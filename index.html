@@ -11367,29 +11367,31 @@ video {
 
     const TUTORIAL_MODULE_CARD_5 = [
       {
-        text: "The 5 is Drop-Base. It ignores the top of the Pile and drops the target all the way back to the very first card played — the Base Card.",
+        text: "The 5 is Drop-Base! It ignores the top of the Pile completely and drops the target all the way back to the Base Card, the very first card played.",
         target: '#baseCardHud'
       },
       {
-        text: "A 4's the Base Card, buried under a 7 played since. Play your 5 and watch the target drop.",
+        text: "Coach opened with a 7, and you've already played a 4 on top of it. Play your 5 and see what happens to the target.",
         target: ['#localHand [data-rank="5"]', '#baseCardHud'],
-        // A 7 sets a 7-OR-LOWER constraint, so a 6 would already have been
-        // legal on it directly — a bad choice for "proves the override
-        // works," since it doesn't actually depend on the override at all.
-        // A King definitely can't satisfy 7-or-lower, so it's the one that
-        // actually demonstrates something changed.
-        scene: { hand: [['5', '♥'], ['K', '♠'], ['Q', '♣']], pile: [['4', '♣'], ['7', '♦']] },
+        scene: {
+          hand: [['5', '♥'], ['6', '♦'], ['K', '♠']],
+          faceUp: [['8', '♣'], ['10', '♥'], ['A', '♦']],
+          pile: [['7', '♠'], ['4', '♣']],
+          pileOwners: ['coach', 'you'],
+          coach: [['5', '♦'], ['9', '♣'], ['Q', '♥']],
+          drawPile: [['8', '♦']]
+        },
         require: { rank: '5' },
-        noCoachReply: true,
-        coachNote: "The target just dropped from the 7 back down to the Base Card — the 4. Now play your King: a 7 demands 7-or-lower, so a King could never follow it — but it beats the 4 underneath just fine.",
-        noteTarget: ['#baseCardHud', '#localHand [data-rank="K"]']
+        coachPlays: [['5', '♦']],
+        noteTarget: '#baseCardHud',
+        coachNote: "See that? The target dropped straight down to the Base Card, your 7, so Coach has to beat THAT, not your 4. They need 7 or lower, and their own 5 fits perfectly."
       },
       {
-        text: "Play your King.",
-        target: ['#localHand [data-rank="K"]', '#baseCardHud'],
-        require: { rank: 'K' },
+        text: "You're still under the Base Card's 7-or-lower rule. Play your 6 to stay beneath it.",
+        target: ['#localHand [data-rank="6"]', '#baseCardHud'],
+        require: { rank: '6' },
         noCoachReply: true,
-        coachNote: "That's the base override at work. A King could never satisfy the 7's 7-or-lower rule — but it beats the 4 underneath just fine."
+        coachNote: "Right where you needed to be! As long as that 5 stays in play, everything underneath still answers to the Base Card, not whatever's sitting on top."
       }
     ];
 
@@ -11404,7 +11406,7 @@ video {
         target: ['#localHand [data-rank="8"]', '#pileZone'],
         require: { rank: '8' },
         noCoachReply: true,
-        coachNote: "2, 4, 6, 8, 10, Queen, and Ace all count as even. A 5, 9, Jack, or King would've been refused."
+        coachNote: "2, 4, 6, 8, 10, Queen and Ace all count as even. 3, 5, 7, 9, Jack and King are all odd."
       }
     ];
 
@@ -11438,24 +11440,24 @@ video {
         scene: { hand: [['8', '♣'], ['3', '♦'], ['9', '♠']], pile: [['5', '♦']] },
         require: { rank: '8' },
         noCoachReply: true,
-        coachNote: "Coach just got skipped — with one opponent, that's your turn again immediately. With 3+ players, it'd just skip the next one."
+        coachNote: "You've skipped Coach with your 8, so it's your turn again. When playing with 2 or more opponents, the number of 8s you play skips that many players."
       }
     ];
 
-    // The only Card Reference demo that seats a 3rd player — Reverse is
-    // invisible with a single opponent, so proving it needs someone for
-    // direction to actually swap between.
+    // The only Card Reference demo that seats a 3rd player — Reverse has no
+    // visible effect with a single opponent, so proving it needs someone
+    // for direction to actually swap between.
     const TUTORIAL_MODULE_CARD_9 = [
       {
-        text: "The 9 is Reverse. Flips turn order with three or more players — invisible with just one opponent, which is why Rival's here too.",
-        target: null
+        text: "The 9 is reverse, it flips the turn order when you have more than one opponent. With just 2 players, the 9 acts as a regular card, like a Queen or King.",
+        target: ['#pileZone', '#gameDirectionBadge']
       },
       {
         text: "Play would normally pass to the Coach next. Play your 9 and watch where it actually goes.",
-        target: ['#localHand [data-rank="9"]', '#turnIndicatorRow'],
+        target: ['#pileZone', '#gameDirectionBadge', '#turnIndicatorRow'],
         scene: { hand: [['9', '♠'], ['5', '♥'], ['K', '♦']], pile: [['4', '♦']] },
         require: { rank: '9' },
-        noteTarget: '#turnIndicatorRow',
+        noteTarget: ['#pileZone', '#gameDirectionBadge', '#turnIndicatorRow'],
         noCoachReply: true,
         coachNote: "Direction just flipped — play skips the Coach completely and goes to Rival instead. With two players, you'd never see it happen."
       }
@@ -11463,7 +11465,7 @@ video {
 
     const TUTORIAL_MODULE_CARD_10 = [
       {
-        text: "The 10 is Burn. Clears the Pile instantly, you go again. Not a universal wildcard, though — it still has to clear whatever's actually required.",
+        text: "The 10 is burn, it clears the pile and takes the cards completely out of the game. After playing a 10, you get another turn!",
         target: '#pileZone',
         scene: { hand: [['10', '♠'], ['4', '♣'], ['J', '♦']], pile: [['Q', '♥']] }
       },
@@ -11472,13 +11474,14 @@ video {
         target: ['#localHand [data-rank="10"]', '#pileZone'],
         require: { rank: '10' },
         noCoachReply: true,
-        coachNote: "Burnt instantly — you go again. A 10 can even land on cards ranked above it, like that Queen. But a 7-or-lower or Odds rule still blocks it outright, same as anything else."
+        noteTarget: '#historyStreamPanel',
+        coachNote: "Check out the Recent Card History strip! As you can see, the 10 can even play on cards that are ranked above it like a Queen and the pile was burnt, but it can't play on a 7 or a Jack."
       }
     ];
 
     const TUTORIAL_MODULE_CARD_J = [
       {
-        text: "The Jack sets an Odds rule. Whoever's next needs an odd card.",
+        text: "The Jack sets an Odds rule, similar to a 6. Whoever's next, needs to play an odd card on top.",
         target: '#pileZone',
         scene: { hand: [['9', '♣'], ['4', '♦'], ['K', '♠']], pile: [['J', '♦']] }
       },
@@ -11487,7 +11490,7 @@ video {
         target: ['#localHand [data-rank="9"]', '#pileZone'],
         require: { rank: '9' },
         noCoachReply: true,
-        coachNote: "3, 5, 7, 9, Jack, and King all count as odd. A 4 or a Queen would've been refused."
+        coachNote: "3, 5, 7, 9, Jack and King are all odd. 2, 4, 6, 8, 10, Queen and Ace all count as even."
       }
     ];
 
@@ -11538,16 +11541,21 @@ video {
 
     const TUTORIAL_MODULE_CARD_JOKER = [
       {
-        text: "The Joker is always legal, no matter what's on the Pile — and it forces whoever you pick to scoop up everything.",
+        text: "The Queen is too high for your other card, but thankfully, the Joker can play on anything, no matter what's on the pile. Whoever plays it gets to choose an opponent to pick up the whole pile, excluding the Joker!",
         target: null
       },
       {
         text: "Play your Joker, then choose the Coach.",
         target: '#localHand [data-rank="JOKER"]',
-        scene: { hand: [['JOKER', '★']], coach: [['4', '♦'], ['6', '♣']], pile: [['9', '♦']] },
+        scene: {
+          hand: [['4', '♦'], ['5', '♥'], ['JOKER', '★']],
+          coach: [['9', '♣'], ['K', '♦'], ['A', '♠']],
+          pile: [['7', '♠'], ['5', '♦'], ['6', '♣'], ['Q', '♥']],
+          pileOwners: ['you', 'coach', 'you', 'coach']
+        },
         require: { rank: 'JOKER' },
         noteTarget: '#pileZone',
-        coachNote: "Coach just picked up the whole Pile — you go again. One risk: if they'd had a Joker too, they could've countered it right back. That's covered in Advanced Tactics."
+        coachNote: "Coach just picked up the whole Pile, so it's your turn again. The one risk is that if they had a Joker too, they could've countered it right back, forcing you to pick up the Pile."
       }
     ];
 
@@ -11838,9 +11846,18 @@ video {
       // reply on top of — attributing it to the Coach instead would show
       // two consecutive Coach plays with no turn in between, which isn't a
       // legal sequence without a Skip).
+      // A scene that needs the pile built up by BOTH sides in a specific
+      // order (e.g. an alternating you/coach/you/coach sequence) sets
+      // pileOwners instead — one entry per pile card, positionally matched.
+      // Falls back to the single pileOwner above when absent, so every
+      // existing scene keeps working unchanged.
       const pileOwnerName = scene.pileOwner === 'you' ? you.name : coach.name;
       state.playedHistory = scene.pile
-        ? state.discardPile.map(c => ({ type: 'play', playerName: pileOwnerName, rank: c.rank, suit: c.suit, isJoker: c.isJoker }))
+        ? state.discardPile.map((c, i) => ({
+            type: 'play',
+            playerName: scene.pileOwners ? (scene.pileOwners[i] === 'you' ? you.name : coach.name) : pileOwnerName,
+            rank: c.rank, suit: c.suit, isJoker: c.isJoker
+          }))
         : [];
 
       // Derive the constraint the top card would really have created, exactly
