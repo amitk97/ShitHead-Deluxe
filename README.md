@@ -31,6 +31,20 @@ Symptom if you're on the wrong domain: clicking "Continue with Google" completes
 
 ## Deploying
 
+### Automatic deploy (recommended — no terminal needed)
+
+A GitHub Action can be set up to deploy automatically every time a change is pushed or merged to `main`. Once it's set up, deploying a change is exactly what you're probably already doing — edit or upload a file on GitHub, commit — and the live site updates itself within a minute or two. No Node.js, no CLI, no phone limitations, nothing to run.
+
+This needs a **one-time setup** by someone with a working computer and Firebase CLI access (not something that can be done from a phone), from the repo root:
+```
+firebase init hosting:github
+```
+It walks through: which GitHub repo (`amitk97/ShitHead-Deluxe`), creates a secure credential for GitHub to deploy with, and generates the workflow file. See it as a checklist, not something to memorize — it prompts for everything.
+
+After that one-time setup, this section can be updated to just say "push to `main`" and the manual steps below become optional for anyone who wants to deploy a change immediately without waiting on CI.
+
+### Manual deploy
+
 **Prerequisites (one-time setup):**
 1. Node.js version 20 or newer — check with `node -v`. If it's older, see below.
 2. The Firebase CLI — installed automatically by the deploy script if missing.
