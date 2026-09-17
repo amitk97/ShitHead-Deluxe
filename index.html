@@ -3677,13 +3677,8 @@ video {
         <button id="authCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
 
-      <!-- Google sign-in is disabled for now — see the click handler below
-           for why (not simply hidden, since players should understand
-           it's coming rather than wonder why it's missing), and pointed
-           at email/password instead rather than left to guess what else
-           to try. -->
-      <button id="googleSignInBtn" class="w-full py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-black uppercase tracking-wider text-slate-500 flex items-center justify-center gap-2 mb-3 cursor-not-allowed opacity-60">
-        <span aria-hidden="true">G</span> Continue with Google <span class="item-soon">Soon</span>
+      <button id="googleSignInBtn" class="w-full py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-black uppercase tracking-wider text-slate-200 hover:bg-slate-700 hover:border-slate-600 flex items-center justify-center gap-2 mb-3 transition">
+        <span aria-hidden="true">G</span> Continue with Google
       </button>
 
       <div class="flex items-center gap-2 mb-3">
@@ -11891,13 +11886,16 @@ video {
       setAuthMode(authMode === 'signup' ? 'signin' : 'signup');
     });
     document.getElementById('googleSignInBtn').addEventListener('click', () => {
-      // Google sign-in doesn't currently work end-to-end (see the note
-      // above the button) — rather than let a player tap it and land in a
-      // broken redirect with no explanation, this button never attempts
-      // sign-in at all and instead points them at the option that does
-      // work.
+      if (!firebaseAvailable) { showAuthError('Sign-in is unavailable right now.'); return; }
       clearAuthError();
-      showAuthMessage('Google sign-in isn\u2019t available yet \u2014 please sign up with email and password below.');
+      // signInWithRedirect navigates away immediately; the result comes back
+      // through auth.getRedirectResult() / onAuthStateChanged above on the
+      // next page load, not through a .then() here.
+      auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider())
+        .catch((e) => {
+          console.warn('Google sign-in failed to start', e);
+          showAuthError(mapAuthError(e) || 'Google sign-in didn\u2019t start \u2014 please try again.');
+        });
     });
     document.getElementById('authSubmitBtn').addEventListener('click', () => {
       if (!firebaseAvailable) { showAuthError('Sign-in is unavailable right now.'); return; }
@@ -19816,17 +19814,21 @@ video {
         auth.currentUser = originalAuthCurrentUser;
       });
 
-      test('REGRESSION: Google sign-in is visually locked and never attempts a real sign-in while it does not work end to end', () => {
+      test('REGRESSION: Google sign-in button is active and starts a real redirect sign-in via GoogleAuthProvider', () => {
         const btn = document.getElementById('googleSignInBtn');
-        assertTrue(!!btn.querySelector('.item-soon'), 'The button must show a Soon label so players understand it is coming, not just missing');
-        assertTrue(btn.className.includes('cursor-not-allowed'), 'The button must look disabled');
+        assertTrue(!btn.querySelector('.item-soon'), 'The button must not show a Soon label now that Google sign-in works');
+        assertTrue(!btn.className.includes('cursor-not-allowed'), 'The button must not look disabled');
         const originalSignIn = auth.signInWithRedirect;
+        const originalAvail = firebaseAvailable;
+        firebaseAvailable = true;
         let signInCalled = false;
-        auth.signInWithRedirect = () => { signInCalled = true; };
+        let providerUsed = null;
+        auth.signInWithRedirect = (provider) => { signInCalled = true; providerUsed = provider; return Promise.resolve(); };
         btn.click();
         auth.signInWithRedirect = originalSignIn;
-        assertTrue(!signInCalled, 'Clicking it must never attempt a real Google sign-in');
-        assertTrue(document.getElementById('authErrorMsg').textContent.toLowerCase().includes('email and password'), 'Clicking it must instead prompt the player to use email and password');
+        firebaseAvailable = originalAvail;
+        assertTrue(signInCalled, 'Clicking it must attempt a real Google sign-in via signInWithRedirect');
+        assertTrue(providerUsed instanceof firebase.auth.GoogleAuthProvider, 'It must sign in with a GoogleAuthProvider, not some other provider');
       });
 
       test('REGRESSION: the Ranked Stats page tells a guest to sign in, and shows a real-not-fake empty state for a signed-in player with no Ranked games yet', () => {
