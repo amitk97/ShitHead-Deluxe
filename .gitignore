@@ -1,0 +1,5 @@
+# Firebase CLI local cache and logs — created automatically by
+# `firebase deploy`/`firebase init`, not part of the project itself.
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
