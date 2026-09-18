@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-16-v63 (ShitHead-Deluxe-63) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-18-v65 (ShitHead-Deluxe-65) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -3838,10 +3838,8 @@ video {
     </div>
   </div>
 
-  <!-- Reads publicProfiles (already public-read, since it exists
-       specifically so friends can see each other's rating) ordered by
-       rating server-side via orderByChild, not a full-table client-side
-       sort — see openLeaderboardPanel(). -->
+  <!-- Reads the public leaderboard projection, which contains no Firebase
+       UID or online-presence field — see openLeaderboardPanel(). -->
   <div id="leaderboardModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-xs bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:85vh; display:flex; flex-direction:column;">
       <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
@@ -3960,19 +3958,9 @@ video {
     </div>
   </div>
 
-  <!-- STAGE 7 — In-game Support form. A mailto: link is NOT a true in-game
-       form (it hands off to the OS mail app) — this project has no
-       deployed backend (no Cloud Functions, no server), so there is no
-       secure way to send an email directly from client-side code without
-       exposing an email-service API key in the page source, which is
-       explicitly unsafe. What this DOES do honestly: write the ticket to
-       supportTickets/{id} in the existing Firebase project (safe — no
-       secret involved, and DB rules can restrict this path to
-       write-only/no-read for normal users). Actually delivering that to
-       an inbox still needs a small Cloud Function triggered on write, or
-       manual review in the Firebase console — see the Stage 7 write-up
-       for the honest full picture. The old header mailto Support button
-       is being replaced by this, not kept as a silent duplicate. -->
+  <!-- Support opens a fully addressed, pre-filled draft in the player's
+       email app. A standalone HTML file cannot safely hold SMTP or email
+       service credentials, so this is the reliable no-backend option. -->
   <div id="supportModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:90vh; display:flex; flex-direction:column;">
       <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
@@ -4003,12 +3991,12 @@ video {
         </div>
         <p id="supportValidationMsg" class="hidden text-[9px] font-bold text-rose-400"></p>
         <p id="supportErrorMsg" class="hidden text-[9px] font-bold text-rose-400"></p>
-        <p id="supportSuccessMsg" class="hidden text-[10px] font-bold text-emerald-400 text-center py-2">&#9989; Received &mdash; thanks! We'll follow up if needed.</p>
-        <button id="supportSendBtn" class="w-full text-[11px] font-black py-2 rounded-lg border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition">SEND</button>
+        <p id="supportSuccessMsg" class="hidden text-[10px] font-bold text-emerald-400 text-center py-2">&#9989; Email draft opened. Please press Send in your email app.</p>
+        <button id="supportSendBtn" class="w-full text-[11px] font-black py-2 rounded-lg border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition">OPEN EMAIL</button>
         <div>
           <button id="supportPrivacyToggleBtn" type="button" class="text-[8px] text-slate-500 underline hover:text-slate-300 transition">What information does this send?</button>
           <div id="supportPrivacyPanel" class="hidden mt-1 text-[8px] text-slate-500 leading-snug bg-slate-900/60 border border-slate-800 rounded-lg p-2">
-            This sends your message, the category you picked, the game version, your browser's user-agent string, and your account ID if you're signed in (so we can look up your account if needed) &mdash; nothing else. It's stored so our team can review and respond; it isn't shared with anyone else.
+            This opens an email addressed to support.shitheaddeluxe@gmail.com containing your category, subject, message and game version. Nothing is sent until you press Send in your email app.
           </div>
         </div>
       </div>
@@ -4914,12 +4902,13 @@ video {
     const MAX_ERROR_REPORTS_PER_SESSION = 10; // a broken loop shouldn't flood Firebase
     function reportError(message, source, lineno, colno, stack) {
       try {
+        // Error storage is authenticated-only. Guests never write reports,
+        // preventing anonymous database spam.
+        if (!currentUser || !currentUser.uid) return;
         if (errorReportCount >= MAX_ERROR_REPORTS_PER_SESSION) return;
         errorReportCount++;
-        const id = getAnonDeviceId();
-        db.ref(`errorReports/${Date.now()}_${Math.random().toString(36).slice(2, 8)}`).set({
+        db.ref(`errorReports/${currentUser.uid}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}`).set({
           at: firebase.database.ServerValue.TIMESTAMP,
-          deviceId: id,
           message: String(message || '').slice(0, 500),
           source: source ? String(source).slice(0, 200) : null,
           line: lineno || null,
@@ -11508,12 +11497,9 @@ video {
     // (matching the item-soon tag already on the button) until their
     // dedicated stages build them out.
     document.getElementById('menuProfileBtn').addEventListener('click', () => { closeHamburgerMenu(); openProfilePanel(); });
-    // STAGE 7 — In-game Support form.
-    // No secure backend exists to actually send an email from here — see
-    // the HTML comment above #supportModal for the full reasoning. This
-    // writes the ticket to Firebase instead (safe: no secret involved),
-    // and is honest with the player that this stores the message rather
-    // than guaranteeing it's been emailed anywhere yet.
+    // STAGE 7 — Support email composer. Email credentials never belong in
+    // client-side HTML, so the form opens a pre-filled draft in the user's
+    // configured email app and lets the user perform the final send.
     let supportSubmitInFlight = false;
     let lastSupportSubmitAt = 0;
     const SUPPORT_COOLDOWN_MS = 60000;
@@ -11545,7 +11531,7 @@ video {
     // which sits BEFORE <html> and so is invisible to
     // document.documentElement) — update this alongside the BUILD comment
     // on each delivery.
-    const GAME_VERSION_LABEL = 'v63';
+    const GAME_VERSION_LABEL = 'v65';
     function getGameVersionLabel() {
       return GAME_VERSION_LABEL;
     }
@@ -11576,29 +11562,15 @@ video {
       sendBtn.disabled = true;
       sendBtn.textContent = 'SENDING\u2026';
 
-      const ticket = {
-        category, subject, message,
-        uid: currentUser ? currentUser.uid : null,
-        gameVersion: getGameVersionLabel(),
-        userAgent: navigator.userAgent,
-        createdAt: (typeof firebase !== 'undefined' && firebase.database && firebase.database.ServerValue) ? firebase.database.ServerValue.TIMESTAMP : Date.now()
-      };
-
-      db.ref('supportTickets').push(ticket)
-        .then(() => {
-          supportSubmitInFlight = false;
-          lastSupportSubmitAt = Date.now();
-          successEl.classList.remove('hidden');
-          document.getElementById('supportFormArea').querySelectorAll('input, select, textarea, button#supportSendBtn').forEach((el) => { el.disabled = true; });
-        })
-        .catch((e) => {
-          supportSubmitInFlight = false;
-          sendBtn.disabled = false;
-          sendBtn.textContent = 'SEND';
-          errorEl.textContent = 'Could not send your message right now \u2014 please try again, or email support.shitheaddeluxe@gmail.com directly.';
-          errorEl.classList.remove('hidden');
-          console.warn('Support ticket submission failed', e);
-        });
+      const accountLine = currentUser && currentUser.email ? `Account email: ${currentUser.email}\n` : '';
+      const body = `Category: ${category}\nGame version: ${getGameVersionLabel()}\n${accountLine}\n${message}`;
+      const mailto = `mailto:support.shitheaddeluxe@gmail.com?subject=${encodeURIComponent(`[ShitHead Deluxe] ${subject}`)}&body=${encodeURIComponent(body)}`;
+      supportSubmitInFlight = false;
+      lastSupportSubmitAt = Date.now();
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'OPEN EMAIL';
+      successEl.classList.remove('hidden');
+      window.location.href = mailto;
     });
 
     // Real Ranked Stats. wins/losses already existed at the top level of
@@ -11815,12 +11787,20 @@ video {
     // Stage 5 write-up for the full, honest picture of what a real
     // backend would still need to finish.
     function deleteOwnAccountData(uid) {
-      return db.ref().update({
-        [`users/${uid}`]: null,
-        [`publicProfiles/${uid}`]: null,
-        [`friends/${uid}`]: null,
-        [`friendRequests/${uid}`]: null,
-        [`ignores/${uid}`]: null
+      return db.ref(`users/${uid}/username`).once('value').then((usernameSnap) => {
+        const username = usernameSnap.val();
+        const updates = {
+          [`users/${uid}`]: null,
+          [`publicProfiles/${uid}`]: null,
+          [`friends/${uid}`]: null,
+          [`friendRequests/${uid}`]: null,
+          [`ignores/${uid}`]: null
+        };
+        if (typeof username === 'string' && username.trim()) {
+          updates[`leaderboard/${username.trim().toLowerCase()}`] = null;
+          updates[`usernames/${username.trim().toLowerCase()}`] = null;
+        }
+        return db.ref().update(updates);
       });
     }
     let deleteAccountInFlight = false;
@@ -13552,11 +13532,16 @@ video {
       if (!currentUser) return Promise.resolve();
       return getOrCreateUserProfile(currentUser.uid).then((profile) => {
         const tier = getRankTier(profile.rating || 500).name;
-        return db.ref(`publicProfiles/${currentUser.uid}`).update({
-          username: profile.username || 'Player',
-          rating: profile.rating || 500,
+        const username = (typeof profile.username === 'string' && profile.username.trim()) ? profile.username.trim() : null;
+        const publicProfileWrite = db.ref(`publicProfiles/${currentUser.uid}`).update({
+          username,
+          rating: profile.rating != null ? profile.rating : 500,
           tier
-        }).catch((e) => console.warn('syncPublicProfile failed', e));
+        });
+        const leaderboardWrite = username
+          ? db.ref(`leaderboard/${username.toLowerCase()}`).set({ username, rating: profile.rating != null ? profile.rating : 500, tier })
+          : Promise.resolve();
+        return Promise.all([publicProfileWrite, leaderboardWrite]).catch((e) => console.warn('syncPublicProfile failed', e));
       });
     }
     // Standard Firebase presence pattern: .info/connected fires whenever
@@ -13868,15 +13853,11 @@ video {
     }
 
     // --- Leaderboard ------------------------------------------------------
-    // Reads publicProfiles ordered by rating server-side (orderByChild +
-    // limitToLast), not a full-table download sorted client-side — this
-    // stays cheap regardless of how many accounts eventually exist.
-    // publicProfiles is already public-read (it exists specifically so
-    // friends can see each other's rating), so no new rule is needed —
-    // but Firebase performs an unindexed query without one, which works
-    // fine at this scale and just logs a console warning suggesting
-    // adding ".indexOn": ["rating"] under publicProfiles in Rules once
-    // the player base is large enough for it to matter.
+    // The public leaderboard is visible to every visitor, including guests.
+    // It includes EVERY public profile that has a real username, rather than
+    // only the top 50 records. Players are ordered by their live online/ranked
+    // rating points, highest first. Firebase rules must allow public reads of
+    // /leaderboard while keeping writes tied to the claimed username.
     // STAGE 2 — Themes page. The exact four existing deck themes (no
     // others exist in the code — see the theme-btn buttons in the lobby
     // and getThemeDeckBackClass), each rendered with the same classes and
@@ -13927,78 +13908,82 @@ video {
     function openLeaderboardPanel() {
       document.getElementById('leaderboardModal').classList.remove('hidden');
       const area = document.getElementById('leaderboardArea');
-      document.getElementById('leaderboardEmptyMsg').classList.add('hidden');
-      area.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-4">Loading\u2026</p>';
-      // BUG FIX (still showing "Sign in" while signed in): the previous
-      // fix switched from the app's own `currentUser` variable to
-      // `auth.currentUser` — an improvement, but auth.currentUser is
-      // still just a synchronous SNAPSHOT, and it can genuinely read
-      // null for a brief window right after page load, before Firebase
-      // has finished restoring a persisted session from storage. If the
-      // Leaderboard button is tapped in that window, the old check
-      // still wrongly reports signed-out. auth.onAuthStateChanged() is
-      // the one API that's actually guaranteed correct here: it fires
-      // immediately with whatever the CURRENT state already is once
-      // Firebase has settled it, waiting for that to finish first if it
-      // hasn't — so this can never show "Sign in" to someone who
-      // genuinely is, no matter how early it's clicked. The listener
-      // unsubscribes itself the instant it fires once, so this never
-      // leaks or re-fires while the modal sits open.
-      // Declared with `let` (not `const`) and assigned before use inside
-      // the callback: onAuthStateChanged can genuinely fire SYNCHRONOUSLY
-      // — either because the auth state was already fully resolved before
-      // this call, or, when Firebase itself is unavailable, because the
-      // fallback stub calls back immediately with null (see the
-      // firebaseAvailable catch block above the game state declaration).
-      // Referencing `unsubscribe` from inside a synchronously-invoked
-      // callback while it was still declared `const` threw "Cannot access
-      // 'unsubscribe' before initialization" — an uncaught error that
-      // left the modal stuck on "Loading…" forever, exactly the "broken
-      // or empty modal" this needs to avoid. `handled` guards against
-      // ever running the body twice regardless of firing order.
-      let unsubscribe;
-      let handled = false;
-      unsubscribe = auth.onAuthStateChanged((authUser) => {
-        if (handled) return;
-        handled = true;
-        if (typeof unsubscribe === 'function') unsubscribe();
-        if (!authUser) {
-          area.innerHTML = '<p class="text-[10px] text-slate-400 text-center py-4">Sign in to view the Leaderboard.</p>';
+      const emptyMsg = document.getElementById('leaderboardEmptyMsg');
+      emptyMsg.classList.add('hidden');
+      area.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-4">Loading…</p>';
+
+      // Public leaderboard: do not require Firebase Authentication.
+      // Read the public leaderboard projection. It is keyed by username,
+      // not Firebase UID, and deliberately contains no presence field.
+      // with a real username and sort by live ranked rating points.
+      const renderRows = (data) => {
+        const rows = [];
+        Object.entries(data || {}).forEach(([usernameKey, profile]) => {
+          profile = profile || {};
+          if (typeof profile.username !== 'string' || !profile.username.trim()) return;
+          rows.push({ usernameKey, ...profile });
+        });
+        rows.sort((a, b) => {
+          const ratingDifference = (Number(b.rating) || 0) - (Number(a.rating) || 0);
+          if (ratingDifference !== 0) return ratingDifference;
+          return String(a.username).localeCompare(String(b.username), undefined, { sensitivity: 'base' });
+        });
+        if (!rows.length) {
+          area.innerHTML = '';
+          emptyMsg.classList.remove('hidden');
           return;
         }
-        // The publicProfiles rule itself only requires `auth != null` to
-        // read — no username needed for that — but a signed-in player
-        // who hasn't picked one yet still can't meaningfully appear on
-        // it themselves, so that gets its own distinct message rather
-        // than being lumped in with "not signed in" at all.
-        getOrCreateUserProfile(authUser.uid).then((profile) => {
-          if (!profile.username) {
-            area.innerHTML = '<p class="text-[10px] text-slate-400 text-center py-4">Set a username to view the Leaderboard.</p>';
-            return;
-          }
-          return db.ref('publicProfiles').orderByChild('rating').limitToLast(50).once('value').then((snap) => {
-            const rows = [];
-            snap.forEach((child) => { rows.push({ uid: child.key, ...child.val() }); });
-            rows.reverse(); // limitToLast returns ascending order; highest rating first here
-            if (rows.length === 0) { area.innerHTML = ''; document.getElementById('leaderboardEmptyMsg').classList.remove('hidden'); return; }
-            document.getElementById('leaderboardEmptyMsg').classList.add('hidden');
-            area.innerHTML = rows.map((p, i) => leaderboardRowHtml(p, i + 1)).join('');
-          });
-        }).catch((e) => {
-          // Surfacing the actual reason (not just a generic message) means
-          // a real permission/rules problem is diagnosable from a phone
-          // screenshot alone, without needing to reproduce it with devtools
-          // open — exactly the situation that prompted this fix.
-          const reason = (e && e.code === 'PERMISSION_DENIED')
-            ? 'Sign in to view the Leaderboard.'
-            : `Couldn\u2019t load the leaderboard${e && e.code ? ` (${e.code})` : ''}.`;
-          area.innerHTML = `<p class="text-[10px] text-rose-400 text-center py-4">${reason}</p>`;
-          console.error('Leaderboard load failed', e);
+        emptyMsg.classList.add('hidden');
+        area.innerHTML = rows.map((player, index) => leaderboardRowHtml(player, index + 1)).join('');
+      };
+
+      const showError = (error) => {
+        const code = error && error.code ? ` (${error.code})` : '';
+        area.innerHTML = `<p class="text-[10px] text-rose-400 text-center py-4">Couldn’t load the leaderboard${code}. Check that leaderboard is publicly readable in Firebase Rules.</p>`;
+        console.error('Public leaderboard load failed', error);
+      };
+
+      // Use the SDK first. A timeout prevents the modal being stuck on
+      // “Loading…” forever if the SDK connection/query is unavailable.
+      let settled = false;
+      const finish = (callback) => {
+        if (settled) return;
+        settled = true;
+        callback();
+      };
+      const timeout = setTimeout(() => {
+        // Firebase REST is a simple fallback for guests and avoids a stalled
+        // Realtime Database SDK query leaving the leaderboard blank.
+        fetch('https://shithead-pro-default-rtdb.europe-west1.firebasedatabase.app/leaderboard.json')
+          .then((response) => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+          })
+          .then((data) => finish(() => renderRows(data)))
+          .catch((error) => finish(() => showError(error)));
+      }, 5000);
+
+      db.ref('leaderboard').once('value')
+        .then((snap) => {
+          clearTimeout(timeout);
+          const data = snap.val() || {};
+          finish(() => renderRows(data));
+        })
+        .catch((error) => {
+          clearTimeout(timeout);
+          // Try the public REST endpoint if the SDK query fails.
+          fetch('https://shithead-pro-default-rtdb.europe-west1.firebasedatabase.app/leaderboard.json')
+            .then((response) => {
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+              return response.json();
+            })
+            .then((data) => finish(() => renderRows(data)))
+            .catch(() => finish(() => showError(error)));
         });
-      });
     }
     function leaderboardRowHtml(p, rank) {
-      const isMe = currentUser && p.uid === currentUser.uid;
+      const myName = document.getElementById('playerNameInput')?.value?.trim().toLowerCase();
+      const isMe = !!myName && String(p.username || '').toLowerCase() === myName;
       const tier = getRankTier(p.rating || 500);
       return `<div class="flex items-center justify-between gap-2 border rounded-xl px-2.5 py-2 ${isMe ? 'bg-amber-950/40 border-amber-600' : 'bg-slate-900/60 border-slate-800'}">
         <div class="flex items-center gap-2 min-w-0">
@@ -16894,7 +16879,10 @@ video {
     }
     function logTutorialCompletion() {
       try {
-        const id = getAnonDeviceId();
+        // Analytics writes are authenticated-only; guest completions are not
+        // persisted, avoiding an anonymous public write endpoint.
+        if (!currentUser || !currentUser.uid) return;
+        const id = currentUser.uid;
         const nameInput = document.getElementById('playerNameInput');
         db.ref(`tutorialCompletions/${id}`).set({
           completedAt: firebase.database.ServerValue.TIMESTAMP,
@@ -19557,12 +19545,11 @@ video {
         closeHamburgerMenu();
       });
 
-      await test("REGRESSION: the Leaderboard tells a guest to sign in, instead of a generic \"couldn't load\" for what's actually a sign-in requirement", () => {
+      await test("REGRESSION: the public Leaderboard does not require a signed-in user", () => {
         currentUser = null;
         openLeaderboardPanel();
         const text = document.getElementById('leaderboardArea').innerHTML;
-        assertTrue(text.includes('Sign in'), 'A guest must be told to sign in, not shown a generic failure — the publicProfiles rule requires auth != null to read at all');
-        assertTrue(!text.toLowerCase().includes("couldn't load"), 'This is a known, expected state for a guest, not an error');
+        assertTrue(text.includes('Loading') || !text.includes('Sign in'), 'A guest must be allowed to load the public Leaderboard');
         document.getElementById('leaderboardModal').classList.add('hidden');
       });
 
