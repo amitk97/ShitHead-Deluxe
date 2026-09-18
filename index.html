@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-18-v65 (ShitHead-Deluxe-65) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-18-v66 (ShitHead-Deluxe-66) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -4981,9 +4981,13 @@ video {
       });
     }
 
+    // Firebase may invoke this listener synchronously. Declare state before
+    // registering it so a fast connection callback cannot hit the temporal
+    // dead zone and abort startup with "Cannot access state before initialization".
+    let state = null;
     db.ref('.info/connected').on('value', (snap) => {
       const isConnected = snap.val() === true;
-      const inRoom = state.isMultiplayer && !!state.roomCode;
+      const inRoom = !!state && state.isMultiplayer && !!state.roomCode;
       if (!isConnected) {
         if (inRoom) { wasDisconnected = true; setConnectionBanner('lost'); }
         return;
@@ -5074,7 +5078,7 @@ video {
       return arr;
     }
 
-    let state = {
+    state = {
       difficulty: 'medium',
       speedIndex: DEFAULT_SPEED_INDEX,
       turnDelay: SPEED_DELAYS[DEFAULT_SPEED_INDEX],
@@ -11531,7 +11535,7 @@ video {
     // which sits BEFORE <html> and so is invisible to
     // document.documentElement) — update this alongside the BUILD comment
     // on each delivery.
-    const GAME_VERSION_LABEL = 'v65';
+    const GAME_VERSION_LABEL = 'v66';
     function getGameVersionLabel() {
       return GAME_VERSION_LABEL;
     }
