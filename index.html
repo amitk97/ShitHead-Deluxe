@@ -7534,8 +7534,15 @@ video {
       if (!bigEffectsOn) return;
       try {
         const isWinner = player && player.finishRank === 1;
-        const ownEffect = player?.id === state.localPlayerId ? (equippedCosmetics.victoryEffect || 'default') : 'default';
-        playVictoryEffect(isWinner ? (player?.cosmetics?.victoryEffect || ownEffect) : 'default');
+        // This device's equipped state is the freshest source for its own
+        // player. A room snapshot can briefly retain the literal string
+        // "default" from before the player equipped an effect; because that
+        // string is truthy, the old fallback order silently suppressed the
+        // newly equipped victory animation.
+        const effect = player?.id === state.localPlayerId
+          ? (equippedCosmetics.victoryEffect || 'default')
+          : (player?.cosmetics?.victoryEffect || 'default');
+        playVictoryEffect(isWinner ? effect : 'default');
       } catch (error) {
         console.warn('Victory cosmetic skipped safely:', error);
       }
@@ -12547,6 +12554,12 @@ video {
       return !!item && COSMETIC_CATEGORY_TYPES[item.category] === type && !!COSMETIC_RUNTIME_IDS[type]?.has(id);
     }
 
+    function canRestoreEquippedCosmetic(type, id, purchases = cosmeticPurchaseState) {
+      if (id === 'default') return true;
+      const builtIn = BUILT_IN_COSMETICS.some(item => item.id === id && COSMETIC_CATEGORY_TYPES[item.category] === type);
+      return builtIn || !!purchases?.[id];
+    }
+
     function applyEquippedCosmetics() {
       Object.keys(DEFAULT_EQUIPPED_COSMETICS).forEach(type => {
         if (!isSupportedCosmetic(type, equippedCosmetics[type])) equippedCosmetics[type] = 'default';
@@ -12660,7 +12673,7 @@ video {
         equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS, ...saved };
         ['cardBack', 'frame', 'emotes', 'tableTheme', 'burnEffect', 'victoryEffect'].forEach(type => {
           const id = equippedCosmetics[type];
-          if (id !== 'default' && !cosmeticPurchaseState[id]) equippedCosmetics[type] = 'default';
+          if (!canRestoreEquippedCosmetic(type, id)) equippedCosmetics[type] = 'default';
         });
         applyEquippedCosmetics();
         renderPersonalisationCosmetics();
@@ -12903,6 +12916,19 @@ video {
       document.getElementById('profileModal').classList.add('hidden');
       openShopPanel();
     });
+    function calculateCosmeticPurchase(current, item, purchasedAt = Date.now()) {
+      const user = current || {};
+      const owned = user.ownedCosmetics || {};
+      if (!item || !item.id || !Number.isFinite(Number(item.cost))) return { error: 'Invalid Shop item.' };
+      if (owned[item.id]) return { error: 'Already owned.' };
+      const balance = Number(user.diamonds) || 0;
+      if (balance < item.cost) return { error: `You need ${item.cost} Diamonds to buy ${item.name}.` };
+      const purchase = { purchasedAt, cost: item.cost };
+      return {
+        purchase,
+        user: { ...user, diamonds: balance - item.cost, ownedCosmetics: { ...owned, [item.id]: purchase } }
+      };
+    }
     document.getElementById('nameTokenBuyBtn').addEventListener('click', () => {
       if (!currentUser) { document.getElementById('shopModal').classList.add('hidden'); openAuthModal(); return; }
       if (nameChangeTokenState) return;
@@ -13010,13 +13036,10 @@ video {
       // Concurrent tabs are retried against the newest balance, so two items can
       // never be obtained while only one debit survives.
       db.ref(`users/${uid}`).transaction(current => {
-        const user = current || {};
-        const owned = user.ownedCosmetics || {};
-        if (owned[item.id]) { purchaseError = 'Already owned.'; return; }
-        const balance = Number(user.diamonds) || 0;
-        if (balance < item.cost) { purchaseError = `You need ${item.cost} Diamonds to buy ${item.name}.`; return; }
-        committedPurchase = { purchasedAt: Date.now(), cost: item.cost };
-        return { ...user, diamonds: balance - item.cost, ownedCosmetics: { ...owned, [item.id]: committedPurchase } };
+        const calculated = calculateCosmeticPurchase(current, item);
+        if (calculated.error) { purchaseError = calculated.error; return; }
+        committedPurchase = calculated.purchase;
+        return calculated.user;
       }).then(result => {
         if (!result.committed) throw new Error(purchaseError || 'Purchase could not be committed.');
         const updatedUser = result.snapshot.val() || {};
@@ -21756,6 +21779,49 @@ video {
           Object.keys(DEFAULT_EQUIPPED_COSMETICS).forEach(type => assertEqual(reloaded[type], equippedCosmetics[type], `${type} must survive reload storage`));
         } finally {
           cosmeticPurchaseState = savedPurchases; equippedCosmetics = savedEquipped; applyEquippedCosmetics(); state.isMultiplayer = savedState;
+        }
+      });
+
+      await test('REGRESSION: every cosmetic purchase deducts exactly once and records canonical ownership atomically', () => {
+        COSMETIC_SHOP_ITEMS.forEach((item, index) => {
+          const startingBalance = item.cost + 137;
+          const at = 1700000000000 + index;
+          const first = calculateCosmeticPurchase({ diamonds: startingBalance, ownedCosmetics: {} }, item, at);
+          assertTrue(!first.error, `${item.id} must be purchasable with enough Diamonds`);
+          assertEqual(first.user.diamonds, 137, `${item.id} must deduct exactly its advertised cost`);
+          assertEqual(first.user.ownedCosmetics[item.id], { purchasedAt: at, cost: item.cost }, `${item.id} ownership must be written in the same user transaction`);
+          const duplicate = calculateCosmeticPurchase(first.user, item, at + 1);
+          assertEqual(duplicate.error, 'Already owned.', `${item.id} must never charge or purchase twice`);
+          const insufficient = calculateCosmeticPurchase({ diamonds: Math.max(0, item.cost - 1), ownedCosmetics: {} }, item, at);
+          assertTrue(insufficient.error?.includes('Diamonds'), `${item.id} must explain an insufficient balance`);
+          assertTrue(!insufficient.user, `${item.id} must not mutate ownership when funds are insufficient`);
+        });
+      });
+
+      await test('REGRESSION: built-in cosmetics survive reload without a purchase record', () => {
+        assertTrue(canRestoreEquippedCosmetic('emotes', 'emotes-classic', {}), 'Classic Reactions must restore because it is built in');
+        assertTrue(!canRestoreEquippedCosmetic('cardBack', 'back-neon', {}), 'A paid cosmetic without ownership must still be rejected');
+        assertTrue(canRestoreEquippedCosmetic('cardBack', 'back-neon', { 'back-neon': true }), 'A paid owned cosmetic must restore');
+      });
+
+      await test('REGRESSION: a local winner uses the currently equipped victory effect over stale room cosmetics', () => {
+        const previousEffect = equippedCosmetics.victoryEffect;
+        const previousBigEffects = bigEffectsOn;
+        const previousPlayerId = state.localPlayerId;
+        const originalPlayVictoryEffect = playVictoryEffect;
+        let played = null;
+        try {
+          state.localPlayerId = 'winner';
+          equippedCosmetics.victoryEffect = 'victory-fireworks';
+          bigEffectsOn = true;
+          playVictoryEffect = effect => { played = effect; };
+          triggerEquippedVictoryEffect({ id:'winner', finishRank:1, cosmetics:{ victoryEffect:'default' } });
+          assertEqual(played, 'victory-fireworks', 'A stale room default must not suppress the local equipped effect');
+        } finally {
+          equippedCosmetics.victoryEffect = previousEffect;
+          bigEffectsOn = previousBigEffects;
+          state.localPlayerId = previousPlayerId;
+          playVictoryEffect = originalPlayVictoryEffect;
         }
       });
 
