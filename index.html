@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-19-v84 (ShitHead-Deluxe-84) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-22-v98 (ShitHead-Deluxe-98) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -344,12 +344,15 @@
     #challengeToast {
       position: fixed;
       left: 50%;
-      top: calc(env(safe-area-inset-top, 0px) + 12px);
+      /* JS measures the real global-header bottom edge. The fallback keeps
+         the toast below the header even before the first measurement. */
+      top: var(--challenge-toast-top, calc(env(safe-area-inset-top, 0px) + 56px));
       transform: translateX(-50%) translateY(-20px);
       opacity: 0;
       pointer-events: none;
       transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease;
-      z-index: 120;
+      /* Above page/modal content, below the global header and hamburger. */
+      z-index: 190;
       max-width: calc(100vw - 24px);
       touch-action: pan-x;
     }
@@ -625,6 +628,23 @@
     .victory-card-particle { position:fixed; top:-48px; z-index:110; width:28px; height:40px; border-radius:5px; background:#fff; border:2px solid #ef4444; color:#111827; display:flex; align-items:center; justify-content:center; font-weight:900; pointer-events:none; animation:cosmetic-card-shower 2.2s ease-in forwards; }
     @keyframes cosmetic-card-shower { to { transform:translate3d(var(--drift),110vh,0) rotate(var(--spin)); opacity:.15; } }
 
+    /* Shop previews are self-contained. They deliberately do not reuse the
+       full-screen gameplay particle canvas, so trying an effect can never
+       shake, navigate, or visually replace the screen behind the Shop. */
+    .shop-preview-stage { position:relative; width:100%; min-height:132px; overflow:hidden; border:1px solid rgba(71,85,105,.75); border-radius:12px; background:rgba(2,6,23,.72); display:flex; align-items:center; justify-content:center; isolation:isolate; }
+    .shop-preview-card { flex:none; }
+    .shop-table-preview { position:relative; width:min(100%,240px); height:132px; overflow:hidden; border:2px solid var(--shop-table-trim); border-radius:14px; background:var(--shop-table-bg); box-shadow:inset 0 0 35px rgba(255,255,255,.08); }
+    .shop-table-preview-card { position:absolute; top:39px; width:44px; height:64px; border-radius:7px; }
+    .shop-table-preview-card.deck { left:24px; background:#08101f; border:2px solid #334155; }
+    .shop-table-preview-card.pile { left:calc(50% - 22px); border:2px dashed rgba(255,255,255,.62); }
+    .shop-table-preview-card.base { right:24px; background:#080b22; border:2px solid var(--shop-table-trim); }
+    .shop-table-preview-label { position:absolute; top:12px; left:0; right:0; text-align:center; color:white; font-size:9px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+    .shop-burn-core { width:54px; height:72px; border-radius:10px; border:2px solid #64748b; background:#111827; display:flex; align-items:center; justify-content:center; font-size:28px; }
+    .shop-burn-particle { position:absolute; left:50%; top:60%; width:9px; height:14px; border-radius:60% 40% 55% 45%; background:var(--particle-color); box-shadow:0 0 10px var(--particle-color); pointer-events:none; animation:shop-burn-burst .85s ease-out forwards; }
+    .shop-burn-particle.ice { width:11px; height:11px; border-radius:2px; transform:rotate(45deg); }
+    .shop-burn-particle.electric { width:4px; height:22px; border-radius:2px; }
+    @keyframes shop-burn-burst { from { transform:translate(-50%,-50%) scale(.35) rotate(0); opacity:1; } to { transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.15) rotate(var(--spin)); opacity:0; } }
+
     #flightLayer {
       position: fixed;
       inset: 0;
@@ -811,6 +831,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
   <style>
@@ -5144,6 +5165,20 @@ video {
       measurementId: "G-877FBCFGYQ"
     };
 
+    // Public reCAPTCHA Enterprise site key registered for the production
+    // domains. Monitor App Check traffic before enabling enforcement.
+    const FIREBASE_APP_CHECK_SITE_KEY = '6LdOesktAAAAAA-yzSmpBpz5wXpQLHWPM96xeiOp';
+
+    // Player-controlled strings must never become executable markup. Use
+    // these helpers for text/attribute interpolation; prefer textContent when
+    // building a single DOM node.
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, char => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
+      })[char]);
+    }
+    function escapeAttr(value) { return escapeHtml(value).replace(/`/g, '&#96;'); }
+
     // If the Firebase SDK failed to load for any reason (network issue, an
     // ad-blocker or privacy extension flagging the CDN, a CDN outage), this
     // line would otherwise throw immediately — and since it's a top-level
@@ -5159,6 +5194,12 @@ video {
     try {
       if (typeof firebase === 'undefined') throw new Error('Firebase SDK did not load');
       firebase.initializeApp(firebaseConfig);
+      if (firebase.appCheck && FIREBASE_APP_CHECK_SITE_KEY) {
+        firebase.appCheck().activate(
+          new firebase.appCheck.ReCaptchaEnterpriseProvider(FIREBASE_APP_CHECK_SITE_KEY),
+          true
+        );
+      }
       db = firebase.database();
       auth = firebase.auth();
     } catch (e) {
@@ -5289,6 +5330,7 @@ video {
           state.players = list;
         }
         state.phase = data.phase || state.phase;
+        state.matchId = data.matchId || state.matchId;
         state.drawPile = data.drawPile || [];
         state.discardPile = data.discardPile || [];
         state.playedHistory = data.playedHistory || [];
@@ -5413,6 +5455,7 @@ video {
       isRanked: false,
       rankedRatingApplied: false,
       rankedAutoStarted: false,
+      matchId: null,
       roomCode: '',
       phase: 'LOBBY',
       players: [],
@@ -6098,6 +6141,7 @@ video {
       state.isRanked = false;
       state.rankedRatingApplied = false;
       state.rankedAutoStarted = false;
+      state.matchId = generateMatchId();
       state.localPlayerId = 'p_user';
       state.selectedBotCount = botCount;
       state.phase = 'SWAP';
@@ -6730,7 +6774,7 @@ video {
           <div class="flex items-center justify-between gap-2 py-1.5 border-b border-slate-800/70">
             <div class="flex items-center gap-1 min-w-0">
               <span class="w-5 shrink-0 text-center font-black ${(isLobby ? index === 0 : p.hasFinished) ? 'text-amber-400' : 'text-slate-200'}">${place}</span>
-              <span class="truncate font-black ${isYou ? 'text-emerald-400' : 'text-slate-200'}">${p.name}${isYou ? ' (you)' : ''}${showBotTag ? ' (Bot)' : ''}</span>
+              <span class="truncate font-black ${isYou ? 'text-emerald-400' : 'text-slate-200'}">${escapeHtml(p.name)}${isYou ? ' (you)' : ''}${showBotTag ? ' (Bot)' : ''}</span>
             </div>
             <div class="match-stats-grid ${isLobby ? 'cols-7' : 'cols-5'} shrink-0 text-[9px] text-slate-400" style="width:${colWidth}px;">
               <span class="text-center">${st.played || 0}</span>
@@ -7530,7 +7574,7 @@ video {
           <div class="flex items-center justify-between gap-2">
             <span class="flex items-center gap-1.5 font-black text-[11px] uppercase tracking-wide truncate ${isYou ? 'text-amber-400' : 'text-slate-200'}">
               <span class="text-slate-500 shrink-0">#${p.finishRank}</span>
-              <span class="truncate">${p.name}${isYou ? ' (You)' : ''}</span>
+              <span class="truncate">${escapeHtml(p.name)}${isYou ? ' (You)' : ''}</span>
             </span>
             ${ratingHtml}
           </div>`;
@@ -7776,7 +7820,7 @@ video {
         // showing it here costs nothing extra and answers exactly the
         // question a player has at this screen: how tough is this match?
         nameEl.innerHTML = opponent
-          ? `<span>vs ${opponent.name}</span>${renderRatingBadge(opponent.rating)}`
+          ? `<span>vs ${escapeHtml(opponent.name)}</span>${renderRatingBadge(opponent.rating)}`
           : '\u00a0';
       }
       document.getElementById('emoteLayer')?.classList.add('hidden');
@@ -9508,7 +9552,7 @@ video {
           const marker = document.createElement('div');
           marker.className = "flex flex-col items-center justify-center shrink-0 mx-1.5 gap-0.5";
           marker.innerHTML = `
-            <span class="text-[7px] font-black uppercase tracking-wider text-rose-400 whitespace-nowrap">${item.playerName} Picked Up</span>
+            <span class="text-[7px] font-black uppercase tracking-wider text-rose-400 whitespace-nowrap">${escapeHtml(item.playerName)} Picked Up</span>
             <div class="w-0.5 h-4 bg-rose-500 rounded-full shadow-[0_0_6px_rgba(244,63,94,0.7)]"></div>
           `;
           stream.appendChild(marker);
@@ -9518,7 +9562,7 @@ video {
           const marker = document.createElement('div');
           marker.className = "flex flex-col items-center justify-center shrink-0 mx-1.5 gap-0.5 rounded-lg" + (highlightThis ? ' tutorial-glow' : '');
           marker.innerHTML = `
-            <span class="text-[7px] font-black uppercase tracking-wider text-slate-200 whitespace-nowrap">🔥 ${item.playerName} Burnt</span>
+            <span class="text-[7px] font-black uppercase tracking-wider text-slate-200 whitespace-nowrap">🔥 ${escapeHtml(item.playerName)} Burnt</span>
             <div class="w-0.5 h-4 bg-slate-950 border border-slate-500 rounded-full"></div>
           `;
           stream.appendChild(marker);
@@ -9536,7 +9580,7 @@ video {
           // blind gamble instead.
           badge.className = "flex items-center gap-1 px-2 py-0.2 rounded-lg bg-rose-950/60 border border-rose-500/70 shrink-0 shadow text-xs" + (highlightThis ? ' tutorial-glow' : '');
           badge.innerHTML = `
-            <span class="text-[8px] text-rose-300 font-black uppercase max-w-[40px] truncate tracking-wider">${item.playerName}</span>
+            <span class="text-[8px] text-rose-300 font-black uppercase max-w-[40px] truncate tracking-wider">${escapeHtml(item.playerName)}</span>
             <div class="flex items-center gap-0.5 text-[10px] font-black ${sCol} line-through opacity-70">
               <span>${item.rank}</span>
               <span>${item.isJoker ? powerIconSvg('JOKER', 'text-amber-400', 'width:12px;height:12px') : item.suit}</span>
@@ -9548,7 +9592,7 @@ video {
         }
         badge.className = "flex items-center gap-1 px-2 py-0.2 rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] shrink-0 shadow text-xs" + (highlightThis ? ' tutorial-glow' : '');
         badge.innerHTML = `
-          <span class="text-[8px] text-slate-400 font-black uppercase max-w-[40px] truncate tracking-wider">${item.playerName}</span>
+          <span class="text-[8px] text-slate-400 font-black uppercase max-w-[40px] truncate tracking-wider">${escapeHtml(item.playerName)}</span>
           <div class="flex items-center gap-0.5 text-[10px] font-black ${sCol}">
             <span>${item.rank}</span>
             <span>${item.isJoker ? powerIconSvg('JOKER', 'text-amber-400', 'width:12px;height:12px') : item.suit}</span>
@@ -9790,7 +9834,7 @@ video {
 
         const showKick = state.isMultiplayer && state.isHost && !state.isRanked && !p.isBot && !p.hasFinished;
         const kickBtnHtml = showKick
-          ? `<button onclick="kickPlayerMidMatch('${p.id}')" data-tip="Remove from match" aria-label="Remove ${p.name} from match" class="ml-0.5 shrink-0 w-[14px] h-[14px] flex items-center justify-center rounded-full bg-rose-950/70 hover:bg-rose-800 text-rose-300 text-[9px] font-black border border-rose-700 leading-none">&times;</button>`
+          ? `<button onclick="kickPlayerMidMatch('${escapeAttr(p.id)}')" data-tip="Remove from match" aria-label="Remove ${escapeAttr(p.name)} from match" class="ml-0.5 shrink-0 w-[14px] h-[14px] flex items-center justify-center rounded-full bg-rose-950/70 hover:bg-rose-800 text-rose-300 text-[9px] font-black border border-rose-700 leading-none">&times;</button>`
           : '';
         // The name itself already says "(Bot)" when there's room, but that
         // text is inside a truncating span — on a narrow phone screen a
@@ -9817,7 +9861,7 @@ video {
         oppDiv.innerHTML = `
           <div class="flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full shrink-0 ${isTurn ? 'bg-amber-400 animate-ping' : 'bg-slate-600'}"></span>
-            <span class="text-[9px] md:text-[11px] font-black tracking-wider text-slate-100 uppercase truncate max-w-[64px] md:max-w-none">${p.name}</span>
+            <span class="text-[9px] md:text-[11px] font-black tracking-wider text-slate-100 uppercase truncate max-w-[64px] md:max-w-none">${escapeHtml(p.name)}</span>
             ${botBadgeHtml}
             ${statusBadgeHtml}
             <span id="opp-timer-${p.id}" class="hidden text-[7px] md:text-[8px] font-black px-1.5 h-[15px] shrink-0 flex items-center justify-center rounded-full bg-rose-950/70 text-rose-300 border border-rose-600">15s</span>
@@ -10386,6 +10430,13 @@ video {
       return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
+    function generateMatchId() {
+      const bytes = new Uint32Array(4);
+      if (window.crypto?.getRandomValues) window.crypto.getRandomValues(bytes);
+      else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 0xffffffff);
+      return `m_${Date.now().toString(36)}_${[...bytes].map(n => n.toString(36)).join('')}`;
+    }
+
     // Atomically read-modify-write a room's player list.
     //
     // Every place that used to change this list did it in two separate
@@ -10423,6 +10474,7 @@ video {
       if (!state.isMultiplayer || !state.roomCode) return;
       state.stateVersion = (state.stateVersion || 0) + 1;
       const syncedState = {
+        matchId: state.matchId || null,
         phase: state.phase,
         players: state.players,
         currentTurnIndex: state.currentTurnIndex,
@@ -10445,6 +10497,17 @@ video {
       db.ref(`rooms/${state.roomCode}`).update(syncedState);
     }
 
+    function reserveUnusedRoom(payloadFactory, attemptsLeft = 12) {
+      const code = generateNumericalRoomCode();
+      const payload = payloadFactory(code);
+      return db.ref(`rooms/${code}`).transaction(current => current == null ? payload : undefined)
+        .then(result => {
+          if (result.committed) return { code, payload };
+          if (attemptsLeft <= 1) throw new Error('Could not reserve an unused room code. Please try again.');
+          return reserveUnusedRoom(payloadFactory, attemptsLeft - 1);
+        });
+    }
+
     function initHostRoom() {
       state.isRanked = false;
       state.rankedRatingApplied = false;
@@ -10457,8 +10520,6 @@ video {
       resetRoomMembershipConfirmation();
       state.isMultiplayer = true;
       state.isHost = true;
-      const code = generateNumericalRoomCode();
-      state.roomCode = code;
       state.localPlayerId = 'p_host';
 
       const hostPlayer = {
@@ -10476,21 +10537,26 @@ video {
       };
 
       state.players = [hostPlayer];
-      sessionStorage.setItem('shithead_joined_room', code);
-
-      db.ref(`rooms/${code}`).set({
-        createdAt: Date.now(),
+      return reserveUnusedRoom(code => ({
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
         roomCode: code,
         phase: 'LOBBY',
         hostId: 'p_host',
         players: [hostPlayer],
         turnTimerMs: state.turnTimerMs,
         clientVersion: getGameVersionLabel()
+      })).then(({ code }) => {
+        state.roomCode = code;
+        sessionStorage.setItem('shithead_joined_room', code);
+        showMultiplayerLobbyView();
+        listenToFirebaseRoom(code);
+        return code;
+      }).catch(error => {
+        state.isMultiplayer = false;
+        pNameInput.disabled = false;
+        notifyBanner(error.message || 'Could not create a room.');
+        throw error;
       });
-
-      showMultiplayerLobbyView();
-
-      listenToFirebaseRoom(code);
     }
 
     function joinMultiRoom() {
@@ -11149,6 +11215,7 @@ video {
         } else {
           const previousSyncedTurnIndex = state.currentTurnIndex;
           state.phase = data.phase || state.phase;
+          state.matchId = data.matchId || state.matchId;
           state.drawPile = data.drawPile || [];
           state.discardPile = data.discardPile || [];
           state.playedHistory = data.playedHistory || [];
@@ -11217,7 +11284,7 @@ video {
         }
 
         div.innerHTML = `
-          <span>${p.name} ${p.isHost ? '(Host)' : ''}</span>
+          <span>${escapeHtml(p.name)} ${p.isHost ? '(Host)' : ''}</span>
           <div class="flex items-center">
             <span class="${p.isBot ? 'text-amber-400' : 'text-emerald-400'}">${p.isBot ? 'AI Bot' : 'Connected'}</span>
             ${kickBtn}
@@ -11247,6 +11314,7 @@ video {
       // dealing means the previous match's end-screen buttons are gone,
       // full stop, regardless of what triggered this call.
       hideMatchEndUI();
+      state.matchId = generateMatchId();
 
       state.players = shuffle([...state.players]);
 
@@ -12207,7 +12275,7 @@ video {
     // which sits BEFORE <html> and so is invisible to
     // document.documentElement) — update this alongside the BUILD comment
     // on each delivery.
-    const GAME_VERSION_LABEL = 'v95';
+    const GAME_VERSION_LABEL = 'v98';
     function getGameVersionLabel() {
       return GAME_VERSION_LABEL;
     }
@@ -12348,7 +12416,6 @@ video {
       { id: 'frame-diamond', category: 'Frames', name: 'Diamond Aura', cost: 90, tones: ['#083344','#22d3ee','#e0f2fe'] },
       { id: 'frame-obsidian-throne', category: 'Frames', name: 'Obsidian Throne', cost: 200, tones: ['#030712','#8b5cf6','#ddd6fe'] },
       { id: 'frame-emerald-sovereign', category: 'Frames', name: 'Emerald Sovereign', cost: 200, tones: ['#022c22','#34d399','#d1fae5'] },
-      { id: 'emotes-classic', category: 'Emote Packs', name: 'Classic Reactions', cost: 30, tones: ['#172033','#34d399','#fbbf24'] },
       { id: 'emotes-savage', category: 'Emote Packs', name: 'Savage Set', cost: 45, tones: ['#3f1420','#fb7185','#c084fc'] },
       { id: 'emotes-victory', category: 'Emote Packs', name: 'Victory Pack', cost: 50, tones: ['#172033','#fbbf24','#60a5fa'] },
       { id: 'emotes-chaos', category: 'Emote Packs', name: 'Chaos Pack', cost: 200, tones: ['#172033','#f43f5e','#a855f7'] },
@@ -12361,6 +12428,11 @@ video {
       { id: 'victory-confetti', category: 'Victory Effects', name: 'Confetti Burst', cost: 250, tones: ['#7c2d12','#fbbf24','#ec4899'] },
       { id: 'victory-cards', category: 'Victory Effects', name: 'Card Shower', cost: 500, tones: ['#172554','#60a5fa','#f8fafc'] },
       { id: 'victory-fireworks', category: 'Victory Effects', name: 'Fireworks', cost: 750, tones: ['#312e81','#c084fc','#fde047'] }
+    ];
+    // Classic Reactions ships with the game. It remains selectable for old
+    // saves, but is intentionally not a purchasable Shop item.
+    const BUILT_IN_COSMETICS = [
+      { id: 'emotes-classic', category: 'Emote Packs', name: 'Classic Reactions', cost: 0, builtIn: true, tones: ['#172033','#34d399','#fbbf24'] }
     ];
     const COSMETIC_CATEGORY_TYPES = Object.freeze({
       'Card Backs': 'cardBack', 'Frames': 'frame', 'Emote Packs': 'emotes',
@@ -12413,7 +12485,7 @@ video {
 
     function isSupportedCosmetic(type, id) {
       if (id === 'default') return Object.prototype.hasOwnProperty.call(DEFAULT_EQUIPPED_COSMETICS, type);
-      const item = COSMETIC_SHOP_ITEMS.find(entry => entry.id === id);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS].find(entry => entry.id === id);
       return !!item && COSMETIC_CATEGORY_TYPES[item.category] === type && !!COSMETIC_RUNTIME_IDS[type]?.has(id);
     }
 
@@ -12450,11 +12522,12 @@ video {
     function equipCosmetic(type, id, options = {}) {
       const { preview = true, sync = true } = options;
       if (!isSupportedCosmetic(type, id)) return false;
-      if (id !== 'default' && !cosmeticPurchaseState[id]) return false;
+      const builtIn = BUILT_IN_COSMETICS.some(item => item.id === id && COSMETIC_CATEGORY_TYPES[item.category] === type);
+      if (id !== 'default' && !builtIn && !cosmeticPurchaseState[id]) return false;
       equippedCosmetics[type] = id;
       applyEquippedCosmetics();
       renderPersonalisationCosmetics();
-      const item = COSMETIC_SHOP_ITEMS.find(entry => entry.id === id);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS].find(entry => entry.id === id);
       const effectsDisabled = (type === 'burnEffect' || type === 'victoryEffect') && !bigEffectsOn;
       const status = document.getElementById('personalisationStatus');
       if (status) status.textContent = `${item ? item.name : 'Default'} equipped.${effectsDisabled ? ' Effects are currently disabled in Settings.' : ''}`;
@@ -12485,7 +12558,7 @@ video {
       const id = item ? item.id : 'default';
       const defaultNames = { cardBack:'Card Back', frame:'Frame', emotes:'Emotes', tableTheme:'Table', burnEffect:'Burn', victoryEffect:'Victory' };
       const name = item ? item.name : `Default ${defaultNames[type] || 'Cosmetic'}`;
-      const owned = id === 'default' || !!cosmeticPurchaseState[id];
+      const owned = id === 'default' || !!item?.builtIn || !!cosmeticPurchaseState[id];
       const active = id === activeId;
       return `<button type="button" data-equip-type="${type}" data-equip-id="${id}" ${owned ? '' : 'disabled'} aria-pressed="${active}" class="cosmetic-option-card rounded-xl border ${active ? 'border-emerald-500' : owned ? 'border-slate-700' : 'border-slate-800 opacity-45'} bg-slate-900/60 p-2 flex items-center gap-2 text-left transition ${owned && !active ? 'hover:border-amber-500' : ''}">
         <span class="shrink-0 flex items-center justify-center">${cosmeticPreview(item, type)}</span>
@@ -12503,7 +12576,7 @@ video {
       if (!backs || !frames || !emotes || !tables || !burns || !victories) return;
       backs.innerHTML = [null, ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Card Backs')].map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('');
       frames.innerHTML = [null, ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Frames')].map(i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame)).join('');
-      emotes.innerHTML = [null, ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Emote Packs')].map(i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes)).join('');
+      emotes.innerHTML = [null, ...BUILT_IN_COSMETICS.filter(i => i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Emote Packs')].map(i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes)).join('');
       tables.innerHTML = [null, ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Table Themes')].map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('');
       burns.innerHTML = [null, ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects')].map(i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect)).join('');
       victories.innerHTML = [null, ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Victory Effects')].map(i => personalisationOptionHtml(i, 'victoryEffect', equippedCosmetics.victoryEffect)).join('');
@@ -12521,9 +12594,10 @@ video {
       }
       return Promise.all([
         db.ref(`shopPurchases/${user.uid}/cosmetics`).once('value'),
-        db.ref(`users/${user.uid}/equippedCosmetics`).once('value')
-      ]).then(([purchaseSnap, equippedSnap]) => {
-        cosmeticPurchaseState = purchaseSnap.val() || {};
+        db.ref(`users/${user.uid}/equippedCosmetics`).once('value'),
+        db.ref(`users/${user.uid}/ownedCosmetics`).once('value')
+      ]).then(([purchaseSnap, equippedSnap, ownedSnap]) => {
+        cosmeticPurchaseState = { ...(purchaseSnap.val() || {}), ...(ownedSnap.val() || {}) };
         const saved = equippedSnap.val() || {};
         equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS, ...saved };
         ['cardBack', 'frame', 'emotes', 'tableTheme', 'burnEffect', 'victoryEffect'].forEach(type => {
@@ -12679,21 +12753,42 @@ video {
       const type = COSMETIC_CATEGORY_TYPES[item.category];
       let demo = '';
       if (type === 'cardBack') {
-        demo = `<div class="relative w-[68px] h-[102px] rounded-xl custom-card-back ${getCosmeticBackClass(item.id)} border-2 border-slate-500 flex items-center justify-center shadow-xl">${getEmblemSvg()}<span class="absolute inset-[5px] rounded-lg border border-white/20"></span></div>`;
+        demo = `<div class="shop-preview-stage"><div class="card-base shop-preview-card relative rounded-xl custom-card-back ${getCosmeticBackClass(item.id)} border-2 border-slate-500 flex items-center justify-center shadow-xl">${getEmblemSvg()}<span class="absolute inset-[5px] rounded-lg border border-white/20"></span></div></div>`;
       } else if (type === 'frame') {
-        demo = `<div class="flex -space-x-3">${[['A','♠'],['K','♥'],['Q','♦']].map(([rank,suit], index) => `<div class="relative w-[58px] h-[87px] rounded-lg bg-slate-900 border-2 p-2 font-black ${suit === '♠' ? 'text-white' : 'text-red-400'}" style="border-color:${item.tones[1]};box-shadow:0 0 ${8 + index * 2}px ${item.tones[1]}"><span class="block leading-none">${rank}</span><span class="block leading-none mt-1">${suit}</span><span class="absolute inset-0 flex items-center justify-center text-2xl opacity-80">${suit}</span></div>`).join('')}</div>`;
+        demo = `<div class="shop-preview-stage"><div class="card-base shop-preview-card relative rounded-xl bg-slate-900 border-2 p-1 font-black text-white" style="border-color:${item.tones[1]};${getCosmeticFrameStyle(item.id)}"><span class="card-corner-rank block leading-none">A</span><span class="card-corner-suit block leading-none mt-px">♠</span><span class="absolute inset-0 flex items-center justify-center text-[clamp(22px,4vh,34px)] opacity-90">♠</span></div></div>`;
       } else if (type === 'emotes') {
-        demo = `<div class="grid grid-cols-3 gap-2">${(EMOTE_PACKS[item.id] || []).map(emoji => `<span class="w-10 h-10 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-xl">${emoji}</span>`).join('')}</div>`;
+        demo = `<div class="shop-preview-stage"><div class="grid grid-cols-3 gap-2">${(EMOTE_PACKS[item.id] || []).map(emoji => `<span class="w-10 h-10 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-xl">${emoji}</span>`).join('')}</div></div>`;
       } else if (type === 'tableTheme') {
         const bg = item.id === 'table-winter' ? 'linear-gradient(145deg,#082f49,#0c4a6e 58%,#e0f2fe)' : 'radial-gradient(circle,#065f46,#022c22 68%,#d4af37)';
-        demo = `<div class="relative w-44 h-24 rounded-xl border-2 overflow-hidden" style="background:${bg};border-color:${item.tones[2]}"><span class="absolute left-5 top-5 w-8 h-12 rounded bg-slate-950 border border-cyan-300"></span><span class="absolute left-[72px] top-5 w-8 h-12 rounded border border-dashed border-white/60"></span><span class="absolute right-5 top-5 w-8 h-12 rounded bg-slate-900 border border-amber-300"></span></div>`;
+        demo = `<div class="shop-preview-stage"><div class="shop-table-preview" style="--shop-table-bg:${bg};--shop-table-trim:${item.tones[2]}"><span class="shop-table-preview-label">${item.name}</span><span class="shop-table-preview-card deck"></span><span class="shop-table-preview-card pile"></span><span class="shop-table-preview-card base"></span></div></div>`;
       } else if (type === 'burnEffect') {
-        demo = `<div class="text-center"><div class="text-5xl">${item.id === 'burn-ice' ? '❄️' : item.id === 'burn-electric' ? '⚡' : '🔥'}</div><div class="text-[8px] text-slate-400 mt-1">Tap below to play the pile-burn animation</div></div>`;
+        demo = `<div class="shop-preview-stage" data-shop-burn-stage><div class="shop-burn-core">${item.id === 'burn-ice' ? '❄️' : item.id === 'burn-electric' ? '⚡' : '🔥'}</div></div>`;
       } else if (type === 'victoryEffect') {
-        demo = `<div class="text-center"><div class="text-5xl">${item.id === 'victory-cards' ? '🃏' : item.id === 'victory-fireworks' ? '🎆' : '🎉'}</div><div class="text-[8px] text-slate-400 mt-1">Tap below to play the win animation</div></div>`;
+        demo = `<div class="shop-preview-stage"><div class="text-center"><div class="text-5xl">${item.id === 'victory-cards' ? '🃏' : item.id === 'victory-fireworks' ? '🎆' : '🎉'}</div><div class="text-[8px] text-slate-400 mt-1">Tap below to play the win animation</div></div></div>`;
       }
       const isAnimated = type === 'burnEffect' || type === 'victoryEffect';
       return `<div class="flex items-start justify-between gap-2 mb-1"><div><div class="text-[10px] font-black text-white">${item.name}</div><div class="text-[8px] uppercase tracking-wider text-cyan-300">${item.category.slice(0, -1)} preview</div></div><button type="button" data-close-shop-preview class="text-slate-400 text-lg leading-none" aria-label="Close preview">×</button></div><div class="min-h-[106px] flex items-center justify-center">${demo}</div>${isAnimated ? `<button type="button" data-play-shop-effect="${item.id}" class="mt-2 w-full rounded-lg border border-cyan-500 py-1.5 text-[9px] font-black text-cyan-300">PLAY EFFECT</button>` : ''}<p class="mt-2 text-center text-[8px] text-slate-500">Preview only — no Diamonds have been spent.</p>`;
+    }
+
+    function playShopBurnPreview(id, stage) {
+      if (!stage) return false;
+      stage.querySelectorAll('.shop-burn-particle').forEach(node => node.remove());
+      const kind = id === 'burn-ice' ? 'ice' : id === 'burn-electric' ? 'electric' : '';
+      const palette = id === 'burn-ice' ? ['#e0f2fe','#7dd3fc','#38bdf8'] : id === 'burn-electric' ? ['#ffffff','#fde047','#22d3ee'] : ['#fbbf24','#fb7185','#c084fc','#22d3ee'];
+      for (let index = 0; index < 18; index += 1) {
+        const particle = document.createElement('span');
+        particle.className = `shop-burn-particle ${kind}`.trim();
+        const angle = (Math.PI * 2 * index) / 18;
+        const distance = 38 + (index % 4) * 9;
+        particle.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
+        particle.style.setProperty('--dy', `${Math.sin(angle) * distance - 18}px`);
+        particle.style.setProperty('--spin', `${(index % 2 ? 1 : -1) * (90 + index * 13)}deg`);
+        particle.style.setProperty('--particle-color', palette[index % palette.length]);
+        particle.style.animationDelay = `${(index % 5) * 18}ms`;
+        stage.appendChild(particle);
+        setTimeout(() => particle.remove(), 1100);
+      }
+      return true;
     }
 
     function getCosmeticBackClass(id) {
@@ -12735,10 +12830,11 @@ video {
       Promise.all([
         initChallengeEconomy(),
         db.ref(`shopPurchases/${currentUser.uid}/nameChangeToken`).once('value'),
-        db.ref(`shopPurchases/${currentUser.uid}/cosmetics`).once('value')
-      ]).then(([, snap, cosmeticsSnap]) => {
+        db.ref(`shopPurchases/${currentUser.uid}/cosmetics`).once('value'),
+        db.ref(`users/${currentUser.uid}/ownedCosmetics`).once('value')
+      ]).then(([, snap, cosmeticsSnap, ownedSnap]) => {
         nameChangeTokenState = snap.val();
-        cosmeticPurchaseState = cosmeticsSnap.val() || {};
+        cosmeticPurchaseState = { ...(cosmeticsSnap.val() || {}), ...(ownedSnap.val() || {}) };
         renderNameChangeToken();
         renderCosmeticShop();
       }).catch((e) => setNameTokenStatus(`Couldn’t load the Shop${e.code ? ` (${e.code})` : ''}.`, 'error'));
@@ -12756,18 +12852,19 @@ video {
       btn.disabled = true;
       btn.textContent = 'Purchasing…';
       const uid = currentUser.uid;
-      Promise.all([
-        db.ref(`users/${uid}/diamonds`).once('value'),
-        db.ref(`shopPurchases/${uid}/nameChangeToken`).once('value')
-      ]).then(([diamondSnap, purchaseSnap]) => {
-        const balance = diamondSnap.val() || 0;
-        if (purchaseSnap.exists()) throw new Error('This lifetime item has already been purchased.');
-        if (balance < NAME_CHANGE_TOKEN_COST) throw new Error('You need 100 Diamonds to buy this token.');
-        const purchasedAt = firebase.database.ServerValue.TIMESTAMP;
-        return db.ref().update({
-          [`users/${uid}/diamonds`]: balance - NAME_CHANGE_TOKEN_COST,
-          [`shopPurchases/${uid}/nameChangeToken`]: { purchasedAt, cost: NAME_CHANGE_TOKEN_COST }
-        }).then(() => ({ balance: balance - NAME_CHANGE_TOKEN_COST }));
+      let tokenError = null;
+      let tokenRecord = null;
+      db.ref(`users/${uid}`).transaction(current => {
+        const user = current || {};
+        if (user.nameChangeToken) { tokenError = 'This lifetime item has already been purchased.'; return; }
+        const balance = Number(user.diamonds) || 0;
+        if (balance < NAME_CHANGE_TOKEN_COST) { tokenError = 'You need 100 Diamonds to buy this token.'; return; }
+        tokenRecord = { purchasedAt: Date.now(), cost: NAME_CHANGE_TOKEN_COST };
+        return { ...user, diamonds: balance - NAME_CHANGE_TOKEN_COST, nameChangeToken: tokenRecord };
+      }).then(result => {
+        if (!result.committed) throw new Error(tokenError || 'Purchase could not be committed.');
+        db.ref(`shopPurchases/${uid}/nameChangeToken`).set(tokenRecord).catch(() => {});
+        return { balance: Number(result.snapshot.val()?.diamonds) || 0 };
       }).then(({ balance }) => {
         challengeEconomy.diamonds = balance;
         nameChangeTokenState = { purchasedAt: Date.now(), cost: NAME_CHANGE_TOKEN_COST };
@@ -12781,6 +12878,8 @@ video {
     document.getElementById('cosmeticShopList').addEventListener('click', (event) => {
       const categoryBtn = event.target.closest('[data-shop-category]');
       if (categoryBtn) {
+        event.preventDefault();
+        event.stopPropagation();
         const category = categoryBtn.dataset.shopCategory;
         if (collapsedShopCategories.has(category)) collapsedShopCategories.delete(category);
         else collapsedShopCategories.add(category);
@@ -12789,6 +12888,8 @@ video {
       }
       const closePreviewBtn = event.target.closest('[data-close-shop-preview]');
       if (closePreviewBtn) {
+        event.preventDefault();
+        event.stopPropagation();
         const inlinePanel = closePreviewBtn.closest('[data-inline-shop-preview]');
         if (inlinePanel) {
           inlinePanel.classList.add('hidden');
@@ -12800,19 +12901,22 @@ video {
       }
       const playBtn = event.target.closest('[data-play-shop-effect]');
       if (playBtn) {
+        event.preventDefault();
+        event.stopPropagation();
         const id = playBtn.dataset.playShopEffect;
         const item = COSMETIC_SHOP_ITEMS.find(entry => entry.id === id);
         const type = item && COSMETIC_CATEGORY_TYPES[item.category];
         if (type === 'victoryEffect') playVictoryEffect(id);
         if (type === 'burnEffect') {
           const inlinePanel = playBtn.closest('[data-inline-shop-preview]');
-          const rect = inlinePanel.getBoundingClientRect();
-          playBurnEffect(id, rect.left + rect.width / 2, rect.top + rect.height / 2);
+          playShopBurnPreview(id, inlinePanel?.querySelector('[data-shop-burn-stage]'));
         }
         return;
       }
       const previewBtn = event.target.closest('[data-preview-cosmetic-id]');
       if (previewBtn) {
+        event.preventDefault();
+        event.stopPropagation();
         const previewItem = COSMETIC_SHOP_ITEMS.find(entry => entry.id === previewBtn.dataset.previewCosmeticId);
         if (previewItem && newCosmeticIds.delete(previewItem.id)) {
           persistNewCosmetics();
@@ -12842,24 +12946,26 @@ video {
       btn.disabled = true;
       btn.textContent = 'BUYING…';
       const uid = currentUser.uid;
-      const diamondRef = db.ref(`users/${uid}/diamonds`);
-      const purchaseRef = db.ref(`shopPurchases/${uid}/cosmetics/${item.id}`);
-      // Read both values immediately before committing, then write the debit and
-      // ownership record together. The old two-transaction flow briefly created
-      // ownership before charging the player; a rejected second write could make
-      // the button appear to do nothing and required an unreliable rollback.
-      Promise.all([diamondRef.once('value'), purchaseRef.once('value')]).then(([diamondSnap, purchaseSnap]) => {
-        if (purchaseSnap.exists()) throw new Error('Already owned.');
-        const currentBalance = Number(diamondSnap.val()) || 0;
-        if (currentBalance < item.cost) throw new Error(`You need ${item.cost} Diamonds to buy ${item.name}.`);
-        const nextBalance = currentBalance - item.cost;
-        return db.ref().update({
-          [`users/${uid}/diamonds`]: nextBalance,
-          [`shopPurchases/${uid}/cosmetics/${item.id}`]: {
-            purchasedAt: firebase.database.ServerValue.TIMESTAMP,
-            cost: item.cost
-          }
-        }).then(() => nextBalance);
+      let purchaseError = null;
+      let committedPurchase = null;
+      // Balance and canonical ownership now live in one user-node transaction.
+      // Concurrent tabs are retried against the newest balance, so two items can
+      // never be obtained while only one debit survives.
+      db.ref(`users/${uid}`).transaction(current => {
+        const user = current || {};
+        const owned = user.ownedCosmetics || {};
+        if (owned[item.id]) { purchaseError = 'Already owned.'; return; }
+        const balance = Number(user.diamonds) || 0;
+        if (balance < item.cost) { purchaseError = `You need ${item.cost} Diamonds to buy ${item.name}.`; return; }
+        committedPurchase = { purchasedAt: Date.now(), cost: item.cost };
+        return { ...user, diamonds: balance - item.cost, ownedCosmetics: { ...owned, [item.id]: committedPurchase } };
+      }).then(result => {
+        if (!result.committed) throw new Error(purchaseError || 'Purchase could not be committed.');
+        const updatedUser = result.snapshot.val() || {};
+        // Legacy mirror keeps older clients able to display the purchase; the
+        // canonical, atomic ownership record is users/{uid}/ownedCosmetics.
+        db.ref(`shopPurchases/${uid}/cosmetics/${item.id}`).set(committedPurchase).catch(() => {});
+        return Number(updatedUser.diamonds) || 0;
       }).then((balance) => {
         challengeEconomy.diamonds = balance;
         cosmeticPurchaseState[item.id] = { purchasedAt: Date.now(), cost: item.cost };
@@ -13856,13 +13962,25 @@ video {
     // needs to move atomically with it.
     function awardMatchDiamonds(amount, label) {
       if (!currentUser || !(amount > 0)) return Promise.resolve(false);
-      return db.ref(`users/${currentUser.uid}/diamonds`).transaction((current) => (current || 0) + amount)
+      const rewardId = state.matchId || generateMatchId();
+      let alreadyProcessed = false;
+      return db.ref(`users/${currentUser.uid}`).transaction((current) => {
+        const user = current || {};
+        const processed = user.processedMatchRewards || {};
+        if (processed[rewardId]) { alreadyProcessed = true; return; }
+        return {
+          ...user,
+          diamonds: (Number(user.diamonds) || 0) + amount,
+          processedMatchRewards: { ...processed, [rewardId]: { amount, label: String(label || '').slice(0, 40), awardedAt: Date.now() } }
+        };
+      })
         .then((result) => {
+          if (alreadyProcessed) return false;
           if (!result.committed) {
             console.error(`awardMatchDiamonds: transaction for "${label}" did not commit`, result);
             return false;
           }
-          challengeEconomy.diamonds = result.snapshot.val() || 0;
+          challengeEconomy.diamonds = Number(result.snapshot.val()?.diamonds) || 0;
           updateDiamondHeader();
           enqueueChallengeToast(label, amount, -1); // priority -1: a match-win result sorts ahead of any challenge completed the same instant
           renderChallengesModalIfOpen();
@@ -14142,6 +14260,28 @@ video {
       displayChallengeToast(next.name, next.reward);
     }
 
+    const CHALLENGE_TOAST_GAP = 8;
+
+    // Pure geometry helper used by the live positioner and viewport tests.
+    // Clamping the result keeps the complete toast on-screen even when the
+    // mobile browser chrome or an on-screen keyboard shortens the viewport.
+    function calculateChallengeToastTop(headerBottom, viewportHeight, toastHeight = 54) {
+      const desiredTop = Math.max(0, Number(headerBottom) || 0) + CHALLENGE_TOAST_GAP;
+      const availableHeight = Math.max(0, Number(viewportHeight) || 0);
+      const maxTop = Math.max(CHALLENGE_TOAST_GAP, availableHeight - Math.max(1, Number(toastHeight) || 54) - CHALLENGE_TOAST_GAP);
+      return Math.min(desiredTop, maxTop);
+    }
+
+    function positionChallengeToast() {
+      const toast = document.getElementById('challengeToast');
+      if (!toast) return;
+      const header = document.querySelector('body > header');
+      const headerBottom = header ? header.getBoundingClientRect().bottom : 48;
+      const viewportHeight = window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight;
+      const toastHeight = toast.offsetHeight || 54;
+      toast.style.setProperty('--challenge-toast-top', `${Math.ceil(calculateChallengeToastTop(headerBottom, viewportHeight, toastHeight))}px`);
+    }
+
     function displayChallengeToast(name, reward) {
       const toast = document.getElementById('challengeToast');
       if (!toast) { challengeToastActive = false; return; }
@@ -14149,6 +14289,7 @@ video {
       const rewardEl = document.getElementById('challengeToastReward');
       if (nameEl) nameEl.textContent = name;
       if (rewardEl) rewardEl.innerHTML = `&#128142; ${reward}`;
+      positionChallengeToast();
       toast.classList.remove('dismissing');
       void toast.offsetWidth; // force reflow so the slide-up transition restarts cleanly for the next queued toast
       toast.classList.add('show');
@@ -14203,6 +14344,11 @@ video {
         if (dx > 24 || dy > 24) dismissChallengeToast(); // a swipe
       });
       toast.addEventListener('pointercancel', () => { dragging = false; });
+      const reposition = () => positionChallengeToast();
+      window.addEventListener('resize', reposition, { passive: true });
+      window.addEventListener('orientationchange', reposition, { passive: true });
+      if (window.visualViewport) window.visualViewport.addEventListener('resize', reposition, { passive: true });
+      requestAnimationFrame(reposition);
     })();
 
     // One shared row template for every list in the modal — completed
@@ -14794,8 +14940,12 @@ video {
       const me = players[myIndex];
       const won = me.finishRank === 1;
       const opponent = players.find((p) => p.id !== state.localPlayerId);
+      const resultId = state.matchId || `${state.roomCode || 'ranked'}_${players.map(p => p.uid).sort().join('_')}`;
+      let duplicateResult = false;
       db.ref(`users/${me.uid}`).transaction((current) => {
         const c = current || { rating: 500, wins: 0, losses: 0 };
+        const processedRankedMatches = c.processedRankedMatches || {};
+        if (processedRankedMatches[resultId]) { duplicateResult = true; return; }
         const newRating = Math.max(0, c.rating + deltas[myIndex]);
         // Recorded here (self-write, same as everything else in this
         // function) so findRankedMatch can check it before pairing two
@@ -14836,11 +14986,12 @@ video {
           jokerDeflects: (cStats.jokerDeflects || 0) + (me.gameStats?.jokerDeflects || 0),
           snapBurns: (cStats.snapBurns || 0) + (me.gameStats?.snapBurns || 0)
         };
-        const next = { ...c, rating: newRating, wins: (c.wins || 0) + (won ? 1 : 0), losses: (c.losses || 0) + (won ? 0 : 1), rankedStats, challengeStats };
+        const next = { ...c, rating: newRating, wins: (c.wins || 0) + (won ? 1 : 0), losses: (c.losses || 0) + (won ? 0 : 1), rankedStats, challengeStats, processedRankedMatches: { ...processedRankedMatches, [resultId]: { rank: me.finishRank, appliedAt: Date.now() } } };
         if (opponent && opponent.uid) next.lastRankedOpponent = { uid: opponent.uid, at: Date.now() };
         return next;
       }, (error, committed, snapshot) => {
         if (error) console.warn('Ranked rating update failed', error);
+        else if (duplicateResult) return;
         else {
           syncPublicProfile(); // rating moved — keep the friends-visible copy current
           // Challenges: Burns/Streaks/Joker Deflects/Snap Burns/Games
@@ -14929,7 +15080,9 @@ video {
     });
 
     function friendRowHtml(uid, profile, type) {
-      const name = profile.username || profile.name || 'Player';
+      const rawName = profile.username || profile.name || 'Player';
+      const name = escapeHtml(rawName);
+      const safeUid = escapeAttr(uid);
       const presenceClass = profile.online ? 'online' : 'offline';
       // Friend requests use a synthetic profile ({username, from the
       // request itself) with no rating — publicProfiles was never fetched
@@ -14940,15 +15093,15 @@ video {
         : '';
       let actions = '';
       if (type === 'friend') {
-        actions = `<button data-uid="${uid}" data-name="${name}" class="friend-invite-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">INVITE</button>
-          <button data-uid="${uid}" class="friend-unfriend-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">UNFRIEND</button>
-          <button data-uid="${uid}" class="friend-ignore-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-amber-500 hover:text-amber-400 transition">IGNORE</button>`;
+        actions = `<button data-uid="${safeUid}" data-name="${escapeAttr(rawName)}" class="friend-invite-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">INVITE</button>
+          <button data-uid="${safeUid}" class="friend-unfriend-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">UNFRIEND</button>
+          <button data-uid="${safeUid}" class="friend-ignore-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-amber-500 hover:text-amber-400 transition">IGNORE</button>`;
       } else if (type === 'ignored') {
-        actions = `<button data-uid="${uid}" class="friend-unignore-btn shrink-0 text-[9px] font-black px-2 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-amber-500 hover:text-amber-400 transition">UN-IGNORE</button>`;
+        actions = `<button data-uid="${safeUid}" class="friend-unignore-btn shrink-0 text-[9px] font-black px-2 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-amber-500 hover:text-amber-400 transition">UN-IGNORE</button>`;
       } else if (type === 'request') {
-        actions = `<button data-uid="${uid}" class="friend-accept-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">ACCEPT</button>
-          <button data-uid="${uid}" class="friend-decline-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">DECLINE</button>
-          <button data-uid="${uid}" class="friend-ignore-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-amber-500 hover:text-amber-400 transition">IGNORE</button>`;
+        actions = `<button data-uid="${safeUid}" class="friend-accept-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">ACCEPT</button>
+          <button data-uid="${safeUid}" class="friend-decline-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">DECLINE</button>
+          <button data-uid="${safeUid}" class="friend-ignore-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-amber-500 hover:text-amber-400 transition">IGNORE</button>`;
       }
       return `<div class="flex items-center justify-between gap-2 bg-slate-900/60 border border-slate-800 rounded-xl px-2.5 py-2">
         <div class="flex items-center gap-2 min-w-0">
@@ -15071,7 +15224,7 @@ video {
         if (!snap.exists()) { resultEl.textContent = 'No player found with that username.'; return; }
         const uid = snap.val();
         if (uid === currentUser.uid) { resultEl.textContent = 'That\u2019s you!'; return; }
-        resultEl.innerHTML = `Found <b class="text-white">${name}</b>! <button id="sendRequestBtn" data-uid="${uid}" data-name="${name}" class="ml-1 text-[9px] font-black px-2 py-1 rounded-lg border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition">SEND REQUEST</button>`;
+        resultEl.innerHTML = `Found <b class="text-white">${escapeHtml(name)}</b>! <button id="sendRequestBtn" data-uid="${escapeAttr(uid)}" data-name="${escapeAttr(name)}" class="ml-1 text-[9px] font-black px-2 py-1 rounded-lg border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition">SEND REQUEST</button>`;
       }).catch((e) => { resultEl.textContent = 'Search failed \u2014 try again.'; console.warn('friend search failed', e); });
     });
     document.getElementById('friendSearchResult').addEventListener('click', (e) => {
@@ -15093,12 +15246,11 @@ video {
     function sendGameInvite(friendUid, friendName) {
       if (!currentUser) return;
       document.getElementById('friendsModal').classList.add('hidden');
-      initHostRoom();
-      const code = state.roomCode;
       const myName = document.getElementById('playerNameInput').value.trim() || 'Player';
-      const inviteId = db.ref(`gameInvites/${friendUid}`).push().key;
-      db.ref(`gameInvites/${friendUid}/${inviteId}`).set({ fromUid: currentUser.uid, fromName: myName, roomCode: code, sentAt: Date.now() })
-        .then(() => notifyBanner(`\u{1F4E8} Invite sent to ${friendName}!`))
+      initHostRoom().then((code) => {
+        const inviteId = db.ref(`gameInvites/${friendUid}`).push().key;
+        return db.ref(`gameInvites/${friendUid}/${inviteId}`).set({ fromUid: currentUser.uid, fromName: myName, roomCode: code, sentAt: firebase.database.ServerValue.TIMESTAMP });
+      }).then(() => notifyBanner(`\u{1F4E8} Invite sent to ${friendName}!`))
         .catch((e) => { console.warn('sendGameInvite failed', e); notifyBanner('Could not send the invite \u2014 please try again.'); });
     }
     // Reuses joinMultiRoom() completely — it already reads a code from
@@ -15126,18 +15278,18 @@ video {
     function inboxItemHtml(item) {
       if (item.type === 'request') {
         return `<div class="bg-slate-900/60 border border-slate-800 rounded-xl px-2.5 py-2">
-          <p class="text-xs font-bold text-white mb-1.5">${item.name} wants to be friends</p>
+          <p class="text-xs font-bold text-white mb-1.5">${escapeHtml(item.name)} wants to be friends</p>
           <div class="flex gap-1.5">
-            <button data-uid="${item.uid}" class="inbox-accept-req-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">ACCEPT</button>
-            <button data-uid="${item.uid}" class="inbox-decline-req-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">DECLINE</button>
+            <button data-uid="${escapeAttr(item.uid)}" class="inbox-accept-req-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">ACCEPT</button>
+            <button data-uid="${escapeAttr(item.uid)}" class="inbox-decline-req-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">DECLINE</button>
           </div>
         </div>`;
       }
       return `<div class="bg-slate-900/60 border border-slate-800 rounded-xl px-2.5 py-2">
-        <p class="text-xs font-bold text-white mb-1.5">${item.fromName} invited you to a private game</p>
+        <p class="text-xs font-bold text-white mb-1.5">${escapeHtml(item.fromName)} invited you to a private game</p>
         <div class="flex gap-1.5">
-          <button data-room="${item.roomCode}" data-id="${item.id}" class="inbox-join-invite-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">JOIN</button>
-          <button data-id="${item.id}" class="inbox-decline-invite-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">DECLINE</button>
+          <button data-room="${escapeAttr(item.roomCode)}" data-id="${escapeAttr(item.id)}" class="inbox-join-invite-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">JOIN</button>
+          <button data-id="${escapeAttr(item.id)}" class="inbox-decline-invite-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">DECLINE</button>
         </div>
       </div>`;
     }
@@ -21405,6 +21557,25 @@ video {
         assertTrue(!openShopCosmeticPreview.toString().includes('scrollIntoView'), 'Opening a preview must never scroll the Shop back to another location');
       });
 
+      await test('REGRESSION: Shop previews use game-size cards and an isolated burn stage', () => {
+        const backMarkup = shopCosmeticPreviewMarkup(COSMETIC_SHOP_ITEMS.find(item => item.category === 'Card Backs'));
+        const frameMarkup = shopCosmeticPreviewMarkup(COSMETIC_SHOP_ITEMS.find(item => item.category === 'Frames'));
+        const tableMarkup = shopCosmeticPreviewMarkup(COSMETIC_SHOP_ITEMS.find(item => item.category === 'Table Themes'));
+        const burnMarkup = shopCosmeticPreviewMarkup(COSMETIC_SHOP_ITEMS.find(item => item.category === 'Burn Effects'));
+        assertTrue(backMarkup.includes('card-base shop-preview-card'), 'Card-back previews must use the live game card dimensions');
+        assertTrue(frameMarkup.includes('card-base shop-preview-card'), 'Frame previews must use the live game card dimensions');
+        assertTrue(frameMarkup.includes('card-corner-rank') && frameMarkup.includes('card-corner-suit'), 'Frame previews must use normal game rank and suit sizing');
+        assertTrue(tableMarkup.includes('shop-table-preview-card deck') && tableMarkup.includes('shop-table-preview-card pile') && tableMarkup.includes('shop-table-preview-card base'), 'Table previews must visibly render deck, pile and base-card zones');
+        assertTrue(burnMarkup.includes('data-shop-burn-stage'), 'Burn effects must have a contained Shop preview stage');
+        assertTrue(!playShopBurnPreview.toString().includes('playBurnEffect') && !playShopBurnPreview.toString().includes('render('), 'Shop burn previews must never invoke gameplay rendering or navigation');
+      });
+
+      await test('REGRESSION: Classic Reactions are built in and never sold', () => {
+        assertTrue(!COSMETIC_SHOP_ITEMS.some(item => item.id === 'emotes-classic'), 'Classic Reactions must not appear in the Shop catalogue');
+        assertTrue(BUILT_IN_COSMETICS.some(item => item.id === 'emotes-classic' && item.builtIn), 'Classic Reactions must remain available as a built-in cosmetic');
+        assertTrue(isSupportedCosmetic('emotes', 'emotes-classic'), 'Legacy Classic Reactions saves must remain valid');
+      });
+
       await test('Shop distinguishes EQUIP, EQUIP NOW and EQUIPPED without repurchasing', () => {
         const savedPurchases = cosmeticPurchaseState;
         const savedEquipped = { ...equippedCosmetics };
@@ -21750,6 +21921,87 @@ video {
         assertEqual(order, ['Burn the Pile', 'Burner', 'Pyromaniac'], 'Daily must come first, then Ranked Burns in threshold order, regardless of the order they actually completed in');
         challengeToastQueue = originalQueue;
         challengeToastActive = originalActive;
+      });
+
+      await test('REGRESSION: challenge toast sits below the real header and above ordinary pages', () => {
+        const toast = document.getElementById('challengeToast');
+        const header = document.querySelector('body > header');
+        assertTrue(!!toast && !!header, 'Toast and global header must both exist');
+        positionChallengeToast();
+        const toastTop = parseFloat(getComputedStyle(toast).top);
+        const headerBottom = header.getBoundingClientRect().bottom;
+        const toastZ = Number(getComputedStyle(toast).zIndex);
+        const headerZ = Number(getComputedStyle(header).zIndex);
+        const hamburgerZ = Number(getComputedStyle(document.getElementById('hamburgerOverlay')).zIndex);
+        const shopZ = Number(getComputedStyle(document.getElementById('shopModal')).zIndex) || 0;
+        assertTrue(toastTop >= headerBottom + CHALLENGE_TOAST_GAP - 1, `Toast top (${toastTop}) must clear header bottom (${headerBottom})`);
+        assertTrue(toastZ > shopZ, 'Toast must appear above Shop, Settings and Personalisation pages');
+        assertTrue(toastZ < headerZ && toastZ < hamburgerZ, 'Header and hamburger must remain above the toast');
+      });
+
+      await test('REGRESSION: challenge toast geometry fits phone, desktop and shortened mobile viewports', () => {
+        [[320,568],[390,844],[1366,768],[844,390],[390,300]].forEach(([width,height]) => {
+          const headerBottom = width > height ? 44 : 48;
+          const toastHeight = 54;
+          const top = calculateChallengeToastTop(headerBottom, height, toastHeight);
+          assertTrue(top >= headerBottom + CHALLENGE_TOAST_GAP || height < headerBottom + CHALLENGE_TOAST_GAP + toastHeight, `${width}x${height}: toast must clear the header whenever physically possible`);
+          assertTrue(top + toastHeight <= height - CHALLENGE_TOAST_GAP + 1, `${width}x${height}: complete toast must remain inside viewport`);
+        });
+      });
+
+      await test('REGRESSION: resize and orientation changes recalculate challenge-toast position', () => {
+        const toast = document.getElementById('challengeToast');
+        toast.style.setProperty('--challenge-toast-top', '1px');
+        window.dispatchEvent(new Event('resize'));
+        const afterResize = parseFloat(toast.style.getPropertyValue('--challenge-toast-top'));
+        toast.style.setProperty('--challenge-toast-top', '2px');
+        window.dispatchEvent(new Event('orientationchange'));
+        const afterOrientation = parseFloat(toast.style.getPropertyValue('--challenge-toast-top'));
+        assertTrue(afterResize > 1, 'Resize must move toast back below the header');
+        assertTrue(afterOrientation > 2, 'Orientation change must move toast back below the header');
+      });
+
+      await test('REGRESSION: rejected challenge transaction never shows a false completion toast', async () => {
+        const savedUser = currentUser;
+        const savedDb = db;
+        const savedQueue = challengeToastQueue;
+        const savedActive = challengeToastActive;
+        try {
+          currentUser = { uid: 'toast-failure-test' };
+          challengeToastQueue = [];
+          challengeToastActive = true;
+          db = { ref: () => ({ transaction: () => Promise.reject(new Error('PERMISSION_DENIED')) }) };
+          const claimed = await claimChallenge('toast-failure-test', 20, 'Must Not Appear');
+          assertTrue(!claimed, 'Rejected transaction must report no award');
+          assertTrue(!challengeToastQueue.some(item => item.name === 'Must Not Appear'), 'Rejected transaction must not enqueue a toast');
+        } finally {
+          currentUser = savedUser;
+          db = savedDb;
+          challengeToastQueue = savedQueue;
+          challengeToastActive = savedActive;
+        }
+      });
+
+      await test('SECURITY: player-controlled names are escaped before HTML rendering', () => {
+        const payload = `<img src=x onerror="window.__xss_test=1">O'Reilly & Co`;
+        const escaped = escapeHtml(payload);
+        assertTrue(!escaped.includes('<img') && !escaped.includes('onerror="'), 'Escaped text must not create executable markup');
+        assertTrue(escaped.includes('&lt;img') && escaped.includes('&#39;') && escaped.includes('&amp;'), 'Escaping must preserve the visible text safely');
+        const standings = buildFinalStandingsHtml([{ id:'p1', name:payload, hasFinished:true, finishRank:1 }], 'p1', false);
+        assertTrue(!standings.includes('<img src=x'), 'Final standings must never interpolate raw player markup');
+      });
+
+      await test('SECURITY: match rewards and Ranked results carry idempotency guards', () => {
+        assertTrue(awardMatchDiamonds.toString().includes('processedMatchRewards'), 'Match rewards must record processed match IDs');
+        assertTrue(applyRankedRatingUpdate.toString().includes('processedRankedMatches'), 'Ranked settlement must reject a repeated match ID');
+        assertTrue(typeof generateMatchId() === 'string' && generateMatchId().startsWith('m_'), 'Every new match must receive a stable-format unique ID');
+      });
+
+      await test('SECURITY: room creation reserves an unused six-digit code transactionally', () => {
+        const source = reserveUnusedRoom.toString();
+        assertTrue(source.includes('.transaction'), 'Room reservation must be a Firebase transaction');
+        assertTrue(source.includes('current == null'), 'An existing room must never be overwritten');
+        assertTrue(source.includes('attemptsLeft'), 'A collision must retry with another code');
       });
 
       // Small path-aware mock of the Firebase Realtime Database surface
