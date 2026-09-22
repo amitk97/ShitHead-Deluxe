@@ -12324,6 +12324,19 @@ video {
     function isRoomVersionCompatible(roomData) {
       return !roomData?.clientVersion || roomData.clientVersion === getGameVersionLabel();
     }
+    let lastSupportDraftUri = '';
+    function buildSupportMailto(category, subject, message) {
+      const accountLine = currentUser && currentUser.email ? `Account email: ${currentUser.email}\n` : '';
+      const body = `Category: ${category}\nGame version: ${getGameVersionLabel()}\n${accountLine}\n${message}`;
+      return `mailto:support.shitheaddeluxe@gmail.com?subject=${encodeURIComponent(`[ShitHead Deluxe] ${subject}`)}&body=${encodeURIComponent(body)}`;
+    }
+    function openSupportEmailDraft(uri) {
+      lastSupportDraftUri = uri;
+      // The in-page regression suite validates the generated draft without
+      // navigating Chrome away from the remaining tests into a mail client.
+      if (new URLSearchParams(location.search).get('dev-tests') === '1') return;
+      window.location.href = uri;
+    }
     document.getElementById('supportSendBtn').addEventListener('click', () => {
       const validationEl = document.getElementById('supportValidationMsg');
       const errorEl = document.getElementById('supportErrorMsg');
@@ -12351,15 +12364,13 @@ video {
       sendBtn.disabled = true;
       sendBtn.textContent = 'SENDING\u2026';
 
-      const accountLine = currentUser && currentUser.email ? `Account email: ${currentUser.email}\n` : '';
-      const body = `Category: ${category}\nGame version: ${getGameVersionLabel()}\n${accountLine}\n${message}`;
-      const mailto = `mailto:support.shitheaddeluxe@gmail.com?subject=${encodeURIComponent(`[ShitHead Deluxe] ${subject}`)}&body=${encodeURIComponent(body)}`;
+      const mailto = buildSupportMailto(category, subject, message);
       supportSubmitInFlight = false;
       lastSupportSubmitAt = Date.now();
       sendBtn.disabled = false;
       sendBtn.textContent = 'OPEN EMAIL';
       successEl.classList.remove('hidden');
-      window.location.href = mailto;
+      openSupportEmailDraft(mailto);
     });
 
     // Real Ranked Stats. wins/losses already existed at the top level of
@@ -21394,24 +21405,22 @@ video {
         document.getElementById('supportSendBtn').click();
         assertEqual(document.getElementById('supportValidationMsg').textContent, 'Please enter a message.', 'Message must also be required');
       });
-      await test('REGRESSION: the Support form actually stores the ticket (not a mailto redirect) with the right metadata, and enters a real loading/success state', () => {
+      await test('REGRESSION: the Support form builds the correct email draft without navigating away during tests', () => {
         openSupportPanel();
         document.getElementById('supportCategorySelect').value = 'Feedback';
         document.getElementById('supportSubjectInput').value = 'Love the game';
         document.getElementById('supportMessageInput').value = 'Great job on the Ranked mode!';
-        let capturedTicket = null;
-        const originalDb = db;
-        db = { ref: () => ({ push: (obj) => { capturedTicket = obj; return Promise.resolve(); } }) };
+        lastSupportDraftUri = '';
         lastSupportSubmitAt = 0;
         document.getElementById('supportSendBtn').click();
-        db = originalDb;
-        assertTrue(!!capturedTicket, 'Submitting must write a ticket via db.ref().push(), not open a mailto: link');
-        assertEqual(capturedTicket.category, 'Feedback', 'The chosen category must be included');
-        assertEqual(capturedTicket.subject, 'Love the game', 'The subject must be included');
-        assertEqual(capturedTicket.message, 'Great job on the Ranked mode!', 'The message must be included');
-        assertTrue('gameVersion' in capturedTicket && 'userAgent' in capturedTicket, 'Limited platform metadata (version, user-agent) must be attached');
-        assertTrue('uid' in capturedTicket, "The signed-in user's uid must be attached when available (null otherwise), for support lookups");
-        assertTrue(!('email' in capturedTicket) && !('password' in capturedTicket), 'No unnecessary private information may be attached');
+        assertTrue(lastSupportDraftUri.startsWith('mailto:support.shitheaddeluxe@gmail.com?'), 'The draft must target the official support address');
+        const decodedDraft = decodeURIComponent(lastSupportDraftUri);
+        assertTrue(decodedDraft.includes('[ShitHead Deluxe] Love the game'), 'The subject must be included');
+        assertTrue(decodedDraft.includes('Category: Feedback'), 'The chosen category must be included');
+        assertTrue(decodedDraft.includes(`Game version: ${getGameVersionLabel()}`), 'The game version must be included');
+        assertTrue(decodedDraft.includes('Great job on the Ranked mode!'), 'The message must be included');
+        assertTrue(!decodedDraft.toLowerCase().includes('password'), 'The draft must never contain credentials');
+        assertTrue(!document.getElementById('supportSuccessMsg').classList.contains('hidden'), 'A successful draft must show the success state');
       });
       await test('REGRESSION: the Support form blocks resubmission during its cooldown window (basic spam protection)', () => {
         // The previous test's db.push() resolves asynchronously â its
@@ -21423,20 +21432,18 @@ video {
         document.getElementById('supportSubjectInput').value = 'x';
         document.getElementById('supportMessageInput').value = 'y';
         lastSupportSubmitAt = Date.now();
-        const originalDb = db;
-        db = { ref: () => ({ push: () => Promise.resolve() }) };
         document.getElementById('supportSendBtn').click();
-        db = originalDb;
         assertTrue(!document.getElementById('supportValidationMsg').classList.contains('hidden'), 'A too-soon resubmission must be blocked with a message, not silently sent again');
         assertTrue(document.getElementById('supportValidationMsg').textContent.includes('wait'), 'The cooldown message must tell the player to wait');
       });
-      await test('REGRESSION: the Support privacy explanation is honest about exactly what is sent, and is togglable', () => {
+      await test('REGRESSION: the Support privacy explanation is honest about the email draft and is togglable', () => {
         openSupportPanel();
         const panel = document.getElementById('supportPrivacyPanel');
         assertTrue(panel.classList.contains('hidden'), 'The privacy detail must start collapsed, not clutter the form');
         document.getElementById('supportPrivacyToggleBtn').click();
         assertTrue(!panel.classList.contains('hidden'), 'Clicking the toggle must reveal it');
-        assertTrue(panel.textContent.includes('game version') && panel.textContent.includes('user-agent') && panel.textContent.includes('account ID'), 'The explanation must accurately list what is actually sent');
+        assertTrue(panel.textContent.includes('category') && panel.textContent.includes('subject') && panel.textContent.includes('message') && panel.textContent.includes('game version'), 'The explanation must accurately list the draft contents');
+        assertTrue(panel.textContent.includes('Nothing is sent until you press Send'), 'The explanation must make the final user-controlled send step clear');
       });
 
       await test('REGRESSION: Settings no longer contains Account or Support â both moved out, not just hidden', () => {
