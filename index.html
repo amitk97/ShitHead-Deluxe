@@ -12288,6 +12288,7 @@ video {
     // configured email app and lets the user perform the final send.
     let supportSubmitInFlight = false;
     let lastSupportSubmitAt = 0;
+    let devTestSuiteRunning = false;
     const SUPPORT_COOLDOWN_MS = 60000;
 
     function openSupportPanel() {
@@ -12334,7 +12335,7 @@ video {
       lastSupportDraftUri = uri;
       // The in-page regression suite validates the generated draft without
       // navigating Chrome away from the remaining tests into a mail client.
-      if (new URLSearchParams(location.search).get('dev-tests') === '1') return;
+      if (devTestSuiteRunning || new URLSearchParams(location.search).get('dev-tests') === '1') return;
       window.location.href = uri;
     }
     document.getElementById('supportSendBtn').addEventListener('click', () => {
@@ -18522,6 +18523,7 @@ video {
     // run so test scenarios can never overwrite a real in-progress save.
     // ============================================================
     async function runDevTestSuite() {
+      devTestSuiteRunning = true;
       const originalSaveGameState = saveGameState;
       saveGameState = function () {};
       burnInstantResolveForTests = true;
