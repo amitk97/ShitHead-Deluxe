@@ -21414,7 +21414,13 @@ video {
         document.getElementById('supportMessageInput').value = 'Great job on the Ranked mode!';
         lastSupportDraftUri = '';
         lastSupportSubmitAt = 0;
-        document.getElementById('supportSendBtn').click();
+        const originalDraftOpener = openSupportEmailDraft;
+        openSupportEmailDraft = (uri) => { lastSupportDraftUri = uri; };
+        try {
+          document.getElementById('supportSendBtn').click();
+        } finally {
+          openSupportEmailDraft = originalDraftOpener;
+        }
         assertTrue(lastSupportDraftUri.startsWith('mailto:support.shitheaddeluxe@gmail.com?'), 'The draft must target the official support address');
         const decodedDraft = decodeURIComponent(lastSupportDraftUri);
         assertTrue(decodedDraft.includes('[ShitHead Deluxe] Love the game'), 'The subject must be included');
