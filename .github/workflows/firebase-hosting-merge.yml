@@ -16,16 +16,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Authenticate to Firebase
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
-
-      - name: Deploy Realtime Database rules
-        run: npx --yes firebase-tools@latest deploy --only database --project shithead-pro --non-interactive
-
       - name: Deploy main branch to live Firebase Hosting
-        if: always()
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
