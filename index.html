@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-23-v109 (ShitHead-Deluxe-109) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-23-v110 (ShitHead-Deluxe-110) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -224,6 +224,46 @@
     #inboxBadge.inbox-badge--challenge { background-color:#fbbf24; color:#0f172a; }
     #inboxBadge.inbox-badge--rank { background-color:#a78bfa; color:#0f172a; }
     #inboxBadge.inbox-badge--shop { background-color:#f472b6; color:#0f172a; }
+    /* Anchor the count to the envelope's upper-right corner, including on
+       narrow phones. Its size follows the icon, not the lobby layout. */
+    #headerInboxBtn #inboxBadge {
+      position:absolute; top:0; right:0;
+      transform:translate(30%,-25%);
+      width:auto; min-width:15px; height:15px;
+      padding:0 2px; font-size:8px; line-height:1;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none;
+    }
+    #headerInboxBtn #inboxBadge.hidden { display:none; }
+    @media (max-width:767px) {
+      #headerInboxBtn #inboxBadge {
+        min-width:12px; height:12px;
+        padding:0 1px; font-size:7px;
+        transform:translate(25%,-20%);
+      }
+    }
+    #deckThemeBody > button {
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; text-align:center;
+      min-width:0; min-height:55px; line-height:1.2;
+    }
+    #deckThemeBody > button .pack-icon {
+      display:block; flex:none; width:26px; height:26px;
+      margin:0 auto 3px;
+    }
+    #deckThemeBody > button > span { display:block; width:100%; text-align:center; }
+    #modeSingleBtn, #modeMultiBtn, #modeRankedBtn {
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; text-align:center;
+      gap:2px; min-width:0; min-height:70px; line-height:1.2;
+    }
+    #modeSingleBtn > span, #modeMultiBtn > span, #modeRankedBtn > span {
+      display:block; width:100%; text-align:center;
+    }
+    #lobbySpeedBox { padding:6px 10px 5px; }
+    #lobbySpeedBox > div:first-child { margin-bottom:2px; }
+    #lobbySpeedSlider { display:block; margin:0; }
+    #lobbySpeedTicks { margin-top:1px; }
     .inbox-activity--rank { background:rgba(76,29,149,.25); border-color:rgba(167,139,250,.65); }
     .inbox-activity--rank .inbox-activity-accent { color:#c4b5fd; }
     .inbox-activity--shop { background:rgba(131,24,67,.24); border-color:rgba(244,114,182,.65); }
@@ -3395,7 +3435,7 @@ video {
     <symbol id="ui-challenges" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M11 7h10v5c0 4.1-2 6.3-5 6.3S11 16.1 11 12V7Z" fill="#5f451b" stroke="#fbbf24" stroke-width="2"/><path d="M11 9H7.5v2.2c0 2.8 1.6 4.3 4.1 4.3M21 9h3.5v2.2c0 2.8-1.6 4.3-4.1 4.3M16 18.3V23M12 25h8" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="ui-shop" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M6.5 8h3l2.2 11.2h11.8l2-7.5H11" fill="#263449" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="24" r="1.8" fill="#34d399"/><circle cx="22" cy="24" r="1.8" fill="#34d399"/></symbol>
     <symbol id="ui-guide" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M12.2 12a4.2 4.2 0 1 1 6.1 3.7c-1.6.8-2.3 1.6-2.3 3" fill="none" stroke="#34d399" stroke-width="2.8" stroke-linecap="round"/><circle cx="16" cy="23.2" r="1.5" fill="#cbd5e1"/></symbol>
-    <symbol id="ui-settings" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="m16 7 2 .6 1.6-1 2.8 2.8-1 1.6.6 2 2 .8v4l-2 .8-.6 2 1 1.6-2.8 2.8-1.6-1-2 .6-.8 2h-4l-.8-2-2-.6-1.6 1L4 22.3l1-1.6-.6-2-2-.8v-4l2-.8.6-2-1-1.6 2.8-2.8 1.6 1 2-.6.8-2h4l.8 2Z" fill="#263449" stroke="#cbd5e1" stroke-width="1.7" stroke-linejoin="round"/><circle cx="14" cy="15.8" r="3.4" fill="none" stroke="#60a5fa" stroke-width="2"/></symbol>
+    <symbol id="ui-settings" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="m16 7 2 .6 1.6-1 2.8 2.8-1 1.6.6 2 2 .8v4l-2 .8-.6 2 1 1.6-2.8 2.8-1.6-1-2 .6-.8 2h-4l-.8-2-2-.6-1.6 1L4 22.3l1-1.6-.6-2-2-.8v-4l2-.8.6-2-1-1.6 2.8-2.8 1.6 1 2-.6.8-2h4l.8 2Z" transform="translate(2 0)" fill="#263449" stroke="#cbd5e1" stroke-width="1.7" stroke-linejoin="round"/><circle cx="16" cy="15.8" r="3.4" fill="none" stroke="#60a5fa" stroke-width="2"/></symbol>
     <symbol id="ui-support" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M6.5 8.5h19v13h-10l-5.8 4v-4H6.5v-13Z" fill="#263449" stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="15" r="1.3" fill="#c084fc"/><circle cx="16" cy="15" r="1.3" fill="#c084fc"/><circle cx="20" cy="15" r="1.3" fill="#c084fc"/></symbol>
     <symbol id="ui-exit" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#3f1420" stroke="#be123c"/><path d="M14 8H8.5v16H14M17 11l5 5-5 5M11 16h11" fill="none" stroke="#fb7185" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="ui-select-rank" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><rect x="7" y="8" width="8" height="16" rx="2" fill="#263449" stroke="#cbd5e1" stroke-width="1.8"/><rect x="12" y="6" width="8" height="18" rx="2" fill="#263449" stroke="#60a5fa" stroke-width="1.8"/><rect x="17" y="9" width="8" height="15" rx="2" fill="#263449" stroke="#34d399" stroke-width="1.8"/><path d="M15.5 11h1" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></symbol>
@@ -3556,7 +3596,7 @@ video {
       <div class="space-y-2.5">
         <div>
           <label class="block text-xs font-black tracking-wider uppercase text-slate-400 mb-1 text-center">Your Nickname</label>
-          <input type="text" id="playerNameInput" maxlength="12" placeholder="e.g. Alex" class="w-full bg-slate-950 border-2 border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold focus:border-amber-400 outline-none text-white transition" />
+          <input type="text" id="playerNameInput" maxlength="12" placeholder="e.g. Alex" class="w-full bg-slate-950 border-2 border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold focus:border-amber-400 outline-none text-white transition text-center" style="text-align:center" />
           <p id="nameRequiredMsg" class="hidden text-[10px] font-bold text-rose-400 mt-1">Please enter a nickname to continue.</p>
         </div>
 
@@ -3632,7 +3672,7 @@ video {
             </div>
           </div>
 
-          <div class="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
+          <div id="lobbySpeedBox" class="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
             <div class="text-center text-[10px] font-black uppercase text-slate-400 mb-1">
               <span>Game Speed — <span id="lobbySpeedVal" class="text-amber-400">1.0x</span></span>
             </div>
