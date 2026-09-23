@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-23-v101 (ShitHead-Deluxe-101) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-23-v102 (ShitHead-Deluxe-102) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -12851,6 +12851,32 @@ video {
       const button = document.querySelector(`[data-preview-cosmetic-id="${item.id}"]`);
       if (button) button.setAttribute('aria-expanded', 'true');
     }
+    function isAmitkTestingAccount(profile = {}) {
+      const username = String(profile.username || '').trim().toLowerCase();
+      const email = String(currentUser?.email || '').trim().toLowerCase();
+      return username === 'amitk' || email === 'amirk2197@googlemail.com';
+    }
+
+    // Gives the designated AmitK testing account one real, spendable 999,999
+    // Diamond balance. The V4 marker makes this a one-time grant: purchases
+    // reduce the canonical users/{uid}/diamonds value normally and reopening
+    // the Shop does NOT refill it.
+    function ensureAmitkSpendableTestBalance() {
+      if (!currentUser) return Promise.resolve(null);
+      return db.ref(`users/${currentUser.uid}`).transaction((current) => {
+        if (!current || !isAmitkTestingAccount(current)) return current;
+        if (current.amitKShopTestGrantV4Done) return current;
+        return { ...current, diamonds: 999999, amitKShopTestGrantV4Done: true };
+      }).then((result) => {
+        const profile = result.snapshot?.val() || {};
+        if (isAmitkTestingAccount(profile)) {
+          challengeEconomy.diamonds = Number(profile.diamonds) || 0;
+          updateDiamondHeader();
+        }
+        return profile;
+      });
+    }
+
     function openShopPanel() {
       closeHamburgerMenu();
       closeOtherMenuPages('shopModal');
@@ -12858,17 +12884,23 @@ video {
       document.getElementById('shopModal').classList.remove('hidden');
       clearShopActionNotice();
       setNameTokenStatus('Loading…');
-      Promise.all([
-        initChallengeEconomy(),
-        db.ref(`shopPurchases/${currentUser.uid}/nameChangeToken`).once('value'),
-        db.ref(`shopPurchases/${currentUser.uid}/cosmetics`).once('value'),
-        db.ref(`users/${currentUser.uid}/ownedCosmetics`).once('value')
-      ]).then(([, snap, cosmeticsSnap, ownedSnap]) => {
-        nameChangeTokenState = snap.val();
-        cosmeticPurchaseState = { ...(cosmeticsSnap.val() || {}), ...(ownedSnap.val() || {}) };
-        renderNameChangeToken();
-        renderCosmeticShop();
-      }).catch((e) => setNameTokenStatus(`Couldn’t load the Shop${e.code ? ` (${e.code})` : ''}.`, 'error'));
+      initChallengeEconomy()
+        .then(() => ensureAmitkSpendableTestBalance())
+        .then(() => Promise.all([
+          db.ref(`shopPurchases/${currentUser.uid}/nameChangeToken`).once('value'),
+          db.ref(`shopPurchases/${currentUser.uid}/cosmetics`).once('value'),
+          db.ref(`users/${currentUser.uid}/ownedCosmetics`).once('value'),
+          db.ref(`users/${currentUser.uid}`).once('value')
+        ]))
+        .then(([snap, cosmeticsSnap, ownedSnap, userSnap]) => {
+          const canonicalUser = userSnap.val() || {};
+          challengeEconomy.diamonds = Number(canonicalUser.diamonds) || 0;
+          updateDiamondHeader();
+          nameChangeTokenState = snap.val();
+          cosmeticPurchaseState = { ...(cosmeticsSnap.val() || {}), ...(ownedSnap.val() || {}) };
+          renderNameChangeToken();
+          renderCosmeticShop();
+        }).catch((e) => setNameTokenStatus(`Couldn’t load the Shop${e.code ? ` (${e.code})` : ''}.`, 'error'));
     }
     document.getElementById('menuShopBtn').addEventListener('click', openShopPanel);
     document.getElementById('headerDiamondBtn').addEventListener('click', openShopPanel);
@@ -13937,13 +13969,15 @@ video {
           // This is stored on users/{uid}/diamonds (the same field purchases debit),
           // rather than faking only the header value. The marker prevents purchases
           // from refilling the balance on later loads.
-          const isAmitKTestAccount = String(profile.username || '').trim().toLowerCase() === 'amitk';
-          if (isAmitKTestAccount && !profile.amitKShopTestGrantV1Done) {
+          const testUsername = String(profile.username || '').trim().toLowerCase();
+          const testEmail = String(currentUser?.email || '').trim().toLowerCase();
+          const isAmitKTestAccount = testUsername === 'amitk' || testEmail === 'amirk2197@googlemail.com';
+          if (isAmitKTestAccount && !profile.amitKShopTestGrantV4Done) {
             profile.diamonds = 999999;
-            profile.amitKShopTestGrantV1Done = true;
+            profile.amitKShopTestGrantV4Done = true;
             return db.ref(`users/${currentUser.uid}`).update({
               diamonds: 999999,
-              amitKShopTestGrantV1Done: true
+              amitKShopTestGrantV4Done: true
             }).then(() => profile);
           }
           return profile;
@@ -21963,6 +21997,16 @@ video {
         assertEqual(categoryButton.getAttribute('aria-expanded'), 'false', 'Collapsed category must report its state accessibly');
         ['all','affordable','owned','unowned','equipped'].forEach(filter => assertTrue(!!document.querySelector(`[data-shop-filter="${filter}"]`), `${filter} filter must exist`));
         collapsedShopCategories.delete('Card Backs'); shopFilter = savedFilter; renderCosmeticShop();
+      });
+
+      await test('REGRESSION: AmitK test-account detection accepts the real username and authenticated email', () => {
+        const savedUser = currentUser;
+        try {
+          currentUser = { uid:'amitk-test', email:'amirk2197@googlemail.com' };
+          assertTrue(isAmitkTestingAccount({ username:'SomethingElse' }), 'Authenticated AmitK test email must be recognised');
+          currentUser = { uid:'amitk-test', email:'other@example.com' };
+          assertTrue(isAmitkTestingAccount({ username:'AmitK' }), 'AmitK username must be recognised case-insensitively');
+        } finally { currentUser = savedUser; }
       });
 
       await test('Shop purchase feedback includes NEW, shortfall guidance and unlock animation', () => {
