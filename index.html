@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-23-v108 (ShitHead-Deluxe-108) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-23-v109 (ShitHead-Deluxe-109) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -222,6 +222,12 @@
     #inboxBadge.inbox-badge--friend { background-color:#10b981; }
     #inboxBadge.inbox-badge--game { background-color:#0ea5e9; }
     #inboxBadge.inbox-badge--challenge { background-color:#fbbf24; color:#0f172a; }
+    #inboxBadge.inbox-badge--rank { background-color:#a78bfa; color:#0f172a; }
+    #inboxBadge.inbox-badge--shop { background-color:#f472b6; color:#0f172a; }
+    .inbox-activity--rank { background:rgba(76,29,149,.25); border-color:rgba(167,139,250,.65); }
+    .inbox-activity--rank .inbox-activity-accent { color:#c4b5fd; }
+    .inbox-activity--shop { background:rgba(131,24,67,.24); border-color:rgba(244,114,182,.65); }
+    .inbox-activity--shop .inbox-activity-accent { color:#f9a8d4; }
     /* STAGE 1 — Menu structure and responsive presentation.
        Mobile default: a slide-up bottom sheet, anchored to the bottom edge.
        Desktop (min-width: 768px, matching Tailwind's own md: breakpoint
@@ -13045,7 +13051,13 @@ video {
       const purchase = { purchasedAt, cost: item.cost };
       return {
         purchase,
-        user: { ...user, diamonds: balance - item.cost, ownedCosmetics: { ...owned, [item.id]: purchase } }
+        user: {
+          ...user, diamonds: balance - item.cost, ownedCosmetics: { ...owned, [item.id]: purchase },
+          activityInbox: {
+            ...(user.activityInbox || {}),
+            [`shop_${item.id}`]: { type: 'shop', name: item.name, cost: item.cost, sentAt: purchasedAt }
+          }
+        }
       };
     }
     document.getElementById('nameTokenBuyBtn').addEventListener('click', () => {
@@ -13063,7 +13075,13 @@ video {
         const balance = Number(user.diamonds) || 0;
         if (balance < NAME_CHANGE_TOKEN_COST) { tokenError = 'You need 100 Diamonds to buy this token.'; return; }
         tokenRecord = { purchasedAt: Date.now(), cost: NAME_CHANGE_TOKEN_COST };
-        return { ...user, diamonds: balance - NAME_CHANGE_TOKEN_COST, nameChangeToken: tokenRecord };
+        return {
+          ...user, diamonds: balance - NAME_CHANGE_TOKEN_COST, nameChangeToken: tokenRecord,
+          activityInbox: {
+            ...(user.activityInbox || {}),
+            name_change_token: { type: 'shop', name: 'Name Change Token', cost: NAME_CHANGE_TOKEN_COST, sentAt: tokenRecord.purchasedAt }
+          }
+        };
       }).then(result => {
         if (!result.committed) throw new Error(tokenError || 'Purchase could not be committed.');
         db.ref(`shopPurchases/${uid}/nameChangeToken`).set(tokenRecord).catch(() => {});
@@ -15336,12 +15354,16 @@ video {
       const won = me.finishRank === 1;
       const opponent = players.find((p) => p.id !== state.localPlayerId);
       const resultId = state.matchId || `${state.roomCode || 'ranked'}_${players.map(p => p.uid).sort().join('_')}`;
+      const rankMailId = `rank_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       let duplicateResult = false;
       db.ref(`users/${me.uid}`).transaction((current) => {
         const c = current || { rating: 500, wins: 0, losses: 0 };
         const processedRankedMatches = c.processedRankedMatches || {};
         if (processedRankedMatches[resultId]) { duplicateResult = true; return; }
-        const newRating = Math.max(0, c.rating + deltas[myIndex]);
+        const previousRating = c.rating != null ? Number(c.rating) : 500;
+        const newRating = Math.max(0, previousRating + deltas[myIndex]);
+        const previousTier = getRankTier(previousRating).name;
+        const newTier = getRankTier(newRating).name;
         // Recorded here (self-write, same as everything else in this
         // function) so findRankedMatch can check it before pairing two
         // accounts back together — the actual anti-farming enforcement,
@@ -15382,6 +15404,16 @@ video {
           snapBurns: (cStats.snapBurns || 0) + (me.gameStats?.snapBurns || 0)
         };
         const next = { ...c, rating: newRating, wins: (c.wins || 0) + (won ? 1 : 0), losses: (c.losses || 0) + (won ? 0 : 1), rankedStats, challengeStats, processedRankedMatches: { ...processedRankedMatches, [resultId]: { rank: me.finishRank, appliedAt: Date.now() } } };
+        if (previousTier !== newTier) {
+          next.activityInbox = {
+            ...(c.activityInbox || {}),
+            [rankMailId]: {
+              type: 'rank', fromTier: previousTier, toTier: newTier,
+              direction: newRating > previousRating ? 'up' : 'down',
+              previousRating, newRating, sentAt: Date.now()
+            }
+          };
+        }
         if (opponent && opponent.uid) next.lastRankedOpponent = { uid: opponent.uid, at: Date.now() };
         return next;
       }, (error, committed, snapshot) => {
@@ -15659,7 +15691,7 @@ video {
       joinMultiRoom();
     }
 
-    // --- Inbox: friend requests, game invites and completed challenges ---
+    // --- Inbox: requests, invites, challenges, rank changes and purchases ---
     const GAME_INVITE_EXPIRY_MS = 5 * 60 * 1000;
     function cleanupExpiredInvites(invData) {
       if (!currentUser) return [];
@@ -15695,6 +15727,22 @@ video {
           <button type="button" data-challenge-id="${escapeAttr(item.id)}" class="inbox-read-challenge-btn mt-2 w-full text-[9px] font-black py-1 rounded-lg border border-amber-500 text-amber-300 hover:bg-amber-500 hover:text-slate-950 transition">MARK AS READ</button>
         </div>`;
       }
+      if (item.type === 'rank' || item.type === 'shop') {
+        const isRank = item.type === 'rank';
+        const heading = isRank ? `Rank ${item.direction === 'up' ? 'up' : 'down'}` : 'Shop purchase';
+        const detail = isRank
+          ? `${escapeHtml(item.fromTier)} → ${escapeHtml(item.toTier)}`
+          : escapeHtml(item.name);
+        const subtext = isRank
+          ? `${Math.round(Number(item.previousRating) || 0)} → ${Math.round(Number(item.newRating) || 0)} rating points`
+          : `${Number(item.cost) || 0} Diamonds spent`;
+        return `<div class="inbox-activity--${item.type} border rounded-xl px-2.5 py-2">
+          <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${heading}</p>
+          <p class="text-xs font-bold text-white">${detail}</p>
+          <p class="inbox-activity-accent text-[10px] mt-1">${subtext}</p>
+          <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
+        </div>`;
+      }
       return `<div class="bg-slate-900/60 border border-slate-800 rounded-xl px-2.5 py-2">
         <p class="text-xs font-bold text-white mb-1.5">${escapeHtml(item.fromName)} invited you to a private game</p>
         <div class="flex gap-1.5">
@@ -15711,8 +15759,9 @@ video {
       Promise.all([
         db.ref(`friendRequests/${uid}`).once('value'),
         db.ref(`gameInvites/${uid}`).once('value'),
-        db.ref(`users/${uid}/challengeInbox`).once('value')
-      ]).then(([reqSnap, invSnap, challengeSnap]) => {
+        db.ref(`users/${uid}/challengeInbox`).once('value'),
+        db.ref(`users/${uid}/activityInbox`).once('value')
+      ]).then(([reqSnap, invSnap, challengeSnap, activitySnap]) => {
         if (currentUser?.uid !== uid) return;
         const items = [];
         const reqData = reqSnap.val() || {};
@@ -15728,6 +15777,10 @@ video {
           if (!mail || typeof mail !== 'object') return;
           items.push({ type: 'challenge', id, name: mail.name || id, reward: mail.reward, sentAt: Number(mail.completedAt) || 0 });
         });
+        Object.entries(activitySnap.val() || {}).forEach(([id, mail]) => {
+          if (!mail || !['rank', 'shop'].includes(mail.type)) return;
+          items.push({ ...mail, id, sentAt: Number(mail.sentAt) || 0 });
+        });
         items.sort((a, b) => b.sentAt - a.sentAt);
         if (items.length === 0) { area.innerHTML = ''; document.getElementById('inboxEmptyMsg').classList.remove('hidden'); return; }
         document.getElementById('inboxEmptyMsg').classList.add('hidden');
@@ -15735,7 +15788,7 @@ video {
       }).catch((e) => { area.innerHTML = ''; console.warn('renderInbox failed', e); });
     }
     document.getElementById('inboxArea').addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-uid], button[data-id], button[data-challenge-id]');
+      const btn = e.target.closest('button[data-uid], button[data-id], button[data-challenge-id], button[data-activity-id]');
       if (!btn) return;
       if (btn.classList.contains('inbox-accept-req-btn')) { acceptFriendRequest(btn.dataset.uid); renderInbox(); }
       else if (btn.classList.contains('inbox-decline-req-btn')) { declineFriendRequest(btn.dataset.uid); renderInbox(); }
@@ -15745,29 +15798,36 @@ video {
       } else if (btn.classList.contains('inbox-read-challenge-btn')) {
         db.ref(`users/${currentUser.uid}/challengeInbox/${btn.dataset.challengeId}`).remove()
           .then(renderInbox).catch((e) => console.warn('markChallengeMailRead failed', e));
+      } else if (btn.classList.contains('inbox-read-activity-btn')) {
+        db.ref(`users/${currentUser.uid}/activityInbox/${btn.dataset.activityId}`).remove()
+          .then(renderInbox).catch((e) => console.warn('markActivityMailRead failed', e));
       }
     });
     let inboxBadgeSubscriptions = [];
     let inboxBadgeRequestData = null;
     let inboxBadgeInviteData = null;
     let inboxBadgeChallengeData = null;
+    let inboxBadgeActivityData = null;
     let inboxBadgeUid = null;
     let inboxBadgeExpiryTimer = null;
 
-    function summarizeInboxNotifications(requests, invites, challenges = {}, now = Date.now()) {
+    function summarizeInboxNotifications(requests, invites, challenges = {}, activity = {}, now = Date.now()) {
       const friendRequests = Object.values(requests || {}).filter((request) => request && typeof request === 'object');
       const gameInvites = Object.values(invites || {}).filter((invite) => {
         const sentAt = Number(invite?.sentAt);
         return Number.isFinite(sentAt) && sentAt > 0 && sentAt <= now + 60_000 && now - sentAt <= GAME_INVITE_EXPIRY_MS;
       });
       const challengeMail = Object.values(challenges || {}).filter((mail) => mail && typeof mail === 'object');
-      const newestFriend = Math.max(0, ...friendRequests.map((request) => Number(request.sentAt) || 0));
-      const newestGame = Math.max(0, ...gameInvites.map((invite) => Number(invite.sentAt) || 0));
-      const newestChallenge = Math.max(0, ...challengeMail.map((mail) => Number(mail.completedAt) || 0));
+      const activityMail = Object.values(activity || {}).filter((mail) => mail && ['rank', 'shop'].includes(mail.type));
+      const candidates = [
+        ...friendRequests.map((mail) => ({ type: 'friend', at: Number(mail.sentAt) || 0 })),
+        ...gameInvites.map((mail) => ({ type: 'game', at: Number(mail.sentAt) || 0 })),
+        ...challengeMail.map((mail) => ({ type: 'challenge', at: Number(mail.completedAt) || 0 })),
+        ...activityMail.map((mail) => ({ type: mail.type, at: Number(mail.sentAt) || 0 }))
+      ];
       return {
-        count: friendRequests.length + gameInvites.length + challengeMail.length,
-        latestType: challengeMail.length && newestChallenge >= Math.max(newestFriend, newestGame)
-          ? 'challenge' : gameInvites.length && newestGame > newestFriend ? 'game' : 'friend',
+        count: candidates.length,
+        latestType: candidates.reduce((latest, entry) => entry.at >= latest.at ? entry : latest, { type: 'friend', at: -1 }).type,
         nextExpiry: gameInvites.length ? Math.min(...gameInvites.map((invite) => Number(invite.sentAt) + GAME_INVITE_EXPIRY_MS)) : null
       };
     }
@@ -15776,19 +15836,21 @@ video {
       const badge = document.getElementById('inboxBadge');
       const button = document.getElementById('headerInboxBtn');
       clearTimeout(inboxBadgeExpiryTimer);
-      if (!badge || !currentUser || inboxBadgeUid !== currentUser.uid || inboxBadgeRequestData === null || inboxBadgeInviteData === null || inboxBadgeChallengeData === null) {
+      if (!badge || !currentUser || inboxBadgeUid !== currentUser.uid || inboxBadgeRequestData === null || inboxBadgeInviteData === null || inboxBadgeChallengeData === null || inboxBadgeActivityData === null) {
         badge?.classList.add('hidden');
         if (button) { button.setAttribute('aria-label', 'Inbox'); button.dataset.tip = 'Inbox'; }
         return;
       }
-      const summary = summarizeInboxNotifications(inboxBadgeRequestData, inboxBadgeInviteData, inboxBadgeChallengeData);
+      const summary = summarizeInboxNotifications(inboxBadgeRequestData, inboxBadgeInviteData, inboxBadgeChallengeData, inboxBadgeActivityData);
       badge.textContent = summary.count > 99 ? '99+' : String(summary.count);
       badge.classList.toggle('hidden', summary.count === 0);
       badge.classList.toggle('inbox-badge--friend', summary.count > 0 && summary.latestType === 'friend');
       badge.classList.toggle('inbox-badge--game', summary.count > 0 && summary.latestType === 'game');
       badge.classList.toggle('inbox-badge--challenge', summary.count > 0 && summary.latestType === 'challenge');
+      badge.classList.toggle('inbox-badge--rank', summary.count > 0 && summary.latestType === 'rank');
+      badge.classList.toggle('inbox-badge--shop', summary.count > 0 && summary.latestType === 'shop');
       if (button) {
-        const latestLabel = { friend: 'friend request', game: 'game invite', challenge: 'completed challenge' }[summary.latestType];
+        const latestLabel = { friend: 'friend request', game: 'game invite', challenge: 'completed challenge', rank: 'rank change', shop: 'shop purchase' }[summary.latestType];
         const label = summary.count ? `Inbox: ${summary.count} pending, newest is a ${latestLabel}` : 'Inbox';
         button.setAttribute('aria-label', label);
         button.dataset.tip = label;
@@ -15802,7 +15864,7 @@ video {
       inboxBadgeSubscriptions.forEach(({ ref, handler }) => ref.off('value', handler));
       inboxBadgeSubscriptions = [];
       clearTimeout(inboxBadgeExpiryTimer);
-      inboxBadgeRequestData = inboxBadgeInviteData = inboxBadgeChallengeData = null;
+      inboxBadgeRequestData = inboxBadgeInviteData = inboxBadgeChallengeData = inboxBadgeActivityData = null;
       inboxBadgeUid = user?.uid || null;
       refreshInboxBadge();
       if (!user || !firebaseAvailable) return;
@@ -15810,6 +15872,7 @@ video {
       const requestsRef = db.ref(`friendRequests/${uid}`);
       const invitesRef = db.ref(`gameInvites/${uid}`);
       const challengesRef = db.ref(`users/${uid}/challengeInbox`);
+      const activityRef = db.ref(`users/${uid}/activityInbox`);
       const onRequests = (snap) => {
         if (inboxBadgeUid !== uid) return;
         inboxBadgeRequestData = snap.val() || {};
@@ -15825,14 +15888,21 @@ video {
         inboxBadgeChallengeData = snap.val() || {};
         refreshInboxBadge();
       };
+      const onActivity = (snap) => {
+        if (inboxBadgeUid !== uid) return;
+        inboxBadgeActivityData = snap.val() || {};
+        refreshInboxBadge();
+      };
       inboxBadgeSubscriptions = [
         { ref: requestsRef, handler: onRequests },
         { ref: invitesRef, handler: onInvites },
-        { ref: challengesRef, handler: onChallenges }
+        { ref: challengesRef, handler: onChallenges },
+        { ref: activityRef, handler: onActivity }
       ];
       requestsRef.on('value', onRequests, (error) => console.warn('Friend request badge sync failed', error));
       invitesRef.on('value', onInvites, (error) => console.warn('Game invite badge sync failed', error));
       challengesRef.on('value', onChallenges, (error) => console.warn('Challenge mail badge sync failed', error));
+      activityRef.on('value', onActivity, (error) => console.warn('Activity mail badge sync failed', error));
     }
 
     // --- Leaderboard ------------------------------------------------------
@@ -21765,15 +21835,20 @@ video {
         const now = 1_000_000;
         const requests = { one: { name: 'Ash', sentAt: now - 3_000 } };
         const invites = { one: { fromName: 'Pavan', sentAt: now - 1_000 } };
-        assertEqual(summarizeInboxNotifications(requests, invites, {}, now).latestType, 'game', 'Newer game invite should turn the badge blue');
-        assertEqual(summarizeInboxNotifications(requests, invites, {}, now).count, 2, 'Both pending categories should count');
+        assertEqual(summarizeInboxNotifications(requests, invites, {}, {}, now).latestType, 'game', 'Newer game invite should turn the badge blue');
+        assertEqual(summarizeInboxNotifications(requests, invites, {}, {}, now).count, 2, 'Both pending categories should count');
         requests.two = { name: 'Pooja', sentAt: now - 500 };
-        assertEqual(summarizeInboxNotifications(requests, invites, {}, now).latestType, 'friend', 'Newer friend request should turn the badge green');
+        assertEqual(summarizeInboxNotifications(requests, invites, {}, {}, now).latestType, 'friend', 'Newer friend request should turn the badge green');
         const challenges = { burner: { name: 'Burner', reward: 50, completedAt: now - 100 } };
-        assertEqual(summarizeInboxNotifications(requests, invites, challenges, now).latestType, 'challenge', 'Newest completed challenge should turn the badge gold');
-        assertEqual(summarizeInboxNotifications(requests, invites, challenges, now).count, 4, 'Challenge mail should add to the pending total');
+        assertEqual(summarizeInboxNotifications(requests, invites, challenges, {}, now).latestType, 'challenge', 'Newest completed challenge should turn the badge gold');
+        assertEqual(summarizeInboxNotifications(requests, invites, challenges, {}, now).count, 4, 'Challenge mail should add to the pending total');
+        const activity = { promotion: { type: 'rank', sentAt: now - 80 }, item: { type: 'shop', sentAt: now - 40 } };
+        assertEqual(summarizeInboxNotifications(requests, invites, challenges, activity, now).latestType, 'shop', 'Newest shop purchase should turn the badge pink');
+        assertEqual(summarizeInboxNotifications(requests, invites, challenges, activity, now).count, 6, 'Rank and shop mail should count');
+        delete activity.item;
+        assertEqual(summarizeInboxNotifications(requests, invites, challenges, activity, now).latestType, 'rank', 'Newest rank change should turn the badge purple');
         invites.one.sentAt = now - GAME_INVITE_EXPIRY_MS - 1;
-        assertEqual(summarizeInboxNotifications({}, invites, {}, now).count, 0, 'Expired game invites should not keep the badge visible');
+        assertEqual(summarizeInboxNotifications({}, invites, {}, {}, now).count, 0, 'Expired game invites should not keep the badge visible');
       });
 
       // ---- STAGE 1: hamburger menu restructure + responsive presentation ----
@@ -22265,8 +22340,10 @@ video {
           assertTrue(!first.error, `${item.id} must be purchasable with enough Diamonds`);
           assertEqual(first.user.diamonds, 137, `${item.id} must deduct exactly its advertised cost`);
           assertEqual(first.user.ownedCosmetics[item.id], { purchasedAt: at, cost: item.cost }, `${item.id} ownership must be written in the same user transaction`);
+          assertEqual(first.user.activityInbox[`shop_${item.id}`], { type: 'shop', name: item.name, cost: item.cost, sentAt: at }, `${item.id} must create purchase mail in the same transaction`);
           const duplicate = calculateCosmeticPurchase(first.user, item, at + 1);
           assertEqual(duplicate.error, 'Already owned.', `${item.id} must never charge or purchase twice`);
+          assertEqual(Object.keys(first.user.activityInbox).length, 1, `${item.id} must create only one purchase mail`);
           const insufficient = calculateCosmeticPurchase({ diamonds: Math.max(0, item.cost - 1), ownedCosmetics: {} }, item, at);
           assertTrue(insufficient.error?.includes('Diamonds'), `${item.id} must explain an insufficient balance`);
           assertTrue(!insufficient.user, `${item.id} must not mutate ownership when funds are insufficient`);
@@ -23100,6 +23177,38 @@ video {
         assertEqual(stored.rankedStats.bestStreak, 1, 'Best streak must track the current one');
         assertEqual(stored.rankedStats.burnt, 3, "This match's burnt count must be added from the player's own gameStats");
         assertEqual(stored.rankedStats.jokersPlayed, 1, "This match's Jokers-played count must be added from the player's own gameStats");
+      });
+      await test('Ranked tier changes create one mail per completed match, for promotions and demotions', () => {
+        const originalDb = db;
+        try {
+          const runMatch = (startingRating, finishRank, matchId) => {
+            freshState({ isRanked: true, localPlayerId: 'p1', matchId });
+            state.players = [
+              makePlayer({ id: 'p1', uid: 'u1', rating: startingRating, finishRank }),
+              makePlayer({ id: 'p2', uid: 'u2', rating: startingRating, finishRank: finishRank === 1 ? 2 : 1 })
+            ];
+            let stored = { rating: startingRating, wins: 0, losses: 0 };
+            db = { ref: () => ({ transaction: (fn, cb) => {
+              const next = fn(stored);
+              if (next) stored = next;
+              cb(null, false, null);
+            } }) };
+            applyRankedRatingUpdate();
+            const first = stored.activityInbox && Object.values(stored.activityInbox);
+            applyRankedRatingUpdate();
+            assertEqual(Object.keys(stored.activityInbox || {}).length, first?.length || 0, 'Replaying the same match must not add mail');
+            return first || [];
+          };
+          const promoted = runMatch(999, 1, 'rank-promotion-test');
+          assertEqual(promoted.length, 1, 'Crossing into Silver must produce one mail');
+          assertEqual(promoted[0].fromTier, 'Bronze', 'Promotion must include previous tier');
+          assertEqual(promoted[0].toTier, 'Silver', 'Promotion must include new tier');
+          assertEqual(promoted[0].direction, 'up', 'Promotion must say up');
+          const demoted = runMatch(1001, 2, 'rank-demotion-test');
+          assertEqual(demoted.length, 1, 'Dropping into Bronze must produce one mail');
+          assertEqual(demoted[0].direction, 'down', 'Demotion must say down');
+          assertEqual(runMatch(700, 1, 'rank-same-tier-test').length, 0, 'Rating changes within a tier must not produce rank mail');
+        } finally { db = originalDb; }
       });
 
 
