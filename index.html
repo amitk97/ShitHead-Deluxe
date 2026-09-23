@@ -12860,8 +12860,15 @@ video {
         initChallengeEconomy(),
         db.ref(`shopPurchases/${currentUser.uid}/nameChangeToken`).once('value'),
         db.ref(`shopPurchases/${currentUser.uid}/cosmetics`).once('value'),
-        db.ref(`users/${currentUser.uid}/ownedCosmetics`).once('value')
-      ]).then(([, snap, cosmeticsSnap, ownedSnap]) => {
+        db.ref(`users/${currentUser.uid}/ownedCosmetics`).once('value'),
+        db.ref(`users/${currentUser.uid}`).once('value')
+      ]).then(([, snap, cosmeticsSnap, ownedSnap, userSnap]) => {
+        // Always reconcile the Shop with the canonical Firebase balance before
+        // rendering. This prevents a stale cached/header balance from disagreeing
+        // with the balance the purchase transaction will actually debit.
+        const canonicalUser = userSnap.val() || {};
+        challengeEconomy.diamonds = Number(canonicalUser.diamonds) || 0;
+        updateDiamondHeader();
         nameChangeTokenState = snap.val();
         cosmeticPurchaseState = { ...(cosmeticsSnap.val() || {}), ...(ownedSnap.val() || {}) };
         renderNameChangeToken();
@@ -13936,12 +13943,16 @@ video {
           // rather than faking only the header value. The marker prevents purchases
           // from refilling the balance on later loads.
           const isAmitKTestAccount = String(profile.username || '').trim().toLowerCase() === 'amitk';
-          if (isAmitKTestAccount && !profile.amitKShopTestGrantV1Done) {
+          if (isAmitKTestAccount && !profile.amitKShopTestGrantV2Done) {
+            // V2 repairs test accounts where the old V1 marker was saved while
+            // the spendable balance later diverged from the header/cache.
             profile.diamonds = 999999;
             profile.amitKShopTestGrantV1Done = true;
+            profile.amitKShopTestGrantV2Done = true;
             return db.ref(`users/${currentUser.uid}`).update({
               diamonds: 999999,
-              amitKShopTestGrantV1Done: true
+              amitKShopTestGrantV1Done: true,
+              amitKShopTestGrantV2Done: true
             }).then(() => profile);
           }
           return profile;
