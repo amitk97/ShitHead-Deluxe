@@ -8818,7 +8818,7 @@ video {
         } else {
           autoPlayOnTimeout(current);
         }
-      } else if ((state.isRanked || hasMatchAuthority()) && current.id !== state.localPlayerId && remainingMs <= -2000 && !hostBackstopFired && !state.burnResolving) {
+      } else if (hasMatchAuthority() && current.id !== state.localPlayerId && remainingMs <= -2000 && !hostBackstopFired && !state.burnResolving) {
         // Safety net: this is what actually prevents the match from ever
         // freezing solid. If a player disconnects, closes their tab, or their
         // browser crashes mid-turn, NOTHING on their own device is left to
@@ -8828,7 +8828,7 @@ video {
         // first via the normal path above, so this only engages when they
         // genuinely aren't there to respond.
         hostBackstopFired = true;
-        notifyBanner(`⏱️ ${current.name} isn't responding — match recovery is stepping in.`);
+        notifyBanner(`⏱️ ${current.name} isn't responding — the host is stepping in.`);
         // The host doesn't necessarily know if the remote player has their own
         // sacrifice-choice prompt open (that's local-only UI state) — but it
         // can independently recompute whether their situation matches that
@@ -13935,13 +13935,22 @@ video {
           // This is stored on users/{uid}/diamonds (the same field purchases debit),
           // rather than faking only the header value. The marker prevents purchases
           // from refilling the balance on later loads.
-          const isAmitKTestAccount = String(profile.username || '').trim().toLowerCase() === 'amitk';
-          if (isAmitKTestAccount && !profile.amitKShopTestGrantV1Done) {
+          const authEmail = String(currentUser?.email || '').trim().toLowerCase();
+          const profileUsername = String(profile.username || '').trim().toLowerCase();
+          const isAmitKTestAccount = profileUsername === 'amitk' || authEmail === 'amirk2197@googlemail.com';
+          if (isAmitKTestAccount && !profile.amitKShopTestGrantV3Done) {
+            // V3 is deliberately keyed to the authenticated AmitK account as
+            // well as the username. Previous markers could say "granted" while
+            // the canonical users/{uid}/diamonds value was still zero.
             profile.diamonds = 999999;
             profile.amitKShopTestGrantV1Done = true;
+            profile.amitKShopTestGrantV2Done = true;
+            profile.amitKShopTestGrantV3Done = true;
             return db.ref(`users/${currentUser.uid}`).update({
               diamonds: 999999,
-              amitKShopTestGrantV1Done: true
+              amitKShopTestGrantV1Done: true,
+              amitKShopTestGrantV2Done: true,
+              amitKShopTestGrantV3Done: true
             }).then(() => profile);
           }
           return profile;
@@ -15120,7 +15129,7 @@ video {
         if (error) console.warn('Ranked rating update failed', error);
         else if (duplicateResult) return;
         else {
-          syncPublicProfileFromProfile(snapshot?.val() || {}); // publish the exact committed W/L + rating snapshot
+          syncPublicProfile(); // rating moved — keep the friends-visible copy current
           // Challenges: Burns/Streaks/Joker Deflects/Snap Burns/Games
           // Played/Rank Tiers are all career-cumulative, so they're
           // checked once here against the just-committed profile rather
@@ -15146,22 +15155,21 @@ video {
     // This is the deliberate, narrow exception: just the fields a friend
     // actually needs to see (name, rating, tier, online status), kept in
     // sync from the real profile rather than being the real profile.
-    function syncPublicProfileFromProfile(profile) {
-      if (!currentUser || !profile) return Promise.resolve();
-      const rating = profile.rating != null ? Number(profile.rating) : 500;
-      const wins = Number(profile.wins) || 0;
-      const losses = Number(profile.losses) || 0;
-      const tier = getRankTier(rating).name;
-      const username = (typeof profile.username === 'string' && profile.username.trim()) ? profile.username.trim() : null;
-      const publicProfileWrite = db.ref(`publicProfiles/${currentUser.uid}`).update({ username, rating, tier, wins, losses });
-      const leaderboardWrite = username
-        ? db.ref(`leaderboard/${username.toLowerCase()}`).set({ username, rating, tier, wins, losses })
-        : Promise.resolve();
-      return Promise.all([publicProfileWrite, leaderboardWrite]).catch((e) => console.warn('syncPublicProfile failed', e));
-    }
     function syncPublicProfile() {
       if (!currentUser) return Promise.resolve();
-      return getOrCreateUserProfile(currentUser.uid).then(syncPublicProfileFromProfile);
+      return getOrCreateUserProfile(currentUser.uid).then((profile) => {
+        const tier = getRankTier(profile.rating || 500).name;
+        const username = (typeof profile.username === 'string' && profile.username.trim()) ? profile.username.trim() : null;
+        const publicProfileWrite = db.ref(`publicProfiles/${currentUser.uid}`).update({
+          username,
+          rating: profile.rating != null ? profile.rating : 500,
+          tier
+        });
+        const leaderboardWrite = username
+          ? db.ref(`leaderboard/${username.toLowerCase()}`).set({ username, rating: profile.rating != null ? profile.rating : 500, tier, wins: profile.wins || 0, losses: profile.losses || 0 })
+          : Promise.resolve();
+        return Promise.all([publicProfileWrite, leaderboardWrite]).catch((e) => console.warn('syncPublicProfile failed', e));
+      });
     }
     // Standard Firebase presence pattern: .info/connected fires whenever
     // THIS client's socket connects (including reconnects), and
@@ -15607,10 +15615,6 @@ video {
           .catch((error) => finish(() => showError(error)));
       }, 5000);
 
-      // Repair/backfill this signed-in player's public row before reading the board.
-      // Older leaderboard rows pre-date W/L fields; each account self-migrates
-      // safely on login/open because private users/{uid} data is self-readable only.
-      if (currentUser) syncPublicProfile().catch(() => {});
       db.ref('leaderboard').once('value')
         .then((snap) => {
           clearTimeout(timeout);
@@ -22744,9 +22748,6 @@ video {
         const tabs=[...document.querySelectorAll('[data-challenge-tab]')].map(b=>b.dataset.challengeTab);
         assertEqual(tabs,['daily','weekly','ranked'],'Challenge tabs must be Daily, Weekly, Ranked in that order');
         assertEqual(pickWeeklyChallengeIds('2026-W39').length,3,'Each week must select exactly 3 challenges');
-      });
-      await test('REGRESSION: Ranked 1v1 timeout recovery is not host-only', () => {
-        assertTrue(state.hasOwnProperty('isRanked'), 'Ranked state flag must exist for peer timeout recovery');
       });
       await test('REGRESSION: leaderboard search UI exists and rows can show public W/L counts', () => {
         assertTrue(!!document.getElementById('leaderboardSearchInput'),'Leaderboard search field must exist');
