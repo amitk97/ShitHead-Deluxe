@@ -595,7 +595,7 @@
       overflow: hidden;
     }
     .deck-count-badge {
-      position:absolute; right:4px; bottom:4px; z-index:10; min-width:28px;
+      position:absolute; left:50%; bottom:4px; transform:translateX(-50%); z-index:10; min-width:28px;
       padding:2px 6px; border-radius:999px;
       background:rgba(2,6,23,.94); border:1px solid rgba(251,191,36,.82);
       color:#fde68a; font-size:10px; font-weight:900; line-height:1.15;
@@ -891,6 +891,25 @@
     .card-zone-label--table[data-active-layer="down"] .active-layer { color:#fbbf24; text-shadow:0 0 8px rgba(251,191,36,.5); }
     .card-zone-label--table .inactive-layer { color:#94a3b8; font-weight:600; }
     .card-zone-label--hand { color:#fbbf24; }
+    /* Table labels sit directly on the table surface, which changes with
+       every table theme (Winter Wonderland is bright and busy). Give them
+       the same dark pill as the deck counter so they stay readable on any
+       theme; the border picks up the equipped theme's accent. */
+    :root { --table-label-border: rgba(148,163,184,.55); }
+    body[data-equipped-table-theme="table-casino"] { --table-label-border: rgba(212,175,55,.75); }
+    body[data-equipped-table-theme="table-winter"] { --table-label-border: rgba(186,230,253,.85); }
+    .table-label-pill {
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:2px 7px; border-radius:999px;
+      background:rgba(2,6,23,.94); border:1px solid var(--table-label-border);
+      box-shadow:0 2px 8px rgba(0,0,0,.62); line-height:1.15;
+    }
+    .card-zone-label.table-label-pill { padding:2px 8px; }
+    .card-zone-label--table.table-label-pill { padding:4px 7px; border-radius:10px; }
+    .empty-zone-pill { color:#6ee7b7; font-size:8px; letter-spacing:.08em; }
+    /* Deck and Base Card flank the pile: cancel the pill's padding + border
+       so their columns keep their old widths and the pile stays centred. */
+    .table-label-pill.layout-neutral { margin-inline:-8px; }
     /* Keep these panels inside the visible area below the persistent header.
        Their close buttons stay fixed in each panel while content scrolls. */
     #settingsModal, #themesModal, #shopModal, #rulesModal, #tutorialHubScreen {
@@ -4485,7 +4504,7 @@ video {
         </button>
         <div id="personalisationTableBody" class="settings-body pb-1 space-y-3">
           <div><div class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1">Table Themes</div><div id="personalisationTableThemes" class="grid grid-cols-2 gap-2"></div></div>
-          <div><div class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1">Burn Effects</div><div id="personalisationBurnEffects" class="grid grid-cols-2 gap-2"></div></div>
+          <div><div class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1">Burn Effects</div><div id="personalisationBurnStage" class="shop-preview-stage mb-2" data-shop-burn-stage><div class="shop-burn-core">🔥</div><span class="text-[8px] font-bold text-slate-400 pointer-events-none" style="position:absolute;left:0;right:0;bottom:6px;text-align:center;">Tap an effect to preview it</span></div><div id="personalisationBurnEffects" class="grid grid-cols-2 gap-2"></div></div>
           <div><div class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1">Victory Effects</div><div id="personalisationVictoryEffects" class="grid grid-cols-2 gap-2"></div></div>
           <div><div class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1">Emote Packs</div><div id="personalisationEmotes" class="grid grid-cols-2 gap-2"></div></div>
         </div>
@@ -4595,7 +4614,7 @@ video {
         <!-- Deck -->
         <div id="deckZone" class="flex flex-col items-center gap-0.5">
           <div id="drawPile" class="relative card-base rounded-xl flex items-center justify-center shadow-xl cursor-default transition-all" data-tip="Deck (Refills Hand to 3)"></div>
-          <span class="text-[9px] font-black uppercase tracking-widest text-emerald-400">Deck</span>
+          <span class="table-label-pill layout-neutral text-[9px] font-black uppercase tracking-widest text-emerald-400">Deck</span>
         </div>
 
         <!-- Discard / Active Pile -->
@@ -4609,7 +4628,7 @@ video {
             </div>
             <div id="discardPileContainer" data-drop-zone="discard" class="relative card-base rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer" data-tip="Click to inspect pile cards">
               <div id="emptyDiscardPlaceholder" class="w-full h-full border-2 border-dashed border-emerald-500/40 rounded-xl flex items-center justify-center text-[9px] font-bold uppercase tracking-wider text-emerald-500/60 text-center p-1">
-                Empty Pile
+                <span class="table-label-pill empty-zone-pill font-black">Empty Pile</span>
               </div>
               <div id="discardCardsWrapper" class="absolute inset-0 flex items-center justify-center pointer-events-none"></div>
             </div>
@@ -4630,7 +4649,7 @@ video {
             <span id="bottomCardValue" class="text-xs md:text-sm font-black text-slate-400">—</span>
             <span class="text-[7px] font-bold text-slate-600 uppercase tracking-wider text-center leading-none">Pile Base</span>
           </div>
-          <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Base Card</span>
+          <span class="table-label-pill layout-neutral text-[9px] font-black uppercase tracking-widest text-slate-300">Base Card</span>
         </div>
 
         <!-- Snap Burn Button: a normal flex sibling sitting to the RIGHT of
@@ -4784,7 +4803,7 @@ video {
       <!-- Table Slots Row (Face-Up Askew on Face-Down) -->
       <div id="localTableCardZone" class="w-full shrink-0 flex justify-center items-center relative isolate z-10 my-0.5" aria-label="Your face-down and face-up table cards">
         <div id="tableCardZoneLabels" class="card-zone-label-row card-zone-label-row--table" aria-hidden="true">
-          <span id="tableZoneLabel" class="card-zone-label card-zone-label--table" data-active-layer="up"><span id="faceUpZoneLabel" class="active-layer">Face-up</span><span id="faceDownZoneLabel" class="inactive-layer">Face-down</span></span>
+          <span id="tableZoneLabel" class="card-zone-label card-zone-label--table table-label-pill" data-active-layer="up"><span id="faceUpZoneLabel" class="active-layer">Face-up</span><span id="faceDownZoneLabel" class="inactive-layer">Face-down</span></span>
         </div>
         <div id="localTableSlots" class="relative z-10 flex gap-3 md:gap-4"></div>
 
@@ -4792,7 +4811,7 @@ video {
 
       <!-- Hand Row (Fanned Stack) -->
       <div id="localHandCardZone" class="w-full flex flex-col justify-center items-center relative isolate z-20 mt-0.5" aria-label="Cards currently in your hand">
-        <div class="card-zone-label-row" aria-hidden="true"><span id="handZoneLabel" class="card-zone-label card-zone-label--hand">Hand</span></div>
+        <div class="card-zone-label-row" aria-hidden="true"><span id="handZoneLabel" class="card-zone-label card-zone-label--hand table-label-pill">Hand</span></div>
         <!-- Fanned Hand Container -->
         <div id="localHand" data-drop-zone="hand" class="relative isolate z-20 flex flex-col items-center justify-end max-w-full overflow-x-auto px-4 pt-7 pb-1 custom-scrollbar min-h-[75px] max-h-[60vh]"></div>
       </div>
@@ -9524,6 +9543,18 @@ video {
       return rows;
     }
 
+    // render() rebuilds every card on each state change (a tap, a select, a
+    // bot move). The pop entrance starts at opacity 0, so replaying it on
+    // every rebuild made Face-Up cards briefly transparent and exposed the
+    // Face-Down card back beneath them. Only a card's first appearance pops.
+    const poppedCardIds = new Set();
+    function shouldPopCard(cardId) {
+      if (poppedCardIds.has(cardId)) return false;
+      if (poppedCardIds.size > 400) poppedCardIds.clear();
+      poppedCardIds.add(cardId);
+      return true;
+    }
+
     function createCardElement(card, isSelectable = false, isSelected = false, isLegal = false, isOpponent = false, isHand = false) {
       const el = document.createElement('div');
       el.dataset.cardId = card.id;
@@ -9542,7 +9573,7 @@ video {
       } else if (isLegal) {
         borderGlow = 'animate-legal-glow border-emerald-400';
       }
-      const handClass = isHand ? 'hand-card hand-card-stacked' : 'animate-card-pop transition-all duration-150';
+      const handClass = isHand ? 'hand-card hand-card-stacked' : `${shouldPopCard(card.id) ? 'animate-card-pop ' : ''}transition-all duration-150`;
       el.className = `relative ${sizeClass} rounded-xl bg-[var(--card-bg)] border-2 ${borderGlow} card-shadow p-1 flex flex-col justify-between cursor-pointer shrink-0 select-none overflow-hidden ${handClass}`;
       const suitClass = getSuitStyle(card.suit);
       
@@ -9943,7 +9974,7 @@ video {
 
       if (!state.drawPile || state.drawPile.length === 0) {
         drawPileEl.className = "relative card-base rounded-xl border-2 border-dashed border-emerald-500/40 flex items-center justify-center text-[9px] font-bold uppercase tracking-wider text-emerald-500/60 text-center p-1";
-        drawPileEl.innerHTML = "Empty Deck";
+        drawPileEl.innerHTML = '<span class="table-label-pill empty-zone-pill font-black">Empty Deck</span>';
       } else {
         drawPileEl.className = `relative card-base rounded-xl custom-card-back flex items-center justify-center shadow-xl cursor-default ${getThemeDeckBackClass()}`;
         drawPileEl.innerHTML = `
@@ -10135,7 +10166,9 @@ video {
             }
             if (tutorialWantsCard(faceUpCardAtSlot, 'faceUp')) upCard.classList.add('tutorial-glow');
             
-            // Layer askew over the face down card so both remain visible
+            // Layer askew over the face down card so both remain visible.
+            // Never fade in: any transparency shows the card back beneath.
+            upCard.classList.remove('animate-card-pop');
             upCard.classList.add('absolute', 'inset-0', 'card-face-up');
             if (hasDown) {
               upCard.style.transform = 'rotate(3deg) translate(2px, -3px)';
@@ -12681,14 +12714,25 @@ video {
     }
 
     function previewEquippedCosmetic(type, id) {
+      // Burn previews play in Custom's own contained stage. They used to fire
+      // on the hidden game table's pile and shake #gameTable, which knocked
+      // the open Custom panel aside (flashing the home screen) with nothing
+      // visible to show for it.
+      if (type === 'burnEffect') return playPersonalisationBurnPreview(id);
       if (!bigEffectsOn || id === 'default') return;
       if (type === 'victoryEffect') return playVictoryEffect(id);
-      if (type === 'burnEffect') {
-        const pile = document.getElementById('discardPileContainer');
-        if (!pile) return;
-        const rect = pile.getBoundingClientRect();
-        playBurnEffect(id, rect.left + rect.width / 2, rect.top + rect.height / 2);
-      }
+    }
+
+    function burnPreviewIcon(id) {
+      return id === 'burn-ice' ? '❄️' : id === 'burn-electric' ? '⚡' : '🔥';
+    }
+
+    function playPersonalisationBurnPreview(id) {
+      const stage = document.getElementById('personalisationBurnStage');
+      if (!stage) return false;
+      const core = stage.querySelector('.shop-burn-core');
+      if (core) core.textContent = burnPreviewIcon(id);
+      return playShopBurnPreview(id, stage);
     }
 
     function equipCosmetic(type, id, options = {}) {
@@ -12949,7 +12993,7 @@ video {
         const bg = item.id === 'table-winter' ? 'linear-gradient(145deg,#082f49,#0c4a6e 58%,#e0f2fe)' : 'radial-gradient(circle,#065f46,#022c22 68%,#d4af37)';
         demo = `<div class="shop-preview-stage"><div class="shop-table-preview" style="--shop-table-bg:${bg};--shop-table-trim:${item.tones[2]}"><span class="shop-table-preview-label">${item.name}</span><span class="shop-table-preview-card deck"></span><span class="shop-table-preview-card pile"></span><span class="shop-table-preview-card base"></span></div></div>`;
       } else if (type === 'burnEffect') {
-        demo = `<div class="shop-preview-stage" data-shop-burn-stage><div class="shop-burn-core">${item.id === 'burn-ice' ? '❄️' : item.id === 'burn-electric' ? '⚡' : '🔥'}</div></div>`;
+        demo = `<div class="shop-preview-stage" data-shop-burn-stage><div class="shop-burn-core">${burnPreviewIcon(item.id)}</div></div>`;
       } else if (type === 'victoryEffect') {
         demo = `<div class="shop-preview-stage"><div class="text-center"><div class="text-5xl">${item.id === 'victory-cards' ? '🃏' : item.id === 'victory-fireworks' ? '🎆' : '🎉'}</div><div class="text-[8px] text-slate-400 mt-1">Tap below to play the win animation</div></div></div>`;
       }
@@ -12961,7 +13005,10 @@ video {
       if (!stage) return false;
       stage.querySelectorAll('.shop-burn-particle').forEach(node => node.remove());
       const kind = id === 'burn-ice' ? 'ice' : id === 'burn-electric' ? 'electric' : '';
-      const palette = id === 'burn-ice' ? ['#e0f2fe','#7dd3fc','#38bdf8'] : id === 'burn-electric' ? ['#ffffff','#fde047','#22d3ee'] : ['#fbbf24','#fb7185','#c084fc','#22d3ee'];
+      const palette = id === 'burn-ice' ? ['#e0f2fe','#7dd3fc','#38bdf8']
+        : id === 'burn-electric' ? ['#ffffff','#fde047','#22d3ee']
+        : id === 'burn-coloured' ? ['#fbbf24','#fb7185','#c084fc','#22d3ee']
+        : ['#f97316','#fbbf24','#ef4444'];
       for (let index = 0; index < 18; index += 1) {
         const particle = document.createElement('span');
         particle.className = `shop-burn-particle ${kind}`.trim();
@@ -13021,6 +13068,9 @@ video {
       if (wasOpen) return;
       panel.innerHTML = shopCosmeticPreviewMarkup(item);
       panel.classList.remove('hidden');
+      // Burn effects play straight away so the preview shows the effect
+      // itself, not just a static icon; PLAY EFFECT replays it.
+      if (COSMETIC_CATEGORY_TYPES[item.category] === 'burnEffect') playShopBurnPreview(item.id, panel.querySelector('[data-shop-burn-stage]'));
       const button = document.querySelector(`[data-preview-cosmetic-id="${item.id}"]`);
       if (button) button.setAttribute('aria-expanded', 'true');
     }
@@ -19727,8 +19777,8 @@ video {
         ['handZoneLabel', 'tableZoneLabel'].forEach(id => {
           const label = document.getElementById(id);
           assertTrue(!!label, `${id} must exist`);
-          assertEqual(getComputedStyle(label).borderTopStyle, 'none', `${id} must have no border`);
-          assertEqual(getComputedStyle(label).backgroundColor, 'rgba(0, 0, 0, 0)', `${id} must have no background`);
+          // Labels carry a dark pill so they stay readable on every table theme.
+          assertTrue(getComputedStyle(label).backgroundColor !== 'rgba(0, 0, 0, 0)', `${id} must have a readable backing`);
         });
         assertEqual(getComputedStyle(document.getElementById('handZoneLabel')).position, 'static', 'Hand label must reserve its own row');
         assertEqual(getComputedStyle(document.getElementById('tableCardZoneLabels')).position, 'absolute', 'Table label must not affect card centring');
@@ -20424,6 +20474,43 @@ video {
         freshState({ drawPile: generateDeck().slice(0,36) });
         render();
         assertTrue(document.getElementById('drawPileCount')?.classList.contains('deck-count-badge'), 'Deck count must remain readable over custom backs');
+      });
+
+      await test('REGRESSION: the Deck count sits centred on the bottom edge of the deck', () => {
+        freshState({ drawPile: generateDeck().slice(0,36), players: [makePlayer({ id: 'p1', hand: [makeCard('4')] }), makePlayer({ id: 'p2', isBot: true })] });
+        render();
+        const badge = document.getElementById('drawPileCount').getBoundingClientRect();
+        const deck = document.getElementById('drawPile').getBoundingClientRect();
+        assertTrue(Math.abs((badge.left + badge.width / 2) - (deck.left + deck.width / 2)) <= 1, 'The Deck count must be horizontally centred on the deck');
+      });
+      await test('REGRESSION: tapping a card never exposes the card back under Face-Up cards', () => {
+        const local = makePlayer({ id: 'p1', hand: [makeCard('4','♦'), makeCard('6','♦')], faceUp: [makeCard('7','♠'), makeCard('J','♦'), makeCard('Q','♣')], faceDown: [makeCard('2'), makeCard('3'), makeCard('5')] });
+        freshState({ phase: 'SWAP', players: [local, makePlayer({ id: 'p2', name: 'Bot', isBot: true })] });
+        render();
+        render(); // a tap/select re-renders the whole table
+        const faceUps = [...document.querySelectorAll('#localTableSlots .card-face-up')];
+        assertEqual(faceUps.length, 3, 'All three Face-Up cards must render');
+        faceUps.forEach(el => assertTrue(!el.classList.contains('animate-card-pop'), 'Face-Up cards must never fade in over the Face-Down card back'));
+        const pileCard = makeCard('K','♠');
+        assertTrue(createCardElement(pileCard).classList.contains('animate-card-pop'), 'A card appearing for the first time may still pop in');
+        assertTrue(!createCardElement(pileCard).classList.contains('animate-card-pop'), 'Re-rendering the same card must not replay the fade-in');
+      });
+      await test('REGRESSION: previewing a burn effect in Custom plays in its own stage without shaking the table', () => {
+        const stage = document.getElementById('personalisationBurnStage');
+        assertTrue(!!stage, 'Custom must have a contained burn preview stage');
+        document.getElementById('gameTable').classList.remove('animate-screen-shake');
+        const particlesBefore = particles.length;
+        previewEquippedCosmetic('burnEffect', 'burn-ice');
+        assertTrue(stage.querySelectorAll('.shop-burn-particle').length > 0, 'The burn preview must play inside the Custom stage');
+        assertEqual(stage.querySelector('.shop-burn-core').textContent, '❄️', 'The stage must show the previewed effect');
+        assertTrue(!document.getElementById('gameTable').classList.contains('animate-screen-shake'), 'Previewing must not shake the game table behind Custom');
+        assertEqual(particles.length, particlesBefore, 'Previewing must not use the hidden gameplay particle canvas');
+      });
+      await test('REGRESSION: table labels keep a readable backing on every table theme', () => {
+        ['handZoneLabel', 'tableZoneLabel'].forEach(id => assertTrue(document.getElementById(id).classList.contains('table-label-pill'), `${id} needs the readable label pill`));
+        assertTrue(!!document.querySelector('#emptyDiscardPlaceholder .table-label-pill'), 'Empty Pile needs the readable label pill');
+        assertTrue(!!document.querySelector('#deckZone .table-label-pill'), 'Deck label needs the readable label pill');
+        assertTrue(!!document.querySelector('#baseCardHud > .table-label-pill'), 'Base Card label needs the readable label pill');
       });
 
       await test('Accessibility settings exist and apply', () => {
