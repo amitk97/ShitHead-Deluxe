@@ -13100,6 +13100,46 @@ video {
         }
       };
     }
+    // Firebase runs a transaction first against its local cache. Nothing keeps
+    // users/{uid} live-synced, so that first pass sees null. Returning
+    // undefined there aborts before the server balance is ever read (every
+    // purchase failed with "You need N Diamonds" despite a real balance), so
+    // null is handed back and Firebase re-runs the update with the server
+    // value. The outcome is reset on every pass so only the final one counts.
+    function createCosmeticPurchaseTransaction(item) {
+      const outcome = { error: null, purchase: null };
+      const update = (current) => {
+        outcome.error = null;
+        outcome.purchase = null;
+        if (current === null) return null;
+        const calculated = calculateCosmeticPurchase(current, item);
+        if (calculated.error) { outcome.error = calculated.error; return; }
+        outcome.purchase = calculated.purchase;
+        return calculated.user;
+      };
+      return { update, outcome };
+    }
+    function createNameChangeTokenTransaction(purchasedAt = Date.now()) {
+      const outcome = { error: null, record: null };
+      const update = (current) => {
+        outcome.error = null;
+        outcome.record = null;
+        if (current === null) return null;
+        const user = current;
+        if (user.nameChangeToken) { outcome.error = 'This lifetime item has already been purchased.'; return; }
+        const balance = Number(user.diamonds) || 0;
+        if (balance < NAME_CHANGE_TOKEN_COST) { outcome.error = 'You need 100 Diamonds to buy this token.'; return; }
+        outcome.record = { purchasedAt, cost: NAME_CHANGE_TOKEN_COST };
+        return {
+          ...user, diamonds: balance - NAME_CHANGE_TOKEN_COST, nameChangeToken: outcome.record,
+          activityInbox: {
+            ...(user.activityInbox || {}),
+            name_change_token: { type: 'shop', name: 'Name Change Token', cost: NAME_CHANGE_TOKEN_COST, sentAt: purchasedAt }
+          }
+        };
+      };
+      return { update, outcome };
+    }
     document.getElementById('nameTokenBuyBtn').addEventListener('click', () => {
       if (!currentUser) { document.getElementById('shopModal').classList.add('hidden'); openAuthModal(); return; }
       if (nameChangeTokenState) return;
@@ -13107,24 +13147,10 @@ video {
       btn.disabled = true;
       btn.textContent = 'Purchasing…';
       const uid = currentUser.uid;
-      let tokenError = null;
-      let tokenRecord = null;
-      db.ref(`users/${uid}`).transaction(current => {
-        const user = current || {};
-        if (user.nameChangeToken) { tokenError = 'This lifetime item has already been purchased.'; return; }
-        const balance = Number(user.diamonds) || 0;
-        if (balance < NAME_CHANGE_TOKEN_COST) { tokenError = 'You need 100 Diamonds to buy this token.'; return; }
-        tokenRecord = { purchasedAt: Date.now(), cost: NAME_CHANGE_TOKEN_COST };
-        return {
-          ...user, diamonds: balance - NAME_CHANGE_TOKEN_COST, nameChangeToken: tokenRecord,
-          activityInbox: {
-            ...(user.activityInbox || {}),
-            name_change_token: { type: 'shop', name: 'Name Change Token', cost: NAME_CHANGE_TOKEN_COST, sentAt: tokenRecord.purchasedAt }
-          }
-        };
-      }).then(result => {
-        if (!result.committed) throw new Error(tokenError || 'Purchase could not be committed.');
-        db.ref(`shopPurchases/${uid}/nameChangeToken`).set(tokenRecord).catch(() => {});
+      const tokenTx = createNameChangeTokenTransaction();
+      db.ref(`users/${uid}`).transaction(tokenTx.update).then(result => {
+        if (!result.committed || !tokenTx.outcome.record) throw new Error(tokenTx.outcome.error || 'Purchase could not be committed.');
+        db.ref(`shopPurchases/${uid}/nameChangeToken`).set(tokenTx.outcome.record).catch(() => {});
         return { balance: Number(result.snapshot.val()?.diamonds) || 0 };
       }).then(({ balance }) => {
         challengeEconomy.diamonds = balance;
@@ -13215,18 +13241,13 @@ video {
       btn.disabled = true;
       btn.textContent = 'BUYING…';
       const uid = currentUser.uid;
-      let purchaseError = null;
-      let committedPurchase = null;
       // Balance and canonical ownership now live in one user-node transaction.
       // Concurrent tabs are retried against the newest balance, so two items can
       // never be obtained while only one debit survives.
-      db.ref(`users/${uid}`).transaction(current => {
-        const calculated = calculateCosmeticPurchase(current, item);
-        if (calculated.error) { purchaseError = calculated.error; return; }
-        committedPurchase = calculated.purchase;
-        return calculated.user;
-      }).then(result => {
-        if (!result.committed) throw new Error(purchaseError || 'Purchase could not be committed.');
+      const purchaseTx = createCosmeticPurchaseTransaction(item);
+      db.ref(`users/${uid}`).transaction(purchaseTx.update).then(result => {
+        const committedPurchase = purchaseTx.outcome.purchase;
+        if (!result.committed || !committedPurchase) throw new Error(purchaseTx.outcome.error || 'Purchase could not be committed.');
         const updatedUser = result.snapshot.val() || {};
         // Legacy mirror keeps older clients able to display the purchase; the
         // canonical, atomic ownership record is users/{uid}/ownedCosmetics.
@@ -23284,6 +23305,36 @@ video {
         assertTrue(!!first.user.ownedCosmetics[item.id],'Ownership must be recorded in the same atomic result');
         assertTrue(!!calculateCosmeticPurchase({diamonds:249,ownedCosmetics:{}},item,123).error,'Insufficient balance must not produce a purchasable user state');
         assertTrue(!!calculateCosmeticPurchase(first.user,item,124).error,'A second purchase of an already-owned cosmetic must be rejected');
+      });
+      await test('REGRESSION: Shop purchases survive Firebase\'s null first transaction pass', () => {
+        // Mirrors the Realtime Database client: the update runs against the
+        // local cache (null without a live listener); returning undefined
+        // aborts, otherwise it re-runs against the server value.
+        const runLikeFirebase = (update, server) => {
+          if (update(null) === undefined) return { committed: false };
+          const value = update(server);
+          return value === undefined ? { committed: false } : { committed: true, value };
+        };
+        const item = COSMETIC_SHOP_ITEMS.find(entry => entry.id === 'back-midnight');
+        const server = { username: 'AmitK', diamonds: 999999, ownedCosmetics: {} };
+        const cosmeticTx = createCosmeticPurchaseTransaction(item);
+        const bought = runLikeFirebase(cosmeticTx.update, server);
+        assertTrue(bought.committed, 'A 999,999 balance must be able to buy Midnight Royale');
+        assertEqual(bought.value.diamonds, 999999 - item.cost, 'The real server balance must be debited');
+        assertTrue(!!bought.value.ownedCosmetics[item.id], 'Ownership must be recorded');
+        assertEqual(cosmeticTx.outcome.error, null, 'The null first pass must not leave a stale error');
+        assertTrue(!!cosmeticTx.outcome.purchase, 'The final pass must report the purchase');
+        const broke = createCosmeticPurchaseTransaction(item);
+        assertTrue(!runLikeFirebase(broke.update, { diamonds: item.cost - 1 }).committed, 'An insufficient server balance must still abort');
+        assertTrue(broke.outcome.error?.includes('Diamonds'), 'An insufficient server balance must explain why');
+        const missing = createCosmeticPurchaseTransaction(item);
+        runLikeFirebase(missing.update, null);
+        assertTrue(!missing.outcome.purchase, 'A missing user node must never be reported as a purchase');
+        const tokenTx = createNameChangeTokenTransaction(123);
+        const token = runLikeFirebase(tokenTx.update, { diamonds: 999999 });
+        assertTrue(token.committed, 'A 999,999 balance must be able to buy the Name Change Token');
+        assertEqual(token.value.diamonds, 999899, 'The token must debit exactly 100 from the server balance');
+        assertEqual(tokenTx.outcome.record, { purchasedAt: 123, cost: 100 }, 'The final pass must report the token record');
       });
       await test('REGRESSION: Shop buy buttons enter an in-flight disabled state before Firebase purchase completion', () => {
         const src=document.getElementById('cosmeticShopList');
