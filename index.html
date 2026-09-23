@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-23-v105 (ShitHead-Deluxe-105) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-23-v107 (ShitHead-Deluxe-107) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -219,6 +219,8 @@
     .hamburger-btn.open .hamburger-bars span:nth-child(1) { transform: translateY(5px) rotate(45deg); }
     .hamburger-btn.open .hamburger-bars span:nth-child(2) { opacity: 0; }
     .hamburger-btn.open .hamburger-bars span:nth-child(3) { transform: translateY(-5px) rotate(-45deg); }
+    #inboxBadge.inbox-badge--friend { background-color:#10b981; }
+    #inboxBadge.inbox-badge--game { background-color:#0ea5e9; }
     /* STAGE 1 — Menu structure and responsive presentation.
        Mobile default: a slide-up bottom sheet, anchored to the bottom edge.
        Desktop (min-width: 768px, matching Tailwind's own md: breakpoint
@@ -3473,7 +3475,7 @@ video {
       <button id="multiSelectToggleBtn" class="h-7 flex items-center justify-center bg-transparent hover:brightness-125 rounded transition tip-below" style="width:1.75rem;" data-tip="Select all of a rank: OFF (S)" aria-label="Select all of a rank: OFF (S)"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-select-rank"/></svg></button>
       <button id="headerInboxBtn" class="relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Inbox" data-tip="Inbox">
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-mail"/></svg>
-        <span id="inboxBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 flex items-center justify-center rounded-full bg-rose-600 text-white text-[8px] font-black leading-none">0</span>
+        <span id="inboxBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 flex items-center justify-center rounded-full inbox-badge--friend text-white text-[8px] font-black leading-none">0</span>
       </button>
       <!-- Rightmost/outermost element on purpose — the desktop dropdown's
            own fixed `right: 12px` anchor (see the #hamburgerDrawer CSS)
@@ -13665,11 +13667,12 @@ video {
         syncNicknameFromAccount();
         refreshDifficultyLocks();
         if (user) {
-          ensureUsername(); syncPublicProfile(); setupPresence(); refreshInboxBadge(); attemptRankedReconnect();
+          ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); attemptRankedReconnect();
           initChallengeEconomy(); loadCosmeticCollection(user);
           // Preferences live under the account and do not depend on profile creation.
           loadAccountSettings(user);
         } else {
+          startInboxBadgeListener(null);
           document.getElementById('inboxBadge')?.classList.add('hidden');
           initChallengeEconomy(); loadCosmeticCollection(null);
         }
@@ -15719,23 +15722,75 @@ video {
         db.ref(`gameInvites/${currentUser.uid}/${btn.dataset.id}`).remove().then(renderInbox).catch((e) => console.warn('decline invite failed', e));
       }
     });
+    let inboxBadgeSubscriptions = [];
+    let inboxBadgeRequestData = null;
+    let inboxBadgeInviteData = null;
+    let inboxBadgeUid = null;
+    let inboxBadgeExpiryTimer = null;
+
+    function summarizeInboxNotifications(requests, invites, now = Date.now()) {
+      const friendRequests = Object.values(requests || {}).filter((request) => request && typeof request === 'object');
+      const gameInvites = Object.values(invites || {}).filter((invite) => {
+        const sentAt = Number(invite?.sentAt);
+        return Number.isFinite(sentAt) && sentAt > 0 && sentAt <= now + 60_000 && now - sentAt <= GAME_INVITE_EXPIRY_MS;
+      });
+      const newestFriend = Math.max(0, ...friendRequests.map((request) => Number(request.sentAt) || 0));
+      const newestGame = Math.max(0, ...gameInvites.map((invite) => Number(invite.sentAt) || 0));
+      return {
+        count: friendRequests.length + gameInvites.length,
+        latestType: gameInvites.length && (!friendRequests.length || newestGame > newestFriend) ? 'game' : 'friend',
+        nextExpiry: gameInvites.length ? Math.min(...gameInvites.map((invite) => Number(invite.sentAt) + GAME_INVITE_EXPIRY_MS)) : null
+      };
+    }
+
     function refreshInboxBadge() {
       const badge = document.getElementById('inboxBadge');
-      if (!badge) return;
-      if (!currentUser) { badge.classList.add('hidden'); return; }
-      Promise.all([
-        db.ref(`friendRequests/${currentUser.uid}`).once('value'),
-        db.ref(`gameInvites/${currentUser.uid}`).once('value')
-      ]).then(([reqSnap, invSnap]) => {
-        const now = Date.now();
-        const reqCount = Object.keys(reqSnap.val() || {}).length;
-        const invData = invSnap.val() || {};
-        const expired = new Set(cleanupExpiredInvites(invData));
-        const invCount = Object.keys(invData).filter((id) => !expired.has(id) && now - Number(invData[id].sentAt) <= GAME_INVITE_EXPIRY_MS).length;
-        const total = reqCount + invCount;
-        badge.textContent = total;
-        badge.classList.toggle('hidden', total === 0);
-      }).catch(() => {});
+      const button = document.getElementById('headerInboxBtn');
+      clearTimeout(inboxBadgeExpiryTimer);
+      if (!badge || !currentUser || inboxBadgeUid !== currentUser.uid || inboxBadgeRequestData === null || inboxBadgeInviteData === null) {
+        badge?.classList.add('hidden');
+        if (button) { button.setAttribute('aria-label', 'Inbox'); button.dataset.tip = 'Inbox'; }
+        return;
+      }
+      const summary = summarizeInboxNotifications(inboxBadgeRequestData, inboxBadgeInviteData);
+      badge.textContent = summary.count > 99 ? '99+' : String(summary.count);
+      badge.classList.toggle('hidden', summary.count === 0);
+      badge.classList.toggle('inbox-badge--friend', summary.count > 0 && summary.latestType === 'friend');
+      badge.classList.toggle('inbox-badge--game', summary.count > 0 && summary.latestType === 'game');
+      if (button) {
+        const label = summary.count ? `Inbox: ${summary.count} pending, newest is a ${summary.latestType === 'friend' ? 'friend request' : 'game invite'}` : 'Inbox';
+        button.setAttribute('aria-label', label);
+        button.dataset.tip = label;
+      }
+      if (summary.nextExpiry !== null) {
+        inboxBadgeExpiryTimer = setTimeout(refreshInboxBadge, Math.max(50, summary.nextExpiry - Date.now() + 50));
+      }
+    }
+
+    function startInboxBadgeListener(user) {
+      inboxBadgeSubscriptions.forEach(({ ref, handler }) => ref.off('value', handler));
+      inboxBadgeSubscriptions = [];
+      clearTimeout(inboxBadgeExpiryTimer);
+      inboxBadgeRequestData = inboxBadgeInviteData = null;
+      inboxBadgeUid = user?.uid || null;
+      refreshInboxBadge();
+      if (!user || !firebaseAvailable) return;
+      const uid = user.uid;
+      const requestsRef = db.ref(`friendRequests/${uid}`);
+      const invitesRef = db.ref(`gameInvites/${uid}`);
+      const onRequests = (snap) => {
+        if (inboxBadgeUid !== uid) return;
+        inboxBadgeRequestData = snap.val() || {};
+        refreshInboxBadge();
+      };
+      const onInvites = (snap) => {
+        if (inboxBadgeUid !== uid) return;
+        inboxBadgeInviteData = snap.val() || {};
+        refreshInboxBadge();
+      };
+      inboxBadgeSubscriptions = [{ ref: requestsRef, handler: onRequests }, { ref: invitesRef, handler: onInvites }];
+      requestsRef.on('value', onRequests, (error) => console.warn('Friend request badge sync failed', error));
+      invitesRef.on('value', onInvites, (error) => console.warn('Game invite badge sync failed', error));
     }
 
     // --- Leaderboard ------------------------------------------------------
@@ -21663,6 +21718,17 @@ video {
         assertTrue(!document.getElementById('menuInboxBtn'), 'The old hamburger-drawer Inbox entry must be gone');
         assertTrue(!!document.getElementById('headerInboxBtn'), 'A header Inbox button must exist');
         assertTrue(!!document.getElementById('inboxBadge'), 'The unread-count badge must still exist under its same id, wherever it now lives');
+      });
+      await test('REGRESSION: Inbox badge uses the latest pending notification category', () => {
+        const now = 1_000_000;
+        const requests = { one: { name: 'Ash', sentAt: now - 3_000 } };
+        const invites = { one: { fromName: 'Pavan', sentAt: now - 1_000 } };
+        assertEqual(summarizeInboxNotifications(requests, invites, now).latestType, 'game', 'Newer game invite should turn the badge blue');
+        assertEqual(summarizeInboxNotifications(requests, invites, now).count, 2, 'Both pending categories should count');
+        requests.two = { name: 'Pooja', sentAt: now - 500 };
+        assertEqual(summarizeInboxNotifications(requests, invites, now).latestType, 'friend', 'Newer friend request should turn the badge green');
+        invites.one.sentAt = now - GAME_INVITE_EXPIRY_MS - 1;
+        assertEqual(summarizeInboxNotifications({}, invites, now).count, 0, 'Expired game invites should not keep the badge visible');
       });
 
       // ---- STAGE 1: hamburger menu restructure + responsive presentation ----
