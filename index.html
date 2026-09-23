@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-23-v104 (ShitHead-Deluxe-104) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-23-v105 (ShitHead-Deluxe-105) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -545,6 +545,13 @@
       position: relative;
       overflow: hidden;
     }
+    .deck-count-badge {
+      position:relative; z-index:6; min-width:28px;
+      padding:2px 6px; border-radius:999px;
+      background:rgba(2,6,23,.94); border:1px solid rgba(251,191,36,.82);
+      color:#fde68a; font-size:10px; font-weight:900; line-height:1.15;
+      text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.62);
+    }
     .custom-card-back::before {
       content: '';
       position: absolute;
@@ -654,10 +661,17 @@
     /* Deck themes are choices, not full-size gameplay exhibits. Keep them
        consistent with every other compact Personalisation option. */
     #themesGridArea { gap:.5rem; }
-    #themesGridArea .theme-option-card { min-height:76px; padding:.5rem; flex-direction:row; justify-content:flex-start; text-align:left; }
-    #themesGridArea .theme-option-preview { width:32px; height:46px; flex:none; border-radius:.5rem; }
-    #themesGridArea .theme-option-copy { min-width:0; flex:1; }
-    #themesGridArea .theme-option-action { width:auto; min-width:76px; padding:.3rem .55rem; }
+    #themesGridArea .theme-option-card {
+      min-height:82px; padding:.5rem; text-align:left;
+      display:grid !important;
+      grid-template-columns:38px minmax(0,1fr);
+      grid-template-rows:auto auto;
+      grid-template-areas:"preview copy" "preview action";
+      column-gap:.5rem; row-gap:.35rem; align-items:center;
+    }
+    #themesGridArea .theme-option-preview { grid-area:preview; width:32px; height:46px; flex:none; border-radius:.5rem; }
+    #themesGridArea .theme-option-copy { grid-area:copy; min-width:0; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    #themesGridArea .theme-option-action { grid-area:action; width:100%; min-width:0; max-width:100%; padding:.3rem .35rem; justify-self:stretch; white-space:nowrap; }
 
     /* Shop previews are self-contained. They deliberately do not reuse the
        full-screen gameplay particle canvas, so trying an effect can never
@@ -3498,7 +3512,7 @@ video {
     <nav class="p-2 space-y-1">
       <button id="menuProfileBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-profile"/></svg></span><span>Profile</span></button>
       <button id="menuStatsBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-stats"/></svg></span><span>Stats</span></button>
-      <button id="menuThemesBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg></span><span>Personalisation</span></button>
+      <button id="menuThemesBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg></span><span>Custom</span></button>
       <button id="menuFriendsBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-friends"/></svg></span><span>Friends</span></button>
       <button id="menuLeaderboardBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-leaderboard"/></svg></span><span>Leaderboard</span></button>
       <button id="menuChallengesBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-challenges"/></svg></span><span>Challenges</span></button>
@@ -3540,16 +3554,16 @@ video {
             <span class="settings-chev absolute text-slate-400 text-[10px] transition-transform" style="right:0;">&#9660;</span>
           </button>
           <div id="deckThemeBody" class="grid grid-cols-4 gap-2">
-            <button id="lobbyProfileShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-amber-500 bg-slate-900 font-bold hover:border-amber-400 transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Profile">
+            <button id="lobbyProfileShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Profile">
               <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-profile"/></svg><span>Profile</span>
             </button>
-            <button id="lobbyPersonalisationShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-emerald-950 font-bold hover:border-amber-400 transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Personalisation">
-              <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg><span>Personalisation</span>
+            <button id="lobbyPersonalisationShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Custom">
+              <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg><span>Custom</span>
             </button>
-            <button id="lobbyGuideShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-indigo-950 font-bold hover:border-amber-400 transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Guide and Strategy">
+            <button id="lobbyGuideShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Guide and Strategy">
               <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg><span>Guide</span>
             </button>
-            <button id="lobbySettingsShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-rose-950 font-bold hover:border-amber-400 transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Settings">
+            <button id="lobbySettingsShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Settings">
               <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg><span>Settings</span>
             </button>
           </div>
@@ -4395,7 +4409,7 @@ video {
   <div id="themesModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:85vh; display:flex; flex-direction:column;">
       <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
-        <span class="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-amber-400"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg><span>Personalisation</span></span>
+        <span class="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-amber-400"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg><span>Custom</span></span>
         <button id="themesCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
       <div class="overflow-y-auto pr-1" style="flex:1;">
@@ -9883,7 +9897,7 @@ video {
         drawPileEl.innerHTML = `
           <div class="flex flex-col items-center justify-center pointer-events-none">
             ${getEmblemSvg()}
-            <span id="drawPileCount" class="font-mono text-[10px] font-black text-amber-300 mt-0.5">${state.drawPile.length}</span>
+            <span id="drawPileCount" class="deck-count-badge mt-1">${state.drawPile.length}</span>
           </div>
         `;
       }
@@ -10016,7 +10030,7 @@ video {
             // yet. Lets the tutorial spotlight "the middle card" precisely
             // without spoiling what's actually there.
             downCard.dataset.slot = i;
-            downCard.innerHTML = getEmblemSvg();
+            downCard.innerHTML = hasUp ? '' : getEmblemSvg();
             if (canAccessFaceDown(local) && isMyTurn) {
               downCard.classList.add('animate-legal-glow', 'border-emerald-400');
               if (tutorialActive && TUTORIAL_STEPS[tutorialStep]?.require?.blind) {
@@ -10408,6 +10422,7 @@ video {
       document.getElementById('lobbySpeedSlider').value = state.speedIndex;
       try { localStorage.setItem('shithead_speed_index', String(state.speedIndex)); } catch (e) {}
       saveGameState();
+      scheduleSettingsCloudSave();
     }
 
     function returnToHomeScreen() {
@@ -13272,6 +13287,87 @@ video {
     // from what Firebase actually thinks is signed in.
     let currentUser = null;
     let authMode = 'signin'; // 'signin' | 'signup'
+    let applyingAccountSettings = false;
+    let settingsCloudSaveTimer = null;
+
+    function collectAccountSettings() {
+      return {
+        speedIndex: Number.isInteger(state?.speedIndex) ? state.speedIndex : DEFAULT_SPEED_INDEX,
+        selectAllOfRank: !!selectAllOfRank,
+        masterVolume: Math.max(0, Math.min(100, Number(masterVolume) || 0)),
+        showCardIcons: !!showCardIcons,
+        highContrast: !!highContrast,
+        hideHelperIcons: !!hideHelperIcons,
+        reduceMotion: !!reduceMotion,
+        bigEffectsOn: !!bigEffectsOn,
+        hapticsOn: !!hapticsOn,
+        dealAnimationOn: !!dealAnimationOn,
+        emotesMuted: !!emotesMuted
+      };
+    }
+
+    function applyAccountSettings(settings) {
+      if (!settings || typeof settings !== 'object') return;
+      applyingAccountSettings = true;
+      try {
+        const speed = Number(settings.speedIndex);
+        if (Number.isInteger(speed) && speed >= 0 && speed < SPEED_PRESETS.length) updateSpeedByIndex(speed);
+
+        if (typeof settings.selectAllOfRank === 'boolean') {
+          selectAllOfRank = settings.selectAllOfRank;
+          try { localStorage.setItem('shithead_select_all_rank', selectAllOfRank ? '1' : '0'); } catch (e) {}
+        }
+        if (Number.isFinite(Number(settings.masterVolume))) {
+          masterVolume = Math.max(0, Math.min(100, Number(settings.masterVolume)));
+          try { localStorage.setItem('shithead_volume', String(masterVolume)); } catch (e) {}
+        }
+        const boolPrefs = [
+          ['showCardIcons','shithead_card_icons',v => { showCardIcons=v; }],
+          ['highContrast','shithead_high_contrast',v => { highContrast=v; }],
+          ['hideHelperIcons','shithead_hide_helpers',v => { hideHelperIcons=v; }],
+          ['reduceMotion','shithead_reduce_motion',v => { reduceMotion=v; }],
+          ['bigEffectsOn','shithead_big_effects',v => { bigEffectsOn=v; }],
+          ['hapticsOn','shithead_haptics',v => { hapticsOn=v; }],
+          ['dealAnimationOn','shithead_deal_animation',v => { dealAnimationOn=v; }],
+          ['emotesMuted','shithead_emotes_muted',v => { emotesMuted=v; }]
+        ];
+        boolPrefs.forEach(([key, storageKey, assign]) => {
+          if (typeof settings[key] !== 'boolean') return;
+          assign(settings[key]);
+          try { localStorage.setItem(storageKey, settings[key] ? '1' : '0'); } catch (e) {}
+        });
+        updateMultiSelectToggleUI();
+        applyAccessibilityPrefs();
+        refreshSettingsUI();
+        if (typeof render === 'function' && state?.phase && state.phase !== 'LOBBY') render();
+      } finally {
+        applyingAccountSettings = false;
+      }
+    }
+
+    function loadAccountSettings(user = currentUser) {
+      if (!user || !firebaseAvailable) return Promise.resolve();
+      const ref = db.ref(`users/${user.uid}/settings`);
+      return ref.once('value').then((snap) => {
+        const saved = snap.val();
+        if (saved && typeof saved === 'object') {
+          applyAccountSettings(saved);
+          return;
+        }
+        return ref.set({ ...collectAccountSettings(), updatedAt: firebase.database.ServerValue.TIMESTAMP });
+      }).catch((error) => console.warn('Account settings sync failed', error));
+    }
+
+    function scheduleSettingsCloudSave() {
+      if (!currentUser || !firebaseAvailable || applyingAccountSettings) return;
+      clearTimeout(settingsCloudSaveTimer);
+      settingsCloudSaveTimer = setTimeout(() => {
+        db.ref(`users/${currentUser.uid}/settings`).set({
+          ...collectAccountSettings(),
+          updatedAt: firebase.database.ServerValue.TIMESTAMP
+        }).catch((error) => console.warn('Account settings save failed', error));
+      }, 180);
+    }
 
     // STAGE 5 — Profile & Account page logic.
     function refreshProfilePanel() {
@@ -13561,8 +13657,14 @@ video {
         refreshRankedUI();
         syncNicknameFromAccount();
         refreshDifficultyLocks();
-        if (user) { ensureUsername(); syncPublicProfile(); setupPresence(); refreshInboxBadge(); attemptRankedReconnect(); initChallengeEconomy(); loadCosmeticCollection(user); }
-        else { document.getElementById('inboxBadge')?.classList.add('hidden'); initChallengeEconomy(); loadCosmeticCollection(null); }
+        if (user) {
+          ensureUsername(); syncPublicProfile(); setupPresence(); refreshInboxBadge(); attemptRankedReconnect();
+          initChallengeEconomy(); loadCosmeticCollection(user);
+          getOrCreateUserProfile(user.uid).then(() => loadAccountSettings(user));
+        } else {
+          document.getElementById('inboxBadge')?.classList.add('hidden');
+          initChallengeEconomy(); loadCosmeticCollection(null);
+        }
       });
       // Google uses signInWithRedirect rather than signInWithPopup — popups
       // are unreliable on mobile browsers specifically because of
@@ -15806,14 +15908,14 @@ video {
     document.getElementById('setIconsRow').addEventListener('click', () => {
       showCardIcons = !showCardIcons;
       try { localStorage.setItem('shithead_card_icons', showCardIcons ? '1' : '0'); } catch (e) {}
-      refreshSettingsUI(); render();
+      refreshSettingsUI(); render(); scheduleSettingsCloudSave();
     });
     document.getElementById('setRankRow').addEventListener('click', () => {
       const newValue = !selectAllOfRank;
       if (!newValue && !tutorialAllowToggleOff()) return;
       selectAllOfRank = newValue;
       state.selectedPlayCardIds = [];
-      updateMultiSelectToggleUI(); refreshSettingsUI(); render();
+      updateMultiSelectToggleUI(); refreshSettingsUI(); render(); scheduleSettingsCloudSave();
     });
     document.getElementById('setFullscreenRow').addEventListener('click', () => {
       toggleFullscreen();
@@ -15883,7 +15985,7 @@ video {
       if (masterVolume > 0) { volumeBeforeMute = masterVolume; masterVolume = 0; }
       else { masterVolume = volumeBeforeMute || 85; }
       try { localStorage.setItem('shithead_volume', String(masterVolume)); } catch (e) {}
-      applyAccessibilityPrefs(); refreshSettingsUI();
+      applyAccessibilityPrefs(); refreshSettingsUI(); scheduleSettingsCloudSave();
     });
 
     document.getElementById('speedResetBtn').addEventListener('click', () => {
@@ -15894,33 +15996,34 @@ video {
 
     document.getElementById('setContrastRow').addEventListener('click', () => {
       highContrast = !highContrast; writePref('shithead_high_contrast', highContrast);
-      applyAccessibilityPrefs(); refreshSettingsUI(); render();
+      applyAccessibilityPrefs(); refreshSettingsUI(); render(); scheduleSettingsCloudSave();
     });
     document.getElementById('setHideHelpersRow').addEventListener('click', () => {
       hideHelperIcons = !hideHelperIcons; writePref('shithead_hide_helpers', hideHelperIcons);
-      applyAccessibilityPrefs(); refreshSettingsUI();
+      applyAccessibilityPrefs(); refreshSettingsUI(); scheduleSettingsCloudSave();
     });
     document.getElementById('setMotionRow').addEventListener('click', () => {
       reduceMotion = !reduceMotion; writePref('shithead_reduce_motion', reduceMotion);
-      applyAccessibilityPrefs(); refreshSettingsUI();
+      applyAccessibilityPrefs(); refreshSettingsUI(); scheduleSettingsCloudSave();
     });
     document.getElementById('setBigEffectsRow').addEventListener('click', () => {
       bigEffectsOn = !bigEffectsOn; writePref('shithead_big_effects', bigEffectsOn);
-      refreshSettingsUI();
+      refreshSettingsUI(); scheduleSettingsCloudSave();
     });
     document.getElementById('setHapticsRow').addEventListener('click', () => {
       hapticsOn = !hapticsOn; writePref('shithead_haptics', hapticsOn);
-      refreshSettingsUI();
+      refreshSettingsUI(); scheduleSettingsCloudSave();
     });
     document.getElementById('setDealAnimRow').addEventListener('click', () => {
       dealAnimationOn = !dealAnimationOn; writePref('shithead_deal_animation', dealAnimationOn);
-      refreshSettingsUI();
+      refreshSettingsUI(); scheduleSettingsCloudSave();
     });
     document.getElementById('volumeSlider').addEventListener('input', (e) => {
       masterVolume = parseInt(e.target.value, 10);
       try { localStorage.setItem('shithead_volume', String(masterVolume)); } catch (err) {}
       document.getElementById('volumeLabel').textContent = `${masterVolume}%`;
       applyAccessibilityPrefs();
+      scheduleSettingsCloudSave();
     });
     applyAccessibilityPrefs();
 
@@ -15928,6 +16031,7 @@ video {
       emotesMuted = !emotesMuted;
       writePref('shithead_emotes_muted', emotesMuted);
       refreshSettingsUI();
+      scheduleSettingsCloudSave();
     });
 
     document.getElementById('cardRefBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleCardReference(); });
@@ -20071,6 +20175,21 @@ video {
         assertTrue(el.className.includes('left-1/2'),
           'The snap prompt must be centred rather than pinned to an edge');
       });
+      await test('REGRESSION: account settings snapshot contains every persistent app setting', () => {
+        const prefs = collectAccountSettings();
+        ['speedIndex','selectAllOfRank','masterVolume','showCardIcons','highContrast','hideHelperIcons','reduceMotion','bigEffectsOn','hapticsOn','dealAnimationOn','emotesMuted']
+          .forEach(key => assertTrue(Object.prototype.hasOwnProperty.call(prefs,key), key+' must sync across devices'));
+      });
+      await test('REGRESSION: Custom deck-theme controls have separate grid areas for name and action', () => {
+        const css = document.querySelector('style')?.textContent || '';
+        assertTrue(css.includes('grid-template-areas:"preview copy" "preview action"'), 'Theme name and SELECT/APPLIED must not overlap');
+      });
+      await test('REGRESSION: the live Deck count uses a protected badge above card-back artwork', () => {
+        freshState({ drawPile: generateDeck().slice(0,36) });
+        render();
+        assertTrue(document.getElementById('drawPileCount')?.classList.contains('deck-count-badge'), 'Deck count must remain readable over custom backs');
+      });
+
       await test('Accessibility settings exist and apply', () => {
         ['setContrastRow','setMotionRow','setHapticsRow','volumeSlider'].forEach(id => {
           assertTrue(!!document.getElementById(id), `${id} must exist in settings`);
