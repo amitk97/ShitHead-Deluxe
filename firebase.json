@@ -8,5 +8,8 @@
       "**/node_modules/**",
       "index[0-9]*.html"
     ]
+  },
+  "database": {
+    "rules": "database.rules.json"
   }
 }

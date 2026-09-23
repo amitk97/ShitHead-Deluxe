@@ -16,6 +16,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Deploy Realtime Database rules
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
+          npx --yes firebase-tools@latest deploy --only database --project shithead-pro --non-interactive
+
       - name: Deploy main branch to live Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

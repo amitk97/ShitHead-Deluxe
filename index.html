@@ -546,7 +546,7 @@
       overflow: hidden;
     }
     .deck-count-badge {
-      position:relative; z-index:6; min-width:28px;
+      position:absolute; right:4px; bottom:4px; z-index:10; min-width:28px;
       padding:2px 6px; border-radius:999px;
       background:rgba(2,6,23,.94); border:1px solid rgba(251,191,36,.82);
       color:#fde68a; font-size:10px; font-weight:900; line-height:1.15;
@@ -671,7 +671,10 @@
     }
     #themesGridArea .theme-option-preview { grid-area:preview; width:32px; height:46px; flex:none; border-radius:.5rem; }
     #themesGridArea .theme-option-copy { grid-area:copy; min-width:0; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    #themesGridArea .theme-option-action { grid-area:action; width:100%; min-width:0; max-width:100%; padding:.3rem .35rem; justify-self:stretch; white-space:nowrap; }
+    #themesGridArea .theme-option-action { grid-area:action; width:100%; min-width:0; max-width:100%; padding:.3rem .2rem; justify-self:stretch; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    @media (max-width:390px) { #themesGridArea { grid-template-columns:minmax(0,1fr) !important; } }
+    #localTableSlots .card-face-up { z-index:2; background-color:var(--card-bg) !important; isolation:isolate; }
+    body.high-contrast #localTableSlots .card-face-up { background-color:#05070d !important; }
 
     /* Shop previews are self-contained. They deliberately do not reuse the
        full-screen gameplay particle canvas, so trying an effect can never
@@ -3554,16 +3557,16 @@ video {
             <span class="settings-chev absolute text-slate-400 text-[10px] transition-transform" style="right:0;">&#9660;</span>
           </button>
           <div id="deckThemeBody" class="grid grid-cols-4 gap-2">
-            <button id="lobbyProfileShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Profile">
+            <button id="lobbyProfileShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Profile">
               <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-profile"/></svg><span>Profile</span>
             </button>
-            <button id="lobbyPersonalisationShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Custom">
+            <button id="lobbyPersonalisationShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Custom">
               <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg><span>Custom</span>
             </button>
-            <button id="lobbyGuideShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Guide and Strategy">
+            <button id="lobbyGuideShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Guide and Strategy">
               <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg><span>Guide</span>
             </button>
-            <button id="lobbySettingsShortcut" type="button" class="py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Settings">
+            <button id="lobbySettingsShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Settings">
               <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg><span>Settings</span>
             </button>
           </div>
@@ -9897,8 +9900,8 @@ video {
         drawPileEl.innerHTML = `
           <div class="flex flex-col items-center justify-center pointer-events-none">
             ${getEmblemSvg()}
-            <span id="drawPileCount" class="deck-count-badge mt-1">${state.drawPile.length}</span>
           </div>
+          <span id="drawPileCount" class="deck-count-badge">${state.drawPile.length}</span>
         `;
       }
 
@@ -10084,7 +10087,7 @@ video {
             if (tutorialWantsCard(faceUpCardAtSlot, 'faceUp')) upCard.classList.add('tutorial-glow');
             
             // Layer askew over the face down card so both remain visible
-            upCard.classList.add('absolute', 'inset-0');
+            upCard.classList.add('absolute', 'inset-0', 'card-face-up');
             if (hasDown) {
               upCard.style.transform = 'rotate(3deg) translate(2px, -3px)';
             }
@@ -11904,6 +11907,7 @@ video {
       applyAccessibilityPrefs(); // className was just fully replaced above, which wipes high-contrast/reduce-motion -- reapply them
       state.deckTheme = themeClass;
       try { localStorage.setItem('shithead_deck_theme', themeClass); } catch (e) {}
+      scheduleSettingsCloudSave();
       saveGameState();
       render();
       document.querySelectorAll('.theme-btn').forEach((b) => {
@@ -12872,7 +12876,7 @@ video {
         tableTheme: 'Changes your table background and arena styling',
         burnEffect: 'Plays when you burn the pile',
         victoryEffect: 'Plays when you finish in first place'
-      }[type] || 'Cosmetic personalisation';
+      }[type] || 'Custom item';
     }
 
     function shopCosmeticThumbnail(item, type) {
@@ -13293,6 +13297,7 @@ video {
     function collectAccountSettings() {
       return {
         speedIndex: Number.isInteger(state?.speedIndex) ? state.speedIndex : DEFAULT_SPEED_INDEX,
+        deckTheme: state?.deckTheme || 'theme-obsidian',
         selectAllOfRank: !!selectAllOfRank,
         masterVolume: Math.max(0, Math.min(100, Number(masterVolume) || 0)),
         showCardIcons: !!showCardIcons,
@@ -13312,6 +13317,7 @@ video {
       try {
         const speed = Number(settings.speedIndex);
         if (Number.isInteger(speed) && speed >= 0 && speed < SPEED_PRESETS.length) updateSpeedByIndex(speed);
+        if (['theme-obsidian','theme-emerald','theme-cyber','theme-crimson'].includes(settings.deckTheme)) selectDeckTheme(settings.deckTheme);
 
         if (typeof settings.selectAllOfRank === 'boolean') {
           selectAllOfRank = settings.selectAllOfRank;
@@ -13653,6 +13659,7 @@ video {
           return; // signOut() will re-fire this listener with user = null
         }
         currentUser = user;
+        clearTimeout(settingsCloudSaveTimer);
         updateHamburgerAccountLabel();
         refreshRankedUI();
         syncNicknameFromAccount();
@@ -13660,7 +13667,8 @@ video {
         if (user) {
           ensureUsername(); syncPublicProfile(); setupPresence(); refreshInboxBadge(); attemptRankedReconnect();
           initChallengeEconomy(); loadCosmeticCollection(user);
-          getOrCreateUserProfile(user.uid).then(() => loadAccountSettings(user));
+          // Preferences live under the account and do not depend on profile creation.
+          loadAccountSettings(user);
         } else {
           document.getElementById('inboxBadge')?.classList.add('hidden');
           initChallengeEconomy(); loadCosmeticCollection(null);

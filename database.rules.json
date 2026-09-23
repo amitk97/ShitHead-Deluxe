@@ -1,0 +1,192 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomCode": {
+        ".read": true,
+        ".write": "$roomCode.matches(/^[0-9]{6}$/)",
+        ".validate": "newData.hasChildren(['phase'])"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "diamonds": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 999999"
+        },
+        "completedChallenges": {
+          "$challengeId": {
+            ".validate": "newData.hasChildren(['completedAt', 'reward']) && newData.child('reward').isNumber() && newData.child('completedAt').isNumber()"
+          }
+        },
+        "dailyChallengeState": {
+          ".validate": "newData.hasChildren(['dateKey', 'challengeIds'])"
+        },
+        "retroactiveChallengeCheckDone": {
+          ".validate": "newData.isBoolean()"
+        },
+        "equippedCosmetics": {
+          "cardBack": {
+            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'back-midnight' || newData.val() === 'back-emerald' || newData.val() === 'back-neon' || newData.val() === 'back-crimson' || newData.val() === 'back-nebula' || newData.val() === 'back-inferno')))"
+          },
+          "frame": {
+            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'frame-silver' || newData.val() === 'frame-gold' || newData.val() === 'frame-diamond' || newData.val() === 'frame-obsidian-throne' || newData.val() === 'frame-emerald-sovereign')))"
+          },
+          "emotes": {
+            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'emotes-classic' || newData.val() === 'emotes-savage' || newData.val() === 'emotes-victory' || newData.val() === 'emotes-chaos' || newData.val() === 'emotes-royal')))"
+          },
+          "tableTheme": {
+            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'table-casino' || newData.val() === 'table-winter')))"
+          },
+          "burnEffect": {
+            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'burn-coloured' || newData.val() === 'burn-ice' || newData.val() === 'burn-electric')))"
+          },
+          "victoryEffect": {
+            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'victory-confetti' || newData.val() === 'victory-cards' || newData.val() === 'victory-fireworks')))"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "shopPurchases": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "nameChangeToken": {
+          ".write": "auth != null && auth.uid === $uid && ((!data.exists() && root.child('users').child($uid).child('diamonds').isNumber() && root.child('users').child($uid).child('diamonds').val() >= 100 && newData.child('cost').val() === 100 && newData.child('purchasedAt').isNumber() && !newData.child('usedAt').exists()) || (data.exists() && !data.child('usedAt').exists() && newData.child('cost').val() === data.child('cost').val() && newData.child('purchasedAt').val() === data.child('purchasedAt').val() && newData.child('usedAt').isNumber()))",
+          ".validate": "newData.hasChildren(['cost', 'purchasedAt']) && newData.child('cost').val() === 100 && newData.child('purchasedAt').isNumber()",
+          "$other": {
+            ".validate": "$other === 'cost' || $other === 'purchasedAt' || $other === 'usedAt'"
+          }
+        },
+        "cosmetics": {
+          "$itemId": {
+            ".write": "auth != null && auth.uid === $uid && ((data.exists() && !newData.exists()) || (!data.exists() && newData.hasChildren(['cost', 'purchasedAt']) && newData.child('purchasedAt').isNumber() && (($itemId === 'back-midnight' && newData.child('cost').val() === 40) || ($itemId === 'back-emerald' && newData.child('cost').val() === 50) || ($itemId === 'back-neon' && newData.child('cost').val() === 60) || ($itemId === 'back-crimson' && newData.child('cost').val() === 60) || ($itemId === 'back-nebula' && newData.child('cost').val() === 200) || ($itemId === 'back-inferno' && newData.child('cost').val() === 200) || ($itemId === 'frame-silver' && newData.child('cost').val() === 35) || ($itemId === 'frame-gold' && newData.child('cost').val() === 60) || ($itemId === 'frame-diamond' && newData.child('cost').val() === 90) || ($itemId === 'frame-obsidian-throne' && newData.child('cost').val() === 200) || ($itemId === 'frame-emerald-sovereign' && newData.child('cost').val() === 200) || ($itemId === 'emotes-classic' && newData.child('cost').val() === 30) || ($itemId === 'emotes-savage' && newData.child('cost').val() === 45) || ($itemId === 'emotes-victory' && newData.child('cost').val() === 50) || ($itemId === 'emotes-chaos' && newData.child('cost').val() === 200) || ($itemId === 'emotes-royal' && newData.child('cost').val() === 200) || ($itemId === 'table-casino' && newData.child('cost').val() === 750) || ($itemId === 'table-winter' && newData.child('cost').val() === 750) || ($itemId === 'burn-coloured' && newData.child('cost').val() === 250) || ($itemId === 'burn-ice' && newData.child('cost').val() === 500) || ($itemId === 'burn-electric' && newData.child('cost').val() === 750) || ($itemId === 'victory-confetti' && newData.child('cost').val() === 250) || ($itemId === 'victory-cards' && newData.child('cost').val() === 500) || ($itemId === 'victory-fireworks' && newData.child('cost').val() === 750))))",
+            ".validate": "!newData.exists() || (newData.hasChildren(['cost', 'purchasedAt']) && newData.child('cost').isNumber() && newData.child('purchasedAt').isNumber())",
+            "$other": {
+              ".validate": "$other === 'cost' || $other === 'purchasedAt'"
+            }
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "usernames": {
+      "$name": {
+        ".read": true,
+        ".write": "auth != null && ((!newData.exists() && data.val() === auth.uid) || (!data.exists() && newData.val() === auth.uid && $name.matches(/^[a-z0-9][a-z0-9_-]{2,11}$/) && !$name.matches(/.*(admin|administrator|moderator|support|staff|official|system|root|owner|developer|fuck|cunt|asshole|bastard|bitch|whore|slut|shit).*/)))"
+      }
+    },
+    "matchmaking": {
+      "waiting": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      },
+      "assignments": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null"
+        }
+      }
+    },
+    "leaderboard": {
+      ".read": true,
+      ".indexOn": [
+        "rating"
+      ],
+      "$name": {
+        ".write": "auth != null && root.child('usernames').child($name).val() === auth.uid",
+        ".validate": "!newData.exists() || (newData.hasChildren(['username', 'rating', 'tier', 'wins', 'losses']) && newData.child('username').isString() && newData.child('username').val().length >= 3 && newData.child('username').val().length <= 12 && newData.child('rating').isNumber() && newData.child('rating').val() >= 0 && newData.child('rating').val() <= 10000 && newData.child('tier').isString() && newData.child('wins').isNumber() && newData.child('wins').val() >= 0 && newData.child('losses').isNumber() && newData.child('losses').val() >= 0)",
+        "$other": {
+          ".validate": "$other === 'username' || $other === 'rating' || $other === 'tier' || $other === 'wins' || $other === 'losses'"
+        }
+      }
+    },
+    "publicProfiles": {
+      ".indexOn": [
+        "rating"
+      ],
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid",
+        "username": {
+          ".validate": "!newData.exists() || (newData.isString() && newData.val().length >= 3 && newData.val().length <= 12)"
+        },
+        "rating": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
+        },
+        "tier": {
+          ".validate": "newData.isString()"
+        },
+        "online": {
+          ".validate": "newData.isBoolean()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "friends": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$friendUid": {
+          ".write": "auth != null && ((!newData.exists() && (auth.uid === $uid || auth.uid === $friendUid)) || (newData.exists() && (auth.uid === $uid || (auth.uid === $friendUid && root.child('friendRequests').child($friendUid).child($uid).exists()))))",
+          ".validate": "!newData.exists() || newData.val() === true"
+        }
+      }
+    },
+    "friendRequests": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$fromUid": {
+          ".write": "auth != null && ((!newData.exists() && (auth.uid === $fromUid || auth.uid === $uid)) || (!data.exists() && auth.uid === $fromUid && auth.uid !== $uid))",
+          ".validate": "newData.hasChildren(['name', 'sentAt']) && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 12 && newData.child('sentAt').isNumber()",
+          "$other": {
+            ".validate": "$other === 'name' || $other === 'sentAt'"
+          }
+        }
+      }
+    },
+    "ignores": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "gameInvites": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$inviteId": {
+          ".write": "auth != null && ((!data.exists() && newData.child('fromUid').val() === auth.uid && auth.uid !== $uid) || (!newData.exists() && (auth.uid === $uid || data.child('fromUid').val() === auth.uid)))",
+          ".validate": "newData.hasChildren(['fromUid', 'fromName', 'roomCode', 'sentAt']) && newData.child('fromUid').val() === auth.uid && newData.child('fromName').isString() && newData.child('fromName').val().length >= 1 && newData.child('fromName').val().length <= 12 && newData.child('roomCode').isString() && newData.child('roomCode').val().matches(/^[0-9]{6}$/) && newData.child('sentAt').isNumber()",
+          "$other": {
+            ".validate": "$other === 'fromUid' || $other === 'fromName' || $other === 'roomCode' || $other === 'sentAt'"
+          }
+        }
+      }
+    },
+    "tutorialCompletions": {
+      "$uid": {
+        ".read": false,
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['completedAt', 'playerName'])"
+      }
+    },
+    "errorReports": {
+      ".read": false,
+      "$uid": {
+        "$reportId": {
+          ".write": "auth != null && auth.uid === $uid && !data.exists()",
+          ".validate": "newData.hasChildren(['at', 'message']) && newData.child('message').isString() && newData.child('message').val().length <= 500"
+        }
+      }
+    },
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}
