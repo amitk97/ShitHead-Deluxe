@@ -910,6 +910,13 @@
     /* Deck and Base Card flank the pile: cancel the pill's padding + border
        so their columns keep their old widths and the pile stays centred. */
     .table-label-pill.layout-neutral { margin-inline:-8px; }
+    /* Points from the Hand label down to the cards it names. A pseudo-element
+       so render() can keep setting the label's text to plain "Hand". */
+    #handZoneLabel::after { content:'\2193'; margin-left:4px; font-size:1.2em; line-height:1; }
+    /* The Deck (card-base) is wider than the Base Card (card-table). Equal
+       side columns keep the pile, and the table cards and hand below it, on
+       the screen's centre line. Wider labels overflow evenly both ways. */
+    #deckZone, #baseCardHud { width:clamp(52px, 8.5vh, 82px); }
     /* Keep these panels inside the visible area below the persistent header.
        Their close buttons stay fixed in each panel while content scrolls. */
     #settingsModal, #themesModal, #shopModal, #rulesModal, #tutorialHubScreen {
@@ -4056,9 +4063,9 @@ video {
           <span class="block text-[8px] text-slate-400 leading-snug">Brighter cards and stronger outlines</span></span>
           <span id="setContrastState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
-        <button id="setHideHelpersRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="helper, card reference, play matrix, hints, guide">
+        <button id="setHideHelpersRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="helper, card powers, card reference, play matrix, hints, guide">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Hide Helper Icons</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Hides the Card Reference &amp; Play Matrix buttons</span></span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Hides the Card Powers &amp; Play Matrix buttons</span></span>
           <span id="setHideHelpersState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         <button id="setMotionRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="motion, animation, vfx, pulsing, glow, effects, flights, movement">
@@ -4554,6 +4561,9 @@ video {
     <!-- Tapping anywhere on this panel closes it, so it's never in the way. -->
     <div id="cardRefPanel" class="hidden fixed z-[68] bg-slate-950 border-2 border-amber-500 rounded-xl shadow-2xl px-2 py-1.5 cursor-grab"
          style="width:118px; touch-action:none; transform-origin: top left;">
+      <!-- Close X, top-right like every other panel's. Row 1 ("2 Reset") is
+           short, so it shares that line; kept clear of the corner handle. -->
+      <button id="cardRefCloseBtn" type="button" class="absolute text-slate-400 hover:text-white font-black leading-none" style="top:4px; right:10px; z-index:2; font-size:12px;" aria-label="Close Card Powers">✕</button>
       <div id="cardRefList" class="flex flex-col gap-0 text-[11px] leading-[1.35]"></div>
       <p id="cardRefHint" class="text-[7.5px] text-slate-400 mt-1 pt-1 border-t border-slate-700 leading-tight"></p>
       <!-- Corner resize handles: drag any one to resize. Aspect ratio is
@@ -4714,7 +4724,7 @@ video {
              siblings, that's structurally impossible now. -->
         <div id="cardRefLayer" class="absolute z-40" style="left:0; bottom:calc((clamp(26px,7.5vw,34px) + 6px) * -1); height:clamp(26px,7.5vw,34px);">
           <button id="cardRefBtn" class="rounded-full bg-slate-900/90 border-2 border-slate-600 text-slate-300 shadow-lg flex items-center justify-center font-black transition active:scale-90 hover:border-amber-500"
-            style="width:clamp(26px,7.5vw,34px);height:clamp(26px,7.5vw,34px);font-size:clamp(13px,4vw,17px);" data-tip="Card reference" aria-label="Card reference">i</button>
+            style="width:clamp(26px,7.5vw,34px);height:clamp(26px,7.5vw,34px);font-size:clamp(13px,4vw,17px);" data-tip="Card Powers" aria-label="Card Powers">i</button>
         </div>
 
         <!-- Hand count sits bottom-RIGHT, directly under the emote button. -->
@@ -8305,6 +8315,9 @@ video {
     function initCardRefDrag() {
       const panel = document.getElementById('cardRefPanel');
       if (!panel) return;
+      // A tap on the X already closes via the tap-anywhere path below; this
+      // also covers keyboard activation.
+      document.getElementById('cardRefCloseBtn')?.addEventListener('click', () => toggleCardReference(true));
 
       panel.addEventListener('pointerdown', (e) => {
         if (!cardRefOpen) return;
@@ -17246,7 +17259,7 @@ video {
         target: ['#localTableSlots', '#centerArena'],
         require: { blind: true },
         noCoachReply: true,
-        coachNote: `That's a win! You're empty — Hand, Table, everything. That's the whole game, start to finish. ${window.innerWidth < 768 ? 'Tap' : 'Click'} the \u2261 menu: the ? shortcut opens Guide & Strategy and the \u2699\uFE0F shortcut opens Settings. You can also tap the i button during a game for a quick card reference.`,
+        coachNote: `That's a win! You're empty — Hand, Table, everything. That's the whole game, start to finish. ${window.innerWidth < 768 ? 'Tap' : 'Click'} the \u2261 menu: the ? shortcut opens Guide & Strategy and the \u2699\uFE0F shortcut opens Settings. You can also tap the i button during a game to see every card's power.`,
         noteTarget: ['#hamburgerBtn', '#cardRefBtn']
       }
     ];
@@ -20157,8 +20170,8 @@ video {
       });
       await test('Card reference has no header row and uses the short hint', () => {
         const panel = document.getElementById('cardRefPanel');
-        assertTrue(!panel.querySelector('#cardRefCloseBtn'),
-          'The dedicated close button is replaced by tap-anywhere-to-close');
+        assertTrue(!!panel.querySelector('#cardRefCloseBtn'),
+          'Card Powers has an X close button like every other panel');
         const m = Object.fromEntries(CARD_REFERENCE);
         assertEqual(m['5'], 'Drop to Base', '5 label should be capitalised');
         assertEqual(m['7'], '7 or Lower', '7 label should be capitalised');
@@ -20511,6 +20524,37 @@ video {
         assertTrue(!!document.querySelector('#emptyDiscardPlaceholder .table-label-pill'), 'Empty Pile needs the readable label pill');
         assertTrue(!!document.querySelector('#deckZone .table-label-pill'), 'Deck label needs the readable label pill');
         assertTrue(!!document.querySelector('#baseCardHud > .table-label-pill'), 'Base Card label needs the readable label pill');
+      });
+
+      await test('REGRESSION: Card Powers is named consistently and its X closes it', () => {
+        const btn = document.getElementById('cardRefBtn');
+        assertEqual(btn.dataset.tip, 'Card Powers', 'The i button tooltip must read Card Powers');
+        assertEqual(btn.getAttribute('aria-label'), 'Card Powers', 'The i button label must read Card Powers');
+        toggleCardReference(true);
+        toggleCardReference();
+        assertTrue(cardRefOpen, 'Card Powers must open');
+        const panel = document.getElementById('cardRefPanel').getBoundingClientRect();
+        const x = document.getElementById('cardRefCloseBtn').getBoundingClientRect();
+        assertTrue(x.right <= panel.right && panel.right - x.right < 20 && x.top - panel.top < 16, 'The X must sit in the top-right corner');
+        document.getElementById('cardRefCloseBtn').click();
+        assertTrue(!cardRefOpen && document.getElementById('cardRefPanel').classList.contains('hidden'), 'The X must close Card Powers');
+      });
+      await test('REGRESSION: pile, middle table card, Hand label and hand share one centre line', () => {
+        freshState();
+        const cards = generateDeck();
+        state.players = [makePlayer({ id: 'p1', hand: cards.slice(0, 3),
+          faceUp: cards.slice(3, 6).map((c, i) => ({ ...c, slotIndex: i })),
+          faceDown: cards.slice(6, 9).map((c, i) => ({ ...c, slotIndex: i })) }), makePlayer({ id: 'p2' })];
+        render();
+        const mid = el => { const b = el.getBoundingClientRect(); return b.left + b.width / 2; };
+        const handCards = [...document.querySelectorAll('#localHand [data-card-id]')].map(e => e.getBoundingClientRect());
+        const handMid = (Math.min(...handCards.map(b => b.left)) + Math.max(...handCards.map(b => b.right))) / 2;
+        const pile = mid(document.getElementById('discardPileContainer'));
+        [['Hand label', mid(document.getElementById('handZoneLabel'))], ['hand cards', handMid],
+         ['middle table card', mid(document.getElementById('localTableSlots').children[1])]].forEach(([name, x]) => {
+          assertTrue(Math.abs(x - pile) <= 1, `${name} must line up with the pile (off by ${Math.abs(x - pile).toFixed(1)}px)`);
+        });
+        assertEqual(getComputedStyle(document.getElementById('handZoneLabel'), '::after').content, '"↓"', 'The Hand label must point down at the hand');
       });
 
       await test('Accessibility settings exist and apply', () => {
