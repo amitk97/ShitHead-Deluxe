@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-23-v107 (ShitHead-Deluxe-107) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-23-v108 (ShitHead-Deluxe-108) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -221,6 +221,7 @@
     .hamburger-btn.open .hamburger-bars span:nth-child(3) { transform: translateY(-5px) rotate(-45deg); }
     #inboxBadge.inbox-badge--friend { background-color:#10b981; }
     #inboxBadge.inbox-badge--game { background-color:#0ea5e9; }
+    #inboxBadge.inbox-badge--challenge { background-color:#fbbf24; color:#0f172a; }
     /* STAGE 1 — Menu structure and responsive presentation.
        Mobile default: a slide-up bottom sheet, anchored to the bottom edge.
        Desktop (min-width: 768px, matching Tailwind's own md: breakpoint
@@ -14291,10 +14292,15 @@ video {
         const completed = c.completedChallenges || {};
         if (completed[challengeId]) { awarded = false; return c; } // already claimed — no-op, not an abort
         awarded = true;
+        const completedAt = Date.now();
         return {
           ...c,
           diamonds: (c.diamonds || 0) + reward,
-          completedChallenges: { ...completed, [challengeId]: { completedAt: Date.now(), reward } }
+          completedChallenges: { ...completed, [challengeId]: { completedAt, reward } },
+          challengeInbox: {
+            ...(c.challengeInbox || {}),
+            [challengeId]: { name: String(displayName || challengeId).slice(0, 80), reward, completedAt }
+          }
         };
       }).then((result) => {
         if (!awarded) return false; // already claimed — a genuine no-op, not worth logging
@@ -15653,7 +15659,7 @@ video {
       joinMultiRoom();
     }
 
-    // --- Inbox: unified inbox for friend requests + game invites -------
+    // --- Inbox: friend requests, game invites and completed challenges ---
     const GAME_INVITE_EXPIRY_MS = 5 * 60 * 1000;
     function cleanupExpiredInvites(invData) {
       if (!currentUser) return [];
@@ -15681,6 +15687,14 @@ video {
           </div>
         </div>`;
       }
+      if (item.type === 'challenge') {
+        return `<div class="bg-amber-950/40 border border-amber-500/60 rounded-xl px-2.5 py-2">
+          <p class="text-[9px] font-black uppercase tracking-wide text-amber-400 mb-1">Challenge completed</p>
+          <p class="text-xs font-bold text-white">${escapeHtml(item.name)}</p>
+          <p class="text-[10px] text-amber-300 mt-1">+${Number(item.reward) || 0} Diamonds</p>
+          <button type="button" data-challenge-id="${escapeAttr(item.id)}" class="inbox-read-challenge-btn mt-2 w-full text-[9px] font-black py-1 rounded-lg border border-amber-500 text-amber-300 hover:bg-amber-500 hover:text-slate-950 transition">MARK AS READ</button>
+        </div>`;
+      }
       return `<div class="bg-slate-900/60 border border-slate-800 rounded-xl px-2.5 py-2">
         <p class="text-xs font-bold text-white mb-1.5">${escapeHtml(item.fromName)} invited you to a private game</p>
         <div class="flex gap-1.5">
@@ -15690,12 +15704,16 @@ video {
       </div>`;
     }
     function renderInbox() {
+      const uid = currentUser?.uid;
+      if (!uid) return;
       const area = document.getElementById('inboxArea');
       area.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-4">Loading\u2026</p>';
       Promise.all([
-        db.ref(`friendRequests/${currentUser.uid}`).once('value'),
-        db.ref(`gameInvites/${currentUser.uid}`).once('value')
-      ]).then(([reqSnap, invSnap]) => {
+        db.ref(`friendRequests/${uid}`).once('value'),
+        db.ref(`gameInvites/${uid}`).once('value'),
+        db.ref(`users/${uid}/challengeInbox`).once('value')
+      ]).then(([reqSnap, invSnap, challengeSnap]) => {
+        if (currentUser?.uid !== uid) return;
         const items = [];
         const reqData = reqSnap.val() || {};
         Object.keys(reqData).forEach((uid) => items.push({ type: 'request', uid, name: reqData[uid].name, sentAt: reqData[uid].sentAt }));
@@ -15703,8 +15721,12 @@ video {
         const invData = invSnap.val() || {};
         Object.keys(invData).forEach((id) => {
           const inv = invData[id];
-          if (now - inv.sentAt > GAME_INVITE_EXPIRY_MS) { db.ref(`gameInvites/${currentUser.uid}/${id}`).remove(); return; }
+          if (now - inv.sentAt > GAME_INVITE_EXPIRY_MS) { db.ref(`gameInvites/${uid}/${id}`).remove(); return; }
           items.push({ type: 'invite', id, fromName: inv.fromName, roomCode: inv.roomCode, sentAt: inv.sentAt });
+        });
+        Object.entries(challengeSnap.val() || {}).forEach(([id, mail]) => {
+          if (!mail || typeof mail !== 'object') return;
+          items.push({ type: 'challenge', id, name: mail.name || id, reward: mail.reward, sentAt: Number(mail.completedAt) || 0 });
         });
         items.sort((a, b) => b.sentAt - a.sentAt);
         if (items.length === 0) { area.innerHTML = ''; document.getElementById('inboxEmptyMsg').classList.remove('hidden'); return; }
@@ -15713,32 +15735,39 @@ video {
       }).catch((e) => { area.innerHTML = ''; console.warn('renderInbox failed', e); });
     }
     document.getElementById('inboxArea').addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-uid], button[data-id]');
+      const btn = e.target.closest('button[data-uid], button[data-id], button[data-challenge-id]');
       if (!btn) return;
       if (btn.classList.contains('inbox-accept-req-btn')) { acceptFriendRequest(btn.dataset.uid); renderInbox(); }
       else if (btn.classList.contains('inbox-decline-req-btn')) { declineFriendRequest(btn.dataset.uid); renderInbox(); }
       else if (btn.classList.contains('inbox-join-invite-btn')) joinInvitedRoom(btn.dataset.room, btn.dataset.id);
       else if (btn.classList.contains('inbox-decline-invite-btn')) {
         db.ref(`gameInvites/${currentUser.uid}/${btn.dataset.id}`).remove().then(renderInbox).catch((e) => console.warn('decline invite failed', e));
+      } else if (btn.classList.contains('inbox-read-challenge-btn')) {
+        db.ref(`users/${currentUser.uid}/challengeInbox/${btn.dataset.challengeId}`).remove()
+          .then(renderInbox).catch((e) => console.warn('markChallengeMailRead failed', e));
       }
     });
     let inboxBadgeSubscriptions = [];
     let inboxBadgeRequestData = null;
     let inboxBadgeInviteData = null;
+    let inboxBadgeChallengeData = null;
     let inboxBadgeUid = null;
     let inboxBadgeExpiryTimer = null;
 
-    function summarizeInboxNotifications(requests, invites, now = Date.now()) {
+    function summarizeInboxNotifications(requests, invites, challenges = {}, now = Date.now()) {
       const friendRequests = Object.values(requests || {}).filter((request) => request && typeof request === 'object');
       const gameInvites = Object.values(invites || {}).filter((invite) => {
         const sentAt = Number(invite?.sentAt);
         return Number.isFinite(sentAt) && sentAt > 0 && sentAt <= now + 60_000 && now - sentAt <= GAME_INVITE_EXPIRY_MS;
       });
+      const challengeMail = Object.values(challenges || {}).filter((mail) => mail && typeof mail === 'object');
       const newestFriend = Math.max(0, ...friendRequests.map((request) => Number(request.sentAt) || 0));
       const newestGame = Math.max(0, ...gameInvites.map((invite) => Number(invite.sentAt) || 0));
+      const newestChallenge = Math.max(0, ...challengeMail.map((mail) => Number(mail.completedAt) || 0));
       return {
-        count: friendRequests.length + gameInvites.length,
-        latestType: gameInvites.length && (!friendRequests.length || newestGame > newestFriend) ? 'game' : 'friend',
+        count: friendRequests.length + gameInvites.length + challengeMail.length,
+        latestType: challengeMail.length && newestChallenge >= Math.max(newestFriend, newestGame)
+          ? 'challenge' : gameInvites.length && newestGame > newestFriend ? 'game' : 'friend',
         nextExpiry: gameInvites.length ? Math.min(...gameInvites.map((invite) => Number(invite.sentAt) + GAME_INVITE_EXPIRY_MS)) : null
       };
     }
@@ -15747,18 +15776,20 @@ video {
       const badge = document.getElementById('inboxBadge');
       const button = document.getElementById('headerInboxBtn');
       clearTimeout(inboxBadgeExpiryTimer);
-      if (!badge || !currentUser || inboxBadgeUid !== currentUser.uid || inboxBadgeRequestData === null || inboxBadgeInviteData === null) {
+      if (!badge || !currentUser || inboxBadgeUid !== currentUser.uid || inboxBadgeRequestData === null || inboxBadgeInviteData === null || inboxBadgeChallengeData === null) {
         badge?.classList.add('hidden');
         if (button) { button.setAttribute('aria-label', 'Inbox'); button.dataset.tip = 'Inbox'; }
         return;
       }
-      const summary = summarizeInboxNotifications(inboxBadgeRequestData, inboxBadgeInviteData);
+      const summary = summarizeInboxNotifications(inboxBadgeRequestData, inboxBadgeInviteData, inboxBadgeChallengeData);
       badge.textContent = summary.count > 99 ? '99+' : String(summary.count);
       badge.classList.toggle('hidden', summary.count === 0);
       badge.classList.toggle('inbox-badge--friend', summary.count > 0 && summary.latestType === 'friend');
       badge.classList.toggle('inbox-badge--game', summary.count > 0 && summary.latestType === 'game');
+      badge.classList.toggle('inbox-badge--challenge', summary.count > 0 && summary.latestType === 'challenge');
       if (button) {
-        const label = summary.count ? `Inbox: ${summary.count} pending, newest is a ${summary.latestType === 'friend' ? 'friend request' : 'game invite'}` : 'Inbox';
+        const latestLabel = { friend: 'friend request', game: 'game invite', challenge: 'completed challenge' }[summary.latestType];
+        const label = summary.count ? `Inbox: ${summary.count} pending, newest is a ${latestLabel}` : 'Inbox';
         button.setAttribute('aria-label', label);
         button.dataset.tip = label;
       }
@@ -15771,13 +15802,14 @@ video {
       inboxBadgeSubscriptions.forEach(({ ref, handler }) => ref.off('value', handler));
       inboxBadgeSubscriptions = [];
       clearTimeout(inboxBadgeExpiryTimer);
-      inboxBadgeRequestData = inboxBadgeInviteData = null;
+      inboxBadgeRequestData = inboxBadgeInviteData = inboxBadgeChallengeData = null;
       inboxBadgeUid = user?.uid || null;
       refreshInboxBadge();
       if (!user || !firebaseAvailable) return;
       const uid = user.uid;
       const requestsRef = db.ref(`friendRequests/${uid}`);
       const invitesRef = db.ref(`gameInvites/${uid}`);
+      const challengesRef = db.ref(`users/${uid}/challengeInbox`);
       const onRequests = (snap) => {
         if (inboxBadgeUid !== uid) return;
         inboxBadgeRequestData = snap.val() || {};
@@ -15788,9 +15820,19 @@ video {
         inboxBadgeInviteData = snap.val() || {};
         refreshInboxBadge();
       };
-      inboxBadgeSubscriptions = [{ ref: requestsRef, handler: onRequests }, { ref: invitesRef, handler: onInvites }];
+      const onChallenges = (snap) => {
+        if (inboxBadgeUid !== uid) return;
+        inboxBadgeChallengeData = snap.val() || {};
+        refreshInboxBadge();
+      };
+      inboxBadgeSubscriptions = [
+        { ref: requestsRef, handler: onRequests },
+        { ref: invitesRef, handler: onInvites },
+        { ref: challengesRef, handler: onChallenges }
+      ];
       requestsRef.on('value', onRequests, (error) => console.warn('Friend request badge sync failed', error));
       invitesRef.on('value', onInvites, (error) => console.warn('Game invite badge sync failed', error));
+      challengesRef.on('value', onChallenges, (error) => console.warn('Challenge mail badge sync failed', error));
     }
 
     // --- Leaderboard ------------------------------------------------------
@@ -21723,12 +21765,15 @@ video {
         const now = 1_000_000;
         const requests = { one: { name: 'Ash', sentAt: now - 3_000 } };
         const invites = { one: { fromName: 'Pavan', sentAt: now - 1_000 } };
-        assertEqual(summarizeInboxNotifications(requests, invites, now).latestType, 'game', 'Newer game invite should turn the badge blue');
-        assertEqual(summarizeInboxNotifications(requests, invites, now).count, 2, 'Both pending categories should count');
+        assertEqual(summarizeInboxNotifications(requests, invites, {}, now).latestType, 'game', 'Newer game invite should turn the badge blue');
+        assertEqual(summarizeInboxNotifications(requests, invites, {}, now).count, 2, 'Both pending categories should count');
         requests.two = { name: 'Pooja', sentAt: now - 500 };
-        assertEqual(summarizeInboxNotifications(requests, invites, now).latestType, 'friend', 'Newer friend request should turn the badge green');
+        assertEqual(summarizeInboxNotifications(requests, invites, {}, now).latestType, 'friend', 'Newer friend request should turn the badge green');
+        const challenges = { burner: { name: 'Burner', reward: 50, completedAt: now - 100 } };
+        assertEqual(summarizeInboxNotifications(requests, invites, challenges, now).latestType, 'challenge', 'Newest completed challenge should turn the badge gold');
+        assertEqual(summarizeInboxNotifications(requests, invites, challenges, now).count, 4, 'Challenge mail should add to the pending total');
         invites.one.sentAt = now - GAME_INVITE_EXPIRY_MS - 1;
-        assertEqual(summarizeInboxNotifications({}, invites, now).count, 0, 'Expired game invites should not keep the badge visible');
+        assertEqual(summarizeInboxNotifications({}, invites, {}, now).count, 0, 'Expired game invites should not keep the badge visible');
       });
 
       // ---- STAGE 1: hamburger menu restructure + responsive presentation ----
@@ -22368,10 +22413,13 @@ video {
         return claimChallenge('burner', 50, 'Burner').then((firstResult) => {
           assertTrue(firstResult, 'The first claim must succeed');
           assertEqual(stored.diamonds, 50, 'Diamonds must be credited exactly once');
+          assertEqual(stored.challengeInbox.burner.name, 'Burner', 'A successful challenge claim must create its inbox mail');
+          assertEqual(stored.challengeInbox.burner.reward, 50, 'Inbox mail must show the reward actually credited');
           return claimChallenge('burner', 50, 'Burner');
         }).then((secondResult) => {
           assertTrue(!secondResult, 'A second claim of the same challenge must be a no-op');
           assertEqual(stored.diamonds, 50, 'Diamonds must NOT be credited twice for the same challenge');
+          assertEqual(Object.keys(stored.challengeInbox).length, 1, 'A repeated claim must not create another mail');
           currentUser = originalCurrentUser;
           db = originalDb;
         });
