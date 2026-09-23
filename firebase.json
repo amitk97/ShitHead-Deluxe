@@ -6,6 +6,7 @@
       "**/.*",
       "**/.*/**",
       "**/node_modules/**",
+      "gha-creds-*.json",
       "index[0-9]*.html"
     ]
   },

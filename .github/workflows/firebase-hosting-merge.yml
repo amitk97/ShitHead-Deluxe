@@ -25,6 +25,7 @@ jobs:
         run: npx --yes firebase-tools@latest deploy --only database --project shithead-pro --non-interactive
 
       - name: Deploy main branch to live Firebase Hosting
+        if: always()
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
