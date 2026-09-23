@@ -27,22 +27,22 @@
         },
         "equippedCosmetics": {
           "cardBack": {
-            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'back-midnight' || newData.val() === 'back-emerald' || newData.val() === 'back-neon' || newData.val() === 'back-crimson' || newData.val() === 'back-nebula' || newData.val() === 'back-inferno')))"
+            ".validate": "newData.isString() && (newData.val() === 'default' || ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() || root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) && (newData.val() === 'back-midnight' || newData.val() === 'back-emerald' || newData.val() === 'back-neon' || newData.val() === 'back-crimson' || newData.val() === 'back-nebula' || newData.val() === 'back-inferno')))"
           },
           "frame": {
-            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'frame-silver' || newData.val() === 'frame-gold' || newData.val() === 'frame-diamond' || newData.val() === 'frame-obsidian-throne' || newData.val() === 'frame-emerald-sovereign')))"
+            ".validate": "newData.isString() && (newData.val() === 'default' || ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() || root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) && (newData.val() === 'frame-silver' || newData.val() === 'frame-gold' || newData.val() === 'frame-diamond' || newData.val() === 'frame-obsidian-throne' || newData.val() === 'frame-emerald-sovereign')))"
           },
           "emotes": {
-            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'emotes-classic' || newData.val() === 'emotes-savage' || newData.val() === 'emotes-victory' || newData.val() === 'emotes-chaos' || newData.val() === 'emotes-royal')))"
+            ".validate": "newData.isString() && (newData.val() === 'default' || newData.val() === 'emotes-classic' || ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() || root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) && (newData.val() === 'emotes-classic' || newData.val() === 'emotes-savage' || newData.val() === 'emotes-victory' || newData.val() === 'emotes-chaos' || newData.val() === 'emotes-royal')))"
           },
           "tableTheme": {
-            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'table-casino' || newData.val() === 'table-winter')))"
+            ".validate": "newData.isString() && (newData.val() === 'default' || ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() || root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) && (newData.val() === 'table-casino' || newData.val() === 'table-winter')))"
           },
           "burnEffect": {
-            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'burn-coloured' || newData.val() === 'burn-ice' || newData.val() === 'burn-electric')))"
+            ".validate": "newData.isString() && (newData.val() === 'default' || ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() || root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) && (newData.val() === 'burn-coloured' || newData.val() === 'burn-ice' || newData.val() === 'burn-electric')))"
           },
           "victoryEffect": {
-            ".validate": "newData.isString() && (newData.val() === 'default' || (root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists() && (newData.val() === 'victory-confetti' || newData.val() === 'victory-cards' || newData.val() === 'victory-fireworks')))"
+            ".validate": "newData.isString() && (newData.val() === 'default' || ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() || root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) && (newData.val() === 'victory-confetti' || newData.val() === 'victory-cards' || newData.val() === 'victory-fireworks')))"
           },
           "$other": {
             ".validate": false
