@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-23-v99 (ShitHead-Deluxe-99) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-23-v100 (ShitHead-Deluxe-100) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -4111,7 +4111,7 @@ video {
         <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Leaderboard</span>
         <button id="leaderboardCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
-      <div id="leaderboardArea" class="overflow-y-auto space-y-1.5" style="flex:1;"></div>
+      <div class="mb-2" style="flex-shrink:0;"><input id="leaderboardSearchInput" type="search" autocomplete="off" placeholder="Search player…" aria-label="Search leaderboard by username" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-[10px] text-white outline-none focus:border-amber-500"></div><div id="leaderboardArea" class="overflow-y-auto space-y-1.5" style="flex:1;"></div>
       <p id="leaderboardEmptyMsg" class="hidden text-[10px] text-slate-500 text-center py-4">No ranked players yet.</p>
     </div>
   </div>
@@ -4316,101 +4316,23 @@ video {
       </div>
 
       <div class="overflow-y-auto" style="flex:1;">
-
-        <!-- Top level: Daily, Ranked, Bot Matches. All three (and every
-             Ranked subsection below) reuse .settings-head/.settings-body/
-             .settings-chev — the exact same collapsible pattern and click
-             handler Settings already uses, wired up automatically since
-             that handler is attached to every .settings-head on the page
-             at load time, not just the ones inside #settingsModal. -->
-        <button class="settings-head w-full flex items-center justify-between py-1.5" data-target="challengesTutorialBody">
-          <span class="text-[10px] font-black uppercase tracking-widest text-amber-400">Getting Started</span>
-          <span class="settings-chev text-amber-400 text-[10px] transition-transform">&#9660;</span>
-        </button>
-        <div id="challengesTutorialBody" class="settings-body pb-2">
-          <div id="challengesTutorialList" class="flex flex-col gap-1.5 pt-1"></div>
+        <div id="challengeTabs" class="sticky top-0 z-10 grid grid-cols-3 gap-1 bg-slate-950 pb-2" role="tablist">
+          <button type="button" data-challenge-tab="daily" aria-selected="true" class="challenge-tab rounded-lg border border-amber-500 bg-amber-950/50 px-2 py-2 text-[9px] font-black uppercase text-amber-300">Daily</button>
+          <button type="button" data-challenge-tab="weekly" aria-selected="false" class="challenge-tab rounded-lg border border-slate-700 px-2 py-2 text-[9px] font-black uppercase text-slate-400">Weekly</button>
+          <button type="button" data-challenge-tab="ranked" aria-selected="false" class="challenge-tab rounded-lg border border-slate-700 px-2 py-2 text-[9px] font-black uppercase text-slate-400">Ranked</button>
         </div>
-
-        <button id="challengesDailyHead" class="settings-head w-full flex items-center justify-between py-1.5 border-t border-slate-800" data-target="challengesDailyBody">
-          <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Daily</span>
-          <span class="settings-chev text-emerald-400 text-[10px] transition-transform">&#9660;</span>
-        </button>
-        <div id="challengesDailyBody" class="settings-body pb-2">
-          <div id="challengesDailyList" class="flex flex-col gap-1.5 pt-1"></div>
-        </div>
-
-        <button class="settings-head w-full flex items-center justify-between py-1.5 mt-1 border-t border-slate-800" data-target="challengesRankedBody">
-          <span class="text-[10px] font-black uppercase tracking-widest text-sky-400">Ranked</span>
-          <span class="settings-chev text-sky-400 text-[10px] transition-transform">&#9660;</span>
-        </button>
-        <div id="challengesRankedBody" class="settings-body pb-2 pt-1">
-
-          <button class="settings-head w-full flex items-center justify-between py-1 pl-2 border-l border-slate-800 ml-1" data-target="challengesSubBurnsBody">
-            <span class="text-[9px] font-black uppercase tracking-wider text-slate-300">Burns</span>
-            <span class="settings-chev text-slate-400 text-[9px] transition-transform">&#9660;</span>
-          </button>
-          <div id="challengesSubBurnsBody" class="settings-body pl-2 ml-1 border-l border-slate-800">
-            <div id="challengesRankedBurnsList" class="flex flex-col gap-1.5 pb-1.5 pt-1"></div>
-          </div>
-
-          <button class="settings-head w-full flex items-center justify-between py-1 pl-2 border-l border-slate-800 ml-1" data-target="challengesSubEndingBody">
-            <span class="text-[9px] font-black uppercase tracking-wider text-slate-300">Ending Cards</span>
-            <span class="settings-chev text-slate-400 text-[9px] transition-transform">&#9660;</span>
-          </button>
-          <div id="challengesSubEndingBody" class="settings-body pl-2 ml-1 border-l border-slate-800">
-            <div id="challengesEndingCardsList" class="flex flex-col gap-1.5 pb-1.5 pt-1"></div>
-          </div>
-
-          <button class="settings-head w-full flex items-center justify-between py-1 pl-2 border-l border-slate-800 ml-1" data-target="challengesSubGamesBody">
-            <span class="text-[9px] font-black uppercase tracking-wider text-slate-300">Games Played</span>
-            <span class="settings-chev text-slate-400 text-[9px] transition-transform">&#9660;</span>
-          </button>
-          <div id="challengesSubGamesBody" class="settings-body pl-2 ml-1 border-l border-slate-800">
-            <div id="challengesRankedGamesList" class="flex flex-col gap-1.5 pb-1.5 pt-1"></div>
-          </div>
-
-          <button class="settings-head w-full flex items-center justify-between py-1 pl-2 border-l border-slate-800 ml-1" data-target="challengesSubJokerBody">
-            <span class="text-[9px] font-black uppercase tracking-wider text-slate-300">Joker Deflects</span>
-            <span class="settings-chev text-slate-400 text-[9px] transition-transform">&#9660;</span>
-          </button>
-          <div id="challengesSubJokerBody" class="settings-body pl-2 ml-1 border-l border-slate-800">
-            <div id="challengesRankedJokerList" class="flex flex-col gap-1.5 pb-1.5 pt-1"></div>
-          </div>
-
-          <button class="settings-head w-full flex items-center justify-between py-1 pl-2 border-l border-slate-800 ml-1" data-target="challengesSubTiersBody">
-            <span class="text-[9px] font-black uppercase tracking-wider text-slate-300">Rank Tiers</span>
-            <span class="settings-chev text-slate-400 text-[9px] transition-transform">&#9660;</span>
-          </button>
-          <div id="challengesSubTiersBody" class="settings-body pl-2 ml-1 border-l border-slate-800">
-            <div id="challengesRankTiersList" class="flex flex-col gap-1.5 pb-1.5 pt-1"></div>
-          </div>
-
-          <button class="settings-head w-full flex items-center justify-between py-1 pl-2 border-l border-slate-800 ml-1" data-target="challengesSubSnapBody">
-            <span class="text-[9px] font-black uppercase tracking-wider text-slate-300">Snap Burns</span>
-            <span class="settings-chev text-slate-400 text-[9px] transition-transform">&#9660;</span>
-          </button>
-          <div id="challengesSubSnapBody" class="settings-body pl-2 ml-1 border-l border-slate-800">
-            <div id="challengesRankedSnapList" class="flex flex-col gap-1.5 pb-1.5 pt-1"></div>
-          </div>
-
-          <button class="settings-head w-full flex items-center justify-between py-1 pl-2 border-l border-slate-800 ml-1" data-target="challengesSubStreaksBody">
-            <span class="text-[9px] font-black uppercase tracking-wider text-slate-300">Win Streaks</span>
-            <span class="settings-chev text-slate-400 text-[9px] transition-transform">&#9660;</span>
-          </button>
-          <div id="challengesSubStreaksBody" class="settings-body pl-2 ml-1 border-l border-slate-800">
-            <div id="challengesRankedStreaksList" class="flex flex-col gap-1.5 pb-1.5 pt-1"></div>
-          </div>
-
-        </div>
-
-        <button class="settings-head w-full flex items-center justify-between py-1.5 mt-1 border-t border-slate-800" data-target="challengesBotBody">
-          <span class="text-[10px] font-black uppercase tracking-widest text-rose-400">Bot Matches</span>
-          <span class="settings-chev text-rose-400 text-[10px] transition-transform">&#9660;</span>
-        </button>
-        <div id="challengesBotBody" class="settings-body pb-2">
-          <div id="challengesBotMatchesList" class="flex flex-col gap-1.5 pt-1"></div>
-        </div>
-
+        <section data-challenge-panel="daily"><div id="challengesDailyList" class="flex flex-col gap-1.5"></div><div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase text-amber-400 mb-1">Getting Started</div><div id="challengesTutorialList" class="flex flex-col gap-1.5"></div></div></section>
+        <section data-challenge-panel="weekly" class="hidden"><div class="mb-2 text-[8px] text-slate-500">Resets every Monday (UK time).</div><div id="challengesWeeklyList" class="flex flex-col gap-1.5"></div></section>
+        <section data-challenge-panel="ranked" class="hidden">
+          <div class="text-[8px] font-black uppercase text-sky-400 mb-1">Burns</div><div id="challengesRankedBurnsList" class="flex flex-col gap-1.5 mb-3"></div>
+          <div class="text-[8px] font-black uppercase text-sky-400 mb-1">Ending Cards</div><div id="challengesEndingCardsList" class="flex flex-col gap-1.5 mb-3"></div>
+          <div class="text-[8px] font-black uppercase text-sky-400 mb-1">Games Played</div><div id="challengesRankedGamesList" class="flex flex-col gap-1.5 mb-3"></div>
+          <div class="text-[8px] font-black uppercase text-sky-400 mb-1">Joker Deflects</div><div id="challengesRankedJokerList" class="flex flex-col gap-1.5 mb-3"></div>
+          <div class="text-[8px] font-black uppercase text-sky-400 mb-1">Rank Tiers</div><div id="challengesRankTiersList" class="flex flex-col gap-1.5 mb-3"></div>
+          <div class="text-[8px] font-black uppercase text-sky-400 mb-1">Snap Burns</div><div id="challengesRankedSnapList" class="flex flex-col gap-1.5 mb-3"></div>
+          <div class="text-[8px] font-black uppercase text-sky-400 mb-1">Win Streaks</div><div id="challengesRankedStreaksList" class="flex flex-col gap-1.5 mb-3"></div>
+          <div class="text-[8px] font-black uppercase text-rose-400 mb-1">Bot Milestones</div><div id="challengesBotMatchesList" class="flex flex-col gap-1.5"></div>
+        </section>
       </div>
     </div>
   </div>
@@ -12468,6 +12390,7 @@ video {
     document.getElementById('challengesModal').addEventListener('click', (e) => {
       if (e.target.id === 'challengesModal') document.getElementById('challengesModal').classList.add('hidden');
     });
+    document.getElementById('challengeTabs').addEventListener('click',e=>{const b=e.target.closest('[data-challenge-tab]');if(!b)return;const t=b.dataset.challengeTab;document.querySelectorAll('[data-challenge-panel]').forEach(p=>p.classList.toggle('hidden',p.dataset.challengePanel!==t));document.querySelectorAll('[data-challenge-tab]').forEach(x=>{const a=x.dataset.challengeTab===t;x.setAttribute('aria-selected',String(a));x.className=`challenge-tab rounded-lg border px-2 py-2 text-[9px] font-black uppercase ${a?'border-amber-500 bg-amber-950/50 text-amber-300':'border-slate-700 text-slate-400'}`;});});
     const NAME_CHANGE_TOKEN_COST = 100;
     const COSMETIC_SHOP_ITEMS = [
       { id: 'back-midnight', category: 'Card Backs', name: 'Midnight Royale', cost: 40, tones: ['#0f172a','#38bdf8','#cbd5e1'] },
@@ -13102,7 +13025,7 @@ video {
             [`users/${uid}/username`]: newName,
             [`publicProfiles/${uid}/username`]: newName,
             [`leaderboard/${oldKey}`]: null,
-            [`leaderboard/${newKey}`]: { username: newName, rating, tier },
+            [`leaderboard/${newKey}`]: { username: newName, rating, tier, wins: profile.wins || 0, losses: profile.losses || 0 },
             [`shopPurchases/${uid}/nameChangeToken/usedAt`]: firebase.database.ServerValue.TIMESTAMP
           }).catch((error) => newUsernameRef.remove().then(() => { throw error; }));
         });
@@ -13608,6 +13531,13 @@ video {
       { id: 'finish-any-match', name: 'Finisher', desc: 'Finish a match, any placement.', target: 1 }
     ];
     if (DAILY_CHALLENGE_POOL.length !== 20) console.warn('DAILY_CHALLENGE_POOL should have exactly 20 entries, has', DAILY_CHALLENGE_POOL.length);
+    const WEEKLY_CHALLENGE_REWARD=100;
+    const WEEKLY_CHALLENGE_POOL=[
+      {id:'burn-once',name:'Bonfire Week',desc:'Burn the pile 5 times.',target:5},{id:'play-joker',name:'Joker Week',desc:'Play 5 Jokers.',target:5},
+      {id:'win-any-match',name:'Winning Habit',desc:'Win 5 matches in any mode.',target:5},{id:'beat-a-bot',name:'Bot Hunter',desc:'Beat a Bot 3 times.',target:3},
+      {id:'finish-any-match',name:'Card Marathon',desc:'Finish 10 matches.',target:10},{id:'win-ranked-match',name:'Ranked Week',desc:'Win 3 Ranked matches.',target:3},
+      {id:'snap-burn-once',name:'Snap Happy',desc:'Complete 3 Snap Burns.',target:3},{id:'four-of-a-kind-burn',name:'Four Play',desc:'Complete 3 four-of-a-kind burns.',target:3}
+    ];
 
     // --- Ranked one-time challenges (career-cumulative, Ranked only) ---
     // Only the TARGET thresholds were spec'd exactly (e.g. "Burner
@@ -13731,6 +13661,11 @@ video {
     function getDailyChallengeDef(id) {
       return DAILY_CHALLENGE_POOL.find((c) => c.id === id) || null;
     }
+    function getUkWeekKey(date=new Date()){const uk=new Date(date.toLocaleString('en-US',{timeZone:'Europe/London'}));const d=new Date(Date.UTC(uk.getFullYear(),uk.getMonth(),uk.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));return `${d.getUTCFullYear()}-W${String(Math.ceil((((d-ys)/86400000)+1)/7)).padStart(2,'0')}`;}
+    function pickWeeklyChallengeIds(k){const rng=mulberry32(hashStringToSeed('weekly-'+k)),pool=WEEKLY_CHALLENGE_POOL.map(c=>c.id);for(let i=pool.length-1;i>pool.length-4;i--){const j=Math.floor(rng()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}return pool.slice(pool.length-3);}
+    function getWeeklyChallengeDef(id){return WEEKLY_CHALLENGE_POOL.find(c=>c.id===id)||null;}
+    function weeklyCompletionKey(k,id){return `weekly_${k}_${id}`;}
+    function ensureWeeklyChallengeState(x){const k=getUkWeekKey();if(x&&x.weekKey===k&&Array.isArray(x.challengeIds)&&x.challengeIds.length===3)return {state:x,changed:false};return {state:{weekKey:k,challengeIds:pickWeeklyChallengeIds(k),progress:{}},changed:true};}
 
     // --- Firebase schema wiring -----------------------------------------
     // Diamonds and completedChallenges live on the same users/{uid} node
@@ -13759,7 +13694,7 @@ video {
     // applyRankedRatingUpdate/recordDifficultyWin already maintain) —
     // duplicated here only so the Challenges modal can render real
     // progress numbers without a second Firebase read of its own.
-    let challengeEconomy = { diamonds: 0, completedChallenges: {}, dailyChallengeState: null, rating: 500, wins: 0, losses: 0, rankedStats: {}, challengeStats: {}, difficultyWins: {} };
+    let challengeEconomy = { diamonds: 0, completedChallenges: {}, dailyChallengeState: null, weeklyChallengeState: null, rating: 500, wins: 0, losses: 0, rankedStats: {}, challengeStats: {}, difficultyWins: {} };
     // BUG FIX (unrewarded challenges): tracks which account challengeEconomy
     // was last freshly loaded for. onAuthStateChanged can legitimately fire
     // more than once for the same signed-in session (a Firebase ID-token
@@ -13860,7 +13795,7 @@ video {
     // in memory.
     function initChallengeEconomy() {
       if (!currentUser) {
-        challengeEconomy = { diamonds: 0, completedChallenges: {}, dailyChallengeState: null, rating: 500, wins: 0, losses: 0, rankedStats: {}, challengeStats: {}, difficultyWins: {} };
+        challengeEconomy = { diamonds: 0, completedChallenges: {}, dailyChallengeState: null, weeklyChallengeState: null, rating: 500, wins: 0, losses: 0, rankedStats: {}, challengeStats: {}, difficultyWins: {} };
         challengeEconomyLoadedForUid = null;
         challengeEconomyLoadError = null;
         updateDiamondHeader();
@@ -13930,10 +13865,14 @@ video {
         }
         return resetWrite.then(() => {
           const { state: dailyState, changed } = ensureDailyChallengeState(profile.dailyChallengeState);
+          const { state: weeklyState, changed: weeklyChanged } = ensureWeeklyChallengeState(profile.weeklyChallengeState);
+          profile.weeklyChallengeState=weeklyState;
+          if(weeklyChanged) db.ref(`users/${currentUser.uid}/weeklyChallengeState`).set(weeklyState).catch(e=>console.warn('Weekly rollover failed',e));
           challengeEconomy = {
             diamonds: profile.diamonds || 0,
             completedChallenges: profile.completedChallenges || {},
             dailyChallengeState: dailyState,
+            weeklyChallengeState: weeklyState,
             rating: profile.rating || 500,
             wins: profile.wins || 0,
             losses: profile.losses || 0,
@@ -13965,7 +13904,7 @@ video {
           if (pendingDailyEvents.length) {
             const queued = pendingDailyEvents;
             pendingDailyEvents = [];
-            queued.forEach((ids) => bumpDailyChallengeProgress(ids));
+            queued.forEach((ids) => { bumpDailyChallengeProgress(ids); bumpWeeklyChallengeProgress(ids); });
           }
           // Retroactive backfill: exactly once per account (or once again
           // right after a reset above cleared this same flag) — a
@@ -14112,6 +14051,7 @@ video {
         return;
       }
       bumpDailyChallengeProgress(eventIds);
+      bumpWeeklyChallengeProgress(eventIds);
     }
 
     // Advances progress on whichever of TODAY's 3 picked daily challenges
@@ -14138,6 +14078,8 @@ video {
         else renderChallengesModalIfOpen(); // progress moved even though not yet complete
       });
     }
+
+    function bumpWeeklyChallengeProgress(eventIds){const w=challengeEconomy.weeklyChallengeState;if(!w||!currentUser)return;if(!w.progress||typeof w.progress!=='object')w.progress={};const picked=new Set(w.challengeIds||[]);eventIds.forEach(id=>{if(!picked.has(id))return;const d=getWeeklyChallengeDef(id);if(!d)return;const k=weeklyCompletionKey(w.weekKey,id);if(challengeEconomy.completedChallenges[k])return;w.progress[id]=(w.progress[id]||0)+1;db.ref(`users/${currentUser.uid}/weeklyChallengeState/progress/${id}`).set(w.progress[id]).catch(e=>console.warn('Weekly progress failed',e));if(w.progress[id]>=d.target)claimChallenge(k,WEEKLY_CHALLENGE_REWARD,d.name);else renderChallengesModalIfOpen();});}
 
     // Ranked one-time challenges are all career-cumulative, so they're
     // checked in one place, once per Ranked match's rating update, against
@@ -14466,7 +14408,7 @@ video {
     }
 
     const CHALLENGES_SIGN_IN_MSG = '<p class="text-[9px] text-slate-500 text-center py-2">Sign in to track this.</p>';
-    const CHALLENGES_LIST_IDS = ['challengesTutorialList', 'challengesDailyList', 'challengesRankedBurnsList', 'challengesRankedStreaksList', 'challengesRankedJokerList', 'challengesRankedSnapList', 'challengesRankedGamesList', 'challengesEndingCardsList', 'challengesRankTiersList', 'challengesBotMatchesList'];
+    const CHALLENGES_LIST_IDS = ['challengesTutorialList', 'challengesDailyList', 'challengesWeeklyList', 'challengesRankedBurnsList', 'challengesRankedStreaksList', 'challengesRankedJokerList', 'challengesRankedSnapList', 'challengesRankedGamesList', 'challengesEndingCardsList', 'challengesRankTiersList', 'challengesBotMatchesList'];
 
     // Builds every section's HTML from challengeEconomy + CHALLENGE_DEFS.
     // Guests get an honest "sign in" prompt in every section rather than
@@ -14540,6 +14482,8 @@ video {
         return renderChallengeRowHTML(def.name, `${progress}/${def.target} \u2014 ${def.desc}`, CHALLENGE_REWARD, completed);
       }).join('') : '<p class="text-[9px] text-slate-500 text-center py-2">Loading challenges…</p>';
       setListHtml('challengesDailyList', dailyHtml);
+      const weekly=challengeEconomy.weeklyChallengeState;
+      setListHtml('challengesWeeklyList',weekly?weekly.challengeIds.map(id=>{const d=getWeeklyChallengeDef(id);if(!d)return '';const done=!!challengeEconomy.completedChallenges[weeklyCompletionKey(weekly.weekKey,id)],p=Math.min((weekly.progress&&weekly.progress[id])||0,d.target);return renderChallengeRowHTML(d.name,`${p}/${d.target} — ${d.desc}`,WEEKLY_CHALLENGE_REWARD,done);}).join(''):'<p class="text-[9px] text-slate-500 text-center py-2">Loading challenges…</p>');
       const allDailyComplete = !!daily && daily.challengeIds.length > 0 && daily.challengeIds.every((id) => challengeEconomy.completedChallenges[dailyCompletionKey(daily.dateKey, id)]);
       maybeAutoCollapseDailySection(allDailyComplete);
 
@@ -15111,7 +15055,7 @@ video {
           tier
         });
         const leaderboardWrite = username
-          ? db.ref(`leaderboard/${username.toLowerCase()}`).set({ username, rating: profile.rating != null ? profile.rating : 500, tier })
+          ? db.ref(`leaderboard/${username.toLowerCase()}`).set({ username, rating: profile.rating != null ? profile.rating : 500, tier, wins: profile.wins || 0, losses: profile.losses || 0 })
           : Promise.resolve();
         return Promise.all([publicProfileWrite, leaderboardWrite]).catch((e) => console.warn('syncPublicProfile failed', e));
       });
@@ -15347,6 +15291,7 @@ video {
 
     // --- Inbox: unified inbox for friend requests + game invites -------
     const GAME_INVITE_EXPIRY_MS = 5 * 60 * 1000;
+    function cleanupExpiredInvites(data){if(!currentUser)return [];const now=Date.now(),expired=[];Object.entries(data||{}).forEach(([id,inv])=>{if(!inv||!Number(inv.sentAt)||now-Number(inv.sentAt)>GAME_INVITE_EXPIRY_MS)expired.push(id);});if(expired.length){const u={};expired.forEach(id=>u[id]=null);db.ref(`gameInvites/${currentUser.uid}`).update(u).catch(e=>console.warn('Expired invite cleanup failed',e));}return expired;}
     function openInboxPanel() {
       if (!currentUser) { openAuthModal(); return; }
       document.getElementById('inboxModal').classList.remove('hidden');
@@ -15418,7 +15363,8 @@ video {
         const now = Date.now();
         const reqCount = Object.keys(reqSnap.val() || {}).length;
         const invData = invSnap.val() || {};
-        const invCount = Object.keys(invData).filter((id) => now - invData[id].sentAt <= GAME_INVITE_EXPIRY_MS).length;
+        const expired=new Set(cleanupExpiredInvites(invData));
+        const invCount = Object.keys(invData).filter((id) => !expired.has(id) && now - Number(invData[id].sentAt) <= GAME_INVITE_EXPIRY_MS).length;
         const total = reqCount + invCount;
         badge.textContent = total;
         badge.classList.toggle('hidden', total === 0);
@@ -15491,6 +15437,7 @@ video {
       // Read the public leaderboard projection. It is keyed by username,
       // not Firebase UID, and deliberately contains no presence field.
       // with a real username and sort by live ranked rating points.
+      let leaderboardRows=[];
       const renderRows = (data) => {
         const rows = [];
         Object.entries(data || {}).forEach(([usernameKey, profile]) => {
@@ -15508,9 +15455,13 @@ video {
           emptyMsg.classList.remove('hidden');
           return;
         }
-        emptyMsg.classList.add('hidden');
-        area.innerHTML = rows.map((player, index) => leaderboardRowHtml(player, index + 1)).join('');
+        leaderboardRows=rows.map((p,i)=>({...p,rank:i+1}));
+        const q=(document.getElementById('leaderboardSearchInput')?.value||'').trim().toLowerCase();
+        const shown=q?leaderboardRows.filter(p=>String(p.username||'').toLowerCase().includes(q)):leaderboardRows;
+        emptyMsg.classList.toggle('hidden',shown.length>0); emptyMsg.textContent=q?'No players match that search.':'No ranked players yet.';
+        area.innerHTML=shown.map(p=>leaderboardRowHtml(p,p.rank)).join('');
       };
+      const search=document.getElementById('leaderboardSearchInput');search.value='';search.oninput=()=>{const q=search.value.trim().toLowerCase(),shown=q?leaderboardRows.filter(p=>String(p.username||'').toLowerCase().includes(q)):leaderboardRows;emptyMsg.classList.toggle('hidden',shown.length>0);emptyMsg.textContent=q?'No players match that search.':'No ranked players yet.';area.innerHTML=shown.map(p=>leaderboardRowHtml(p,p.rank)).join('');};
 
       const showError = (error) => {
         const code = error && error.code ? ` (${error.code})` : '';
@@ -15563,7 +15514,7 @@ video {
       return `<div class="flex items-center justify-between gap-2 border rounded-xl px-2.5 py-2 ${isMe ? 'bg-amber-950/40 border-amber-600' : 'bg-slate-900/60 border-slate-800'}">
         <div class="flex items-center gap-2 min-w-0">
           <span class="text-[10px] font-black text-slate-500" style="width:20px;text-align:right;">#${rank}</span>
-          <span class="text-xs font-bold text-white truncate">${p.username || 'Player'}</span>
+          <div class="min-w-0"><div class="text-xs font-bold text-white truncate">${p.username || 'Player'}${isMe?' <span class="text-amber-300 text-[8px]">YOU</span>':''}</div><div class="text-[8px] text-slate-500">${Number(p.wins)||0}W · ${Number(p.losses)||0}L · ${(Number(p.wins)||0)+(Number(p.losses)||0)} played</div></div>
         </div>
         <span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border font-black text-[10px] w-fit ${tier.cls}" style="${tier.style}">${tier.name} \u00b7 ${Math.round(p.rating || 500)}</span>
       </div>`;
@@ -22654,6 +22605,10 @@ video {
         assertTrue(!/progress|unlock(ed|s)?\s*\d|reward/i.test(area.innerHTML.replace('Coming Soon', '')), 'No fake unlock progress or fake rewards may be implied for the Coming Soon card');
         document.getElementById('themesModal').classList.add('hidden');
       });
+      await test('REGRESSION: Shop purchase math is atomic and blocks duplicate/insufficient purchases',()=>{const item={id:'test-cosmetic',name:'Test',cost:250};const a=calculateCosmeticPurchase({diamonds:999999,ownedCosmetics:{}},item,123);assertEqual(a.user.diamonds,999749,'250 debit');assertTrue(!!a.user.ownedCosmetics[item.id],'ownership recorded');assertTrue(!!calculateCosmeticPurchase({diamonds:249,ownedCosmetics:{}},item,123).error,'insufficient blocked');assertTrue(!!calculateCosmeticPurchase(a.user,item,124).error,'duplicate blocked');});
+      await test('REGRESSION: Challenges has Daily Weekly Ranked tabs',()=>{assertEqual([...document.querySelectorAll('[data-challenge-tab]')].map(b=>b.dataset.challengeTab),['daily','weekly','ranked'],'tab order');assertEqual(pickWeeklyChallengeIds('2026-W39').length,3,'3 weekly challenges');});
+      await test('REGRESSION: Leaderboard search and W/L display exist',()=>{assertTrue(!!document.getElementById('leaderboardSearchInput'),'search exists');const h=leaderboardRowHtml({username:'Tester',rating:600,wins:7,losses:3},2);assertTrue(h.includes('7W')&&h.includes('3L')&&h.includes('10 played'),'W/L shown');});
+      await test('REGRESSION: expired invites are cleaned',()=>{const ou=currentUser,od=db;let up=null;currentUser={uid:'t'};db={ref:()=>({update:u=>{up=u;return Promise.resolve();}})};const x=cleanupExpiredInvites({old:{sentAt:Date.now()-GAME_INVITE_EXPIRY_MS-1},fresh:{sentAt:Date.now()}});assertTrue(x.includes('old')&&!x.includes('fresh'),'expiry selection');assertTrue(up&&up.old===null,'firebase delete');currentUser=ou;db=od;});
       await test('REGRESSION: the Themes page previews are the real card-back visuals, not invented swatches', () => {
         openThemesPanel();
         const area = document.getElementById('themesGridArea');
