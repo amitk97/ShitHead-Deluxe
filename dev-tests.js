@@ -1258,16 +1258,53 @@ async function runDevTestSuite() {
     hideMatchEndUI();
     state.isRanked = false;
   });
-  await test('REGRESSION: match-end actions use menu-style icons and Back to Lobby is centred', () => {
+  await test('REGRESSION: online, an 8 that skips back to the same seat still auto-picks up when nothing beats it', async () => {
+    const savedPickup = executePickup;
+    const pickedUp = [];
+    try {
+      syncFirebaseGameState = () => {};
+      freshState({ isMultiplayer: true, isHost: true, roomCode: '888888', phase: 'PLAY', currentTurnIndex: 0, turnDeadline: 1000 });
+      state.players = [
+        makePlayer({ id: 'p1', name: 'You', hand: [makeCard('5'), makeCard('7')], faceUp: [makeCard('K')], faceDown: [makeCard('3')] }),
+        makePlayer({ id: 'p2', name: 'Them', hand: [makeCard('9')], faceUp: [makeCard('Q')], faceDown: [makeCard('4')] })
+      ];
+      state.discardPile = [makeCard('4')];
+      mpLastCheckedTurnIndex = null;
+      executePickup = (id) => pickedUp.push(id);
+      render();
+      await new Promise((r) => setTimeout(r, 650));
+      assertEqual(pickedUp.length, 0, 'With a legal move (5 on a 4) nothing is picked up');
+      // Two 8s skip the only opponent: same seat, new turn, and a 5/7 can't beat an 8.
+      state.discardPile.push(makeCard('8', '♥'), makeCard('8', '♠'));
+      state.turnDeadline = 2000;
+      render();
+      await new Promise((r) => setTimeout(r, 650));
+      assertEqual(pickedUp.join(','), 'p1', 'The turn that came straight back must auto-pick up the pile');
+    } finally {
+      executePickup = savedPickup;
+      mpLastCheckedTurnIndex = null;
+      freshState();
+    }
+  });
+  await test('REGRESSION: match-end actions use menu-style icons; Back to Lobby is centred under two buttons, beside Match Stats otherwise', () => {
     const stats = document.getElementById('matchStatsBtn');
     const quick = document.getElementById('quickPlayMatchBtn');
     const lobby = document.getElementById('playAgainMatchBtn');
     assertEqual(stats.querySelector('use')?.getAttribute('href'), '#ui-stats', 'Match Stats must reuse the menu Stats icon');
     assertEqual(quick.querySelector('use')?.getAttribute('href'), '#ui-quick-play', 'Quick Play must use its menu-style icon');
     assertEqual(lobby.querySelector('use')?.getAttribute('href'), '#ui-lobby', 'Back to Lobby must use its menu-style icon');
-    assertEqual(getComputedStyle(lobby).gridColumnStart, '1', 'Back to Lobby must span the full grid row');
-    assertEqual(getComputedStyle(lobby).gridColumnEnd, '-1', 'Back to Lobby must span the full grid row');
-    assertEqual(getComputedStyle(lobby).justifySelf, 'center', 'Back to Lobby must be horizontally centred');
+    const quickWasHidden = quick.classList.contains('hidden');
+    try {
+      quick.classList.remove('hidden');
+      assertEqual(getComputedStyle(lobby).gridColumnStart, '1', 'With Quick Play showing, Back to Lobby must span the full grid row');
+      assertEqual(getComputedStyle(lobby).gridColumnEnd, '-1', 'With Quick Play showing, Back to Lobby must span the full grid row');
+      assertEqual(getComputedStyle(lobby).justifySelf, 'center', 'With Quick Play showing, Back to Lobby must be horizontally centred');
+      quick.classList.add('hidden');
+      assertEqual(getComputedStyle(lobby).gridColumnStart, 'auto', 'Ranked/online (no Quick Play): Return to Ranked sits in the grid beside Match Stats');
+      assertEqual(getComputedStyle(lobby).justifySelf, 'stretch', 'Ranked/online (no Quick Play): Return to Ranked fills its half of the row');
+    } finally {
+      quick.classList.toggle('hidden', quickWasHidden);
+    }
   });
   await test('REGRESSION: an equipped victory effect fires on the immediate match-end path', () => {
     const savedEquipped = equippedCosmetics;

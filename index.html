@@ -921,6 +921,9 @@
     }
     #matchEndButtonRow .match-end-icon { width:32px; height:32px; flex:0 0 32px; }
     #playAgainMatchBtn { grid-column:1 / -1; width:calc(50% - 6px) !important; justify-self:center; }
+    /* Only a third button gets its own centred row. When Quick Play is
+       hidden (Ranked, online rooms) it sits beside Match Stats. */
+    #quickPlayMatchBtn.hidden ~ #playAgainMatchBtn { grid-column:auto; width:100% !important; justify-self:stretch; }
 
     /* Final Standings box (end-of-match placement summary): sitting at the
        exact same width as #historyStreamPanel above it means its left/right
@@ -10858,8 +10861,14 @@ video {
       }
 
       if (state.isMultiplayer && isMyTurn && !state.pendingFollowUp && !state.pendingFaceUpSacrifice && !state.burnResolving) {
-        if (mpLastCheckedTurnIndex !== state.currentTurnIndex) {
-          mpLastCheckedTurnIndex = state.currentTurnIndex;
+        // Keyed on the turn itself, not just the seat: an 8 (Skip) in a
+        // 2-player match hands the turn straight back to the same seat, and a
+        // seat-only key never re-checked, so a player with nothing to beat
+        // the 8 was left staring at an unplayable hand. Every new turn gets a
+        // fresh deadline and a changed pile.
+        const turnCheckKey = `${state.currentTurnIndex}|${state.turnDeadline || ''}|${state.discardPile.length}`;
+        if (mpLastCheckedTurnIndex !== turnCheckKey) {
+          mpLastCheckedTurnIndex = turnCheckKey;
           mpTimeoutFired = false;
           const validMoves = getLegalMovesForPlayer(local, state.discardPile, state.activeConstraint);
           if (validMoves.length === 0) {
