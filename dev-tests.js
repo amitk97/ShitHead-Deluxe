@@ -4882,18 +4882,25 @@ async function runDevTestSuite() {
     auth.currentUser = originalAuthCurrentUser;
   });
 
-  await test('REGRESSION: Google sign-in is enabled and clicking it actually attempts a real redirect sign-in', () => {
+  await test('REGRESSION: Google sign-in is enabled and clicking it opens a real Google pop-up sign-in (redirect only as the fallback)', async () => {
     const btn = document.getElementById('googleSignInBtn');
     assertTrue(!btn.querySelector('.item-soon'), 'The Soon label must be gone now that this works end to end');
     assertTrue(!btn.className.includes('cursor-not-allowed'), 'The button must no longer look disabled');
-    const originalSignIn = auth.signInWithRedirect;
-    let signInCalled = false;
-    let providerWasGoogleProvider = false;
-    auth.signInWithRedirect = (provider) => { signInCalled = true; providerWasGoogleProvider = provider instanceof firebase.auth.GoogleAuthProvider; return Promise.resolve(); };
-    btn.click();
-    auth.signInWithRedirect = originalSignIn;
-    assertTrue(signInCalled, 'Clicking it must now actually attempt a real Google sign-in');
-    assertTrue(providerWasGoogleProvider, 'It must sign in with a real GoogleAuthProvider, not some other provider');
+    const originalPopup = auth.signInWithPopup;
+    const originalRedirect = auth.signInWithRedirect;
+    const calls = [];
+    try {
+      auth.signInWithPopup = (provider) => { calls.push(['popup', provider instanceof firebase.auth.GoogleAuthProvider]); return Promise.reject({ code: 'auth/popup-blocked' }); };
+      auth.signInWithRedirect = (provider) => { calls.push(['redirect', provider instanceof firebase.auth.GoogleAuthProvider]); return Promise.resolve(); };
+      btn.click();
+      await new Promise((r) => setTimeout(r, 0));
+    } finally {
+      auth.signInWithPopup = originalPopup;
+      auth.signInWithRedirect = originalRedirect;
+    }
+    assertTrue(calls.length >= 1 && calls[0][0] === 'popup', 'Clicking it must first try a real Google pop-up sign-in');
+    assertTrue(calls.every((c) => c[1]), 'It must sign in with a real GoogleAuthProvider, not some other provider');
+    assertTrue(calls.some((c) => c[0] === 'redirect'), 'A blocked pop-up must fall back to the redirect sign-in');
   });
 
   await test('REGRESSION: the Ranked Stats page tells a guest to sign in, and shows a real-not-fake empty state for a signed-in player with no Ranked games yet', () => {
