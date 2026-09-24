@@ -6076,28 +6076,30 @@ video {
       }
     }
 
-    // Buying in the Shop: a burst of Diamonds leaves the price and flies
-    // into the header balance, which gives a little bump as they land.
-    function spawnDiamondBurst(fromRect, toEl, count = 8) {
-      if (!fromRect || !toEl || motionOff() || typeof Element.prototype.animate !== 'function') return;
-      const t = toEl.getBoundingClientRect();
-      const x0 = fromRect.left + fromRect.width / 2, y0 = fromRect.top + fromRect.height / 2;
+    // Spending in the Shop: Diamonds pop out of the header balance and get
+    // tossed away, spinning off the bottom of the screen, while the pill dips.
+    function spawnDiamondSpend(balanceEl, count = 9) {
+      if (!balanceEl || motionOff() || typeof Element.prototype.animate !== 'function') return;
+      const icon = balanceEl.querySelector('span') || balanceEl;
+      const r = icon.getBoundingClientRect();
+      const x0 = r.left + r.width / 2, y0 = r.top + r.height / 2;
+      const fall = window.innerHeight - y0 + 60;
       for (let i = 0; i < count; i++) {
         const el = document.createElement('div');
         el.textContent = '💎';
         el.style.cssText = `position:fixed;z-index:200;pointer-events:none;left:${x0 - 8}px;top:${y0 - 8}px;font-size:16px;line-height:16px;`;
         document.body.appendChild(el);
-        const ang = (Math.PI * 2 * i) / count + Math.random() * .5;
-        const r = 26 + Math.random() * 18;
-        const bx = Math.cos(ang) * r, by = Math.sin(ang) * r;
-        const dx = t.left + t.width / 2 - x0, dy = t.top + t.height / 2 - y0;
+        const side = (Math.random() * 2 - 1);                // left/right toss
+        const vx = side * (60 + Math.random() * 120);
+        const peak = -(30 + Math.random() * 45);              // pops up first
+        const spin = (Math.random() < .5 ? -1 : 1) * (360 + Math.random() * 360);
         el.animate([
-          { transform: 'translate(0,0) scale(.4)', opacity: 0 },
-          { transform: `translate(${bx}px, ${by}px) scale(1.15)`, opacity: 1, offset: .28 },
-          { transform: `translate(${dx}px, ${dy}px) scale(.5)`, opacity: .85 }
-        ], { duration: 780, delay: i * 35, easing: EASE.soft, fill: 'both' }).finished.then(() => el.remove(), () => el.remove());
+          { transform: 'translate(0,0) rotate(0deg) scale(.6)', opacity: 0 },
+          { transform: `translate(${vx * .3}px, ${peak}px) rotate(${spin * .25}deg) scale(1.1)`, opacity: 1, offset: .22, easing: 'cubic-bezier(.3,0,.6,1)' },
+          { transform: `translate(${vx}px, ${fall}px) rotate(${spin}deg) scale(.9)`, opacity: .9 }
+        ], { duration: 1000 + Math.random() * 350, delay: i * 45, easing: 'linear', fill: 'both' }).finished.then(() => el.remove(), () => el.remove());
       }
-      setTimeout(() => toEl.animate([{ scale: 1 }, { scale: 1.18 }, { scale: 1 }], { duration: 420, easing: EASE.spring }), 780 + count * 35 - 120);
+      balanceEl.animate([{ scale: 1 }, { scale: .86 }, { scale: 1 }], { duration: 480, easing: EASE.spring });
     }
 
     // Pop-ups and pages spring in when they open (see watchOverlayEntrances).
@@ -16844,7 +16846,6 @@ video {
         return;
       }
       clearShopActionNotice();
-      const buyRect = btn.getBoundingClientRect();
       btn.disabled = true;
       btn.textContent = 'BUYING…';
       const uid = currentUser.uid;
@@ -16874,7 +16875,7 @@ video {
         renderCosmeticShop();
         renderPersonalisationCosmetics();
         showShopPurchaseSuccess(item);
-        spawnDiamondBurst(buyRect, document.getElementById('headerDiamondBtn'));
+        spawnDiamondSpend(document.getElementById('headerDiamondBtn'));
         notifyBanner(`✓ ${item.name} purchased for ${item.cost} Diamonds.`);
       }).catch((error) => {
         const permissionDenied = error && (error.code === 'PERMISSION_DENIED' || error.code === 'permission_denied');
