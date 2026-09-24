@@ -73,7 +73,7 @@ async function runDevTestSuite() {
       // never lets the hold's setTimeout fire — without resetting it
       // here, that leaks into whichever test runs next and makes
       // isLocalPlayersTurnNow() falsely false for them.
-      burnResolving: false, turnTransitionLocked: false,
+      burnResolving: false, turnTransitionLocked: false, blindRevealing: false,
       turnDeadline: null, localPlayerId: 'p1', difficulty: 'medium', players: []
     }, overrides || {});
   }

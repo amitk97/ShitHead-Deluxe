@@ -1067,6 +1067,16 @@
       #settingsModal, #themesModal, #shopModal, #rulesModal, #tutorialHubScreen { top: calc(60px + var(--safe-top)); }
     }
     body.ui-overlay-open { overflow:hidden !important; overscroll-behavior:none; }
+    /* Blind face-down flip reveal (playBlindReveal). */
+    .blind-reveal-dim { position:fixed; inset:0; z-index:180; background:radial-gradient(circle at var(--rx,50%) var(--ry,50%), rgba(2,6,23,.15) 0, rgba(2,6,23,.7) 70%); pointer-events:auto; opacity:0; transition:opacity .2s ease-out; }
+    .blind-reveal-card { position:fixed; z-index:181; perspective:700px; pointer-events:none; }
+    .blind-reveal-inner { position:relative; width:100%; height:100%; transform-style:preserve-3d; }
+    .blind-reveal-face { position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:12px; overflow:hidden; }
+    .blind-reveal-face > * { width:100% !important; height:100% !important; margin:0 !important; transform:none !important; }
+    .blind-reveal-front { transform:rotateY(180deg); }
+    .blind-reveal-glow { position:absolute; inset:0; border-radius:12px; pointer-events:none; box-shadow:0 0 24px 6px rgba(245,158,11,.55); opacity:.9; }
+    .blind-reveal-card.is-good .blind-reveal-glow { box-shadow:0 0 30px 10px rgba(16,185,129,.75); }
+    .blind-reveal-card.is-bad .blind-reveal-glow { box-shadow:0 0 30px 10px rgba(244,63,94,.75); }
     /* Never fade the whole card: Face-Up cards sit directly over Face-Down
        cards, so element opacity made the purchased card-back pattern show
        through the face and look like the card had glitched/flipped. Dim the
@@ -5603,6 +5613,50 @@ video {
         if (typeof notifySoundOn !== 'undefined' && !notifySoundOn) return;
         this._play(this.notifyEl);
       }
+      /* Blind flip reveal: a rising whoosh with two heartbeat thumps, then a
+         bright two-note chime (playable) or a low thud (forced pickup).
+         Synthesised on the fly; silent without a running Web Audio context. */
+      playRevealTension(seconds) {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime;
+        const len = Math.max(0.3, seconds);
+        const noise = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * len), ctx.sampleRate);
+        const data = noise.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+        const src = ctx.createBufferSource(); src.buffer = noise;
+        const filter = ctx.createBiquadFilter(); filter.type = 'bandpass'; filter.Q.value = 3;
+        filter.frequency.setValueAtTime(250, t0); filter.frequency.exponentialRampToValueAtTime(2200, t0 + len);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.22 * vol, t0 + len * 0.9); g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+        src.connect(filter).connect(g).connect(ctx.destination); src.start(t0); src.stop(t0 + len);
+        [0.05, 0.05 + Math.min(0.32, len * 0.35)].forEach((at) => {
+          const o = ctx.createOscillator(); o.type = 'sine';
+          o.frequency.setValueAtTime(70, t0 + at); o.frequency.exponentialRampToValueAtTime(40, t0 + at + 0.16);
+          const og = ctx.createGain();
+          og.gain.setValueAtTime(0.0001, t0 + at); og.gain.exponentialRampToValueAtTime(0.5 * vol, t0 + at + 0.015); og.gain.exponentialRampToValueAtTime(0.0001, t0 + at + 0.18);
+          o.connect(og).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + 0.2);
+        });
+      }
+      playRevealResult(good) {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime;
+        const notes = good ? [[880, 0], [1318.5, 0.07]] : [[110, 0], [82.4, 0.05]];
+        notes.forEach(([freq, at]) => {
+          const o = ctx.createOscillator(); o.type = good ? 'triangle' : 'sawtooth';
+          o.frequency.setValueAtTime(freq, t0 + at);
+          const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = good ? 5000 : 500;
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime((good ? 0.25 : 0.4) * vol, t0 + at + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + (good ? 0.35 : 0.45));
+          o.connect(f).connect(g).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + 0.5);
+        });
+      }
       /* A card is dealt to a player, or a card is played to the discard pile */
       playCardPlace() {
         this._play(this.placeEl);
@@ -5954,6 +6008,93 @@ video {
           setTimeout(() => el.remove(), duration * 1000);
         }, i * 40);
       }
+    }
+
+    // Blind (face-down) flips get a short, tense reveal before the play
+    // applies: the card rises over the pile, the table dims, it wobbles and
+    // turns edge-on... then snaps over, glowing green if it can be played
+    // or red if it forces a pickup. Yours ~1.2s, bots ~0.8s so a run of
+    // bot flips doesn't drag. Off for the tutorial (scripted), Reduce
+    // Motion, fast-forward and the test suite: those flip instantly.
+    const BLIND_REVEAL_MS = { self: 1200, other: 800 };
+    function shouldRevealBlind() {
+      if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return false;
+      if (typeof tutorialActive !== 'undefined' && tutorialActive) return false;
+      if (typeof reduceMotion !== 'undefined' && reduceMotion) return false;
+      if (state.isFastForwarding) return false;
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return false;
+      return typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
+    }
+    function playBlindReveal(playerId, card, done) {
+      let finished = false;
+      const finish = () => { if (finished) return; finished = true; cleanup(); done(); };
+      const pile = document.getElementById('discardPileContainer');
+      const origin = getPlayerAnimationTarget(playerId);
+      const layer = document.body;
+      if (!pile) { done(); return; }
+      const isSelf = playerId === state.localPlayerId;
+      const total = isSelf ? BLIND_REVEAL_MS.self : BLIND_REVEAL_MS.other;
+      const good = isPlayLegal(card, state.discardPile, state.activeConstraint);
+      const p = pile.getBoundingClientRect();
+      const o = origin ? origin.getBoundingClientRect() : p;
+      const w = p.width, h = p.height;
+      const endX = p.left, endY = p.top;
+      const startX = o.left + o.width / 2 - w / 2, startY = o.top + o.height / 2 - h / 2;
+
+      const dim = document.createElement('div');
+      dim.className = 'blind-reveal-dim';
+      dim.style.setProperty('--rx', `${p.left + w / 2}px`);
+      dim.style.setProperty('--ry', `${p.top + h / 2}px`);
+      const wrap = document.createElement('div');
+      wrap.className = 'blind-reveal-card';
+      wrap.style.cssText += `left:${endX}px;top:${endY}px;width:${w}px;height:${h}px;`;
+      const inner = document.createElement('div');
+      inner.className = 'blind-reveal-inner';
+      const back = document.createElement('div');
+      back.className = 'blind-reveal-face blind-reveal-back';
+      const existingBack = (isSelf ? document.querySelector('#localTableSlots .custom-card-back') : document.querySelector(`#opp-${CSS.escape(playerId)} .custom-card-back`))
+        || document.querySelector('.custom-card-back');
+      if (existingBack) back.appendChild(existingBack.cloneNode(true));
+      else back.style.background = 'linear-gradient(135deg,#1e293b,#0f172a)';
+      const front = document.createElement('div');
+      front.className = 'blind-reveal-face blind-reveal-front';
+      try { front.appendChild(createCardElement(card, false, false, false, false, false)); } catch (e) {}
+      const glow = document.createElement('div');
+      glow.className = 'blind-reveal-glow';
+      inner.append(back, front);
+      wrap.append(glow, inner);
+      layer.append(dim, wrap);
+      const cleanup = () => { dim.remove(); wrap.remove(); };
+      requestAnimationFrame(() => { dim.style.opacity = '1'; });
+
+      // Phase timings as fractions of the total.
+      const lift = 0.25, tease = 0.45; // then the snap
+      const dx = startX - endX, dy = startY - endY;
+      wrap.animate([
+        { transform: `translate(${dx}px, ${dy}px) scale(.8)`, offset: 0 },
+        { transform: 'translate(0,0) scale(1.28)', offset: lift, easing: 'cubic-bezier(.2,.8,.2,1)' },
+        { transform: 'translate(0,0) scale(1.28) rotate(-2deg)', offset: lift + tease * 0.3 },
+        { transform: 'translate(0,0) scale(1.3) rotate(2deg)', offset: lift + tease * 0.6 },
+        { transform: 'translate(0,0) scale(1.32)', offset: lift + tease },
+        { transform: 'translate(0,0) scale(1.22)', offset: 0.9, easing: 'cubic-bezier(.34,1.56,.64,1)' },
+        { transform: 'translate(0,0) scale(1)', offset: 1 }
+      ], { duration: total, fill: 'forwards' });
+      inner.animate([
+        { transform: 'rotateY(0deg)', offset: 0 },
+        { transform: 'rotateY(0deg)', offset: lift + tease * 0.35 },
+        { transform: 'rotateY(80deg)', offset: lift + tease, easing: 'cubic-bezier(.6,0,.9,.4)' },
+        { transform: 'rotateY(180deg)', offset: lift + tease + 0.12, easing: 'cubic-bezier(.2,1.4,.4,1)' },
+        { transform: 'rotateY(180deg)', offset: 1 }
+      ], { duration: total, fill: 'forwards' });
+      audio.playRevealTension((total * (lift + tease)) / 1000);
+      setTimeout(() => {
+        wrap.classList.add(good ? 'is-good' : 'is-bad');
+        audio.playRevealResult(good);
+        if (!good) wrap.animate([{ translate: '0 0' }, { translate: '-5px 0' }, { translate: '5px 0' }, { translate: '-3px 0' }, { translate: '0 0' }], { duration: 260 });
+        Haptics.vibrate(good ? 15 : [30, 40, 30]);
+      }, total * (lift + tease + 0.1));
+      setTimeout(() => { dim.style.opacity = '0'; }, total * 0.9);
+      setTimeout(finish, total + 60);
     }
   </script>
 
@@ -7214,8 +7355,21 @@ video {
       }
     }
 
-    function executePlayCards(playerId, cardsToPlay, isBlind = false, chainedRankCount = 0) {
+    function executePlayCards(playerId, cardsToPlay, isBlind = false, chainedRankCount = 0, opts = {}) {
       if (isMatchDecided()) return;
+      // A blind flip is revealing: nothing else plays until it lands.
+      if (state.blindRevealing && !opts.revealed) return;
+      if (isBlind && !opts.revealed && shouldRevealBlind() && cardsToPlay && cardsToPlay[0] && !state.burnResolving) {
+        const card = cardsToPlay[0];
+        state.blindRevealing = true;
+        playBlindReveal(playerId, card, () => {
+          state.blindRevealing = false;
+          const owner = state.players.find(p => p.id === playerId);
+          if (isMatchDecided() || !owner || !(owner.faceDown || []).some(c => c.id === card.id)) return;
+          executePlayCards(playerId, cardsToPlay, true, chainedRankCount, { revealed: true });
+        });
+        return;
+      }
       clearStaleSelections();
       // A burn (10, or 4-of-a-kind) is still resolving — state.discardPile
       // hasn't been cleared yet even though the burner's own currentTurnIndex
@@ -7273,7 +7427,7 @@ video {
       // Kinetic Projectile
       const targetPileEl = document.getElementById('discardPileContainer');
       const originEl = getPlayerAnimationTarget(playerId);
-      spawnCardFlight(originEl, targetPileEl, cardsToPlay.length, cardsToPlay[0]);
+      if (!opts.revealed) spawnCardFlight(originEl, targetPileEl, cardsToPlay.length, cardsToPlay[0]);
 
       ['hand', 'faceUp', 'faceDown'].forEach(poolKey => {
         if (player[poolKey]) {
@@ -8695,6 +8849,7 @@ video {
     // stale Quick Play / Back to Lobby / Match Stats / Continue Watching
     // button sitting on screen from the previous match.
     function hideMatchEndUI() {
+      state.blindRevealing = false; // a new match never waits on a leftover blind reveal
       matchWinnerEffectShown = false;
       if (typeof resetMatchSummary === 'function') resetMatchSummary();
       document.getElementById('quickPlayMatchBtn')?.classList.add('hidden');
@@ -19843,7 +19998,7 @@ video {
       notifySeenIds[kind] = new Set(ids);
       if (!seen) return;
       const fresh = ids.filter(id => !seen.has(id));
-      if (fresh.length && !devTestSuiteRunning) audio.playNotify(); // Settings → Notification Sound
+      if (fresh.length && !devTestSuiteRunning && !(typeof tutorialActive !== 'undefined' && tutorialActive)) audio.playNotify(); // Settings → Notification Sound; silent in the tutorial
       fresh.forEach((id) => {
         const item = data[id] || {};
         const who = String(item.fromName || item.name || 'A friend').slice(0, 12);

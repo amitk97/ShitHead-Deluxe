@@ -39,6 +39,11 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Order: tabs by how often they're used; inside a tab the main slider first, then rows alphabetical (a test checks this).
 - Turn Alert (`turnAlertOn`, `audio/turn.mp3` at `TURN_ALERT_GAIN` of the volume) chimes in `render` when `isMyTurn` goes false → true. Notification Sound (`notifySoundOn`, `audio/notify.mp3`) chimes when `notifyNewInboxItems` sees a new invite/request/gift. Both default on and sync to `users/{uid}/settings`.
 
+## Blind flip reveal
+
+- Every face-down (blind) play goes through a reveal first (`playBlindReveal`, gated at the top of `executePlayCards`; the real play reruns with `{ revealed: true }`): the card rises over the pile, the table dims, it wobbles and turns edge-on, then snaps over glowing green (playable) or red (forced pickup). ~1.2s for you, ~0.8s for others (`BLIND_REVEAL_MS`). Sounds are synthesised (`playRevealTension` / `playRevealResult`).
+- `state.blindRevealing` blocks every other play meanwhile (reset by `hideMatchEndUI`). Skipped (instant flip) in the tutorial, with Reduce Motion, while fast-forwarding, in a hidden tab and during the test suite (`shouldRevealBlind`). Online, only the player who flips sees the reveal; everyone else gets the result.
+
 ## Shop / Custom layout
 
 - Only one page is open at a time: `EXCLUSIVE_PAGE_IDS` (every menu page + `inboxModal`) is watched by `exclusivePageObserver`, so opening any of them hides the rest, whatever opened it.
