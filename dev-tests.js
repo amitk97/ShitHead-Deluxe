@@ -3886,8 +3886,11 @@ async function runDevTestSuite() {
       assertTrue(localDealLooksIncomplete({ phase:'SWAP' }, [{ id:'p_guest', hand:[], faceUp:[], faceDown:[] }]), 'A guest missing its SWAP deal must be recovered');
       assertTrue(!localDealLooksIncomplete({ phase:'SWAP' }, [{ id:'p_guest', hand:[1,2,3], faceUp:[1,2,3], faceDown:[1,2,3] }]), 'A complete SWAP deal must be accepted');
       assertTrue(localDealLooksIncomplete({ phase:'PLAY' }, [{ id:'p_guest', hasFinished:false }]), 'A live player with no card zones must be recovered');
-      assertTrue(localDealLooksIncomplete({ phase:'PLAY' }, [{ id:'p_guest', hasFinished:false, faceDown:[1] }]), 'A partial snapshot that omits Hand and Face-Up must be recovered, even when Face-Down survived');
-      assertTrue(localDealLooksIncomplete({ phase:'PLAY' }, [{ id:'p_guest', hasFinished:false, hand:[1], faceDown:[1] }]), 'Omitting only Face-Up must still trigger recovery');
+      // Firebase drops empty arrays, so in PLAY a missing Hand/Face-Up zone is
+      // just an empty one. Treating it as damage froze the table once a
+      // player's Hand ran out.
+      assertTrue(!localDealLooksIncomplete({ phase:'PLAY' }, [{ id:'p_guest', hasFinished:false, faceDown:[1] }]), 'A Hand and Face-Up that have run out (omitted by Firebase) are normal');
+      assertTrue(!localDealLooksIncomplete({ phase:'PLAY' }, [{ id:'p_guest', hasFinished:false, hand:[1], faceDown:[1] }]), 'An empty Face-Up (omitted by Firebase) is normal');
       assertTrue(!localDealLooksIncomplete({ phase:'PLAY' }, [{ id:'p_guest', hand:[], faceUp:[], faceDown:[1] }]), 'Legitimate empty hand/face-up zones must remain valid');
     } finally { state.localPlayerId = savedLocalId; }
   });

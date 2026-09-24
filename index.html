@@ -7358,6 +7358,10 @@ video {
         const resumeIndex = state.currentTurnIndex; // where the turn was already heading
         state.pendingFollowUp = { playerId: player.id, cardId: bonusCard.id, resumeIndex, chainedRankCount: effectiveRankCount };
         state.currentTurnIndex = state.players.findIndex(p => p.id === player.id); // briefly reclaim the turn
+        // Online, the bonus gets its own short countdown (shown to everyone
+        // as this player's turn timer). When it runs out the bonus is skipped
+        // (see updateMultiplayerTimerDisplays) so nobody is left waiting.
+        if (state.isMultiplayer && !player.isBot) state.turnDeadline = Date.now() + BONUS_FOLLOW_UP_MS;
         if (state.botActionTimer) clearTimeout(state.botActionTimer);
         saveGameState();
         if (state.isMultiplayer) syncFirebaseGameState();
@@ -7382,6 +7386,7 @@ video {
       triggerNextTurn();
     }
 
+    const BONUS_FOLLOW_UP_MS = 8000;
     function resolveFollowUpPlay(shouldPlay) {
       const pending = state.pendingFollowUp;
       if (!pending) return;
@@ -7405,6 +7410,11 @@ video {
 
       // Skipped (or the card is no longer there for some reason): resume where the turn was heading
       state.currentTurnIndex = pending.resumeIndex;
+      if (state.isMultiplayer) {
+        // Skipping hands the turn on: the next player gets a fresh window.
+        const upcoming = state.players[state.currentTurnIndex];
+        state.turnDeadline = (upcoming && !upcoming.isBot) ? Date.now() + (state.turnTimerMs || 15000) : null;
+      }
       saveGameState();
       if (state.isMultiplayer) syncFirebaseGameState();
       render();
@@ -7917,6 +7927,9 @@ video {
         targets.sort((a, b) => ((a.hand?.length || 0) + (a.faceUp?.length || 0) + (a.faceDown?.length || 0)) - ((b.hand?.length || 0) + (b.faceUp?.length || 0) + (b.faceDown?.length || 0)));
         const target = targets[0] || targets[Math.floor(Math.random() * targets.length)];
         resolveJokerDuelInstant(initiator, target, jokerCard);
+      } else if (targets.length === 1 && !tutorialActive) {
+        // Only one possible target (every 2-player game): no picker needed.
+        resolveJokerDuelInstant(initiator, targets[0], jokerCard);
       } else {
         const bar = document.getElementById('floatingJokerBar');
         const container = document.getElementById('jokerInlineTargets');
@@ -8096,7 +8109,10 @@ video {
       // Draw offer, or is mid face-up sacrifice) is not a bug — leave it.
       if (state.pendingFollowUp || state.pendingFaceUpSacrifice) return;
       if ((me.hand?.length || 0) < 3 && state.drawPile && state.drawPile.length > 0) {
-        refillHand(me);
+        // Only sync when cards were really drawn. refillHand can legitimately
+        // draw nothing (e.g. the match is already decided); syncing anyway
+        // fired this listener again at once and looped until the page froze.
+        if (!refillHand(me).length) return;
         saveGameState();
         if (state.isMultiplayer) syncFirebaseGameState();
         render();
@@ -9745,7 +9761,17 @@ video {
         // Skipping the check this tick costs nothing — it's re-evaluated on
         // every tick, so it fires the moment burnResolving clears instead.
         mpTimeoutFired = true;
-        if (state.pendingFaceUpSacrifice && state.pendingFaceUpSacrifice.playerId === current.id) {
+        const jokerBar = document.getElementById('floatingJokerBar');
+        if (jokerBar && !jokerBar.classList.contains('hidden')) {
+          // Out of time while choosing who the Joker hits: pick the first.
+          jokerBar.querySelector('#jokerInlineTargets button')?.click();
+          mpTimeoutFired = false;
+        } else if (state.pendingFollowUp && state.pendingFollowUp.playerId === current.id) {
+          // An unanswered Bonus Draw is skipped, never auto-played over.
+          notifyBanner('⏱️ Bonus skipped.');
+          resolveFollowUpPlay(false);
+          mpTimeoutFired = false;
+        } else if (state.pendingFaceUpSacrifice && state.pendingFaceUpSacrifice.playerId === current.id) {
           resolveFaceUpSacrificeTimeout();
         } else {
           autoPlayOnTimeout(current);
@@ -9786,6 +9812,15 @@ video {
       if (!player || player.hasFinished || state.phase !== 'PLAY') return;
       if (state.players[state.currentTurnIndex]?.id !== player.id) return; // turn already moved on
       const isSelf = player.id === state.localPlayerId;
+      const onlyFaceDown = !(player.hand?.length) && !(player.faceUp?.length) && player.faceDown?.length;
+      if (onlyFaceDown) {
+        // Only face-down cards left: flip one blind, exactly like a bot does.
+        // (Picking a "best" move from an empty Hand/Face-Up used to crash
+        // here, so the timeout never resolved the turn.)
+        notifyBanner(isSelf ? "⏱️ Time's up! Flipping a face-down card for you..." : `⏱️ Flipping a face-down card for ${player.name}...`);
+        executePlayCards(player.id, [player.faceDown[0]], true);
+        return;
+      }
       const validMoves = getLegalMovesForPlayer(player, state.discardPile, state.activeConstraint);
       if (validMoves.length > 0) {
         notifyBanner(isSelf ? "⏱️ Time's up! Auto-playing a move for you..." : `⏱️ Auto-playing for ${player.name}...`);
@@ -11444,7 +11479,7 @@ video {
       if (confirm("Return to Main Menu?")) {
         sessionStorage.removeItem('shithead_joined_room');
         localStorage.removeItem('shithead_game_state');
-        location.reload();
+        leaveMultiplayerRoom().then(() => location.reload());
       }
     }
 
@@ -11816,14 +11851,36 @@ video {
       db.ref(`rooms/${state.roomCode}`).update({ turnTimerMs: ms });
     }
 
+    // Leaving an online room tells everyone straight away instead of waiting
+    // for the 45s disconnect grace: in the lobby you're taken off the list;
+    // mid-match a bot takes your cards (or a 2-player casual match ends).
+    // A leaving host passes the host role on. Resolves after the write, or
+    // after 2s at most so a bad connection can't trap anyone on the page.
     function leaveMultiplayerRoom() {
-      if (!state.roomCode) return;
-      sessionStorage.removeItem('shithead_joined_room');
+      if (!state.isMultiplayer || !state.roomCode || !state.localPlayerId) return Promise.resolve();
       const code = state.roomCode;
       const myId = state.localPlayerId;
-      updatePlayersAtomic(code, (currentList) => currentList.filter(p => p.id !== myId), () => {
-        location.reload();
-      });
+      const inMatch = state.phase === 'PLAY' || state.phase === 'SWAP';
+      const me = state.players.find(p => p.id === myId);
+      let write;
+      try {
+        db.ref(`rooms/${code}/presence/${myId}`).set({ status: 'left', at: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
+        if (inMatch && me && !me.hasFinished) {
+          write = removePlayerFromMatch(myId, 'left');
+        } else {
+          write = new Promise((resolve) => updatePlayersAtomic(code, (list) => {
+            const next = list.filter(p => p.id !== myId);
+            if (next.length && !next.some(p => p.isHost)) {
+              const heir = next.find(p => !p.isBot);
+              if (heir) heir.isHost = true;
+            }
+            return next;
+          }, () => resolve()));
+        }
+      } catch (error) {
+        console.warn('Leaving the room cleanly failed', error);
+      }
+      return Promise.race([Promise.resolve(write).catch(() => {}), new Promise(resolve => setTimeout(resolve, 2000))]);
     }
 
     function kickPlayer(playerId) {
@@ -11879,11 +11936,19 @@ video {
     }
 
     function removePlayerFromMatch(playerId, reason) {
-      if (!hasMatchAuthority()) return;
+      // 'left' is the leaving player's own client handing its seat over on
+      // the way out, so it doesn't need (or have) match authority.
+      if (reason !== 'left' && !hasMatchAuthority()) return;
       const idx = state.players.findIndex(p => p.id === playerId);
       if (idx === -1) return;
       const removed = state.players[idx];
-      const cause = reason === 'disconnected' ? 'lost connection and was away too long' : 'was removed by the host';
+      const cause = reason === 'disconnected' ? 'lost connection and was away too long'
+        : reason === 'left' ? 'left the match' : 'was removed by the host';
+      // A leaving host passes the host role to the next human at the table.
+      if (removed.isHost) {
+        const heir = state.players.find(p => p.id !== removed.id && !p.isBot);
+        if (heir) heir.isHost = true;
+      }
 
       // Ranked never just ends on a disconnect — a departure mid-match is
       // exactly the situation the 5-move concession cap below exists to
@@ -11893,8 +11958,7 @@ video {
         state.players.splice(idx, 1);
         state.players.forEach(p => { p.hasFinished = false; p.finishRank = null; p.isReady = p.isBot; });
         notifyBanner(`🚫 ${removed.name} ${cause} — not enough players left, match ended.`);
-        db.ref(`rooms/${state.roomCode}`).update({ phase: 'LOBBY', players: state.players });
-        return;
+        return db.ref(`rooms/${state.roomCode}`).update({ phase: 'LOBBY', players: state.players, stateVersion: (state.stateVersion || 0) + 1 });
       }
 
       const substitute = {
@@ -11919,9 +11983,16 @@ video {
         // indefinitely with no such limit — that cap only makes sense once
         // a rating is on the line.
         isRankedSubstitute: !!state.isRanked,
-        substituteMoveCount: 0
+        substituteMoveCount: 0,
+        isReady: true
       };
       state.players[idx] = substitute;
+      if (reason === 'left') {
+        // Hand the seat over and stop: this client is about to leave, so it
+        // mustn't start driving the bot itself.
+        state.stateVersion = (state.stateVersion || 0) + 1;
+        return db.ref(`rooms/${state.roomCode}`).update({ players: state.players, stateVersion: state.stateVersion });
+      }
 
       notifyBanner(`🤖 ${removed.name} ${cause} — a bot is now playing their hand.`);
       saveGameState();
@@ -11978,6 +12049,18 @@ video {
           // holding anything up by going quiet.
           if (p.isBot || p.id === state.localPlayerId || p.hasFinished) return;
           const info = presence[p.id];
+          // Someone who pressed Leave hands their own seat over, but if that
+          // write never landed, don't make the table wait out the grace.
+          if (info && info.status === 'left' && !disconnectGraceTimers[p.id]) {
+            disconnectGraceTimers[p.id] = setTimeout(() => {
+              delete disconnectGraceTimers[p.id];
+              const current = state.players.find(pl => pl.id === p.id);
+              if (!current || current.isBot) return;
+              if (state.phase === 'LOBBY') updatePlayersAtomic(code, (list) => list.filter(pl => pl.id !== p.id));
+              else removePlayerFromMatch(p.id, 'disconnected');
+            }, 3000);
+            return;
+          }
           const isAway = info && info.status === 'disconnected';
           if (isAway && !disconnectGraceTimers[p.id]) {
             disconnectGraceTimers[p.id] = setTimeout(() => {
@@ -12035,6 +12118,7 @@ video {
     }
 
     let lastStateRecoveryRequestAt = 0;
+    let answeringRecoveryRequest = false;
     function localDealLooksIncomplete(data, players) {
       if (!data || !['SWAP', 'PLAY'].includes(data.phase)) return false;
       const local = players.find(player => player.id === state.localPlayerId);
@@ -12042,13 +12126,13 @@ video {
       if (data.phase === 'SWAP') {
         return (local.hand || []).length !== 3 || (local.faceUp || []).length !== 3 || (local.faceDown || []).length !== 3;
       }
-      // Every live player record must contain all three zones, even when a
-      // zone is legitimately empty. Using AND here meant a damaged snapshot
-      // that retained only faceDown (but omitted hand and faceUp) looked
-      // valid—the exact non-host failure where both visible zones vanished.
-      return !Object.prototype.hasOwnProperty.call(local, 'hand') ||
-        !Object.prototype.hasOwnProperty.call(local, 'faceUp') ||
-        !Object.prototype.hasOwnProperty.call(local, 'faceDown');
+      // In PLAY an empty zone is normal (Firebase simply omits empty
+      // arrays), so a missing zone can't mean damage. Treating it as damage
+      // made a player whose Hand ran out ignore every later update and keep
+      // asking the host to resend — the table froze on their turn. Only a
+      // still-playing seat with no cards anywhere is really broken.
+      const cardCount = ['hand', 'faceUp', 'faceDown'].reduce((sum, zone) => sum + ((local[zone] || []).length), 0);
+      return cardCount === 0;
     }
 
     function requestAuthoritativeStateRecovery(reason) {
@@ -12092,9 +12176,13 @@ video {
         const isCatchUp = isInitialSnapshot;
         isInitialSnapshot = false;
 
-        if (state.isHost && data.stateRecoveryRequests && Object.keys(data.stateRecoveryRequests).length) {
-          syncFirebaseGameState();
+        if (state.isHost && data.stateRecoveryRequests && Object.keys(data.stateRecoveryRequests).length && !answeringRecoveryRequest) {
+          // Our own resend fires this listener again at once (while the
+          // request is still there), which used to resend forever. Clear the
+          // request first and ignore the echo.
+          answeringRecoveryRequest = true;
           db.ref(`rooms/${code}/stateRecoveryRequests`).remove().catch(() => {});
+          try { syncFirebaseGameState(); } finally { answeringRecoveryRequest = false; }
         }
 
         // Show reactions from other players. Own emotes are shown immediately
@@ -12151,7 +12239,11 @@ video {
         const isStaleSnapshot = typeof data.stateVersion === 'number' && data.stateVersion < (state.stateVersion || 0);
 
         if (data.players && !isStaleSnapshot) {
-          const incomingPlayers = (Array.isArray(data.players) ? data.players : Object.values(data.players)).filter(p => p && p.id);
+          // Firebase doesn't store empty arrays, so a player whose Hand (or
+          // Face-Up) has run out arrives with that zone missing. Put the
+          // empty zones back before anything reads them.
+          const incomingPlayers = (Array.isArray(data.players) ? data.players : Object.values(data.players)).filter(p => p && p.id)
+            .map(p => ({ ...p, hand: p.hand || [], faceUp: p.faceUp || [], faceDown: p.faceDown || [] }));
           if (localDealLooksIncomplete(data, incomingPlayers)) {
             requestAuthoritativeStateRecovery(`missing-${data.phase.toLowerCase()}-cards`);
             return;
@@ -12186,6 +12278,9 @@ video {
           // own write landing — treating that as removal reloaded the page a
           // split second after joining.
           if (stillHere) hasConfirmedRoomMembership = true;
+          // The host role can be passed on when the host leaves.
+          const myRecord = state.players.find(p => p.id === state.localPlayerId);
+          if (!state.isRanked && myRecord && typeof myRecord.isHost === 'boolean') state.isHost = myRecord.isHost;
           if (!stillHere && !state.isHost && hasConfirmedRoomMembership) {
             alert("You have been removed from the room by the host.");
             sessionStorage.removeItem('shithead_joined_room');
@@ -12193,7 +12288,10 @@ video {
             return;
           }
           const localRoomPlayer = state.players.find(p => p.id === state.localPlayerId);
-          if (localRoomPlayer && !localRoomPlayer.isBot && JSON.stringify(localRoomPlayer.cosmetics || {}) !== JSON.stringify(getPublicCosmeticLoadout())) {
+          // Firebase hands objects back with their keys sorted, so compare
+          // key-by-key: a plain JSON.stringify never matched and re-published
+          // the whole player list on every single room update.
+          if (localRoomPlayer && !localRoomPlayer.isBot && !sameCosmeticLoadout(localRoomPlayer.cosmetics, getPublicCosmeticLoadout())) {
             setTimeout(publishLocalCosmeticsToRoom, 0);
           }
         }
@@ -14702,6 +14800,11 @@ video {
         victoryEffect: equippedCosmetics.victoryEffect || 'default',
         avatar: equippedCosmetics.avatar || 'default'
       };
+    }
+
+    function sameCosmeticLoadout(a, b) {
+      const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+      return [...keys].every(key => (a?.[key] || 'default') === (b?.[key] || 'default'));
     }
 
     function publishLocalCosmeticsToRoom() {
@@ -19970,7 +20073,7 @@ video {
         // Guests always land on the normal home screen without an auth prompt.
         if (state.isRanked && currentUser) sessionStorage.setItem('shithead_return_to_ranked', '1');
         else sessionStorage.removeItem('shithead_return_to_ranked');
-        location.reload();
+        leaveMultiplayerRoom().then(() => location.reload());
       }
     });
 

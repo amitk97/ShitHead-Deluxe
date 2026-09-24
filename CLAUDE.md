@@ -48,6 +48,14 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Vs Bots remembers the last bot count and difficulty (`readBotPrefs` / `applyBotPrefs`: localStorage `shithead_bot_count` / `shithead_difficulty`, plus `botCount` / `botDifficulty` in `users/{uid}/settings` for signed-in accounts). A locked difficulty is never restored.
 - Tab strips (`initHorizontalScroller`) keep the selected tab scrolled into view.
 
+## Online sync pitfalls (the cause of "Ranked/online lags and freezes")
+
+- Firebase never stores empty arrays: a player whose Hand or Face-Up has run out arrives with that zone missing. The room listener refills `hand`/`faceUp`/`faceDown` with `[]` before use; never treat a missing zone as damage (`localDealLooksIncomplete` only flags a live seat with no cards at all).
+- `syncFirebaseGameState()` fires this client's own room listener synchronously. Anything the listener does that syncs again (refill invariant, recovery requests) must only sync when something really changed, or it recurses until the page freezes.
+- Firebase returns object keys sorted; compare objects key-by-key (`sameCosmeticLoadout`), never with `JSON.stringify`.
+- Bonus Draw online has an 8s countdown (`BONUS_FOLLOW_UP_MS`) and is skipped on timeout; a Joker with one possible target skips the picker; timeout auto-play flips a face-down card when that's all a player has.
+- Leaving (`leaveMultiplayerRoom`): lobby → removed from the list; mid-match → a bot takes the seat (2-player casual ends back in the lobby); a leaving host passes `isHost` to the next human. Presence `left` also tells the others within 3s.
+
 ## Installable app & notifications
 
 - `manifest.webmanifest`, `icons/*.png` and `sw.js` make the game installable (menu → Install App: the browser prompt, or Safari steps on iOS). `sw.js` is network-first for pages (every deploy shows at once) and only serves its cached copy offline; `sw.js` and the manifest are `no-cache` in `firebase.json`.
