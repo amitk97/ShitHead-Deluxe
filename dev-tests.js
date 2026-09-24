@@ -1139,6 +1139,17 @@ async function runDevTestSuite() {
     assertTrue(TURN_ALERT_GAIN > 0 && TURN_ALERT_GAIN < 1, 'The turn chime is scaled below the master volume');
     assertEqual(audio.gain.get(audio.turnEl), TURN_ALERT_GAIN, 'The scale applies to the turn clip');
   });
+  await test('Challenges: completed rows and the completion mail say what the challenge was', () => {
+    const row = renderChallengeRowHTML('Burner', '20/20', 50, true, challengeDescription('burner'));
+    assertTrue(row.includes('Burn the pile 20 times in Ranked.'), 'A completed row shows its description');
+    assertTrue(!row.includes('>Completed<'), 'A completed row no longer just says Completed');
+    const all = Object.values(CHALLENGE_DEFS).flat();
+    assertEqual(all.filter(c => !challengeDescription(c.id)).map(c => c.id), [], 'Every challenge has a description');
+    assertTrue(!!challengeDescription(`daily_2026-09-24_${DAILY_CHALLENGE_POOL[0].id}`), 'Daily completion keys resolve to their description');
+    assertTrue(!!challengeDescription(`weekly_2026-W39_${WEEKLY_CHALLENGE_POOL[0].id}`), 'Weekly completion keys resolve to their description');
+    const mail = inboxItemHtml({ type: 'challenge', id: 'hat-trick', name: 'Hat-trick', reward: 30 });
+    assertTrue(mail.includes('Win 3 Ranked matches in a row.'), 'The completion mail says what was done');
+  });
   await test('Mute button toggles and restores the previous volume', () => {
     const before = masterVolume;
     masterVolume = 70; refreshSettingsUI();

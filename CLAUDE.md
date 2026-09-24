@@ -44,11 +44,17 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Every face-down (blind) play goes through a reveal first (`playBlindReveal`, gated at the top of `executePlayCards`; the real play reruns with `{ revealed: true }`): the card rises over the pile, the table dims, it wobbles and turns edge-on, then snaps over glowing green (playable) or red (forced pickup). ~1.2s for you, ~0.8s for others (`BLIND_REVEAL_MS`). Sounds are synthesised (`playRevealTension` / `playRevealResult`).
 - `state.blindRevealing` blocks every other play meanwhile (reset by `hideMatchEndUI`). Skipped (instant flip) in the tutorial, with Reduce Motion, while fast-forwarding, in a hidden tab and during the test suite (`shouldRevealBlind`). Online, only the player who flips sees the reveal; everyone else gets the result.
 
+## Challenges
+
+- Every row shows what the challenge asks for; a completed row keeps that description (with the ✓) instead of just "Completed". The "Challenge completed" mail shows it too. One source: `challengeDescription(defOrCompletionKey)` (handles `daily_<date>_<id>` / `weekly_<week>_<id>` keys and the tutorial).
+
 ## Microinteractions & flips
 
 - Main buttons press in (`scale` on `:active`, plus a 6ms vibration tick on touch); a touched hand card lifts; Play pulses once when it becomes available (`mi-pulse-once`); the turn pill slides in when your turn arrives (`mi-slide-in`); the header Diamond count rolls to its new value (`rollDiamondCount`).
 - Face-up cards arriving on any table (yours and opponents') and the Pile inspect view flip in with a crisp 3D turn (`mi-flip-in`, first appearance via `shouldPopCard`). Played cards stay a quick slide.
-- All of it is off with Reduce Motion (the `body.reduce-motion` CSS rule or explicit `reduceMotion` checks). Spring physics / house easing curves are planned for a later batch, waiting on the owner's go-ahead.
+- Also: pickups fly into the seat as a fan of card backs (`spawnPickupFan`); cards selected to play stay raised with a gold edge in the hand (`mi-staged`) and spring up on the pile (`mi-staged-preview`/`mi-lift-in`); Settings toggles are sliding switches (`paintToggle` → `.mi-switch`, the ON/OFF text stays); every `.cosmetic-tab-bar` gets one gliding highlight pill (`attachTabGlide`, from `initHorizontalScroller`); the last 5s of your online turn pulse red with a soft tick + buzz each second (`mi-urgent`, `audio.playTick`); a Shop purchase bursts Diamonds from the price to the header (`spawnDiamondBurst`); pages and pop-ups spring in when opened (`watchOverlayEntrances` → `springIn`).
+- House motion curves: CSS `--ease-snappy` (presses/toggles), `--ease-bouncy` (landings), `--ease-soft` (fades/pop-ups), `--ease-spring` (a real spring via `linear()`, bouncy fallback); JS twin `EASE`. Use these for any new animation.
+- All of it is off with Reduce Motion (the `body.reduce-motion` CSS rule, or `reduceMotion` / `motionOff()` checks for Web Animations).
 
 ## Shop / Custom layout
 

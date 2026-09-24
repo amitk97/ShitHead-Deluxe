@@ -583,7 +583,7 @@
 
     /* Hand Layout with Balanced Overlap */
     .hand-card {
-      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), margin 0.2s ease-out;
+      transition: transform 0.24s var(--ease-bouncy), translate 0.24s var(--ease-bouncy), margin 0.2s var(--ease-soft), opacity .2s var(--ease-soft);
       position: relative;
       touch-action: none;
     }
@@ -1067,10 +1067,22 @@
       #settingsModal, #themesModal, #shopModal, #rulesModal, #tutorialHubScreen { top: calc(60px + var(--safe-top)); }
     }
     body.ui-overlay-open { overflow:hidden !important; overscroll-behavior:none; }
+    /* Online rooms on phones: the room code needs the header's left side,
+       so the Diamond pill shows just its icon there (tap it for the count). */
+    @media (max-width: 480px) {
+      body > header:has(#roomCodeBadge:not(.hidden)) #headerDiamondCount { display: none; }
+      body > header > div:first-child { overflow: hidden; }
+    }
+    /* ---- House motion curves: every animation uses one of these ----
+       snappy = UI presses/toggles; bouncy = small overshoot for things that
+       land; soft = pop-ups and fades; spring = a real spring shape (linear()
+       where supported, bouncy otherwise). Mirrored in JS as EASE. */
+    :root { --ease-snappy: cubic-bezier(.2,.9,.3,1); --ease-bouncy: cubic-bezier(.34,1.56,.64,1); --ease-soft: cubic-bezier(.22,1,.36,1); --ease-spring: var(--ease-bouncy); }
+    @supports (transition-timing-function: linear(0, 1)) { :root { --ease-spring: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1); } }
     /* ---- Microinteractions (all neutralised by body.reduce-motion) ---- */
     :is(.cosmetic-tab, .settings-row, #hamburgerDrawer nav button, #lobbyScreen button, #matchEndButtonRow button,
         .ms-actions button, #playSelectedBtn, #swapControlBar button, #headerInboxBtn, #hamburgerBtn, #headerDiamondBtn,
-        #matrixRefBtn, #cardRefBtn, #emoteToggleBtn):not(:disabled) { transition-property: transform, background-color, border-color, color, box-shadow, opacity; }
+        #matrixRefBtn, #cardRefBtn, #emoteToggleBtn):not(:disabled) { transition-property: transform, scale, background-color, border-color, color, box-shadow, opacity; transition-timing-function: var(--ease-snappy); transition-duration: .16s; }
     :is(.cosmetic-tab, .settings-row, #hamburgerDrawer nav button, #lobbyScreen button, #matchEndButtonRow button,
         .ms-actions button, #playSelectedBtn, #swapControlBar button, #headerInboxBtn, #hamburgerBtn, #headerDiamondBtn,
         #matrixRefBtn, #cardRefBtn, #emoteToggleBtn):not(:disabled):active { scale: .95; }
@@ -1078,11 +1090,34 @@
     @keyframes miPulse { 0% { box-shadow: 0 0 0 0 rgba(245,158,11,.75); scale: 1; } 40% { scale: 1.06; } 100% { box-shadow: 0 0 0 16px rgba(245,158,11,0); scale: 1; } }
     .mi-pulse-once { animation: miPulse .55s ease-out; }
     @keyframes miSlideIn { from { translate: 0 -10px; opacity: 0; scale: .9; } to { translate: 0 0; opacity: 1; scale: 1; } }
-    .mi-slide-in { animation: miSlideIn .38s cubic-bezier(.2,.9,.3,1.25); }
+    .mi-slide-in { animation: miSlideIn .5s var(--ease-spring); }
+    /* Selected-to-play: the hand keeps a raised, gold-edged placeholder;
+       the copy sitting on the pile springs up with a gold edge. */
+    .hand-card.mi-staged { opacity: .45 !important; translate: 0 -12px; box-shadow: 0 0 0 2px #fbbf24, 0 0 14px rgba(251,191,36,.45) !important; }
+    .mi-staged-preview { box-shadow: 0 0 0 2px #fbbf24, 0 12px 18px rgba(0,0,0,.5) !important; }
+    @keyframes miLiftIn { from { translate: 0 10px; scale: .9; } to { translate: 0 0; scale: 1; } }
+    .mi-lift-in { animation: miLiftIn .45s var(--ease-spring); }
+    /* Settings ON/OFF as a sliding switch (the ON/OFF word stays inside). */
+    .mi-switch { position: relative; display: inline-flex; align-items: center; justify-content: flex-end; width: 46px; height: 22px; padding: 0 7px; border-radius: 999px;
+      font-size: 8px; font-weight: 900; letter-spacing: .04em; background: #3f1d24; border: 1px solid #f43f5e; color: #fda4af; flex-shrink: 0;
+      transition: background-color .22s var(--ease-soft), border-color .22s var(--ease-soft), color .22s var(--ease-soft); }
+    .mi-switch::before { content: ''; position: absolute; left: 3px; top: 50%; width: 16px; height: 16px; margin-top: -8px; border-radius: 50%; background: #fda4af;
+      box-shadow: 0 1px 3px rgba(0,0,0,.5); transition: translate .32s var(--ease-spring), background-color .22s var(--ease-soft); }
+    .mi-switch.is-on { justify-content: flex-start; background: #064e3b; border-color: #10b981; color: #6ee7b7; }
+    .mi-switch.is-on::before { translate: 22px 0; background: #6ee7b7; }
+    /* Tab strips: the highlight is one pill that glides between tabs. */
+    .tab-glide { position: absolute; z-index: 0; border-radius: 999px; border: 1px solid #f59e0b; background: rgba(69,26,3,.45); pointer-events: none; opacity: 0;
+      transition: left .42s var(--ease-spring), width .42s var(--ease-spring), top .3s var(--ease-soft), opacity .2s var(--ease-soft); }
+    .hscroll-wrap.has-glide .cosmetic-tab-bar { position: relative; z-index: 1; background: transparent; }
+    .hscroll-wrap.has-glide { background: #020617; }
+    .hscroll-wrap.has-glide .cosmetic-tab[aria-selected="true"] { background: transparent; border-color: transparent; }
+    /* Last 5 seconds of your online turn. */
+    @keyframes miUrgent { 0%, 100% { scale: 1; box-shadow: 0 0 10px rgba(244,63,94,.35); } 50% { scale: 1.12; box-shadow: 0 0 18px rgba(244,63,94,.85); } }
+    #turnTimerBadge.mi-urgent { animation: miUrgent 1s var(--ease-soft) infinite; background: #4c0519; }
     /* Crisp 3D flip-in for face-up cards arriving on a table and the pile view. */
     #localTableSlots, .opp-slot-row, #inspectCardsContainer { perspective: 600px; }
     @keyframes miFlipIn { 0% { rotate: y 90deg; scale: .9; filter: brightness(.55); } 60% { rotate: y -10deg; scale: 1.04; filter: brightness(1.15); } 100% { rotate: y 0deg; scale: 1; filter: none; } }
-    .mi-flip-in { animation: miFlipIn .4s cubic-bezier(.2,.8,.2,1) both; }
+    .mi-flip-in { animation: miFlipIn .45s var(--ease-soft) both; }
     /* Blind face-down flip reveal (playBlindReveal). */
     .blind-reveal-dim { position:fixed; inset:0; z-index:180; background:radial-gradient(circle at var(--rx,50%) var(--ry,50%), rgba(2,6,23,.15) 0, rgba(2,6,23,.7) 70%); pointer-events:auto; opacity:0; transition:opacity .2s ease-out; }
     .blind-reveal-card { position:fixed; z-index:181; perspective:700px; pointer-events:none; }
@@ -5673,6 +5708,18 @@ video {
           o.connect(f).connect(g).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + 0.5);
         });
       }
+      /* Last five seconds of your online turn: one soft tick per second. */
+      playTick() {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime;
+        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(1250, t0);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.12 * vol, t0 + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.06);
+        o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + 0.07);
+      }
       /* A card is dealt to a player, or a card is played to the discard pile */
       playCardPlace() {
         this._play(this.placeEl);
@@ -5993,6 +6040,100 @@ video {
     function getPlayerAnimationTarget(playerId) {
       if (playerId === state.localPlayerId) return document.getElementById('localHand');
       return document.getElementById(`opp-${playerId}`) || document.getElementById('opponentsContainer');
+    }
+
+    // JS twin of the CSS motion curves (see :root --ease-*).
+    const EASE = (() => {
+      const spring = 'linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1)';
+      let springOk = false;
+      try { springOk = typeof CSS !== 'undefined' && CSS.supports('transition-timing-function', 'linear(0, 1)'); } catch (e) {}
+      const bouncy = 'cubic-bezier(.34,1.56,.64,1)';
+      return { snappy: 'cubic-bezier(.2,.9,.3,1)', bouncy, soft: 'cubic-bezier(.22,1,.36,1)', spring: springOk ? spring : bouncy };
+    })();
+    const motionOff = () => (typeof reduceMotion !== 'undefined' && reduceMotion) || (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning);
+
+    // Picking up the pile: the cards fly into that player's seat as a
+    // quick fan of card backs rather than one blob.
+    function spawnPickupFan(fromEl, toEl, count) {
+      if (!fromEl || !toEl || motionOff() || typeof Element.prototype.animate !== 'function') { spawnCardFlight(fromEl, toEl, count); return; }
+      const f = fromEl.getBoundingClientRect(), t = toEl.getBoundingClientRect();
+      const n = Math.min(Math.max(count, 1), 7);
+      const backTemplate = document.querySelector('.custom-card-back');
+      const w = 34, h = 49;
+      for (let i = 0; i < n; i++) {
+        const el = document.createElement('div');
+        el.style.cssText = `position:fixed;z-index:190;pointer-events:none;width:${w}px;height:${h}px;left:${f.left + f.width / 2 - w / 2}px;top:${f.top + f.height / 2 - h / 2}px;border-radius:6px;overflow:hidden;box-shadow:0 6px 12px rgba(0,0,0,.45);`;
+        if (backTemplate) { const b = backTemplate.cloneNode(true); b.style.cssText += ';width:100%;height:100%;position:absolute;inset:0;margin:0;'; el.appendChild(b); }
+        else el.style.background = 'linear-gradient(135deg,#1e293b,#0f172a)';
+        document.body.appendChild(el);
+        const spread = (i - (n - 1) / 2) * 14;
+        const dx = t.left + t.width / 2 - (f.left + f.width / 2), dy = t.top + t.height / 2 - (f.top + f.height / 2);
+        el.animate([
+          { transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: 1 },
+          { transform: `translate(${spread * 1.6}px, ${-18 - Math.abs(spread) * .3}px) rotate(${spread}deg) scale(1.05)`, opacity: 1, offset: .3 },
+          { transform: `translate(${dx + spread * .5}px, ${dy}px) rotate(${spread * .4}deg) scale(.55)`, opacity: .15 }
+        ], { duration: 520, delay: i * 45, easing: EASE.soft, fill: 'both' }).finished.then(() => el.remove(), () => el.remove());
+      }
+    }
+
+    // Buying in the Shop: a burst of Diamonds leaves the price and flies
+    // into the header balance, which gives a little bump as they land.
+    function spawnDiamondBurst(fromRect, toEl, count = 8) {
+      if (!fromRect || !toEl || motionOff() || typeof Element.prototype.animate !== 'function') return;
+      const t = toEl.getBoundingClientRect();
+      const x0 = fromRect.left + fromRect.width / 2, y0 = fromRect.top + fromRect.height / 2;
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.textContent = '💎';
+        el.style.cssText = `position:fixed;z-index:200;pointer-events:none;left:${x0 - 8}px;top:${y0 - 8}px;font-size:16px;line-height:16px;`;
+        document.body.appendChild(el);
+        const ang = (Math.PI * 2 * i) / count + Math.random() * .5;
+        const r = 26 + Math.random() * 18;
+        const bx = Math.cos(ang) * r, by = Math.sin(ang) * r;
+        const dx = t.left + t.width / 2 - x0, dy = t.top + t.height / 2 - y0;
+        el.animate([
+          { transform: 'translate(0,0) scale(.4)', opacity: 0 },
+          { transform: `translate(${bx}px, ${by}px) scale(1.15)`, opacity: 1, offset: .28 },
+          { transform: `translate(${dx}px, ${dy}px) scale(.5)`, opacity: .85 }
+        ], { duration: 780, delay: i * 35, easing: EASE.soft, fill: 'both' }).finished.then(() => el.remove(), () => el.remove());
+      }
+      setTimeout(() => toEl.animate([{ scale: 1 }, { scale: 1.18 }, { scale: 1 }], { duration: 420, easing: EASE.spring }), 780 + count * 35 - 120);
+    }
+
+    // Pop-ups and pages spring in when they open (see watchOverlayEntrances).
+    function springIn(panel) {
+      if (!panel || motionOff() || typeof panel.animate !== 'function') return;
+      panel.animate([{ opacity: 0, scale: .94, translate: '0 10px' }, { opacity: 1, scale: 1, translate: '0 0' }], { duration: 420, easing: EASE.spring });
+    }
+
+    // Tab strips: one highlight pill glides to whichever tab is selected.
+    function attachTabGlide(strip) {
+      const wrap = strip.closest('.hscroll-wrap');
+      if (!wrap || wrap.querySelector(':scope > .tab-glide')) return;
+      const pill = document.createElement('div');
+      pill.className = 'tab-glide';
+      wrap.appendChild(pill);
+      wrap.classList.add('has-glide');
+      let placed = false;
+      const place = () => {
+        const tab = strip.querySelector('[aria-selected="true"]');
+        if (!tab || !strip.clientWidth) { pill.style.opacity = '0'; return; }
+        const wr = wrap.getBoundingClientRect(), tr = tab.getBoundingClientRect();
+        if (!placed || motionOff()) pill.style.transition = 'none';
+        pill.style.left = `${tr.left - wr.left}px`;
+        pill.style.top = `${tr.top - wr.top}px`;
+        pill.style.width = `${tr.width}px`;
+        pill.style.height = `${tr.height}px`;
+        pill.style.opacity = '1';
+        if (!placed || motionOff()) { void pill.offsetWidth; pill.style.transition = ''; }
+        placed = true;
+      };
+      new MutationObserver(() => requestAnimationFrame(place)).observe(strip, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-selected'] });
+      strip.addEventListener('scroll', () => { const t = pill.style.transition; pill.style.transition = 'none'; place(); void pill.offsetWidth; pill.style.transition = t; }, { passive: true });
+      window.addEventListener('resize', () => { placed = false; place(); });
+      // Strips are often built while hidden: re-place once they show.
+      if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { if (!placed || pill.style.opacity === '0') { placed = false; place(); } }).observe(strip);
+      requestAnimationFrame(place);
     }
 
     function spawnCardFlight(fromEl, toEl, count = 1, cardData = null) {
@@ -8157,7 +8298,7 @@ video {
       
       const fromPile = document.getElementById('discardPileContainer');
       const targetPlayerEl = getPlayerAnimationTarget(playerId);
-      spawnCardFlight(fromPile, targetPlayerEl, count);
+      spawnPickupFan(fromPile, targetPlayerEl, count);
 
       bumpStat(player, 'pickedUp', count);
       if (player.gameStats && count > (player.gameStats.biggestPickup || 0)) player.gameStats.biggestPickup = count;
@@ -10018,6 +10159,7 @@ video {
       document.querySelectorAll('[id^="opp-timer-"]').forEach(el => el.classList.add('hidden'));
     }
 
+    let lastUrgentTickSec = null;
     function updateMultiplayerTimerDisplays() {
       const current = state.players[state.currentTurnIndex];
 
@@ -10045,7 +10187,16 @@ video {
         if (badge && txt) {
           badge.classList.remove('hidden');
           txt.textContent = `${remainingSec}s`;
-          badge.classList.toggle('animate-pulse', remainingSec <= 5);
+          const urgent = remainingSec <= 5 && remainingSec > 0;
+          badge.classList.toggle('mi-urgent', urgent && !reduceMotion);
+          badge.classList.toggle('animate-pulse', urgent && reduceMotion);
+          // One soft tick (and a buzz) per second in the last five.
+          if (urgent && lastUrgentTickSec !== remainingSec) {
+            lastUrgentTickSec = remainingSec;
+            audio.playTick();
+            Haptics.vibrate(20);
+          }
+          if (!urgent) lastUrgentTickSec = null;
         }
         clearOpponentTimerBadges();
       } else {
@@ -10879,6 +11030,7 @@ video {
     function initHorizontalScroller(strip) {
       if (!strip || strip.dataset.hscrollReady) return;
       strip.dataset.hscrollReady = '1';
+      if (strip.classList.contains('cosmetic-tab-bar')) attachTabGlide(strip);
       const wrap = strip.closest('.hscroll-wrap');
       const update = () => {
         if (!wrap) return;
@@ -11560,7 +11712,7 @@ video {
             // The interactive, glowing copy of this card now lives on top of
             // the pile (see stagedPlayPreview below) — the hand just shows a
             // dimmed placeholder so its slot doesn't just vanish.
-            cardEl.style.opacity = '0.3';
+            cardEl.classList.add('mi-staged');
             cardEl.style.pointerEvents = 'none';
           }
           cardEl.style.zIndex = isSwapSelected ? '500' : String(iInRow + 1);
@@ -11589,6 +11741,7 @@ video {
       // Cards staged to play sit visually on top of the pile until confirmed
       // (Play Selected / Enter) or dragged back off to change your mind.
       const stagedPreview = document.getElementById('stagedPlayPreview');
+      if (!state.selectedPlayCardIds.length) stagedLiftShown.clear();
       if (stagedPreview) {
         stagedPreview.innerHTML = '';
         if (state.phase === 'PLAY' && state.selectedPlayCardIds.length > 0) {
@@ -11597,6 +11750,8 @@ video {
             const card = pool.find(c => c.id === cardId);
             if (!card) return;
             const stagedEl = createCardElement(card, false, true, true, false, false);
+            stagedEl.classList.add('mi-staged-preview');
+            if (!stagedLiftShown.has(card.id)) { stagedLiftShown.add(card.id); stagedEl.classList.add('mi-lift-in'); }
             stagedEl.style.marginLeft = idx > 0 ? '-30px' : '0';
             stagedEl.style.zIndex = String(idx + 1);
             stagedEl.dataset.tip = 'Drag off to change your mind';
@@ -11684,6 +11839,8 @@ video {
     // button, banners, history) is laid out: if the player's area still runs
     // past the bottom of the table, pull the rows closer (down to 55% of the
     // card behind showing) and then shrink the cards until it fits.
+    const stagedLiftShown = new Set(); // staged cards that already sprang up onto the pile
+
     function fitHandToTable() {
       const hand = document.getElementById('localHand');
       const table = document.getElementById('gameTable');
@@ -13796,8 +13953,7 @@ video {
     function paintToggle(el, on) {
       if (!el) return;
       el.textContent = on ? 'ON' : 'OFF';
-      el.className = `text-[10px] font-black px-2 py-0.5 rounded border ${on
-        ? 'text-emerald-400 border-emerald-500' : 'text-rose-400 border-rose-500'}`;
+      el.className = `mi-switch${on ? ' is-on' : ''}`;
     }
     function refreshSettingsUI() {
       paintToggle(document.getElementById('setIconsState'), showCardIcons);
@@ -16688,6 +16844,7 @@ video {
         return;
       }
       clearShopActionNotice();
+      const buyRect = btn.getBoundingClientRect();
       btn.disabled = true;
       btn.textContent = 'BUYING…';
       const uid = currentUser.uid;
@@ -16717,6 +16874,7 @@ video {
         renderCosmeticShop();
         renderPersonalisationCosmetics();
         showShopPurchaseSuccess(item);
+        spawnDiamondBurst(buyRect, document.getElementById('headerDiamondBtn'));
         notifyBanner(`✓ ${item.name} purchased for ${item.cost} Diamonds.`);
       }).catch((error) => {
         const permissionDenied = error && (error.code === 'PERMISSION_DENIED' || error.code === 'permission_denied');
@@ -17635,6 +17793,34 @@ video {
       }
       return pool.slice(pool.length - 3);
     }
+    // What each challenge asks for, in one sentence: shown on every row
+    // (in progress or completed) and in the "Challenge completed" mail.
+    // Takes a def or any completion key (daily_<date>_<id>, weekly_<week>_<id>).
+    function challengeDescription(defOrId) {
+      const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+      let def = defOrId, id = typeof defOrId === 'string' ? defOrId : defOrId?.id;
+      if (typeof defOrId === 'string') {
+        if (/^daily_/.test(id)) return getDailyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
+        if (/^weekly_/.test(id)) return getWeeklyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
+        if (id === TUTORIAL_COMPLETION_CHALLENGE.id) return TUTORIAL_COMPLETION_CHALLENGE.desc;
+        def = Object.values(CHALLENGE_DEFS).flat().find(c => c.id === id);
+        if (!def) return '';
+      }
+      if (def.desc) return def.desc;
+      const group = Object.keys(CHALLENGE_DEFS).find(k => CHALLENGE_DEFS[k].includes(def));
+      const rankName = (r) => ({ J: 'a Jack', Q: 'a Queen', K: 'a King', A: 'an Ace', JOKER: 'a Joker', '8': 'an 8' }[r] || `a ${r}`);
+      switch (group) {
+        case 'rankedBurns': return `Burn the pile ${plural(def.target, 'time', 'times')} in Ranked.`;
+        case 'rankedStreaks': return `Win ${def.target} Ranked matches in a row.`;
+        case 'rankedJokerDeflects': return def.target === 1 ? 'Deflect a Joker challenge in Ranked.' : `Deflect ${def.target} Joker challenges in Ranked.`;
+        case 'rankedSnapBurns': return `Snap Burn ${plural(def.target, 'time', 'times')} in Ranked.`;
+        case 'rankedGamesPlayed': return `Play ${def.target} Ranked matches.`;
+        case 'endingCards': return `Win a Ranked match with ${rankName(def.rank)} as your last card.`;
+        case 'rankTiers': return `Reach a ${def.minRating} Ranked rating.`;
+        case 'botMatches': return `Beat ${def.difficulty === 'boss' ? 'Boss' : def.difficulty} bots ${def.target} times.`;
+        default: return '';
+      }
+    }
     function getDailyChallengeDef(id) {
       return DAILY_CHALLENGE_POOL.find((c) => c.id === id) || null;
     }
@@ -18517,14 +18703,14 @@ video {
     // One shared row template for every list in the modal — completed
     // shows a checkmark in place of the progress/reward per spec ("When
     // complete, replace the progress/reward with a Completed checkmark").
-    function renderChallengeRowHTML(name, progressText, reward, completed) {
+    function renderChallengeRowHTML(name, progressText, reward, completed, desc = '') {
       const rightSide = completed
         ? '<span class="text-emerald-400 text-xs font-black" aria-label="Completed">&#10003;</span>'
         : `<span class="flex items-center gap-1 text-[10px] font-black text-cyan-300">&#128142; ${reward}</span>`;
       return `<div class="flex items-center justify-between px-2 py-1.5 bg-slate-900/70 border border-slate-800 rounded-lg">
         <div class="flex flex-col">
           <span class="text-[10px] font-bold text-slate-200">${name}</span>
-          <span class="text-[9px] text-slate-500">${completed ? 'Completed' : progressText}</span>
+          <span class="text-[9px] text-slate-500">${completed ? (desc || 'Completed') : progressText}</span>
         </div>
         ${rightSide}
       </div>`;
@@ -18538,7 +18724,7 @@ video {
       return defs.map((c) => {
         const completed = !!challengeEconomy.completedChallenges[c.id];
         const progress = Math.min(currentValue, c.target);
-        return renderChallengeRowHTML(c.name, `${progress}/${c.target}`, c.reward, completed);
+        return renderChallengeRowHTML(c.name, `${progress}/${c.target} \u2014 ${challengeDescription(c)}`, c.reward, completed, challengeDescription(c));
       }).join('');
     }
 
@@ -18610,7 +18796,8 @@ video {
         TUTORIAL_COMPLETION_CHALLENGE.name,
         TUTORIAL_COMPLETION_CHALLENGE.desc,
         TUTORIAL_COMPLETION_CHALLENGE.reward,
-        tutorialChallengeComplete
+        tutorialChallengeComplete,
+        TUTORIAL_COMPLETION_CHALLENGE.desc
       ));
 
       const daily = challengeEconomy.dailyChallengeState;
@@ -18619,7 +18806,7 @@ video {
         if (!def) return '';
         const completed = !!challengeEconomy.completedChallenges[dailyCompletionKey(daily.dateKey, id)];
         const progress = Math.min((daily.progress && daily.progress[id]) || 0, def.target);
-        return renderChallengeRowHTML(def.name, `${progress}/${def.target} \u2014 ${def.desc}`, CHALLENGE_REWARD, completed);
+        return renderChallengeRowHTML(def.name, `${progress}/${def.target} \u2014 ${def.desc}`, CHALLENGE_REWARD, completed, def.desc);
       }).join('') : '<p class="text-[9px] text-slate-500 text-center py-2">Loading challenges…</p>';
       setListHtml('challengesDailyList', dailyHtml);
       const weekly = challengeEconomy.weeklyChallengeState;
@@ -18627,7 +18814,7 @@ video {
         const def=getWeeklyChallengeDef(id); if (!def) return '';
         const completed=!!challengeEconomy.completedChallenges[weeklyCompletionKey(weekly.weekKey,id)];
         const progress=Math.min((weekly.progress&&weekly.progress[id])||0,def.target);
-        return renderChallengeRowHTML(def.name, `${progress}/${def.target} — ${def.desc}`, WEEKLY_CHALLENGE_REWARD, completed);
+        return renderChallengeRowHTML(def.name, `${progress}/${def.target} — ${def.desc}`, WEEKLY_CHALLENGE_REWARD, completed, def.desc);
       }).join('') : '<p class="text-[9px] text-slate-500 text-center py-2">Loading challenges…</p>';
       setListHtml('challengesWeeklyList', weeklyHtml);
       const allDailyComplete = !!daily && daily.challengeIds.length > 0 && daily.challengeIds.every((id) => challengeEconomy.completedChallenges[dailyCompletionKey(daily.dateKey, id)]);
@@ -18645,21 +18832,21 @@ video {
       setListHtml('challengesEndingCardsList', CHALLENGE_DEFS.endingCards.map((c) => {
         const completed = !!challengeEconomy.completedChallenges[c.id];
         const rankLabel = c.rank === 'JOKER' ? 'a Joker' : `a ${c.rank}`;
-        return renderChallengeRowHTML(c.name, `Win Ranked, finish on ${rankLabel}`, c.reward, completed);
+        return renderChallengeRowHTML(c.name, `Win Ranked, finish on ${rankLabel}`, c.reward, completed, challengeDescription(c));
       }).join(''));
 
       const rating = Math.round(challengeEconomy.rating || 0);
       setListHtml('challengesRankTiersList', CHALLENGE_DEFS.rankTiers.map((c) => {
         const completed = !!challengeEconomy.completedChallenges[c.id];
         const progress = Math.min(rating, c.minRating);
-        return renderChallengeRowHTML(c.name, `${progress}/${c.minRating} rating`, c.reward, completed);
+        return renderChallengeRowHTML(c.name, `${progress}/${c.minRating} rating`, c.reward, completed, challengeDescription(c));
       }).join(''));
 
       const dw = challengeEconomy.difficultyWins || {};
       setListHtml('challengesBotMatchesList', CHALLENGE_DEFS.botMatches.map((c) => {
         const completed = !!challengeEconomy.completedChallenges[c.id];
         const progress = Math.min(dw[c.difficulty] || 0, c.target);
-        return renderChallengeRowHTML(c.name, `${progress}/${c.target}`, c.reward, completed);
+        return renderChallengeRowHTML(c.name, `${progress}/${c.target} \u2014 ${challengeDescription(c)}`, c.reward, completed, challengeDescription(c));
       }).join(''));
     }
 
@@ -19684,6 +19871,7 @@ video {
         return `<div class="bg-amber-950/40 border border-amber-500/60 rounded-xl px-2.5 py-2">
           <p class="text-[9px] font-black uppercase tracking-wide text-amber-400 mb-1">Challenge completed</p>
           <p class="text-xs font-bold text-white">${escapeHtml(item.name)}</p>
+          ${challengeDescription(item.id) ? `<p class="text-[10px] text-slate-300 mt-0.5">${escapeHtml(challengeDescription(item.id))}</p>` : ''}
           <p class="text-[10px] text-amber-300 mt-1">+${Number(item.reward) || 0} Diamonds</p>
           <button type="button" data-challenge-id="${escapeAttr(item.id)}" class="inbox-read-challenge-btn mt-2 w-full text-[9px] font-black py-1 rounded-lg border border-amber-500 text-amber-300 hover:bg-amber-500 hover:text-slate-950 transition">MARK AS READ</button>
         </div>`;
@@ -20815,6 +21003,20 @@ video {
     // NOT gated by this (see below) — they need to work precisely when
     // something IS open, to close it.
     const BLOCKING_OVERLAY_IDS = ['authModal', 'challengesModal', 'deleteAccountModal', 'friendsModal', 'inboxModal', 'leaderboardModal', 'matchStatsModal', 'needHumanModal', 'pileInspectModal', 'profileModal', 'rulesModal', 'settingsModal', 'shopModal', 'statsModal', 'supportModal', 'themesModal', 'usernameModal'];
+    // Every page and pop-up springs in as it opens, whatever opened it.
+    (function watchOverlayEntrances() {
+      const ids = [...BLOCKING_OVERLAY_IDS, 'tutorialHubScreen', 'matchSummaryModal', 'difficultyUnlockPopup'];
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        let wasHidden = el.classList.contains('hidden');
+        new MutationObserver(() => {
+          const hidden = el.classList.contains('hidden');
+          if (wasHidden && !hidden) springIn(el.firstElementChild);
+          wasHidden = hidden;
+        }).observe(el, { attributes: true, attributeFilter: ['class'] });
+      });
+    })();
     function isAnyOverlayOpen() {
       if (document.getElementById('hamburgerDrawer')?.classList.contains('open')) return true;
       return BLOCKING_OVERLAY_IDS.some((id) => {
