@@ -10912,11 +10912,8 @@ video {
       const viewportW = window.innerWidth || 390;
       const seatW = opponentCount <= 1 ? Math.min(240, viewportW - 40)
         : opponentCount === 2 ? Math.min(190, (viewportW - 36) / 2)
-        : Math.min(150, (viewportW - 30 - DIRECTION_BADGE_ROOM) / 3 - 6);
+        : Math.min(150, (viewportW - 30) / 3 - 6);
       oppContainer.style.setProperty('--opp-seat-w', `${Math.floor(seatW)}px`);
-      // Three seats span the full width, so the first one would sit under the
-      // play-direction badge in the top-left corner: keep that strip clear.
-      oppContainer.style.paddingLeft = opponentCount >= 3 ? `${DIRECTION_BADGE_ROOM}px` : '';
       oppContainer.style.setProperty('--opp-name-size', opponentCount <= 1 ? '12px' : opponentCount === 2 ? '10px' : '8px');
       ensureBotAvatars(state.players);
       const oppAvatarSize = Math.round(18 * oppScale);
@@ -11439,10 +11436,6 @@ video {
     // button, banners, history) is laid out: if the player's area still runs
     // past the bottom of the table, pull the rows closer (down to 55% of the
     // card behind showing) and then shrink the cards until it fits.
-    // Width kept free at the left of a 3-opponent row for #gameDirectionBadge
-    // (8px inset + ~29px badge, less the row's own 12px side padding).
-    const DIRECTION_BADGE_ROOM = 28;
-
     function fitHandToTable() {
       const hand = document.getElementById('localHand');
       const table = document.getElementById('gameTable');
