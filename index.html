@@ -1067,6 +1067,22 @@
       #settingsModal, #themesModal, #shopModal, #rulesModal, #tutorialHubScreen { top: calc(60px + var(--safe-top)); }
     }
     body.ui-overlay-open { overflow:hidden !important; overscroll-behavior:none; }
+    /* ---- Microinteractions (all neutralised by body.reduce-motion) ---- */
+    :is(.cosmetic-tab, .settings-row, #hamburgerDrawer nav button, #lobbyScreen button, #matchEndButtonRow button,
+        .ms-actions button, #playSelectedBtn, #swapControlBar button, #headerInboxBtn, #hamburgerBtn, #headerDiamondBtn,
+        #matrixRefBtn, #cardRefBtn, #emoteToggleBtn):not(:disabled) { transition-property: transform, background-color, border-color, color, box-shadow, opacity; }
+    :is(.cosmetic-tab, .settings-row, #hamburgerDrawer nav button, #lobbyScreen button, #matchEndButtonRow button,
+        .ms-actions button, #playSelectedBtn, #swapControlBar button, #headerInboxBtn, #hamburgerBtn, #headerDiamondBtn,
+        #matrixRefBtn, #cardRefBtn, #emoteToggleBtn):not(:disabled):active { scale: .95; }
+    .hand-card:active { translate: 0 -6px; filter: drop-shadow(0 8px 10px rgba(0,0,0,.45)); }
+    @keyframes miPulse { 0% { box-shadow: 0 0 0 0 rgba(245,158,11,.75); scale: 1; } 40% { scale: 1.06; } 100% { box-shadow: 0 0 0 16px rgba(245,158,11,0); scale: 1; } }
+    .mi-pulse-once { animation: miPulse .55s ease-out; }
+    @keyframes miSlideIn { from { translate: 0 -10px; opacity: 0; scale: .9; } to { translate: 0 0; opacity: 1; scale: 1; } }
+    .mi-slide-in { animation: miSlideIn .38s cubic-bezier(.2,.9,.3,1.25); }
+    /* Crisp 3D flip-in for face-up cards arriving on a table and the pile view. */
+    #localTableSlots, .opp-slot-row, #inspectCardsContainer { perspective: 600px; }
+    @keyframes miFlipIn { 0% { rotate: y 90deg; scale: .9; filter: brightness(.55); } 60% { rotate: y -10deg; scale: 1.04; filter: brightness(1.15); } 100% { rotate: y 0deg; scale: 1; filter: none; } }
+    .mi-flip-in { animation: miFlipIn .4s cubic-bezier(.2,.8,.2,1) both; }
     /* Blind face-down flip reveal (playBlindReveal). */
     .blind-reveal-dim { position:fixed; inset:0; z-index:180; background:radial-gradient(circle at var(--rx,50%) var(--ry,50%), rgba(2,6,23,.15) 0, rgba(2,6,23,.7) 70%); pointer-events:auto; opacity:0; transition:opacity .2s ease-out; }
     .blind-reveal-card { position:fixed; z-index:181; perspective:700px; pointer-events:none; }
@@ -5513,7 +5529,7 @@ video {
       notify: "audio/notify.mp3"   // New invite / friend request / gift
     };
     // The your-turn chime plays softer than the card sounds.
-    const TURN_ALERT_GAIN = 0.55;
+    const TURN_ALERT_GAIN = 0.25;
 
     const Haptics = {
       vibrate(pattern) {
@@ -6027,7 +6043,15 @@ video {
     }
     function playBlindReveal(playerId, card, done) {
       let finished = false;
-      const finish = () => { if (finished) return; finished = true; cleanup(); done(); };
+      // Apply the play first (the pile renders underneath), then fade the
+      // reveal card away over it, so nothing blinks or jumps.
+      const finish = () => {
+        if (finished) return; finished = true;
+        done();
+        wrap.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease-out', fill: 'forwards' });
+        dim.style.opacity = '0';
+        setTimeout(cleanup, 180);
+      };
       const pile = document.getElementById('discardPileContainer');
       const origin = getPlayerAnimationTarget(playerId);
       const layer = document.body;
@@ -6090,7 +6114,9 @@ video {
       setTimeout(() => {
         wrap.classList.add(good ? 'is-good' : 'is-bad');
         audio.playRevealResult(good);
-        if (!good) wrap.animate([{ translate: '0 0' }, { translate: '-5px 0' }, { translate: '5px 0' }, { translate: '-3px 0' }, { translate: '0 0' }], { duration: 260 });
+        // A miss gets a soft red swell rather than a shake, so the pickup
+        // that follows reads as one smooth motion.
+        if (!good) glow.animate([{ opacity: 0.6 }, { opacity: 1 }, { opacity: 0.8 }], { duration: 320, easing: 'ease-out' });
         Haptics.vibrate(good ? 15 : [30, 40, 30]);
       }, total * (lift + tease + 0.1));
       setTimeout(() => { dim.style.opacity = '0'; }, total * 0.9);
@@ -7443,7 +7469,9 @@ video {
         notifyBanner(`${player.name} played blind ${cardRank} and failed! Automatic Pickup.`);
         saveGameState();
         if (state.isMultiplayer) syncFirebaseGameState();
-        delayUnlessTesting(() => executePickup(playerId), state.turnDelay * 0.7);
+        // After a reveal the miss has already been shown, so the pickup
+        // follows almost at once instead of pausing on the pile.
+        delayUnlessTesting(() => executePickup(playerId), opts.revealed ? Math.min(260, state.turnDelay * 0.3) : state.turnDelay * 0.7);
         return;
       }
 
@@ -10983,10 +11011,13 @@ video {
       const inspectContainer = document.getElementById('inspectCardsContainer');
       inspectContainer.innerHTML = '';
 
-      state.discardPile.forEach(card => {
+      state.discardPile.forEach((card, idx) => {
         const cardEl = createCardElement(card, false, false, false, false, false);
         cardEl.style.position = 'relative';
         cardEl.style.transform = 'none';
+        cardEl.classList.remove('animate-card-pop');
+        cardEl.classList.add('mi-flip-in');
+        cardEl.style.animationDelay = `${Math.min(idx, 12) * 35}ms`;
         inspectContainer.appendChild(cardEl);
       });
 
@@ -11025,6 +11056,10 @@ video {
       // Chime once as the turn arrives (Settings → Turn Alert), never for
       // the scripted tutorial or while the test suite drives the table.
       if (isMyTurn && !lastRenderWasMyTurn && !tutorialActive && !devTestSuiteRunning) audio.playTurnAlert();
+      if (isMyTurn && !lastRenderWasMyTurn && !reduceMotion) {
+        const pill = document.getElementById('activeTurnIndicator');
+        if (pill) { pill.classList.remove('mi-slide-in'); void pill.offsetWidth; pill.classList.add('mi-slide-in'); }
+      }
       lastRenderWasMyTurn = !!isMyTurn;
       // A selection is only meaningful during the local player's live turn.
       // Clear any staged glow left behind by a turn-changing multiplayer
@@ -11142,8 +11177,9 @@ video {
             if (upCard) {
               const sCol = getSuitStyle(upCard.suit);
               const skewClass = hasDown ? 'transform rotate-[3deg] translate-x-0.5 -translate-y-1 shadow-md' : '';
+              const flipClass = shouldPopCard(upCard.id) ? 'mi-flip-in' : '';
               slotContent += `
-                <div class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] p-0.5 flex flex-col justify-between select-none ${skewClass}" style="${getOpponentCosmeticFrameStyle(p.cosmetics?.frame)}">
+                <div class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] p-0.5 flex flex-col justify-between select-none ${skewClass} ${flipClass}" style="${getOpponentCosmeticFrameStyle(p.cosmetics?.frame)}">
                   <div class="flex flex-col opp-corner-text font-black leading-none ${sCol}">
                     <span>${upCard.isJoker ? 'JKR' : upCard.rank}</span>${upCard.isJoker ? '' : `<span>${upCard.suit}</span>`}
                   </div>
@@ -11409,6 +11445,7 @@ video {
               ? state.selectedSacrificeIds.includes(faceUpCardAtSlot.id)
               : (state.selectedPlayCardIds.includes(faceUpCardAtSlot.id) || (state.phase === 'SWAP' && state.selectedSwapFaceUpSlot === i));
             const upCard = createCardElement(faceUpCardAtSlot, true, isSelected, isSacrificeMode ? true : isLegalFaceUp, false, false);
+            if (upCard.classList.contains('animate-card-pop')) upCard.classList.replace('animate-card-pop', 'mi-flip-in');
             const faceUpSnapEligible = !isMyTurn && !!getCurrentSnapOpportunity()?.cards.some(c => c.id === faceUpCardAtSlot.id);
             if (state.phase === 'PLAY' && !isMyTurn) {
               upCard.classList.add('card-out-of-turn');
@@ -11573,7 +11610,11 @@ video {
       }
 
       const playBtn = document.getElementById('playSelectedBtn');
+      const playWasDisabled = playBtn.disabled;
       playBtn.disabled = state.selectedPlayCardIds.length === 0;
+      if (playWasDisabled && !playBtn.disabled && !reduceMotion) {
+        playBtn.classList.remove('mi-pulse-once'); void playBtn.offsetWidth; playBtn.classList.add('mi-pulse-once');
+      }
 
       const sacrificeBar = document.getElementById('sacrificeControlBar');
       const isSacrificingNow = state.pendingFaceUpSacrifice && state.pendingFaceUpSacrifice.playerId === local.id;
@@ -11614,6 +11655,13 @@ video {
     // and Card Powers buttons (same x), centred on the Deck card's middle,
     // and never lower than just above the Play Matrix button.
     window.addEventListener('resize', () => positionDirectionBadge());
+    // A tiny tick on pressing the main buttons (Settings → Vibration).
+    // The empty touchstart listener is what lets iPhones show :active.
+    document.addEventListener('touchstart', () => {}, { passive: true });
+    document.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') return;
+      if (e.target.closest?.('#playSelectedBtn:not(:disabled), #lobbyScreen button, #matchEndButtonRow button, .ms-actions button, #swapControlBar button, .cosmetic-tab, .settings-row')) Haptics.vibrate(6);
+    }, { passive: true });
     function positionDirectionBadge() {
       const badge = document.getElementById('gameDirectionBadge');
       const arena = document.getElementById('centerArena');
@@ -17686,12 +17734,29 @@ video {
     // needing its own live Firebase listener. The header number also gets
     // a pulse+green flash on a gain, or a shake+red flash on a spend —
     // the modal's copy stays a plain, unanimated number.
+    // The header count rolls to its new value instead of jumping.
+    let diamondRollFrame = null;
+    function rollDiamondCount(el, from, to) {
+      cancelAnimationFrame(diamondRollFrame);
+      if (from === null || from === to || reduceMotion || (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning)) {
+        el.textContent = formatCompactDiamonds(to);
+        return;
+      }
+      const start = performance.now(), ms = 650;
+      const step = (now) => {
+        const t = Math.min(1, (now - start) / ms);
+        const eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = formatCompactDiamonds(Math.round(from + (to - from) * eased));
+        if (t < 1) diamondRollFrame = requestAnimationFrame(step);
+      };
+      diamondRollFrame = requestAnimationFrame(step);
+    }
     function updateDiamondHeader() {
       const exact = Math.max(0, Math.floor(challengeEconomy.diamonds || 0));
       const display = formatCompactDiamonds(exact);
       const headerEl = document.getElementById('headerDiamondCount');
       if (headerEl) {
-        headerEl.textContent = display;
+        rollDiamondCount(headerEl, lastPaintedDiamonds, exact);
         headerEl.title = exact.toLocaleString(); // exact value always available on hover/long-press
         // A fresh baseline (sign-in, sign-out) never keeps an old flash.
         if (lastPaintedDiamonds === null) headerEl.classList.remove('diamond-flash-up', 'diamond-flash-down');

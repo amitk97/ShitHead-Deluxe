@@ -37,12 +37,18 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - Tabs like the Shop (`SETTINGS_TABS`: Gameplay, Display, Sound & Alerts, Accessibility; last tab in localStorage `shithead_settings_tab`). Each tab is a `.settings-tab-panel`; search looks across every tab and clearing it returns to the chosen one. "Helper Icons" reads ON when shown (pref is still `shithead_hide_helpers`).
 - Order: tabs by how often they're used; inside a tab the main slider first, then rows alphabetical (a test checks this).
-- Turn Alert (`turnAlertOn`, `audio/turn.mp3` at `TURN_ALERT_GAIN` of the volume) chimes in `render` when `isMyTurn` goes false → true. Notification Sound (`notifySoundOn`, `audio/notify.mp3`) chimes when `notifyNewInboxItems` sees a new invite/request/gift. Both default on and sync to `users/{uid}/settings`.
+- Turn Alert (`turnAlertOn`, `audio/turn.mp3` at `TURN_ALERT_GAIN` = 25% of the volume) chimes in `render` when `isMyTurn` goes false → true. Notification Sound (`notifySoundOn`, `audio/notify.mp3`) chimes when `notifyNewInboxItems` sees a new invite/request/gift. Both default on and sync to `users/{uid}/settings`.
 
 ## Blind flip reveal
 
 - Every face-down (blind) play goes through a reveal first (`playBlindReveal`, gated at the top of `executePlayCards`; the real play reruns with `{ revealed: true }`): the card rises over the pile, the table dims, it wobbles and turns edge-on, then snaps over glowing green (playable) or red (forced pickup). ~1.2s for you, ~0.8s for others (`BLIND_REVEAL_MS`). Sounds are synthesised (`playRevealTension` / `playRevealResult`).
 - `state.blindRevealing` blocks every other play meanwhile (reset by `hideMatchEndUI`). Skipped (instant flip) in the tutorial, with Reduce Motion, while fast-forwarding, in a hidden tab and during the test suite (`shouldRevealBlind`). Online, only the player who flips sees the reveal; everyone else gets the result.
+
+## Microinteractions & flips
+
+- Main buttons press in (`scale` on `:active`, plus a 6ms vibration tick on touch); a touched hand card lifts; Play pulses once when it becomes available (`mi-pulse-once`); the turn pill slides in when your turn arrives (`mi-slide-in`); the header Diamond count rolls to its new value (`rollDiamondCount`).
+- Face-up cards arriving on any table (yours and opponents') and the Pile inspect view flip in with a crisp 3D turn (`mi-flip-in`, first appearance via `shouldPopCard`). Played cards stay a quick slide.
+- All of it is off with Reduce Motion (the `body.reduce-motion` CSS rule or explicit `reduceMotion` checks). Spring physics / house easing curves are planned for a later batch, waiting on the owner's go-ahead.
 
 ## Shop / Custom layout
 
