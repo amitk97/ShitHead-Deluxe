@@ -4039,6 +4039,22 @@ async function runDevTestSuite() {
     assertTrue(isRoomVersionCompatible({}), 'Legacy rooms without a version remain recoverable');
   });
 
+  await test('Only one page is open: the Inbox and menu pages close each other', async () => {
+    const el = id => document.getElementById(id);
+    const tick = () => new Promise(r => setTimeout(r, 0));
+    const open = id => el(id).classList.remove('hidden');
+    open('settingsModal'); await tick();
+    open('inboxModal'); await tick();
+    assertTrue(el('settingsModal').classList.contains('hidden'), 'Opening the Inbox closes Settings');
+    assertTrue(!el('inboxModal').classList.contains('hidden'), 'The Inbox stays open');
+    open('shopModal'); await tick();
+    assertTrue(el('inboxModal').classList.contains('hidden'), 'Opening a menu page closes the Inbox');
+    open('profileModal'); await tick();
+    assertTrue(el('shopModal').classList.contains('hidden'), 'Menu pages close each other too');
+    closeOtherMenuPages(); await tick();
+    assertTrue(EXCLUSIVE_PAGE_IDS.every(id => el(id).classList.contains('hidden')), 'Everything closes cleanly');
+  });
+
   await test('Shop is organised into section tabs and all five filters render correctly', () => {
     const savedFilter = shopFilter, savedTab = shopTab;
     shopFilter = 'all'; shopTab = 'Profile Pictures'; renderCosmeticShop();
@@ -4048,7 +4064,7 @@ async function runDevTestSuite() {
     renderCosmeticShop();
     let tabs = tabNames();
     assertTrue(tabs[tabs.length - 1].includes('Seasonal'), 'With no event near, Seasonal is the last tab');
-    assertEqual(tabs.slice(0, -1), ['Tables', 'Card Backs', 'Frames', 'Burn', 'Victory', 'Pictures', 'Emotes'], 'Table and cards, then effects, then you');
+    assertEqual(tabs.slice(0, -1), ['Pictures', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Victory', 'Emotes'], 'Pictures, then table and cards, then effects');
     seasonalNowOverride = '2026-10-12T12:00:00'; // 3 days before Halloween
     renderCosmeticShop();
     assertTrue(tabNames()[0].includes('Seasonal'), 'Seasonal leads when an event starts within 3 days');

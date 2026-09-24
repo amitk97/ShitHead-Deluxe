@@ -13227,11 +13227,25 @@ video {
       const page = document.getElementById(id);
       if (page) menuPageObserver.observe(page, { attributes:true, attributeFilter:['class'] });
     });
+    // Only one page is ever open: the menu pages and the Inbox all count.
+    const EXCLUSIVE_PAGE_IDS = [...MENU_PAGE_IDS, 'inboxModal'];
     function closeOtherMenuPages(exceptId = null) {
-      MENU_PAGE_IDS.forEach((id) => {
+      EXCLUSIVE_PAGE_IDS.forEach((id) => {
         if (id !== exceptId) document.getElementById(id)?.classList.add('hidden');
       });
     }
+    // Watches the pages themselves rather than every button that opens one
+    // (menu, header mailbox, keyboard shortcuts, links between pages), so
+    // whichever page was opened last is the one left showing.
+    const exclusivePageObserver = new MutationObserver((records) => {
+      const opened = records.filter(({ target, oldValue }) =>
+        /(^|\s)hidden(\s|$)/.test(oldValue || '') && !target.classList.contains('hidden'));
+      if (opened.length) closeOtherMenuPages(opened[opened.length - 1].target.id);
+    });
+    EXCLUSIVE_PAGE_IDS.forEach((id) => {
+      const page = document.getElementById(id);
+      if (page) exclusivePageObserver.observe(page, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
+    });
     function openHamburgerMenu() {
       // currentUser starts null and is only ever set inside the async
       // onAuthStateChanged callback (see its own comment) — for a
@@ -15039,18 +15053,18 @@ video {
 
     // One list drives the section tabs on both the Shop and Custom pages.
     // Adding a cosmetic category later = one entry here.
-    // Grouped by where each item shows up: the table and cards you look at
-    // all game, then the big moments (burns, wins), then you (picture, emotes).
+    // Your picture first, then by where items show up: the table and cards
+    // you look at all game, then the big moments (burns, wins), then emotes.
     const COSMETIC_TABS = [
+      { category: 'Profile Pictures', label: 'Pictures' },
       { category: 'Table Themes', label: 'Tables' },
       { category: 'Card Backs', label: 'Card Backs' },
       { category: 'Frames', label: 'Frames' },
       { category: 'Burn Effects', label: 'Burn' },
       { category: 'Victory Effects', label: 'Victory' },
-      { category: 'Profile Pictures', label: 'Pictures' },
       { category: 'Emote Packs', label: 'Emotes' }
     ];
-    let shopTab = 'Table Themes';
+    let shopTab = 'Profile Pictures';
     // Every Shop/Custom tab lists items cheapest first, then A-Z within a price.
     function sortByValue(items) {
       return [...items].sort((a, b) => ((a.cost || 0) - (b.cost || 0)) || String(a.name).localeCompare(String(b.name)));
@@ -18754,6 +18768,8 @@ video {
     }
     function openInboxPanel() {
       if (!currentUser) { openAuthModal(); return; }
+      closeHamburgerMenu();
+      closeOtherMenuPages('inboxModal');
       document.getElementById('inboxModal').classList.remove('hidden');
       renderInbox();
     }

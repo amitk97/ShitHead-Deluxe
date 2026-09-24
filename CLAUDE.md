@@ -35,7 +35,9 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Shop / Custom layout
 
-- Both pages use section tabs driven by `COSMETIC_TABS`, ordered by where items show up: Tables, Card Backs, Frames, Burn, Victory, Pictures, Emotes (Custom puts Pictures + Deck first via `CUSTOM_TABS`). A new cosmetic category = one entry there.
+- Only one page is open at a time: `EXCLUSIVE_PAGE_IDS` (every menu page + `inboxModal`) is watched by `exclusivePageObserver`, so opening any of them hides the rest, whatever opened it.
+
+- Both pages use section tabs driven by `COSMETIC_TABS`, Pictures first, then by where items show up: Tables, Card Backs, Frames, Burn, Victory, Emotes (Custom adds Deck after Pictures via `CUSTOM_TABS`). A new cosmetic category = one entry there.
 - The Shop's Seasonal tab is first (and the default tab) only while an event is live or starts within `SEASONAL_LEAD_DAYS` (3) days (`seasonalTabLeads`); otherwise it's last. Each event section folds with a chevron (`seasonalSectionOverrides`); live/soon events start open, the rest folded.
 - Custom shows every cosmetic as a tile (`.cosmetic-tile-grid`, 2 per row; pictures 3 per row).
 - Table themes are CSS on `body[data-equipped-table-theme="…"] #gameTable` plus a `--table-label-border` accent and a Shop preview background in `shopCosmeticPreviewMarkup`. New themes also need the rules id list and price.
