@@ -79,7 +79,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - Google = `signInWithPopup` (account chooser every time), falling back to `signInWithRedirect` when the pop-up can't open, and always redirect in the installed iPhone app (`navigator.standalone`). The redirect alone failed with "missing initial state" in the installed Android app.
 - `authDomain` = the page's own hosting domain (`SAME_SITE_AUTH_DOMAINS`), so the `/__/auth/handler` step stays same-site. A cross-site handler loses its state on phones and shows "missing initial state". Every domain in that list must be an Authorized redirect URI (`https://<domain>/__/auth/handler`) on the Google OAuth web client (Google Cloud Console → APIs & Services → Credentials), and in Firebase Auth → Authorized domains. `sw.js` never intercepts `/__/` paths.
-- GitHub Pages (`*.github.io`) copies and `shithead-pro.firebaseapp.com` redirect to `https://shithead-pro.web.app/` from the first script in `<head>`, so everyone plays on the Hosting domain.
+- Every link ends at `https://shithead-pro.web.app/`: GitHub Pages (`*.github.io`) and `shithead-pro.firebaseapp.com` redirect from the first script in `<head>` (privacy-policy.html too); `/index.html` and old snapshot names (`/indexN.html`) 301 to `/` (`redirects` in `firebase.json`); any other missing path gets `404.html`, which redirects to the game. `_config.yml` keeps the snapshots off GitHub Pages so they 404 there too.
 
 ## Phone back gesture
 

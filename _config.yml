@@ -1,0 +1,13 @@
+# GitHub Pages copy of this repo. The game lives at https://shithead-pro.web.app/
+# (index.html and 404.html send visitors there). Old game snapshots are left out
+# so their links 404 and 404.html redirects them to the live game too.
+exclude:
+  - index1.html
+  - index2.html
+  - index20.html
+  - index100.html
+  - index300.html
+  - CLAUDE.md
+  - database.rules.json
+  - functions
+  - dev-tests.js
