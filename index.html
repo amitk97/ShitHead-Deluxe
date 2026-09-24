@@ -1065,6 +1065,7 @@
     .profile-name-status.is-ok { color:#34d399; }
     .profile-owned-pill { cursor:default; border-color:#10b981 !important; color:#34d399 !important; }
     .profile-owned-pill:hover { background:transparent !important; }
+    .menu-sign-out span:last-child { color:#fda4af; }
     .confirm-scrim { position:fixed; inset:0; z-index:120; background:rgba(2,6,23,.75); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:16px; }
     .confirm-scrim.hidden { display:none; }
     .confirm-card { width:min(290px,100%); background:#020617; border:2px solid #f59e0b; border-radius:16px; padding:16px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,.6); }
@@ -3762,6 +3763,7 @@ video {
       <button id="menuGuideBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></span><span>Guide &amp; Strategy</span></button>
       <button id="menuSettingsBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg></span><span>Settings</span></button>
       <button id="menuSupportBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-support"/></svg></span><span>Support</span></button>
+      <button id="menuSignOutBtn" class="hamburger-menu-item hidden menu-sign-out"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#2a1016" stroke="#7f1d1d"/><path d="M14 8H9.5A1.5 1.5 0 0 0 8 9.5v13A1.5 1.5 0 0 0 9.5 24H14" stroke="#fda4af" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M18 11l5 5-5 5M23 16H13" stroke="#fb7185" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Sign Out</span></button>
     </nav>
   </div>
 
@@ -14646,8 +14648,37 @@ video {
     document.getElementById('signOutConfirm').addEventListener('click', (e) => { if (e.target.id === 'signOutConfirm') closeSignOutConfirm(); });
     document.getElementById('signOutYesBtn').addEventListener('click', () => {
       closeSignOutConfirm();
-      auth.signOut().catch((e) => console.warn('Sign out failed', e));
+      performSignOut();
     });
+    document.getElementById('menuSignOutBtn').addEventListener('click', () => {
+      closeHamburgerMenu();
+      if (currentUser) openSignOutConfirm();
+    });
+    // Signing out ends everything: leaves any room/match, forgets the saved
+    // match, nickname and Ranked return flag, then reloads straight onto the
+    // plain Vs Bots home screen as a guest (no name, no Diamonds).
+    let signOutResetting = false;
+    function resetAfterSignOut() {
+      if (signOutResetting) return;
+      signOutResetting = true;
+      try {
+        if (state.isMultiplayer && state.roomCode && state.localPlayerId && typeof db !== 'undefined') {
+          const myId = state.localPlayerId;
+          updatePlayersAtomic(state.roomCode, (list) => (list || []).filter(p => p.id !== myId));
+        }
+      } catch (e) { console.warn('Leaving room on sign out failed', e); }
+      ['shithead_joined_room', 'shithead_return_to_ranked'].forEach(k => { try { sessionStorage.removeItem(k); } catch (e) {} });
+      ['shithead_game_state', 'shithead_player_name'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+      const input = document.getElementById('playerNameInput');
+      if (input) { input.value = ''; input.disabled = false; }
+      challengeEconomy.diamonds = 0;
+      if (typeof updateDiamondHeader === 'function') updateDiamondHeader();
+      if (!window.__skipSignOutReload) setTimeout(() => location.reload(), 150);
+    }
+    function performSignOut() {
+      const signOut = auth && typeof auth.signOut === 'function' ? auth.signOut() : Promise.resolve();
+      return Promise.resolve(signOut).catch((e) => console.warn('Sign out failed', e)).finally(resetAfterSignOut);
+    }
     function openProfilePanel() {
       refreshProfilePanel();
       refreshOwnAvatarDisplays();
@@ -14807,6 +14838,7 @@ video {
       const drawerLabel = document.getElementById('hamburgerAccountLabel');
       const drawerSub = document.getElementById('hamburgerAccountSub');
       if (!drawerLabel) return;
+      document.getElementById('menuSignOutBtn')?.classList.toggle('hidden', !currentUser);
       if (currentUser) {
         drawerLabel.textContent = currentUser.displayName || currentUser.email || 'Signed in';
         drawerSub.textContent = 'Tap Profile for your rating & stats';
@@ -14897,7 +14929,9 @@ video {
           auth.signOut();
           return; // signOut() will re-fire this listener with user = null
         }
+        const wasSignedIn = !!currentUser;
         currentUser = user;
+        if (wasSignedIn && !user) resetAfterSignOut();
         clearTimeout(settingsCloudSaveTimer);
         updateHamburgerAccountLabel();
         refreshRankedUI();
@@ -21871,6 +21905,7 @@ video {
       await test('REGRESSION: Sign out asks for confirmation first', () => {
         const savedUser = currentUser, savedAuth = auth;
         let signedOut = 0;
+        window.__skipSignOutReload = true;
         try {
           currentUser = { uid: 'me' };
           auth = { ...auth, signOut: () => { signedOut++; return Promise.resolve(); } };
@@ -21881,7 +21916,7 @@ video {
           document.getElementById('profileAccountActionBtn').click();
           document.getElementById('signOutYesBtn').click();
           assertEqual(signedOut, 1, 'Yes signs out');
-        } finally { currentUser = savedUser; auth = savedAuth; }
+        } finally { currentUser = savedUser; auth = savedAuth; signOutResetting = false; setTimeout(() => { window.__skipSignOutReload = false; }, 0); }
       });
 
       await test('REGRESSION: shape burn effects draw real shapes in previews and games', () => {
@@ -21953,6 +21988,32 @@ video {
           .forEach(id => { assertEqual(pack(id).length, 6, `${id} has six emotes`); assertTrue(isSupportedCosmetic('emotes', id), `${id} is equippable`); });
         const prices = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.id.startsWith('emotes-flags') || i.id === 'emotes-animals' || i.id === 'emotes-sports').map(i => [i.id, i.cost]));
         Object.entries(prices).forEach(([id, cost]) => assertEqual(cost, id.includes('flags') ? 750 : 500, `${id} price`));
+      });
+
+      await test('REGRESSION: menu Sign Out confirms first, then signing out fully resets to a guest', () => {
+        const savedUser = currentUser, savedAuth = auth;
+        let signedOut = 0;
+        window.__skipSignOutReload = true;
+        try {
+          currentUser = { uid: 'me' };
+          updateHamburgerAccountLabel();
+          assertTrue(!document.getElementById('menuSignOutBtn').classList.contains('hidden'), 'Sign Out appears in the menu when signed in');
+          auth = { ...auth, signOut: () => { signedOut++; return Promise.resolve(); } };
+          document.getElementById('menuSignOutBtn').click();
+          assertTrue(!document.getElementById('signOutConfirm').classList.contains('hidden') && signedOut === 0, 'Menu Sign Out opens the confirm first');
+          document.getElementById('signOutNoBtn').click();
+          assertEqual(signedOut, 0, 'No keeps you signed in');
+          localStorage.setItem('shithead_player_name', 'Amitk');
+          document.getElementById('playerNameInput').value = 'Amitk';
+          challengeEconomy.diamonds = 500;
+          signOutResetting = false;
+          resetAfterSignOut();
+          assertEqual(document.getElementById('playerNameInput').value, '', 'Nickname is cleared');
+          assertEqual(localStorage.getItem('shithead_player_name'), null, 'Saved nickname is forgotten');
+          assertEqual(challengeEconomy.diamonds, 0, 'Diamonds are cleared');
+          currentUser = null; updateHamburgerAccountLabel();
+          assertTrue(document.getElementById('menuSignOutBtn').classList.contains('hidden'), 'Sign Out hides when signed out');
+        } finally { currentUser = savedUser; auth = savedAuth; signOutResetting = false; window.__skipSignOutReload = false; updateHamburgerAccountLabel(); }
       });
 
       await test('Accessibility settings exist and apply', () => {
@@ -23443,10 +23504,10 @@ video {
 
       // ---- STAGE 1: hamburger menu restructure + responsive presentation ----
       await test('REGRESSION: the hamburger menu has all 9 items in the agreed order, with no duplicates', () => {
-        const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuShopBtn', 'menuGuideBtn', 'menuSettingsBtn', 'menuSupportBtn'];
+        const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuShopBtn', 'menuGuideBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuSignOutBtn'];
         const nav = document.querySelector('#hamburgerDrawer nav');
         const actualOrder = Array.from(nav.querySelectorAll('button')).map(b => b.id);
-        assertEqual(actualOrder, expectedOrder, 'Menu items must appear in exactly the agreed order: Profile, Stats, Personalisation, Friends, Leaderboard, Challenges, Shop, Guide & Strategy, Settings, Support');
+        assertEqual(actualOrder, expectedOrder, 'Menu items must appear in exactly the agreed order: Profile, Stats, Personalisation, Friends, Leaderboard, Challenges, Shop, Guide & Strategy, Settings, Support, Sign Out (signed in only)');
         assertTrue(!document.getElementById('menuInboxBtn'), 'Inbox must not also still be inside the drawer now that it lives in the header');
         const allIds = Array.from(document.querySelectorAll('[id]')).map(el => el.id);
         const seen = {};
