@@ -796,6 +796,8 @@
        Same renderer in games (this fixed layer) and in Shop/Custom
        previews (inside the preview stage). */
     #burnFxLayer { position:fixed; inset:0; pointer-events:none; z-index:46; overflow:hidden; }
+    #victoryFxLayer { position:fixed; inset:0; pointer-events:none; z-index:110; overflow:hidden; }
+    .vfx-chop-text { font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; color:#ffffff; -webkit-text-stroke:1.5px #111827; paint-order:stroke fill; text-shadow:0 0 2px #111827, 3px 3px 0 #b91c1c, 5px 5px 0 #111827; white-space:nowrap; letter-spacing:.02em; }
     .bfx { position:absolute; left:0; top:0; pointer-events:none; will-change:transform,opacity; }
     .bfx svg { display:block; overflow:visible; }
     .bfx-flash { position:absolute; inset:0; pointer-events:none; }
@@ -3641,6 +3643,7 @@ video {
   <div id="flightLayer"></div>
   <canvas id="particleCanvas"></canvas>
   <div id="burnFxLayer" aria-hidden="true"></div>
+  <div id="victoryFxLayer" aria-hidden="true"></div>
 
   <!-- Snap Burn Banner -->
   <!-- Snap prompt: deliberately terse. Fixed to the bottom-centre and width
@@ -7897,7 +7900,114 @@ video {
       triggerEquippedVictoryEffect(player);
     }
 
+    // ============================================================
+    // SHAPE VICTORY EFFECTS (Sparkler Salute, 5-Star Finish, Karate Chop)
+    // Drawn on #victoryFxLayer above everything, with the same helpers as
+    // the shape burn effects.
+    // ============================================================
+    function vfxSparklers(layer) {
+      const W = layer.clientWidth || window.innerWidth, H = layer.clientHeight || window.innerHeight;
+      const stickLen = Math.min(230, H * .32);
+      const sides = [{ x: Math.max(44, W * .12), dir: 1 }, { x: W - Math.max(44, W * .12), dir: -1 }];
+      const duration = 3400, start = performance.now();
+      sides.forEach(({ x, dir }) => {
+        const stick = bfxAdd(layer, `<svg width="24" height="${stickLen + 20}" viewBox="0 0 24 ${stickLen + 20}"><rect x="10" y="10" width="4" height="${stickLen}" rx="2" fill="#94a3b8"/><rect x="9" y="10" width="6" height="${stickLen * .55}" rx="3" fill="#475569"/><rect x="8" y="${stickLen}" width="8" height="18" rx="3" fill="#78350f"/></svg>`, x, H * .56, 24, stickLen + 20);
+        stick.style.transform = `rotate(${dir * 24}deg)`;
+        bfxAnimate(stick, [{ opacity: 0 }, { opacity: 1, offset: .06 }, { opacity: 1, offset: .9 }, { opacity: 0 }], { duration: duration + 300 });
+      });
+      const tick = setInterval(() => {
+        const t = (performance.now() - start) / duration;
+        if (t >= 1 || !layer.isConnected) { clearInterval(tick); return; }
+        sides.forEach(({ x, dir }) => {
+          // The burning tip slides down the coated half of the stick.
+          const along = -stickLen / 2 + 10 + t * stickLen * .5;
+          const ang = (dir * 24 * Math.PI) / 180;
+          const tipX = x - Math.sin(ang) * along, tipY = H * .56 + Math.cos(ang) * along;
+          const glow = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff,#fde68a 35%,rgba(251,191,36,.35) 60%,transparent 72%)"></div>', tipX, tipY, 26, 26);
+          bfxAnimate(glow, [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(1.6)' }], { duration: 160 });
+          for (let i = 0; i < 7; i++) {
+            const a = Math.random() * Math.PI * 2, d = bfxRand(28, 95), len = bfxRand(10, 26);
+            const c = Math.random() < .7 ? '#fde68a' : '#ffffff';
+            const spark = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:2px;background:linear-gradient(90deg,transparent,${c});box-shadow:0 0 5px #fbbf24"></div>`, tipX, tipY, len, 2);
+            const deg = (a * 180) / Math.PI;
+            bfxAnimate(spark, [{ transform: `rotate(${deg}deg) translateX(0)`, opacity: 1 }, { transform: `rotate(${deg}deg) translateX(${d}px)`, opacity: 0 }], { duration: bfxRand(260, 420), easing: 'ease-out' });
+          }
+        });
+      }, 45);
+    }
+    const VFX_STAR = 'M50 6 62 37 96 38 69 59 79 92 50 73 21 92 31 59 4 38 38 37Z';
+    function vfxFiveStars(layer) {
+      const W = layer.clientWidth || window.innerWidth, H = layer.clientHeight || window.innerHeight;
+      const size = Math.min(66, (W - 40) / 5.6), gap = size * .18;
+      const total = size * 5 + gap * 4, y = H * .38;
+      const gradId = `vfx-star-${++bfxGradientSeq}`;
+      for (let i = 0; i < 5; i++) {
+        const x = (W - total) / 2 + size / 2 + i * (size + gap);
+        const star = bfxAdd(layer, `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><defs><linearGradient id="${gradId}-${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4b8"/><stop offset=".5" stop-color="#fbbf24"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs>
+          <path d="${VFX_STAR}" fill="rgba(15,23,42,.55)" stroke="#fcd34d" stroke-width="4" stroke-linejoin="round"/>
+          <path class="vfx-star-fill" d="${VFX_STAR}" fill="url(#${gradId}-${i})" stroke="#fff7d6" stroke-width="3" stroke-linejoin="round" opacity="0"/></svg>`, x, y, size, size);
+        bfxAnimate(star, [{ opacity: 0, transform: 'translateY(14px) scale(.7)' }, { opacity: 1, transform: 'translateY(0) scale(1)', offset: .1 }, { opacity: 1, transform: 'scale(1)', offset: .88 }, { opacity: 0, transform: 'scale(.9)' }], { duration: 4200, easing: 'ease-out' });
+        const fill = star.querySelector('.vfx-star-fill');
+        const fillDelay = 450 + i * 380;
+        if (typeof fill.animate === 'function') fill.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: fillDelay, fill: 'forwards' });
+        setTimeout(() => {
+          if (!star.isConnected) return;
+          if (typeof star.animate === 'function') star.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)' }, { transform: 'scale(1)' }], { duration: 320, easing: 'ease-out' });
+          for (let j = 0; j < 10; j++) {
+            const a = (j / 10) * Math.PI * 2, d = size * bfxRand(.6, .9);
+            const dot = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:#fde68a;box-shadow:0 0 6px #fbbf24"></div>', x, y, 5, 5);
+            bfxAnimate(dot, [{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`, opacity: 0 }], { duration: 480, easing: 'ease-out' });
+          }
+        }, fillDelay);
+      }
+    }
+    const VFX_HAND = `<svg width="100%" height="100%" viewBox="0 0 120 60">
+      <rect x="0" y="14" width="26" height="34" rx="6" fill="#f8fafc" stroke="#111827" stroke-width="2.5"/>
+      <path d="M4 20h18M4 42h18" stroke="#cbd5e1" stroke-width="2"/>
+      <path d="M24 22c6-5 14-7 24-8l52-4c10-1 16 4 16 11s-6 11-16 12l-50 5c-11 1-19-1-26-5Z" fill="#f5c9a0" stroke="#111827" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M46 14c3-9 12-12 20-9 3 3 1 7-4 8" fill="#f5c9a0" stroke="#111827" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M62 23l48-3M60 30l46-3" stroke="#b7865c" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+    function vfxKarate(layer) {
+      const W = layer.clientWidth || window.innerWidth, H = layer.clientHeight || window.innerHeight;
+      const words = ['CHOP!', 'HI-YAH!', 'CHOP!', 'KA-POW!'];
+      const spots = [[.3, .3], [.7, .45], [.35, .62], [.66, .24]];
+      spots.forEach(([fx, fy], i) => {
+        const delay = i * 520;
+        const x = W * fx, y = H * fy;
+        const hw = Math.min(200, W * .5), hh = hw / 2;
+        const hand = bfxAdd(layer, VFX_HAND, x + hw * .15, y - hh * .6, hw, hh);
+        hand.style.transformOrigin = '15% 50%';
+        bfxAnimate(hand, [
+          { transform: 'translate(60px,-90px) rotate(-55deg)', opacity: 0 },
+          { transform: 'translate(30px,-50px) rotate(-40deg)', opacity: 1, offset: .25 },
+          { transform: 'translate(0,0) rotate(18deg)', opacity: 1, offset: .45 },
+          { transform: 'translate(-2px,4px) rotate(14deg)', opacity: 1, offset: .75 },
+          { transform: 'translate(-2px,4px) rotate(14deg)', opacity: 0 }
+        ], { duration: 820, delay, easing: 'ease-in' });
+        setTimeout(() => {
+          if (!layer.isConnected) return;
+          const burst = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 100 100"><path d="M50 2 58 30 86 14 72 40 98 50 72 60 86 86 58 70 50 98 42 70 14 86 28 60 2 50 28 40 14 14 42 30Z" fill="#f97316" stroke="#111827" stroke-width="3" stroke-linejoin="round"/><path d="M50 18 55 36 72 28 64 44 82 50 64 56 72 72 55 64 50 82 45 64 28 72 36 56 18 50 36 44 28 28 45 36Z" fill="#fde047"/></svg>`, x, y + 6, 140, 140);
+          bfxAnimate(burst, [{ transform: 'scale(.2) rotate(-20deg)', opacity: 1 }, { transform: 'scale(1.1) rotate(0)', opacity: 1, offset: .25 }, { transform: 'scale(1) rotate(4deg)', opacity: 1, offset: .75 }, { transform: 'scale(1.15)', opacity: 0 }], { duration: 900 });
+          const text = bfxAdd(layer, `<div class="vfx-chop-text" style="font-size:${Math.min(38, W * .095)}px;display:flex;align-items:center;justify-content:center;width:100%;height:100%">${words[i]}</div>`, x, y - 52, 200, 50);
+          bfxAnimate(text, [{ transform: 'scale(.3) rotate(-8deg)', opacity: 0 }, { transform: 'scale(1.2) rotate(-6deg)', opacity: 1, offset: .2 }, { transform: 'scale(1) rotate(-6deg)', opacity: 1, offset: .75 }, { transform: 'scale(1.1) rotate(-6deg) translateY(-12px)', opacity: 0 }], { duration: 1000 });
+          const cracks = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 100 100"><path d="M50 50 30 38 22 20M50 50 74 40 90 44M50 50 58 74 52 92M50 50 26 64 10 70M50 50 70 66 84 82" stroke="#e2e8f0" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`, x, y + 8, 150, 150);
+          bfxAnimate(cracks, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: .9, transform: 'scale(1)', offset: .15 }, { opacity: 0, transform: 'scale(1.05)' }], { duration: 900 });
+          const table = document.getElementById('gameTable');
+          if (table) { table.classList.add('animate-screen-shake'); setTimeout(() => table.classList.remove('animate-screen-shake'), 300); }
+        }, delay + 370);
+      });
+    }
+    function playShapeVictoryEffect(effect) {
+      const layer = document.getElementById('victoryFxLayer');
+      if (!layer) return false;
+      const run = { 'victory-sparklers': vfxSparklers, 'victory-stars': vfxFiveStars, 'victory-karate': vfxKarate }[effect];
+      if (!run) return false;
+      run(layer);
+      return true;
+    }
+
     function playVictoryEffect(effect) {
+      if (playShapeVictoryEffect(effect)) return;
       if (effect === 'victory-cards') {
         const ranks = ['A','K','Q','J','10'];
         for (let i = 0; i < 26; i++) {
@@ -13187,8 +13297,11 @@ video {
       { id: 'burn-sweets', category: 'Burn Effects', name: 'Stupendous Confectionery', cost: 1500, tones: ['#4a044e','#ef4444','#fde68a'] },
       { id: 'burn-smoke', category: 'Burn Effects', name: 'Smoke Show', cost: 2000, tones: ['#0f172a','#64748b','#e2e8f0'] },
       { id: 'victory-confetti', category: 'Victory Effects', name: 'Confetti Burst', cost: 250, tones: ['#7c2d12','#fbbf24','#ec4899'] },
-      { id: 'victory-cards', category: 'Victory Effects', name: 'Card Shower', cost: 500, tones: ['#172554','#60a5fa','#f8fafc'] },
+      { id: 'victory-cards', category: 'Victory Effects', name: 'Card Shower', cost: 1500, tones: ['#172554','#60a5fa','#f8fafc'] },
       { id: 'victory-fireworks', category: 'Victory Effects', name: 'Fireworks', cost: 750, tones: ['#312e81','#c084fc','#fde047'] },
+      { id: 'victory-sparklers', category: 'Victory Effects', name: 'Sparkler Salute', cost: 750, tones: ['#1c1917','#fbbf24','#ffffff'] },
+      { id: 'victory-stars', category: 'Victory Effects', name: '5-Star Finish', cost: 1000, tones: ['#1e1b4b','#fbbf24','#fff7d6'] },
+      { id: 'victory-karate', category: 'Victory Effects', name: 'Karate Chop', cost: 2000, tones: ['#111827','#f97316','#fde047'] },
       { id: 'avatar-ace-spades', category: 'Profile Pictures', name: 'Ace of Spades', cost: 200, tones: ['#1e293b','#cbd5e1','#f8fafc'] },
       { id: 'avatar-queen-hearts', category: 'Profile Pictures', name: 'Queen of Hearts', cost: 200, tones: ['#3f0b1b','#e11d48','#fbbf24'] },
       { id: 'avatar-joker', category: 'Profile Pictures', name: 'Joker', cost: 200, tones: ['#2e1065','#a855f7','#10b981'] },
@@ -13241,7 +13354,7 @@ video {
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal']),
       tableTheme: new Set(['table-casino','table-winter','table-midnight','table-candyfloss','table-royal']),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke']),
-      victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks']),
+      victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks','victory-sparklers','victory-stars','victory-karate']),
       avatar: new Set(Object.keys(AVATAR_ART))
     });
     let nameChangeTokenState = null;
@@ -13810,7 +13923,7 @@ video {
       } else if (type === 'avatar') {
         demo = `<div class="shop-preview-stage"><div class="avatar-demo">${avatarHtml(item.id, 84)}<div class="avatar-demo-list"><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>IN GAME</span></span><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>#1 <small>Leaderboard</small></span></span><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>FRIENDS</span></span></div></div></div>`;
       } else if (type === 'victoryEffect') {
-        demo = `<div class="shop-preview-stage"><div class="text-center"><div class="text-5xl">${item.id === 'victory-cards' ? '🃏' : item.id === 'victory-fireworks' ? '🎆' : '🎉'}</div><div class="text-[8px] text-slate-400 mt-1">Tap below to play the win animation</div></div></div>`;
+        demo = `<div class="shop-preview-stage"><div class="text-center"><div class="text-5xl">${{ 'victory-cards': '🃏', 'victory-fireworks': '🎆', 'victory-sparklers': '🎇', 'victory-stars': '⭐', 'victory-karate': '🥋' }[item.id] || '🎉'}</div><div class="text-[8px] text-slate-400 mt-1">Tap below to play the win animation</div></div></div>`;
       }
       const isAnimated = type === 'burnEffect' || type === 'victoryEffect';
       return `<div class="flex items-start justify-between gap-2 mb-1"><div><div class="text-[10px] font-black text-white">${item.name}</div><div class="text-[8px] uppercase tracking-wider text-cyan-300">${item.category.slice(0, -1)} preview</div></div><button type="button" data-close-shop-preview class="text-slate-400 text-lg leading-none" aria-label="Close preview">×</button></div><div class="min-h-[106px] flex items-center justify-center">${demo}</div>${isAnimated ? `<button type="button" data-play-shop-effect="${item.id}" class="mt-2 w-full rounded-lg border border-cyan-500 py-1.5 text-[9px] font-black text-cyan-300">PLAY EFFECT</button>` : ''}<p class="mt-2 text-center text-[8px] text-slate-500">Preview only — no Diamonds have been spent.</p>`;
@@ -21685,6 +21798,19 @@ video {
         assertEqual(prices, { 'Coloured Flame': 250, 'Ice Shatter': 500, 'Electric Blast': 1000, 'Paint Splats': 750, 'Stupendous Confectionery': 1500, 'Smoke Show': 2000 }, 'Burn effect prices');
       });
 
+      await test('REGRESSION: new victory effects draw on their own top layer, with the requested prices', () => {
+        const layer = document.getElementById('victoryFxLayer');
+        ['victory-sparklers', 'victory-stars', 'victory-karate'].forEach(id => {
+          layer.innerHTML = '';
+          playVictoryEffect(id);
+          assertTrue(layer.querySelectorAll('.bfx').length > 0, `${id} must draw on the victory layer`);
+        });
+        assertEqual(layer.querySelectorAll('.bfx svg path').length > 0, true, 'Effects are drawn shapes');
+        layer.innerHTML = '';
+        const prices = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Victory Effects').map(i => [i.name, i.cost]));
+        assertEqual(prices, { 'Confetti Burst': 250, 'Card Shower': 1500, 'Fireworks': 750, 'Sparkler Salute': 750, '5-Star Finish': 1000, 'Karate Chop': 2000 }, 'Victory effect prices');
+      });
+
       await test('Accessibility settings exist and apply', () => {
         ['setContrastRow','setMotionRow','setHapticsRow','volumeSlider'].forEach(id => {
           assertTrue(!!document.getElementById(id), `${id} must exist in settings`);
@@ -23475,7 +23601,7 @@ video {
         const expected = {
           'table-casino': 750, 'table-winter': 750, 'table-midnight': 750, 'table-candyfloss': 750, 'table-royal': 750,
           'burn-coloured': 250, 'burn-ice': 500, 'burn-electric': 1000, 'burn-paint': 750, 'burn-sweets': 1500, 'burn-smoke': 2000,
-          'victory-confetti': 250, 'victory-cards': 500, 'victory-fireworks': 750
+          'victory-confetti': 250, 'victory-cards': 1500, 'victory-fireworks': 750, 'victory-sparklers': 750, 'victory-stars': 1000, 'victory-karate': 2000
         };
         Object.entries(expected).forEach(([id, cost]) => {
           const item = COSMETIC_SHOP_ITEMS.find(entry => entry.id === id);
