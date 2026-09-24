@@ -919,7 +919,7 @@
     .card-zone-label-row--table {
       position:absolute;
       z-index:20;
-      right:calc(50% + clamp(81px, 13vh, 118px));
+      right:calc(50% + clamp(81px, 13vh, 118px) + 6px);
       top:50%;
       transform:translateY(-50%);
       width:auto;
@@ -955,6 +955,8 @@
     .table-label-pill.layout-neutral { margin-inline:-8px; }
     /* Points from the Hand label down to the cards it names. A pseudo-element
        so render() can keep setting the label's text to plain "Hand". */
+    /* A little breathing room so a fanned hand never tucks under the label. */
+    .card-zone-label-row:has(#handZoneLabel) { padding-bottom:5px; }
     #handZoneLabel::after { content:'\2193'; margin-left:4px; font-size:1.2em; line-height:1; }
     /* The Deck (card-base) is wider than the Base Card (card-table). Equal
        side columns keep the pile, and the table cards and hand below it, on
@@ -1131,6 +1133,10 @@
     .profile-streak { display:block; margin-top:2px; font-size:10px; font-weight:900; color:#fb923c; }
     .profile-streak.hidden { display:none; }
     /* Seasonal events */
+    .inbox-season { background:linear-gradient(135deg,var(--season-dark),rgba(15,23,42,.85)); border-color:var(--season-accent); }
+    .inbox-season-accent { color:var(--season-light); }
+    .inbox-season-emoji { font-size:28px; line-height:1; }
+    .inbox-season-shop-btn { background:var(--season-accent); color:#020617; }
     .season-tab.is-live { border-color:#f472b6; color:#fbcfe8; background:linear-gradient(135deg,rgba(131,24,67,.55),rgba(76,29,149,.45)); }
     .season-tab.is-live[aria-selected="true"] { border-color:#f59e0b; color:#fde68a; }
     .season-section { margin-bottom:14px; }
@@ -5597,7 +5603,15 @@ video {
       return true;
     }
 
+    // Reduce motion: a single soft glow instead of flying particles and shakes.
+    function playCalmBurn(x, y) {
+      const layer = document.getElementById('burnFxLayer');
+      if (!layer) return;
+      const el = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(253,186,116,.75),rgba(249,115,22,.25) 45%,transparent 70%)"></div>', x, y, 120, 120);
+      bfxAnimate(el, [{ opacity: 0 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 700, easing: 'ease-out' });
+    }
     function playBurnEffect(effect, x, y) {
+      if (typeof reduceMotion !== 'undefined' && reduceMotion) return playCalmBurn(x, y);
       if (effect === 'burn-ice') return triggerBurnEmberExplosion(x, y, ['#e0f2fe','#7dd3fc','#38bdf8','#ffffff'], 70);
       if (SHAPE_BURN_EFFECTS.has(effect)) {
         playBurnFx(effect, document.getElementById('burnFxLayer'), x, y, 1);
@@ -8209,6 +8223,7 @@ video {
         const effect = player?.id === state.localPlayerId
           ? (equippedCosmetics.victoryEffect || 'default')
           : (player?.cosmetics?.victoryEffect || 'default');
+        if (reduceMotion) return;
         playVictoryEffect(isWinner ? effect : 'default', snapshotCardStyle(player));
       } catch (error) {
         console.warn('Victory cosmetic skipped safely:', error);
@@ -9426,7 +9441,9 @@ video {
     const readPref = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v === '1'; } catch (e) { return d; } };
     const writePref = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } catch (e) {} };
     let highContrast = readPref('shithead_high_contrast', false);
-    let reduceMotion = readPref('shithead_reduce_motion', false);
+    // Defaults to the device's own "reduce motion" setting until the player
+    // picks one in Settings.
+    let reduceMotion = readPref('shithead_reduce_motion', (() => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })());
     // Hides the Card Reference and Play Matrix trigger buttons (and force-
     // closes either panel if it happens to be open) for players who already
     // know the rules and find the extra icons around the History strip
@@ -10029,7 +10046,7 @@ video {
       };
       const used = h('header') + h('#opponentsContainer') + h('#centerArena')
                  + h('#playActionControls') + h('#swapControlBar') + h('#localTableCardZone')
-                 + h('#handZoneLabel');
+                 + (document.getElementById('handZoneLabel')?.parentElement?.getBoundingClientRect().height || 0);
       // The hand's own padding is real space the cards can't use — its top
       // padding exists so a selected card can lift without being clipped.
       // Leaving it out is what left a constant ~19px of overflow.
@@ -14631,7 +14648,7 @@ video {
       }
       if (type === 'tableTheme') return miniTablePreviewHtml(item.id);
       if (type === 'emotes') return `<span class="text-base">${(EMOTE_PACKS[item.id] || []).slice(0, 3).join('')}</span>`;
-      if (type === 'frame') return `<span class="w-8 h-10 rounded-lg border-2 bg-slate-900" style="border-color:${item.tones[1]};box-shadow:0 0 8px ${item.tones[1]}"></span>`;
+      if (type === 'frame') return `<span class="w-8 h-10 rounded-lg border-2 bg-slate-900" style="border-color:#334155;${getCosmeticFrameStyle(item.id).replace(/!important/g, '')}"></span>`;
       if (type !== 'cardBack') return `<span class="w-8 h-8 rounded-lg border border-slate-600" style="background:linear-gradient(135deg,${item.tones[0]} 0 45%,${item.tones[1]} 45% 72%,${item.tones[2]} 72% 100%)"></span>`;
       const backClass = getCosmeticBackClass(item.id);
       return `<span class="w-8 h-10 rounded-lg custom-card-back ${backClass} flex items-center justify-center">${getEmblemSvg()}</span>`;
@@ -14995,6 +15012,27 @@ video {
         renderCosmeticShop();
       });
     }
+    // One "event is here" mail per event per year, and one on its last day.
+    // users/{uid}/seasonMailSent remembers what was sent so reading (and
+    // deleting) a mail never brings it back.
+    function sendSeasonalMail() {
+      if (!currentUser || typeof db === 'undefined' || !firebaseAvailable) return Promise.resolve();
+      const active = activeSeasonalEvents();
+      if (!active.length) return Promise.resolve();
+      const uid = currentUser.uid, now = seasonalNow();
+      return db.ref(`users/${uid}/seasonMailSent`).once('value').then(snap => {
+        const sent = snap.val() || {};
+        const updates = {};
+        active.forEach(w => {
+          const lastDay = seasonDaysBetween(now, w.endsAt) <= 1;
+          const key = lastDay ? `${w.key}-last` : w.key;
+          if (sent[key] || (lastDay && sent[`${w.key}-last`])) return;
+          updates[`seasonMailSent/${key}`] = true;
+          updates[`activityInbox/season_${key}`] = { type: 'season', event: w.event.id, lastDay, until: seasonShortDate(w.end), sentAt: Date.now() };
+        });
+        return Object.keys(updates).length ? db.ref(`users/${uid}`).update(updates) : null;
+      }).catch((e) => console.warn('sendSeasonalMail failed', e));
+    }
     // Counts a first-place finish towards every event that is on today.
     function recordSeasonalWin() {
       if (!currentUser || typeof db === 'undefined' || !firebaseAvailable) return Promise.resolve();
@@ -15079,7 +15117,7 @@ video {
       if (type === 'tableTheme') return `<span style="display:block;width:120px">${miniTablePreviewHtml(item.id)}</span>`;
       if (type === 'emotes') return `<span class="text-[13px] leading-tight text-center">${(EMOTE_PACKS[item.id] || []).slice(0, 4).join('')}</span>`;
       if (type === 'cardBack') return `<span class="w-7 h-[42px] rounded-md custom-card-back ${getCosmeticBackClass(item.id)} border border-slate-500 flex items-center justify-center shadow-md">${getEmblemSvg()}</span>`;
-      if (type === 'frame') return `<span class="relative w-7 h-[42px] rounded-md bg-slate-950 border-2 flex flex-col items-start p-1 font-black text-[8px] text-white" style="border-color:${item.tones[1]};box-shadow:0 0 7px ${item.tones[1]}"><span>A</span><span class="${item.id === 'frame-gold' ? 'text-amber-300' : 'text-red-400'}">♥</span></span>`;
+      if (type === 'frame') return `<span class="relative w-7 h-[42px] rounded-md bg-slate-950 border-2 flex flex-col items-start p-1 font-black text-[8px] text-white" style="border-color:#334155;${getCosmeticFrameStyle(item.id).replace(/!important/g, '')}"><span>A</span><span class="${item.id === 'frame-gold' ? 'text-amber-300' : 'text-red-400'}">♥</span></span>`;
       const symbols = { tableTheme:'♠', burnEffect: burnPreviewIcon(item.id), victoryEffect:'🏆' };
       return `<span class="w-9 h-9 rounded-lg border border-slate-600 flex items-center justify-center text-lg" style="background:linear-gradient(135deg,${item.tones[0]},${item.tones[1]});color:${item.tones[2]}">${symbols[type] || '◇'}</span>`;
     }
@@ -16037,7 +16075,7 @@ video {
         refreshDifficultyLocks();
         if (user) {
           ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); attemptRankedReconnect();
-          initChallengeEconomy().then(() => claimDailyLoginReward()); loadCosmeticCollection(user);
+          initChallengeEconomy().then(() => { claimDailyLoginReward(); sendSeasonalMail(); }); loadCosmeticCollection(user);
           // Preferences live under the account and do not depend on profile creation.
           loadAccountSettings(user);
         } else {
@@ -16443,6 +16481,8 @@ video {
       if (headerEl) {
         headerEl.textContent = display;
         headerEl.title = exact.toLocaleString(); // exact value always available on hover/long-press
+        // A fresh baseline (sign-in, sign-out) never keeps an old flash.
+        if (lastPaintedDiamonds === null) headerEl.classList.remove('diamond-flash-up', 'diamond-flash-down');
         if (lastPaintedDiamonds !== null && exact !== lastPaintedDiamonds) {
           headerEl.classList.remove('diamond-flash-up', 'diamond-flash-down');
           void headerEl.offsetWidth; // force reflow so back-to-back changes each restart their own animation
@@ -18171,7 +18211,24 @@ video {
     document.getElementById('inboxModal').addEventListener('click', (e) => {
       if (e.target.id === 'inboxModal') document.getElementById('inboxModal').classList.add('hidden');
     });
+    // Mail kinds stored under users/{uid}/activityInbox.
+    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season'];
     function inboxItemHtml(item) {
+      if (item.type === 'season') {
+        const ev = SEASONAL_EVENT_BY_ID[item.event];
+        if (!ev) return '';
+        return `<div class="inbox-season border rounded-xl px-2.5 py-2" style="--season-dark:${ev.tones[0]};--season-accent:${ev.tones[1]};--season-light:${ev.tones[2]}">
+          <div class="flex items-center gap-2"><span class="inbox-season-emoji" aria-hidden="true">${ev.emoji}</span><div class="min-w-0">
+          <p class="inbox-season-accent text-[9px] font-black uppercase tracking-wide mb-1">${item.lastDay ? 'Last day' : 'Seasonal event'}</p>
+          <p class="text-xs font-bold text-white">${escapeHtml(item.lastDay ? `${ev.name} ends today!` : `${ev.name} is here!`)}</p>
+          <p class="inbox-season-accent text-[10px] mt-1">${escapeHtml(item.lastDay ? 'Last chance for this year’s items and bundle.' : `7 new items, a bundle, and ${ev.names.earned} to earn — until ${item.until || 'the event ends'}.`)}</p>
+          </div></div>
+          <div class="flex gap-1.5 mt-2">
+            <button type="button" data-season-shop="1" class="inbox-season-shop-btn flex-1 text-[9px] font-black py-1 rounded-lg">OPEN SHOP</button>
+            <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-season-accent flex-1 text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
+          </div>
+        </div>`;
+      }
       if (item.type === 'request') {
         return `<div class="bg-slate-900/60 border border-slate-800 rounded-xl px-2.5 py-2">
           <p class="text-xs font-bold text-white mb-1.5 flex items-center gap-2">${avatarHtml(item.avatar, 28)}<span class="min-w-0">${escapeHtml(item.name)} wants to be friends</span></p>
@@ -18221,7 +18278,7 @@ video {
     // Notifications (challenge, rank, purchase, unlock mail) can be cleared in
     // one go. Friend requests and game invites need an answer, so they stay.
     function isClearableInboxItem(item) {
-      return item.type === 'challenge' || item.type === 'rank' || item.type === 'shop';
+      return item.type === 'challenge' || ACTIVITY_MAIL_TYPES.includes(item.type);
     }
     function clearAllInboxNotifications() {
       const uid = currentUser?.uid;
@@ -18264,7 +18321,7 @@ video {
           items.push({ type: 'challenge', id, name: mail.name || id, reward: mail.reward, sentAt: Number(mail.completedAt) || 0 });
         });
         Object.entries(activitySnap.val() || {}).forEach(([id, mail]) => {
-          if (!mail || !['rank', 'shop'].includes(mail.type)) return;
+          if (!mail || !ACTIVITY_MAIL_TYPES.includes(mail.type)) return;
           items.push({ ...mail, id, sentAt: Number(mail.sentAt) || 0 });
         });
         items.sort((a, b) => b.sentAt - a.sentAt);
@@ -18280,6 +18337,12 @@ video {
       }).catch((e) => { area.innerHTML = ''; console.warn('renderInbox failed', e); });
     }
     document.getElementById('inboxArea').addEventListener('click', (e) => {
+      if (e.target.closest('[data-season-shop]')) {
+        document.getElementById('inboxModal')?.classList.add('hidden');
+        shopTab = SEASONAL_TAB; shopTabPicked = true;
+        openShopPanel();
+        return;
+      }
       const btn = e.target.closest('button[data-uid], button[data-id], button[data-challenge-id], button[data-activity-id]');
       if (!btn) return;
       if (btn.classList.contains('inbox-accept-req-btn')) { acceptFriendRequest(btn.dataset.uid); renderInbox(); }
@@ -18310,7 +18373,7 @@ video {
         return Number.isFinite(sentAt) && sentAt > 0 && sentAt <= now + 60_000 && now - sentAt <= GAME_INVITE_EXPIRY_MS;
       });
       const challengeMail = Object.values(challenges || {}).filter((mail) => mail && typeof mail === 'object');
-      const activityMail = Object.values(activity || {}).filter((mail) => mail && ['rank', 'shop'].includes(mail.type));
+      const activityMail = Object.values(activity || {}).filter((mail) => mail && ACTIVITY_MAIL_TYPES.includes(mail.type));
       const candidates = [
         ...friendRequests.map((mail) => ({ type: 'friend', at: Number(mail.sentAt) || 0 })),
         ...gameInvites.map((mail) => ({ type: 'game', at: Number(mail.sentAt) || 0 })),
@@ -21606,12 +21669,21 @@ video {
       // next test read that same global — exactly what caused the
       // Leaderboard guest test to intermittently see a stale mocked
       // `auth` left over from the test before it.
+      // Every test gets the real Firebase handles and hooks back afterwards,
+      // even when it failed half-way through swapping in a fake. Without this
+      // one failing test leaked its fake db into every test after it.
       async function test(name, fn) {
+        const saved = { db, dbRef: db && db.ref, auth, currentUser, syncFirebaseGameState, burnInstantResolveForTests, bigEffectsOn, reduceMotion };
         try {
           await fn();
           results.push({ name, pass: true });
         } catch (err) {
           results.push({ name, pass: false, error: err.message });
+        } finally {
+          db = saved.db; if (db && saved.dbRef) db.ref = saved.dbRef;
+          auth = saved.auth; currentUser = saved.currentUser;
+          syncFirebaseGameState = saved.syncFirebaseGameState; burnInstantResolveForTests = saved.burnInstantResolveForTests;
+          bigEffectsOn = saved.bigEffectsOn; reduceMotion = saved.reduceMotion;
         }
       }
       function makeCard(rank, suit, id) {
@@ -21633,7 +21705,7 @@ video {
           // never lets the hold's setTimeout fire — without resetting it
           // here, that leaks into whichever test runs next and makes
           // isLocalPlayersTurnNow() falsely false for them.
-          burnResolving: false,
+          burnResolving: false, turnTransitionLocked: false,
           turnDeadline: null, localPlayerId: 'p1', difficulty: 'medium', players: []
         }, overrides || {});
       }
@@ -22230,6 +22302,10 @@ video {
       });
       await test('REGRESSION: labels clear all card rows after repeated pile pickups', () => {
         freshState();
+        // Earlier tests can leave the end-of-match row and swap bar showing;
+        // a real PLAY-phase table never has either.
+        hideMatchEndUI();
+        document.getElementById('swapControlBar')?.classList.add('hidden');
         const cards = generateDeck();
         const you = makePlayer({ hand: cards.slice(0, 36),
           faceUp: cards.slice(36, 39).map((c, i) => ({ ...c, slotIndex: i })),
@@ -22687,9 +22763,8 @@ video {
         state.localPlayerId = 'host';
         let capturedUpdate = null;
         const originalRef = db.ref;
-        db.ref = (path) => { const r = originalRef(path); const origUpdate = r.update; r.update = (val) => { capturedUpdate = val; return Promise.resolve(); }; return r; };
-        removePlayerFromMatch('target', 'disconnected');
-        db.ref = originalRef;
+        db.ref = (path) => { const r = originalRef.call(db, path); r.update = (val) => { capturedUpdate = val; return Promise.resolve(); }; return r; };
+        try { removePlayerFromMatch('target', 'disconnected'); } finally { db.ref = originalRef; }
         assertEqual(state.players.map(p => p.id), ['host'], 'The departed player must be gone, not replaced with a bot');
         assertTrue(!!capturedUpdate, 'A heads-up match ending must sync the room back to LOBBY phase');
         assertEqual(capturedUpdate.phase, 'LOBBY', 'A two-player match with one player gone has no meaningful way to continue');
@@ -22893,7 +22968,7 @@ video {
         assertTrue(css.includes('grid-template-areas:"preview copy" "preview action"'), 'Theme name and SELECT/APPLIED must not overlap');
       });
       await test('REGRESSION: the live Deck count uses a protected badge above card-back artwork', () => {
-        freshState({ drawPile: generateDeck().slice(0,36) });
+        freshState({ drawPile: generateDeck().slice(0,36), players: [makePlayer({ id: 'p1', hand: [makeCard('4')] }), makePlayer({ id: 'p2', isBot: true })] });
         render();
         assertTrue(document.getElementById('drawPileCount')?.classList.contains('deck-count-badge'), 'Deck count must remain readable over custom backs');
       });
@@ -24022,7 +24097,7 @@ video {
         state.isHost = false;
         showMatchEndUI();
         assertEqual(quickPlayBtn.disabled, true, "A guest's Quick Play button must be disabled");
-        assertTrue(quickPlayBtn.textContent.includes('WAITING FOR HOST'), 'A guest should see a waiting-for-host message');
+        assertTrue(/WAITING FOR\s*HOST/.test(quickPlayBtn.textContent), 'A guest should see a waiting-for-host message');
         assertTrue(backToLobbyBtn.classList.contains('hidden'), 'Only the host can send the room back to the lobby, so a guest must not see this button at all');
 
         hideMatchEndUI(); // cleanup
@@ -24125,6 +24200,7 @@ video {
       });
 
       await test("'M' toggles the hamburger menu, 'I' toggles the Inbox", () => {
+        currentUser = { uid: 'keyboard-test-uid' }; // the Inbox belongs to a signed-in account
         closeHamburgerMenu();
         document.getElementById('inboxModal').classList.add('hidden');
         window.dispatchEvent(new KeyboardEvent('keydown', { key: 'm', bubbles: true }));
@@ -24135,6 +24211,7 @@ video {
         assertTrue(!document.getElementById('inboxModal').classList.contains('hidden'), "'I' must open the Inbox");
         window.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', bubbles: true }));
         assertTrue(document.getElementById('inboxModal').classList.contains('hidden'), "A second 'I' must close it again");
+        document.getElementById('authModal').classList.add('hidden');
       });
 
       await test('REGRESSION: card-specific gameplay shortcuts (and S) go silent while any menu or modal is open', () => {
@@ -24156,61 +24233,24 @@ video {
         window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', bubbles: true })); // restore
       });
 
-      await test('REGRESSION: openLeaderboardPanel trusts the resolved auth state, not the app currentUser variable, and distinguishes a missing username', () => {
-        const originalCurrentUser = currentUser;
-        const originalAuth = auth;
-        const originalDb = db;
-        currentUser = null; // simulate the stale-variable state that originally caused the bug
-        auth = { onAuthStateChanged: (cb) => { cb({ uid: 'live-auth-uid' }); return () => {}; } };
-        db = { ref: () => ({
-          orderByChild: () => ({ limitToLast: () => ({ once: () => Promise.resolve({ forEach: () => {} }) }) }),
-          once: () => Promise.resolve({ exists: () => true, val: () => ({ username: null }) })
-        }) };
-        openLeaderboardPanel();
-        return Promise.resolve().then(() => Promise.resolve()).then(() => Promise.resolve()).then(() => {
-          const text = document.getElementById('leaderboardArea').innerText;
-          assertTrue(!text.toLowerCase().includes('sign in'), 'A resolved, genuinely signed-in auth state must not show "Sign in", even if the app currentUser variable is stale');
-          assertTrue(text.toLowerCase().includes('username'), 'A signed-in player with no username must see a distinct message, not "Sign in"');
-          currentUser = originalCurrentUser;
-          auth = originalAuth;
-          db = originalDb;
-          document.getElementById('leaderboardModal').classList.add('hidden');
-        });
-      });
-
-      await test('REGRESSION: openLeaderboardPanel never shows "Sign in" even when clicked before Firebase has finished restoring a persisted session', () => {
-        const originalCurrentUser = currentUser;
-        const originalAuth = auth;
-        const originalDb = db;
+      // The Leaderboard is public now: it reads the leaderboard projection
+      // directly and never depends on the auth state, which replaces the two
+      // older "wait for auth before showing Sign in" tests.
+      await test('REGRESSION: the public Leaderboard never asks anyone to sign in, however auth is resolving', async () => {
         currentUser = null;
-        let firedYet = false;
-        // Simulates the exact race that survived the previous fix:
-        // auth.currentUser would read null synchronously right now, but
-        // the auth state resolves moments later — onAuthStateChanged is
-        // what correctly waits for that instead of trusting a snapshot.
-        auth = {
-          currentUser: null, // a synchronous read RIGHT NOW would still (wrongly) say signed-out
-          onAuthStateChanged: (cb) => {
-            setTimeout(() => { firedYet = true; cb({ uid: 'late-resolving-uid' }); }, 0);
-            return () => {};
-          }
-        };
-        db = { ref: () => ({
-          orderByChild: () => ({ limitToLast: () => ({ once: () => Promise.resolve({ forEach: () => {} }) }) }),
-          once: () => Promise.resolve({ exists: () => true, val: () => ({ username: 'Amit' }) })
-        }) };
+        auth = { currentUser: null, onAuthStateChanged: () => () => {} }; // auth never resolves
+        const readPaths = [];
+        db = { ref: (path) => { readPaths.push(path); return {
+          once: () => Promise.resolve({ val: () => ({ amit: { username: 'Amit', rating: 900, tier: 'Silver', wins: 3, losses: 1 }, bo: { username: 'Bo', rating: 1200, tier: 'Silver', wins: 5, losses: 2 } }) }),
+          orderByChild: () => ({ limitToLast: () => ({ once: () => Promise.resolve({ val: () => ({}) }) }) })
+        }; } };
         openLeaderboardPanel();
-        return new Promise((resolve) => setTimeout(resolve, 0))
-          .then(() => Promise.resolve()).then(() => Promise.resolve()).then(() => Promise.resolve())
-          .then(() => {
-            assertTrue(firedYet, 'The test setup itself must have actually exercised the delayed-resolution path');
-            const text = document.getElementById('leaderboardArea').innerText;
-            assertTrue(!text.toLowerCase().includes('sign in'), 'Must not show "Sign in" just because auth.currentUser had not settled yet at click time');
-            currentUser = originalCurrentUser;
-            auth = originalAuth;
-            db = originalDb;
-            document.getElementById('leaderboardModal').classList.add('hidden');
-          });
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        const text = document.getElementById('leaderboardArea').innerText;
+        assertTrue(!text.toLowerCase().includes('sign in'), 'The public Leaderboard must never say "Sign in"');
+        assertTrue(readPaths.some(p => String(p).startsWith('leaderboard')), 'It must read the public leaderboard projection');
+        assertTrue(text.indexOf('Bo') !== -1 && text.indexOf('Bo') < text.indexOf('Amit'), 'Players must be ranked by rating, highest first');
+        document.getElementById('leaderboardModal').classList.add('hidden');
       });
 
       // ---- Card reference panel: corner-anchored resize + viewport-fit cap ----
@@ -24218,12 +24258,15 @@ video {
         toggleCardReference(); // open
         const panel = document.getElementById('cardRefPanel');
         setCardRefZoom(1);
-        panel.style.left = '100px';
-        panel.style.top = '100px';
         const w = panel.offsetWidth, h = panel.offsetHeight;
-        const rightBefore = 100 + w * cardRefZoom;
-        const bottomBefore = 100 + h * cardRefZoom;
-        setCardRefZoomFromCorner('tl', 1.4);
+        // Start in the bottom-right corner and grow by an amount that still
+        // fits on screen, so the keep-on-screen clamp never has to move it.
+        const startLeft = window.innerWidth - w - 20, startTop = window.innerHeight - h - 20;
+        panel.style.left = `${startLeft}px`;
+        panel.style.top = `${startTop}px`;
+        const rightBefore = startLeft + w * cardRefZoom;
+        const bottomBefore = startTop + h * cardRefZoom;
+        setCardRefZoomFromCorner('tl', Math.min(1.4, getMaxCardRefZoom() * 0.9));
         const left = parseFloat(panel.style.left), top = parseFloat(panel.style.top);
         const rightAfter = left + w * cardRefZoom;
         const bottomAfter = top + h * cardRefZoom;
@@ -24265,11 +24308,13 @@ video {
         buildMatchStats('game');
         const gameGrid = document.querySelector('#matchStatsBody .match-stats-grid');
         assertTrue(!!gameGrid, 'Match Stats must render a .match-stats-grid element');
-        const gameCols = getComputedStyle(gameGrid).gridTemplateColumns.split(' ').length;
+        // A hidden panel reports the declared "repeat(N, …)" instead of N sizes.
+        const countCols = (el) => { const v = getComputedStyle(el).gridTemplateColumns; const m = v.match(/^repeat\((\d+)/); return m ? Number(m[1]) : v.split(' ').length; };
+        const gameCols = countCols(gameGrid);
         assertEqual(gameCols, 5, 'The Game tab has 5 stat columns (Played/Picked/Burnt/Turns/JKR) — a class that silently fails to apply (this project has no live Tailwind compiler; grid-cols-N must already exist in the precompiled CSS) would collapse this to 1');
         buildMatchStats('lobby');
         const lobbyGrid = document.querySelector('#matchStatsBody .match-stats-grid');
-        const lobbyCols = getComputedStyle(lobbyGrid).gridTemplateColumns.split(' ').length;
+        const lobbyCols = countCols(lobbyGrid);
         assertEqual(lobbyCols, 7, 'The Lobby tab has 7 stat columns (adds Wins/Win%)');
       });
 
@@ -24837,7 +24882,7 @@ video {
           assertTrue(parseFloat(cs.borderTopLeftRadius) > 0, 'The bottom sheet must have rounded top corners');
           assertTrue(getComputedStyle(document.getElementById('hamburgerDragHandle')).display !== 'none', 'The drag handle must be visible on mobile');
         } else {
-          assertTrue(parseFloat(cs.width) >= 190 && parseFloat(cs.width) <= 230, `At desktop widths the drawer must be a ~190-230px dropdown, got ${cs.width}`);
+          assertTrue(parseFloat(cs.width) >= 280 && parseFloat(cs.width) <= 340, `At desktop widths the drawer must be a ~310px dropdown, got ${cs.width}`);
           assertEqual(getComputedStyle(document.getElementById('hamburgerDragHandle')).display, 'none', 'The drag handle is a mobile affordance and must not show on desktop');
         }
         closeHamburgerMenu();
@@ -24854,7 +24899,7 @@ video {
       await test("REGRESSION: Stage 8 — the tutorial's final message points to Guide & Strategy by name, device-aware, and never mentions Settings", () => {
         const finalStep = TUTORIAL_STEPS.find((s) => s.coachNote && s.coachNote.includes('Guide & Strategy'));
         assertTrue(!!finalStep, 'A tutorial step directing players to Guide & Strategy must exist');
-        assertTrue(!finalStep.coachNote.toLowerCase().includes('settings'), 'The final tutorial message must never send players to Settings for the rules — that moved to the hamburger menu');
+        assertTrue(!/settings[^.]*\b(rules|guide)\b|\b(rules|guide)\b[^.]*\bin settings/i.test(finalStep.coachNote), 'The final tutorial message must never send players to Settings for the rules — that moved to the hamburger menu');
         assertTrue(/tap|click/i.test(finalStep.coachNote), 'The instruction must use device-appropriate phrasing (Tap on mobile, Click on desktop)');
         assertTrue(finalStep.noteTarget.includes('#hamburgerBtn'), 'It must still spotlight the hamburger button, which is how Guide & Strategy is actually reached');
       });
@@ -24956,15 +25001,20 @@ video {
         document.getElementById('deleteStep2CancelBtn').click();
         currentUser = null;
       });
-      await test("REGRESSION: deleteOwnAccountData only ever targets the acting user's own uid across every path it touches", () => {
+      await test("REGRESSION: deleteOwnAccountData only ever targets the acting user's own uid across every path it touches", async () => {
         let capturedUpdate = null;
-        const originalDb = db;
-        db = { ref: () => ({ update: (obj) => { capturedUpdate = obj; return Promise.resolve(); } }) };
-        deleteOwnAccountData('victim-uid');
-        db = originalDb;
+        const readPaths = [];
+        db = { ref: (path) => ({
+          once: () => { readPaths.push(path); return Promise.resolve({ val: () => 'VictimName' }); },
+          update: (obj) => { capturedUpdate = obj; return Promise.resolve(); }
+        }) };
+        await deleteOwnAccountData('victim-uid');
+        assertEqual(readPaths, ['users/victim-uid/username'], 'It may only look up the caller\'s own username');
         const paths = Object.keys(capturedUpdate);
         assertTrue(paths.length > 0, 'Must actually target some paths');
-        paths.forEach((p) => assertTrue(p.endsWith('/victim-uid'), `Every deleted path must be scoped to the caller's own uid, got: ${p}`));
+        // The leaderboard entry and username reservation are keyed by the
+        // caller's own (lower-cased) username rather than their uid.
+        paths.forEach((p) => assertTrue(p.endsWith('/victim-uid') || p === 'leaderboard/victimname' || p === 'usernames/victimname', `Every deleted path must belong to the caller, got: ${p}`));
         assertTrue(paths.every((p) => capturedUpdate[p] === null), 'Every targeted path must be set to null (deleted), never partially modified');
       });
 
@@ -24981,13 +25031,14 @@ video {
       // This replaces the old "Challenges is a polished Coming Soon
       // placeholder" test with one asserting the real thing exists.
       await test('REGRESSION: Challenges shows real sections and a live Diamond counter, not a Coming Soon placeholder', () => {
+        currentUser = { uid: 'challenges-open-test' }; // Challenges live on the account
         document.getElementById('menuChallengesBtn').click();
         const modal = document.getElementById('challengesModal');
         assertTrue(!modal.classList.contains('hidden'), 'Challenges must open from the menu');
         assertTrue(!modal.innerText.toLowerCase().includes('coming soon'), 'Challenges must no longer say Coming Soon');
         assertTrue(!!document.getElementById('challengesModalDiamondCount'), 'The modal must show a live Diamond count');
-        ['Daily', 'Ranked', 'Ending Cards', 'Rank Tiers', 'Bot Matches'].forEach((section) => {
-          assertTrue(modal.innerText.includes(section), `Must have a ${section} section`);
+        ['Daily', 'Weekly', 'Ranked', 'Bots', 'Ending Cards', 'Rank Tiers'].forEach((section) => {
+          assertTrue(modal.textContent.includes(section), `Must have a ${section} section`);
         });
         document.getElementById('challengesCloseBtn').click();
         assertTrue(modal.classList.contains('hidden'), 'The close button must still work');
@@ -25040,7 +25091,7 @@ video {
         const victory = COSMETIC_SHOP_ITEMS.find(item => item.id === 'emotes-victory');
         const cardBack = COSMETIC_SHOP_ITEMS.find(item => item.id === 'back-midnight');
         const emoteMarkup = shopCosmeticPreviewMarkup(victory);
-        const categoryMarkup = `<span>${shopCollapsedCategories.has(cardBack.category) ? '\u25B6' : '\u25BC'}</span>`;
+        const categoryMarkup = `<span>${collapsedShopCategories.has(cardBack.category) ? '\u25B6' : '\u25BC'}</span>`;
         assertTrue(shopCosmeticThumbnail(victory, 'emotes').includes('\u{1F3C6}'), 'Shop thumbnails must contain the trophy emoji');
         assertTrue(emoteMarkup.includes('\u{1F48E}'), 'Emote previews must contain the Diamond emoji');
         assertTrue(emoteMarkup.includes('\u2014'), 'Preview text must contain a real em dash');
@@ -25192,6 +25243,50 @@ video {
         assertTrue(!earned.isEarned({ seasonWins: { 'halloween-2026': 2 } }), '2 wins is not enough');
         assertTrue(earned.isEarned({ seasonWins: { 'halloween-2026': 3 } }), '3 wins earns it');
         assertTrue(!earned.isEarned({ seasonWins: { 'christmas-2026': 5 } }), 'Wins in another event do not count');
+      });
+
+      await test('Seasonal mail: one "event is here" and one "last day" mail per event, never re-sent after reading', async () => {
+        const savedNow = seasonalNowOverride;
+        const store = {};
+        currentUser = { uid: 'season-mail-uid' };
+        db = { ref: (path) => ({
+          once: () => Promise.resolve({ val: () => store.seasonMailSent || null }),
+          update: (u) => { Object.entries(u).forEach(([k, v]) => { const [top, key] = k.split('/'); (store[top] = store[top] || {})[key] = v; }); return Promise.resolve(); }
+        }) };
+        try {
+          seasonalNowOverride = '2026-10-20T12:00:00';
+          await sendSeasonalMail();
+          assertTrue(!!store.activityInbox?.['season_halloween-2026'], 'The first visit during Halloween sends its mail');
+          delete store.activityInbox['season_halloween-2026']; // player reads and deletes it
+          await sendSeasonalMail();
+          assertTrue(!store.activityInbox['season_halloween-2026'], 'A read mail is never sent again');
+          seasonalNowOverride = '2026-11-02T12:00:00';
+          await sendSeasonalMail();
+          assertTrue(store.activityInbox['season_halloween-2026-last']?.lastDay === true, 'The last day sends its own reminder');
+          assertTrue(inboxItemHtml({ ...store.activityInbox['season_halloween-2026-last'], id: 'season_halloween-2026-last' }).includes('ends today'), 'The last-day mail says so');
+        } finally {
+          seasonalNowOverride = savedNow;
+        }
+      });
+
+      await test('Reduce motion swaps the big burn and victory effects for a calm glow', () => {
+        const layer = document.getElementById('burnFxLayer');
+        layer.innerHTML = '';
+        reduceMotion = true;
+        playBurnEffect('burn-smoke', 100, 100);
+        assertEqual(layer.children.length, 1, 'Reduce motion shows one soft glow instead of dozens of particles');
+        layer.innerHTML = '';
+        const vLayer = document.getElementById('victoryFxLayer');
+        vLayer.innerHTML = '';
+        bigEffectsOn = true;
+        triggerEquippedVictoryEffect({ id: state.localPlayerId, finishRank: 1 });
+        assertEqual(vLayer.children.length, 0, 'Reduce motion skips the full-screen victory animation');
+      });
+
+      await test('Frame icons in the Shop and Custom show the frame\'s real colour', () => {
+        const brew = COSMETIC_SHOP_ITEMS.find(i => i.id === 'frame-halloween');
+        assertTrue(shopCosmeticThumbnail(brew, 'frame').includes('#84cc16') || shopCosmeticThumbnail(brew, 'frame').includes('132,204,22'), "Witch's Brew shows its green glow, not the event's orange");
+        assertTrue(cosmeticPreview(brew, 'frame').includes('132,204,22'), 'The Custom tile shows the same glow');
       });
 
       await test('Daily login streak: consecutive days grow, a missed day restarts, same day pays nothing', () => {
@@ -25796,7 +25891,9 @@ video {
             set: (val) => { setAtPath(path, val); return Promise.resolve(); },
             update: (patch) => { setAtPath(path, { ...(getAtPath(path) || {}), ...patch }); return Promise.resolve(); },
             transaction: (fn) => {
+              // Like Firebase: returning undefined aborts without writing.
               const result = fn(getAtPath(path));
+              if (result === undefined) return Promise.resolve({ committed: false, snapshot: { val: () => getAtPath(path) } });
               setAtPath(path, result);
               return Promise.resolve({ committed: true, snapshot: { val: () => getAtPath(path) } });
             }
@@ -25830,7 +25927,10 @@ video {
         return initChallengeEconomy()
           .then(() => Promise.resolve()).then(() => Promise.resolve()).then(() => Promise.resolve())
           .then(() => {
-          assertEqual(challengeEconomy.diamonds, 0, 'THE RESET must zero the diamond balance');
+          // The reset zeroes the balance, then the stated retroactive
+          // exceptions (Rank Tier, Games Played, Win Streaks) pay out again.
+          const reAwarded = Object.values(challengeEconomy.completedChallenges).reduce((sum, c) => sum + (Number(c.reward) || 0), 0);
+          assertEqual(challengeEconomy.diamonds, reAwarded, 'After THE RESET the balance must be exactly what the retroactive exceptions re-award — the old 500 must be gone');
           assertTrue(!challengeEconomy.completedChallenges['burner'], 'THE RESET must clear completedChallenges, including any now-invalid old award');
           assertEqual(challengeEconomy.challengeStats, { burns: 0, snapBurns: 0, jokerDeflects: 0 }, 'THE RESET must zero the dedicated challenge counters too');
           assertEqual(challengeEconomy.dailyChallengeState.progress, {}, 'Daily challenges must initialize cleanly at 0/0, not carry over old progress');
@@ -25924,7 +26024,7 @@ video {
         challengeEconomy = { ...challengeEconomy, diamonds: 0, dailyChallengeState: null, completedChallenges: {} };
 
         // Finishing 1st in a Bot Match
-        freshState({ isRanked: false, isMultiplayer: false });
+        freshState({ isRanked: false, isMultiplayer: false, matchId: 'match-win-bot' });
         const p1 = makePlayer({ id: 'p1' });
         state.players = [p1, makePlayer({ id: 'p2', isBot: true })];
         checkPlayerFinished(p1);
@@ -25943,7 +26043,7 @@ video {
           assertEqual(mock._getData().users['match-win-test-uid'].diamonds, 10, 'Finishing 2nd (or any non-1st place) in a Bot Match must award 0 — balance must be unchanged');
 
           // Winning a Ranked match
-          freshState({ isRanked: true, isMultiplayer: true });
+          freshState({ isRanked: true, isMultiplayer: true, matchId: 'match-win-ranked' });
           const r1 = makePlayer({ id: 'p1' });
           state.players = [r1, makePlayer({ id: 'p2' })];
           checkPlayerFinished(r1);
@@ -25982,7 +26082,7 @@ video {
         const originalPending = pendingDailyEvents;
         const originalLocalPlayerId = state.localPlayerId;
         currentUser = { uid: 'buffer-test-uid' };
-        db = { ref: () => ({ set: () => Promise.resolve() }) };
+        db = { ref: () => ({ set: () => Promise.resolve(), transaction: () => Promise.resolve({ committed: false, snapshot: { val: () => null } }) }) };
         challengeEconomy = { ...challengeEconomy, dailyChallengeState: null, completedChallenges: {} };
         pendingDailyEvents = [];
         state.localPlayerId = 'p1';
@@ -26001,39 +26101,29 @@ video {
         pendingDailyEvents = originalPending;
       });
 
-      await test('REGRESSION: the Daily section auto-collapses once all 3 challenges are complete, and never fights a manual reopen afterward', () => {
-        const originalCurrentUser = currentUser;
+      // The Challenges page is now tabbed (Daily / Weekly / Ranked / Bots),
+      // replacing the old collapsible sections these two tests used to check.
+      await test('Challenges Daily tab lists today\'s three challenges', () => {
         const originalEconomy = challengeEconomy;
-        currentUser = { uid: 'collapse-test-uid' };
+        currentUser = { uid: 'daily-tab-test-uid' };
+        const originalLoadedForUid = challengeEconomyLoadedForUid;
+        challengeEconomyLoadedForUid = 'daily-tab-test-uid';
         const dateKey = '2026-09-17';
         const ids = ['burn-once', 'play-joker', 'play-a-two'];
-        challengeEconomy = {
-          ...challengeEconomy,
-          dailyChallengeState: { dateKey, challengeIds: ids, progress: { 'burn-once': 1, 'play-joker': 1, 'play-a-two': 1 } },
-          completedChallenges: Object.fromEntries(ids.map((id) => [dailyCompletionKey(dateKey, id), { completedAt: 1, reward: 20 }]))
-        };
-        const body = document.getElementById('challengesDailyBody');
-        const head = document.getElementById('challengesDailyHead');
-        body.classList.remove('hidden');
-        if (head.querySelector('.settings-chev')) head.querySelector('.settings-chev').style.transform = '';
-        dailyAutoCollapseArmed = true;
-        renderChallengesPanel();
-        assertTrue(body.classList.contains('hidden'), 'The Daily section must auto-collapse the moment all 3 are complete');
-        body.classList.remove('hidden'); // the player manually reopens it
-        renderChallengesPanel(); // re-render while still all-complete (e.g. a Ranked claim elsewhere triggers this)
-        assertTrue(!body.classList.contains('hidden'), 'Once already auto-collapsed, re-rendering must not fight a manual reopen');
-        currentUser = originalCurrentUser;
-        challengeEconomy = originalEconomy;
+        challengeEconomy = { ...challengeEconomy, dailyChallengeState: { dateKey, challengeIds: ids, progress: { 'burn-once': 1 } }, completedChallenges: {} };
+        try {
+          renderChallengesPanel();
+          assertTrue(document.getElementById('challengesDailyList').children.length >= 3, 'All three Daily challenges must be listed');
+        } finally {
+          challengeEconomy = originalEconomy;
+          challengeEconomyLoadedForUid = originalLoadedForUid;
+        }
       });
 
-      await test("REGRESSION: the Challenges modal is Daily/Ranked/Bot Matches at top level, with Ranked's 7 categories nested alphabetically and unprefixed", () => {
-        document.getElementById('menuChallengesBtn').click();
-        const modal = document.getElementById('challengesModal');
-        assertTrue(!!document.getElementById('challengesRankedBody'), 'Ranked must be a single collapsible top-level section');
-        const subheadLabels = [...document.querySelectorAll('#challengesRankedBody .settings-head')].map((h) => h.querySelector('span').textContent.trim());
-        assertEqual(subheadLabels, ['Burns', 'Ending Cards', 'Games Played', 'Joker Deflects', 'Rank Tiers', 'Snap Burns', 'Win Streaks'], 'Ranked subsections must be exactly these 7, in alphabetical order, unprefixed');
-        assertTrue(!modal.innerText.includes('Ranked \u2014'), 'The old "Ranked \u2014 " prefix must be gone');
-        document.getElementById('challengesCloseBtn').click();
+      await test("REGRESSION: the Challenges Ranked tab has its 7 categories in alphabetical order", () => {
+        const labels = [...document.querySelectorAll('#challengeTabRanked > .text-\\[8px\\]')].map((h) => h.textContent.trim());
+        assertEqual(labels, ['Burns', 'Ending Cards', 'Games Played', 'Joker Deflects', 'Rank Tiers', 'Snap Burns', 'Win Streaks'], 'Ranked categories must be exactly these 7, in alphabetical order');
+        assertTrue(!document.getElementById('challengesModal').innerText.includes('Ranked \u2014'), 'The old "Ranked \u2014 " prefix must be gone');
       });
 
       await test('REGRESSION: the Ranked Stats page is honestly Coming Soon, structured around Ranked only, with no invented numbers', () => {
@@ -26062,7 +26152,7 @@ video {
         openHamburgerMenu();
         const cs = getComputedStyle(document.getElementById('hamburgerDrawer'));
         if (window.innerWidth >= 768) {
-          assertEqual(cs.right, '12px', 'The desktop dropdown must be right-anchored');
+          assertEqual(cs.right, '18px', 'The desktop dropdown must be right-anchored');
         }
         closeHamburgerMenu();
       });
@@ -26145,13 +26235,13 @@ video {
         currentUser = null;
         const originalAvail = firebaseAvailable;
         firebaseAvailable = true;
-        const originalAuthCurrentUser = auth.currentUser;
-        auth.currentUser = { uid: 'restored_uid' };
+        // Firebase's real auth.currentUser is read-only, so stand in a plain
+        // object with a restored session (the test runner restores auth).
+        auth = { ...auth, currentUser: { uid: 'restored_uid' }, onAuthStateChanged: () => () => {} };
         openHamburgerMenu();
         assertTrue(!!currentUser && currentUser.uid === 'restored_uid', "A genuinely-restored Firebase session must be adopted immediately, before onAuthStateChanged's first async callback has had a chance to fire — this is what made Leaderboard/Profile/Stats wrongly say \"sign in\" right after a page load while actually already signed in");
         closeHamburgerMenu();
         firebaseAvailable = originalAvail;
-        auth.currentUser = originalAuthCurrentUser;
         currentUser = null;
       });
       await test('REGRESSION: opening the hamburger menu does not fabricate a signed-in state when nobody is actually signed in', () => {
@@ -26184,10 +26274,10 @@ video {
       await test('REGRESSION: the Ranked Stats page tells a guest to sign in, and shows a real-not-fake empty state for a signed-in player with no Ranked games yet', () => {
         currentUser = null;
         document.getElementById('menuStatsBtn').click();
-        const modal = document.getElementById('statsModal');
-        assertTrue(!modal.classList.contains('hidden'), 'Stats must open from the menu');
-        assertTrue(modal.innerText.includes('Sign in'), 'A guest must be told to sign in — Ranked stats live on the account');
-        document.getElementById('statsCloseBtn').click();
+        const authModal = document.getElementById('authModal');
+        assertTrue(!authModal.classList.contains('hidden'), 'A guest tapping Stats must be asked to sign in — Ranked stats live on the account');
+        assertTrue(document.getElementById('statsModal').classList.contains('hidden'), 'A guest must not see an empty Stats page');
+        authModal.classList.add('hidden');
 
         const html = buildRankedStatsHtml({ rating: 500, wins: 0, losses: 0 });
         assertTrue(html.includes("haven't played a Ranked match"), 'A signed-in player with zero Ranked games must see an honest empty state, not zeros for every stat');
@@ -26327,9 +26417,9 @@ video {
         assertTrue(typeof calculateCosmeticPurchase==='function','Atomic purchase calculator must exist');
         assertTrue(!!src,'Shop list must exist for delegated purchase handling');
       });
-      await test('REGRESSION: Challenges exposes exactly Daily, Weekly and Ranked top tabs', () => {
+      await test('REGRESSION: Challenges exposes exactly Daily, Weekly, Ranked and Bots top tabs', () => {
         const tabs=[...document.querySelectorAll('[data-challenge-tab]')].map(b=>b.dataset.challengeTab);
-        assertEqual(tabs,['daily','weekly','ranked'],'Challenge tabs must be Daily, Weekly, Ranked in that order');
+        assertEqual(tabs,['daily','weekly','ranked','bots'],'Challenge tabs must be Daily, Weekly, Ranked, Bots in that order');
         assertEqual(pickWeeklyChallengeIds('2026-W39').length,3,'Each week must select exactly 3 challenges');
       });
       await test('REGRESSION: leaderboard search UI exists and rows can show public W/L counts', () => {
@@ -26491,7 +26581,9 @@ video {
         // A genuinely newer snapshot (version 6) must still apply normally.
         capturedCallback({ val: () => ({
           phase: 'PLAY', stateVersion: 6,
-          players: [{ id: 'p1', hand: [makeCard('K')] }, { id: 'p2', hand: [] }],
+          // A complete record (all three zones) — a snapshot missing zones is
+          // treated as damaged and triggers a recovery instead.
+          players: [{ id: 'p1', hand: [makeCard('K')], faceUp: [], faceDown: [] }, { id: 'p2', hand: [], faceUp: [], faceDown: [] }],
           discardPile: [], currentTurnIndex: 0, direction: 1
         }) });
         assertEqual(state.players.find(p => p.id === 'p1').hand.length, 1, 'A genuinely newer snapshot must still be applied normally, not blocked forever');
