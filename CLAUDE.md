@@ -7,7 +7,7 @@ Single-file web game (`index.html`) on Firebase Hosting + Realtime Database (pro
 - **Commit and push straight to `main`** (it deploys live automatically). No branches, PRs or merge steps unless the owner asks for one — there are no other players yet.
 - **Whenever the rules change, paste the complete `database.rules.json` into the chat reply as one copy-pastable code block.** The owner publishes rules by pasting them into the Console and can't easily open/copy JSON files.
 - Tests: open `index.html?dev-tests=1` (the suite lives in `dev-tests.js`, loaded only then; it runs against index.html's globals). All tests should pass; the runner restores `db`/`auth`/`currentUser` after every test.
-- Assets live outside index.html: table and card-back art in `art/tables/*.svg` and `art/backs/*.svg`, sound clips in `audio/*.mp3` (cache headers in `firebase.json`; art caches for 1 day, so a changed file can take a day to reach players).
+- Assets live outside index.html: table and card-back art in `art/tables/*.svg` and `art/backs/*.svg`, sound clips in `audio/*.mp3` (played through Web Audio from buffers decoded once in `SoundFX`; never clone `<audio>` per play, it lags on iPhones) (cache headers in `firebase.json`; art caches for 1 day, so a changed file can take a day to reach players).
 
 ## AmitK test account
 

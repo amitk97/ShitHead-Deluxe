@@ -5502,15 +5502,67 @@ video {
     class SoundFX {
       constructor() {
         this.enabled = true;
-        // One base <audio> element per clip; playback clones it so overlapping
-        // plays (e.g. several cards placed in quick succession) don't cut each other off.
+        // One base <audio> element per clip. It holds the volume (set from
+        // Settings), the riffle's duration, and is the fallback player.
         this.riffleEl = new Audio(AUDIO_SOURCES.riffle);
         this.placeEl = new Audio(AUDIO_SOURCES.place);
         this.takeEl = new Audio(AUDIO_SOURCES.take);
         [this.riffleEl, this.placeEl, this.takeEl].forEach(a => { a.preload = 'auto'; a.volume = 0.85; });
+        // Web Audio plays each clip from a buffer decoded once, so a sound
+        // starts on the same frame as its animation. Cloning <audio> made
+        // iPhones fetch and decode the file again on every play (a
+        // noticeable lag on the shuffle and every dealt card) and iOS
+        // ignores <audio>.volume anyway; a GainNode respects it.
+        this.ctx = null;
+        this.buffers = new Map();
+        this._initWebAudio();
+      }
+      _initWebAudio() {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        try { this.ctx = new Ctx(); } catch (e) { this.ctx = null; return; }
+        [this.riffleEl, this.placeEl, this.takeEl].forEach(el => {
+          const src = el.getAttribute('src');
+          fetch(src).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+            .then(data => new Promise((resolve, reject) => {
+              // Callback form: older Safari has no promise-returning decodeAudioData.
+              const p = this.ctx.decodeAudioData(data, resolve, reject);
+              if (p && p.then) p.then(resolve, reject);
+            }))
+            .then(buffer => this.buffers.set(el, buffer))
+            .catch(() => {});
+        });
+        // iOS starts the context suspended until a tap; resume on every
+        // gesture (it is suspended again after calls/backgrounding).
+        const unlock = () => {
+          if (!this.ctx || this.ctx.state === 'running') return;
+          this.ctx.resume().catch(() => {});
+          try {
+            const silent = this.ctx.createBufferSource();
+            silent.buffer = this.ctx.createBuffer(1, 1, 22050);
+            silent.connect(this.ctx.destination);
+            silent.start(0);
+          } catch (e) {}
+        };
+        ['pointerdown', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, unlock, { capture: true, passive: true }));
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) unlock(); });
       }
       _play(base) {
         if (!this.enabled) return;
+        const buffer = this.buffers.get(base);
+        // Only while running: a sound started on a suspended context would
+        // wait and play whenever it resumes, i.e. late.
+        if (buffer && this.ctx && this.ctx.state === 'running') {
+          try {
+            const src = this.ctx.createBufferSource();
+            src.buffer = buffer;
+            const gain = this.ctx.createGain();
+            gain.gain.value = base.volume;
+            src.connect(gain).connect(this.ctx.destination);
+            src.start(0);
+            return;
+          } catch (e) {}
+        }
         try {
           const inst = base.cloneNode();
           inst.volume = base.volume;
@@ -6864,7 +6916,9 @@ video {
       // browser hasn't finished loading the audio's metadata yet.
       audio.playRiffleShuffle();
       const riffleEl = audio.riffleEl;
-      const knownDuration = riffleEl && riffleEl.duration && isFinite(riffleEl.duration) ? riffleEl.duration : null;
+      const riffleBuffer = audio.buffers && audio.buffers.get(riffleEl);
+      const knownDuration = riffleBuffer ? riffleBuffer.duration
+        : riffleEl && riffleEl.duration && isFinite(riffleEl.duration) ? riffleEl.duration : null;
       const shuffleMs = knownDuration ? knownDuration * 1000 : 4296;
 
       if (visual) runRiffleShuffleAnimation(visual, shuffleMs);
