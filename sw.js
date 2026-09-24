@@ -22,6 +22,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET' || request.mode !== 'navigate') return;
+  // Firebase's own pages (Google sign-in handler) are never touched.
+  if (new URL(request.url).pathname.startsWith('/__/')) return;
   event.respondWith(
     fetch(request)
       .then((response) => {

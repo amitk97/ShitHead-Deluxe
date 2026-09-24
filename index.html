@@ -5929,9 +5929,18 @@ video {
 
   <!-- GAMEPLAY ENGINE -->
   <script>
+    // Google sign-in runs its redirect handler (/__/auth/handler) on the
+    // SAME domain the game is served from. With the default firebaseapp.com
+    // handler on a web.app page, phones that partition storage per site
+    // (installed app, Safari, newer Chrome) lose the sign-in state halfway
+    // and show "Unable to process request due to missing initial state".
+    // Firebase Hosting serves that handler on every hosting domain; each one
+    // listed here must also be an Authorized redirect URI
+    // (https://<domain>/__/auth/handler) on the Google OAuth web client.
+    const SAME_SITE_AUTH_DOMAINS = ['shithead-pro.web.app', 'shithead-pro.firebaseapp.com'];
     const firebaseConfig = {
       apiKey: "AIzaSyAEU9g6jfZm6M-EcT47skRUvQ-uuszgYZk",
-      authDomain: "shithead-pro.firebaseapp.com",
+      authDomain: SAME_SITE_AUTH_DOMAINS.includes(location.hostname) ? location.hostname : "shithead-pro.firebaseapp.com",
       databaseURL: "https://shithead-pro-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "shithead-pro",
       storageBucket: "shithead-pro.firebasestorage.app",

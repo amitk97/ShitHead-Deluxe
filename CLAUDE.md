@@ -75,6 +75,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - The service worker isn't registered when `?dev-tests=1` is in the URL.
 - The installed iPhone app draws under the status bar (`black-translucent`): `--safe-top` (`env(safe-area-inset-top)`) is added to the header's height, the top of the full-page panels, `.fixed.inset-0.p-4/.p-3` pop-ups and top banners. Anything new pinned to the top of the screen needs `var(--safe-top)` too.
 
+## Google sign-in
+
+- Redirect flow with `authDomain` = the page's own hosting domain (`SAME_SITE_AUTH_DOMAINS`), so the `/__/auth/handler` step stays same-site. A cross-site handler loses its state on phones and shows "missing initial state". Every domain in that list must be an Authorized redirect URI (`https://<domain>/__/auth/handler`) on the Google OAuth web client (Google Cloud Console → APIs & Services → Credentials), and in Firebase Auth → Authorized domains. `sw.js` never intercepts `/__/` paths.
+
 ## Phone back gesture
 
 - Back (Android gesture/button; a left-edge swipe in the installed iPhone app) closes the top pop-up/page (`BACK_LAYERS`: element id → its close button or function; `null` = must be answered, Back does nothing), then the menu; at a table it clicks Exit (the "Leave this match?" confirm); in a Ranked search it cancels; in an online lobby it offers to leave. Only the bare home screen lets Back exit the app.
