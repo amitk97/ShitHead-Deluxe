@@ -36,6 +36,8 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Settings
 
 - Tabs like the Shop (`SETTINGS_TABS`: Gameplay, Display, Sound & Alerts, Accessibility; last tab in localStorage `shithead_settings_tab`). Each tab is a `.settings-tab-panel`; search looks across every tab and clearing it returns to the chosen one. "Helper Icons" reads ON when shown (pref is still `shithead_hide_helpers`).
+- Order: tabs by how often they're used; inside a tab the main slider first, then rows alphabetical (a test checks this).
+- Turn Alert (`turnAlertOn`, `audio/turn.mp3` at `TURN_ALERT_GAIN` of the volume) chimes in `render` when `isMyTurn` goes false → true. Notification Sound (`notifySoundOn`, `audio/notify.mp3`) chimes when `notifyNewInboxItems` sees a new invite/request/gift. Both default on and sync to `users/{uid}/settings`.
 
 ## Shop / Custom layout
 

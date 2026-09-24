@@ -1086,7 +1086,14 @@ async function runDevTestSuite() {
       assertEqual(where('setRankRow'), 'gameplay', 'Select All Of A Rank is Gameplay');
       ['setEmotesRow', 'setIconsRow', 'setHideHelpersRow', 'setBigEffectsRow', 'setDealAnimRow', 'setFullscreenRow']
         .forEach(id => assertEqual(where(id), 'display', `${id} is in Display`));
-      ['setHapticsRow', 'setNotifyRow'].forEach(id => assertEqual(where(id), 'sound', `${id} is in Sound & Alerts`));
+      ['setHapticsRow', 'setNotifyRow', 'setNotifySoundRow', 'setTurnAlertRow'].forEach(id => assertEqual(where(id), 'sound', `${id} is in Sound & Alerts`));
+      // Within a tab: the main slider first, then alphabetical.
+      const titles = (key) => [...document.querySelectorAll(`#settingsTab-${key} .settings-row`)].map(r => r.querySelector('.block').textContent.trim());
+      ['gameplay', 'display', 'sound', 'access'].forEach(key => {
+        const t = titles(key);
+        assertEqual(t.join('|'), [...t].sort((a, b) => a.localeCompare(b)).join('|'), `${key} rows are alphabetical`);
+      });
+      assertTrue(document.getElementById('setFullscreenRow').textContent.includes('press F'), 'Fullscreen mentions the F key');
       assertEqual(where('volumeSlider'), 'sound', 'Volume is in Sound & Alerts');
       ['setContrastRow', 'setMotionRow'].forEach(id => assertEqual(where(id), 'access', `${id} is in Accessibility`));
       showSettingsTab('display');
@@ -1105,6 +1112,32 @@ async function runDevTestSuite() {
       showSettingsTab(savedTab);
       if (wasHidden) modal.classList.add('hidden');
     }
+  });
+  await test('Turn Alert chimes once as the turn arrives; Notification Sound chimes for new inbox items', () => {
+    const played = [];
+    const saved = { turn: audio.playTurnAlert, notify: audio.playNotify, running: devTestSuiteRunning };
+    try {
+      audio.playTurnAlert = () => played.push('turn');
+      audio.playNotify = () => played.push('notify');
+      devTestSuiteRunning = false;
+      freshState({ phase: 'PLAY', currentTurnIndex: 1 });
+      state.players = [makePlayer({ id: 'p1', hand: [makeCard('5')] }), makePlayer({ id: 'p2', isBot: true, hand: [makeCard('9')] })];
+      lastRenderWasMyTurn = false;
+      render();
+      assertEqual(played.length, 0, 'No chime on an opponent\'s turn');
+      state.currentTurnIndex = 0; render(); render();
+      assertEqual(played.join(','), 'turn', 'One chime when the turn arrives, not one per render');
+      notifySeenIds = { invite: new Set(['a']) };
+      notifyNewInboxItems('invite', { a: {}, b: { fromName: 'Pooja' } });
+      assertEqual(played.join(','), 'turn,notify', 'A new invite plays the notification sound');
+    } finally {
+      audio.playTurnAlert = saved.turn; audio.playNotify = saved.notify; devTestSuiteRunning = saved.running;
+      lastRenderWasMyTurn = false; freshState();
+    }
+  });
+  await test('Turn Alert plays softer than the card sounds', () => {
+    assertTrue(TURN_ALERT_GAIN > 0 && TURN_ALERT_GAIN < 1, 'The turn chime is scaled below the master volume');
+    assertEqual(audio.gain.get(audio.turnEl), TURN_ALERT_GAIN, 'The scale applies to the turn clip');
   });
   await test('Mute button toggles and restores the previous volume', () => {
     const before = masterVolume;

@@ -4382,10 +4382,20 @@ video {
         </button>
         </div>
         <div id="settingsTab-display" class="settings-body settings-tab-panel" data-settings-panel="display" role="tabpanel">
+        <button id="setBigEffectsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="vfx, effects, animation, embers, confetti, burn, win, victory, particles">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Burn &amp; Victory Effects</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Off skips the burn embers and win confetti</span></span>
+          <span id="setBigEffectsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
         <button id="setIconsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="icons, power, hints, card info">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Card Power Icons</span>
           <span class="block text-[8px] text-slate-400 leading-snug">Show each card's power on the card</span></span>
           <span id="setIconsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
+        <button id="setFullscreenRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="full screen, expand, immersive, display, f key, keyboard">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Fullscreen</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Or press F on a keyboard</span></span>
+          <span id="setFullscreenState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         <button id="setHideHelpersRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="helper, card powers, card reference, play matrix, hints, guide">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Helper Icons</span>
@@ -4397,20 +4407,10 @@ video {
           <span class="block text-[8px] text-slate-400 leading-snug">Your own reactions always show</span></span>
           <span id="setEmotesState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
-        <button id="setBigEffectsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="vfx, effects, animation, embers, confetti, burn, win, victory, particles">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Burn &amp; Victory Effects</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Off skips the burn embers and win confetti</span></span>
-          <span id="setBigEffectsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
-        </button>
         <button id="setDealAnimRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="vfx, animation, shuffle, deal, effects, dealing sound">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Shuffle &amp; Deal Animation</span>
           <span class="block text-[8px] text-slate-400 leading-snug">Off skips straight to the game, no shuffle/deal sound</span></span>
           <span id="setDealAnimState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
-        </button>
-        <button id="setFullscreenRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="full screen, expand, immersive, display">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Fullscreen</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Also available from the header</span></span>
-          <span id="setFullscreenState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         </div>
         <div id="settingsTab-sound" class="settings-body settings-tab-panel" data-settings-panel="sound" role="tabpanel">
@@ -4423,15 +4423,25 @@ video {
               <button id="muteBtn" class="text-[10px] font-black px-2 py-0.5 rounded border">ON</button>
             </span>
           </div>
-        <button id="setHapticsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="haptic, vibrate, feedback, rumble">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Vibration</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Haptic feedback on key moments</span></span>
-          <span id="setHapticsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        <button id="setNotifySoundRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="notification sound, chime, alert sound, invite sound, ding">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Notification Sound</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">A chime when an invite, friend request or gift arrives</span></span>
+          <span id="setNotifySoundState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         <button id="setNotifyRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="notifications, alerts, push, gifts, invites, friends, app">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Notifications</span>
           <span id="setNotifySub" class="block text-[8px] text-slate-400 leading-snug">Game invites, friend requests, gifts and new events</span></span>
           <span id="setNotifyState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
+        <button id="setTurnAlertRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="turn alert, your turn, chime, reminder, ding">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Turn Alert</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">A soft chime when it's your turn</span></span>
+          <span id="setTurnAlertState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
+        <button id="setHapticsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="haptic, vibrate, feedback, rumble">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Vibration</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Haptic feedback on key moments</span></span>
+          <span id="setHapticsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         </div>
         <!-- ============================================================
@@ -5488,8 +5498,12 @@ video {
     const AUDIO_SOURCES = {
       riffle: "audio/riffle.mp3",
       place: "audio/place.mp3",
-      take: "audio/take.mp3"
+      take: "audio/take.mp3",
+      turn: "audio/turn.mp3",      // Your-turn alert
+      notify: "audio/notify.mp3"   // New invite / friend request / gift
     };
+    // The your-turn chime plays softer than the card sounds.
+    const TURN_ALERT_GAIN = 0.55;
 
     const Haptics = {
       vibrate(pattern) {
@@ -5508,7 +5522,10 @@ video {
         this.riffleEl = new Audio(AUDIO_SOURCES.riffle);
         this.placeEl = new Audio(AUDIO_SOURCES.place);
         this.takeEl = new Audio(AUDIO_SOURCES.take);
-        [this.riffleEl, this.placeEl, this.takeEl].forEach(a => { a.preload = 'auto'; a.volume = 0.85; });
+        this.turnEl = new Audio(AUDIO_SOURCES.turn);
+        this.notifyEl = new Audio(AUDIO_SOURCES.notify);
+        this.allEls().forEach(a => { a.preload = 'auto'; a.volume = 0.85; });
+        this.gain = new Map([[this.turnEl, TURN_ALERT_GAIN]]);
         // Web Audio plays each clip from a buffer decoded once, so a sound
         // starts on the same frame as its animation. Cloning <audio> made
         // iPhones fetch and decode the file again on every play (a
@@ -5522,7 +5539,7 @@ video {
         const Ctx = window.AudioContext || window.webkitAudioContext;
         if (!Ctx) return;
         try { this.ctx = new Ctx(); } catch (e) { this.ctx = null; return; }
-        [this.riffleEl, this.placeEl, this.takeEl].forEach(el => {
+        this.allEls().forEach(el => {
           const src = el.getAttribute('src');
           fetch(src).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
             .then(data => new Promise((resolve, reject) => {
@@ -5548,8 +5565,10 @@ video {
         ['pointerdown', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, unlock, { capture: true, passive: true }));
         document.addEventListener('visibilitychange', () => { if (!document.hidden) unlock(); });
       }
+      allEls() { return [this.riffleEl, this.placeEl, this.takeEl, this.turnEl, this.notifyEl]; }
       _play(base) {
         if (!this.enabled) return;
+        const level = base.volume * (this.gain?.get(base) ?? 1);
         const buffer = this.buffers.get(base);
         // Only while running: a sound started on a suspended context would
         // wait and play whenever it resumes, i.e. late.
@@ -5558,7 +5577,7 @@ video {
             const src = this.ctx.createBufferSource();
             src.buffer = buffer;
             const gain = this.ctx.createGain();
-            gain.gain.value = base.volume;
+            gain.gain.value = level;
             src.connect(gain).connect(this.ctx.destination);
             src.start(0);
             return;
@@ -5566,13 +5585,23 @@ video {
         }
         try {
           const inst = base.cloneNode();
-          inst.volume = base.volume;
+          inst.volume = level;
           inst.play().catch(() => {});
         } catch (e) {}
       }
       /* Deck being shuffled before the deal, at the start of a match (like an online poker table) */
       playRiffleShuffle() {
         this._play(this.riffleEl);
+      }
+      /* It has just become this player's turn (Settings → Turn Alert) */
+      playTurnAlert() {
+        if (typeof turnAlertOn !== 'undefined' && !turnAlertOn) return;
+        this._play(this.turnEl);
+      }
+      /* A new game invite, friend request or gift arrived (Settings → Notification Sound) */
+      playNotify() {
+        if (typeof notifySoundOn !== 'undefined' && !notifySoundOn) return;
+        this._play(this.notifyEl);
       }
       /* A card is dealt to a player, or a card is played to the discard pile */
       playCardPlace() {
@@ -9733,6 +9762,10 @@ video {
     let hideHelperIcons = readPref('shithead_hide_helpers', false);
     let bigEffectsOn = readPref('shithead_big_effects', true);
     let hapticsOn = readPref('shithead_haptics', true);
+    // Your-turn chime and the new-invite/request/gift chime (both default on).
+    let turnAlertOn = readPref('shithead_turn_alert', true);
+    let notifySoundOn = readPref('shithead_notify_sound', true);
+    let lastRenderWasMyTurn = false;
     let notificationsOn = readPref('shithead_notifications', false);
     let dealAnimationOn = readPref('shithead_deal_animation', true);
     let masterVolume = (() => {
@@ -9752,7 +9785,7 @@ video {
         if (typeof toggleCardReference === 'function') toggleCardReference(true);
       }
       if (typeof audio !== 'undefined' && audio) {
-        [audio.riffleEl, audio.placeEl, audio.takeEl].forEach(a => { if (a) a.volume = masterVolume / 100; });
+        audio.allEls().forEach(a => { if (a) a.volume = masterVolume / 100; });
       }
     }
 
@@ -10834,6 +10867,10 @@ video {
 
       const currentTurnPlayer = state.players[state.currentTurnIndex];
       const isMyTurn = currentTurnPlayer && currentTurnPlayer.id === local.id && state.phase === 'PLAY' && !local.hasFinished;
+      // Chime once as the turn arrives (Settings → Turn Alert), never for
+      // the scripted tutorial or while the test suite drives the table.
+      if (isMyTurn && !lastRenderWasMyTurn && !tutorialActive && !devTestSuiteRunning) audio.playTurnAlert();
+      lastRenderWasMyTurn = !!isMyTurn;
       // A selection is only meaningful during the local player's live turn.
       // Clear any staged glow left behind by a turn-changing multiplayer
       // snapshot, timeout, burn, or pickup. Snap Burn has its own dedicated
@@ -13569,6 +13606,8 @@ video {
       paintToggle(document.getElementById('setMotionState'), reduceMotion);
       paintToggle(document.getElementById('setBigEffectsState'), bigEffectsOn);
       paintToggle(document.getElementById('setHapticsState'), hapticsOn);
+      paintToggle(document.getElementById('setTurnAlertState'), turnAlertOn);
+      paintToggle(document.getElementById('setNotifySoundState'), notifySoundOn);
       paintToggle(document.getElementById('setDealAnimState'), dealAnimationOn);
       if (typeof paintNotifyToggle === 'function') paintNotifyToggle();
       const vs = document.getElementById('volumeSlider');
@@ -16605,6 +16644,8 @@ video {
         reduceMotion: !!reduceMotion,
         bigEffectsOn: !!bigEffectsOn,
         hapticsOn: !!hapticsOn,
+        turnAlertOn: !!turnAlertOn,
+        notifySoundOn: !!notifySoundOn,
         dealAnimationOn: !!dealAnimationOn,
         emotesMuted: !!emotesMuted,
         botCount: readBotPrefs().count,
@@ -16635,6 +16676,8 @@ video {
           ['reduceMotion','shithead_reduce_motion',v => { reduceMotion=v; }],
           ['bigEffectsOn','shithead_big_effects',v => { bigEffectsOn=v; }],
           ['hapticsOn','shithead_haptics',v => { hapticsOn=v; }],
+          ['turnAlertOn','shithead_turn_alert',v => { turnAlertOn=v; }],
+          ['notifySoundOn','shithead_notify_sound',v => { notifySoundOn=v; }],
           ['dealAnimationOn','shithead_deal_animation',v => { dealAnimationOn=v; }],
           ['emotesMuted','shithead_emotes_muted',v => { emotesMuted=v; }]
         ];
@@ -19799,7 +19842,9 @@ video {
       const seen = notifySeenIds[kind];
       notifySeenIds[kind] = new Set(ids);
       if (!seen) return;
-      ids.filter(id => !seen.has(id)).forEach((id) => {
+      const fresh = ids.filter(id => !seen.has(id));
+      if (fresh.length && !devTestSuiteRunning) audio.playNotify(); // Settings → Notification Sound
+      fresh.forEach((id) => {
         const item = data[id] || {};
         const who = String(item.fromName || item.name || 'A friend').slice(0, 12);
         if (kind === 'gift') {
@@ -20223,6 +20268,16 @@ video {
     document.getElementById('setHapticsRow').addEventListener('click', () => {
       hapticsOn = !hapticsOn; writePref('shithead_haptics', hapticsOn);
       refreshSettingsUI(); scheduleSettingsCloudSave();
+    });
+    document.getElementById('setTurnAlertRow').addEventListener('click', () => {
+      turnAlertOn = !turnAlertOn; writePref('shithead_turn_alert', turnAlertOn);
+      refreshSettingsUI(); scheduleSettingsCloudSave();
+      if (turnAlertOn) audio.playTurnAlert(); // a preview of what it sounds like
+    });
+    document.getElementById('setNotifySoundRow').addEventListener('click', () => {
+      notifySoundOn = !notifySoundOn; writePref('shithead_notify_sound', notifySoundOn);
+      refreshSettingsUI(); scheduleSettingsCloudSave();
+      if (notifySoundOn) audio.playNotify();
     });
     document.getElementById('setDealAnimRow').addEventListener('click', () => {
       dealAnimationOn = !dealAnimationOn; writePref('shithead_deal_animation', dealAnimationOn);
