@@ -993,6 +993,9 @@
     .profile-avatar-btn .avatar-tile { transition:transform .15s; }
     .profile-avatar-btn:hover .avatar-tile { transform:scale(1.05); }
     .profile-avatar-hint { font-size:7.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:#fbbf24; white-space:nowrap; }
+    .inbox-clear-all { flex-shrink:0; width:100%; margin-bottom:8px; padding:7px 0; border-radius:10px; border:1px solid #f59e0b; color:#fcd34d; font-size:9px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; background:rgba(69,26,3,.35); }
+    .inbox-clear-all:hover { background:#f59e0b; color:#020617; }
+    .inbox-clear-all:disabled { opacity:.5; cursor:default; }
     /* In-game player card (matches the approved mockup). */
     .pp-scrim { position:fixed; inset:0; z-index:96; background:rgba(2,6,23,.62); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
     .pp-card { position:absolute; left:50%; width:min(300px, calc(100vw - 32px)); transform:translateX(-50%); background:#020617; border:2px solid #f59e0b; border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.6); padding:16px; color:#e2e8f0; }
@@ -4300,6 +4303,7 @@ video {
         <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Inbox</span>
         <button id="inboxCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
+      <button id="inboxClearAllBtn" type="button" class="inbox-clear-all hidden">✓ Read &amp; clear all</button>
       <div id="inboxArea" class="overflow-y-auto space-y-1.5" style="flex:1;"></div>
       <p id="inboxEmptyMsg" class="hidden text-[10px] text-slate-500 text-center py-4">Nothing new.</p>
     </div>
@@ -12425,6 +12429,9 @@ video {
       'leaderboardModal', 'challengesModal', 'shopModal', 'rulesModal',
       'settingsModal', 'supportModal', 'tutorialHubScreen'
     ];
+    // Every scrolling panel gets the floating Jump to top/bottom button,
+    // including in-game ones that aren't hamburger menu pages.
+    const JUMP_PAGE_IDS = [...MENU_PAGE_IDS, 'inboxModal', 'matchStatsModal', 'pileInspectModal'];
     function resolveMenuPageScroller(page) {
       if (!page) return null;
       const candidates = [page, ...page.querySelectorAll('*')].filter((el) => {
@@ -12449,7 +12456,7 @@ video {
       btn.setAttribute('aria-label', nearBottom ? 'Jump to top of this page' : 'Jump to bottom of this page');
     }
     function installMenuPageJumpButtons() {
-      MENU_PAGE_IDS.forEach((id) => {
+      JUMP_PAGE_IDS.forEach((id) => {
         const page = document.getElementById(id);
         if (!page || page.querySelector(':scope > .menu-page-jump')) return;
         const btn = document.createElement('button');
@@ -12467,7 +12474,7 @@ video {
     }
     installMenuPageJumpButtons();
     document.addEventListener('scroll', (event) => {
-      const page = MENU_PAGE_IDS.map(id => document.getElementById(id)).find(el => el && !el.classList.contains('hidden') && (el === event.target || el.contains(event.target)));
+      const page = JUMP_PAGE_IDS.map(id => document.getElementById(id)).find(el => el && !el.classList.contains('hidden') && (el === event.target || el.contains(event.target)));
       if (page) updateMenuPageJump(page);
     }, true);
     const menuPageObserver = new MutationObserver((records) => {
@@ -12476,7 +12483,7 @@ video {
         if (!page.classList.contains('hidden')) requestAnimationFrame(() => updateMenuPageJump(page));
       });
     });
-    MENU_PAGE_IDS.forEach(id => {
+    JUMP_PAGE_IDS.forEach(id => {
       const page = document.getElementById(id);
       if (page) menuPageObserver.observe(page, { attributes:true, attributeFilter:['class'] });
     });
@@ -16424,6 +16431,25 @@ video {
         </div>
       </div>`;
     }
+    // Notifications (challenge, rank, purchase, unlock mail) can be cleared in
+    // one go. Friend requests and game invites need an answer, so they stay.
+    function isClearableInboxItem(item) {
+      return item.type === 'challenge' || item.type === 'rank' || item.type === 'shop';
+    }
+    function clearAllInboxNotifications() {
+      const uid = currentUser?.uid;
+      if (!uid) return Promise.resolve();
+      const btn = document.getElementById('inboxClearAllBtn');
+      btn.disabled = true;
+      return db.ref(`users/${uid}`).update({ challengeInbox: null, activityInbox: null }).then(() => {
+        renderInbox();
+        refreshInboxBadge();
+        const pending = document.querySelectorAll('#inboxArea .inbox-accept-req-btn, #inboxArea .inbox-join-invite-btn').length;
+        notifyBanner(pending ? '✓ Notifications cleared. Friend requests and invites still need an answer.' : '✓ Inbox cleared.');
+      }).catch((error) => { console.warn('clear inbox failed', error); notifyBanner('Could not clear the inbox. Please try again.'); })
+        .finally(() => { btn.disabled = false; });
+    }
+    document.getElementById('inboxClearAllBtn').addEventListener('click', clearAllInboxNotifications);
     function renderInbox() {
       const uid = currentUser?.uid;
       if (!uid) return;
@@ -16455,6 +16481,7 @@ video {
           items.push({ ...mail, id, sentAt: Number(mail.sentAt) || 0 });
         });
         items.sort((a, b) => b.sentAt - a.sentAt);
+        document.getElementById('inboxClearAllBtn').classList.toggle('hidden', !items.some(isClearableInboxItem));
         if (items.length === 0) { area.innerHTML = ''; document.getElementById('inboxEmptyMsg').classList.remove('hidden'); return; }
         document.getElementById('inboxEmptyMsg').classList.add('hidden');
         area.innerHTML = items.map(inboxItemHtml).join('');
@@ -21222,6 +21249,14 @@ video {
         assertEqual(EARNED_AVATARS.find(i => i.id === 'avatar-crown-diamond').name, 'Platinum Crown', 'Diamond Crown is renamed Platinum Crown');
         const btn = document.getElementById('profileAvatarBtn');
         assertTrue(!!btn && btn.textContent.includes('Tap to change'), 'The profile picture is a button with a change hint');
+      });
+
+      await test('REGRESSION: Inbox has Read & clear all and a Jump button', () => {
+        assertTrue(!!document.getElementById('inboxClearAllBtn'), 'Inbox has a Read & clear all button');
+        assertTrue(!!document.querySelector('#inboxModal > .menu-page-jump'), 'Inbox gets the floating Jump to top/bottom button');
+        ['matchStatsModal', 'pileInspectModal'].forEach(id => assertTrue(!!document.querySelector(`#${id} > .menu-page-jump`), `${id} gets the Jump button too`));
+        assertTrue(isClearableInboxItem({ type: 'challenge' }) && isClearableInboxItem({ type: 'shop' }) && isClearableInboxItem({ type: 'rank' }), 'Notifications are clearable');
+        assertTrue(!isClearableInboxItem({ type: 'request' }) && !isClearableInboxItem({ type: 'invite' }), 'Friend requests and invites are never cleared unanswered');
       });
 
       await test('Accessibility settings exist and apply', () => {
