@@ -953,6 +953,51 @@
     @keyframes shop-unlock-pop { 0%{opacity:0;transform:scale(.72)} 70%{opacity:1;transform:scale(1.05)} 100%{transform:scale(1)} }
     #shopModal .shop-sticky-header { position:sticky; top:0; z-index:30; background:#020617; }
     .turn-transition-lock { pointer-events:none !important; opacity:.7; }
+    /* Profile pictures: one 1:1 rounded-square tile everywhere (matches the
+       default profile icon). Animations are subtle loops and stop entirely
+       under Reduce Motion. */
+    .avatar-tile { display:inline-block; flex:none; line-height:0; vertical-align:middle; }
+    .avatar-svg { width:100%; height:100%; display:block; overflow:visible; }
+    .avatar-tile.avatar-locked { filter:grayscale(1) brightness(.5); }
+    .av-flicker { transform-box:fill-box; transform-origin:50% 100%; animation:av-flicker 1.1s ease-in-out infinite alternate; }
+    .av-flicker-2 { animation-duration:.8s; animation-delay:-.3s; }
+    @keyframes av-flicker { 0% { transform:scale(1,1); opacity:.85; } 50% { transform:scale(1.06,.9); } 100% { transform:scale(.95,1.08); opacity:1; } }
+    .av-fan { transform-box:view-box; transform-origin:32px 50px; animation:av-fan-l 2.8s ease-in-out infinite; }
+    .av-fan-r { animation-name:av-fan-r; }
+    @keyframes av-fan-l { 0%,20% { transform:rotate(-24deg); } 45%,70% { transform:rotate(0deg); } 95%,100% { transform:rotate(-24deg); } }
+    @keyframes av-fan-r { 0%,20% { transform:rotate(24deg); } 45%,70% { transform:rotate(0deg); } 95%,100% { transform:rotate(24deg); } }
+    .av-sway { transform-box:view-box; transform-origin:32px 52px; animation:av-sway 3.2s ease-in-out infinite; }
+    @keyframes av-sway { 0%,100% { transform:rotate(-6deg); } 50% { transform:rotate(6deg); } }
+    .av-shine { animation:av-shine 2.6s ease-in-out infinite; }
+    @keyframes av-shine { 0%,35% { transform:translateX(-12px); } 75%,100% { transform:translateX(48px); } }
+    .av-twinkle { transform-box:fill-box; transform-origin:center; animation:av-twinkle 1.8s ease-in-out infinite; }
+    .av-twinkle-2 { animation-delay:-.6s; } .av-twinkle-3 { animation-delay:-1.1s; } .av-twinkle-4 { animation-delay:-1.4s; }
+    @keyframes av-twinkle { 0%,100% { transform:scale(.3); opacity:.2; } 50% { transform:scale(1.15); opacity:1; } }
+    body.reduce-motion .avatar-svg * { animation:none !important; }
+    /* Opponent seat: [picture + name] / cards / [bot · status · timer].
+       The head and status rows take their width from the card row
+       (width:0 + min-width:100%), so a long name truncates instead of
+       widening the seat, and statuses no longer squeeze the name. */
+    .opp-head, .opp-status-row { width:0; min-width:100%; display:flex; align-items:center; justify-content:center; gap:4px; }
+    .opp-status-row { gap:3px; min-height:15px; }
+    .opp-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .avatar-tile.opp-avatar-turn { border-radius:26%; box-shadow:0 0 0 2px #fbbf24, 0 0 10px rgba(251,191,36,.65); }
+    .avatar-picker-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .avatar-picker-label { grid-column:1 / -1; font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:#64748b; margin-top:4px; }
+    .avatar-option { display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px 7px; border-radius:12px; border:1px solid #334155; background:rgba(15,23,42,.6); text-align:center; transition:border-color .15s, background .15s; }
+    .avatar-option:not(:disabled):hover { border-color:#f59e0b; }
+    .avatar-option[aria-pressed="true"] { border-color:#10b981; background:rgba(6,78,59,.28); }
+    .avatar-option:disabled { cursor:default; }
+    .avatar-option-art { position:relative; line-height:0; }
+    .avatar-option-lock { position:absolute; right:-4px; bottom:-4px; width:18px; height:18px; border-radius:999px; background:#0f172a; border:1px solid #475569; display:flex; align-items:center; justify-content:center; font-size:9px; line-height:1; }
+    .avatar-option-name { font-size:9px; font-weight:900; color:#fff; line-height:1.15; }
+    .avatar-option-status { font-size:8px; font-weight:700; color:#94a3b8; line-height:1.2; }
+    .avatar-option[aria-pressed="true"] .avatar-option-status { color:#34d399; }
+    .avatar-option-status.is-locked { color:#64748b; }
+    .avatar-demo { display:flex; align-items:center; justify-content:center; gap:16px; padding:12px; }
+    .avatar-demo-list { display:flex; flex-direction:column; gap:8px; }
+    .avatar-demo-chip { display:flex; align-items:center; gap:6px; padding:5px 8px; border-radius:10px; border:1px solid #334155; background:rgba(15,23,42,.85); font-size:9px; font-weight:900; color:#e2e8f0; letter-spacing:.04em; white-space:nowrap; }
+    .avatar-demo-chip small { font-size:8px; color:#94a3b8; font-weight:700; letter-spacing:0; }
   </style>
 
   
@@ -4274,7 +4319,7 @@ video {
         <div>
           <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Public Profile</span>
           <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-2">
-            <span class="inline-flex items-center justify-center" aria-label="Default profile icon"><svg class="pack-icon pack-icon-lg" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-profile"/></svg></span>
+            <span class="inline-flex items-center justify-center" data-own-avatar="42"></span>
             <div class="min-w-0">
               <span id="profileUsernameText" class="block text-sm font-black text-white truncate">Not signed in</span>
               <span id="profileRatingText" class="block text-[10px] text-slate-400 mt-0.5">&nbsp;</span>
@@ -4498,7 +4543,7 @@ video {
         <button class="settings-head w-full flex items-center justify-between py-2 border-t border-slate-800" data-target="personalisationProfileBody" type="button">
           <span class="text-[10px] font-black uppercase tracking-widest text-sky-400">Profile Pictures</span><span class="settings-chev text-sky-400 transition-transform">&#9660;</span>
         </button>
-        <div id="personalisationProfileBody" class="settings-body pb-2"><p class="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 p-3 text-[9px] text-slate-500 text-center">Unlockable profile pictures will appear here.</p></div>
+        <div id="personalisationProfileBody" class="settings-body pb-2"><div id="personalisationAvatars" class="avatar-picker-grid"></div></div>
         <button class="settings-head w-full flex items-center justify-between py-2 border-t border-slate-800" data-target="personalisationCardsBody" type="button">
           <span class="text-[10px] font-black uppercase tracking-widest text-purple-400">Card Cosmetics</span><span class="settings-chev text-purple-400 transition-transform">&#9660;</span>
         </button>
@@ -6262,6 +6307,7 @@ video {
           id: `p_bot_${i+1}`,
           name: name,
           isBot: true,
+          avatar: pickBotAvatar(state.players),
           hand: [],
           faceUp: [],
           faceDown: [],
@@ -7657,6 +7703,7 @@ video {
           <div class="flex items-center justify-between gap-2">
             <span class="flex items-center gap-1.5 font-black text-[11px] uppercase tracking-wide truncate ${isYou ? 'text-amber-400' : 'text-slate-200'}">
               <span class="text-slate-500 shrink-0">#${p.finishRank}</span>
+              ${avatarHtml(getPlayerAvatarId(p), 20)}
               <span class="truncate">${escapeHtml(p.name)}${isYou ? ' (You)' : ''}</span>
             </span>
             ${ratingHtml}
@@ -9862,6 +9909,8 @@ video {
       // width being wasted, so this scales cards up accordingly.
       const oppScale = opponentCount <= 1 ? 1.55 : opponentCount === 2 ? 1.22 : 1;
       oppContainer.style.setProperty('--opp-scale', oppScale);
+      ensureBotAvatars(state.players);
+      const oppAvatarSize = Math.round(18 * oppScale);
       state.players.filter(p => p.id !== state.localPlayerId).forEach(p => {
         const isTurn = currentTurnPlayer && currentTurnPlayer.id === p.id && !p.hasFinished;
         const oppDiv = document.createElement('div');
@@ -9961,17 +10010,21 @@ video {
           ? `<span class="shrink-0 text-[7px] md:text-[8px] font-black px-1 h-[15px] flex items-center justify-center rounded-full border ${botBadgeColorClass}" data-tip="${botDiffKey.charAt(0).toUpperCase() + botDiffKey.slice(1)} bot">🤖</span>`
           : '';
 
+        // Picture + name on top (the picture glows gold on this seat's
+        // turn), cards in the middle, every status chip underneath.
         oppDiv.innerHTML = `
-          <div class="flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full shrink-0 ${isTurn ? 'bg-amber-400 animate-ping' : 'bg-slate-600'}"></span>
-            <span class="text-[9px] md:text-[11px] font-black tracking-wider text-slate-100 uppercase truncate max-w-[64px] md:max-w-none">${escapeHtml(p.name)}</span>
+          <div class="opp-head">
+            ${avatarHtml(getPlayerAvatarId(p), oppAvatarSize, isTurn ? 'opp-avatar-turn' : '')}
+            <span class="opp-name text-[9px] md:text-[11px] font-black tracking-wider text-slate-100 uppercase" title="${escapeAttr(p.name)}">${escapeHtml(p.name)}</span>
+          </div>
+          <div class="flex opp-slot-row">
+            ${tableSlotsHtml}
+          </div>
+          <div class="opp-status-row">
             ${botBadgeHtml}
             ${statusBadgeHtml}
             <span id="opp-timer-${p.id}" class="hidden text-[7px] md:text-[8px] font-black px-1.5 h-[15px] shrink-0 flex items-center justify-center rounded-full bg-rose-950/70 text-rose-300 border border-rose-600">15s</span>
             ${kickBtnHtml}
-          </div>
-          <div class="flex opp-slot-row">
-            ${tableSlotsHtml}
           </div>
         `;
         oppContainer.appendChild(oppDiv);
@@ -10853,7 +10906,7 @@ video {
       updatePlayersAtomic(state.roomCode, (currentList) => {
         const currentBotCount = currentList.filter(p => p.isBot).length;
         if (currentBotCount >= 2 || currentList.length >= 4) return currentList;
-        return [...currentList, newBot];
+        return [...currentList, { ...newBot, avatar: pickBotAvatar(currentList) }];
       });
     }
 
@@ -10987,6 +11040,7 @@ video {
         // when a stranger named Priya joined mid-match.
         name: `${removed.name} (Bot)`,
         isBot: true,
+        avatar: pickBotAvatar(state.players.filter(p => p.id !== removed.id)),
         isHost: false,
         // Deliberately NOT whatever the table's own difficulty is set to —
         // this is a stand-in to keep the match moving, not a new opponent
@@ -12615,6 +12669,195 @@ video {
       document.querySelectorAll('[data-challenge-panel]').forEach(p=>p.classList.toggle('hidden',p.dataset.challengePanel!==tab));
       document.querySelectorAll('[data-challenge-tab]').forEach(b=>{ const active=b.dataset.challengeTab===tab; b.setAttribute('aria-selected',String(active)); b.className=`challenge-tab rounded-lg border px-2 py-2 text-[9px] font-black uppercase tracking-wider ${active ? 'border-amber-500 bg-amber-950/50 text-amber-300' : 'border-slate-700 text-slate-400'}`; });
     });
+    // ============================================================
+    // PROFILE PICTURES
+    // Every picture shares one tile: the same 25%-radius rounded square as
+    // the default profile icon, a dark base lit by a soft radial glow in the
+    // picture's own colour, a hairline inner highlight and a centred emblem.
+    // Metals and suit colours come from one shared gradient set (see
+    // AVATAR_DEFS_SVG) so the whole family reads as one consistent style.
+    // Drawn as inline SVG: crisp at any size, no image hosting, no loading.
+    // ============================================================
+    const AVATAR_TONES = {
+      navy:   ['#1e3a5f', '#0b1220', '#3b5170'],
+      bronze: ['#6b3a17', '#140b06', '#8a5a33'],
+      silver: ['#475569', '#0b1220', '#94a3b8'],
+      gold:   ['#7c5a0b', '#150f03', '#b8912b'],
+      cyan:   ['#0e5d73', '#04121a', '#2aa6c4'],
+      purple: ['#5b21b6', '#0f0620', '#8b5cf6'],
+      red:    ['#7f1d2d', '#16060a', '#b4424f'],
+      ember:  ['#8a2d0b', '#170704', '#c2531f'],
+      ice:    ['#1d4f7a', '#07131f', '#5aa9d6'],
+      green:  ['#14532d', '#05140c', '#2f8a57'],
+      brown:  ['#5c3a1e', '#140c06', '#8b6440'],
+      ghost:  ['#334d66', '#0a1119', '#6f8fae']
+    };
+
+    // One hidden <defs> block shared by every picture on the page. Kept out of
+    // display:none so gradients and clip paths always resolve.
+    const AVATAR_DEFS_SVG = `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+      ${Object.entries(AVATAR_TONES).map(([k, [glow, base]]) => `<radialGradient id="av-bg-${k}" cx="50%" cy="30%" r="80%"><stop offset="0" stop-color="${glow}"/><stop offset="1" stop-color="${base}"/></radialGradient>`).join('')}
+      <linearGradient id="av-m-bronze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd3a1"/><stop offset=".45" stop-color="#d08a4a"/><stop offset="1" stop-color="#7a4420"/></linearGradient>
+      <linearGradient id="av-m-silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#cbd5e1"/><stop offset="1" stop-color="#64748b"/></linearGradient>
+      <linearGradient id="av-m-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4b8"/><stop offset=".45" stop-color="#fbbf24"/><stop offset="1" stop-color="#a16207"/></linearGradient>
+      <linearGradient id="av-m-diamond" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0fdff"/><stop offset=".45" stop-color="#67e8f9"/><stop offset="1" stop-color="#0e7490"/></linearGradient>
+      <linearGradient id="av-m-master" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fae8ff"/><stop offset=".45" stop-color="#c084fc"/><stop offset="1" stop-color="#6b21a8"/></linearGradient>
+      <linearGradient id="av-m-ivory" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe6ee"/></linearGradient>
+      <linearGradient id="av-m-crimson" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fda4af"/><stop offset=".5" stop-color="#e11d48"/><stop offset="1" stop-color="#881337"/></linearGradient>
+      <linearGradient id="av-m-pearl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#d7dee8"/><stop offset="1" stop-color="#8795a8"/></linearGradient>
+      <linearGradient id="av-m-flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#b91c1c"/><stop offset=".5" stop-color="#f97316"/><stop offset="1" stop-color="#fcd34d"/></linearGradient>
+      <linearGradient id="av-m-core" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#fffbeb"/></linearGradient>
+      <linearGradient id="av-m-frost" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bae6fd"/><stop offset=".55" stop-color="#38bdf8"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>
+      <linearGradient id="av-m-poo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b07a4f"/><stop offset=".55" stop-color="#7c4a26"/><stop offset="1" stop-color="#4a2a13"/></linearGradient>
+      <linearGradient id="av-m-joker" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b0764"/><stop offset="1" stop-color="#1e1b4b"/></linearGradient>
+      <linearGradient id="av-shine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <clipPath id="av-clip-tile" clipPathUnits="userSpaceOnUse"><rect x="3" y="3" width="58" height="58" rx="14"/></clipPath>
+      <clipPath id="av-clip-card" clipPathUnits="userSpaceOnUse"><rect x="19" y="11" width="26" height="40" rx="4"/></clipPath>
+    </defs></svg>`;
+
+    const AV_CROWN = (metal) => `
+      <path d="M15 42 13 21l10.5 9.5L32 15l8.5 15.5L51 21l-2 21Z" fill="url(#av-m-${metal})" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"/>
+      <rect x="14.5" y="41" width="35" height="7" rx="2.2" fill="url(#av-m-${metal})" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
+      <path d="M17.5 38.5h29" stroke="rgba(255,255,255,.45)" stroke-width="1.2" stroke-linecap="round"/>
+      <circle cx="13" cy="20.5" r="2.6" fill="url(#av-m-${metal})" stroke="rgba(0,0,0,.35)"/>
+      <circle cx="32" cy="14.5" r="2.8" fill="url(#av-m-${metal})" stroke="rgba(0,0,0,.35)"/>
+      <circle cx="51" cy="20.5" r="2.6" fill="url(#av-m-${metal})" stroke="rgba(0,0,0,.35)"/>`;
+    const AV_CROWN_GEMS = (color) => `<circle cx="24" cy="44.5" r="1.8" fill="${color}"/><path d="m32 41.6 2.6 2.9-2.6 2.9-2.6-2.9Z" fill="${color}"/><circle cx="40" cy="44.5" r="1.8" fill="${color}"/>`;
+    const AV_SPADE = 'M32 13c-6 8-17 14-17 22.5 0 5 4 8 8.5 8 3 0 5.5-1.5 7-3.5-.5 4-2 7-4.5 10h12c-2.5-3-4-6-4.5-10 1.5 2 4 3.5 7 3.5 4.5 0 8.5-3 8.5-8C49 27 38 21 32 13Z';
+    const AV_HEART = 'M32 47C20 38 14 32 14 25c0-5 4-8.8 8.6-8.8 4 0 7 2.4 9.4 5.9 2.4-3.5 5.4-5.9 9.4-5.9 4.6 0 8.6 3.8 8.6 8.8 0 7-6 13-18 22Z';
+    const AV_DIAMOND = 'M32 13 47 32 32 51 17 32Z';
+    const AV_CLUB = `<circle cx="32" cy="21.5" r="7.2"/><circle cx="22.5" cy="33" r="7.2"/><circle cx="41.5" cy="33" r="7.2"/><circle cx="32" cy="30.5" r="4.5"/><path d="M30 34c0 6-1.5 10-4 16h12c-2.5-6-4-10-4-16Z"/>`;
+    const AV_FLAME = 'M32 11c4 8.5 14 13 14 25.5C46 45 40 52 32 52s-14-7-14-15.5c0-7 4-11.5 7-15.5 0 6 3 9 5 9-1-6.5-.5-12.5 2-19Z';
+    const AV_FLAME_CORE = 'M32 29c3 4 7 7 7 12 0 4.5-3 7.5-7 7.5s-7-3-7-7.5c0-3.5 3-7 7-12Z';
+
+    // A mini playing card (ivory face, rank in the corner, emblem centred).
+    const avCard = (rank, rankColor, emblem) => `
+      <rect x="19" y="11" width="26" height="40" rx="4" fill="url(#av-m-ivory)" stroke="rgba(15,23,42,.55)" stroke-width="1.2"/>
+      <text x="22.5" y="20.5" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="8" fill="${rankColor}">${rank}</text>
+      ${emblem}`;
+
+    const AVATAR_ART = {
+      'avatar-crown-bronze': { tone: 'bronze', art: AV_CROWN('bronze') + AV_CROWN_GEMS('#7c2d12') },
+      'avatar-suit-spades':  { tone: 'navy', art: `<path d="${AV_SPADE}" fill="url(#av-m-pearl)" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>` },
+      'avatar-suit-hearts':  { tone: 'navy', art: `<path d="${AV_HEART}" fill="url(#av-m-crimson)" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>` },
+      'avatar-suit-diamonds':{ tone: 'navy', art: `<path d="${AV_DIAMOND}" fill="url(#av-m-crimson)" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"/><path d="M32 17 26 32" stroke="rgba(255,255,255,.4)" stroke-width="1.4" stroke-linecap="round"/>` },
+      'avatar-suit-clubs':   { tone: 'navy', art: `<g fill="url(#av-m-pearl)" stroke="rgba(0,0,0,.35)" stroke-width="1.2">${AV_CLUB}</g>` },
+
+      'avatar-ace-spades':   { tone: 'silver', art: avCard('A', '#0f172a', `<path d="${AV_SPADE}" transform="translate(32 33) scale(.52) translate(-32 -32)" fill="#0f172a"/>`) },
+      'avatar-queen-hearts': { tone: 'red', art: avCard('Q', '#be123c', `<g transform="translate(34 22.5) scale(.24) translate(-32 -32)">${AV_CROWN('gold')}</g><path d="${AV_HEART}" transform="translate(32 37) scale(.46) translate(-32 -32)" fill="url(#av-m-crimson)"/>`) },
+      'avatar-joker':        { tone: 'purple', art: `
+        <path d="M20 43C18 33 13 27 9.5 22.5 18 22 24 28 27 37Z" fill="#a855f7" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M44 43c2-10 7-16 10.5-20.5C46 22 40 28 37 37Z" fill="#f43f5e" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M25 43c0-12 3.5-21.5 7-28.5 3.5 7 7 16.5 7 28.5Z" fill="#10b981" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"/>
+        <rect x="17" y="42" width="30" height="7" rx="2.5" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
+        <circle cx="9.5" cy="22.5" r="3.2" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.35)"/><circle cx="32" cy="14.5" r="3.2" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.35)"/><circle cx="54.5" cy="22.5" r="3.2" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.35)"/>` },
+      'avatar-burn-flame':   { tone: 'ember', art: `<path d="${AV_FLAME}" fill="url(#av-m-flame)" stroke="rgba(0,0,0,.3)" stroke-width="1.2" stroke-linejoin="round"/><path d="${AV_FLAME_CORE}" fill="url(#av-m-core)"/>` },
+      'avatar-ghost':        { tone: 'ghost', art: `
+        <path d="M19 51V30c0-9.5 5.8-16 13-16s13 6.5 13 16v21l-4.3-4-4.3 4-4.4-4-4.4 4-4.3-4Z" fill="rgba(226,232,240,.5)" stroke="rgba(255,255,255,.85)" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M24 22c1.5-2.5 4-4 7-4.3" stroke="rgba(255,255,255,.7)" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+        <ellipse cx="27" cy="31" rx="2.6" ry="3.6" fill="#0f172a"/><ellipse cx="37" cy="31" rx="2.6" ry="3.6" fill="#0f172a"/>
+        <ellipse cx="32" cy="39.5" rx="2.4" ry="2.8" fill="#0f172a" opacity=".85"/>` },
+      'avatar-frozen':       { tone: 'ice', art: `
+        <circle cx="32" cy="34" r="16" fill="url(#av-m-frost)" stroke="rgba(0,0,0,.3)" stroke-width="1.2"/>
+        <path d="M19.5 24.5c3-5.5 7.5-8.5 12.5-8.5s9.5 3 12.5 8.5" fill="none" stroke="#f0f9ff" stroke-width="3" stroke-linecap="round"/>
+        <path d="m22 25 1.3 4.5 1.4-4.2M30 21.5l1.4 5 1.4-5M39 24.3l1.3 4.6 1.4-4.4" fill="#f0f9ff" stroke="#f0f9ff" stroke-width="1" stroke-linejoin="round"/>
+        <path d="M24.5 31.5 29 33M39.5 31.5 35 33" stroke="#0c2a4a" stroke-width="2" stroke-linecap="round"/>
+        <rect x="24.5" y="38" width="15" height="6" rx="2" fill="#f8fafc" stroke="#0c2a4a" stroke-width="1.2"/>
+        <path d="M28.2 38v6M32 38v6M35.8 38v6M24.5 41h15" stroke="#0c2a4a" stroke-width=".9"/>` },
+
+      'avatar-burning-ten':  { tone: 'ember', animated: true, art: `
+        <g class="av-flicker"><path d="${AV_FLAME}" transform="translate(21 27) scale(.62 .72) translate(-32 -32)" fill="url(#av-m-flame)"/></g>
+        <g class="av-flicker av-flicker-2"><path d="${AV_FLAME}" transform="translate(43 25) scale(.7 .8) translate(-32 -32)" fill="url(#av-m-flame)"/></g>
+        <g class="av-flicker"><path d="${AV_FLAME}" transform="translate(32 21) scale(.8 .9) translate(-32 -32)" fill="url(#av-m-flame)"/><path d="${AV_FLAME_CORE}" transform="translate(32 24) scale(.7) translate(-32 -40)" fill="url(#av-m-core)"/></g>
+        <g transform="translate(0 6) rotate(-8 32 34)">${avCard('10', '#0f172a', `<path d="${AV_SPADE}" transform="translate(32 34) scale(.46) translate(-32 -32)" fill="#0f172a"/>`)}</g>` },
+      'avatar-fanned-hand':  { tone: 'navy', animated: true, art: `
+        <g class="av-fan av-fan-l"><rect x="22" y="15" width="20" height="30" rx="3.2" fill="url(#av-m-crimson)" stroke="rgba(0,0,0,.4)" stroke-width="1.1"/><path d="${AV_HEART}" transform="translate(32 30) scale(.3) translate(-32 -32)" fill="#fff" opacity=".9"/></g>
+        <g class="av-fan av-fan-r"><rect x="22" y="15" width="20" height="30" rx="3.2" fill="#1e293b" stroke="rgba(255,255,255,.35)" stroke-width="1.1"/><path d="${AV_DIAMOND}" transform="translate(32 30) scale(.3) translate(-32 -32)" fill="url(#av-m-gold)"/></g>
+        <g><rect x="22" y="15" width="20" height="30" rx="3.2" fill="url(#av-m-ivory)" stroke="rgba(0,0,0,.45)" stroke-width="1.1"/><text x="24.5" y="22.5" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="6.5" fill="#0f172a">A</text><path d="${AV_SPADE}" transform="translate(32 31) scale(.34) translate(-32 -32)" fill="#0f172a"/></g>` },
+      'avatar-joker-card':   { tone: 'purple', animated: true, art: `
+        <g class="av-sway">
+          <rect x="19" y="11" width="26" height="40" rx="4" fill="url(#av-m-joker)" stroke="url(#av-m-gold)" stroke-width="1.6"/>
+          <g transform="translate(32 31) scale(.5) translate(-32 -32)">
+            <path d="M20 43C18 33 13 27 9.5 22.5 18 22 24 28 27 37Z" fill="#a855f7"/><path d="M44 43c2-10 7-16 10.5-20.5C46 22 40 28 37 37Z" fill="#f43f5e"/><path d="M25 43c0-12 3.5-21.5 7-28.5 3.5 7 7 16.5 7 28.5Z" fill="#10b981"/>
+            <rect x="17" y="42" width="30" height="7" rx="2.5" fill="url(#av-m-gold)"/><circle cx="9.5" cy="22.5" r="3.4" fill="url(#av-m-gold)"/><circle cx="32" cy="14.5" r="3.4" fill="url(#av-m-gold)"/><circle cx="54.5" cy="22.5" r="3.4" fill="url(#av-m-gold)"/>
+          </g>
+          <text x="22.3" y="19.5" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="5.5" fill="#fcd34d">JKR</text>
+          <g clip-path="url(#av-clip-card)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>
+        </g>` },
+
+      'avatar-shithead':     { tone: 'brown', art: `
+        <path d="M17 46.5c0-4 3.5-6.5 8-6.5h14c4.5 0 8 2.5 8 6.5S43.5 52 39 52H25c-4.5 0-8-1.5-8-5.5Z" fill="url(#av-m-poo)" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
+        <path d="M21 38.5c0-3.5 3-5.5 6.5-5.5h9c3.5 0 6.5 2 6.5 5.5S40 43 36.5 43h-9C24 43 21 42 21 38.5Z" fill="url(#av-m-poo)" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
+        <path d="M25 31c0-3 2.5-4.5 5-4.5h4.5c2.5 0 4.5 1.5 4.5 4.3 0 2.7-2 4.2-4.5 4.2h-5C27 35 25 34 25 31Z" fill="url(#av-m-poo)" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
+        <path d="M30 26.5c.5-3.5 3-5.5 5.5-6.5-.5 2.5 0 4.5 1.5 6" fill="url(#av-m-poo)" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"/>
+        <circle cx="27.5" cy="38" r="2.6" fill="#fff"/><circle cx="36.5" cy="38" r="2.6" fill="#fff"/><circle cx="28" cy="38.4" r="1.2" fill="#1c0f06"/><circle cx="37" cy="38.4" r="1.2" fill="#1c0f06"/>
+        <path d="M27 46.5c3 2.5 7 2.5 10 0" fill="none" stroke="#1c0f06" stroke-width="1.6" stroke-linecap="round"/>` },
+      'avatar-centurion':    { tone: 'red', art: `
+        <text x="32" y="38" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="21" fill="#ef4444" stroke="#7f1d1d" stroke-width=".8" letter-spacing="-1">100</text>
+        <path d="M13.5 43.5 50 41.5M15.5 48.5 47 46.8" stroke="#ef4444" stroke-width="2.6" stroke-linecap="round"/>` },
+      'avatar-crown-silver': { tone: 'silver', art: AV_CROWN('silver') + AV_CROWN_GEMS('#1d4ed8') },
+      'avatar-crown-gold':   { tone: 'gold', art: AV_CROWN('gold') + AV_CROWN_GEMS('#b91c1c') },
+      'avatar-crown-diamond':{ tone: 'cyan', animated: true, art: AV_CROWN('diamond') + AV_CROWN_GEMS('#ecfeff') + `
+        <g class="av-twinkle"><path d="m45 11 1.2 3.3 3.3 1.2-3.3 1.2L45 20l-1.2-3.3-3.3-1.2 3.3-1.2Z" fill="#fff"/></g>
+        <g class="av-twinkle av-twinkle-2"><path d="m19 12 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z" fill="#cffafe"/></g>` },
+      'avatar-crown-master': { tone: 'purple', animated: true, art: AV_CROWN('master') + AV_CROWN_GEMS('#fdf4ff') + `
+        <g class="av-twinkle"><path d="m48 9 1.3 3.7 3.7 1.3-3.7 1.3L48 19l-1.3-3.7-3.7-1.3 3.7-1.3Z" fill="#fff"/></g>
+        <g class="av-twinkle av-twinkle-2"><path d="m15 10 1 2.8 2.8 1-2.8 1-1 2.8-1-2.8-2.8-1 2.8-1Z" fill="#f5d0fe"/></g>
+        <g class="av-twinkle av-twinkle-3"><path d="m53 44 .9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9Z" fill="#e9d5ff"/></g>
+        <g class="av-twinkle av-twinkle-4"><path d="m10 42 .8 2.1 2.1.8-2.1.8-.8 2.1-.8-2.1-2.1-.8 2.1-.8Z" fill="#fff"/></g>` }
+    };
+
+    document.body.insertAdjacentHTML('afterbegin', AVATAR_DEFS_SVG);
+    const DEFAULT_AVATAR_ID = 'avatar-crown-bronze';
+    function resolveAvatarId(id) {
+      return AVATAR_ART[id] ? id : DEFAULT_AVATAR_ID;
+    }
+    function avatarSvg(id) {
+      const art = AVATAR_ART[resolveAvatarId(id)];
+      const [, , rim] = AVATAR_TONES[art.tone];
+      return `<svg viewBox="0 0 64 64" class="avatar-svg" aria-hidden="true" focusable="false">
+        <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#av-bg-${art.tone})" stroke="${rim}" stroke-width="2"/>
+        <rect x="4.5" y="4.5" width="55" height="55" rx="12.5" fill="none" stroke="rgba(255,255,255,.07)"/>
+        <g clip-path="url(#av-clip-tile)">${art.art}</g>
+      </svg>`;
+    }
+    // size: px. Every surface uses this so the aspect ratio (1:1 rounded
+    // square, matching the default profile icon) is identical everywhere.
+    // The one place that decides which picture a seat shows: you see your own
+    // equipped picture, bots carry theirs on the seat, and other people's
+    // come from the public loadout they publish into the room.
+    function getPlayerAvatarId(player) {
+      if (!player) return DEFAULT_AVATAR_ID;
+      if (player.id === state?.localPlayerId && !player.isBot) return resolveAvatarId(equippedCosmetics?.avatar);
+      if (player.isBot) return resolveAvatarId(player.avatar);
+      return resolveAvatarId(player.cosmetics?.avatar);
+    }
+    // Bots wear a random FREE picture, never the same as another bot at the
+    // table. pickBotAvatar is used when a bot is created; ensureBotAvatars is
+    // a deterministic safety net at render time (same result on every client,
+    // since it only depends on seat order and ids) for bots from older saves.
+    function pickBotAvatar(players = []) {
+      const taken = new Set(players.filter(p => p && p.isBot).map(p => p.avatar));
+      const options = FREE_AVATAR_IDS.filter(id => !taken.has(id));
+      const pool = options.length ? options : FREE_AVATAR_IDS;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+    function ensureBotAvatars(players = []) {
+      const used = new Set();
+      players.forEach(p => {
+        if (!p || !p.isBot) return;
+        if (FREE_AVATAR_IDS.includes(p.avatar) && !used.has(p.avatar)) { used.add(p.avatar); return; }
+        const seed = String(p.id || '').split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+        const pick = FREE_AVATAR_IDS.map((_, i) => FREE_AVATAR_IDS[(seed + i) % FREE_AVATAR_IDS.length]).find(id => !used.has(id)) || FREE_AVATAR_IDS[seed % FREE_AVATAR_IDS.length];
+        p.avatar = pick;
+        used.add(pick);
+      });
+    }
+    function avatarHtml(id, size = 32, extraClass = '') {
+      const item = getAvatarItem(resolveAvatarId(id));
+      return `<span class="avatar-tile ${extraClass}" style="width:${size}px;height:${size}px" role="img" aria-label="${item ? escapeAttr(item.name) : 'Profile picture'}">${avatarSvg(id)}</span>`;
+    }
+
     const NAME_CHANGE_TOKEN_COST = 100;
     const COSMETIC_SHOP_ITEMS = [
       { id: 'back-midnight', category: 'Card Backs', name: 'Midnight Royale', cost: 40, tones: ['#0f172a','#38bdf8','#cbd5e1'] },
@@ -12639,16 +12882,51 @@ video {
       { id: 'burn-electric', category: 'Burn Effects', name: 'Electric Blast', cost: 750, tones: ['#164e63','#fde047','#ffffff'] },
       { id: 'victory-confetti', category: 'Victory Effects', name: 'Confetti Burst', cost: 250, tones: ['#7c2d12','#fbbf24','#ec4899'] },
       { id: 'victory-cards', category: 'Victory Effects', name: 'Card Shower', cost: 500, tones: ['#172554','#60a5fa','#f8fafc'] },
-      { id: 'victory-fireworks', category: 'Victory Effects', name: 'Fireworks', cost: 750, tones: ['#312e81','#c084fc','#fde047'] }
+      { id: 'victory-fireworks', category: 'Victory Effects', name: 'Fireworks', cost: 750, tones: ['#312e81','#c084fc','#fde047'] },
+      { id: 'avatar-ace-spades', category: 'Profile Pictures', name: 'Ace of Spades', cost: 200, tones: ['#1e293b','#cbd5e1','#f8fafc'] },
+      { id: 'avatar-queen-hearts', category: 'Profile Pictures', name: 'Queen of Hearts', cost: 200, tones: ['#3f0b1b','#e11d48','#fbbf24'] },
+      { id: 'avatar-joker', category: 'Profile Pictures', name: 'Joker', cost: 200, tones: ['#2e1065','#a855f7','#10b981'] },
+      { id: 'avatar-burn-flame', category: 'Profile Pictures', name: 'Burn Flame', cost: 500, tones: ['#431407','#f97316','#fcd34d'] },
+      { id: 'avatar-ghost', category: 'Profile Pictures', name: 'Transparent Ghost', cost: 500, tones: ['#1e293b','#94a3b8','#f8fafc'] },
+      { id: 'avatar-frozen', category: 'Profile Pictures', name: 'Frozen', cost: 500, tones: ['#0c4a6e','#38bdf8','#e0f2fe'] },
+      { id: 'avatar-burning-ten', category: 'Profile Pictures', name: 'Burning 10', cost: 1000, animated: true, tones: ['#431407','#f97316','#fcd34d'] },
+      { id: 'avatar-fanned-hand', category: 'Profile Pictures', name: 'Fanned Hand', cost: 1000, animated: true, tones: ['#0f172a','#e11d48','#fbbf24'] },
+      { id: 'avatar-joker-card', category: 'Profile Pictures', name: 'Joker Card', cost: 1000, animated: true, tones: ['#2e1065','#a855f7','#fbbf24'] }
     ];
     // Classic Reactions ships with the game. It remains selectable for old
     // saves, but is intentionally not a purchasable Shop item.
     const BUILT_IN_COSMETICS = [
-      { id: 'emotes-classic', category: 'Emote Packs', name: 'Classic Reactions', cost: 0, builtIn: true, tones: ['#172033','#34d399','#fbbf24'] }
+      { id: 'emotes-classic', category: 'Emote Packs', name: 'Classic Reactions', cost: 0, builtIn: true, tones: ['#172033','#34d399','#fbbf24'] },
+      // Free profile pictures. Bronze Crown is also what 'default' shows.
+      { id: 'avatar-crown-bronze', category: 'Profile Pictures', name: 'Bronze Crown', cost: 0, builtIn: true },
+      { id: 'avatar-suit-spades', category: 'Profile Pictures', name: 'Spades', cost: 0, builtIn: true },
+      { id: 'avatar-suit-hearts', category: 'Profile Pictures', name: 'Hearts', cost: 0, builtIn: true },
+      { id: 'avatar-suit-diamonds', category: 'Profile Pictures', name: 'Diamonds', cost: 0, builtIn: true },
+      { id: 'avatar-suit-clubs', category: 'Profile Pictures', name: 'Clubs', cost: 0, builtIn: true }
     ];
+    // Earn-only profile pictures: never sold. Unlocked by ranked milestones
+    // (see grantEarnedAvatars) and then recorded in ownedCosmetics like any
+    // other owned item, so they stay unlocked even if rating later drops.
+    // There is no "Diamond" rank tier; the Diamond Crown marks Platinum.
+    const EARNED_AVATARS = [
+      { id: 'avatar-crown-silver', category: 'Profile Pictures', name: 'Silver Crown', earned: true, requirement: 'Reach Silver rank', isEarned: (u) => avatarPeakRating(u) >= 1000 },
+      { id: 'avatar-crown-gold', category: 'Profile Pictures', name: 'Gold Crown', earned: true, requirement: 'Reach Gold rank', isEarned: (u) => avatarPeakRating(u) >= 1500 },
+      { id: 'avatar-crown-diamond', category: 'Profile Pictures', name: 'Diamond Crown', earned: true, animated: true, requirement: 'Reach Platinum rank', isEarned: (u) => avatarPeakRating(u) >= 1800 },
+      { id: 'avatar-crown-master', category: 'Profile Pictures', name: 'Master Crown', earned: true, animated: true, requirement: 'Reach Master rank', isEarned: (u) => avatarPeakRating(u) >= 2000 },
+      { id: 'avatar-centurion', category: 'Profile Pictures', name: 'Centurion', earned: true, requirement: 'Play 100 ranked games', isEarned: (u) => ((Number(u?.wins) || 0) + (Number(u?.losses) || 0)) >= 100 },
+      { id: 'avatar-shithead', category: 'Profile Pictures', name: 'ShitHead', earned: true, requirement: 'Lose 10 ranked games in a row', isEarned: (u) => (Number(u?.rankedStats?.bestLossStreak) || 0) >= 10 }
+    ];
+    function avatarPeakRating(u) {
+      return Math.max(Number(u?.rating) || 0, Number(u?.rankedStats?.highestRating) || 0);
+    }
+    const FREE_AVATAR_IDS = ['avatar-crown-bronze', 'avatar-suit-spades', 'avatar-suit-hearts', 'avatar-suit-diamonds', 'avatar-suit-clubs'];
+    function getAvatarItem(id) {
+      return [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].find(item => item.id === id && item.category === 'Profile Pictures') || null;
+    }
     const COSMETIC_CATEGORY_TYPES = Object.freeze({
       'Card Backs': 'cardBack', 'Frames': 'frame', 'Emote Packs': 'emotes',
-      'Table Themes': 'tableTheme', 'Burn Effects': 'burnEffect', 'Victory Effects': 'victoryEffect'
+      'Table Themes': 'tableTheme', 'Burn Effects': 'burnEffect', 'Victory Effects': 'victoryEffect',
+      'Profile Pictures': 'avatar'
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
       cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno']),
@@ -12656,7 +12934,8 @@ video {
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal']),
       tableTheme: new Set(['table-casino','table-winter']),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric']),
-      victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks'])
+      victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks']),
+      avatar: new Set(Object.keys(AVATAR_ART))
     });
     let nameChangeTokenState = null;
     let cosmeticPurchaseState = {};
@@ -12667,7 +12946,7 @@ video {
       try { return new Set(JSON.parse(localStorage.getItem('shithead_new_cosmetics') || '[]')); }
       catch (e) { return new Set(); }
     })();
-    const DEFAULT_EQUIPPED_COSMETICS = { cardBack: 'default', frame: 'default', emotes: 'default', tableTheme: 'default', burnEffect: 'default', victoryEffect: 'default' };
+    const DEFAULT_EQUIPPED_COSMETICS = { cardBack: 'default', frame: 'default', emotes: 'default', tableTheme: 'default', burnEffect: 'default', victoryEffect: 'default', avatar: 'default' };
     let equippedCosmetics = (() => {
       try {
         return { ...DEFAULT_EQUIPPED_COSMETICS, ...JSON.parse(localStorage.getItem('shithead_equipped_cosmetics') || '{}') };
@@ -12681,7 +12960,8 @@ video {
         cardBack: equippedCosmetics.cardBack || 'default',
         frame: equippedCosmetics.frame || 'default',
         burnEffect: equippedCosmetics.burnEffect || 'default',
-        victoryEffect: equippedCosmetics.victoryEffect || 'default'
+        victoryEffect: equippedCosmetics.victoryEffect || 'default',
+        avatar: equippedCosmetics.avatar || 'default'
       };
     }
 
@@ -12697,7 +12977,7 @@ video {
 
     function isSupportedCosmetic(type, id) {
       if (id === 'default') return Object.prototype.hasOwnProperty.call(DEFAULT_EQUIPPED_COSMETICS, type);
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS].find(entry => entry.id === id);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS].find(entry => entry.id === id);
       return !!item && COSMETIC_CATEGORY_TYPES[item.category] === type && !!COSMETIC_RUNTIME_IDS[type]?.has(id);
     }
 
@@ -12717,6 +12997,8 @@ video {
       document.body.dataset.equippedTableTheme = equippedCosmetics.tableTheme || 'default';
       document.body.dataset.equippedBurnEffect = equippedCosmetics.burnEffect;
       document.body.dataset.equippedVictoryEffect = equippedCosmetics.victoryEffect;
+      document.body.dataset.equippedAvatar = equippedCosmetics.avatar || 'default';
+      refreshOwnAvatarDisplays();
       try { localStorage.setItem('shithead_equipped_cosmetics', JSON.stringify(equippedCosmetics)); } catch (e) {}
       publishLocalCosmeticsToRoom();
       if (typeof emoteFanOpen !== 'undefined' && emoteFanOpen) {
@@ -12724,6 +13006,12 @@ video {
         toggleEmoteFan(false);
       }
       if (typeof render === 'function' && state && state.phase !== 'LOBBY') render();
+    }
+
+    function refreshOwnAvatarDisplays() {
+      document.querySelectorAll('[data-own-avatar]').forEach(slot => {
+        slot.innerHTML = avatarHtml(equippedCosmetics.avatar, Number(slot.dataset.ownAvatar) || 42);
+      });
     }
 
     function previewEquippedCosmetic(type, id) {
@@ -12756,14 +13044,17 @@ video {
       equippedCosmetics[type] = id;
       applyEquippedCosmetics();
       renderPersonalisationCosmetics();
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS].find(entry => entry.id === id);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS].find(entry => entry.id === id);
       const effectsDisabled = (type === 'burnEffect' || type === 'victoryEffect') && !bigEffectsOn;
       const status = document.getElementById('personalisationStatus');
       if (status) status.textContent = `${item ? item.name : 'Default'} equipped.${effectsDisabled ? ' Effects are currently disabled in Settings.' : ''}`;
       if (id === lastPurchasedCosmeticId) lastPurchasedCosmeticId = null;
       if (typeof renderCosmeticShop === 'function') renderCosmeticShop();
       if (preview) previewEquippedCosmetic(type, id);
-      if (sync && currentUser) db.ref(`users/${currentUser.uid}/equippedCosmetics/${type}`).set(id).catch(() => {
+      if (sync && currentUser) db.ref(`users/${currentUser.uid}/equippedCosmetics/${type}`).set(id).then(() => {
+        // Other players see pictures via the public profile / leaderboard copy.
+        if (type === 'avatar') syncPublicProfile();
+      }).catch(() => {
         if (status) status.textContent = 'Equipped on this device, but account sync failed.';
       });
       return true;
@@ -12795,7 +13086,33 @@ video {
       </button>`;
     }
 
+    function avatarOptionHtml(item) {
+      const equippedId = resolveAvatarId(equippedCosmetics.avatar);
+      const owned = !!item.builtIn || !!cosmeticPurchaseState[item.id];
+      const active = owned && equippedId === item.id;
+      const status = active ? '✓ EQUIPPED'
+        : owned ? 'Tap to equip'
+        : item.earned ? item.requirement
+        : `💎 ${item.cost} in Shop`;
+      return `<button type="button" class="avatar-option" data-equip-type="avatar" data-equip-id="${item.id}" ${owned ? '' : 'disabled'} aria-pressed="${active}">
+        <span class="avatar-option-art">${avatarHtml(item.id, 52, owned ? '' : (item.earned ? 'avatar-locked' : ''))}${owned ? '' : '<span class="avatar-option-lock" aria-hidden="true">🔒</span>'}</span>
+        <span class="avatar-option-name">${item.name}</span>
+        <span class="avatar-option-status ${owned ? '' : 'is-locked'}">${status}</span>
+      </button>`;
+    }
+
+    function renderPersonalisationAvatars() {
+      const grid = document.getElementById('personalisationAvatars');
+      if (!grid) return;
+      const shopAvatars = COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Profile Pictures');
+      const freeAvatars = BUILT_IN_COSMETICS.filter(item => item.category === 'Profile Pictures');
+      grid.innerHTML = `<span class="avatar-picker-label">Free</span>${freeAvatars.map(avatarOptionHtml).join('')}
+        <span class="avatar-picker-label">Shop</span>${shopAvatars.map(avatarOptionHtml).join('')}
+        <span class="avatar-picker-label">Earn in Ranked</span>${EARNED_AVATARS.map(avatarOptionHtml).join('')}`;
+    }
+
     function renderPersonalisationCosmetics() {
+      renderPersonalisationAvatars();
       const backs = document.getElementById('personalisationCardBacks');
       const frames = document.getElementById('personalisationFrames');
       const emotes = document.getElementById('personalisationEmotes');
@@ -12829,15 +13146,43 @@ video {
         cosmeticPurchaseState = { ...(purchaseSnap.val() || {}), ...(ownedSnap.val() || {}) };
         const saved = equippedSnap.val() || {};
         equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS, ...saved };
-        ['cardBack', 'frame', 'emotes', 'tableTheme', 'burnEffect', 'victoryEffect'].forEach(type => {
+        ['cardBack', 'frame', 'emotes', 'tableTheme', 'burnEffect', 'victoryEffect', 'avatar'].forEach(type => {
           const id = equippedCosmetics[type];
           if (!canRestoreEquippedCosmetic(type, id)) equippedCosmetics[type] = 'default';
         });
         applyEquippedCosmetics();
         renderPersonalisationCosmetics();
+        // Catches milestones reached before earn-only pictures existed.
+        return db.ref(`users/${user.uid}`).once('value').then(snap => grantEarnedAvatars(snap.val()));
       }).catch(() => {
         document.getElementById('personalisationStatus').textContent = 'Could not load your cosmetic collection. Please try again.';
       });
+    }
+
+    // Unlocks any earn-only profile picture whose milestone the given
+    // users/{uid} snapshot meets. Recorded in ownedCosmetics (so it survives
+    // a later rating drop) with an inbox note and a banner.
+    function grantEarnedAvatars(userVal) {
+      if (!currentUser || !userVal) return Promise.resolve([]);
+      const newly = EARNED_AVATARS.filter(item => !cosmeticPurchaseState[item.id] && item.isEarned(userVal));
+      if (!newly.length) return Promise.resolve([]);
+      const now = Date.now();
+      const updates = {};
+      newly.forEach(item => {
+        updates[`ownedCosmetics/${item.id}`] = { cost: 0, purchasedAt: now };
+        updates[`activityInbox/unlock_${item.id}`] = { type: 'shop', unlocked: true, name: item.name, cost: 0, requirement: item.requirement, sentAt: now };
+      });
+      return db.ref(`users/${currentUser.uid}`).update(updates).then(() => {
+        newly.forEach(item => {
+          cosmeticPurchaseState[item.id] = { cost: 0, purchasedAt: now };
+          newCosmeticIds.add(item.id);
+        });
+        persistNewCosmetics();
+        renderPersonalisationCosmetics();
+        if (typeof refreshInboxBadge === 'function') refreshInboxBadge();
+        notifyBanner(`🏆 Profile picture unlocked: ${newly.map(item => item.name).join(', ')}`);
+        return newly;
+      }).catch((error) => { console.warn('grantEarnedAvatars failed', error); return []; });
     }
 
     document.getElementById('themesModal').addEventListener('click', (event) => {
@@ -12913,7 +13258,7 @@ video {
       const list = document.getElementById('cosmeticShopList');
       if (!list) return;
       const balance = challengeEconomy.diamonds || 0;
-      const groups = ['Card Backs', 'Frames', 'Emote Packs', 'Table Themes', 'Burn Effects', 'Victory Effects'];
+      const groups = ['Profile Pictures', 'Card Backs', 'Frames', 'Emote Packs', 'Table Themes', 'Burn Effects', 'Victory Effects'];
       list.innerHTML = groups.map(category => {
         const categoryItems = COSMETIC_SHOP_ITEMS.filter(item => item.category === category && shopItemMatchesFilter(item, balance));
         if (!categoryItems.length) return '';
@@ -12981,11 +13326,13 @@ video {
         emotes: 'Changes the six reactions in your emote fan',
         tableTheme: 'Changes your table background and arena styling',
         burnEffect: 'Plays when you burn the pile',
-        victoryEffect: 'Plays when you finish in first place'
+        victoryEffect: 'Plays when you finish in first place',
+        avatar: 'Your picture in games, Friends and the leaderboard'
       }[type] || 'Custom item';
     }
 
     function shopCosmeticThumbnail(item, type) {
+      if (type === 'avatar') return avatarHtml(item.id, 40);
       if (type === 'emotes') return `<span class="text-[13px] leading-tight text-center">${(EMOTE_PACKS[item.id] || []).slice(0, 4).join('')}</span>`;
       if (type === 'cardBack') return `<span class="w-7 h-[42px] rounded-md custom-card-back ${getCosmeticBackClass(item.id)} border border-slate-500 flex items-center justify-center shadow-md">${getEmblemSvg()}</span>`;
       if (type === 'frame') return `<span class="relative w-7 h-[42px] rounded-md bg-slate-950 border-2 flex flex-col items-start p-1 font-black text-[8px] text-white" style="border-color:${item.tones[1]};box-shadow:0 0 7px ${item.tones[1]}"><span>A</span><span class="${item.id === 'frame-gold' ? 'text-amber-300' : 'text-red-400'}">♥</span></span>`;
@@ -13007,6 +13354,8 @@ video {
         demo = `<div class="shop-preview-stage"><div class="shop-table-preview" style="--shop-table-bg:${bg};--shop-table-trim:${item.tones[2]}"><span class="shop-table-preview-label">${item.name}</span><span class="shop-table-preview-card deck"></span><span class="shop-table-preview-card pile"></span><span class="shop-table-preview-card base"></span></div></div>`;
       } else if (type === 'burnEffect') {
         demo = `<div class="shop-preview-stage" data-shop-burn-stage><div class="shop-burn-core">${burnPreviewIcon(item.id)}</div></div>`;
+      } else if (type === 'avatar') {
+        demo = `<div class="shop-preview-stage"><div class="avatar-demo">${avatarHtml(item.id, 84)}<div class="avatar-demo-list"><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>IN GAME</span></span><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>#1 <small>Leaderboard</small></span></span><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>FRIENDS</span></span></div></div></div>`;
       } else if (type === 'victoryEffect') {
         demo = `<div class="shop-preview-stage"><div class="text-center"><div class="text-5xl">${item.id === 'victory-cards' ? '🃏' : item.id === 'victory-fireworks' ? '🎆' : '🎉'}</div><div class="text-[8px] text-slate-400 mt-1">Tap below to play the win animation</div></div></div>`;
       }
@@ -13562,6 +13911,7 @@ video {
     }
     function openProfilePanel() {
       refreshProfilePanel();
+      refreshOwnAvatarDisplays();
       document.getElementById('profileModal').classList.remove('hidden');
     }
     document.getElementById('profileCloseBtn').addEventListener('click', () => document.getElementById('profileModal').classList.add('hidden'));
@@ -15510,6 +15860,9 @@ video {
           jokersPlayed: (rs.jokersPlayed || 0) + (me.gameStats?.jokersPlayed || 0),
           currentStreak: newStreak,
           bestStreak: Math.max(rs.bestStreak || 0, newStreak),
+          // Consecutive ranked losses, for the earn-only ShitHead picture.
+          currentLossStreak: won ? 0 : (rs.currentLossStreak || 0) + 1,
+          bestLossStreak: Math.max(rs.bestLossStreak || 0, won ? 0 : (rs.currentLossStreak || 0) + 1),
           highestRating: Math.max(rs.highestRating != null ? rs.highestRating : c.rating, newRating),
           lowestRating: Math.min(rs.lowestRating != null ? rs.lowestRating : c.rating, newRating)
         };
@@ -15552,6 +15905,7 @@ video {
           // single source of truth for these totals.
           if (committed && snapshot) {
             const val = snapshot.val() || {};
+            grantEarnedAvatars(val);
             challengeEconomy.rating = val.rating != null ? val.rating : challengeEconomy.rating;
             challengeEconomy.wins = val.wins || 0;
             challengeEconomy.losses = val.losses || 0;
@@ -15575,13 +15929,18 @@ video {
       return getOrCreateUserProfile(currentUser.uid).then((profile) => {
         const tier = getRankTier(profile.rating || 500).name;
         const username = (typeof profile.username === 'string' && profile.username.trim()) ? profile.username.trim() : null;
-        const publicProfileWrite = db.ref(`publicProfiles/${currentUser.uid}`).update({
+        // The picture is written separately so a rules set that predates
+        // profile pictures can only reject the picture, never the rating.
+        const avatar = resolveAvatarId(equippedCosmetics.avatar);
+        const uid = currentUser.uid;
+        const publicProfileWrite = db.ref(`publicProfiles/${uid}`).update({
           username,
           rating: profile.rating != null ? profile.rating : 500,
           tier
-        });
+        }).then(() => db.ref(`publicProfiles/${uid}/avatar`).set(avatar).catch(() => {}));
         const leaderboardWrite = username
           ? db.ref(`leaderboard/${username.toLowerCase()}`).set({ username, rating: profile.rating != null ? profile.rating : 500, tier, wins: profile.wins || 0, losses: profile.losses || 0 })
+            .then(() => db.ref(`leaderboard/${username.toLowerCase()}/avatar`).set(avatar).catch(() => {}))
           : Promise.resolve();
         return Promise.all([publicProfileWrite, leaderboardWrite]).catch((e) => console.warn('syncPublicProfile failed', e));
       });
@@ -15657,6 +16016,7 @@ video {
       return `<div class="flex items-center justify-between gap-2 bg-slate-900/60 border border-slate-800 rounded-xl px-2.5 py-2">
         <div class="flex items-center gap-2 min-w-0">
           <span class="presence-dot ${presenceClass}"></span>
+          ${avatarHtml(profile.avatar, 30)}
           <div class="min-w-0">
             <span class="text-xs font-bold text-white truncate block">${name}</span>
             ${ratingHtml}
@@ -15836,7 +16196,7 @@ video {
     function inboxItemHtml(item) {
       if (item.type === 'request') {
         return `<div class="bg-slate-900/60 border border-slate-800 rounded-xl px-2.5 py-2">
-          <p class="text-xs font-bold text-white mb-1.5">${escapeHtml(item.name)} wants to be friends</p>
+          <p class="text-xs font-bold text-white mb-1.5 flex items-center gap-2">${avatarHtml(item.avatar, 28)}<span class="min-w-0">${escapeHtml(item.name)} wants to be friends</span></p>
           <div class="flex gap-1.5">
             <button data-uid="${escapeAttr(item.uid)}" class="inbox-accept-req-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">ACCEPT</button>
             <button data-uid="${escapeAttr(item.uid)}" class="inbox-decline-req-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">DECLINE</button>
@@ -15853,22 +16213,27 @@ video {
       }
       if (item.type === 'rank' || item.type === 'shop') {
         const isRank = item.type === 'rank';
-        const heading = isRank ? `Rank ${item.direction === 'up' ? 'up' : 'down'}` : 'Shop purchase';
+        const heading = isRank ? `Rank ${item.direction === 'up' ? 'up' : 'down'}` : item.unlocked ? 'Profile picture unlocked' : 'Shop purchase';
         const detail = isRank
           ? `${escapeHtml(item.fromTier)} → ${escapeHtml(item.toTier)}`
           : escapeHtml(item.name);
         const subtext = isRank
           ? `${Math.round(Number(item.previousRating) || 0)} → ${Math.round(Number(item.newRating) || 0)} rating points`
-          : `${Number(item.cost) || 0} Diamonds spent`;
+          : item.unlocked ? escapeHtml(item.requirement || 'Earned in Ranked') : `${Number(item.cost) || 0} Diamonds spent`;
+        // Shop mail keys are shop_<itemId>; unlock mail keys are unlock_<itemId>.
+        const avatarId = String(item.id || '').replace(/^(shop|unlock)_/, '');
+        const thumb = AVATAR_ART[avatarId] ? avatarHtml(avatarId, 34) : '';
         return `<div class="inbox-activity--${item.type} border rounded-xl px-2.5 py-2">
+          <div class="flex items-center gap-2">${thumb}<div class="min-w-0">
           <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${heading}</p>
           <p class="text-xs font-bold text-white">${detail}</p>
           <p class="inbox-activity-accent text-[10px] mt-1">${subtext}</p>
+          </div></div>
           <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
         </div>`;
       }
       return `<div class="bg-slate-900/60 border border-slate-800 rounded-xl px-2.5 py-2">
-        <p class="text-xs font-bold text-white mb-1.5">${escapeHtml(item.fromName)} invited you to a private game</p>
+        <p class="text-xs font-bold text-white mb-1.5 flex items-center gap-2">${avatarHtml(item.avatar, 28)}<span class="min-w-0">${escapeHtml(item.fromName)} invited you to a private game</span></p>
         <div class="flex gap-1.5">
           <button data-room="${escapeAttr(item.roomCode)}" data-id="${escapeAttr(item.id)}" class="inbox-join-invite-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">JOIN</button>
           <button data-id="${escapeAttr(item.id)}" class="inbox-decline-invite-btn flex-1 text-[9px] font-black py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">DECLINE</button>
@@ -15895,7 +16260,7 @@ video {
         Object.keys(invData).forEach((id) => {
           const inv = invData[id];
           if (now - inv.sentAt > GAME_INVITE_EXPIRY_MS) { db.ref(`gameInvites/${uid}/${id}`).remove(); return; }
-          items.push({ type: 'invite', id, fromName: inv.fromName, roomCode: inv.roomCode, sentAt: inv.sentAt });
+          items.push({ type: 'invite', id, fromUid: inv.fromUid, fromName: inv.fromName, roomCode: inv.roomCode, sentAt: inv.sentAt });
         });
         Object.entries(challengeSnap.val() || {}).forEach(([id, mail]) => {
           if (!mail || typeof mail !== 'object') return;
@@ -15909,6 +16274,11 @@ video {
         if (items.length === 0) { area.innerHTML = ''; document.getElementById('inboxEmptyMsg').classList.remove('hidden'); return; }
         document.getElementById('inboxEmptyMsg').classList.add('hidden');
         area.innerHTML = items.map(inboxItemHtml).join('');
+        // Senders' pictures arrive a moment later from their public profiles.
+        const people = items.filter(item => item.type === 'request' || item.type === 'invite');
+        Promise.all(people.map(item => db.ref(`publicProfiles/${item.type === 'request' ? item.uid : item.fromUid}/avatar`).once('value')
+          .then(snap => { item.avatar = snap.val(); }).catch(() => {})))
+          .then(() => { if (people.length && currentUser?.uid === uid) area.innerHTML = items.map(inboxItemHtml).join(''); });
       }).catch((e) => { area.innerHTML = ''; console.warn('renderInbox failed', e); });
     }
     document.getElementById('inboxArea').addEventListener('click', (e) => {
@@ -16181,6 +16551,7 @@ video {
       return `<div class="flex items-center justify-between gap-2 border rounded-xl px-2.5 py-2 ${isMe ? 'bg-amber-950/40 border-amber-600' : 'bg-slate-900/60 border-slate-800'}">
         <div class="flex items-center gap-2 min-w-0">
           <span class="text-[10px] font-black text-slate-500" style="width:20px;text-align:right;">#${rank}</span>
+          ${avatarHtml(p.avatar, 30)}
           <div class="min-w-0"><div class="text-xs font-bold text-white truncate">${p.username || 'Player'}${isMe ? ' <span class=\"text-amber-300 text-[8px]\">YOU</span>' : ''}</div><div class="text-[8px] text-slate-500">${Number(p.wins)||0}W · ${Number(p.losses)||0}L · ${((Number(p.wins)||0)+(Number(p.losses)||0))} played</div></div>
         </div>
         <span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border font-black text-[10px] w-fit ${tier.cls}" style="${tier.style}">${tier.name} \u00b7 ${Math.round(p.rating || 500)}</span>
@@ -20557,6 +20928,72 @@ video {
         assertEqual(getComputedStyle(document.getElementById('handZoneLabel'), '::after').content, '"↓"', 'The Hand label must point down at the hand');
       });
 
+      await test('REGRESSION: profile picture catalogue matches the owner spec', () => {
+        const free = BUILT_IN_COSMETICS.filter(i => i.category === 'Profile Pictures').map(i => i.name);
+        assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
+        const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Profile Pictures').map(i => [i.name, i.cost]));
+        assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000 }, 'Shop pictures and prices');
+        assertEqual(EARNED_AVATARS.map(i => i.name), ['Silver Crown', 'Gold Crown', 'Diamond Crown', 'Master Crown', 'Centurion', 'ShitHead'], 'Earn-only pictures');
+        [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Profile Pictures')
+          .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
+      });
+      await test('REGRESSION: every profile picture renders as the same 1:1 rounded square', () => {
+        const host = document.createElement('div');
+        host.innerHTML = Object.keys(AVATAR_ART).map(id => avatarHtml(id, 40)).join('');
+        document.body.appendChild(host);
+        [...host.children].forEach(tile => {
+          const b = tile.getBoundingClientRect();
+          assertEqual([Math.round(b.width), Math.round(b.height)], [40, 40], 'Every picture must be a 40x40 square at size 40');
+        });
+        host.remove();
+        assertEqual(resolveAvatarId('default'), 'avatar-crown-bronze', 'No picture chosen shows the Bronze Crown');
+      });
+      await test('REGRESSION: earn-only pictures unlock at the right milestones', () => {
+        const byId = Object.fromEntries(EARNED_AVATARS.map(i => [i.id, i]));
+        assertTrue(!byId['avatar-crown-silver'].isEarned({ rating: 999 }) && byId['avatar-crown-silver'].isEarned({ rating: 1000 }), 'Silver at 1000');
+        assertTrue(byId['avatar-crown-gold'].isEarned({ rating: 900, rankedStats: { highestRating: 1500 } }), 'Gold counts a past peak');
+        assertTrue(byId['avatar-crown-diamond'].isEarned({ rating: 1800 }) && !byId['avatar-crown-master'].isEarned({ rating: 1999 }), 'Platinum/Master thresholds');
+        assertTrue(byId['avatar-centurion'].isEarned({ wins: 40, losses: 60 }) && !byId['avatar-centurion'].isEarned({ wins: 40, losses: 59 }), '100 ranked games');
+        assertTrue(byId['avatar-shithead'].isEarned({ rankedStats: { bestLossStreak: 10 } }) && !byId['avatar-shithead'].isEarned({ rankedStats: { bestLossStreak: 9 } }), '10 losses in a row');
+      });
+      await test('REGRESSION: bots get free pictures and never share one at the same table', () => {
+        for (let round = 0; round < 25; round++) {
+          const players = [makePlayer({ id: 'p1' })];
+          for (let i = 1; i <= 3; i++) players.push(makePlayer({ id: `p_bot_${i}`, isBot: true, avatar: pickBotAvatar(players) }));
+          const ids = players.filter(p => p.isBot).map(p => p.avatar);
+          assertEqual(new Set(ids).size, 3, 'Three bots must have three different pictures');
+          ids.forEach(id => assertTrue(FREE_AVATAR_IDS.includes(id), 'Bots only use free pictures'));
+        }
+        const legacy = [makePlayer({ id: 'b1', isBot: true }), makePlayer({ id: 'b2', isBot: true, avatar: 'avatar-suit-hearts' }), makePlayer({ id: 'b3', isBot: true, avatar: 'avatar-suit-hearts' })];
+        ensureBotAvatars(legacy);
+        assertEqual(new Set(legacy.map(p => p.avatar)).size, 3, 'Old saves with missing or duplicate bot pictures are repaired');
+      });
+      await test('REGRESSION: opponent seats show picture + name on top and statuses below the cards', () => {
+        freshState({ phase: 'SWAP' });
+        state.players = [makePlayer({ id: 'p1', hand: [makeCard('4')] }),
+          makePlayer({ id: 'p2', name: 'Maximilian', isBot: true, avatar: 'avatar-suit-clubs', isReady: true, faceUp: [makeCard('5')], faceDown: [makeCard('6')] }),
+          makePlayer({ id: 'p3', name: 'Ro', isBot: true, isReady: false }), makePlayer({ id: 'p4', name: 'Et', isBot: true })];
+        render();
+        const seat = document.getElementById('opp-p2');
+        const [head, cards, status] = [...seat.children];
+        assertTrue(head.classList.contains('opp-head') && !!head.querySelector('.avatar-tile') && head.textContent.includes('Maximilian'), 'Top row: picture and full name');
+        assertTrue(cards.classList.contains('opp-slot-row'), 'Middle row: cards');
+        assertTrue(status.classList.contains('opp-status-row') && status.textContent.includes('Ready'), 'Bottom row: Ready/Waiting and badges');
+        assertTrue(head.getBoundingClientRect().width <= cards.getBoundingClientRect().width + 1, 'A long name must not widen the seat');
+      });
+      await test('REGRESSION: Custom lists every picture, with earn-only ones locked until unlocked', () => {
+        const saved = cosmeticPurchaseState;
+        cosmeticPurchaseState = {};
+        renderPersonalisationAvatars();
+        const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
+        assertEqual(options.length, 20, 'All 20 pictures appear in Custom');
+        const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
+        assertTrue(master.disabled && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
+        assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
+        cosmeticPurchaseState = saved;
+        renderPersonalisationAvatars();
+      });
+
       await test('Accessibility settings exist and apply', () => {
         ['setContrastRow','setMotionRow','setHapticsRow','volumeSlider'].forEach(id => {
           assertTrue(!!document.getElementById(id), `${id} must exist in settings`);
@@ -22449,7 +22886,7 @@ video {
 
       await test('Multiplayer cosmetic payload exposes only visible gameplay cosmetics', () => {
         const loadout = getPublicCosmeticLoadout();
-        assertEqual(Object.keys(loadout).sort(), ['burnEffect','cardBack','frame','victoryEffect'], 'Only opponent-visible cosmetics should be synced');
+        assertEqual(Object.keys(loadout).sort(), ['avatar','burnEffect','cardBack','frame','victoryEffect'], 'Only opponent-visible cosmetics (incl. the profile picture) should be synced');
         assertTrue(getCosmeticBackClass('back-neon') === 'cosmetic-back-neon', 'Opponent card backs must resolve to the purchased design');
         assertTrue(getCosmeticFrameStyle('frame-gold').includes('#fbbf24'), 'Opponent frames must resolve to their own frame styling');
       });
