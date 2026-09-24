@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-24-v111 (ShitHead-Deluxe-111) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-24-v112 (ShitHead-Deluxe-112) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -17018,11 +17018,9 @@ video {
           initChallengeEconomy(); loadCosmeticCollection(null);
         }
       });
-      // Google uses signInWithRedirect rather than signInWithPopup — popups
-      // are unreliable on mobile browsers specifically because of
-      // third-party storage/cookie restrictions between the page and the
-      // firebaseapp.com auth handler, which is what produced the "requested
-      // action is invalid" error. Redirect avoids that channel entirely.
+      // Google sign-in is a pop-up, with a redirect as the fallback (and in
+      // the installed iPhone app); see the googleSignInBtn handler. This
+      // picks up the result when the page comes back from a redirect.
       auth.getRedirectResult().then((result) => {
         // onAuthStateChanged (above) is what actually drives the UI, and
         // fires on its own once Firebase processes the redirect — this
@@ -17051,14 +17049,23 @@ video {
     document.getElementById('googleSignInBtn').addEventListener('click', () => {
       if (!firebaseAvailable) { showAuthError('Sign-in is unavailable right now.'); return; }
       clearAuthError();
-      // signInWithRedirect (not signInWithPopup) — see the comment on
-      // getRedirectResult above for why: popups are unreliable on mobile
-      // specifically because of third-party storage/cookie restrictions
-      // between this page and the firebaseapp.com auth handler. This
-      // navigates away immediately; onAuthStateChanged and the
-      // getRedirectResult().catch() above are what handle the outcome
-      // once the player is redirected back.
-      auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()).catch((e) => {
+      // Pop-up first, redirect only as the fallback. A redirect keeps its
+      // state in the page's sessionStorage, and the installed Android app
+      // (and some in-app browsers) finish the Google step in a different
+      // window, which shows "Unable to process request due to missing
+      // initial state". A pop-up hands the result straight back to this
+      // page. The installed iPhone app keeps the redirect: its pop-ups open
+      // outside the app and can't report back.
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const redirect = () => auth.signInWithRedirect(provider).catch((e) => showAuthError(mapAuthError(e)));
+      if (navigator.standalone === true) { redirect(); return; }
+      // onAuthStateChanged drives the signed-in UI either way.
+      auth.signInWithPopup(provider).then(() => closeAuthModal()).catch((e) => {
+        const code = e && e.code;
+        if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment'
+            || code === 'auth/web-storage-unsupported') { redirect(); return; }
+        if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
         showAuthError(mapAuthError(e));
       });
     });
