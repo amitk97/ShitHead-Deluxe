@@ -7,7 +7,38 @@
       "**/.*/**",
       "**/node_modules/**",
       "gha-creds-*.json",
-      "index[0-9]*.html"
+      "index[0-9]*.html",
+      "CLAUDE.md",
+      "database.rules.json"
+    ],
+    "headers": [
+      {
+        "source": "/art/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=86400"
+          }
+        ]
+      },
+      {
+        "source": "/audio/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=604800"
+          }
+        ]
+      },
+      {
+        "source": "/dev-tests.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      }
     ]
   },
   "database": {

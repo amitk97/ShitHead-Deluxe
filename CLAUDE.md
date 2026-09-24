@@ -6,7 +6,8 @@ Single-file web game (`index.html`) on Firebase Hosting + Realtime Database (pro
 - `database.rules.json` is the source for the Realtime Database rules. Hosting deploys automatically on merge to `main`, but **rules do not**: after changing them, publish the file's contents in Firebase Console → Realtime Database → Rules.
 - **Commit and push straight to `main`** (it deploys live automatically). No branches, PRs or merge steps unless the owner asks for one — there are no other players yet.
 - **Whenever the rules change, paste the complete `database.rules.json` into the chat reply as one copy-pastable code block.** The owner publishes rules by pasting them into the Console and can't easily open/copy JSON files.
-- Tests: open `index.html?dev-tests=1`. Some tests need a live Firebase connection and fail offline; compare against the base branch rather than expecting 100%.
+- Tests: open `index.html?dev-tests=1` (the suite lives in `dev-tests.js`, loaded only then; it runs against index.html's globals). All tests should pass; the runner restores `db`/`auth`/`currentUser` after every test.
+- Assets live outside index.html: table and card-back art in `art/tables/*.svg` and `art/backs/*.svg`, sound clips in `audio/*.mp3` (cache headers in `firebase.json`; art caches for 1 day, so a changed file can take a day to reach players).
 
 ## AmitK test account
 
@@ -50,4 +51,4 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Prices are fixed per kind (`SEASONAL_PRICES`: backs/frames 300, pictures/emotes 500, burns 1000, tables/victories 1500); the event bundle is 75% of whatever the player doesn't own yet. The rules match seasonal ids by regex, so a new event = add its id to the `(lunar|valentine|…)` lists in `database.rules.json`.
 - Dates: `seasonalWindowsForYear`. Diwali, Lunar New Year and Ramadan use hard-coded tables to 2040 (Lunar/Ramadan fall back to `Intl` calendars after that; Diwali needs new dates adding after 2040). Easter is computed.
 - Seasonal items are only sold during their event (Shop → Seasonal tab); owned ones stay in Custom forever. `seasonalNowOverride = 'YYYY-MM-DDT12:00'` in the console previews any date. The AmitK test account can buy every event's items any time (Shop spending only).
-- Art: tables and card backs are URL-encoded SVG data URIs in `SEASONAL_TABLE_ART` / `SEASONAL_BACK_ART` (decode, edit, re-encode); pictures in `SEASONAL_AVATAR_ART`; effects in `SEASONAL_BURN_FX` / `SEASONAL_VICTORY_FX`.
+- Art: tables are `art/tables/season-<event>.svg`, card backs `art/backs/<event>.svg` (paths in `SEASONAL_TABLE_ART` / `SEASONAL_BACK_ART`); pictures in `SEASONAL_AVATAR_ART`; effects in `SEASONAL_BURN_FX` / `SEASONAL_VICTORY_FX`.
