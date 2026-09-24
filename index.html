@@ -9681,7 +9681,15 @@ video {
       'emotes-savage': ['😈', '💩', '🤡', '🥱', '💀', '🔥'],
       'emotes-victory': ['🏆', '👑', '🎉', '💎', '🙌', '🥳'],
       'emotes-chaos': ['🤯', '🃏', '🌪️', '⚡', '🫨', '💥'],
-      'emotes-royal': ['👑', '🫅', '🏰', '⚜️', '💍', '🦚']
+      'emotes-royal': ['👑', '🫅', '🏰', '⚜️', '💍', '🦚'],
+      'emotes-animals': ['🐵', '🦁', '🐶', '🐷', '🐮', '🐸'],
+      'emotes-sports': ['⚽', '🎾', '🏸', '🎱', '🏎️', '🏏'],
+      'emotes-flags-europe': ['🇷🇺', '🇩🇪', '🇬🇧', '🇫🇷', '🇮🇹', '🇪🇸'],
+      'emotes-flags-north-america': ['🇺🇸', '🇲🇽', '🇨🇦', '🇬🇹', '🇭🇹', '🇩🇴'],
+      'emotes-flags-south-america': ['🇧🇷', '🇨🇴', '🇦🇷', '🇵🇪', '🇻🇪', '🇨🇱'],
+      'emotes-flags-asia': ['🇮🇳', '🇨🇳', '🇮🇩', '🇵🇰', '🇧🇩', '🇯🇵'],
+      'emotes-flags-africa': ['🇳🇬', '🇪🇹', '🇪🇬', '🇨🇩', '🇹🇿', '🇿🇦'],
+      'emotes-flags-oceania': ['🇦🇺', '🇵🇬', '🇳🇿', '🇫🇯', '🇸🇧', '🇻🇺']
     };
     function getActiveEmotes() {
       return EMOTE_PACKS[equippedCosmetics.emotes] || EMOTE_PACKS.default;
@@ -13363,6 +13371,14 @@ video {
       { id: 'emotes-victory', category: 'Emote Packs', name: 'Victory Pack', cost: 50, tones: ['#172033','#fbbf24','#60a5fa'] },
       { id: 'emotes-chaos', category: 'Emote Packs', name: 'Chaos Pack', cost: 200, tones: ['#172033','#f43f5e','#a855f7'] },
       { id: 'emotes-royal', category: 'Emote Packs', name: 'Royal Court', cost: 200, tones: ['#172033','#fbbf24','#d8b4fe'] },
+      { id: 'emotes-animals', category: 'Emote Packs', name: 'Animal Pack', cost: 500, tones: ['#14532d', '#f59e0b', '#fde68a'] },
+      { id: 'emotes-sports', category: 'Emote Packs', name: 'Sports Pack', cost: 500, tones: ['#0f172a', '#22c55e', '#f8fafc'] },
+      { id: 'emotes-flags-europe', category: 'Emote Packs', name: 'European Flags', cost: 750, tones: ['#1e3a8a', '#fbbf24', '#f8fafc'] },
+      { id: 'emotes-flags-north-america', category: 'Emote Packs', name: 'North American Flags', cost: 750, tones: ['#1e3a8a', '#ef4444', '#f8fafc'] },
+      { id: 'emotes-flags-south-america', category: 'Emote Packs', name: 'South American Flags', cost: 750, tones: ['#14532d', '#facc15', '#38bdf8'] },
+      { id: 'emotes-flags-asia', category: 'Emote Packs', name: 'Asian Flags', cost: 750, tones: ['#7f1d1d', '#f97316', '#f8fafc'] },
+      { id: 'emotes-flags-africa', category: 'Emote Packs', name: 'African Flags', cost: 750, tones: ['#14532d', '#facc15', '#dc2626'] },
+      { id: 'emotes-flags-oceania', category: 'Emote Packs', name: 'Oceania Flags', cost: 750, tones: ['#0c4a6e', '#38bdf8', '#f8fafc'] },
       { id: 'table-casino', category: 'Table Themes', name: 'Luxury Casino', cost: 750, tones: ['#031713','#059669','#d4af37'] },
       { id: 'table-winter', category: 'Table Themes', name: 'Winter Wonderland', cost: 750, tones: ['#082f49','#7dd3fc','#f8fafc'] },
       { id: 'table-midnight', category: 'Table Themes', name: 'Midnight', cost: 750, tones: ['#000000','#1e293b','#e2e8f0'] },
@@ -13433,7 +13449,7 @@ video {
     const COSMETIC_RUNTIME_IDS = Object.freeze({
       cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno']),
       frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign']),
-      emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal']),
+      emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania']),
       tableTheme: new Set(['table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic']),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke']),
       victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks','victory-sparklers','victory-stars','victory-karate']),
@@ -21926,6 +21942,17 @@ video {
           assertTrue(backs.length > 0 && backs.every(b => b.classList.contains('cosmetic-back-crimson') && b.classList.contains('opponent-cosmetic-card')), 'Shower keeps the snapshot even after a re-equip');
           document.querySelectorAll('.victory-card-particle').forEach(n => n.remove());
         } finally { Object.assign(equippedCosmetics, saved); }
+      });
+
+      await test('REGRESSION: new emote packs contain what was asked for, at the right prices', () => {
+        const pack = id => EMOTE_PACKS[id] || [];
+        ['🐵', '🦁', '🐶', '🐷', '🐮'].forEach(e => assertTrue(pack('emotes-animals').includes(e), `Animal Pack needs ${e}`));
+        ['⚽', '🎾', '🏸', '🎱', '🏎️'].forEach(e => assertTrue(pack('emotes-sports').includes(e), `Sports Pack needs ${e}`));
+        ['🇬🇧', '🇪🇸', '🇫🇷'].forEach(e => assertTrue(pack('emotes-flags-europe').includes(e), `European Flags needs ${e}`));
+        ['emotes-animals', 'emotes-sports', 'emotes-flags-europe', 'emotes-flags-north-america', 'emotes-flags-south-america', 'emotes-flags-asia', 'emotes-flags-africa', 'emotes-flags-oceania']
+          .forEach(id => { assertEqual(pack(id).length, 6, `${id} has six emotes`); assertTrue(isSupportedCosmetic('emotes', id), `${id} is equippable`); });
+        const prices = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.id.startsWith('emotes-flags') || i.id === 'emotes-animals' || i.id === 'emotes-sports').map(i => [i.id, i.cost]));
+        Object.entries(prices).forEach(([id, cost]) => assertEqual(cost, id.includes('flags') ? 750 : 500, `${id} price`));
       });
 
       await test('Accessibility settings exist and apply', () => {
