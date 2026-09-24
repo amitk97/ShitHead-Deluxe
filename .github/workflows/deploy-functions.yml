@@ -1,12 +1,18 @@
 # Deploys the push-notification Cloud Functions in functions/.
-# Run it by hand from GitHub → Actions → "Deploy notification functions" →
-# Run workflow. Needs the Firebase project on the Blaze plan and the
+# Runs automatically when functions/ changes on main, or by hand from
+# GitHub → Actions → "Deploy notification functions" → Run workflow. Needs the Firebase project on the Blaze plan and the
 # FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO service account allowed to deploy
 # functions (see CLAUDE.md → Push notifications).
 name: Deploy notification functions
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'functions/**'
+      - '.github/workflows/deploy-functions.yml'
 
 permissions:
   contents: read
