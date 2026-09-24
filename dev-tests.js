@@ -4099,6 +4099,45 @@ async function runDevTestSuite() {
     }
   });
 
+  await test('Phone Back: closes the top pop-up first, then the menu; a must-answer prompt stays; at the table it asks to leave', () => {
+    const el = id => document.getElementById(id);
+    const shown = [];
+    const show = id => { el(id).classList.remove('hidden'); shown.push(id); };
+    try {
+      assertEqual(topBackLayer(), null, 'Nothing open: nothing for Back to close');
+      show('settingsModal');
+      assertEqual(topBackLayer().id, 'settingsModal', 'An open page is closed by Back');
+      show('giftModal');
+      assertEqual(topBackLayer().id, 'giftModal', 'The pop-up on top goes first');
+      el('giftModal').classList.add('hidden');
+      topBackLayer().close();
+      assertTrue(el('settingsModal').classList.contains('hidden'), 'Back closes the page the same way its X button does');
+      show('usernameModal');
+      const layer = topBackLayer();
+      assertEqual(layer.id, 'usernameModal', 'The username prompt is on top');
+      layer.close();
+      assertTrue(!el('usernameModal').classList.contains('hidden'), 'A prompt that must be answered is not dismissed by Back');
+      el('usernameModal').classList.add('hidden');
+      const exit = el('leaveGameBtn'), wasHidden = exit.classList.contains('hidden');
+      exit.classList.remove('hidden');
+      const action = screenBackAction();
+      if (wasHidden) exit.classList.add('hidden');
+      assertTrue(typeof action === 'function', 'At a table, Back leads to the Leave-match question');
+      assertTrue(document.getElementById('leaveRoomBtn') && typeof leaveRoomAndReload === 'function', 'Leave Room leaves and reloads');
+    } finally {
+      shown.forEach(id => el(id).classList.add('hidden'));
+    }
+  });
+  await test('Event calendar for the phone’s own daily check lists what starts next, with start days', () => {
+    const list = upcomingSeasonCalendar(new Date(2026, 9, 10, 12));
+    assertEqual(list[0].key, 'halloween-2026', 'Halloween is next on 10 October 2026');
+    assertEqual(list[0].start, '2026-10-15', 'With its start day');
+    assertTrue(list.every(e => e.name && e.emoji && e.title && /^\d{4}-\d{2}-\d{2}$/.test(e.start)), 'Every entry has what the alert needs');
+    assertEqual(new Set(list.map(e => e.key)).size, list.length, 'No duplicates');
+    assertTrue(list.length >= 9 && list.length <= 40, 'About a year of events');
+    assertTrue(!pushAvailable() || !!FCM_VAPID_KEY, 'Push only switches on once the Web Push key is set');
+  });
+
   await test('The menu reopens scrolled to the top', () => {
     const drawer = document.getElementById('hamburgerDrawer');
     const savedHeight = drawer.style.maxHeight;

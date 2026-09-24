@@ -238,6 +238,18 @@
         }
       }
     },
+    "pushTokens": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "$key": {
+          ".validate": "newData.hasChildren(['token', 'at']) && newData.child('token').isString() && newData.child('token').val().length > 0 && newData.child('token').val().length <= 4096 && newData.child('at').isNumber()",
+          "$other": {
+            ".validate": "$other === 'token' || $other === 'at'"
+          }
+        }
+      }
+    },
     "gifts": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

@@ -1337,6 +1337,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
   <style>
@@ -4465,7 +4466,7 @@ video {
         </button>
         <button id="setNotifyRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="notifications, alerts, push, gifts, invites, friends, app">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Notifications</span>
-          <span id="setNotifySub" class="block text-[8px] text-slate-400 leading-snug">Gifts, game invites and friend requests while the game is in the background</span></span>
+          <span id="setNotifySub" class="block text-[8px] text-slate-400 leading-snug">Game invites, friend requests, gifts and new events</span></span>
           <span id="setNotifyState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         </div>
@@ -11492,7 +11493,7 @@ video {
       if (confirm("Return to Main Menu?")) {
         sessionStorage.removeItem('shithead_joined_room');
         localStorage.removeItem('shithead_game_state');
-        leaveMultiplayerRoom().then(() => location.reload());
+        leaveMultiplayerRoom().then(reloadCleanly);
       }
     }
 
@@ -16647,10 +16648,18 @@ video {
     }
     function resetDailyStreakOnSignOut() { dailyStreakState = null; closeDailyReward(); refreshProfileStreak(); }
     function performSignOut() {
-      // Still signed in here, so a Ranked search can take its ticket out of the queue.
+      // Still signed in here, so a Ranked search can take its ticket out of
+      // the queue and this device can stop getting the account's alerts.
       if (rankedHeartbeatTimer || rankedAssignmentRef) cancelRankedSearch();
-      const signOut = auth && typeof auth.signOut === 'function' ? auth.signOut() : Promise.resolve();
-      return Promise.resolve(signOut).catch((e) => console.warn('Sign out failed', e)).finally(resetAfterSignOut);
+      const finishSignOut = () => {
+        const signOut = auth && typeof auth.signOut === 'function' ? auth.signOut() : Promise.resolve();
+        return Promise.resolve(signOut).catch((e) => console.warn('Sign out failed', e)).finally(resetAfterSignOut);
+      };
+      let hasPushToken = false;
+      try { hasPushToken = !!localStorage.getItem(PUSH_TOKEN_STORAGE); } catch (e) {}
+      if (!hasPushToken) return finishSignOut();
+      // Wait (briefly) for this device's push token to be removed first.
+      return Promise.race([unregisterPushToken(), new Promise(resolve => setTimeout(resolve, 1500))]).catch(() => {}).then(finishSignOut);
     }
     function renderProfileShowcase() {
       const slot = document.getElementById('profileShowcase');
@@ -16920,6 +16929,7 @@ video {
           ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); attemptRankedReconnect();
           initChallengeEconomy().then(() => { claimDailyLoginReward(); sendSeasonalMail(); loadSeasonWins(); }); loadCosmeticCollection(user);
           setTimeout(() => { if (currentUser && !devTestSuiteRunning) pruneOldRooms(); }, 15000);
+          setTimeout(() => { if (currentUser && !devTestSuiteRunning) { registerPushToken(); shareSeasonCalendarWithWorker(); } }, 4000);
           // Preferences live under the account and do not depend on profile creation.
           loadAccountSettings(user);
         } else {
@@ -19483,6 +19493,7 @@ video {
     }
     function openFromNotification(target) {
       if (target === 'friends' && typeof openFriendsPanel === 'function') openFriendsPanel();
+      else if (target === 'shop' && typeof openShopPanel === 'function') openShopPanel();
       else openInboxPanel();
     }
     (() => {
@@ -19518,7 +19529,9 @@ video {
         return;
       }
       paintToggle(state, notificationsActive());
-      if (sub) sub.textContent = 'Gifts, game invites and friend requests while the game is in the background';
+      if (sub) sub.textContent = pushAvailable()
+        ? 'Game invites, friend requests, gifts and new events — even when the app is closed'
+        : 'Game invites, friend requests and gifts while the game is in the background';
     }
     document.getElementById('setNotifyRow').addEventListener('click', async () => {
       if (!notificationsSupported()) { paintNotifyToggle(); return; }
@@ -19530,10 +19543,12 @@ video {
           try { permission = await Notification.requestPermission(); } catch (e) { permission = 'denied'; }
         }
         notificationsOn = permission === 'granted';
-        if (notificationsOn) showAppNotification('Notifications are on', 'We\u2019ll let you know about gifts, game invites and friend requests.', 'settings', true);
+        if (notificationsOn) showAppNotification('Notifications are on', 'We\u2019ll let you know about game invites, friend requests, gifts and new events.', 'settings', true);
       }
       writePref('shithead_notifications', notificationsOn);
       paintNotifyToggle();
+      if (notificationsOn) { registerPushToken(); shareSeasonCalendarWithWorker(); }
+      else { unregisterPushToken(); stopSeasonChecks(); }
     });
 
     function showAppNotification(title, body, tag, evenIfVisible = false, open = 'inbox') {
@@ -19549,6 +19564,73 @@ video {
         } catch (e) {}
       });
     }
+    // Alerts while the app is fully closed come from push messages: each
+    // device saves its Firebase Cloud Messaging token under
+    // pushTokens/{uid}, and the Cloud Functions in functions/ send invites,
+    // friend requests, gifts and event starts (sw.js shows them). Needs the
+    // project's Web Push key below (Firebase Console → Project settings →
+    // Cloud Messaging → Web Push certificates) and the functions deployed;
+    // until then only the alerts that work while the game is open run.
+    const FCM_VAPID_KEY = '';
+    const PUSH_TOKEN_STORAGE = 'shithead_push_token';
+    const pushTokenKey = (token) => String(token).replace(/[.#$\[\]\/]/g, '_').slice(0, 700);
+    function pushAvailable() {
+      if (!FCM_VAPID_KEY || !firebaseAvailable || typeof firebase === 'undefined' || !firebase.messaging) return false;
+      try { return typeof firebase.messaging.isSupported !== 'function' || !!firebase.messaging.isSupported(); } catch (e) { return false; }
+    }
+    async function registerPushToken() {
+      if (!pushAvailable() || !currentUser || !notificationsActive() || !('serviceWorker' in navigator)) return;
+      try {
+        const registration = appServiceWorker || await navigator.serviceWorker.ready;
+        const token = await firebase.messaging().getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: registration });
+        if (!token || !currentUser) return;
+        let previous = null;
+        try { previous = localStorage.getItem(PUSH_TOKEN_STORAGE); } catch (e) {}
+        if (previous && previous !== token) db.ref(`pushTokens/${currentUser.uid}/${pushTokenKey(previous)}`).remove().catch(() => {});
+        await db.ref(`pushTokens/${currentUser.uid}/${pushTokenKey(token)}`).set({ token, at: serverNow() });
+        try { localStorage.setItem(PUSH_TOKEN_STORAGE, token); } catch (e) {}
+      } catch (error) {
+        console.warn('Push notifications could not be set up', error);
+      }
+    }
+    // Stop this device getting the account's alerts (notifications off, or
+    // signing out — must run while still signed in).
+    async function unregisterPushToken(uid = currentUser?.uid) {
+      let token = null;
+      try { token = localStorage.getItem(PUSH_TOKEN_STORAGE); localStorage.removeItem(PUSH_TOKEN_STORAGE); } catch (e) {}
+      if (!token) return;
+      if (uid) { try { await db.ref(`pushTokens/${uid}/${pushTokenKey(token)}`).remove(); } catch (e) {} }
+      if (pushAvailable()) { try { await firebase.messaging().deleteToken(); } catch (e) {} }
+    }
+    // Android's installed app can also check for a new event by itself
+    // about once a day, even with no server: the page hands sw.js the
+    // upcoming event dates and a periodic background check shows the alert
+    // on the day an event starts (same tag as the server's, so never twice).
+    function upcomingSeasonCalendar(now = new Date()) {
+      const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const horizon = new Date(now.getTime() + 400 * 864e5);
+      const windows = [...seasonalWindowsAround(now), ...seasonalWindowsAround(horizon)];
+      const seen = new Set();
+      return windows
+        .filter(w => w.endsAt > now && w.start <= horizon && !seen.has(w.key) && seen.add(w.key))
+        .sort((a, b) => a.start - b.start)
+        .map(w => ({ key: w.key, name: w.event.name, title: w.event.title, emoji: w.event.emoji, start: ymd(w.start) }));
+    }
+    async function shareSeasonCalendarWithWorker() {
+      if (!('serviceWorker' in navigator) || !notificationsActive()) return;
+      try {
+        const registration = appServiceWorker || await navigator.serviceWorker.ready;
+        registration.active?.postMessage({ type: 'season-calendar', events: upcomingSeasonCalendar() });
+        if (registration.periodicSync) {
+          const status = await navigator.permissions?.query({ name: 'periodic-background-sync' }).catch(() => null);
+          if (!status || status.state === 'granted') await registration.periodicSync.register('season-check', { minInterval: 12 * 60 * 60 * 1000 });
+        }
+      } catch (error) { /* not supported on this device: the server's alert still comes */ }
+    }
+    async function stopSeasonChecks() {
+      try { const registration = appServiceWorker || await navigator.serviceWorker?.ready; await registration?.periodicSync?.unregister('season-check'); } catch (e) {}
+    }
+
     // Notify only about items that arrive after the listener starts: the
     // first snapshot of each list is what was already waiting.
     let notifySeenIds = {};
@@ -20211,7 +20293,7 @@ video {
         document.getElementById('joinRoomBtn').click();
       }
     });
-    document.getElementById('leaveRoomBtn').addEventListener('click', leaveMultiplayerRoom);
+    document.getElementById('leaveRoomBtn').addEventListener('click', () => leaveRoomAndReload());
     document.getElementById('addBotBtn').addEventListener('click', addBotToMultiplayerLobby);
     document.getElementById('removeBotBtn').addEventListener('click', removeBotFromMultiplayerLobby);
     document.getElementById('startMultiGameBtn').addEventListener('click', () => {
@@ -20258,7 +20340,7 @@ video {
         // Guests always land on the normal home screen without an auth prompt.
         if (state.isRanked && currentUser) sessionStorage.setItem('shithead_return_to_ranked', '1');
         else sessionStorage.removeItem('shithead_return_to_ranked');
-        leaveMultiplayerRoom().then(() => location.reload());
+        leaveMultiplayerRoom().then(reloadCleanly);
       }
     });
 
@@ -20290,6 +20372,123 @@ video {
     function isTypingInField() {
       const activeTag = document.activeElement && document.activeElement.tagName;
       return activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement?.isContentEditable;
+    }
+
+    // --- Phone back gesture / back button ---------------------------------
+    // Android's back gesture and back button (and a left-edge swipe in the
+    // installed iPhone app, which has no back gesture of its own) step back
+    // through the game instead of closing it: the top pop-up or page closes
+    // first, then the menu; at a table it asks before leaving the match.
+    // Only on the home screen with nothing open does Back leave the app.
+    // It works through one "guard" history entry that exists whenever there
+    // is something to go back from.
+    const BACK_LAYERS = {
+      deleteAccountModal: () => clickFirstShown(['deleteStep2CancelBtn', 'deleteStep1CancelBtn']),
+      giftOpenModal: 'giftOpenClose', giftModal: 'giftModalClose', installHelpModal: 'installHelpClose',
+      dailyRewardModal: () => closeDailyReward(), playerPopup: 'playerPopupClose', matchSummaryModal: 'matchSummaryClose',
+      authModal: 'authCloseBtn', usernameModal: null, difficultyUnlockPopup: 'difficultyUnlockPopupBtn',
+      matchStatsModal: 'matchStatsCloseBtn', friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
+      leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', supportModal: 'supportCloseBtn',
+      shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
+      themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
+      needHumanModal: 'needHumanCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
+      victoryOverlay: 'closeVictoryBtn', floatingJokerBar: null,
+      followUpToastBanner: () => resolveFollowUpPlay(false)
+    };
+    const isShownOnScreen = (el) => !!el && !el.classList.contains('hidden') && el.getClientRects().length > 0;
+    function clickFirstShown(ids) {
+      const button = ids.map(id => document.getElementById(id)).find(isShownOnScreen);
+      if (button) button.click();
+    }
+    // The top-most open pop-up/page/menu, or null.
+    function topBackLayer() {
+      if (document.getElementById('hamburgerDrawer')?.classList.contains('open')) return { id: 'hamburgerDrawer', close: () => closeHamburgerMenu() };
+      let top = null, topZ = -Infinity;
+      Object.keys(BACK_LAYERS).forEach((id) => {
+        const el = document.getElementById(id);
+        if (!isShownOnScreen(el)) return;
+        const z = parseInt(getComputedStyle(el).zIndex, 10) || 0;
+        if (z >= topZ) { top = id; topZ = z; }
+      });
+      if (!top) return null;
+      const how = BACK_LAYERS[top];
+      if (how === null) return { id: top, close: () => {} }; // must be answered on screen: Back does nothing
+      return { id: top, close: typeof how === 'function' ? how : () => document.getElementById(how)?.click() };
+    }
+    // What Back does when nothing is open on top, or null on the home screen.
+    function screenBackAction() {
+      if (tutorialActive && isShownOnScreen(document.getElementById('tutorialSkipBtn'))) return () => document.getElementById('tutorialSkipBtn').click();
+      if (rankedSearchTimer || rankedHeartbeatTimer || rankedAssignmentRef) return () => cancelRankedSearch();
+      if (isShownOnScreen(document.getElementById('leaveGameBtn'))) return () => document.getElementById('leaveGameBtn').click();
+      if (state.isMultiplayer && state.roomCode && state.isRanked) return () => {}; // a Ranked match is about to start
+      if (state.isMultiplayer && state.roomCode && state.phase === 'LOBBY') return () => { if (confirm('Leave this room?')) leaveRoomAndReload(); };
+      return null;
+    }
+    const wantsBackGuard = () => !!topBackLayer() || !!screenBackAction();
+    const hasBackGuard = () => !!(history.state && history.state.shBackGuard);
+    let ignoreNextPopstate = false;
+    function syncBackGuard() {
+      if (devTestSuiteRunning) return;
+      const want = wantsBackGuard();
+      if (want && !hasBackGuard()) {
+        history.pushState({ shBackGuard: true }, '');
+      } else if (!want && hasBackGuard()) {
+        // Closed with an on-screen button: drop the guard so the next Back
+        // leaves the app straight away instead of doing nothing.
+        ignoreNextPopstate = true;
+        history.back();
+      }
+    }
+    function handleBack() {
+      const layer = topBackLayer();
+      if (layer) { layer.close(); return; }
+      const action = screenBackAction();
+      if (action) action();
+    }
+    window.addEventListener('popstate', () => {
+      if (ignoreNextPopstate) { ignoreNextPopstate = false; return; }
+      handleBack();
+      setTimeout(syncBackGuard, 60); // still something open? arm Back again
+    });
+    // A reload keeps the current history entry; if that was a guard it's
+    // just a normal entry now (a fresh one is added when needed).
+    if (hasBackGuard()) history.replaceState(null, '');
+    let backGuardSyncTimer = null;
+    const scheduleBackGuardSync = () => { clearTimeout(backGuardSyncTimer); backGuardSyncTimer = setTimeout(syncBackGuard, 80); };
+    const backGuardObserver = new MutationObserver(scheduleBackGuardSync);
+    [...Object.keys(BACK_LAYERS), 'hamburgerDrawer', 'lobbyScreen', 'leaveGameBtn', 'tutorialSkipBtn', 'rankedSearching', 'multiLobbyRoom'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) backGuardObserver.observe(el, { attributes: true, attributeFilter: ['class', 'style'] });
+    });
+    scheduleBackGuardSync();
+    // Reloads that end a match or leave a room first step off the guard
+    // entry, so the fresh page doesn't start on a leftover history entry.
+    function reloadCleanly() {
+      if (!hasBackGuard()) { location.reload(); return; }
+      ignoreNextPopstate = true;
+      window.addEventListener('popstate', () => location.reload(), { once: true });
+      history.back();
+      setTimeout(() => location.reload(), 500);
+    }
+    function leaveRoomAndReload() {
+      sessionStorage.removeItem('shithead_joined_room');
+      leaveMultiplayerRoom().then(reloadCleanly);
+    }
+    // Installed iPhone app: swipe in from the left edge = Back.
+    if (isIOSDevice() && isStandaloneApp()) {
+      let edgeStart = null;
+      document.addEventListener('touchstart', (e) => {
+        const t = e.touches[0];
+        edgeStart = (e.touches.length === 1 && t.clientX <= 24) ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
+      }, { passive: true });
+      document.addEventListener('touchend', (e) => {
+        if (!edgeStart) return;
+        const t = e.changedTouches[0];
+        const dx = t.clientX - edgeStart.x, dy = Math.abs(t.clientY - edgeStart.y);
+        const quick = Date.now() - edgeStart.at < 800;
+        edgeStart = null;
+        if (dx > 70 && dy < 60 && quick && hasBackGuard()) history.back();
+      }, { passive: true });
     }
 
     // Keyboard Shortcuts

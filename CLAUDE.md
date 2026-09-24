@@ -67,8 +67,17 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Installable app & notifications
 
 - `manifest.webmanifest`, `icons/*.png` and `sw.js` make the game installable (menu → Install App: the browser prompt, or Safari steps on iOS). `sw.js` is network-first for pages (every deploy shows at once) and only serves its cached copy offline; `sw.js` and the manifest are `no-cache` in `firebase.json`.
-- Settings → Notifications (`notificationsOn`, localStorage `shithead_notifications`). `notifyNewInboxItems` announces new gifts, game invites and friend requests from the Inbox listeners while the page is hidden. There's no server push, so nothing arrives once the game is fully closed; that would need Cloud Functions + FCM (Blaze plan).
+- Settings → Notifications (`notificationsOn`, localStorage `shithead_notifications`). While the game is open/backgrounded, `notifyNewInboxItems` announces new gifts, game invites and friend requests from the Inbox listeners.
+- App closed (push): each device saves its FCM token at `pushTokens/{uid}/{key}` (`registerPushToken`; removed on toggle-off and sign-out while still signed in). The Cloud Functions in `functions/` (`notifyGameInvite`, `notifyFriendRequest`, `notifyGift`, daily 09:00 UK `notifySeasonStart`) send data-only messages; `sw.js` shows them (skipped when the game is on screen, except on Apple devices, which must show every push). Tags match the in-game alerts (`shithead-gift-<id>`, `shithead-season-<key>`…), so nothing shows twice.
+- Push only switches on once `FCM_VAPID_KEY` in index.html holds the project's Web Push key (Console → Project settings → Cloud Messaging → Web Push certificates) and the functions are deployed: project on the Blaze plan, then GitHub → Actions → "Deploy notification functions" (manual workflow; its service account needs Cloud Functions Admin, Service Account User, Cloud Build Editor, Artifact Registry Admin, Cloud Scheduler Admin) or `npx firebase-tools deploy --only functions` locally. Hosting ignores `functions/**`.
+- `functions/seasons.js` is a COPY of the event dates code in index.html (`DIWALI_DATES` … `seasonalWindowsForYear`): change both together.
+- Without the server, Android's installed app still gets event starts: the page posts `upcomingSeasonCalendar()` to `sw.js`, and a `periodicsync` ('season-check', ~daily) shows the alert on the start day.
 - The service worker isn't registered when `?dev-tests=1` is in the URL.
+
+## Phone back gesture
+
+- Back (Android gesture/button; a left-edge swipe in the installed iPhone app) closes the top pop-up/page (`BACK_LAYERS`: element id → its close button or function; `null` = must be answered, Back does nothing), then the menu; at a table it clicks Exit (the "Leave this match?" confirm); in a Ranked search it cancels; in an online lobby it offers to leave. Only the bare home screen lets Back exit the app.
+- One `{ shBackGuard: true }` history entry exists whenever there's something to go back from (`syncBackGuard`, driven by a MutationObserver on those elements); closing with an on-screen button drops it again. A new pop-up/page needs an entry in `BACK_LAYERS`. Reloads after leaving a match/room go through `reloadCleanly`.
 
 ## Showcase & daily streak
 

@@ -9,7 +9,8 @@
       "gha-creds-*.json",
       "index[0-9]*.html",
       "CLAUDE.md",
-      "database.rules.json"
+      "database.rules.json",
+      "functions/**"
     ],
     "headers": [
       {
@@ -74,5 +75,16 @@
   },
   "database": {
     "rules": "database.rules.json"
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "*.log"
+      ]
+    }
+  ]
 }

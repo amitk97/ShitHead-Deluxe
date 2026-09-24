@@ -1,0 +1,36 @@
+# Deploys the push-notification Cloud Functions in functions/.
+# Run it by hand from GitHub → Actions → "Deploy notification functions" →
+# Run workflow. Needs the Firebase project on the Blaze plan and the
+# FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO service account allowed to deploy
+# functions (see CLAUDE.md → Push notifications).
+name: Deploy notification functions
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy_functions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install function dependencies
+        working-directory: functions
+        run: npm install --no-audit --no-fund
+
+      - name: Deploy functions
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
+        run: |
+          echo "$SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/service-account.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/service-account.json"
+          npx --yes firebase-tools@13 deploy --only functions --project shithead-pro --non-interactive --force

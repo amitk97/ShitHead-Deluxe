@@ -1,0 +1,13 @@
+{
+  "name": "shithead-functions",
+  "private": true,
+  "description": "Push notifications for ShitHead Deluxe (game invites, friend requests, gifts, seasonal events).",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0"
+  }
+}
