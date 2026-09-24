@@ -1526,7 +1526,7 @@ async function runDevTestSuite() {
   await test('REGRESSION: Custom is organised into tabs with tiles, at least 2 per row', () => {
     openThemesPanel();
     const tabs = [...document.querySelectorAll('#customTabBar [data-custom-tab]')].map(b => b.textContent.trim());
-    assertEqual(tabs, ['Pictures', 'Deck', 'Card Backs', 'Frames', 'Emotes', 'Tables', 'Burn', 'Victory'], 'Custom tabs');
+    assertEqual(tabs, ['Pictures', 'Deck', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Victory', 'Emotes'], 'Custom tabs');
     document.querySelector('#customTabBar [data-custom-tab="cardBack"]').click();
     assertTrue(!document.querySelector('[data-custom-panel="cardBack"]').classList.contains('hidden') && document.querySelector('[data-custom-panel="avatar"]').classList.contains('hidden'), 'Only the chosen tab shows');
     const tiles = [...document.querySelectorAll('#personalisationCardBacks .cosmetic-tile')];
@@ -3530,7 +3530,9 @@ async function runDevTestSuite() {
     let previewCount = 0;
     COSMETIC_TABS.forEach(tab => { shopTab = tab.category; renderCosmeticShop(); previewCount += document.querySelectorAll('[data-inline-shop-preview]').length; });
     seasonalForceAllEvents = true;
+    SEASONAL_EVENTS.forEach(ev => { seasonalSectionOverrides[ev.id] = true; });
     shopTab = SEASONAL_TAB; renderCosmeticShop(); previewCount += document.querySelectorAll('[data-inline-shop-preview]').length;
+    SEASONAL_EVENTS.forEach(ev => { delete seasonalSectionOverrides[ev.id]; });
     seasonalForceAllEvents = false;
     shopTab = savedTab; renderCosmeticShop();
     assertEqual(previewCount, COSMETIC_SHOP_ITEMS.length, 'Every item must own an inline preview directly beneath its row');
@@ -3582,6 +3584,28 @@ async function runDevTestSuite() {
       assertTrue(!COSMETIC_SHOP_ITEMS.filter(i => i.season).some(i => i.category === 'Profile Pictures' && !isSupportedCosmetic('avatar', i.id)), 'Seasonal pictures have art');
     } finally {
       seasonalNowOverride = savedNow; currentUser = savedUser; cosmeticPurchaseState = savedOwned;
+    }
+  });
+
+  await test('Seasonal Shop: each event folds with its chevron; live events start open, others folded', () => {
+    const savedNow = seasonalNowOverride, savedTab = shopTab, savedUser = currentUser;
+    try {
+      currentUser = null;
+      seasonalForceAllEvents = true;
+      seasonalNowOverride = '2026-10-20T12:00:00';
+      shopTab = SEASONAL_TAB; renderCosmeticShop();
+      const section = (id) => document.querySelector(`[data-season-section="${id}"]`);
+      assertTrue(!section('halloween').classList.contains('is-collapsed'), 'The live event starts open');
+      assertTrue(section('christmas').classList.contains('is-collapsed') && !section('christmas').querySelector('[data-shop-row]'), 'Other events start folded, showing only their banner');
+      section('christmas').querySelector('[data-season-toggle]').click();
+      assertTrue(!!section('christmas').querySelector('[data-shop-row]'), 'Tapping the banner unfolds it');
+      section('halloween').querySelector('[data-season-toggle]').click();
+      assertTrue(section('halloween').classList.contains('is-collapsed'), 'Tapping an open banner folds it');
+      assertEqual(section('halloween').querySelector('[data-season-toggle]').getAttribute('aria-expanded'), 'false', 'The chevron state is announced');
+    } finally {
+      seasonalForceAllEvents = false;
+      Object.keys(seasonalSectionOverrides).forEach(k => delete seasonalSectionOverrides[k]);
+      seasonalNowOverride = savedNow; shopTab = savedTab; currentUser = savedUser; renderCosmeticShop();
     }
   });
 
@@ -4018,9 +4042,22 @@ async function runDevTestSuite() {
   await test('Shop is organised into section tabs and all five filters render correctly', () => {
     const savedFilter = shopFilter, savedTab = shopTab;
     shopFilter = 'all'; shopTab = 'Profile Pictures'; renderCosmeticShop();
-    const tabs = [...document.querySelectorAll('#shopTabBar [data-shop-tab]')].map(b => b.textContent.replace(/\d+/g, '').trim());
-    assertTrue(tabs[0].includes('Seasonal'), 'The Seasonal tab comes first');
-    assertEqual(tabs.slice(1), ['Pictures', 'Card Backs', 'Frames', 'Emotes', 'Tables', 'Burn', 'Victory'], 'Shop tabs in the owner-requested order');
+    const savedNow = seasonalNowOverride;
+    const tabNames = () => [...document.querySelectorAll('#shopTabBar [data-shop-tab]')].map(b => b.textContent.replace(/\d+/g, '').trim());
+    seasonalNowOverride = '2026-09-24T12:00:00'; // 21 days before Halloween
+    renderCosmeticShop();
+    let tabs = tabNames();
+    assertTrue(tabs[tabs.length - 1].includes('Seasonal'), 'With no event near, Seasonal is the last tab');
+    assertEqual(tabs.slice(0, -1), ['Tables', 'Card Backs', 'Frames', 'Burn', 'Victory', 'Pictures', 'Emotes'], 'Table and cards, then effects, then you');
+    seasonalNowOverride = '2026-10-12T12:00:00'; // 3 days before Halloween
+    renderCosmeticShop();
+    assertTrue(tabNames()[0].includes('Seasonal'), 'Seasonal leads when an event starts within 3 days');
+    seasonalNowOverride = '2026-10-20T12:00:00'; // during Halloween
+    renderCosmeticShop();
+    tabs = tabNames();
+    assertTrue(tabs[0].includes('Seasonal'), 'Seasonal leads while an event is on');
+    seasonalNowOverride = savedNow;
+    renderCosmeticShop();
     document.querySelector('#shopTabBar [data-shop-tab="Card Backs"]').click();
     const shown = [...document.querySelectorAll('#cosmeticShopList [data-preview-cosmetic-id]')].map(b => b.dataset.previewCosmeticId);
     assertTrue(shown.length > 0 && shown.every(id => id.startsWith('back-')), 'A tab only shows its own section');

@@ -1248,6 +1248,12 @@
     .season-title small { display:block; font-size:9px; font-weight:800; color:var(--season-light); letter-spacing:.12em; text-transform:uppercase; }
     .season-when { flex:none; padding:3px 8px; border-radius:999px; border:1px solid #475569; font-size:9px; font-weight:900; color:#cbd5e1; background:rgba(2,6,23,.6); }
     .season-when.is-live { border-color:var(--season-accent); color:#fff; }
+    button.season-head { width:100%; text-align:left; cursor:pointer; }
+    .season-chev { flex:none; width:22px; height:22px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--season-light); border:1px solid rgba(148,163,184,.35); transition:transform .18s; }
+    .season-head[aria-expanded="false"] .season-chev { transform:rotate(-90deg); }
+    .season-section.is-collapsed { margin-bottom:6px; }
+    .season-section.is-collapsed .season-head { padding:8px 12px; box-shadow:none; }
+    .season-section.is-collapsed .season-emoji { font-size:20px; }
     .season-earn { display:flex; align-items:center; gap:8px; margin:6px 0; padding:6px 10px; border-radius:12px; border:1px dashed #334155; font-size:10px; color:#cbd5e1; line-height:1.3; }
     .season-earn b { color:#fff; }
     .season-progress { display:inline-block; margin-left:4px; padding:0 6px; border-radius:999px; background:var(--season-accent); color:#020617; font-weight:900; }
@@ -15033,16 +15039,18 @@ video {
 
     // One list drives the section tabs on both the Shop and Custom pages.
     // Adding a cosmetic category later = one entry here.
+    // Grouped by where each item shows up: the table and cards you look at
+    // all game, then the big moments (burns, wins), then you (picture, emotes).
     const COSMETIC_TABS = [
-      { category: 'Profile Pictures', label: 'Pictures' },
+      { category: 'Table Themes', label: 'Tables' },
       { category: 'Card Backs', label: 'Card Backs' },
       { category: 'Frames', label: 'Frames' },
-      { category: 'Emote Packs', label: 'Emotes' },
-      { category: 'Table Themes', label: 'Tables' },
       { category: 'Burn Effects', label: 'Burn' },
-      { category: 'Victory Effects', label: 'Victory' }
+      { category: 'Victory Effects', label: 'Victory' },
+      { category: 'Profile Pictures', label: 'Pictures' },
+      { category: 'Emote Packs', label: 'Emotes' }
     ];
-    let shopTab = 'Profile Pictures';
+    let shopTab = 'Table Themes';
     // Every Shop/Custom tab lists items cheapest first, then A-Z within a price.
     function sortByValue(items) {
       return [...items].sort((a, b) => ((a.cost || 0) - (b.cost || 0)) || String(a.name).localeCompare(String(b.name)));
@@ -15053,10 +15061,11 @@ video {
       const seasonalCount = COSMETIC_SHOP_ITEMS.filter(item => item.season && isSeasonalItemBuyable(item) && shopItemMatchesFilter(item, balance)).length;
       const live = activeSeasonalEvents();
       const seasonalTab = `<button type="button" role="tab" class="cosmetic-tab season-tab ${live.length ? 'is-live' : ''}" data-shop-tab="${SEASONAL_TAB}" aria-selected="${shopTab === SEASONAL_TAB}">${live.length ? live.map(w => w.event.emoji).join('') : '🎉'} Seasonal <small>${seasonalCount || (live.length ? 0 : 'soon')}</small></button>`;
-      bar.innerHTML = seasonalTab + COSMETIC_TABS.map(tab => {
+      const seasonalFirst = seasonalTabLeads();
+      bar.innerHTML = (seasonalFirst ? seasonalTab : '') + COSMETIC_TABS.map(tab => {
         const count = COSMETIC_SHOP_ITEMS.filter(item => !item.season && item.category === tab.category && shopItemMatchesFilter(item, balance)).length;
         return `<button type="button" role="tab" class="cosmetic-tab" data-shop-tab="${tab.category}" aria-selected="${shopTab === tab.category}">${tab.label} <small>${count}</small></button>`;
-      }).join('');
+      }).join('') + (seasonalFirst ? '' : seasonalTab);
     }
     function shopItemRowHtml(item, balance) {
         const owned = !!cosmeticPurchaseState[item.id];
@@ -15090,6 +15099,17 @@ video {
     let seasonalForceAllEvents = false; // tests only
     let shopTabPicked = false;
     const seasonShortDate = (date) => date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    // Seasonal leads the Shop only while an event is on or starts within 3 days.
+    const SEASONAL_LEAD_DAYS = 3;
+    function seasonalTabLeads(now = seasonalNow()) {
+      if (activeSeasonalEvents(now).length) return true;
+      const next = nextSeasonalEvent(now);
+      return !!next && (next.start - now) <= SEASONAL_LEAD_DAYS * 864e5;
+    }
+    // Each event section folds up with its chevron. Live events start open;
+    // the rest (e.g. the test account's full list) start folded.
+    const seasonalSectionOverrides = {};
+    const isSeasonalSectionOpen = (eventId, state) => seasonalSectionOverrides[eventId] ?? (state === 'active' || state === 'soon');
     function seasonalSectionHtml(ev, balance, { state, win, now }) {
       const accentStyle = `--season-dark:${ev.tones[0]};--season-accent:${ev.tones[1]};--season-light:${ev.tones[2]}`;
       let when = '';
@@ -15106,11 +15126,15 @@ video {
       const earnText = earnedOwned ? `<b>${ev.names.earned}</b> earned ✓`
         : state === 'soon' ? `Win ${SEASONAL_EARN_WINS} games during the event to earn <b>${ev.names.earned}</b>`
         : `Win ${SEASONAL_EARN_WINS} games during ${ev.name} to earn <b>${ev.names.earned}</b> <span class="season-progress">${wins}/${SEASONAL_EARN_WINS}</span>`;
-      const head = `<div class="season-head" style="${accentStyle}">
+      const open = isSeasonalSectionOpen(ev.id, state);
+      const headBtn = `<button type="button" class="season-head" style="${accentStyle}" data-season-toggle="${ev.id}" data-season-state="${state}" aria-expanded="${open}">
           <span class="season-emoji" aria-hidden="true">${ev.emoji}</span>
           <span class="season-title"><b>${ev.name}</b><small>${ev.title}</small></span>
           ${when ? `<span class="season-when ${state === 'active' ? 'is-live' : ''}">${when}</span>` : ''}
-        </div>
+          <span class="season-chev" aria-hidden="true">▾</span>
+        </button>`;
+      if (!open) return `<section class="season-section is-collapsed" data-season-section="${ev.id}">${headBtn}</section>`;
+      const head = `${headBtn}
         <div class="season-earn" style="${accentStyle}">${avatarHtml(earnedId, 30, earnedOwned ? '' : 'avatar-locked')}<span>${earnText}</span></div>`;
       let bundle = '';
       if (state !== 'soon') {
@@ -15755,7 +15779,7 @@ video {
       closeOtherMenuPages('shopModal');
       if (!currentUser) { openAuthModal(); return; }
       document.getElementById('shopModal').classList.remove('hidden');
-      if (!shopTabPicked && activeSeasonalEvents().length) shopTab = SEASONAL_TAB;
+      if (!shopTabPicked && seasonalTabLeads()) shopTab = SEASONAL_TAB;
       clearShopActionNotice();
       setNameTokenStatus('Loading…');
       initChallengeEconomy()
@@ -15875,6 +15899,13 @@ video {
       tab.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
     });
     document.getElementById('cosmeticShopList').addEventListener('click', (event) => {
+      const seasonToggle = event.target.closest('[data-season-toggle]');
+      if (seasonToggle) {
+        const id = seasonToggle.dataset.seasonToggle;
+        seasonalSectionOverrides[id] = !isSeasonalSectionOpen(id, seasonToggle.dataset.seasonState);
+        renderCosmeticShop();
+        return;
+      }
       const jump = event.target.closest('[data-shop-tab-jump]');
       if (jump) { shopTab = jump.dataset.shopTabJump; shopTabPicked = true; renderCosmeticShop(); return; }
       const giftBtn = event.target.closest('[data-gift-item]');
@@ -19095,6 +19126,7 @@ video {
       }
       document.getElementById('themesModal').classList.add('hidden');
       shopTab = shopItem.season ? SEASONAL_TAB : shopItem.category;
+      if (shopItem.season) seasonalSectionOverrides[shopItem.season] = true;
       shopTabPicked = true;
       shopFilter = 'all';
       pendingShopFocusId = id;
