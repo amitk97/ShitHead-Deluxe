@@ -52,3 +52,9 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Dates: `seasonalWindowsForYear`. Diwali, Lunar New Year and Ramadan use hard-coded tables to 2040 (Lunar/Ramadan fall back to `Intl` calendars after that; Diwali needs new dates adding after 2040). Easter is computed.
 - Seasonal items are only sold during their event (Shop → Seasonal tab); owned ones stay in Custom forever. `seasonalNowOverride = 'YYYY-MM-DDT12:00'` in the console previews any date. The AmitK test account can buy every event's items any time (Shop spending only).
 - Art: tables are `art/tables/season-<event>.svg`, card backs `art/backs/<event>.svg` (paths in `SEASONAL_TABLE_ART` / `SEASONAL_BACK_ART`); pictures in `SEASONAL_AVATAR_ART`; effects in `SEASONAL_BURN_FX` / `SEASONAL_VICTORY_FX`.
+
+## Gifting
+
+- Shop rows have 🎁 GIFT (any item that's buyable right now; never earn-only pictures). Friends list 🎁 opens the Shop in "gift for X" mode (`giftTarget`).
+- `sendGift`: the sender pays in a `users/{uid}` transaction (`calculateGiftPayment`, receipt mail), then writes `gifts/{friendUid}/{giftId}`; if delivery fails the Diamonds are refunded. Rules: only a friend can create a gift, only the recipient can read/delete it.
+- `claimGift` (Inbox → OPEN GIFT): `calculateGiftClaim` adds the item to `ownedCosmetics`, or pays its Shop price if already owned, and records `claimedGifts/{giftId}` in the same transaction so a gift can't be opened twice.

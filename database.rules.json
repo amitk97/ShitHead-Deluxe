@@ -70,6 +70,16 @@
           "$key": {
             ".validate": "$key.matches(/^(lunar|valentine|ramadan|easter|summer|halloween|diwali|christmas|newyear)-[0-9]{4}$/) && newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000"
           }
+        },
+        "claimedGifts": {
+          "$giftId": {
+            ".validate": "newData.isBoolean()"
+          }
+        },
+        "seasonMailSent": {
+          "$key": {
+            ".validate": "newData.isBoolean() && $key.matches(/^(lunar|valentine|ramadan|easter|summer|halloween|diwali|christmas|newyear)-[0-9]{4}(-last)?$/)"
+          }
         }
       }
     },
@@ -221,6 +231,18 @@
         "$reportId": {
           ".write": "auth != null && auth.uid === $uid && !data.exists()",
           ".validate": "newData.hasChildren(['at', 'message']) && newData.child('message').isString() && newData.child('message').val().length <= 500"
+        }
+      }
+    },
+    "gifts": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$giftId": {
+          ".write": "auth != null && ((!data.exists() && newData.exists() && auth.uid !== $uid && newData.child('fromUid').val() === auth.uid && root.child('friends').child(auth.uid).child($uid).val() === true) || (!newData.exists() && auth.uid === $uid))",
+          ".validate": "newData.hasChildren(['fromUid', 'fromName', 'itemId', 'cost', 'sentAt']) && newData.child('fromName').isString() && newData.child('fromName').val().length >= 1 && newData.child('fromName').val().length <= 12 && newData.child('itemId').isString() && newData.child('itemId').val().matches(/^(back|frame|emotes|table|burn|victory|avatar)-[a-z0-9-]{2,40}$/) && !newData.child('itemId').val().matches(/-earned$/) && newData.child('cost').isNumber() && newData.child('cost').val() > 0 && newData.child('cost').val() <= 5000 && newData.child('sentAt').isNumber()",
+          "$other": {
+            ".validate": "$other === 'fromUid' || $other === 'fromName' || $other === 'itemId' || $other === 'cost' || $other === 'sentAt'"
+          }
         }
       }
     },

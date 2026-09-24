@@ -3657,6 +3657,54 @@ async function runDevTestSuite() {
     assertTrue(cosmeticPreview(brew, 'frame').includes('132,204,22'), 'The Custom tile shows the same glow');
   });
 
+  await test('Gifting: the sender pays once and gets a receipt; only buyable Shop items can be gifted', () => {
+    const table = COSMETIC_SHOP_ITEMS.find(i => i.id === 'table-desert');
+    const pay = calculateGiftPayment({ diamonds: 1500, ownedCosmetics: {} }, table, { uid: 'f1', name: 'Pooja' }, 'g1', 100);
+    assertEqual(pay.user.diamonds, 500, 'Gifting deducts exactly the item price from the sender');
+    assertEqual(pay.user.ownedCosmetics, {}, 'The sender does not get the item themselves');
+    assertEqual(pay.user.activityInbox.gift_sent_g1, { type: 'gift', direction: 'sent', name: 'Desert', to: 'Pooja', cost: 1000, sentAt: 100 }, 'The sender gets a receipt in their Inbox');
+    assertTrue(!!calculateGiftPayment({ diamonds: 10 }, table, { uid: 'f1', name: 'P' }, 'g2').error, 'Not enough Diamonds is refused');
+    assertTrue(!giftableItem('avatar-halloween-earned'), 'Earn-only pictures can never be gifted');
+    const savedNow = seasonalNowOverride;
+    try {
+      seasonalNowOverride = '2026-09-24T12:00:00';
+      assertTrue(!giftableItem('table-halloween'), 'Seasonal items can only be gifted while their event is on');
+      seasonalNowOverride = '2026-10-20T12:00:00';
+      assertTrue(!!giftableItem('table-halloween'), 'During Halloween its items can be gifted');
+    } finally { seasonalNowOverride = savedNow; }
+  });
+
+  await test('Gifting: opening adds the item once, or pays its value if already owned', () => {
+    const gift = { fromUid: 'a', fromName: 'Amit', itemId: 'back-neon', cost: 60, sentAt: 1 };
+    const opened = calculateGiftClaim({ diamonds: 10, ownedCosmetics: {} }, 'g1', gift, 200);
+    assertTrue(!!opened.user.ownedCosmetics['back-neon'], 'The item joins the collection');
+    assertEqual(opened.user.diamonds, 10, 'No Diamonds change when the item is new');
+    assertTrue(opened.user.claimedGifts.g1 === true, 'The gift is marked opened in the same write');
+    assertEqual(calculateGiftClaim(opened.user, 'g1', gift).error, 'Already opened.', 'A gift can never be opened twice');
+    const dup = calculateGiftClaim({ diamonds: 10, ownedCosmetics: { 'back-neon': { cost: 60 } } }, 'g2', gift, 200);
+    assertTrue(dup.asDiamonds, 'A duplicate becomes Diamonds');
+    assertEqual(dup.user.diamonds, 70, 'A duplicate pays the item price');
+    const inflated = calculateGiftClaim({ diamonds: 0, ownedCosmetics: { 'back-neon': {} } }, 'g3', { ...gift, cost: 5000 });
+    assertEqual(inflated.user.diamonds, 60, 'A duplicate never pays more than the real Shop price');
+  });
+
+  await test('Gifting: Shop rows offer GIFT, the Friends list has a gift button, and unopened gifts show in the Inbox', () => {
+    const savedUser = currentUser, savedTab = shopTab, savedFilter = shopFilter;
+    try {
+      currentUser = { uid: 'gift-ui-test' };
+      shopFilter = 'all'; shopTab = 'Card Backs';
+      renderCosmeticShop();
+      assertTrue(document.querySelectorAll('#cosmeticShopList [data-gift-item]').length > 0, 'Shop rows have a GIFT button');
+      assertTrue(friendRowHtml('f1', { username: 'Pooja' }, 'friend').includes('friend-gift-btn'), 'Friends have a gift button');
+      const html = inboxItemHtml({ type: 'giftIn', id: 'g9', fromName: 'Amit', itemId: 'back-neon', cost: 60 });
+      assertTrue(html.includes('Gift from Amit') && html.includes('data-claim-gift="g9"'), 'An unopened gift shows who sent it and an Open button');
+      const summary = summarizeInboxNotifications({}, {}, {}, { giftIn_g9: { type: 'gift', sentAt: 5 } });
+      assertEqual(summary.count, 1, 'Unopened gifts count towards the Inbox badge');
+    } finally {
+      currentUser = savedUser; shopTab = savedTab; shopFilter = savedFilter; renderCosmeticShop();
+    }
+  });
+
   await test('Daily login streak: consecutive days grow, a missed day restarts, same day pays nothing', () => {
     const d = (y, m, day) => new Date(y, m - 1, day, 12);
     assertEqual(calculateDailyStreak(null, d(2026, 3, 1)).count, 1, 'First claim is Day 1');
