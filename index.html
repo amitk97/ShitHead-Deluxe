@@ -753,12 +753,20 @@
        shake, navigate, or visually replace the screen behind the Shop. */
     .shop-preview-stage { position:relative; width:100%; min-height:132px; overflow:hidden; border:1px solid rgba(71,85,105,.75); border-radius:12px; background:rgba(2,6,23,.72); display:flex; align-items:center; justify-content:center; isolation:isolate; }
     .shop-preview-card { flex:none; }
-    .shop-table-preview { position:relative; width:min(100%,240px); height:132px; overflow:hidden; border:2px solid var(--shop-table-trim); border-radius:14px; background:var(--shop-table-bg); box-shadow:inset 0 0 35px rgba(255,255,255,.08); }
-    .shop-table-preview-card { position:absolute; top:39px; width:44px; height:64px; border-radius:7px; }
-    .shop-table-preview-card.deck { left:24px; background:#08101f; border:2px solid #334155; }
-    .shop-table-preview-card.pile { left:calc(50% - 22px); border:2px dashed rgba(255,255,255,.62); }
-    .shop-table-preview-card.base { right:24px; background:#080b22; border:2px solid var(--shop-table-trim); }
-    .shop-table-preview-label { position:absolute; top:12px; left:0; right:0; text-align:center; color:white; font-size:9px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+    /* Always-visible mini table (Shop rows, Custom tiles, preview panel). */
+    .mini-table { position:relative; display:block; width:100%; height:64px; overflow:hidden; border-radius:10px; }
+    .mini-table.is-large { height:132px; border-radius:14px; }
+    .mini-table-card { position:absolute; top:50%; width:17%; max-width:26px; aspect-ratio:5/7; border-radius:4px; transform:translateY(-50%); }
+    .mini-table.is-large .mini-table-card { max-width:44px; border-radius:7px; }
+    .mini-table-card.deck { left:14%; background:linear-gradient(135deg,#1e293b,#0f172a); border:1.5px solid #475569; }
+    .mini-table-card.pile { left:50%; transform:translate(-50%,-50%); border:1.5px dashed var(--mini-table-label); }
+    .mini-table-card.face { right:14%; background:#f8fafc; border:1.5px solid #cbd5e1; color:#dc2626; font-size:9px; font-weight:900; line-height:1; padding:2px; }
+    .mini-table.is-large .mini-table-card.face { font-size:13px; padding:4px; }
+    .mini-table-name { position:absolute; left:0; right:0; bottom:4px; text-align:center; color:#fff; font-size:7px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; text-shadow:0 1px 3px #000,0 0 6px #000; }
+    .mini-table.is-large .mini-table-name { top:12px; bottom:auto; font-size:9px; }
+    .shop-row-table { padding:0 8px 8px; }
+    .cosmetic-tile .avatar-option-art .mini-table { width:100%; }
+    .cosmetic-tile .avatar-option-art:has(.mini-table) { align-self:stretch; }
     .shop-burn-core { width:54px; height:72px; border-radius:10px; border:2px solid #64748b; background:#111827; display:flex; align-items:center; justify-content:center; font-size:28px; }
     .shop-burn-particle { position:absolute; left:50%; top:60%; width:9px; height:14px; border-radius:60% 40% 55% 45%; background:var(--particle-color); box-shadow:0 0 10px var(--particle-color); pointer-events:none; animation:shop-burn-burst .85s ease-out forwards; }
     .shop-burn-particle.ice { width:11px; height:11px; border-radius:2px; transform:rotate(45deg); }
@@ -13402,6 +13410,24 @@ video {
       const t = ILLUSTRATED_TABLES[id];
       return t ? `url('${TABLE_ART[t.art]}') center/cover no-repeat, ${t.base}` : '';
     }
+    // Mirrors the in-game #gameTable look for each theme so previews match.
+    const CSS_TABLE_PREVIEWS = {
+      default: { bg: 'linear-gradient(180deg,#030c08,#0d2b1d 50%,#030c08)', rim: 'inset 0 0 0 1px #1e293b', label: 'rgba(148,163,184,.7)' },
+      'table-casino': { bg: 'radial-gradient(ellipse at 50% 45%,rgba(16,185,129,.30),transparent 48%),repeating-linear-gradient(45deg,rgba(251,191,36,.035) 0 2px,transparent 2px 18px),linear-gradient(180deg,#071a17,#064e3b 48%,#031713)', rim: 'inset 0 0 0 3px #d4af37,inset 0 0 30px rgba(0,0,0,.78)', label: 'rgba(212,175,55,.85)' },
+      'table-midnight': { bg: 'radial-gradient(circle at 18% 28%,rgba(255,255,255,.9) 0 .8px,transparent 1.6px),radial-gradient(circle at 71% 16%,rgba(255,255,255,.7) 0 .7px,transparent 1.4px),radial-gradient(circle at 42% 80%,rgba(226,232,240,.55) 0 1px,transparent 1.8px),radial-gradient(circle at 90% 70%,rgba(255,255,255,.8) 0 .6px,transparent 1.3px),#000', rim: 'inset 0 0 0 3px #1e293b,inset 0 0 40px rgba(0,0,0,.9)', label: 'rgba(203,213,225,.7)' },
+      'table-royal': { bg: 'radial-gradient(ellipse at 50% 45%,rgba(167,139,250,.28),transparent 55%),repeating-linear-gradient(45deg,rgba(251,191,36,.07) 0 1px,transparent 1px 14px),repeating-linear-gradient(-45deg,rgba(251,191,36,.07) 0 1px,transparent 1px 14px),linear-gradient(180deg,#1e0b3d,#3b0764 50%,#1e0b3d)', rim: 'inset 0 0 0 3px #d4af37,inset 0 0 0 5px #7f1d1d,inset 0 0 30px rgba(0,0,0,.7)', label: 'rgba(251,191,36,.85)' },
+      'table-winter': { bg: 'radial-gradient(circle at 18% 16%,rgba(255,255,255,.8) 0 1px,transparent 2px),radial-gradient(circle at 78% 32%,rgba(255,255,255,.65) 0 1px,transparent 2px),radial-gradient(ellipse at 50% 55%,rgba(186,230,253,.32),transparent 55%),linear-gradient(180deg,#082f49,#0c4a6e 48%,#172554)', size: '31px 31px,43px 43px,auto,auto', rim: 'inset 0 0 0 3px #bae6fd,inset 0 0 36px rgba(224,242,254,.2)', label: 'rgba(186,230,253,.85)' }
+    };
+    function tablePreviewLook(id) {
+      const art = ILLUSTRATED_TABLES[id];
+      if (art) return { bg: tableArtBackground(id), rim: art.rim, label: art.label };
+      return CSS_TABLE_PREVIEWS[id] || CSS_TABLE_PREVIEWS.default;
+    }
+    function miniTablePreviewHtml(id, name, large = false) {
+      const look = tablePreviewLook(id || 'default');
+      const style = `background:${look.bg};${look.size ? `background-size:${look.size};` : ''}box-shadow:${look.rim};--mini-table-label:${look.label}`;
+      return `<span class="mini-table${large ? ' is-large' : ''}" data-table-preview="${id || 'default'}" style="${style}"><span class="mini-table-card deck"></span><span class="mini-table-card pile"></span><span class="mini-table-card face">A<br>♥</span>${name ? `<span class="mini-table-name">${name}</span>` : ''}</span>`;
+    }
     (function installIllustratedTableStyles() {
       const css = Object.entries(ILLUSTRATED_TABLES).map(([id, t]) =>
         `body[data-equipped-table-theme="${id}"] #gameTable { background:${tableArtBackground(id)} !important; box-shadow:${t.rim}; }\n` +
@@ -13754,11 +13780,13 @@ video {
 
     function cosmeticPreview(item, type) {
       if (!item) {
+        if (type === 'tableTheme') return miniTablePreviewHtml('default');
         if (type === 'emotes') return '<span class="text-xl">😂</span>';
         if (type === 'frame') return '<span class="w-8 h-10 rounded-lg border-2 border-slate-600 bg-slate-900"></span>';
         if (type !== 'cardBack') return '<span class="w-8 h-8 rounded-lg border border-slate-600 bg-slate-900 flex items-center justify-center text-slate-400">◇</span>';
         return `<span class="w-8 h-10 rounded-lg custom-card-back ${getThemeDeckBackClass()} flex items-center justify-center">${getEmblemSvg()}</span>`;
       }
+      if (type === 'tableTheme') return miniTablePreviewHtml(item.id);
       if (type === 'emotes') return `<span class="text-base">${(EMOTE_PACKS[item.id] || []).slice(0, 3).join('')}</span>`;
       if (type === 'frame') return `<span class="w-8 h-10 rounded-lg border-2 bg-slate-900" style="border-color:${item.tones[1]};box-shadow:0 0 8px ${item.tones[1]}"></span>`;
       if (type !== 'cardBack') return `<span class="w-8 h-8 rounded-lg border border-slate-600" style="background:linear-gradient(135deg,${item.tones[0]} 0 45%,${item.tones[1]} 45% 72%,${item.tones[2]} 72% 100%)"></span>`;
@@ -14002,6 +14030,7 @@ video {
                   : `<button data-cosmetic-id="${item.id}" aria-disabled="${!affordable}" class="cosmetic-buy-btn min-w-[66px] px-2 py-1 rounded-lg border text-[9px] font-black transition ${affordable ? 'border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-slate-950' : 'border-slate-700 text-slate-600 opacity-60'}">💎 ${item.cost}</button>`}
               </span>
             </div>
+            ${type === 'tableTheme' ? `<div class="shop-row-table">${miniTablePreviewHtml(item.id)}</div>` : ''}
             <div id="shop-preview-${item.id}" data-inline-shop-preview class="hidden border-t border-slate-700/70 bg-slate-950/55 p-3"></div>
           </div>`;
         }).join('');
@@ -14070,12 +14099,7 @@ video {
       } else if (type === 'emotes') {
         demo = `<div class="shop-preview-stage"><div class="grid grid-cols-3 gap-2">${(EMOTE_PACKS[item.id] || []).map(emoji => `<span class="w-10 h-10 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-xl">${emoji}</span>`).join('')}</div></div>`;
       } else if (type === 'tableTheme') {
-        const bg = {
-          'table-winter': 'linear-gradient(145deg,#082f49,#0c4a6e 58%,#e0f2fe)',
-          'table-midnight': 'radial-gradient(circle at 22% 30%,#fff 0 1px,transparent 2px),radial-gradient(circle at 74% 20%,#fff 0 .8px,transparent 1.6px),radial-gradient(circle at 60% 78%,#cbd5e1 0 1px,transparent 2px),#000',
-          'table-royal': 'repeating-linear-gradient(45deg,rgba(251,191,36,.12) 0 1px,transparent 1px 14px),repeating-linear-gradient(-45deg,rgba(251,191,36,.12) 0 1px,transparent 1px 14px),linear-gradient(180deg,#1e0b3d,#3b0764 50%,#1e0b3d)'
-        }[item.id] || tableArtBackground(item.id) || 'radial-gradient(circle,#065f46,#022c22 68%,#d4af37)';
-        demo = `<div class="shop-preview-stage"><div class="shop-table-preview" style="--shop-table-bg:${bg};--shop-table-trim:${item.tones[2]}"><span class="shop-table-preview-label">${item.name}</span><span class="shop-table-preview-card deck"></span><span class="shop-table-preview-card pile"></span><span class="shop-table-preview-card base"></span></div></div>`;
+        demo = `<div class="shop-preview-stage" style="width:100%">${miniTablePreviewHtml(item.id, item.name, true)}</div>`;
       } else if (type === 'burnEffect') {
         demo = `<div class="shop-preview-stage" data-shop-burn-stage><div class="shop-burn-core">${burnPreviewIcon(item.id)}</div></div>`;
       } else if (type === 'avatar') {
@@ -23962,6 +23986,24 @@ video {
         assertTrue(!openShopCosmeticPreview.toString().includes('scrollIntoView'), 'Opening a preview must never scroll the Shop back to another location');
       });
 
+      await test('REGRESSION: every table theme shows its preview in Shop rows and Custom tiles without a click', () => {
+        const tables = COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Table Themes');
+        tables.forEach(item => {
+          const html = miniTablePreviewHtml(item.id);
+          assertTrue(html.includes(`data-table-preview="${item.id}"`), `${item.id} must render a mini table`);
+          assertTrue(tablePreviewLook(item.id) !== CSS_TABLE_PREVIEWS.default, `${item.id} must have its own table look`);
+          assertTrue(personalisationOptionHtml(item, 'tableTheme', 'default').includes(`data-table-preview="${item.id}"`), `${item.id} Custom tile must show the table`);
+        });
+        assertTrue(personalisationOptionHtml(null, 'tableTheme', 'default').includes('data-table-preview="default"'), 'Default Table tile must show the default table');
+        const previousTab = shopTab;
+        shopTab = 'Table Themes';
+        renderCosmeticShop();
+        const rows = document.querySelectorAll('#cosmeticShopList .shop-row-table [data-table-preview]');
+        shopTab = previousTab;
+        renderCosmeticShop();
+        assertEqual(rows.length, tables.length, 'Each Shop table row must show its preview up front');
+      });
+
       await test('REGRESSION: Shop previews use game-size cards and an isolated burn stage', () => {
         const backMarkup = shopCosmeticPreviewMarkup(COSMETIC_SHOP_ITEMS.find(item => item.category === 'Card Backs'));
         const frameMarkup = shopCosmeticPreviewMarkup(COSMETIC_SHOP_ITEMS.find(item => item.category === 'Frames'));
@@ -23970,7 +24012,7 @@ video {
         assertTrue(backMarkup.includes('card-base shop-preview-card'), 'Card-back previews must use the live game card dimensions');
         assertTrue(frameMarkup.includes('card-base shop-preview-card'), 'Frame previews must use the live game card dimensions');
         assertTrue(frameMarkup.includes('card-corner-rank') && frameMarkup.includes('card-corner-suit'), 'Frame previews must use normal game rank and suit sizing');
-        assertTrue(tableMarkup.includes('shop-table-preview-card deck') && tableMarkup.includes('shop-table-preview-card pile') && tableMarkup.includes('shop-table-preview-card base'), 'Table previews must visibly render deck, pile and base-card zones');
+        assertTrue(tableMarkup.includes('mini-table-card deck') && tableMarkup.includes('mini-table-card pile') && tableMarkup.includes('mini-table-card face'), 'Table previews must visibly render deck, pile and face-up card zones');
         assertTrue(burnMarkup.includes('data-shop-burn-stage'), 'Burn effects must have a contained Shop preview stage');
         assertTrue(!playShopBurnPreview.toString().includes('playBurnEffect') && !playShopBurnPreview.toString().includes('render('), 'Shop burn previews must never invoke gameplay rendering or navigation');
       });
