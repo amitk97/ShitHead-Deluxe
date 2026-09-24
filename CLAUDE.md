@@ -78,6 +78,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Google sign-in
 
 - Redirect flow with `authDomain` = the page's own hosting domain (`SAME_SITE_AUTH_DOMAINS`), so the `/__/auth/handler` step stays same-site. A cross-site handler loses its state on phones and shows "missing initial state". Every domain in that list must be an Authorized redirect URI (`https://<domain>/__/auth/handler`) on the Google OAuth web client (Google Cloud Console → APIs & Services → Credentials), and in Firebase Auth → Authorized domains. `sw.js` never intercepts `/__/` paths.
+- GitHub Pages (`*.github.io`) copies redirect to `https://shithead-pro.web.app/` from the first script in `<head>`, so everyone plays on the Hosting domain.
 
 ## Phone back gesture
 
