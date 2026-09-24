@@ -104,6 +104,15 @@
       padding-right: env(safe-area-inset-right);
       padding-bottom: env(safe-area-inset-bottom);
     }
+    /* Installed iPhone app (black-translucent status bar): the page starts
+       under the clock/battery, so the header grows by the notch height and
+       everything pinned to the top moves down with it. 0 everywhere else. */
+    :root { --safe-top: env(safe-area-inset-top, 0px); }
+    body > header.h-11 { height: calc(2.75rem + var(--safe-top)); padding-top: calc(0.25rem + var(--safe-top)); }
+    .fixed.inset-0.p-4 { padding-top: calc(1rem + var(--safe-top)); }
+    .fixed.inset-0.p-3 { padding-top: calc(0.75rem + var(--safe-top)); }
+    #actionBanner { top: calc(0.75rem + var(--safe-top)); }
+    #connectionStatusBanner { top: calc(3rem + var(--safe-top)); }
 
     input, textarea { user-select: auto !important; -webkit-user-select: auto !important; }
 
@@ -335,7 +344,7 @@
     @media (min-width: 768px) {
       /* Desktop gets a genuinely larger control bar; mobile retains the
          compact 44px header so it does not steal vertical game space. */
-      body > header { height: 60px !important; padding: 7px 18px !important; }
+      body > header { height: calc(60px + var(--safe-top)) !important; padding: calc(7px + var(--safe-top)) 18px 7px !important; }
       body > header .brand-logo-rendered { font-size: 32px !important; }
       #leaveGameBtn, #multiSelectToggleBtn, #headerInboxBtn, #hamburgerBtn {
         width: 38px !important;
@@ -353,7 +362,7 @@
         left: auto;
         right: 18px;
         bottom: auto;
-        top: 66px;
+        top: calc(66px + var(--safe-top));
         width: 310px;
         max-width: 310px;
         max-height: 82vh;
@@ -1015,7 +1024,7 @@
     /* Keep these panels inside the visible area below the persistent header.
        Their close buttons stay fixed in each panel while content scrolls. */
     #settingsModal, #themesModal, #shopModal, #rulesModal, #tutorialHubScreen {
-      top: 44px;
+      top: calc(44px + var(--safe-top));
       bottom: 0;
       height: auto;
       padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
@@ -1032,7 +1041,7 @@
     #rulesModal > div > div:first-child { flex-shrink: 0; }
     #rulesModal > div > div:nth-child(2) { min-height: 0; }
     @media (min-width: 768px) {
-      #settingsModal, #themesModal, #shopModal, #rulesModal, #tutorialHubScreen { top: 60px; }
+      #settingsModal, #themesModal, #shopModal, #rulesModal, #tutorialHubScreen { top: calc(60px + var(--safe-top)); }
     }
     body.ui-overlay-open { overflow:hidden !important; overscroll-behavior:none; }
     /* Never fade the whole card: Face-Up cards sit directly over Face-Down

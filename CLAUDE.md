@@ -73,6 +73,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - `functions/seasons.js` is a COPY of the event dates code in index.html (`DIWALI_DATES` … `seasonalWindowsForYear`): change both together.
 - Without the server, Android's installed app still gets event starts: the page posts `upcomingSeasonCalendar()` to `sw.js`, and a `periodicsync` ('season-check', ~daily) shows the alert on the start day.
 - The service worker isn't registered when `?dev-tests=1` is in the URL.
+- The installed iPhone app draws under the status bar (`black-translucent`): `--safe-top` (`env(safe-area-inset-top)`) is added to the header's height, the top of the full-page panels, `.fixed.inset-0.p-4/.p-3` pop-ups and top banners. Anything new pinned to the top of the screen needs `var(--safe-top)` too.
 
 ## Phone back gesture
 
