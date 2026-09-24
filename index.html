@@ -13263,7 +13263,10 @@ video {
       }
       document.getElementById('hamburgerBtn')?.classList.add('open');
       document.getElementById('hamburgerOverlay').classList.remove('hidden');
-      document.getElementById('hamburgerDrawer').classList.add('open');
+      const drawer = document.getElementById('hamburgerDrawer');
+      // Always start from the top, not wherever it was last scrolled to.
+      [drawer, ...drawer.querySelectorAll('*')].forEach((el) => { if (el.scrollTop) el.scrollTop = 0; });
+      drawer.classList.add('open');
       refreshInboxBadge();
       window.addEventListener('keydown', hamburgerEscHandler);
     }

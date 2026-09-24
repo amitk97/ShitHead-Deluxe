@@ -4039,6 +4039,20 @@ async function runDevTestSuite() {
     assertTrue(isRoomVersionCompatible({}), 'Legacy rooms without a version remain recoverable');
   });
 
+  await test('The menu reopens scrolled to the top', () => {
+    const drawer = document.getElementById('hamburgerDrawer');
+    const savedHeight = drawer.style.maxHeight;
+    drawer.style.maxHeight = '120px';
+    openHamburgerMenu();
+    drawer.scrollTop = 200;
+    assertTrue(drawer.scrollTop > 0, 'The menu can scroll');
+    closeHamburgerMenu();
+    openHamburgerMenu();
+    assertEqual(drawer.scrollTop, 0, 'Reopening starts at the top');
+    closeHamburgerMenu();
+    drawer.style.maxHeight = savedHeight;
+  });
+
   await test('Only one page is open: the Inbox and menu pages close each other', async () => {
     const el = id => document.getElementById(id);
     const tick = () => new Promise(r => setTimeout(r, 0));
