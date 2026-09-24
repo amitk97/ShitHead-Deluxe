@@ -1054,6 +1054,28 @@
     .cosmetic-tile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
     .cosmetic-tile { min-height:104px; }
     .cosmetic-tile .avatar-option-art { min-height:48px; display:flex; align-items:center; justify-content:center; }
+    .profile-name-row { display:flex; align-items:center; gap:6px; min-width:0; }
+    .profile-edit-name { flex:none; width:22px; height:22px; border-radius:7px; border:1px solid #f59e0b; color:#fbbf24; font-size:11px; line-height:1; display:flex; align-items:center; justify-content:center; }
+    .profile-edit-name:hover { background:#f59e0b; color:#020617; }
+    .profile-name-editor { display:flex; gap:5px; align-items:center; }
+    .profile-name-editor input { min-width:0; flex:1; background:#020617; border:2px solid #334155; border-radius:8px; padding:4px 7px; font-size:12px; font-weight:800; color:#fff; outline:none; }
+    .profile-name-editor input:focus { border-color:#f59e0b; }
+    .profile-name-save { flex:none; padding:5px 9px; border-radius:8px; border:1px solid #10b981; color:#34d399; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+    .profile-name-cancel { flex:none; padding:4px 6px; color:#94a3b8; font-weight:900; }
+    .profile-name-status { display:block; font-size:8.5px; margin-top:3px; color:#fb7185; }
+    .profile-name-status.is-ok { color:#34d399; }
+    .profile-owned-pill { cursor:default; border-color:#10b981 !important; color:#34d399 !important; }
+    .profile-owned-pill:hover { background:transparent !important; }
+    .confirm-scrim { position:fixed; inset:0; z-index:120; background:rgba(2,6,23,.75); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:16px; }
+    .confirm-scrim.hidden { display:none; }
+    .confirm-card { width:min(290px,100%); background:#020617; border:2px solid #f59e0b; border-radius:16px; padding:16px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,.6); }
+    .confirm-title { font-size:15px; font-weight:900; color:#fff; letter-spacing:.02em; }
+    .confirm-text { font-size:10px; color:#94a3b8; margin-top:6px; line-height:1.4; }
+    .confirm-row { display:flex; gap:8px; margin-top:14px; }
+    .confirm-btn { flex:1; padding:9px 0; border-radius:10px; border:1px solid #475569; color:#e2e8f0; font-size:10px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+    .confirm-btn:hover { border-color:#94a3b8; }
+    .confirm-btn.is-danger { border-color:#e11d48; color:#fda4af; background:rgba(76,5,25,.5); }
+    .confirm-btn.is-danger:hover { background:#e11d48; color:#fff; }
     /* In-game player card (matches the approved mockup). */
     .pp-scrim { position:fixed; inset:0; z-index:96; background:rgba(2,6,23,.62); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
     .pp-card { position:absolute; left:50%; width:min(300px, calc(100vw - 32px)); transform:translateX(-50%); background:#020617; border:2px solid #f59e0b; border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.6); padding:16px; color:#e2e8f0; }
@@ -4405,6 +4427,13 @@ video {
        flow already used by "Forgot password?" during sign-in — no new
        mechanism invented. Change Username links to the one-time lifetime
        Name Change Token now sold in the Shop. -->
+  <div id="signOutConfirm" class="hidden confirm-scrim" role="dialog" aria-modal="true" aria-labelledby="signOutConfirmTitle">
+    <div class="confirm-card">
+      <div id="signOutConfirmTitle" class="confirm-title">Sign out?</div>
+      <p class="confirm-text">You can sign back in any time. Your progress is saved to your account.</p>
+      <div class="confirm-row"><button id="signOutNoBtn" type="button" class="confirm-btn">No</button><button id="signOutYesBtn" type="button" class="confirm-btn is-danger">Yes, sign out</button></div>
+    </div>
+  </div>
   <!-- In-game player card: opened by tapping an opponent's picture/name. -->
   <div id="playerPopup" class="hidden pp-scrim" aria-hidden="true">
     <div id="playerPopupCard" class="pp-card" role="dialog" aria-modal="true" aria-labelledby="playerPopupName">
@@ -4424,7 +4453,9 @@ video {
           <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-2">
             <button id="profileAvatarBtn" type="button" class="profile-avatar-btn" aria-label="Change profile picture"><span class="inline-flex items-center justify-center" data-own-avatar="46"></span><span class="profile-avatar-hint">Tap to change</span></button>
             <div class="min-w-0">
-              <span id="profileUsernameText" class="block text-sm font-black text-white truncate">Not signed in</span>
+              <span class="profile-name-row"><span id="profileUsernameText" class="block text-sm font-black text-white truncate">Not signed in</span><button id="profileEditNameBtn" type="button" class="profile-edit-name hidden" aria-label="Change username">✎</button></span>
+              <span id="profileNameEditor" class="hidden profile-name-editor"><input id="profileNameInput" type="text" maxlength="12" autocomplete="off" placeholder="New username" /><button id="profileNameSaveBtn" type="button" class="profile-name-save">Save</button><button id="profileNameCancelBtn" type="button" class="profile-name-cancel" aria-label="Cancel">✕</button></span>
+              <span id="profileNameStatus" class="hidden profile-name-status"></span>
               <span id="profileRatingText" class="block text-[10px] text-slate-400 mt-0.5">&nbsp;</span>
             </div>
           </div>
@@ -4447,7 +4478,7 @@ video {
             </div>
             <div class="flex items-center justify-between gap-2 px-3 py-2">
               <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Change Username</span>
-              <span class="block text-[8px] text-slate-400 leading-snug">Requires the one-time Shop token</span></span>
+              <span id="profileUsernameSub" class="block text-[8px] text-slate-400 leading-snug">Requires the one-time Shop token</span></span>
               <button id="profileChangeUsernameBtn" class="shrink-0 text-[10px] font-black px-2.5 py-1 rounded-lg border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition">SHOP</button>
             </div>
           </div>
@@ -13740,6 +13771,8 @@ video {
     document.getElementById('menuShopBtn').addEventListener('click', openShopPanel);
     document.getElementById('headerDiamondBtn').addEventListener('click', openShopPanel);
     document.getElementById('profileChangeUsernameBtn').addEventListener('click', () => {
+      if (nameChangeTokenState?.usedAt) return;
+      if (currentUser && nameChangeTokenState) { openProfileNameEditor(); return; }
       document.getElementById('profileModal').classList.add('hidden');
       openShopPanel();
     });
@@ -13955,16 +13988,14 @@ video {
       shopFilter = button.dataset.shopFilter;
       renderCosmeticShop();
     });
-    document.getElementById('nameTokenUseBtn').addEventListener('click', () => {
-      if (!currentUser || !nameChangeTokenState || nameChangeTokenState.usedAt) return;
-      const newName = document.getElementById('nameTokenInput').value.trim();
-      if (!USERNAME_PATTERN.test(newName)) { setNameTokenStatus('Use 3–12 characters; start with a letter or number.', 'error'); return; }
-      if (isUsernameBlocked(newName)) { setNameTokenStatus('That username isn’t allowed.', 'error'); return; }
+    // Spends the Name Change Token. Shared by the Shop's Use row and the
+    // Profile page's inline editor so both apply exactly the same checks.
+    function changeUsernameWithToken(newName) {
+      if (!currentUser || !nameChangeTokenState || nameChangeTokenState.usedAt) return Promise.reject(new Error('You need an unused Name Change Token.'));
+      if (!USERNAME_PATTERN.test(newName)) return Promise.reject(new Error('Use 3–12 characters; start with a letter or number.'));
+      if (isUsernameBlocked(newName)) return Promise.reject(new Error('That username isn’t allowed.'));
       const uid = currentUser.uid;
-      const btn = document.getElementById('nameTokenUseBtn');
-      btn.disabled = true;
-      btn.textContent = 'Changing…';
-      getOrCreateUserProfile(uid).then((profile) => {
+      return getOrCreateUserProfile(uid).then((profile) => {
         const oldName = (profile.username || '').trim();
         const oldKey = oldName.toLowerCase();
         const newKey = newName.toLowerCase();
@@ -13989,8 +14020,16 @@ video {
         renderNameChangeToken();
         refreshProfilePanel();
         notifyBanner(`Username changed to ${newName}.`);
-      }).catch((e) => setNameTokenStatus(e.message || 'Username change failed. Please try again.', 'error'))
-        .finally(() => { btn.disabled = false; btn.textContent = 'Use Token'; });
+      });
+    }
+    document.getElementById('nameTokenUseBtn').addEventListener('click', () => {
+      if (!currentUser || !nameChangeTokenState || nameChangeTokenState.usedAt) return;
+      const btn = document.getElementById('nameTokenUseBtn');
+      btn.disabled = true;
+      btn.textContent = 'Changing…';
+      changeUsernameWithToken(document.getElementById('nameTokenInput').value.trim())
+        .catch((e) => setNameTokenStatus(e.message || 'Username change failed. Please try again.', 'error'))
+        .finally(() => { btn.disabled = false; btn.textContent = 'Use'; });
     });
     document.getElementById('shopCloseBtn').addEventListener('click', () => document.getElementById('shopModal').classList.add('hidden'));
     document.getElementById('shopModal').addEventListener('click', (e) => {
@@ -14155,17 +14194,70 @@ video {
           usernameEl.textContent = profile.username || 'Player';
           ratingEl.innerHTML = `${renderRatingBadge(profile.rating)} <span class="text-slate-500">${profile.wins || 0}W-${profile.losses || 0}L</span>`;
         }).catch(() => { usernameEl.textContent = 'Player'; ratingEl.textContent = 'Could not load rating.'; });
+        db.ref(`shopPurchases/${currentUser.uid}/nameChangeToken`).once('value')
+          .then((snap) => { nameChangeTokenState = snap.val(); renderProfileUsernameControls(); })
+          .catch(() => renderProfileUsernameControls());
       } else {
         usernameEl.textContent = 'Not signed in';
         ratingEl.textContent = '';
         statusLabel.textContent = 'Not signed in';
         statusSub.textContent = 'Sign in to save stats across devices';
         actionBtn.textContent = 'SIGN IN';
+        nameChangeTokenState = null;
+        renderProfileUsernameControls();
         emailRow.classList.add('hidden');
         pwRow.classList.add('hidden');
         dangerZone.classList.add('hidden');
       }
     }
+    // Profile's Change Username row: SHOP (no token) / OWNED (token ready,
+    // edit via the ✎ next to your name) / USED.
+    function renderProfileUsernameControls() {
+      const btn = document.getElementById('profileChangeUsernameBtn');
+      const sub = document.getElementById('profileUsernameSub');
+      const pencil = document.getElementById('profileEditNameBtn');
+      const owned = !!currentUser && !!nameChangeTokenState && !nameChangeTokenState.usedAt;
+      const used = !!currentUser && !!nameChangeTokenState?.usedAt;
+      btn.textContent = owned ? 'OWNED' : used ? 'USED' : 'SHOP';
+      btn.classList.toggle('profile-owned-pill', owned || used);
+      sub.textContent = owned ? 'Token owned: tap ✎ next to your name' : used ? 'Your one-time token has been used' : 'Requires the one-time Shop token';
+      pencil.classList.toggle('hidden', !owned);
+      if (!owned) closeProfileNameEditor();
+    }
+    function openProfileNameEditor() {
+      document.getElementById('profileNameInput').value = '';
+      document.querySelector('.profile-name-row').classList.add('hidden');
+      document.getElementById('profileNameEditor').classList.remove('hidden');
+      document.getElementById('profileNameStatus').classList.add('hidden');
+      document.getElementById('profileNameInput').focus();
+    }
+    function closeProfileNameEditor() {
+      document.querySelector('.profile-name-row')?.classList.remove('hidden');
+      document.getElementById('profileNameEditor')?.classList.add('hidden');
+    }
+    document.getElementById('profileEditNameBtn').addEventListener('click', openProfileNameEditor);
+    document.getElementById('profileNameCancelBtn').addEventListener('click', () => { closeProfileNameEditor(); document.getElementById('profileNameStatus').classList.add('hidden'); });
+    function saveProfileName() {
+      const btn = document.getElementById('profileNameSaveBtn');
+      const status = document.getElementById('profileNameStatus');
+      btn.disabled = true;
+      btn.textContent = '…';
+      changeUsernameWithToken(document.getElementById('profileNameInput').value.trim())
+        .then(() => { closeProfileNameEditor(); status.textContent = 'Username changed.'; status.className = 'profile-name-status is-ok'; })
+        .catch((e) => { status.textContent = e.message || 'Username change failed. Please try again.'; status.className = 'profile-name-status'; })
+        .finally(() => { btn.disabled = false; btn.textContent = 'Save'; });
+    }
+    document.getElementById('profileNameSaveBtn').addEventListener('click', saveProfileName);
+    document.getElementById('profileNameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') saveProfileName(); if (e.key === 'Escape') closeProfileNameEditor(); });
+    // Sign out asks first (single tap opens the confirm; Yes/No decides).
+    function openSignOutConfirm() { document.getElementById('signOutConfirm').classList.remove('hidden'); document.getElementById('signOutNoBtn').focus(); }
+    function closeSignOutConfirm() { document.getElementById('signOutConfirm').classList.add('hidden'); }
+    document.getElementById('signOutNoBtn').addEventListener('click', closeSignOutConfirm);
+    document.getElementById('signOutConfirm').addEventListener('click', (e) => { if (e.target.id === 'signOutConfirm') closeSignOutConfirm(); });
+    document.getElementById('signOutYesBtn').addEventListener('click', () => {
+      closeSignOutConfirm();
+      auth.signOut().catch((e) => console.warn('Sign out failed', e));
+    });
     function openProfilePanel() {
       refreshProfilePanel();
       refreshOwnAvatarDisplays();
@@ -14181,7 +14273,7 @@ video {
       if (e.target.id === 'profileModal') document.getElementById('profileModal').classList.add('hidden');
     });
     document.getElementById('profileAccountActionBtn').addEventListener('click', () => {
-      if (currentUser) auth.signOut().catch((e) => console.warn('Sign out failed', e));
+      if (currentUser) openSignOutConfirm();
       else { document.getElementById('profileModal').classList.add('hidden'); openAuthModal(); }
     });
     // Reuses the exact same sendPasswordResetEmail call already used by
@@ -21367,6 +21459,39 @@ video {
         openCustomAtAvatars();
         assertTrue(!document.querySelector('[data-custom-panel="avatar"]').classList.contains('hidden'), 'The profile shortcut opens the Pictures tab');
         document.getElementById('themesModal').classList.add('hidden');
+      });
+
+      await test('REGRESSION: Profile username row shows SHOP/OWNED/USED and edits inline next to the name', () => {
+        const savedUser = currentUser, savedToken = nameChangeTokenState;
+        try {
+          currentUser = { uid: 'me' };
+          nameChangeTokenState = null; renderProfileUsernameControls();
+          assertEqual(document.getElementById('profileChangeUsernameBtn').textContent, 'SHOP', 'No token: SHOP');
+          assertTrue(document.getElementById('profileEditNameBtn').classList.contains('hidden'), 'No pencil without a token');
+          nameChangeTokenState = { cost: 100, purchasedAt: 1 }; renderProfileUsernameControls();
+          assertEqual(document.getElementById('profileChangeUsernameBtn').textContent, 'OWNED', 'Owned token: OWNED');
+          assertTrue(!document.getElementById('profileEditNameBtn').classList.contains('hidden'), 'Pencil appears next to the name');
+          document.getElementById('profileEditNameBtn').click();
+          assertTrue(!document.getElementById('profileNameEditor').classList.contains('hidden'), 'Pencil opens the inline editor');
+          document.getElementById('profileNameCancelBtn').click();
+          nameChangeTokenState = { cost: 100, purchasedAt: 1, usedAt: 2 }; renderProfileUsernameControls();
+          assertEqual(document.getElementById('profileChangeUsernameBtn').textContent, 'USED', 'Used token: USED');
+        } finally { currentUser = savedUser; nameChangeTokenState = savedToken; renderProfileUsernameControls(); }
+      });
+      await test('REGRESSION: Sign out asks for confirmation first', () => {
+        const savedUser = currentUser, savedAuth = auth;
+        let signedOut = 0;
+        try {
+          currentUser = { uid: 'me' };
+          auth = { ...auth, signOut: () => { signedOut++; return Promise.resolve(); } };
+          document.getElementById('profileAccountActionBtn').click();
+          assertTrue(!document.getElementById('signOutConfirm').classList.contains('hidden') && signedOut === 0, 'One tap opens the confirm, without signing out');
+          document.getElementById('signOutNoBtn').click();
+          assertTrue(document.getElementById('signOutConfirm').classList.contains('hidden') && signedOut === 0, 'No keeps you signed in');
+          document.getElementById('profileAccountActionBtn').click();
+          document.getElementById('signOutYesBtn').click();
+          assertEqual(signedOut, 1, 'Yes signs out');
+        } finally { currentUser = savedUser; auth = savedAuth; }
       });
 
       await test('Accessibility settings exist and apply', () => {
