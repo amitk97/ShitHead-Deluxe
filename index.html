@@ -114,10 +114,33 @@
 
     .guide-font { font-family: 'Plus Jakarta Sans', sans-serif; }
 
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.25);
-      border-radius: 4px;
+    /* One scrollbar style everywhere: a slim rounded slate thumb on a clear
+       track that turns amber on hover (Chromium/Safari), and the matching
+       thin slate bar in Firefox. */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+    ::-webkit-scrollbar-thumb { background-color: rgba(148, 163, 184, 0.32); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+    ::-webkit-scrollbar-thumb:hover { background-color: rgba(245, 158, 11, 0.7); }
+    ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+    @supports not selector(::-webkit-scrollbar) {
+      * { scrollbar-width: thin; scrollbar-color: rgba(148, 163, 184, 0.4) transparent; }
+    }
+
+    /* Horizontal strips (Shop/Custom tabs, Shop filters): mouse wheel and
+       drag scroll them, and on mouse devices ‹ › buttons appear at an edge
+       that has more to show. */
+    .hscroll-wrap { position: relative; }
+    .hscroll-wrap.is-sticky { position: sticky; top: 0; z-index: 25; background: #020617; }
+    .hscroll { cursor: grab; scrollbar-width: none; }
+    .hscroll::-webkit-scrollbar { display: none; }
+    .hscroll.hscroll-dragging { cursor: grabbing; user-select: none; }
+    .hscroll.hscroll-dragging * { pointer-events: none; }
+    .hscroll-btn { display: none; position: absolute; top: 2px; z-index: 3; width: 28px; height: 28px; border-radius: 999px; border: 1px solid #475569; background: rgba(2, 6, 23, 0.94); color: #fbbf24; font-size: 18px; font-weight: 900; line-height: 1; align-items: center; justify-content: center; box-shadow: 0 0 12px 6px #020617; }
+    .hscroll-btn.prev { left: 0; }
+    .hscroll-btn.next { right: 0; }
+    .hscroll-btn:hover { border-color: #f59e0b; }
+    @media (hover: hover) and (pointer: fine) {
+      .hscroll-wrap.can-prev .hscroll-btn.prev, .hscroll-wrap.can-next .hscroll-btn.next { display: flex; }
     }
 
     /* Recent Card History strip: draggable/swipeable on top of native
@@ -1072,7 +1095,7 @@
     .name-token-status:empty { display:none; }
     /* Section tabs shared by the Shop and Custom pages. Horizontally
        scrollable, so new sections can be added without redesigning. */
-    .cosmetic-tab-bar { position:sticky; top:0; z-index:25; display:flex; gap:5px; overflow-x:auto; padding:2px 0 8px; background:#020617; scrollbar-width:none; }
+    .cosmetic-tab-bar { position:relative; display:flex; gap:5px; overflow-x:auto; padding:2px 0 8px; background:#020617; scrollbar-width:none; }
     .cosmetic-tab-bar::-webkit-scrollbar { display:none; }
     .cosmetic-tab { flex:none; display:flex; align-items:center; gap:4px; padding:6px 10px; border-radius:999px; border:1px solid #334155; color:#94a3b8; font-size:9px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; background:rgba(15,23,42,.8); white-space:nowrap; }
     .cosmetic-tab[aria-selected="true"] { border-color:#f59e0b; color:#fcd34d; background:rgba(69,26,3,.45); }
@@ -4810,14 +4833,15 @@ video {
       </div>
       <div>
         <div id="giftModeBanner" class="gift-banner hidden"></div>
-        <div id="shopTabBar" class="cosmetic-tab-bar" role="tablist" aria-label="Shop sections"></div>
-        <div id="shopFilterBar" class="flex gap-1 overflow-x-auto pb-2" aria-label="Shop filters">
+        <div class="hscroll-wrap is-sticky"><button type="button" class="hscroll-btn prev" aria-label="Scroll sections left" tabindex="-1">‹</button><div id="shopTabBar" class="cosmetic-tab-bar hscroll" role="tablist" aria-label="Shop sections"></div><button type="button" class="hscroll-btn next" aria-label="Scroll sections right" tabindex="-1">›</button></div>
+        <div class="hscroll-wrap"><button type="button" class="hscroll-btn prev" aria-label="Scroll filters left" tabindex="-1">‹</button>
+        <div id="shopFilterBar" class="flex gap-1 overflow-x-auto pb-2 hscroll" aria-label="Shop filters">
           <button data-shop-filter="all" class="shop-filter-btn shrink-0 rounded-full border border-emerald-500 px-2 py-1 text-[8px] font-black text-emerald-300">ALL</button>
           <button data-shop-filter="affordable" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">AFFORDABLE</button>
           <button data-shop-filter="owned" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">OWNED</button>
           <button data-shop-filter="unowned" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">NOT OWNED</button>
           <button data-shop-filter="equipped" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">EQUIPPED</button>
-        </div>
+        </div><button type="button" class="hscroll-btn next" aria-label="Scroll filters right" tabindex="-1">›</button></div>
         <div id="cosmeticShopList" class="space-y-2"></div>
         <p id="cosmeticShopStatus" class="text-[9px] text-center text-slate-400 leading-snug mt-2"></p>
       </div>
@@ -4885,7 +4909,7 @@ video {
         <button id="themesCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
       <div class="overflow-y-auto pr-1" style="flex:1;">
-        <div id="customTabBar" class="cosmetic-tab-bar" role="tablist" aria-label="Custom sections"></div>
+        <div class="hscroll-wrap is-sticky"><button type="button" class="hscroll-btn prev" aria-label="Scroll sections left" tabindex="-1">‹</button><div id="customTabBar" class="cosmetic-tab-bar hscroll" role="tablist" aria-label="Custom sections"></div><button type="button" class="hscroll-btn next" aria-label="Scroll sections right" tabindex="-1">›</button></div>
         <div data-custom-panel="avatar"><div id="personalisationAvatars" class="avatar-picker-grid"></div></div>
         <div data-custom-panel="deck" class="hidden"><div id="themesGridArea" class="grid grid-cols-2 gap-3 py-1"></div></div>
         <div data-custom-panel="cardBack" class="hidden"><div id="personalisationCardBacks" class="cosmetic-tile-grid"></div></div>
@@ -10453,6 +10477,59 @@ video {
     // Lets the strip be grabbed and dragged/swiped anywhere along its
     // length, not just via the thin scrollbar — mouse-drag on desktop,
     // finger-swipe on mobile, both through the same Pointer Events path.
+    // Mouse-friendly horizontal scrolling for tab/filter strips whose
+    // scrollbar is hidden: the wheel scrolls sideways, click-and-drag pans
+    // (a drag never counts as a tap on a tab), and the ‹ › buttons page it.
+    function initHorizontalScroller(strip) {
+      if (!strip || strip.dataset.hscrollReady) return;
+      strip.dataset.hscrollReady = '1';
+      const wrap = strip.closest('.hscroll-wrap');
+      const update = () => {
+        if (!wrap) return;
+        const max = strip.scrollWidth - strip.clientWidth;
+        wrap.classList.toggle('can-prev', strip.scrollLeft > 2);
+        wrap.classList.toggle('can-next', max - strip.scrollLeft > 2);
+      };
+      strip.addEventListener('wheel', (e) => {
+        if (strip.scrollWidth <= strip.clientWidth) return;
+        const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+        if (!delta) return;
+        const before = strip.scrollLeft;
+        strip.scrollLeft += delta;
+        if (strip.scrollLeft !== before) e.preventDefault(); // at an end, let the page scroll instead
+      }, { passive: false });
+      let pointerId = null, startX = 0, startLeft = 0, dragged = false;
+      strip.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return; // touch already scrolls natively
+        pointerId = e.pointerId; startX = e.clientX; startLeft = strip.scrollLeft; dragged = false;
+      });
+      strip.addEventListener('pointermove', (e) => {
+        if (pointerId === null || e.pointerId !== pointerId) return;
+        const dx = e.clientX - startX;
+        if (!dragged && Math.abs(dx) < 5) return;
+        if (!dragged) { dragged = true; strip.classList.add('hscroll-dragging'); try { strip.setPointerCapture(pointerId); } catch (err) {} }
+        strip.scrollLeft = startLeft - dx;
+      });
+      const end = () => {
+        if (pointerId === null) return;
+        pointerId = null;
+        if (dragged) setTimeout(() => strip.classList.remove('hscroll-dragging'), 0);
+      };
+      strip.addEventListener('pointerup', end);
+      strip.addEventListener('pointercancel', end);
+      strip.addEventListener('click', (e) => { if (dragged) { e.stopPropagation(); e.preventDefault(); dragged = false; } }, true);
+      strip.addEventListener('scroll', update, { passive: true });
+      if (wrap) {
+        wrap.querySelector('.hscroll-btn.prev')?.addEventListener('click', () => strip.scrollBy({ left: -Math.max(120, strip.clientWidth * 0.7), behavior: reduceMotion ? 'auto' : 'smooth' }));
+        wrap.querySelector('.hscroll-btn.next')?.addEventListener('click', () => strip.scrollBy({ left: Math.max(120, strip.clientWidth * 0.7), behavior: reduceMotion ? 'auto' : 'smooth' }));
+      }
+      // Tabs are re-rendered and panels open/resize: keep the arrows honest.
+      new MutationObserver(update).observe(strip, { childList: true, subtree: true });
+      if (typeof ResizeObserver === 'function') new ResizeObserver(update).observe(strip);
+      update();
+    }
+    document.querySelectorAll('.hscroll').forEach(initHorizontalScroller);
+
     function initHistoryDragScroll() {
       const stream = document.getElementById('cardHistoryStream');
       if (!stream) return;
