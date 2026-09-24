@@ -5029,7 +5029,7 @@ video {
     </div>
 
     <!-- ZONE 1: OPPONENTS (TOP TIER: MAX 17VH) -->
-    <div id="opponentsContainer" class="w-full flex justify-center items-start gap-1.5 md:gap-6 min-h-[58px] max-h-[17vh] shrink-0 overflow-x-auto custom-scrollbar z-10 px-2 py-3"></div>
+    <div id="opponentsContainer" class="w-full flex justify-center items-start gap-1.5 md:gap-6 min-h-[58px] shrink-0 z-10 px-2" style="overflow:visible;padding-top:8px;padding-bottom:8px"></div>
 
     <!-- ZONE 2: CENTER ARENA (MIDDLE TIER: MAX 30VH) -->
     <div id="centerArena" class="relative flex flex-col items-center justify-center shrink-0 my-auto z-20 w-full max-h-[30vh] gap-1">
@@ -10188,6 +10188,21 @@ video {
     // hand's own position. Heights are set by their own content and so are
     // stable; the hand's position moves as a *result* of resizing the hand,
     // which is why an earlier position-based attempt chased its own tail.
+    // Opponent seats are never clipped or scrolled: if the scaled-up seats
+    // (1–2 opponents) would take too much of a short screen, shrink their
+    // scale until they fit a share of the height instead.
+    function fitOpponentSeats(container, scale) {
+      const maxH = Math.max(120, window.innerHeight * 0.19);
+      for (let pass = 0; pass < 3; pass++) {
+        const seatH = Math.max(0, ...[...container.children].map(el => el.offsetHeight));
+        if (!seatH || seatH <= maxH) return;
+        const next = Math.max(0.7, scale * maxH / seatH);
+        if (next >= scale - 0.01) return;
+        scale = next;
+        container.style.setProperty('--opp-scale', scale.toFixed(3));
+      }
+    }
+
     function getAvailableHandHeightPx() {
       const h = (sel) => {
         const el = document.querySelector(sel);
@@ -10536,10 +10551,29 @@ video {
         wrap.querySelector('.hscroll-btn.prev')?.addEventListener('click', () => strip.scrollBy({ left: -Math.max(120, strip.clientWidth * 0.7), behavior: reduceMotion ? 'auto' : 'smooth' }));
         wrap.querySelector('.hscroll-btn.next')?.addEventListener('click', () => strip.scrollBy({ left: Math.max(120, strip.clientWidth * 0.7), behavior: reduceMotion ? 'auto' : 'smooth' }));
       }
+      // Keep the selected tab on screen: when the selection changes, and
+      // when the strip first shows (it's often rendered while hidden).
+      let revealedKey = null, wasVisible = false;
+      const revealSelected = () => {
+        const visible = strip.clientWidth > 0;
+        const tab = strip.querySelector('[aria-selected="true"]');
+        const key = tab ? (tab.dataset.shopTab || tab.dataset.customTab || tab.textContent) : null;
+        if (visible && tab && (key !== revealedKey || !wasVisible)) {
+          const pad = 44; // room for the ‹ › buttons
+          const left = tab.getBoundingClientRect().left - strip.getBoundingClientRect().left + strip.scrollLeft;
+          const right = left + tab.offsetWidth;
+          if (left - pad < strip.scrollLeft) strip.scrollLeft = Math.max(0, left - pad);
+          else if (right + pad > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = right + pad - strip.clientWidth;
+          revealedKey = key;
+        }
+        wasVisible = visible;
+        update();
+      };
+      strip.revealSelectedTab = revealSelected;
       // Tabs are re-rendered and panels open/resize: keep the arrows honest.
-      new MutationObserver(update).observe(strip, { childList: true, subtree: true });
-      if (typeof ResizeObserver === 'function') new ResizeObserver(update).observe(strip);
-      update();
+      new MutationObserver(revealSelected).observe(strip, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-selected'] });
+      if (typeof ResizeObserver === 'function') new ResizeObserver(revealSelected).observe(strip);
+      revealSelected();
     }
     document.querySelectorAll('.hscroll').forEach(initHorizontalScroller);
 
@@ -10828,6 +10862,7 @@ video {
         `;
         oppContainer.appendChild(oppDiv);
       });
+      fitOpponentSeats(oppContainer, oppScale);
 
       // 2. Discard, Deck & Base HUD
       const discardWrapper = document.getElementById('discardCardsWrapper');
@@ -12692,13 +12727,44 @@ video {
       document.getElementById('modeRankedBtn').click();
     }
 
+    function styleBotCountBtns() {
+      document.querySelectorAll('.bot-count-btn').forEach(b => {
+        b.className = Number(b.dataset.bots) === state.selectedBotCount
+          ? "bot-count-btn py-1.5 text-xs rounded-lg border-2 border-amber-500 bg-amber-950/60 font-black text-amber-300 transition"
+          : "bot-count-btn py-1.5 text-xs rounded-lg border-2 border-slate-700 bg-slate-800 font-bold hover:border-amber-500 transition";
+      });
+    }
+    // The last bot count and difficulty picked in the lobby. Kept on the
+    // device and, when signed in, in users/{uid}/settings (see
+    // collectAccountSettings) so every device starts where you left off.
+    function readBotPrefs() {
+      let count = 3, difficulty = 'medium';
+      try {
+        const c = Number(localStorage.getItem('shithead_bot_count'));
+        if ([1, 2, 3].includes(c)) count = c;
+        const d = localStorage.getItem('shithead_difficulty');
+        if (['easy', 'medium', 'hard', 'boss'].includes(d)) difficulty = d;
+      } catch (e) {}
+      return { count, difficulty };
+    }
+    function applyBotPrefs({ count, difficulty } = readBotPrefs()) {
+      if ([1, 2, 3].includes(Number(count))) {
+        state.selectedBotCount = Number(count);
+        try { localStorage.setItem('shithead_bot_count', String(state.selectedBotCount)); } catch (e) {}
+      }
+      if (DIFF_LABELS[difficulty] && unlockedDifficulties[difficulty]) {
+        state.difficulty = difficulty;
+        try { localStorage.setItem('shithead_difficulty', difficulty); } catch (e) {}
+      }
+      styleBotCountBtns();
+      document.querySelectorAll('.diff-btn').forEach(styleDifficultyBtn);
+    }
     document.querySelectorAll('.bot-count-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.bot-count-btn').forEach(b => {
-          b.className = "bot-count-btn py-1.5 text-xs rounded-lg border-2 border-slate-700 bg-slate-800 font-bold hover:border-amber-500 transition";
-        });
-        btn.className = "bot-count-btn py-1.5 text-xs rounded-lg border-2 border-amber-500 bg-amber-950/60 font-black text-amber-300 transition";
         state.selectedBotCount = parseInt(btn.dataset.bots);
+        try { localStorage.setItem('shithead_bot_count', String(state.selectedBotCount)); } catch (e) {}
+        styleBotCountBtns();
+        scheduleSettingsCloudSave();
       });
     });
 
@@ -12843,9 +12909,11 @@ video {
         state.difficulty = btn.dataset.diff;
         try { localStorage.setItem('shithead_difficulty', state.difficulty); } catch (e) {}
         document.querySelectorAll('.diff-btn').forEach(styleDifficultyBtn);
+        scheduleSettingsCloudSave();
         saveGameState();
       });
     });
+    if (!state.phase || state.phase === 'LOBBY') applyBotPrefs();
 
     // Shared by both the lobby's theme row AND Personalisation's Deck Themes subsection so
     // selecting a theme behaves identically and stays in sync regardless
@@ -16192,7 +16260,9 @@ video {
         bigEffectsOn: !!bigEffectsOn,
         hapticsOn: !!hapticsOn,
         dealAnimationOn: !!dealAnimationOn,
-        emotesMuted: !!emotesMuted
+        emotesMuted: !!emotesMuted,
+        botCount: readBotPrefs().count,
+        botDifficulty: readBotPrefs().difficulty
       };
     }
 
@@ -16227,6 +16297,10 @@ video {
           assign(settings[key]);
           try { localStorage.setItem(storageKey, settings[key] ? '1' : '0'); } catch (e) {}
         });
+        if (settings.botCount !== undefined || settings.botDifficulty !== undefined) {
+          const local = readBotPrefs();
+          applyBotPrefs({ count: settings.botCount ?? local.count, difficulty: settings.botDifficulty ?? local.difficulty });
+        }
         updateMultiSelectToggleUI();
         applyAccessibilityPrefs();
         refreshSettingsUI();
@@ -22226,6 +22300,7 @@ video {
     }
 
     function endTutorial(completed) {
+      applyBotPrefs();
       tutorialActive = false;
       tutorialBotPaused = false;
       tutorialStep = 0;

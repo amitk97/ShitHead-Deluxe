@@ -42,6 +42,12 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Custom shows every cosmetic as a tile (`.cosmetic-tile-grid`, 2 per row; pictures 3 per row).
 - Table themes are CSS on `body[data-equipped-table-theme="…"] #gameTable` plus a `--table-label-border` accent and a Shop preview background in `shopCosmeticPreviewMarkup`. New themes also need the rules id list and price.
 
+## Table layout & lobby prefs
+
+- Opponent seats are never clipped or scrolled: `#opponentsContainer` has no max height; `fitOpponentSeats` shrinks `--opp-scale` so a seat stays within ~19% of the screen height.
+- Vs Bots remembers the last bot count and difficulty (`readBotPrefs` / `applyBotPrefs`: localStorage `shithead_bot_count` / `shithead_difficulty`, plus `botCount` / `botDifficulty` in `users/{uid}/settings` for signed-in accounts). A locked difficulty is never restored.
+- Tab strips (`initHorizontalScroller`) keep the selected tab scrolled into view.
+
 ## Showcase & daily streak
 
 - Showcase: equipped table/card back/frame/burn/victory/emotes are mirrored to `publicProfiles/{uid}/showcase` (`syncShowcase`) and shown on the in-game player card and the Profile page (`showcaseHtml`). New cosmetic types that should be shown need adding to `SHOWCASE_TYPES` and the `showcase` rule.

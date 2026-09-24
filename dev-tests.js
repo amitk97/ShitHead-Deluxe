@@ -4039,6 +4039,39 @@ async function runDevTestSuite() {
     assertTrue(isRoomVersionCompatible({}), 'Legacy rooms without a version remain recoverable');
   });
 
+  await test('Vs Bots remembers the last bot count and difficulty (device + account settings)', () => {
+    const saved = { count: state.selectedBotCount, diff: state.difficulty, unlocked: { ...unlockedDifficulties } };
+    let ls = {};
+    try { ls = { c: localStorage.getItem('shithead_bot_count'), d: localStorage.getItem('shithead_difficulty') }; } catch (e) {}
+    try {
+      unlockedDifficulties = { easy: true, medium: true, hard: true, boss: true };
+      document.querySelector('.bot-count-btn[data-bots="1"]').click();
+      document.querySelector('.diff-btn[data-diff="hard"]').click();
+      state.selectedBotCount = 3; state.difficulty = 'medium'; // e.g. a tutorial borrowed them
+      applyBotPrefs();
+      assertEqual(state.selectedBotCount, 1, 'Bot count comes back');
+      assertEqual(state.difficulty, 'hard', 'Difficulty comes back');
+      assertTrue(document.querySelector('.bot-count-btn[data-bots="1"]').className.includes('border-amber-500'), 'The remembered count is highlighted');
+      const cloud = collectAccountSettings();
+      assertEqual(cloud.botCount, 1, 'Signed-in accounts save the count');
+      assertEqual(cloud.botDifficulty, 'hard', 'Signed-in accounts save the difficulty');
+      applyAccountSettings({ botCount: 2, botDifficulty: 'easy' });
+      assertEqual(state.selectedBotCount, 2, 'Account settings restore the count on another device');
+      assertEqual(state.difficulty, 'easy', 'Account settings restore the difficulty on another device');
+      unlockedDifficulties = { easy: true, medium: true, hard: false, boss: false };
+      applyAccountSettings({ botCount: 3, botDifficulty: 'boss' });
+      assertEqual(state.difficulty, 'easy', 'A locked difficulty is never restored');
+    } finally {
+      unlockedDifficulties = saved.unlocked;
+      try {
+        ls.c === null ? localStorage.removeItem('shithead_bot_count') : localStorage.setItem('shithead_bot_count', ls.c);
+        ls.d === null ? localStorage.removeItem('shithead_difficulty') : localStorage.setItem('shithead_difficulty', ls.d);
+      } catch (e) {}
+      state.selectedBotCount = saved.count; state.difficulty = saved.diff;
+      styleBotCountBtns(); document.querySelectorAll('.diff-btn').forEach(styleDifficultyBtn);
+    }
+  });
+
   await test('The menu reopens scrolled to the top', () => {
     const drawer = document.getElementById('hamburgerDrawer');
     const savedHeight = drawer.style.maxHeight;
