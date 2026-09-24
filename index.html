@@ -692,6 +692,38 @@
         linear-gradient(180deg,#071a17,#064e3b 48%,#031713) !important;
       box-shadow:inset 0 0 0 3px #d4af37,inset 0 0 42px rgba(0,0,0,.78);
     }
+    /* Midnight: true black with a sparse scatter of stars (large, uneven
+       tile sizes keep the stars few and irregular). */
+    body[data-equipped-table-theme="table-midnight"] #gameTable {
+      background:
+        radial-gradient(circle at 23% 31%,rgba(255,255,255,.9) 0 .8px,transparent 1.6px),
+        radial-gradient(circle at 71% 12%,rgba(255,255,255,.7) 0 .7px,transparent 1.4px),
+        radial-gradient(circle at 44% 77%,rgba(226,232,240,.55) 0 1px,transparent 1.8px),
+        radial-gradient(circle at 88% 64%,rgba(255,255,255,.8) 0 .6px,transparent 1.3px),
+        #000 !important;
+      background-size:137px 131px,211px 197px,173px 229px,263px 241px,auto !important;
+      box-shadow:inset 0 0 0 3px #1e293b,inset 0 0 60px rgba(0,0,0,.9);
+    }
+    /* Candyfloss: soft pink with faint, wispy candyfloss clouds. */
+    body[data-equipped-table-theme="table-candyfloss"] #gameTable {
+      background:
+        radial-gradient(ellipse 38% 16% at 22% 24%,rgba(255,255,255,.42),transparent 70%),
+        radial-gradient(ellipse 30% 13% at 78% 18%,rgba(255,240,250,.36),transparent 70%),
+        radial-gradient(ellipse 42% 18% at 70% 70%,rgba(255,255,255,.3),transparent 70%),
+        radial-gradient(ellipse 34% 15% at 18% 82%,rgba(250,232,255,.34),transparent 70%),
+        radial-gradient(ellipse at 50% 50%,rgba(240,171,252,.35),transparent 60%),
+        linear-gradient(170deg,#f9a8d4,#f0abfc 45%,#fbcfe8) !important;
+      box-shadow:inset 0 0 0 3px #fff1f2,inset 0 0 50px rgba(190,24,93,.25);
+    }
+    /* Royal: deep purple velvet, fine gold lattice and a gold rim. */
+    body[data-equipped-table-theme="table-royal"] #gameTable {
+      background:
+        radial-gradient(ellipse at 50% 45%,rgba(167,139,250,.28),transparent 55%),
+        repeating-linear-gradient(45deg,rgba(251,191,36,.07) 0 1px,transparent 1px 22px),
+        repeating-linear-gradient(-45deg,rgba(251,191,36,.07) 0 1px,transparent 1px 22px),
+        linear-gradient(180deg,#1e0b3d,#3b0764 50%,#1e0b3d) !important;
+      box-shadow:inset 0 0 0 3px #d4af37,inset 0 0 0 6px #7f1d1d,inset 0 0 46px rgba(0,0,0,.7);
+    }
     body[data-equipped-table-theme="table-winter"] #gameTable {
       background:
         radial-gradient(circle at 18% 16%,rgba(255,255,255,.8) 0 1px,transparent 2px),
@@ -898,6 +930,9 @@
     :root { --table-label-border: rgba(148,163,184,.55); }
     body[data-equipped-table-theme="table-casino"] { --table-label-border: rgba(212,175,55,.75); }
     body[data-equipped-table-theme="table-winter"] { --table-label-border: rgba(186,230,253,.85); }
+    body[data-equipped-table-theme="table-midnight"] { --table-label-border: rgba(148,163,184,.45); }
+    body[data-equipped-table-theme="table-candyfloss"] { --table-label-border: rgba(255,241,242,.95); }
+    body[data-equipped-table-theme="table-royal"] { --table-label-border: rgba(212,175,55,.8); }
     .table-label-pill {
       display:inline-flex; align-items:center; justify-content:center;
       padding:2px 7px; border-radius:999px;
@@ -12942,6 +12977,9 @@ video {
       { id: 'emotes-royal', category: 'Emote Packs', name: 'Royal Court', cost: 200, tones: ['#172033','#fbbf24','#d8b4fe'] },
       { id: 'table-casino', category: 'Table Themes', name: 'Luxury Casino', cost: 750, tones: ['#031713','#059669','#d4af37'] },
       { id: 'table-winter', category: 'Table Themes', name: 'Winter Wonderland', cost: 750, tones: ['#082f49','#7dd3fc','#f8fafc'] },
+      { id: 'table-midnight', category: 'Table Themes', name: 'Midnight', cost: 750, tones: ['#000000','#1e293b','#e2e8f0'] },
+      { id: 'table-candyfloss', category: 'Table Themes', name: 'Candyfloss', cost: 750, tones: ['#f9a8d4','#f0abfc','#fff1f2'] },
+      { id: 'table-royal', category: 'Table Themes', name: 'Royal', cost: 750, tones: ['#2e1065','#7c3aed','#fbbf24'] },
       { id: 'burn-coloured', category: 'Burn Effects', name: 'Coloured Flame', cost: 250, tones: ['#581c87','#ec4899','#22d3ee'] },
       { id: 'burn-ice', category: 'Burn Effects', name: 'Ice Shatter', cost: 500, tones: ['#0c4a6e','#38bdf8','#e0f2fe'] },
       { id: 'burn-electric', category: 'Burn Effects', name: 'Electric Blast', cost: 750, tones: ['#164e63','#fde047','#ffffff'] },
@@ -12998,7 +13036,7 @@ video {
       cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno']),
       frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign']),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal']),
-      tableTheme: new Set(['table-casino','table-winter']),
+      tableTheme: new Set(['table-casino','table-winter','table-midnight','table-candyfloss','table-royal']),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric']),
       victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks']),
       avatar: new Set(Object.keys(AVATAR_ART))
@@ -13557,7 +13595,12 @@ video {
       } else if (type === 'emotes') {
         demo = `<div class="shop-preview-stage"><div class="grid grid-cols-3 gap-2">${(EMOTE_PACKS[item.id] || []).map(emoji => `<span class="w-10 h-10 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-xl">${emoji}</span>`).join('')}</div></div>`;
       } else if (type === 'tableTheme') {
-        const bg = item.id === 'table-winter' ? 'linear-gradient(145deg,#082f49,#0c4a6e 58%,#e0f2fe)' : 'radial-gradient(circle,#065f46,#022c22 68%,#d4af37)';
+        const bg = {
+          'table-winter': 'linear-gradient(145deg,#082f49,#0c4a6e 58%,#e0f2fe)',
+          'table-midnight': 'radial-gradient(circle at 22% 30%,#fff 0 1px,transparent 2px),radial-gradient(circle at 74% 20%,#fff 0 .8px,transparent 1.6px),radial-gradient(circle at 60% 78%,#cbd5e1 0 1px,transparent 2px),#000',
+          'table-candyfloss': 'radial-gradient(ellipse 45% 22% at 25% 28%,rgba(255,255,255,.5),transparent 70%),radial-gradient(ellipse 40% 20% at 72% 70%,rgba(255,255,255,.4),transparent 70%),linear-gradient(170deg,#f9a8d4,#f0abfc 50%,#fbcfe8)',
+          'table-royal': 'repeating-linear-gradient(45deg,rgba(251,191,36,.12) 0 1px,transparent 1px 14px),repeating-linear-gradient(-45deg,rgba(251,191,36,.12) 0 1px,transparent 1px 14px),linear-gradient(180deg,#1e0b3d,#3b0764 50%,#1e0b3d)'
+        }[item.id] || 'radial-gradient(circle,#065f46,#022c22 68%,#d4af37)';
         demo = `<div class="shop-preview-stage"><div class="shop-table-preview" style="--shop-table-bg:${bg};--shop-table-trim:${item.tones[2]}"><span class="shop-table-preview-label">${item.name}</span><span class="shop-table-preview-card deck"></span><span class="shop-table-preview-card pile"></span><span class="shop-table-preview-card base"></span></div></div>`;
       } else if (type === 'burnEffect') {
         demo = `<div class="shop-preview-stage" data-shop-burn-stage><div class="shop-burn-core">${burnPreviewIcon(item.id)}</div></div>`;
@@ -23114,7 +23157,7 @@ video {
 
       await test('Second-wave table, burn and victory cosmetics are complete and correctly priced', () => {
         const expected = {
-          'table-casino': 750, 'table-winter': 750,
+          'table-casino': 750, 'table-winter': 750, 'table-midnight': 750, 'table-candyfloss': 750, 'table-royal': 750,
           'burn-coloured': 250, 'burn-ice': 500, 'burn-electric': 750,
           'victory-confetti': 250, 'victory-cards': 500, 'victory-fireworks': 750
         };
