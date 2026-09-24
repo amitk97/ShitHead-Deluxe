@@ -1,6 +1,10 @@
 {
   "rules": {
     "rooms": {
+      ".read": "auth != null && query.orderByChild == 'createdAt' && query.startAt == null && query.limitToFirst <= 25",
+      ".indexOn": [
+        "createdAt"
+      ],
       "$roomCode": {
         ".read": true,
         ".write": "$roomCode.matches(/^[0-9]{6}$/)",

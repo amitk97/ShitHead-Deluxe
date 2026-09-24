@@ -5904,6 +5904,11 @@ video {
     // doing nothing.
     let firebaseAvailable = true;
     let db, auth;
+    // Every phone's clock is a little different, so shared deadlines (turn
+    // timers, invites, the Ranked queue) use Firebase's server time instead:
+    // Date.now() corrected by the offset Firebase measures on connect.
+    let serverTimeOffsetMs = 0;
+    function serverNow() { return Date.now() + serverTimeOffsetMs; }
     try {
       if (typeof firebase === 'undefined') throw new Error('Firebase SDK did not load');
       firebase.initializeApp(firebaseConfig);
@@ -5915,6 +5920,10 @@ video {
       }
       db = firebase.database();
       auth = firebase.auth();
+      db.ref('.info/serverTimeOffset').on('value', (snap) => {
+        const offset = Number(snap.val());
+        serverTimeOffsetMs = Number.isFinite(offset) ? offset : 0;
+      });
     } catch (e) {
       firebaseAvailable = false;
       console.warn('Firebase unavailable — multiplayer will be disabled, but solo play and the tutorial are unaffected.', e);
@@ -7040,6 +7049,10 @@ video {
           const allReady = currentList.length > 0 && currentList.every(p => p.isReady);
           if (allReady && state.phase === 'SWAP') {
             state.phase = 'PLAY';
+            // The first turn gets a clock too: without one it never timed
+            // out, so an idle first player held the whole table forever.
+            const firstPlayer = state.players[state.currentTurnIndex];
+            state.turnDeadline = (firstPlayer && !firstPlayer.isBot) ? serverNow() + (state.turnTimerMs || 15000) : null;
             document.getElementById('swapControlBar').classList.add('hidden');
             document.getElementById('playActionControls').classList.remove('hidden');
             notifyBanner(`${state.players[state.currentTurnIndex].name}'s Turn to Start!`);
@@ -7361,7 +7374,7 @@ video {
         // Online, the bonus gets its own short countdown (shown to everyone
         // as this player's turn timer). When it runs out the bonus is skipped
         // (see updateMultiplayerTimerDisplays) so nobody is left waiting.
-        if (state.isMultiplayer && !player.isBot) state.turnDeadline = Date.now() + BONUS_FOLLOW_UP_MS;
+        if (state.isMultiplayer && !player.isBot) state.turnDeadline = serverNow() + BONUS_FOLLOW_UP_MS;
         if (state.botActionTimer) clearTimeout(state.botActionTimer);
         saveGameState();
         if (state.isMultiplayer) syncFirebaseGameState();
@@ -7413,7 +7426,7 @@ video {
       if (state.isMultiplayer) {
         // Skipping hands the turn on: the next player gets a fresh window.
         const upcoming = state.players[state.currentTurnIndex];
-        state.turnDeadline = (upcoming && !upcoming.isBot) ? Date.now() + (state.turnTimerMs || 15000) : null;
+        state.turnDeadline = (upcoming && !upcoming.isBot) ? serverNow() + (state.turnTimerMs || 15000) : null;
       }
       saveGameState();
       if (state.isMultiplayer) syncFirebaseGameState();
@@ -7783,7 +7796,7 @@ video {
       state.pendingFaceUpSacrifice = { playerId };
       state.selectedSacrificeIds = [];
       if (state.isMultiplayer) {
-        state.turnDeadline = Date.now() + (state.turnTimerMs || 15000);
+        state.turnDeadline = serverNow() + (state.turnTimerMs || 15000);
       }
       notifyBanner("No legal move — pick card/s for your hand.");
       saveGameState();
@@ -7965,7 +7978,7 @@ video {
       state.jokerTurnLockConsumedPending = false;
       state.pendingFollowUp = null;
       if (state.isMultiplayer) {
-        state.turnDeadline = winner.isBot ? null : Date.now() + (state.turnTimerMs || 15000);
+        state.turnDeadline = winner.isBot ? null : serverNow() + (state.turnTimerMs || 15000);
       }
       return true;
     }
@@ -8138,7 +8151,7 @@ video {
         // every other client sees the identical deadline (no separate "who
         // broadcasts the timer" logic needed).
         const upcoming = state.players[state.currentTurnIndex];
-        state.turnDeadline = (upcoming && !upcoming.isBot) ? (Date.now() + (state.turnTimerMs || 15000)) : null;
+        state.turnDeadline = (upcoming && !upcoming.isBot) ? (serverNow() + (state.turnTimerMs || 15000)) : null;
       }
     }
 
@@ -9735,7 +9748,7 @@ video {
         return;
       }
 
-      const remainingMs = state.turnDeadline - Date.now();
+      const remainingMs = state.turnDeadline - serverNow();
       const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
 
       if (current.id === state.localPlayerId) {
@@ -11544,7 +11557,8 @@ video {
         baseOverrideCard: state.baseOverrideCard || null,
         turnDeadline: state.turnDeadline || null,
         turnTimerMs: state.turnTimerMs || 15000,
-        stateVersion: state.stateVersion
+        stateVersion: state.stateVersion,
+        updatedAt: serverNow() // last activity, so old-room cleanup never touches a live game
       };
       if (state.jokerTurnOwnerId) {
         syncedState.jokerTurnOwnerId = state.jokerTurnOwnerId;
@@ -11851,6 +11865,40 @@ video {
       db.ref(`rooms/${state.roomCode}`).update({ turnTimerMs: ms });
     }
 
+    // Rooms are never deleted by the game itself when players just close the
+    // app, so signed-in players quietly clear out rooms that are over 2 days
+    // old and haven't been touched for 2 days (at most once every 6 hours per
+    // device, 25 rooms at a time). The Database Rules only allow this exact
+    // query shape (signed in, oldest first by createdAt, 25 at most); the
+    // 2-day age and idle checks happen here before anything is removed.
+    const ROOM_MAX_AGE_MS = 2 * 24 * 60 * 60 * 1000;
+    const ROOM_PRUNE_EVERY_MS = 6 * 60 * 60 * 1000;
+    function roomRecentlyActive(room, cutoff) {
+      const stamps = [room?.updatedAt, room?.turnDeadline, room?.shufflingStartedAt, room?.lastEmote?.at,
+        ...Object.values(room?.presence || {}).map(p => p?.at)];
+      return stamps.some(stamp => Number(stamp) > cutoff);
+    }
+    function pruneOldRooms(force = false) {
+      if (!firebaseAvailable || !currentUser) return Promise.resolve(0);
+      try {
+        const last = Number(localStorage.getItem('shithead_room_prune_at')) || 0;
+        if (!force && Date.now() - last < ROOM_PRUNE_EVERY_MS) return Promise.resolve(0);
+        localStorage.setItem('shithead_room_prune_at', String(Date.now()));
+      } catch (e) {}
+      // A minute's margin so the rules' own clock always agrees it's 2 days.
+      const cutoff = serverNow() - ROOM_MAX_AGE_MS - 60000;
+      return db.ref('rooms').orderByChild('createdAt').endAt(cutoff).limitToFirst(25).once('value').then((snap) => {
+        const removals = {};
+        snap.forEach((child) => {
+          const room = child.val() || {};
+          const oldEnough = !(Number(room.createdAt) > cutoff);
+          if (/^[0-9]{6}$/.test(child.key) && child.key !== state.roomCode && oldEnough && !roomRecentlyActive(room, cutoff)) removals[child.key] = null;
+        });
+        const count = Object.keys(removals).length;
+        return count ? db.ref('rooms').update(removals).then(() => count) : 0;
+      }).catch((error) => { console.warn('Old room cleanup skipped', error); return 0; });
+    }
+
     // Leaving an online room tells everyone straight away instead of waiting
     // for the 45s disconnect grace: in the lobby you're taken off the list;
     // mid-match a bot takes your cards (or a 2-player casual match ends).
@@ -11862,20 +11910,30 @@ video {
       const myId = state.localPlayerId;
       const inMatch = state.phase === 'PLAY' || state.phase === 'SWAP';
       const me = state.players.find(p => p.id === myId);
+      const othersHere = state.players.some(p => p.id !== myId && !p.isBot);
       let write;
       try {
-        db.ref(`rooms/${code}/presence/${myId}`).set({ status: 'left', at: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
-        if (inMatch && me && !me.hasFinished) {
+        if (!othersHere) {
+          // Nobody real left to play in it (or only bots): remove the room.
+          write = db.ref(`rooms/${code}`).remove();
+        } else if (inMatch && me && !me.hasFinished) {
+          db.ref(`rooms/${code}/presence/${myId}`).set({ status: 'left', at: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
           write = removePlayerFromMatch(myId, 'left');
         } else {
+          db.ref(`rooms/${code}/presence/${myId}`).set({ status: 'left', at: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
+          let humansLeft = 0;
           write = new Promise((resolve) => updatePlayersAtomic(code, (list) => {
             const next = list.filter(p => p.id !== myId);
+            humansLeft = next.filter(p => !p.isBot).length;
             if (next.length && !next.some(p => p.isHost)) {
               const heir = next.find(p => !p.isBot);
               if (heir) heir.isHost = true;
             }
             return next;
-          }, () => resolve()));
+          }, (error, committed) => {
+            if (!error && committed && humansLeft === 0) db.ref(`rooms/${code}`).remove().catch(() => {});
+            resolve();
+          }));
         }
       } catch (error) {
         console.warn('Leaving the room cleanly failed', error);
@@ -16589,6 +16647,8 @@ video {
     }
     function resetDailyStreakOnSignOut() { dailyStreakState = null; closeDailyReward(); refreshProfileStreak(); }
     function performSignOut() {
+      // Still signed in here, so a Ranked search can take its ticket out of the queue.
+      if (rankedHeartbeatTimer || rankedAssignmentRef) cancelRankedSearch();
       const signOut = auth && typeof auth.signOut === 'function' ? auth.signOut() : Promise.resolve();
       return Promise.resolve(signOut).catch((e) => console.warn('Sign out failed', e)).finally(resetAfterSignOut);
     }
@@ -16859,6 +16919,7 @@ video {
         if (user) {
           ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); attemptRankedReconnect();
           initChallengeEconomy().then(() => { claimDailyLoginReward(); sendSeasonalMail(); loadSeasonWins(); }); loadCosmeticCollection(user);
+          setTimeout(() => { if (currentUser && !devTestSuiteRunning) pruneOldRooms(); }, 15000);
           // Preferences live under the account and do not depend on profile creation.
           loadAccountSettings(user);
         } else {
@@ -18178,9 +18239,37 @@ video {
       if (modal && !modal.classList.contains('hidden')) renderChallengesPanel();
     }
 
+    // Ranked basics every account must have. A record can already exist
+    // before its first Ranked visit (settings, the login streak and Diamonds
+    // all write to users/{uid}), so missing fields are filled in rather than
+    // assumed: without a rating the Ranked ticket and the end-of-match save
+    // both failed.
+    const RANKED_PROFILE_DEFAULTS = { rating: 500, wins: 0, losses: 0 };
     function getOrCreateUserProfile(uid) {
       return db.ref(`users/${uid}`).once('value').then((snap) => {
-        if (snap.exists()) return snap.val();
+        if (snap.exists()) {
+          const profile = snap.val() || {};
+          const missing = {};
+          Object.entries(RANKED_PROFILE_DEFAULTS).forEach(([key, value]) => {
+            if (!Number.isFinite(Number(profile[key])) || profile[key] === null || profile[key] === undefined) missing[key] = value;
+          });
+          if (!Object.keys(missing).length) return profile;
+          // Each field is filled only if it's still empty on the server, in
+          // its own transaction: a plain write could land after a Ranked
+          // result that was saved in the meantime and put the rating back.
+          const filled = { ...profile };
+          return Promise.all(Object.keys(missing).map((key) => new Promise((resolve) => {
+            db.ref(`users/${uid}/${key}`).transaction((current) => {
+              if (current === null || current === undefined) return missing[key];
+              return; // already set (maybe just now): leave it alone
+            }, (error, committed, snapshot) => {
+              if (error) console.warn('Profile backfill failed', error);
+              const value = snapshot && typeof snapshot.val === 'function' ? snapshot.val() : null;
+              filled[key] = Number.isFinite(Number(value)) && value !== null ? Number(value) : missing[key];
+              resolve();
+            });
+          }))).then(() => filled);
+        }
         const fresh = { rating: 500, wins: 0, losses: 0, diamonds: 0, completedChallenges: {}, dailyChallengeState: null, retroactiveChallengeCheckDone: true, diamondEconomyResetV2Done: true, challengeStats: { burns: 0, snapBurns: 0, jokerDeflects: 0 } };
         return db.ref(`users/${uid}`).set(fresh).then(() => fresh);
       });
@@ -18493,77 +18582,158 @@ video {
     // just made LESS likely to pair again for a while, not impossible.
     const RANKED_REMATCH_COOLDOWN_MS = 10 * 60 * 1000;
     const RANKED_REMATCH_SKIP_CHANCE = 0.7;
-    function findRankedMatch() {
+    // The queue is one "waiting" ticket. While waiting, a player's ticket is
+    // refreshed every few seconds and removed automatically if their
+    // connection drops; anyone searching treats a ticket that hasn't been
+    // refreshed for 30s as a ghost (closed app, phone locked) and takes the
+    // spot instead of being paired with an empty seat. Pairing happens in the
+    // same transaction that takes the waiting player out of the queue, so two
+    // searchers can never both claim the same opponent.
+    const RANKED_TICKET_HEARTBEAT_MS = 5000;
+    const RANKED_TICKET_STALE_MS = 30000;
+    const RANKED_ASSIGNMENT_MAX_AGE_MS = 60000;
+    let rankedHeartbeatTimer = null;
+    let rankedSearchToken = 0;
+    function isRankedTicketStale(ticket, now = serverNow()) {
+      const ts = Number(ticket?.ts);
+      return !Number.isFinite(ts) || now - ts > RANKED_TICKET_STALE_MS;
+    }
+    function stopRankedHeartbeat() {
+      clearInterval(rankedHeartbeatTimer);
+      rankedHeartbeatTimer = null;
+      try { db.ref('matchmaking/waiting').onDisconnect().cancel(); } catch (e) {}
+    }
+    function stopRankedAssignmentListener() {
+      if (rankedAssignmentRef) { rankedAssignmentRef.off(); rankedAssignmentRef = null; }
+    }
+    // What the searcher does with the queue slot, decided inside the
+    // transaction (so it always reflects the server's latest value).
+    function decideRankedQueueAction(current, myTicket, lastOpponent, skipRoll, now = serverNow()) {
+      if (current && current.uid !== myTicket.uid && !isRankedTicketStale(current, now)) {
+        const onCooldown = lastOpponent && lastOpponent.uid === current.uid && (now - Number(lastOpponent.at)) < RANKED_REMATCH_COOLDOWN_MS;
+        if (onCooldown && skipRoll) return { action: 'skip' };
+        return { action: 'claim', opponent: current };
+      }
+      // Empty, a ghost, or my own older ticket: I'm the one waiting now.
+      return { action: 'wait' };
+    }
+    function findRankedMatch(options = {}) {
       if (!currentUser) { openAuthModal(); return; }
       const pNameInput = document.getElementById('playerNameInput');
       const myName = pNameInput.value.trim() || currentUser.displayName || 'Player';
-      getOrCreateUserProfile(currentUser.uid).then((profile) => {
-        const myTicket = { uid: currentUser.uid, name: myName, rating: profile.rating, cosmetics: getPublicCosmeticLoadout(), ts: Date.now() };
-        startRankedSearchClock();
+      const searchToken = ++rankedSearchToken;
+      const stillSearching = () => searchToken === rankedSearchToken && !!currentUser;
+      stopRankedHeartbeat();
+      stopRankedAssignmentListener();
+      Promise.all([
+        getOrCreateUserProfile(currentUser.uid),
+        db.ref(`users/${currentUser.uid}/lastRankedOpponent`).once('value').then(snap => snap.val()).catch(() => null)
+      ]).then(([profile, lastOpponent]) => {
+        if (!stillSearching()) return;
+        const myTicket = { uid: currentUser.uid, name: myName, rating: finiteRating(profile.rating), cosmetics: getPublicCosmeticLoadout(), ts: serverNow() };
+        if (!options.keepClock || !rankedSearchTimer) startRankedSearchClock();
         refreshRankedUI();
+        const skipRoll = Math.random() < RANKED_REMATCH_SKIP_CHANCE;
+        let decision = null;
         db.ref('matchmaking/waiting').transaction((current) => {
-          return current ? current : myTicket;
-        }, (error, committed, snapshot) => {
-          if (error) { stopRankedSearchClock(); refreshRankedUI(); alert('Matchmaking failed \u2014 please try again. If this keeps happening, Database Rules may be blocking the "matchmaking" path.'); return; }
-          const slotValue = snapshot.val();
-          if (slotValue && slotValue.uid === myTicket.uid) {
-            // Empty slot — I'm the waiter. Listen for someone to match me.
-            rankedAssignmentRef = db.ref(`matchmaking/assignments/${myTicket.uid}`);
-            rankedAssignmentRef.on('value', (assignSnap) => {
-              if (!assignSnap.exists()) return;
-              const data = assignSnap.val();
-              rankedAssignmentRef.off();
-              rankedAssignmentRef.remove();
-              stopRankedSearchClock();
-              state.players = data.players;
-              state.isMultiplayer = true; state.isHost = false; state.isRanked = true; state.rankedAutoStarted = false;
-              state.roomCode = data.roomCode; state.localPlayerId = 'p_room1';
-              enterRankedRoom(data.roomCode);
-            });
-          } else if (slotValue) {
-            // Someone was already waiting — I'm the matcher, but roll the
-            // rematch deprioritization first if we're within the cooldown
-            // window. This is deliberately a chance to skip, not a
-            // guaranteed one — see the comment on RANKED_REMATCH_SKIP_CHANCE
-            // above for why a hard block isn't what's wanted here.
-            const oppTicket = slotValue;
-            db.ref(`users/${currentUser.uid}/lastRankedOpponent`).once('value').then((lastOppSnap) => {
-              const lastOpp = lastOppSnap.val();
-              const onCooldown = lastOpp && lastOpp.uid === oppTicket.uid && (Date.now() - lastOpp.at) < RANKED_REMATCH_COOLDOWN_MS;
-              if (onCooldown && Math.random() < RANKED_REMATCH_SKIP_CHANCE) {
-                stopRankedSearchClock();
-                refreshRankedUI();
-                notifyBanner('\u23F1\uFE0F Looking for a different opponent \u2014 try again in a moment.');
-                return;
-              }
-              const code = createRankedRoom(myTicket, oppTicket, true);
-              db.ref('matchmaking/waiting').transaction((current) => {
-                return (current && current.uid === oppTicket.uid) ? null : current;
-              });
-              db.ref(`matchmaking/assignments/${oppTicket.uid}`).set({ roomCode: code, players: state.players });
-              stopRankedSearchClock();
-              enterRankedRoom(code);
-            }).catch((e) => {
-              console.warn('Rematch cooldown check failed', e);
-              stopRankedSearchClock();
-              refreshRankedUI();
-              alert('Matchmaking failed \u2014 please try again.');
-            });
+          decision = decideRankedQueueAction(current, myTicket, lastOpponent, skipRoll);
+          if (decision.action === 'claim') return null;   // take them out of the queue in the same step
+          if (decision.action === 'skip') return current;
+          return { ...myTicket, ts: serverNow() };
+        }, (error, committed) => {
+          if (!stillSearching()) {
+            // Cancelled while this was in flight: don't leave a ticket behind.
+            if (!error && committed && decision?.action === 'wait') removeOwnRankedTicket();
+            return;
           }
+          if (error || !committed || !decision) {
+            stopRankedSearchClock(); refreshRankedUI();
+            alert('Matchmaking failed — please try again. If this keeps happening, Database Rules may be blocking the "matchmaking" path.');
+            return;
+          }
+          if (decision.action === 'skip') {
+            stopRankedSearchClock(); refreshRankedUI();
+            notifyBanner('⏱️ Looking for a different opponent — try again in a moment.');
+            return;
+          }
+          if (decision.action === 'claim') {
+            const opponent = { ...decision.opponent, rating: finiteRating(decision.opponent.rating) };
+            const code = createRankedRoom(myTicket, opponent, true);
+            db.ref(`matchmaking/assignments/${opponent.uid}`).set({ roomCode: code, players: state.players, at: serverNow() });
+            stopRankedSearchClock();
+            enterRankedRoom(code);
+            return;
+          }
+          waitForRankedMatch(myTicket, stillSearching);
         });
       }).catch((e) => {
+        if (!stillSearching()) return;
         stopRankedSearchClock();
         refreshRankedUI();
-        alert('Couldn\u2019t start matchmaking \u2014 your account profile failed to load. This usually means Database Rules are blocking the "users" path. Check the console/errorReports for details.');
+        alert('Couldn’t start matchmaking — your account profile failed to load. This usually means Database Rules are blocking the "users" path. Check the console/errorReports for details.');
         console.warn('findRankedMatch failed', e);
       });
     }
 
+    // I'm the waiting ticket: listen for a match, keep the ticket fresh, and
+    // drop it automatically if this connection goes away.
+    function waitForRankedMatch(myTicket, stillSearching) {
+      try { db.ref('matchmaking/waiting').onDisconnect().remove(); } catch (e) {}
+      rankedAssignmentRef = db.ref(`matchmaking/assignments/${myTicket.uid}`);
+      rankedAssignmentRef.on('value', (assignSnap) => {
+        if (!assignSnap.exists() || !stillSearching()) return;
+        const data = assignSnap.val() || {};
+        // A match assigned in an old search that was never picked up would
+        // otherwise drop us straight into that long-gone room.
+        if (!data.at || serverNow() - Number(data.at) > RANKED_ASSIGNMENT_MAX_AGE_MS || !data.roomCode) {
+          assignSnap.ref.remove().catch(() => {});
+          return;
+        }
+        stopRankedAssignmentListener();
+        assignSnap.ref.remove().catch(() => {});
+        stopRankedHeartbeat();
+        stopRankedSearchClock();
+        state.players = data.players;
+        state.isMultiplayer = true; state.isHost = false; state.isRanked = true; state.rankedAutoStarted = false;
+        state.roomCode = data.roomCode; state.localPlayerId = 'p_room1';
+        enterRankedRoom(data.roomCode);
+      });
+      let missingSince = 0;
+      rankedHeartbeatTimer = setInterval(() => {
+        if (!stillSearching()) { stopRankedHeartbeat(); return; }
+        let mine = false;
+        db.ref('matchmaking/waiting').transaction((current) => {
+          mine = false;
+          if (current === null) return null;           // let Firebase re-run with the server's value
+          if (current.uid !== myTicket.uid) return;    // someone else's ticket: leave it alone
+          mine = true;
+          return { ...current, ts: serverNow() };
+        }, (error) => {
+          if (error || !stillSearching()) return;
+          if (mine) { missingSince = 0; return; }
+          // Gone: usually someone just claimed us and their match arrives in
+          // a moment. If nothing arrives (we were dropped as a ghost while
+          // the app was in the background), queue again.
+          if (!missingSince) { missingSince = Date.now(); return; }
+          if (Date.now() - missingSince >= RANKED_TICKET_HEARTBEAT_MS * 2) findRankedMatch({ keepClock: true });
+        });
+      }, RANKED_TICKET_HEARTBEAT_MS);
+    }
+
+    function removeOwnRankedTicket() {
+      if (!currentUser) return;
+      const uid = currentUser.uid;
+      db.ref('matchmaking/waiting').transaction((current) => {
+        if (current === null) return null;
+        return current.uid === uid ? null : undefined;
+      });
+    }
+
     function cancelRankedSearch() {
-      if (currentUser) {
-        db.ref('matchmaking/waiting').transaction((current) => (current && current.uid === currentUser.uid) ? null : current);
-      }
-      if (rankedAssignmentRef) { rankedAssignmentRef.off(); rankedAssignmentRef = null; }
+      rankedSearchToken++;
+      stopRankedHeartbeat();
+      removeOwnRankedTicket();
+      stopRankedAssignmentListener();
       stopRankedSearchClock();
       refreshRankedUI();
     }
@@ -18607,6 +18777,11 @@ video {
     // rule like that, since the host's auth.uid never matches an
     // opponent's uid.
     let rankedRatingDraft = null;
+    // A stored rating as a real number, or the fallback (500 for new accounts).
+    function finiteRating(value, fallback = 500) {
+      const number = Number(value);
+      return value !== null && value !== undefined && value !== '' && Number.isFinite(number) ? number : fallback;
+    }
     function applyRankedRatingUpdate() {
       rankedRatingDraft = null;
       const players = state.players;
@@ -18623,11 +18798,16 @@ video {
       const rankMailId = `rank_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       let duplicateResult = false;
       db.ref(`users/${me.uid}`).transaction((current) => {
+        // Firebase may run this several times (cache first, then server):
+        // everything captured by the closure is reset on every pass.
+        duplicateResult = false;
+        rankedRatingDraft = null;
         const c = current || { rating: 500, wins: 0, losses: 0 };
         const processedRankedMatches = c.processedRankedMatches || {};
         if (processedRankedMatches[resultId]) { duplicateResult = true; return; }
-        const previousRating = c.rating != null ? Number(c.rating) : 500;
-        const newRating = Math.max(0, previousRating + deltas[myIndex]);
+        const previousRating = finiteRating(c.rating);
+        const delta = Number.isFinite(deltas[myIndex]) ? deltas[myIndex] : 0;
+        const newRating = Math.max(0, previousRating + delta);
         const previousTier = getRankTier(previousRating).name;
         const newTier = getRankTier(newRating).name;
         rankedRatingDraft = { from: previousRating, to: newRating };
@@ -18656,8 +18836,10 @@ video {
           // Consecutive ranked losses, for the earn-only ShitHead picture.
           currentLossStreak: won ? 0 : (rs.currentLossStreak || 0) + 1,
           bestLossStreak: Math.max(rs.bestLossStreak || 0, won ? 0 : (rs.currentLossStreak || 0) + 1),
-          highestRating: Math.max(rs.highestRating != null ? rs.highestRating : c.rating, newRating),
-          lowestRating: Math.min(rs.lowestRating != null ? rs.lowestRating : c.rating, newRating)
+          // Seeded from the pre-match rating (never a missing one: Math.max
+          // with undefined is NaN, and Firebase rejects the whole save).
+          highestRating: Math.max(finiteRating(rs.highestRating, previousRating), newRating),
+          lowestRating: Math.min(finiteRating(rs.lowestRating, previousRating), newRating)
         };
         // Dedicated challenge counters — deliberately separate from
         // rankedStats above, and deliberately event-counts (one per
@@ -18684,10 +18866,13 @@ video {
             }
           };
         }
-        if (opponent && opponent.uid) next.lastRankedOpponent = { uid: opponent.uid, at: Date.now() };
+        if (opponent && opponent.uid) next.lastRankedOpponent = { uid: opponent.uid, at: serverNow() };
         return next;
       }, (error, committed, snapshot) => {
-        if (error) console.warn('Ranked rating update failed', error);
+        if (error) {
+          console.warn('Ranked rating update failed', error);
+          notifyBanner('⚠️ Your Ranked result couldn’t be saved — check your connection.');
+        }
         else if (duplicateResult) return;
         else {
           syncPublicProfile(); // rating moved — keep the friends-visible copy current
@@ -18994,7 +19179,7 @@ video {
     const GAME_INVITE_EXPIRY_MS = 5 * 60 * 1000;
     function cleanupExpiredInvites(invData) {
       if (!currentUser) return [];
-      const now=Date.now(), expired=[];
+      const now=serverNow(), expired=[];
       Object.entries(invData||{}).forEach(([id,inv])=>{ if (!inv || !Number(inv.sentAt) || now-Number(inv.sentAt)>GAME_INVITE_EXPIRY_MS) expired.push(id); });
       if (expired.length) { const updates={}; expired.forEach(id=>updates[id]=null); db.ref(`gameInvites/${currentUser.uid}`).update(updates).catch(e=>console.warn('Expired invite cleanup failed',e)); }
       return expired;
@@ -19134,7 +19319,7 @@ video {
         const items = [];
         const reqData = reqSnap.val() || {};
         Object.keys(reqData).forEach((uid) => items.push({ type: 'request', uid, name: reqData[uid].name, sentAt: reqData[uid].sentAt }));
-        const now = Date.now();
+        const now = serverNow();
         const invData = invSnap.val() || {};
         Object.keys(invData).forEach((id) => {
           const inv = invData[id];
@@ -19198,7 +19383,7 @@ video {
     let inboxBadgeUid = null;
     let inboxBadgeExpiryTimer = null;
 
-    function summarizeInboxNotifications(requests, invites, challenges = {}, activity = {}, now = Date.now()) {
+    function summarizeInboxNotifications(requests, invites, challenges = {}, activity = {}, now = serverNow()) {
       const friendRequests = Object.values(requests || {}).filter((request) => request && typeof request === 'object');
       const gameInvites = Object.values(invites || {}).filter((invite) => {
         const sentAt = Number(invite?.sentAt);
@@ -19245,7 +19430,7 @@ video {
         button.dataset.tip = label;
       }
       if (summary.nextExpiry !== null) {
-        inboxBadgeExpiryTimer = setTimeout(refreshInboxBadge, Math.max(50, summary.nextExpiry - Date.now() + 50));
+        inboxBadgeExpiryTimer = setTimeout(refreshInboxBadge, Math.max(50, summary.nextExpiry - serverNow() + 50));
       }
     }
 

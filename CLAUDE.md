@@ -54,7 +54,15 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - `syncFirebaseGameState()` fires this client's own room listener synchronously. Anything the listener does that syncs again (refill invariant, recovery requests) must only sync when something really changed, or it recurses until the page freezes.
 - Firebase returns object keys sorted; compare objects key-by-key (`sameCosmeticLoadout`), never with `JSON.stringify`.
 - Bonus Draw online has an 8s countdown (`BONUS_FOLLOW_UP_MS`) and is skipped on timeout; a Joker with one possible target skips the picker; timeout auto-play flips a face-down card when that's all a player has.
-- Leaving (`leaveMultiplayerRoom`): lobby → removed from the list; mid-match → a bot takes the seat (2-player casual ends back in the lobby); a leaving host passes `isHost` to the next human. Presence `left` also tells the others within 3s.
+- Leaving (`leaveMultiplayerRoom`): lobby → removed from the list; mid-match → a bot takes the seat (2-player casual ends back in the lobby); a leaving host passes `isHost` to the next human. Presence `left` also tells the others within 3s. The last real player leaving deletes the room.
+- Shared deadlines (turn timer, Bonus countdown, invites, Ranked queue) use `serverNow()` (Date.now + `.info/serverTimeOffset`), never the phone's own clock. The first turn after everyone is Ready gets a deadline too.
+- Every `syncFirebaseGameState` stamps `updatedAt`. `pruneOldRooms` (signed-in, once per 6h per device, 25 at a time) deletes rooms over 2 days old with no activity for 2 days; the rules only allow that query shape on `rooms` (ordered by `createdAt`, from the oldest, ≤25).
+
+## Ranked
+
+- `getOrCreateUserProfile` fills in a missing `rating`/`wins`/`losses` field-by-field in transactions (records often exist before the first Ranked game). Never write defaults with a plain update: it can land after a result saved in the meantime.
+- `applyRankedRatingUpdate` seeds `highestRating`/`lowestRating` from the pre-match rating via `finiteRating`: a NaN anywhere makes Firebase reject the whole result.
+- Queue = one `matchmaking/waiting` ticket. The waiter refreshes `ts` every 5s (`RANKED_TICKET_HEARTBEAT_MS`) and sets `onDisconnect().remove()`; searchers treat a ticket older than 30s as a ghost and take the spot. Claiming (`decideRankedQueueAction`) removes the opponent in the same transaction. Assignments carry `at` and are ignored after 60s. A waiter whose ticket vanished with no assignment re-queues itself.
 
 ## Installable app & notifications
 

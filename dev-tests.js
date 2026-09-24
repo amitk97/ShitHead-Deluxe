@@ -4472,12 +4472,16 @@ async function runDevTestSuite() {
         once: () => Promise.resolve({ exists: () => getAtPath(path) !== undefined, val: () => getAtPath(path) }),
         set: (val) => { setAtPath(path, val); return Promise.resolve(); },
         update: (patch) => { setAtPath(path, { ...(getAtPath(path) || {}), ...patch }); return Promise.resolve(); },
-        transaction: (fn) => {
-          // Like Firebase: returning undefined aborts without writing.
-          const result = fn(getAtPath(path));
-          if (result === undefined) return Promise.resolve({ committed: false, snapshot: { val: () => getAtPath(path) } });
-          setAtPath(path, result);
-          return Promise.resolve({ committed: true, snapshot: { val: () => getAtPath(path) } });
+        transaction: (fn, onComplete) => {
+          // Like Firebase: returning undefined aborts without writing, and
+          // the optional completion callback gets (error, committed, snapshot).
+          const current = getAtPath(path);
+          const result = fn(current === undefined ? null : current);
+          const committed = result !== undefined;
+          if (committed) setAtPath(path, result);
+          const snapshot = { val: () => { const v = getAtPath(path); return v === undefined ? null : v; } };
+          if (onComplete) onComplete(null, committed, snapshot);
+          return Promise.resolve({ committed, snapshot });
         }
       }),
       _getData: () => data
@@ -4896,6 +4900,178 @@ async function runDevTestSuite() {
     assertEqual(stored.rankedStats.bestStreak, 1, 'Best streak must track the current one');
     assertEqual(stored.rankedStats.burnt, 3, "This match's burnt count must be added from the player's own gameStats");
     assertEqual(stored.rankedStats.jokersPlayed, 1, "This match's Jokers-played count must be added from the player's own gameStats");
+  });
+  await test('Ranked results still save for an account whose record has no rating yet (no NaN)', () => {
+    freshState({ isRanked: true, localPlayerId: 'p1', matchId: 'no-rating-test' });
+    state.players = [
+      makePlayer({ id: 'p1', uid: 'u1', rating: undefined, finishRank: 1 }),
+      makePlayer({ id: 'p2', uid: 'u2', rating: 500, finishRank: 2 })
+    ];
+    // Created by settings/Diamonds before this account ever played Ranked.
+    let stored = { settings: { speedIndex: 1 }, diamonds: 40 };
+    const originalDb = db;
+    try {
+      db = { ref: () => ({ transaction: (fn, cb) => { stored = fn(stored); cb(null, false, null); } }) };
+      applyRankedRatingUpdate();
+    } finally { db = originalDb; }
+    const numbers = [stored.rating, stored.wins, stored.losses, stored.rankedStats.highestRating, stored.rankedStats.lowestRating];
+    assertTrue(numbers.every(Number.isFinite), `Every saved number must be real — Firebase rejects NaN and the whole result was lost: ${JSON.stringify(numbers)}`);
+    assertTrue(stored.rating > 500, 'A win from the default 500 goes up');
+    assertEqual(stored.rankedStats.lowestRating, 500, 'The rating range starts from the default rating');
+    assertEqual(stored.diamonds, 40, 'Everything else on the account is kept');
+  });
+  await test('Opening Ranked fills in a missing rating, wins and losses on an existing account', async () => {
+    const originalDb = db;
+    const mock = makeMockDb({ users: { u9: { diamonds: 10, settings: { speedIndex: 2 } }, u8: { rating: 812, wins: 3, losses: 4 } } });
+    db = mock;
+    try {
+      const profile = await getOrCreateUserProfile('u9');
+      assertEqual([profile.rating, profile.wins, profile.losses], [500, 0, 0], 'Missing Ranked basics come back as defaults');
+      const saved = mock._getData().users.u9;
+      assertEqual([saved.rating, saved.wins, saved.losses], [500, 0, 0], 'The defaults are saved to the account');
+      assertEqual(saved.diamonds, 10, 'Other fields are untouched');
+      const existing = await getOrCreateUserProfile('u8');
+      assertEqual(existing.rating, 812, 'A real rating is never replaced');
+    } finally { db = originalDb; }
+  });
+  await test('Filling in a missing rating never overwrites a Ranked result saved in the meantime', async () => {
+    const originalDb = db;
+    const server = { rating: 516, wins: 1, losses: 0, diamonds: 3 }; // the result landed after our read
+    const writes = [];
+    db = { ref: (path) => ({
+      once: () => Promise.resolve({ exists: () => true, val: () => ({ diamonds: 3 }) }), // stale: read before the result saved
+      update: (patch) => { writes.push(['update', path, patch]); return Promise.resolve(); },
+      transaction: (fn, cb) => {
+        const key = path.split('/').pop();
+        const next = fn(server[key] === undefined ? null : server[key]);
+        if (next !== undefined) { server[key] = next; writes.push(['set', path, next]); }
+        cb(null, next !== undefined, { val: () => server[key] });
+      }
+    }) };
+    try {
+      const profile = await getOrCreateUserProfile('u7');
+      assertEqual([server.rating, server.wins, server.losses], [516, 1, 0], 'The saved result is untouched');
+      assertEqual(writes.length, 0, 'Nothing was written over it');
+      assertEqual(profile.rating, 516, 'The returned profile uses the real rating');
+    } finally { db = originalDb; }
+  });
+  await test('Ranked queue: live players are claimed, ghosts are replaced, recent opponents can be skipped', () => {
+    const me = { uid: 'me' };
+    const now = 10_000_000;
+    assertEqual(decideRankedQueueAction(null, me, null, false, now).action, 'wait', 'An empty queue: wait');
+    const live = decideRankedQueueAction({ uid: 'x', ts: now - 5000 }, me, null, false, now);
+    assertEqual(live.action, 'claim', 'A player refreshed 5s ago is matched');
+    assertEqual(live.opponent.uid, 'x', 'The claimed ticket is theirs');
+    assertEqual(decideRankedQueueAction({ uid: 'x', ts: now - 31000 }, me, null, false, now).action, 'wait', 'A ticket not refreshed for 30s is a ghost (closed app): take the spot instead');
+    assertEqual(decideRankedQueueAction({ uid: 'x' }, me, null, false, now).action, 'wait', 'A ticket with no timestamp is treated as a ghost');
+    assertEqual(decideRankedQueueAction({ uid: 'me', ts: now - 60000 }, me, null, false, now).action, 'wait', 'My own old ticket: just wait again');
+    const recent = { uid: 'x', at: now - 60000 };
+    assertEqual(decideRankedQueueAction({ uid: 'x', ts: now }, me, recent, true, now).action, 'skip', 'A recent opponent can be skipped');
+    assertEqual(decideRankedQueueAction({ uid: 'x', ts: now }, me, recent, false, now).action, 'claim', 'Skipping is only a chance, not a block');
+    assertTrue(findRankedMatch.toString().includes("decision.action === 'claim') return null"), 'Claiming takes the opponent out of the queue in the same transaction');
+    assertTrue(waitForRankedMatch.toString().includes('onDisconnect().remove()'), 'A waiting ticket is removed automatically if the connection drops');
+  });
+  await test("Turn deadlines use Firebase's server time, not this phone's clock", () => {
+    const savedOffset = serverTimeOffsetMs;
+    try {
+      serverTimeOffsetMs = 60000; // this phone's clock is a minute behind the server
+      freshState({ isMultiplayer: true, phase: 'PLAY', turnTimerMs: 15000 });
+      state.players = [makePlayer({ id: 'p1' }), makePlayer({ id: 'p2' })];
+      state.localPlayerId = 'p1';
+      state.currentTurnIndex = 0;
+      advanceTurn(1);
+      const expected = Date.now() + 60000 + 15000;
+      assertTrue(Math.abs(state.turnDeadline - expected) < 1000, `The deadline is set on the server's clock (off by ${state.turnDeadline - expected}ms)`);
+      const left = state.turnDeadline - serverNow();
+      assertTrue(left > 14000 && left <= 15000, `Everyone sees the full 15 seconds (${left}ms)`);
+    } finally { serverTimeOffsetMs = savedOffset; }
+  });
+  await test('Online: the first turn after everyone is ready gets a turn timer', () => {
+    const originalDb = db;
+    const cards = generateDeck();
+    freshState({ isMultiplayer: true, roomCode: '777777', localPlayerId: 'p1', phase: 'SWAP', turnTimerMs: 15000 });
+    const seat = (id, off) => makePlayer({ id, isReady: id !== 'p1', hand: cards.slice(off, off + 3), faceUp: cards.slice(off + 3, off + 6), faceDown: cards.slice(off + 6, off + 9) });
+    state.players = [seat('p1', 0), seat('p2', 9)];
+    state.currentTurnIndex = 0;
+    db = { ref: () => ({
+      transaction: (fn, cb) => { const list = fn(JSON.parse(JSON.stringify(state.players))); cb(null, true, { val: () => list }); },
+      update: () => Promise.resolve()
+    }) };
+    try {
+      finishLocalSwap();
+      assertEqual(state.phase, 'PLAY', 'Everyone ready: play starts');
+      const left = state.turnDeadline - serverNow();
+      assertTrue(left > 14000 && left <= 15000, `The first player has the usual 15 seconds (${left}ms) — before, the first turn had no clock and could stall forever`);
+    } finally {
+      db = originalDb;
+      document.getElementById('swapControlBar')?.classList.add('hidden');
+    }
+  });
+  await test('Old-room cleanup removes only rooms over 2 days old and idle, with the one query the rules allow', async () => {
+    const originalDb = db, originalUser = currentUser, savedRoom = state.roomCode;
+    let savedPruneAt = null;
+    try { savedPruneAt = localStorage.getItem('shithead_room_prune_at'); } catch (e) {}
+    const now = serverNow(), day = 864e5;
+    const rooms = {
+      '111111': { createdAt: now - 3 * day },                                       // old and idle
+      '222222': { createdAt: now - 3 * day, updatedAt: now - 3600e3 },               // old, but a move an hour ago
+      '333333': { createdAt: now - 5 * day, presence: { p1: { at: now - 60000 } } }, // someone connected a minute ago
+      '444444': { createdAt: now - 4 * day },                                       // this device's own room
+      'junk': { createdAt: now - 9 * day }                                          // not a room code
+    };
+    let query = null, removed = null;
+    db = { ref: (path) => ({
+      orderByChild: (key) => ({ endAt: (value) => ({ limitToFirst: (n) => ({ once: () => {
+        query = { path, key, value, n };
+        return Promise.resolve({ forEach: (cb) => Object.entries(rooms).forEach(([k, v]) => cb({ key: k, val: () => v })) });
+      } }) }) }),
+      update: (patch) => { removed = { path, patch }; return Promise.resolve(); }
+    }) };
+    currentUser = { uid: 'prune-test' };
+    state.roomCode = '444444';
+    try {
+      const count = await pruneOldRooms(true);
+      assertEqual([query.path, query.key], ['rooms', 'createdAt'], 'Rooms are looked up by creation time');
+      assertTrue(query.n <= 25, 'At most 25 at a time');
+      assertTrue(query.value <= now - 2 * day, 'Only rooms more than 2 days old are asked for');
+      assertEqual(removed.path, 'rooms', 'Removed in one write');
+      assertEqual(Object.keys(removed.patch), ['111111'], 'Only the old, idle room is removed');
+      assertEqual(count, 1, 'Reports how many were removed');
+    } finally {
+      db = originalDb; currentUser = originalUser; state.roomCode = savedRoom;
+      try { savedPruneAt === null ? localStorage.removeItem('shithead_room_prune_at') : localStorage.setItem('shithead_room_prune_at', savedPruneAt); } catch (e) {}
+    }
+  });
+  await test('Leaving a room: alone it is deleted; with others your seat is handed over and host passes on', async () => {
+    const originalDb = db;
+    const calls = [];
+    db = { ref: (path) => ({
+      remove: () => { calls.push(['remove', path]); return Promise.resolve(); },
+      set: () => Promise.resolve(),
+      update: (value) => { calls.push(['update', path, value]); return Promise.resolve(); },
+      transaction: (fn, cb) => { fn([]); if (cb) cb(null, true, null); }
+    }) };
+    try {
+      freshState({ isMultiplayer: true, roomCode: '555555', localPlayerId: 'p1', phase: 'LOBBY' });
+      state.players = [makePlayer({ id: 'p1', isHost: true })];
+      await leaveMultiplayerRoom();
+      assertTrue(calls.some(([op, path]) => op === 'remove' && path === 'rooms/555555'), 'Alone in the room: it is deleted');
+      calls.length = 0;
+      const cards = generateDeck();
+      freshState({ isMultiplayer: true, roomCode: '555556', localPlayerId: 'p1', phase: 'PLAY' });
+      state.players = [
+        makePlayer({ id: 'p1', isHost: true, hand: cards.slice(0, 3) }),
+        makePlayer({ id: 'p2', hand: cards.slice(3, 6) }),
+        makePlayer({ id: 'p3', hand: cards.slice(6, 9) })
+      ];
+      await leaveMultiplayerRoom();
+      assertTrue(!calls.some(([op]) => op === 'remove'), 'With others still playing, the room stays');
+      const handover = calls.find(([op, path]) => op === 'update' && path === 'rooms/555556');
+      assertTrue(!!handover, 'Mid-match the seat is handed over in one write');
+      const seats = handover[2].players;
+      assertTrue(seats.some(p => p.isBot && p.name.endsWith('(Bot)') && p.hand.length === 3), 'A bot takes over your cards');
+      assertTrue(seats.find(p => p.id === 'p2').isHost, 'The next player becomes host');
+    } finally { db = originalDb; }
   });
   await test('Ranked tier changes create one mail per completed match, for promotions and demotions', () => {
     const originalDb = db;
