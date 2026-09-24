@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-24-v112 (ShitHead-Deluxe-112) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-24-v113 (ShitHead-Deluxe-113) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -9,10 +9,12 @@
 <head>
   <meta charset="UTF-8" />
   <script>
-    // The game's home is Firebase Hosting. Old GitHub Pages links hop there
-    // before anything loads (Google sign-in only works same-site there, and
-    // this keeps one install, one set of saved settings).
-    if (/\.github\.io$/i.test(location.hostname)) {
+    // The game's home is shithead-pro.web.app. GitHub Pages and the older
+    // firebaseapp.com address hop there before anything loads (Google
+    // sign-in is proven there, and this keeps one install, one set of saved
+    // settings). Only this page redirects: firebaseapp.com's /__/auth/*
+    // pages are Firebase's own and are never touched.
+    if (/\.github\.io$/i.test(location.hostname) || location.hostname === 'shithead-pro.firebaseapp.com') {
       location.replace('https://shithead-pro.web.app/' + location.search + location.hash);
     }
   </script>
