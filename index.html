@@ -495,6 +495,21 @@
        separate overlay element), so this single rule covers both. */
     #deleteAccountModal { z-index: 120; }
     .presence-dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; }
+    /* Friends list rows */
+    #friendsListArea { display:flex; flex-direction:column; gap:7px; }
+    .friend-row { display:flex; flex-direction:column; gap:8px; padding:9px 10px; border-radius:14px; border:1px solid #1e293b; background:rgba(15,23,42,.6); }
+    .friend-main { display:flex; align-items:center; gap:9px; min-width:0; }
+    .friend-info { min-width:0; flex:1; display:flex; flex-direction:column; gap:2px; }
+    .friend-name { font-size:14px; font-weight:900; color:#fff; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .friend-rank { font-size:10px; font-weight:800; color:rgba(251,191,36,.9); white-space:nowrap; }
+    .friend-actions { display:grid; gap:5px; }
+    .friend-action { min-width:0; padding:6px 2px; border-radius:9px; border:1px solid #334155; background:transparent; color:#94a3b8; font-size:9px; font-weight:900; letter-spacing:.03em; white-space:nowrap; transition:background .15s,color .15s,border-color .15s; }
+    .friend-action--gift { border-color:#db2777; color:#f9a8d4; }
+    .friend-action--gift:hover { background:#db2777; color:#fff; }
+    .friend-action--go { border-color:#059669; color:#34d399; }
+    .friend-action--go:hover { background:#059669; color:#020617; }
+    .friend-action--danger:hover { border-color:#f43f5e; color:#fb7185; }
+    .friend-action--warn:hover { border-color:#f59e0b; color:#fbbf24; }
     .presence-dot.online { background: #10b981; box-shadow: 0 0 4px #10b981; }
     .presence-dot.offline { background: #475569; }
     .card-selected {
@@ -4509,7 +4524,7 @@ video {
   </div>
 
   <div id="friendsModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
-    <div class="w-full max-w-xs bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:85vh; display:flex; flex-direction:column;">
+    <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:85vh; display:flex; flex-direction:column;">
       <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
         <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Friends</span>
         <button id="friendsCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
@@ -18435,31 +18450,38 @@ video {
       // for them, so this naturally stays blank there rather than showing
       // a wrong or default number.
       const ratingHtml = (typeof profile.rating === 'number')
-        ? `<span class="text-[9px] font-bold text-amber-400/90">${getRankTier(profile.rating).name} \u00b7 ${Math.round(profile.rating)}</span>`
+        ? `${getRankTier(profile.rating).name} \u00b7 ${Math.round(profile.rating)}`
         : '';
-      let actions = '';
+      // Two lines per person: picture + full name (room for 13 characters)
+      // and rank on top, the action buttons in an even row underneath.
+      const btn = (cls, label, extra = '') => `<button type="button" data-uid="${safeUid}" ${extra} class="${cls} friend-action">${label}</button>`;
+      let actions = [];
       if (type === 'friend') {
-        actions = `<button data-uid="${safeUid}" data-name="${escapeAttr(rawName)}" class="friend-gift-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border transition" aria-label="Send ${escapeAttr(rawName)} a gift">🎁</button>
-          <button data-uid="${safeUid}" data-name="${escapeAttr(rawName)}" class="friend-invite-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">INVITE</button>
-          <button data-uid="${safeUid}" class="friend-unfriend-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">UNFRIEND</button>
-          <button data-uid="${safeUid}" class="friend-ignore-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-amber-500 hover:text-amber-400 transition">IGNORE</button>`;
+        actions = [
+          btn('friend-gift-btn friend-action--gift', '🎁 GIFT', `data-name="${escapeAttr(rawName)}" aria-label="Send ${escapeAttr(rawName)} a gift"`),
+          btn('friend-invite-btn friend-action--go', 'INVITE', `data-name="${escapeAttr(rawName)}"`),
+          btn('friend-unfriend-btn friend-action--danger', 'UNFRIEND'),
+          btn('friend-ignore-btn friend-action--warn', 'IGNORE')
+        ];
       } else if (type === 'ignored') {
-        actions = `<button data-uid="${safeUid}" class="friend-unignore-btn shrink-0 text-[9px] font-black px-2 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-amber-500 hover:text-amber-400 transition">UN-IGNORE</button>`;
+        actions = [btn('friend-unignore-btn friend-action--warn', 'UN-IGNORE')];
       } else if (type === 'request') {
-        actions = `<button data-uid="${safeUid}" class="friend-accept-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-slate-950 transition">ACCEPT</button>
-          <button data-uid="${safeUid}" class="friend-decline-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-rose-500 hover:text-rose-400 transition">DECLINE</button>
-          <button data-uid="${safeUid}" class="friend-ignore-btn shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-slate-700 text-slate-400 hover:border-amber-500 hover:text-amber-400 transition">IGNORE</button>`;
+        actions = [
+          btn('friend-accept-btn friend-action--go', 'ACCEPT'),
+          btn('friend-decline-btn friend-action--danger', 'DECLINE'),
+          btn('friend-ignore-btn friend-action--warn', 'IGNORE')
+        ];
       }
-      return `<div class="flex items-center justify-between gap-2 bg-slate-900/60 border border-slate-800 rounded-xl px-2.5 py-2">
-        <div class="flex items-center gap-2 min-w-0">
-          <span class="presence-dot ${presenceClass}"></span>
-          ${avatarHtml(profile.avatar, 30)}
-          <div class="min-w-0">
-            <span class="text-xs font-bold text-white truncate block">${name}</span>
-            ${ratingHtml}
+      return `<div class="friend-row">
+        <div class="friend-main">
+          <span class="presence-dot ${presenceClass}" title="${profile.online ? 'Online' : 'Offline'}"></span>
+          ${avatarHtml(profile.avatar, 40)}
+          <div class="friend-info">
+            <span class="friend-name" title="${escapeAttr(rawName)}">${name}</span>
+            ${ratingHtml ? `<span class="friend-rank">${ratingHtml}</span>` : ''}
           </div>
         </div>
-        <div class="flex items-center gap-1 shrink-0">${actions}</div>
+        ${actions.length ? `<div class="friend-actions" style="grid-template-columns:repeat(${actions.length},minmax(0,1fr))">${actions.join('')}</div>` : ''}
       </div>`;
     }
     function showFriendsEmpty(msg) {
