@@ -996,6 +996,29 @@
     .inbox-clear-all { flex-shrink:0; width:100%; margin-bottom:8px; padding:7px 0; border-radius:10px; border:1px solid #f59e0b; color:#fcd34d; font-size:9px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; background:rgba(69,26,3,.35); }
     .inbox-clear-all:hover { background:#f59e0b; color:#020617; }
     .inbox-clear-all:disabled { opacity:.5; cursor:default; }
+    /* Compact Name Change Token row (was a large card). */
+    .name-token-card { border:1px solid #334155; background:rgba(15,23,42,.7); border-radius:12px; padding:8px 10px; }
+    .name-token-row { display:flex; align-items:center; gap:8px; }
+    .name-token-icon { width:26px; height:26px; flex:none; border-radius:8px; background:#172033; border:1px solid #334155; display:flex; align-items:center; justify-content:center; color:#fbbf24; font-size:13px; }
+    .name-token-title { display:block; font-size:11px; font-weight:900; color:#fff; line-height:1.2; }
+    .name-token-sub { display:block; font-size:8.5px; color:#94a3b8; line-height:1.3; }
+    .name-token-buy { flex:none; min-width:62px; padding:5px 8px; border-radius:8px; border:1px solid #f59e0b; color:#fbbf24; font-size:9px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+    .name-token-buy:not(:disabled):hover { background:#f59e0b; color:#020617; }
+    .name-token-use { display:flex; gap:6px; margin-top:8px; }
+    .name-token-use-btn { flex:none; padding:0 12px; border-radius:8px; border:1px solid #10b981; color:#34d399; font-size:9px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+    .name-token-status { font-size:8.5px; color:#94a3b8; text-align:center; margin-top:4px; }
+    .name-token-status:empty { display:none; }
+    /* Section tabs shared by the Shop and Custom pages. Horizontally
+       scrollable, so new sections can be added without redesigning. */
+    .cosmetic-tab-bar { position:sticky; top:0; z-index:25; display:flex; gap:5px; overflow-x:auto; padding:2px 0 8px; background:#020617; scrollbar-width:none; }
+    .cosmetic-tab-bar::-webkit-scrollbar { display:none; }
+    .cosmetic-tab { flex:none; display:flex; align-items:center; gap:4px; padding:6px 10px; border-radius:999px; border:1px solid #334155; color:#94a3b8; font-size:9px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; background:rgba(15,23,42,.8); white-space:nowrap; }
+    .cosmetic-tab[aria-selected="true"] { border-color:#f59e0b; color:#fcd34d; background:rgba(69,26,3,.45); }
+    .cosmetic-tab small { font-size:8px; color:#64748b; font-weight:900; }
+    .cosmetic-tab[aria-selected="true"] small { color:#fbbf24; }
+    .cosmetic-tile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .cosmetic-tile { min-height:104px; }
+    .cosmetic-tile .avatar-option-art { min-height:48px; display:flex; align-items:center; justify-content:center; }
     /* In-game player card (matches the approved mockup). */
     .pp-scrim { position:fixed; inset:0; z-index:96; background:rgba(2,6,23,.62); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
     .pp-card { position:absolute; left:50%; width:min(300px, calc(100vw - 32px)); transform:translateX(-50%); background:#020617; border:2px solid #f59e0b; border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.6); padding:16px; color:#e2e8f0; }
@@ -4493,20 +4516,20 @@ video {
       <div class="overflow-y-auto pr-1 space-y-3" style="flex:1;">
       <div id="shopActionNotice" class="hidden sticky top-1 z-30 rounded-xl border-2 bg-slate-950/95 p-2.5 text-center text-[9px] font-black leading-snug shadow-xl" role="status" aria-live="polite"></div>
       <div id="shopPurchaseSuccess" class="hidden sticky top-1 z-20 shop-purchase-success rounded-xl border-2 border-emerald-400 bg-emerald-950/95 p-3 text-center shadow-[0_0_22px_rgba(52,211,153,.35)]" aria-live="polite"></div>
-      <div class="rounded-xl border border-slate-700 bg-slate-900/70 p-3 space-y-2">
-        <div class="flex items-start justify-between gap-2">
-          <div><div class="text-xs font-black text-white">Name Change Token</div><p class="text-[9px] text-slate-400 leading-snug mt-0.5">Change your account username once. Lifetime purchase: it can never be bought again.</p></div>
-          <span class="shrink-0 text-[11px] font-black text-cyan-300">&#128142; 100</span>
+      <div class="name-token-card">
+        <div class="name-token-row">
+          <span class="name-token-icon" aria-hidden="true">✎</span>
+          <span class="min-w-0" style="flex:1"><span class="name-token-title">Name Change Token</span><span class="name-token-sub">Change your username once · lifetime · 💎 100</span></span>
+          <button id="nameTokenBuyBtn" class="name-token-buy">Buy</button>
         </div>
-        <button id="nameTokenBuyBtn" class="w-full py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider transition">Buy Token</button>
-        <div id="nameTokenUseArea" class="hidden space-y-2 pt-1 border-t border-slate-700">
-          <input id="nameTokenInput" type="text" maxlength="12" autocomplete="off" placeholder="New username" class="w-full bg-slate-950 border-2 border-slate-800 rounded-lg px-3 py-2 text-xs font-bold text-white outline-none focus:border-amber-400" />
-          <button id="nameTokenUseBtn" class="w-full py-2 rounded-lg border border-emerald-500 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 text-[10px] font-black uppercase tracking-wider transition">Use Token</button>
+        <div id="nameTokenUseArea" class="hidden name-token-use">
+          <input id="nameTokenInput" type="text" maxlength="12" autocomplete="off" placeholder="New username" class="bg-slate-950 border-2 border-slate-800 rounded-lg px-2 py-1.5 text-xs font-bold text-white outline-none focus:border-amber-400" style="flex:1;min-width:0" />
+          <button id="nameTokenUseBtn" class="name-token-use-btn">Use</button>
         </div>
-        <p id="nameTokenStatus" class="text-[9px] text-center text-slate-400 leading-snug"></p>
+        <p id="nameTokenStatus" class="name-token-status"></p>
       </div>
       <div>
-        <div class="flex items-center justify-between mb-1"><span class="text-[9px] font-black uppercase tracking-widest text-emerald-400">Recommended Cosmetics</span><span class="text-[8px] text-slate-500">Permanent unlocks</span></div>
+        <div id="shopTabBar" class="cosmetic-tab-bar" role="tablist" aria-label="Shop sections"></div>
         <div id="shopFilterBar" class="flex gap-1 overflow-x-auto pb-2" aria-label="Shop filters">
           <button data-shop-filter="all" class="shop-filter-btn shrink-0 rounded-full border border-emerald-500 px-2 py-1 text-[8px] font-black text-emerald-300">ALL</button>
           <button data-shop-filter="affordable" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">AFFORDABLE</button>
@@ -4581,30 +4604,15 @@ video {
         <button id="themesCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
       <div class="overflow-y-auto pr-1" style="flex:1;">
-        <button class="settings-head w-full flex items-center justify-between py-2" data-target="personalisationDeckBody" type="button">
-          <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Deck Themes</span><span class="settings-chev text-emerald-400 transition-transform">&#9660;</span>
-        </button>
-        <div id="personalisationDeckBody" class="settings-body pb-2"><div id="themesGridArea" class="grid grid-cols-2 gap-3 py-1"></div></div>
-        <button class="settings-head w-full flex items-center justify-between py-2 border-t border-slate-800" data-target="personalisationProfileBody" type="button">
-          <span class="text-[10px] font-black uppercase tracking-widest text-sky-400">Profile Pictures</span><span class="settings-chev text-sky-400 transition-transform">&#9660;</span>
-        </button>
-        <div id="personalisationProfileBody" class="settings-body pb-2"><div id="personalisationAvatars" class="avatar-picker-grid"></div></div>
-        <button class="settings-head w-full flex items-center justify-between py-2 border-t border-slate-800" data-target="personalisationCardsBody" type="button">
-          <span class="text-[10px] font-black uppercase tracking-widest text-purple-400">Card Cosmetics</span><span class="settings-chev text-purple-400 transition-transform">&#9660;</span>
-        </button>
-        <div id="personalisationCardsBody" class="settings-body pb-2 space-y-3">
-          <div><div class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1">Card Backs</div><div id="personalisationCardBacks" class="grid grid-cols-2 gap-2"></div></div>
-          <div><div class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1">Card Frames</div><div id="personalisationFrames" class="grid grid-cols-2 gap-2"></div></div>
-        </div>
-        <button class="settings-head w-full flex items-center justify-between py-2 border-t border-slate-800" data-target="personalisationTableBody" type="button">
-          <span class="text-[10px] font-black uppercase tracking-widest text-amber-400">Table &amp; Effects</span><span class="settings-chev text-amber-400 transition-transform">&#9660;</span>
-        </button>
-        <div id="personalisationTableBody" class="settings-body pb-1 space-y-3">
-          <div><div class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1">Table Themes</div><div id="personalisationTableThemes" class="grid grid-cols-2 gap-2"></div></div>
-          <div><div class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1">Burn Effects</div><div id="personalisationBurnStage" class="shop-preview-stage mb-2" data-shop-burn-stage><div class="shop-burn-core">🔥</div><span class="text-[8px] font-bold text-slate-400 pointer-events-none" style="position:absolute;left:0;right:0;bottom:6px;text-align:center;">Tap an effect to preview it</span></div><div id="personalisationBurnEffects" class="grid grid-cols-2 gap-2"></div></div>
-          <div><div class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1">Victory Effects</div><div id="personalisationVictoryEffects" class="grid grid-cols-2 gap-2"></div></div>
-          <div><div class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1">Emote Packs</div><div id="personalisationEmotes" class="grid grid-cols-2 gap-2"></div></div>
-        </div>
+        <div id="customTabBar" class="cosmetic-tab-bar" role="tablist" aria-label="Custom sections"></div>
+        <div data-custom-panel="avatar"><div id="personalisationAvatars" class="avatar-picker-grid"></div></div>
+        <div data-custom-panel="deck" class="hidden"><div id="themesGridArea" class="grid grid-cols-2 gap-3 py-1"></div></div>
+        <div data-custom-panel="cardBack" class="hidden"><div id="personalisationCardBacks" class="cosmetic-tile-grid"></div></div>
+        <div data-custom-panel="frame" class="hidden"><div id="personalisationFrames" class="cosmetic-tile-grid"></div></div>
+        <div data-custom-panel="emotes" class="hidden"><div id="personalisationEmotes" class="cosmetic-tile-grid"></div></div>
+        <div data-custom-panel="tableTheme" class="hidden"><div id="personalisationTableThemes" class="cosmetic-tile-grid"></div></div>
+        <div data-custom-panel="burnEffect" class="hidden"><div id="personalisationBurnStage" class="shop-preview-stage mb-2" data-shop-burn-stage><div class="shop-burn-core">🔥</div><span class="text-[8px] font-bold text-slate-400 pointer-events-none" style="position:absolute;left:0;right:0;bottom:6px;text-align:center;">Tap an effect to preview it</span></div><div id="personalisationBurnEffects" class="cosmetic-tile-grid"></div></div>
+        <div data-custom-panel="victoryEffect" class="hidden"><div id="personalisationVictoryEffects" class="cosmetic-tile-grid"></div></div>
         <button id="unequipAllCosmeticsBtn" type="button" class="mt-3 w-full rounded-xl border border-rose-700 bg-rose-950/30 px-3 py-2 text-[9px] font-black uppercase tracking-wider text-rose-300 hover:bg-rose-900/50">Unequip All Cosmetics</button>
         <p id="personalisationStatus" class="text-[9px] text-center text-slate-500 pt-2" aria-live="polite"></p>
       </div>
@@ -13255,9 +13263,12 @@ video {
       const name = item ? item.name : `Default ${defaultNames[type] || 'Cosmetic'}`;
       const owned = id === 'default' || !!item?.builtIn || !!cosmeticPurchaseState[id];
       const active = id === activeId;
-      return `<button type="button" data-equip-type="${type}" data-equip-id="${id}" ${owned ? '' : 'disabled'} aria-pressed="${active}" class="cosmetic-option-card rounded-xl border ${active ? 'border-emerald-500' : owned ? 'border-slate-700' : 'border-slate-800 opacity-45'} bg-slate-900/60 p-2 flex items-center gap-2 text-left transition ${owned && !active ? 'hover:border-amber-500' : ''}">
-        <span class="shrink-0 flex items-center justify-center">${cosmeticPreview(item, type)}</span>
-        <span class="min-w-0"><span class="block text-[9px] font-black text-white leading-tight">${name}</span><span class="block text-[8px] mt-1 ${active ? 'text-emerald-400' : owned ? 'text-slate-400' : 'text-slate-600'}">${active ? '✓ EQUIPPED' : owned ? 'Tap to equip' : 'Buy in Shop'}</span></span>
+      // Tile layout, shared with the profile-picture tiles.
+      const status = active ? '✓ EQUIPPED' : owned ? 'Tap to equip' : `💎 ${item.cost} in Shop`;
+      return `<button type="button" data-equip-type="${type}" data-equip-id="${id}" ${owned ? '' : 'disabled'} aria-pressed="${active}" class="cosmetic-option-card cosmetic-tile avatar-option">
+        <span class="avatar-option-art">${cosmeticPreview(item, type)}${owned ? '' : '<span class="avatar-option-lock" aria-hidden="true">🔒</span>'}</span>
+        <span class="avatar-option-name">${name}</span>
+        <span class="avatar-option-status ${owned ? '' : 'is-locked'}">${status}</span>
       </button>`;
     }
 
@@ -13395,21 +13406,21 @@ video {
       useArea.classList.add('hidden');
       buyBtn.disabled = false;
       if (!currentUser) {
-        buyBtn.textContent = 'Sign In';
+        buyBtn.textContent = 'Sign in';
         setNameTokenStatus('Sign in to purchase Shop items.');
       } else if (!nameChangeTokenState) {
-        buyBtn.textContent = (challengeEconomy.diamonds || 0) >= NAME_CHANGE_TOKEN_COST ? 'Buy Token' : 'Not Enough Diamonds';
+        buyBtn.textContent = (challengeEconomy.diamonds || 0) >= NAME_CHANGE_TOKEN_COST ? 'Buy' : 'Need 💎';
         buyBtn.disabled = (challengeEconomy.diamonds || 0) < NAME_CHANGE_TOKEN_COST;
-        setNameTokenStatus('One purchase per account, for life.');
+        setNameTokenStatus('');
       } else if (nameChangeTokenState.usedAt) {
-        buyBtn.textContent = 'Purchased & Used';
+        buyBtn.textContent = 'Used';
         buyBtn.disabled = true;
-        setNameTokenStatus('Your lifetime Name Change Token has already been used.', 'success');
+        setNameTokenStatus('');
       } else {
-        buyBtn.textContent = 'Token Owned';
+        buyBtn.textContent = 'Owned';
         buyBtn.disabled = true;
         useArea.classList.remove('hidden');
-        setNameTokenStatus('Enter the new username you want, then use the token.', 'success');
+        setNameTokenStatus('');
       }
       buyBtn.classList.toggle('opacity-50', buyBtn.disabled);
       buyBtn.classList.toggle('cursor-not-allowed', buyBtn.disabled);
@@ -13429,11 +13440,32 @@ video {
       if (el) { el.textContent = ''; el.classList.add('hidden'); }
     }
 
+    // One list drives the section tabs on both the Shop and Custom pages.
+    // Adding a cosmetic category later = one entry here.
+    const COSMETIC_TABS = [
+      { category: 'Profile Pictures', label: 'Pictures' },
+      { category: 'Card Backs', label: 'Card Backs' },
+      { category: 'Frames', label: 'Frames' },
+      { category: 'Emote Packs', label: 'Emotes' },
+      { category: 'Table Themes', label: 'Tables' },
+      { category: 'Burn Effects', label: 'Burn' },
+      { category: 'Victory Effects', label: 'Victory' }
+    ];
+    let shopTab = 'Profile Pictures';
+    function renderShopTabs(balance) {
+      const bar = document.getElementById('shopTabBar');
+      if (!bar) return;
+      bar.innerHTML = COSMETIC_TABS.map(tab => {
+        const count = COSMETIC_SHOP_ITEMS.filter(item => item.category === tab.category && shopItemMatchesFilter(item, balance)).length;
+        return `<button type="button" role="tab" class="cosmetic-tab" data-shop-tab="${tab.category}" aria-selected="${shopTab === tab.category}">${tab.label} <small>${count}</small></button>`;
+      }).join('');
+    }
     function renderCosmeticShop() {
       const list = document.getElementById('cosmeticShopList');
       if (!list) return;
       const balance = challengeEconomy.diamonds || 0;
-      const groups = ['Profile Pictures', 'Card Backs', 'Frames', 'Emote Packs', 'Table Themes', 'Burn Effects', 'Victory Effects'];
+      renderShopTabs(balance);
+      const groups = [shopTab];
       list.innerHTML = groups.map(category => {
         const categoryItems = COSMETIC_SHOP_ITEMS.filter(item => item.category === category && shopItemMatchesFilter(item, balance));
         if (!categoryItems.length) return '';
@@ -13460,9 +13492,9 @@ video {
             <div id="shop-preview-${item.id}" data-inline-shop-preview class="hidden border-t border-slate-700/70 bg-slate-950/55 p-3"></div>
           </div>`;
         }).join('');
-        return `<div><button type="button" data-shop-category="${category}" aria-expanded="${!collapsed}" class="w-full flex items-center justify-between py-1 text-[8px] font-black uppercase tracking-wider text-slate-400"><span>${category} <span class="text-slate-600">(${categoryItems.length})</span></span><span>${collapsed ? '▶' : '▼'}</span></button><div class="${collapsed ? 'hidden' : ''} space-y-1.5">${items}</div></div>`;
+        return `<div class="space-y-1.5">${items}</div>`;
       }).join('');
-      if (!list.innerHTML.trim()) list.innerHTML = '<p class="rounded-xl border border-dashed border-slate-700 p-4 text-center text-[9px] text-slate-500">No cosmetics match this filter.</p>';
+      if (!list.innerHTML.trim()) list.innerHTML = '<p class="rounded-xl border border-dashed border-slate-700 p-4 text-center text-[9px] text-slate-500">Nothing in this section matches the filter.</p>';
       document.querySelectorAll('[data-shop-filter]').forEach(button => {
         const active = button.dataset.shopFilter === shopFilter;
         button.className = `shop-filter-btn shrink-0 rounded-full border px-2 py-1 text-[8px] font-black ${active ? 'border-emerald-500 text-emerald-300 bg-emerald-950/40' : 'border-slate-700 text-slate-400'}`;
@@ -13748,6 +13780,13 @@ video {
         setNameTokenStatus(e.message || 'Purchase failed. Please try again.', 'error');
         renderNameChangeToken();
       });
+    });
+    document.getElementById('shopTabBar').addEventListener('click', (event) => {
+      const tab = event.target.closest('[data-shop-tab]');
+      if (!tab) return;
+      shopTab = tab.dataset.shopTab;
+      renderCosmeticShop();
+      tab.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
     });
     document.getElementById('cosmeticShopList').addEventListener('click', (event) => {
       const categoryBtn = event.target.closest('[data-shop-category]');
@@ -16654,11 +16693,26 @@ video {
         btn.addEventListener('click', () => selectDeckTheme(btn.dataset.theme));
       });
     }
+    const CUSTOM_TABS = [
+      { key: 'avatar', label: 'Pictures' },
+      { key: 'deck', label: 'Deck' },
+      ...COSMETIC_TABS.filter(tab => tab.category !== 'Profile Pictures').map(tab => ({ key: COSMETIC_CATEGORY_TYPES[tab.category], label: tab.label }))
+    ];
+    let customTab = 'avatar';
+    function setCustomTab(key) {
+      customTab = CUSTOM_TABS.some(tab => tab.key === key) ? key : 'avatar';
+      const bar = document.getElementById('customTabBar');
+      if (bar) bar.innerHTML = CUSTOM_TABS.map(tab => `<button type="button" role="tab" class="cosmetic-tab" data-custom-tab="${tab.key}" aria-selected="${tab.key === customTab}">${tab.label}</button>`).join('');
+      document.querySelectorAll('[data-custom-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.customPanel !== customTab));
+    }
+    document.getElementById('customTabBar').addEventListener('click', (event) => {
+      const tab = event.target.closest('[data-custom-tab]');
+      if (tab) setCustomTab(tab.dataset.customTab);
+    });
+    setCustomTab('avatar');
     function openCustomAtAvatars() {
       openThemesPanel();
-      const body = document.getElementById('personalisationProfileBody');
-      if (body && body.classList.contains('hidden')) document.querySelector('[data-target="personalisationProfileBody"]')?.click();
-      requestAnimationFrame(() => document.querySelector('[data-target="personalisationProfileBody"]')?.scrollIntoView({ block: 'start' }));
+      setCustomTab('avatar');
     }
     function openThemesPanel() {
       renderThemesPanelActiveState();
@@ -21259,6 +21313,19 @@ video {
         assertTrue(!isClearableInboxItem({ type: 'request' }) && !isClearableInboxItem({ type: 'invite' }), 'Friend requests and invites are never cleared unanswered');
       });
 
+      await test('REGRESSION: Custom is organised into tabs with tiles, at least 2 per row', () => {
+        openThemesPanel();
+        const tabs = [...document.querySelectorAll('#customTabBar [data-custom-tab]')].map(b => b.textContent.trim());
+        assertEqual(tabs, ['Pictures', 'Deck', 'Card Backs', 'Frames', 'Emotes', 'Tables', 'Burn', 'Victory'], 'Custom tabs');
+        document.querySelector('#customTabBar [data-custom-tab="cardBack"]').click();
+        assertTrue(!document.querySelector('[data-custom-panel="cardBack"]').classList.contains('hidden') && document.querySelector('[data-custom-panel="avatar"]').classList.contains('hidden'), 'Only the chosen tab shows');
+        const tiles = [...document.querySelectorAll('#personalisationCardBacks .cosmetic-tile')];
+        assertTrue(tiles.length >= 2 && Math.abs(tiles[0].getBoundingClientRect().top - tiles[1].getBoundingClientRect().top) < 2, 'Tiles sit at least two to a row');
+        openCustomAtAvatars();
+        assertTrue(!document.querySelector('[data-custom-panel="avatar"]').classList.contains('hidden'), 'The profile shortcut opens the Pictures tab');
+        document.getElementById('themesModal').classList.add('hidden');
+      });
+
       await test('Accessibility settings exist and apply', () => {
         ['setContrastRow','setMotionRow','setHapticsRow','volumeSlider'].forEach(id => {
           assertTrue(!!document.getElementById(id), `${id} must exist in settings`);
@@ -23097,8 +23164,11 @@ video {
           }
         });
         assertEqual(JSON.stringify(cosmeticPurchaseState), purchasesBefore, 'Building previews must not change ownership');
-        renderCosmeticShop();
-        assertEqual(document.querySelectorAll('[data-inline-shop-preview]').length, COSMETIC_SHOP_ITEMS.length, 'Every item must own an inline preview directly beneath its row');
+        const savedTab = shopTab;
+        let previewCount = 0;
+        COSMETIC_TABS.forEach(tab => { shopTab = tab.category; renderCosmeticShop(); previewCount += document.querySelectorAll('[data-inline-shop-preview]').length; });
+        shopTab = savedTab; renderCosmeticShop();
+        assertEqual(previewCount, COSMETIC_SHOP_ITEMS.length, 'Every item must own an inline preview directly beneath its row');
         assertTrue(!openShopCosmeticPreview.toString().includes('scrollIntoView'), 'Opening a preview must never scroll the Shop back to another location');
       });
 
@@ -23129,12 +23199,14 @@ video {
           cosmeticPurchaseState = { 'back-neon': { cost: 60 }, 'frame-gold': { cost: 60 } };
           equippedCosmetics.cardBack = 'back-neon';
           lastPurchasedCosmeticId = 'frame-gold';
-          renderCosmeticShop();
+          shopTab = 'Card Backs'; renderCosmeticShop();
           const neon = document.querySelector('[data-shop-equip-id="back-neon"]');
-          const gold = document.querySelector('[data-shop-equip-id="frame-gold"]');
           assertEqual(neon?.textContent.trim(), 'EQUIPPED', 'The active item must say EQUIPPED');
-          assertEqual(gold?.textContent.trim(), 'EQUIP NOW', 'A newly purchased item must offer EQUIP NOW');
           assertTrue(!document.querySelector('[data-cosmetic-id="back-neon"]'), 'Owned items must never retain a purchase button');
+          shopTab = 'Frames'; renderCosmeticShop();
+          const gold = document.querySelector('[data-shop-equip-id="frame-gold"]');
+          assertEqual(gold?.textContent.trim(), 'EQUIP NOW', 'A newly purchased item must offer EQUIP NOW');
+          shopTab = 'Profile Pictures';
         } finally {
           cosmeticPurchaseState = savedPurchases;
           equippedCosmetics = savedEquipped;
@@ -23316,15 +23388,17 @@ video {
         assertTrue(isRoomVersionCompatible({}), 'Legacy rooms without a version remain recoverable');
       });
 
-      await test('Shop categories collapse and all five filters render correctly', () => {
-        const savedFilter = shopFilter;
-        shopFilter = 'all'; renderCosmeticShop();
-        const categoryButton = document.querySelector('[data-shop-category="Card Backs"]');
-        assertTrue(!!categoryButton, 'Card Backs must have a collapsible category header');
-        categoryButton.click();
-        assertEqual(categoryButton.getAttribute('aria-expanded'), 'false', 'Collapsed category must report its state accessibly');
+      await test('Shop is organised into section tabs and all five filters render correctly', () => {
+        const savedFilter = shopFilter, savedTab = shopTab;
+        shopFilter = 'all'; shopTab = 'Profile Pictures'; renderCosmeticShop();
+        const tabs = [...document.querySelectorAll('#shopTabBar [data-shop-tab]')].map(b => b.textContent.replace(/\d+/g, '').trim());
+        assertEqual(tabs, ['Pictures', 'Card Backs', 'Frames', 'Emotes', 'Tables', 'Burn', 'Victory'], 'Shop tabs in the owner-requested order');
+        document.querySelector('#shopTabBar [data-shop-tab="Card Backs"]').click();
+        const shown = [...document.querySelectorAll('#cosmeticShopList [data-preview-cosmetic-id]')].map(b => b.dataset.previewCosmeticId);
+        assertTrue(shown.length > 0 && shown.every(id => id.startsWith('back-')), 'A tab only shows its own section');
+        assertEqual(document.querySelector('#shopTabBar [data-shop-tab="Card Backs"]').getAttribute('aria-selected'), 'true', 'The active tab is marked selected');
         ['all','affordable','owned','unowned','equipped'].forEach(filter => assertTrue(!!document.querySelector(`[data-shop-filter="${filter}"]`), `${filter} filter must exist`));
-        collapsedShopCategories.delete('Card Backs'); shopFilter = savedFilter; renderCosmeticShop();
+        shopFilter = savedFilter; shopTab = savedTab; renderCosmeticShop();
       });
 
       await test('REGRESSION: AmitK test-account detection accepts the real username and authenticated email', () => {
@@ -23343,13 +23417,14 @@ video {
           cosmeticPurchaseState = {};
           challengeEconomy.diamonds = 0;
           newCosmeticIds = new Set(['back-neon']);
+          shopTab = 'Card Backs';
           renderCosmeticShop();
           assertTrue(document.getElementById('cosmeticShopList').innerText.includes('NEW'), 'A newly purchased item must carry a NEW indicator');
           assertTrue(document.getElementById('cosmeticShopList').innerText.includes('Need 💎'), 'Unaffordable items must show the exact shortfall');
           showShopPurchaseSuccess(COSMETIC_SHOP_ITEMS[0]);
           assertTrue(!document.getElementById('shopPurchaseSuccess').classList.contains('hidden'), 'Purchase success animation panel must become visible');
         } finally {
-          newCosmeticIds = savedNew; cosmeticPurchaseState = savedPurchases; challengeEconomy.diamonds = savedDiamonds; renderCosmeticShop();
+          newCosmeticIds = savedNew; cosmeticPurchaseState = savedPurchases; challengeEconomy.diamonds = savedDiamonds; shopTab = 'Profile Pictures'; renderCosmeticShop();
         }
       });
 
