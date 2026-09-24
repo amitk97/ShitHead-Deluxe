@@ -48,6 +48,12 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Vs Bots remembers the last bot count and difficulty (`readBotPrefs` / `applyBotPrefs`: localStorage `shithead_bot_count` / `shithead_difficulty`, plus `botCount` / `botDifficulty` in `users/{uid}/settings` for signed-in accounts). A locked difficulty is never restored.
 - Tab strips (`initHorizontalScroller`) keep the selected tab scrolled into view.
 
+## Installable app & notifications
+
+- `manifest.webmanifest`, `icons/*.png` and `sw.js` make the game installable (menu → Install App: the browser prompt, or Safari steps on iOS). `sw.js` is network-first for pages (every deploy shows at once) and only serves its cached copy offline; `sw.js` and the manifest are `no-cache` in `firebase.json`.
+- Settings → Notifications (`notificationsOn`, localStorage `shithead_notifications`). `notifyNewInboxItems` announces new gifts, game invites and friend requests from the Inbox listeners while the page is hidden. There's no server push, so nothing arrives once the game is fully closed; that would need Cloud Functions + FCM (Blaze plan).
+- The service worker isn't registered when `?dev-tests=1` is in the URL.
+
 ## Showcase & daily streak
 
 - Showcase: equipped table/card back/frame/burn/victory/emotes are mirrored to `publicProfiles/{uid}/showcase` (`syncShowcase`) and shown on the in-game player card and the Profile page (`showcaseHtml`). New cosmetic types that should be shown need adding to `SHOWCASE_TYPES` and the `showcase` rule.

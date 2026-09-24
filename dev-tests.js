@@ -3170,7 +3170,7 @@ async function runDevTestSuite() {
 
   // ---- STAGE 1: hamburger menu restructure + responsive presentation ----
   await test('REGRESSION: the hamburger menu has all 9 items in the agreed order, with no duplicates', () => {
-    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuShopBtn', 'menuGuideBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuSignOutBtn'];
+    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuShopBtn', 'menuGuideBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuInstallBtn', 'menuSignOutBtn'];
     const nav = document.querySelector('#hamburgerDrawer nav');
     const actualOrder = Array.from(nav.querySelectorAll('button')).map(b => b.id);
     assertEqual(actualOrder, expectedOrder, 'Menu items must appear in exactly the agreed order: Profile, Stats, Personalisation, Friends, Leaderboard, Challenges, Shop, Guide & Strategy, Settings, Support, Sign Out (signed in only)');
@@ -4069,6 +4069,30 @@ async function runDevTestSuite() {
       } catch (e) {}
       state.selectedBotCount = saved.count; state.difficulty = saved.diff;
       styleBotCountBtns(); document.querySelectorAll('.diff-btn').forEach(styleDifficultyBtn);
+    }
+  });
+
+  await test('Notifications fire only for new gifts, invites and friend requests (not ones already waiting)', () => {
+    const realShow = showAppNotification;
+    const shown = [];
+    showAppNotification = (title, body, tag, evenIfVisible, open) => shown.push({ title, tag, open });
+    try {
+      notifySeenIds = {};
+      notifyNewInboxItems('gift', { g1: { fromName: 'Sam', itemId: 'frame-gold' } });
+      notifyNewInboxItems('request', { r1: { name: 'Jo' } });
+      assertEqual(shown.length, 0, 'What was already waiting is not announced');
+      notifyNewInboxItems('gift', { g1: { fromName: 'Sam', itemId: 'frame-gold' }, g2: { fromName: 'Sam', itemId: 'frame-gold' } });
+      notifyNewInboxItems('request', { r1: { name: 'Jo' }, r2: { name: 'Alex' } });
+      notifyNewInboxItems('invite', { i1: { fromName: 'Kai' } });
+      notifyNewInboxItems('invite', { i1: { fromName: 'Kai' }, i2: { fromName: 'Kai' } });
+      assertEqual(shown.map(n => n.tag), ['gift-g2', 'request-r2', 'invite-i2'], 'Each new item is announced once');
+      assertTrue(shown[0].title.includes('Sam') && shown[0].title.includes('gift'), 'Gift notifications name the sender');
+      assertEqual(shown[1].open, 'friends', 'Friend requests open the Friends page');
+      notifyNewInboxItems('gift', { g2: { fromName: 'Sam' } });
+      assertEqual(shown.length, 3, 'Opening a gift (removing it) is not announced');
+    } finally {
+      showAppNotification = realShow;
+      notifySeenIds = {};
     }
   });
 

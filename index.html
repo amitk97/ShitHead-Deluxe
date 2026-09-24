@@ -10,6 +10,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>ShitHead</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#020617" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ShitHead" />
   
   <!-- ============================================================
        TAILWIND CSS — compiled and inlined at build time, not loaded
@@ -1213,6 +1220,13 @@
     .gift-banner.hidden { display:none; }
     .gift-banner b { color:#fff; }
     .gift-banner button { margin-left:auto; flex:none; padding:4px 8px; border-radius:8px; border:1px solid #f9a8d4; color:#f9a8d4; font-size:9px; font-weight:900; }
+    .gift-card.install-card { border-color:#10b981; text-align:center; }
+    .install-icon { display:block; width:64px; height:64px; border-radius:16px; margin:2px auto 8px; box-shadow:0 6px 18px rgba(0,0,0,.5); }
+    .install-title { font-size:15px; font-weight:900; color:#fff; }
+    .install-body { font-size:12px; line-height:1.5; color:#cbd5e1; margin:8px 0 12px; text-align:left; }
+    .install-body ol { margin:6px 0 0 18px; list-style:decimal; }
+    .install-body b { color:#fff; }
+    .install-close { width:100%; padding:10px; border-radius:12px; background:#059669; color:#fff; font-weight:900; font-size:12px; letter-spacing:.06em; }
     .gift-scrim { position:fixed; inset:0; z-index:98; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(2,6,23,.82); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
     .gift-scrim.hidden { display:none; }
     .gift-card { width:min(360px,100%); max-height:86vh; overflow-y:auto; background:#020617; border:2px solid #db2777; border-radius:18px; padding:14px; color:#e2e8f0; box-shadow:0 20px 60px rgba(0,0,0,.7); }
@@ -3963,6 +3977,7 @@ video {
       <button id="menuGuideBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></span><span>Guide &amp; Strategy</span></button>
       <button id="menuSettingsBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg></span><span>Settings</span></button>
       <button id="menuSupportBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-support"/></svg></span><span>Support</span></button>
+      <button id="menuInstallBtn" class="hamburger-menu-item hidden"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#052e1c" stroke="#047857"/><rect x="10" y="6.5" width="12" height="19" rx="2.5" fill="none" stroke="#6ee7b7" stroke-width="2"/><path d="M16 10.5v8M12.5 15.5 16 19l3.5-3.5" stroke="#34d399" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Install App</span></button>
       <button id="menuSignOutBtn" class="hamburger-menu-item hidden menu-sign-out"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#2a1016" stroke="#7f1d1d"/><path d="M14 8H9.5A1.5 1.5 0 0 0 8 9.5v13A1.5 1.5 0 0 0 9.5 24H14" stroke="#fda4af" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M18 11l5 5-5 5M23 16H13" stroke="#fb7185" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Sign Out</span></button>
     </nav>
   </div>
@@ -4448,6 +4463,11 @@ video {
           <span class="block text-[8px] text-slate-400 leading-snug">Haptic feedback on key moments</span></span>
           <span id="setHapticsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
+        <button id="setNotifyRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="notifications, alerts, push, gifts, invites, friends, app">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Notifications</span>
+          <span id="setNotifySub" class="block text-[8px] text-slate-400 leading-snug">Gifts, game invites and friend requests while the game is in the background</span></span>
+          <span id="setNotifyState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
         </div>
 
         <button class="settings-head w-full flex items-center justify-between py-1.5 mt-1" data-target="secDisplay">
@@ -4685,6 +4705,15 @@ video {
       <div id="giftOpenFrom" class="gift-open-from"></div>
       <div id="giftOpenItem" class="gift-item"></div>
       <div class="gift-open-actions"><button type="button" id="giftOpenEquip" class="gift-open-equip">EQUIP NOW</button><button type="button" id="giftOpenClose" class="gift-open-later">LATER</button></div>
+    </div>
+  </div>
+
+  <div id="installHelpModal" class="hidden gift-scrim" role="dialog" aria-modal="true" aria-labelledby="installHelpTitle">
+    <div class="gift-card install-card">
+      <img src="/icons/icon-192.png" alt="" class="install-icon" width="64" height="64">
+      <div id="installHelpTitle" class="install-title">Install ShitHead</div>
+      <div id="installHelpBody" class="install-body"></div>
+      <button type="button" id="installHelpClose" class="install-close">GOT IT</button>
     </div>
   </div>
 
@@ -9601,6 +9630,7 @@ video {
     let hideHelperIcons = readPref('shithead_hide_helpers', false);
     let bigEffectsOn = readPref('shithead_big_effects', true);
     let hapticsOn = readPref('shithead_haptics', true);
+    let notificationsOn = readPref('shithead_notifications', false);
     let dealAnimationOn = readPref('shithead_deal_animation', true);
     let masterVolume = (() => {
       try { const v = localStorage.getItem('shithead_volume'); return v === null ? 85 : parseInt(v, 10); }
@@ -13230,6 +13260,7 @@ video {
       paintToggle(document.getElementById('setBigEffectsState'), bigEffectsOn);
       paintToggle(document.getElementById('setHapticsState'), hapticsOn);
       paintToggle(document.getElementById('setDealAnimState'), dealAnimationOn);
+      if (typeof paintNotifyToggle === 'function') paintNotifyToggle();
       const vs = document.getElementById('volumeSlider');
       const vl = document.getElementById('volumeLabel');
       if (vs) vs.value = masterVolume;
@@ -19115,7 +19146,145 @@ video {
       }
     }
 
+    // --- Installable app & notifications --------------------------------
+    // sw.js makes the game installable and shows notifications. There's no
+    // server to push from, so notifications come from the page's own live
+    // listeners: they arrive while the game is open or in the background,
+    // not once it has been fully closed.
+    const isStandaloneApp = () => window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
+    const isIOSDevice = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    let deferredInstallPrompt = null;
+    let appServiceWorker = null;
+    function refreshInstallMenuItem() {
+      const show = !isStandaloneApp() && (!!deferredInstallPrompt || isIOSDevice());
+      document.getElementById('menuInstallBtn')?.classList.toggle('hidden', !show);
+    }
+    function showInstallHelp(html) {
+      document.getElementById('installHelpBody').innerHTML = html;
+      document.getElementById('installHelpModal').classList.remove('hidden');
+    }
+    document.getElementById('installHelpClose').addEventListener('click', () => document.getElementById('installHelpModal').classList.add('hidden'));
+    document.getElementById('installHelpModal').addEventListener('click', (e) => { if (e.target.id === 'installHelpModal') e.target.classList.add('hidden'); });
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      refreshInstallMenuItem();
+    });
+    window.addEventListener('appinstalled', () => { deferredInstallPrompt = null; refreshInstallMenuItem(); });
+    document.getElementById('menuInstallBtn').addEventListener('click', async () => {
+      closeHamburgerMenu();
+      if (deferredInstallPrompt) {
+        const prompt = deferredInstallPrompt;
+        deferredInstallPrompt = null;
+        try { await prompt.prompt(); await prompt.userChoice; } catch (e) {}
+        refreshInstallMenuItem();
+        return;
+      }
+      showInstallHelp(isIOSDevice()
+        ? 'On iPhone and iPad, install it from Safari:<ol><li>Tap the <b>Share</b> button (the square with an arrow).</li><li>Choose <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>.</li></ol>'
+        : 'Open your browser menu and choose <b>Install app</b> or <b>Add to Home screen</b>.');
+    });
+    refreshInstallMenuItem();
+    if ('serviceWorker' in navigator && window.isSecureContext && !new URLSearchParams(location.search).has('dev-tests')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then((reg) => { appServiceWorker = reg; }).catch((e) => console.warn('Service worker registration failed', e));
+      });
+      navigator.serviceWorker.addEventListener('message', (e) => {
+        if (e.data?.type === 'notification-open') openFromNotification(e.data.open);
+      });
+    }
+    function openFromNotification(target) {
+      if (target === 'friends' && typeof openFriendsPanel === 'function') openFriendsPanel();
+      else openInboxPanel();
+    }
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const target = params.get('open');
+      if (!target) return;
+      params.delete('open');
+      history.replaceState(null, '', location.pathname + (params.toString() ? `?${params}` : '') + location.hash);
+      // Wait for sign-in to settle so the Inbox can load.
+      const tryOpen = (attempt = 0) => {
+        if (currentUser || attempt > 20) { if (currentUser) openFromNotification(target); return; }
+        setTimeout(() => tryOpen(attempt + 1), 250);
+      };
+      tryOpen();
+    })();
+
+    const notificationsSupported = () => typeof Notification !== 'undefined';
+    function notificationsActive() {
+      return notificationsOn && notificationsSupported() && Notification.permission === 'granted';
+    }
+    function paintNotifyToggle() {
+      const state = document.getElementById('setNotifyState');
+      const sub = document.getElementById('setNotifySub');
+      if (!state) return;
+      if (!notificationsSupported()) {
+        state.textContent = 'N/A'; state.className = 'shrink-0 text-[10px] font-black px-2 py-0.5 rounded border text-slate-500 border-slate-600';
+        if (sub) sub.textContent = isIOSDevice() && !isStandaloneApp() ? 'Install the app (menu → Install App) to turn these on' : 'Not supported by this browser';
+        return;
+      }
+      if (Notification.permission === 'denied') {
+        state.textContent = 'BLOCKED'; state.className = 'shrink-0 text-[10px] font-black px-2 py-0.5 rounded border text-rose-400 border-rose-500';
+        if (sub) sub.textContent = 'Allow notifications for this site in your browser settings';
+        return;
+      }
+      paintToggle(state, notificationsActive());
+      if (sub) sub.textContent = 'Gifts, game invites and friend requests while the game is in the background';
+    }
+    document.getElementById('setNotifyRow').addEventListener('click', async () => {
+      if (!notificationsSupported()) { paintNotifyToggle(); return; }
+      if (notificationsActive()) {
+        notificationsOn = false;
+      } else {
+        let permission = Notification.permission;
+        if (permission === 'default') {
+          try { permission = await Notification.requestPermission(); } catch (e) { permission = 'denied'; }
+        }
+        notificationsOn = permission === 'granted';
+        if (notificationsOn) showAppNotification('Notifications are on', 'We\u2019ll let you know about gifts, game invites and friend requests.', 'settings', true);
+      }
+      writePref('shithead_notifications', notificationsOn);
+      paintNotifyToggle();
+    });
+
+    function showAppNotification(title, body, tag, evenIfVisible = false, open = 'inbox') {
+      if (!notificationsActive() || (!evenIfVisible && document.visibilityState === 'visible')) return;
+      const options = { body, tag: `shithead-${tag}`, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', data: { open } };
+      const viaWorker = appServiceWorker?.showNotification
+        ? appServiceWorker.showNotification(title, options)
+        : Promise.reject(new Error('no service worker'));
+      viaWorker.catch(() => {
+        try {
+          const n = new Notification(title, options);
+          n.onclick = () => { window.focus(); openFromNotification(options.data.open); n.close(); };
+        } catch (e) {}
+      });
+    }
+    // Notify only about items that arrive after the listener starts: the
+    // first snapshot of each list is what was already waiting.
+    let notifySeenIds = {};
+    function notifyNewInboxItems(kind, data) {
+      const ids = Object.keys(data || {});
+      const seen = notifySeenIds[kind];
+      notifySeenIds[kind] = new Set(ids);
+      if (!seen) return;
+      ids.filter(id => !seen.has(id)).forEach((id) => {
+        const item = data[id] || {};
+        const who = String(item.fromName || item.name || 'A friend').slice(0, 12);
+        if (kind === 'gift') {
+          const shopItem = COSMETIC_SHOP_ITEMS.find(i => i.id === item.itemId);
+          showAppNotification(`🎁 ${who} sent you a gift`, shopItem ? `${shopItem.name} is waiting in your Inbox.` : 'Open your Inbox to see it.', `gift-${id}`);
+        } else if (kind === 'invite') {
+          showAppNotification(`🃏 ${who} invited you to a game`, 'Tap to join before the invite runs out.', `invite-${id}`);
+        } else if (kind === 'request') {
+          showAppNotification(`👋 ${who} wants to be friends`, 'Tap to accept or decline.', `request-${id}`, false, 'friends');
+        }
+      });
+    }
+
     function startInboxBadgeListener(user) {
+      notifySeenIds = {};
       inboxBadgeSubscriptions.forEach(({ ref, handler }) => ref.off('value', handler));
       inboxBadgeSubscriptions = [];
       clearTimeout(inboxBadgeExpiryTimer);
@@ -19132,16 +19301,19 @@ video {
       const onGifts = (snap) => {
         if (inboxBadgeUid !== uid) return;
         inboxBadgeGiftData = snap.val() || {};
+        notifyNewInboxItems('gift', inboxBadgeGiftData);
         refreshInboxBadge();
       };
       const onRequests = (snap) => {
         if (inboxBadgeUid !== uid) return;
         inboxBadgeRequestData = snap.val() || {};
+        notifyNewInboxItems('request', inboxBadgeRequestData);
         refreshInboxBadge();
       };
       const onInvites = (snap) => {
         if (inboxBadgeUid !== uid) return;
         inboxBadgeInviteData = snap.val() || {};
+        notifyNewInboxItems('invite', inboxBadgeInviteData);
         refreshInboxBadge();
       };
       const onChallenges = (snap) => {
