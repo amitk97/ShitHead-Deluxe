@@ -123,6 +123,12 @@
     .fixed.inset-0.p-3 { padding-top: calc(0.75rem + var(--safe-top)); }
     #actionBanner { top: calc(0.75rem + var(--safe-top)); }
     #connectionStatusBanner { top: calc(3rem + var(--safe-top)); }
+    /* The table fills what's left under the (taller, on iPhone) header. */
+    main#gameTable { height: calc(100dvh - 2.75rem - var(--safe-top)); max-height: calc(100dvh - 2.75rem - var(--safe-top)); }
+    /* Play direction sits in the table's top-left corner, out of the
+       column flow, so the opponents and everything below move up and the
+       hand gets that row's height. */
+    #gameDirectionBadge { position: absolute; top: 6px; left: 8px; z-index: 30; margin: 0; }
 
     input, textarea { user-select: auto !important; -webkit-user-select: auto !important; }
 
@@ -367,7 +373,7 @@
       #headerDiamondBtn, #roomCodeBadge { height: 38px !important; padding-left: 12px !important; padding-right: 12px !important; }
       #headerDiamondBtn > span:first-child { font-size: 17px !important; }
       #headerDiamondCount, #roomCodeBadge { font-size: 14px !important; }
-      #gameTable { height: calc(100dvh - 60px) !important; max-height: calc(100dvh - 60px) !important; }
+      #gameTable { height: calc(100dvh - 60px - var(--safe-top)) !important; max-height: calc(100dvh - 60px - var(--safe-top)) !important; }
       #hamburgerDrawer {
         left: auto;
         right: 18px;
@@ -4286,11 +4292,8 @@ video {
     </defs>
   </svg>
 
-      <!-- Direction badge: a direct child of the column-flex game table would
-           otherwise stretch to fill the full row width (flex cross-axis
-           stretch), rendering as an empty-looking full-width bar with the
-           icon stuck at the left edge. self-center + w-fit keeps it a small,
-           centered pill sized to its own content instead. -->
+      <!-- Direction badge: pinned to the table's top-left corner (see the
+           #gameDirectionBadge CSS), outside the column flow. -->
       <span id="gameDirectionBadge" class="hidden self-center w-fit mx-auto px-2 py-0.5 text-sm font-black bg-slate-900 border border-slate-700 rounded text-amber-300 text-center" data-tip="Play Direction">
         <span>↻</span>
       </span>
@@ -11293,7 +11296,16 @@ video {
 
       // A single row keeps today's compact footprint; more rows are allowed
       // more vertical room, since there's genuinely more to show.
-      handContainer.style.maxHeight = `${availableHandHeight}px`;
+      // availableHandHeight is the room for the cards themselves; the hand's
+      // own padding (lift room above, a little below) comes on top of it.
+      // Capping the padded box at the bare card height made 2-3 row hands
+      // overflow and scroll, clipping the back row.
+      const handPadCs = getComputedStyle(handContainer);
+      const handPadPx = (parseFloat(handPadCs.paddingTop) || 0) + (parseFloat(handPadCs.paddingBottom) || 0);
+      handContainer.style.maxHeight = `${availableHandHeight + handPadPx}px`;
+      const rowVisibleFraction = rowCount > 1
+        ? Math.min(0.9, Math.max(0.55, (availableHandHeight / cardMetrics.height - 1) / (rowCount - 1)))
+        : 1;
 
       handRows.forEach((rowCards, rowIdx) => {
         const rowEl = document.createElement('div');
@@ -11304,7 +11316,10 @@ video {
         rowEl.style.cssText = `position:relative; isolation:isolate; z-index:${(rowIdx + 1) * 100}; width:100%; display:flex; align-items:flex-end; justify-content:center;`;
         if (rowIdx > 0) {
           // Pulls this row up to overlap the bottom of the row behind it.
-          rowEl.style.marginTop = `${cardMetrics.height * -0.45}px`;
+          // Rows show at least 55% of the card behind; any spare height
+          // (cards are usually width-limited with 2-3 rows) spreads them
+          // apart so more of each back-row card is visible.
+          rowEl.style.marginTop = `${-cardMetrics.height * (1 - rowVisibleFraction)}px`;
         }
 
         rowCards.forEach((card, iInRow) => {
@@ -11414,6 +11429,45 @@ video {
       checkSnapBurnEligibility();
       renderCardReference();
       schedulePileInspectHint(isMyTurn);
+      fitHandToTable();
+    }
+
+    // Last word on the hand's height, once everything around it (play
+    // button, banners, history) is laid out: if the player's area still runs
+    // past the bottom of the table, pull the rows closer (down to 55% of the
+    // card behind showing) and then shrink the cards until it fits.
+    function fitHandToTable() {
+      const hand = document.getElementById('localHand');
+      const table = document.getElementById('gameTable');
+      const zone = document.getElementById('localPlayerZone');
+      if (!hand || !table || !zone || !hand.children.length) return;
+      const limit = table.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(table).paddingBottom) || 0);
+      const overflow = zone.getBoundingClientRect().bottom - limit;
+      if (!(overflow > 1)) return;
+      const rows = [...hand.children];
+      const firstCard = rows[0].firstElementChild;
+      const h = parseFloat(firstCard?.style.height) || 0;
+      if (!h) return;
+      const n = rows.length;
+      const vis = n > 1 ? 1 + (parseFloat(rows[1].style.marginTop) || 0) / h : 1;
+      const stack = h * (1 + (n - 1) * vis);
+      const target = stack - overflow;
+      let newVis = vis;
+      let newH = h;
+      if (n > 1) newVis = Math.max(0.55, Math.min(vis, (target / h - 1) / (n - 1)));
+      if (h * (1 + (n - 1) * newVis) > target) newH = Math.max(52, target / (1 + (n - 1) * newVis));
+      const ratio = newH / h;
+      rows.forEach((row, i) => {
+        if (i > 0) row.style.marginTop = `${-newH * (1 - newVis)}px`;
+        [...row.children].forEach((cardEl) => {
+          if (ratio === 1) return;
+          const w = newH * 0.69;
+          cardEl.style.width = `${w}px`;
+          cardEl.style.height = `${newH}px`;
+          if (cardEl.style.marginLeft) cardEl.style.marginLeft = `${(parseFloat(cardEl.style.marginLeft) || 0) * ratio}px`;
+          if (w < 46) cardEl.classList.add('card-tiny');
+        });
+      });
     }
 
     function getAllSelectablePool(player) {
