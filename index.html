@@ -979,9 +979,43 @@
        (width:0 + min-width:100%), so a long name truncates instead of
        widening the seat, and statuses no longer squeeze the name. */
     .opp-head, .opp-status-row { width:0; min-width:100%; display:flex; align-items:center; justify-content:center; gap:4px; }
+    /* Seats are sized for the picture + a 12-character name (set per
+       opponent count in render), with padding so card-frame glows are
+       never clipped by the seat edge. */
+    .opp-seat { min-width:var(--opp-seat-w, 112px); padding:6px 8px 5px !important; }
+    .opp-seat .opp-name { font-size:var(--opp-name-size, 9px); letter-spacing:.03em; }
+    .opp-head { cursor:pointer; border-radius:8px; }
+    .opp-head:focus-visible { outline:2px solid #f59e0b; outline-offset:2px; }
     .opp-status-row { gap:3px; min-height:15px; }
     .opp-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .avatar-tile.opp-avatar-turn { border-radius:26%; box-shadow:0 0 0 2px #fbbf24, 0 0 10px rgba(251,191,36,.65); }
+    .profile-avatar-btn { display:flex; flex-direction:column; align-items:center; gap:3px; flex:none; border-radius:12px; padding:2px; }
+    .profile-avatar-btn .avatar-tile { transition:transform .15s; }
+    .profile-avatar-btn:hover .avatar-tile { transform:scale(1.05); }
+    .profile-avatar-hint { font-size:7.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:#fbbf24; white-space:nowrap; }
+    /* In-game player card (matches the approved mockup). */
+    .pp-scrim { position:fixed; inset:0; z-index:96; background:rgba(2,6,23,.62); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
+    .pp-card { position:absolute; left:50%; width:min(300px, calc(100vw - 32px)); transform:translateX(-50%); background:#020617; border:2px solid #f59e0b; border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.6); padding:16px; color:#e2e8f0; }
+    .pp-card::before { content:''; position:absolute; top:-9px; left:var(--pp-arrow, 50%); width:16px; height:16px; background:#020617; border-left:2px solid #f59e0b; border-top:2px solid #f59e0b; transform:translateX(-50%) rotate(45deg); }
+    .pp-x { position:absolute; top:10px; right:12px; color:#94a3b8; font-weight:900; font-size:16px; line-height:1; padding:4px; }
+    .pp-x:hover { color:#fff; }
+    .pp-head { display:flex; align-items:center; gap:12px; padding-right:22px; }
+    .pp-name { font-size:17px; font-weight:900; color:#fff; letter-spacing:.02em; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pp-badge { display:inline-flex; align-items:center; gap:4px; margin-top:5px; padding:2px 8px; border-radius:8px; border:1px solid; font-size:11px; font-weight:900; width:fit-content; }
+    .pp-sub { font-size:10px; color:#94a3b8; margin-top:4px; font-weight:700; }
+    .pp-sub.is-online { color:#34d399; }
+    .pp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:14px; }
+    .pp-stat { background:rgba(15,23,42,.8); border:1px solid #1e293b; border-radius:10px; padding:8px 4px; text-align:center; }
+    .pp-stat b { display:block; font-size:15px; font-weight:900; color:#fff; }
+    .pp-stat span { display:block; font-size:8px; font-weight:900; letter-spacing:.08em; color:#64748b; text-transform:uppercase; margin-top:2px; }
+    .pp-row { display:flex; gap:6px; margin-top:12px; }
+    .pp-btn { flex:1; text-align:center; padding:8px 0; border-radius:10px; font-size:10px; font-weight:900; letter-spacing:.06em; border:1px solid #334155; color:#cbd5e1; background:transparent; }
+    .pp-btn.primary { border-color:#10b981; color:#34d399; }
+    .pp-btn.primary:hover { background:#10b981; color:#022c22; }
+    .pp-btn:disabled { cursor:default; }
+    .pp-friends { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:8px 0; border-radius:10px; font-size:10px; font-weight:900; letter-spacing:.06em; color:#34d399; background:rgba(6,78,59,.35); border:1px solid #065f46; }
+    .pp-note { margin-top:14px; border:1px dashed #334155; border-radius:12px; padding:12px; text-align:center; font-size:11px; color:#94a3b8; line-height:1.4; }
+    .pp-note b { color:#fcd34d; }
     .avatar-picker-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
     .avatar-picker-label { grid-column:1 / -1; font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:#64748b; margin-top:4px; }
     .avatar-option { display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px 7px; border-radius:12px; border:1px solid #334155; background:rgba(15,23,42,.6); text-align:center; transition:border-color .15s, background .15s; }
@@ -4309,6 +4343,13 @@ video {
        flow already used by "Forgot password?" during sign-in — no new
        mechanism invented. Change Username links to the one-time lifetime
        Name Change Token now sold in the Shop. -->
+  <!-- In-game player card: opened by tapping an opponent's picture/name. -->
+  <div id="playerPopup" class="hidden pp-scrim" aria-hidden="true">
+    <div id="playerPopupCard" class="pp-card" role="dialog" aria-modal="true" aria-labelledby="playerPopupName">
+      <button id="playerPopupClose" type="button" class="pp-x" aria-label="Close">✕</button>
+      <div id="playerPopupBody"></div>
+    </div>
+  </div>
   <div id="profileModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:90vh; display:flex; flex-direction:column;">
       <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
@@ -4319,7 +4360,7 @@ video {
         <div>
           <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Public Profile</span>
           <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-2">
-            <span class="inline-flex items-center justify-center" data-own-avatar="42"></span>
+            <button id="profileAvatarBtn" type="button" class="profile-avatar-btn" aria-label="Change profile picture"><span class="inline-flex items-center justify-center" data-own-avatar="46"></span><span class="profile-avatar-hint">Tap to change</span></button>
             <div class="min-w-0">
               <span id="profileUsernameText" class="block text-sm font-black text-white truncate">Not signed in</span>
               <span id="profileRatingText" class="block text-[10px] text-slate-400 mt-0.5">&nbsp;</span>
@@ -9909,13 +9950,20 @@ video {
       // width being wasted, so this scales cards up accordingly.
       const oppScale = opponentCount <= 1 ? 1.55 : opponentCount === 2 ? 1.22 : 1;
       oppContainer.style.setProperty('--opp-scale', oppScale);
+      // Wide enough for the picture plus a 12-character name at every count.
+      const viewportW = window.innerWidth || 390;
+      const seatW = opponentCount <= 1 ? Math.min(240, viewportW - 40)
+        : opponentCount === 2 ? Math.min(190, (viewportW - 36) / 2)
+        : Math.min(150, (viewportW - 30) / 3 - 6);
+      oppContainer.style.setProperty('--opp-seat-w', `${Math.floor(seatW)}px`);
+      oppContainer.style.setProperty('--opp-name-size', opponentCount <= 1 ? '12px' : opponentCount === 2 ? '10px' : '8px');
       ensureBotAvatars(state.players);
       const oppAvatarSize = Math.round(18 * oppScale);
       state.players.filter(p => p.id !== state.localPlayerId).forEach(p => {
         const isTurn = currentTurnPlayer && currentTurnPlayer.id === p.id && !p.hasFinished;
         const oppDiv = document.createElement('div');
         oppDiv.id = `opp-${p.id}`;
-        oppDiv.className = `flex flex-col items-center gap-1 p-1 rounded-2xl border transition-all ${
+        oppDiv.className = `opp-seat flex flex-col items-center gap-1 p-1 rounded-2xl border transition-all ${
           isTurn ? 'border-amber-400 bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-turn-pulse scale-105' : 'border-slate-800 bg-slate-900/60'
         } ${p.hasFinished ? 'opacity-40 grayscale scale-95' : ''}`;
         
@@ -10013,9 +10061,9 @@ video {
         // Picture + name on top (the picture glows gold on this seat's
         // turn), cards in the middle, every status chip underneath.
         oppDiv.innerHTML = `
-          <div class="opp-head">
+          <div class="opp-head" role="button" tabindex="0" data-player-popup="${escapeAttr(p.id)}" aria-label="View ${escapeAttr(p.name)}'s profile">
             ${avatarHtml(getPlayerAvatarId(p), oppAvatarSize, isTurn ? 'opp-avatar-turn' : '')}
-            <span class="opp-name text-[9px] md:text-[11px] font-black tracking-wider text-slate-100 uppercase" title="${escapeAttr(p.name)}">${escapeHtml(p.name)}</span>
+            <span class="opp-name font-black text-slate-100 uppercase" title="${escapeAttr(p.name)}">${escapeHtml(p.name)}</span>
           </div>
           <div class="flex opp-slot-row">
             ${tableSlotsHtml}
@@ -10684,6 +10732,7 @@ video {
       const hostPlayer = {
         id: 'p_host',
         name: hostName,
+        uid: currentUser?.uid || null,
         isHost: true,
         isBot: false,
         hand: [],
@@ -10823,6 +10872,7 @@ video {
         const newPlayer = {
           id: myId,
           name: pName,
+          uid: currentUser?.uid || null,
           isHost: false,
           isBot: false,
           hand: [],
@@ -12907,11 +12957,12 @@ video {
     // Earn-only profile pictures: never sold. Unlocked by ranked milestones
     // (see grantEarnedAvatars) and then recorded in ownedCosmetics like any
     // other owned item, so they stay unlocked even if rating later drops.
-    // There is no "Diamond" rank tier; the Diamond Crown marks Platinum.
+    // Platinum Crown keeps its original id (avatar-crown-diamond) so existing
+    // ownership and the Database Rules id list stay valid.
     const EARNED_AVATARS = [
       { id: 'avatar-crown-silver', category: 'Profile Pictures', name: 'Silver Crown', earned: true, requirement: 'Reach Silver rank', isEarned: (u) => avatarPeakRating(u) >= 1000 },
       { id: 'avatar-crown-gold', category: 'Profile Pictures', name: 'Gold Crown', earned: true, requirement: 'Reach Gold rank', isEarned: (u) => avatarPeakRating(u) >= 1500 },
-      { id: 'avatar-crown-diamond', category: 'Profile Pictures', name: 'Diamond Crown', earned: true, animated: true, requirement: 'Reach Platinum rank', isEarned: (u) => avatarPeakRating(u) >= 1800 },
+      { id: 'avatar-crown-diamond', category: 'Profile Pictures', name: 'Platinum Crown', earned: true, animated: true, requirement: 'Reach Platinum rank', isEarned: (u) => avatarPeakRating(u) >= 1800 },
       { id: 'avatar-crown-master', category: 'Profile Pictures', name: 'Master Crown', earned: true, animated: true, requirement: 'Reach Master rank', isEarned: (u) => avatarPeakRating(u) >= 2000 },
       { id: 'avatar-centurion', category: 'Profile Pictures', name: 'Centurion', earned: true, requirement: 'Play 100 ranked games', isEarned: (u) => ((Number(u?.wins) || 0) + (Number(u?.losses) || 0)) >= 100 },
       { id: 'avatar-shithead', category: 'Profile Pictures', name: 'ShitHead', earned: true, requirement: 'Lose 10 ranked games in a row', isEarned: (u) => (Number(u?.rankedStats?.bestLossStreak) || 0) >= 10 }
@@ -13007,6 +13058,123 @@ video {
       }
       if (typeof render === 'function' && state && state.phase !== 'LOBBY') render();
     }
+
+    // ---- In-game player card -------------------------------------------
+    let playerPopupToken = 0;
+    function closePlayerPopup() {
+      playerPopupToken++;
+      const popup = document.getElementById('playerPopup');
+      popup.classList.add('hidden');
+      popup.setAttribute('aria-hidden', 'true');
+    }
+    function positionPlayerPopup(anchor) {
+      const card = document.getElementById('playerPopupCard');
+      const rect = anchor ? anchor.getBoundingClientRect() : null;
+      card.style.top = `${rect ? Math.round(rect.bottom + 14) : 120}px`;
+      if (!rect) { card.style.setProperty('--pp-arrow', '50%'); return; }
+      const cardRect = card.getBoundingClientRect();
+      const arrowX = rect.left + rect.width / 2 - cardRect.left;
+      card.style.setProperty('--pp-arrow', `${Math.max(18, Math.min(cardRect.width - 18, arrowX))}px`);
+      // Keep the whole card on screen on short phones.
+      const overflow = cardRect.bottom - (window.innerHeight - 8);
+      if (overflow > 0) card.style.top = `${Math.max(8, rect.bottom + 14 - overflow)}px`;
+    }
+    function playerPopupStatsHtml(stats, profile) {
+      const games = Number(stats.games) || ((Number(profile.wins) || 0) + (Number(profile.losses) || 0));
+      const wins = Number(stats.wins != null ? stats.wins : profile.wins) || 0;
+      const rate = games ? `${Math.round((wins / games) * 100)}%` : '—';
+      const cell = (value, label) => `<div class="pp-stat"><b>${value}</b><span>${label}</span></div>`;
+      return `<div class="pp-grid">
+        ${cell(games, 'Ranked games')}${cell(rate, 'Win rate')}${cell(Number(stats.bestStreak) || 0, 'Best streak')}
+        ${cell(Math.round(Number(stats.peak) || Number(profile.rating) || 500), 'Peak rating')}${cell(Number(stats.burnt) || 0, 'Cards burnt')}${cell(Number(stats.jokers) || 0, 'Jokers played')}
+      </div>`;
+    }
+    function renderPlayerPopupHuman(player, profile, friendState) {
+      const tier = getRankTier(profile.rating != null ? profile.rating : 500);
+      const hasProfile = !!player.uid && profile.loaded;
+      const badge = hasProfile
+        ? `<span class="pp-badge ${tier.cls}" style="${tier.style}">${tier.name} · ${Math.round(profile.rating != null ? profile.rating : 500)}</span>`
+        : `<span class="pp-badge" style="border-color:#475569;color:#cbd5e1">Guest player</span>`;
+      const online = hasProfile ? `<div class="pp-sub ${profile.online ? 'is-online' : ''}">● ${profile.online ? 'Online now' : 'Offline'}</div>` : '';
+      let actions = '';
+      if (hasProfile && currentUser && player.uid !== currentUser.uid) {
+        const friendHtml = friendState === 'friends'
+          ? '<span class="pp-friends"><span aria-hidden="true">✔</span> FRIENDS</span>'
+          : friendState === 'sent'
+            ? '<button type="button" class="pp-btn primary" disabled>REQUEST SENT</button>'
+            : `<button type="button" class="pp-btn primary" data-pp-action="friend" data-uid="${escapeAttr(player.uid)}">+ ADD FRIEND</button>`;
+        const ignoreHtml = friendState === 'ignored'
+          ? '<button type="button" class="pp-btn" disabled>IGNORED</button>'
+          : `<button type="button" class="pp-btn" data-pp-action="ignore" data-uid="${escapeAttr(player.uid)}">IGNORE</button>`;
+        actions = `<div class="pp-row">${friendHtml}${ignoreHtml}</div>`;
+      }
+      return `<div class="pp-head">${avatarHtml(getPlayerAvatarId(player), 64)}
+          <div class="min-w-0"><div id="playerPopupName" class="pp-name">${escapeHtml(player.name)}</div>${badge}${online}</div></div>
+        ${hasProfile ? playerPopupStatsHtml(profile.stats || {}, profile) : '<div class="pp-note">This player isn\'t signed in, so they don\'t have a rank or stats yet.</div>'}
+        ${actions}`;
+    }
+    function renderPlayerPopupBot(player) {
+      const diff = player.difficulty || state.difficulty || 'medium';
+      const colors = { easy: ['#059669', '#6ee7b7', 'rgba(2,44,34,.6)'], medium: ['#d97706', '#fcd34d', 'rgba(69,26,3,.6)'], hard: ['#e11d48', '#fda4af', 'rgba(76,5,25,.6)'], boss: ['#9333ea', '#d8b4fe', 'rgba(59,7,100,.6)'] }[diff] || ['#d97706', '#fcd34d', 'rgba(69,26,3,.6)'];
+      return `<div class="pp-head">${avatarHtml(getPlayerAvatarId(player), 64)}
+          <div class="min-w-0"><div id="playerPopupName" class="pp-name">${escapeHtml(player.name)}</div>
+          <span class="pp-badge" style="border-color:${colors[0]};color:${colors[1]};background:${colors[2]}">🤖 Bot · ${diff.charAt(0).toUpperCase() + diff.slice(1)}</span></div></div>
+        <div class="pp-note">This player is a <b>computer opponent</b>.<br>Bots don't have a rank or stats.</div>`;
+    }
+    function openPlayerPopup(playerId, anchor) {
+      const player = state.players?.find(p => p.id === playerId);
+      if (!player) return;
+      const token = ++playerPopupToken;
+      const popup = document.getElementById('playerPopup');
+      const body = document.getElementById('playerPopupBody');
+      const profile = { loaded: false };
+      body.innerHTML = player.isBot ? renderPlayerPopupBot(player) : renderPlayerPopupHuman(player, profile, null);
+      popup.classList.remove('hidden');
+      popup.setAttribute('aria-hidden', 'false');
+      positionPlayerPopup(anchor);
+      document.getElementById('playerPopupClose').focus({ preventScroll: true });
+      if (player.isBot || !player.uid || typeof db === 'undefined') return;
+      const me = currentUser?.uid;
+      Promise.all([
+        db.ref(`publicProfiles/${player.uid}`).once('value').then(snap => snap.val() || {}),
+        me ? db.ref(`friends/${me}/${player.uid}`).once('value').then(snap => snap.val() === true).catch(() => false) : Promise.resolve(false),
+        me ? db.ref(`ignores/${me}/${player.uid}`).once('value').then(snap => snap.val() === true).catch(() => false) : Promise.resolve(false)
+      ]).then(([publicProfile, isFriend, isIgnored]) => {
+        if (token !== playerPopupToken) return;
+        const friendState = isFriend ? 'friends' : isIgnored ? 'ignored' : null;
+        body.innerHTML = renderPlayerPopupHuman(player, { ...publicProfile, loaded: true }, friendState);
+        positionPlayerPopup(anchor);
+      }).catch(() => {});
+    }
+    document.getElementById('playerPopupClose').addEventListener('click', closePlayerPopup);
+    document.getElementById('playerPopup').addEventListener('click', (event) => {
+      if (event.target.id === 'playerPopup') { closePlayerPopup(); return; }
+      const btn = event.target.closest('[data-pp-action]');
+      if (!btn || !currentUser) return;
+      const uid = btn.dataset.uid;
+      if (btn.dataset.ppAction === 'friend') {
+        btn.disabled = true;
+        getOrCreateUserProfile(currentUser.uid).then(myProfile =>
+          db.ref(`friendRequests/${uid}/${currentUser.uid}`).set({ name: myProfile.username || 'Player', sentAt: Date.now() })
+        ).then(() => { btn.textContent = 'REQUEST SENT'; })
+          .catch(() => { btn.disabled = false; notifyBanner('Could not send that friend request.'); });
+      } else if (btn.dataset.ppAction === 'ignore') {
+        ignorePerson(uid);
+        btn.textContent = 'IGNORED';
+        btn.disabled = true;
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !document.getElementById('playerPopup').classList.contains('hidden')) closePlayerPopup();
+    });
+    document.getElementById('opponentsContainer').addEventListener('click', (event) => {
+      const head = event.target.closest('[data-player-popup]');
+      if (head) openPlayerPopup(head.dataset.playerPopup, head.closest('.opp-seat') || head);
+    });
+    document.getElementById('opponentsContainer').addEventListener('keydown', (event) => {
+      const head = event.target.closest('[data-player-popup]');
+      if (head && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openPlayerPopup(head.dataset.playerPopup, head.closest('.opp-seat') || head); }
+    });
 
     function refreshOwnAvatarDisplays() {
       document.querySelectorAll('[data-own-avatar]').forEach(slot => {
@@ -13915,6 +14083,11 @@ video {
       document.getElementById('profileModal').classList.remove('hidden');
     }
     document.getElementById('profileCloseBtn').addEventListener('click', () => document.getElementById('profileModal').classList.add('hidden'));
+    // Tapping your own picture jumps straight to the picture picker in Custom.
+    document.getElementById('profileAvatarBtn').addEventListener('click', () => {
+      document.getElementById('profileModal').classList.add('hidden');
+      openCustomAtAvatars();
+    });
     document.getElementById('profileModal').addEventListener('click', (e) => {
       if (e.target.id === 'profileModal') document.getElementById('profileModal').classList.add('hidden');
     });
@@ -15937,7 +16110,18 @@ video {
           username,
           rating: profile.rating != null ? profile.rating : 500,
           tier
-        }).then(() => db.ref(`publicProfiles/${uid}/avatar`).set(avatar).catch(() => {}));
+        }).then(() => Promise.all([
+          db.ref(`publicProfiles/${uid}/avatar`).set(avatar).catch(() => {}),
+          // Summary shown on the in-game player card (users/{uid} is private).
+          db.ref(`publicProfiles/${uid}/stats`).set({
+            games: (Number(profile.wins) || 0) + (Number(profile.losses) || 0),
+            wins: Number(profile.wins) || 0,
+            bestStreak: Number(profile.rankedStats?.bestStreak) || 0,
+            peak: Math.round(Math.max(Number(profile.rankedStats?.highestRating) || 0, Number(profile.rating) || 0)),
+            burnt: Number(profile.rankedStats?.burnt) || 0,
+            jokers: Number(profile.rankedStats?.jokersPlayed) || 0
+          }).catch(() => {})
+        ]));
         const leaderboardWrite = username
           ? db.ref(`leaderboard/${username.toLowerCase()}`).set({ username, rating: profile.rating != null ? profile.rating : 500, tier, wins: profile.wins || 0, losses: profile.losses || 0 })
             .then(() => db.ref(`leaderboard/${username.toLowerCase()}/avatar`).set(avatar).catch(() => {}))
@@ -16442,6 +16626,12 @@ video {
       area.querySelectorAll('.themes-page-select-btn').forEach((btn) => {
         btn.addEventListener('click', () => selectDeckTheme(btn.dataset.theme));
       });
+    }
+    function openCustomAtAvatars() {
+      openThemesPanel();
+      const body = document.getElementById('personalisationProfileBody');
+      if (body && body.classList.contains('hidden')) document.querySelector('[data-target="personalisationProfileBody"]')?.click();
+      requestAnimationFrame(() => document.querySelector('[data-target="personalisationProfileBody"]')?.scrollIntoView({ block: 'start' }));
     }
     function openThemesPanel() {
       renderThemesPanelActiveState();
@@ -20933,7 +21123,7 @@ video {
         assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
         const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Profile Pictures').map(i => [i.name, i.cost]));
         assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000 }, 'Shop pictures and prices');
-        assertEqual(EARNED_AVATARS.map(i => i.name), ['Silver Crown', 'Gold Crown', 'Diamond Crown', 'Master Crown', 'Centurion', 'ShitHead'], 'Earn-only pictures');
+        assertEqual(EARNED_AVATARS.map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead'], 'Earn-only pictures');
         [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Profile Pictures')
           .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
       });
@@ -20979,7 +21169,7 @@ video {
         assertTrue(head.classList.contains('opp-head') && !!head.querySelector('.avatar-tile') && head.textContent.includes('Maximilian'), 'Top row: picture and full name');
         assertTrue(cards.classList.contains('opp-slot-row'), 'Middle row: cards');
         assertTrue(status.classList.contains('opp-status-row') && status.textContent.includes('Ready'), 'Bottom row: Ready/Waiting and badges');
-        assertTrue(head.getBoundingClientRect().width <= cards.getBoundingClientRect().width + 1, 'A long name must not widen the seat');
+        assertTrue(head.getBoundingClientRect().width <= seat.clientWidth + 1, 'A long name must stay inside the seat');
       });
       await test('REGRESSION: Custom lists every picture, with earn-only ones locked until unlocked', () => {
         const saved = cosmeticPurchaseState;
@@ -20992,6 +21182,46 @@ video {
         assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
         cosmeticPurchaseState = saved;
         renderPersonalisationAvatars();
+      });
+
+      await test('REGRESSION: opponent seats fit the picture and a full 12-character name', () => {
+        freshState({ phase: 'PLAY' });
+        state.players = [makePlayer({ id: 'p1', hand: [makeCard('4')] }),
+          makePlayer({ id: 'p2', name: 'CHRISTOPHER1', isBot: true }), makePlayer({ id: 'p3', name: 'ALEXANDRIA22', isBot: true }), makePlayer({ id: 'p4', name: 'Bo', isBot: true })];
+        render();
+        ['p2', 'p3'].forEach(id => {
+          const name = document.querySelector(`#opp-${id} .opp-name`);
+          assertTrue(name.scrollWidth <= name.clientWidth + 1, `${name.textContent} must not be cut off`);
+        });
+        const seat = document.getElementById('opp-p2');
+        const cards = seat.querySelector('.opp-slot-row').getBoundingClientRect();
+        const box = seat.getBoundingClientRect();
+        assertTrue(cards.left - box.left >= 6 && box.right - cards.right >= 6, 'Seats leave room around the cards for frame glows');
+      });
+      await test('REGRESSION: tapping an opponent opens their player card (bot and friend states)', () => {
+        freshState({ phase: 'PLAY', difficulty: 'hard' });
+        state.players = [makePlayer({ id: 'p1', hand: [makeCard('4')] }), makePlayer({ id: 'p2', name: 'Sophia', isBot: true, avatar: 'avatar-suit-hearts' })];
+        render();
+        document.querySelector('#opp-p2 [data-player-popup]').click();
+        const popup = document.getElementById('playerPopup');
+        assertTrue(!popup.classList.contains('hidden'), 'The player card opens');
+        assertTrue(popup.textContent.includes('Bot · Hard') && popup.textContent.includes("Bots don't have a rank or stats"), 'Bots are shown as bots, with no stats');
+        document.getElementById('playerPopupClose').click();
+        assertTrue(popup.classList.contains('hidden'), 'The X closes the player card');
+        const savedUser = currentUser;
+        currentUser = { uid: 'me' };
+        const human = makePlayer({ id: 'p3', name: 'Jamie', uid: 'them' });
+        const profile = { loaded: true, rating: 1540, online: true, stats: { games: 128, wins: 73, bestStreak: 6, peak: 1612, burnt: 412, jokers: 31 } };
+        const friend = renderPlayerPopupHuman(human, profile, 'friends');
+        assertTrue(friend.includes('✔') && friend.includes('FRIENDS') && !friend.includes('ADD FRIEND'), 'Friends show a green tick instead of Add Friend');
+        const stranger = renderPlayerPopupHuman(human, profile, null);
+        assertTrue(stranger.includes('ADD FRIEND') && stranger.includes('57%') && stranger.includes('Gold'), 'Non-friends get Add Friend; stats and rank are shown');
+        currentUser = savedUser;
+      });
+      await test('REGRESSION: Platinum Crown naming and profile picture shortcut', () => {
+        assertEqual(EARNED_AVATARS.find(i => i.id === 'avatar-crown-diamond').name, 'Platinum Crown', 'Diamond Crown is renamed Platinum Crown');
+        const btn = document.getElementById('profileAvatarBtn');
+        assertTrue(!!btn && btn.textContent.includes('Tap to change'), 'The profile picture is a button with a change hint');
       });
 
       await test('Accessibility settings exist and apply', () => {

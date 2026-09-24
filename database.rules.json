@@ -133,6 +133,12 @@
         "avatar": {
           ".validate": "!newData.exists() || (newData.isString() && newData.val().matches(/^(default|avatar-[a-z-]{3,30})$/))"
         },
+        "stats": {
+          ".validate": "newData.hasChildren(['games'])",
+          "$stat": {
+            ".validate": "$stat.matches(/^(games|wins|bestStreak|peak|burnt|jokers)$/) && newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000"
+          }
+        },
         "$other": {
           ".validate": false
         }
