@@ -58,3 +58,8 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Shop rows have 🎁 GIFT (any item that's buyable right now; never earn-only pictures). Friends list 🎁 opens the Shop in "gift for X" mode (`giftTarget`).
 - `sendGift`: the sender pays in a `users/{uid}` transaction (`calculateGiftPayment`, receipt mail), then writes `gifts/{friendUid}/{giftId}`; if delivery fails the Diamonds are refunded. Rules: only a friend can create a gift, only the recipient can read/delete it.
 - `claimGift` (Inbox → OPEN GIFT): `calculateGiftClaim` adds the item to `ownedCosmetics`, or pays its Shop price if already owned, and records `claimedGifts/{giftId}` in the same transaction so a gift can't be opened twice.
+
+## Match summary
+
+- `showMatchEndUI` → `scheduleMatchSummary` opens `#matchSummaryModal` ~1.6s after the end (after the victory effect). Content from `matchSummaryHtml`: placing, the local player's `gameStats`, every Diamond toast this match (`enqueueChallengeToast` → `logMatchReward`), Ranked rating change (`applyRankedRatingUpdate` → `matchSummaryRating`), daily and seasonal progress. It updates live as late rewards arrive.
+- REMATCH mirrors the end-of-match row (Quick Play / guest "waiting for host" / Ranked "find another match"). `hideMatchEndUI` (every new match) resets it. Not scheduled while the dev test suite runs.

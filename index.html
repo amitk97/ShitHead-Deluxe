@@ -1132,6 +1132,35 @@
     .daily-note { margin-top:8px; font-size:9px; color:#64748b; line-height:1.4; }
     .profile-streak { display:block; margin-top:2px; font-size:10px; font-weight:900; color:#fb923c; }
     .profile-streak.hidden { display:none; }
+    /* Match summary */
+    .ms-scrim { position:fixed; inset:0; z-index:96; display:flex; align-items:center; justify-content:center; padding:14px; background:rgba(2,6,23,.72); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
+    .ms-scrim.hidden { display:none; }
+    .ms-card { position:relative; width:min(380px,100%); max-height:90vh; overflow-y:auto; background:radial-gradient(circle at 50% 0,var(--ms-glow,rgba(245,158,11,.2)),transparent 55%),#020617; border:2px solid var(--ms-edge,#f59e0b); border-radius:20px; padding:16px 14px 12px; color:#e2e8f0; box-shadow:0 20px 60px rgba(0,0,0,.7); animation:daily-pop .35s cubic-bezier(.2,1.4,.4,1) both; }
+    .ms-x { position:absolute; top:8px; right:10px; color:#94a3b8; font-size:20px; line-height:1; padding:4px; }
+    .ms-head { text-align:center; }
+    .ms-emoji { font-size:40px; line-height:1; }
+    .ms-title { margin-top:4px; font-size:19px; font-weight:900; color:#fff; text-transform:uppercase; letter-spacing:.04em; }
+    .ms-mode { font-size:10px; font-weight:800; color:#94a3b8; letter-spacing:.08em; text-transform:uppercase; }
+    .ms-rating { display:flex; align-items:center; justify-content:center; gap:8px; margin:10px auto 0; padding:6px 12px; width:fit-content; border-radius:999px; border:1px solid #334155; background:rgba(15,23,42,.8); font-size:12px; font-weight:900; color:#fff; }
+    .ms-rating .up { color:#34d399; } .ms-rating .down { color:#fb7185; }
+    .ms-section { margin-top:12px; }
+    .ms-label { font-size:9px; font-weight:900; letter-spacing:.14em; color:#64748b; text-transform:uppercase; margin-bottom:5px; }
+    .ms-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; }
+    .ms-stat { padding:7px 4px; border-radius:10px; border:1px solid #1e293b; background:rgba(15,23,42,.8); text-align:center; }
+    .ms-stat b { display:block; font-size:16px; font-weight:900; color:#fff; line-height:1.1; }
+    .ms-stat span { display:block; font-size:8px; font-weight:800; color:#94a3b8; letter-spacing:.06em; text-transform:uppercase; }
+    .ms-rewards { border-radius:12px; border:1px solid #155e75; background:rgba(8,51,68,.35); padding:6px 10px; }
+    .ms-reward { display:flex; justify-content:space-between; gap:8px; padding:3px 0; font-size:11px; font-weight:700; color:#e2e8f0; }
+    .ms-reward b { color:#67e8f9; font-weight:900; white-space:nowrap; }
+    .ms-reward.total { margin-top:3px; padding-top:6px; border-top:1px solid #155e75; font-weight:900; color:#fff; }
+    .ms-none { font-size:10px; color:#64748b; text-align:center; padding:4px 0; }
+    .ms-progress { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:10px; border:1px solid #1e293b; background:rgba(15,23,42,.7); font-size:10px; font-weight:700; color:#cbd5e1; margin-top:4px; }
+    .ms-bar { flex:1; height:6px; border-radius:999px; background:#1e293b; overflow:hidden; min-width:50px; }
+    .ms-bar i { display:block; height:100%; border-radius:inherit; background:var(--bar,#f59e0b); }
+    .ms-actions { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:14px; }
+    .ms-primary { grid-column:1 / -1; padding:11px 0; border-radius:12px; background:#10b981; color:#022c22; font-size:13px; font-weight:900; letter-spacing:.08em; }
+    .ms-primary[disabled] { background:#1e293b; color:#64748b; }
+    .ms-secondary { padding:8px 0; border-radius:12px; border:1px solid #475569; color:#cbd5e1; font-size:10px; font-weight:900; letter-spacing:.06em; }
     /* Gifting */
     .cosmetic-gift-btn { min-width:66px; padding:4px 8px; border-radius:8px; border:1px solid #db2777; color:#f9a8d4; font-size:8px; font-weight:900; background:transparent; }
     .cosmetic-gift-btn:hover, .cosmetic-gift-btn.is-target { background:#db2777; color:#fff; }
@@ -4573,6 +4602,18 @@ video {
       <div id="dailyRewardNext" class="daily-sub"></div>
       <button id="dailyRewardCollectBtn" type="button" class="daily-btn">COLLECT</button>
       <p class="daily-note">Log in every day to build your streak. Miss a day and it restarts at Day 1.</p>
+    </div>
+  </div>
+
+  <div id="matchSummaryModal" class="hidden ms-scrim" role="dialog" aria-modal="true" aria-labelledby="matchSummaryTitle">
+    <div class="ms-card">
+      <button type="button" id="matchSummaryClose" class="ms-x" aria-label="View the table">&times;</button>
+      <div id="matchSummaryBody"></div>
+      <div class="ms-actions">
+        <button type="button" id="matchSummaryAgain" class="ms-primary">REMATCH</button>
+        <button type="button" id="matchSummaryStats" class="ms-secondary">FULL STATS</button>
+        <button type="button" id="matchSummaryTable" class="ms-secondary">VIEW TABLE</button>
+      </div>
     </div>
   </div>
 
@@ -8398,6 +8439,7 @@ video {
       // opponent's own "FINISHED #N" tag and your own table area, so
       // there's no single glance that shows the whole result.
       renderFinalStandings();
+      scheduleMatchSummary();
 
       quickPlayBtn.classList.remove('hidden');
       if (state.isRanked) {
@@ -8441,6 +8483,7 @@ video {
     // button sitting on screen from the previous match.
     function hideMatchEndUI() {
       matchWinnerEffectShown = false;
+      if (typeof resetMatchSummary === 'function') resetMatchSummary();
       document.getElementById('quickPlayMatchBtn')?.classList.add('hidden');
       document.getElementById('playAgainMatchBtn')?.classList.add('hidden');
       document.getElementById('matchStatsBtn')?.classList.add('hidden');
@@ -15089,6 +15132,122 @@ video {
         return Object.keys(updates).length ? db.ref(`users/${uid}`).update(updates) : null;
       }).catch((e) => console.warn('sendSeasonalMail failed', e));
     }
+    // ---- Match summary --------------------------------------------------
+    // Pops up shortly after a match ends: placing, your stats for the game,
+    // Diamonds earned (every toast that fired this match, updated live as
+    // late rewards arrive), Ranked rating change, and progress towards the
+    // daily challenges and any seasonal picture.
+    let matchRewardLog = [];
+    let matchSummaryRating = null;
+    let matchSummaryTimer = null;
+    function resetMatchSummary() {
+      matchRewardLog = [];
+      matchSummaryRating = null;
+      clearTimeout(matchSummaryTimer);
+      document.getElementById('matchSummaryModal')?.classList.add('hidden');
+    }
+    function logMatchReward(name, reward) {
+      if (!(Number(reward) > 0)) return;
+      matchRewardLog.push({ name: String(name || 'Reward'), reward: Number(reward) });
+      refreshMatchSummary();
+    }
+    function matchPlacingInfo(me) {
+      const n = state.players.length;
+      if (!me) return { emoji: '🃏', title: 'Match over', edge: '#475569', glow: 'rgba(71,85,105,.25)' };
+      if (!me.hasFinished && typeof isShitHead === 'function' && isShitHead(me)) return { emoji: '💩', title: "You're the ShitHead", edge: '#b45309', glow: 'rgba(180,83,9,.25)' };
+      const rank = me.finishRank || n;
+      if (rank === 1) return { emoji: '🏆', title: 'You won!', edge: '#f59e0b', glow: 'rgba(245,158,11,.28)' };
+      return { emoji: rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🎖️', title: `${rank}${rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th'} place`, edge: '#94a3b8', glow: 'rgba(148,163,184,.22)' };
+    }
+    function matchModeLabel() {
+      const bots = state.players.filter(p => p.isBot).length;
+      if (state.isRanked) return 'Ranked match';
+      if (state.isMultiplayer) return `Online · ${state.players.length} players`;
+      const diff = String(state.difficulty || 'medium');
+      return `Vs ${bots} bot${bots === 1 ? '' : 's'} · ${diff.charAt(0).toUpperCase() + diff.slice(1)}`;
+    }
+    function matchSummaryHtml() {
+      const me = state.players.find(p => p.id === state.localPlayerId);
+      const place = matchPlacingInfo(me);
+      const st = me?.gameStats || freshStatsScope();
+      const stat = (v, label) => `<div class="ms-stat"><b>${Number(v) || 0}</b><span>${label}</span></div>`;
+      let rating = '';
+      if (matchSummaryRating) {
+        const d = Math.round(matchSummaryRating.to - matchSummaryRating.from);
+        rating = `<div class="ms-rating">Rating ${Math.round(matchSummaryRating.from)} → ${Math.round(matchSummaryRating.to)} <span class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d}</span></div>`;
+      }
+      const total = matchRewardLog.reduce((sum, r) => sum + r.reward, 0);
+      const rewards = currentUser
+        ? (matchRewardLog.length
+          ? `<div class="ms-rewards">${matchRewardLog.map(r => `<div class="ms-reward"><span>${escapeHtml(r.name)}</span><b>+💎 ${r.reward}</b></div>`).join('')}${matchRewardLog.length > 1 ? `<div class="ms-reward total"><span>Total</span><b>+💎 ${total}</b></div>` : ''}</div>`
+          : '<p class="ms-none">No Diamonds this match — wins and challenges pay out.</p>')
+        : '<p class="ms-none">Sign in to earn Diamonds from wins and challenges.</p>';
+      const progress = [];
+      const daily = challengeEconomy?.dailyChallengeState;
+      if (currentUser && daily?.challengeIds?.length) {
+        const done = daily.challengeIds.filter(id => challengeEconomy.completedChallenges?.[dailyCompletionKey(daily.dateKey, id)]).length;
+        progress.push(`<div class="ms-progress"><span>📅 Daily challenges</span><span class="ms-bar" style="--bar:#34d399"><i style="width:${Math.round((done / daily.challengeIds.length) * 100)}%"></i></span><b>${done}/${daily.challengeIds.length}</b></div>`);
+      }
+      if (currentUser) activeSeasonalEvents().forEach(w => {
+        const owned = !!cosmeticPurchaseState[`avatar-${w.event.id}-earned`];
+        const wins = Math.min(SEASONAL_EARN_WINS, seasonalWinsFor(seasonalWinState, w.event.id));
+        progress.push(`<div class="ms-progress"><span>${w.event.emoji} ${escapeHtml(w.event.names.earned)}</span><span class="ms-bar" style="--bar:${w.event.tones[1]}"><i style="width:${owned ? 100 : Math.round((wins / SEASONAL_EARN_WINS) * 100)}%"></i></span><b>${owned ? '✓' : `${wins}/${SEASONAL_EARN_WINS}`}</b></div>`);
+      });
+      return `<div class="ms-head"><div class="ms-emoji" aria-hidden="true">${place.emoji}</div><div id="matchSummaryTitle" class="ms-title">${place.title}</div><div class="ms-mode">${escapeHtml(matchModeLabel())}</div>${rating}</div>
+        <div class="ms-section"><div class="ms-label">Your game</div><div class="ms-stats">${stat(st.played, 'Played')}${stat(st.pickedUp, 'Picked up')}${stat(st.burnt, 'Burns')}${stat(st.turns, 'Turns')}${stat(st.jokersPlayed, 'Jokers')}${stat(st.biggestPickup, 'Biggest pickup')}</div></div>
+        <div class="ms-section"><div class="ms-label">Diamonds earned</div>${rewards}</div>
+        ${progress.length ? `<div class="ms-section"><div class="ms-label">Progress</div>${progress.join('')}</div>` : ''}`;
+    }
+    // Mirrors whatever the end-of-match row offers: Quick Play (rematch),
+    // the guest's "waiting for host", or Ranked's "return to Ranked".
+    function matchSummaryAgainAction() {
+      const quick = document.getElementById('quickPlayMatchBtn');
+      const lobby = document.getElementById('playAgainMatchBtn');
+      if (quick && !quick.classList.contains('hidden')) return { label: quick.disabled ? 'WAITING FOR HOST…' : 'REMATCH', disabled: quick.disabled, button: quick };
+      if (lobby && !lobby.classList.contains('hidden')) return { label: state.isRanked ? 'FIND ANOTHER MATCH' : 'BACK TO LOBBY', disabled: false, button: lobby };
+      return { label: 'REMATCH', disabled: true, button: null };
+    }
+    function refreshMatchSummary() {
+      const modal = document.getElementById('matchSummaryModal');
+      if (!modal || modal.classList.contains('hidden')) return;
+      const me = state.players.find(p => p.id === state.localPlayerId);
+      const place = matchPlacingInfo(me);
+      const card = modal.querySelector('.ms-card');
+      card.style.setProperty('--ms-edge', place.edge);
+      card.style.setProperty('--ms-glow', place.glow);
+      document.getElementById('matchSummaryBody').innerHTML = matchSummaryHtml();
+      const again = matchSummaryAgainAction();
+      const btn = document.getElementById('matchSummaryAgain');
+      btn.textContent = again.label;
+      btn.disabled = again.disabled;
+    }
+    function openMatchSummary() {
+      if (state.phase !== 'FINISHED' || !state.players.some(p => p.id === state.localPlayerId)) return false;
+      document.getElementById('matchSummaryModal').classList.remove('hidden');
+      refreshMatchSummary();
+      return true;
+    }
+    function scheduleMatchSummary() {
+      clearTimeout(matchSummaryTimer);
+      if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return;
+      matchSummaryTimer = setTimeout(openMatchSummary, reduceMotion ? 400 : 1600);
+    }
+    function closeMatchSummary() { document.getElementById('matchSummaryModal').classList.add('hidden'); }
+    document.getElementById('matchSummaryClose').addEventListener('click', closeMatchSummary);
+    document.getElementById('matchSummaryTable').addEventListener('click', closeMatchSummary);
+    document.getElementById('matchSummaryStats').addEventListener('click', () => { closeMatchSummary(); document.getElementById('matchStatsBtn')?.click(); });
+    document.getElementById('matchSummaryAgain').addEventListener('click', () => {
+      const again = matchSummaryAgainAction();
+      if (again.disabled || !again.button) return;
+      closeMatchSummary();
+      again.button.click();
+    });
+    function loadSeasonWins() {
+      if (!currentUser || typeof db === 'undefined' || !firebaseAvailable) return Promise.resolve();
+      const uid = currentUser.uid;
+      return db.ref(`users/${uid}/seasonWins`).once('value').then(snap => { if (currentUser?.uid === uid) seasonalWinState = snap.val() || {}; }).catch(() => {});
+    }
+
     // ---- Gifting --------------------------------------------------------
     // A player buys a Shop item for a friend: the Diamonds leave the sender's
     // own balance (users/{uid}, a transaction), then the gift is written to
@@ -15290,7 +15449,7 @@ video {
       const uid = currentUser.uid;
       return Promise.all(active.map(w => db.ref(`users/${uid}/seasonWins/${w.key}`)
         .transaction(c => Math.min(100000, (Number(c) || 0) + 1))
-        .then(r => { if (r.committed) seasonalWinState[w.key] = Number(r.snapshot.val()) || 0; })
+        .then(r => { if (r.committed) { seasonalWinState[w.key] = Number(r.snapshot.val()) || 0; refreshMatchSummary(); } })
         .catch(() => {})))
         .then(() => db.ref(`users/${uid}`).once('value'))
         .then(snap => grantEarnedAvatars(snap.val()))
@@ -16329,7 +16488,7 @@ video {
         refreshDifficultyLocks();
         if (user) {
           ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); attemptRankedReconnect();
-          initChallengeEconomy().then(() => { claimDailyLoginReward(); sendSeasonalMail(); }); loadCosmeticCollection(user);
+          initChallengeEconomy().then(() => { claimDailyLoginReward(); sendSeasonalMail(); loadSeasonWins(); }); loadCosmeticCollection(user);
           // Preferences live under the account and do not depend on profile creation.
           loadAccountSettings(user);
         } else {
@@ -17387,6 +17546,7 @@ video {
     let challengeToastTimer = null;
 
     function enqueueChallengeToast(name, reward, priority) {
+      if (typeof logMatchReward === 'function') logMatchReward(name, reward);
       challengeToastQueue.push({ name, reward, priority });
       challengeToastQueue.sort((a, b) => a.priority - b.priority);
       processChallengeToastQueue();
@@ -18076,7 +18236,9 @@ video {
     // earlier host-writes-everyone's-rating design could never satisfy a
     // rule like that, since the host's auth.uid never matches an
     // opponent's uid.
+    let rankedRatingDraft = null;
     function applyRankedRatingUpdate() {
+      rankedRatingDraft = null;
       const players = state.players;
       if (players.length < 2) return;
       if (players.some((p) => !p.uid)) return; // every seat needs a real ranked account
@@ -18098,6 +18260,7 @@ video {
         const newRating = Math.max(0, previousRating + deltas[myIndex]);
         const previousTier = getRankTier(previousRating).name;
         const newTier = getRankTier(newRating).name;
+        rankedRatingDraft = { from: previousRating, to: newRating };
         // Recorded here (self-write, same as everything else in this
         // function) so findRankedMatch can check it before pairing two
         // accounts back together — the actual anti-farming enforcement,
@@ -18165,6 +18328,7 @@ video {
           // single source of truth for these totals.
           if (committed && snapshot) {
             const val = snapshot.val() || {};
+            if (rankedRatingDraft) { matchSummaryRating = rankedRatingDraft; refreshMatchSummary(); }
             grantEarnedAvatars(val);
             challengeEconomy.rating = val.rating != null ? val.rating : challengeEconomy.rating;
             challengeEconomy.wins = val.wins || 0;

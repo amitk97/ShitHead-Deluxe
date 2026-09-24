@@ -3705,6 +3705,45 @@ async function runDevTestSuite() {
     }
   });
 
+  await test('Match summary: placing, your stats, itemised Diamonds and the right next-match button', () => {
+    freshState({ phase: 'FINISHED', isMultiplayer: false, isRanked: false, difficulty: 'hard' });
+    const me = makePlayer({ id: 'p1', hasFinished: true, finishRank: 1 });
+    me.gameStats = { ...freshStatsScope(), played: 17, pickedUp: 4, burnt: 2, turns: 21, jokersPlayed: 1, biggestPickup: 3 };
+    state.players = [me, makePlayer({ id: 'p2', isBot: true, hand: [makeCard('4')] }), makePlayer({ id: 'p3', isBot: true, hasFinished: true, finishRank: 2 })];
+    state.localPlayerId = 'p1';
+    const savedUser = currentUser;
+    currentUser = { uid: 'summary-test' };
+    try {
+      resetMatchSummary();
+      logMatchReward('Match Won!', 10);
+      logMatchReward('Burn Once', 20);
+      logMatchReward('Nothing', 0);
+      showMatchEndUI();
+      assertTrue(openMatchSummary(), 'The summary opens once the match is FINISHED');
+      const text = document.getElementById('matchSummaryBody').textContent;
+      assertTrue(text.includes('You won!'), 'First place says so');
+      assertTrue(text.includes('Vs 2 bots · Hard'), 'The mode is shown');
+      assertTrue(/17\s*Played/.test(text) && /3\s*Biggest pickup/.test(text), 'Your own stats for this game are shown');
+      assertTrue(text.includes('Match Won!') && text.includes('Burn Once') && text.includes('+💎 30'), 'Every Diamond reward is listed with a total');
+      assertTrue(!text.includes('Nothing'), 'Zero rewards are not listed');
+      assertEqual(document.getElementById('matchSummaryAgain').textContent, 'REMATCH', 'Vs Bots offers a rematch');
+      matchSummaryRating = { from: 1300, to: 1325 };
+      refreshMatchSummary();
+      assertTrue(document.getElementById('matchSummaryBody').textContent.includes('1300 → 1325') && document.getElementById('matchSummaryBody').textContent.includes('+25'), 'A Ranked rating change is shown');
+      state.isMultiplayer = true; state.isHost = false;
+      showMatchEndUI(); refreshMatchSummary();
+      assertTrue(document.getElementById('matchSummaryAgain').disabled, 'A guest cannot restart the room');
+      state.players[0].hasFinished = false; state.players[0].finishRank = null; state.players[0].hand = [makeCard('9')];
+      state.players[1].hasFinished = true; state.players[1].finishRank = 1; state.players[1].hand = [];
+      assertEqual(matchPlacingInfo(state.players[0]).title, "You're the ShitHead", 'The last player is the ShitHead');
+    } finally {
+      currentUser = savedUser;
+      hideMatchEndUI();
+      assertTrue(document.getElementById('matchSummaryModal').classList.contains('hidden'), 'Starting a new match closes the summary');
+      assertEqual(matchRewardLog.length, 0, 'A new match starts with an empty reward list');
+    }
+  });
+
   await test('Daily login streak: consecutive days grow, a missed day restarts, same day pays nothing', () => {
     const d = (y, m, day) => new Date(y, m - 1, day, 12);
     assertEqual(calculateDailyStreak(null, d(2026, 3, 1)).count, 1, 'First claim is Day 1');
