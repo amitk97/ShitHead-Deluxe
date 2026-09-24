@@ -723,6 +723,11 @@
       box-shadow:inset 0 0 0 1px #d1fae5,inset 0 0 0 2px #34d399,0 0 9px rgba(16,185,129,.68),0 3px 8px rgba(0,0,0,.55) !important;
     }
 
+    /* Darkness: a matt, true-black edge with no glow at all. */
+    body[data-equipped-frame="frame-darkness"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) {
+      border-color:#000 !important; box-shadow:inset 0 0 0 3px #000 !important;
+    }
+
     body[data-equipped-table-theme="table-casino"] #gameTable {
       background:
         radial-gradient(ellipse at 50% 45%,rgba(16,185,129,.30),transparent 48%),
@@ -1101,6 +1106,7 @@
     .cosmetic-tab[aria-selected="true"] { border-color:#f59e0b; color:#fcd34d; background:rgba(69,26,3,.45); }
     .cosmetic-tab small { font-size:8px; color:#64748b; font-weight:900; }
     .cosmetic-tab[aria-selected="true"] small { color:#fbbf24; }
+    .effect-mini-tile { display:inline-flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:12px; border:2px solid #475569; background:#0f172a; color:#cbd5e1; font-size:26px; line-height:1; }
     .frame-mini-card { display:inline-flex; flex-direction:column; align-items:center; justify-content:center; width:40px; height:54px; border-radius:8px; border:3px solid #475569; background:#0f172a; color:#f8fafc; font-weight:900; font-size:13px; line-height:1.05; }
     .cosmetic-tile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
     .cosmetic-tile { min-height:104px; }
@@ -14479,6 +14485,7 @@ video {
       { id: 'frame-diamond', category: 'Frames', name: 'Diamond Aura', cost: 90, tones: ['#083344','#22d3ee','#e0f2fe'] },
       { id: 'frame-obsidian-throne', category: 'Frames', name: 'Obsidian Throne', cost: 200, tones: ['#030712','#8b5cf6','#ddd6fe'] },
       { id: 'frame-emerald-sovereign', category: 'Frames', name: 'Emerald Sovereign', cost: 200, tones: ['#022c22','#34d399','#d1fae5'] },
+      { id: 'frame-darkness', category: 'Frames', name: 'Darkness', cost: 250, tones: ['#000000','#000000','#1f2937'] },
       { id: 'emotes-savage', category: 'Emote Packs', name: 'Savage Set', cost: 45, tones: ['#3f1420','#fb7185','#c084fc'] },
       { id: 'emotes-victory', category: 'Emote Packs', name: 'Victory Pack', cost: 50, tones: ['#172033','#fbbf24','#60a5fa'] },
       { id: 'emotes-chaos', category: 'Emote Packs', name: 'Chaos Pack', cost: 200, tones: ['#172033','#f43f5e','#a855f7'] },
@@ -14562,7 +14569,7 @@ video {
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
       cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno', ...seasonalIdsOf('cardBack')]),
-      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign', ...seasonalIdsOf('frame')]),
+      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness', ...seasonalIdsOf('frame')]),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania', ...seasonalIdsOf('emotes')]),
       tableTheme: new Set(['table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic', ...seasonalIdsOf('tableTheme')]),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke', ...seasonalIdsOf('burnEffect')]),
@@ -14863,13 +14870,19 @@ video {
         if (type === 'tableTheme') return miniTablePreviewHtml('default');
         if (type === 'emotes') return '<span class="text-xl">😂</span>';
         if (type === 'frame') return framePreviewCard(null);
-        if (type !== 'cardBack') return '<span class="w-8 h-8 rounded-lg border border-slate-600 bg-slate-900 flex items-center justify-center text-slate-400">◇</span>';
+        if (type === 'burnEffect') return '<span class="effect-mini-tile">🔥</span>';
+        if (type === 'victoryEffect') return '<span class="effect-mini-tile">🏆</span>';
+        if (type !== 'cardBack') return '<span class="effect-mini-tile">◇</span>';
         return `<span class="w-8 h-10 rounded-lg custom-card-back ${getThemeDeckBackClass()} flex items-center justify-center">${getEmblemSvg()}</span>`;
       }
       if (type === 'tableTheme') return miniTablePreviewHtml(item.id);
       if (type === 'emotes') return `<span class="text-base">${(EMOTE_PACKS[item.id] || []).slice(0, 3).join('')}</span>`;
       if (type === 'frame') return framePreviewCard(item);
-      if (type !== 'cardBack') return `<span class="w-8 h-8 rounded-lg border border-slate-600" style="background:linear-gradient(135deg,${item.tones[0]} 0 45%,${item.tones[1]} 45% 72%,${item.tones[2]} 72% 100%)"></span>`;
+      if (type === 'burnEffect' || type === 'victoryEffect') {
+        const icon = type === 'burnEffect' ? burnPreviewIcon(item.id) : victoryPreviewIcon(item.id);
+        return `<span class="effect-mini-tile" style="background:linear-gradient(135deg,${item.tones[0]},${item.tones[1]});border-color:${item.tones[2]}">${icon}</span>`;
+      }
+      if (type !== 'cardBack') return `<span class="effect-mini-tile" style="background:linear-gradient(135deg,${item.tones[0]} 0 45%,${item.tones[1]} 45% 72%,${item.tones[2]} 72% 100%)"></span>`;
       const backClass = getCosmeticBackClass(item.id);
       return `<span class="w-8 h-10 rounded-lg custom-card-back ${backClass} flex items-center justify-center">${getEmblemSvg()}</span>`;
     }
@@ -15731,7 +15744,8 @@ video {
         'frame-gold': 'box-shadow:inset 0 0 0 2px #fbbf24,0 0 8px rgba(251,191,36,.65)!important',
         'frame-diamond': 'box-shadow:inset 0 0 0 2px #67e8f9,0 0 9px rgba(34,211,238,.68)!important',
         'frame-obsidian-throne': 'box-shadow:inset 0 0 0 2px #8b5cf6,0 0 9px rgba(139,92,246,.68)!important',
-        'frame-emerald-sovereign': 'box-shadow:inset 0 0 0 2px #34d399,0 0 9px rgba(52,211,153,.68)!important'
+        'frame-emerald-sovereign': 'box-shadow:inset 0 0 0 2px #34d399,0 0 9px rgba(52,211,153,.68)!important',
+        'frame-darkness': 'border-color:#000!important;box-shadow:inset 0 0 0 3px #000!important'
       };
       if (SEASONAL_FRAME_STYLES[id]) return `box-shadow:${SEASONAL_FRAME_STYLES[id][0]}!important`;
       return styles[id] || '';
@@ -15748,7 +15762,8 @@ video {
         'frame-gold': 'box-shadow:0 0 0 1px #fbbf24,0 0 5px rgba(251,191,36,.5)!important',
         'frame-diamond': 'box-shadow:0 0 0 1px #67e8f9,0 0 5px rgba(34,211,238,.52)!important',
         'frame-obsidian-throne': 'box-shadow:0 0 0 1px #8b5cf6,0 0 5px rgba(139,92,246,.5)!important',
-        'frame-emerald-sovereign': 'box-shadow:0 0 0 1px #34d399,0 0 5px rgba(52,211,153,.5)!important'
+        'frame-emerald-sovereign': 'box-shadow:0 0 0 1px #34d399,0 0 5px rgba(52,211,153,.5)!important',
+        'frame-darkness': 'border-color:#000!important;box-shadow:0 0 0 1px #000!important'
       };
       if (SEASONAL_FRAME_STYLES[id]) return `box-shadow:${SEASONAL_FRAME_STYLES[id][1]}!important`;
       return styles[id] || '';
