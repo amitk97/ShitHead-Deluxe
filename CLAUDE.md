@@ -33,6 +33,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Adding a picture also needs the rules updated: `equippedCosmetics/avatar` id list and the `shopPurchases` price list.
 - The page's Tailwind CSS is precompiled: new utility class names silently do nothing. Use custom CSS classes or inline styles for new UI.
 
+## Settings
+
+- Tabs like the Shop (`SETTINGS_TABS`: Gameplay, Display, Sound & Alerts, Accessibility; last tab in localStorage `shithead_settings_tab`). Each tab is a `.settings-tab-panel`; search looks across every tab and clearing it returns to the chosen one. "Helper Icons" reads ON when shown (pref is still `shithead_hide_helpers`).
+
 ## Shop / Custom layout
 
 - Only one page is open at a time: `EXCLUSIVE_PAGE_IDS` (every menu page + `inboxModal`) is watched by `exclusivePageObserver`, so opening any of them hides the rest, whatever opened it.
@@ -45,7 +49,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Table layout & lobby prefs
 
 - Opponent seats are never clipped or scrolled: `#opponentsContainer` has no max height; `fitOpponentSeats` shrinks `--opp-scale` so a seat stays within ~19% of the screen height.
-- The play-direction badge (`#gameDirectionBadge`) is pinned to the table's top-left corner, out of the column flow. The hand's rows spread into spare height (at least 55% of each back-row card shows), and `fitHandToTable` (end of `render`) shrinks the rows/cards if the player's area still runs past the table bottom (the play button row is revealed after the hand is sized). The hand's `maxHeight` is the cards' height plus its own padding.
+- The play-direction badge (`#gameDirectionBadge`) is a circle the size of the Card Powers button, in the left-hand column above the Play Matrix button (same size), level with the middle of the Deck (`positionDirectionBadge`, end of `render` and on resize). The hand's rows spread into spare height (at least 55% of each back-row card shows), and `fitHandToTable` (end of `render`) shrinks the rows/cards if the player's area still runs past the table bottom (the play button row is revealed after the hand is sized). The hand's `maxHeight` is the cards' height plus its own padding.
 - Vs Bots remembers the last bot count and difficulty (`readBotPrefs` / `applyBotPrefs`: localStorage `shithead_bot_count` / `shithead_difficulty`, plus `botCount` / `botDifficulty` in `users/{uid}/settings` for signed-in accounts). A locked difficulty is never restored.
 - Tab strips (`initHorizontalScroller`) keep the selected tab scrolled into view.
 

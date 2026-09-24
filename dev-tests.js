@@ -1074,6 +1074,38 @@ async function runDevTestSuite() {
     assertTrue(afterFirst, 'Clicking the header collapses the section');
     assertTrue(afterSecond, 'Clicking again expands it');
   });
+  await test('Settings: tabs like the Shop, each setting in its tab, search spans every tab', () => {
+    const modal = document.getElementById('settingsModal');
+    const wasHidden = modal.classList.contains('hidden');
+    const savedTab = settingsTab;
+    try {
+      modal.classList.remove('hidden');
+      const tabs = [...document.querySelectorAll('#settingsTabBar .cosmetic-tab')].map(t => t.dataset.settingsTab);
+      assertEqual(tabs.join(','), 'gameplay,display,sound,access', 'Settings uses the Shop-style tab strip');
+      const where = (id) => document.getElementById(id).closest('.settings-tab-panel').dataset.settingsPanel;
+      assertEqual(where('setRankRow'), 'gameplay', 'Select All Of A Rank is Gameplay');
+      ['setEmotesRow', 'setIconsRow', 'setHideHelpersRow', 'setBigEffectsRow', 'setDealAnimRow', 'setFullscreenRow']
+        .forEach(id => assertEqual(where(id), 'display', `${id} is in Display`));
+      ['setHapticsRow', 'setNotifyRow'].forEach(id => assertEqual(where(id), 'sound', `${id} is in Sound & Alerts`));
+      assertEqual(where('volumeSlider'), 'sound', 'Volume is in Sound & Alerts');
+      ['setContrastRow', 'setMotionRow'].forEach(id => assertEqual(where(id), 'access', `${id} is in Accessibility`));
+      showSettingsTab('display');
+      const visible = [...document.querySelectorAll('.settings-tab-panel')].filter(p => !p.classList.contains('hidden')).map(p => p.dataset.settingsPanel);
+      assertEqual(visible.join(','), 'display', 'Only the chosen tab shows');
+      const savedHide = hideHelperIcons;
+      hideHelperIcons = false; refreshSettingsUI();
+      assertEqual(document.getElementById('setHideHelpersState').textContent, 'ON', 'Helper Icons reads ON while the helper icons show (the default)');
+      hideHelperIcons = savedHide; refreshSettingsUI();
+      const search = document.getElementById('settingsSearchInput');
+      search.value = 'vibration'; search.dispatchEvent(new Event('input'));
+      assertTrue(!document.getElementById('settingsTab-sound').classList.contains('hidden'), 'Search finds a setting on another tab');
+      search.value = ''; search.dispatchEvent(new Event('input'));
+      assertTrue(document.getElementById('settingsTab-sound').classList.contains('hidden'), 'Clearing the search returns to the chosen tab');
+    } finally {
+      showSettingsTab(savedTab);
+      if (wasHidden) modal.classList.add('hidden');
+    }
+  });
   await test('Mute button toggles and restores the previous volume', () => {
     const before = masterVolume;
     masterVolume = 70; refreshSettingsUI();

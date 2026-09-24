@@ -125,10 +125,13 @@
     #connectionStatusBanner { top: calc(3rem + var(--safe-top)); }
     /* The table fills what's left under the (taller, on iPhone) header. */
     main#gameTable { height: calc(100dvh - 2.75rem - var(--safe-top)); max-height: calc(100dvh - 2.75rem - var(--safe-top)); }
-    /* Play direction sits in the table's top-left corner, out of the
-       column flow, so the opponents and everything below move up and the
-       hand gets that row's height. */
-    #gameDirectionBadge { position: absolute; top: 6px; left: 8px; z-index: 30; margin: 0; }
+    /* Play direction: a circle the size of the Card Powers button, in the
+       left-hand column with the Play Matrix button, level with the middle of
+       the Deck (placed by positionDirectionBadge). */
+    #gameDirectionBadge { position: absolute; z-index: 55; margin: 0; left: 0; top: 0; padding: 0;
+      width: clamp(26px,7.5vw,34px); height: clamp(26px,7.5vw,34px); border-radius: 9999px; border-width: 2px;
+      display: flex; align-items: center; justify-content: center; font-size: clamp(13px,4vw,17px); line-height: 1; }
+    #gameDirectionBadge.hidden { display: none; }
 
     input, textarea { user-select: auto !important; -webkit-user-select: auto !important; }
 
@@ -1056,7 +1059,8 @@
       display: flex;
       flex-direction: column;
     }
-    #settingsModal > div > div:nth-child(2) { min-height: 0; overflow-y: auto; }
+    #settingsScroll { min-height: 0; overflow-y: auto; }
+    #settingsModal .hscroll-wrap { flex-shrink: 0; }
     #rulesModal > div > div:first-child { flex-shrink: 0; }
     #rulesModal > div > div:nth-child(2) { min-height: 0; }
     @media (min-width: 768px) {
@@ -4292,11 +4296,6 @@ video {
     </defs>
   </svg>
 
-      <!-- Direction badge: pinned to the table's top-left corner (see the
-           #gameDirectionBadge CSS), outside the column flow. -->
-      <span id="gameDirectionBadge" class="hidden self-center w-fit mx-auto px-2 py-0.5 text-sm font-black bg-slate-900 border border-slate-700 rounded text-amber-300 text-center" data-tip="Play Direction">
-        <span>↻</span>
-      </span>
 
   <!-- End-of-match stats -->
   <div id="matchStatsModal" class="hidden fixed inset-0 z-[86] bg-slate-950/85 flex items-center justify-center p-3">
@@ -4354,22 +4353,19 @@ video {
   </div>
 
   <div id="settingsModal" class="hidden fixed inset-0 z-[85] bg-slate-950/80 flex items-center justify-center p-4">
-    <div class="w-full max-w-xs bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4">
+    <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4">
       <div class="flex items-center gap-2 mb-3 border-b border-slate-800 pb-2">
         <span class="text-[11px] font-black uppercase tracking-widest text-amber-400 shrink-0">Settings</span>
         <input type="text" id="settingsSearchInput" placeholder="Search" class="flex-1 min-w-0 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-[11px] font-bold focus:border-amber-400 outline-none text-white transition" />
         <button id="settingsCloseBtn" class="shrink-0 text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
 
-      <div class="max-h-[68vh] overflow-y-auto pr-1">
+      <div class="hscroll-wrap"><button type="button" class="hscroll-btn prev" aria-label="Scroll sections left" tabindex="-1">‹</button><div id="settingsTabBar" class="cosmetic-tab-bar hscroll" role="tablist" aria-label="Settings sections"></div><button type="button" class="hscroll-btn next" aria-label="Scroll sections right" tabindex="-1">›</button></div>
+      <div id="settingsScroll" class="max-h-[68vh] overflow-y-auto pr-1">
 
         <p id="settingsNoResultsMsg" class="hidden text-[10px] font-bold text-slate-500 text-center py-3">No matching settings found.</p>
 
-        <button class="settings-head w-full flex items-center justify-between py-1.5" data-target="secGameplay">
-          <span class="text-[9px] font-black uppercase tracking-widest text-emerald-400">Gameplay</span>
-          <span class="settings-chev text-emerald-400 text-[10px] transition-transform">&#9660;</span>
-        </button>
-        <div id="secGameplay" class="settings-body">
+        <div id="settingsTab-gameplay" class="settings-body settings-tab-panel" data-settings-panel="gameplay" role="tabpanel">
           <div class="settings-searchable flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="speed, pace, fast, slow, bot speed, tempo, opponent turn">
             <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Game Speed</span>
             <span class="block text-[8px] text-slate-400">How fast opponents take their turn</span></span>
@@ -4385,12 +4381,39 @@ video {
           <span id="setRankState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         </div>
-
-        <button class="settings-head w-full flex items-center justify-between py-1.5 mt-1" data-target="secAudio">
-          <span class="text-[9px] font-black uppercase tracking-widest text-emerald-400">Audio</span>
-          <span class="settings-chev text-emerald-400 text-[10px] transition-transform">&#9660;</span>
+        <div id="settingsTab-display" class="settings-body settings-tab-panel" data-settings-panel="display" role="tabpanel">
+        <button id="setIconsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="icons, power, hints, card info">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Card Power Icons</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Show each card's power on the card</span></span>
+          <span id="setIconsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
-        <div id="secAudio" class="settings-body">
+        <button id="setHideHelpersRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="helper, card powers, card reference, play matrix, hints, guide">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Helper Icons</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">The Card Powers &amp; Play Matrix buttons on the table</span></span>
+          <span id="setHideHelpersState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
+        <button id="setEmotesRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="reactions, emoji, emotes, chat">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Show Others' Emotes</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Your own reactions always show</span></span>
+          <span id="setEmotesState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
+        <button id="setBigEffectsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="vfx, effects, animation, embers, confetti, burn, win, victory, particles">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Burn &amp; Victory Effects</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Off skips the burn embers and win confetti</span></span>
+          <span id="setBigEffectsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
+        <button id="setDealAnimRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="vfx, animation, shuffle, deal, effects, dealing sound">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Shuffle &amp; Deal Animation</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Off skips straight to the game, no shuffle/deal sound</span></span>
+          <span id="setDealAnimState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
+        <button id="setFullscreenRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="full screen, expand, immersive, display">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Fullscreen</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Also available from the header</span></span>
+          <span id="setFullscreenState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
+        </div>
+        <div id="settingsTab-sound" class="settings-body settings-tab-panel" data-settings-panel="sound" role="tabpanel">
           <div class="settings-searchable flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="sound, audio, sfx, mute, loud, quiet">
             <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Volume</span>
             <span class="block text-[8px] text-slate-400">Card, shuffle and burn sounds</span></span>
@@ -4400,13 +4423,17 @@ video {
               <button id="muteBtn" class="text-[10px] font-black px-2 py-0.5 rounded border">ON</button>
             </span>
           </div>
-        <button id="setEmotesRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="reactions, emoji, emotes, chat">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Show Others' Emotes</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Your own reactions always show</span></span>
-          <span id="setEmotesState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        <button id="setHapticsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="haptic, vibrate, feedback, rumble">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Vibration</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Haptic feedback on key moments</span></span>
+          <span id="setHapticsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
+        <button id="setNotifyRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="notifications, alerts, push, gifts, invites, friends, app">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Notifications</span>
+          <span id="setNotifySub" class="block text-[8px] text-slate-400 leading-snug">Game invites, friend requests, gifts and new events</span></span>
+          <span id="setNotifyState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         </div>
-
         <!-- ============================================================
              PLANNED (not yet built): "Comfortable Viewing Mode" toggle.
              Off by default. Requested because the game's current layout is
@@ -4453,63 +4480,16 @@ video {
                tests (buttons still reachable, nothing permanently stuck
                off-screen) rather than being expected to pass the old ones.
              ============================================================ -->
-
-        <button class="settings-head w-full flex items-center justify-between py-1.5 mt-1" data-target="secAccess">
-          <span class="text-[9px] font-black uppercase tracking-widest text-emerald-400">Accessibility</span>
-          <span class="settings-chev text-emerald-400 text-[10px] transition-transform">&#9660;</span>
-        </button>
-        <div id="secAccess" class="settings-body">
-        <button id="setIconsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="icons, power, hints, card info">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Card Power Icons</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Show each card's power on the card</span></span>
-          <span id="setIconsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
-        </button>
+        <div id="settingsTab-access" class="settings-body settings-tab-panel" data-settings-panel="access" role="tabpanel">
         <button id="setContrastRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="contrast, brightness, visibility, colors, colours">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">High Contrast</span>
           <span class="block text-[8px] text-slate-400 leading-snug">Brighter cards and stronger outlines</span></span>
           <span id="setContrastState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
-        <button id="setHideHelpersRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="helper, card powers, card reference, play matrix, hints, guide">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Hide Helper Icons</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Hides the Card Powers &amp; Play Matrix buttons</span></span>
-          <span id="setHideHelpersState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
-        </button>
         <button id="setMotionRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="motion, animation, vfx, pulsing, glow, effects, flights, movement">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Reduce Motion</span>
           <span class="block text-[8px] text-slate-400 leading-snug">Stops pulsing, glows and card flights</span></span>
           <span id="setMotionState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
-        </button>
-        <button id="setBigEffectsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="vfx, effects, animation, embers, confetti, burn, win, victory, particles">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Burn &amp; Victory Effects</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Off skips the burn embers and win confetti</span></span>
-          <span id="setBigEffectsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
-        </button>
-        <button id="setHapticsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="haptic, vibrate, feedback, rumble">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Vibration</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Haptic feedback on key moments</span></span>
-          <span id="setHapticsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
-        </button>
-        <button id="setNotifyRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="notifications, alerts, push, gifts, invites, friends, app">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Notifications</span>
-          <span id="setNotifySub" class="block text-[8px] text-slate-400 leading-snug">Game invites, friend requests, gifts and new events</span></span>
-          <span id="setNotifyState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
-        </button>
-        </div>
-
-        <button class="settings-head w-full flex items-center justify-between py-1.5 mt-1" data-target="secDisplay">
-          <span class="text-[9px] font-black uppercase tracking-widest text-emerald-400">Display</span>
-          <span class="settings-chev text-emerald-400 text-[10px] transition-transform">&#9660;</span>
-        </button>
-        <div id="secDisplay" class="settings-body">
-        <button id="setFullscreenRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="full screen, expand, immersive, display">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Fullscreen</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Also available from the header</span></span>
-          <span id="setFullscreenState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
-        </button>
-        <button id="setDealAnimRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="vfx, animation, shuffle, deal, effects, dealing sound">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Shuffle &amp; Deal Animation</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Off skips straight to the game, no shuffle/deal sound</span></span>
-          <span id="setDealAnimState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         </div>
       </div>
@@ -5088,6 +5068,11 @@ video {
 
     <!-- ZONE 2: CENTER ARENA (MIDDLE TIER: MAX 30VH) -->
     <div id="centerArena" class="relative flex flex-col items-center justify-center shrink-0 my-auto z-20 w-full max-h-[30vh] gap-1">
+      <!-- Play direction: placed by positionDirectionBadge (left column,
+           above the Play Matrix button, level with the Deck's middle). -->
+      <span id="gameDirectionBadge" class="hidden bg-slate-900/90 border-slate-600 text-amber-300 font-black shadow-lg" data-tip="Play Direction" aria-label="Play direction">
+        <span>↻</span>
+      </span>
 
       <!-- Center Stacks -->
       <div class="relative flex items-center justify-center gap-5 md:gap-8 my-0.5">
@@ -5165,9 +5150,9 @@ video {
              clamp() formula, same 6px gap above the strip) on the opposite
              edge, so the two sit as a symmetric pair above the History
              strip. -->
-        <div id="matrixRefLayer" class="absolute z-[55] pointer-events-none" style="left:0; top:calc((clamp(34px,10vw,46px) + 6px) * -1); height:clamp(34px,10vw,46px);">
+        <div id="matrixRefLayer" class="absolute z-[55] pointer-events-none" style="left:0; top:calc((clamp(26px,7.5vw,34px) + 6px) * -1); height:clamp(26px,7.5vw,34px);">
           <button id="matrixRefBtn" class="pointer-events-auto rounded-full bg-slate-900/90 border-2 border-slate-600 text-slate-300 shadow-lg flex items-center justify-center transition transform active:scale-90 hover:scale-105 hover:border-amber-500"
-            style="width:clamp(34px,10vw,46px);height:clamp(34px,10vw,46px);font-size:clamp(15px,4.6vw,20px);" data-tip="Play Matrix: what beats what" aria-label="Open the Play Matrix reference">&#9638;</button>
+            style="width:clamp(26px,7.5vw,34px);height:clamp(26px,7.5vw,34px);font-size:clamp(12px,3.6vw,16px);" data-tip="Play Matrix: what beats what" aria-label="Open the Play Matrix reference">&#9638;</button>
         </div>
         <div class="flex items-center justify-between w-full text-[8px] uppercase font-black tracking-widest text-slate-400 border-b border-slate-800/80 pb-0.5">
           <button id="histFirstBtn" class="px-1 py-0.2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded transition font-black text-[8px]">⇤ FIRST</button>
@@ -11430,6 +11415,29 @@ video {
       renderCardReference();
       schedulePileInspectHint(isMyTurn);
       fitHandToTable();
+      positionDirectionBadge();
+    }
+
+    // The direction badge shares the left-hand column with the Play Matrix
+    // and Card Powers buttons (same x), centred on the Deck card's middle,
+    // and never lower than just above the Play Matrix button.
+    window.addEventListener('resize', () => positionDirectionBadge());
+    function positionDirectionBadge() {
+      const badge = document.getElementById('gameDirectionBadge');
+      const arena = document.getElementById('centerArena');
+      const deck = document.getElementById('drawPile');
+      if (!badge || !arena || !deck || badge.classList.contains('hidden')) return;
+      const a = arena.getBoundingClientRect();
+      const d = deck.getBoundingClientRect();
+      const h = badge.offsetHeight;
+      const matrix = document.getElementById('matrixRefBtn');
+      const matrixShown = matrix && !document.getElementById('matrixRefLayer')?.classList.contains('hidden') && matrix.offsetWidth;
+      const column = matrixShown ? matrix.getBoundingClientRect() : document.getElementById('historyStreamPanel')?.getBoundingClientRect();
+      if (!column || !d.height) return;
+      let top = d.top + d.height / 2 - h / 2;
+      if (matrixShown) top = Math.min(top, column.top - 6 - h);
+      badge.style.left = `${Math.round(column.left - a.left + (matrixShown ? (column.width - badge.offsetWidth) / 2 : 0))}px`;
+      badge.style.top = `${Math.round(top - a.top)}px`;
     }
 
     // Last word on the hand's height, once everything around it (play
@@ -13557,7 +13565,7 @@ video {
       paintToggle(document.getElementById('setEmotesState'), !emotesMuted);
       paintToggle(document.getElementById('setFullscreenState'), !!document.fullscreenElement);
       paintToggle(document.getElementById('setContrastState'), highContrast);
-      paintToggle(document.getElementById('setHideHelpersState'), hideHelperIcons);
+      paintToggle(document.getElementById('setHideHelpersState'), !hideHelperIcons);
       paintToggle(document.getElementById('setMotionState'), reduceMotion);
       paintToggle(document.getElementById('setBigEffectsState'), bigEffectsOn);
       paintToggle(document.getElementById('setHapticsState'), hapticsOn);
@@ -20127,22 +20135,50 @@ video {
           if (body) sectionsWithMatch.add(body.id);
         }
       });
-      document.querySelectorAll('#settingsModal .settings-head').forEach((head) => {
-        const body = document.getElementById(head.dataset.target);
-        if (!body) return;
-        if (!q) {
-          head.classList.remove('hidden');
-          body.classList.remove('hidden');
-          const chev = head.querySelector('.settings-chev');
-          if (chev) chev.style.transform = '';
-          return;
-        }
-        const hasMatch = sectionsWithMatch.has(head.dataset.target);
-        head.classList.toggle('hidden', !hasMatch);
-        body.classList.toggle('hidden', !hasMatch);
+      // Searching looks across every tab; clearing it goes back to the tab.
+      settingsSearching = !!q;
+      document.querySelectorAll('#settingsModal .settings-tab-panel').forEach((panel) => {
+        panel.classList.toggle('hidden', q ? !sectionsWithMatch.has(panel.id) : panel.dataset.settingsPanel !== settingsTab);
       });
+      renderSettingsTabs();
       document.getElementById('settingsNoResultsMsg').classList.toggle('hidden', anyVisible || !q);
     });
+
+    // Settings tabs: the same strip as the Shop and Custom pages.
+    const SETTINGS_TABS = [
+      { key: 'gameplay', label: 'Gameplay' },
+      { key: 'display', label: 'Display' },
+      { key: 'sound', label: 'Sound & Alerts' },
+      { key: 'access', label: 'Accessibility' }
+    ];
+    let settingsTab = (() => {
+      try { const t = localStorage.getItem('shithead_settings_tab'); return SETTINGS_TABS.some(x => x.key === t) ? t : 'gameplay'; } catch (e) { return 'gameplay'; }
+    })();
+    let settingsSearching = false;
+    function renderSettingsTabs() {
+      const bar = document.getElementById('settingsTabBar');
+      if (!bar) return;
+      bar.innerHTML = SETTINGS_TABS.map(t => `<button type="button" role="tab" class="cosmetic-tab" data-settings-tab="${t.key}" aria-selected="${!settingsSearching && t.key === settingsTab}">${t.label}</button>`).join('');
+      initHorizontalScroller(bar);
+    }
+    function showSettingsTab(key) {
+      if (!SETTINGS_TABS.some(t => t.key === key)) return;
+      settingsTab = key;
+      try { localStorage.setItem('shithead_settings_tab', key); } catch (e) {}
+      const search = document.getElementById('settingsSearchInput');
+      if (search && search.value) { search.value = ''; search.dispatchEvent(new Event('input')); }
+      settingsSearching = false;
+      document.querySelectorAll('#settingsModal .settings-tab-panel').forEach((panel) => {
+        panel.classList.toggle('hidden', panel.dataset.settingsPanel !== key);
+      });
+      document.getElementById('settingsScroll')?.scrollTo(0, 0);
+      renderSettingsTabs();
+    }
+    document.getElementById('settingsTabBar')?.addEventListener('click', (e) => {
+      const tab = e.target.closest('[data-settings-tab]');
+      if (tab) showSettingsTab(tab.dataset.settingsTab);
+    });
+    showSettingsTab(settingsTab);
 
     // Mute remembers the previous level so unmuting restores it rather than
     // jumping to some arbitrary default.
