@@ -4,7 +4,7 @@
   "description": "Push notifications for ShitHead Deluxe (game invites, friend requests, gifts, seasonal events).",
   "main": "index.js",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "dependencies": {
     "firebase-admin": "^12.7.0",

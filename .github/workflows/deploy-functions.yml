@@ -27,16 +27,22 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+
+      - name: Sign in to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
+
+      # The Firebase CLI checks the Blaze plan through this API but never
+      # switches it on itself.
+      - name: Enable the Cloud Billing API
+        run: gcloud services enable cloudbilling.googleapis.com --project shithead-pro
 
       - name: Install function dependencies
         working-directory: functions
         run: npm install --no-audit --no-fund
 
       - name: Deploy functions
-        env:
-          SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
         run: |
-          echo "$SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/service-account.json"
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/service-account.json"
           npx --yes firebase-tools@13 deploy --only functions --project shithead-pro --non-interactive --force
