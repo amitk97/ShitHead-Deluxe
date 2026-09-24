@@ -4,6 +4,7 @@ Single-file web game (`index.html`) on Firebase Hosting + Realtime Database (pro
 
 - `index.html` is the live game. `index1.html`, `index2.html`, … are old snapshots — don't edit them (Hosting ignores them).
 - `database.rules.json` is the source for the Realtime Database rules. Hosting deploys automatically on merge to `main`, but **rules do not**: after changing them, publish the file's contents in Firebase Console → Realtime Database → Rules.
+- **Commit and push straight to `main`** (it deploys live automatically). No branches, PRs or merge steps unless the owner asks for one — there are no other players yet.
 - **Whenever the rules change, paste the complete `database.rules.json` into the chat reply as one copy-pastable code block.** The owner publishes rules by pasting them into the Console and can't easily open/copy JSON files.
 - Tests: open `index.html?dev-tests=1`. Some tests need a live Firebase connection and fail offline; compare against the base branch rather than expecting 100%.
 
