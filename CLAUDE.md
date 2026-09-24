@@ -45,7 +45,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Table layout & lobby prefs
 
 - Opponent seats are never clipped or scrolled: `#opponentsContainer` has no max height; `fitOpponentSeats` shrinks `--opp-scale` so a seat stays within ~19% of the screen height.
-- The play-direction badge (`#gameDirectionBadge`) is pinned to the table's top-left corner, out of the column flow. The hand's rows spread into spare height (at least 55% of each back-row card shows), and `fitHandToTable` (end of `render`) shrinks the rows/cards if the player's area still runs past the table bottom (the play button row is revealed after the hand is sized). The hand's `maxHeight` is the cards' height plus its own padding.
+- The play-direction badge (`#gameDirectionBadge`) is pinned to the table's top-left corner, out of the column flow; with 3 opponents the row keeps `DIRECTION_BADGE_ROOM` clear on the left (seats narrow to fit) so the first seat's picture isn't under it. The hand's rows spread into spare height (at least 55% of each back-row card shows), and `fitHandToTable` (end of `render`) shrinks the rows/cards if the player's area still runs past the table bottom (the play button row is revealed after the hand is sized). The hand's `maxHeight` is the cards' height plus its own padding.
 - Vs Bots remembers the last bot count and difficulty (`readBotPrefs` / `applyBotPrefs`: localStorage `shithead_bot_count` / `shithead_difficulty`, plus `botCount` / `botDifficulty` in `users/{uid}/settings` for signed-in accounts). A locked difficulty is never restored.
 - Tab strips (`initHorizontalScroller`) keep the selected tab scrolled into view.
 
