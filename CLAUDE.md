@@ -43,3 +43,11 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Showcase: equipped table/card back/frame/burn/victory/emotes are mirrored to `publicProfiles/{uid}/showcase` (`syncShowcase`) and shown on the in-game player card and the Profile page (`showcaseHtml`). New cosmetic types that should be shown need adding to `SHOWCASE_TYPES` and the `showcase` rule.
 - Daily login streak: `claimDailyLoginReward` claims `users/{uid}/loginStreak` (local calendar day) then adds `DAILY_STREAK_REWARDS` Diamonds. The 7-day track repeats; a missed day restarts at Day 1.
 - Locked Custom tiles use `data-locked` (not `disabled`) so tapping opens that item in the Shop (`openLockedCosmetic`).
+
+## Seasonal events
+
+- `SEASONAL_EVENTS` (9 events) drives everything: names, emotes, table rim/label, frame glow, card-back colours. Items are generated as `<kind>-<event>` (`table-halloween`, `back-halloween`, `frame-…`, `burn-…`, `victory-…`, `avatar-…`, `emotes-…`) plus earn-only `avatar-<event>-earned` (win 3 games during the event, counted in `users/{uid}/seasonWins/<event>-<year>`).
+- Prices are fixed per kind (`SEASONAL_PRICES`: backs/frames 300, pictures/emotes 500, burns 1000, tables/victories 1500); the event bundle is 75% of whatever the player doesn't own yet. The rules match seasonal ids by regex, so a new event = add its id to the `(lunar|valentine|…)` lists in `database.rules.json`.
+- Dates: `seasonalWindowsForYear`. Diwali, Lunar New Year and Ramadan use hard-coded tables to 2040 (Lunar/Ramadan fall back to `Intl` calendars after that; Diwali needs new dates adding after 2040). Easter is computed.
+- Seasonal items are only sold during their event (Shop → Seasonal tab); owned ones stay in Custom forever. `seasonalNowOverride = 'YYYY-MM-DDT12:00'` in the console previews any date. The AmitK test account can buy every event's items any time (Shop spending only).
+- Art: tables and card backs are SVG sources in the scratch generator, stored as data URIs in `SEASONAL_TABLE_ART` / `SEASONAL_BACK_ART`; pictures in `SEASONAL_AVATAR_ART`; effects in `SEASONAL_BURN_FX` / `SEASONAL_VICTORY_FX`.
