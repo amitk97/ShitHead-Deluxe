@@ -1101,6 +1101,7 @@
     .cosmetic-tab[aria-selected="true"] { border-color:#f59e0b; color:#fcd34d; background:rgba(69,26,3,.45); }
     .cosmetic-tab small { font-size:8px; color:#64748b; font-weight:900; }
     .cosmetic-tab[aria-selected="true"] small { color:#fbbf24; }
+    .frame-mini-card { display:inline-flex; flex-direction:column; align-items:center; justify-content:center; width:40px; height:54px; border-radius:8px; border:3px solid #475569; background:#0f172a; color:#f8fafc; font-weight:900; font-size:13px; line-height:1.05; }
     .cosmetic-tile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
     .cosmetic-tile { min-height:104px; }
     .cosmetic-tile .avatar-option-art { min-height:48px; display:flex; align-items:center; justify-content:center; }
@@ -14851,17 +14852,23 @@ video {
       return true;
     }
 
+    // A mini card wearing the frame: coloured border plus the frame's own glow.
+    function framePreviewCard(item) {
+      const style = item ? `border-color:${item.tones[1]};${getCosmeticFrameStyle(item.id).replace(/!important/g, '')}` : '';
+      return `<span class="frame-mini-card" style="${style}"><span>A</span><span>♠</span></span>`;
+    }
+
     function cosmeticPreview(item, type) {
       if (!item) {
         if (type === 'tableTheme') return miniTablePreviewHtml('default');
         if (type === 'emotes') return '<span class="text-xl">😂</span>';
-        if (type === 'frame') return '<span class="w-8 h-10 rounded-lg border-2 border-slate-600 bg-slate-900"></span>';
+        if (type === 'frame') return framePreviewCard(null);
         if (type !== 'cardBack') return '<span class="w-8 h-8 rounded-lg border border-slate-600 bg-slate-900 flex items-center justify-center text-slate-400">◇</span>';
         return `<span class="w-8 h-10 rounded-lg custom-card-back ${getThemeDeckBackClass()} flex items-center justify-center">${getEmblemSvg()}</span>`;
       }
       if (type === 'tableTheme') return miniTablePreviewHtml(item.id);
       if (type === 'emotes') return `<span class="text-base">${(EMOTE_PACKS[item.id] || []).slice(0, 3).join('')}</span>`;
-      if (type === 'frame') return `<span class="w-8 h-10 rounded-lg border-2 bg-slate-900" style="border-color:#334155;${getCosmeticFrameStyle(item.id).replace(/!important/g, '')}"></span>`;
+      if (type === 'frame') return framePreviewCard(item);
       if (type !== 'cardBack') return `<span class="w-8 h-8 rounded-lg border border-slate-600" style="background:linear-gradient(135deg,${item.tones[0]} 0 45%,${item.tones[1]} 45% 72%,${item.tones[2]} 72% 100%)"></span>`;
       const backClass = getCosmeticBackClass(item.id);
       return `<span class="w-8 h-10 rounded-lg custom-card-back ${backClass} flex items-center justify-center">${getEmblemSvg()}</span>`;
