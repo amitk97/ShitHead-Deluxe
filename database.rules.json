@@ -50,6 +50,21 @@
           "$other": {
             ".validate": false
           }
+        },
+        "loginStreak": {
+          ".validate": "newData.hasChildren(['count', 'lastDate'])",
+          "count": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100000"
+          },
+          "lastDate": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)"
+          },
+          "best": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000"
+          },
+          "$other": {
+            ".validate": false
+          }
         }
       }
     },
@@ -137,6 +152,11 @@
           ".validate": "newData.hasChildren(['games'])",
           "$stat": {
             ".validate": "$stat.matches(/^(games|wins|bestStreak|peak|burnt|jokers)$/) && newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000"
+          }
+        },
+        "showcase": {
+          "$type": {
+            ".validate": "$type.matches(/^(tableTheme|cardBack|frame|burnEffect|victoryEffect|emotes)$/) && newData.isString() && newData.val().matches(/^[a-z0-9-]{3,40}$/)"
           }
         },
         "$other": {

@@ -756,6 +756,7 @@
     /* Always-visible mini table (Shop rows, Custom tiles, preview panel). */
     .mini-table { position:relative; display:block; width:100%; height:64px; overflow:hidden; border-radius:10px; }
     .mini-table.is-large { height:132px; border-radius:14px; }
+    .mini-table .mini-table-card.custom-card-back { position:absolute; border-width:1.5px !important; }
     .mini-table-card { position:absolute; top:50%; width:17%; max-width:26px; aspect-ratio:5/7; border-radius:4px; transform:translateY(-50%); }
     .mini-table.is-large .mini-table-card { max-width:44px; border-radius:7px; }
     .mini-table-card.deck { left:14%; background:linear-gradient(135deg,#1e293b,#0f172a); border:1.5px solid #475569; }
@@ -1107,6 +1108,40 @@
     .pp-btn.primary:hover { background:#10b981; color:#022c22; }
     .pp-btn:disabled { cursor:default; }
     .pp-friends { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:8px 0; border-radius:10px; font-size:10px; font-weight:900; letter-spacing:.06em; color:#34d399; background:rgba(6,78,59,.35); border:1px solid #065f46; }
+    .daily-scrim { position:fixed; inset:0; z-index:97; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(2,6,23,.8); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
+    .daily-scrim.hidden { display:none; }
+    .daily-card { width:min(340px,100%); text-align:center; background:radial-gradient(circle at 50% 0,rgba(245,158,11,.22),transparent 60%),#020617; border:2px solid #f59e0b; border-radius:20px; padding:18px 14px 14px; box-shadow:0 20px 60px rgba(0,0,0,.7); color:#e2e8f0; animation:daily-pop .35s cubic-bezier(.2,1.4,.4,1) both; }
+    @keyframes daily-pop { from { transform:scale(.8); opacity:0; } to { transform:scale(1); opacity:1; } }
+    .daily-flame { font-size:38px; line-height:1; filter:drop-shadow(0 0 10px rgba(249,115,22,.7)); }
+    .daily-title { margin-top:6px; font-size:18px; font-weight:900; color:#fff; letter-spacing:.04em; text-transform:uppercase; }
+    .daily-amount { margin-top:2px; font-size:24px; font-weight:900; color:#67e8f9; text-shadow:0 0 12px rgba(34,211,238,.55); }
+    .daily-track { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; margin-top:12px; }
+    .daily-day { display:flex; flex-direction:column; align-items:center; gap:2px; padding:5px 0 4px; border-radius:9px; border:1px solid #1e293b; background:rgba(15,23,42,.8); font-size:7px; font-weight:900; color:#64748b; letter-spacing:.04em; }
+    .daily-day b { font-size:9px; color:#94a3b8; }
+    .daily-day i { font-style:normal; font-size:12px; line-height:1; }
+    .daily-day.is-done { border-color:#065f46; background:rgba(6,78,59,.35); color:#34d399; }
+    .daily-day.is-done b { color:#6ee7b7; }
+    .daily-day.is-today { border-color:#f59e0b; background:rgba(120,53,15,.5); color:#fcd34d; box-shadow:0 0 12px rgba(245,158,11,.45); }
+    .daily-day.is-today b { color:#fde68a; }
+    .daily-day.is-big:not(.is-done):not(.is-today) { border-color:#7c3aed; color:#c4b5fd; }
+    .daily-sub { margin-top:10px; font-size:11px; color:#cbd5e1; font-weight:700; }
+    .daily-btn { margin-top:12px; width:100%; padding:10px 0; border-radius:12px; background:#f59e0b; color:#020617; font-size:12px; font-weight:900; letter-spacing:.1em; }
+    .daily-btn:hover { background:#fbbf24; }
+    .daily-note { margin-top:8px; font-size:9px; color:#64748b; line-height:1.4; }
+    .profile-streak { display:block; margin-top:2px; font-size:10px; font-weight:900; color:#fb923c; }
+    .profile-streak.hidden { display:none; }
+    .pp-showcase { margin-top:12px; }
+    .pp-showcase .mini-table { height:82px; }
+    .pp-showcase .mini-table-card { top:42%; }
+    .profile-showcase .pp-showcase { margin-top:8px; background:rgba(15,23,42,.6); border:1px solid #1e293b; border-radius:12px; padding:10px; }
+    .pp-section { font-size:9px; font-weight:900; letter-spacing:.14em; color:#64748b; text-transform:uppercase; margin-bottom:5px; }
+    .pp-show-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; margin-top:6px; }
+    .pp-show { display:flex; align-items:center; gap:6px; min-width:0; padding:5px 6px; border-radius:9px; background:rgba(15,23,42,.8); border:1px solid #1e293b; }
+    .pp-show-icon { flex:none; width:20px; text-align:center; font-size:14px; line-height:1; }
+    .pp-show-text { min-width:0; line-height:1.15; }
+    .pp-show-text small { display:block; font-size:7px; font-weight:900; letter-spacing:.1em; color:#64748b; text-transform:uppercase; }
+    .pp-show-text b { display:block; font-size:10px; color:#e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .pp-show.is-default b { color:#64748b; font-weight:700; }
     .pp-note { margin-top:14px; border:1px dashed #334155; border-radius:12px; padding:12px; text-align:center; font-size:11px; color:#94a3b8; line-height:1.4; }
     .pp-note b { color:#fcd34d; }
     .avatar-picker-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
@@ -1115,6 +1150,11 @@
     .avatar-option:not(:disabled):hover { border-color:#f59e0b; }
     .avatar-option[aria-pressed="true"] { border-color:#10b981; background:rgba(6,78,59,.28); }
     .avatar-option:disabled { cursor:default; }
+    /* Locked items stay tappable (they jump to the Shop) but look dimmed. */
+    .avatar-option[data-locked] { border-style:dashed; }
+    .avatar-option[data-locked] .avatar-option-art > :not(.avatar-option-lock) { filter:saturate(.5) brightness(.65); }
+    .shop-row-focus { animation:shop-row-focus 1.6s ease-out 1; }
+    @keyframes shop-row-focus { 0%,40% { box-shadow:0 0 0 2px #f59e0b,0 0 18px rgba(245,158,11,.55); } 100% { box-shadow:0 0 0 0 transparent; } }
     .avatar-option-art { position:relative; line-height:0; }
     .avatar-option-lock { position:absolute; right:-4px; bottom:-4px; width:18px; height:18px; border-radius:999px; background:#0f172a; border:1px solid #475569; display:flex; align-items:center; justify-content:center; font-size:9px; line-height:1; }
     .avatar-option-name { font-size:9px; font-weight:900; color:#fff; line-height:1.15; }
@@ -4454,6 +4494,18 @@ video {
       <div id="playerPopupBody"></div>
     </div>
   </div>
+  <div id="dailyRewardModal" class="hidden daily-scrim" role="dialog" aria-modal="true" aria-labelledby="dailyRewardTitle">
+    <div class="daily-card">
+      <div class="daily-flame" aria-hidden="true">🔥</div>
+      <div id="dailyRewardTitle" class="daily-title">Day 1 streak!</div>
+      <div id="dailyRewardAmount" class="daily-amount">+💎 10</div>
+      <div id="dailyRewardTrack" class="daily-track"></div>
+      <div id="dailyRewardNext" class="daily-sub"></div>
+      <button id="dailyRewardCollectBtn" type="button" class="daily-btn">COLLECT</button>
+      <p class="daily-note">Log in every day to build your streak. Miss a day and it restarts at Day 1.</p>
+    </div>
+  </div>
+
   <div id="profileModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:90vh; display:flex; flex-direction:column;">
       <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
@@ -4470,8 +4522,10 @@ video {
               <span id="profileNameEditor" class="hidden profile-name-editor"><input id="profileNameInput" type="text" maxlength="12" autocomplete="off" placeholder="New username" /><button id="profileNameSaveBtn" type="button" class="profile-name-save">Save</button><button id="profileNameCancelBtn" type="button" class="profile-name-cancel" aria-label="Cancel">✕</button></span>
               <span id="profileNameStatus" class="hidden profile-name-status"></span>
               <span id="profileRatingText" class="block text-[10px] text-slate-400 mt-0.5">&nbsp;</span>
+              <span id="profileStreakText" class="profile-streak hidden"></span>
             </div>
           </div>
+          <div id="profileShowcase" class="profile-showcase"></div>
         </div>
         <div>
           <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Account</span>
@@ -13423,10 +13477,12 @@ video {
       if (art) return { bg: tableArtBackground(id), rim: art.rim, label: art.label };
       return CSS_TABLE_PREVIEWS[id] || CSS_TABLE_PREVIEWS.default;
     }
-    function miniTablePreviewHtml(id, name, large = false) {
+    function miniTablePreviewHtml(id, name, large = false, cards = {}) {
       const look = tablePreviewLook(id || 'default');
       const style = `background:${look.bg};${look.size ? `background-size:${look.size};` : ''}box-shadow:${look.rim};--mini-table-label:${look.label}`;
-      return `<span class="mini-table${large ? ' is-large' : ''}" data-table-preview="${id || 'default'}" style="${style}"><span class="mini-table-card deck"></span><span class="mini-table-card pile"></span><span class="mini-table-card face">A<br>♥</span>${name ? `<span class="mini-table-name">${name}</span>` : ''}</span>`;
+      const deck = cards.backId ? `<span class="mini-table-card deck custom-card-back ${getCosmeticBackClass(cards.backId)}"></span>` : '<span class="mini-table-card deck"></span>';
+      const faceStyle = cards.frameId && cards.frameId !== 'default' ? ` style="${getCosmeticFrameStyle(cards.frameId).replace(/!important/g, '')}"` : '';
+      return `<span class="mini-table${large ? ' is-large' : ''}" data-table-preview="${id || 'default'}" style="${style}">${deck}<span class="mini-table-card pile"></span><span class="mini-table-card face"${faceStyle}>A<br>♥</span>${name ? `<span class="mini-table-name">${name}</span>` : ''}</span>`;
     }
     (function installIllustratedTableStyles() {
       const css = Object.entries(ILLUSTRATED_TABLES).map(([id, t]) =>
@@ -13542,6 +13598,7 @@ video {
     let cosmeticPurchaseState = {};
     let lastPurchasedCosmeticId = null;
     let shopFilter = 'all';
+    let pendingShopFocusId = null;
     const collapsedShopCategories = new Set();
     let newCosmeticIds = (() => {
       try { return new Set(JSON.parse(localStorage.getItem('shithead_new_cosmetics') || '[]')); }
@@ -13639,6 +13696,46 @@ video {
         ${cell(Math.round(Number(stats.peak) || Number(profile.rating) || 500), 'Peak rating')}${cell(Number(stats.burnt) || 0, 'Cards burnt')}${cell(Number(stats.jokers) || 0, 'Jokers played')}
       </div>`;
     }
+    // ---- Showcase: what a player has equipped, shown on their player card.
+    const SHOWCASE_TYPES = ['tableTheme', 'cardBack', 'frame', 'burnEffect', 'victoryEffect', 'emotes'];
+    function getShowcaseLoadout() {
+      const loadout = {};
+      SHOWCASE_TYPES.forEach(type => {
+        const id = equippedCosmetics[type];
+        loadout[type] = id && isSupportedCosmetic(type, id) ? id : 'default';
+      });
+      return loadout;
+    }
+    function syncShowcase() {
+      if (!currentUser || typeof db === 'undefined') return Promise.resolve();
+      return db.ref(`publicProfiles/${currentUser.uid}/showcase`).set(getShowcaseLoadout()).catch(() => {});
+    }
+    function cosmeticDisplayName(type, id) {
+      if (!id || id === 'default') return 'Default';
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS].find(entry => entry.id === id && COSMETIC_CATEGORY_TYPES[entry.category] === type);
+      return item ? item.name : 'Default';
+    }
+    function victoryPreviewIcon(id) {
+      return { 'victory-cards': '🃏', 'victory-fireworks': '🎆', 'victory-sparklers': '🎇', 'victory-stars': '⭐', 'victory-karate': '🥋' }[id] || '🏆';
+    }
+    function showcaseHtml(showcase) {
+      if (!showcase) return '';
+      const pick = type => {
+        const id = showcase[type];
+        return id && isSupportedCosmetic(type, id) ? id : 'default';
+      };
+      const table = pick('tableTheme'), back = pick('cardBack'), frame = pick('frame');
+      const burn = pick('burnEffect'), victory = pick('victoryEffect'), emotes = pick('emotes');
+      const chip = (icon, label, type, id) => `<div class="pp-show ${id === 'default' ? 'is-default' : ''}"><span class="pp-show-icon">${icon}</span><span class="pp-show-text"><small>${label}</small><b>${cosmeticDisplayName(type, id)}</b></span></div>`;
+      const emoteIcon = (emotes !== 'default' && EMOTE_PACKS[emotes]?.[0]) || '😂';
+      return `<div class="pp-showcase"><div class="pp-section">Showcase</div>
+        ${miniTablePreviewHtml(table, cosmeticDisplayName('tableTheme', table) + ' table', false, { backId: back, frameId: frame })}
+        <div class="pp-show-grid">
+          ${chip('🂠', 'Card back', 'cardBack', back)}${chip('▢', 'Frame', 'frame', frame)}
+          ${chip(burnPreviewIcon(burn), 'Burn', 'burnEffect', burn)}${chip(victoryPreviewIcon(victory), 'Victory', 'victoryEffect', victory)}
+          ${chip(emoteIcon, 'Emotes', 'emotes', emotes)}
+        </div></div>`;
+    }
     function renderPlayerPopupHuman(player, profile, friendState) {
       const tier = getRankTier(profile.rating != null ? profile.rating : 500);
       const hasProfile = !!player.uid && profile.loaded;
@@ -13661,6 +13758,7 @@ video {
       return `<div class="pp-head">${avatarHtml(getPlayerAvatarId(player), 64)}
           <div class="min-w-0"><div id="playerPopupName" class="pp-name">${escapeHtml(player.name)}</div>${badge}${online}</div></div>
         ${hasProfile ? playerPopupStatsHtml(profile.stats || {}, profile) : '<div class="pp-note">This player isn\'t signed in, so they don\'t have a rank or stats yet.</div>'}
+        ${showcaseHtml(profile.showcase || player.cosmetics)}
         ${actions}`;
     }
     function renderPlayerPopupBot(player) {
@@ -13772,6 +13870,7 @@ video {
       if (sync && currentUser) db.ref(`users/${currentUser.uid}/equippedCosmetics/${type}`).set(id).then(() => {
         // Other players see pictures via the public profile / leaderboard copy.
         if (type === 'avatar') syncPublicProfile();
+        else if (SHOWCASE_TYPES.includes(type)) syncShowcase();
       }).catch(() => {
         if (status) status.textContent = 'Equipped on this device, but account sync failed.';
       });
@@ -13802,7 +13901,7 @@ video {
       const active = id === activeId;
       // Tile layout, shared with the profile-picture tiles.
       const status = active ? '✓ EQUIPPED' : owned ? 'Tap to equip' : `💎 ${item.cost} in Shop`;
-      return `<button type="button" data-equip-type="${type}" data-equip-id="${id}" ${owned ? '' : 'disabled'} aria-pressed="${active}" class="cosmetic-option-card cosmetic-tile avatar-option">
+      return `<button type="button" data-equip-type="${type}" data-equip-id="${id}" ${owned ? '' : 'data-locked aria-disabled="true"'} aria-pressed="${active}" class="cosmetic-option-card cosmetic-tile avatar-option">
         <span class="avatar-option-art">${cosmeticPreview(item, type)}${owned ? '' : '<span class="avatar-option-lock" aria-hidden="true">🔒</span>'}</span>
         <span class="avatar-option-name">${name}</span>
         <span class="avatar-option-status ${owned ? '' : 'is-locked'}">${status}</span>
@@ -13817,7 +13916,7 @@ video {
         : owned ? 'Tap to equip'
         : item.earned ? item.requirement
         : `💎 ${item.cost} in Shop`;
-      return `<button type="button" class="avatar-option" data-equip-type="avatar" data-equip-id="${item.id}" ${owned ? '' : 'disabled'} aria-pressed="${active}">
+      return `<button type="button" class="avatar-option" data-equip-type="avatar" data-equip-id="${item.id}" ${owned ? '' : 'data-locked aria-disabled="true"'} aria-pressed="${active}">
         <span class="avatar-option-art">${avatarHtml(item.id, 52, owned ? '' : (item.earned ? 'avatar-locked' : ''))}${owned ? '' : '<span class="avatar-option-lock" aria-hidden="true">🔒</span>'}</span>
         <span class="avatar-option-name">${item.name}</span>
         <span class="avatar-option-status ${owned ? '' : 'is-locked'}">${status}</span>
@@ -13913,6 +14012,7 @@ video {
       if (!btn || btn.disabled) return;
       const type = btn.dataset.equipType;
       const id = btn.dataset.equipId;
+      if (btn.hasAttribute('data-locked')) { openLockedCosmetic(id); return; }
       equipCosmetic(type, id);
     });
     document.getElementById('unequipAllCosmeticsBtn').addEventListener('click', () => {
@@ -13927,6 +14027,7 @@ video {
       renderPersonalisationCosmetics();
       renderCosmeticShop();
       document.getElementById('personalisationStatus').textContent = 'All cosmetics unequipped. Defaults restored.';
+      syncShowcase();
       if (currentUser) db.ref(`users/${currentUser.uid}/equippedCosmetics`).set(equippedCosmetics).catch(() => {
         document.getElementById('personalisationStatus').textContent = 'Defaults restored on this device, but account sync failed.';
       });
@@ -14019,9 +14120,9 @@ video {
           const equipLabel = lastPurchasedCosmeticId === item.id ? 'EQUIP NOW' : 'EQUIP';
           const isNew = newCosmeticIds.has(item.id);
           const shortfall = Math.max(0, item.cost - balance);
-          return `<div class="rounded-xl border ${owned ? 'border-emerald-700' : 'border-slate-800'} bg-slate-900/60 overflow-hidden">
+          return `<div data-shop-row="${item.id}" class="rounded-xl border ${owned ? 'border-emerald-700' : 'border-slate-800'} bg-slate-900/60 overflow-hidden">
             <div class="flex items-center gap-2 p-2">
-              <span class="shrink-0 w-[42px] h-[46px] flex items-center justify-center">${shopCosmeticThumbnail(item, type)}</span>
+              ${type === 'tableTheme' ? '' : `<span class="shrink-0 w-[42px] h-[46px] flex items-center justify-center">${shopCosmeticThumbnail(item, type)}</span>`}
               <span class="min-w-0 flex-1"><span class="flex items-center gap-1"><span class="block text-[10px] font-black text-white truncate">${item.name}</span>${isNew ? '<span class="shrink-0 rounded-full bg-fuchsia-600 px-1.5 py-0.5 text-[7px] font-black text-white">NEW</span>' : ''}</span><span class="block text-[8px] text-slate-500">${getCosmeticDescription(type)}</span>${!owned && !affordable ? `<span class="block text-[8px] font-bold text-rose-400">Need 💎${shortfall} more</span>` : ''}</span>
               <span class="shrink-0 flex flex-col gap-1">
                 <button type="button" data-preview-cosmetic-id="${item.id}" aria-expanded="false" class="cosmetic-preview-btn min-w-[66px] px-2 py-1 rounded-lg border border-cyan-600 text-[8px] font-black text-cyan-300 hover:bg-cyan-500 hover:text-slate-950 transition">PREVIEW</button>
@@ -14037,6 +14138,12 @@ video {
         return `<div class="space-y-1.5">${items}</div>`;
       }).join('');
       if (!list.innerHTML.trim()) list.innerHTML = '<p class="rounded-xl border border-dashed border-slate-700 p-4 text-center text-[9px] text-slate-500">Nothing in this section matches the filter.</p>';
+      const focusRow = pendingShopFocusId && list.querySelector(`[data-shop-row="${pendingShopFocusId}"]`);
+      if (focusRow) {
+        pendingShopFocusId = null;
+        focusRow.classList.add('shop-row-focus');
+        focusRow.scrollIntoView?.({ block: 'center' });
+      }
       document.querySelectorAll('[data-shop-filter]').forEach(button => {
         const active = button.dataset.shopFilter === shopFilter;
         button.className = `shop-filter-btn shrink-0 rounded-full border px-2 py-1 text-[8px] font-black ${active ? 'border-emerald-500 text-emerald-300 bg-emerald-950/40' : 'border-slate-700 text-slate-400'}`;
@@ -14082,6 +14189,7 @@ video {
 
     function shopCosmeticThumbnail(item, type) {
       if (type === 'avatar') return avatarHtml(item.id, 40);
+      if (type === 'tableTheme') return `<span style="display:block;width:120px">${miniTablePreviewHtml(item.id)}</span>`;
       if (type === 'emotes') return `<span class="text-[13px] leading-tight text-center">${(EMOTE_PACKS[item.id] || []).slice(0, 4).join('')}</span>`;
       if (type === 'cardBack') return `<span class="w-7 h-[42px] rounded-md custom-card-back ${getCosmeticBackClass(item.id)} border border-slate-500 flex items-center justify-center shadow-md">${getEmblemSvg()}</span>`;
       if (type === 'frame') return `<span class="relative w-7 h-[42px] rounded-md bg-slate-950 border-2 flex flex-col items-start p-1 font-black text-[8px] text-white" style="border-color:${item.tones[1]};box-shadow:0 0 7px ${item.tones[1]}"><span>A</span><span class="${item.id === 'frame-gold' ? 'text-amber-300' : 'text-red-400'}">♥</span></span>`;
@@ -14741,6 +14849,7 @@ video {
       if (signOutResetting) return;
       signOutResetting = true;
       try {
+        resetDailyStreakOnSignOut();
         if (state.isMultiplayer && state.roomCode && state.localPlayerId && typeof db !== 'undefined') {
           const myId = state.localPlayerId;
           updatePlayersAtomic(state.roomCode, (list) => (list || []).filter(p => p.id !== myId));
@@ -14754,13 +14863,20 @@ video {
       if (typeof updateDiamondHeader === 'function') updateDiamondHeader();
       if (!window.__skipSignOutReload) setTimeout(() => location.reload(), 150);
     }
+    function resetDailyStreakOnSignOut() { dailyStreakState = null; closeDailyReward(); refreshProfileStreak(); }
     function performSignOut() {
       const signOut = auth && typeof auth.signOut === 'function' ? auth.signOut() : Promise.resolve();
       return Promise.resolve(signOut).catch((e) => console.warn('Sign out failed', e)).finally(resetAfterSignOut);
     }
+    function renderProfileShowcase() {
+      const slot = document.getElementById('profileShowcase');
+      if (slot) slot.innerHTML = showcaseHtml(getShowcaseLoadout()).replace('<div class="pp-section">Showcase</div>', '<div class="pp-section">Your showcase · what other players see</div>');
+    }
     function openProfilePanel() {
       refreshProfilePanel();
       refreshOwnAvatarDisplays();
+      renderProfileShowcase();
+      refreshProfileStreak();
       document.getElementById('profileModal').classList.remove('hidden');
     }
     document.getElementById('profileCloseBtn').addEventListener('click', () => document.getElementById('profileModal').classList.add('hidden'));
@@ -15018,7 +15134,7 @@ video {
         refreshDifficultyLocks();
         if (user) {
           ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); attemptRankedReconnect();
-          initChallengeEconomy(); loadCosmeticCollection(user);
+          initChallengeEconomy().then(() => claimDailyLoginReward()); loadCosmeticCollection(user);
           // Preferences live under the account and do not depend on profile creation.
           loadAccountSettings(user);
         } else {
@@ -15707,6 +15823,96 @@ video {
         })
         .catch((e) => { console.error('awardMatchDiamonds threw for', label, e); return false; });
     }
+
+    // ---- Daily login streak ---------------------------------------------
+    // One reward per local calendar day, credited automatically on sign-in
+    // (or when the app is reopened on a new day). The weekly track repeats:
+    // Day 8 pays like Day 1 again but the streak count keeps growing.
+    // Missing a day restarts the streak at Day 1.
+    const DAILY_STREAK_REWARDS = [10, 15, 20, 25, 30, 40, 100];
+    let dailyStreakState = null;
+    let dailyClaimInFlight = null;
+    function localDateKey(date = new Date()) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+    function previousLocalDateKey(date = new Date()) {
+      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
+      return localDateKey(d);
+    }
+    function dailyStreakReward(count) {
+      return DAILY_STREAK_REWARDS[(Math.max(1, count) - 1) % DAILY_STREAK_REWARDS.length];
+    }
+    // Pure: the next streak state, or null if today is already claimed.
+    function calculateDailyStreak(streak, now = new Date()) {
+      const today = localDateKey(now);
+      const prev = streak || {};
+      if (prev.lastDate === today) return null;
+      const count = prev.lastDate === previousLocalDateKey(now) ? (Number(prev.count) || 0) + 1 : 1;
+      return { count, lastDate: today, best: Math.max(Number(prev.best) || 0, count) };
+    }
+    function claimDailyLoginReward() {
+      if (!currentUser || typeof db === 'undefined' || !firebaseAvailable) return Promise.resolve(null);
+      if (dailyClaimInFlight) return dailyClaimInFlight;
+      const uid = currentUser.uid;
+      let claimed = null;
+      // Claim the day first (small transaction on loginStreak only, so no
+      // other users/{uid} child is re-validated), then credit the Diamonds.
+      dailyClaimInFlight = db.ref(`users/${uid}/loginStreak`).transaction((current) => {
+        claimed = null;
+        const next = calculateDailyStreak(current);
+        if (!next) return; // already claimed today (checked against the server value too)
+        claimed = next;
+        return next;
+      }).then((result) => {
+        dailyStreakState = result.snapshot?.val() || dailyStreakState;
+        refreshProfileStreak();
+        if (!result.committed || !claimed || currentUser?.uid !== uid) return null;
+        const reward = dailyStreakReward(claimed.count);
+        return db.ref(`users/${uid}/diamonds`).transaction((c) => Math.min(999999, (Number(c) || 0) + reward)).then((dResult) => {
+          if (!dResult.committed) return null;
+          challengeEconomy.diamonds = Number(dResult.snapshot.val()) || 0;
+          updateDiamondHeader();
+          renderChallengesModalIfOpen();
+          showDailyReward(claimed.count, reward);
+          return { count: claimed.count, reward };
+        });
+      }).catch((e) => { console.warn('claimDailyLoginReward failed', e); return null; })
+        .finally(() => { dailyClaimInFlight = null; });
+      return dailyClaimInFlight;
+    }
+    function dailyTrackHtml(count) {
+      const dayInWeek = ((Math.max(1, count) - 1) % 7) + 1;
+      return DAILY_STREAK_REWARDS.map((reward, i) => {
+        const day = i + 1;
+        const cls = day < dayInWeek ? 'is-done' : day === dayInWeek ? 'is-today' : '';
+        return `<span class="daily-day ${cls} ${day === 7 ? 'is-big' : ''}">DAY ${day}<i>${day < dayInWeek ? '✓' : day === 7 ? '🎁' : '💎'}</i><b>${reward}</b></span>`;
+      }).join('');
+    }
+    function showDailyReward(count, reward) {
+      const inMatch = state && (state.phase === 'PLAY' || state.phase === 'SWAP');
+      if (inMatch) { enqueueChallengeToast(`Day ${count} login streak`, reward, 0); return; }
+      document.getElementById('dailyRewardTitle').textContent = count === 1 ? 'Daily reward!' : `${count}-day streak!`;
+      document.getElementById('dailyRewardAmount').textContent = `+💎 ${reward}`;
+      document.getElementById('dailyRewardTrack').innerHTML = dailyTrackHtml(count);
+      document.getElementById('dailyRewardNext').textContent = `Come back tomorrow for 💎 ${dailyStreakReward(count + 1)}`;
+      document.getElementById('dailyRewardModal').classList.remove('hidden');
+      document.getElementById('dailyRewardCollectBtn').focus({ preventScroll: true });
+    }
+    function closeDailyReward() { document.getElementById('dailyRewardModal').classList.add('hidden'); }
+    document.getElementById('dailyRewardCollectBtn').addEventListener('click', closeDailyReward);
+    document.getElementById('dailyRewardModal').addEventListener('click', (e) => { if (e.target.id === 'dailyRewardModal') closeDailyReward(); });
+    function refreshProfileStreak() {
+      const el = document.getElementById('profileStreakText');
+      if (!el) return;
+      const today = localDateKey(), yesterday = previousLocalDateKey();
+      const live = currentUser && dailyStreakState && (dailyStreakState.lastDate === today || dailyStreakState.lastDate === yesterday);
+      el.classList.toggle('hidden', !live);
+      if (live) el.textContent = `🔥 ${dailyStreakState.count}-day login streak${dailyStreakState.best > dailyStreakState.count ? ` · best ${dailyStreakState.best}` : ''}`;
+    }
+    // A tab left open overnight still gets the new day's reward.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && currentUser && dailyStreakState?.lastDate !== localDateKey()) claimDailyLoginReward();
+    });
 
     // ============================================================
     // CHALLENGES — gameplay event hooks (Part 3). Everything above this
@@ -16796,6 +17002,7 @@ video {
           tier
         }).then(() => Promise.all([
           db.ref(`publicProfiles/${uid}/avatar`).set(avatar).catch(() => {}),
+          syncShowcase(),
           // Summary shown on the in-game player card (users/{uid} is private).
           db.ref(`publicProfiles/${uid}/stats`).set({
             games: (Number(profile.wins) || 0) + (Number(profile.losses) || 0),
@@ -17348,6 +17555,24 @@ video {
       if (tab) setCustomTab(tab.dataset.customTab);
     });
     setCustomTab('avatar');
+    // Tapping something you don't own in Custom: Shop items open the Shop on
+    // that item; earn-only pictures say how to earn them.
+    function openLockedCosmetic(id) {
+      const shopItem = COSMETIC_SHOP_ITEMS.find(item => item.id === id);
+      if (!shopItem) {
+        const earned = EARNED_AVATARS.find(item => item.id === id);
+        const status = document.getElementById('personalisationStatus');
+        if (status && earned) status.textContent = `${earned.name}: ${earned.requirement}.`;
+        return false;
+      }
+      document.getElementById('themesModal').classList.add('hidden');
+      shopTab = shopItem.category;
+      shopFilter = 'all';
+      pendingShopFocusId = id;
+      openShopPanel();
+      if (currentUser) renderCosmeticShop();
+      return true;
+    }
     function openCustomAtAvatars() {
       openThemesPanel();
       setCustomTab('avatar');
@@ -21897,7 +22122,7 @@ video {
         const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
         assertEqual(options.length, 20, 'All 20 pictures appear in Custom');
         const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
-        assertTrue(master.disabled && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
+        assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
         assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
         cosmeticPurchaseState = saved;
         renderPersonalisationAvatars();
@@ -23984,6 +24209,43 @@ video {
         shopTab = savedTab; renderCosmeticShop();
         assertEqual(previewCount, COSMETIC_SHOP_ITEMS.length, 'Every item must own an inline preview directly beneath its row');
         assertTrue(!openShopCosmeticPreview.toString().includes('scrollIntoView'), 'Opening a preview must never scroll the Shop back to another location');
+      });
+
+      await test('Daily login streak: consecutive days grow, a missed day restarts, same day pays nothing', () => {
+        const d = (y, m, day) => new Date(y, m - 1, day, 12);
+        assertEqual(calculateDailyStreak(null, d(2026, 3, 1)).count, 1, 'First claim is Day 1');
+        assertEqual(calculateDailyStreak({ count: 3, lastDate: '2026-02-28', best: 3 }, d(2026, 3, 1)).count, 4, 'Month rollover counts as consecutive');
+        assertEqual(calculateDailyStreak({ count: 5, lastDate: '2026-02-26', best: 5 }, d(2026, 3, 1)).count, 1, 'Missing a day restarts at Day 1');
+        assertEqual(calculateDailyStreak({ count: 5, lastDate: '2026-02-26', best: 5 }, d(2026, 3, 1)).best, 5, 'Best streak is kept');
+        assertEqual(calculateDailyStreak({ count: 2, lastDate: '2026-03-01' }, d(2026, 3, 1)), null, 'Already claimed today');
+        assertEqual(dailyStreakReward(1), 10, 'Day 1 reward');
+        assertEqual(dailyStreakReward(7), 100, 'Day 7 bonus');
+        assertEqual(dailyStreakReward(8), 10, 'Week 2 restarts the reward track');
+        assertTrue(dailyTrackHtml(3).includes('is-today'), 'Track highlights today');
+      });
+
+      await test('Showcase: player card lists the equipped loadout and never shows unknown ids', () => {
+        const html = showcaseHtml({ tableTheme: 'table-royal', cardBack: 'back-nebula', frame: 'frame-gold', burnEffect: 'burn-ice', victoryEffect: 'nope', emotes: 'default' });
+        assertTrue(html.includes('data-table-preview="table-royal"'), 'Shows their table');
+        assertTrue(html.includes('Ice Shatter'), 'Shows their burn effect name');
+        assertTrue(!html.includes('nope'), 'Unknown ids fall back to Default');
+        assertEqual(showcaseHtml(null), '', 'No loadout, no showcase');
+        const loadout = getShowcaseLoadout();
+        assertEqual(Object.keys(loadout).sort().join(','), [...SHOWCASE_TYPES].sort().join(','), 'Public showcase only carries the six cosmetic types');
+      });
+
+      await test('Locked Custom items stay tappable and open that item in the Shop', () => {
+        const locked = COSMETIC_SHOP_ITEMS.find(item => item.category === 'Table Themes' && !cosmeticPurchaseState[item.id]);
+        const html = personalisationOptionHtml(locked, 'tableTheme', 'default');
+        assertTrue(html.includes('data-locked') && !/\sdisabled[\s>]/.test(html), 'Locked tile is marked locked, not disabled');
+        const savedTab = shopTab, savedUser = currentUser;
+        currentUser = null;
+        openLockedCosmetic(locked.id);
+        assertEqual(shopTab, 'Table Themes', 'Shop opens on the item\'s section');
+        assertEqual(pendingShopFocusId, locked.id, 'Shop will scroll to the item');
+        pendingShopFocusId = null; shopTab = savedTab; currentUser = savedUser;
+        document.getElementById('authModal')?.classList.add('hidden');
+        document.getElementById('shopModal')?.classList.add('hidden');
       });
 
       await test('REGRESSION: every table theme shows its preview in Shop rows and Custom tiles without a click', () => {

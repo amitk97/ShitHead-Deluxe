@@ -37,3 +37,9 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Both pages use section tabs driven by `COSMETIC_TABS` (Custom adds a Deck tab via `CUSTOM_TABS`). A new cosmetic category = one entry there.
 - Custom shows every cosmetic as a tile (`.cosmetic-tile-grid`, 2 per row; pictures 3 per row).
 - Table themes are CSS on `body[data-equipped-table-theme="…"] #gameTable` plus a `--table-label-border` accent and a Shop preview background in `shopCosmeticPreviewMarkup`. New themes also need the rules id list and price.
+
+## Showcase & daily streak
+
+- Showcase: equipped table/card back/frame/burn/victory/emotes are mirrored to `publicProfiles/{uid}/showcase` (`syncShowcase`) and shown on the in-game player card and the Profile page (`showcaseHtml`). New cosmetic types that should be shown need adding to `SHOWCASE_TYPES` and the `showcase` rule.
+- Daily login streak: `claimDailyLoginReward` claims `users/{uid}/loginStreak` (local calendar day) then adds `DAILY_STREAK_REWARDS` Diamonds. The 7-day track repeats; a missed day restarts at Day 1.
+- Locked Custom tiles use `data-locked` (not `disabled`) so tapping opens that item in the Shop (`openLockedCosmetic`).
