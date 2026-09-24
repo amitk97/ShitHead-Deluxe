@@ -726,6 +726,8 @@
     .cosmetic-option-card { min-height:76px; }
     .cosmetic-option-card[aria-pressed="true"] { border-color:#34d399; background:rgba(6,78,59,.24); }
     .victory-card-particle { position:fixed; top:-48px; z-index:110; width:28px; height:40px; border-radius:5px; background:#fff; border:2px solid #ef4444; color:#111827; display:flex; align-items:center; justify-content:center; font-weight:900; pointer-events:none; animation:cosmetic-card-shower 2.2s ease-in forwards; }
+    .victory-card-particle.vcp-back { background:transparent; border:0; }
+    .vcp-back-face { position:absolute; inset:0; border-radius:5px; border:1px solid rgba(148,163,184,.7); }
     @keyframes cosmetic-card-shower { to { transform:translate3d(var(--drift),110vh,0) rotate(var(--spin)); opacity:.15; } }
 
     /* Deck themes are choices, not full-size gameplay exhibits. Keep them
@@ -5458,16 +5460,38 @@ video {
       }
     }
     function bfxSmoke(host, x, y, k) {
-      for (let i = 0; i < 24; i++) {
-        const size = bfxRand(44, 100) * k;
-        const dark = i % 4 === 0;
-        const puff = bfxAdd(host, `<div style="width:100%;height:100%;border-radius:50%;filter:blur(${4 * k}px);background:radial-gradient(circle,${dark ? 'rgba(51,65,85,.75)' : 'rgba(203,213,225,.6)'},${dark ? 'rgba(30,41,59,.35)' : 'rgba(100,116,139,.3)'} 50%,transparent 70%)"></div>`, x + bfxRand(-34, 34) * k, y + bfxRand(-10, 10) * k, size, size);
-        bfxAnimate(puff, [
-          { transform: 'translate(0,0) scale(.35)', opacity: 0 },
-          { transform: `translate(${bfxRand(-15, 15) * k}px, ${bfxRand(-25, -10) * k}px) scale(.9)`, opacity: .9, offset: .25 },
-          { transform: `translate(${bfxRand(-95, 95) * k}px, ${bfxRand(-170, -70) * k}px) scale(${bfxRand(1.4, 2.2)})`, opacity: 0 }
-        ], { duration: bfxRand(1900, 2700), delay: bfxRand(0, 650), easing: 'ease-out' });
+      const puff = (size, fill, blur) => `<div style="width:100%;height:100%;border-radius:50%;filter:blur(${blur}px);background:${fill}"></div>`;
+      const light = 'radial-gradient(circle,rgba(226,232,240,.7),rgba(148,163,184,.35) 50%,transparent 70%)';
+      const dark = 'radial-gradient(circle,rgba(30,41,59,.85),rgba(15,23,42,.45) 50%,transparent 70%)';
+      const tints = ['radial-gradient(circle,rgba(167,139,250,.5),rgba(76,29,149,.2) 55%,transparent 72%)', 'radial-gradient(circle,rgba(45,212,191,.42),rgba(17,94,89,.18) 55%,transparent 72%)'];
+      // 1) A dense ground ring that rolls outward from the pile.
+      for (let i = 0; i < 16; i++) {
+        const size = bfxRand(50, 90) * k;
+        const dir = i % 2 ? 1 : -1;
+        const el = bfxAdd(host, puff(size, i % 3 ? light : dark, 5 * k), x, y + 8 * k, size, size * .7);
+        bfxAnimate(el, [
+          { transform: 'translate(0,0) scale(.3)', opacity: 0 },
+          { transform: `translate(${dir * bfxRand(20, 50) * k}px, ${-bfxRand(0, 10) * k}px) scale(1)`, opacity: .95, offset: .2 },
+          { transform: `translate(${dir * bfxRand(110, 190) * k}px, ${-bfxRand(10, 40) * k}px) scale(${bfxRand(1.8, 2.6)})`, opacity: 0 }
+        ], { duration: bfxRand(2200, 3000), delay: bfxRand(0, 250), easing: 'cubic-bezier(.2,.7,.3,1)' });
       }
+      // 2) A tall swirling column with a few coloured wisps through it.
+      for (let i = 0; i < 34; i++) {
+        const size = bfxRand(46, 110) * k;
+        const fill = i % 9 === 4 ? tints[0] : i % 9 === 7 ? tints[1] : (i % 3 === 0 ? dark : light);
+        const el = bfxAdd(host, puff(size, fill, 6 * k), x + bfxRand(-26, 26) * k, y + bfxRand(-6, 6) * k, size, size);
+        const sway = bfxRand(-1, 1) > 0 ? 1 : -1;
+        const rise = bfxRand(150, 260) * k;
+        bfxAnimate(el, [
+          { transform: 'translate(0,0) rotate(0deg) scale(.35)', opacity: 0 },
+          { transform: `translate(${sway * 22 * k}px, ${-rise * .25}px) rotate(${sway * 60}deg) scale(1)`, opacity: .92, offset: .22 },
+          { transform: `translate(${-sway * 30 * k}px, ${-rise * .6}px) rotate(${sway * 140}deg) scale(1.6)`, opacity: .6, offset: .6 },
+          { transform: `translate(${sway * bfxRand(40, 90) * k}px, ${-rise}px) rotate(${sway * 220}deg) scale(${bfxRand(2, 2.8)})`, opacity: 0 }
+        ], { duration: bfxRand(2400, 3400), delay: bfxRand(0, 900), easing: 'ease-out' });
+      }
+      // 3) A brief dark flash at the base so it reads as a "puff" moment.
+      const core = bfxAdd(host, puff(90 * k, dark, 8 * k), x, y, 90 * k, 60 * k);
+      bfxAnimate(core, [{ transform: 'scale(.4)', opacity: .95 }, { transform: 'scale(1.8)', opacity: 0 }], { duration: 900, easing: 'ease-out' });
     }
     function playBurnFx(id, host, x, y, scale = 1) {
       if (!host) return false;
@@ -6275,13 +6299,15 @@ video {
 
       const totalCards = 12;
       const perSide = totalCards / 2;
-      const cardClass = "absolute w-11 h-16 rounded-md bg-slate-800 border-2 border-amber-500/70 shadow-lg";
+      const cs = dealCardStyle || snapshotCardStyle();
+      const cardClass = `absolute w-11 h-16 rounded-md custom-card-back opponent-cosmetic-card ${cs.backClass} border border-slate-500 shadow-lg`;
 
       const leftStack = [];
       const rightStack = [];
       for (let i = 0; i < perSide; i++) {
         const left = document.createElement('div');
         left.className = cardClass;
+        left.style.cssText = cs.frameStyle;
         left.style.left = 'calc(50% - 58px)';
         left.style.top = `calc(50% - ${i * 1.1}px)`;
         left.style.transform = 'translate(-50%, -50%)';
@@ -6291,7 +6317,7 @@ video {
 
         const right = document.createElement('div');
         right.className = cardClass;
-        right.style.borderColor = 'rgba(245, 197, 24, 0.45)';
+        right.style.cssText = cs.frameStyle;
         right.style.left = 'calc(50% + 58px)';
         right.style.top = `calc(50% - ${i * 1.1}px)`;
         right.style.transform = 'translate(-50%, -50%)';
@@ -6407,7 +6433,7 @@ video {
         return `<div id="deal-slot-${i}" class="absolute w-9 h-13 rounded-md border-2 border-dashed border-slate-500" style="left:calc(50% + ${x}px); bottom:0; transform:translateX(-50%);"></div>`;
       }).join('');
       return `
-        <div id="shuffleDeckIcon" class="absolute left-1/2 top-0 -translate-x-1/2 w-11 h-15 rounded-md bg-slate-800 border-2 border-amber-500 shadow-xl"></div>
+        <div id="shuffleDeckIcon" class="absolute left-1/2 top-0 -translate-x-1/2 w-11 h-15 rounded-md custom-card-back opponent-cosmetic-card ${(dealCardStyle || snapshotCardStyle()).backClass} border border-slate-500 shadow-xl" style="${(dealCardStyle || snapshotCardStyle()).frameStyle}"></div>
         ${slots}
       `;
     }
@@ -6416,12 +6442,31 @@ video {
     // overlay — deliberately separate from spawnCardFlight, since the real
     // opponent/hand DOM elements this deals to don't necessarily exist yet
     // (a fresh single-player start hasn't built the board at all at this point).
+    // Snapshots a player's card back + frame at the moment an animation
+    // starts. Uses stand-alone classes/inline styles (opponent-cosmetic-card
+    // opts out of the global body-level frame rules), so re-equipping
+    // something mid-animation can't change cards already on screen.
+    function snapshotCardStyle(player = null) {
+      const isLocal = !player || (player.id === state?.localPlayerId && !player.isBot);
+      const backId = isLocal ? equippedCosmetics.cardBack : player?.cosmetics?.cardBack;
+      const frameId = isLocal ? equippedCosmetics.frame : player?.cosmetics?.frame;
+      return {
+        backClass: isLocal ? getThemeDeckBackClass() : getCosmeticBackClass(backId || 'default'),
+        frameStyle: getCosmeticFrameStyle(frameId || 'default').replace(/!important/g, '')
+      };
+    }
+    let dealCardStyle = null;
+    function snapshotCardBackHtml(style, extraClass = '', extraStyle = '') {
+      return `<div class="${extraClass} custom-card-back opponent-cosmetic-card ${style.backClass}" style="${style.frameStyle};${extraStyle}"></div>`;
+    }
     function spawnMiniCardFlight(fromEl, toEl) {
       if (!fromEl || !toEl) return;
       const fromRect = fromEl.getBoundingClientRect();
       const toRect = toEl.getBoundingClientRect();
       const card = document.createElement('div');
-      card.className = 'fixed w-8 h-11 rounded bg-slate-700 border-2 border-amber-400 shadow-lg pointer-events-none';
+      const cs = dealCardStyle || snapshotCardStyle();
+      card.className = `fixed w-8 h-11 rounded custom-card-back opponent-cosmetic-card ${cs.backClass} border border-slate-500 shadow-lg pointer-events-none`;
+      card.style.cssText = cs.frameStyle;
       card.style.zIndex = '9999';
       card.style.left = (fromRect.left + fromRect.width / 2 - 16) + 'px';
       card.style.top = (fromRect.top + fromRect.height / 2 - 22) + 'px';
@@ -6498,6 +6543,9 @@ video {
       const overlay = document.getElementById('shuffleIntroOverlay');
       const label = document.getElementById('shuffleIntroText');
       const visual = document.getElementById('shuffleVisual');
+      // The shuffle and deal show your own card back and frame, frozen at
+      // this moment for the whole animation.
+      dealCardStyle = snapshotCardStyle();
       if (overlay) overlay.classList.remove('hidden');
       if (label) label.textContent = 'Shuffling the Deck...';
 
@@ -7994,14 +8042,22 @@ video {
       return true;
     }
 
-    function playVictoryEffect(effect) {
+    function playVictoryEffect(effect, cardStyle = null) {
       if (playShapeVictoryEffect(effect)) return;
       if (effect === 'victory-cards') {
+        // Cards wear the winner's card back and frame, frozen at the start.
+        const cs = cardStyle || snapshotCardStyle();
         const ranks = ['A','K','Q','J','10'];
         for (let i = 0; i < 26; i++) {
           const card = document.createElement('span');
-          card.className = 'victory-card-particle';
-          card.textContent = ranks[i % ranks.length];
+          if (i % 2) {
+            card.className = 'victory-card-particle vcp-back';
+            card.innerHTML = snapshotCardBackHtml(cs, 'vcp-back-face');
+          } else {
+            card.className = 'victory-card-particle';
+            card.textContent = ranks[i % ranks.length];
+            if (cs.frameStyle) card.style.cssText = cs.frameStyle;
+          }
           card.style.left = `${Math.random() * 96}%`;
           card.style.setProperty('--drift', `${Math.round((Math.random() - .5) * 180)}px`);
           card.style.setProperty('--spin', `${Math.round((Math.random() - .5) * 720)}deg`);
@@ -8036,7 +8092,7 @@ video {
         const effect = player?.id === state.localPlayerId
           ? (equippedCosmetics.victoryEffect || 'default')
           : (player?.cosmetics?.victoryEffect || 'default');
-        playVictoryEffect(isWinner ? effect : 'default');
+        playVictoryEffect(isWinner ? effect : 'default', snapshotCardStyle(player));
       } catch (error) {
         console.warn('Victory cosmetic skipped safely:', error);
       }
@@ -13670,11 +13726,11 @@ video {
     function renderPersonalisationAvatars() {
       const grid = document.getElementById('personalisationAvatars');
       if (!grid) return;
-      const shopAvatars = COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Profile Pictures');
-      const freeAvatars = BUILT_IN_COSMETICS.filter(item => item.category === 'Profile Pictures');
+      const shopAvatars = sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Profile Pictures'));
+      const freeAvatars = sortByValue(BUILT_IN_COSMETICS.filter(item => item.category === 'Profile Pictures'));
       grid.innerHTML = `<span class="avatar-picker-label">Free</span>${freeAvatars.map(avatarOptionHtml).join('')}
         <span class="avatar-picker-label">Shop</span>${shopAvatars.map(avatarOptionHtml).join('')}
-        <span class="avatar-picker-label">Earn in Ranked</span>${EARNED_AVATARS.map(avatarOptionHtml).join('')}`;
+        <span class="avatar-picker-label">Earn in Ranked</span>${sortByValue(EARNED_AVATARS).map(avatarOptionHtml).join('')}`;
     }
 
     function renderPersonalisationCosmetics() {
@@ -13686,12 +13742,12 @@ video {
       const burns = document.getElementById('personalisationBurnEffects');
       const victories = document.getElementById('personalisationVictoryEffects');
       if (!backs || !frames || !emotes || !tables || !burns || !victories) return;
-      backs.innerHTML = [null, ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Card Backs')].map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('');
-      frames.innerHTML = [null, ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Frames')].map(i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame)).join('');
-      emotes.innerHTML = [null, ...BUILT_IN_COSMETICS.filter(i => i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Emote Packs')].map(i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes)).join('');
-      tables.innerHTML = [null, ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Table Themes')].map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('');
-      burns.innerHTML = [null, ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects')].map(i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect)).join('');
-      victories.innerHTML = [null, ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Victory Effects')].map(i => personalisationOptionHtml(i, 'victoryEffect', equippedCosmetics.victoryEffect)).join('');
+      backs.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Card Backs'))].map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('');
+      frames.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Frames'))].map(i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame)).join('');
+      emotes.innerHTML = [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Emote Packs')])].map(i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes)).join('');
+      tables.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Table Themes'))].map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('');
+      burns.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects'))].map(i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect)).join('');
+      victories.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Victory Effects'))].map(i => personalisationOptionHtml(i, 'victoryEffect', equippedCosmetics.victoryEffect)).join('');
       const status = document.getElementById('personalisationStatus');
       status.textContent = currentUser ? 'Your equipped choices are saved to your account.' : 'Sign in to load and save purchased cosmetics.';
     }
@@ -13832,6 +13888,10 @@ video {
       { category: 'Victory Effects', label: 'Victory' }
     ];
     let shopTab = 'Profile Pictures';
+    // Every Shop/Custom tab lists items cheapest first, then A-Z within a price.
+    function sortByValue(items) {
+      return [...items].sort((a, b) => ((a.cost || 0) - (b.cost || 0)) || String(a.name).localeCompare(String(b.name)));
+    }
     function renderShopTabs(balance) {
       const bar = document.getElementById('shopTabBar');
       if (!bar) return;
@@ -13847,7 +13907,7 @@ video {
       renderShopTabs(balance);
       const groups = [shopTab];
       list.innerHTML = groups.map(category => {
-        const categoryItems = COSMETIC_SHOP_ITEMS.filter(item => item.category === category && shopItemMatchesFilter(item, balance));
+        const categoryItems = sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === category && shopItemMatchesFilter(item, balance)));
         if (!categoryItems.length) return '';
         const collapsed = collapsedShopCategories.has(category);
         const items = categoryItems.map(item => {
@@ -21834,6 +21894,38 @@ video {
         layer.innerHTML = '';
         const prices = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Victory Effects').map(i => [i.name, i.cost]));
         assertEqual(prices, { 'Confetti Burst': 250, 'Card Shower': 1500, 'Fireworks': 750, 'Sparkler Salute': 750, '5-Star Finish': 1000, 'Karate Chop': 2000 }, 'Victory effect prices');
+      });
+
+      await test('REGRESSION: Shop and Custom tabs list cheapest first, then A-Z', () => {
+        const savedTab = shopTab, savedFilter = shopFilter;
+        shopFilter = 'all';
+        COSMETIC_TABS.forEach(tab => {
+          shopTab = tab.category; renderCosmeticShop();
+          const ids = [...document.querySelectorAll('#cosmeticShopList [data-preview-cosmetic-id]')].map(b => b.dataset.previewCosmeticId);
+          const items = ids.map(id => COSMETIC_SHOP_ITEMS.find(i => i.id === id));
+          items.forEach((item, i) => { if (i) assertTrue(items[i - 1].cost < item.cost || (items[i - 1].cost === item.cost && items[i - 1].name.localeCompare(item.name) <= 0), `${tab.label}: ${items[i - 1].name} must come before ${item.name}`); });
+        });
+        shopTab = savedTab; shopFilter = savedFilter; renderCosmeticShop();
+        renderPersonalisationCosmetics();
+        const burnNames = [...document.querySelectorAll('#personalisationBurnEffects .avatar-option-name')].map(n => n.textContent).slice(1);
+        assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show'], 'Custom burn tiles in value order');
+      });
+      await test('REGRESSION: Card Shower and the deal freeze the relevant player\'s card style at the start', () => {
+        const saved = { ...equippedCosmetics };
+        try {
+          equippedCosmetics.cardBack = 'back-neon'; equippedCosmetics.frame = 'frame-gold';
+          const mine = snapshotCardStyle();
+          assertEqual(mine.backClass, 'cosmetic-back-neon', 'Your own card back');
+          assertTrue(mine.frameStyle.includes('#fbbf24'), 'Your own frame');
+          const theirs = snapshotCardStyle({ id: 'p2', cosmetics: { cardBack: 'back-crimson', frame: 'frame-diamond' } });
+          assertEqual(theirs.backClass, 'cosmetic-back-crimson', 'The winner\'s card back, not yours');
+          document.querySelectorAll('.victory-card-particle').forEach(n => n.remove());
+          playVictoryEffect('victory-cards', theirs);
+          equippedCosmetics.cardBack = 'back-emerald';
+          const backs = [...document.querySelectorAll('.victory-card-particle .vcp-back-face')];
+          assertTrue(backs.length > 0 && backs.every(b => b.classList.contains('cosmetic-back-crimson') && b.classList.contains('opponent-cosmetic-card')), 'Shower keeps the snapshot even after a re-equip');
+          document.querySelectorAll('.victory-card-particle').forEach(n => n.remove());
+        } finally { Object.assign(equippedCosmetics, saved); }
       });
 
       await test('Accessibility settings exist and apply', () => {
