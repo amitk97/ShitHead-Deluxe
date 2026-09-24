@@ -1016,7 +1016,9 @@
     /* Seats are sized for the picture + a 12-character name (set per
        opponent count in render), with padding so card-frame glows are
        never clipped by the seat edge. */
-    .opp-seat { min-width:var(--opp-seat-w, 112px); padding:6px 8px 5px !important; }
+    .opp-seat { min-width:var(--opp-seat-w, 112px); padding:6px 8px 5px !important; row-gap:8px !important; }
+    /* Face-up cards sit tilted and nudged up; keep them clear of the picture. */
+    .opp-seat .opp-head { margin-bottom:3px; }
     .opp-seat .opp-name { font-size:var(--opp-name-size, 9px); letter-spacing:.03em; }
     .opp-head { cursor:pointer; border-radius:8px; }
     .opp-head:focus-visible { outline:2px solid #f59e0b; outline-offset:2px; }
@@ -4563,6 +4565,7 @@ video {
         </div>
         <p id="supportValidationMsg" class="hidden text-[9px] font-bold text-rose-400"></p>
         <p id="supportErrorMsg" class="hidden text-[9px] font-bold text-rose-400"></p>
+        <p class="text-[8px] text-slate-500 text-center">Flag emoji on Windows: Twemoji by Twitter, CC-BY 4.0.</p>
         <p id="supportSuccessMsg" class="hidden text-[10px] font-bold text-emerald-400 text-center py-2">&#9989; Email draft opened. Please press Send in your email app.</p>
         <button id="supportSendBtn" class="w-full text-[11px] font-black py-2 rounded-lg border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition">OPEN EMAIL</button>
         <div>
@@ -5466,6 +5469,7 @@ video {
       const light = 'radial-gradient(circle,rgba(226,232,240,.7),rgba(148,163,184,.35) 50%,transparent 70%)';
       const dark = 'radial-gradient(circle,rgba(30,41,59,.85),rgba(15,23,42,.45) 50%,transparent 70%)';
       const tints = ['radial-gradient(circle,rgba(167,139,250,.5),rgba(76,29,149,.2) 55%,transparent 72%)', 'radial-gradient(circle,rgba(45,212,191,.42),rgba(17,94,89,.18) 55%,transparent 72%)'];
+      // Whole effect finishes within 2 seconds (delay + duration <= 2000ms).
       // 1) A dense ground ring that rolls outward from the pile.
       for (let i = 0; i < 16; i++) {
         const size = bfxRand(50, 90) * k;
@@ -5475,7 +5479,7 @@ video {
           { transform: 'translate(0,0) scale(.3)', opacity: 0 },
           { transform: `translate(${dir * bfxRand(20, 50) * k}px, ${-bfxRand(0, 10) * k}px) scale(1)`, opacity: .95, offset: .2 },
           { transform: `translate(${dir * bfxRand(110, 190) * k}px, ${-bfxRand(10, 40) * k}px) scale(${bfxRand(1.8, 2.6)})`, opacity: 0 }
-        ], { duration: bfxRand(2200, 3000), delay: bfxRand(0, 250), easing: 'cubic-bezier(.2,.7,.3,1)' });
+        ], { duration: bfxRand(1500, 1800), delay: bfxRand(0, 200), easing: 'cubic-bezier(.2,.7,.3,1)' });
       }
       // 2) A tall swirling column with a few coloured wisps through it.
       for (let i = 0; i < 34; i++) {
@@ -5489,11 +5493,11 @@ video {
           { transform: `translate(${sway * 22 * k}px, ${-rise * .25}px) rotate(${sway * 60}deg) scale(1)`, opacity: .92, offset: .22 },
           { transform: `translate(${-sway * 30 * k}px, ${-rise * .6}px) rotate(${sway * 140}deg) scale(1.6)`, opacity: .6, offset: .6 },
           { transform: `translate(${sway * bfxRand(40, 90) * k}px, ${-rise}px) rotate(${sway * 220}deg) scale(${bfxRand(2, 2.8)})`, opacity: 0 }
-        ], { duration: bfxRand(2400, 3400), delay: bfxRand(0, 900), easing: 'ease-out' });
+        ], { duration: bfxRand(1300, 1650), delay: bfxRand(0, 350), easing: 'ease-out' });
       }
       // 3) A brief dark flash at the base so it reads as a "puff" moment.
       const core = bfxAdd(host, puff(90 * k, dark, 8 * k), x, y, 90 * k, 60 * k);
-      bfxAnimate(core, [{ transform: 'scale(.4)', opacity: .95 }, { transform: 'scale(1.8)', opacity: 0 }], { duration: 900, easing: 'ease-out' });
+      bfxAnimate(core, [{ transform: 'scale(.4)', opacity: .95 }, { transform: 'scale(1.8)', opacity: 0 }], { duration: 700, easing: 'ease-out' });
     }
     function playBurnFx(id, host, x, y, scale = 1) {
       if (!host) return false;
@@ -7288,6 +7292,11 @@ video {
       // once the pile has actually been emptied. See the field's own comment
       // on the state object for why this exists.
       state.burnResolving = true;
+      // Any bot action or turn check scheduled before this burn is now stale.
+      if (state.botActionTimer) { clearTimeout(state.botActionTimer); state.botActionTimer = null; }
+      // A "no legal move" choice opened against the pre-burn pile is void:
+      // the burner plays again on an empty pile.
+      if (state.pendingFaceUpSacrifice) { state.pendingFaceUpSacrifice = null; state.selectedSacrificeIds = []; }
       // Credit the burn to whoever caused it, sized by what was destroyed.
       bumpStat(player, 'burnt', state.discardPile.length);
       audio.burn();
@@ -7397,7 +7406,19 @@ video {
     // of them) must ALSO move into the hand along with the pile. This is the
     // single entry point every "no legal move" path routes through, so the
     // rule is applied consistently everywhere it can trigger.
+    // True when this player genuinely has no legal move RIGHT NOW. A
+    // "no legal move" decision can be scheduled a moment before a burn lands
+    // (or reached while the burn's hold is still showing the old pile), so
+    // every such path re-checks here against the live, post-burn state.
+    function stillHasNoLegalMove(player) {
+      if (!player || state.burnResolving || state.phase !== 'PLAY') return false;
+      if (state.players[state.currentTurnIndex]?.id !== player.id) return false;
+      return getLegalMovesForPlayer(player, state.discardPile, state.activeConstraint).length === 0;
+    }
     function handleNoLegalMove(player, difficulty) {
+      // Never while a burn is resolving, and never on a pile that has since
+      // been burnt: an empty pile always has a legal move.
+      if (!stillHasNoLegalMove(player)) return;
       const hasFaceUp = player.faceUp && player.faceUp.length > 0;
 
       if (canAccessFaceUp(player) && hasFaceUp) {
@@ -7465,6 +7486,7 @@ video {
     // timer applies, and times out into a random (medium-style) choice if
     // they don't decide — the game can never stall waiting on this.
     function beginFaceUpSacrificeChoice(playerId) {
+      if (!stillHasNoLegalMove(state.players.find(p => p.id === playerId))) return;
       state.pendingFaceUpSacrifice = { playerId };
       state.selectedSacrificeIds = [];
       if (state.isMultiplayer) {
@@ -9583,6 +9605,10 @@ video {
 
     function checkTurnAndAct() {
       if (state.phase !== 'PLAY') return;
+      // Mid-burn the pile still shows the burnt cards and their constraint
+      // (e.g. "7 or lower"). finishBurn re-triggers the turn once it's clear,
+      // so acting now would judge the burner's hand against a dead pile.
+      if (state.burnResolving) return;
       // Same guard as triggerNextTurn — belt-and-braces. This function is
       // what actually plays a card on the Coach's behalf, so it must never
       // act while a tutorial step has scripted control of the board, even
@@ -10322,7 +10348,7 @@ video {
         turnTxt.className = isMyTurn ? "text-[10px] md:text-[11px] font-black tracking-widest uppercase text-emerald-400 animate-pulse" : "text-[10px] md:text-[11px] font-black tracking-widest uppercase text-amber-400";
       }
 
-      if (state.isMultiplayer && isMyTurn && !state.pendingFollowUp && !state.pendingFaceUpSacrifice) {
+      if (state.isMultiplayer && isMyTurn && !state.pendingFollowUp && !state.pendingFaceUpSacrifice && !state.burnResolving) {
         if (mpLastCheckedTurnIndex !== state.currentTurnIndex) {
           mpLastCheckedTurnIndex = state.currentTurnIndex;
           mpTimeoutFired = false;
@@ -13272,6 +13298,35 @@ video {
     };
 
     document.body.insertAdjacentHTML('afterbegin', AVATAR_DEFS_SVG);
+    // Windows' emoji font has no country flags (they show as two letters,
+    // e.g. "GB"). If this device can't draw a flag, load Twemoji's flag-only
+    // font (CC-BY 4.0, via country-flag-emoji-polyfill) for flag characters
+    // only; every other character keeps the normal fonts. Devices that
+    // already draw flags (phones, Macs) are left untouched.
+    (function installFlagEmojiFallback() {
+      const drawsFlags = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = canvas.height = 24;
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          ctx.textBaseline = 'top';
+          ctx.font = '20px sans-serif';
+          ctx.fillText('\u{1F1EC}\u{1F1E7}', 0, 0);
+          const px = ctx.getImageData(0, 0, 24, 24).data;
+          for (let i = 0; i < px.length; i += 4) {
+            if (px[i + 3] > 0 && (Math.abs(px[i] - px[i + 1]) > 40 || Math.abs(px[i + 1] - px[i + 2]) > 40)) return true;
+          }
+          return false;
+        } catch (e) { return true; }
+      };
+      if (drawsFlags()) return;
+      const style = document.createElement('style');
+      style.id = 'flagEmojiFallback';
+      style.textContent = "@font-face{font-family:'Twemoji Country Flags';unicode-range:U+1F1E6-1F1FF,U+1F3F4,U+E0062-E0063,U+E0065,U+E0067,U+E006C,U+E006E,U+E0073-E0074,U+E0077,U+E007F;src:url('https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1/dist/TwemojiCountryFlags.woff2') format('woff2');font-display:swap;}"
+        + "body{font-family:'Twemoji Country Flags','Outfit',sans-serif;}";
+      document.head.appendChild(style);
+      document.body.classList.add('flag-font-fallback');
+    })();
     const DEFAULT_AVATAR_ID = 'avatar-crown-bronze';
     function resolveAvatarId(id) {
       return AVATAR_ART[id] ? id : DEFAULT_AVATAR_ID;
@@ -13748,7 +13803,7 @@ video {
       const freeAvatars = sortByValue(BUILT_IN_COSMETICS.filter(item => item.category === 'Profile Pictures'));
       grid.innerHTML = `<span class="avatar-picker-label">Free</span>${freeAvatars.map(avatarOptionHtml).join('')}
         <span class="avatar-picker-label">Shop</span>${shopAvatars.map(avatarOptionHtml).join('')}
-        <span class="avatar-picker-label">Earn in Ranked</span>${sortByValue(EARNED_AVATARS).map(avatarOptionHtml).join('')}`;
+        <span class="avatar-picker-label">Earn in Ranked</span>${EARNED_AVATARS.map(avatarOptionHtml).join('')}`;
     }
 
     function renderPersonalisationCosmetics() {
@@ -22014,6 +22069,51 @@ video {
           currentUser = null; updateHamburgerAccountLabel();
           assertTrue(document.getElementById('menuSignOutBtn').classList.contains('hidden'), 'Sign Out hides when signed out');
         } finally { currentUser = savedUser; auth = savedAuth; signOutResetting = false; window.__skipSignOutReload = false; updateHamburgerAccountLabel(); }
+      });
+
+      await test('REGRESSION: a 4-of-a-kind burn across turns leaves the burner free to play anything next', async () => {
+        freshState({ phase: 'PLAY', currentTurnIndex: 0 });
+        const me = makePlayer({ id: 'p1', hand: [makeCard('7', '♥'), makeCard('7', '♦'), makeCard('7', '♣')], faceUp: [makeCard('J', '♣'), makeCard('J', '♥'), makeCard('A', '♣')], faceDown: [makeCard('4'), makeCard('5'), makeCard('6')] });
+        const bot = makePlayer({ id: 'p2', name: 'Giulia', isBot: true, hand: [makeCard('9')], faceUp: [], faceDown: [makeCard('K')] });
+        state.players = [me, bot];
+        state.discardPile = [makeCard('7', '♠')];
+        state.activeConstraint = 'LOW7';
+        state.localPlayerId = 'p1';
+        const wasInstant = burnInstantResolveForTests;
+        burnInstantResolveForTests = false; // the real timed hold, where the bug lived
+        try {
+        executePlayCards('p1', [...me.hand]);
+        assertTrue(state.burnResolving, 'The 4th seven starts a burn');
+        // The exact race from the bug report: a turn check lands during the burn hold.
+        checkTurnAndAct();
+        handleNoLegalMove(state.players[0], 'medium');
+        assertTrue(!state.pendingFaceUpSacrifice, 'No "no legal move" choice may open against the burning pile');
+        await new Promise(r => setTimeout(r, 750));
+        assertTrue(!state.burnResolving && state.discardPile.length === 0, 'The pile is burnt');
+        assertEqual(state.activeConstraint, null, 'The 7-or-lower rule is gone after the burn');
+        assertEqual(state.players[state.currentTurnIndex].id, 'p1', 'The burner plays again');
+        const moves = getLegalMovesForPlayer(state.players[0], state.discardPile, state.activeConstraint);
+        assertTrue(moves.some(m => m.some ? m.some(c => c.rank === 'J') : m.rank === 'J'), 'Face-up J (or anything) is playable on the empty pile');
+        assertTrue(!state.pendingFaceUpSacrifice, 'Still no bogus pick-up choice once the burn has cleared');
+        } finally {
+          burnInstantResolveForTests = wasInstant;
+          if (state.botActionTimer) clearTimeout(state.botActionTimer);
+        }
+      });
+
+      await test('REGRESSION: Smoke Show lasts 2 seconds and earn-only pictures stay in milestone order', () => {
+        const stage = document.getElementById('personalisationBurnStage');
+        stage.querySelectorAll('.bfx').forEach(n => n.remove());
+        const before = new Set(document.getAnimations());
+        playBurnFx('burn-smoke', stage, 120, 80, .6);
+        const smoke = document.getAnimations().filter(a => !before.has(a));
+        const longest = Math.max(...smoke.map(a => { const t = a.effect.getTiming(); return (t.delay || 0) + t.duration; }));
+        assertTrue(smoke.length > 20 && longest <= 2000, `Smoke Show must finish within 2s (longest ${Math.round(longest)}ms)`);
+        smoke.forEach(a => a.cancel());
+        stage.querySelectorAll('.bfx').forEach(n => n.remove());
+        renderPersonalisationAvatars();
+        const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-6);
+        assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead'], 'Earn-only pictures in milestone order');
       });
 
       await test('Accessibility settings exist and apply', () => {
