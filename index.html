@@ -1142,8 +1142,6 @@
     .mi-wiggle { animation: miWiggle .6s var(--ease-soft); }
     @keyframes miBadgeBounce { 0% { scale: .3; } 55% { scale: 1.35; } 100% { scale: 1; } }
     .mi-badge-bounce { animation: miBadgeBounce .5s var(--ease-spring); }
-    /* Joker spotlight beam. */
-    .joker-beam { position: fixed; inset: 0; z-index: 185; pointer-events: none; overflow: visible; }
     /* Crisp 3D flip-in for face-up cards arriving on a table and the pile view. */
     #localTableSlots, .opp-slot-row, #inspectCardsContainer { perspective: 600px; }
     @keyframes miFlipIn { 0% { rotate: y 90deg; scale: .9; filter: brightness(.55); } 60% { rotate: y -10deg; scale: 1.04; filter: brightness(1.15); } 100% { rotate: y 0deg; scale: 1; filter: none; } }
@@ -6169,34 +6167,6 @@ video {
       setTimeout(() => balanceEl.animate([{ scale: 1 }, { scale: 1.2 }, { scale: 1 }], { duration: 420, easing: EASE.spring }), 850 + count * 55 - 150);
     }
 
-    // Joker spotlight: a glowing beam draws from the Joker player's seat to
-    // the target, whose seat flashes red, just before they pick up.
-    function playJokerSpotlight(fromPlayerId, toPlayerId) {
-      if (motionOff() || typeof Element.prototype.animate !== 'function') return;
-      const a = getPlayerAnimationTarget(fromPlayerId), b = getPlayerAnimationTarget(toPlayerId);
-      if (!a || !b) return;
-      const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-      const x1 = ra.left + ra.width / 2, y1 = ra.top + ra.height / 2, x2 = rb.left + rb.width / 2, y2 = rb.top + rb.height / 2;
-      const len = Math.hypot(x2 - x1, y2 - y1);
-      if (len < 10) return;
-      const ns = 'http://www.w3.org/2000/svg';
-      const svg = document.createElementNS(ns, 'svg');
-      svg.setAttribute('class', 'joker-beam');
-      svg.setAttribute('width', innerWidth); svg.setAttribute('height', innerHeight);
-      svg.innerHTML = `<defs><linearGradient id="jkBeam" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#f43f5e"/></linearGradient>
-        <filter id="jkGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="url(#jkBeam)" stroke-width="6" stroke-linecap="round" filter="url(#jkGlow)" stroke-dasharray="${len}" stroke-dashoffset="${len}"/>
-        <circle cx="${x2}" cy="${y2}" r="6" fill="#f43f5e" filter="url(#jkGlow)" opacity="0"/>
-        <text x="${x1}" y="${y1 - 18}" text-anchor="middle" font-size="22">🃏</text>`;
-      document.body.appendChild(svg);
-      const line = svg.querySelector('line'), dot = svg.querySelector('circle'), icon = svg.querySelector('text');
-      line.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 380, easing: EASE.soft, fill: 'forwards' });
-      icon.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 250, fill: 'forwards' });
-      dot.animate([{ opacity: 0, r: 4 }, { opacity: 1, r: 26 }, { opacity: 0, r: 40 }], { duration: 520, delay: 360, easing: EASE.soft, fill: 'forwards' });
-      b.animate([{ filter: 'none' }, { filter: 'drop-shadow(0 0 14px rgba(244,63,94,.95)) brightness(1.2)' }, { filter: 'none' }], { duration: 700, delay: 360, easing: EASE.soft });
-      svg.animate([{ opacity: 1 }, { opacity: 1, offset: .7 }, { opacity: 0 }], { duration: 1150, fill: 'forwards' }).finished.then(() => svg.remove(), () => svg.remove());
-    }
-
     // Pop-ups and pages spring in when they open (see watchOverlayEntrances).
     function springIn(panel) {
       if (!panel || motionOff() || typeof panel.animate !== 'function') return;
@@ -8443,7 +8413,6 @@ video {
         state.lastJokerInitiatorId = null;
         state.jokerTurnOwnerId = null;
         if (originalInitiator && originalInitiator.id !== initiator.id) {
-          playJokerSpotlight(initiator.id, originalInitiator.id); // the counter sends it back
           state.discardPile = state.discardPile.filter(c => !c.isJoker);
           recordHistory(initiator.name, [jokerCard]);
           audio.burn();
@@ -8542,7 +8511,6 @@ video {
     }
 
     function resolveJokerDuelInstant(initiator, target, initialJoker) {
-      if (initiator && target) playJokerSpotlight(initiator.id, target.id);
       state.lastJokerInitiatorId = null;
       state.jokerTurnOwnerId = null;
       state.jokerTurnLockConsumedPending = false;
