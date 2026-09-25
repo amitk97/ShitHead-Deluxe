@@ -1022,6 +1022,35 @@ async function runDevTestSuite() {
     });
     assertTrue(EMOTE_FLOAT_Z > emoteZ, 'Floating reactions show above the picker');
   });
+  await test('Last card: exactly one card left in total (not two of a rank) flags the seat and alerts once', () => {
+    freshState({ phase: 'PLAY', localPlayerId: 'me' });
+    const me = makePlayer({ id: 'me', hand: [makeCard('4'), makeCard('9')] });
+    const noah = makePlayer({ id: 'noah', name: 'Noah', isBot: true, hand: [makeCard('7', '♠'), makeCard('7', '♥')] });
+    state.players = [me, noah];
+    lastCardAlerted.clear();
+    assertTrue(!isOnLastCard(noah), 'Two cards of the same rank is not a last card');
+    noah.hand = []; noah.faceDown = [makeCard('K')];
+    assertTrue(isOnLastCard(noah), 'One face-down card left is a last card');
+    const banners = [];
+    const originalBanner = notifyBanner;
+    notifyBanner = (m) => banners.push(m);
+    try {
+      announceLastCards(); announceLastCards();
+      assertEqual(banners.length, 1, 'Announced once, not on every render');
+      assertTrue(banners[0].includes('Noah') && banners[0].includes('LAST CARD'), 'Names the player');
+      noah.hand = [makeCard('2'), makeCard('3'), makeCard('5')]; // picked up
+      announceLastCards();
+      noah.hand = [];
+      announceLastCards();
+      assertEqual(banners.length, 2, 'Announced again after picking up and getting back to one card');
+      me.hand = [makeCard('4')];
+      announceLastCards();
+      assertEqual(banners.length, 2, 'No banner for your own last card');
+    } finally { notifyBanner = originalBanner; lastCardAlerted.clear(); }
+    render();
+    const seat = document.getElementById('opp-noah');
+    assertTrue(seat && seat.classList.contains('opp-last-card') && !!seat.querySelector('.last-card-chip'), 'The seat shows the LAST CARD chip');
+  });
   await test('Every Burn cosmetic (and the default) has its own burn sound', () => {
     assertTrue(typeof BURN_SOUNDS.default === 'function', 'A default burn sound exists');
     const missing = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && typeof BURN_SOUNDS[i.id] !== 'function').map(i => i.id);

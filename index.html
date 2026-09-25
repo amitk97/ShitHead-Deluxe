@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v122 (ShitHead-Deluxe-122) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v123 (ShitHead-Deluxe-123) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -606,6 +606,10 @@
     .mh-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; text-align:center; }
     .mh-stats b { display:block; font-size:12px; color:#f8fafc; }
     .mh-stats span { font-size:7px; font-weight:800; text-transform:uppercase; color:#94a3b8; }
+    .last-card-chip { font-size:8px; font-weight:900; letter-spacing:.06em; padding:0 6px; height:15px; display:flex; align-items:center; border-radius:999px; background:#be123c; color:#fff; border:1px solid #fda4af; white-space:nowrap; animation:last-card-pulse 1.1s var(--ease-soft) infinite; }
+    .opp-seat.opp-last-card { border-color:#f43f5e !important; box-shadow:0 0 0 1px rgba(244,63,94,.6), 0 0 16px rgba(244,63,94,.45) !important; }
+    @keyframes last-card-pulse { 0%,100% { transform:scale(1); box-shadow:0 0 0 0 rgba(244,63,94,.6); } 50% { transform:scale(1.08); box-shadow:0 0 0 5px rgba(244,63,94,0); } }
+    body.reduce-motion .last-card-chip { animation:none; }
     .finished-box-wrap { display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; }
     .finished-leave-btn { min-width:128px; padding:8px 22px; border-radius:12px; border:2px solid #e11d48; background:rgba(76,5,25,.75); color:#fda4af; font-size:12px; font-weight:900; letter-spacing:.14em; box-shadow:0 6px 18px rgba(0,0,0,.45); }
     .friends-online-count { font-size:10px; font-weight:800; color:#94a3b8; text-align:center; margin:0 0 6px; }
@@ -5867,6 +5871,20 @@ video {
           o.connect(f).connect(g).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + 0.06);
         });
       }
+      /* An opponent is down to their last card: two quick, soft rising pings. */
+      playLastCard() {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime;
+        [[988, 0], [1480, 0.11]].forEach(([freq, at]) => {
+          const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(freq, t0 + at);
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime(0.14 * vol, t0 + at + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + 0.28);
+          o.connect(g).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + 0.3);
+        });
+      }
       /* Last five seconds of your online turn: one soft tick per second. */
       playTick() {
         const ctx = this.ctx;
@@ -9399,6 +9417,7 @@ video {
       msShown = { bars: {}, rewards: 0, done: new Set(), rankup: null };
       matchWinnerEffectShown = false;
       matchHistoryCurrentId = null; // the next finish is a new entry
+      if (typeof lastCardAlerted !== 'undefined') lastCardAlerted.clear();
       if (typeof resetMatchSummary === 'function') resetMatchSummary();
       document.getElementById('quickPlayMatchBtn')?.classList.add('hidden');
       document.getElementById('playAgainMatchBtn')?.classList.add('hidden');
@@ -10997,6 +11016,29 @@ video {
     // Inbox and menu pages 95…), so they never show over the mailbox or
     // Settings. A dev test checks this.
     const EMOTE_FLOAT_Z = 78;
+
+    // ---- One card left ----
+    // A player is on their last card when exactly ONE card is left across
+    // hand, face-up and face-down (two cards of the same rank don't count).
+    // Their seat gets a pulsing LAST CARD chip; the moment an opponent gets
+    // there, a banner + soft double chime + buzz, once until they have more
+    // cards again (e.g. after picking up).
+    function totalCardsHeld(p) { return (p?.hand?.length || 0) + (p?.faceUp?.length || 0) + (p?.faceDown?.length || 0); }
+    function isOnLastCard(p) {
+      return !!p && state.phase === 'PLAY' && !p.hasFinished && totalCardsHeld(p) === 1 && !isMatchDecided();
+    }
+    const lastCardAlerted = new Set();
+    function announceLastCards() {
+      state.players.forEach((p) => {
+        if (!isOnLastCard(p)) { lastCardAlerted.delete(p.id); return; }
+        if (lastCardAlerted.has(p.id)) return;
+        lastCardAlerted.add(p.id);
+        if (p.id === state.localPlayerId || tutorialActive) return;
+        notifyBanner(`☝️ ${p.name} is on their LAST CARD!`);
+        audio.playLastCard();
+        Haptics.vibrate([20, 60, 20]);
+      });
+    }
     function showEmoteFloat(emoji, playerId) {
       const isOwn = playerId === state.localPlayerId;
       if (emotesMuted && !isOwn) return;
@@ -11678,11 +11720,12 @@ video {
       const oppAvatarSize = Math.round(18 * oppScale);
       state.players.filter(p => p.id !== state.localPlayerId).forEach(p => {
         const isTurn = currentTurnPlayer && currentTurnPlayer.id === p.id && !p.hasFinished;
+        const onLastCard = isOnLastCard(p);
         const oppDiv = document.createElement('div');
         oppDiv.id = `opp-${p.id}`;
         oppDiv.className = `opp-seat flex flex-col items-center gap-1 p-1 rounded-2xl border transition-all ${
           isTurn ? 'border-amber-400 bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-turn-pulse scale-105' : 'border-slate-800 bg-slate-900/60'
-        } ${p.hasFinished ? 'opacity-40 grayscale scale-95' : ''}`;
+        } ${p.hasFinished ? 'opacity-40 grayscale scale-95' : ''} ${onLastCard ? 'opp-last-card' : ''}`;
         
         let tableSlotsHtml = '';
 
@@ -11789,6 +11832,7 @@ video {
           <div class="opp-status-row">
             ${botBadgeHtml}
             ${statusBadgeHtml}
+            ${onLastCard ? '<span class="last-card-chip" data-tip="Only one card left">☝️ LAST CARD</span>' : ''}
             <span id="opp-timer-${p.id}" class="hidden text-[7px] md:text-[8px] font-black px-1.5 h-[15px] shrink-0 flex items-center justify-center rounded-full bg-rose-950/70 text-rose-300 border border-rose-600">15s</span>
             ${kickBtnHtml}
           </div>
@@ -11796,6 +11840,7 @@ video {
         oppContainer.appendChild(oppDiv);
       });
       fitOpponentSeats(oppContainer, oppScale);
+      announceLastCards();
 
       // 2. Discard, Deck & Base HUD
       const discardWrapper = document.getElementById('discardCardsWrapper');

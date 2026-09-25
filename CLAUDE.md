@@ -84,6 +84,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - The emote picker (`#emoteLayer`, z-index 65 inline) is above everything on the table, including the end-of-match standings and buttons (60); floating reactions (`EMOTE_FLOAT_Z` = 78, `showEmoteFloat`) are above all table banners too. Both stay BELOW every pop-up and page (summary 79, Guide 80, Settings 85, Inbox/menu pages 95+), so they never show over the mailbox or Settings. A dev test checks both sides; keep new table UI under 65 and new pop-ups above 78.
 
+## Last card alert
+
+- `isOnLastCard(p)`: PLAY phase, not finished, exactly ONE card across hand + face-up + face-down (two of a rank never counts). The seat gets `.opp-last-card` and a pulsing `☝️ LAST CARD` chip (render); `announceLastCards` (end of the opponents block in `render`) banners + `audio.playLastCard()` + buzz once per opponent until their count changes again (`lastCardAlerted`, cleared in `hideMatchEndUI`). Never for your own seat or in the tutorial.
+
 ## Online sync pitfalls (the cause of "Ranked/online lags and freezes")
 
 - Firebase never stores empty arrays: a player whose Hand or Face-Up has run out arrives with that zone missing. The room listener refills `hand`/`faceUp`/`faceDown` with `[]` before use; never treat a missing zone as damage (`localDealLooksIncomplete` only flags a live seat with no cards at all).
