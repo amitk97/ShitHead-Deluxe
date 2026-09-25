@@ -4686,6 +4686,26 @@ async function runDevTestSuite() {
     }
   });
 
+  await test('Hand Sort: rank by default; power order is 4,5,6,7,8,9,J,Q,K,A,10,2,3,Joker', () => {
+    const saved = handSortByPower;
+    try {
+      const ranks = ['JOKER', '3', '2', '10', 'A', 'K', 'Q', 'J', '9', '8', '7', '6', '5', '4'];
+      const cards = ranks.map((r, i) => ({ id: 'hs' + i, rank: r, isJoker: r === 'JOKER' }));
+      handSortByPower = false;
+      assertEqual([...cards].sort((a, b) => handSortValue(a) - handSortValue(b)).map(c => c.rank).join(','), '2,3,4,5,6,7,8,9,10,J,Q,K,A,JOKER', 'Off = by rank');
+      handSortByPower = true;
+      assertEqual([...cards].sort((a, b) => handSortValue(a) - handSortValue(b)).map(c => c.rank).join(','), '4,5,6,7,8,9,J,Q,K,A,10,2,3,JOKER', 'On = by power');
+      assertTrue(!!document.getElementById('setHandSortRow'), 'Settings → Gameplay has the Hand Sort row');
+      assertTrue('handSortByPower' in collectAccountSettings(), 'Synced with the account settings');
+    } finally { handSortByPower = saved; }
+  });
+
+  await test('Invite links: ?join=<6 digits> is the only accepted form, and the share link points at the game', () => {
+    assertEqual(inviteLinkFor('123456'), 'https://shithead-pro.web.app/?join=123456', 'Link format');
+    assertTrue(!!document.getElementById('shareInviteLinkBtn'), 'The lobby has a Share Invite Link button');
+    assertEqual(inviteCodeFromUrl(), null, 'No join code on the test page');
+  });
+
   await test('Notifications fire only for new gifts, invites and friend requests (not ones already waiting)', () => {
     const realShow = showAppNotification;
     const shown = [];

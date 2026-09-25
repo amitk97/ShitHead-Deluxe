@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v133 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v134 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -4329,6 +4329,9 @@ video {
               <button id="copyRoomCodeBtn" class="mt-1.5 px-2.5 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider text-amber-300 transition flex items-center gap-1.5">
                 <span id="copyRoomCodeIcon">📋</span><span id="copyRoomCodeLabel">Copy Code</span>
               </button>
+              <button id="shareInviteLinkBtn" class="mt-1.5 px-2.5 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider text-sky-300 transition flex items-center gap-1.5">
+                <span id="shareInviteLinkIcon">🔗</span><span id="shareInviteLinkLabel">Share Invite Link</span>
+              </button>
               <button id="lobbyInviteFriendsBtn" class="mt-1.5 px-2.5 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider text-emerald-300 transition flex items-center gap-1.5">
                 <span>👥</span><span>Invite Friends</span>
               </button>
@@ -4553,6 +4556,11 @@ video {
               <button id="speedResetBtn" class="text-[10px] font-black px-2 py-0.5 rounded border border-slate-600 text-slate-300 hover:border-amber-500 hover:text-amber-400 transition">RESET</button>
             </span>
           </div>
+        <button id="setHandSortRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="hand sort, sort, order, arrange, power, rank, cards order">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Hand Sort</span>
+          <span id="setHandSortDesc" class="block text-[8px] text-slate-400 leading-snug">Off: by rank. On: by power</span></span>
+          <span id="setHandSortState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
         <button id="setRankRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="multi select, rank select, tap select, quick select, select all">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Select All Of A Rank</span>
           <span class="block text-[8px] text-slate-400 leading-snug">One tap selects every card of that rank</span></span>
@@ -6939,6 +6947,15 @@ video {
       '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
       'J': 11, 'Q': 12, 'K': 13, 'A': 14, 'JOKER': 99
     };
+    // Settings → Hand Sort ON ("by power"): weakest to strongest, as the
+    // owner ranks them. Power cards go last: 10 (burn), 2 (reset), 3
+    // (transparent), then the Joker.
+    const POWER_SORT_ORDER = ['4', '5', '6', '7', '8', '9', 'J', 'Q', 'K', 'A', '10', '2', '3', 'JOKER'];
+    const HAND_SORT_POWER_VALUES = Object.fromEntries(POWER_SORT_ORDER.map((r, i) => [r, i]));
+    function handSortValue(card) {
+      const rank = card && (card.isJoker ? 'JOKER' : card.rank);
+      return handSortByPower ? (HAND_SORT_POWER_VALUES[rank] ?? 99) : (HAND_SORT_VALUES[rank] ?? 99);
+    }
 
     function generateDeck() {
       let deck = [];
@@ -10501,6 +10518,7 @@ video {
     let lastRenderWasMyTurn = false;
     let notificationsOn = readPref('shithead_notifications', false);
     let dealAnimationOn = readPref('shithead_deal_animation', true);
+    let handSortByPower = readPref('shithead_hand_sort_power', false); // Hand Sort: OFF = by rank, ON = by power
     let masterVolume = (() => {
       try { const v = localStorage.getItem('shithead_volume'); return v === null ? 85 : parseInt(v, 10); }
       catch (e) { return 85; }
@@ -12101,7 +12119,7 @@ video {
       handContainer.innerHTML = '';
       
       local.hand = local.hand || [];
-      local.hand.sort((a, b) => HAND_SORT_VALUES[a.rank] - HAND_SORT_VALUES[b.rank]);
+      local.hand.sort((a, b) => handSortValue(a) - handSortValue(b));
 
       const handRows = computeHandRows(local.hand);
       const rowCount = handRows.length;
@@ -14479,6 +14497,11 @@ video {
       paintToggle(document.getElementById('setTurnAlertState'), turnAlertOn);
       paintToggle(document.getElementById('setNotifySoundState'), notifySoundOn);
       paintToggle(document.getElementById('setDealAnimState'), dealAnimationOn);
+      paintToggle(document.getElementById('setHandSortState'), handSortByPower);
+      const handSortDesc = document.getElementById('setHandSortDesc');
+      if (handSortDesc) handSortDesc.textContent = handSortByPower
+        ? 'By power: 4 to A, then 10, 2, 3, Joker'
+        : 'By rank: 2 to A (on sorts by power)';
       if (typeof paintNotifyToggle === 'function') paintNotifyToggle();
       const vs = document.getElementById('volumeSlider');
       const vl = document.getElementById('volumeLabel');
@@ -14993,6 +15016,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v134: [
+        ['🔗', 'Invite links: in an Online Room, tap SHARE INVITE LINK and send it on WhatsApp or anywhere. Friends tap it to jump straight into your room.'],
+        ['🃏', 'Hand Sort (Settings → Gameplay): turn it on to sort your hand by power (4 up to A, then 10, 2, 3, Joker) instead of by rank.']
+      ],
       v130: [
         ['🎯', 'New Getting Started challenges: play your first game (ShitHead Virgin) and win your first game (Beginner), 20 Diamonds each.']
       ],
@@ -18057,6 +18084,7 @@ video {
         turnAlertOn: !!turnAlertOn,
         notifySoundOn: !!notifySoundOn,
         dealAnimationOn: !!dealAnimationOn,
+        handSortByPower: !!handSortByPower,
         emotesMuted: !!emotesMuted,
         botCount: readBotPrefs().count,
         botDifficulty: readBotPrefs().difficulty
@@ -18089,6 +18117,7 @@ video {
           ['turnAlertOn','shithead_turn_alert',v => { turnAlertOn=v; }],
           ['notifySoundOn','shithead_notify_sound',v => { notifySoundOn=v; }],
           ['dealAnimationOn','shithead_deal_animation',v => { dealAnimationOn=v; }],
+          ['handSortByPower','shithead_hand_sort_power',v => { handSortByPower=v; }],
           ['emotesMuted','shithead_emotes_muted',v => { emotesMuted=v; }]
         ];
         boolPrefs.forEach(([key, storageKey, assign]) => {
@@ -18513,6 +18542,7 @@ video {
     setupPasswordToggle('togglePasswordBtn', 'authPasswordInput');
     setupPasswordToggle('toggleConfirmPasswordBtn', 'authConfirmPasswordInput');
 
+    let authStateResolved = !firebaseAvailable; // first auth answer arrived (invite links wait for it)
     if (firebaseAvailable) {
       // A password-account user who never verified shouldn't stay signed in
       // just because Firebase persists sessions locally — this check runs
@@ -18520,6 +18550,7 @@ video {
       // unverified session from an earlier visit gets caught too, not only
       // the moment right after signing up.
       auth.onAuthStateChanged((user) => {
+        authStateResolved = true;
         const isUnverifiedPasswordUser = user && !user.emailVerified && user.providerData.some((p) => p.providerId === 'password');
         if (isUnverifiedPasswordUser) {
           auth.signOut();
@@ -21855,6 +21886,11 @@ video {
       dealAnimationOn = !dealAnimationOn; writePref('shithead_deal_animation', dealAnimationOn);
       refreshSettingsUI(); scheduleSettingsCloudSave();
     });
+    document.getElementById('setHandSortRow').addEventListener('click', () => {
+      handSortByPower = !handSortByPower; writePref('shithead_hand_sort_power', handSortByPower);
+      refreshSettingsUI(); scheduleSettingsCloudSave();
+      if (state.phase && state.phase !== 'LOBBY') render();
+    });
     document.getElementById('volumeSlider').addEventListener('input', (e) => {
       masterVolume = parseInt(e.target.value, 10);
       try { localStorage.setItem('shithead_volume', String(masterVolume)); } catch (err) {}
@@ -22001,31 +22037,34 @@ video {
     // older execCommand path is a genuine necessity here, not just belt and
     // braces. If both fail, the code text itself is selectable as a last
     // resort.
-    document.getElementById('copyRoomCodeBtn').addEventListener('click', async () => {
-      const code = state.roomCode || document.getElementById('prominentRoomCode').textContent.trim();
-      if (!code || code === '------') return;
-
-      let copied = false;
+    async function copyTextToClipboard(text) {
       try {
         if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(code);
-          copied = true;
+          await navigator.clipboard.writeText(text);
+          return true;
         }
       } catch (e) { /* fall through to the legacy path below */ }
-
-      if (!copied) {
-        try {
-          const ta = document.createElement('textarea');
-          ta.value = code;
-          ta.setAttribute('readonly', '');
-          ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
-          document.body.appendChild(ta);
-          ta.select();
-          ta.setSelectionRange(0, code.length); // iOS needs an explicit range
-          copied = document.execCommand('copy');
-          ta.remove();
-        } catch (e) { copied = false; }
-      }
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, text.length); // iOS needs an explicit range
+        const copied = document.execCommand('copy');
+        ta.remove();
+        return copied;
+      } catch (e) { return false; }
+    }
+    function currentLobbyRoomCode() {
+      const code = state.roomCode || document.getElementById('prominentRoomCode').textContent.trim();
+      return /^[0-9]{6}$/.test(code || '') ? code : null;
+    }
+    document.getElementById('copyRoomCodeBtn').addEventListener('click', async () => {
+      const code = currentLobbyRoomCode();
+      if (!code) return;
+      const copied = await copyTextToClipboard(code);
 
       const label = document.getElementById('copyRoomCodeLabel');
       const icon = document.getElementById('copyRoomCodeIcon');
@@ -22042,6 +22081,70 @@ video {
         label.textContent = 'Copy Code';
       }, 1800);
     });
+
+    // § Invite links: https://shithead-pro.web.app/?join=<code> opens the game
+    // straight into that room (handleInviteLinkOnLoad). The lobby's Share
+    // Invite Link button sends it through the phone's share sheet (WhatsApp
+    // etc.), or copies it where sharing isn't available.
+    const INVITE_LINK_BASE = 'https://shithead-pro.web.app/';
+    function inviteLinkFor(code) { return `${INVITE_LINK_BASE}?join=${encodeURIComponent(code)}`; }
+    async function shareInviteLink(code) {
+      const url = inviteLinkFor(code);
+      const text = `Play ShitHead with me! Tap to join my room (code ${code}):`;
+      if (navigator.share) {
+        try { await navigator.share({ title: 'ShitHead Deluxe', text, url }); return 'shared'; }
+        catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+      }
+      return (await copyTextToClipboard(`${text} ${url}`)) ? 'copied' : 'failed';
+    }
+    document.getElementById('shareInviteLinkBtn').addEventListener('click', async () => {
+      const code = currentLobbyRoomCode();
+      if (!code) return;
+      const result = await shareInviteLink(code);
+      const label = document.getElementById('shareInviteLinkLabel');
+      const icon = document.getElementById('shareInviteLinkIcon');
+      if (result === 'copied') { icon.textContent = '✅'; label.textContent = 'Link copied!'; Haptics.vibrate(20); }
+      else if (result === 'failed') { icon.textContent = '⚠️'; label.textContent = inviteLinkFor(code).replace('https://', ''); }
+      else return;
+      setTimeout(() => { icon.textContent = '🔗'; label.textContent = 'Share Invite Link'; }, result === 'failed' ? 6000 : 1800);
+    });
+    // Arriving from an invite link: wait for sign-in to settle (so the seat is
+    // tied to the account), then open Online Room with the code filled in and
+    // join, or ask for a nickname first. Never interrupts a match or rejoin.
+    function inviteCodeFromUrl() {
+      const code = new URLSearchParams(location.search).get('join');
+      return /^[0-9]{6}$/.test(code || '') ? code : null;
+    }
+    function handleInviteLinkOnLoad() {
+      const code = inviteCodeFromUrl();
+      if (!code) return;
+      const params = new URLSearchParams(location.search);
+      params.delete('join');
+      history.replaceState(history.state, '', location.pathname + (params.toString() ? `?${params}` : '') + location.hash);
+      let attempt = 0;
+      const tryJoin = () => {
+        attempt++;
+        // Sign-in first (the seat is tied to the account), then a beat for a
+        // pending "Rejoin your match?" check and the account nickname.
+        if (!authStateResolved && attempt < 16) { setTimeout(tryJoin, 250); return; }
+        if (attempt < 100) { attempt = 100; setTimeout(tryJoin, 1200); return; }
+        if (state.isMultiplayer || (state.phase && state.phase !== 'LOBBY')) return;
+        if (!document.getElementById('rejoinModal')?.classList.contains('hidden')) return;
+        if (isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
+        document.getElementById('modeMultiBtn').click();
+        document.getElementById('joinCodeInput').value = code;
+        const nameInput = document.getElementById('playerNameInput');
+        if (nameInput && nameInput.value.trim()) {
+          notifyBanner(`🔗 Joining room ${code}…`);
+          joinMultiRoom();
+        } else {
+          notifyBanner(`🔗 Enter a nickname, then tap JOIN to enter room ${code}.`);
+          requireValidName();
+        }
+      };
+      setTimeout(tryJoin, 600);
+    }
+    if (!IS_DEV_TEST_PAGE) handleInviteLinkOnLoad();
 
     document.getElementById('emoteToggleBtn').addEventListener('click', (e) => {
       e.stopPropagation();

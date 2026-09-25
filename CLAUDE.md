@@ -35,10 +35,15 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Adding a picture also needs the rules updated: `equippedCosmetics/avatar` id list and the `shopPurchases` price list.
 - The page's Tailwind CSS is precompiled: new utility class names silently do nothing. Use custom CSS classes or inline styles for new UI.
 
+## Card power order (the owner's ranking, weakest → strongest)
+
+- **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, Joker.** This is `POWER_SORT_ORDER` in index.html. Use it wherever cards are ordered "by power" (Hand Sort, and anything new that ranks card strength), not `RANK_VALUES` (which is the play-legality rank).
+
 ## Settings
 
 - Tabs like the Shop (`SETTINGS_TABS`: Gameplay, Display, Sound & Alerts, Accessibility; last tab in localStorage `shithead_settings_tab`). Each tab is a `.settings-tab-panel`; search looks across every tab and clearing it returns to the chosen one. "Helper Icons" reads ON when shown (pref is still `shithead_hide_helpers`).
 - Order: tabs by how often they're used; inside a tab the main slider first, then rows alphabetical (a test checks this).
+- Hand Sort (Gameplay tab, `handSortByPower`, localStorage `shithead_hand_sort_power`, synced as `handSortByPower` in `users/{uid}/settings`): OFF (default) sorts the hand by rank 2→A (`HAND_SORT_VALUES`), ON by power (`POWER_SORT_ORDER`). Applied in `render` via `handSortValue`.
 - Turn Alert (`turnAlertOn`, `audio/turn.mp3` at `TURN_ALERT_GAIN` = 8% of the volume: the owner wants it faint) chimes in `render` when `isMyTurn` goes false → true. Notification Sound (`notifySoundOn`, `audio/notify.mp3`) chimes when `notifyNewInboxItems` sees a new invite/request/gift. Both default on and sync to `users/{uid}/settings`.
 
 ## Blind flip reveal
@@ -175,6 +180,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Rejoin, friends & small prefs
 
 - The current room is kept in sessionStorage `shithead_joined_room` plus localStorage `shithead_active_match` ({code, at, playerId, name}, 3h): always use `rememberJoinedRoom` / `forgetJoinedRoom` / `joinedRoomRecord`. On load (`attemptMatchReconnect`, after auth; guests too) a live match rejoins: Ranked automatically by uid, casual after the "Rejoin your match?" prompt (`#rejoinModal`; seat by uid, stored id, or name incl. a "Name (Bot)" stand-in, which is handed back via `reclaimSubstitutedSeat`).
+- Invite links: `https://shithead-pro.web.app/?join=<code>` (`inviteLinkFor`). The lobby's SHARE INVITE LINK (`#shareInviteLinkBtn` → `shareInviteLink`: share sheet, else copies text + link). Arriving (`handleInviteLinkOnLoad`, not on the test page): strips `join` from the URL, waits for the first auth answer (`authStateResolved`) plus 1.2s, then does nothing if already in a room/match or the Rejoin prompt is up; otherwise opens Online Room with the code filled and joins, or asks for a nickname first.
 - Friends: online first with "N of M online"; INVITE from inside a casual lobby invites into that room (`inviteableRoomCode`), otherwise it opens a new one. The lobby has an Invite Friends button.
 - Match history: `recordMatchHistory` (from `showMatchEndUI`, once per match via `matchHistoryCurrentId`, reset in `hideMatchEndUI`) saves the last 30 to localStorage `shithead_match_history_<uid|guest>` and, signed in, `users/{uid}/matchHistory/{id}` (pruned to 30). `patchMatchHistory` adds late Diamonds (`logMatchReward`) and the Ranked rating change. Shown in Stats → Match History (`matchHistoryHtml`; tabs via `statsTab`, localStorage `shithead_stats_tab`).
 - Burn sounds: `BURN_SOUNDS[burnId]` recipes (synthesised via `SoundFX._burnKit`), one per Burn cosmetic plus `default`; `audio.burn(burnEffectIdFor(player))` in `executeBurn` and Joker counters, remote players hear it from `lastCosmeticEffect` (skipped by the sender via its `by` field), Shop preview plays it.
