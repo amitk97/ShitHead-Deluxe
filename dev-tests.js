@@ -3564,6 +3564,55 @@ async function runDevTestSuite() {
       assertEqual(typeof collectAccountSettings().whatsNewOn, 'boolean', 'It syncs with the account settings');
     } finally { if (whatsNewOn !== was) row.click(); }
   });
+  await test('Friends show when they are in a match; WATCH opens it read-only from their seat', async () => {
+    let row = friendRowHtml('u1', { username: 'Jamie', online: true, playing: { mode: 'online', room: '424242', at: 1 } }, 'friend');
+    assertTrue(row.includes('In a match · Online Room') && row.includes('friend-watch-btn') && row.includes('data-room="424242"'), 'An online match offers WATCH');
+    row = friendRowHtml('u1', { username: 'Jamie', online: true, playing: { mode: 'bots', at: 1 } }, 'friend');
+    assertTrue(row.includes('In a match · Vs Bots') && !row.includes('friend-watch-btn') && row.includes('friend-invite-btn'), 'A bot game shows the status but nothing to watch');
+    row = friendRowHtml('u1', { username: 'Jamie', online: false, playing: { mode: 'ranked', room: '424242', at: 1 } }, 'friend');
+    assertTrue(!row.includes('In a match'), 'A stale status on an offline friend is ignored');
+
+    freshState({ phase: 'LOBBY' });
+    state.roomCode = null; state.players = []; state.localPlayerId = 'me';
+    const card = (id, rank) => ({ id, rank, suit: '♥' });
+    const room = { phase: 'PLAY', isRanked: true, matchId: 'm1', currentTurnIndex: 0, direction: 1, drawPile: [], discardPile: [card('d1', '5')],
+      players: [ { id: 'p_host', uid: 'friend', name: 'Jamie', hand: [card('h1', 'A'), card('h2', 'K')], faceUp: [card('f1', '9')], faceDown: [card('x1', '3')] },
+                 { id: 'p_room1', uid: 'other', name: 'Rival', hand: [card('h3', '7')], faceUp: [], faceDown: [card('x2', '2')] } ] };
+    const writes = [];
+    let listener = null;
+    db = { ref: (path) => ({
+      once: () => Promise.resolve({ val: () => room }),
+      on: (ev, cb) => { listener = cb; }, off: () => { listener = null; },
+      set: (v) => { writes.push(path); return Promise.resolve(); }, update: (v) => { writes.push(path); return Promise.resolve(); },
+      remove: () => { writes.push(path); return Promise.resolve(); },
+      transaction: () => { writes.push(path); return Promise.resolve({}); },
+      onDisconnect: () => ({ set: () => {}, remove: () => {} })
+    }) };
+    const realReload = reloadCleanly; let reloaded = false;
+    reloadCleanly = () => { reloaded = true; };
+    try {
+      await startSpectating('424242', 'friend', 'Jamie');
+      assertTrue(!!state.spectating && state.spectating.seatId === 'p_host', 'Watching the friend\'s seat');
+      assertTrue(state.localPlayerId !== 'p_host' && !state.players.some(p => p.id === state.localPlayerId), 'The spectator holds no seat');
+      assertEqual(hasMatchAuthority(), false, 'A spectator never has match authority, even in Ranked');
+      const seat = state.players.find(p => p.id === 'p_host');
+      assertTrue(seat.hand.length === 2 && seat.hand.every(c => c.hidden && c.rank !== 'A' && c.rank !== 'K'), 'A Ranked hand reaches the spectator as a count only');
+      const shown = [...document.querySelectorAll('#localHand [data-card-id]')];
+      assertTrue(shown.length === 2 && shown.every(el => el.classList.contains('custom-card-back') && !/[AK]/.test(el.textContent)), 'The hand is drawn as card backs');
+      assertTrue(/Watching Jamie/.test(document.getElementById('spectateBar')?.textContent || ''), 'The Watching bar shows');
+      syncFirebaseGameState(); updatePlayersAtomic('424242', l => l); saveFinalMatchStats(); await leaveMultiplayerRoom();
+      assertEqual(writes.filter(w => w.startsWith('rooms/')), [], 'Nothing is ever written to the room');
+      room.currentTurnIndex = 1; listener({ val: () => room });
+      assertEqual(state.currentTurnIndex, 1, 'Live updates follow the room');
+      document.getElementById('leaveGameBtn').click();
+      assertTrue(reloaded && !state.spectating && !document.getElementById('spectateBar'), 'Exit leaves spectating and resets the page');
+    } finally {
+      reloadCleanly = realReload;
+      if (state.spectating) { state.spectating = null; }
+      document.body.classList.remove('spectating');
+      document.getElementById('spectateBar')?.remove();
+    }
+  });
   await test('Friends list: online friends first; inviting from a casual lobby uses that room', () => {
     freshState({ isMultiplayer: true, isRanked: false, roomCode: '424242', phase: 'LOBBY' });
     assertEqual(inviteableRoomCode(), '424242', 'Lobby of a casual room');

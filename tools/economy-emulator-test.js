@@ -240,6 +240,14 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   r = await call('bob', { action: 'sync' });
   ok(r.newAvatars.some(a => a.id === 'avatar-crown-gold') && r.claimed.some(c => c.id === 'reach-gold'), 'sync: Gold Crown + Reach Gold from the real rating', r);
 
+  // Friends' "in a match" status
+  await allowed('set own playing status', db => set(ref(db, 'publicProfiles/alice/playing'), { mode: 'online', room: '424242', at: 1 }));
+  await allowed('bots status without a room', db => set(ref(db, 'publicProfiles/alice/playing'), { mode: 'bots', at: 1 }));
+  await allowed('clear playing status', db => set(ref(db, 'publicProfiles/alice/playing'), null));
+  await denied('bad playing mode', db => set(ref(db, 'publicProfiles/alice/playing'), { mode: 'hacked', at: 1 }));
+  await denied('bad playing room', db => set(ref(db, 'publicProfiles/alice/playing'), { mode: 'online', room: '../x', at: 1 }));
+  await denied("someone else's playing status", db => set(ref(db, 'publicProfiles/bob/playing'), { mode: 'bots', at: 1 }));
+
   console.log(`\n${pass} passed, ${failN} failed`);
   process.exit(failN ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });

@@ -330,6 +330,16 @@
         "online": {
           ".validate": "newData.isBoolean()"
         },
+        "playing": {
+          ".validate": "newData.hasChildren(['mode', 'at']) && newData.child('at').isNumber() &&
+            newData.child('mode').isString() && newData.child('mode').val().matches(/^(bots|online|ranked)$/)",
+          "room": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9]{6}$/)"
+          },
+          "$other": {
+            ".validate": "$other === 'mode' || $other === 'at' || $other === 'room'"
+          }
+        },
         "avatar": {
           ".validate": "!newData.exists() || (newData.isString() &&
             newData.val().matches(/^(default|avatar-[a-z-]{3,30})$/))"

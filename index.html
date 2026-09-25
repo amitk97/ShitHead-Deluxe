@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v141 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v142 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -572,6 +572,13 @@
     .friend-rank { font-size:10px; font-weight:800; color:rgba(251,191,36,.9); white-space:nowrap; }
     .friend-status { font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; color:#64748b; }
     .friend-status.online { color:#34d399; }
+    .friend-status.playing { color:#fbbf24; text-transform:none; letter-spacing:.02em; }
+    #spectateBar { position:fixed; left:50%; transform:translateX(-50%); top:calc(var(--header-h) + 6px); z-index:64; display:flex; align-items:center; gap:10px; padding:6px 8px 6px 12px; border-radius:999px; border:1px solid #0891b2; background:rgba(8,47,73,.92); color:#a5f3fc; font-size:11px; font-weight:900; box-shadow:0 6px 18px rgba(0,0,0,.45); white-space:nowrap; max-width:calc(100vw - 24px); }
+    #spectateBar button { padding:4px 12px; border-radius:999px; background:#0891b2; color:#020617; font-weight:900; font-size:10px; letter-spacing:.08em; }
+    body.spectating #gameTable { pointer-events:none; }
+    body.spectating #roomCodeBadge { display:none !important; }
+    body.spectating #swapControlBar, body.spectating #playActionControls, body.spectating #sacrificeControlBar, body.spectating #emoteLayer, body.spectating #matchEndButtonRow { display:none !important; }
+    body.spectating #opponentsContainer { margin-top:40px; }
     /* Pull-to-refresh strip above the Inbox / Friends lists (attachPullToRefresh) */
     .ptr-indicator { height:0; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:6px; font-size:10px; font-weight:800; color:#94a3b8; opacity:0; transition: height .22s var(--ease-soft), opacity .22s var(--ease-soft); }
     .ptr-indicator.is-dragging { transition: none; }
@@ -630,6 +637,8 @@
     .friend-action--gift:hover { background:#db2777; color:#fff; }
     .friend-action--go { border-color:#059669; color:#34d399; }
     .friend-action--go:hover { background:#059669; color:#020617; }
+    .friend-action--watch { border-color:#0891b2; color:#67e8f9; }
+    .friend-action--watch:hover { background:#0891b2; color:#020617; }
     .friend-action--danger:hover { border-color:#f43f5e; color:#fb7185; }
     .friend-action--warn:hover { border-color:#f59e0b; color:#fbbf24; }
     .presence-dot.online { background: #10b981; box-shadow: 0 0 4px #10b981; }
@@ -6693,6 +6702,7 @@ video {
     //   § Ranked matchmaking
     //   § Challenges and Diamonds economy (paid by the server: functions/economy.js)
     //   § Social: profiles, presence, friends, invites, inbox
+    //   § Spectating a friend's match (read-only)
     //   § Installable app and notifications
     //   § Settings page
     //   § Invite links
@@ -8406,7 +8416,7 @@ video {
       });
     }
     function saveFinalMatchStats() {
-      if (!state.isMultiplayer || !state.roomCode || !state.matchId || typeof db === 'undefined' || !firebaseAvailable) return;
+      if (state.spectating || !state.isMultiplayer || !state.roomCode || !state.matchId || typeof db === 'undefined' || !firebaseAvailable) return;
       const matchId = state.matchId;
       const known = matchStatsPlayers().filter(p => p.gameStats || p.lobbyStats).map(statsCopy);
       if (!known.length) return;
@@ -9463,6 +9473,7 @@ video {
 
     // § Match end, victory and standings
     function showMatchEndUI() {
+      if (state.spectating) { render(); return; } // spectators just see the final table
       // Ranked's rating update is now self-writes-only (see
       // applyRankedRatingUpdate's comment) — every client independently
       // notices phase === 'FINISHED' and writes its OWN rating, so this no
@@ -11471,6 +11482,12 @@ video {
       // about, rather than every card in that zone. Purely additive; no
       // existing selector or behavior depends on this attribute's absence.
       el.dataset.rank = card.rank;
+      if (card.hidden) { // a watched Ranked hand: only its backs reach the spectator
+        el.dataset.rank = '';
+        el.className = `relative ${isHand ? 'card-base hand-card hand-card-stacked' : 'card-table'} rounded-xl custom-card-back ${getThemeDeckBackClass()} flex items-center justify-center shadow-lg shrink-0 select-none`;
+        el.innerHTML = getEmblemSvg();
+        return el;
+      }
       el.draggable = false; // native HTML5 DnD is replaced by the unified pointer-drag system below
       
       const sizeClass = isOpponent ? 'card-opponent-slot' : (isHand ? 'card-base' : 'card-table');
@@ -11756,9 +11773,12 @@ video {
     };
 
     // § Rendering: the table
+    // The seat drawn at the bottom: yours, or the friend you're watching.
+    function viewSeatId() { return state.spectating ? state.spectating.seatId : state.localPlayerId; }
     function render() {
       cleanupDrag(); // a re-render can remove the card element mid-drag; never leave a stuck ghost behind
-      const local = state.players.find(p => p.id === state.localPlayerId);
+      const viewId = viewSeatId();
+      const local = state.players.find(p => p.id === viewId);
       if (!local) return;
 
       const handCountEl = document.getElementById('handCountValue');
@@ -11780,7 +11800,7 @@ video {
       }
 
       const currentTurnPlayer = state.players[state.currentTurnIndex];
-      const isMyTurn = currentTurnPlayer && currentTurnPlayer.id === local.id && state.phase === 'PLAY' && !local.hasFinished;
+      const isMyTurn = !state.spectating && currentTurnPlayer && currentTurnPlayer.id === local.id && state.phase === 'PLAY' && !local.hasFinished;
       // Chime once as the turn arrives (Settings → Turn Alert), never for
       // the scripted tutorial or while the test suite drives the table.
       if (isMyTurn && !lastRenderWasMyTurn && !tutorialActive && !devTestSuiteRunning) {
@@ -11846,7 +11866,7 @@ video {
       // 1. Layered Opponents Zone
       const oppContainer = document.getElementById('opponentsContainer');
       oppContainer.innerHTML = '';
-      const opponentCount = state.players.filter(p => p.id !== state.localPlayerId).length;
+      const opponentCount = state.players.filter(p => p.id !== viewId).length;
       // The base card size is already tuned for the worst case of 3 opponents
       // needing to fit side by side — with fewer, there's genuinely spare
       // width being wasted, so this scales cards up accordingly.
@@ -11861,7 +11881,7 @@ video {
       oppContainer.style.setProperty('--opp-name-size', opponentCount <= 1 ? '12px' : opponentCount === 2 ? '10px' : '8px');
       ensureBotAvatars(state.players);
       const oppAvatarSize = Math.round(18 * oppScale);
-      state.players.filter(p => p.id !== state.localPlayerId).forEach(p => {
+      state.players.filter(p => p.id !== viewId).forEach(p => {
         const isTurn = currentTurnPlayer && currentTurnPlayer.id === p.id && !p.hasFinished;
         const onLastCard = isOnLastCard(p);
         const oppDiv = document.createElement('div');
@@ -12690,6 +12710,7 @@ video {
       return (Array.isArray(players) ? players : Object.values(players || {})).filter(p => p && p.id);
     }
     function updatePlayersAtomic(roomCode, updater, onComplete) {
+      if (state.spectating) return;
       db.ref(`rooms/${roomCode}/players`).transaction((currentRaw) => {
         const currentList = roomPlayerList(currentRaw);
         const result = updater(currentList);
@@ -12704,7 +12725,7 @@ video {
 
     // § Online rooms: sync, host, join, leave
     function syncFirebaseGameState() {
-      if (!state.isMultiplayer || !state.roomCode) return;
+      if (!state.isMultiplayer || !state.roomCode || state.spectating) return;
       state.stateVersion = (state.stateVersion || 0) + 1;
       const syncedState = {
         matchId: state.matchId || null,
@@ -13066,6 +13087,7 @@ video {
     // A leaving host passes the host role on. Resolves after the write, or
     // after 2s at most so a bad connection can't trap anyone on the page.
     function leaveMultiplayerRoom() {
+      if (state.spectating) return Promise.resolve();
       if (!state.isMultiplayer || !state.roomCode || !state.localPlayerId) return Promise.resolve();
       const code = state.roomCode;
       const myId = state.localPlayerId;
@@ -13151,6 +13173,7 @@ video {
     // see kickPlayer/kickPlayerMidMatch) since that's a genuinely different
     // concern from "keep the match itself from freezing".
     function hasMatchAuthority() {
+      if (state.spectating) return false; // a spectator never acts for anyone
       return state.isHost || state.isRanked;
     }
 
@@ -15157,6 +15180,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v142: [
+        ['🎮', 'Friends list shows who is in a match, and in which mode.'],
+        ['👀', "Tap WATCH to spectate a friend's online or Ranked game live (Ranked hands stay hidden)."]
+      ],
       v141: [
         ['📊', 'Match Stats still show players who left, even after you reload or rejoin.'],
         ['📜', "Match History now keeps everyone's numbers: tap a match to compare."]
@@ -20453,6 +20480,8 @@ video {
         if (snap.val() === true) {
           presenceRef.onDisconnect().set(false);
           presenceRef.set(true);
+          db.ref(`publicProfiles/${currentUser.uid}/playing`).onDisconnect().remove();
+          lastPlayingKey = null; syncPlayingStatus(); // re-assert after a reconnect
         }
       });
     }
@@ -20490,7 +20519,9 @@ video {
       const name = escapeHtml(rawName);
       const safeUid = escapeAttr(uid);
       const presenceClass = profile.online ? 'online' : 'offline';
-      const onlineHtml = type === 'friend' ? `<span class="friend-status ${presenceClass}">${profile.online ? 'Online' : 'Offline'}</span>` : '';
+      const playing = profile.online ? friendPlaying(profile) : null;
+      const onlineHtml = type === 'friend'
+        ? `<span class="friend-status ${playing ? 'playing' : presenceClass}">${playing ? `🎮 In a match · ${playing.label}` : profile.online ? 'Online' : 'Offline'}</span>` : '';
       // Friend requests use a synthetic profile ({username, from the
       // request itself) with no rating — publicProfiles was never fetched
       // for them, so this naturally stays blank there rather than showing
@@ -20505,7 +20536,9 @@ video {
       if (type === 'friend') {
         actions = [
           btn('friend-gift-btn friend-action--gift', '🎁 GIFT', `data-name="${escapeAttr(rawName)}" aria-label="Send ${escapeAttr(rawName)} a gift"`),
-          btn('friend-invite-btn friend-action--go', inviteableRoomCode() ? 'INVITE HERE' : 'INVITE', `data-name="${escapeAttr(rawName)}" aria-label="Invite ${escapeAttr(rawName)} to play"`),
+          playing && playing.room
+            ? btn('friend-watch-btn friend-action--watch', '👀 WATCH', `data-name="${escapeAttr(rawName)}" data-room="${escapeAttr(playing.room)}" aria-label="Watch ${escapeAttr(rawName)}'s match"`)
+            : btn('friend-invite-btn friend-action--go', inviteableRoomCode() ? 'INVITE HERE' : 'INVITE', `data-name="${escapeAttr(rawName)}" aria-label="Invite ${escapeAttr(rawName)} to play"`),
           btn('friend-unfriend-btn friend-action--danger', 'UNFRIEND'),
           btn('friend-ignore-btn friend-action--warn', 'IGNORE')
         ];
@@ -20658,6 +20691,7 @@ video {
       const uid = btn.dataset.uid;
       if (btn.classList.contains('friend-gift-btn')) startGiftForFriend(uid, btn.dataset.name);
       else if (btn.classList.contains('friend-invite-btn')) sendGameInvite(uid, btn.dataset.name);
+      else if (btn.classList.contains('friend-watch-btn')) startSpectating(btn.dataset.room, uid, btn.dataset.name);
       else if (btn.classList.contains('friend-unfriend-btn')) unfriend(uid);
       else if (btn.classList.contains('friend-unignore-btn')) unignore(uid);
       else if (btn.classList.contains('friend-accept-btn')) acceptFriendRequest(uid);
@@ -20988,6 +21022,125 @@ video {
       if (summary.nextExpiry !== null) {
         inboxBadgeExpiryTimer = setTimeout(refreshInboxBadge, Math.max(50, summary.nextExpiry - serverNow() + 50));
       }
+    }
+
+    // § Spectating a friend's match (read-only)
+    // Friends see who is in a match: publicProfiles/{uid}/playing =
+    // { mode: bots|online|ranked, room (online/ranked only), at }, written
+    // only when it changes and removed on disconnect. WATCH opens that room
+    // read-only: the spectator has its own listener that only copies the
+    // table into state and renders it from the friend's seat (viewSeatId).
+    // localPlayerId is a dummy that matches no seat and every room write
+    // is refused while state.spectating is set, so a spectator can never
+    // play, time out, drive bots or score anything for anyone.
+    let lastPlayingKey = null;
+    function currentPlayingStatus() {
+      if (!state) return null;
+      const inMatch = (state.phase === 'SWAP' || state.phase === 'PLAY') && !tutorialActive && !state.spectating
+        && !!state.localPlayerId && state.players.some(p => p.id === state.localPlayerId);
+      if (!inMatch) return null;
+      const mode = state.isRanked ? 'ranked' : state.isMultiplayer ? 'online' : 'bots';
+      return mode === 'bots' || !state.roomCode ? { mode } : { mode, room: String(state.roomCode) };
+    }
+    function syncPlayingStatus() {
+      if (!currentUser || typeof db === 'undefined' || !firebaseAvailable || devTestSuiteRunning) return;
+      const status = currentPlayingStatus();
+      const key = status ? `${status.mode}|${status.room || ''}` : 'none';
+      if (key === lastPlayingKey) return;
+      lastPlayingKey = key;
+      const ref = db.ref(`publicProfiles/${currentUser.uid}/playing`);
+      (status ? ref.set({ ...status, at: firebase.database.ServerValue.TIMESTAMP }) : ref.remove()).catch(() => { lastPlayingKey = null; });
+    }
+    setInterval(syncPlayingStatus, 5000);
+    const PLAYING_LABELS = { bots: 'Vs Bots', online: 'Online Room', ranked: 'Ranked' };
+    function friendPlaying(profile) {
+      const p = profile && profile.playing;
+      if (!p || !PLAYING_LABELS[p.mode]) return null;
+      return { mode: p.mode, label: PLAYING_LABELS[p.mode], room: /^[0-9]{6}$/.test(String(p.room || '')) ? String(p.room) : null };
+    }
+    let spectateRef = null;
+    const SPECTATOR_ID = '__spectator__';
+    function startSpectating(code, friendUid, friendName) {
+      if (!/^[0-9]{6}$/.test(String(code || ''))) return;
+      if (state.spectating) stopSpectating();
+      if ((state.phase === 'SWAP' || state.phase === 'PLAY') || state.roomCode) {
+        notifyBanner('Finish or leave your own game first.');
+        return;
+      }
+      if (isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
+      return db.ref(`rooms/${code}`).once('value').then((snap) => {
+        const data = snap.val();
+        const seat = data && roomPlayerList(data.players).find(p => p.uid === friendUid);
+        if (!data || !seat || !['SWAP', 'PLAY', 'FINISHED'].includes(data.phase)) {
+          notifyBanner(`${friendName || 'Your friend'} isn't in a match any more.`);
+          return;
+        }
+        document.getElementById('friendsModal')?.classList.add('hidden');
+        state.spectating = { code: String(code), uid: friendUid, name: friendName || seat.name || 'Friend', seatId: seat.id, ranked: !!data.isRanked };
+        state.localPlayerId = SPECTATOR_ID;
+        state.isMultiplayer = true;
+        state.isRanked = !!data.isRanked;
+        state.isHost = false;
+        state.roomCode = null; // nothing that writes to a room has a code to write to
+        document.body.classList.add('spectating');
+        applySpectatedRoom(data);
+        dismissLobbyAndStart();
+        showSpectateBar();
+        spectateRef = db.ref(`rooms/${code}`);
+        spectateRef.on('value', (s) => {
+          if (!state.spectating) return;
+          const d = s.val();
+          if (!d || !roomPlayerList(d.players).some(p => p.id === state.spectating.seatId)) {
+            notifyBanner(`${state.spectating.name}'s match has ended.`);
+            setTimeout(stopSpectating, 2500);
+            return;
+          }
+          applySpectatedRoom(d);
+        });
+      }).catch(() => notifyBanner("Couldn't open that match."));
+    }
+    function applySpectatedRoom(data) {
+      const seatId = state.spectating.seatId;
+      state.players = roomPlayerList(data.players).map((p) => {
+        const q = { ...p, hand: p.hand || [], faceUp: p.faceUp || [], faceDown: p.faceDown || [] };
+        // Ranked hands stay private: the spectator only gets the count.
+        if (p.id === seatId && state.spectating.ranked) q.hand = q.hand.map((c, i) => ({ id: `hidden-${i}`, rank: '4', suit: '♠', hidden: true }));
+        return q;
+      });
+      state.phase = data.phase || state.phase;
+      state.matchId = data.matchId || state.matchId;
+      state.drawPile = data.drawPile || [];
+      state.discardPile = data.discardPile || [];
+      state.playedHistory = data.playedHistory || [];
+      state.currentTurnIndex = data.currentTurnIndex || 0;
+      state.jokerTurnOwnerId = data.jokerTurnOwnerId || null;
+      state.direction = data.direction || 1;
+      state.activeConstraint = data.activeConstraint || null;
+      state.baseOverrideCard = data.baseOverrideCard || null;
+      state.turnDeadline = data.turnDeadline || null;
+      state.selectedPlayCardIds = [];
+      render();
+      updateDirectionBadge();
+    }
+    function showSpectateBar() {
+      let bar = document.getElementById('spectateBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'spectateBar';
+        bar.innerHTML = '<span id="spectateBarText"></span><button type="button" id="spectateLeaveBtn">LEAVE</button>';
+        document.body.appendChild(bar);
+        bar.querySelector('#spectateLeaveBtn').addEventListener('click', stopSpectating);
+      }
+      bar.querySelector('#spectateBarText').textContent = `👀 Watching ${state.spectating.name}${state.spectating.ranked ? ' · Ranked, hand hidden' : ''}`;
+      bar.classList.remove('hidden');
+    }
+    function stopSpectating() {
+      if (spectateRef) { spectateRef.off(); spectateRef = null; }
+      if (!state.spectating) return;
+      state.spectating = null;
+      document.body.classList.remove('spectating');
+      document.getElementById('spectateBar')?.remove();
+      reloadCleanly(); // back to a fresh home screen, nothing of the watched match left in state
     }
 
     // § Installable app and notifications
@@ -22038,6 +22191,7 @@ video {
     });
 
     document.getElementById('leaveGameBtn').addEventListener('click', () => {
+      if (state.spectating) { stopSpectating(); return; }
       const midMatch = state.phase === 'PLAY' || state.phase === 'SWAP';
       const msg = midMatch && state.isRanked && state.isMultiplayer
         ? "Leave this Ranked match? A bot takes your seat and it counts as a LOSS: your rating will go down."
