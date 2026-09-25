@@ -3801,6 +3801,41 @@ async function runDevTestSuite() {
     closeHamburgerMenu();
   });
 
+  await test('Leaderboard and Friends list update live when someone changes their picture', async () => {
+    const listeners = {};
+    const liveRef = (path, value) => ({
+      on: (ev, cb) => { listeners[path] = cb; cb({ val: () => value }); },
+      off: () => { delete listeners[path]; },
+      once: () => Promise.resolve({ val: () => value })
+    });
+    db = { ref: (path) => {
+      if (path === 'leaderboard') return liveRef(path, { bo: { username: 'Bo', rating: 900, avatar: 'default' } });
+      if (path === 'friends/me') return liveRef(path, { f1: true });
+      if (path === 'publicProfiles/f1') return liveRef(path, { username: 'Fi', avatar: 'default' });
+      return liveRef(path, null);
+    } };
+    openLeaderboardPanel();
+    await new Promise((r) => setTimeout(r, 0));
+    listeners.leaderboard({ val: () => ({ bo: { username: 'Bo', rating: 900, avatar: 'avatar-crown-diamond' } }) });
+    const lbHtml = document.getElementById('leaderboardArea').innerHTML;
+    assertEqual(lbHtml, (() => { const d = document.createElement('div'); d.innerHTML = leaderboardRowHtml({ username: 'Bo', rating: 900, avatar: 'avatar-crown-diamond' }, 1); return d.innerHTML; })(), 'A changed picture must repaint the open Leaderboard');
+    document.getElementById('leaderboardModal').classList.add('hidden');
+    await new Promise((r) => setTimeout(r, 0));
+    assertTrue(!listeners.leaderboard, 'Closing the Leaderboard must stop listening');
+
+    currentUser = { uid: 'me' };
+    currentFriendsTab = 'friends';
+    renderFriendsList();
+    await new Promise((r) => setTimeout(r, 0));
+    const before = document.getElementById('friendsListArea').innerHTML;
+    listeners['publicProfiles/f1']({ val: () => ({ username: 'Fi', avatar: 'avatar-crown-diamond' }) });
+    await new Promise((r) => setTimeout(r, 200));
+    const after = document.getElementById('friendsListArea').innerHTML;
+    assertTrue(after !== before && after.includes('Fi'), 'A friend changing their picture must repaint the Friends list');
+    stopFriendProfileWatch();
+    assertTrue(!listeners['publicProfiles/f1'], 'Stopping the watch must detach the friend listeners');
+  });
+
   await test("REGRESSION: the public Leaderboard does not require a signed-in user", () => {
     currentUser = null;
     openLeaderboardPanel();

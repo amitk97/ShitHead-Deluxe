@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v136 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v137 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -15071,6 +15071,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v137: [
+        ['🖼️', 'Friends list and Leaderboard update live: new profile pictures show straight away.']
+      ],
       v136: [
         ['🂠', 'Face-down cards now fly from your table to the Pile before they flip.'],
         ['📖', 'New Swap Phase section in Guide & Strategy: what to put face-up and why.']
@@ -16723,6 +16726,7 @@ video {
       renderCosmeticShop();
       document.getElementById('personalisationStatus').textContent = 'All cosmetics unequipped. Defaults restored.';
       syncShowcase();
+      syncPublicProfile(); // the profile picture reset too
       if (currentUser) db.ref(`users/${currentUser.uid}/equippedCosmetics`).set(equippedCosmetics).catch(() => {
         document.getElementById('personalisationStatus').textContent = 'Defaults restored on this device, but account sync failed.';
       });
@@ -20297,12 +20301,15 @@ video {
         // profile pictures can only reject the picture, never the rating.
         const avatar = resolveAvatarId(equippedCosmetics.avatar);
         const uid = currentUser.uid;
+        // The picture goes first and on its own, so friends and the
+        // leaderboard see a new one even if the rating copy is refused.
+        const avatarWrite = db.ref(`publicProfiles/${uid}/avatar`).set(avatar).catch(() => {});
         const publicProfileWrite = db.ref(`publicProfiles/${uid}`).update({
           username,
           rating: profile.rating != null ? profile.rating : 500,
           tier
         }).then(() => Promise.all([
-          db.ref(`publicProfiles/${uid}/avatar`).set(avatar).catch(() => {}),
+          avatarWrite,
           syncShowcase(),
           // Summary shown on the in-game player card (users/{uid} is private).
           db.ref(`publicProfiles/${uid}/stats`).set({
@@ -20315,8 +20322,7 @@ video {
           }).catch(() => {})
         ]));
         const leaderboardWrite = username
-          ? db.ref(`leaderboard/${username.toLowerCase()}`).set({ username, rating: profile.rating != null ? profile.rating : 500, tier, wins: profile.wins || 0, losses: profile.losses || 0 })
-            .then(() => db.ref(`leaderboard/${username.toLowerCase()}/avatar`).set(avatar).catch(() => {}))
+          ? db.ref(`leaderboard/${username.toLowerCase()}`).set({ username, rating: profile.rating != null ? profile.rating : 500, tier, wins: profile.wins || 0, losses: profile.losses || 0, avatar })
           : Promise.resolve();
         return Promise.all([publicProfileWrite, leaderboardWrite]).catch((e) => console.warn('syncPublicProfile failed', e));
       });
@@ -20347,6 +20353,7 @@ video {
     }
     function switchFriendsTab(tab) {
       currentFriendsTab = tab;
+      if (tab !== 'friends') stopFriendProfileWatch();
       document.querySelectorAll('.friends-tab-btn').forEach((b) => {
         const active = b.dataset.tab === tab;
         b.className = `friends-tab-btn flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg border-2 transition ${active ? 'border-amber-500 bg-amber-950/40 text-amber-300' : 'border-slate-700 bg-slate-800 text-slate-300'}`;
@@ -20417,22 +20424,50 @@ video {
       el.textContent = msg;
       el.classList.remove('hidden');
     }
+    // While the Friends list is open it listens to each friend's public
+    // profile, so a new picture, going online/offline or a rating change
+    // shows up by itself (stopFriendProfileWatch detaches on close).
+    let friendProfileWatch = null; // { profiles: { uid: profile }, refs: [ref], timer }
+    function stopFriendProfileWatch() {
+      if (!friendProfileWatch) return;
+      friendProfileWatch.refs.forEach(ref => { if (typeof ref.off === 'function') ref.off(); });
+      clearTimeout(friendProfileWatch.timer);
+      friendProfileWatch = null;
+    }
+    function paintFriendsList(profiles) {
+      const area = document.getElementById('friendsListArea');
+      const results = Object.entries(profiles).map(([uid, profile]) => ({ uid, profile: profile || {} }));
+      // Online friends first (then A-Z), with a count on top.
+      const nameOf = (r) => String(r.profile.username || r.profile.name || '').toLowerCase();
+      results.sort((a, b) => (!!b.profile.online - !!a.profile.online) || nameOf(a).localeCompare(nameOf(b)));
+      const online = results.filter(r => r.profile.online).length;
+      area.innerHTML = `<p class="friends-online-count">${online} of ${results.length} online</p>`
+        + results.map(({ uid, profile }) => friendRowHtml(uid, profile, 'friend')).join('');
+    }
     function renderFriendsList() {
+      stopFriendProfileWatch();
       const area = document.getElementById('friendsListArea');
       area.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-4">Loading\u2026</p>';
       db.ref(`friends/${currentUser.uid}`).once('value').then((snap) => {
         const uids = Object.keys(snap.val() || {});
         if (uids.length === 0) { showFriendsEmpty("You haven't added any friends yet."); return; }
         document.getElementById('friendsEmptyMsg').classList.add('hidden');
-        Promise.all(uids.map((uid) => db.ref(`publicProfiles/${uid}`).once('value').then((s) => ({ uid, profile: s.val() || {} }))))
-          .then((results) => {
-            // Online friends first (then A-Z), with a count on top.
-            const nameOf = (r) => String(r.profile.username || r.profile.name || '').toLowerCase();
-            results.sort((a, b) => (!!b.profile.online - !!a.profile.online) || nameOf(a).localeCompare(nameOf(b)));
-            const online = results.filter(r => r.profile.online).length;
-            area.innerHTML = `<p class="friends-online-count">${online} of ${results.length} online</p>`
-              + results.map(({ uid, profile }) => friendRowHtml(uid, profile, 'friend')).join('');
-          });
+        const watch = friendProfileWatch = { profiles: {}, refs: [], timer: null };
+        let pending = uids.length;
+        uids.forEach((uid) => {
+          const ref = db.ref(`publicProfiles/${uid}`);
+          watch.refs.push(ref);
+          let first = true;
+          const listen = typeof ref.on === 'function' ? (ok, fail) => ref.on('value', ok, fail) : (ok, fail) => ref.once('value').then(ok, fail);
+          listen((s) => {
+            if (friendProfileWatch !== watch) return;
+            watch.profiles[uid] = s.val() || {};
+            if (first) { first = false; if (--pending === 0) paintFriendsList(watch.profiles); return; }
+            if (pending > 0 || currentFriendsTab !== 'friends') return;
+            clearTimeout(watch.timer);
+            watch.timer = setTimeout(() => { if (friendProfileWatch === watch) paintFriendsList(watch.profiles); }, 150);
+          }, () => { if (first) { first = false; watch.profiles[uid] = {}; if (--pending === 0) paintFriendsList(watch.profiles); } });
+        });
       }).catch((e) => { area.innerHTML = ''; console.warn('renderFriendsList failed', e); });
     }
     function renderIgnoredList() {
@@ -21207,6 +21242,11 @@ video {
       if (e.target.id === 'themesModal') document.getElementById('themesModal').classList.add('hidden');
     });
 
+    let leaderboardWatchRef = null;
+    function stopLeaderboardWatch() {
+      if (leaderboardWatchRef && typeof leaderboardWatchRef.off === 'function') leaderboardWatchRef.off();
+      leaderboardWatchRef = null;
+    }
     function openLeaderboardPanel() {
       document.getElementById('leaderboardModal').classList.remove('hidden');
       const area = document.getElementById('leaderboardArea');
@@ -21279,10 +21319,24 @@ video {
           .catch((error) => finish(() => showError(error)));
       }, 5000);
 
-      db.ref('leaderboard').once('value')
+      // Stays live while the page is open: new pictures and ratings show up
+      // by themselves (stopLeaderboardWatch detaches on close).
+      stopLeaderboardWatch();
+      const lbRef = db.ref('leaderboard');
+      leaderboardWatchRef = lbRef;
+      new Promise((resolve, reject) => {
+        if (typeof lbRef.on !== 'function') { lbRef.once('value').then(resolve, reject); return; }
+        let first = true;
+        lbRef.on('value', (snap) => {
+          if (leaderboardWatchRef !== lbRef) return;
+          if (first) { first = false; resolve(snap); return; }
+          if (settled) renderRows(snap.val() || {});
+        }, reject);
+      })
         .then((snap) => {
           clearTimeout(timeout);
           const data = snap.val() || {};
+          if (settled) { renderRows(data); return; } // replaces a REST fallback that got there first
           finish(() => renderRows(data));
         })
         .catch((error) => {
@@ -21311,6 +21365,12 @@ video {
       </div>`;
     }
     document.getElementById('leaderboardCloseBtn').addEventListener('click', () => document.getElementById('leaderboardModal').classList.add('hidden'));
+    // Live lists stop listening once their page is hidden (close button,
+    // Back, another page opening over it…).
+    [['leaderboardModal', () => stopLeaderboardWatch()], ['friendsModal', () => stopFriendProfileWatch()]].forEach(([id, stop]) => {
+      const el = document.getElementById(id);
+      if (el) new MutationObserver(() => { if (el.classList.contains('hidden')) stop(); }).observe(el, { attributes: true, attributeFilter: ['class'] });
+    });
     document.getElementById('leaderboardModal').addEventListener('click', (e) => {
       if (e.target.id === 'leaderboardModal') document.getElementById('leaderboardModal').classList.add('hidden');
     });
