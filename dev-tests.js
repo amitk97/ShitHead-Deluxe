@@ -3930,11 +3930,41 @@ async function runDevTestSuite() {
     assertTrue(a.some((id, i) => id !== c[i]), 'A different UK date should (almost always) pick a different set — this is a sanity check, not a strict guarantee, but 2026-09-17 vs 2026-09-18 is a fixed, known-different pair');
   });
 
-  await test('Tutorial Graduate is a one-time 100 Diamond full-tutorial challenge shown in Challenges', () => {
+  await test('Tutorial Graduate is a one-time 200 Diamond full-tutorial challenge shown in Challenges', () => {
     assertEqual(TUTORIAL_COMPLETION_CHALLENGE.id, 'tutorial-graduate', 'Tutorial challenge needs a stable permanent completion key');
-    assertEqual(TUTORIAL_COMPLETION_CHALLENGE.reward, 100, 'Completing every tutorial module must award 100 Diamonds');
+    assertEqual(TUTORIAL_COMPLETION_CHALLENGE.reward, 200, 'Completing Quick Start and every tutorial lesson must award 200 Diamonds');
     assertTrue(getAllTutorialModuleIds().length > 0, 'The full-tutorial requirement must resolve to real tutorial modules');
     assertTrue(!!document.getElementById('challengesTutorialList'), 'Challenges must contain the Getting Started tutorial challenge list');
+  });
+
+  await test('Quick Starter pays 50 once; Tutorial Graduate needs Quick Start and every lesson', async () => {
+    assertEqual(QUICK_START_CHALLENGE.id, 'tutorial-quick-start', 'Stable completion key');
+    assertEqual(QUICK_START_CHALLENGE.reward, 50, 'Quick Start pays 50 Diamonds');
+    assertEqual(challengeDescription(QUICK_START_CHALLENGE.id), QUICK_START_CHALLENGE.desc, 'Completed row / mail shows what it asked for');
+    const saved = localStorage.getItem('shithead_tutorial_progress');
+    const origClaim = claimChallenge, origUser = currentUser, origDone = accountTutorialLessonsDone, origCompleted = challengeEconomy.completedChallenges;
+    const claims = [];
+    claimChallenge = (id, reward) => { claims.push([id, reward]); return Promise.resolve(true); };
+    try {
+      currentUser = { uid: 'test-uid' };
+      challengeEconomy.completedChallenges = {};
+      accountTutorialLessonsDone = true;
+      localStorage.setItem('shithead_tutorial_progress', '{}');
+      await syncTutorialChallenges();
+      assertEqual(claims, [], 'Every lesson but no Quick Start: nothing yet');
+      localStorage.setItem('shithead_tutorial_progress', JSON.stringify({ quick_start: true }));
+      accountTutorialLessonsDone = false;
+      await syncTutorialChallenges();
+      assertEqual(claims, [['tutorial-quick-start', 50]], 'Quick Start alone: only Quick Starter');
+      claims.length = 0;
+      accountTutorialLessonsDone = true;
+      await syncTutorialChallenges();
+      assertEqual(claims, [['tutorial-quick-start', 50], ['tutorial-graduate', 200]], 'Both done: Graduate too');
+    } finally {
+      claimChallenge = origClaim; currentUser = origUser; accountTutorialLessonsDone = origDone;
+      challengeEconomy.completedChallenges = origCompleted;
+      if (saved === null) localStorage.removeItem('shithead_tutorial_progress'); else localStorage.setItem('shithead_tutorial_progress', saved);
+    }
   });
 
   await test('Generated cosmetic concepts are implemented as real equippable items', () => {

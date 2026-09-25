@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v128 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v129 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -14969,6 +14969,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v129: [
+        ['💎', 'Finish the Quick Start tutorial for 50 Diamonds.'],
+        ['🎓', 'Tutorial Graduate now pays 200 Diamonds: complete Quick Start and every tutorial lesson.']
+      ],
       v126: [
         ['⚡', 'New one-minute Quick Start: tap Tutorial to learn the whole game in 6 quick steps.'],
         ['☝️', "Last card alert: you'll see (and hear) when a player is down to their final card."],
@@ -18656,8 +18660,14 @@ video {
     const TUTORIAL_COMPLETION_CHALLENGE = {
       id: 'tutorial-graduate',
       name: 'Tutorial Graduate',
-      desc: 'Complete every available tutorial module.',
-      reward: 100
+      desc: 'Complete Quick Start and every tutorial lesson.',
+      reward: 200
+    };
+    const QUICK_START_CHALLENGE = {
+      id: 'tutorial-quick-start',
+      name: 'Quick Starter',
+      desc: 'Complete the Quick Start tutorial.',
+      reward: 50
     };
 
     // --- Daily pool (20 total; exactly 3 are picked per UK day) --------
@@ -18826,6 +18836,7 @@ video {
         if (/^daily_/.test(id)) return getDailyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
         if (/^weekly_/.test(id)) return getWeeklyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
         if (id === TUTORIAL_COMPLETION_CHALLENGE.id) return TUTORIAL_COMPLETION_CHALLENGE.desc;
+        if (id === QUICK_START_CHALLENGE.id) return QUICK_START_CHALLENGE.desc;
         def = Object.values(CHALLENGE_DEFS).flat().find(c => c.id === id);
         if (!def) return '';
       }
@@ -19123,20 +19134,11 @@ video {
           challengeEconomyLoadedForUid = currentUser.uid;
           updateDiamondHeader();
           renderChallengesModalIfOpen();
-          // Existing graduates are recognised too. The completion flag is
-          // account-backed, while the local all-module check also covers a
-          // guest who finished everything and then signed in on this device.
-          if (profile.tutorialCompleted || hasCompletedFullTutorialLocally()) {
-            if (!profile.tutorialCompleted) {
-              db.ref(`users/${currentUser.uid}/tutorialCompleted`).set(true)
-                .catch((e) => console.warn('tutorialCompleted sync failed', e));
-            }
-            claimChallenge(
-              TUTORIAL_COMPLETION_CHALLENGE.id,
-              TUTORIAL_COMPLETION_CHALLENGE.reward,
-              TUTORIAL_COMPLETION_CHALLENGE.name
-            );
-          }
+          // Existing graduates are recognised too. tutorialCompleted is the
+          // account-backed "every lesson done" flag; local progress also
+          // covers a guest who finished lessons and then signed in here.
+          accountTutorialLessonsDone = !!profile.tutorialCompleted;
+          syncTutorialChallenges();
           // Drain the buffer from the CRITICAL BUG FIX in notifyChallengeEvent
           // above: anything that happened before this exact point (state
           // just became ready one line up) gets replayed now, in the order
@@ -19594,6 +19596,7 @@ video {
 
     function getChallengePriority(challengeId) {
       if (challengeId === TUTORIAL_COMPLETION_CHALLENGE.id) return -1000;
+      if (challengeId === QUICK_START_CHALLENGE.id) return -999;
       if (challengeId.startsWith('daily_')) {
         // daily_<dateKey>_<poolId> — split is safe because dateKey is
         // YYYY-MM-DD (dashes, not underscores) and no pool id contains
@@ -19815,14 +19818,13 @@ video {
         return;
       }
 
-      const tutorialChallengeComplete = !!challengeEconomy.completedChallenges[TUTORIAL_COMPLETION_CHALLENGE.id];
-      setListHtml('challengesTutorialList', renderChallengeRowHTML(
-        TUTORIAL_COMPLETION_CHALLENGE.name,
-        TUTORIAL_COMPLETION_CHALLENGE.desc,
-        TUTORIAL_COMPLETION_CHALLENGE.reward,
-        tutorialChallengeComplete,
-        TUTORIAL_COMPLETION_CHALLENGE.desc
-      ));
+      setListHtml('challengesTutorialList', [QUICK_START_CHALLENGE, TUTORIAL_COMPLETION_CHALLENGE].map((def) => renderChallengeRowHTML(
+        def.name,
+        def.desc,
+        def.reward,
+        !!challengeEconomy.completedChallenges[def.id],
+        def.desc
+      )).join(''));
 
       const daily = challengeEconomy.dailyChallengeState;
       const dailyHtml = daily ? daily.challengeIds.map((id) => {
@@ -23538,13 +23540,32 @@ video {
       const progress = getTutorialProgress();
       return ids.length > 0 && ids.every((id) => progress[id]);
     }
+    // Tutorial challenges: Quick Starter (50) for Quick Start; Tutorial
+    // Graduate (200) once Quick Start AND every hub lesson are done. Safe
+    // to call any time: claimChallenge pays each one only once.
+    let accountTutorialLessonsDone = false; // users/{uid}/tutorialCompleted, set at load
+    function syncTutorialChallenges() {
+      if (typeof currentUser === 'undefined' || !currentUser) return Promise.resolve(false);
+      const completed = (challengeEconomy && challengeEconomy.completedChallenges) || {};
+      const quickDone = !!getTutorialProgress().quick_start || !!completed[QUICK_START_CHALLENGE.id];
+      const lessonsDone = accountTutorialLessonsDone || hasCompletedFullTutorialLocally();
+      let chain = Promise.resolve();
+      if (lessonsDone && !accountTutorialLessonsDone) {
+        accountTutorialLessonsDone = true;
+        chain = db.ref(`users/${currentUser.uid}/tutorialCompleted`).set(true)
+          .catch((e) => console.warn('tutorialCompleted sync failed', e));
+      }
+      if (quickDone) {
+        chain = chain.then(() => claimChallenge(QUICK_START_CHALLENGE.id, QUICK_START_CHALLENGE.reward, QUICK_START_CHALLENGE.name));
+      }
+      if (quickDone && lessonsDone) {
+        chain = chain.then(() => claimChallenge(TUTORIAL_COMPLETION_CHALLENGE.id, TUTORIAL_COMPLETION_CHALLENGE.reward, TUTORIAL_COMPLETION_CHALLENGE.name));
+      }
+      return chain;
+    }
     function awardTutorialCompletionChallenge() {
       if (typeof currentUser === 'undefined' || !currentUser) return Promise.resolve(false);
-      return initChallengeEconomy().then(() => claimChallenge(
-        TUTORIAL_COMPLETION_CHALLENGE.id,
-        TUTORIAL_COMPLETION_CHALLENGE.reward,
-        TUTORIAL_COMPLETION_CHALLENGE.name
-      ));
+      return initChallengeEconomy().then(() => syncTutorialChallenges());
     }
     function markTutorialModuleComplete(id) {
       if (!id) return;
@@ -23560,9 +23581,9 @@ video {
         // possibly complete (that requires the page to have fully loaded
         // and a person to have clicked through it).
         const allIds = getAllTutorialModuleIds();
-        if (typeof currentUser !== 'undefined' && currentUser && allIds.length > 0 && allIds.every((mid) => progress[mid])) {
-          db.ref(`users/${currentUser.uid}`).update({ tutorialCompleted: true })
-            .then(() => awardTutorialCompletionChallenge())
+        const lessonsDone = allIds.length > 0 && allIds.every((mid) => progress[mid]);
+        if (typeof currentUser !== 'undefined' && currentUser && (id === 'quick_start' || lessonsDone)) {
+          awardTutorialCompletionChallenge()
             .catch((e) => console.warn('Tutorial completion reward sync failed', e));
         }
       } catch (e) {
