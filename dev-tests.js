@@ -1063,7 +1063,9 @@ async function runDevTestSuite() {
     assertEqual(d.stats.find(([l]) => l === 'Burns')[1], 2, 'Your stats');
     const c = drawShareCard(d);
     assertEqual([c.width, c.height], [1080, 1350], 'Portrait share size');
-    assertTrue(!!document.getElementById('matchSummaryShare'), 'The summary has a SHARE button');
+    const share = document.getElementById('matchSummaryShare');
+    assertTrue(!!share && !!share.querySelector('svg'), 'The summary has a share icon');
+    assertTrue(!share.closest('.ms-actions'), 'It sits in the corner, not in the button row');
   });
   await test('Offline: Online Room and Ranked explain that Vs Bots works offline, and stay closed', () => {
     const desc = Object.getOwnPropertyDescriptor(Navigator.prototype, 'onLine');

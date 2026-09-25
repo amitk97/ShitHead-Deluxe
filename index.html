@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v126 (ShitHead-Deluxe-126) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v127 (ShitHead-Deluxe-127) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1384,8 +1384,13 @@
     .ms-progress { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:10px; border:1px solid #1e293b; background:rgba(15,23,42,.7); font-size:10px; font-weight:700; color:#cbd5e1; margin-top:4px; }
     .ms-bar { flex:1; height:6px; border-radius:999px; background:#1e293b; overflow:hidden; min-width:50px; }
     .ms-bar i { display:block; height:100%; border-radius:inherit; background:var(--bar,#f59e0b); }
-    .ms-actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:14px; }
-    .ms-secondary.ms-share { border-color:#0891b2; color:#67e8f9; background:rgba(8,51,68,.45); }
+    .ms-actions { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:14px; }
+    /* Share: the platform's own share icon, top-left of the card (the ✕ is top-right). */
+    .ms-share-icon { position:absolute; top:8px; left:10px; width:34px; height:34px; padding:6px; border-radius:10px; color:#94a3b8; display:flex; align-items:center; justify-content:center; transition:color .15s var(--ease-soft), background-color .15s var(--ease-soft), transform .12s var(--ease-snappy); }
+    .ms-share-icon:hover { color:#e2e8f0; background:rgba(148,163,184,.12); }
+    .ms-share-icon:active { transform:scale(.9); }
+    .ms-share-icon svg { width:22px; height:22px; display:block; }
+    .ms-share-icon.is-busy { opacity:.5; pointer-events:none; }
     .ms-primary { grid-column:1 / -1; padding:11px 0; border-radius:12px; background:#10b981; color:#022c22; font-size:13px; font-weight:900; letter-spacing:.08em; }
     .ms-primary[disabled] { background:#1e293b; color:#64748b; }
     .ms-secondary { padding:8px 0; border-radius:12px; border:1px solid #475569; color:#cbd5e1; font-size:10px; font-weight:900; letter-spacing:.06em; }
@@ -4865,11 +4870,11 @@ video {
 
   <div id="matchSummaryModal" class="hidden ms-scrim" role="dialog" aria-modal="true" aria-labelledby="matchSummaryTitle">
     <div class="ms-card">
+      <button type="button" id="matchSummaryShare" class="ms-share-icon" aria-label="Share your result" data-tip="Share your result"></button>
       <button type="button" id="matchSummaryClose" class="ms-x" aria-label="View the table">&times;</button>
       <div id="matchSummaryBody"></div>
       <div class="ms-actions">
         <button type="button" id="matchSummaryAgain" class="ms-primary">REMATCH</button>
-        <button type="button" id="matchSummaryShare" class="ms-secondary ms-share">📤 SHARE</button>
         <button type="button" id="matchSummaryStats" class="ms-secondary">FULL STATS</button>
         <button type="button" id="matchSummaryTable" class="ms-secondary">VIEW TABLE</button>
       </div>
@@ -17109,8 +17114,7 @@ video {
     }
     async function shareMatchResult() {
       const btn = document.getElementById('matchSummaryShare');
-      const label = btn ? btn.textContent : '';
-      if (btn) { btn.disabled = true; btn.textContent = '⏳ …'; }
+      if (btn) { btn.disabled = true; btn.classList.add('is-busy'); }
       try {
         try { await document.fonts?.ready; } catch (e) {}
         const d = matchShareData();
@@ -17134,9 +17138,14 @@ video {
         notifyBanner('Could not make the share image, please try again.');
         return 'failed';
       } finally {
-        if (btn) { btn.disabled = false; btn.textContent = label; }
+        if (btn) { btn.disabled = false; btn.classList.remove('is-busy'); }
       }
     }
+    // The share icon people already know: iOS's box-and-arrow on Apple
+    // devices, the three connected dots everywhere else.
+    const SHARE_ICON_APPLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v7A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5H17"/></svg>';
+    const SHARE_ICON_OTHER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>';
+    document.getElementById('matchSummaryShare').innerHTML = /iphone|ipad|ipod|macintosh|mac os/i.test(navigator.userAgent) ? SHARE_ICON_APPLE : SHARE_ICON_OTHER;
     document.getElementById('matchSummaryShare').addEventListener('click', () => { shareMatchResult(); });
     document.getElementById('matchSummaryClose').addEventListener('click', closeMatchSummary);
     document.getElementById('matchSummaryTable').addEventListener('click', closeMatchSummary);
