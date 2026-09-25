@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v142 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v143 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1366,6 +1366,18 @@
     .pp-btn.primary { border-color:#10b981; color:#34d399; }
     .pp-btn.primary:hover { background:#10b981; color:#022c22; }
     .pp-btn:disabled { cursor:default; }
+    .pp-btn.report { flex:0 0 auto; padding:8px 10px; border-color:#9f1239; color:#fda4af; }
+    .pp-report { margin-top:10px; padding:10px; border:1px solid #9f1239; border-radius:12px; background:rgba(76,5,25,.35); }
+    .pp-report-title { font-size:10px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:#fda4af; margin-bottom:6px; }
+    .pp-report-reasons { display:flex; flex-wrap:wrap; gap:5px; }
+    .pp-report-reasons button { padding:5px 8px; border-radius:999px; border:1px solid #475569; color:#cbd5e1; font-size:9px; font-weight:800; }
+    .pp-report-reasons button.is-on { border-color:#f43f5e; background:#9f1239; color:#fff; }
+    .pp-report textarea { width:100%; margin-top:7px; min-height:44px; resize:none; border-radius:8px; border:1px solid #334155; background:#020617; color:#e2e8f0; font-size:10px; padding:6px; }
+    .pp-report-send { width:100%; margin-top:7px; padding:7px 0; border-radius:9px; background:#e11d48; color:#fff; font-size:10px; font-weight:900; letter-spacing:.08em; }
+    .pp-report-send:disabled { opacity:.45; }
+    .reports-tabs { display:flex; gap:6px; margin-bottom:8px; flex-shrink:0; }
+    .reports-tabs button { flex:1; padding:6px 0; border-radius:9px; border:1px solid #334155; color:#94a3b8; font-size:10px; font-weight:900; letter-spacing:.06em; }
+    .reports-tabs button.is-on { border-color:#f43f5e; color:#fda4af; background:rgba(76,5,25,.45); }
     .pp-friends { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:8px 0; border-radius:10px; font-size:10px; font-weight:900; letter-spacing:.06em; color:#34d399; background:rgba(6,78,59,.35); border:1px solid #065f46; }
     .daily-scrim { position:fixed; inset:0; z-index:97; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(2,6,23,.8); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
     .daily-scrim.hidden { display:none; }
@@ -5054,6 +5066,7 @@ video {
         <span class="text-[11px] font-black uppercase tracking-widest text-rose-400">Error Reports</span>
         <button id="errorReportsCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
+      <div class="reports-tabs" role="tablist"><button type="button" id="reportsTabErrors" class="is-on">ERRORS</button><button type="button" id="reportsTabPlayers">PLAYER REPORTS</button></div>
       <p id="errorReportsSummary" class="text-[10px] text-slate-400 mb-2" style="flex-shrink:0;">Loading…</p>
       <div id="errorReportsList" class="overflow-y-auto space-y-1.5" style="flex:1; min-height:0;"></div>
       <div class="flex gap-2" style="flex-shrink:0; margin-top:12px;">
@@ -6703,6 +6716,7 @@ video {
     //   § Challenges and Diamonds economy (paid by the server: functions/economy.js)
     //   § Social: profiles, presence, friends, invites, inbox
     //   § Spectating a friend's match (read-only)
+    //   § Reports (player reports from the player card)
     //   § Installable app and notifications
     //   § Settings page
     //   § Invite links
@@ -15180,6 +15194,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v143: [
+        ['⚑', "Report a player: tap their name at the table, then REPORT (cheating, offensive name, abuse, quitting)."]
+      ],
       v142: [
         ['🎮', 'Friends list shows who is in a match, and in which mode.'],
         ['👀', "Tap WATCH to spectate a friend's online or Ranked game live (Ranked hands stay hidden)."]
@@ -16584,7 +16601,8 @@ video {
         const ignoreHtml = friendState === 'ignored'
           ? '<button type="button" class="pp-btn" disabled>IGNORED</button>'
           : `<button type="button" class="pp-btn" data-pp-action="ignore" data-uid="${escapeAttr(player.uid)}">IGNORE</button>`;
-        actions = `<div class="pp-row">${friendHtml}${ignoreHtml}</div>`;
+        const reportHtml = `<button type="button" class="pp-btn report" data-pp-action="report" data-uid="${escapeAttr(player.uid)}" aria-label="Report ${escapeAttr(player.name)}">⚑ REPORT</button>`;
+        actions = `<div class="pp-row">${friendHtml}${ignoreHtml}${reportHtml}</div><div class="pp-report-slot"></div>`;
       }
       return `<div class="pp-head">${avatarHtml(getPlayerAvatarId(player), 64)}
           <div class="min-w-0"><div id="playerPopupName" class="pp-name">${escapeHtml(player.name)}</div>${badge}${online}</div></div>
@@ -16600,7 +16618,9 @@ video {
           <span class="pp-badge" style="border-color:${colors[0]};color:${colors[1]};background:${colors[2]}">🤖 Bot · ${diff.charAt(0).toUpperCase() + diff.slice(1)}</span></div></div>
         <div class="pp-note">This player is a <b>computer opponent</b>.<br>Bots don't have a rank or stats.</div>`;
     }
+    let playerPopupAnchor = null;
     function openPlayerPopup(playerId, anchor) {
+      playerPopupAnchor = anchor;
       const player = state.players?.find(p => p.id === playerId);
       if (!player) return;
       const token = ++playerPopupToken;
@@ -16641,8 +16661,53 @@ video {
         ignorePerson(uid);
         btn.textContent = 'IGNORED';
         btn.disabled = true;
+      } else if (btn.dataset.ppAction === 'report') {
+        const slot = document.querySelector('#playerPopupBody .pp-report-slot');
+        if (slot) slot.innerHTML = slot.innerHTML ? '' : playerReportFormHtml(uid);
+        positionPlayerPopup(playerPopupAnchor);
+      } else if (btn.dataset.ppAction === 'report-reason') {
+        btn.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('is-on', b === btn));
+        const send = document.querySelector('#playerPopupBody .pp-report-send');
+        if (send) send.disabled = false;
+      } else if (btn.dataset.ppAction === 'report-send') {
+        const form = btn.closest('.pp-report');
+        const reason = form?.querySelector('.pp-report-reasons .is-on')?.dataset.reason;
+        if (!reason) return;
+        btn.disabled = true;
+        const player = state.players.find(p => p.uid === uid);
+        sendPlayerReport(uid, player?.name || '', reason, form.querySelector('textarea')?.value || '')
+          .then(() => { form.innerHTML = '<div class="pp-report-title">Thanks, report sent</div><div class="pp-note" style="margin:0">It goes to the game\'s owner to review.</div>'; })
+          .catch(() => { btn.disabled = false; notifyBanner('Could not send that report. Try again.'); });
       }
     });
+    // § Reports (player reports from the player card)
+    // One report per reporter per player (a new one replaces it),
+    // readable only by the owner (menu → Error Reports → Player Reports).
+    const REPORT_REASONS = [['cheating', 'Cheating'], ['name', 'Offensive name'], ['abuse', 'Abusive emotes'], ['quitting', 'Quitting / stalling'], ['other', 'Other']];
+    function playerReportFormHtml(uid) {
+      return `<div class="pp-report"><div class="pp-report-title">Report this player</div>
+        <div class="pp-report-reasons">${REPORT_REASONS.map(([id, label]) => `<button type="button" data-pp-action="report-reason" data-uid="${escapeAttr(uid)}" data-reason="${id}">${label}</button>`).join('')}</div>
+        <textarea maxlength="200" placeholder="What happened? (optional)"></textarea>
+        <button type="button" class="pp-report-send" data-pp-action="report-send" data-uid="${escapeAttr(uid)}" disabled>SEND REPORT</button></div>`;
+    }
+    function sendPlayerReport(reportedUid, reportedName, reason, note) {
+      if (!currentUser || !reportedUid || reportedUid === currentUser.uid) return Promise.reject(new Error('not allowed'));
+      if (!REPORT_REASONS.some(([id]) => id === reason)) return Promise.reject(new Error('bad reason'));
+      const room = state.spectating ? state.spectating.code : state.roomCode;
+      const report = {
+        reason,
+        at: firebase.database.ServerValue.TIMESTAMP,
+        reportedName: String(reportedName || '').slice(0, 30),
+        reporterName: String(document.getElementById('playerNameInput')?.value || '').slice(0, 30),
+        mode: state.isRanked ? 'ranked' : state.isMultiplayer ? 'online' : 'bots',
+        version: GAME_BUILD.version
+      };
+      const trimmed = String(note || '').trim().slice(0, 200);
+      if (trimmed) report.note = trimmed;
+      if (/^[0-9]{6}$/.test(String(room || ''))) report.room = String(room);
+      if (state.matchId) report.matchId = String(state.matchId).slice(0, 40);
+      return db.ref(`playerReports/${reportedUid}/${currentUser.uid}`).set(report);
+    }
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !document.getElementById('playerPopup').classList.contains('hidden')) closePlayerPopup();
     });
@@ -17993,10 +18058,45 @@ video {
           </div>
         </details>`).join('');
     }
+    let reportsTab = 'errors';
+    const REASON_LABELS = Object.fromEntries(REPORT_REASONS);
+    // One row per reported player: how many people reported them, for what.
+    function groupPlayerReports(data) {
+      return Object.entries(data || {}).map(([uid, byReporter]) => {
+        const reports = Object.entries(byReporter || {}).filter(([, r]) => r && typeof r === 'object').map(([from, r]) => ({ from, ...r }));
+        const reasons = {};
+        reports.forEach(r => { reasons[r.reason] = (reasons[r.reason] || 0) + 1; });
+        const latest = reports.reduce((a, r) => ((r.at || 0) > (a.at || 0) ? r : a), reports[0] || {});
+        return { uid, name: latest.reportedName || uid.slice(0, 8), count: reports.length, reasons, last: latest.at || 0, reports: reports.sort((a, b) => (b.at || 0) - (a.at || 0)) };
+      }).filter(g => g.count).sort((a, b) => b.count - a.count || b.last - a.last);
+    }
+    function renderPlayerReports(data) {
+      const groups = groupPlayerReports(data);
+      const total = groups.reduce((n, g) => n + g.count, 0);
+      document.getElementById('errorReportsSummary').textContent = total
+        ? `${total} report${total === 1 ? '' : 's'} about ${groups.length} player${groups.length === 1 ? '' : 's'} · most reported first`
+        : 'No player reports. 🎉';
+      document.getElementById('errorReportsList').innerHTML = groups.map((g) => `
+        <details class="bg-slate-900/70 border border-slate-800 rounded-lg px-2 py-1.5">
+          <summary class="text-[10px] font-bold text-slate-100 cursor-pointer">${escapeHtml(g.name)} <span class="text-rose-300">×${g.count}</span>
+            <span class="text-slate-400 font-normal">${escapeHtml(Object.entries(g.reasons).map(([r, n]) => `${REASON_LABELS[r] || r}${n > 1 ? ` ×${n}` : ''}`).join(', '))}</span></summary>
+          <div class="text-[9px] text-slate-400 mt-1 space-y-1">
+            ${g.reports.map(r => `<div class="border-t border-slate-800 pt-1"><b class="text-slate-200">${escapeHtml(REASON_LABELS[r.reason] || r.reason || '?')}</b> · from ${escapeHtml(r.reporterName || r.from.slice(0, 8))} · ${r.at ? new Date(r.at).toLocaleString() : '?'}${r.mode ? ` · ${escapeHtml(r.mode)}` : ''}${r.room ? ` · room ${escapeHtml(r.room)}` : ''}${r.note ? `<div class="text-slate-300">“${escapeHtml(r.note)}”</div>` : ''}</div>`).join('')}
+            <div class="text-slate-500">Player id: ${escapeHtml(g.uid)}</div>
+            <button type="button" data-clear-reports="${escapeAttr(g.uid)}" class="mt-1 text-[9px] font-black px-2 py-1 rounded border border-slate-600 text-slate-300">CLEAR THESE</button>
+          </div>
+        </details>`).join('');
+    }
+    function paintReportsTabs() {
+      document.getElementById('reportsTabErrors').classList.toggle('is-on', reportsTab === 'errors');
+      document.getElementById('reportsTabPlayers').classList.toggle('is-on', reportsTab === 'players');
+    }
     function loadErrorReports() {
+      paintReportsTabs();
       document.getElementById('errorReportsSummary').textContent = 'Loading…';
       document.getElementById('errorReportsList').innerHTML = '';
-      db.ref('errorReports').once('value').then((snap) => renderErrorReports(snap.val())).catch((e) => {
+      const path = reportsTab === 'players' ? 'playerReports' : 'errorReports';
+      db.ref(path).once('value').then((snap) => (reportsTab === 'players' ? renderPlayerReports : renderErrorReports)(snap.val())).catch((e) => {
         document.getElementById('errorReportsSummary').textContent = e && /permission/i.test(e.code || e.message || '')
           ? 'Blocked by the Database Rules: publish the latest rules (they let only your verified email read reports).'
           : `Couldn’t load reports: ${e?.message || e}`;
@@ -18011,8 +18111,16 @@ video {
     document.getElementById('errorReportsCloseBtn').addEventListener('click', () => document.getElementById('errorReportsModal').classList.add('hidden'));
     document.getElementById('errorReportsRefreshBtn').addEventListener('click', loadErrorReports);
     document.getElementById('errorReportsClearBtn').addEventListener('click', () => {
-      if (!confirm('Delete every error report?')) return;
-      db.ref('errorReports').remove().then(loadErrorReports).catch((e) => alert(`Couldn’t clear: ${e?.message || e}`));
+      const players = reportsTab === 'players';
+      if (!confirm(players ? 'Delete every player report?' : 'Delete every error report?')) return;
+      db.ref(players ? 'playerReports' : 'errorReports').remove().then(loadErrorReports).catch((e) => alert(`Couldn’t clear: ${e?.message || e}`));
+    });
+    document.getElementById('reportsTabErrors').addEventListener('click', () => { reportsTab = 'errors'; loadErrorReports(); });
+    document.getElementById('reportsTabPlayers').addEventListener('click', () => { reportsTab = 'players'; loadErrorReports(); });
+    document.getElementById('errorReportsList').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-clear-reports]');
+      if (!btn || !confirm('Delete the reports about this player?')) return;
+      db.ref(`playerReports/${btn.dataset.clearReports}`).remove().then(loadErrorReports).catch((err) => alert(`Couldn’t clear: ${err?.message || err}`));
     });
 
     // Lobby quick-access strip replaces the old deck-theme selector. It uses

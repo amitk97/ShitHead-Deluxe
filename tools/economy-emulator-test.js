@@ -248,6 +248,15 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   await denied('bad playing room', db => set(ref(db, 'publicProfiles/alice/playing'), { mode: 'online', room: '../x', at: 1 }));
   await denied("someone else's playing status", db => set(ref(db, 'publicProfiles/bob/playing'), { mode: 'bots', at: 1 }));
 
+  // Player reports
+  await allowed('report another player', db => set(ref(db, 'playerReports/bob/alice'), { reason: 'cheating', at: 1, note: 'x', mode: 'ranked', room: '424242' }));
+  await denied('report yourself', db => set(ref(db, 'playerReports/alice/alice'), { reason: 'cheating', at: 1 }));
+  await denied('report as someone else', db => set(ref(db, 'playerReports/carol/bob'), { reason: 'cheating', at: 1 }));
+  await denied('unknown report reason', db => set(ref(db, 'playerReports/bob/alice'), { reason: 'spam', at: 1 }));
+  await denied('extra report fields', db => set(ref(db, 'playerReports/bob/alice'), { reason: 'other', at: 1, diamonds: 5 }));
+  await denied('read player reports', db => get(ref(db, 'playerReports')));
+  await denied('delete reports', db => set(ref(db, 'playerReports/bob'), null));
+
   console.log(`\n${pass} passed, ${failN} failed`);
   process.exit(failN ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });

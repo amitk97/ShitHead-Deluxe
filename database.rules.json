@@ -435,6 +435,46 @@
         }
       }
     },
+    "playerReports": {
+      ".read": "auth != null && auth.token.email === 'amirk2197@googlemail.com' &&
+        auth.token.email_verified === true",
+      ".write": "auth != null && auth.token.email === 'amirk2197@googlemail.com' &&
+        auth.token.email_verified === true && !newData.exists()",
+      "$reportedUid": {
+        ".write": "auth != null && auth.token.email === 'amirk2197@googlemail.com' &&
+          auth.token.email_verified === true && !newData.exists()",
+        "$reporterUid": {
+          ".write": "auth != null && auth.uid === $reporterUid && $reporterUid !== $reportedUid",
+          ".validate": "newData.hasChildren(['reason', 'at']) && newData.child('at').isNumber() &&
+            newData.child('reason').isString() &&
+            newData.child('reason').val().matches(/^(cheating|name|abuse|quitting|other)$/)",
+          "note": {
+            ".validate": "newData.isString() && newData.val().length <= 200"
+          },
+          "reportedName": {
+            ".validate": "newData.isString() && newData.val().length <= 30"
+          },
+          "reporterName": {
+            ".validate": "newData.isString() && newData.val().length <= 30"
+          },
+          "mode": {
+            ".validate": "newData.isString() && newData.val().matches(/^(bots|online|ranked)$/)"
+          },
+          "room": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9]{6}$/)"
+          },
+          "matchId": {
+            ".validate": "newData.isString() && newData.val().length <= 40"
+          },
+          "version": {
+            ".validate": "newData.isString() && newData.val().length <= 12"
+          },
+          "$other": {
+            ".validate": "$other === 'reason' || $other === 'at'"
+          }
+        }
+      }
+    },
     "pushTokens": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

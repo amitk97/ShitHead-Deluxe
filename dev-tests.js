@@ -3564,6 +3564,37 @@ async function runDevTestSuite() {
       assertEqual(typeof collectAccountSettings().whatsNewOn, 'boolean', 'It syncs with the account settings');
     } finally { if (whatsNewOn !== was) row.click(); }
   });
+  await test('Report a player from their player card; the owner sees reports grouped by player', async () => {
+    freshState({ phase: 'PLAY' });
+    state.isMultiplayer = true; state.isRanked = true; state.roomCode = '424242'; state.matchId = 'm9';
+    state.players = [makePlayer({ id: 'p1', name: 'Me' }), makePlayer({ id: 'p2', name: 'Cheater', uid: 'bad' })];
+    state.localPlayerId = 'p1';
+    currentUser = { uid: 'me' };
+    const writes = [];
+    db = { ref: (path) => ({
+      once: () => Promise.resolve({ val: () => (path.startsWith('publicProfiles') ? { username: 'Cheater', rating: 700 } : null) }),
+      set: (v) => { writes.push([path, v]); return Promise.resolve(); }
+    }) };
+    openPlayerPopup('p2', null);
+    await new Promise(r => setTimeout(r, 0));
+    const body = document.getElementById('playerPopupBody');
+    try {
+      body.querySelector('[data-pp-action="report"]').click();
+      const send = body.querySelector('.pp-report-send');
+      assertTrue(!!send && send.disabled, 'The form opens with SEND disabled until a reason is picked');
+      body.querySelector('[data-reason="cheating"]').click();
+      assertTrue(!send.disabled, 'Picking a reason enables SEND');
+      body.querySelector('.pp-report textarea').value = 'Played two cards at once';
+      send.click();
+      await new Promise(r => setTimeout(r, 0));
+      const [path, report] = writes.find(([p]) => p.startsWith('playerReports/')) || [];
+      assertEqual(path, 'playerReports/bad/me', 'One report per reporter per player');
+      assertEqual([report.reason, report.note, report.mode, report.room, report.matchId], ['cheating', 'Played two cards at once', 'ranked', '424242', 'm9'], 'The report carries the reason, note and match');
+      assertTrue(/Thanks, report sent/.test(body.textContent), 'The player sees it was sent');
+    } finally { closePlayerPopup(); }
+    const groups = groupPlayerReports({ bad: { a: { reason: 'cheating', at: 2, reportedName: 'Cheater' }, b: { reason: 'cheating', at: 3, reportedName: 'Cheater' } }, meh: { a: { reason: 'name', at: 1, reportedName: 'Meh' } } });
+    assertEqual(groups.map(g => [g.name, g.count, g.reasons.cheating || g.reasons.name]), [['Cheater', 2, 2], ['Meh', 1, 1]], 'Most-reported player first, with reason counts');
+  });
   await test('Friends show when they are in a match; WATCH opens it read-only from their seat', async () => {
     let row = friendRowHtml('u1', { username: 'Jamie', online: true, playing: { mode: 'online', room: '424242', at: 1 } }, 'friend');
     assertTrue(row.includes('In a match · Online Room') && row.includes('friend-watch-btn') && row.includes('data-room="424242"'), 'An online match offers WATCH');
