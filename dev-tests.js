@@ -3423,15 +3423,22 @@ async function runDevTestSuite() {
   });
 
   // ---- REGRESSION: Ranked match authority isn't tied to isHost ----
-  await test('hasMatchAuthority: Ranked grants match authority to both players, casual rooms only to the host', () => {
-    freshState({ isMultiplayer: true, isHost: true, isRanked: false });
-    assertTrue(hasMatchAuthority(), 'The host of a casual room must have match authority');
-    freshState({ isMultiplayer: true, isHost: false, isRanked: false });
-    assertTrue(!hasMatchAuthority(), 'A casual-room guest must NOT have match authority (lobby management stays host-only)');
-    freshState({ isMultiplayer: true, isHost: true, isRanked: true });
-    assertTrue(hasMatchAuthority(), 'The Ranked player who happened to create the room still has authority');
-    freshState({ isMultiplayer: true, isHost: false, isRanked: true });
-    assertTrue(hasMatchAuthority(), 'REGRESSION: the non-host Ranked player must ALSO have match authority, or a host disconnect freezes the match with nobody left to notice');
+  await test('hasMatchAuthority: exactly one phone drives a match, Ranked and casual alike, and it moves when that app goes away', () => {
+    const saved = roomPresence;
+    try {
+      [false, true].forEach((ranked) => {
+        const host = makePlayer({ id: 'p_host', name: 'Host' }), guest = makePlayer({ id: 'p_room1', name: 'Guest' });
+        roomPresence = { p_host: { status: 'connected' }, p_room1: { status: 'connected' } };
+        freshState({ isMultiplayer: true, isHost: true, isRanked: ranked, localPlayerId: 'p_host' });
+        state.players = [host, guest];
+        assertTrue(hasMatchAuthority(), 'The first open seat drives');
+        freshState({ isMultiplayer: true, isHost: false, isRanked: ranked, localPlayerId: 'p_room1' });
+        state.players = [host, guest];
+        assertTrue(!hasMatchAuthority(), 'Only one phone drives, so two never move the same bot');
+        roomPresence = { p_host: { status: 'disconnected' } };
+        assertTrue(hasMatchAuthority(), 'REGRESSION: when the first seat drops, the next player takes over, or the match freezes');
+      });
+    } finally { roomPresence = saved; }
   });
   await test('REGRESSION: a Ranked guest (non-host) can substitute a bot for a disconnected host', () => {
     // Before this fix, removePlayerFromMatch bailed out for anyone who
@@ -3443,9 +3450,10 @@ async function runDevTestSuite() {
     const guest = makePlayer({ id: 'p_room1', name: 'Still Here', uid: 'uid_guest' });
     state.players = [host, guest];
     const originalSync = syncFirebaseGameState;
+    const savedPresence = roomPresence;
+    roomPresence = { p_host: { status: 'disconnected' }, p_room1: { status: 'connected' } };
     syncFirebaseGameState = () => {};
-    removePlayerFromMatch('p_host', 'disconnected');
-    syncFirebaseGameState = originalSync;
+    try { removePlayerFromMatch('p_host', 'disconnected'); } finally { syncFirebaseGameState = originalSync; roomPresence = savedPresence; }
     const seat = state.players.find(p => p.name.startsWith('Departed'));
     assertTrue(!!seat && seat.isBot, "The departed host's seat must be handed to a substitute bot, driven by the guest's own client");
     assertTrue(seat.isRankedSubstitute, 'The substitute must be marked Ranked-only so the 5-turn concession cap applies');
@@ -3563,6 +3571,59 @@ async function runDevTestSuite() {
       assertEqual(whatsNewOn, !was, 'Tapping it toggles the setting');
       assertEqual(typeof collectAccountSettings().whatsNewOn, 'boolean', 'It syncs with the account settings');
     } finally { if (whatsNewOn !== was) row.click(); }
+  });
+  await test('Online saves only land on top of the version this phone saw; a losing save reloads the table', () => {
+    freshState({ phase: 'PLAY' });
+    state.isMultiplayer = true; state.roomCode = '424242'; state.stateVersion = 5;
+    let server = { phase: 'PLAY', stateVersion: 5, presence: { p1: { status: 'connected' } } };
+    const reapplied = [];
+    const realHandler = activeRoomHandler;
+    activeRoomHandler = (snap) => reapplied.push(snap.val().stateVersion);
+    db = { ref: () => ({ transaction: (fn, done) => {
+      const next = fn(server);
+      if (next === undefined) done(null, false, { val: () => server });
+      else { server = next; done(null, true, { val: () => next }); }
+      return Promise.resolve();
+    } }) };
+    try {
+      syncFirebaseGameState();
+      assertEqual(server.stateVersion, 6, 'On top of the version it saw: saved');
+      assertTrue(!!server.presence, 'The rest of the room (presence etc.) is kept');
+      server = { ...server, stateVersion: 9 }; // another phone saved meanwhile
+      syncFirebaseGameState();
+      assertEqual(server.stateVersion, 9, "An out-of-date save doesn't overwrite the other phone's move");
+      assertEqual(reapplied, [9], 'It reloads the real table instead');
+      assertEqual(state.stateVersion, 9, 'And carries on from the real version');
+    } finally { activeRoomHandler = realHandler; }
+  });
+  await test("The match driver is elected: the first player whose app is open, not always the host", () => {
+    freshState({ phase: 'PLAY' });
+    state.isMultiplayer = true; state.isHost = false;
+    state.players = [makePlayer({ id: 'p_host', name: 'Host' }), makePlayer({ id: 'p_bot', isBot: true }), makePlayer({ id: 'p_me', name: 'Me' })];
+    state.localPlayerId = 'p_me';
+    const saved = roomPresence;
+    try {
+      roomPresence = { p_host: { status: 'connected' } };
+      assertEqual(matchAuthorityId(), 'p_host', 'The host drives while their app is open');
+      assertTrue(!hasMatchAuthority(), 'So this phone does not');
+      roomPresence = { p_host: { status: 'away' } };
+      assertEqual(matchAuthorityId(), 'p_me', 'Host in the background: the next open app takes over (bots skipped)');
+      assertTrue(hasMatchAuthority(), 'This phone now drives the match');
+      roomPresence = { p_host: { status: 'disconnected' } };
+      assertTrue(hasMatchAuthority(), 'Same when the host has lost connection');
+      state.isMultiplayer = false;
+      assertTrue(hasMatchAuthority(), 'Offline games always drive themselves');
+    } finally { roomPresence = saved; }
+  });
+  await test('Health: session records sum up into the owner view', () => {
+    const h = summariseHealth({ '2026-09-24': {
+      s1: { device: 'iphone', app: true, loadMs: 1000, frames: { n: 1000, slow: 100, ms: 20000 }, counts: { botsStarted: 3, botsFinished: 2, rejectedSave: 1 } },
+      s2: { device: 'desktop', app: false, loadMs: 3000, frames: { n: 1000, slow: 0, ms: 16000 }, counts: { botsStarted: 1, botsLeft: 1, onlineStarted: 1, errors: 2 } }
+    } });
+    assertEqual([h.sessions, h.installed, h.loadMedian], [2, 50, 3000], 'Sessions, installed share, median load');
+    assertEqual([h.fps, h.slowPct, h.jankySessions], [56, 5, 1], 'Frame rate across all frames, slow share, janky sessions');
+    assertEqual(h.modes.find(m => m.mode === 'bots'), { mode: 'bots', started: 4, finished: 2, left: 1, abandoned: 1 }, 'Started = finished + left + abandoned');
+    assertEqual([h.rejectedSaves, h.errors], [1, 2], 'Problems counted');
   });
   await test('Ranked matches are dealt from the server (seat order + deck); a local deal only without the server', async () => {
     freshState({ phase: 'LOBBY' });

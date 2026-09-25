@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v145 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v146 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5066,7 +5066,7 @@ video {
         <span class="text-[11px] font-black uppercase tracking-widest text-rose-400">Error Reports</span>
         <button id="errorReportsCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
-      <div class="reports-tabs" role="tablist"><button type="button" id="reportsTabErrors" class="is-on">ERRORS</button><button type="button" id="reportsTabPlayers">PLAYERS</button><button type="button" id="reportsTabAudit">RANKED AUDIT</button></div>
+      <div class="reports-tabs" role="tablist"><button type="button" id="reportsTabErrors" class="is-on">ERRORS</button><button type="button" id="reportsTabPlayers">PLAYERS</button><button type="button" id="reportsTabAudit">RANKED AUDIT</button><button type="button" id="reportsTabHealth">HEALTH</button></div>
       <p id="errorReportsSummary" class="text-[10px] text-slate-400 mb-2" style="flex-shrink:0;">Loading…</p>
       <div id="errorReportsList" class="overflow-y-auto space-y-1.5" style="flex:1; min-height:0;"></div>
       <div class="flex gap-2" style="flex-shrink:0; margin-top:12px;">
@@ -6870,6 +6870,7 @@ video {
         const key = `${message}|${lineno}|${colno}`;
         if (reportedErrorKeys.has(key)) return;
         reportedErrorKeys.add(key);
+        Health.note('errors');
         if (errorReportCount >= MAX_ERROR_REPORTS_PER_SESSION) return;
         errorReportCount++;
         db.ref(`errorReports/${currentUser.uid}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}`).set({
@@ -6892,6 +6893,73 @@ video {
         // Never let error reporting itself throw or interrupt the player.
       }
     }
+    // Health: anonymous numbers per play session, so the owner can see how
+    // the game runs on real phones (menu → Error Reports → HEALTH): page load
+    // time, frame rate while a match is on screen, matches started /
+    // finished / left per mode (the rest were abandoned: the app was closed),
+    // rejected online saves and errors. One record per session at
+    // health/{UK date}/{session}, signed-in players only (like error reports),
+    // saved at most every 15s and when the app goes to the background.
+    const Health = (() => {
+      const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+      const onTestPage = /[?&]dev-tests=1\b/.test(location.search); // IS_DEV_TEST_PAGE isn't defined yet here
+      const id = `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+      const rec = {
+        v: '', at: Date.now(), loadMs: 0,
+        device: /iPhone|iPad/.test(ua) ? 'iphone' : /Android/.test(ua) ? 'android' : 'desktop',
+        app: false, frames: { n: 0, slow: 0, ms: 0 }, counts: {}
+      };
+      let saveTimer = null, dirty = false, lastFrame = 0;
+      const enabled = () => !onTestPage && typeof currentUser !== 'undefined' && currentUser && currentUser.uid
+        && typeof db !== 'undefined' && typeof firebaseAvailable !== 'undefined' && firebaseAvailable;
+      function save() {
+        clearTimeout(saveTimer); saveTimer = null;
+        if (!dirty || !enabled()) return;
+        dirty = false;
+        rec.uid = currentUser.uid;
+        rec.v = GAME_BUILD.version;
+        rec.app = !!(window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone);
+        rec.frames.ms = Math.round(rec.frames.ms);
+        db.ref(`health/${localDateKey(new Date(rec.at))}/${id}`).set(rec).catch(() => {});
+      }
+      function touch() { dirty = true; if (!saveTimer) saveTimer = setTimeout(save, 15000); }
+      function note(key, amount = 1) {
+        if (!/^[A-Za-z]{1,24}$/.test(key)) return;
+        rec.counts[key] = Math.min(100000, (rec.counts[key] || 0) + amount);
+        touch();
+      }
+      // Frame times while a match is on screen: slow = over 50ms (under 20fps).
+      function frame(t) {
+        const playing = typeof state !== 'undefined' && state && (state.phase === 'PLAY' || state.phase === 'SWAP') && !document.hidden;
+        if (playing && lastFrame && t - lastFrame < 1000) {
+          const dt = t - lastFrame;
+          rec.frames.n++; rec.frames.ms += dt;
+          if (dt > 50) rec.frames.slow++;
+          if (rec.frames.n % 600 === 0) touch();
+        }
+        lastFrame = playing ? t : 0;
+        requestAnimationFrame(frame);
+      }
+      if (typeof requestAnimationFrame === 'function' && !onTestPage) requestAnimationFrame(frame);
+      window.addEventListener('load', () => setTimeout(() => {
+        const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+        rec.loadMs = Math.round(nav ? nav.loadEventEnd || nav.domContentLoadedEventEnd : performance.now());
+        touch();
+      }, 0));
+      document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+      window.addEventListener('pagehide', save);
+      const counted = new Set();
+      const once = (kind) => { const key = `${kind}|${state.matchId || ''}|${state.roomCode || ''}`; if (counted.has(key)) return false; counted.add(key); return true; };
+      const modeKey = () => (typeof tutorialActive !== 'undefined' && tutorialActive) ? 'tutorial'
+        : state.isRanked ? 'ranked' : state.isMultiplayer ? 'online' : 'bots';
+      return {
+        note,
+        matchStarted() { if (!state.spectating && once('s')) note(`${modeKey()}Started`); },
+        matchFinished() { if (!state.spectating && once('f')) note(`${modeKey()}Finished`); },
+        matchLeft() { if (!state.spectating) note(`${modeKey()}Left`); },
+        save, record: rec
+      };
+    })();
     window.addEventListener('error', (event) => {
       reportError(event.message, event.filename, event.lineno, event.colno, event.error && event.error.stack);
     });
@@ -7902,6 +7970,7 @@ video {
 
     // § Match flow: start, play, pick up, burn
     function dismissLobbyAndStart() {
+      Health.matchStarted();
       // Belt-and-braces: re-assert high-contrast/reduce-motion here too, so
       // that no matter which path led to the game view (new match, Play
       // Again, restored session), the accessibility classes can never be
@@ -7981,7 +8050,7 @@ video {
             notifyBanner(`${state.players[state.currentTurnIndex].name}'s Turn to Start!`);
             syncFirebaseGameState();
             render();
-            if (state.isHost) triggerNextTurn();
+            if (hasMatchAuthority()) triggerNextTurn();
             return;
           }
           render();
@@ -9495,6 +9564,7 @@ video {
     // § Match end, victory and standings
     function showMatchEndUI() {
       if (state.spectating) { render(); return; } // spectators just see the final table
+      Health.matchFinished();
       // Ranked's rating update is now self-writes-only (see
       // applyRankedRatingUpdate's comment) — every client independently
       // notices phase === 'FINISHED' and writes its OWN rating, so this no
@@ -10813,7 +10883,7 @@ video {
         // first via the normal path above, so this only engages when they
         // genuinely aren't there to respond.
         hostBackstopFired = true;
-        notifyBanner(`⏱️ ${current.name} isn't responding — the host is stepping in.`);
+        notifyBanner(`⏱️ ${current.name} isn't responding — playing their turn for them.`);
         // The host doesn't necessarily know if the remote player has their own
         // sacrifice-choice prompt open (that's local-only UI state) — but it
         // can independently recompute whether their situation matches that
@@ -10909,13 +10979,9 @@ video {
         state.botActionTimer = setTimeout(checkTurnAndAct, state.turnDelay);
       } else if (hasMatchAuthority()) {
         // Human turns are handled by each player's own client via the 15s turn
-        // timer — only bot turns need to be actively driven, normally only by
-        // the host, to avoid two clients trying to control the same bot at
-        // once. Ranked extends this to both players (see hasMatchAuthority)
-        // — safe there specifically because a substitute bot only ever
-        // exists in place of whichever of the two players is currently gone,
-        // so only the one client that's actually still present is ever
-        // running this code at all; there's no second client to race with.
+        // timer — only bot turns need to be actively driven, by the one
+        // elected driver (hasMatchAuthority), so two phones never control the
+        // same bot; if two briefly do, the transactional save keeps one move.
         const upcoming = state.players[state.currentTurnIndex];
         if (upcoming && upcoming.isBot) {
           state.botActionTimer = setTimeout(checkTurnAndAct, state.turnDelay);
@@ -12745,9 +12811,17 @@ video {
     }
 
     // § Online rooms: sync, host, join, leave
+    // Every save is a transaction that only commits on top of the version
+    // this phone last saw. Two phones used to save at the same moment and
+    // the later one silently undid the other's move (a lost update); now the
+    // loser's save is dropped and it reloads the table (activeRoomHandler),
+    // where its player can act again on what really happened.
+    let activeRoomHandler = null;
+    let rejectedSaves = 0;
     function syncFirebaseGameState() {
       if (!state.isMultiplayer || !state.roomCode || state.spectating) return;
-      state.stateVersion = (state.stateVersion || 0) + 1;
+      const baseVersion = state.stateVersion || 0;
+      state.stateVersion = baseVersion + 1;
       const syncedState = {
         matchId: state.matchId || null,
         phase: state.phase,
@@ -12770,7 +12844,23 @@ video {
         syncedState.jokerTurnOwnerId = null;
         state.jokerTurnLockConsumedPending = false;
       }
-      db.ref(`rooms/${state.roomCode}`).update(syncedState);
+      const roomRef = db.ref(`rooms/${state.roomCode}`);
+      if (typeof roomRef.transaction !== 'function') { roomRef.update(syncedState); return; }
+      roomRef.transaction((current) => {
+        if (current === null) return null; // cache not loaded yet: Firebase re-runs this with the server's copy
+        if ((Number(current.stateVersion) || 0) !== baseVersion) return; // someone else saved first
+        const next = { ...current, ...syncedState };
+        if (syncedState.jokerTurnOwnerId === null) delete next.jokerTurnOwnerId;
+        return next;
+      }, (error, committed, snapshot) => {
+        if (error || committed || !snapshot || !snapshot.val()) return;
+        rejectedSaves++;
+        Health.note('rejectedSave');
+        const server = snapshot.val();
+        state.stateVersion = Number(server.stateVersion) || 0;
+        if (activeRoomHandler) activeRoomHandler(snapshot);
+      }, false); // not applied locally first: this phone already shows its move, and a local
+      // pre-apply that then aborts tripped a Firebase SDK assert ("removeWrite … nonexistent writeId")
     }
 
     function reserveUnusedRoom(payloadFactory, attemptsLeft = 12) {
@@ -13193,9 +13283,34 @@ video {
     // Kick/lobby-management stays host-only (and off entirely in Ranked —
     // see kickPlayer/kickPlayerMidMatch) since that's a genuinely different
     // concern from "keep the match itself from freezing".
+    // The phone that drives the match (bots, timeouts for absent players,
+    // disconnect hand-overs, state recovery) is elected, not fixed to the
+    // host: the first human seat whose app is open right now. A seat counts
+    // as present unless its presence says away (app in the background),
+    // disconnected or left, so every phone works out the same answer and
+    // the job moves the moment the driver's app goes into the background.
+    let roomPresence = {};
+    function seatIsPresent(p) {
+      if (p.id === state.localPlayerId) return typeof document === 'undefined' || !document.hidden;
+      const info = roomPresence[p.id];
+      return !info || info.status === 'connected';
+    }
+    function matchAuthorityId() {
+      const driver = state.players.find(p => p && !p.isBot && seatIsPresent(p));
+      return driver ? driver.id : null;
+    }
     function hasMatchAuthority() {
       if (state.spectating) return false; // a spectator never acts for anyone
-      return state.isHost || state.isRanked;
+      if (!state.isMultiplayer) return true;
+      return matchAuthorityId() === state.localPlayerId;
+    }
+    // Picks up a bot's (or an absent player's) turn when this phone has just
+    // become the driver.
+    let wasMatchDriver = false;
+    function checkMatchDriverChange() {
+      const now = state.isMultiplayer && state.phase === 'PLAY' && hasMatchAuthority();
+      if (now && !wasMatchDriver) triggerNextTurn();
+      wasMatchDriver = now;
     }
 
     function removePlayerFromMatch(playerId, reason) {
@@ -13289,9 +13404,22 @@ video {
       db.ref('.info/connected').on('value', (snap) => {
         if (snap.val() !== true) return;
         presenceRef.onDisconnect().set({ status: 'disconnected', at: firebase.database.ServerValue.TIMESTAMP });
-        presenceRef.set({ status: 'connected', at: firebase.database.ServerValue.TIMESTAMP });
+        presenceRef.set({ status: document.hidden ? 'away' : 'connected', at: firebase.database.ServerValue.TIMESTAMP });
       });
+      presenceSeatRef = presenceRef;
+      if (!presenceVisibilityHooked) {
+        presenceVisibilityHooked = true;
+        // App in the background = "away": the others take over driving the
+        // match straight away (it isn't a disconnect, so the seat is kept).
+        document.addEventListener('visibilitychange', () => {
+          if (!presenceSeatRef || state.spectating) return;
+          presenceSeatRef.set({ status: document.hidden ? 'away' : 'connected', at: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
+          checkMatchDriverChange();
+        });
+      }
     }
+    let presenceSeatRef = null;
+    let presenceVisibilityHooked = false;
 
     // Host-only: watches every OTHER player's presence and, if one goes
     // quiet for longer than the grace period, hands their seat to a bot the
@@ -13304,8 +13432,10 @@ video {
 
     function watchForDisconnectedPlayers(code) {
       db.ref(`rooms/${code}/presence`).on('value', (snap) => {
-        if (!hasMatchAuthority()) return;
         const presence = snap.val() || {};
+        roomPresence = presence;
+        checkMatchDriverChange();
+        if (!hasMatchAuthority()) return;
         state.players.forEach(p => {
           // Bots have no connection to lose, the host can't remove
           // themselves this way, and a player who's already finished isn't
@@ -13399,7 +13529,7 @@ video {
     }
 
     function requestAuthoritativeStateRecovery(reason) {
-      if (!state.isMultiplayer || state.isHost || !state.roomCode || !state.localPlayerId) return;
+      if (!state.isMultiplayer || hasMatchAuthority() || !state.roomCode || !state.localPlayerId) return;
       const now = Date.now();
       if (now - lastStateRecoveryRequestAt < 2500) return;
       lastStateRecoveryRequestAt = now;
@@ -13429,7 +13559,7 @@ video {
       // live board, while a genuine new match starting while already
       // connected still plays the animation as intended.
       let isInitialSnapshot = true;
-      db.ref(`rooms/${code}`).on('value', (snapshot) => {
+      activeRoomHandler = (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
         if (!isRoomVersionCompatible(data)) {
@@ -13440,7 +13570,7 @@ video {
         const isCatchUp = isInitialSnapshot;
         isInitialSnapshot = false;
 
-        if (state.isHost && data.stateRecoveryRequests && Object.keys(data.stateRecoveryRequests).length && !answeringRecoveryRequest) {
+        if (hasMatchAuthority() && data.stateRecoveryRequests && Object.keys(data.stateRecoveryRequests).length && !answeringRecoveryRequest) {
           // Our own resend fires this listener again at once (while the
           // request is still there), which used to resend forever. Clear the
           // request first and ignore the echo.
@@ -13658,18 +13788,15 @@ video {
             if (state.phase === 'PLAY') enforceLocalHandRefillInvariant();
           }
 
-          // Normally only the host drives bot turns (see triggerNextTurn) —
-          // Ranked extends that to both players via hasMatchAuthority, since
-          // isHost there is an arbitrary distinction with no real authority
-          // behind it and the match must never depend on specifically the
-          // original host still being around. Without this, a bot's turn
-          // arriving via a REMOTE player's move would never be noticed,
-          // silently freezing the match on that bot forever.
+          // The elected driver (hasMatchAuthority) picks up a bot's turn that
+          // arrived via a REMOTE player's move; without this the match would
+          // freeze on that bot.
           if (hasMatchAuthority() && state.phase === 'PLAY') {
             triggerNextTurn();
           }
         }
-      });
+      };
+      db.ref(`rooms/${code}`).on('value', activeRoomHandler);
     }
 
     function updateLobbyPlayerList() {
@@ -15226,6 +15353,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v146: [
+        ['🔒', 'Online games are steadier: two players acting at the same moment can no longer undo each other\'s move.'],
+        ['📱', "If the host's app goes into the background, another player's phone keeps the game (and its bots) moving."]
+      ],
       v145: [
         ['🎴', 'Ranked matches are now dealt by the server: nobody can rig the deal.']
       ],
@@ -18129,6 +18260,53 @@ video {
       document.getElementById('reportsTabErrors').classList.toggle('is-on', reportsTab === 'errors');
       document.getElementById('reportsTabPlayers').classList.toggle('is-on', reportsTab === 'players');
       document.getElementById('reportsTabAudit').classList.toggle('is-on', reportsTab === 'audit');
+      document.getElementById('reportsTabHealth').classList.toggle('is-on', reportsTab === 'health');
+    }
+    // HEALTH: the last 7 days of Health session records, summed up.
+    const HEALTH_DAYS = 7;
+    function summariseHealth(data) {
+      const sessions = [];
+      Object.entries(data || {}).forEach(([day, byId]) => Object.values(byId || {}).forEach(r => { if (r && typeof r === 'object') sessions.push({ day, ...r }); }));
+      const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+      const median = (xs) => { const v = xs.filter(x => x > 0).sort((a, b) => a - b); return v.length ? v[Math.floor(v.length / 2)] : 0; };
+      const p90 = (xs) => { const v = xs.filter(x => x > 0).sort((a, b) => a - b); return v.length ? v[Math.min(v.length - 1, Math.floor(v.length * 0.9))] : 0; };
+      const sum = (f) => sessions.reduce((n, r) => n + (Number(f(r)) || 0), 0);
+      const frames = sum(r => r.frames && r.frames.n), frameMs = sum(r => r.frames && r.frames.ms), slow = sum(r => r.frames && r.frames.slow);
+      const count = (k) => sum(r => r.counts && r.counts[k]);
+      const modes = ['bots', 'online', 'ranked', 'tutorial'].map((m) => {
+        const started = count(`${m}Started`), finished = count(`${m}Finished`), left = count(`${m}Left`);
+        return { mode: m, started, finished, left, abandoned: Math.max(0, started - finished - left) };
+      });
+      const devices = {};
+      sessions.forEach(r => { devices[r.device || '?'] = (devices[r.device || '?'] || 0) + 1; });
+      const byDay = {};
+      sessions.forEach(r => { byDay[r.day] = (byDay[r.day] || 0) + 1; });
+      return {
+        sessions: sessions.length, devices, byDay, installed: pct(sessions.filter(r => r.app).length, sessions.length),
+        loadMedian: median(sessions.map(r => Number(r.loadMs) || 0)), loadP90: p90(sessions.map(r => Number(r.loadMs) || 0)),
+        fps: frameMs ? Math.round((frames / frameMs) * 1000) : 0, slowPct: frames ? Math.round((slow / frames) * 1000) / 10 : 0,
+        jankySessions: sessions.filter(r => r.frames && r.frames.n > 300 && r.frames.slow / r.frames.n > 0.05).length,
+        modes, rejectedSaves: count('rejectedSave'), errors: count('errors')
+      };
+    }
+    function renderHealth(data) {
+      const h = summariseHealth(data);
+      document.getElementById('errorReportsSummary').textContent = h.sessions
+        ? `Last ${HEALTH_DAYS} days · ${h.sessions} signed-in session${h.sessions === 1 ? '' : 's'}`
+        : `No sessions in the last ${HEALTH_DAYS} days yet.`;
+      if (!h.sessions) { document.getElementById('errorReportsList').innerHTML = ''; return; }
+      const row = (label, value, note = '') => `<div class="flex justify-between gap-2 py-1 border-b border-slate-800"><span class="text-slate-300">${label}</span><span class="text-right"><b class="text-white">${value}</b>${note ? `<span class="block text-[8px] text-slate-500">${note}</span>` : ''}</span></div>`;
+      const box = (title, rows) => `<div class="bg-slate-900/70 border border-slate-800 rounded-lg px-2 py-1.5 text-[10px]"><div class="text-[9px] font-black uppercase tracking-widest text-rose-300 mb-1">${title}</div>${rows}</div>`;
+      document.getElementById('errorReportsList').innerHTML = [
+        box('Players', row('Sessions', h.sessions) + row('Devices', escapeHtml(Object.entries(h.devices).map(([d, n]) => `${d} ${n}`).join(' · '))) + row('Installed app', `${h.installed}%`)
+          + row('Per day', escapeHtml(Object.entries(h.byDay).sort().map(([d, n]) => `${d.slice(5)}: ${n}`).join(' · ')))),
+        box('Speed', row('Page load', `${(h.loadMedian / 1000).toFixed(1)}s`, `slowest 10%: ${(h.loadP90 / 1000).toFixed(1)}s`)
+          + row('Frame rate in matches', `${h.fps} fps`, `${h.slowPct}% of frames slow (under 20fps)`)
+          + row('Janky sessions', h.jankySessions, 'more than 5% slow frames')),
+        box('Matches', h.modes.filter(m => m.started).map(m => row(m.mode[0].toUpperCase() + m.mode.slice(1),
+          `${m.finished}/${m.started} finished`, `${m.left} left · ${m.abandoned} abandoned (app closed)`)).join('') || row('Matches', 'none yet')),
+        box('Problems', row('Online saves rejected', h.rejectedSaves, 'two phones saved at once; the later one reloaded the table') + row('Errors', h.errors, 'details in the ERRORS tab'))
+      ].join('');
     }
     // The server's Ranked audit (functions/ranked-audit.js) flags writes to a
     // Ranked room that an honest phone couldn't have made. One row per match.
@@ -18179,9 +18357,11 @@ video {
       paintReportsTabs();
       document.getElementById('errorReportsSummary').textContent = 'Loading…';
       document.getElementById('errorReportsList').innerHTML = '';
-      const path = { players: 'playerReports', audit: 'rankedAudit' }[reportsTab] || 'errorReports';
-      const draw = { players: renderPlayerReports, audit: renderRankedAudit }[reportsTab] || renderErrorReports;
-      db.ref(path).once('value').then((snap) => draw(snap.val())).catch((e) => {
+      const path = { players: 'playerReports', audit: 'rankedAudit', health: 'health' }[reportsTab] || 'errorReports';
+      const draw = { players: renderPlayerReports, audit: renderRankedAudit, health: renderHealth }[reportsTab] || renderErrorReports;
+      const since = localDateKey(new Date(Date.now() - (HEALTH_DAYS - 1) * 86400000));
+      const query = reportsTab === 'health' ? db.ref(path).orderByKey().startAt(since) : db.ref(path);
+      query.once('value').then((snap) => draw(snap.val())).catch((e) => {
         document.getElementById('errorReportsSummary').textContent = e && /permission/i.test(e.code || e.message || '')
           ? 'Blocked by the Database Rules: publish the latest rules (they let only your verified email read reports).'
           : `Couldn’t load reports: ${e?.message || e}`;
@@ -18196,12 +18376,13 @@ video {
     document.getElementById('errorReportsCloseBtn').addEventListener('click', () => document.getElementById('errorReportsModal').classList.add('hidden'));
     document.getElementById('errorReportsRefreshBtn').addEventListener('click', loadErrorReports);
     document.getElementById('errorReportsClearBtn').addEventListener('click', () => {
-      const path = { players: 'playerReports', audit: 'rankedAudit' }[reportsTab] || 'errorReports';
-      const what = { players: 'player report', audit: 'Ranked audit entry' }[reportsTab] || 'error report';
+      const path = { players: 'playerReports', audit: 'rankedAudit', health: 'health' }[reportsTab] || 'errorReports';
+      const what = { players: 'player report', audit: 'Ranked audit entry', health: 'health record' }[reportsTab] || 'error report';
       if (!confirm(`Delete every ${what}?`)) return;
       db.ref(path).remove().then(loadErrorReports).catch((e) => alert(`Couldn’t clear: ${e?.message || e}`));
     });
     document.getElementById('reportsTabAudit').addEventListener('click', () => { reportsTab = 'audit'; loadErrorReports(); });
+    document.getElementById('reportsTabHealth').addEventListener('click', () => { reportsTab = 'health'; loadErrorReports(); });
     document.getElementById('reportsTabErrors').addEventListener('click', () => { reportsTab = 'errors'; loadErrorReports(); });
     document.getElementById('reportsTabPlayers').addEventListener('click', () => { reportsTab = 'players'; loadErrorReports(); });
     document.getElementById('errorReportsList').addEventListener('click', (e) => {
@@ -22399,6 +22580,7 @@ video {
           ? "Leave this match? Your progress in it will be lost and you can't rejoin."
           : "Return to the main menu?";
       if (confirm(msg)) {
+        if (midMatch) { Health.matchLeft(); Health.save(); }
         forgetJoinedRoom();
         localStorage.removeItem('shithead_game_state');
         // Only a signed-in player should be returned to the Ranked lobby.

@@ -476,6 +476,42 @@
         }
       }
     },
+    "health": {
+      ".read": "auth != null && auth.token.email === 'amirk2197@googlemail.com' &&
+        auth.token.email_verified === true",
+      ".write": "auth != null && auth.token.email === 'amirk2197@googlemail.com' &&
+        auth.token.email_verified === true && !newData.exists()",
+      "$day": {
+        "$session": {
+          ".write": "auth != null && $day.matches(/^20[0-9]{2}-[0-9]{2}-[0-9]{2}$/) &&
+            $session.matches(/^s[a-z0-9]{6,20}$/) &&
+            (!data.exists() || data.child('uid').val() === auth.uid)",
+          ".validate": "newData.hasChildren(['uid', 'v', 'device', 'at']) &&
+            newData.child('uid').val() === auth.uid && newData.child('v').isString() &&
+            newData.child('v').val().length <= 12 &&
+            newData.child('device').val().matches(/^(iphone|android|desktop)$/)",
+          "at": { ".validate": "newData.isNumber()" },
+          "loadMs": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 600000"
+          },
+          "app": { ".validate": "newData.isBoolean()" },
+          "frames": {
+            "$k": {
+              ".validate": "$k.matches(/^(n|slow|ms)$/) && newData.isNumber() && newData.val() >= 0"
+            }
+          },
+          "counts": {
+            "$k": {
+              ".validate": "$k.matches(/^[A-Za-z]{1,24}$/) && newData.isNumber() &&
+                newData.val() >= 0 && newData.val() <= 100000"
+            }
+          },
+          "$other": {
+            ".validate": "$other === 'uid' || $other === 'v' || $other === 'device'"
+          }
+        }
+      }
+    },
     "rankedAudit": {
       ".read": "auth != null && auth.token.email === 'amirk2197@googlemail.com' &&
         auth.token.email_verified === true",

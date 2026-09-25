@@ -267,6 +267,14 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   await denied('read player reports', db => get(ref(db, 'playerReports')));
   await denied('delete reports', db => set(ref(db, 'playerReports/bob'), null));
 
+  // Health records (menu → Error Reports → HEALTH)
+  const hrec = { uid: 'alice', v: 'v146', device: 'iphone', at: 1, loadMs: 1200, app: true, frames: { n: 10, slow: 1, ms: 170 }, counts: { botsStarted: 1 } };
+  await allowed('save own health record', db => set(ref(db, 'health/2026-09-25/sabc1234'), hrec));
+  await denied('health record for another account', db => set(ref(db, 'health/2026-09-25/sabc9999'), { ...hrec, uid: 'bob' }));
+  await denied('bad health device', db => set(ref(db, 'health/2026-09-25/sabc5555'), { ...hrec, device: 'toaster' }));
+  await denied('extra health fields', db => set(ref(db, 'health/2026-09-25/sabc6666'), { ...hrec, diamonds: 5 }));
+  await denied('read health records', db => get(ref(db, 'health')));
+
   console.log(`\n${pass} passed, ${failN} failed`);
   process.exit(failN ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });

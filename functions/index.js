@@ -176,7 +176,12 @@ exports.auditRankedRoom = functionsV1.region(REGION).database.instance(INSTANCE)
     // checked against the version it was really built on (kept in hist),
     // so an honest race isn't flagged and tampering hidden in one still is.
     const version = Number(after.stateVersion) || 0;
-    const stale = !!(before && version && Number(before.stateVersion) >= version);
+    // (The same version with only seats changed is a Ready/swap save, which
+    // has its own transaction and doesn't bump the version: not stale.)
+    const tableKeys = ['discardPile', 'drawPile', 'currentTurnIndex', 'phase'];
+    const sameVersionTableChange = !!(before && Number(before.stateVersion) === version
+      && tableKeys.some((k) => JSON.stringify(before[k]) !== JSON.stringify(after[k])));
+    const stale = !!(before && version && (Number(before.stateVersion) > version || sameVersionTableChange));
     const ctx = { uid, now, seen, left, deal };
     let findings = auditTransition(before, after, ctx);
     if (version && findings.some((f) => f.hard)) {

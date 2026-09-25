@@ -6,7 +6,8 @@
 //   start the emulators (see CLAUDE.md), then
 //   NODE_PATH=$(npm root -g) SH_VIDEO_DEPS=/path/with/node_modules \
 //     node tools/ranked-audit-games.js <games> [idleChance] [cheat,cheat,...]
-//   cheats (one per game, in order): dump | crown | push
+//   cheats (one per game, in order): dump | crown | push | away (one app goes to the background and stops;
+//   the other phone must take over its turns and the game still finish)
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -69,6 +70,7 @@ const admin = async (p, method = 'GET', v, ns = NS) => (await fetch(`http://127.
     window.__turnKey = null; window.__idleThis = false; window.__lastAct = 0;
     setInterval(() => {
       try {
+        if (window.__stopped) return;
         if (state.phase === 'SWAP') { const me = state.players.find(p => p.id === state.localPlayerId); if (me && !me.isReady && me.hand?.length === 3) finishLocalSwap(); return; }
         if (state.phase !== 'PLAY' || state.blindRevealing || state.burnResolving) return;
         const me = state.players.find(p => p.id === state.localPlayerId);
@@ -117,6 +119,12 @@ const admin = async (p, method = 'GET', v, ns = NS) => (await fetch(`http://127.
         if (kind === 'dump') { state.discardPile.push(...me.hand); me.hand = []; }
         if (kind === 'crown') { me.hasFinished = true; me.finishRank = 1; other.hasFinished = true; other.finishRank = 2; state.phase = 'FINISHED'; }
         if (kind === 'push') { other.hand.push(...state.discardPile, state.drawPile.pop()); state.discardPile = []; }
+        if (kind === 'away') {
+          window.__stopped = true;
+          Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+          document.dispatchEvent(new Event('visibilitychange'));
+          return kind;
+        }
         syncFirebaseGameState();
         return kind;
       }, cheat);
