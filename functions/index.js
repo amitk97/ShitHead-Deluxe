@@ -131,3 +131,6 @@ exports.notifySeasonStart = onSchedule({ schedule: 'every day 09:00', timeZone: 
     logger.info('season start', { key: event.key, devices: entries.length, sent });
   }
 });
+
+// The economy (Diamonds, purchases, gifts, challenges, Ranked results).
+exports.economy = require('./economy').economy;

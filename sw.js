@@ -16,6 +16,7 @@ const OFFLINE_ASSETS = [
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js',
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check-compat.js',
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js',
   'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
 ];
 // Files kept as they're used (card art, tables, fonts). Nothing that talks

@@ -1,0 +1,1182 @@
+{
+ "items": {
+  "back-midnight": {
+   "name": "Midnight Royale",
+   "cost": 40
+  },
+  "back-emerald": {
+   "name": "Emerald Court",
+   "cost": 50
+  },
+  "back-neon": {
+   "name": "Neon Circuit",
+   "cost": 60
+  },
+  "back-crimson": {
+   "name": "Crimson Flame",
+   "cost": 60
+  },
+  "back-nebula": {
+   "name": "Royal Nebula",
+   "cost": 200
+  },
+  "back-inferno": {
+   "name": "Inferno Circuit",
+   "cost": 200
+  },
+  "frame-silver": {
+   "name": "Silver Edge",
+   "cost": 35
+  },
+  "frame-gold": {
+   "name": "Golden Crown",
+   "cost": 60
+  },
+  "frame-diamond": {
+   "name": "Diamond Aura",
+   "cost": 90
+  },
+  "frame-obsidian-throne": {
+   "name": "Obsidian Throne",
+   "cost": 200
+  },
+  "frame-emerald-sovereign": {
+   "name": "Emerald Sovereign",
+   "cost": 200
+  },
+  "frame-darkness": {
+   "name": "Darkness",
+   "cost": 250
+  },
+  "emotes-savage": {
+   "name": "Savage Set",
+   "cost": 45
+  },
+  "emotes-victory": {
+   "name": "Victory Pack",
+   "cost": 50
+  },
+  "emotes-chaos": {
+   "name": "Chaos Pack",
+   "cost": 200
+  },
+  "emotes-royal": {
+   "name": "Royal Court",
+   "cost": 200
+  },
+  "emotes-animals": {
+   "name": "Animal Pack",
+   "cost": 500
+  },
+  "emotes-sports": {
+   "name": "Sports Pack",
+   "cost": 500
+  },
+  "emotes-flags-europe": {
+   "name": "European Flags",
+   "cost": 750
+  },
+  "emotes-flags-north-america": {
+   "name": "North American Flags",
+   "cost": 750
+  },
+  "emotes-flags-south-america": {
+   "name": "South American Flags",
+   "cost": 750
+  },
+  "emotes-flags-asia": {
+   "name": "Asian Flags",
+   "cost": 750
+  },
+  "emotes-flags-africa": {
+   "name": "African Flags",
+   "cost": 750
+  },
+  "emotes-flags-oceania": {
+   "name": "Oceania Flags",
+   "cost": 750
+  },
+  "table-casino": {
+   "name": "Luxury Casino",
+   "cost": 750
+  },
+  "table-winter": {
+   "name": "Winter Wonderland",
+   "cost": 750
+  },
+  "table-midnight": {
+   "name": "Midnight",
+   "cost": 750
+  },
+  "table-candyfloss": {
+   "name": "Candyfloss",
+   "cost": 750
+  },
+  "table-royal": {
+   "name": "Royal",
+   "cost": 750
+  },
+  "table-desert": {
+   "name": "Desert",
+   "cost": 1000
+  },
+  "table-jungle": {
+   "name": "Jungle",
+   "cost": 1000
+  },
+  "table-devilish": {
+   "name": "Devilish",
+   "cost": 2000
+  },
+  "table-angelic": {
+   "name": "Angelic",
+   "cost": 2000
+  },
+  "burn-coloured": {
+   "name": "Coloured Flame",
+   "cost": 250
+  },
+  "burn-ice": {
+   "name": "Ice Shatter",
+   "cost": 500
+  },
+  "burn-electric": {
+   "name": "Electric Blast",
+   "cost": 1000
+  },
+  "burn-paint": {
+   "name": "Paint Splats",
+   "cost": 750
+  },
+  "burn-sweets": {
+   "name": "Stupendous Confectionery",
+   "cost": 1500
+  },
+  "burn-smoke": {
+   "name": "Smoke Show",
+   "cost": 2000
+  },
+  "victory-confetti": {
+   "name": "Confetti Burst",
+   "cost": 250
+  },
+  "victory-cards": {
+   "name": "Card Shower",
+   "cost": 1500
+  },
+  "victory-fireworks": {
+   "name": "Fireworks",
+   "cost": 750
+  },
+  "victory-sparklers": {
+   "name": "Sparkler Salute",
+   "cost": 750
+  },
+  "victory-stars": {
+   "name": "5-Star Finish",
+   "cost": 1000
+  },
+  "victory-karate": {
+   "name": "Karate Chop",
+   "cost": 2000
+  },
+  "avatar-ace-spades": {
+   "name": "Ace of Spades",
+   "cost": 200
+  },
+  "avatar-queen-hearts": {
+   "name": "Queen of Hearts",
+   "cost": 200
+  },
+  "avatar-joker": {
+   "name": "Joker",
+   "cost": 200
+  },
+  "avatar-burn-flame": {
+   "name": "Burn Flame",
+   "cost": 500
+  },
+  "avatar-ghost": {
+   "name": "Transparent Ghost",
+   "cost": 500
+  },
+  "avatar-frozen": {
+   "name": "Frozen",
+   "cost": 500
+  },
+  "avatar-burning-ten": {
+   "name": "Burning 10",
+   "cost": 1000
+  },
+  "avatar-fanned-hand": {
+   "name": "Fanned Hand",
+   "cost": 1000
+  },
+  "avatar-joker-card": {
+   "name": "Joker Card",
+   "cost": 1000
+  },
+  "back-lunar": {
+   "name": "Lucky Envelope",
+   "cost": 300,
+   "season": "lunar"
+  },
+  "frame-lunar": {
+   "name": "Jade",
+   "cost": 300,
+   "season": "lunar"
+  },
+  "avatar-lunar": {
+   "name": "Lucky Cat",
+   "cost": 500,
+   "season": "lunar"
+  },
+  "emotes-lunar": {
+   "name": "Good Fortune",
+   "cost": 500,
+   "season": "lunar"
+  },
+  "burn-lunar": {
+   "name": "Firecrackers",
+   "cost": 1000,
+   "season": "lunar"
+  },
+  "table-lunar": {
+   "name": "Lantern Festival",
+   "cost": 1500,
+   "season": "lunar"
+  },
+  "victory-lunar": {
+   "name": "Dragon Dance",
+   "cost": 1500,
+   "season": "lunar"
+  },
+  "back-valentine": {
+   "name": "Love Letter",
+   "cost": 300,
+   "season": "valentine"
+  },
+  "frame-valentine": {
+   "name": "Rose Gold",
+   "cost": 300,
+   "season": "valentine"
+  },
+  "avatar-valentine": {
+   "name": "Lovestruck Ace",
+   "cost": 500,
+   "season": "valentine"
+  },
+  "emotes-valentine": {
+   "name": "Sweethearts",
+   "cost": 500,
+   "season": "valentine"
+  },
+  "burn-valentine": {
+   "name": "Heartbreak",
+   "cost": 1000,
+   "season": "valentine"
+  },
+  "table-valentine": {
+   "name": "Candlelit Dinner",
+   "cost": 1500,
+   "season": "valentine"
+  },
+  "victory-valentine": {
+   "name": "Cupid's Arrows",
+   "cost": 1500,
+   "season": "valentine"
+  },
+  "back-ramadan": {
+   "name": "Arabesque",
+   "cost": 300,
+   "season": "ramadan"
+  },
+  "frame-ramadan": {
+   "name": "Moonlight",
+   "cost": 300,
+   "season": "ramadan"
+  },
+  "avatar-ramadan": {
+   "name": "Fanous Lantern",
+   "cost": 500,
+   "season": "ramadan"
+  },
+  "emotes-ramadan": {
+   "name": "Blessings",
+   "cost": 500,
+   "season": "ramadan"
+  },
+  "burn-ramadan": {
+   "name": "Lantern Glow",
+   "cost": 1000,
+   "season": "ramadan"
+  },
+  "table-ramadan": {
+   "name": "Crescent Night",
+   "cost": 1500,
+   "season": "ramadan"
+  },
+  "victory-ramadan": {
+   "name": "Moonrise",
+   "cost": 1500,
+   "season": "ramadan"
+  },
+  "back-easter": {
+   "name": "Painted Egg",
+   "cost": 300,
+   "season": "easter"
+  },
+  "frame-easter": {
+   "name": "Pastel Bloom",
+   "cost": 300,
+   "season": "easter"
+  },
+  "avatar-easter": {
+   "name": "Golden Egg",
+   "cost": 500,
+   "season": "easter"
+  },
+  "emotes-easter": {
+   "name": "Springtime",
+   "cost": 500,
+   "season": "easter"
+  },
+  "burn-easter": {
+   "name": "Egg Crack",
+   "cost": 1000,
+   "season": "easter"
+  },
+  "table-easter": {
+   "name": "Spring Meadow",
+   "cost": 1500,
+   "season": "easter"
+  },
+  "victory-easter": {
+   "name": "Egg Hunt",
+   "cost": 1500,
+   "season": "easter"
+  },
+  "back-summer": {
+   "name": "Sunset Stripes",
+   "cost": 300,
+   "season": "summer"
+  },
+  "frame-summer": {
+   "name": "Tropical",
+   "cost": 300,
+   "season": "summer"
+  },
+  "avatar-summer": {
+   "name": "Ice Lolly",
+   "cost": 500,
+   "season": "summer"
+  },
+  "emotes-summer": {
+   "name": "Holiday Mode",
+   "cost": 500,
+   "season": "summer"
+  },
+  "burn-summer": {
+   "name": "Cannonball",
+   "cost": 1000,
+   "season": "summer"
+  },
+  "table-summer": {
+   "name": "Beach Day",
+   "cost": 1500,
+   "season": "summer"
+  },
+  "victory-summer": {
+   "name": "Beach Ball Bounce",
+   "cost": 1500,
+   "season": "summer"
+  },
+  "back-halloween": {
+   "name": "Cobweb",
+   "cost": 300,
+   "season": "halloween"
+  },
+  "frame-halloween": {
+   "name": "Witch's Brew",
+   "cost": 300,
+   "season": "halloween"
+  },
+  "avatar-halloween": {
+   "name": "Jack-o'-Lantern",
+   "cost": 500,
+   "season": "halloween"
+  },
+  "emotes-halloween": {
+   "name": "Spooky",
+   "cost": 500,
+   "season": "halloween"
+  },
+  "burn-halloween": {
+   "name": "Ghost Flames",
+   "cost": 1000,
+   "season": "halloween"
+  },
+  "table-halloween": {
+   "name": "Haunted Graveyard",
+   "cost": 1500,
+   "season": "halloween"
+  },
+  "victory-halloween": {
+   "name": "Bat Swarm",
+   "cost": 1500,
+   "season": "halloween"
+  },
+  "back-diwali": {
+   "name": "Marigold Mandala",
+   "cost": 300,
+   "season": "diwali"
+  },
+  "frame-diwali": {
+   "name": "Diya Glow",
+   "cost": 300,
+   "season": "diwali"
+  },
+  "avatar-diwali": {
+   "name": "Golden Lotus",
+   "cost": 500,
+   "season": "diwali"
+  },
+  "emotes-diwali": {
+   "name": "Celebration",
+   "cost": 500,
+   "season": "diwali"
+  },
+  "burn-diwali": {
+   "name": "Colour Burst",
+   "cost": 1000,
+   "season": "diwali"
+  },
+  "table-diwali": {
+   "name": "Rangoli",
+   "cost": 1500,
+   "season": "diwali"
+  },
+  "victory-diwali": {
+   "name": "Lights of Diwali",
+   "cost": 1500,
+   "season": "diwali"
+  },
+  "back-christmas": {
+   "name": "Candy Cane",
+   "cost": 300,
+   "season": "christmas"
+  },
+  "frame-christmas": {
+   "name": "Tinsel",
+   "cost": 300,
+   "season": "christmas"
+  },
+  "avatar-christmas": {
+   "name": "Gingerbread Joker",
+   "cost": 500,
+   "season": "christmas"
+  },
+  "emotes-christmas": {
+   "name": "Festive",
+   "cost": 500,
+   "season": "christmas"
+  },
+  "burn-christmas": {
+   "name": "Present Pop",
+   "cost": 1000,
+   "season": "christmas"
+  },
+  "table-christmas": {
+   "name": "Fireside",
+   "cost": 1500,
+   "season": "christmas"
+  },
+  "victory-christmas": {
+   "name": "Sleigh Ride",
+   "cost": 1500,
+   "season": "christmas"
+  },
+  "back-newyear": {
+   "name": "Black Tie",
+   "cost": 300,
+   "season": "newyear"
+  },
+  "frame-newyear": {
+   "name": "Gold Fizz",
+   "cost": 300,
+   "season": "newyear"
+  },
+  "avatar-newyear": {
+   "name": "Disco Ball",
+   "cost": 500,
+   "season": "newyear"
+  },
+  "emotes-newyear": {
+   "name": "Cheers",
+   "cost": 500,
+   "season": "newyear"
+  },
+  "burn-newyear": {
+   "name": "Champagne Pop",
+   "cost": 1000,
+   "season": "newyear"
+  },
+  "table-newyear": {
+   "name": "Midnight Skyline",
+   "cost": 1500,
+   "season": "newyear"
+  },
+  "victory-newyear": {
+   "name": "Countdown",
+   "cost": 1500,
+   "season": "newyear"
+  }
+ },
+ "builtIn": [
+  "emotes-classic",
+  "avatar-crown-bronze",
+  "avatar-suit-spades",
+  "avatar-suit-hearts",
+  "avatar-suit-diamonds",
+  "avatar-suit-clubs"
+ ],
+ "earned": {
+  "avatar-crown-silver": {
+   "name": "Silver Crown",
+   "requirement": "Reach Silver rank",
+   "type": "peakRating",
+   "min": 1000
+  },
+  "avatar-crown-gold": {
+   "name": "Gold Crown",
+   "requirement": "Reach Gold rank",
+   "type": "peakRating",
+   "min": 1500
+  },
+  "avatar-crown-diamond": {
+   "name": "Platinum Crown",
+   "requirement": "Reach Platinum rank",
+   "type": "peakRating",
+   "min": 1800
+  },
+  "avatar-crown-master": {
+   "name": "Master Crown",
+   "requirement": "Reach Master rank",
+   "type": "peakRating",
+   "min": 2000
+  },
+  "avatar-centurion": {
+   "name": "Centurion",
+   "requirement": "Play 100 ranked games",
+   "type": "rankedGames",
+   "min": 100
+  },
+  "avatar-shithead": {
+   "name": "ShitHead",
+   "requirement": "Lose 10 ranked games in a row",
+   "type": "lossStreak",
+   "min": 10
+  },
+  "avatar-lunar-earned": {
+   "name": "Golden Dragon",
+   "requirement": "Win 3 games during Lunar New Year",
+   "type": "seasonWins",
+   "season": "lunar",
+   "min": 3
+  },
+  "avatar-valentine-earned": {
+   "name": "Queen of Roses",
+   "requirement": "Win 3 games during Valentine's",
+   "type": "seasonWins",
+   "season": "valentine",
+   "min": 3
+  },
+  "avatar-ramadan-earned": {
+   "name": "Golden Crescent",
+   "requirement": "Win 3 games during Ramadan",
+   "type": "seasonWins",
+   "season": "ramadan",
+   "min": 3
+  },
+  "avatar-easter-earned": {
+   "name": "Bunny King",
+   "requirement": "Win 3 games during Easter",
+   "type": "seasonWins",
+   "season": "easter",
+   "min": 3
+  },
+  "avatar-summer-earned": {
+   "name": "Holiday Joker",
+   "requirement": "Win 3 games during Summer Holidays",
+   "type": "seasonWins",
+   "season": "summer",
+   "min": 3
+  },
+  "avatar-halloween-earned": {
+   "name": "Skeleton King",
+   "requirement": "Win 3 games during Halloween",
+   "type": "seasonWins",
+   "season": "halloween",
+   "min": 3
+  },
+  "avatar-diwali-earned": {
+   "name": "Eternal Flame",
+   "requirement": "Win 3 games during Diwali",
+   "type": "seasonWins",
+   "season": "diwali",
+   "min": 3
+  },
+  "avatar-christmas-earned": {
+   "name": "Santa's Crown",
+   "requirement": "Win 3 games during Christmas",
+   "type": "seasonWins",
+   "season": "christmas",
+   "min": 3
+  },
+  "avatar-newyear-earned": {
+   "name": "Party Joker",
+   "requirement": "Win 3 games during New Year's",
+   "type": "seasonWins",
+   "season": "newyear",
+   "min": 3
+  }
+ },
+ "seasonalEvents": [
+  {
+   "id": "lunar",
+   "name": "Lunar New Year"
+  },
+  {
+   "id": "valentine",
+   "name": "Valentine's"
+  },
+  {
+   "id": "ramadan",
+   "name": "Ramadan"
+  },
+  {
+   "id": "easter",
+   "name": "Easter"
+  },
+  {
+   "id": "summer",
+   "name": "Summer Holidays"
+  },
+  {
+   "id": "halloween",
+   "name": "Halloween"
+  },
+  {
+   "id": "diwali",
+   "name": "Diwali"
+  },
+  {
+   "id": "christmas",
+   "name": "Christmas"
+  },
+  {
+   "id": "newyear",
+   "name": "New Year's"
+  }
+ ],
+ "seasonalBundleRate": 0.75,
+ "nameChangeTokenCost": 100,
+ "dailyStreakRewards": [
+  10,
+  15,
+  20,
+  25,
+  30,
+  40,
+  100
+ ],
+ "matchWinRewards": {
+  "bots": 10,
+  "ranked": 20
+ },
+ "dailyReward": 20,
+ "weeklyReward": 100,
+ "dailyPool": [
+  {
+   "id": "burn-once",
+   "name": "Burn the Pile",
+   "target": 1
+  },
+  {
+   "id": "play-joker",
+   "name": "Wild Card",
+   "target": 1
+  },
+  {
+   "id": "rank-triple",
+   "name": "Triple Threat",
+   "target": 1
+  },
+  {
+   "id": "play-transparent",
+   "name": "See-Through",
+   "target": 1
+  },
+  {
+   "id": "play-eight-skip",
+   "name": "Skip Ahead",
+   "target": 1
+  },
+  {
+   "id": "burn-with-ten",
+   "name": "Clean Sweep",
+   "target": 1
+  },
+  {
+   "id": "four-of-a-kind-burn",
+   "name": "Four of a Kind",
+   "target": 1
+  },
+  {
+   "id": "snap-burn-once",
+   "name": "Fast Hands",
+   "target": 1
+  },
+  {
+   "id": "deflect-joker-once",
+   "name": "Not Today",
+   "target": 1
+  },
+  {
+   "id": "play-facedown",
+   "name": "Blind Faith",
+   "target": 1
+  },
+  {
+   "id": "five-card-turn",
+   "name": "High Roller",
+   "target": 1
+  },
+  {
+   "id": "no-pickup-finish",
+   "name": "Untouchable",
+   "target": 1
+  },
+  {
+   "id": "win-any-match",
+   "name": "Victory Lap",
+   "target": 1
+  },
+  {
+   "id": "beat-a-bot",
+   "name": "Machine Beater",
+   "target": 1
+  },
+  {
+   "id": "play-three-matches",
+   "name": "Warm Up",
+   "target": 3
+  },
+  {
+   "id": "comeback-win",
+   "name": "Comeback Kid",
+   "target": 1
+  },
+  {
+   "id": "play-a-two",
+   "name": "Reset Button",
+   "target": 1
+  },
+  {
+   "id": "finish-first",
+   "name": "First Out",
+   "target": 1
+  },
+  {
+   "id": "win-ranked-match",
+   "name": "Ranked Result",
+   "target": 1
+  },
+  {
+   "id": "finish-any-match",
+   "name": "Finisher",
+   "target": 1
+  }
+ ],
+ "weeklyPool": [
+  {
+   "id": "burn-once",
+   "name": "Bonfire Week",
+   "target": 5
+  },
+  {
+   "id": "play-joker",
+   "name": "Joker Week",
+   "target": 5
+  },
+  {
+   "id": "win-any-match",
+   "name": "Winning Habit",
+   "target": 5
+  },
+  {
+   "id": "beat-a-bot",
+   "name": "Bot Hunter",
+   "target": 3
+  },
+  {
+   "id": "finish-any-match",
+   "name": "Card Marathon",
+   "target": 10
+  },
+  {
+   "id": "win-ranked-match",
+   "name": "Ranked Week",
+   "target": 3
+  },
+  {
+   "id": "snap-burn-once",
+   "name": "Snap Happy",
+   "target": 3
+  },
+  {
+   "id": "four-of-a-kind-burn",
+   "name": "Four Play",
+   "target": 3
+  }
+ ],
+ "gettingStarted": [
+  {
+   "id": "tutorial-quick-start",
+   "name": "Quick Starter",
+   "reward": 50
+  },
+  {
+   "id": "first-game",
+   "name": "ShitHead Virgin",
+   "reward": 20
+  },
+  {
+   "id": "first-win",
+   "name": "Beginner",
+   "reward": 20
+  },
+  {
+   "id": "tutorial-graduate",
+   "name": "Tutorial Graduate",
+   "reward": 200
+  }
+ ],
+ "challengeDefs": {
+  "rankedBurns": [
+   {
+    "id": "burner",
+    "name": "Burner",
+    "target": 20,
+    "reward": 50
+   },
+   {
+    "id": "arsonist",
+    "name": "Arsonist",
+    "target": 50,
+    "reward": 125
+   },
+   {
+    "id": "pyromaniac",
+    "name": "Pyromaniac",
+    "target": 100,
+    "reward": 250
+   }
+  ],
+  "rankedStreaks": [
+   {
+    "id": "hat-trick",
+    "name": "Hat-trick",
+    "target": 3,
+    "reward": 30
+   },
+   {
+    "id": "beast",
+    "name": "Beast",
+    "target": 5,
+    "reward": 200
+   },
+   {
+    "id": "unstoppable",
+    "name": "Unstoppable",
+    "target": 10,
+    "reward": 500
+   }
+  ],
+  "rankedJokerDeflects": [
+   {
+    "id": "gotcha",
+    "name": "Gotcha",
+    "target": 1,
+    "reward": 20
+   },
+   {
+    "id": "return-to-sender",
+    "name": "Return to Sender",
+    "target": 5,
+    "reward": 200
+   },
+   {
+    "id": "deflector",
+    "name": "Deflector",
+    "target": 10,
+    "reward": 500
+   }
+  ],
+  "rankedSnapBurns": [
+   {
+    "id": "snapper",
+    "name": "Snapper",
+    "target": 10,
+    "reward": 10
+   },
+   {
+    "id": "flaming-turtle",
+    "name": "Flaming Turtle",
+    "target": 50,
+    "reward": 200
+   },
+   {
+    "id": "snap-god",
+    "name": "Snap God",
+    "target": 100,
+    "reward": 500
+   }
+  ],
+  "rankedGamesPlayed": [
+   {
+    "id": "bullseye",
+    "name": "Bullseye",
+    "target": 50,
+    "reward": 50
+   },
+   {
+    "id": "centurion",
+    "name": "Centurion",
+    "target": 100,
+    "reward": 100
+   },
+   {
+    "id": "veteran",
+    "name": "Veteran",
+    "target": 200,
+    "reward": 200
+   },
+   {
+    "id": "stalwart",
+    "name": "Stalwart",
+    "target": 300,
+    "reward": 300
+   },
+   {
+    "id": "loyal",
+    "name": "Loyal",
+    "target": 400,
+    "reward": 400
+   },
+   {
+    "id": "consummate",
+    "name": "Consummate",
+    "target": 500,
+    "reward": 500
+   },
+   {
+    "id": "legacy",
+    "name": "Legacy",
+    "target": 1000,
+    "reward": 1000
+   }
+  ],
+  "endingCards": [
+   {
+    "id": "double-trouble",
+    "name": "Double Trouble",
+    "rank": "2",
+    "reward": 100
+   },
+   {
+    "id": "threes-a-crowd",
+    "name": "Three's a Crowd",
+    "rank": "3",
+    "reward": 100
+   },
+   {
+    "id": "four-gery",
+    "name": "Four-gery",
+    "rank": "4",
+    "reward": 500
+   },
+   {
+    "id": "five-alive",
+    "name": "Five Alive",
+    "rank": "5",
+    "reward": 400
+   },
+   {
+    "id": "lets-talk-about-six",
+    "name": "Let's Talk About Six",
+    "rank": "6",
+    "reward": 400
+   },
+   {
+    "id": "seven-or-heaven",
+    "name": "Seven or Heaven",
+    "rank": "7",
+    "reward": 200
+   },
+   {
+    "id": "g-eight-keeper",
+    "name": "G-eight-keeper",
+    "rank": "8",
+    "reward": 200
+   },
+   {
+    "id": "cloud-nine",
+    "name": "Cloud Nine",
+    "rank": "9",
+    "reward": 200
+   },
+   {
+    "id": "ten-commandments",
+    "name": "Ten Commandments",
+    "rank": "10",
+    "reward": 100
+   },
+   {
+    "id": "jack-of-all-trades",
+    "name": "Jack of All Trades",
+    "rank": "J",
+    "reward": 100
+   },
+   {
+    "id": "drag-queen",
+    "name": "Drag Queen",
+    "rank": "Q",
+    "reward": 100
+   },
+   {
+    "id": "kingpin",
+    "name": "Kingpin",
+    "rank": "K",
+    "reward": 100
+   },
+   {
+    "id": "ace-in-the-hole",
+    "name": "Ace in the Hole",
+    "rank": "A",
+    "reward": 100
+   },
+   {
+    "id": "jokes-on-you",
+    "name": "Jokes on You",
+    "rank": "JOKER",
+    "reward": 500
+   }
+  ],
+  "rankTiers": [
+   {
+    "id": "reach-bronze",
+    "name": "Reach Bronze",
+    "minRating": 500,
+    "reward": 25
+   },
+   {
+    "id": "reach-silver",
+    "name": "Reach Silver",
+    "minRating": 1000,
+    "reward": 75
+   },
+   {
+    "id": "reach-gold",
+    "name": "Reach Gold",
+    "minRating": 1500,
+    "reward": 200
+   },
+   {
+    "id": "reach-platinum",
+    "name": "Reach Platinum",
+    "minRating": 1800,
+    "reward": 400
+   },
+   {
+    "id": "reach-master",
+    "name": "Reach Master",
+    "minRating": 2000,
+    "reward": 750
+   }
+  ],
+  "botMatches": [
+   {
+    "id": "beat-easy-bot",
+    "name": "Beat Easy Bot",
+    "difficulty": "easy",
+    "target": 5,
+    "reward": 30
+   },
+   {
+    "id": "beat-medium-bot",
+    "name": "Beat Medium Bot",
+    "difficulty": "medium",
+    "target": 5,
+    "reward": 60
+   },
+   {
+    "id": "beat-hard-bot",
+    "name": "Beat Hard Bot",
+    "difficulty": "hard",
+    "target": 5,
+    "reward": 120
+   },
+   {
+    "id": "beat-boss-bot",
+    "name": "Beat Boss Bot",
+    "difficulty": "boss",
+    "target": 5,
+    "reward": 250
+   }
+  ]
+ },
+ "difficultyUnlocks": [
+  {
+   "diff": "medium",
+   "requireDiff": "easy",
+   "requireWins": 3
+  },
+  {
+   "diff": "hard",
+   "requireDiff": "medium",
+   "requireWins": 5
+  },
+  {
+   "diff": "boss",
+   "requireDiff": "hard",
+   "requireWins": 10
+  }
+ ],
+ "rankTiers": [
+  {
+   "name": "Master",
+   "min": 2000
+  },
+  {
+   "name": "Platinum",
+   "min": 1800
+  },
+  {
+   "name": "Gold",
+   "min": 1500
+  },
+  {
+   "name": "Silver",
+   "min": 1000
+  },
+  {
+   "name": "Bronze",
+   "min": 500
+  },
+  {
+   "name": "Novice",
+   "min": 0
+  }
+ ]
+}

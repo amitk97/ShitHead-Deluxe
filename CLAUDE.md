@@ -14,16 +14,25 @@ Single-file web game (`index.html`) on Firebase Hosting + Realtime Database (pro
 ## AmitK test account
 
 - Username `AmitK` / email `amirk2197@googlemail.com` (`isAmitkTestingAccount`).
-- Gets a one-time, real 999,999 Diamond balance (`ensureAmitkSpendableTestBalance`, marker `amitKShopTestGrantV4Done`). Spending reduces it; it is never refilled.
+- Gets a one-time, real 999,999 Diamond balance, granted by the server (economy `init`, checked by the signed-in account's **verified email**, marker `amitKShopTestGrantV4Done`). Spending reduces it; it is never refilled. The server also lets this email buy every event's seasonal items any time.
 - The exception is **Shop spending only**. Do not unlock gameplay (bot difficulties, ranked, etc.) for this account.
-- No special Database Rules exception is needed: users may write their own `users/{uid}` and diamonds are capped at 999,999.
+
+## Server economy (anti-cheat)
+
+- Phones can't write their own wallet any more. The rules make these `users/{uid}` fields server-only: `diamonds`, `ownedCosmetics`, `completedChallenges`, `loginStreak`, `rating`, `wins`, `losses`, `rankedStats`, `challengeStats`, `difficultyWins`, `seasonWins`, `processedMatchRewards`, `processedRankedMatches`, `matchCounters`, `claimedGifts`, `nameChangeToken`, `lastRankedOpponent` and the grant flags; `challengeInbox` entries can only be deleted. `users/{uid}` has NO blanket `.write`: only named fields (`equippedCosmetics`, `dailyChallengeState`, `seasonMailSent`, `retroactiveChallengeCheckDone`, `username`, `challengeInbox` deletes) and the `$field` catch-all (settings, matchHistory, activityInbox, weeklyChallengeState, tutorialCompleted…) are writable. A new server-owned field must be named in the rules (no `.write`), or `$field` makes it player-writable. `shopPurchases/*/cosmetics` and new `gifts` are server-only; `publicProfiles/*/rating`+`tier` and `leaderboard` rating/wins/losses must equal the account's real values.
+- Every change goes through ONE callable, `economy` (`functions/economy.js`, region europe-west1), via `callEconomy(action, data)` in index.html. Actions: `init` (profile defaults + AmitK grant, once per sign-in, `ensureServerProfile`), `sync` (pays milestones already met + earned pictures, at sign-in), `streak` (one per **UK** calendar day), `claim` (a completion key; daily/weekly must be today's/this week's real picks, milestones are checked against server totals), `matchWin` (Vs Bots / casual online; `reportMatchWin`), `matchFinished` (`reportMatchFinished`, ShitHead Virgin/Beginner), `rankedResult` (`applyRankedRatingUpdate`: scores the whole room once from the server's own ratings, idempotent via `rankedResults/{matchId}`, winner +20, ending-card + milestone challenges, public rating copies), `buyItem`, `buyBundle`, `buyNameToken`, `sendGift`, `claimGift`.
+- Ranked integrity: rooms are writable by anyone, so `rankedResult` only scores a room when every seat has written its own `rankedMembers/{room}/{uid}` marker (server time, writable only by that account; `enterRankedRoom`), and the same two accounts are scored at most `RANKED_PAIR_PER_DAY` (5) times a UK day (`rankedPairs`). The host still runs the game itself, so a modified host client could fake a result: server-run moves would be the next step if that ever happens.
+- Phase 2 caps (server): wins ≥45s apart and ≤40 a day (`MATCH_LIMITS`), a win on a locked difficulty is refused, per-match ceilings on reported Ranked stats (`RANKED_STAT_CAPS`), online wins are checked against the room, rank-tier challenges need a Ranked game, Diamonds cap 999,999.
+- Prices, rewards, challenge tables and earned-picture rules come from `functions/catalog.json`, exported from the game: **after changing any price, reward, challenge or Shop item, run `node tools/export-catalog.js`** (a dev test fails when they drift). Earned-picture rules live in `EARNED_AVATAR_RULES`. Daily/weekly picks are duplicated in the server (a shared fixture test guards them); event dates come from `functions/seasons.js`.
+- Tests: the dev suite fakes the server (`fakeEconomy`; by default `callEconomy` rejects, like no signal). Server + rules: start the emulators (`npx firebase-tools emulators:start --only auth,database,functions --project shithead-pro`, ports in `firebase.json`) and run `NODE_PATH=$SH_VIDEO_DEPS/node_modules node tools/economy-emulator-test.js`. Locally the Functions emulator uses database namespace `shithead-pro`.
+- Deploy order: pushing `functions/**` runs the "Deploy notification functions" workflow (it deploys `economy` too). Publish new rules only AFTER that workflow is green, or rewards/purchases fail until it is. Offline, rewards and purchases aren't available (bot games still play).
 
 ## Firebase transaction pitfall (the cause of "has Diamonds but can't buy")
 
 `ref.transaction(update)` first calls `update` with the **local cache**, which is `null` when nothing keeps that path live-synced. Returning `undefined` aborts immediately without ever reading the server. So in any transaction that can abort:
 
 - `if (current === null) return null;` before the checks, so Firebase re-runs with the server value.
-- Reset any error/result captured by the closure at the start of every pass, and confirm success from the final pass (see `createCosmeticPurchaseTransaction`).
+- Reset any error/result captured by the closure at the start of every pass, and confirm success from the final pass (see `userTx` in `functions/economy.js`; the server's admin SDK behaves the same way).
 
 A write to a parent node re-runs `.validate` on every child, so a whole-`users/{uid}` transaction fails if any existing child (e.g. `equippedCosmetics`) no longer satisfies its rule. `equippedCosmetics` rules accept ownership from `users/{uid}/ownedCosmetics` (canonical) or the legacy `shopPurchases/{uid}/cosmetics` mirror.
 
@@ -32,7 +41,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Cosmetic type `avatar` (category `Profile Pictures`). Art is inline SVG in `AVATAR_ART`; every picture uses the same 1:1 rounded-square tile via `avatarHtml(id, size)`. Keep new pictures in that style (shared tile, glow tone, metal/suit gradients).
 - Free = `BUILT_IN_COSMETICS` (Bronze Crown is also what `default` shows). Shop = `COSMETIC_SHOP_ITEMS`. Earn-only = `EARNED_AVATARS`, granted into `ownedCosmetics` by `grantEarnedAvatars`. The Platinum Crown (id `avatar-crown-diamond`, kept for compatibility) is earned at Platinum.
 - Bots get a random free picture, never shared with another bot at the table (`pickBotAvatar` / `ensureBotAvatars`).
-- Adding a picture also needs the rules updated: `equippedCosmetics/avatar` id list and the `shopPurchases` price list.
+- Adding a picture also needs the rules updated (`equippedCosmetics/avatar` id list) and the server catalog re-exported (`node tools/export-catalog.js`); an earn-only one also needs its rule in `EARNED_AVATAR_RULES`.
 - The page's Tailwind CSS is precompiled: new utility class names silently do nothing. Use custom CSS classes or inline styles for new UI.
 
 ## Card power order (the owner's ranking, weakest → strongest)
@@ -62,7 +71,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Challenges
 
-- Getting Started (`GETTING_STARTED_CHALLENGES`, shown in that order): Quick Starter 50, ShitHead Virgin 20 (play a first game), Beginner 20 (win a first game), Tutorial Graduate 200. The first-game pair is paid from `recordMatchHistory` (once per real match, never the tutorial) via `claimFirstGameChallenges`, and backfilled at sign-in from Ranked W/L, `difficultyWins` and local match history (`backfillFirstGameChallenges`).
+- Getting Started (`GETTING_STARTED_CHALLENGES`, shown in that order): Quick Starter 50, ShitHead Virgin 20 (play a first game), Beginner 20 (win a first game), Tutorial Graduate 200. The first-game pair is paid by the server when it records a finished match (`reportMatchFinished` from `recordMatchHistory`, never the tutorial) or a win, and at sign-in (`sync`) from Ranked W/L and `difficultyWins`. Milestone challenges (Ranked totals, tiers, ending cards, bot wins) are all checked and paid by the server; the game never claims them itself.
 - Every row shows what the challenge asks for; a completed row keeps that description (with the ✓) instead of just "Completed". The "Challenge completed" mail shows it too. One source: `challengeDescription(defOrCompletionKey)` (handles `daily_<date>_<id>` / `weekly_<week>_<id>` keys and the tutorial).
 
 ## Microinteractions & flips
@@ -86,7 +95,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Both pages use section tabs driven by `COSMETIC_TABS`, Pictures first, then by where items show up: Tables, Card Backs, Frames, Burn, Victory, Emotes (Custom adds Deck after Pictures via `CUSTOM_TABS`). A new cosmetic category = one entry there.
 - The Shop's Seasonal tab is first (and the default tab) only while an event is live or starts within `SEASONAL_LEAD_DAYS` (3) days (`seasonalTabLeads`); otherwise it's last. Each event section folds with a chevron (`seasonalSectionOverrides`); live/soon events start open, the rest folded.
 - Custom shows every cosmetic as a tile (`.cosmetic-tile-grid`, 2 per row; pictures 3 per row).
-- Table themes are CSS on `body[data-equipped-table-theme="…"] #gameTable` plus a `--table-label-border` accent and a Shop preview background in `shopCosmeticPreviewMarkup`. New themes also need the rules id list and price.
+- Table themes are CSS on `body[data-equipped-table-theme="…"] #gameTable` plus a `--table-label-border` accent and a Shop preview background in `shopCosmeticPreviewMarkup`. New themes also need the rules id list (`equippedCosmetics`) and a catalog re-export for the price.
 
 ## Table layout & lobby prefs
 
@@ -116,8 +125,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Ranked
 
-- `getOrCreateUserProfile` fills in a missing `rating`/`wins`/`losses` field-by-field in transactions (records often exist before the first Ranked game). Never write defaults with a plain update: it can land after a result saved in the meantime.
-- `applyRankedRatingUpdate` seeds `highestRating`/`lowestRating` from the pre-match rating via `finiteRating`: a NaN anywhere makes Firebase reject the whole result.
+- A missing `rating`/`wins`/`losses` is filled in by the server (`init`, only fields still empty; `getOrCreateUserProfile` asks for it). Ranked results are scored on the server (`rankedResult`), which seeds `highestRating`/`lowestRating` from the pre-match rating; the room is read after a short wait and the call retried, since the final placings reach the room a moment after the phones see them.
 - Queue = one `matchmaking/waiting` ticket. The waiter refreshes `ts` every 5s (`RANKED_TICKET_HEARTBEAT_MS`) and sets `onDisconnect().remove()`; searchers treat a ticket older than 30s as a ghost and take the spot. Claiming (`decideRankedQueueAction`) removes the opponent in the same transaction. Assignments carry `at` and are ignored after 60s. A waiter whose ticket vanished with no assignment re-queues itself.
 
 ## Installable app & notifications
@@ -146,7 +154,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Showcase & daily streak
 
 - Showcase: equipped table/card back/frame/burn/victory/emotes are mirrored to `publicProfiles/{uid}/showcase` (`syncShowcase`) and shown on the in-game player card and the Profile page (`showcaseHtml`). New cosmetic types that should be shown need adding to `SHOWCASE_TYPES` and the `showcase` rule.
-- Daily login streak: `claimDailyLoginReward` claims `users/{uid}/loginStreak` (local calendar day) then adds `DAILY_STREAK_REWARDS` Diamonds. The 7-day track repeats; a missed day restarts at Day 1.
+- Daily login streak: `claimDailyLoginReward` → server `streak`: one claim per UK calendar day (`localDateKey` is the UK date), `DAILY_STREAK_REWARDS` Diamonds. The 7-day track repeats; a missed day restarts at Day 1.
 - Locked Custom tiles use `data-locked` (not `disabled`) so tapping opens that item in the Shop (`openLockedCosmetic`).
 
 ## Seasonal events
@@ -160,8 +168,8 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Gifting
 
 - Shop rows have 🎁 GIFT (any item that's buyable right now; never earn-only pictures). Friends list 🎁 opens the Shop in "gift for X" mode (`giftTarget`).
-- `sendGift`: the sender pays in a `users/{uid}` transaction (`calculateGiftPayment`, receipt mail), then writes `gifts/{friendUid}/{giftId}`; if delivery fails the Diamonds are refunded. Rules: only a friend can create a gift, only the recipient can read/delete it.
-- `claimGift` (Inbox → OPEN GIFT): `calculateGiftClaim` adds the item to `ownedCosmetics`, or pays its Shop price if already owned, and records `claimedGifts/{giftId}` in the same transaction so a gift can't be opened twice.
+- `sendGift` → server `sendGift`: checks the friendship and today's price, takes the Diamonds (receipt mail), then writes `gifts/{friendUid}/{giftId}`; if delivery fails the Diamonds are refunded. Rules: only the server creates gifts, only the recipient can read/delete them.
+- `claimGift` (Inbox → OPEN GIFT) → server `claimGift`: adds the item to `ownedCosmetics`, or pays its Shop price if already owned, and records `claimedGifts/{giftId}` in the same transaction so a gift can't be opened twice.
 
 ## Match summary
 

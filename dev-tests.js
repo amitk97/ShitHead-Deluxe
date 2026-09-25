@@ -14,6 +14,23 @@ async function runDevTestSuite() {
   const originalSaveGameState = saveGameState;
   saveGameState = function () {};
   burnInstantResolveForTests = true;
+  // The economy lives on the server (functions/economy.js). Tests never reach
+  // it: by default a call fails at once (as with no signal); tests that need
+  // an answer swap in a fake with fakeEconomy(). Restored after every test.
+  const realCallEconomy = callEconomy;
+  const offlineEconomy = () => Promise.reject(new Error('No server in the test suite.'));
+  callEconomy = offlineEconomy;
+  // Fakes the server: `handlers[action](data)` returns the result; every
+  // call is recorded as [action, data].
+  function fakeEconomy(handlers) {
+    const calls = [];
+    callEconomy = (action, data = {}) => {
+      calls.push([action, data]);
+      const handler = handlers[action];
+      return handler ? Promise.resolve().then(() => handler(data)) : Promise.reject(new Error(`No fake for ${action}`));
+    };
+    return calls;
+  }
 
   const results = [];
 
@@ -41,7 +58,7 @@ async function runDevTestSuite() {
   // even when it failed half-way through swapping in a fake. Without this
   // one failing test leaked its fake db into every test after it.
   async function test(name, fn) {
-    const saved = { db, dbRef: db && db.ref, auth, currentUser, syncFirebaseGameState, burnInstantResolveForTests, bigEffectsOn, reduceMotion };
+    const saved = { db, dbRef: db && db.ref, auth, currentUser, syncFirebaseGameState, burnInstantResolveForTests, bigEffectsOn, reduceMotion, callEconomy };
     try {
       await fn();
       results.push({ name, pass: true });
@@ -52,6 +69,7 @@ async function runDevTestSuite() {
       auth = saved.auth; currentUser = saved.currentUser;
       syncFirebaseGameState = saved.syncFirebaseGameState; burnInstantResolveForTests = saved.burnInstantResolveForTests;
       bigEffectsOn = saved.bigEffectsOn; reduceMotion = saved.reduceMotion;
+      callEconomy = saved.callEconomy;
     }
   }
   function makeCard(rank, suit, id) {
@@ -3997,29 +4015,112 @@ async function runDevTestSuite() {
     }
   });
 
-  await test('ShitHead Virgin / Beginner: 20 each, paid once from the finished match', async () => {
-    assertEqual([FIRST_GAME_CHALLENGE.name, FIRST_GAME_CHALLENGE.reward, FIRST_WIN_CHALLENGE.name, FIRST_WIN_CHALLENGE.reward], ['ShitHead Virgin', 20, 'Beginner', 20], 'Names and rewards');
-    assertTrue(GETTING_STARTED_CHALLENGES.includes(FIRST_GAME_CHALLENGE) && GETTING_STARTED_CHALLENGES.includes(FIRST_WIN_CHALLENGE), 'Shown under Getting Started');
-    assertEqual(challengeDescription('first-win'), 'Win your first game.', 'Completed row / mail shows what it asked for');
-    const origClaim = claimChallenge, origUser = currentUser, origCompleted = challengeEconomy.completedChallenges;
-    const claims = [];
-    claimChallenge = (id, reward) => { claims.push([id, reward]); return Promise.resolve(true); };
+  // ---- Economy on the server (functions/economy.js) ------------------
+  // The server's own logic is tested against the Firebase emulators by
+  // tools/economy-emulator-test.js; these check the game asks it correctly.
+  await test('Server economy: daily and weekly picks match the server (fixed fixture)', () => {
+    // functions/economy.js must pick the same ids (tools/economy-emulator-test.js checks the same fixture).
+    assertEqual(pickDailyChallengeIds('2026-09-17'), ['beat-a-bot', 'win-any-match', 'burn-with-ten'], 'Daily picks for 2026-09-17');
+    assertEqual(pickWeeklyChallengeIds('2026-W38'), ['burn-once', 'snap-burn-once', 'win-any-match'], 'Weekly picks for 2026-W38');
+    assertEqual(getUkWeekKey(new Date('2026-09-17T12:00:00Z')), '2026-W38', 'UK week key');
+  });
+
+  await test('Server economy: functions/catalog.json matches the Shop and Challenges (re-run tools/export-catalog.js if not)', async () => {
+    const live = serverEconomyCatalog();
+    assertTrue(Object.keys(live.items).length > 50 && Object.keys(live.earned).length >= 6, 'The catalog covers the Shop and earned pictures');
+    let saved = null;
+    try { const res = await fetch('functions/catalog.json', { cache: 'no-store' }); if (res.ok) saved = await res.json(); } catch (e) {}
+    if (!saved) return; // not served on the live site (Hosting ignores functions/)
+    assertEqual(JSON.stringify(saved), JSON.stringify(live), 'functions/catalog.json is out of date');
+  });
+
+  await test('Server economy: a challenge is claimed through the server once, and its reward recorded', async () => {
+    const savedEconomy = { diamonds: challengeEconomy.diamonds, completedChallenges: challengeEconomy.completedChallenges };
     try {
-      currentUser = { uid: 'test-uid' };
+      currentUser = { uid: 'claim-uid' };
+      challengeEconomy.diamonds = 5;
       challengeEconomy.completedChallenges = {};
-      await claimFirstGameChallenges(true, false);
-      assertEqual(claims, [['first-game', 20]], 'A loss pays only ShitHead Virgin');
-      claims.length = 0;
-      challengeEconomy.completedChallenges = { 'first-game': { completedAt: 1, reward: 20 } };
-      await claimFirstGameChallenges(true, true);
-      assertEqual(claims, [['first-win', 20]], 'A win pays Beginner; completed ones are skipped');
-      claims.length = 0;
-      challengeEconomy.completedChallenges = {};
-      await backfillFirstGameChallenges({ difficultyWins: { easy: 2 } });
-      assertEqual(claims, [['first-game', 20], ['first-win', 20]], 'Existing Vs Bots wins backfill both');
+      const calls = fakeEconomy({ claim: (d) => ({ awarded: { id: d.id, name: 'Burner', reward: 50 }, diamonds: 55 }) });
+      assertTrue(await claimChallenge('burner', 50, 'Burner'), 'The first claim succeeds');
+      assertEqual(calls, [['claim', { id: 'burner' }]], 'Only the id is sent: the server decides the reward');
+      assertEqual(challengeEconomy.diamonds, 55, 'The balance comes from the server');
+      assertTrue(!!challengeEconomy.completedChallenges.burner, 'Recorded as completed');
+      assertTrue(!(await claimChallenge('burner', 50, 'Burner')), 'A completed challenge is not asked for again');
+      assertEqual(calls.length, 1, 'No second request');
+      fakeEconomy({ claim: () => { throw new Error('Not completed yet.'); } });
+      assertTrue(!(await claimChallenge('arsonist', 125, 'Arsonist')), 'A refused claim pays nothing');
+      assertEqual(challengeEconomy.diamonds, 55, 'Balance unchanged when refused');
     } finally {
-      claimChallenge = origClaim; currentUser = origUser; challengeEconomy.completedChallenges = origCompleted;
+      challengeEconomy.diamonds = savedEconomy.diamonds;
+      challengeEconomy.completedChallenges = savedEconomy.completedChallenges;
     }
+  });
+
+  await test('Server economy: a Vs Bots win is reported once with its difficulty; the reply updates Diamonds and unlocks', async () => {
+    const saved = { diamonds: challengeEconomy.diamonds, dw: challengeEconomy.difficultyWins, unlocked: { ...unlockedDifficulties }, matchId: state.matchId, mp: state.isMultiplayer, diff: state.difficulty };
+    try {
+      currentUser = { uid: 'win-uid' };
+      state.isMultiplayer = false; state.difficulty = 'easy'; state.matchId = 'm_test_1';
+      const calls = fakeEconomy({ matchWin: () => ({ diamondsAwarded: 10, diamonds: 110, difficultyWins: { easy: 3 }, unlockedDifficulty: 'medium', seasonWins: {}, claimed: [], newAvatars: [] }) });
+      const res = await reportMatchWin();
+      assertEqual(calls, [['matchWin', { mode: 'bots', matchId: 'm_test_1', difficulty: 'easy' }]], 'Mode, match id and difficulty are sent; never an amount');
+      assertEqual(res.diamondsAwarded, 10, 'The server decides the payout');
+      assertEqual(challengeEconomy.diamonds, 110, 'Header balance from the server');
+      assertTrue(unlockedDifficulties.medium, 'Medium unlocks from the server\'s count');
+      document.getElementById('difficultyUnlockPopup')?.classList.add('hidden');
+    } finally {
+      challengeEconomy.diamonds = saved.diamonds; challengeEconomy.difficultyWins = saved.dw; unlockedDifficulties = saved.unlocked;
+      state.matchId = saved.matchId; state.isMultiplayer = saved.mp; state.difficulty = saved.diff;
+      document.querySelectorAll('.diff-btn').forEach(styleDifficultyBtn);
+    }
+  });
+
+  await test('Server economy: a finished match and the daily login streak are recorded by the server', async () => {
+    const saved = { diamonds: challengeEconomy.diamonds, completed: challengeEconomy.completedChallenges, streak: dailyStreakState, matchId: state.matchId };
+    try {
+      currentUser = { uid: 'fin-uid' };
+      challengeEconomy.completedChallenges = {};
+      state.matchId = 'm_test_2';
+      const calls = fakeEconomy({
+        matchFinished: () => ({ claimed: [{ id: 'first-game', name: 'ShitHead Virgin', reward: 20 }], diamonds: 20 }),
+        streak: () => ({ claimed: { count: 2, reward: 15 }, streak: { count: 2, lastDate: localDateKey(), best: 2 }, diamonds: 35 })
+      });
+      await reportMatchFinished();
+      assertEqual(calls[0], ['matchFinished', { matchId: 'm_test_2' }], 'Only the match id is sent');
+      assertTrue(!!challengeEconomy.completedChallenges['first-game'], 'ShitHead Virgin recorded from the reply');
+      const claimed = await claimDailyLoginReward();
+      assertEqual(claimed, { count: 2, reward: 15 }, 'Streak day and reward come from the server');
+      assertEqual(challengeEconomy.diamonds, 35, 'Balance from the server');
+      document.getElementById('dailyRewardModal')?.classList.add('hidden');
+    } finally {
+      challengeEconomy.diamonds = saved.diamonds; challengeEconomy.completedChallenges = saved.completed; dailyStreakState = saved.streak; state.matchId = saved.matchId;
+    }
+  });
+
+  await test('Server economy: a finished Ranked match is scored by the server from the room', async () => {
+    const saved = { players: state.players, roomCode: state.roomCode, local: state.localPlayerId, rating: challengeEconomy.rating, summary: matchSummaryRating };
+    try {
+      currentUser = { uid: 'r-uid' };
+      state.players = [{ id: 'a', uid: 'r-uid', finishRank: 1 }, { id: 'b', uid: 'o-uid', finishRank: 2 }];
+      state.localPlayerId = 'a'; state.roomCode = '123456';
+      const calls = fakeEconomy({ rankedResult: () => ({ from: 500, to: 516, won: true, diamondsAwarded: 20, rating: 516, wins: 1, losses: 0, diamonds: 40, rankedStats: {}, challengeStats: {}, claimed: [], newAvatars: [] }) });
+      applyRankedRatingUpdate();
+      await new Promise(r => setTimeout(r, 1100));
+      assertEqual(calls, [['rankedResult', { roomCode: '123456' }]], 'Only the room is sent, never a rating');
+      assertEqual(matchSummaryRating, { from: 500, to: 516 }, 'The summary shows the server\'s result');
+      assertEqual(challengeEconomy.rating, 516, 'Rating from the server');
+    } finally {
+      state.players = saved.players; state.roomCode = saved.roomCode; state.localPlayerId = saved.local;
+      challengeEconomy.rating = saved.rating; matchSummaryRating = saved.summary;
+    }
+  });
+
+  await test('Server economy: Shop, bundles, gifts and the name token all go through the server', () => {
+    const src = document.documentElement.innerHTML;
+    ['buyItem', 'buyBundle', 'buyNameToken', 'sendGift', 'claimGift', 'rankedResult', 'matchWin', 'matchFinished', 'streak', 'claim', 'sync', 'init']
+      .forEach(action => assertTrue(src.includes(`callEconomy('${action}'`), `The game calls the server for ${action}`));
+    ['calculateCosmeticPurchase', 'awardMatchDiamonds', 'recordDifficultyWin', 'recordSeasonalWin'].forEach(name =>
+      assertTrue(typeof window[name] === 'undefined', `${name} (a phone-side Diamond writer) is gone`));
   });
 
   await test('Generated cosmetic concepts are implemented as real equippable items', () => {
@@ -4191,27 +4292,6 @@ async function runDevTestSuite() {
     }
   });
 
-  await test('Seasonal bundle: 25% off what you do not own, charged once, all items recorded together', () => {
-    const savedOwned = cosmeticPurchaseState;
-    try {
-      cosmeticPurchaseState = {};
-      const full = seasonalBundleFor('christmas');
-      assertEqual(full.items.length, 7, 'Bundle has all 7 items');
-      assertEqual(full.price, 4200, 'Full bundle costs 4200');
-      cosmeticPurchaseState = { 'table-christmas': { cost: 1500 } };
-      const part = seasonalBundleFor('christmas');
-      assertEqual(part.items.length, 6, 'Owned items are left out');
-      assertEqual(part.price, 3080, 'Remaining 4100 at 25% off rounds to 3080');
-      const result = calculateBundlePurchase({ diamonds: 5000, ownedCosmetics: {} }, 'christmas', full.items, full.price, 1700000000000);
-      assertEqual(result.user.diamonds, 800, 'Bundle deducts its price once');
-      assertEqual(Object.keys(result.purchases).length, 7, 'All items are owned together');
-      assertTrue(!!calculateBundlePurchase({ diamonds: 100, ownedCosmetics: {} }, 'christmas', full.items, full.price).error, 'Not enough Diamonds is refused');
-      assertTrue(!!calculateBundlePurchase({ diamonds: 9000, ownedCosmetics: { 'back-christmas': {} } }, 'christmas', full.items, full.price).error, 'A changed collection is refused rather than overcharged');
-    } finally {
-      cosmeticPurchaseState = savedOwned;
-    }
-  });
-
   await test('Seasonal earn-only pictures need 3 wins in one event', () => {
     const earned = EARNED_AVATARS.find(i => i.id === 'avatar-halloween-earned');
     assertTrue(!earned.isEarned({ seasonWins: { 'halloween-2026': 2 } }), '2 wins is not enough');
@@ -4261,37 +4341,6 @@ async function runDevTestSuite() {
     const brew = COSMETIC_SHOP_ITEMS.find(i => i.id === 'frame-halloween');
     assertTrue(shopCosmeticThumbnail(brew, 'frame').includes('#84cc16') || shopCosmeticThumbnail(brew, 'frame').includes('132,204,22'), "Witch's Brew shows its green glow, not the event's orange");
     assertTrue(cosmeticPreview(brew, 'frame').includes('132,204,22'), 'The Custom tile shows the same glow');
-  });
-
-  await test('Gifting: the sender pays once and gets a receipt; only buyable Shop items can be gifted', () => {
-    const table = COSMETIC_SHOP_ITEMS.find(i => i.id === 'table-desert');
-    const pay = calculateGiftPayment({ diamonds: 1500, ownedCosmetics: {} }, table, { uid: 'f1', name: 'Pooja' }, 'g1', 100);
-    assertEqual(pay.user.diamonds, 500, 'Gifting deducts exactly the item price from the sender');
-    assertEqual(pay.user.ownedCosmetics, {}, 'The sender does not get the item themselves');
-    assertEqual(pay.user.activityInbox.gift_sent_g1, { type: 'gift', direction: 'sent', name: 'Desert', to: 'Pooja', cost: 1000, sentAt: 100 }, 'The sender gets a receipt in their Inbox');
-    assertTrue(!!calculateGiftPayment({ diamonds: 10 }, table, { uid: 'f1', name: 'P' }, 'g2').error, 'Not enough Diamonds is refused');
-    assertTrue(!giftableItem('avatar-halloween-earned'), 'Earn-only pictures can never be gifted');
-    const savedNow = seasonalNowOverride;
-    try {
-      seasonalNowOverride = '2026-09-24T12:00:00';
-      assertTrue(!giftableItem('table-halloween'), 'Seasonal items can only be gifted while their event is on');
-      seasonalNowOverride = '2026-10-20T12:00:00';
-      assertTrue(!!giftableItem('table-halloween'), 'During Halloween its items can be gifted');
-    } finally { seasonalNowOverride = savedNow; }
-  });
-
-  await test('Gifting: opening adds the item once, or pays its value if already owned', () => {
-    const gift = { fromUid: 'a', fromName: 'Amit', itemId: 'back-neon', cost: 60, sentAt: 1 };
-    const opened = calculateGiftClaim({ diamonds: 10, ownedCosmetics: {} }, 'g1', gift, 200);
-    assertTrue(!!opened.user.ownedCosmetics['back-neon'], 'The item joins the collection');
-    assertEqual(opened.user.diamonds, 10, 'No Diamonds change when the item is new');
-    assertTrue(opened.user.claimedGifts.g1 === true, 'The gift is marked opened in the same write');
-    assertEqual(calculateGiftClaim(opened.user, 'g1', gift).error, 'Already opened.', 'A gift can never be opened twice');
-    const dup = calculateGiftClaim({ diamonds: 10, ownedCosmetics: { 'back-neon': { cost: 60 } } }, 'g2', gift, 200);
-    assertTrue(dup.asDiamonds, 'A duplicate becomes Diamonds');
-    assertEqual(dup.user.diamonds, 70, 'A duplicate pays the item price');
-    const inflated = calculateGiftClaim({ diamonds: 0, ownedCosmetics: { 'back-neon': {} } }, 'g3', { ...gift, cost: 5000 });
-    assertEqual(inflated.user.diamonds, 60, 'A duplicate never pays more than the real Shop price');
   });
 
   await test('Gifting: Shop rows offer GIFT, the Friends list has a gift button, and unopened gifts show in the Inbox', () => {
@@ -4532,24 +4581,6 @@ async function runDevTestSuite() {
     } finally {
       cosmeticPurchaseState = savedPurchases; equippedCosmetics = savedEquipped; applyEquippedCosmetics(); state.isMultiplayer = savedState;
     }
-  });
-
-  await test('REGRESSION: every cosmetic purchase deducts exactly once and records canonical ownership atomically', () => {
-    COSMETIC_SHOP_ITEMS.forEach((item, index) => {
-      const startingBalance = item.cost + 137;
-      const at = 1700000000000 + index;
-      const first = calculateCosmeticPurchase({ diamonds: startingBalance, ownedCosmetics: {} }, item, at);
-      assertTrue(!first.error, `${item.id} must be purchasable with enough Diamonds`);
-      assertEqual(first.user.diamonds, 137, `${item.id} must deduct exactly its advertised cost`);
-      assertEqual(first.user.ownedCosmetics[item.id], { purchasedAt: at, cost: item.cost }, `${item.id} ownership must be written in the same user transaction`);
-      assertEqual(first.user.activityInbox[`shop_${item.id}`], { type: 'shop', name: item.name, cost: item.cost, sentAt: at }, `${item.id} must create purchase mail in the same transaction`);
-      const duplicate = calculateCosmeticPurchase(first.user, item, at + 1);
-      assertEqual(duplicate.error, 'Already owned.', `${item.id} must never charge or purchase twice`);
-      assertEqual(Object.keys(first.user.activityInbox).length, 1, `${item.id} must create only one purchase mail`);
-      const insufficient = calculateCosmeticPurchase({ diamonds: Math.max(0, item.cost - 1), ownedCosmetics: {} }, item, at);
-      assertTrue(insufficient.error?.includes('Diamonds'), `${item.id} must explain an insufficient balance`);
-      assertTrue(!insufficient.user, `${item.id} must not mutate ownership when funds are insufficient`);
-    });
   });
 
   await test('REGRESSION: built-in cosmetics survive reload without a purchase record', () => {
@@ -4872,75 +4903,6 @@ async function runDevTestSuite() {
     document.getElementById('shopModal').classList.add('hidden'); syncBackgroundScrollLock();
   });
 
-  await test('REGRESSION: claimChallenge never awards the same challenge twice', () => {
-    const originalCurrentUser = currentUser;
-    const originalDb = db;
-    currentUser = { uid: 'test-claim-uid' };
-    let stored = { diamonds: 0, completedChallenges: {} };
-    db = { ref: () => ({ transaction: (fn) => {
-      stored = fn(stored) || stored;
-      return Promise.resolve({ committed: true, snapshot: { val: () => stored } });
-    } }) };
-    return claimChallenge('burner', 50, 'Burner').then((firstResult) => {
-      assertTrue(firstResult, 'The first claim must succeed');
-      assertEqual(stored.diamonds, 50, 'Diamonds must be credited exactly once');
-      assertEqual(stored.challengeInbox.burner.name, 'Burner', 'A successful challenge claim must create its inbox mail');
-      assertEqual(stored.challengeInbox.burner.reward, 50, 'Inbox mail must show the reward actually credited');
-      return claimChallenge('burner', 50, 'Burner');
-    }).then((secondResult) => {
-      assertTrue(!secondResult, 'A second claim of the same challenge must be a no-op');
-      assertEqual(stored.diamonds, 50, 'Diamonds must NOT be credited twice for the same challenge');
-      assertEqual(Object.keys(stored.challengeInbox).length, 1, 'A repeated claim must not create another mail');
-      currentUser = originalCurrentUser;
-      db = originalDb;
-    });
-  });
-
-  await test('REGRESSION: runRetroactiveChallengeCheck backfills Streaks/Games Played/Rank Tier/Bot Matches from legacy stats, but NEVER Burns/Snap Burns/Joker Deflects', () => {
-    const originalCurrentUser = currentUser;
-    const originalDb = db;
-    currentUser = { uid: 'veteran-uid' };
-    let stored = { diamonds: 0, completedChallenges: {} };
-    db = { ref: () => ({ transaction: (fn) => {
-      stored = fn(stored) || stored;
-      return Promise.resolve({ committed: true, snapshot: { val: () => stored } });
-    } }) };
-    // A pre-existing account's real profile shape, as it would look
-    // the moment this update ships — rankedStats/difficultyWins/
-    // rating all predate Challenges entirely, and there is NO
-    // challengeStats field yet at all (it didn't exist before this
-    // update), exactly like a real legacy account.
-    runRetroactiveChallengeCheck({
-      rating: 1050,
-      wins: 52,
-      losses: 10,
-      rankedStats: { burnt: 60, bestStreak: 4 },
-      difficultyWins: { easy: 5, medium: 2 }
-    });
-    assertTrue(!stored.completedChallenges['burner'], 'Burner must NOT be backfilled from the legacy rankedStats.burnt card-count field — Burns are never retroactive');
-    assertTrue(!stored.completedChallenges['arsonist'], 'Arsonist must NOT be backfilled either, for the same reason');
-    assertTrue(!!stored.completedChallenges['reach-silver'], 'Reach Silver (1000 rating) must still be backfilled from an existing 1050 rating (a stated exception)');
-    assertTrue(!stored.completedChallenges['reach-gold'], 'Reach Gold (1500 rating) must NOT be backfilled from an existing 1050 rating');
-    assertTrue(!!stored.completedChallenges['beat-easy-bot'], 'Beat Easy Bot (5 wins) must still be backfilled from 5 pre-existing easy difficultyWins (a stated exception)');
-    assertTrue(!stored.completedChallenges['beat-medium-bot'], 'Beat Medium Bot (5 wins) must NOT be backfilled from only 2 pre-existing medium difficultyWins');
-    currentUser = originalCurrentUser;
-    db = originalDb;
-  });
-
-  await test('REGRESSION: a brand-new account starts with retroactiveChallengeCheckDone already true, since there is nothing to backfill', () => {
-    const originalDb = db;
-    db = { ref: () => ({
-      once: () => Promise.resolve({ exists: () => false }),
-      set: (val) => Promise.resolve(val)
-    }) };
-    return getOrCreateUserProfile('brand-new-uid').then((fresh) => {
-      assertTrue(fresh.retroactiveChallengeCheckDone === true, 'A fresh profile must start with the retroactive check already marked done, not pending');
-      assertTrue(fresh.diamondEconomyResetV2Done === true, 'A fresh profile has nothing to reset, so it must start already marked done too');
-      assertEqual(fresh.challengeStats, { burns: 0, snapBurns: 0, jokerDeflects: 0 }, 'A fresh profile must start with its own dedicated challengeStats, all at 0');
-      db = originalDb;
-    });
-  });
-
   await test('REGRESSION: formatCompactDiamonds keeps the header from ever breaking on a huge balance, while the backend keeps the exact integer', () => {
     assertEqual(formatCompactDiamonds(850), '850', 'Under 1,000 must show the exact integer');
     assertEqual(formatCompactDiamonds(1500), '1.5K', 'Thousands must compact to one decimal + K');
@@ -4980,32 +4942,6 @@ async function runDevTestSuite() {
     assertEqual(byId(CHALLENGE_DEFS.rankedSnapBurns, 'snapper').reward, 10, 'Snapper must pay 10');
     assertEqual(byId(CHALLENGE_DEFS.rankedSnapBurns, 'flaming-turtle').reward, 200, 'Flaming Turtle must pay 200');
     assertEqual(byId(CHALLENGE_DEFS.rankedSnapBurns, 'snap-god').reward, 500, 'Snap God must pay 500');
-  });
-
-  await test('REGRESSION: Ending Cards now covers all 14 ranks including 2, 3, and Ace, each with the exact spec\u2019d payout, and the finishing-card check recognizes the new ranks', () => {
-    assertEqual(CHALLENGE_DEFS.endingCards.length, 14, 'There must be exactly 14 Ending Card challenges');
-    const byRank = (rank) => CHALLENGE_DEFS.endingCards.find((c) => c.rank === rank);
-    assertEqual(byRank('2').reward, 100, 'Double Trouble (2) must pay 100');
-    assertEqual(byRank('3').reward, 100, "Three's a Crowd (3) must pay 100");
-    assertEqual(byRank('A').reward, 100, 'Ace in the Hole (A) must pay 100');
-    assertEqual(byRank('5').reward, 400, 'Five Alive (5) must pay 400');
-    assertEqual(byRank('6').reward, 400, 'Six (6) must pay 400');
-    assertEqual(byRank('4').reward, 500, 'Four-gery (4) must still pay the highest payout, 500');
-    assertEqual(byRank('JOKER').reward, 500, 'Jokes on You (Joker) must still pay the highest payout, 500');
-    const originalCurrentUser = currentUser;
-    const originalDb = db;
-    currentUser = { uid: 'ending-card-test-uid' };
-    let stored = { diamonds: 0, completedChallenges: {} };
-    db = { ref: () => ({ transaction: (fn) => {
-      stored = fn(stored) || stored;
-      return Promise.resolve({ committed: true, snapshot: { val: () => stored } });
-    } }) };
-    checkEndingCardChallenge({ lastPlayRank: '2' });
-    assertTrue(!!stored.completedChallenges['double-trouble'], 'Finishing a Ranked match on a 2 must claim Double Trouble');
-    checkEndingCardChallenge({ lastPlayRank: 'A' });
-    assertTrue(!!stored.completedChallenges['ace-in-the-hole'], 'Finishing a Ranked match on an Ace must claim Ace in the Hole');
-    currentUser = originalCurrentUser;
-    db = originalDb;
   });
 
   await test('REGRESSION: getChallengePriority orders Daily first, then by category, then by threshold within a category', () => {
@@ -5102,12 +5038,6 @@ async function runDevTestSuite() {
     assertTrue(!standings.includes('<img src=x'), 'Final standings must never interpolate raw player markup');
   });
 
-  await test('SECURITY: match rewards and Ranked results carry idempotency guards', () => {
-    assertTrue(awardMatchDiamonds.toString().includes('processedMatchRewards'), 'Match rewards must record processed match IDs');
-    assertTrue(applyRankedRatingUpdate.toString().includes('processedRankedMatches'), 'Ranked settlement must reject a repeated match ID');
-    assertTrue(typeof generateMatchId() === 'string' && generateMatchId().startsWith('m_'), 'Every new match must receive a stable-format unique ID');
-  });
-
   await test('SECURITY: room creation reserves an unused six-digit code transactionally', () => {
     const source = reserveUnusedRoom.toString();
     assertTrue(source.includes('.transaction'), 'Room reservation must be a Firebase transaction');
@@ -5157,49 +5087,6 @@ async function runDevTestSuite() {
       _getData: () => data
     };
   }
-
-  await test('REGRESSION: THE RESET wipes diamonds/completedChallenges/dailyChallengeState/challengeStats exactly once, then re-arms the retroactive exceptions', () => {
-    const originalCurrentUser = currentUser;
-    const originalDb = db;
-    const originalEconomy = challengeEconomy;
-    const originalLoadedForUid = challengeEconomyLoadedForUid;
-    currentUser = { uid: 'reset-test-uid' };
-    challengeEconomyLoadedForUid = null; // force a genuine load regardless of any earlier test's state
-    const mock = makeMockDb({
-      users: {
-        'reset-test-uid': {
-          diamonds: 500,
-          completedChallenges: { burner: { completedAt: 1, reward: 50 } }, // an old, now-invalid award under the previous rules
-          dailyChallengeState: { dateKey: '2020-01-01', challengeIds: ['burn-once'], progress: { 'burn-once': 1 } },
-          retroactiveChallengeCheckDone: true, // already ran once, under the OLD rules
-          diamondEconomyResetV2Done: false, // has NOT been reset yet
-          rating: 1050, wins: 52, losses: 10,
-          rankedStats: { burnt: 60, bestStreak: 4 },
-          challengeStats: { burns: 12, snapBurns: 3, jokerDeflects: 1 } // leftovers from earlier dev testing
-        }
-      }
-    });
-    db = mock;
-    return initChallengeEconomy()
-      .then(() => Promise.resolve()).then(() => Promise.resolve()).then(() => Promise.resolve())
-      .then(() => {
-      // The reset zeroes the balance, then the stated retroactive
-      // exceptions (Rank Tier, Games Played, Win Streaks) pay out again.
-      const reAwarded = Object.values(challengeEconomy.completedChallenges).reduce((sum, c) => sum + (Number(c.reward) || 0), 0);
-      assertEqual(challengeEconomy.diamonds, reAwarded, 'After THE RESET the balance must be exactly what the retroactive exceptions re-award — the old 500 must be gone');
-      assertTrue(!challengeEconomy.completedChallenges['burner'], 'THE RESET must clear completedChallenges, including any now-invalid old award');
-      assertEqual(challengeEconomy.challengeStats, { burns: 0, snapBurns: 0, jokerDeflects: 0 }, 'THE RESET must zero the dedicated challenge counters too');
-      assertEqual(challengeEconomy.dailyChallengeState.progress, {}, 'Daily challenges must initialize cleanly at 0/0, not carry over old progress');
-      const persisted = mock._getData().users['reset-test-uid'];
-      assertTrue(persisted.diamondEconomyResetV2Done === true, 'The reset must be marked done in Firebase so it never runs again for this account');
-      assertTrue(!!challengeEconomy.completedChallenges['reach-silver'], 'Rank Tier must still be retroactively re-awarded after the reset (a stated exception)');
-      assertTrue(!challengeEconomy.completedChallenges['burner'], 'Burns must NOT be retroactively re-awarded after the reset, even though rankedStats.burnt still says 60');
-      currentUser = originalCurrentUser;
-      db = originalDb;
-      challengeEconomy = originalEconomy;
-      challengeEconomyLoadedForUid = originalLoadedForUid;
-    });
-  });
 
   await test('REGRESSION: a re-entrant initChallengeEconomy call for the same signed-in account never clobbers live in-memory progress', () => {
     const originalCurrentUser = currentUser;
@@ -5268,48 +5155,6 @@ async function runDevTestSuite() {
     const z = parseInt(getComputedStyle(modal).zIndex, 10);
     assertTrue(!isNaN(z) && z >= 120, `Delete Account's computed z-index must actually be >= 120 (got "${getComputedStyle(modal).zIndex}")`);
     if (wasHidden) modal.classList.add('hidden');
-  });
-
-  await test('REGRESSION: match-win Diamond payout is 10 for a Bot Match win, 20 for a Ranked win, and 0 for anything else', () => {
-    const originalCurrentUser = currentUser;
-    const originalDb = db;
-    const originalEconomy = challengeEconomy;
-    currentUser = { uid: 'match-win-test-uid' };
-    const mock = makeMockDb({ users: { 'match-win-test-uid': { diamonds: 0, completedChallenges: {}, difficultyWins: {} } } });
-    db = mock;
-    challengeEconomy = { ...challengeEconomy, diamonds: 0, dailyChallengeState: null, completedChallenges: {} };
-
-    // Finishing 1st in a Bot Match
-    freshState({ isRanked: false, isMultiplayer: false, matchId: 'match-win-bot' });
-    const p1 = makePlayer({ id: 'p1' });
-    state.players = [p1, makePlayer({ id: 'p2', isBot: true })];
-    checkPlayerFinished(p1);
-
-    return Promise.resolve().then(() => Promise.resolve()).then(() => Promise.resolve()).then(() => {
-      assertEqual(mock._getData().users['match-win-test-uid'].diamonds, 10, 'Finishing 1st in a Bot Match must award exactly 10 Diamonds');
-
-      // Finishing 2nd in a Bot Match (p1 already finished 1st above)
-      freshState({ isRanked: false, isMultiplayer: false });
-      const q1 = makePlayer({ id: 'p1', hasFinished: true, finishRank: 1 });
-      const q2 = makePlayer({ id: 'p2' });
-      state.players = [q1, q2];
-      checkPlayerFinished(q2);
-      return Promise.resolve().then(() => Promise.resolve());
-    }).then(() => {
-      assertEqual(mock._getData().users['match-win-test-uid'].diamonds, 10, 'Finishing 2nd (or any non-1st place) in a Bot Match must award 0 — balance must be unchanged');
-
-      // Winning a Ranked match
-      freshState({ isRanked: true, isMultiplayer: true, matchId: 'match-win-ranked' });
-      const r1 = makePlayer({ id: 'p1' });
-      state.players = [r1, makePlayer({ id: 'p2' })];
-      checkPlayerFinished(r1);
-      return Promise.resolve().then(() => Promise.resolve()).then(() => Promise.resolve());
-    }).then(() => {
-      assertEqual(mock._getData().users['match-win-test-uid'].diamonds, 30, 'Winning a Ranked match must additionally award 20 Diamonds (10 + 20 = 30 total so far)');
-      currentUser = originalCurrentUser;
-      db = originalDb;
-      challengeEconomy = originalEconomy;
-    });
   });
 
   await test('REGRESSION: opening Challenges mid-Ranked-match shows live Burns/Snap Burns/Joker Deflects progress from the match in progress', () => {
@@ -5561,77 +5406,6 @@ async function runDevTestSuite() {
     const html = buildRankedStatsHtml({ rating: 500, wins: 1, losses: 0 });
     assertTrue(html.includes('Highest rating reached') && html.includes('Lowest rating reached'), 'Both range stats must still render even with no rankedStats object yet');
   });
-  await test('REGRESSION: applyRankedRatingUpdate seeds and tracks the highest/lowest rating ever reached, and the win streak', () => {
-    freshState({ isRanked: true, localPlayerId: 'p1' });
-    const me = makePlayer({ id: 'p1', uid: 'u1', rating: 500, finishRank: 1, gameStats: { burnt: 3, jokersPlayed: 1 } });
-    const opp = makePlayer({ id: 'p2', uid: 'u2', rating: 500, finishRank: 2 });
-    state.players = [me, opp];
-    let stored = { rating: 500, wins: 2, losses: 1 }; // a pre-existing account with no rankedStats yet
-    const originalDb = db;
-    db = { ref: () => ({ transaction: (fn, cb) => { stored = fn(stored); cb(null); return Promise.resolve(); } }) };
-    applyRankedRatingUpdate();
-    db = originalDb;
-    assertTrue(stored.rankedStats.highestRating >= 500, 'The first tracked match must seed the range from the pre-match rating, then include the new one');
-    assertTrue(stored.rankedStats.lowestRating <= 500, 'Same for the lower bound');
-    assertEqual(stored.rankedStats.currentStreak, 1, 'A win must start (or extend) the streak');
-    assertEqual(stored.rankedStats.bestStreak, 1, 'Best streak must track the current one');
-    assertEqual(stored.rankedStats.burnt, 3, "This match's burnt count must be added from the player's own gameStats");
-    assertEqual(stored.rankedStats.jokersPlayed, 1, "This match's Jokers-played count must be added from the player's own gameStats");
-  });
-  await test('Ranked results still save for an account whose record has no rating yet (no NaN)', () => {
-    freshState({ isRanked: true, localPlayerId: 'p1', matchId: 'no-rating-test' });
-    state.players = [
-      makePlayer({ id: 'p1', uid: 'u1', rating: undefined, finishRank: 1 }),
-      makePlayer({ id: 'p2', uid: 'u2', rating: 500, finishRank: 2 })
-    ];
-    // Created by settings/Diamonds before this account ever played Ranked.
-    let stored = { settings: { speedIndex: 1 }, diamonds: 40 };
-    const originalDb = db;
-    try {
-      db = { ref: () => ({ transaction: (fn, cb) => { stored = fn(stored); cb(null, false, null); } }) };
-      applyRankedRatingUpdate();
-    } finally { db = originalDb; }
-    const numbers = [stored.rating, stored.wins, stored.losses, stored.rankedStats.highestRating, stored.rankedStats.lowestRating];
-    assertTrue(numbers.every(Number.isFinite), `Every saved number must be real — Firebase rejects NaN and the whole result was lost: ${JSON.stringify(numbers)}`);
-    assertTrue(stored.rating > 500, 'A win from the default 500 goes up');
-    assertEqual(stored.rankedStats.lowestRating, 500, 'The rating range starts from the default rating');
-    assertEqual(stored.diamonds, 40, 'Everything else on the account is kept');
-  });
-  await test('Opening Ranked fills in a missing rating, wins and losses on an existing account', async () => {
-    const originalDb = db;
-    const mock = makeMockDb({ users: { u9: { diamonds: 10, settings: { speedIndex: 2 } }, u8: { rating: 812, wins: 3, losses: 4 } } });
-    db = mock;
-    try {
-      const profile = await getOrCreateUserProfile('u9');
-      assertEqual([profile.rating, profile.wins, profile.losses], [500, 0, 0], 'Missing Ranked basics come back as defaults');
-      const saved = mock._getData().users.u9;
-      assertEqual([saved.rating, saved.wins, saved.losses], [500, 0, 0], 'The defaults are saved to the account');
-      assertEqual(saved.diamonds, 10, 'Other fields are untouched');
-      const existing = await getOrCreateUserProfile('u8');
-      assertEqual(existing.rating, 812, 'A real rating is never replaced');
-    } finally { db = originalDb; }
-  });
-  await test('Filling in a missing rating never overwrites a Ranked result saved in the meantime', async () => {
-    const originalDb = db;
-    const server = { rating: 516, wins: 1, losses: 0, diamonds: 3 }; // the result landed after our read
-    const writes = [];
-    db = { ref: (path) => ({
-      once: () => Promise.resolve({ exists: () => true, val: () => ({ diamonds: 3 }) }), // stale: read before the result saved
-      update: (patch) => { writes.push(['update', path, patch]); return Promise.resolve(); },
-      transaction: (fn, cb) => {
-        const key = path.split('/').pop();
-        const next = fn(server[key] === undefined ? null : server[key]);
-        if (next !== undefined) { server[key] = next; writes.push(['set', path, next]); }
-        cb(null, next !== undefined, { val: () => server[key] });
-      }
-    }) };
-    try {
-      const profile = await getOrCreateUserProfile('u7');
-      assertEqual([server.rating, server.wins, server.losses], [516, 1, 0], 'The saved result is untouched');
-      assertEqual(writes.length, 0, 'Nothing was written over it');
-      assertEqual(profile.rating, 516, 'The returned profile uses the real rating');
-    } finally { db = originalDb; }
-  });
   await test('Ranked queue: live players are claimed, ghosts are replaced, recent opponents can be skipped', () => {
     const me = { uid: 'me' };
     const now = 10_000_000;
@@ -5750,52 +5524,6 @@ async function runDevTestSuite() {
       assertTrue(seats.find(p => p.id === 'p2').isHost, 'The next player becomes host');
     } finally { db = originalDb; }
   });
-  await test('Ranked tier changes create one mail per completed match, for promotions and demotions', () => {
-    const originalDb = db;
-    try {
-      const runMatch = (startingRating, finishRank, matchId) => {
-        freshState({ isRanked: true, localPlayerId: 'p1', matchId });
-        state.players = [
-          makePlayer({ id: 'p1', uid: 'u1', rating: startingRating, finishRank }),
-          makePlayer({ id: 'p2', uid: 'u2', rating: startingRating, finishRank: finishRank === 1 ? 2 : 1 })
-        ];
-        let stored = { rating: startingRating, wins: 0, losses: 0 };
-        db = { ref: () => ({ transaction: (fn, cb) => {
-          const next = fn(stored);
-          if (next) stored = next;
-          cb(null, false, null);
-        } }) };
-        applyRankedRatingUpdate();
-        const first = stored.activityInbox && Object.values(stored.activityInbox);
-        applyRankedRatingUpdate();
-        assertEqual(Object.keys(stored.activityInbox || {}).length, first?.length || 0, 'Replaying the same match must not add mail');
-        return first || [];
-      };
-      const promoted = runMatch(999, 1, 'rank-promotion-test');
-      assertEqual(promoted.length, 1, 'Crossing into Silver must produce one mail');
-      assertEqual(promoted[0].fromTier, 'Bronze', 'Promotion must include previous tier');
-      assertEqual(promoted[0].toTier, 'Silver', 'Promotion must include new tier');
-      assertEqual(promoted[0].direction, 'up', 'Promotion must say up');
-      const demoted = runMatch(1001, 2, 'rank-demotion-test');
-      assertEqual(demoted.length, 1, 'Dropping into Bronze must produce one mail');
-      assertEqual(demoted[0].direction, 'down', 'Demotion must say down');
-      assertEqual(runMatch(700, 1, 'rank-same-tier-test').length, 0, 'Rating changes within a tier must not produce rank mail');
-    } finally { db = originalDb; }
-  });
-
-
-  // This test's own `test(name, () => {` opening was missing entirely
-  // in the source — same class of pre-existing copy/paste accident as
-  // the "Ranked Stats" one above, just the opposite half of it (a body
-  // with no wrapper at all, rather than a wrapper with no closing
-  // brace). Harmless under the old synchronous test() — the body still
-  // ran as a continuation of whatever test happened to be executing
-  // above it, using assertTrue/assertEqual from that enclosing
-  // closure — but with test() calls now `await`ed, an unwrapped body
-  // like this has no enclosing async function to await inside, so it
-  // surfaces as a hard SyntaxError instead of a silent structural
-  // accident. Restoring the wrapper here doesn't change what it
-  // verifies, only makes it a real, independently-reported test again.
   await test('openThemesPanel opens the modal and shows the real theme grid, with an honest Coming Soon placeholder and no fake unlock progress', () => {
     openThemesPanel();
     const area = document.getElementById('themesGridArea');
@@ -5808,49 +5536,6 @@ async function runDevTestSuite() {
     assertTrue(area.innerHTML.includes('Coming Soon'), 'A placeholder for future unlockable themes must be present and honestly labelled');
     assertTrue(!/progress|unlock(ed|s)?\s*\d|reward/i.test(area.innerHTML.replace('Coming Soon', '')), 'No fake unlock progress or fake rewards may be implied for the Coming Soon card');
     document.getElementById('themesModal').classList.add('hidden');
-  });
-  await test('REGRESSION: Shop purchase calculator debits exactly once and blocks insufficient/duplicate purchases', () => {
-    const item={id:'test-cosmetic',name:'Test Cosmetic',cost:250};
-    const first=calculateCosmeticPurchase({diamonds:999999,ownedCosmetics:{}},item,123);
-    assertEqual(first.user.diamonds,999749,'250 Diamonds must be deducted from 999999');
-    assertTrue(!!first.user.ownedCosmetics[item.id],'Ownership must be recorded in the same atomic result');
-    assertTrue(!!calculateCosmeticPurchase({diamonds:249,ownedCosmetics:{}},item,123).error,'Insufficient balance must not produce a purchasable user state');
-    assertTrue(!!calculateCosmeticPurchase(first.user,item,124).error,'A second purchase of an already-owned cosmetic must be rejected');
-  });
-  await test('REGRESSION: Shop purchases survive Firebase\'s null first transaction pass', () => {
-    // Mirrors the Realtime Database client: the update runs against the
-    // local cache (null without a live listener); returning undefined
-    // aborts, otherwise it re-runs against the server value.
-    const runLikeFirebase = (update, server) => {
-      if (update(null) === undefined) return { committed: false };
-      const value = update(server);
-      return value === undefined ? { committed: false } : { committed: true, value };
-    };
-    const item = COSMETIC_SHOP_ITEMS.find(entry => entry.id === 'back-midnight');
-    const server = { username: 'AmitK', diamonds: 999999, ownedCosmetics: {} };
-    const cosmeticTx = createCosmeticPurchaseTransaction(item);
-    const bought = runLikeFirebase(cosmeticTx.update, server);
-    assertTrue(bought.committed, 'A 999,999 balance must be able to buy Midnight Royale');
-    assertEqual(bought.value.diamonds, 999999 - item.cost, 'The real server balance must be debited');
-    assertTrue(!!bought.value.ownedCosmetics[item.id], 'Ownership must be recorded');
-    assertEqual(cosmeticTx.outcome.error, null, 'The null first pass must not leave a stale error');
-    assertTrue(!!cosmeticTx.outcome.purchase, 'The final pass must report the purchase');
-    const broke = createCosmeticPurchaseTransaction(item);
-    assertTrue(!runLikeFirebase(broke.update, { diamonds: item.cost - 1 }).committed, 'An insufficient server balance must still abort');
-    assertTrue(broke.outcome.error?.includes('Diamonds'), 'An insufficient server balance must explain why');
-    const missing = createCosmeticPurchaseTransaction(item);
-    runLikeFirebase(missing.update, null);
-    assertTrue(!missing.outcome.purchase, 'A missing user node must never be reported as a purchase');
-    const tokenTx = createNameChangeTokenTransaction(123);
-    const token = runLikeFirebase(tokenTx.update, { diamonds: 999999 });
-    assertTrue(token.committed, 'A 999,999 balance must be able to buy the Name Change Token');
-    assertEqual(token.value.diamonds, 999899, 'The token must debit exactly 100 from the server balance');
-    assertEqual(tokenTx.outcome.record, { purchasedAt: 123, cost: 100 }, 'The final pass must report the token record');
-  });
-  await test('REGRESSION: Shop buy buttons enter an in-flight disabled state before Firebase purchase completion', () => {
-    const src=document.getElementById('cosmeticShopList');
-    assertTrue(typeof calculateCosmeticPurchase==='function','Atomic purchase calculator must exist');
-    assertTrue(!!src,'Shop list must exist for delegated purchase handling');
   });
   await test('REGRESSION: Challenges exposes exactly Daily, Weekly, Ranked and Bots top tabs', () => {
     const tabs=[...document.querySelectorAll('[data-challenge-tab]')].map(b=>b.dataset.challengeTab);
@@ -6133,6 +5818,7 @@ async function runDevTestSuite() {
   });
 
   saveGameState = originalSaveGameState;
+  callEconomy = realCallEconomy;
   burnInstantResolveForTests = false;
   renderDevTestReport(results);
 }

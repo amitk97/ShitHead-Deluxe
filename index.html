@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v134 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v135 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7,7 +7,9 @@
        <body>   header · menu drawer · home/lobby · game table · pages and pop-ups
        scripts  SOUND ENGINE · BURN EMBER ENGINE · KINETIC PROJECTILE ENGINE (card flights,
                 blind reveal) · GAMEPLAY ENGINE (everything else; its own map is at the top)
-       outside  dev-tests.js (index.html?dev-tests=1) · art/ · audio/ · sw.js · functions/ -->
+       outside  dev-tests.js (index.html?dev-tests=1) · art/ · audio/ · sw.js · functions/ (push
+                notifications; economy.js = the server economy, catalog.json from
+                tools/export-catalog.js) -->
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
@@ -1544,6 +1546,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
   <style>
@@ -6614,7 +6617,7 @@ video {
   <!-- GAMEPLAY ENGINE -->
   <script>
     // MAP OF THIS SCRIPT (search for "// § " to jump between sections):
-    //   § Start-up plumbing: pages to <body>, Firebase, error reports
+    //   § Start-up plumbing: pages to <body>, Firebase, error reports, callEconomy
     //   § Game state, save & restore
     //   § Rules engine: legal moves and constraints
     //   § Bot AI
@@ -6630,10 +6633,11 @@ video {
     //   § Shop and Custom pages
     //   § Accounts and sign-in
     //   § Ranked matchmaking
-    //   § Challenges and Diamonds economy
+    //   § Challenges and Diamonds economy (paid by the server: functions/economy.js)
     //   § Social: profiles, presence, friends, invites, inbox
     //   § Installable app and notifications
     //   § Settings page
+    //   § Invite links
     //   § Phone back gesture
     //   § Tutorial
     //   § Page start-up
@@ -6702,6 +6706,20 @@ video {
     // Date.now() corrected by the offset Firebase measures on connect.
     let serverTimeOffsetMs = 0;
     function serverNow() { return Date.now() + serverTimeOffsetMs; }
+    // The economy runs on the server (functions/economy.js): Diamonds, owned
+    // items, challenge claims, the login streak, gifts, match rewards and
+    // Ranked results. The Database Rules stop phones writing those fields,
+    // so every change goes through here. Resolves with the action's result;
+    // rejects with an Error whose message is safe to show the player.
+    let economyCallable = null;
+    function callEconomy(action, data = {}) {
+      if (!firebaseAvailable || typeof firebase === 'undefined' || !firebase.functions) return Promise.reject(new Error('You need a connection for that.'));
+      if (!economyCallable) economyCallable = firebase.app().functions('europe-west1').httpsCallable('economy', { timeout: 30000 });
+      return economyCallable({ ...data, action }).then(res => res.data).catch((error) => {
+        const offline = typeof isOffline === 'function' && isOffline();
+        throw new Error(offline ? 'You need a connection for that.' : (error && error.message && !/^internal$/i.test(error.message) ? error.message : 'Something went wrong. Please try again.'));
+      });
+    }
     try {
       if (typeof firebase === 'undefined') throw new Error('Firebase SDK did not load');
       firebase.initializeApp(firebaseConfig);
@@ -9062,21 +9080,12 @@ video {
         if (finishedCount === 1) {
           player.lobbyStats = player.lobbyStats || freshStatsScope();
           player.lobbyStats.wins = (player.lobbyStats.wins || 0) + 1;
-          // Difficulty-unlock progress: solo Vs Bots wins only, for the
-          // actual local human, never multiplayer/ranked and never a bot's
-          // own win — recordDifficultyWin no-ops on its own if signed out.
-          if (!state.isMultiplayer && player.id === state.localPlayerId) {
-            recordDifficultyWin(state.difficulty);
-          }
-          // Flat match-win Diamond payout — separate from the Challenges
-          // system entirely, and deliberately only ever fires here (1st
-          // place, local player only): 2nd/3rd/4th in a Bot Match and a
-          // Ranked loss both correctly pay 0 simply because this block
-          // never runs for them, not through any extra logic.
-          if (player.id === state.localPlayerId) {
-            if (state.isRanked) awardMatchDiamonds(20, 'Ranked Win!');
-            else if (!state.isMultiplayer) awardMatchDiamonds(10, 'Match Won!');
-            if (typeof recordSeasonalWin === 'function' && !(typeof tutorialActive !== 'undefined' && tutorialActive)) recordSeasonalWin();
+          // The local human's win is reported to the server (economy
+          // `matchWin`), which pays Vs Bots Diamonds, counts difficulty
+          // unlocks and seasonal wins. Ranked is scored from the room
+          // instead (applyRankedRatingUpdate). Never in the tutorial.
+          if (player.id === state.localPlayerId && !state.isRanked && !(typeof tutorialActive !== 'undefined' && tutorialActive)) {
+            reportMatchWin();
           }
           // Challenges: 1st-place-only events. Ending Card challenges are
           // Ranked-only per spec, checked against the rank of whatever
@@ -9088,7 +9097,6 @@ video {
             if (state.isRanked) winEvents.push('win-ranked-match');
             if (!state.isMultiplayer) winEvents.push('beat-a-bot'); // every opponent in Vs Bots is a bot by definition
             notifyChallengeEvent(player, winEvents);
-            if (state.isRanked) checkEndingCardChallenge(player);
           }
         }
         
@@ -14120,28 +14128,41 @@ video {
     // whether that exact count just crossed a threshold (an exact-equality
     // check, so it fires once, right when it happens, not on every
     // subsequent win past that point).
-    function recordDifficultyWin(difficulty) {
-      if (!currentUser) return;
-      db.ref(`users/${currentUser.uid}/difficultyWins/${difficulty}`).transaction((current) => (current || 0) + 1)
-        .then((result) => {
-          if (!result.committed) return;
-          const newCount = result.snapshot.val();
-          const cachedWins = readCachedDifficultyWins(currentUser.uid);
-          cachedWins[difficulty] = Math.max(Number(cachedWins[difficulty]) || 0, Number(newCount) || 0);
-          cacheDifficultyWins(currentUser.uid, cachedWins);
-          const rule = DIFF_UNLOCK_RULES.find((r) => r.requireDiff === difficulty && r.requireWins === newCount);
-          if (rule) {
-            unlockedDifficulties[rule.diff] = true;
-            document.querySelectorAll('.diff-btn').forEach(styleDifficultyBtn);
-            showDifficultyUnlockPopup(rule.diff.charAt(0).toUpperCase() + rule.diff.slice(1));
-          }
-          checkBotMatchChallenge(difficulty, newCount);
-          challengeEconomy.difficultyWins = challengeEconomy.difficultyWins || {};
-          challengeEconomy.difficultyWins[difficulty] = newCount;
-          renderChallengesModalIfOpen();
-          refreshDifficultyLocks();
-        })
-        .catch((e) => console.warn('recordDifficultyWin failed', e));
+    // A win by the local player (Vs Bots or a casual online room), reported
+    // to the server (economy `matchWin`). It pays the Vs Bots Diamonds,
+    // counts difficulty unlocks and seasonal wins, and any challenge or
+    // picture that unlocks; this applies what it sends back. Online, the
+    // room needs a moment to show the finish, so that call waits and retries.
+    function reportMatchWin() {
+      if (!currentUser) return Promise.resolve(null);
+      const mode = state.isMultiplayer ? 'online' : 'bots';
+      const payload = { mode, matchId: state.matchId || (state.matchId = generateMatchId()) };
+      if (mode === 'bots') payload.difficulty = state.difficulty;
+      else payload.roomCode = state.roomCode;
+      const attempt = (tries) => callEconomy('matchWin', payload).catch((error) => {
+        if (mode === 'online' && tries > 0) return new Promise(r => setTimeout(r, 2500)).then(() => attempt(tries - 1));
+        throw error;
+      });
+      const start = mode === 'online' ? new Promise(r => setTimeout(r, 1500)) : Promise.resolve();
+      return start.then(() => attempt(2)).then((res) => {
+        if (res.already) return res;
+        if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
+        if (res.diamondsAwarded > 0) enqueueChallengeToast('Match Won!', res.diamondsAwarded, -1);
+        if (mode === 'bots' && res.difficultyWins) {
+          const wins = cacheDifficultyWins(currentUser.uid, res.difficultyWins);
+          challengeEconomy.difficultyWins = { ...(challengeEconomy.difficultyWins || {}), ...res.difficultyWins };
+          unlockedDifficulties = computeUnlockedDifficulties(wins);
+          document.querySelectorAll('.diff-btn').forEach(styleDifficultyBtn);
+          renderDifficultyProgress(wins);
+          if (res.unlockedDifficulty) showDifficultyUnlockPopup(res.unlockedDifficulty.charAt(0).toUpperCase() + res.unlockedDifficulty.slice(1));
+        }
+        if (res.seasonWins) { seasonalWinState = res.seasonWins; refreshMatchSummary(); }
+        applyServerClaims(res.claimed);
+        applyNewAvatars(res.newAvatars);
+        updateDiamondHeader();
+        renderChallengesModalIfOpen();
+        return res;
+      }).catch((e) => { console.warn('Match win not recorded', e.message); return null; });
     }
     document.getElementById('difficultyUnlockPopupBtn').addEventListener('click', () => {
       document.getElementById('difficultyUnlockPopup').classList.add('hidden');
@@ -14868,7 +14889,7 @@ video {
       const id = `m${entry.at.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
       entry.id = id;
       matchHistoryCurrentId = id;
-      claimFirstGameChallenges(true, entry.place === 1 && !entry.shithead);
+      reportMatchFinished();
       writeLocalMatchHistory([entry, ...readLocalMatchHistory().filter(e => e.id !== id)]);
       if (currentUser && typeof db !== 'undefined' && firebaseAvailable) {
         const uid = currentUser.uid;
@@ -16619,8 +16640,8 @@ video {
         });
         applyEquippedCosmetics();
         renderPersonalisationCosmetics();
-        // Catches milestones reached before earn-only pictures existed.
-        return db.ref(`users/${user.uid}`).once('value').then(snap => grantEarnedAvatars(snap.val()));
+        // Earn-only pictures already qualified for are unlocked by the
+        // server's sync at sign-in (initChallengeEconomy).
       }).catch(() => {
         document.getElementById('personalisationStatus').textContent = 'Could not load your cosmetic collection. Please try again.';
       });
@@ -16629,27 +16650,9 @@ video {
     // Unlocks any earn-only profile picture whose milestone the given
     // users/{uid} snapshot meets. Recorded in ownedCosmetics (so it survives
     // a later rating drop) with an inbox note and a banner.
-    function grantEarnedAvatars(userVal) {
-      if (!currentUser || !userVal) return Promise.resolve([]);
-      const newly = EARNED_AVATARS.filter(item => !cosmeticPurchaseState[item.id] && item.isEarned(userVal));
-      if (!newly.length) return Promise.resolve([]);
-      const now = Date.now();
-      const updates = {};
-      newly.forEach(item => {
-        updates[`ownedCosmetics/${item.id}`] = { cost: 0, purchasedAt: now };
-        updates[`activityInbox/unlock_${item.id}`] = { type: 'shop', unlocked: true, name: item.name, cost: 0, requirement: item.requirement, sentAt: now };
-      });
-      return db.ref(`users/${currentUser.uid}`).update(updates).then(() => {
-        newly.forEach(item => {
-          cosmeticPurchaseState[item.id] = { cost: 0, purchasedAt: now };
-          newCosmeticIds.add(item.id);
-        });
-        persistNewCosmetics();
-        renderPersonalisationCosmetics();
-        if (typeof refreshInboxBadge === 'function') refreshInboxBadge();
-        notifyBanner(`🏆 Profile picture unlocked: ${newly.map(item => item.name).join(', ')}`);
-        return newly;
-      }).catch((error) => { console.warn('grantEarnedAvatars failed', error); return []; });
+    function grantEarnedAvatars() {
+      if (!currentUser) return Promise.resolve([]);
+      return syncServerEconomy().then(res => (res && res.newAvatars) || []);
     }
 
     document.getElementById('themesModal').addEventListener('click', (event) => {
@@ -16876,23 +16879,6 @@ video {
       }
       list.innerHTML = sections.join('');
     }
-    function calculateBundlePurchase(current, eventId, items, price, purchasedAt = Date.now()) {
-      const user = current || {};
-      const owned = user.ownedCosmetics || {};
-      const ev = SEASONAL_EVENT_BY_ID[eventId];
-      if (!ev || !items.length) return { error: 'Invalid bundle.' };
-      if (items.some(item => owned[item.id])) return { error: 'Your collection changed. Please check the bundle price and try again.' };
-      const balance = Number(user.diamonds) || 0;
-      if (balance < price) return { error: `You need ${price} Diamonds for the ${ev.name} Bundle.` };
-      const purchases = Object.fromEntries(items.map(item => [item.id, { purchasedAt, cost: item.cost }]));
-      return {
-        purchases,
-        user: {
-          ...user, diamonds: balance - price, ownedCosmetics: { ...owned, ...purchases },
-          activityInbox: { ...(user.activityInbox || {}), [`shop_bundle_${eventId}_${purchasedAt}`]: { type: 'shop', name: `${ev.name} Bundle`, cost: price, sentAt: purchasedAt } }
-        }
-      };
-    }
     function buySeasonalBundle(eventId) {
       const ev = SEASONAL_EVENT_BY_ID[eventId];
       if (!ev || !currentUser) return;
@@ -16905,33 +16891,22 @@ video {
       }
       if (!confirm(`Buy the ${ev.name} Bundle (${items.length} items) for ${price} Diamonds?`)) return;
       const uid = currentUser.uid;
-      const outcome = { error: null, purchases: null };
-      db.ref(`users/${uid}`).transaction((current) => {
-        outcome.error = null;
-        outcome.purchases = null;
-        if (current === null) return null;
-        const calc = calculateBundlePurchase(current, eventId, items, price);
-        if (calc.error) { outcome.error = calc.error; return; }
-        outcome.purchases = calc.purchases;
-        return calc.user;
-      }).then(result => {
-        if (!result.committed || !outcome.purchases) throw new Error(outcome.error || 'Purchase could not be committed.');
-        Object.entries(outcome.purchases).forEach(([id, record]) => {
-          db.ref(`shopPurchases/${uid}/cosmetics/${id}`).set(record).catch(() => {});
+      callEconomy('buyBundle', { eventId, price }).then((res) => {
+        if (currentUser?.uid !== uid) return;
+        Object.entries(res.purchases || {}).forEach(([id, record]) => {
           cosmeticPurchaseState[id] = record;
           newCosmeticIds.add(id);
         });
         persistNewCosmetics();
-        challengeEconomy.diamonds = Number(result.snapshot.val()?.diamonds) || 0;
+        challengeEconomy.diamonds = Number(res.diamonds) || 0;
         updateDiamondHeader();
         renderNameChangeToken();
         renderCosmeticShop();
         renderPersonalisationCosmetics();
-        showShopActionNotice(`${ev.name} Bundle unlocked: ${items.length} items for 💎 ${price}. Equip them from EQUIP or Custom.`, 'success');
+        showShopActionNotice(`${ev.name} Bundle unlocked: ${items.length} items for 💎 ${res.price}. Equip them from EQUIP or Custom.`, 'success');
         notifyBanner(`✓ ${ev.name} Bundle purchased.`);
       }).catch((error) => {
-        const denied = error && (error.code === 'PERMISSION_DENIED' || error.code === 'permission_denied');
-        showShopActionNotice(denied ? 'Purchase blocked by Firebase. Publish the latest Database Rules, then try again.' : (error.message || 'Purchase failed. Please try again.'), 'error');
+        showShopActionNotice(error.message || 'Purchase failed. Please try again.', 'error');
         renderCosmeticShop();
       });
     }
@@ -17233,38 +17208,6 @@ video {
       const item = COSMETIC_SHOP_ITEMS.find(i => i.id === id);
       return item && isSeasonalItemBuyable(item) ? item : null;
     }
-    function calculateGiftPayment(current, item, friend, giftId, sentAt = Date.now()) {
-      const user = current || {};
-      if (!item || !friend?.uid) return { error: 'Invalid gift.' };
-      const balance = Number(user.diamonds) || 0;
-      if (balance < item.cost) return { error: `You need ${item.cost} Diamonds to gift ${item.name}.` };
-      return {
-        user: {
-          ...user, diamonds: balance - item.cost,
-          activityInbox: { ...(user.activityInbox || {}), [`gift_sent_${giftId}`]: { type: 'gift', direction: 'sent', name: item.name, to: String(friend.name || 'a friend').slice(0, 12), cost: item.cost, sentAt } }
-        }
-      };
-    }
-    function calculateGiftClaim(current, giftId, gift, now = Date.now()) {
-      const user = current || {};
-      const item = COSMETIC_SHOP_ITEMS.find(i => i.id === gift?.itemId);
-      if (!item) return { error: 'This gift is no longer available.' };
-      if (user.claimedGifts?.[giftId]) return { error: 'Already opened.' };
-      const owned = user.ownedCosmetics || {};
-      const asDiamonds = !!owned[item.id];
-      const value = Math.max(0, Math.min(Number(gift.cost) || item.cost, item.cost));
-      const note = { type: 'gift', direction: 'received', name: item.name, from: String(gift.fromName || 'a friend').slice(0, 12), cost: value, asDiamonds, sentAt: now };
-      return {
-        item, asDiamonds,
-        user: {
-          ...user,
-          diamonds: asDiamonds ? Math.min(999999, (Number(user.diamonds) || 0) + value) : (Number(user.diamonds) || 0),
-          ownedCosmetics: asDiamonds ? owned : { ...owned, [item.id]: { purchasedAt: now, cost: 0 } },
-          claimedGifts: { ...(user.claimedGifts || {}), [giftId]: true },
-          activityInbox: { ...(user.activityInbox || {}), [`gift_in_${giftId}`]: note }
-        }
-      };
-    }
     function renderGiftBanner() {
       const banner = document.getElementById('giftModeBanner');
       if (!banner) return;
@@ -17306,35 +17249,10 @@ video {
       const status = document.getElementById('giftModalStatus');
       if (!item || !currentUser || !friend?.uid) return Promise.resolve(false);
       if ((Number(challengeEconomy.diamonds) || 0) < item.cost) { status.textContent = `You need 💎${item.cost - (Number(challengeEconomy.diamonds) || 0)} more to gift ${item.name}.`; return Promise.resolve(false); }
-      const uid = currentUser.uid;
-      const giftId = db.ref(`gifts/${friend.uid}`).push().key;
-      const sentAt = Date.now();
-      const outcome = { error: null, ok: false };
       status.textContent = 'Wrapping your gift…';
-      return getOrCreateUserProfile(uid).then(profile => {
-        const fromName = String(profile?.username || 'A friend').slice(0, 12);
-        return db.ref(`users/${uid}`).transaction(current => {
-          outcome.error = null; outcome.ok = false;
-          if (current === null) return null;
-          const calc = calculateGiftPayment(current, item, friend, giftId, sentAt);
-          if (calc.error) { outcome.error = calc.error; return; }
-          outcome.ok = true;
-          return calc.user;
-        }).then(result => {
-          if (!result.committed || !outcome.ok) throw new Error(outcome.error || 'The gift could not be paid for.');
-          challengeEconomy.diamonds = Number(result.snapshot.val()?.diamonds) || 0;
-          updateDiamondHeader();
-          return db.ref(`gifts/${friend.uid}/${giftId}`).set({ fromUid: uid, fromName, itemId: item.id, cost: item.cost, sentAt }).catch(error => {
-            // Delivery failed after paying: give the Diamonds back.
-            return db.ref(`users/${uid}/diamonds`).transaction(c => Math.min(999999, (Number(c) || 0) + item.cost)).then(r => {
-              challengeEconomy.diamonds = Number(r.snapshot.val()) || challengeEconomy.diamonds;
-              updateDiamondHeader();
-              db.ref(`users/${uid}/activityInbox/gift_sent_${giftId}`).remove().catch(() => {});
-              const denied = error && /permission/i.test(String(error.code || error.message));
-              throw new Error(denied ? 'Gifts can only be sent to friends (and the latest Database Rules must be published). Your Diamonds were refunded.' : 'The gift could not be delivered. Your Diamonds were refunded.');
-            });
-          });
-        });
+      return callEconomy('sendGift', { itemId: item.id, friendUid: friend.uid, friendName: String(friend.name || '').slice(0, 12) }).then((res) => {
+        challengeEconomy.diamonds = Number(res.diamonds) || 0;
+        updateDiamondHeader();
       }).then(() => {
         status.textContent = '';
         closeGiftModal();
@@ -17354,29 +17272,18 @@ video {
       return db.ref(`gifts/${uid}/${giftId}`).once('value').then(snap => {
         const gift = snap.val();
         if (!gift) throw new Error('This gift has already been opened.');
-        const outcome = { error: null, result: null };
-        return db.ref(`users/${uid}`).transaction(current => {
-          outcome.error = null; outcome.result = null;
-          if (current === null) return null;
-          const calc = calculateGiftClaim(current, giftId, gift);
-          if (calc.error) { outcome.error = calc.error; return; }
-          outcome.result = calc;
-          return calc.user;
-        }).then(result => {
-          const claimed = result.committed && outcome.result;
-          // Remove the gift whether it was just opened or had been already.
-          if (claimed || outcome.error === 'Already opened.') db.ref(`gifts/${uid}/${giftId}`).remove().catch(() => {});
-          if (!claimed) throw new Error(outcome.error || 'The gift could not be opened.');
-          const { item, asDiamonds } = outcome.result;
-          challengeEconomy.diamonds = Number(result.snapshot.val()?.diamonds) || 0;
+        return callEconomy('claimGift', { giftId }).then((res) => {
+          const item = COSMETIC_SHOP_ITEMS.find(i => i.id === res.itemId);
+          challengeEconomy.diamonds = Number(res.diamonds) || 0;
           updateDiamondHeader();
-          if (!asDiamonds) {
+          if (!item) return true;
+          if (!res.asDiamonds) {
             cosmeticPurchaseState[item.id] = { purchasedAt: Date.now(), cost: 0 };
             newCosmeticIds.add(item.id);
             persistNewCosmetics();
             renderPersonalisationCosmetics();
           }
-          showGiftOpened(item, gift, asDiamonds);
+          showGiftOpened(item, gift, res.asDiamonds);
           return true;
         });
       }).catch(error => { notifyBanner(`⚠ ${error.message || 'The gift could not be opened.'}`); return false; });
@@ -17414,19 +17321,6 @@ video {
       if (item) notifyBanner(`✓ ${item.name} equipped.`);
     });
     // Counts a first-place finish towards every event that is on today.
-    function recordSeasonalWin() {
-      if (!currentUser || typeof db === 'undefined' || !firebaseAvailable) return Promise.resolve();
-      const active = activeSeasonalEvents();
-      if (!active.length) return Promise.resolve();
-      const uid = currentUser.uid;
-      return Promise.all(active.map(w => db.ref(`users/${uid}/seasonWins/${w.key}`)
-        .transaction(c => Math.min(100000, (Number(c) || 0) + 1))
-        .then(r => { if (r.committed) { seasonalWinState[w.key] = Number(r.snapshot.val()) || 0; refreshMatchSummary(); } })
-        .catch(() => {})))
-        .then(() => db.ref(`users/${uid}`).once('value'))
-        .then(snap => grantEarnedAvatars(snap.val()))
-        .catch((e) => console.warn('recordSeasonalWin failed', e));
-    }
     // § Shop and Custom pages
     function renderCosmeticShop() {
       const list = document.getElementById('cosmeticShopList');
@@ -17620,18 +17514,12 @@ video {
     // the Shop does NOT refill it.
     function ensureAmitkSpendableTestBalance() {
       if (!currentUser) return Promise.resolve(null);
-      return db.ref(`users/${currentUser.uid}`).transaction((current) => {
-        if (!current || !isAmitkTestingAccount(current)) return current;
-        if (current.amitKShopTestGrantV4Done) return current;
-        return { ...current, diamonds: 999999, amitKShopTestGrantV4Done: true };
-      }).then((result) => {
-        const profile = result.snapshot?.val() || {};
-        if (isAmitkTestingAccount(profile)) {
-          challengeEconomy.diamonds = Number(profile.diamonds) || 0;
-          updateDiamondHeader();
-        }
-        return profile;
-      });
+      // The one-time grant is made by the server (economy `init`, checked by
+      // the account's verified email); this just reads the result.
+      return ensureServerProfile().then((res) => {
+        if (res && res.testGrant) { challengeEconomy.diamonds = Number(res.diamonds) || 0; updateDiamondHeader(); }
+        return res;
+      }).catch(() => null);
     }
 
     function openShopPanel() {
@@ -17669,78 +17557,13 @@ video {
       document.getElementById('profileModal').classList.add('hidden');
       openShopPanel();
     });
-    function calculateCosmeticPurchase(current, item, purchasedAt = Date.now()) {
-      const user = current || {};
-      const owned = user.ownedCosmetics || {};
-      if (!item || !item.id || !Number.isFinite(Number(item.cost))) return { error: 'Invalid Shop item.' };
-      if (owned[item.id]) return { error: 'Already owned.' };
-      const balance = Number(user.diamonds) || 0;
-      if (balance < item.cost) return { error: `You need ${item.cost} Diamonds to buy ${item.name}.` };
-      const purchase = { purchasedAt, cost: item.cost };
-      return {
-        purchase,
-        user: {
-          ...user, diamonds: balance - item.cost, ownedCosmetics: { ...owned, [item.id]: purchase },
-          activityInbox: {
-            ...(user.activityInbox || {}),
-            [`shop_${item.id}`]: { type: 'shop', name: item.name, cost: item.cost, sentAt: purchasedAt }
-          }
-        }
-      };
-    }
-    // Firebase runs a transaction first against its local cache. Nothing keeps
-    // users/{uid} live-synced, so that first pass sees null. Returning
-    // undefined there aborts before the server balance is ever read (every
-    // purchase failed with "You need N Diamonds" despite a real balance), so
-    // null is handed back and Firebase re-runs the update with the server
-    // value. The outcome is reset on every pass so only the final one counts.
-    function createCosmeticPurchaseTransaction(item) {
-      const outcome = { error: null, purchase: null };
-      const update = (current) => {
-        outcome.error = null;
-        outcome.purchase = null;
-        if (current === null) return null;
-        const calculated = calculateCosmeticPurchase(current, item);
-        if (calculated.error) { outcome.error = calculated.error; return; }
-        outcome.purchase = calculated.purchase;
-        return calculated.user;
-      };
-      return { update, outcome };
-    }
-    function createNameChangeTokenTransaction(purchasedAt = Date.now()) {
-      const outcome = { error: null, record: null };
-      const update = (current) => {
-        outcome.error = null;
-        outcome.record = null;
-        if (current === null) return null;
-        const user = current;
-        if (user.nameChangeToken) { outcome.error = 'This lifetime item has already been purchased.'; return; }
-        const balance = Number(user.diamonds) || 0;
-        if (balance < NAME_CHANGE_TOKEN_COST) { outcome.error = 'You need 100 Diamonds to buy this token.'; return; }
-        outcome.record = { purchasedAt, cost: NAME_CHANGE_TOKEN_COST };
-        return {
-          ...user, diamonds: balance - NAME_CHANGE_TOKEN_COST, nameChangeToken: outcome.record,
-          activityInbox: {
-            ...(user.activityInbox || {}),
-            name_change_token: { type: 'shop', name: 'Name Change Token', cost: NAME_CHANGE_TOKEN_COST, sentAt: purchasedAt }
-          }
-        };
-      };
-      return { update, outcome };
-    }
     document.getElementById('nameTokenBuyBtn').addEventListener('click', () => {
       if (!currentUser) { document.getElementById('shopModal').classList.add('hidden'); openAuthModal(); return; }
       if (nameChangeTokenState) return;
       const btn = document.getElementById('nameTokenBuyBtn');
       btn.disabled = true;
       btn.textContent = 'Purchasing…';
-      const uid = currentUser.uid;
-      const tokenTx = createNameChangeTokenTransaction();
-      db.ref(`users/${uid}`).transaction(tokenTx.update).then(result => {
-        if (!result.committed || !tokenTx.outcome.record) throw new Error(tokenTx.outcome.error || 'Purchase could not be committed.');
-        db.ref(`shopPurchases/${uid}/nameChangeToken`).set(tokenTx.outcome.record).catch(() => {});
-        return { balance: Number(result.snapshot.val()?.diamonds) || 0 };
-      }).then(({ balance }) => {
+      callEconomy('buyNameToken').then((res) => ({ balance: Number(res.diamonds) || 0 })).then(({ balance }) => {
         challengeEconomy.diamonds = balance;
         nameChangeTokenState = { purchasedAt: Date.now(), cost: NAME_CHANGE_TOKEN_COST };
         updateDiamondHeader();
@@ -17856,20 +17679,9 @@ video {
       clearShopActionNotice();
       btn.disabled = true;
       btn.textContent = 'BUYING…';
-      const uid = currentUser.uid;
-      // Balance and canonical ownership now live in one user-node transaction.
-      // Concurrent tabs are retried against the newest balance, so two items can
-      // never be obtained while only one debit survives.
-      const purchaseTx = createCosmeticPurchaseTransaction(item);
-      db.ref(`users/${uid}`).transaction(purchaseTx.update).then(result => {
-        const committedPurchase = purchaseTx.outcome.purchase;
-        if (!result.committed || !committedPurchase) throw new Error(purchaseTx.outcome.error || 'Purchase could not be committed.');
-        const updatedUser = result.snapshot.val() || {};
-        // Legacy mirror keeps older clients able to display the purchase; the
-        // canonical, atomic ownership record is users/{uid}/ownedCosmetics.
-        db.ref(`shopPurchases/${uid}/cosmetics/${item.id}`).set(committedPurchase).catch(() => {});
-        return Number(updatedUser.diamonds) || 0;
-      }).then((balance) => {
+      // The server checks the price, the balance and the event window, and
+      // records ownership and the Diamonds together (economy `buyItem`).
+      callEconomy('buyItem', { itemId: item.id }).then(res => Number(res.diamonds) || 0).then((balance) => {
         challengeEconomy.diamonds = balance;
         cosmeticPurchaseState[item.id] = { purchasedAt: Date.now(), cost: item.cost };
         lastPurchasedCosmeticId = item.id;
@@ -17886,10 +17698,7 @@ video {
         spawnDiamondSpend(document.getElementById('headerDiamondBtn'));
         notifyBanner(`✓ ${item.name} purchased for ${item.cost} Diamonds.`);
       }).catch((error) => {
-        const permissionDenied = error && (error.code === 'PERMISSION_DENIED' || error.code === 'permission_denied');
-        const message = permissionDenied
-          ? 'Purchase blocked by Firebase. Publish the latest Database Rules, then try again.'
-          : (error.message || 'Purchase failed. Please try again.');
+        const message = error.message || 'Purchase failed. Please try again.';
         document.getElementById('cosmeticShopStatus').textContent = message;
         document.getElementById('cosmeticShopStatus').className = 'text-[9px] text-center text-rose-400 leading-snug mt-2';
         showShopActionNotice(message, 'error');
@@ -18844,6 +18653,48 @@ video {
       ]
     };
 
+    // The prices, rewards and rules the server (functions/economy.js) pays
+    // and charges by. functions/catalog.json is this, exported by
+    // tools/export-catalog.js; a dev test fails if the two drift apart, so
+    // after changing any price, reward or challenge, re-run the exporter.
+    const EARNED_AVATAR_RULES = {
+      'avatar-crown-silver': { type: 'peakRating', min: 1000 },
+      'avatar-crown-gold': { type: 'peakRating', min: 1500 },
+      'avatar-crown-diamond': { type: 'peakRating', min: 1800 },
+      'avatar-crown-master': { type: 'peakRating', min: 2000 },
+      'avatar-centurion': { type: 'rankedGames', min: 100 },
+      'avatar-shithead': { type: 'lossStreak', min: 10 }
+    };
+    function serverEconomyCatalog() {
+      const earned = {};
+      EARNED_AVATARS.forEach(item => {
+        const rule = item.season ? { type: 'seasonWins', season: item.season, min: SEASONAL_EARN_WINS } : EARNED_AVATAR_RULES[item.id];
+        if (!rule) throw new Error(`No server rule for earned picture ${item.id}`);
+        earned[item.id] = { name: item.name, requirement: item.requirement, ...rule };
+      });
+      return {
+        items: Object.fromEntries(COSMETIC_SHOP_ITEMS.map(item => [item.id, { name: item.name, cost: item.cost, ...(item.season ? { season: item.season } : {}) }])),
+        builtIn: BUILT_IN_COSMETICS.map(item => item.id),
+        earned,
+        seasonalEvents: SEASONAL_EVENTS.map(ev => ({ id: ev.id, name: ev.name })),
+        seasonalBundleRate: SEASONAL_BUNDLE_RATE,
+        nameChangeTokenCost: NAME_CHANGE_TOKEN_COST,
+        dailyStreakRewards: DAILY_STREAK_REWARDS,
+        matchWinRewards: { bots: 10, ranked: 20 },
+        dailyReward: CHALLENGE_REWARD,
+        weeklyReward: WEEKLY_CHALLENGE_REWARD,
+        dailyPool: DAILY_CHALLENGE_POOL.map(c => ({ id: c.id, name: c.name, target: c.target })),
+        weeklyPool: WEEKLY_CHALLENGE_POOL.map(c => ({ id: c.id, name: c.name, target: c.target })),
+        gettingStarted: GETTING_STARTED_CHALLENGES.map(c => ({ id: c.id, name: c.name, reward: c.reward })),
+        challengeDefs: JSON.parse(JSON.stringify(CHALLENGE_DEFS)),
+        difficultyUnlocks: DIFF_UNLOCK_RULES,
+        rankTiers: [['Master', 2000], ['Platinum', 1800], ['Gold', 1500], ['Silver', 1000], ['Bronze', 500], ['Novice', 0]].map(([name, min]) => {
+          if (getRankTier(min).name !== name) throw new Error(`Rank tier table out of date at ${name}`);
+          return { name, min };
+        })
+      };
+    }
+
     // --- Daily reset: exactly midnight UK time (GMT/BST-aware) ---------
     // Rather than juggling UTC offsets by hand (which would silently
     // break every March/October when the UK clock changes), this asks
@@ -19103,80 +18954,10 @@ video {
       // account already loaded is a no-op, not a reload.
       if (challengeEconomyLoadedForUid === currentUser.uid) return Promise.resolve();
       challengeEconomyLoadError = null;
-      return getOrCreateUserProfile(currentUser.uid).then((profile) => {
-        // ============================================================
-        // THE RESET — one-time migration, runs exactly once per account
-        // (gated by diamondEconomyResetV2Done, the same pattern as
-        // retroactiveChallengeCheckDone below). Zeroes diamonds and
-        // clears completedChallenges/dailyChallengeState/challengeStats
-        // for every EXISTING account, undoing whatever this economy
-        // handed out during earlier development/testing, now that the
-        // challenge names, payouts, and Burns/Snap Burns/Joker Deflects
-        // counting method have all changed underneath it.
-        //
-        // Also resets retroactiveChallengeCheckDone to false on purpose:
-        // Games Played, Win Streaks, and Rank Tier are still allowed to
-        // be retroactively recalculated from existing legacy stats (the
-        // spec's own stated exception), so once completedChallenges is
-        // wiped, letting the retroactive check below run again is what
-        // correctly re-awards those three from the account's real
-        // history. Burns/Snap Burns/Joker Deflects do NOT get re-awarded
-        // by that same pass — see the comment on checkRankedCumulativeChallenges
-        // for why: they now read from challengeStats, not from any
-        // pre-existing legacy field, so a legacy account has a real,
-        // honest 0 there with nothing to backfill from.
-        //
-        // Mutating the local `profile` object here (not just firing the
-        // Firebase write) means everything below in this same function
-        // — ensureDailyChallengeState, the challengeEconomy build, the
-        // retroactive check — all see the RESET values immediately,
-        // without waiting on a network round-trip.
-        //
-        // BUG FIX (unrewarded challenges): this write is now AWAITED
-        // before the retroactive check below fires a single claim.
-        // Previously the reset's plain .update({completedChallenges:{}})
-        // and the retroactive check's own claimChallenge() transactions
-        // fired concurrently, both touching users/{uid} — a .update()
-        // unconditionally replaces the whole key it names, so if the
-        // reset's write happened to land on the server AFTER a
-        // retroactive claim had already committed, it would silently
-        // erase that fresh award with no error, no warning, nothing.
-        // Sequencing them removes that race entirely.
-        let resetWrite = Promise.resolve();
-        if (!profile.diamondEconomyResetV2Done) {
-          profile.diamonds = 0;
-          profile.completedChallenges = {};
-          profile.dailyChallengeState = null;
-          profile.challengeStats = { burns: 0, snapBurns: 0, jokerDeflects: 0 };
-          profile.retroactiveChallengeCheckDone = false;
-          profile.diamondEconomyResetV2Done = true;
-          resetWrite = db.ref(`users/${currentUser.uid}`).update({
-            diamonds: 0,
-            completedChallenges: {},
-            dailyChallengeState: null,
-            challengeStats: { burns: 0, snapBurns: 0, jokerDeflects: 0 },
-            retroactiveChallengeCheckDone: false,
-            diamondEconomyResetV2Done: true
-          }).catch((e) => console.error('THE RESET failed to persist — retroactive claims below may race with a retry of it', e));
-        }
-        return resetWrite.then(() => {
-          // TEST ACCOUNT: give AmitK one canonical spendable Shop balance.
-          // This is stored on users/{uid}/diamonds (the same field purchases debit),
-          // rather than faking only the header value. The marker prevents purchases
-          // from refilling the balance on later loads.
-          const testUsername = String(profile.username || '').trim().toLowerCase();
-          const testEmail = String(currentUser?.email || '').trim().toLowerCase();
-          const isAmitKTestAccount = testUsername === 'amitk' || testEmail === 'amirk2197@googlemail.com';
-          if (isAmitKTestAccount && !profile.amitKShopTestGrantV4Done) {
-            profile.diamonds = 999999;
-            profile.amitKShopTestGrantV4Done = true;
-            return db.ref(`users/${currentUser.uid}`).update({
-              diamonds: 999999,
-              amitKShopTestGrantV4Done: true
-            }).then(() => profile);
-          }
-          return profile;
-        }).then(() => {
+      // `init` (once per sign-in) fills in a new profile's defaults and gives
+      // the AmitK test account its one-time balance; the profile is read after.
+      return ensureServerProfile().catch((e) => console.warn('Economy init failed', e))
+        .then(() => getOrCreateUserProfile(currentUser.uid)).then((profile) => {
           const { state: dailyState, changed } = ensureDailyChallengeState(profile.dailyChallengeState);
           const { state: weeklyState, changed: weeklyChanged } = ensureWeeklyChallengeState(profile.weeklyChallengeState);
           profile.weeklyChallengeState = weeklyState;
@@ -19201,7 +18982,9 @@ video {
           // covers a guest who finished lessons and then signed in here.
           accountTutorialLessonsDone = !!profile.tutorialCompleted;
           syncTutorialChallenges();
-          backfillFirstGameChallenges(profile);
+          // The server pays any milestone already met (Ranked totals, bot
+          // wins, first game/win) and unlocks earned pictures.
+          syncServerEconomy();
           // Drain the buffer from the CRITICAL BUG FIX in notifyChallengeEvent
           // above: anything that happened before this exact point (state
           // just became ready one line up) gets replayed now, in the order
@@ -19211,75 +18994,75 @@ video {
             pendingDailyEvents = [];
             queued.forEach((ids) => { bumpDailyChallengeProgress(ids); bumpWeeklyChallengeProgress(ids); });
           }
-          // Retroactive backfill: exactly once per account (or once again
-          // right after a reset above cleared this same flag) — a
-          // returning veteran's EXISTING rankedStats/difficultyWins/rating
-          // (recorded long before Challenges existed) get checked against
-          // every threshold right here, so anything already met is
-          // silently claimed with no need to replay it. Gated on a flag on
-          // the profile itself, not just "did I run this before in this
-          // session", so it genuinely only ever runs once per account per
-          // reset, not once per sign-in.
-          if (!profile.retroactiveChallengeCheckDone) {
-            runRetroactiveChallengeCheck(profile);
-            db.ref(`users/${currentUser.uid}/retroactiveChallengeCheckDone`).set(true)
-              .catch((e) => console.warn('Failed to record retroactive challenge check as done', e));
-          }
           if (changed) {
             return db.ref(`users/${currentUser.uid}/dailyChallengeState`).set(dailyState)
               .catch((e) => console.warn('Failed to persist rolled-over daily challenge state', e));
           }
-        });
-      }).catch((e) => {
+        }).catch((e) => {
         challengeEconomyLoadError = e;
         renderChallengesModalIfOpen();
         console.error('initChallengeEconomy failed', e);
       });
     }
 
-    // Atomically credits diamonds AND records the completion together, on
-    // the same users/{uid} transaction pattern applyRankedRatingUpdate()
-    // already uses above — so a completion can never be recorded without
-    // its reward landing (or vice versa), even across a flaky connection.
-    // Returns Promise<boolean>, true only if THIS call is the one that
-    // actually completed it — callers can safely call this speculatively
-    // on every relevant event without worrying about double-awarding.
+    // Asks the server to pay a challenge (economy `claim`): it checks the
+    // key is real, current and met, and pays it once. `reward`/`displayName`
+    // are only used for the toast; the server's own values win.
+    const claimsInFlight = new Map();
     function claimChallenge(challengeId, reward, displayName) {
       if (!currentUser) return Promise.resolve(false);
-      let awarded = false;
-      return db.ref(`users/${currentUser.uid}`).transaction((current) => {
-        const c = current || {};
-        const completed = c.completedChallenges || {};
-        if (completed[challengeId]) { awarded = false; return c; } // already claimed — no-op, not an abort
-        awarded = true;
-        const completedAt = Date.now();
-        return {
-          ...c,
-          diamonds: (c.diamonds || 0) + reward,
-          completedChallenges: { ...completed, [challengeId]: { completedAt, reward } },
-          challengeInbox: {
-            ...(c.challengeInbox || {}),
-            [challengeId]: { name: String(displayName || challengeId).slice(0, 80), reward, completedAt }
-          }
-        };
-      }).then((result) => {
-        if (!awarded) return false; // already claimed — a genuine no-op, not worth logging
-        if (!result.committed) {
-          // BUG FIX diagnostic: this used to fail completely silently —
-          // the promise just resolved to false with no trace anywhere,
-          // which is exactly the kind of gap that makes "diamonds never
-          // showed up" impossible to root-cause from a bug report alone.
-          console.error(`claimChallenge: transaction for "${challengeId}" did not commit`, result);
+      if (challengeEconomy.completedChallenges?.[challengeId]) return Promise.resolve(false);
+      if (claimsInFlight.has(challengeId)) return claimsInFlight.get(challengeId);
+      const request = callEconomy('claim', { id: challengeId }).then((res) => {
+        if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
+        if (!res.awarded) {
+          if (res.already) challengeEconomy.completedChallenges[challengeId] = challengeEconomy.completedChallenges[challengeId] || { completedAt: Date.now(), reward };
+          updateDiamondHeader();
           return false;
         }
-        const val = result.snapshot.val() || {};
-        challengeEconomy.diamonds = val.diamonds || 0;
-        challengeEconomy.completedChallenges = val.completedChallenges || {};
-        updateDiamondHeader();
-        if (displayName) enqueueChallengeToast(displayName, reward, getChallengePriority(challengeId));
-        renderChallengesModalIfOpen();
+        applyServerClaims([res.awarded]);
         return true;
-      }).catch((e) => { console.error('claimChallenge threw for', challengeId, e); return false; });
+      }).catch((e) => { console.warn('Challenge claim refused', challengeId, e.message); return false; })
+        .finally(() => claimsInFlight.delete(challengeId));
+      claimsInFlight.set(challengeId, request);
+      return request;
+    }
+    // Records challenges the server just paid ({ id, name, reward }), with a toast each.
+    function applyServerClaims(claimed) {
+      (claimed || []).forEach((c) => {
+        if (!c || !c.id) return;
+        challengeEconomy.completedChallenges[c.id] = { completedAt: Date.now(), reward: c.reward };
+        enqueueChallengeToast(c.name || c.id, c.reward, getChallengePriority(c.id));
+      });
+      updateDiamondHeader();
+      renderChallengesModalIfOpen();
+    }
+    // Shows earn-only pictures the server just unlocked ({ id, name }).
+    function applyNewAvatars(newAvatars) {
+      if (!newAvatars || !newAvatars.length) return;
+      const now = Date.now();
+      newAvatars.forEach((item) => {
+        cosmeticPurchaseState[item.id] = { cost: 0, purchasedAt: now };
+        newCosmeticIds.add(item.id);
+      });
+      persistNewCosmetics();
+      renderPersonalisationCosmetics();
+      if (typeof refreshInboxBadge === 'function') refreshInboxBadge();
+      notifyBanner(`🏆 Profile picture unlocked: ${newAvatars.map(item => item.name).join(', ')}`);
+    }
+    // Pays anything the account already qualifies for (economy `sync`).
+    let economySyncInFlight = null;
+    function syncServerEconomy() {
+      if (!currentUser) return Promise.resolve(null);
+      if (economySyncInFlight) return economySyncInFlight;
+      economySyncInFlight = callEconomy('sync').then((res) => {
+        if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
+        applyServerClaims(res.claimed);
+        applyNewAvatars(res.newAvatars);
+        return res;
+      }).catch((e) => { console.warn('Economy sync failed', e.message); return null; })
+        .finally(() => { economySyncInFlight = null; });
+      return economySyncInFlight;
     }
 
     // Flat per-match Diamond payout for actually winning a match — Bot
@@ -19290,34 +19073,6 @@ video {
     // diamonds field alone (not the whole users/{uid} object) is enough
     // here — there's no companion field like completedChallenges that
     // needs to move atomically with it.
-    function awardMatchDiamonds(amount, label) {
-      if (!currentUser || !(amount > 0)) return Promise.resolve(false);
-      const rewardId = state.matchId || generateMatchId();
-      let alreadyProcessed = false;
-      return db.ref(`users/${currentUser.uid}`).transaction((current) => {
-        const user = current || {};
-        const processed = user.processedMatchRewards || {};
-        if (processed[rewardId]) { alreadyProcessed = true; return; }
-        return {
-          ...user,
-          diamonds: (Number(user.diamonds) || 0) + amount,
-          processedMatchRewards: { ...processed, [rewardId]: { amount, label: String(label || '').slice(0, 40), awardedAt: Date.now() } }
-        };
-      })
-        .then((result) => {
-          if (alreadyProcessed) return false;
-          if (!result.committed) {
-            console.error(`awardMatchDiamonds: transaction for "${label}" did not commit`, result);
-            return false;
-          }
-          challengeEconomy.diamonds = Number(result.snapshot.val()?.diamonds) || 0;
-          updateDiamondHeader();
-          enqueueChallengeToast(label, amount, -1); // priority -1: a match-win result sorts ahead of any challenge completed the same instant
-          renderChallengesModalIfOpen();
-          return true;
-        })
-        .catch((e) => { console.error('awardMatchDiamonds threw for', label, e); return false; });
-    }
 
     // ---- Daily login streak ---------------------------------------------
     // One reward per local calendar day, credited automatically on sign-in
@@ -19327,12 +19082,15 @@ video {
     const DAILY_STREAK_REWARDS = [10, 15, 20, 25, 30, 40, 100];
     let dailyStreakState = null;
     let dailyClaimInFlight = null;
+    // Streak days are UK calendar days (like the daily challenges), which is
+    // what the server counts by.
     function localDateKey(date = new Date()) {
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
     }
     function previousLocalDateKey(date = new Date()) {
-      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
-      return localDateKey(d);
+      const [y, m, d] = localDateKey(date).split('-').map(Number);
+      const prev = new Date(Date.UTC(y, m - 1, d - 1));
+      return `${prev.getUTCFullYear()}-${String(prev.getUTCMonth() + 1).padStart(2, '0')}-${String(prev.getUTCDate()).padStart(2, '0')}`;
     }
     function dailyStreakReward(count) {
       return DAILY_STREAK_REWARDS[(Math.max(1, count) - 1) % DAILY_STREAK_REWARDS.length];
@@ -19345,33 +19103,22 @@ video {
       const count = prev.lastDate === previousLocalDateKey(now) ? (Number(prev.count) || 0) + 1 : 1;
       return { count, lastDate: today, best: Math.max(Number(prev.best) || 0, count) };
     }
+    // The server pays it (economy `streak`): one claim per UK calendar day.
     function claimDailyLoginReward() {
       if (!currentUser || typeof db === 'undefined' || !firebaseAvailable) return Promise.resolve(null);
       if (dailyClaimInFlight) return dailyClaimInFlight;
       const uid = currentUser.uid;
-      let claimed = null;
-      // Claim the day first (small transaction on loginStreak only, so no
-      // other users/{uid} child is re-validated), then credit the Diamonds.
-      dailyClaimInFlight = db.ref(`users/${uid}/loginStreak`).transaction((current) => {
-        claimed = null;
-        const next = calculateDailyStreak(current);
-        if (!next) return; // already claimed today (checked against the server value too)
-        claimed = next;
-        return next;
-      }).then((result) => {
-        dailyStreakState = result.snapshot?.val() || dailyStreakState;
+      dailyClaimInFlight = callEconomy('streak').then((res) => {
+        if (currentUser?.uid !== uid) return null;
+        dailyStreakState = res.streak || dailyStreakState;
         refreshProfileStreak();
-        if (!result.committed || !claimed || currentUser?.uid !== uid) return null;
-        const reward = dailyStreakReward(claimed.count);
-        return db.ref(`users/${uid}/diamonds`).transaction((c) => Math.min(999999, (Number(c) || 0) + reward)).then((dResult) => {
-          if (!dResult.committed) return null;
-          challengeEconomy.diamonds = Number(dResult.snapshot.val()) || 0;
-          updateDiamondHeader();
-          renderChallengesModalIfOpen();
-          showDailyReward(claimed.count, reward);
-          return { count: claimed.count, reward };
-        });
-      }).catch((e) => { console.warn('claimDailyLoginReward failed', e); return null; })
+        if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
+        updateDiamondHeader();
+        renderChallengesModalIfOpen();
+        if (!res.claimed) return null;
+        showDailyReward(res.claimed.count, res.claimed.reward);
+        return res.claimed;
+      }).catch((e) => { console.warn('claimDailyLoginReward failed', e.message); return null; })
         .finally(() => { dailyClaimInFlight = null; });
       return dailyClaimInFlight;
     }
@@ -19495,122 +19242,26 @@ video {
       });
     }
 
-    // Ranked one-time challenges are all career-cumulative, so they're
-    // checked in one place, once per Ranked match's rating update, against
-    // the just-committed users/{uid} snapshot — see applyRankedRatingUpdate
-    // above. claimChallenge() is safe to call speculatively on every
-    // still-unmet-or-already-met challenge here: it no-ops for anything
-    // already recorded in completedChallenges.
+    // Milestone challenges (Ranked totals, rank tiers, ending cards, bot
+    // wins) and ShitHead Virgin / Beginner are checked and paid by the
+    // server from its own records: after a Ranked result, a win, a finished
+    // match, or the sync at sign-in. Nothing here claims them.
     //
-    // Burns/Snap Burns/Joker Deflects read from challengeStats — a
-    // dedicated counter that only ever starts existing (at 0) from this
-    // update forward, never from a pre-existing legacy field — so a
-    // veteran account can never be retroactively rewarded for burns/
-    // snaps/deflects it racked up before this system existed. Win
-    // Streaks, Games Played, and Rank Tier are the stated exception:
-    // they still read rankedStats.bestStreak / wins+losses / rating,
-    // which ARE allowed to retroactively count a player's real history.
-    function checkRankedCumulativeChallenges(profileVal) {
-      if (!profileVal) return;
-      const rs = profileVal.rankedStats || {};
-      const cs = profileVal.challengeStats || {};
-      const gamesPlayed = (profileVal.wins || 0) + (profileVal.losses || 0);
-      const groups = [
-        [CHALLENGE_DEFS.rankedBurns, cs.burns || 0],
-        [CHALLENGE_DEFS.rankedStreaks, rs.bestStreak || 0],
-        [CHALLENGE_DEFS.rankedJokerDeflects, cs.jokerDeflects || 0],
-        [CHALLENGE_DEFS.rankedSnapBurns, cs.snapBurns || 0],
-        [CHALLENGE_DEFS.rankedGamesPlayed, gamesPlayed]
-      ];
-      groups.forEach(([defs, value]) => {
-        defs.forEach((c) => { if (value >= c.target) claimChallenge(c.id, c.reward, c.name); });
-      });
-      const rating = profileVal.rating || 0;
-      CHALLENGE_DEFS.rankTiers.forEach((c) => { if (rating >= c.minRating) claimChallenge(c.id, c.reward, c.name); });
-    }
-
-    // Ending Card challenges: Ranked only, awarded to whoever just
-    // finished 1st, based on player.lastPlayRank — captured at the very
-    // top of executePlayCards for the exact play that emptied their hand,
-    // so this always reflects the true final card, burns and Joker duels
-    // included (see the comment there for why it survives those async
-    // paths intact).
-    function checkEndingCardChallenge(player) {
-      const rank = player.lastPlayRank;
-      if (!rank) return;
-      const def = CHALLENGE_DEFS.endingCards.find((c) => c.rank === rank);
-      if (def) claimChallenge(def.id, def.reward, def.name);
-    }
-
-    // Bot Match challenges reuse the difficultyWins/{difficulty} counter
-    // that already exists for the difficulty-unlock system — called from
-    // recordDifficultyWin with the freshly-committed win count, so no
-    // separate tracking was needed for these at all.
-    // ShitHead Virgin / Beginner: paid from recordMatchHistory (once per
-    // finished real match, never the tutorial). Already-completed ids are
-    // skipped here so a normal match doesn't open a transaction for them.
-    function claimFirstGameChallenges(played, won) {
-      if (typeof currentUser === 'undefined' || !currentUser) return Promise.resolve(false);
-      const done = (challengeEconomy && challengeEconomy.completedChallenges) || {};
-      let chain = Promise.resolve();
-      [[played, FIRST_GAME_CHALLENGE], [won, FIRST_WIN_CHALLENGE]].forEach(([met, def]) => {
-        if (met && !done[def.id]) chain = chain.then(() => claimChallenge(def.id, def.reward, def.name));
-      });
-      return chain;
-    }
-    // At sign-in: players who already had games before these existed (Ranked
-    // record, Vs Bots wins, or match history on this device, guest's too).
-    function backfillFirstGameChallenges(profile) {
-      const history = [matchHistoryKey(), 'shithead_match_history_guest'].flatMap((key) => {
-        try { const list = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(list) ? list : []; } catch (e) { return []; }
-      });
-      const botWins = Object.values((profile && profile.difficultyWins) || {}).reduce((a, n) => a + (Number(n) || 0), 0);
-      const rankedWins = Number(profile && profile.wins) || 0, rankedLosses = Number(profile && profile.losses) || 0;
-      const won = rankedWins > 0 || botWins > 0 || history.some(e => e && e.place === 1 && !e.shithead);
-      const played = won || rankedLosses > 0 || history.length > 0;
-      return claimFirstGameChallenges(played, won);
-    }
-
-    function checkBotMatchChallenge(difficulty, newCount) {
-      const def = CHALLENGE_DEFS.botMatches.find((c) => c.difficulty === difficulty);
-      if (def && newCount >= def.target) claimChallenge(def.id, def.reward, def.name);
+    // A finished real match (never the tutorial), from recordMatchHistory:
+    // the server counts it and pays ShitHead Virgin / Beginner if due.
+    function reportMatchFinished() {
+      if (typeof currentUser === 'undefined' || !currentUser) return Promise.resolve(null);
+      const matchId = state.matchId || (state.matchId = generateMatchId());
+      return callEconomy('matchFinished', { matchId }).then((res) => {
+        if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
+        applyServerClaims(res.claimed);
+        return res;
+      }).catch((e) => { console.warn('Match not recorded', e.message); return null; });
     }
 
     // ============================================================
-    // CHALLENGES — retroactive backfill (Part 5, final part of the
-    // Challenges & Diamonds build). Runs once per account — see the
-    // retroactiveChallengeCheckDone gate in initChallengeEconomy above —
-    // using stats the account may already have from BEFORE Challenges
-    // existed.
-    //
-    // This deliberately just calls the exact same functions Part 3
-    // already wired into live gameplay, against the player's EXISTING
-    // profile, rather than duplicating any threshold logic: a veteran
-    // with 60 career Ranked burns already recorded gets Burner AND
-    // Arsonist silently claimed the moment they sign in post-update, no
-    // need to burn a 61st pile.
-    //
-    // Two categories can't be backfilled at all, honestly. Joker
-    // Deflects and Snap Burns never existed as tracked stats before this
-    // update, so there is no historical count to check — a veteran
-    // starts those two at a true, correct 0, exactly like a brand new
-    // player. Ending Cards and Daily challenges are inherently forward-
-    // looking (no record of what card ended a past match, and Daily is
-    // scoped to today by definition) — neither is attempted here either.
-    function runRetroactiveChallengeCheck(profile) {
-      checkRankedCumulativeChallenges(profile);
-      const dw = profile.difficultyWins || {};
-      CHALLENGE_DEFS.botMatches.forEach((c) => checkBotMatchChallenge(c.difficulty, dw[c.difficulty] || 0));
-    }
-
-    // ============================================================
-    // CHALLENGES — temporary debug console helpers (Part 5). For manual
-    // testing only: triggering a claim (and its toast) on demand,
-    // checking the balance updates instantly, and resetting a test
-    // account's progress to re-run the retroactive check cleanly. Not
-    // referenced anywhere else in the app — safe to delete this whole
-    // block once manual testing is done, or leave it, since it does
-    // nothing unless explicitly called from the console.
+    // CHALLENGES — console helper for manual testing: asks the server to
+    // pay a challenge (it still checks the challenge was really met).
     // ============================================================
     window.debugCompleteChallenge = function (challengeId) {
       if (!currentUser) { console.warn('debugCompleteChallenge: sign in first — the economy is an account feature.'); return; }
@@ -19635,30 +19286,6 @@ video {
       if (!def) { console.warn(`debugCompleteChallenge: no challenge found with id "${challengeId}". Try one of:`, allDefs.map((d) => d.id)); return; }
       claimChallenge(def.id, def.reward, def.name).then((ok) => {
         console.log(ok ? `Claimed "${def.name}" (+${def.reward} diamonds).` : `"${def.name}" was already claimed.`);
-      });
-    };
-    window.debugAddDiamonds = function (amount) {
-      if (!currentUser) { console.warn('debugAddDiamonds: sign in first.'); return; }
-      db.ref(`users/${currentUser.uid}/diamonds`).transaction((c) => (c || 0) + (amount || 0)).then((result) => {
-        if (result.committed) {
-          challengeEconomy.diamonds = result.snapshot.val() || 0;
-          updateDiamondHeader();
-          renderChallengesModalIfOpen();
-          console.log(`Diamonds now: ${challengeEconomy.diamonds}`);
-        }
-      });
-    };
-    window.debugResetChallenges = function () {
-      if (!currentUser) { console.warn('debugResetChallenges: sign in first.'); return; }
-      db.ref(`users/${currentUser.uid}`).update({
-        diamonds: 0,
-        completedChallenges: {},
-        dailyChallengeState: null,
-        retroactiveChallengeCheckDone: false
-      }).then(() => {
-        console.log('Challenge progress reset. Re-running initChallengeEconomy to reload and re-check retroactively\u2026');
-        challengeEconomyLoadedForUid = null; // force a genuine reload — see the guard's own comment for why it's otherwise a no-op
-        return initChallengeEconomy();
       });
     };
 
@@ -19979,33 +19606,32 @@ video {
     // assumed: without a rating the Ranked ticket and the end-of-match save
     // both failed.
     const RANKED_PROFILE_DEFAULTS = { rating: 500, wins: 0, losses: 0 };
+    // Reads users/{uid}. A missing profile, or one without its Ranked
+    // defaults (rating/wins/losses), is filled in by the server (economy
+    // `init`): phones can't write those fields. The fill-in only touches
+    // fields that are still empty, so it can never undo a saved result.
+    function profileNeedsInit(profile) {
+      return !profile || Object.keys(RANKED_PROFILE_DEFAULTS).some((key) => {
+        const value = profile[key];
+        return value === null || value === undefined || !Number.isFinite(Number(value));
+      }) || !Number.isFinite(Number(profile.diamonds));
+    }
+    let profileInitInFlight = null;
+    function ensureServerProfile() {
+      if (!profileInitInFlight) profileInitInFlight = callEconomy('init').finally(() => { profileInitInFlight = null; });
+      return profileInitInFlight;
+    }
     function getOrCreateUserProfile(uid) {
       return db.ref(`users/${uid}`).once('value').then((snap) => {
-        if (snap.exists()) {
-          const profile = snap.val() || {};
-          const missing = {};
-          Object.entries(RANKED_PROFILE_DEFAULTS).forEach(([key, value]) => {
-            if (!Number.isFinite(Number(profile[key])) || profile[key] === null || profile[key] === undefined) missing[key] = value;
+        const profile = snap.exists() ? (snap.val() || {}) : null;
+        if (!profileNeedsInit(profile)) return profile;
+        return ensureServerProfile()
+          .then(() => db.ref(`users/${uid}`).once('value'))
+          .then((fresh) => ({ ...RANKED_PROFILE_DEFAULTS, diamonds: 0, ...(fresh.val() || {}) }))
+          .catch((error) => {
+            console.warn('Profile set-up failed', error);
+            return { ...RANKED_PROFILE_DEFAULTS, diamonds: 0, ...(profile || {}) };
           });
-          if (!Object.keys(missing).length) return profile;
-          // Each field is filled only if it's still empty on the server, in
-          // its own transaction: a plain write could land after a Ranked
-          // result that was saved in the meantime and put the rating back.
-          const filled = { ...profile };
-          return Promise.all(Object.keys(missing).map((key) => new Promise((resolve) => {
-            db.ref(`users/${uid}/${key}`).transaction((current) => {
-              if (current === null || current === undefined) return missing[key];
-              return; // already set (maybe just now): leave it alone
-            }, (error, committed, snapshot) => {
-              if (error) console.warn('Profile backfill failed', error);
-              const value = snapshot && typeof snapshot.val === 'function' ? snapshot.val() : null;
-              filled[key] = Number.isFinite(Number(value)) && value !== null ? Number(value) : missing[key];
-              resolve();
-            });
-          }))).then(() => filled);
-        }
-        const fresh = { rating: 500, wins: 0, losses: 0, diamonds: 0, completedChallenges: {}, dailyChallengeState: null, retroactiveChallengeCheckDone: true, diamondEconomyResetV2Done: true, challengeStats: { burns: 0, snapBurns: 0, jokerDeflects: 0 } };
-        return db.ref(`users/${uid}`).set(fresh).then(() => fresh);
       });
     }
 
@@ -20215,6 +19841,11 @@ video {
     }
 
     function enterRankedRoom(code) {
+      // Proof this account really sat at this Ranked table: only the account
+      // itself can write it, and the server won't score a room without one
+      // for every seat (so nobody can put someone else in a fake room).
+      if (currentUser) db.ref(`rankedMembers/${code}/${currentUser.uid}`).set(firebase.database.ServerValue.TIMESTAMP)
+        .catch((e) => console.warn('Ranked seat not recorded', e));
       rememberJoinedRoom(code);
       showMultiplayerLobbyView();
       listenToFirebaseRoom(code);
@@ -20572,118 +20203,43 @@ video {
       const number = Number(value);
       return value !== null && value !== undefined && value !== '' && Number.isFinite(number) ? number : fallback;
     }
+    // The server scores the finished Ranked room (economy `rankedResult`):
+    // every seat's rating from the server's own records (pairwise Elo, as
+    // above), wins/losses, Ranked stats, the winner's Diamonds, milestone
+    // challenges and pictures, once per match. The room can take a moment
+    // to show the final placings, so a refused call is retried.
     function applyRankedRatingUpdate() {
       rankedRatingDraft = null;
       const players = state.players;
-      if (players.length < 2) return;
+      if (!currentUser || players.length < 2) return;
       if (players.some((p) => !p.uid)) return; // every seat needs a real ranked account
       if (players.some((p) => p.finishRank == null)) return; // every seat needs a settled placement
-      const myIndex = players.findIndex((p) => p.id === state.localPlayerId);
-      if (myIndex === -1) return;
-      const deltas = pairwiseEloDeltas(players);
-      const me = players[myIndex];
-      const won = me.finishRank === 1;
-      const opponent = players.find((p) => p.id !== state.localPlayerId);
-      const resultId = state.matchId || `${state.roomCode || 'ranked'}_${players.map(p => p.uid).sort().join('_')}`;
-      const rankMailId = `rank_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      let duplicateResult = false;
-      db.ref(`users/${me.uid}`).transaction((current) => {
-        // Firebase may run this several times (cache first, then server):
-        // everything captured by the closure is reset on every pass.
-        duplicateResult = false;
-        rankedRatingDraft = null;
-        const c = current || { rating: 500, wins: 0, losses: 0 };
-        const processedRankedMatches = c.processedRankedMatches || {};
-        if (processedRankedMatches[resultId]) { duplicateResult = true; return; }
-        const previousRating = finiteRating(c.rating);
-        const delta = Number.isFinite(deltas[myIndex]) ? deltas[myIndex] : 0;
-        const newRating = Math.max(0, previousRating + delta);
-        const previousTier = getRankTier(previousRating).name;
-        const newTier = getRankTier(newRating).name;
-        rankedRatingDraft = { from: previousRating, to: newRating };
-        // Recorded here (self-write, same as everything else in this
-        // function) so findRankedMatch can check it before pairing two
-        // accounts back together — the actual anti-farming enforcement,
-        // not just this bookkeeping.
-        const rs = c.rankedStats || {};
-        const prevStreak = rs.currentStreak || 0;
-        const newStreak = won ? prevStreak + 1 : 0;
-        // wins/losses already exist at the top level and this function is
-        // the only place that ever increments them, so "played" and win%
-        // are derived from those on the Stats page rather than kept as a
-        // second, easily-drifting counter here. Only the genuinely NEW
-        // numbers live in rankedStats: cards burnt and Jokers played
-        // (summed from this match's own gameStats, which resets fresh
-        // each match — see bumpStat), the win streak, and the highest/
-        // lowest rating ever reached (seeded from the pre-match rating on
-        // the very first ranked finish, so a fresh account's starting
-        // point is captured too, not just ratings reached after that).
-        const rankedStats = {
-          burnt: (rs.burnt || 0) + (me.gameStats?.burnt || 0),
-          jokersPlayed: (rs.jokersPlayed || 0) + (me.gameStats?.jokersPlayed || 0),
-          currentStreak: newStreak,
-          bestStreak: Math.max(rs.bestStreak || 0, newStreak),
-          // Consecutive ranked losses, for the earn-only ShitHead picture.
-          currentLossStreak: won ? 0 : (rs.currentLossStreak || 0) + 1,
-          bestLossStreak: Math.max(rs.bestLossStreak || 0, won ? 0 : (rs.currentLossStreak || 0) + 1),
-          // Seeded from the pre-match rating (never a missing one: Math.max
-          // with undefined is NaN, and Firebase rejects the whole save).
-          highestRating: Math.max(finiteRating(rs.highestRating, previousRating), newRating),
-          lowestRating: Math.min(finiteRating(rs.lowestRating, previousRating), newRating)
-        };
-        // Dedicated challenge counters — deliberately separate from
-        // rankedStats above, and deliberately event-counts (one per
-        // burn/deflect/snap-burn), not the card-count `burnt` already
-        // tracked for the Stats page. Kept apart specifically so a
-        // legacy account's pre-existing rankedStats.burnt can never leak
-        // into the Burns challenge and retroactively reward it — see
-        // checkRankedCumulativeChallenges and THE RESET in
-        // initChallengeEconomy for the full reasoning.
-        const cStats = c.challengeStats || {};
-        const challengeStats = {
-          burns: (cStats.burns || 0) + (me.gameStats?.challengeBurns || 0),
-          jokerDeflects: (cStats.jokerDeflects || 0) + (me.gameStats?.jokerDeflects || 0),
-          snapBurns: (cStats.snapBurns || 0) + (me.gameStats?.snapBurns || 0)
-        };
-        const next = { ...c, rating: newRating, wins: (c.wins || 0) + (won ? 1 : 0), losses: (c.losses || 0) + (won ? 0 : 1), rankedStats, challengeStats, processedRankedMatches: { ...processedRankedMatches, [resultId]: { rank: me.finishRank, appliedAt: Date.now() } } };
-        if (previousTier !== newTier) {
-          next.activityInbox = {
-            ...(c.activityInbox || {}),
-            [rankMailId]: {
-              type: 'rank', fromTier: previousTier, toTier: newTier,
-              direction: newRating > previousRating ? 'up' : 'down',
-              previousRating, newRating, sentAt: Date.now()
-            }
-          };
-        }
-        if (opponent && opponent.uid) next.lastRankedOpponent = { uid: opponent.uid, at: serverNow() };
-        return next;
-      }, (error, committed, snapshot) => {
-        if (error) {
-          console.warn('Ranked rating update failed', error);
-          notifyBanner('⚠️ Your Ranked result couldn’t be saved — check your connection.');
-        }
-        else if (duplicateResult) return;
-        else {
-          syncPublicProfile(); // rating moved — keep the friends-visible copy current
-          // Challenges: Burns/Streaks/Joker Deflects/Snap Burns/Games
-          // Played/Rank Tiers are all career-cumulative, so they're
-          // checked once here against the just-committed profile rather
-          // than per-event mid-match — the committed snapshot is the
-          // single source of truth for these totals.
-          if (committed && snapshot) {
-            const val = snapshot.val() || {};
-            if (rankedRatingDraft) { matchSummaryRating = rankedRatingDraft; patchMatchHistory(); refreshMatchSummary(); }
-            grantEarnedAvatars(val);
-            challengeEconomy.rating = val.rating != null ? val.rating : challengeEconomy.rating;
-            challengeEconomy.wins = val.wins || 0;
-            challengeEconomy.losses = val.losses || 0;
-            challengeEconomy.rankedStats = val.rankedStats || {};
-            challengeEconomy.challengeStats = val.challengeStats || {};
-            checkRankedCumulativeChallenges(val);
-            renderChallengesModalIfOpen();
-          }
-        }
+      const roomCode = state.roomCode, uid = currentUser.uid;
+      const attempt = (tries) => callEconomy('rankedResult', { roomCode }).catch((error) => {
+        if (tries > 0 && !/opponent a lot/.test(error.message)) return new Promise(r => setTimeout(r, 2000)).then(() => attempt(tries - 1));
+        throw error;
+      });
+      new Promise(r => setTimeout(r, 800)).then(() => attempt(4)).then((res) => {
+        if (currentUser?.uid !== uid) return;
+        rankedRatingDraft = { from: res.from, to: res.to };
+        matchSummaryRating = rankedRatingDraft;
+        patchMatchHistory();
+        refreshMatchSummary();
+        challengeEconomy.rating = Number.isFinite(Number(res.rating)) ? Number(res.rating) : challengeEconomy.rating;
+        challengeEconomy.wins = res.wins || 0;
+        challengeEconomy.losses = res.losses || 0;
+        challengeEconomy.rankedStats = res.rankedStats || {};
+        challengeEconomy.challengeStats = res.challengeStats || {};
+        if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
+        if (res.diamondsAwarded > 0) enqueueChallengeToast('Ranked Win!', res.diamondsAwarded, -1);
+        applyServerClaims(res.claimed);
+        applyNewAvatars(res.newAvatars);
+        updateDiamondHeader();
+        renderChallengesModalIfOpen();
+        syncPublicProfile(); // rating moved — keep the friends-visible copy current
+      }).catch((error) => {
+        console.warn('Ranked rating update failed', error.message);
+        notifyBanner(/opponent a lot/.test(error.message) ? `⚠️ ${error.message}` : '⚠️ Your Ranked result couldn’t be saved — check your connection.');
       });
     }
 
