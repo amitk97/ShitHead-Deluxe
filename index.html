@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v114 (ShitHead-Deluxe-114) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v115 (ShitHead-Deluxe-115) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -576,6 +576,31 @@
     .whats-new-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
     .whats-new-list li { display:flex; gap:10px; align-items:flex-start; font-size:12px; line-height:1.35; color:#cbd5e1; background:rgba(15,23,42,.7); border:1px solid #1e293b; border-radius:12px; padding:8px 10px; }
     .whats-new-list li > span:first-child { font-size:18px; line-height:1; flex-shrink:0; }
+    .stats-tabs { display:flex; gap:6px; margin-bottom:8px; }
+    .stats-tab { flex:1; padding:6px 0; border-radius:10px; border:2px solid #334155; background:#1e293b; color:#cbd5e1; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+    .stats-tab[aria-selected="true"] { border-color:#f59e0b; background:rgba(120,53,15,.4); color:#fcd34d; }
+    .mh-summary { display:flex; justify-content:space-around; background:rgba(15,23,42,.7); border:1px solid rgba(245,158,11,.35); border-radius:12px; padding:8px 4px; margin-bottom:8px; }
+    .mh-summary div { display:flex; flex-direction:column; align-items:center; }
+    .mh-summary b { font-size:15px; font-weight:900; color:#fcd34d; }
+    .mh-summary span { font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8; }
+    .mh-list { display:flex; flex-direction:column; gap:6px; }
+    .mh-item { background:rgba(15,23,42,.7); border:1px solid #1e293b; border-left:3px solid var(--mh-edge, #475569); border-radius:10px; }
+    .mh-item > summary { list-style:none; display:flex; align-items:center; gap:8px; padding:7px 9px; cursor:pointer; }
+    .mh-item > summary::-webkit-details-marker { display:none; }
+    .mh-emoji { font-size:20px; line-height:1; flex-shrink:0; }
+    .mh-main { flex:1; min-width:0; display:flex; flex-direction:column; }
+    .mh-title { font-size:11px; font-weight:900; color:#f1f5f9; }
+    .mh-sub { font-size:9px; font-weight:700; color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .mh-side { display:flex; flex-direction:column; align-items:flex-end; gap:1px; font-size:9px; font-weight:900; }
+    .mh-side .gem { color:#67e8f9; }
+    .mh-side .up { color:#34d399; } .mh-side .down { color:#fb7185; }
+    .mh-detail { padding:0 9px 8px; font-size:9px; color:#cbd5e1; }
+    .mh-order { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:6px; }
+    .mh-order span { background:#1e293b; border-radius:999px; padding:2px 7px; font-weight:800; }
+    .mh-order span.me { background:rgba(245,158,11,.25); color:#fcd34d; }
+    .mh-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; text-align:center; }
+    .mh-stats b { display:block; font-size:12px; color:#f8fafc; }
+    .mh-stats span { font-size:7px; font-weight:800; text-transform:uppercase; color:#94a3b8; }
     .friends-online-count { font-size:10px; font-weight:800; color:#94a3b8; text-align:center; margin:0 0 6px; }
     .friend-actions { display:grid; gap:5px; }
     .friend-action { min-width:0; padding:6px 2px; border-radius:9px; border:1px solid #334155; background:transparent; color:#94a3b8; font-size:9px; font-weight:900; letter-spacing:.03em; white-space:nowrap; transition:background .15s,color .15s,border-color .15s; }
@@ -5079,8 +5104,12 @@ video {
   <div id="statsModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:85vh; display:flex; flex-direction:column;">
       <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
-        <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Ranked Stats</span>
+        <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Stats</span>
         <button id="statsCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
+      </div>
+      <div class="stats-tabs" role="tablist" style="flex-shrink:0;">
+        <button type="button" role="tab" class="stats-tab" data-stats-tab="history">Match History</button>
+        <button type="button" role="tab" class="stats-tab" data-stats-tab="ranked">Ranked</button>
       </div>
       <div id="statsContentArea" class="overflow-y-auto" style="flex:1;"></div>
     </div>
@@ -5838,12 +5867,125 @@ video {
           setTimeout(() => this._play(this.takeEl), i * 85);
         }
       }
-      /* No dedicated sound asset for these events — kept as silent no-ops (with haptics where useful)
-         so every existing call site keeps working without needing to be edited individually. */
-      burn() { Haptics.vibrate([30, 50, 40]); }
+      /* ---- Burn sounds: one synthesised recipe per burn effect ----
+         Every Burn cosmetic (and each seasonal one) has its own sound,
+         matched to its animation; anything unknown gets the default fire
+         whoosh. Built from two primitives on one master gain. */
+      _burnKit() {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return null;
+        const vol = this.riffleEl.volume;
+        if (!vol) return null;
+        const t0 = ctx.currentTime + 0.01;
+        const out = ctx.createGain(); out.gain.value = vol; out.connect(ctx.destination);
+        const env = (g, at, dur, level, attack) => {
+          g.gain.setValueAtTime(0.0001, t0 + at);
+          g.gain.exponentialRampToValueAtTime(Math.max(0.0002, level), t0 + at + attack);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+        };
+        // Filtered noise: whooshes, crackles, splats, hiss.
+        const noise = ({ at = 0, dur = 0.3, type = 'lowpass', f0 = 800, f1 = f0, q = 1, level = 0.3, attack = 0.01 }) => {
+          const buf = ctx.createBuffer(1, Math.max(1, Math.ceil(ctx.sampleRate * dur)), ctx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+          const src = ctx.createBufferSource(); src.buffer = buf;
+          const f = ctx.createBiquadFilter(); f.type = type; f.Q.value = q;
+          f.frequency.setValueAtTime(f0, t0 + at); f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + at + dur);
+          const g = ctx.createGain(); env(g, at, dur, level, Math.min(attack, dur / 2));
+          src.connect(f).connect(g).connect(out); src.start(t0 + at); src.stop(t0 + at + dur + 0.02);
+        };
+        // Oscillator: thumps, zaps, pops, chimes and bells.
+        const tone = ({ at = 0, dur = 0.2, type = 'sine', f0 = 440, f1 = f0, level = 0.2, attack = 0.005, vibrato = 0 }) => {
+          const o = ctx.createOscillator(); o.type = type;
+          o.frequency.setValueAtTime(f0, t0 + at); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + at + dur);
+          if (vibrato) {
+            const lfo = ctx.createOscillator(); lfo.frequency.value = 6;
+            const depth = ctx.createGain(); depth.gain.value = vibrato;
+            lfo.connect(depth).connect(o.frequency); lfo.start(t0 + at); lfo.stop(t0 + at + dur + 0.02);
+          }
+          const g = ctx.createGain(); env(g, at, dur, level, Math.min(attack, dur / 2));
+          o.connect(g).connect(out); o.start(t0 + at); o.stop(t0 + at + dur + 0.02);
+        };
+        const scatter = (n, from, to, fn) => { for (let i = 0; i < n; i++) fn(from + Math.random() * (to - from), i); };
+        return { noise, tone, scatter };
+      }
+      playBurnSound(effectId = 'default') {
+        const kit = this._burnKit();
+        if (!kit) return;
+        const recipe = BURN_SOUNDS[effectId] || BURN_SOUNDS.default;
+        try { recipe(kit); } catch (e) {}
+      }
+      /* The pile burns (10, four of a kind, Joker counter): the burner's sound + a buzz. */
+      burn(effectId = 'default') { Haptics.vibrate([30, 50, 40]); this.playBurnSound(effectId); }
       turnNotify() { Haptics.vibrate(20); }
       win() { Haptics.vibrate([50, 80, 50, 100]); }
     }
+
+    // Burn sound recipes, keyed by Burn cosmetic id (see playBurnSound).
+    const fireWhoosh = ({ noise, tone, scatter }, level = 1) => {
+      noise({ dur: 0.55, f0: 350, f1: 2600, q: 0.8, level: 0.45 * level, attack: 0.08 });
+      tone({ dur: 0.28, f0: 95, f1: 40, level: 0.55 * level, attack: 0.01 });
+      scatter(10, 0.08, 0.8, (at) => noise({ at, dur: 0.025, type: 'highpass', f0: 3500, level: 0.22 * level }));
+    };
+    const popBurst = ({ tone }, times, pitch = 1, level = 0.25) => times.forEach((at, i) => {
+      const f = (700 + (i % 3) * 220) * pitch;
+      tone({ at, dur: 0.08, f0: f, f1: f * 0.35, level });
+      tone({ at: at + 0.01, dur: 0.05, type: 'triangle', f0: f * 3, level: level * 0.3 });
+    });
+    const BURN_SOUNDS = {
+      default: (k) => fireWhoosh(k),
+      // Coloured Flame: the fire, plus a rising shimmer of colour.
+      'burn-coloured': (k) => { fireWhoosh(k, 0.8); [660, 880, 1108, 1320, 1760].forEach((f, i) => k.tone({ at: 0.1 + i * 0.06, dur: 0.35, type: 'triangle', f0: f, level: 0.1 })); },
+      // Ice Shatter: a sharp crack and falling glassy pings.
+      'burn-ice': (k) => {
+        k.tone({ dur: 0.09, type: 'square', f0: 220, f1: 60, level: 0.25 });
+        k.noise({ dur: 0.2, type: 'highpass', f0: 2500, f1: 6000, level: 0.4 });
+        k.scatter(9, 0.03, 0.45, (at) => k.tone({ at, dur: 0.3, f0: 2200 + Math.random() * 2600, level: 0.09 }));
+      },
+      // Electric Blast: a falling zap, mains buzz and sparks.
+      'burn-electric': (k) => {
+        k.tone({ dur: 0.35, type: 'sawtooth', f0: 1400, f1: 70, level: 0.32 });
+        k.tone({ dur: 0.45, type: 'square', f0: 60, f1: 55, level: 0.14 });
+        k.scatter(14, 0, 0.5, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 4000, q: 4, level: 0.5 }));
+      },
+      // Paint Splats: three wet splats.
+      'burn-paint': (k) => [0, 0.14, 0.3].forEach((at, i) => {
+        k.noise({ at, dur: 0.2, f0: 1200 - i * 200, f1: 180, level: 0.5 });
+        k.tone({ at, dur: 0.12, f0: 170 - i * 20, f1: 60, level: 0.35 });
+      }),
+      // Stupendous Confectionery: a scatter of candy pops and a sparkle.
+      'burn-sweets': (k) => { popBurst(k, [0, 0.09, 0.16, 0.27, 0.35, 0.47, 0.55], 1.1); k.tone({ at: 0.5, dur: 0.4, type: 'triangle', f0: 2093, level: 0.08 }); },
+      // Smoke Show: a slow, soft puff with a low rumble.
+      'burn-smoke': (k) => {
+        k.noise({ dur: 1.2, type: 'bandpass', f0: 420, f1: 160, q: 0.7, level: 0.45, attack: 0.3 });
+        k.tone({ dur: 1.0, f0: 58, f1: 45, level: 0.25, attack: 0.2 });
+      },
+      // Seasonal burns
+      'burn-valentine': (k) => { fireWhoosh(k, 0.5); [784, 988, 1175].forEach((f, i) => k.tone({ at: 0.08 + i * 0.1, dur: 0.5, type: 'triangle', f0: f, level: 0.12 })); },
+      'burn-summer': (k) => { fireWhoosh(k, 0.7); k.noise({ at: 0.05, dur: 0.9, type: 'highpass', f0: 5000, f1: 3000, level: 0.2, attack: 0.1 }); },
+      'burn-halloween': (k) => { fireWhoosh(k, 0.6); k.tone({ at: 0.05, dur: 1.0, type: 'triangle', f0: 420, f1: 140, level: 0.16, attack: 0.15, vibrato: 18 }); },
+      'burn-diwali': (k) => {
+        k.tone({ dur: 0.3, f0: 180, f1: 45, level: 0.5 });
+        k.noise({ dur: 0.25, f0: 1500, f1: 200, level: 0.35 });
+        k.scatter(22, 0.2, 1.2, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 4500, level: 0.25 }));
+      },
+      'burn-christmas': (k) => {
+        fireWhoosh(k, 0.5);
+        [0.05, 0.17, 0.29, 0.41, 0.53].forEach((at) => [2637, 3136, 3951].forEach((f) => k.tone({ at: at + Math.random() * 0.02, dur: 0.18, type: 'triangle', f0: f, level: 0.05 })));
+      },
+      'burn-newyear': (k) => {
+        k.tone({ dur: 0.45, f0: 700, f1: 2600, level: 0.1, attack: 0.05 });
+        k.tone({ at: 0.45, dur: 0.35, f0: 120, f1: 40, level: 0.55 });
+        k.noise({ at: 0.45, dur: 0.4, f0: 2000, f1: 200, level: 0.4 });
+        k.scatter(18, 0.55, 1.3, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 5000, level: 0.2 }));
+      },
+      'burn-easter': (k) => { popBurst(k, [0, 0.12, 0.22, 0.36], 1.3, 0.2); [1047, 1319].forEach((f, i) => k.tone({ at: 0.35 + i * 0.08, dur: 0.4, type: 'triangle', f0: f, level: 0.1 })); },
+      'burn-lunar': (k) => k.scatter(12, 0, 0.9, (at) => {
+        k.noise({ at, dur: 0.035, type: 'bandpass', f0: 1800, q: 1.5, level: 0.55 });
+        k.tone({ at, dur: 0.05, f0: 300, f1: 90, level: 0.25 });
+      }),
+      'burn-ramadan': (k) => { fireWhoosh(k, 0.35); [523.25, 1046.5, 1568].forEach((f, i) => k.tone({ dur: 1.4, f0: f, level: 0.14 / (i + 1), attack: 0.01 })); }
+    };
 
     const audio = new SoundFX();
   </script>
@@ -6113,11 +6255,14 @@ video {
       triggerBurnEmberExplosion(x, y);
     }
 
+    // The Burn cosmetic a player has equipped (their own from equippedCosmetics).
+    function burnEffectIdFor(player) {
+      const ownEffect = (typeof equippedCosmetics !== 'undefined' && equippedCosmetics.burnEffect) || 'default';
+      return player?.cosmetics?.burnEffect || (player?.id === state?.localPlayerId ? ownEffect : 'default') || 'default';
+    }
     function triggerEquippedBurnEffect(x, y, player = null) {
       try {
-        const ownEffect = (typeof equippedCosmetics !== 'undefined' && equippedCosmetics.burnEffect) || 'default';
-        const effect = player?.cosmetics?.burnEffect || (player?.id === state?.localPlayerId ? ownEffect : 'default');
-        playBurnEffect(effect, x, y);
+        playBurnEffect(burnEffectIdFor(player), x, y);
       } catch (error) {
         console.warn('Burn cosmetic skipped safely:', error);
       }
@@ -8224,7 +8369,7 @@ video {
       if (state.pendingFaceUpSacrifice) { state.pendingFaceUpSacrifice = null; state.selectedSacrificeIds = []; }
       // Credit the burn to whoever caused it, sized by what was destroyed.
       bumpStat(player, 'burnt', state.discardPile.length);
-      audio.burn();
+      audio.burn(burnEffectIdFor(player));
       notifyBanner(message);
       recordBurnHistory(player.name);
 
@@ -8252,9 +8397,9 @@ video {
         triggerEquippedBurnEffect(pileRect.left + (pileRect.width / 2), pileRect.top + (pileRect.height / 2), player);
       }
       if (state.isMultiplayer && state.roomCode) {
-        const burnEffectId = player?.cosmetics?.burnEffect || (player?.id === state.localPlayerId ? equippedCosmetics.burnEffect : 'default') || 'default';
+        const burnEffectId = burnEffectIdFor(player);
         db.ref(`rooms/${state.roomCode}/lastCosmeticEffect`).set({
-          type: 'burn', playerId: player.id, effectId: burnEffectId, at: Date.now()
+          type: 'burn', playerId: player.id, by: state.localPlayerId, effectId: burnEffectId, at: Date.now()
         }).catch(error => console.warn('Burn effect broadcast skipped', error));
       }
 
@@ -8529,10 +8674,12 @@ video {
         if (originalInitiator && originalInitiator.id !== initiator.id) {
           state.discardPile = state.discardPile.filter(c => !c.isJoker);
           recordHistory(initiator.name, [jokerCard]);
-          audio.burn();
+          audio.burn(burnEffectIdFor(initiator));
           bumpStat(initiator, 'jokerDeflects', 1);
           notifyChallengeEvent(initiator, ['deflect-joker-once']);
           notifyBanner(`💥 ${initiator.name} countered with JOKER! ${originalInitiator.name} picks up — ${initiator.name} plays next!`);
+          // The counter-Joker left their hand: top it back up to 3 now.
+          refillHand(initiator);
           giveJokerWinnerNextTurn(initiator);
           saveGameState();
           if (state.isMultiplayer) syncFirebaseGameState();
@@ -8636,6 +8783,9 @@ video {
       const handJokerIndex = (target.hand || []).findIndex(c => c.isJoker);
       if (handJokerIndex !== -1) {
         counterJoker = target.hand.splice(handJokerIndex, 1)[0];
+        // Played from the hand like any other card: draw back up to 3 now,
+        // not at the defender's next turn.
+        refillHand(target);
       } else if (canAccessFaceUp(target)) {
         const upJokerIndex = (target.faceUp || []).findIndex(c => c.isJoker);
         if (upJokerIndex !== -1) {
@@ -8654,7 +8804,7 @@ video {
         bumpStat(target, 'jokerDeflects', 1);
         notifyChallengeEvent(target, ['deflect-joker-once']);
         recordHistory(target.name, [counterJoker]);
-        audio.burn();
+        audio.burn(burnEffectIdFor(target));
         notifyBanner(`💥 ${target.name} countered with JOKER! ${initiator.name} picks up — ${target.name} plays next!`);
         // The defender won the duel, so THEY take the next turn. executePickup
         // is told not to advance the turn itself — otherwise its own
@@ -9129,6 +9279,7 @@ video {
         state.rankedRatingApplied = true;
         applyRankedRatingUpdate();
       }
+      try { recordMatchHistory(); } catch (e) { console.warn('Match history skipped', e); }
       // Never let a "Continue Watching" popup from an earlier finisher this
       // match survive onto the end-of-match screen on ANY client.
       document.getElementById('victoryOverlay')?.classList.add('hidden');
@@ -9210,6 +9361,7 @@ video {
       state.blindRevealing = false; // a new match never waits on a leftover blind reveal
       msShown = { bars: {}, rewards: 0, done: new Set(), rankup: null };
       matchWinnerEffectShown = false;
+      matchHistoryCurrentId = null; // the next finish is a new entry
       if (typeof resetMatchSummary === 'function') resetMatchSummary();
       document.getElementById('quickPlayMatchBtn')?.classList.add('hidden');
       document.getElementById('playAgainMatchBtn')?.classList.add('hidden');
@@ -13019,7 +13171,13 @@ video {
 
         if (data.lastCosmeticEffect?.at && data.lastCosmeticEffect.at !== lastHandledCosmeticEffectAt) {
           lastHandledCosmeticEffectAt = data.lastCosmeticEffect.at;
-          if (!isCatchUp && data.lastCosmeticEffect.playerId !== state.localPlayerId && data.lastCosmeticEffect.type === 'burn' && bigEffectsOn) {
+          // Skipped by the client that made the burn (it already played it),
+          // including the host broadcasting a bot's burn.
+          const remoteBurn = !isCatchUp && data.lastCosmeticEffect.type === 'burn'
+            && data.lastCosmeticEffect.playerId !== state.localPlayerId
+            && data.lastCosmeticEffect.by !== state.localPlayerId;
+          if (remoteBurn) audio.playBurnSound(data.lastCosmeticEffect.effectId || 'default');
+          if (remoteBurn && bigEffectsOn) {
             setTimeout(() => {
               try {
                 const pile = document.getElementById('discardPileContainer');
@@ -14474,7 +14632,10 @@ video {
         <div class="space-y-1">${rows.map(([label, value]) => statRowHtml(label, value)).join('')}</div>
         <p class="text-[8px] text-slate-600 text-center pt-2">Casual, Vs Bots, and Tutorial games are never counted here.</p>`;
     }
+    let statsTab = (() => { try { return localStorage.getItem('shithead_stats_tab') === 'ranked' ? 'ranked' : 'history'; } catch (e) { return 'history'; } })();
     function renderStatsPanel() {
+      document.querySelectorAll('[data-stats-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.statsTab === statsTab)));
+      if (statsTab === 'history') { renderMatchHistoryPanel(); return; }
       const area = document.getElementById('statsContentArea');
       if (!currentUser) {
         area.innerHTML = '<p class="text-[10px] text-slate-400 text-center leading-snug py-6 px-1">Sign in to track your Ranked stats.</p>';
@@ -14495,6 +14656,138 @@ video {
       document.getElementById('statsModal').classList.remove('hidden');
     });
     document.getElementById('statsCloseBtn').addEventListener('click', () => document.getElementById('statsModal').classList.add('hidden'));
+    document.querySelectorAll('[data-stats-tab]').forEach(b => b.addEventListener('click', () => {
+      statsTab = b.dataset.statsTab;
+      try { localStorage.setItem('shithead_stats_tab', statsTab); } catch (e) {}
+      renderStatsPanel();
+    }));
+
+    // ---- Match history ----------------------------------------------------
+    // Every finished match (not the tutorial) is saved for the player: the
+    // last MATCH_HISTORY_LIMIT on this device, and for a signed-in account
+    // also at users/{uid}/matchHistory so it follows them to every device.
+    // Diamonds and the Ranked rating change arrive after the match ends, so
+    // the entry is patched as they come in (patchMatchHistory).
+    const MATCH_HISTORY_LIMIT = 30;
+    let matchHistoryCurrentId = null;
+    const matchHistoryKey = () => `shithead_match_history_${currentUser ? currentUser.uid : 'guest'}`;
+    function readLocalMatchHistory() {
+      try { const list = JSON.parse(localStorage.getItem(matchHistoryKey()) || '[]'); return Array.isArray(list) ? list : []; } catch (e) { return []; }
+    }
+    function writeLocalMatchHistory(list) {
+      try { localStorage.setItem(matchHistoryKey(), JSON.stringify(list.slice(0, MATCH_HISTORY_LIMIT))); } catch (e) {}
+    }
+    function buildMatchHistoryEntry() {
+      const me = state.players.find(p => p.id === state.localPlayerId);
+      if (!me) return null;
+      const n = state.players.length;
+      const shithead = !me.hasFinished && typeof isShitHead === 'function' && isShitHead(me);
+      const placeOf = (p) => p.finishRank || n;
+      const st = me.gameStats || {};
+      return {
+        at: Date.now(),
+        mode: state.isRanked ? 'ranked' : state.isMultiplayer ? 'online' : 'bots',
+        label: matchModeLabel(),
+        place: shithead ? n : placeOf(me),
+        of: n,
+        shithead: !!shithead,
+        players: [...state.players].sort((a, b) => placeOf(a) - placeOf(b))
+          .map(p => ({ name: String(p.name || 'Player').replace(/\s*\(Bot\)$/, '').slice(0, 16), bot: !!p.isBot, me: p.id === me.id })),
+        stats: { played: st.played || 0, pickedUp: st.pickedUp || 0, burnt: st.burnt || 0, jokers: st.jokersPlayed || 0, turns: st.turns || 0 },
+        diamonds: matchRewardLog.reduce((sum, r) => sum + r.reward, 0),
+        rating: matchSummaryRating ? { from: Math.round(matchSummaryRating.from), to: Math.round(matchSummaryRating.to) } : null
+      };
+    }
+    function recordMatchHistory() {
+      if (tutorialActive || (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning)) return null;
+      if (matchHistoryCurrentId) return matchHistoryCurrentId; // once per match
+      const entry = buildMatchHistoryEntry();
+      if (!entry) return null;
+      const id = `m${entry.at.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      entry.id = id;
+      matchHistoryCurrentId = id;
+      writeLocalMatchHistory([entry, ...readLocalMatchHistory().filter(e => e.id !== id)]);
+      if (currentUser && typeof db !== 'undefined' && firebaseAvailable) {
+        const uid = currentUser.uid;
+        db.ref(`users/${uid}/matchHistory/${id}`).set(entry).then(() => pruneCloudMatchHistory(uid))
+          .catch(e => console.warn('Match history save failed', e));
+      }
+      return id;
+    }
+    function pruneCloudMatchHistory(uid) {
+      return db.ref(`users/${uid}/matchHistory`).once('value').then((snap) => {
+        const all = Object.entries(snap.val() || {}).sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
+        if (all.length <= MATCH_HISTORY_LIMIT) return;
+        const updates = {};
+        all.slice(MATCH_HISTORY_LIMIT).forEach(([key]) => { updates[key] = null; });
+        return db.ref(`users/${uid}/matchHistory`).update(updates);
+      }).catch(() => {});
+    }
+    // Late arrivals for the match just recorded: Diamonds and rating.
+    function patchMatchHistory() {
+      const id = matchHistoryCurrentId;
+      if (!id) return;
+      const patch = {
+        diamonds: matchRewardLog.reduce((sum, r) => sum + r.reward, 0),
+        rating: matchSummaryRating ? { from: Math.round(matchSummaryRating.from), to: Math.round(matchSummaryRating.to) } : null
+      };
+      writeLocalMatchHistory(readLocalMatchHistory().map(e => e.id === id ? { ...e, ...patch } : e));
+      if (currentUser && typeof db !== 'undefined' && firebaseAvailable) {
+        db.ref(`users/${currentUser.uid}/matchHistory/${id}`).update(patch).catch(() => {});
+      }
+    }
+    function loadMatchHistory() {
+      const local = readLocalMatchHistory();
+      if (!currentUser || typeof db === 'undefined' || !firebaseAvailable) return Promise.resolve(local);
+      return db.ref(`users/${currentUser.uid}/matchHistory`).once('value').then((snap) => {
+        const merged = new Map();
+        [...Object.values(snap.val() || {}), ...local].forEach(e => { if (e && e.id && !merged.has(e.id)) merged.set(e.id, e); });
+        const list = [...merged.values()].sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, MATCH_HISTORY_LIMIT);
+        writeLocalMatchHistory(list);
+        return list;
+      }).catch(() => local);
+    }
+    function timeAgo(at, now = Date.now()) {
+      const s = Math.max(0, Math.round((now - at) / 1000));
+      if (s < 60) return 'just now';
+      const m = Math.round(s / 60); if (m < 60) return `${m}m ago`;
+      const h = Math.round(m / 60); if (h < 24) return `${h}h ago`;
+      const d = Math.round(h / 24); if (d < 7) return `${d}d ago`;
+      return new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    }
+    function matchHistoryHtml(list, now = Date.now()) {
+      if (!list.length) return '<p class="text-[10px] text-slate-400 text-center leading-snug py-6 px-1">No matches yet. Every game you finish will show up here.</p>';
+      const wins = list.filter(e => e.place === 1).length;
+      const shitheads = list.filter(e => e.shithead).length;
+      const gems = list.reduce((sum, e) => sum + (Number(e.diamonds) || 0), 0);
+      const ord = (n) => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
+      const rows = list.map((e) => {
+        const won = e.place === 1;
+        const emoji = won ? '🏆' : e.shithead ? '💩' : e.place === 2 ? '🥈' : e.place === 3 ? '🥉' : '🎖️';
+        const title = won ? 'Won' : e.shithead ? 'ShitHead' : `${ord(e.place)} of ${e.of}`;
+        const edge = won ? '#f59e0b' : e.shithead ? '#b45309' : '#64748b';
+        const d = e.rating ? e.rating.to - e.rating.from : null;
+        const side = [
+          e.diamonds > 0 ? `<span class="gem">+💎${e.diamonds}</span>` : '',
+          d !== null ? `<span class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d} rating</span>` : ''
+        ].join('');
+        const st = e.stats || {};
+        const stat = (v, l) => `<div><b>${Number(v) || 0}</b><span>${l}</span></div>`;
+        return `<details class="mh-item" style="--mh-edge:${edge}"><summary><span class="mh-emoji" aria-hidden="true">${emoji}</span>
+          <span class="mh-main"><span class="mh-title">${title}</span><span class="mh-sub">${escapeHtml(e.label || '')} · ${timeAgo(e.at, now)}</span></span>
+          <span class="mh-side">${side}</span></summary>
+          <div class="mh-detail"><div class="mh-order">${(e.players || []).map((p, i) => `<span class="${p.me ? 'me' : ''}">${i + 1}. ${escapeHtml(p.name)}${p.bot ? ' 🤖' : ''}</span>`).join('')}</div>
+          <div class="mh-stats">${stat(st.played, 'Played')}${stat(st.pickedUp, 'Picked up')}${stat(st.burnt, 'Burns')}${stat(st.jokers, 'Jokers')}${stat(st.turns, 'Turns')}</div></div></details>`;
+      }).join('');
+      return `<div class="mh-summary"><div><b>${list.length}</b><span>Matches</span></div><div><b>${wins}</b><span>Wins</span></div><div><b>${Math.round((wins / list.length) * 100)}%</b><span>Win rate</span></div><div><b>${shitheads}</b><span>ShitHeads</span></div><div><b>💎${gems}</b><span>Earned</span></div></div>
+        <div class="mh-list">${rows}</div>
+        <p class="text-[8px] text-slate-600 text-center pt-2">Your last ${MATCH_HISTORY_LIMIT} matches. Tap one for the details.</p>`;
+    }
+    function renderMatchHistoryPanel() {
+      const area = document.getElementById('statsContentArea');
+      area.innerHTML = matchHistoryHtml(readLocalMatchHistory());
+      loadMatchHistory().then((list) => { if (statsTab === 'history') area.innerHTML = matchHistoryHtml(list); });
+    }
     document.getElementById('statsModal').addEventListener('click', (e) => {
       if (e.target.id === 'statsModal') document.getElementById('statsModal').classList.add('hidden');
     });
@@ -14560,6 +14853,11 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v115: [
+        ['📜', 'Match History: menu → Stats shows your last 30 matches, with the finishing order, your stats, Diamonds earned and rating changes.'],
+        ['🔥', 'Burns now have sound! Every Burn effect has its own, from ice shattering to candy pops, and everyone at the table hears yours.'],
+        ['🃏', 'Fixed: countering a Joker now tops your hand back up to 3 straight away.']
+      ],
       v114: [
         ['🔄', 'Closed the app mid-match? Open it again to jump straight back into your seat, even if a bot was covering for you.'],
         ['🃏', 'Blind flips online: everyone at the table now watches the card turn over, not just the player flipping it.'],
@@ -16458,6 +16756,7 @@ video {
     function logMatchReward(name, reward) {
       if (!(Number(reward) > 0)) return;
       matchRewardLog.push({ name: String(name || 'Reward'), reward: Number(reward) });
+      patchMatchHistory();
       refreshMatchSummary();
     }
     function matchPlacingInfo(me) {
@@ -16901,6 +17200,7 @@ video {
 
     function playShopBurnPreview(id, stage) {
       if (!stage) return false;
+      audio.playBurnSound(id);
       stage.querySelectorAll('.shop-burn-particle, .bfx, .bfx-flash').forEach(node => node.remove());
       if (SHAPE_BURN_EFFECTS.has(id)) {
         const rect = stage.getBoundingClientRect();
@@ -20014,7 +20314,7 @@ video {
           // single source of truth for these totals.
           if (committed && snapshot) {
             const val = snapshot.val() || {};
-            if (rankedRatingDraft) { matchSummaryRating = rankedRatingDraft; refreshMatchSummary(); }
+            if (rankedRatingDraft) { matchSummaryRating = rankedRatingDraft; patchMatchHistory(); refreshMatchSummary(); }
             grantEarnedAvatars(val);
             challengeEconomy.rating = val.rating != null ? val.rating : challengeEconomy.rating;
             challengeEconomy.wins = val.wins || 0;

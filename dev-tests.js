@@ -910,7 +910,7 @@ async function runDevTestSuite() {
     // needs that delay to actually be real for its own scope.
     const wasInstant = burnInstantResolveForTests;
     burnInstantResolveForTests = false;
-    freshState({ discardPile: [makeCard('6'), makeCard('2'), makeCard('5'), makeCard('A')] });
+    freshState({ discardPile: [makeCard('6'), makeCard('2'), makeCard('5'), makeCard('A')], drawPile: [] });
     const initiator = makePlayer({ id: 'coach', isBot: true, hand: [makeCard('JOKER', 'JOKER')] });
     const defender = makePlayer({ id: 'you', hand: [makeCard('JOKER', 'JOKER')] });
     state.players = [defender, initiator];
@@ -920,6 +920,79 @@ async function runDevTestSuite() {
     assertEqual(defender.hand.length, 0, "The defender's counter-Joker must be spent, not left in hand");
     assertEqual(state.players[state.currentTurnIndex].id, 'you', 'The duel winner (the one who countered) keeps the turn');
     burnInstantResolveForTests = wasInstant;
+  });
+  await test('Match history: a finished match is recorded once, then patched with Diamonds and rating', () => {
+    const savedUser = currentUser, wasRunning = devTestSuiteRunning;
+    currentUser = null;
+    const key = 'shithead_match_history_guest';
+    const saved = localStorage.getItem(key);
+    localStorage.removeItem(key);
+    try {
+      freshState({ phase: 'FINISHED', isRanked: false, isMultiplayer: false, localPlayerId: 'me', difficulty: 'hard' });
+      state.players = [
+        makePlayer({ id: 'me', name: 'Jamie', hasFinished: true, finishRank: 1, gameStats: { played: 20, pickedUp: 3, burnt: 2, jokersPlayed: 1, turns: 15 } }),
+        makePlayer({ id: 'b1', name: 'Soren', isBot: true, hasFinished: false, hand: [makeCard('4')] })
+      ];
+      matchHistoryCurrentId = null;
+      devTestSuiteRunning = false;
+      matchRewardLog = [{ name: 'Win', reward: 10 }];
+      const id = recordMatchHistory();
+      assertTrue(!!id, 'An id is returned');
+      assertEqual(recordMatchHistory(), id, 'The same match is never recorded twice');
+      let list = readLocalMatchHistory();
+      assertEqual(list.length, 1, 'One entry');
+      assertEqual(list[0].place, 1, 'Won');
+      assertEqual(list[0].mode, 'bots', 'Mode');
+      assertEqual(list[0].players.map(p => p.name), ['Jamie', 'Soren'], 'Finishing order');
+      assertEqual(list[0].stats.burnt, 2, 'Stats saved');
+      assertEqual(list[0].diamonds, 10, 'Diamonds already earned are included');
+      matchRewardLog.push({ name: 'Daily', reward: 25 });
+      matchSummaryRating = { from: 500, to: 518 };
+      patchMatchHistory();
+      list = readLocalMatchHistory();
+      assertEqual(list[0].diamonds, 35, 'Late Diamonds are added');
+      assertEqual(list[0].rating.to - list[0].rating.from, 18, 'Rating change is added');
+      const html = matchHistoryHtml(list);
+      assertTrue(html.includes('Won') && html.includes('+💎35') && html.includes('+18 rating'), 'Shown in the list');
+    } finally {
+      devTestSuiteRunning = wasRunning;
+      matchHistoryCurrentId = null; matchRewardLog = []; matchSummaryRating = null;
+      currentUser = savedUser;
+      if (saved === null) localStorage.removeItem(key); else localStorage.setItem(key, saved);
+    }
+  });
+  await test('Every Burn cosmetic (and the default) has its own burn sound', () => {
+    assertTrue(typeof BURN_SOUNDS.default === 'function', 'A default burn sound exists');
+    const missing = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && typeof BURN_SOUNDS[i.id] !== 'function').map(i => i.id);
+    assertEqual(missing, [], 'Burn items without a sound');
+    const p = makePlayer({ id: 'x', cosmetics: { burnEffect: 'burn-ice' } });
+    assertEqual(burnEffectIdFor(p), 'burn-ice', "A player's equipped burn picks the sound");
+    assertEqual(burnEffectIdFor(makePlayer({ id: 'bot' })), 'default', 'No burn equipped: the default');
+  });
+  await test('REGRESSION: an automatic counter-Joker is replaced from the Deck straight away', () => {
+    freshState({ discardPile: [makeCard('6'), makeCard('JOKER', 'JOKER')], drawPile: [makeCard('4'), makeCard('9'), makeCard('K')] });
+    const initiator = makePlayer({ id: 'soren', isBot: true, hand: [makeCard('Q')] });
+    const defender = makePlayer({ id: 'you', hand: [makeCard('JOKER', 'JOKER'), makeCard('7'), makeCard('10')] });
+    state.players = [defender, initiator];
+    state.localPlayerId = 'you';
+    resolveJokerDuelInstant(initiator, defender, makeCard('JOKER', 'JOKER'));
+    assertEqual(defender.hand.length, 3, 'The defender draws back up to 3 as soon as the Joker leaves their hand');
+    assertTrue(!defender.hand.some(c => c.isJoker), 'The counter-Joker itself is gone');
+    assertEqual(state.drawPile.length, 2, 'Exactly one card came off the Deck');
+  });
+  await test('REGRESSION: a manual Joker played onto a Joker also draws back up to 3', () => {
+    const wasInstant = burnInstantResolveForTests;
+    burnInstantResolveForTests = false;
+    const counter = makeCard('JOKER', 'JOKER');
+    freshState({ discardPile: [makeCard('6'), makeCard('JOKER', 'JOKER'), counter], drawPile: [makeCard('4'), makeCard('9')] });
+    const soren = makePlayer({ id: 'soren', isBot: true, hand: [makeCard('Q')] });
+    const you = makePlayer({ id: 'you', hand: [makeCard('7'), makeCard('10')] });
+    state.players = [you, soren];
+    state.localPlayerId = 'you';
+    state.lastJokerInitiatorId = 'soren';
+    handleJokerPlay(you, counter);
+    burnInstantResolveForTests = wasInstant;
+    assertEqual(you.hand.length, 3, 'The counterer is topped back up to 3 at once');
   });
   await test('REGRESSION: Amit keeps the next turn when Diya cannot counter his Joker', () => {
     freshState({ discardPile: [makeCard('4'), makeCard('K'), makeCard('JOKER', 'JOKER')], drawPile: [] });
