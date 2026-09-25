@@ -1422,9 +1422,13 @@ async function runDevTestSuite() {
     const mail = inboxItemHtml({ type: 'challenge', id: 'hat-trick', name: 'Hat-trick', reward: 30 });
     assertTrue(mail.includes('Win 3 Ranked matches in a row.'), 'The completion mail says what was done');
   });
-  await test('Pages and pop-ups never grow past the visible screen (their X stays on screen)', () => {
+  await test('Pages and pop-ups never grow past the visible screen or under the header (their X stays on screen)', () => {
     const problems = [];
-    ['profileModal', 'friendsModal', 'inboxModal', 'challengesModal', 'leaderboardModal', 'statsModal', 'needHumanModal', 'difficultyUnlockPopup', 'pileInspectModal'].forEach((id) => {
+    const headerBottom = document.querySelector('body > header').getBoundingClientRect().bottom;
+    const pages = [...document.querySelectorAll('body > div.fixed.inset-0.flex.items-center.justify-center[id]')]
+      .map(el => el.id).filter(id => !['lobbyScreen', 'victoryOverlay', 'shuffleIntroOverlay'].includes(id));
+    assertTrue(pages.includes('challengesModal') && pages.length > 15, 'Every centred page is checked');
+    [...pages, 'pileInspectModal', 'matchSummaryModal'].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       const wasHidden = el.classList.contains('hidden');
@@ -1433,7 +1437,7 @@ async function runDevTestSuite() {
       const spacer = document.createElement('div'); spacer.style.height = '2400px';
       panel.appendChild(spacer);
       const r = panel.getBoundingClientRect();
-      if (r.top < -1 || r.bottom > window.innerHeight + 1) problems.push(`${id} ${Math.round(r.top)}..${Math.round(r.bottom)} of ${window.innerHeight}`);
+      if (r.top < headerBottom - 1 || r.bottom > window.innerHeight + 1) problems.push(`${id} ${Math.round(r.top)}..${Math.round(r.bottom)} of ${window.innerHeight}`);
       spacer.remove();
       if (wasHidden) el.classList.add('hidden');
       // Fixed pages must never sit inside the (sometimes transformed) table.

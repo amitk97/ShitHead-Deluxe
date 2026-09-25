@@ -86,7 +86,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Pages fit every phone
 
-- Every `div.fixed.inset-0.flex.items-center.justify-center` pop-up/page caps its panel at the VISIBLE screen (`100dvh` less padding, `--safe-top` and the home bar) and scrolls inside, so its top and X never slip under the header/status bar (iPhone Safari's `vh` includes hidden toolbars). Exclusions use `:not(:where(...))` so they add no specificity (plain `:not(#id)` outranked pages' own ID rules). A dev test checks tall content still fits.
+- The header (z-index 202) is above every page, so every `div.fixed.inset-0.flex.items-center.justify-center` pop-up/page starts BELOW it (`top: var(--header-h)`: 2.75rem, or 60px from 768px wide, plus `--safe-top`) and caps its panel at the space left (`100dvh - --header-h` less padding and the home bar), scrolling inside, so its top and X are never covered on phones or PC. The match summary (`.ms-scrim`/`.ms-card`) does the same; Settings/Shop/Custom/Guide/Tutorial hub have their own `top` rule (iPhone Safari's `vh` includes hidden toolbars). Exclusions use `:not(:where(...))` so they add no specificity (plain `:not(#id)` outranked pages' own ID rules). A dev test checks tall content in every page still fits below the header.
 - Pages/pop-ups are moved to the top level of `<body>` at load (list at the top of the GAMEPLAY ENGINE script). Inside `#gameTable`, any transform on the table (burn screen-shake etc.) made their `position:fixed` start at the table top, under the header. A new page/pop-up goes in that list.
 
 ## Shop / Custom layout

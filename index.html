@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v137 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v138 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1133,8 +1133,19 @@
        dvh (iPhone Safari's vh includes the hidden toolbars, which is what let
        a 90vh panel spill up under the header and hide its X), less the
        status bar / home bar, and scrolls inside rather than overflowing. */
+    /* The header (z-index 202) sits above every page, so a page starts
+       BELOW it (--header-h already includes the status bar) and its panel
+       fits the space left: tall ones (Challenges, Friends...) never slide
+       their top and X under the header, on phones or PC. */
+    :root { --header-h: calc(2.75rem + var(--safe-top)); }
+    @media (min-width: 768px) { :root { --header-h: calc(60px + var(--safe-top)); } }
+    div.fixed.inset-0.flex.items-center.justify-center:not(:where(#lobbyScreen, #victoryOverlay, #shuffleIntroOverlay, #settingsModal, #themesModal, #shopModal, #rulesModal, #tutorialHubScreen)) {
+      top: var(--header-h);
+    }
+    div.fixed.inset-0.flex.items-center.justify-center.p-4:not(:where(#lobbyScreen, #victoryOverlay, #shuffleIntroOverlay, #settingsModal, #themesModal, #shopModal, #rulesModal, #tutorialHubScreen)) { padding-top: 1rem; }
+    div.fixed.inset-0.flex.items-center.justify-center.p-3:not(:where(#lobbyScreen, #victoryOverlay, #shuffleIntroOverlay, #settingsModal, #themesModal, #shopModal, #rulesModal, #tutorialHubScreen)) { padding-top: .75rem; }
     div.fixed.inset-0.flex.items-center.justify-center:not(:where(#lobbyScreen, #victoryOverlay, #shuffleIntroOverlay)) > div:first-child {
-      max-height: calc(100dvh - 2rem - var(--safe-top) - env(safe-area-inset-bottom, 0px)) !important;
+      max-height: calc(100dvh - var(--header-h) - 2rem - env(safe-area-inset-bottom, 0px)) !important;
       overflow-y: auto;
       overscroll-behavior: contain;
     }
@@ -1362,9 +1373,9 @@
     .profile-streak { display:block; margin-top:2px; font-size:10px; font-weight:900; color:#fb923c; }
     .profile-streak.hidden { display:none; }
     /* Match summary */
-    .ms-scrim { position:fixed; inset:0; z-index:79; display:flex; align-items:center; justify-content:center; padding:14px; background:rgba(2,6,23,.72); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
+    .ms-scrim { position:fixed; inset:0; top:var(--header-h); z-index:79; display:flex; align-items:center; justify-content:center; padding:14px; background:rgba(2,6,23,.72); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
     .ms-scrim.hidden { display:none; }
-    .ms-card { position:relative; width:min(380px,100%); max-height:90vh; overflow-y:auto; background:radial-gradient(circle at 50% 0,var(--ms-glow,rgba(245,158,11,.2)),transparent 55%),#020617; border:2px solid var(--ms-edge,#f59e0b); border-radius:20px; padding:16px 14px 12px; color:#e2e8f0; box-shadow:0 20px 60px rgba(0,0,0,.7); animation:daily-pop .35s cubic-bezier(.2,1.4,.4,1) both; }
+    .ms-card { position:relative; width:min(380px,100%); max-height:calc(100dvh - var(--header-h) - 28px - env(safe-area-inset-bottom, 0px)); overflow-y:auto; background:radial-gradient(circle at 50% 0,var(--ms-glow,rgba(245,158,11,.2)),transparent 55%),#020617; border:2px solid var(--ms-edge,#f59e0b); border-radius:20px; padding:16px 14px 12px; color:#e2e8f0; box-shadow:0 20px 60px rgba(0,0,0,.7); animation:daily-pop .35s cubic-bezier(.2,1.4,.4,1) both; }
     .ms-x { position:absolute; top:8px; right:10px; color:#94a3b8; font-size:20px; line-height:1; padding:4px; }
     .ms-head { text-align:center; }
     .ms-emoji { font-size:40px; line-height:1; }
