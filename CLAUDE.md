@@ -46,6 +46,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Every face-down (blind) play goes through a reveal first (`playBlindReveal`, gated at the top of `executePlayCards`; the real play reruns with `{ revealed: true }`): the card rises over the pile, the table dims, it wobbles and turns edge-on, then snaps over glowing green (playable) or red (forced pickup). ~1.2s for you, ~0.8s for others (`BLIND_REVEAL_MS`). Sounds are synthesised (`playRevealTension` / `playRevealResult`).
 - `state.blindRevealing` blocks every other play meanwhile (reset by `hideMatchEndUI`). Skipped (instant flip) in the tutorial, with Reduce Motion, while fast-forwarding, in a hidden tab and during the test suite (`shouldRevealBlind`). Online, the client making the flip (you, or the host for a bot) broadcasts it as `rooms/{code}/lastBlindReveal` (`broadcastBlindReveal`: card, result, length, `serverNow()` time) and every other player plays the same reveal, trimmed by the delay (`showRemoteBlindReveal`), so it lands with the real play.
 
+## Tutorial
+
+- Quick Start (`QUICK_START_MODULE` / `TUTORIAL_MODULE_QUICK_START`): 6 steps, one short sentence each (a test caps steps at 6 and text at 18 words). The lobby Tutorial button starts it directly the first time (`launchTutorialModule(id, { fromHub: false })`, ends on the lobby with "You're ready!"); once done, the button opens the hub, where Quick Start is the highlighted first row. It is NOT part of `getAllTutorialModuleIds` (the complete-every-lesson challenge). Keep new first-time teaching here short; detail belongs in the hub lessons.
+
 ## Challenges
 
 - Every row shows what the challenge asks for; a completed row keeps that description (with the ✓) instead of just "Completed". The "Challenge completed" mail shows it too. One source: `challengeDescription(defOrCompletionKey)` (handles `daily_<date>_<id>` / `weekly_<week>_<id>` keys and the tutorial).

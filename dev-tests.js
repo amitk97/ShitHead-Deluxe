@@ -1085,6 +1085,31 @@ async function runDevTestSuite() {
       document.getElementById('modeSingleBtn').click();
     }
   });
+  await test('Quick Start: at most 6 short steps, and the Tutorial button starts it the first time', () => {
+    assertTrue(TUTORIAL_MODULE_QUICK_START.length <= 6, 'No more than 6 steps');
+    TUTORIAL_MODULE_QUICK_START.forEach((step, i) => {
+      assertTrue(step.text.split(/\s+/).length <= 18, `Step ${i + 1} is one short sentence (${step.text.split(/\s+/).length} words)`);
+      if (step.coachNote) assertTrue(step.coachNote.split(/\s+/).length <= 18, `Step ${i + 1} note is short`);
+    });
+    assertTrue(!getAllTutorialModuleIds().includes('quick_start'), 'Not counted in the complete-every-lesson challenge');
+    const saved = localStorage.getItem('shithead_tutorial_progress');
+    const originalLaunch = launchTutorialModule, originalHub = openTutorialHub;
+    const calls = [];
+    launchTutorialModule = (id, opts) => calls.push(['launch', id, opts && opts.fromHub]);
+    openTutorialHub = () => calls.push(['hub']);
+    const nameInput = document.getElementById('playerNameInput'), savedName = nameInput.value;
+    nameInput.value = 'Tester';
+    try {
+      localStorage.removeItem('shithead_tutorial_progress');
+      document.getElementById('startTutorialBtn').click();
+      localStorage.setItem('shithead_tutorial_progress', JSON.stringify({ quick_start: true }));
+      document.getElementById('startTutorialBtn').click();
+    } finally {
+      launchTutorialModule = originalLaunch; openTutorialHub = originalHub; nameInput.value = savedName;
+      if (saved === null) localStorage.removeItem('shithead_tutorial_progress'); else localStorage.setItem('shithead_tutorial_progress', saved);
+    }
+    assertEqual(calls, [['launch', 'quick_start', false], ['hub']], 'First tap: Quick Start; after that: the hub');
+  });
   await test('Every Burn cosmetic (and the default) has its own burn sound', () => {
     assertTrue(typeof BURN_SOUNDS.default === 'function', 'A default burn sound exists');
     const missing = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && typeof BURN_SOUNDS[i.id] !== 'function').map(i => i.id);

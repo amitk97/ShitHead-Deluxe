@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v125 (ShitHead-Deluxe-125) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v126 (ShitHead-Deluxe-126) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -610,6 +610,7 @@
     .opp-seat.opp-last-card { border-color:#f43f5e !important; box-shadow:0 0 0 1px rgba(244,63,94,.6), 0 0 16px rgba(244,63,94,.45) !important; }
     @keyframes last-card-pulse { 0%,100% { transform:scale(1); box-shadow:0 0 0 0 rgba(244,63,94,.6); } 50% { transform:scale(1.08); box-shadow:0 0 0 5px rgba(244,63,94,0); } }
     body.reduce-motion .last-card-chip { animation:none; }
+    #tutorialHubQuickStart .tutorial-quick-row { border-color:#f59e0b; background:linear-gradient(135deg,rgba(120,53,15,.55),rgba(15,23,42,.9)); box-shadow:0 0 14px rgba(245,158,11,.25); }
     .finished-box-wrap { display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; }
     .finished-leave-btn { min-width:128px; padding:8px 22px; border-radius:12px; border:2px solid #e11d48; background:rgba(76,5,25,.75); color:#fda4af; font-size:12px; font-weight:900; letter-spacing:.14em; box-shadow:0 6px 18px rgba(0,0,0,.45); }
     .friends-online-count { font-size:10px; font-weight:800; color:#94a3b8; text-align:center; margin:0 0 6px; }
@@ -4500,6 +4501,7 @@ video {
         <button id="tutorialHubResetBtn" class="text-[8.5px] font-bold text-slate-500 hover:text-rose-400 underline decoration-dotted transition">Reset progress</button>
       </div>
       <div class="overflow-y-auto pr-1 flex-1">
+        <div id="tutorialHubQuickStart" style="margin-bottom:12px;"></div>
         <button data-section="core" class="tutorial-hub-section-header w-full flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-1.5 cursor-pointer">
           <span>Core Path <span class="section-count text-slate-500 normal-case font-bold"></span></span>
           <span class="section-chevron transition-transform">&#9662;</span>
@@ -14962,6 +14964,13 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v126: [
+        ['⚡', 'New one-minute Quick Start: tap Tutorial to learn the whole game in 6 quick steps.'],
+        ['☝️', "Last card alert: you'll see (and hear) when a player is down to their final card."],
+        ['📤', 'Share your result: tap SHARE on the match summary to send a picture of your game to friends.'],
+        ['📴', 'Play Vs Bots with no signal: once the app has been opened online, it works offline too.'],
+        ['🦇', 'The Bat Swarm victory now has real flapping bats.']
+      ],
       v115: [
         ['📜', 'Match History: menu → Stats shows your last 30 matches, with the finishing order, your stats, Diamonds earned and rating changes.'],
         ['🔥', 'Burns now have sound! Every Burn effect has its own, from ice shattering to candy pops, and everyone at the table hears yours.'],
@@ -21831,7 +21840,13 @@ video {
       });
     }
 
-    document.getElementById('startTutorialBtn').addEventListener('click', () => openTutorialHub());
+    // First time: straight into the one-minute Quick Start. After that the
+    // button opens the hub (Quick Start is its first row).
+    document.getElementById('startTutorialBtn').addEventListener('click', () => {
+      if (getTutorialProgress()[QUICK_START_MODULE.id]) { openTutorialHub(); return; }
+      if (!requireValidName()) return;
+      launchTutorialModule(QUICK_START_MODULE.id, { fromHub: false });
+    });
     document.getElementById('tutorialHubCloseBtn')?.addEventListener('click', () => closeTutorialHub());
     document.querySelectorAll('.tutorial-hub-section-header').forEach((header) => {
       header.addEventListener('click', () => {
@@ -23394,6 +23409,49 @@ video {
       { id: 'card_4oak', label: '4-Kind', steps: TUTORIAL_MODULE_CARD_4OAK }
     ];
 
+    // --- Quick Start: the whole game in about a minute ---------------------
+    // What a first-time player gets from the Tutorial button: one short
+    // sentence per step, on the real table. Everything else (Core Path,
+    // Card Powers, Advanced) stays in the hub for anyone who wants more.
+    // Not counted towards the "complete every lesson" challenge.
+    const TUTORIAL_MODULE_QUICK_START = [
+      {
+        text: "Get rid of all your cards. The last player holding cards is the ShitHead! 💩",
+        target: null
+      },
+      {
+        text: "Play a card equal to or higher than the Pile. Tap your Queen or King, then Play.",
+        target: ['#localHand', '#pileZone'],
+        scene: { hand: [['7', '♣'], ['Q', '♠'], ['K', '♦']], faceUp: [['2', '♣'], ['J', '♦'], ['A', '♣']], pile: [['Q', '♥']], coach: [['A', '♠']], drawPile: [['4', '♦'], ['6', '♣']] },
+        require: { rank: ['Q', 'K'] },
+        coachPlays: [['A', '♠']],
+        coachNote: "Coach beat you with an Ace, the highest card.",
+        noteTarget: ['#discardPileContainer [data-rank="A"]']
+      },
+      {
+        text: "Nothing in your hand beats it, so tap the Pile to pick it up.",
+        target: ['#discardPileContainer [data-rank="A"]', '#localHand'],
+        require: { pickup: true }
+      },
+      {
+        text: "Some cards have powers: a 10 burns the whole Pile. Play it!",
+        target: ['#localHand [data-rank="10"]', '#pileZone'],
+        scene: { hand: [['10', '♠'], ['4', '♣'], ['6', '♦']], pile: [['Q', '♥']] },
+        require: { rank: '10' },
+        noCoachReply: true,
+        coachNote: "Burnt! And you play again. Tap the ⓘ button in any game to see every card's power."
+      },
+      {
+        text: "Hand empty? Play your Face-Up cards, then your Face-Down ones blind.",
+        target: ['#localHand', '#localTableSlots']
+      },
+      {
+        text: "That's it! You're ready to play. More lessons are in Tutorial whenever you want them.",
+        target: null
+      }
+    ];
+    const QUICK_START_MODULE = { id: 'quick_start', title: '⚡ Quick Start', time: '~1 min', desc: 'Everything you need to play', steps: TUTORIAL_MODULE_QUICK_START, players: 2 };
+
     const TUTORIAL_HUB_MODULES = [
       { id: 'goal', title: 'The Goal', time: '~20 sec', desc: "What you're trying to do", steps: TUTORIAL_MODULE_GOAL, players: 2 },
       { id: 'your_cards', title: 'Your Cards', time: '~35 sec', desc: 'Hand, Face-Up, Face-Down', steps: TUTORIAL_MODULE_YOUR_CARDS, players: 2 },
@@ -23536,6 +23594,13 @@ video {
 
     function renderTutorialHub() {
       const progress = getTutorialProgress();
+      const quick = document.getElementById('tutorialHubQuickStart');
+      if (quick) {
+        quick.innerHTML = '';
+        const row = buildTutorialHubRow(QUICK_START_MODULE, !!progress[QUICK_START_MODULE.id]);
+        row.classList.add('tutorial-quick-row');
+        quick.appendChild(row);
+      }
       const coreList = document.getElementById('tutorialHubCoreList');
       if (coreList) {
         coreList.innerHTML = '';
@@ -23592,12 +23657,13 @@ video {
     let tutorialCurrentModuleId = null;
     let tutorialCurrentModuleTitle = '';
 
-    function launchTutorialModule(id) {
-      const mod = TUTORIAL_HUB_MODULES.find(m => m.id === id)
+    function launchTutorialModule(id, { fromHub = true } = {}) {
+      const mod = (id === QUICK_START_MODULE.id ? QUICK_START_MODULE : null)
+        || TUTORIAL_HUB_MODULES.find(m => m.id === id)
         || TUTORIAL_HUB_ADVANCED_MODULES.find(m => m.id === id)
         || TUTORIAL_CARD_ROSTER.find(m => m.id === id && m.steps);
       if (!mod) return;
-      tutorialLaunchedFromHub = true;
+      tutorialLaunchedFromHub = fromHub;
       tutorialCurrentModuleId = id;
       // Card Power Reference entries only carry a short "label" (e.g. "2",
       // "JKR") rather than a full title like the other two registries.
@@ -24585,7 +24651,10 @@ video {
       document.getElementById('lobbyScreen').classList.remove('hidden');
       document.getElementById('emoteLayer')?.classList.add('hidden');
       if (completed) {
-        if (tutorialCurrentModuleId) {
+        if (tutorialCurrentModuleId === QUICK_START_MODULE.id && !tutorialLaunchedFromHub) {
+          markTutorialModuleComplete(tutorialCurrentModuleId);
+          notifyBanner("🎓 You're ready! Tap START GAME to play vs Bots.");
+        } else if (tutorialCurrentModuleId) {
           markTutorialModuleComplete(tutorialCurrentModuleId);
           notifyBanner('🎓 Module complete!');
         } else {
@@ -24598,6 +24667,7 @@ video {
         tutorialCurrentModuleId = null;
         openTutorialHubInternal();
       }
+      tutorialCurrentModuleId = null;
     }
 
     // The developer test suite lives in dev-tests.js and is only fetched
