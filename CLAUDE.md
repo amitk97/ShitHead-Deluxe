@@ -48,7 +48,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Tutorial
 
-- Quick Start (`QUICK_START_MODULE` / `TUTORIAL_MODULE_QUICK_START`): 6 steps, one short sentence each (a test caps steps at 6 and text at 18 words). The lobby Tutorial button starts it directly the first time (`launchTutorialModule(id, { fromHub: false })`, ends on the lobby with "You're ready!"); once done, the button opens the hub, where Quick Start is the highlighted first row. It is NOT part of `getAllTutorialModuleIds` (the complete-every-lesson challenge). Keep new first-time teaching here short; detail belongs in the hub lessons.
+- Quick Start (`QUICK_START_MODULE` / `TUTORIAL_MODULE_QUICK_START`): 6 steps, one short sentence each (a test caps steps at 6 and text at 18 words). The lobby Tutorial button starts it directly the first time (`launchTutorialModule(id, { fromHub: false })`, ends on the lobby with "You're ready!"); once done, the button opens the hub, where Quick Start is the highlighted first row. Step 5 makes the player tap the glowing ⓘ (`tapCheck: '#cardRefBtn'`, completed in the `cardRefBtn` click handler because it stops propagation) to open Card Powers; the panel closes on the next step and in `endTutorial`. It is NOT part of `getAllTutorialModuleIds` (the complete-every-lesson challenge). Keep new first-time teaching here short; detail belongs in the hub lessons.
 
 ## Promo & how-to-play videos
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v127 (ShitHead-Deluxe-127) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v128 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -21812,7 +21812,14 @@ video {
       scheduleSettingsCloudSave();
     });
 
-    document.getElementById('cardRefBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleCardReference(); });
+    document.getElementById('cardRefBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      // A "tap the ⓘ" tutorial step only counts the tap that OPENS the panel.
+      const tutorialWantsIt = tutorialActive && TUTORIAL_STEPS[tutorialStep]?.require?.tapCheck === '#cardRefBtn';
+      if (tutorialWantsIt && cardRefOpen) return;
+      toggleCardReference();
+      if (tutorialWantsIt) tutorialOnTapCheck('#cardRefBtn');
+    });
     initCardRefDrag();
     initCardRefZoomControls();
     document.getElementById('matrixRefBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleMatrixReference(); });
@@ -23448,15 +23455,18 @@ video {
         scene: { hand: [['10', '♠'], ['4', '♣'], ['6', '♦']], pile: [['Q', '♥']] },
         require: { rank: '10' },
         noCoachReply: true,
-        coachNote: "Burnt! And you play again. Tap the ⓘ button in any game to see every card's power."
+        coachNote: "Burnt! And you play again."
       },
       {
-        text: "Hand empty? Play your Face-Up cards, then your Face-Down ones blind.",
+        text: "Every card has a power. Tap the glowing ⓘ button to see them all.",
+        target: '#cardRefBtn',
+        require: { tapCheck: '#cardRefBtn' },
+        coachNote: "Here's every card's power. Open it any time during a game.",
+        noteTarget: ['#cardRefPanel', '#cardRefBtn']
+      },
+      {
+        text: "Hand empty? Play Face-Up cards, then Face-Down ones blind. You're ready!",
         target: ['#localHand', '#localTableSlots']
-      },
-      {
-        text: "That's it! You're ready to play. More lessons are in Tutorial whenever you want them.",
-        target: null
       }
     ];
     const QUICK_START_MODULE = { id: 'quick_start', title: '⚡ Quick Start', time: '~1 min', desc: 'Everything you need to play', steps: TUTORIAL_MODULE_QUICK_START, players: 2 };
@@ -23918,7 +23928,11 @@ video {
       if (playBtnEl) playBtnEl.classList.toggle('tutorial-glow', wantsCardPlay);
       if (zoneEl) zoneEl.style.zIndex = wantsCardPlay ? '80' : '';
       document.getElementById('finishSwapBtn')?.classList.toggle('tutorial-glow', !!(step.require && step.require.ready));
-      document.getElementById('localTableSlots')?.classList.toggle('tutorial-glow', !!(step.require && step.require.tapCheck));
+      const tapSel = step.require && step.require.tapCheck;
+      document.getElementById('localTableSlots')?.classList.toggle('tutorial-glow', !!tapSel && tapSel !== '#cardRefBtn');
+      document.getElementById('cardRefBtn')?.classList.toggle('tutorial-glow', tapSel === '#cardRefBtn');
+      // The Card Powers panel opened by a tap step closes once the lesson moves on.
+      if (tapSel !== '#cardRefBtn' && typeof cardRefOpen !== 'undefined' && cardRefOpen) toggleCardReference(true);
 
       const inSwap = state.phase === 'SWAP';
       if (inSwap && state.players[0]) state.players[0].isReady = false;
@@ -24584,6 +24598,7 @@ video {
       if (!step || !step.require || !step.require.tapCheck) return;
       if (matchedSelector !== step.require.tapCheck) return;
       document.getElementById('localTableSlots')?.classList.remove('tutorial-glow');
+      document.getElementById('cardRefBtn')?.classList.remove('tutorial-glow');
       tutorialAwaitingAction = false;
       tutorialDelay(() => showCoachNote(step), 300);
     }
@@ -24639,6 +24654,8 @@ video {
       tutorialClearTimers();
       resetPileInspectHint();
       document.getElementById('playSelectedBtn')?.classList.remove('tutorial-glow');
+      document.getElementById('cardRefBtn')?.classList.remove('tutorial-glow');
+      if (typeof cardRefOpen !== 'undefined' && cardRefOpen) toggleCardReference(true);
       const zoneReset = document.getElementById('localPlayerZone');
       if (zoneReset) zoneReset.style.zIndex = '';
       document.getElementById('tutorialLayer').classList.add('hidden');
