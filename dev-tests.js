@@ -3564,6 +3564,40 @@ async function runDevTestSuite() {
       assertEqual(typeof collectAccountSettings().whatsNewOn, 'boolean', 'It syncs with the account settings');
     } finally { if (whatsNewOn !== was) row.click(); }
   });
+  await test("The server's copy of the play rules (functions/rules.js) matches isPlayLegal everywhere", async () => {
+    let src = null;
+    try { const r = await fetch('functions/rules.js', { cache: 'no-store' }); if (r.ok) src = await r.text(); } catch (e) {}
+    if (src === null) return; // the live site doesn't serve functions/
+    const mod = { exports: {} };
+    new Function('module', 'exports', src)(mod, mod.exports);
+    const server = mod.exports;
+    assertEqual(server.RANKS, RANKS, 'Same ranks'); assertEqual(server.SUITS, SUITS, 'Same suits');
+    const deck = generateDeck();
+    deck.forEach(c => { const k = server.canonicalCard(c.id) || {}; assertEqual([k.rank, k.suit, k.isJoker], [c.rank, c.suit, c.isJoker], `Card ${c.id} means the same card`); });
+    const card = (rank) => ({ id: 'x', rank, suit: '♠', isJoker: rank === 'JOKER' });
+    const ranks = [...RANKS, 'JOKER'];
+    const piles = [[], ...ranks.map(r => [card(r)]), ...ranks.map(r => [card(r), card('3')]), [card('3'), card('3')]];
+    const saved = state.baseOverrideCard;
+    const diffs = [];
+    try {
+      [null, 'EVEN', 'ODD', 'LOW7'].forEach(con => [null, card('8'), card('K'), card('6')].forEach(base => piles.forEach(pile => ranks.forEach(r => {
+        state.baseOverrideCard = base;
+        const mine = isPlayLegal(card(r), pile, con);
+        const theirs = server.isPlayLegal(card(r), pile, con, base);
+        if (mine !== theirs) diffs.push(`${r} on [${pile.map(c => c.rank)}] ${con || ''} base ${base ? base.rank : '-'}`);
+      }))));
+    } finally { state.baseOverrideCard = saved; }
+    assertEqual(diffs.slice(0, 5), [], 'Change functions/rules.js together with isPlayLegal');
+  });
+  await test('Owner view: the Ranked audit lists flagged matches, serious ones first', () => {
+    const rows = groupRankedAudit({
+      '111111': { m_a: { counts: { hard: 0, soft: 1 }, meta: { at: 5, players: { p1: { name: 'Al', uid: 'a' } } }, findings: { f: { kind: 'out-of-turn', hard: false, by: 'a', seat: 'p1', at: 5 } } } },
+      '222222': { m_b: { counts: { hard: 2, soft: 0 }, meta: { at: 1, players: { p1: { name: 'Cy', uid: 'c' }, p2: { name: 'Di', uid: 'd' } } },
+        findings: { f1: { kind: 'finished-with-cards', hard: true, by: 'c', seat: 'p1', at: 2 }, f2: { kind: 'vanished', hard: true, by: 'c', at: 1 } } } }
+    });
+    assertEqual(rows.map(r => [r.room, r.hard]), [['222222', 2], ['111111', 0]], 'Serious findings first');
+    assertEqual(rows[0].findings.map(f => [f.label, f.byName]), [['A card disappeared', 'Cy'], ['Finished while holding cards', 'Cy']], 'Findings are explained, oldest first, with who wrote them');
+  });
   await test('Report a player from their player card; the owner sees reports grouped by player', async () => {
     freshState({ phase: 'PLAY' });
     state.isMultiplayer = true; state.isRanked = true; state.roomCode = '424242'; state.matchId = 'm9';

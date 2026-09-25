@@ -134,3 +134,62 @@ exports.notifySeasonStart = onSchedule({ schedule: 'every day 09:00', timeZone: 
 
 // The economy (Diamonds, purchases, gifts, challenges, Ranked results).
 exports.economy = require('./economy').economy;
+
+// Ranked audit: every write to a Ranked room is checked against what an
+// honest client could have done (ranked-audit.js), with the account that
+// made it. A v1 trigger because only v1 database triggers say who wrote.
+// Findings go to rankedAudit/{room}/{matchId} (owner-only; menu → Error
+// Reports → RANKED AUDIT) and economy's rankedResult reads them.
+const functionsV1 = require('firebase-functions/v1');
+const { auditTransition } = require('./ranked-audit');
+const AUDIT_FINDINGS_KEEP = 40;
+const auditKey = (v) => String(v || 'none').replace(/[.#$[\]/]/g, '_').slice(0, 200);
+
+exports.auditRankedRoom = functionsV1.region(REGION).database.instance(INSTANCE).ref('/rooms/{code}')
+  .onWrite(async (change, context) => {
+    const after = change.after.val();
+    const before = change.before.val();
+    if (!after || after.isRanked !== true) return null;
+    if (context.authType === 'ADMIN') return null; // the server's own writes
+    const uid = (context.auth && context.auth.uid) || null;
+    const now = Date.parse(context.timestamp) || Date.now();
+    const code = context.params.code;
+    const base = admin.database().ref(`rankedAudit/${code}/${auditKey(after.matchId)}`);
+    const [seen, left] = await Promise.all([
+      base.child('seen').once('value').then((s) => s.val() || {}),
+      base.child('left').once('value').then((s) => s.val() || {})
+    ]);
+    const findings = auditTransition(before, after, { uid, now, seen, left });
+    const updates = {};
+    if (uid) updates[`seen/${uid}`] = now;
+    // A player's own "left" presence lets the others hand their seat to a bot.
+    const mySeat = (Array.isArray(after.players) ? after.players : Object.values(after.players || {})).find((p) => p && p.uid === uid);
+    if (mySeat && after.presence && after.presence[mySeat.id] && after.presence[mySeat.id].status === 'left') updates[`left/${uid}`] = true;
+    if (!findings.length) {
+      if (Object.keys(updates).length) await base.update(updates);
+      return null;
+    }
+    updates.meta = {
+      room: code,
+      matchId: String(after.matchId || ''),
+      at: now,
+      players: Object.fromEntries((Array.isArray(after.players) ? after.players : Object.values(after.players || {}))
+        .filter((p) => p && p.id).map((p) => [auditKey(p.id), { name: String(p.name || '').slice(0, 30), uid: p.uid || null }]))
+    };
+    await base.update(updates);
+    const counts = await base.child('counts').transaction((c) => {
+      const cur = c || { hard: 0, soft: 0, logged: 0 };
+      findings.forEach((f) => { cur[f.hard ? 'hard' : 'soft'] += 1; });
+      cur.logged = Math.min(AUDIT_FINDINGS_KEEP, cur.logged + findings.length);
+      return cur;
+    });
+    const room = counts.snapshot.val() || {};
+    const keep = Math.max(0, AUDIT_FINDINGS_KEEP - ((room.logged || 0) - findings.length));
+    const adds = {};
+    findings.slice(0, keep).forEach((f) => {
+      adds[`findings/${base.child('findings').push().key}`] = { ...f, by: uid, at: now, stateVersion: Number(after.stateVersion) || 0 };
+    });
+    if (Object.keys(adds).length) await base.update(adds);
+    logger.warn('Ranked audit finding', { code, matchId: after.matchId, uid, kinds: findings.map((f) => f.kind) });
+    return null;
+  });

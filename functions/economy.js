@@ -35,6 +35,10 @@ const MATCH_LIMITS = { minGapMs: 45 * 1000, perDay: 40 };
 const RANKED_STAT_CAPS = { burnt: 60, jokersPlayed: 8, challengeBurns: 20, jokerDeflects: 8, snapBurns: 12 };
 const SEASON_SLACK_MS = 14 * 60 * 60 * 1000; // phones' local dates vs the server's UTC
 const PROCESSED_KEEP = 200;
+// Off = shadow mode: the Ranked audit's findings are recorded on each result
+// (rankedResults/{matchId}/audit) and shown to the owner, but every match is
+// still scored. Turn on once real honest games show no hard findings.
+const RANKED_AUDIT_ENFORCE = false;
 const RANKED_PAIR_PER_DAY = 5; // processedMatchRewards / processedRankedMatches entries kept
 
 const db = () => admin.database();
@@ -435,22 +439,35 @@ actions.rankedResult = async ({ uid, data }) => {
   // writable by that account), within the last day.
   const members = await Promise.all(uids.map(u => db().ref(`rankedMembers/${code}/${u}`).once('value').then(s => num(s.val(), 0))));
   if (members.some(at => !at || Date.now() - at > 24 * 60 * 60 * 1000)) fail('failed-precondition', 'That match could not be checked.');
+  // The Ranked audit (index.js auditRankedRoom) has checked every write to
+  // this room. While RANKED_AUDIT_ENFORCE is off it only records what it
+  // found on the result (shadow mode); on, a match with a hard finding isn't
+  // scored.
+  const auditRef = db().ref(`rankedAudit/${code}/${String(room.matchId || 'none').replace(/[.#$[\]/]/g, '_').slice(0, 200)}/counts`);
+  if (RANKED_AUDIT_ENFORCE) await new Promise(r => setTimeout(r, 1500)); // let the last write's audit land
+  const audit = (await auditRef.once('value')).val() || { hard: 0, soft: 0 };
   const resultId = (room.matchId && KEY_RE.test(room.matchId) ? room.matchId : `${code}_${[...uids].sort().join('_')}`).slice(0, 700).replace(/[.#$[\]/]/g, '_');
   const markerRef = db().ref(`rankedResults/${resultId}`);
   // A scoring that died half-way (older than a minute) may be retried: each
   // seat's own processedRankedMatches entry stops anything counting twice.
   const claimTx = await markerRef.transaction(c => (c === null || (c.state === 'scoring' && Date.now() - num(c.at) > 60000))
-    ? { at: Date.now(), room: code, state: 'scoring' } : undefined, undefined, false);
+    ? { at: Date.now(), room: code, state: 'scoring', audit: { hard: num(audit.hard), soft: num(audit.soft) } } : undefined, undefined, false);
   if (!claimTx.committed) {
     // Already scored (or being scored by the other player's call).
     for (let i = 0; i < 20; i++) {
       const mine = (await markerRef.child(`results/${uid}`).once('value')).val();
+      if (mine && mine.error === 'audit') fail('failed-precondition', 'This match didn\'t pass the Ranked checks, so it doesn\'t count for rating.');
       if (mine && mine.error === 'pair-limit') fail('resource-exhausted', 'You\'ve played this opponent a lot today: this one doesn\'t count for rating.');
       if (mine && mine.error) fail('internal', 'Your Ranked result could not be saved.');
       if (mine) return mine;
       await new Promise(r => setTimeout(r, 500));
     }
     fail('unavailable', 'Your result is still being saved. It will show shortly.');
+  }
+  if (RANKED_AUDIT_ENFORCE && num(audit.hard) > 0) {
+    const refused = { error: 'audit' };
+    await markerRef.update({ state: 'done', results: Object.fromEntries(uids.map(u => [u, refused])) });
+    fail('failed-precondition', 'This match didn\'t pass the Ranked checks, so it doesn\'t count for rating.');
   }
   // The same two accounts are scored at most RANKED_PAIR_PER_DAY times a
   // day (stops feeding rating with a second account).

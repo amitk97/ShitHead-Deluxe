@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v143 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v144 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5066,7 +5066,7 @@ video {
         <span class="text-[11px] font-black uppercase tracking-widest text-rose-400">Error Reports</span>
         <button id="errorReportsCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
-      <div class="reports-tabs" role="tablist"><button type="button" id="reportsTabErrors" class="is-on">ERRORS</button><button type="button" id="reportsTabPlayers">PLAYER REPORTS</button></div>
+      <div class="reports-tabs" role="tablist"><button type="button" id="reportsTabErrors" class="is-on">ERRORS</button><button type="button" id="reportsTabPlayers">PLAYERS</button><button type="button" id="reportsTabAudit">RANKED AUDIT</button></div>
       <p id="errorReportsSummary" class="text-[10px] text-slate-400 mb-2" style="flex-shrink:0;">Loading…</p>
       <div id="errorReportsList" class="overflow-y-auto space-y-1.5" style="flex:1; min-height:0;"></div>
       <div class="flex gap-2" style="flex-shrink:0; margin-top:12px;">
@@ -15194,6 +15194,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v144: [
+        ['🛡️', 'Ranked is checked on the server now: every move in a Ranked match is verified, so a tampered game can be spotted.']
+      ],
       v143: [
         ['⚑', "Report a player: tap their name at the table, then REPORT (cheating, offensive name, abuse, quitting)."]
       ],
@@ -18090,13 +18093,59 @@ video {
     function paintReportsTabs() {
       document.getElementById('reportsTabErrors').classList.toggle('is-on', reportsTab === 'errors');
       document.getElementById('reportsTabPlayers').classList.toggle('is-on', reportsTab === 'players');
+      document.getElementById('reportsTabAudit').classList.toggle('is-on', reportsTab === 'audit');
+    }
+    // The server's Ranked audit (functions/ranked-audit.js) flags writes to a
+    // Ranked room that an honest phone couldn't have made. One row per match.
+    const AUDIT_LABELS = {
+      'bad-card': 'Changed or invented a card', 'dup-card': 'Duplicated a card', 'bad-deal': 'Bad deal',
+      'outsider-write': 'Written by someone not at the table', 'seat-owner-changed': 'Seat taken over',
+      'seat-hijack': 'Active player turned into a bot', 'swap-changed-cards': 'Cards changed during the swap',
+      'swap-by-other': "Someone else rearranged a player's swap", 'moved-by-other': "Played another player's cards",
+      'to-deck': 'Card put back in the Deck', 'seat-to-seat': 'Cards moved between players',
+      'pushed-cards': 'Made someone pick up', 'pile-tamper': 'Pile tampered with', 'deck-tamper': 'Deck tampered with',
+      'new-card': 'A card appeared from nowhere', 'vanished': 'A card disappeared', 'multi-blind': 'Several face-down cards at once',
+      'mixed-play': 'Played two ranks at once', 'illegal-play': 'Illegal play', 'out-of-turn': 'Played out of turn',
+      'finished-with-cards': 'Finished while holding cards'
+    };
+    function groupRankedAudit(data) {
+      const rows = [];
+      Object.entries(data || {}).forEach(([room, matches]) => Object.entries(matches || {}).forEach(([matchKey, m]) => {
+        if (!m || !m.counts) return;
+        const players = (m.meta && m.meta.players) || {};
+        const nameOf = (seatId) => (players[seatId] && players[seatId].name) || seatId || '';
+        const byName = (uid) => (Object.values(players).find(p => p.uid === uid) || {}).name || (uid ? uid.slice(0, 8) : '?');
+        const findings = Object.values(m.findings || {}).sort((a, b) => (a.at || 0) - (b.at || 0))
+          .map(f => ({ ...f, label: AUDIT_LABELS[f.kind] || f.kind, seatName: nameOf(f.seat), byName: byName(f.by) }));
+        rows.push({ room, matchKey, hard: Number(m.counts.hard) || 0, soft: Number(m.counts.soft) || 0, at: (m.meta && m.meta.at) || 0,
+          names: Object.values(players).map(p => p.name).filter(Boolean), findings });
+      }));
+      return rows.sort((a, b) => b.hard - a.hard || b.at - a.at);
+    }
+    function renderRankedAudit(data) {
+      const rows = groupRankedAudit(data);
+      const flagged = rows.filter(r => r.hard).length;
+      document.getElementById('errorReportsSummary').textContent = rows.length
+        ? `${rows.length} Ranked match${rows.length === 1 ? '' : 'es'} with findings · ${flagged} with serious ones (can't happen in an honest game)`
+        : 'No Ranked match has been flagged. 🎉';
+      document.getElementById('errorReportsList').innerHTML = rows.map((r) => `
+        <details class="bg-slate-900/70 border ${r.hard ? 'border-rose-700' : 'border-slate-800'} rounded-lg px-2 py-1.5">
+          <summary class="text-[10px] font-bold text-slate-100 cursor-pointer">${escapeHtml(r.names.join(' vs ') || 'Ranked match')}
+            <span class="${r.hard ? 'text-rose-300' : 'text-amber-300'}">${r.hard ? `${r.hard} serious` : ''}${r.hard && r.soft ? ' · ' : ''}${r.soft ? `${r.soft} minor` : ''}</span></summary>
+          <div class="text-[9px] text-slate-400 mt-1 space-y-1">
+            <div>Room ${escapeHtml(r.room)} · ${r.at ? new Date(r.at).toLocaleString() : '?'}</div>
+            ${r.findings.map(f => `<div class="border-t border-slate-800 pt-1"><b class="${f.hard ? 'text-rose-300' : 'text-amber-200'}">${escapeHtml(f.label)}</b>${f.seatName ? ` · ${escapeHtml(f.seatName)}` : ''} · by ${escapeHtml(f.byName)}<div class="text-slate-400">${escapeHtml(f.detail || '')}</div></div>`).join('')}
+            <button type="button" data-clear-audit="${escapeAttr(r.room)}" class="mt-1 text-[9px] font-black px-2 py-1 rounded border border-slate-600 text-slate-300">CLEAR THIS ROOM</button>
+          </div>
+        </details>`).join('');
     }
     function loadErrorReports() {
       paintReportsTabs();
       document.getElementById('errorReportsSummary').textContent = 'Loading…';
       document.getElementById('errorReportsList').innerHTML = '';
-      const path = reportsTab === 'players' ? 'playerReports' : 'errorReports';
-      db.ref(path).once('value').then((snap) => (reportsTab === 'players' ? renderPlayerReports : renderErrorReports)(snap.val())).catch((e) => {
+      const path = { players: 'playerReports', audit: 'rankedAudit' }[reportsTab] || 'errorReports';
+      const draw = { players: renderPlayerReports, audit: renderRankedAudit }[reportsTab] || renderErrorReports;
+      db.ref(path).once('value').then((snap) => draw(snap.val())).catch((e) => {
         document.getElementById('errorReportsSummary').textContent = e && /permission/i.test(e.code || e.message || '')
           ? 'Blocked by the Database Rules: publish the latest rules (they let only your verified email read reports).'
           : `Couldn’t load reports: ${e?.message || e}`;
@@ -18111,13 +18160,20 @@ video {
     document.getElementById('errorReportsCloseBtn').addEventListener('click', () => document.getElementById('errorReportsModal').classList.add('hidden'));
     document.getElementById('errorReportsRefreshBtn').addEventListener('click', loadErrorReports);
     document.getElementById('errorReportsClearBtn').addEventListener('click', () => {
-      const players = reportsTab === 'players';
-      if (!confirm(players ? 'Delete every player report?' : 'Delete every error report?')) return;
-      db.ref(players ? 'playerReports' : 'errorReports').remove().then(loadErrorReports).catch((e) => alert(`Couldn’t clear: ${e?.message || e}`));
+      const path = { players: 'playerReports', audit: 'rankedAudit' }[reportsTab] || 'errorReports';
+      const what = { players: 'player report', audit: 'Ranked audit entry' }[reportsTab] || 'error report';
+      if (!confirm(`Delete every ${what}?`)) return;
+      db.ref(path).remove().then(loadErrorReports).catch((e) => alert(`Couldn’t clear: ${e?.message || e}`));
     });
+    document.getElementById('reportsTabAudit').addEventListener('click', () => { reportsTab = 'audit'; loadErrorReports(); });
     document.getElementById('reportsTabErrors').addEventListener('click', () => { reportsTab = 'errors'; loadErrorReports(); });
     document.getElementById('reportsTabPlayers').addEventListener('click', () => { reportsTab = 'players'; loadErrorReports(); });
     document.getElementById('errorReportsList').addEventListener('click', (e) => {
+      const auditBtn = e.target.closest('[data-clear-audit]');
+      if (auditBtn) {
+        if (confirm('Delete the audit for this room?')) db.ref(`rankedAudit/${auditBtn.dataset.clearAudit}`).remove().then(loadErrorReports).catch((err) => alert(`Couldn’t clear: ${err?.message || err}`));
+        return;
+      }
       const btn = e.target.closest('[data-clear-reports]');
       if (!btn || !confirm('Delete the reports about this player?')) return;
       db.ref(`playerReports/${btn.dataset.clearReports}`).remove().then(loadErrorReports).catch((err) => alert(`Couldn’t clear: ${err?.message || err}`));

@@ -332,7 +332,8 @@
         },
         "playing": {
           ".validate": "newData.hasChildren(['mode', 'at']) && newData.child('at').isNumber() &&
-            newData.child('mode').isString() && newData.child('mode').val().matches(/^(bots|online|ranked)$/)",
+            newData.child('mode').isString() &&
+            newData.child('mode').val().matches(/^(bots|online|ranked)$/)",
           "room": {
             ".validate": "newData.isString() && newData.val().matches(/^[0-9]{6}$/)"
           },
@@ -473,6 +474,16 @@
             ".validate": "$other === 'reason' || $other === 'at'"
           }
         }
+      }
+    },
+    "rankedAudit": {
+      ".read": "auth != null && auth.token.email === 'amirk2197@googlemail.com' &&
+        auth.token.email_verified === true",
+      ".write": "auth != null && auth.token.email === 'amirk2197@googlemail.com' &&
+        auth.token.email_verified === true && !newData.exists()",
+      "$code": {
+        ".write": "auth != null && auth.token.email === 'amirk2197@googlemail.com' &&
+          auth.token.email_verified === true && !newData.exists()"
       }
     },
     "pushTokens": {
