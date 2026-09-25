@@ -143,6 +143,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - `showMatchEndUI` → `scheduleMatchSummary` opens `#matchSummaryModal` ~1.6s after the end (after the victory effect). Content from `matchSummaryHtml`: placing, the local player's `gameStats`, every Diamond toast this match (`enqueueChallengeToast` → `logMatchReward`), Ranked rating change (`applyRankedRatingUpdate` → `matchSummaryRating`), daily and seasonal progress. It updates live as late rewards arrive.
 - The summary is not a page: `.ms-scrim` sits at z-index 79, below the Inbox and every menu page (lowest is the Guide at 80), so they open on top of it and closing them returns to it (a test checks). It is not in `EXCLUSIVE_PAGE_IDS`.
+- Vs Bots only: a LEAVE button sits under the "MATCH FINISHED" box on the player's table area (`#finishedLeaveBtn`, drawn in `render`) → `leaveBotMatch()` (clears the saved game, `reloadCleanly`, no confirm). Never online or in the tutorial.
 - REMATCH mirrors the end-of-match row (Quick Play / guest "waiting for host" / Ranked "find another match"). `hideMatchEndUI` (every new match) resets it. Not scheduled while the dev test suite runs.
 
 ## Version, What's New & error reports

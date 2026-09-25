@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v117 (ShitHead-Deluxe-117) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v118 (ShitHead-Deluxe-118) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -601,6 +601,8 @@
     .mh-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; text-align:center; }
     .mh-stats b { display:block; font-size:12px; color:#f8fafc; }
     .mh-stats span { font-size:7px; font-weight:800; text-transform:uppercase; color:#94a3b8; }
+    .finished-box-wrap { display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; }
+    .finished-leave-btn { min-width:128px; padding:8px 22px; border-radius:12px; border:2px solid #e11d48; background:rgba(76,5,25,.75); color:#fda4af; font-size:12px; font-weight:900; letter-spacing:.14em; box-shadow:0 6px 18px rgba(0,0,0,.45); }
     .friends-online-count { font-size:10px; font-weight:800; color:#94a3b8; text-align:center; margin:0 0 6px; }
     .friend-actions { display:grid; gap:5px; }
     .friend-action { min-width:0; padding:6px 2px; border-radius:9px; border:1px solid #334155; background:transparent; color:#94a3b8; font-size:9px; font-weight:900; letter-spacing:.03em; white-space:nowrap; transition:background .15s,color .15s,border-color .15s; }
@@ -11879,11 +11881,17 @@ video {
         const lost = !local.hasFinished;
         // The ShitHead's placing is simply last: one behind everyone who finished.
         const placing = lost ? state.players.filter(p => p.hasFinished).length + 1 : local.finishRank;
+        // Vs Bots: a Leave button under the box, straight back to the home
+        // screen (the player's part of the match is over, so no confirm).
+        const offerLeave = !state.isMultiplayer && !tutorialActive;
         tableSlots.innerHTML = `
+          <div class="finished-box-wrap">
           <div class="w-full max-w-sm ${lost ? 'h-20 border-amber-600' : 'h-16 border-amber-500'} shrink-0 bg-slate-950/80 rounded-2xl border-2 flex flex-col items-center justify-center p-2 shadow-2xl">
             <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest">MATCH FINISHED</span>
             <span class="text-base font-black text-amber-400 tracking-wider">FINISHED #${placing}</span>
             ${lost ? '<span class="text-2xl leading-none mt-0.5">\u{1F4A9}</span>' : ''}
+          </div>
+          ${offerLeave ? '<button type="button" id="finishedLeaveBtn" class="finished-leave-btn" onclick="leaveBotMatch()">LEAVE</button>' : ''}
           </div>
         `;
       } else {
@@ -21983,6 +21991,14 @@ video {
       window.addEventListener('popstate', () => location.reload(), { once: true });
       history.back();
       setTimeout(() => location.reload(), 500);
+    }
+    // Vs Bots only (the Leave button under "MATCH FINISHED"): back to the
+    // home screen without restoring this game.
+    function leaveBotMatch() {
+      if (state.isMultiplayer) return;
+      try { localStorage.removeItem('shithead_game_state'); } catch (e) {}
+      try { sessionStorage.removeItem('shithead_return_to_ranked'); } catch (e) {}
+      reloadCleanly();
     }
     function leaveRoomAndReload() {
       forgetJoinedRoom();

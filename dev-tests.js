@@ -970,6 +970,18 @@ async function runDevTestSuite() {
       assertEqual(below, [], 'Pages that would open underneath the summary');
     } finally { summary.classList.add('hidden'); }
   });
+  await test('Vs Bots: a Leave button sits under MATCH FINISHED (never online)', () => {
+    freshState({ phase: 'FINISHED', isMultiplayer: false, localPlayerId: 'me', drawPile: [], discardPile: [] });
+    state.players = [makePlayer({ id: 'me', hasFinished: true, finishRank: 1 }), makePlayer({ id: 'b1', isBot: true, hasFinished: true, finishRank: 2 })];
+    render();
+    const btn = document.getElementById('finishedLeaveBtn');
+    assertTrue(!!btn && btn.textContent.includes('LEAVE'), 'The Leave button is shown');
+    assertTrue(btn.previousElementSibling && btn.previousElementSibling.textContent.includes('MATCH FINISHED'), 'It sits under the MATCH FINISHED box');
+    state.isMultiplayer = true;
+    render();
+    assertTrue(!document.getElementById('finishedLeaveBtn'), 'Online matches keep their own end-of-match options');
+    state.isMultiplayer = false;
+  });
   await test('Every Burn cosmetic (and the default) has its own burn sound', () => {
     assertTrue(typeof BURN_SOUNDS.default === 'function', 'A default burn sound exists');
     const missing = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && typeof BURN_SOUNDS[i.id] !== 'function').map(i => i.id);
