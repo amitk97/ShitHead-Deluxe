@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v118 (ShitHead-Deluxe-118) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v119 (ShitHead-Deluxe-119) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -135,6 +135,10 @@
       width: clamp(26px,7.5vw,34px); height: clamp(26px,7.5vw,34px); border-radius: 9999px; border-width: 2px;
       display: flex; align-items: center; justify-content: center; font-size: clamp(13px,4vw,17px); line-height: 1; }
     #gameDirectionBadge.hidden { display: none; }
+    /* Each play direction has its own colour: clockwise gold, anticlockwise cyan. */
+    #gameDirectionBadge { transition: color .35s var(--ease-soft), border-color .35s var(--ease-soft), box-shadow .35s var(--ease-soft), background-color .35s var(--ease-soft); }
+    #gameDirectionBadge[data-direction="cw"] { color: #fcd34d; border-color: #f59e0b; background-color: rgba(69,26,3,.9); box-shadow: 0 0 10px rgba(245,158,11,.45); }
+    #gameDirectionBadge[data-direction="ccw"] { color: #67e8f9; border-color: #06b6d4; background-color: rgba(8,51,68,.9); box-shadow: 0 0 10px rgba(6,182,212,.5); }
 
     input, textarea { user-select: auto !important; -webkit-user-select: auto !important; }
 
@@ -12390,6 +12394,8 @@ video {
     function updateDirectionBadge() {
       const badge = document.getElementById('gameDirectionBadge');
       badge.innerHTML = state.direction === 1 ? '<span>↻</span>' : '<span>↺</span>';
+      badge.dataset.direction = state.direction === 1 ? 'cw' : 'ccw';
+      badge.setAttribute('aria-label', state.direction === 1 ? 'Play direction: clockwise' : 'Play direction: anticlockwise');
       // A 9 reversing play spins the icon a full turn the new way round.
       if (lastShownDirection !== null && lastShownDirection !== state.direction && !motionOff() && badge.animate) {
         badge.animate([{ rotate: '0deg', scale: 1 }, { rotate: `${state.direction === 1 ? 360 : -360}deg`, scale: 1.25, offset: .7 }, { rotate: `${state.direction === 1 ? 360 : -360}deg`, scale: 1 }], { duration: 650, easing: EASE.spring });

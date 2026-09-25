@@ -982,6 +982,27 @@ async function runDevTestSuite() {
     assertTrue(!document.getElementById('finishedLeaveBtn'), 'Online matches keep their own end-of-match options');
     state.isMultiplayer = false;
   });
+  await test('The direction icon has its own colour for clockwise and anticlockwise', () => {
+    const badge = document.getElementById('gameDirectionBadge');
+    const wasHidden = badge.classList.contains('hidden');
+    badge.classList.remove('hidden');
+    try {
+      freshState({ direction: 1 });
+      updateDirectionBadge();
+      assertEqual(badge.dataset.direction, 'cw', 'Clockwise is marked');
+      badge.style.transition = 'none';
+      const cw = getComputedStyle(badge).color;
+      state.direction = -1;
+      updateDirectionBadge();
+      assertEqual(badge.dataset.direction, 'ccw', 'Anticlockwise is marked');
+      const ccw = getComputedStyle(badge).color;
+      assertTrue(cw !== ccw, `The two directions must differ in colour (${cw} vs ${ccw})`);
+    } finally {
+      badge.style.transition = '';
+      if (wasHidden) badge.classList.add('hidden');
+      state.direction = 1; updateDirectionBadge();
+    }
+  });
   await test('Every Burn cosmetic (and the default) has its own burn sound', () => {
     assertTrue(typeof BURN_SOUNDS.default === 'function', 'A default burn sound exists');
     const missing = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && typeof BURN_SOUNDS[i.id] !== 'function').map(i => i.id);
