@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v139 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v140 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -4642,6 +4642,11 @@ video {
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Vibration</span>
           <span class="block text-[8px] text-slate-400 leading-snug">Haptic feedback on key moments</span></span>
           <span id="setHapticsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
+        <button id="setWhatsNewRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="what's new, whats new, updates, update notes, changelog, patch notes, version, pop-up">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">What's New</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Show what changed after each update</span></span>
+          <span id="setWhatsNewState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         </div>
         <!-- ============================================================
@@ -10590,6 +10595,7 @@ video {
     let hapticsOn = readPref('shithead_haptics', true);
     // Your-turn chime and the new-invite/request/gift chime (both default on).
     let turnAlertOn = readPref('shithead_turn_alert', true);
+    let whatsNewOn = readPref('shithead_whats_new', true); // What's New pop-up after an update
     let notifySoundOn = readPref('shithead_notify_sound', true);
     let lastRenderWasMyTurn = false;
     let notificationsOn = readPref('shithead_notifications', false);
@@ -14588,6 +14594,7 @@ video {
       paintToggle(document.getElementById('setNotifySoundState'), notifySoundOn);
       paintToggle(document.getElementById('setDealAnimState'), dealAnimationOn);
       paintToggle(document.getElementById('setHandSortState'), handSortByPower);
+      paintToggle(document.getElementById('setWhatsNewState'), whatsNewOn);
       const handSortDesc = document.getElementById('setHandSortDesc');
       if (handSortDesc) handSortDesc.textContent = handSortByPower
         ? 'By power: 4 to A, then 10, 2, 3, Joker'
@@ -15106,6 +15113,16 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v140: [
+        ['✨', "What's New now lists everything you missed if you skipped a few updates."],
+        ['🔕', "Don't want these? Settings → Sound & Alerts → What's New turns them off."]
+      ],
+      v139: [
+        ['📊', 'Match Stats keep players who leave after the game, marked (left).']
+      ],
+      v138: [
+        ['📐', 'Pop-ups and pages never slide under the top bar any more, on phones or PC.']
+      ],
       v137: [
         ['🖼️', 'Friends list and Leaderboard update live: new profile pictures show straight away.']
       ],
@@ -15147,9 +15164,19 @@ video {
       ]
     };
     const SEEN_VERSION_KEY = 'shithead_seen_version';
-    function showWhatsNew(version = GAME_BUILD.version) {
-      const notes = WHATS_NEW[version];
-      if (!notes) return false;
+    const versionNumber = (v) => Number(String(v || '').replace(/^v/, '')) || 0;
+    // Every note newer than `seen` up to `version`, newest first (a player
+    // who skipped a few updates sees all of them), capped to stay readable.
+    function whatsNewNotesSince(seen, version = GAME_BUILD.version) {
+      const from = versionNumber(seen), to = versionNumber(version);
+      return Object.keys(WHATS_NEW).filter(v => versionNumber(v) > from && versionNumber(v) <= to)
+        .sort((a, b) => versionNumber(b) - versionNumber(a))
+        .flatMap(v => WHATS_NEW[v]).slice(0, WHATS_NEW_MAX_ROWS);
+    }
+    const WHATS_NEW_MAX_ROWS = 8;
+    function showWhatsNew(version = GAME_BUILD.version, seen = null) {
+      const notes = seen ? whatsNewNotesSince(seen, version) : WHATS_NEW[version];
+      if (!notes || !notes.length) return false;
       document.getElementById('whatsNewVersion').textContent = `Version ${version.replace(/^v/, '')}${GAME_BUILD.date ? ` · ${GAME_BUILD.date}` : ''}`;
       document.getElementById('whatsNewList').innerHTML = notes.map(([icon, text]) => `<li><span>${icon}</span><span>${escapeHtml(text)}</span></li>`).join('');
       document.getElementById('whatsNewModal').classList.remove('hidden');
@@ -15163,13 +15190,14 @@ video {
       try { seen = localStorage.getItem(SEEN_VERSION_KEY); } catch (e) {}
       const markSeen = () => { try { localStorage.setItem(SEEN_VERSION_KEY, version); } catch (e) {} };
       // A first visit has nothing to compare with.
-      if (!seen || seen === version || !WHATS_NEW[version]) { markSeen(); return; }
+      if (!whatsNewOn || !seen || seen === version || !whatsNewNotesSince(seen, version).length) { markSeen(); return; }
       // Wait for the home screen: never over a match or another pop-up.
       const busy = () => state.isMultiplayer || (state.phase && state.phase !== 'LOBBY')
         || [...BLOCKING_OVERLAY_IDS, 'rejoinModal', 'matchSummaryModal', 'dailyRewardModal'].some(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
       const tryShow = (attempt) => {
         if (busy()) { if (attempt < 120) setTimeout(() => tryShow(attempt + 1), 5000); return; }
-        if (showWhatsNew(version)) markSeen();
+        if (!whatsNewOn) { markSeen(); return; }
+        if (showWhatsNew(version, seen)) markSeen();
       };
       setTimeout(() => tryShow(0), 2500);
     }
@@ -17971,6 +17999,7 @@ video {
         notifySoundOn: !!notifySoundOn,
         dealAnimationOn: !!dealAnimationOn,
         handSortByPower: !!handSortByPower,
+        whatsNewOn: !!whatsNewOn,
         emotesMuted: !!emotesMuted,
         botCount: readBotPrefs().count,
         botDifficulty: readBotPrefs().difficulty
@@ -18004,6 +18033,7 @@ video {
           ['notifySoundOn','shithead_notify_sound',v => { notifySoundOn=v; }],
           ['dealAnimationOn','shithead_deal_animation',v => { dealAnimationOn=v; }],
           ['handSortByPower','shithead_hand_sort_power',v => { handSortByPower=v; }],
+          ['whatsNewOn','shithead_whats_new',v => { whatsNewOn=v; }],
           ['emotesMuted','shithead_emotes_muted',v => { emotesMuted=v; }]
         ];
         boolPrefs.forEach(([key, storageKey, assign]) => {
@@ -21573,6 +21603,10 @@ video {
     });
     document.getElementById('setDealAnimRow').addEventListener('click', () => {
       dealAnimationOn = !dealAnimationOn; writePref('shithead_deal_animation', dealAnimationOn);
+      refreshSettingsUI(); scheduleSettingsCloudSave();
+    });
+    document.getElementById('setWhatsNewRow').addEventListener('click', () => {
+      whatsNewOn = !whatsNewOn; writePref('shithead_whats_new', whatsNewOn);
       refreshSettingsUI(); scheduleSettingsCloudSave();
     });
     document.getElementById('setHandSortRow').addEventListener('click', () => {

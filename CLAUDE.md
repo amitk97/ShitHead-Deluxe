@@ -183,7 +183,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Version, What's New & error reports
 
 - The version comes ONLY from the `<!-- BUILD: YYYY-MM-DD-vNNN ... -->` comment at the top of index.html (`GAME_BUILD` → `getGameVersionLabel()`). Bump it for every release: it drives room compatibility (`clientVersion`), the support email and What's New.
-- What's New: `WHATS_NEW['vNNN']` = `[icon, text]` rows, shown once to a returning player whose `shithead_seen_version` differs (`maybeShowWhatsNew`, waits for the home screen). A build with no entry shows nothing. Add one when players would notice the change.
+- What's New: `WHATS_NEW['vNNN']` = `[icon, text]` rows. **Every release gets an entry** (a test fails if the current BUILD has none): a short, player-facing line per change. Shown once to a returning player whose `shithead_seen_version` differs (`maybeShowWhatsNew`, waits for the home screen), listing every version they missed, newest first (`whatsNewNotesSince`, ≤ `WHATS_NEW_MAX_ROWS`). Players can turn it off: Settings → Sound & Alerts → What's New (`whatsNewOn`, localStorage `shithead_whats_new`, synced in `users/{uid}/settings`).
 - `reportError` writes `errorReports/{uid}/{id}` (once per error per session, never during tests). Only the owner (`GAME_OWNER_EMAIL`, verified) can read/clear them: menu → Error Reports (`#errorReportsModal`, grouped by message).
 
 ## Rejoin, friends & small prefs

@@ -3516,6 +3516,22 @@ async function runDevTestSuite() {
       assertTrue(!showWhatsNew('v1'), 'A version with no notes shows nothing');
     } finally { modal.classList.add('hidden'); }
   });
+  await test("Every release has What's New notes; skipped updates are shown together; Settings can turn them off", () => {
+    assertTrue(Array.isArray(WHATS_NEW[GAME_BUILD.version]) && WHATS_NEW[GAME_BUILD.version].length > 0,
+      `WHATS_NEW['${GAME_BUILD.version}'] must describe this build (every release gets an entry)`);
+    const cur = Number(GAME_BUILD.version.slice(1));
+    const skipped = whatsNewNotesSince(`v${cur - 3}`);
+    const expected = [cur, cur - 1, cur - 2].flatMap(n => WHATS_NEW[`v${n}`] || []).slice(0, WHATS_NEW_MAX_ROWS);
+    assertEqual(skipped, expected, 'A player three updates behind sees all three, newest first');
+    const row = document.getElementById('setWhatsNewRow');
+    assertTrue(!!row && !!row.closest('#settingsTab-sound'), "The What's New switch lives in Sound & Alerts");
+    const was = whatsNewOn;
+    try {
+      row.click();
+      assertEqual(whatsNewOn, !was, 'Tapping it toggles the setting');
+      assertEqual(typeof collectAccountSettings().whatsNewOn, 'boolean', 'It syncs with the account settings');
+    } finally { if (whatsNewOn !== was) row.click(); }
+  });
   await test('Friends list: online friends first; inviting from a casual lobby uses that room', () => {
     freshState({ isMultiplayer: true, isRanked: false, roomCode: '424242', phase: 'LOBBY' });
     assertEqual(inviteableRoomCode(), '424242', 'Lobby of a casual room');
