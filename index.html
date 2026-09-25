@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v140 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v141 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -602,6 +602,14 @@
     .mh-side .gem { color:#67e8f9; }
     .mh-side .up { color:#34d399; } .mh-side .down { color:#fb7185; }
     .mh-detail { padding:0 9px 8px; font-size:9px; color:#cbd5e1; }
+    .mh-everyone { display:flex; flex-direction:column; gap:2px; font-size:9px; }
+    .mh-row { display:grid; grid-template-columns:minmax(0,1fr) repeat(5, 34px); align-items:center; gap:2px; padding:3px 4px; border-radius:6px; }
+    .mh-row > span:not(.mh-name) { text-align:center; font-weight:800; color:#cbd5e1; }
+    .mh-row .mh-name { font-weight:800; color:#e2e8f0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .mh-row .mh-name em { color:#64748b; font-style:normal; }
+    .mh-row.me { background:rgba(245,158,11,.18); }
+    .mh-row.me .mh-name { color:#fcd34d; }
+    .mh-head > span { font-size:7px; text-transform:uppercase; letter-spacing:.05em; color:#64748b !important; }
     .mh-order { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:6px; }
     .mh-order span { background:#1e293b; border-radius:999px; padding:2px 7px; font-weight:800; }
     .mh-order span.me { background:rgba(245,158,11,.25); color:#fcd34d; }
@@ -8374,17 +8382,40 @@ video {
     // still belong in this match's Match Stats: kept here, marked "(left)",
     // until the next match starts (hideMatchEndUI) or the room changes.
     let departedStatPlayers = [];
-    function rememberDepartedPlayers(prev, next, phase) {
+    const statsCopy = (p) => ({ id: p.id, name: p.name, isBot: !!p.isBot, hasFinished: !!p.hasFinished, finishRank: p.finishRank || null,
+      gameStats: p.gameStats || null, lobbyStats: p.lobbyStats || null });
+    // The room also keeps everyone's final numbers (rooms/{code}/finalStats,
+    // written by every phone at the end, see saveFinalMatchStats), so after a
+    // reload or rejoin the players who have gone since are still listed.
+    function rememberDepartedPlayers(prev, next, phase, finalStats, matchId) {
       const here = new Set(next.map(p => p.id));
       departedStatPlayers = departedStatPlayers.filter(d => !here.has(d.id) && d.roomCode === state.roomCode);
+      if (phase === 'FINISHED' && finalStats && finalStats.matchId && finalStats.matchId === matchId) {
+        Object.values(finalStats.players || {}).forEach((p) => {
+          if (!p || !p.id || here.has(p.id) || p.id === state.localPlayerId) return;
+          if (departedStatPlayers.some(d => d.id === p.id)) return;
+          departedStatPlayers.push({ ...p, departed: true, roomCode: state.roomCode });
+        });
+      }
       (prev || []).forEach((p) => {
         if (!p || here.has(p.id) || p.id === state.localPlayerId) return;
         if (phase !== 'FINISHED' && !p.hasFinished) return;
         if (!p.gameStats && !p.lobbyStats) return;
         departedStatPlayers = departedStatPlayers.filter(d => d.id !== p.id);
-        departedStatPlayers.push({ id: p.id, name: p.name, isBot: !!p.isBot, hasFinished: !!p.hasFinished, finishRank: p.finishRank,
-          gameStats: p.gameStats, lobbyStats: p.lobbyStats, departed: true, roomCode: state.roomCode });
+        departedStatPlayers.push({ ...statsCopy(p), departed: true, roomCode: state.roomCode });
       });
+    }
+    function saveFinalMatchStats() {
+      if (!state.isMultiplayer || !state.roomCode || !state.matchId || typeof db === 'undefined' || !firebaseAvailable) return;
+      const matchId = state.matchId;
+      const known = matchStatsPlayers().filter(p => p.gameStats || p.lobbyStats).map(statsCopy);
+      if (!known.length) return;
+      db.ref(`rooms/${state.roomCode}/finalStats`).transaction((cur) => {
+        const base = cur && cur.matchId === matchId ? cur : { matchId, players: {} };
+        base.players = base.players || {};
+        known.forEach((p) => { if (!base.players[p.id]) base.players[p.id] = JSON.parse(JSON.stringify(p)); });
+        return base;
+      }).catch(() => {});
     }
     function matchStatsPlayers() {
       const here = new Set(state.players.map(p => p.id));
@@ -9443,6 +9474,7 @@ video {
         applyRankedRatingUpdate();
       }
       try { recordMatchHistory(); } catch (e) { console.warn('Match history skipped', e); }
+      try { saveFinalMatchStats(); } catch (e) { console.warn('Final stats not saved', e); }
       // Never let a "Continue Watching" popup from an earlier finisher this
       // match survive onto the end-of-match screen on ANY client.
       document.getElementById('victoryOverlay')?.classList.add('hidden');
@@ -13468,7 +13500,7 @@ video {
               return p;
             });
           } else {
-            rememberDepartedPlayers(state.players, incomingPlayers, data.phase);
+            rememberDepartedPlayers(state.players, incomingPlayers, data.phase, data.finalStats, data.matchId);
             state.players = incomingPlayers;
           }
 
@@ -14939,7 +14971,7 @@ video {
     function buildMatchHistoryEntry() {
       const me = state.players.find(p => p.id === state.localPlayerId);
       if (!me) return null;
-      const n = state.players.length;
+      const n = matchStatsPlayers().length;
       const shithead = !me.hasFinished && typeof isShitHead === 'function' && isShitHead(me);
       const placeOf = (p) => p.finishRank || n;
       const st = me.gameStats || {};
@@ -14950,8 +14982,12 @@ video {
         place: shithead ? n : placeOf(me),
         of: n,
         shithead: !!shithead,
-        players: [...state.players].sort((a, b) => placeOf(a) - placeOf(b))
-          .map(p => ({ name: String(p.name || 'Player').replace(/\s*\(Bot\)$/, '').slice(0, 16), bot: !!p.isBot, me: p.id === me.id })),
+        players: [...matchStatsPlayers()].sort((a, b) => placeOf(a) - placeOf(b))
+          .map((p) => {
+            const g = p.gameStats || {};
+            return { name: String(p.name || 'Player').replace(/\s*\(Bot\)$/, '').slice(0, 16), bot: !!p.isBot, me: p.id === me.id,
+              left: !!p.departed, st: [g.played || 0, g.pickedUp || 0, g.burnt || 0, g.jokersPlayed || 0, g.turns || 0] };
+          }),
         stats: { played: st.played || 0, pickedUp: st.pickedUp || 0, burnt: st.burnt || 0, jokers: st.jokersPlayed || 0, turns: st.turns || 0 },
         diamonds: matchRewardLog.reduce((sum, r) => sum + r.reward, 0),
         rating: matchSummaryRating ? { from: Math.round(matchSummaryRating.from), to: Math.round(matchSummaryRating.to) } : null
@@ -15015,6 +15051,14 @@ video {
       const d = Math.round(h / 24); if (d < 7) return `${d}d ago`;
       return new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
     }
+    // Every player's numbers for one match (entries saved before v141 only
+    // have the local player's, so they fall back to the old layout).
+    function everyoneTable(players) {
+      if (!Array.isArray(players) || !players.length || !players.every(p => Array.isArray(p.st))) return '';
+      const head = ['Played', 'Picked', 'Burnt', 'JKR', 'Turns'].map(h => `<span>${h}</span>`).join('');
+      const rows = players.map((p, i) => `<div class="mh-row${p.me ? ' me' : ''}"><span class="mh-name">${i + 1}. ${escapeHtml(p.name)}${p.bot ? ' 🤖' : ''}${p.left ? ' <em>(left)</em>' : ''}</span>${p.st.map(v => `<span>${Number(v) || 0}</span>`).join('')}</div>`).join('');
+      return `<div class="mh-everyone"><div class="mh-row mh-head"><span class="mh-name"></span>${head}</div>${rows}</div>`;
+    }
     function matchHistoryHtml(list, now = Date.now()) {
       if (!list.length) return '<p class="text-[10px] text-slate-400 text-center leading-snug py-6 px-1">No matches yet. Every game you finish will show up here.</p>';
       const wins = list.filter(e => e.place === 1).length;
@@ -15036,8 +15080,8 @@ video {
         return `<details class="mh-item" style="--mh-edge:${edge}"><summary><span class="mh-emoji" aria-hidden="true">${emoji}</span>
           <span class="mh-main"><span class="mh-title">${title}</span><span class="mh-sub">${escapeHtml(e.label || '')} · ${timeAgo(e.at, now)}</span></span>
           <span class="mh-side">${side}</span></summary>
-          <div class="mh-detail"><div class="mh-order">${(e.players || []).map((p, i) => `<span class="${p.me ? 'me' : ''}">${i + 1}. ${escapeHtml(p.name)}${p.bot ? ' 🤖' : ''}</span>`).join('')}</div>
-          <div class="mh-stats">${stat(st.played, 'Played')}${stat(st.pickedUp, 'Picked up')}${stat(st.burnt, 'Burns')}${stat(st.jokers, 'Jokers')}${stat(st.turns, 'Turns')}</div></div></details>`;
+          <div class="mh-detail">${everyoneTable(e.players) || `<div class="mh-order">${(e.players || []).map((p, i) => `<span class="${p.me ? 'me' : ''}">${i + 1}. ${escapeHtml(p.name)}${p.bot ? ' 🤖' : ''}</span>`).join('')}</div>
+          <div class="mh-stats">${stat(st.played, 'Played')}${stat(st.pickedUp, 'Picked up')}${stat(st.burnt, 'Burns')}${stat(st.jokers, 'Jokers')}${stat(st.turns, 'Turns')}</div>`}</div></details>`;
       }).join('');
       return `<div class="mh-summary"><div><b>${list.length}</b><span>Matches</span></div><div><b>${wins}</b><span>Wins</span></div><div><b>${Math.round((wins / list.length) * 100)}%</b><span>Win rate</span></div><div><b>${shitheads}</b><span>ShitHeads</span></div><div><b>💎${gems}</b><span>Earned</span></div></div>
         <div class="mh-list">${rows}</div>
@@ -15113,6 +15157,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v141: [
+        ['📊', 'Match Stats still show players who left, even after you reload or rejoin.'],
+        ['📜', "Match History now keeps everyone's numbers: tap a match to compare."]
+      ],
       v140: [
         ['✨', "What's New now lists everything you missed if you skipped a few updates."],
         ['🔕', "Don't want these? Settings → Sound & Alerts → What's New turns them off."]

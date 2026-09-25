@@ -3105,7 +3105,29 @@ async function runDevTestSuite() {
     assertEqual(departedStatPlayers.length, 0, 'A mid-match leaver without a result is not kept');
     hideMatchEndUI();
     assertEqual(departedStatPlayers.length, 0, 'A new match starts without them');
+    // After a reload the room's saved finalStats bring them back
+    const saved = { matchId: 'mX', players: { p2: { id: 'p2', name: 'Quitter', isBot: false, hasFinished: false, finishRank: null, gameStats: { played: 7, pickedUp: 9 } } } };
+    rememberDepartedPlayers([], [me], 'FINISHED', saved, 'mX');
+    assertEqual(departedStatPlayers.map(d => d.name), ['Quitter'], 'Saved final stats restore a player who has gone');
+    departedStatPlayers = [];
+    rememberDepartedPlayers([], [me], 'FINISHED', saved, 'mOther');
+    assertEqual(departedStatPlayers.length, 0, "Another match's saved stats are ignored");
     buildMatchStats('game');
+  });
+  await test('Match History keeps every player\'s numbers', () => {
+    freshState({ drawPile: [] });
+    const me = makePlayer({ id: 'p1', name: 'Me', hasFinished: true, finishRank: 1 });
+    const bot = makePlayer({ id: 'p2', name: 'Bo', isBot: true });
+    bumpStat(me, 'played', 4); bumpStat(bot, 'pickedUp', 6);
+    state.players = [me, bot]; state.localPlayerId = 'p1';
+    const entry = buildMatchHistoryEntry();
+    assertEqual(entry.players.map(p => p.st), [[4, 0, 0, 0, entry.players[0].st[4]], [0, 6, 0, 0, entry.players[1].st[4]]], 'Each player carries Played/Picked/Burnt/JKR/Turns');
+    const box = document.createElement('div');
+    box.innerHTML = matchHistoryHtml([{ ...entry, id: 'x' }]);
+    assertEqual(box.querySelectorAll('.mh-everyone .mh-row:not(.mh-head)').length, 2, 'The detail lists everyone');
+    const old = { ...entry, id: 'y', players: [{ name: 'Me', me: true }] };
+    box.innerHTML = matchHistoryHtml([old]);
+    assertTrue(!!box.querySelector('.mh-order') && !box.querySelector('.mh-everyone'), 'Older entries keep the old layout');
   });
 
   await test('REGRESSION: Match Stats number columns actually lay out side by side, not stacked', () => {
@@ -3515,6 +3537,16 @@ async function runDevTestSuite() {
       assertEqual(document.querySelectorAll('#whatsNewList li').length, WHATS_NEW.v114.length, 'One row per note');
       assertTrue(!showWhatsNew('v1'), 'A version with no notes shows nothing');
     } finally { modal.classList.add('hidden'); }
+  });
+  await test('The README is refreshed every 15 versions from v150 (text + screenshots)', async () => {
+    let text = null;
+    try { const r = await fetch('README.md', { cache: 'no-store' }); if (r.ok) text = await r.text(); } catch (e) {}
+    if (text === null) return; // the live site doesn't serve the README
+    const m = text.match(/README-VERSION:\s*v(\d+)/);
+    assertTrue(!!m, 'README.md starts with a README-VERSION stamp');
+    const stamped = Number(m[1]), current = Number(GAME_BUILD.version.slice(1));
+    const nextDue = stamped < 150 ? 150 : 150 + (Math.floor((stamped - 150) / 15) + 1) * 15;
+    assertTrue(current < nextDue, `README refresh due: v${current} has reached v${nextDue}. Update the README text, retake the screenshots (node tools/readme-screenshots.js) and set README-VERSION to v${current}`);
   });
   await test("Every release has What's New notes; skipped updates are shown together; Settings can turn them off", () => {
     assertTrue(Array.isArray(WHATS_NEW[GAME_BUILD.version]) && WHATS_NEW[GAME_BUILD.version].length > 0,
