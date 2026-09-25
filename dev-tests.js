@@ -1051,6 +1051,20 @@ async function runDevTestSuite() {
     const seat = document.getElementById('opp-noah');
     assertTrue(seat && seat.classList.contains('opp-last-card') && !!seat.querySelector('.last-card-chip'), 'The seat shows the LAST CARD chip');
   });
+  await test('Share: the result card is a 1080×1350 image with the placing, order and stats', () => {
+    freshState({ phase: 'FINISHED', localPlayerId: 'me' });
+    state.players = [
+      makePlayer({ id: 'me', name: 'Jamie', hasFinished: true, finishRank: 1, gameStats: { played: 9, pickedUp: 1, burnt: 2, turns: 7, jokersPlayed: 0, biggestPickup: 1 } }),
+      makePlayer({ id: 'b', name: 'Soren (Bot)', isBot: true, hand: [makeCard('4')] })
+    ];
+    const d = matchShareData();
+    assertEqual(d.order.map(p => p.name), ['Jamie', 'Soren'], 'Finishing order, bot suffix dropped');
+    assertTrue(d.order[0].me, 'You are marked');
+    assertEqual(d.stats.find(([l]) => l === 'Burns')[1], 2, 'Your stats');
+    const c = drawShareCard(d);
+    assertEqual([c.width, c.height], [1080, 1350], 'Portrait share size');
+    assertTrue(!!document.getElementById('matchSummaryShare'), 'The summary has a SHARE button');
+  });
   await test('Every Burn cosmetic (and the default) has its own burn sound', () => {
     assertTrue(typeof BURN_SOUNDS.default === 'function', 'A default burn sound exists');
     const missing = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && typeof BURN_SOUNDS[i.id] !== 'function').map(i => i.id);

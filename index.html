@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v123 (ShitHead-Deluxe-123) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v124 (ShitHead-Deluxe-124) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1383,7 +1383,8 @@
     .ms-progress { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:10px; border:1px solid #1e293b; background:rgba(15,23,42,.7); font-size:10px; font-weight:700; color:#cbd5e1; margin-top:4px; }
     .ms-bar { flex:1; height:6px; border-radius:999px; background:#1e293b; overflow:hidden; min-width:50px; }
     .ms-bar i { display:block; height:100%; border-radius:inherit; background:var(--bar,#f59e0b); }
-    .ms-actions { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:14px; }
+    .ms-actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:14px; }
+    .ms-secondary.ms-share { border-color:#0891b2; color:#67e8f9; background:rgba(8,51,68,.45); }
     .ms-primary { grid-column:1 / -1; padding:11px 0; border-radius:12px; background:#10b981; color:#022c22; font-size:13px; font-weight:900; letter-spacing:.08em; }
     .ms-primary[disabled] { background:#1e293b; color:#64748b; }
     .ms-secondary { padding:8px 0; border-radius:12px; border:1px solid #475569; color:#cbd5e1; font-size:10px; font-weight:900; letter-spacing:.06em; }
@@ -4866,6 +4867,7 @@ video {
       <div id="matchSummaryBody"></div>
       <div class="ms-actions">
         <button type="button" id="matchSummaryAgain" class="ms-primary">REMATCH</button>
+        <button type="button" id="matchSummaryShare" class="ms-secondary ms-share">📤 SHARE</button>
         <button type="button" id="matchSummaryStats" class="ms-secondary">FULL STATS</button>
         <button type="button" id="matchSummaryTable" class="ms-secondary">VIEW TABLE</button>
       </div>
@@ -17021,6 +17023,112 @@ video {
       matchSummaryTimer = setTimeout(openMatchSummary, reduceMotion ? 400 : 1600);
     }
     function closeMatchSummary() { document.getElementById('matchSummaryModal').classList.add('hidden'); }
+
+    // ---- Share your result -------------------------------------------------
+    // SHARE on the match summary draws a 1080×1350 result card (placing,
+    // finishing order, stats, Diamonds, rating, the game link) and hands it
+    // to the phone's share sheet (WhatsApp, X, Instagram, save to Photos…).
+    // Where sharing files isn't supported it downloads the PNG instead.
+    const SHARE_URL = 'https://shithead-pro.web.app';
+    function matchShareData() {
+      const me = state.players.find(p => p.id === state.localPlayerId);
+      const place = matchPlacingInfo(me);
+      const n = state.players.length;
+      const placeOf = (p) => p.finishRank || n;
+      const st = me?.gameStats || freshStatsScope();
+      return {
+        emoji: place.emoji, title: place.title, edge: place.edge,
+        name: me?.name || 'Player', mode: matchModeLabel(),
+        order: [...state.players].sort((a, b) => placeOf(a) - placeOf(b)).map(p => ({ name: String(p.name || 'Player').replace(/\s*\(Bot\)$/, ''), bot: !!p.isBot, me: p.id === me?.id })),
+        stats: [['Played', st.played], ['Picked up', st.pickedUp], ['Burns', st.burnt], ['Turns', st.turns], ['Jokers', st.jokersPlayed], ['Top pickup', st.biggestPickup]],
+        diamonds: matchRewardLog.reduce((sum, r) => sum + r.reward, 0),
+        rating: matchSummaryRating ? { from: Math.round(matchSummaryRating.from), to: Math.round(matchSummaryRating.to) } : null
+      };
+    }
+    function drawShareCard(d) {
+      const W = 1080, H = 1350;
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const g = c.getContext('2d');
+      const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+      const font = (weight, size, family = "'Outfit', 'Plus Jakarta Sans', Arial, sans-serif") => `${weight} ${size}px ${family}`;
+      // Background: night table with a warm glow behind the placing.
+      const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#0b1020'); bg.addColorStop(1, '#020617'); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+      const glow = g.createRadialGradient(W / 2, 390, 20, W / 2, 390, 520); glow.addColorStop(0, d.edge + '55'); glow.addColorStop(1, 'transparent'); g.fillStyle = glow; g.fillRect(0, 0, W, H);
+      g.strokeStyle = d.edge; g.lineWidth = 10; rr(24, 24, W - 48, H - 48, 48); g.stroke();
+      g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+      // Logo
+      const logo = g.createLinearGradient(0, 70, 0, 150); logo.addColorStop(0, '#f87171'); logo.addColorStop(.45, '#b91c1c'); logo.addColorStop(1, '#5e0a0a');
+      g.font = font(900, 92, "'Cinzel', Georgia, serif"); g.lineWidth = 4; g.strokeStyle = '#fde047'; g.strokeText('ShitHead', W / 2, 150); g.fillStyle = logo; g.fillText('ShitHead', W / 2, 150);
+      g.font = font(800, 28, "'Cinzel', Georgia, serif"); g.fillStyle = '#fbbf24'; g.fillText('D E L U X E', W / 2, 192);
+      // Placing
+      g.font = font(400, 136, "'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"); g.fillText(d.emoji, W / 2, 352);
+      g.font = font(900, 76); g.fillStyle = '#fde68a'; g.fillText(d.title, W / 2, 440);
+      g.font = font(700, 36); g.fillStyle = '#cbd5e1'; g.fillText(`${d.name} · ${d.mode}`, W / 2, 492);
+      // Rating + Diamonds pills
+      const pills = [];
+      if (d.rating) { const diff = d.rating.to - d.rating.from; pills.push({ text: `Rating ${d.rating.from} → ${d.rating.to} (${diff >= 0 ? '+' : ''}${diff})`, color: diff >= 0 ? '#34d399' : '#fb7185' }); }
+      if (d.diamonds > 0) pills.push({ text: `+${d.diamonds} Diamonds 💎`, color: '#67e8f9' });
+      let py = 522;
+      pills.forEach((pill) => {
+        g.font = font(800, 34); const tw = g.measureText(pill.text).width + 60;
+        g.fillStyle = 'rgba(15,23,42,.9)'; rr(W / 2 - tw / 2, py, tw, 60, 30); g.fill(); g.strokeStyle = pill.color; g.lineWidth = 3; g.stroke();
+        g.fillStyle = pill.color; g.fillText(pill.text, W / 2, py + 42); py += 72;
+      });
+      // Finishing order
+      const top = py + 34;
+      g.textAlign = 'left'; g.font = font(900, 26); g.fillStyle = '#94a3b8'; g.fillText('FINISHING ORDER', 110, top);
+      d.order.slice(0, 4).forEach((p, i) => {
+        const y = top + 22 + i * 64;
+        g.fillStyle = p.me ? 'rgba(245,158,11,.22)' : 'rgba(30,41,59,.75)'; rr(96, y, W - 192, 54, 16); g.fill();
+        if (p.me) { g.strokeStyle = '#f59e0b'; g.lineWidth = 3; rr(96, y, W - 192, 54, 16); g.stroke(); }
+        g.font = font(900, 32); g.fillStyle = p.me ? '#fcd34d' : '#e2e8f0';
+        g.fillText(`#${i + 1}  ${p.name}${p.me ? ' (you)' : ''}${p.bot ? '  🤖' : ''}${i === d.order.length - 1 && d.order.length > 1 ? '  💩' : ''}`, 124, y + 39);
+      });
+      // Stats grid
+      const sy = top + 22 + Math.min(4, d.order.length) * 64 + 26;
+      const cols = 3, cw = (W - 192) / cols;
+      d.stats.forEach(([label, value], i) => {
+        const x = 96 + (i % cols) * cw, y = sy + Math.floor(i / cols) * 104;
+        g.fillStyle = 'rgba(15,23,42,.85)'; rr(x + 6, y, cw - 12, 92, 18); g.fill();
+        g.textAlign = 'center'; g.font = font(900, 42); g.fillStyle = '#f8fafc'; g.fillText(String(Number(value) || 0), x + cw / 2, y + 50);
+        g.font = font(800, 21); g.fillStyle = '#94a3b8'; g.fillText(label.toUpperCase(), x + cw / 2, y + 79);
+      });
+      // Footer
+      g.textAlign = 'center'; g.font = font(900, 40); g.fillStyle = '#34d399'; g.fillText('Play free → shithead-pro.web.app', W / 2, H - 88);
+      g.font = font(700, 24); g.fillStyle = '#64748b'; g.fillText(new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }), W / 2, H - 52);
+      return c;
+    }
+    async function shareMatchResult() {
+      const btn = document.getElementById('matchSummaryShare');
+      const label = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ …'; }
+      try {
+        try { await document.fonts?.ready; } catch (e) {}
+        const d = matchShareData();
+        const canvas = drawShareCard(d);
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+        if (!blob) throw new Error('Could not make the image');
+        const file = new File([blob], 'shithead-result.png', { type: 'image/png' });
+        const text = `${d.emoji} ${d.title} in ShitHead! Can you beat me? ${SHARE_URL}`;
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], text, title: 'ShitHead' }); return 'shared'; }
+          catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+        }
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'shithead-result.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        notifyBanner('📥 Result image saved: share it anywhere!');
+        return 'downloaded';
+      } catch (e) {
+        console.warn('Share failed', e);
+        notifyBanner('Could not make the share image, please try again.');
+        return 'failed';
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = label; }
+      }
+    }
+    document.getElementById('matchSummaryShare').addEventListener('click', () => { shareMatchResult(); });
     document.getElementById('matchSummaryClose').addEventListener('click', closeMatchSummary);
     document.getElementById('matchSummaryTable').addEventListener('click', closeMatchSummary);
     document.getElementById('matchSummaryStats').addEventListener('click', () => { closeMatchSummary(); document.getElementById('matchStatsBtn')?.click(); });
