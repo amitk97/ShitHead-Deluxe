@@ -58,6 +58,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Blind flip reveal
 
 - Every face-down (blind) play goes through a reveal first (`playBlindReveal`, gated at the top of `executePlayCards`; the real play reruns with `{ revealed: true }`): the card rises over the pile, the table dims, it wobbles and turns edge-on, then snaps over glowing green (playable) or red (forced pickup). ~1.2s for you, ~0.8s for others (`BLIND_REVEAL_MS`). Sounds are synthesised (`playRevealTension` / `playRevealResult`).
+- The reveal starts from the flipped card's own face-down slot (`blindSlotElement`: `.custom-card-back[data-slot]` in `#localTableSlots` or the opponent seat), at that card's size, and hides the slot card until it lands, so the card itself travels to the Pile and flips.
 - `state.blindRevealing` blocks every other play meanwhile (reset by `hideMatchEndUI`). Skipped (instant flip) in the tutorial, with Reduce Motion, while fast-forwarding, in a hidden tab and during the test suite (`shouldRevealBlind`). Online, the client making the flip (you, or the host for a bot) broadcasts it as `rooms/{code}/lastBlindReveal` (`broadcastBlindReveal`: card, result, length, `serverNow()` time) and every other player plays the same reveal, trimmed by the delay (`showRemoteBlindReveal`), so it lands with the real play.
 
 ## Tutorial
@@ -194,3 +195,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Burn sounds: `BURN_SOUNDS[burnId]` recipes (synthesised via `SoundFX._burnKit`), one per Burn cosmetic plus `default`; `audio.burn(burnEffectIdFor(player))` in `executeBurn` and Joker counters, remote players hear it from `lastCosmeticEffect` (skipped by the sender via its `by` field), Shop preview plays it.
 - **Whenever a new Burn item is added (Shop or seasonal), also design its own `BURN_SOUNDS` recipe without being asked**: read its animation (`bfx…` / `sbfx…` function) and follow it beat for beat: what the effect is (fire, water, ice, sparks…), the moment of impact, each delayed wave (use the same delays), and the tail as particles land (e.g. Cannonball = plunk + splash, a second wash with the second ripple at 0.22s, droplets pattering down). Keep it in the same loudness range as the others (peak ≈ 0.2–0.55 when rendered offline) and never reuse another item's recipe. A test fails if a Burn item has no recipe.
 - Inbox and Friends lists pull to refresh (`attachPullToRefresh`). The Shop opens on the last tab (`shithead_shop_tab`, `restoredShopTab`), except a seasonal event that started since takes the lead once. Turn Alert also buzzes (Vibration). Leaving a live Ranked match warns it counts as a loss.
+
+## README
+
+- `README.md` (GitHub front page) shows screenshots from `docs/screenshots/` (home, swap, table, card-powers, play-matrix, guide-swap), taken from the real game at 390×844 @2x. Both are ignored by Hosting. Retake them when the look changes a lot.

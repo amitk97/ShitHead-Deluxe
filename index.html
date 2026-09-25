@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v135 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v136 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5580,11 +5580,29 @@ video {
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
             <p>Welcome to <strong>ShitHead</strong>! The objective is to shed all your cards across three sequential phases. The last remaining player holding cards is the <strong>Shithead</strong>.</p>
             <p class="rounded-lg border border-slate-700 bg-slate-900/60 p-2"><strong class="text-emerald-300">Card-area labels:</strong> Hand marks your held cards. The stacked Face-up and Face-down labels to the left of your table cards highlight Face-up while any face-up cards remain, then Face-down when none remain.</p>
+            <p><strong class="text-amber-300">0. Swap Phase:</strong> Before the first card is played, everyone can swap cards between their Hand and their Face-Up Cards. Tap READY when you're happy (see <em>Swap Phase</em> below).</p>
             <p><strong class="text-amber-300">1. Hand Phase:</strong> You must play cards from your Hand first. Whenever your Hand drops below 3 cards and the Deck has cards remaining, you automatically refill.</p>
             <p><strong class="text-amber-300">2. Face-Up Table Phase:</strong> When your Hand and the Deck are completely empty, you play directly from your 3 Face-Up Cards.</p>
             <p><strong class="text-amber-300">3. Blind Face-Down Phase:</strong> Once your Face-Up Cards are cleared, flip your 3 Face-Down Cards one by one. If you flip an illegal move, you must pick up the entire Pile!</p>
             <p><strong class="text-amber-300">Equal or Higher:</strong> You must play a card that is equal to or higher than the current top card of the Pile (e.g. King on Queen), depending on what you are playing on.</p>
             <p><strong class="text-emerald-400">Automatic Pickup:</strong> If it is your turn and you hold no legal moves, the game automatically gives you the Pile without hassle.</p>
+          </div>
+        </div>
+
+        <!-- Section 1b: Swap Phase -->
+        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60">
+          <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
+            <span>Swap Phase</span>
+            <span class="chevron transform transition-transform duration-200">▼</span>
+          </button>
+          <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
+            <p>Every match starts with the <strong>Swap Phase</strong>. You're dealt 3 Face-Down Cards, 3 Face-Up Cards on top of them and 3 cards in your Hand. Before anyone plays, you can swap cards between your <strong>Hand</strong> and your <strong>Face-Up Cards</strong> as many times as you like.</p>
+            <p><strong class="text-amber-300">How:</strong> tap a card in your Hand, then the Face-Up Card you want to swap it with (or drag one onto the other). Your Face-Down Cards can never be swapped or looked at. Tap <strong class="text-emerald-400">READY</strong> when you're done; play starts once everyone is ready.</p>
+            <p><strong class="text-amber-300">Why it matters:</strong> you play your Hand first, while the Deck keeps topping it up, but your Face-Up Cards only come into play near the end, when you have no Hand left to fall back on. That's when you need your strongest cards.</p>
+            <p><strong class="text-amber-300">Put face-up:</strong> your best cards, the power cards first (Joker, 3, 2, 10), then Aces and Kings. With them on the table you can beat almost anything when it counts, and a 10 or a 2 gets you out of a big Pile.</p>
+            <p><strong class="text-amber-300">Keep in your Hand:</strong> your low cards (4s, 5s, 6s, 7s). They're easy to get rid of early, while the Pile is still low and the Deck keeps refilling you.</p>
+            <p><strong class="text-amber-300">Pairs:</strong> two or three of the same rank face-up can be played together in one go, so matching cards on the table clear faster.</p>
+            <p><strong class="text-amber-300">Remember:</strong> everyone can see your Face-Up Cards, so opponents know what you'll have at the end, and you can read theirs too. If someone has stacked power cards face-up, try to leave them a big Pile before they reach them.</p>
           </div>
         </div>
 
@@ -6530,6 +6548,16 @@ video {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return false;
       return typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
     }
+    // The face-down card element a blind play comes from (by its fixed slot).
+    function blindSlotElement(playerId, card) {
+      const owner = state.players.find(p => p.id === playerId);
+      if (!owner || !card) return null;
+      const slot = buildFixedSlots(owner.faceDown || []).findIndex(c => c && c.id === card.id);
+      if (slot < 0) return null;
+      const scope = playerId === state.localPlayerId ? '#localTableSlots' : `#opp-${CSS.escape(playerId)}`;
+      const el = document.querySelector(`${scope} .custom-card-back[data-slot="${slot}"]`);
+      return el && el.getBoundingClientRect().width > 0 ? el : null;
+    }
     // opts (another player's flip, broadcast through the room): { good, ms }.
     function playBlindReveal(playerId, card, done, opts = {}) {
       let finished = false;
@@ -6543,7 +6571,10 @@ video {
         setTimeout(cleanup, 180);
       };
       const pile = document.getElementById('discardPileContainer');
-      const origin = getPlayerAnimationTarget(playerId);
+      // The flipped card itself travels: find its face-down slot so the
+      // reveal starts there (same size) and the slot card is hidden meanwhile.
+      const slotCard = blindSlotElement(playerId, card);
+      const origin = slotCard || getPlayerAnimationTarget(playerId);
       const layer = document.body;
       if (!pile) { done(); return; }
       const isSelf = playerId === state.localPlayerId;
@@ -6554,6 +6585,7 @@ video {
       const w = p.width, h = p.height;
       const endX = p.left, endY = p.top;
       const startX = o.left + o.width / 2 - w / 2, startY = o.top + o.height / 2 - h / 2;
+      const startScale = slotCard ? Math.max(0.4, Math.min(1.6, o.width / w)) : 0.8;
 
       const dim = document.createElement('div');
       dim.className = 'blind-reveal-dim';
@@ -6566,7 +6598,7 @@ video {
       inner.className = 'blind-reveal-inner';
       const back = document.createElement('div');
       back.className = 'blind-reveal-face blind-reveal-back';
-      const existingBack = (isSelf ? document.querySelector('#localTableSlots .custom-card-back') : document.querySelector(`#opp-${CSS.escape(playerId)} .custom-card-back`))
+      const existingBack = slotCard || (isSelf ? document.querySelector('#localTableSlots .custom-card-back') : document.querySelector(`#opp-${CSS.escape(playerId)} .custom-card-back`))
         || document.querySelector('.custom-card-back');
       if (existingBack) back.appendChild(existingBack.cloneNode(true));
       else back.style.background = 'linear-gradient(135deg,#1e293b,#0f172a)';
@@ -6578,14 +6610,16 @@ video {
       inner.append(back, front);
       wrap.append(glow, inner);
       layer.append(dim, wrap);
-      const cleanup = () => { dim.remove(); wrap.remove(); };
+      if (slotCard) slotCard.style.visibility = 'hidden';
+      const cleanup = () => { dim.remove(); wrap.remove(); if (slotCard) slotCard.style.visibility = ''; };
       requestAnimationFrame(() => { dim.style.opacity = '1'; });
 
       // Phase timings as fractions of the total.
-      const lift = 0.25, tease = 0.45; // then the snap
+      const lift = 0.3, tease = 0.4; // then the snap
       const dx = startX - endX, dy = startY - endY;
       wrap.animate([
-        { transform: `translate(${dx}px, ${dy}px) scale(.8)`, offset: 0 },
+        { transform: `translate(${dx}px, ${dy}px) scale(${startScale})`, offset: 0, easing: 'cubic-bezier(.3,.7,.2,1)' },
+        { transform: `translate(${dx * 0.35}px, ${dy * 0.35 - 18}px) scale(${(startScale + 1.28) / 2}) rotate(-4deg)`, offset: lift * 0.55 },
         { transform: 'translate(0,0) scale(1.28)', offset: lift, easing: 'cubic-bezier(.2,.8,.2,1)' },
         { transform: 'translate(0,0) scale(1.28) rotate(-2deg)', offset: lift + tease * 0.3 },
         { transform: 'translate(0,0) scale(1.3) rotate(2deg)', offset: lift + tease * 0.6 },
@@ -11796,7 +11830,7 @@ video {
               // card and look like an extra power icon.
               const showBackEmblem = !upCard;
               slotContent += `
-                <div class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg custom-card-back ${getCosmeticBackClass(p.cosmetics?.cardBack || 'default')} flex items-center justify-center select-none shadow" style="${showBackEmblem ? getOpponentCosmeticFrameStyle(p.cosmetics?.frame) : ''}">
+                <div data-slot="${i}" class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg custom-card-back ${getCosmeticBackClass(p.cosmetics?.cardBack || 'default')} flex items-center justify-center select-none shadow" style="${showBackEmblem ? getOpponentCosmeticFrameStyle(p.cosmetics?.frame) : ''}">
                   ${showBackEmblem ? getEmblemSvg() : ''}
                 </div>
               `;
@@ -15037,6 +15071,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v136: [
+        ['🂠', 'Face-down cards now fly from your table to the Pile before they flip.'],
+        ['📖', 'New Swap Phase section in Guide & Strategy: what to put face-up and why.']
+      ],
       v134: [
         ['🔗', 'Invite links: in an Online Room, tap SHARE INVITE LINK and send it on WhatsApp or anywhere. Friends tap it to jump straight into your room.'],
         ['🃏', 'Hand Sort (Settings → Gameplay): turn it on to sort your hand by power (4 up to A, then 10, 2, 3, Joker) instead of by rank.']

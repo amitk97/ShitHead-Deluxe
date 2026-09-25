@@ -12,7 +12,9 @@
       "database.rules.json",
       "functions/**",
       "_config.yml",
-      "tools/**"
+      "tools/**",
+      "docs/**",
+      "README.md"
     ],
     "headers": [
       {
