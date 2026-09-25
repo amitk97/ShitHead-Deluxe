@@ -4627,6 +4627,35 @@ async function runDevTestSuite() {
     }
   });
 
+  await test('Signed in: the lobby defaults to the highest unlocked difficulty; bot count row centres on the difficulty row', () => {
+    const saved = { diff: state.difficulty, unlocked: { ...unlockedDifficulties }, user: currentUser, known: difficultyLocksKnownFor, phase: state.phase };
+    try {
+      currentUser = { uid: 'test-uid' }; difficultyLocksKnownFor = 'test-uid'; state.phase = 'LOBBY';
+      unlockedDifficulties = { easy: true, medium: true, hard: true, boss: false };
+      state.difficulty = 'easy';
+      applyBotPrefs({ count: 2, difficulty: 'medium' });
+      assertEqual(state.difficulty, 'hard', 'Highest unlocked wins over the remembered one');
+      unlockedDifficulties.boss = true; selectHighestUnlockedDifficulty();
+      assertEqual(state.difficulty, 'boss', 'A new unlock becomes the default');
+      state.phase = 'PLAY'; state.difficulty = 'medium'; selectHighestUnlockedDifficulty();
+      assertEqual(state.difficulty, 'medium', 'Never changed mid-match');
+      difficultyLocksKnownFor = null; state.phase = 'LOBBY'; state.difficulty = 'easy';
+      applyBotPrefs({ count: 2, difficulty: 'boss' });
+      assertEqual(state.difficulty, 'easy', 'Before the unlocks load, nothing is picked for them');
+      const lobby = document.getElementById('lobbyScreen'), wasHidden = lobby && lobby.classList.contains('hidden');
+      const single = document.getElementById('singleOptions'), singleHidden = single.classList.contains('hidden');
+      lobby && lobby.classList.remove('hidden'); single.classList.remove('hidden');
+      const mid = (el) => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
+      const a = mid(document.querySelector('.bot-count-btn')), b = mid(document.querySelector('.diff-btn'));
+      if (lobby && wasHidden) lobby.classList.add('hidden'); if (singleHidden) single.classList.add('hidden');
+      assertTrue(Math.abs(a - b) < 1, `Bot count buttons centre on the difficulty buttons (${a.toFixed(1)} vs ${b.toFixed(1)})`);
+    } finally {
+      currentUser = saved.user; difficultyLocksKnownFor = saved.known; state.phase = saved.phase;
+      unlockedDifficulties = saved.unlocked; state.difficulty = saved.diff;
+      document.querySelectorAll('.diff-btn').forEach(styleDifficultyBtn);
+    }
+  });
+
   await test('Notifications fire only for new gifts, invites and friend requests (not ones already waiting)', () => {
     const realShow = showAppNotification;
     const shown = [];

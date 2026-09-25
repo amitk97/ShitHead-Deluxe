@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v131 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v132 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1532,7 +1532,10 @@
     .avatar-demo-list { display:flex; flex-direction:column; gap:8px; }
     .avatar-demo-chip { display:flex; align-items:center; gap:6px; padding:5px 8px; border-radius:10px; border:1px solid #334155; background:rgba(15,23,42,.85); font-size:9px; font-weight:900; color:#e2e8f0; letter-spacing:.04em; white-space:nowrap; }
     .avatar-demo-chip small { font-size:8px; color:#94a3b8; font-weight:700; letter-spacing:0; }
-  </style>
+    /* Vs Bots lobby: bot count + difficulty share rows so both button rows centre on each other. */
+    .bot-setup-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: .75rem; align-items: center; }
+    .bot-setup-grid > label { align-self: end; }
+</style>
 
   
   <!-- Firebase SDKs -->
@@ -4249,17 +4252,16 @@ video {
 
         <!-- Single Player Options -->
         <div id="singleOptions" class="space-y-2 pt-1">
-          <div class="grid grid-cols-2 gap-3">
-            <div>
+          <!-- One grid: labels, then both button rows (the bot-count row is
+               centred on the taller difficulty buttons), then the progress bar. -->
+          <div class="bot-setup-grid">
               <label class="block text-[11px] font-black uppercase text-slate-400 mb-1 text-center">Bot Opponents</label>
+              <label class="block text-[11px] font-black uppercase text-slate-400 mb-1 text-center">Bot Difficulty</label>
               <div class="grid grid-cols-3 gap-1.5">
                 <button data-bots="1" class="bot-count-btn py-1.5 text-xs rounded-lg border-2 border-slate-700 bg-slate-800 font-bold hover:border-amber-500 transition">1 Bot</button>
                 <button data-bots="2" class="bot-count-btn py-1.5 text-xs rounded-lg border-2 border-slate-700 bg-slate-800 font-bold hover:border-amber-500 transition">2 Bots</button>
                 <button data-bots="3" class="bot-count-btn py-1.5 text-xs rounded-lg border-2 border-amber-500 bg-amber-950/60 font-black text-amber-300 transition">3 Bots</button>
               </div>
-            </div>
-            <div>
-              <label class="block text-[11px] font-black uppercase text-slate-400 mb-1 text-center">Bot Difficulty</label>
               <div class="grid grid-cols-4 gap-1">
                 <button data-diff="easy" class="diff-btn py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-slate-800 font-bold text-slate-300 transition">EASY</button>
                 <button data-diff="medium" class="diff-btn py-1.5 text-[10px] rounded-lg border-2 border-slate-700 bg-slate-800 font-bold text-slate-300 transition">MED</button>
@@ -4271,6 +4273,7 @@ video {
                    against, so every difficulty just stays open for guest
                    play exactly as it always has — this is additive for
                    signed-in players, not a restriction on anyone else. -->
+              <div class="bot-setup-spacer"></div>
               <div id="difficultyProgressWrap" class="hidden mt-1.5 px-1">
                 <div class="flex items-center justify-between text-[8px] font-bold text-slate-400 mb-0.5">
                   <span id="difficultyProgressLabel">Win 3 Easy games to unlock Medium</span>
@@ -4280,7 +4283,6 @@ video {
                   <div id="difficultyProgressBar" class="h-full bg-amber-500 transition-all" style="width:0%"></div>
                 </div>
               </div>
-            </div>
           </div>
 
           <div id="lobbySpeedBox" class="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
@@ -13977,7 +13979,15 @@ video {
         state.selectedBotCount = Number(count);
         try { localStorage.setItem('shithead_bot_count', String(state.selectedBotCount)); } catch (e) {}
       }
-      if (DIFF_LABELS[difficulty] && unlockedDifficulties[difficulty]) {
+      // Signed in: the lobby defaults to the highest unlocked difficulty
+      // instead (set by refreshDifficultyLocks once the account's unlocks
+      // are known); the remembered one is for guests.
+      // (currentUser is a later `let`: the first call runs before it exists.)
+      let signedInUid = null;
+      try { signedInUid = currentUser ? currentUser.uid : null; } catch (e) {}
+      if (signedInUid) {
+        if (difficultyLocksKnownFor === signedInUid) state.difficulty = highestUnlockedDifficulty();
+      } else if (DIFF_LABELS[difficulty] && unlockedDifficulties[difficulty]) {
         state.difficulty = difficulty;
         try { localStorage.setItem('shithead_difficulty', difficulty); } catch (e) {}
       }
@@ -14027,6 +14037,16 @@ video {
       try { localStorage.setItem(difficultyWinsCacheKey(uid), JSON.stringify(merged)); } catch (e) {}
       return merged;
     }
+    let difficultyLocksKnownFor = null; // uid whose unlocks are loaded
+    function highestUnlockedDifficulty() {
+      return ['boss', 'hard', 'medium', 'easy'].find(d => unlockedDifficulties[d]) || 'easy';
+    }
+    // Signed-in lobby default: the highest unlocked difficulty. Only in the
+    // lobby, so a win that unlocks a level mid-match never changes the match.
+    function selectHighestUnlockedDifficulty() {
+      if (!state.phase || state.phase === 'LOBBY') state.difficulty = highestUnlockedDifficulty();
+      else if (!unlockedDifficulties[state.difficulty]) state.difficulty = 'easy';
+    }
     function computeUnlockedDifficulties(wins) {
       const w = wins || {};
       return { easy: true, medium: (w.easy || 0) >= 3, hard: (w.medium || 0) >= 5, boss: (w.hard || 0) >= 10 };
@@ -14058,12 +14078,15 @@ video {
         // fallback for temporary offline/auth/App Check failures.
         const wins = cacheDifficultyWins(currentUser.uid, snap.val() || {});
         unlockedDifficulties = computeUnlockedDifficulties(wins);
-        if (!unlockedDifficulties[state.difficulty]) state.difficulty = 'easy';
+        difficultyLocksKnownFor = currentUser.uid;
+        selectHighestUnlockedDifficulty();
         document.querySelectorAll('.diff-btn').forEach(styleDifficultyBtn);
         renderDifficultyProgress(wins);
       }).catch((e) => {
         const wins = readCachedDifficultyWins(currentUser.uid);
         unlockedDifficulties = computeUnlockedDifficulties(wins);
+        difficultyLocksKnownFor = currentUser.uid;
+        selectHighestUnlockedDifficulty();
         document.querySelectorAll('.diff-btn').forEach(styleDifficultyBtn);
         renderDifficultyProgress(wins);
         console.warn('refreshDifficultyLocks used cached progress', e);
