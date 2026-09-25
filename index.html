@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v144 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v145 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7057,6 +7057,13 @@ video {
       return handSortByPower ? (HAND_SORT_POWER_VALUES[rank] ?? 99) : (HAND_SORT_VALUES[rank] ?? 99);
     }
 
+    // generateDeck numbers the cards c_1…c_54 in SUITS × RANKS order (then
+    // the Jokers) before shuffling, so an id always means the same card.
+    function deckCardById(id) {
+      const n = Number(String(id).replace(/^c_/, ''));
+      if (n > SUITS.length * RANKS.length) return { id, suit: 'JOKER', rank: 'JOKER', isJoker: true };
+      return { id, suit: SUITS[Math.floor((n - 1) / RANKS.length)], rank: RANKS[(n - 1) % RANKS.length], isJoker: false };
+    }
     function generateDeck() {
       let deck = [];
       let id = 1;
@@ -13705,17 +13712,42 @@ video {
       return true;
     }
 
-    function startMultiplayerGame() {
+    // Ranked is dealt by the server (economy rankedDeal: seat order + a
+    // crypto-shuffled deck the Ranked audit checks the deal against), so the
+    // host can't deal itself a good hand. Without a connection to the server
+    // it falls back to a local deal, which the audit flags.
+    let rankedDealPending = false;
+    function requestRankedDeal(matchId, attempt = 0) {
+      return callEconomy('rankedDeal', { roomCode: state.roomCode, matchId }).catch((e) => {
+        if (attempt >= 2) throw e;
+        return new Promise(r => setTimeout(r, 800 * (attempt + 1))).then(() => requestRankedDeal(matchId, attempt + 1));
+      });
+    }
+    function startMultiplayerGame(opts) {
       if (!canStartMultiplayerGame()) return;
+      opts = (opts && typeof opts === 'object') ? opts : {};
+      if (state.isRanked && !opts.serverDeal && !opts.localDeal) {
+        if (rankedDealPending) return;
+        rankedDealPending = true;
+        const matchId = generateMatchId();
+        requestRankedDeal(matchId)
+          .then((deal) => { rankedDealPending = false; startMultiplayerGame({ serverDeal: deal }); })
+          .catch((e) => { rankedDealPending = false; console.warn('Server deal unavailable, dealing locally', e); startMultiplayerGame({ localDeal: true, matchId }); });
+        return;
+      }
       // Same guarantee as startSinglePlayerGame: a new match actually
       // dealing means the previous match's end-screen buttons are gone,
       // full stop, regardless of what triggered this call.
       hideMatchEndUI();
-      state.matchId = generateMatchId();
+      const serverDeal = opts.serverDeal;
+      const seatedByServer = serverDeal && Array.isArray(serverDeal.order) && Array.isArray(serverDeal.deck)
+        && serverDeal.order.length === state.players.length && serverDeal.order.every(uid => state.players.some(p => p.uid === uid));
+      state.matchId = seatedByServer ? serverDeal.matchId : (opts.matchId || generateMatchId());
+      state.players = seatedByServer
+        ? serverDeal.order.map(uid => state.players.find(p => p.uid === uid))
+        : shuffle([...state.players]);
 
-      state.players = shuffle([...state.players]);
-
-      const deck = generateDeck();
+      const deck = seatedByServer ? serverDeal.deck.map(deckCardById) : generateDeck();
       const dealtPlayers = state.players.map(p => {
         // Carried forward on purpose — this is what makes "Lobby Totals"
         // mean something across repeated matches in the same room. Only
@@ -15194,6 +15226,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v145: [
+        ['🎴', 'Ranked matches are now dealt by the server: nobody can rig the deal.']
+      ],
       v144: [
         ['🛡️', 'Ranked is checked on the server now: every move in a Ranked match is verified, so a tampered game can be spotted.']
       ],
@@ -18106,7 +18141,8 @@ video {
       'pushed-cards': 'Made someone pick up', 'pile-tamper': 'Pile tampered with', 'deck-tamper': 'Deck tampered with',
       'new-card': 'A card appeared from nowhere', 'vanished': 'A card disappeared', 'multi-blind': 'Several face-down cards at once',
       'mixed-play': 'Played two ranks at once', 'illegal-play': 'Illegal play', 'out-of-turn': 'Played out of turn',
-      'finished-with-cards': 'Finished while holding cards'
+      'finished-with-cards': 'Finished while holding cards', 'no-server-deal': "Dealt without the server's deck",
+      'rigged-deal': "Deal differs from the server's", 'lost-update': 'Out-of-date save (two phones saved at once)'
     };
     function groupRankedAudit(data) {
       const rows = [];

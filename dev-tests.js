@@ -3564,6 +3564,32 @@ async function runDevTestSuite() {
       assertEqual(typeof collectAccountSettings().whatsNewOn, 'boolean', 'It syncs with the account settings');
     } finally { if (whatsNewOn !== was) row.click(); }
   });
+  await test('Ranked matches are dealt from the server (seat order + deck); a local deal only without the server', async () => {
+    freshState({ phase: 'LOBBY' });
+    state.isMultiplayer = true; state.isRanked = true; state.isHost = true; state.roomCode = '515151';
+    state.players = [makePlayer({ id: 'p_host', uid: 'alice', name: 'Alice' }), makePlayer({ id: 'p_room1', uid: 'bob', name: 'Bob' })];
+    state.localPlayerId = 'p_host';
+    const synced = [];
+    db = { ref: (path) => ({ update: (v) => { synced.push([path, v]); return Promise.resolve(); }, set: () => Promise.resolve(), transaction: () => Promise.resolve({}), once: () => Promise.resolve({ val: () => null }) }) };
+    const deck = Array.from({ length: 54 }, (_, i) => `c_${54 - i}`);
+    const calls = fakeEconomy({ rankedDeal: (d) => ({ matchId: d.matchId, order: ['bob', 'alice'], deck }) });
+    startMultiplayerGame();
+    await new Promise(r => setTimeout(r, 20));
+    assertEqual(calls.map(c => c[0]), ['rankedDeal'], 'The host asks the server for the deal');
+    assertEqual(state.players.map(p => p.uid), ['bob', 'alice'], "Seats in the server's order (Bob goes first)");
+    assertEqual(state.players[0].hand.map(c => c.id), deck.slice(0, 3), "Bob's hand is the top of the server's deck");
+    assertEqual(state.players[1].faceDown.map(c => c.id), deck.slice(15, 18), 'Then face-up, face-down, seat by seat');
+    assertEqual(state.drawPile.map(c => c.id), deck.slice(18), 'The rest is the Deck, in order');
+    assertEqual(state.players[0].hand[0].rank, deckCardById('c_54').rank, 'Ids turn back into the same cards');
+    assertEqual(state.matchId, calls[0][1].matchId, 'The match id the server dealt for');
+    fakeEconomy({});
+    state.phase = 'LOBBY';
+    startMultiplayerGame();
+    await new Promise(r => setTimeout(r, 2800));
+    assertEqual(state.phase, 'SWAP', 'No server: the match still starts with a local deal');
+    assertEqual(state.players.flatMap(p => [...p.hand, ...p.faceUp, ...p.faceDown]).length + state.drawPile.length, 54, 'A full local deck');
+    hideMatchEndUI();
+  });
   await test("The server's copy of the play rules (functions/rules.js) matches isPlayLegal everywhere", async () => {
     let src = null;
     try { const r = await fetch('functions/rules.js', { cache: 'no-store' }); if (r.ok) src = await r.text(); } catch (e) {}

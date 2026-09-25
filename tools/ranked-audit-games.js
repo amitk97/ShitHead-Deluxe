@@ -97,6 +97,8 @@ const admin = async (p, method = 'GET', v, ns = NS) => (await fetch(`http://127.
   let totalHard = 0, totalSoft = 0;
   for (let g = 1; g <= GAMES; g++) {
     await admin('matchmaking', 'PUT', null);
+    await admin('rooms', 'PUT', null); // or the accounts rejoin the last finished room
+    for (const u of [alice, bob]) await admin(`users/${u}/lastRankedOpponent`, 'DELETE'); // matchmaking avoids an instant rematch
     const A = await mk('alice@test.local', 'Alice'), B = await mk('bob@test.local', 'Bob');
     await A.page.evaluate(() => findRankedMatch());
     await A.page.waitForTimeout(1500);
@@ -135,6 +137,7 @@ const admin = async (p, method = 'GET', v, ns = NS) => (await fetch(`http://127.
     totalHard += hard.length; totalSoft += soft.length;
     const seenCount = matches.reduce((n, m) => n + Object.keys(m.seen || {}).length, 0);
     console.log(`game ${g}: room ${code} phase ${phase} in ${Math.round((Date.now() - t0) / 1000)}s, v${room && room.stateVersion}, audit seen ${seenCount} writers, hard ${hard.length}, soft ${soft.length}`);
+    if (hard.length && process.env.AUDIT_DEBUG_OUT) fs.writeFileSync(`${process.env.AUDIT_DEBUG_OUT}-${code}.json`, JSON.stringify(matches, null, 1));
     [...hard, ...soft].slice(0, 12).forEach(f => console.log('   ', f.hard ? 'HARD' : 'soft', f.kind, f.seat || '', f.detail, 'by', (f.by || '').slice(0, 6), 'v' + f.stateVersion));
     if (A.errs.length || B.errs.length) console.log('   page errors:', [...A.errs, ...B.errs].slice(0, 4));
     await A.ctx.close(); await B.ctx.close();

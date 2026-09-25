@@ -137,5 +137,25 @@ ok(hard(auditTransition(b, a, ctx('alice'))).includes('swap-changed-cards'), 'sw
 b = room(); b.currentTurnIndex = 1; a = play(clone(b), 0, [b.players[0].hand[2].id]);
 ok(kinds(auditTransition(b, a, ctx('alice'))).includes('out-of-turn'), 'playing on the other player\'s turn flagged');
 
+// --- the deal comes from the server (economy rankedDeal) ---
+function dealFrom(deal, seats) {
+  const deck = deal.deck.map(id => ({ id, ...canonicalCard(id) }));
+  const players = deal.order.map(uid => {
+    const seat = seats.find(s => s.uid === uid);
+    return { ...seat, hand: deck.splice(0, 3), faceUp: deck.splice(0, 3), faceDown: deck.splice(0, 3) };
+  });
+  return { isRanked: true, phase: 'SWAP', matchId: deal.matchId, players, drawPile: deck, discardPile: [], currentTurnIndex: 0 };
+}
+const serverDeal = { matchId: 'm2', order: ['bob', 'alice'], deck: Array.from({ length: 54 }, (_, i) => `c_${54 - i}`) };
+const lobbySeats = [{ id: 'p_host', uid: 'alice', name: 'Alice' }, { id: 'p_room1', uid: 'bob', name: 'Bob' }];
+const lobby = { isRanked: true, phase: 'LOBBY', matchId: 'm1', players: lobbySeats };
+a = dealFrom(serverDeal, lobbySeats);
+ok(auditTransition(lobby, a, ctx('alice', 1000, { deal: serverDeal })).length === 0, "dealing the server's deck is clean", auditTransition(lobby, a, ctx('alice', 1000, { deal: serverDeal })));
+ok(hard(auditTransition(lobby, a, ctx('alice'))).includes('no-server-deal'), 'a Ranked deal without the server deck caught');
+a = dealFrom(serverDeal, lobbySeats); [a.players[1].hand[0], a.drawPile[0]] = [a.drawPile[0], a.players[1].hand[0]];
+ok(hard(auditTransition(lobby, a, ctx('alice', 1000, { deal: serverDeal }))).includes('rigged-deal'), 'swapping a Deck card into your deal caught');
+a = dealFrom(serverDeal, lobbySeats); a.players.reverse();
+ok(hard(auditTransition(lobby, a, ctx('alice', 1000, { deal: serverDeal }))).includes('rigged-deal'), 'changing who goes first caught');
+
 console.log(`\n${pass} passed, ${failN} failed`);
 process.exit(failN ? 1 : 0);

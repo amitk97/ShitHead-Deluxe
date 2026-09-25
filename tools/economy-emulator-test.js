@@ -192,6 +192,16 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
       { id: 'p_room1', uid: 'bob', finishRank: 2, rating: 500, gameStats: { burnt: 3 } }
     ]
   });
+  // The server deals Ranked (seat order + deck), once per room
+  r = await call('carol', { action: 'rankedDeal', roomCode: '123456', matchId: 'rk_1' });
+  ok(r.error, 'no deal for someone not at the table', r);
+  const deal = await call('alice', { action: 'rankedDeal', roomCode: '123456', matchId: 'rk_1' });
+  ok(deal.matchId === 'rk_1' && deal.order.sort().join() === 'alice,bob' && new Set(deal.deck).size === 54, 'a member gets the full shuffled deal', deal);
+  r = await call('bob', { action: 'rankedDeal', roomCode: '123456', matchId: 'rk_1' });
+  ok(r.deck && r.deck.join() === deal.deck.join(), 'asking again for the same match gives the same deal');
+  r = await call('alice', { action: 'rankedDeal', roomCode: '123456', matchId: 'rk_2' });
+  ok(r.error, 'no fresh deal for the same room straight away (no fishing for a good hand)', r);
+  await denied('read the server deal', db => get(ref(db, 'rankedDeals/123456')));
   const aBefore = await admin('users/alice/diamonds');
   r = await call('alice', { action: 'rankedResult', roomCode: '123456' });
   ok(r.won && r.from === 500 && r.to === 516 && r.diamondsAwarded === 20, 'Ranked win: +16 from server ratings (not the room\'s 9999), +20 Diamonds', r);

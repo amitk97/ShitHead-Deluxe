@@ -16,7 +16,10 @@ const { logger } = require('firebase-functions');
 const admin = require('firebase-admin');
 const { eventsStartingOn } = require('./seasons');
 
-admin.initializeApp();
+// SH_TEST_DB_NS (emulator runs only, via functions/.env.local) points the
+// server at the namespace the test pages use, so economy and the Ranked
+// audit see the same rooms. Unset in production.
+admin.initializeApp(process.env.SH_TEST_DB_NS ? { databaseURL: `https://${process.env.SH_TEST_DB_NS}.firebaseio.com` } : undefined);
 
 const REGION = 'europe-west1';                 // same region as the database
 const INSTANCE = 'shithead-pro-default-rtdb';
@@ -141,9 +144,17 @@ exports.economy = require('./economy').economy;
 // Findings go to rankedAudit/{room}/{matchId} (owner-only; menu → Error
 // Reports → RANKED AUDIT) and economy's rankedResult reads them.
 const functionsV1 = require('firebase-functions/v1');
-const { auditTransition } = require('./ranked-audit');
+const { auditTransition, gameChanged, isNewDeal } = require('./ranked-audit');
 const AUDIT_FINDINGS_KEEP = 40;
 const auditKey = (v) => String(v || 'none').replace(/[.#$[\]/]/g, '_').slice(0, 200);
+const HIST_KEEP = 8;
+const AUDIT_FIELDS = ['isRanked', 'phase', 'matchId', 'stateVersion', 'players', 'discardPile', 'drawPile', 'currentTurnIndex',
+  'turnDeadline', 'activeConstraint', 'baseOverrideCard', 'pendingFollowUp', 'jokerTurnOwnerId'];
+const auditSnapshot = (room) => Object.fromEntries(AUDIT_FIELDS.filter((k) => room[k] !== undefined).map((k) => [k, room[k]]));
+const keptVersion = async (ref, version) => {
+  const raw = (await ref.child(`hist/${version}`).once('value')).val();
+  try { return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+};
 
 exports.auditRankedRoom = functionsV1.region(REGION).database.instance(INSTANCE).ref('/rooms/{code}')
   .onWrite(async (change, context) => {
@@ -159,8 +170,33 @@ exports.auditRankedRoom = functionsV1.region(REGION).database.instance(INSTANCE)
       base.child('seen').once('value').then((s) => s.val() || {}),
       base.child('left').once('value').then((s) => s.val() || {})
     ]);
-    const findings = auditTransition(before, after, { uid, now, seen, left });
+    const deal = isNewDeal(before, after) ? (await admin.database().ref(`rankedDeals/${code}`).once('value')).val() : null;
+    // Two phones can save the same version at once; the later one lands on
+    // top of the other's move (a lost update). Such an out-of-date write is
+    // checked against the version it was really built on (kept in hist),
+    // so an honest race isn't flagged and tampering hidden in one still is.
+    const version = Number(after.stateVersion) || 0;
+    const stale = !!(before && version && Number(before.stateVersion) >= version);
+    const ctx = { uid, now, seen, left, deal };
+    let findings = auditTransition(before, after, ctx);
+    if (version && findings.some((f) => f.hard)) {
+      // A phone that was a move or two behind builds on an older version:
+      // judge the write by the recent version it fits best (tampering fits none).
+      for (let v = version - 1; v >= Math.max(1, version - 4) && findings.some((f) => f.hard); v--) {
+        const kept = await keptVersion(base, v);
+        if (!kept) continue;
+        const alt = auditTransition(kept, after, ctx);
+        if (alt.filter((f) => f.hard).length < findings.filter((f) => f.hard).length) findings = alt;
+      }
+    }
+    if (stale && gameChanged(before, after) && !findings.some((f) => f.hard)) {
+      findings.push({ kind: 'lost-update', hard: false, seat: null, detail: `v${version} saved over v${before.stateVersion}` });
+    }
     const updates = {};
+    if (version && (after.phase === 'PLAY' || after.phase === 'SWAP')) {
+      updates[`hist/${version}`] = JSON.stringify(auditSnapshot(after));
+      if (version > HIST_KEEP) updates[`hist/${version - HIST_KEEP}`] = null;
+    }
     if (uid) updates[`seen/${uid}`] = now;
     // A player's own "left" presence lets the others hand their seat to a bot.
     const mySeat = (Array.isArray(after.players) ? after.players : Object.values(after.players || {})).find((p) => p && p.uid === uid);
@@ -189,6 +225,8 @@ exports.auditRankedRoom = functionsV1.region(REGION).database.instance(INSTANCE)
     findings.slice(0, keep).forEach((f) => {
       adds[`findings/${base.child('findings').push().key}`] = { ...f, by: uid, at: now, stateVersion: Number(after.stateVersion) || 0 };
     });
+    // Emulator debugging only (SH_AUDIT_DEBUG in functions/.env.local).
+    if (process.env.SH_AUDIT_DEBUG) adds[`debug/${base.child('debug').push().key}`] = { by: uid, before: JSON.stringify(before), after: JSON.stringify(after) };
     if (Object.keys(adds).length) await base.update(adds);
     logger.warn('Ranked audit finding', { code, matchId: after.matchId, uid, kinds: findings.map((f) => f.kind) });
     return null;

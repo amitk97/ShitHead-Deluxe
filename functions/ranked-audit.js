@@ -55,10 +55,32 @@ function gameChanged(before, after) {
   return keys.some((k) => JSON.stringify(before && before[k]) !== JSON.stringify(after && after[k]));
 }
 
+// A Ranked match is dealt from the server's deal (economy rankedDeal): seats
+// in its order, each taking hand, face-up, face-down 3 at a time from the top
+// of its deck, the rest left as the Deck in the same order.
+function isNewDeal(before, after) {
+  return !!after && after.phase === 'SWAP' && (!before || before.matchId !== after.matchId || before.phase !== 'SWAP');
+}
+function checkServerDeal(after, deal, add) {
+  if (!deal || deal.matchId !== after.matchId) { add('no-server-deal', true, 'dealt without the server\'s deck'); return; }
+  const seats = seatsOf(after);
+  const order = list(deal.order);
+  if (seats.map((s) => s.uid).join() !== order.join()) add('rigged-deal', true, 'seats not in the server\'s order');
+  const deck = list(deal.deck);
+  let at = 0;
+  const take = () => deck.slice(at, (at += 3)).join();
+  const ids = (cards) => list(cards).map((c) => c.id).join();
+  seats.forEach((seat) => {
+    const hand = take(), up = take(), down = take();
+    if (ids(seat.hand) !== hand || ids(seat.faceUp) !== up || ids(seat.faceDown) !== down) add('rigged-deal', true, 'cards differ from the server\'s deal', seat.id);
+  });
+  if (ids(after.drawPile) !== deck.slice(at).join()) add('rigged-deal', true, 'Deck differs from the server\'s deal');
+}
+
 /**
  * @param before room before the write (or null)
  * @param after room after the write
- * @param ctx { uid, now, seen: {uid: lastWriteMs}, left: {uid: true} }
+ * @param ctx { uid, now, seen: {uid: lastWriteMs}, left: {uid: true}, deal (rankedDeals/{room}, for a new deal) }
  * @returns findings [{ kind, hard, seat?, detail }]
  */
 function auditTransition(before, after, ctx) {
@@ -77,9 +99,10 @@ function auditTransition(before, after, ctx) {
     ids.add(c.id);
   }
 
-  const newMatch = !before || before.matchId !== after.matchId || !['SWAP', 'PLAY', 'FINISHED'].includes(before.phase);
+  const newMatch = isNewDeal(before, after) || !before || before.matchId !== after.matchId || !['SWAP', 'PLAY', 'FINISHED'].includes(before.phase);
   if (newMatch) {
     if (after.phase === 'SWAP') {
+      checkServerDeal(after, ctx.deal, add);
       if (ids.size !== DECK_SIZE) add('bad-deal', true, `${ids.size} cards dealt`);
       seatsOf(after).forEach((seat) => {
         if (list(seat.hand).length !== 3 || list(seat.faceUp).length !== 3 || list(seat.faceDown).length !== 3) add('bad-deal', true, 'not 3/3/3', seat.id);
@@ -198,8 +221,11 @@ function auditTransition(before, after, ctx) {
     const ranks = new Set(open.filter((f) => !f.card.isJoker).map((f) => f.card.rank));
     if (ranks.size > 1) { add('mixed-play', true, `played ${[...ranks].join('+')} together`, seatId); return; }
     const card = open[0].card;
+    // Matching the rank on top is how a Bonus Draw follow-up (not synced to
+    // the room) and a snap look, and gains nothing, so it's accepted.
     const legal = isPlayLegal(card, beforePile, before.activeConstraint || null, before.baseOverrideCard || null)
-      || (pileBurns(beforePile) && isPlayLegal(card, [], null, null));
+      || (pileBurns(beforePile) && isPlayLegal(card, [], null, null))
+      || (!!topBefore && !topBefore.isJoker && topBefore.rank === card.rank);
     if (!legal) add('illegal-play', true, `${card.rank} on ${topBefore ? topBefore.rank : 'an empty pile'}${before.activeConstraint ? ` (${before.activeConstraint})` : ''}`, seatId);
     if (turnSeat && turnSeat.id !== seatId && !card.isJoker) {
       let run = 0;
@@ -228,4 +254,4 @@ function auditTransition(before, after, ctx) {
   return findings;
 }
 
-module.exports = { auditTransition, pileBurns, locate, TIMEOUT_GRACE_MS, AWAY_BEFORE_BOT_MS };
+module.exports = { auditTransition, gameChanged, isNewDeal, pileBurns, locate, TIMEOUT_GRACE_MS, AWAY_BEFORE_BOT_MS };

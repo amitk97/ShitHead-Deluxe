@@ -14,6 +14,7 @@
 //   claim         one challenge by completion key (daily_…, weekly_…, id)
 //   matchWin      a Vs Bots or casual online win (caps: see MATCH_LIMITS)
 //   matchFinished a finished match (ShitHead Virgin / Beginner)
+//   rankedDeal    the server's seat order + shuffled deck for a Ranked match
 //   rankedResult  score a finished Ranked room for every seat, once
 //   buyItem / buyBundle / buyNameToken / sendGift / claimGift
 'use strict';
@@ -24,6 +25,8 @@ const admin = require('firebase-admin');
 const CAT = require('./catalog.json');
 Object.entries(CAT.items).forEach(([id, item]) => { item.id = id; });
 const { seasonalWindowsForYear } = require('./seasons');
+const nodeCrypto = require('crypto');
+const { DECK_SIZE } = require('./rules');
 
 const MAX_DIAMONDS = 999999;
 const AMITK_EMAIL = 'amirk2197@googlemail.com';
@@ -425,6 +428,54 @@ actions.matchFinished = async ({ uid, data }) => {
 // Scores a finished Ranked room for every seat at once (idempotent: the
 // second player's call just reads the stored result). Ratings come from the
 // server's own records, not from the room.
+// The host's phone deals, so it could deal itself a great hand. In Ranked
+// the server decides instead: it shuffles the seats and the 54 cards
+// (c_1…c_54, crypto-random) once per match and keeps them in rankedDeals
+// (server-only); the host deals exactly that and the Ranked audit checks the
+// first dealt state against it. One deal per room: a new one only once the
+// last is 10 minutes old, so a host can't keep asking until it likes one.
+const RANKED_REDEAL_MS = 10 * 60 * 1000;
+function shuffledCopy(list) {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = nodeCrypto.randomInt(i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+actions.rankedDeal = async ({ uid, data }) => {
+  const code = clip(data.roomCode, 6);
+  const matchId = clip(data.matchId, 80);
+  if (!/^\d{6}$/.test(code) || !KEY_RE.test(matchId)) fail('invalid-argument', 'Bad match.');
+  const room = (await db().ref(`rooms/${code}`).once('value')).val();
+  if (!room || room.isRanked !== true) fail('failed-precondition', 'Not a Ranked room.');
+  const uids = Object.values(room.players || {}).filter(Boolean).map(p => p.uid).filter(Boolean);
+  if (uids.length < 2 || new Set(uids).size !== uids.length || !uids.includes(uid)) fail('permission-denied', 'You are not at that table.');
+  const member = num((await db().ref(`rankedMembers/${code}/${uid}`).once('value')).val(), 0);
+  if (!member) fail('permission-denied', 'You are not at that table.');
+  const ref = db().ref(`rankedDeals/${code}`);
+  let deal = null, refused = false;
+  const tx = await ref.transaction((cur) => {
+    deal = null; refused = false;
+    if (cur && cur.matchId === matchId) { deal = cur; return; } // the same match asking again
+    if (cur && Date.now() - num(cur.at) < RANKED_REDEAL_MS) { refused = true; return; }
+    deal = {
+      matchId,
+      at: Date.now(),
+      by: uid,
+      order: shuffledCopy(uids),
+      deck: shuffledCopy(Array.from({ length: DECK_SIZE }, (_, i) => `c_${i + 1}`))
+    };
+    return deal;
+  }, undefined, false);
+  if (!tx.committed && !deal) {
+    const cur = tx.snapshot.val();
+    if (cur && cur.matchId === matchId) deal = cur;
+  }
+  if (!deal) fail('resource-exhausted', refused ? 'This table was dealt a moment ago.' : 'Could not deal.');
+  return { matchId: deal.matchId, order: deal.order, deck: deal.deck };
+};
+
 actions.rankedResult = async ({ uid, data }) => {
   const code = clip(data.roomCode, 6);
   if (!/^\d{6}$/.test(code)) fail('invalid-argument', 'Bad room.');
