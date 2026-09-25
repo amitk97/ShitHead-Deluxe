@@ -1087,8 +1087,38 @@ async function runDevTestSuite() {
       document.getElementById('modeSingleBtn').click();
     }
   });
-  await test('Quick Start: at most 7 short steps, and the Tutorial button starts it the first time', () => {
-    assertTrue(TUTORIAL_MODULE_QUICK_START.length <= 7, 'No more than 7 steps');
+  await test('Tutorial spotlight follows a target that resizes; asked-for cards stop glowing once you act', async () => {
+    const saved = { active: tutorialActive, step: tutorialStep, awaiting: tutorialAwaitingAction };
+    const box = document.createElement('div');
+    box.id = 'spotlightFollowProbe';
+    box.style.cssText = 'position:fixed;left:20px;top:300px;width:60px;height:40px;';
+    document.body.appendChild(box);
+    try {
+      tutorialActive = true;
+      positionTutorialUI('#spotlightFollowProbe');
+      box.style.width = '200px';
+      cancelAnimationFrame(tutorialFollowRaf); tutorialFollowRaf = null;
+      tutorialFollowSpotlight(); // one frame of the follow loop
+      const rect = document.querySelector('#tutorialSpotlightBorders rect');
+      assertTrue(!!rect && Math.abs(+rect.getAttribute('width') - 208) < 1, `Box grew with the target (${rect && rect.getAttribute('width')})`);
+      tutorialStep = 1; tutorialAwaitingAction = true;
+      const q = { rank: 'Q', suit: '♠', id: 'q' };
+      const step1 = TUTORIAL_STEPS[1];
+      if (step1 && step1.require && step1.require.rank) {
+        assertTrue(tutorialWantsCard({ ...q, rank: [].concat(step1.require.rank)[0] }, 'hand'), 'Glows while waiting');
+        tutorialAwaitingAction = false;
+        assertTrue(!tutorialWantsCard({ ...q, rank: [].concat(step1.require.rank)[0] }, 'hand'), 'Stops glowing once the player has acted');
+      }
+    } finally {
+      tutorialActive = saved.active; tutorialStep = saved.step; tutorialAwaitingAction = saved.awaiting;
+      box.remove();
+      document.getElementById('tutorialSpotlightHoles')?.replaceChildren();
+      document.getElementById('tutorialSpotlightBorders')?.replaceChildren();
+    }
+  });
+
+  await test('Quick Start: at most 8 short steps, and the Tutorial button starts it the first time', () => {
+    assertTrue(TUTORIAL_MODULE_QUICK_START.length <= 8, 'No more than 8 steps');
     TUTORIAL_MODULE_QUICK_START.forEach((step, i) => {
       assertTrue(step.text.split(/\s+/).length <= 18, `Step ${i + 1} is one short sentence (${step.text.split(/\s+/).length} words)`);
       if (step.coachNote) assertTrue(step.coachNote.split(/\s+/).length <= 18, `Step ${i + 1} note is short`);

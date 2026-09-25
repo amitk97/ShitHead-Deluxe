@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v132 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v133 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -23527,18 +23527,24 @@ video {
         target: '#cardRefBtn',
         require: { tapCheck: '#cardRefBtn' },
         coachNote: "Here's every card's power. Open it any time during a game.",
-        noteTarget: ['#cardRefPanel', '#cardRefBtn']
+        noteTarget: '#cardRefPanel'
       },
       {
         text: "The ▦ Play Matrix shows which card can go on which. Tap the glowing ▦!",
         target: '#matrixRefBtn',
         require: { tapCheck: '#matrixRefBtn' },
         coachNote: "Row = your card, column = the Pile. ✓ plays, ✗ doesn't. Every card's power is built in.",
-        noteTarget: ['#matrixRefPanel', '#matrixRefBtn']
+        noteTarget: '#matrixRefPanel'
       },
       {
-        text: "Hand empty? Play Face-Up cards, then Face-Down ones blind. You're ready!",
-        target: ['#localHand', '#localTableSlots']
+        text: "Once your Hand and the Deck run out, you play your Face-Up cards.",
+        target: ['#tableZoneLabel', '#localTableSlots .card-table'],
+        scene: { hand: [], emptyDeck: true }
+      },
+      {
+        text: "Last, your Face-Down cards, flipped blind: pure luck! Empty them all to win. You're ready!",
+        target: ['#tableZoneLabel', '#localTableSlots .custom-card-back'],
+        scene: { hand: [], faceUp: [], emptyDeck: true }
       }
     ];
     const QUICK_START_MODULE = { id: 'quick_start', title: '⚡ Quick Start', time: '~1 min', desc: 'Everything you need to play', steps: TUTORIAL_MODULE_QUICK_START, players: 2 };
@@ -24042,6 +24048,7 @@ video {
         if (step.matchSpotlightWidthPair) syncSpotlightBoxWidths(...step.matchSpotlightWidthPair);
       };
       applySpotlight();
+      startTutorialSpotlightFollow();
       // The caption's own size can shift the layout underneath it, leaving the
       // spotlight measured against a stale position. Re-measure once the
       // browser has settled.
@@ -24139,7 +24146,40 @@ video {
       narrowEls.forEach(el => { el.setAttribute('x', newX); el.setAttribute('width', wide); });
     }
 
+    // The spotlight follows its targets: every frame while the tutorial runs,
+    // tutorialFollowSpotlight re-measures them and redraws only when something
+    // moved or resized (a hand growing after a pickup, a card lifting or
+    // leaving, a pop-up springing open or being resized/zoomed).
+    let tutorialSpotlightSel = null, tutorialSpotlightSig = '', tutorialFollowRaf = null;
+    function tutorialSpotlightSignature(selector) {
+      const selectors = Array.isArray(selector) ? selector : (selector ? [selector] : []);
+      const parts = selectors.flatMap(s => { try { return Array.from(document.querySelectorAll(s)); } catch (e) { return []; } })
+        .map(el => { const r = el.getBoundingClientRect(); return `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}`; });
+      const arena = document.getElementById('centerArena')?.getBoundingClientRect();
+      const cap = document.getElementById('tutorialCaption');
+      return `${parts.join('|')}#${arena ? Math.round(arena.top) : ''}#${cap ? cap.offsetWidth + 'x' + cap.offsetHeight : ''}#${window.innerWidth}x${window.innerHeight}`;
+    }
+    function tutorialFollowSpotlight() {
+      if (!tutorialActive) { tutorialFollowRaf = null; return; }
+      if (tutorialSpotlightSignature(tutorialSpotlightSel) !== tutorialSpotlightSig) positionTutorialUI(tutorialSpotlightSel);
+      tutorialFollowRaf = requestAnimationFrame(tutorialFollowSpotlight);
+    }
+    function startTutorialSpotlightFollow() {
+      if (tutorialFollowRaf === null) tutorialFollowRaf = requestAnimationFrame(tutorialFollowSpotlight);
+    }
+
     function positionTutorialUI(selector) {
+      tutorialSpotlightSel = selector;
+      tutorialSpotlightSig = tutorialSpotlightSignature(selector);
+      drawTutorialSpotlight(selector);
+      // Step-level extras redraw with it (only for the step's own target).
+      const step = tutorialActive ? TUTORIAL_STEPS[tutorialStep] : null;
+      if (step && selector === step.target) {
+        if (step.swapColorGroups) renderSwapColorSpotlights(step.swapColorGroups, tutorialSwapSequenceProgress);
+        if (step.matchSpotlightWidthPair) syncSpotlightBoxWidths(...step.matchSpotlightWidthPair);
+      }
+    }
+    function drawTutorialSpotlight(selector) {
       const cap = document.getElementById('tutorialCaption');
       const holesGroup = document.getElementById('tutorialSpotlightHoles');
       const bordersGroup = document.getElementById('tutorialSpotlightBorders');
@@ -24244,7 +24284,9 @@ video {
     // the Hand is still the actual reachable tier (only once Hand+Deck are
     // both empty does Face-Up become live, same rule the game itself uses).
     function tutorialWantsCard(card, pool) {
-      if (!tutorialActive || !card) return false;
+      // Once the player has acted (e.g. the Coach's reply is landing), the
+      // cards the step asked for stop glowing.
+      if (!tutorialActive || !card || !tutorialAwaitingAction) return false;
       const step = TUTORIAL_STEPS[tutorialStep];
       if (!step || !step.require) return false;
       const r = step.require;
