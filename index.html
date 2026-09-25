@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v129 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v130 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -14822,6 +14822,7 @@ video {
       const id = `m${entry.at.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
       entry.id = id;
       matchHistoryCurrentId = id;
+      claimFirstGameChallenges(true, entry.place === 1 && !entry.shithead);
       writeLocalMatchHistory([entry, ...readLocalMatchHistory().filter(e => e.id !== id)]);
       if (currentUser && typeof db !== 'undefined' && firebaseAvailable) {
         const uid = currentUser.uid;
@@ -14969,6 +14970,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v130: [
+        ['🎯', 'New Getting Started challenges: play your first game (ShitHead Virgin) and win your first game (Beginner), 20 Diamonds each.']
+      ],
       v129: [
         ['💎', 'Finish the Quick Start tutorial for 50 Diamonds.'],
         ['🎓', 'Tutorial Graduate now pays 200 Diamonds: complete Quick Start and every tutorial lesson.']
@@ -18669,6 +18673,10 @@ video {
       desc: 'Complete the Quick Start tutorial.',
       reward: 50
     };
+    const FIRST_GAME_CHALLENGE = { id: 'first-game', name: 'ShitHead Virgin', desc: 'Play your first game.', reward: 20 };
+    const FIRST_WIN_CHALLENGE = { id: 'first-win', name: 'Beginner', desc: 'Win your first game.', reward: 20 };
+    // Challenges → Getting Started, in the order they're shown.
+    const GETTING_STARTED_CHALLENGES = [QUICK_START_CHALLENGE, FIRST_GAME_CHALLENGE, FIRST_WIN_CHALLENGE, TUTORIAL_COMPLETION_CHALLENGE];
 
     // --- Daily pool (20 total; exactly 3 are picked per UK day) --------
     const DAILY_CHALLENGE_POOL = [
@@ -18835,8 +18843,8 @@ video {
       if (typeof defOrId === 'string') {
         if (/^daily_/.test(id)) return getDailyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
         if (/^weekly_/.test(id)) return getWeeklyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
-        if (id === TUTORIAL_COMPLETION_CHALLENGE.id) return TUTORIAL_COMPLETION_CHALLENGE.desc;
-        if (id === QUICK_START_CHALLENGE.id) return QUICK_START_CHALLENGE.desc;
+        const gettingStarted = GETTING_STARTED_CHALLENGES.find(c => c.id === id);
+        if (gettingStarted) return gettingStarted.desc;
         def = Object.values(CHALLENGE_DEFS).flat().find(c => c.id === id);
         if (!def) return '';
       }
@@ -19139,6 +19147,7 @@ video {
           // covers a guest who finished lessons and then signed in here.
           accountTutorialLessonsDone = !!profile.tutorialCompleted;
           syncTutorialChallenges();
+          backfillFirstGameChallenges(profile);
           // Drain the buffer from the CRITICAL BUG FIX in notifyChallengeEvent
           // above: anything that happened before this exact point (state
           // just became ready one line up) gets replayed now, in the order
@@ -19483,6 +19492,31 @@ video {
     // that already exists for the difficulty-unlock system — called from
     // recordDifficultyWin with the freshly-committed win count, so no
     // separate tracking was needed for these at all.
+    // ShitHead Virgin / Beginner: paid from recordMatchHistory (once per
+    // finished real match, never the tutorial). Already-completed ids are
+    // skipped here so a normal match doesn't open a transaction for them.
+    function claimFirstGameChallenges(played, won) {
+      if (typeof currentUser === 'undefined' || !currentUser) return Promise.resolve(false);
+      const done = (challengeEconomy && challengeEconomy.completedChallenges) || {};
+      let chain = Promise.resolve();
+      [[played, FIRST_GAME_CHALLENGE], [won, FIRST_WIN_CHALLENGE]].forEach(([met, def]) => {
+        if (met && !done[def.id]) chain = chain.then(() => claimChallenge(def.id, def.reward, def.name));
+      });
+      return chain;
+    }
+    // At sign-in: players who already had games before these existed (Ranked
+    // record, Vs Bots wins, or match history on this device, guest's too).
+    function backfillFirstGameChallenges(profile) {
+      const history = [matchHistoryKey(), 'shithead_match_history_guest'].flatMap((key) => {
+        try { const list = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(list) ? list : []; } catch (e) { return []; }
+      });
+      const botWins = Object.values((profile && profile.difficultyWins) || {}).reduce((a, n) => a + (Number(n) || 0), 0);
+      const rankedWins = Number(profile && profile.wins) || 0, rankedLosses = Number(profile && profile.losses) || 0;
+      const won = rankedWins > 0 || botWins > 0 || history.some(e => e && e.place === 1 && !e.shithead);
+      const played = won || rankedLosses > 0 || history.length > 0;
+      return claimFirstGameChallenges(played, won);
+    }
+
     function checkBotMatchChallenge(difficulty, newCount) {
       const def = CHALLENGE_DEFS.botMatches.find((c) => c.difficulty === difficulty);
       if (def && newCount >= def.target) claimChallenge(def.id, def.reward, def.name);
@@ -19596,7 +19630,7 @@ video {
 
     function getChallengePriority(challengeId) {
       if (challengeId === TUTORIAL_COMPLETION_CHALLENGE.id) return -1000;
-      if (challengeId === QUICK_START_CHALLENGE.id) return -999;
+      if (GETTING_STARTED_CHALLENGES.some(c => c.id === challengeId)) return -999;
       if (challengeId.startsWith('daily_')) {
         // daily_<dateKey>_<poolId> — split is safe because dateKey is
         // YYYY-MM-DD (dashes, not underscores) and no pool id contains
@@ -19818,7 +19852,7 @@ video {
         return;
       }
 
-      setListHtml('challengesTutorialList', [QUICK_START_CHALLENGE, TUTORIAL_COMPLETION_CHALLENGE].map((def) => renderChallengeRowHTML(
+      setListHtml('challengesTutorialList', GETTING_STARTED_CHALLENGES.map((def) => renderChallengeRowHTML(
         def.name,
         def.desc,
         def.reward,

@@ -56,6 +56,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Challenges
 
+- Getting Started (`GETTING_STARTED_CHALLENGES`, shown in that order): Quick Starter 50, ShitHead Virgin 20 (play a first game), Beginner 20 (win a first game), Tutorial Graduate 200. The first-game pair is paid from `recordMatchHistory` (once per real match, never the tutorial) via `claimFirstGameChallenges`, and backfilled at sign-in from Ranked W/L, `difficultyWins` and local match history (`backfillFirstGameChallenges`).
 - Every row shows what the challenge asks for; a completed row keeps that description (with the ✓) instead of just "Completed". The "Challenge completed" mail shows it too. One source: `challengeDescription(defOrCompletionKey)` (handles `daily_<date>_<id>` / `weekly_<week>_<id>` keys and the tutorial).
 
 ## Microinteractions & flips

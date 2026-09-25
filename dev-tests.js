@@ -3967,6 +3967,31 @@ async function runDevTestSuite() {
     }
   });
 
+  await test('ShitHead Virgin / Beginner: 20 each, paid once from the finished match', async () => {
+    assertEqual([FIRST_GAME_CHALLENGE.name, FIRST_GAME_CHALLENGE.reward, FIRST_WIN_CHALLENGE.name, FIRST_WIN_CHALLENGE.reward], ['ShitHead Virgin', 20, 'Beginner', 20], 'Names and rewards');
+    assertTrue(GETTING_STARTED_CHALLENGES.includes(FIRST_GAME_CHALLENGE) && GETTING_STARTED_CHALLENGES.includes(FIRST_WIN_CHALLENGE), 'Shown under Getting Started');
+    assertEqual(challengeDescription('first-win'), 'Win your first game.', 'Completed row / mail shows what it asked for');
+    const origClaim = claimChallenge, origUser = currentUser, origCompleted = challengeEconomy.completedChallenges;
+    const claims = [];
+    claimChallenge = (id, reward) => { claims.push([id, reward]); return Promise.resolve(true); };
+    try {
+      currentUser = { uid: 'test-uid' };
+      challengeEconomy.completedChallenges = {};
+      await claimFirstGameChallenges(true, false);
+      assertEqual(claims, [['first-game', 20]], 'A loss pays only ShitHead Virgin');
+      claims.length = 0;
+      challengeEconomy.completedChallenges = { 'first-game': { completedAt: 1, reward: 20 } };
+      await claimFirstGameChallenges(true, true);
+      assertEqual(claims, [['first-win', 20]], 'A win pays Beginner; completed ones are skipped');
+      claims.length = 0;
+      challengeEconomy.completedChallenges = {};
+      await backfillFirstGameChallenges({ difficultyWins: { easy: 2 } });
+      assertEqual(claims, [['first-game', 20], ['first-win', 20]], 'Existing Vs Bots wins backfill both');
+    } finally {
+      claimChallenge = origClaim; currentUser = origUser; challengeEconomy.completedChallenges = origCompleted;
+    }
+  });
+
   await test('Generated cosmetic concepts are implemented as real equippable items', () => {
     const previousBack = equippedCosmetics.cardBack;
     try {
