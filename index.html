@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v120 (ShitHead-Deluxe-120) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v121 (ShitHead-Deluxe-121) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5309,7 +5309,7 @@ video {
              right-hand end. Anchoring to this bar (not the arena's midpoint)
              keeps it still when the multiplayer timer changes arena height.
              NOTE: shown in bot mode for testing; restrict before release. -->
-        <div id="emoteLayer" class="hidden absolute z-[55] pointer-events-none" style="right:0; top:calc((clamp(34px,10vw,46px) + 6px) * -1); height:clamp(34px,10vw,46px);">
+        <div id="emoteLayer" class="hidden absolute pointer-events-none" style="z-index:65; right:0; top:calc((clamp(34px,10vw,46px) + 6px) * -1); height:clamp(34px,10vw,46px);">
           <div class="relative">
             <button id="emoteToggleBtn" class="pointer-events-auto rounded-full bg-slate-900/90 border-2 border-amber-500/70 shadow-lg flex items-center justify-center transition transform active:scale-90 hover:scale-105"
               style="width:clamp(34px,10vw,46px);height:clamp(34px,10vw,46px);font-size:clamp(18px,5.5vw,26px);" aria-label="Send a reaction">😄</button>
@@ -10968,6 +10968,13 @@ video {
     // Floats the emoji up from the sending player's area, then fades. Muting
     // only suppresses OTHER players' emotes — you always see your own, so the
     // button never feels unresponsive.
+    // Emote stacking: the picker (#emoteLayer, 65) sits above everything on
+    // the table, including the end-of-match standings and buttons (60);
+    // floating reactions (78) above all table banners too. Both stay BELOW
+    // every pop-up and page (end-of-match summary 79, Guide 80, Settings 85,
+    // Inbox and menu pages 95…), so they never show over the mailbox or
+    // Settings. A dev test checks this.
+    const EMOTE_FLOAT_Z = 78;
     function showEmoteFloat(emoji, playerId) {
       const isOwn = playerId === state.localPlayerId;
       if (emotesMuted && !isOwn) return;
@@ -10976,8 +10983,9 @@ video {
       const r = anchor.getBoundingClientRect();
       const el = document.createElement('div');
       el.textContent = emoji;
+      el.className = 'emote-float';
       el.style.cssText = `position:fixed; left:${r.left + r.width / 2 - 20}px; top:${r.top - 10}px;
-        font-size:36px; z-index:9999; pointer-events:none;
+        font-size:36px; z-index:${EMOTE_FLOAT_Z}; pointer-events:none;
         transition: transform 1.9s ease-out, opacity 1.9s ease-out;`;
       document.body.appendChild(el);
       requestAnimationFrame(() => {

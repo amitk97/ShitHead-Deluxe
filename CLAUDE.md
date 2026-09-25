@@ -80,6 +80,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Vs Bots remembers the last bot count and difficulty (`readBotPrefs` / `applyBotPrefs`: localStorage `shithead_bot_count` / `shithead_difficulty`, plus `botCount` / `botDifficulty` in `users/{uid}/settings` for signed-in accounts). A locked difficulty is never restored.
 - Tab strips (`initHorizontalScroller`) keep the selected tab scrolled into view.
 
+## Emote layering
+
+- The emote picker (`#emoteLayer`, z-index 65 inline) is above everything on the table, including the end-of-match standings and buttons (60); floating reactions (`EMOTE_FLOAT_Z` = 78, `showEmoteFloat`) are above all table banners too. Both stay BELOW every pop-up and page (summary 79, Guide 80, Settings 85, Inbox/menu pages 95+), so they never show over the mailbox or Settings. A dev test checks both sides; keep new table UI under 65 and new pop-ups above 78.
+
 ## Online sync pitfalls (the cause of "Ranked/online lags and freezes")
 
 - Firebase never stores empty arrays: a player whose Hand or Face-Up has run out arrives with that zone missing. The room listener refills `hand`/`faceUp`/`faceDown` with `[]` before use; never treat a missing zone as damage (`localDealLooksIncomplete` only flags a live seat with no cards at all).

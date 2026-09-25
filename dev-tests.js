@@ -1003,6 +1003,25 @@ async function runDevTestSuite() {
       state.direction = 1; updateDirectionBadge();
     }
   });
+  await test('Emotes sit above the table (standings, end buttons) but below every pop-up and page', () => {
+    const zOf = (el) => parseInt(getComputedStyle(el).zIndex, 10) || 0;
+    const emoteZ = zOf(document.getElementById('emoteLayer'));
+    ['finalStandingsBanner', 'matchEndButtonRow'].forEach((id) => {
+      const el = document.getElementById(id);
+      assertTrue(emoteZ > zOf(el), `The emote picker (${emoteZ}) must be above #${id} (${zOf(el)})`);
+    });
+    const pages = [...EXCLUSIVE_PAGE_IDS, 'matchSummaryModal', 'rejoinModal', 'whatsNewModal', 'authModal'];
+    pages.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const wasHidden = el.classList.contains('hidden');
+      el.classList.remove('hidden');
+      const pz = zOf(el);
+      if (wasHidden) el.classList.add('hidden');
+      assertTrue(pz > EMOTE_FLOAT_Z && pz > emoteZ, `#${id} (${pz}) must cover emotes (picker ${emoteZ}, floats ${EMOTE_FLOAT_Z})`);
+    });
+    assertTrue(EMOTE_FLOAT_Z > emoteZ, 'Floating reactions show above the picker');
+  });
   await test('Every Burn cosmetic (and the default) has its own burn sound', () => {
     assertTrue(typeof BURN_SOUNDS.default === 'function', 'A default burn sound exists');
     const missing = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && typeof BURN_SOUNDS[i.id] !== 'function').map(i => i.id);
