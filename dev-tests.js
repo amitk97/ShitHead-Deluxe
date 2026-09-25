@@ -3166,6 +3166,66 @@ async function runDevTestSuite() {
     const substitute = makePlayer({ id: 'p1', name: 'Priya', isBot: true });
     assertEqual(reclaimSubstitutedSeat(substitute).name, 'Priya', 'A plain name with no suffix must pass through unchanged');
   });
+  await test('Online blind flips are broadcast to the room with the result and timing', () => {
+    freshState({ isMultiplayer: true, roomCode: '101010', localPlayerId: 'p_me', discardPile: [{ id: 'k1', rank: 'K', suit: 'H' }], activeConstraint: null });
+    const originalDb = db;
+    let path = null, payload = null;
+    db = { ref: (p) => ({ set: (v) => { path = p; payload = v; return Promise.resolve(); } }) };
+    try { broadcastBlindReveal('p_me', { id: 'c3', rank: '3', suit: 'S' }); } finally { db = originalDb; }
+    assertEqual(path, 'rooms/101010/lastBlindReveal', 'Written to the room');
+    assertEqual(payload.playerId, 'p_me', 'Names whose flip it is');
+    assertEqual(payload.by, 'p_me', 'Names the client that made it');
+    assertTrue(payload.good === true, 'A 3 is playable on a King: green');
+    assertEqual(payload.ms, BLIND_REVEAL_MS.self, 'Carries the reveal length');
+    assertTrue(typeof payload.key === 'string' && payload.key.length > 3, 'Has a unique key');
+  });
+  await test('A broadcast reveal is never replayed by the client that made it, or when it arrives too late', () => {
+    freshState({ isMultiplayer: true, roomCode: '101010', localPlayerId: 'p_host' });
+    const card = { id: 'c3', rank: '3', suit: 'S' };
+    assertTrue(!showRemoteBlindReveal({ key: 'a', by: 'p_host', playerId: 'p_bot_1', card, good: true, ms: 800, at: serverNow() }), 'The host made this bot flip itself');
+    assertTrue(!showRemoteBlindReveal({ key: 'b', by: 'p_x', playerId: 'p_host', card, good: true, ms: 800, at: serverNow() }), 'Never my own flip');
+    assertTrue(!showRemoteBlindReveal({ key: 'c', by: 'p_x', playerId: 'p_x', card, good: true, ms: 800, at: serverNow() - 5000 }), 'Too late: the result is already on the table');
+  });
+  await test('The Shop opens on the last tab picked, unless a seasonal event has started since', () => {
+    const saved = localStorage.getItem('shithead_shop_tab');
+    try {
+      localStorage.removeItem('shithead_shop_tab');
+      assertEqual(restoredShopTab(false), 'Profile Pictures', 'Nothing saved: Pictures');
+      assertEqual(restoredShopTab(true), SEASONAL_TAB, 'Nothing saved, event on: Seasonal');
+      localStorage.setItem('shithead_shop_tab', JSON.stringify({ tab: 'Card Backs', seasonLead: false }));
+      assertEqual(restoredShopTab(false), 'Card Backs', 'Remembers the tab');
+      assertEqual(restoredShopTab(true), SEASONAL_TAB, 'An event that started since takes the lead');
+      localStorage.setItem('shithead_shop_tab', JSON.stringify({ tab: 'Card Backs', seasonLead: true }));
+      assertEqual(restoredShopTab(true), 'Card Backs', 'Picked during the event: stays');
+      localStorage.setItem('shithead_shop_tab', JSON.stringify({ tab: 'Not A Tab', seasonLead: false }));
+      assertEqual(restoredShopTab(false), 'Profile Pictures', 'A tab that no longer exists is ignored');
+    } finally {
+      if (saved === null) localStorage.removeItem('shithead_shop_tab'); else localStorage.setItem('shithead_shop_tab', saved);
+    }
+  });
+  await test("What's New shows the notes for a version and is keyed by vNNN", () => {
+    Object.keys(WHATS_NEW).forEach(k => assertTrue(/^v\d+$/.test(k), `Key ${k} must look like v114`));
+    const modal = document.getElementById('whatsNewModal');
+    try {
+      assertTrue(showWhatsNew('v114'), 'v114 has notes');
+      assertTrue(!modal.classList.contains('hidden'), 'The pop-up opens');
+      assertEqual(document.querySelectorAll('#whatsNewList li').length, WHATS_NEW.v114.length, 'One row per note');
+      assertTrue(!showWhatsNew('v1'), 'A version with no notes shows nothing');
+    } finally { modal.classList.add('hidden'); }
+  });
+  await test('Friends list: online friends first; inviting from a casual lobby uses that room', () => {
+    freshState({ isMultiplayer: true, isRanked: false, roomCode: '424242', phase: 'LOBBY' });
+    assertEqual(inviteableRoomCode(), '424242', 'Lobby of a casual room');
+    const row = friendRowHtml('u1', { username: 'Jamie', online: true }, 'friend');
+    assertTrue(row.includes('INVITE HERE'), 'The button says it invites into this room');
+    assertTrue(row.includes('friend-status online'), 'Shows Online');
+    state.isRanked = true;
+    assertEqual(inviteableRoomCode(), null, 'Never a Ranked room');
+    freshState({ isMultiplayer: true, isRanked: false, roomCode: '424242', phase: 'PLAY' });
+    assertEqual(inviteableRoomCode(), null, 'Not once the match has started');
+    freshState({ isMultiplayer: false });
+    assertTrue(friendRowHtml('u1', { username: 'Jamie', online: false }, 'friend').includes('friend-status offline'), 'Shows Offline');
+  });
   await test('The joined room survives the app being killed (localStorage), and expires', () => {
     freshState({ localPlayerId: 'p_ab12', players: [makePlayer({ id: 'p_ab12', name: 'Jamie' })] });
     forgetJoinedRoom();

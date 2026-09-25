@@ -42,7 +42,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Blind flip reveal
 
 - Every face-down (blind) play goes through a reveal first (`playBlindReveal`, gated at the top of `executePlayCards`; the real play reruns with `{ revealed: true }`): the card rises over the pile, the table dims, it wobbles and turns edge-on, then snaps over glowing green (playable) or red (forced pickup). ~1.2s for you, ~0.8s for others (`BLIND_REVEAL_MS`). Sounds are synthesised (`playRevealTension` / `playRevealResult`).
-- `state.blindRevealing` blocks every other play meanwhile (reset by `hideMatchEndUI`). Skipped (instant flip) in the tutorial, with Reduce Motion, while fast-forwarding, in a hidden tab and during the test suite (`shouldRevealBlind`). Online, only the player who flips sees the reveal; everyone else gets the result.
+- `state.blindRevealing` blocks every other play meanwhile (reset by `hideMatchEndUI`). Skipped (instant flip) in the tutorial, with Reduce Motion, while fast-forwarding, in a hidden tab and during the test suite (`shouldRevealBlind`). Online, the client making the flip (you, or the host for a bot) broadcasts it as `rooms/{code}/lastBlindReveal` (`broadcastBlindReveal`: card, result, length, `serverNow()` time) and every other player plays the same reveal, trimmed by the delay (`showRemoteBlindReveal`), so it lands with the real play.
 
 ## Challenges
 
@@ -141,3 +141,15 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - `showMatchEndUI` → `scheduleMatchSummary` opens `#matchSummaryModal` ~1.6s after the end (after the victory effect). Content from `matchSummaryHtml`: placing, the local player's `gameStats`, every Diamond toast this match (`enqueueChallengeToast` → `logMatchReward`), Ranked rating change (`applyRankedRatingUpdate` → `matchSummaryRating`), daily and seasonal progress. It updates live as late rewards arrive.
 - REMATCH mirrors the end-of-match row (Quick Play / guest "waiting for host" / Ranked "find another match"). `hideMatchEndUI` (every new match) resets it. Not scheduled while the dev test suite runs.
+
+## Version, What's New & error reports
+
+- The version comes ONLY from the `<!-- BUILD: YYYY-MM-DD-vNNN ... -->` comment at the top of index.html (`GAME_BUILD` → `getGameVersionLabel()`). Bump it for every release: it drives room compatibility (`clientVersion`), the support email and What's New.
+- What's New: `WHATS_NEW['vNNN']` = `[icon, text]` rows, shown once to a returning player whose `shithead_seen_version` differs (`maybeShowWhatsNew`, waits for the home screen). A build with no entry shows nothing. Add one when players would notice the change.
+- `reportError` writes `errorReports/{uid}/{id}` (once per error per session, never during tests). Only the owner (`GAME_OWNER_EMAIL`, verified) can read/clear them: menu → Error Reports (`#errorReportsModal`, grouped by message).
+
+## Rejoin, friends & small prefs
+
+- The current room is kept in sessionStorage `shithead_joined_room` plus localStorage `shithead_active_match` ({code, at, playerId, name}, 3h): always use `rememberJoinedRoom` / `forgetJoinedRoom` / `joinedRoomRecord`. On load (`attemptMatchReconnect`, after auth; guests too) a live match rejoins: Ranked automatically by uid, casual after the "Rejoin your match?" prompt (`#rejoinModal`; seat by uid, stored id, or name incl. a "Name (Bot)" stand-in, which is handed back via `reclaimSubstitutedSeat`).
+- Friends: online first with "N of M online"; INVITE from inside a casual lobby invites into that room (`inviteableRoomCode`), otherwise it opens a new one. The lobby has an Invite Friends button.
+- Inbox and Friends lists pull to refresh (`attachPullToRefresh`). The Shop opens on the last tab (`shithead_shop_tab`, `restoredShopTab`), except a seasonal event that started since takes the lead once. Turn Alert also buzzes (Vibration). Leaving a live Ranked match warns it counts as a loss.

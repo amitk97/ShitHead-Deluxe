@@ -560,6 +560,20 @@
     .friend-info { min-width:0; flex:1; display:flex; flex-direction:column; gap:2px; }
     .friend-name { font-size:14px; font-weight:900; color:#fff; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .friend-rank { font-size:10px; font-weight:800; color:rgba(251,191,36,.9); white-space:nowrap; }
+    .friend-status { font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; color:#64748b; }
+    .friend-status.online { color:#34d399; }
+    /* Pull-to-refresh strip above the Inbox / Friends lists (attachPullToRefresh) */
+    .ptr-indicator { height:0; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:6px; font-size:10px; font-weight:800; color:#94a3b8; opacity:0; transition: height .22s var(--ease-soft), opacity .22s var(--ease-soft); }
+    .ptr-indicator.is-dragging { transition: none; }
+    .ptr-indicator .ptr-icon { display:inline-block; transition: transform .18s var(--ease-snappy); }
+    .ptr-indicator.is-ready { color:#fbbf24; }
+    .ptr-indicator.is-ready .ptr-icon { transform: rotate(180deg); }
+    .ptr-indicator.is-busy .ptr-icon { animation: ptr-spin .8s linear infinite; }
+    @keyframes ptr-spin { to { transform: rotate(360deg); } }
+    .whats-new-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+    .whats-new-list li { display:flex; gap:10px; align-items:flex-start; font-size:12px; line-height:1.35; color:#cbd5e1; background:rgba(15,23,42,.7); border:1px solid #1e293b; border-radius:12px; padding:8px 10px; }
+    .whats-new-list li > span:first-child { font-size:18px; line-height:1; flex-shrink:0; }
+    .friends-online-count { font-size:10px; font-weight:800; color:#94a3b8; text-align:center; margin:0 0 6px; }
     .friend-actions { display:grid; gap:5px; }
     .friend-action { min-width:0; padding:6px 2px; border-radius:9px; border:1px solid #334155; background:transparent; color:#94a3b8; font-size:9px; font-weight:900; letter-spacing:.03em; white-space:nowrap; transition:background .15s,color .15s,border-color .15s; }
     .friend-action--gift { border-color:#db2777; color:#f9a8d4; }
@@ -4245,6 +4259,9 @@ video {
               <button id="copyRoomCodeBtn" class="mt-1.5 px-2.5 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider text-amber-300 transition flex items-center gap-1.5">
                 <span id="copyRoomCodeIcon">📋</span><span id="copyRoomCodeLabel">Copy Code</span>
               </button>
+              <button id="lobbyInviteFriendsBtn" class="mt-1.5 px-2.5 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider text-emerald-300 transition flex items-center gap-1.5">
+                <span>👥</span><span>Invite Friends</span>
+              </button>
             </div>
 
             <!-- Host Bot Management Controls -->
@@ -4525,7 +4542,7 @@ video {
         </button>
         <button id="setTurnAlertRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="turn alert, your turn, chime, reminder, ding">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Turn Alert</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">A soft chime when it's your turn</span></span>
+          <span class="block text-[8px] text-slate-400 leading-snug">A soft chime when it's your turn (plus a buzz if Vibration is on)</span></span>
           <span id="setTurnAlertState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         <button id="setHapticsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="haptic, vibrate, feedback, rumble">
@@ -5410,6 +5427,17 @@ video {
   </div>
 
   <!-- NEED-ANOTHER-HUMAN MODAL -->
+  <div id="whatsNewModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[95] flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/60 rounded-2xl max-w-sm w-full shadow-2xl" style="padding:20px; display:flex; flex-direction:column; gap:12px;">
+      <div class="text-center">
+        <div class="text-3xl">✨</div>
+        <h2 class="text-base font-black text-amber-400 uppercase tracking-wide">What's New</h2>
+        <p id="whatsNewVersion" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"></p>
+      </div>
+      <ul id="whatsNewList" class="whats-new-list"></ul>
+      <button id="whatsNewCloseBtn" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Got It</button>
+    </div>
+  </div>
   <div id="rejoinModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-emerald-600/50 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
       <div class="text-4xl">🔄</div>
@@ -6277,7 +6305,8 @@ video {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return false;
       return typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
     }
-    function playBlindReveal(playerId, card, done) {
+    // opts (another player's flip, broadcast through the room): { good, ms }.
+    function playBlindReveal(playerId, card, done, opts = {}) {
       let finished = false;
       // Apply the play first (the pile renders underneath), then fade the
       // reveal card away over it, so nothing blinks or jumps.
@@ -6293,8 +6322,8 @@ video {
       const layer = document.body;
       if (!pile) { done(); return; }
       const isSelf = playerId === state.localPlayerId;
-      const total = isSelf ? BLIND_REVEAL_MS.self : BLIND_REVEAL_MS.other;
-      const good = isPlayLegal(card, state.discardPile, state.activeConstraint);
+      const total = opts.ms || (isSelf ? BLIND_REVEAL_MS.self : BLIND_REVEAL_MS.other);
+      const good = typeof opts.good === 'boolean' ? opts.good : isPlayLegal(card, state.discardPile, state.activeConstraint);
       const p = pile.getBoundingClientRect();
       const o = origin ? origin.getBoundingClientRect() : p;
       const w = p.width, h = p.height;
@@ -6370,7 +6399,7 @@ video {
     ['matchStatsModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
-     'matchSummaryModal', 'errorReportsModal', 'rejoinModal'].forEach((id) => {
+     'matchSummaryModal', 'errorReportsModal', 'rejoinModal', 'whatsNewModal'].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.parentElement !== document.body) document.body.appendChild(el);
     });
@@ -7637,6 +7666,30 @@ video {
       }
     }
 
+    // Online, the client making a blind flip (you, or the host for a bot)
+    // tells the room, so every player watches the same reveal while the
+    // result is on its way.
+    function broadcastBlindReveal(playerId, card) {
+      if (!state.isMultiplayer || !state.roomCode || typeof db === 'undefined' || !db) return;
+      const ms = playerId === state.localPlayerId ? BLIND_REVEAL_MS.self : BLIND_REVEAL_MS.other;
+      try {
+        db.ref(`rooms/${state.roomCode}/lastBlindReveal`).set({
+          key: Math.random().toString(36).slice(2, 10), by: state.localPlayerId, playerId,
+          card: { id: card.id, rank: card.rank, suit: card.suit || null },
+          good: isPlayLegal(card, state.discardPile, state.activeConstraint), ms, at: serverNow()
+        }).catch(error => console.warn('Blind reveal broadcast skipped', error));
+      } catch (error) { console.warn('Blind reveal broadcast skipped', error); }
+    }
+    // Another player's broadcast reveal, trimmed by however long it took to
+    // arrive so it lands with their real play.
+    function showRemoteBlindReveal(reveal) {
+      if (!reveal || !reveal.card || reveal.by === state.localPlayerId || reveal.playerId === state.localPlayerId) return false;
+      const left = (reveal.ms || BLIND_REVEAL_MS.other) - Math.max(0, serverNow() - (reveal.at || 0));
+      if (left < 350 || state.blindRevealing || !shouldRevealBlind()) return false;
+      playBlindReveal(reveal.playerId, reveal.card, () => {}, { good: !!reveal.good, ms: Math.min(left, reveal.ms || left) });
+      return true;
+    }
+
     function executePlayCards(playerId, cardsToPlay, isBlind = false, chainedRankCount = 0, opts = {}) {
       if (isMatchDecided()) return;
       // A blind flip is revealing: nothing else plays until it lands.
@@ -7644,6 +7697,7 @@ video {
       if (isBlind && !opts.revealed && shouldRevealBlind() && cardsToPlay && cardsToPlay[0] && !state.burnResolving) {
         const card = cardsToPlay[0];
         state.blindRevealing = true;
+        broadcastBlindReveal(playerId, card);
         playBlindReveal(playerId, card, () => {
           state.blindRevealing = false;
           const owner = state.players.find(p => p.id === playerId);
@@ -10627,6 +10681,7 @@ video {
     let emoteFanOpen = false;
     let lastHandledEmoteAt = 0;
     let lastHandledCosmeticEffectAt = 0;
+    let lastHandledBlindRevealKey = '';
 
     function canSendEmote() {
       const now = Date.now();
@@ -11323,7 +11378,11 @@ video {
       const isMyTurn = currentTurnPlayer && currentTurnPlayer.id === local.id && state.phase === 'PLAY' && !local.hasFinished;
       // Chime once as the turn arrives (Settings → Turn Alert), never for
       // the scripted tutorial or while the test suite drives the table.
-      if (isMyTurn && !lastRenderWasMyTurn && !tutorialActive && !devTestSuiteRunning) audio.playTurnAlert();
+      if (isMyTurn && !lastRenderWasMyTurn && !tutorialActive && !devTestSuiteRunning) {
+        audio.playTurnAlert();
+        // A short double buzz with it (Vibration setting), handy with the sound off.
+        if (turnAlertOn) Haptics.vibrate([40, 60, 40]);
+      }
       if (isMyTurn && !lastRenderWasMyTurn && !reduceMotion) {
         const pill = document.getElementById('activeTurnIndicator');
         if (pill) { pill.classList.remove('mi-slide-in'); void pill.offsetWidth; pill.classList.add('mi-slide-in'); }
@@ -12925,6 +12984,11 @@ video {
           }
         }
 
+        if (data.lastBlindReveal?.key && data.lastBlindReveal.key !== lastHandledBlindRevealKey) {
+          lastHandledBlindRevealKey = data.lastBlindReveal.key;
+          if (!isCatchUp) showRemoteBlindReveal(data.lastBlindReveal);
+        }
+
         if (data.lastCosmeticEffect?.at && data.lastCosmeticEffect.at !== lastHandledCosmeticEffectAt) {
           lastHandledCosmeticEffectAt = data.lastCosmeticEffect.at;
           if (!isCatchUp && data.lastCosmeticEffect.playerId !== state.localPlayerId && data.lastCosmeticEffect.type === 'burn' && bigEffectsOn) {
@@ -14408,6 +14472,105 @@ video {
     });
     document.getElementById('menuThemesBtn').addEventListener('click', () => { closeHamburgerMenu(); openThemesPanel(); });
     document.getElementById('menuFriendsBtn').addEventListener('click', () => { closeHamburgerMenu(); openFriendsPanel(); });
+    document.getElementById('lobbyInviteFriendsBtn').addEventListener('click', () => openFriendsPanel());
+
+    // Pull down at the top of a list to reload it (Inbox, Friends).
+    const PTR_TRIGGER_PX = 56;
+    function attachPullToRefresh(list, refresh) {
+      const panel = list && list.parentElement;
+      if (!panel) return;
+      const ind = document.createElement('div');
+      ind.className = 'ptr-indicator';
+      ind.innerHTML = '<span class="ptr-icon">↓</span><span class="ptr-text">Pull to refresh</span>';
+      panel.insertBefore(ind, list);
+      const text = ind.querySelector('.ptr-text');
+      let startY = null, pull = 0, busy = false;
+      const show = (h) => { ind.style.height = `${h}px`; ind.style.opacity = String(Math.min(1, h / PTR_TRIGGER_PX)); };
+      panel.addEventListener('touchstart', (e) => {
+        startY = (busy || list.scrollTop > 0 || e.touches.length !== 1) ? null : e.touches[0].clientY;
+        pull = 0;
+      }, { passive: true });
+      panel.addEventListener('touchmove', (e) => {
+        if (startY === null) return;
+        const dy = e.touches[0].clientY - startY;
+        if (dy <= 0 || list.scrollTop > 0) { pull = 0; show(0); return; }
+        const wasReady = pull >= PTR_TRIGGER_PX;
+        pull = Math.min(84, dy * 0.5);
+        ind.classList.add('is-dragging');
+        show(pull);
+        const ready = pull >= PTR_TRIGGER_PX;
+        ind.classList.toggle('is-ready', ready);
+        text.textContent = ready ? 'Release to refresh' : 'Pull to refresh';
+        if (ready && !wasReady) Haptics.vibrate(6);
+      }, { passive: true });
+      const end = () => {
+        if (startY === null) return;
+        startY = null;
+        ind.classList.remove('is-dragging', 'is-ready');
+        if (pull < PTR_TRIGGER_PX) { show(0); return; }
+        busy = true;
+        ind.classList.add('is-busy');
+        text.textContent = 'Refreshing…';
+        show(32);
+        const started = Date.now();
+        Promise.resolve().then(refresh).catch((e) => console.warn('Pull to refresh failed', e)).then(() => {
+          setTimeout(() => {
+            busy = false;
+            ind.classList.remove('is-busy');
+            text.textContent = 'Pull to refresh';
+            show(0);
+          }, Math.max(0, 500 - (Date.now() - started)));
+        });
+      };
+      panel.addEventListener('touchend', end);
+      panel.addEventListener('touchcancel', end);
+    }
+    attachPullToRefresh(document.getElementById('inboxArea'), () => renderInbox());
+
+    // "What's new" once after an update: a returning player whose last seen
+    // version (localStorage shithead_seen_version) differs from this build
+    // gets that build's notes. Add an entry here with each BUILD bump that
+    // players would notice; a build with no entry shows nothing.
+    const WHATS_NEW = {
+      v114: [
+        ['🔄', 'Closed the app mid-match? Open it again to jump straight back into your seat, even if a bot was covering for you.'],
+        ['🃏', 'Blind flips online: everyone at the table now watches the card turn over, not just the player flipping it.'],
+        ['👥', 'Friends shows who is online first. Invite friends straight into the room you are in from the lobby.'],
+        ['🔃', 'Pull down on your Inbox or Friends list to refresh it.'],
+        ['📳', 'Your turn now gives a short buzz too (Settings → Vibration).'],
+        ['🛍️', 'The Shop opens on the tab you last used.'],
+        ['⚠️', 'Leaving a Ranked match now warns you that it counts as a loss.']
+      ]
+    };
+    const SEEN_VERSION_KEY = 'shithead_seen_version';
+    function showWhatsNew(version = GAME_BUILD.version) {
+      const notes = WHATS_NEW[version];
+      if (!notes) return false;
+      document.getElementById('whatsNewVersion').textContent = `Version ${version.replace(/^v/, '')}${GAME_BUILD.date ? ` · ${GAME_BUILD.date}` : ''}`;
+      document.getElementById('whatsNewList').innerHTML = notes.map(([icon, text]) => `<li><span>${icon}</span><span>${escapeHtml(text)}</span></li>`).join('');
+      document.getElementById('whatsNewModal').classList.remove('hidden');
+      return true;
+    }
+    document.getElementById('whatsNewCloseBtn').addEventListener('click', () => document.getElementById('whatsNewModal').classList.add('hidden'));
+    function maybeShowWhatsNew() {
+      if (IS_DEV_TEST_PAGE) return;
+      const version = GAME_BUILD.version;
+      let seen = null;
+      try { seen = localStorage.getItem(SEEN_VERSION_KEY); } catch (e) {}
+      const markSeen = () => { try { localStorage.setItem(SEEN_VERSION_KEY, version); } catch (e) {} };
+      // A first visit has nothing to compare with.
+      if (!seen || seen === version || !WHATS_NEW[version]) { markSeen(); return; }
+      // Wait for the home screen: never over a match or another pop-up.
+      const busy = () => state.isMultiplayer || (state.phase && state.phase !== 'LOBBY')
+        || [...BLOCKING_OVERLAY_IDS, 'rejoinModal', 'matchSummaryModal', 'dailyRewardModal'].some(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
+      const tryShow = (attempt) => {
+        if (busy()) { if (attempt < 120) setTimeout(() => tryShow(attempt + 1), 5000); return; }
+        if (showWhatsNew(version)) markSeen();
+      };
+      setTimeout(() => tryShow(0), 2500);
+    }
+    maybeShowWhatsNew();
+    attachPullToRefresh(document.getElementById('friendsListArea'), () => switchFriendsTab(currentFriendsTab));
     document.getElementById('headerInboxBtn').addEventListener('click', () => openInboxPanel());
     document.getElementById('menuChallengesBtn').addEventListener('click', () => {
       closeHamburgerMenu();
@@ -16085,6 +16248,19 @@ video {
     let seasonalWinState = {};
     let seasonalForceAllEvents = false; // tests only
     let shopTabPicked = false;
+    // The Shop opens on the tab last picked (localStorage shithead_shop_tab).
+    // A seasonal event that has started since then still takes the lead once.
+    const SHOP_TAB_KEY = 'shithead_shop_tab';
+    function rememberShopTab(tab) {
+      try { localStorage.setItem(SHOP_TAB_KEY, JSON.stringify({ tab, seasonLead: seasonalTabLeads() })); } catch (e) {}
+    }
+    function restoredShopTab(seasonLeadsNow) {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(SHOP_TAB_KEY) || 'null'); } catch (e) {}
+      const valid = saved && (saved.tab === SEASONAL_TAB || COSMETIC_TABS.some(t => t.category === saved.tab));
+      if (seasonLeadsNow && !(valid && saved.seasonLead)) return SEASONAL_TAB;
+      return valid ? saved.tab : (seasonLeadsNow ? SEASONAL_TAB : 'Profile Pictures');
+    }
     const seasonShortDate = (date) => date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
     // Seasonal leads the Shop only while an event is on or starts within 3 days.
     const SEASONAL_LEAD_DAYS = 3;
@@ -16805,7 +16981,7 @@ video {
       closeOtherMenuPages('shopModal');
       if (!currentUser) { openAuthModal(); return; }
       document.getElementById('shopModal').classList.remove('hidden');
-      if (!shopTabPicked && seasonalTabLeads()) shopTab = SEASONAL_TAB;
+      if (!shopTabPicked) shopTab = restoredShopTab(seasonalTabLeads());
       clearShopActionNotice();
       setNameTokenStatus('Loading…');
       initChallengeEconomy()
@@ -16921,6 +17097,7 @@ video {
       if (!tab) return;
       shopTab = tab.dataset.shopTab;
       shopTabPicked = true;
+      rememberShopTab(shopTab);
       renderCosmeticShop();
       tab.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
     });
@@ -19905,6 +20082,7 @@ video {
       const name = escapeHtml(rawName);
       const safeUid = escapeAttr(uid);
       const presenceClass = profile.online ? 'online' : 'offline';
+      const onlineHtml = type === 'friend' ? `<span class="friend-status ${presenceClass}">${profile.online ? 'Online' : 'Offline'}</span>` : '';
       // Friend requests use a synthetic profile ({username, from the
       // request itself) with no rating — publicProfiles was never fetched
       // for them, so this naturally stays blank there rather than showing
@@ -19919,7 +20097,7 @@ video {
       if (type === 'friend') {
         actions = [
           btn('friend-gift-btn friend-action--gift', '🎁 GIFT', `data-name="${escapeAttr(rawName)}" aria-label="Send ${escapeAttr(rawName)} a gift"`),
-          btn('friend-invite-btn friend-action--go', 'INVITE', `data-name="${escapeAttr(rawName)}"`),
+          btn('friend-invite-btn friend-action--go', inviteableRoomCode() ? 'INVITE HERE' : 'INVITE', `data-name="${escapeAttr(rawName)}" aria-label="Invite ${escapeAttr(rawName)} to play"`),
           btn('friend-unfriend-btn friend-action--danger', 'UNFRIEND'),
           btn('friend-ignore-btn friend-action--warn', 'IGNORE')
         ];
@@ -19939,6 +20117,7 @@ video {
           <div class="friend-info">
             <span class="friend-name" title="${escapeAttr(rawName)}">${name}</span>
             ${ratingHtml ? `<span class="friend-rank">${ratingHtml}</span>` : ''}
+            ${onlineHtml}
           </div>
         </div>
         ${actions.length ? `<div class="friend-actions" style="grid-template-columns:repeat(${actions.length},minmax(0,1fr))">${actions.join('')}</div>` : ''}
@@ -19958,7 +20137,14 @@ video {
         if (uids.length === 0) { showFriendsEmpty("You haven't added any friends yet."); return; }
         document.getElementById('friendsEmptyMsg').classList.add('hidden');
         Promise.all(uids.map((uid) => db.ref(`publicProfiles/${uid}`).once('value').then((s) => ({ uid, profile: s.val() || {} }))))
-          .then((results) => { area.innerHTML = results.map(({ uid, profile }) => friendRowHtml(uid, profile, 'friend')).join(''); });
+          .then((results) => {
+            // Online friends first (then A-Z), with a count on top.
+            const nameOf = (r) => String(r.profile.username || r.profile.name || '').toLowerCase();
+            results.sort((a, b) => (!!b.profile.online - !!a.profile.online) || nameOf(a).localeCompare(nameOf(b)));
+            const online = results.filter(r => r.profile.online).length;
+            area.innerHTML = `<p class="friends-online-count">${online} of ${results.length} online</p>`
+              + results.map(({ uid, profile }) => friendRowHtml(uid, profile, 'friend')).join('');
+          });
       }).catch((e) => { area.innerHTML = ''; console.warn('renderFriendsList failed', e); });
     }
     function renderIgnoredList() {
@@ -20074,11 +20260,18 @@ video {
     // creation — it already does everything a private room needs (create
     // the room, set local state, show the multiplayer lobby); this just
     // adds the invite write on top of it.
+    // The casual room this player is waiting in, if any: inviting from
+    // there asks the friend into it instead of opening a new one.
+    function inviteableRoomCode() {
+      if (!state.isMultiplayer || state.isRanked || !state.roomCode) return null;
+      return (!state.phase || state.phase === 'LOBBY') ? state.roomCode : null;
+    }
     function sendGameInvite(friendUid, friendName) {
       if (!currentUser) return;
       document.getElementById('friendsModal').classList.add('hidden');
-      const myName = document.getElementById('playerNameInput').value.trim() || 'Player';
-      initHostRoom().then((code) => {
+      const myName = (document.getElementById('playerNameInput').value.trim() || 'Player').slice(0, 12);
+      const existing = inviteableRoomCode();
+      (existing ? Promise.resolve(existing) : initHostRoom()).then((code) => {
         const inviteId = db.ref(`gameInvites/${friendUid}`).push().key;
         return db.ref(`gameInvites/${friendUid}/${inviteId}`).set({ fromUid: currentUser.uid, fromName: myName, roomCode: code, sentAt: firebase.database.ServerValue.TIMESTAMP });
       }).then(() => notifyBanner(`\u{1F4E8} Invite sent to ${friendName}!`))
@@ -21287,9 +21480,12 @@ video {
     });
 
     document.getElementById('leaveGameBtn').addEventListener('click', () => {
-      const msg = state.phase === 'PLAY' || state.phase === 'SWAP'
-        ? "Leave this match? Your progress in it will be lost and you can't rejoin."
-        : "Return to the main menu?";
+      const midMatch = state.phase === 'PLAY' || state.phase === 'SWAP';
+      const msg = midMatch && state.isRanked && state.isMultiplayer
+        ? "Leave this Ranked match? A bot takes your seat and it counts as a LOSS: your rating will go down."
+        : midMatch
+          ? "Leave this match? Your progress in it will be lost and you can't rejoin."
+          : "Return to the main menu?";
       if (confirm(msg)) {
         forgetJoinedRoom();
         localStorage.removeItem('shithead_game_state');
@@ -21308,7 +21504,7 @@ video {
     // player is typing into a room-code field. M and I are deliberately
     // NOT gated by this (see below) — they need to work precisely when
     // something IS open, to close it.
-    const BLOCKING_OVERLAY_IDS = ['authModal', 'challengesModal', 'deleteAccountModal', 'friendsModal', 'inboxModal', 'leaderboardModal', 'matchStatsModal', 'needHumanModal', 'pileInspectModal', 'profileModal', 'rulesModal', 'settingsModal', 'shopModal', 'statsModal', 'supportModal', 'themesModal', 'usernameModal', 'errorReportsModal', 'rejoinModal'];
+    const BLOCKING_OVERLAY_IDS = ['authModal', 'challengesModal', 'deleteAccountModal', 'friendsModal', 'inboxModal', 'leaderboardModal', 'matchStatsModal', 'needHumanModal', 'pileInspectModal', 'profileModal', 'rulesModal', 'settingsModal', 'shopModal', 'statsModal', 'supportModal', 'themesModal', 'usernameModal', 'errorReportsModal', 'rejoinModal', 'whatsNewModal'];
     // Every page and pop-up springs in as it opens, whatever opened it.
     (function watchOverlayEntrances() {
       const ids = [...BLOCKING_OVERLAY_IDS, 'tutorialHubScreen', 'matchSummaryModal', 'difficultyUnlockPopup'];
@@ -21362,7 +21558,7 @@ video {
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
-      needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
+      needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
       victoryOverlay: 'closeVictoryBtn', floatingJokerBar: null,
       followUpToastBanner: () => resolveFollowUpPlay(false)
     };
