@@ -1073,6 +1073,15 @@
       body > header:has(#roomCodeBadge:not(.hidden)) #headerDiamondCount { display: none; }
       body > header > div:first-child { overflow: hidden; }
     }
+    /* Every page and pop-up fits the VISIBLE screen on every phone: sized by
+       dvh (iPhone Safari's vh includes the hidden toolbars, which is what let
+       a 90vh panel spill up under the header and hide its X), less the
+       status bar / home bar, and scrolls inside rather than overflowing. */
+    div.fixed.inset-0.flex.items-center.justify-center:not(:where(#lobbyScreen, #victoryOverlay, #shuffleIntroOverlay)) > div:first-child {
+      max-height: calc(100dvh - 2rem - var(--safe-top) - env(safe-area-inset-bottom, 0px)) !important;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
     /* ---- House motion curves: every animation uses one of these ----
        snappy = UI presses/toggles; bouncy = small overshoot for things that
        land; soft = pop-ups and fades; spring = a real spring shape (linear()
@@ -1114,6 +1123,27 @@
     /* Last 5 seconds of your online turn. */
     @keyframes miUrgent { 0%, 100% { scale: 1; box-shadow: 0 0 10px rgba(244,63,94,.35); } 50% { scale: 1.12; box-shadow: 0 0 18px rgba(244,63,94,.85); } }
     #turnTimerBadge.mi-urgent { animation: miUrgent 1s var(--ease-soft) infinite; background: #4c0519; }
+    /* Match summary: bars fill from where they were, finished rows stamp. */
+    .ms-bar i { transition: width .8s var(--ease-soft); }
+    @keyframes miStamp { 0% { scale: 2.2; opacity: 0; rotate: -18deg; } 60% { scale: .9; opacity: 1; rotate: 4deg; } 100% { scale: 1; rotate: 0deg; } }
+    .mi-stamp { display: inline-block; animation: miStamp .5s var(--ease-spring) both; color: #34d399; }
+    @keyframes miRowIn { from { translate: -14px 0; opacity: 0; } to { translate: 0 0; opacity: 1; } }
+    .mi-row-in { animation: miRowIn .45s var(--ease-spring) both; }
+    /* Rank up: the new tier badge flips in and a shine sweeps across it. */
+    .ms-rankup { position: relative; overflow: hidden; margin: 8px auto 0; width: fit-content; padding: 6px 14px; border-radius: 12px; border: 2px solid; font-weight: 900; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+    .ms-rankup small { display: block; font-size: 8px; letter-spacing: .14em; opacity: .8; }
+    @keyframes miRankFlip { 0% { rotate: x 90deg; scale: .7; opacity: 0; } 60% { rotate: x -12deg; scale: 1.08; opacity: 1; } 100% { rotate: x 0deg; scale: 1; } }
+    .ms-rankup.mi-rank-in { animation: miRankFlip .7s var(--ease-spring) both; }
+    .ms-rankup::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); translate: -120% 0; }
+    .ms-rankup.mi-rank-in::after { animation: miShine 1.1s .45s var(--ease-soft) both; }
+    @keyframes miShine { to { translate: 120% 0; } }
+    /* Inbox: the mail icon wiggles and the count bounces when something new lands. */
+    @keyframes miWiggle { 0%,100% { rotate: 0deg; } 20% { rotate: -14deg; } 40% { rotate: 12deg; } 60% { rotate: -8deg; } 80% { rotate: 4deg; } }
+    .mi-wiggle { animation: miWiggle .6s var(--ease-soft); }
+    @keyframes miBadgeBounce { 0% { scale: .3; } 55% { scale: 1.35; } 100% { scale: 1; } }
+    .mi-badge-bounce { animation: miBadgeBounce .5s var(--ease-spring); }
+    /* Joker spotlight beam. */
+    .joker-beam { position: fixed; inset: 0; z-index: 185; pointer-events: none; overflow: visible; }
     /* Crisp 3D flip-in for face-up cards arriving on a table and the pile view. */
     #localTableSlots, .opp-slot-row, #inspectCardsContainer { perspective: 600px; }
     @keyframes miFlipIn { 0% { rotate: y 90deg; scale: .9; filter: brightness(.55); } 60% { rotate: y -10deg; scale: 1.04; filter: brightness(1.15); } 100% { rotate: y 0deg; scale: 1; filter: none; } }
@@ -5708,6 +5738,21 @@ video {
           o.connect(f).connect(g).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + 0.5);
         });
       }
+      /* Equipping a cosmetic: a short two-part "slot in" click. */
+      playEquipClick() {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime;
+        [[1800, 0, 0.1], [2600, 0.045, 0.07]].forEach(([freq, at, level]) => {
+          const o = ctx.createOscillator(); o.type = 'square'; o.frequency.setValueAtTime(freq, t0 + at);
+          const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 6;
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime(level * vol, t0 + at + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + 0.05);
+          o.connect(f).connect(g).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + 0.06);
+        });
+      }
       /* Last five seconds of your online turn: one soft tick per second. */
       playTick() {
         const ctx = this.ctx;
@@ -6102,6 +6147,56 @@ video {
       balanceEl.animate([{ scale: 1 }, { scale: .86 }, { scale: 1 }], { duration: 480, easing: EASE.spring });
     }
 
+    // Earning Diamonds: they appear mid-screen and stream up into the header
+    // balance, which bumps as they land (the mirror of spawnDiamondSpend).
+    function spawnDiamondGain(balanceEl, amount) {
+      if (!balanceEl || motionOff() || typeof Element.prototype.animate !== 'function') return;
+      const count = Math.max(4, Math.min(12, Math.round(Math.log2(Math.max(2, amount)) * 1.6)));
+      const t = (balanceEl.querySelector('span') || balanceEl).getBoundingClientRect();
+      const tx = t.left + t.width / 2, ty = t.top + t.height / 2;
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.textContent = '💎';
+        const x0 = innerWidth * (.3 + Math.random() * .4), y0 = innerHeight * (.28 + Math.random() * .14);
+        el.style.cssText = `position:fixed;z-index:200;pointer-events:none;left:${x0 - 9}px;top:${y0 - 9}px;font-size:18px;line-height:18px;`;
+        document.body.appendChild(el);
+        el.animate([
+          { transform: 'translate(0,0) scale(.2)', opacity: 0 },
+          { transform: `translate(${(Math.random() - .5) * 30}px, ${-10 - Math.random() * 20}px) scale(1.15)`, opacity: 1, offset: .25 },
+          { transform: `translate(${tx - x0}px, ${ty - y0}px) scale(.55)`, opacity: .9 }
+        ], { duration: 850, delay: i * 55, easing: EASE.soft, fill: 'both' }).finished.then(() => el.remove(), () => el.remove());
+      }
+      setTimeout(() => balanceEl.animate([{ scale: 1 }, { scale: 1.2 }, { scale: 1 }], { duration: 420, easing: EASE.spring }), 850 + count * 55 - 150);
+    }
+
+    // Joker spotlight: a glowing beam draws from the Joker player's seat to
+    // the target, whose seat flashes red, just before they pick up.
+    function playJokerSpotlight(fromPlayerId, toPlayerId) {
+      if (motionOff() || typeof Element.prototype.animate !== 'function') return;
+      const a = getPlayerAnimationTarget(fromPlayerId), b = getPlayerAnimationTarget(toPlayerId);
+      if (!a || !b) return;
+      const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+      const x1 = ra.left + ra.width / 2, y1 = ra.top + ra.height / 2, x2 = rb.left + rb.width / 2, y2 = rb.top + rb.height / 2;
+      const len = Math.hypot(x2 - x1, y2 - y1);
+      if (len < 10) return;
+      const ns = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('class', 'joker-beam');
+      svg.setAttribute('width', innerWidth); svg.setAttribute('height', innerHeight);
+      svg.innerHTML = `<defs><linearGradient id="jkBeam" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#f43f5e"/></linearGradient>
+        <filter id="jkGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="url(#jkBeam)" stroke-width="6" stroke-linecap="round" filter="url(#jkGlow)" stroke-dasharray="${len}" stroke-dashoffset="${len}"/>
+        <circle cx="${x2}" cy="${y2}" r="6" fill="#f43f5e" filter="url(#jkGlow)" opacity="0"/>
+        <text x="${x1}" y="${y1 - 18}" text-anchor="middle" font-size="22">🃏</text>`;
+      document.body.appendChild(svg);
+      const line = svg.querySelector('line'), dot = svg.querySelector('circle'), icon = svg.querySelector('text');
+      line.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 380, easing: EASE.soft, fill: 'forwards' });
+      icon.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 250, fill: 'forwards' });
+      dot.animate([{ opacity: 0, r: 4 }, { opacity: 1, r: 26 }, { opacity: 0, r: 40 }], { duration: 520, delay: 360, easing: EASE.soft, fill: 'forwards' });
+      b.animate([{ filter: 'none' }, { filter: 'drop-shadow(0 0 14px rgba(244,63,94,.95)) brightness(1.2)' }, { filter: 'none' }], { duration: 700, delay: 360, easing: EASE.soft });
+      svg.animate([{ opacity: 1 }, { opacity: 1, offset: .7 }, { opacity: 0 }], { duration: 1150, fill: 'forwards' }).finished.then(() => svg.remove(), () => svg.remove());
+    }
+
     // Pop-ups and pages spring in when they open (see watchOverlayEntrances).
     function springIn(panel) {
       if (!panel || motionOff() || typeof panel.animate !== 'function') return;
@@ -6269,6 +6364,18 @@ video {
 
   <!-- GAMEPLAY ENGINE -->
   <script>
+    // Pages and pop-ups live at the top level of <body>. Written inside the
+    // game table, any transform on the table (the burn screen-shake, some
+    // browsers' compositing) made their position:fixed boxes start at the
+    // table's top instead of the screen's, pushing the top and X of a tall
+    // page (e.g. Profile on iPhone) under the header.
+    ['matchStatsModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
+     'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
+     'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
+     'matchSummaryModal'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el && el.parentElement !== document.body) document.body.appendChild(el);
+    });
     // Google sign-in runs its redirect handler (/__/auth/handler) on the
     // SAME domain the game is served from. With the default firebaseapp.com
     // handler on a web.app page, phones that partition storage per site
@@ -8336,6 +8443,7 @@ video {
         state.lastJokerInitiatorId = null;
         state.jokerTurnOwnerId = null;
         if (originalInitiator && originalInitiator.id !== initiator.id) {
+          playJokerSpotlight(initiator.id, originalInitiator.id); // the counter sends it back
           state.discardPile = state.discardPile.filter(c => !c.isJoker);
           recordHistory(initiator.name, [jokerCard]);
           audio.burn();
@@ -8434,6 +8542,7 @@ video {
     }
 
     function resolveJokerDuelInstant(initiator, target, initialJoker) {
+      if (initiator && target) playJokerSpotlight(initiator.id, target.id);
       state.lastJokerInitiatorId = null;
       state.jokerTurnOwnerId = null;
       state.jokerTurnLockConsumedPending = false;
@@ -9021,6 +9130,7 @@ video {
     // button sitting on screen from the previous match.
     function hideMatchEndUI() {
       state.blindRevealing = false; // a new match never waits on a leftover blind reveal
+      msShown = { bars: {}, rewards: 0, done: new Set(), rankup: null };
       matchWinnerEffectShown = false;
       if (typeof resetMatchSummary === 'function') resetMatchSummary();
       document.getElementById('quickPlayMatchBtn')?.classList.add('hidden');
@@ -12021,9 +12131,15 @@ video {
       setTimeout(() => banner.classList.add('opacity-0'), 2800);
     }
 
+    let lastShownDirection = null;
     function updateDirectionBadge() {
       const badge = document.getElementById('gameDirectionBadge');
       badge.innerHTML = state.direction === 1 ? '<span>↻</span>' : '<span>↺</span>';
+      // A 9 reversing play spins the icon a full turn the new way round.
+      if (lastShownDirection !== null && lastShownDirection !== state.direction && !motionOff() && badge.animate) {
+        badge.animate([{ rotate: '0deg', scale: 1 }, { rotate: `${state.direction === 1 ? 360 : -360}deg`, scale: 1.25, offset: .7 }, { rotate: `${state.direction === 1 ? 360 : -360}deg`, scale: 1 }], { duration: 650, easing: EASE.spring });
+      }
+      lastShownDirection = state.direction;
     }
 
     function updateSpeedByIndex(idx) {
@@ -15823,7 +15939,16 @@ video {
       const type = btn.dataset.equipType;
       const id = btn.dataset.equipId;
       if (btn.hasAttribute('data-locked')) { openLockedCosmetic(id); return; }
-      equipCosmetic(type, id);
+      const previous = type === 'avatar' ? resolveAvatarId(equippedCosmetics.avatar) : equippedCosmetics[type];
+      if (!equipCosmetic(type, id) || motionOff()) return;
+      // Equip snap: the new pick pops and "slots in" with a click; the old
+      // one eases back from a faded state.
+      const modal = document.getElementById('themesModal');
+      const pick = modal.querySelector(`[data-equip-type="${type}"][data-equip-id="${CSS.escape(id)}"]`);
+      const old = previous && previous !== id ? modal.querySelector(`[data-equip-type="${type}"][data-equip-id="${CSS.escape(previous)}"]`) : null;
+      pick?.animate([{ scale: .9 }, { scale: 1.08, offset: .45 }, { scale: 1 }], { duration: 420, easing: EASE.spring });
+      old?.animate([{ opacity: .35 }, { opacity: 1 }], { duration: 380, easing: EASE.soft });
+      audio.playEquipClick();
     });
     document.getElementById('unequipAllCosmeticsBtn').addEventListener('click', () => {
       const hasEquipped = Object.values(equippedCosmetics).some(id => id && id !== 'default');
@@ -16142,23 +16267,28 @@ video {
       if (matchSummaryRating) {
         const d = Math.round(matchSummaryRating.to - matchSummaryRating.from);
         rating = `<div class="ms-rating">Rating ${Math.round(matchSummaryRating.from)} → ${Math.round(matchSummaryRating.to)} <span class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d}</span></div>`;
+        const fromTier = getRankTier(matchSummaryRating.from), toTier = getRankTier(matchSummaryRating.to);
+        if (d > 0 && fromTier.name !== toTier.name) {
+          rating += `<div class="ms-rankup ${toTier.cls}" style="${toTier.style}" data-rankup="${toTier.name}"><small>Rank up</small>${toTier.name}</div>`;
+        }
       }
       const total = matchRewardLog.reduce((sum, r) => sum + r.reward, 0);
       const rewards = currentUser
         ? (matchRewardLog.length
-          ? `<div class="ms-rewards">${matchRewardLog.map(r => `<div class="ms-reward"><span>${escapeHtml(r.name)}</span><b>+💎 ${r.reward}</b></div>`).join('')}${matchRewardLog.length > 1 ? `<div class="ms-reward total"><span>Total</span><b>+💎 ${total}</b></div>` : ''}</div>`
+          ? `<div class="ms-rewards">${matchRewardLog.map((r, i) => `<div class="ms-reward" data-reward-index="${i}"><span>${escapeHtml(r.name)}</span><b>+💎 ${r.reward}</b></div>`).join('')}${matchRewardLog.length > 1 ? `<div class="ms-reward total"><span>Total</span><b>+💎 ${total}</b></div>` : ''}</div>`
           : '<p class="ms-none">No Diamonds this match — wins and challenges pay out.</p>')
         : '<p class="ms-none">Sign in to earn Diamonds from wins and challenges.</p>';
       const progress = [];
       const daily = challengeEconomy?.dailyChallengeState;
       if (currentUser && daily?.challengeIds?.length) {
         const done = daily.challengeIds.filter(id => challengeEconomy.completedChallenges?.[dailyCompletionKey(daily.dateKey, id)]).length;
-        progress.push(`<div class="ms-progress"><span>📅 Daily challenges</span><span class="ms-bar" style="--bar:#34d399"><i style="width:${Math.round((done / daily.challengeIds.length) * 100)}%"></i></span><b>${done}/${daily.challengeIds.length}</b></div>`);
+        const allDone = done === daily.challengeIds.length;
+        progress.push(`<div class="ms-progress"><span>📅 Daily challenges</span><span class="ms-bar" style="--bar:#34d399"><i data-bar="daily" style="width:${Math.round((done / daily.challengeIds.length) * 100)}%"></i></span><b data-done="${allDone ? 'daily' : ''}">${allDone ? '✓' : `${done}/${daily.challengeIds.length}`}</b></div>`);
       }
       if (currentUser) activeSeasonalEvents().forEach(w => {
         const owned = !!cosmeticPurchaseState[`avatar-${w.event.id}-earned`];
         const wins = Math.min(SEASONAL_EARN_WINS, seasonalWinsFor(seasonalWinState, w.event.id));
-        progress.push(`<div class="ms-progress"><span>${w.event.emoji} ${escapeHtml(w.event.names.earned)}</span><span class="ms-bar" style="--bar:${w.event.tones[1]}"><i style="width:${owned ? 100 : Math.round((wins / SEASONAL_EARN_WINS) * 100)}%"></i></span><b>${owned ? '✓' : `${wins}/${SEASONAL_EARN_WINS}`}</b></div>`);
+        progress.push(`<div class="ms-progress"><span>${w.event.emoji} ${escapeHtml(w.event.names.earned)}</span><span class="ms-bar" style="--bar:${w.event.tones[1]}"><i data-bar="season-${w.event.id}" style="width:${owned ? 100 : Math.round((wins / SEASONAL_EARN_WINS) * 100)}%"></i></span><b data-done="${owned ? `season-${w.event.id}` : ''}">${owned ? '✓' : `${wins}/${SEASONAL_EARN_WINS}`}</b></div>`);
       });
       return `<div class="ms-head"><div class="ms-emoji" aria-hidden="true">${place.emoji}</div><div id="matchSummaryTitle" class="ms-title">${place.title}</div><div class="ms-mode">${escapeHtml(matchModeLabel())}</div>${rating}</div>
         <div class="ms-section"><div class="ms-label">Your game</div><div class="ms-stats">${stat(st.played, 'Played')}${stat(st.pickedUp, 'Picked up')}${stat(st.burnt, 'Burns')}${stat(st.turns, 'Turns')}${stat(st.jokersPlayed, 'Jokers')}${stat(st.biggestPickup, 'Biggest pickup')}</div></div>
@@ -16182,11 +16312,43 @@ video {
       const card = modal.querySelector('.ms-card');
       card.style.setProperty('--ms-edge', place.edge);
       card.style.setProperty('--ms-glow', place.glow);
-      document.getElementById('matchSummaryBody').innerHTML = matchSummaryHtml();
+      const body = document.getElementById('matchSummaryBody');
+      body.innerHTML = matchSummaryHtml();
+      animateMatchSummary(body);
       const again = matchSummaryAgainAction();
       const btn = document.getElementById('matchSummaryAgain');
       btn.textContent = again.label;
       btn.disabled = again.disabled;
+    }
+    // The summary is rebuilt as late rewards arrive; these remember what was
+    // already shown so bars fill from their last width, only new reward rows
+    // slide in, and a ✓ / rank-up badge animates once.
+    let msShown = { bars: {}, rewards: 0, done: new Set(), rankup: null };
+    function animateMatchSummary(body) {
+      const calm = motionOff();
+      body.querySelectorAll('[data-bar]').forEach((bar) => {
+        const key = bar.dataset.bar, target = bar.style.width;
+        const from = msShown.bars[key] ?? '0%';
+        msShown.bars[key] = target;
+        if (calm || from === target) return;
+        bar.style.transition = 'none'; bar.style.width = from; void bar.offsetWidth;
+        bar.style.transition = ''; requestAnimationFrame(() => { bar.style.width = target; });
+      });
+      body.querySelectorAll('[data-reward-index]').forEach((row) => {
+        if (Number(row.dataset.rewardIndex) >= msShown.rewards && !calm) row.classList.add('mi-row-in');
+      });
+      msShown.rewards = body.querySelectorAll('[data-reward-index]').length;
+      body.querySelectorAll('[data-done]').forEach((cell) => {
+        const key = cell.dataset.done;
+        if (!key) return;
+        if (!msShown.done.has(key) && !calm) cell.classList.add('mi-stamp');
+        msShown.done.add(key);
+      });
+      const rank = body.querySelector('[data-rankup]');
+      if (rank && msShown.rankup !== rank.dataset.rankup) {
+        msShown.rankup = rank.dataset.rankup;
+        if (!calm) rank.classList.add('mi-rank-in');
+      }
     }
     function openMatchSummary() {
       if (state.phase !== 'FINISHED' || !state.players.some(p => p.id === state.localPlayerId)) return false;
@@ -17944,6 +18106,7 @@ video {
       const headerEl = document.getElementById('headerDiamondCount');
       if (headerEl) {
         rollDiamondCount(headerEl, lastPaintedDiamonds, exact);
+        if (lastPaintedDiamonds !== null && exact > lastPaintedDiamonds) spawnDiamondGain(document.getElementById('headerDiamondBtn'), exact - lastPaintedDiamonds);
         headerEl.title = exact.toLocaleString(); // exact value always available on hover/long-press
         // A fresh baseline (sign-in, sign-out) never keeps an old flash.
         if (lastPaintedDiamonds === null) headerEl.classList.remove('diamond-flash-up', 'diamond-flash-down');
@@ -20026,6 +20189,7 @@ video {
       };
     }
 
+    let lastInboxBadgeCount = null;
     function refreshInboxBadge() {
       const badge = document.getElementById('inboxBadge');
       const button = document.getElementById('headerInboxBtn');
@@ -20040,6 +20204,11 @@ video {
       const summary = summarizeInboxNotifications(inboxBadgeRequestData, inboxBadgeInviteData, inboxBadgeChallengeData, { ...(inboxBadgeActivityData || {}), ...giftMail });
       badge.textContent = summary.count > 99 ? '99+' : String(summary.count);
       badge.classList.toggle('hidden', summary.count === 0);
+      // Something new landed: the mail icon wiggles and the count bounces.
+      if (lastInboxBadgeCount !== null && summary.count > lastInboxBadgeCount && !motionOff()) {
+        [[button, 'mi-wiggle'], [badge, 'mi-badge-bounce']].forEach(([el, cls]) => { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); });
+      }
+      lastInboxBadgeCount = summary.count;
       badge.classList.toggle('inbox-badge--friend', summary.count > 0 && summary.latestType === 'friend');
       badge.classList.toggle('inbox-badge--game', summary.count > 0 && summary.latestType === 'game');
       badge.classList.toggle('inbox-badge--challenge', summary.count > 0 && summary.latestType === 'challenge');

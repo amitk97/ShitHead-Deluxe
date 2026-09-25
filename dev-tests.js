@@ -1150,6 +1150,25 @@ async function runDevTestSuite() {
     const mail = inboxItemHtml({ type: 'challenge', id: 'hat-trick', name: 'Hat-trick', reward: 30 });
     assertTrue(mail.includes('Win 3 Ranked matches in a row.'), 'The completion mail says what was done');
   });
+  await test('Pages and pop-ups never grow past the visible screen (their X stays on screen)', () => {
+    const problems = [];
+    ['profileModal', 'friendsModal', 'inboxModal', 'challengesModal', 'leaderboardModal', 'statsModal', 'needHumanModal', 'difficultyUnlockPopup', 'pileInspectModal'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const wasHidden = el.classList.contains('hidden');
+      el.classList.remove('hidden');
+      const panel = el.firstElementChild;
+      const spacer = document.createElement('div'); spacer.style.height = '2400px';
+      panel.appendChild(spacer);
+      const r = panel.getBoundingClientRect();
+      if (r.top < -1 || r.bottom > window.innerHeight + 1) problems.push(`${id} ${Math.round(r.top)}..${Math.round(r.bottom)} of ${window.innerHeight}`);
+      spacer.remove();
+      if (wasHidden) el.classList.add('hidden');
+      // Fixed pages must never sit inside the (sometimes transformed) table.
+      if (el.closest('#gameTable')) problems.push(`${id} is inside #gameTable`);
+    });
+    assertEqual(problems, [], 'Every panel fits the visible screen and scrolls inside');
+  });
   await test('Mute button toggles and restores the previous volume', () => {
     const before = masterVolume;
     masterVolume = 70; refreshSettingsUI();
