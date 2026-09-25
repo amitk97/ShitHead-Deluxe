@@ -1169,6 +1169,13 @@ async function runDevTestSuite() {
     });
     assertEqual(problems, [], 'Every panel fits the visible screen and scrolls inside');
   });
+  await test('The game version comes from the BUILD comment at the top of the file', () => {
+    const comment = [...document.childNodes].find(n => n.nodeType === Node.COMMENT_NODE && /BUILD:/.test(n.data));
+    assertTrue(!!comment, 'The BUILD comment exists');
+    const m = comment.data.match(/BUILD:\s*\d{4}-\d{2}-\d{2}-v(\d+)/);
+    assertEqual(getGameVersionLabel(), `v${m[1]}`, 'The support email / room version matches the BUILD comment');
+    assertTrue(decodeURIComponent(buildSupportMailto('Bug', 'x', 'y')).includes(`Game version: v${m[1]}`), 'The support email carries it');
+  });
   await test('Mute button toggles and restores the previous volume', () => {
     const before = masterVolume;
     masterVolume = 70; refreshSettingsUI();
@@ -3159,11 +3166,84 @@ async function runDevTestSuite() {
     const substitute = makePlayer({ id: 'p1', name: 'Priya', isBot: true });
     assertEqual(reclaimSubstitutedSeat(substitute).name, 'Priya', 'A plain name with no suffix must pass through unchanged');
   });
-  await test('REGRESSION: attemptRankedReconnect silently rejoins a Ranked match where the player was never substituted', () => {
+  await test('The joined room survives the app being killed (localStorage), and expires', () => {
+    freshState({ localPlayerId: 'p_ab12', players: [makePlayer({ id: 'p_ab12', name: 'Jamie' })] });
+    forgetJoinedRoom();
+    rememberJoinedRoom('778899');
+    sessionStorage.removeItem('shithead_joined_room'); // app killed: sessionStorage gone
+    const rec = joinedRoomRecord();
+    assertEqual(rec && rec.code, '778899', 'The room code must come back from localStorage');
+    assertEqual(rec.playerId, 'p_ab12', 'The seat id is stored with it');
+    assertEqual(rec.name, 'Jamie', 'The name is stored with it');
+    localStorage.setItem('shithead_active_match', JSON.stringify({ ...rec, at: Date.now() - 4 * 60 * 60 * 1000 }));
+    assertEqual(joinedRoomRecord(), null, 'A record older than 3 hours is ignored');
+    forgetJoinedRoom();
+    assertEqual(joinedRoomRecord(), null, 'forgetJoinedRoom clears it');
+  });
+  await test('A casual match asks before rejoining, then hands a bot stand-in back by name', () => {
+    freshState({ isMultiplayer: false, isHost: false, isRanked: false, roomCode: null, localPlayerId: null });
+    const savedUser = currentUser;
+    currentUser = null;
+    matchReconnectAttempted = false;
+    forgetJoinedRoom();
+    localStorage.setItem('shithead_active_match', JSON.stringify({ code: '135790', at: Date.now(), playerId: 'p_old1', name: 'Jamie' }));
+    const fakeRoom = {
+      isRanked: false, phase: 'PLAY', hostId: 'p_host',
+      players: [
+        { id: 'p_host', name: 'Pooja', isBot: false },
+        { id: 'p_bot_q2', name: 'Jamie', isBot: true },
+        { id: 'p_bot_q1', name: 'Jamie (Bot)', isBot: true }
+      ]
+    };
+    const originalDb = db, originalListen = listenToFirebaseRoom, originalAtomic = updatePlayersAtomic;
+    let listenedCode = null, atomicList = null;
+    listenToFirebaseRoom = (code) => { listenedCode = code; };
+    updatePlayersAtomic = (code, updater, onComplete) => { atomicList = updater(fakeRoom.players); onComplete(null, true, { val: () => atomicList }); };
+    db = { ref: () => ({ once: (event, successCb) => successCb({ exists: () => true, val: () => fakeRoom }) }) };
+    try {
+      attemptMatchReconnect();
+      const modal = document.getElementById('rejoinModal');
+      assertTrue(!modal.classList.contains('hidden'), 'A casual rejoin must ask first');
+      assertEqual(listenedCode, null, 'Nothing is joined until the player says yes');
+      document.getElementById('rejoinYesBtn').click();
+      assertTrue(modal.classList.contains('hidden'), 'The prompt closes');
+      assertEqual(state.localPlayerId, 'p_bot_q1', 'Takes back the stand-in seat named "Jamie (Bot)", not a real bot that happens to be called Jamie');
+      assertTrue(atomicList.find(p => p.id === 'p_bot_q1').isBot === false, 'The seat is human again');
+      assertEqual(listenedCode, '135790', 'Listens to the room');
+      assertTrue(state.isMultiplayer && !state.isRanked && !state.isHost, 'Casual guest seat');
+    } finally {
+      db = originalDb; listenToFirebaseRoom = originalListen; updatePlayersAtomic = originalAtomic;
+      currentUser = savedUser;
+      forgetJoinedRoom();
+      document.getElementById('rejoinModal').classList.add('hidden');
+    }
+  });
+  await test('"No thanks" on the rejoin prompt forgets the match', () => {
+    freshState({ isMultiplayer: false, roomCode: null, localPlayerId: null });
+    const savedUser = currentUser;
+    currentUser = null;
+    matchReconnectAttempted = false;
+    localStorage.setItem('shithead_active_match', JSON.stringify({ code: '246801', at: Date.now(), playerId: 'p_me', name: 'Jamie' }));
+    const fakeRoom = { phase: 'SWAP', players: [{ id: 'p_host', name: 'Pooja', isBot: false }, { id: 'p_me', name: 'Jamie', isBot: false }] };
+    const originalDb = db, originalListen = listenToFirebaseRoom;
+    let listened = false;
+    listenToFirebaseRoom = () => { listened = true; };
+    db = { ref: () => ({ once: (event, successCb) => successCb({ exists: () => true, val: () => fakeRoom }) }) };
+    try {
+      attemptMatchReconnect();
+      document.getElementById('rejoinNoBtn').click();
+      assertTrue(!listened, 'Declining does not join');
+      assertEqual(joinedRoomRecord(), null, 'Declining forgets the stored match');
+    } finally {
+      db = originalDb; listenToFirebaseRoom = originalListen; currentUser = savedUser;
+      forgetJoinedRoom();
+    }
+  });
+  await test('REGRESSION: attemptMatchReconnect silently rejoins a Ranked match where the player was never substituted', () => {
     freshState({ isMultiplayer: false, isHost: false, isRanked: false, roomCode: null, localPlayerId: null });
     currentUser = { uid: 'uid_amit' };
-    rankedReconnectAttempted = false;
-    sessionStorage.setItem('shithead_joined_room', '112233');
+    matchReconnectAttempted = false;
+    forgetJoinedRoom(); sessionStorage.setItem('shithead_joined_room', '112233');
     const fakeRoom = {
       isRanked: true, phase: 'PLAY',
       players: [
@@ -3176,20 +3256,20 @@ async function runDevTestSuite() {
     let listenedCode = null;
     listenToFirebaseRoom = (code) => { listenedCode = code; };
     db = { ref: () => ({ once: (event, successCb) => successCb({ exists: () => true, val: () => fakeRoom }) }) };
-    attemptRankedReconnect();
+    attemptMatchReconnect();
     db = originalDb;
     listenToFirebaseRoom = originalListen;
-    sessionStorage.removeItem('shithead_joined_room');
+    forgetJoinedRoom();
     assertEqual(state.localPlayerId, 'p_host', 'Must identify the seat matching my uid, not assume a fixed seat order');
     assertTrue(state.isRanked === true, 'Must mark the resumed match as Ranked');
     assertEqual(listenedCode, '112233', 'Must attach the live room listener for the reconnected room');
     currentUser = null;
   });
-  await test('REGRESSION: attemptRankedReconnect reclaims a seat a bot had already substituted into', () => {
+  await test('REGRESSION: attemptMatchReconnect reclaims a seat a bot had already substituted into', () => {
     freshState({ isMultiplayer: false, isHost: false, isRanked: false, roomCode: null, localPlayerId: null });
     currentUser = { uid: 'uid_amit' };
-    rankedReconnectAttempted = false;
-    sessionStorage.setItem('shithead_joined_room', '445566');
+    matchReconnectAttempted = false;
+    forgetJoinedRoom(); sessionStorage.setItem('shithead_joined_room', '445566');
     const fakeRoom = {
       isRanked: true, phase: 'PLAY',
       players: [
@@ -3208,11 +3288,11 @@ async function runDevTestSuite() {
       onComplete(null, true, { val: () => atomicList });
     };
     db = { ref: () => ({ once: (event, successCb) => successCb({ exists: () => true, val: () => fakeRoom }) }) };
-    attemptRankedReconnect();
+    attemptMatchReconnect();
     db = originalDb;
     listenToFirebaseRoom = originalListen;
     updatePlayersAtomic = originalAtomic;
-    sessionStorage.removeItem('shithead_joined_room');
+    forgetJoinedRoom();
     const reclaimedSeat = atomicList && atomicList.find(p => p.uid === 'uid_amit');
     assertTrue(!!reclaimedSeat && !reclaimedSeat.isBot, 'The bot-substituted seat must be converted back to human control');
     assertEqual(state.localPlayerId, 'p_bot_zz11', 'Must resume as the SAME seat id the substitute was using — nothing else in the room needs to change');
@@ -3302,7 +3382,8 @@ async function runDevTestSuite() {
 
   // ---- STAGE 1: hamburger menu restructure + responsive presentation ----
   await test('REGRESSION: the hamburger menu has all 9 items in the agreed order, with no duplicates', () => {
-    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuShopBtn', 'menuGuideBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuInstallBtn', 'menuSignOutBtn'];
+    // Error Reports is owner-only (hidden for everyone else).
+    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuShopBtn', 'menuGuideBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuErrorReportsBtn', 'menuInstallBtn', 'menuSignOutBtn'];
     const nav = document.querySelector('#hamburgerDrawer nav');
     const actualOrder = Array.from(nav.querySelectorAll('button')).map(b => b.id);
     assertEqual(actualOrder, expectedOrder, 'Menu items must appear in exactly the agreed order: Profile, Stats, Personalisation, Friends, Leaderboard, Challenges, Shop, Guide & Strategy, Settings, Support, Sign Out (signed in only)');

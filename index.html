@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-24-v113 (ShitHead-Deluxe-113) — bump this string on every delivered change so any
+<!-- BUILD: 2026-09-25-v114 (ShitHead-Deluxe-114) — bump this string on every delivered change so any
      two copies of this file can be told apart at a glance. This exists
      specifically because a past session delivered a file that had silently
      fallen out of sync with the version actually tested — a one-line visual
@@ -4099,6 +4099,7 @@ video {
       <button id="menuGuideBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></span><span>Guide &amp; Strategy</span></button>
       <button id="menuSettingsBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg></span><span>Settings</span></button>
       <button id="menuSupportBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-support"/></svg></span><span>Support</span></button>
+      <button id="menuErrorReportsBtn" class="hamburger-menu-item hidden"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#2a1016" stroke="#7f1d1d"/><path d="M16 8.5l8.5 15h-17z" fill="none" stroke="#fb7185" stroke-width="2" stroke-linejoin="round"/><path d="M16 14v4.5" stroke="#fb7185" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="21" r="1.2" fill="#fb7185"/></svg></span><span>Error Reports</span></button>
       <button id="menuInstallBtn" class="hamburger-menu-item hidden"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#052e1c" stroke="#047857"/><rect x="10" y="6.5" width="12" height="19" rx="2.5" fill="none" stroke="#6ee7b7" stroke-width="2"/><path d="M16 10.5v8M12.5 15.5 16 19l3.5-3.5" stroke="#34d399" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Install App</span></button>
       <button id="menuSignOutBtn" class="hamburger-menu-item hidden menu-sign-out"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#2a1016" stroke="#7f1d1d"/><path d="M14 8H9.5A1.5 1.5 0 0 0 8 9.5v13A1.5 1.5 0 0 0 9.5 24H14" stroke="#fda4af" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M18 11l5 5-5 5M23 16H13" stroke="#fb7185" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Sign Out</span></button>
     </nav>
@@ -4913,6 +4914,22 @@ video {
   <!-- Support opens a fully addressed, pre-filled draft in the player's
        email app. A standalone HTML file cannot safely hold SMTP or email
        service credentials, so this is the reliable no-backend option. -->
+  <!-- Owner-only: the game's error reports (Database Rules let only the owner's verified email read them). -->
+  <div id="errorReportsModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-slate-950 border-2 border-rose-500 rounded-2xl shadow-2xl p-4" style="display:flex; flex-direction:column;">
+      <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
+        <span class="text-[11px] font-black uppercase tracking-widest text-rose-400">Error Reports</span>
+        <button id="errorReportsCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
+      </div>
+      <p id="errorReportsSummary" class="text-[10px] text-slate-400 mb-2" style="flex-shrink:0;">Loading…</p>
+      <div id="errorReportsList" class="overflow-y-auto space-y-1.5" style="flex:1; min-height:0;"></div>
+      <div class="flex gap-2" style="flex-shrink:0; margin-top:12px;">
+        <button id="errorReportsRefreshBtn" class="flex-1 text-[10px] font-black py-2 rounded-lg border border-slate-600 text-slate-200">REFRESH</button>
+        <button id="errorReportsClearBtn" class="flex-1 text-[10px] font-black py-2 rounded-lg border border-rose-500 text-rose-300">CLEAR ALL</button>
+      </div>
+    </div>
+  </div>
+
   <div id="supportModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:90vh; display:flex; flex-direction:column;">
       <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
@@ -5393,6 +5410,17 @@ video {
   </div>
 
   <!-- NEED-ANOTHER-HUMAN MODAL -->
+  <div id="rejoinModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-emerald-600/50 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
+      <div class="text-4xl">🔄</div>
+      <h2 class="text-base font-black text-emerald-400 uppercase tracking-wide">Rejoin Your Match?</h2>
+      <p id="rejoinModalText" class="text-slate-300 text-xs leading-relaxed">Your online match is still going.</p>
+      <div class="flex flex-col gap-2 pt-1">
+        <button id="rejoinYesBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Rejoin Match</button>
+        <button id="rejoinNoBtn" class="w-full py-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-300 uppercase tracking-wider transition">No Thanks</button>
+      </div>
+    </div>
+  </div>
   <div id="needHumanModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-600/50 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
       <div class="text-4xl">🙋</div>
@@ -6342,7 +6370,7 @@ video {
     ['matchStatsModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
-     'matchSummaryModal'].forEach((id) => {
+     'matchSummaryModal', 'errorReportsModal', 'rejoinModal'].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.parentElement !== document.body) document.body.appendChild(el);
     });
@@ -6455,11 +6483,16 @@ video {
     // synchronously during script load).
     let errorReportCount = 0;
     const MAX_ERROR_REPORTS_PER_SESSION = 10; // a broken loop shouldn't flood Firebase
+    const reportedErrorKeys = new Set();     // the same error once per session
     function reportError(message, source, lineno, colno, stack) {
       try {
         // Error storage is authenticated-only. Guests never write reports,
         // preventing anonymous database spam.
         if (!currentUser || !currentUser.uid) return;
+        if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return;
+        const key = `${message}|${lineno}|${colno}`;
+        if (reportedErrorKeys.has(key)) return;
+        reportedErrorKeys.add(key);
         if (errorReportCount >= MAX_ERROR_REPORTS_PER_SESSION) return;
         errorReportCount++;
         db.ref(`errorReports/${currentUser.uid}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}`).set({
@@ -6473,7 +6506,10 @@ video {
           phase: (typeof state !== 'undefined' && state) ? state.phase : null,
           isMultiplayer: (typeof state !== 'undefined' && state) ? !!state.isMultiplayer : null,
           tutorialActive: typeof tutorialActive !== 'undefined' ? !!tutorialActive : false,
-          url: (location.href || '').slice(0, 200)
+          url: (location.href || '').slice(0, 200),
+          version: typeof getGameVersionLabel === 'function' ? getGameVersionLabel() : null,
+          screen: `${window.innerWidth}x${window.innerHeight}`,
+          app: !!(window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone)
         });
       } catch (e) {
         // Never let error reporting itself throw or interrupt the player.
@@ -6524,7 +6560,7 @@ video {
         if (!snap.exists()) {
           // The room is gone (host left, or it was cleaned up).
           notifyBanner('That room no longer exists.');
-          sessionStorage.removeItem('shithead_joined_room');
+          forgetJoinedRoom();
           return;
         }
         const data = snap.val();
@@ -9283,7 +9319,7 @@ video {
     // Works for either player, not just the host, since there's no "room"
     // left to be in charge of afterward.
     function returnToRankedLobby() {
-      sessionStorage.removeItem('shithead_joined_room');
+      forgetJoinedRoom();
       sessionStorage.setItem('shithead_return_to_ranked', '1');
       location.reload();
     }
@@ -12127,7 +12163,7 @@ video {
 
     function returnToHomeScreen() {
       if (confirm("Return to Main Menu?")) {
-        sessionStorage.removeItem('shithead_joined_room');
+        forgetJoinedRoom();
         localStorage.removeItem('shithead_game_state');
         leaveMultiplayerRoom().then(reloadCleanly);
       }
@@ -12257,7 +12293,7 @@ video {
         clientVersion: getGameVersionLabel()
       })).then(({ code }) => {
         state.roomCode = code;
-        sessionStorage.setItem('shithead_joined_room', code);
+        rememberJoinedRoom(code);
         showMultiplayerLobbyView();
         listenToFirebaseRoom(code);
         return code;
@@ -12327,7 +12363,7 @@ video {
         if (data.phase && data.phase !== 'LOBBY') {
           if (existingMatch) {
             state.localPlayerId = existingMatch.id;
-            sessionStorage.setItem('shithead_joined_room', code);
+            rememberJoinedRoom(code);
 
             document.getElementById('joinCodeInput').disabled = true;
             document.getElementById('roomCodeBadge').classList.remove('hidden');
@@ -12347,7 +12383,7 @@ video {
         // reclaims that seat instead of creating a duplicate.
         if (existingMatch) {
           state.localPlayerId = existingMatch.id;
-          sessionStorage.setItem('shithead_joined_room', code);
+          rememberJoinedRoom(code);
           showMultiplayerLobbyView();
           listenToFirebaseRoom(code);
           return;
@@ -12386,7 +12422,7 @@ video {
           cosmetics: getPublicCosmeticLoadout()
         };
 
-        sessionStorage.setItem('shithead_joined_room', code);
+        rememberJoinedRoom(code);
 
         // Atomic: two people tapping "Join" on the same shared link at
         // close to the same moment must not be able to overwrite each
@@ -12408,7 +12444,7 @@ video {
           const iMadeIt = Array.isArray(finalList) && finalList.some(p => p.id === myId);
           if (!iMadeIt) {
             alert("Room filled up just as you joined — ask the host for a fresh code.");
-            sessionStorage.removeItem('shithead_joined_room');
+            forgetJoinedRoom();
             pNameInput.disabled = false;
             if (joinBtnEl) joinBtnEl.disabled = false;
             return;
@@ -12978,7 +13014,7 @@ video {
           if (!state.isRanked && myRecord && typeof myRecord.isHost === 'boolean') state.isHost = myRecord.isHost;
           if (!stillHere && !state.isHost && hasConfirmedRoomMembership) {
             alert("You have been removed from the room by the host.");
-            sessionStorage.removeItem('shithead_joined_room');
+            forgetJoinedRoom();
             location.reload();
             return;
           }
@@ -14067,7 +14103,7 @@ video {
     const MENU_PAGE_IDS = [
       'profileModal', 'statsModal', 'themesModal', 'friendsModal',
       'leaderboardModal', 'challengesModal', 'shopModal', 'rulesModal',
-      'settingsModal', 'supportModal', 'tutorialHubScreen'
+      'settingsModal', 'supportModal', 'tutorialHubScreen', 'errorReportsModal'
     ];
     // Every scrolling panel gets the floating Jump to top/bottom button,
     // including in-game ones that aren't hamburger menu pages.
@@ -14209,6 +14245,7 @@ video {
     let supportSubmitInFlight = false;
     let lastSupportSubmitAt = 0;
     let devTestSuiteRunning = false;
+    const IS_DEV_TEST_PAGE = /[?&]dev-tests=1\b/.test(location.search);
     const SUPPORT_COOLDOWN_MS = 60000;
 
     function openSupportPanel() {
@@ -14234,11 +14271,16 @@ video {
     document.getElementById('supportMessageInput').addEventListener('input', (e) => {
       document.getElementById('supportMessageCount').textContent = `${e.target.value.length} / 1000`;
     });
-    // Kept as a plain constant (not parsed from the BUILD HTML comment,
-    // which sits BEFORE <html> and so is invisible to
-    // document.documentElement) — update this alongside the BUILD comment
-    // on each delivery.
-    const GAME_VERSION_LABEL = 'v98';
+    // The BUILD comment at the very top of this file is the one place the
+    // version lives: it sits before <html> but is still one of
+    // document.childNodes, so the label (support emails, room compatibility)
+    // can never drift from it again.
+    const GAME_BUILD = (() => {
+      const node = [...document.childNodes].find(n => n.nodeType === Node.COMMENT_NODE && /BUILD:/.test(n.data));
+      const m = node && node.data.match(/BUILD:\s*(\d{4}-\d{2}-\d{2})-v(\d+)/);
+      return m ? { date: m[1], version: `v${m[2]}` } : { date: '', version: 'v0' };
+    })();
+    const GAME_VERSION_LABEL = GAME_BUILD.version;
     function getGameVersionLabel() {
       return GAME_VERSION_LABEL;
     }
@@ -14248,7 +14290,8 @@ video {
     let lastSupportDraftUri = '';
     function buildSupportMailto(category, subject, message) {
       const accountLine = currentUser && currentUser.email ? `Account email: ${currentUser.email}\n` : '';
-      const body = `Category: ${category}\nGame version: ${getGameVersionLabel()}\n${accountLine}\n${message}`;
+      const device = `${navigator.userAgent.includes('iPhone') ? 'iPhone' : /Android/.test(navigator.userAgent) ? 'Android' : 'Desktop'}${(window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone) ? ' app' : ' browser'}`;
+      const body = `Category: ${category}\nGame version: ${getGameVersionLabel()}${GAME_BUILD.date ? ` (${GAME_BUILD.date})` : ''}\nDevice: ${device}\n${accountLine}\n${message}`;
       return `mailto:support.shitheaddeluxe@gmail.com?subject=${encodeURIComponent(`[ShitHead Deluxe] ${subject}`)}&body=${encodeURIComponent(body)}`;
     }
     function openSupportEmailDraft(uri) {
@@ -17082,6 +17125,72 @@ video {
     document.getElementById('drawerGuideShortcutBtn').addEventListener('click', () => { closeHamburgerMenu(); document.getElementById('rulesModal').classList.remove('hidden'); });
     document.getElementById('menuSupportBtn').addEventListener('click', () => { closeHamburgerMenu(); openSupportPanel(); });
 
+    // ---- Error Reports (owner only) ------------------------------------
+    // Every player's uncaught errors land in errorReports/{uid}/{id}
+    // (reportError). Only the owner's verified email may read or clear them
+    // (Database Rules), and only the owner sees this menu item.
+    const GAME_OWNER_EMAIL = 'amirk2197@googlemail.com';
+    function isGameOwner() {
+      return !!currentUser && String(currentUser.email || '').toLowerCase() === GAME_OWNER_EMAIL;
+    }
+    // Groups identical errors so a repeated bug is one row with a count.
+    function groupErrorReports(data) {
+      const groups = new Map();
+      Object.entries(data || {}).forEach(([uid, reports]) => {
+        Object.values(reports || {}).forEach((r) => {
+          if (!r || typeof r !== 'object') return;
+          const key = `${r.message}|${r.line}`;
+          const g = groups.get(key) || { message: r.message || '(no message)', line: r.line, stack: r.stack, count: 0, players: new Set(), last: 0, versions: new Set(), devices: new Set(), phases: new Set() };
+          g.count++; g.players.add(uid);
+          if ((r.at || 0) > g.last) { g.last = r.at || 0; g.stack = r.stack || g.stack; }
+          if (r.version) g.versions.add(r.version);
+          if (r.phase) g.phases.add(r.phase);
+          const ua = String(r.userAgent || '');
+          g.devices.add(/iPhone|iPad/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : 'Desktop');
+          groups.set(key, g);
+        });
+      });
+      return [...groups.values()].sort((a, b) => b.last - a.last);
+    }
+    function renderErrorReports(data) {
+      const groups = groupErrorReports(data);
+      const total = groups.reduce((n, g) => n + g.count, 0);
+      document.getElementById('errorReportsSummary').textContent = total
+        ? `${total} report${total === 1 ? '' : 's'} · ${groups.length} different error${groups.length === 1 ? '' : 's'} · newest first`
+        : 'No errors reported. 🎉';
+      document.getElementById('errorReportsList').innerHTML = groups.map((g) => `
+        <details class="bg-slate-900/70 border border-slate-800 rounded-lg px-2 py-1.5">
+          <summary class="text-[10px] font-bold text-slate-100 cursor-pointer">${escapeHtml(String(g.message).slice(0, 140))} <span class="text-rose-300">×${g.count}</span></summary>
+          <div class="text-[9px] text-slate-400 mt-1 space-y-0.5">
+            <div>Last: ${g.last ? new Date(g.last).toLocaleString() : '?'} · ${g.players.size} player${g.players.size === 1 ? '' : 's'}</div>
+            <div>Versions: ${escapeHtml([...g.versions].join(', ') || '?')} · ${escapeHtml([...g.devices].join(', '))} · ${escapeHtml([...g.phases].join(', ') || '?')}</div>
+            ${g.line ? `<div>Line ${g.line}</div>` : ''}
+            ${g.stack ? `<pre class="whitespace-pre-wrap text-[8px] text-slate-500 mt-1">${escapeHtml(String(g.stack).slice(0, 800))}</pre>` : ''}
+          </div>
+        </details>`).join('');
+    }
+    function loadErrorReports() {
+      document.getElementById('errorReportsSummary').textContent = 'Loading…';
+      document.getElementById('errorReportsList').innerHTML = '';
+      db.ref('errorReports').once('value').then((snap) => renderErrorReports(snap.val())).catch((e) => {
+        document.getElementById('errorReportsSummary').textContent = e && /permission/i.test(e.code || e.message || '')
+          ? 'Blocked by the Database Rules: publish the latest rules (they let only your verified email read reports).'
+          : `Couldn’t load reports: ${e?.message || e}`;
+      });
+    }
+    document.getElementById('menuErrorReportsBtn').addEventListener('click', () => {
+      closeHamburgerMenu();
+      if (!isGameOwner()) return;
+      document.getElementById('errorReportsModal').classList.remove('hidden');
+      loadErrorReports();
+    });
+    document.getElementById('errorReportsCloseBtn').addEventListener('click', () => document.getElementById('errorReportsModal').classList.add('hidden'));
+    document.getElementById('errorReportsRefreshBtn').addEventListener('click', loadErrorReports);
+    document.getElementById('errorReportsClearBtn').addEventListener('click', () => {
+      if (!confirm('Delete every error report?')) return;
+      db.ref('errorReports').remove().then(loadErrorReports).catch((e) => alert(`Couldn’t clear: ${e?.message || e}`));
+    });
+
     // Lobby quick-access strip replaces the old deck-theme selector. It uses
     // the same destinations and icons as the hamburger menu, so there is only
     // one source of truth for page-opening behaviour.
@@ -17326,7 +17435,8 @@ video {
           updatePlayersAtomic(state.roomCode, (list) => (list || []).filter(p => p.id !== myId));
         }
       } catch (e) { console.warn('Leaving room on sign out failed', e); }
-      ['shithead_joined_room', 'shithead_return_to_ranked'].forEach(k => { try { sessionStorage.removeItem(k); } catch (e) {} });
+      forgetJoinedRoom();
+      ['shithead_return_to_ranked'].forEach(k => { try { sessionStorage.removeItem(k); } catch (e) {} });
       ['shithead_game_state', 'shithead_player_name'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
       const input = document.getElementById('playerNameInput');
       if (input) { input.value = ''; input.disabled = false; }
@@ -17515,6 +17625,7 @@ video {
       const drawerSub = document.getElementById('hamburgerAccountSub');
       if (!drawerLabel) return;
       document.getElementById('menuSignOutBtn')?.classList.toggle('hidden', !currentUser);
+      document.getElementById('menuErrorReportsBtn')?.classList.toggle('hidden', !isGameOwner());
       if (currentUser) {
         drawerLabel.textContent = currentUser.displayName || currentUser.email || 'Signed in';
         drawerSub.textContent = 'Tap Profile for your rating & stats';
@@ -17614,7 +17725,7 @@ video {
         syncNicknameFromAccount();
         refreshDifficultyLocks();
         if (user) {
-          ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); attemptRankedReconnect();
+          ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); if (!IS_DEV_TEST_PAGE) attemptMatchReconnect();
           initChallengeEconomy().then(() => { claimDailyLoginReward(); sendSeasonalMail(); loadSeasonWins(); }); loadCosmeticCollection(user);
           setTimeout(() => { if (currentUser && !devTestSuiteRunning) pruneOldRooms(); }, 15000);
           setTimeout(() => { if (currentUser && !devTestSuiteRunning) { registerPushToken(); shareSeasonCalendarWithWorker(); } }, 4000);
@@ -17623,6 +17734,7 @@ video {
         } else {
           startInboxBadgeListener(null);
           document.getElementById('inboxBadge')?.classList.add('hidden');
+          if (!IS_DEV_TEST_PAGE) attemptMatchReconnect();
           initChallengeEconomy(); loadCosmeticCollection(null);
         }
       });
@@ -19233,26 +19345,19 @@ video {
     }
 
     function enterRankedRoom(code) {
-      sessionStorage.setItem('shithead_joined_room', code);
+      rememberJoinedRoom(code);
       showMultiplayerLobbyView();
       listenToFirebaseRoom(code);
     }
 
-    // Runs once per page load, right after sign-in resolves. A refreshed
-    // (or crashed/reopened) tab has no other memory of being mid-Ranked-match
-    // — shithead_joined_room in sessionStorage is the only surviving trace —
-    // so without this, the ONLY way back into the match was the 45-second
-    // disconnect grace window closing on you: the host's watcher substitutes
-    // a bot, and Ranked's 5-turn concession cap (see checkTurnAndAct) then
-    // rules you as having conceded — a real rating loss for what was just a
-    // refresh. Unlike a casual Online Room (name-based manual rejoin via
-    // joinMultiRoom — see its comment on why that's still name-matched),
-    // Ranked players are always signed in and every Ranked seat already
-    // carries the account's real uid, so this can identify "my seat" with
-    // total confidence and rejoin automatically with no typing required.
-    // Pure and separately testable: turns a bot-substituted seat back into
-    // the human it was standing in for, keeping everything else (hand,
-    // faceUp, faceDown, rating, uid, id) exactly as the substitute left it.
+    // Runs once per page load (after sign-in resolves, or straight away
+    // for a guest). A refreshed, crashed or killed app would otherwise have
+    // no way back into its match until the 45s disconnect grace ran out and
+    // a bot took the seat. Ranked seats carry the account uid, so Ranked
+    // rejoins automatically (a lost seat there costs rating); a casual room
+    // asks first. The seat is found by uid, then the stored player id, then
+    // the name (a bot stand-in keeps the name with " (Bot)" on the end).
+    // Bot stand-ins are handed straight back to the returning player.
     function reclaimSubstitutedSeat(playerRecord) {
       return {
         ...playerRecord,
@@ -19263,67 +19368,130 @@ video {
       };
     }
 
-    let rankedReconnectAttempted = false;
-    function attemptRankedReconnect() {
-      if (!currentUser || rankedReconnectAttempted) return;
-      const code = sessionStorage.getItem('shithead_joined_room');
-      if (!code) return;
-      rankedReconnectAttempted = true;
+    // The room this device is playing in. sessionStorage alone was lost
+    // whenever the phone killed the app, so it's mirrored to localStorage
+    // (with the seat and name) for a few hours.
+    const JOINED_ROOM_KEY = 'shithead_joined_room';
+    const ACTIVE_MATCH_KEY = 'shithead_active_match';
+    const ACTIVE_MATCH_MAX_AGE_MS = 3 * 60 * 60 * 1000;
+    function rememberJoinedRoom(code) {
+      try { sessionStorage.setItem(JOINED_ROOM_KEY, code); } catch (e) {}
+      try {
+        const name = (state.players || []).find(p => p && p.id === state.localPlayerId)?.name
+          || document.getElementById('playerNameInput')?.value.trim() || '';
+        localStorage.setItem(ACTIVE_MATCH_KEY, JSON.stringify({ code, at: Date.now(), playerId: state.localPlayerId || null, name }));
+      } catch (e) {}
+    }
+    function forgetJoinedRoom() {
+      try { sessionStorage.removeItem(JOINED_ROOM_KEY); } catch (e) {}
+      try { localStorage.removeItem(ACTIVE_MATCH_KEY); } catch (e) {}
+    }
+    // { code, playerId, name } or null.
+    function joinedRoomRecord() {
+      let stored = null;
+      try { stored = JSON.parse(localStorage.getItem(ACTIVE_MATCH_KEY) || 'null'); } catch (e) {}
+      if (stored && !(Date.now() - stored.at < ACTIVE_MATCH_MAX_AGE_MS)) stored = null;
+      let code = null;
+      try { code = sessionStorage.getItem(JOINED_ROOM_KEY); } catch (e) {}
+      if (code) return { ...(stored && stored.code === code ? stored : {}), code };
+      return stored && stored.code ? stored : null;
+    }
+
+    let matchReconnectAttempted = false;
+    function findMyRejoinSeat(players, record) {
+      const live = players.filter(p => p && p.id);
+      if (currentUser) {
+        const byUid = live.find(p => p.uid === currentUser.uid);
+        if (byUid) return byUid;
+      }
+      if (record.playerId) {
+        const byId = live.find(p => p.id === record.playerId && !p.isBot);
+        if (byId) return byId;
+      }
+      const name = (record.name || '').trim().toLowerCase();
+      if (!name) return null;
+      return live.find(p => {
+        if (p.isBot && !/\(Bot\)$/.test(p.name)) return false; // a real bot, not a stand-in
+        if (currentUser && p.uid && p.uid !== currentUser.uid) return false;
+        return p.name.replace(/\s*\(Bot\)$/, '').trim().toLowerCase() === name;
+      }) || null;
+    }
+
+    function attemptMatchReconnect() {
+      if (matchReconnectAttempted || typeof db === 'undefined' || !db) return;
+      if (state.isMultiplayer) return; // already in a room this page load
+      const record = joinedRoomRecord();
+      if (!record) return;
+      matchReconnectAttempted = true;
+      const code = record.code;
 
       db.ref(`rooms/${code}`).once('value', (snap) => {
-        if (!snap.exists()) { sessionStorage.removeItem('shithead_joined_room'); return; }
+        if (state.isMultiplayer) return;
+        if (!snap.exists()) { forgetJoinedRoom(); return; }
         const data = snap.val();
-        // Not a Ranked room — leave it alone entirely. A casual Online Room
-        // rejoin is a different, name-based flow (joinMultiRoom) that the
-        // player drives manually; this function never touches that case.
-        if (!data.isRanked) return;
-        if (data.phase === 'FINISHED' || data.phase === 'LOBBY' || !data.phase) {
-          // Nothing left to silently rejoin — either it's already over, or
-          // it never actually got past the pre-deal lobby.
-          sessionStorage.removeItem('shithead_joined_room');
+        if (data.phase === 'FINISHED' || data.phase === 'LOBBY' || !data.phase || !isRoomVersionCompatible(data)) {
+          // Over, never dealt, or from another game version: nothing to rejoin.
+          forgetJoinedRoom();
           return;
         }
+        // Ranked needs the account that owns the seat.
+        if (data.isRanked && !currentUser) { matchReconnectAttempted = false; return; }
 
-        let players = Array.isArray(data.players) ? data.players : Object.values(data.players || {});
-        players = players.filter(p => p && p.id);
-        const mySeat = players.find(p => p.uid === currentUser.uid);
-        if (!mySeat) { sessionStorage.removeItem('shithead_joined_room'); return; }
+        const players = Array.isArray(data.players) ? data.players : Object.values(data.players || {});
+        const mySeat = data.isRanked
+          ? players.find(p => p && p.id && p.uid === currentUser.uid)
+          : findMyRejoinSeat(players, record);
+        if (!mySeat) { forgetJoinedRoom(); return; }
 
         const reclaimSeat = () => {
+          resetRoomMembershipConfirmation();
           state.isMultiplayer = true;
-          state.isRanked = true;
-          state.isHost = mySeat.id === 'p_host';
+          state.isRanked = !!data.isRanked;
+          state.isHost = mySeat.id === 'p_host' || mySeat.id === data.hostId;
           state.roomCode = code;
           state.localPlayerId = mySeat.id;
-          notifyBanner('🔄 Reconnected to your Ranked match!');
-          // listenToFirebaseRoom's very first snapshot fully rebuilds the
-          // right UI for whatever phase the match is actually in (SWAP,
-          // PLAY, or FINISHED) — the same code path a normal join already
-          // relies on — so nothing else needs to be set up by hand here.
+          rememberJoinedRoom(code);
+          notifyBanner(data.isRanked ? '🔄 Reconnected to your Ranked match!' : '🔄 Back in your match!');
+          // The listener's first snapshot rebuilds the UI for whatever phase
+          // the match is in, the same path a normal join uses.
           listenToFirebaseRoom(code);
         };
-
-        if (mySeat.isBot) {
-          // Already substituted while this account was away. Hand the seat
-          // straight back — same id, so nothing else in the room needs to
-          // change — rather than leaving a bot permanently in control of an
-          // account that's actually back at the table.
+        const rejoin = () => {
+          if (!mySeat.isBot) { reclaimSeat(); return; }
+          // A bot took the seat while this player was away: hand it back
+          // (same id, so nothing else in the room changes).
           updatePlayersAtomic(code, (list) => {
             const idx = list.findIndex(p => p.id === mySeat.id);
-            if (idx === -1) return list;
+            if (idx === -1 || !list[idx].isBot) return list;
             const next = [...list];
             next[idx] = reclaimSubstitutedSeat(list[idx]);
             return next;
           }, (error, committed) => {
             if (!error && committed) reclaimSeat();
-            else sessionStorage.removeItem('shithead_joined_room');
+            else { forgetJoinedRoom(); notifyBanner('Could not get back into that match.'); }
           });
-        } else {
-          reclaimSeat();
-        }
+        };
+
+        if (data.isRanked) { rejoin(); return; }
+        showRejoinPrompt(code, mySeat, rejoin);
       }, (error) => {
-        console.warn('Ranked reconnect check failed', error);
+        console.warn('Match reconnect check failed', error);
       });
+    }
+
+    function showRejoinPrompt(code, seat, onRejoin) {
+      const modal = document.getElementById('rejoinModal');
+      if (!modal) return;
+      const name = seat.name.replace(/\s*\(Bot\)$/, '');
+      document.getElementById('rejoinModalText').textContent = seat.isBot
+        ? `Your match in room ${code} is still going and a bot is playing ${name}'s cards. Jump back in?`
+        : `Your match in room ${code} is still going. Jump back in as ${name}?`;
+      const yes = document.getElementById('rejoinYesBtn');
+      const no = document.getElementById('rejoinNoBtn');
+      const close = () => { modal.classList.add('hidden'); yes.onclick = null; no.onclick = null; };
+      yes.onclick = () => { close(); onRejoin(); };
+      no.onclick = () => { close(); forgetJoinedRoom(); };
+      modal.classList.remove('hidden');
     }
 
     // Ranked-only: a soft deprioritization against two accounts repeatedly
@@ -20673,7 +20841,7 @@ video {
     // for long. This exists purely so a player is never stuck with zero
     // buttons if that auto-start somehow doesn't fire.
     document.getElementById('rankedConnectedLeaveBtn').addEventListener('click', () => {
-      sessionStorage.removeItem('shithead_joined_room');
+      forgetJoinedRoom();
       location.reload();
     });
 
@@ -21109,11 +21277,11 @@ video {
         const code = state.roomCode;
         const myId = state.localPlayerId;
         updatePlayersAtomic(code, (currentList) => currentList.filter(p => p.id !== myId), () => {
-          sessionStorage.removeItem('shithead_joined_room');
+          forgetJoinedRoom();
           location.reload();
         });
       } else {
-        sessionStorage.removeItem('shithead_joined_room');
+        forgetJoinedRoom();
         location.reload();
       }
     });
@@ -21123,7 +21291,7 @@ video {
         ? "Leave this match? Your progress in it will be lost and you can't rejoin."
         : "Return to the main menu?";
       if (confirm(msg)) {
-        sessionStorage.removeItem('shithead_joined_room');
+        forgetJoinedRoom();
         localStorage.removeItem('shithead_game_state');
         // Only a signed-in player should be returned to the Ranked lobby.
         // Guests always land on the normal home screen without an auth prompt.
@@ -21140,7 +21308,7 @@ video {
     // player is typing into a room-code field. M and I are deliberately
     // NOT gated by this (see below) — they need to work precisely when
     // something IS open, to close it.
-    const BLOCKING_OVERLAY_IDS = ['authModal', 'challengesModal', 'deleteAccountModal', 'friendsModal', 'inboxModal', 'leaderboardModal', 'matchStatsModal', 'needHumanModal', 'pileInspectModal', 'profileModal', 'rulesModal', 'settingsModal', 'shopModal', 'statsModal', 'supportModal', 'themesModal', 'usernameModal'];
+    const BLOCKING_OVERLAY_IDS = ['authModal', 'challengesModal', 'deleteAccountModal', 'friendsModal', 'inboxModal', 'leaderboardModal', 'matchStatsModal', 'needHumanModal', 'pileInspectModal', 'profileModal', 'rulesModal', 'settingsModal', 'shopModal', 'statsModal', 'supportModal', 'themesModal', 'usernameModal', 'errorReportsModal', 'rejoinModal'];
     // Every page and pop-up springs in as it opens, whatever opened it.
     (function watchOverlayEntrances() {
       const ids = [...BLOCKING_OVERLAY_IDS, 'tutorialHubScreen', 'matchSummaryModal', 'difficultyUnlockPopup'];
@@ -21191,10 +21359,10 @@ video {
       dailyRewardModal: () => closeDailyReward(), playerPopup: 'playerPopupClose', matchSummaryModal: 'matchSummaryClose',
       authModal: 'authCloseBtn', usernameModal: null, difficultyUnlockPopup: 'difficultyUnlockPopupBtn',
       matchStatsModal: 'matchStatsCloseBtn', friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
-      leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', supportModal: 'supportCloseBtn',
+      leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
-      needHumanModal: 'needHumanCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
+      needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
       victoryOverlay: 'closeVictoryBtn', floatingJokerBar: null,
       followUpToastBanner: () => resolveFollowUpPlay(false)
     };
@@ -21274,7 +21442,7 @@ video {
       setTimeout(() => location.reload(), 500);
     }
     function leaveRoomAndReload() {
-      sessionStorage.removeItem('shithead_joined_room');
+      forgetJoinedRoom();
       leaveMultiplayerRoom().then(reloadCleanly);
     }
     // Installed iPhone app: swipe in from the left edge = Back.

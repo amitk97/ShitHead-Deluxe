@@ -230,7 +230,8 @@
       }
     },
     "errorReports": {
-      ".read": false,
+      ".read": "auth != null && auth.token.email === 'amirk2197@googlemail.com' && auth.token.email_verified === true",
+      ".write": "auth != null && auth.token.email === 'amirk2197@googlemail.com' && auth.token.email_verified === true && !newData.exists()",
       "$uid": {
         "$reportId": {
           ".write": "auth != null && auth.uid === $uid && !data.exists()",
