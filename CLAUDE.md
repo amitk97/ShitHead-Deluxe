@@ -50,6 +50,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - Quick Start (`QUICK_START_MODULE` / `TUTORIAL_MODULE_QUICK_START`): 6 steps, one short sentence each (a test caps steps at 6 and text at 18 words). The lobby Tutorial button starts it directly the first time (`launchTutorialModule(id, { fromHub: false })`, ends on the lobby with "You're ready!"); once done, the button opens the hub, where Quick Start is the highlighted first row. It is NOT part of `getAllTutorialModuleIds` (the complete-every-lesson challenge). Keep new first-time teaching here short; detail belongs in the hub lessons.
 
+## Promo & how-to-play videos
+
+- `tools/video/` (ignored by Hosting) records them from the real game: `director.js` (loads the game in a 390×844 iframe drawn 2× on a 780×1688 page, captures the browser screencast, encodes 30fps VP8 WebM with Playwright's ffmpeg; `V.*` in-page helpers for scenes, captions, highlights and title cards; bots never move on their own), `promo.js` (~32s), `howto.js` (~73s), `bats.js`. Look: Halloween table, Cobweb back, default frame, Ghost Flames burn, Bat Swarm victory (set in `openGame`). Needs `SH_VIDEO_DEPS` with `firebase@10.12.0` + `canvas-confetti@1.6.0` installed. Only WebM can be encoded here (no H.264); convert to MP4 in CapCut etc. Playwright's own `recordVideo` captures CSS pixels only (a quarter-size frame): don't use it.
+
 ## Challenges
 
 - Every row shows what the challenge asks for; a completed row keeps that description (with the ✓) instead of just "Completed". The "Challenge completed" mail shows it too. One source: `challengeDescription(defOrCompletionKey)` (handles `daily_<date>_<id>` / `weekly_<week>_<id>` keys and the tutorial).

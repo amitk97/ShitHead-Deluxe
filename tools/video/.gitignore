@@ -1,0 +1,4 @@
+deps/
+*.webm
+*.webm.marks.json
+*.png

@@ -11,7 +11,8 @@
       "CLAUDE.md",
       "database.rules.json",
       "functions/**",
-      "_config.yml"
+      "_config.yml",
+      "tools/**"
     ],
     "headers": [
       {
