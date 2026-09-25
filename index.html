@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v124 (ShitHead-Deluxe-124) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v125 (ShitHead-Deluxe-125) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -13909,11 +13909,14 @@ video {
       document.getElementById('modeRankedBtn').className = MODE_BTN_INACTIVE;
     });
 
+    // No signal: Online Room and Ranked need the internet; Vs Bots and the
+    // Tutorial work offline (sw.js keeps every file they need).
+    const isOffline = () => !firebaseAvailable || (typeof navigator !== 'undefined' && navigator.onLine === false);
+    const OFFLINE_MODE_MSG = "📴 You're offline. Vs Bots and the Tutorial work without a signal; Online Room and Ranked come back when you reconnect.";
+    window.addEventListener('offline', () => notifyBanner('📴 No signal. You can keep playing Vs Bots offline.'));
+    window.addEventListener('online', () => notifyBanner('📶 Back online.'));
     document.getElementById('modeMultiBtn').addEventListener('click', () => {
-      if (!firebaseAvailable) {
-        alert("Online multiplayer isn't available right now — it needs a connection that couldn't be reached. Playing vs Bots and the Tutorial both work offline.");
-        return;
-      }
+      if (isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
       document.getElementById('singleOptions').classList.add('hidden');
       document.getElementById('multiOptions').classList.remove('hidden');
       document.getElementById('rankedOptions').classList.add('hidden');
@@ -13923,10 +13926,7 @@ video {
     });
 
     document.getElementById('modeRankedBtn').addEventListener('click', () => {
-      if (!firebaseAvailable) {
-        alert("Ranked isn't available right now — it needs a connection that couldn't be reached. Playing vs Bots and the Tutorial both work offline.");
-        return;
-      }
+      if (isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
       document.getElementById('singleOptions').classList.add('hidden');
       document.getElementById('multiOptions').classList.add('hidden');
       document.getElementById('rankedOptions').classList.remove('hidden');

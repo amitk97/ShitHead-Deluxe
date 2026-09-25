@@ -1065,6 +1065,26 @@ async function runDevTestSuite() {
     assertEqual([c.width, c.height], [1080, 1350], 'Portrait share size');
     assertTrue(!!document.getElementById('matchSummaryShare'), 'The summary has a SHARE button');
   });
+  await test('Offline: Online Room and Ranked explain that Vs Bots works offline, and stay closed', () => {
+    const desc = Object.getOwnPropertyDescriptor(Navigator.prototype, 'onLine');
+    Object.defineProperty(navigator, 'onLine', { get: () => false, configurable: true });
+    const banners = [], originalBanner = notifyBanner;
+    notifyBanner = (m) => banners.push(m);
+    try {
+      document.getElementById('multiOptions').classList.add('hidden');
+      document.getElementById('rankedOptions').classList.add('hidden');
+      document.getElementById('modeMultiBtn').click();
+      document.getElementById('modeRankedBtn').click();
+      assertEqual(banners.length, 2, 'Both taps explain');
+      assertTrue(banners.every(b => b.includes('offline') && b.includes('Vs Bots')), 'The message points to Vs Bots');
+      assertTrue(document.getElementById('multiOptions').classList.contains('hidden') && document.getElementById('rankedOptions').classList.contains('hidden'), 'Neither opens');
+    } finally {
+      notifyBanner = originalBanner;
+      delete navigator.onLine;
+      if (desc) Object.defineProperty(Navigator.prototype, 'onLine', desc);
+      document.getElementById('modeSingleBtn').click();
+    }
+  });
   await test('Every Burn cosmetic (and the default) has its own burn sound', () => {
     assertTrue(typeof BURN_SOUNDS.default === 'function', 'A default burn sound exists');
     const missing = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && typeof BURN_SOUNDS[i.id] !== 'function').map(i => i.id);

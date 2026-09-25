@@ -1,40 +1,83 @@
 // ShitHead Deluxe service worker.
-// Makes the game installable and shows notifications. Pages always come
-// from the network first so every deploy reaches players straight away;
-// the cached copy is only used when offline.
-const CACHE = 'shithead-shell-v1';
+// Makes the game installable, playable offline (Vs Bots and the Tutorial)
+// and shows notifications. Pages always come from the network first so
+// every deploy reaches players straight away; the cached copy is only used
+// when offline. Game files (sounds, art, fonts, the Firebase and confetti
+// scripts) are served from the cache and refreshed in the background.
+const CACHE = 'shithead-shell-v2';
+const ASSET_CACHE = 'shithead-assets-v1';
 const DATA_CACHE = 'shithead-data-v1'; // small saved data (event calendar), kept across updates
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
+// Everything a Vs Bots game needs with no signal, fetched when the app installs.
+const OFFLINE_ASSETS = [
+  '/audio/riffle.mp3', '/audio/place.mp3', '/audio/take.mp3', '/audio/turn.mp3', '/audio/notify.mp3',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js',
+  'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
+];
+// Files kept as they're used (card art, tables, fonts). Nothing that talks
+// to the database or sign-in is ever cached.
+function isCachedAsset(url) {
+  if (url.origin === self.location.origin) {
+    return /^\/(art|audio|icons)\//.test(url.pathname) || url.pathname === '/manifest.webmanifest';
+  }
+  return (url.hostname === 'www.gstatic.com' && url.pathname.startsWith('/firebasejs/'))
+    || (url.hostname === 'cdn.jsdelivr.net' && url.pathname.startsWith('/npm/canvas-confetti'))
+    || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
+}
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).catch(() => {}));
+  event.waitUntil(Promise.all([
+    caches.open(CACHE).then((cache) => cache.addAll(SHELL)).catch(() => {}),
+    // One at a time, so a single failure never stops the rest.
+    caches.open(ASSET_CACHE).then((cache) => Promise.all(OFFLINE_ASSETS.map((url) => cache.add(url).catch(() => {}))))
+  ]));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE && key !== DATA_CACHE).map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(keys.filter((key) => ![CACHE, ASSET_CACHE, DATA_CACHE].includes(key)).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
-  if (request.method !== 'GET' || request.mode !== 'navigate') return;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
   // Firebase's own pages (Google sign-in handler) are never touched.
-  if (new URL(request.url).pathname.startsWith('/__/')) return;
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (response.ok && new URL(request.url).pathname === '/') {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put('/', copy)).catch(() => {});
-        }
-        return response;
-      })
-      .catch(() => caches.match('/').then((cached) => cached || Response.error()))
-  );
+  if (url.origin === self.location.origin && url.pathname.startsWith('/__/')) return;
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok && url.pathname === '/') {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put('/', copy)).catch(() => {});
+          }
+          return response;
+        })
+        .catch(() => caches.match('/').then((cached) => cached || Response.error()))
+    );
+    return;
+  }
+  if (!isCachedAsset(url)) return;
+  // Stale-while-revalidate: the cached copy straight away, a fresh one saved for next time.
+  event.respondWith(caches.open(ASSET_CACHE).then(async (cache) => {
+    const cached = await cache.match(request, { ignoreVary: true });
+    const refresh = fetch(request).then((response) => {
+      if (response && (response.ok || response.type === 'opaque')) cache.put(request, response.clone()).catch(() => {});
+      return response;
+    }).catch(() => null);
+    if (cached) { event.waitUntil(refresh); return cached; }
+    const fresh = await refresh;
+    return fresh || Response.error();
+  }));
 });
 
 // Tapping a notification brings the game forward (or opens it) on the
