@@ -2,6 +2,7 @@
 
 Single-file web game (`index.html`) on Firebase Hosting + Realtime Database (project `shithead-pro`).
 
+- Finding your way: the BUILD comment at the top has a FILE MAP; the GAMEPLAY ENGINE script opens with a MAP and each section starts with a `// § Name` marker (search `// § `). New code goes in the matching section; a new section gets a marker and a line in the map.
 - `index.html` is the live game. `index1.html`, `index2.html`, … are old snapshots — don't edit them (Hosting ignores them).
 - `database.rules.json` is the source for the Realtime Database rules. Hosting deploys automatically on merge to `main`, but **rules do not**: after changing them, publish the file's contents in Firebase Console → Realtime Database → Rules.
 - **Commit and push straight to `main`** (it deploys live automatically). No branches, PRs or merge steps unless the owner asks for one — there are no other players yet.

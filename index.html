@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v114 (ShitHead-Deluxe-114) — bump this string on every delivered change so any
-     two copies of this file can be told apart at a glance. This exists
-     specifically because a past session delivered a file that had silently
-     fallen out of sync with the version actually tested — a one-line visual
-     check here would have caught that immediately instead of requiring a
-     full diff. -->
+<!-- BUILD: 2026-09-25-v114 (ShitHead-Deluxe-114) — bump this on every release. It is the game's
+     version everywhere (room compatibility, support email, What's New).
+
+     FILE MAP
+       <head>   domain redirect · precompiled Tailwind <style> · game <style> (themes, motion, pages)
+       <body>   header · menu drawer · home/lobby · game table · pages and pop-ups
+       scripts  SOUND ENGINE · BURN EMBER ENGINE · KINETIC PROJECTILE ENGINE (card flights,
+                blind reveal) · GAMEPLAY ENGINE (everything else; its own map is at the top)
+       outside  dev-tests.js (index.html?dev-tests=1) · art/ · audio/ · sw.js · functions/ -->
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
@@ -6391,6 +6394,32 @@ video {
 
   <!-- GAMEPLAY ENGINE -->
   <script>
+    // MAP OF THIS SCRIPT (search for "// § " to jump between sections):
+    //   § Start-up plumbing: pages to <body>, Firebase, error reports
+    //   § Game state, save & restore
+    //   § Rules engine: legal moves and constraints
+    //   § Bot AI
+    //   § Match flow: start, play, pick up, burn
+    //   § Match end, victory and standings
+    //   § Turn loop
+    //   § Rendering: cards
+    //   § Rendering: the table
+    //   § Online rooms: sync, host, join, leave
+    //   § Online rooms: the room listener
+    //   § Profile pictures, table art, seasonal events
+    //   § Cosmetics catalogue
+    //   § Shop and Custom pages
+    //   § Accounts and sign-in
+    //   § Ranked matchmaking
+    //   § Challenges and Diamonds economy
+    //   § Social: profiles, presence, friends, invites, inbox
+    //   § Installable app and notifications
+    //   § Settings page
+    //   § Phone back gesture
+    //   § Tutorial
+    //   § Page start-up
+
+    // § Start-up plumbing: pages to <body>, Firebase, error reports
     // Pages and pop-ups live at the top level of <body>. Written inside the
     // game table, any transform on the table (the burn screen-shake, some
     // browsers' compositing) made their position:fixed boxes start at the
@@ -6596,7 +6625,7 @@ video {
         const previousResyncTurnIndex = state.currentTurnIndex;
         clearStaleSelections();
         if (data.players) {
-          const list = (Array.isArray(data.players) ? data.players : Object.values(data.players)).filter(p => p && p.id);
+          const list = roomPlayerList(data.players);
           if (list.some(p => p.id === state.localPlayerId)) hasConfirmedRoomMembership = true;
           if (localDealLooksIncomplete(data, list)) {
             requestAuthoritativeStateRecovery(`resync-${reason || 'unknown'}`);
@@ -6626,6 +6655,7 @@ video {
     // Firebase may invoke this listener synchronously. Declare state before
     // registering it so a fast connection callback cannot hit the temporal
     // dead zone and abort startup with "Cannot access state before initialization".
+    // § Game state, save & restore
     let state = null;
     db.ref('.info/connected').on('value', (snap) => {
       const isConnected = snap.val() === true;
@@ -6913,6 +6943,7 @@ video {
       return !!(rank && card && card.rank === rank);
     }
 
+    // § Rules engine: legal moves and constraints
     function isPlayLegal(card, discardPile, activeConstraint) {
       if (card.isJoker) return true;
       let topCard = getEffectiveTopCard(discardPile);
@@ -7049,6 +7080,7 @@ video {
     // behaved like a person and the tiers weren't really comparable.
     const BOT_ACCURACY = { easy: 0.25, medium: 0.55, hard: 0.85, boss: 0.97 };
 
+    // § Bot AI
     function selectBestBotMove(bot, validMoves, difficulty) {
       const uniqueRanks = [...new Set(validMoves.map(c => c.rank))];
       const pool = (bot.hand && bot.hand.length > 0) ? bot.hand : bot.faceUp;
@@ -7533,6 +7565,7 @@ video {
       notifyBanner("Swap Phase: Choose your 3 Face-Up cards!");
     }
 
+    // § Match flow: start, play, pick up, burn
     function dismissLobbyAndStart() {
       // Belt-and-braces: re-assert high-contrast/reduce-motion here too, so
       // that no matter which path led to the game view (new match, Play
@@ -7636,35 +7669,26 @@ video {
       }
     }
 
+    // The play log (Pile history) keeps the last 25 entries.
+    const PLAYED_HISTORY_LIMIT = 25;
+    function pushHistory(...entries) {
+      state.playedHistory.push(...entries);
+      if (state.playedHistory.length > PLAYED_HISTORY_LIMIT) {
+        state.playedHistory = state.playedHistory.slice(-PLAYED_HISTORY_LIMIT);
+      }
+    }
     function recordHistory(playerName, cards, meta) {
-      cards.forEach(c => {
-        state.playedHistory.push({
-          type: 'play',
-          playerName: playerName,
-          rank: c.rank,
-          suit: c.suit,
-          isJoker: c.isJoker,
-          blindFailed: !!(meta && meta.blindFailed)
-        });
-      });
-      if (state.playedHistory.length > 25) {
-        state.playedHistory = state.playedHistory.slice(-25);
-      }
+      pushHistory(...cards.map(c => ({
+        type: 'play',
+        playerName: playerName,
+        rank: c.rank,
+        suit: c.suit,
+        isJoker: c.isJoker,
+        blindFailed: !!(meta && meta.blindFailed)
+      })));
     }
-
-    function recordPickupHistory(playerName) {
-      state.playedHistory.push({ type: 'pickup', playerName });
-      if (state.playedHistory.length > 25) {
-        state.playedHistory = state.playedHistory.slice(-25);
-      }
-    }
-
-    function recordBurnHistory(playerName) {
-      state.playedHistory.push({ type: 'burn', playerName });
-      if (state.playedHistory.length > 25) {
-        state.playedHistory = state.playedHistory.slice(-25);
-      }
-    }
+    function recordPickupHistory(playerName) { pushHistory({ type: 'pickup', playerName }); }
+    function recordBurnHistory(playerName) { pushHistory({ type: 'burn', playerName }); }
 
     // Online, the client making a blind flip (you, or the host for a bot)
     // tells the room, so every player watches the same reveal while the
@@ -9043,11 +9067,6 @@ video {
     // calls it from the Firebase listener upon seeing phase === 'FINISHED'.
     // "1st", "2nd", "3rd", "4th"... — only ever needs to handle small
     // finish ranks (this game seats at most 4), but written generally.
-    function ordinalSuffix(n) {
-      const s = ['th', 'st', 'nd', 'rd'];
-      const v = n % 100;
-      return n + (s[(v - 20) % 10] || s[v] || s[0]);
-    }
 
     // Pure and separately testable: builds the Final Standings box's inner
     // HTML for a finished match. Ranked additionally shows each player's
@@ -9098,6 +9117,7 @@ video {
       }
     }
 
+    // § Match end, victory and standings
     function showMatchEndUI() {
       // Ranked's rating update is now self-writes-only (see
       // applyRankedRatingUpdate's comment) — every client independently
@@ -10456,6 +10476,7 @@ video {
       }
     }
 
+    // § Turn loop
     function triggerNextTurn() {
       // Cancel any previously-scheduled bot action FIRST, unconditionally —
       // before any early return below. A plain (non-burn) scripted Coach
@@ -11059,6 +11080,7 @@ video {
       return true;
     }
 
+    // § Rendering: cards
     function createCardElement(card, isSelectable = false, isSelected = false, isLegal = false, isOpponent = false, isHand = false) {
       const el = document.createElement('div');
       el.dataset.cardId = card.id;
@@ -11351,6 +11373,7 @@ video {
       document.getElementById('pileInspectModal').classList.add('hidden');
     };
 
+    // § Rendering: the table
     function render() {
       cleanupDrag(); // a re-render can remove the card element mid-drag; never leave a stuck ghost behind
       const local = state.players.find(p => p.id === state.localPlayerId);
@@ -11397,7 +11420,7 @@ video {
       }
 
       const turnTxt = document.getElementById('activeTurnText');
-      if (currentTurnPlayer) {
+      if (currentTurnPlayer && turnTxt) {
         turnTxt.textContent = isMyTurn ? "🔥 YOUR TURN!" : `Turn: ${currentTurnPlayer.name}`;
         turnTxt.className = isMyTurn ? "text-[10px] md:text-[11px] font-black tracking-widest uppercase text-emerald-400 animate-pulse" : "text-[10px] md:text-[11px] font-black tracking-widest uppercase text-amber-400";
       }
@@ -12259,10 +12282,14 @@ video {
     // automatically, as many times as it takes to land cleanly. `updater`
     // must therefore be a pure function of the list it's given (no
     // reliance on outside state), since it may run more than once.
+    // A room's players as a clean array. Firebase can hand the list back as
+    // an object, and a half-written seat can arrive without an id.
+    function roomPlayerList(players) {
+      return (Array.isArray(players) ? players : Object.values(players || {})).filter(p => p && p.id);
+    }
     function updatePlayersAtomic(roomCode, updater, onComplete) {
       db.ref(`rooms/${roomCode}/players`).transaction((currentRaw) => {
-        let currentList = Array.isArray(currentRaw) ? currentRaw : Object.values(currentRaw || {});
-        currentList = currentList.filter(p => p && p.id); // drop corrupted/ghost entries
+        const currentList = roomPlayerList(currentRaw);
         const result = updater(currentList);
         // Transactions abort if the updater returns undefined — always
         // commit something, falling back to the cleaned-up current list.
@@ -12273,6 +12300,7 @@ video {
       });
     }
 
+    // § Online rooms: sync, host, join, leave
     function syncFirebaseGameState() {
       if (!state.isMultiplayer || !state.roomCode) return;
       state.stateVersion = (state.stateVersion || 0) + 1;
@@ -12403,8 +12431,7 @@ video {
           if (joinBtnEl) joinBtnEl.disabled = false;
           return;
         }
-        let existingPlayers = Array.isArray(data.players) ? data.players : Object.values(data.players || {});
-        existingPlayers = existingPlayers.filter(p => p && p.id); // drop any corrupted/ghost entries
+        const existingPlayers = roomPlayerList(data.players); // drops any corrupted/ghost entries
 
         // RECONNECTION: if a match is still running (not the pre-game lobby) and
         // the entered name exactly matches an existing NON-BOT seat, treat this
@@ -12937,6 +12964,7 @@ video {
       }).catch(error => console.warn('State recovery request failed', error));
     }
 
+    // § Online rooms: the room listener
     function listenToFirebaseRoom(code) {
       setupPresenceTracking(code, state.localPlayerId);
       watchForDisconnectedPlayers(code); // no-ops on any client that isn't the host
@@ -13037,7 +13065,7 @@ video {
           // Firebase doesn't store empty arrays, so a player whose Hand (or
           // Face-Up) has run out arrives with that zone missing. Put the
           // empty zones back before anything reads them.
-          const incomingPlayers = (Array.isArray(data.players) ? data.players : Object.values(data.players)).filter(p => p && p.id)
+          const incomingPlayers = roomPlayerList(data.players)
             .map(p => ({ ...p, hand: p.hand || [], faceUp: p.faceUp || [], faceDown: p.faceDown || [] }));
           if (localDealLooksIncomplete(data, incomingPlayers)) {
             requestAuthoritativeStateRecovery(`missing-${data.phase.toLowerCase()}-cards`);
@@ -14589,6 +14617,7 @@ video {
       document.querySelectorAll('[data-challenge-panel]').forEach(p=>p.classList.toggle('hidden',p.dataset.challengePanel!==tab));
       document.querySelectorAll('[data-challenge-tab]').forEach(b=>{ const active=b.dataset.challengeTab===tab; b.setAttribute('aria-selected',String(active)); b.className=`challenge-tab rounded-lg border px-2 py-2 text-[9px] font-black uppercase tracking-wider ${active ? 'border-amber-500 bg-amber-950/50 text-amber-300' : 'border-slate-700 text-slate-400'}`; });
     });
+    // § Profile pictures, table art, seasonal events
     // ============================================================
     // PROFILE PICTURES
     // Every picture shares one tile: the same 25%-radius rounded square as
@@ -15572,6 +15601,7 @@ video {
       document.head.appendChild(style);
     })();
     const NAME_CHANGE_TOKEN_COST = 100;
+    // § Cosmetics catalogue
     const COSMETIC_SHOP_ITEMS = [
       { id: 'back-midnight', category: 'Card Backs', name: 'Midnight Royale', cost: 40, tones: ['#0f172a','#38bdf8','#cbd5e1'] },
       { id: 'back-emerald', category: 'Card Backs', name: 'Emerald Court', cost: 50, tones: ['#052e2b','#34d399','#fbbf24'] },
@@ -16771,6 +16801,7 @@ video {
         .then(snap => grantEarnedAvatars(snap.val()))
         .catch((e) => console.warn('recordSeasonalWin failed', e));
     }
+    // § Shop and Custom pages
     function renderCosmeticShop() {
       const list = document.getElementById('cosmeticShopList');
       if (!list) return;
@@ -17401,6 +17432,7 @@ video {
       if (e.target.id === 'settingsModal') e.currentTarget.classList.add('hidden');
     });
 
+    // § Accounts and sign-in
     // --- Account (Google + Email/Password sign-in) -----------------------
     // currentUser mirrors Firebase's own auth state — never written to
     // directly, only ever set from onAuthStateChanged, so it can't drift
@@ -18006,6 +18038,7 @@ video {
         .catch((e) => showAuthError(mapAuthError(e)));
     });
 
+    // § Ranked matchmaking
     // --- Ranked Matchmaking -------------------------------------------
     // Design: a single "waiting" ticket at matchmaking/waiting. Whoever
     // finds that slot empty becomes the WAITER and listens for an
@@ -18029,6 +18062,7 @@ video {
     let rankedSearchStart = null;
     let rankedAssignmentRef = null;
 
+    // § Challenges and Diamonds economy
     // ============================================================
     // CHALLENGES & DIAMONDS ECONOMY — data model (Part 2 of the
     // Challenges/Diamonds build; see project chat for Parts 1/3/4/5).
@@ -19614,7 +19648,7 @@ video {
         // Ranked needs the account that owns the seat.
         if (data.isRanked && !currentUser) { matchReconnectAttempted = false; return; }
 
-        const players = Array.isArray(data.players) ? data.players : Object.values(data.players || {});
+        const players = roomPlayerList(data.players);
         const mySeat = data.isRanked
           ? players.find(p => p && p.id && p.uid === currentUser.uid)
           : findMyRejoinSeat(players, record);
@@ -19994,6 +20028,7 @@ video {
       });
     }
 
+    // § Social: profiles, presence, friends, invites, inbox
     // --- Public profile + presence -----------------------------------------
     // publicProfiles/{uid} exists ONLY because users/{uid} is locked to
     // self-read-only by design (so a stranger can't read your full account).
@@ -20554,6 +20589,7 @@ video {
       }
     }
 
+    // § Installable app and notifications
     // --- Installable app & notifications --------------------------------
     // sw.js makes the game installable and shows notifications. There's no
     // server to push from, so notifications come from the page's own live
@@ -21097,6 +21133,7 @@ video {
     });
 
     // Settings tabs: the same strip as the Shop and Custom pages.
+    // § Settings page
     const SETTINGS_TABS = [
       { key: 'gameplay', label: 'Gameplay' },
       { key: 'display', label: 'Display' },
@@ -21541,6 +21578,7 @@ video {
       return activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement?.isContentEditable;
     }
 
+    // § Phone back gesture
     // --- Phone back gesture / back button ---------------------------------
     // Android's back gesture and back button (and a left-edge swipe in the
     // installed iPhone app, which has no back gesture of its own) step back
@@ -21837,6 +21875,7 @@ video {
     // points in game code are two one-line guards (bot pause + play intercept),
     // both of which short-circuit to normal behaviour when the tutorial is off.
     // ============================================================
+    // § Tutorial
     let tutorialActive = false;
     let tutorialStep = 0;
     let tutorialBotPaused = false;   // blocks the Coach until the step says go
@@ -21870,176 +21909,8 @@ video {
 
     // Each scenario defines the board, what the player must do, and how the
     // Coach replies. `require` is what the player has to play to move on.
-    // ===== ORIGINAL 21-STEP TUTORIAL (retired, kept for reference/restore) =====
-    // Renamed out of the live path so nothing calls it. To bring it back,
-    // rename this back to TUTORIAL_STEPS and remove/rename the new array below.
-    const TUTORIAL_STEPS_OLD_BACKUP = [
-      {
-        text: "Welcome! I'm your Coach. We'll play a few real hands together. Your goal: get rid of all your cards. The last player still holding cards is the ShitHead.",
-        target: null
-      },
-      {
-        text: "These are your HAND cards. You play from here first, topping up from the deck after each turn while it lasts.",
-        target: '#localHand'
-      },
-      {
-        text: "Beneath your hand are your TABLE cards — three face-up, three face-down under them. They're locked until your hand AND the deck are both empty.",
-        target: '#localTableSlots'
-      },
-      {
-        text: "Every game opens with a SWAP PHASE. Your face-up table cards are the ones you'll be stuck playing LAST — so this is your chance to put your best cards there.",
-        target: '#localPlayerZone',
-        phase: 'SWAP',
-        scene: { phase: 'SWAP', hand: [['2','♣'],['10','♦'],['7','♠']], faceUp: [['4','♥'],['5','♠'],['6','♣']], coach: [['9','♥']] }
-      },
-      {
-        text: "Your 2 is one of the strongest cards in the game, but it's sitting in your hand. Your 4 is the weakest, stuck face-up. Tap your 2, then tap the 4 to swap them.",
-        target: '#localTableSlots',
-        phase: 'SWAP',
-        scene: { phase: 'SWAP', hand: [['2','♣'],['10','♦'],['7','♠']], faceUp: [['4','♥'],['5','♠'],['6','♣']], coach: [['9','♥']] },
-        require: { swap: true, handRank: '2', faceUpRank: '4' },
-        coachNote: "Much better — that 2 is now waiting for you at the end of the game."
-      },
-      {
-        text: "Rule of thumb: put HIGH cards and the five power cards (2, 3, 10, Ace, Joker) on the table. Swap as many as you like, then hit READY.",
-        target: '#localPlayerZone',
-        phase: 'SWAP',
-        scene: { phase: 'SWAP', hand: [['4','♥'],['10','♦'],['7','♠']], faceUp: [['2','♣'],['5','♠'],['6','♣']], coach: [['9','♥']] },
-        require: { ready: true },
-        coachNote: "Game on. Now let's learn how to actually play."
-      },
-      {
-        text: "This is the PILE. To play, your card must MATCH or BEAT the top card. The pile shows an 8 — play your 9 to beat it.",
-        target: '#pileZone',
-        scene: { hand: [['9','♠'],['4','♦'],['K','♣']], pile: [['8','♥']], coach: [['J','♦']] },
-        require: { rank: '9' },
-        coachPlays: [['J','♦']],
-        coachNote: "The Coach answers with a Jack — higher than your 9, so it's legal."
-      },
-      {
-        text: "A JACK forces the next player to play an ODD card. Your 4 is even and won't do — your 7 is odd, so play that.",
-        target: '#localHand',
-        scene: { hand: [['7','♠'],['4','♦'],['8','♠']], pile: [['8','♥'],['9','♠'],['J','♦']], coach: [['6','♣']] },
-        require: { rank: '7' },
-        coachPlays: [['6','♣']],
-        coachNote: "The Coach answers with a 6 — and that forces YOU to play an EVEN card next."
-      },
-      {
-        text: "Your only even card is the 4 — the most restrictive card in the game, playable only on a 2, 3, 4, 6 or 7. A 6 is one of them, so play it.",
-        target: '#localHand',
-        scene: { hand: [['4','♦'],['5','♠'],['6','♥']], pile: [['2','♦'],['K','♣'],['6','♣']], coach: [['Q','♠']] },
-        require: { rank: '4' },
-        coachPlays: [['Q','♠']],
-        coachNote: "The Coach answers with a Queen — and your 5 and 6 can't beat it."
-      },
-      {
-        text: "Nothing you hold beats that Queen — so you must PICK UP the whole pile. Tap the pile to take it.",
-        target: '#pileZone',
-        require: { pickup: true },
-        coachNote: "That's the setback of the game. Look at your hand — the whole pile is now in it, including a 2 and a pair of 6s. We'll use those next."
-      },
-      {
-        text: "Recoverable, though. A 2 is a RESET — it plays on almost anything and wipes the slate clean, so any card can follow it. Play the 2 you just picked up.",
-        target: '#localHand',
-        require: { rank: '2' },
-        coachPlays: [['4','♥']],
-        coachNote: "See? After a 2 the Coach could play anything — even a lowly 4."
-      },
-      {
-        text: "Handy trick: cards of the SAME rank can be played together in one turn. You're holding two 6s — tap both, then hit PLAY SELECTED CARD(S).",
-        target: '#localHand',
-        require: { rank: '6', count: 2 },
-        coachPlays: [['8','♣']],
-        coachNote: "Two cards gone in a single turn — that's how you empty a hand fast. Two 6s demand an EVEN card, so the Coach had to answer with one."
-      },
-      {
-        text: "Fresh hand for this one. A 10 is a BURNER. It destroys the entire pile permanently and you go again immediately. Play your 10.",
-        target: '#localHand',
-        scene: { hand: [['10','♦'],['7','♠'],['K','♥']], pile: [['2','♣'],['9','♥'],['Q','♦']], coach: [['8','♠']] },
-        require: { rank: '10' },
-        noCoachReply: true,
-        coachNote: "Pile burnt — and it's still your turn."
-      },
-      {
-        text: "New deal. A 7 forces the next player to play 7 or LOWER. Play your 7 and watch the Coach get stuck with a low card.",
-        target: '#localHand',
-        scene: { hand: [['7','♠'],['K','♥'],['4','♣']], pile: [['5','♦']], coach: [['3','♦']] },
-        require: { rank: '7' },
-        coachPlays: [['3','♦']],
-        coachNote: "The Coach answered with a 3 — the TRANSPARENT card. A 3 sets no target of its own, so your 7 underneath is still what must be beaten."
-      },
-      {
-        text: "So the transparent 3 changes nothing — your 7 still demands 7 or lower. Your 4 fits (a 4 goes on a 2, 3, 4, 6 or 7). Play it.",
-        target: '#localHand',
-        require: { rank: '4' },
-        noCoachReply: true,
-        coachNote: "Exactly — you played through the 3 to the 7 beneath it. That's the whole trick to transparent cards."
-      },
-      {
-        text: "Fresh hand. An 8 SKIPS the next player. Same multi-card trick: play BOTH your 8s together to skip the Coach twice, bringing the turn straight back to you.",
-        target: '#localHand',
-        scene: { hand: [['8','♠'],['8','♥'],['5','♦']], pile: [['4','♣']], coach: [['K','♦']] },
-        require: { rank: '8', count: 2 },
-        noCoachReply: true,
-        coachNote: "Two 8s, two skips — back to you already."
-      },
-      {
-        text: "That Jack demands an ODD card — and a 5 is odd, so it's legal. A 5 also drops the target down to the card at the very BOTTOM of the pile, shown as the Base Card. Play your 5.",
-        target: '#baseCardHud',
-        scene: { hand: [['5','♦'],['K','♠'],['9','♣']], pile: [['4','♥'],['8','♠'],['J','♣']], coach: [['6','♠']] },
-        require: { rank: '5' },
-        coachPlays: [['6','♠']],
-        coachNote: "The Coach now had to beat the BASE card, not the top one."
-      },
-      {
-        text: "One more tool: the ▮ button in the header. Turn it ON and tapping any card selects EVERY card of that rank at once — handy when you hold a pair. Give it a tap.",
-        target: '#multiSelectToggleBtn',
-        require: { toggleRankSelect: true },
-        coachNote: "That's it. You can flip it on or off any time — it's a tactical choice, not a setting you have to keep."
-      },
-      {
-        text: "Four of a rank in a row BURNS the pile. Two 9s are already down and you hold the other two — play them both. (Out of turn, you could SNAP them instead.)",
-        target: '#localHand',
-        scene: { hand: [['9','♣'],['9','♦'],['J','♠']], pile: [['9','♠'],['9','♥']], coach: [['K','♦']] },
-        require: { rank: '9', count: 2 },
-        noCoachReply: true,
-        coachNote: "Four 9s — the pile is gone for good, and you play again."
-      },
-      {
-        text: "Fresh hand for the last one. The JOKER. It forces an opponent of your choice to pick up the whole pile. Play it and pick your target.",
-        target: '#localHand',
-        scene: { hand: [['JOKER','JOKER'],['K','♣'],['4','♦']], pile: [['Q','♦'],['8','♣'],['5','♥']], coach: [['A','♠']] },
-        require: { rank: 'JOKER' },
-        noCoachReply: true,
-        coachNote: "Brutal — and the Coach has to take the lot."
-      },
-      {
-        text: "Now the endgame. Your hand is empty AND the deck has run out — so your FACE-UP table cards unlock. That's why you put good cards there earlier. Play your 10.",
-        target: '#localTableSlots',
-        scene: { hand: [], faceUp: [['10','♦'],['4','♣'],['6','♥']], faceDown: [['K','♠'],['3','♥'],['8','♣']], pile: [['9','♠']], coach: [['9','♥']], emptyDeck: true },
-        require: { rank: '10' },
-        noCoachReply: true,
-        coachNote: "Burnt the pile straight from the table — and you go again."
-      },
-      {
-        text: "Careful though: if none of your face-up cards are legal you must pick up the pile AND take a face-up card into your hand with it. Losing tempo like that can cost you the game.",
-        target: '#localTableSlots'
-      },
-      {
-        text: "Last tier: once your face-up cards are gone you play BLIND from the face-down cards. You can't see them — tap any one and hope. If it doesn't fit, you pick up the pile.",
-        target: '#localTableSlots',
-        scene: { hand: [], faceUp: [], faceDown: [['K','♠'],['3','♥'],['8','♣']], pile: [['4','♦']], coach: [['9','♥']], emptyDeck: true },
-        require: { blind: true },
-        coachNote: "That's the gamble that decides most games — and the whole reason the swap phase matters."
-      },
-      {
-        text: "That's the whole game. Open the menu any time for the full rules. Good luck out there!",
-        target: null
-      }
-    ];
-    // ===== END OF RETIRED BACKUP =====
 
-    // ===== NEW TUTORIAL =====
+    // ===== TUTORIAL STEPS =====
     // Steps 1-6 are a self-contained intro + swap-phase practice — a small,
     // disposable scene like every non-stacked scene in this file, replaced
     // outright the moment Step 7 deals in.
@@ -24182,6 +24053,7 @@ video {
       });
     }
 
+    // § Page start-up
     window.addEventListener('DOMContentLoaded', () => {
       if (new URLSearchParams(location.search).get('dev-tests') === '1') {
         // Fire-and-forget is fine here — runDevTestSuite's own test()
