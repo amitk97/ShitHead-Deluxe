@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v116 (ShitHead-Deluxe-116) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v117 (ShitHead-Deluxe-117) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5680,7 +5680,7 @@ video {
       notify: "audio/notify.mp3"   // New invite / friend request / gift
     };
     // The your-turn chime plays softer than the card sounds.
-    const TURN_ALERT_GAIN = 0.25;
+    const TURN_ALERT_GAIN = 0.08; // a faint cue, well under the card sounds
 
     const Haptics = {
       vibrate(pattern) {
