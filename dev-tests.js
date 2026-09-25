@@ -961,6 +961,15 @@ async function runDevTestSuite() {
       if (saved === null) localStorage.removeItem(key); else localStorage.setItem(key, saved);
     }
   });
+  await test('The Inbox and every menu page open on top of the end-of-match summary', () => {
+    const z = (id) => parseInt(getComputedStyle(document.getElementById(id)).zIndex, 10) || 0;
+    const summary = document.getElementById('matchSummaryModal');
+    summary.classList.remove('hidden');
+    try {
+      const below = EXCLUSIVE_PAGE_IDS.filter(id => document.getElementById(id) && z(id) <= z('matchSummaryModal'));
+      assertEqual(below, [], 'Pages that would open underneath the summary');
+    } finally { summary.classList.add('hidden'); }
+  });
   await test('Every Burn cosmetic (and the default) has its own burn sound', () => {
     assertTrue(typeof BURN_SOUNDS.default === 'function', 'A default burn sound exists');
     const missing = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && typeof BURN_SOUNDS[i.id] !== 'function').map(i => i.id);

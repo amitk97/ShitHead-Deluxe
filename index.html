@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v115 (ShitHead-Deluxe-115) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v116 (ShitHead-Deluxe-116) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1348,7 +1348,7 @@
     .profile-streak { display:block; margin-top:2px; font-size:10px; font-weight:900; color:#fb923c; }
     .profile-streak.hidden { display:none; }
     /* Match summary */
-    .ms-scrim { position:fixed; inset:0; z-index:96; display:flex; align-items:center; justify-content:center; padding:14px; background:rgba(2,6,23,.72); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
+    .ms-scrim { position:fixed; inset:0; z-index:79; display:flex; align-items:center; justify-content:center; padding:14px; background:rgba(2,6,23,.72); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
     .ms-scrim.hidden { display:none; }
     .ms-card { position:relative; width:min(380px,100%); max-height:90vh; overflow-y:auto; background:radial-gradient(circle at 50% 0,var(--ms-glow,rgba(245,158,11,.2)),transparent 55%),#020617; border:2px solid var(--ms-edge,#f59e0b); border-radius:20px; padding:16px 14px 12px; color:#e2e8f0; box-shadow:0 20px 60px rgba(0,0,0,.7); animation:daily-pop .35s cubic-bezier(.2,1.4,.4,1) both; }
     .ms-x { position:absolute; top:8px; right:10px; color:#94a3b8; font-size:20px; line-height:1; padding:4px; }
@@ -5962,7 +5962,16 @@ video {
       },
       // Seasonal burns
       'burn-valentine': (k) => { fireWhoosh(k, 0.5); [784, 988, 1175].forEach((f, i) => k.tone({ at: 0.08 + i * 0.1, dur: 0.5, type: 'triangle', f0: f, level: 0.12 })); },
-      'burn-summer': (k) => { fireWhoosh(k, 0.7); k.noise({ at: 0.05, dur: 0.9, type: 'highpass', f0: 5000, f1: 3000, level: 0.2, attack: 0.1 }); },
+      // Cannonball: a deep plunk into the water and a big splash (flash +
+      // first ripple), a second wash with the second ripple (0.22s), then
+      // the thrown droplets pattering back down over the next second.
+      'burn-summer': (k) => {
+        k.tone({ dur: 0.2, f0: 320, f1: 65, level: 0.38 });
+        k.tone({ at: 0.02, dur: 0.09, f0: 420, f1: 950, level: 0.1 });
+        k.noise({ dur: 0.5, type: 'bandpass', f0: 2600, f1: 700, q: 0.8, level: 0.42, attack: 0.005 });
+        k.noise({ at: 0.22, dur: 0.38, f0: 1800, f1: 400, level: 0.25, attack: 0.02 });
+        k.scatter(14, 0.35, 1.05, (at) => k.tone({ at, dur: 0.05, f0: 900 + Math.random() * 1300, f1: 1600 + Math.random() * 1600, level: 0.07 }));
+      },
       'burn-halloween': (k) => { fireWhoosh(k, 0.6); k.tone({ at: 0.05, dur: 1.0, type: 'triangle', f0: 420, f1: 140, level: 0.16, attack: 0.15, vibrato: 18 }); },
       'burn-diwali': (k) => {
         k.tone({ dur: 0.3, f0: 180, f1: 45, level: 0.5 });
