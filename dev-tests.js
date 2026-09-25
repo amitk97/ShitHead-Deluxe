@@ -1087,8 +1087,8 @@ async function runDevTestSuite() {
       document.getElementById('modeSingleBtn').click();
     }
   });
-  await test('Quick Start: at most 6 short steps, and the Tutorial button starts it the first time', () => {
-    assertTrue(TUTORIAL_MODULE_QUICK_START.length <= 6, 'No more than 6 steps');
+  await test('Quick Start: at most 7 short steps, and the Tutorial button starts it the first time', () => {
+    assertTrue(TUTORIAL_MODULE_QUICK_START.length <= 7, 'No more than 7 steps');
     TUTORIAL_MODULE_QUICK_START.forEach((step, i) => {
       assertTrue(step.text.split(/\s+/).length <= 18, `Step ${i + 1} is one short sentence (${step.text.split(/\s+/).length} words)`);
       if (step.coachNote) assertTrue(step.coachNote.split(/\s+/).length <= 18, `Step ${i + 1} note is short`);

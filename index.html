@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v130 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v131 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -21848,17 +21848,23 @@ video {
       scheduleSettingsCloudSave();
     });
 
+    // A "tap the ⓘ / ▦" tutorial step only counts the tap that OPENS the panel.
+    function tutorialRefButtonTap(selector, isOpen, toggle) {
+      const tutorialWantsIt = tutorialActive && TUTORIAL_STEPS[tutorialStep]?.require?.tapCheck === selector;
+      if (tutorialWantsIt && isOpen()) return;
+      toggle();
+      if (tutorialWantsIt) tutorialOnTapCheck(selector);
+    }
     document.getElementById('cardRefBtn').addEventListener('click', (e) => {
       e.stopPropagation();
-      // A "tap the ⓘ" tutorial step only counts the tap that OPENS the panel.
-      const tutorialWantsIt = tutorialActive && TUTORIAL_STEPS[tutorialStep]?.require?.tapCheck === '#cardRefBtn';
-      if (tutorialWantsIt && cardRefOpen) return;
-      toggleCardReference();
-      if (tutorialWantsIt) tutorialOnTapCheck('#cardRefBtn');
+      tutorialRefButtonTap('#cardRefBtn', () => cardRefOpen, () => toggleCardReference());
     });
     initCardRefDrag();
     initCardRefZoomControls();
-    document.getElementById('matrixRefBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleMatrixReference(); });
+    document.getElementById('matrixRefBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      tutorialRefButtonTap('#matrixRefBtn', () => matrixRefOpen, () => toggleMatrixReference());
+    });
     initMatrixRefDrag();
     initMatrixRefZoomControls();
     initHistoryDragScroll();
@@ -23501,6 +23507,13 @@ video {
         noteTarget: ['#cardRefPanel', '#cardRefBtn']
       },
       {
+        text: "The ▦ Play Matrix shows which card can go on which. Tap the glowing ▦!",
+        target: '#matrixRefBtn',
+        require: { tapCheck: '#matrixRefBtn' },
+        coachNote: "Row = your card, column = the Pile. ✓ plays, ✗ doesn't. Every card's power is built in.",
+        noteTarget: ['#matrixRefPanel', '#matrixRefBtn']
+      },
+      {
         text: "Hand empty? Play Face-Up cards, then Face-Down ones blind. You're ready!",
         target: ['#localHand', '#localTableSlots']
       }
@@ -23984,10 +23997,13 @@ video {
       if (zoneEl) zoneEl.style.zIndex = wantsCardPlay ? '80' : '';
       document.getElementById('finishSwapBtn')?.classList.toggle('tutorial-glow', !!(step.require && step.require.ready));
       const tapSel = step.require && step.require.tapCheck;
-      document.getElementById('localTableSlots')?.classList.toggle('tutorial-glow', !!tapSel && tapSel !== '#cardRefBtn');
+      const refBtnTap = tapSel === '#cardRefBtn' || tapSel === '#matrixRefBtn';
+      document.getElementById('localTableSlots')?.classList.toggle('tutorial-glow', !!tapSel && !refBtnTap);
       document.getElementById('cardRefBtn')?.classList.toggle('tutorial-glow', tapSel === '#cardRefBtn');
-      // The Card Powers panel opened by a tap step closes once the lesson moves on.
+      document.getElementById('matrixRefBtn')?.classList.toggle('tutorial-glow', tapSel === '#matrixRefBtn');
+      // The Card Powers / Play Matrix panel opened by a tap step closes once the lesson moves on.
       if (tapSel !== '#cardRefBtn' && typeof cardRefOpen !== 'undefined' && cardRefOpen) toggleCardReference(true);
+      if (tapSel !== '#matrixRefBtn' && typeof matrixRefOpen !== 'undefined' && matrixRefOpen) toggleMatrixReference(true);
 
       const inSwap = state.phase === 'SWAP';
       if (inSwap && state.players[0]) state.players[0].isReady = false;
@@ -24654,6 +24670,7 @@ video {
       if (matchedSelector !== step.require.tapCheck) return;
       document.getElementById('localTableSlots')?.classList.remove('tutorial-glow');
       document.getElementById('cardRefBtn')?.classList.remove('tutorial-glow');
+      document.getElementById('matrixRefBtn')?.classList.remove('tutorial-glow');
       tutorialAwaitingAction = false;
       tutorialDelay(() => showCoachNote(step), 300);
     }
@@ -24710,7 +24727,9 @@ video {
       resetPileInspectHint();
       document.getElementById('playSelectedBtn')?.classList.remove('tutorial-glow');
       document.getElementById('cardRefBtn')?.classList.remove('tutorial-glow');
+      document.getElementById('matrixRefBtn')?.classList.remove('tutorial-glow');
       if (typeof cardRefOpen !== 'undefined' && cardRefOpen) toggleCardReference(true);
+      if (typeof matrixRefOpen !== 'undefined' && matrixRefOpen) toggleMatrixReference(true);
       const zoneReset = document.getElementById('localPlayerZone');
       if (zoneReset) zoneReset.style.zIndex = '';
       document.getElementById('tutorialLayer').classList.add('hidden');
