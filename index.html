@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v138 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v139 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -8364,6 +8364,27 @@ video {
     // currently selected. Ordered by finishing position so the winner is at
     // the top and the ShitHead at the bottom.
     let matchStatsScope = 'game';
+    // Players who left once their result was in (the match over, or they
+    // had already finished) drop out of the room's list, but their stats
+    // still belong in this match's Match Stats: kept here, marked "(left)",
+    // until the next match starts (hideMatchEndUI) or the room changes.
+    let departedStatPlayers = [];
+    function rememberDepartedPlayers(prev, next, phase) {
+      const here = new Set(next.map(p => p.id));
+      departedStatPlayers = departedStatPlayers.filter(d => !here.has(d.id) && d.roomCode === state.roomCode);
+      (prev || []).forEach((p) => {
+        if (!p || here.has(p.id) || p.id === state.localPlayerId) return;
+        if (phase !== 'FINISHED' && !p.hasFinished) return;
+        if (!p.gameStats && !p.lobbyStats) return;
+        departedStatPlayers = departedStatPlayers.filter(d => d.id !== p.id);
+        departedStatPlayers.push({ id: p.id, name: p.name, isBot: !!p.isBot, hasFinished: !!p.hasFinished, finishRank: p.finishRank,
+          gameStats: p.gameStats, lobbyStats: p.lobbyStats, departed: true, roomCode: state.roomCode });
+      });
+    }
+    function matchStatsPlayers() {
+      const here = new Set(state.players.map(p => p.id));
+      return [...state.players, ...departedStatPlayers.filter(d => !here.has(d.id) && d.roomCode === state.roomCode)];
+    }
     function buildMatchStats(scope) {
       if (scope) matchStatsScope = scope;
       const body = document.getElementById('matchStatsBody');
@@ -8393,7 +8414,8 @@ video {
           played: s.played || 0
         };
       };
-      const ordered = [...state.players].sort((a, b) => {
+      const statPlayers = matchStatsPlayers();
+      const ordered = statPlayers.sort((a, b) => {
         if (isLobby) {
           const ra = lobbyRank(a), rb = lobbyRank(b);
           if (ra.wins !== rb.wins) return rb.wins - ra.wins;
@@ -8428,7 +8450,7 @@ video {
         // since finishRank never ties within a single match.
         const place = isLobby
           ? `${index + 1}`
-          : (p.hasFinished ? `${p.finishRank}` : `${state.players.length}`);
+          : (p.hasFinished ? `${p.finishRank}` : `${statPlayers.length}`);
         const isYou = p.id === state.localPlayerId;
         // Some bots (solo games) have a plain name with no indication they're
         // a bot; others (multiplayer add-bot, or a kicked-player substitute)
@@ -8445,7 +8467,7 @@ video {
           <div class="flex items-center justify-between gap-2 py-1.5 border-b border-slate-800/70">
             <div class="flex items-center gap-1 min-w-0">
               <span class="w-5 shrink-0 text-center font-black ${(isLobby ? index === 0 : p.hasFinished) ? 'text-amber-400' : 'text-slate-200'}">${place}</span>
-              <span class="truncate font-black ${isYou ? 'text-emerald-400' : 'text-slate-200'}">${escapeHtml(p.name)}${isYou ? ' (you)' : ''}${showBotTag ? ' (Bot)' : ''}</span>
+              <span class="truncate font-black ${isYou ? 'text-emerald-400' : 'text-slate-200'}">${escapeHtml(p.name)}${isYou ? ' (you)' : ''}${showBotTag ? ' (Bot)' : ''}${p.departed ? ' <span class="text-slate-500 font-bold">(left)</span>' : ''}</span>
             </div>
             <div class="match-stats-grid ${isLobby ? 'cols-7' : 'cols-5'} shrink-0 text-[9px] text-slate-400" style="width:${colWidth}px;">
               <span class="text-center">${st.played || 0}</span>
@@ -9498,6 +9520,7 @@ video {
       msShown = { bars: {}, rewards: 0, done: new Set(), rankup: null };
       matchWinnerEffectShown = false;
       matchHistoryCurrentId = null; // the next finish is a new entry
+      departedStatPlayers = []; // players who left the last match's stats
       if (typeof lastCardAlerted !== 'undefined') lastCardAlerted.clear();
       if (typeof resetMatchSummary === 'function') resetMatchSummary();
       document.getElementById('quickPlayMatchBtn')?.classList.add('hidden');
@@ -13439,6 +13462,7 @@ video {
               return p;
             });
           } else {
+            rememberDepartedPlayers(state.players, incomingPlayers, data.phase);
             state.players = incomingPlayers;
           }
 

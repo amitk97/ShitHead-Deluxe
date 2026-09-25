@@ -3081,6 +3081,33 @@ async function runDevTestSuite() {
     });
   });
 
+  await test('Match Stats still show a player who left after the match was decided', () => {
+    freshState({ drawPile: [] });
+    state.roomCode = '123456';
+    const me = makePlayer({ id: 'p1', name: 'Me', hasFinished: true, finishRank: 1 });
+    const them = makePlayer({ id: 'p2', name: 'Quitter', hasFinished: false });
+    state.players = [me, them];
+    state.localPlayerId = 'p1';
+    bumpStat(them, 'played', 7);
+    bumpStat(them, 'pickedUp', 9);
+    them.gameStats.biggestPickup = 9; them.lobbyStats.biggestPickup = 9;
+    rememberDepartedPlayers(state.players, [me], 'FINISHED');
+    state.players = [me];
+    buildMatchStats('game');
+    let text = document.getElementById('matchStatsBody').innerText;
+    assertTrue(/Quitter/.test(text) && /\(left\)/.test(text), 'The player who left is still listed, marked (left)');
+    assertTrue(/Quitter took 9/.test(text), 'Their pickups still count for the worst pickup');
+    buildMatchStats('lobby');
+    assertTrue(/Quitter/.test(document.getElementById('matchStatsBody').innerText), 'And in Lobby Totals');
+    // Someone leaving mid-match, before finishing, is not kept (a bot takes their seat)
+    departedStatPlayers = [];
+    rememberDepartedPlayers([me, makePlayer({ id: 'p3', name: 'Mid', hasFinished: false, gameStats: {} })], [me], 'PLAY');
+    assertEqual(departedStatPlayers.length, 0, 'A mid-match leaver without a result is not kept');
+    hideMatchEndUI();
+    assertEqual(departedStatPlayers.length, 0, 'A new match starts without them');
+    buildMatchStats('game');
+  });
+
   await test('REGRESSION: Match Stats number columns actually lay out side by side, not stacked', () => {
     freshState({ drawPile: [] });
     const p1 = makePlayer({ id: 'p1' });
