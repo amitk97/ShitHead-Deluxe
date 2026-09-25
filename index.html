@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v121 (ShitHead-Deluxe-121) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v122 (ShitHead-Deluxe-122) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1460,8 +1460,30 @@
     .season-next-label { margin:4px 2px 6px; font-size:9px; font-weight:900; letter-spacing:.14em; color:#64748b; text-transform:uppercase; }
     .season-promo { display:block; width:100%; margin-bottom:8px; padding:8px 10px; border-radius:12px; border:1px solid #f472b6; background:linear-gradient(135deg,rgba(131,24,67,.4),rgba(76,29,149,.35)); color:#fbcfe8; font-size:10px; font-weight:900; text-align:left; }
     .season-badge { position:absolute; left:-5px; top:-5px; width:18px; height:18px; border-radius:999px; background:#0f172a; border:1px solid #475569; display:flex; align-items:center; justify-content:center; font-size:10px; line-height:1; }
-    .sfx-flap { animation:sfx-flap .16s ease-in-out infinite alternate; transform-origin:50% 60%; }
-    @keyframes sfx-flap { from { transform:scaleY(1); } to { transform:scaleY(.35); } }
+    /* Bat Swarm victory: real flapping bats. Each wing hinges at the
+       shoulder: a quick power stroke down (0-40%), a slower recovery up,
+       foreshortening at the top of the beat; the body lifts on each
+       downstroke. --flap sets the beat per bat (see svfxHalloween). */
+    .rbat { position:relative; width:100%; height:100%; animation:rbat-bob var(--flap,.26s) cubic-bezier(.45,0,.55,1) infinite; animation-delay:var(--flap-delay,0s); filter:drop-shadow(0 0 2px rgba(253,186,116,.9)) drop-shadow(0 0 9px rgba(249,115,22,.55)); }
+    .rbat-wing { position:absolute; top:14%; width:47%; height:72%; }
+    .rbat-wing svg, .rbat-body svg { display:block; width:100%; height:100%; overflow:visible; }
+    .rbat-wing.l { right:50%; transform-origin:100% 30%; animation:rbat-flap-l var(--flap,.26s) infinite; animation-delay:var(--flap-delay,0s); }
+    .rbat-wing.r { left:50%; transform-origin:0% 30%; animation:rbat-flap-r var(--flap,.26s) infinite; animation-delay:var(--flap-delay,0s); }
+    .rbat-wing.r svg { transform:scaleX(-1); }
+    .rbat-body { position:absolute; left:50%; top:0; width:19%; height:100%; transform:translateX(-50%); }
+    @keyframes rbat-flap-l {
+      0%   { transform:rotate(38deg) scaleX(.72) scaleY(1.04); animation-timing-function:cubic-bezier(.55,0,.9,.45); }
+      40%  { transform:rotate(-24deg) scaleX(1) scaleY(.88); animation-timing-function:cubic-bezier(.3,.1,.4,1); }
+      70%  { transform:rotate(10deg) scaleX(.95) scaleY(.8); }
+      100% { transform:rotate(38deg) scaleX(.72) scaleY(1.04); }
+    }
+    @keyframes rbat-flap-r {
+      0%   { transform:rotate(-38deg) scaleX(.72) scaleY(1.04); animation-timing-function:cubic-bezier(.55,0,.9,.45); }
+      40%  { transform:rotate(24deg) scaleX(1) scaleY(.88); animation-timing-function:cubic-bezier(.3,.1,.4,1); }
+      70%  { transform:rotate(-10deg) scaleX(.95) scaleY(.8); }
+      100% { transform:rotate(-38deg) scaleX(.72) scaleY(1.04); }
+    }
+    @keyframes rbat-bob { 0%,100% { transform:translateY(8%); } 40% { transform:translateY(-10%); } }
     .svfx-count { display:flex; align-items:center; justify-content:center; width:100%; height:100%; font-family:'Arial Black',Arial,sans-serif; font-weight:900; color:#fde68a; text-shadow:0 0 18px rgba(251,191,36,.9),0 4px 0 #92400e; white-space:nowrap; }
     .svfx-hny { color:#fff7d6; letter-spacing:.04em; }
     .pp-showcase { margin-top:12px; }
@@ -15625,7 +15647,22 @@ video {
     const sfxPaintedEgg = (a, b, c) => sfxSvg(40, 52, `<path d="M20 2C30 2 37 18 37 30 37 42 29 50 20 50S3 42 3 30C3 18 10 2 20 2Z" fill="${a}" stroke="rgba(0,0,0,.2)"/><path d="M4 26l4-4 4 4 4-4 4 4 4-4 4 4 4-4 4 4" stroke="${b}" stroke-width="3" fill="none"/><path d="M4 36h32" stroke="${c}" stroke-width="3"/><ellipse cx="13" cy="14" rx="3" ry="6" fill="#fff" opacity=".45"/>`);
     const SFX_PASTELS = [['#fbcfe8', '#a78bfa', '#38bdf8'], ['#fef08a', '#f472b6', '#22c55e'], ['#bfdbfe', '#f59e0b', '#ec4899'], ['#ddd6fe', '#10b981', '#f472b6'], ['#bbf7d0', '#8b5cf6', '#f59e0b']];
     const sfxFlower = (c) => sfxSvg(24, 24, `${[0, 72, 144, 216, 288].map(r => `<ellipse cx="12" cy="6" rx="4" ry="6" fill="${c}" transform="rotate(${r} 12 12)"/>`).join('')}<circle cx="12" cy="12" r="3.5" fill="#fde047"/>`);
-    const SFX_BAT = `<div class="sfx-flap" style="width:100%;height:100%;filter:drop-shadow(0 0 4px rgba(249,115,22,.75))">${sfxSvg(40, 20, '<path d="M20 12C18 8 14 6 8 7 10 9 10 11 9 14 12 12 15 12 17 14 18 12 19 12 20 13 21 12 22 12 23 14 25 12 28 12 31 14 30 11 30 9 32 7 26 6 22 8 20 12Z" fill="#2e1a47" stroke="#c4b5fd" stroke-width=".9"/><circle cx="18.6" cy="11" r=".9" fill="#fb923c"/><circle cx="21.4" cy="11" r=".9" fill="#fb923c"/>')}</div>`;
+    // A real-looking bat: membrane wing (scalloped trailing edge between the
+    // finger bones, thumb claw at the wrist) and a furry body with ears,
+    // snout and glowing eyes. The same wing is mirrored for the right side.
+    const RBAT_WING = '<svg viewBox="0 0 60 36" preserveAspectRatio="none"><defs><linearGradient id="rbatMem" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4c2f6b"/><stop offset=".55" stop-color="#27163d"/><stop offset="1" stop-color="#150b22"/></linearGradient></defs>'
+      + '<path d="M60 9C52 4 44 1 34 1 26 1 18 3 11 6 6 8 2 11 0 15 4 15 7 17 9 21 12 17 17 16 21 20 23 15 29 14 32 19 35 14 41 13 44 18 47 14 53 13 60 17Z" fill="url(#rbatMem)" stroke="#6d4a8f" stroke-width=".7" stroke-linejoin="round"/>'
+      + '<path d="M60 10L34 2M34 2L0 15M34 2L9 21M34 2L21 20M36 3L32 19M44 5L44 18" stroke="#8b6aa8" stroke-width="1.1" stroke-linecap="round" fill="none" opacity=".75"/>'
+      + '<path d="M34 2l-2.2-1.6" stroke="#d6c8e6" stroke-width="1.2" stroke-linecap="round"/></svg>';
+    const RBAT_BODY = '<svg viewBox="0 0 20 40"><defs><radialGradient id="rbatFur" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="#4b3462"/><stop offset=".6" stop-color="#241535"/><stop offset="1" stop-color="#140b1f"/></radialGradient></defs>'
+      + '<path d="M4.2 4 5.8 11 8.4 9.6ZM15.8 4 14.2 11 11.6 9.6Z" fill="#241535" stroke="#6d4a8f" stroke-width=".6" stroke-linejoin="round"/>'
+      + '<ellipse cx="10" cy="24" rx="5.6" ry="11" fill="url(#rbatFur)"/>'
+      + '<circle cx="10" cy="12" r="5" fill="url(#rbatFur)"/>'
+      + '<path d="M8.6 15.2 10 17 11.4 15.2Z" fill="#140b1f"/>'
+      + '<circle cx="8" cy="11.6" r="1.3" fill="#fb923c"/><circle cx="12" cy="11.6" r="1.3" fill="#fb923c"/>'
+      + '<circle cx="8.3" cy="11.3" r=".4" fill="#fff7d6"/><circle cx="12.3" cy="11.3" r=".4" fill="#fff7d6"/>'
+      + '<path d="M7 30 6.2 36M13 30 13.8 36" stroke="#241535" stroke-width="1.2" stroke-linecap="round"/></svg>';
+    const realBatHtml = (flap, delay) => `<div class="rbat" style="--flap:${flap}s;--flap-delay:${delay}s"><div class="rbat-wing l">${RBAT_WING}</div><div class="rbat-wing r">${RBAT_WING}</div><div class="rbat-body">${RBAT_BODY}</div></div>`;
 
     // ----- Burns -----
     function sbfxValentine(host, x, y, k) {
@@ -15772,15 +15809,36 @@ video {
         bfxAnimate(el, frames, { duration: bfxRand(2600, 3200), delay: i * 260, easing: 'linear' });
       }
     }
+    // Bat Swarm: bats pour out of the moon's glow in the middle, bigger as
+    // they come towards you, and swoop away in wavy paths, tilting into
+    // each turn. Every bat beats its wings at its own speed.
     function svfxHalloween(layer) {
       const [W, H] = svfxSize(layer);
-      for (let i = 0; i < 26; i++) {
-        const a = bfxRand(0, Math.PI * 2), d = Math.max(W, H) * bfxRand(.55, .8), size = bfxRand(34, 64);
-        const el = bfxAdd(layer, SFX_BAT, W / 2, H * .45, size, size / 2);
-        const mx = Math.cos(a) * d * .4 + bfxRand(-60, 60), my = Math.sin(a) * d * .4 + bfxRand(-60, 60);
-        bfxAnimate(el, [{ transform: 'translate(0,0) scale(.2)', opacity: 0 }, { transform: `translate(${mx * .3}px, ${my * .3}px) scale(.8)`, opacity: 1, offset: .15 }, { transform: `translate(${mx}px, ${my}px) scale(1)`, opacity: 1, offset: .5 }, { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px) scale(1.2)`, opacity: .9 }], { duration: bfxRand(2200, 2900), delay: bfxRand(0, 700), easing: 'ease-in' });
+      const ox = W / 2, oy = H * .5;
+      sfxPop(layer, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(253,230,138,.6),rgba(124,58,237,.28) 42%,transparent 70%)"></div>`, ox, oy, 280, 280, [{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.5)', opacity: 0 }], 1300);
+      const count = 24;
+      for (let i = 0; i < count; i++) {
+        const size = bfxRand(64, 118);
+        const flap = bfxRand(.2, .3);
+        const el = bfxAdd(layer, realBatHtml(flap.toFixed(3), (-bfxRand(0, flap)).toFixed(3)), ox, oy, size, size * .6);
+        // Heading: mostly up and out, fanned all round.
+        const a = -Math.PI / 2 + bfxRand(-1.5, 1.5) + (i % 2 ? .25 : -.25);
+        const dist = Math.hypot(W, H) * bfxRand(.55, .75);
+        const wave = bfxRand(24, 60) * (Math.random() < .5 ? -1 : 1);
+        const steps = 6, frames = [];
+        let prevX = 0;
+        for (let k = 0; k <= steps; k++) {
+          const t = k / steps;
+          const along = dist * t * t * .35 + dist * t * .65;
+          const side = Math.sin(t * Math.PI * 2.2) * wave * t;
+          const x = Math.cos(a) * along - Math.sin(a) * side;
+          const y = Math.sin(a) * along + Math.cos(a) * side;
+          const tilt = Math.max(-28, Math.min(28, (x - prevX) * .25));
+          prevX = x;
+          frames.push({ transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${tilt.toFixed(1)}deg) scale(${(.35 + t * .95).toFixed(2)})`, opacity: k === 0 ? 0 : k === steps ? .85 : 1, offset: t });
+        }
+        bfxAnimate(el, frames, { duration: bfxRand(2300, 3100), delay: i * 45 + bfxRand(0, 260), easing: 'cubic-bezier(.3,.1,.6,1)' });
       }
-      sfxPop(layer, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(253,230,138,.55),rgba(124,58,237,.25) 40%,transparent 70%)"></div>`, W / 2, H * .45, 260, 260, [{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.4)', opacity: 0 }], 1100);
     }
     function svfxFireworkBurst(layer, x, y, colours, n = 28, r = 110) {
       for (let j = 0; j < n; j++) {
