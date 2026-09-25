@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v119 (ShitHead-Deluxe-119) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-25-v120 (ShitHead-Deluxe-120) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -135,6 +135,7 @@
       width: clamp(26px,7.5vw,34px); height: clamp(26px,7.5vw,34px); border-radius: 9999px; border-width: 2px;
       display: flex; align-items: center; justify-content: center; font-size: clamp(13px,4vw,17px); line-height: 1; }
     #gameDirectionBadge.hidden { display: none; }
+    #gameDirectionBadge .dir-arrow { width: 64%; height: 64%; display: block; flex-shrink: 0; }
     /* Each play direction has its own colour: clockwise gold, anticlockwise cyan. */
     #gameDirectionBadge { transition: color .35s var(--ease-soft), border-color .35s var(--ease-soft), box-shadow .35s var(--ease-soft), background-color .35s var(--ease-soft); }
     #gameDirectionBadge[data-direction="cw"] { color: #fcd34d; border-color: #f59e0b; background-color: rgba(69,26,3,.9); box-shadow: 0 0 10px rgba(245,158,11,.45); }
@@ -5242,7 +5243,6 @@ video {
       <!-- Play direction: placed by positionDirectionBadge (left column,
            above the Play Matrix button, level with the Deck's middle). -->
       <span id="gameDirectionBadge" class="hidden bg-slate-900/90 border-slate-600 text-amber-300 font-black shadow-lg" data-tip="Play Direction" aria-label="Play direction">
-        <span>↻</span>
       </span>
 
       <!-- Center Stacks -->
@@ -12391,9 +12391,18 @@ video {
     }
 
     let lastShownDirection = null;
+    // A drawn arrow, not the ↻/↺ text characters: fonts place those glyphs
+    // off-centre, so they never sat in the middle of the circle. The arc is
+    // centred on the 24×24 box (12,12), nudged 0.7 so the arrowhead's bulk
+    // balances; anticlockwise is the mirror image.
+    function directionArrowSvg(clockwise) {
+      return `<svg class="dir-arrow" viewBox="0 0 24 24" aria-hidden="true"><g${clockwise ? '' : ' transform="translate(24 0) scale(-1 1)"'}>`
+        + '<g transform="translate(0.7 0)"><path d="M12 5A7 7 0 1 1 5.94 8.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>'
+        + '<path d="M7.3 6.1 7.9 10.6 3.4 8.2Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></g></g></svg>';
+    }
     function updateDirectionBadge() {
       const badge = document.getElementById('gameDirectionBadge');
-      badge.innerHTML = state.direction === 1 ? '<span>↻</span>' : '<span>↺</span>';
+      badge.innerHTML = directionArrowSvg(state.direction === 1);
       badge.dataset.direction = state.direction === 1 ? 'cw' : 'ccw';
       badge.setAttribute('aria-label', state.direction === 1 ? 'Play direction: clockwise' : 'Play direction: anticlockwise');
       // A 9 reversing play spins the icon a full turn the new way round.
