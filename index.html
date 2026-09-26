@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v151 (ShitHead-Deluxe-133) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v152 (ShitHead-Deluxe-134) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -15988,6 +15988,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v152: [
+        ['🎁', 'Invite links now work for brand-new players straight after sign-up, and the "You joined" message waits until you have picked your username.']
+      ],
       v151: [
         ['🔗', 'Invite friends! Friends → Invite Friends shares your own link. When a friend signs up with it and plays 3 games, you get 💎 100 and they get 💎 50.'],
         ['👥', 'Profile → Invite friends shows your code, who joined and how many games they have played.'],
@@ -23479,10 +23482,12 @@ video {
     }
     // The home screen hides the table's banners, so arriving by a link gets a
     // small pop-up: an invite to sign up, then "you joined" once linked.
-    function showReferralWelcome(kind, inviterName) {
+    function showReferralWelcome(kind, inviterName, attempt = 0) {
       const modal = document.getElementById('referralWelcomeModal');
+      // A new player is usually still choosing a username: wait for that
+      // (and any other pop-up) to close, then show it.
       const busy = ['rejoinModal', 'authModal', 'usernameModal', 'gauntletModal'].some(id => !document.getElementById(id)?.classList.contains('hidden'));
-      if (kind === 'joined' && busy) { notifyBanner(`🎉 You joined with ${inviterName || 'a friend'}'s invite!`); return; }
+      if (busy && attempt < 180) { setTimeout(() => showReferralWelcome(kind, inviterName, attempt + 1), 1000); return; }
       const joined = kind === 'joined';
       document.getElementById('referralWelcomeTitle').textContent = joined ? `You joined with ${inviterName || 'a friend'}'s invite!` : "You've been invited!";
       document.getElementById('referralWelcomeText').innerHTML = joined

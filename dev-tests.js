@@ -5329,6 +5329,63 @@ async function runDevTestSuite() {
     assertTrue(/pile-card/.test(html) && !/#f8fafc/.test(html), 'The showcase draws real (dark) face-up cards with the frame');
   });
 
+  await test('Referrals: a ?ref= link is remembered, cleaned from the address bar and claimed once signed in', async () => {
+    const savedUrl = location.pathname + location.search + location.hash;
+    try {
+      localStorage.removeItem(REF_PENDING_KEY);
+      history.replaceState(history.state, '', location.pathname + '?dev-tests=1&ref=amitk');
+      handleReferralLinkOnLoad();
+      assertEqual(pendingReferral()?.code, 'AMITK', 'Code kept, upper-cased');
+      assertTrue(!/ref=/.test(location.search) && /dev-tests=1/.test(location.search), 'Only ref= is removed from the address');
+      currentUser = { uid: 'r-uid' };
+      const calls = fakeEconomy({ referral: (d) => ({ inviterName: 'Amitk', code: null, referredBy: { name: 'Amitk', games: 0, needed: 3, paid: false }, recruits: [], recruited: 0, paidThisMonth: 0 }) });
+      await claimPendingReferral();
+      assertEqual(calls[0], ['referral', { op: 'claim', code: 'AMITK' }], 'Claimed with the code');
+      assertEqual(pendingReferral(), null, 'Then forgotten');
+      setPendingReferral({ code: 'AMITK', at: Date.now() });
+      fakeEconomy({ referral: () => { throw new Error('Invites are for new accounts.'); } });
+      await claimPendingReferral();
+      assertEqual(pendingReferral(), null, 'A final refusal drops the code');
+      setPendingReferral({ code: 'AMITK', at: Date.now() });
+      fakeEconomy({ referral: () => { throw new Error('You need a connection for that.'); } });
+      await claimPendingReferral();
+      assertEqual(pendingReferral()?.code, 'AMITK', 'No signal keeps it for later');
+      setPendingReferral({ code: 'AMITK', at: Date.now() - 31 * 864e5 });
+      assertEqual(pendingReferral(), null, 'Codes older than 30 days are ignored');
+    } finally {
+      localStorage.removeItem(REF_PENDING_KEY);
+      history.replaceState(history.state, '', savedUrl);
+      document.getElementById('referralWelcomeModal').classList.add('hidden');
+      referralStatusCache = null;
+    }
+  });
+
+  await test('Referrals: Profile section, Inbox mail, Recruiter challenge and the welcome pop-up', () => {
+    const st = { code: 'AMITK', recruited: 2, paidThisMonth: 2, recruits: [{ name: 'Erin', games: 3, done: true, reward: 100, at: 2 }, { name: 'Gus', games: 1, done: false, reward: 0, at: 1 }], referredBy: { name: 'Carol', games: 2, needed: 3, paid: false } };
+    const html = referralProfileHtml(st);
+    assertTrue(/AMITK/.test(html) && /\?ref=AMITK/.test(html), 'Code and link');
+    assertTrue(/2\/5/.test(html) && /2\/10/.test(html), 'Recruiter and monthly counts');
+    assertTrue(/Erin/.test(html) && /\+100/.test(html) && /Gus/.test(html) && /1\/3/.test(html), 'Recruits with their progress');
+    assertTrue(/Invited by <b>Carol<\/b>: 2\/3/.test(html), 'Who invited you and your progress');
+    assertTrue(/GET MY INVITE LINK/.test(referralProfileHtml({ ...st, code: null })), 'No code yet: a button to make one');
+    const joined = inboxItemHtml({ type: 'referral', event: 'joined', name: 'Erin', id: 'referral_join_x' });
+    const capped = inboxItemHtml({ type: 'referral', event: 'capped', name: 'Fay', id: 'referral_y' });
+    assertTrue(/joined with your invite/i.test(joined) && /Erin/.test(joined) && /MARK AS READ/.test(joined), 'Joined mail');
+    assertTrue(/limit/i.test(capped) && /Fay/.test(capped), 'Monthly limit mail');
+    assertTrue(ACTIVITY_MAIL_TYPES.includes('referral'), 'Referral mail is listed in the Inbox');
+    assertTrue(/Frame unlocked/.test(inboxItemHtml({ type: 'shop', unlocked: true, id: 'unlock_frame-gauntlet', name: 'Gauntlet Gold', requirement: 'Beat the Gauntlet' })), 'A frame unlock says Frame');
+    assertTrue(/Recruit 5 players/.test(challengeDescription(CHALLENGE_DEFS.recruits[0])), 'Recruiter challenge described');
+    assertTrue(!!document.querySelector('#friendsModal #friendsInviteBtn'), 'Friends has an Invite Friends button');
+    const auth = document.getElementById('authModal'), wasHidden = auth.classList.contains('hidden');
+    auth.classList.remove('hidden');
+    showReferralWelcome('joined', 'Carol');
+    assertTrue(document.getElementById('referralWelcomeModal').classList.contains('hidden'), 'Waits while another pop-up (sign-in, username) is open');
+    auth.classList.toggle('hidden', wasHidden);
+    showReferralWelcome('invited');
+    assertTrue(!document.getElementById('referralWelcomeModal').classList.contains('hidden') && /SIGN UP/.test(document.getElementById('referralWelcomeGoBtn').textContent), 'Invite pop-up offers sign-up');
+    document.getElementById('referralWelcomeModal').classList.add('hidden');
+  });
+
   await test('Gauntlet: lobby button sits under the bot count with the ⓘ on its right; the welcome screen explains it', async () => {
     const saved = gauntletSaved();
     const lobby = document.getElementById('lobbyScreen'), wasHidden = lobby.classList.contains('hidden');

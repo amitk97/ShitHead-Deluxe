@@ -287,9 +287,20 @@ function challengeForKey(id, user, now) {
 // ---- Actions ------------------------------------------------------------------------------
 const actions = {};
 
+// When the account was really created (Firebase Auth), for referrals: the game
+// can write to users/{uid} before init runs, so "no profile yet" alone can't
+// tell a new account. null if Auth doesn't know the account (unit tests).
+async function authCreatedAt(uid) {
+  try {
+    const rec = await admin.auth().getUser(uid);
+    const t = Date.parse(rec?.metadata?.creationTime || '');
+    return Number.isFinite(t) ? t : null;
+  } catch (e) { return null; }
+}
 actions.init = async ({ uid, auth }) => {
   const ref = db().ref(`users/${uid}`);
   const snap = await ref.once('value');
+  const created = snap.exists() && snap.child('createdAt').exists() ? null : await authCreatedAt(uid);
   if (!snap.exists()) {
     await ref.transaction(c => c === null ? {
       createdAt: Date.now(), // a new account (only these can be linked to an inviter)
@@ -307,6 +318,7 @@ actions.init = async ({ uid, auth }) => {
     });
     if (!Number.isFinite(Number(user.diamonds))) { user.diamonds = 0; changed = true; }
     if (!user.diamondEconomyResetV2Done) { user.diamondEconomyResetV2Done = true; changed = true; }
+    if (!user.createdAt && created) { user.createdAt = created; changed = true; }
     let testGrant = false;
     if (isAmitK(auth) && !user.amitKShopTestGrantV4Done) {
       user.diamonds = MAX_DIAMONDS; user.amitKShopTestGrantV4Done = true; changed = true; testGrant = true;
