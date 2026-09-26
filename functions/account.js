@@ -67,6 +67,7 @@ async function requestDeletion(uid, now = Date.now()) {
     [`publicProfiles/${uid}`]: null,
     [`pushTokens/${uid}`]: null
   };
+  require('./boards').boardPaths(uid).forEach(p => { updates[p] = null; });
   if (typeof username === 'string' && username.trim()) updates[`leaderboard/${username.trim().toLowerCase()}`] = null;
   await db().ref().update(updates);
   return deletion;
@@ -86,6 +87,7 @@ async function purgeAccount(uid) {
   ['users', 'publicProfiles', 'friends', 'friendRequests', 'ignores', 'shopPurchases', 'gifts', 'gameInvites', 'pushTokens', 'errorReports', 'playerReports']
     .forEach(root => { updates[`${root}/${uid}`] = null; });
   Object.keys(friends || {}).forEach(f => { updates[`friends/${f}/${uid}`] = null; });
+  require('./boards').boardPaths(uid).forEach(p => { updates[p] = null; });
   Object.entries(allRequests || {}).forEach(([to, from]) => { if (from && from[uid]) updates[`friendRequests/${to}/${uid}`] = null; });
   Object.entries(allReports || {}).forEach(([reported, by]) => { if (by && by[uid]) updates[`playerReports/${reported}/${uid}`] = null; });
   Object.entries(codes || {}).forEach(([code, owner]) => { if (owner && owner.uid === uid) updates[`referralCodes/${code}`] = null; });

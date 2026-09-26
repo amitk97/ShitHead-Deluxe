@@ -319,6 +319,10 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   const daveCan = async (label, fn) => { const out = await tryWrite('dave', fn); ok(out === 'ok', `allowed: ${label}`, out); };
   await daveCan('equip the Gauntlet frame', db => set(ref(db, 'users/dave/equippedCosmetics/frame'), 'frame-gauntlet'));
   await daveCan('equip the Gauntlet picture', db => set(ref(db, 'users/dave/equippedCosmetics/avatar'), 'avatar-gauntlet'));
+  // Earned Recruiter picture (5 invites) must be equippable once owned.
+  await admin('users/dave/ownedCosmetics/avatar-recruiter', 'PUT', true);
+  await daveCan('equip the Recruiter picture', db => set(ref(db, 'users/dave/equippedCosmetics/avatar'), 'avatar-recruiter'));
+  await daveCan('equip the Gauntlet picture again', db => set(ref(db, 'users/dave/equippedCosmetics/avatar'), 'avatar-gauntlet'));
   await denied('equip the Gauntlet frame without it', db => set(ref(db, 'users/alice/equippedCosmetics/frame'), 'frame-gauntlet'));
   ok((await tryWrite('dave', db => set(ref(db, 'users/dave/gauntlet/doneDay'), 'x'))) === 'denied', 'blocked: write your own Gauntlet record');
   r = await call('alice', { action: 'buyItem', itemId: 'frame-gauntlet' });
@@ -417,6 +421,31 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok((await erinCan(db => get(ref(db, 'referralCodes')))) === 'denied', 'blocked: reading the invite codes');
   ok((await erinCan(db => set(ref(db, 'referralCodes/ERIN'), { uid: 'erin' }))) === 'denied', 'blocked: making your own code by hand');
 
+  // Leaderboards the server keeps (boards/challenges, boards/gauntlet) and top-place mail
+  ok((await admin('users/dave/gauntlet/botsBeaten')) === 10, 'Gauntlet: every bot beaten is counted (2 clears = 10)', await admin('users/dave/gauntlet/botsBeaten'));
+  await admin('users/dave/username', 'PUT', 'Dave'); // every real account has one
+  await call('dave', { action: 'sync' });
+  const gb = await admin('boards/gauntlet/dave');
+  ok(gb && gb.count === 10 && gb.name === 'Dave', 'Gauntlet board entry kept by the server', gb);
+  const daveDone = Object.keys((await admin('users/dave/completedChallenges')) || {}).length;
+  ok((await admin('boards/challenges/dave'))?.count === daveDone, 'Challenges board: challenges completed', [await admin('boards/challenges/dave'), daveDone]);
+  let mail = await admin('users/dave/activityInbox/board_gauntlet_1');
+  ok(mail && mail.type === 'board' && mail.board === 'gauntlet' && mail.rank === 1, 'reaching #1 sends a congratulations mail', mail);
+  ok((await admin('users/alice/activityInbox/board_ranked_1'))?.board === 'ranked', 'Ranked #1 is congratulated too');
+  // Older account: bots beaten back-filled at sign-in (5 per clear), overtakes dave
+  await call('jon', { action: 'init' });
+  await admin('users/jon', 'PATCH', { username: 'Jon', gauntlet: { completions: 3, firstDoneAt: 1 } });
+  await call('jon', { action: 'sync' });
+  ok((await admin('users/jon/gauntlet/botsBeaten')) === 15 && (await admin('boards/gauntlet/jon'))?.count === 15, 'older accounts are back-filled at sign-in', await admin('boards/gauntlet/jon'));
+  ok((await admin('users/jon/activityInbox/board_gauntlet_1'))?.rank === 1, 'the new #1 is congratulated');
+  ok((await admin('users/dave/boardBest/gauntlet')) === 1, 'the best place mailed is remembered');
+  await admin('users/dave/activityInbox/board_gauntlet_1', 'DELETE');
+  await call('dave', { action: 'sync' });
+  ok((await admin('users/dave/activityInbox/board_gauntlet_1')) === null && (await admin('users/dave/activityInbox/board_gauntlet_2')) === null, 'no mail again for a place already reached (dropping to #2 after #1)');
+  ok((await tryWrite('alice', db => set(ref(db, 'boards/gauntlet/alice'), { name: 'alice', count: 999 }))) === 'denied', 'blocked: writing a board entry');
+  ok((await tryWrite('alice', db => set(ref(db, 'users/alice/boardBest/ranked'), 1))) === 'denied', 'blocked: writing your own best place');
+  ok((await tryWrite('alice', db => get(ref(db, 'boards/gauntlet')))) === 'ok', 'boards are public to read');
+
   // Account data: export, deletion with a 7-day recovery window, the purge
   await call('gina', { action: 'init' });
   await admin('', 'PATCH', {
@@ -450,6 +479,7 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok(purged.join() === 'gina', 'purge: only accounts past their window', purged);
   const gone = await Promise.all(['users/gina', 'friends/gina', 'friends/alice/gina', 'friendRequests/bob/gina', 'usernames/gina', 'referralCodes/GINA', 'playerReports/bob/gina', 'pushTokens/gina'].map(p => admin(p)));
   ok(gone.every(v => v === null), 'purge: erased everywhere, including friends\' lists, requests, username and code', gone);
+  ok((await admin('boards/challenges/gina')) === null && (await admin('boards/gauntlet/gina')) === null, 'purge: off the boards too');
   ok((await admin('users/alice/username')) !== undefined && (await admin('users/alice')) !== null, 'purge: other accounts untouched');
   await call('alice', { action: 'deleteAccount', op: 'cancel' });
 

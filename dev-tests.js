@@ -3027,7 +3027,7 @@ async function runDevTestSuite() {
       once: () => Promise.resolve({ val: () => ({ amit: { username: 'Amit', rating: 900, tier: 'Silver', wins: 3, losses: 1 }, bo: { username: 'Bo', rating: 1200, tier: 'Silver', wins: 5, losses: 2 } }) }),
       orderByChild: () => ({ limitToLast: () => ({ once: () => Promise.resolve({ val: () => ({}) }) }) })
     }; } };
-    openLeaderboardPanel();
+    openLeaderboardPanel('ranked');
     await new Promise((resolve) => setTimeout(resolve, 0));
     const text = document.getElementById('leaderboardArea').innerText;
     assertTrue(!text.toLowerCase().includes('sign in'), 'The public Leaderboard must never say "Sign in"');
@@ -4094,7 +4094,7 @@ async function runDevTestSuite() {
       if (path === 'publicProfiles/f1') return liveRef(path, { username: 'Fi', avatar: 'default' });
       return liveRef(path, null);
     } };
-    openLeaderboardPanel();
+    openLeaderboardPanel('ranked');
     await new Promise((r) => setTimeout(r, 0));
     listeners.leaderboard({ val: () => ({ bo: { username: 'Bo', rating: 900, avatar: 'avatar-crown-diamond' } }) });
     const lbHtml = document.getElementById('leaderboardArea').innerHTML;
@@ -4116,9 +4116,69 @@ async function runDevTestSuite() {
     assertTrue(!listeners['publicProfiles/f1'], 'Stopping the watch must detach the friend listeners');
   });
 
+  await test('Leaderboard tabs: Challenges and Gauntlet boards read the server boards, best first, you highlighted', async () => {
+    const listeners = {}, reads = [];
+    const boards = {
+      'boards/challenges': { u1: { name: 'Ann', count: 12 }, u2: { name: 'Bob', count: 30, avatar: 'default' }, u3: { name: 'Cy', count: 12 }, u4: { name: 'Zero', count: 0 } },
+      'boards/gauntlet': { u1: { name: 'Ann', count: 7 }, u2: { name: 'Bob', count: 2 } }
+    };
+    const liveRef = (path, value) => {
+      const ref = {
+        on: (ev, cb) => { listeners[path] = cb; cb({ val: () => value }); },
+        off: () => { delete listeners[path]; },
+        once: () => Promise.resolve({ val: () => value }),
+        orderByChild: (f) => { reads.push([path, f]); return ref; },
+        limitToLast: () => ref
+      };
+      return ref;
+    };
+    db = { ref: (path) => liveRef(path, boards[path] || { bo: { username: 'Bo', rating: 900 } }) };
+    currentUser = { uid: 'u1' };
+    const tabs = [...document.querySelectorAll('#leaderboardModal [data-lb-tab]')].map(b => b.dataset.lbTab);
+    assertEqual(tabs, ['ranked', 'challenges', 'gauntlet'], 'Tabs: Ranked, Challenges, Gauntlet');
+    openLeaderboardPanel('challenges');
+    await new Promise((r) => setTimeout(r, 0));
+    assertTrue(reads.some(([p, f]) => p === 'boards/challenges' && f === 'count'), 'The Challenges board is read by count', reads);
+    const rows = [...document.querySelectorAll('#leaderboardArea [data-lb-row]')].map(r => r.dataset.lbRow);
+    assertEqual(rows, ['Bob', 'Ann', 'Cy'], 'Best first, ties by name, nobody on 0');
+    const area = document.getElementById('leaderboardArea').innerHTML;
+    assertTrue(area.includes('30 challenges completed') && /🥇/.test(area) && (area.match(/🥈/g) || []).length === 2, 'Counts shown; equal counts share a place', area.slice(0, 300));
+    assertTrue(document.querySelector('#leaderboardArea [data-lb-row="Ann"]').innerHTML.includes('YOU'), 'Your own row is marked by account, not name');
+    assertEqual(document.querySelector('[data-lb-tab="challenges"]').getAttribute('aria-selected'), 'true', 'The tab shows as selected');
+    document.querySelector('[data-lb-tab="gauntlet"]').click();
+    await new Promise((r) => setTimeout(r, 0));
+    assertTrue(!listeners['boards/challenges'], 'Changing tab stops the old board listening');
+    assertEqual([...document.querySelectorAll('#leaderboardArea [data-lb-row]')].map(r => r.dataset.lbRow), ['Ann', 'Bob'], 'Gauntlet board by bots beaten');
+    assertTrue(document.getElementById('leaderboardArea').innerHTML.includes('7 Gauntlet bots beaten'), 'Gauntlet rows say bots beaten');
+    assertTrue(/bots beaten/i.test(document.getElementById('leaderboardTabNote').textContent), 'The note explains the board');
+    document.getElementById('leaderboardModal').classList.add('hidden');
+    let remembered = null; try { remembered = localStorage.getItem('shithead_leaderboard_tab'); } catch (e) {}
+    assertEqual(remembered, 'gauntlet', 'The last tab is remembered');
+    leaderboardTab = 'ranked';
+    try { localStorage.removeItem('shithead_leaderboard_tab'); } catch (e) {}
+  });
+
+  await test('Leaderboard congratulations mail: #1/#2/#3/top 10 per board, with a way to the board', async () => {
+    assertTrue(ACTIVITY_MAIL_TYPES.includes('board'), 'Board mail shows in the Inbox');
+    const one = inboxItemHtml({ type: 'board', board: 'gauntlet', tier: 1, rank: 1, id: 'board_gauntlet_1' });
+    assertTrue(one.includes('#1 on the Gauntlet leaderboard!') && one.includes('🥇'), 'The #1 mail', one);
+    const ten = inboxItemHtml({ type: 'board', board: 'challenges', tier: 10, rank: 7, id: 'board_challenges_10' });
+    assertTrue(ten.includes('You made the Challenges top 10!'), 'The top 10 mail');
+    assertTrue(inboxItemHtml({ type: 'board', board: 'ranked', tier: 3, rank: 3, id: 'board_ranked_3' }).includes('#3 on the Ranked leaderboard'), 'Ranked #3');
+    assertTrue(one.includes('data-board-open="gauntlet"') && one.includes('data-activity-id="board_gauntlet_1"'), 'VIEW LEADERBOARD and MARK AS READ');
+    const opened = [];
+    const realOpen = openLeaderboardPanel;
+    openLeaderboardPanel = (tab) => opened.push(tab);
+    try {
+      document.getElementById('inboxArea').innerHTML = one;
+      document.querySelector('#inboxArea [data-board-open]').click();
+    } finally { openLeaderboardPanel = realOpen; document.getElementById('inboxArea').innerHTML = ''; }
+    assertEqual(opened, ['gauntlet'], 'VIEW LEADERBOARD opens that board');
+  });
+
   await test("REGRESSION: the public Leaderboard does not require a signed-in user", () => {
     currentUser = null;
-    openLeaderboardPanel();
+    openLeaderboardPanel('ranked');
     const text = document.getElementById('leaderboardArea').innerHTML;
     assertTrue(text.includes('Loading') || !text.includes('Sign in'), 'A guest must be allowed to load the public Leaderboard');
     document.getElementById('leaderboardModal').classList.add('hidden');

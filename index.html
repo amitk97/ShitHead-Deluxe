@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v159 (ShitHead-Deluxe-141) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v160 (ShitHead-Deluxe-142) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -369,6 +369,10 @@
     .ch-stat--shop .pack-icon { width:17px; height:17px; }
     .inbox-activity--referral { background:rgba(6,78,59,.3); border-color:rgba(52,211,153,.6); }
     .inbox-activity--referral .inbox-activity-accent { color:#6ee7b7; }
+    .inbox-activity--board { background:linear-gradient(135deg, rgba(120,53,15,.45), rgba(15,23,42,.6)); border-color:rgba(251,191,36,.75); }
+    .inbox-activity--board .inbox-activity-accent { color:#fcd34d; }
+    .board-mail-medal { font-size:26px; line-height:1; flex-shrink:0; }
+    .board-mail-actions { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
     /* Referrals: Friends → Invite Friends button, Profile → Invite friends section. */
     .ref-invite-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:.4rem; padding:.5rem; margin-bottom:.5rem; border-radius:.6rem;
       border:1.5px solid #10b981; background:linear-gradient(135deg,rgba(6,78,59,.55),rgba(4,47,46,.55)); color:#a7f3d0; font-weight:900; font-size:.68rem; letter-spacing:.1em; }
@@ -651,6 +655,7 @@
     .stats-tabs { display:flex; gap:6px; margin-bottom:8px; }
     .stats-tab { flex:1; padding:6px 0; border-radius:10px; border:2px solid #334155; background:#1e293b; color:#cbd5e1; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
     .stats-tab[aria-selected="true"] { border-color:#f59e0b; background:rgba(120,53,15,.4); color:#fcd34d; }
+    .lb-count-pill { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:8px; border:1px solid #f59e0b; background:rgba(120,53,15,.35); color:#fcd34d; font-size:10px; font-weight:900; white-space:nowrap; }
     .mh-summary { display:flex; justify-content:space-around; background:rgba(15,23,42,.7); border:1px solid rgba(245,158,11,.35); border-radius:12px; padding:8px 4px; margin-bottom:8px; }
     .mh-summary div { display:flex; flex-direction:column; align-items:center; }
     .mh-summary b { font-size:15px; font-weight:900; color:#fcd34d; }
@@ -5043,6 +5048,12 @@ video {
         <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Leaderboard</span>
         <button id="leaderboardCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
+      <div class="stats-tabs" role="tablist" style="flex-shrink:0;">
+        <button type="button" role="tab" class="stats-tab" data-lb-tab="ranked">Ranked</button>
+        <button type="button" role="tab" class="stats-tab" data-lb-tab="challenges">Challenges</button>
+        <button type="button" role="tab" class="stats-tab" data-lb-tab="gauntlet">Gauntlet</button>
+      </div>
+      <p id="leaderboardTabNote" class="text-[9px] text-slate-500 text-center mb-2" style="flex-shrink:0;"></p>
       <div class="mb-2" style="flex-shrink:0;">
         <input id="leaderboardSearchInput" type="search" autocomplete="off" placeholder="Search player…" aria-label="Search leaderboard by username" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-[10px] text-white outline-none focus:border-amber-500">
       </div>
@@ -16058,6 +16069,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v160: [
+        ['🏅', 'Leaderboard has new tabs: Challenges (most challenges completed) and Gauntlet (most Gauntlet bots beaten).'],
+        ['🥇', 'Reach the top 10, #3, #2 or #1 on any leaderboard and a congratulations message lands in your Inbox.']
+      ],
       v159: [
         ['⬇', 'Profile → Your data → Download my data saves a copy of everything stored about your account.'],
         ['🗑️', 'Deleting your account now works properly, and you have 7 days to change your mind: sign back in and tap Keep my account.'],
@@ -22111,7 +22126,33 @@ video {
       if (e.target.id === 'inboxModal') document.getElementById('inboxModal').classList.add('hidden');
     });
     // Mail kinds stored under users/{uid}/activityInbox.
-    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral'];
+    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board'];
+    // Congratulations from the server (functions/boards.js) the first time a
+    // player reaches the top 10, #3, #2 or #1 on a leaderboard.
+    const BOARD_NAMES = { ranked: 'Ranked', challenges: 'Challenges', gauntlet: 'Gauntlet' };
+    function boardMailText(item) {
+      const board = BOARD_NAMES[item.board] || 'Leaderboard';
+      const tier = Number(item.tier) || 10;
+      const icon = tier === 1 ? '🥇' : tier === 2 ? '🥈' : tier === 3 ? '🥉' : '🏆';
+      const heading = tier <= 3 ? `You're #${tier} on the ${board} leaderboard!` : `You made the ${board} top 10!`;
+      const what = { ranked: 'Ranked rating', challenges: 'challenges completed', gauntlet: 'Gauntlet bots beaten' }[item.board] || 'score';
+      const sub = tier === 1 ? `Nobody has more ${what}. Congratulations!` : `Congratulations! Keep going for #1.`;
+      return { icon, heading, sub };
+    }
+    function boardMailHtml(item) {
+      const t = boardMailText(item);
+      return `<div class="inbox-activity--board border rounded-xl px-2.5 py-2">
+          <div class="flex items-center gap-2"><span class="board-mail-medal">${t.icon}</span><div class="min-w-0">
+          <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">Leaderboard</p>
+          <p class="text-xs font-bold text-white">${escapeHtml(t.heading)}</p>
+          <p class="inbox-activity-accent text-[10px] mt-1">${escapeHtml(t.sub)}</p>
+          </div></div>
+          <div class="board-mail-actions">
+          <button type="button" data-board-open="${escapeAttr(BOARD_NAMES[item.board] ? item.board : 'ranked')}" class="inbox-activity-accent text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">VIEW LEADERBOARD</button>
+          <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
+          </div>
+        </div>`;
+    }
     function inboxItemHtml(item) {
       if (item.type === 'giftIn') {
         const giftItem = COSMETIC_SHOP_ITEMS.find(i => i.id === item.itemId);
@@ -22171,6 +22212,7 @@ video {
           <button type="button" data-challenge-id="${escapeAttr(item.id)}" class="inbox-read-challenge-btn mt-2 w-full text-[9px] font-black py-1 rounded-lg border border-amber-500 text-amber-300 hover:bg-amber-500 hover:text-slate-950 transition">MARK AS READ</button>
         </div>`;
       }
+      if (item.type === 'board') return boardMailHtml(item);
       if (item.type === 'referral') {
         const capped = item.event === 'capped';
         return `<div class="inbox-activity--referral border rounded-xl px-2.5 py-2">
@@ -22282,6 +22324,12 @@ video {
     document.getElementById('inboxArea').addEventListener('click', (e) => {
       const claimBtn = e.target.closest('[data-claim-gift]');
       if (claimBtn) { claimBtn.disabled = true; claimGift(claimBtn.dataset.claimGift).finally(() => renderInbox()); return; }
+      const boardBtn = e.target.closest('[data-board-open]');
+      if (boardBtn) {
+        document.getElementById('inboxModal')?.classList.add('hidden');
+        openLeaderboardPanel(boardBtn.dataset.boardOpen);
+        return;
+      }
       if (e.target.closest('[data-season-shop]')) {
         document.getElementById('inboxModal')?.classList.add('hidden');
         shopTab = SEASONAL_TAB; shopTabPicked = true;
@@ -22858,59 +22906,76 @@ video {
       if (leaderboardWatchRef && typeof leaderboardWatchRef.off === 'function') leaderboardWatchRef.off();
       leaderboardWatchRef = null;
     }
-    function openLeaderboardPanel() {
+    // Three boards: Ranked (leaderboard/{name}, by rating) and the two the
+    // server keeps (boards/challenges|gauntlet/{uid} = {name, avatar, count},
+    // functions/boards.js). Last tab in localStorage shithead_leaderboard_tab.
+    const LEADERBOARD_TABS = {
+      ranked: { path: 'leaderboard', note: 'Ranked rating', empty: 'No ranked players yet.' },
+      challenges: { path: 'boards/challenges', note: 'Challenges completed (running total)', empty: 'No challenges completed yet.' },
+      gauntlet: { path: 'boards/gauntlet', note: 'Gauntlet bots beaten (every bot, not just full runs)', empty: 'No Gauntlet bots beaten yet.' }
+    };
+    const LEADERBOARD_REST = 'https://shithead-pro-default-rtdb.europe-west1.firebasedatabase.app/';
+    let leaderboardTab = (() => { try { const t = localStorage.getItem('shithead_leaderboard_tab'); return LEADERBOARD_TABS[t] ? t : 'ranked'; } catch (e) { return 'ranked'; } })();
+    // Board rows, best first (ties by name). Ranked needs a username; the
+    // server boards need a name and a count above 0.
+    function leaderboardRowsFrom(tab, data) {
+      const rows = [];
+      Object.entries(data || {}).forEach(([key, entry]) => {
+        entry = entry || {};
+        if (tab === 'ranked') {
+          if (typeof entry.username !== 'string' || !entry.username.trim()) return;
+          rows.push({ usernameKey: key, ...entry, score: Number(entry.rating) || 0 });
+        } else {
+          if (typeof entry.name !== 'string' || !entry.name.trim() || !(Number(entry.count) > 0)) return;
+          rows.push({ uid: key, username: entry.name, avatar: entry.avatar, count: Number(entry.count), score: Number(entry.count) });
+        }
+      });
+      rows.sort((a, b) => (b.score - a.score) || String(a.username).localeCompare(String(b.username), undefined, { sensitivity: 'base' }));
+      // Equal scores share a place (1, 2, 2, 4).
+      rows.forEach((r, i) => { r.rank = i && rows[i - 1].score === r.score ? rows[i - 1].rank : i + 1; });
+      return rows;
+    }
+    function openLeaderboardPanel(tab) {
+      if (tab && LEADERBOARD_TABS[tab]) leaderboardTab = tab;
+      try { localStorage.setItem('shithead_leaderboard_tab', leaderboardTab); } catch (e) {}
+      const cfg = LEADERBOARD_TABS[leaderboardTab];
+      const shownTab = leaderboardTab;
+      const freshOpen = document.getElementById('leaderboardModal').classList.contains('hidden');
       document.getElementById('leaderboardModal').classList.remove('hidden');
+      document.querySelectorAll('[data-lb-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.lbTab === shownTab)));
+      document.getElementById('leaderboardTabNote').textContent = cfg.note;
       const area = document.getElementById('leaderboardArea');
       const emptyMsg = document.getElementById('leaderboardEmptyMsg');
       emptyMsg.classList.add('hidden');
       area.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-4">Loading…</p>';
 
-      // Public leaderboard: do not require Firebase Authentication.
-      // Read the public leaderboard projection. It is keyed by username,
-      // not Firebase UID, and deliberately contains no presence field.
-      // with a real username and sort by live ranked rating points.
+      // Public boards: no sign-in needed. The Ranked one is keyed by username
+      // and the others carry only a name, picture and count (no presence).
       let leaderboardRows = [];
+      const paint = () => {
+        const q = (document.getElementById('leaderboardSearchInput')?.value || '').trim().toLowerCase();
+        const shown = q ? leaderboardRows.filter(p => String(p.username || '').toLowerCase().includes(q)) : leaderboardRows;
+        emptyMsg.classList.toggle('hidden', shown.length > 0);
+        emptyMsg.textContent = q ? 'No players match that search.' : cfg.empty;
+        area.innerHTML = shown.map(p => leaderboardRowHtml(p, p.rank, shownTab)).join('');
+      };
       const renderRows = (data) => {
-        const rows = [];
-        Object.entries(data || {}).forEach(([usernameKey, profile]) => {
-          profile = profile || {};
-          if (typeof profile.username !== 'string' || !profile.username.trim()) return;
-          rows.push({ usernameKey, ...profile });
-        });
-        rows.sort((a, b) => {
-          const ratingDifference = (Number(b.rating) || 0) - (Number(a.rating) || 0);
-          if (ratingDifference !== 0) return ratingDifference;
-          return String(a.username).localeCompare(String(b.username), undefined, { sensitivity: 'base' });
-        });
-        if (!rows.length) {
-          area.innerHTML = '';
-          emptyMsg.classList.remove('hidden');
-          return;
-        }
-        leaderboardRows = rows.map((player,index)=>({...player,rank:index+1}));
-        const query=(document.getElementById('leaderboardSearchInput')?.value||'').trim().toLowerCase();
-        const shown=query ? leaderboardRows.filter(p=>String(p.username||'').toLowerCase().includes(query)) : leaderboardRows;
-        emptyMsg.classList.toggle('hidden', shown.length>0);
-        emptyMsg.textContent = query ? 'No players match that search.' : 'No ranked players yet.';
-        area.innerHTML = shown.map((player) => leaderboardRowHtml(player, player.rank)).join('');
+        if (leaderboardTab !== shownTab) return;
+        leaderboardRows = leaderboardRowsFrom(shownTab, data);
+        paint();
       };
-      const searchInput=document.getElementById('leaderboardSearchInput');
-      searchInput.value='';
-      searchInput.oninput=()=>{
-        const q=searchInput.value.trim().toLowerCase();
-        const shown=q ? leaderboardRows.filter(p=>String(p.username||'').toLowerCase().includes(q)) : leaderboardRows;
-        emptyMsg.classList.toggle('hidden',shown.length>0);
-        emptyMsg.textContent=q?'No players match that search.':'No ranked players yet.';
-        area.innerHTML=shown.map(p=>leaderboardRowHtml(p,p.rank)).join('');
-      };
+      const searchInput = document.getElementById('leaderboardSearchInput');
+      if (freshOpen) searchInput.value = '';
+      searchInput.oninput = paint;
 
       const showError = (error) => {
+        if (leaderboardTab !== shownTab) return;
         const code = error && error.code ? ` (${error.code})` : '';
-        area.innerHTML = `<p class="text-[10px] text-rose-400 text-center py-4">Couldn’t load the leaderboard${code}. Check that leaderboard is publicly readable in Firebase Rules.</p>`;
+        area.innerHTML = `<p class="text-[10px] text-rose-400 text-center py-4">Couldn’t load the leaderboard${code}. Check your connection and try again.</p>`;
         console.error('Public leaderboard load failed', error);
       };
 
-      // Use the SDK first. A timeout prevents the modal being stuck on
+      // Use the SDK first. A timeout prevents the page being stuck on
       // “Loading…” forever if the SDK connection/query is unavailable.
       let settled = false;
       const finish = (callback) => {
@@ -22918,22 +22983,22 @@ video {
         settled = true;
         callback();
       };
+      // Firebase REST is a simple fallback for guests and avoids a stalled
+      // Realtime Database SDK query leaving the leaderboard blank.
+      const restLoad = () => fetch(`${LEADERBOARD_REST}${cfg.path}.json`).then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      });
       const timeout = setTimeout(() => {
-        // Firebase REST is a simple fallback for guests and avoids a stalled
-        // Realtime Database SDK query leaving the leaderboard blank.
-        fetch('https://shithead-pro-default-rtdb.europe-west1.firebasedatabase.app/leaderboard.json')
-          .then((response) => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return response.json();
-          })
-          .then((data) => finish(() => renderRows(data)))
-          .catch((error) => finish(() => showError(error)));
+        restLoad().then((data) => finish(() => renderRows(data))).catch((error) => finish(() => showError(error)));
       }, 5000);
 
-      // Stays live while the page is open: new pictures and ratings show up
-      // by themselves (stopLeaderboardWatch detaches on close).
+      // Stays live while the page is open: new pictures and scores show up
+      // by themselves (stopLeaderboardWatch detaches on close/tab change).
+      // The server boards are read top 100 by count (indexed in the rules).
       stopLeaderboardWatch();
-      const lbRef = db.ref('leaderboard');
+      const baseRef = db.ref(cfg.path);
+      const lbRef = shownTab === 'ranked' || typeof baseRef.orderByChild !== 'function' ? baseRef : baseRef.orderByChild('count').limitToLast(100);
       leaderboardWatchRef = lbRef;
       new Promise((resolve, reject) => {
         if (typeof lbRef.on !== 'function') { lbRef.once('value').then(resolve, reject); return; }
@@ -22953,26 +23018,35 @@ video {
         .catch((error) => {
           clearTimeout(timeout);
           // Try the public REST endpoint if the SDK query fails.
-          fetch('https://shithead-pro-default-rtdb.europe-west1.firebasedatabase.app/leaderboard.json')
-            .then((response) => {
-              if (!response.ok) throw new Error(`HTTP ${response.status}`);
-              return response.json();
-            })
-            .then((data) => finish(() => renderRows(data)))
-            .catch(() => finish(() => showError(error)));
+          restLoad().then((data) => finish(() => renderRows(data))).catch(() => finish(() => showError(error)));
         });
     }
-    function leaderboardRowHtml(p, rank) {
-      const myName = document.getElementById('playerNameInput')?.value?.trim().toLowerCase();
-      const isMe = !!myName && String(p.username || '').toLowerCase() === myName;
-      const tier = getRankTier(p.rating || 500);
-      return `<div class="flex items-center justify-between gap-2 border rounded-xl px-2.5 py-2 ${isMe ? 'bg-amber-950/40 border-amber-600' : 'bg-slate-900/60 border-slate-800'}">
+    document.querySelectorAll('[data-lb-tab]').forEach(b => b.addEventListener('click', () => {
+      if (b.dataset.lbTab !== leaderboardTab) openLeaderboardPanel(b.dataset.lbTab);
+    }));
+    function leaderboardRowHtml(p, rank, tab = 'ranked') {
+      const myName = document.getElementById('playerNameInput')?.value?.trim();
+      const isMe = tab === 'ranked'
+        ? !!myName && String(p.username || '').toLowerCase() === String(myName).toLowerCase()
+        : !!(currentUser && p.uid === currentUser.uid);
+      const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+      let sub, pill;
+      if (tab === 'ranked') {
+        const tier = getRankTier(p.rating || 500);
+        sub = `${Number(p.wins)||0}W · ${Number(p.losses)||0}L · ${((Number(p.wins)||0)+(Number(p.losses)||0))} played`;
+        pill = `<span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border font-black text-[10px] w-fit ${tier.cls}" style="${tier.style}">${tier.name} · ${Math.round(p.rating || 500)}</span>`;
+      } else {
+        const n = Number(p.count) || 0;
+        sub = tab === 'challenges' ? `${n} challenge${n === 1 ? '' : 's'} completed` : `${n} Gauntlet bot${n === 1 ? '' : 's'} beaten`;
+        pill = `<span class="lb-count-pill">${tab === 'challenges' ? '🏅' : '⚔️'} ${n}</span>`;
+      }
+      return `<div class="flex items-center justify-between gap-2 border rounded-xl px-2.5 py-2 ${isMe ? 'bg-amber-950/40 border-amber-600' : 'bg-slate-900/60 border-slate-800'}" data-lb-row="${escapeHtml(String(p.username || ''))}">
         <div class="flex items-center gap-2 min-w-0">
-          <span class="text-[10px] font-black text-slate-500" style="width:20px;text-align:right;">#${rank}</span>
+          <span class="text-[10px] font-black text-slate-500" style="width:22px;text-align:center;${rank <= 3 ? 'font-size:17px;line-height:1;' : ''}">${medal}</span>
           ${avatarHtml(p.avatar, 30)}
-          <div class="min-w-0"><div class="text-xs font-bold text-white truncate">${p.username || 'Player'}${isMe ? ' <span class=\"text-amber-300 text-[8px]\">YOU</span>' : ''}</div><div class="text-[8px] text-slate-500">${Number(p.wins)||0}W · ${Number(p.losses)||0}L · ${((Number(p.wins)||0)+(Number(p.losses)||0))} played</div></div>
+          <div class="min-w-0"><div class="text-xs font-bold text-white truncate">${escapeHtml(String(p.username || 'Player'))}${isMe ? ' <span class=\"text-amber-300 text-[8px]\">YOU</span>' : ''}</div><div class="text-[8px] text-slate-500">${sub}</div></div>
         </div>
-        <span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border font-black text-[10px] w-fit ${tier.cls}" style="${tier.style}">${tier.name} \u00b7 ${Math.round(p.rating || 500)}</span>
+        ${pill}
       </div>`;
     }
     document.getElementById('leaderboardCloseBtn').addEventListener('click', () => document.getElementById('leaderboardModal').classList.add('hidden'));

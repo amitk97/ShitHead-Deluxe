@@ -49,6 +49,7 @@ const RANKED_AUDIT_ENFORCE = false;
 const RANKED_PAIR_PER_DAY = 5; // processedMatchRewards / processedRankedMatches entries kept
 
 const db = () => admin.database();
+const boards = require('./boards');
 const fail = (code, message) => { throw new HttpsError(code, message); };
 const clip = (value, max) => String(value == null ? '' : value).slice(0, max);
 const num = (value, fallback = 0) => { const n = Number(value); return value !== null && value !== undefined && value !== '' && Number.isFinite(n) ? n : fallback; };
@@ -153,9 +154,10 @@ function itemBuyableNow(item, auth, now) {
 // server: returning null there makes it re-run with the real value. `mutate`
 // gets a copy and returns { user, ...result }, { error } or { noop, ...result }.
 async function userTx(uid, mutate) {
-  let outcome = null;
+  let outcome = null, before = null;
   const result = await db().ref(`users/${uid}`).transaction((current) => {
     outcome = null;
+    before = current;
     if (current === null) return null;
     const out = mutate(JSON.parse(JSON.stringify(current)));
     outcome = out || { noop: true };
@@ -164,7 +166,12 @@ async function userTx(uid, mutate) {
   }, undefined, false);
   if (!result.snapshot.exists()) fail('failed-precondition', 'Your profile is still being created. Please try again.');
   if (outcome?.error) fail('failed-precondition', outcome.error);
-  return { ...(outcome || {}), user: result.snapshot.val() || {} };
+  const saved = result.snapshot.val() || {};
+  // Leaderboards + congratulations (functions/boards.js); never fails the action.
+  if (result.committed && outcome && !outcome.noop) {
+    try { outcome.boardMail = await boards.onUserChanged(uid, before, saved); } catch (e) { logger.warn('boards update failed', { uid, error: String(e) }); }
+  }
+  return { ...(outcome || {}), user: saved };
 }
 function pruneMap(map, keep = PROCESSED_KEEP) {
   const entries = Object.entries(map || {});
@@ -339,6 +346,11 @@ actions.sync = async ({ uid }) => {
     const newAvatars = grantEarnedAvatars(user, legacy, now);
     // A first Gauntlet clear from before it was a challenge: record it (already paid).
     let backfilled = false;
+    // Gauntlet bots beaten from before they were counted: 5 per clear + this run's.
+    if (user.gauntlet && user.gauntlet.botsBeaten == null && (num(user.gauntlet.completions) || user.gauntlet.run)) {
+      user.gauntlet.botsBeaten = num(user.gauntlet.completions) * CAT.gauntlet.rounds.length + num(user.gauntlet.run?.round);
+      backfilled = true;
+    }
     if (user.gauntlet?.firstDoneAt && !user.completedChallenges?.['gauntlet-first']) {
       user.completedChallenges = user.completedChallenges || {};
       user.completedChallenges['gauntlet-first'] = { completedAt: num(user.gauntlet.firstDoneAt), reward: num(CAT.gauntlet.firstReward) };
@@ -346,6 +358,8 @@ actions.sync = async ({ uid }) => {
     }
     return claimed.length || newAvatars.length || backfilled ? { user, claimed, newAvatars } : { noop: true, claimed: [], newAvatars: [] };
   });
+  // Make sure this player is on the Challenges / Gauntlet boards (older accounts).
+  try { await boards.onUserChanged(uid, null, res.user, { force: true }); } catch (e) { logger.warn('boards backfill failed', { uid, error: String(e) }); }
   return { claimed: res.claimed || [], newAvatars: res.newAvatars || [], diamonds: num(res.user.diamonds) };
 };
 
@@ -689,6 +703,7 @@ actions.gauntlet = async ({ uid, data }) => {
     if (!won) return loseLife() ? { user, over: true } : { user };
     run.playing = false;
     run.round = num(run.round) + 1;
+    g.botsBeaten = num(g.botsBeaten) + 1; // Gauntlet board
     if (run.round < G.rounds.length) return { user };
     // Beaten: once a day.
     g.run = null;

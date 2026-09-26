@@ -97,6 +97,12 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - The phone can't delete `users/{uid}` itself (no blanket write), so account deletion must always go through the server.
 - Game: Profile → Your data (`#profileDataSection`, `downloadMyData`: server copy + `thisDevice` = this device's `shithead_*` localStorage minus the push token, saved as `shithead-data-<name>-<date>.json`; share sheet on iPhone). Delete account (`deleteFinalBtn`, password re-check kept) → `deleteAccount` request → `performSignOut`. Sign-in runs `pendingAccountDeletion` first: a pending deletion shows `#keepAccountModal` (Back can't skip it) and nothing public starts until Keep (`startSignedInSession`, the old body of the signed-in branch of `onAuthStateChanged`); "Continue deleting" signs out. Sign-in help: `#authHelpToggle` / `#authHelpPanel` (reset link, `resendVerificationEmail`, Google tip, 7-day note, support). Privacy policy describes both. End to end: `tools/account-e2e.js` (a real page on the emulators: download, delete, sign back in → Keep, delete again, purge; same `functions/.env.local` setup as `tools/referral-e2e.js`).
 
+## Leaderboards
+
+- Leaderboard page tabs (`LEADERBOARD_TABS`, last tab in localStorage `shithead_leaderboard_tab`): **Ranked** (`leaderboard/{name}`, by rating), **Challenges** (`boards/challenges`, challenges completed, running total) and **Gauntlet** (`boards/gauntlet`, every Gauntlet bot beaten, `gauntlet.botsBeaten`). Rows from `leaderboardRowsFrom` (best first, equal scores share a place, 🥇🥈🥉), drawn by `leaderboardRowHtml(p, rank, tab)`; your row is found by uid on the server boards. The server boards are read `orderByChild('count').limitToLast(100)`, live while open, REST fallback like Ranked.
+- `functions/boards.js` keeps `boards/{board}/{uid}` = {name, avatar, count, at} (server-only, public read, `.indexOn: count`). economy's `userTx` calls `boards.onUserChanged(uid, before, after)` after every committed change, and `sync` forces it at sign-in (backfill). No username = no entry; a count of 0 removes it; hidden/erased with account deletion (`boardPaths`).
+- Congratulations: the first time a player reaches the top 10, #3, #2 or #1 on a board (Ranked checked when the rating rises), the server writes `users/{uid}/activityInbox/board_<board>_<tier>` (type `board`); the best tier mailed is kept in server-only `users/{uid}/boardBest/{board}` so it isn't sent again. Inbox: `boardMailHtml` (VIEW LEADERBOARD → `openLeaderboardPanel(board)`, MARK AS READ).
+
 ## Challenges
 
 - Getting Started (`GETTING_STARTED_CHALLENGES`, shown in that order): Quick Starter 50, ShitHead Virgin 20 (play a first game), Beginner 20 (win a first game), Tutorial Graduate 200. The first-game pair is paid by the server when it records a finished match (`reportMatchFinished` from `recordMatchHistory`, never the tutorial) or a win, and at sign-in (`sync`) from Ranked W/L and `difficultyWins`. Milestone challenges (Ranked totals, tiers, ending cards, bot wins) are all checked and paid by the server; the game never claims them itself.
@@ -238,12 +244,6 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - `README.md` (GitHub front page) shows screenshots from `docs/screenshots/` (home, swap, table, card-powers, play-matrix, guide-swap), taken from the real game at 390×844 @2x by `tools/readme-screenshots.js`. Both are ignored by Hosting.
 - **Refresh the README every 15 versions, starting at v150 (v150, v165, v180…)** without being asked: bring the text up to date with every feature added since (Features, How to play, Tech), retake all the screenshots with `tools/readme-screenshots.js`, and set the `README-VERSION` stamp on its first line to the new version. A dev test fails once the BUILD reaches the next due version with an older stamp.
-
-## Owner's backlog: remind the owner about these (don't build until asked)
-
-- Leaderboard tabs: **Challenges completed** (running total, as on the Challenges page) and **Gauntlet bots beaten** (every bot beaten, not just full clears), alongside the Ranked rating board.
-- Inbox congratulations when a player reaches **#1, #2, #3 or the top 10** on any of those leaderboards.
-- Queued after referrals: **account recovery** and **data export**.
 
 ## Future theme ideas (owner's backlog — don't build until asked)
 
