@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v160 (ShitHead-Deluxe-142) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v161 (ShitHead-Deluxe-143) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -16069,6 +16069,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v161: [
+        ['🖼️', 'A new profile picture now shows straight away on the Challenges and Gauntlet leaderboards.']
+      ],
       v160: [
         ['🏅', 'Leaderboard has new tabs: Challenges (most challenges completed) and Gauntlet (most Gauntlet bots beaten).'],
         ['🥇', 'Reach the top 10, #3, #2 or #1 on any leaderboard and a congratulations message lands in your Inbox.']
@@ -23043,7 +23046,7 @@ video {
       return `<div class="flex items-center justify-between gap-2 border rounded-xl px-2.5 py-2 ${isMe ? 'bg-amber-950/40 border-amber-600' : 'bg-slate-900/60 border-slate-800'}" data-lb-row="${escapeHtml(String(p.username || ''))}">
         <div class="flex items-center gap-2 min-w-0">
           <span class="text-[10px] font-black text-slate-500" style="width:22px;text-align:center;${rank <= 3 ? 'font-size:17px;line-height:1;' : ''}">${medal}</span>
-          ${avatarHtml(p.avatar, 30)}
+          ${avatarHtml(isMe && tab !== 'ranked' ? resolveAvatarId(equippedCosmetics.avatar) : p.avatar, 30)}
           <div class="min-w-0"><div class="text-xs font-bold text-white truncate">${escapeHtml(String(p.username || 'Player'))}${isMe ? ' <span class=\"text-amber-300 text-[8px]\">YOU</span>' : ''}</div><div class="text-[8px] text-slate-500">${sub}</div></div>
         </div>
         ${pill}

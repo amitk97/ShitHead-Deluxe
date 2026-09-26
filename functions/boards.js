@@ -74,7 +74,29 @@ async function onUserChanged(uid, before, after, { force = false } = {}) {
   return mailed;
 }
 
+// A new picture or name reaches the player's existing board entries at once
+// (the publicProfiles trigger in index.js). Only entries that are already
+// there are touched, so this never puts anyone on a board.
+async function refreshProfile(uid) {
+  const [user, avatar] = await Promise.all([
+    db().ref(`users/${uid}`).once('value').then(s => s.val()),
+    db().ref(`publicProfiles/${uid}/avatar`).once('value').then(s => s.val())
+  ]);
+  if (!user || user.deletion) return 0;
+  const name = typeof user.username === 'string' && user.username.trim() ? user.username : null;
+  const updates = {};
+  for (const board of Object.keys(BOARDS)) {
+    const entry = (await db().ref(`boards/${board}/${uid}`).once('value')).val();
+    if (!entry) continue;
+    const pic = typeof avatar === 'string' ? avatar : null;
+    if ((entry.avatar || null) !== pic) updates[`boards/${board}/${uid}/avatar`] = pic;
+    if (name && entry.name !== name) updates[`boards/${board}/${uid}/name`] = name;
+  }
+  if (Object.keys(updates).length) await db().ref().update(updates);
+  return Object.keys(updates).length;
+}
+
 // Hidden while an account is being deleted; erased with it.
 const boardPaths = (uid) => Object.keys(BOARDS).map(board => `boards/${board}/${uid}`);
 
-module.exports = { BOARDS, TIERS, onUserChanged, placeOn, boardPaths };
+module.exports = { BOARDS, TIERS, onUserChanged, placeOn, boardPaths, refreshProfile };

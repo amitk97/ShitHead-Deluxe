@@ -10,7 +10,7 @@
 // so one alert never shows twice.
 'use strict';
 
-const { onValueCreated } = require('firebase-functions/v2/database');
+const { onValueCreated, onValueWritten } = require('firebase-functions/v2/database');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { logger } = require('firebase-functions');
 const admin = require('firebase-admin');
@@ -104,6 +104,13 @@ exports.notifyGift = onValueCreated(trigger('/gifts/{uid}/{giftId}'), (event) =>
     open: 'inbox'
   }, 86400);
 });
+
+// Leaderboards (functions/boards.js): a player's new picture or name shows
+// on their Challenges/Gauntlet board entries straight away.
+const refreshBoards = (event) => require('./boards').refreshProfile(event.params.uid)
+  .catch((e) => logger.warn('board profile refresh failed', { uid: event.params.uid, error: String(e) }));
+exports.boardsPicture = onValueWritten(trigger('/publicProfiles/{uid}/avatar'), refreshBoards);
+exports.boardsName = onValueWritten(trigger('/publicProfiles/{uid}/username'), refreshBoards);
 
 // Today's date in the UK, as { y, m, d }.
 function ukToday(now = new Date()) {

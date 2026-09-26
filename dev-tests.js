@@ -4144,6 +4144,9 @@ async function runDevTestSuite() {
     const area = document.getElementById('leaderboardArea').innerHTML;
     assertTrue(area.includes('30 challenges completed') && /🥇/.test(area) && (area.match(/🥈/g) || []).length === 2, 'Counts shown; equal counts share a place', area.slice(0, 300));
     assertTrue(document.querySelector('#leaderboardArea [data-lb-row="Ann"]').innerHTML.includes('YOU'), 'Your own row is marked by account, not name');
+    const myPic = resolveAvatarId(equippedCosmetics.avatar);
+    const d = document.createElement('div'); d.innerHTML = avatarHtml(myPic, 30);
+    assertTrue(document.querySelector('#leaderboardArea [data-lb-row="Ann"]').innerHTML.includes(d.innerHTML), 'Your own row shows the picture you have on now, not the one the board last saved');
     assertEqual(document.querySelector('[data-lb-tab="challenges"]').getAttribute('aria-selected'), 'true', 'The tab shows as selected');
     document.querySelector('[data-lb-tab="gauntlet"]').click();
     await new Promise((r) => setTimeout(r, 0));

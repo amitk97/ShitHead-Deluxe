@@ -480,6 +480,19 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   const gone = await Promise.all(['users/gina', 'friends/gina', 'friends/alice/gina', 'friendRequests/bob/gina', 'usernames/gina', 'referralCodes/GINA', 'playerReports/bob/gina', 'pushTokens/gina'].map(p => admin(p)));
   ok(gone.every(v => v === null), 'purge: erased everywhere, including friends\' lists, requests, username and code', gone);
   ok((await admin('boards/challenges/gina')) === null && (await admin('boards/gauntlet/gina')) === null, 'purge: off the boards too');
+
+  // A new picture or name reaches existing board entries (publicProfiles trigger → refreshProfile)
+  const boardsMod = require('../functions/boards');
+  await admin('publicProfiles/dave/avatar', 'PUT', 'avatar-ghost');
+  await boardsMod.refreshProfile('dave');
+  ok((await admin('boards/gauntlet/dave/avatar')) === 'avatar-ghost' && (await admin('boards/challenges/dave/avatar')) === 'avatar-ghost', 'a changed picture shows on every board', [await admin('boards/gauntlet/dave'), await admin('boards/challenges/dave')]);
+  await admin('users/dave/username', 'PUT', 'Davo');
+  await boardsMod.refreshProfile('dave');
+  ok((await admin('boards/gauntlet/dave/name')) === 'Davo', 'a changed name shows on the boards');
+  await admin('publicProfiles/alice/avatar', 'PUT', 'avatar-ghost');
+  const aliceBefore = await admin('boards/gauntlet/alice');
+  await boardsMod.refreshProfile('alice');
+  ok(JSON.stringify(await admin('boards/gauntlet/alice')) === JSON.stringify(aliceBefore), 'refreshing never adds someone to a board');
   ok((await admin('users/alice/username')) !== undefined && (await admin('users/alice')) !== null, 'purge: other accounts untouched');
   await call('alice', { action: 'deleteAccount', op: 'cancel' });
 
