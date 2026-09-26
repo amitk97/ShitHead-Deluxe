@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v155 (ShitHead-Deluxe-137) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v156 (ShitHead-Deluxe-138) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -336,6 +336,18 @@
     .inbox-activity--rank .inbox-activity-accent { color:#c4b5fd; }
     .inbox-activity--shop { background:rgba(131,24,67,.24); border-color:rgba(244,114,182,.65); }
     .inbox-activity--shop .inbox-activity-accent { color:#f9a8d4; }
+    /* Challenges header: Diamonds, completed count, Shop shortcut: one height. */
+    .ch-stat-bar { display:flex; align-items:center; gap:8px; margin-top:8px; }
+    .ch-stat { display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 10px; border-radius:999px; border:1px solid; font-weight:900; font-size:11px; line-height:1; white-space:nowrap; }
+    .ch-stat b { font-variant-numeric:tabular-nums; }
+    .ch-stat small { font-size:8px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; opacity:.85; }
+    .ch-stat--diamonds { color:#67e8f9; border-color:rgba(34,211,238,.35); background:rgba(8,51,68,.45); }
+    .ch-stat--done { color:#6ee7b7; border-color:rgba(52,211,153,.35); background:rgba(6,78,59,.35); }
+    .ch-stat--done.hidden { display:none; }
+    .ch-stat--shop { margin-left:auto; color:#fbbf24; border-color:rgba(245,158,11,.55); background:rgba(69,26,3,.4); cursor:pointer; transition:transform .12s var(--ease-snappy), background .15s; }
+    .ch-stat--shop:hover { background:rgba(120,53,15,.55); }
+    .ch-stat--shop:active { transform:scale(.95); }
+    .ch-stat--shop .pack-icon { width:17px; height:17px; }
     .inbox-activity--referral { background:rgba(6,78,59,.3); border-color:rgba(52,211,153,.6); }
     .inbox-activity--referral .inbox-activity-accent { color:#6ee7b7; }
     /* Referrals: Friends → Invite Friends button, Profile → Invite friends section. */
@@ -5299,20 +5311,17 @@ video {
 
   <div id="challengesModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:85vh; display:flex; flex-direction:column;">
-      <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
-        <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Challenges</span>
-        <div class="flex items-center" style="gap:12px">
-          <div class="flex items-center gap-1 text-cyan-300" title="Diamonds">
-            <span class="text-xs leading-none">&#128142;</span>
-            <span id="challengesModalDiamondCount" class="text-[11px] font-black leading-none tabular-nums">0</span>
-          </div>
-          <div id="challengesModalDoneWrap" class="flex items-center gap-1 text-emerald-300" title="Challenges completed" style="padding:3px 7px;border-radius:999px;border:1px solid rgba(52,211,153,.35);background:rgba(6,78,59,.35)">
-            <span class="text-xs leading-none font-black">&#10003;</span>
-            <span id="challengesModalDoneCount" class="text-[11px] font-black leading-none tabular-nums">0</span>
-            <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-500/80 leading-none">completed</span>
-          </div>
+      <div class="mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Challenges</span>
+          <button id="challengesCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
         </div>
-        <button id="challengesCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
+        <!-- Your totals, then a shortcut to spend them. -->
+        <div class="ch-stat-bar">
+          <div class="ch-stat ch-stat--diamonds" title="Diamonds"><span aria-hidden="true">&#128142;</span><b id="challengesModalDiamondCount">0</b></div>
+          <div id="challengesModalDoneWrap" class="ch-stat ch-stat--done" title="Challenges completed"><span aria-hidden="true">&#10003;</span><b id="challengesModalDoneCount">0</b><small>completed</small></div>
+          <button type="button" id="challengesShopBtn" class="ch-stat ch-stat--shop" aria-label="Open the Shop"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg><small>Shop</small></button>
+        </div>
       </div>
 
       <div class="overflow-y-auto" style="flex:1;">
@@ -16001,6 +16010,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v156: [
+        ['🛒', 'A Shop button at the top of the Challenges page, next to your Diamonds and challenges completed.']
+      ],
       v155: [
         ['🏆', 'The Challenges page shows how many you have completed.']
       ],
@@ -18908,6 +18920,10 @@ video {
     // Same as the Challenges / Shop rows further down the menu.
     document.getElementById('drawerChallengesShortcutBtn').addEventListener('click', () => document.getElementById('menuChallengesBtn').click());
     document.getElementById('drawerShopShortcutBtn').addEventListener('click', () => document.getElementById('menuShopBtn').click());
+    document.getElementById('challengesShopBtn').addEventListener('click', () => {
+      document.getElementById('challengesModal').classList.add('hidden');
+      document.getElementById('menuShopBtn').click();
+    });
     document.getElementById('menuSupportBtn').addEventListener('click', () => { closeHamburgerMenu(); openSupportPanel(); });
 
     // ---- Error Reports (owner only) ------------------------------------
