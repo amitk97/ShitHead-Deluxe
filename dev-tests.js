@@ -4349,6 +4349,33 @@ async function runDevTestSuite() {
     assertEqual(JSON.stringify(saved), JSON.stringify(live), 'functions/catalog.json is out of date');
   });
 
+  await test('Server economy: a call that trips the Firebase Messaging bug is sent directly instead', async () => {
+    const saved = { callable: economyCallable, primed: messagingPrimed, fetch: window.fetch };
+    const sent = [];
+    try {
+      messagingPrimed = Promise.resolve();
+      auth = { currentUser: { getIdToken: async () => 'id-token' } };
+      economyCallable = () => Promise.reject(Object.assign(new Error("Messaging: We are unable to register the default service worker. (messaging/failed-service-worker-registration)."), { code: 'messaging/failed-service-worker-registration' }));
+      window.fetch = async (url, opts) => { sent.push([url, opts]); return { ok: true, json: async () => ({ result: { run: null, doneToday: false } }) }; };
+      const res = await realCallEconomy('gauntlet', { op: 'status' });
+      assertEqual(res, { run: null, doneToday: false }, 'The answer comes back as normal');
+      assertEqual(sent.length, 1, 'Sent once, directly');
+      assertEqual(sent[0][0], ECONOMY_URL, 'To the economy function');
+      assertEqual(sent[0][1].headers.Authorization, 'Bearer id-token', 'As the signed-in player');
+      assertEqual(JSON.parse(sent[0][1].body), { data: { op: 'status', action: 'gauntlet' } }, 'Same request');
+      window.fetch = async () => ({ ok: false, json: async () => ({ error: { message: 'Not enough Diamonds.', status: 'FAILED_PRECONDITION' } }) });
+      let msg = '';
+      await realCallEconomy('buyItem', { itemId: 'x' }).catch(e => { msg = e.message; });
+      assertEqual(msg, 'Not enough Diamonds.', "The server's refusal is shown as it is");
+      sent.length = 0;
+      window.fetch = async (url, opts) => { sent.push(url); return { ok: true, json: async () => ({ result: {} }) }; };
+      economyCallable = () => Promise.reject(new Error('Not enough Diamonds.'));
+      msg = '';
+      await realCallEconomy('buyItem', { itemId: 'x' }).catch(e => { msg = e.message; });
+      assertTrue(sent.length === 0 && msg === 'Not enough Diamonds.', 'Other errors are never re-sent');
+    } finally { economyCallable = saved.callable; messagingPrimed = saved.primed; window.fetch = saved.fetch; }
+  });
+
   await test('Server economy: a challenge is claimed through the server once, and its reward recorded', async () => {
     const savedEconomy = { diamonds: challengeEconomy.diamonds, completedChallenges: challengeEconomy.completedChallenges };
     try {
@@ -5250,6 +5277,22 @@ async function runDevTestSuite() {
         tones[diff] = getComputedStyle(label).color;
       });
       assertEqual(new Set(Object.values(tones)).size, 4, 'Each difficulty has its own colour');
+    } finally { gauntletRestore(saved); }
+  });
+
+  await test('Gauntlet: tapping the picture or frame name previews it', () => {
+    const saved = gauntletSaved();
+    try {
+      showGauntlet({ kind: 'welcome', status: { run: null, doneToday: false, completions: 0, firstDone: false } });
+      const body = document.getElementById('gauntletModalBody');
+      body.querySelector('[data-gauntlet-preview="picture"]').click();
+      const box = document.getElementById('gauntletPreview');
+      assertTrue(!box.classList.contains('hidden') && !!box.querySelector('.avatar-tile, svg'), 'The picture shows');
+      body.querySelector('[data-gauntlet-preview="frame"]').click();
+      assertEqual(box.querySelectorAll('.gauntlet-frame-card').length, 3, 'The frame shows on three cards');
+      body.querySelector('[data-gauntlet-preview="frame"]').click();
+      assertTrue(box.classList.contains('hidden'), 'Tapping again closes it');
+      assertTrue(document.getElementById('gauntletModal').classList.contains('hidden') === false, 'The pop-up stays open');
     } finally { gauntletRestore(saved); }
   });
 

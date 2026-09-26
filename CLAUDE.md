@@ -28,6 +28,10 @@ Single-file web game (`index.html`) on Firebase Hosting + Realtime Database (pro
 - Tests: the dev suite fakes the server (`fakeEconomy`; by default `callEconomy` rejects, like no signal). Server + rules: start the emulators (`npx firebase-tools emulators:start --only auth,database,functions --project shithead-pro`, ports in `firebase.json`) and run `NODE_PATH=$SH_VIDEO_DEPS/node_modules node tools/economy-emulator-test.js`. Locally the Functions emulator uses database namespace `shithead-pro`.
 - Deploy order: pushing `functions/**` runs the "Deploy notification functions" workflow (it deploys `economy` too). Publish new rules only AFTER that workflow is green, or rewards/purchases fail until it is. Offline, rewards and purchases aren't available (bot games still play).
 
+## Firebase Functions + Messaging pitfall (the "Messaging: unable to register the default service worker" error)
+
+- With notification permission granted, the Functions SDK (10.12.0) asks Messaging for a token on EVERY callable and doesn't await it inside its try, so a failed lookup fails the whole call. Without a registration, Messaging looks for `/firebase-messaging-sw.js` (404 here). `callEconomy` therefore first runs `primeMessagingForFunctions` (one `getToken` with our VAPID key and `sw.js`'s registration, which Messaging then keeps) and, if a call still fails with a messaging/service-worker error, resends it with `callEconomyDirect` (plain POST `{data}` + ID token to `ECONOMY_URL`; the function doesn't enforce App Check). Never add a `firebase-messaging-sw.js`. Test: "a call that trips the Firebase Messaging bug".
+
 ## Firebase transaction pitfall (the cause of "has Diamonds but can't buy")
 
 `ref.transaction(update)` first calls `update` with the **local cache**, which is `null` when nothing keeps that path live-synced. Returning `undefined` aborts immediately without ever reading the server. So in any transaction that can abort:

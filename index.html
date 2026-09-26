@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v148 (ShitHead-Deluxe-130) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v149 (ShitHead-Deluxe-131) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1648,6 +1648,19 @@
     .gauntlet-alt { width:100%; padding:.4rem; font-size:.65rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#94a3b8; }
     .gauntlet-alt:hover { color:#e2e8f0; }
     body.reduce-motion .gh-heart.gh-lost { animation:none; }
+    .gauntlet-item-link { font:inherit; font-weight:800; color:#fbbf24; text-decoration:underline dotted; text-underline-offset:3px; cursor:pointer; padding:0; }
+    .gauntlet-item-link[aria-expanded="true"] { color:#fde68a; text-decoration-style:solid; }
+    .gauntlet-preview { display:flex; flex-direction:column; align-items:center; gap:.3rem; margin-top:.6rem; padding:.7rem .5rem .6rem;
+      border-radius:.7rem; background:radial-gradient(ellipse at 50% 30%, rgba(245,158,11,.18), transparent 70%), #020617; border:1px solid rgba(245,158,11,.35); }
+    .gauntlet-preview-name { font-weight:900; font-size:.8rem; color:#fde68a; letter-spacing:.04em; }
+    .gauntlet-preview-note { font-size:.62rem; color:#94a3b8; }
+    .gauntlet-frame-fan { display:flex; gap:.5rem; padding:.3rem 0 .2rem; }
+    .gauntlet-frame-card { width:46px; height:66px; border-radius:7px; border:2px solid #f59e0b; background:linear-gradient(160deg,#1e293b,#0f172a);
+      display:flex; flex-direction:column; align-items:flex-start; padding:4px 6px; font-weight:900; line-height:1; }
+    .gauntlet-frame-card b { font-size:15px; }
+    .gauntlet-frame-card i { font-style:normal; font-size:13px; margin-top:2px; }
+    .gauntlet-frame-fan .gauntlet-frame-card:nth-child(1) { transform:rotate(-8deg) translateY(4px); }
+    .gauntlet-frame-fan .gauntlet-frame-card:nth-child(3) { transform:rotate(8deg) translateY(4px); }
 </style>
 
   
@@ -6877,10 +6890,48 @@ video {
     // so every change goes through here. Resolves with the action's result;
     // rejects with an Error whose message is safe to show the player.
     let economyCallable = null;
+    // Firebase's Functions SDK asks Messaging for a push token on every call
+    // once notifications are allowed. Without our service worker it looks
+    // for /firebase-messaging-sw.js (404 here) and, due to an unawaited
+    // promise in the SDK, the whole call then fails with "Messaging: We are
+    // unable to register the default service worker…". So Messaging is
+    // first pointed at sw.js (it keeps that registration for later
+    // lookups), and a call that still fails that way is sent directly.
+    let messagingPrimed = null;
+    function primeMessagingForFunctions() {
+      if (messagingPrimed) return messagingPrimed;
+      const within = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
+      messagingPrimed = (async () => {
+        try {
+          if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+          if (typeof firebase === 'undefined' || !firebase.messaging || !('serviceWorker' in navigator) || typeof FCM_VAPID_KEY === 'undefined') return;
+          const reg = (typeof appServiceWorker !== 'undefined' && appServiceWorker) || await within(navigator.serviceWorker.getRegistration('/'), 2500);
+          if (!reg) return;
+          await within(firebase.messaging().getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg }).catch(() => null), 5000);
+        } catch (e) { /* push is optional */ }
+      })();
+      return messagingPrimed;
+    }
+    const ECONOMY_URL = 'https://europe-west1-shithead-pro.cloudfunctions.net/economy';
+    async function callEconomyDirect(payload) {
+      const user = typeof auth !== 'undefined' && auth && auth.currentUser;
+      const headers = { 'Content-Type': 'application/json' };
+      if (user) headers.Authorization = `Bearer ${await user.getIdToken()}`;
+      const res = await fetch(ECONOMY_URL, { method: 'POST', headers, body: JSON.stringify({ data: payload }) });
+      const body = await res.json().catch(() => ({}));
+      if (body && body.error) throw new Error(body.error.message || 'Something went wrong. Please try again.');
+      if (!res.ok || !body || !('result' in body)) throw new Error('Something went wrong. Please try again.');
+      return body.result;
+    }
+    const isMessagingSdkError = (error) => /messaging\/|service ?worker/i.test(`${error && error.code} ${error && error.message}`);
     function callEconomy(action, data = {}) {
       if (!firebaseAvailable || typeof firebase === 'undefined' || !firebase.functions) return Promise.reject(new Error('You need a connection for that.'));
       if (!economyCallable) economyCallable = firebase.app().functions('europe-west1').httpsCallable('economy', { timeout: 30000 });
-      return economyCallable({ ...data, action }).then(res => res.data).catch((error) => {
+      const payload = { ...data, action };
+      return primeMessagingForFunctions()
+        .then(() => economyCallable(payload).then(res => res.data))
+        .catch((error) => (isMessagingSdkError(error) ? callEconomyDirect(payload) : Promise.reject(error)))
+        .catch((error) => {
         const offline = typeof isOffline === 'function' && isOffline();
         throw new Error(offline ? 'You need a connection for that.' : (error && error.message && !/^internal$/i.test(error.message) ? error.message : 'Something went wrong. Please try again.'));
       });
@@ -11159,7 +11210,33 @@ video {
     function gauntletRewardHtml(st) {
       if (st.local) return `<div class="gauntlet-reward">${currentUser ? 'Offline: this run is just for fun.' : '<b>Sign in</b> to earn Diamonds and the Gauntlet rewards.'}</div>`;
       if (st.firstDone) return `<div class="gauntlet-reward">Beat it today: <b>${GAUNTLET.dailyReward} 💎</b> (once a day)</div>`;
-      return `<div class="gauntlet-reward">First time you beat it: <b>${GAUNTLET.firstReward} 💎</b> + the <b>${GAUNTLET.pictureName}</b> picture + the <b>${GAUNTLET.frameName}</b> frame.<br>Then <b>${GAUNTLET.dailyReward} 💎</b> every day you beat it again.</div>`;
+      return `<div class="gauntlet-reward">First time you beat it: <b>${GAUNTLET.firstReward} 💎</b> + the ${gauntletItemLink('picture')} picture + the ${gauntletItemLink('frame')} frame.<br>Then <b>${GAUNTLET.dailyReward} 💎</b> every day you beat it again.<div id="gauntletPreview" class="gauntlet-preview hidden" aria-live="polite"></div></div>`;
+    }
+    // Tap a reward's name to see it: the picture large, or the frame on a
+    // few cards the way it looks at the table.
+    function gauntletItemLink(kind) {
+      const name = kind === 'picture' ? GAUNTLET.pictureName : GAUNTLET.frameName;
+      return `<button type="button" class="gauntlet-item-link" data-gauntlet-preview="${kind}" aria-expanded="false">${name}</button>`;
+    }
+    function gauntletPreviewHtml(kind) {
+      if (kind === 'picture') {
+        return `<div class="gauntlet-preview-art">${avatarHtml(GAUNTLET.picture, 96)}</div><div class="gauntlet-preview-name">${GAUNTLET.pictureName}</div><div class="gauntlet-preview-note">Earn-only profile picture</div>`;
+      }
+      const style = getCosmeticFrameStyle(GAUNTLET.frame).replace(/!important/g, '');
+      const card = (rank, suit, red) => `<span class="gauntlet-frame-card" style="${style}"><b style="color:${red ? '#f87171' : '#e2e8f0'}">${rank}</b><i style="color:${red ? '#f87171' : '#e2e8f0'}">${suit}</i></span>`;
+      return `<div class="gauntlet-preview-art gauntlet-frame-fan">${card('K', '♥', true)}${card('A', '♠')}${card('10', '♦', true)}</div><div class="gauntlet-preview-name">${GAUNTLET.frameName}</div><div class="gauntlet-preview-note">Earn-only card frame</div>`;
+    }
+    function toggleGauntletPreview(btn) {
+      const box = document.getElementById('gauntletPreview');
+      if (!box) return;
+      const kind = btn.dataset.gauntletPreview;
+      const open = box.dataset.kind === kind && !box.classList.contains('hidden');
+      document.querySelectorAll('[data-gauntlet-preview]').forEach(b => b.setAttribute('aria-expanded', String(!open && b === btn)));
+      if (open) { box.classList.add('hidden'); box.dataset.kind = ''; return; }
+      box.dataset.kind = kind;
+      box.innerHTML = gauntletPreviewHtml(kind);
+      box.classList.remove('hidden');
+      if (typeof springIn === 'function' && !reduceMotion) springIn(box);
     }
     function gauntletItemsHtml(items) {
       if (!items || !items.length) return '';
@@ -11265,6 +11342,8 @@ video {
       }
     }
     document.getElementById('gauntletModalBody').addEventListener('click', (e) => {
+      const preview = e.target.closest('[data-gauntlet-preview]');
+      if (preview) { toggleGauntletPreview(preview); return; }
       const btn = e.target.closest('[data-gauntlet-action]');
       if (btn && !btn.disabled) gauntletAction(btn.dataset.gauntletAction);
     });
@@ -15840,6 +15919,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v149: [
+        ['🛠️', 'Fixed an error about a "service worker" that could stop purchases, rewards and the Gauntlet on phones with notifications turned on.'],
+        ['👀', 'In the Gauntlet, tap Gauntlet Champion or Gauntlet Gold to preview the prizes.']
+      ],
       v148: [
         ['💾', 'Closed the app mid-game against bots? It now really comes back exactly where you left it (it could lose the game before).'],
         ['⚔️', 'The Gauntlet remembers your run: close the app between games and it reopens on the next bot. A result sent with no signal is saved and sent when you are back online.'],
