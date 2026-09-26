@@ -5032,6 +5032,181 @@ async function runDevTestSuite() {
     }
   });
 
+  // ---- Gauntlet ----
+  const gauntletSaved = () => ({ user: currentUser, usesServer: gauntletUsesServer, shuffle: runShuffleIntro, diamonds: challengeEconomy.diamonds,
+    owned: cosmeticPurchaseState, g: state.gauntlet, mp: state.isMultiplayer, local: localStorage.getItem(GAUNTLET_LOCAL_KEY) });
+  const gauntletRestore = (saved) => {
+    currentUser = saved.user; gauntletUsesServer = saved.usesServer; runShuffleIntro = saved.shuffle;
+    challengeEconomy.diamonds = saved.diamonds; cosmeticPurchaseState = saved.owned; state.gauntlet = saved.g; state.isMultiplayer = saved.mp;
+    if (saved.local === null) localStorage.removeItem(GAUNTLET_LOCAL_KEY); else localStorage.setItem(GAUNTLET_LOCAL_KEY, saved.local);
+    gauntletPending = null; gauntletLastView = null; closeGauntlet();
+    document.getElementById('gauntletHud').classList.add('hidden');
+  };
+  const endGauntletGame = (won) => {
+    const [me, bot] = state.players;
+    me.hasFinished = bot.hasFinished = true;
+    me.finishRank = won ? 1 : 2; bot.finishRank = won ? 2 : 1;
+    state.phase = 'FINISHED';
+  };
+
+  await test('Gauntlet: rounds are Easy, Easy, Medium, Hard, Boss with 3 lives; each game is one bot at that level', () => {
+    const saved = gauntletSaved();
+    try {
+      assertEqual(GAUNTLET.rounds, ['easy', 'easy', 'medium', 'hard', 'boss'], 'The five rounds');
+      assertEqual([GAUNTLET.lives, GAUNTLET.firstReward, GAUNTLET.dailyReward], [3, 200, 50], 'Lives and rewards');
+      freshState({ isMultiplayer: false, drawPile: [] });
+      state.players = [makePlayer({ id: 'p_user', isBot: false })];
+      startSinglePlayerGame(1, null, { gauntlet: { runId: 'g1', round: 3, lives: 2 } });
+      const bots = state.players.filter(p => p.isBot);
+      assertEqual(bots.length, 1, 'One bot');
+      assertEqual(bots[0].difficulty, 'hard', 'Round 4 is the Hard bot');
+      assertEqual(state.gauntlet.bot.name, bots[0].name, 'The bot is remembered for a retry');
+      render();
+      const hud = document.getElementById('gauntletHud');
+      assertTrue(!hud.classList.contains('hidden'), 'Hearts show on the table');
+      assertEqual(hud.querySelectorAll('.gh-heart').length, 3, 'Three hearts');
+      assertEqual(hud.querySelectorAll('.gh-heart.is-empty').length, 1, 'A lost life is a hollow heart');
+      assertTrue(/4\/5/.test(hud.textContent), 'The round is shown');
+      const r = hud.getBoundingClientRect(), t = document.getElementById('gameTable').getBoundingClientRect();
+      assertTrue(r.left - t.left < 12 && r.top - t.top < 14, 'Hearts sit in the top-left corner of the table');
+      startSinglePlayerGame(1);
+      assertTrue(state.gauntlet === null && !state.players[1].difficulty, 'A normal game is not a Gauntlet game');
+      render();
+      assertTrue(hud.classList.contains('hidden'), 'No hearts in a normal game');
+    } finally { gauntletRestore(saved); }
+  });
+
+  await test('Gauntlet: a win is reported to the Gauntlet only (never matchWin, so no difficulty unlock progress)', async () => {
+    const saved = gauntletSaved();
+    try {
+      currentUser = { uid: 'g-uid' };
+      gauntletUsesServer = () => true;
+      freshState({ isMultiplayer: false, drawPile: [] });
+      state.players = [makePlayer({ id: 'p_user', isBot: false })];
+      startSinglePlayerGame(1, null, { gauntlet: { runId: 'g1', round: 0, lives: 3 } });
+      const calls = fakeEconomy({ gauntlet: (d) => ({ run: { id: 'g1', round: 1, lives: 3, playing: false }, doneToday: false, completions: 0, firstDone: false, over: false, completed: false, diamondsAwarded: 0, first: false, newItems: [], diamonds: 5 }) });
+      const me = state.players[0];
+      me.hand = []; me.faceUp = []; me.faceDown = [];
+      checkPlayerFinished(me);
+      endGauntletGame(true);
+      await gauntletMatchEnded();
+      assertEqual(calls.map(c => c[0]), ['gauntlet'], 'Only the Gauntlet hears about the win');
+      assertEqual(calls[0][1], { op: 'result', runId: 'g1', won: true }, 'Run id and the result; never an amount');
+      assertEqual([state.gauntlet.round, state.gauntlet.lives], [1, 3], 'On to round 2');
+      assertEqual(gauntletLastView.kind, 'won', 'The Continue screen');
+      assertTrue(/CONTINUE GAUNTLET/.test(document.getElementById('gauntletModalBody').textContent), 'Continue Gauntlet is offered');
+      await gauntletMatchEnded();
+      assertEqual(calls.length, 1, 'Reported once per match');
+    } finally { gauntletRestore(saved); }
+  });
+
+  await test('Gauntlet: a loss costs a life and TRY AGAIN brings back the same bot', async () => {
+    const saved = gauntletSaved();
+    try {
+      currentUser = { uid: 'g-uid' };
+      gauntletUsesServer = () => true;
+      runShuffleIntro = (fn) => fn();
+      freshState({ isMultiplayer: false, drawPile: [] });
+      state.players = [makePlayer({ id: 'p_user', isBot: false })];
+      startSinglePlayerGame(1, null, { gauntlet: { runId: 'g2', round: 2, lives: 3 } });
+      const bot = { name: state.players[1].name, avatar: state.players[1].avatar };
+      const calls = fakeEconomy({ gauntlet: (d) => d.op === 'result'
+        ? { run: { id: 'g2', round: 2, lives: 2, playing: false }, doneToday: false, completions: 0, firstDone: false }
+        : { run: { id: 'g2', round: 2, lives: 2, playing: true }, doneToday: false, completions: 0, firstDone: false } });
+      endGauntletGame(false);
+      await gauntletMatchEnded();
+      assertEqual(gauntletLastView.kind, 'lost', 'The lost-a-life screen');
+      assertTrue(/TRY AGAIN/.test(document.getElementById('gauntletModalBody').textContent), 'Try again is offered');
+      await gauntletAction('begin');
+      assertEqual(calls[1], ['gauntlet', { op: 'begin', runId: 'g2' }], 'The next game is begun on the server');
+      assertEqual(state.phase, 'SWAP', 'A new game is dealt');
+      assertEqual({ name: state.players[1].name, avatar: state.players[1].avatar }, bot, 'The same bot, name and picture');
+      assertEqual(state.players[1].difficulty, 'medium', 'At the same level');
+      assertEqual(state.gauntlet.lives, 2, 'With one life fewer');
+    } finally { gauntletRestore(saved); }
+  });
+
+  await test('Gauntlet: beating the Boss pays from the server and unlocks the picture and frame', async () => {
+    const saved = gauntletSaved();
+    try {
+      currentUser = { uid: 'g-uid' };
+      gauntletUsesServer = () => true;
+      cosmeticPurchaseState = {};
+      freshState({ isMultiplayer: false, drawPile: [] });
+      state.players = [makePlayer({ id: 'p_user', isBot: false })];
+      startSinglePlayerGame(1, null, { gauntlet: { runId: 'g3', round: 4, lives: 1 } });
+      assertEqual(state.players[1].difficulty, 'boss', 'The last round is the Boss');
+      fakeEconomy({ gauntlet: () => ({ run: null, doneToday: true, completions: 1, firstDone: true, completed: true, diamondsAwarded: 200, first: true,
+        newItems: [{ id: 'avatar-gauntlet', name: 'Gauntlet Champion' }, { id: 'frame-gauntlet', name: 'Gauntlet Gold' }], diamonds: 260 }) });
+      endGauntletGame(true);
+      await gauntletMatchEnded();
+      assertEqual(gauntletLastView.kind, 'done', 'The Gauntlet beaten screen');
+      assertEqual(challengeEconomy.diamonds, 260, 'Balance from the server');
+      assertTrue(!!cosmeticPurchaseState['avatar-gauntlet'] && !!cosmeticPurchaseState['frame-gauntlet'], 'Picture and frame owned');
+      const body = document.getElementById('gauntletModalBody').textContent;
+      assertTrue(/\+200/.test(body) && /Gauntlet Champion/.test(body) && /Gauntlet Gold/.test(body), 'The reward and both items are shown');
+      assertTrue(isSupportedCosmetic('frame', 'frame-gauntlet') && isSupportedCosmetic('avatar', 'avatar-gauntlet'), 'Both can be equipped');
+    } finally { gauntletRestore(saved); }
+  });
+
+  await test('Gauntlet: the frame and picture are earn-only (never in the Shop, never giftable)', () => {
+    assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.id === 'frame-gauntlet' || i.id === 'avatar-gauntlet'), 'Not sold');
+    const cat = serverEconomyCatalog();
+    assertTrue(!cat.items['frame-gauntlet'] && !cat.items['avatar-gauntlet'], 'The server has no price for them');
+    assertEqual(cat.earned['avatar-gauntlet'].type, 'gauntlet', 'The picture is granted by the Gauntlet itself');
+    assertEqual(cat.gauntlet.frame, 'frame-gauntlet', 'The server knows which frame to grant');
+    assertTrue(!!getCosmeticFrameStyle('frame-gauntlet') && !!getOpponentCosmeticFrameStyle('frame-gauntlet'), 'The frame is drawn on your cards and opponents see it');
+  });
+
+  await test('Gauntlet: signed out, a run is kept on this device (no rewards); 3 losses end it; leaving a game costs a life', async () => {
+    const saved = gauntletSaved();
+    try {
+      currentUser = null;
+      localStorage.removeItem(GAUNTLET_LOCAL_KEY);
+      let r = await gauntletCall('start');
+      assertTrue(r.local && r.run.lives === 3 && r.run.playing, 'A local run starts');
+      const id = r.run.id;
+      r = await gauntletCall('result', { runId: id, won: true });
+      assertEqual(r.run.round, 1, 'A win moves on');
+      await gauntletCall('begin', { runId: id });
+      r = await gauntletCall('begin', { runId: id });
+      assertTrue(r.forfeited && r.run.lives === 2, 'A game left half-way is a loss');
+      r = await gauntletCall('result', { runId: id, won: false });
+      assertEqual(r.run.lives, 1, 'Another loss');
+      await gauntletCall('begin', { runId: id });
+      r = await gauntletCall('result', { runId: id, won: false });
+      assertTrue(r.over && !r.run, 'Out of lives: the run is over');
+      assertTrue(!r.diamondsAwarded, 'No rewards offline');
+    } finally { gauntletRestore(saved); }
+  });
+
+  await test('Gauntlet: lobby button sits under the bot count with the ⓘ on its right; the welcome screen explains it', async () => {
+    const saved = gauntletSaved();
+    const lobby = document.getElementById('lobbyScreen'), wasHidden = lobby.classList.contains('hidden');
+    const single = document.getElementById('singleOptions'), singleHidden = single.classList.contains('hidden');
+    try {
+      lobby.classList.remove('hidden'); single.classList.remove('hidden');
+      const btn = document.getElementById('gauntletBtn').getBoundingClientRect();
+      const info = document.getElementById('gauntletInfo').getBoundingClientRect();
+      const counts = [...document.querySelectorAll('.bot-count-btn')].map(b => b.getBoundingClientRect());
+      assertTrue(btn.top >= counts[0].bottom, 'Under the bot count buttons');
+      assertTrue(Math.abs(btn.left - counts[0].left) < 1, 'Lined up with them on the left');
+      assertTrue(info.left >= btn.right && info.right <= counts[2].right + 1, 'ⓘ on the right, within the column');
+      assertTrue(Math.abs((info.top + info.height / 2) - (btn.top + btn.height / 2)) < 1.5, 'ⓘ level with the button');
+      assertTrue(/5 bots in a row/.test(document.getElementById('gauntletTip').textContent), 'The tip explains the Gauntlet');
+      currentUser = null;
+      localStorage.removeItem(GAUNTLET_LOCAL_KEY);
+      openGauntletWelcome();
+      await new Promise(r => setTimeout(r, 0));
+      const body = document.getElementById('gauntletModalBody').textContent;
+      assertTrue(/Welcome to the Gauntlet/i.test(body) && /ENTER THE GAUNTLET/.test(body), 'Welcome screen with its start button');
+      assertTrue(/don't count toward unlocking/.test(body), 'Says it does not count toward unlocks');
+    } finally {
+      if (wasHidden) lobby.classList.add('hidden'); if (singleHidden) single.classList.add('hidden');
+      gauntletRestore(saved);
+    }
+  });
+
   await test('Hand Sort: rank by default; power order is 4,5,6,7,8,9,J,Q,K,A,10,2,3,Joker', () => {
     const saved = handSortByPower;
     try {

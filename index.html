@@ -11042,7 +11042,7 @@ video {
     let gauntletHudLives = null;      // lives last drawn (for the heart-lost pop)
 
     const gauntletRoundLabel = (round) => GAUNTLET_LABELS[GAUNTLET.rounds[round]] || 'Boss';
-    const gauntletUsesServer = () => !!currentUser && !isOffline();
+    function gauntletUsesServer() { return !!currentUser && !isOffline(); }
     function gauntletLocalRead() { try { return JSON.parse(localStorage.getItem(GAUNTLET_LOCAL_KEY) || '{}') || {}; } catch (e) { return {}; } }
     function gauntletLocalWrite(g) { try { localStorage.setItem(GAUNTLET_LOCAL_KEY, JSON.stringify(g)); } catch (e) {} }
     // This device's twin of the server action (no rewards, no daily limit).
