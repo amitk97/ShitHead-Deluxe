@@ -5386,17 +5386,19 @@ async function runDevTestSuite() {
     document.getElementById('referralWelcomeModal').classList.add('hidden');
   });
 
-  await test('Profile layout: picture spans the name block, rank + record on one line, Account buttons one size', () => {
+  await test('Profile layout: picture spans the name block, rank + rating + record in one pill, Account buttons one size', () => {
     const modal = document.getElementById('profileModal'), wasHidden = modal.classList.contains('hidden');
     try {
       modal.classList.remove('hidden');
       document.getElementById('profileUsernameText').textContent = 'Amitk';
-      document.getElementById('profileRatingText').innerHTML = `${renderRatingBadge(442)}<span class="profile-wl">3W-7L</span>`;
+      document.getElementById('profileRatingText').innerHTML = renderRatingBadge(442, '3W-7L');
       const st = document.getElementById('profileStreakText'); st.textContent = '🔥 3-day login streak'; st.classList.remove('hidden');
       ['profileEmailRow', 'profileChangePasswordRow'].forEach(id => document.getElementById(id).classList.remove('hidden'));
       const pill = document.querySelector('#profileRatingText > span:first-child').getBoundingClientRect();
       const wl = document.querySelector('#profileRatingText .profile-wl').getBoundingClientRect();
-      assertTrue(Math.abs((pill.top + pill.height / 2) - (wl.top + wl.height / 2)) < 2 && wl.left > pill.right, 'W-L sits beside the rank pill, centred on it');
+      const pillEl = document.querySelector('#profileRatingText > span:first-child');
+      assertTrue(pillEl.contains(document.querySelector('#profileRatingText .profile-wl')) && /Novice · 442 · 3W-7L/.test(pillEl.textContent), 'W-L is inside the rank pill');
+      assertEqual(getComputedStyle(document.querySelector('#profileRatingText .profile-wl')).fontSize, getComputedStyle(pillEl).fontSize, 'Same size as the rank and rating');
       const name = document.getElementById('profileUsernameText').getBoundingClientRect();
       assertTrue(Math.abs(name.left - pill.left) < 1.5, 'Name and pill share a left edge');
       const tile = document.querySelector('#profileAvatarBtn .avatar-tile, #profileAvatarBtn [data-own-avatar] > *').getBoundingClientRect();

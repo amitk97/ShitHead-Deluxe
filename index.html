@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v153 (ShitHead-Deluxe-135) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v154 (ShitHead-Deluxe-136) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1366,7 +1366,7 @@
     #profileHeaderCard > .min-w-0 { display:flex; flex-direction:column; gap:5px; padding-top:1px; }
     .profile-rating-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 !important; }
     .profile-rating-row > * { margin:0 !important; }
-    .profile-wl { font-size:11px; font-weight:800; color:#94a3b8; white-space:nowrap; }
+    .profile-wl { white-space:nowrap; }
     #profileStreakText { margin-top:0; }
     /* The Account buttons (Sign out / Change / Owned / Shop) are one size. */
     #profileAccountActionBtn, #profileChangePasswordBtn, #profileChangeUsernameBtn {
@@ -16001,6 +16001,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v154: [
+        ['🏷️', 'Your Profile shows your rank, rating and win/loss record together in one pill.']
+      ],
       v153: [
         ['✨', 'Tidier Profile: a bigger picture lined up with your name, your rank and record on one line, matching buttons, and showcase cards that sit neatly inside your frame.']
       ],
@@ -19282,7 +19285,7 @@ video {
         ratingEl.textContent = '';
         getOrCreateUserProfile(currentUser.uid).then((profile) => {
           usernameEl.textContent = profile.username || 'Player';
-          ratingEl.innerHTML = `${renderRatingBadge(profile.rating)}<span class="profile-wl">${profile.wins || 0}W-${profile.losses || 0}L</span>`;
+          ratingEl.innerHTML = renderRatingBadge(profile.rating, `${profile.wins || 0}W-${profile.losses || 0}L`);
         }).catch(() => { usernameEl.textContent = 'Player'; ratingEl.textContent = 'Could not load rating.'; });
         db.ref(`shopPurchases/${currentUser.uid}/nameChangeToken`).once('value')
           .then((snap) => { nameChangeTokenState = snap.val(); renderProfileUsernameControls(); })
@@ -21117,9 +21120,10 @@ video {
       if (r >= 500) return { name: 'Bronze', cls: 'text-orange-300', style: 'border-color:rgba(249,115,22,.4);background-color:rgba(67,20,7,.4);' };
       return { name: 'Novice', cls: 'text-slate-400 border-slate-600 bg-slate-900/60', style: '' };
     }
-    function renderRatingBadge(rating) {
+    // `record` (e.g. "3W-7L") joins the same pill on the Profile page.
+    function renderRatingBadge(rating, record = '') {
       const tier = getRankTier(rating);
-      return `<span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border font-black text-xs w-fit ${tier.cls}" style="${tier.style}">${tier.name} \u00b7 ${Math.round(rating)}</span>`;
+      return `<span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border font-black text-xs w-fit ${tier.cls}" style="${tier.style}">${tier.name} \u00b7 ${Math.round(rating)}${record ? ` \u00b7 <span class="profile-wl">${record}</span>` : ''}</span>`;
     }
 
     function refreshRankedUI() {
