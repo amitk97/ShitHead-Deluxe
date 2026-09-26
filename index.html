@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v152 (ShitHead-Deluxe-134) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v153 (ShitHead-Deluxe-135) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -947,6 +947,8 @@
     /* Face-up cards drawn like the game's own cards (dark face, coloured rank), with the frame on top. */
     .mini-table-card.face, .mini-table-card.pile-card { background:linear-gradient(160deg,#1e293b,#0f172a); border:1.5px solid #475569; color:#f87171; font-size:9px; font-weight:900; line-height:1; padding:2px; }
     .mini-table-card.face { right:14%; }
+    /* Keep the rank clear of the frame drawn inside the card edge. */
+    .pp-showcase .mini-table-card.face, .pp-showcase .mini-table-card.pile-card { padding:5px 0 0 5px; font-size:8px; line-height:1.05; overflow:hidden; }
     .mini-table-card.pile-card { left:50%; transform:translate(-50%,-50%) rotate(-6deg); color:#e2e8f0; }
     .mini-table.is-large .mini-table-card.face, .mini-table.is-large .mini-table-card.pile-card { font-size:13px; padding:4px; }
     .mini-table-name { position:absolute; left:0; right:0; bottom:4px; text-align:center; color:#fff; font-size:7px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; text-shadow:0 1px 3px #000,0 0 6px #000; }
@@ -1358,7 +1360,18 @@
     .cosmetic-tile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
     .cosmetic-tile { min-height:104px; }
     .cosmetic-tile .avatar-option-art { min-height:48px; display:flex; align-items:center; justify-content:center; }
-    .profile-name-row { display:flex; align-items:center; gap:6px; min-width:0; }
+    .profile-name-row { display:flex; align-items:center; gap:6px; min-width:0; min-height:24px; }
+    /* Username, rank pill + W-L, and streak share one left edge; the picture
+       spans exactly that block (top-aligned; its "Tap to change" sits below). */
+    #profileHeaderCard > .min-w-0 { display:flex; flex-direction:column; gap:5px; padding-top:1px; }
+    .profile-rating-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 !important; }
+    .profile-rating-row > * { margin:0 !important; }
+    .profile-wl { font-size:11px; font-weight:800; color:#94a3b8; white-space:nowrap; }
+    #profileStreakText { margin-top:0; }
+    /* The Account buttons (Sign out / Change / Owned / Shop) are one size. */
+    #profileAccountActionBtn, #profileChangePasswordBtn, #profileChangeUsernameBtn {
+      width:84px; height:30px; padding:0 !important; display:inline-flex; align-items:center; justify-content:center;
+      font-size:10px !important; font-weight:900; letter-spacing:.06em; border-radius:9px !important; flex:none; }
     .profile-edit-name { flex:none; width:22px; height:22px; border-radius:7px; border:1px solid #f59e0b; color:#fbbf24; font-size:11px; line-height:1; display:flex; align-items:center; justify-content:center; }
     .profile-edit-name:hover { background:#f59e0b; color:#020617; }
     .profile-name-editor { display:flex; gap:5px; align-items:center; }
@@ -5098,13 +5111,13 @@ video {
       <div class="overflow-y-auto space-y-3" style="flex:1;">
         <div>
           <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Public Profile</span>
-          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center gap-2">
-            <button id="profileAvatarBtn" type="button" class="profile-avatar-btn" aria-label="Change profile picture"><span class="inline-flex items-center justify-center" data-own-avatar="46"></span><span class="profile-avatar-hint">Tap to change</span></button>
+          <div id="profileHeaderCard" class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-start gap-3">
+            <button id="profileAvatarBtn" type="button" class="profile-avatar-btn" aria-label="Change profile picture"><span class="inline-flex items-center justify-center" data-own-avatar="68"></span><span class="profile-avatar-hint">Tap to change</span></button>
             <div class="min-w-0">
               <span class="profile-name-row"><span id="profileUsernameText" class="block text-sm font-black text-white truncate">Not signed in</span><button id="profileEditNameBtn" type="button" class="profile-edit-name hidden" aria-label="Change username">✎</button></span>
               <span id="profileNameEditor" class="hidden profile-name-editor"><input id="profileNameInput" type="text" maxlength="12" autocomplete="off" placeholder="New username" /><button id="profileNameSaveBtn" type="button" class="profile-name-save">Save</button><button id="profileNameCancelBtn" type="button" class="profile-name-cancel" aria-label="Cancel">✕</button></span>
               <span id="profileNameStatus" class="hidden profile-name-status"></span>
-              <span id="profileRatingText" class="block text-[10px] text-slate-400 mt-0.5">&nbsp;</span>
+              <span id="profileRatingText" class="profile-rating-row text-[10px] text-slate-400">&nbsp;</span>
               <span id="profileStreakText" class="profile-streak hidden"></span>
             </div>
           </div>
@@ -15988,6 +16001,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v153: [
+        ['✨', 'Tidier Profile: a bigger picture lined up with your name, your rank and record on one line, matching buttons, and showcase cards that sit neatly inside your frame.']
+      ],
       v152: [
         ['🎁', 'Invite links now work for brand-new players straight after sign-up, and the "You joined" message waits until you have picked your username.']
       ],
@@ -19266,7 +19282,7 @@ video {
         ratingEl.textContent = '';
         getOrCreateUserProfile(currentUser.uid).then((profile) => {
           usernameEl.textContent = profile.username || 'Player';
-          ratingEl.innerHTML = `${renderRatingBadge(profile.rating)} <span class="text-slate-500">${profile.wins || 0}W-${profile.losses || 0}L</span>`;
+          ratingEl.innerHTML = `${renderRatingBadge(profile.rating)}<span class="profile-wl">${profile.wins || 0}W-${profile.losses || 0}L</span>`;
         }).catch(() => { usernameEl.textContent = 'Player'; ratingEl.textContent = 'Could not load rating.'; });
         db.ref(`shopPurchases/${currentUser.uid}/nameChangeToken`).once('value')
           .then((snap) => { nameChangeTokenState = snap.val(); renderProfileUsernameControls(); })

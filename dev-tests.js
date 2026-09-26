@@ -5386,6 +5386,27 @@ async function runDevTestSuite() {
     document.getElementById('referralWelcomeModal').classList.add('hidden');
   });
 
+  await test('Profile layout: picture spans the name block, rank + record on one line, Account buttons one size', () => {
+    const modal = document.getElementById('profileModal'), wasHidden = modal.classList.contains('hidden');
+    try {
+      modal.classList.remove('hidden');
+      document.getElementById('profileUsernameText').textContent = 'Amitk';
+      document.getElementById('profileRatingText').innerHTML = `${renderRatingBadge(442)}<span class="profile-wl">3W-7L</span>`;
+      const st = document.getElementById('profileStreakText'); st.textContent = '🔥 3-day login streak'; st.classList.remove('hidden');
+      ['profileEmailRow', 'profileChangePasswordRow'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+      const pill = document.querySelector('#profileRatingText > span:first-child').getBoundingClientRect();
+      const wl = document.querySelector('#profileRatingText .profile-wl').getBoundingClientRect();
+      assertTrue(Math.abs((pill.top + pill.height / 2) - (wl.top + wl.height / 2)) < 2 && wl.left > pill.right, 'W-L sits beside the rank pill, centred on it');
+      const name = document.getElementById('profileUsernameText').getBoundingClientRect();
+      assertTrue(Math.abs(name.left - pill.left) < 1.5, 'Name and pill share a left edge');
+      const tile = document.querySelector('#profileAvatarBtn .avatar-tile, #profileAvatarBtn [data-own-avatar] > *').getBoundingClientRect();
+      const streak = st.getBoundingClientRect();
+      assertTrue(Math.abs(tile.top - document.querySelector('.profile-name-row').getBoundingClientRect().top) < 6 && Math.abs(tile.bottom - streak.bottom) < 10, `Picture spans name to streak (${Math.round(tile.top)}–${Math.round(tile.bottom)} vs ${Math.round(name.top)}–${Math.round(streak.bottom)})`);
+      const sizes = ['profileAccountActionBtn', 'profileChangePasswordBtn', 'profileChangeUsernameBtn'].map(id => document.getElementById(id).getBoundingClientRect()).filter(r => r.width).map(r => `${Math.round(r.width)}x${Math.round(r.height)}`);
+      assertTrue(sizes.length >= 2 && new Set(sizes).size === 1, `Account buttons match (${sizes.join(', ')})`);
+    } finally { modal.classList.toggle('hidden', wasHidden); }
+  });
+
   await test('Gauntlet: lobby button sits under the bot count with the ⓘ on its right; the welcome screen explains it', async () => {
     const saved = gauntletSaved();
     const lobby = document.getElementById('lobbyScreen'), wasHidden = lobby.classList.contains('hidden');
