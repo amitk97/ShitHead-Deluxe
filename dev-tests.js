@@ -667,7 +667,7 @@ async function runDevTestSuite() {
     assertTrue(document.getElementById('localTableCardZone').classList.contains('justify-center'), 'Table cards must be independently centred');
     assertEqual(document.querySelectorAll('#tableZoneLabel > span').length, 2, 'The table label has two stacked words without a slash');
     assertTrue(document.getElementById('localHandCardZone').classList.contains('flex-col'), 'Hand label and hand cards must occupy separate vertical rows');
-    assertTrue(document.body.innerHTML.includes('Card-area labels:'), 'The Guide must explain the new labels');
+    assertTrue(!document.body.innerHTML.includes('Card-area labels:'), 'The Guide no longer describes the labels (owner: not needed)');
     assertTrue(TUTORIAL_MODULE_YOUR_CARDS.some(step => String(step.text).includes('gold HAND label')), 'The tutorial must introduce the Hand label');
   });
   await test('REGRESSION: shared table label changes only when all face-up cards are gone', () => {
