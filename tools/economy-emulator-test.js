@@ -417,6 +417,42 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok((await erinCan(db => get(ref(db, 'referralCodes')))) === 'denied', 'blocked: reading the invite codes');
   ok((await erinCan(db => set(ref(db, 'referralCodes/ERIN'), { uid: 'erin' }))) === 'denied', 'blocked: making your own code by hand');
 
+  // Account data: export, deletion with a 7-day recovery window, the purge
+  await call('gina', { action: 'init' });
+  await admin('', 'PATCH', {
+    'users/gina/username': 'Gina', 'usernames/gina': 'gina',
+    'friends/gina/alice': true, 'friends/alice/gina': true, 'friendRequests/bob/gina': { name: 'Gina', sentAt: 1 },
+    'publicProfiles/gina': { username: 'Gina', rating: 500 }, 'leaderboard/gina': { username: 'Gina', rating: 500, tier: 'Bronze', wins: 0, losses: 0 },
+    'playerReports/bob/gina': { reason: 'other', at: 1 }, 'referralCodes/GINA': { uid: 'gina', at: 1 }, 'pushTokens/gina/k1': { token: 't', at: 1 }
+  });
+  r = await call('gina', { action: 'accountData' });
+  ok(r.account && r.account.uid === 'gina' && r.account.username === 'Gina' && r.profile && r.profile.username === 'Gina', 'export: account and profile', r.account);
+  ok(r.friends.join() === 'alice' && r.friendRequestsSent.length === 1 && r.friendRequestsSent[0].toUid === 'bob', 'export: friends and requests sent', [r.friends, r.friendRequestsSent]);
+  ok(r.playerReportsMade.length === 1 && !JSON.stringify(r).includes('"token"'), 'export: reports made, push tokens left out');
+  r = await call('gina', { action: 'deleteAccount', op: 'request' });
+  const del = await admin('users/gina/deletion');
+  ok(del && del.purgeAt - del.requestedAt === 7 * 864e5, 'delete: a 7-day recovery window', del);
+  ok((await admin('publicProfiles/gina')) === null && (await admin('leaderboard/gina')) === null, 'delete: hidden from profiles and the leaderboard at once');
+  ok((await admin('users/gina/username')) === 'Gina' && (await admin('usernames/gina')) === 'gina', 'delete: data and username kept during the window');
+  r = await call('gina', { action: 'deleteAccount', op: 'status' });
+  ok(r.deletion && r.deletion.purgeAt === del.purgeAt, 'delete: status shows the date', r);
+  r = await call('gina', { action: 'deleteAccount', op: 'cancel' });
+  ok(!r.deletion && (await admin('users/gina/deletion')) === null, 'delete: signing back in can cancel it', r);
+  ok((await tryWrite('gina', db => set(ref(db, 'users/gina/deletion'), { requestedAt: 1, purgeAt: 2 }))) === 'denied', 'blocked: writing your own deletion');
+  await call('gina', { action: 'deleteAccount', op: 'request' });
+  await admin('users/gina/deletion/purgeAt', 'PUT', Date.now() - 1000);
+  await call('alice', { action: 'deleteAccount', op: 'request' }); // not due yet: must survive
+  process.env.FIREBASE_DATABASE_EMULATOR_HOST = '127.0.0.1:9000';
+  process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
+  const fAdmin = require('../functions/node_modules/firebase-admin');
+  if (!fAdmin.apps.length) fAdmin.initializeApp({ projectId: 'shithead-pro', databaseURL: `http://127.0.0.1:9000?ns=${NS}` });
+  const purged = await require('../functions/account').purgeDueAccounts();
+  ok(purged.join() === 'gina', 'purge: only accounts past their window', purged);
+  const gone = await Promise.all(['users/gina', 'friends/gina', 'friends/alice/gina', 'friendRequests/bob/gina', 'usernames/gina', 'referralCodes/GINA', 'playerReports/bob/gina', 'pushTokens/gina'].map(p => admin(p)));
+  ok(gone.every(v => v === null), 'purge: erased everywhere, including friends\' lists, requests, username and code', gone);
+  ok((await admin('users/alice/username')) !== undefined && (await admin('users/alice')) !== null, 'purge: other accounts untouched');
+  await call('alice', { action: 'deleteAccount', op: 'cancel' });
+
   console.log(`\n${pass} passed, ${failN} failed`);
   process.exit(failN ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });

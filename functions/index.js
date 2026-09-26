@@ -138,6 +138,13 @@ exports.notifySeasonStart = onSchedule({ schedule: 'every day 09:00', timeZone: 
 // The economy (Diamonds, purchases, gifts, challenges, Ranked results).
 exports.economy = require('./economy').economy;
 
+// Deleted accounts: after the 7-day recovery window, erase them everywhere
+// (functions/account.js). Runs once a day.
+exports.purgeDeletedAccounts = onSchedule({ schedule: 'every day 03:30', timeZone: 'Europe/London', region: REGION }, async () => {
+  const purged = await require('./account').purgeDueAccounts();
+  if (purged.length) logger.info(`Purged ${purged.length} deleted account(s)`);
+});
+
 // Ranked audit: every write to a Ranked room is checked against what an
 // honest client could have done (ranked-audit.js), with the account that
 // made it. A v1 trigger because only v1 database triggers say who wrote.

@@ -17,6 +17,8 @@
 //   rankedDeal    the server's seat order + shuffled deck for a Ranked match
 //   gauntlet      Vs Bots Gauntlet runs: start, each game's result, the reward
 //   referral      invite codes, linking a new player to their inviter, the rewards
+//   accountData   everything stored about the account (Profile → Download my data)
+//   deleteAccount request (7-day recovery window) / cancel / status (functions/account.js)
 //   rankedResult  score a finished Ranked room for every seat, once
 //   buyItem / buyBundle / buyNameToken / sendGift / claimGift
 'use strict';
@@ -625,6 +627,21 @@ actions.referral = async ({ uid, auth, data }) => {
     [`friendRequests/${owner.uid}/${uid}`]: null
   });
   return { ...(await status()), inviterName };
+};
+
+// ---- Account data and deletion (functions/account.js) -----------------------------
+const account = require('./account');
+actions.accountData = async ({ uid }) => {
+  let authUser = null;
+  try { authUser = await admin.auth().getUser(uid); } catch (e) { authUser = null; }
+  return account.collectAccountData(uid, authUser);
+};
+actions.deleteAccount = async ({ uid, data }) => {
+  const op = data.op; // request | cancel | status
+  if (op === 'request') return { deletion: await account.requestDeletion(uid) };
+  if (op === 'cancel') { await account.cancelDeletion(uid); return { deletion: null }; }
+  if (op === 'status') return { deletion: (await db().ref(`users/${uid}/deletion`).once('value')).val() || null };
+  fail('invalid-argument', 'Unknown step.');
 };
 
 const GAUNTLET_MIN_GAME_MS = 30000; // a real game against a bot takes longer than this

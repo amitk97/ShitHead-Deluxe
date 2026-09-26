@@ -13,6 +13,9 @@
       }
     },
     "users": {
+      ".indexOn": [
+        "deletion/purgeAt"
+      ],
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
         "diamonds": {
@@ -220,6 +223,9 @@
         },
         "referralStats": {
           ".validate": "newData.hasChildren()"
+        },
+        "deletion": {
+          ".validate": "newData.hasChildren(['requestedAt', 'purgeAt'])"
         },
         "lastRankedOpponent": {
           ".validate": "newData.hasChildren(['uid', 'at'])"
