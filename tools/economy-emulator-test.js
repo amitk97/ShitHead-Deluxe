@@ -19,12 +19,12 @@ let pass = 0, failN = 0;
 const ok = (cond, label, extra) => { if (cond) { pass++; console.log('PASS', label); } else { failN++; console.log('FAIL', label, extra !== undefined ? JSON.stringify(extra) : ''); } };
 
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
-function token(uid, email) {
+function token(uid, email, verified = true) {
   const now = Math.floor(Date.now() / 1000);
-  return `${b64({ alg: 'none', typ: 'JWT' })}.${b64({ iss: 'https://securetoken.google.com/shithead-pro', aud: 'shithead-pro', auth_time: now, user_id: uid, sub: uid, iat: now, exp: now + 3600, email: email || `${uid}@test.local`, email_verified: true, firebase: { sign_in_provider: 'password' } })}.`;
+  return `${b64({ alg: 'none', typ: 'JWT' })}.${b64({ iss: 'https://securetoken.google.com/shithead-pro', aud: 'shithead-pro', auth_time: now, user_id: uid, sub: uid, iat: now, exp: now + 3600, email: email || `${uid}@test.local`, email_verified: verified, firebase: { sign_in_provider: 'password' } })}.`;
 }
-async function call(uid, data, email) {
-  const res = await fetch(FN, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token(uid, email)}` }, body: JSON.stringify({ data }) });
+async function call(uid, data, email, verified = true) {
+  const res = await fetch(FN, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token(uid, email, verified)}` }, body: JSON.stringify({ data }) });
   const body = await res.json();
   return body.error ? { error: body.error } : body.result;
 }
@@ -32,6 +32,7 @@ async function admin(path, method = 'GET', value) {
   const res = await fetch(`${DB}/${path}.json?ns=${NS}`, { method, headers: { Authorization: 'Bearer owner' }, body: value === undefined ? undefined : JSON.stringify(value) });
   return res.json();
 }
+const num0 = (v) => Number(v) || 0;
 const clients = {};
 function client(uid) {
   if (!clients[uid]) {
@@ -330,6 +331,84 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   for (let i = 0; i < 2; i++) r = await gGame(g.run.id, false);
   ok(r.over && !r.run, 'losing all 3 lives ends the run', r);
   ok((await admin('users/dave/difficultyWins')) === null, 'Gauntlet wins never count toward difficulty unlocks');
+
+  // Referrals: invite codes, linking new players, rewards after 3 real games
+  await call('carol', { action: 'init' });
+  await admin('users/carol/username', 'PUT', 'Carol');
+  r = await call('carol', { action: 'referral', op: 'code' }, undefined, false);
+  ok(r.error, 'no invite code without a verified email', r);
+  r = await call('carol', { action: 'referral', op: 'code' });
+  ok(r.code === 'CAROL' && r.recruits.length === 0, 'invite code made from the username', r);
+  r = await call('carol', { action: 'referral', op: 'code' });
+  ok(r.code === 'CAROL', 'asking again keeps the same code', r);
+  r = await call('carol', { action: 'referral', op: 'claim', code: 'CAROL' });
+  ok(r.error, "can't use your own invite", r);
+  await admin('users/bob/createdAt', 'DELETE'); // accounts from before referrals have no createdAt
+  r = await call('bob', { action: 'referral', op: 'claim', code: 'CAROL' });
+  ok(r.error, 'an existing (old) account cannot use an invite', r);
+  await call('erin', { action: 'init' });
+  await admin('users/erin/username', 'PUT', 'Erin');
+  r = await call('erin', { action: 'referral', op: 'claim', code: 'NOPE99' });
+  ok(r.error, 'an unknown code is refused', r);
+  r = await call('erin', { action: 'referral', op: 'claim', code: 'CAROL' }, undefined, false);
+  ok(r.error, 'an invite needs a verified email', r);
+  r = await call('erin', { action: 'referral', op: 'claim', code: 'carol' });
+  ok(r.inviterName === 'Carol' && r.referredBy && r.referredBy.games === 0, 'a new player links to the inviter (code in any case)', r);
+  ok((await admin('friends/erin/carol')) === true && (await admin('friends/carol/erin')) === true, 'inviter and new player are made friends');
+  const joinMail = await admin('users/carol/activityInbox/referral_join_erin');
+  ok(joinMail && joinMail.type === 'referral' && joinMail.event === 'joined', 'the inviter is told someone joined', joinMail);
+  r = await call('erin', { action: 'referral', op: 'claim', code: 'CAROL' });
+  ok(r.error, 'an account links to one invite only', r);
+  await call('carol', { action: 'sync' }); await call('erin', { action: 'sync' }); // pay anything already due first
+  const erinDiamonds0 = num0(await admin('users/erin/diamonds')), carolDiamonds0 = num0(await admin('users/carol/diamonds'));
+  const refGame = async (uid, id) => {
+    await admin(`users/${uid}/matchCounters/lastFinishedAt`, 'PUT', 1);
+    return call(uid, { action: 'matchFinished', matchId: id });
+  };
+  r = await refGame('erin', 'rf1');
+  ok(r.referral && r.referral.games === 1, 'first game counts toward the invite', r);
+  r = await refGame('erin', 'rf2');
+  ok(!r.referral, 'a game straight after another does not count (must be a real game)', r);
+  await admin('users/erin/referredBy/lastGameAt', 'PUT', 1);
+  r = await refGame('erin', 'rf3');
+  ok(r.referral && r.referral.games === 2, 'second game counts', r);
+  ok((await admin('users/carol/referrals/erin/games')) === 2, "the inviter sees the new player's progress");
+  await admin('users/erin/referredBy/lastGameAt', 'PUT', 1);
+  r = await refGame('erin', 'rf4');
+  ok(r.referral && r.referral.paid, 'third game completes the invite', r);
+  ok(num0(await admin('users/erin/diamonds')) - erinDiamonds0 >= 50, 'new player gets 50 💎', await admin('users/erin/diamonds'));
+  ok(num0(await admin('users/carol/diamonds')) - carolDiamonds0 === 100, 'inviter gets 100 💎', await admin('users/carol/diamonds'));
+  ok((await admin('users/carol/referralStats/recruits')) === 1, 'one recruit counted');
+  await admin('users/erin/referredBy/lastGameAt', 'PUT', 1);
+  r = await refGame('erin', 'rf5');
+  ok(!r.referral, 'nothing more after the invite is paid', r);
+  ok(num0(await admin('users/carol/diamonds')) - carolDiamonds0 === 100, 'the inviter is paid once');
+  r = await call('carol', { action: 'referral', op: 'status' });
+  ok(r.recruits.length === 1 && r.recruits[0].name === 'Erin' && r.recruits[0].done && r.recruited === 1 && r.paidThisMonth === 1, 'status lists recruits', r);
+  // Monthly cap, then the 5th recruit: Recruiter picture + challenge
+  const month = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit' }).format(new Date());
+  await admin('users/carol/referralStats', 'PATCH', { month, paidThisMonth: 10, recruits: 4 });
+  await call('fay', { action: 'init' });
+  await admin('users/fay/username', 'PUT', 'Fay');
+  await call('fay', { action: 'referral', op: 'claim', code: 'CAROL' });
+  const carolBefore = num0(await admin('users/carol/diamonds'));
+  for (let i = 0; i < 3; i++) { await admin('users/fay/referredBy/lastGameAt', 'PUT', 1); r = await refGame('fay', `ff${i}`); }
+  ok(r.referral && r.referral.paid && num0(await admin('users/fay/diamonds')) >= 50, 'the new player is still paid when the inviter is capped', r);
+  const carolAfter = num0(await admin('users/carol/diamonds'));
+  ok(carolAfter - carolBefore === 250, 'capped: no 100 💎 for the inviter, but the Recruiter challenge pays 250', carolAfter - carolBefore);
+  ok((await admin('users/carol/referralStats/recruits')) === 5, 'still counts as a recruit');
+  ok(!!(await admin('users/carol/ownedCosmetics/avatar-recruiter')), 'Recruiter picture unlocked at 5 recruits');
+  ok(!!(await admin('users/carol/completedChallenges/recruit-five')), 'Recruit 5 players challenge completed');
+  const capMail = await admin('users/carol/activityInbox/referral_fay');
+  ok(capMail && capMail.event === 'capped', 'the inviter is told the monthly limit was reached', capMail);
+  // Rules: all of it is server-only
+  const erinCan = (fn) => tryWrite('erin', fn);
+  ok((await erinCan(db => set(ref(db, 'users/erin/referredBy/paid'), false))) === 'denied', 'blocked: rewriting your own invite');
+  ok((await erinCan(db => set(ref(db, 'users/erin/createdAt'), Date.now()))) === 'denied', 'blocked: making your account look new');
+  ok((await tryWrite('carol', db => set(ref(db, 'users/carol/referralStats/recruits'), 99))) === 'denied', 'blocked: faking recruits');
+  ok((await tryWrite('carol', db => set(ref(db, 'users/carol/referrals/x'), { name: 'x' }))) === 'denied', 'blocked: adding a fake recruit');
+  ok((await erinCan(db => get(ref(db, 'referralCodes')))) === 'denied', 'blocked: reading the invite codes');
+  ok((await erinCan(db => set(ref(db, 'referralCodes/ERIN'), { uid: 'erin' }))) === 'denied', 'blocked: making your own code by hand');
 
   console.log(`\n${pass} passed, ${failN} failed`);
   process.exit(failN ? 1 : 0);

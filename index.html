@@ -16211,6 +16211,17 @@ video {
           </g>
         </g>
         <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
+      // Recruiter (earn-only): a friend brought to the table, with a gold +.
+      'avatar-recruiter':    { tone: 'green', animated: true, art: `
+        <g stroke="rgba(0,0,0,.4)" stroke-width="1.1">
+          <circle cx="38" cy="26" r="6.5" fill="url(#av-m-silver)"/>
+          <path d="M26.5 47c0-7.5 5-12.5 11.5-12.5S49.5 39.5 49.5 47Z" fill="url(#av-m-silver)"/>
+          <circle cx="24.5" cy="29" r="7.5" fill="url(#av-m-gold)"/>
+          <path d="M11 53c0-8.5 6-14 13.5-14S38 44.5 38 53Z" fill="url(#av-m-gold)"/>
+        </g>
+        <circle cx="50" cy="15" r="7.6" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.45)" stroke-width="1.1"/>
+        <path d="M50 10.6v8.8M45.6 15h8.8" stroke="#14532d" stroke-width="2.8" stroke-linecap="round"/>
+        <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
       'avatar-centurion':    { tone: 'red', art: `
         <text x="32" y="38" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="21" fill="#ef4444" stroke="#7f1d1d" stroke-width=".8" letter-spacing="-1">100</text>
         <path d="M13.5 43.5 50 41.5M15.5 48.5 47 46.8" stroke="#ef4444" stroke-width="2.6" stroke-linecap="round"/>` },
@@ -17174,7 +17185,8 @@ video {
       { id: 'avatar-crown-master', category: 'Profile Pictures', name: 'Master Crown', earned: true, animated: true, requirement: 'Reach Master rank', isEarned: (u) => avatarPeakRating(u) >= 2000 },
       { id: 'avatar-centurion', category: 'Profile Pictures', name: 'Centurion', earned: true, requirement: 'Play 100 ranked games', isEarned: (u) => ((Number(u?.wins) || 0) + (Number(u?.losses) || 0)) >= 100 },
       { id: 'avatar-shithead', category: 'Profile Pictures', name: 'ShitHead', earned: true, requirement: 'Lose 10 ranked games in a row', isEarned: (u) => (Number(u?.rankedStats?.bestLossStreak) || 0) >= 10 },
-      { id: 'avatar-gauntlet', category: 'Profile Pictures', name: 'Gauntlet Champion', earned: true, gauntlet: true, requirement: 'Beat the Gauntlet', isEarned: () => false }
+      { id: 'avatar-gauntlet', category: 'Profile Pictures', name: 'Gauntlet Champion', earned: true, gauntlet: true, requirement: 'Beat the Gauntlet', isEarned: () => false },
+      { id: 'avatar-recruiter', category: 'Profile Pictures', name: 'Recruiter', earned: true, referral: true, requirement: 'Recruit 5 players', isEarned: () => false }
     ];
     // Earn-only frames: never sold or gifted, shown locked in Custom until
     // the server grants them (Gauntlet Gold: beat the Gauntlet once).
@@ -17606,8 +17618,9 @@ video {
       const seasonalAvatars = [...sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Profile Pictures' && item.season)), ...SEASONAL_EARNED_AVATARS].filter(isCosmeticListed);
       grid.innerHTML = `<span class="avatar-picker-label">Free</span>${freeAvatars.map(avatarOptionHtml).join('')}
         <span class="avatar-picker-label">Shop</span>${shopAvatars.map(avatarOptionHtml).join('')}
-        <span class="avatar-picker-label">Earn in Ranked</span>${EARNED_AVATARS.filter(item => !item.season && !item.gauntlet).map(avatarOptionHtml).join('')}
+        <span class="avatar-picker-label">Earn in Ranked</span>${EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral).map(avatarOptionHtml).join('')}
         <span class="avatar-picker-label">Earn in the Gauntlet</span>${EARNED_AVATARS.filter(item => item.gauntlet).map(avatarOptionHtml).join('')}
+        <span class="avatar-picker-label">Earn by inviting friends</span>${EARNED_AVATARS.filter(item => item.referral).map(avatarOptionHtml).join('')}
         ${seasonalAvatars.length ? `<span class="avatar-picker-label">Seasonal</span>${seasonalAvatars.map(avatarOptionHtml).join('')}` : ''}`;
     }
 
@@ -19815,6 +19828,11 @@ video {
         { id: 'beat-medium-bot', name: 'Beat Medium Bot', difficulty: 'medium', target: 5, reward: 60 },
         { id: 'beat-hard-bot', name: 'Beat Hard Bot', difficulty: 'hard', target: 5, reward: 120 },
         { id: 'beat-boss-bot', name: 'Beat Boss Bot', difficulty: 'boss', target: 5, reward: 250 }
+      ],
+      // Friends who joined with your invite link and finished their first
+      // games (REFERRAL.gamesNeeded); counted by the server (referralStats).
+      recruits: [
+        { id: 'recruit-five', name: 'Recruiter', target: 5, reward: 250 }
       ]
     };
 
@@ -19832,6 +19850,18 @@ video {
       picture: 'avatar-gauntlet', pictureName: 'Gauntlet Champion',
       frame: 'frame-gauntlet', frameName: 'Gauntlet Gold'
     };
+    // Referrals: invite links (?ref=CODE). Paid by the server (economy
+    // referral + matchFinished) from these values (catalog export).
+    const REFERRAL = {
+      gamesNeeded: 3,          // finished games before anyone is paid
+      gameGapMs: 3 * 60 * 1000, // only games at least this far apart count
+      newPlayerReward: 50,
+      inviterReward: 100,
+      monthlyCap: 10,          // paid referrals per inviter per UK month
+      newAccountDays: 3,       // how new an account must be to use an invite
+      recruiterTarget: 5,
+      picture: 'avatar-recruiter', pictureName: 'Recruiter'
+    };
     const EARNED_AVATAR_RULES = {
       'avatar-crown-silver': { type: 'peakRating', min: 1000 },
       'avatar-crown-gold': { type: 'peakRating', min: 1500 },
@@ -19839,7 +19869,8 @@ video {
       'avatar-crown-master': { type: 'peakRating', min: 2000 },
       'avatar-centurion': { type: 'rankedGames', min: 100 },
       'avatar-shithead': { type: 'lossStreak', min: 10 },
-      'avatar-gauntlet': { type: 'gauntlet' } // granted by the gauntlet action itself
+      'avatar-gauntlet': { type: 'gauntlet' }, // granted by the gauntlet action itself
+      'avatar-recruiter': { type: 'recruits', min: 5 }
     };
     function serverEconomyCatalog() {
       const earned = {};
@@ -19865,6 +19896,7 @@ video {
         challengeDefs: JSON.parse(JSON.stringify(CHALLENGE_DEFS)),
         difficultyUnlocks: DIFF_UNLOCK_RULES,
         gauntlet: JSON.parse(JSON.stringify(GAUNTLET)),
+        referral: JSON.parse(JSON.stringify(REFERRAL)),
         rankTiers: [['Master', 2000], ['Platinum', 1800], ['Gold', 1500], ['Silver', 1000], ['Bronze', 500], ['Novice', 0]].map(([name, min]) => {
           if (getRankTier(min).name !== name) throw new Error(`Rank tier table out of date at ${name}`);
           return { name, min };
@@ -19942,6 +19974,7 @@ video {
         case 'endingCards': return `Win a Ranked match with ${rankName(def.rank)} as your last card.`;
         case 'rankTiers': return `Reach a ${def.minRating} Ranked rating.`;
         case 'botMatches': return `Beat ${def.difficulty === 'boss' ? 'Boss' : def.difficulty} bots ${def.target} times.`;
+        case 'recruits': return `Recruit ${def.target} players: friends who join with your invite link and play ${REFERRAL.gamesNeeded} games.`;
         default: return '';
       }
     }

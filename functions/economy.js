@@ -16,6 +16,7 @@
 //   matchFinished a finished match (ShitHead Virgin / Beginner)
 //   rankedDeal    the server's seat order + shuffled deck for a Ranked match
 //   gauntlet      Vs Bots Gauntlet runs: start, each game's result, the reward
+//   referral      invite codes, linking a new player to their inviter, the rewards
 //   rankedResult  score a finished Ranked room for every seat, once
 //   buyItem / buyBundle / buyNameToken / sendGift / claimGift
 'use strict';
@@ -195,6 +196,7 @@ function milestoneEligible(user) {
   // Rank tiers count once the player has played Ranked (everyone starts at 500).
   if (games > 0) d.rankTiers.forEach(c => { if (num(user.rating, 500) >= c.minRating) out.push({ ...c, target: c.minRating }); });
   d.botMatches.forEach(c => { if (num(dw[c.difficulty]) >= c.target) out.push(c); });
+  add(d.recruits || [], num(user.referralStats?.recruits));
   return out;
 }
 function playedAMatch(user) {
@@ -226,6 +228,7 @@ function grantEarnedAvatars(user, legacy, now) {
       : rule.type === 'rankedGames' ? num(user.wins) + num(user.losses) >= rule.min
       : rule.type === 'lossStreak' ? num(rs.bestLossStreak) >= rule.min
       : rule.type === 'seasonWins' ? seasonalWinsFor(user.seasonWins, rule.season) >= rule.min
+      : rule.type === 'recruits' ? num(user.referralStats?.recruits) >= rule.min
       : false;
     if (!met) return;
     user.ownedCosmetics = user.ownedCosmetics || {};
@@ -289,6 +292,7 @@ actions.init = async ({ uid, auth }) => {
   const snap = await ref.once('value');
   if (!snap.exists()) {
     await ref.transaction(c => c === null ? {
+      createdAt: Date.now(), // a new account (only these can be linked to an inviter)
       rating: 500, wins: 0, losses: 0, diamonds: 0, completedChallenges: {},
       retroactiveChallengeCheckDone: true, diamondEconomyResetV2Done: true,
       challengeStats: { burns: 0, snapBurns: 0, jokerDeflects: 0 }
@@ -420,10 +424,12 @@ actions.matchFinished = async ({ uid, data }) => {
     counters.finished = num(counters.finished) + 1;
     counters.lastFinishedAt = now;
     counters.recentFinished = pruneMap({ ...recent, [matchId]: { at: now } }, 20);
+    const referral = referralGameCounted(user, now);
     const claimed = grantMilestones(user, now);
-    return { user, claimed };
+    return { user, claimed, referral };
   });
-  return { claimed: res.claimed || [], diamonds: num(res.user.diamonds) };
+  if (res.referral) await referralReportToInviter(uid, res.user, res.referral, now);
+  return { claimed: res.claimed || [], diamonds: num(res.user.diamonds), referral: res.referral ? { games: res.referral.games, paid: !!res.referral.paid } : null };
 };
 
 // Scores a finished Ranked room for every seat at once (idempotent: the
@@ -483,6 +489,125 @@ actions.rankedDeal = async ({ uid, data }) => {
 // Completing it pays once per UK day: the first ever completion gives
 // firstReward + the earn-only picture and frame, later days dailyReward.
 // Gauntlet games never count towards difficulty unlocks (no matchWin).
+// ---- Referrals --------------------------------------------------------------------
+// Each account can make one invite code (from its username, e.g. AMITK) kept in
+// server-only referralCodes/{CODE}. A NEW account (created by init within
+// REFERRAL.newAccountDays) with a verified email can link itself to a code once
+// (op 'claim'): users/{uid}/referredBy, the inviter's users/{inv}/referrals/{uid},
+// and the two become friends. After REFERRAL.gamesNeeded finished games (at
+// least REFERRAL.gameGapMs apart, counted in matchFinished) the new player gets
+// REFERRAL.newPlayerReward and the inviter REFERRAL.inviterReward, at most
+// REFERRAL.monthlyCap paid a month (UK month). Every completed recruit counts
+// toward the Recruiter picture and challenge (referralStats.recruits).
+const REFERRAL = CAT.referral;
+const REF_CODE_RE = /^[A-Z0-9]{3,16}$/;
+const ukMonthKey = (now) => ukDateKey(new Date(now)).slice(0, 7);
+function referralGameCounted(user, now) {
+  const r = user.referredBy;
+  if (!r || r.paid || !r.uid) return null;
+  if (now - num(r.lastGameAt) < REFERRAL.gameGapMs) return null;
+  r.games = num(r.games) + 1;
+  r.lastGameAt = now;
+  if (r.games < REFERRAL.gamesNeeded) return { inviter: r.uid, games: r.games };
+  r.paid = true; r.paidAt = now;
+  const inviterName = clip(r.name || 'a friend', 20);
+  recordClaim(user, `referral_joined_${r.uid}`.slice(0, 80), `Joined with ${inviterName}'s invite`, num(REFERRAL.newPlayerReward), now);
+  return { inviter: r.uid, games: r.games, paid: true };
+}
+async function referralReportToInviter(uid, invitee, ref, now) {
+  const name = clip(invitee.username || 'A friend', 20);
+  const legacy = await legacyOwned(ref.inviter);
+  await userTx(ref.inviter, (user) => {
+    user.referrals = user.referrals || {};
+    const entry = user.referrals[uid];
+    if (!entry) return { noop: true };
+    entry.name = name;
+    entry.games = ref.games;
+    if (!ref.paid || entry.paidAt) return { user };
+    entry.paidAt = now;
+    const stats = user.referralStats = user.referralStats || {};
+    const month = ukMonthKey(now);
+    if (stats.month !== month) { stats.month = month; stats.paidThisMonth = 0; }
+    stats.recruits = num(stats.recruits) + 1;
+    if (num(stats.paidThisMonth) < num(REFERRAL.monthlyCap)) {
+      stats.paidThisMonth = num(stats.paidThisMonth) + 1;
+      entry.reward = num(REFERRAL.inviterReward);
+      recordClaim(user, `referral_${uid}`.slice(0, 80), `${name} joined with your invite`, num(REFERRAL.inviterReward), now);
+    } else {
+      entry.reward = 0;
+      user.activityInbox = user.activityInbox || {};
+      user.activityInbox[`referral_${uid}`] = { type: 'referral', event: 'capped', name, sentAt: now };
+    }
+    grantMilestones(user, now);
+    grantEarnedAvatars(user, legacy, now);
+    return { user };
+  });
+}
+function referralCodeFromName(name) {
+  return String(name || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+}
+actions.referral = async ({ uid, auth, data }) => {
+  const op = data.op; // code | claim | status
+  if (!['code', 'claim', 'status'].includes(op)) fail('invalid-argument', 'Unknown referral step.');
+  const verified = !!auth?.token?.email_verified;
+  const now = Date.now();
+  const userRef = db().ref(`users/${uid}`);
+  const status = async () => {
+    const [code, by, list, stats] = await Promise.all(['referralCode', 'referredBy', 'referrals', 'referralStats']
+      .map(k => userRef.child(k).once('value').then(s => s.val())));
+    return {
+      code: code || null,
+      referredBy: by ? { name: by.name || null, games: num(by.games), needed: REFERRAL.gamesNeeded, paid: !!by.paid } : null,
+      recruits: Object.entries(list || {}).map(([id, r]) => ({ name: r.name || 'New player', games: num(r.games), done: !!r.paidAt, reward: num(r.reward), at: num(r.at) }))
+        .sort((a, b) => b.at - a.at),
+      recruited: num(stats?.recruits),
+      paidThisMonth: stats?.month === ukMonthKey(now) ? num(stats.paidThisMonth) : 0
+    };
+  };
+  if (op === 'status') return status();
+  if (!verified) fail('failed-precondition', 'Verify your email address first.');
+  if (op === 'code') {
+    const existing = (await userRef.child('referralCode').once('value')).val();
+    if (existing) return status();
+    const username = (await userRef.child('username').once('value')).val();
+    const base = referralCodeFromName(username);
+    if (base.length < 3) fail('failed-precondition', 'Choose a username first.');
+    let code = null;
+    for (let i = 0; i < 6 && !code; i++) {
+      const candidate = i === 0 ? base : `${base.slice(0, 12)}${nodeCrypto.randomInt(10, 9999)}`;
+      const res = await db().ref(`referralCodes/${candidate}`).transaction(c => (c === null ? { uid, at: now } : undefined), undefined, false);
+      if (res.committed || res.snapshot.val()?.uid === uid) code = candidate;
+    }
+    if (!code) fail('resource-exhausted', 'Could not make a code. Please try again.');
+    await userRef.child('referralCode').set(code);
+    return status();
+  }
+  // claim: a new player arriving by a link
+  const code = clip(data.code, 16).toUpperCase();
+  if (!REF_CODE_RE.test(code)) fail('invalid-argument', 'That invite code is not valid.');
+  const owner = (await db().ref(`referralCodes/${code}`).once('value')).val();
+  if (!owner || !owner.uid) fail('not-found', 'That invite code was not found.');
+  if (owner.uid === uid) fail('failed-precondition', "You can't use your own invite.");
+  const inviterName = clip((await db().ref(`users/${owner.uid}/username`).once('value')).val() || code, 20);
+  const res = await userTx(uid, (user) => {
+    if (user.referredBy) return { error: 'This account is already linked to an invite.' };
+    const created = num(user.createdAt);
+    if (!created || now - created > num(REFERRAL.newAccountDays) * 864e5) return { error: 'Invites are for new accounts.' };
+    user.referredBy = { uid: owner.uid, code, name: inviterName, at: now, games: 0, lastGameAt: 0, paid: false };
+    return { user };
+  });
+  const myName = clip(res.user.username || 'A new player', 20);
+  await db().ref().update({
+    [`users/${owner.uid}/referrals/${uid}`]: { name: myName, at: now, games: 0 },
+    [`users/${owner.uid}/activityInbox/referral_join_${uid}`]: { type: 'referral', event: 'joined', name: myName, sentAt: now },
+    [`friends/${uid}/${owner.uid}`]: true,
+    [`friends/${owner.uid}/${uid}`]: true,
+    [`friendRequests/${uid}/${owner.uid}`]: null,
+    [`friendRequests/${owner.uid}/${uid}`]: null
+  });
+  return { ...(await status()), inviterName };
+};
+
 const GAUNTLET_MIN_GAME_MS = 30000; // a real game against a bot takes longer than this
 actions.gauntlet = async ({ uid, data }) => {
   const G = CAT.gauntlet;

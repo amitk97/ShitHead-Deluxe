@@ -582,6 +582,12 @@
    "requirement": "Beat the Gauntlet",
    "type": "gauntlet"
   },
+  "avatar-recruiter": {
+   "name": "Recruiter",
+   "requirement": "Recruit 5 players",
+   "type": "recruits",
+   "min": 5
+  },
   "avatar-lunar-earned": {
    "name": "Golden Dragon",
    "requirement": "Win 3 games during Lunar New Year",
@@ -1139,6 +1145,14 @@
     "target": 5,
     "reward": 250
    }
+  ],
+  "recruits": [
+   {
+    "id": "recruit-five",
+    "name": "Recruiter",
+    "target": 5,
+    "reward": 250
+   }
   ]
  },
  "difficultyUnlocks": [
@@ -1173,6 +1187,17 @@
   "pictureName": "Gauntlet Champion",
   "frame": "frame-gauntlet",
   "frameName": "Gauntlet Gold"
+ },
+ "referral": {
+  "gamesNeeded": 3,
+  "gameGapMs": 180000,
+  "newPlayerReward": 50,
+  "inviterReward": 100,
+  "monthlyCap": 10,
+  "newAccountDays": 3,
+  "recruiterTarget": 5,
+  "picture": "avatar-recruiter",
+  "pictureName": "Recruiter"
  },
  "rankTiers": [
   {

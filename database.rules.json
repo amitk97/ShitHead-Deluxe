@@ -206,6 +206,21 @@
         "gauntlet": {
           ".validate": "newData.hasChildren()"
         },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "referralCode": {
+          ".validate": "newData.isString()"
+        },
+        "referredBy": {
+          ".validate": "newData.hasChildren(['uid'])"
+        },
+        "referrals": {
+          ".validate": "newData.hasChildren()"
+        },
+        "referralStats": {
+          ".validate": "newData.hasChildren()"
+        },
         "lastRankedOpponent": {
           ".validate": "newData.hasChildren(['uid', 'at'])"
         },
