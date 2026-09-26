@@ -307,6 +307,11 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   const gOwned = await admin('users/dave/ownedCosmetics');
   ok(gOwned && gOwned['avatar-gauntlet'] && gOwned['frame-gauntlet'], 'Gauntlet picture and frame owned', gOwned);
   ok(await admin(`users/dave/challengeInbox`) !== null, 'Gauntlet mail sent');
+  ok((await admin('users/dave/completedChallenges/gauntlet-first'))?.reward === 200, 'first clear is a completed challenge (Bots tab)');
+  await admin('users/dave/completedChallenges/gauntlet-first', 'DELETE');
+  const daveD = await admin('users/dave/diamonds');
+  await call('dave', { action: 'sync' });
+  ok(!!(await admin('users/dave/completedChallenges/gauntlet-first')) && (await admin('users/dave/diamonds')) === daveD, 'an older first clear is recorded at sync without paying again');
   r = await call('dave', { action: 'gauntlet', op: 'start' });
   ok(r.error, 'only once a day', r);
   g = await call('dave', { action: 'gauntlet', op: 'status' });
@@ -324,6 +329,8 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   r = await gGame(g.run.id, true, false);
   for (let i = 0; i < 4; i++) r = await gGame(g.run.id, true);
   ok(r.completed && !r.first && r.diamondsAwarded === 50 && r.diamonds === 250 && r.newItems.length === 0, 'a later day pays 50', r);
+  const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  ok((await admin(`users/dave/completedChallenges/gauntlet_${todayKey}`))?.reward === 50, "a daily clear is that day's Daily Gauntlet challenge");
   // Three losses end the run
   await admin('users/dave/gauntlet/doneDay', 'PUT', '2000-01-01');
   g = await call('dave', { action: 'gauntlet', op: 'start' });

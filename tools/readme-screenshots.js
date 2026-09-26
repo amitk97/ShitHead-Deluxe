@@ -28,7 +28,7 @@ const S = process.env.SH_VIDEO_DEPS || ROOT, file = path.join(ROOT, 'index.html'
   const OUT = path.join(ROOT, 'docs/screenshots');
   const snap = (n) => page.screenshot({ path: path.join(OUT, n + '.png') });
   await page.goto('https://game.local/index.html');
-  await page.evaluate(() => { localStorage.setItem('shithead_seen_version', 'x'); localStorage.setItem('shithead_tutorial_progress', JSON.stringify({ quick_start: true })); localStorage.setItem('shithead_player_name', 'Amit'); });
+  await page.evaluate(() => { localStorage.setItem('shithead_whats_new', '0'); localStorage.setItem('shithead_seen_version', 'x'); localStorage.setItem('shithead_tutorial_progress', JSON.stringify({ quick_start: true })); localStorage.setItem('shithead_player_name', 'Amit'); });
   await page.goto('https://game.local/index.html');
   await page.waitForTimeout(2500);
   await page.fill('#playerNameInput', 'Amit');
@@ -68,7 +68,7 @@ const S = process.env.SH_VIDEO_DEPS || ROOT, file = path.join(ROOT, 'index.html'
   await page.click('#matrixRefBtn');
   await page.waitForTimeout(900);
   await snap('play-matrix');
-  await page.click('#matrixRefBtn');
+  await page.click('#matrixRefCloseBtn');
   await page.waitForTimeout(300);
   await page.evaluate(() => {
     document.getElementById('rulesModal').classList.remove('hidden');

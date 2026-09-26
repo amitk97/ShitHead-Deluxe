@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v149 (ShitHead-Deluxe-131) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v150 (ShitHead-Deluxe-132) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -414,8 +414,8 @@
       #hamburgerDrawer > div:nth-child(2) { padding: 18px !important; }
       #hamburgerAccountLabel { font-size: 17px !important; }
       #hamburgerAccountSub { font-size: 12px !important; margin-top: 3px !important; }
-      #drawerGuideShortcutBtn, #drawerSettingsShortcutBtn { width: 44px !important; height: 44px !important; }
-      #drawerGuideShortcutBtn .pack-icon, #drawerSettingsShortcutBtn .pack-icon { width: 31px; height: 31px; }
+      #drawerGuideShortcutBtn, #drawerSettingsShortcutBtn, #drawerChallengesShortcutBtn, #drawerShopShortcutBtn { width: 44px !important; height: 44px !important; }
+      #drawerGuideShortcutBtn .pack-icon, #drawerSettingsShortcutBtn .pack-icon, #drawerChallengesShortcutBtn .pack-icon, #drawerShopShortcutBtn .pack-icon { width: 31px; height: 31px; }
       #hamburgerDrawer nav { padding: 10px !important; }
       .hamburger-menu-item { padding: 13px 15px !important; border-radius: 12px !important; font-size: 14px !important; gap: 12px !important; }
       .hamburger-menu-item .item-icon, .hamburger-menu-item .item-icon svg { width: 30px !important; height: 30px !important; }
@@ -917,8 +917,11 @@
     .mini-table.is-large .mini-table-card { max-width:44px; border-radius:7px; }
     .mini-table-card.deck { left:14%; background:linear-gradient(135deg,#1e293b,#0f172a); border:1.5px solid #475569; }
     .mini-table-card.pile { left:50%; transform:translate(-50%,-50%); border:1.5px dashed var(--mini-table-label); }
-    .mini-table-card.face { right:14%; background:#f8fafc; border:1.5px solid #cbd5e1; color:#dc2626; font-size:9px; font-weight:900; line-height:1; padding:2px; }
-    .mini-table.is-large .mini-table-card.face { font-size:13px; padding:4px; }
+    /* Face-up cards drawn like the game's own cards (dark face, coloured rank), with the frame on top. */
+    .mini-table-card.face, .mini-table-card.pile-card { background:linear-gradient(160deg,#1e293b,#0f172a); border:1.5px solid #475569; color:#f87171; font-size:9px; font-weight:900; line-height:1; padding:2px; }
+    .mini-table-card.face { right:14%; }
+    .mini-table-card.pile-card { left:50%; transform:translate(-50%,-50%) rotate(-6deg); color:#e2e8f0; }
+    .mini-table.is-large .mini-table-card.face, .mini-table.is-large .mini-table-card.pile-card { font-size:13px; padding:4px; }
     .mini-table-name { position:absolute; left:0; right:0; bottom:4px; text-align:center; color:#fff; font-size:7px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; text-shadow:0 1px 3px #000,0 0 6px #000; }
     .mini-table.is-large .mini-table-name { top:12px; bottom:auto; font-size:9px; }
     .shop-row-table { padding:0 8px 8px; }
@@ -4290,6 +4293,8 @@ video {
         <div id="hamburgerAccountSub" class="text-[10px] text-slate-500 mt-0.5">Sign in for friends &amp; stats</div>
       </div>
       <div class="flex items-center gap-2 shrink-0" aria-label="Quick access">
+        <button id="drawerChallengesShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-amber-500 transition" style="height:2.25rem" aria-label="Open Challenges" title="Challenges"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-challenges"/></svg></button>
+        <button id="drawerShopShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-cyan-500 transition" style="height:2.25rem" aria-label="Open Shop" title="Shop"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg></button>
         <button id="drawerGuideShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-emerald-500 transition" style="height:2.25rem" aria-label="Open Guide and Strategy" title="Guide &amp; Strategy"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></button>
         <button id="drawerSettingsShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-sky-500 transition" style="height:2.25rem" aria-label="Open Settings" title="Settings"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg></button>
       </div>
@@ -5251,9 +5256,16 @@ video {
     <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:85vh; display:flex; flex-direction:column;">
       <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
         <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Challenges</span>
-        <div class="flex items-center gap-1 text-cyan-300">
-          <span class="text-xs leading-none">&#128142;</span>
-          <span id="challengesModalDiamondCount" class="text-[11px] font-black leading-none tabular-nums">0</span>
+        <div class="flex items-center" style="gap:12px">
+          <div class="flex items-center gap-1 text-cyan-300" title="Diamonds">
+            <span class="text-xs leading-none">&#128142;</span>
+            <span id="challengesModalDiamondCount" class="text-[11px] font-black leading-none tabular-nums">0</span>
+          </div>
+          <div id="challengesModalDoneWrap" class="flex items-center gap-1 text-emerald-300" title="Challenges completed" style="padding:3px 7px;border-radius:999px;border:1px solid rgba(52,211,153,.35);background:rgba(6,78,59,.35)">
+            <span class="text-xs leading-none font-black">&#10003;</span>
+            <span id="challengesModalDoneCount" class="text-[11px] font-black leading-none tabular-nums">0</span>
+            <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-500/80 leading-none">done</span>
+          </div>
         </div>
         <button id="challengesCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
@@ -5267,6 +5279,7 @@ video {
         </div>
         <section id="challengeTabDaily" data-challenge-panel="daily">
           <div id="challengesDailyList" class="flex flex-col gap-1.5 pt-1"></div>
+          <div id="challengesDailyGauntletList" class="flex flex-col gap-1.5 pt-1.5"></div>
           <div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase tracking-wider text-amber-400 mb-1">Getting Started</div><div id="challengesTutorialList" class="flex flex-col gap-1.5"></div></div>
         </section>
         <section id="challengeTabWeekly" data-challenge-panel="weekly" class="hidden">
@@ -5284,7 +5297,9 @@ video {
         </section>
         <section id="challengeTabBots" data-challenge-panel="bots" class="hidden">
           <div class="mb-2 text-[8px] text-slate-500">Bot match milestones across every difficulty.</div>
-          <div id="challengesBotMatchesList" class="flex flex-col gap-1.5"></div>
+          <div id="challengesBotMatchesList" class="flex flex-col gap-1.5 mb-3"></div>
+          <div class="text-[8px] font-black uppercase tracking-wider text-amber-400 mb-1">Gauntlet</div>
+          <div id="challengesGauntletList" class="flex flex-col gap-1.5"></div>
         </section>
       </div>
     </div>
@@ -5390,9 +5405,11 @@ video {
          script). Opened from the grid icon above the History strip. -->
     <div id="matrixRefPanel" class="hidden fixed z-[68] bg-slate-950 border-2 border-amber-500 rounded-xl shadow-2xl px-2 py-1.5 cursor-grab"
          style="max-width:calc(100vw - 16px); touch-action:none; transform-origin: top left;">
-      <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center justify-between mb-1" style="padding-right:18px;">
         <span class="text-[9px] font-black uppercase tracking-widest text-amber-400">Play Matrix</span>
       </div>
+      <!-- Close X, top-right like Card Powers'. -->
+      <button id="matrixRefCloseBtn" type="button" class="absolute text-slate-400 hover:text-white font-black leading-none" style="top:4px; right:10px; z-index:2; font-size:12px;" aria-label="Close Play Matrix">✕</button>
       <div id="matrixRefScroll" class="overflow-auto custom-scrollbar" style="max-height:55vh;">
         <table id="matrixRefTable" class="border-collapse" style="font-size:8px; line-height:1.1;"></table>
       </div>
@@ -10368,6 +10385,7 @@ video {
       // A tap on the X already closes via the tap-anywhere path below; this
       // also covers keyboard activation.
       document.getElementById('cardRefCloseBtn')?.addEventListener('click', () => toggleCardReference(true));
+      document.getElementById('matrixRefCloseBtn')?.addEventListener('click', (e) => { e.stopPropagation(); toggleMatrixReference(true); });
 
       panel.addEventListener('pointerdown', (e) => {
         if (!cardRefOpen) return;
@@ -11425,6 +11443,11 @@ video {
       }
       updateDiamondHeader();
       const g = state.gauntlet || { runId: p.runId, local: p.local };
+      if (res.completed && !res.local && challengeEconomy.completedChallenges) {
+        const key = res.first ? GAUNTLET_CHALLENGES.first.id : `gauntlet_${localDateKey()}`;
+        challengeEconomy.completedChallenges[key] = { completedAt: Date.now(), reward: Number(res.diamondsAwarded) || 0 };
+        renderChallengesModalIfOpen();
+      }
       if (res.completed) {
         state.gauntlet = { ...g, round: GAUNTLET.rounds.length, ended: true };
         renderGauntletHud();
@@ -15529,7 +15552,7 @@ video {
     // guarantees menu pages are mutually exclusive without duplicating the
     // same close-list in every one of their open functions.
     document.getElementById('hamburgerDrawer').addEventListener('click', (event) => {
-      if (event.target.closest('.hamburger-menu-item, #drawerGuideShortcutBtn, #drawerSettingsShortcutBtn')) {
+      if (event.target.closest('.hamburger-menu-item, #drawerGuideShortcutBtn, #drawerSettingsShortcutBtn, #drawerChallengesShortcutBtn, #drawerShopShortcutBtn')) {
         closeOtherMenuPages();
       }
     }, true);
@@ -15919,6 +15942,12 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v150: [
+        ['🏆', 'Challenges: the Gauntlet is now a challenge (Bots tab), plus a Daily Gauntlet worth 50 💎 every day. The top of the page shows how many challenges you have completed.'],
+        ['☰', 'Challenges and the Shop are now one tap away at the top of the menu.'],
+        ['🃏', 'Your showcase shows your cards the way they look in the game, with your frame on them.'],
+        ['✕', 'The Play Matrix has a close button.']
+      ],
       v149: [
         ['🛠️', 'Fixed an error about a "service worker" that could stop purchases, rewards and the Gauntlet on phones with notifications turned on.'],
         ['👀', 'In the Gauntlet, tap Gauntlet Champion or Gauntlet Gold to preview the prizes.']
@@ -17093,7 +17122,10 @@ video {
       const style = `background:${look.bg};${look.size ? `background-size:${look.size};` : ''}box-shadow:${look.rim};--mini-table-label:${look.label}`;
       const deck = cards.backId ? `<span class="mini-table-card deck custom-card-back ${getCosmeticBackClass(cards.backId)}"></span>` : '<span class="mini-table-card deck"></span>';
       const faceStyle = cards.frameId && cards.frameId !== 'default' ? ` style="${getCosmeticFrameStyle(cards.frameId).replace(/!important/g, '')}"` : '';
-      return `<span class="mini-table${large ? ' is-large' : ''}" data-table-preview="${id || 'default'}" style="${style}">${deck}<span class="mini-table-card pile"></span><span class="mini-table-card face"${faceStyle}>A<br>♥</span>${name ? `<span class="mini-table-name">${name}</span>` : ''}</span>`;
+      // With a loadout (showcase) the pile holds a card too, so both face-up
+      // cards show the frame; the Shop's table previews keep the empty pile.
+      const pile = cards.backId || cards.frameId ? `<span class="mini-table-card pile-card"${faceStyle}>K<br>♠</span>` : '<span class="mini-table-card pile"></span>';
+      return `<span class="mini-table${large ? ' is-large' : ''}" data-table-preview="${id || 'default'}" style="${style}">${deck}${pile}<span class="mini-table-card face"${faceStyle}>A<br>♥</span>${name ? `<span class="mini-table-name">${name}</span>` : ''}</span>`;
     }
     (function installIllustratedTableStyles() {
       const css = Object.entries(ILLUSTRATED_TABLES).map(([id, t]) =>
@@ -18796,6 +18828,9 @@ video {
     document.getElementById('menuGuideBtn').addEventListener('click', () => { closeHamburgerMenu(); document.getElementById('rulesModal').classList.remove('hidden'); });
     document.getElementById('drawerSettingsShortcutBtn').addEventListener('click', () => { closeHamburgerMenu(); openSettings(); });
     document.getElementById('drawerGuideShortcutBtn').addEventListener('click', () => { closeHamburgerMenu(); document.getElementById('rulesModal').classList.remove('hidden'); });
+    // Same as the Challenges / Shop rows further down the menu.
+    document.getElementById('drawerChallengesShortcutBtn').addEventListener('click', () => document.getElementById('menuChallengesBtn').click());
+    document.getElementById('drawerShopShortcutBtn').addEventListener('click', () => document.getElementById('menuShopBtn').click());
     document.getElementById('menuSupportBtn').addEventListener('click', () => { closeHamburgerMenu(); openSupportPanel(); });
 
     // ---- Error Reports (owner only) ------------------------------------
@@ -19453,7 +19488,7 @@ video {
       document.getElementById('menuErrorReportsBtn')?.classList.toggle('hidden', !isGameOwner());
       if (currentUser) {
         drawerLabel.textContent = currentUser.displayName || currentUser.email || 'Signed in';
-        drawerSub.textContent = 'Tap Profile for your rating & stats';
+        drawerSub.textContent = 'Tap your profile for your ranked rating';
       } else {
         drawerLabel.textContent = 'Not signed in';
         drawerSub.textContent = 'Sign in for friends & stats';
@@ -19862,6 +19897,18 @@ video {
       recruiterTarget: 5,
       picture: 'avatar-recruiter', pictureName: 'Recruiter'
     };
+    // The Gauntlet as challenges: the first clear (Bots tab) and a fixed daily
+    // one (Daily tab). Their completion keys are written by the server.
+    const GAUNTLET_CHALLENGES = {
+      first: { id: 'gauntlet-first', name: 'Gauntlet Champion', desc: 'Beat all 5 Gauntlet bots for the first time.' },
+      daily: { id: 'gauntlet_daily', name: 'Daily Gauntlet', desc: 'Beat all 5 Gauntlet bots today.' }
+    };
+    function gauntletBeatenToday(done = {}) {
+      const today = localDateKey();
+      if (done[`gauntlet_${today}`]) return true;
+      const first = done[GAUNTLET_CHALLENGES.first.id];
+      return !!first && localDateKey(new Date(Number(first.completedAt) || 0)) === today;
+    }
     const EARNED_AVATAR_RULES = {
       'avatar-crown-silver': { type: 'peakRating', min: 1000 },
       'avatar-crown-gold': { type: 'peakRating', min: 1500 },
@@ -19959,6 +20006,8 @@ video {
         if (/^weekly_/.test(id)) return getWeeklyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
         const gettingStarted = GETTING_STARTED_CHALLENGES.find(c => c.id === id);
         if (gettingStarted) return gettingStarted.desc;
+        if (id === GAUNTLET_CHALLENGES.first.id) return GAUNTLET_CHALLENGES.first.desc;
+        if (/^gauntlet_\d{4}-\d{2}-\d{2}$/.test(id)) return GAUNTLET_CHALLENGES.daily.desc;
         def = Object.values(CHALLENGE_DEFS).flat().find(c => c.id === id);
         if (!def) return '';
       }
@@ -20688,7 +20737,7 @@ video {
     }
 
     const CHALLENGES_SIGN_IN_MSG = '<p class="text-[9px] text-slate-500 text-center py-2">Sign in to track this.</p>';
-    const CHALLENGES_LIST_IDS = ['challengesTutorialList', 'challengesDailyList', 'challengesWeeklyList', 'challengesRankedBurnsList', 'challengesRankedStreaksList', 'challengesRankedJokerList', 'challengesRankedSnapList', 'challengesRankedGamesList', 'challengesEndingCardsList', 'challengesRankTiersList', 'challengesBotMatchesList'];
+    const CHALLENGES_LIST_IDS = ['challengesTutorialList', 'challengesDailyList', 'challengesWeeklyList', 'challengesRankedBurnsList', 'challengesRankedStreaksList', 'challengesRankedJokerList', 'challengesRankedSnapList', 'challengesRankedGamesList', 'challengesEndingCardsList', 'challengesRankTiersList', 'challengesBotMatchesList', 'challengesGauntletList', 'challengesDailyGauntletList'];
 
     // Builds every section's HTML from challengeEconomy + CHALLENGE_DEFS.
     // Guests get an honest "sign in" prompt in every section rather than
@@ -20732,8 +20781,10 @@ video {
     }
 
     function renderChallengesPanel() {
+      document.getElementById('challengesModalDoneWrap')?.classList.toggle('hidden', !currentUser);
       if (!currentUser) {
-        CHALLENGES_LIST_IDS.forEach((id) => setListHtml(id, CHALLENGES_SIGN_IN_MSG));
+        CHALLENGES_LIST_IDS.filter(id => !/Gauntlet/.test(id)).forEach((id) => setListHtml(id, CHALLENGES_SIGN_IN_MSG));
+        ['challengesGauntletList', 'challengesDailyGauntletList'].forEach(id => setListHtml(id, ''));
         return;
       }
 
@@ -20794,6 +20845,16 @@ video {
         const progress = Math.min(rating, c.minRating);
         return renderChallengeRowHTML(c.name, `${progress}/${c.minRating} rating`, c.reward, completed, challengeDescription(c));
       }).join(''));
+
+      // Gauntlet: first clear (Bots) and the fixed Daily Gauntlet (paid by
+      // the server's gauntlet action, recorded as completed challenges).
+      const done = challengeEconomy.completedChallenges;
+      setListHtml('challengesGauntletList', renderChallengeRowHTML(GAUNTLET_CHALLENGES.first.name, GAUNTLET_CHALLENGES.first.desc,
+        GAUNTLET.firstReward, !!done[GAUNTLET_CHALLENGES.first.id], GAUNTLET_CHALLENGES.first.desc));
+      setListHtml('challengesDailyGauntletList', renderChallengeRowHTML(GAUNTLET_CHALLENGES.daily.name, GAUNTLET_CHALLENGES.daily.desc,
+        GAUNTLET.dailyReward, gauntletBeatenToday(done), GAUNTLET_CHALLENGES.daily.desc));
+      const doneCount = document.getElementById('challengesModalDoneCount');
+      if (doneCount) doneCount.textContent = String(Object.keys(done || {}).length);
 
       const dw = challengeEconomy.difficultyWins || {};
       setListHtml('challengesBotMatchesList', CHALLENGE_DEFS.botMatches.map((c) => {

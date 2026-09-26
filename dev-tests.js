@@ -4201,7 +4201,7 @@ async function runDevTestSuite() {
     currentUser = { uid: 'u1', email: 'test@x.com', displayName: null };
     updateHamburgerAccountLabel();
     assertEqual(document.getElementById('hamburgerAccountLabel').textContent, 'test@x.com', "Signed-in state must show the account's email");
-    assertTrue(document.getElementById('hamburgerAccountSub').textContent.includes('Profile'), 'The hint must point to Profile now, not the removed Settings account section');
+    assertTrue(document.getElementById('hamburgerAccountSub').textContent.includes('your profile for your ranked rating'), 'The hint points to the Profile (your ranked rating)');
     currentUser = null;
     updateHamburgerAccountLabel();
     assertEqual(document.getElementById('hamburgerAccountLabel').textContent, 'Not signed in', 'Signed-out state must still work');
@@ -5294,6 +5294,39 @@ async function runDevTestSuite() {
       assertTrue(box.classList.contains('hidden'), 'Tapping again closes it');
       assertTrue(document.getElementById('gauntletModal').classList.contains('hidden') === false, 'The pop-up stays open');
     } finally { gauntletRestore(saved); }
+  });
+
+  await test('Gauntlet challenges: first clear on the Bots tab, a fixed Daily Gauntlet, and the completed count', () => {
+    const saved = { user: currentUser, loaded: challengeEconomyLoadedForUid, done: challengeEconomy.completedChallenges, daily: challengeEconomy.dailyChallengeState };
+    try {
+      currentUser = { uid: 'c-uid' }; challengeEconomyLoadedForUid = 'c-uid';
+      challengeEconomy.dailyChallengeState = { dateKey: localDateKey(), challengeIds: [], progress: {} };
+      challengeEconomy.completedChallenges = { 'first-game': { completedAt: 1 } };
+      renderChallengesPanel();
+      const bots = document.getElementById('challengesGauntletList').textContent, daily = document.getElementById('challengesDailyGauntletList').textContent;
+      assertTrue(/Gauntlet Champion/.test(bots) && /200/.test(bots), 'Bots tab: Gauntlet Champion, 200');
+      assertTrue(/Daily Gauntlet/.test(daily) && /50/.test(daily), 'Daily tab: Daily Gauntlet, 50');
+      assertEqual(document.getElementById('challengesModalDoneCount').textContent, '1', 'Completed count');
+      challengeEconomy.completedChallenges = { 'first-game': { completedAt: 1 }, 'gauntlet-first': { completedAt: Date.now(), reward: 200 } };
+      renderChallengesPanel();
+      assertTrue(document.querySelector('#challengesGauntletList').textContent.includes('✓') || !/200/.test(document.getElementById('challengesGauntletList').textContent), 'First clear shows done');
+      assertTrue(gauntletBeatenToday(challengeEconomy.completedChallenges), "A first clear today also counts as today's Daily Gauntlet");
+      challengeEconomy.completedChallenges = { [`gauntlet_${localDateKey()}`]: { completedAt: Date.now(), reward: 50 } };
+      assertTrue(gauntletBeatenToday(challengeEconomy.completedChallenges), 'A daily clear counts');
+      assertEqual(challengeDescription('gauntlet-first'), GAUNTLET_CHALLENGES.first.desc, 'Mail describes the first clear');
+      assertEqual(challengeDescription('gauntlet_2026-09-26'), GAUNTLET_CHALLENGES.daily.desc, 'Mail describes a daily clear');
+    } finally {
+      currentUser = saved.user; challengeEconomyLoadedForUid = saved.loaded;
+      challengeEconomy.completedChallenges = saved.done; challengeEconomy.dailyChallengeState = saved.daily;
+    }
+  });
+
+  await test('Menu shortcuts: Challenges and Shop sit next to Guide and Settings; Play Matrix has a close X', () => {
+    const ids = [...document.querySelectorAll('#hamburgerDrawer [aria-label="Quick access"] button')].map(b => b.id);
+    assertEqual(ids, ['drawerChallengesShortcutBtn', 'drawerShopShortcutBtn', 'drawerGuideShortcutBtn', 'drawerSettingsShortcutBtn'], 'Four shortcuts, in order');
+    assertTrue(!!document.querySelector('#matrixRefPanel #matrixRefCloseBtn'), 'Play Matrix has an X');
+    const html = miniTablePreviewHtml('table-midnight', 'x', false, { backId: 'back-midnight', frameId: 'frame-gold' });
+    assertTrue(/pile-card/.test(html) && !/#f8fafc/.test(html), 'The showcase draws real (dark) face-up cards with the frame');
   });
 
   await test('Gauntlet: lobby button sits under the bot count with the ⓘ on its right; the welcome screen explains it', async () => {

@@ -1,4 +1,4 @@
-<!-- README-VERSION: v140 — refresh text + screenshots every 15 versions from v150 (v150, v165, v180…); see CLAUDE.md -->
+<!-- README-VERSION: v150 — refresh text + screenshots every 15 versions from v150 (v150, v165, v180…); see CLAUDE.md -->
 # 💩 ShitHead Deluxe
 
 **The classic card game ShitHead, rebuilt for your phone.** Play against bots, with friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
@@ -56,14 +56,15 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 
 ## Features
 
-- **Vs Bots** with four difficulties (Easy → Boss) that unlock as you win, playable offline.
-- **Online rooms** with friends: share an invite link, chat with emotes, and a bot takes over if someone leaves.
-- **Ranked** 1v1 matchmaking with an Elo rating and tiers from Novice to Master.
+- **Vs Bots** with four difficulties (Easy → Boss) that unlock as you win, playable offline. Close the app mid-game and it picks up exactly where you left off.
+- **The Gauntlet**: beat 5 bots in a row (Easy, Easy, Medium, Hard, Boss) with 3 lives. The first clear wins an exclusive picture and frame, then Diamonds every day you beat it again.
+- **Online rooms** with friends: share an invite link, chat with emotes, and a bot takes over if someone leaves. Friends can watch your match live.
+- **Ranked** 1v1 matchmaking with an Elo rating and tiers from Novice to Master. The deck is shuffled by the server and every move is checked.
 - **Tutorial**: a one-minute Quick Start plus in-depth lessons for every card.
-- **Challenges and Diamonds**: daily and weekly challenges, a login streak and milestones.
-- **Shop and Custom**: tables, card backs, frames, burn effects with their own sounds, victory effects, emote packs and profile pictures, plus seasonal events (Halloween, Christmas, Diwali, Lunar New Year and more).
-- **Friends**: friend requests, gifts and game invites, with push notifications.
-- **Match summary** with stats and a shareable result card.
+- **Challenges and Diamonds**: daily and weekly challenges, the Daily Gauntlet, a login streak and milestones, with a running total of challenges completed.
+- **Shop and Custom**: tables, card backs, frames, burn effects with their own sounds, victory effects, emote packs and profile pictures, plus seasonal events (Halloween, Christmas, Diwali, Lunar New Year and more). Earn-only pictures and frames for Ranked tiers, the Gauntlet and recruiting friends.
+- **Friends**: friend requests, gifts, game invites and a public showcase of your look, with push notifications. Invite friends with your own link and you both earn Diamonds once they've played a few games.
+- **Match summary** with stats and a shareable result card, plus a full match history.
 
 ## Tech
 
@@ -71,6 +72,6 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 - It's hosted on **Firebase Hosting**, and every push to `main` deploys automatically.
 - **Firebase Realtime Database** handles online rooms, profiles and friends.
 - **Firebase Auth** handles sign-in (Google or email).
-- **Cloud Functions** ([`functions/`](functions)) handle the economy: Diamonds, purchases, gifts, challenges and Ranked results are checked and saved on the server, so they can't be edited from the browser. The functions also send push notifications.
+- **Cloud Functions** ([`functions/`](functions)) handle the economy: Diamonds, purchases, gifts, challenges, the Gauntlet, referrals and Ranked results are checked and saved on the server, so they can't be edited from the browser. They also deal Ranked games, audit every Ranked move, and send push notifications.
 - A service worker makes the game installable and lets Vs Bots play offline.
 - A developer test suite runs in the browser: open `index.html?dev-tests=1`.

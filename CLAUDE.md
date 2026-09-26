@@ -232,6 +232,12 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - `README.md` (GitHub front page) shows screenshots from `docs/screenshots/` (home, swap, table, card-powers, play-matrix, guide-swap), taken from the real game at 390×844 @2x by `tools/readme-screenshots.js`. Both are ignored by Hosting.
 - **Refresh the README every 15 versions, starting at v150 (v150, v165, v180…)** without being asked: bring the text up to date with every feature added since (Features, How to play, Tech), retake all the screenshots with `tools/readme-screenshots.js`, and set the `README-VERSION` stamp on its first line to the new version. A dev test fails once the BUILD reaches the next due version with an older stamp.
 
+## Owner's backlog: remind the owner about these (don't build until asked)
+
+- Leaderboard tabs: **Challenges completed** (running total, as on the Challenges page) and **Gauntlet bots beaten** (every bot beaten, not just full clears), alongside the Ranked rating board.
+- Inbox congratulations when a player reaches **#1, #2, #3 or the top 10** on any of those leaderboards.
+- Queued after referrals: **account recovery** and **data export**.
+
 ## Future theme ideas (owner's backlog — don't build until asked)
 
 - For new card backs, packs, tables, burns etc. once current themes get stale: **Space, Sport, Animals, Countries/Cities, Cyberpunk, Gothic, Retro, Arcade, Origami** (Origami burn effect: the card folds up when burnt).

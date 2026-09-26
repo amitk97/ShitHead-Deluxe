@@ -323,7 +323,14 @@ actions.sync = async ({ uid }) => {
   const res = await userTx(uid, (user) => {
     const claimed = grantMilestones(user, now);
     const newAvatars = grantEarnedAvatars(user, legacy, now);
-    return claimed.length || newAvatars.length ? { user, claimed, newAvatars } : { noop: true, claimed: [], newAvatars: [] };
+    // A first Gauntlet clear from before it was a challenge: record it (already paid).
+    let backfilled = false;
+    if (user.gauntlet?.firstDoneAt && !user.completedChallenges?.['gauntlet-first']) {
+      user.completedChallenges = user.completedChallenges || {};
+      user.completedChallenges['gauntlet-first'] = { completedAt: num(user.gauntlet.firstDoneAt), reward: num(CAT.gauntlet.firstReward) };
+      backfilled = true;
+    }
+    return claimed.length || newAvatars.length || backfilled ? { user, claimed, newAvatars } : { noop: true, claimed: [], newAvatars: [] };
   });
   return { claimed: res.claimed || [], newAvatars: res.newAvatars || [], diamonds: num(res.user.diamonds) };
 };
@@ -660,7 +667,6 @@ actions.gauntlet = async ({ uid, data }) => {
     g.completions = num(g.completions) + 1;
     const first = !g.firstDoneAt;
     const amount = first ? num(G.firstReward) : num(G.dailyReward);
-    addDiamonds(user, amount);
     const newItems = [];
     user.activityInbox = user.activityInbox || {};
     if (first) {
@@ -674,8 +680,9 @@ actions.gauntlet = async ({ uid, data }) => {
         }
       });
     }
-    user.challengeInbox = user.challengeInbox || {};
-    user.challengeInbox[`gauntlet_${today}`] = { name: first ? 'Gauntlet beaten (first time!)' : 'Gauntlet beaten', reward: amount, completedAt: now };
+    // Completed challenges: 'gauntlet-first' (Bots tab) or the day's
+    // 'gauntlet_<date>' (Daily tab); pays and mails like any challenge.
+    recordClaim(user, first ? 'gauntlet-first' : `gauntlet_${today}`, first ? 'Gauntlet Champion' : 'Daily Gauntlet', amount, now);
     return { user, completed: true, amount, first, newItems };
   });
   return {
