@@ -4229,21 +4229,78 @@ async function runDevTestSuite() {
     document.getElementById('deleteStep2CancelBtn').click();
     currentUser = null;
   });
-  await test("REGRESSION: deleteOwnAccountData only ever targets the acting user's own uid across every path it touches", async () => {
-    let capturedUpdate = null;
-    const readPaths = [];
-    db = { ref: (path) => ({
-      once: () => { readPaths.push(path); return Promise.resolve({ val: () => 'VictimName' }); },
-      update: (obj) => { capturedUpdate = obj; return Promise.resolve(); }
-    }) };
-    await deleteOwnAccountData('victim-uid');
-    assertEqual(readPaths, ['users/victim-uid/username'], 'It may only look up the caller\'s own username');
-    const paths = Object.keys(capturedUpdate);
-    assertTrue(paths.length > 0, 'Must actually target some paths');
-    // The leaderboard entry and username reservation are keyed by the
-    // caller's own (lower-cased) username rather than their uid.
-    paths.forEach((p) => assertTrue(p.endsWith('/victim-uid') || p === 'leaderboard/victimname' || p === 'usernames/victimname', `Every deleted path must belong to the caller, got: ${p}`));
-    assertTrue(paths.every((p) => capturedUpdate[p] === null), 'Every targeted path must be set to null (deleted), never partially modified');
+  await test('Account deletion goes through the server (7-day window) and signs out; nothing is deleted from the phone', async () => {
+    const saved = { signOut: performSignOut };
+    let signedOut = 0;
+    try {
+      currentUser = { uid: 'del-uid', providerData: [{ providerId: 'google.com' }] };
+      performSignOut = () => { signedOut++; return Promise.resolve(); };
+      let wrote = 0;
+      db = { ref: () => ({ update: () => { wrote++; return Promise.resolve(); }, set: () => { wrote++; return Promise.resolve(); }, remove: () => { wrote++; return Promise.resolve(); }, once: () => Promise.resolve({ val: () => null }) }) };
+      const purgeAt = Date.now() + 7 * 864e5;
+      const calls = fakeEconomy({ deleteAccount: () => ({ deletion: { requestedAt: Date.now(), purgeAt } }) });
+      document.getElementById('deleteAccountModal').classList.remove('hidden');
+      document.getElementById('deleteStep2').classList.remove('hidden');
+      const input = document.getElementById('deleteConfirmInput');
+      input.value = 'DELETE'; input.dispatchEvent(new Event('input'));
+      document.getElementById('deleteFinalBtn').click();
+      await new Promise(r => setTimeout(r, 30));
+      assertEqual(calls, [['deleteAccount', { op: 'request' }]], 'Asks the server to delete');
+      assertEqual(wrote, 0, 'The phone deletes nothing itself');
+      assertEqual(signedOut, 1, 'Then signs out');
+      assertTrue(document.getElementById('deleteAccountModal').classList.contains('hidden'), 'The dialog closes');
+    } finally {
+      performSignOut = saved.signOut;
+      document.getElementById('deleteConfirmInput').value = '';
+      document.getElementById('deleteStep2').classList.add('hidden');
+    }
+  });
+
+  await test('Signing in to an account being deleted asks "Keep my account?" before anything public starts', async () => {
+    const saved = { start: startSignedInSession };
+    let started = 0;
+    try {
+      startSignedInSession = () => { started++; };
+      currentUser = { uid: 'keep-uid' };
+      showKeepAccount({ requestedAt: Date.now(), purgeAt: Date.now() + 5 * 864e5 });
+      const modal = document.getElementById('keepAccountModal');
+      assertTrue(!modal.classList.contains('hidden') && /erased for good on/.test(document.getElementById('keepAccountText').textContent), 'Asks, with the date');
+      assertEqual(started, 0, 'Nothing starts yet (no public profile, presence or leaderboard)');
+      const calls = fakeEconomy({ deleteAccount: () => ({ deletion: null }) });
+      document.getElementById('keepAccountBtn').click();
+      await new Promise(r => setTimeout(r, 30));
+      assertEqual(calls, [['deleteAccount', { op: 'cancel' }]], 'Keep cancels the deletion on the server');
+      assertEqual(started, 1, 'Then the normal signed-in session starts');
+      assertTrue(modal.classList.contains('hidden'), 'And the question closes');
+      assertTrue(BACK_LAYERS.keepAccountModal === null, 'Back cannot skip the question');
+    } finally { startSignedInSession = saved.start; document.getElementById('keepAccountModal').classList.add('hidden'); }
+  });
+
+  await test('Download my data saves the server copy plus this device\'s settings as JSON (no push token)', async () => {
+    const saved = { createObjectURL: URL.createObjectURL };
+    let blob = null;
+    try {
+      currentUser = { uid: 'exp-uid' };
+      localStorage.setItem('shithead_push_token', 'secret');
+      URL.createObjectURL = (b) => { blob = b; return 'blob:x'; };
+      fakeEconomy({ accountData: () => ({ account: { uid: 'exp-uid', username: 'Amitk' }, profile: { diamonds: 5 } }) });
+      await downloadMyData();
+      assertTrue(!!blob && /shithead-data-Amitk-\d{4}-\d{2}-\d{2}\.json/.test(blob.name), 'A dated JSON file named after the player', blob && blob.name);
+      const data = JSON.parse(await blob.text());
+      assertEqual(data.profile.diamonds, 5, 'Server data included');
+      assertTrue(!!data.thisDevice && !('shithead_push_token' in data.thisDevice), "This device's settings included, push token left out");
+      assertTrue(/Saved/.test(document.getElementById('downloadMyDataStatus').textContent), 'Says it was saved');
+    } finally { URL.createObjectURL = saved.createObjectURL; localStorage.removeItem('shithead_push_token'); }
+  });
+
+  await test("Can't sign in? help: reset link, resend verification, Google tip and support", () => {
+    const panel = document.getElementById('authHelpPanel');
+    assertTrue(panel.classList.contains('hidden'), 'Folded away by default');
+    document.getElementById('authHelpToggle').click();
+    assertTrue(!panel.classList.contains('hidden'), 'Opens on tap');
+    const text = panel.textContent;
+    assertTrue(/reset link/.test(text) && /send it again/.test(text) && /Continue with Google/.test(text) && /7 days/.test(text) && /Contact support/.test(text), 'Covers every way back in');
+    document.getElementById('authHelpToggle').click();
   });
 
   await test('REGRESSION: Shop contains the lifetime 100-Diamond Name Change Token', () => {

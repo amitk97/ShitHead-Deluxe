@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v158 (ShitHead-Deluxe-140) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v159 (ShitHead-Deluxe-141) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -336,6 +336,21 @@
     .inbox-activity--rank .inbox-activity-accent { color:#c4b5fd; }
     .inbox-activity--shop { background:rgba(131,24,67,.24); border-color:rgba(244,114,182,.65); }
     .inbox-activity--shop .inbox-activity-accent { color:#f9a8d4; }
+    /* Account: Your data card, Can't sign in help. */
+    .acct-card { background:rgba(15,23,42,.6); border:1px solid #1e293b; border-radius:.75rem; padding:.7rem .75rem; display:flex; flex-direction:column; gap:.5rem; }
+    .acct-text { font-size:.64rem; line-height:1.45; color:#94a3b8; }
+    .acct-btn { width:100%; padding:.5rem; border-radius:.55rem; border:1px solid #38bdf8; color:#7dd3fc; font-size:.64rem; font-weight:900; letter-spacing:.08em; }
+    .acct-btn:hover { background:#0c4a6e; }
+    .acct-btn:disabled { opacity:.5; }
+    .acct-status { font-size:.6rem; font-weight:700; color:#7dd3fc; }
+    .acct-status.is-error { color:#fda4af; }
+    .auth-help-toggle { display:block; margin:.6rem auto 0; font-size:9px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:#64748b; text-decoration:underline dotted; text-underline-offset:3px; }
+    .auth-help-toggle:hover { color:#fbbf24; }
+    .auth-help { margin-top:.5rem; padding:.55rem .65rem; border-radius:.65rem; background:#020617; border:1px solid #1e293b; display:flex; flex-direction:column; gap:.4rem; }
+    .auth-help.hidden { display:none; }
+    .auth-help-item { font-size:10px; line-height:1.45; color:#94a3b8; }
+    .auth-help-item b { color:#e2e8f0; }
+    .auth-help-link { font:inherit; font-weight:800; color:#fbbf24; text-decoration:underline; padding:0; }
     /* Challenges header: Diamonds, completed count, Shop shortcut: one height. */
     /* Diamonds left, completed count dead centre, Shop right. */
     .ch-stat-bar { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; margin-top:8px; }
@@ -4931,6 +4946,14 @@ video {
         <button id="authToggleModeBtn" class="text-[9px] font-black uppercase tracking-wider text-slate-400 hover:text-amber-400 transition">Need an account? Sign Up</button>
         <button id="authForgotBtn" class="text-[9px] font-black uppercase tracking-wider text-slate-400 hover:text-amber-400 transition">Forgot?</button>
       </div>
+      <button id="authHelpToggle" type="button" class="auth-help-toggle" aria-expanded="false" aria-controls="authHelpPanel">Can't sign in?</button>
+      <div id="authHelpPanel" class="auth-help hidden">
+        <div class="auth-help-item"><b>Forgot your password?</b> Enter your email above, then tap <button type="button" class="auth-help-link" data-auth-help="reset">send a reset link</button>.</div>
+        <div class="auth-help-item"><b>Didn't get the verification email?</b> Check spam, or enter your email and password above and tap <button type="button" class="auth-help-link" data-auth-help="verify">send it again</button>.</div>
+        <div class="auth-help-item"><b>Signed up with Google?</b> Your account has no password: use <b>Continue with Google</b> with the same Google account.</div>
+        <div class="auth-help-item"><b>Deleted your account?</b> You can still sign in for 7 days afterwards and keep it.</div>
+        <div class="auth-help-item"><b>Still stuck?</b> <button type="button" class="auth-help-link" data-auth-help="support">Contact support</button> from the email you signed up with.</div>
+      </div>
     </div>
   </div>
 
@@ -5166,6 +5189,14 @@ video {
             </div>
           </div>
         </div>
+        <div id="profileDataSection" class="hidden">
+          <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Your data</span>
+          <div class="acct-card">
+            <p class="acct-text">Download a copy of everything ShitHead Deluxe stores about your account: profile, stats, match history, purchases and friends.</p>
+            <button id="downloadMyDataBtn" type="button" class="acct-btn">⬇ DOWNLOAD MY DATA</button>
+            <p id="downloadMyDataStatus" class="acct-status hidden"></p>
+          </div>
+        </div>
         <div id="profileDangerZone" class="hidden">
           <span class="block text-[9px] font-black uppercase tracking-widest text-rose-500 mb-1">Danger Zone</span>
           <div class="bg-rose-950/30 border border-rose-800 rounded-xl p-3">
@@ -5186,13 +5217,15 @@ video {
     <div class="w-full max-w-xs bg-slate-950 border-2 border-rose-600 rounded-2xl shadow-2xl p-4">
       <span class="block text-[11px] font-black uppercase tracking-widest text-rose-400 mb-2">Delete Account?</span>
       <div id="deleteStep1" class="space-y-2">
-        <p class="text-[10px] text-slate-300 leading-snug">This cannot be reversed. Deleting your account will remove:</p>
+        <p class="text-[10px] text-slate-300 leading-snug">Your account is hidden straight away and <b class="text-white">erased after 7 days</b>. Changed your mind? Sign back in before then and tap <b class="text-white">Keep my account</b>. After that it can't be undone. It removes:</p>
         <ul class="text-[9px] text-slate-400 leading-snug space-y-0.5 pl-2" style="list-style:none;">
           <li>&bull; Account sign-in</li>
           <li>&bull; Ranked rating &amp; stats</li>
           <li>&bull; Friends list</li>
+          <li>&bull; Diamonds, items and challenges</li>
           <li>&bull; Saved preferences</li>
         </ul>
+        <p class="text-[9px] text-slate-500 leading-snug">Want a copy first? Profile → Your data → Download my data.</p>
         <button id="deleteStep1ContinueBtn" class="w-full text-[10px] font-black py-2 rounded-lg border border-rose-600 text-rose-400 hover:bg-rose-600 hover:text-white transition mt-2">CONTINUE</button>
         <button id="deleteStep1CancelBtn" class="w-full text-[10px] font-black py-2 rounded-lg border border-slate-700 text-slate-300 hover:border-slate-500 transition">CANCEL</button>
       </div>
@@ -5204,7 +5237,7 @@ video {
         <p class="text-[10px] text-slate-300 leading-snug">Type <span class="font-black text-rose-400">DELETE</span> to confirm.</p>
         <input id="deleteConfirmInput" type="text" autocomplete="off" class="w-full bg-slate-950 border-2 border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-white outline-none focus:border-rose-500" />
         <p id="deleteAccountError" class="hidden text-[9px] font-bold text-rose-400"></p>
-        <button id="deleteFinalBtn" disabled class="w-full text-[10px] font-black py-2 rounded-lg border border-rose-600 text-rose-500 opacity-40 cursor-not-allowed transition mt-2">PERMANENTLY DELETE</button>
+        <button id="deleteFinalBtn" disabled class="w-full text-[10px] font-black py-2 rounded-lg border border-rose-600 text-rose-500 opacity-40 cursor-not-allowed transition mt-2">DELETE MY ACCOUNT</button>
         <button id="deleteStep2CancelBtn" class="w-full text-[10px] font-black py-2 rounded-lg border border-slate-700 text-slate-300 hover:border-slate-500 transition">CANCEL</button>
       </div>
     </div>
@@ -5733,6 +5766,18 @@ video {
       </div>
       <ul id="whatsNewList" class="whats-new-list"></ul>
       <button id="whatsNewCloseBtn" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Got It</button>
+    </div>
+  </div>
+  <div id="keepAccountModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur z-[95] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="keepAccountTitle">
+    <div class="bg-slate-900 border border-rose-500/60 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-3">
+      <div class="text-4xl" aria-hidden="true">🗑️</div>
+      <h2 id="keepAccountTitle" class="text-base font-black text-rose-300 uppercase tracking-wide">Your account is being deleted</h2>
+      <p id="keepAccountText" class="text-slate-300 text-xs leading-relaxed"></p>
+      <p id="keepAccountError" class="hidden text-[10px] font-bold text-rose-400"></p>
+      <div class="flex flex-col gap-2 pt-1">
+        <button id="keepAccountBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Keep my account</button>
+        <button id="keepAccountDeleteBtn" class="w-full py-1.5 text-[10px] font-bold text-slate-400 hover:text-rose-300 uppercase tracking-wider transition">Continue deleting (sign out)</button>
+      </div>
     </div>
   </div>
   <div id="referralWelcomeModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="referralWelcomeTitle">
@@ -6916,7 +6961,7 @@ video {
     ['matchStatsModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
-     'matchSummaryModal', 'errorReportsModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal'].forEach((id) => {
+     'matchSummaryModal', 'errorReportsModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal'].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.parentElement !== document.body) document.body.appendChild(el);
     });
@@ -16013,6 +16058,11 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v159: [
+        ['⬇', 'Profile → Your data → Download my data saves a copy of everything stored about your account.'],
+        ['🗑️', 'Deleting your account now works properly, and you have 7 days to change your mind: sign back in and tap Keep my account.'],
+        ['🔑', "Can't sign in? New help on the sign-in screen, including resending the verification email."]
+      ],
       v158: [
         ['📖', 'A shorter Guide: the note about the card-area labels is gone.']
       ],
@@ -19301,6 +19351,7 @@ video {
         statusSub.textContent = 'Signed in';
         actionBtn.textContent = 'SIGN OUT';
         dangerZone.classList.remove('hidden');
+        document.getElementById('profileDataSection')?.classList.remove('hidden');
         if (currentUser.email) {
           emailRow.classList.remove('hidden');
           document.getElementById('profileEmailText').textContent = currentUser.email;
@@ -19329,6 +19380,7 @@ video {
         emailRow.classList.add('hidden');
         pwRow.classList.add('hidden');
         dangerZone.classList.add('hidden');
+        document.getElementById('profileDataSection')?.classList.add('hidden');
       }
     }
     // Profile's Change Username row: SHOP (no token) / OWNED (token ready,
@@ -19408,6 +19460,89 @@ video {
       if (!window.__skipSignOutReload) setTimeout(() => location.reload(), 150);
     }
     function resetDailyStreakOnSignOut() { dailyStreakState = null; closeDailyReward(); refreshProfileStreak(); }
+    // Everything a signed-in session starts (see onAuthStateChanged).
+    function startSignedInSession(user) {
+      ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); if (!IS_DEV_TEST_PAGE) attemptMatchReconnect();
+      initChallengeEconomy().then(() => { claimDailyLoginReward(); sendSeasonalMail(); loadSeasonWins(); }); loadCosmeticCollection(user);
+      setTimeout(() => { if (currentUser && !devTestSuiteRunning) pruneOldRooms(); }, 15000);
+      setTimeout(() => { if (currentUser && !devTestSuiteRunning) { registerPushToken(); shareSeasonCalendarWithWorker(); } }, 4000);
+      // Preferences live under the account and do not depend on profile creation.
+      loadAccountSettings(user);
+    }
+
+    // ---- Account deletion (7-day recovery window) and Download my data ----
+    // The server does both (economy deleteAccount / accountData,
+    // functions/account.js): the phone can't delete users/{uid} itself.
+    function pendingAccountDeletion(user) {
+      if (typeof db === 'undefined' || !db || !firebaseAvailable || IS_DEV_TEST_PAGE) return Promise.resolve(null);
+      const read = db.ref(`users/${user.uid}/deletion`).once('value').then(snap => snap.val()).catch(() => null);
+      return Promise.race([read, new Promise(r => setTimeout(() => r(null), 4000))]);
+    }
+    const deletionDateText = (deletion) => new Date(Number(deletion.purgeAt) || Date.now()).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+    function showKeepAccount(deletion) {
+      document.getElementById('keepAccountText').innerHTML = `It will be erased for good on <b class="text-white">${escapeHtml(deletionDateText(deletion))}</b>. Keep it and everything is back as it was: Diamonds, items, friends and rating.`;
+      document.getElementById('keepAccountError').classList.add('hidden');
+      document.getElementById('keepAccountModal').classList.remove('hidden');
+    }
+    document.getElementById('keepAccountBtn').addEventListener('click', (e) => {
+      const btn = e.currentTarget, user = currentUser;
+      if (!user) return;
+      btn.disabled = true;
+      callEconomy('deleteAccount', { op: 'cancel' }).then(() => {
+        document.getElementById('keepAccountModal').classList.add('hidden');
+        startSignedInSession(user);
+        notifyBanner('Welcome back! Your account is safe.');
+      }).catch((err) => {
+        const el = document.getElementById('keepAccountError');
+        el.textContent = err.message; el.classList.remove('hidden');
+      }).finally(() => { btn.disabled = false; });
+    });
+    document.getElementById('keepAccountDeleteBtn').addEventListener('click', () => {
+      document.getElementById('keepAccountModal').classList.add('hidden');
+      performSignOut();
+    });
+    // Download my data: the server's copy plus this device's own saved bits
+    // (settings, local match history), as one JSON file.
+    function deviceDataForExport() {
+      const out = {};
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (!/^shithead_/.test(key) || /push_token/.test(key)) continue;
+          const raw = localStorage.getItem(key);
+          try { out[key] = JSON.parse(raw); } catch (e) { out[key] = raw; }
+        }
+      } catch (e) {}
+      return out;
+    }
+    async function downloadMyData() {
+      const btn = document.getElementById('downloadMyDataBtn');
+      const status = document.getElementById('downloadMyDataStatus');
+      if (!currentUser) return;
+      btn.disabled = true;
+      status.className = 'acct-status'; status.textContent = 'Gathering your data…';
+      try {
+        const data = await callEconomy('accountData');
+        data.thisDevice = deviceDataForExport();
+        const name = `shithead-data-${(data.account?.username || 'account').replace(/[^A-Za-z0-9_-]/g, '')}-${localDateKey()}.json`;
+        const file = new File([JSON.stringify(data, null, 2)], name, { type: 'application/json' });
+        let shared = false;
+        if (isIOSDevice() && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: 'My ShitHead data' }); shared = true; } catch (e) { if (e && e.name === 'AbortError') shared = true; }
+        }
+        if (!shared) {
+          const url = URL.createObjectURL(file);
+          const a = document.createElement('a');
+          a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+        }
+        status.textContent = `✓ Saved ${name}`;
+      } catch (e) {
+        status.className = 'acct-status is-error'; status.textContent = e.message;
+      } finally { btn.disabled = false; }
+    }
+    document.getElementById('downloadMyDataBtn').addEventListener('click', downloadMyData);
+
     function performSignOut() {
       // Still signed in here, so a Ranked search can take its ticket out of
       // the queue and this device can stop getting the account's alerts.
@@ -19486,31 +19621,6 @@ video {
       btn.classList.toggle('opacity-40', !match);
       btn.classList.toggle('cursor-not-allowed', !match);
     });
-    // Best-effort cleanup of the data this account can legally delete
-    // under ITSELF — security rules only permit self-writes to these
-    // paths. This deliberately does NOT reach into other users' records
-    // (e.g. this uid still sitting in a friend's own friends/{theirUid}
-    // list) — that needs elevated (Cloud Function) privilege this
-    // single-file client-side app does not and should not have. See the
-    // Stage 5 write-up for the full, honest picture of what a real
-    // backend would still need to finish.
-    function deleteOwnAccountData(uid) {
-      return db.ref(`users/${uid}/username`).once('value').then((usernameSnap) => {
-        const username = usernameSnap.val();
-        const updates = {
-          [`users/${uid}`]: null,
-          [`publicProfiles/${uid}`]: null,
-          [`friends/${uid}`]: null,
-          [`friendRequests/${uid}`]: null,
-          [`ignores/${uid}`]: null
-        };
-        if (typeof username === 'string' && username.trim()) {
-          updates[`leaderboard/${username.trim().toLowerCase()}`] = null;
-          updates[`usernames/${username.trim().toLowerCase()}`] = null;
-        }
-        return db.ref().update(updates);
-      });
-    }
     let deleteAccountInFlight = false;
     document.getElementById('deleteFinalBtn').addEventListener('click', () => {
       if (deleteAccountInFlight || !currentUser) return;
@@ -19521,33 +19631,20 @@ video {
       const isPasswordAccount = !!(currentUser.providerData && currentUser.providerData[0] && currentUser.providerData[0].providerId === 'password');
 
       const finishDeletion = () => {
-        // Auth deletion invalidates the session, so the DB cleanup (which
-        // needs a still-valid, authenticated session to pass security
-        // rules) must happen FIRST, not after. reauthenticate() just above
-        // this is what makes the *next* step count as "recent" without a
-        // page-navigating redirect.
-        deleteOwnAccountData(uid)
-          .then(() => currentUser.delete())
-          .then(() => {
+        // The server hides the account now and erases it after 7 days
+        // (economy deleteAccount; signing back in before then can keep it).
+        callEconomy('deleteAccount', { op: 'request' })
+          .then((res) => {
             deleteAccountInFlight = false;
             document.getElementById('deleteAccountModal').classList.add('hidden');
             document.getElementById('profileModal').classList.add('hidden');
-            notifyBanner('Your account has been deleted.');
+            notifyBanner(`Your account will be erased on ${deletionDateText(res.deletion)}. Sign in before then to keep it.`);
+            performSignOut();
           })
           .catch((e) => {
             deleteAccountInFlight = false;
-            if (e && e.code === 'auth/requires-recent-login') {
-              // Only realistically still reachable for a Google account,
-              // where reauth here would mean a page-navigating redirect —
-              // out of scope for this in-flow confirmation, so this is
-              // an honest fallback rather than a silent failure or a
-              // false success claim.
-              errEl.textContent = 'For security, please sign out, sign back in, and try deleting your account again.';
-              errEl.classList.remove('hidden');
-            } else {
-              errEl.textContent = 'Could not delete your account: ' + (e && e.message ? e.message : 'unknown error');
-              errEl.classList.remove('hidden');
-            }
+            errEl.textContent = e.message || 'Could not delete your account. Please try again.';
+            errEl.classList.remove('hidden');
           });
       };
 
@@ -19691,12 +19788,14 @@ video {
         syncNicknameFromAccount();
         refreshDifficultyLocks();
         if (user) {
-          ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); if (!IS_DEV_TEST_PAGE) attemptMatchReconnect();
-          initChallengeEconomy().then(() => { claimDailyLoginReward(); sendSeasonalMail(); loadSeasonWins(); }); loadCosmeticCollection(user);
-          setTimeout(() => { if (currentUser && !devTestSuiteRunning) pruneOldRooms(); }, 15000);
-          setTimeout(() => { if (currentUser && !devTestSuiteRunning) { registerPushToken(); shareSeasonCalendarWithWorker(); } }, 4000);
-          // Preferences live under the account and do not depend on profile creation.
-          loadAccountSettings(user);
+          // An account waiting to be deleted asks first ("Keep my account?"),
+          // so nothing public (profile, leaderboard, presence) comes back
+          // unless the player keeps it.
+          pendingAccountDeletion(user).then((deletion) => {
+            if (currentUser !== user) return;
+            if (deletion) showKeepAccount(deletion);
+            else startSignedInSession(user);
+          });
         } else {
           startInboxBadgeListener(null);
           document.getElementById('inboxBadge')?.classList.add('hidden');
@@ -19786,6 +19885,33 @@ video {
           .catch((e) => showAuthError(mapAuthError(e)));
       }
     });
+    // Can't sign in? Reset link, resend verification, Google tip, support.
+    document.getElementById('authHelpToggle').addEventListener('click', (e) => {
+      const panel = document.getElementById('authHelpPanel');
+      panel.classList.toggle('hidden');
+      e.currentTarget.setAttribute('aria-expanded', String(!panel.classList.contains('hidden')));
+    });
+    document.getElementById('authHelpPanel').addEventListener('click', (e) => {
+      const link = e.target.closest('[data-auth-help]');
+      if (!link) return;
+      const kind = link.dataset.authHelp;
+      if (kind === 'reset') { document.getElementById('authForgotBtn').click(); return; }
+      if (kind === 'support') { closeAuthModal(); openSupportPanel(); return; }
+      resendVerificationEmail();
+    });
+    function resendVerificationEmail() {
+      const email = document.getElementById('authEmailInput').value.trim();
+      const password = document.getElementById('authPasswordInput').value;
+      if (!email || !password) { showAuthError('Enter your email and password above first, then tap "send it again".'); return; }
+      clearAuthError();
+      auth.signInWithEmailAndPassword(email, password)
+        .then((cred) => {
+          if (cred.user.emailVerified) { closeAuthModal(); return; } // already verified: just signed in
+          return cred.user.sendEmailVerification().then(() => auth.signOut())
+            .then(() => showAuthMessage('Verification email sent again. Check your inbox (and spam), tap the link, then sign in.'));
+        })
+        .catch((e) => showAuthError(mapAuthError(e)));
+    }
     document.getElementById('authForgotBtn').addEventListener('click', () => {
       const email = document.getElementById('authEmailInput').value.trim();
       if (!email) { showAuthError('Enter your email above first, then tap Forgot.'); return; }
@@ -23637,7 +23763,7 @@ video {
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
-      needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', referralWelcomeModal: 'referralWelcomeCloseBtn', whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
+      needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', referralWelcomeModal: 'referralWelcomeCloseBtn', keepAccountModal: null, whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
       victoryOverlay: 'closeVictoryBtn', floatingJokerBar: null,
       followUpToastBanner: () => resolveFollowUpPlay(false)
     };
