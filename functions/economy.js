@@ -15,6 +15,7 @@
 //   matchWin      a Vs Bots or casual online win (caps: see MATCH_LIMITS)
 //   matchFinished a finished match (ShitHead Virgin / Beginner)
 //   rankedDeal    the server's seat order + shuffled deck for a Ranked match
+//   gauntlet      Vs Bots Gauntlet runs: start, each game's result, the reward
 //   rankedResult  score a finished Ranked room for every seat, once
 //   buyItem / buyBundle / buyNameToken / sendGift / claimGift
 'use strict';
@@ -474,6 +475,76 @@ actions.rankedDeal = async ({ uid, data }) => {
   }
   if (!deal) fail('resource-exhausted', refused ? 'This table was dealt a moment ago.' : 'Could not deal.');
   return { matchId: deal.matchId, order: deal.order, deck: deal.deck };
+};
+
+// Gauntlet: five 1-bot games in a row (CAT.gauntlet.rounds: easy, easy,
+// medium, hard, boss) with 3 lives. The server keeps the run (users/{uid}/
+// gauntlet, server-only) so lives and rounds can't be edited on the phone.
+// Completing it pays once per UK day: the first ever completion gives
+// firstReward + the earn-only picture and frame, later days dailyReward.
+// Gauntlet games never count towards difficulty unlocks (no matchWin).
+const GAUNTLET_MIN_GAME_MS = 30000; // a real game against a bot takes longer than this
+actions.gauntlet = async ({ uid, data }) => {
+  const G = CAT.gauntlet;
+  const op = data.op;
+  if (op !== 'start' && op !== 'result' && op !== 'status') fail('invalid-argument', 'Unknown Gauntlet step.');
+  const now = Date.now();
+  const today = ukDateKey(new Date(now));
+  const status = (g) => ({
+    run: g.run ? { id: g.run.id, round: num(g.run.round), lives: num(g.run.lives) } : null,
+    doneToday: g.doneDay === today, completions: num(g.completions), firstDone: !!g.firstDoneAt
+  });
+  if (op === 'status') {
+    const g = (await db().ref(`users/${uid}/gauntlet`).once('value')).val() || {};
+    return status(g);
+  }
+  const res = await userTx(uid, (user) => {
+    const g = user.gauntlet = user.gauntlet || {};
+    if (op === 'start') {
+      if (g.doneDay === today) return { error: "You've already beaten the Gauntlet today. Come back tomorrow!" };
+      g.run = { id: `g${now.toString(36)}${nodeCrypto.randomInt(1e9).toString(36)}`, round: 0, lives: G.lives, startedAt: now, lastAt: now };
+      return { user };
+    }
+    const run = g.run;
+    if (!run || run.id !== clip(data.runId, 40)) return { error: 'That Gauntlet run has ended.' };
+    const won = data.won === true;
+    if (won && now - num(run.lastAt) < GAUNTLET_MIN_GAME_MS) return { error: 'That game was too quick to count.' };
+    run.lastAt = now;
+    if (!won) {
+      run.lives = num(run.lives) - 1;
+      if (run.lives <= 0) { g.run = null; g.failed = num(g.failed) + 1; return { user, over: true }; }
+      return { user };
+    }
+    run.round = num(run.round) + 1;
+    if (run.round < G.rounds.length) return { user };
+    // Beaten: once a day.
+    g.run = null;
+    g.doneDay = today;
+    g.completions = num(g.completions) + 1;
+    const first = !g.firstDoneAt;
+    const amount = first ? num(G.firstReward) : num(G.dailyReward);
+    addDiamonds(user, amount);
+    const newItems = [];
+    user.activityInbox = user.activityInbox || {};
+    if (first) {
+      g.firstDoneAt = now;
+      user.ownedCosmetics = user.ownedCosmetics || {};
+      [[G.picture, G.pictureName], [G.frame, G.frameName]].forEach(([id, name]) => {
+        if (!user.ownedCosmetics[id]) {
+          user.ownedCosmetics[id] = { cost: 0, purchasedAt: now };
+          user.activityInbox[`unlock_${id}`] = { type: 'shop', unlocked: true, name, cost: 0, requirement: 'Beat the Gauntlet', sentAt: now };
+          newItems.push({ id, name });
+        }
+      });
+    }
+    user.challengeInbox = user.challengeInbox || {};
+    user.challengeInbox[`gauntlet_${today}`] = { name: first ? 'Gauntlet beaten (first time!)' : 'Gauntlet beaten', reward: amount, completedAt: now };
+    return { user, completed: true, amount, first, newItems };
+  });
+  return {
+    ...status(res.user.gauntlet || {}), over: !!res.over, completed: !!res.completed,
+    diamondsAwarded: num(res.amount), first: !!res.first, newItems: res.newItems || [], diamonds: num(res.user.diamonds)
+  };
 };
 
 actions.rankedResult = async ({ uid, data }) => {

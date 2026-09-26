@@ -1153,6 +1153,22 @@
    "requireWins": 10
   }
  ],
+ "gauntlet": {
+  "rounds": [
+   "easy",
+   "easy",
+   "medium",
+   "hard",
+   "boss"
+  ],
+  "lives": 3,
+  "firstReward": 200,
+  "dailyReward": 50,
+  "picture": "avatar-gauntlet",
+  "pictureName": "Gauntlet Champion",
+  "frame": "frame-gauntlet",
+  "frameName": "Gauntlet Gold"
+ },
  "rankTiers": [
   {
    "name": "Master",

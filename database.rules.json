@@ -53,6 +53,7 @@
               (newData.val() === 'frame-silver' || newData.val() === 'frame-gold' ||
               newData.val() === 'frame-diamond' || newData.val() === 'frame-obsidian-throne' ||
               newData.val() === 'frame-emerald-sovereign' || newData.val() === 'frame-darkness' ||
+              newData.val() === 'frame-gauntlet' ||
               (newData.val().matches(/^frame-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^frame-(halloween|diwali|christmas|newyear)$/)))))"
           },
@@ -123,7 +124,7 @@
               newData.val() === 'avatar-joker-card' || newData.val() === 'avatar-crown-silver' ||
               newData.val() === 'avatar-crown-gold' || newData.val() === 'avatar-crown-diamond' ||
               newData.val() === 'avatar-crown-master' || newData.val() === 'avatar-centurion' ||
-              newData.val() === 'avatar-shithead' ||
+              newData.val() === 'avatar-shithead' || newData.val() === 'avatar-gauntlet' ||
               (newData.val().matches(/^avatar-(lunar|valentine|ramadan|easter|summer)(-earned)?$/) ||
               newData.val().matches(/^avatar-(halloween|diwali|christmas|newyear)(-earned)?$/)))))"
           },
@@ -200,6 +201,9 @@
           ".validate": "newData.hasChildren()"
         },
         "matchCounters": {
+          ".validate": "newData.hasChildren()"
+        },
+        "gauntlet": {
           ".validate": "newData.hasChildren()"
         },
         "lastRankedOpponent": {

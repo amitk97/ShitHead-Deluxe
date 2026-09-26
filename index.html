@@ -19220,6 +19220,16 @@ video {
     // and charges by. functions/catalog.json is this, exported by
     // tools/export-catalog.js; a dev test fails if the two drift apart, so
     // after changing any price, reward or challenge, re-run the exporter.
+    // Gauntlet (Vs Bots): 5 one-bot games in a row, 3 lives. Rewards are paid
+    // by the server (economy gauntlet) from these values (catalog export).
+    const GAUNTLET = {
+      rounds: ['easy', 'easy', 'medium', 'hard', 'boss'],
+      lives: 3,
+      firstReward: 200,
+      dailyReward: 50,
+      picture: 'avatar-gauntlet', pictureName: 'Gauntlet Champion',
+      frame: 'frame-gauntlet', frameName: 'Gauntlet Gold'
+    };
     const EARNED_AVATAR_RULES = {
       'avatar-crown-silver': { type: 'peakRating', min: 1000 },
       'avatar-crown-gold': { type: 'peakRating', min: 1500 },
@@ -19251,6 +19261,7 @@ video {
         gettingStarted: GETTING_STARTED_CHALLENGES.map(c => ({ id: c.id, name: c.name, reward: c.reward })),
         challengeDefs: JSON.parse(JSON.stringify(CHALLENGE_DEFS)),
         difficultyUnlocks: DIFF_UNLOCK_RULES,
+        gauntlet: JSON.parse(JSON.stringify(GAUNTLET)),
         rankTiers: [['Master', 2000], ['Platinum', 1800], ['Gold', 1500], ['Silver', 1000], ['Bronze', 500], ['Novice', 0]].map(([name, min]) => {
           if (getRankTier(min).name !== name) throw new Error(`Rank tier table out of date at ${name}`);
           return { name, min };

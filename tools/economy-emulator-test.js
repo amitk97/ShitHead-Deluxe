@@ -275,6 +275,47 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   await denied('extra health fields', db => set(ref(db, 'health/2026-09-25/sabc6666'), { ...hrec, diamonds: 5 }));
   await denied('read health records', db => get(ref(db, 'health')));
 
+  // Gauntlet: 5 one-bot games, 3 lives, once a day
+  await call('dave', { action: 'init' });
+  const backdate = () => admin('users/dave/gauntlet/run/lastAt', 'PUT', Date.now() - 31000);
+  let g = await call('dave', { action: 'gauntlet', op: 'start' });
+  ok(g.run && g.run.round === 0 && g.run.lives === 3, 'Gauntlet run starts with 3 lives', g);
+  const runId = g.run.id;
+  r = await call('dave', { action: 'gauntlet', op: 'result', runId, won: true });
+  ok(r.error, 'a win straight after the start is too quick to count', r);
+  r = await call('dave', { action: 'gauntlet', op: 'result', runId: 'gnope', won: false });
+  ok(r.error, 'a result for another run is refused', r);
+  r = await call('dave', { action: 'gauntlet', op: 'result', runId, won: false });
+  ok(r.run && r.run.lives === 2 && r.run.round === 0 && !r.over, 'a loss costs a life, same bot again', r);
+  for (let i = 0; i < 4; i++) { await backdate(); r = await call('dave', { action: 'gauntlet', op: 'result', runId, won: true }); }
+  ok(r.run && r.run.round === 4 && !r.completed, 'four wins reach the boss', r);
+  await backdate();
+  r = await call('dave', { action: 'gauntlet', op: 'result', runId, won: true });
+  ok(r.completed && r.first && r.diamondsAwarded === 200 && r.diamonds === 200 && r.newItems.length === 2 && !r.run, 'beating the boss the first time pays 200 + picture + frame', r);
+  const gOwned = await admin('users/dave/ownedCosmetics');
+  ok(gOwned && gOwned['avatar-gauntlet'] && gOwned['frame-gauntlet'], 'Gauntlet picture and frame owned', gOwned);
+  ok(await admin(`users/dave/challengeInbox`) !== null, 'Gauntlet mail sent');
+  r = await call('dave', { action: 'gauntlet', op: 'start' });
+  ok(r.error, 'only once a day', r);
+  g = await call('dave', { action: 'gauntlet', op: 'status' });
+  ok(g.doneToday && g.completions === 1 && g.firstDone && !g.run, 'status shows today done', g);
+  const daveCan = async (label, fn) => { const out = await tryWrite('dave', fn); ok(out === 'ok', `allowed: ${label}`, out); };
+  await daveCan('equip the Gauntlet frame', db => set(ref(db, 'users/dave/equippedCosmetics/frame'), 'frame-gauntlet'));
+  await daveCan('equip the Gauntlet picture', db => set(ref(db, 'users/dave/equippedCosmetics/avatar'), 'avatar-gauntlet'));
+  await denied('equip the Gauntlet frame without it', db => set(ref(db, 'users/alice/equippedCosmetics/frame'), 'frame-gauntlet'));
+  ok((await tryWrite('dave', db => set(ref(db, 'users/dave/gauntlet/doneDay'), 'x'))) === 'denied', 'blocked: write your own Gauntlet record');
+  // Next day: 50 Diamonds, no second copy of the items
+  await admin('users/dave/gauntlet/doneDay', 'PUT', '2000-01-01');
+  g = await call('dave', { action: 'gauntlet', op: 'start' });
+  for (let i = 0; i < 5; i++) { await backdate(); r = await call('dave', { action: 'gauntlet', op: 'result', runId: g.run.id, won: true }); }
+  ok(r.completed && !r.first && r.diamondsAwarded === 50 && r.diamonds === 250 && r.newItems.length === 0, 'a later day pays 50', r);
+  // Three losses end the run
+  await admin('users/dave/gauntlet/doneDay', 'PUT', '2000-01-01');
+  g = await call('dave', { action: 'gauntlet', op: 'start' });
+  for (let i = 0; i < 3; i++) r = await call('dave', { action: 'gauntlet', op: 'result', runId: g.run.id, won: false });
+  ok(r.over && !r.run, 'losing all 3 lives ends the run', r);
+  ok((await admin('users/dave/difficultyWins')) === null, 'Gauntlet wins never count toward difficulty unlocks');
+
   console.log(`\n${pass} passed, ${failN} failed`);
   process.exit(failN ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });
