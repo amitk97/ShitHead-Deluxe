@@ -278,19 +278,30 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   // Gauntlet: 5 one-bot games, 3 lives, once a day
   await call('dave', { action: 'init' });
   const backdate = () => admin('users/dave/gauntlet/run/lastAt', 'PUT', Date.now() - 31000);
+  const gGame = async (runId, won, begin = true) => {
+    if (begin) await call('dave', { action: 'gauntlet', op: 'begin', runId });
+    if (won) await backdate();
+    return call('dave', { action: 'gauntlet', op: 'result', runId, won });
+  };
   let g = await call('dave', { action: 'gauntlet', op: 'start' });
-  ok(g.run && g.run.round === 0 && g.run.lives === 3, 'Gauntlet run starts with 3 lives', g);
+  ok(g.run && g.run.round === 0 && g.run.lives === 3 && g.run.playing, 'Gauntlet run starts with 3 lives, first game on', g);
   const runId = g.run.id;
   r = await call('dave', { action: 'gauntlet', op: 'result', runId, won: true });
   ok(r.error, 'a win straight after the start is too quick to count', r);
   r = await call('dave', { action: 'gauntlet', op: 'result', runId: 'gnope', won: false });
   ok(r.error, 'a result for another run is refused', r);
-  r = await call('dave', { action: 'gauntlet', op: 'result', runId, won: false });
+  r = await gGame(runId, false, false);
   ok(r.run && r.run.lives === 2 && r.run.round === 0 && !r.over, 'a loss costs a life, same bot again', r);
-  for (let i = 0; i < 4; i++) { await backdate(); r = await call('dave', { action: 'gauntlet', op: 'result', runId, won: true }); }
-  ok(r.run && r.run.round === 4 && !r.completed, 'four wins reach the boss', r);
+  r = await call('dave', { action: 'gauntlet', op: 'result', runId, won: false });
+  ok(r.error, 'no result without a game in progress', r);
+  await call('dave', { action: 'gauntlet', op: 'begin', runId });
+  r = await call('dave', { action: 'gauntlet', op: 'begin', runId });
+  ok(r.forfeited && r.run && r.run.lives === 1 && r.run.playing, 'leaving a game half-way costs a life', r);
   await backdate();
   r = await call('dave', { action: 'gauntlet', op: 'result', runId, won: true });
+  for (let i = 0; i < 3; i++) r = await gGame(runId, true);
+  ok(r.run && r.run.round === 4 && r.run.lives === 1 && !r.completed, 'four wins reach the boss', r);
+  r = await gGame(runId, true);
   ok(r.completed && r.first && r.diamondsAwarded === 200 && r.diamonds === 200 && r.newItems.length === 2 && !r.run, 'beating the boss the first time pays 200 + picture + frame', r);
   const gOwned = await admin('users/dave/ownedCosmetics');
   ok(gOwned && gOwned['avatar-gauntlet'] && gOwned['frame-gauntlet'], 'Gauntlet picture and frame owned', gOwned);
@@ -304,15 +315,19 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   await daveCan('equip the Gauntlet picture', db => set(ref(db, 'users/dave/equippedCosmetics/avatar'), 'avatar-gauntlet'));
   await denied('equip the Gauntlet frame without it', db => set(ref(db, 'users/alice/equippedCosmetics/frame'), 'frame-gauntlet'));
   ok((await tryWrite('dave', db => set(ref(db, 'users/dave/gauntlet/doneDay'), 'x'))) === 'denied', 'blocked: write your own Gauntlet record');
+  r = await call('alice', { action: 'buyItem', itemId: 'frame-gauntlet' });
+  ok(r.error, 'the Gauntlet frame is not for sale', r);
   // Next day: 50 Diamonds, no second copy of the items
   await admin('users/dave/gauntlet/doneDay', 'PUT', '2000-01-01');
   g = await call('dave', { action: 'gauntlet', op: 'start' });
-  for (let i = 0; i < 5; i++) { await backdate(); r = await call('dave', { action: 'gauntlet', op: 'result', runId: g.run.id, won: true }); }
+  r = await gGame(g.run.id, true, false);
+  for (let i = 0; i < 4; i++) r = await gGame(g.run.id, true);
   ok(r.completed && !r.first && r.diamondsAwarded === 50 && r.diamonds === 250 && r.newItems.length === 0, 'a later day pays 50', r);
   // Three losses end the run
   await admin('users/dave/gauntlet/doneDay', 'PUT', '2000-01-01');
   g = await call('dave', { action: 'gauntlet', op: 'start' });
-  for (let i = 0; i < 3; i++) r = await call('dave', { action: 'gauntlet', op: 'result', runId: g.run.id, won: false });
+  r = await gGame(g.run.id, false, false);
+  for (let i = 0; i < 2; i++) r = await gGame(g.run.id, false);
   ok(r.over && !r.run, 'losing all 3 lives ends the run', r);
   ok((await admin('users/dave/difficultyWins')) === null, 'Gauntlet wins never count toward difficulty unlocks');
 

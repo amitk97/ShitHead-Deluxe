@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-25-v146 (ShitHead-Deluxe-128) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v147 (ShitHead-Deluxe-129) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -831,6 +831,11 @@
       box-shadow:inset 0 0 0 1px #d1fae5,inset 0 0 0 2px #34d399,0 0 9px rgba(16,185,129,.68),0 3px 8px rgba(0,0,0,.55) !important;
     }
 
+    /* Gauntlet Gold (earn-only): a hammered gold edge with a bronze inner rim. */
+    body[data-equipped-frame="frame-gauntlet"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) {
+      border-color:#f59e0b !important;
+      box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #b45309,0 0 10px rgba(245,158,11,.7),0 3px 8px rgba(0,0,0,.55) !important;
+    }
     /* Darkness: a matt, true-black edge with no glow at all. */
     body[data-equipped-frame="frame-darkness"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) {
       border-color:#000 !important; box-shadow:inset 0 0 0 3px #000 !important;
@@ -1577,6 +1582,72 @@
     /* Vs Bots lobby: bot count + difficulty share rows so both button rows centre on each other. */
     .bot-setup-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: .75rem; align-items: center; }
     .bot-setup-grid > label { align-self: end; }
+    /* Gauntlet: lobby button + ⓘ, hearts on the table, the run pop-up. */
+    .gauntlet-row { display:flex; align-items:center; gap:.4rem; margin-top:.45rem; }
+    .gauntlet-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:.35rem; padding:.42rem .5rem; border-radius:.5rem;
+      border:2px solid #b45309; background:linear-gradient(135deg,#431407,#7c2d12 55%,#431407); color:#fde68a; font-weight:900; font-size:.72rem;
+      letter-spacing:.14em; box-shadow:0 0 10px rgba(245,158,11,.22), inset 0 1px 0 rgba(253,230,138,.25); cursor:pointer;
+      transition:transform .12s var(--ease-snappy), border-color .15s, box-shadow .15s; }
+    .gauntlet-btn:hover { border-color:#f59e0b; box-shadow:0 0 14px rgba(245,158,11,.4), inset 0 1px 0 rgba(253,230,138,.3); }
+    .gauntlet-btn:active { transform:scale(.95); }
+    .gauntlet-btn svg { width:15px; height:15px; flex:none; }
+    .gauntlet-info { position:relative; flex:none; width:22px; height:22px; border-radius:50%; border:1.5px solid #64748b; background:#0f172a;
+      color:#cbd5e1; font:italic 900 12px/19px Georgia,'Times New Roman',serif; text-align:center; cursor:help; user-select:none; }
+    .gauntlet-info:hover, .gauntlet-info:focus-visible, .gauntlet-info.open { border-color:#f59e0b; color:#fde68a; outline:none; }
+    .gauntlet-tip { position:absolute; bottom:calc(100% + 9px); left:50%; width:min(236px, 72vw); transform:translate(-50%, 4px); z-index:40;
+      padding:.6rem .7rem; border-radius:.75rem; background:#0b1120; border:1px solid rgba(245,158,11,.6); box-shadow:0 10px 24px rgba(0,0,0,.6);
+      color:#e2e8f0; font:600 11px/1.45 system-ui,-apple-system,'Segoe UI',sans-serif; font-style:normal; text-align:left; letter-spacing:0;
+      opacity:0; visibility:hidden; pointer-events:none; transition:opacity .15s var(--ease-soft), transform .15s var(--ease-soft), visibility 0s .15s; }
+    .gauntlet-tip b { display:block; color:#fbbf24; font-weight:900; font-size:11px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:.15rem; }
+    .gauntlet-tip::after { content:''; position:absolute; top:100%; left:50%; margin-left:-6px; border:6px solid transparent; border-top-color:rgba(245,158,11,.6); }
+    .gauntlet-info:hover .gauntlet-tip, .gauntlet-info:focus-visible .gauntlet-tip, .gauntlet-info.open .gauntlet-tip {
+      opacity:1; visibility:visible; transform:translate(-50%, 0); transition:opacity .15s var(--ease-soft), transform .15s var(--ease-soft); }
+    .gauntlet-hud { position:absolute; top:8px; left:6px; z-index:30; display:flex; flex-direction:column; align-items:center; gap:3px;
+      padding:6px 4px 5px; border-radius:12px; background:rgba(2,6,23,.82); border:1px solid rgba(245,158,11,.55);
+      box-shadow:0 4px 12px rgba(0,0,0,.45); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); pointer-events:none; }
+    .gauntlet-hud .gh-hearts, .gauntlet-card .gh-hearts { display:flex; gap:3px; }
+    .gauntlet-hud .gh-hearts { flex-direction:column; }
+    .gh-heart { width:18px; height:18px; display:block; }
+    .gh-heart path { fill:#ef4444; stroke:#fecaca; stroke-width:1.4; transition:fill .3s var(--ease-soft); }
+    .gh-heart.is-empty path { fill:transparent; stroke:#f87171; stroke-width:2; }
+    .gh-heart.gh-lost { animation:gh-lose .7s var(--ease-bouncy); }
+    @keyframes gh-lose { 0% { transform:scale(1); } 30% { transform:scale(1.45) rotate(-8deg); } 60% { transform:scale(.85) rotate(6deg); } 100% { transform:scale(1); } }
+    .gh-round { display:flex; flex-direction:column; align-items:center; font:900 7px/1.15 system-ui,-apple-system,sans-serif; letter-spacing:.06em;
+      color:#94a3b8; text-transform:uppercase; white-space:nowrap; }
+    .gh-round b { font-size:10px; color:#fbbf24; letter-spacing:.02em; }
+    .gauntlet-card { position:relative; width:100%; max-width:24rem; padding:1.4rem 1.2rem 1.1rem; border-radius:1.25rem; text-align:center;
+      background:radial-gradient(ellipse at 50% 0%, rgba(180,83,9,.35), transparent 60%), #0f172a; border:1.5px solid rgba(245,158,11,.6);
+      box-shadow:0 0 30px rgba(245,158,11,.18), 0 20px 50px rgba(0,0,0,.6); color:#e2e8f0; }
+    .gauntlet-close { position:absolute; top:.55rem; right:.7rem; width:30px; height:30px; border-radius:50%; color:#94a3b8; font-weight:900; font-size:14px; }
+    .gauntlet-close:hover { color:#fff; background:rgba(148,163,184,.15); }
+    .gauntlet-emblem { font-size:2.4rem; line-height:1; margin-bottom:.35rem; }
+    .gauntlet-title { font-size:1.05rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:#fbbf24; }
+    .gauntlet-text { margin:.5rem 0 0; font-size:.78rem; line-height:1.5; color:#cbd5e1; }
+    .gauntlet-card .gh-hearts { justify-content:center; margin:.7rem 0 .2rem; gap:6px; }
+    .gauntlet-card .gh-heart { width:30px; height:30px; }
+    .gauntlet-track { display:flex; justify-content:center; gap:.3rem; margin:.75rem 0 .2rem; }
+    .gauntlet-step { flex:1; max-width:4.1rem; padding:.3rem .1rem; border-radius:.55rem; border:1.5px solid #334155; background:#0b1120;
+      font-size:.55rem; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:#64748b; }
+    .gauntlet-step b { display:block; font-size:.85rem; line-height:1.1; color:#94a3b8; }
+    .gauntlet-step.is-done { border-color:#b45309; background:rgba(180,83,9,.2); color:#fbbf24; }
+    .gauntlet-step.is-done b { color:#fde68a; }
+    .gauntlet-step.is-now { border-color:#f59e0b; color:#fde68a; box-shadow:0 0 10px rgba(245,158,11,.45); }
+    .gauntlet-step.is-now b { color:#fff; }
+    .gauntlet-step.is-boss b { color:#f87171; }
+    .gauntlet-reward { margin:.8rem 0 0; padding:.55rem .7rem; border-radius:.75rem; background:rgba(2,6,23,.6); border:1px solid #1e293b;
+      font-size:.72rem; line-height:1.45; color:#cbd5e1; }
+    .gauntlet-reward b { color:#fbbf24; }
+    .gauntlet-items { display:flex; justify-content:center; gap:1rem; margin-top:.55rem; }
+    .gauntlet-items figure { margin:0; display:flex; flex-direction:column; align-items:center; gap:.25rem; font-size:.6rem; font-weight:800; color:#fde68a; }
+    .gauntlet-note { margin-top:.55rem; font-size:.62rem; color:#94a3b8; }
+    .gauntlet-actions { display:flex; flex-direction:column; gap:.45rem; margin-top:1rem; }
+    .gauntlet-go { width:100%; padding:.7rem; border-radius:.8rem; font-weight:900; font-size:.8rem; letter-spacing:.12em; color:#1c1917;
+      background:linear-gradient(180deg,#fcd34d,#f59e0b); box-shadow:0 4px 14px rgba(245,158,11,.35); transition:transform .12s var(--ease-snappy); }
+    .gauntlet-go:active { transform:scale(.96); }
+    .gauntlet-go:disabled { background:#334155; color:#94a3b8; box-shadow:none; }
+    .gauntlet-alt { width:100%; padding:.4rem; font-size:.65rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#94a3b8; }
+    .gauntlet-alt:hover { color:#e2e8f0; }
+    body.reduce-motion .gh-heart.gh-lost { animation:none; }
 </style>
 
   
@@ -4316,7 +4387,11 @@ video {
                    against, so every difficulty just stays open for guest
                    play exactly as it always has — this is additive for
                    signed-in players, not a restriction on anyone else. -->
-              <div class="bot-setup-spacer"></div>
+              <!-- Gauntlet: under the bot count, level with the unlock bar. -->
+              <div class="gauntlet-row">
+                <button type="button" id="gauntletBtn" class="gauntlet-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg><span>GAUNTLET</span></button>
+                <span class="gauntlet-info" id="gauntletInfo" tabindex="0" role="button" aria-label="What is the Gauntlet?" aria-describedby="gauntletTip">i<span class="gauntlet-tip" id="gauntletTip" role="tooltip"><b>The Gauntlet</b>Take on 5 bots in a row: Easy, Easy, Medium, Hard, then the Boss. You have 3 lives. Can you reach the end before they run out?</span></span>
+              </div>
               <div id="difficultyProgressWrap" class="hidden mt-1.5 px-1">
                 <div class="flex items-center justify-between text-[8px] font-bold text-slate-400 mb-0.5">
                   <span id="difficultyProgressLabel">Win 3 Easy games to unlock Medium</span>
@@ -5330,6 +5405,7 @@ video {
     </div>
 
     <!-- ZONE 1: OPPONENTS (TOP TIER: MAX 17VH) -->
+    <div id="gauntletHud" class="gauntlet-hud hidden" role="status" aria-live="polite"></div>
     <div id="opponentsContainer" class="w-full flex justify-center items-start gap-1.5 md:gap-6 min-h-[58px] shrink-0 z-10 px-2" style="overflow:visible;padding-top:8px;padding-bottom:8px"></div>
 
     <!-- ZONE 2: CENTER ARENA (MIDDLE TIER: MAX 30VH) -->
@@ -5568,6 +5644,12 @@ video {
       </div>
       <ul id="whatsNewList" class="whats-new-list"></ul>
       <button id="whatsNewCloseBtn" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Got It</button>
+    </div>
+  </div>
+  <div id="gauntletModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="gauntletTitle">
+    <div class="gauntlet-card">
+      <button type="button" id="gauntletCloseBtn" class="gauntlet-close" aria-label="Close">✕</button>
+      <div id="gauntletModalBody"></div>
     </div>
   </div>
   <div id="rejoinModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4">
@@ -6703,6 +6785,7 @@ video {
     //   § Bot AI
     //   § Match flow: start, play, pick up, burn
     //   § Match end, victory and standings
+    //   § Gauntlet: five one-bot games in a row with three lives
     //   § Turn loop
     //   § Rendering: cards
     //   § Rendering: the table
@@ -6733,7 +6816,7 @@ video {
     ['matchStatsModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
-     'matchSummaryModal', 'errorReportsModal', 'rejoinModal', 'whatsNewModal'].forEach((id) => {
+     'matchSummaryModal', 'errorReportsModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal'].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.parentElement !== document.body) document.body.appendChild(el);
     });
@@ -7240,6 +7323,7 @@ video {
         }
         const stateToSave = {
           difficulty: state.difficulty,
+          gauntlet: state.gauntlet || null,
           speedIndex: state.speedIndex,
           turnDelay: state.turnDelay,
           deckTheme: state.deckTheme,
@@ -7860,7 +7944,7 @@ video {
       }, shuffleMs);
     }
 
-    function startSinglePlayerGame(botCount, reuseBotNames) {
+    function startSinglePlayerGame(botCount, reuseBotNames, opts = {}) {
       if (state.botActionTimer) clearTimeout(state.botActionTimer);
       localStorage.removeItem('shithead_game_state');
       // A new match starting is the one moment that must never coexist with
@@ -7875,6 +7959,7 @@ video {
       
       state.isMultiplayer = false;
       state.isRanked = false;
+      state.gauntlet = opts.gauntlet ? { ...opts.gauntlet } : null; // § Gauntlet
       state.rankedRatingApplied = false;
       state.rankedAutoStarted = false;
       state.matchId = generateMatchId();
@@ -7906,7 +7991,9 @@ video {
       // so this is the one other piece needed for "same bots, same
       // difficulty" on repeat.
       let rawPicked;
-      if (reuseBotNames && reuseBotNames.length === botCount) {
+      if (state.gauntlet && state.gauntlet.bot) {
+        rawPicked = [state.gauntlet.bot.name];
+      } else if (reuseBotNames && reuseBotNames.length === botCount) {
         rawPicked = reuseBotNames.slice();
       } else {
         rawPicked = shuffle([...BOT_NAMES]).slice(0, botCount);
@@ -7922,7 +8009,8 @@ video {
           id: `p_bot_${i+1}`,
           name: name,
           isBot: true,
-          avatar: pickBotAvatar(state.players),
+          ...(state.gauntlet ? { difficulty: GAUNTLET.rounds[state.gauntlet.round] || 'boss' } : {}),
+          avatar: state.gauntlet?.bot?.avatar || pickBotAvatar(state.players),
           hand: [],
           faceUp: [],
           faceDown: [],
@@ -7937,6 +8025,7 @@ video {
       // browser session (bots don't get the same continuity since the bot
       // roster is reshuffled from BOT_NAMES every game — there's no
       // consistent "same bot" to attribute a running total to).
+      if (state.gauntlet) state.gauntlet.bot = { name: state.players[1].name, avatar: state.players[1].avatar };
       state.players.forEach(p => {
         p.gameStats = freshStatsScope();
         p.lobbyStats = (p.id === 'p_user' ? prevHumanLobbyStats : null) || freshStatsScope();
@@ -7965,7 +8054,9 @@ video {
 
       saveGameState();
       render();
-      notifyBanner("Swap Phase: Choose your 3 Face-Up cards!");
+      notifyBanner(state.gauntlet
+        ? `⚔️ Gauntlet round ${state.gauntlet.round + 1}/${GAUNTLET.rounds.length}: ${gauntletRoundLabel(state.gauntlet.round)} bot. Choose your 3 Face-Up cards!`
+        : "Swap Phase: Choose your 3 Face-Up cards!");
     }
 
     // § Match flow: start, play, pick up, burn
@@ -9287,7 +9378,8 @@ video {
           // `matchWin`), which pays Vs Bots Diamonds, counts difficulty
           // unlocks and seasonal wins. Ranked is scored from the room
           // instead (applyRankedRatingUpdate). Never in the tutorial.
-          if (player.id === state.localPlayerId && !state.isRanked && !(typeof tutorialActive !== 'undefined' && tutorialActive)) {
+          // Gauntlet games report to the Gauntlet instead (gauntletMatchEnded).
+          if (player.id === state.localPlayerId && !state.isRanked && !(!state.isMultiplayer && state.gauntlet) && !(typeof tutorialActive !== 'undefined' && tutorialActive)) {
             reportMatchWin();
           }
           // Challenges: 1st-place-only events. Ending Card challenges are
@@ -9612,7 +9704,9 @@ video {
       // opponent's own "FINISHED #N" tag and your own table area, so
       // there's no single glance that shows the whole result.
       renderFinalStandings();
-      scheduleMatchSummary();
+      const gauntletGame = !state.isMultiplayer && !!state.gauntlet;
+      if (gauntletGame) gauntletMatchEnded(); // its own pop-up instead of the summary
+      else scheduleMatchSummary();
 
       quickPlayBtn.classList.remove('hidden');
       if (state.isRanked) {
@@ -9643,6 +9737,7 @@ video {
         // "start again" for that mode, so Back to Lobby never applies there.
         backToLobbyBtn.innerHTML = '<svg class="match-end-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-lobby"/></svg><span>BACK TO<br>LOBBY</span>';
         backToLobbyBtn.classList.toggle('hidden', !state.isMultiplayer);
+        if (gauntletGame) updateGauntletEndButton();
       }
 
       render();
@@ -10927,6 +11022,299 @@ video {
         notifyBanner(isSelf ? "⏱️ Time's up! Auto-picking up the pile..." : `⏱️ Auto-picking up the pile for ${player.name}...`);
         executePickup(player.id);
       }
+    }
+
+    // § Gauntlet: five one-bot games in a row with three lives
+    // Easy, Easy, Medium, Hard, Boss (GAUNTLET.rounds). A win moves to the
+    // next bot, a loss costs a life and replays the same bot. Signed in, the
+    // server keeps the run and pays (economy `gauntlet`: start → result →
+    // begin → result …; a game begun and never reported costs a life, so
+    // leaving a losing game doesn't save one). Signed out or offline the run
+    // is kept on this device, with no rewards. Gauntlet games never report a
+    // normal win: no Vs Bots Diamonds, difficulty unlocks or seasonal wins.
+    // state.gauntlet = { runId, round, lives, local, ended? } during a run.
+    const GAUNTLET_LOCAL_KEY = 'shithead_gauntlet_local';
+    const GAUNTLET_LABELS = { easy: 'Easy', medium: 'Medium', hard: 'Hard', boss: 'Boss' };
+    const GAUNTLET_HEART = '<path d="M12 20.5S3.2 15 2.3 9.4C1.7 5.9 4 3.5 7 3.5c2.1 0 3.6 1.2 5 3 1.4-1.8 2.9-3 5-3 3 0 5.3 2.4 4.7 5.9C20.8 15 12 20.5 12 20.5Z"/>';
+    let gauntletPending = null;      // a finished game's result not yet accepted
+    let gauntletReportedMatch = null; // matchId already reported
+    let gauntletLastView = null;      // what the pop-up shows after a game
+    let gauntletHudLives = null;      // lives last drawn (for the heart-lost pop)
+
+    const gauntletRoundLabel = (round) => GAUNTLET_LABELS[GAUNTLET.rounds[round]] || 'Boss';
+    const gauntletUsesServer = () => !!currentUser && !isOffline();
+    function gauntletLocalRead() { try { return JSON.parse(localStorage.getItem(GAUNTLET_LOCAL_KEY) || '{}') || {}; } catch (e) { return {}; } }
+    function gauntletLocalWrite(g) { try { localStorage.setItem(GAUNTLET_LOCAL_KEY, JSON.stringify(g)); } catch (e) {} }
+    // This device's twin of the server action (no rewards, no daily limit).
+    function gauntletLocalStep(op, data) {
+      const g = gauntletLocalRead();
+      const status = () => ({ run: g.run ? { ...g.run } : null, doneToday: false, completions: g.completions || 0, firstDone: false, local: true });
+      if (op === 'status') return status();
+      if (op === 'start') {
+        g.run = { id: `local${Date.now().toString(36)}`, round: 0, lives: GAUNTLET.lives, playing: true };
+        gauntletLocalWrite(g);
+        return status();
+      }
+      const run = g.run;
+      if (!run || run.id !== data.runId) throw new Error('That Gauntlet run has ended.');
+      const loseLife = () => { run.lives -= 1; run.playing = false; if (run.lives > 0) return false; g.run = null; return true; };
+      let res = {};
+      if (op === 'begin') {
+        const forfeited = !!run.playing;
+        if (forfeited && loseLife()) res = { over: true, forfeited };
+        else { run.playing = true; res = { forfeited }; }
+      } else if (!run.playing) {
+        throw new Error('No Gauntlet game is in progress.');
+      } else if (!data.won) {
+        res = loseLife() ? { over: true } : {};
+      } else {
+        run.playing = false;
+        run.round += 1;
+        if (run.round >= GAUNTLET.rounds.length) { g.run = null; g.completions = (g.completions || 0) + 1; res = { completed: true }; }
+      }
+      gauntletLocalWrite(g);
+      return { ...status(), ...res };
+    }
+    function gauntletCall(op, data = {}, local = !gauntletUsesServer()) {
+      if (local) {
+        try { return Promise.resolve(gauntletLocalStep(op, data)); } catch (e) { return Promise.reject(e); }
+      }
+      return callEconomy('gauntlet', { op, ...data });
+    }
+
+    // ---- The pop-up (welcome, after each game, errors) ----
+    function gauntletHeartsHtml(lives, lostIndex = -1) {
+      return `<div class="gh-hearts" aria-label="${lives} of ${GAUNTLET.lives} lives left">${Array.from({ length: GAUNTLET.lives }, (_, i) =>
+        `<svg class="gh-heart${i >= lives ? ' is-empty' : ''}${i === lostIndex ? ' gh-lost' : ''}" viewBox="0 0 24 24" aria-hidden="true">${GAUNTLET_HEART}</svg>`).join('')}</div>`;
+    }
+    function gauntletTrackHtml(done, now) {
+      return `<div class="gauntlet-track">${GAUNTLET.rounds.map((d, i) => {
+        const cls = i < done ? 'is-done' : i === now ? 'is-now' : '';
+        return `<div class="gauntlet-step ${cls}${d === 'boss' ? ' is-boss' : ''}"><b>${i < done ? '✓' : i + 1}</b>${d === 'medium' ? 'Med' : GAUNTLET_LABELS[d]}</div>`;
+      }).join('')}</div>`;
+    }
+    function gauntletRewardHtml(st) {
+      if (st.local) return `<div class="gauntlet-reward">${currentUser ? 'Offline: this run is just for fun.' : '<b>Sign in</b> to earn Diamonds and the Gauntlet rewards.'}</div>`;
+      if (st.firstDone) return `<div class="gauntlet-reward">Beat it today: <b>${GAUNTLET.dailyReward} 💎</b> (once a day)</div>`;
+      return `<div class="gauntlet-reward">First time you beat it: <b>${GAUNTLET.firstReward} 💎</b> + the <b>${GAUNTLET.pictureName}</b> picture + the <b>${GAUNTLET.frameName}</b> frame.<br>Then <b>${GAUNTLET.dailyReward} 💎</b> every day you beat it again.</div>`;
+    }
+    function gauntletItemsHtml(items) {
+      if (!items || !items.length) return '';
+      return `<div class="gauntlet-items">${items.map(item => {
+        const art = item.id === GAUNTLET.picture ? avatarHtml(item.id, 52) : framePreviewCard(EARNED_FRAMES.find(f => f.id === item.id));
+        return `<figure>${art}<figcaption>${escapeHtml(item.name)}</figcaption></figure>`;
+      }).join('')}</div>`;
+    }
+    function gauntletModalHtml(v) {
+      const head = (emblem, title, text) => `<div class="gauntlet-emblem" aria-hidden="true">${emblem}</div><div id="gauntletTitle" class="gauntlet-title">${title}</div>${text ? `<p class="gauntlet-text">${text}</p>` : ''}`;
+      const go = (label, action, disabled) => `<button type="button" class="gauntlet-go" data-gauntlet-action="${action}"${disabled ? ' disabled' : ''}>${label}</button>`;
+      const alt = (label, action) => `<button type="button" class="gauntlet-alt" data-gauntlet-action="${action}">${label}</button>`;
+      const inGame = state.phase && state.phase !== 'LOBBY';
+      const leave = alt(inGame ? 'Leave (your run is saved)' : 'Not now', 'leave');
+      if (v.kind === 'loading') return head('⚔️', 'The Gauntlet', 'Loading…');
+      if (v.kind === 'error') return head('⚠️', 'The Gauntlet', escapeHtml(v.message || 'Something went wrong.')) +
+        `<div class="gauntlet-actions">${v.retry ? go('TRY AGAIN', v.retry) : ''}${alt(inGame ? 'Leave' : 'Close', 'leave')}</div>`;
+      if (v.kind === 'welcome') {
+        const st = v.status, run = st.run;
+        const intro = 'Five bots, one at a time, each tougher than the last. Lose a game and you face the same bot again, for a life. Lose all 3 lives and the run is over.';
+        let body = gauntletTrackHtml(run ? run.round : 0, run ? run.round : 0) + gauntletHeartsHtml(run ? run.lives : GAUNTLET.lives);
+        let actions;
+        if (st.doneToday) {
+          body += `<div class="gauntlet-reward">✓ <b>Beaten today!</b> The Gauntlet opens again at midnight (UK time).</div>`;
+          actions = go('COME BACK TOMORROW', 'none', true) + alt('Close', 'leave');
+        } else if (run) {
+          body += gauntletRewardHtml(st) + (run.playing ? `<p class="gauntlet-note">Your last Gauntlet game wasn't finished, so it counts as a loss.</p>` : '');
+          actions = go(`CONTINUE · ROUND ${run.round + 1}`, 'begin') + alt('Start a new run', 'start') + alt('Not now', 'leave');
+        } else {
+          body += gauntletRewardHtml(st);
+          actions = go('ENTER THE GAUNTLET', 'start') + alt('Not now', 'leave');
+        }
+        return head('⚔️', 'Welcome to the Gauntlet', intro) + body +
+          `<p class="gauntlet-note">Gauntlet wins don't count toward unlocking bot difficulties.</p><div class="gauntlet-actions">${actions}</div>`;
+      }
+      const r = v.res, run = r.run;
+      if (v.kind === 'won') {
+        return head('🗡️', `Round ${run.round} beaten!`, `Next up: <b>${gauntletRoundLabel(run.round)}</b> bot (round ${run.round + 1} of ${GAUNTLET.rounds.length}).`) +
+          gauntletTrackHtml(run.round, run.round) + gauntletHeartsHtml(run.lives) +
+          `<div class="gauntlet-actions">${go('CONTINUE GAUNTLET', 'begin')}${leave}</div>`;
+      }
+      if (v.kind === 'lost') {
+        return head('💔', 'You lost a life', `${v.forfeited ? 'A game you left counts as a loss. ' : ''}Face the <b>${gauntletRoundLabel(run.round)}</b> bot again.`) +
+          gauntletTrackHtml(run.round, run.round) + gauntletHeartsHtml(run.lives, run.lives) +
+          `<div class="gauntlet-actions">${go('TRY AGAIN', 'begin')}${leave}</div>`;
+      }
+      if (v.kind === 'over') {
+        const reached = Number.isFinite(v.round) ? v.round : 0;
+        return head('☠️', 'Game over', `You ran out of lives on round ${reached + 1} (${gauntletRoundLabel(reached)} bot).`) +
+          gauntletTrackHtml(reached, reached) + gauntletHeartsHtml(0, 0) +
+          `<div class="gauntlet-actions">${go('START A NEW RUN', 'start')}${alt(inGame ? 'Leave' : 'Close', 'leave')}</div>`;
+      }
+      // completed
+      const paid = Number(r.diamondsAwarded) || 0;
+      const reward = r.local ? `<div class="gauntlet-reward">${currentUser ? 'Played offline, so no rewards this time.' : '<b>Sign in</b> next time to earn Diamonds and the Gauntlet rewards.'}</div>`
+        : `<div class="gauntlet-reward"><b>+${paid} 💎</b>${r.first ? ` and two things only Gauntlet champions have:${gauntletItemsHtml(r.newItems)}` : ' for today’s win. Come back tomorrow for more.'}</div>`;
+      return head('🏆', 'Gauntlet beaten!', 'All five bots down. Well played.') +
+        gauntletTrackHtml(GAUNTLET.rounds.length, -1) + gauntletHeartsHtml(v.lives) + reward +
+        `<div class="gauntlet-actions">${go(inGame ? 'BACK TO THE LOBBY' : 'DONE', 'leave')}</div>`;
+    }
+    function showGauntlet(view) {
+      gauntletLastView = view;
+      document.getElementById('gauntletModalBody').innerHTML = gauntletModalHtml(view);
+      document.getElementById('gauntletModal').classList.remove('hidden');
+      updateGauntletEndButton();
+    }
+    function closeGauntlet() { document.getElementById('gauntletModal').classList.add('hidden'); }
+
+    function openGauntletWelcome() {
+      document.getElementById('gauntletInfo')?.classList.remove('open');
+      showGauntlet({ kind: 'loading' });
+      gauntletCall('status').then((status) => showGauntlet({ kind: 'welcome', status }))
+        .catch((e) => showGauntlet({ kind: 'error', message: e.message, retry: 'welcome' }));
+    }
+    function gauntletAction(action) {
+      if (action === 'welcome') return openGauntletWelcome();
+      if (action === 'leave') {
+        closeGauntlet();
+        if (state.gauntlet && !state.isMultiplayer && state.phase && state.phase !== 'LOBBY') leaveBotMatch();
+        return;
+      }
+      if (action === 'retryResult') return gauntletReport();
+      const btns = document.querySelectorAll('#gauntletModalBody button');
+      btns.forEach(b => { b.disabled = true; });
+      if (action === 'start') {
+        return gauntletCall('start').then((res) => startGauntletGame(res))
+          .catch((e) => showGauntlet({ kind: 'error', message: e.message, retry: 'start' }));
+      }
+      if (action === 'begin') {
+        const g = state.gauntlet && !state.gauntlet.ended ? state.gauntlet : null;
+        const runId = g ? g.runId : gauntletLastView?.status?.run?.id;
+        const local = g ? g.local : !!gauntletLastView?.status?.local;
+        return gauntletCall('begin', { runId }, local).then((res) => {
+          if (res.over) {
+            const round = res.run ? res.run.round : (g ? g.round : gauntletLastView?.status?.run?.round);
+            if (g) state.gauntlet = { ...g, lives: 0, ended: true };
+            renderGauntletHud();
+            return showGauntlet({ kind: 'over', res, round });
+          }
+          startGauntletGame({ ...res, local: !!res.local || local });
+        }).catch((e) => showGauntlet({ kind: 'error', message: e.message, retry: 'welcome' }));
+      }
+    }
+    document.getElementById('gauntletModalBody').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-gauntlet-action]');
+      if (btn && !btn.disabled) gauntletAction(btn.dataset.gauntletAction);
+    });
+    document.getElementById('gauntletCloseBtn').addEventListener('click', () => gauntletAction('leave'));
+    document.getElementById('gauntletBtn').addEventListener('click', openGauntletWelcome);
+    // ⓘ: hover/focus on a computer, tap to toggle on a phone.
+    document.getElementById('gauntletInfo').addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.currentTarget.classList.toggle('open');
+    });
+    document.addEventListener('click', () => document.getElementById('gauntletInfo')?.classList.remove('open'));
+
+    // A game of the run starts (the server already counts it as begun).
+    function startGauntletGame(res) {
+      const run = res.run;
+      if (!run) return showGauntlet({ kind: 'error', message: 'That Gauntlet run has ended.', retry: 'welcome' });
+      closeGauntlet();
+      gauntletPending = null;
+      const gauntlet = { runId: run.id, round: run.round, lives: run.lives, local: !!res.local };
+      const prior = state.gauntlet;
+      if (prior && prior.bot && prior.round === run.round && prior.runId === run.id) gauntlet.bot = prior.bot; // the same bot again
+      hideMatchEndUI();
+      runShuffleIntro(() => startSinglePlayerGame(1, null, { gauntlet }));
+    }
+
+    // Match end (from showMatchEndUI): report the result, then the pop-up.
+    function gauntletMatchEnded() {
+      const g = state.gauntlet;
+      if (!g || g.ended || gauntletReportedMatch === state.matchId) return;
+      gauntletReportedMatch = state.matchId;
+      const me = state.players.find(p => p.id === state.localPlayerId);
+      gauntletPending = { runId: g.runId, won: me?.finishRank === 1, local: !!g.local, round: g.round };
+      updateGauntletEndButton();
+      const testing = typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning;
+      const pause = new Promise(r => setTimeout(r, testing ? 0 : (reduceMotion ? 400 : 1600))); // after the victory effect
+      return Promise.all([gauntletReport({ quiet: true }), pause]).then(([view]) => { if (view) showGauntlet(view); });
+    }
+    function gauntletReport(opts = {}) {
+      const p = gauntletPending;
+      if (!p) return Promise.resolve(null);
+      return gauntletCall('result', { runId: p.runId, won: p.won }, p.local).then((res) => {
+        gauntletPending = null;
+        const view = applyGauntletResult(res, p);
+        if (!opts.quiet) showGauntlet(view);
+        return view;
+      }).catch((e) => {
+        const view = { kind: 'error', message: `${e.message} Your result is kept: try again.`, retry: 'retryResult' };
+        if (!opts.quiet) showGauntlet(view);
+        return view;
+      });
+    }
+    function applyGauntletResult(res, p) {
+      if (Number.isFinite(Number(res.diamonds)) && !res.local) challengeEconomy.diamonds = Number(res.diamonds);
+      if (res.diamondsAwarded > 0) enqueueChallengeToast('Gauntlet beaten', res.diamondsAwarded, -1);
+      if (res.newItems && res.newItems.length) {
+        const now = Date.now();
+        res.newItems.forEach((item) => { cosmeticPurchaseState[item.id] = { cost: 0, purchasedAt: now }; newCosmeticIds.add(item.id); });
+        persistNewCosmetics();
+        renderPersonalisationCosmetics();
+        if (typeof refreshInboxBadge === 'function') refreshInboxBadge();
+      }
+      updateDiamondHeader();
+      const g = state.gauntlet || { runId: p.runId, local: p.local };
+      if (res.completed) {
+        state.gauntlet = { ...g, round: GAUNTLET.rounds.length, ended: true };
+        renderGauntletHud();
+        return { kind: 'done', res, lives: g.lives };
+      }
+      if (res.over || !res.run) {
+        state.gauntlet = { ...g, lives: 0, ended: true };
+        renderGauntletHud();
+        return { kind: 'over', res, round: p.round };
+      }
+      state.gauntlet = { ...g, round: res.run.round, lives: res.run.lives };
+      renderGauntletHud();
+      return { kind: p.won ? 'won' : 'lost', res };
+    }
+    // The end-of-match button row offers the same next step as the pop-up.
+    function updateGauntletEndButton() {
+      const btn = document.getElementById('quickPlayMatchBtn');
+      if (!btn || !state.gauntlet || state.isMultiplayer || state.phase !== 'FINISHED') return;
+      const kind = gauntletPending ? 'wait' : gauntletLastView?.kind;
+      const label = kind === 'won' ? 'CONTINUE<br>GAUNTLET' : kind === 'lost' ? 'TRY<br>AGAIN' : kind === 'over' ? 'NEW<br>RUN'
+        : kind === 'done' ? 'BACK TO<br>LOBBY' : kind === 'error' ? 'TRY<br>AGAIN' : 'SAVING…';
+      btn.innerHTML = `<svg class="match-end-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-quick-play"/></svg><span>${label}</span>`;
+      btn.disabled = kind === 'wait';
+    }
+    function gauntletEndButtonAction() {
+      const v = gauntletLastView;
+      if (!v) return;
+      const action = v.kind === 'won' || v.kind === 'lost' ? 'begin' : v.kind === 'over' ? 'start' : v.kind === 'done' ? 'leave' : v.retry;
+      if (action) gauntletAction(action);
+    }
+
+    // Hearts, top-left of the table, on their own dark pill so every table
+    // theme shows them clearly.
+    function renderGauntletHud() {
+      const hud = document.getElementById('gauntletHud');
+      if (!hud) return;
+      const g = state.gauntlet;
+      const show = !!g && !state.isMultiplayer && !(typeof tutorialActive !== 'undefined' && tutorialActive) &&
+        state.phase && state.phase !== 'LOBBY' && document.getElementById('lobbyScreen')?.classList.contains('hidden');
+      hud.classList.toggle('hidden', !show);
+      if (!show) { gauntletHudLives = null; return; }
+      const lives = Math.max(0, g.lives);
+      const lost = gauntletHudLives !== null && lives < gauntletHudLives ? lives : -1;
+      const key = `${lives}|${g.round}|${lost}`;
+      if (hud.dataset.key === key && lost < 0) return;
+      hud.dataset.key = key;
+      gauntletHudLives = lives;
+      const beaten = g.round >= GAUNTLET.rounds.length;
+      const roundText = beaten ? 'Beaten!' : `Round ${g.round + 1}/${GAUNTLET.rounds.length} · ${gauntletRoundLabel(g.round)}`;
+      hud.setAttribute('aria-label', `Gauntlet: ${lives} of ${GAUNTLET.lives} lives, ${roundText}`);
+      hud.innerHTML = `${gauntletHeartsHtml(lives, lost)}<div class="gh-round" aria-hidden="true">${beaten ? '<b>🏆</b>' : `<b>${g.round + 1}/${GAUNTLET.rounds.length}</b>${gauntletRoundLabel(g.round)}`}</div>`;
     }
 
     // § Turn loop
@@ -12500,6 +12888,7 @@ video {
       schedulePileInspectHint(isMyTurn);
       fitHandToTable();
       positionDirectionBadge();
+      renderGauntletHud();
     }
 
     // The direction badge shares the left-hand column with the Play Matrix
@@ -14646,6 +15035,7 @@ video {
     document.getElementById('followUpSkipBtn').addEventListener('click', () => resolveFollowUpPlay(false));
 
     document.getElementById('quickPlayMatchBtn').addEventListener('click', (e) => {
+      if (!state.isMultiplayer && state.gauntlet) { gauntletEndButtonAction(); return; }
       hideMatchEndUI(); // never leave a stale Quick Play / Match Stats visible while the next match sets up
       // Quick Play against bots should feel like continuing the same table,
       // not rolling a fresh cast every time — captured now, before anything
@@ -15353,6 +15743,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v147: [
+        ['⚔️', 'New: the Gauntlet! Beat 5 bots in a row (Easy, Easy, Medium, Hard, Boss) with 3 lives. Find it under the bot buttons.'],
+        ['🏆', 'Beat it for the first time to win 200 💎, the Gauntlet Champion picture and the Gauntlet Gold frame. Then 50 💎 each day you beat it.']
+      ],
       v146: [
         ['🔒', 'Online games are steadier: two players acting at the same moment can no longer undo each other\'s move.'],
         ['📱', "If the host's app goes into the background, another player's phone keeps the game (and its bots) moving."]
@@ -15619,6 +16013,19 @@ video {
         <path d="M30 26.5c.5-3.5 3-5.5 5.5-6.5-.5 2.5 0 4.5 1.5 6" fill="url(#av-m-poo)" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"/>
         <circle cx="27.5" cy="38" r="2.6" fill="#fff"/><circle cx="36.5" cy="38" r="2.6" fill="#fff"/><circle cx="28" cy="38.4" r="1.2" fill="#1c0f06"/><circle cx="37" cy="38.4" r="1.2" fill="#1c0f06"/>
         <path d="M27 46.5c3 2.5 7 2.5 10 0" fill="none" stroke="#1c0f06" stroke-width="1.6" stroke-linecap="round"/>` },
+      // Gauntlet Champion (earn-only): crossed swords behind a gold shield
+      // carrying the crimson heart of the Gauntlet's lives.
+      'avatar-gauntlet':     { tone: 'gold', animated: true, art: `
+        <g stroke="rgba(0,0,0,.45)" stroke-width="1" stroke-linejoin="round">
+          <g transform="rotate(-42 32 30)"><path d="M30.7 4 32 1.5 33.3 4l.9 37h-4.4Z" fill="url(#av-m-silver)"/><rect x="23.5" y="41" width="17" height="3.6" rx="1.6" fill="url(#av-m-gold)"/><rect x="30.3" y="44.6" width="3.4" height="7.6" rx="1.2" fill="#78350f"/><circle cx="32" cy="54.2" r="2.5" fill="url(#av-m-gold)"/></g>
+          <g transform="rotate(42 32 30)"><path d="M30.7 4 32 1.5 33.3 4l.9 37h-4.4Z" fill="url(#av-m-silver)"/><rect x="23.5" y="41" width="17" height="3.6" rx="1.6" fill="url(#av-m-gold)"/><rect x="30.3" y="44.6" width="3.4" height="7.6" rx="1.2" fill="#78350f"/><circle cx="32" cy="54.2" r="2.5" fill="url(#av-m-gold)"/></g>
+          <g transform="translate(32 31) scale(.74) translate(-32 -32)">
+            <path d="M18.5 18.5c5 .8 9.5-.6 13.5-3.5 4 2.9 8.5 4.3 13.5 3.5v13c0 9-6 14.5-13.5 18-7.5-3.5-13.5-9-13.5-18Z" fill="url(#av-m-gold)" stroke-width="1.6"/>
+            <path d="M22 21.5c3.7.3 7-.7 10-2.7 3 2 6.3 3 10 2.7v10c0 6.8-4.4 11-10 13.9-5.6-2.9-10-7.1-10-13.9Z" fill="#7f1d1d" stroke="none"/>
+            <path d="${AV_HEART}" transform="translate(32 31.5) scale(.33) translate(-32 -32)" fill="url(#av-m-crimson)" stroke="#fecaca" stroke-width="2.4"/>
+          </g>
+        </g>
+        <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
       'avatar-centurion':    { tone: 'red', art: `
         <text x="32" y="38" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="21" fill="#ef4444" stroke="#7f1d1d" stroke-width=".8" letter-spacing="-1">100</text>
         <path d="M13.5 43.5 50 41.5M15.5 48.5 47 46.8" stroke="#ef4444" stroke-width="2.6" stroke-linecap="round"/>` },
@@ -16581,7 +16988,13 @@ video {
       { id: 'avatar-crown-diamond', category: 'Profile Pictures', name: 'Platinum Crown', earned: true, animated: true, requirement: 'Reach Platinum rank', isEarned: (u) => avatarPeakRating(u) >= 1800 },
       { id: 'avatar-crown-master', category: 'Profile Pictures', name: 'Master Crown', earned: true, animated: true, requirement: 'Reach Master rank', isEarned: (u) => avatarPeakRating(u) >= 2000 },
       { id: 'avatar-centurion', category: 'Profile Pictures', name: 'Centurion', earned: true, requirement: 'Play 100 ranked games', isEarned: (u) => ((Number(u?.wins) || 0) + (Number(u?.losses) || 0)) >= 100 },
-      { id: 'avatar-shithead', category: 'Profile Pictures', name: 'ShitHead', earned: true, requirement: 'Lose 10 ranked games in a row', isEarned: (u) => (Number(u?.rankedStats?.bestLossStreak) || 0) >= 10 }
+      { id: 'avatar-shithead', category: 'Profile Pictures', name: 'ShitHead', earned: true, requirement: 'Lose 10 ranked games in a row', isEarned: (u) => (Number(u?.rankedStats?.bestLossStreak) || 0) >= 10 },
+      { id: 'avatar-gauntlet', category: 'Profile Pictures', name: 'Gauntlet Champion', earned: true, gauntlet: true, requirement: 'Beat the Gauntlet', isEarned: () => false }
+    ];
+    // Earn-only frames: never sold or gifted, shown locked in Custom until
+    // the server grants them (Gauntlet Gold: beat the Gauntlet once).
+    const EARNED_FRAMES = [
+      { id: 'frame-gauntlet', category: 'Frames', name: 'Gauntlet Gold', earned: true, cost: 0, requirement: 'Beat the Gauntlet', tones: ['#1c0a02', '#f59e0b', '#fde68a'] }
     ];
     COSMETIC_SHOP_ITEMS.push(...SEASONAL_SHOP_ITEMS);
     EARNED_AVATARS.push(...SEASONAL_EARNED_AVATARS);
@@ -16599,7 +17012,7 @@ video {
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
       cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno', ...seasonalIdsOf('cardBack')]),
-      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness', ...seasonalIdsOf('frame')]),
+      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet', ...seasonalIdsOf('frame')]),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania', ...seasonalIdsOf('emotes')]),
       tableTheme: new Set(['table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic', ...seasonalIdsOf('tableTheme')]),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke', ...seasonalIdsOf('burnEffect')]),
@@ -16652,7 +17065,7 @@ video {
 
     function isSupportedCosmetic(type, id) {
       if (id === 'default') return Object.prototype.hasOwnProperty.call(DEFAULT_EQUIPPED_COSMETICS, type);
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS].find(entry => entry.id === id);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES].find(entry => entry.id === id);
       return !!item && COSMETIC_CATEGORY_TYPES[item.category] === type && !!COSMETIC_RUNTIME_IDS[type]?.has(id);
     }
 
@@ -16729,7 +17142,7 @@ video {
     }
     function cosmeticDisplayName(type, id) {
       if (!id || id === 'default') return 'Default';
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS].find(entry => entry.id === id && COSMETIC_CATEGORY_TYPES[entry.category] === type);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_FRAMES].find(entry => entry.id === id && COSMETIC_CATEGORY_TYPES[entry.category] === type);
       return item ? item.name : 'Default';
     }
     function victoryPreviewIcon(id) {
@@ -16925,7 +17338,7 @@ video {
       equippedCosmetics[type] = id;
       applyEquippedCosmetics();
       renderPersonalisationCosmetics();
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS].find(entry => entry.id === id);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES].find(entry => entry.id === id);
       const effectsDisabled = (type === 'burnEffect' || type === 'victoryEffect') && !bigEffectsOn;
       const status = document.getElementById('personalisationStatus');
       if (status) status.textContent = `${item ? item.name : 'Default'} equipped.${effectsDisabled ? ' Effects are currently disabled in Settings.' : ''}`;
@@ -16977,7 +17390,7 @@ video {
       const owned = id === 'default' || !!item?.builtIn || !!cosmeticPurchaseState[id];
       const active = id === activeId;
       // Tile layout, shared with the profile-picture tiles.
-      const status = active ? '✓ EQUIPPED' : owned ? 'Tap to equip' : `💎 ${item.cost} in Shop`;
+      const status = active ? '✓ EQUIPPED' : owned ? 'Tap to equip' : item.earned ? item.requirement : `💎 ${item.cost} in Shop`;
       return `<button type="button" data-equip-type="${type}" data-equip-id="${id}" ${owned ? '' : 'data-locked aria-disabled="true"'} aria-pressed="${active}" class="cosmetic-option-card cosmetic-tile avatar-option">
         <span class="avatar-option-art">${cosmeticPreview(item, type)}${owned ? '' : '<span class="avatar-option-lock" aria-hidden="true">🔒</span>'}${item?.season ? `<span class="season-badge" title="${SEASONAL_EVENT_BY_ID[item.season].name}">${SEASONAL_EVENT_BY_ID[item.season].emoji}</span>` : ''}</span>
         <span class="avatar-option-name">${name}</span>
@@ -17008,7 +17421,8 @@ video {
       const seasonalAvatars = [...sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Profile Pictures' && item.season)), ...SEASONAL_EARNED_AVATARS].filter(isCosmeticListed);
       grid.innerHTML = `<span class="avatar-picker-label">Free</span>${freeAvatars.map(avatarOptionHtml).join('')}
         <span class="avatar-picker-label">Shop</span>${shopAvatars.map(avatarOptionHtml).join('')}
-        <span class="avatar-picker-label">Earn in Ranked</span>${EARNED_AVATARS.filter(item => !item.season).map(avatarOptionHtml).join('')}
+        <span class="avatar-picker-label">Earn in Ranked</span>${EARNED_AVATARS.filter(item => !item.season && !item.gauntlet).map(avatarOptionHtml).join('')}
+        <span class="avatar-picker-label">Earn in the Gauntlet</span>${EARNED_AVATARS.filter(item => item.gauntlet).map(avatarOptionHtml).join('')}
         ${seasonalAvatars.length ? `<span class="avatar-picker-label">Seasonal</span>${seasonalAvatars.map(avatarOptionHtml).join('')}` : ''}`;
     }
 
@@ -17022,7 +17436,7 @@ video {
       const victories = document.getElementById('personalisationVictoryEffects');
       if (!backs || !frames || !emotes || !tables || !burns || !victories) return;
       backs.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs'))].map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('');
-      frames.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames'))].map(i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame)).join('');
+      frames.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames')), ...EARNED_FRAMES].map(i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame)).join('');
       emotes.innerHTML = [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs')])].map(i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes)).join('');
       tables.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes'))].map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('');
       burns.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Burn Effects'))].map(i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect)).join('');
@@ -17377,6 +17791,7 @@ video {
       const bots = state.players.filter(p => p.isBot).length;
       if (state.isRanked) return 'Ranked match';
       if (state.isMultiplayer) return `Online · ${state.players.length} players`;
+      if (state.gauntlet) return `Gauntlet · Round ${Math.min(state.gauntlet.round, GAUNTLET.rounds.length - 1) + 1} · ${gauntletRoundLabel(Math.min(state.gauntlet.round, GAUNTLET.rounds.length - 1))}`;
       const diff = String(state.difficulty || 'medium');
       return `Vs ${bots} bot${bots === 1 ? '' : 's'} · ${diff.charAt(0).toUpperCase() + diff.slice(1)}`;
     }
@@ -17874,7 +18289,8 @@ video {
         'frame-diamond': 'box-shadow:inset 0 0 0 2px #67e8f9,0 0 9px rgba(34,211,238,.68)!important',
         'frame-obsidian-throne': 'box-shadow:inset 0 0 0 2px #8b5cf6,0 0 9px rgba(139,92,246,.68)!important',
         'frame-emerald-sovereign': 'box-shadow:inset 0 0 0 2px #34d399,0 0 9px rgba(52,211,153,.68)!important',
-        'frame-darkness': 'border-color:#000!important;box-shadow:inset 0 0 0 3px #000!important'
+        'frame-darkness': 'border-color:#000!important;box-shadow:inset 0 0 0 3px #000!important',
+        'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #b45309,0 0 9px rgba(245,158,11,.75)!important'
       };
       if (SEASONAL_FRAME_STYLES[id]) return `box-shadow:${SEASONAL_FRAME_STYLES[id][0]}!important`;
       return styles[id] || '';
@@ -17892,7 +18308,8 @@ video {
         'frame-diamond': 'box-shadow:0 0 0 1px #67e8f9,0 0 5px rgba(34,211,238,.52)!important',
         'frame-obsidian-throne': 'box-shadow:0 0 0 1px #8b5cf6,0 0 5px rgba(139,92,246,.5)!important',
         'frame-emerald-sovereign': 'box-shadow:0 0 0 1px #34d399,0 0 5px rgba(52,211,153,.5)!important',
-        'frame-darkness': 'border-color:#000!important;box-shadow:0 0 0 1px #000!important'
+        'frame-darkness': 'border-color:#000!important;box-shadow:0 0 0 1px #000!important',
+        'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:0 0 0 1px #fbbf24,0 0 5px rgba(245,158,11,.55)!important'
       };
       if (SEASONAL_FRAME_STYLES[id]) return `box-shadow:${SEASONAL_FRAME_STYLES[id][1]}!important`;
       return styles[id] || '';
@@ -19236,7 +19653,8 @@ video {
       'avatar-crown-diamond': { type: 'peakRating', min: 1800 },
       'avatar-crown-master': { type: 'peakRating', min: 2000 },
       'avatar-centurion': { type: 'rankedGames', min: 100 },
-      'avatar-shithead': { type: 'lossStreak', min: 10 }
+      'avatar-shithead': { type: 'lossStreak', min: 10 },
+      'avatar-gauntlet': { type: 'gauntlet' } // granted by the gauntlet action itself
     };
     function serverEconomyCatalog() {
       const earned = {};
@@ -21870,7 +22288,7 @@ video {
     function openLockedCosmetic(id) {
       const shopItem = COSMETIC_SHOP_ITEMS.find(item => item.id === id);
       if (!shopItem) {
-        const earned = EARNED_AVATARS.find(item => item.id === id);
+        const earned = [...EARNED_AVATARS, ...EARNED_FRAMES].find(item => item.id === id);
         const status = document.getElementById('personalisationStatus');
         if (status && earned) status.textContent = `${earned.name}: ${earned.requirement}.`;
         return false;
@@ -22664,7 +23082,7 @@ video {
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
-      needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
+      needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
       victoryOverlay: 'closeVictoryBtn', floatingJokerBar: null,
       followUpToastBanner: () => resolveFollowUpPlay(false)
     };

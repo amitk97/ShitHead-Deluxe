@@ -486,12 +486,12 @@ actions.rankedDeal = async ({ uid, data }) => {
 const GAUNTLET_MIN_GAME_MS = 30000; // a real game against a bot takes longer than this
 actions.gauntlet = async ({ uid, data }) => {
   const G = CAT.gauntlet;
-  const op = data.op;
-  if (op !== 'start' && op !== 'result' && op !== 'status') fail('invalid-argument', 'Unknown Gauntlet step.');
+  const op = data.op; // start (a new run, its first game begins) | begin (the next game) | result | status
+  if (!['start', 'begin', 'result', 'status'].includes(op)) fail('invalid-argument', 'Unknown Gauntlet step.');
   const now = Date.now();
   const today = ukDateKey(new Date(now));
   const status = (g) => ({
-    run: g.run ? { id: g.run.id, round: num(g.run.round), lives: num(g.run.lives) } : null,
+    run: g.run ? { id: g.run.id, round: num(g.run.round), lives: num(g.run.lives), playing: !!g.run.playing } : null,
     doneToday: g.doneDay === today, completions: num(g.completions), firstDone: !!g.firstDoneAt
   });
   if (op === 'status') {
@@ -502,19 +502,31 @@ actions.gauntlet = async ({ uid, data }) => {
     const g = user.gauntlet = user.gauntlet || {};
     if (op === 'start') {
       if (g.doneDay === today) return { error: "You've already beaten the Gauntlet today. Come back tomorrow!" };
-      g.run = { id: `g${now.toString(36)}${nodeCrypto.randomInt(1e9).toString(36)}`, round: 0, lives: G.lives, startedAt: now, lastAt: now };
+      g.run = { id: `g${now.toString(36)}${nodeCrypto.randomInt(1e9).toString(36)}`, round: 0, lives: G.lives, startedAt: now, lastAt: now, playing: true };
       return { user };
     }
     const run = g.run;
     if (!run || run.id !== clip(data.runId, 40)) return { error: 'That Gauntlet run has ended.' };
+    const loseLife = () => {
+      run.lives = num(run.lives) - 1;
+      run.playing = false;
+      if (run.lives > 0) return false;
+      g.run = null; g.failed = num(g.failed) + 1;
+      return true;
+    };
+    if (op === 'begin') {
+      // A game that was started and never reported (left half-way) is a loss.
+      const forfeited = !!run.playing || undefined;
+      if (forfeited && loseLife()) return { user, over: true, forfeited };
+      run.playing = true; run.lastAt = now;
+      return { user, forfeited };
+    }
+    if (!run.playing) return { error: 'No Gauntlet game is in progress.' };
     const won = data.won === true;
     if (won && now - num(run.lastAt) < GAUNTLET_MIN_GAME_MS) return { error: 'That game was too quick to count.' };
     run.lastAt = now;
-    if (!won) {
-      run.lives = num(run.lives) - 1;
-      if (run.lives <= 0) { g.run = null; g.failed = num(g.failed) + 1; return { user, over: true }; }
-      return { user };
-    }
+    if (!won) return loseLife() ? { user, over: true } : { user };
+    run.playing = false;
     run.round = num(run.round) + 1;
     if (run.round < G.rounds.length) return { user };
     // Beaten: once a day.
@@ -542,7 +554,7 @@ actions.gauntlet = async ({ uid, data }) => {
     return { user, completed: true, amount, first, newItems };
   });
   return {
-    ...status(res.user.gauntlet || {}), over: !!res.over, completed: !!res.completed,
+    ...status(res.user.gauntlet || {}), over: !!res.over, completed: !!res.completed, forfeited: !!res.forfeited,
     diamondsAwarded: num(res.amount), first: !!res.first, newItems: res.newItems || [], diamonds: num(res.user.diamonds)
   };
 };

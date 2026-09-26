@@ -577,6 +577,11 @@
    "type": "lossStreak",
    "min": 10
   },
+  "avatar-gauntlet": {
+   "name": "Gauntlet Champion",
+   "requirement": "Beat the Gauntlet",
+   "type": "gauntlet"
+  },
   "avatar-lunar-earned": {
    "name": "Golden Dragon",
    "requirement": "Win 3 games during Lunar New Year",
