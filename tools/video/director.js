@@ -26,7 +26,8 @@ const PAGE_LIB = `
     #vCard { position:fixed; inset:0; z-index:100001; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
       background:radial-gradient(circle at 50% 38%, rgb(76,29,149), rgb(2,6,23) 65%); opacity:0; transition:opacity .45s ease; text-align:center; padding:24px; }
     #vCard.show { opacity:1; }
-    body.v-rec #victoryOverlay, body.v-rec #headerDiamondBtn, body.v-rec #finalStandingsBanner ~ #matchEndButtonRow { display:none !important; }
+    body.v-rec #victoryOverlay, body.v-rec #headerDiamondBtn, body.v-rec #finalStandingsBanner ~ #matchEndButtonRow,
+      body.v-rec #skipSimulationBtn, body.v-rec #finishedLeaveBtn { display:none !important; }
     #vCard .logo { font-family:'Cinzel',Georgia,serif; font-weight:900; font-size:64px; line-height:1;
       background:linear-gradient(180deg,#f87171,#b91c1c 45%,#5e0a0a); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
       filter:drop-shadow(0 2px 0 #fde047) drop-shadow(0 4px 10px rgba(0,0,0,.9)); }
