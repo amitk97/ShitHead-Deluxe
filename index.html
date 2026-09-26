@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v150 (ShitHead-Deluxe-132) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v151 (ShitHead-Deluxe-133) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -336,6 +336,33 @@
     .inbox-activity--rank .inbox-activity-accent { color:#c4b5fd; }
     .inbox-activity--shop { background:rgba(131,24,67,.24); border-color:rgba(244,114,182,.65); }
     .inbox-activity--shop .inbox-activity-accent { color:#f9a8d4; }
+    .inbox-activity--referral { background:rgba(6,78,59,.3); border-color:rgba(52,211,153,.6); }
+    .inbox-activity--referral .inbox-activity-accent { color:#6ee7b7; }
+    /* Referrals: Friends → Invite Friends button, Profile → Invite friends section. */
+    .ref-invite-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:.4rem; padding:.5rem; margin-bottom:.5rem; border-radius:.6rem;
+      border:1.5px solid #10b981; background:linear-gradient(135deg,rgba(6,78,59,.55),rgba(4,47,46,.55)); color:#a7f3d0; font-weight:900; font-size:.68rem; letter-spacing:.1em; }
+    .ref-invite-btn:active { transform:scale(.97); }
+    .ref-invite-btn small { display:block; font-size:.55rem; letter-spacing:.02em; font-weight:700; color:#6ee7b7; opacity:.85; }
+    .ref-card { background:rgba(15,23,42,.6); border:1px solid #1e293b; border-radius:.75rem; padding:.7rem .75rem; }
+    .ref-code-row { display:flex; align-items:center; gap:.5rem; }
+    .ref-code { flex:1; min-width:0; font:900 1rem/1.1 ui-monospace,Menlo,monospace; letter-spacing:.12em; color:#fbbf24; }
+    .ref-link { display:block; font-size:.6rem; color:#94a3b8; margin-top:.15rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ref-btn { flex:none; font-size:.6rem; font-weight:900; letter-spacing:.08em; padding:.35rem .6rem; border-radius:.5rem; border:1px solid #10b981; color:#6ee7b7; }
+    .ref-btn:hover { background:#10b981; color:#022c22; }
+    .ref-how { font-size:.62rem; color:#94a3b8; line-height:1.45; margin-top:.5rem; }
+    .ref-how b { color:#e2e8f0; }
+    .ref-stat-row { display:flex; gap:.4rem; margin-top:.55rem; }
+    .ref-stat { flex:1; text-align:center; padding:.35rem .2rem; border-radius:.55rem; background:#020617; border:1px solid #1e293b; }
+    .ref-stat b { display:block; font-size:.85rem; color:#fff; }
+    .ref-stat span { font-size:.5rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#64748b; }
+    .ref-list { margin-top:.55rem; display:flex; flex-direction:column; gap:.3rem; }
+    .ref-person { display:flex; align-items:center; gap:.5rem; font-size:.68rem; color:#e2e8f0; }
+    .ref-person .ref-name { flex:1; min-width:0; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ref-pips { display:flex; gap:3px; }
+    .ref-pips i { width:9px; height:9px; border-radius:50%; background:#1e293b; border:1px solid #334155; }
+    .ref-pips i.on { background:#10b981; border-color:#34d399; }
+    .ref-person .ref-state { font-size:.58rem; font-weight:900; color:#6ee7b7; min-width:3.2rem; text-align:right; }
+    .ref-invited { margin-top:.55rem; padding:.45rem .55rem; border-radius:.55rem; background:rgba(6,78,59,.25); border:1px solid rgba(16,185,129,.4); font-size:.64rem; color:#a7f3d0; }
     /* STAGE 1 — Menu structure and responsive presentation.
        Mobile default: a slide-up bottom sheet, anchored to the bottom edge.
        Desktop (min-width: 768px, matching Tailwind's own md: breakpoint
@@ -4933,6 +4960,7 @@ video {
         <button data-tab="ignored" class="friends-tab-btn flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg border-2 transition">Ignored</button>
         <button data-tab="requests" class="friends-tab-btn flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg border-2 transition">Requests<span id="requestsTabBadge" class="hidden item-badge" style="margin-left:4px;">0</span></button>
       </div>
+      <button type="button" id="friendsInviteBtn" class="ref-invite-btn" style="flex-shrink:0;"><span aria-hidden="true">🔗</span><span>INVITE FRIENDS<small>You both get 💎 once they've played 3 games</small></span></button>
       <div id="friendsSearchWrap" class="flex gap-1 mb-2" style="flex-shrink:0;">
         <input type="text" id="friendSearchInput" placeholder="Search username" maxlength="12" class="flex-1 min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-bold focus:border-amber-400 outline-none text-white transition" />
         <button id="friendSearchBtn" class="shrink-0 text-[10px] font-black px-3 py-1.5 rounded-lg border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition">FIND</button>
@@ -5081,6 +5109,10 @@ video {
             </div>
           </div>
           <div id="profileShowcase" class="profile-showcase"></div>
+        </div>
+        <div id="profileReferralSection" class="hidden">
+          <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Invite friends</span>
+          <div id="profileReferralBody" class="ref-card"></div>
         </div>
         <div>
           <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Account</span>
@@ -5281,6 +5313,7 @@ video {
           <div id="challengesDailyList" class="flex flex-col gap-1.5 pt-1"></div>
           <div id="challengesDailyGauntletList" class="flex flex-col gap-1.5 pt-1.5"></div>
           <div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase tracking-wider text-amber-400 mb-1">Getting Started</div><div id="challengesTutorialList" class="flex flex-col gap-1.5"></div></div>
+          <div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase tracking-wider text-emerald-400 mb-1">Friends</div><div id="challengesRecruitList" class="flex flex-col gap-1.5"></div></div>
         </section>
         <section id="challengeTabWeekly" data-challenge-panel="weekly" class="hidden">
           <div class="mb-2 text-[8px] text-slate-500">Resets every Monday (UK time).</div>
@@ -5674,6 +5707,17 @@ video {
       </div>
       <ul id="whatsNewList" class="whats-new-list"></ul>
       <button id="whatsNewCloseBtn" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Got It</button>
+    </div>
+  </div>
+  <div id="referralWelcomeModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="referralWelcomeTitle">
+    <div class="bg-slate-900 border border-emerald-500/60 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-3">
+      <div class="text-4xl" aria-hidden="true">🎁</div>
+      <h2 id="referralWelcomeTitle" class="text-base font-black text-emerald-400 uppercase tracking-wide">You've been invited!</h2>
+      <p id="referralWelcomeText" class="text-slate-300 text-xs leading-relaxed"></p>
+      <div class="flex flex-col gap-2 pt-1">
+        <button id="referralWelcomeGoBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Sign up</button>
+        <button id="referralWelcomeCloseBtn" class="w-full py-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-300 uppercase tracking-wider transition">Not now</button>
+      </div>
     </div>
   </div>
   <div id="gauntletModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="gauntletTitle">
@@ -6833,6 +6877,7 @@ video {
     //   § Installable app and notifications
     //   § Settings page
     //   § Invite links
+    //   § Referrals (?ref=CODE invite links, Profile → Invite friends)
     //   § Phone back gesture
     //   § Tutorial
     //   § Page start-up
@@ -6846,7 +6891,7 @@ video {
     ['matchStatsModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
-     'matchSummaryModal', 'errorReportsModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal'].forEach((id) => {
+     'matchSummaryModal', 'errorReportsModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal'].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.parentElement !== document.body) document.body.appendChild(el);
     });
@@ -6915,6 +6960,7 @@ video {
     // first pointed at sw.js (it keeps that registration for later
     // lookups), and a call that still fails that way is sent directly.
     let messagingPrimed = null;
+    let referralStatusCache = null; // § Referrals: last economy referral 'status' for currentUser
     function primeMessagingForFunctions() {
       if (messagingPrimed) return messagingPrimed;
       const within = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
@@ -15942,6 +15988,11 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v151: [
+        ['🔗', 'Invite friends! Friends → Invite Friends shares your own link. When a friend signs up with it and plays 3 games, you get 💎 100 and they get 💎 50.'],
+        ['👥', 'Profile → Invite friends shows your code, who joined and how many games they have played.'],
+        ['🏅', 'Recruit 5 players to earn the Recruiter picture and challenge.']
+      ],
       v150: [
         ['🏆', 'Challenges: the Gauntlet is now a challenge (Bots tab), plus a Daily Gauntlet worth 50 💎 every day. The top of the page shows how many challenges you have completed.'],
         ['☰', 'Challenges and the Shop are now one tap away at the top of the menu.'],
@@ -16079,6 +16130,7 @@ video {
       document.getElementById('challengesModal').classList.remove('hidden');
       renderChallengesPanel();
       initChallengeEconomy().then(renderChallengesPanel);
+      if (!referralStatusCache) fetchReferralStatus().then(renderChallengesModalIfOpen);
     });
     document.getElementById('challengesCloseBtn').addEventListener('click', () => document.getElementById('challengesModal').classList.add('hidden'));
     document.getElementById('challengesModal').addEventListener('click', (e) => {
@@ -19288,6 +19340,7 @@ video {
     function resetAfterSignOut() {
       if (signOutResetting) return;
       signOutResetting = true;
+      referralStatusCache = null;
       try {
         resetDailyStreakOnSignOut();
         if (state.isMultiplayer && state.roomCode && state.localPlayerId && typeof db !== 'undefined') {
@@ -19328,6 +19381,7 @@ video {
       refreshOwnAvatarDisplays();
       renderProfileShowcase();
       refreshProfileStreak();
+      renderProfileReferral(true);
       document.getElementById('profileModal').classList.remove('hidden');
     }
     document.getElementById('profileCloseBtn').addEventListener('click', () => document.getElementById('profileModal').classList.add('hidden'));
@@ -20007,6 +20061,8 @@ video {
         const gettingStarted = GETTING_STARTED_CHALLENGES.find(c => c.id === id);
         if (gettingStarted) return gettingStarted.desc;
         if (id === GAUNTLET_CHALLENGES.first.id) return GAUNTLET_CHALLENGES.first.desc;
+        if (/^referral_joined_/.test(id)) return `You played ${REFERRAL.gamesNeeded} games after joining with a friend's invite.`;
+        if (/^referral_/.test(id)) return `A friend you invited has played ${REFERRAL.gamesNeeded} games.`;
         if (/^gauntlet_\d{4}-\d{2}-\d{2}$/.test(id)) return GAUNTLET_CHALLENGES.daily.desc;
         def = Object.values(CHALLENGE_DEFS).flat().find(c => c.id === id);
         if (!def) return '';
@@ -20245,6 +20301,7 @@ video {
           // wins, first game/win) and unlocks earned pictures.
           syncServerEconomy();
           flushGauntletPending(); // a Gauntlet result that never reached the server
+          claimPendingReferral(); // arrived by a friend's ?ref= link
           refreshGauntletLobbyBtn();
           // Drain the buffer from the CRITICAL BUG FIX in notifyChallengeEvent
           // above: anything that happened before this exact point (state
@@ -20516,6 +20573,8 @@ video {
       return callEconomy('matchFinished', { matchId }).then((res) => {
         if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
         applyServerClaims(res.claimed);
+        noteReferralProgress(res.referral);
+        if (res.referral) updateDiamondHeader();
         return res;
       }).catch((e) => { console.warn('Match not recorded', e.message); return null; });
     }
@@ -20737,7 +20796,7 @@ video {
     }
 
     const CHALLENGES_SIGN_IN_MSG = '<p class="text-[9px] text-slate-500 text-center py-2">Sign in to track this.</p>';
-    const CHALLENGES_LIST_IDS = ['challengesTutorialList', 'challengesDailyList', 'challengesWeeklyList', 'challengesRankedBurnsList', 'challengesRankedStreaksList', 'challengesRankedJokerList', 'challengesRankedSnapList', 'challengesRankedGamesList', 'challengesEndingCardsList', 'challengesRankTiersList', 'challengesBotMatchesList', 'challengesGauntletList', 'challengesDailyGauntletList'];
+    const CHALLENGES_LIST_IDS = ['challengesTutorialList', 'challengesDailyList', 'challengesWeeklyList', 'challengesRankedBurnsList', 'challengesRankedStreaksList', 'challengesRankedJokerList', 'challengesRankedSnapList', 'challengesRankedGamesList', 'challengesEndingCardsList', 'challengesRankTiersList', 'challengesBotMatchesList', 'challengesGauntletList', 'challengesDailyGauntletList', 'challengesRecruitList'];
 
     // Builds every section's HTML from challengeEconomy + CHALLENGE_DEFS.
     // Guests get an honest "sign in" prompt in every section rather than
@@ -20784,7 +20843,7 @@ video {
       document.getElementById('challengesModalDoneWrap')?.classList.toggle('hidden', !currentUser);
       if (!currentUser) {
         CHALLENGES_LIST_IDS.filter(id => !/Gauntlet/.test(id)).forEach((id) => setListHtml(id, CHALLENGES_SIGN_IN_MSG));
-        ['challengesGauntletList', 'challengesDailyGauntletList'].forEach(id => setListHtml(id, ''));
+        ['challengesGauntletList', 'challengesDailyGauntletList', 'challengesRecruitList'].forEach(id => setListHtml(id, ''));
         return;
       }
 
@@ -20853,6 +20912,11 @@ video {
         GAUNTLET.firstReward, !!done[GAUNTLET_CHALLENGES.first.id], GAUNTLET_CHALLENGES.first.desc));
       setListHtml('challengesDailyGauntletList', renderChallengeRowHTML(GAUNTLET_CHALLENGES.daily.name, GAUNTLET_CHALLENGES.daily.desc,
         GAUNTLET.dailyReward, gauntletBeatenToday(done), GAUNTLET_CHALLENGES.daily.desc));
+      // Recruiter: friends who joined with your invite and played their games.
+      setListHtml('challengesRecruitList', CHALLENGE_DEFS.recruits.map((c) => {
+        const have = Math.min((referralStatusCache && referralStatusCache.recruited) || 0, c.target);
+        return renderChallengeRowHTML(c.name, `${have}/${c.target} — ${challengeDescription(c)}`, c.reward, !!done[c.id], challengeDescription(c));
+      }).join(''));
       const doneCount = document.getElementById('challengesModalDoneCount');
       if (doneCount) doneCount.textContent = String(Object.keys(done || {}).length);
 
@@ -21870,7 +21934,7 @@ video {
       if (e.target.id === 'inboxModal') document.getElementById('inboxModal').classList.add('hidden');
     });
     // Mail kinds stored under users/{uid}/activityInbox.
-    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift'];
+    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral'];
     function inboxItemHtml(item) {
       if (item.type === 'giftIn') {
         const giftItem = COSMETIC_SHOP_ITEMS.find(i => i.id === item.itemId);
@@ -21930,9 +21994,21 @@ video {
           <button type="button" data-challenge-id="${escapeAttr(item.id)}" class="inbox-read-challenge-btn mt-2 w-full text-[9px] font-black py-1 rounded-lg border border-amber-500 text-amber-300 hover:bg-amber-500 hover:text-slate-950 transition">MARK AS READ</button>
         </div>`;
       }
+      if (item.type === 'referral') {
+        const capped = item.event === 'capped';
+        return `<div class="inbox-activity--referral border rounded-xl px-2.5 py-2">
+          <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${capped ? 'Monthly invite limit reached' : 'A friend joined with your invite'}</p>
+          <p class="text-xs font-bold text-white">${escapeHtml(item.name || 'A new player')}</p>
+          <p class="inbox-activity-accent text-[10px] mt-1">${capped
+            ? `They count toward Recruiter, but only ${REFERRAL.monthlyCap} invites a month pay Diamonds.`
+            : `You're friends now. You get 💎 ${REFERRAL.inviterReward} (and they get 💎 ${REFERRAL.newPlayerReward}) once they've played ${REFERRAL.gamesNeeded} games.`}</p>
+          <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
+        </div>`;
+      }
       if (item.type === 'rank' || item.type === 'shop') {
         const isRank = item.type === 'rank';
-        const heading = isRank ? `Rank ${item.direction === 'up' ? 'up' : 'down'}` : item.unlocked ? 'Profile picture unlocked' : 'Shop purchase';
+        const unlockedFrame = item.unlocked && /^unlock_frame-/.test(String(item.id || ''));
+        const heading = isRank ? `Rank ${item.direction === 'up' ? 'up' : 'down'}` : item.unlocked ? (unlockedFrame ? 'Frame unlocked' : 'Profile picture unlocked') : 'Shop purchase';
         const detail = isRank
           ? `${escapeHtml(item.fromTier)} → ${escapeHtml(item.toTier)}`
           : escapeHtml(item.name);
@@ -21941,7 +22017,8 @@ video {
           : item.unlocked ? escapeHtml(item.requirement || 'Earned in Ranked') : `${Number(item.cost) || 0} Diamonds spent`;
         // Shop mail keys are shop_<itemId>; unlock mail keys are unlock_<itemId>.
         const avatarId = String(item.id || '').replace(/^(shop|unlock)_/, '');
-        const thumb = AVATAR_ART[avatarId] ? avatarHtml(avatarId, 34) : '';
+        const frameItem = unlockedFrame ? EARNED_FRAMES.find(f => f.id === avatarId) : null;
+        const thumb = AVATAR_ART[avatarId] ? avatarHtml(avatarId, 34) : frameItem ? framePreviewCard(frameItem) : '';
         return `<div class="inbox-activity--${item.type} border rounded-xl px-2.5 py-2">
           <div class="flex items-center gap-2">${thumb}<div class="min-w-0">
           <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${heading}</p>
@@ -23160,6 +23237,7 @@ video {
       setTimeout(tryJoin, 600);
     }
     if (!IS_DEV_TEST_PAGE) handleInviteLinkOnLoad();
+    if (!IS_DEV_TEST_PAGE) setTimeout(() => handleReferralLinkOnLoad(), 0); // defined further down
 
     document.getElementById('emoteToggleBtn').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -23345,6 +23423,149 @@ video {
       return activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement?.isContentEditable;
     }
 
+    // § Referrals: https://shithead-pro.web.app/?ref=<CODE>
+    // The code is remembered from the link (localStorage) until the player is
+    // signed in, then the server links the new account to the inviter (economy
+    // referral 'claim': new accounts with a verified email only, once). The
+    // server counts the new player's games and pays both (see functions/economy.js).
+    const REF_PENDING_KEY = 'shithead_ref_code';
+    const REF_PENDING_MAX_AGE = 30 * 864e5;
+    // referralStatusCache (last economy referral 'status') is declared at the top of the script.
+    const referralLinkFor = (code) => `https://shithead-pro.web.app/?ref=${encodeURIComponent(code)}`;
+    function pendingReferral() {
+      try {
+        const p = JSON.parse(localStorage.getItem(REF_PENDING_KEY) || 'null');
+        if (!p || !p.code || Date.now() - (p.at || 0) > REF_PENDING_MAX_AGE) return null;
+        return p;
+      } catch (e) { return null; }
+    }
+    function setPendingReferral(value) {
+      try { if (value) localStorage.setItem(REF_PENDING_KEY, JSON.stringify(value)); else localStorage.removeItem(REF_PENDING_KEY); } catch (e) {}
+    }
+    function handleReferralLinkOnLoad() {
+      const params = new URLSearchParams(location.search);
+      const code = (params.get('ref') || '').toUpperCase();
+      if (!params.has('ref')) return;
+      params.delete('ref');
+      history.replaceState(history.state, '', location.pathname + (params.toString() ? `?${params}` : '') + location.hash);
+      if (!/^[A-Z0-9]{3,16}$/.test(code)) return;
+      setPendingReferral({ code, at: Date.now() });
+      let attempt = 0;
+      const greet = () => {
+        if (!authStateResolved && ++attempt < 20) { setTimeout(greet, 250); return; }
+        if (currentUser) claimPendingReferral();
+        else showReferralWelcome('invited');
+      };
+      setTimeout(greet, 1500);
+    }
+    let referralClaimInFlight = false;
+    function claimPendingReferral() {
+      const pending = pendingReferral();
+      if (!pending || !currentUser || referralClaimInFlight || isOffline()) return Promise.resolve(null);
+      referralClaimInFlight = true;
+      return callEconomy('referral', { op: 'claim', code: pending.code }).then((res) => {
+        setPendingReferral(null);
+        referralStatusCache = res;
+        showReferralWelcome('joined', res.inviterName);
+        if (typeof renderFriendsList === 'function' && !document.getElementById('friendsModal')?.classList.contains('hidden')) renderFriendsList();
+        return res;
+      }).catch((e) => {
+        // Final answers (already linked, not a new account, own code, bad code)
+        // drop the code; anything else (no signal, email not verified yet) keeps it.
+        if (/already linked|new accounts|own invite|not found|not valid/i.test(e.message)) setPendingReferral(null);
+        if (/not found|not valid/i.test(e.message)) notifyBanner(`⚠️ ${e.message}`);
+        return null;
+      }).finally(() => { referralClaimInFlight = false; });
+    }
+    // The home screen hides the table's banners, so arriving by a link gets a
+    // small pop-up: an invite to sign up, then "you joined" once linked.
+    function showReferralWelcome(kind, inviterName) {
+      const modal = document.getElementById('referralWelcomeModal');
+      const busy = ['rejoinModal', 'authModal', 'usernameModal', 'gauntletModal'].some(id => !document.getElementById(id)?.classList.contains('hidden'));
+      if (kind === 'joined' && busy) { notifyBanner(`🎉 You joined with ${inviterName || 'a friend'}'s invite!`); return; }
+      const joined = kind === 'joined';
+      document.getElementById('referralWelcomeTitle').textContent = joined ? `You joined with ${inviterName || 'a friend'}'s invite!` : "You've been invited!";
+      document.getElementById('referralWelcomeText').innerHTML = joined
+        ? `You're friends now. Play <b>${REFERRAL.gamesNeeded} games</b> (any mode) and you get <b>💎 ${REFERRAL.newPlayerReward}</b>, and so do they.`
+        : `A friend sent you their invite. Sign up and play <b>${REFERRAL.gamesNeeded} games</b> to get <b>💎 ${REFERRAL.newPlayerReward}</b>. You'll be made friends automatically.`;
+      const go = document.getElementById('referralWelcomeGoBtn');
+      go.textContent = joined ? "LET'S PLAY" : 'SIGN UP';
+      go.dataset.kind = kind;
+      modal.classList.remove('hidden');
+    }
+    document.getElementById('referralWelcomeGoBtn').addEventListener('click', (e) => {
+      document.getElementById('referralWelcomeModal').classList.add('hidden');
+      if (e.currentTarget.dataset.kind === 'invited') { openAuthModal(); setAuthMode('signup'); }
+    });
+    document.getElementById('referralWelcomeCloseBtn').addEventListener('click', () => document.getElementById('referralWelcomeModal').classList.add('hidden'));
+    function fetchReferralStatus() {
+      if (!currentUser || isOffline()) return Promise.resolve(referralStatusCache);
+      return callEconomy('referral', { op: 'status' }).then((res) => { referralStatusCache = res; return res; })
+        .catch(() => referralStatusCache);
+    }
+    function ensureReferralCode() {
+      if (referralStatusCache && referralStatusCache.code) return Promise.resolve(referralStatusCache.code);
+      return callEconomy('referral', { op: 'code' }).then((res) => { referralStatusCache = res; return res.code; });
+    }
+    async function shareReferralLink() {
+      if (!currentUser) { openAuthModal(); notifyBanner('Sign in to get your own invite link.'); return 'signin'; }
+      let code;
+      try { code = await ensureReferralCode(); }
+      catch (e) { notifyBanner(`⚠️ ${e.message}`); return 'failed'; }
+      renderProfileReferral();
+      const url = referralLinkFor(code);
+      const text = `Play ShitHead with me! Sign up with my link and play ${REFERRAL.gamesNeeded} games: we both get Diamonds 💎`;
+      if (navigator.share) {
+        try { await navigator.share({ title: 'ShitHead Deluxe', text, url }); return 'shared'; }
+        catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+      }
+      if (await copyTextToClipboard(`${text} ${url}`)) { notifyBanner('✅ Invite link copied!'); Haptics.vibrate(20); return 'copied'; }
+      notifyBanner(url.replace('https://', ''));
+      return 'failed';
+    }
+    document.getElementById('friendsInviteBtn').addEventListener('click', () => shareReferralLink());
+
+    // Profile → Invite friends: your code and link, who joined and how far
+    // along they are, your Recruiter progress, and who invited you.
+    function referralProfileHtml(st) {
+      if (!st) return '<p class="ref-how">Loading…</p>';
+      const pips = (n) => `<span class="ref-pips" aria-label="${n} of ${REFERRAL.gamesNeeded} games">${Array.from({ length: REFERRAL.gamesNeeded }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
+      const codeRow = st.code
+        ? `<div class="ref-code-row"><div class="min-w-0" style="flex:1"><div class="ref-code">${escapeHtml(st.code)}</div><span class="ref-link">${escapeHtml(referralLinkFor(st.code).replace('https://', ''))}</span></div>
+            <button type="button" class="ref-btn" data-ref-action="share">SHARE</button><button type="button" class="ref-btn" data-ref-action="copy">COPY</button></div>`
+        : `<button type="button" class="ref-invite-btn" data-ref-action="share" style="margin:0"><span aria-hidden="true">🔗</span><span>GET MY INVITE LINK</span></button>`;
+      const how = `<p class="ref-how">When a friend signs up with your link and plays <b>${REFERRAL.gamesNeeded} games</b>, you get <b>💎 ${REFERRAL.inviterReward}</b> and they get <b>💎 ${REFERRAL.newPlayerReward}</b>. You're made friends automatically. Recruit <b>${REFERRAL.recruiterTarget}</b> to earn the <b>${REFERRAL.pictureName}</b> picture. Up to ${REFERRAL.monthlyCap} paid invites a month.</p>`;
+      const stats = `<div class="ref-stat-row"><div class="ref-stat"><b>${Math.min(st.recruited || 0, REFERRAL.recruiterTarget)}/${REFERRAL.recruiterTarget}</b><span>Recruiter</span></div>
+        <div class="ref-stat"><b>${(st.recruits || []).length}</b><span>Joined</span></div>
+        <div class="ref-stat"><b>${st.paidThisMonth || 0}/${REFERRAL.monthlyCap}</b><span>Paid this month</span></div></div>`;
+      const list = (st.recruits || []).length ? `<div class="ref-list">${st.recruits.map(r => `<div class="ref-person"><span class="ref-name">${escapeHtml(r.name)}</span>${pips(r.done ? REFERRAL.gamesNeeded : r.games)}<span class="ref-state">${r.done ? (r.reward ? `✓ +${r.reward} 💎` : '✓') : `${r.games}/${REFERRAL.gamesNeeded}`}</span></div>`).join('')}</div>` : '';
+      const invited = st.referredBy ? `<div class="ref-invited">🎁 Invited by <b>${escapeHtml(st.referredBy.name || 'a friend')}</b>: ${st.referredBy.paid ? `done, you both got your Diamonds.` : `${st.referredBy.games}/${st.referredBy.needed} games played. Finish them for 💎 ${REFERRAL.newPlayerReward}.`}</div>` : '';
+      return codeRow + how + stats + list + invited;
+    }
+    function renderProfileReferral(fetch = false) {
+      const section = document.getElementById('profileReferralSection');
+      const body = document.getElementById('profileReferralBody');
+      if (!section || !body) return;
+      section.classList.toggle('hidden', !currentUser);
+      if (!currentUser) return;
+      body.innerHTML = referralProfileHtml(referralStatusCache);
+      if (fetch) fetchReferralStatus().then((st) => { if (st) body.innerHTML = referralProfileHtml(st); });
+    }
+    document.getElementById('profileReferralBody').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-ref-action]');
+      if (!btn) return;
+      if (btn.dataset.refAction === 'share') { shareReferralLink(); return; }
+      const code = referralStatusCache && referralStatusCache.code;
+      if (code && await copyTextToClipboard(referralLinkFor(code))) { btn.textContent = 'COPIED'; Haptics.vibrate(20); setTimeout(() => { btn.textContent = 'COPY'; }, 1600); }
+    });
+    // The new player's progress after each finished game (economy matchFinished).
+    function noteReferralProgress(ref) {
+      if (!ref) return;
+      if (referralStatusCache && referralStatusCache.referredBy) Object.assign(referralStatusCache.referredBy, { games: ref.games, paid: !!ref.paid });
+      if (ref.paid) enqueueChallengeToast("Friend's invite complete", REFERRAL.newPlayerReward, -1);
+      else notifyBanner(`🎁 Invite progress: ${ref.games}/${REFERRAL.gamesNeeded} games. ${REFERRAL.gamesNeeded - ref.games} more for 💎 ${REFERRAL.newPlayerReward}!`);
+    }
+
     // § Phone back gesture
     // --- Phone back gesture / back button ---------------------------------
     // Android's back gesture and back button (and a left-edge swipe in the
@@ -23363,7 +23584,7 @@ video {
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
-      needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
+      needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', referralWelcomeModal: 'referralWelcomeCloseBtn', whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
       victoryOverlay: 'closeVictoryBtn', floatingJokerBar: null,
       followUpToastBanner: () => resolveFollowUpPlay(false)
     };
