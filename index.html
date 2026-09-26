@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v156 (ShitHead-Deluxe-138) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v157 (ShitHead-Deluxe-139) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -337,14 +337,18 @@
     .inbox-activity--shop { background:rgba(131,24,67,.24); border-color:rgba(244,114,182,.65); }
     .inbox-activity--shop .inbox-activity-accent { color:#f9a8d4; }
     /* Challenges header: Diamonds, completed count, Shop shortcut: one height. */
-    .ch-stat-bar { display:flex; align-items:center; gap:8px; margin-top:8px; }
+    /* Diamonds left, completed count dead centre, Shop right. */
+    .ch-stat-bar { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; margin-top:8px; }
+    .ch-stat-bar > .ch-stat--diamonds { justify-self:start; }
+    .ch-stat-bar > .ch-stat--done { justify-self:center; }
+    .ch-stat-bar > .ch-stat--shop { justify-self:end; }
     .ch-stat { display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 10px; border-radius:999px; border:1px solid; font-weight:900; font-size:11px; line-height:1; white-space:nowrap; }
     .ch-stat b { font-variant-numeric:tabular-nums; }
     .ch-stat small { font-size:8px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; opacity:.85; }
     .ch-stat--diamonds { color:#67e8f9; border-color:rgba(34,211,238,.35); background:rgba(8,51,68,.45); }
     .ch-stat--done { color:#6ee7b7; border-color:rgba(52,211,153,.35); background:rgba(6,78,59,.35); }
     .ch-stat--done.hidden { display:none; }
-    .ch-stat--shop { margin-left:auto; color:#fbbf24; border-color:rgba(245,158,11,.55); background:rgba(69,26,3,.4); cursor:pointer; transition:transform .12s var(--ease-snappy), background .15s; }
+    .ch-stat--shop { grid-column:3; color:#fbbf24; border-color:rgba(245,158,11,.55); background:rgba(69,26,3,.4); cursor:pointer; transition:transform .12s var(--ease-snappy), background .15s; }
     .ch-stat--shop:hover { background:rgba(120,53,15,.55); }
     .ch-stat--shop:active { transform:scale(.95); }
     .ch-stat--shop .pack-icon { width:17px; height:17px; }
@@ -16010,6 +16014,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v157: [
+        ['🏆', 'Challenges: your completed count now sits in the middle of the top bar.']
+      ],
       v156: [
         ['🛒', 'A Shop button at the top of the Challenges page, next to your Diamonds and challenges completed.']
       ],
