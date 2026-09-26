@@ -37,26 +37,31 @@
           "cardBack": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
-              root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) &&
+              root.child('shopPurchases').child($uid)
+                .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val() === 'back-midnight' || newData.val() === 'back-emerald' ||
               newData.val() === 'back-neon' || newData.val() === 'back-crimson' ||
               newData.val() === 'back-nebula' || newData.val() === 'back-inferno' ||
-              newData.val().matches(/^back-(lunar|valentine|ramadan|easter|summer|halloween|diwali|christmas|newyear)$/))))"
+              (newData.val().matches(/^back-(lunar|valentine|ramadan|easter|summer)$/) ||
+              newData.val().matches(/^back-(halloween|diwali|christmas|newyear)$/)))))"
           },
           "frame": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
-              root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) &&
+              root.child('shopPurchases').child($uid)
+                .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val() === 'frame-silver' || newData.val() === 'frame-gold' ||
               newData.val() === 'frame-diamond' || newData.val() === 'frame-obsidian-throne' ||
               newData.val() === 'frame-emerald-sovereign' || newData.val() === 'frame-darkness' ||
-              newData.val().matches(/^frame-(lunar|valentine|ramadan|easter|summer|halloween|diwali|christmas|newyear)$/))))"
+              (newData.val().matches(/^frame-(lunar|valentine|ramadan|easter|summer)$/) ||
+              newData.val().matches(/^frame-(halloween|diwali|christmas|newyear)$/)))))"
           },
           "emotes": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               newData.val() === 'emotes-classic' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
-              root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) &&
+              root.child('shopPurchases').child($uid)
+                .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val() === 'emotes-classic' || newData.val() === 'emotes-savage' ||
               newData.val() === 'emotes-victory' || newData.val() === 'emotes-chaos' ||
               newData.val() === 'emotes-royal' || newData.val() === 'emotes-animals' ||
@@ -65,36 +70,43 @@
               newData.val() === 'emotes-flags-south-america' ||
               newData.val() === 'emotes-flags-asia' || newData.val() === 'emotes-flags-africa' ||
               newData.val() === 'emotes-flags-oceania' ||
-              newData.val().matches(/^emotes-(lunar|valentine|ramadan|easter|summer|halloween|diwali|christmas|newyear)$/))))"
+              (newData.val().matches(/^emotes-(lunar|valentine|ramadan|easter|summer)$/) ||
+              newData.val().matches(/^emotes-(halloween|diwali|christmas|newyear)$/)))))"
           },
           "tableTheme": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
-              root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) &&
+              root.child('shopPurchases').child($uid)
+                .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val() === 'table-casino' || newData.val() === 'table-winter' ||
               newData.val() === 'table-midnight' || newData.val() === 'table-candyfloss' ||
               newData.val() === 'table-royal' || newData.val() === 'table-desert' ||
               newData.val() === 'table-jungle' || newData.val() === 'table-devilish' ||
               newData.val() === 'table-angelic' ||
-              newData.val().matches(/^table-(lunar|valentine|ramadan|easter|summer|halloween|diwali|christmas|newyear)$/))))"
+              (newData.val().matches(/^table-(lunar|valentine|ramadan|easter|summer)$/) ||
+              newData.val().matches(/^table-(halloween|diwali|christmas|newyear)$/)))))"
           },
           "burnEffect": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
-              root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) &&
+              root.child('shopPurchases').child($uid)
+                .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val() === 'burn-coloured' || newData.val() === 'burn-ice' ||
               newData.val() === 'burn-electric' || newData.val() === 'burn-paint' ||
               newData.val() === 'burn-sweets' || newData.val() === 'burn-smoke' ||
-              newData.val().matches(/^burn-(lunar|valentine|ramadan|easter|summer|halloween|diwali|christmas|newyear)$/))))"
+              (newData.val().matches(/^burn-(lunar|valentine|ramadan|easter|summer)$/) ||
+              newData.val().matches(/^burn-(halloween|diwali|christmas|newyear)$/)))))"
           },
           "victoryEffect": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
-              root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) &&
+              root.child('shopPurchases').child($uid)
+                .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val() === 'victory-confetti' || newData.val() === 'victory-cards' ||
               newData.val() === 'victory-fireworks' || newData.val() === 'victory-sparklers' ||
               newData.val() === 'victory-stars' || newData.val() === 'victory-karate' ||
-              newData.val().matches(/^victory-(lunar|valentine|ramadan|easter|summer|halloween|diwali|christmas|newyear)$/))))"
+              (newData.val().matches(/^victory-(lunar|valentine|ramadan|easter|summer)$/) ||
+              newData.val().matches(/^victory-(halloween|diwali|christmas|newyear)$/)))))"
           },
           "avatar": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
@@ -102,7 +114,8 @@
               newData.val() === 'avatar-suit-hearts' || newData.val() === 'avatar-suit-diamonds' ||
               newData.val() === 'avatar-suit-clubs' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
-              root.child('shopPurchases').child($uid).child('cosmetics').child(newData.val()).exists()) &&
+              root.child('shopPurchases').child($uid)
+                .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val() === 'avatar-ace-spades' || newData.val() === 'avatar-queen-hearts' ||
               newData.val() === 'avatar-joker' || newData.val() === 'avatar-burn-flame' ||
               newData.val() === 'avatar-ghost' || newData.val() === 'avatar-frozen' ||
@@ -111,7 +124,8 @@
               newData.val() === 'avatar-crown-gold' || newData.val() === 'avatar-crown-diamond' ||
               newData.val() === 'avatar-crown-master' || newData.val() === 'avatar-centurion' ||
               newData.val() === 'avatar-shithead' ||
-              newData.val().matches(/^avatar-(lunar|valentine|ramadan|easter|summer|halloween|diwali|christmas|newyear)(-earned)?$/))))"
+              (newData.val().matches(/^avatar-(lunar|valentine|ramadan|easter|summer)(-earned)?$/) ||
+              newData.val().matches(/^avatar-(halloween|diwali|christmas|newyear)(-earned)?$/)))))"
           },
           "$other": {
             ".validate": false
@@ -135,7 +149,9 @@
         },
         "seasonWins": {
           "$key": {
-            ".validate": "$key.matches(/^(lunar|valentine|ramadan|easter|summer|halloween|diwali|christmas|newyear)-[0-9]{4}$/) &&
+            ".validate": "
+            ($key.matches(/^(lunar|valentine|ramadan|easter|summer)-[0-9]{4}$/) ||
+            $key.matches(/^(halloween|diwali|christmas|newyear)-[0-9]{4}$/)) &&
               newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000"
           }
         },
@@ -148,7 +164,8 @@
           ".write": "auth != null && auth.uid === $uid",
           "$key": {
             ".validate": "newData.isBoolean() &&
-              $key.matches(/^(lunar|valentine|ramadan|easter|summer|halloween|diwali|christmas|newyear)-[0-9]{4}(-last)?$/)"
+              ($key.matches(/^(lunar|valentine|ramadan|easter|summer)-[0-9]{4}(-last)?$/) ||
+              $key.matches(/^(halloween|diwali|christmas|newyear)-[0-9]{4}(-last)?$/))"
           }
         },
         "ownedCosmetics": {
@@ -207,10 +224,12 @@
           ".write": "auth != null && auth.uid === $uid &&
             (!data.exists() || data.val() === newData.val() ||
             (root.child('shopPurchases').child($uid).child('nameChangeToken').exists() &&
-            !root.child('shopPurchases').child($uid).child('nameChangeToken').child('usedAt').exists() &&
+            !root.child('shopPurchases').child($uid).child('nameChangeToken')
+              .child('usedAt').exists() &&
             newData.parent().parent().parent().child('shopPurchases').child($uid)
               .child('nameChangeToken').child('usedAt').exists()))",
-          ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 12"
+          ".validate": "newData.isString() && newData.val().length >= 3 &&
+            newData.val().length <= 12"
         },
         "$field": {
           ".write": "auth != null && auth.uid === $uid"
@@ -247,7 +266,8 @@
         "$uid": {
           ".read": "auth != null && auth.uid === $uid",
           ".write": "auth != null && auth.uid === $uid && $roomCode.matches(/^[0-9]{6}$/)",
-          ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 60000"
+          ".validate": "newData.isNumber() && newData.val() >= now - 60000 &&
+            newData.val() <= now + 60000"
         }
       }
     },
@@ -257,7 +277,9 @@
         ".write": "auth != null && ((!newData.exists() && data.val() === auth.uid) ||
           (!data.exists() && newData.val() === auth.uid &&
           $name.matches(/^[a-z0-9][a-z0-9_-]{2,11}$/) &&
-          !$name.matches(/.*(admin|administrator|moderator|support|staff|official|system|root|owner|developer|fuck|cunt|asshole|bastard|bitch|whore|slut|shit).*/)))"
+          !$name.matches(/.*(admin|administrator|moderator|support|staff|official).*/) &&
+          !$name.matches(/.*(system|root|owner|developer|fuck|cunt).*/) &&
+          !$name.matches(/.*(asshole|bastard|bitch|whore|slut|shit).*/)))"
       }
     },
     "matchmaking": {
@@ -288,11 +310,14 @@
           newData.child('wins').val() >= 0 && newData.child('losses').isNumber() &&
           newData.child('losses').val() >= 0 &&
           newData.child('rating').val() ===
-            root.child('users').child(root.child('usernames').child($name).val()).child('rating').val() &&
+            root.child('users').child(root.child('usernames').child($name).val())
+              .child('rating').val() &&
           newData.child('wins').val() ===
-            root.child('users').child(root.child('usernames').child($name).val()).child('wins').val() &&
+            root.child('users').child(root.child('usernames').child($name).val())
+              .child('wins').val() &&
           newData.child('losses').val() ===
-            root.child('users').child(root.child('usernames').child($name).val()).child('losses').val())",
+            root.child('users').child(root.child('usernames').child($name).val())
+              .child('losses').val())",
         "avatar": {
           ".validate": "!newData.exists() || (newData.isString() &&
             newData.val().matches(/^(default|avatar-[a-z-]{3,30})$/))"
@@ -354,7 +379,8 @@
         },
         "showcase": {
           "$type": {
-            ".validate": "$type.matches(/^(tableTheme|cardBack|frame|burnEffect|victoryEffect|emotes)$/) &&
+            ".validate": "($type.matches(/^(tableTheme|cardBack|frame)$/) ||
+              $type.matches(/^(burnEffect|victoryEffect|emotes)$/)) &&
               newData.isString() && newData.val().matches(/^[a-z0-9-]{3,40}$/)"
           }
         },
@@ -402,7 +428,8 @@
         "$inviteId": {
           ".write": "auth != null && ((!data.exists() &&
             newData.child('fromUid').val() === auth.uid && auth.uid !== $uid) ||
-            (!newData.exists() && (auth.uid === $uid || data.child('fromUid').val() === auth.uid)))",
+            (!newData.exists() && (auth.uid === $uid ||
+              data.child('fromUid').val() === auth.uid)))",
           ".validate": "newData.hasChildren(['fromUid', 'fromName', 'roomCode', 'sentAt']) &&
             newData.child('fromUid').val() === auth.uid && newData.child('fromName').isString() &&
             newData.child('fromName').val().length >= 1 &&
