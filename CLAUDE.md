@@ -77,6 +77,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Server (`gauntlet` action, `users/{uid}/gauntlet`, server-only): `start` (new run, first game begun; refused once beaten today, UK day), `begin` (next game; a game begun and never reported is a loss, so leaving a losing game costs a life), `result` {runId, won} (a win <30s after its begin is refused), `status`. First clear: 200 💎 + `avatar-gauntlet` (Gauntlet Champion) + `frame-gauntlet` (Gauntlet Gold) with unlock mail; later days 50 💎. Challenge-style mail `challengeInbox/gauntlet_<date>`.
 - Gauntlet games NEVER call `reportMatchWin` (no Vs Bots Diamonds, difficulty unlocks or seasonal wins), even before Medium/Hard/Boss are unlocked; `showMatchEndUI` → `gauntletMatchEnded` replaces the match summary; the end row's Quick Play button mirrors the pop-up (`updateGauntletEndButton`). `state.gauntlet` is saved with the game, so a reload resumes it.
 - Signed out/offline (`gauntletUsesServer()` false) the run lives in localStorage `shithead_gauntlet_local` (`gauntletLocalStep`, same rules, no rewards, no daily limit).
+- Resume anywhere: mid-game is the normal saved game (`state.gauntlet` + `matchId` are saved with it; restore banner says Gauntlet). At a game's end `gauntletMatchEnded` drops the saved game and stores `shithead_gauntlet_pending` (a signed-in result not yet confirmed; `flushGauntletPending` resends it at sign-in, on `online` and before the welcome; "in progress"/"has ended" replies mean it already landed) and `shithead_gauntlet_between` (closed on the Continue/Try again screen → `resumeGauntletBetweenGames` reopens the pop-up at start-up). `shithead_gauntlet_last` = last seen run → lobby button reads CONTINUE n/5 (`refreshGauntletLobbyBtn`). HUD/track labels use `GAUNTLET_DIFF_TONES` (the lobby's `DIFF_COLORS` text-*-300 colours; a test compares them).
 - Earn-only frames: `EARNED_FRAMES` (not in `COSMETIC_SHOP_ITEMS`, so never sold, gifted or priced; shown locked in Custom with their requirement). The picture's `EARNED_AVATAR_RULES` type `gauntlet` is ignored by the server's `grantEarnedAvatars` (the action grants it).
 
 ## Challenges
@@ -121,6 +122,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Last card alert
 
 - `isOnLastCard(p)`: PLAY phase, not finished, exactly ONE card across hand + face-up + face-down (two of a rank never counts). The seat gets `.opp-last-card` and a pulsing `☝️ LAST CARD` chip (render); `announceLastCards` (end of the opponents block in `render`) banners + `audio.playLastCard()` + buzz once per opponent until their count changes again (`lastCardAlerted`, cleared in `hideMatchEndUI`). Never for your own seat or in the tutorial.
+
+## Saved Vs Bots game
+
+- `saveGameState` does nothing until start-up has checked for a game to restore (`savedGameChecked`): start-up applies settings first (`updateSpeedByIndex` saves), and that save on the home screen used to delete the game it was about to restore. The dev suite replaces `saveGameState` with a no-op; tests of saving call `originalSaveGameState`.
 
 ## Online sync pitfalls (the cause of "Ranked/online lags and freezes")
 

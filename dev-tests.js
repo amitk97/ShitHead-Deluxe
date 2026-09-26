@@ -5180,6 +5180,79 @@ async function runDevTestSuite() {
     } finally { gauntletRestore(saved); }
   });
 
+  await test('Gauntlet: a result that could not reach the server is kept and sent later (a win is never lost)', async () => {
+    const saved = gauntletSaved();
+    try {
+      currentUser = { uid: 'g-uid' };
+      gauntletUsesServer = () => true;
+      freshState({ isMultiplayer: false, drawPile: [] });
+      state.players = [makePlayer({ id: 'p_user', isBot: false })];
+      startSinglePlayerGame(1, null, { gauntlet: { runId: 'g5', round: 1, lives: 3 } });
+      fakeEconomy({ gauntlet: () => { throw new Error('You need a connection for that.'); } });
+      endGauntletGame(true);
+      await gauntletMatchEnded();
+      assertEqual(gauntletLastView.kind, 'error', 'No signal: the result waits');
+      assertEqual(gauntletStore.get(GAUNTLET_PENDING_KEY), { uid: 'g-uid', runId: 'g5', won: true, round: 1 }, 'Kept on the phone');
+      assertTrue(!!gauntletStore.get(GAUNTLET_BETWEEN_KEY), 'Remembered as between games');
+      assertTrue(localStorage.getItem('shithead_game_state') === null, 'The finished game is never restored');
+      const calls = fakeEconomy({ gauntlet: (d) => d.op === 'result'
+        ? { run: { id: 'g5', round: 2, lives: 3, playing: false }, doneToday: false, completions: 0, firstDone: false }
+        : { run: { id: 'g5', round: 2, lives: 3, playing: false }, doneToday: false, completions: 0, firstDone: false } });
+      await flushGauntletPending();
+      assertEqual(calls[0], ['gauntlet', { op: 'result', runId: 'g5', won: true }], 'Sent once there is a signal');
+      assertEqual(gauntletStore.get(GAUNTLET_PENDING_KEY), null, 'Then forgotten');
+      assertEqual(gauntletLastView.kind, 'won', 'Its screen shows the win');
+      assertEqual(state.gauntlet.round, 2, 'On to round 3');
+      assertTrue(/CONTINUE 3\/5/.test(document.getElementById('gauntletBtn').textContent), 'The lobby button offers to continue');
+    } finally {
+      gauntletStore.set(GAUNTLET_PENDING_KEY, null); gauntletStore.set(GAUNTLET_BETWEEN_KEY, null); gauntletStore.set(GAUNTLET_LAST_KEY, null);
+      refreshGauntletLobbyBtn();
+      gauntletRestore(saved);
+    }
+  });
+
+  await test('Start-up never deletes the saved game before restoring it (settings saved first used to wipe it)', () => {
+    const was = savedGameChecked;
+    try {
+      savedGameChecked = true; // after start-up
+      freshState({ isMultiplayer: false, phase: 'PLAY', drawPile: [] });
+      state.players = [makePlayer({ id: 'p_user', isBot: false }), makePlayer({ id: 'p_bot_1', isBot: true })];
+      originalSaveGameState();
+      const kept = localStorage.getItem('shithead_game_state');
+      assertTrue(!!kept, `A game in play is saved`);
+      savedGameChecked = false; // as at start-up, before the restore
+      state.phase = 'LOBBY';
+      originalSaveGameState();
+      assertEqual(localStorage.getItem('shithead_game_state'), kept, 'A save on the home screen at start-up keeps it');
+      savedGameChecked = true;
+      originalSaveGameState();
+      assertEqual(localStorage.getItem('shithead_game_state'), null, 'After start-up, leaving to the home screen clears it as before');
+    } finally { savedGameChecked = was; localStorage.removeItem('shithead_game_state'); }
+  });
+
+  await test('Gauntlet: the round label on the table uses the lobby difficulty colours', () => {
+    const saved = gauntletSaved();
+    try {
+      freshState({ isMultiplayer: false, drawPile: [] });
+      state.players = [makePlayer({ id: 'p_user', isBot: false })];
+      const tones = {};
+      [0, 2, 3, 4].forEach((round) => {
+        startSinglePlayerGame(1, null, { gauntlet: { runId: 'g6', round, lives: 3 } });
+        render();
+        const label = document.querySelector('#gauntletHud .gh-round span');
+        const diff = GAUNTLET.rounds[round];
+        assertEqual(label.textContent, DIFF_LABELS[diff], `${diff} shows as on the lobby button`);
+        const probe = document.createElement('span');
+        probe.className = DIFF_COLORS[diff].text;
+        document.body.appendChild(probe);
+        assertEqual(getComputedStyle(label).color, getComputedStyle(probe).color, `${diff} matches the lobby colour`);
+        probe.remove();
+        tones[diff] = getComputedStyle(label).color;
+      });
+      assertEqual(new Set(Object.values(tones)).size, 4, 'Each difficulty has its own colour');
+    } finally { gauntletRestore(saved); }
+  });
+
   await test('Gauntlet: lobby button sits under the bot count with the ⓘ on its right; the welcome screen explains it', async () => {
     const saved = gauntletSaved();
     const lobby = document.getElementById('lobbyScreen'), wasHidden = lobby.classList.contains('hidden');

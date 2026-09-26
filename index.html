@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v147 (ShitHead-Deluxe-129) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-26-v148 (ShitHead-Deluxe-130) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7308,7 +7308,13 @@ video {
       burnResolving: false
     };
 
+    // Nothing is saved (or cleared) until start-up has restored the last
+    // game: start-up applies settings first (e.g. game speed, which saves),
+    // and that save ran while still on the home screen, deleting the game
+    // it was about to restore.
+    let savedGameChecked = false;
     function saveGameState() {
+      if (!savedGameChecked) return;
       try {
         // The tutorial is a scripted lesson, not a real match — persisting it
         // meant returning to the app offered to "restore" it as a game against
@@ -7324,6 +7330,7 @@ video {
         const stateToSave = {
           difficulty: state.difficulty,
           gauntlet: state.gauntlet || null,
+          matchId: state.matchId || null,
           speedIndex: state.speedIndex,
           turnDelay: state.turnDelay,
           deckTheme: state.deckTheme,
@@ -11034,6 +11041,21 @@ video {
     // normal win: no Vs Bots Diamonds, difficulty unlocks or seasonal wins.
     // state.gauntlet = { runId, round, lives, local, ended? } during a run.
     const GAUNTLET_LOCAL_KEY = 'shithead_gauntlet_local';
+    // Where you left off, so a closed app or a crash never loses the run:
+    // PENDING = a finished game's result the server hasn't confirmed yet
+    // (sent again at start-up / back online); BETWEEN = the app closed on
+    // the Continue / Try again screen (the pop-up reopens at start-up);
+    // LAST = the run as last seen, for the lobby button's "Continue".
+    const GAUNTLET_PENDING_KEY = 'shithead_gauntlet_pending';
+    const GAUNTLET_BETWEEN_KEY = 'shithead_gauntlet_between';
+    const GAUNTLET_LAST_KEY = 'shithead_gauntlet_last';
+    // Same colours as the lobby's difficulty buttons (DIFF_COLORS text-*-300).
+    const GAUNTLET_DIFF_TONES = { easy: '#6ee7b7', medium: '#fcd34d', hard: '#fda4af', boss: '#d8b4fe' };
+    const gauntletStore = {
+      get(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; } },
+      set(key, value) { try { if (value == null) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+    };
+    const gauntletOwner = (local) => (local || !currentUser ? 'device' : currentUser.uid);
     const GAUNTLET_LABELS = { easy: 'Easy', medium: 'Medium', hard: 'Hard', boss: 'Boss' };
     const GAUNTLET_HEART = '<path d="M12 20.5S3.2 15 2.3 9.4C1.7 5.9 4 3.5 7 3.5c2.1 0 3.6 1.2 5 3 1.4-1.8 2.9-3 5-3 3 0 5.3 2.4 4.7 5.9C20.8 15 12 20.5 12 20.5Z"/>';
     let gauntletPending = null;      // a finished game's result not yet accepted
@@ -11076,11 +11098,52 @@ video {
       return { ...status(), ...res };
     }
     function gauntletCall(op, data = {}, local = !gauntletUsesServer()) {
+      const remember = (res) => {
+        if (res && 'run' in res) {
+          gauntletStore.set(GAUNTLET_LAST_KEY, res.run ? { owner: gauntletOwner(local), round: res.run.round, lives: res.run.lives } : null);
+          refreshGauntletLobbyBtn();
+        }
+        return res;
+      };
       if (local) {
-        try { return Promise.resolve(gauntletLocalStep(op, data)); } catch (e) { return Promise.reject(e); }
+        try { return Promise.resolve(remember(gauntletLocalStep(op, data))); } catch (e) { return Promise.reject(e); }
       }
-      return callEconomy('gauntlet', { op, ...data });
+      return callEconomy('gauntlet', { op, ...data }).then(remember);
     }
+    // The lobby button says when a run is waiting to be continued.
+    function refreshGauntletLobbyBtn() {
+      const label = document.querySelector('#gauntletBtn span');
+      if (!label) return;
+      const last = gauntletStore.get(GAUNTLET_LAST_KEY);
+      const mine = last && last.owner === (gauntletUsesServer() ? currentUser.uid : 'device');
+      label.textContent = mine ? `CONTINUE ${last.round + 1}/${GAUNTLET.rounds.length}` : 'GAUNTLET';
+    }
+    // A signed-in game's result that never reached the server (no signal,
+    // app closed or crashed) is sent as soon as it can be, so a win is never
+    // lost and the next game doesn't count it as a walk-out.
+    let gauntletFlushing = null;
+    function flushGauntletPending() {
+      const p = gauntletStore.get(GAUNTLET_PENDING_KEY);
+      if (!p || !currentUser || p.uid !== currentUser.uid || isOffline()) return Promise.resolve(null);
+      if (gauntletFlushing) return gauntletFlushing;
+      gauntletFlushing = callEconomy('gauntlet', { op: 'result', runId: p.runId, won: p.won }).then((res) => {
+        gauntletStore.set(GAUNTLET_PENDING_KEY, null);
+        gauntletCall('status').catch(() => {});
+        const view = applyGauntletResult(res, { ...p, local: false });
+        // Its screen was waiting on this result: show what happened.
+        if (gauntletPending && gauntletPending.runId === p.runId) {
+          gauntletPending = null;
+          if (!document.getElementById('gauntletModal').classList.contains('hidden')) showGauntlet(view);
+        }
+        return view;
+      }).catch((e) => {
+        // Already counted, or the run is gone: nothing left to send.
+        if (/in progress|has ended/i.test(e.message)) gauntletStore.set(GAUNTLET_PENDING_KEY, null);
+        return null;
+      }).finally(() => { gauntletFlushing = null; });
+      return gauntletFlushing;
+    }
+    window.addEventListener('online', () => { setTimeout(flushGauntletPending, 1500); });
 
     // ---- The pop-up (welcome, after each game, errors) ----
     function gauntletHeartsHtml(lives, lostIndex = -1) {
@@ -11090,7 +11153,7 @@ video {
     function gauntletTrackHtml(done, now) {
       return `<div class="gauntlet-track">${GAUNTLET.rounds.map((d, i) => {
         const cls = i < done ? 'is-done' : i === now ? 'is-now' : '';
-        return `<div class="gauntlet-step ${cls}${d === 'boss' ? ' is-boss' : ''}"><b>${i < done ? '✓' : i + 1}</b>${d === 'medium' ? 'Med' : GAUNTLET_LABELS[d]}</div>`;
+        return `<div class="gauntlet-step ${cls}${d === 'boss' ? ' is-boss' : ''}"><b>${i < done ? '✓' : i + 1}</b><span style="color:${GAUNTLET_DIFF_TONES[d]}">${d === 'medium' ? 'Med' : GAUNTLET_LABELS[d]}</span></div>`;
       }).join('')}</div>`;
     }
     function gauntletRewardHtml(st) {
@@ -11129,7 +11192,7 @@ video {
           body += gauntletRewardHtml(st);
           actions = go('ENTER THE GAUNTLET', 'start') + alt('Not now', 'leave');
         }
-        return head('⚔️', 'Welcome to the Gauntlet', intro) + body +
+        return head('⚔️', run ? 'Welcome back to the Gauntlet' : 'Welcome to the Gauntlet', run ? `Round ${run.round + 1} of ${GAUNTLET.rounds.length} is waiting: the <b>${gauntletRoundLabel(run.round)}</b> bot.` : intro) + body +
           `<p class="gauntlet-note">Gauntlet wins don't count toward unlocking bot difficulties.</p><div class="gauntlet-actions">${actions}</div>`;
       }
       const r = v.res, run = r.run;
@@ -11168,12 +11231,13 @@ video {
     function openGauntletWelcome() {
       document.getElementById('gauntletInfo')?.classList.remove('open');
       showGauntlet({ kind: 'loading' });
-      gauntletCall('status').then((status) => showGauntlet({ kind: 'welcome', status }))
+      flushGauntletPending().then(() => gauntletCall('status')).then((status) => showGauntlet({ kind: 'welcome', status }))
         .catch((e) => showGauntlet({ kind: 'error', message: e.message, retry: 'welcome' }));
     }
     function gauntletAction(action) {
       if (action === 'welcome') return openGauntletWelcome();
       if (action === 'leave') {
+        gauntletStore.set(GAUNTLET_BETWEEN_KEY, null);
         closeGauntlet();
         if (state.gauntlet && !state.isMultiplayer && state.phase && state.phase !== 'LOBBY') leaveBotMatch();
         return;
@@ -11219,6 +11283,7 @@ video {
       if (!run) return showGauntlet({ kind: 'error', message: 'That Gauntlet run has ended.', retry: 'welcome' });
       closeGauntlet();
       gauntletPending = null;
+      gauntletStore.set(GAUNTLET_BETWEEN_KEY, null);
       const gauntlet = { runId: run.id, round: run.round, lives: run.lives, local: !!res.local };
       const prior = state.gauntlet;
       if (prior && prior.bot && prior.round === run.round && prior.runId === run.id) gauntlet.bot = prior.bot; // the same bot again
@@ -11229,10 +11294,15 @@ video {
     // Match end (from showMatchEndUI): report the result, then the pop-up.
     function gauntletMatchEnded() {
       const g = state.gauntlet;
-      if (!g || g.ended || gauntletReportedMatch === state.matchId) return;
+      if (!g || g.ended) return;
+      if (!state.matchId) state.matchId = generateMatchId(); // a game saved by an older build
+      if (gauntletReportedMatch === state.matchId) return;
       gauntletReportedMatch = state.matchId;
+      try { localStorage.removeItem('shithead_game_state'); } catch (e) {} // finished: never restore it
       const me = state.players.find(p => p.id === state.localPlayerId);
       gauntletPending = { runId: g.runId, won: me?.finishRank === 1, local: !!g.local, round: g.round };
+      if (!g.local && currentUser) gauntletStore.set(GAUNTLET_PENDING_KEY, { uid: currentUser.uid, runId: g.runId, won: gauntletPending.won, round: g.round });
+      gauntletStore.set(GAUNTLET_BETWEEN_KEY, { owner: gauntletOwner(g.local), at: Date.now() });
       updateGauntletEndButton();
       const testing = typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning;
       const pause = new Promise(r => setTimeout(r, testing ? 0 : (reduceMotion ? 400 : 1600))); // after the victory effect
@@ -11243,16 +11313,28 @@ video {
       if (!p) return Promise.resolve(null);
       return gauntletCall('result', { runId: p.runId, won: p.won }, p.local).then((res) => {
         gauntletPending = null;
+        gauntletStore.set(GAUNTLET_PENDING_KEY, null);
         const view = applyGauntletResult(res, p);
         if (!opts.quiet) showGauntlet(view);
         return view;
       }).catch((e) => {
-        const view = { kind: 'error', message: `${e.message} Your result is kept: try again.`, retry: 'retryResult' };
+        if (/in progress|has ended/i.test(e.message)) {
+          // Already delivered (e.g. sent again when the signal came back).
+          gauntletStore.set(GAUNTLET_PENDING_KEY, null);
+          gauntletPending = null;
+          return gauntletCall('status').then((status) => {
+            const view = { kind: 'welcome', status };
+            if (!opts.quiet) showGauntlet(view);
+            return view;
+          }).catch(() => null);
+        }
+        const view = { kind: 'error', message: `${e.message} Your result is kept and will be sent when you're back online.`, retry: 'retryResult' };
         if (!opts.quiet) showGauntlet(view);
         return view;
       });
     }
     function applyGauntletResult(res, p) {
+      if (res.completed || res.over || !res.run) gauntletStore.set(GAUNTLET_BETWEEN_KEY, null);
       if (Number.isFinite(Number(res.diamonds)) && !res.local) challengeEconomy.diamonds = Number(res.diamonds);
       if (res.diamondsAwarded > 0) enqueueChallengeToast('Gauntlet beaten', res.diamondsAwarded, -1);
       if (res.newItems && res.newItems.length) {
@@ -11314,7 +11396,22 @@ video {
       const beaten = g.round >= GAUNTLET.rounds.length;
       const roundText = beaten ? 'Beaten!' : `Round ${g.round + 1}/${GAUNTLET.rounds.length} · ${gauntletRoundLabel(g.round)}`;
       hud.setAttribute('aria-label', `Gauntlet: ${lives} of ${GAUNTLET.lives} lives, ${roundText}`);
-      hud.innerHTML = `${gauntletHeartsHtml(lives, lost)}<div class="gh-round" aria-hidden="true">${beaten ? '<b>🏆</b>' : `<b>${g.round + 1}/${GAUNTLET.rounds.length}</b>${gauntletRoundLabel(g.round)}`}</div>`;
+      const diff = GAUNTLET.rounds[g.round];
+      hud.innerHTML = `${gauntletHeartsHtml(lives, lost)}<div class="gh-round" aria-hidden="true">${beaten ? '<b>🏆</b>' : `<b>${g.round + 1}/${GAUNTLET.rounds.length}</b><span style="color:${GAUNTLET_DIFF_TONES[diff]}">${DIFF_LABELS[diff]}</span>`}</div>`;
+    }
+
+    // Closed on the Continue / Try again screen: reopen the run at start-up
+    // (after sign-in has answered, so a signed-in run is read from the server).
+    function resumeGauntletBetweenGames(attempt = 0) {
+      const between = gauntletStore.get(GAUNTLET_BETWEEN_KEY);
+      if (!between || (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning)) return;
+      if (Date.now() - (between.at || 0) > 7 * 24 * 3600 * 1000) { gauntletStore.set(GAUNTLET_BETWEEN_KEY, null); return; }
+      if (!authStateResolved && attempt < 20) { setTimeout(() => resumeGauntletBetweenGames(attempt + 1), 250); return; }
+      setTimeout(() => {
+        const lobbyUp = !document.getElementById('lobbyScreen')?.classList.contains('hidden');
+        const busy = ['rejoinModal', 'authModal', 'usernameModal'].some(id => !document.getElementById(id)?.classList.contains('hidden'));
+        if (lobbyUp && !busy && between.owner === (gauntletUsesServer() ? currentUser.uid : 'device')) openGauntletWelcome();
+      }, 900);
     }
 
     // § Turn loop
@@ -15743,6 +15840,11 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v148: [
+        ['💾', 'Closed the app mid-game against bots? It now really comes back exactly where you left it (it could lose the game before).'],
+        ['⚔️', 'The Gauntlet remembers your run: close the app between games and it reopens on the next bot. A result sent with no signal is saved and sent when you are back online.'],
+        ['🎨', 'Gauntlet round labels use the same colours as the difficulty buttons.']
+      ],
       v147: [
         ['⚔️', 'New: the Gauntlet! Beat 5 bots in a row (Easy, Easy, Medium, Hard, Boss) with 3 lives. Find it under the bot buttons.'],
         ['🏆', 'Beat it for the first time to win 200 💎, the Gauntlet Champion picture and the Gauntlet Gold frame. Then 50 💎 each day you beat it.']
@@ -19977,6 +20079,8 @@ video {
           // The server pays any milestone already met (Ranked totals, bot
           // wins, first game/win) and unlocks earned pictures.
           syncServerEconomy();
+          flushGauntletPending(); // a Gauntlet result that never reached the server
+          refreshGauntletLobbyBtn();
           // Drain the buffer from the CRITICAL BUG FIX in notifyChallengeEvent
           // above: anything that happened before this exact point (state
           // just became ready one line up) gets replayed now, in the order
@@ -25694,6 +25798,7 @@ video {
         // this only rejects on a genuine bug in the harness itself
         // (e.g. renderDevTestReport throwing) rather than a normal test
         // failure. Still caught, not left as a silent unhandled rejection.
+        savedGameChecked = true; // no game to restore on the test page
         loadDevTestSuite().then(() => runDevTestSuite()).catch((e) => console.error('Dev test suite crashed', e));
         return;
       }
@@ -25711,6 +25816,7 @@ video {
       updateSpeedByIndex(state.speedIndex ?? DEFAULT_SPEED_INDEX);
 
       const restored = loadGameState();
+      savedGameChecked = true;
       if (restored && state.phase !== 'LOBBY') {
         document.body.className = `bg-slate-950 text-slate-100 flex flex-col justify-between ${state.deckTheme || 'theme-obsidian'} relative select-none`;
         applyAccessibilityPrefs(); // className was just fully replaced above, which wipes high-contrast/reduce-motion -- reapply them
@@ -25725,11 +25831,16 @@ video {
           document.getElementById('playActionControls').classList.remove('hidden');
         }
         render();
-        notifyBanner("Game restored from previous session!");
+        notifyBanner(state.gauntlet && !state.isMultiplayer
+          ? `⚔️ Gauntlet restored: round ${state.gauntlet.round + 1} of ${GAUNTLET.rounds.length}, right where you left it.`
+          : "Game restored from previous session!");
         if (state.phase === 'PLAY' && !state.isMultiplayer) {
           triggerNextTurn();
         }
+      } else {
+        resumeGauntletBetweenGames();
       }
+      refreshGauntletLobbyBtn();
     });
   </script>
 </body>
