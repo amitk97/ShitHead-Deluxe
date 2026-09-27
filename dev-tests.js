@@ -6157,6 +6157,55 @@ async function runDevTestSuite() {
     assertTrue(document.getElementById('shopModal').classList.contains('hidden') && !document.getElementById('themesModal').classList.contains('hidden'), 'Opens Custom');
     document.getElementById('themesModal').classList.add('hidden');
   });
+  await test('Collection: every item by type, owned in colour, the rest locked; opened from Profile and from Custom\'s owned count', () => {
+    const savedOwned = cosmeticPurchaseState;
+    try {
+      openThemesPanel();
+      cosmeticPurchaseState = { 'back-neon': true, 'table-halloween': true };
+      renderPersonalisationCosmetics();
+      document.getElementById('customOwnedBtn').click();
+      const modal = document.getElementById('collectionModal');
+      assertTrue(!modal.classList.contains('hidden') && document.getElementById('themesModal').classList.contains('hidden'), "Custom's owned count opens the Collection");
+      const tiles = [...modal.querySelectorAll('.coll-tile')];
+      const { owned, total } = collectionCounts();
+      assertEqual(tiles.length, total, 'Every item is in it');
+      assertEqual(modal.querySelectorAll('.coll-tile.is-owned').length, owned, 'Owned ones in colour');
+      assertTrue(modal.querySelector('[data-coll-id="back-neon"]').classList.contains('is-owned') && modal.querySelector('[data-coll-id="table-halloween"]').classList.contains('is-owned'), 'Including seasonal ones you own');
+      const locked = modal.querySelector('[data-coll-id="table-angelic"]');
+      assertTrue(locked.classList.contains('is-locked') && !!locked.querySelector('.coll-lock'), 'Unowned: greyed with a lock');
+      locked.click();
+      assertTrue(/Angelic/.test(document.getElementById('collectionStatus').textContent) && /Shop/.test(document.getElementById('collectionStatus').textContent), 'Tapping says how to get it');
+      assertEqual(modal.querySelectorAll('.coll-section').length, COSMETIC_TABS.length, 'One section per type');
+      modal.classList.add('hidden');
+      openProfilePanel();
+      assertTrue(document.getElementById('profileCollectionCount').textContent === `${owned} / ${total} items`, 'Profile shows the count');
+      document.getElementById('profileCollectionBtn').click();
+      assertTrue(!modal.classList.contains('hidden'), 'and opens it');
+    } finally {
+      cosmeticPurchaseState = savedOwned; renderPersonalisationCosmetics();
+      ['collectionModal', 'profileModal', 'themesModal'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    }
+  });
+  await test('Tapping "n completed" lists every completed challenge, newest first, with names and rewards', () => {
+    const savedEco = challengeEconomy, savedUser = currentUser;
+    try {
+      currentUser = { uid: 'u1' };
+      challengeEconomy = { ...savedEco, completedChallenges: {
+        'burner': { completedAt: 1000, reward: 50 },
+        'daily_2026-09-20_burn-once': { completedAt: 3000, reward: 20 },
+        'season_halloween-2026_all': { completedAt: 2000, reward: 550 }
+      } };
+      document.getElementById('challengesModal').classList.remove('hidden');
+      document.getElementById('challengesModalDoneWrap').click();
+      const rows = [...document.querySelectorAll('#challengesDoneList .done-row b')].map(b => b.textContent);
+      assertEqual(rows, ['Burn the Pile', 'Season Complete', 'Burner'], 'Newest first, by name');
+      assertTrue(document.getElementById('challengesDoneList').textContent.includes('Halloween 2026'), 'Seasonal ones say which event');
+      assertTrue(document.getElementById('challengesDoneSummary').textContent.includes('620'), 'The total Diamonds earned');
+      assertTrue(getComputedStyle(document.getElementById('challengeTabs')).display === 'none', 'The tabs make way');
+      document.getElementById('challengesDoneBack').click();
+      assertTrue(!document.getElementById('challengeTabs').classList.contains('hidden') && document.getElementById('challengeTabDone').classList.contains('hidden'), 'Back returns to the tabs');
+    } finally { challengeEconomy = savedEco; currentUser = savedUser; document.getElementById('challengesModal').classList.add('hidden'); }
+  });
   await test('The room code shows only on Play Friends (and at that room\'s table); other home tabs get the Diamond count back', () => {
     const saved = { roomCode: state.roomCode, isMultiplayer: state.isMultiplayer, isRanked: state.isRanked };
     const badge = document.getElementById('roomCodeBadge'), lobby = document.getElementById('lobbyScreen');

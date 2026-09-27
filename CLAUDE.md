@@ -115,6 +115,8 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - Getting Started (`GETTING_STARTED_CHALLENGES`, shown in that order): Quick Starter 50, ShitHead Virgin 20 (play a first game), Beginner 20 (win a first game), Tutorial Graduate 200. The first-game pair is paid by the server when it records a finished match (`reportMatchFinished` from `recordMatchHistory`, never the tutorial) or a win, and at sign-in (`sync`) from Ranked W/L and `difficultyWins`. Milestone challenges (Ranked totals, tiers, ending cards, bot wins) are all checked and paid by the server; the game never claims them itself.
 - Seasonal (`§ Seasonal challenges`): a Challenges tab shown only while an event is on (`renderSeasonalChallenges`, `liveSeasonalChallengeWindow`). `SEASONAL_CHALLENGES` (finish 30 = 330, burn 50 = 275, 15 Jokers = 330, win 15 = 440) + `SEASONAL_CHALLENGE_BONUS` (all four = 550), event-long and ~10% above the weekly rate per match, ending in 5/0. Progress `users/{uid}/seasonalChallengeState/{event-year}/{id}`; keys `season_<event-year>_<id>`; the server (`challengeForKey`) pays only while that event is on, the bonus only after all four; numbers come from the catalog export.
+- Tapping "n completed" (`#challengesModalDoneWrap`) swaps the tabs for the Completed list (`showCompletedChallenges` / `renderCompletedChallenges`: newest first, `challengeNameForKey` names any completion key and its group, total Diamonds); ‹ Back returns to the last tab.
+- Collection (`§ Collection log`, `#collectionModal`, a menu page): every item by type from `customAllItems`, owned in colour, the rest greyed with a lock; tapping says how to get it (`customLockedStatus`). Opened from Profile (`#profileCollectionBtn`, count + bar via `refreshCollectionButton`) and from Custom's owned count (`#customOwnedBtn`).
 - Every row shows what the challenge asks for; a completed row keeps that description (with the ✓) instead of just "Completed". The "Challenge completed" mail shows it too. One source: `challengeDescription(defOrCompletionKey)` (handles `daily_<date>_<id>` / `weekly_<week>_<id>` keys and the tutorial).
 
 ## Icons (no emoji as UI)
@@ -277,12 +279,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Owner's later list (don't build until asked), in suggested order
 
-1. Challenges: tapping "n completed" lists the completed challenges.
-2. Collection Log on the Profile page (every item; owned in colour, unowned greyed and locked); tapping Custom's "n / n owned" opens it.
-3. Best of 3 / 5 series between friends (casual rooms only; Ranked stays single games).
-4. Weekly puzzle (not a daily one).
-5. Tournament mode (friends' bracket; needs more players first).
-6. Far down the line (liked, not yet): "you've been overtaken" leaderboard mail, clubs, a season pass.
+1. Best of 3 / 5 series between friends (casual rooms only; Ranked stays single games).
+2. Weekly puzzle (not a daily one).
+3. Tournament mode (friends' bracket; needs more players first).
+4. Far down the line (liked, not yet): "you've been overtaken" leaderboard mail, clubs, a season pass.
 - Not decided: weekly leaderboards, a friends-only leaderboard filter, "beat my score" share links, translations, a Joker Master earn-only Joker effect, a fresh-eyes check of a new player's first 5 minutes; turning on Ranked audit enforcement once honest games show no hard findings.
 - Rejected: a daily puzzle, a login-streak leaderboard.
 
