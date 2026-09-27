@@ -119,6 +119,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Collection (`§ Collection log`, `#collectionModal`, a menu page): every item by type from `customAllItems`, owned in colour, the rest greyed with a lock; tapping says how to get it (`customLockedStatus`). Opened from Profile (`#profileCollectionBtn`, count + bar via `refreshCollectionButton`) and from Custom's owned count (`#customOwnedBtn`).
 - Every row shows what the challenge asks for; a completed row keeps that description (with the ✓) instead of just "Completed". The "Challenge completed" mail shows it too. One source: `challengeDescription(defOrCompletionKey)` (handles `daily_<date>_<id>` / `weekly_<week>_<id>` keys and the tutorial).
 
+## Voice (copy)
+
+- Player-facing text is calm and plain: sentence case, short, no shouting and few exclamation marks ("6 played: the next card must be even.", "Room code copied.", "You won"). Effect shouts inside animations ("HA!", "BOO!") and the tutorial coach can keep their personality; old What's New entries are history and stay as written.
+
 ## Icons (no emoji as UI)
 
 - `§ Icons`: the sprite at the top of `<body>` holds the line icons `#ic-…` (24px grid, 1.75 stroke, `currentColor`), the full-colour Diamond `#ic-gem`, place discs `#ic-place1-3`, Gauntlet lives and rank badges `#tier-novice…master` (the same metal gradients as the crown pictures, `av-m-*`). Markup: `icon('gift')`, `tierBadge('Gold')`. The owner's rule: never use emoji as UI icons, button symbols, status indicators or bullets; use an SVG icon.

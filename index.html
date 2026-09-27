@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v177 (ShitHead-Deluxe-159) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v178 (ShitHead-Deluxe-160) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -4461,7 +4461,7 @@ video {
   <!-- FOLLOW-UP DRAW PROMPT (you drew another of the same rank you just played) -->
   <div id="followUpToastBanner" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[80] bg-slate-950/95 border-2 border-emerald-500 shadow-[0_0_25px_rgba(16,185,129,0.6)] px-5 py-4 rounded-2xl flex flex-col items-center gap-2 max-w-[85vw] animate-snap-toast">
     <span class="text-2xl">🎯</span>
-    <span class="text-[12px] font-black text-emerald-400 uppercase tracking-wider">Bonus Draw!</span>
+    <span class="text-[12px] font-black text-emerald-400 uppercase tracking-wider">Bonus draw</span>
     <span class="text-[10px] font-semibold text-slate-300 text-center">Play the matching card?</span>
     <div class="flex items-center gap-2 mt-1.5">
       <button id="followUpPlayBtn" class="min-w-[84px] px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-wider rounded-lg shadow text-center">Play It</button>
@@ -4806,7 +4806,7 @@ video {
                "auto-matched" should mean rather than depositing the player
                into what looks and behaves like a manually-hosted room. -->
           <div id="rankedConnected" class="hidden bg-slate-950/50 p-3 rounded-xl border border-emerald-500/40 text-center space-y-2">
-            <p class="text-xs font-black uppercase tracking-wider text-emerald-300">Opponent Found!</p>
+            <p class="text-xs font-black uppercase tracking-wider text-emerald-300">Opponent found</p>
             <div id="rankedOpponentName" class="flex items-center justify-center gap-2 flex-wrap text-sm font-black text-white">&nbsp;</div>
             <p class="text-[10px] text-slate-400 animate-pulse">Starting match&hellip;</p>
             <button id="rankedConnectedLeaveBtn" class="text-[9px] font-black uppercase tracking-wider text-slate-500 hover:text-rose-400 transition underline">Taking too long? Tap to leave</button>
@@ -4831,12 +4831,12 @@ video {
   <!-- MULTIPLAYER VICTORY MODAL -->
   <div id="victoryOverlay" class="hidden fixed inset-0 z-[80] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-4">
     <div class="bg-slate-900 border-2 border-amber-500 rounded-3xl p-8 max-w-md w-full text-center shadow-[0_0_50px_rgba(245,158,11,0.4)]">
-      <h2 class="brand-logo-rendered text-4xl mb-1">Victory!</h2>
+      <h2 class="brand-logo-rendered text-4xl mb-1">Victory</h2>
       <p id="victoryNameText" class="text-2xl font-black text-white mb-3 uppercase tracking-wider">Player Name</p>
       <div class="inline-block px-5 py-1 rounded-full bg-slate-950 border border-amber-500/50 mb-5">
         <span id="victoryRankText" class="text-xs font-bold text-amber-400 uppercase tracking-widest">Finished Rank: #1</span>
       </div>
-      <p class="text-slate-400 text-xs font-semibold mb-6 px-2 leading-relaxed">Match continues until the final Shithead remains!</p>
+      <p class="text-slate-400 text-xs font-semibold mb-6 px-2 leading-relaxed">The match carries on until only the ShitHead is left.</p>
       <button id="closeVictoryBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 font-black rounded-xl shadow-lg transition tracking-widest text-slate-950 text-xs uppercase">CONTINUE WATCHING</button>
     </div>
   </div>
@@ -5168,7 +5168,7 @@ video {
   <div id="usernameModal" class="hidden fixed inset-0 z-[95] bg-slate-950/90 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-xs bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4">
       <span class="block text-[11px] font-black uppercase tracking-widest text-amber-400 mb-1">Choose a Username</span>
-      <p class="text-[10px] text-slate-400 leading-snug mb-3">Pick carefully, and lock it in!</p>
+      <p class="text-[10px] text-slate-400 leading-snug mb-3">Pick carefully, then lock it in.</p>
       <input type="text" id="usernameChoiceInput" placeholder="Username" maxlength="12" autocomplete="off" class="w-full bg-slate-950 border-2 border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold focus:border-amber-400 outline-none text-white transition" />
       <div class="text-[9px] text-slate-500 mt-1.5 leading-snug space-y-0.5">
         <p>&bull; 3-12 characters</p>
@@ -5197,7 +5197,7 @@ video {
   <div id="difficultyUnlockPopup" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-xs bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4 text-center">
       <div class="text-4xl mb-2">&#128275;</div>
-      <div class="text-sm font-black uppercase tracking-widest text-amber-400 mb-1">Difficulty Unlocked!</div>
+      <div class="text-sm font-black uppercase tracking-widest text-amber-400 mb-1">Difficulty unlocked</div>
       <div id="difficultyUnlockPopupText" class="text-xs font-bold text-slate-300 mb-4">You can now play on Medium.</div>
       <button id="difficultyUnlockPopupBtn" class="w-full py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Nice!</button>
     </div>
@@ -5298,7 +5298,7 @@ video {
   <div id="dailyRewardModal" class="hidden daily-scrim" role="dialog" aria-modal="true" aria-labelledby="dailyRewardTitle">
     <div class="daily-card">
       <div class="daily-flame" aria-hidden="true">🔥</div>
-      <div id="dailyRewardTitle" class="daily-title">Day 1 streak!</div>
+      <div id="dailyRewardTitle" class="daily-title">Day 1 streak</div>
       <div id="dailyRewardAmount" class="daily-amount">+💎 10</div>
       <div id="dailyRewardTrack" class="daily-track"></div>
       <div id="dailyRewardNext" class="daily-sub"></div>
@@ -5333,7 +5333,7 @@ video {
   <div id="giftOpenModal" class="hidden gift-scrim" role="dialog" aria-modal="true" aria-labelledby="giftOpenTitle">
     <div class="gift-card gift-open-card">
       <div class="gift-open-box" aria-hidden="true">🎁</div>
-      <div id="giftOpenTitle" class="gift-open-title">A gift!</div>
+      <div id="giftOpenTitle" class="gift-open-title">A gift</div>
       <div id="giftOpenFrom" class="gift-open-from"></div>
       <div id="giftOpenItem" class="gift-item"></div>
       <div class="gift-open-actions"><button type="button" id="giftOpenEquip" class="gift-open-equip">EQUIP NOW</button><button type="button" id="giftOpenClose" class="gift-open-later">LATER</button></div>
@@ -5842,7 +5842,7 @@ video {
              emote button lives), it can never overlap either one. -->
         <button id="snapBurnBtn" class="hidden card-table animate-pulse-glow bg-rose-600 hover:bg-rose-500 rounded-xl font-black text-white shadow-2xl flex flex-col items-center justify-center gap-0.5 transition transform hover:scale-105" data-tip="Complete 4-of-a-Kind out of turn!">
           <span class="text-xs leading-tight">🔥 SNAP</span>
-          <span class="text-[8px] font-bold opacity-90 leading-tight">BURN!</span>
+          <span class="text-[8px] font-bold opacity-90 leading-tight">BURN</span>
         </button>
       </div>
 
@@ -6035,7 +6035,7 @@ video {
   <div id="referralWelcomeModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="referralWelcomeTitle">
     <div class="bg-slate-900 border border-emerald-500/60 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-3">
       <div class="text-4xl" aria-hidden="true">🎁</div>
-      <h2 id="referralWelcomeTitle" class="text-base font-black text-emerald-400 uppercase tracking-wide">You've been invited!</h2>
+      <h2 id="referralWelcomeTitle" class="text-base font-black text-emerald-400 uppercase tracking-wide">You've been invited</h2>
       <p id="referralWelcomeText" class="text-slate-300 text-xs leading-relaxed"></p>
       <div class="flex flex-col gap-2 pt-1">
         <button id="referralWelcomeGoBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Sign up</button>
@@ -8702,8 +8702,8 @@ video {
       saveGameState();
       render();
       notifyBanner(state.gauntlet
-        ? `⚔️ Gauntlet round ${state.gauntlet.round + 1}/${GAUNTLET.rounds.length}: ${gauntletRoundLabel(state.gauntlet.round)} bot. Choose your 3 Face-Up cards!`
-        : "Swap Phase: Choose your 3 Face-Up cards!");
+        ? `⚔️ Gauntlet round ${state.gauntlet.round + 1}/${GAUNTLET.rounds.length}: ${gauntletRoundLabel(state.gauntlet.round)} bot. choose your 3 Face-Up cards.`
+        : "Swap phase: choose your 3 Face-Up cards.");
     }
 
     // § Match flow: start, play, pick up, burn
@@ -8785,7 +8785,7 @@ video {
             state.turnDeadline = (firstPlayer && !firstPlayer.isBot) ? serverNow() + (state.turnTimerMs || 15000) : null;
             document.getElementById('swapControlBar').classList.add('hidden');
             document.getElementById('playActionControls').classList.remove('hidden');
-            notifyBanner(`${state.players[state.currentTurnIndex].name}'s Turn to Start!`);
+            notifyBanner(`${state.players[state.currentTurnIndex].name}' starts.`);
             syncFirebaseGameState();
             render();
             if (hasMatchAuthority()) triggerNextTurn();
@@ -8801,7 +8801,7 @@ video {
         state.phase = 'PLAY';
         document.getElementById('swapControlBar').classList.add('hidden');
         document.getElementById('playActionControls').classList.remove('hidden');
-        notifyBanner(`${state.players[state.currentTurnIndex].name}'s Turn to Start!`);
+        notifyBanner(`${state.players[state.currentTurnIndex].name}' starts.`);
       }
 
       saveGameState();
@@ -8942,7 +8942,7 @@ video {
       audio.playCardPlace(cardsToPlay.length > 1 ? 1.2 : 1.0);
 
       if (isBlindFailure) {
-        notifyBanner(`${player.name} played blind ${cardRank} and failed! Automatic Pickup.`);
+        notifyBanner(`${player.name} flipped a ${cardRank} that can't be played and picks up the pile.`);
         saveGameState();
         if (state.isMultiplayer) syncFirebaseGameState();
         // After a reveal the miss has already been shown, so the pickup
@@ -8970,7 +8970,7 @@ video {
 
       if (checkFourOfAKindBurn()) {
         if (tutorialActive && tutorialDeferBurn) {
-          state.pendingTutorialBurn = { playerId: player.id, message: "4-of-a-Kind Burn!" };
+          state.pendingTutorialBurn = { playerId: player.id, message: "Four of a kind. The pile is burnt." };
           render();
           return;
         }
@@ -8986,7 +8986,7 @@ video {
         // account for burns from before this challenge existed.
         bumpStat(player, 'challengeBurns', 1);
         notifyChallengeEvent(player, [wasOutOfTurnPlay ? 'snap-burn-once' : 'four-of-a-kind-burn', 'burn-once']);
-        executeBurn(player, "4-of-a-Kind Burn!");
+        executeBurn(player, "Four of a kind. The pile is burnt.");
         return;
       }
 
@@ -9006,13 +9006,13 @@ video {
 
       if (cardRank === '10') {
         if (tutorialActive && tutorialDeferBurn) {
-          state.pendingTutorialBurn = { playerId: player.id, message: "10 Played — Pile Burnt!" };
+          state.pendingTutorialBurn = { playerId: player.id, message: "10 played. The pile is burnt." };
           render();
           return;
         }
         bumpStat(player, 'challengeBurns', 1);
         notifyChallengeEvent(player, ['burn-with-ten', 'burn-once']);
-        executeBurn(player, "10 Played — Pile Burnt!");
+        executeBurn(player, "10 played. The pile is burnt.");
         return;
       }
 
@@ -9022,29 +9022,29 @@ video {
         // else at the table. If N reaches (or exceeds) the number of other active
         // players, every opponent is skipped and it becomes your turn again.
         const effectiveSkips = Math.min(effectiveRankCount, otherActiveCount);
-        notifyBanner(`8 Played! Skipping ${effectiveSkips} player(s).`);
+        notifyBanner(`8 played: ${effectiveSkips === 1 ? 'the next player is skipped' : `${effectiveSkips} players are skipped`}.`);
         advanceTurn(effectiveSkips + 1);
       } else if (cardRank === '9') {
         const count = effectiveRankCount;
         if (count % 2 === 1) {
           state.direction *= -1;
-          notifyBanner(`${count} Nine(s) Played! Direction Reversed.`);
+          notifyBanner(`${count === 1 ? '9' : `${count} nines`} played: play reverses.`);
         } else {
-          notifyBanner(`${count} Nines Played! Direction Maintained.`);
+          notifyBanner(`${count} nines played: the direction stays the same.`);
         }
         updateDirectionBadge();
         advanceTurn(1);
       } else if (cardRank === '6') {
         state.activeConstraint = 'EVEN';
-        notifyBanner(`6 Played! Next player MUST play EVEN.`);
+        notifyBanner(`6 played: the next card must be even.`);
         advanceTurn(1);
       } else if (cardRank === '7') {
         state.activeConstraint = 'LOW7';
-        notifyBanner(`7 Played! Next player MUST play 7 OR LOWER.`);
+        notifyBanner(`7 played: the next card must be 7 or lower.`);
         advanceTurn(1);
       } else if (cardRank === 'J') {
         state.activeConstraint = 'ODD';
-        notifyBanner(`Jack Played! Next player MUST play ODD.`);
+        notifyBanner(`Jack played: the next card must be odd.`);
         advanceTurn(1);
       } else if (cardRank === '5') {
         if (state.discardPile.length > 0) {
@@ -9057,7 +9057,7 @@ video {
             // playing real 8s (never skips past everyone at the table).
             const otherActiveCount = state.players.filter(p => !p.hasFinished && p.id !== player.id).length;
             const effectiveSkips = Math.min(effectiveRankCount, otherActiveCount);
-            notifyBanner(`5 Played! Base is an 8 — skipping ${effectiveSkips} player(s).`);
+            notifyBanner(`5 played on an 8: ${effectiveSkips === 1 ? 'the next player is skipped' : `${effectiveSkips} players are skipped`}.`);
             advanceTurn(effectiveSkips + 1);
           } else if (bottomCard.rank === '9') {
             // Same idea for a base of 9 — the 5(s) inherit the 9's direction
@@ -9066,14 +9066,14 @@ video {
             const count = effectiveRankCount;
             if (count % 2 === 1) {
               state.direction *= -1;
-              notifyBanner(`5 Played! Base is a 9 — Direction Reversed.`);
+              notifyBanner(`5 played on a 9: play reverses.`);
             } else {
-              notifyBanner(`5 Played! Base is a 9 — Direction Maintained.`);
+              notifyBanner(`5 played on 9s: the direction stays the same.`);
             }
             updateDirectionBadge();
             advanceTurn(1);
           } else {
-            notifyBanner(`5 Played! Next player must beat the BASE card (${bottomCard.rank}).`);
+            notifyBanner(`5 played: the next card must beat the base card (${bottomCard.rank}).`);
             advanceTurn(1);
           }
         } else {
@@ -9097,21 +9097,21 @@ video {
         if (under && under.rank === '8') {
           const others = state.players.filter(p => !p.hasFinished && p.id !== player.id).length;
           const skips = Math.min(effectiveRankCount, others);
-          notifyBanner(`3 Played! Transparent over an 8 — skipping ${skips} player(s).`);
+          notifyBanner(`3 played over an 8: ${skips === 1 ? 'the next player is skipped' : `${skips} players are skipped`}.`);
           advanceTurn(skips + 1);
         } else if (under && under.rank === '9') {
           if (effectiveRankCount % 2 === 1) {
             state.direction *= -1;
-            notifyBanner(`3 Played! Transparent over a 9 — Direction Reversed.`);
+            notifyBanner(`3 played over a 9: play reverses.`);
           } else {
-            notifyBanner(`3 Played! Transparent over a 9 — Direction Maintained.`);
+            notifyBanner(`3 played over 9s: the direction stays the same.`);
           }
           updateDirectionBadge();
           advanceTurn(1);
         } else {
           notifyBanner(previousBaseOverride
-            ? `3 Played! Transparent — next player must still beat the BASE card (${previousBaseOverride.rank}).`
-            : `3 Played! Transparent — next player must beat whatever's underneath it.`);
+            ? `3 played: the next card must still beat the base card (${previousBaseOverride.rank}).`
+            : `3 played: the next card must beat the card beneath it.`);
           advanceTurn(1);
         }
       } else {
@@ -9146,7 +9146,7 @@ video {
         if (player.isBot) {
           state.botActionTimer = setTimeout(() => resolveFollowUpPlay(true), Math.max(state.turnDelay * 0.5, 250));
         } else if (player.id === state.localPlayerId) {
-          notifyBanner(`🎯 Bonus ${bonusCard.rank} drawn!`);
+          notifyBanner(`Bonus: you drew another ${bonusCard.rank}.`);
           const banner = document.getElementById('followUpToastBanner');
           if (banner) banner.classList.remove('hidden');
         } else if (state.isMultiplayer) {
@@ -9724,8 +9724,8 @@ video {
           notifyChallengeEvent(initiator, ['deflect-joker-once']);
           const loserOut = finishOnEmptyJokerPile(originalInitiator);
           notifyBanner(loserOut
-            ? `💥 ${initiator.name} countered with JOKER, but ${originalInitiator.name} has nothing to pick up and is out!`
-            : `💥 ${initiator.name} countered with JOKER! ${originalInitiator.name} picks up — ${initiator.name} plays next!`);
+            ? `${initiator.name} countered the Joker, but ${originalInitiator.name} has nothing to pick up and is out.`
+            : `${initiator.name} countered the Joker. ${originalInitiator.name} picks up and ${initiator.name} plays next.`);
           // The counter-Joker left their hand: top it back up to 3 now.
           refillHand(initiator);
           // It may have been their last card: they finish, and the turn
@@ -9902,8 +9902,8 @@ video {
         audio.burn(burnEffectIdFor(target));
         const initiatorOut = finishOnEmptyJokerPile(initiator);
         notifyBanner(initiatorOut
-          ? `💥 ${target.name} countered with JOKER, but ${initiator.name} has nothing to pick up and is out!`
-          : `💥 ${target.name} countered with JOKER! ${initiator.name} picks up — ${target.name} plays next!`);
+          ? `${target.name} countered the Joker, but ${initiator.name} has nothing to pick up and is out.`
+          : `${target.name} countered the Joker. ${initiator.name} picks up and ${target.name} plays next.`);
         // A counter-Joker can be the defender's last card: they finish
         // (unless the Joker player just went out first and that settled it).
         if (!isMatchDecided()) checkPlayerFinished(target);
@@ -9914,7 +9914,7 @@ video {
         giveJokerWinnerNextTurn(target);
         jokerCounterPickup(initiator);
       } else {
-        notifyBanner(`JOKER — ${target.name} picked up pile! ${initiator.name} gets another turn!`);
+        notifyBanner(`Joker: ${target.name} picks up the pile and ${initiator.name} plays again.`);
         const pickupCount = state.discardPile.length;
         if (pickupCount > 0) recordPickupHistory(target.name);
         audio.pickupSequence(pickupCount);
@@ -10117,7 +10117,7 @@ video {
           showVictoryOverlay(player, finishedCount);
         } else {
           triggerEquippedVictoryEffect(player);
-          notifyBanner(`🎉 ${player.name} finished (Rank #${finishedCount})!`);
+          notifyBanner(`${player.name} finished #${finishedCount}.`);
         }
       }
     }
@@ -11718,17 +11718,17 @@ video {
         // Only face-down cards left: flip one blind, exactly like a bot does.
         // (Picking a "best" move from an empty Hand/Face-Up used to crash
         // here, so the timeout never resolved the turn.)
-        notifyBanner(isSelf ? "⏱️ Time's up! Flipping a face-down card for you..." : `⏱️ Flipping a face-down card for ${player.name}...`);
+        notifyBanner(isSelf ? "Time's up. Flipping a face-down card for you." : `⏱️ Flipping a face-down card for ${player.name}...`);
         executePlayCards(player.id, [player.faceDown[0]], true);
         return;
       }
       const validMoves = getLegalMovesForPlayer(player, state.discardPile, state.activeConstraint);
       if (validMoves.length > 0) {
-        notifyBanner(isSelf ? "⏱️ Time's up! Auto-playing a move for you..." : `⏱️ Auto-playing for ${player.name}...`);
+        notifyBanner(isSelf ? "Time's up. Playing a move for you." : `⏱️ Auto-playing for ${player.name}...`);
         const chosen = selectBestBotMove(player, validMoves, 'medium');
         executePlayCards(player.id, chosen);
       } else {
-        notifyBanner(isSelf ? "⏱️ Time's up! Auto-picking up the pile..." : `⏱️ Auto-picking up the pile for ${player.name}...`);
+        notifyBanner(isSelf ? "Time's up. Picking up the pile for you." : `⏱️ Auto-picking up the pile for ${player.name}...`);
         executePickup(player.id);
       }
     }
@@ -11911,7 +11911,7 @@ video {
         let body = gauntletTrackHtml(run ? run.round : 0, run ? run.round : 0) + gauntletHeartsHtml(run ? run.lives : GAUNTLET.lives);
         let actions;
         if (st.doneToday) {
-          body += `<div class="gauntlet-reward">✓ <b>Beaten today!</b> The Gauntlet opens again at midnight (UK time).</div>`;
+          body += `<div class="gauntlet-reward">✓ <b>Beaten today.</b> The Gauntlet opens again at midnight (UK time).</div>`;
           actions = go('COME BACK TOMORROW', 'none', true) + alt('Close', 'leave');
         } else if (run) {
           body += gauntletRewardHtml(st) + (run.playing ? `<p class="gauntlet-note">Your last Gauntlet game wasn't finished, so it counts as a loss.</p>` : '');
@@ -11925,7 +11925,7 @@ video {
       }
       const r = v.res, run = r.run;
       if (v.kind === 'won') {
-        return head('🗡️', `Round ${run.round} beaten!`, `Next up: <b>${gauntletRoundLabel(run.round)}</b> bot (round ${run.round + 1} of ${GAUNTLET.rounds.length}).`) +
+        return head('🗡️', `Round ${run.round} beaten`, `Next up: <b>${gauntletRoundLabel(run.round)}</b> bot (round ${run.round + 1} of ${GAUNTLET.rounds.length}).`) +
           gauntletTrackHtml(run.round, run.round) + gauntletHeartsHtml(run.lives) +
           `<div class="gauntlet-actions">${go('CONTINUE GAUNTLET', 'begin')}${leave}</div>`;
       }
@@ -11944,7 +11944,7 @@ video {
       const paid = Number(r.diamondsAwarded) || 0;
       const reward = r.local ? `<div class="gauntlet-reward">${currentUser ? 'Played offline, so no rewards this time.' : '<b>Sign in</b> next time to earn Diamonds and the Gauntlet rewards.'}</div>`
         : `<div class="gauntlet-reward"><b>+${paid} 💎</b>${r.first ? ` and two things only Gauntlet champions have:${gauntletItemsHtml(r.newItems)}` : ' for today’s win. Come back tomorrow for more.'}</div>`;
-      return head('🏆', 'Gauntlet beaten!', 'All five bots down. Well played.') +
+      return head('🏆', 'Gauntlet beaten', 'All five bots down. Well played.') +
         gauntletTrackHtml(GAUNTLET.rounds.length, -1) + gauntletHeartsHtml(v.lives) + reward +
         `<div class="gauntlet-actions">${go(inGame ? 'BACK TO THE LOBBY' : 'DONE', 'leave')}</div>`;
     }
@@ -12129,7 +12129,7 @@ video {
       hud.dataset.key = key;
       gauntletHudLives = lives;
       const beaten = g.round >= GAUNTLET.rounds.length;
-      const roundText = beaten ? 'Beaten!' : `Round ${g.round + 1}/${GAUNTLET.rounds.length} · ${gauntletRoundLabel(g.round)}`;
+      const roundText = beaten ? 'Beaten' : `Round ${g.round + 1}/${GAUNTLET.rounds.length} · ${gauntletRoundLabel(g.round)}`;
       hud.setAttribute('aria-label', `Gauntlet: ${lives} of ${GAUNTLET.lives} lives, ${roundText}`);
       const diff = GAUNTLET.rounds[g.round];
       hud.innerHTML = `${gauntletHeartsHtml(lives, lost)}<div class="gh-round" aria-hidden="true">${beaten ? '<b>🏆</b>' : `<b>${g.round + 1}/${GAUNTLET.rounds.length}</b><span style="color:${GAUNTLET_DIFF_TONES[diff]}">${DIFF_LABELS[diff]}</span>`}</div>`;
@@ -12174,7 +12174,7 @@ video {
         // and for ranked concessions, which rely on this same field.
         shitheadPlayer.finishRank = state.players.length;
         shitheadPlayer.hasFinished = true;
-        notifyBanner(`💀 ${shitheadPlayer.name} IS THE SHITHEAD! 💀`);
+        notifyBanner(`${shitheadPlayer.name} is the ShitHead.`);
         state.phase = 'FINISHED';
         endFastForwardIfActive();
         saveGameState();
@@ -12188,7 +12188,7 @@ video {
         const botSnap = checkBotSnapBurn();
         if (botSnap) {
           state.botActionTimer = setTimeout(() => {
-            notifyBanner(`🔥 ${botSnap.bot.name} SNAPPED & BURNT THE PILE!`);
+            notifyBanner(`${botSnap.bot.name} snapped a four of a kind and burnt the pile.`);
             executePlayCards(botSnap.bot.id, botSnap.cards);
           }, state.turnDelay * 0.45);
           return;
@@ -12289,7 +12289,7 @@ video {
             const noHand = !(current.hand && current.hand.length > 0);
             notifyBanner(noHand
               ? "No legal move — pick card/s for your hand."
-              : "No legal moves available! Automatically picking up pile...");
+              : "No legal move. Picking up the pile.");
             setTimeout(() => handleNoLegalMove(current, state.difficulty), state.turnDelay * 0.7);
           }
         }
@@ -12456,7 +12456,7 @@ video {
 
     function sendEmote(emoji) {
       if (!canSendEmote()) {
-        notifyBanner('⏳ Slow down a moment!');
+        notifyBanner('Slow down a moment.');
         return;
       }
       emoteSendTimes.push(Date.now());
@@ -12498,7 +12498,7 @@ video {
         if (lastCardAlerted.has(p.id)) return;
         lastCardAlerted.add(p.id);
         if (p.id === state.localPlayerId || tutorialActive) return;
-        notifyBanner(`☝️ ${p.name} is on their LAST CARD!`);
+        notifyBanner(`${p.name} is on their last card.`);
         audio.playLastCard();
         Haptics.vibrate([20, 60, 20]);
       });
@@ -13133,7 +13133,7 @@ video {
 
       const turnTxt = document.getElementById('activeTurnText');
       if (currentTurnPlayer && turnTxt) {
-        turnTxt.textContent = isMyTurn ? "🔥 YOUR TURN!" : `Turn: ${currentTurnPlayer.name}`;
+        turnTxt.textContent = isMyTurn ? "Your turn" : `Turn: ${currentTurnPlayer.name}`;
         turnTxt.className = isMyTurn ? "text-[10px] md:text-[11px] font-black tracking-widest uppercase text-emerald-400 animate-pulse" : "text-[10px] md:text-[11px] font-black tracking-widest uppercase text-amber-400";
       }
 
@@ -13828,7 +13828,7 @@ video {
       }
       const card = pool.find(c => c.id === cardId);
       if (!card || !isPlayLegal(card, state.discardPile, state.activeConstraint)) {
-        notifyBanner("Illegal play selection!");
+        notifyBanner("You can't play that selection.");
         return;
       }
       state.selectedPlayCardIds = [card.id];
@@ -13905,7 +13905,7 @@ video {
       const card = pool.find(c => c.id === cardId);
       if (!card) return;
       if (!isPlayLegal(card, state.discardPile, state.activeConstraint)) {
-        notifyBanner("Illegal Move!");
+        notifyBanner("That card can't be played here.");
         return;
       }
       if (state.selectedPlayCardIds.length > 0) {
@@ -14185,7 +14185,7 @@ video {
 
       db.ref(`rooms/${code}`).once('value', (snap) => {
         if (!snap.exists()) {
-          alert("Room not found! Verify the 6-digit code.");
+          alert("Room not found. Check the 6-digit code.");
           pNameInput.disabled = false;
           if (joinBtnEl) joinBtnEl.disabled = false;
           return;
@@ -14989,7 +14989,7 @@ video {
           document.getElementById('sacrificeControlBar')?.classList.add('hidden');
           document.getElementById('playActionControls')?.classList.add('hidden');
           render();
-          notifyBanner("Game Started! Swap your cards.");
+          notifyBanner("Game started. Swap your cards.");
         } else {
           const previousSyncedTurnIndex = state.currentTurnIndex;
           state.phase = data.phase || state.phase;
@@ -15427,7 +15427,7 @@ video {
             // the specific Face-Up arrangement a step is about to describe
             // (or the locked sequence itself, mid-way through) can be
             // scrambled by a drag that has nothing to do with either.
-            if (tutorialActive) { notifyBanner("Hold on for the next step!"); return; }
+            if (tutorialActive) { notifyBanner("Hold on for the next step."); return; }
             const fromIdx = local.faceUp.findIndex(c => c.id === card.id);
             if (fromIdx !== -1) {
               const temp = local.faceUp[fromIdx];
@@ -15708,7 +15708,7 @@ video {
       return start.then(() => attempt(2)).then((res) => {
         if (res.already) return res;
         if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
-        if (res.diamondsAwarded > 0) enqueueChallengeToast('Match Won!', res.diamondsAwarded, -1);
+        if (res.diamondsAwarded > 0) enqueueChallengeToast('Match won', res.diamondsAwarded, -1);
         if (mode === 'bots' && res.difficultyWins) {
           const wins = cacheDifficultyWins(currentUser.uid, res.difficultyWins);
           challengeEconomy.difficultyWins = { ...(challengeEconomy.difficultyWins || {}), ...res.difficultyWins };
@@ -15751,7 +15751,7 @@ video {
       styleDifficultyBtn(btn); // reflect the default (Medium) as soon as the page loads
       btn.addEventListener('click', () => {
         if (!unlockedDifficulties[btn.dataset.diff]) {
-          notifyBanner(`\u{1F512} Locked \u2014 keep winning to unlock ${DIFF_LABELS[btn.dataset.diff]}!`);
+          notifyBanner(`\u{1F512} Locked \u2014 keep winning to unlock ${DIFF_LABELS[btn.dataset.diff]}.`);
           return;
         }
         state.difficulty = btn.dataset.diff;
@@ -16613,6 +16613,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v178: [
+        ['✏️', 'Calmer, clearer wording across the game: shorter messages at the table, and less shouting.']
+      ],
       v177: [
         ['🗂️', 'Collection: see every item in the game, the ones you own in colour. Open it from your Profile or by tapping the owned count in Custom.'],
         ['✅', 'Tap "completed" on the Challenges page to see every challenge you\'ve finished and the Diamonds they paid.']
@@ -19262,7 +19265,7 @@ video {
       let when = '';
       if (state === 'active' && win) {
         const left = seasonDaysBetween(now, win.endsAt);
-        when = left <= 1 ? 'Last day!' : `Leaves in ${left} days`;
+        when = left <= 1 ? 'Last day' : `Leaves in ${left} days`;
       } else if (win) {
         const until = seasonDaysBetween(now, win.start);
         when = state === 'soon' ? `Starts in ${until} day${until === 1 ? '' : 's'} · ${seasonShortDate(win.start)}` : `Opens ${seasonShortDate(win.start)}`;
@@ -19392,7 +19395,7 @@ video {
       if (!me) return { emoji: '🃏', title: 'Match over', edge: '#475569', glow: 'rgba(71,85,105,.25)' };
       if (!me.hasFinished && typeof isShitHead === 'function' && isShitHead(me)) return { emoji: '💩', title: "You're the ShitHead", edge: '#b45309', glow: 'rgba(180,83,9,.25)' };
       const rank = me.finishRank || n;
-      if (rank === 1) return { emoji: '🏆', title: 'You won!', edge: '#f59e0b', glow: 'rgba(245,158,11,.28)' };
+      if (rank === 1) return { emoji: '🏆', title: 'You won', edge: '#f59e0b', glow: 'rgba(245,158,11,.28)' };
       return { emoji: rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🎖️', title: `${rank}${rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th'} place`, edge: '#94a3b8', glow: 'rgba(148,163,184,.22)' };
     }
     function matchModeLabel() {
@@ -19601,7 +19604,7 @@ video {
         a.href = URL.createObjectURL(blob); a.download = 'shithead-result.png';
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-        notifyBanner('📥 Result image saved: share it anywhere!');
+        notifyBanner('Result image saved.');
         return 'downloaded';
       } catch (e) {
         console.warn('Share failed', e);
@@ -19697,7 +19700,7 @@ video {
         renderGiftBanner();
         renderNameChangeToken();
         renderCosmeticShop();
-        notifyBanner(`🎁 ${item.name} sent to ${friend.name}!`);
+        notifyBanner(`${item.name} sent to ${friend.name}.`);
         showShopActionNotice(`🎁 ${item.name} is on its way to ${friend.name}.`, 'success');
         return true;
       }).catch(error => { status.textContent = error.message || 'Gift failed. Please try again.'; return false; });
@@ -19728,7 +19731,7 @@ video {
     function showGiftOpened(item, gift, asDiamonds) {
       const type = COSMETIC_CATEGORY_TYPES[item.category];
       giftOpenItemId = asDiamonds ? null : item.id;
-      document.getElementById('giftOpenTitle').textContent = asDiamonds ? 'Gift turned into Diamonds' : 'You got a gift!';
+      document.getElementById('giftOpenTitle').textContent = asDiamonds ? 'Gift turned into Diamonds' : 'You got a gift';
       document.getElementById('giftOpenFrom').textContent = `From ${gift.fromName || 'a friend'}`;
       document.getElementById('giftOpenItem').innerHTML = `<span class="shrink-0" style="${type === 'tableTheme' ? 'width:110px' : ''}">${type === 'tableTheme' ? miniTablePreviewHtml(item.id) : shopCosmeticThumbnail(item, type)}</span><span class="min-w-0" style="text-align:left"><span class="gift-item-name block">${escapeHtml(item.name)}</span><span class="gift-item-sub block">${asDiamonds ? `You already had it, so you got 💎 ${Number(gift.cost) || item.cost}` : escapeHtml(item.category.replace(/s$/, ''))}</span></span>`;
       document.getElementById('giftOpenEquip').classList.toggle('hidden', asDiamonds);
@@ -19811,7 +19814,7 @@ video {
     function showShopPurchaseSuccess(item) {
       const panel = document.getElementById('shopPurchaseSuccess');
       if (!panel || !item) return;
-      panel.innerHTML = `<div class="text-2xl">✨</div><div class="text-[11px] font-black text-emerald-300">${item.name} Unlocked!</div><div class="mt-1 flex items-center justify-center">${shopCosmeticThumbnail(item, COSMETIC_CATEGORY_TYPES[item.category])}</div><div class="mt-1 text-[8px] text-slate-300">Use EQUIP NOW to apply it.</div>`;
+      panel.innerHTML = `<div class="text-2xl">✨</div><div class="text-[11px] font-black text-emerald-300">${item.name} unlocked</div><div class="mt-1 flex items-center justify-center">${shopCosmeticThumbnail(item, COSMETIC_CATEGORY_TYPES[item.category])}</div><div class="mt-1 text-[8px] text-slate-300">Use EQUIP NOW to apply it.</div>`;
       panel.classList.remove('hidden');
       panel.classList.remove('shop-purchase-success');
       void panel.offsetWidth;
@@ -20736,7 +20739,7 @@ video {
       callEconomy('deleteAccount', { op: 'cancel' }).then(() => {
         document.getElementById('keepAccountModal').classList.add('hidden');
         startSignedInSession(user);
-        notifyBanner('Welcome back! Your account is safe.');
+        notifyBanner('Welcome back. Your account is safe.');
       }).catch((err) => {
         const el = document.getElementById('keepAccountError');
         el.textContent = err.message; el.classList.remove('hidden');
@@ -21115,7 +21118,7 @@ video {
           .then(() => {
             setAuthMode('signin');
             document.getElementById('authPasswordInput').value = '';
-            showAuthMessage('Account created! Check your email to verify it, then sign in.');
+            showAuthMessage('Account created. Check your email to verify it, then sign in.');
           })
           .catch((e) => showAuthError(mapAuthError(e)));
       } else {
@@ -21882,7 +21885,7 @@ video {
     function showDailyReward(count, reward) {
       const inMatch = state && (state.phase === 'PLAY' || state.phase === 'SWAP');
       if (inMatch) { enqueueChallengeToast(`Day ${count} login streak`, reward, 0); return; }
-      document.getElementById('dailyRewardTitle').textContent = count === 1 ? 'Daily reward!' : `${count}-day streak!`;
+      document.getElementById('dailyRewardTitle').textContent = count === 1 ? 'Daily reward' : `${count}-day streak`;
       document.getElementById('dailyRewardAmount').textContent = `+💎 ${reward}`;
       document.getElementById('dailyRewardTrack').innerHTML = dailyTrackHtml(count);
       document.getElementById('dailyRewardNext').textContent = `Come back tomorrow for 💎 ${dailyStreakReward(count + 1)}`;
@@ -22049,7 +22052,7 @@ video {
       }
       const head = document.getElementById('challengesSeasonalHead');
       const left = seasonDaysBetween(seasonalNow(), win.endsAt);
-      if (head) head.innerHTML = `<b>${win.event.emoji} ${win.event.name}</b> · ${left <= 1 ? 'last day!' : `ends in ${left} days`}`;
+      if (head) head.innerHTML = `<b>${win.event.emoji} ${win.event.name}</b> · ${left <= 1 ? 'last day' : `ends in ${left} days`}`;
       // The bonus is claimed once the fourth is confirmed by the server.
       if (currentUser) maybeClaimSeasonalBonus(win);
       const progress = (challengeEconomy.seasonalChallengeState || {})[win.key] || {};
@@ -22849,7 +22852,7 @@ video {
           state.roomCode = code;
           state.localPlayerId = mySeat.id;
           rememberJoinedRoom(code);
-          notifyBanner(data.isRanked ? '🔄 Reconnected to your Ranked match!' : '🔄 Back in your match!');
+          notifyBanner(data.isRanked ? 'Reconnected to your Ranked match.' : 'Back in your match.');
           // The listener's first snapshot rebuilds the UI for whatever phase
           // the match is in, the same path a normal join uses.
           listenToFirebaseRoom(code);
@@ -23128,7 +23131,7 @@ video {
         challengeEconomy.rankedStats = res.rankedStats || {};
         challengeEconomy.challengeStats = res.challengeStats || {};
         if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
-        if (res.diamondsAwarded > 0) enqueueChallengeToast('Ranked Win!', res.diamondsAwarded, -1);
+        if (res.diamondsAwarded > 0) enqueueChallengeToast('Ranked win', res.diamondsAwarded, -1);
         applyServerClaims(res.claimed);
         applyNewAvatars(res.newAvatars);
         updateDiamondHeader();
@@ -23425,7 +23428,7 @@ video {
       db.ref(`usernames/${name.toLowerCase()}`).once('value').then((snap) => {
         if (!snap.exists()) { resultEl.textContent = 'No player found with that username.'; return; }
         const uid = snap.val();
-        if (uid === currentUser.uid) { resultEl.textContent = 'That\u2019s you!'; return; }
+        if (uid === currentUser.uid) { resultEl.textContent = 'That\u2019s you.'; return; }
         resultEl.innerHTML = `Found <b class="text-white">${escapeHtml(name)}</b>! <button id="sendRequestBtn" data-uid="${escapeAttr(uid)}" data-name="${escapeAttr(name)}" class="ml-1 text-[9px] font-black px-2 py-1 rounded-lg border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition">SEND REQUEST</button>`;
       }).catch((e) => { resultEl.textContent = 'Search failed \u2014 try again.'; console.warn('friend search failed', e); });
     });
@@ -23435,7 +23438,7 @@ video {
       const uid = btn.dataset.uid, name = btn.dataset.name;
       getOrCreateUserProfile(currentUser.uid).then((myProfile) => {
         db.ref(`friendRequests/${uid}/${currentUser.uid}`).set({ name: myProfile.username || 'Player', sentAt: Date.now() })
-          .then(() => { document.getElementById('friendSearchResult').textContent = 'Request sent!'; })
+          .then(() => { document.getElementById('friendSearchResult').textContent = 'Request sent.'; })
           .catch((e) => { document.getElementById('friendSearchResult').textContent = 'Could not send that request.'; console.warn('sendFriendRequest failed', e); });
       });
     });
@@ -23459,7 +23462,7 @@ video {
       (existing ? Promise.resolve(existing) : initHostRoom()).then((code) => {
         const inviteId = db.ref(`gameInvites/${friendUid}`).push().key;
         return db.ref(`gameInvites/${friendUid}/${inviteId}`).set({ fromUid: currentUser.uid, fromName: myName, roomCode: code, sentAt: firebase.database.ServerValue.TIMESTAMP });
-      }).then(() => notifyBanner(`\u{1F4E8} Invite sent to ${friendName}!`))
+      }).then(() => notifyBanner(`\u{1F4E8} Invite sent to ${friendName}.`))
         .catch((e) => { console.warn('sendGameInvite failed', e); notifyBanner('Could not send the invite \u2014 please try again.'); });
     }
     // Reuses joinMultiRoom() completely — it already reads a code from
@@ -23502,9 +23505,9 @@ video {
       const board = BOARD_NAMES[item.board] || 'Leaderboard';
       const tier = Number(item.tier) || 10;
       const icon = tier === 1 ? '🥇' : tier === 2 ? '🥈' : tier === 3 ? '🥉' : '🏆';
-      const heading = tier <= 3 ? `You're #${tier} on the ${board} leaderboard!` : `You made the ${board} top 10!`;
+      const heading = tier <= 3 ? `You're #${tier} on the ${board} leaderboard` : `You made the ${board} top 10`;
       const what = { ranked: 'Ranked rating', challenges: 'challenges completed', gauntlet: 'Gauntlet bots beaten' }[item.board] || 'score';
-      const sub = tier === 1 ? `Nobody has more ${what}. Congratulations!` : `Congratulations! Keep going for #1.`;
+      const sub = tier === 1 ? `Nobody has more ${what}. Congratulations.` : `Congratulations. Keep going for #1.`;
       return { icon, heading, sub };
     }
     function boardMailHtml(item) {
@@ -23553,7 +23556,7 @@ video {
         return `<div class="inbox-season border rounded-xl px-2.5 py-2" style="--season-dark:${ev.tones[0]};--season-accent:${ev.tones[1]};--season-light:${ev.tones[2]}">
           <div class="flex items-center gap-2"><span class="inbox-season-emoji" aria-hidden="true">${ev.emoji}</span><div class="min-w-0">
           <p class="inbox-season-accent text-[9px] font-black uppercase tracking-wide mb-1">${item.lastDay ? 'Last day' : 'Seasonal event'}</p>
-          <p class="text-xs font-bold text-white">${escapeHtml(item.lastDay ? `${ev.name} ends today!` : `${ev.name} is here!`)}</p>
+          <p class="text-xs font-bold text-white">${escapeHtml(item.lastDay ? `${ev.name} ends today` : `${ev.name} is here`)}</p>
           <p class="inbox-season-accent text-[10px] mt-1">${escapeHtml(item.lastDay ? 'Last chance for this year’s items and bundle.' : `7 new items, a bundle, and ${ev.names.earned} to earn — until ${item.until || 'the event ends'}.`)}</p>
           </div></div>
           <div class="flex gap-1.5 mt-2">
@@ -24899,7 +24902,7 @@ video {
       const icon = document.getElementById('copyRoomCodeIcon');
       if (copied) {
         icon.textContent = '✅';
-        label.textContent = 'Copied!';
+        label.textContent = 'Copied';
         Haptics.vibrate(20);
       } else {
         icon.textContent = '⚠️';
@@ -24932,7 +24935,7 @@ video {
       const result = await shareInviteLink(code);
       const label = document.getElementById('shareInviteLinkLabel');
       const icon = document.getElementById('shareInviteLinkIcon');
-      if (result === 'copied') { icon.textContent = '✅'; label.textContent = 'Copied!'; Haptics.vibrate(20); }
+      if (result === 'copied') { icon.textContent = '✅'; label.textContent = 'Copied'; Haptics.vibrate(20); }
       else if (result === 'failed') { icon.textContent = '⚠️'; label.textContent = inviteLinkFor(code).replace('https://', ''); }
       else return;
       setTimeout(() => { icon.textContent = '🔗'; label.textContent = 'Share link'; }, result === 'failed' ? 6000 : 1800);
@@ -25075,7 +25078,7 @@ video {
     document.getElementById('needHumanCopyBtn').addEventListener('click', () => {
       const code = state.roomCode || '';
       if (code && navigator.clipboard) {
-        navigator.clipboard.writeText(code).then(() => notifyBanner("Room code copied! Send it to a friend.")).catch(() => {});
+        navigator.clipboard.writeText(code).then(() => notifyBanner("Room code copied.")).catch(() => {});
       }
     });
     document.getElementById('needHumanBotsBtn').addEventListener('click', () => {
@@ -25258,7 +25261,7 @@ video {
         try { await navigator.share({ title: 'ShitHead Deluxe', text, url }); return 'shared'; }
         catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
       }
-      if (await copyTextToClipboard(`${text} ${url}`)) { notifyBanner('✅ Invite link copied!'); Haptics.vibrate(20); return 'copied'; }
+      if (await copyTextToClipboard(`${text} ${url}`)) { notifyBanner('Invite link copied.'); Haptics.vibrate(20); return 'copied'; }
       notifyBanner(url.replace('https://', ''));
       return 'failed';
     }
@@ -27677,7 +27680,7 @@ video {
       // purely informational step, and the specific cards a later step
       // names no longer match what's actually on the table.
       if (state.phase === 'SWAP' && (!step || !step.require || !step.require.swap)) {
-        notifyBanner("Hold on for the next step!");
+        notifyBanner("Hold on for the next step.");
         return false;
       }
       const current = tutorialCurrentSwapRequirement(step);
@@ -27898,12 +27901,12 @@ video {
       if (completed) {
         if (tutorialCurrentModuleId === QUICK_START_MODULE.id && !tutorialLaunchedFromHub) {
           markTutorialModuleComplete(tutorialCurrentModuleId);
-          notifyBanner("🎓 You're ready! Tap START GAME to play vs Bots.");
+          notifyBanner("You're ready. Tap Start Game to play Vs Bots.");
         } else if (tutorialCurrentModuleId) {
           markTutorialModuleComplete(tutorialCurrentModuleId);
-          notifyBanner('🎓 Module complete!');
+          notifyBanner('Lesson complete.');
         } else {
-          notifyBanner('🎓 Tutorial complete — good luck!');
+          notifyBanner('Tutorial complete. Good luck.');
         }
         logTutorialCompletion();
       }

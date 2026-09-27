@@ -1055,7 +1055,7 @@ async function runDevTestSuite() {
     try {
       announceLastCards(); announceLastCards();
       assertEqual(banners.length, 1, 'Announced once, not on every render');
-      assertTrue(banners[0].includes('Noah') && banners[0].includes('LAST CARD'), 'Names the player');
+      assertTrue(banners[0].includes('Noah') && banners[0].includes('last card'), 'Names the player');
       noah.hand = [makeCard('2'), makeCard('3'), makeCard('5')]; // picked up
       announceLastCards();
       noah.hand = [];
@@ -4580,9 +4580,9 @@ async function runDevTestSuite() {
   await test('Leaderboard congratulations mail: #1/#2/#3/top 10 per board, with a way to the board', async () => {
     assertTrue(ACTIVITY_MAIL_TYPES.includes('board'), 'Board mail shows in the Inbox');
     const one = inboxItemHtml({ type: 'board', board: 'gauntlet', tier: 1, rank: 1, id: 'board_gauntlet_1' });
-    assertTrue(one.includes('#1 on the Gauntlet leaderboard!') && one.includes('🥇'), 'The #1 mail', one);
+    assertTrue(one.includes('#1 on the Gauntlet leaderboard') && one.includes('🥇'), 'The #1 mail', one);
     const ten = inboxItemHtml({ type: 'board', board: 'challenges', tier: 10, rank: 7, id: 'board_challenges_10' });
-    assertTrue(ten.includes('You made the Challenges top 10!'), 'The top 10 mail');
+    assertTrue(ten.includes('You made the Challenges top 10'), 'The top 10 mail');
     assertTrue(inboxItemHtml({ type: 'board', board: 'ranked', tier: 3, rank: 3, id: 'board_ranked_3' }).includes('#3 on the Ranked leaderboard'), 'Ranked #3');
     assertTrue(one.includes('data-board-open="gauntlet"') && one.includes('data-activity-id="board_gauntlet_1"'), 'VIEW LEADERBOARD and MARK AS READ');
     const opened = [];
@@ -5254,7 +5254,7 @@ async function runDevTestSuite() {
       showMatchEndUI();
       assertTrue(openMatchSummary(), 'The summary opens once the match is FINISHED');
       const text = document.getElementById('matchSummaryBody').textContent;
-      assertTrue(text.includes('You won!'), 'First place says so');
+      assertTrue(text.includes('You won'), 'First place says so');
       assertTrue(text.includes('Vs 2 bots · Hard'), 'The mode is shown');
       assertTrue(/17\s*Played/.test(text) && /3\s*Biggest pickup/.test(text), 'Your own stats for this game are shown');
       assertTrue(text.includes('Match Won!') && text.includes('Burn Once') && text.includes('+💎 30'), 'Every Diamond reward is listed with a total');
