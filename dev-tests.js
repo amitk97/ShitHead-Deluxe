@@ -2246,6 +2246,40 @@ async function runDevTestSuite() {
     executePlayCards('p1', [three]);
     assertTrue(state.direction !== before, 'A 3 over a 9 must reverse direction');
   });
+  await test('REGRESSION: a 3 on a 5 whose base is an 8 skips too (the 3 acts as the 5, the 5 acts as the 8)', () => {
+    // The owner's Gauntlet game: base 8♦, then J, 7, 5 (skipped the bot), then a 3.
+    freshState({ discardPile: [makeCard('8', '♦'), makeCard('J', '♥'), makeCard('7', '♣'), makeCard('5', '♦')], drawPile: [] });
+    state.baseOverrideCard = state.discardPile[0];
+    const three = makeCard('3', '♥');
+    state.players = [makePlayer({ id: 'p1', name: 'You', hand: [three, makeCard('K')] }),
+                     makePlayer({ id: 'p2', name: 'Giulia', isBot: true, hand: [makeCard('3', '♠')] })];
+    state.localPlayerId = 'p1'; state.currentTurnIndex = 0;
+    executePlayCards('p1', [three]);
+    assertEqual(state.players[state.currentTurnIndex].id, 'p1', 'The 3 skips the opponent, just like the 5 did');
+    assertEqual(state.baseOverrideCard && state.baseOverrideCard.rank, '8', 'The next card still has to beat the base 8');
+    // The bot's own 3 on top does the same to you.
+    state.currentTurnIndex = 1;
+    executePlayCards('p2', [state.players[1].hand[0]]);
+    assertEqual(state.players[state.currentTurnIndex].id, 'p2', "Giulia's 3 on top skips you in turn");
+  });
+  await test('A 3 on a 5 whose base is a 9 reverses, like the 5 did', () => {
+    freshState({ discardPile: [makeCard('9', '♦'), makeCard('K'), makeCard('5', '♠')], drawPile: [], direction: 1 });
+    state.baseOverrideCard = state.discardPile[0];
+    const three = makeCard('3');
+    state.players = [makePlayer({ id: 'p1', hand: [three, makeCard('K')] }), makePlayer({ id: 'p2', isBot: true, hand: [makeCard('K')] })];
+    state.localPlayerId = 'p1'; state.currentTurnIndex = 0;
+    executePlayCards('p1', [three]);
+    assertEqual(state.direction, -1, 'The 3 reverses direction');
+  });
+  await test('A 3 on a 5 whose base is an ordinary card just passes the turn', () => {
+    freshState({ discardPile: [makeCard('K'), makeCard('Q'), makeCard('5')], drawPile: [] });
+    state.baseOverrideCard = state.discardPile[0];
+    const three = makeCard('3');
+    state.players = [makePlayer({ id: 'p1', hand: [three, makeCard('4')] }), makePlayer({ id: 'p2', isBot: true, hand: [makeCard('K')] })];
+    state.localPlayerId = 'p1'; state.currentTurnIndex = 0;
+    executePlayCards('p1', [three]);
+    assertEqual(state.players[state.currentTurnIndex].id, 'p2', 'No skip without an 8 underneath');
+  });
   await test('A 3 over an ordinary card advances the turn normally', () => {
     freshState({ discardPile: [makeCard('4'), makeCard('K')], drawPile: [] });
     const three = makeCard('3');

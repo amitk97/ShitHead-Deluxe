@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v162 (ShitHead-Deluxe-144) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v163 (ShitHead-Deluxe-145) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -8664,7 +8664,9 @@ video {
         // turn effect must carry too. A 3 on an 8 still skips; a 3 on a 9
         // still reverses. The count of 3s drives it, exactly as the real
         // cards would.
-        const under = getEffectiveTopCard(state.discardPile.filter(c => c.rank !== '3'));
+        // When a 5 sent play down to the base card, the 5 IS that base card
+        // (a 5 on an 8 skips), so a 3 on top acts as the base card too.
+        const under = previousBaseOverride || getEffectiveTopCard(state.discardPile.filter(c => c.rank !== '3'));
         if (under && under.rank === '8') {
           const others = state.players.filter(p => !p.hasFinished && p.id !== player.id).length;
           const skips = Math.min(effectiveRankCount, others);
@@ -16087,6 +16089,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v163: [
+        ['🃏', 'Fixed: a 3 on a 5 now does what the 5 did. If the base card is an 8 it skips, and if it is a 9 it reverses.']
+      ],
       v162: [
         ['🔗', 'Links to the game now show a proper preview picture in WhatsApp, iMessage, Discord and everywhere else you share them.']
       ],
