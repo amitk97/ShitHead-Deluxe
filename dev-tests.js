@@ -6150,6 +6150,7 @@ async function runDevTestSuite() {
     const savedNow = seasonalNowOverride, savedEco = challengeEconomy;
     try {
       SEASONAL_CHALLENGES.concat(SEASONAL_CHALLENGE_BONUS).forEach(c => assertTrue(c.reward % 5 === 0, `${c.name} ends in 5 or 0`, c.reward));
+      SEASONAL_CHALLENGES.forEach(c => assertTrue(c.target >= 15, `${c.name} can't be done in a game or two`, c.target));
       challengeEconomy = { ...savedEco, completedChallenges: {}, seasonalChallengeState: {} };
       seasonalNowOverride = '2026-09-24T12:00:00'; // no event
       renderSeasonalChallenges();
@@ -6160,7 +6161,7 @@ async function runDevTestSuite() {
       const tab = document.querySelector('[data-challenge-tab="seasonal"]');
       assertTrue(!tab.classList.contains('hidden') && tab.textContent.includes('Seasonal'), 'Shown during Halloween');
       const list = document.getElementById('challengesSeasonalList').textContent;
-      assertTrue(list.includes('3/5') && list.includes('Season Complete'), 'Rows show progress and the bonus', list);
+      assertTrue(list.includes('3/50') && list.includes('Season Complete'), 'Rows show progress and the bonus', list);
     } finally { seasonalNowOverride = savedNow; challengeEconomy = savedEco; renderSeasonalChallenges(); }
   });
   await test('Free tables: Oak Wood and Classic Felt are unlocked for everyone, with real photo-like art', async () => {

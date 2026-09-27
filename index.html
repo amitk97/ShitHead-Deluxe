@@ -21622,19 +21622,19 @@ video {
 
     // § Seasonal challenges
     // Only while an event is on (Challenges → Seasonal tab, hidden
-    // otherwise). The same four challenges each event, lasting the whole
-    // event, plus a bonus for finishing all four. Rewards are ~10% above the
-    // everyday ones (Warm Up 50 → 55, weekly 100 → 110, 250 → 275), always
-    // ending in 5 or 0. Progress: users/{uid}/seasonalChallengeState/{key}/{id}
+    // otherwise). The same four challenges each event, sized to take the
+    // whole event (a single game can hold 5 burns), plus a bonus for all
+    // four. Rewards: about 10% more per match of effort than the weekly
+    // ones (weekly: 10 matches finished = 100), always ending in 5 or 0. Progress: users/{uid}/seasonalChallengeState/{key}/{id}
     // (key = event instance, e.g. "halloween-2026"); completion key
     // season_<key>_<id>.
     const SEASONAL_CHALLENGES = [
-      { id: 'finish-any-match', name: 'Party Games', desc: 'Finish 5 matches during the event.', target: 5, reward: 55 },
-      { id: 'burn-once', name: 'Festive Fire', desc: 'Burn the pile 5 times.', target: 5, reward: 110 },
-      { id: 'play-joker', name: 'Wild Celebration', desc: 'Play 5 Jokers.', target: 5, reward: 110 },
-      { id: 'win-any-match', name: 'Holiday Winner', desc: 'Win 5 matches in any mode.', target: 5, reward: 110 }
+      { id: 'finish-any-match', name: 'Party Games', desc: 'Finish 30 matches during the event.', target: 30, reward: 330 },
+      { id: 'burn-once', name: 'Festive Fire', desc: 'Burn the pile 50 times.', target: 50, reward: 275 },
+      { id: 'play-joker', name: 'Wild Celebration', desc: 'Play 15 Jokers.', target: 15, reward: 330 },
+      { id: 'win-any-match', name: 'Holiday Winner', desc: 'Win 15 matches in any mode.', target: 15, reward: 440 }
     ];
-    const SEASONAL_CHALLENGE_BONUS = { id: 'all', name: 'Season Complete', desc: 'Complete all four seasonal challenges.', reward: 275 };
+    const SEASONAL_CHALLENGE_BONUS = { id: 'all', name: 'Season Complete', desc: 'Complete all four seasonal challenges.', reward: 550 };
     const seasonalCompletionKey = (instanceKey, id) => `season_${instanceKey}_${id}`;
     // The event whose challenges show: the live one ending soonest.
     function liveSeasonalChallengeWindow(now = seasonalNow()) {
