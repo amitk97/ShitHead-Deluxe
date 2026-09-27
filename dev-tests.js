@@ -1205,6 +1205,36 @@ async function runDevTestSuite() {
     assertTrue(diya.hand.some(c => c.rank === '4') && diya.hand.some(c => c.rank === 'K'), 'Diya must receive the non-Joker pile cards');
     assertTrue(!diya.hand.some(c => c.isJoker), 'The played Joker must be burnt rather than added to Diya\'s hand');
   });
+  await test('REGRESSION: a Joker as your LAST card passes the turn on (the game froze when a bot was next)', () => {
+    // Found by playing 600 bot games: the finished Joker winner kept the
+    // next turn, and the skip-past-finished step never woke the next bot.
+    freshState({ discardPile: [makeCard('4'), makeCard('K'), makeCard('JOKER', 'JOKER')], drawPile: [] });
+    const vikram = makePlayer({ id: 'vikram', name: 'Vikram', isBot: true, hand: [], faceUp: [], faceDown: [] });
+    const freja = makePlayer({ id: 'freja', name: 'Freja', isBot: true, hand: [makeCard('6')] });
+    const mia = makePlayer({ id: 'mia', name: 'Mia', isBot: true, hand: [makeCard('9')] });
+    state.players = [vikram, freja, mia];
+    state.localPlayerId = 'nobody';
+    state.currentTurnIndex = 0;
+    resolveJokerDuelInstant(vikram, freja, makeCard('JOKER', 'JOKER'));
+    assertTrue(vikram.hasFinished, 'Vikram is out');
+    assertTrue(state.jokerTurnOwnerId !== 'vikram', 'No turn lock on a finished player');
+    assertEqual(state.players[state.currentTurnIndex].id, 'freja', 'The turn moves on to the next player still in');
+  });
+  await test('REGRESSION: a turn landing on a finished seat is passed on AND the next player is told to go', () => {
+    freshState({ discardPile: [makeCard('4')], drawPile: [] });
+    const done = makePlayer({ id: 'done', isBot: true, hand: [], hasFinished: true, finishRank: 1 });
+    const a = makePlayer({ id: 'a', isBot: true, hand: [makeCard('9')] });
+    const b = makePlayer({ id: 'b', isBot: true, hand: [makeCard('K')] });
+    state.players = [done, a, b];
+    state.localPlayerId = 'nobody';
+    state.currentTurnIndex = 0;
+    let triggered = 0;
+    const realTrigger = triggerNextTurn;
+    triggerNextTurn = () => { triggered++; };
+    try { checkTurnAndAct(); } finally { triggerNextTurn = realTrigger; }
+    assertEqual(state.players[state.currentTurnIndex].id, 'a', 'The turn moves past the finished seat');
+    assertEqual(triggered, 1, 'and the next player is prompted to take it');
+  });
   await test('REGRESSION: Pooja retains the Joker bonus turn against a competing multiplayer snapshot', () => {
     freshState({ discardPile: [makeCard('4'), makeCard('JOKER', 'JOKER')], drawPile: [] });
     const pooja = makePlayer({ id: 'pooja', name: 'Pooja', hand: [makeCard('10')] });
@@ -2226,6 +2256,33 @@ async function runDevTestSuite() {
   });
 
   // ---- REGRESSION: a 3 inherits the turn effect of the card beneath ----
+  await test('REGRESSION: a 2-3 row hand never slides after a redraw (the hand "bouncing" side to side)', async () => {
+    const table = document.getElementById('gameTable');
+    const lobby = document.getElementById('lobbyScreen');
+    const wasHidden = [table.classList.contains('hidden'), lobby.classList.contains('hidden')];
+    table.classList.remove('hidden'); lobby.classList.add('hidden');
+    try {
+      const ranks = ['2','5','6','7','8','8','Q','Q','K','K','K','A','A','4','9','J'];
+      freshState({ phase: 'PLAY', discardPile: [makeCard('9')], drawPile: [] });
+      state.players = [makePlayer({ id: 'me', hand: ranks.map(r => makeCard(r)), faceDown: [makeCard('4')] }), makePlayer({ id: 'bot', isBot: true, hand: [makeCard('K')] })];
+      state.localPlayerId = 'me'; state.currentTurnIndex = 0;
+      const sliding = () => [...document.querySelectorAll('#localHand *')].some(el => el.getAnimations().some(a => a.transitionProperty));
+      render();
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      let slid = false;
+      for (let i = 0; i < 3; i++) {
+        render();
+        await new Promise(r => requestAnimationFrame(r));
+        slid = slid || sliding();
+        await new Promise(r => setTimeout(r, 30));
+        slid = slid || sliding();
+      }
+      assertTrue(document.querySelectorAll('#localHand > div').length >= 2, 'The test hand really has several rows');
+      assertTrue(!slid, 'No hand card slides into place after a redraw');
+    } finally {
+      table.classList.toggle('hidden', wasHidden[0]); lobby.classList.toggle('hidden', wasHidden[1]);
+    }
+  });
   await test('REGRESSION: a 3 played on an 8 still skips (transparency carries the effect)', () => {
     freshState({ discardPile: [makeCard('4'), makeCard('8')], drawPile: [] });
     const three = makeCard('3');

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v163 (ShitHead-Deluxe-145) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v164 (ShitHead-Deluxe-146) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -9357,6 +9357,16 @@ video {
       const winnerIndex = state.players.findIndex(p => p.id === winner.id);
       if (winnerIndex < 0) return false;
       state.currentTurnIndex = winnerIndex;
+      if (winner.hasFinished) {
+        // The Joker was their last card: they're out, so the turn goes on
+        // to the next player instead of locking onto a finished seat (which
+        // froze the game when a bot was next).
+        state.jokerTurnOwnerId = null;
+        state.jokerTurnLockConsumedPending = false;
+        state.pendingFollowUp = null;
+        advanceTurn(1);
+        return true;
+      }
       state.jokerTurnOwnerId = winner.id;
       state.jokerTurnLockConsumedPending = false;
       state.pendingFollowUp = null;
@@ -11771,6 +11781,8 @@ video {
       if (!current || current.hasFinished) {
         advanceTurn(1);
         render();
+        // Whoever the turn moved to must still be told to go.
+        triggerNextTurn();
         return;
       }
       render();
@@ -13293,9 +13305,18 @@ video {
       if (n > 1) newVis = Math.max(0.55, Math.min(vis, (target / h - 1) / (n - 1)));
       if (h * (1 + (n - 1) * newVis) > target) newH = Math.max(52, target / (1 + (n - 1) * newVis));
       const ratio = newH / h;
+      // These are the cards render() just drew: resize them instantly. The
+      // card's own margin/size transition would otherwise slide the whole
+      // hand into place after every render (the hand "bouncing" side to
+      // side with 2+ rows). Normal transitions come back next frame.
+      const settled = [];
       rows.forEach((row, i) => {
+        row.style.transition = 'none';
+        settled.push(row);
         if (i > 0) row.style.marginTop = `${-newH * (1 - newVis)}px`;
         [...row.children].forEach((cardEl) => {
+          cardEl.style.transition = 'none';
+          settled.push(cardEl);
           if (ratio === 1) return;
           const w = newH * 0.69;
           cardEl.style.width = `${w}px`;
@@ -13304,6 +13325,8 @@ video {
           if (w < 46) cardEl.classList.add('card-tiny');
         });
       });
+      void hand.offsetWidth; // apply the sizes with transitions off
+      requestAnimationFrame(() => settled.forEach(el => { el.style.transition = ''; }));
     }
 
     function getAllSelectablePool(player) {
@@ -16089,6 +16112,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v164: [
+        ['🖐️', 'Fixed: a hand with two or three rows no longer bounces side to side.'],
+        ['🃏', 'Fixed: a game could freeze when a player finished by playing a Joker as their last card.']
+      ],
       v163: [
         ['🃏', 'Fixed: a 3 on a 5 now does what the 5 did. If the base card is an 8 it skips, and if it is a 9 it reverses.']
       ],
