@@ -1351,7 +1351,7 @@ async function runDevTestSuite() {
   await test('Joker effects: in the Showcase, the Custom Joker tab and the Guide', () => {
     assertTrue(SHOWCASE_TYPES.includes('jokerEffect'), 'Shown in the Showcase');
     assertTrue(showcaseHtml({ jokerEffect: 'joker-magic' }).includes('Magic Trick'), 'by name');
-    assertTrue(!!document.getElementById('personalisationJokerEffects') && !!document.getElementById('personalisationJokerStage'), 'Custom has a Joker tab with a preview stage');
+    assertTrue(!!document.getElementById('personalisationJokerEffects') && !!document.querySelector('[data-custom-panel="jokerEffect"]'), 'Custom has a Joker tab');
     assertEqual(jokerEffectIdFor(makePlayer({ id: 'bot' })), 'default', 'Nothing equipped: the default effect');
   });
 
@@ -2002,16 +2002,37 @@ async function runDevTestSuite() {
     assertTrue(createCardElement(pileCard).classList.contains('animate-card-pop'), 'A card appearing for the first time may still pop in');
     assertTrue(!createCardElement(pileCard).classList.contains('animate-card-pop'), 'Re-rendering the same card must not replay the fade-in');
   });
-  await test('REGRESSION: previewing a burn effect in Custom plays in its own stage without shaking the table', () => {
-    const stage = document.getElementById('personalisationBurnStage');
-    assertTrue(!!stage, 'Custom must have a contained burn preview stage');
-    document.getElementById('gameTable').classList.remove('animate-screen-shake');
-    const particlesBefore = particles.length;
-    previewEquippedCosmetic('burnEffect', 'burn-ice');
-    assertTrue(stage.querySelectorAll('.shop-burn-particle').length > 0, 'The burn preview must play inside the Custom stage');
-    assertEqual(stage.querySelector('.shop-burn-core').textContent, '❄️', 'The stage must show the previewed effect');
-    assertTrue(!document.getElementById('gameTable').classList.contains('animate-screen-shake'), 'Previewing must not shake the game table behind Custom');
-    assertEqual(particles.length, particlesBefore, 'Previewing must not use the hidden gameplay particle canvas');
+  await test('REGRESSION: previewing a burn effect in Custom plays under its tile without shaking the table', () => {
+    const modal = document.getElementById('themesModal');
+    const wasHidden = modal.classList.contains('hidden');
+    modal.classList.remove('hidden');
+    try {
+      renderPersonalisationCosmetics();
+      setCustomTab('burnEffect');
+      document.getElementById('gameTable').classList.remove('animate-screen-shake');
+      const particlesBefore = particles.length;
+      previewEquippedCosmetic('burnEffect', 'burn-ice');
+      const box = document.querySelector('#personalisationBurnEffects .custom-inline-preview');
+      assertTrue(!!box, 'The preview opens inside the Burn grid, not at the top of the page');
+      const tile = document.querySelector('#personalisationBurnEffects [data-equip-id="burn-ice"]');
+      assertTrue(box.getBoundingClientRect().top >= tile.getBoundingClientRect().bottom - 1, 'It opens under the tapped tile');
+      const rowMates = [...document.querySelectorAll('#personalisationBurnEffects .cosmetic-tile')].filter(t => t.offsetTop === tile.offsetTop);
+      assertTrue(rowMates.every(t => t.getBoundingClientRect().bottom <= box.getBoundingClientRect().top + 1), 'After the whole row, so the row stays together');
+      assertTrue(box.querySelectorAll('.shop-burn-particle').length > 0, 'The burn preview plays inside it');
+      assertEqual(box.querySelector('.shop-burn-core').textContent, '❄️', 'It shows the previewed effect');
+      assertTrue(!document.querySelector('#personalisationBurnStage, #personalisationJokerStage'), 'No preview stage at the top of the page any more');
+      previewEquippedCosmetic('jokerEffect', 'joker-magic');
+      assertEqual(document.querySelectorAll('#themesModal .custom-inline-preview').length, 0, 'A Joker tile not on screen opens nothing (and the old preview closes)');
+      setCustomTab('jokerEffect');
+      previewEquippedCosmetic('jokerEffect', 'joker-magic');
+      assertTrue(!!document.querySelector('#personalisationJokerEffects .custom-inline-preview .jfx-stage'), 'Joker previews open under their tile too');
+      assertTrue(!document.getElementById('gameTable').classList.contains('animate-screen-shake'), 'Previewing must not shake the game table behind Custom');
+      assertEqual(particles.length, particlesBefore, 'Previewing must not use the hidden gameplay particle canvas');
+    } finally {
+      document.querySelectorAll('#jokerFxLayer > *, .custom-inline-preview').forEach(n => n.remove());
+      setCustomTab('all');
+      if (wasHidden) modal.classList.add('hidden');
+    }
   });
   await test('REGRESSION: table labels keep a readable backing on every table theme', () => {
     ['handZoneLabel', 'tableZoneLabel'].forEach(id => assertTrue(document.getElementById(id).classList.contains('table-label-pill'), `${id} needs the readable label pill`));
@@ -2168,7 +2189,7 @@ async function runDevTestSuite() {
   await test('REGRESSION: Custom is organised into tabs with tiles, at least 2 per row', () => {
     openThemesPanel();
     const tabs = [...document.querySelectorAll('#customTabBar [data-custom-tab]')].map(b => b.textContent.trim());
-    assertEqual(tabs, ['Pictures', 'Deck', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'Custom tabs');
+    assertEqual(tabs, ['All', 'Pictures', 'Deck', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'Custom tabs');
     document.querySelector('#customTabBar [data-custom-tab="cardBack"]').click();
     assertTrue(!document.querySelector('[data-custom-panel="cardBack"]').classList.contains('hidden') && document.querySelector('[data-custom-panel="avatar"]').classList.contains('hidden'), 'Only the chosen tab shows');
     const tiles = [...document.querySelectorAll('#personalisationCardBacks .cosmetic-tile')];
@@ -2212,8 +2233,22 @@ async function runDevTestSuite() {
     } finally { currentUser = savedUser; auth = savedAuth; signOutResetting = false; setTimeout(() => { window.__skipSignOutReload = false; }, 0); }
   });
 
+  // A throwaway burn preview stage (Custom's previews open under their tile).
+  function testBurnStage() {
+    let stage = document.getElementById('testBurnStage');
+    if (!stage) {
+      stage = document.createElement('div');
+      stage.id = 'testBurnStage';
+      stage.className = 'shop-preview-stage';
+      stage.dataset.shopBurnStage = '';
+      stage.style.cssText = 'position:fixed;left:-9999px;top:0;width:300px;height:160px';
+      stage.innerHTML = '<div class="shop-burn-core">🔥</div>';
+      document.body.appendChild(stage);
+    }
+    return stage;
+  }
   await test('REGRESSION: shape burn effects draw real shapes in previews and games', () => {
-    const stage = document.getElementById('personalisationBurnStage');
+    const stage = testBurnStage();
     [['burn-electric', 'polyline'], ['burn-coloured', 'path'], ['burn-sweets', 'ellipse'], ['burn-paint', 'path'], ['burn-smoke', 'div']].forEach(([id, shape]) => {
       assertTrue(playShopBurnPreview(id, stage), `${id} must play in the preview stage`);
       assertTrue(!!stage.querySelector(`.bfx ${shape}`), `${id} must draw ${shape} shapes, not plain dots`);
@@ -2340,7 +2375,7 @@ async function runDevTestSuite() {
   });
 
   await test('REGRESSION: Smoke Show lasts 2 seconds and earn-only pictures stay in milestone order', () => {
-    const stage = document.getElementById('personalisationBurnStage');
+    const stage = testBurnStage();
     stage.querySelectorAll('.bfx').forEach(n => n.remove());
     const before = new Set(document.getAnimations());
     playBurnFx('burn-smoke', stage, 120, 80, .6);
@@ -3811,7 +3846,7 @@ async function runDevTestSuite() {
     const saved = localStorage.getItem('shithead_shop_tab');
     try {
       localStorage.removeItem('shithead_shop_tab');
-      assertEqual(restoredShopTab(false), 'Profile Pictures', 'Nothing saved: Pictures');
+      assertEqual(restoredShopTab(false), SHOP_ALL_TAB, 'Nothing saved: All');
       assertEqual(restoredShopTab(true), SEASONAL_TAB, 'Nothing saved, event on: Seasonal');
       localStorage.setItem('shithead_shop_tab', JSON.stringify({ tab: 'Card Backs', seasonLead: false }));
       assertEqual(restoredShopTab(false), 'Card Backs', 'Remembers the tab');
@@ -3819,7 +3854,9 @@ async function runDevTestSuite() {
       localStorage.setItem('shithead_shop_tab', JSON.stringify({ tab: 'Card Backs', seasonLead: true }));
       assertEqual(restoredShopTab(true), 'Card Backs', 'Picked during the event: stays');
       localStorage.setItem('shithead_shop_tab', JSON.stringify({ tab: 'Not A Tab', seasonLead: false }));
-      assertEqual(restoredShopTab(false), 'Profile Pictures', 'A tab that no longer exists is ignored');
+      assertEqual(restoredShopTab(false), SHOP_ALL_TAB, 'A tab that no longer exists is ignored');
+      localStorage.setItem('shithead_shop_tab', JSON.stringify({ tab: SHOP_ALL_TAB, seasonLead: false }));
+      assertEqual(restoredShopTab(false), SHOP_ALL_TAB, 'All is remembered too');
     } finally {
       if (saved === null) localStorage.removeItem('shithead_shop_tab'); else localStorage.setItem('shithead_shop_tab', saved);
     }
@@ -3834,14 +3871,14 @@ async function runDevTestSuite() {
       assertTrue(!showWhatsNew('v1'), 'A version with no notes shows nothing');
     } finally { modal.classList.add('hidden'); }
   });
-  await test('The README is refreshed every 15 versions from v150 (text + screenshots)', async () => {
+  await test('The README is refreshed every 20 versions from v180 (text + screenshots)', async () => {
     let text = null;
     try { const r = await fetch('README.md', { cache: 'no-store' }); if (r.ok) text = await r.text(); } catch (e) {}
     if (text === null) return; // the live site doesn't serve the README
     const m = text.match(/README-VERSION:\s*v(\d+)/);
     assertTrue(!!m, 'README.md starts with a README-VERSION stamp');
     const stamped = Number(m[1]), current = Number(GAME_BUILD.version.slice(1));
-    const nextDue = stamped < 150 ? 150 : 150 + (Math.floor((stamped - 150) / 15) + 1) * 15;
+    const nextDue = stamped < 180 ? 180 : 180 + (Math.floor((stamped - 180) / 20) + 1) * 20;
     assertTrue(current < nextDue, `README refresh due: v${current} has reached v${nextDue}. Update the README text, retake the screenshots (node tools/readme-screenshots.js) and set README-VERSION to v${current}`);
   });
   await test("Every release has What's New notes; skipped updates are shown together; Settings can turn them off", () => {
@@ -5981,14 +6018,14 @@ async function runDevTestSuite() {
     renderCosmeticShop();
     let tabs = tabNames();
     assertTrue(tabs[tabs.length - 1].includes('Seasonal'), 'With no event near, Seasonal is the last tab');
-    assertEqual(tabs.slice(0, -1), ['Pictures', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'Pictures, then table and cards, then effects');
+    assertEqual(tabs.slice(0, -1), ['All', 'Pictures', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'All, then Pictures, then table and cards, then effects');
     seasonalNowOverride = '2026-10-12T12:00:00'; // 3 days before Halloween
     renderCosmeticShop();
-    assertTrue(tabNames()[0].includes('Seasonal'), 'Seasonal leads when an event starts within 3 days');
+    assertTrue(tabNames()[0] === 'All' && tabNames()[1].includes('Seasonal'), 'Seasonal leads (after All) when an event starts within 3 days');
     seasonalNowOverride = '2026-10-20T12:00:00'; // during Halloween
     renderCosmeticShop();
     tabs = tabNames();
-    assertTrue(tabs[0].includes('Seasonal'), 'Seasonal leads while an event is on');
+    assertTrue(tabs[0] === 'All' && tabs[1].includes('Seasonal'), 'Seasonal leads (after All) while an event is on');
     seasonalNowOverride = savedNow;
     renderCosmeticShop();
     document.querySelector('#shopTabBar [data-shop-tab="Card Backs"]').click();
@@ -5997,6 +6034,87 @@ async function runDevTestSuite() {
     assertEqual(document.querySelector('#shopTabBar [data-shop-tab="Card Backs"]').getAttribute('aria-selected'), 'true', 'The active tab is marked selected');
     ['all','affordable','owned','unowned','equipped'].forEach(filter => assertTrue(!!document.querySelector(`[data-shop-filter="${filter}"]`), `${filter} filter must exist`));
     shopFilter = savedFilter; shopTab = savedTab; renderCosmeticShop();
+  });
+  await test("Shop → All: first, every non-seasonal item in folding sections, Name Change Token on top (All only)", () => {
+    const savedFilter = shopFilter, savedTab = shopTab, savedCollapsed = [...collapsedShopCategories];
+    try {
+      shopFilter = 'all'; collapsedShopCategories.clear();
+      shopTab = SHOP_ALL_TAB; renderCosmeticShop();
+      assertEqual(document.querySelector('#shopTabBar [data-shop-tab]').dataset.shopTab, SHOP_ALL_TAB, 'All is the first tab');
+      const token = document.getElementById('shopNameTokenCard');
+      assertTrue(!token.classList.contains('hidden'), 'The Name Change Token shows on All');
+      assertTrue(!!(token.compareDocumentPosition(document.getElementById('cosmeticShopList')) & Node.DOCUMENT_POSITION_FOLLOWING), 'above every item');
+      assertTrue(!!(document.getElementById('shopTabBar').compareDocumentPosition(token) & Node.DOCUMENT_POSITION_FOLLOWING), 'inside the tab, under the tab bar');
+      const heads = [...document.querySelectorAll('#cosmeticShopList [data-shop-category]')];
+      assertEqual(heads.map(h => h.dataset.shopCategory), COSMETIC_TABS.map(t => t.category), 'One section per type, in tab order');
+      assertTrue(heads.every(h => h.querySelector('.cat-head-chev') && h.getAttribute('aria-expanded') === 'true'), 'Each has a chevron and starts open');
+      const shown = [...document.querySelectorAll('#cosmeticShopList [data-shop-row]')].map(r => r.dataset.shopRow);
+      const expected = COSMETIC_SHOP_ITEMS.filter(i => !i.season).map(i => i.id);
+      assertEqual(shown.length, expected.length, 'Every non-seasonal item is listed once');
+      assertTrue(shown.every(id => !COSMETIC_SHOP_ITEMS.find(i => i.id === id).season), 'No seasonal items');
+      heads.find(h => h.dataset.shopCategory === 'Card Backs').click();
+      const backHead = document.querySelector('#cosmeticShopList [data-shop-category="Card Backs"]');
+      assertEqual(backHead.getAttribute('aria-expanded'), 'false', 'The chevron folds a section');
+      assertTrue(!document.querySelector('#cosmeticShopList [data-shop-row^="back-"]'), 'Folded: its items are hidden');
+      assertTrue(JSON.parse(localStorage.getItem('shithead_shop_collapsed')).includes('Card Backs'), 'and it is remembered');
+      backHead.click();
+      assertTrue(!!document.querySelector('#cosmeticShopList [data-shop-row^="back-"]'), 'Tap again to open it');
+      shopTab = 'Card Backs'; renderCosmeticShop();
+      assertTrue(token.classList.contains('hidden'), 'Not on any other tab');
+      assertTrue(!document.querySelector('#cosmeticShopList [data-shop-category]'), 'Single tabs have no section heads');
+      shopTab = SEASONAL_TAB; renderCosmeticShop();
+      assertTrue(token.classList.contains('hidden'), 'Not on Seasonal either');
+    } finally {
+      collapsedShopCategories.clear(); savedCollapsed.forEach(c => collapsedShopCategories.add(c));
+      try { localStorage.setItem('shithead_shop_collapsed', JSON.stringify(savedCollapsed)); } catch (e) {}
+      shopFilter = savedFilter; shopTab = savedTab; renderCosmeticShop();
+    }
+  });
+  await test('Custom → All: every item incl. all seasonal ones, folding sections, and a Diamonds / owned / Shop bar', () => {
+    const savedOwned = cosmeticPurchaseState, savedCollapsed = [...customAllCollapsed], savedNow = seasonalNowOverride;
+    try {
+      seasonalNowOverride = '2026-09-24T12:00:00'; // no event on
+      customAllCollapsed.clear();
+      openThemesPanel();
+      cosmeticPurchaseState = { 'back-halloween': true, 'burn-ice': true };
+      setCustomTab('all');
+      renderPersonalisationCosmetics();
+      assertEqual(document.querySelector('#customTabBar [data-custom-tab]').dataset.customTab, 'all', 'All is the first Custom tab');
+      assertTrue(!document.querySelector('[data-custom-panel="all"]').classList.contains('hidden'), 'and it shows');
+      const heads = [...document.querySelectorAll('#personalisationAll [data-custom-section-toggle]')];
+      assertEqual(heads.map(h => h.querySelector('.cat-head-title').textContent), COSMETIC_TABS.map(t => t.label), 'One section per type');
+      const ids = new Set([...document.querySelectorAll('#personalisationAll [data-equip-id]')].map(b => b.dataset.equipId));
+      const everything = [...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...BUILT_IN_COSMETICS.filter(i => COSMETIC_TABS.some(t => t.category === i.category))];
+      const missing = everything.filter(i => !ids.has(i.id)).map(i => i.id);
+      assertEqual(missing, [], 'Every item is in All, seasonal ones included');
+      const halloweenTable = document.querySelector('#personalisationAll [data-equip-id="table-halloween"]');
+      assertTrue(halloweenTable.hasAttribute('data-locked') && halloweenTable.textContent.includes('Halloween only'), 'An unowned out-of-season item is locked and says when it is sold');
+      assertTrue(!document.querySelector('#personalisationAll [data-equip-id="back-halloween"]').hasAttribute('data-locked'), 'An owned seasonal item can be equipped any time');
+      const backsHead = heads.find(h => h.dataset.customSectionToggle === 'cardBack');
+      const backTotal = customAllItems('cardBack').length;
+      assertEqual(backsHead.querySelector('.cat-head-count').textContent, `1/${backTotal}`, 'Sections count owned / total');
+      backsHead.click();
+      assertEqual(document.querySelector('#personalisationAll [data-custom-section-toggle="cardBack"]').getAttribute('aria-expanded'), 'false', 'The chevron folds a section');
+      assertTrue(!document.querySelector('#personalisationAll [data-equip-type="cardBack"]'), 'Folded: its tiles are hidden');
+      document.querySelector('#personalisationAll [data-custom-section-toggle="cardBack"]').click();
+      assertTrue(!!document.querySelector('#personalisationAll [data-equip-type="cardBack"]'), 'and back open');
+      const bar = document.querySelector('#themesModal .ch-stat-bar');
+      assertTrue(!!bar && !!bar.querySelector('#customDiamondCount') && !!bar.querySelector('#customShopBtn'), 'The header has Diamonds and the Shop, like Challenges');
+      const d = bar.querySelector('.ch-stat--diamonds').getBoundingClientRect(), o = bar.querySelector('.ch-stat--done').getBoundingClientRect(), sh = bar.querySelector('.ch-stat--shop').getBoundingClientRect();
+      const mid = r => r.top + r.height / 2;
+      assertTrue(Math.abs(mid(d) - mid(sh)) < 1.5 && Math.abs(mid(d) - mid(o)) < 1.5, 'All three sit on one line');
+      assertTrue(d.left < o.left && o.right < sh.left, 'Diamonds left, owned in the middle, Shop right');
+      const total = [...COSMETIC_TABS].reduce((n, t) => n + customAllItems(COSMETIC_CATEGORY_TYPES[t.category]).length, 0);
+      assertEqual(document.getElementById('customOwnedTotal').textContent, `/ ${total} owned`, 'The middle shows how much of everything you own');
+      challengeEconomy.diamonds = challengeEconomy.diamonds || 0; updateDiamondHeader();
+      assertEqual(document.getElementById('customDiamondCount').textContent, document.getElementById('challengesModalDiamondCount').textContent, 'Same balance as Challenges');
+    } finally {
+      cosmeticPurchaseState = savedOwned; seasonalNowOverride = savedNow;
+      customAllCollapsed.clear(); savedCollapsed.forEach(t => customAllCollapsed.add(t));
+      try { localStorage.setItem('shithead_custom_all_collapsed', JSON.stringify(savedCollapsed)); } catch (e) {}
+      renderPersonalisationCosmetics();
+      document.getElementById('themesModal').classList.add('hidden');
+    }
   });
 
   await test('REGRESSION: AmitK test-account detection accepts the real username and authenticated email', () => {

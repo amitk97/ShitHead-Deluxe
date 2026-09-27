@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v165 (ShitHead-Deluxe-147) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v166 (ShitHead-Deluxe-148) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -371,6 +371,15 @@
     .auth-help-link { font:inherit; font-weight:800; color:#fbbf24; text-decoration:underline; padding:0; }
     /* Challenges header: Diamonds, completed count, Shop shortcut: one height. */
     /* Diamonds left, completed count dead centre, Shop right. */
+    .cat-section { margin-bottom:8px; }
+    .cat-head { width:100%; display:flex; align-items:center; gap:8px; padding:7px 10px; margin-bottom:6px; border-radius:12px; border:1px solid #334155; background:linear-gradient(135deg,#0f172a,#020617 85%); text-align:left; cursor:pointer; }
+    .cat-head-title { flex:1; min-width:0; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; color:#fcd34d; }
+    .cat-head-count { font-size:9px; font-weight:900; color:#94a3b8; }
+    .cat-head-chev { flex:none; width:20px; height:20px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#fcd34d; border:1px solid rgba(148,163,184,.35); transition:transform .18s var(--ease-snappy, ease); }
+    .cat-head[aria-expanded="false"] .cat-head-chev { transform:rotate(-90deg); }
+    .cat-section:has(> .cat-head[aria-expanded="false"]) { margin-bottom:4px; }
+    .custom-inline-preview { grid-column:1 / -1; border:1px solid rgba(34,211,238,.35); border-radius:12px; background:rgba(2,6,23,.6); padding:6px; }
+    .custom-inline-preview > .shop-preview-stage, .custom-inline-preview > .jfx-stage { margin:0; }
     .ch-stat-bar { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; margin-top:8px; }
     .ch-stat-bar > .ch-stat--diamonds { justify-self:start; }
     .ch-stat-bar > .ch-stat--done { justify-self:center; }
@@ -5363,18 +5372,6 @@ video {
       <div class="overflow-y-auto pr-1 space-y-3" style="flex:1;">
       <div id="shopActionNotice" class="hidden sticky top-1 z-30 rounded-xl border-2 bg-slate-950/95 p-2.5 text-center text-[9px] font-black leading-snug shadow-xl" role="status" aria-live="polite"></div>
       <div id="shopPurchaseSuccess" class="hidden sticky top-1 z-20 shop-purchase-success rounded-xl border-2 border-emerald-400 bg-emerald-950/95 p-3 text-center shadow-[0_0_22px_rgba(52,211,153,.35)]" aria-live="polite"></div>
-      <div class="name-token-card">
-        <div class="name-token-row">
-          <span class="name-token-icon" aria-hidden="true">✎</span>
-          <span class="min-w-0" style="flex:1"><span class="name-token-title">Name Change Token</span><span class="name-token-sub">Change your username once · lifetime · 💎 100</span></span>
-          <button id="nameTokenBuyBtn" class="name-token-buy">Buy</button>
-        </div>
-        <div id="nameTokenUseArea" class="hidden name-token-use">
-          <input id="nameTokenInput" type="text" maxlength="12" autocomplete="off" placeholder="New username" class="bg-slate-950 border-2 border-slate-800 rounded-lg px-2 py-1.5 text-xs font-bold text-white outline-none focus:border-amber-400" style="flex:1;min-width:0" />
-          <button id="nameTokenUseBtn" class="name-token-use-btn">Use</button>
-        </div>
-        <p id="nameTokenStatus" class="name-token-status"></p>
-      </div>
       <div>
         <div id="giftModeBanner" class="gift-banner hidden"></div>
         <div class="hscroll-wrap is-sticky"><button type="button" class="hscroll-btn prev" aria-label="Scroll sections left" tabindex="-1">‹</button><div id="shopTabBar" class="cosmetic-tab-bar hscroll" role="tablist" aria-label="Shop sections"></div><button type="button" class="hscroll-btn next" aria-label="Scroll sections right" tabindex="-1">›</button></div>
@@ -5386,6 +5383,18 @@ video {
           <button data-shop-filter="unowned" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">NOT OWNED</button>
           <button data-shop-filter="equipped" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">EQUIPPED</button>
         </div><button type="button" class="hscroll-btn next" aria-label="Scroll filters right" tabindex="-1">›</button></div>
+        <div id="shopNameTokenCard" class="name-token-card mb-2">
+          <div class="name-token-row">
+            <span class="name-token-icon" aria-hidden="true">✎</span>
+            <span class="min-w-0" style="flex:1"><span class="name-token-title">Name Change Token</span><span class="name-token-sub">Change your username once · lifetime · 💎 100</span></span>
+            <button id="nameTokenBuyBtn" class="name-token-buy">Buy</button>
+          </div>
+          <div id="nameTokenUseArea" class="hidden name-token-use">
+            <input id="nameTokenInput" type="text" maxlength="12" autocomplete="off" placeholder="New username" class="bg-slate-950 border-2 border-slate-800 rounded-lg px-2 py-1.5 text-xs font-bold text-white outline-none focus:border-amber-400" style="flex:1;min-width:0" />
+            <button id="nameTokenUseBtn" class="name-token-use-btn">Use</button>
+          </div>
+          <p id="nameTokenStatus" class="name-token-status"></p>
+        </div>
         <div id="cosmeticShopList" class="space-y-2"></div>
         <p id="cosmeticShopStatus" class="text-[9px] text-center text-slate-400 leading-snug mt-2"></p>
       </div>
@@ -5460,20 +5469,29 @@ video {
 
   <div id="themesModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:85vh; display:flex; flex-direction:column;">
-      <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
-        <span class="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-amber-400"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg><span>Custom</span></span>
-        <button id="themesCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
+      <div class="mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
+        <div class="flex items-center justify-between">
+          <span class="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-amber-400"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg><span>Custom</span></span>
+          <button id="themesCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
+        </div>
+        <!-- Same bar as Challenges: balance, how much you own, then the Shop. -->
+        <div class="ch-stat-bar">
+          <div class="ch-stat ch-stat--diamonds" title="Diamonds"><span aria-hidden="true">&#128142;</span><b id="customDiamondCount">0</b></div>
+          <div class="ch-stat ch-stat--done" title="Items owned"><span aria-hidden="true">&#10003;</span><b id="customOwnedCount">0</b><small id="customOwnedTotal">owned</small></div>
+          <button type="button" id="customShopBtn" class="ch-stat ch-stat--shop" aria-label="Open the Shop"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg><small>Shop</small></button>
+        </div>
       </div>
       <div class="overflow-y-auto pr-1" style="flex:1;">
         <div class="hscroll-wrap is-sticky"><button type="button" class="hscroll-btn prev" aria-label="Scroll sections left" tabindex="-1">‹</button><div id="customTabBar" class="cosmetic-tab-bar hscroll" role="tablist" aria-label="Custom sections"></div><button type="button" class="hscroll-btn next" aria-label="Scroll sections right" tabindex="-1">›</button></div>
-        <div data-custom-panel="avatar"><div id="personalisationAvatars" class="avatar-picker-grid"></div></div>
+        <div data-custom-panel="all"><div id="personalisationAll" class="custom-all"></div></div>
+        <div data-custom-panel="avatar" class="hidden"><div id="personalisationAvatars" class="avatar-picker-grid"></div></div>
         <div data-custom-panel="deck" class="hidden"><div id="themesGridArea" class="grid grid-cols-2 gap-3 py-1"></div></div>
         <div data-custom-panel="cardBack" class="hidden"><div id="personalisationCardBacks" class="cosmetic-tile-grid"></div></div>
         <div data-custom-panel="frame" class="hidden"><div id="personalisationFrames" class="cosmetic-tile-grid"></div></div>
         <div data-custom-panel="emotes" class="hidden"><div id="personalisationEmotes" class="cosmetic-tile-grid"></div></div>
         <div data-custom-panel="tableTheme" class="hidden"><div id="personalisationTableThemes" class="cosmetic-tile-grid"></div></div>
-        <div data-custom-panel="burnEffect" class="hidden"><div id="personalisationBurnStage" class="shop-preview-stage mb-2" data-shop-burn-stage><div class="shop-burn-core">🔥</div><span class="text-[8px] font-bold text-slate-400 pointer-events-none" style="position:absolute;left:0;right:0;bottom:6px;text-align:center;">Tap an effect to preview it</span></div><div id="personalisationBurnEffects" class="cosmetic-tile-grid"></div></div>
-        <div data-custom-panel="jokerEffect" class="hidden"><div id="personalisationJokerStage" class="jfx-stage mb-2"><div class="jfx-stage-hint">🃏<small>Tap an effect to preview it</small></div></div><div id="personalisationJokerEffects" class="cosmetic-tile-grid"></div></div>
+        <div data-custom-panel="burnEffect" class="hidden"><div id="personalisationBurnEffects" class="cosmetic-tile-grid"></div></div>
+        <div data-custom-panel="jokerEffect" class="hidden"><div id="personalisationJokerEffects" class="cosmetic-tile-grid"></div></div>
         <div data-custom-panel="victoryEffect" class="hidden"><div id="personalisationVictoryEffects" class="cosmetic-tile-grid"></div></div>
         <button id="unequipAllCosmeticsBtn" type="button" class="mt-3 w-full rounded-xl border border-rose-700 bg-rose-950/30 px-3 py-2 text-[9px] font-black uppercase tracking-wider text-rose-300 hover:bg-rose-900/50">Unequip All Cosmetics</button>
         <p id="personalisationStatus" class="text-[9px] text-center text-slate-500 pt-2" aria-live="polite"></p>
@@ -16280,6 +16298,12 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v166: [
+        ['🗂️', 'Custom has a new All tab with every item in the game, seasonal ones included, in sections that fold away.'],
+        ['💎', 'Custom now shows your Diamonds, how many items you own, and a shortcut to the Shop.'],
+        ['🔥', 'Burn and Joker previews in Custom now play right under the effect you tap.'],
+        ['🛒', 'The Shop opens on a new All tab with every item in folding sections, and the Name Change Token at the top.']
+      ],
       v165: [
         ['🃏', 'New in the Shop: Joker Effects. A short animation plays over the table whenever you play a Joker, and everyone at the table sees it.'],
         ['🎃', "Every seasonal event gets its own Joker Effect too, from the Pumpkin Joker's BOO! to Santa Joker's HO HO HO!"],
@@ -18097,7 +18121,11 @@ video {
     let lastPurchasedCosmeticId = null;
     let shopFilter = 'all';
     let pendingShopFocusId = null;
-    const collapsedShopCategories = new Set();
+    const SHOP_COLLAPSED_KEY = 'shithead_shop_collapsed';
+    const collapsedShopCategories = (() => {
+      try { return new Set(JSON.parse(localStorage.getItem(SHOP_COLLAPSED_KEY) || '[]')); }
+      catch (e) { return new Set(); }
+    })();
     let newCosmeticIds = (() => {
       try { return new Set(JSON.parse(localStorage.getItem('shithead_new_cosmetics') || '[]')); }
       catch (e) { return new Set(); }
@@ -18388,8 +18416,7 @@ video {
       // on the hidden game table's pile and shake #gameTable, which knocked
       // the open Custom panel aside (flashing the home screen) with nothing
       // visible to show for it.
-      if (type === 'burnEffect') return playPersonalisationBurnPreview(id);
-      if (type === 'jokerEffect') return playJokerPreview(id, document.getElementById('personalisationJokerStage'));
+      if (type === 'burnEffect' || type === 'jokerEffect') return playInlineEffectPreview(type, id);
       if (!bigEffectsOn || id === 'default') return;
       if (type === 'victoryEffect') return playVictoryEffect(id);
     }
@@ -18398,12 +18425,26 @@ video {
       return { 'burn-ice': '❄️', 'burn-electric': '⚡', 'burn-sweets': '🍬', 'burn-paint': '🎨', 'burn-smoke': '💨' }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('burn-', '')]?.burnIcon || '🔥';
     }
 
-    function playPersonalisationBurnPreview(id) {
-      const stage = document.getElementById('personalisationBurnStage');
-      if (!stage) return false;
-      const core = stage.querySelector('.shop-burn-core');
-      if (core) core.textContent = burnPreviewIcon(id);
-      return playShopBurnPreview(id, stage);
+    // Burn and Joker previews open in Custom right under the tapped tile (a
+    // full-width row after that tile's row), in the tab on screen.
+    function visibleCustomPanel() {
+      return [...document.querySelectorAll('#themesModal [data-custom-panel]')].find(panel => !panel.classList.contains('hidden')) || null;
+    }
+    function playInlineEffectPreview(type, id) {
+      document.querySelectorAll('#themesModal .custom-inline-preview').forEach(el => el.remove());
+      const tile = visibleCustomPanel()?.querySelector(`[data-equip-type="${type}"][data-equip-id="${CSS.escape(id)}"]`);
+      if (!tile) return false;
+      let rowEnd = tile;
+      for (let next = tile.nextElementSibling; next && next.offsetTop === tile.offsetTop && !next.classList.contains('custom-inline-preview'); next = next.nextElementSibling) rowEnd = next;
+      const box = document.createElement('div');
+      box.className = 'custom-inline-preview';
+      box.dataset.previewFor = id;
+      box.innerHTML = type === 'burnEffect'
+        ? `<div class="shop-preview-stage" data-shop-burn-stage><div class="shop-burn-core">${burnPreviewIcon(id)}</div></div>`
+        : `<div class="jfx-stage"><div class="jfx-stage-hint">${jokerPreviewIcon(id)}</div></div>`;
+      rowEnd.after(box);
+      box.scrollIntoView?.({ block: 'nearest' });
+      return type === 'burnEffect' ? playShopBurnPreview(id, box.firstElementChild) : playJokerPreview(id, box.firstElementChild);
     }
 
     function equipCosmetic(type, id, options = {}) {
@@ -18467,7 +18508,7 @@ video {
       const owned = id === 'default' || !!item?.builtIn || !!cosmeticPurchaseState[id];
       const active = id === activeId;
       // Tile layout, shared with the profile-picture tiles.
-      const status = active ? '✓ EQUIPPED' : owned ? 'Tap to equip' : item.earned ? item.requirement : `💎 ${item.cost} in Shop`;
+      const status = active ? '✓ EQUIPPED' : owned ? 'Tap to equip' : customLockedStatus(item);
       return `<button type="button" data-equip-type="${type}" data-equip-id="${id}" ${owned ? '' : 'data-locked aria-disabled="true"'} aria-pressed="${active}" class="cosmetic-option-card cosmetic-tile avatar-option">
         <span class="avatar-option-art">${cosmeticPreview(item, type)}${owned ? '' : '<span class="avatar-option-lock" aria-hidden="true">🔒</span>'}${item?.season ? `<span class="season-badge" title="${SEASONAL_EVENT_BY_ID[item.season].name}">${SEASONAL_EVENT_BY_ID[item.season].emoji}</span>` : ''}</span>
         <span class="avatar-option-name">${name}</span>
@@ -18475,14 +18516,21 @@ video {
       </button>`;
     }
 
+    // What a locked tile says: how to earn it, when it's sold, or its price.
+    function customLockedStatus(item) {
+      if (item.earned) return item.requirement;
+      if (item.season && !isSeasonalItemBuyable(item)) {
+        const ev = SEASONAL_EVENT_BY_ID[item.season];
+        return `${ev.emoji} ${ev.name} only`;
+      }
+      return `💎 ${item.cost} in Shop`;
+    }
+
     function avatarOptionHtml(item) {
       const equippedId = resolveAvatarId(equippedCosmetics.avatar);
       const owned = !!item.builtIn || !!cosmeticPurchaseState[item.id];
       const active = owned && equippedId === item.id;
-      const status = active ? '✓ EQUIPPED'
-        : owned ? 'Tap to equip'
-        : item.earned ? item.requirement
-        : `💎 ${item.cost} in Shop`;
+      const status = active ? '✓ EQUIPPED' : owned ? 'Tap to equip' : customLockedStatus(item);
       return `<button type="button" class="avatar-option" data-equip-type="avatar" data-equip-id="${item.id}" ${owned ? '' : 'data-locked aria-disabled="true"'} aria-pressed="${active}">
         <span class="avatar-option-art">${avatarHtml(item.id, 52, owned ? '' : (item.earned ? 'avatar-locked' : ''))}${owned ? '' : '<span class="avatar-option-lock" aria-hidden="true">🔒</span>'}${item.season ? `<span class="season-badge" title="${SEASONAL_EVENT_BY_ID[item.season].name}">${SEASONAL_EVENT_BY_ID[item.season].emoji}</span>` : ''}</span>
         <span class="avatar-option-name">${item.name}</span>
@@ -18504,8 +18552,53 @@ video {
         ${seasonalAvatars.length ? `<span class="avatar-picker-label">Seasonal</span>${seasonalAvatars.map(avatarOptionHtml).join('')}` : ''}`;
     }
 
+    // Custom → All: every item in the game, seasonal ones included (owned or
+    // not), in one folding section per type. Folded sections are remembered.
+    const CUSTOM_ALL_COLLAPSED_KEY = 'shithead_custom_all_collapsed';
+    const customAllCollapsed = (() => {
+      try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_ALL_COLLAPSED_KEY) || '[]')); }
+      catch (e) { return new Set(); }
+    })();
+    function customAllItems(type) {
+      const category = Object.keys(COSMETIC_CATEGORY_TYPES).find(key => COSMETIC_CATEGORY_TYPES[key] === type);
+      const bySeason = (items) => SEASONAL_EVENTS.flatMap(ev => sortByValue(items.filter(item => item.season === ev.id)));
+      const shop = COSMETIC_SHOP_ITEMS.filter(item => item.category === category);
+      const earned = [...EARNED_AVATARS, ...EARNED_FRAMES].filter(item => item.category === category);
+      const free = BUILT_IN_COSMETICS.filter(item => item.category === category);
+      return [
+        ...sortByValue([...free, ...shop.filter(item => !item.season)]),
+        ...earned.filter(item => !item.season),
+        ...bySeason([...shop, ...earned].filter(item => item.season))
+      ];
+    }
+    const isCosmeticOwned = (item) => !!item.builtIn || !!cosmeticPurchaseState[item.id];
+    function renderPersonalisationAll() {
+      const area = document.getElementById('personalisationAll');
+      if (!area) return;
+      let owned = 0, total = 0;
+      area.innerHTML = COSMETIC_TABS.map(tab => {
+        const type = COSMETIC_CATEGORY_TYPES[tab.category];
+        const items = customAllItems(type);
+        const have = items.filter(isCosmeticOwned).length;
+        owned += have; total += items.length;
+        const open = !customAllCollapsed.has(type);
+        const tiles = !open ? '' : type === 'avatar'
+          ? `<div class="avatar-picker-grid">${items.map(avatarOptionHtml).join('')}</div>`
+          : `<div class="cosmetic-tile-grid">${[null, ...items].map(item => personalisationOptionHtml(item, type, equippedCosmetics[type])).join('')}</div>`;
+        return `<section class="cat-section" data-custom-section="${type}">
+          <button type="button" class="cat-head" data-custom-section-toggle="${type}" aria-expanded="${open}"><span class="cat-head-title">${tab.label}</span><span class="cat-head-count">${have}/${items.length}</span><span class="cat-head-chev" aria-hidden="true">▾</span></button>
+          ${tiles}
+        </section>`;
+      }).join('');
+      const ownedEl = document.getElementById('customOwnedCount');
+      if (ownedEl) ownedEl.textContent = owned;
+      const totalEl = document.getElementById('customOwnedTotal');
+      if (totalEl) totalEl.textContent = `/ ${total} owned`;
+    }
+
     function renderPersonalisationCosmetics() {
       renderPersonalisationAvatars();
+      renderPersonalisationAll();
       const backs = document.getElementById('personalisationCardBacks');
       const frames = document.getElementById('personalisationFrames');
       const emotes = document.getElementById('personalisationEmotes');
@@ -18563,6 +18656,14 @@ video {
     }
 
     document.getElementById('themesModal').addEventListener('click', (event) => {
+      const sectionBtn = event.target.closest('[data-custom-section-toggle]');
+      if (sectionBtn) {
+        const type = sectionBtn.dataset.customSectionToggle;
+        if (customAllCollapsed.has(type)) customAllCollapsed.delete(type); else customAllCollapsed.add(type);
+        try { localStorage.setItem(CUSTOM_ALL_COLLAPSED_KEY, JSON.stringify([...customAllCollapsed])); } catch (e) {}
+        renderPersonalisationAll();
+        return;
+      }
       const btn = event.target.closest('[data-equip-type]');
       if (!btn || btn.disabled) return;
       const type = btn.dataset.equipType;
@@ -18572,7 +18673,7 @@ video {
       if (!equipCosmetic(type, id) || motionOff()) return;
       // Equip snap: the new pick pops and "slots in" with a click; the old
       // one eases back from a faded state.
-      const modal = document.getElementById('themesModal');
+      const modal = visibleCustomPanel() || document.getElementById('themesModal');
       const pick = modal.querySelector(`[data-equip-type="${type}"][data-equip-id="${CSS.escape(id)}"]`);
       const old = previous && previous !== id ? modal.querySelector(`[data-equip-type="${type}"][data-equip-id="${CSS.escape(previous)}"]`) : null;
       pick?.animate([{ scale: .9 }, { scale: 1.08, offset: .45 }, { scale: 1 }], { duration: 420, easing: EASE.spring });
@@ -18657,7 +18758,10 @@ video {
       { category: 'Victory Effects', label: 'Victory' },
       { category: 'Emote Packs', label: 'Emotes' }
     ];
-    let shopTab = 'Profile Pictures';
+    // The Shop's first tab: every item not tied to an event, one folding
+    // section per type, with the Name Change Token at the top.
+    const SHOP_ALL_TAB = 'All';
+    let shopTab = SHOP_ALL_TAB;
     // Every Shop/Custom tab lists items cheapest first, then A-Z within a price.
     function sortByValue(items) {
       return [...items].sort((a, b) => ((a.cost || 0) - (b.cost || 0)) || String(a.name).localeCompare(String(b.name)));
@@ -18669,7 +18773,9 @@ video {
       const live = activeSeasonalEvents();
       const seasonalTab = `<button type="button" role="tab" class="cosmetic-tab season-tab ${live.length ? 'is-live' : ''}" data-shop-tab="${SEASONAL_TAB}" aria-selected="${shopTab === SEASONAL_TAB}">${live.length ? live.map(w => w.event.emoji).join('') : '🎉'} Seasonal <small>${seasonalCount || (live.length ? 0 : 'soon')}</small></button>`;
       const seasonalFirst = seasonalTabLeads();
-      bar.innerHTML = (seasonalFirst ? seasonalTab : '') + COSMETIC_TABS.map(tab => {
+      const allCount = COSMETIC_SHOP_ITEMS.filter(item => !item.season && shopItemMatchesFilter(item, balance)).length;
+      const allTab = `<button type="button" role="tab" class="cosmetic-tab" data-shop-tab="${SHOP_ALL_TAB}" aria-selected="${shopTab === SHOP_ALL_TAB}">All <small>${allCount}</small></button>`;
+      bar.innerHTML = allTab + (seasonalFirst ? seasonalTab : '') + COSMETIC_TABS.map(tab => {
         const count = COSMETIC_SHOP_ITEMS.filter(item => !item.season && item.category === tab.category && shopItemMatchesFilter(item, balance)).length;
         return `<button type="button" role="tab" class="cosmetic-tab" data-shop-tab="${tab.category}" aria-selected="${shopTab === tab.category}">${tab.label} <small>${count}</small></button>`;
       }).join('') + (seasonalFirst ? '' : seasonalTab);
@@ -18714,9 +18820,9 @@ video {
     function restoredShopTab(seasonLeadsNow) {
       let saved = null;
       try { saved = JSON.parse(localStorage.getItem(SHOP_TAB_KEY) || 'null'); } catch (e) {}
-      const valid = saved && (saved.tab === SEASONAL_TAB || COSMETIC_TABS.some(t => t.category === saved.tab));
+      const valid = saved && (saved.tab === SEASONAL_TAB || saved.tab === SHOP_ALL_TAB || COSMETIC_TABS.some(t => t.category === saved.tab));
       if (seasonLeadsNow && !(valid && saved.seasonLead)) return SEASONAL_TAB;
-      return valid ? saved.tab : (seasonLeadsNow ? SEASONAL_TAB : 'Profile Pictures');
+      return valid ? saved.tab : (seasonLeadsNow ? SEASONAL_TAB : SHOP_ALL_TAB);
     }
     const seasonShortDate = (date) => date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
     // Seasonal leads the Shop only while an event is on or starts within 3 days.
@@ -18762,7 +18868,7 @@ video {
         if (b.items.length >= 2) {
           const affordable = balance >= b.price;
           bundle = `<div class="season-bundle" style="${accentStyle}"><span class="season-bundle-icon" aria-hidden="true">🎁</span>
-            <span class="season-bundle-text"><b>${ev.name} Bundle</b><small>${b.items.length === 7 ? 'All 7 items' : `The ${b.items.length} items you don't own yet`} · save 💎 ${b.full - b.price}</small></span>
+            <span class="season-bundle-text"><b>${ev.name} Bundle</b><small>${b.items.length === COSMETIC_SHOP_ITEMS.filter(item => item.season === ev.id).length ? `All ${b.items.length} items` : `The ${b.items.length} items you don't own yet`} · save 💎 ${b.full - b.price}</small></span>
             <button type="button" data-bundle-event="${ev.id}" aria-disabled="${!affordable}" class="season-bundle-btn ${affordable ? '' : 'is-short'}"><s>💎 ${b.full}</s> 💎 ${b.price}</button></div>`;
         }
       }
@@ -19237,14 +19343,21 @@ video {
       if (!list) return;
       const balance = challengeEconomy.diamonds || 0;
       renderShopTabs(balance);
-      const groups = shopTab === SEASONAL_TAB ? [] : [shopTab];
+      const isAll = shopTab === SHOP_ALL_TAB;
+      document.getElementById('shopNameTokenCard')?.classList.toggle('hidden', !isAll);
+      const groups = shopTab === SEASONAL_TAB ? [] : isAll ? COSMETIC_TABS.map(tab => tab.category) : [shopTab];
       if (shopTab === SEASONAL_TAB) renderSeasonalShop(list, balance);
       else list.innerHTML = groups.map(category => {
         const categoryItems = sortByValue(COSMETIC_SHOP_ITEMS.filter(item => !item.season && item.category === category && shopItemMatchesFilter(item, balance)));
         if (!categoryItems.length) return '';
-        const collapsed = collapsedShopCategories.has(category);
         const items = categoryItems.map(item => shopItemRowHtml(item, balance)).join('');
-        return `<div class="space-y-1.5">${items}</div>`;
+        if (!isAll) return `<div class="space-y-1.5">${items}</div>`;
+        const open = !collapsedShopCategories.has(category);
+        const label = COSMETIC_TABS.find(tab => tab.category === category).label;
+        return `<section class="cat-section" data-shop-section="${category}">
+          <button type="button" class="cat-head" data-shop-category="${category}" aria-expanded="${open}"><span class="cat-head-title">${label}</span><span class="cat-head-count">${categoryItems.length}</span><span class="cat-head-chev" aria-hidden="true">▾</span></button>
+          ${open ? `<div class="space-y-1.5">${items}</div>` : ''}
+        </section>`;
       }).join('');
       if (!list.innerHTML.trim()) list.innerHTML = '<p class="rounded-xl border border-dashed border-slate-700 p-4 text-center text-[9px] text-slate-500">Nothing in this section matches the filter.</p>';
       else if (shopTab !== SEASONAL_TAB && shopFilter === 'all' && activeSeasonalEvents().length) list.insertAdjacentHTML('afterbegin', `<button type="button" class="season-promo" data-shop-tab-jump="${SEASONAL_TAB}">${activeSeasonalEvents().map(w => `${w.event.emoji} ${w.event.name}`).join(' · ')} items are in the Shop now →</button>`);
@@ -19519,6 +19632,7 @@ video {
         const category = categoryBtn.dataset.shopCategory;
         if (collapsedShopCategories.has(category)) collapsedShopCategories.delete(category);
         else collapsedShopCategories.add(category);
+        try { localStorage.setItem(SHOP_COLLAPSED_KEY, JSON.stringify([...collapsedShopCategories])); } catch (e) {}
         renderCosmeticShop();
         return;
       }
@@ -21099,8 +21213,10 @@ video {
           headerEl.classList.add(exact > lastPaintedDiamonds ? 'diamond-flash-up' : 'diamond-flash-down');
         }
       }
-      const modalEl = document.getElementById('challengesModalDiamondCount');
-      if (modalEl) modalEl.textContent = display;
+      ['challengesModalDiamondCount', 'customDiamondCount'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = display;
+      });
       lastPaintedDiamonds = exact;
     }
     (function setupDiamondFlashCleanup() {
@@ -23543,13 +23659,15 @@ video {
       });
     }
     const CUSTOM_TABS = [
+      { key: 'all', label: 'All' },
       { key: 'avatar', label: 'Pictures' },
       { key: 'deck', label: 'Deck' },
       ...COSMETIC_TABS.filter(tab => tab.category !== 'Profile Pictures').map(tab => ({ key: COSMETIC_CATEGORY_TYPES[tab.category], label: tab.label }))
     ];
     let customTab = 'avatar';
     function setCustomTab(key) {
-      customTab = CUSTOM_TABS.some(tab => tab.key === key) ? key : 'avatar';
+      customTab = CUSTOM_TABS.some(tab => tab.key === key) ? key : 'all';
+      document.querySelectorAll('#themesModal .custom-inline-preview').forEach(el => el.remove());
       const bar = document.getElementById('customTabBar');
       if (bar) bar.innerHTML = CUSTOM_TABS.map(tab => `<button type="button" role="tab" class="cosmetic-tab" data-custom-tab="${tab.key}" aria-selected="${tab.key === customTab}">${tab.label}</button>`).join('');
       document.querySelectorAll('[data-custom-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.customPanel !== customTab));
@@ -23558,7 +23676,7 @@ video {
       const tab = event.target.closest('[data-custom-tab]');
       if (tab) setCustomTab(tab.dataset.customTab);
     });
-    setCustomTab('avatar');
+    setCustomTab('all');
     // Tapping something you don't own in Custom: Shop items open the Shop on
     // that item; earn-only pictures say how to earn them.
     function openLockedCosmetic(id) {
@@ -23590,6 +23708,10 @@ video {
       loadCosmeticCollection();
     }
     document.getElementById('themesCloseBtn').addEventListener('click', () => document.getElementById('themesModal').classList.add('hidden'));
+    document.getElementById('customShopBtn').addEventListener('click', () => {
+      document.getElementById('themesModal').classList.add('hidden');
+      document.getElementById('menuShopBtn').click();
+    });
     document.getElementById('themesModal').addEventListener('click', (e) => {
       if (e.target.id === 'themesModal') document.getElementById('themesModal').classList.add('hidden');
     });

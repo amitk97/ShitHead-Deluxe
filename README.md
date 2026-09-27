@@ -1,4 +1,4 @@
-<!-- README-VERSION: v165 — refresh text + screenshots every 15 versions from v150 (v150, v165, v180…); see CLAUDE.md -->
+<!-- README-VERSION: v165 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
 # 💩 ShitHead Deluxe
 
 **The classic card game ShitHead, rebuilt for your phone.** Play against bots, with friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
