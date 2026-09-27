@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v175 (ShitHead-Deluxe-157) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v176 (ShitHead-Deluxe-158) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -378,6 +378,14 @@
     .header-gem .ic-gem { width:20px; height:20px; display:block; vertical-align:0; }
     #headerDiamondBtn.header-gem-btn, #headerDiamondBtn.header-gem-btn:hover { background:transparent !important; border:0 !important; box-shadow:none !important; }
     #headerDiamondCount { font-size:14px !important; }
+    .room-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:8px; }
+    .room-action { display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 10px; border-radius:999px; border:1px solid #475569; background:#1e293b; font-size:10px; font-weight:800; letter-spacing:.03em; white-space:nowrap; transition:background .15s; }
+    .room-action:hover { background:#334155; }
+    .room-action .ic { width:14px; height:14px; }
+    /* A tall home screen (e.g. Play Friends with a room open) must scroll
+       from its top: flex centring pushed the top out of reach. */
+    #lobbyScreen { align-items:flex-start !important; }
+    #lobbyScreen > :not(script) { margin-top:auto; margin-bottom:auto; }
     .mode-btn { display:grid; grid-template-rows:24px 20px 14px; justify-items:center; align-items:center; row-gap:2px; padding:10px 4px; min-width:0; }
     .mode-btn .mode-ic { width:22px; height:22px; }
     .mode-btn .mode-name { font-size:14px; font-weight:900; line-height:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
@@ -4362,6 +4370,9 @@ video {
     <symbol id="ic-ev-newyear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12V3.5M12 12l6-6M12 12h8.5M12 12l6 6M12 12v8.5M12 12l-6 6M12 12H3.5M12 12 6 6"/><circle cx="12" cy="12" r="1.3"/></g></symbol>
     <symbol id="ic-poo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 8.5C8 8.5 7 9.5 7 10.8c0 .7.3 1.3.8 1.7H7c-1.9 0-3.5 1.4-3.5 3.2 0 1.9 1.6 3.3 3.5 3.3h10c1.9 0 3.5-1.4 3.5-3.3 0-1.8-1.6-3.2-3.5-3.2h-.8c.5-.4.8-1 .8-1.7 0-1.3-1-2.3-2.5-2.3H13c1.3-.6 1.5-2.4.5-4-.8 1.8-2.5 2-4 4z"/><circle cx="10" cy="15.5" r=".6"/><circle cx="14" cy="15.5" r=".6"/></g></symbol>
     <symbol id="ic-lastcard" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="3.5" width="11" height="17" rx="2"/><path d="M12 8v5M12 16v.1"/></g></symbol>
+    <symbol id="ic-friends4" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="5" r="2.2"/><circle cx="17" cy="5" r="2.2"/><path d="M3 11.5a4 4 0 0 1 8 0M13 11.5a4 4 0 0 1 8 0"/><circle cx="7" cy="15" r="2.2"/><circle cx="17" cy="15" r="2.2"/><path d="M3 21.5a4 4 0 0 1 8 0M13 21.5a4 4 0 0 1 8 0"/></g></symbol>
+    <symbol id="ic-download" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v12M7 11l5 5 5-5M4.5 20.5h15"/></g></symbol>
+    <symbol id="ic-tap" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 11V5a1.5 1.5 0 0 1 3 0v6l3.6.8a2 2 0 0 1 1.6 2.3l-.9 4.4a2 2 0 0 1-2 1.5H11a2 2 0 0 1-1.6-.8l-3.5-4.5a1.4 1.4 0 0 1 2.1-1.8l1.5 1.6"/><path d="M6.5 5.5a4.5 4.5 0 0 1 9 0"/></g></symbol>
     <symbol id="ic-life" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z" fill="#f43f5e" stroke="#881337" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 9.3c.6-.9 1.6-1.1 2.3-.8" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".6" fill="none"/></symbol>
     <symbol id="ic-life-lost" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round"/></symbol>
     <symbol id="ic-gem" viewBox="2.4 2.4 19.2 19.2"><path d="M7 3.5h10l4 5.5-9 11.5L3 9z" fill="url(#ic-gem-l)"/><path d="M12 20.5 21 9h-5.2z" fill="url(#ic-gem-r)"/><path d="M3 9h18l-4-5.5H7z" fill="url(#ic-gem-t)"/><path d="M8.2 9 12 3.5 15.8 9z" fill="#f0fdff" opacity=".85"/><path d="M8.2 9 12 20.5 15.8 9" fill="none" stroke="#0c4a6e" stroke-width=".7" opacity=".55"/><path d="M7 3.5h10l4 5.5-9 11.5L3 9z M3 9h18" fill="none" stroke="#082f49" stroke-width="1" stroke-linejoin="round"/><path d="M8.3 5.4 7.4 7" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/></symbol>
@@ -4586,7 +4597,7 @@ video {
             <span class="mode-sub">1-3 AI players</span>
           </button>
           <button id="modeMultiBtn" class="mode-btn rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition">
-            <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-users"/></svg>
+            <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-friends4"/></svg>
             <span class="mode-name">Play Friends</span>
             <span class="mode-sub">Host or join</span>
           </button>
@@ -4677,15 +4688,18 @@ video {
                    also be highlighted manually if the copy button is
                    unavailable (e.g. a browser without clipboard permission). -->
               <span id="prominentRoomCode" class="text-2xl font-mono font-black text-amber-400 tracking-widest select-text cursor-pointer" style="user-select:text;-webkit-user-select:text;">------</span>
-              <button id="copyRoomCodeBtn" class="mt-1.5 px-2.5 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider text-amber-300 transition flex items-center gap-1.5">
-                <span id="copyRoomCodeIcon">📋</span><span id="copyRoomCodeLabel">Copy Code</span>
-              </button>
-              <button id="shareInviteLinkBtn" class="mt-1.5 px-2.5 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider text-sky-300 transition flex items-center gap-1.5">
-                <span id="shareInviteLinkIcon">🔗</span><span id="shareInviteLinkLabel">Share Invite Link</span>
-              </button>
-              <button id="lobbyInviteFriendsBtn" class="mt-1.5 px-2.5 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider text-emerald-300 transition flex items-center gap-1.5">
-                <span>👥</span><span>Invite Friends</span>
-              </button>
+              <!-- One compact row (wraps to two on the narrowest phones). -->
+              <div class="room-actions">
+                <button id="copyRoomCodeBtn" class="room-action text-amber-300">
+                  <span id="copyRoomCodeIcon">📋</span><span id="copyRoomCodeLabel">Copy</span>
+                </button>
+                <button id="shareInviteLinkBtn" class="room-action text-sky-300">
+                  <span id="shareInviteLinkIcon">🔗</span><span id="shareInviteLinkLabel">Share link</span>
+                </button>
+                <button id="lobbyInviteFriendsBtn" class="room-action text-emerald-300">
+                  <span>👥</span><span>Invite</span>
+                </button>
+              </div>
             </div>
 
             <!-- Host Bot Management Controls -->
@@ -7295,7 +7309,7 @@ video {
       '🎨': 'sparkle', '🔑': 'lock', '📋': 'cards', '🏠': 'online', '📶': 'online', '🔕': 'bell', '🙈': 'eye', '🪵': 'cards',
       '🗂': 'cards', '🖐': 'cards', '🏷': 'gift', '📱': 'share', '🎴': 'cards', '📐': 'cards', '📳': 'bell', '🧨': 'burst',
       '🔽': 'refresh', '🎯': 'star', '💔': 'close', '🚫': 'close', '⚑': 'warning', '📖': 'cards', '🖼': 'sparkle', '🙋': 'users',
-      '👋': 'users', '📅': 'clock', '📥': 'share', '📜': 'cards', '🧪': 'sparkle', '👕': 'sparkle', '🎇': 'ev-newyear'
+      '👋': 'users', '📅': 'clock', '📥': 'share', '📜': 'cards', '🧪': 'sparkle', '👕': 'sparkle', '🎇': 'ev-newyear', '⬇': 'download', '👆': 'tap'
     };
     const EMOJI_ICON_RE = new RegExp(`(?:${Object.keys(EMOJI_ICON).join('|')})\uFE0F?`, 'gu');
     const EMOJI_KEEP = '#emoteLayer, [data-keep-emoji], .emote-float, .effect-mini-tile, .shop-burn-core, .jfx-stage, .jfx-stage-hint, .pp-show-icon, .bfx, #jokerFxLayer, #victoryFxLayer, #burnFxLayer, .shop-preview-stage, textarea, script, style';
@@ -15408,6 +15422,17 @@ video {
     // drifts out of sync with each other one button at a time.
     const MODE_BTN_ACTIVE = "mode-btn rounded-xl font-bold bg-amber-600 hover:bg-amber-500 text-slate-950 border-2 border-amber-500 transition";
     const MODE_BTN_INACTIVE = "mode-btn rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition";
+    // The header's room code belongs to Play Friends: shown on that tab while
+    // you're in a room, and at the table in that room's match; any other home
+    // tab gets the normal header back (the Diamond count shows again).
+    function syncRoomCodeBadge() {
+      const badge = document.getElementById('roomCodeBadge');
+      if (!badge) return;
+      const lobbyOpen = !document.getElementById('lobbyScreen')?.classList.contains('hidden');
+      const onFriendsTab = !document.getElementById('multiOptions')?.classList.contains('hidden');
+      const show = !!state.roomCode && !!state.isMultiplayer && !state.isRanked && (!lobbyOpen || onFriendsTab);
+      badge.classList.toggle('hidden', !show);
+    }
     document.getElementById('modeSingleBtn').addEventListener('click', () => {
       document.getElementById('singleOptions').classList.remove('hidden');
       document.getElementById('multiOptions').classList.add('hidden');
@@ -15415,6 +15440,7 @@ video {
       document.getElementById('modeSingleBtn').className = MODE_BTN_ACTIVE;
       document.getElementById('modeMultiBtn').className = MODE_BTN_INACTIVE;
       document.getElementById('modeRankedBtn').className = MODE_BTN_INACTIVE;
+      syncRoomCodeBadge();
     });
 
     // No signal: Online Room and Ranked need the internet; Vs Bots and the
@@ -15431,6 +15457,7 @@ video {
       document.getElementById('modeMultiBtn').className = MODE_BTN_ACTIVE;
       document.getElementById('modeSingleBtn').className = MODE_BTN_INACTIVE;
       document.getElementById('modeRankedBtn').className = MODE_BTN_INACTIVE;
+      syncRoomCodeBadge();
     });
 
     document.getElementById('modeRankedBtn').addEventListener('click', () => {
@@ -15442,6 +15469,7 @@ video {
       document.getElementById('modeSingleBtn').className = MODE_BTN_INACTIVE;
       document.getElementById('modeMultiBtn').className = MODE_BTN_INACTIVE;
       refreshRankedUI();
+      syncRoomCodeBadge();
     });
     // Set by the in-game Exit button when leaving a Ranked match (and by
     // returnToRankedLobby's reload) so the fresh page load this triggers
@@ -16525,6 +16553,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v176: [
+        ['🛠️', 'Fixed: the home screen could get stuck part-way down after reconnecting, and the room code stayed in the header after leaving Play Friends.'],
+        ['👥', 'Play Friends has a four-player icon, and the room box has smaller Copy, Share link and Invite buttons on one row.']
+      ],
       v175: [
         ['👥', 'Online Room is now called Play Friends, and the home screen mode buttons line up neatly: icon, name, then subtitle.'],
         ['💎', 'A bigger Diamond balance in the header, and drawn icons for every seasonal event.']
@@ -24694,11 +24726,11 @@ video {
         Haptics.vibrate(20);
       } else {
         icon.textContent = '⚠️';
-        label.textContent = 'Select & copy';
+        label.textContent = 'Select it';
       }
       setTimeout(() => {
         icon.textContent = '📋';
-        label.textContent = 'Copy Code';
+        label.textContent = 'Copy';
       }, 1800);
     });
 
@@ -24723,10 +24755,10 @@ video {
       const result = await shareInviteLink(code);
       const label = document.getElementById('shareInviteLinkLabel');
       const icon = document.getElementById('shareInviteLinkIcon');
-      if (result === 'copied') { icon.textContent = '✅'; label.textContent = 'Link copied!'; Haptics.vibrate(20); }
+      if (result === 'copied') { icon.textContent = '✅'; label.textContent = 'Copied!'; Haptics.vibrate(20); }
       else if (result === 'failed') { icon.textContent = '⚠️'; label.textContent = inviteLinkFor(code).replace('https://', ''); }
       else return;
-      setTimeout(() => { icon.textContent = '🔗'; label.textContent = 'Share Invite Link'; }, result === 'failed' ? 6000 : 1800);
+      setTimeout(() => { icon.textContent = '🔗'; label.textContent = 'Share link'; }, result === 'failed' ? 6000 : 1800);
     });
     // Arriving from an invite link: wait for sign-in to settle (so the seat is
     // tied to the account), then open Online Room with the code filled in and

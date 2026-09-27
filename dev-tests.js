@@ -6157,8 +6157,30 @@ async function runDevTestSuite() {
     assertTrue(document.getElementById('shopModal').classList.contains('hidden') && !document.getElementById('themesModal').classList.contains('hidden'), 'Opens Custom');
     document.getElementById('themesModal').classList.add('hidden');
   });
+  await test('The room code shows only on Play Friends (and at that room\'s table); other home tabs get the Diamond count back', () => {
+    const saved = { roomCode: state.roomCode, isMultiplayer: state.isMultiplayer, isRanked: state.isRanked };
+    const badge = document.getElementById('roomCodeBadge'), lobby = document.getElementById('lobbyScreen');
+    const lobbyWasHidden = lobby.classList.contains('hidden');
+    try {
+      lobby.classList.remove('hidden');
+      Object.assign(state, { roomCode: '822405', isMultiplayer: true, isRanked: false });
+      badge.textContent = '822405';
+      document.getElementById('multiOptions').classList.remove('hidden'); document.getElementById('singleOptions').classList.add('hidden');
+      syncRoomCodeBadge();
+      assertTrue(!badge.classList.contains('hidden'), 'Shown on Play Friends while in a room');
+      document.getElementById('modeSingleBtn').click();
+      assertTrue(badge.classList.contains('hidden'), 'Vs Bots: hidden');
+      assertTrue(getComputedStyle(document.getElementById('headerDiamondCount')).display !== 'none', 'and the Diamond count is back');
+      document.getElementById('modeMultiBtn').click();
+      assertTrue(isOffline() || !badge.classList.contains('hidden'), 'Back to Play Friends: shown again');
+    } finally {
+      Object.assign(state, saved); badge.classList.add('hidden');
+      document.getElementById('modeSingleBtn').click();
+      if (lobbyWasHidden) lobby.classList.add('hidden');
+    }
+  });
   await test('No emoji used as UI icons: the main pages show drawn icons (emotes and effect art excepted)', async () => {
-    const allowed = new Set(['♠', '♥', '♦', '♣', '✓', '✕', '✗', '↻', '↺', '⇤', '⇥', '©', '®', '™', '↔', '↕']);
+    const allowed = new Set(['🂠', '♠', '♥', '♦', '♣', '✓', '✕', '✗', '↻', '↺', '⇤', '⇥', '©', '®', '™', '↔', '↕']);
     const offenders = [];
     const scan = (root, where) => {
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -6168,7 +6190,7 @@ async function runDevTestSuite() {
         for (const ch of n.data.match(/\p{Extended_Pictographic}/gu) || []) if (!allowed.has(ch)) offenders.push(`${where}: ${ch} in "${n.data.trim().slice(0, 40)}"`);
       }
     };
-    const pages = ['shopModal', 'challengesModal', 'themesModal', 'settingsModal', 'whatsNewModal'];
+    const pages = ['shopModal', 'challengesModal', 'themesModal', 'settingsModal', 'whatsNewModal', 'profileModal', 'inboxModal', 'friendsModal', 'leaderboardModal', 'matchSummaryModal', 'statsModal', 'rulesModal', 'gauntletModal', 'hamburgerDrawer', 'gameTable'];
     try {
       renderCosmeticShop(); renderChallengesPanel(); renderPersonalisationCosmetics();
       showWhatsNew(GAME_BUILD.version, 'v150');
@@ -6176,7 +6198,7 @@ async function runDevTestSuite() {
       scan(document.querySelector('header'), 'header');
       scan(document.getElementById('lobbyScreen'), 'home');
       pages.forEach(id => { const el = document.getElementById(id); if (el) scan(el, id); });
-      assertEqual(offenders.slice(0, 12), [], 'Emoji left in the UI');
+      assertEqual(offenders.slice(0, 40), [], 'Emoji left in the UI');
     } finally { document.getElementById('whatsNewModal')?.classList.add('hidden'); }
   });
   await test('Saved loadouts: save, switch in one tap, the worn one is ticked, unowned items fall back', () => {
