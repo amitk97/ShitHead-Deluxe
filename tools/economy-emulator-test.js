@@ -81,6 +81,9 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   await allowed('settings', db => set(ref(db, 'users/alice/settings'), { masterVolume: 50 }));
   await allowed('match history', db => set(ref(db, 'users/alice/matchHistory/m1'), { at: 1 }));
   await allowed('equip a free item', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-suit-spades'));
+  await allowed('equip the free Oak Wood table', db => set(ref(db, 'users/alice/equippedCosmetics/tableTheme'), 'table-wood'));
+  await allowed('equip the free Classic Felt table', db => set(ref(db, 'users/alice/equippedCosmetics/tableTheme'), 'table-felt'));
+  await denied('equip an unowned Shop table', db => set(ref(db, 'users/alice/equippedCosmetics/tableTheme'), 'table-angelic'));
   await allowed('daily progress', db => set(ref(db, 'users/alice/dailyChallengeState'), { dateKey: '2026-09-25', challengeIds: ['a', 'b', 'c'], progress: { a: 1 } }));
   await allowed('tutorial flag', db => set(ref(db, 'users/alice/tutorialCompleted'), true));
   await allowed('first username', db => set(ref(db, 'users/alice/username'), 'Alice'));

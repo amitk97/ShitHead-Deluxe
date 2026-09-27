@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v167 (ShitHead-Deluxe-149) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v168 (ShitHead-Deluxe-150) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -9463,14 +9463,17 @@ video {
           audio.burn(burnEffectIdFor(initiator));
           bumpStat(initiator, 'jokerDeflects', 1);
           notifyChallengeEvent(initiator, ['deflect-joker-once']);
-          notifyBanner(`💥 ${initiator.name} countered with JOKER! ${originalInitiator.name} picks up — ${initiator.name} plays next!`);
+          const loserOut = finishOnEmptyJokerPile(originalInitiator);
+          notifyBanner(loserOut
+            ? `💥 ${initiator.name} countered with JOKER, but ${originalInitiator.name} has nothing to pick up and is out!`
+            : `💥 ${initiator.name} countered with JOKER! ${originalInitiator.name} picks up — ${initiator.name} plays next!`);
           // The counter-Joker left their hand: top it back up to 3 now.
           refillHand(initiator);
           // It may have been their last card: they finish, and the turn
           // goes on to the next player (giveJokerWinnerNextTurn).
-          checkPlayerFinished(initiator);
+          if (!isMatchDecided()) checkPlayerFinished(initiator);
           giveJokerWinnerNextTurn(initiator);
-          jokerCounterPickup(originalInitiator, pileBeforeThis);
+          jokerCounterPickup(originalInitiator);
           return;
         }
       }
@@ -9521,22 +9524,37 @@ video {
     }
 
     // A countered Joker's player picks up the pile. If that Joker was their
-    // LAST card they are not finished (they lost the duel), so the pickup
-    // happens at once: no moment with an empty seat that reads as a finish,
-    // and no victory effect or match end. With nothing else on the pile
-    // (the Jokers leave it), their own Joker comes back to them.
-    // Saves the duel too: the empty case goes out as one write with the
-    // pickup, so the Ranked audit never sees their Joker vanish and return.
-    function jokerCounterPickup(loser, loserJoker) {
+    // LAST card:
+    // - with cards left on the pile they are NOT finished (they lost the
+    //   duel): they pick it up at once, so there's no moment with an empty
+    //   seat that reads as a finish, and no victory effect or match end;
+    // - with nothing else on the pile (the Jokers leave it) there's nothing to
+    //   pick up and they hold nothing: they're out, and as they played first
+    //   they finish ahead of a defender who countered with their own last
+    //   card (finishOnEmptyJokerPile, run before the defender's finish check).
+    function finishOnEmptyJokerPile(player) {
+      const empty = !((player.hand?.length || 0) + (player.faceUp?.length || 0) + (player.faceDown?.length || 0));
+      if (!empty || state.discardPile.length) return false;
+      checkPlayerFinished(player);
+      return true;
+    }
+    // Saves the duel too: an empty-handed pickup goes out as one write with
+    // the duel.
+    function jokerCounterPickup(loser) {
       const empty = !((loser.hand?.length || 0) + (loser.faceUp?.length || 0) + (loser.faceDown?.length || 0));
-      if (!empty || isMatchDecided()) {
-        saveGameState();
-        if (state.isMultiplayer) syncFirebaseGameState();
-        if (!empty) delayUnlessTesting(() => executePickup(loser.id, true), state.turnDelay * 0.8);
+      if (empty && state.discardPile.length && !isMatchDecided()) {
+        executePickup(loser.id, true);
         return;
       }
-      if (!state.discardPile.length && loserJoker) state.discardPile.push(loserJoker);
-      executePickup(loser.id, true);
+      saveGameState();
+      if (state.isMultiplayer) syncFirebaseGameState();
+      if (!empty) {
+        delayUnlessTesting(() => executePickup(loser.id, true), state.turnDelay * 0.8);
+        return;
+      }
+      // Out (nothing to pick up) or the match is already settled.
+      render();
+      triggerNextTurn();
     }
 
     // One source of truth for the rule: the Joker-duel winner owns the next
@@ -9623,15 +9641,19 @@ video {
         notifyChallengeEvent(target, ['deflect-joker-once']);
         recordHistory(target.name, [counterJoker]);
         audio.burn(burnEffectIdFor(target));
-        notifyBanner(`💥 ${target.name} countered with JOKER! ${initiator.name} picks up — ${target.name} plays next!`);
-        // A counter-Joker can be the defender's last card: they finish.
-        checkPlayerFinished(target);
+        const initiatorOut = finishOnEmptyJokerPile(initiator);
+        notifyBanner(initiatorOut
+          ? `💥 ${target.name} countered with JOKER, but ${initiator.name} has nothing to pick up and is out!`
+          : `💥 ${target.name} countered with JOKER! ${initiator.name} picks up — ${target.name} plays next!`);
+        // A counter-Joker can be the defender's last card: they finish
+        // (unless the Joker player just went out first and that settled it).
+        if (!isMatchDecided()) checkPlayerFinished(target);
         // The defender won the duel, so THEY take the next turn. executePickup
         // is told not to advance the turn itself — otherwise its own
         // advanceTurn(1) would step straight past the defender and hand the
         // turn to whoever sits after them instead.
         giveJokerWinnerNextTurn(target);
-        jokerCounterPickup(initiator, initialJoker);
+        jokerCounterPickup(initiator);
       } else {
         notifyBanner(`JOKER — ${target.name} picked up pile! ${initiator.name} gets another turn!`);
         const pickupCount = state.discardPile.length;
@@ -16313,6 +16335,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v168: [
+        ['🪵', 'Two new free tables in Custom: Oak Wood and Classic Felt, with real wood grain and felt texture.'],
+        ['🃏', "A Joker as your last card on an empty pile now wins, even if it's countered: there's nothing to pick up, so you're out."]
+      ],
       v167: [
         ['🃏', "Fixed: if your last card is a Joker and it's countered, you don't finish. You pick up the pile, and the victory waits until the game is really over."]
       ],
@@ -16793,13 +16819,18 @@ video {
       'desert': "art/tables/desert.svg",
       'jungle': "art/tables/jungle.svg",
       'devilish': "art/tables/devilish.svg",
-      'angelic': "art/tables/angelic.svg"
+      'angelic': "art/tables/angelic.svg",
+      // Free photo-like surfaces (tools/make-table-textures.py).
+      'wood': "art/tables/wood.jpg",
+      'felt': "art/tables/felt.jpg"
     };
     const ILLUSTRATED_TABLES = {
       'table-candyfloss': { art: 'candyfloss', base: '#f0abfc', rim: 'inset 0 0 0 3px #fff1f2,inset 0 0 50px rgba(190,24,93,.25)', label: 'rgba(255,241,242,.95)' },
       'table-desert': { art: 'desert', base: '#c9773f', rim: 'inset 0 0 0 3px #e9b872,inset 0 0 44px rgba(59,29,8,.5)', label: 'rgba(233,184,114,.9)' },
       'table-jungle': { art: 'jungle', base: '#0b3d1f', rim: 'inset 0 0 0 3px #15803d,inset 0 0 46px rgba(0,0,0,.6)', label: 'rgba(74,222,128,.75)' },
       'table-devilish': { art: 'devilish', base: '#3f0606', rim: 'inset 0 0 0 3px #7f1d1d,inset 0 0 0 5px #000,inset 0 0 50px rgba(0,0,0,.7)', label: 'rgba(239,68,68,.85)' },
+      'table-wood': { art: 'wood', base: '#6b4226', rim: 'inset 0 0 0 3px #2a170b,inset 0 0 0 4px rgba(255,220,170,.18),inset 0 0 46px rgba(20,10,4,.55)', label: 'rgba(253,230,190,.85)' },
+      'table-felt': { art: 'felt', base: '#1f5a36', rim: 'inset 0 0 0 4px #4a2a14,inset 0 0 0 5px #1c0f06,inset 0 0 44px rgba(0,0,0,.55)', label: 'rgba(209,250,229,.8)' },
       'table-angelic': { art: 'angelic', base: '#312e81', rim: 'inset 0 0 0 3px #e0f2fe,inset 0 0 50px rgba(224,242,254,.25)', label: 'rgba(224,242,254,.9)' }
     };
     // Seasonal event pictures (shop + earn-only). Same tile, tones and
@@ -18083,6 +18114,9 @@ video {
     // saves, but is intentionally not a purchasable Shop item.
     const BUILT_IN_COSMETICS = [
       { id: 'emotes-classic', category: 'Emote Packs', name: 'Classic Reactions', cost: 0, builtIn: true, tones: ['#172033','#34d399','#fbbf24'] },
+      // Free tables: real-looking wood and card-room felt.
+      { id: 'table-wood', category: 'Table Themes', name: 'Oak Wood', cost: 0, builtIn: true, tones: ['#6b4226','#a06a3c','#f3d9b1'] },
+      { id: 'table-felt', category: 'Table Themes', name: 'Classic Felt', cost: 0, builtIn: true, tones: ['#1f5a36','#2f7a4a','#d1fae5'] },
       // Free profile pictures. Bronze Crown is also what 'default' shows.
       { id: 'avatar-crown-bronze', category: 'Profile Pictures', name: 'Bronze Crown', cost: 0, builtIn: true },
       { id: 'avatar-suit-spades', category: 'Profile Pictures', name: 'Spades', cost: 0, builtIn: true },
@@ -18128,7 +18162,7 @@ video {
       cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno', ...seasonalIdsOf('cardBack')]),
       frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet', ...seasonalIdsOf('frame')]),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania', ...seasonalIdsOf('emotes')]),
-      tableTheme: new Set(['table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic', ...seasonalIdsOf('tableTheme')]),
+      tableTheme: new Set(['table-wood','table-felt','table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic', ...seasonalIdsOf('tableTheme')]),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke', ...seasonalIdsOf('burnEffect')]),
       victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks','victory-sparklers','victory-stars','victory-karate', ...seasonalIdsOf('victoryEffect')]),
       jokerEffect: new Set(['joker-grin','joker-jackbox','joker-puppet','joker-magic','joker-glitch','joker-storm', ...seasonalIdsOf('jokerEffect')]),
@@ -18628,7 +18662,7 @@ video {
       backs.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs'))].map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('');
       frames.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames')), ...EARNED_FRAMES].map(i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame)).join('');
       emotes.innerHTML = [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs')])].map(i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes)).join('');
-      tables.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes'))].map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('');
+      tables.innerHTML = [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Table Themes'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes')])].map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('');
       burns.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Burn Effects'))].map(i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect)).join('');
       victories.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Victory Effects'))].map(i => personalisationOptionHtml(i, 'victoryEffect', equippedCosmetics.victoryEffect)).join('');
       jokers.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Joker Effects'))].map(i => personalisationOptionHtml(i, 'jokerEffect', equippedCosmetics.jokerEffect)).join('');

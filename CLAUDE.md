@@ -136,6 +136,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Both pages use section tabs driven by `COSMETIC_TABS`, Pictures first, then by where items show up: Tables, Card Backs, Frames, Burn, Victory, Emotes (Custom adds Deck after Pictures via `CUSTOM_TABS`). A new cosmetic category = one entry there.
 - The Shop's Seasonal tab is first (and the default tab) only while an event is live or starts within `SEASONAL_LEAD_DAYS` (3) days (`seasonalTabLeads`); otherwise it's last. Each event section folds with a chevron (`seasonalSectionOverrides`); live/soon events start open, the rest folded.
 - Custom shows every cosmetic as a tile (`.cosmetic-tile-grid`, 2 per row; pictures 3 per row).
+- Free tables: **Oak Wood** (`table-wood`) and **Classic Felt** (`table-felt`) are `BUILT_IN_COSMETICS` (never sold) drawn from photo-like JPGs `art/tables/wood.jpg` / `felt.jpg` via `ILLUSTRATED_TABLES`; regenerate with `python3 tools/make-table-textures.py` (needs numpy + pillow). The rules let anyone equip them.
 - **All tabs.** The Shop opens on **All** (`SHOP_ALL_TAB`, the first tab and the default): every non-seasonal item, one folding `.cat-section` per `COSMETIC_TABS` type (chevron `data-shop-category`, folded ones remembered in localStorage `shithead_shop_collapsed`). The Name Change Token (`#shopNameTokenCard`) shows at the top of All only.
 - Custom's first tab is **All** (`#personalisationAll`, `renderPersonalisationAll` / `customAllItems`): every item in the game, including every seasonal one owned or not (an unowned one out of season is locked and reads "🎃 Halloween only", `customLockedStatus`), folding sections with owned/total counts (`shithead_custom_all_collapsed`). Custom's header has the Challenges-style `.ch-stat-bar`: 💎 (`#customDiamondCount`, painted by `updateDiamondHeader`), owned / total (`#customOwnedCount`), Shop button (`#customShopBtn`).
 - Custom's Burn and Joker previews open under the tapped tile (`playInlineEffectPreview`: a full-width `.custom-inline-preview` after that tile's row, in the visible panel only). There is no preview stage at the top of the page.
@@ -154,7 +155,8 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Joker as a last card
 
-- A Joker duel is resolved before anyone finishes: `resolveJokerDuelInstant` checks the target for a counter (hand, or face-up when reachable) first, and only an uncontested Joker finishes its player (`checkPlayerFinished(initiator)`). If a last-card Joker is countered, its player is NOT finished: `jokerCounterPickup` makes them pick up at once (no delay, so the seat is never empty; with nothing else on the pile, their own Joker comes back), with no victory effect or match end. Tests: "Last card a Joker that gets countered (2/3/4 players…)".
+- A Joker duel is resolved before anyone finishes: `resolveJokerDuelInstant` checks the target for a counter (hand, or face-up when reachable) first, and only an uncontested Joker finishes its player (`checkPlayerFinished(initiator)`).
+- A countered last-card Joker: if cards are left on the pile (the Jokers leave it), its player is NOT finished and picks up at once (`jokerCounterPickup`, no delay, so the seat is never empty), with no victory effect or match end. If the pile is otherwise empty, there's nothing to pick up: they're out, and as they played first they finish ahead of a defender who also went out (`finishOnEmptyJokerPile`, run before the defender's finish check, which is skipped once the match is settled). Tests: "Last card a Joker that gets countered…" / "…on an empty pile, countered…" (2/3/4 players).
 
 ## Last card alert
 
@@ -262,6 +264,15 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - `README.md` (GitHub front page) shows screenshots from `docs/screenshots/` (home, swap, table, card-powers, play-matrix, guide-swap), taken from the real game at 390×844 @2x by `tools/readme-screenshots.js`. Both are ignored by Hosting.
 - **Refresh the README every 20 versions, starting at v180 (v180, v200, v220…)** without being asked: bring the text up to date with every feature added since (Features, How to play, Tech), retake all the screenshots with `tools/readme-screenshots.js`, and set the `README-VERSION` stamp on its first line to the new version. A dev test fails once the BUILD reaches the next due version with an older stamp.
+
+## Owner's later list (don't build until asked)
+
+- Next: **seasonal challenges** (rewards ~10% above the normal ones, amounts ending in 5 or 0).
+- Soon: **Collection Log** on the Profile page (every item; owned in colour, unowned greyed and locked).
+- Later: a **weekly puzzle** (not a daily one).
+- Far down the line (liked, not yet): "you've been overtaken" leaderboard mail, clubs, a season pass.
+- Not approved yet: weekly leaderboards, a friends-only leaderboard filter, "beat my score" share links, translations, a Joker Master earn-only Joker effect, a fresh-eyes check of a new player's first 5 minutes; turning on Ranked audit enforcement once honest games show no hard findings.
+- Rejected: a daily puzzle, a login-streak leaderboard.
 
 ## Future theme ideas (owner's backlog — don't build until asked)
 

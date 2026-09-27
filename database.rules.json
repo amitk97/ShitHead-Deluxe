@@ -79,6 +79,7 @@
           },
           "tableTheme": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
+              newData.val() === 'table-wood' || newData.val() === 'table-felt' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&

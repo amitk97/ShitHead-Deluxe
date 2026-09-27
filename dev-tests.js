@@ -1437,8 +1437,8 @@ async function runDevTestSuite() {
   // once, the Joker player picks up the pile, and no victory effect, finish
   // or match end fires.
   for (const n of [2, 3, 4]) {
-    for (const pileOnlyJoker of [false, true]) {
-      await test(`Last card a Joker that gets countered (${n} players${pileOnlyJoker ? ', nothing else on the pile' : ''}): not finished, picks up, no victory`, () => {
+    for (const pileOnlyJoker of [false]) {
+      await test(`Last card a Joker that gets countered (${n} players): not finished, picks up, no victory`, () => {
         const joker = makeCard('JOKER', 'JOKER');
         const counter = makeCard('JOKER', 'JOKER');
         const calls = { end: 0, overlay: 0, fx: 0 };
@@ -1456,13 +1456,47 @@ async function runDevTestSuite() {
           const a = state.players[0], b = state.players[1];
           assertTrue(!a.hasFinished && !a.finishRank, 'The countered Joker player is not finished', [a.hasFinished, a.finishRank]);
           const aCards = (a.hand?.length || 0) + (a.faceUp?.length || 0) + (a.faceDown?.length || 0);
-          if (pileOnlyJoker) assertTrue(aCards === 1 && a.hand[0].isJoker, 'With nothing else on the pile, their Joker comes back to them', a.hand);
-          else assertEqual(a.hand.map(c => c.rank).sort(), ['4', '6'], 'They pick up the pile at once');
+          assertTrue(aCards === 2, 'Holding the pile', aCards);
+          assertEqual(a.hand.map(c => c.rank).sort(), ['4', '6'], 'They pick up the pile at once');
           assertEqual(state.phase, 'PLAY', 'The game is not over');
           assertEqual(state.players[state.currentTurnIndex].id, 'b', 'The defender won the duel and plays next');
           assertTrue(!b.hasFinished, 'The defender still holds a card, so is still in');
           assertEqual(calls, { end: 0, overlay: 0, fx: 0 }, 'No match end, victory pop-up or victory effect');
         } finally { showMatchEndUI = realEnd; showVictoryOverlay = realOverlay; triggerEquippedVictoryEffect = realFx; }
+      });
+    }
+  }
+  // ---- ...but onto an empty pile, a countered last-card Joker still wins ----
+  // Nothing to pick up and no cards left: the Joker player is out, and as
+  // they played first they finish ahead of a defender who also went out.
+  for (const n of [2, 3, 4]) {
+    for (const defenderLast of [false, true]) {
+      await test(`Last card a Joker on an empty pile, countered${defenderLast ? ' with the defender\'s last card' : ''} (${n} players): the Joker player is out first`, () => {
+        const joker = makeCard('JOKER', 'JOKER');
+        const counter = makeCard('JOKER', 'JOKER');
+        const bHand = defenderLast ? [counter] : [counter, makeCard('K')];
+        const seats = [['a', [joker]], ['b', bHand], ['c', [makeCard('K'), makeCard('9'), makeCard('5')]], ['d', [makeCard('Q'), makeCard('8'), makeCard('5')]]].slice(0, n);
+        let ended = 0;
+        const realTrigger = triggerNextTurn;
+        lastCardScenario(seats, () => {
+          state.discardPile = [];
+          triggerNextTurn = () => { ended += state.players.filter(p => !p.hasFinished).length <= 1 ? 1 : 0; };
+          executePlayCards('a', [joker]);
+        });
+        triggerNextTurn = realTrigger;
+        const a = state.players[0], b = state.players[1];
+        assertTrue(a.hasFinished && a.finishRank === 1, 'The Joker player finishes first', [a.hasFinished, a.finishRank]);
+        assertEqual((a.hand || []).length, 0, 'Nothing to pick up');
+        if (n === 2) {
+          assertTrue(!b.hasFinished, 'Two players: that settles it, the defender is the ShitHead', [b.hasFinished, b.finishRank]);
+          assertTrue(ended > 0, 'and the match is told to end');
+        } else if (defenderLast) {
+          assertTrue(b.hasFinished && b.finishRank === 2, 'The defender who also went out finishes second', [b.hasFinished, b.finishRank]);
+        } else {
+          assertTrue(!b.hasFinished && state.players[state.currentTurnIndex].id === 'b', 'The defender won the duel and plays next');
+        }
+        const stillIn = state.players.filter(p => !p.hasFinished);
+        assertTrue(stillIn.length >= 1, 'Never everyone finished');
       });
     }
   }
@@ -6110,6 +6144,33 @@ async function runDevTestSuite() {
       collapsedShopCategories.clear(); savedCollapsed.forEach(c => collapsedShopCategories.add(c));
       try { localStorage.setItem('shithead_shop_collapsed', JSON.stringify(savedCollapsed)); } catch (e) {}
       shopFilter = savedFilter; shopTab = savedTab; renderCosmeticShop();
+    }
+  });
+  await test('Free tables: Oak Wood and Classic Felt are unlocked for everyone, with real photo-like art', async () => {
+    const saved = cosmeticPurchaseState, savedEq = { ...equippedCosmetics };
+    try {
+      openThemesPanel();
+      cosmeticPurchaseState = {};
+      renderPersonalisationCosmetics();
+      ['table-wood', 'table-felt'].forEach(id => {
+        const item = BUILT_IN_COSMETICS.find(i => i.id === id);
+        assertTrue(!!item && item.cost === 0 && item.category === 'Table Themes', `${id} is a free table`);
+        assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.id === id), `${id} is not sold`);
+        const tile = document.querySelector(`#personalisationTableThemes [data-equip-id="${id}"]`);
+        assertTrue(!!tile && !tile.hasAttribute('data-locked'), `${id} shows unlocked in Custom → Tables`);
+        assertTrue(canRestoreEquippedCosmetic('tableTheme', id, {}), `${id} stays equipped without owning anything`);
+        assertTrue(tableArtBackground(id).includes('.jpg'), `${id} uses its texture`);
+      });
+      assertTrue(equipCosmetic('tableTheme', 'table-felt', { preview: false, sync: false }), 'Equips without buying');
+      assertEqual(document.body.dataset.equippedTableTheme, 'table-felt', 'and the table wears it');
+      for (const f of ['art/tables/wood.jpg', 'art/tables/felt.jpg']) {
+        const r = await fetch(f, { cache: 'no-store' });
+        const b = new Uint8Array(await r.arrayBuffer());
+        assertTrue(r.ok && b[0] === 0xFF && b[1] === 0xD8 && b.length < 300 * 1024, `${f} is a JPEG under 300 KB`, b.length);
+      }
+    } finally {
+      cosmeticPurchaseState = saved; equippedCosmetics = savedEq; applyEquippedCosmetics(); renderPersonalisationCosmetics();
+      document.getElementById('themesModal').classList.add('hidden');
     }
   });
   await test('Custom → All: every item incl. all seasonal ones, folding sections, and a Diamonds / owned / Shop bar', () => {
