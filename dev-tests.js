@@ -6146,6 +6146,21 @@ async function runDevTestSuite() {
       shopFilter = savedFilter; shopTab = savedTab; renderCosmeticShop();
     }
   });
+  await test("Show Others' Effects: off shows other players' effects in the default style, never your own", () => {
+    const saved = othersEffectsOn, savedEq = { ...equippedCosmetics };
+    try {
+      freshState({});
+      const me = makePlayer({ id: 'me' }), them = makePlayer({ id: 'them', cosmetics: { burnEffect: 'burn-ice', jokerEffect: 'joker-magic', victoryEffect: 'victory-stars' } });
+      state.players = [me, them]; state.localPlayerId = 'me';
+      equippedCosmetics.jokerEffect = 'joker-glitch';
+      othersEffectsOn = true;
+      assertEqual([burnEffectIdFor(them), jokerEffectIdFor(them)], ['burn-ice', 'joker-magic'], 'On: their effects');
+      othersEffectsOn = false;
+      assertEqual([burnEffectIdFor(them), jokerEffectIdFor(them)], ['default', 'default'], 'Off: default style');
+      assertEqual(jokerEffectIdFor(me), 'joker-glitch', 'Your own stays');
+      assertTrue(!!document.querySelector('#settingsTab-display #setOthersEffectsRow'), 'The row is in Display');
+    } finally { othersEffectsOn = saved; equippedCosmetics = savedEq; }
+  });
   await test('Seasonal challenges: a tab only during an event, rewards ~10% up and ending in 5 or 0', () => {
     const savedNow = seasonalNowOverride, savedEco = challengeEconomy;
     try {

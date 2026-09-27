@@ -56,6 +56,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Settings
 
 - Tabs like the Shop (`SETTINGS_TABS`: Gameplay, Display, Sound & Alerts, Accessibility; last tab in localStorage `shithead_settings_tab`). Each tab is a `.settings-tab-panel`; search looks across every tab and clearing it returns to the chosen one. "Helper Icons" reads ON when shown (pref is still `shithead_hide_helpers`).
+- Show Others' Effects (Display, `othersEffectsOn`, localStorage `shithead_others_effects`, synced): off draws other players' burn/Joker/victory effects as `default` (`othersEffect`, `burnEffectIdFor`, `jokerEffectIdFor`, the remote handlers); your own never change.
 - Order: tabs by how often they're used; inside a tab the main slider first, then rows alphabetical (a test checks this).
 - Hand Sort (Gameplay tab, `handSortByPower`, localStorage `shithead_hand_sort_power`, synced as `handSortByPower` in `users/{uid}/settings`): OFF (default) sorts the hand by rank 2→A (`HAND_SORT_VALUES`), ON by power (`POWER_SORT_ORDER`). Applied in `render` via `handSortValue`.
 - Turn Alert (`turnAlertOn`, `audio/turn.mp3` at `TURN_ALERT_GAIN` = 8% of the volume: the owner wants it faint) chimes in `render` when `isMyTurn` goes false → true. Notification Sound (`notifySoundOn`, `audio/notify.mp3`) chimes when `notifyNewInboxItems` sees a new invite/request/gift. Both default on and sync to `users/{uid}/settings`.
@@ -266,12 +267,16 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - `README.md` (GitHub front page) shows screenshots from `docs/screenshots/` (home, swap, table, card-powers, play-matrix, guide-swap), taken from the real game at 390×844 @2x by `tools/readme-screenshots.js`. Both are ignored by Hosting.
 - **Refresh the README every 20 versions, starting at v180 (v180, v200, v220…)** without being asked: bring the text up to date with every feature added since (Features, How to play, Tech), retake all the screenshots with `tools/readme-screenshots.js`, and set the `README-VERSION` stamp on its first line to the new version. A dev test fails once the BUILD reaches the next due version with an older stamp.
 
-## Owner's later list (don't build until asked)
+## Owner's later list (don't build until asked), in suggested order
 
-- Soon: **Collection Log** on the Profile page (every item; owned in colour, unowned greyed and locked).
-- Later: a **weekly puzzle** (not a daily one).
-- Far down the line (liked, not yet): "you've been overtaken" leaderboard mail, clubs, a season pass.
-- Not approved yet: weekly leaderboards, a friends-only leaderboard filter, "beat my score" share links, translations, a Joker Master earn-only Joker effect, a fresh-eyes check of a new player's first 5 minutes; turning on Ranked audit enforcement once honest games show no hard findings.
+1. Challenges: tapping "n completed" lists the completed challenges.
+2. Collection Log on the Profile page (every item; owned in colour, unowned greyed and locked); tapping Custom's "n / n owned" opens it.
+3. Saved loadouts in Custom (name a set of equipped items, switch in one tap).
+4. Best of 3 / 5 series between friends (casual rooms only; Ranked stays single games).
+5. Weekly puzzle (not a daily one).
+6. Tournament mode (friends' bracket; needs more players first).
+7. Far down the line (liked, not yet): "you've been overtaken" leaderboard mail, clubs, a season pass.
+- Not decided: weekly leaderboards, a friends-only leaderboard filter, "beat my score" share links, translations, a Joker Master earn-only Joker effect, a fresh-eyes check of a new player's first 5 minutes; turning on Ranked audit enforcement once honest games show no hard findings.
 - Rejected: a daily puzzle, a login-streak leaderboard.
 
 ## Future theme ideas (owner's backlog — don't build until asked)

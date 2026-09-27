@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v169 (ShitHead-Deluxe-151) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v170 (ShitHead-Deluxe-152) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -4846,6 +4846,11 @@ video {
           <span class="block text-[8px] text-slate-400 leading-snug">The Card Powers &amp; Play Matrix buttons on the table</span></span>
           <span id="setHideHelpersState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
+        <button id="setOthersEffectsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="opponents, others, effects, burn, joker, victory, hide, cosmetics">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Show Others' Effects</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Off shows other players' burn, Joker and victory effects in the default style</span></span>
+          <span id="setOthersEffectsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">ON</span>
+        </button>
         <button id="setEmotesRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="reactions, emoji, emotes, chat">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Show Others' Emotes</span>
           <span class="block text-[8px] text-slate-400 leading-snug">Your own reactions always show</span></span>
@@ -6827,6 +6832,7 @@ video {
     // The Burn cosmetic a player has equipped (their own from equippedCosmetics).
     function burnEffectIdFor(player) {
       const ownEffect = (typeof equippedCosmetics !== 'undefined' && equippedCosmetics.burnEffect) || 'default';
+      if (player && player.id !== state?.localPlayerId && !othersEffectsOn) return 'default';
       return player?.cosmetics?.burnEffect || (player?.id === state?.localPlayerId ? ownEffect : 'default') || 'default';
     }
     function triggerEquippedBurnEffect(x, y, player = null) {
@@ -10034,7 +10040,7 @@ video {
         // newly equipped victory animation.
         const effect = player?.id === state.localPlayerId
           ? (equippedCosmetics.victoryEffect || 'default')
-          : (player?.cosmetics?.victoryEffect || 'default');
+          : othersEffect(player?.cosmetics?.victoryEffect);
         if (reduceMotion) return;
         playVictoryEffect(isWinner ? effect : 'default', snapshotCardStyle(player));
       } catch (error) {
@@ -11273,6 +11279,10 @@ video {
     // cluttered rather than helpful.
     let hideHelperIcons = readPref('shithead_hide_helpers', false);
     let bigEffectsOn = readPref('shithead_big_effects', true);
+    // Show Others' Effects (Display): off shows everyone else's burn, Joker
+    // and victory effects in the default style (the play is still shown).
+    let othersEffectsOn = readPref('shithead_others_effects', true);
+    const othersEffect = (id) => (othersEffectsOn ? id : 'default') || 'default';
     let hapticsOn = readPref('shithead_haptics', true);
     // Your-turn chime and the new-invite/request/gift chime (both default on).
     let turnAlertOn = readPref('shithead_turn_alert', true);
@@ -14575,7 +14585,7 @@ video {
         if (data.lastJokerEffect?.at && data.lastJokerEffect.at !== lastHandledJokerEffectAt) {
           lastHandledJokerEffectAt = data.lastJokerEffect.at;
           if (!isCatchUp && data.lastJokerEffect.by !== state.localPlayerId) {
-            try { playJokerEffect(data.lastJokerEffect.effectId || 'default', { counter: !!data.lastJokerEffect.counter }); }
+            try { playJokerEffect(othersEffect(data.lastJokerEffect.effectId), { counter: !!data.lastJokerEffect.counter }); }
             catch (error) { console.warn('Remote Joker effect skipped safely:', error); }
           }
         }
@@ -14587,14 +14597,14 @@ video {
           const remoteBurn = !isCatchUp && data.lastCosmeticEffect.type === 'burn'
             && data.lastCosmeticEffect.playerId !== state.localPlayerId
             && data.lastCosmeticEffect.by !== state.localPlayerId;
-          if (remoteBurn) audio.playBurnSound(data.lastCosmeticEffect.effectId || 'default');
+          if (remoteBurn) audio.playBurnSound(othersEffect(data.lastCosmeticEffect.effectId));
           if (remoteBurn && bigEffectsOn) {
             setTimeout(() => {
               try {
                 const pile = document.getElementById('discardPileContainer');
                 if (!pile) return;
                 const rect = pile.getBoundingClientRect();
-                playBurnEffect(data.lastCosmeticEffect.effectId || 'default', rect.left + rect.width / 2, rect.top + rect.height / 2);
+                playBurnEffect(othersEffect(data.lastCosmeticEffect.effectId), rect.left + rect.width / 2, rect.top + rect.height / 2);
               } catch (error) {
                 console.warn('Remote burn cosmetic skipped safely:', error);
               }
@@ -15805,6 +15815,7 @@ video {
       paintToggle(document.getElementById('setHideHelpersState'), !hideHelperIcons);
       paintToggle(document.getElementById('setMotionState'), reduceMotion);
       paintToggle(document.getElementById('setBigEffectsState'), bigEffectsOn);
+      paintToggle(document.getElementById('setOthersEffectsState'), othersEffectsOn);
       paintToggle(document.getElementById('setHapticsState'), hapticsOn);
       paintToggle(document.getElementById('setTurnAlertState'), turnAlertOn);
       paintToggle(document.getElementById('setNotifySoundState'), notifySoundOn);
@@ -16341,6 +16352,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v170: [
+        ['🙈', "New setting (Display): Show Others' Effects. Turn it off to see other players' burn, Joker and victory effects in the plain default style."]
+      ],
       v169: [
         ['🎉', 'Seasonal challenges: during every event a new Seasonal tab in Challenges has four big event-long challenges, plus a Season Complete bonus.']
       ],
@@ -17988,7 +18002,7 @@ video {
     }
     function jokerEffectIdFor(player) {
       const own = (typeof equippedCosmetics !== 'undefined' && equippedCosmetics.jokerEffect) || 'default';
-      const id = player?.id === state?.localPlayerId ? own : (player?.cosmetics?.jokerEffect || 'default');
+      const id = player?.id === state?.localPlayerId ? own : othersEffect(player?.cosmetics?.jokerEffect);
       return JOKER_FX[id] ? id : 'default';
     }
 
@@ -20135,6 +20149,7 @@ video {
         hideHelperIcons: !!hideHelperIcons,
         reduceMotion: !!reduceMotion,
         bigEffectsOn: !!bigEffectsOn,
+        othersEffectsOn: !!othersEffectsOn,
         hapticsOn: !!hapticsOn,
         turnAlertOn: !!turnAlertOn,
         notifySoundOn: !!notifySoundOn,
@@ -20169,6 +20184,7 @@ video {
           ['hideHelperIcons','shithead_hide_helpers',v => { hideHelperIcons=v; }],
           ['reduceMotion','shithead_reduce_motion',v => { reduceMotion=v; }],
           ['bigEffectsOn','shithead_big_effects',v => { bigEffectsOn=v; }],
+          ['othersEffectsOn','shithead_others_effects',v => { othersEffectsOn=v; }],
           ['hapticsOn','shithead_haptics',v => { hapticsOn=v; }],
           ['turnAlertOn','shithead_turn_alert',v => { turnAlertOn=v; }],
           ['notifySoundOn','shithead_notify_sound',v => { notifySoundOn=v; }],
@@ -24162,6 +24178,10 @@ video {
     });
     document.getElementById('setBigEffectsRow').addEventListener('click', () => {
       bigEffectsOn = !bigEffectsOn; writePref('shithead_big_effects', bigEffectsOn);
+      refreshSettingsUI(); scheduleSettingsCloudSave();
+    });
+    document.getElementById('setOthersEffectsRow').addEventListener('click', () => {
+      othersEffectsOn = !othersEffectsOn; writePref('shithead_others_effects', othersEffectsOn);
       refreshSettingsUI(); scheduleSettingsCloudSave();
     });
     document.getElementById('setHapticsRow').addEventListener('click', () => {
