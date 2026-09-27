@@ -380,6 +380,7 @@
     .cat-section:has(> .cat-head[aria-expanded="false"]) { margin-bottom:4px; }
     .custom-inline-preview { grid-column:1 / -1; border:1px solid rgba(34,211,238,.35); border-radius:12px; background:rgba(2,6,23,.6); padding:6px; }
     .custom-inline-preview > .shop-preview-stage, .custom-inline-preview > .jfx-stage { margin:0; }
+    #challengeTabs > .challenge-tab { flex:1 1 0; min-width:0; }
     .ch-stat-bar { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; margin-top:8px; }
     .ch-stat-bar > .ch-stat--diamonds { justify-self:start; }
     .ch-stat-bar > .ch-stat--done { justify-self:center; }
@@ -5418,17 +5419,22 @@ video {
       </div>
 
       <div class="overflow-y-auto" style="flex:1;">
-        <div id="challengeTabs" class="sticky top-0 z-10 grid grid-cols-4 gap-1 bg-slate-950 pb-2" role="tablist" aria-label="Challenge categories">
+        <div id="challengeTabs" class="sticky top-0 z-10 bg-slate-950 pb-2" role="tablist" aria-label="Challenge categories" style="display:flex;gap:4px">
           <button type="button" data-challenge-tab="daily" role="tab" aria-selected="true" class="challenge-tab rounded-lg border border-emerald-500 bg-emerald-950/50 px-2 py-2 text-[9px] font-black uppercase tracking-wider text-emerald-300">Daily</button>
           <button type="button" data-challenge-tab="weekly" role="tab" aria-selected="false" class="challenge-tab rounded-lg border border-slate-700 px-2 py-2 text-[9px] font-black uppercase tracking-wider text-slate-400">Weekly</button>
           <button type="button" data-challenge-tab="ranked" role="tab" aria-selected="false" class="challenge-tab rounded-lg border border-slate-700 px-2 py-2 text-[9px] font-black uppercase tracking-wider text-slate-400">Ranked</button>
           <button type="button" data-challenge-tab="bots" role="tab" aria-selected="false" class="challenge-tab rounded-lg border border-slate-700 px-2 py-2 text-[9px] font-black uppercase tracking-wider text-slate-400">Bots</button>
+          <button type="button" data-challenge-tab="seasonal" role="tab" aria-selected="false" class="challenge-tab hidden rounded-lg border border-slate-700 px-2 py-2 text-[9px] font-black uppercase tracking-wider text-slate-400">Seasonal</button>
         </div>
         <section id="challengeTabDaily" data-challenge-panel="daily">
           <div id="challengesDailyList" class="flex flex-col gap-1.5 pt-1"></div>
           <div id="challengesDailyGauntletList" class="flex flex-col gap-1.5 pt-1.5"></div>
           <div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase tracking-wider text-amber-400 mb-1">Getting Started</div><div id="challengesTutorialList" class="flex flex-col gap-1.5"></div></div>
           <div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase tracking-wider text-emerald-400 mb-1">Friends</div><div id="challengesRecruitList" class="flex flex-col gap-1.5"></div></div>
+        </section>
+        <section id="challengeTabSeasonal" data-challenge-panel="seasonal" class="hidden">
+          <div id="challengesSeasonalHead" class="mb-2 text-[9px] text-amber-300"></div>
+          <div id="challengesSeasonalList" class="flex flex-col gap-1.5"></div>
         </section>
         <section id="challengeTabWeekly" data-challenge-panel="weekly" class="hidden">
           <div class="mb-2 text-[8px] text-slate-500">Resets every Monday (UK time).</div>
@@ -16549,7 +16555,7 @@ video {
       const btn=e.target.closest('[data-challenge-tab]'); if (!btn) return;
       const tab=btn.dataset.challengeTab;
       document.querySelectorAll('[data-challenge-panel]').forEach(p=>p.classList.toggle('hidden',p.dataset.challengePanel!==tab));
-      document.querySelectorAll('[data-challenge-tab]').forEach(b=>{ const active=b.dataset.challengeTab===tab; b.setAttribute('aria-selected',String(active)); b.className=`challenge-tab rounded-lg border px-2 py-2 text-[9px] font-black uppercase tracking-wider ${active ? 'border-amber-500 bg-amber-950/50 text-amber-300' : 'border-slate-700 text-slate-400'}`; });
+      document.querySelectorAll('[data-challenge-tab]').forEach(b=>{ const active=b.dataset.challengeTab===tab; b.setAttribute('aria-selected',String(active)); b.className=`challenge-tab ${b.classList.contains('hidden') ? 'hidden ' : ''}rounded-lg border px-2 py-2 text-[9px] font-black uppercase tracking-wider ${active ? 'border-amber-500 bg-amber-950/50 text-amber-300' : 'border-slate-700 text-slate-400'}`; });
     });
     // § Profile pictures, table art, seasonal events
     // ============================================================
@@ -21334,6 +21340,7 @@ video {
             completedChallenges: profile.completedChallenges || {},
             dailyChallengeState: dailyState,
             weeklyChallengeState: weeklyState,
+            seasonalChallengeState: profile.seasonalChallengeState || {},
             rating: profile.rating || 500,
             wins: profile.wins || 0,
             losses: profile.losses || 0,
@@ -21569,6 +21576,7 @@ video {
       }
       bumpDailyChallengeProgress(eventIds);
       bumpWeeklyChallengeProgress(eventIds);
+      bumpSeasonalChallengeProgress(eventIds);
     }
 
     // Advances progress on whichever of TODAY's 3 picked daily challenges
@@ -21610,6 +21618,76 @@ video {
         db.ref(`users/${currentUser.uid}/weeklyChallengeState/progress/${id}`).set(weekly.progress[id]).catch(e=>console.warn('Failed to persist weekly progress',id,e));
         if (weekly.progress[id]>=def.target) claimChallenge(key,WEEKLY_CHALLENGE_REWARD,def.name); else renderChallengesModalIfOpen();
       });
+    }
+
+    // § Seasonal challenges
+    // Only while an event is on (Challenges → Seasonal tab, hidden
+    // otherwise). The same four challenges each event, lasting the whole
+    // event, plus a bonus for finishing all four. Rewards are ~10% above the
+    // everyday ones (Warm Up 50 → 55, weekly 100 → 110, 250 → 275), always
+    // ending in 5 or 0. Progress: users/{uid}/seasonalChallengeState/{key}/{id}
+    // (key = event instance, e.g. "halloween-2026"); completion key
+    // season_<key>_<id>.
+    const SEASONAL_CHALLENGES = [
+      { id: 'finish-any-match', name: 'Party Games', desc: 'Finish 5 matches during the event.', target: 5, reward: 55 },
+      { id: 'burn-once', name: 'Festive Fire', desc: 'Burn the pile 5 times.', target: 5, reward: 110 },
+      { id: 'play-joker', name: 'Wild Celebration', desc: 'Play 5 Jokers.', target: 5, reward: 110 },
+      { id: 'win-any-match', name: 'Holiday Winner', desc: 'Win 5 matches in any mode.', target: 5, reward: 110 }
+    ];
+    const SEASONAL_CHALLENGE_BONUS = { id: 'all', name: 'Season Complete', desc: 'Complete all four seasonal challenges.', reward: 275 };
+    const seasonalCompletionKey = (instanceKey, id) => `season_${instanceKey}_${id}`;
+    // The event whose challenges show: the live one ending soonest.
+    function liveSeasonalChallengeWindow(now = seasonalNow()) {
+      return activeSeasonalEvents(now)[0] || null;
+    }
+    function bumpSeasonalChallengeProgress(eventIds) {
+      const win = liveSeasonalChallengeWindow();
+      if (!win || !currentUser) return;
+      const all = challengeEconomy.seasonalChallengeState || (challengeEconomy.seasonalChallengeState = {});
+      const progress = all[win.key] || (all[win.key] = {});
+      eventIds.forEach((id) => {
+        const def = SEASONAL_CHALLENGES.find(c => c.id === id);
+        if (!def) return;
+        const key = seasonalCompletionKey(win.key, id);
+        if (challengeEconomy.completedChallenges[key]) return;
+        progress[id] = (progress[id] || 0) + 1;
+        db.ref(`users/${currentUser.uid}/seasonalChallengeState/${win.key}/${id}`).set(progress[id]).catch(e => console.warn('Failed to persist seasonal progress', id, e));
+        if (progress[id] >= def.target) claimChallenge(key, def.reward, def.name);
+        else renderChallengesModalIfOpen();
+      });
+      maybeClaimSeasonalBonus(win);
+    }
+    function maybeClaimSeasonalBonus(win) {
+      const done = (id) => !!challengeEconomy.completedChallenges[seasonalCompletionKey(win.key, id)];
+      if (!done(SEASONAL_CHALLENGE_BONUS.id) && SEASONAL_CHALLENGES.every(c => done(c.id))) {
+        claimChallenge(seasonalCompletionKey(win.key, SEASONAL_CHALLENGE_BONUS.id), SEASONAL_CHALLENGE_BONUS.reward, SEASONAL_CHALLENGE_BONUS.name);
+      }
+    }
+    function renderSeasonalChallenges() {
+      const tab = document.querySelector('[data-challenge-tab="seasonal"]');
+      const win = liveSeasonalChallengeWindow();
+      if (tab) {
+        tab.classList.toggle('hidden', !win);
+        if (win) tab.innerHTML = `${win.event.emoji} Seasonal`;
+      }
+      if (!win) {
+        // The event ended while the tab was open: back to Daily.
+        if (tab?.getAttribute('aria-selected') === 'true') document.querySelector('[data-challenge-tab="daily"]')?.click();
+        return;
+      }
+      const head = document.getElementById('challengesSeasonalHead');
+      const left = seasonDaysBetween(seasonalNow(), win.endsAt);
+      if (head) head.innerHTML = `<b>${win.event.emoji} ${win.event.name}</b> · ${left <= 1 ? 'last day!' : `ends in ${left} days`}`;
+      const progress = (challengeEconomy.seasonalChallengeState || {})[win.key] || {};
+      const rows = SEASONAL_CHALLENGES.map((def) => {
+        const completed = !!challengeEconomy.completedChallenges[seasonalCompletionKey(win.key, def.id)];
+        const n = Math.min(progress[def.id] || 0, def.target);
+        return renderChallengeRowHTML(def.name, `${n}/${def.target} — ${def.desc}`, def.reward, completed, def.desc);
+      });
+      const doneCount = SEASONAL_CHALLENGES.filter(c => challengeEconomy.completedChallenges[seasonalCompletionKey(win.key, c.id)]).length;
+      const bonusDone = !!challengeEconomy.completedChallenges[seasonalCompletionKey(win.key, SEASONAL_CHALLENGE_BONUS.id)];
+      rows.push(renderChallengeRowHTML(SEASONAL_CHALLENGE_BONUS.name, `${doneCount}/${SEASONAL_CHALLENGES.length} — ${SEASONAL_CHALLENGE_BONUS.desc}`, SEASONAL_CHALLENGE_BONUS.reward, bonusDone, SEASONAL_CHALLENGE_BONUS.desc));
+      setListHtml('challengesSeasonalList', rows.join(''));
     }
 
     // Milestone challenges (Ranked totals, rank tiers, ending cards, bot
@@ -21848,7 +21926,7 @@ video {
     }
 
     const CHALLENGES_SIGN_IN_MSG = '<p class="text-[9px] text-slate-500 text-center py-2">Sign in to track this.</p>';
-    const CHALLENGES_LIST_IDS = ['challengesTutorialList', 'challengesDailyList', 'challengesWeeklyList', 'challengesRankedBurnsList', 'challengesRankedStreaksList', 'challengesRankedJokerList', 'challengesRankedSnapList', 'challengesRankedGamesList', 'challengesEndingCardsList', 'challengesRankTiersList', 'challengesBotMatchesList', 'challengesGauntletList', 'challengesDailyGauntletList', 'challengesRecruitList'];
+    const CHALLENGES_LIST_IDS = ['challengesSeasonalList', 'challengesTutorialList', 'challengesDailyList', 'challengesWeeklyList', 'challengesRankedBurnsList', 'challengesRankedStreaksList', 'challengesRankedJokerList', 'challengesRankedSnapList', 'challengesRankedGamesList', 'challengesEndingCardsList', 'challengesRankTiersList', 'challengesBotMatchesList', 'challengesGauntletList', 'challengesDailyGauntletList', 'challengesRecruitList'];
 
     // Builds every section's HTML from challengeEconomy + CHALLENGE_DEFS.
     // Guests get an honest "sign in" prompt in every section rather than
@@ -21932,6 +22010,7 @@ video {
         return renderChallengeRowHTML(def.name, `${progress}/${def.target} — ${def.desc}`, WEEKLY_CHALLENGE_REWARD, completed, def.desc);
       }).join('') : '<p class="text-[9px] text-slate-500 text-center py-2">Loading challenges…</p>';
       setListHtml('challengesWeeklyList', weeklyHtml);
+      renderSeasonalChallenges();
       const allDailyComplete = !!daily && daily.challengeIds.length > 0 && daily.challengeIds.every((id) => challengeEconomy.completedChallenges[dailyCompletionKey(daily.dateKey, id)]);
       maybeAutoCollapseDailySection(allDailyComplete);
 

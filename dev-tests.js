@@ -6146,6 +6146,23 @@ async function runDevTestSuite() {
       shopFilter = savedFilter; shopTab = savedTab; renderCosmeticShop();
     }
   });
+  await test('Seasonal challenges: a tab only during an event, rewards ~10% up and ending in 5 or 0', () => {
+    const savedNow = seasonalNowOverride, savedEco = challengeEconomy;
+    try {
+      SEASONAL_CHALLENGES.concat(SEASONAL_CHALLENGE_BONUS).forEach(c => assertTrue(c.reward % 5 === 0, `${c.name} ends in 5 or 0`, c.reward));
+      challengeEconomy = { ...savedEco, completedChallenges: {}, seasonalChallengeState: {} };
+      seasonalNowOverride = '2026-09-24T12:00:00'; // no event
+      renderSeasonalChallenges();
+      assertTrue(document.querySelector('[data-challenge-tab="seasonal"]').classList.contains('hidden'), 'Hidden with no event on');
+      seasonalNowOverride = '2026-10-20T12:00:00'; // Halloween
+      challengeEconomy.seasonalChallengeState = { 'halloween-2026': { 'burn-once': 3 } };
+      renderSeasonalChallenges();
+      const tab = document.querySelector('[data-challenge-tab="seasonal"]');
+      assertTrue(!tab.classList.contains('hidden') && tab.textContent.includes('Seasonal'), 'Shown during Halloween');
+      const list = document.getElementById('challengesSeasonalList').textContent;
+      assertTrue(list.includes('3/5') && list.includes('Season Complete'), 'Rows show progress and the bonus', list);
+    } finally { seasonalNowOverride = savedNow; challengeEconomy = savedEco; renderSeasonalChallenges(); }
+  });
   await test('Free tables: Oak Wood and Classic Felt are unlocked for everyone, with real photo-like art', async () => {
     const saved = cosmeticPurchaseState, savedEq = { ...equippedCosmetics };
     try {
@@ -6900,9 +6917,9 @@ async function runDevTestSuite() {
     assertTrue(!/progress|unlock(ed|s)?\s*\d|reward/i.test(area.innerHTML.replace('Coming Soon', '')), 'No fake unlock progress or fake rewards may be implied for the Coming Soon card');
     document.getElementById('themesModal').classList.add('hidden');
   });
-  await test('REGRESSION: Challenges exposes exactly Daily, Weekly, Ranked and Bots top tabs', () => {
+  await test('REGRESSION: Challenges exposes exactly Daily, Weekly, Ranked, Bots (+ Seasonal during events) top tabs', () => {
     const tabs=[...document.querySelectorAll('[data-challenge-tab]')].map(b=>b.dataset.challengeTab);
-    assertEqual(tabs,['daily','weekly','ranked','bots'],'Challenge tabs must be Daily, Weekly, Ranked, Bots in that order');
+    assertEqual(tabs,['daily','weekly','ranked','bots','seasonal'],'Challenge tabs must be Daily, Weekly, Ranked, Bots in that order');
     assertEqual(pickWeeklyChallengeIds('2026-W39').length,3,'Each week must select exactly 3 challenges');
   });
   await test('REGRESSION: leaderboard search UI exists and rows can show public W/L counts', () => {
