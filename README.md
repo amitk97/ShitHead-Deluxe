@@ -1,7 +1,7 @@
-<!-- README-VERSION: v165 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
+<!-- README-VERSION: v180 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
 # 💩 ShitHead Deluxe
 
-**The classic card game ShitHead, rebuilt for your phone.** Play against bots, with friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
+**The classic card game ShitHead, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
 
 ### ▶ [Play now at shithead-pro.web.app](https://shithead-pro.web.app/)
 
@@ -34,7 +34,7 @@ Four of the same rank in a row **burns** the Pile. So does a 10. Whoever burns p
   <img src="docs/screenshots/play-matrix.png" width="32%" alt="The Play Matrix" />
 </p>
 
-Tap the **ⓘ** button during a game for every card's power, and the **▦ Play Matrix** to see which card can go on which (row = your card, column = the Pile; ✓ plays, ✗ doesn't).
+Tap the **ⓘ** button during a game for every card's power, and the **▦ Play Matrix** to see which card can go on which (row = your card, column = the Pile; ✓ plays, ✗ doesn't). When a 3 is on top, the Pile label shows what you really have to beat (for example *Transparent - Q*).
 
 | Card | Power |
 |---|---|
@@ -58,14 +58,15 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 
 - **Vs Bots** with four difficulties (Easy → Boss) that unlock as you win, playable offline. Close the app mid-game and it picks up exactly where you left off.
 - **The Gauntlet**: beat 5 bots in a row (Easy, Easy, Medium, Hard, Boss) with 3 lives. The first clear wins an exclusive picture and frame, then Diamonds every day you beat it again.
-- **Online rooms** with friends: share an invite link, chat with emotes, and a bot takes over if someone leaves. Friends can watch your match live.
+- **Play Friends**: private rooms for up to 4 players. Share an invite link, react with emotes, and a bot takes over if someone leaves. Friends can watch your match live.
 - **Ranked** 1v1 matchmaking with an Elo rating and tiers from Novice to Master. The deck is shuffled by the server and every move is checked.
 - **Tutorial**: a one-minute Quick Start plus in-depth lessons for every card, and a searchable Guide (rules, card powers, the Gauntlet, key terms).
-- **Challenges and Diamonds**: daily and weekly challenges, the Daily Gauntlet, a login streak and milestones, with a running total of challenges completed.
-- **Shop and Custom**: tables, card backs, frames, burn effects with their own sounds, **Joker effects** (a short animation over the table whenever you play a Joker: Jester's Grin, Jack-in-the-Box, Magic Trick, Glitch and more, plus a Pumpkin Joker, Santa Joker and others for each seasonal event), victory effects, emote packs and profile pictures, plus seasonal events (Halloween, Christmas, Diwali, Lunar New Year and more). Earn-only pictures and frames for Ranked tiers, the Gauntlet and recruiting friends.
+- **Challenges and Diamonds**: daily and weekly challenges, the Daily Gauntlet, a login streak and milestones. During every seasonal event a Seasonal tab adds four big event-long challenges and a Season Complete bonus. Tap your completed count to see every challenge you've finished.
+- **Shop and Custom** (each opens on an All tab with every item in folding sections): tables, card backs, frames, burn effects with their own sounds, **Joker effects** (a short animation over the table whenever you play a Joker: Jester's Grin, Jack-in-the-Box, Magic Trick, Glitch and more, plus a Pumpkin Joker, Santa Joker and others for each seasonal event), victory effects, emote packs and profile pictures, plus seasonal events (Halloween, Christmas, Diwali, Lunar New Year and more). Earn-only pictures and frames for Ranked tiers, the Gauntlet and recruiting friends. Two free tables (Oak Wood and Classic Felt), up to 3 saved looks you can switch in one tap, and a **Collection** page showing everything you own and how to get the rest.
 - **Friends**: friend requests, gifts, game invites and a public showcase of your look, with push notifications. Invite friends with your own link and you both earn Diamonds once they've played a few games.
 - **Leaderboards**: Ranked rating, challenges completed and Gauntlet bots beaten, with an Inbox message when you reach the top 10, #3, #2 or #1.
 - **Match summary** with stats and a shareable result card, plus a full match history.
+- **Built for phones**: the hand resizes to fill your screen, drawn icons throughout, and settings such as Hand Sort, Turn Alert and Show Others' Effects.
 - **Your data**: download everything stored about your account, or delete it (with 7 days to change your mind).
 
 ## Tech

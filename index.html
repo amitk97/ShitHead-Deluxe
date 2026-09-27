@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v179 (ShitHead-Deluxe-161) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v180 (ShitHead-Deluxe-162) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -8035,6 +8035,14 @@ video {
       return false;
     }
 
+    // A 3 on top is see-through: the Pile label names the card that really
+    // has to be beaten ("Transparent - Q"), from the same rules the legal
+    // moves use (a 3 on a 5 carries the 5's base card through).
+    function transparentPileLabel(pile = state.discardPile) {
+      const target = state.baseOverrideCard || getEffectiveTopCard(pile);
+      if (!target || target.rank === '3') return 'Transparent - Any';
+      return `Transparent - ${target.isJoker ? 'Joker' : target.rank}`;
+    }
     function getEffectiveTopCard(pile) {
       if (!pile || pile.length === 0) return null;
       for (let i = pile.length - 1; i >= 0; i--) {
@@ -12654,6 +12662,9 @@ video {
       return Math.max(50, Math.min(budget, window.innerHeight * 0.46));
     }
 
+    // Back rows of a 2-3 row hand show at least this much of each card (the
+    // rank and suit sit in the top part), so the cards can be larger.
+    const HAND_ROW_MIN_VISIBLE = 0.42;
     function computeHandCardMetrics(maxRowSize, rowCount = 1, availableHeightPx = null) {
       const vh = window.innerHeight / 100;
       // What the card would naturally be if only viewport height mattered
@@ -12664,9 +12675,16 @@ video {
       // actually have — the hand container has px-4 (16px) padding each
       // side, plus a small extra safety margin.
       const availableWidthPx = Math.max(200, window.innerWidth - 48);
-      const visibleFraction = 0.52; // fraction of each subsequent overlapped card left visible
-      const divisor = 1 + (maxRowSize - 1) * visibleFraction;
-      const widthBasedWidth = availableWidthPx / divisor;
+      // How much of each overlapped card stays visible. A small hand keeps
+      // a relaxed 52%; a long row only needs the rank-and-suit strip (at
+      // least 22px, about a third of the card), so its cards can be bigger.
+      let visibleFraction = 0.52;
+      let widthBasedWidth = availableWidthPx / (1 + (maxRowSize - 1) * visibleFraction);
+      if (widthBasedWidth < heightBasedWidth && maxRowSize > 1) {
+        const tight = availableWidthPx / (1 + (maxRowSize - 1) * 0.34);
+        visibleFraction = Math.min(0.52, Math.max(0.34, 22 / Math.min(heightBasedWidth, tight)));
+        widthBasedWidth = availableWidthPx / (1 + (maxRowSize - 1) * visibleFraction);
+      }
 
       let width = Math.max(30, Math.min(heightBasedWidth, widthBasedWidth));
 
@@ -12674,7 +12692,7 @@ video {
       // n rows occupy height * (1 + 0.55 * (n - 1)). Shrink the card until
       // that stack fits the space genuinely available.
       if (availableHeightPx && rowCount >= 1) {
-        const stackFactor = 1 + 0.55 * (rowCount - 1);
+        const stackFactor = 1 + HAND_ROW_MIN_VISIBLE * (rowCount - 1);
         const maxCardHeight = availableHeightPx / stackFactor;
         // 36px is the floor at which a rank and suit still render inside the
         // card (verified by the card-contents test), so never shrink past it.
@@ -12682,6 +12700,9 @@ video {
       }
 
       const height = width / 0.69; // preserve card-base's own aspect ratio
+      // Once the size is known, spread the row across the width available
+      // (never more than the relaxed 52%, never less than the rank strip).
+      if (maxRowSize > 1) visibleFraction = Math.min(0.52, Math.max(visibleFraction, (availableWidthPx / width - 1) / (maxRowSize - 1)));
       const marginLeft = -(width * (1 - visibleFraction));
       return { width, height, marginLeft };
     }
@@ -12767,11 +12788,27 @@ video {
       return slots;
     }
 
-    function computeHandRows(hand) {
+    function bestHandRows(hand, availableHeightPx) {
+      const fallback = computeHandRows(hand);
+      if (hand.length <= 10) return fallback;
+      const availW = Math.max(200, window.innerWidth - 48);
+      let best = fallback, bestW = -1;
+      [1, 2, 3].forEach((r) => {
+        const rows = computeHandRows(hand, r);
+        const k = Math.max(...rows.map(x => x.length), 1);
+        const m = computeHandCardMetrics(k, rows.length, availableHeightPx);
+        const rowWidth = m.width + (k - 1) * (m.width + m.marginLeft);
+        if (rowWidth > availW + 1) return; // would need sideways scrolling
+        if (m.width > bestW + 0.5 || (Math.abs(m.width - bestW) <= 0.5 && rows.length === fallback.length)) { best = rows; bestW = m.width; }
+      });
+      return best;
+    }
+    function computeHandRows(hand, forcedRows = 0) {
       const count = hand.length;
       let rowCount = 1;
       if (count > 24) rowCount = 3;
       else if (count > 10) rowCount = 2;
+      if (forcedRows) rowCount = Math.max(1, Math.min(forcedRows, count || 1));
 
       const base = Math.floor(count / rowCount);
       const remainder = count % rowCount;
@@ -13412,7 +13449,7 @@ video {
       const topCardLabel = topCardRank ? (CARD_REFERENCE.find(([r]) => r === topCardRank) || [])[1] : null;
       if (topCardLabel) {
         constraintTag.classList.remove('hidden');
-        constraintTag.textContent = topCardLabel;
+        constraintTag.textContent = topCardRank === '3' ? transparentPileLabel() : topCardLabel;
       } else {
         constraintTag.classList.add('hidden');
       }
@@ -13579,7 +13616,9 @@ video {
       local.hand = local.hand || [];
       local.hand.sort((a, b) => handSortValue(a) - handSortValue(b));
 
-      const handRows = computeHandRows(local.hand);
+      // Try 1, 2 and 3 rows and keep whichever gives the biggest cards that
+      // still fit the width: a tall phone suits more rows, a short one fewer.
+      const handRows = bestHandRows(local.hand, getAvailableHandHeightPx());
       const rowCount = handRows.length;
 
       // Sizing is based on the LARGEST row (capped at 12 by computeHandRows),
@@ -13603,7 +13642,7 @@ video {
       const handPadPx = (parseFloat(handPadCs.paddingTop) || 0) + (parseFloat(handPadCs.paddingBottom) || 0);
       handContainer.style.maxHeight = `${availableHandHeight + handPadPx}px`;
       const rowVisibleFraction = rowCount > 1
-        ? Math.min(0.9, Math.max(0.55, (availableHandHeight / cardMetrics.height - 1) / (rowCount - 1)))
+        ? Math.min(0.9, Math.max(HAND_ROW_MIN_VISIBLE, (availableHandHeight / cardMetrics.height - 1) / (rowCount - 1)))
         : 1;
 
       handRows.forEach((rowCards, rowIdx) => {
@@ -13775,6 +13814,17 @@ video {
     // card behind showing) and then shrink the cards until it fits.
     const stagedLiftShown = new Set(); // staged cards that already sprang up onto the pile
 
+    // Makes the hand fill the room it has: shrinks it if the player's area
+    // runs past the table bottom, and grows it (bigger cards, same layout)
+    // when there's spare room between the Hand label and the table bottom,
+    // within the row's width. Worked out from the real screen each render.
+    const HAND_MAX_CARD_H = 150;
+    function handRowWidth() {
+      const hand = document.getElementById('localHand');
+      if (!hand) return 300;
+      const cs = getComputedStyle(hand);
+      return hand.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0) - 4;
+    }
     function fitHandToTable() {
       const hand = document.getElementById('localHand');
       const table = document.getElementById('gameTable');
@@ -13782,7 +13832,8 @@ video {
       if (!hand || !table || !zone || !hand.children.length) return;
       const limit = table.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(table).paddingBottom) || 0);
       const overflow = zone.getBoundingClientRect().bottom - limit;
-      if (!(overflow > 1)) return;
+      const spare = -overflow;
+      if (!(overflow > 1) && !(spare > 6)) return;
       const rows = [...hand.children];
       const firstCard = rows[0].firstElementChild;
       const h = parseFloat(firstCard?.style.height) || 0;
@@ -13790,12 +13841,28 @@ video {
       const n = rows.length;
       const vis = n > 1 ? 1 + (parseFloat(rows[1].style.marginTop) || 0) / h : 1;
       const stack = h * (1 + (n - 1) * vis);
-      const target = stack - overflow;
       let newVis = vis;
       let newH = h;
-      if (n > 1) newVis = Math.max(0.55, Math.min(vis, (target / h - 1) / (n - 1)));
-      if (h * (1 + (n - 1) * newVis) > target) newH = Math.max(52, target / (1 + (n - 1) * newVis));
+      if (overflow > 1) {
+        const target = stack - overflow;
+        if (n > 1) newVis = Math.max(HAND_ROW_MIN_VISIBLE, Math.min(vis, (target / h - 1) / (n - 1)));
+        if (h * (1 + (n - 1) * newVis) > target) newH = Math.max(52, target / (1 + (n - 1) * newVis));
+      } else {
+        // Grow: as tall as the spare room allows, as wide as the widest row allows.
+        const byHeight = (stack + spare - 2) / (1 + (n - 1) * vis);
+        // The longest row may overlap down to its rank strip (a third of
+        // the card, at least 22px) to let the cards grow wider.
+        const k = Math.max(...rows.map(r => r.children.length), 1);
+        const byWidth = k > 1 ? (handRowWidth() / (1 + (k - 1) * 0.34)) / 0.69 : HAND_MAX_CARD_H;
+        newH = Math.min(byHeight, byWidth, HAND_MAX_CARD_H);
+        if (!(newH > h + 1)) return;
+      }
       const ratio = newH / h;
+      // Growing: re-space the longest row across the full width at the new size.
+      const kMax = Math.max(...rows.map(r => r.children.length), 1);
+      const growW = newH * 0.69;
+      const growVis = kMax > 1 ? Math.min(0.52, Math.max(0.34, 22 / growW, (handRowWidth() / growW - 1) / (kMax - 1))) : 0.52;
+      const growMargin = -(growW * (1 - growVis));
       // These are the cards render() just drew: resize them instantly. The
       // card's own margin/size transition would otherwise slide the whole
       // hand into place after every render (the hand "bouncing" side to
@@ -13812,10 +13879,12 @@ video {
           const w = newH * 0.69;
           cardEl.style.width = `${w}px`;
           cardEl.style.height = `${newH}px`;
-          if (cardEl.style.marginLeft) cardEl.style.marginLeft = `${(parseFloat(cardEl.style.marginLeft) || 0) * ratio}px`;
-          if (w < 46) cardEl.classList.add('card-tiny');
+          if (cardEl.style.marginLeft) cardEl.style.marginLeft = `${ratio > 1 ? growMargin : (parseFloat(cardEl.style.marginLeft) || 0) * ratio}px`;
+          cardEl.classList.toggle('card-tiny', w < 46);
         });
       });
+      // The hand's max height grows with the cards.
+      if (ratio > 1) hand.style.maxHeight = `${(parseFloat(hand.style.maxHeight) || 0) + (newH - h) * (1 + (n - 1) * newVis) + 2}px`;
       void hand.offsetWidth; // apply the sizes with transitions off
       requestAnimationFrame(() => settled.forEach(el => { el.style.transition = ''; }));
     }
@@ -16627,6 +16696,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v180: [
+        ['🃏', 'Bigger cards in big hands: the hand now fills the space under "Hand" and picks the best number of rows for your screen.'],
+        ['👀', 'When a 3 is on the Pile, its label tells you what you really have to beat, e.g. "Transparent - Q".']
+      ],
       v179: [
         ['🎨', 'A cleaner look: softer page frames, easier-to-read small text, and one clear gold button for buying in the Shop.']
       ],

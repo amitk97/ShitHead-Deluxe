@@ -2570,7 +2570,9 @@ async function runDevTestSuite() {
     const wasHidden = [table.classList.contains('hidden'), lobby.classList.contains('hidden')];
     table.classList.remove('hidden'); lobby.classList.add('hidden');
     try {
-      const ranks = ['2','5','6','7','8','8','Q','Q','K','K','K','A','A','4','9','J'];
+      const ranks = ['2','5','6','7','8','8','Q','Q','K','K','K','A','A','4','9','J'].flatMap(r => [r, r]);
+      var realBest = bestHandRows;
+      bestHandRows = (hand) => computeHandRows(hand, 3); // a wide test window would pick one row
       freshState({ phase: 'PLAY', discardPile: [makeCard('9')], drawPile: [] });
       state.players = [makePlayer({ id: 'me', hand: ranks.map(r => makeCard(r)), faceDown: [makeCard('4')] }), makePlayer({ id: 'bot', isBot: true, hand: [makeCard('K')] })];
       state.localPlayerId = 'me'; state.currentTurnIndex = 0;
@@ -2588,6 +2590,7 @@ async function runDevTestSuite() {
       assertTrue(document.querySelectorAll('#localHand > div').length >= 2, 'The test hand really has several rows');
       assertTrue(!slid, 'No hand card slides into place after a redraw');
     } finally {
+      bestHandRows = realBest;
       table.classList.toggle('hidden', wasHidden[0]); lobby.classList.toggle('hidden', wasHidden[1]);
     }
   });
@@ -6156,6 +6159,37 @@ async function runDevTestSuite() {
     btn.click();
     assertTrue(document.getElementById('shopModal').classList.contains('hidden') && !document.getElementById('themesModal').classList.contains('hidden'), 'Opens Custom');
     document.getElementById('themesModal').classList.add('hidden');
+  });
+  await test('A 3 on the Pile: the label says what to beat ("Transparent - N")', () => {
+    freshState({ discardPile: [makeCard('Q', '♦'), makeCard('3', '♣')] });
+    state.players = [makePlayer({ id: 'p1', hand: [makeCard('K')] }), makePlayer({ id: 'p2', isBot: true })];
+    state.localPlayerId = 'p1';
+    render();
+    const tag = document.getElementById('activeConstraintTag');
+    assertEqual(tag.textContent, 'Transparent - Q', 'One 3 on a Queen');
+    state.discardPile = [makeCard('2'), makeCard('3', '♥'), makeCard('3', '♣')]; render();
+    assertEqual(tag.textContent, 'Transparent - 2', 'Two 3s on a 2');
+    state.discardPile = [makeCard('3', '♥')]; render();
+    assertEqual(tag.textContent, 'Transparent - Any', 'Only 3s: anything goes');
+    state.discardPile = [makeCard('9'), makeCard('5'), makeCard('3')]; state.baseOverrideCard = makeCard('9'); render();
+    assertEqual(tag.textContent, 'Transparent - 9', 'A 3 on a 5 carries the base card through');
+    state.baseOverrideCard = null;
+    state.discardPile = [makeCard('9')]; render();
+    assertEqual(tag.textContent, 'Reverse', 'Other cards keep their power name');
+  });
+  await test('Big hands pick the row count that gives the biggest cards that still fit the width', () => {
+    const hand = Array.from({ length: 29 }, (_, i) => ({ id: `h${i}`, rank: ['4','5','6','7','8','9','J','Q','K','A'][i % 10], suit: '♠' }));
+    const rows = bestHandRows(hand, 140);
+    const k = Math.max(...rows.map(r => r.length));
+    const m = computeHandCardMetrics(k, rows.length, 140);
+    [1, 2, 3].forEach(r => {
+      const alt = computeHandRows(hand, r); const ak = Math.max(...alt.map(x => x.length));
+      const am = computeHandCardMetrics(ak, alt.length, 140);
+      const fits = am.width + (ak - 1) * (am.width + am.marginLeft) <= Math.max(200, window.innerWidth - 48) + 1;
+      if (fits) assertTrue(m.width >= am.width - 0.5, `${rows.length} rows is at least as big as ${r}`, [m.width, am.width]);
+    });
+    assertTrue(m.width + (k - 1) * (m.width + m.marginLeft) <= Math.max(200, window.innerWidth - 48) + 1, 'and fits without scrolling');
+    assertTrue(-m.marginLeft <= m.width * 0.66 + 0.01 && m.width + m.marginLeft >= 21.9, 'Each overlapped card still shows its rank strip');
   });
   await test('Collection: every item by type, owned in colour, the rest locked; opened from Profile and from Custom\'s owned count', () => {
     const savedOwned = cosmeticPurchaseState;
