@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v180 (ShitHead-Deluxe-162) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v181 (ShitHead-Deluxe-163) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1802,6 +1802,10 @@
     .bot-setup-grid > label { align-self: end; }
     /* Gauntlet: lobby button + ⓘ, hearts on the table, the run pop-up. */
     .gauntlet-row { display:flex; align-items:center; gap:.4rem; margin-top:.45rem; }
+    /* With no unlock bar beside it (every difficulty open, or signed out),
+       the Gauntlet row spans the grid and sits centred with a longer button. */
+    .bot-setup-grid:has(#difficultyProgressWrap.hidden) .gauntlet-row { grid-column:1 / -1; justify-content:center; }
+    .bot-setup-grid:has(#difficultyProgressWrap.hidden) .gauntlet-btn { flex:0 1 70%; }
     .gauntlet-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:.35rem; padding:.42rem .5rem; border-radius:.5rem;
       border:2px solid #b45309; background:linear-gradient(135deg,#431407,#7c2d12 55%,#431407); color:#fde68a; font-weight:900; font-size:.72rem;
       letter-spacing:.14em; box-shadow:0 0 10px rgba(245,158,11,.22), inset 0 1px 0 rgba(253,230,138,.25); cursor:pointer;
@@ -16696,6 +16700,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v181: [
+        ['⚔️', 'The Gauntlet button sits centred and wider once every bot difficulty is unlocked.']
+      ],
       v180: [
         ['🃏', 'Bigger cards in big hands: the hand now fills the space under "Hand" and picks the best number of rows for your screen.'],
         ['👀', 'When a 3 is on the Pile, its label tells you what you really have to beat, e.g. "Transparent - Q".']
