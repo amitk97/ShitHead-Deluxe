@@ -368,6 +368,17 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   for (let i = 0; i < 2; i++) r = await gGame(g.run.id, false);
   ok(r.over && !r.run, 'losing all 3 lives ends the run', r);
   ok((await admin('users/dave/difficultyWins')) === null, 'Gauntlet wins never count toward difficulty unlocks');
+  // A new UK day: yesterday's run is gone, the Gauntlet starts again at round 1
+  g = await call('dave', { action: 'gauntlet', op: 'start' });
+  r = await gGame(g.run.id, true, false);
+  ok(r.run && r.run.round === 1, 'a win moves the run to round 2', r);
+  await admin('users/dave/gauntlet/run/startedAt', 'PUT', Date.now() - 26 * 3600 * 1000);
+  g = await call('dave', { action: 'gauntlet', op: 'status' });
+  ok(g.run === null, "yesterday's run is not offered to continue", g);
+  r = await call('dave', { action: 'gauntlet', op: 'begin', runId: r.run.id });
+  ok(r.error && /new day/.test(r.error.message), "yesterday's run can't be continued", r);
+  g = await call('dave', { action: 'gauntlet', op: 'start' });
+  ok(g.run && g.run.round === 0 && g.run.lives === 3, 'the new day starts at the first Easy bot with full lives', g);
 
   // Referrals: invite codes, linking new players, rewards after 3 real games
   await call('carol', { action: 'init' });
@@ -448,11 +459,11 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok((await erinCan(db => set(ref(db, 'referralCodes/ERIN'), { uid: 'erin' }))) === 'denied', 'blocked: making your own code by hand');
 
   // Leaderboards the server keeps (boards/challenges, boards/gauntlet) and top-place mail
-  ok((await admin('users/dave/gauntlet/botsBeaten')) === 10, 'Gauntlet: every bot beaten is counted (2 clears = 10)', await admin('users/dave/gauntlet/botsBeaten'));
+  ok((await admin('users/dave/gauntlet/botsBeaten')) === 11, 'Gauntlet: every bot beaten is counted (2 clears + 1 win = 11)', await admin('users/dave/gauntlet/botsBeaten'));
   await admin('users/dave/username', 'PUT', 'Dave'); // every real account has one
   await call('dave', { action: 'sync' });
   const gb = await admin('boards/gauntlet/dave');
-  ok(gb && gb.count === 10 && gb.name === 'Dave', 'Gauntlet board entry kept by the server', gb);
+  ok(gb && gb.count === 11 && gb.name === 'Dave', 'Gauntlet board entry kept by the server', gb);
   const daveDone = Object.keys((await admin('users/dave/completedChallenges')) || {}).length;
   ok((await admin('boards/challenges/dave'))?.count === daveDone, 'Challenges board: challenges completed', [await admin('boards/challenges/dave'), daveDone]);
   let mail = await admin('users/dave/activityInbox/board_gauntlet_1');

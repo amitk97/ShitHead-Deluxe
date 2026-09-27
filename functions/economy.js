@@ -678,8 +678,13 @@ actions.gauntlet = async ({ uid, data }) => {
   if (!['start', 'begin', 'result', 'status'].includes(op)) fail('invalid-argument', 'Unknown Gauntlet step.');
   const now = Date.now();
   const today = ukDateKey(new Date(now));
+  // A run belongs to the UK day it started on: the next day the Gauntlet
+  // starts again from the first Easy bot (full lives), never from where an
+  // old run stopped.
+  const runDay = (run) => ukDateKey(new Date(num(run.startedAt) || num(run.lastAt) || 0));
+  const liveRun = (g) => (g.run && runDay(g.run) === today ? g.run : null);
   const status = (g) => ({
-    run: g.run ? { id: g.run.id, round: num(g.run.round), lives: num(g.run.lives), playing: !!g.run.playing } : null,
+    run: liveRun(g) ? { id: g.run.id, round: num(g.run.round), lives: num(g.run.lives), playing: !!g.run.playing, day: today } : null,
     doneToday: g.doneDay === today, completions: num(g.completions), firstDone: !!g.firstDoneAt
   });
   if (op === 'status') {
@@ -693,8 +698,8 @@ actions.gauntlet = async ({ uid, data }) => {
       g.run = { id: `g${now.toString(36)}${nodeCrypto.randomInt(1e9).toString(36)}`, round: 0, lives: G.lives, startedAt: now, lastAt: now, playing: true };
       return { user };
     }
-    const run = g.run;
-    if (!run || run.id !== clip(data.runId, 40)) return { error: 'That Gauntlet run has ended.' };
+    const run = liveRun(g);
+    if (!run || run.id !== clip(data.runId, 40)) return { error: g.run && !run ? "That Gauntlet run has ended: it's a new day, so the Gauntlet starts again from the first bot." : 'That Gauntlet run has ended.' };
     const loseLife = () => {
       run.lives = num(run.lives) - 1;
       run.playing = false;

@@ -1567,6 +1567,20 @@ async function runDevTestSuite() {
     assertTrue(on, 'ON should be green');
     assertTrue(off, 'OFF should be red');
   });
+  await test('REGRESSION: the rank toggle keeps its full-size tile after toggling (was a tiny glyph on iPhone)', () => {
+    const btn = document.getElementById('multiSelectToggleBtn');
+    const prev = selectAllOfRank;
+    selectAllOfRank = true; updateMultiSelectToggleUI();
+    selectAllOfRank = false; updateMultiSelectToggleUI();
+    const svg = btn.querySelector('svg use[href="#ui-select-rank"]');
+    const box = btn.querySelector('svg') && btn.querySelector('svg').getBoundingClientRect();
+    const text = Array.from(btn.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join('');
+    selectAllOfRank = prev; updateMultiSelectToggleUI();
+    assertTrue(!!svg, 'The select-rank tile must stay after a toggle');
+    assertEqual(text, '', 'No text glyph in the button');
+    assertTrue(!!box && box.width >= 24, 'The tile keeps its size, got ' + (box && box.width));
+    assertTrue(!!btn.querySelector('.rank-toggle-dot'), 'An ON/OFF dot shows the state');
+  });
   await test('REGRESSION: the tutorial never writes a restorable saved game', () => {
     freshState(); tutorialTestSetup();
     try { localStorage.removeItem('shithead_game_state'); } catch (e) {}
@@ -5772,6 +5786,48 @@ async function runDevTestSuite() {
       assertTrue(/CONTINUE 3\/5/.test(document.getElementById('gauntletBtn').textContent), 'The lobby button offers to continue');
     } finally {
       gauntletStore.set(GAUNTLET_PENDING_KEY, null); gauntletStore.set(GAUNTLET_BETWEEN_KEY, null); gauntletStore.set(GAUNTLET_LAST_KEY, null);
+      refreshGauntletLobbyBtn();
+      gauntletRestore(saved);
+    }
+  });
+
+  await test('Gauntlet: a new UK day starts again from the first Easy bot (no Continue, no old game or screen)', async () => {
+    const saved = gauntletSaved();
+    const yesterday = previousLocalDateKey();
+    try {
+      currentUser = null;
+      localStorage.removeItem(GAUNTLET_LOCAL_KEY);
+      let r = await gauntletCall('start');
+      r = await gauntletCall('result', { runId: r.run.id, won: true });
+      assertTrue(/CONTINUE 2\/5/.test(document.getElementById('gauntletBtn').textContent), 'Same day: the lobby offers to continue');
+      // Midnight passes.
+      const g = JSON.parse(localStorage.getItem(GAUNTLET_LOCAL_KEY)); g.run.day = yesterday;
+      localStorage.setItem(GAUNTLET_LOCAL_KEY, JSON.stringify(g));
+      gauntletStore.set(GAUNTLET_LAST_KEY, { ...gauntletStore.get(GAUNTLET_LAST_KEY), day: yesterday });
+      refreshGauntletLobbyBtn();
+      assertTrue(!/CONTINUE/.test(document.getElementById('gauntletBtn').textContent), 'Next day: the button no longer offers the old run');
+      const st = await gauntletCall('status');
+      assertEqual(st.run, null, "Yesterday's run is gone");
+      let refused = false;
+      try { await gauntletCall('begin', { runId: g.run.id }); } catch (e) { refused = /has ended/.test(e.message); }
+      assertTrue(refused, "Yesterday's run can't be continued");
+      r = await gauntletCall('start');
+      assertTrue(r.run.round === 0 && r.run.lives === 3, 'A fresh run from the first Easy bot, full lives');
+      // A saved Gauntlet game from yesterday isn't restored.
+      const stash = localStorage.getItem('shithead_game_state');
+      localStorage.setItem('shithead_game_state', JSON.stringify({ phase: 'PLAY', players: [{ id: 'p_user' }], gauntlet: { runId: 'x', round: 3, lives: 2, day: yesterday } }));
+      const restored = loadGameState();
+      const left = localStorage.getItem('shithead_game_state');
+      if (stash === null) localStorage.removeItem('shithead_game_state'); else localStorage.setItem('shithead_game_state', stash);
+      assertTrue(!restored && left === null, "Yesterday's Gauntlet game is dropped, not restored");
+      // Nor does yesterday's between-games screen reopen.
+      gauntletStore.set(GAUNTLET_BETWEEN_KEY, { owner: 'device', at: Date.now() - 36 * 3600 * 1000 });
+      const dev = devTestSuiteRunning; devTestSuiteRunning = false;
+      try { resumeGauntletBetweenGames(); } finally { devTestSuiteRunning = dev; }
+      assertEqual(gauntletStore.get(GAUNTLET_BETWEEN_KEY), null, "Yesterday's Continue screen is forgotten");
+    } finally {
+      localStorage.removeItem(GAUNTLET_LOCAL_KEY);
+      gauntletStore.set(GAUNTLET_BETWEEN_KEY, null); gauntletStore.set(GAUNTLET_LAST_KEY, null);
       refreshGauntletLobbyBtn();
       gauntletRestore(saved);
     }
