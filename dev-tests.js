@@ -4558,7 +4558,7 @@ async function runDevTestSuite() {
     const rows = [...document.querySelectorAll('#leaderboardArea [data-lb-row]')].map(r => r.dataset.lbRow);
     assertEqual(rows, ['Bob', 'Ann', 'Cy'], 'Best first, ties by name, nobody on 0');
     const area = document.getElementById('leaderboardArea').innerHTML;
-    assertTrue(area.includes('30 challenges completed') && /🥇/.test(area) && (area.match(/🥈/g) || []).length === 2, 'Counts shown; equal counts share a place', area.slice(0, 300));
+    assertTrue(area.includes('30 challenges completed') && /lb-place is-1/.test(area) && (area.match(/lb-place is-2/g) || []).length === 2, 'Counts shown; equal counts share a place', area.slice(0, 300));
     assertTrue(document.querySelector('#leaderboardArea [data-lb-row="Ann"]').innerHTML.includes('YOU'), 'Your own row is marked by account, not name');
     const myPic = resolveAvatarId(equippedCosmetics.avatar);
     const d = document.createElement('div'); d.innerHTML = avatarHtml(myPic, 30);

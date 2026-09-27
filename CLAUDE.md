@@ -117,6 +117,12 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Seasonal (`§ Seasonal challenges`): a Challenges tab shown only while an event is on (`renderSeasonalChallenges`, `liveSeasonalChallengeWindow`). `SEASONAL_CHALLENGES` (finish 30 = 330, burn 50 = 275, 15 Jokers = 330, win 15 = 440) + `SEASONAL_CHALLENGE_BONUS` (all four = 550), event-long and ~10% above the weekly rate per match, ending in 5/0. Progress `users/{uid}/seasonalChallengeState/{event-year}/{id}`; keys `season_<event-year>_<id>`; the server (`challengeForKey`) pays only while that event is on, the bonus only after all four; numbers come from the catalog export.
 - Every row shows what the challenge asks for; a completed row keeps that description (with the ✓) instead of just "Completed". The "Challenge completed" mail shows it too. One source: `challengeDescription(defOrCompletionKey)` (handles `daily_<date>_<id>` / `weekly_<week>_<id>` keys and the tutorial).
 
+## Icons (no emoji as UI)
+
+- `§ Icons`: the sprite at the top of `<body>` holds the line icons `#ic-…` (24px grid, 1.75 stroke, `currentColor`), the full-colour Diamond `#ic-gem`, place discs `#ic-place1-3`, Gauntlet lives and rank badges `#tier-novice…master` (the same metal gradients as the crown pictures, `av-m-*`). Markup: `icon('gift')`, `tierBadge('Gold')`. The owner's rule: never use emoji as UI icons, button symbols, status indicators or bullets; use an SVG icon.
+- Every text node is passed through `iconizeTextNode` (a MutationObserver from start-up): the UI emoji listed in `EMOJI_ICON` become icons wherever they're drawn (templates, textContent, banners). `EMOJI_KEEP` subtrees are left alone because their emoji are content: emotes, effect art tiles and stages, seasonal badges. A new UI symbol = a new `#ic-` symbol (+ an `EMOJI_ICON` entry if old text uses the emoji).
+- Still emoji (phase 2): the What's New icon column's unmapped rows, the 9 seasonal event marks (`ev.emoji`), 💩/☝️ status marks and effect tile art.
+
 ## Microinteractions & flips
 
 - Main buttons press in (`scale` on `:active`, plus a 6ms vibration tick on touch); a touched hand card lifts; Play pulses once when it becomes available (`mi-pulse-once`); the turn pill slides in when your turn arrives (`mi-slide-in`); the header Diamond count rolls to its new value (`rollDiamondCount`).

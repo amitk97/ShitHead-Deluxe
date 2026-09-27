@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v173 (ShitHead-Deluxe-155) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v174 (ShitHead-Deluxe-156) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -371,6 +371,15 @@
     .auth-help-link { font:inherit; font-weight:800; color:#fbbf24; text-decoration:underline; padding:0; }
     /* Challenges header: Diamonds, completed count, Shop shortcut: one height. */
     /* Diamonds left, completed count dead centre, Shop right. */
+    .ic { width:1.15em; height:1.15em; display:inline-block; vertical-align:-.2em; flex:none; overflow:visible; }
+    .ic-gem { width:1.05em; height:1.05em; vertical-align:-.15em; }
+    .ic-tier { width:1.3em; height:1.3em; vertical-align:-.3em; }
+    .mode-ic { width:20px; height:20px; margin-bottom:2px; }
+    .ch-row-lead .ic-tier { width:22px; height:22px; display:block; }
+    .lb-place { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:999px; font-size:11px; font-weight:900; color:#1f2937; box-shadow:inset 0 -2px 0 rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.6); }
+    .lb-place.is-1 { background:linear-gradient(#fff4b8,#fbbf24 55%,#a16207); }
+    .lb-place.is-2 { background:linear-gradient(#ffffff,#cbd5e1 55%,#64748b); }
+    .lb-place.is-3 { background:linear-gradient(#ffd3a1,#d08a4a 55%,#7a4420); }
     .loadout-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin-bottom:8px; }
     .loadout-slot { position:relative; display:flex; flex-direction:column; gap:3px; padding:5px; border-radius:12px; border:1px solid #334155; background:rgba(15,23,42,.7); text-align:center; cursor:pointer; min-width:0; }
     .loadout-slot.is-active { border-color:#f59e0b; box-shadow:0 0 0 1px #f59e0b, 0 0 12px rgba(245,158,11,.25); }
@@ -4299,6 +4308,51 @@ video {
 <body class="bg-slate-950 text-slate-100 theme-obsidian select-none">
   <!-- Shared two-tone navigation icon pack. A navy rounded tile, bold pale
        linework and one bright accent keep every icon coherent in dark mode. -->
+  <!-- UI icon set (icon(), tierBadge()): one line style; the Diamond and tier badges are the only full-colour ones. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="ic-gem-t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0fbff"/><stop offset="1" stop-color="#7dd3fc"/></linearGradient><linearGradient id="ic-gem-l" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#0369a1"/></linearGradient><linearGradient id="ic-gem-r" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#0e7490"/></linearGradient><linearGradient id="tier-g-novice" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#94a3b8"/><stop offset=".45" stop-color="#64748b"/><stop offset="1" stop-color="#334155"/></linearGradient><linearGradient id="tier-g-bronze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd3a1"/><stop offset=".45" stop-color="#d08a4a"/><stop offset="1" stop-color="#7a4420"/></linearGradient><linearGradient id="tier-g-silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#cbd5e1"/><stop offset="1" stop-color="#64748b"/></linearGradient><linearGradient id="tier-g-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4b8"/><stop offset=".45" stop-color="#fbbf24"/><stop offset="1" stop-color="#a16207"/></linearGradient><linearGradient id="tier-g-platinum" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0fdff"/><stop offset=".45" stop-color="#67e8f9"/><stop offset="1" stop-color="#0e7490"/></linearGradient><linearGradient id="tier-g-master" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fae8ff"/><stop offset=".45" stop-color="#c084fc"/><stop offset="1" stop-color="#6b21a8"/></linearGradient></defs>
+    <symbol id="ic-gift" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="4" rx="1"/><path d="M5 12.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7.5M12 8.5V21"/><path d="M12 8.5C10.5 5 7 4.5 6.5 6.5S9 8.5 12 8.5c3 0 5.5-.5 5.5-2S13.5 5 12 8.5z"/></g></symbol>
+    <symbol id="ic-trophy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5v1.5A3.5 3.5 0 0 0 7.5 11M17 6h2.5v1.5A3.5 3.5 0 0 1 16.5 11"/><path d="M12 14v3.5M8.5 20.5h7M9.5 20.5l.5-3h4l.5 3"/></g></symbol>
+    <symbol id="ic-flame" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-3.9 0-6.5-2.7-6.5-6.2 0-3.9 3.1-6 4-9.8 2.2 1.4 3.2 3.4 3.2 5.2 1-.6 1.7-1.7 1.9-2.9 2.4 1.9 3.9 4.6 3.9 7.4C18.5 18.3 15.9 21 12 21z"/><path d="M12 21c-1.7 0-3-1.2-3-2.9 0-1.9 1.6-2.8 2.1-4.6 1.8 1 3.9 2.7 3.9 4.6 0 1.7-1.3 2.9-3 2.9z"/></g></symbol>
+    <symbol id="ic-joker" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13.5 3 6l5 4 4-6 4 6 5-4-2 7.5z"/><circle cx="3" cy="5.5" r="1"/><circle cx="12" cy="3.5" r="1"/><circle cx="21" cy="5.5" r="1"/><path d="M6 13.5a6 6 0 0 0 12 0"/><path d="M9.5 16.5c.8.8 1.6 1 2.5 1s1.7-.2 2.5-1"/></g></symbol>
+    <symbol id="ic-cards" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3.5" width="11" height="15" rx="2"/><path d="M8 6.5 5.2 7.4a1.5 1.5 0 0 0-1 1.9l3.3 10.3a1.5 1.5 0 0 0 1.9 1l6.6-2.1"/><path d="M13.5 8.5l1.5 2.5-1.5 2.5-1.5-2.5z"/></g></symbol>
+    <symbol id="ic-swords" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3.5 6.5V3.5h3l11 11M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 17.5 3.5h3v3l-3 3M5 14l4 4M7 17l-3 3M3 19l2 2"/></g></symbol>
+    <symbol id="ic-crown" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8l4 4 4-6 4 6 4-4-1.5 10h-13z"/><path d="M5.5 20.5h13"/></g></symbol>
+    <symbol id="ic-star" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.9z"/></g></symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></g></symbol>
+    <symbol id="ic-close" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></g></symbol>
+    <symbol id="ic-warning" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 4.3 2.9 17.5A2 2 0 0 0 4.6 20.5h14.8a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4.5M12 17.2v.1"/></g></symbol>
+    <symbol id="ic-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5M12 14.5v2"/></g></symbol>
+    <symbol id="ic-bot" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="7.5" width="15" height="11" rx="3"/><path d="M12 7.5V4.5M12 4.5h.01M2.5 12v3M21.5 12v3"/><circle cx="9" cy="12.5" r="1.2"/><circle cx="15" cy="12.5" r="1.2"/><path d="M9.5 15.8h5"/></g></symbol>
+    <symbol id="ic-users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 19.5a6.5 6.5 0 0 1 13 0"/><path d="M16 5.2a3.5 3.5 0 0 1 0 6.6M18 14.2c2 .9 3.5 2.8 3.5 5.3"/></g></symbol>
+    <symbol id="ic-sparkle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.6 4.7 2.3 6.4 7 7-4.7.6-6.4 2.3-7 7-.6-4.7-2.3-6.4-7-7 4.7-.6 6.4-2.3 7-7z"/><path d="M19 16.5c.2 1.4.8 2 2.2 2.2-1.4.2-2 .8-2.2 2.2-.2-1.4-.8-2-2.2-2.2 1.4-.2 2-.8 2.2-2.2z"/></g></symbol>
+    <symbol id="ic-party" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20.5 8.5 8l7.5 7.5z"/><path d="M13 4.5c.5 1.5 0 2.5-1 3M20 11c-1.5-.5-2.5 0-3 1M17 3.5v2M20.5 7h-2M18 6l1.5-1.5"/></g></symbol>
+    <symbol id="ic-refresh" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.3L4 8.5M4 4v4.5h4.5M4 13a8 8 0 0 0 14.3 4.3L20 15.5M20 20v-4.5h-4.5"/></g></symbol>
+    <symbol id="ic-share" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="17.5" cy="5.5" r="2.5"/><circle cx="6.5" cy="12" r="2.5"/><circle cx="17.5" cy="18.5" r="2.5"/><path d="M8.7 10.8l6.6-4M8.7 13.2l6.6 4"/></g></symbol>
+    <symbol id="ic-link" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></g></symbol>
+    <symbol id="ic-eye" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></g></symbol>
+    <symbol id="ic-bell" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></g></symbol>
+    <symbol id="ic-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></g></symbol>
+    <symbol id="ic-pencil" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 4.5l4 4L8.5 19.5 4 20l.5-4.5z"/><path d="M13.5 6.5l4 4"/></g></symbol>
+    <symbol id="ic-trash" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5h15M9.5 6.5V4.5h5v2M6.5 6.5l1 13.5h9l1-13.5M10 10.5v6M14 10.5v6"/></g></symbol>
+    <symbol id="ic-save" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.5h11l3.5 3.5v12a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V5A1.5 1.5 0 0 1 5 3.5z"/><path d="M7.5 3.5v5h8v-5M7.5 20.5v-6h9v6"/></g></symbol>
+    <symbol id="ic-shield" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 5 6v5.5c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6z"/><path d="m9 12 2 2 4-4"/></g></symbol>
+    <symbol id="ic-ranked" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 5 6v5.5c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6z"/><path d="M8.8 14.5 12 12.5l3.2 2M8.8 11 12 9l3.2 2"/></g></symbol>
+    <symbol id="ic-leader" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 20.5h17M5 20.5V14h4v6.5M10 20.5V9h4v11.5M15 20.5V12h4v8.5"/><path d="m12 3 .8 1.6 1.7.2-1.2 1.2.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.2 1.7-.2z"/></g></symbol>
+    <symbol id="ic-online" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.3 3.5 5.2 3.5 8.5s-1.1 6.2-3.5 8.5c-2.4-2.3-3.5-5.2-3.5-8.5S9.6 5.8 12 3.5z"/></g></symbol>
+    <symbol id="ic-burst" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.8 5.2L19 6l-2.2 5.2L22 13l-5.4 1.3L18 19.5l-4.8-2.8L12 22l-1.2-5.3L6 19.5l1.4-5.2L2 13l5.2-1.8L5 6l5.2 2.2z"/></g></symbol>
+    <symbol id="ic-bolt" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2.5 4.5 13.5h7l-1 8 8.5-11h-7z"/></g></symbol>
+    <symbol id="ic-cart" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 11h10.6l2-8H6.3"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></g></symbol>
+    <symbol id="ic-place1" viewBox="0 0 24 24"><defs><linearGradient id="ic-pl1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4b8"/><stop offset=".55" stop-color="#fbbf24"/><stop offset="1" stop-color="#a16207"/></linearGradient></defs><circle cx="12" cy="12" r="9.5" fill="url(#ic-pl1)" stroke="rgba(0,0,0,.35)" stroke-width="1"/><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="900" font-family="system-ui,sans-serif" fill="#1f2937">1</text></symbol><symbol id="ic-place2" viewBox="0 0 24 24"><defs><linearGradient id="ic-pl2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#cbd5e1"/><stop offset="1" stop-color="#64748b"/></linearGradient></defs><circle cx="12" cy="12" r="9.5" fill="url(#ic-pl2)" stroke="rgba(0,0,0,.35)" stroke-width="1"/><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="900" font-family="system-ui,sans-serif" fill="#1f2937">2</text></symbol><symbol id="ic-place3" viewBox="0 0 24 24"><defs><linearGradient id="ic-pl3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd3a1"/><stop offset=".55" stop-color="#d08a4a"/><stop offset="1" stop-color="#7a4420"/></linearGradient></defs><circle cx="12" cy="12" r="9.5" fill="url(#ic-pl3)" stroke="rgba(0,0,0,.35)" stroke-width="1"/><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="900" font-family="system-ui,sans-serif" fill="#1f2937">3</text></symbol>
+    <symbol id="ic-life" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z" fill="#f43f5e" stroke="#881337" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 9.3c.6-.9 1.6-1.1 2.3-.8" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".6" fill="none"/></symbol>
+    <symbol id="ic-life-lost" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="ic-gem" viewBox="2.4 2.4 19.2 19.2"><path d="M7 3.5h10l4 5.5-9 11.5L3 9z" fill="url(#ic-gem-l)"/><path d="M12 20.5 21 9h-5.2z" fill="url(#ic-gem-r)"/><path d="M3 9h18l-4-5.5H7z" fill="url(#ic-gem-t)"/><path d="M8.2 9 12 3.5 15.8 9z" fill="#f0fdff" opacity=".85"/><path d="M8.2 9 12 20.5 15.8 9" fill="none" stroke="#0c4a6e" stroke-width=".7" opacity=".55"/><path d="M7 3.5h10l4 5.5-9 11.5L3 9z M3 9h18" fill="none" stroke="#082f49" stroke-width="1" stroke-linejoin="round"/><path d="M8.3 5.4 7.4 7" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/></symbol>
+    <symbol id="tier-novice" viewBox="3.5 1.5 17 21"><path d="M12 2.5 5 5v6c0 4.9 3 8.4 7 10.3 4-1.9 7-5.4 7-10.3V5z" fill="url(#tier-g-novice)" stroke="#0f172a" stroke-width="1.1" stroke-linejoin="round"/><path d="M12 3.6 6 5.8v1.6L12 5.2l6 2.2V5.8z" fill="#fff" opacity=".35"/></symbol>
+    <symbol id="tier-bronze" viewBox="3.5 1.5 17 21"><path d="M12 2.5 5 5v6c0 4.9 3 8.4 7 10.3 4-1.9 7-5.4 7-10.3V5z" fill="url(#tier-g-bronze)" stroke="#3b1d08" stroke-width="1.1" stroke-linejoin="round"/><path d="M12 3.6 6 5.8v1.6L12 5.2l6 2.2V5.8z" fill="#fff" opacity=".35"/><path d="M8.3 14.5l3.7-2.3 3.7 2.3" fill="none" stroke="#3b1d08" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="tier-silver" viewBox="3.5 1.5 17 21"><path d="M12 2.5 5 5v6c0 4.9 3 8.4 7 10.3 4-1.9 7-5.4 7-10.3V5z" fill="url(#tier-g-silver)" stroke="#1e293b" stroke-width="1.1" stroke-linejoin="round"/><path d="M12 3.6 6 5.8v1.6L12 5.2l6 2.2V5.8z" fill="#fff" opacity=".35"/><path d="M8.3 14.5l3.7-2.3 3.7 2.3" fill="none" stroke="#1e293b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.3 11.5l3.7-2.3 3.7 2.3" fill="none" stroke="#1e293b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="tier-gold" viewBox="3.5 1.5 17 21"><path d="M12 2.5 5 5v6c0 4.9 3 8.4 7 10.3 4-1.9 7-5.4 7-10.3V5z" fill="url(#tier-g-gold)" stroke="#451a03" stroke-width="1.1" stroke-linejoin="round"/><path d="M12 3.6 6 5.8v1.6L12 5.2l6 2.2V5.8z" fill="#fff" opacity=".35"/><path d="M8.3 14.5l3.7-2.3 3.7 2.3" fill="none" stroke="#451a03" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.3 11.5l3.7-2.3 3.7 2.3" fill="none" stroke="#451a03" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.3 8.5l3.7-2.3 3.7 2.3" fill="none" stroke="#451a03" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="tier-platinum" viewBox="3.5 1.5 17 21"><path d="M12 2.5 5 5v6c0 4.9 3 8.4 7 10.3 4-1.9 7-5.4 7-10.3V5z" fill="url(#tier-g-platinum)" stroke="#083344" stroke-width="1.1" stroke-linejoin="round"/><path d="M12 3.6 6 5.8v1.6L12 5.2l6 2.2V5.8z" fill="#fff" opacity=".35"/><path d="M8.3 15.2l3.7-2.3 3.7 2.3" fill="none" stroke="#083344" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.3 12.6l3.7-2.3 3.7 2.3" fill="none" stroke="#083344" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="m12 5.8 1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3z" fill="#fff" stroke="#083344" stroke-width=".6"/></symbol>
+    <symbol id="tier-master" viewBox="3.5 1.5 17 21"><path d="M12 2.5 5 5v6c0 4.9 3 8.4 7 10.3 4-1.9 7-5.4 7-10.3V5z" fill="url(#tier-g-master)" stroke="#2e1065" stroke-width="1.1" stroke-linejoin="round"/><path d="M12 3.6 6 5.8v1.6L12 5.2l6 2.2V5.8z" fill="#fff" opacity=".35"/><path d="M8 13.5 7.3 8.8l2.3 1.8L12 7.3l2.4 3.3 2.3-1.8-.7 4.7z" fill="#fde68a" stroke="#2e1065" stroke-width=".9" stroke-linejoin="round"/><path d="M8.4 15.3h7.2" stroke="#2e1065" stroke-width="1.3" stroke-linecap="round"/></symbol>
+  </svg>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
     <symbol id="ui-tutorial" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M5.8 9.1c3.3-.9 6.3-.4 9 1.5v13c-2.7-1.9-5.7-2.4-9-1.5V9.1Zm20.4 0c-3.3-.9-6.3-.4-9 1.5v13c2.7-1.9 5.7-2.4 9-1.5V9.1Z" fill="none" stroke="#cbd5e1" stroke-width="2.2" stroke-linejoin="round"/><circle cx="21.7" cy="13.3" r="1.2" fill="#34d399"/><path d="M21.7 16v3.5" stroke="#34d399" stroke-width="2.2" stroke-linecap="round"/></symbol>
     <symbol id="ui-profile" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033" stroke="#334155"/><circle cx="16" cy="12" r="4" fill="#263449" stroke="#cbd5e1" stroke-width="2"/><path d="M8.5 25c.7-5.3 3.3-7.7 7.5-7.7s6.8 2.4 7.5 7.7" fill="#263449" stroke="#cbd5e1" stroke-width="2.1" stroke-linecap="round"/><path d="M22.8 6.6h2.6v2.6" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/></symbol>
@@ -4507,14 +4561,17 @@ video {
 
         <div class="grid grid-cols-3 gap-2">
           <button id="modeSingleBtn" class="py-2 px-2 rounded-xl font-bold bg-amber-600 hover:bg-amber-500 text-slate-950 transition flex flex-col items-center">
+            <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-bot"/></svg>
             <span class="text-sm font-black">Vs Bots</span>
             <span class="text-[9px] font-bold opacity-80">1-3 AI Players</span>
           </button>
           <button id="modeMultiBtn" class="py-2 px-2 rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition flex flex-col items-center">
+            <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-online"/></svg>
             <span class="text-sm font-black">Online Room</span>
             <span class="text-[9px] font-bold opacity-75">Join / Host</span>
           </button>
           <button id="modeRankedBtn" class="py-2 px-2 rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition flex flex-col items-center">
+            <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-ranked"/></svg>
             <span class="text-sm font-black">Ranked</span>
             <span class="text-[9px] font-bold opacity-75">Auto-Matched 1v1</span>
           </button>
@@ -7159,6 +7216,7 @@ video {
   <script>
     // MAP OF THIS SCRIPT (search for "// § " to jump between sections):
     //   § Start-up plumbing: pages to <body>, Firebase, error reports, callEconomy
+    //   § Icons: the SVG icon set and the emoji → icon converter
     //   § Game state, save & restore
     //   § Rules engine: legal moves and constraints
     //   § Bot AI
@@ -7187,6 +7245,68 @@ video {
     //   § Phone back gesture
     //   § Tutorial
     //   § Page start-up
+
+    // § Icons: the SVG icon set and the emoji → icon converter
+    // The icons are <symbol>s in the sprite at the top of <body> (#ic-…,
+    // tier badges #tier-…). One line style drawn in currentColor; only the
+    // Diamond, Gauntlet lives and rank tier badges are full colour (the tier
+    // badges use the same metals as the crown pictures). icon('gift') /
+    // tierBadge('Gold') give the markup. So that no UI shows an emoji icon,
+    // every text node the game draws is passed through iconizeTextNode: the
+    // UI emoji in EMOJI_ICON become icons. Emotes, effect art and seasonal
+    // marks (EMOJI_KEEP) are left alone, since the emoji there are content.
+    function icon(name, cls = '') {
+      return `<svg class="ic ic-${name}${cls ? ` ${cls}` : ''}" aria-hidden="true" focusable="false"><use href="#ic-${name}"/></svg>`;
+    }
+    const RANK_TIER_IDS = ['novice', 'bronze', 'silver', 'gold', 'platinum', 'master'];
+    function tierBadge(tier, cls = '') {
+      const k = String(tier || 'novice').toLowerCase();
+      return `<svg class="ic ic-tier${cls ? ` ${cls}` : ''}" aria-hidden="true" focusable="false"><use href="#tier-${RANK_TIER_IDS.includes(k) ? k : 'novice'}"/></svg>`;
+    }
+    const EMOJI_ICON = {
+      '💎': 'gem', '🎁': 'gift', '🏆': 'trophy', '🔥': 'flame', '⚠': 'warning', '⚔': 'swords', '🗡': 'swords',
+      '🎉': 'party', '🥳': 'party', '✨': 'sparkle', '🤖': 'bot', '🔗': 'link', '🔄': 'refresh', '🔃': 'refresh',
+      '⏱': 'clock', '⏳': 'clock', '🔒': 'lock', '⭐': 'star', '🗑': 'trash', '✏': 'pencil', '✎': 'pencil',
+      '👀': 'eye', '🔔': 'bell', '👥': 'users', '🛒': 'cart', '🛍': 'cart', '✅': 'check', '✔': 'check',
+      '💾': 'save', '📤': 'share', '💥': 'burst', '⚡': 'bolt', '🃏': 'joker', '👑': 'crown', '🏅': 'trophy',
+      '🎖': 'trophy', '🛡': 'shield', '🎮': 'cards', '📊': 'leader', '🥇': 'place1', '🥈': 'place2', '🥉': 'place3'
+    };
+    const EMOJI_ICON_RE = new RegExp(`(?:${Object.keys(EMOJI_ICON).join('|')})\uFE0F?`, 'gu');
+    const EMOJI_KEEP = '#emoteLayer, [data-keep-emoji], .emote-float, .effect-mini-tile, .shop-burn-core, .jfx-stage, .jfx-stage-hint, .season-badge, .season-emoji, .pp-show-icon, .bfx, #jokerFxLayer, #victoryFxLayer, #burnFxLayer, .shop-preview-stage, textarea, script, style';
+    const iconTemplate = document.createElement('template');
+    function iconizeTextNode(node) {
+      const text = node.data;
+      EMOJI_ICON_RE.lastIndex = 0;
+      if (!text || !EMOJI_ICON_RE.test(text)) return;
+      const parent = node.parentElement;
+      if (!parent || parent.closest('svg') || parent.closest(EMOJI_KEEP)) return;
+      const frag = document.createDocumentFragment();
+      let last = 0, m;
+      EMOJI_ICON_RE.lastIndex = 0;
+      while ((m = EMOJI_ICON_RE.exec(text))) {
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        iconTemplate.innerHTML = icon(EMOJI_ICON[m[0].replace(/\uFE0F/g, '')]);
+        frag.appendChild(iconTemplate.content.firstChild);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.replaceWith(frag);
+    }
+    function iconizeEmoji(root) {
+      if (root.nodeType === 3) { iconizeTextNode(root); return; }
+      if (root.nodeType !== 1 || root.closest?.('svg')) return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      const found = [];
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) { EMOJI_ICON_RE.lastIndex = 0; if (EMOJI_ICON_RE.test(n.data)) found.push(n); }
+      found.forEach(iconizeTextNode);
+    }
+    new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === 'characterData') iconizeTextNode(m.target);
+        else m.addedNodes.forEach(iconizeEmoji);
+      }
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+    iconizeEmoji(document.body);
 
     // § Start-up plumbing: pages to <body>, Firebase, error reports
     // Pages and pop-ups live at the top level of <body>. Written inside the
@@ -16379,6 +16499,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v174: [
+        ['💎', 'A fresh look: new drawn icons across the game instead of emoji, a new Diamond, and rank badges for every tier (the crown pictures match their tier colours).'],
+        ['🎮', 'Vs Bots, Online Room and Ranked now have their own icons on the home screen.']
+      ],
       v173: [
         ['🛠️', 'Fixed: the saved-look options now fit inside their slot, and tab highlights line up as soon as a page opens.']
       ],
@@ -21731,7 +21855,7 @@ video {
       const win = liveSeasonalChallengeWindow();
       if (tab) {
         tab.classList.toggle('hidden', !win);
-        if (win) tab.innerHTML = `${win.event.emoji} Seasonal`;
+        if (win) tab.textContent = 'Seasonal';
       }
       if (!win) {
         // The event ended while the tab was open: back to Daily.
@@ -21960,15 +22084,15 @@ video {
     // One shared row template for every list in the modal — completed
     // shows a checkmark in place of the progress/reward per spec ("When
     // complete, replace the progress/reward with a Completed checkmark").
-    function renderChallengeRowHTML(name, progressText, reward, completed, desc = '') {
+    function renderChallengeRowHTML(name, progressText, reward, completed, desc = '', lead = '') {
       const rightSide = completed
         ? '<span class="text-emerald-400 text-xs font-black" aria-label="Completed">&#10003;</span>'
         : `<span class="flex items-center gap-1 text-[10px] font-black text-cyan-300">&#128142; ${reward}</span>`;
       return `<div class="flex items-center justify-between px-2 py-1.5 bg-slate-900/70 border border-slate-800 rounded-lg">
-        <div class="flex flex-col">
+        <div class="flex items-center gap-2 min-w-0">${lead ? `<span class="ch-row-lead">${lead}</span>` : ''}<div class="flex flex-col">
           <span class="text-[10px] font-bold text-slate-200">${name}</span>
           <span class="text-[9px] text-slate-500">${completed ? (desc || 'Completed') : progressText}</span>
-        </div>
+        </div></div>
         ${rightSide}
       </div>`;
     }
@@ -22098,7 +22222,7 @@ video {
       setListHtml('challengesRankTiersList', CHALLENGE_DEFS.rankTiers.map((c) => {
         const completed = !!challengeEconomy.completedChallenges[c.id];
         const progress = Math.min(rating, c.minRating);
-        return renderChallengeRowHTML(c.name, `${progress}/${c.minRating} rating`, c.reward, completed, challengeDescription(c));
+        return renderChallengeRowHTML(c.name, `${progress}/${c.minRating} rating`, c.reward, completed, challengeDescription(c), tierBadge(getRankTier(c.minRating).name));
       }).join(''));
 
       // Gauntlet: first clear (Bots) and the fixed Daily Gauntlet (paid by
@@ -22297,7 +22421,7 @@ video {
     // `record` (e.g. "3W-7L") joins the same pill on the Profile page.
     function renderRatingBadge(rating, record = '') {
       const tier = getRankTier(rating);
-      return `<span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border font-black text-xs w-fit ${tier.cls}" style="${tier.style}">${tier.name} \u00b7 ${Math.round(rating)}${record ? ` \u00b7 <span class="profile-wl">${record}</span>` : ''}</span>`;
+      return `<span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border font-black text-xs w-fit ${tier.cls}" style="${tier.style}">${tierBadge(tier.name)}${tier.name} \u00b7 ${Math.round(rating)}${record ? ` \u00b7 <span class="profile-wl">${record}</span>` : ''}</span>`;
     }
 
     function refreshRankedUI() {
@@ -24147,12 +24271,13 @@ video {
       const isMe = tab === 'ranked'
         ? !!myName && String(p.username || '').toLowerCase() === String(myName).toLowerCase()
         : !!(currentUser && p.uid === currentUser.uid);
-      const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+      // Top three get a gold / silver / bronze place disc (no emoji medals).
+      const medal = rank <= 3 ? `<span class="lb-place is-${rank}" aria-label="Place ${rank}">${rank}</span>` : `#${rank}`;
       let sub, pill;
       if (tab === 'ranked') {
         const tier = getRankTier(p.rating || 500);
         sub = `${Number(p.wins)||0}W · ${Number(p.losses)||0}L · ${((Number(p.wins)||0)+(Number(p.losses)||0))} played`;
-        pill = `<span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border font-black text-[10px] w-fit ${tier.cls}" style="${tier.style}">${tier.name} · ${Math.round(p.rating || 500)}</span>`;
+        pill = `<span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border font-black text-[10px] w-fit ${tier.cls}" style="${tier.style}">${tierBadge(tier.name)}${tier.name} · ${Math.round(p.rating || 500)}</span>`;
       } else {
         const n = Number(p.count) || 0;
         sub = tab === 'challenges' ? `${n} challenge${n === 1 ? '' : 's'} completed` : `${n} Gauntlet bot${n === 1 ? '' : 's'} beaten`;
