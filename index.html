@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v164 (ShitHead-Deluxe-146) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v165 (ShitHead-Deluxe-147) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1039,6 +1039,23 @@
        previews (inside the preview stage). */
     #burnFxLayer { position:fixed; inset:0; pointer-events:none; z-index:46; overflow:hidden; }
     #victoryFxLayer { position:fixed; inset:0; pointer-events:none; z-index:110; overflow:hidden; }
+    /* Joker effects: over the table (64), under the emote picker (65) and every pop-up. */
+    #jokerFxLayer { position:fixed; inset:0; pointer-events:none; z-index:64; overflow:hidden; }
+    .jfx-host { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .jfx-scrim { position:absolute; inset:0; }
+    .jfx-scan { position:absolute; inset:0; background:repeating-linear-gradient(0deg, rgba(34,211,238,.12) 0 2px, transparent 2px 5px); mix-blend-mode:screen; }
+    .jfx-word { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-family:'Outfit','Arial Black',sans-serif; font-weight:900; color:#fff; white-space:nowrap; letter-spacing:.02em;
+      -webkit-text-stroke:2px #1e1b4b; paint-order:stroke fill; text-shadow:0 0 16px var(--jfx-glow, #fbbf24), 0 3px 0 #1e1b4b; }
+    .jfx-glitch-text { -webkit-text-stroke:0; text-shadow:none; letter-spacing:.06em; }
+    .jfx-wink { transform-box:fill-box; transform-origin:center; animation:jfxWink 1.5s linear both; }
+    @keyframes jfxWink { 0%, 42% { transform:scaleY(1); } 48%, 58% { transform:scaleY(.12); } 64%, 100% { transform:scaleY(1); } }
+    .jfx-flicker { animation:jfxFlicker .22s steps(2) infinite alternate; }
+    @keyframes jfxFlicker { from { opacity:1; } to { opacity:.7; } }
+    .jfx-stage { position:relative; overflow:hidden; height:170px; width:100%; border-radius:14px; border:1px solid #334155;
+      background:radial-gradient(circle at 50% 40%, #1e1b4b, #020617 75%); }
+    .jfx-stage-hint { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; font-size:34px; opacity:.55; pointer-events:none; }
+    .jfx-stage-hint small { font-size:8px; font-weight:700; color:#94a3b8; }
+    body.reduce-motion #jokerFxLayer { display:none; }
     .vfx-chop-text { font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; color:#ffffff; -webkit-text-stroke:1.5px #111827; paint-order:stroke fill; text-shadow:0 0 2px #111827, 3px 3px 0 #b91c1c, 5px 5px 0 #111827; white-space:nowrap; letter-spacing:.02em; }
     .bfx { position:absolute; left:0; top:0; pointer-events:none; will-change:transform,opacity; }
     .bfx svg { display:block; overflow:visible; }
@@ -4280,6 +4297,7 @@ video {
   <canvas id="particleCanvas"></canvas>
   <div id="burnFxLayer" aria-hidden="true"></div>
   <div id="victoryFxLayer" aria-hidden="true"></div>
+  <div id="jokerFxLayer" aria-hidden="true"></div>
 
   <!-- Snap Burn Banner -->
   <!-- Snap prompt: deliberately terse. Fixed to the bottom-centre and width
@@ -4798,9 +4816,9 @@ video {
         </button>
         </div>
         <div id="settingsTab-display" class="settings-body settings-tab-panel" data-settings-panel="display" role="tabpanel">
-        <button id="setBigEffectsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="vfx, effects, animation, embers, confetti, burn, win, victory, particles">
-          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Burn &amp; Victory Effects</span>
-          <span class="block text-[8px] text-slate-400 leading-snug">Off skips the burn embers and win confetti</span></span>
+        <button id="setBigEffectsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="vfx, effects, animation, embers, confetti, burn, win, victory, joker, particles">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Burn, Joker &amp; Victory Effects</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Off skips the burn embers, Joker animations and win confetti</span></span>
           <span id="setBigEffectsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         <button id="setIconsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="icons, power, hints, card info">
@@ -5455,6 +5473,7 @@ video {
         <div data-custom-panel="emotes" class="hidden"><div id="personalisationEmotes" class="cosmetic-tile-grid"></div></div>
         <div data-custom-panel="tableTheme" class="hidden"><div id="personalisationTableThemes" class="cosmetic-tile-grid"></div></div>
         <div data-custom-panel="burnEffect" class="hidden"><div id="personalisationBurnStage" class="shop-preview-stage mb-2" data-shop-burn-stage><div class="shop-burn-core">🔥</div><span class="text-[8px] font-bold text-slate-400 pointer-events-none" style="position:absolute;left:0;right:0;bottom:6px;text-align:center;">Tap an effect to preview it</span></div><div id="personalisationBurnEffects" class="cosmetic-tile-grid"></div></div>
+        <div data-custom-panel="jokerEffect" class="hidden"><div id="personalisationJokerStage" class="jfx-stage mb-2"><div class="jfx-stage-hint">🃏<small>Tap an effect to preview it</small></div></div><div id="personalisationJokerEffects" class="cosmetic-tile-grid"></div></div>
         <div data-custom-panel="victoryEffect" class="hidden"><div id="personalisationVictoryEffects" class="cosmetic-tile-grid"></div></div>
         <button id="unequipAllCosmeticsBtn" type="button" class="mt-3 w-full rounded-xl border border-rose-700 bg-rose-950/30 px-3 py-2 text-[9px] font-black uppercase tracking-wider text-rose-300 hover:bg-rose-900/50">Unequip All Cosmetics</button>
         <p id="personalisationStatus" class="text-[9px] text-center text-slate-500 pt-2" aria-live="polite"></p>
@@ -5979,6 +5998,24 @@ video {
           </div>
         </div>
 
+        <!-- Section 3b: The Gauntlet -->
+        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60">
+          <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
+            <span>The Gauntlet</span>
+            <span class="chevron transform transition-transform duration-200">&#9660;</span>
+          </button>
+          <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
+            <p>The <strong>Gauntlet</strong> is a Vs Bots challenge: <strong>five one-on-one games in a row</strong>, each against a tougher bot. Start it from the <strong class="text-amber-300">GAUNTLET</strong> button on the home screen, under the bot count.</p>
+            <p><strong class="text-amber-300">The rounds:</strong> 1 Easy, 2 Easy, 3 Medium, 4 Hard, 5 Boss. The hearts and round number sit in the top-left corner of the table.</p>
+            <p><strong class="text-amber-300">Lives:</strong> you have 3. Win a game and you move on to the next round. Lose one and you lose a life and face the <em>same</em> bot again. Lose all 3 and the run is over.</p>
+            <p><strong class="text-amber-300">Leaving:</strong> a game you start and don't finish counts as a loss, so leaving a game you're losing still costs a life. Closing the app is fine: the Gauntlet remembers exactly where you were, mid-game or between games.</p>
+            <p><strong class="text-amber-300">Rewards:</strong> beat all five for the first time and you get <strong>💎 200</strong>, the <strong>Gauntlet Champion</strong> profile picture and the <strong>Gauntlet Gold</strong> card frame, which only Gauntlet champions can have. After that, every day you beat it pays <strong>💎 50</strong>. It can be beaten once a day (it opens again at midnight, UK time).</p>
+            <p><strong class="text-amber-300">Offline:</strong> you can play it with no signal or signed out, just without Diamonds or rewards.</p>
+            <p><strong class="text-amber-300">Good to know:</strong> Gauntlet wins don't count toward unlocking bot difficulties or normal Vs Bots Diamonds. Every bot you beat does count on the <strong>Gauntlet leaderboard</strong>, even in runs you don't finish.</p>
+            <p><strong class="text-amber-300">Challenges:</strong> <em>Gauntlet Champion</em> (first clear) is in the Bots tab; the daily Gauntlet win is in the Daily tab.</p>
+          </div>
+        </div>
+
         <!-- Section 4: Key Terms -->
         <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60">
           <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
@@ -5989,23 +6026,34 @@ video {
             <p><strong class="text-amber-400">Base Card:</strong> The card at the very bottom of the Pile &mdash; the first one played since the last Burn. Normally irrelevant, but a 5 drops the target down to it, so the next player must beat the Base Card instead of the top one.</p>
             <p><strong class="text-amber-400">Blind Card:</strong> See <em>Face-Down Cards</em>.</p>
             <p><strong class="text-amber-400">Bonus Draw:</strong> If the card you draw right after playing matches the rank you just played, you get offered a free follow-up play with it before the turn passes &mdash; a way to chain extra plays in one turn.</p>
-            <p><strong class="text-amber-400">Burn:</strong> The entire Pile is removed from the game permanently &mdash; not picked up by anyone. Caused by a 10, by four of a kind, or by a Joker duel. Whoever burnt it plays again immediately on an empty Pile.</p>
+            <p><strong class="text-amber-400">Burn:</strong> The entire Pile is removed from the game permanently &mdash; not picked up by anyone. Caused by a 10, by four of a kind, or by a Joker duel. Whoever burnt it plays again immediately on an empty Pile &mdash; unless that was their last card, in which case they finish and the next player carries on.</p>
+            <p><strong class="text-amber-400">Challenges:</strong> Goals that pay Diamonds: Getting Started, daily and weekly picks, Bots, Ranked and Friends milestones. Menu &rarr; Challenges shows every one and what it asks for.</p>
             <p><strong class="text-amber-400">Constraint:</strong> A restriction the previous card placed on your turn. A 6 forces an EVEN card, a Jack forces an ODD card, and a 7 forces a card of rank 7 or lower. The banner shows the active constraint.</p>
             <p><strong class="text-amber-400">Deck:</strong> The face-down stack you draw from. After each turn you top your Hand back up to three cards while the Deck lasts. Once it's empty, no more topping up &mdash; and your Table Cards become reachable.</p>
+            <p><strong class="text-amber-400">Diamonds:</strong> The game&rsquo;s currency (💎). Earned from wins, challenges, the daily login streak and the Gauntlet; spent in the Shop on cosmetics or gifts for friends.</p>
             <p><strong class="text-amber-400">Direction:</strong> Which way turn order flows around the table. A 9 flips it &mdash; an odd number played at once reverses it, an even number leaves it unchanged. A 5 played on a 9 base, or a 3 played over a 9, both act as a 9 for this purpose too.</p>
-            <p><strong class="text-amber-400">Duel (Joker Duel):</strong> When you play a Joker you choose an opponent to pick up the Pile. If that opponent holds a Joker they may counter with it, and the Pile bounces back to you instead. Both Jokers are burnt either way.</p>
+            <p><strong class="text-amber-400">Duel (Joker Duel):</strong> When you play a Joker you choose an opponent to pick up the Pile. If that opponent holds a Joker they may counter with it, and the Pile bounces back to you instead. Both Jokers are burnt either way. Whoever wins the duel plays next; if their Joker was their last card, they finish and the next player carries on.</p>
             <p><strong class="text-amber-400">Face-Down Cards:</strong> Three cards dealt beneath your Face-Up Cards that nobody ever sees. Only playable once your Hand, the Deck <em>and</em> your Face-Up Cards are all gone. You flip one blind &mdash; if it isn't legal, you pick up the Pile.</p>
             <p><strong class="text-amber-400">Face-Up Cards:</strong> Three cards on the table in front of you, visible to everyone. Only playable once your Hand and the Deck are both empty. Because you play them last, the Swap Phase is your chance to stock them with strong cards.</p>
+            <p><strong class="text-amber-400">Gauntlet:</strong> Five Vs Bots games in a row against tougher and tougher bots (Easy, Easy, Medium, Hard, Boss) with 3 lives. See <em>The Gauntlet</em> above.</p>
             <p><strong class="text-amber-400">Hand:</strong> The cards only you can see, held off the table. You play from here first, and top back up to three from the Deck after each turn while the Deck lasts.</p>
+            <p><strong class="text-amber-400">Joker Effect:</strong> A cosmetic animation that plays over the table whenever you play a Joker, bought in the Shop&rsquo;s Joker tab. Everyone at the table sees it, online too.</p>
+            <p><strong class="text-amber-400">Last Card:</strong> A player down to one card in total gets a pulsing <strong>&#9757;&#65039; LAST CARD</strong> badge and a warning, so nobody sneaks out unnoticed.</p>
+            <p><strong class="text-amber-400">Leaderboard:</strong> Menu &rarr; Leaderboard: three tabs, <em>Ranked</em> (rating), <em>Challenges</em> (challenges completed) and <em>Gauntlet</em> (bots beaten). Reach the top 10, #3, #2 or #1 and a congratulations message lands in your Inbox.</p>
+            <p><strong class="text-amber-400">Lives:</strong> Your hearts in the Gauntlet. You start with 3; losing a game costs one and you replay the same bot.</p>
             <p><strong class="text-amber-400">Pick Up:</strong> Taking the entire Pile into your Hand because you had no legal move. The setback of the game. If your Hand was already empty, you must also take one Face-Up Card (or several of the same rank) along with it.</p>
             <p><strong class="text-amber-400">Pile:</strong> The face-up stack in the middle that everyone plays onto. Your card must match or beat the top card of the Pile &mdash; if you can't, you take the whole Pile into your Hand.</p>
             <p><strong class="text-amber-400">Power Cards:</strong> The five strongest cards &mdash; 2 (Reset), 3 (Transparent), 10 (Burner), Ace (highest rank) and Joker. Worth saving rather than spending, and worth putting in your Face-Up Cards during the Swap Phase.</p>
             <p><strong class="text-amber-400">Rank:</strong> A card's value, ignoring suit. Suits never matter in ShitHead &mdash; only rank. That's also why several cards of the same rank can be played together in one turn.</p>
+            <p><strong class="text-amber-400">Ranked:</strong> One-on-one online games against a real player, scored with a rating. Win and your rating goes up; lose and it goes down. Leaving a Ranked game counts as a loss.</p>
+            <p><strong class="text-amber-400">Rating:</strong> Your Ranked score (everyone starts at 500). It decides your Tier and your place on the Ranked leaderboard.</p>
             <p><strong class="text-amber-400">Reset:</strong> The 2. It can be played on almost anything (except a Jack) and clears the target, so the next player may follow it with any card at all.</p>
+            <p><strong class="text-amber-400">Seasonal Event:</strong> Halloween, Christmas, Diwali and more: while an event is on, its themed items are sold in the Shop&rsquo;s Seasonal tab, and winning 3 games earns that event&rsquo;s picture.</p>
             <p><strong class="text-amber-400">ShitHead:</strong> The loser &mdash; the last player still holding cards once everyone else has emptied their Hand, Face-Up and Face-Down cards.</p>
             <p><strong class="text-amber-400">Snap Burn:</strong> Completing four of a kind <em>out of turn</em>. If the top of the Pile already shows some of a rank and you hold the rest, a SNAP button appears and you can burn the Pile immediately, even when it isn't your turn.</p>
             <p><strong class="text-amber-400">Swap Phase:</strong> The setup round before play begins, where you trade cards between your Hand and your Face-Up Cards. Since Face-Up Cards are played last, this is where you protect your Power Cards. Press READY when done.</p>
             <p><strong class="text-amber-400">Table Cards:</strong> Collective term for your Face-Up and Face-Down Cards &mdash; everything in front of you rather than in your Hand.</p>
+            <p><strong class="text-amber-400">Tier:</strong> Your Ranked rank from your rating: Novice, Bronze (500+), Silver (1000+), Gold (1500+), Platinum (1800+) and Master (2000+).</p>
             <p><strong class="text-amber-400">Transparent Card:</strong> The 3. It sets no target of its own, so the next player must beat whatever card sits underneath it. Playable on anything except a 6.</p>
           </div>
         </div>
@@ -6302,6 +6350,13 @@ video {
         const recipe = BURN_SOUNDS[effectId] || BURN_SOUNDS.default;
         try { recipe(kit); } catch (e) {}
       }
+      // Joker effects (§ Joker effects): one recipe per effect, same kit.
+      playJokerSound(effectId = 'default') {
+        const kit = this._burnKit();
+        if (!kit) return;
+        const recipe = JOKER_SOUNDS[effectId] || JOKER_SOUNDS.default;
+        try { recipe(kit); } catch (e) {}
+      }
       /* The pile burns (10, four of a kind, Joker counter): the burner's sound + a buzz. */
       burn(effectId = 'default') { Haptics.vibrate([30, 50, 40]); this.playBurnSound(effectId); }
       turnNotify() { Haptics.vibrate(20); }
@@ -6381,6 +6436,100 @@ video {
         k.tone({ at, dur: 0.05, f0: 300, f1: 90, level: 0.25 });
       }),
       'burn-ramadan': (k) => { fireWhoosh(k, 0.35); [523.25, 1046.5, 1568].forEach((f, i) => k.tone({ dur: 1.4, f0: f, level: 0.14 / (i + 1), attack: 0.01 })); }
+    };
+
+    // Joker effect sounds, keyed by Joker effect id and timed to each
+    // animation's beats (JOKER_FX_MS = 1.5s): same loudness as the burns.
+    const jokerChime = ({ tone }, notes, at = 0, gap = 0.07, level = 0.12, type = 'triangle', dur = 0.35) =>
+      notes.forEach((f, i) => tone({ at: at + i * gap, dur, type, f0: f, level }));
+    const JOKER_SOUNDS = {
+      // Default: a card flip whoosh and a rising sparkle.
+      default: (k) => { k.noise({ dur: 0.25, type: 'bandpass', f0: 900, f1: 3200, q: 1.2, level: 0.3 }); k.tone({ dur: 0.2, f0: 140, f1: 60, level: 0.35 }); jokerChime(k, [784, 988, 1319, 1568], 0.14); },
+      // Jester's Grin: three mocking "ha" blips as the HA!s pop, bells on the hat.
+      'joker-grin': (k) => {
+        [0.3, 0.52, 0.74].forEach((at, i) => { k.tone({ at, dur: 0.11, type: 'square', f0: 620 - i * 60, f1: 420 - i * 60, level: 0.13 }); k.tone({ at: at + 0.09, dur: 0.1, type: 'square', f0: 560 - i * 60, f1: 380 - i * 60, level: 0.1 }); });
+        k.scatter(6, 0.05, 0.3, (at) => k.tone({ at, dur: 0.18, type: 'triangle', f0: 2637 + Math.random() * 600, level: 0.06 }));
+      },
+      // Jack-in-the-Box: crank clicks, the lid clacks open, a big spring boing.
+      'joker-jackbox': (k) => {
+        k.scatter(5, 0, 0.18, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 2400, q: 6, level: 0.35 }));
+        k.noise({ at: 0.22, dur: 0.05, type: 'bandpass', f0: 900, q: 2, level: 0.4 });
+        k.tone({ at: 0.24, dur: 0.6, f0: 160, f1: 520, level: 0.3, vibrato: 60 });
+      },
+      // Puppet Master: wooden clacks as it swings and a plucked string.
+      'joker-puppet': (k) => {
+        [0.28, 0.5, 0.72, 0.94].forEach((at) => { k.noise({ at, dur: 0.04, type: 'bandpass', f0: 1300, q: 5, level: 0.4 }); k.tone({ at, dur: 0.06, f0: 420, f1: 300, level: 0.12 }); });
+        k.tone({ at: 0.05, dur: 0.5, type: 'triangle', f0: 196, level: 0.14 });
+      },
+      // Magic Trick: three wand taps, a puff of smoke, then the reveal chime.
+      'joker-magic': (k) => {
+        [0.2, 0.32, 0.44].forEach((at) => k.tone({ at, dur: 0.05, type: 'triangle', f0: 3000, level: 0.12 }));
+        k.noise({ at: 0.6, dur: 0.35, type: 'lowpass', f0: 1200, f1: 200, level: 0.3, attack: 0.03 });
+        jokerChime(k, [1047, 1319, 1568, 2093], 0.68, 0.06, 0.1);
+      },
+      // Glitch: digital blips at random pitches over a low buzz.
+      'joker-glitch': (k) => {
+        k.tone({ dur: 1.2, type: 'sawtooth', f0: 55, f1: 50, level: 0.08, attack: 0.02 });
+        k.scatter(12, 0.02, 1.1, (at) => k.tone({ at, dur: 0.04, type: 'square', f0: 200 + Math.random() * 1800, level: 0.1 }));
+        k.scatter(5, 0.05, 1.0, (at) => k.noise({ at, dur: 0.06, type: 'highpass', f0: 3000, level: 0.2 }));
+      },
+      // Card Storm: a rising gust of flapping cards and the snap into one.
+      'joker-storm': (k) => {
+        k.noise({ dur: 0.62, type: 'bandpass', f0: 300, f1: 2800, q: 0.8, level: 0.35, attack: 0.3 });
+        k.scatter(14, 0.05, 0.6, (at) => k.noise({ at, dur: 0.015, type: 'highpass', f0: 4200, level: 0.18 }));
+        k.tone({ at: 0.64, dur: 0.22, f0: 180, f1: 60, level: 0.45 });
+        jokerChime(k, [880, 1319], 0.68, 0.06, 0.1);
+      },
+      // Pumpkin Joker: a spooky wobble, then the ghost's rising BOO.
+      'joker-halloween': (k) => {
+        k.tone({ dur: 0.55, type: 'triangle', f0: 330, f1: 220, level: 0.14, vibrato: 14, attack: 0.08 });
+        k.tone({ at: 0.58, dur: 0.55, f0: 140, f1: 260, level: 0.3, vibrato: 10, attack: 0.05 });
+        k.noise({ at: 0.58, dur: 0.4, type: 'bandpass', f0: 500, f1: 900, q: 2, level: 0.18, attack: 0.05 });
+      },
+      // Santa Joker: sleigh bells and three deep HO notes.
+      'joker-christmas': (k) => {
+        k.scatter(14, 0, 1.1, (at) => k.tone({ at, dur: 0.12, type: 'triangle', f0: 2637 + Math.random() * 900, level: 0.05 }));
+        [0.32, 0.5, 0.68].forEach((at) => k.tone({ at, dur: 0.16, f0: 150, f1: 120, level: 0.32 }));
+      },
+      // Midnight Joker: quick 3-2-1 ticks, a cork pop and firework crackle.
+      'joker-newyear': (k) => {
+        [0, 0.17, 0.34].forEach((at, i) => k.tone({ at, dur: 0.07, type: 'square', f0: 900 + i * 150, level: 0.12 }));
+        k.tone({ at: 0.52, dur: 0.08, f0: 900, f1: 220, level: 0.4 });
+        k.noise({ at: 0.52, dur: 0.3, type: 'highpass', f0: 2500, f1: 6000, level: 0.2 });
+        k.scatter(16, 0.6, 1.2, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 5000, level: 0.18 }));
+      },
+      // Diya Joker: a soft chime for each lamp as it lights.
+      'joker-diwali': (k) => {
+        [523, 587, 659, 784, 880, 988, 1047, 1175, 1319, 1568].forEach((f, i) => k.tone({ at: 0.06 + i * 0.055, dur: 0.35, type: 'triangle', f0: f, level: 0.07 }));
+        k.noise({ at: 0.62, dur: 0.4, type: 'highpass', f0: 4000, level: 0.12, attack: 0.05 });
+      },
+      // Fortune Joker: a gong as the envelope opens and clinking coins.
+      'joker-lunar': (k) => {
+        k.tone({ at: 0.28, dur: 1.1, f0: 110, f1: 104, level: 0.3, attack: 0.01 });
+        k.tone({ at: 0.28, dur: 0.9, f0: 247, f1: 240, level: 0.12 });
+        k.scatter(10, 0.52, 1.15, (at) => k.tone({ at, dur: 0.12, type: 'triangle', f0: 3000 + Math.random() * 1500, level: 0.07 }));
+      },
+      // Cupid Joker: a harp flourish, the arrow's twang, a kiss.
+      'joker-valentine': (k) => {
+        jokerChime(k, [523, 659, 784, 1047, 1319], 0.02, 0.05, 0.08);
+        k.tone({ at: 0.6, dur: 0.18, type: 'triangle', f0: 220, f1: 180, level: 0.2 });
+        k.noise({ at: 0.6, dur: 0.2, type: 'highpass', f0: 2000, f1: 5000, level: 0.12 });
+        k.tone({ at: 0.66, dur: 0.1, f0: 1400, f1: 2400, level: 0.12 });
+      },
+      // Egg Joker: three wobble knocks, a crack and a happy pop.
+      'joker-easter': (k) => {
+        [0.14, 0.26, 0.38].forEach((at) => k.tone({ at, dur: 0.06, f0: 300, f1: 200, level: 0.2 }));
+        k.noise({ at: 0.52, dur: 0.12, type: 'highpass', f0: 2500, level: 0.35 });
+        k.tone({ at: 0.56, dur: 0.18, f0: 500, f1: 1400, level: 0.18 });
+      },
+      // Beach Joker: the wave washing across and a gull-ish whistle.
+      'joker-summer': (k) => {
+        k.noise({ dur: 1.3, type: 'lowpass', f0: 500, f1: 1800, level: 0.3, attack: 0.4 });
+        k.tone({ at: 0.35, dur: 0.3, f0: 1800, f1: 2600, level: 0.06 });
+        k.tone({ at: 0.7, dur: 0.3, f0: 2400, f1: 1600, level: 0.06 });
+      },
+      // Lantern Joker: calm, soft bells as the lantern glows.
+      'joker-ramadan': (k) => [523.25, 783.99, 1046.5].forEach((f, i) => k.tone({ at: 0.3 + i * 0.14, dur: 1.0, f0: f, level: 0.12 / (i + 1), attack: 0.02 }))
     };
 
     const audio = new SoundFX();
@@ -6965,6 +7114,7 @@ video {
     //   § Online rooms: sync, host, join, leave
     //   § Online rooms: the room listener
     //   § Profile pictures, table art, seasonal events
+    //   § Joker effects: the overlay played when a Joker lands
     //   § Cosmetics catalogue
     //   § Shop and Custom pages
     //   § Accounts and sign-in
@@ -9289,6 +9439,7 @@ video {
         state.lastJokerInitiatorId = null;
         state.jokerTurnOwnerId = null;
         if (originalInitiator && originalInitiator.id !== initiator.id) {
+          playJokerEffectFor(initiator, { counter: true });
           state.discardPile = state.discardPile.filter(c => !c.isJoker);
           recordHistory(initiator.name, [jokerCard]);
           audio.burn(burnEffectIdFor(initiator));
@@ -9297,6 +9448,9 @@ video {
           notifyBanner(`💥 ${initiator.name} countered with JOKER! ${originalInitiator.name} picks up — ${initiator.name} plays next!`);
           // The counter-Joker left their hand: top it back up to 3 now.
           refillHand(initiator);
+          // It may have been their last card: they finish, and the turn
+          // goes on to the next player (giveJokerWinnerNextTurn).
+          checkPlayerFinished(initiator);
           giveJokerWinnerNextTurn(initiator);
           saveGameState();
           if (state.isMultiplayer) syncFirebaseGameState();
@@ -9306,6 +9460,7 @@ video {
       }
 
       const targets = state.players.filter(p => !p.hasFinished && p.id !== initiator.id && ((p.hand?.length || 0) + (p.faceUp?.length || 0) + (p.faceDown?.length || 0) > 0));
+      playJokerEffectFor(initiator);
 
       if (initiator.isBot) {
         if (tutorialActive && tutorialDeferBurn) {
@@ -9421,6 +9576,7 @@ video {
       }
 
       if (counterJoker) {
+        playJokerEffectFor(target, { counter: true });
         // A counter-Joker never passes through executePlayCards (it's
         // spliced straight out of the defender's hand/face-up above), so
         // without this it never reaches the one bumpStat(..., 'jokersPlayed', ...)
@@ -9433,6 +9589,8 @@ video {
         recordHistory(target.name, [counterJoker]);
         audio.burn(burnEffectIdFor(target));
         notifyBanner(`💥 ${target.name} countered with JOKER! ${initiator.name} picks up — ${target.name} plays next!`);
+        // A counter-Joker can be the defender's last card: they finish.
+        checkPlayerFinished(target);
         // The defender won the duel, so THEY take the next turn. executePickup
         // is told not to advance the turn itself — otherwise its own
         // advanceTurn(1) would step straight past the defender and hand the
@@ -11897,6 +12055,7 @@ video {
     let emoteFanOpen = false;
     let lastHandledEmoteAt = 0;
     let lastHandledCosmeticEffectAt = 0;
+    let lastHandledJokerEffectAt = 0;
     let lastHandledBlindRevealKey = '';
 
     function canSendEmote() {
@@ -14351,6 +14510,15 @@ video {
           if (!isCatchUp) showRemoteBlindReveal(data.lastBlindReveal);
         }
 
+        // Joker effects: played for everyone but the client that made the play.
+        if (data.lastJokerEffect?.at && data.lastJokerEffect.at !== lastHandledJokerEffectAt) {
+          lastHandledJokerEffectAt = data.lastJokerEffect.at;
+          if (!isCatchUp && data.lastJokerEffect.by !== state.localPlayerId) {
+            try { playJokerEffect(data.lastJokerEffect.effectId || 'default', { counter: !!data.lastJokerEffect.counter }); }
+            catch (error) { console.warn('Remote Joker effect skipped safely:', error); }
+          }
+        }
+
         if (data.lastCosmeticEffect?.at && data.lastCosmeticEffect.at !== lastHandledCosmeticEffectAt) {
           lastHandledCosmeticEffectAt = data.lastCosmeticEffect.at;
           // Skipped by the client that made the burn (it already played it),
@@ -16112,6 +16280,12 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v165: [
+        ['🃏', 'New in the Shop: Joker Effects. A short animation plays over the table whenever you play a Joker, and everyone at the table sees it.'],
+        ['🎃', "Every seasonal event gets its own Joker Effect too, from the Pumpkin Joker's BOO! to Santa Joker's HO HO HO!"],
+        ['⚔️', 'The Guide has a new Gauntlet section, and Key Terms now cover the newer features.'],
+        ['🛠️', 'Fixed: countering a Joker with your last card now finishes you properly, and the game carries on.']
+      ],
       v164: [
         ['🖐️', 'Fixed: a hand with two or three rows no longer bounces side to side.'],
         ['🃏', 'Fixed: a game could freeze when a player finished by playing a Joker as their last card.']
@@ -16728,59 +16902,59 @@ video {
     // or earned is kept forever. Ids are "<kind>-<event>", which is also what
     // the Database Rules match on.
     // ============================================================
-    const SEASONAL_PRICES = { cardBack: 300, frame: 300, avatar: 500, emotes: 500, burnEffect: 1000, tableTheme: 1500, victoryEffect: 1500 };
+    const SEASONAL_PRICES = { cardBack: 300, frame: 300, avatar: 500, emotes: 500, burnEffect: 1000, tableTheme: 1500, victoryEffect: 1500, jokerEffect: 3000 };
     const SEASONAL_BUNDLE_RATE = 0.75;
     const SEASONAL_EARN_WINS = 3;
     const SEASONAL_EVENTS = [
       { id: 'lunar', name: 'Lunar New Year', title: 'Year of Fortune', emoji: '🧧', when: 'From 3 days before Lunar New Year to the Lantern Festival', tones: ['#450a0a', '#dc2626', '#fbbf24'],
-        names: { tableTheme: 'Lantern Festival', cardBack: 'Lucky Envelope', frame: 'Jade', burnEffect: 'Firecrackers', victoryEffect: 'Dragon Dance', avatar: 'Lucky Cat', earned: 'Golden Dragon', emotes: 'Good Fortune' },
+        names: { tableTheme: 'Lantern Festival', cardBack: 'Lucky Envelope', frame: 'Jade', burnEffect: 'Firecrackers', jokerEffect: 'Fortune Joker', victoryEffect: 'Dragon Dance', avatar: 'Lucky Cat', earned: 'Golden Dragon', emotes: 'Good Fortune' },
         burnIcon: '🧨', victoryIcon: '🐉', emotes: ['🧧', '🐉', '🏮', '🎆', '🍊', '🥟'],
         table: { base: '#991b1b', rim: 'inset 0 0 0 3px #fbbf24,inset 0 0 46px rgba(28,3,3,.65)', label: 'rgba(251,191,36,.85)' },
         frame: ['inset 0 0 0 1px #fde68a,inset 0 0 0 3px #10b981,0 0 9px rgba(16,185,129,.6)', '0 0 0 1px #10b981,0 0 5px rgba(251,191,36,.5)'], back: { color: '#b91c1c', ink: '#fbbf24', border: '#fbbf24' } },
       { id: 'valentine', name: "Valentine's", title: 'Love Is Blind', emoji: '💘', when: '1–16 February', tones: ['#4c0519', '#e11d48', '#fda4af'],
-        names: { tableTheme: 'Candlelit Dinner', cardBack: 'Love Letter', frame: 'Rose Gold', burnEffect: 'Heartbreak', victoryEffect: "Cupid's Arrows", avatar: 'Lovestruck Ace', earned: 'Queen of Roses', emotes: 'Sweethearts' },
+        names: { tableTheme: 'Candlelit Dinner', cardBack: 'Love Letter', frame: 'Rose Gold', burnEffect: 'Heartbreak', jokerEffect: 'Cupid Joker', victoryEffect: "Cupid's Arrows", avatar: 'Lovestruck Ace', earned: 'Queen of Roses', emotes: 'Sweethearts' },
         burnIcon: '💔', victoryIcon: '💘', emotes: ['💘', '😍', '💔', '🌹', '💌', '😘'],
         table: { base: '#7f1d3a', rim: 'inset 0 0 0 3px #d4a017,inset 0 0 50px rgba(26,0,7,.7)', label: 'rgba(253,164,175,.9)' },
         frame: ['inset 0 0 0 1px #fff1f2,inset 0 0 0 2px #e8a598,0 0 9px rgba(244,114,182,.6)', '0 0 0 1px #e8a598,0 0 5px rgba(244,114,182,.5)'], back: { color: '#fce7f3', ink: '#be123c', border: '#d4a017' } },
       { id: 'ramadan', name: 'Ramadan', title: 'Ramadan Kareem', emoji: '🌙', when: 'From the start of Ramadan to 3 days after Eid al-Fitr', tones: ['#0b1540', '#1e40af', '#fde68a'],
-        names: { tableTheme: 'Crescent Night', cardBack: 'Arabesque', frame: 'Moonlight', burnEffect: 'Lantern Glow', victoryEffect: 'Moonrise', avatar: 'Fanous Lantern', earned: 'Golden Crescent', emotes: 'Blessings' },
+        names: { tableTheme: 'Crescent Night', cardBack: 'Arabesque', frame: 'Moonlight', burnEffect: 'Lantern Glow', jokerEffect: 'Lantern Joker', victoryEffect: 'Moonrise', avatar: 'Fanous Lantern', earned: 'Golden Crescent', emotes: 'Blessings' },
         burnIcon: '🏮', victoryIcon: '🌙', emotes: ['🌙', '✨', '🕌', '🤲', '🍵', '🍲'],
         table: { base: '#172554', rim: 'inset 0 0 0 3px #d4a017,inset 0 0 50px rgba(2,4,15,.7)', label: 'rgba(253,230,138,.85)' },
         frame: ['inset 0 0 0 1px #fef3c7,inset 0 0 0 2px #d4a017,0 0 10px rgba(191,219,254,.55)', '0 0 0 1px #fde68a,0 0 5px rgba(191,219,254,.5)'], back: { color: '#0b1540', ink: '#fde68a', border: '#fbbf24' } },
       { id: 'easter', name: 'Easter', title: 'Egg Hunt', emoji: '🐣', when: 'From 2 weeks before Easter Sunday to the Sunday after', tones: ['#4c1d95', '#a78bfa', '#fde68a'],
-        names: { tableTheme: 'Spring Meadow', cardBack: 'Painted Egg', frame: 'Pastel Bloom', burnEffect: 'Egg Crack', victoryEffect: 'Egg Hunt', avatar: 'Golden Egg', earned: 'Bunny King', emotes: 'Springtime' },
+        names: { tableTheme: 'Spring Meadow', cardBack: 'Painted Egg', frame: 'Pastel Bloom', burnEffect: 'Egg Crack', jokerEffect: 'Egg Joker', victoryEffect: 'Egg Hunt', avatar: 'Golden Egg', earned: 'Bunny King', emotes: 'Springtime' },
         burnIcon: '🥚', victoryIcon: '🐣', emotes: ['🐣', '🐰', '🥚', '🌷', '🍫', '🐥'],
         table: { base: '#4ade80', rim: 'inset 0 0 0 3px #f5d0fe,inset 0 0 40px rgba(20,83,45,.35)', label: 'rgba(245,208,254,.95)' },
         frame: ['inset 0 0 0 1px #fdf4ff,inset 0 0 0 2px #c4b5fd,0 0 9px rgba(110,231,183,.6)', '0 0 0 1px #c4b5fd,0 0 5px rgba(110,231,183,.5)'], back: { color: '#fdf4ff', ink: '#a78bfa', border: '#a78bfa' } },
       { id: 'summer', name: 'Summer Holidays', title: 'Out of Office', emoji: '☀️', when: '1 July – 31 August', tones: ['#0e7490', '#f59e0b', '#fde68a'],
-        names: { tableTheme: 'Beach Day', cardBack: 'Sunset Stripes', frame: 'Tropical', burnEffect: 'Cannonball', victoryEffect: 'Beach Ball Bounce', avatar: 'Ice Lolly', earned: 'Holiday Joker', emotes: 'Holiday Mode' },
+        names: { tableTheme: 'Beach Day', cardBack: 'Sunset Stripes', frame: 'Tropical', burnEffect: 'Cannonball', jokerEffect: 'Beach Joker', victoryEffect: 'Beach Ball Bounce', avatar: 'Ice Lolly', earned: 'Holiday Joker', emotes: 'Holiday Mode' },
         burnIcon: '💦', victoryIcon: '🏐', emotes: ['😎', '🏖️', '🍦', '🌊', '🍹', '🍉'],
         table: { base: '#f5d08a', rim: 'inset 0 0 0 3px #fff7ed,inset 0 0 40px rgba(120,53,15,.35)', label: 'rgba(255,247,237,.95)' },
         frame: ['inset 0 0 0 1px #ccfbf1,inset 0 0 0 2px #2dd4bf,0 0 9px rgba(250,204,21,.6)', '0 0 0 1px #2dd4bf,0 0 5px rgba(250,204,21,.5)'], back: { color: '#db2777', ink: '#fde68a', border: '#fde68a' } },
       { id: 'halloween', name: 'Halloween', title: 'Trick or Treat', emoji: '🎃', when: '15 October – 2 November', tones: ['#140a24', '#f97316', '#a3e635'],
-        names: { tableTheme: 'Haunted Graveyard', cardBack: 'Cobweb', frame: "Witch's Brew", burnEffect: 'Ghost Flames', victoryEffect: 'Bat Swarm', avatar: "Jack-o'-Lantern", earned: 'Skeleton King', emotes: 'Spooky' },
+        names: { tableTheme: 'Haunted Graveyard', cardBack: 'Cobweb', frame: "Witch's Brew", burnEffect: 'Ghost Flames', jokerEffect: 'Pumpkin Joker', victoryEffect: 'Bat Swarm', avatar: "Jack-o'-Lantern", earned: 'Skeleton King', emotes: 'Spooky' },
         burnIcon: '👻', victoryIcon: '🦇', emotes: ['🎃', '👻', '💀', '🦇', '🕷️', '🧟'],
         table: { base: '#2e1065', rim: 'inset 0 0 0 3px #f97316,inset 0 0 50px rgba(0,0,0,.7)', label: 'rgba(249,115,22,.85)' },
         frame: ['inset 0 0 0 1px #d9f99d,inset 0 0 0 3px #581c87,0 0 10px rgba(132,204,22,.65)', '0 0 0 1px #84cc16,0 0 5px rgba(132,204,22,.5)'], back: { color: '#0b0713', ink: '#cbd5e1', border: '#f97316' } },
       { id: 'diwali', name: 'Diwali', title: 'Festival of Lights', emoji: '🪔', when: 'The 7 days either side of Diwali', tones: ['#1e1b4b', '#f59e0b', '#ec4899'],
-        names: { tableTheme: 'Rangoli', cardBack: 'Marigold Mandala', frame: 'Diya Glow', burnEffect: 'Colour Burst', victoryEffect: 'Lights of Diwali', avatar: 'Golden Lotus', earned: 'Eternal Flame', emotes: 'Celebration' },
+        names: { tableTheme: 'Rangoli', cardBack: 'Marigold Mandala', frame: 'Diya Glow', burnEffect: 'Colour Burst', jokerEffect: 'Diya Joker', victoryEffect: 'Lights of Diwali', avatar: 'Golden Lotus', earned: 'Eternal Flame', emotes: 'Celebration' },
         burnIcon: '🎨', victoryIcon: '🪔', emotes: ['🪔', '🎆', '🌸', '✨', '🍬', '🙏'],
         table: { base: '#312e81', rim: 'inset 0 0 0 3px #f59e0b,inset 0 0 50px rgba(11,10,36,.65)', label: 'rgba(253,186,116,.9)' },
         frame: ['inset 0 0 0 1px #fef3c7,inset 0 0 0 2px #f59e0b,0 0 10px rgba(249,115,22,.7)', '0 0 0 1px #f59e0b,0 0 5px rgba(249,115,22,.55)'], back: { color: '#7c2d12', ink: '#fbbf24', border: '#fbbf24' } },
       { id: 'christmas', name: 'Christmas', title: 'Deck the Halls', emoji: '🎄', when: '1–26 December', tones: ['#14532d', '#dc2626', '#fde68a'],
-        names: { tableTheme: 'Fireside', cardBack: 'Candy Cane', frame: 'Tinsel', burnEffect: 'Present Pop', victoryEffect: 'Sleigh Ride', avatar: 'Gingerbread Joker', earned: "Santa's Crown", emotes: 'Festive' },
+        names: { tableTheme: 'Fireside', cardBack: 'Candy Cane', frame: 'Tinsel', burnEffect: 'Present Pop', jokerEffect: 'Santa Joker', victoryEffect: 'Sleigh Ride', avatar: 'Gingerbread Joker', earned: "Santa's Crown", emotes: 'Festive' },
         burnIcon: '🎁', victoryIcon: '🛷', emotes: ['🎄', '🎅', '❄️', '🎁', '⛄', '🦌'],
         table: { base: '#5c2c10', rim: 'inset 0 0 0 3px #dc2626,inset 0 0 0 5px #fde68a,inset 0 0 46px rgba(20,8,3,.7)', label: 'rgba(254,240,138,.9)' },
         frame: ['inset 0 0 0 1px #fde68a,inset 0 0 0 3px #dc2626,0 0 9px rgba(250,204,21,.65)', '0 0 0 1px #dc2626,0 0 5px rgba(250,204,21,.55)'], back: { color: '#f8fafc', ink: '#dc2626', border: '#15803d' } },
       { id: 'newyear', name: "New Year's", title: 'Happy New Year', emoji: '🎆', when: '27 December – 7 January', tones: ['#020617', '#d4a017', '#fde68a'],
-        names: { tableTheme: 'Midnight Skyline', cardBack: 'Black Tie', frame: 'Gold Fizz', burnEffect: 'Champagne Pop', victoryEffect: 'Countdown', avatar: 'Disco Ball', earned: 'Party Joker', emotes: 'Cheers' },
+        names: { tableTheme: 'Midnight Skyline', cardBack: 'Black Tie', frame: 'Gold Fizz', burnEffect: 'Champagne Pop', jokerEffect: 'Midnight Joker', victoryEffect: 'Countdown', avatar: 'Disco Ball', earned: 'Party Joker', emotes: 'Cheers' },
         burnIcon: '🍾', victoryIcon: '🎆', emotes: ['🥂', '🎆', '🎉', '🕛', '🍾', '✨'],
         table: { base: '#1e1b4b', rim: 'inset 0 0 0 3px #d4a017,inset 0 0 50px rgba(0,0,0,.7)', label: 'rgba(253,230,138,.85)' },
         frame: ['inset 0 0 0 1px #fff7d6,inset 0 0 0 2px #d4a017,0 0 10px rgba(253,230,138,.7)', '0 0 0 1px #d4a017,0 0 5px rgba(253,230,138,.55)'], back: { color: '#0a0a0a', ink: '#d4a017', border: '#d4a017' } }
     ];
     const SEASONAL_EVENT_BY_ID = Object.fromEntries(SEASONAL_EVENTS.map(ev => [ev.id, ev]));
-    const SEASONAL_KIND_PREFIX = { tableTheme: 'table', cardBack: 'back', frame: 'frame', burnEffect: 'burn', victoryEffect: 'victory', avatar: 'avatar', emotes: 'emotes' };
-    const SEASONAL_TYPE_CATEGORY = Object.freeze({ cardBack: 'Card Backs', frame: 'Frames', emotes: 'Emote Packs', tableTheme: 'Table Themes', burnEffect: 'Burn Effects', victoryEffect: 'Victory Effects', avatar: 'Profile Pictures' });
+    const SEASONAL_KIND_PREFIX = { tableTheme: 'table', cardBack: 'back', frame: 'frame', burnEffect: 'burn', victoryEffect: 'victory', avatar: 'avatar', emotes: 'emotes', jokerEffect: 'joker' };
+    const SEASONAL_TYPE_CATEGORY = Object.freeze({ cardBack: 'Card Backs', frame: 'Frames', emotes: 'Emote Packs', tableTheme: 'Table Themes', burnEffect: 'Burn Effects', victoryEffect: 'Victory Effects', avatar: 'Profile Pictures', jokerEffect: 'Joker Effects' });
     const seasonalItemId = (type, eventId) => `${SEASONAL_KIND_PREFIX[type]}-${eventId}`;
     const seasonalIdsOf = (type) => SEASONAL_EVENTS.map(ev => seasonalItemId(type, ev.id));
     const SEASONAL_BACK_IDS = new Set(seasonalIdsOf('cardBack'));
@@ -17355,6 +17529,449 @@ video {
       style.textContent = css;
       document.head.appendChild(style);
     })();
+    // § Joker effects: the overlay played when a Joker lands
+    // Every effect runs for JOKER_FX_MS over a softly dimmed table and draws
+    // with the same bfx/sfx helpers as the burns: fx(host, g), where host is a
+    // full-screen div in #jokerFxLayer (z-index 64: over the table, under the
+    // emote picker and every pop-up) or a Shop/Custom preview stage, and
+    // g = { W, H, cx, cy, k } (k scales the art to the host). Shared pieces
+    // keep them consistent: jfxScrim (the dim), jfxHero (the main picture:
+    // springs in, holds, leaves by the end), jfxWord (the shout: "HA!",
+    // "BOO!"...). A Joker played on a Joker never shows two at once: the
+    // first is always seen for JOKER_FX_MIN_MS, then the counter's effect
+    // takes over with a COUNTERED! tag (playJokerEffect).
+    const JOKER_FX_MS = 1500;
+    const JOKER_FX_MIN_MS = 650;
+    const jfxGeom = (host, preview = false) => {
+      const W = host.clientWidth || window.innerWidth, H = host.clientHeight || window.innerHeight;
+      const k = preview ? Math.min(W / 380, H / 410) : Math.max(.5, Math.min(1.25, Math.min(W / 380, H / 560)));
+      return { W, H, cx: W / 2, cy: H * (preview ? .5 : .45), k };
+    };
+    function jfxScrim(host, tint = 'rgba(30,27,75,.5)') {
+      const el = document.createElement('div');
+      el.className = 'jfx-scrim';
+      el.style.background = `radial-gradient(circle at 50% 45%, ${tint}, rgba(2,6,23,.4) 72%)`;
+      host.appendChild(el);
+      bfxAnimate(el, [{ opacity: 0 }, { opacity: 1, offset: .1 }, { opacity: 1, offset: .82 }, { opacity: 0 }], { duration: JOKER_FX_MS, easing: 'linear' });
+    }
+    const JFX_ENTER = {
+      pop: [{ transform: 'scale(.2) rotate(-12deg)', opacity: 0 }, { transform: 'scale(1.12) rotate(3deg)', opacity: 1, offset: .16 }, { transform: 'scale(1) rotate(0)', opacity: 1, offset: .26 },
+        { transform: 'scale(1) rotate(0)', opacity: 1, offset: .8 }, { transform: 'scale(.86) translateY(-14px)', opacity: 0 }],
+      flip: [{ transform: 'perspective(700px) rotateY(180deg) scale(.4)', opacity: 0 }, { transform: 'perspective(700px) rotateY(0) scale(1.1)', opacity: 1, offset: .22 },
+        { transform: 'perspective(700px) rotateY(0) scale(1)', opacity: 1, offset: .32 }, { transform: 'perspective(700px) scale(1)', opacity: 1, offset: .8 }, { transform: 'translateY(-26px) scale(.9)', opacity: 0 }],
+      rise: [{ transform: 'translateY(40%) scale(.85)', opacity: 0 }, { transform: 'translateY(-4%) scale(1.04)', opacity: 1, offset: .22 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: .32 },
+        { transform: 'translateY(0) scale(1)', opacity: 1, offset: .8 }, { transform: 'translateY(-10%) scale(.95)', opacity: 0 }],
+      fade: [{ opacity: 0, transform: 'scale(.94)' }, { opacity: 1, transform: 'scale(1)', offset: .25 }, { opacity: 1, offset: .8 }, { opacity: 0, transform: 'scale(1.03)' }]
+    };
+    function jfxHero(host, g, html, w, h, { x = g.cx, y = g.cy, enter = 'pop', delay = 0, end = JOKER_FX_MS - 60 } = {}) {
+      const frames = Array.isArray(enter) ? enter : JFX_ENTER[enter];
+      return sfxPop(host, html, x, y, w * g.k, h * g.k, frames, end - delay, delay);
+    }
+    function jfxWord(host, g, text, { x = g.cx, y = g.cy + 118 * g.k, color = '#fbbf24', size = 44, delay = 300, end = JOKER_FX_MS - 80, tilt = -6 } = {}) {
+      const px = size * g.k;
+      const w = Math.min(g.W - 12, (text.length * .66 + 1.2) * px), h = px * 1.5;
+      sfxPop(host, `<div class="jfx-word" style="font-size:${px}px;--jfx-glow:${color}">${text}</div>`, x, y, w, h,
+        [{ transform: `scale(.3) rotate(${tilt}deg)`, opacity: 0 }, { transform: `scale(1.18) rotate(${tilt}deg)`, opacity: 1, offset: .18 },
+          { transform: `scale(1) rotate(${tilt}deg)`, opacity: 1, offset: .76 }, { transform: `scale(1.05) rotate(${tilt}deg) translateY(-8px)`, opacity: 0 }], end - delay, delay);
+    }
+    // A clipped window (for things rising out of boxes, hats, eggs).
+    function jfxClip(host, left, top, w, h) {
+      const el = document.createElement('div');
+      el.className = 'bfx';
+      Object.assign(el.style, { left: `${left}px`, top: `${top}px`, width: `${w}px`, height: `${h}px`, overflow: 'hidden' });
+      host.appendChild(el);
+      setTimeout(() => el.remove(), JOKER_FX_MS + 300);
+      return el;
+    }
+    // A firework burst sized to fit what's left of the 1.5s.
+    function jfxBurst(host, x, y, colours, n, r, dur) {
+      for (let j = 0; j < n; j++) {
+        const a = (j / n) * Math.PI * 2, d = r * bfxRand(.75, 1.05), el = bfxAdd(host, sfxDot(colours[j % colours.length]), x, y, 5, 5);
+        bfxAnimate(el, [{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d * .8}px,${Math.sin(a) * d * .8}px)`, opacity: 1, offset: .6 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + 24}px)`, opacity: 0 }], { duration: dur, easing: 'cubic-bezier(.1,.8,.3,1)' });
+      }
+      sfxFlash(host, x, y, 1, 'rgba(255,255,255,.8)', 70, 350);
+    }
+    const jfxSparkles = (host, g, x, y, colours, n = 12, delay = 0, radius = 110) => {
+      for (let i = 0; i < n; i++) {
+        const a = (Math.PI * 2 * i) / n + bfxRand(-.2, .2), r = bfxRand(.6, 1) * radius * g.k;
+        const el = bfxAdd(host, sfxStar(colours[i % colours.length]), x, y, 16 * g.k, 16 * g.k);
+        bfxAnimate(el, [{ transform: 'translate(0,0) scale(0)', opacity: 0 }, { transform: `translate(${Math.cos(a) * r * .7}px,${Math.sin(a) * r * .7}px) scale(1.2) rotate(90deg)`, opacity: 1, offset: .45 },
+          { transform: `translate(${Math.cos(a) * r}px,${Math.sin(a) * r}px) scale(0) rotate(180deg)`, opacity: 0 }], { duration: 700, delay: delay + bfxRand(0, 120), easing: 'ease-out' });
+      }
+    };
+
+    // ---- Art ----
+    const jfxHatBody = (a = '#7c3aed', b = '#16a34a', c = '#dc2626', bell = '#fbbf24') =>
+      `<path d="M12 66C12 44 8 30 3 20 22 24 36 38 42 58Z" fill="${a}" stroke="#1e1b4b" stroke-width="2"/>` +
+      `<path d="M36 60C40 38 46 18 50 7 54 18 60 38 64 60Z" fill="${b}" stroke="#1e1b4b" stroke-width="2"/>` +
+      `<path d="M88 66C88 44 92 30 97 20 78 24 64 38 58 58Z" fill="${c}" stroke="#1e1b4b" stroke-width="2"/>` +
+      `<rect x="10" y="58" width="80" height="14" rx="7" fill="${bell}" stroke="#92400e" stroke-width="2"/>` +
+      [[3, 20], [50, 7], [97, 20]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="6" fill="${bell}" stroke="#92400e" stroke-width="2"/>`).join('');
+    const JFX_CARD = sfxSvg(70, 100, `<rect x="2" y="2" width="66" height="96" rx="9" fill="#111827" stroke="#fbbf24" stroke-width="3"/>
+      <rect x="7" y="7" width="56" height="86" rx="6" fill="none" stroke="rgba(251,191,36,.35)" stroke-width="1.2"/>
+      <text x="9" y="21" font-family="Outfit,system-ui,sans-serif" font-weight="900" font-size="12" fill="#f472b6">JKR</text>
+      <g transform="translate(11 32) scale(.48)">${jfxHatBody()}</g>
+      <text x="35" y="86" text-anchor="middle" font-family="Outfit,system-ui,sans-serif" font-weight="900" font-size="10" fill="#fbbf24" letter-spacing="1">JOKER</text>`);
+    // A jester's face under the hat (viewBox 0 0 120 150).
+    const jfxJesterBody = (wink = false, hat = jfxHatBody()) => `<circle cx="60" cy="100" r="42" fill="#fdf2f8" stroke="#1e1b4b" stroke-width="3"/>
+      <g transform="translate(10 0)">${hat}</g>
+      <circle cx="31" cy="104" r="7" fill="#f472b6" opacity=".55"/><circle cx="89" cy="104" r="7" fill="#f472b6" opacity=".55"/>
+      <path d="M38 80l12-4M82 80l-12-4" stroke="#1e1b4b" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="46" cy="92" rx="5.5" ry="7.5" fill="#1e1b4b"/>
+      <ellipse class="${wink ? 'jfx-wink' : ''}" cx="74" cy="92" rx="5.5" ry="7.5" fill="#1e1b4b"/>
+      <circle cx="60" cy="104" r="5" fill="#ef4444"/>
+      <path d="M32 112q28 34 56 0q-28 14-56 0Z" fill="#dc2626" stroke="#1e1b4b" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M40 115q20 9 40 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`;
+    const jfxNest = (x, y, w, h, vb, body) => `<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${vb}">${body}</svg>`;
+    const JFX_MINI_BACK = sfxSvg(28, 40, '<rect x="1" y="1" width="26" height="38" rx="5" fill="#4c1d95" stroke="#fbbf24" stroke-width="2"/><path d="M14 8 22 20 14 32 6 20Z" fill="#f472b6" opacity=".85"/>');
+
+    // ---- The effects ----
+    function jfxDefault(host, g) {
+      jfxScrim(host);
+      sfxFlash(host, g.cx, g.cy, g.k, 'rgba(244,114,182,.75)', 260, 700, 140);
+      jfxHero(host, g, JFX_CARD, 112, 160, { enter: 'flip' });
+      jfxSparkles(host, g, g.cx, g.cy, ['#fbbf24', '#f472b6', '#fff'], 10, 220);
+      jfxWord(host, g, 'JOKER!', { color: '#f472b6' });
+    }
+    // Jester's Grin: a giant jester face winks and cackles "HA!".
+    function jfxGrin(host, g) {
+      jfxScrim(host, 'rgba(88,28,135,.55)');
+      jfxHero(host, g, sfxSvg(120, 150, jfxJesterBody(true)), 170, 212, { y: g.cy - 10 * g.k });
+      [[-.3, -.2, 300], [.3, -.28, 520], [0, .42, 740]].forEach(([fx, fy, d], i) => jfxWord(host, g, 'HA!', {
+        x: g.cx + fx * 300 * g.k, y: g.cy + fy * 300 * g.k, color: ['#a855f7', '#22c55e', '#f43f5e'][i], size: 34, delay: d, tilt: [-12, 10, -4][i]
+      }));
+      jfxSparkles(host, g, g.cx, g.cy, ['#a855f7', '#22c55e', '#fbbf24'], 12, 260, 150);
+    }
+    // Jack-in-the-Box: the lid flips, a jester springs out and bobs.
+    function jfxJackbox(host, g) {
+      jfxScrim(host, 'rgba(127,29,29,.45)');
+      const k = g.k, boxW = 130 * k, boxH = 100 * k, boxY = g.cy + 70 * k;
+      const clip = jfxClip(host, g.cx - 90 * k, 0, 180 * k, boxY);
+      const head = sfxSvg(80, 170, jfxNest(4, 0, 72, 90, '0 0 120 150', jfxJesterBody()) +
+        '<path d="M40 86l-16 7 32 7-32 7 32 7-32 7 32 7-32 7 32 7-16 7" fill="none" stroke="#cbd5e1" stroke-width="4.5" stroke-linejoin="round"/>');
+      const hh = 170 * k;
+      const headEl = bfxAdd(clip, head, 90 * k, boxY - hh / 2 + 10 * k, 80 * k, hh);
+      bfxAnimate(headEl, [{ transform: `translateY(${hh}px)`, offset: 0 }, { transform: `translateY(${hh}px)`, offset: .14 }, { transform: 'translateY(-26px)', offset: .3 },
+        { transform: 'translateY(8px)', offset: .4 }, { transform: 'translateY(-10px) rotate(-6deg)', offset: .52 }, { transform: 'translateY(0) rotate(5deg)', offset: .64 },
+        { transform: 'translateY(0) rotate(-3deg)', opacity: 1, offset: .82 }, { transform: 'translateY(-14px)', opacity: 0 }], { duration: JOKER_FX_MS - 60, easing: 'ease-out' });
+      const box = sfxSvg(130, 100, '<rect x="3" y="6" width="124" height="90" rx="6" fill="#dc2626" stroke="#1e1b4b" stroke-width="4"/><path d="M65 20 90 51 65 82 40 51Z" fill="#fbbf24" stroke="#1e1b4b" stroke-width="3"/><circle cx="20" cy="22" r="5" fill="#fbbf24"/><circle cx="110" cy="80" r="5" fill="#fbbf24"/><rect x="118" y="44" width="16" height="8" rx="3" fill="#94a3b8"/>');
+      jfxHero(host, g, box, 130, 100, { y: boxY + boxH / 2, enter: 'rise' });
+      const lid = bfxAdd(host, sfxSvg(134, 20, '<rect x="2" y="3" width="130" height="15" rx="4" fill="#b91c1c" stroke="#1e1b4b" stroke-width="3.5"/>'), g.cx, boxY + 2 * k, 134 * k, 20 * k);
+      // The lid pops off as the jester springs out and tumbles away.
+      bfxAnimate(lid, [{ transform: 'translateY(30%) rotate(0)', opacity: 0 }, { transform: 'translate(0,0) rotate(0)', opacity: 1, offset: .08 }, { transform: 'translate(0,0) rotate(0)', opacity: 1, offset: .14 },
+        { transform: `translate(${-70 * k}px,${-120 * k}px) rotate(-160deg)`, opacity: 1, offset: .34 }, { transform: `translate(${-120 * k}px,${-40 * k}px) rotate(-320deg)`, opacity: 0, offset: .55 },
+        { transform: `translate(${-120 * k}px,${-40 * k}px) rotate(-320deg)`, opacity: 0 }], { duration: JOKER_FX_MS - 60, easing: 'ease-out' });
+      jfxSparkles(host, g, g.cx, boxY - 40 * k, ['#fbbf24', '#ef4444', '#fff'], 10, 300, 120);
+      jfxWord(host, g, 'BOING!', { y: g.cy - 150 * k, color: '#ef4444', delay: 380, tilt: 5 });
+    }
+    // Puppet Master: a jester puppet drops in on its strings and dances.
+    function jfxPuppet(host, g) {
+      jfxScrim(host, 'rgba(68,64,60,.5)');
+      const k = g.k;
+      const puppet = sfxSvg(140, 260, `<rect x="8" y="4" width="124" height="12" rx="5" fill="#92400e" stroke="#451a03" stroke-width="2.5"/><rect x="64" y="2" width="12" height="40" rx="4" fill="#78350f"/>
+        <path d="M14 16 44 176M70 42 70 96M126 16 96 176M40 16 34 128M100 16 106 128" stroke="#e7e5e4" stroke-width="1.4" opacity=".85"/>
+        ${jfxNest(40, 76, 60, 75, '0 0 120 150', jfxJesterBody())}
+        <path d="M52 150h36l12 58H40Z" fill="#7c3aed" stroke="#1e1b4b" stroke-width="2.5"/><path d="M70 150v58" stroke="#16a34a" stroke-width="8"/>
+        <path d="M52 156 34 128M88 156 106 128" stroke="#dc2626" stroke-width="8" stroke-linecap="round"/>
+        <path d="M58 208 44 176M82 208 96 176" stroke="#16a34a" stroke-width="9" stroke-linecap="round"/>
+        <path d="M48 208 40 240M92 208 100 240" stroke="#dc2626" stroke-width="9" stroke-linecap="round"/><circle cx="40" cy="242" r="6" fill="#fbbf24"/><circle cx="100" cy="242" r="6" fill="#fbbf24"/>`);
+      const el = bfxAdd(host, puppet, g.cx, g.cy - 10 * k, 140 * k, 260 * k);
+      el.style.transformOrigin = '50% 0%';
+      bfxAnimate(el, [{ transform: 'translateY(-110%) rotate(0)', opacity: 1 }, { transform: 'translateY(4%) rotate(0)', offset: .2 }, { transform: 'translateY(0) rotate(9deg)', offset: .34 },
+        { transform: 'translateY(-3%) rotate(-9deg)', offset: .48 }, { transform: 'translateY(0) rotate(7deg)', offset: .62 }, { transform: 'translateY(-2%) rotate(-5deg)', opacity: 1, offset: .8 },
+        { transform: 'translateY(-110%) rotate(0)', opacity: 1 }], { duration: JOKER_FX_MS - 40, easing: 'ease-in-out' });
+      jfxWord(host, g, 'DANCE!', { y: g.cy + 150 * k, color: '#f59e0b', delay: 420, tilt: -4 });
+    }
+    // Magic Trick: tap tap tap, a puff of smoke, and a Joker rises from the hat.
+    function jfxMagic(host, g) {
+      jfxScrim(host, 'rgba(49,46,129,.55)');
+      const k = g.k, hatY = g.cy + 62 * k;
+      const clip = jfxClip(host, g.cx - 80 * k, 0, 160 * k, hatY - 22 * k);
+      const card = bfxAdd(clip, JFX_CARD, 80 * k, hatY - 22 * k - 80 * k, 90 * k, 128 * k);
+      bfxAnimate(card, [{ transform: `translateY(${150 * k}px)`, offset: 0 }, { transform: `translateY(${150 * k}px)`, offset: .42 }, { transform: 'translateY(-6px) rotate(-4deg)', offset: .6 },
+        { transform: 'translateY(0) rotate(0)', opacity: 1, offset: .82 }, { transform: 'translateY(-12px)', opacity: 0 }], { duration: JOKER_FX_MS - 60, easing: 'ease-out' });
+      const hat = sfxSvg(150, 110, '<ellipse cx="75" cy="30" rx="72" ry="14" fill="#111827" stroke="#6366f1" stroke-width="3"/><path d="M25 30h100l-8 72H33Z" fill="#111827" stroke="#6366f1" stroke-width="3"/><path d="M29 62h92" stroke="#dc2626" stroke-width="10"/><ellipse cx="75" cy="30" rx="50" ry="8" fill="#020617"/>');
+      jfxHero(host, g, hat, 150, 110, { y: hatY + 34 * k, enter: 'rise' });
+      const wand = bfxAdd(host, sfxSvg(20, 120, '<rect x="6" y="6" width="8" height="110" rx="3" fill="#111827" stroke="#e0e7ff" stroke-width="1.5"/><rect x="6" y="6" width="8" height="18" rx="3" fill="#f8fafc"/>'), g.cx + 95 * k, hatY - 40 * k, 20 * k, 120 * k);
+      wand.style.transformOrigin = '50% 100%';
+      bfxAnimate(wand, [{ transform: 'rotate(40deg)', opacity: 0 }, { transform: 'rotate(30deg)', opacity: 1, offset: .1 }, { transform: 'rotate(-10deg)', offset: .16 }, { transform: 'rotate(20deg)', offset: .22 },
+        { transform: 'rotate(-10deg)', offset: .28 }, { transform: 'rotate(20deg)', offset: .34 }, { transform: 'rotate(-12deg)', offset: .4 }, { transform: 'rotate(25deg)', opacity: 1, offset: .75 }, { transform: 'rotate(30deg)', opacity: 0 }], { duration: JOKER_FX_MS - 60 });
+      setTimeout(() => {
+        if (!host.isConnected) return;
+        for (let i = 0; i < 9; i++) {
+          const el = bfxAdd(host, sfxDot(i % 2 ? 'rgba(226,232,240,.85)' : 'rgba(203,213,225,.7)', false), g.cx + bfxRand(-50, 50) * k, hatY - 20 * k, bfxRand(40, 70) * k, bfxRand(40, 70) * k);
+          bfxAnimate(el, [{ transform: 'scale(.2)', opacity: .9 }, { transform: `translate(${bfxRand(-40, 40) * k}px,${-bfxRand(40, 90) * k}px) scale(1.3)`, opacity: 0 }], { duration: 650, delay: bfxRand(0, 80), easing: 'ease-out' });
+        }
+        jfxSparkles(host, g, g.cx, hatY - 70 * k, ['#e0e7ff', '#a5b4fc', '#fbbf24'], 12, 60, 120);
+      }, 600);
+      jfxWord(host, g, 'TA-DA!', { y: g.cy - 140 * k, color: '#818cf8', delay: 700, tilt: 4 });
+    }
+    // Glitch: the screen tears, the colours split and JOKER flickers.
+    function jfxGlitch(host, g) {
+      jfxScrim(host, 'rgba(8,47,73,.55)');
+      const k = g.k, scan = document.createElement('div');
+      scan.className = 'jfx-scan';
+      host.appendChild(scan);
+      bfxAnimate(scan, [{ opacity: 0 }, { opacity: .55, offset: .1 }, { opacity: .35, offset: .5 }, { opacity: .55, offset: .8 }, { opacity: 0 }], { duration: JOKER_FX_MS });
+      const px = Math.min(g.W * .19, 76 * k);
+      const layer = (colour, dx) => sfxPop(host, `<div class="jfx-word jfx-glitch-text" style="font-size:${px}px;color:${colour}">JOKER</div>`, g.cx, g.cy, Math.min(g.W, px * 4.2), px * 1.4,
+        [0, .08, .14, .2, .3, .38, .5, .6, .7, .78, .84, .9, 1].map((o, i) => ({ offset: o, opacity: o === 0 || o === 1 ? 0 : 1,
+          transform: `translate(${(i % 3 - 1) * dx * k}px,${(i % 2 ? 2 : -2) * k}px) skewX(${i % 4 === 1 ? 14 : 0}deg)`, clipPath: i % 5 === 2 ? 'inset(30% 0 35% 0)' : 'none' })), JOKER_FX_MS - 60, 60);
+      layer('#f43f5e', 7); layer('#22d3ee', -7); layer('#f8fafc', 0);
+      for (let i = 0; i < 9; i++) {
+        const el = bfxAdd(host, `<div style="width:100%;height:100%;background:${['#22d3ee', '#f43f5e', '#a855f7', '#f8fafc'][i % 4]};opacity:.55"></div>`, g.W / 2, bfxRand(.15, .85) * g.H, g.W * bfxRand(.4, 1.1), bfxRand(3, 14) * k);
+        bfxAnimate(el, [{ opacity: 0, transform: 'translateX(0)' }, { opacity: 1, transform: `translateX(${bfxRand(-40, 40) * k}px)`, offset: .3 }, { opacity: 0, transform: `translateX(${bfxRand(-80, 80) * k}px)` }], { duration: bfxRand(120, 240), delay: bfxRand(40, 1150) });
+      }
+    }
+    // Card Storm: cards spiral in from every side and snap into one Joker.
+    function jfxStorm(host, g) {
+      jfxScrim(host, 'rgba(76,29,149,.5)');
+      const k = g.k, R = Math.max(g.W, g.H) * .62, n = 18;
+      for (let i = 0; i < n; i++) {
+        const a0 = (Math.PI * 2 * i) / n, el = bfxAdd(host, JFX_MINI_BACK, g.cx, g.cy, 34 * k, 48 * k);
+        bfxAnimate(el, [0, .2, .4, .6, .8, 1].map(t => {
+          const a = a0 + t * Math.PI * 1.6, r = R * (1 - t);
+          return { offset: t * .45, transform: `translate(${Math.cos(a) * r}px,${Math.sin(a) * r}px) rotate(${t * 540 + i * 20}deg) scale(${1 - t * .5})`, opacity: t === 1 ? .2 : 1 };
+        }).concat([{ offset: 1, transform: 'scale(.3)', opacity: 0 }]), { duration: JOKER_FX_MS, easing: 'linear' });
+      }
+      sfxFlash(host, g.cx, g.cy, k, 'rgba(250,232,255,.95)', 280, 600, 640);
+      jfxHero(host, g, JFX_CARD, 112, 160, { delay: 660, enter: 'pop' });
+      jfxWord(host, g, 'WILD!', { color: '#c084fc', delay: 760 });
+    }
+    // ---- Seasonal ----
+    // Halloween, Pumpkin Joker: a grinning jack-o'-lantern in a jester hat,
+    // then a ghost bursts out of it: BOO!
+    function jfxHalloween(host, g) {
+      jfxScrim(host, 'rgba(67,20,7,.55)');
+      const k = g.k;
+      const pumpkin = sfxSvg(120, 130, `<g transform="translate(14 0) scale(.92)">${jfxHatBody('#7c3aed', '#f97316', '#16a34a')}</g>
+        <ellipse cx="60" cy="92" rx="54" ry="38" fill="#f97316" stroke="#7c2d12" stroke-width="3"/><path d="M40 58c-8 20-8 50 0 70M80 58c8 20 8 50 0 70M60 55v76" stroke="#c2410c" stroke-width="3" fill="none"/>
+        <path class="jfx-flicker" d="M32 82l12-12 12 12ZM64 82l12-12 12 12Z" fill="#fde047"/>
+        <path class="jfx-flicker" d="M28 100q32 24 64 0l-8 6-6-6-7 7-7-7-7 7-7-7-6 6Z" fill="#fde047"/>`);
+      jfxHero(host, g, pumpkin, 150, 162, { y: g.cy + 10 * k });
+      const ghost = bfxAdd(host, SFX_GHOST, g.cx, g.cy, 80 * k, 96 * k);
+      bfxAnimate(ghost, [{ transform: 'translate(0,0) scale(.3)', opacity: 0, offset: 0 }, { transform: 'translate(0,0) scale(.3)', opacity: 0, offset: .38 },
+        { transform: `translate(${80 * k}px,${-110 * k}px) scale(1.5) rotate(-8deg)`, opacity: 1, offset: .55 }, { transform: `translate(${96 * k}px,${-124 * k}px) scale(1.6) rotate(6deg)`, opacity: 1, offset: .8 },
+        { transform: `translate(${140 * k}px,${-180 * k}px) scale(1.7)`, opacity: 0 }], { duration: JOKER_FX_MS - 40, easing: 'ease-out' });
+      jfxWord(host, g, 'BOO!', { x: g.cx - 60 * k, y: g.cy - 120 * k, color: '#a3e635', delay: 620, size: 50, tilt: -10 });
+    }
+    // Christmas, Santa Joker: Santa in a jester hat: HO HO HO! in the snow.
+    function jfxChristmas(host, g) {
+      jfxScrim(host, 'rgba(20,83,45,.5)');
+      const k = g.k;
+      const santa = sfxSvg(120, 160, `<circle cx="60" cy="96" r="38" fill="#fcd9b8" stroke="#1e1b4b" stroke-width="2.5"/>
+        <g transform="translate(10 4)">${jfxHatBody('#dc2626', '#16a34a', '#dc2626', '#f8fafc')}</g>
+        <path d="M22 106c4 36 22 52 38 52s34-16 38-52c-10 10-24 12-38 12s-28-2-38-12Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+        <path d="M40 112q20-10 40 0q-20 8-40 0Z" fill="#f8fafc" stroke="#cbd5e1"/><ellipse cx="46" cy="92" rx="5" ry="6" fill="#1e1b4b"/><ellipse class="jfx-wink" cx="74" cy="92" rx="5" ry="6" fill="#1e1b4b"/>
+        <circle cx="60" cy="104" r="6" fill="#ef4444"/><circle cx="34" cy="104" r="6" fill="#fda4af" opacity=".7"/><circle cx="86" cy="104" r="6" fill="#fda4af" opacity=".7"/>`);
+      jfxHero(host, g, santa, 150, 200, { y: g.cy - 6 * k });
+      for (let i = 0; i < 22; i++) {
+        const x = bfxRand(0, g.W), el = bfxAdd(host, sfxDot('#f8fafc'), x, -10, bfxRand(4, 9) * k, bfxRand(4, 9) * k);
+        bfxAnimate(el, [{ transform: 'translate(0,0)', opacity: 0 }, { opacity: 1, offset: .15 }, { transform: `translate(${bfxRand(-30, 30)}px,${g.H * bfxRand(.6, 1)}px)`, opacity: 0 }], { duration: bfxRand(1050, 1300), delay: bfxRand(0, 160), easing: 'linear' });
+      }
+      jfxWord(host, g, 'HO HO HO!', { color: '#ef4444', delay: 320, size: 40 });
+    }
+    // New Year, Midnight Joker: a quick 3-2-1, a pop, fireworks, JOKER!
+    function jfxNewYear(host, g) {
+      jfxScrim(host, 'rgba(30,27,75,.6)');
+      const k = g.k, px = 110 * k;
+      ['3', '2', '1'].forEach((n, i) => sfxPop(host, `<div class="svfx-count" style="font-size:${px}px">${n}</div>`, g.cx, g.cy, px * 1.4, px * 1.3,
+        [{ transform: 'scale(1.9)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .35 }, { transform: 'scale(.9)', opacity: 1, offset: .75 }, { transform: 'scale(.6)', opacity: 0 }], 190, i * 170));
+      setTimeout(() => {
+        if (!host.isConnected) return;
+        sfxFlash(host, g.cx, g.cy, k, 'rgba(254,243,199,.95)', 300, 500);
+        [[0, 0], [-.3, -.25], [.3, -.22], [-.22, .22], [.25, .25]].forEach(([fx, fy], i) => setTimeout(() => host.isConnected &&
+          jfxBurst(host, g.cx + fx * g.W, g.cy + fy * g.H * .8, ['#fde68a', '#fbbf24', '#f472b6', '#22d3ee', '#ffffff'], 22, 90 * k, 700), i * 60));
+      }, 520);
+      jfxHero(host, g, JFX_CARD, 104, 148, { delay: 560, enter: 'pop' });
+      jfxWord(host, g, 'JOKER!', { color: '#fde68a', delay: 640 });
+    }
+    // Diwali, Diya Joker: a ring of lamps lights one by one around the Joker.
+    function jfxDiwali(host, g) {
+      jfxScrim(host, 'rgba(124,45,18,.5)');
+      const k = g.k, n = 10, r = 118 * k;
+      const mandala = sfxSvg(200, 200, [0, 30, 60, 90, 120, 150].map(a => `<ellipse cx="100" cy="100" rx="92" ry="26" fill="none" stroke="${a % 60 ? '#f472b6' : '#fbbf24'}" stroke-width="3" transform="rotate(${a} 100 100)"/>`).join('') + '<circle cx="100" cy="100" r="30" fill="#f59e0b" opacity=".35"/>');
+      sfxPop(host, mandala, g.cx, g.cy, 210 * k, 210 * k, [{ transform: 'scale(.3) rotate(0)', opacity: 0 }, { transform: 'scale(1) rotate(40deg)', opacity: .9, offset: .3 }, { transform: 'scale(1.02) rotate(120deg)', opacity: .9, offset: .8 }, { transform: 'scale(1.1) rotate(150deg)', opacity: 0 }], JOKER_FX_MS - 60);
+      const diya = sfxSvg(40, 40, '<ellipse class="jfx-flicker" cx="20" cy="12" rx="5" ry="10" fill="#fde047"/><ellipse cx="20" cy="14" rx="2.5" ry="5" fill="#fff"/><path d="M4 22h32q-4 14-16 14T4 22Z" fill="#c2410c" stroke="#7c2d12" stroke-width="2"/>');
+      for (let i = 0; i < n; i++) {
+        const a = -Math.PI / 2 + (Math.PI * 2 * i) / n, d = 60 + i * 55;
+        const el = bfxAdd(host, diya, g.cx + Math.cos(a) * r, g.cy + Math.sin(a) * r, 34 * k, 34 * k);
+        bfxAnimate(el, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.3)', opacity: 1, offset: .12 }, { transform: 'scale(1)', opacity: 1, offset: .2 }, { opacity: 1, offset: .85 }, { opacity: 0 }], { duration: JOKER_FX_MS - d - 40, delay: d });
+      }
+      jfxHero(host, g, JFX_CARD, 92, 131, { enter: 'fade', delay: 120 });
+      jfxSparkles(host, g, g.cx, g.cy, ['#fde047', '#f472b6', '#fb923c'], 12, 620, 150);
+      jfxWord(host, g, 'JOKER!', { y: g.cy + 168 * k, color: '#fb923c', delay: 520 });
+    }
+    // Lunar New Year, Fortune Joker: a red envelope opens, out comes the
+    // Joker in a shower of gold coins.
+    function jfxLunar(host, g) {
+      jfxScrim(host, 'rgba(127,29,29,.55)');
+      const k = g.k, envY = g.cy + 50 * k;
+      const clip = jfxClip(host, g.cx - 70 * k, 0, 140 * k, envY - 30 * k);
+      const card = bfxAdd(clip, JFX_CARD, 70 * k, envY - 30 * k - 70 * k, 84 * k, 120 * k);
+      bfxAnimate(card, [{ transform: `translateY(${140 * k}px)`, offset: 0 }, { transform: `translateY(${140 * k}px)`, offset: .3 }, { transform: 'translateY(-8px)', offset: .5 },
+        { transform: 'translateY(0)', opacity: 1, offset: .82 }, { transform: 'translateY(-12px)', opacity: 0 }], { duration: JOKER_FX_MS - 60, easing: 'ease-out' });
+      const env = sfxSvg(140, 110, '<rect x="4" y="4" width="132" height="102" rx="8" fill="#dc2626" stroke="#7f1d1d" stroke-width="3"/><circle cx="70" cy="58" r="18" fill="#fbbf24" stroke="#92400e" stroke-width="2"/><text x="70" y="65" text-anchor="middle" font-size="20" font-weight="900" fill="#b91c1c" font-family="serif">福</text>');
+      jfxHero(host, g, env, 140, 110, { y: envY + 26 * k, enter: 'rise' });
+      const flap = bfxAdd(host, sfxSvg(136, 50, '<path d="M2 2h132L68 48Z" fill="#b91c1c" stroke="#7f1d1d" stroke-width="3" stroke-linejoin="round"/>'), g.cx, envY - 4 * k, 136 * k, 50 * k);
+      flap.style.transformOrigin = '50% 0%';
+      bfxAnimate(flap, [{ transform: 'rotateX(0)', opacity: 0 }, { transform: 'rotateX(0)', opacity: 1, offset: .1 }, { transform: 'rotateX(0)', offset: .18 }, { transform: 'rotateX(180deg)', offset: .3 },
+        { transform: 'rotateX(180deg)', opacity: 1, offset: .82 }, { transform: 'rotateX(180deg)', opacity: 0 }], { duration: JOKER_FX_MS - 60 });
+      setTimeout(() => host.isConnected && sfxThrow(host, g.cx, envY - 60 * k, k, 16, () => [sfxSvg(20, 20, '<circle cx="10" cy="10" r="9" fill="#fbbf24" stroke="#92400e" stroke-width="2"/><rect x="7" y="7" width="6" height="6" fill="#92400e"/>'), 16, 16], { speed: [120, 200], gravity: 380, dur: [700, 820], delay: [0, 110] }), 520);
+      jfxWord(host, g, 'LUCKY!', { y: g.cy - 150 * k, color: '#fbbf24', delay: 560, tilt: 4 });
+    }
+    // Valentine's, Cupid Joker: a heart jester flies in and fires an arrow.
+    function jfxValentine(host, g) {
+      jfxScrim(host, 'rgba(136,19,55,.5)');
+      const k = g.k;
+      const cupid = sfxSvg(140, 140, `<path d="M20 64c-16-8-18-26-6-32 8-4 18 2 22 10M120 64c16-8 18-26 6-32-8-4-18 2-22 10" fill="#fce7f3" stroke="#f9a8d4" stroke-width="2"/>
+        <g transform="translate(20 36) scale(1)"><path d="${SFX_HEART}" fill="#e11d48" stroke="#881337" stroke-width="3"/></g>
+        <g transform="translate(34 0) scale(.72)">${jfxHatBody('#f472b6', '#e11d48', '#f472b6')}</g>
+        <ellipse cx="58" cy="82" rx="5" ry="6" fill="#fff"/><ellipse class="jfx-wink" cx="82" cy="82" rx="5" ry="6" fill="#fff"/><path d="M56 98q14 12 28 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>`);
+      jfxHero(host, g, cupid, 160, 160, { enter: [{ transform: `translateX(${-g.W * .7}px) rotate(-20deg)`, opacity: 1 }, { transform: 'translateX(12px) rotate(6deg)', opacity: 1, offset: .22 },
+        { transform: 'translateX(0) translateY(-6px) rotate(0)', offset: .34 }, { transform: 'translateY(4px)', offset: .5 }, { transform: 'translateY(-4px)', opacity: 1, offset: .8 }, { transform: 'translateY(-20px) scale(.9)', opacity: 0 }] });
+      const arrow = bfxAdd(host, sfxSvg(120, 20, '<path d="M4 10H104" stroke="#92400e" stroke-width="3" stroke-linecap="round"/><path d="M104 4 118 10 104 16Z" fill="#fbbf24" stroke="#92400e"/><path d="M4 10 14 2H24L14 10 24 18H14Z" fill="#fb7185"/>'), g.cx, g.cy + 10 * k, 120 * k, 20 * k);
+      bfxAnimate(arrow, [{ transform: 'translateX(0)', opacity: 0, offset: 0 }, { transform: 'translateX(0)', opacity: 0, offset: .4 }, { transform: 'translateX(0)', opacity: 1, offset: .42 }, { transform: `translateX(${g.W * .7}px)`, opacity: 1 }], { duration: 900, easing: 'ease-in' });
+      setTimeout(() => host.isConnected && sfxThrow(host, g.cx, g.cy, k, 14, j => [sfxHeartSvg(['#fb7185', '#f43f5e', '#fda4af'][j % 3]), bfxRand(14, 22), bfxRand(14, 22)], { up: false, speed: [100, 170], gravity: 120, dur: [650, 780], delay: [0, 40] }), 620);
+      jfxWord(host, g, 'MWAH!', { color: '#fb7185', delay: 620, tilt: -8 });
+    }
+    // Easter, Egg Joker: a big egg wobbles, cracks, and a bunny in a jester
+    // hat pops out.
+    function jfxEaster(host, g) {
+      jfxScrim(host, 'rgba(22,101,52,.4)');
+      const k = g.k, eggY = g.cy + 30 * k;
+      const clip = jfxClip(host, g.cx - 80 * k, 0, 160 * k, eggY + 10 * k);
+      const bunny = sfxSvg(120, 160, `<ellipse cx="42" cy="40" rx="12" ry="36" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/><ellipse cx="78" cy="40" rx="12" ry="36" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+        <ellipse cx="42" cy="44" rx="5" ry="24" fill="#fbcfe8"/><ellipse cx="78" cy="44" rx="5" ry="24" fill="#fbcfe8"/>
+        <circle cx="60" cy="104" r="38" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/><g transform="translate(24 44) scale(.72)">${jfxHatBody('#a78bfa', '#f472b6', '#38bdf8')}</g>
+        <ellipse cx="46" cy="102" rx="5" ry="6" fill="#1e1b4b"/><ellipse class="jfx-wink" cx="74" cy="102" rx="5" ry="6" fill="#1e1b4b"/><path d="M56 112l4 4 4-4Z" fill="#f472b6"/><path d="M50 120q10 8 20 0" stroke="#1e1b4b" stroke-width="2.5" fill="none"/>`);
+      const bEl = bfxAdd(clip, bunny, 80 * k, eggY - 50 * k, 110 * k, 146 * k);
+      bfxAnimate(bEl, [{ transform: `translateY(${130 * k}px)`, offset: 0 }, { transform: `translateY(${130 * k}px)`, offset: .36 }, { transform: 'translateY(-10px)', offset: .5 },
+        { transform: 'translateY(0)', opacity: 1, offset: .82 }, { transform: 'translateY(-12px)', opacity: 0 }], { duration: JOKER_FX_MS - 60, easing: 'ease-out' });
+      const [a, b, c] = SFX_PASTELS[1];
+      const eggBottom = sfxSvg(40, 52, `<path d="M3 30C3 42 11 50 20 50S37 42 37 30l-5-4-4 5-4-5-4 5-4-5-4 5-4-5Z" fill="${a}" stroke="rgba(0,0,0,.25)"/><path d="M4 36h32" stroke="${c}" stroke-width="3"/>`);
+      const eggTop = sfxSvg(40, 52, `<path d="M20 2C30 2 37 18 37 30l-5-4-4 5-4-5-4 5-4-5-4 5-4-5-5 4C3 18 10 2 20 2Z" fill="${a}" stroke="rgba(0,0,0,.25)"/><path d="M4 22l4-4 4 4 4-4 4 4 4-4 4 4 4-4 4 4" stroke="${b}" stroke-width="3" fill="none"/><ellipse cx="13" cy="14" rx="3" ry="6" fill="#fff" opacity=".45"/>`);
+      const wobble = [{ transform: 'translateY(30%) rotate(0)', opacity: 0 }, { transform: 'rotate(0)', opacity: 1, offset: .08 }, { transform: 'rotate(-9deg)', offset: .14 }, { transform: 'rotate(9deg)', offset: .2 },
+        { transform: 'rotate(-7deg)', offset: .26 }, { transform: 'rotate(0)', offset: .32 }];
+      const eggW = 120, eggH = 156;
+      const bottom = sfxPop(host, eggBottom, g.cx, eggY + 40 * k, eggW * k, eggH * k, [...wobble, { transform: 'rotate(0)', opacity: 1, offset: .8 }, { transform: 'rotate(0)', opacity: 0 }], JOKER_FX_MS - 60);
+      bottom.style.transformOrigin = '50% 90%';
+      const top = sfxPop(host, eggTop, g.cx, eggY + 40 * k, eggW * k, eggH * k, [...wobble, { transform: `translate(${50 * k}px,${-120 * k}px) rotate(60deg)`, opacity: 1, offset: .5 }, { transform: `translate(${80 * k}px,${-40 * k}px) rotate(120deg)`, opacity: 0 }], JOKER_FX_MS - 60);
+      top.style.transformOrigin = '50% 90%';
+      jfxWord(host, g, 'HOP!', { y: g.cy - 150 * k, color: '#a78bfa', delay: 620, tilt: 6 });
+    }
+    // Summer, Beach Joker: a Joker in shades surfs across on a wave.
+    function jfxSummer(host, g) {
+      jfxScrim(host, 'rgba(12,74,110,.45)');
+      const k = g.k, waveY = g.cy + 60 * k;
+      sfxFlash(host, g.W * .82, g.H * .2, k, 'rgba(253,224,71,.85)', 180, JOKER_FX_MS - 100);
+      const wave = sfxSvg(400, 120, '<path d="M0 60Q50 20 100 60T200 60T300 60T400 60V120H0Z" fill="#0ea5e9" opacity=".85"/><path d="M0 60Q50 20 100 60T200 60T300 60T400 60" stroke="#e0f2fe" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M0 84Q50 60 100 84T200 84T300 84T400 84V120H0Z" fill="#0369a1" opacity=".9"/>');
+      sfxPop(host, wave, g.cx, waveY + 40 * k, g.W * 1.6, 130 * k, [{ transform: `translateX(${-g.W * .5}px)`, opacity: 0 }, { transform: `translateX(${-g.W * .3}px)`, opacity: 1, offset: .15 }, { transform: `translateX(${g.W * .15}px)`, opacity: 1, offset: .8 }, { transform: `translateX(${g.W * .3}px)`, opacity: 0 }], JOKER_FX_MS - 40);
+      const surfer = sfxSvg(110, 150, `${jfxNest(20, 0, 70, 100, '0 0 70 100', JFX_CARD.replace(/^<svg[^>]*>|<\/svg>$/g, ''))}
+        <rect x="26" y="40" width="58" height="12" rx="5" fill="#111827"/><circle cx="41" cy="46" r="9" fill="#111827"/><circle cx="69" cy="46" r="9" fill="#111827"/><path d="M38 42h6M66 42h6" stroke="#38bdf8" stroke-width="2"/>
+        <ellipse cx="55" cy="118" rx="54" ry="10" fill="#f97316" stroke="#7c2d12" stroke-width="2.5"/><path d="M8 118h94" stroke="#fde047" stroke-width="3"/>`);
+      const el = bfxAdd(host, surfer, g.cx, waveY - 30 * k, 110 * k, 150 * k);
+      bfxAnimate(el, [{ transform: `translate(${-g.W * .75}px,10px) rotate(-8deg)`, opacity: 1 }, { transform: 'translate(0,-8px) rotate(6deg)', offset: .35 }, { transform: 'translate(10px,4px) rotate(-4deg)', offset: .5 },
+        { transform: 'translate(20px,-6px) rotate(5deg)', opacity: 1, offset: .75 }, { transform: `translate(${g.W * .75}px,0) rotate(-6deg)`, opacity: 1 }], { duration: JOKER_FX_MS - 40, easing: 'ease-in-out' });
+      jfxWord(host, g, "SURF'S UP!", { y: g.cy - 130 * k, color: '#38bdf8', delay: 360, size: 38, tilt: -5 });
+    }
+    // Ramadan, Lantern Joker: kept calm: a lantern lowers on its chain under
+    // a crescent moon and its glow reveals the Joker.
+    function jfxRamadan(host, g) {
+      jfxScrim(host, 'rgba(15,23,42,.6)');
+      const k = g.k;
+      sfxPop(host, sfxSvg(60, 60, '<path d="M40 6A26 26 0 1 0 54 44 21 21 0 1 1 40 6Z" fill="#fde68a"/>'), g.cx - 110 * k, g.cy - 150 * k, 60 * k, 60 * k,
+        [{ opacity: 0, transform: 'scale(.8)' }, { opacity: 1, transform: 'scale(1)', offset: .3 }, { opacity: 1, offset: .8 }, { opacity: 0 }], JOKER_FX_MS - 60);
+      for (let i = 0; i < 10; i++) {
+        const el = bfxAdd(host, sfxStar(i % 2 ? '#fde68a' : '#fff'), g.cx + bfxRand(-160, 160) * k, g.cy + bfxRand(-190, -40) * k, 12 * k, 12 * k);
+        bfxAnimate(el, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.1) rotate(45deg)', opacity: 1, offset: .45 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 700, delay: bfxRand(100, 700) });
+      }
+      const lantern = sfxSvg(60, 170, `<path d="M30 0v88" stroke="#d4a017" stroke-width="2.5" stroke-dasharray="5 3"/>${jfxNest(0, 84, 60, 86, '0 0 40 60', sfxLantern().replace(/^<svg[^>]*>|<\/svg>$/g, ''))}`);
+      const lEl = bfxAdd(host, lantern, g.cx, g.cy - 150 * k, 60 * k, 170 * k);
+      lEl.style.transformOrigin = '50% 0%';
+      bfxAnimate(lEl, [{ transform: 'translateY(-100%) rotate(0)', opacity: 1 }, { transform: 'translateY(0) rotate(5deg)', offset: .25 }, { transform: 'rotate(-3deg)', offset: .45 }, { transform: 'rotate(2deg)', opacity: 1, offset: .8 }, { transform: 'rotate(0)', opacity: 0 }], { duration: JOKER_FX_MS - 40, easing: 'ease-out' });
+      sfxFlash(host, g.cx, g.cy - 20 * k, k, 'rgba(253,230,138,.75)', 320, 900, 360);
+      jfxHero(host, g, JFX_CARD, 88, 126, { y: g.cy + 80 * k, enter: 'fade', delay: 420 });
+    }
+    const JOKER_FX = {
+      default: jfxDefault, 'joker-grin': jfxGrin, 'joker-jackbox': jfxJackbox, 'joker-puppet': jfxPuppet,
+      'joker-magic': jfxMagic, 'joker-glitch': jfxGlitch, 'joker-storm': jfxStorm,
+      'joker-halloween': jfxHalloween, 'joker-christmas': jfxChristmas, 'joker-newyear': jfxNewYear, 'joker-diwali': jfxDiwali,
+      'joker-lunar': jfxLunar, 'joker-valentine': jfxValentine, 'joker-easter': jfxEaster, 'joker-summer': jfxSummer, 'joker-ramadan': jfxRamadan
+    };
+    function jokerPreviewIcon(id) {
+      return { 'joker-grin': '😜', 'joker-jackbox': '🎁', 'joker-puppet': '🎭', 'joker-magic': '🎩', 'joker-glitch': '📺', 'joker-storm': '🌪️',
+        'joker-halloween': '🎃', 'joker-christmas': '🎅', 'joker-newyear': '🥂', 'joker-diwali': '🪔', 'joker-lunar': '🧧',
+        'joker-valentine': '💘', 'joker-easter': '🥚', 'joker-summer': '🏄', 'joker-ramadan': '🏮' }[id] || '🃏';
+    }
+    function jokerEffectIdFor(player) {
+      const own = (typeof equippedCosmetics !== 'undefined' && equippedCosmetics.jokerEffect) || 'default';
+      const id = player?.id === state?.localPlayerId ? own : (player?.cosmetics?.jokerEffect || 'default');
+      return JOKER_FX[id] ? id : 'default';
+    }
+
+    // ---- Playing them ----
+    // One effect on screen at a time. A second Joker (a counter) waits until
+    // the first has been seen JOKER_FX_MIN_MS, then fades it and takes over;
+    // a third replaces the one waiting.
+    let jokerFxNow = null, jokerFxPending = null;
+    function playJokerEffect(id, opts = {}) {
+      const key = JOKER_FX[id] ? id : 'default';
+      const now = performance.now();
+      if (jokerFxNow && now - jokerFxNow.at < JOKER_FX_MIN_MS) {
+        if (jokerFxPending) clearTimeout(jokerFxPending);
+        jokerFxPending = setTimeout(() => { jokerFxPending = null; playJokerEffect(key, opts); }, JOKER_FX_MIN_MS - (now - jokerFxNow.at));
+        return 'queued';
+      }
+      audio.playJokerSound(key);
+      const layer = document.getElementById('jokerFxLayer');
+      if (!layer || !bigEffectsOn || reduceMotion) return 'sound';
+      if (jokerFxNow) {
+        const old = jokerFxNow.host;
+        if (typeof old.animate === 'function') old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: 'forwards' });
+        setTimeout(() => old.remove(), 170);
+      }
+      const host = document.createElement('div');
+      host.className = 'jfx-host';
+      host.dataset.jokerEffect = key;
+      layer.appendChild(host);
+      const g = jfxGeom(host);
+      try {
+        JOKER_FX[key](host, g);
+        if (opts.counter) jfxWord(host, g, 'COUNTERED!', { y: g.cy - 205 * g.k, color: '#22d3ee', size: 30, delay: 60, tilt: 0 });
+      } catch (e) { console.warn('Joker effect skipped safely:', e); }
+      const mine = { host, at: now, id: key };
+      jokerFxNow = mine;
+      setTimeout(() => { host.remove(); if (jokerFxNow === mine) jokerFxNow = null; }, JOKER_FX_MS + 250);
+      return 'played';
+    }
+    // A Joker just landed for this player (played, or countered): their
+    // effect here, and online for everyone else at the table.
+    function playJokerEffectFor(player, opts = {}) {
+      if (!player || (typeof tutorialActive !== 'undefined' && tutorialActive)) return;
+      if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning && !opts.inTests) return;
+      const id = jokerEffectIdFor(player);
+      playJokerEffect(id, opts);
+      if (state.isMultiplayer && state.roomCode && !state.spectating && typeof db !== 'undefined') {
+        db.ref(`rooms/${state.roomCode}/lastJokerEffect`).set({
+          playerId: player.id, by: state.localPlayerId, effectId: id, counter: !!opts.counter, at: Date.now()
+        }).catch(error => console.warn('Joker effect broadcast skipped', error));
+      }
+    }
+    // Shop / Custom preview inside a stage box.
+    function playJokerPreview(id, stage) {
+      if (!stage) return false;
+      stage.querySelectorAll('.jfx-host').forEach(el => el.remove());
+      const key = JOKER_FX[id] ? id : 'default';
+      audio.playJokerSound(key);
+      const host = document.createElement('div');
+      host.className = 'jfx-host';
+      stage.appendChild(host);
+      try { JOKER_FX[key](host, jfxGeom(host, true)); } catch (e) { console.warn('Joker preview skipped:', e); }
+      setTimeout(() => host.remove(), JOKER_FX_MS + 250);
+      return true;
+    }
+
     const NAME_CHANGE_TOKEN_COST = 100;
     // § Cosmetics catalogue
     const COSMETIC_SHOP_ITEMS = [
@@ -17403,6 +18020,13 @@ video {
       { id: 'victory-sparklers', category: 'Victory Effects', name: 'Sparkler Salute', cost: 750, tones: ['#1c1917','#fbbf24','#ffffff'] },
       { id: 'victory-stars', category: 'Victory Effects', name: '5-Star Finish', cost: 1000, tones: ['#1e1b4b','#fbbf24','#fff7d6'] },
       { id: 'victory-karate', category: 'Victory Effects', name: 'Karate Chop', cost: 2000, tones: ['#111827','#f97316','#fde047'] },
+      // Joker Effects (§ Joker effects): rarer than burns, so priced higher.
+      { id: 'joker-grin', category: 'Joker Effects', name: "Jester's Grin", cost: 2000, tones: ['#2e1065','#a855f7','#fde047'] },
+      { id: 'joker-jackbox', category: 'Joker Effects', name: 'Jack-in-the-Box', cost: 2000, tones: ['#450a0a','#ef4444','#fbbf24'] },
+      { id: 'joker-puppet', category: 'Joker Effects', name: 'Puppet Master', cost: 2000, tones: ['#1c1917','#b45309','#f5f5f4'] },
+      { id: 'joker-magic', category: 'Joker Effects', name: 'Magic Trick', cost: 2000, tones: ['#0f172a','#6366f1','#e0e7ff'] },
+      { id: 'joker-glitch', category: 'Joker Effects', name: 'Glitch', cost: 2000, tones: ['#020617','#22d3ee','#f43f5e'] },
+      { id: 'joker-storm', category: 'Joker Effects', name: 'Card Storm', cost: 2000, tones: ['#1e1b4b','#c084fc','#fbbf24'] },
       { id: 'avatar-ace-spades', category: 'Profile Pictures', name: 'Ace of Spades', cost: 200, tones: ['#1e293b','#cbd5e1','#f8fafc'] },
       { id: 'avatar-queen-hearts', category: 'Profile Pictures', name: 'Queen of Hearts', cost: 200, tones: ['#3f0b1b','#e11d48','#fbbf24'] },
       { id: 'avatar-joker', category: 'Profile Pictures', name: 'Joker', cost: 200, tones: ['#2e1065','#a855f7','#10b981'] },
@@ -17456,7 +18080,7 @@ video {
     const COSMETIC_CATEGORY_TYPES = Object.freeze({
       'Card Backs': 'cardBack', 'Frames': 'frame', 'Emote Packs': 'emotes',
       'Table Themes': 'tableTheme', 'Burn Effects': 'burnEffect', 'Victory Effects': 'victoryEffect',
-      'Profile Pictures': 'avatar'
+      'Joker Effects': 'jokerEffect', 'Profile Pictures': 'avatar'
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
       cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno', ...seasonalIdsOf('cardBack')]),
@@ -17465,6 +18089,7 @@ video {
       tableTheme: new Set(['table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic', ...seasonalIdsOf('tableTheme')]),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke', ...seasonalIdsOf('burnEffect')]),
       victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks','victory-sparklers','victory-stars','victory-karate', ...seasonalIdsOf('victoryEffect')]),
+      jokerEffect: new Set(['joker-grin','joker-jackbox','joker-puppet','joker-magic','joker-glitch','joker-storm', ...seasonalIdsOf('jokerEffect')]),
       avatar: new Set(Object.keys(AVATAR_ART))
     });
     let nameChangeTokenState = null;
@@ -17477,7 +18102,7 @@ video {
       try { return new Set(JSON.parse(localStorage.getItem('shithead_new_cosmetics') || '[]')); }
       catch (e) { return new Set(); }
     })();
-    const DEFAULT_EQUIPPED_COSMETICS = { cardBack: 'default', frame: 'default', emotes: 'default', tableTheme: 'default', burnEffect: 'default', victoryEffect: 'default', avatar: 'default' };
+    const DEFAULT_EQUIPPED_COSMETICS = { cardBack: 'default', frame: 'default', emotes: 'default', tableTheme: 'default', burnEffect: 'default', victoryEffect: 'default', jokerEffect: 'default', avatar: 'default' };
     let equippedCosmetics = (() => {
       try {
         return { ...DEFAULT_EQUIPPED_COSMETICS, ...JSON.parse(localStorage.getItem('shithead_equipped_cosmetics') || '{}') };
@@ -17492,6 +18117,7 @@ video {
         frame: equippedCosmetics.frame || 'default',
         burnEffect: equippedCosmetics.burnEffect || 'default',
         victoryEffect: equippedCosmetics.victoryEffect || 'default',
+        jokerEffect: equippedCosmetics.jokerEffect || 'default',
         avatar: equippedCosmetics.avatar || 'default'
       };
     }
@@ -17533,6 +18159,7 @@ video {
       document.body.dataset.equippedTableTheme = equippedCosmetics.tableTheme || 'default';
       document.body.dataset.equippedBurnEffect = equippedCosmetics.burnEffect;
       document.body.dataset.equippedVictoryEffect = equippedCosmetics.victoryEffect;
+      document.body.dataset.equippedJokerEffect = equippedCosmetics.jokerEffect || 'default';
       document.body.dataset.equippedAvatar = equippedCosmetics.avatar || 'default';
       refreshOwnAvatarDisplays();
       try { localStorage.setItem('shithead_equipped_cosmetics', JSON.stringify(equippedCosmetics)); } catch (e) {}
@@ -17575,7 +18202,7 @@ video {
       </div>`;
     }
     // ---- Showcase: what a player has equipped, shown on their player card.
-    const SHOWCASE_TYPES = ['tableTheme', 'cardBack', 'frame', 'burnEffect', 'victoryEffect', 'emotes'];
+    const SHOWCASE_TYPES = ['tableTheme', 'cardBack', 'frame', 'burnEffect', 'victoryEffect', 'jokerEffect', 'emotes'];
     function getShowcaseLoadout() {
       const loadout = {};
       SHOWCASE_TYPES.forEach(type => {
@@ -17603,7 +18230,7 @@ video {
         return id && isSupportedCosmetic(type, id) ? id : 'default';
       };
       const table = pick('tableTheme'), back = pick('cardBack'), frame = pick('frame');
-      const burn = pick('burnEffect'), victory = pick('victoryEffect'), emotes = pick('emotes');
+      const burn = pick('burnEffect'), victory = pick('victoryEffect'), joker = pick('jokerEffect'), emotes = pick('emotes');
       const chip = (icon, label, type, id) => `<div class="pp-show ${id === 'default' ? 'is-default' : ''}"><span class="pp-show-icon">${icon}</span><span class="pp-show-text"><small>${label}</small><b>${cosmeticDisplayName(type, id)}</b></span></div>`;
       const emoteIcon = (emotes !== 'default' && EMOTE_PACKS[emotes]?.[0]) || '😂';
       return `<div class="pp-showcase"><div class="pp-section">Showcase</div>
@@ -17611,7 +18238,7 @@ video {
         <div class="pp-show-grid">
           ${chip('🂠', 'Card back', 'cardBack', back)}${chip('▢', 'Frame', 'frame', frame)}
           ${chip(burnPreviewIcon(burn), 'Burn', 'burnEffect', burn)}${chip(victoryPreviewIcon(victory), 'Victory', 'victoryEffect', victory)}
-          ${chip(emoteIcon, 'Emotes', 'emotes', emotes)}
+          ${chip(jokerPreviewIcon(joker), 'Joker', 'jokerEffect', joker)}${chip(emoteIcon, 'Emotes', 'emotes', emotes)}
         </div></div>`;
     }
     function renderPlayerPopupHuman(player, profile, friendState) {
@@ -17762,6 +18389,7 @@ video {
       // the open Custom panel aside (flashing the home screen) with nothing
       // visible to show for it.
       if (type === 'burnEffect') return playPersonalisationBurnPreview(id);
+      if (type === 'jokerEffect') return playJokerPreview(id, document.getElementById('personalisationJokerStage'));
       if (!bigEffectsOn || id === 'default') return;
       if (type === 'victoryEffect') return playVictoryEffect(id);
     }
@@ -17787,7 +18415,7 @@ video {
       applyEquippedCosmetics();
       renderPersonalisationCosmetics();
       const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES].find(entry => entry.id === id);
-      const effectsDisabled = (type === 'burnEffect' || type === 'victoryEffect') && !bigEffectsOn;
+      const effectsDisabled = (type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect') && !bigEffectsOn;
       const status = document.getElementById('personalisationStatus');
       if (status) status.textContent = `${item ? item.name : 'Default'} equipped.${effectsDisabled ? ' Effects are currently disabled in Settings.' : ''}`;
       if (id === lastPurchasedCosmeticId) lastPurchasedCosmeticId = null;
@@ -17816,14 +18444,15 @@ video {
         if (type === 'frame') return framePreviewCard(null);
         if (type === 'burnEffect') return '<span class="effect-mini-tile">🔥</span>';
         if (type === 'victoryEffect') return '<span class="effect-mini-tile">🏆</span>';
+        if (type === 'jokerEffect') return '<span class="effect-mini-tile">🃏</span>';
         if (type !== 'cardBack') return '<span class="effect-mini-tile">◇</span>';
         return `<span class="w-8 h-10 rounded-lg custom-card-back ${getThemeDeckBackClass()} flex items-center justify-center">${getEmblemSvg()}</span>`;
       }
       if (type === 'tableTheme') return miniTablePreviewHtml(item.id);
       if (type === 'emotes') return `<span class="text-base">${(EMOTE_PACKS[item.id] || []).slice(0, 3).join('')}</span>`;
       if (type === 'frame') return framePreviewCard(item);
-      if (type === 'burnEffect' || type === 'victoryEffect') {
-        const icon = type === 'burnEffect' ? burnPreviewIcon(item.id) : victoryPreviewIcon(item.id);
+      if (type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect') {
+        const icon = type === 'burnEffect' ? burnPreviewIcon(item.id) : type === 'jokerEffect' ? jokerPreviewIcon(item.id) : victoryPreviewIcon(item.id);
         return `<span class="effect-mini-tile" style="background:linear-gradient(135deg,${item.tones[0]},${item.tones[1]});border-color:${item.tones[2]}">${icon}</span>`;
       }
       if (type !== 'cardBack') return `<span class="effect-mini-tile" style="background:linear-gradient(135deg,${item.tones[0]} 0 45%,${item.tones[1]} 45% 72%,${item.tones[2]} 72% 100%)"></span>`;
@@ -17833,7 +18462,7 @@ video {
 
     function personalisationOptionHtml(item, type, activeId) {
       const id = item ? item.id : 'default';
-      const defaultNames = { cardBack:'Card Back', frame:'Frame', emotes:'Emotes', tableTheme:'Table', burnEffect:'Burn', victoryEffect:'Victory' };
+      const defaultNames = { cardBack:'Card Back', frame:'Frame', emotes:'Emotes', tableTheme:'Table', burnEffect:'Burn', victoryEffect:'Victory', jokerEffect:'Joker' };
       const name = item ? item.name : `Default ${defaultNames[type] || 'Cosmetic'}`;
       const owned = id === 'default' || !!item?.builtIn || !!cosmeticPurchaseState[id];
       const active = id === activeId;
@@ -17883,13 +18512,15 @@ video {
       const tables = document.getElementById('personalisationTableThemes');
       const burns = document.getElementById('personalisationBurnEffects');
       const victories = document.getElementById('personalisationVictoryEffects');
-      if (!backs || !frames || !emotes || !tables || !burns || !victories) return;
+      const jokers = document.getElementById('personalisationJokerEffects');
+      if (!backs || !frames || !emotes || !tables || !burns || !victories || !jokers) return;
       backs.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs'))].map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('');
       frames.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames')), ...EARNED_FRAMES].map(i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame)).join('');
       emotes.innerHTML = [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs')])].map(i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes)).join('');
       tables.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes'))].map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('');
       burns.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Burn Effects'))].map(i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect)).join('');
       victories.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Victory Effects'))].map(i => personalisationOptionHtml(i, 'victoryEffect', equippedCosmetics.victoryEffect)).join('');
+      jokers.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Joker Effects'))].map(i => personalisationOptionHtml(i, 'jokerEffect', equippedCosmetics.jokerEffect)).join('');
       const status = document.getElementById('personalisationStatus');
       status.textContent = currentUser ? 'Your equipped choices are saved to your account.' : 'Sign in to load and save purchased cosmetics.';
     }
@@ -17910,7 +18541,7 @@ video {
         cosmeticPurchaseState = { ...(purchaseSnap.val() || {}), ...(ownedSnap.val() || {}) };
         const saved = equippedSnap.val() || {};
         equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS, ...saved };
-        ['cardBack', 'frame', 'emotes', 'tableTheme', 'burnEffect', 'victoryEffect', 'avatar'].forEach(type => {
+        ['cardBack', 'frame', 'emotes', 'tableTheme', 'burnEffect', 'victoryEffect', 'jokerEffect', 'avatar'].forEach(type => {
           const id = equippedCosmetics[type];
           if (!canRestoreEquippedCosmetic(type, id)) equippedCosmetics[type] = 'default';
         });
@@ -18022,6 +18653,7 @@ video {
       { category: 'Card Backs', label: 'Card Backs' },
       { category: 'Frames', label: 'Frames' },
       { category: 'Burn Effects', label: 'Burn' },
+      { category: 'Joker Effects', label: 'Joker' },
       { category: 'Victory Effects', label: 'Victory' },
       { category: 'Emote Packs', label: 'Emotes' }
     ];
@@ -18661,6 +19293,7 @@ video {
         tableTheme: 'Changes your table background and arena styling',
         burnEffect: 'Plays when you burn the pile',
         victoryEffect: 'Plays when you finish in first place',
+        jokerEffect: 'Plays over the table when you play a Joker',
         avatar: 'Your picture in games, Friends and the leaderboard'
       }[type] || 'Custom item';
     }
@@ -18671,7 +19304,7 @@ video {
       if (type === 'emotes') return `<span class="text-[13px] leading-tight text-center">${(EMOTE_PACKS[item.id] || []).slice(0, 4).join('')}</span>`;
       if (type === 'cardBack') return `<span class="w-7 h-[42px] rounded-md custom-card-back ${getCosmeticBackClass(item.id)} border border-slate-500 flex items-center justify-center shadow-md">${getEmblemSvg()}</span>`;
       if (type === 'frame') return `<span class="relative w-7 h-[42px] rounded-md bg-slate-950 border-2 flex flex-col items-start p-1 font-black text-[8px] text-white" style="border-color:#334155;${getCosmeticFrameStyle(item.id).replace(/!important/g, '')}"><span>A</span><span class="${item.id === 'frame-gold' ? 'text-amber-300' : 'text-red-400'}">♥</span></span>`;
-      const symbols = { tableTheme:'♠', burnEffect: burnPreviewIcon(item.id), victoryEffect:'🏆' };
+      const symbols = { tableTheme:'♠', burnEffect: burnPreviewIcon(item.id), victoryEffect:'🏆', jokerEffect: jokerPreviewIcon(item.id) };
       return `<span class="w-9 h-9 rounded-lg border border-slate-600 flex items-center justify-center text-lg" style="background:linear-gradient(135deg,${item.tones[0]},${item.tones[1]});color:${item.tones[2]}">${symbols[type] || '◇'}</span>`;
     }
 
@@ -18690,10 +19323,12 @@ video {
         demo = `<div class="shop-preview-stage" data-shop-burn-stage><div class="shop-burn-core">${burnPreviewIcon(item.id)}</div></div>`;
       } else if (type === 'avatar') {
         demo = `<div class="shop-preview-stage"><div class="avatar-demo">${avatarHtml(item.id, 84)}<div class="avatar-demo-list"><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>IN GAME</span></span><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>#1 <small>Leaderboard</small></span></span><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>FRIENDS</span></span></div></div></div>`;
+      } else if (type === 'jokerEffect') {
+        demo = `<div class="jfx-stage" data-shop-joker-stage><div class="jfx-stage-hint">${jokerPreviewIcon(item.id)}</div></div>`;
       } else if (type === 'victoryEffect') {
         demo = `<div class="shop-preview-stage"><div class="text-center"><div class="text-5xl">${victoryPreviewIcon(item.id)}</div><div class="text-[8px] text-slate-400 mt-1">Tap below to play the win animation</div></div></div>`;
       }
-      const isAnimated = type === 'burnEffect' || type === 'victoryEffect';
+      const isAnimated = type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect';
       return `<div class="flex items-start justify-between gap-2 mb-1"><div><div class="text-[10px] font-black text-white">${item.name}</div><div class="text-[8px] uppercase tracking-wider text-cyan-300">${item.category.slice(0, -1)} preview</div></div><button type="button" data-close-shop-preview class="text-slate-400 text-lg leading-none" aria-label="Close preview">×</button></div><div class="min-h-[106px] flex items-center justify-center">${demo}</div>${isAnimated ? `<button type="button" data-play-shop-effect="${item.id}" class="mt-2 w-full rounded-lg border border-cyan-500 py-1.5 text-[9px] font-black text-cyan-300">PLAY EFFECT</button>` : ''}<p class="mt-2 text-center text-[8px] text-slate-500">Preview only — no Diamonds have been spent.</p>`;
     }
 
@@ -18779,6 +19414,7 @@ video {
       // Burn effects play straight away so the preview shows the effect
       // itself, not just a static icon; PLAY EFFECT replays it.
       if (COSMETIC_CATEGORY_TYPES[item.category] === 'burnEffect') playShopBurnPreview(item.id, panel.querySelector('[data-shop-burn-stage]'));
+      if (COSMETIC_CATEGORY_TYPES[item.category] === 'jokerEffect') playJokerPreview(item.id, panel.querySelector('[data-shop-joker-stage]'));
       const button = document.querySelector(`[data-preview-cosmetic-id="${item.id}"]`);
       if (button) button.setAttribute('aria-expanded', 'true');
     }
@@ -18907,6 +19543,7 @@ video {
         const item = COSMETIC_SHOP_ITEMS.find(entry => entry.id === id);
         const type = item && COSMETIC_CATEGORY_TYPES[item.category];
         if (type === 'victoryEffect') playVictoryEffect(id);
+        if (type === 'jokerEffect') playJokerPreview(id, playBtn.closest('[data-inline-shop-preview]')?.querySelector('[data-shop-joker-stage]'));
         if (type === 'burnEffect') {
           const inlinePanel = playBtn.closest('[data-inline-shop-preview]');
           playShopBurnPreview(id, inlinePanel?.querySelector('[data-shop-burn-stage]'));

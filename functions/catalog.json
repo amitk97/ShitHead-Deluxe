@@ -180,6 +180,30 @@
    "name": "Karate Chop",
    "cost": 2000
   },
+  "joker-grin": {
+   "name": "Jester's Grin",
+   "cost": 2000
+  },
+  "joker-jackbox": {
+   "name": "Jack-in-the-Box",
+   "cost": 2000
+  },
+  "joker-puppet": {
+   "name": "Puppet Master",
+   "cost": 2000
+  },
+  "joker-magic": {
+   "name": "Magic Trick",
+   "cost": 2000
+  },
+  "joker-glitch": {
+   "name": "Glitch",
+   "cost": 2000
+  },
+  "joker-storm": {
+   "name": "Card Storm",
+   "cost": 2000
+  },
   "avatar-ace-spades": {
    "name": "Ace of Spades",
    "cost": 200
@@ -251,6 +275,11 @@
    "cost": 1500,
    "season": "lunar"
   },
+  "joker-lunar": {
+   "name": "Fortune Joker",
+   "cost": 3000,
+   "season": "lunar"
+  },
   "back-valentine": {
    "name": "Love Letter",
    "cost": 300,
@@ -284,6 +313,11 @@
   "victory-valentine": {
    "name": "Cupid's Arrows",
    "cost": 1500,
+   "season": "valentine"
+  },
+  "joker-valentine": {
+   "name": "Cupid Joker",
+   "cost": 3000,
    "season": "valentine"
   },
   "back-ramadan": {
@@ -321,6 +355,11 @@
    "cost": 1500,
    "season": "ramadan"
   },
+  "joker-ramadan": {
+   "name": "Lantern Joker",
+   "cost": 3000,
+   "season": "ramadan"
+  },
   "back-easter": {
    "name": "Painted Egg",
    "cost": 300,
@@ -354,6 +393,11 @@
   "victory-easter": {
    "name": "Egg Hunt",
    "cost": 1500,
+   "season": "easter"
+  },
+  "joker-easter": {
+   "name": "Egg Joker",
+   "cost": 3000,
    "season": "easter"
   },
   "back-summer": {
@@ -391,6 +435,11 @@
    "cost": 1500,
    "season": "summer"
   },
+  "joker-summer": {
+   "name": "Beach Joker",
+   "cost": 3000,
+   "season": "summer"
+  },
   "back-halloween": {
    "name": "Cobweb",
    "cost": 300,
@@ -424,6 +473,11 @@
   "victory-halloween": {
    "name": "Bat Swarm",
    "cost": 1500,
+   "season": "halloween"
+  },
+  "joker-halloween": {
+   "name": "Pumpkin Joker",
+   "cost": 3000,
    "season": "halloween"
   },
   "back-diwali": {
@@ -461,6 +515,11 @@
    "cost": 1500,
    "season": "diwali"
   },
+  "joker-diwali": {
+   "name": "Diya Joker",
+   "cost": 3000,
+   "season": "diwali"
+  },
   "back-christmas": {
    "name": "Candy Cane",
    "cost": 300,
@@ -496,6 +555,11 @@
    "cost": 1500,
    "season": "christmas"
   },
+  "joker-christmas": {
+   "name": "Santa Joker",
+   "cost": 3000,
+   "season": "christmas"
+  },
   "back-newyear": {
    "name": "Black Tie",
    "cost": 300,
@@ -529,6 +593,11 @@
   "victory-newyear": {
    "name": "Countdown",
    "cost": 1500,
+   "season": "newyear"
+  },
+  "joker-newyear": {
+   "name": "Midnight Joker",
+   "cost": 3000,
    "season": "newyear"
   }
  },

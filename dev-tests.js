@@ -1235,6 +1235,203 @@ async function runDevTestSuite() {
     assertEqual(state.players[state.currentTurnIndex].id, 'a', 'The turn moves past the finished seat');
     assertEqual(triggered, 1, 'and the next player is prompted to take it');
   });
+  await test('REGRESSION: countering a Joker by hand with your LAST card finishes you and the game goes on', () => {
+    const wasInstant = burnInstantResolveForTests;
+    burnInstantResolveForTests = false;
+    const realTrigger = triggerNextTurn;
+    triggerNextTurn = () => {};
+    try {
+      const counter = makeCard('JOKER', 'JOKER');
+      freshState({ discardPile: [makeCard('6'), makeCard('JOKER', 'JOKER'), counter], drawPile: [] });
+      const soren = makePlayer({ id: 'soren', isBot: true, hand: [makeCard('Q')] });
+      const you = makePlayer({ id: 'you', hand: [] });
+      const mia = makePlayer({ id: 'mia', isBot: true, hand: [makeCard('K')] });
+      state.players = [you, soren, mia];
+      state.localPlayerId = 'you';
+      state.lastJokerInitiatorId = 'soren';
+      handleJokerPlay(you, counter);
+      assertTrue(you.hasFinished && you.finishRank === 1, 'You finish with your counter-Joker', [you.hasFinished, you.finishRank]);
+      const cur = state.players[state.currentTurnIndex];
+      assertTrue(cur && !cur.hasFinished, 'A player still in takes the turn', cur && cur.id);
+    } finally { burnInstantResolveForTests = wasInstant; triggerNextTurn = realTrigger; }
+  });
+  await test('Guide: a Gauntlet section, and Key Terms alphabetical and covering the newer features', () => {
+    const sections = [...document.querySelectorAll('#rulesModal .accordion-toggle span:first-child')].map(el => el.textContent.trim());
+    assertTrue(sections.includes('The Gauntlet'), 'The Guide has a Gauntlet section', sections);
+    const keyTerms = [...document.querySelectorAll('#rulesModal .accordion-toggle')].find(b => /Key Terms/.test(b.textContent)).nextElementSibling;
+    const terms = [...keyTerms.querySelectorAll('p > strong:first-child')].map(el => el.textContent.replace(/:$/, '').trim());
+    const sorted = [...terms].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    assertEqual(terms, sorted, 'Key Terms stay in alphabetical order');
+    ['Gauntlet', 'Lives', 'Joker Effect', 'Leaderboard', 'Diamonds', 'Ranked', 'Tier'].forEach(t => assertTrue(terms.includes(t), `Key Terms explain ${t}`));
+  });
+  // ---- Joker effects ----
+  await test('Joker effects: 6 in the Shop at 2000, one per seasonal event at 3000, each with its own animation and sound', () => {
+    const shop = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Joker Effects' && !i.season);
+    const seasonal = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Joker Effects' && i.season);
+    assertEqual(shop.length, 6, 'Six Shop Joker effects');
+    assertTrue(shop.every(i => i.cost === 2000), 'Shop Joker effects cost 2000', shop.map(i => i.cost));
+    assertEqual(seasonal.length, SEASONAL_EVENTS.length, 'One per seasonal event');
+    assertTrue(seasonal.every(i => i.cost === 3000), 'Seasonal Joker effects cost 3000', seasonal.map(i => i.cost));
+    const all = [...shop, ...seasonal];
+    assertEqual(all.filter(i => typeof JOKER_FX[i.id] !== 'function').map(i => i.id), [], 'Every Joker effect has an animation');
+    assertEqual(all.filter(i => typeof JOKER_SOUNDS[i.id] !== 'function').map(i => i.id), [], 'Every Joker effect has its own sound');
+    assertEqual(new Set(all.map(i => JOKER_SOUNDS[i.id])).size, all.length, 'No two share a sound');
+    assertTrue(all.every(i => isSupportedCosmetic('jokerEffect', i.id)), 'All can be equipped');
+    assertTrue(typeof JOKER_FX.default === 'function' && typeof JOKER_SOUNDS.default === 'function', 'A default for players with none equipped');
+  });
+  await test('Joker effects: every animation plays within 1.5s (quick but not too quick) and cleans up after itself', async () => {
+    const stage = document.createElement('div');
+    stage.style.cssText = 'position:fixed;left:0;top:0;width:390px;height:700px;';
+    document.body.appendChild(stage);
+    const lengths = {};
+    try {
+      for (const id of Object.keys(JOKER_FX)) {
+        const host = document.createElement('div');
+        host.className = 'jfx-host';
+        stage.appendChild(host);
+        const t0 = document.timeline.currentTime;
+        JOKER_FX[id](host, jfxGeom(host));
+        // Some pieces start part-way through: watch the whole run.
+        const seen = new Map(); // animation -> when it ends (ms after the effect began)
+        for (let t = 0; t <= 1500; t += 50) {
+          host.getAnimations({ subtree: true }).forEach(a => {
+            if (seen.has(a)) return;
+            const end = a.effect.getComputedTiming().endTime;
+            const start = a.startTime == null ? document.timeline.currentTime : a.startTime;
+            seen.set(a, Number.isFinite(end) ? start - t0 + end : 0); // endless loops (a flame flicker) go with the host
+          });
+          await new Promise(r => setTimeout(r, 50));
+        }
+        lengths[id] = Math.round(Math.max(0, ...seen.values()));
+        assertTrue(seen.size > 2, `${id} draws something`);
+        host.remove();
+      }
+    } finally { stage.remove(); }
+    const tooLong = Object.entries(lengths).filter(([, ms]) => ms > JOKER_FX_MS + 60);
+    const tooShort = Object.entries(lengths).filter(([, ms]) => ms < 1000);
+    assertEqual(tooLong, [], 'No animation runs past the 1.5s window');
+    assertEqual(tooShort, [], 'Nor is any over in under a second');
+  });
+  await test('Joker effects: a Joker played on a Joker never shows two at once; the first is seen, then COUNTERED takes over', async () => {
+    const was = [bigEffectsOn, reduceMotion];
+    bigEffectsOn = true; reduceMotion = false;
+    const layer = document.getElementById('jokerFxLayer');
+    try {
+      layer.innerHTML = ''; jokerFxNow = null;
+      assertEqual(playJokerEffect('joker-grin'), 'played', 'The first plays straight away');
+      assertEqual(playJokerEffect('joker-glitch', { counter: true }), 'queued', 'A counter straight after waits its turn');
+      assertEqual(layer.querySelectorAll('.jfx-host').length, 1, 'Only one effect on screen');
+      await new Promise(r => setTimeout(r, JOKER_FX_MIN_MS + 120));
+      const hosts = [...layer.querySelectorAll('.jfx-host')];
+      assertEqual(hosts[hosts.length - 1].dataset.jokerEffect, 'joker-glitch', 'Then the counter takes over');
+      assertTrue(hosts[hosts.length - 1].textContent.includes('COUNTERED!'), 'with a COUNTERED! tag');
+      await new Promise(r => setTimeout(r, 250));
+      assertEqual(layer.querySelectorAll('.jfx-host').length, 1, 'and the first has faded away');
+    } finally {
+      bigEffectsOn = was[0]; reduceMotion = was[1];
+      layer.innerHTML = ''; jokerFxNow = null; if (jokerFxPending) { clearTimeout(jokerFxPending); jokerFxPending = null; }
+    }
+  });
+  await test('Joker effects: playing and countering a Joker trigger the right player\'s effect', () => {
+    const calls = [];
+    const real = playJokerEffectFor;
+    playJokerEffectFor = (player, opts = {}) => calls.push([player.id, !!opts.counter]);
+    const realTrigger = triggerNextTurn;
+    triggerNextTurn = () => {};
+    try {
+      freshState({ discardPile: [makeCard('4'), makeCard('K')], drawPile: [] });
+      const joker = makeCard('JOKER', 'JOKER');
+      const a = makePlayer({ id: 'a', isBot: true, hand: [joker, makeCard('9')] });
+      const b = makePlayer({ id: 'b', isBot: true, hand: [makeCard('JOKER', 'JOKER'), makeCard('5')] });
+      state.players = [a, b]; state.localPlayerId = 'nobody'; state.currentTurnIndex = 0;
+      executePlayCards('a', [joker]);
+      assertEqual(calls, [['a', false], ['b', true]], 'The Joker player\'s effect, then the defender\'s as a counter');
+    } finally { playJokerEffectFor = real; triggerNextTurn = realTrigger; }
+  });
+  await test('Joker effects: in the Showcase, the Custom Joker tab and the Guide', () => {
+    assertTrue(SHOWCASE_TYPES.includes('jokerEffect'), 'Shown in the Showcase');
+    assertTrue(showcaseHtml({ jokerEffect: 'joker-magic' }).includes('Magic Trick'), 'by name');
+    assertTrue(!!document.getElementById('personalisationJokerEffects') && !!document.getElementById('personalisationJokerStage'), 'Custom has a Joker tab with a preview stage');
+    assertEqual(jokerEffectIdFor(makePlayer({ id: 'bot' })), 'default', 'Nothing equipped: the default effect');
+  });
+
+  // ---- Last card is a power card, 3-4 players: the game goes on ----
+  // A 10, a four-of-a-kind burn (in turn or snapped) or a Joker as someone's
+  // LAST card: they finish, and the next player still in takes the turn.
+  const lastCardScenario = (seats, run) => {
+    const realTrigger = triggerNextTurn;
+    let prompted = 0;
+    triggerNextTurn = () => { prompted++; };
+    try {
+      freshState({ discardPile: [makeCard('4'), makeCard('6')], drawPile: [] });
+      state.players = seats.map(([id, hand, extra]) => makePlayer(Object.assign({ id, name: id, isBot: true, hand }, extra || {})));
+      state.localPlayerId = 'nobody';
+      state.currentTurnIndex = 0;
+      run();
+    } finally { triggerNextTurn = realTrigger; }
+    return prompted;
+  };
+  for (const n of [3, 4]) {
+    const others = (from) => ['b', 'c', 'd'].slice(0, n - 1).map((id, i) => [id, [makeCard('K'), makeCard('9')].concat(i === from ? [] : [makeCard('5')])]);
+    await test(`Last card a 10 (${n} players): that player finishes and the next player takes the turn`, () => {
+      const ten = makeCard('10');
+      const prompted = lastCardScenario([['a', [ten]], ...others(-1)], () => executePlayCards('a', [ten]));
+      const a = state.players[0];
+      assertTrue(a.hasFinished && a.finishRank === 1, 'The 10 player finishes first', [a.hasFinished, a.finishRank]);
+      assertEqual(state.phase, 'PLAY', 'The game carries on');
+      assertEqual(state.players[state.currentTurnIndex].id, 'b', 'The next player (b) takes the turn');
+      assertTrue(prompted > 0, 'and is told to go');
+    });
+    await test(`Last cards a four-of-a-kind burn (${n} players): finish, next player takes the turn`, () => {
+      const sevens = [makeCard('7', '♠'), makeCard('7', '♥')];
+      const prompted = lastCardScenario([['a', sevens], ...others(-1)], () => {
+        state.discardPile = [makeCard('4'), makeCard('7', '♦'), makeCard('7', '♣')];
+        executePlayCards('a', sevens);
+      });
+      assertTrue(state.players[0].hasFinished, 'The burner finishes');
+      assertEqual(state.discardPile.length, 0, 'The pile is burnt');
+      assertEqual(state.players[state.currentTurnIndex].id, 'b', 'The next player takes the turn');
+      assertTrue(prompted > 0, 'and is told to go');
+    });
+    await test(`Last card snapped into a four-of-a-kind out of turn (${n} players): finish, the game goes on`, () => {
+      const seven = makeCard('7', '♠');
+      const prompted = lastCardScenario([['a', [seven]], ...others(-1)], () => {
+        state.discardPile = [makeCard('4'), makeCard('7', '♦'), makeCard('7', '♣'), makeCard('7', '♥')];
+        state.currentTurnIndex = 1; // b's turn: a snaps
+        executePlayCards('a', [seven]);
+      });
+      assertTrue(state.players[0].hasFinished, 'The snapper finishes');
+      assertEqual(state.phase, 'PLAY', 'The game carries on');
+      const cur = state.players[state.currentTurnIndex];
+      assertTrue(cur && !cur.hasFinished && cur.id !== 'a', 'A player still in takes the turn', cur && cur.id);
+      assertTrue(prompted > 0, 'and is told to go');
+    });
+    await test(`Last card a Joker (${n} players): finish, the target picks up, the next player takes the turn`, () => {
+      const joker = makeCard('JOKER', 'JOKER');
+      const prompted = lastCardScenario([['a', [joker]], ...others(-1)], () => executePlayCards('a', [joker]));
+      const a = state.players[0];
+      assertTrue(a.hasFinished, 'The Joker player finishes');
+      assertEqual(state.phase, 'PLAY', 'The game carries on');
+      const cur = state.players[state.currentTurnIndex];
+      assertTrue(cur && !cur.hasFinished, 'A player still in takes the turn', cur && cur.id);
+      assertTrue(state.jokerTurnOwnerId !== 'a', 'No turn lock on the finished player');
+      assertTrue(prompted > 0, 'and is told to go');
+    });
+    await test(`Last card a counter-Joker (${n} players): the defender finishes, the game goes on`, () => {
+      const joker = makeCard('JOKER', 'JOKER');
+      const counter = makeCard('JOKER', 'JOKER');
+      // b holds only the Joker (fewest cards, so the bot initiator targets b).
+      const seats = [['a', [joker, makeCard('K'), makeCard('Q')]], ['b', [counter]], ...others(0).slice(1)];
+      const prompted = lastCardScenario(seats, () => executePlayCards('a', [joker]));
+      const b = state.players[1];
+      assertTrue(b.hasFinished && b.finishRank === 1, 'The defender who countered with their last card finishes', [b.hasFinished, b.finishRank, b.hand.length]);
+      assertEqual(state.phase, 'PLAY', 'The game carries on');
+      const cur = state.players[state.currentTurnIndex];
+      assertTrue(cur && !cur.hasFinished, 'A player still in takes the turn', cur && cur.id);
+      assertTrue(state.jokerTurnOwnerId !== 'b', 'No turn lock on the finished defender');
+      assertTrue(prompted > 0, 'and is told to go');
+    });
+  }
   await test('REGRESSION: Pooja retains the Joker bonus turn against a competing multiplayer snapshot', () => {
     freshState({ discardPile: [makeCard('4'), makeCard('JOKER', 'JOKER')], drawPile: [] });
     const pooja = makePlayer({ id: 'pooja', name: 'Pooja', hand: [makeCard('10')] });
@@ -1971,7 +2168,7 @@ async function runDevTestSuite() {
   await test('REGRESSION: Custom is organised into tabs with tiles, at least 2 per row', () => {
     openThemesPanel();
     const tabs = [...document.querySelectorAll('#customTabBar [data-custom-tab]')].map(b => b.textContent.trim());
-    assertEqual(tabs, ['Pictures', 'Deck', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Victory', 'Emotes'], 'Custom tabs');
+    assertEqual(tabs, ['Pictures', 'Deck', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'Custom tabs');
     document.querySelector('#customTabBar [data-custom-tab="cardBack"]').click();
     assertTrue(!document.querySelector('[data-custom-panel="cardBack"]').classList.contains('hidden') && document.querySelector('[data-custom-panel="avatar"]').classList.contains('hidden'), 'Only the chosen tab shows');
     const tiles = [...document.querySelectorAll('#personalisationCardBacks .cosmetic-tile')];
@@ -4813,9 +5010,9 @@ async function runDevTestSuite() {
     assertEqual(SEASONAL_EVENTS.length, 9, 'Nine seasonal events');
     SEASONAL_EVENTS.forEach(ev => {
       const items = COSMETIC_SHOP_ITEMS.filter(i => i.season === ev.id);
-      assertEqual(items.length, 7, `${ev.name} sells 7 items`);
-      assertEqual(new Set(items.map(i => i.category)).size, 7, `${ev.name} has one item per Shop section`);
-      assertEqual(items.reduce((sum, i) => sum + i.cost, 0), 5600, `${ev.name} items total 5600`);
+      assertEqual(items.length, 8, `${ev.name} sells 8 items`);
+      assertEqual(new Set(items.map(i => i.category)).size, 8, `${ev.name} has one item per Shop section`);
+      assertEqual(items.reduce((sum, i) => sum + i.cost, 0), 8600, `${ev.name} items total 8600 (incl. the 3000 Joker effect)`);
       assertTrue(EARNED_AVATARS.some(i => i.id === `avatar-${ev.id}-earned`), `${ev.name} has an earn-only picture`);
       assertTrue(!!ILLUSTRATED_TABLES[`table-${ev.id}`] && !!EMOTE_PACKS[`emotes-${ev.id}`] && !!SEASONAL_BURN_FX[`burn-${ev.id}`] && !!SEASONAL_VICTORY_FX[`victory-${ev.id}`], `${ev.name} has live art and effects`);
     });
@@ -5073,7 +5270,7 @@ async function runDevTestSuite() {
 
   await test('Multiplayer cosmetic payload exposes only visible gameplay cosmetics', () => {
     const loadout = getPublicCosmeticLoadout();
-    assertEqual(Object.keys(loadout).sort(), ['avatar','burnEffect','cardBack','frame','victoryEffect'], 'Only opponent-visible cosmetics (incl. the profile picture) should be synced');
+    assertEqual(Object.keys(loadout).sort(), ['avatar','burnEffect','cardBack','frame','jokerEffect','victoryEffect'], 'Only opponent-visible cosmetics (incl. the profile picture and Joker effect) should be synced');
     assertTrue(getCosmeticBackClass('back-neon') === 'cosmetic-back-neon', 'Opponent card backs must resolve to the purchased design');
     assertTrue(getCosmeticFrameStyle('frame-gold').includes('#fbbf24'), 'Opponent frames must resolve to their own frame styling');
   });
@@ -5784,7 +5981,7 @@ async function runDevTestSuite() {
     renderCosmeticShop();
     let tabs = tabNames();
     assertTrue(tabs[tabs.length - 1].includes('Seasonal'), 'With no event near, Seasonal is the last tab');
-    assertEqual(tabs.slice(0, -1), ['Pictures', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Victory', 'Emotes'], 'Pictures, then table and cards, then effects');
+    assertEqual(tabs.slice(0, -1), ['Pictures', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'Pictures, then table and cards, then effects');
     seasonalNowOverride = '2026-10-12T12:00:00'; // 3 days before Halloween
     renderCosmeticShop();
     assertTrue(tabNames()[0].includes('Seasonal'), 'Seasonal leads when an event starts within 3 days');

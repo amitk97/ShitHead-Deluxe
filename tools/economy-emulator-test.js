@@ -124,7 +124,7 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   r = await call('amit', { action: 'buyItem', itemId: 'back-valentine' }, 'amirk2197@googlemail.com');
   ok(r.diamonds === 999999 - 300, 'AmitK buys a seasonal item any time', r);
   r = await call('amit', { action: 'buyBundle', eventId: 'halloween' }, 'amirk2197@googlemail.com');
-  ok(r.price > 0 && Object.keys(r.purchases).length === 7, 'AmitK buys a seasonal bundle', r && { price: r.price, n: r.purchases && Object.keys(r.purchases).length, err: r.error });
+  ok(r.price > 0 && Object.keys(r.purchases).length === 8, 'AmitK buys a seasonal bundle (8 items incl. the Joker effect)', r && { price: r.price, n: r.purchases && Object.keys(r.purchases).length, err: r.error });
   r = await call('amit', { action: 'init' }, 'amirk2197@googlemail.com');
   ok(r.diamonds < 999999, 'the grant never refills', r);
 
@@ -333,6 +333,15 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   r = await gGame(g.run.id, true, false);
   for (let i = 0; i < 4; i++) r = await gGame(g.run.id, true);
   ok(r.completed && !r.first && r.diamondsAwarded === 50 && r.diamonds === 250 && r.newItems.length === 0, 'a later day pays 50', r);
+  // Joker effects: bought from the server's catalog (2000), equipped only when owned
+  await admin('users/dave/diamonds', 'PUT', 2500);
+  r = await call('dave', { action: 'buyItem', itemId: 'joker-grin' });
+  ok(r.diamonds === 500, 'buy a Joker effect (2000)', r);
+  await daveCan('equip a Joker effect', db => set(ref(db, 'users/dave/equippedCosmetics/jokerEffect'), 'joker-grin'));
+  ok((await tryWrite('dave', db => set(ref(db, 'users/dave/equippedCosmetics/jokerEffect'), 'joker-glitch'))) === 'denied', 'blocked: equip a Joker effect you do not own');
+  r = await call('dave', { action: 'buyItem', itemId: 'joker-halloween' });
+  ok(r.error && /only sold during|need 3000/.test(r.error.message), 'seasonal Joker effect (3000) not bought out of season', r);
+  await daveCan('show the Joker effect in the showcase', db => set(ref(db, 'publicProfiles/dave/showcase/jokerEffect'), 'joker-grin'));
   const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   ok((await admin(`users/dave/completedChallenges/gauntlet_${todayKey}`))?.reward === 50, "a daily clear is that day's Daily Gauntlet challenge");
   // Three losses end the run

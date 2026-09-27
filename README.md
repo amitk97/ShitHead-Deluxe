@@ -1,4 +1,4 @@
-<!-- README-VERSION: v150 — refresh text + screenshots every 15 versions from v150 (v150, v165, v180…); see CLAUDE.md -->
+<!-- README-VERSION: v165 — refresh text + screenshots every 15 versions from v150 (v150, v165, v180…); see CLAUDE.md -->
 # 💩 ShitHead Deluxe
 
 **The classic card game ShitHead, rebuilt for your phone.** Play against bots, with friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
@@ -25,7 +25,7 @@ Everyone is dealt **3 Face-Down cards**, **3 Face-Up cards** on top of them, and
 3. **Face-Up.** When your Hand and the Deck are both empty, play your Face-Up cards.
 4. **Face-Down.** Last, flip your Face-Down cards blind, one at a time. If the card you flip can't be played, you pick up the Pile.
 
-Four of the same rank in a row **burns** the Pile. So does a 10. Whoever burns plays again.
+Four of the same rank in a row **burns** the Pile. So does a 10. Whoever burns plays again, unless that was their last card: then they finish and the next player carries on.
 
 ## Card powers
 
@@ -60,11 +60,13 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 - **The Gauntlet**: beat 5 bots in a row (Easy, Easy, Medium, Hard, Boss) with 3 lives. The first clear wins an exclusive picture and frame, then Diamonds every day you beat it again.
 - **Online rooms** with friends: share an invite link, chat with emotes, and a bot takes over if someone leaves. Friends can watch your match live.
 - **Ranked** 1v1 matchmaking with an Elo rating and tiers from Novice to Master. The deck is shuffled by the server and every move is checked.
-- **Tutorial**: a one-minute Quick Start plus in-depth lessons for every card.
+- **Tutorial**: a one-minute Quick Start plus in-depth lessons for every card, and a searchable Guide (rules, card powers, the Gauntlet, key terms).
 - **Challenges and Diamonds**: daily and weekly challenges, the Daily Gauntlet, a login streak and milestones, with a running total of challenges completed.
-- **Shop and Custom**: tables, card backs, frames, burn effects with their own sounds, victory effects, emote packs and profile pictures, plus seasonal events (Halloween, Christmas, Diwali, Lunar New Year and more). Earn-only pictures and frames for Ranked tiers, the Gauntlet and recruiting friends.
+- **Shop and Custom**: tables, card backs, frames, burn effects with their own sounds, **Joker effects** (a short animation over the table whenever you play a Joker: Jester's Grin, Jack-in-the-Box, Magic Trick, Glitch and more, plus a Pumpkin Joker, Santa Joker and others for each seasonal event), victory effects, emote packs and profile pictures, plus seasonal events (Halloween, Christmas, Diwali, Lunar New Year and more). Earn-only pictures and frames for Ranked tiers, the Gauntlet and recruiting friends.
 - **Friends**: friend requests, gifts, game invites and a public showcase of your look, with push notifications. Invite friends with your own link and you both earn Diamonds once they've played a few games.
+- **Leaderboards**: Ranked rating, challenges completed and Gauntlet bots beaten, with an Inbox message when you reach the top 10, #3, #2 or #1.
 - **Match summary** with stats and a shareable result card, plus a full match history.
+- **Your data**: download everything stored about your account, or delete it (with 7 days to change your mind).
 
 ## Tech
 
@@ -72,6 +74,6 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 - It's hosted on **Firebase Hosting**, and every push to `main` deploys automatically.
 - **Firebase Realtime Database** handles online rooms, profiles and friends.
 - **Firebase Auth** handles sign-in (Google or email).
-- **Cloud Functions** ([`functions/`](functions)) handle the economy: Diamonds, purchases, gifts, challenges, the Gauntlet, referrals and Ranked results are checked and saved on the server, so they can't be edited from the browser. They also deal Ranked games, audit every Ranked move, and send push notifications.
+- **Cloud Functions** ([`functions/`](functions)) handle the economy: Diamonds, purchases, gifts, challenges, the Gauntlet, referrals and Ranked results are checked and saved on the server, so they can't be edited from the browser. They also deal Ranked games, audit every Ranked move, keep the leaderboards, and send push notifications.
 - A service worker makes the game installable and lets Vs Bots play offline.
 - A developer test suite runs in the browser: open `index.html?dev-tests=1`.

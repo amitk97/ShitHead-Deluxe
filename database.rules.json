@@ -112,6 +112,15 @@
               (newData.val().matches(/^victory-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^victory-(halloween|diwali|christmas|newyear)$/)))))"
           },
+          "jokerEffect": {
+            ".validate": "newData.isString() && (newData.val() === 'default' ||
+              ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
+              root.child('shopPurchases').child($uid)
+                .child('cosmetics').child(newData.val()).exists()) &&
+              (newData.val().matches(/^joker-(grin|jackbox|puppet|magic|glitch|storm)$/) ||
+              newData.val().matches(/^joker-(lunar|valentine|ramadan|easter|summer)$/) ||
+              newData.val().matches(/^joker-(halloween|diwali|christmas|newyear)$/))))"
+          },
           "avatar": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               newData.val() === 'avatar-crown-bronze' || newData.val() === 'avatar-suit-spades' ||
@@ -417,7 +426,7 @@
         "showcase": {
           "$type": {
             ".validate": "($type.matches(/^(tableTheme|cardBack|frame)$/) ||
-              $type.matches(/^(burnEffect|victoryEffect|emotes)$/)) &&
+              $type.matches(/^(burnEffect|victoryEffect|jokerEffect|emotes)$/)) &&
               newData.isString() && newData.val().matches(/^[a-z0-9-]{3,40}$/)"
           }
         },
