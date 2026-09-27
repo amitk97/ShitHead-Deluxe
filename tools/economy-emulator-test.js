@@ -148,6 +148,20 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok(r.error, 'a challenge not picked today is refused', r);
   r = await call('alice', { action: 'claim', id: 'daily_2020-01-01_burn-once' });
   ok(r.error, 'an old daily is refused', r);
+  // Seasonal challenges: only while that event is on; the bonus needs all four.
+  r = await call('alice', { action: 'claim', id: 'season_halloween-2020_burn-once' });
+  ok(r.error && /ended/.test(r.error.message), 'a seasonal challenge from a past event is refused', r);
+  {
+    const hw = new Date('2026-10-20T12:00:00Z');
+    const key = 'halloween-2026';
+    const c = (id, u = {}) => _test.challengeForKey(`season_${key}_${id}`, u, hw);
+    ok(c('burn-once').reward === 275 && c('win-any-match').reward === 440, 'seasonal rewards come from the catalog', c('burn-once'));
+    ok(c('nope').error, 'an unknown seasonal challenge is refused');
+    ok(/Not completed/.test(c('all').error || ''), 'the Season Complete bonus needs all four first');
+    const done = Object.fromEntries(cat.seasonalChallenges.map(x => [`season_${key}_${x.id}`, { reward: x.reward }]));
+    ok(c('all', { completedChallenges: done }).reward === 550, 'the bonus pays once all four are done');
+    ok(_test.challengeForKey(`season_${key}_burn-once`, {}, new Date('2026-12-01T12:00:00Z')).error, 'refused after the event');
+  }
   r = await call('alice', { action: 'claim', id: 'burner' });
   ok(r.error && /Not completed/.test(r.error.message), 'Burner refused without 20 Ranked burns', r);
   r = await call('alice', { action: 'claim', id: 'tutorial-quick-start' });

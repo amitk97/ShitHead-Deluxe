@@ -922,6 +922,38 @@
    "target": 3
   }
  ],
+ "seasonalChallenges": [
+  {
+   "id": "finish-any-match",
+   "name": "Party Games",
+   "target": 30,
+   "reward": 330
+  },
+  {
+   "id": "burn-once",
+   "name": "Festive Fire",
+   "target": 50,
+   "reward": 275
+  },
+  {
+   "id": "play-joker",
+   "name": "Wild Celebration",
+   "target": 15,
+   "reward": 330
+  },
+  {
+   "id": "win-any-match",
+   "name": "Holiday Winner",
+   "target": 15,
+   "reward": 440
+  }
+ ],
+ "seasonalChallengeBonus": {
+  "id": "all",
+  "name": "Season Complete",
+  "desc": "Complete all four seasonal challenges.",
+  "reward": 550
+ },
  "gettingStarted": [
   {
    "id": "tutorial-quick-start",

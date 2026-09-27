@@ -21049,6 +21049,8 @@ video {
         weeklyReward: WEEKLY_CHALLENGE_REWARD,
         dailyPool: DAILY_CHALLENGE_POOL.map(c => ({ id: c.id, name: c.name, target: c.target })),
         weeklyPool: WEEKLY_CHALLENGE_POOL.map(c => ({ id: c.id, name: c.name, target: c.target })),
+        seasonalChallenges: SEASONAL_CHALLENGES.map(c => ({ id: c.id, name: c.name, target: c.target, reward: c.reward })),
+        seasonalChallengeBonus: { ...SEASONAL_CHALLENGE_BONUS },
         gettingStarted: GETTING_STARTED_CHALLENGES.map(c => ({ id: c.id, name: c.name, reward: c.reward })),
         challengeDefs: JSON.parse(JSON.stringify(CHALLENGE_DEFS)),
         difficultyUnlocks: DIFF_UNLOCK_RULES,
@@ -21114,6 +21116,10 @@ video {
       if (typeof defOrId === 'string') {
         if (/^daily_/.test(id)) return getDailyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
         if (/^weekly_/.test(id)) return getWeeklyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
+        if (/^season_/.test(id)) {
+          const cid = id.split('_').slice(2).join('_');
+          return (cid === SEASONAL_CHALLENGE_BONUS.id ? SEASONAL_CHALLENGE_BONUS : SEASONAL_CHALLENGES.find(c => c.id === cid))?.desc || '';
+        }
         const gettingStarted = GETTING_STARTED_CHALLENGES.find(c => c.id === id);
         if (gettingStarted) return gettingStarted.desc;
         if (id === GAUNTLET_CHALLENGES.first.id) return GAUNTLET_CHALLENGES.first.desc;
@@ -21678,6 +21684,8 @@ video {
       const head = document.getElementById('challengesSeasonalHead');
       const left = seasonDaysBetween(seasonalNow(), win.endsAt);
       if (head) head.innerHTML = `<b>${win.event.emoji} ${win.event.name}</b> · ${left <= 1 ? 'last day!' : `ends in ${left} days`}`;
+      // The bonus is claimed once the fourth is confirmed by the server.
+      if (currentUser) maybeClaimSeasonalBonus(win);
       const progress = (challengeEconomy.seasonalChallengeState || {})[win.key] || {};
       const rows = SEASONAL_CHALLENGES.map((def) => {
         const completed = !!challengeEconomy.completedChallenges[seasonalCompletionKey(win.key, def.id)];

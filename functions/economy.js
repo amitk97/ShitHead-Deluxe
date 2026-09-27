@@ -11,7 +11,7 @@
 //   init          fill in a new/old profile's defaults; the AmitK test grant
 //   sync          pay any milestone challenge / earn-only picture already met
 //   streak        daily login reward (one per UK calendar day)
-//   claim         one challenge by completion key (daily_…, weekly_…, id)
+//   claim         one challenge by completion key (daily_…, weekly_…, season_…, id)
 //   matchWin      a Vs Bots or casual online win (caps: see MATCH_LIMITS)
 //   matchFinished a finished match (ShitHead Virgin / Beginner)
 //   rankedDeal    the server's seat order + shuffled deck for a Ranked match
@@ -280,6 +280,19 @@ function challengeForKey(id, user, now) {
     const def = CAT.weeklyPool.find(c => c.id === poolId);
     if (!def || !pickWeeklyIds(weekKey).includes(poolId)) return { error: 'Not one of that week\'s challenges.' };
     return { name: def.name, reward: CAT.weeklyReward };
+  }
+  // Seasonal: only while that event instance is on (with the usual slack).
+  const season = /^season_([a-z]+-\d{4})_([a-z0-9-]+)$/.exec(id);
+  if (season) {
+    const [, key, cid] = season;
+    if (!activeSeasonWindows(now).some(w => w.key === key)) return { error: 'That event has ended.' };
+    const bonus = CAT.seasonalChallengeBonus;
+    if (cid === bonus.id) {
+      const allDone = CAT.seasonalChallenges.every(c => user.completedChallenges?.[`season_${key}_${c.id}`]);
+      return allDone ? { name: bonus.name, reward: bonus.reward } : { error: 'Not completed yet.' };
+    }
+    const def = CAT.seasonalChallenges.find(c => c.id === cid);
+    return def ? { name: def.name, reward: def.reward } : { error: 'Unknown challenge.' };
   }
   const gs = CAT.gettingStarted.find(c => c.id === id);
   if (gs) {
