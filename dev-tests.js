@@ -1085,7 +1085,7 @@ async function runDevTestSuite() {
     assertTrue(!!share && !!share.querySelector('svg'), 'The summary has a share icon');
     assertTrue(!share.closest('.ms-actions'), 'It sits in the corner, not in the button row');
   });
-  await test('Offline: Online Room and Ranked explain that Vs Bots works offline, and stay closed', () => {
+  await test('Offline: Play Friends and Ranked explain that Vs Bots works offline, and stay closed', () => {
     const desc = Object.getOwnPropertyDescriptor(Navigator.prototype, 'onLine');
     Object.defineProperty(navigator, 'onLine', { get: () => false, configurable: true });
     const banners = [], originalBanner = notifyBanner;
@@ -4119,7 +4119,7 @@ async function runDevTestSuite() {
   });
   await test('Friends show when they are in a match; WATCH opens it read-only from their seat', async () => {
     let row = friendRowHtml('u1', { username: 'Jamie', online: true, playing: { mode: 'online', room: '424242', at: 1 } }, 'friend');
-    assertTrue(row.includes('In a match · Online Room') && row.includes('friend-watch-btn') && row.includes('data-room="424242"'), 'An online match offers WATCH');
+    assertTrue(row.includes('In a match · Play Friends') && row.includes('friend-watch-btn') && row.includes('data-room="424242"'), 'An online match offers WATCH');
     row = friendRowHtml('u1', { username: 'Jamie', online: true, playing: { mode: 'bots', at: 1 } }, 'friend');
     assertTrue(row.includes('In a match · Vs Bots') && !row.includes('friend-watch-btn') && row.includes('friend-invite-btn'), 'A bot game shows the status but nothing to watch');
     row = friendRowHtml('u1', { username: 'Jamie', online: false, playing: { mode: 'ranked', room: '424242', at: 1 } }, 'friend');
@@ -6156,6 +6156,28 @@ async function runDevTestSuite() {
     btn.click();
     assertTrue(document.getElementById('shopModal').classList.contains('hidden') && !document.getElementById('themesModal').classList.contains('hidden'), 'Opens Custom');
     document.getElementById('themesModal').classList.add('hidden');
+  });
+  await test('No emoji used as UI icons: the main pages show drawn icons (emotes and effect art excepted)', async () => {
+    const allowed = new Set(['♠', '♥', '♦', '♣', '✓', '✕', '✗', '↻', '↺', '⇤', '⇥', '©', '®', '™', '↔', '↕']);
+    const offenders = [];
+    const scan = (root, where) => {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        const el = n.parentElement;
+        if (!el || el.closest(EMOJI_KEEP) || el.closest('svg')) continue;
+        for (const ch of n.data.match(/\p{Extended_Pictographic}/gu) || []) if (!allowed.has(ch)) offenders.push(`${where}: ${ch} in "${n.data.trim().slice(0, 40)}"`);
+      }
+    };
+    const pages = ['shopModal', 'challengesModal', 'themesModal', 'settingsModal', 'whatsNewModal'];
+    try {
+      renderCosmeticShop(); renderChallengesPanel(); renderPersonalisationCosmetics();
+      showWhatsNew(GAME_BUILD.version, 'v150');
+      await new Promise(r => setTimeout(r, 0));
+      scan(document.querySelector('header'), 'header');
+      scan(document.getElementById('lobbyScreen'), 'home');
+      pages.forEach(id => { const el = document.getElementById(id); if (el) scan(el, id); });
+      assertEqual(offenders.slice(0, 12), [], 'Emoji left in the UI');
+    } finally { document.getElementById('whatsNewModal')?.classList.add('hidden'); }
   });
   await test('Saved loadouts: save, switch in one tap, the worn one is ticked, unowned items fall back', () => {
     const savedUser = currentUser, savedDb = db, savedEq = { ...equippedCosmetics }, savedOwned = cosmeticPurchaseState, savedL = savedLoadouts;

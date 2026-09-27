@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v174 (ShitHead-Deluxe-156) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v175 (ShitHead-Deluxe-157) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -374,7 +374,14 @@
     .ic { width:1.15em; height:1.15em; display:inline-block; vertical-align:-.2em; flex:none; overflow:visible; }
     .ic-gem { width:1.05em; height:1.05em; vertical-align:-.15em; }
     .ic-tier { width:1.3em; height:1.3em; vertical-align:-.3em; }
-    .mode-ic { width:20px; height:20px; margin-bottom:2px; }
+    .header-gem-btn { gap:5px; height:28px; padding:0 2px; background:none; border:0; }
+    .header-gem .ic-gem { width:20px; height:20px; display:block; vertical-align:0; }
+    #headerDiamondBtn.header-gem-btn, #headerDiamondBtn.header-gem-btn:hover { background:transparent !important; border:0 !important; box-shadow:none !important; }
+    #headerDiamondCount { font-size:14px !important; }
+    .mode-btn { display:grid; grid-template-rows:24px 20px 14px; justify-items:center; align-items:center; row-gap:2px; padding:10px 4px; min-width:0; }
+    .mode-btn .mode-ic { width:22px; height:22px; }
+    .mode-btn .mode-name { font-size:14px; font-weight:900; line-height:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    .mode-btn .mode-sub { font-size:9px; font-weight:700; line-height:14px; opacity:.78; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
     .ch-row-lead .ic-tier { width:22px; height:22px; display:block; }
     .lb-place { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:999px; font-size:11px; font-weight:900; color:#1f2937; box-shadow:inset 0 -2px 0 rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.6); }
     .lb-place.is-1 { background:linear-gradient(#fff4b8,#fbbf24 55%,#a16207); }
@@ -499,8 +506,9 @@
         height: 38px !important;
       }
       #headerDiamondBtn, #roomCodeBadge { height: 38px !important; padding-left: 12px !important; padding-right: 12px !important; }
-      #headerDiamondBtn > span:first-child { font-size: 17px !important; }
-      #headerDiamondCount, #roomCodeBadge { font-size: 14px !important; }
+      #headerDiamondBtn .header-gem .ic-gem { width: 24px !important; height: 24px !important; }
+      #headerDiamondCount { font-size: 17px !important; }
+      #roomCodeBadge { font-size: 14px !important; }
       #gameTable { height: calc(100dvh - 60px - var(--safe-top)) !important; max-height: calc(100dvh - 60px - var(--safe-top)) !important; }
       #hamburgerDrawer {
         left: auto;
@@ -4343,6 +4351,17 @@ video {
     <symbol id="ic-bolt" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2.5 4.5 13.5h7l-1 8 8.5-11h-7z"/></g></symbol>
     <symbol id="ic-cart" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 11h10.6l2-8H6.3"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></g></symbol>
     <symbol id="ic-place1" viewBox="0 0 24 24"><defs><linearGradient id="ic-pl1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4b8"/><stop offset=".55" stop-color="#fbbf24"/><stop offset="1" stop-color="#a16207"/></linearGradient></defs><circle cx="12" cy="12" r="9.5" fill="url(#ic-pl1)" stroke="rgba(0,0,0,.35)" stroke-width="1"/><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="900" font-family="system-ui,sans-serif" fill="#1f2937">1</text></symbol><symbol id="ic-place2" viewBox="0 0 24 24"><defs><linearGradient id="ic-pl2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#cbd5e1"/><stop offset="1" stop-color="#64748b"/></linearGradient></defs><circle cx="12" cy="12" r="9.5" fill="url(#ic-pl2)" stroke="rgba(0,0,0,.35)" stroke-width="1"/><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="900" font-family="system-ui,sans-serif" fill="#1f2937">2</text></symbol><symbol id="ic-place3" viewBox="0 0 24 24"><defs><linearGradient id="ic-pl3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd3a1"/><stop offset=".55" stop-color="#d08a4a"/><stop offset="1" stop-color="#7a4420"/></linearGradient></defs><circle cx="12" cy="12" r="9.5" fill="url(#ic-pl3)" stroke="rgba(0,0,0,.35)" stroke-width="1"/><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="900" font-family="system-ui,sans-serif" fill="#1f2937">3</text></symbol>
+    <symbol id="ic-ev-lunar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="3.5" width="13" height="17" rx="2"/><path d="M5.5 8.5 12 12l6.5-3.5"/><circle cx="12" cy="15" r="2.2"/></g></symbol>
+    <symbol id="ic-ev-valentine" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19.5s-6.5-4-6.5-9A3.8 3.8 0 0 1 12 8.3a3.8 3.8 0 0 1 6.5 2.2c0 5-6.5 9-6.5 9z"/><path d="M3 20 21 4M17.5 4H21v3.5M3 20l.5-2.5M3 20l2.5-.5"/></g></symbol>
+    <symbol id="ic-ev-ramadan" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4a8 8 0 1 0 5.5 12.6A6.6 6.6 0 0 1 14.5 4z"/><path d="m18 5 .6 1.3 1.4.2-1 1 .2 1.4-1.2-.7-1.2.7.2-1.4-1-1 1.4-.2z"/></g></symbol>
+    <symbol id="ic-ev-easter" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c3.3 0 6 5 6 9.5a6 6 0 0 1-12 0c0-4.5 2.7-9.5 6-9.5z"/><path d="M6.3 12.2l1.9-1.4 1.9 1.4 1.9-1.4 1.9 1.4 1.9-1.4 1.9 1.4"/></g></symbol>
+    <symbol id="ic-ev-summer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></g></symbol>
+    <symbol id="ic-ev-halloween" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5c-2-1.3-7.5-1-7.5 5.5 0 5 3.5 7.5 7.5 7.5s7.5-2.5 7.5-7.5c0-6.5-5.5-6.8-7.5-5.5z"/><path d="M12 7.5c0-2 .8-3.3 2.5-4"/><path d="m8.5 12 1.5 1.5L11.5 12M12.5 12l1.5 1.5 1.5-1.5M8.5 16c1 1 2.2 1.4 3.5 1.4s2.5-.4 3.5-1.4"/></g></symbol>
+    <symbol id="ic-ev-diwali" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13.5h17c-.8 3.6-4.2 6-8.5 6s-7.7-2.4-8.5-6z"/><path d="M12 11.5c-1.6-1.4-1.8-3.4 0-6.5 1.8 3.1 1.6 5.1 0 6.5z"/></g></symbol>
+    <symbol id="ic-ev-christmas" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 7.5 9.5H10L6 14.5h3L5 19.5h14l-4-5h3l-4-5h2.5z"/><path d="M12 19.5v2"/></g></symbol>
+    <symbol id="ic-ev-newyear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12V3.5M12 12l6-6M12 12h8.5M12 12l6 6M12 12v8.5M12 12l-6 6M12 12H3.5M12 12 6 6"/><circle cx="12" cy="12" r="1.3"/></g></symbol>
+    <symbol id="ic-poo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 8.5C8 8.5 7 9.5 7 10.8c0 .7.3 1.3.8 1.7H7c-1.9 0-3.5 1.4-3.5 3.2 0 1.9 1.6 3.3 3.5 3.3h10c1.9 0 3.5-1.4 3.5-3.3 0-1.8-1.6-3.2-3.5-3.2h-.8c.5-.4.8-1 .8-1.7 0-1.3-1-2.3-2.5-2.3H13c1.3-.6 1.5-2.4.5-4-.8 1.8-2.5 2-4 4z"/><circle cx="10" cy="15.5" r=".6"/><circle cx="14" cy="15.5" r=".6"/></g></symbol>
+    <symbol id="ic-lastcard" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="3.5" width="11" height="17" rx="2"/><path d="M12 8v5M12 16v.1"/></g></symbol>
     <symbol id="ic-life" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z" fill="#f43f5e" stroke="#881337" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 9.3c.6-.9 1.6-1.1 2.3-.8" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".6" fill="none"/></symbol>
     <symbol id="ic-life-lost" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z" fill="none" stroke="#475569" stroke-width="1.6" stroke-linejoin="round"/></symbol>
     <symbol id="ic-gem" viewBox="2.4 2.4 19.2 19.2"><path d="M7 3.5h10l4 5.5-9 11.5L3 9z" fill="url(#ic-gem-l)"/><path d="M12 20.5 21 9h-5.2z" fill="url(#ic-gem-r)"/><path d="M3 9h18l-4-5.5H7z" fill="url(#ic-gem-t)"/><path d="M8.2 9 12 3.5 15.8 9z" fill="#f0fdff" opacity=".85"/><path d="M8.2 9 12 20.5 15.8 9" fill="none" stroke="#0c4a6e" stroke-width=".7" opacity=".55"/><path d="M7 3.5h10l4 5.5-9 11.5L3 9z M3 9h18" fill="none" stroke="#082f49" stroke-width="1" stroke-linejoin="round"/><path d="M8.3 5.4 7.4 7" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/></symbol>
@@ -4428,8 +4447,8 @@ video {
       <button id="leaveGameBtn" class="hidden h-7 flex items-center justify-center bg-transparent hover:brightness-125 rounded-lg transition tip-below" style="width:1.75rem;" data-tip="Exit" aria-label="Exit game">
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-exit"/></svg>
       </button>
-      <button id="headerDiamondBtn" class="flex items-center justify-center gap-1 h-7 px-2 rounded-lg bg-slate-900 border border-slate-700 text-cyan-300 transition tip-below" data-tip="Diamonds" aria-label="Diamond balance">
-        <span class="text-xs leading-none">&#128142;</span>
+      <button id="headerDiamondBtn" class="header-gem-btn flex items-center justify-center text-cyan-300 transition tip-below" data-tip="Diamonds" aria-label="Diamond balance">
+        <span class="header-gem" aria-hidden="true"><svg class="ic ic-gem"><use href="#ic-gem"/></svg></span>
         <span id="headerDiamondCount" class="text-[11px] font-black leading-none tabular-nums" title="0">0</span>
       </button>
       <!-- Only ever shown for an Online Room (join/host) match — never
@@ -4560,20 +4579,21 @@ video {
         </div>
 
         <div class="grid grid-cols-3 gap-2">
-          <button id="modeSingleBtn" class="py-2 px-2 rounded-xl font-bold bg-amber-600 hover:bg-amber-500 text-slate-950 transition flex flex-col items-center">
+          <!-- Each mode button is three fixed rows: icon, name, subtitle. -->
+          <button id="modeSingleBtn" class="mode-btn rounded-xl font-bold bg-amber-600 hover:bg-amber-500 text-slate-950 border-2 border-amber-500 transition">
             <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-bot"/></svg>
-            <span class="text-sm font-black">Vs Bots</span>
-            <span class="text-[9px] font-bold opacity-80">1-3 AI Players</span>
+            <span class="mode-name">Vs Bots</span>
+            <span class="mode-sub">1-3 AI players</span>
           </button>
-          <button id="modeMultiBtn" class="py-2 px-2 rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition flex flex-col items-center">
-            <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-online"/></svg>
-            <span class="text-sm font-black">Online Room</span>
-            <span class="text-[9px] font-bold opacity-75">Join / Host</span>
+          <button id="modeMultiBtn" class="mode-btn rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition">
+            <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-users"/></svg>
+            <span class="mode-name">Play Friends</span>
+            <span class="mode-sub">Host or join</span>
           </button>
-          <button id="modeRankedBtn" class="py-2 px-2 rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition flex flex-col items-center">
+          <button id="modeRankedBtn" class="mode-btn rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition">
             <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-ranked"/></svg>
-            <span class="text-sm font-black">Ranked</span>
-            <span class="text-[9px] font-bold opacity-75">Auto-Matched 1v1</span>
+            <span class="mode-name">Ranked</span>
+            <span class="mode-sub">Matched 1v1</span>
           </button>
         </div>
 
@@ -7269,10 +7289,16 @@ video {
       '⏱': 'clock', '⏳': 'clock', '🔒': 'lock', '⭐': 'star', '🗑': 'trash', '✏': 'pencil', '✎': 'pencil',
       '👀': 'eye', '🔔': 'bell', '👥': 'users', '🛒': 'cart', '🛍': 'cart', '✅': 'check', '✔': 'check',
       '💾': 'save', '📤': 'share', '💥': 'burst', '⚡': 'bolt', '🃏': 'joker', '👑': 'crown', '🏅': 'trophy',
-      '🎖': 'trophy', '🛡': 'shield', '🎮': 'cards', '📊': 'leader', '🥇': 'place1', '🥈': 'place2', '🥉': 'place3'
+      '🎖': 'trophy', '🛡': 'shield', '🎮': 'cards', '📊': 'leader', '🥇': 'place1', '🥈': 'place2', '🥉': 'place3',
+      '🧧': 'ev-lunar', '💘': 'ev-valentine', '🌙': 'ev-ramadan', '🐣': 'ev-easter', '☀': 'ev-summer', '🎃': 'ev-halloween',
+      '🪔': 'ev-diwali', '🎄': 'ev-christmas', '🎆': 'ev-newyear', '💩': 'poo', '☝': 'lastcard', '📴': 'warning', '🎓': 'star',
+      '🎨': 'sparkle', '🔑': 'lock', '📋': 'cards', '🏠': 'online', '📶': 'online', '🔕': 'bell', '🙈': 'eye', '🪵': 'cards',
+      '🗂': 'cards', '🖐': 'cards', '🏷': 'gift', '📱': 'share', '🎴': 'cards', '📐': 'cards', '📳': 'bell', '🧨': 'burst',
+      '🔽': 'refresh', '🎯': 'star', '💔': 'close', '🚫': 'close', '⚑': 'warning', '📖': 'cards', '🖼': 'sparkle', '🙋': 'users',
+      '👋': 'users', '📅': 'clock', '📥': 'share', '📜': 'cards', '🧪': 'sparkle', '👕': 'sparkle', '🎇': 'ev-newyear'
     };
     const EMOJI_ICON_RE = new RegExp(`(?:${Object.keys(EMOJI_ICON).join('|')})\uFE0F?`, 'gu');
-    const EMOJI_KEEP = '#emoteLayer, [data-keep-emoji], .emote-float, .effect-mini-tile, .shop-burn-core, .jfx-stage, .jfx-stage-hint, .season-badge, .season-emoji, .pp-show-icon, .bfx, #jokerFxLayer, #victoryFxLayer, #burnFxLayer, .shop-preview-stage, textarea, script, style';
+    const EMOJI_KEEP = '#emoteLayer, [data-keep-emoji], .emote-float, .effect-mini-tile, .shop-burn-core, .jfx-stage, .jfx-stage-hint, .pp-show-icon, .bfx, #jokerFxLayer, #victoryFxLayer, #burnFxLayer, .shop-preview-stage, textarea, script, style';
     const iconTemplate = document.createElement('template');
     function iconizeTextNode(node) {
       const text = node.data;
@@ -15380,8 +15406,8 @@ video {
     document.getElementById('navHomeLogoBtn').addEventListener('click', returnToHomeScreen);
     // Shared between all 3 mode buttons so their active/inactive look never
     // drifts out of sync with each other one button at a time.
-    const MODE_BTN_ACTIVE = "py-2 px-2 rounded-xl font-bold bg-amber-600 hover:bg-amber-500 text-slate-950 transition flex flex-col items-center";
-    const MODE_BTN_INACTIVE = "py-2 px-2 rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition flex flex-col items-center";
+    const MODE_BTN_ACTIVE = "mode-btn rounded-xl font-bold bg-amber-600 hover:bg-amber-500 text-slate-950 border-2 border-amber-500 transition";
+    const MODE_BTN_INACTIVE = "mode-btn rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition";
     document.getElementById('modeSingleBtn').addEventListener('click', () => {
       document.getElementById('singleOptions').classList.remove('hidden');
       document.getElementById('multiOptions').classList.add('hidden');
@@ -15394,7 +15420,7 @@ video {
     // No signal: Online Room and Ranked need the internet; Vs Bots and the
     // Tutorial work offline (sw.js keeps every file they need).
     const isOffline = () => !firebaseAvailable || (typeof navigator !== 'undefined' && navigator.onLine === false);
-    const OFFLINE_MODE_MSG = "📴 You're offline. Vs Bots and the Tutorial work without a signal; Online Room and Ranked come back when you reconnect.";
+    const OFFLINE_MODE_MSG = "📴 You're offline. Vs Bots and the Tutorial work without a signal; Play Friends and Ranked come back when you reconnect.";
     window.addEventListener('offline', () => notifyBanner('📴 No signal. You can keep playing Vs Bots offline.'));
     window.addEventListener('online', () => notifyBanner('📶 Back online.'));
     document.getElementById('modeMultiBtn').addEventListener('click', () => {
@@ -16499,6 +16525,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v175: [
+        ['👥', 'Online Room is now called Play Friends, and the home screen mode buttons line up neatly: icon, name, then subtitle.'],
+        ['💎', 'A bigger Diamond balance in the header, and drawn icons for every seasonal event.']
+      ],
       v174: [
         ['💎', 'A fresh look: new drawn icons across the game instead of emoji, a new Diamond, and rank badges for every tier (the crown pictures match their tier colours).'],
         ['🎮', 'Vs Bots, Online Room and Ranked now have their own icons on the home screen.']
@@ -16690,7 +16720,7 @@ video {
       const notes = seen ? whatsNewNotesSince(seen, version) : WHATS_NEW[version];
       if (!notes || !notes.length) return false;
       document.getElementById('whatsNewVersion').textContent = `Version ${version.replace(/^v/, '')}${GAME_BUILD.date ? ` · ${GAME_BUILD.date}` : ''}`;
-      document.getElementById('whatsNewList').innerHTML = notes.map(([icon, text]) => `<li><span>${icon}</span><span>${escapeHtml(text)}</span></li>`).join('');
+      document.getElementById('whatsNewList').innerHTML = notes.map(([mark, text]) => `<li><span>${icon(EMOJI_ICON[String(mark).replace(/\uFE0F/g, '')] || 'sparkle')}</span><span>${escapeHtml(text)}</span></li>`).join('');
       document.getElementById('whatsNewModal').classList.remove('hidden');
       return true;
     }
@@ -18716,7 +18746,7 @@ video {
     function cosmeticPreview(item, type) {
       if (!item) {
         if (type === 'tableTheme') return miniTablePreviewHtml('default');
-        if (type === 'emotes') return '<span class="text-xl">😂</span>';
+        if (type === 'emotes') return '<span class="text-xl" data-keep-emoji>😂</span>';
         if (type === 'frame') return framePreviewCard(null);
         if (type === 'burnEffect') return '<span class="effect-mini-tile">🔥</span>';
         if (type === 'victoryEffect') return '<span class="effect-mini-tile">🏆</span>';
@@ -18725,7 +18755,7 @@ video {
         return `<span class="w-8 h-10 rounded-lg custom-card-back ${getThemeDeckBackClass()} flex items-center justify-center">${getEmblemSvg()}</span>`;
       }
       if (type === 'tableTheme') return miniTablePreviewHtml(item.id);
-      if (type === 'emotes') return `<span class="text-base">${(EMOTE_PACKS[item.id] || []).slice(0, 3).join('')}</span>`;
+      if (type === 'emotes') return `<span class="text-base" data-keep-emoji>${(EMOTE_PACKS[item.id] || []).slice(0, 3).join('')}</span>`;
       if (type === 'frame') return framePreviewCard(item);
       if (type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect') {
         const icon = type === 'burnEffect' ? burnPreviewIcon(item.id) : type === 'jokerEffect' ? jokerPreviewIcon(item.id) : victoryPreviewIcon(item.id);
@@ -19651,11 +19681,11 @@ video {
     function shopCosmeticThumbnail(item, type) {
       if (type === 'avatar') return avatarHtml(item.id, 40);
       if (type === 'tableTheme') return `<span style="display:block;width:120px">${miniTablePreviewHtml(item.id)}</span>`;
-      if (type === 'emotes') return `<span class="text-[13px] leading-tight text-center">${(EMOTE_PACKS[item.id] || []).slice(0, 4).join('')}</span>`;
+      if (type === 'emotes') return `<span class="text-[13px] leading-tight text-center" data-keep-emoji>${(EMOTE_PACKS[item.id] || []).slice(0, 4).join('')}</span>`;
       if (type === 'cardBack') return `<span class="w-7 h-[42px] rounded-md custom-card-back ${getCosmeticBackClass(item.id)} border border-slate-500 flex items-center justify-center shadow-md">${getEmblemSvg()}</span>`;
       if (type === 'frame') return `<span class="relative w-7 h-[42px] rounded-md bg-slate-950 border-2 flex flex-col items-start p-1 font-black text-[8px] text-white" style="border-color:#334155;${getCosmeticFrameStyle(item.id).replace(/!important/g, '')}"><span>A</span><span class="${item.id === 'frame-gold' ? 'text-amber-300' : 'text-red-400'}">♥</span></span>`;
       const symbols = { tableTheme:'♠', burnEffect: burnPreviewIcon(item.id), victoryEffect:'🏆', jokerEffect: jokerPreviewIcon(item.id) };
-      return `<span class="w-9 h-9 rounded-lg border border-slate-600 flex items-center justify-center text-lg" style="background:linear-gradient(135deg,${item.tones[0]},${item.tones[1]});color:${item.tones[2]}">${symbols[type] || '◇'}</span>`;
+      return `<span data-keep-emoji class="w-9 h-9 rounded-lg border border-slate-600 flex items-center justify-center text-lg" style="background:linear-gradient(135deg,${item.tones[0]},${item.tones[1]});color:${item.tones[2]}">${symbols[type] || '◇'}</span>`;
     }
 
     function shopCosmeticPreviewMarkup(item) {
@@ -23574,7 +23604,7 @@ video {
       (status ? ref.set({ ...status, at: firebase.database.ServerValue.TIMESTAMP }) : ref.remove()).catch(() => { lastPlayingKey = null; });
     }
     setInterval(syncPlayingStatus, 5000);
-    const PLAYING_LABELS = { bots: 'Vs Bots', online: 'Online Room', ranked: 'Ranked' };
+    const PLAYING_LABELS = { bots: 'Vs Bots', online: 'Play Friends', ranked: 'Ranked' };
     function friendPlaying(profile) {
       const p = profile && profile.playing;
       if (!p || !PLAYING_LABELS[p.mode]) return null;

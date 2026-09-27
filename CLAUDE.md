@@ -121,7 +121,8 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - `§ Icons`: the sprite at the top of `<body>` holds the line icons `#ic-…` (24px grid, 1.75 stroke, `currentColor`), the full-colour Diamond `#ic-gem`, place discs `#ic-place1-3`, Gauntlet lives and rank badges `#tier-novice…master` (the same metal gradients as the crown pictures, `av-m-*`). Markup: `icon('gift')`, `tierBadge('Gold')`. The owner's rule: never use emoji as UI icons, button symbols, status indicators or bullets; use an SVG icon.
 - Every text node is passed through `iconizeTextNode` (a MutationObserver from start-up): the UI emoji listed in `EMOJI_ICON` become icons wherever they're drawn (templates, textContent, banners). `EMOJI_KEEP` subtrees are left alone because their emoji are content: emotes, effect art tiles and stages, seasonal badges. A new UI symbol = a new `#ic-` symbol (+ an `EMOJI_ICON` entry if old text uses the emoji).
-- Still emoji (phase 2): the What's New icon column's unmapped rows, the 9 seasonal event marks (`ev.emoji`), 💩/☝️ status marks and effect tile art.
+- Seasonal events have their own icons (`#ic-ev-<event>`, mapped from `ev.emoji`), What's New rows always draw an icon (unmapped → sparkle), 💩 → `#ic-poo`, ☝️ → `#ic-lastcard`. Only effect tile art, emote content and the Shop/Custom emote previews (`data-keep-emoji`) still show emoji. A dev test ("No emoji used as UI icons") scans the header, home screen, Shop, Challenges, Custom, Settings and What's New.
+- Home mode buttons (`.mode-btn`): three fixed rows, icon / name / subtitle; the second mode is called **Play Friends** (was Online Room). The header Diamond has no pill (`.header-gem-btn`).
 
 ## Microinteractions & flips
 
