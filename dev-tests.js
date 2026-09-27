@@ -6146,6 +6146,36 @@ async function runDevTestSuite() {
       shopFilter = savedFilter; shopTab = savedTab; renderCosmeticShop();
     }
   });
+  await test('Saved loadouts: save, switch in one tap, the worn one is ticked, unowned items fall back', () => {
+    const savedUser = currentUser, savedDb = db, savedEq = { ...equippedCosmetics }, savedOwned = cosmeticPurchaseState, savedL = savedLoadouts;
+    const writes = [];
+    try {
+      currentUser = { uid: 'u1' };
+      db = { ref: (p) => ({ set: (v) => { writes.push([p, v]); return Promise.resolve(); }, remove: () => Promise.resolve(), once: () => Promise.resolve({ val: () => null }) }) };
+      openThemesPanel();
+      cosmeticPurchaseState = { 'back-neon': true, 'table-royal': true };
+      savedLoadouts = {};
+      equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS, cardBack: 'back-neon', tableTheme: 'table-royal' };
+      renderLoadouts();
+      assertEqual(document.querySelectorAll('#customLoadouts .loadout-slot').length, 3, 'Three slots');
+      saveLoadout('s1', 'Royal');
+      assertTrue(writes.some(([p, v]) => p === 'users/u1/loadouts/s1' && v.items.tableTheme === 'table-royal'), 'Saved to the account under s1', writes);
+      assertTrue(document.querySelector('[data-loadout-wear="s1"]').classList.contains('is-active'), 'The worn look is ticked');
+      equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS };
+      renderLoadouts();
+      assertTrue(!document.querySelector('[data-loadout-wear="s1"]').classList.contains('is-active'), 'Changing the look clears the tick');
+      document.querySelector('[data-loadout-wear="s1"]').click();
+      assertEqual([equippedCosmetics.cardBack, equippedCosmetics.tableTheme], ['back-neon', 'table-royal'], 'One tap puts it back on');
+      assertTrue(writes.some(([p]) => p === 'users/u1/equippedCosmetics'), 'and syncs the equip');
+      delete cosmeticPurchaseState['back-neon'];
+      wearLoadout('s1');
+      assertEqual(equippedCosmetics.cardBack, 'default', 'An item no longer owned falls back to default');
+    } finally {
+      currentUser = savedUser; db = savedDb; equippedCosmetics = savedEq; cosmeticPurchaseState = savedOwned; savedLoadouts = savedL;
+      applyEquippedCosmetics(); renderPersonalisationCosmetics();
+      document.getElementById('themesModal').classList.add('hidden');
+    }
+  });
   await test("Show Others' Effects: off shows other players' effects in the default style, never your own", () => {
     const saved = othersEffectsOn, savedEq = { ...equippedCosmetics };
     try {

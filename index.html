@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v170 (ShitHead-Deluxe-152) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v171 (ShitHead-Deluxe-153) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -371,6 +371,21 @@
     .auth-help-link { font:inherit; font-weight:800; color:#fbbf24; text-decoration:underline; padding:0; }
     /* Challenges header: Diamonds, completed count, Shop shortcut: one height. */
     /* Diamonds left, completed count dead centre, Shop right. */
+    .loadout-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin-bottom:8px; }
+    .loadout-slot { position:relative; display:flex; flex-direction:column; gap:3px; padding:5px; border-radius:12px; border:1px solid #334155; background:rgba(15,23,42,.7); text-align:center; cursor:pointer; min-width:0; }
+    .loadout-slot.is-active { border-color:#f59e0b; box-shadow:0 0 0 1px #f59e0b, 0 0 12px rgba(245,158,11,.25); }
+    .loadout-slot .mini-table { height:40px; border-radius:7px; }
+    .loadout-slot .mini-table-name { display:none; }
+    .loadout-name { font-size:9px; font-weight:900; color:#e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:14px; }
+    .loadout-slot.is-active .loadout-name { color:#fcd34d; }
+    .loadout-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:58px; border-style:dashed; color:#94a3b8; font-size:9px; font-weight:900; }
+    .loadout-empty b { font-size:16px; line-height:1; color:#fcd34d; }
+    .loadout-more { position:absolute; right:3px; bottom:3px; width:18px; height:16px; border-radius:6px; font-size:11px; line-height:14px; color:#cbd5e1; background:rgba(2,6,23,.8); }
+    .loadout-avatar { position:absolute; left:8px; top:8px; }
+    .loadout-menu { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; gap:3px; padding:4px; border-radius:12px; background:rgba(2,6,23,.96); z-index:2; }
+    .loadout-menu button { font-size:8px; font-weight:900; letter-spacing:.05em; padding:4px 2px; border-radius:6px; border:1px solid #334155; color:#e2e8f0; }
+    .loadout-menu button[data-loadout-act="clear"] { color:#fda4af; border-color:#7f1d1d; }
+    .loadout-guest { grid-column:1/-1; font-size:9px; color:#94a3b8; text-align:center; padding:6px; border:1px dashed #334155; border-radius:10px; }
     .cat-section { margin-bottom:8px; }
     .cat-head { width:100%; display:flex; align-items:center; gap:8px; padding:7px 10px; margin-bottom:6px; border-radius:12px; border:1px solid #334155; background:linear-gradient(135deg,#0f172a,#020617 85%); text-align:left; cursor:pointer; }
     .cat-head-title { flex:1; min-width:0; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; color:#fcd34d; }
@@ -5493,6 +5508,7 @@ video {
         </div>
       </div>
       <div class="overflow-y-auto pr-1" style="flex:1;">
+        <div id="customLoadouts" class="loadout-strip" aria-label="Saved looks"></div>
         <div class="hscroll-wrap is-sticky"><button type="button" class="hscroll-btn prev" aria-label="Scroll sections left" tabindex="-1">‹</button><div id="customTabBar" class="cosmetic-tab-bar hscroll" role="tablist" aria-label="Custom sections"></div><button type="button" class="hscroll-btn next" aria-label="Scroll sections right" tabindex="-1">›</button></div>
         <div data-custom-panel="all"><div id="personalisationAll" class="custom-all"></div></div>
         <div data-custom-panel="avatar" class="hidden"><div id="personalisationAvatars" class="avatar-picker-grid"></div></div>
@@ -16352,6 +16368,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v171: [
+        ['👕', 'Saved looks in Custom: keep up to 3 complete loadouts and switch between them in one tap.']
+      ],
       v170: [
         ['🙈', "New setting (Display): Show Others' Effects. Turn it off to see other players' burn, Joker and victory effects in the plain default style."]
       ],
@@ -18674,6 +18693,8 @@ video {
     function renderPersonalisationCosmetics() {
       renderPersonalisationAvatars();
       renderPersonalisationAll();
+      // (Before the loadouts section has run at start-up, its lets aren't ready.)
+      try { renderLoadouts(); } catch (e) { if (!(e instanceof ReferenceError)) throw e; }
       const backs = document.getElementById('personalisationCardBacks');
       const frames = document.getElementById('personalisationFrames');
       const emotes = document.getElementById('personalisationEmotes');
@@ -23816,6 +23837,108 @@ video {
         btn.addEventListener('click', () => selectDeckTheme(btn.dataset.theme));
       });
     }
+    // § Saved loadouts (Custom)
+    // Up to 3 complete looks per account, switched in one tap from the strip
+    // above Custom's tabs. users/{uid}/loadouts/{s1|s2|s3} = {name, items, at}
+    // (non-numeric keys so Firebase keeps an object). Putting one on goes
+    // through the normal ownership checks: anything no longer owned falls back
+    // to the default. The deck theme is a separate free preference.
+    const LOADOUT_SLOTS = ['s1', 's2', 's3'];
+    const LOADOUT_TYPES = ['avatar', 'tableTheme', 'cardBack', 'frame', 'burnEffect', 'jokerEffect', 'victoryEffect', 'emotes'];
+    let savedLoadouts = {};
+    let savedLoadoutsUid = null;
+    let loadoutMenuSlot = null;
+    const currentLookItems = () => Object.fromEntries(LOADOUT_TYPES.map(t => [t, equippedCosmetics[t] || 'default']));
+    const loadoutIsWorn = (l) => !!l && LOADOUT_TYPES.every(t => (l.items?.[t] || 'default') === (equippedCosmetics[t] || 'default'));
+    function loadSavedLoadouts() {
+      if (!currentUser) { savedLoadouts = {}; savedLoadoutsUid = null; renderLoadouts(); return Promise.resolve(); }
+      const uid = currentUser.uid;
+      return db.ref(`users/${uid}/loadouts`).once('value').then(snap => {
+        if (currentUser?.uid !== uid) return;
+        // A look saved while this was loading wins over the older copy.
+        savedLoadouts = savedLoadoutsUid === uid ? { ...(snap.val() || {}), ...savedLoadouts } : (snap.val() || {});
+        savedLoadoutsUid = uid;
+        renderLoadouts();
+      }).catch(e => console.warn('Could not load saved looks', e));
+    }
+    function renderLoadouts() {
+      const strip = document.getElementById('customLoadouts');
+      if (!strip) return;
+      if (!currentUser) { strip.innerHTML = '<div class="loadout-guest">Sign in to save up to 3 looks and switch in one tap</div>'; return; }
+      strip.innerHTML = LOADOUT_SLOTS.map((slot, i) => {
+        const l = savedLoadouts[slot];
+        if (!l) return `<button type="button" class="loadout-slot loadout-empty" data-loadout-save="${slot}" aria-label="Save your current look in slot ${i + 1}"><b>+</b>Save current</button>`;
+        const worn = loadoutIsWorn(l);
+        const menu = loadoutMenuSlot === slot ? `<span class="loadout-menu">
+            <button type="button" data-loadout-act="save" data-slot="${slot}">SAVE CURRENT HERE</button>
+            <button type="button" data-loadout-act="rename" data-slot="${slot}">RENAME</button>
+            <button type="button" data-loadout-act="clear" data-slot="${slot}">CLEAR</button>
+          </span>` : '';
+        return `<div role="button" tabindex="0" class="loadout-slot ${worn ? 'is-active' : ''}" data-loadout-wear="${slot}" aria-pressed="${worn}" aria-label="Wear ${escapeHtml(l.name || `Look ${i + 1}`)}">
+          ${miniTablePreviewHtml(l.items?.tableTheme || 'default', null, false, { backId: l.items?.cardBack || 'default', frameId: l.items?.frame || 'default' })}
+          <span class="loadout-avatar" aria-hidden="true">${avatarHtml(l.items?.avatar || 'default', 18)}</span>
+          <span class="loadout-name">${worn ? '✓ ' : ''}${escapeHtml(l.name || `Look ${i + 1}`)}</span>
+          <button type="button" class="loadout-more" data-loadout-menu="${slot}" aria-label="Options">⋯</button>${menu}
+        </div>`;
+      }).join('');
+    }
+    function saveLoadout(slot, name) {
+      if (!currentUser) return false;
+      if (savedLoadoutsUid !== currentUser.uid) { savedLoadouts = {}; savedLoadoutsUid = currentUser.uid; }
+      const l = { name: String(name || '').trim().slice(0, 16) || `Look ${LOADOUT_SLOTS.indexOf(slot) + 1}`, items: currentLookItems(), at: Date.now() };
+      savedLoadouts = { ...savedLoadouts, [slot]: l };
+      loadoutMenuSlot = null;
+      renderLoadouts();
+      db.ref(`users/${currentUser.uid}/loadouts/${slot}`).set(l).catch(() => {
+        const status = document.getElementById('personalisationStatus');
+        if (status) status.textContent = 'Saved on this device, but account sync failed.';
+      });
+      return true;
+    }
+    function wearLoadout(slot) {
+      const l = savedLoadouts[slot];
+      if (!l) return false;
+      const fellBack = [];
+      LOADOUT_TYPES.forEach(t => {
+        const id = l.items?.[t] || 'default';
+        const ok = id === 'default' || (isSupportedCosmetic(t, id) && canRestoreEquippedCosmetic(t, id));
+        equippedCosmetics[t] = ok ? id : 'default';
+        if (!ok) fellBack.push(t);
+      });
+      applyEquippedCosmetics();
+      loadoutMenuSlot = null;
+      renderPersonalisationCosmetics();
+      if (typeof renderCosmeticShop === 'function') renderCosmeticShop();
+      const status = document.getElementById('personalisationStatus');
+      if (status) status.textContent = `${l.name} equipped.${fellBack.length ? ` ${fellBack.length} item${fellBack.length === 1 ? '' : 's'} you no longer own went back to default.` : ''}`;
+      notifyBanner(`✓ ${l.name} equipped`);
+      if (!motionOff()) audio.playEquipClick();
+      if (currentUser) db.ref(`users/${currentUser.uid}/equippedCosmetics`).set(equippedCosmetics).then(() => { syncPublicProfile(); syncShowcase(); }).catch(() => {
+        if (status) status.textContent = 'Equipped on this device, but account sync failed.';
+      });
+      return true;
+    }
+    document.getElementById('customLoadouts').addEventListener('click', (event) => {
+      const t = event.target;
+      const empty = t.closest('[data-loadout-save]');
+      if (empty) { const slot = empty.dataset.loadoutSave; saveLoadout(slot, prompt('Name this look', `Look ${LOADOUT_SLOTS.indexOf(slot) + 1}`) ?? `Look ${LOADOUT_SLOTS.indexOf(slot) + 1}`); return; }
+      const more = t.closest('[data-loadout-menu]');
+      if (more) { event.stopPropagation(); loadoutMenuSlot = loadoutMenuSlot === more.dataset.loadoutMenu ? null : more.dataset.loadoutMenu; renderLoadouts(); return; }
+      const act = t.closest('[data-loadout-act]');
+      if (act) {
+        event.stopPropagation();
+        const slot = act.dataset.slot, l = savedLoadouts[slot];
+        if (act.dataset.loadoutAct === 'save' && confirm(`Replace "${l.name}" with what you're wearing now?`)) saveLoadout(slot, l.name);
+        else if (act.dataset.loadoutAct === 'rename') { const n = prompt('Rename this look', l.name); if (n !== null) { savedLoadouts[slot] = { ...l, name: String(n).trim().slice(0, 16) || l.name }; if (currentUser) db.ref(`users/${currentUser.uid}/loadouts/${slot}/name`).set(savedLoadouts[slot].name).catch(() => {}); } }
+        else if (act.dataset.loadoutAct === 'clear' && confirm(`Clear "${l.name}"?`)) { delete savedLoadouts[slot]; savedLoadouts = { ...savedLoadouts }; if (currentUser) db.ref(`users/${currentUser.uid}/loadouts/${slot}`).remove().catch(() => {}); }
+        loadoutMenuSlot = null;
+        renderLoadouts();
+        return;
+      }
+      const wear = t.closest('[data-loadout-wear]');
+      if (wear) wearLoadout(wear.dataset.loadoutWear);
+    });
+
     const CUSTOM_TABS = [
       { key: 'all', label: 'All' },
       { key: 'avatar', label: 'Pictures' },
@@ -23864,6 +23987,7 @@ video {
       renderPersonalisationCosmetics();
       document.getElementById('themesModal').classList.remove('hidden');
       loadCosmeticCollection();
+      loadSavedLoadouts();
     }
     document.getElementById('themesCloseBtn').addEventListener('click', () => document.getElementById('themesModal').classList.add('hidden'));
     document.getElementById('customShopBtn').addEventListener('click', () => {

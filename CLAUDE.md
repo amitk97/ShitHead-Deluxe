@@ -141,6 +141,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Free tables: **Oak Wood** (`table-wood`) and **Classic Felt** (`table-felt`) are `BUILT_IN_COSMETICS` (never sold) drawn from photo-like JPGs `art/tables/wood.jpg` / `felt.jpg` via `ILLUSTRATED_TABLES`; regenerate with `python3 tools/make-table-textures.py` (needs numpy + pillow). The rules let anyone equip them.
 - **All tabs.** The Shop opens on **All** (`SHOP_ALL_TAB`, the first tab and the default): every non-seasonal item, one folding `.cat-section` per `COSMETIC_TABS` type (chevron `data-shop-category`, folded ones remembered in localStorage `shithead_shop_collapsed`). The Name Change Token (`#shopNameTokenCard`) shows at the top of All only.
 - Custom's first tab is **All** (`#personalisationAll`, `renderPersonalisationAll` / `customAllItems`): every item in the game, including every seasonal one owned or not (an unowned one out of season is locked and reads "🎃 Halloween only", `customLockedStatus`), folding sections with owned/total counts (`shithead_custom_all_collapsed`). Custom's header has the Challenges-style `.ch-stat-bar`: 💎 (`#customDiamondCount`, painted by `updateDiamondHeader`), owned / total (`#customOwnedCount`), Shop button (`#customShopBtn`).
+- Saved looks (`§ Saved loadouts (Custom)`): the `#customLoadouts` strip above Custom's tabs, 3 slots `users/{uid}/loadouts/{s1|s2|s3}` = {name, items (every `LOADOUT_TYPES` type), at} (player-writable via `$field`; non-numeric keys so Firebase keeps an object). Tap = `wearLoadout` (normal ownership checks; anything no longer owned falls back to default, then one `equippedCosmetics` write + showcase/profile sync); the worn look is ticked (`loadoutIsWorn`); ⋯ = save current here / rename / clear. Deck theme isn't part of it.
 - Custom's Burn and Joker previews open under the tapped tile (`playInlineEffectPreview`: a full-width `.custom-inline-preview` after that tile's row, in the visible panel only). There is no preview stage at the top of the page.
 - Table themes are CSS on `body[data-equipped-table-theme="…"] #gameTable` plus a `--table-label-border` accent and a Shop preview background in `shopCosmeticPreviewMarkup`. New themes also need the rules id list (`equippedCosmetics`) and a catalog re-export for the price.
 
@@ -271,11 +272,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 1. Challenges: tapping "n completed" lists the completed challenges.
 2. Collection Log on the Profile page (every item; owned in colour, unowned greyed and locked); tapping Custom's "n / n owned" opens it.
-3. Saved loadouts in Custom (name a set of equipped items, switch in one tap).
-4. Best of 3 / 5 series between friends (casual rooms only; Ranked stays single games).
-5. Weekly puzzle (not a daily one).
-6. Tournament mode (friends' bracket; needs more players first).
-7. Far down the line (liked, not yet): "you've been overtaken" leaderboard mail, clubs, a season pass.
+3. Best of 3 / 5 series between friends (casual rooms only; Ranked stays single games).
+4. Weekly puzzle (not a daily one).
+5. Tournament mode (friends' bracket; needs more players first).
+6. Far down the line (liked, not yet): "you've been overtaken" leaderboard mail, clubs, a season pass.
 - Not decided: weekly leaderboards, a friends-only leaderboard filter, "beat my score" share links, translations, a Joker Master earn-only Joker effect, a fresh-eyes check of a new player's first 5 minutes; turning on Ranked audit enforcement once honest games show no hard findings.
 - Rejected: a daily puzzle, a login-streak leaderboard.
 
