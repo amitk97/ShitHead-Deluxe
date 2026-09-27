@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-26-v161 (ShitHead-Deluxe-143) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v162 (ShitHead-Deluxe-144) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -25,6 +25,24 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>ShitHead</title>
+  <!-- Link previews (WhatsApp, iMessage, Discord, X, Facebook, Slack…) and
+       search results. The picture is made by tools/make-share-image.js. -->
+  <meta name="description" content="Play ShitHead, the classic card game, free on your phone. Take on bots, play your friends online or climb the Ranked ladder. No download needed." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ShitHead Deluxe" />
+  <meta property="og:title" content="ShitHead Deluxe: the classic card game" />
+  <meta property="og:description" content="Free on your phone. Play bots, your friends online or Ranked. No download needed." />
+  <meta property="og:url" content="https://shithead-pro.web.app/" />
+  <meta property="og:image" content="https://shithead-pro.web.app/icons/share-preview.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ShitHead Deluxe: the card game on two phone screens" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ShitHead Deluxe: the classic card game" />
+  <meta name="twitter:description" content="Free on your phone. Play bots, your friends online or Ranked. No download needed." />
+  <meta name="twitter:image" content="https://shithead-pro.web.app/icons/share-preview.jpg" />
+  <link rel="canonical" href="https://shithead-pro.web.app/" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#020617" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -16069,6 +16087,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v162: [
+        ['🔗', 'Links to the game now show a proper preview picture in WhatsApp, iMessage, Discord and everywhere else you share them.']
+      ],
       v161: [
         ['🖼️', 'A new profile picture now shows straight away on the Challenges and Gauntlet leaderboards.']
       ],
