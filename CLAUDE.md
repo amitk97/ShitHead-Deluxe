@@ -123,6 +123,11 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - Player-facing text is calm and plain: sentence case, short, no shouting and few exclamation marks ("6 played: the next card must be even.", "Room code copied.", "You won"). Effect shouts inside animations ("HA!", "BOO!") and the tutorial coach can keep their personality; old What's New entries are history and stay as written.
 
+## Visual system
+
+- Pages have a soft 1px amber frame (the CSS override on `div.fixed.inset-0 > div.border-2.border-amber-500`), not a thick orange one. Type floor: no text under 8px (`.text-[7px]` → 8px, `.text-[8px]` → 9px); all-caps labels use tight letter-spacing.
+- Buttons: primary = filled gold (the Shop price button), secondary = quiet slate outline (Preview, Gift), destructive = red. New UI should use these three rather than a new colour per button.
+
 ## Icons (no emoji as UI)
 
 - `§ Icons`: the sprite at the top of `<body>` holds the line icons `#ic-…` (24px grid, 1.75 stroke, `currentColor`), the full-colour Diamond `#ic-gem`, place discs `#ic-place1-3`, Gauntlet lives and rank badges `#tier-novice…master` (the same metal gradients as the crown pictures, `av-m-*`). Markup: `icon('gift')`, `tierBadge('Gold')`. The owner's rule: never use emoji as UI icons, button symbols, status indicators or bullets; use an SVG icon.
