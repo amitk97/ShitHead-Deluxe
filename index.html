@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v184 (ShitHead-Deluxe-166) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v185 (ShitHead-Deluxe-167) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -16759,6 +16759,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v185: [
+        ['🎓', 'Tutorial: the 3 lesson always shows the Coach playing the 3 now, even if you tap Continue twice.']
+      ],
       v184: [
         ['⚔️', 'Ranked only pairs you with players on the same version of the game, and a game that is out of date updates itself before a match.']
       ],
@@ -25018,9 +25021,16 @@ video {
       }, 3000);
     });
     bindTapOnly(document.getElementById('tutorialNextBtn'), () => {
+      // Hidden = the Coach is mid-play (see below): a late or queued tap does nothing.
+      if (document.getElementById('tutorialNextBtn').style.display === 'none') return;
       if (tutorialPendingContinueAction) {
         const fn = tutorialPendingContinueAction;
         tutorialPendingContinueAction = null;
+        // Hidden while the Coach plays (about a second before anything
+        // moves): a second tap here used to skip to the next step and cancel
+        // the play, e.g. the 3 lesson's Coach 3 never landed. The note that
+        // follows (showCoachNote / tutorialShowInterimNote) shows it again.
+        document.getElementById('tutorialNextBtn').style.display = 'none';
         fn();
         return;
       }
@@ -26490,7 +26500,7 @@ video {
         noteTarget: ['#pileZone', '#historyStreamPanel']
       },
       {
-        text: "Beat the 9.",
+        text: "Now beat the 9 under the 3. Play your Jack.",
         target: ['#localHand [data-rank="J"]', '#discardPileContainer [data-rank="9"]'],
         // getEffectiveTopCard() skips past the 3 to find the 9 for legality
         // purposes — verified directly in isPlayLegal before writing this.

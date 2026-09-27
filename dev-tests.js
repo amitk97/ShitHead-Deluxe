@@ -1581,6 +1581,20 @@ async function runDevTestSuite() {
     assertTrue(!!box && box.width >= 24, 'The tile keeps its size, got ' + (box && box.width));
     assertTrue(!!btn.querySelector('.rank-toggle-dot'), 'An ON/OFF dot shows the state');
   });
+  await test('REGRESSION: tutorial Continue hides while the Coach plays (a second tap skipped the 3 lesson\'s Coach 3)', () => {
+    freshState(); tutorialTestSetup();
+    try {
+      launchTutorialModule('card_3');
+      const btn = document.getElementById('tutorialNextBtn');
+      assertTrue(!!tutorialPendingContinueAction && btn.style.display !== 'none', 'Step 1 waits on Continue to play the Coach 3');
+      btn.click();
+      assertEqual(btn.style.display, 'none', 'Continue hides while the Coach plays');
+      btn.click();
+      assertEqual(tutorialStep, 0, 'A second tap does not skip ahead');
+      assertTrue(step2Text(), 'Step 2 says the 9 is under the 3');
+    } finally { endTutorial(false); }
+    function step2Text() { return TUTORIAL_MODULE_CARD_3[1].text.includes('under the 3'); }
+  });
   await test('REGRESSION: the tutorial never writes a restorable saved game', () => {
     freshState(); tutorialTestSetup();
     try { localStorage.removeItem('shithead_game_state'); } catch (e) {}
