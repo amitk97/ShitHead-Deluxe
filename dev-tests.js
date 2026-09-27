@@ -6178,6 +6178,13 @@ async function runDevTestSuite() {
       document.querySelector('[data-loadout-wear="s1"]').click();
       assertEqual([equippedCosmetics.cardBack, equippedCosmetics.tableTheme], ['back-neon', 'table-royal'], 'One tap puts it back on');
       assertTrue(writes.some(([p]) => p === 'users/u1/equippedCosmetics'), 'and syncs the equip');
+      loadoutMenuSlot = 's1'; renderLoadouts();
+      const slotBox = document.querySelector('[data-loadout-wear="s1"]').getBoundingClientRect();
+      [...document.querySelectorAll('.loadout-menu button')].forEach(b => {
+        const r = b.getBoundingClientRect();
+        assertTrue(r.top >= slotBox.top - 0.5 && r.bottom <= slotBox.bottom + 0.5 && r.left >= slotBox.left - 0.5 && r.right <= slotBox.right + 0.5, `${b.textContent} fits inside the slot`);
+      });
+      loadoutMenuSlot = null;
       delete cosmeticPurchaseState['back-neon'];
       wearLoadout('s1');
       assertEqual(equippedCosmetics.cardBack, 'default', 'An item no longer owned falls back to default');

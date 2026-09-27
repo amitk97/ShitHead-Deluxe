@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v172 (ShitHead-Deluxe-154) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v173 (ShitHead-Deluxe-155) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -382,8 +382,9 @@
     .loadout-empty b { font-size:16px; line-height:1; color:#fcd34d; }
     .loadout-more { position:absolute; right:3px; bottom:3px; width:18px; height:16px; border-radius:6px; font-size:11px; line-height:14px; color:#cbd5e1; background:rgba(2,6,23,.8); }
     .loadout-avatar { position:absolute; left:8px; top:8px; }
-    .loadout-menu { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; gap:3px; padding:4px; border-radius:12px; background:rgba(2,6,23,.96); z-index:2; }
-    .loadout-menu button { font-size:8px; font-weight:900; letter-spacing:.05em; padding:4px 2px; border-radius:6px; border:1px solid #334155; color:#e2e8f0; }
+    .loadout-menu { position:absolute; inset:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:stretch; gap:3px; padding:4px; border-radius:12px; background:rgba(2,6,23,.97); z-index:2; overflow:hidden; }
+    .loadout-menu button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:0; font-size:7px; font-weight:900; letter-spacing:.04em; line-height:1; padding:2px 0; border-radius:8px; border:1px solid #334155; color:#e2e8f0; white-space:nowrap; }
+    .loadout-menu button i { font-style:normal; font-size:13px; line-height:1; }
     .loadout-menu button[data-loadout-act="clear"] { color:#fda4af; border-color:#7f1d1d; }
     .loadout-guest { grid-column:1/-1; font-size:9px; color:#94a3b8; text-align:center; padding:6px; border:1px dashed #334155; border-radius:10px; }
     .cat-section { margin-bottom:8px; }
@@ -6988,11 +6989,14 @@ video {
         const tab = strip.querySelector('[aria-selected="true"]');
         if (!tab || !strip.clientWidth) { pill.style.opacity = '0'; return; }
         const wr = wrap.getBoundingClientRect(), tr = tab.getBoundingClientRect();
+        // Pages spring in with a scale: measured mid-animation the rects are
+        // scaled, so convert back to the wrap's own (unscaled) pixels.
+        const k = wrap.offsetWidth ? (wr.width / wrap.offsetWidth) || 1 : 1;
         if (!placed || motionOff()) pill.style.transition = 'none';
-        pill.style.left = `${tr.left - wr.left}px`;
-        pill.style.top = `${tr.top - wr.top}px`;
-        pill.style.width = `${tr.width}px`;
-        pill.style.height = `${tr.height}px`;
+        pill.style.left = `${(tr.left - wr.left) / k}px`;
+        pill.style.top = `${(tr.top - wr.top) / k}px`;
+        pill.style.width = `${tr.width / k}px`;
+        pill.style.height = `${tr.height / k}px`;
         pill.style.opacity = '1';
         if (!placed || motionOff()) { void pill.offsetWidth; pill.style.transition = ''; }
         placed = true;
@@ -16375,6 +16379,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v173: [
+        ['🛠️', 'Fixed: the saved-look options now fit inside their slot, and tab highlights line up as soon as a page opens.']
+      ],
       v172: [
         ['🎨', 'The Shop now has a Custom button in its header, so you can try on what you just bought straight away.']
       ],
@@ -23880,9 +23887,9 @@ video {
         if (!l) return `<button type="button" class="loadout-slot loadout-empty" data-loadout-save="${slot}" aria-label="Save your current look in slot ${i + 1}"><b>+</b>Save current</button>`;
         const worn = loadoutIsWorn(l);
         const menu = loadoutMenuSlot === slot ? `<span class="loadout-menu">
-            <button type="button" data-loadout-act="save" data-slot="${slot}">SAVE CURRENT HERE</button>
-            <button type="button" data-loadout-act="rename" data-slot="${slot}">RENAME</button>
-            <button type="button" data-loadout-act="clear" data-slot="${slot}">CLEAR</button>
+            <button type="button" data-loadout-act="save" data-slot="${slot}" aria-label="Save what you're wearing here"><i>💾</i>SAVE</button>
+            <button type="button" data-loadout-act="rename" data-slot="${slot}" aria-label="Rename"><i>✏️</i>NAME</button>
+            <button type="button" data-loadout-act="clear" data-slot="${slot}" aria-label="Clear"><i>🗑️</i>CLEAR</button>
           </span>` : '';
         return `<div role="button" tabindex="0" class="loadout-slot ${worn ? 'is-active' : ''}" data-loadout-wear="${slot}" aria-pressed="${worn}" aria-label="Wear ${escapeHtml(l.name || `Look ${i + 1}`)}">
           ${miniTablePreviewHtml(l.items?.tableTheme || 'default', null, false, { backId: l.items?.cardBack || 'default', frameId: l.items?.frame || 'default' })}
