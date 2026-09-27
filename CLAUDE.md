@@ -210,6 +210,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Ranked
 
 - A missing `rating`/`wins`/`losses` is filled in by the server (`init`, only fields still empty; `getOrCreateUserProfile` asks for it). Ranked results are scored on the server (`rankedResult`), which seeds `highestRating`/`lowestRating` from the pre-match rating; the room is read after a short wait and the call retried, since the final placings reach the room a moment after the phones see them.
+- Versions: a room only opens for the same build (`isRoomVersionCompatible`), so Ranked tickets and assignments carry `v` (`getGameVersionLabel()`). `decideRankedQueueAction` never pairs different builds: a newer waiter → `update` (this phone reloads via `updateToLatestVersion`, once per session per target), an older/unversioned one gives up the spot; an assignment from another build is ignored (or, newer, updates). In the room listener a newer room updates the phone (the start-up rejoin brings it back); an older room says the others must reopen the game. (Seen right after a deploy: "can't join a Ranked match".)
 - Queue = one `matchmaking/waiting` ticket. The waiter refreshes `ts` every 5s (`RANKED_TICKET_HEARTBEAT_MS`) and sets `onDisconnect().remove()`; searchers treat a ticket older than 30s as a ghost and take the spot. Claiming (`decideRankedQueueAction`) removes the opponent in the same transaction. Assignments carry `at` and are ignored after 60s. A waiter whose ticket vanished with no assignment re-queues itself.
 
 ## Installable app & notifications

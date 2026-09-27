@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v183 (ShitHead-Deluxe-165) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v184 (ShitHead-Deluxe-166) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -14922,7 +14922,13 @@ video {
         if (!data) return;
         if (!isRoomVersionCompatible(data)) {
           setConnectionBanner('lost');
-          notifyBanner(`Version mismatch: room ${data.clientVersion}, your game ${getGameVersionLabel()}. Please refresh.`);
+          if (gameVersionNumber(data.clientVersion) > gameVersionNumber(getGameVersionLabel())) {
+            // This phone is behind: update, and the rejoin at start-up
+            // (attemptMatchReconnect) brings it back into this room.
+            updateToLatestVersion('This match is on a newer version of the game. Updating now.', data.clientVersion);
+          } else {
+            notifyBanner(`This room is on an older version (${data.clientVersion}). Ask the other players to close and reopen the game.`);
+          }
           return;
         }
         const isCatchUp = isInitialSnapshot;
@@ -16419,6 +16425,8 @@ video {
     function getGameVersionLabel() {
       return GAME_VERSION_LABEL;
     }
+    // "v184" → 184, for telling which of two builds is newer.
+    function gameVersionNumber(label) { return parseInt(String(label || '').replace(/\D/g, ''), 10) || 0; }
     function isRoomVersionCompatible(roomData) {
       return !roomData?.clientVersion || roomData.clientVersion === getGameVersionLabel();
     }
@@ -16751,6 +16759,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v184: [
+        ['⚔️', 'Ranked only pairs you with players on the same version of the game, and a game that is out of date updates itself before a match.']
+      ],
       v183: [
         ['🃏', 'Play Friends: a Joker played with more than one player to pick from now leaves your table properly, instead of coming back to you.']
       ],
@@ -23086,6 +23097,13 @@ video {
     // transaction (so it always reflects the server's latest value).
     function decideRankedQueueAction(current, myTicket, lastOpponent, skipRoll, now = serverNow()) {
       if (current && current.uid !== myTicket.uid && !isRankedTicketStale(current, now)) {
+        // Only the same build can share a room (isRoomVersionCompatible).
+        // A newer waiter means this phone is behind: update. An older one
+        // (or a build from before tickets carried a version) gives up its
+        // spot, and its own app is told to update when it next looks.
+        if ((current.v || null) !== (myTicket.v || null)) {
+          return gameVersionNumber(current.v) > gameVersionNumber(myTicket.v) ? { action: 'update' } : { action: 'wait' };
+        }
         const onCooldown = lastOpponent && lastOpponent.uid === current.uid && (now - Number(lastOpponent.at)) < RANKED_REMATCH_COOLDOWN_MS;
         if (onCooldown && skipRoll) return { action: 'skip' };
         return { action: 'claim', opponent: current };
@@ -23106,7 +23124,7 @@ video {
         db.ref(`users/${currentUser.uid}/lastRankedOpponent`).once('value').then(snap => snap.val()).catch(() => null)
       ]).then(([profile, lastOpponent]) => {
         if (!stillSearching()) return;
-        const myTicket = { uid: currentUser.uid, name: myName, rating: finiteRating(profile.rating), cosmetics: getPublicCosmeticLoadout(), ts: serverNow() };
+        const myTicket = { uid: currentUser.uid, name: myName, rating: finiteRating(profile.rating), cosmetics: getPublicCosmeticLoadout(), ts: serverNow(), v: getGameVersionLabel() };
         if (!options.keepClock || !rankedSearchTimer) startRankedSearchClock();
         refreshRankedUI();
         const skipRoll = Math.random() < RANKED_REMATCH_SKIP_CHANCE;
@@ -23114,7 +23132,7 @@ video {
         db.ref('matchmaking/waiting').transaction((current) => {
           decision = decideRankedQueueAction(current, myTicket, lastOpponent, skipRoll);
           if (decision.action === 'claim') return null;   // take them out of the queue in the same step
-          if (decision.action === 'skip') return current;
+          if (decision.action === 'skip' || decision.action === 'update') return current;
           return { ...myTicket, ts: serverNow() };
         }, (error, committed) => {
           if (!stillSearching()) {
@@ -23127,6 +23145,11 @@ video {
             alert('Matchmaking failed — please try again. If this keeps happening, Database Rules may be blocking the "matchmaking" path.');
             return;
           }
+          if (decision.action === 'update') {
+            stopRankedSearchClock(); refreshRankedUI();
+            updateToLatestVersion('A new version of the game is out. Updating now, then search again.');
+            return;
+          }
           if (decision.action === 'skip') {
             stopRankedSearchClock(); refreshRankedUI();
             notifyBanner('⏱️ Looking for a different opponent — try again in a moment.');
@@ -23135,7 +23158,7 @@ video {
           if (decision.action === 'claim') {
             const opponent = { ...decision.opponent, rating: finiteRating(decision.opponent.rating) };
             const code = createRankedRoom(myTicket, opponent, true);
-            db.ref(`matchmaking/assignments/${opponent.uid}`).set({ roomCode: code, players: state.players, at: serverNow() });
+            db.ref(`matchmaking/assignments/${opponent.uid}`).set({ roomCode: code, players: state.players, at: serverNow(), v: getGameVersionLabel() });
             stopRankedSearchClock();
             enterRankedRoom(code);
             return;
@@ -23163,6 +23186,18 @@ video {
         // otherwise drop us straight into that long-gone room.
         if (!data.at || serverNow() - Number(data.at) > RANKED_ASSIGNMENT_MAX_AGE_MS || !data.roomCode) {
           assignSnap.ref.remove().catch(() => {});
+          return;
+        }
+        // A match made by a different build can't be played together (the
+        // room would refuse one of us). Newer: update and search again.
+        // Older: ignore it; our heartbeat re-queues us.
+        if ((data.v || null) !== getGameVersionLabel()) {
+          assignSnap.ref.remove().catch(() => {});
+          if (gameVersionNumber(data.v) > gameVersionNumber(getGameVersionLabel())) {
+            stopRankedAssignmentListener(); stopRankedHeartbeat(); stopRankedSearchClock();
+            removeOwnRankedTicket();
+            updateToLatestVersion('A new version of the game is out. Updating now, then search again.');
+          }
           return;
         }
         stopRankedAssignmentListener();
@@ -25553,6 +25588,16 @@ video {
     scheduleBackGuardSync();
     // Reloads that end a match or leave a room first step off the guard
     // entry, so the fresh page doesn't start on a leftover history entry.
+    // Reload onto the newest build (sw.js is network-first for the page).
+    // Once per target version per session, so a phone that still gets the
+    // old page (no signal) can't loop.
+    function updateToLatestVersion(message, targetVersion = 'latest') {
+      if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return;
+      const key = `shithead_update_tried_${targetVersion}`;
+      try { if (sessionStorage.getItem(key)) { notifyBanner('Please close and reopen the game to update it.'); return; } sessionStorage.setItem(key, '1'); } catch (e) {}
+      notifyBanner(message);
+      setTimeout(reloadCleanly, 1200);
+    }
     function reloadCleanly() {
       if (!hasBackGuard()) { location.reload(); return; }
       ignoreNextPopstate = true;

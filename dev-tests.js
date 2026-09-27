@@ -7061,6 +7061,13 @@ async function runDevTestSuite() {
     const recent = { uid: 'x', at: now - 60000 };
     assertEqual(decideRankedQueueAction({ uid: 'x', ts: now }, me, recent, true, now).action, 'skip', 'A recent opponent can be skipped');
     assertEqual(decideRankedQueueAction({ uid: 'x', ts: now }, me, recent, false, now).action, 'claim', 'Skipping is only a chance, not a block');
+    // Different builds can't share a room: never pair them.
+    const mine = { ...me, v: 'v184' };
+    assertEqual(decideRankedQueueAction({ uid: 'x', ts: now, v: 'v184' }, mine, null, false, now).action, 'claim', 'Same version: pair up');
+    assertEqual(decideRankedQueueAction({ uid: 'x', ts: now, v: 'v185' }, mine, null, false, now).action, 'update', 'A newer waiter: this phone updates first');
+    assertEqual(decideRankedQueueAction({ uid: 'x', ts: now, v: 'v183' }, mine, null, false, now).action, 'wait', 'An older waiter gives up the spot');
+    assertEqual(decideRankedQueueAction({ uid: 'x', ts: now }, mine, null, false, now).action, 'wait', 'A ticket from before versions were sent counts as older');
+    assertEqual(gameVersionNumber('v184'), 184, 'Version numbers compare as numbers');
     assertTrue(findRankedMatch.toString().includes("decision.action === 'claim') return null"), 'Claiming takes the opponent out of the queue in the same transaction');
     assertTrue(waitForRankedMatch.toString().includes('onDisconnect().remove()'), 'A waiting ticket is removed automatically if the connection drops');
   });
