@@ -1432,6 +1432,48 @@ async function runDevTestSuite() {
       assertTrue(prompted > 0, 'and is told to go');
     });
   }
+  // ---- A Joker as someone's LAST card, countered: they did NOT finish ----
+  // Checked before anything final happens: the target's counter is found at
+  // once, the Joker player picks up the pile, and no victory effect, finish
+  // or match end fires.
+  for (const n of [2, 3, 4]) {
+    for (const pileOnlyJoker of [false, true]) {
+      await test(`Last card a Joker that gets countered (${n} players${pileOnlyJoker ? ', nothing else on the pile' : ''}): not finished, picks up, no victory`, () => {
+        const joker = makeCard('JOKER', 'JOKER');
+        const counter = makeCard('JOKER', 'JOKER');
+        const calls = { end: 0, overlay: 0, fx: 0 };
+        const realEnd = showMatchEndUI, realOverlay = showVictoryOverlay, realFx = triggerEquippedVictoryEffect;
+        showMatchEndUI = () => { calls.end++; };
+        showVictoryOverlay = () => { calls.overlay++; };
+        triggerEquippedVictoryEffect = () => { calls.fx++; };
+        try {
+          // b has the fewest cards, so the bot initiator targets b (the only target with 2 players).
+          const seats = [['a', [joker]], ['b', [counter, makeCard('K')]], ['c', [makeCard('K'), makeCard('9'), makeCard('5')]], ['d', [makeCard('Q'), makeCard('8'), makeCard('5')]]].slice(0, n);
+          lastCardScenario(seats, () => {
+            if (pileOnlyJoker) state.discardPile = [];
+            executePlayCards('a', [joker]);
+          });
+          const a = state.players[0], b = state.players[1];
+          assertTrue(!a.hasFinished && !a.finishRank, 'The countered Joker player is not finished', [a.hasFinished, a.finishRank]);
+          const aCards = (a.hand?.length || 0) + (a.faceUp?.length || 0) + (a.faceDown?.length || 0);
+          if (pileOnlyJoker) assertTrue(aCards === 1 && a.hand[0].isJoker, 'With nothing else on the pile, their Joker comes back to them', a.hand);
+          else assertEqual(a.hand.map(c => c.rank).sort(), ['4', '6'], 'They pick up the pile at once');
+          assertEqual(state.phase, 'PLAY', 'The game is not over');
+          assertEqual(state.players[state.currentTurnIndex].id, 'b', 'The defender won the duel and plays next');
+          assertTrue(!b.hasFinished, 'The defender still holds a card, so is still in');
+          assertEqual(calls, { end: 0, overlay: 0, fx: 0 }, 'No match end, victory pop-up or victory effect');
+        } finally { showMatchEndUI = realEnd; showVictoryOverlay = realOverlay; triggerEquippedVictoryEffect = realFx; }
+      });
+    }
+  }
+  await test('Last card a Joker, countered with the defender\'s own last card (2 players): the defender wins, the Joker player is the ShitHead', () => {
+    const joker = makeCard('JOKER', 'JOKER');
+    const counter = makeCard('JOKER', 'JOKER');
+    lastCardScenario([['a', [joker]], ['b', [counter]]], () => executePlayCards('a', [joker]));
+    const a = state.players[0], b = state.players[1];
+    assertTrue(b.hasFinished && b.finishRank === 1, 'The defender finishes first');
+    assertTrue(!a.hasFinished || a.finishRank !== 1, 'The Joker player never wins it', [a.hasFinished, a.finishRank]);
+  });
   await test('REGRESSION: Pooja retains the Joker bonus turn against a competing multiplayer snapshot', () => {
     freshState({ discardPile: [makeCard('4'), makeCard('JOKER', 'JOKER')], drawPile: [] });
     const pooja = makePlayer({ id: 'pooja', name: 'Pooja', hand: [makeCard('10')] });

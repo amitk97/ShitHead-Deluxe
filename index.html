@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v166 (ShitHead-Deluxe-148) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v167 (ShitHead-Deluxe-149) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -9470,9 +9470,7 @@ video {
           // goes on to the next player (giveJokerWinnerNextTurn).
           checkPlayerFinished(initiator);
           giveJokerWinnerNextTurn(initiator);
-          saveGameState();
-          if (state.isMultiplayer) syncFirebaseGameState();
-          delayUnlessTesting(() => executePickup(originalInitiator.id, true), state.turnDelay * 0.8);
+          jokerCounterPickup(originalInitiator, pileBeforeThis);
           return;
         }
       }
@@ -9520,6 +9518,25 @@ video {
         });
         bar.classList.remove('hidden');
       }
+    }
+
+    // A countered Joker's player picks up the pile. If that Joker was their
+    // LAST card they are not finished (they lost the duel), so the pickup
+    // happens at once: no moment with an empty seat that reads as a finish,
+    // and no victory effect or match end. With nothing else on the pile
+    // (the Jokers leave it), their own Joker comes back to them.
+    // Saves the duel too: the empty case goes out as one write with the
+    // pickup, so the Ranked audit never sees their Joker vanish and return.
+    function jokerCounterPickup(loser, loserJoker) {
+      const empty = !((loser.hand?.length || 0) + (loser.faceUp?.length || 0) + (loser.faceDown?.length || 0));
+      if (!empty || isMatchDecided()) {
+        saveGameState();
+        if (state.isMultiplayer) syncFirebaseGameState();
+        if (!empty) delayUnlessTesting(() => executePickup(loser.id, true), state.turnDelay * 0.8);
+        return;
+      }
+      if (!state.discardPile.length && loserJoker) state.discardPile.push(loserJoker);
+      executePickup(loser.id, true);
     }
 
     // One source of truth for the rule: the Joker-duel winner owns the next
@@ -9614,9 +9631,7 @@ video {
         // advanceTurn(1) would step straight past the defender and hand the
         // turn to whoever sits after them instead.
         giveJokerWinnerNextTurn(target);
-        saveGameState();
-        if (state.isMultiplayer) syncFirebaseGameState();
-        delayUnlessTesting(() => executePickup(initiator.id, true), state.turnDelay * 0.8);
+        jokerCounterPickup(initiator, initialJoker);
       } else {
         notifyBanner(`JOKER — ${target.name} picked up pile! ${initiator.name} gets another turn!`);
         const pickupCount = state.discardPile.length;
@@ -16298,6 +16313,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v167: [
+        ['🃏', "Fixed: if your last card is a Joker and it's countered, you don't finish. You pick up the pile, and the victory waits until the game is really over."]
+      ],
       v166: [
         ['🗂️', 'Custom has a new All tab with every item in the game, seasonal ones included, in sections that fold away.'],
         ['💎', 'Custom now shows your Diamonds, how many items you own, and a shortcut to the Shop.'],

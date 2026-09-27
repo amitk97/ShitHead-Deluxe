@@ -152,6 +152,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - The emote picker (`#emoteLayer`, z-index 65 inline) is above everything on the table, including the end-of-match standings and buttons (60); floating reactions (`EMOTE_FLOAT_Z` = 78, `showEmoteFloat`) are above all table banners too. Both stay BELOW every pop-up and page (summary 79, Guide 80, Settings 85, Inbox/menu pages 95+), so they never show over the mailbox or Settings. A dev test checks both sides; keep new table UI under 65 and new pop-ups above 78.
 
+## Joker as a last card
+
+- A Joker duel is resolved before anyone finishes: `resolveJokerDuelInstant` checks the target for a counter (hand, or face-up when reachable) first, and only an uncontested Joker finishes its player (`checkPlayerFinished(initiator)`). If a last-card Joker is countered, its player is NOT finished: `jokerCounterPickup` makes them pick up at once (no delay, so the seat is never empty; with nothing else on the pile, their own Joker comes back), with no victory effect or match end. Tests: "Last card a Joker that gets countered (2/3/4 players…)".
+
 ## Last card alert
 
 - `isOnLastCard(p)`: PLAY phase, not finished, exactly ONE card across hand + face-up + face-down (two of a rank never counts). The seat gets `.opp-last-card` and a pulsing `☝️ LAST CARD` chip (render); `announceLastCards` (end of the opponents block in `render`) banners + `audio.playLastCard()` + buzz once per opponent until their count changes again (`lastCardAlerted`, cleared in `hideMatchEndUI`). Never for your own seat or in the tutorial.

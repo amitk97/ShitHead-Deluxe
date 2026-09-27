@@ -77,6 +77,20 @@ a.players[0].faceUp = a.players[0].faceUp.filter(c => !c.isJoker);
 a.players[1].hand.push(...a.discardPile); a.discardPile = [];
 ok(hard(auditTransition(b, a, ctx('alice'))).length === 0, 'a Joker duel (initiator makes the target pick up) is clean', auditTransition(b, a, ctx('alice')));
 
+// Countered last-card Joker: Alice's Joker was her last card, Bob counters
+// from his hand. Alice picks up the pile (not finished); with nothing else
+// on it, her own Joker comes back, all in one write.
+b = room(); release(b.players[0].hand); release(b.players[0].faceDown); release(b.players[1].hand);
+b.players[0].hand = []; b.players[0].faceDown = []; b.drawPile = [];
+b.players[0].faceUp = b.players[0].faceUp.filter(c => c.isJoker);
+b.players[1].hand = [card('JOKER'), card('6')];
+a = clone(b);
+a.players[1].hand = a.players[1].hand.filter(c => !c.isJoker);
+a.players[0].hand = [...a.discardPile]; a.discardPile = []; a.currentTurnIndex = 1;
+ok(hard(auditTransition(b, a, ctx('alice'))).length === 0, 'a countered last-card Joker (initiator picks up the pile) is clean', auditTransition(b, a, ctx('alice')));
+b.discardPile = []; a = clone(b); a.players[1].hand = a.players[1].hand.filter(c => !c.isJoker); a.currentTurnIndex = 1;
+ok(hard(auditTransition(b, a, ctx('alice'))).length === 0, '... and with nothing else on the pile, keeping her own Joker is clean', auditTransition(b, a, ctx('alice')));
+
 b = room(); b.players[1].hand = []; b.players[1].faceUp = []; b.players[1].faceDown = [card('4')]; b.currentTurnIndex = 1;
 b.discardPile = [card('K')]; a = clone(b); a.discardPile.push(a.players[1].faceDown.pop());
 ok(hard(auditTransition(b, a, ctx('bob'))).length === 0, 'a blind flip that fails is not an illegal play');
