@@ -1581,6 +1581,25 @@ async function runDevTestSuite() {
     assertTrue(!!box && box.width >= 24, 'The tile keeps its size, got ' + (box && box.width));
     assertTrue(!!btn.querySelector('.rank-toggle-dot'), 'An ON/OFF dot shows the state');
   });
+  await test('Tutorial lessons: no random Face-Up card shares a rank the lesson uses, and Bonus Draw\'s PLAY IT is on top', () => {
+    freshState(); tutorialTestSetup();
+    try {
+      launchTutorialModule('card_7');
+      showTutorialStep(1);
+      const up = state.players[0].faceUp.map(c => c.rank);
+      assertEqual(up.length, 3, 'Three Face-Up cards');
+      assertTrue(!up.includes('5') && !up.includes('7'), 'No 5 or 7 among them, got ' + up.join(','));
+      endTutorial(false);
+      launchTutorialModule('bonus_draw');
+      showTutorialStep(1);
+      state.pendingFollowUp = { playerId: state.players[0].id, rank: '7' };
+      render();
+      const banner = document.getElementById('followUpToastBanner');
+      const zone = document.getElementById('localPlayerZone');
+      assertTrue(Number(banner.style.zIndex) > Number(zone.style.zIndex || 0), `Bonus prompt (${banner.style.zIndex}) above the lifted play area (${zone.style.zIndex})`);
+      state.pendingFollowUp = null;
+    } finally { endTutorial(false); }
+  });
   await test('REGRESSION: tutorial Continue hides while the Coach plays (a second tap skipped the 3 lesson\'s Coach 3)', () => {
     freshState(); tutorialTestSetup();
     try {

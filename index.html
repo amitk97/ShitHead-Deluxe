@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v185 (ShitHead-Deluxe-167) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v186 (ShitHead-Deluxe-168) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -12703,6 +12703,9 @@ video {
     // Back rows of a 2-3 row hand show at least this much of each card (the
     // rank and suit sit in the top part), so the cards can be larger.
     const HAND_ROW_MIN_VISIBLE = 0.42;
+    // With room to spare a short hand spreads out, up to the whole card plus
+    // a small gap (a 3-card hand used to overlap by half on any phone).
+    const HAND_MAX_VISIBLE = 1.06;
     function computeHandCardMetrics(maxRowSize, rowCount = 1, availableHeightPx = null) {
       const vh = window.innerHeight / 100;
       // What the card would naturally be if only viewport height mattered
@@ -12740,7 +12743,7 @@ video {
       const height = width / 0.69; // preserve card-base's own aspect ratio
       // Once the size is known, spread the row across the width available
       // (never more than the relaxed 52%, never less than the rank strip).
-      if (maxRowSize > 1) visibleFraction = Math.min(0.52, Math.max(visibleFraction, (availableWidthPx / width - 1) / (maxRowSize - 1)));
+      if (maxRowSize > 1) visibleFraction = Math.min(HAND_MAX_VISIBLE, Math.max(visibleFraction, (availableWidthPx / width - 1) / (maxRowSize - 1)));
       const marginLeft = -(width * (1 - visibleFraction));
       return { width, height, marginLeft };
     }
@@ -13796,6 +13799,9 @@ video {
       if (followUpBanner) {
         const isFollowUpNow = state.pendingFollowUp && state.pendingFollowUp.playerId === local.id;
         followUpBanner.classList.toggle('hidden', !isFollowUpNow);
+        // The tutorial lifts the player's area to z-index 80 (the prompt's
+        // own level), which put the Play row over PLAY IT and took its taps.
+        followUpBanner.style.zIndex = tutorialActive ? '84' : '';
       }
 
       const skipBtn = document.getElementById('skipSimulationBtn');
@@ -13899,7 +13905,7 @@ video {
       // Growing: re-space the longest row across the full width at the new size.
       const kMax = Math.max(...rows.map(r => r.children.length), 1);
       const growW = newH * 0.69;
-      const growVis = kMax > 1 ? Math.min(0.52, Math.max(0.34, 22 / growW, (handRowWidth() / growW - 1) / (kMax - 1))) : 0.52;
+      const growVis = kMax > 1 ? Math.min(HAND_MAX_VISIBLE, Math.max(0.34, 22 / growW, (handRowWidth() / growW - 1) / (kMax - 1))) : 0.52;
       const growMargin = -(growW * (1 - growVis));
       // These are the cards render() just drew: resize them instantly. The
       // card's own margin/size transition would otherwise slide the whole
@@ -16759,6 +16765,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v186: [
+        ['🎓', 'Tutorial: the Bonus Draw lesson works again, the 4 lesson lets you try the refused play, and lessons read more calmly.'],
+        ['🃏', 'A short hand spreads out when there is room, instead of overlapping.']
+      ],
       v185: [
         ['🎓', 'Tutorial: the 3 lesson always shows the Coach playing the 3 now, even if you tap Continue twice.']
       ],
@@ -25965,7 +25975,7 @@ video {
         coachNote: "Burnt! The Coach goes again immediately after burning and drops a 4 on the empty Pile. Take a look at the Recent Card History strip below — it shows exactly what got burned and by whom."
       },
       {
-        text: "See the ▮ button up in the header? Flip it ON. While it's on, tapping one card of a rank grabs every card of that rank at once — perfect for playing sets in a single tap.",
+        text: "See the Select all of a rank button in the header (the three cards)? Switch it on. While it's on, tapping one card of a rank grabs every card of that rank at once — perfect for playing sets in a single tap.",
         target: '#multiSelectToggleBtn',
         require: { toggleRankSelect: 'on' },
         coachNote: "Toggle's live. You can flip it on or off whenever suits you — it's a tactic, not a setting you're stuck with."
@@ -26045,7 +26055,7 @@ video {
         coachNote: "Countered — because you matched the Coach's Joker with one of your own, the Coach is the one who has to pick up everything instead, and you keep the turn. Both Jokers vanish from the game the instant they're played — that's always true, win or lose the duel."
       },
       {
-        text: "Hand's empty, Deck's empty — your Face-Up cards just unlocked. Flip the ▮ toggle back OFF: from here on, every card matters on its own.",
+        text: "Hand's empty, Deck's empty — your Face-Up cards just unlocked. Switch Select all of a rank back off: from here on, every card matters on its own.",
         target: '#multiSelectToggleBtn',
         require: { toggleRankSelect: 'off' },
         coachNote: "Toggle's off. Each of your three Queens is now its own decision."
@@ -26103,7 +26113,7 @@ video {
     // constraint, which has no business showing up in a "basics" module).
     const TUTORIAL_MODULE_BASIC_PLAY = [
       {
-        text: "Jumping to after the Swap Phase, Coach opens with a Queen. Play your Queen or King to match or beat it!",
+        text: "Jumping to after the Swap Phase, Coach opens with a Queen. Play your Queen or King to match or beat it.",
         target: ['#localHand', '#discardPileContainer [data-rank="Q"]'],
         scene: {
           hand: [['7', '♣'], ['Q', '♠'], ['K', '♦']],
@@ -26121,14 +26131,14 @@ video {
         postPlayNote: "Your Hand just topped back up to 3. That happens after every turn, until the Deck runs out.",
         postPlayNoteTarget: '#deckZone',
         coachPlays: [['A', '♠']],
-        coachNote: "Coach fires back an Ace — the highest card in the game. You'd need another Ace, a 2, 3, 10, or a Joker. You've got none of those in Hand!",
+        coachNote: "Coach fires back an Ace, the highest plain card. You'd need another Ace, a 2, 3, 10, or a Joker. You've got none of those in Hand.",
         noteTarget: ['#discardPileContainer [data-rank="A"]', '#localHand']
       },
       {
         text: "Nothing in your Hand beats that Ace. Tap the Pile to pick it up.",
         target: ['#discardPileContainer [data-rank="A"]', '#localHand'],
         require: { pickup: true },
-        coachNote: "That's a Forced Pickup! No legal move means the whole Pile lands in your Hand, Ace included. You'll get another shot soon."
+        coachNote: "That's a Forced Pickup. No legal move means the whole Pile lands in your Hand, Ace included. You'll get another shot soon."
       }
     ];
 
@@ -26141,7 +26151,7 @@ video {
     // nothing on screen to point at yet".
     const TUTORIAL_MODULE_GOAL = [
       {
-        text: "Hey, I'm your Coach. Get rid of every card you hold. That's the whole game. Last one holding cards is the ShitHead!",
+        text: "Hey, I'm your Coach. Get rid of every card you hold. That's the whole game. Last one holding cards is the ShitHead.",
         target: null
       },
       {
@@ -26149,7 +26159,7 @@ video {
         target: ['#localHand', '#localTableSlots']
       },
       {
-        text: "Everyone plays onto one shared Pile. Match it, beat it, or pick it up!",
+        text: "Everyone plays onto one shared Pile. Match it, beat it, or pick it up.",
         target: '#pileZone'
       },
       {
@@ -26176,16 +26186,16 @@ video {
         target: ['#handZoneLabel', '#localHand', '#deckZone']
       },
       {
-        text: "FACE-UP is highlighted in the shared table-card label while any visible top-layer cards remain. They're locked until your Hand and Deck are both empty!",
+        text: "The FACE-UP label lights up while you still have Face-Up cards. They stay locked until your Hand and the Deck are both empty.",
         target: ['#faceUpZoneLabel', '#localTableSlots .card-table']
       },
       {
-        text: "FACE-DOWN becomes highlighted in the shared table-card label once all your Face-Up cards are gone. You'll flip these cards blind.",
+        text: "Once your Face-Up cards are gone, the FACE-DOWN label lights up. You flip these blind.",
         target: ['#faceDownZoneLabel', '#localTableSlots .custom-card-back'],
         scene: { faceUp: [] }
       },
       {
-        text: "Order matters: Hand, Face-Up, Face-Down. No skipping ahead, no matter how good the card underneath looks!",
+        text: "Order matters: Hand, Face-Up, Face-Down. No skipping ahead, no matter how good the card underneath looks.",
         target: ['#localHand', '#localTableSlots'],
         scene: { faceUp: [['4', '♠'], ['9', '♦'], ['J', '♣']] }
       }
@@ -26198,13 +26208,13 @@ video {
     // phase check that normally gates it.
     const TUTORIAL_MODULE_SWAP = [
       {
-        text: "Before play starts, you get one shot to trade cards between your Hand and your Face-Up cards. Welcome to the Swap Phase!",
+        text: "Before play starts, you get one shot to trade cards between your Hand and your Face-Up cards. Welcome to the Swap Phase.",
         target: '#swapControlBar',
         phase: 'SWAP',
         scene: { phase: 'SWAP', hand: [['2', '♣'], ['10', '♦'], ['A', '♠']], faceUp: [['4', '♥'], ['5', '♠'], ['6', '♣']] }
       },
       {
-        text: "Face-Up cards sit out until the endgame. They only come into play once your Hand and Deck are empty. Stash your strongest cards there now, as a safety net for later!",
+        text: "Face-Up cards sit out until the endgame. They only come into play once your Hand and Deck are empty. Stash your strongest cards there now, as a safety net for later.",
         target: ['#localHand', '#localTableSlots'],
         phase: 'SWAP'
       },
@@ -26235,7 +26245,7 @@ video {
             { handRank: 'A', faceUpRank: '6' }
           ]
         },
-        coachNote: "Rule of thumb: stash your 2s, 3s, 10s, Aces, and Jokers Face-Up when you can. They're your strongest cards, and this is the only time you get to place them!"
+        coachNote: "Rule of thumb: stash your 2s, 3s, 10s, Aces, and Jokers Face-Up when you can. They're your strongest cards, and this is the only time you get to place them."
       },
       {
         text: "Happy with your Table cards? Tap READY to lock it in.",
@@ -26279,7 +26289,7 @@ video {
         target: '#localTableSlots [data-rank="8"]',
         require: { rank: '8' },
         noCoachReply: true,
-        coachNote: "The 8 is the lowest card available, which makes it the perfect candidate to go first. It lets you play your higher-value cards on top of it. Since it's also a Skip, and there's just one opponent, it jumps back to your turn!"
+        coachNote: "The 8 is the lowest card available, which makes it the perfect candidate to go first. It lets you play your higher-value cards on top of it. Since it's also a Skip, and there's just one opponent, it jumps back to your turn."
       },
       {
         text: "Play your 9.",
@@ -26301,11 +26311,11 @@ video {
         text: "You can't see these until you flip them — it's a real gamble. Try the middle one.",
         target: ['#localHand', '#localTableSlots [data-slot="1"]'],
         require: { blind: true, blindSlot: 1 },
-        coachNote: "Your 6 is no good. You have to pick up. That's the risk of playing blind!",
+        coachNote: "Your 6 is no good. You have to pick up. That's the risk of playing blind.",
         noteTarget: ['#pileZone', '#localHand']
       },
       {
-        text: "Your Hand's got 6 cards now — let's jump forward past playing back through them. Forced Pickup wipes the Pile clean either way, so it's Coach's turn now, opening completely fresh.",
+        text: "Let's skip ahead past playing those 6 cards back out. You picked up the Pile, so it's empty and Coach starts fresh.",
         target: '#pileZone',
         scene: { hand: [], emptyDeck: true },
         coachPlays: [['4', '♠']],
@@ -26323,7 +26333,7 @@ video {
         text: "One card left. Watch what Coach plays with their last one.",
         target: '#pileZone',
         coachPlays: [['2', '♣']],
-        coachNote: "Coach's last card is a 2 — a Reset! That guarantees your final flip is legal, whatever it turns out to be.",
+        coachNote: "Coach's last card is a 2 — a Reset. That guarantees your final flip is legal, whatever it turns out to be.",
         noteTarget: '#discardPileContainer'
       },
       {
@@ -26331,7 +26341,7 @@ video {
         target: '#localTableSlots .custom-card-back',
         require: { blind: true },
         noCoachReply: true,
-        coachNote: "That's a win! Nothing left — Hand, Table, all of it. That's the whole game."
+        coachNote: "That's a win. Nothing left — Hand, Table, all of it. That's the whole game."
       }
     ];
 
@@ -26361,7 +26371,7 @@ video {
     // matters here and can't be left at the default.
     const TUTORIAL_MODULE_SNAP_BURN = [
       {
-        text: "Some moves don't wait for your turn. Meet Snap Burn! Rival's here too, so you can see it work no matter whose turn it lands on.",
+        text: "Some moves don't wait for your turn. Meet Snap Burn. Rival's here too, so you can see it work no matter whose turn it lands on.",
         target: null
       },
       {
@@ -26375,16 +26385,16 @@ video {
           direction: -1
         },
         coachPlays: [['9', '♣']],
-        coachNote: "Direction just flipped, so play skips you completely and heads to Rival next!",
+        coachNote: "Direction just flipped, so play skips you completely and heads to Rival next.",
         noteTarget: ['#turnIndicatorRow', '#gameDirectionBadge']
       },
       {
-        text: "It's Rival's turn now, not yours or Coach's. Snap Burn doesn't care! Tap SNAP.",
+        text: "It's Rival's turn now, not yours or Coach's. Snap Burn doesn't care. Tap SNAP.",
         target: ['#pileZone', '#snapBurnBtn', '#localHand [data-rank="9"]'],
         turnIndex: 2,
         require: { rank: '9', requireSnap: true },
         noCoachReply: true,
-        coachNote: "That's Snap Burn! Four of a kind burns instantly, no matter whose turn it is, as long as you're holding the card that completes it. You go again right after!"
+        coachNote: "That's Snap Burn. Four of a kind burns instantly, no matter whose turn it is, as long as you're holding the card that completes it. You go again right after."
       }
     ];
 
@@ -26406,8 +26416,9 @@ video {
         scene: { hand: [['7', '♦'], ['Q', '♣'], ['K', '♥']], pile: [['4', '♦']], drawPile: [['7', '♠']] },
         require: { rank: '7' },
         allowBonusDraw: true,
+        bonusPromptText: "You drew another 7, so Bonus Draw lets you play it straight away. Tap Play it.",
         noCoachReply: true,
-        coachNote: "That's Bonus Draw! Draw a matching card right after playing one, and you get a free follow-up play before your turn ends.",
+        coachNote: "That's Bonus Draw. Draw a matching card right after playing one, and you get a free follow-up play before your turn ends.",
         noteTarget: ['#deckZone', '#pileZone']
       }
     ];
@@ -26430,7 +26441,7 @@ video {
         scene: { hand: [['9', '♥'], ['9', '♣']], faceUp: [['9', '♦'], ['K', '♠'], ['Q', '♣']], pile: [['4', '♦']], emptyDeck: true },
         require: { rank: '9', count: 3 },
         noCoachReply: true,
-        coachNote: "That's the Cross-Phase exception! Normally Face-Up waits for an empty Hand, but an all-one-rank Hand can pull a matching Face-Up card in early. The King and Queen stay locked either way.",
+        coachNote: "That's the Cross-Phase exception. Normally Face-Up waits for an empty Hand, but an all-one-rank Hand can pull a matching Face-Up card in early. The King and Queen stay locked either way.",
         noteTarget: ['#localTableSlots [data-rank="K"]', '#localTableSlots [data-rank="Q"]']
       }
     ];
@@ -26445,11 +26456,11 @@ video {
     // to actually enforce.
     const TUTORIAL_MODULE_JOKER_DUEL = [
       {
-        text: "Play a Joker and pick who scoops the Pile! But if they're holding one too, they can counter it right back, and both Jokers burn either way.",
+        text: "Play a Joker and pick who scoops the Pile. But if they're holding one too, they can counter it right back, and both Jokers burn either way.",
         target: null
       },
       {
-        text: "Play your Joker, then pick anyone! Neither can counter this one.",
+        text: "Play your Joker, then pick anyone. Neither can counter this one.",
         target: '#localHand [data-rank="JOKER"]',
         scene: { hand: [['JOKER', 'JOKER']], coach: [['4', '♦'], ['6', '♣']], rival: [['5', '♥'], ['8', '♠']] },
         require: { rank: 'JOKER' },
@@ -26457,12 +26468,12 @@ video {
         coachNote: "No counter! Whoever you picked just took the whole Pile, you go again. Your Joker's burnt either way."
       },
       {
-        text: "One more Joker, this time both opponents have one too! Play it and pick either one.",
+        text: "One more Joker, this time both opponents have one too. Play it and pick either one.",
         target: '#localHand [data-rank="JOKER"]',
         scene: { hand: [['JOKER', 'JOKER']], coach: [['JOKER', 'JOKER'], ['4', '♦']], rival: [['JOKER', 'JOKER'], ['5', '♥']] },
         require: { rank: 'JOKER' },
         noteTarget: '#pileZone',
-        coachNote: "Countered! The Pile bounces right back to you, and both Jokers burn. That's the risk with every Joker: it can come right back at you!"
+        coachNote: "Countered! The Pile bounces right back to you, and both Jokers burn. That's the risk with every Joker: it can come right back at you."
       }
     ];
 
@@ -26486,7 +26497,7 @@ video {
         scene: { hand: [['2', '♠'], ['5', '♦'], ['Q', '♣']], pile: [['K', '♥']] },
         require: { rank: '2' },
         noCoachReply: true,
-        coachNote: "That's a Reset. Coach can play anything on the 2, even a 4!"
+        coachNote: "That's a Reset. Coach can play anything on the 2, even a 4."
       }
     ];
 
@@ -26496,7 +26507,7 @@ video {
         target: ['#pileZone', '#historyStreamPanel'],
         scene: { hand: [['J', '♦'], ['4', '♣'], ['6', '♠']], pile: [['9', '♦']], pileOwner: 'you' },
         coachPlays: [['3', '♦']],
-        coachNote: "The 3 is Transparent, so it sets no target of its own. Whoever's next has to beat what's underneath, and in this case that's your 9! You can play a 3 on anything except a 6 (Evens).",
+        coachNote: "The 3 is Transparent, so it sets no target of its own. Whoever's next has to beat what's underneath, and in this case that's your 9. You can play a 3 on anything except a 6 (Evens).",
         noteTarget: ['#pileZone', '#historyStreamPanel']
       },
       {
@@ -26506,7 +26517,7 @@ video {
         // purposes — verified directly in isPlayLegal before writing this.
         require: { rank: 'J' },
         noCoachReply: true,
-        coachNote: "The 3 set no target of its own. You beat the 9 hiding underneath it! The only card a 3 can't follow is a 6."
+        coachNote: "The 3 set no target of its own. You beat the 9 hiding underneath it. The only card a 3 can't follow is a 6."
       }
     ];
 
@@ -26524,9 +26535,12 @@ video {
         coachNote: "That works! A 6's one of the five cards a 4 can follow."
       },
       {
-        text: "Now watch this: that same 4 can't follow a 9, even though it looks small enough to be fine!",
+        text: "Now try your 4 on this 9. Tap it.",
         target: ['#localHand [data-rank="4"]', '#pileZone'],
-        scene: { hand: [['4', '♦'], ['6', '♦'], ['K', '♠']], pile: [['9', '♥']] }
+        scene: { hand: [['4', '♦'], ['6', '♦'], ['K', '♠']], pile: [['9', '♥']] },
+        require: { tapCheck: '#localHand [data-rank="4"]' },
+        coachNote: "Refused. A 4 can't follow a 9, even though it looks low enough. Only a 2, 3, 4, 6 or 7 lets it in.",
+        noteTarget: ['#localHand [data-rank="4"]', '#pileZone']
       }
     ];
 
@@ -26540,7 +26554,7 @@ video {
     // their own 5 via coachPlays, before Step 3 hands it back to you.
     const TUTORIAL_MODULE_CARD_5 = [
       {
-        text: "The 5 is Drop-Base. It ignores everything stacked on the Pile and sends the target straight back to the very first card played: the Base Card!",
+        text: "The 5 is Drop-Base. It ignores everything stacked on the Pile and sends the target straight back to the very first card played: the Base Card.",
         target: '#baseCardHud',
         scene: {
           hand: [['5', '♥'], ['6', '♠'], ['K', '♣']],
@@ -26551,19 +26565,19 @@ video {
         }
       },
       {
-        text: "You opened with a 7, and Coach answered with a 4 on top. That 7 is the Base Card, buried under everything since. Play your 5 and watch the target drop!",
+        text: "You opened with a 7, and Coach answered with a 4 on top. That 7 is the Base Card, buried under everything since. Play your 5 and watch the target drop.",
         target: ['#localHand [data-rank="5"]', '#baseCardHud'],
         require: { rank: '5' },
         coachPlays: [['5', '♦']],
-        coachNote: "Drop-Base just sent the target straight back to the 7. That's why Coach could answer with a 5: it's 7 or under, so it satisfies the Base Card!",
+        coachNote: "Drop-Base just sent the target straight back to the 7. That's why Coach could answer with a 5: it's 7 or under, so it satisfies the Base Card.",
         noteTarget: ['#baseCardHud', '#pileZone']
       },
       {
-        text: "That 5 on top is Drop-Base too, so nothing's changed. The 7 underneath is still what counts. Play your 6, it's 7 or under!",
+        text: "That 5 on top is Drop-Base too, so nothing's changed. The 7 underneath is still what counts. Play your 6, it's 7 or under.",
         target: ['#localHand [data-rank="6"]', '#baseCardHud'],
         require: { rank: '6' },
         noCoachReply: true,
-        coachNote: "That's the Base Card at work! Stack as many 5s as you like on top. The 7 underneath is always what you actually have to beat!"
+        coachNote: "That's the Base Card at work. Stack as many 5s as you like on top. The 7 underneath is always what you actually have to beat."
       }
     ];
 
@@ -26574,11 +26588,11 @@ video {
         scene: { hand: [['8', '♠'], ['3', '♣'], ['K', '♦']], pile: [['6', '♦']] }
       },
       {
-        text: "Play your 8! It's even, so it satisfies the 6.",
+        text: "Play your 8. It's even, so it satisfies the 6.",
         target: ['#localHand [data-rank="8"]', '#pileZone'],
         require: { rank: '8' },
         noCoachReply: true,
-        coachNote: "2, 4, 6, 8, 10, Queen and Ace all count as even. A 5, 9, Jack or King would've been refused!"
+        coachNote: "2, 4, 6, 8, 10, Queen and Ace all count as even. A 5, 9, Jack or King would've been refused."
       }
     ];
 
@@ -26593,11 +26607,11 @@ video {
         scene: { hand: [['5', '♥'], ['K', '♣'], ['A', '♦']], pile: [['7', '♦']] }
       },
       {
-        text: "Play your 5! It satisfies the 7.",
+        text: "Play your 5. It satisfies the 7.",
         target: ['#localHand [data-rank="5"]', '#pileZone'],
         require: { rank: '5' },
         noCoachReply: true,
-        coachNote: "Anything 7 or under works. A King or Ace (way above 7) would've been refused!"
+        coachNote: "Anything 7 or under works. A King or Ace (way above 7) would've been refused."
       }
     ];
 
@@ -26612,7 +26626,7 @@ video {
         scene: { hand: [['8', '♣'], ['3', '♦'], ['9', '♠']], pile: [['5', '♦']] },
         require: { rank: '8' },
         noCoachReply: true,
-        coachNote: "You've skipped Coach with your 8, so it's your turn again! When you're playing with 2 or more opponents, the number of 8s you play skips that many players."
+        coachNote: "You've skipped Coach with your 8, so it's your turn again. When you're playing with 2 or more opponents, the number of 8s you play skips that many players."
       }
     ];
 
@@ -26631,18 +26645,18 @@ video {
         scene: { hand: [['9', '♠'], ['5', '♥'], ['K', '♦']], pile: [['4', '♦']] }
       },
       {
-        text: "Play would normally pass to the Coach next. Play your 9 and watch where it actually goes!",
+        text: "Play would normally pass to the Coach next. Play your 9 and watch where it actually goes.",
         target: ['#pileZone', '#gameDirectionBadge', '#turnIndicatorRow'],
         require: { rank: '9' },
         noteTarget: ['#turnIndicatorRow', '#gameDirectionBadge'],
         noCoachReply: true,
-        coachNote: "Direction just flipped! Play skips the Coach completely and goes to Rival instead. With two players, you'd never see it happen."
+        coachNote: "Direction just flipped. Play skips the Coach completely and goes to Rival instead. With two players, you'd never see it happen."
       }
     ];
 
     const TUTORIAL_MODULE_CARD_10 = [
       {
-        text: "The 10 is Burn. It clears the Pile and takes those cards completely out of the game. After playing a 10, you get another turn!",
+        text: "The 10 is Burn. It clears the Pile and takes those cards completely out of the game. After playing a 10, you get another turn.",
         target: '#pileZone',
         scene: { hand: [['10', '♠'], ['4', '♣'], ['J', '♦']], pile: [['Q', '♥']] }
       },
@@ -26651,29 +26665,29 @@ video {
         target: ['#localHand [data-rank="10"]', '#pileZone'],
         require: { rank: '10' },
         noCoachReply: true,
-        coachNote: "Check out the Recent Card History strip! As you can see, the 10 can even play on cards ranked above it, like that Queen, and the Pile was burnt. It just can't play on a 7 or a Jack!",
+        coachNote: "Check out the Recent Card History strip. As you can see, the 10 can even play on cards ranked above it, like that Queen, and the Pile was burnt. It just can't play on a 7 or a Jack.",
         noteTarget: ['#historyStreamPanel', '#pileZone']
       }
     ];
 
     const TUTORIAL_MODULE_CARD_J = [
       {
-        text: "The Jack sets an Odds rule, similar to a 6. Whoever's next needs to play an odd card on top!",
+        text: "The Jack sets an Odds rule, similar to a 6. Whoever's next needs to play an odd card on top.",
         target: '#pileZone',
         scene: { hand: [['9', '♣'], ['4', '♦'], ['K', '♠']], pile: [['J', '♦']] }
       },
       {
-        text: "Play your 9! It's odd, so it satisfies the Jack.",
+        text: "Play your 9. It's odd, so it satisfies the Jack.",
         target: ['#localHand [data-rank="9"]', '#pileZone'],
         require: { rank: '9' },
         noCoachReply: true,
-        coachNote: "3, 5, 7, 9, Jack and King are all odd. 2, 4, 6, 8, 10, Queen and Ace all count as even!"
+        coachNote: "3, 5, 7, 9, Jack and King are all odd. 2, 4, 6, 8, 10, Queen and Ace all count as even."
       }
     ];
 
     const TUTORIAL_MODULE_CARD_Q = [
       {
-        text: "The Queen has no special power. Just a plain high card: equal or higher wins, same as most of the deck!",
+        text: "The Queen has no special power. Just a plain high card: equal or higher wins, same as most of the deck.",
         target: null
       },
       {
@@ -26682,13 +26696,13 @@ video {
         scene: { hand: [['Q', '♠'], ['4', '♦'], ['6', '♣']], pile: [['9', '♦']] },
         require: { rank: 'Q' },
         noCoachReply: true,
-        coachNote: "Nothing hidden here. A Queen just needs to match or beat the Pile, like almost every plain card!"
+        coachNote: "Nothing hidden here. A Queen just needs to match or beat the Pile, like almost every plain card."
       }
     ];
 
     const TUTORIAL_MODULE_CARD_K = [
       {
-        text: "The King has no special power either. It's another plain high card, beaten only by an Ace or a handful of power cards!",
+        text: "The King has no special power either. It's another plain high card, beaten only by an Ace or a handful of power cards.",
         target: null
       },
       {
@@ -26697,13 +26711,13 @@ video {
         scene: { hand: [['K', '♦'], ['5', '♣'], ['7', '♠']], pile: [['9', '♣']] },
         require: { rank: 'K' },
         noCoachReply: true,
-        coachNote: "Same rule as always: match or beat the Pile!"
+        coachNote: "Same rule as always: match or beat the Pile."
       }
     ];
 
     const TUTORIAL_MODULE_CARD_A = [
       {
-        text: "The Ace is the highest plain card in the deck. Only another Ace or a real power card can follow it!",
+        text: "The Ace is the highest plain card in the deck. Only another Ace or a real power card can follow it.",
         target: null
       },
       {
@@ -26712,7 +26726,7 @@ video {
         scene: { hand: [['A', '♠'], ['4', '♦'], ['7', '♣']], pile: [['K', '♦']] },
         require: { rank: 'A' },
         noCoachReply: true,
-        coachNote: "That's as high as a plain card gets. From here, only another Ace, a 2, 3, 10, or a Joker can follow it!"
+        coachNote: "That's as high as a plain card gets. From here, only another Ace, a 2, 3, 10, or a Joker can follow it."
       }
     ];
 
@@ -26726,7 +26740,7 @@ video {
     // rather than attributing the whole Pile to one name.
     const TUTORIAL_MODULE_CARD_JOKER = [
       {
-        text: "The Queen's too high for your other cards, but the Joker can play on anything, no matter what's on the Pile! Whoever plays it gets to choose an opponent to pick up the whole Pile, except for the Joker itself.",
+        text: "The Queen's too high for your other cards, but the Joker can play on anything, no matter what's on the Pile. Whoever plays it gets to choose an opponent to pick up the whole Pile, except for the Joker itself.",
         target: '#pileZone',
         scene: {
           hand: [['4', '♣'], ['5', '♥'], ['JOKER', 'JOKER']],
@@ -26739,7 +26753,7 @@ video {
         target: '#localHand [data-rank="JOKER"]',
         require: { rank: 'JOKER' },
         noteTarget: '#pileZone',
-        coachNote: "Coach just picked up the whole Pile, so it's your turn again! The one risk is that if they'd had a Joker too, they could've countered it right back, forcing you to pick up the Pile instead."
+        coachNote: "Coach just picked up the whole Pile, so it's your turn again. The one risk is that if they'd had a Joker too, they could've countered it right back, forcing you to pick up the Pile instead."
       }
     ];
 
@@ -26748,7 +26762,7 @@ video {
     // rather than out of turn, so turnIndex is left at its default (0).
     const TUTORIAL_MODULE_CARD_4OAK = [
       {
-        text: "Four of the same rank in a row burns the Pile automatically, the instant the fourth lands. No 10 needed!",
+        text: "Four of the same rank in a row burns the Pile automatically, the instant the fourth lands. No 10 needed.",
         target: '#pileZone',
         // Alternating ownership (Coach, you, Coach) so the History strip
         // shows a real back-and-forth build-up ending on Coach's play —
@@ -26761,7 +26775,7 @@ video {
         target: ['#localHand [data-rank="9"]', '#pileZone'],
         require: { rank: '9' },
         noCoachReply: true,
-        coachNote: "That's an automatic burn! Four of a kind clears the Pile the instant it's completed, your turn or anyone else's, as Snap Burn shows."
+        coachNote: "That's an automatic burn. Four of a kind clears the Pile the instant it's completed, your turn or anyone else's, as Snap Burn shows."
       }
     ];
 
@@ -26790,7 +26804,7 @@ video {
     // Not counted towards the "complete every lesson" challenge.
     const TUTORIAL_MODULE_QUICK_START = [
       {
-        text: "Get rid of all your cards. The last player holding cards is the ShitHead! 💩",
+        text: "Get rid of all your cards. The last player holding cards is the ShitHead. 💩",
         target: null
       },
       {
@@ -26799,13 +26813,15 @@ video {
         scene: { hand: [['7', '♣'], ['Q', '♠'], ['K', '♦']], faceUp: [['2', '♣'], ['J', '♦'], ['A', '♣']], pile: [['Q', '♥']], coach: [['A', '♠']], drawPile: [['4', '♦'], ['6', '♣']] },
         require: { rank: ['Q', 'K'] },
         coachPlays: [['A', '♠']],
-        coachNote: "Coach beat you with an Ace, the highest card.",
+        coachNote: "Coach beat you with an Ace, the highest plain card.",
         noteTarget: ['#discardPileContainer [data-rank="A"]']
       },
       {
         text: "Nothing in your hand beats it, so tap the Pile to pick it up.",
         target: ['#discardPileContainer [data-rank="A"]', '#localHand'],
-        require: { pickup: true }
+        require: { pickup: true },
+        coachNote: "Picked up. None of your cards could go on the Pile, so it all comes into your Hand.",
+        noteTarget: '#localHand'
       },
       {
         text: "Some cards have powers: a 10 burns the whole Pile. Play it!",
@@ -26823,7 +26839,7 @@ video {
         noteTarget: '#cardRefPanel'
       },
       {
-        text: "The ▦ Play Matrix shows which card can go on which. Tap the glowing ▦!",
+        text: "The ▦ Play Matrix shows which card can go on which. Tap the glowing ▦.",
         target: '#matrixRefBtn',
         require: { tapCheck: '#matrixRefBtn' },
         coachNote: "Row = your card, column = the Pile. ✓ plays, ✗ doesn't. Every card's power is built in.",
@@ -26835,7 +26851,7 @@ video {
         scene: { hand: [], emptyDeck: true }
       },
       {
-        text: "Last, your Face-Down cards, flipped blind: pure luck! Empty them all to win. You're ready!",
+        text: "Last, your Face-Down cards, flipped blind: pure luck. Empty them all to win. You're ready!",
         target: ['#tableZoneLabel', '#localTableSlots .custom-card-back'],
         scene: { hand: [], faceUp: [], emptyDeck: true }
       }
@@ -27103,6 +27119,16 @@ video {
       Object.assign(state, d);
     }
 
+    // Plain ranks a scene isn't using (hand, pile, Coach's cards and plays).
+    function tutorialNeutralCards(scene, n, suits, avoidToo = []) {
+      const used = new Set(avoidToo);
+      [scene.hand, scene.pile, scene.coach, scene.rival, scene.drawPile].forEach(list => (list || []).forEach(([r]) => used.add(r)));
+      const plays = TUTORIAL_STEPS.flatMap(st => [].concat(st.coachPlays || []));
+      JSON.stringify(plays).replace(/"(10|[2-9JQKA]|JOKER)"/g, (m, r) => { used.add(r); return m; });
+      TUTORIAL_STEPS.forEach(st => [].concat(st.require?.rank || []).forEach(r => used.add(r)));
+      const pool = ['K', 'Q', 'J', '8', '5', '9', '6', '4', 'A'].filter(r => !used.has(r));
+      return pool.slice(0, n).map((r, i) => ({ ...C(r, suits[i % suits.length]), slotIndex: i }));
+    }
     function tutorialApplyScene(scene) {
       const you = state.players[0], coach = state.players[1];
       // Only present in modules that asked startTutorial for a 3rd seat
@@ -27110,6 +27136,14 @@ video {
       // simply never sets scene.rival*, so this is a pure capability add.
       const rival = state.players[2];
       if (scene.hand) you.hand = scene.hand.map(([r, s]) => C(r, s));
+      // A scene that sets a hand but not the table cards used to keep the
+      // random deal's Face-Up row, which could show the very rank the step
+      // asks for (a locked 5 beside "Play your 5!"). Fill such rows with
+      // calm ranks the step doesn't use.
+      // (An empty scene hand means "carry on from the table as it is".)
+      const dealsHand = !!(scene.hand && scene.hand.length);
+      if (dealsHand && !scene.faceUp) you.faceUp = tutorialNeutralCards(scene, 3, ['♣', '♥', '♠']);
+      if (dealsHand && !scene.coachFaceUp) coach.faceUp = tutorialNeutralCards(scene, 3, ['♦', '♠', '♥'], you.faceUp.map(c => c.rank));
       if (scene.faceUp) you.faceUp = scene.faceUp.map(([r, s], i) => ({ ...C(r, s), slotIndex: i }));
       if (scene.faceDown) you.faceDown = scene.faceDown.map(([r, s], i) => ({ ...C(r, s), slotIndex: i }));
       // The Coach's own table cards are never scripted by default, which
@@ -27320,7 +27354,7 @@ video {
       document.getElementById('finishSwapBtn')?.classList.toggle('tutorial-glow', !!(step.require && step.require.ready));
       const tapSel = step.require && step.require.tapCheck;
       const refBtnTap = tapSel === '#cardRefBtn' || tapSel === '#matrixRefBtn';
-      document.getElementById('localTableSlots')?.classList.toggle('tutorial-glow', !!tapSel && !refBtnTap);
+      document.getElementById('localTableSlots')?.classList.toggle('tutorial-glow', !!tapSel && !refBtnTap && tapSel.includes('#localTableSlots'));
       document.getElementById('cardRefBtn')?.classList.toggle('tutorial-glow', tapSel === '#cardRefBtn');
       document.getElementById('matrixRefBtn')?.classList.toggle('tutorial-glow', tapSel === '#matrixRefBtn');
       // The Card Powers / Play Matrix panel opened by a tap step closes once the lesson moves on.
@@ -27635,8 +27669,8 @@ video {
       }
       if (step.require.toggleRankSelect) {
         notifyBanner(step.require.toggleRankSelect === 'off'
-          ? 'Tap the ▮ toggle in the header to switch it OFF first.'
-          : 'Tap the ▮ toggle in the header first.');
+          ? 'Tap the Select all of a rank button in the header to switch it off first.'
+          : 'Tap the Select all of a rank button in the header first.');
         return false;
       }
       if (step.require.tapCheck) {
@@ -27808,7 +27842,13 @@ video {
       // against them. Their own resolution paths (resolveFollowUpPlay, the
       // picker's button onclick) call back into this same function once
       // settled.
-      if (state.pendingFollowUp) return;
+      if (state.pendingFollowUp) {
+        if (step.bonusPromptText) {
+          document.getElementById('tutorialText').textContent = step.bonusPromptText;
+          requestAnimationFrame(() => positionTutorialUI('#followUpToastBanner'));
+        }
+        return;
+      }
       if (!document.getElementById('floatingJokerBar')?.classList.contains('hidden')) return;
       if (step.postPlayNote) {
         tutorialDelay(() => {
