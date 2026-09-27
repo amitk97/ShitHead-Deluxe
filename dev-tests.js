@@ -7352,6 +7352,48 @@ async function runDevTestSuite() {
     assertEqual(state.stateVersion, 6, "The local version tracker must advance to match an accepted, newer snapshot");
   });
 
+  await test('REGRESSION: online, a face-up Joker stays played while its target is picked (our own effect broadcast used to put it back)', () => {
+    freshState({ isMultiplayer: true, isHost: false, roomCode: '555555', drawPile: [], discardPile: [] });
+    state.localPlayerId = 'p1';
+    const joker = { id: 'jk1', rank: 'JKR', suit: '', isJoker: true, slotIndex: 2 };
+    state.players = [
+      makePlayer({ id: 'p1', name: 'Pooja', hand: [], faceUp: [joker], faceDown: [makeCard('4'), makeCard('5'), makeCard('6')] }),
+      makePlayer({ id: 'p2', name: 'Amit', hand: [makeCard('9')], faceUp: [makeCard('Q')], faceDown: [makeCard('7')] }),
+      makePlayer({ id: 'p3', name: 'Priya', isBot: true, hand: [makeCard('K')], faceUp: [makeCard('10')], faceDown: [makeCard('8')] })
+    ];
+    state.currentTurnIndex = 0; state.phase = 'PLAY'; state.stateVersion = 5;
+    const roomAtV5 = JSON.parse(JSON.stringify({ phase: 'PLAY', stateVersion: 5, players: state.players, discardPile: [], currentTurnIndex: 0, direction: 1 }));
+    let listener = null;
+    const originalRef = db.ref, originalSync = syncFirebaseGameState;
+    const synced = [];
+    db.ref = () => ({ on: (ev, cb) => { if (ev === 'value') listener = cb; }, update: () => Promise.resolve(), set: () => Promise.resolve(), once: () => Promise.resolve({ val: () => null }), remove: () => Promise.resolve(), onDisconnect: () => ({ set: () => {}, remove: () => {}, cancel: () => {} }) });
+    syncFirebaseGameState = () => { synced.push(JSON.parse(JSON.stringify(state.players.find(p => p.id === 'p1').faceUp))); };
+    try {
+      listenToFirebaseRoom('555555');
+      executePlayCards('p1', [joker]);
+      const bar = document.getElementById('floatingJokerBar');
+      assertTrue(!bar.classList.contains('hidden'), 'Two opponents: the target picker opens');
+      // Our own lastJokerEffect write echoes the unchanged room back.
+      listener({ val: () => ({ ...roomAtV5, lastJokerEffect: { effectId: 'default', by: 'p1', at: Date.now() } }) });
+      const me = () => state.players.find(p => p.id === 'p1');
+      assertEqual(me().faceUp.length, 0, 'The echo must not put the Joker back on the table');
+      assertTrue(state.discardPile.some(c => c.id === 'jk1'), 'The Joker stays on the pile');
+      bar.querySelector('#jokerInlineTargets button').click();
+      assertEqual(me().faceUp.length, 0, 'After picking a target the Joker is gone from the table');
+      assertTrue(synced.length > 0 && synced[synced.length - 1].length === 0, 'The synced state has the Joker played');
+      // A newer room (the game moved on: timeout, snap) drops a waiting picker.
+      state.players[0].faceUp = [joker]; state.discardPile = []; state.currentTurnIndex = 0; state.stateVersion = 7;
+      executePlayCards('p1', [joker]);
+      assertTrue(!bar.classList.contains('hidden'), 'Picker open again');
+      listener({ val: () => ({ ...roomAtV5, stateVersion: 9, currentTurnIndex: 1 }) });
+      assertTrue(bar.classList.contains('hidden'), 'A newer room closes the picker');
+      assertEqual(state.currentTurnIndex, 1, 'and its state is applied');
+    } finally {
+      db.ref = originalRef; syncFirebaseGameState = originalSync; pendingJokerChoice = null;
+      document.getElementById('floatingJokerBar').classList.add('hidden');
+    }
+  });
+
   await test('REGRESSION: a stale snapshot cannot erase another player\'s real turn (the "phantom skip with no 8s" bug)', () => {
     freshState({ isMultiplayer: true, isHost: false, roomCode: '777777', drawPile: [] });
     state.localPlayerId = 'p1'; // Amit's client

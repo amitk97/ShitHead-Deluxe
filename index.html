@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v182 (ShitHead-Deluxe-164) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v183 (ShitHead-Deluxe-165) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -9773,6 +9773,13 @@ video {
       }
 
       const targets = state.players.filter(p => !p.hasFinished && p.id !== initiator.id && ((p.hand?.length || 0) + (p.faceUp?.length || 0) + (p.faceDown?.length || 0) > 0));
+      // Online, a player choosing between targets hasn't synced this play
+      // yet, and our own room writes (the effect broadcast just below) fire
+      // the room listener, which would put the room's copy back with the
+      // Joker still on their table. pendingJokerChoice holds such same-state
+      // snapshots off (see activeRoomHandler) until the target is picked.
+      const picksTarget = !initiator.isBot && !(targets.length === 1 && !tutorialActive);
+      pendingJokerChoice = state.isMultiplayer && picksTarget ? { version: state.stateVersion || 0, initiatorId: initiator.id, jokerId: jokerCard.id } : null;
       playJokerEffectFor(initiator);
 
       if (initiator.isBot) {
@@ -9804,7 +9811,14 @@ video {
           btn.textContent = target.name;
           btn.onclick = () => {
             bar.classList.add('hidden');
-            resolveJokerDuelInstant(initiator, target, jokerCard);
+            pendingJokerChoice = null;
+            // Act on the live seats (a room update may have replaced the
+            // player objects since the picker opened), and only while the
+            // Joker is still the card waiting on the pile.
+            const liveInitiator = state.players.find(p => p.id === initiator.id) || initiator;
+            const liveTarget = state.players.find(p => p.id === target.id) || target;
+            if (state.isMultiplayer && !state.discardPile.some(c => c.id === jokerCard.id)) return;
+            resolveJokerDuelInstant(liveInitiator, liveTarget, jokerCard);
             // Mirrors the Bonus Draw pattern: this is a real, separate game
             // prompt the tutorial deferred to (see the floatingJokerBar
             // check in tutorialOnPlayerActed) — now that the player has
@@ -14159,6 +14173,8 @@ video {
     // loser's save is dropped and it reloads the table (activeRoomHandler),
     // where its player can act again on what really happened.
     let activeRoomHandler = null;
+    // A Joker played online whose target is still being picked (handleJokerPlay).
+    let pendingJokerChoice = null;
     let rejectedSaves = 0;
     function syncFirebaseGameState() {
       if (!state.isMultiplayer || !state.roomCode || state.spectating) return;
@@ -14992,7 +15008,22 @@ video {
         // stateVersion (an older write path that doesn't stamp one, or a
         // room from before this existed) is never treated as stale — this
         // is a client-side anti-regression guard, not a source of truth.
-        const isStaleSnapshot = typeof data.stateVersion === 'number' && data.stateVersion < (state.stateVersion || 0);
+        let isStaleSnapshot = typeof data.stateVersion === 'number' && data.stateVersion < (state.stateVersion || 0);
+        // Our Joker is waiting on its target: a snapshot of the same game
+        // state (our own effect broadcast, an emote, presence) must not undo
+        // the play. A newer one means the game moved on without us (timeout,
+        // snap burn): drop the picker and take the room's state.
+        if (pendingJokerChoice && data.phase === 'PLAY') {
+          const incoming = typeof data.stateVersion === 'number' ? data.stateVersion : 0;
+          if (incoming <= pendingJokerChoice.version) isStaleSnapshot = true;
+          else {
+            pendingJokerChoice = null;
+            document.getElementById('floatingJokerBar')?.classList.add('hidden');
+          }
+        } else if (pendingJokerChoice) {
+          pendingJokerChoice = null;
+          document.getElementById('floatingJokerBar')?.classList.add('hidden');
+        }
 
         if (data.players && !isStaleSnapshot) {
           // Firebase doesn't store empty arrays, so a player whose Hand (or
@@ -16720,6 +16751,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v183: [
+        ['🃏', 'Play Friends: a Joker played with more than one player to pick from now leaves your table properly, instead of coming back to you.']
+      ],
       v182: [
         ['⚔️', 'The Gauntlet starts again from the first Easy bot every day, with full lives.'],
         ['🎴', 'The Select all of a rank button in the header is full size again on iPhones, with a green or red dot for on and off.']
