@@ -113,6 +113,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Challenges
 
 - Getting Started (`GETTING_STARTED_CHALLENGES`, shown in that order): Quick Starter 50, ShitHead Virgin 20 (play a first game), Beginner 20 (win a first game), Tutorial Graduate 200. The first-game pair is paid by the server when it records a finished match (`reportMatchFinished` from `recordMatchHistory`, never the tutorial) or a win, and at sign-in (`sync`) from Ranked W/L and `difficultyWins`. Milestone challenges (Ranked totals, tiers, ending cards, bot wins) are all checked and paid by the server; the game never claims them itself.
+- Seasonal (`§ Seasonal challenges`): a Challenges tab shown only while an event is on (`renderSeasonalChallenges`, `liveSeasonalChallengeWindow`). `SEASONAL_CHALLENGES` (finish 30 = 330, burn 50 = 275, 15 Jokers = 330, win 15 = 440) + `SEASONAL_CHALLENGE_BONUS` (all four = 550), event-long and ~10% above the weekly rate per match, ending in 5/0. Progress `users/{uid}/seasonalChallengeState/{event-year}/{id}`; keys `season_<event-year>_<id>`; the server (`challengeForKey`) pays only while that event is on, the bonus only after all four; numbers come from the catalog export.
 - Every row shows what the challenge asks for; a completed row keeps that description (with the ✓) instead of just "Completed". The "Challenge completed" mail shows it too. One source: `challengeDescription(defOrCompletionKey)` (handles `daily_<date>_<id>` / `weekly_<week>_<id>` keys and the tutorial).
 
 ## Microinteractions & flips
@@ -267,7 +268,6 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Owner's later list (don't build until asked)
 
-- Next: **seasonal challenges** (rewards ~10% above the normal ones, amounts ending in 5 or 0).
 - Soon: **Collection Log** on the Profile page (every item; owned in colour, unowned greyed and locked).
 - Later: a **weekly puzzle** (not a daily one).
 - Far down the line (liked, not yet): "you've been overtaken" leaderboard mail, clubs, a season pass.
