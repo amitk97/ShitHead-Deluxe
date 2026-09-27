@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v171 (ShitHead-Deluxe-153) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-27-v172 (ShitHead-Deluxe-154) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5385,10 +5385,17 @@ video {
 
   <div id="shopModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4" style="max-height:88vh;display:flex;flex-direction:column;">
-      <div class="shop-sticky-header flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
-        <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Shop</span>
-        <span class="flex items-center gap-1 text-[11px] font-black text-cyan-300"><span>&#128142;</span><span id="shopDiamondCount">0</span></span>
-        <button id="shopCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
+      <div class="shop-sticky-header mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
+        <div class="flex items-center justify-between">
+          <span class="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-amber-400"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg><span>Shop</span></span>
+          <button id="shopCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
+        </div>
+        <!-- Same bar as Challenges / Custom: balance, then a shortcut to Custom. -->
+        <div class="ch-stat-bar">
+          <div class="ch-stat ch-stat--diamonds" title="Diamonds"><span aria-hidden="true">&#128142;</span><b id="shopDiamondCount">0</b></div>
+          <span></span>
+          <button type="button" id="shopCustomBtn" class="ch-stat ch-stat--shop" aria-label="Open Custom"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg><small>Custom</small></button>
+        </div>
       </div>
       <div class="overflow-y-auto pr-1 space-y-3" style="flex:1;">
       <div id="shopActionNotice" class="hidden sticky top-1 z-30 rounded-xl border-2 bg-slate-950/95 p-2.5 text-center text-[9px] font-black leading-snug shadow-xl" role="status" aria-live="polite"></div>
@@ -16368,6 +16375,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v172: [
+        ['🎨', 'The Shop now has a Custom button in its header, so you can try on what you just bought straight away.']
+      ],
       v171: [
         ['👕', 'Saved looks in Custom: keep up to 3 complete loadouts and switch between them in one tap.']
       ],
@@ -23990,6 +24000,10 @@ video {
       loadSavedLoadouts();
     }
     document.getElementById('themesCloseBtn').addEventListener('click', () => document.getElementById('themesModal').classList.add('hidden'));
+    document.getElementById('shopCustomBtn').addEventListener('click', () => {
+      document.getElementById('shopModal').classList.add('hidden');
+      openThemesPanel();
+    });
     document.getElementById('customShopBtn').addEventListener('click', () => {
       document.getElementById('themesModal').classList.add('hidden');
       document.getElementById('menuShopBtn').click();

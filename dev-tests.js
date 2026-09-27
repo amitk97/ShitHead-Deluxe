@@ -6146,6 +6146,17 @@ async function runDevTestSuite() {
       shopFilter = savedFilter; shopTab = savedTab; renderCosmeticShop();
     }
   });
+  await test('The Shop header has Diamonds and a Custom button on the right, which opens Custom', () => {
+    const bar = document.querySelector('#shopModal .ch-stat-bar');
+    const btn = document.getElementById('shopCustomBtn');
+    assertTrue(!!bar && bar.contains(btn) && bar.contains(document.getElementById('shopDiamondCount')), 'Both in the header bar');
+    document.getElementById('shopModal').classList.remove('hidden');
+    const d = bar.querySelector('.ch-stat--diamonds').getBoundingClientRect(), c = btn.getBoundingClientRect(), b = bar.getBoundingClientRect();
+    assertTrue(d.left < c.left && Math.abs(c.right - b.right) < 2 && Math.abs((d.top + d.height / 2) - (c.top + c.height / 2)) < 1.5, 'Diamonds left, Custom right, on one line');
+    btn.click();
+    assertTrue(document.getElementById('shopModal').classList.contains('hidden') && !document.getElementById('themesModal').classList.contains('hidden'), 'Opens Custom');
+    document.getElementById('themesModal').classList.add('hidden');
+  });
   await test('Saved loadouts: save, switch in one tap, the worn one is ticked, unowned items fall back', () => {
     const savedUser = currentUser, savedDb = db, savedEq = { ...equippedCosmetics }, savedOwned = cosmeticPurchaseState, savedL = savedLoadouts;
     const writes = [];
