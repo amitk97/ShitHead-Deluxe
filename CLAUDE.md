@@ -135,6 +135,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - Pages have a soft 1px amber frame (the CSS override on `div.fixed.inset-0 > div.border-2.border-amber-500`), not a thick orange one. Type floor: no text under 8px (`.text-[7px]` → 8px, `.text-[8px]` → 9px); all-caps labels use tight letter-spacing.
 - Buttons: primary = filled gold (the Shop price button), secondary = quiet slate outline (Preview, Gift), destructive = red. New UI should use these three rather than a new colour per button.
+- Exception (owner's decision): the home screen's START GAME stays green. Don't turn it gold.
 
 ## Icons (no emoji as UI)
 
