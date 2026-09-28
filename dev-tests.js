@@ -1713,6 +1713,52 @@ async function runDevTestSuite() {
       });
     } finally { endTutorial(false); }
   });
+  await test('Snap Burn lesson: the bottom Snap Burn banner sits above the lifted hand and either button snaps', () => {
+    freshState(); tutorialTestSetup();
+    try {
+      launchTutorialModule('snap_burn');
+      showTutorialStep(1);
+      const coach = state.players[1];
+      state.currentTurnIndex = 1;
+      executePlayCards(coach.id, coach.hand.filter(c => c.rank === 'K'));
+      tutorialClearTimers();
+      showTutorialStep(2);
+      render();
+      const seen = [...state.discardPile, ...state.players[0].hand, ...state.players.flatMap(p => p.faceUp)].map(c => c.rank + c.suit);
+      assertEqual(seen.filter((k, i) => seen.indexOf(k) !== i), [], 'No card shows twice on the table');
+      const toast = document.getElementById('snapToastBanner');
+      const zone = document.getElementById('localPlayerZone');
+      assertTrue(!toast.classList.contains('hidden'), 'The banner shows');
+      assertTrue(Number(toast.style.zIndex) > Number(zone.style.zIndex || 0), `Banner (${toast.style.zIndex}) above the lifted hand (${zone.style.zIndex})`);
+      assertTrue(toast.classList.contains('tutorial-glow'), 'The banner glows during the step');
+      assertTrue([].concat(TUTORIAL_STEPS[2].target).includes('#snapToastBanner'), 'The step spotlights the banner too');
+      assertTrue(/Tap Snap Burn/.test(TUTORIAL_STEPS[2].text), 'The text names the Snap Burn button');
+      toast.click();
+      assertEqual(state.discardPile.length, 0, 'Tapping the banner snaps and burns the Pile');
+    } finally { endTutorial(false); }
+  });
+  await test('Button names are written in Title Case in player-facing text', () => {
+    const html = document.documentElement.innerHTML;
+    ['Select all of a rank', 'Snap to Burn', 'Tap SNAP', 'SNAP BURN button', 'Tap Play it', 'Keep my account<', 'Update now<'].forEach(bad =>
+      assertTrue(!html.includes(bad), 'Found "' + bad + '"'));
+    assertTrue(document.getElementById('multiSelectToggleBtn').getAttribute('data-tip').startsWith('Select All Of A Rank'), 'The header tip says Select All Of A Rank');
+  });
+  await test('The home screen shows an empty table, even straight after a lesson', async () => {
+    freshState(); tutorialTestSetup();
+    const lobby = document.getElementById('lobbyScreen');
+    const wasHidden = lobby.classList.contains('hidden');
+    try {
+      launchTutorialModule('snap_burn');
+      endTutorial(false);
+      assertTrue(!lobby.classList.contains('hidden'), 'Back on the home screen');
+      await new Promise(res => setTimeout(res, 0));
+      ['opponentsContainer', 'centerArena', 'localPlayerZone', 'leaveGameBtn'].forEach(id =>
+        assertEqual(getComputedStyle(document.getElementById(id)).visibility, 'hidden', id + ' is hidden behind the home screen'));
+    } finally {
+      if (wasHidden) lobby.classList.add('hidden');
+      await new Promise(res => setTimeout(res, 0));
+    }
+  });
   await test('REGRESSION: the tutorial never writes a restorable saved game', () => {
     freshState(); tutorialTestSetup();
     try { localStorage.removeItem('shithead_game_state'); } catch (e) {}

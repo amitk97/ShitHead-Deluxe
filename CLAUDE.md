@@ -76,6 +76,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Continue runs a pending Coach play (`tutorialPendingContinueAction`) and then hides itself until the note shows (`showCoachNote` / `tutorialShowInterimNote` bring it back): a second tap during the Coach's ~1.2s wait used to skip to the next step and cancel the play (the 3 lesson's Coach 3 never landed).
 - Snap Burn lesson (`TUTORIAL_MODULE_SNAP_BURN`, 3 seats): Kings, normal clockwise direction; Coach's real play passes the turn to Rival, then you SNAP the fourth King. Lessons must follow the real rules and show what they claim (a test replays it). A scene's `direction` repaints `#gameDirectionBadge` at once (`tutorialApplyScene`).
 - Select all of a rank in lessons: a `toggleRankSelect` step (Cross-Phase Combo step 2; the legacy tutorial) starts it from the scene's `toggle` whatever the player's setting, makes `#multiSelectToggleBtn` glow (`checkSnapBurnEligibility`), refuses card taps until it's done (`toggleCardSelection`) and keeps it locked on afterwards (`tutorialAllowToggleOff`); `endTutorial` gives back the player's own setting (`tutorialPrevSelectAll`). Joker Duel scenes always have cards on the Pile so pickups can be seen.
+- The Snap Burn banner (`#snapToastBanner`) is raised to z 84 and glows in lessons (the lifted hand is z 80); the Snap Burn step accepts either button. Rival's Face-Up row gets calm cards too (no card twice on the table).
 - Lesson tables: a scene that deals a hand but no `faceUp`/`coachFaceUp` gets calm ranks the lesson doesn't use (`tutorialNeutralCards`), never the random deal. Bonus Draw's prompt sits above the lifted play area in the tutorial (z 84 vs 80) and its caption switches to `bonusPromptText`. A `tapCheck` can name any element (the 4 lesson taps the hand's 4 to see it refused); the Face-Up row only glows for `#localTableSlots` taps. Lesson copy: a `!` only on short shouts ("Burnt!", "Countered!").
 - The spotlight follows its targets in every lesson: `positionTutorialUI` records the selector and `tutorialFollowSpotlight` (a rAF loop while `tutorialActive`) redraws whenever their rects, the caption or the window change (a hand growing after a pickup, a card lifting/leaving, a pop-up opening or being zoomed). Step extras (`swapColorGroups`, `matchSpotlightWidthPair`) redraw with it. Asked-for cards glow only while `tutorialAwaitingAction` (off once the player has acted).
 
@@ -147,6 +148,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Voice (copy)
 
+- Button and feature names are proper names in Title Case wherever text mentions them (owner's rule): Select All Of A Rank, Snap Burn, Play It, Keep My Account, Update Now, Card History, Your Data → Download My Data. A dev test catches the old lowercase forms.
 - Player-facing text is calm and plain: sentence case, short, no shouting and few exclamation marks ("6 played: the next card must be even.", "Room code copied.", "You won"). Effect shouts inside animations ("HA!", "BOO!") and the tutorial coach can keep their personality; old What's New entries are history and stay as written.
 
 ## Visual system
@@ -170,6 +172,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Also: the direction icon spins a full turn when a 9 reverses play (`updateDirectionBadge`); earned Diamonds stream up into the header (`spawnDiamondGain`, from `updateDiamondHeader`); the match summary's bars fill from their last width, new reward rows slide in, finished rows stamp ✓ and a tier change shows a flipping, shining RANK UP badge (`animateMatchSummary` / `msShown`, reset in `hideMatchEndUI`); equipping in Custom pops the new tile with a click (`audio.playEquipClick`); the Inbox icon wiggles and its count bounces when something new arrives (`refreshInboxBadge`).
 - House motion curves: CSS `--ease-snappy` (presses/toggles), `--ease-bouncy` (landings), `--ease-soft` (fades/pop-ups), `--ease-spring` (a real spring via `linear()`, bouncy fallback); JS twin `EASE`. Use these for any new animation.
 - All of it is off with Reduce Motion (the `body.reduce-motion` CSS rule, or `reduceMotion` / `motionOff()` checks for Web Animations).
+
+## Home screen
+
+- The table behind the home screen is empty: while `#lobbyScreen` is open, `body.lobby-open` (`syncLobbyOpen`, a MutationObserver) hides the seats, centre, hand, Gauntlet HUD and Exit button, so a lesson or game that returns there leaves nothing drawn behind it.
 
 ## Pages fit every phone
 

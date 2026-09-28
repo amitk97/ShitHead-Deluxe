@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v205 (ShitHead-Deluxe-187) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v206 (ShitHead-Deluxe-188) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -515,7 +515,7 @@
     .inbox-activity--board .inbox-activity-accent { color:#fcd34d; }
     .board-mail-medal { font-size:26px; line-height:1; flex-shrink:0; }
     .board-mail-actions { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
-    /* Referrals: Friends → Invite Friends button, Profile → Invite friends section. */
+    /* Referrals: Friends → Invite Friends button, Profile → Invite Friends section. */
     .ref-invite-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:.4rem; padding:.5rem; margin-bottom:.5rem; border-radius:.6rem;
       border:1.5px solid #10b981; background:linear-gradient(135deg,rgba(6,78,59,.55),rgba(4,47,46,.55)); color:#a7f3d0; font-weight:900; font-size:.68rem; letter-spacing:.1em; }
     .ref-invite-btn:active { transform:scale(.97); }
@@ -784,6 +784,8 @@
     #spectateBar { position:fixed; left:50%; transform:translateX(-50%); top:calc(var(--header-h) + 6px); z-index:64; display:flex; align-items:center; gap:10px; padding:6px 8px 6px 12px; border-radius:999px; border:1px solid #0891b2; background:rgba(8,47,73,.92); color:#a5f3fc; font-size:11px; font-weight:900; box-shadow:0 6px 18px rgba(0,0,0,.45); white-space:nowrap; max-width:calc(100vw - 24px); }
     #spectateBar button { padding:4px 12px; border-radius:999px; background:#0891b2; color:#020617; font-weight:900; font-size:10px; letter-spacing:.08em; }
     body.spectating #gameTable { pointer-events:none; }
+    body.lobby-open #opponentsContainer, body.lobby-open #centerArena, body.lobby-open #localPlayerZone,
+    body.lobby-open #gauntletHud, body.lobby-open #floatingJokerBar, body.lobby-open #leaveGameBtn { visibility:hidden !important; }
     body.spectating #roomCodeBadge { display:none !important; }
     body.spectating #swapControlBar, body.spectating #playActionControls, body.spectating #sacrificeControlBar, body.spectating #emoteLayer, body.spectating #matchEndButtonRow { display:none !important; }
     body.spectating #opponentsContainer { margin-top:40px; }
@@ -4703,14 +4705,14 @@ video {
   <div id="snapToastBanner" class="hidden fixed left-1/2 -translate-x-1/2 z-[80] bg-rose-600 border-2 border-rose-300 shadow-[0_0_25px_rgba(244,63,94,0.7)] px-4 py-1.5 rounded-full flex items-center gap-2 animate-snap-toast cursor-pointer hover:bg-rose-500 transition"
        style="bottom:calc(env(safe-area-inset-bottom, 0px) + 8px); max-width:calc(100vw - 16px);">
     <span class="text-base leading-none animate-bounce">🔥</span>
-    <span class="text-[12px] font-black text-white uppercase tracking-wider whitespace-nowrap">Snap to Burn</span>
+    <span class="text-[12px] font-black text-white uppercase tracking-wider whitespace-nowrap">Snap Burn</span>
     <span id="snapToastText" class="hidden"></span>
   </div>
 
   <!-- FOLLOW-UP DRAW PROMPT (you drew another of the same rank you just played) -->
   <div id="followUpToastBanner" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[80] bg-slate-950/95 border-2 border-emerald-500 shadow-[0_0_25px_rgba(16,185,129,0.6)] px-5 py-4 rounded-2xl flex flex-col items-center gap-2 max-w-[85vw] animate-snap-toast">
     <span class="text-2xl">🎯</span>
-    <span class="text-[12px] font-black text-emerald-400 uppercase tracking-wider">Bonus draw</span>
+    <span class="text-[12px] font-black text-emerald-400 uppercase tracking-wider">Bonus Draw</span>
     <span class="text-[10px] font-semibold text-slate-300 text-center">Play the matching card?</span>
     <div class="flex items-center gap-2 mt-1.5">
       <button id="followUpPlayBtn" class="min-w-[84px] px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-wider rounded-lg shadow text-center">Play It</button>
@@ -4770,7 +4772,7 @@ video {
 
     <!-- Right Controls -->
     <div class="flex-1 flex items-center justify-end gap-1.5 min-w-0">
-      <button id="multiSelectToggleBtn" class="relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 rounded transition tip-below" style="width:1.75rem;" data-tip="Select all of a rank: OFF (S)" aria-label="Select all of a rank: OFF (S)"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-select-rank"/></svg></button>
+      <button id="multiSelectToggleBtn" class="relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 rounded transition tip-below" style="width:1.75rem;" data-tip="Select All Of A Rank: OFF (S)" aria-label="Select All Of A Rank: OFF (S)"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-select-rank"/></svg></button>
       <button id="headerInboxBtn" class="relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Inbox" data-tip="Inbox">
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-mail"/></svg>
         <span id="inboxBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 flex items-center justify-center rounded-full inbox-badge--friend text-white text-[8px] font-black leading-none">0</span>
@@ -4805,7 +4807,7 @@ video {
       <div class="flex items-center gap-2 shrink-0" aria-label="Quick access">
         <button id="drawerChallengesShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-amber-500 transition" style="height:2.25rem" aria-label="Open Challenges" title="Challenges"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-challenges"/></svg></button>
         <button id="drawerShopShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-cyan-500 transition" style="height:2.25rem" aria-label="Open Shop" title="Shop"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg></button>
-        <button id="drawerGuideShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-emerald-500 transition" style="height:2.25rem" aria-label="Open Guide and Strategy" title="Guide &amp; Strategy"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></button>
+        <button id="drawerGuideShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-emerald-500 transition" style="height:2.25rem" aria-label="Open Guide &amp; Strategy" title="Guide &amp; Strategy"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></button>
         <button id="drawerSettingsShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-sky-500 transition" style="height:2.25rem" aria-label="Open Settings" title="Settings"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg></button>
       </div>
     </div>
@@ -4868,7 +4870,7 @@ video {
             <button id="lobbyPersonalisationShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Custom">
               <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg><span>Custom</span>
             </button>
-            <button id="lobbyGuideShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Guide and Strategy">
+            <button id="lobbyGuideShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Guide &amp; Strategy">
               <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg><span>Guide</span>
             </button>
             <button id="lobbySettingsShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Settings">
@@ -5631,7 +5633,7 @@ video {
           <button type="button" id="profileCollectionBtn" class="coll-open"><svg class="ic" aria-hidden="true"><use href="#ic-cards"/></svg><span class="coll-open-text"><b>Collection</b><small id="profileCollectionCount">0 / 0 items</small></span><span class="coll-bar"><i id="profileCollectionBar"></i></span><span class="coll-open-chev" aria-hidden="true">›</span></button>
         </div>
         <div id="profileReferralSection" class="hidden">
-          <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Invite friends</span>
+          <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Invite Friends</span>
           <div id="profileReferralBody" class="ref-card"></div>
         </div>
         <div>
@@ -5658,7 +5660,7 @@ video {
           </div>
         </div>
         <div id="profileDataSection" class="hidden">
-          <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Your data</span>
+          <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Your Data</span>
           <div class="acct-card">
             <p class="acct-text">Download a copy of everything ShitHead Deluxe stores about your account: profile, stats, match history, purchases and friends.</p>
             <button id="downloadMyDataBtn" type="button" class="acct-btn">⬇ DOWNLOAD MY DATA</button>
@@ -5685,7 +5687,7 @@ video {
     <div class="w-full max-w-xs bg-slate-950 border-2 border-rose-600 rounded-2xl shadow-2xl p-4">
       <span class="block text-[11px] font-black uppercase tracking-widest text-rose-400 mb-2">Delete Account?</span>
       <div id="deleteStep1" class="space-y-2">
-        <p class="text-[10px] text-slate-300 leading-snug">Your account is hidden straight away and <b class="text-white">erased after 7 days</b>. Changed your mind? Sign back in before then and tap <b class="text-white">Keep my account</b>. After that it can't be undone. It removes:</p>
+        <p class="text-[10px] text-slate-300 leading-snug">Your account is hidden straight away and <b class="text-white">erased after 7 days</b>. Changed your mind? Sign back in before then and tap <b class="text-white">Keep My Account</b>. After that it can't be undone. It removes:</p>
         <ul class="text-[9px] text-slate-400 leading-snug space-y-0.5 pl-2" style="list-style:none;">
           <li>&bull; Account sign-in</li>
           <li>&bull; Ranked rating &amp; stats</li>
@@ -5693,7 +5695,7 @@ video {
           <li>&bull; Diamonds, items and challenges</li>
           <li>&bull; Saved preferences</li>
         </ul>
-        <p class="text-[9px] text-slate-500 leading-snug">Want a copy first? Profile → Your data → Download my data.</p>
+        <p class="text-[9px] text-slate-500 leading-snug">Want a copy first? Profile → Your Data → Download My Data.</p>
         <button id="deleteStep1ContinueBtn" class="w-full text-[10px] font-black py-2 rounded-lg border border-rose-600 text-rose-400 hover:bg-rose-600 hover:text-white transition mt-2">CONTINUE</button>
         <button id="deleteStep1CancelBtn" class="w-full text-[10px] font-black py-2 rounded-lg border border-slate-700 text-slate-300 hover:border-slate-500 transition">CANCEL</button>
       </div>
@@ -6130,7 +6132,7 @@ video {
         </div>
         <!-- Closed, the strip folds into #historyCircleBtn (the card to beat),
              in the left column between Play Matrix and Card Powers. -->
-        <button id="historyCircleBtn" type="button" class="hist-circle" aria-label="Open card history" data-tip="Card history"></button>
+        <button id="historyCircleBtn" type="button" class="hist-circle" aria-label="Open Card History" data-tip="Card History"></button>
         <div id="histHeaderRow" class="flex items-center justify-between w-full text-[8px] uppercase font-black tracking-widest text-slate-400 border-b border-slate-800/80 pb-0.5">
           <span class="flex items-center gap-1"><button id="histCollapseBtn" type="button" class="hist-collapse-btn" aria-label="Close card history">&#8249;</button>
           <button id="histFirstBtn" class="px-1 py-0.2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded transition font-black text-[8px]">⇤ FIRST</button></span>
@@ -6290,8 +6292,8 @@ video {
       <p id="keepAccountText" class="text-slate-300 text-xs leading-relaxed"></p>
       <p id="keepAccountError" class="hidden text-[10px] font-bold text-rose-400"></p>
       <div class="flex flex-col gap-2 pt-1">
-        <button id="keepAccountBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Keep my account</button>
-        <button id="keepAccountDeleteBtn" class="w-full py-1.5 text-[10px] font-bold text-slate-400 hover:text-rose-300 uppercase tracking-wider transition">Continue deleting (sign out)</button>
+        <button id="keepAccountBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Keep My Account</button>
+        <button id="keepAccountDeleteBtn" class="w-full py-1.5 text-[10px] font-bold text-slate-400 hover:text-rose-300 uppercase tracking-wider transition">Continue Deleting (Sign Out)</button>
       </div>
     </div>
   </div>
@@ -6459,7 +6461,7 @@ video {
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[11.5px] leading-relaxed text-slate-300">
             <p><strong>1. The Swap Phase is Critical:</strong> Always put your strongest cards (2s, 3s, 10s, Aces, and Jokers) on your Face-Up Cards. They are your ultimate safety net for the Face-Up Table Phase.</p>
             <p><strong>2. Cross-Phase Combos:</strong> When the Deck is depleted and all cards in your Hand match one or more Face-Up Cards, you can select and play them simultaneously in one massive turn!</p>
-            <p><strong>3. Snap-Burn Vigilance:</strong> Watch the Pile closely. If you hold enough cards in your Hand to make four of a kind with the card(s) on top of the Pile, click <strong class="text-rose-400">🔥 SNAP</strong> immediately, out of turn, to burn the Pile!</p>
+            <p><strong>3. Snap Burn Vigilance:</strong> Watch the Pile closely. If you hold enough cards in your Hand to make four of a kind with the card(s) on top of the Pile, tap <strong class="text-rose-400">Snap Burn</strong> immediately, out of turn, to burn the Pile!</p>
             <p><strong>4. Joker Timing:</strong> Don't waste your Joker early on a small Pile. Wait until an opponent is down to their last Hand or table cards with a large Pile accumulated.</p>
             <p><strong>5. Bonus Draw:</strong> If you draw another card matching the rank you just played, you'll be offered a free follow-up play with it before the turn passes on — a nice way to chain extra plays in a single turn.</p>
           </div>
@@ -6517,7 +6519,7 @@ video {
             <p><strong class="text-amber-400">Reset:</strong> The 2. It can be played on almost anything (except a Jack) and clears the target, so the next player may follow it with any card at all.</p>
             <p><strong class="text-amber-400">Seasonal Event:</strong> Halloween, Christmas, Diwali and more: while an event is on, its themed items are sold in the Shop&rsquo;s Seasonal tab, and winning 3 games earns that event&rsquo;s picture.</p>
             <p><strong class="text-amber-400">ShitHead:</strong> The loser &mdash; the last player still holding cards once everyone else has emptied their Hand, Face-Up and Face-Down cards.</p>
-            <p><strong class="text-amber-400">Snap Burn:</strong> Completing four of a kind <em>out of turn</em>. If the top of the Pile already shows some of a rank and you hold the rest, a SNAP button appears and you can burn the Pile immediately, even when it isn't your turn.</p>
+            <p><strong class="text-amber-400">Snap Burn:</strong> Completing four of a kind <em>out of turn</em>. If the top of the Pile already shows some of a rank and you hold the rest, a Snap Burn button appears and you can burn the Pile immediately, even when it isn't your turn.</p>
             <p><strong class="text-amber-400">Swap Phase:</strong> The setup round before play begins, where you trade cards between your Hand and your Face-Up Cards. Since Face-Up Cards are played last, this is where you protect your Power Cards. Press READY when done.</p>
             <p><strong class="text-amber-400">Table Cards:</strong> Collective term for your Face-Up and Face-Down Cards &mdash; everything in front of you rather than in your Hand.</p>
             <p><strong class="text-amber-400">Tier:</strong> Your Ranked rank from your rating: Novice, Bronze (500+), Silver (1000+), Gold (1500+), Platinum (1800+) and Master (2000+).</p>
@@ -6537,7 +6539,7 @@ video {
               <div><span class="text-amber-400 font-bold">1</span> : Select 10/s</div>
               <div><span class="text-amber-400 font-bold">J, Q, K, A</span> : Select card/s of that court rank</div>
               <div><span class="text-amber-400 font-bold">Space</span> : Select a Joker</div>
-              <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">S</span> : Toggle "Select all of a rank" ON/OFF</div>
+              <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">S</span> : Toggle "Select All Of A Rank" ON/OFF</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">F11 or F</span> : Toggle Fullscreen</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">M</span> : Toggle the menu open/closed</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">I</span> : Toggle the Inbox open/closed</div>
@@ -7831,7 +7833,7 @@ video {
     //   § Installable app and notifications
     //   § Settings page
     //   § Invite links
-    //   § Referrals (?ref=CODE invite links, Profile → Invite friends)
+    //   § Referrals (?ref=CODE invite links, Profile → Invite Friends)
     //   § Phone back gesture
     //   § Tutorial
     //   § Page start-up
@@ -11378,7 +11380,7 @@ video {
       if (!btn.querySelector('svg')) btn.innerHTML = '<svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-select-rank"/></svg>';
       if (!btn.querySelector('.rank-toggle-dot')) btn.insertAdjacentHTML('beforeend', '<span class="rank-toggle-dot" aria-hidden="true"></span>');
       btn.dataset.on = selectAllOfRank ? '1' : '0';
-      const label = `Select all of a rank: ${selectAllOfRank ? 'ON' : 'OFF'} (S)`;
+      const label = `Select All Of A Rank: ${selectAllOfRank ? 'ON' : 'OFF'} (S)`;
       btn.setAttribute('data-tip', label);
       btn.setAttribute('aria-label', label);
       btn.classList.toggle('text-emerald-400', selectAllOfRank);
@@ -13233,7 +13235,7 @@ video {
     }
 
     function checkSnapBurnEligibility() {
-      // A lesson waiting on the Select all of a rank button makes it glow.
+      // A lesson waiting on the Select All Of A Rank button makes it glow.
       const rankStep = tutorialActive ? TUTORIAL_STEPS[tutorialStep]?.require?.toggleRankSelect : null;
       document.getElementById('multiSelectToggleBtn')?.classList.toggle('tutorial-glow', !!rankStep && tutorialAwaitingAction && selectAllOfRank !== (rankStep !== 'off'));
       const snapBtn = document.getElementById('snapBurnBtn');
@@ -13244,6 +13246,10 @@ video {
         snapToast.classList.remove('hidden');
         snapToast.querySelector('span:nth-child(2)').textContent = `SNAP BURN NOW • ${opportunity.burnInfo.needed}× ${opportunity.burnInfo.topRank}`;
         snapBtn.classList.toggle('tutorial-glow', tutorialActive && !!TUTORIAL_STEPS[tutorialStep]?.require?.requireSnap);
+        snapToast.classList.toggle('tutorial-glow', tutorialActive && !!TUTORIAL_STEPS[tutorialStep]?.require?.requireSnap);
+        // The tutorial lifts the player's area to z-index 80 (the banner's own
+        // level), which hid the banner behind the hand cards.
+        snapToast.style.zIndex = tutorialActive ? '84' : '';
         Haptics.vibrate(25);
         snapBtn.onclick = executeLocalSnapBurn;
         snapToast.onclick = executeLocalSnapBurn;
@@ -14891,8 +14897,8 @@ video {
       const tutStep = tutorialActive ? TUTORIAL_STEPS[tutorialStep] : null;
       if (tutStep?.require?.toggleRankSelect && tutorialAwaitingAction) {
         notifyBanner(tutStep.require.toggleRankSelect === 'off'
-          ? 'Tap the Select all of a rank button in the header to switch it off first.'
-          : 'Tap the Select all of a rank button in the header first.');
+          ? 'Tap the Select All Of A Rank button in the header to switch it off first.'
+          : 'Tap the Select All Of A Rank button in the header first.');
         return;
       }
       if (!isLocalPlayersTurnNow()) {
@@ -17225,6 +17231,15 @@ video {
       const page = document.getElementById(id);
       if (page) exclusivePageObserver.observe(page, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
     });
+    // The home screen shows an empty table behind it: a lesson (or anything
+    // else) that returns to it leaves its seats and cards drawn on the table,
+    // so while #lobbyScreen is open, body.lobby-open hides them.
+    function syncLobbyOpen() {
+      const lobby = document.getElementById('lobbyScreen');
+      document.body.classList.toggle('lobby-open', !!lobby && !lobby.classList.contains('hidden'));
+    }
+    new MutationObserver(syncLobbyOpen).observe(document.getElementById('lobbyScreen'), { attributes: true, attributeFilter: ['class'] });
+    syncLobbyOpen();
     function openHamburgerMenu() {
       // currentUser starts null and is only ever set inside the async
       // onAuthStateChanged callback (see its own comment) — for a
@@ -17661,8 +17676,13 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v206: [
+        ['🔥', 'Snap Burn lesson: the Snap Burn banner at the bottom no longer hides behind your cards. Tap either Snap Burn button.'],
+        ['🏠', 'The home screen no longer shows the last lesson or game behind it.'],
+        ['✏️', 'Button names such as Select All Of A Rank and Snap Burn are now written the same way everywhere.']
+      ],
       v205: [
-        ['🎓', 'Cross-Phase Combo lesson: switch on Select all of a rank first, then one tap grabs all three 9s.'],
+        ['🎓', 'Cross-Phase Combo lesson: switch on Select All Of A Rank first, then one tap grabs all three 9s.'],
         ['🃏', 'Joker Duel lesson: the Pile has cards on it, so you can see who picks them up.']
       ],
       v204: [
@@ -17720,7 +17740,7 @@ video {
         ['💡', 'Press and hold any card you can see to read what it does, and whether you can play it now.']
       ],
       v190: [
-        ['🕘', 'Card history can now fold into a circle on the left of the table. It shows the card to beat; tap it to open the history again.'],
+        ['🕘', 'Card History can now fold into a circle on the left of the table. It shows the card to beat; tap it to open the history again.'],
         ['⚙️', 'New setting: Display → Card History chooses whether each game starts with the history open or folded.']
       ],
       v189: [
@@ -17752,7 +17772,7 @@ video {
       ],
       v182: [
         ['⚔️', 'The Gauntlet starts again from the first Easy bot every day, with full lives.'],
-        ['🎴', 'The Select all of a rank button in the header is full size again on iPhones, with a green or red dot for on and off.']
+        ['🎴', 'The Select All Of A Rank button in the header is full size again on iPhones, with a green or red dot for on and off.']
       ],
       v181: [
         ['⚔️', 'The Gauntlet button sits centred and wider once every bot difficulty is unlocked.']
@@ -17835,8 +17855,8 @@ video {
         ['🥇', 'Reach the top 10, #3, #2 or #1 on any leaderboard and a congratulations message lands in your Inbox.']
       ],
       v159: [
-        ['⬇', 'Profile → Your data → Download my data saves a copy of everything stored about your account.'],
-        ['🗑️', 'Deleting your account now works properly, and you have 7 days to change your mind: sign back in and tap Keep my account.'],
+        ['⬇', 'Profile → Your Data → Download My Data saves a copy of everything stored about your account.'],
+        ['🗑️', 'Deleting your account now works properly, and you have 7 days to change your mind: sign back in and tap Keep My Account.'],
         ['🔑', "Can't sign in? New help on the sign-in screen, including resending the verification email."]
       ],
       v158: [
@@ -17862,7 +17882,7 @@ video {
       ],
       v151: [
         ['🔗', 'Invite friends! Friends → Invite Friends shares your own link. When a friend signs up with it and plays 3 games, you get 💎 100 and they get 💎 50.'],
-        ['👥', 'Profile → Invite friends shows your code, who joined and how many games they have played.'],
+        ['👥', 'Profile → Invite Friends shows your code, who joined and how many games they have played.'],
         ['🏅', 'Recruit 5 players to earn the Recruiter picture and challenge.']
       ],
       v150: [
@@ -20939,7 +20959,7 @@ video {
         rating = `<div class="ms-rating">Rating ${Math.round(matchSummaryRating.from)} → ${Math.round(matchSummaryRating.to)} <span class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d}</span></div>`;
         const fromTier = getRankTier(matchSummaryRating.from), toTier = getRankTier(matchSummaryRating.to);
         if (d > 0 && fromTier.name !== toTier.name) {
-          rating += `<div class="ms-rankup ${toTier.cls}" style="${toTier.style}" data-rankup="${toTier.name}"><small>Rank up</small>${toTier.name}</div>`;
+          rating += `<div class="ms-rankup ${toTier.cls}" style="${toTier.style}" data-rankup="${toTier.name}"><small>Rank Up</small>${toTier.name}</div>`;
         }
       }
       const total = matchRewardLog.reduce((sum, r) => sum + r.reward, 0);
@@ -22728,7 +22748,7 @@ video {
     }
     document.getElementById('authForgotBtn').addEventListener('click', () => {
       const email = document.getElementById('authEmailInput').value.trim();
-      if (!email) { showAuthError('Enter your email above first, then tap Forgot.'); return; }
+      if (!email) { showAuthError('Enter your email above first, then tap Forgot?'); return; }
       clearAuthError();
       auth.sendPasswordResetEmail(email)
         .then(() => showAuthMessage('Password reset email sent \u2014 check your inbox.'))
@@ -26926,7 +26946,7 @@ video {
     }
     document.getElementById('friendsInviteBtn').addEventListener('click', () => shareReferralLink());
 
-    // Profile → Invite friends: your code and link, who joined and how far
+    // Profile → Invite Friends: your code and link, who joined and how far
     // along they are, your Recruiter progress, and who invited you.
     function referralProfileHtml(st) {
       if (!st) return '<p class="ref-how">Loading…</p>';
@@ -27105,7 +27125,7 @@ video {
       }
       const inGame = typeof state !== 'undefined' && state.phase && state.phase !== 'LOBBY' && !tutorialActive;
       el.innerHTML = `<div class="up-row"><span class="up-icon">${icon('refresh')}</span><div class="up-text"><b>Update available</b><span>A new version (${escapeHtml(version)}) is ready.${inGame ? ' Your game carries on after the update.' : ''}</span></div></div>
-        <div class="up-btns"><button type="button" class="up-later">Later</button><button type="button" class="up-now">Update now</button></div>`;
+        <div class="up-btns"><button type="button" class="up-later">Later</button><button type="button" class="up-now">Update Now</button></div>`;
       el.classList.remove('hidden');
       el.querySelector('.up-later').onclick = () => { updatePromptSnoozeUntil = Date.now() + 30 * 60 * 1000; el.classList.add('hidden'); };
       el.querySelector('.up-now').onclick = () => applyUpdateNow();
@@ -27481,7 +27501,7 @@ video {
         coachNote: "Burnt! The Coach goes again immediately after burning and drops a 4 on the empty Pile. Take a look at the Recent Card History strip below — it shows exactly what got burned and by whom."
       },
       {
-        text: "See the Select all of a rank button in the header (the three cards)? Switch it on. While it's on, tapping one card of a rank grabs every card of that rank at once — perfect for playing sets in a single tap.",
+        text: "See the Select All Of A Rank button in the header (the three cards)? Switch it on. While it's on, tapping one card of a rank grabs every card of that rank at once — perfect for playing sets in a single tap.",
         target: '#multiSelectToggleBtn',
         require: { toggleRankSelect: 'on' },
         coachNote: "Toggle's live. You can flip it on or off whenever suits you — it's a tactic, not a setting you're stuck with."
@@ -27561,7 +27581,7 @@ video {
         coachNote: "Countered — because you matched the Coach's Joker with one of your own, the Coach is the one who has to pick up everything instead, and you keep the turn. Both Jokers vanish from the game the instant they're played — that's always true, win or lose the duel."
       },
       {
-        text: "Hand's empty, Deck's empty — your Face-Up cards just unlocked. Switch Select all of a rank back off: from here on, every card matters on its own.",
+        text: "Hand's empty, Deck's empty — your Face-Up cards just unlocked. Switch Select All Of A Rank back off: from here on, every card matters on its own.",
         target: '#multiSelectToggleBtn',
         require: { toggleRankSelect: 'off' },
         coachNote: "Toggle's off. Each of your three Queens is now its own decision."
@@ -27574,7 +27594,7 @@ video {
         coachNote: "Matched — the Coach played a Queen right back. Watch closely — you're about to see something new."
       },
       {
-        text: "See that pulsing SNAP BURN button next to the Base Card? Whenever the top of the Pile already matches cards you're holding, you can slap it to play them all at once, out of turn — genuinely out of turn, too: in a 3- or 4-player game you could snap in even while someone else's turn is happening. You're holding the other two Queens — hit the SNAP BURN button now for an instant burn.",
+        text: "See that pulsing Snap Burn button next to the Base Card? Whenever the top of the Pile already matches cards you're holding, you can slap it to play them all at once, out of turn — genuinely out of turn, too: in a 3- or 4-player game you could snap in even while someone else's turn is happening. You're holding the other two Queens — hit the Snap Burn button now for an instant burn.",
         target: ['#localTableSlots', '#centerArena'],
         require: { rank: 'Q', count: 2, requireSnap: true },
         noCoachReply: true,
@@ -27886,8 +27906,8 @@ video {
         noteTarget: ['#pileZone', '#turnIndicatorRow']
       },
       {
-        text: "Your King makes four of a kind. Tap SNAP, even though it's Rival's turn.",
-        target: ['#pileZone', '#snapBurnBtn', '#localHand [data-rank="K"]'],
+        text: "Your King makes four of a kind. Tap Snap Burn, even though it's Rival's turn.",
+        target: ['#pileZone', '#snapBurnBtn', '#snapToastBanner', '#localHand [data-rank="K"]'],
         turnIndex: 2,
         require: { rank: 'K', requireSnap: true },
         noCoachReply: true,
@@ -27913,7 +27933,7 @@ video {
         scene: { hand: [['7', '♦'], ['Q', '♣'], ['K', '♥']], pile: [['4', '♦']], drawPile: [['7', '♠']] },
         require: { rank: '7' },
         allowBonusDraw: true,
-        bonusPromptText: "You drew another 7, so Bonus Draw lets you play it straight away. Tap Play it.",
+        bonusPromptText: "You drew another 7, so Bonus Draw lets you play it straight away. Tap Play It.",
         noCoachReply: true,
         coachNote: "That's Bonus Draw. Draw a matching card right after playing one, and you get a free follow-up play before your turn ends.",
         noteTarget: ['#deckZone', '#pileZone']
@@ -27932,12 +27952,12 @@ video {
         text: "Face-Up cards are usually locked until your Hand's empty. There's one exception.",
         target: null
       },
-      // Select all of a rank starts OFF here whatever the player's setting
+      // Select All Of A Rank starts OFF here whatever the player's setting
       // (scene.toggle), must be switched on before any card can be touched
       // (toggleCardSelection refuses while a toggleRankSelect step waits),
       // and stays locked on for the rest of the lesson (tutorialAllowToggleOff).
       {
-        text: "First, switch on Select all of a rank in the header. Then one tap grabs every card of that rank.",
+        text: "First, switch on Select All Of A Rank in the header. Then one tap grabs every card of that rank.",
         target: '#multiSelectToggleBtn',
         scene: { hand: [['9', '♥'], ['9', '♣']], faceUp: [['9', '♦'], ['K', '♠'], ['Q', '♣']], pile: [['4', '♦']], emptyDeck: true, toggle: false },
         require: { toggleRankSelect: 'on' },
@@ -28671,6 +28691,10 @@ video {
       const dealsHand = !!(scene.hand && scene.hand.length);
       if (dealsHand && !scene.faceUp) you.faceUp = tutorialNeutralCards(scene, 3, ['♣', '♥', '♠']);
       if (dealsHand && !scene.coachFaceUp) coach.faceUp = tutorialNeutralCards(scene, 3, ['♦', '♠', '♥'], you.faceUp.map(c => c.rank));
+      // Rival too (3-seat lessons): the random deal could show a card the
+      // lesson has on the Pile (a second K♠ in Snap Burn). Your ranks are
+      // allowed again here, but never in the same suit.
+      if (dealsHand && rival && !scene.rivalFaceUp) rival.faceUp = tutorialNeutralCards(scene, 3, ['♠', '♦', '♣'], coach.faceUp.map(c => c.rank));
       if (scene.faceUp) you.faceUp = scene.faceUp.map(([r, s], i) => ({ ...C(r, s), slotIndex: i }));
       if (scene.faceDown) you.faceDown = scene.faceDown.map(([r, s], i) => ({ ...C(r, s), slotIndex: i }));
       // The Coach's own table cards are never scripted by default, which
@@ -29218,7 +29242,7 @@ video {
         return false;
       }
       if (step.require.requireSnap && !viaSnap) {
-        notifyBanner('Use the pulsing SNAP BURN button for this one, not the Play button.');
+        notifyBanner('Use the pulsing Snap Burn button for this one, not the Play Selected Cards button.');
         return false;
       }
       if (step.require.pickup) {
@@ -29235,8 +29259,8 @@ video {
       }
       if (step.require.toggleRankSelect) {
         notifyBanner(step.require.toggleRankSelect === 'off'
-          ? 'Tap the Select all of a rank button in the header to switch it off first.'
-          : 'Tap the Select all of a rank button in the header first.');
+          ? 'Tap the Select All Of A Rank button in the header to switch it off first.'
+          : 'Tap the Select All Of A Rank button in the header first.');
         return false;
       }
       if (step.require.tapCheck) {
@@ -29687,7 +29711,7 @@ video {
 
     function endTutorial(completed) {
       applyBotPrefs();
-      // Lessons force Select all of a rank on/off; give the player's own
+      // Lessons force Select All Of A Rank on/off; give the player's own
       // setting back.
       if (tutorialPrevSelectAll !== null) {
         selectAllOfRank = tutorialPrevSelectAll;
