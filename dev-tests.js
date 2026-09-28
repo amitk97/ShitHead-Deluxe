@@ -6588,6 +6588,16 @@ async function runDevTestSuite() {
     assertTrue(/Offline/.test(row) && !/presence-dot online/.test(row), 'a stale friend is drawn offline');
     assertTrue(typeof endPresence === 'function' && /endPresence\(\)/.test(String(performSignOut)), 'sign-out goes offline first');
   });
+  await test('Pile History: tapping outside the box closes it; tapping inside does not', () => {
+    const modal = document.getElementById('pileInspectModal');
+    try {
+      modal.classList.remove('hidden');
+      document.getElementById('inspectCardsContainer').click();
+      assertTrue(!modal.classList.contains('hidden'), 'a tap inside the box keeps it open');
+      modal.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      assertTrue(modal.classList.contains('hidden'), 'a tap on the dimmed area closes it');
+    } finally { modal.classList.add('hidden'); }
+  });
   await test('Update prompt: a newer live build offers Update now / Later; an older or equal one does nothing', () => {
     const cur = gameVersionNumber(getGameVersionLabel());
     assertEqual(newerBuildIn(`<!-- BUILD: 2030-01-01-v${cur + 1} (x) -->`), `v${cur + 1}`, 'a newer build is spotted');
