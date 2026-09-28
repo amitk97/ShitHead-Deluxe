@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v201 (ShitHead-Deluxe-183) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v202 (ShitHead-Deluxe-184) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -17647,6 +17647,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v202: [
+        ['🏆', 'Players you ignore stay on the leaderboard.']
+      ],
       v201: [
         ['👥', 'Friends who were stuck showing as online now show offline until they open the game again.']
       ],
@@ -17655,7 +17658,6 @@ video {
       ],
       v199: [
         ['🏆', 'Tap a player\'s picture or name on the leaderboard to open their profile, add them as a friend or ignore them.'],
-        ['🚫', 'Players you ignore no longer show on the leaderboard.'],
         ['💡', 'The "Click to inspect pile cards" hint no longer covers a card\'s description.'],
         ['▦', 'The tutorial explains the Play Matrix in plain words.']
       ],
@@ -20151,7 +20153,6 @@ video {
           .catch(() => { btn.disabled = false; notifyBanner('Could not send that friend request.'); });
       } else if (btn.dataset.ppAction === 'ignore') {
         ignorePerson(uid);
-        leaderboardHideIgnored(uid, playerPopupPerson?.uid === uid ? playerPopupPerson.name : null);
         btn.textContent = 'IGNORED';
         btn.disabled = true;
       } else if (btn.dataset.ppAction === 'report') {
@@ -25987,31 +25988,6 @@ video {
     let leaderboardTab = (() => { try { const t = localStorage.getItem('shithead_leaderboard_tab'); return LEADERBOARD_TABS[t] ? t : 'ranked'; } catch (e) { return 'ranked'; } })();
     // Board rows, best first (ties by name). Ranked needs a username; the
     // server boards need a name and a count above 0.
-    // Ignored players are left off the leaderboard (their places stay as
-    // they are). Ranked rows are keyed by username, the server boards by uid.
-    let leaderboardIgnored = { uids: new Set(), names: new Set(), forUid: null };
-    let leaderboardRepaint = null;
-    function loadLeaderboardIgnores() {
-      if (!currentUser || typeof db === 'undefined') { leaderboardIgnored = { uids: new Set(), names: new Set(), forUid: null }; return Promise.resolve(); }
-      const me = currentUser.uid;
-      return db.ref(`ignores/${me}`).once('value').then((snap) => {
-        const uids = Object.keys(snap.val() || {});
-        return Promise.all(uids.map(uid => db.ref(`publicProfiles/${uid}/username`).once('value').then(s => s.val()).catch(() => null)))
-          .then((names) => {
-            leaderboardIgnored = { uids: new Set(uids), names: new Set(names.filter(Boolean).map(n => String(n).toLowerCase())), forUid: me };
-          });
-      }).catch(() => {});
-    }
-    function leaderboardIsIgnored(p) {
-      return (p.uid && leaderboardIgnored.uids.has(p.uid))
-        || (p.username && leaderboardIgnored.names.has(String(p.username).toLowerCase()))
-        || (p.usernameKey && leaderboardIgnored.names.has(String(p.usernameKey).toLowerCase()));
-    }
-    function leaderboardHideIgnored(uid, name) {
-      if (uid) leaderboardIgnored.uids.add(uid);
-      if (name) leaderboardIgnored.names.add(String(name).toLowerCase());
-      if (typeof leaderboardRepaint === 'function' && !document.getElementById('leaderboardModal').classList.contains('hidden')) leaderboardRepaint();
-    }
     function leaderboardRowsFrom(tab, data) {
       const rows = [];
       Object.entries(data || {}).forEach(([key, entry]) => {
@@ -26048,8 +26024,7 @@ video {
       let leaderboardRows = [];
       const paint = () => {
         const q = (document.getElementById('leaderboardSearchInput')?.value || '').trim().toLowerCase();
-        const visible = leaderboardRows.filter(p => !leaderboardIsIgnored(p));
-        const shown = q ? visible.filter(p => String(p.username || '').toLowerCase().includes(q)) : visible;
+        const shown = q ? leaderboardRows.filter(p => String(p.username || '').toLowerCase().includes(q)) : leaderboardRows;
         emptyMsg.classList.toggle('hidden', shown.length > 0);
         emptyMsg.textContent = q ? 'No players match that search.' : cfg.empty;
         area.innerHTML = shown.map(p => leaderboardRowHtml(p, p.rank, shownTab)).join('');
@@ -26059,8 +26034,6 @@ video {
         leaderboardRows = leaderboardRowsFrom(shownTab, data);
         paint();
       };
-      leaderboardRepaint = paint;
-      if (freshOpen || leaderboardIgnored.forUid !== (currentUser?.uid || null)) loadLeaderboardIgnores().then(() => { if (leaderboardTab === shownTab) paint(); });
       const searchInput = document.getElementById('leaderboardSearchInput');
       if (freshOpen) searchInput.value = '';
       searchInput.oninput = paint;

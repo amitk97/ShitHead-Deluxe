@@ -6550,7 +6550,7 @@ async function runDevTestSuite() {
       document.getElementById('themesModal').classList.add('hidden');
     }
   });
-  await test('Leaderboard: tapping another player opens their card; ignored players are hidden', () => {
+  await test('Leaderboard: tapping another player opens their card; ignored players stay listed', () => {
     const other = leaderboardRowHtml({ uid: 'u9', username: 'Sam', avatar: 'avatar-joker', count: 3 }, 1, 'challenges');
     const host = document.createElement('div'); host.innerHTML = other;
     const who = host.querySelector('.lb-who');
@@ -6559,15 +6559,8 @@ async function runDevTestSuite() {
     ranked.innerHTML = leaderboardRowHtml({ usernameKey: 'sam', username: 'Sam', rating: 700, wins: 1, losses: 0 }, 2, 'ranked');
     assertEqual(ranked.querySelector('.lb-who')?.dataset.lbKey, 'sam', 'ranked rows carry their username key');
     assertTrue(typeof openProfileCard === 'function' && typeof showPlayerPopupFor === 'function', 'the card opens outside a match too');
-    const saved = leaderboardIgnored;
-    try {
-      leaderboardIgnored = { uids: new Set(['u9']), names: new Set(['bob']), forUid: 'me' };
-      assertTrue(leaderboardIsIgnored({ uid: 'u9', username: 'Sam' }), 'an ignored uid is hidden from the boards');
-      assertTrue(leaderboardIsIgnored({ usernameKey: 'bob', username: 'Bob' }), 'an ignored name is hidden from Ranked');
-      assertTrue(!leaderboardIsIgnored({ uid: 'u2', username: 'Amy' }), 'others stay');
-      leaderboardHideIgnored('u5', 'Zed');
-      assertTrue(leaderboardIsIgnored({ uid: 'u5' }) && leaderboardIsIgnored({ username: 'zed' }), 'ignoring from the card hides them at once');
-    } finally { leaderboardIgnored = saved; }
+    const rows = leaderboardRowsFrom('challenges', { u9: { name: 'Sam', count: 3 }, u2: { name: 'Amy', count: 1 } });
+    assertEqual(rows.length, 2, 'every player stays on the board (ignoring someone never hides them)');
   });
   await test('Hover hints never cover a card description; the Play Matrix is explained in plain words', () => {
     const tip = document.getElementById('dynamicTooltip');
