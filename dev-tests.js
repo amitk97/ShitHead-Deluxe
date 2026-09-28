@@ -1265,11 +1265,12 @@ async function runDevTestSuite() {
     ['Gauntlet', 'Lives', 'Joker Effect', 'Leaderboard', 'Diamonds', 'Ranked', 'Tier'].forEach(t => assertTrue(terms.includes(t), `Key Terms explain ${t}`));
   });
   // ---- Joker effects ----
-  await test('Joker effects: 6 in the Shop at 2000, one per seasonal event at 3000, each with its own animation and sound', () => {
+  await test('Joker effects: 6 in the Shop at 2000 + 4 premium at 3500, one per seasonal event at 3000, each with its own animation and sound', () => {
     const shop = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Joker Effects' && !i.season);
     const seasonal = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Joker Effects' && i.season);
-    assertEqual(shop.length, 6, 'Six Shop Joker effects');
-    assertTrue(shop.every(i => i.cost === 2000), 'Shop Joker effects cost 2000', shop.map(i => i.cost));
+    const premium = ['joker-hypnotist', 'joker-vampire', 'joker-redcard', 'joker-portal'];
+    assertEqual(shop.length, 10, 'Ten Shop Joker effects');
+    assertTrue(shop.every(i => i.cost === (premium.includes(i.id) ? 3500 : 2000)), 'Shop Joker effects cost 2000, premium ones 3500', shop.map(i => i.cost));
     assertEqual(seasonal.length, SEASONAL_EVENTS.length, 'One per seasonal event');
     assertTrue(seasonal.every(i => i.cost === 3000), 'Seasonal Joker effects cost 3000', seasonal.map(i => i.cost));
     const all = [...shop, ...seasonal];
@@ -2368,7 +2369,8 @@ async function runDevTestSuite() {
   }
   await test('REGRESSION: shape burn effects draw real shapes in previews and games', () => {
     const stage = testBurnStage();
-    [['burn-electric', 'polyline'], ['burn-coloured', 'path'], ['burn-sweets', 'ellipse'], ['burn-paint', 'path'], ['burn-smoke', 'div']].forEach(([id, shape]) => {
+    [['burn-electric', 'polyline'], ['burn-coloured', 'path'], ['burn-sweets', 'ellipse'], ['burn-paint', 'path'], ['burn-smoke', 'div'],
+      ['burn-blackhole', 'circle'], ['burn-origami', 'path'], ['burn-pixel', 'div'], ['burn-lava', 'ellipse']].forEach(([id, shape]) => {
       assertTrue(playShopBurnPreview(id, stage), `${id} must play in the preview stage`);
       assertTrue(!!stage.querySelector(`.bfx ${shape}`), `${id} must draw ${shape} shapes, not plain dots`);
     });
@@ -2378,12 +2380,13 @@ async function runDevTestSuite() {
     assertTrue(document.getElementById('burnFxLayer').querySelectorAll('.bfx').length > 0 && particles.length === before, 'In games, shape effects use their own layer, not the ember canvas');
     document.getElementById('burnFxLayer').innerHTML = '';
     const prices = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && !i.season).map(i => [i.name, i.cost]));
-    assertEqual(prices, { 'Coloured Flame': 250, 'Ice Shatter': 500, 'Electric Blast': 1000, 'Paint Splats': 750, 'Stupendous Confectionery': 1500, 'Smoke Show': 2000 }, 'Burn effect prices');
+    assertEqual(prices, { 'Coloured Flame': 250, 'Ice Shatter': 500, 'Electric Blast': 1000, 'Paint Splats': 750, 'Stupendous Confectionery': 1500, 'Smoke Show': 2000,
+      'Black Hole': 2500, 'Origami Fold': 2500, 'Pixel Blast': 2500, 'Lava Melt': 2500 }, 'Burn effect prices');
   });
 
   await test('REGRESSION: new victory effects draw on their own top layer, with the requested prices', () => {
     const layer = document.getElementById('victoryFxLayer');
-    ['victory-sparklers', 'victory-stars', 'victory-karate'].forEach(id => {
+    ['victory-sparklers', 'victory-stars', 'victory-karate', 'victory-trophy', 'victory-rocket', 'victory-origami', 'victory-lion'].forEach(id => {
       layer.innerHTML = '';
       playVictoryEffect(id);
       assertTrue(layer.querySelectorAll('.bfx').length > 0, `${id} must draw on the victory layer`);
@@ -2391,7 +2394,36 @@ async function runDevTestSuite() {
     assertEqual(layer.querySelectorAll('.bfx svg path').length > 0, true, 'Effects are drawn shapes');
     layer.innerHTML = '';
     const prices = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Victory Effects' && !i.season).map(i => [i.name, i.cost]));
-    assertEqual(prices, { 'Confetti Burst': 250, 'Card Shower': 1500, 'Fireworks': 750, 'Sparkler Salute': 750, '5-Star Finish': 1000, 'Karate Chop': 2000 }, 'Victory effect prices');
+    assertEqual(prices, { 'Confetti Burst': 250, 'Card Shower': 1500, 'Fireworks': 750, 'Sparkler Salute': 750, '5-Star Finish': 1000, 'Karate Chop': 2000,
+      'Trophy Lift': 2500, 'Rocket Launch': 2500, 'Origami Flock': 2500, "Lion's Roar": 2500 }, 'Victory effect prices');
+  });
+
+  await test('Premium effects (4 burns, 4 victories): the dearest of their kind, their own sounds, and nothing left behind', () => {
+    const burns = ['burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava'];
+    const wins = ['victory-trophy', 'victory-rocket', 'victory-origami', 'victory-lion'];
+    const cost = (id) => COSMETIC_SHOP_ITEMS.find(i => i.id === id).cost;
+    [['Burn Effects', burns], ['Victory Effects', wins], ['Joker Effects', ['joker-hypnotist', 'joker-vampire', 'joker-redcard', 'joker-portal']]].forEach(([cat, ids]) => {
+      const others = COSMETIC_SHOP_ITEMS.filter(i => i.category === cat && !ids.includes(i.id));
+      assertTrue(ids.every(id => others.every(o => cost(id) >= o.cost)), `${cat}: the premium ones cost at least as much as any other`);
+      assertTrue(ids.every(id => isSupportedCosmetic(COSMETIC_CATEGORY_TYPES[cat], id)), `${cat}: all can be equipped`);
+    });
+    assertEqual(new Set(burns.map(id => BURN_SOUNDS[id])).size, 4, 'Each premium burn has its own sound');
+    assertTrue(burns.every(id => !Object.keys(BURN_SOUNDS).some(o => o !== id && BURN_SOUNDS[o] === BURN_SOUNDS[id])), 'No burn sound is shared');
+    // Every piece a burn draws finishes (and is removed) within ~2s: Lava
+    // Melt's pool sinks away, so no scorch mark stays on the table.
+    const stage = testBurnStage();
+    burns.forEach(id => {
+      stage.querySelectorAll('.bfx, .bfx-flash').forEach(n => n.remove());
+      playBurnFx(id, stage, 120, 80, 1);
+      const pieces = [...stage.querySelectorAll('.bfx')];
+      assertTrue(pieces.length > 5, `${id} draws its pieces`);
+      const ends = pieces.flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
+      assertEqual(pieces.filter(el => el.getAnimations().length === 0).length, 0, `${id}: every piece is animated (and so removed when done)`);
+      assertTrue(Math.max(...ends) <= 2100, `${id} ends within 2.1s (got ${Math.round(Math.max(...ends))}ms)`);
+      assertTrue(ends.every(e => Number.isFinite(e)), `${id}: nothing runs forever`);
+    });
+    stage.querySelectorAll('.bfx, .bfx-flash').forEach(n => n.remove());
+    assertTrue(/ori-wing/.test(bfxSwanSvg()), 'Swans have a flapping wing');
   });
 
   await test('REGRESSION: Shop and Custom tabs list cheapest first, then A-Z', () => {
@@ -2406,7 +2438,7 @@ async function runDevTestSuite() {
     shopTab = savedTab; shopFilter = savedFilter; renderCosmeticShop();
     renderPersonalisationCosmetics();
     const burnNames = [...document.querySelectorAll('#personalisationBurnEffects .avatar-option-name')].map(n => n.textContent).slice(1);
-    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show'], 'Custom burn tiles in value order');
+    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show', 'Black Hole', 'Lava Melt', 'Origami Fold', 'Pixel Blast'], 'Custom burn tiles in value order');
   });
   await test('REGRESSION: Card Shower and the deal freeze the relevant player\'s card style at the start', () => {
     const saved = { ...equippedCosmetics };
@@ -7280,6 +7312,36 @@ async function runDevTestSuite() {
       saveGameState = originalSave; cosmeticPurchaseState = savedPurchases;
       selectDeckTheme('theme-obsidian');
       document.getElementById('themesModal').classList.add('hidden');
+    }
+  });
+  await test('Every item preview is drawn the same way per type: Custom tile = Shop row, one size, never collapsed', () => {
+    // The rule for every new item: previews come from cosmeticPreview, and
+    // every item of a type shows at the same, real size in Custom and the Shop.
+    const host = document.createElement('div');
+    host.style.cssText = 'position:fixed;left:0;top:0;width:360px;z-index:-1;visibility:hidden';
+    document.body.appendChild(host);
+    const box = (html) => { host.innerHTML = html; const el = host.firstElementChild; const r = el.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; };
+    const expected = { cardBack: [32, 44], frame: [32, 44], deck: [32, 44], burnEffect: [40, 40], victoryEffect: [40, 40], jokerEffect: [40, 40], emotes: [40, 40], avatar: [40, 40] };
+    try {
+      COSMETIC_TABS.map(tab => COSMETIC_CATEGORY_TYPES[tab.category]).forEach(type => {
+        const items = customAllItems(type);
+        assertTrue(items.length > 0, `${type} has items`);
+        const sizes = new Set();
+        items.forEach(item => {
+          const custom = box(`<span class="avatar-option-art" style="display:inline-flex">${cosmeticPreview(item, type)}</span>`);
+          const art = box(cosmeticPreview(item, type));
+          const shop = type === 'tableTheme' ? box(`<span style="display:block;width:120px">${cosmeticPreview(item, type)}</span>`) : box(`<span style="display:inline-flex">${shopCosmeticThumbnail(item, type)}</span>`);
+          assertTrue(art[0] >= 20 && art[1] >= 20, `${item.id} preview has a real size (got ${art})`);
+          assertTrue(custom[1] >= 20, `${item.id} Custom tile art is not collapsed`);
+          if (type !== 'tableTheme') assertEqual(shop.join('x'), art.join('x'), `${item.id}: Shop row and Custom show the same preview size`);
+          if (expected[type]) assertEqual(art.join('x'), expected[type].join('x'), `${item.id} uses the shared ${type} size`);
+          sizes.add(art.join('x'));
+        });
+        if (type !== 'tableTheme') assertEqual(sizes.size, 1, `Every ${type} preview is one size (got ${[...sizes]})`);
+        assertTrue(type === 'tableTheme' || type === 'avatar' || box(cosmeticPreview(null, type))[1] >= 20, `Default ${type} preview has a real size`);
+      });
+    } finally {
+      host.remove();
     }
   });
   await test('REGRESSION: closing the Themes page (X button and outside click) both work', () => {

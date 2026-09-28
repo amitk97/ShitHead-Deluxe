@@ -120,6 +120,14 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok((await admin('shopPurchases/alice/cosmetics/back-midnight')) !== null, 'purchase mirror written by server');
   await allowed('equip a bought item', db => set(ref(db, 'users/alice/equippedCosmetics/cardBack'), 'back-midnight'));
   await denied('equip an unowned item', db => set(ref(db, 'users/alice/equippedCosmetics/cardBack'), 'back-neon'));
+  // Premium effects (v189): bought at their price and equippable; unowned refused.
+  await admin('users/alice/diamonds', 'PUT', 3000);
+  r = await call('alice', { action: 'buyItem', itemId: 'burn-origami' });
+  ok(r.diamonds === 500, 'buy Origami Fold (2500)', r);
+  await allowed('equip a premium burn', db => set(ref(db, 'users/alice/equippedCosmetics/burnEffect'), 'burn-origami'));
+  await denied('equip an unowned premium Joker', db => set(ref(db, 'users/alice/equippedCosmetics/jokerEffect'), 'joker-portal'));
+  await denied('equip an unowned premium victory', db => set(ref(db, 'users/alice/equippedCosmetics/victoryEffect'), 'victory-origami'));
+  await admin('users/alice/diamonds', 'PUT', 960);
 
   // AmitK test account
   r = await call('amit', { action: 'init' }, 'amirk2197@googlemail.com');

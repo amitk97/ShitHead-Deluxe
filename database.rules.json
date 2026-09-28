@@ -102,6 +102,7 @@
               (newData.val() === 'burn-coloured' || newData.val() === 'burn-ice' ||
               newData.val() === 'burn-electric' || newData.val() === 'burn-paint' ||
               newData.val() === 'burn-sweets' || newData.val() === 'burn-smoke' ||
+              newData.val().matches(/^burn-(blackhole|origami|pixel|lava)$/) ||
               (newData.val().matches(/^burn-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^burn-(halloween|diwali|christmas|newyear)$/)))))"
           },
@@ -113,6 +114,7 @@
               (newData.val() === 'victory-confetti' || newData.val() === 'victory-cards' ||
               newData.val() === 'victory-fireworks' || newData.val() === 'victory-sparklers' ||
               newData.val() === 'victory-stars' || newData.val() === 'victory-karate' ||
+              newData.val().matches(/^victory-(trophy|rocket|origami|lion)$/) ||
               (newData.val().matches(/^victory-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^victory-(halloween|diwali|christmas|newyear)$/)))))"
           },
@@ -122,6 +124,7 @@
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val().matches(/^joker-(grin|jackbox|puppet|magic|glitch|storm)$/) ||
+              newData.val().matches(/^joker-(hypnotist|vampire|redcard|portal)$/) ||
               newData.val().matches(/^joker-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^joker-(halloween|diwali|christmas|newyear)$/))))"
           },

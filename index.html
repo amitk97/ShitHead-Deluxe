@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v188 (ShitHead-Deluxe-170) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v189 (ShitHead-Deluxe-171) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -930,7 +930,7 @@
     .theme-fourcolour { --card-bg: #0f172a; --card-border: #475569; --text-light: #f8fafc; --text-red: #ef4444; }
     .theme-fourcolour .suit-d { color: #60a5fa !important; }
     .theme-fourcolour .suit-c { color: #4ade80 !important; }
-    .deck-mini-card { display:flex; flex-direction:column; justify-content:space-between; width:32px; height:44px; padding:3px; border-radius:6px; background:var(--card-bg); border:1.5px solid var(--card-border); font-weight:900; line-height:1; }
+    .deck-mini-card { display:flex; box-sizing:border-box; flex-shrink:0; flex-direction:column; justify-content:space-between; width:32px; height:44px; padding:3px; border-radius:6px; background:var(--card-bg); border:1.5px solid var(--card-border); font-weight:900; line-height:1; }
     .deck-mini-card .dm-rank { font-size:11px; color:var(--text-light); }
     .deck-mini-card .dm-suits { display:flex; justify-content:space-between; font-size:8px; }
     .deck-mini-card.is-big { width:64px; height:92px; padding:6px; border-radius:10px; border-width:2px; }
@@ -1051,7 +1051,7 @@
         radial-gradient(ellipse at 30% 25%, #1e3a8a 0, #0b1026 55%, #02030a 100%);
       border-color:#fcd34d !important; color:#fde68a;
     }
-    .custom-card-back.cosmetic-back-arcade > svg, .custom-card-back.cosmetic-back-space > svg { display:none; }
+    .custom-card-back.cosmetic-back-arcade > svg, .custom-card-back.cosmetic-back-space > svg { visibility:hidden; }
     .custom-card-back.cosmetic-back-arcade::before, .custom-card-back.cosmetic-back-space::before { display:none; }
     .custom-card-back.cosmetic-back-tartan {
       background:
@@ -1203,6 +1203,11 @@
        previews (inside the preview stage). */
     #burnFxLayer { position:fixed; inset:0; pointer-events:none; z-index:46; overflow:hidden; }
     #victoryFxLayer { position:fixed; inset:0; pointer-events:none; z-index:110; overflow:hidden; }
+    /* Origami swans flap (burn + victory); the rocket's flame flickers. */
+    .ori-wing { transform-box:fill-box; transform-origin:50% 100%; animation:ori-flap .24s ease-in-out infinite alternate; }
+    @keyframes ori-flap { to { transform:scaleY(-.5); } }
+    .vfx-flame { transform-origin:50% 0; animation:vfx-flicker .09s steps(2) infinite alternate; }
+    @keyframes vfx-flicker { to { transform:scale(.85,1.3); } }
     /* Joker effects: over the table (64), under the emote picker (65) and every pop-up. */
     #jokerFxLayer { position:fixed; inset:0; pointer-events:none; z-index:64; overflow:hidden; }
     .jfx-host { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
@@ -1590,8 +1595,16 @@
     .cosmetic-tab[aria-selected="true"] { border-color:#f59e0b; color:#fcd34d; background:rgba(69,26,3,.45); }
     .cosmetic-tab small { font-size:8px; color:#64748b; font-weight:900; }
     .cosmetic-tab[aria-selected="true"] small { color:#fbbf24; }
-    .effect-mini-tile { display:inline-flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:12px; border:2px solid #475569; background:#0f172a; color:#cbd5e1; font-size:26px; line-height:1; }
-    .frame-mini-card { display:inline-flex; flex-direction:column; align-items:center; justify-content:center; width:40px; height:54px; border-radius:8px; border:3px solid #475569; background:#0f172a; color:#f8fafc; font-weight:900; font-size:13px; line-height:1.05; }
+    /* Item previews (Shop rows, Custom tiles, Collection, gifts) share two
+       sizes so every item of a type looks the same: card-shaped things
+       (card backs, frames, decks) are 32x44 mini cards, everything else a
+       40x40 tile. One source: cosmeticPreview. A dev test checks every item. */
+    .cos-mini-card { display:inline-flex; box-sizing:border-box; flex-shrink:0; align-items:center; justify-content:center; width:32px; height:44px; border-radius:6px; }
+    .cos-mini-card > svg { width:18px; height:18px; }
+    .shop-row-thumb { flex-shrink:0; width:44px; height:46px; display:flex; align-items:center; justify-content:center; }
+    .effect-mini-tile { display:inline-flex; box-sizing:border-box; flex-shrink:0; align-items:center; justify-content:center; width:40px; height:40px; border-radius:10px; border:2px solid #475569; background:#0f172a; color:#cbd5e1; font-size:21px; line-height:1; }
+    .effect-mini-tile.is-emotes { display:inline-grid; grid-template-columns:1fr 1fr; place-items:center; font-size:14px; padding:1px; }
+    .frame-mini-card { display:inline-flex; box-sizing:border-box; flex-shrink:0; flex-direction:column; align-items:center; justify-content:center; width:32px; height:44px; border-radius:6px; border:2px solid #475569; background:#0f172a; color:#f8fafc; font-weight:900; font-size:11px; line-height:1.05; }
     .cosmetic-tile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
     .cosmetic-tile { min-height:104px; }
     .cosmetic-tile .avatar-option-art { min-height:48px; display:flex; align-items:center; justify-content:center; }
@@ -6684,6 +6697,44 @@ video {
         k.noise({ dur: 1.2, type: 'bandpass', f0: 420, f1: 160, q: 0.7, level: 0.45, attack: 0.3 });
         k.tone({ dur: 1.0, f0: 58, f1: 45, level: 0.25, attack: 0.2 });
       },
+      // Black Hole: a deep pull that sinks as the cards spiral in (streaks
+      // for each card), then the pop at 1.05s and twinkling starlight.
+      'burn-blackhole': (k) => {
+        k.tone({ dur: 1.05, f0: 90, f1: 32, level: 0.42, attack: 0.25, vibrato: 4 });
+        k.noise({ dur: 1.0, type: 'bandpass', f0: 2400, f1: 180, q: 1.4, level: 0.3, attack: 0.35 });
+        k.scatter(8, 0.15, 0.95, (at) => k.tone({ at, dur: 0.14, type: 'triangle', f0: 1400 + Math.random() * 600, f1: 300, level: 0.05 }));
+        k.tone({ at: 1.06, dur: 0.12, f0: 180, f1: 1800, level: 0.3 });
+        k.noise({ at: 1.06, dur: 0.25, type: 'highpass', f0: 3000, f1: 7000, level: 0.2 });
+        k.scatter(10, 1.1, 1.6, (at) => k.tone({ at, dur: 0.3, type: 'triangle', f0: 2000 + Math.random() * 2500, level: 0.06 }));
+      },
+      // Origami Fold: a crisp paper crease for each fold (card, triangle,
+      // kite, swan), then wing beats fading as the swans fly off.
+      'burn-origami': (k) => {
+        [0.02, 0.16, 0.3, 0.42].forEach((at, i) => {
+          k.noise({ at, dur: 0.06, type: 'bandpass', f0: 3200 - i * 300, q: 2.5, level: 0.6 });
+          k.noise({ at: at + 0.03, dur: 0.05, type: 'highpass', f0: 5000, level: 0.12 });
+        });
+        [0.56, 0.69, 0.82, 0.95, 1.08, 1.21].forEach((at, i) => k.noise({ at, dur: 0.09, type: 'bandpass', f0: 700, f1: 480, q: 1.2, level: 0.55 * (1 - i * 0.13) }));
+        k.tone({ at: 0.5, dur: 0.9, type: 'triangle', f0: 660, f1: 1320, level: 0.06, attack: 0.1 });
+      },
+      // Pixel Blast: two 8-bit blips as the card pixelates, a crunchy
+      // chiptune boom at 0.2s and a falling arpeggio as the pixels scatter.
+      'burn-pixel': (k) => {
+        k.tone({ dur: 0.07, type: 'square', f0: 880, level: 0.12 });
+        k.tone({ at: 0.09, dur: 0.07, type: 'square', f0: 660, level: 0.12 });
+        k.noise({ at: 0.2, dur: 0.55, type: 'lowpass', f0: 3000, f1: 150, q: 0.7, level: 0.5 });
+        k.tone({ at: 0.2, dur: 0.45, type: 'square', f0: 220, f1: 40, level: 0.18 });
+        [1047, 784, 659, 523, 392].forEach((f, i) => k.tone({ at: 0.32 + i * 0.08, dur: 0.07, type: 'square', f0: f, level: 0.08 }));
+      },
+      // Lava Melt: a sizzle as the cards heat, a heavy slump into the pool,
+      // blorping bubbles, then a hiss as it cools and sinks away.
+      'burn-lava': (k) => {
+        k.noise({ dur: 0.5, type: 'highpass', f0: 2500, f1: 4500, level: 0.11, attack: 0.15 });
+        k.tone({ at: 0.32, dur: 0.7, f0: 70, f1: 45, level: 0.28, attack: 0.1 });
+        k.noise({ at: 0.32, dur: 0.4, type: 'lowpass', f0: 600, f1: 200, level: 0.2, attack: 0.05 });
+        k.scatter(9, 0.76, 1.45, (at) => { const f = 90 + Math.random() * 90; k.tone({ at, dur: 0.1, f0: f, f1: f * 2.2, level: 0.13 }); });
+        k.noise({ at: 1.35, dur: 0.55, type: 'highpass', f0: 4000, f1: 1500, level: 0.08, attack: 0.05 });
+      },
       // Seasonal burns
       'burn-valentine': (k) => { fireWhoosh(k, 0.5); [784, 988, 1175].forEach((f, i) => k.tone({ at: 0.08 + i * 0.1, dur: 0.5, type: 'triangle', f0: f, level: 0.12 })); },
       // Cannonball: a deep plunk into the water and a big splash (flash +
@@ -6761,6 +6812,41 @@ video {
         k.scatter(14, 0.05, 0.6, (at) => k.noise({ at, dur: 0.015, type: 'highpass', f0: 4200, level: 0.18 }));
         k.tone({ at: 0.64, dur: 0.22, f0: 180, f1: 60, level: 0.45 });
         jokerChime(k, [880, 1319], 0.68, 0.06, 0.1);
+      },
+      // Hypnotist: a dreamy, wobbling drone, the watch ticking at each end
+      // of its swing, and a low drop into "PICK IT UP".
+      'joker-hypnotist': (k) => {
+        k.tone({ dur: 1.3, f0: 330, f1: 220, level: 0.1, attack: 0.3, vibrato: 25 });
+        k.tone({ dur: 1.3, type: 'triangle', f0: 333, f1: 223, level: 0.08, attack: 0.3, vibrato: 18 });
+        [0.26, 0.53, 0.8, 1.08].forEach((at, i) => k.noise({ at, dur: 0.03, type: 'bandpass', f0: i % 2 ? 2600 : 3400, q: 8, level: 0.3 }));
+        k.tone({ at: 0.8, dur: 0.5, f0: 196, f1: 98, level: 0.28, attack: 0.02 });
+      },
+      // Vampire: the cape's swoop, a dark organ chord as he appears, bat
+      // squeaks and a low "mwahaha".
+      'joker-vampire': (k) => {
+        k.noise({ dur: 0.4, type: 'bandpass', f0: 250, f1: 1400, q: 0.9, level: 0.6, attack: 0.12 });
+        [147, 175, 220].forEach((f) => k.tone({ at: 0.3, dur: 0.95, type: 'triangle', f0: f, level: 0.07, attack: 0.05 }));
+        k.scatter(10, 0.45, 1.3, (at) => k.tone({ at, dur: 0.05, f0: 3200 + Math.random() * 1800, f1: 4200 + Math.random() * 1500, level: 0.05 }));
+        [0.58, 0.74, 0.9, 1.06].forEach((at, i) => k.tone({ at, dur: 0.12, type: 'sawtooth', f0: 210 - i * 14, f1: 170 - i * 14, level: 0.26, vibrato: 12 }));
+      },
+      // Red Card: two short whistle blasts and a long one as the card goes
+      // up, then the crowd and camera clicks.
+      'joker-redcard': (k) => {
+        [[0, 0.12], [0.17, 0.12], [0.36, 0.42]].forEach(([at, dur]) => {
+          k.tone({ at, dur, f0: 2900, level: 0.24, vibrato: 140 });
+          k.noise({ at, dur, type: 'bandpass', f0: 2900, q: 6, level: 0.12 });
+        });
+        k.noise({ at: 0.6, dur: 0.85, type: 'bandpass', f0: 700, f1: 900, q: 0.6, level: 0.42, attack: 0.2 });
+        k.scatter(6, 0.56, 1.2, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 5000, level: 0.12 }));
+      },
+      // Portal: a rising warp as it opens, a swirling hum, a chime as the
+      // Joker steps through, cards whipping in and the snap shut.
+      'joker-portal': (k) => {
+        k.tone({ dur: 0.35, type: 'sawtooth', f0: 90, f1: 700, level: 0.1, vibrato: 30 });
+        k.noise({ dur: 1.3, type: 'bandpass', f0: 500, f1: 1500, q: 3, level: 0.16, attack: 0.25 });
+        jokerChime(k, [1319, 1760, 2349], 0.3, 0.07, 0.08);
+        k.scatter(8, 0.76, 1.2, (at) => k.noise({ at, dur: 0.03, type: 'highpass', f0: 3800, level: 0.16 }));
+        k.tone({ at: 1.3, dur: 0.18, f0: 400, f1: 70, level: 0.35 });
       },
       // Pumpkin Joker: a spooky wobble, then the ghost's rising BOO.
       'joker-halloween': (k) => {
@@ -6891,7 +6977,7 @@ video {
     // host: an absolutely-positioned container; x/y: impact point inside it;
     // scale: 1 in game, smaller inside the Shop/Custom preview stage.
     // ============================================================
-    const SHAPE_BURN_EFFECTS = new Set(['burn-electric', 'burn-coloured', 'burn-sweets', 'burn-paint', 'burn-smoke']);
+    const SHAPE_BURN_EFFECTS = new Set(['burn-electric', 'burn-coloured', 'burn-sweets', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava']);
     let bfxGradientSeq = 0;
     const bfxRand = (min, max) => min + Math.random() * (max - min);
     function bfxAdd(host, html, x, y, w, h) {
@@ -7054,9 +7140,169 @@ video {
       const core = bfxAdd(host, puff(90 * k, dark, 8 * k), x, y, 90 * k, 60 * k);
       bfxAnimate(core, [{ transform: 'scale(.4)', opacity: .95 }, { transform: 'scale(1.8)', opacity: 0 }], { duration: 700, easing: 'ease-out' });
     }
+    // ---- Premium burns: Black Hole, Origami Fold, Pixel Blast, Lava Melt ----
+    // Each is over within ~2s and removes every piece it drew: nothing stays
+    // on the table (Lava Melt's pool cools and sinks away completely).
+    const bfxSvg = (w, h, body) => `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${body}</svg>`;
+    const bfxHostSize = (host) => [host.clientWidth || window.innerWidth, host.clientHeight || window.innerHeight];
+    // A small playing card (40x56) for effects that start from the pile.
+    const bfxMiniCard = (face = '#f8fafc', mark = '#dc2626', edge = '#334155') => bfxSvg(40, 56,
+      `<rect x="1.5" y="1.5" width="37" height="53" rx="5" fill="${face}" stroke="${edge}" stroke-width="2"/>
+      <path d="M20 37c-9-6-13-10-13-15 0-4 3-7 6.5-7 2.6 0 4.8 1.6 6.5 4 1.7-2.4 3.9-4 6.5-4 3.5 0 6.5 3 6.5 7 0 5-4 9-13 15Z" fill="${mark}"/>`);
+    // An origami swan facing right (100x80). Its wing (.ori-wing) flaps.
+    const bfxSwanSvg = (a = '#f8fafc', b = '#e2e8f0', c = '#cbd5e1') => bfxSvg(100, 80,
+      `<path d="M6 50 52 44 46 70Z" fill="${a}"/><path d="M52 44 88 58 46 70Z" fill="${b}"/>
+      <path d="M70 58 76 10 84 58Z" fill="${a}"/><path d="M76 10 94 18 81 17Z" fill="${c}"/>
+      <g class="ori-wing"><path d="M24 49 58 12 66 51Z" fill="${a}"/><path d="M24 49 58 12 46 50Z" fill="${c}"/></g>
+      <path d="M6 50 52 44 46 70M76 10 80 58" stroke="rgba(71,85,105,.4)" stroke-width="1" fill="none"/>`);
+    const bfxStar4 = (c) => bfxSvg(20, 20, `<path d="M10 0 12 8 20 10 12 12 10 20 8 12 0 10 8 8Z" fill="${c}"/>`);
+
+    // Black Hole: a dark core with a glowing ring opens on the pile, the
+    // cards orbit in and stretch as they fall, then it collapses (1.05s)
+    // into a pop of starlight.
+    function bfxBlackHole(host, x, y, k) {
+      const gid = `bfx-g-${++bfxGradientSeq}`;
+      const arms = [0, 90, 180, 270].map(r => `<path d="M50 50m-40 0a40 40 0 0 1 40-40" stroke="${r % 180 ? '#f59e0b' : '#a78bfa'}" stroke-width="3.5" stroke-linecap="round" fill="none" opacity=".75" transform="rotate(${r} 50 50)"/>`).join('');
+      const hole = bfxAdd(host, bfxSvg(100, 100, `<defs><radialGradient id="${gid}"><stop offset=".3" stop-color="#000"/><stop offset=".46" stop-color="#6d28d9"/><stop offset=".58" stop-color="#f59e0b" stop-opacity=".9"/><stop offset=".78" stop-color="#c026d3" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
+        <circle cx="50" cy="50" r="50" fill="url(#${gid})"/>${arms}<circle cx="50" cy="50" r="24" fill="#000"/>`), x, y, 160 * k, 160 * k);
+      bfxAnimate(hole, [{ transform: 'scale(0) rotate(0deg)', opacity: 0 }, { transform: 'scale(1) rotate(-160deg)', opacity: 1, offset: .18 },
+        { transform: 'scale(1.1) rotate(-560deg)', opacity: 1, offset: .8 }, { transform: 'scale(0) rotate(-760deg)', opacity: 1 }], { duration: 1100, easing: 'ease-in-out' });
+      for (let i = 0; i < 10; i++) {
+        const a0 = (i / 10) * Math.PI * 2, r0 = bfxRand(80, 120) * k;
+        const card = bfxAdd(host, bfxMiniCard(i % 3 ? '#f8fafc' : '#fef3c7', i % 2 ? '#dc2626' : '#111827'), x, y, 26 * k, 36 * k);
+        bfxAnimate(card, [0, .15, .3, .45, .6, .75, .9, 1].map(t => {
+          const a = a0 - t * Math.PI * 2.4, r = r0 * Math.pow(1 - t, 1.3);
+          return { transform: `translate(${Math.cos(a) * r}px,${Math.sin(a) * r}px) rotate(${(a * 180) / Math.PI - 90}deg) scale(${1 - .9 * t},${1 + 1.6 * t})`, opacity: t === 0 ? 0 : t > .92 ? 0 : 1 };
+        }), { duration: 820, delay: 120 + i * 22, easing: 'linear' });
+      }
+      const flash = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff,rgba(196,181,253,.7) 30%,rgba(56,189,248,.25) 55%,transparent 70%)"></div>', x, y, 120 * k, 120 * k);
+      bfxAnimate(flash, [{ transform: 'scale(.1)', opacity: 0 }, { transform: 'scale(.1)', opacity: 1, offset: .01 }, { transform: 'scale(2)', opacity: 0 }], { duration: 480, delay: 1060, easing: 'ease-out' });
+      for (let i = 0; i < 18; i++) {
+        const a = (i / 18) * Math.PI * 2 + bfxRand(-.15, .15), d = bfxRand(60, 135) * k, s = bfxRand(9, 17) * k;
+        const star = bfxAdd(host, bfxStar4(['#ffffff', '#c4b5fd', '#fde68a', '#7dd3fc'][i % 4]), x, y, s, s);
+        bfxAnimate(star, [{ transform: 'translate(0,0) scale(0) rotate(0)', opacity: 0 }, { transform: 'translate(0,0) scale(.4)', opacity: 1, offset: .02 },
+          { transform: `translate(${Math.cos(a) * d * .75}px,${Math.sin(a) * d * .75}px) scale(1.1) rotate(90deg)`, opacity: 1, offset: .5 },
+          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) scale(0) rotate(180deg)`, opacity: 0 }], { duration: bfxRand(520, 720), delay: 1070 + bfxRand(0, 60), easing: 'ease-out' });
+      }
+    }
+
+    // Origami Fold: the top cards fold, crease by crease (card, triangle,
+    // kite), into paper swans that flap off the screen.
+    function bfxOrigami(host, x, y, k) {
+      const [W] = bfxHostSize(host);
+      const stageFrames = (first) => [
+        first ? { transform: 'perspective(400px) rotateY(0) scale(1)', opacity: 1 } : { transform: 'perspective(400px) rotateY(90deg) scale(.9)', opacity: 0 },
+        { transform: 'perspective(400px) rotateY(0) scale(1)', opacity: 1, offset: first ? .1 : .3 },
+        { transform: 'perspective(400px) rotateY(0) scale(1)', opacity: 1, offset: .72 },
+        { transform: 'perspective(400px) rotateX(80deg) scale(.85)', opacity: 0 }];
+      const shapes = [
+        (s) => bfxMiniCard('#f8fafc', '#dc2626'),
+        (s) => bfxSvg(100, 100, '<path d="M10 22H90L50 86Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/><path d="M50 22V86" stroke="#94a3b8" stroke-width="1.5"/><path d="M50 22 90 22 50 86Z" fill="#e2e8f0"/>'),
+        (s) => bfxSvg(100, 100, '<path d="M50 4 72 46 50 96 28 46Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/><path d="M50 4 72 46 50 96Z" fill="#e2e8f0"/><path d="M50 4V96M28 46H72" stroke="#94a3b8" stroke-width="1.2"/>')
+      ];
+      [-1, 0, 1].forEach((side, i) => {
+        const cx = x + side * 46 * k, cy = y + (side ? 6 : -4) * k, scale = side ? .82 : 1, lag = i * 55;
+        const sizes = [[40, 56], [70, 70], [62, 70]];
+        shapes.forEach((make, n) => {
+          const el = bfxAdd(host, make(), cx, cy, sizes[n][0] * k * scale, sizes[n][1] * k * scale);
+          bfxAnimate(el, stageFrames(n === 0), { duration: 175, delay: lag + n * 140, easing: 'ease-in-out' });
+        });
+        // The swan: flips in at 0.42s, hops, then flaps away off the screen.
+        const sw = 96 * k * scale, sh = 77 * k * scale;
+        const tx = side < 0 ? -(cx + sw) : side > 0 ? (W - cx) + sw : bfxRand(-30, 30) * k;
+        const ty = -(cy + sh) * (side ? .75 : 1.05);
+        const swan = bfxAdd(host, `<div style="width:100%;height:100%;${side < 0 ? 'transform:scaleX(-1)' : ''}">${bfxSwanSvg()}</div>`, cx, cy, sw, sh);
+        bfxAnimate(swan, [
+          { transform: 'perspective(400px) rotateY(90deg) translate(0,0)', opacity: 0 },
+          { transform: 'perspective(400px) rotateY(0) translate(0,0)', opacity: 1, offset: .1 },
+          { transform: `translate(0,${-10 * k}px) rotate(${side * 4}deg)`, opacity: 1, offset: .22 },
+          ...[.4, .6, .8, 1].map(t => ({ transform: `translate(${tx * t * t}px,${-10 * k + ty * Math.pow(t, 1.4) + Math.sin(t * 9) * 8 * k}px) rotate(${side * 10 - 8}deg) scale(${1 + t * .25})`, opacity: 1 }))
+        ], { duration: 1100, delay: 400 + lag, easing: 'ease-in' });
+      });
+      // A puff of paper scraps as the folds finish.
+      for (let i = 0; i < 12; i++) {
+        const a = bfxRand(-Math.PI, 0), d = bfxRand(30, 70) * k, s = bfxRand(6, 11) * k;
+        const bit = bfxAdd(host, bfxSvg(10, 10, `<path d="M0 0 10 3 3 10Z" fill="${['#f8fafc', '#e2e8f0', '#fde68a', '#fbcfe8'][i % 4]}"/>`), x, y, s, s);
+        bfxAnimate(bit, [{ transform: 'translate(0,0) rotate(0)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .02 },
+          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) rotate(${bfxRand(-200, 200)}deg)`, opacity: 1, offset: .5 },
+          { transform: `translate(${Math.cos(a) * d * 1.2}px,${Math.sin(a) * d + 40 * k}px) rotate(${bfxRand(-400, 400)}deg)`, opacity: 0 }], { duration: bfxRand(800, 1100), delay: 390 + bfxRand(0, 80), easing: 'ease-out' });
+      }
+    }
+
+    // Pixel Blast: the top card turns into big square pixels, a stepped
+    // 8-bit blast goes off (0.2s) and the pixels scatter in jerky steps.
+    function bfxPixelBlast(host, x, y, k) {
+      const cols = 7, rows = 9, s = 10 * k;
+      const heart = new Set(['3,1', '3,2', '3,4', '3,5', '4,1', '4,2', '4,3', '4,4', '4,5', '5,2', '5,3', '5,4', '6,3']);
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const edge = r === 0 || c === 0 || r === rows - 1 || c === cols - 1;
+          const colour = edge ? '#1e293b' : heart.has(`${r},${c}`) ? '#ef4444' : '#f8fafc';
+          const px0 = (c - (cols - 1) / 2) * s, py0 = (r - (rows - 1) / 2) * s;
+          const el = bfxAdd(host, `<div style="width:100%;height:100%;background:${colour};box-shadow:inset -2px -2px 0 rgba(0,0,0,.25)"></div>`, x + px0, y + py0, s, s);
+          const len = Math.hypot(px0, py0) || 1, v = bfxRand(90, 170) * k;
+          const dx = (px0 / len) * v + bfxRand(-30, 30) * k, dy = (py0 / len) * v - bfxRand(40, 90) * k;
+          bfxAnimate(el, [
+            { transform: 'translate(0,0) scale(1)', opacity: 1, easing: 'steps(2, end)' }, { transform: 'translate(0,0) scale(1.1)', opacity: 1, offset: .16, easing: 'steps(3, end)' },
+            ...[.25, .5, .75, 1].map(t => ({ transform: `translate(${dx * t}px,${dy * t + 260 * k * t * t}px)`, opacity: t < 1 ? 1 : 0, offset: .16 + t * .84, easing: 'steps(3, end)' }))
+          ], { duration: bfxRand(1050, 1300), delay: 0, easing: 'linear' });
+        }
+      }
+      const blast = bfxAdd(host, bfxSvg(20, 20, `<path d="M8 0h4v4h4v4h4v4h-4v4h-4v4H8v-4H4v-4H0V8h4V4h4Z" fill="#f97316"/><path d="M8 4h4v4h4v4h-4v4H8v-4H4V8h4Z" fill="#fde047"/><rect x="8" y="8" width="4" height="4" fill="#fff"/>`), x, y, 130 * k, 130 * k);
+      blast.style.imageRendering = 'pixelated';
+      bfxAnimate(blast, [{ transform: 'scale(.1)', opacity: 0 }, { transform: 'scale(.1)', opacity: 1, offset: .01 }, { transform: 'scale(1.1)', opacity: 1, offset: .5 }, { transform: 'scale(1.5)', opacity: 0 }], { duration: 520, delay: 200, easing: 'steps(5, end)' });
+      const colours = ['#fde047', '#f97316', '#22d3ee', '#f472b6', '#a3e635'];
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2, d = bfxRand(70, 120) * k, sz = bfxRand(5, 8) * k;
+        const bit = bfxAdd(host, `<div style="width:100%;height:100%;background:${colours[i % colours.length]}"></div>`, x, y, sz, sz);
+        bfxAnimate(bit, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .02 },
+          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: 0 }], { duration: 640, delay: 220, easing: 'steps(5, end)' });
+      }
+    }
+
+    // Lava Melt: the cards glow red-hot, droop and melt into a bubbling
+    // lava pool that then cools and sinks away, leaving the table clean.
+    function bfxLavaMelt(host, x, y, k) {
+      const gid = `bfx-g-${++bfxGradientSeq}`;
+      const poolY = y + 30 * k;
+      const pool = bfxAdd(host, bfxSvg(160, 50, `<defs><radialGradient id="${gid}" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#fef08a"/><stop offset=".35" stop-color="#f97316"/><stop offset=".75" stop-color="#b91c1c"/><stop offset="1" stop-color="#450a0a" stop-opacity="0"/></radialGradient></defs><ellipse cx="80" cy="25" rx="78" ry="23" fill="url(#${gid})"/>`), x, poolY, 170 * k, 52 * k);
+      bfxAnimate(pool, [{ transform: 'scale(0,.2)', opacity: 0, filter: 'brightness(1)' }, { transform: 'scale(0,.2)', opacity: 0, offset: .16 },
+        { transform: 'scale(1,1)', opacity: 1, offset: .42 }, { transform: 'scale(1.04,.95)', opacity: 1, filter: 'brightness(1.15)', offset: .66 },
+        { transform: 'scale(.7,.35) translateY(10px)', opacity: .7, filter: 'brightness(.45)', offset: .86 }, { transform: 'scale(.3,0) translateY(16px)', opacity: 0, filter: 'brightness(.3)' }],
+        { duration: 1950, easing: 'ease-in-out' });
+      [-34, 0, 34].forEach((ox, i) => {
+        const cx = x + ox * k, cy = y - 4 * k + (i === 1 ? -6 : 0) * k, rot = [-10, 3, 12][i];
+        const card = bfxAdd(host, `<div style="width:100%;height:100%;transform:rotate(${rot}deg)">${bfxMiniCard('#f8fafc', '#111827')}</div>`, cx, cy, 40 * k, 56 * k);
+        card.style.transformOrigin = '50% 100%';
+        const melt = [{ transform: 'scale(1,1) skewX(0)', opacity: 1 }, { transform: 'scale(1,1) skewX(0)', opacity: 1, offset: .3 },
+          { transform: 'scale(1.1,.75) skewX(6deg) translateY(6px)', opacity: 1, offset: .55 }, { transform: 'scale(1.45,.3) skewX(-5deg) translateY(18px)', opacity: .9, offset: .8 },
+          { transform: 'scale(1.7,.05) translateY(30px)', opacity: 0 }];
+        bfxAnimate(card, melt, { duration: 1000, delay: i * 50, easing: 'ease-in' });
+        const hot = bfxAdd(host, `<div style="width:100%;height:100%;transform:rotate(${rot}deg);border-radius:${5 * k}px;background:linear-gradient(180deg,#fde047,#f97316 45%,#dc2626);box-shadow:0 0 ${14 * k}px #f97316"></div>`, cx, cy, 40 * k, 56 * k);
+        hot.style.transformOrigin = '50% 100%';
+        bfxAnimate(hot, melt.map((f, n) => ({ ...f, opacity: [0, .95, 1, .95, 0][n] })), { duration: 1000, delay: i * 50, easing: 'ease-in' });
+        for (let d = 0; d < 2; d++) {
+          const drip = bfxAdd(host, `<div style="width:100%;height:100%;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:linear-gradient(#fde047,#f97316);box-shadow:0 0 6px #f97316"></div>`, cx + bfxRand(-12, 12) * k, cy + 24 * k, 6 * k, 9 * k);
+          bfxAnimate(drip, [{ transform: 'translateY(0) scale(0)', opacity: 0 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: .2 },
+            { transform: `translateY(${bfxRand(14, 26) * k}px) scale(1,1.3)`, opacity: 1, offset: .8 }, { transform: `translateY(${bfxRand(28, 34) * k}px) scale(1.4,.4)`, opacity: 0 }], { duration: 520, delay: 420 + i * 60 + d * 170, easing: 'ease-in' });
+        }
+      });
+      for (let i = 0; i < 11; i++) {
+        const bx = x + bfxRand(-58, 58) * k, s = bfxRand(7, 14) * k;
+        const bubble = bfxAdd(host, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fef9c3,#fb923c 55%,#c2410c);box-shadow:0 0 6px #fb923c"></div>`, bx, poolY + bfxRand(-6, 4) * k, s, s);
+        bfxAnimate(bubble, [{ transform: 'translateY(0) scale(0)', opacity: 0 }, { transform: `translateY(${-4 * k}px) scale(1)`, opacity: 1, offset: .55 },
+          { transform: `translateY(${-9 * k}px) scale(1.5)`, opacity: 0 }], { duration: bfxRand(280, 420), delay: bfxRand(760, 1350), easing: 'ease-out' });
+      }
+      for (let i = 0; i < 12; i++) {
+        const ember = bfxAdd(host, `<div style="width:100%;height:100%;border-radius:50%;background:#fdba74;box-shadow:0 0 6px #f97316"></div>`, x + bfxRand(-50, 50) * k, poolY, 3.5 * k, 3.5 * k);
+        bfxAnimate(ember, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .1 },
+          { transform: `translate(${bfxRand(-20, 20) * k}px,${-bfxRand(50, 100) * k}px)`, opacity: 0 }], { duration: bfxRand(700, 1000), delay: bfxRand(500, 1000), easing: 'ease-out' });
+      }
+    }
     function playBurnFx(id, host, x, y, scale = 1) {
       if (!host) return false;
-      ({ 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke }[id] || (typeof SEASONAL_BURN_FX !== 'undefined' && SEASONAL_BURN_FX[id]) || (() => {}))(host, x, y, scale);
+      ({ 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
+        'burn-blackhole': bfxBlackHole, 'burn-origami': bfxOrigami, 'burn-pixel': bfxPixelBlast, 'burn-lava': bfxLavaMelt }[id] || (typeof SEASONAL_BURN_FX !== 'undefined' && SEASONAL_BURN_FX[id]) || (() => {}))(host, x, y, scale);
       return true;
     }
 
@@ -10345,10 +10591,153 @@ video {
         }, delay + 370);
       });
     }
+    // ---- Premium victories: Trophy Lift, Rocket Launch, Origami Flock, Lion's Roar ----
+    const vfxSize = (layer) => [layer.clientWidth || window.innerWidth, layer.clientHeight || window.innerHeight];
+    function vfxTickerTape(layer, W, H, n = 60, spanMs = 1500) {
+      const colours = ['#fbbf24', '#f8fafc', '#ef4444', '#3b82f6', '#22c55e', '#ec4899', '#a855f7'];
+      for (let i = 0; i < n; i++) {
+        const w = bfxRand(4, 7), h = bfxRand(16, 28), x = bfxRand(0, W);
+        const strip = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:1px;background:${colours[i % colours.length]}"></div>`, x, -30, w, h);
+        const sway = bfxRand(30, 70) * (i % 2 ? 1 : -1), spin = bfxRand(360, 900) * (i % 3 ? 1 : -1);
+        bfxAnimate(strip, [0, .25, .5, .75, 1].map(t => ({ transform: `translate(${Math.sin(t * 7 + i) * sway}px,${t * (H + 60)}px) rotate(${t * spin}deg) rotateY(${t * 540}deg)`, opacity: t < .9 ? 1 : 0 })),
+          { duration: bfxRand(2400, 3400), delay: bfxRand(0, spanMs), easing: 'linear' });
+      }
+    }
+    // Trophy Lift: a gold trophy rises into a sunburst under ticker tape.
+    function vfxTrophy(layer) {
+      const [W, H] = vfxSize(layer);
+      const size = Math.min(210, W * .52), cx = W / 2, cy = H * .42;
+      const rays = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:repeating-conic-gradient(rgba(253,230,138,.38) 0 9deg,transparent 9deg 20deg);-webkit-mask-image:radial-gradient(circle,#000 25%,transparent 70%);mask-image:radial-gradient(circle,#000 25%,transparent 70%)"></div>', cx, cy, size * 2.6, size * 2.6);
+      bfxAnimate(rays, [{ transform: 'scale(.4) rotate(0deg)', opacity: 0 }, { transform: 'scale(1) rotate(40deg)', opacity: 1, offset: .25 }, { transform: 'scale(1.05) rotate(130deg)', opacity: 1, offset: .8 }, { transform: 'scale(1.1) rotate(160deg)', opacity: 0 }], { duration: 4000, delay: 300, easing: 'linear' });
+      const gid = `vfx-t-${++bfxGradientSeq}`;
+      const trophy = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 120 150"><defs><linearGradient id="${gid}" x1="0" x2="1"><stop offset="0" stop-color="#b45309"/><stop offset=".35" stop-color="#fde68a"/><stop offset=".6" stop-color="#fbbf24"/><stop offset="1" stop-color="#92400e"/></linearGradient></defs>
+        <path d="M28 22C8 22 8 60 38 64M92 22C112 22 112 60 82 64" fill="none" stroke="url(#${gid})" stroke-width="7" stroke-linecap="round"/>
+        <path d="M24 12h72v22c0 30-16 44-36 46-20-2-36-16-36-46Z" fill="url(#${gid})" stroke="#78350f" stroke-width="2.5"/>
+        <rect x="52" y="80" width="16" height="22" fill="url(#${gid})" stroke="#78350f" stroke-width="2"/>
+        <path d="M36 102h48l6 16H30Z" fill="url(#${gid})" stroke="#78350f" stroke-width="2"/>
+        <rect x="24" y="118" width="72" height="24" rx="3" fill="#292524" stroke="#0c0a09" stroke-width="2"/><rect x="40" y="124" width="40" height="12" rx="2" fill="#fbbf24"/>
+        <path d="M60 24 65 36 78 37 68 45 71 58 60 51 49 58 52 45 42 37 55 36Z" fill="#fff7d6"/>
+        <path d="M32 18c2 16 6 28 12 36" stroke="#fff" stroke-width="3" opacity=".6" fill="none" stroke-linecap="round"/></svg>`, cx, cy, size * .8, size);
+      bfxAnimate(trophy, [{ transform: `translateY(${H * .7}px) scale(.8)`, opacity: 1 }, { transform: 'translateY(-18px) scale(1.04)', opacity: 1, offset: .22 },
+        { transform: 'translateY(0) scale(1)', opacity: 1, offset: .3 }, { transform: 'translateY(-26px) scale(1.06)', opacity: 1, offset: .45 },
+        { transform: 'translateY(-10px) scale(1)', opacity: 1, offset: .88 }, { transform: 'translateY(-30px) scale(.95)', opacity: 0 }], { duration: 4200, easing: 'ease-out' });
+      // Glints at the lift.
+      [[-.28, -.32, 1150], [.3, -.1, 1350], [-.05, -.45, 1550]].forEach(([fx, fy, delay]) => {
+        const glint = bfxAdd(layer, bfxStar4('#ffffff'), cx + fx * size, cy + fy * size - 26, 28, 28);
+        bfxAnimate(glint, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(45deg)', opacity: 1, offset: .4 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 520, delay });
+      });
+      vfxTickerTape(layer, W, H, 70, 1800);
+    }
+    // Rocket Launch: the rocket rumbles on the pad, blasts off and leaves a
+    // trail of stars that twinkle out.
+    function vfxRocket(layer) {
+      const [W, H] = vfxSize(layer);
+      const rw = Math.min(70, W * .17), rh = rw * 2.2, x = W / 2, y0 = H - rh * .8;
+      const launchAt = 650, flight = 1500, climb = H + rh * 2;
+      const rocket = bfxAdd(layer, `<div style="position:relative;width:100%;height:100%">
+        <div class="vfx-flame" style="position:absolute;left:25%;top:84%;width:50%;height:40%"><svg width="100%" height="100%" viewBox="0 0 40 50"><path d="M4 0h32C34 20 26 36 20 50 14 36 6 20 4 0Z" fill="#f97316"/><path d="M11 0h18C28 14 24 26 20 36 16 26 12 14 11 0Z" fill="#fde047"/><path d="M16 0h8C24 8 22 14 20 20 18 14 16 8 16 0Z" fill="#fff"/></svg></div>
+        <svg style="position:absolute;inset:0" width="100%" height="100%" viewBox="0 0 60 132"><path d="M30 2C46 18 50 44 48 90H12C10 44 14 18 30 2Z" fill="#f1f5f9" stroke="#334155" stroke-width="2.5"/>
+        <path d="M30 2C38 10 43 20 45 30H15C17 20 22 10 30 2Z" fill="#ef4444" stroke="#334155" stroke-width="2.5"/>
+        <circle cx="30" cy="52" r="9" fill="#38bdf8" stroke="#334155" stroke-width="3"/><circle cx="27" cy="49" r="3" fill="#e0f2fe"/>
+        <path d="M12 72 0 104 12 100ZM48 72 60 104 48 100Z" fill="#ef4444" stroke="#334155" stroke-width="2.5" stroke-linejoin="round"/>
+        <rect x="18" y="90" width="24" height="12" rx="3" fill="#64748b" stroke="#334155" stroke-width="2.5"/><path d="M30 64v24" stroke="#cbd5e1" stroke-width="2"/></svg></div>`, x, y0, rw, rh);
+      const pos = (p) => -climb * p * p;
+      bfxAnimate(rocket, [
+        { transform: 'translate(0,40px)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .08 },
+        ...[.12, .16, .2, .24, .28].map((o, i) => ({ transform: `translate(${i % 2 ? 2 : -2}px,0)`, opacity: 1, offset: o })),
+        ...[0, .2, .4, .6, .8, 1].map(p => ({ transform: `translate(0,${pos(p)}px)`, opacity: 1, offset: (launchAt + p * flight) / (launchAt + flight) }))
+      ], { duration: launchAt + flight, easing: 'linear' });
+      // Smoke billows on the pad.
+      for (let i = 0; i < 18; i++) {
+        const s = bfxRand(40, 80), dir = i % 2 ? 1 : -1;
+        const puff = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;filter:blur(4px);background:radial-gradient(circle,rgba(241,245,249,.85),rgba(148,163,184,.4) 55%,transparent 70%)"></div>', x, y0 + rh * .5, s, s);
+        bfxAnimate(puff, [{ transform: 'translate(0,0) scale(.3)', opacity: 0 }, { transform: `translate(${dir * bfxRand(10, 40)}px,-6px) scale(1)`, opacity: .9, offset: .25 },
+          { transform: `translate(${dir * bfxRand(90, 170)}px,${-bfxRand(10, 50)}px) scale(${bfxRand(1.8, 2.6)})`, opacity: 0 }], { duration: bfxRand(1300, 1800), delay: bfxRand(150, 900), easing: 'ease-out' });
+      }
+      // The star trail, dropped along the flight path.
+      const colours = ['#fde68a', '#ffffff', '#7dd3fc', '#f0abfc'];
+      for (let i = 0; i < 34; i++) {
+        const p = i / 34, at = launchAt + p * flight;
+        if (y0 + pos(p) + rh * .6 < -20) break;
+        const s = bfxRand(10, 20);
+        const star = bfxAdd(layer, bfxStar4(colours[i % colours.length]), x + bfxRand(-16, 16), y0 + pos(p) + rh * .62, s, s);
+        bfxAnimate(star, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.2) rotate(45deg)', opacity: 1, offset: .15 },
+          { transform: `translate(${bfxRand(-26, 26)}px,${bfxRand(10, 40)}px) scale(.8) rotate(120deg)`, opacity: .85, offset: .6 },
+          { transform: `translate(${bfxRand(-40, 40)}px,${bfxRand(40, 80)}px) scale(0) rotate(200deg)`, opacity: 0 }], { duration: bfxRand(1300, 1800), delay: at, easing: 'ease-out' });
+      }
+      // A starburst where it leaves the screen.
+      for (let j = 0; j < 14; j++) {
+        const a = (j / 14) * Math.PI * 2, d = bfxRand(50, 110);
+        const star = bfxAdd(layer, bfxStar4(colours[j % colours.length]), x, 40, 14, 14);
+        bfxAnimate(star, [{ transform: 'translate(0,0) scale(0)', opacity: 0 }, { transform: 'translate(0,0) scale(1)', opacity: 1, offset: .05 },
+          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + 30}px) scale(.4)`, opacity: 0 }], { duration: 1000, delay: launchAt + flight * .78, easing: 'ease-out' });
+      }
+    }
+    // Origami Flock: a flock of paper swans in soft colours flaps across the
+    // screen along wandering paths, with paper scraps drifting down.
+    const VFX_PAPERS = [['#f8fafc', '#e2e8f0', '#cbd5e1'], ['#fce7f3', '#fbcfe8', '#f9a8d4'], ['#e0f2fe', '#bae6fd', '#7dd3fc'],
+      ['#fef9c3', '#fde68a', '#facc15'], ['#dcfce7', '#bbf7d0', '#86efac'], ['#ede9fe', '#ddd6fe', '#c4b5fd']];
+    function vfxOrigamiFlock(layer) {
+      const [W, H] = vfxSize(layer);
+      for (let i = 0; i < 11; i++) {
+        const [a, b, c] = VFX_PAPERS[i % VFX_PAPERS.length];
+        const w = bfxRand(64, 112), h = w * .8, ltr = i % 2 === 0;
+        const y = bfxRand(.12, .78) * H, amp = bfxRand(30, 90), phase = bfxRand(0, Math.PI * 2), turns = bfxRand(1.2, 2.2);
+        const startX = ltr ? -w : W + w, endX = ltr ? W + w : -w;
+        const swan = bfxAdd(layer, `<div style="width:100%;height:100%;${ltr ? '' : 'transform:scaleX(-1)'}">${bfxSwanSvg(a, b, c)}</div>`, 0, y, w, h);
+        bfxAnimate(swan, [0, .125, .25, .375, .5, .625, .75, .875, 1].map(t => ({
+          transform: `translate(${startX + (endX - startX) * t}px,${Math.sin(phase + t * Math.PI * 2 * turns) * amp}px) rotate(${Math.cos(phase + t * Math.PI * 2 * turns) * (ltr ? -12 : 12)}deg)`, opacity: 1
+        })), { duration: bfxRand(3200, 4300), delay: bfxRand(0, 1100) + (i < 3 ? 0 : 200), easing: 'linear' });
+      }
+      for (let i = 0; i < 26; i++) {
+        const s = bfxRand(7, 12), [a] = VFX_PAPERS[i % VFX_PAPERS.length];
+        const bit = bfxAdd(layer, bfxSvg(10, 10, `<path d="M0 0 10 3 3 10Z" fill="${a}" stroke="rgba(71,85,105,.35)" stroke-width=".6"/>`), bfxRand(0, W), -20, s, s);
+        bfxAnimate(bit, [0, .33, .66, 1].map(t => ({ transform: `translate(${Math.sin(t * 6 + i) * 40}px,${t * (H + 40)}px) rotate(${t * bfxRand(300, 700)}deg)`, opacity: t < .9 ? 1 : 0 })),
+          { duration: bfxRand(3000, 4200), delay: bfxRand(0, 1600), easing: 'linear' });
+      }
+    }
+    // Lion's Roar: a lion's head surges in, opens its jaws and roars, sending
+    // gold shockwaves across the screen.
+    function vfxLion(layer) {
+      const [W, H] = vfxSize(layer);
+      const size = Math.min(250, W * .62), cx = W / 2, cy = H * .42, roarAt = 650;
+      const mane = Array.from({ length: 16 }, (_, i) => `<path d="M80 80 L${(80 + Math.cos((i / 16) * Math.PI * 2 - .2) * 74).toFixed(1)} ${(80 + Math.sin((i / 16) * Math.PI * 2 - .2) * 74).toFixed(1)} L${(80 + Math.cos((i / 16) * Math.PI * 2 + .2) * 74).toFixed(1)} ${(80 + Math.sin((i / 16) * Math.PI * 2 + .2) * 74).toFixed(1)}Z" fill="${i % 2 ? '#b45309' : '#d97706'}"/>`).join('');
+      const head = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 160 160">${mane}<circle cx="80" cy="80" r="60" fill="#c2410c"/>
+        <circle cx="42" cy="40" r="11" fill="#f59e0b" stroke="#7c2d12" stroke-width="2.5"/><circle cx="118" cy="40" r="11" fill="#f59e0b" stroke="#7c2d12" stroke-width="2.5"/>
+        <ellipse cx="80" cy="84" rx="46" ry="50" fill="#fbbf24" stroke="#7c2d12" stroke-width="2.5"/>
+        <path d="M54 66l16 5M106 66l-16 5" stroke="#7c2d12" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="62" cy="78" rx="6" ry="5" fill="#1c1917"/><ellipse cx="98" cy="78" rx="6" ry="5" fill="#1c1917"/><circle cx="64" cy="76" r="1.8" fill="#fff"/><circle cx="100" cy="76" r="1.8" fill="#fff"/>
+        <ellipse cx="80" cy="108" rx="24" ry="17" fill="#fde68a"/>
+        <path d="M70 94h20l-10 10Z" fill="#7c2d12"/><path d="M80 104v6M66 112q14 8 28 0" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`, cx, cy, size, size);
+      bfxAnimate(head, [{ transform: 'scale(.2) rotate(-10deg)', opacity: 0 }, { transform: 'scale(1.08) rotate(2deg)', opacity: 1, offset: .14 },
+        { transform: 'scale(1) rotate(0)', opacity: 1, offset: .2 }, { transform: 'scale(1.12)', opacity: 1, offset: .26 }, { transform: 'scale(1.1) translateX(-3px)', opacity: 1, offset: .32 },
+        { transform: 'scale(1.1) translateX(3px)', opacity: 1, offset: .38 }, { transform: 'scale(1.05)', opacity: 1, offset: .82 }, { transform: 'scale(.9) translateY(-20px)', opacity: 0 }], { duration: 3200, easing: 'ease-out' });
+      // The open jaws, over the muzzle.
+      const jaw = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 60 44"><path d="M4 6Q30 -2 56 6Q54 40 30 42Q6 40 4 6Z" fill="#7f1d1d" stroke="#451a03" stroke-width="3"/><path d="M12 7l4 10 4-9M40 8l4 9 4-10" fill="#fff"/><path d="M14 38l4-9 4 10M38 39l4-10 4 9" fill="#fff"/><ellipse cx="30" cy="30" rx="10" ry="6" fill="#f472b6"/></svg>`, cx, cy + size * .22, size * .34, size * .26);
+      jaw.style.transformOrigin = '50% 0%';
+      bfxAnimate(jaw, [{ transform: 'scale(.6,0)', opacity: 0 }, { transform: 'scale(.6,0)', opacity: 1, offset: .01 }, { transform: 'scale(1.05,1.1)', opacity: 1, offset: .08 },
+        { transform: 'scale(1,1)', opacity: 1, offset: .75 }, { transform: 'scale(.8,.2)', opacity: 0 }], { duration: 2000, delay: roarAt - 60, easing: 'ease-out' });
+      [0, 200, 400].forEach((d, i) => {
+        const ring = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;border:${6 - i * 1.5}px solid #fbbf24;box-shadow:0 0 18px rgba(251,191,36,.8),inset 0 0 18px rgba(251,191,36,.6)"></div>`, cx, cy + size * .25, size * .5, size * .5);
+        bfxAnimate(ring, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(.3)', opacity: 1, offset: .02 }, { transform: 'scale(4.5)', opacity: 0 }], { duration: 1100, delay: roarAt + d, easing: 'cubic-bezier(.2,.7,.3,1)' });
+      });
+      for (let i = 0; i < 26; i++) {
+        const a = (i / 26) * Math.PI * 2, d = bfxRand(.6, 1) * Math.max(W, H) * .55;
+        const dust = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:#fde68a;box-shadow:0 0 6px #fbbf24"></div>', cx, cy + size * .25, 6, 6);
+        bfxAnimate(dust, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .02 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: 0 }], { duration: bfxRand(800, 1200), delay: roarAt + bfxRand(0, 300), easing: 'ease-out' });
+      }
+      const word = bfxAdd(layer, `<div class="vfx-chop-text" style="font-size:${Math.min(46, W * .11)}px;display:flex;align-items:center;justify-content:center;width:100%;height:100%">ROAR!</div>`, cx, cy - size * .66, 240, 60);
+      bfxAnimate(word, [{ transform: 'scale(.3) rotate(-6deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(-6deg)', opacity: 1, offset: .15 }, { transform: 'scale(1) rotate(-6deg)', opacity: 1, offset: .8 }, { transform: 'scale(1.1) rotate(-6deg) translateY(-12px)', opacity: 0 }], { duration: 1700, delay: roarAt });
+      setTimeout(() => {
+        const table = document.getElementById('gameTable');
+        if (layer.isConnected && table) { table.classList.add('animate-screen-shake'); setTimeout(() => table.classList.remove('animate-screen-shake'), 400); }
+      }, roarAt);
+    }
     function playShapeVictoryEffect(effect) {
       const layer = document.getElementById('victoryFxLayer');
       if (!layer) return false;
-      const run = { 'victory-sparklers': vfxSparklers, 'victory-stars': vfxFiveStars, 'victory-karate': vfxKarate }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
+      const run = { 'victory-sparklers': vfxSparklers, 'victory-stars': vfxFiveStars, 'victory-karate': vfxKarate,
+        'victory-trophy': vfxTrophy, 'victory-rocket': vfxRocket, 'victory-origami': vfxOrigamiFlock, 'victory-lion': vfxLion }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
       if (!run) return false;
       run(layer);
       return true;
@@ -16850,6 +17239,12 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v189: [
+        ['🔥', 'Four premium burns: Black Hole, Origami Fold (the cards fold into swans and fly off), Pixel Blast and Lava Melt.'],
+        ['🃏', 'Four premium Joker effects: Hypnotist, Vampire, Red Card and Portal.'],
+        ['🏆', 'Four premium victories: Trophy Lift, Rocket Launch, Origami Flock and Lion\'s Roar.'],
+        ['🎴', 'Shop and Custom previews are now the same size for every item, and Retro Arcade and Space show properly.']
+      ],
       v188: [
         ['🛒', 'New in the Shop: decks that change your card faces (Classic Casino, Arcade and the premium Four-Colour).'],
         ['🎴', 'Four new card backs: Tartan, Retro Arcade, Art Deco and Space.'],
@@ -18551,14 +18946,131 @@ video {
       sfxFlash(host, g.cx, g.cy - 20 * k, k, 'rgba(253,230,138,.75)', 320, 900, 360);
       jfxHero(host, g, JFX_CARD, 88, 126, { y: g.cy + 80 * k, enter: 'fade', delay: 420 });
     }
+    // ---- Premium Jokers: Hypnotist, Vampire, Red Card, Portal ----
+    // An Archimedean spiral (viewBox 0 0 100 100) for the Hypnotist and Portal.
+    const jfxSpiralPath = (turns, phase, r1 = 46) => {
+      let d = '';
+      for (let i = 0; i <= 90; i++) {
+        const t = i / 90, a = phase + t * turns * Math.PI * 2, r = 3 + t * (r1 - 3);
+        d += `${i ? 'L' : 'M'}${(50 + Math.cos(a) * r).toFixed(1)} ${(50 + Math.sin(a) * r).toFixed(1)}`;
+      }
+      return d;
+    };
+    // Hypnotist: a spinning spiral and a swinging pocket watch. "You're
+    // getting sleepy…", then "PICK IT UP".
+    function jfxHypnotist(host, g) {
+      const k = g.k;
+      jfxScrim(host, 'rgba(76,29,149,.55)');
+      const spiral = bfxAdd(host, sfxSvg(100, 100, `<circle cx="50" cy="50" r="49" fill="#3b0764"/>
+        <path d="${jfxSpiralPath(3.2, 0)}" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+        <path d="${jfxSpiralPath(3.2, Math.PI)}" stroke="#e879f9" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+        <circle cx="50" cy="50" r="49" fill="none" stroke="#c084fc" stroke-width="2"/>`), g.cx, g.cy - 20 * k, 200 * k, 200 * k);
+      bfxAnimate(spiral, [{ transform: 'scale(.2) rotate(0deg)', opacity: 0 }, { transform: 'scale(1) rotate(300deg)', opacity: 1, offset: .2 },
+        { transform: 'scale(1) rotate(1150deg)', opacity: 1, offset: .82 }, { transform: 'scale(.85) rotate(1400deg)', opacity: 0 }], { duration: JOKER_FX_MS - 60, easing: 'linear' });
+      const top = g.cy - 150 * k;
+      const watch = bfxAdd(host, sfxSvg(60, 150, `<path d="M30 0v92" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="4 3"/>
+        <circle cx="30" cy="94" r="5" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
+        <circle cx="30" cy="122" r="25" fill="#fbbf24" stroke="#92400e" stroke-width="3"/><circle cx="30" cy="122" r="19" fill="#fffbeb" stroke="#b45309" stroke-width="1.5"/>
+        <path d="M30 108v14l9 6" stroke="#1c1917" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="30" cy="122" r="2" fill="#1c1917"/>
+        <path d="M18 112a16 16 0 0 1 8-6" stroke="#fff" stroke-width="2" fill="none" opacity=".8"/>`), g.cx, top + 75 * k, 60 * k, 150 * k);
+      watch.style.transformOrigin = '50% 0%';
+      bfxAnimate(watch, [{ transform: 'rotate(0deg)', opacity: 0 }, { transform: 'rotate(-30deg)', opacity: 1, offset: .18 }, { transform: 'rotate(30deg)', offset: .37 },
+        { transform: 'rotate(-30deg)', offset: .56 }, { transform: 'rotate(30deg)', opacity: 1, offset: .75 }, { transform: 'rotate(0deg)', opacity: 0 }], { duration: JOKER_FX_MS - 60, easing: 'ease-in-out' });
+      jfxWord(host, g, 'You’re getting sleepy…', { size: 21, color: '#c4b5fd', delay: 120, end: 820, tilt: 0 });
+      jfxWord(host, g, 'PICK IT UP', { size: 38, color: '#e879f9', delay: 800, tilt: -4 });
+    }
+    // Vampire: a cape swoops across and reveals the vampire, bats scatter and
+    // he laughs.
+    const JFX_BAT_WING = 'M30 14C26 8 18 6 12 8C14 10 14 13 12 15C8 12 3 12 0 15C4 16 6 19 6 22C11 19 17 19 22 22C24 19 27 18 30 19Z';
+    const JFX_BAT = sfxSvg(60, 30, `<path d="${JFX_BAT_WING}" fill="#1c1917" stroke="#f87171" stroke-width=".8"/><path d="${JFX_BAT_WING}" fill="#1c1917" stroke="#f87171" stroke-width=".8" transform="translate(60 0) scale(-1 1)"/>
+      <ellipse cx="30" cy="16" rx="4.5" ry="6.5" fill="#1c1917"/><path d="M26.5 11l1-4 2 3 2-3 1 4Z" fill="#1c1917"/><circle cx="28.5" cy="14" r="1" fill="#ef4444"/><circle cx="31.5" cy="14" r="1" fill="#ef4444"/>`);
+    function jfxVampire(host, g) {
+      const k = g.k;
+      jfxScrim(host, 'rgba(127,29,29,.5)');
+      const face = sfxSvg(120, 150, `<path d="M8 150 22 100 46 122 60 150ZM112 150 98 100 74 122 60 150Z" fill="#7f1d1d" stroke="#1c1917" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M40 150 60 124 80 150Z" fill="#f8fafc"/>
+        <ellipse cx="60" cy="76" rx="36" ry="44" fill="#e2e8f0" stroke="#1c1917" stroke-width="3"/>
+        <path d="M22 70C16 26 104 26 98 70 90 50 76 46 60 64 44 46 30 50 22 70Z" fill="#111827"/>
+        <path d="M36 70l16 5M84 70l-16 5" stroke="#1c1917" stroke-width="3.5" stroke-linecap="round"/>
+        <ellipse cx="47" cy="82" rx="6.5" ry="4.5" fill="#dc2626"/><ellipse cx="73" cy="82" rx="6.5" ry="4.5" fill="#dc2626"/><circle cx="48" cy="81" r="1.5" fill="#fff"/><circle cx="74" cy="81" r="1.5" fill="#fff"/>
+        <path d="M58 88l2 8 2-8" stroke="#94a3b8" stroke-width="2" fill="none"/>
+        <path d="M42 102Q60 116 78 102Q60 108 42 102Z" fill="#450a0a" stroke="#1c1917" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M49 104l3 9 3-7ZM65 106l3 7 3-9Z" fill="#fff"/>`);
+      jfxHero(host, g, face, 150, 188, { y: g.cy - 6 * k, enter: 'fade', delay: 300 });
+      const cape = bfxAdd(host, sfxSvg(200, 130, `<path d="M0 12Q100 -12 200 12L184 130Q160 100 140 130Q118 100 100 130Q80 100 60 130Q40 100 16 130Z" fill="#111827"/>
+        <path d="M12 18Q100 0 188 18L174 118Q156 94 140 118Q118 94 100 118Q80 94 60 118Q42 94 26 118Z" fill="#991b1b"/>`), g.cx, g.cy - 10 * k, 330 * k, 215 * k);
+      bfxAnimate(cape, [{ transform: 'translateX(-110%) scaleX(.3) skewX(-20deg)', opacity: 1 }, { transform: 'translateX(0) scaleX(1) skewX(0)', opacity: 1, offset: .5 },
+        { transform: 'translateX(0) scaleX(1)', opacity: 1, offset: .62 }, { transform: 'translateX(120%) scaleX(.2) skewX(20deg)', opacity: 1 }], { duration: 560, easing: 'ease-in-out' });
+      for (let i = 0; i < 11; i++) {
+        const a = (i / 11) * Math.PI * 2 + bfxRand(-.2, .2), d = bfxRand(150, 230) * k, w = bfxRand(50, 72) * k;
+        const bat = bfxAdd(host, JFX_BAT, g.cx, g.cy - 10 * k, w, w / 2);
+        bfxAnimate(bat, [0, .125, .25, .375, .5, .625, .75, .875, 1].map((t, n) => ({
+          transform: `translate(${Math.cos(a) * d * t}px,${Math.sin(a) * d * t - 30 * k * t}px) scale(${.3 + t * .9},${(n % 2 ? .45 : 1) * (.3 + t * .9)})`, opacity: t === 0 ? 0 : t > .85 ? 0 : 1
+        })), { duration: bfxRand(760, 880), delay: 440 + bfxRand(0, 120), easing: 'linear' });
+      }
+      jfxWord(host, g, 'MWAHAHA!', { color: '#ef4444', delay: 560, size: 40, y: g.cy + 128 * k });
+    }
+    // Red Card: the whistle blows and the referee holds up a red card with
+    // the Joker on it. Flashbulbs pop in the crowd.
+    function jfxRedCard(host, g) {
+      const k = g.k;
+      jfxScrim(host, 'rgba(20,83,45,.5)');
+      const whistle = bfxAdd(host, sfxSvg(60, 40, `<path d="M8 14h26a14 14 0 1 1-14 14H8Z" fill="#cbd5e1" stroke="#334155" stroke-width="2.5"/><circle cx="34" cy="26" r="5" fill="#334155"/><path d="M8 14v14" stroke="#334155" stroke-width="2.5"/>
+        <path d="M44 8l6-6M48 17l9-2M38 4l1-4" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`), g.cx - 105 * k, g.cy - 130 * k, 70 * k, 47 * k);
+      bfxAnimate(whistle, [{ transform: 'scale(.2) rotate(-20deg)', opacity: 0 }, { transform: 'scale(1.15) rotate(6deg)', opacity: 1, offset: .15 }, { transform: 'scale(1) rotate(-4deg)', offset: .3 },
+        { transform: 'scale(1.1) rotate(6deg)', offset: .45 }, { transform: 'scale(1) rotate(0)', opacity: 1, offset: .7 }, { transform: 'scale(.8)', opacity: 0 }], { duration: 900, easing: 'ease-out' });
+      const card = sfxSvg(90, 230, `<rect x="8" y="4" width="74" height="104" rx="8" fill="#dc2626" stroke="#fff" stroke-width="3"/>
+        <rect x="14" y="10" width="62" height="92" rx="5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/>
+        <g transform="translate(20 22) scale(.5)">${jfxHatBody('#fbbf24', '#f8fafc', '#fbbf24', '#fff')}</g>
+        <text x="45" y="90" text-anchor="middle" font-family="Outfit,system-ui,sans-serif" font-weight="900" font-size="12" fill="#fff" letter-spacing="1">JOKER</text>
+        <rect x="24" y="136" width="42" height="94" fill="#111827"/><rect x="24" y="136" width="42" height="8" fill="#e5e7eb"/>
+        <path d="M22 100h46c6 0 9 4 9 9v18c0 8-6 13-14 13H30c-8 0-13-6-13-13v-18c0-5 2-9 5-9Z" fill="#f5c9a0" stroke="#7c4a24" stroke-width="2.5"/>
+        <path d="M31 104v10M43 104v10M55 104v10M66 105v9" stroke="#b7865c" stroke-width="2" stroke-linecap="round"/>`);
+      jfxHero(host, g, card, 116, 296, { y: g.cy + 40 * k, delay: 250, enter: [
+        { transform: 'translateY(70%)', opacity: 0 }, { transform: 'translateY(-4%) rotate(-3deg)', opacity: 1, offset: .24 }, { transform: 'translateY(0) rotate(3deg)', opacity: 1, offset: .34 },
+        { transform: 'translateY(0) rotate(-2deg)', opacity: 1, offset: .44 }, { transform: 'translateY(0) rotate(0)', opacity: 1, offset: .82 }, { transform: 'translateY(10%)', opacity: 0 }] });
+      for (let i = 0; i < 9; i++) {
+        const fx = (i % 2 ? 1 : -1) * bfxRand(.25, .48), fy = bfxRand(-.42, .3);
+        sfxFlash(host, g.cx + fx * g.W, g.cy + fy * g.H, k, 'rgba(255,255,255,.95)', 46, 260, 560 + i * 80);
+      }
+      jfxWord(host, g, 'SENT OFF!', { color: '#ef4444', delay: 620, size: 40, y: g.cy - 150 * k });
+    }
+    // Portal: a swirling portal opens, the Joker steps through it and the
+    // pile is pulled in after it before it snaps shut.
+    function jfxPortal(host, g) {
+      const k = g.k;
+      jfxScrim(host, 'rgba(8,47,73,.55)');
+      const gid = `jfx-p-${++bfxGradientSeq}`;
+      const portal = bfxAdd(host, sfxSvg(100, 100, `<defs><radialGradient id="${gid}"><stop offset=".25" stop-color="#020617"/><stop offset=".6" stop-color="#0e7490"/><stop offset=".85" stop-color="#22d3ee"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/></radialGradient></defs>
+        <circle cx="50" cy="50" r="50" fill="url(#${gid})"/>
+        <path d="${jfxSpiralPath(2.4, 0, 44)}" stroke="#67e8f9" stroke-width="2.5" fill="none" opacity=".7"/><path d="${jfxSpiralPath(2.4, Math.PI, 44)}" stroke="#c084fc" stroke-width="2.5" fill="none" opacity=".7"/>
+        <circle cx="50" cy="50" r="44" fill="none" stroke="#a855f7" stroke-width="3" stroke-dasharray="14 8"/><circle cx="50" cy="50" r="36" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="6 6"/>`), g.cx, g.cy - 10 * k, 220 * k, 220 * k);
+      bfxAnimate(portal, [{ transform: 'scale(0,0) rotate(0deg)', opacity: 0 }, { transform: 'scale(1.08,.9) rotate(-220deg)', opacity: 1, offset: .18 },
+        { transform: 'scale(1,.92) rotate(-760deg)', opacity: 1, offset: .86 }, { transform: 'scale(0,0) rotate(-980deg)', opacity: 1 }], { duration: JOKER_FX_MS - 60, easing: 'ease-in-out' });
+      jfxHero(host, g, JFX_CARD, 100, 142, { y: g.cy - 10 * k, delay: 180, end: 900, enter: [
+        { transform: 'perspective(600px) scale(.1) rotateY(80deg)', opacity: 0 }, { transform: 'perspective(600px) scale(1.12) rotateY(0)', opacity: 1, offset: .35 },
+        { transform: 'perspective(600px) scale(1)', opacity: 1, offset: .5 }, { transform: 'perspective(600px) scale(1)', opacity: 1, offset: .78 }, { transform: 'perspective(600px) scale(0) rotate(200deg)', opacity: 0 }] });
+      for (let i = 0; i < 9; i++) {
+        const sx = bfxRand(-.3, .3) * g.W, sy = bfxRand(170, 240) * k;
+        const back = bfxAdd(host, JFX_MINI_BACK, g.cx + sx, g.cy + sy - 10 * k, 30 * k, 43 * k);
+        bfxAnimate(back, [0, .25, .5, .75, 1].map(t => {
+          const a = t * Math.PI * 1.5 * (i % 2 ? 1 : -1), r = 1 - t;
+          return { transform: `translate(${-sx * t + Math.sin(a) * 40 * k * r}px,${-sy * t}px) rotate(${t * 540}deg) scale(${1 - t * .85})`, opacity: t === 0 ? 0 : t === 1 ? 0 : 1 };
+        }), { duration: 480, delay: 760 + i * 25, easing: 'ease-in' });
+      }
+      jfxSparkles(host, g, g.cx, g.cy - 10 * k, ['#22d3ee', '#a855f7', '#fff'], 12, 200, 140);
+      jfxWord(host, g, 'WARP!', { color: '#22d3ee', delay: 360, end: 1200 });
+    }
     const JOKER_FX = {
       default: jfxDefault, 'joker-grin': jfxGrin, 'joker-jackbox': jfxJackbox, 'joker-puppet': jfxPuppet,
       'joker-magic': jfxMagic, 'joker-glitch': jfxGlitch, 'joker-storm': jfxStorm,
+      'joker-hypnotist': jfxHypnotist, 'joker-vampire': jfxVampire, 'joker-redcard': jfxRedCard, 'joker-portal': jfxPortal,
       'joker-halloween': jfxHalloween, 'joker-christmas': jfxChristmas, 'joker-newyear': jfxNewYear, 'joker-diwali': jfxDiwali,
       'joker-lunar': jfxLunar, 'joker-valentine': jfxValentine, 'joker-easter': jfxEaster, 'joker-summer': jfxSummer, 'joker-ramadan': jfxRamadan
     };
     function jokerPreviewIcon(id) {
       return { 'joker-grin': '😜', 'joker-jackbox': '🎁', 'joker-puppet': '🎭', 'joker-magic': '🎩', 'joker-glitch': '📺', 'joker-storm': '🌪️',
+        'joker-hypnotist': '🌀', 'joker-vampire': '🧛', 'joker-redcard': '🟥', 'joker-portal': '🌌',
         'joker-halloween': '🎃', 'joker-christmas': '🎅', 'joker-newyear': '🥂', 'joker-diwali': '🪔', 'joker-lunar': '🧧',
         'joker-valentine': '💘', 'joker-easter': '🥚', 'joker-summer': '🏄', 'joker-ramadan': '🏮' }[id] || '🃏';
     }
@@ -18688,12 +19200,20 @@ video {
       { id: 'burn-paint', category: 'Burn Effects', name: 'Paint Splats', cost: 750, tones: ['#1e1b4b','#ec4899','#22c55e'] },
       { id: 'burn-sweets', category: 'Burn Effects', name: 'Stupendous Confectionery', cost: 1500, tones: ['#4a044e','#ef4444','#fde68a'] },
       { id: 'burn-smoke', category: 'Burn Effects', name: 'Smoke Show', cost: 2000, tones: ['#0f172a','#64748b','#e2e8f0'] },
+      { id: 'burn-blackhole', category: 'Burn Effects', name: 'Black Hole', cost: 2500, tones: ['#020617','#6d28d9','#f59e0b'] },
+      { id: 'burn-origami', category: 'Burn Effects', name: 'Origami Fold', cost: 2500, tones: ['#334155','#e2e8f0','#f9a8d4'] },
+      { id: 'burn-pixel', category: 'Burn Effects', name: 'Pixel Blast', cost: 2500, tones: ['#1e1b4b','#f97316','#a3e635'] },
+      { id: 'burn-lava', category: 'Burn Effects', name: 'Lava Melt', cost: 2500, tones: ['#450a0a','#f97316','#fde047'] },
       { id: 'victory-confetti', category: 'Victory Effects', name: 'Confetti Burst', cost: 250, tones: ['#7c2d12','#fbbf24','#ec4899'] },
       { id: 'victory-cards', category: 'Victory Effects', name: 'Card Shower', cost: 1500, tones: ['#172554','#60a5fa','#f8fafc'] },
       { id: 'victory-fireworks', category: 'Victory Effects', name: 'Fireworks', cost: 750, tones: ['#312e81','#c084fc','#fde047'] },
       { id: 'victory-sparklers', category: 'Victory Effects', name: 'Sparkler Salute', cost: 750, tones: ['#1c1917','#fbbf24','#ffffff'] },
       { id: 'victory-stars', category: 'Victory Effects', name: '5-Star Finish', cost: 1000, tones: ['#1e1b4b','#fbbf24','#fff7d6'] },
       { id: 'victory-karate', category: 'Victory Effects', name: 'Karate Chop', cost: 2000, tones: ['#111827','#f97316','#fde047'] },
+      { id: 'victory-trophy', category: 'Victory Effects', name: 'Trophy Lift', cost: 2500, tones: ['#78350f','#fbbf24','#fff7d6'] },
+      { id: 'victory-rocket', category: 'Victory Effects', name: 'Rocket Launch', cost: 2500, tones: ['#0b1026','#1e3a8a','#fde68a'] },
+      { id: 'victory-origami', category: 'Victory Effects', name: 'Origami Flock', cost: 2500, tones: ['#475569','#fbcfe8','#e0f2fe'] },
+      { id: 'victory-lion', category: 'Victory Effects', name: "Lion's Roar", cost: 2500, tones: ['#7c2d12','#d97706','#fde68a'] },
       // Joker Effects (§ Joker effects): rarer than burns, so priced higher.
       { id: 'joker-grin', category: 'Joker Effects', name: "Jester's Grin", cost: 2000, tones: ['#2e1065','#a855f7','#fde047'] },
       { id: 'joker-jackbox', category: 'Joker Effects', name: 'Jack-in-the-Box', cost: 2000, tones: ['#450a0a','#ef4444','#fbbf24'] },
@@ -18701,6 +19221,10 @@ video {
       { id: 'joker-magic', category: 'Joker Effects', name: 'Magic Trick', cost: 2000, tones: ['#0f172a','#6366f1','#e0e7ff'] },
       { id: 'joker-glitch', category: 'Joker Effects', name: 'Glitch', cost: 2000, tones: ['#020617','#22d3ee','#f43f5e'] },
       { id: 'joker-storm', category: 'Joker Effects', name: 'Card Storm', cost: 2000, tones: ['#1e1b4b','#c084fc','#fbbf24'] },
+      { id: 'joker-hypnotist', category: 'Joker Effects', name: 'Hypnotist', cost: 3500, tones: ['#3b0764','#e879f9','#ffffff'] },
+      { id: 'joker-vampire', category: 'Joker Effects', name: 'Vampire', cost: 3500, tones: ['#111827','#991b1b','#e2e8f0'] },
+      { id: 'joker-redcard', category: 'Joker Effects', name: 'Red Card', cost: 3500, tones: ['#14532d','#dc2626','#ffffff'] },
+      { id: 'joker-portal', category: 'Joker Effects', name: 'Portal', cost: 3500, tones: ['#020617','#0e7490','#a855f7'] },
       { id: 'avatar-ace-spades', category: 'Profile Pictures', name: 'Ace of Spades', cost: 200, tones: ['#1e293b','#cbd5e1','#f8fafc'] },
       { id: 'avatar-queen-hearts', category: 'Profile Pictures', name: 'Queen of Hearts', cost: 200, tones: ['#3f0b1b','#e11d48','#fbbf24'] },
       { id: 'avatar-joker', category: 'Profile Pictures', name: 'Joker', cost: 200, tones: ['#2e1065','#a855f7','#10b981'] },
@@ -18770,9 +19294,9 @@ video {
       deck: new Set(['deck-obsidian','deck-emerald','deck-cyber','deck-crimson','deck-casino','deck-arcade','deck-fourcolour']),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania', ...seasonalIdsOf('emotes')]),
       tableTheme: new Set(['table-wood','table-felt','table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic', ...seasonalIdsOf('tableTheme')]),
-      burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke', ...seasonalIdsOf('burnEffect')]),
-      victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks','victory-sparklers','victory-stars','victory-karate', ...seasonalIdsOf('victoryEffect')]),
-      jokerEffect: new Set(['joker-grin','joker-jackbox','joker-puppet','joker-magic','joker-glitch','joker-storm', ...seasonalIdsOf('jokerEffect')]),
+      burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke','burn-blackhole','burn-origami','burn-pixel','burn-lava', ...seasonalIdsOf('burnEffect')]),
+      victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks','victory-sparklers','victory-stars','victory-karate','victory-trophy','victory-rocket','victory-origami','victory-lion', ...seasonalIdsOf('victoryEffect')]),
+      jokerEffect: new Set(['joker-grin','joker-jackbox','joker-puppet','joker-magic','joker-glitch','joker-storm','joker-hypnotist','joker-vampire','joker-redcard','joker-portal', ...seasonalIdsOf('jokerEffect')]),
       avatar: new Set(Object.keys(AVATAR_ART))
     });
     let nameChangeTokenState = null;
@@ -18908,7 +19432,8 @@ video {
       return item ? item.name : 'Default';
     }
     function victoryPreviewIcon(id) {
-      return { 'victory-cards': '🃏', 'victory-fireworks': '🎆', 'victory-sparklers': '🎇', 'victory-stars': '⭐', 'victory-karate': '🥋' }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('victory-', '')]?.victoryIcon || '🏆';
+      return { 'victory-cards': '🃏', 'victory-fireworks': '🎆', 'victory-sparklers': '🎇', 'victory-stars': '⭐', 'victory-karate': '🥋',
+        'victory-trophy': '🏆', 'victory-rocket': '🚀', 'victory-origami': '🦢', 'victory-lion': '🦁' }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('victory-', '')]?.victoryIcon || '🏆';
     }
     function showcaseHtml(showcase) {
       if (!showcase) return '';
@@ -19081,7 +19606,8 @@ video {
     }
 
     function burnPreviewIcon(id) {
-      return { 'burn-ice': '❄️', 'burn-electric': '⚡', 'burn-sweets': '🍬', 'burn-paint': '🎨', 'burn-smoke': '💨' }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('burn-', '')]?.burnIcon || '🔥';
+      return { 'burn-ice': '❄️', 'burn-electric': '⚡', 'burn-sweets': '🍬', 'burn-paint': '🎨', 'burn-smoke': '💨',
+        'burn-blackhole': '🕳️', 'burn-origami': '🦢', 'burn-pixel': '👾', 'burn-lava': '🌋' }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('burn-', '')]?.burnIcon || '🔥';
     }
 
     // Burn and Joker previews open in Custom right under the tapped tile (a
@@ -19162,28 +19688,24 @@ video {
       const suits = ['♠', '♥', '♦', '♣'].map(s => `<span class="${getSuitStyle(s)}">${s}</span>`).join('');
       return `<span class="deck-mini-card ${item?.theme || 'theme-obsidian'} ${big ? 'is-big' : ''}"><span class="dm-rank">A</span><span class="dm-suits">${suits}</span></span>`;
     }
+    // The one preview for an item, wherever it's listed (Custom tiles, the
+    // Collection, Shop rows, gift cards). Card-shaped types are a 32x44
+    // .cos-mini-card, effects and emotes a 40x40 .effect-mini-tile, tables the
+    // mini table. New items/types must come through here (a test checks sizes).
     function cosmeticPreview(item, type) {
-      if (type === 'deck') return deckMiniCardHtml(item);
-      if (!item) {
-        if (type === 'tableTheme') return miniTablePreviewHtml('default');
-        if (type === 'emotes') return '<span class="text-xl" data-keep-emoji>😂</span>';
-        if (type === 'frame') return framePreviewCard(null);
-        if (type === 'burnEffect') return '<span class="effect-mini-tile">🔥</span>';
-        if (type === 'victoryEffect') return '<span class="effect-mini-tile">🏆</span>';
-        if (type === 'jokerEffect') return '<span class="effect-mini-tile">🃏</span>';
-        if (type !== 'cardBack') return '<span class="effect-mini-tile">◇</span>';
-        return `<span class="w-8 h-10 rounded-lg custom-card-back ${getThemeDeckBackClass()} flex items-center justify-center">${getEmblemSvg()}</span>`;
-      }
-      if (type === 'tableTheme') return miniTablePreviewHtml(item.id);
-      if (type === 'emotes') return `<span class="text-base" data-keep-emoji>${(EMOTE_PACKS[item.id] || []).slice(0, 3).join('')}</span>`;
+      if (type === 'deck') { ensureDeckFont(item?.theme); return deckMiniCardHtml(item); }
+      if (type === 'avatar') return avatarHtml(item?.id || 'default', 40);
+      if (type === 'tableTheme') return miniTablePreviewHtml(item ? item.id : 'default');
       if (type === 'frame') return framePreviewCard(item);
+      if (type === 'emotes') return `<span class="effect-mini-tile is-emotes" data-keep-emoji>${(EMOTE_PACKS[item ? item.id : 'default'] || EMOTE_PACKS.default).slice(0, 4).map(e => `<span>${e}</span>`).join('')}</span>`;
+      if (type === 'cardBack') return `<span class="cos-mini-card custom-card-back ${item ? getCosmeticBackClass(item.id) : getThemeDeckBackClass()}">${getEmblemSvg()}</span>`;
       if (type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect') {
+        if (!item) return `<span class="effect-mini-tile">${{ burnEffect:'🔥', victoryEffect:'🏆', jokerEffect:'🃏' }[type]}</span>`;
         const icon = type === 'burnEffect' ? burnPreviewIcon(item.id) : type === 'jokerEffect' ? jokerPreviewIcon(item.id) : victoryPreviewIcon(item.id);
         return `<span class="effect-mini-tile" style="background:linear-gradient(135deg,${item.tones[0]},${item.tones[1]});border-color:${item.tones[2]}">${icon}</span>`;
       }
-      if (type !== 'cardBack') return `<span class="effect-mini-tile" style="background:linear-gradient(135deg,${item.tones[0]} 0 45%,${item.tones[1]} 45% 72%,${item.tones[2]} 72% 100%)"></span>`;
-      const backClass = getCosmeticBackClass(item.id);
-      return `<span class="w-8 h-10 rounded-lg custom-card-back ${backClass} flex items-center justify-center">${getEmblemSvg()}</span>`;
+      if (!item) return '<span class="effect-mini-tile">◇</span>';
+      return `<span class="effect-mini-tile" style="background:linear-gradient(135deg,${item.tones[0]} 0 45%,${item.tones[1]} 45% 72%,${item.tones[2]} 72% 100%)"></span>`;
     }
 
     function personalisationOptionHtml(item, type, activeId) {
@@ -19293,7 +19815,7 @@ video {
       return { owned, total };
     }
     function collectionTileArt(item, type) {
-      return type === 'avatar' ? avatarHtml(item.id, 44) : cosmeticPreview(item, type);
+      return cosmeticPreview(item, type);
     }
     function renderCollection() {
       const { owned, total } = collectionCounts();
@@ -19536,7 +20058,7 @@ video {
         const buyable = isSeasonalItemBuyable(item);
         return `<div data-shop-row="${item.id}" class="rounded-xl border ${owned ? 'border-emerald-700' : 'border-slate-800'} bg-slate-900/60 overflow-hidden">
           <div class="flex items-center gap-2 p-2">
-            ${type === 'tableTheme' ? '' : `<span class="shrink-0 w-[42px] h-[46px] flex items-center justify-center">${shopCosmeticThumbnail(item, type)}</span>`}
+            ${type === 'tableTheme' ? '' : `<span class="shop-row-thumb">${shopCosmeticThumbnail(item, type)}</span>`}
             <span class="min-w-0 flex-1"><span class="flex items-center gap-1"><span class="block text-[10px] font-black text-white truncate">${item.name}</span>${isNew ? '<span class="shrink-0 rounded-full bg-fuchsia-600 px-1.5 py-0.5 text-[7px] font-black text-white">NEW</span>' : ''}</span><span class="block text-[8px] text-slate-500">${getCosmeticDescription(type)}</span>${!owned && buyable && !affordable ? `<span class="block text-[8px] font-bold text-rose-400">Need 💎${shortfall} more</span>` : ''}</span>
             <span class="shrink-0 flex flex-col gap-1">
               <button type="button" data-preview-cosmetic-id="${item.id}" aria-expanded="false" class="cosmetic-preview-btn min-w-[66px] px-2 py-1 rounded-lg border border-cyan-600 text-[8px] font-black text-cyan-300 hover:bg-cyan-500 hover:text-slate-950 transition">PREVIEW</button>
@@ -20158,14 +20680,8 @@ video {
     }
 
     function shopCosmeticThumbnail(item, type) {
-      if (type === 'avatar') return avatarHtml(item.id, 40);
-      if (type === 'deck') { ensureDeckFont(item.theme); return deckMiniCardHtml(item); }
-      if (type === 'tableTheme') return `<span style="display:block;width:120px">${miniTablePreviewHtml(item.id)}</span>`;
-      if (type === 'emotes') return `<span class="text-[13px] leading-tight text-center" data-keep-emoji>${(EMOTE_PACKS[item.id] || []).slice(0, 4).join('')}</span>`;
-      if (type === 'cardBack') return `<span class="w-7 h-[42px] rounded-md custom-card-back ${getCosmeticBackClass(item.id)} border border-slate-500 flex items-center justify-center shadow-md">${getEmblemSvg()}</span>`;
-      if (type === 'frame') return `<span class="relative w-7 h-[42px] rounded-md bg-slate-950 border-2 flex flex-col items-start p-1 font-black text-[8px] text-white" style="border-color:#334155;${getCosmeticFrameStyle(item.id).replace(/!important/g, '')}"><span>A</span><span class="${item.id === 'frame-gold' ? 'text-amber-300' : 'text-red-400'}">♥</span></span>`;
-      const symbols = { tableTheme:'♠', burnEffect: burnPreviewIcon(item.id), victoryEffect:'🏆', jokerEffect: jokerPreviewIcon(item.id) };
-      return `<span data-keep-emoji class="w-9 h-9 rounded-lg border border-slate-600 flex items-center justify-center text-lg" style="background:linear-gradient(135deg,${item.tones[0]},${item.tones[1]});color:${item.tones[2]}">${symbols[type] || '◇'}</span>`;
+      if (type === 'tableTheme') return `<span style="display:block;width:120px">${cosmeticPreview(item, type)}</span>`;
+      return cosmeticPreview(item, type);
     }
 
     function shopCosmeticPreviewMarkup(item) {

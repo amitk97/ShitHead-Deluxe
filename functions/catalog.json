@@ -208,6 +208,22 @@
    "name": "Smoke Show",
    "cost": 2000
   },
+  "burn-blackhole": {
+   "name": "Black Hole",
+   "cost": 2500
+  },
+  "burn-origami": {
+   "name": "Origami Fold",
+   "cost": 2500
+  },
+  "burn-pixel": {
+   "name": "Pixel Blast",
+   "cost": 2500
+  },
+  "burn-lava": {
+   "name": "Lava Melt",
+   "cost": 2500
+  },
   "victory-confetti": {
    "name": "Confetti Burst",
    "cost": 250
@@ -232,6 +248,22 @@
    "name": "Karate Chop",
    "cost": 2000
   },
+  "victory-trophy": {
+   "name": "Trophy Lift",
+   "cost": 2500
+  },
+  "victory-rocket": {
+   "name": "Rocket Launch",
+   "cost": 2500
+  },
+  "victory-origami": {
+   "name": "Origami Flock",
+   "cost": 2500
+  },
+  "victory-lion": {
+   "name": "Lion's Roar",
+   "cost": 2500
+  },
   "joker-grin": {
    "name": "Jester's Grin",
    "cost": 2000
@@ -255,6 +287,22 @@
   "joker-storm": {
    "name": "Card Storm",
    "cost": 2000
+  },
+  "joker-hypnotist": {
+   "name": "Hypnotist",
+   "cost": 3500
+  },
+  "joker-vampire": {
+   "name": "Vampire",
+   "cost": 3500
+  },
+  "joker-redcard": {
+   "name": "Red Card",
+   "cost": 3500
+  },
+  "joker-portal": {
+   "name": "Portal",
+   "cost": 3500
   },
   "avatar-ace-spades": {
    "name": "Ace of Spades",
