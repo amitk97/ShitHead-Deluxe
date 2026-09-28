@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v200 (ShitHead-Deluxe-182) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v201 (ShitHead-Deluxe-183) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -17647,6 +17647,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v201: [
+        ['👥', 'Friends who were stuck showing as online now show offline until they open the game again.']
+      ],
       v200: [
         ['👥', 'Fixed: friends could show as online for hours after closing the game or signing out.']
       ],
@@ -24761,8 +24764,9 @@ video {
     let presenceUid = null, presenceConnected = false, presenceBeatTimer = null;
     function isProfileOnline(profile) {
       if (!profile || profile.online !== true) return false;
-      if (typeof profile.seen === 'number') return serverNow() - profile.seen < PRESENCE_STALE_MS;
-      return true; // older builds don't write `seen` yet
+      // No `seen` = a flag left by an older build (it could be hours old):
+      // offline until that player opens the game again.
+      return typeof profile.seen === 'number' && serverNow() - profile.seen < PRESENCE_STALE_MS;
     }
     function writePresence(online) {
       if (!presenceUid || !firebaseAvailable) return Promise.resolve();

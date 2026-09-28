@@ -2308,7 +2308,7 @@ async function runDevTestSuite() {
     const savedUser = currentUser;
     currentUser = { uid: 'me' };
     const human = makePlayer({ id: 'p3', name: 'Jamie', uid: 'them' });
-    const profile = { loaded: true, rating: 1540, online: true, stats: { games: 128, wins: 73, bestStreak: 6, peak: 1612, burnt: 412, jokers: 31 } };
+    const profile = { loaded: true, rating: 1540, online: true, seen: serverNow(), stats: { games: 128, wins: 73, bestStreak: 6, peak: 1612, burnt: 412, jokers: 31 } };
     const friend = renderPlayerPopupHuman(human, profile, 'friends');
     assertTrue(friend.includes('✔') && friend.includes('FRIENDS') && !friend.includes('ADD FRIEND'), 'Friends show a green tick instead of Add Friend');
     const stranger = renderPlayerPopupHuman(human, profile, null);
@@ -4219,9 +4219,9 @@ async function runDevTestSuite() {
     assertEqual(groups.map(g => [g.name, g.count, g.reasons.cheating || g.reasons.name]), [['Cheater', 2, 2], ['Meh', 1, 1]], 'Most-reported player first, with reason counts');
   });
   await test('Friends show when they are in a match; WATCH opens it read-only from their seat', async () => {
-    let row = friendRowHtml('u1', { username: 'Jamie', online: true, playing: { mode: 'online', room: '424242', at: 1 } }, 'friend');
+    let row = friendRowHtml('u1', { username: 'Jamie', online: true, seen: serverNow(), playing: { mode: 'online', room: '424242', at: 1 } }, 'friend');
     assertTrue(row.includes('In a match · Play Friends') && row.includes('friend-watch-btn') && row.includes('data-room="424242"'), 'An online match offers WATCH');
-    row = friendRowHtml('u1', { username: 'Jamie', online: true, playing: { mode: 'bots', at: 1 } }, 'friend');
+    row = friendRowHtml('u1', { username: 'Jamie', online: true, seen: serverNow(), playing: { mode: 'bots', at: 1 } }, 'friend');
     assertTrue(row.includes('In a match · Vs Bots') && !row.includes('friend-watch-btn') && row.includes('friend-invite-btn'), 'A bot game shows the status but nothing to watch');
     row = friendRowHtml('u1', { username: 'Jamie', online: false, playing: { mode: 'ranked', room: '424242', at: 1 } }, 'friend');
     assertTrue(!row.includes('In a match'), 'A stale status on an offline friend is ignored');
@@ -4270,7 +4270,7 @@ async function runDevTestSuite() {
   await test('Friends list: online friends first; inviting from a casual lobby uses that room', () => {
     freshState({ isMultiplayer: true, isRanked: false, roomCode: '424242', phase: 'LOBBY' });
     assertEqual(inviteableRoomCode(), '424242', 'Lobby of a casual room');
-    const row = friendRowHtml('u1', { username: 'Jamie', online: true }, 'friend');
+    const row = friendRowHtml('u1', { username: 'Jamie', online: true, seen: serverNow() }, 'friend');
     assertTrue(row.includes('INVITE HERE'), 'The button says it invites into this room');
     assertTrue(row.includes('friend-status online'), 'Shows Online');
     state.isRanked = true;
@@ -4460,7 +4460,7 @@ async function runDevTestSuite() {
   });
 
   await test('REGRESSION: a friend row shows their ranked rating under their name', () => {
-    const html = friendRowHtml('u1', { username: 'Pooja', online: true, rating: 1523 }, 'friend');
+    const html = friendRowHtml('u1', { username: 'Pooja', online: true, seen: serverNow(), rating: 1523 }, 'friend');
     assertTrue(html.includes('Pooja'), "The friend's name must be shown");
     assertTrue(html.includes('1523'), "The friend's current rating must be shown under their name");
     assertTrue(html.includes('Gold'), 'The rating should show its tier name too, matching every other rating readout in the game (Opponent Found, Standings)');
@@ -6589,7 +6589,7 @@ async function runDevTestSuite() {
     assertEqual(isProfileOnline({ online: true, seen: now - 30 * 1000 }), true, 'seen 30s ago = online');
     assertEqual(isProfileOnline({ online: true, seen: now - 4 * 60 * 1000 }), false, 'seen 4 min ago = offline even if the flag is stuck on');
     assertEqual(isProfileOnline({ online: false, seen: now }), false, 'flag off = offline');
-    assertEqual(isProfileOnline({ online: true }), true, 'an older build without seen still counts');
+    assertEqual(isProfileOnline({ online: true }), false, 'a flag with no seen (left by an older build) reads offline');
     assertEqual(isProfileOnline(null), false, 'no profile = offline');
     const row = friendRowHtml('u1', { username: 'Sam', online: true, seen: now - 10 * 60 * 1000 }, 'friend');
     assertTrue(/Offline/.test(row) && !/presence-dot online/.test(row), 'a stale friend is drawn offline');
