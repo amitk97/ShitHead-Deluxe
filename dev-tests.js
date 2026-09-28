@@ -1638,6 +1638,36 @@ async function runDevTestSuite() {
     } finally { endTutorial(false); }
     function step2Text() { return TUTORIAL_MODULE_CARD_3[1].text.includes('under the 3'); }
   });
+  await test('REGRESSION: the Snap Burn lesson plays by the rules (Coach\'s play passes to Rival, you snap on Rival\'s turn)', () => {
+    freshState(); tutorialTestSetup();
+    try {
+      launchTutorialModule('snap_burn');
+      showTutorialStep(1);
+      const step = TUTORIAL_MODULE_SNAP_BURN[1];
+      assertTrue(![].concat(step.coachPlays).some(([r]) => r === '9'), 'No 9: nothing in the lesson changes direction');
+      const coach = state.players[1], rival = state.players[2];
+      const play = coach.hand.filter(c => c.rank === step.coachPlays[0][0]);
+      assertTrue(play.length === 1 && isPlayLegal(play[0], state.discardPile, state.activeConstraint), "Coach's card is legal");
+      state.currentTurnIndex = 1;
+      executePlayCards(coach.id, play);
+      assertEqual(state.direction, 1, 'Direction stays clockwise');
+      assertEqual(document.getElementById('gameDirectionBadge').dataset.direction, 'cw', 'The badge shows clockwise');
+      assertEqual(state.players[state.currentTurnIndex].id, rival.id, "It's Rival's turn after Coach, as the lesson says");
+      const opp = getCurrentSnapOpportunity();
+      assertTrue(!!opp && opp.cards.length === 1 && opp.cards[0].rank === TUTORIAL_MODULE_SNAP_BURN[2].require.rank, 'You can snap with the card the step asks for');
+      TUTORIAL_MODULE_SNAP_BURN.forEach(st => assertTrue(!st.text.includes('9'), 'Lesson text never mentions a 9: ' + st.text));
+    } finally { endTutorial(false); }
+  });
+  await test('A tutorial scene with a direction shows it on the direction badge at once', () => {
+    freshState(); tutorialTestSetup();
+    try {
+      startTutorial();
+      tutorialApplyScene({ hand: [['4', '♦']], pile: [['8', '♥']], coach: [['K', '♥']], direction: -1 });
+      assertEqual(document.getElementById('gameDirectionBadge').dataset.direction, 'ccw', 'Anticlockwise shows at once');
+      tutorialApplyScene({ hand: [['4', '♦']], pile: [['8', '♥']], coach: [['K', '♥']], direction: 1 });
+      assertEqual(document.getElementById('gameDirectionBadge').dataset.direction, 'cw', 'Clockwise shows at once');
+    } finally { endTutorial(false); }
+  });
   await test('REGRESSION: the tutorial never writes a restorable saved game', () => {
     freshState(); tutorialTestSetup();
     try { localStorage.removeItem('shithead_game_state'); } catch (e) {}

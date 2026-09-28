@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v203 (ShitHead-Deluxe-185) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v204 (ShitHead-Deluxe-186) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -17651,6 +17651,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v204: [
+        ['🎓', 'The Snap Burn lesson is clearer: Coach plays a King, then you snap the fourth on Rival\'s turn.'],
+        ['🔄', 'The direction arrow now shows the right way round as soon as a lesson starts.']
+      ],
       v203: [
         ['🃏', 'Tap outside the Pile History box to close it.']
       ],
@@ -27840,49 +27844,40 @@ video {
     // requirement; every module is independently launchable at any time.
     // ============================================================
     // --- Module: Snap Burn --------------------------------------------
-    // Framed mid-Coach's-turn (turnIndex: 1) — that's the entire point of
-    // the lesson. tutorialBotPaused already prevents the Coach from
-    // actually acting regardless, so this is purely a framing device, not
-    // a real risk of the bot hijacking the turn. Verified against the real
-    // checkSnapBurnEligibility(): it gates on rank-run-length and holding
-    // enough matches, never on whose turn it currently is — so tapping
-    // SNAP here really is legal exactly as taught, not a scripted illusion.
-    // Seats a 3rd player (Rival) so the lesson can show Snap Burn landing on
-    // someone other than the Coach — reinforcing that it truly doesn't care
-    // whose turn it is. Step 2 is a genuine live play (coachPlays), not a
-    // pre-set illusion: Coach's 9 really flips state.direction and really
-    // sends the turn to Rival via the real advanceTurn/getEffectiveTopCard
-    // path, so the direction badge and turn indicator update for real. The
-    // scene's direction: -1 sets up the pre-existing reversal Coach's 9 flips
-    // back to +1 — from Coach's seat (index 1), +1 lands on Rival (index 2);
-    // -1 would have sent it to you instead, which is why the pre-state
-    // matters here and can't be left at the default.
+    // Three seats (you, Coach, Rival) so the snap lands on someone else's
+    // turn. Kings on purpose: they have no power, so nothing but Snap Burn
+    // happens (an earlier version used 9s from a pre-reversed direction, and
+    // the badge never showed the flip). Step 2 is a real play (coachPlays):
+    // the direction is the normal clockwise one, so Coach's King passes the
+    // turn to Rival through the real advanceTurn. checkSnapBurnEligibility
+    // gates on the run of the rank and holding the card that completes it,
+    // never on whose turn it is, so tapping SNAP really is legal here.
     const TUTORIAL_MODULE_SNAP_BURN = [
       {
-        text: "Some moves don't wait for your turn. Meet Snap Burn. Rival's here too, so you can see it work no matter whose turn it lands on.",
+        text: "Some moves don't wait for your turn. Meet Snap Burn.",
         target: null
       },
       {
-        text: "Two 9s are already down. Watch what happens when Coach plays a third.",
-        target: ['#pileZone', '#gameDirectionBadge', '#turnIndicatorRow'],
+        text: "Two Kings are down and you hold the last one. Watch Coach play the third.",
+        target: ['#pileZone', '#localHand [data-rank="K"]'],
         turnIndex: 1,
         scene: {
-          hand: [['9', '♥'], ['3', '♣'], ['5', '♦']],
-          pile: [['9', '♠', 'you'], ['9', '♦', 'rival']],
-          coach: [['9', '♣']],
-          direction: -1
+          hand: [['K', '♥'], ['4', '♣'], ['6', '♦']],
+          pile: [['K', '♠', 'you'], ['K', '♦', 'rival']],
+          coach: [['K', '♣']],
+          direction: 1
         },
-        coachPlays: [['9', '♣']],
-        coachNote: "Direction just flipped, so play skips you completely and heads to Rival next.",
-        noteTarget: ['#turnIndicatorRow', '#gameDirectionBadge']
+        coachPlays: [['K', '♣']],
+        coachNote: "Three Kings are down. It's Rival's turn now, not yours.",
+        noteTarget: ['#pileZone', '#turnIndicatorRow']
       },
       {
-        text: "It's Rival's turn now, not yours or Coach's. Snap Burn doesn't care. Tap SNAP.",
-        target: ['#pileZone', '#snapBurnBtn', '#localHand [data-rank="9"]'],
+        text: "Your King makes four of a kind. Tap SNAP, even though it's Rival's turn.",
+        target: ['#pileZone', '#snapBurnBtn', '#localHand [data-rank="K"]'],
         turnIndex: 2,
-        require: { rank: '9', requireSnap: true },
+        require: { rank: 'K', requireSnap: true },
         noCoachReply: true,
-        coachNote: "That's Snap Burn. Four of a kind burns instantly, no matter whose turn it is, as long as you're holding the card that completes it. You go again right after."
+        coachNote: "That's Snap Burn. Hold the card that completes four of a kind and you can burn the Pile on anyone's turn. Then you go again."
       }
     ];
 
@@ -28703,11 +28698,13 @@ video {
       state.baseOverrideCard = null;
       state.selectedPlayCardIds = [];
       state.currentTurnIndex = 0;
-      // Only set when a scene specifically depends on a particular pre-existing
-      // direction (e.g. Snap Burn's 3-player Reverse tie-in, where the Coach's
-      // live 9 needs to flip FROM a known state so it lands on a specific
-      // player) — otherwise left alone, since most scenes don't care.
+      // Only set when a scene depends on a particular direction (e.g. Snap
+      // Burn's Coach play must pass the turn to Rival); otherwise left alone.
       if (scene.direction !== undefined) state.direction = scene.direction;
+      // Show the scene's direction at once (the badge otherwise kept the
+      // previous one, so a 9 flipping it looked like it did nothing).
+      lastShownDirection = null;
+      updateDirectionBadge();
 
       // Refills come from a controlled supply of cards. A scene that names an
       // exact stack (the hand-stacked continuous lessons) gets exactly that,
