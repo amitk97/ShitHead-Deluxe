@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v208 (ShitHead-Deluxe-190) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v209 (ShitHead-Deluxe-191) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -795,6 +795,12 @@
     #homeCardTip .home-tip-inner { width:100%; height:100%; display:flex; align-items:center; gap:12px; transition:opacity .26s var(--ease-soft, ease), transform .26s var(--ease-soft, ease); }
     #homeCardTip .home-tip-inner.home-tip-out { opacity:0; transform:translateY(6px); }
     #homeCardTip.home-tip-below .home-tip-inner { padding:8px 12px; border-radius:14px; background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.18); box-sizing:border-box; }
+    #homeCardTip.home-tip-below .home-tip-inner { justify-content:center; }
+    #homeCardTip.home-tip-below .home-tip-text { flex:0 1 auto; max-width:300px; text-align:center; }
+    #homeCardTip.home-tip-compact .home-tip-inner { padding:4px 10px; gap:9px; border-radius:12px; }
+    #homeCardTip.home-tip-compact .home-tip-card { zoom:.66; }
+    #homeCardTip.home-tip-compact .home-tip-text { font-size:10px; line-height:1.25; }
+    #homeCardTip.home-tip-compact .home-tip-name { font-size:9px; margin-bottom:1px; }
     #homeCardTip.home-tip-side .home-tip-inner { flex-direction:column; justify-content:center; text-align:center; gap:14px; }
     #homeCardTip .home-tip-art { flex:none; display:flex; align-items:center; justify-content:center; }
     #homeCardTip .home-tip-card { position:relative !important; width:44px !important; height:62px !important; font-size:12px; margin:0 !important; filter:drop-shadow(0 6px 14px rgba(0,0,0,.55)); }
@@ -17722,6 +17728,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v209: [
+        ['🃏', 'The home screen card and its power are centred, and fit in the installed app too.']
+      ],
       v208: [
         ['🏠', 'The home screen now shows your table softly in the background, or the event table while an event is on.'],
         ['🃏', 'Where there is room, the home screen shows a card and its power, changing every few seconds.'],
@@ -27229,19 +27238,29 @@ video {
       if (!open) { tip.classList.add('hidden'); return; }
       const r = panel.getBoundingClientRect();
       const W = window.innerWidth, H = window.innerHeight;
-      // The lobby's bottom padding is the home bar plus a small margin.
-      const bottomSafe = parseFloat(getComputedStyle(lobby).paddingBottom) || 0;
+      // Only the home bar (the lobby's bottom padding less its 12px margin)
+      // is off limits below the panel.
+      const bottomSafe = Math.max(0, (parseFloat(getComputedStyle(lobby).paddingBottom) || 0) - 12);
       const GAP = 8, STRIP_H = 68, SIDE_W = 200, SIDE_H = 330;
+      // The installed app has the status bar and home bar to fit around, so
+      // it gets a slimmer strip when the normal one has no room.
+      const COMPACT_GAP = 3, COMPACT_H = 48;
       const below = H - bottomSafe - r.bottom;
-      tip.classList.remove('home-tip-side', 'home-tip-below');
+      tip.classList.remove('home-tip-side', 'home-tip-below', 'home-tip-compact');
+      const strip = (h, gap) => {
+        const w = Math.min(r.width, W - 32);
+        tip.style.cssText = `left:${(W - w) / 2}px;top:${r.bottom + Math.max(gap, (below - h) / 2)}px;width:${w}px;height:${h}px;`;
+      };
       if (r.left >= SIDE_W + 2 * GAP && r.height >= SIDE_H && H >= 480) {
         const w = Math.min(260, r.left - 2 * GAP);
         tip.classList.add('home-tip-side');
         tip.style.cssText = `left:${(r.left - w) / 2}px;top:${r.top + (r.height - SIDE_H) / 2}px;width:${w}px;height:${SIDE_H}px;`;
       } else if (below >= STRIP_H + 2 * GAP) {
-        const w = Math.min(r.width, W - 32);
         tip.classList.add('home-tip-below');
-        tip.style.cssText = `left:${(W - w) / 2}px;top:${r.bottom + (below - STRIP_H) / 2}px;width:${w}px;height:${STRIP_H}px;`;
+        strip(STRIP_H, GAP);
+      } else if (isStandaloneApp() && below >= COMPACT_H + 2 * COMPACT_GAP) {
+        tip.classList.add('home-tip-below', 'home-tip-compact');
+        strip(COMPACT_H, COMPACT_GAP);
       } else {
         tip.classList.add('hidden');
         return;
@@ -27274,6 +27293,9 @@ video {
       lobby?.addEventListener('scroll', soon, { passive: true });
       // The panel changes height when a mode opens (Play Friends, Ranked).
       if (panel && window.ResizeObserver) new ResizeObserver(soon).observe(panel);
+      // Safe areas and fonts can settle after the first frame.
+      window.addEventListener('load', soon);
+      setTimeout(soon, 800);
       soon();
     })();
 

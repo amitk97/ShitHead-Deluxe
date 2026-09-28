@@ -1821,6 +1821,10 @@ async function runDevTestSuite() {
         assertTrue(t.bottom <= panel.top || t.top >= panel.bottom || t.right <= panel.left || t.left >= panel.right, 'The tip never covers the panel');
         assertTrue(t.left >= 0 && t.right <= innerWidth && t.top >= 0 && t.bottom <= innerHeight, 'The tip stays on screen');
       }
+      if (!tip.classList.contains('hidden') && tip.classList.contains('home-tip-below')) {
+        const inner = tip.querySelector('.home-tip-inner');
+        assertEqual(getComputedStyle(inner).justifyContent, 'center', 'The card and its rule are centred in the strip');
+      }
       const first = homeTipRank; rotateHomeTip();
       await new Promise(r => setTimeout(r, 300));
       if (!tip.classList.contains('hidden')) assertTrue(homeTipRank !== first, 'It moves on to a different card');
