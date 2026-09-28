@@ -1668,6 +1668,51 @@ async function runDevTestSuite() {
       assertEqual(document.getElementById('gameDirectionBadge').dataset.direction, 'cw', 'Clockwise shows at once');
     } finally { endTutorial(false); }
   });
+  await test('Cross-Phase lesson: Select all starts OFF, must be switched on before any card, then locks on; your setting comes back after', () => {
+    freshState(); tutorialTestSetup();
+    const before = selectAllOfRank;
+    let saved = null; try { saved = localStorage.getItem('shithead_select_all_rank'); } catch (e) {}
+    try {
+      selectAllOfRank = true; updateMultiSelectToggleUI();
+      launchTutorialModule('cross_phase');
+      const idx = TUTORIAL_STEPS.findIndex(st => st.require && st.require.toggleRankSelect === 'on');
+      const play = TUTORIAL_STEPS.findIndex(st => st.require && st.require.rank === '9');
+      assertTrue(idx > 0 && idx < play, 'The toggle step comes before the 9s');
+      showTutorialStep(idx);
+      assertEqual(selectAllOfRank, false, 'Starts OFF even when the player had it on');
+      const nine = state.players[0].hand.find(c => c.rank === '9');
+      toggleCardSelection(nine.id, getAllSelectablePool(state.players[0]));
+      assertEqual(state.selectedPlayCardIds.length, 0, 'Cards cannot be touched before the toggle is on');
+      const btn = document.getElementById('multiSelectToggleBtn');
+      render();
+      assertTrue(btn.classList.contains('tutorial-glow'), 'The header button glows while the step waits');
+      btn.click();
+      assertEqual(selectAllOfRank, true, 'The header button switches it on');
+      assertTrue(!btn.classList.contains('tutorial-glow'), 'It stops glowing once on');
+      btn.click();
+      assertEqual(selectAllOfRank, true, 'It stays locked on during the lesson');
+      tutorialClearTimers();
+      showTutorialStep(play);
+      toggleCardSelection(nine.id, getAllSelectablePool(state.players[0]));
+      assertEqual(state.selectedPlayCardIds.length, 3, 'One tap grabs both Hand 9s and the Face-Up 9');
+      endTutorial(false);
+      assertEqual(selectAllOfRank, true, "The player's own setting is back after the lesson");
+    } finally {
+      if (tutorialActive) endTutorial(false);
+      selectAllOfRank = before; updateMultiSelectToggleUI();
+      try { if (saved === null) localStorage.removeItem('shithead_select_all_rank'); else localStorage.setItem('shithead_select_all_rank', saved); } catch (e) {}
+    }
+  });
+  await test('Joker Duel lesson: the Pile has cards whenever a Joker is explained or played', () => {
+    freshState(); tutorialTestSetup();
+    try {
+      launchTutorialModule('joker_duel');
+      TUTORIAL_MODULE_JOKER_DUEL.forEach((st, i) => {
+        if (st.scene) showTutorialStep(i);
+        assertTrue(state.discardPile.length >= 3, `Step ${i + 1} has cards on the Pile to pick up (got ${state.discardPile.length})`);
+      });
+    } finally { endTutorial(false); }
+  });
   await test('REGRESSION: the tutorial never writes a restorable saved game', () => {
     freshState(); tutorialTestSetup();
     try { localStorage.removeItem('shithead_game_state'); } catch (e) {}

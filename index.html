@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v204 (ShitHead-Deluxe-186) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v205 (ShitHead-Deluxe-187) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -13233,6 +13233,9 @@ video {
     }
 
     function checkSnapBurnEligibility() {
+      // A lesson waiting on the Select all of a rank button makes it glow.
+      const rankStep = tutorialActive ? TUTORIAL_STEPS[tutorialStep]?.require?.toggleRankSelect : null;
+      document.getElementById('multiSelectToggleBtn')?.classList.toggle('tutorial-glow', !!rankStep && tutorialAwaitingAction && selectAllOfRank !== (rankStep !== 'off'));
       const snapBtn = document.getElementById('snapBurnBtn');
       const snapToast = document.getElementById('snapToastBanner');
       const opportunity = getCurrentSnapOpportunity();
@@ -14885,6 +14888,13 @@ video {
     }
 
     function toggleCardSelection(cardId, pool) {
+      const tutStep = tutorialActive ? TUTORIAL_STEPS[tutorialStep] : null;
+      if (tutStep?.require?.toggleRankSelect && tutorialAwaitingAction) {
+        notifyBanner(tutStep.require.toggleRankSelect === 'off'
+          ? 'Tap the Select all of a rank button in the header to switch it off first.'
+          : 'Tap the Select all of a rank button in the header first.');
+        return;
+      }
       if (!isLocalPlayersTurnNow()) {
         state.selectedPlayCardIds = [];
         notifyBanner('Wait for your turn — Snap Burn is still available when shown.');
@@ -17651,6 +17661,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v205: [
+        ['🎓', 'Cross-Phase Combo lesson: switch on Select all of a rank first, then one tap grabs all three 9s.'],
+        ['🃏', 'Joker Duel lesson: the Pile has cards on it, so you can see who picks them up.']
+      ],
       v204: [
         ['🎓', 'The Snap Burn lesson is clearer: Coach plays a King, then you snap the fourth on Rival\'s turn.'],
         ['🔄', 'The direction arrow now shows the right way round as soon as a lesson starts.']
@@ -27918,13 +27932,23 @@ video {
         text: "Face-Up cards are usually locked until your Hand's empty. There's one exception.",
         target: null
       },
+      // Select all of a rank starts OFF here whatever the player's setting
+      // (scene.toggle), must be switched on before any card can be touched
+      // (toggleCardSelection refuses while a toggleRankSelect step waits),
+      // and stays locked on for the rest of the lesson (tutorialAllowToggleOff).
       {
-        text: "Your whole Hand is a pair of 9s, and you've got a matching 9 sitting Face-Up. Empty Deck plus a one-rank Hand means you can reach it early. Select all three 9s and play them together.",
+        text: "First, switch on Select all of a rank in the header. Then one tap grabs every card of that rank.",
+        target: '#multiSelectToggleBtn',
+        scene: { hand: [['9', '♥'], ['9', '♣']], faceUp: [['9', '♦'], ['K', '♠'], ['Q', '♣']], pile: [['4', '♦']], emptyDeck: true, toggle: false },
+        require: { toggleRankSelect: 'on' },
+        coachNote: "It's on, and it stays on for this lesson."
+      },
+      {
+        text: "Your Hand is only 9s and the Deck is empty, so your Face-Up 9 can join them. Tap a 9 to grab all three, then play.",
         target: ['#localHand [data-rank="9"]', '#localTableSlots [data-rank="9"]'],
-        scene: { hand: [['9', '♥'], ['9', '♣']], faceUp: [['9', '♦'], ['K', '♠'], ['Q', '♣']], pile: [['4', '♦']], emptyDeck: true },
         require: { rank: '9', count: 3 },
         noCoachReply: true,
-        coachNote: "That's the Cross-Phase exception. Normally Face-Up waits for an empty Hand, but an all-one-rank Hand can pull a matching Face-Up card in early. The King and Queen stay locked either way.",
+        coachNote: "That's the Cross-Phase exception. An all-one-rank Hand can pull a matching Face-Up card in early. The King and Queen stay locked.",
         noteTarget: ['#localTableSlots [data-rank="K"]', '#localTableSlots [data-rank="Q"]']
       }
     ];
@@ -27938,25 +27962,36 @@ video {
     // player following a specific naming instruction the engine has no way
     // to actually enforce.
     const TUTORIAL_MODULE_JOKER_DUEL = [
+      // Both scenes start with cards on the Pile (played you, Coach, Rival in
+      // turn order, so it's your turn), so every pickup visibly flies to the
+      // seat that scoops it.
       {
         text: "Play a Joker and pick who scoops the Pile. But if they're holding one too, they can counter it right back, and both Jokers burn either way.",
-        target: null
+        target: '#pileZone',
+        scene: {
+          hand: [['JOKER', 'JOKER']],
+          pile: [['Q', '♦', 'you'], ['K', '♣', 'coach'], ['K', '♥', 'rival']],
+          coach: [['4', '♦'], ['6', '♣']], rival: [['5', '♥'], ['8', '♠']]
+        }
       },
       {
         text: "Play your Joker, then pick anyone. Neither can counter this one.",
         target: '#localHand [data-rank="JOKER"]',
-        scene: { hand: [['JOKER', 'JOKER']], coach: [['4', '♦'], ['6', '♣']], rival: [['5', '♥'], ['8', '♠']] },
         require: { rank: 'JOKER' },
         noteTarget: '#pileZone',
-        coachNote: "No counter! Whoever you picked just took the whole Pile, you go again. Your Joker's burnt either way."
+        coachNote: "No counter. Whoever you picked took the whole Pile, and you go again. Your Joker's burnt either way."
       },
       {
         text: "One more Joker, this time both opponents have one too. Play it and pick either one.",
         target: '#localHand [data-rank="JOKER"]',
-        scene: { hand: [['JOKER', 'JOKER']], coach: [['JOKER', 'JOKER'], ['4', '♦']], rival: [['JOKER', 'JOKER'], ['5', '♥']] },
+        scene: {
+          hand: [['JOKER', 'JOKER']],
+          pile: [['Q', '♠', 'you'], ['A', '♦', 'coach'], ['A', '♣', 'rival']],
+          coach: [['JOKER', 'JOKER'], ['4', '♦']], rival: [['JOKER', 'JOKER'], ['5', '♥']]
+        },
         require: { rank: 'JOKER' },
         noteTarget: '#pileZone',
-        coachNote: "Countered! The Pile bounces right back to you, and both Jokers burn. That's the risk with every Joker: it can come right back at you."
+        coachNote: "Countered. The Pile comes straight back to you, and both Jokers burn. That's the risk with every Joker."
       }
     ];
 
@@ -28746,12 +28781,14 @@ video {
       }
     }
 
+    let tutorialPrevSelectAll = null;
     function startTutorial(moduleSteps, playerCount = 2) {
       if (!requireValidName()) return;
       TUTORIAL_STEPS = moduleSteps || TUTORIAL_STEPS_FULL_LEGACY;
       tutorialActive = true;
       tutorialStep = 0;
       tutorialSnapshots = [];
+      tutorialPrevSelectAll = selectAllOfRank;
       tutorialBotPaused = true;
       tutorialClearTimers();
 
@@ -29650,6 +29687,13 @@ video {
 
     function endTutorial(completed) {
       applyBotPrefs();
+      // Lessons force Select all of a rank on/off; give the player's own
+      // setting back.
+      if (tutorialPrevSelectAll !== null) {
+        selectAllOfRank = tutorialPrevSelectAll;
+        tutorialPrevSelectAll = null;
+        updateMultiSelectToggleUI();
+      }
       tutorialActive = false;
       tutorialBotPaused = false;
       tutorialStep = 0;
@@ -29660,6 +29704,7 @@ video {
       document.getElementById('cardRefBtn')?.classList.remove('tutorial-glow');
       ['discardPileContainer', 'localHand'].forEach(id => document.getElementById(id)?.classList.remove('tutorial-glow'));
       document.getElementById('matrixRefBtn')?.classList.remove('tutorial-glow');
+      document.getElementById('multiSelectToggleBtn')?.classList.remove('tutorial-glow');
       if (typeof cardRefOpen !== 'undefined' && cardRefOpen) toggleCardReference(true);
       if (typeof matrixRefOpen !== 'undefined' && matrixRefOpen) toggleMatrixReference(true);
       const zoneReset = document.getElementById('localPlayerZone');
