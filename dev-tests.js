@@ -6510,14 +6510,16 @@ async function runDevTestSuite() {
         const tile = document.querySelector(`#personalisationTableThemes [data-equip-id="${id}"]`);
         assertTrue(!!tile && !tile.hasAttribute('data-locked'), `${id} shows unlocked in Custom → Tables`);
         assertTrue(canRestoreEquippedCosmetic('tableTheme', id, {}), `${id} stays equipped without owning anything`);
-        assertTrue(tableArtBackground(id).includes('.jpg'), `${id} uses its texture`);
+        assertTrue(tableArtBackground(id).includes('-tile.jpg') && tableArtBackground(id).includes(`${TABLE_TILE_PX}px repeat`), `${id} repeats its sharp tile instead of stretching one picture`);
       });
       assertTrue(equipCosmetic('tableTheme', 'table-felt', { preview: false, sync: false }), 'Equips without buying');
       assertEqual(document.body.dataset.equippedTableTheme, 'table-felt', 'and the table wears it');
-      for (const f of ['art/tables/wood.jpg', 'art/tables/felt.jpg']) {
+      for (const f of ['art/tables/wood-tile.jpg', 'art/tables/felt-tile.jpg']) {
         const r = await fetch(f, { cache: 'no-store' });
         const b = new Uint8Array(await r.arrayBuffer());
-        assertTrue(r.ok && b[0] === 0xFF && b[1] === 0xD8 && b.length < 300 * 1024, `${f} is a JPEG under 300 KB`, b.length);
+        assertTrue(r.ok && b[0] === 0xFF && b[1] === 0xD8 && b.length < 400 * 1024, `${f} is a JPEG under 400 KB`, b.length);
+        const img = new Image(); img.src = f; await img.decode();
+        assertTrue(img.naturalWidth >= 1920 && img.naturalHeight >= 1920, `${f} is a 1920px tile (3x its 640px size, sharp on 4K)`, img.naturalWidth);
       }
     } finally {
       cosmeticPurchaseState = saved; equippedCosmetics = savedEq; applyEquippedCosmetics(); renderPersonalisationCosmetics();
@@ -7423,6 +7425,42 @@ async function runDevTestSuite() {
       el.click();
       assertEqual(clicked, 1, 'A normal tap still works');
     } finally { el.remove(); hideCardHold(); }
+  });
+  await test('REGRESSION: a frame equipped while Custom is still loading stays equipped (it used to revert)', async () => {
+    const savedDb = db, savedUser = currentUser, savedEq = { ...equippedCosmetics }, savedOwned = cosmeticPurchaseState;
+    let release; const gate = new Promise(r => { release = r; });
+    const owned = { 'frame-gold': { purchasedAt: 1 }, 'frame-silver': { purchasedAt: 1 }, 'back-midnight': { purchasedAt: 1 } };
+    const server = { 'shopPurchases/u1/cosmetics': null, 'users/u1/equippedCosmetics': { frame: 'frame-gold', cardBack: 'default' }, 'users/u1/ownedCosmetics': owned };
+    let reject = false;
+    db = { ref: (path) => ({
+      once: () => gate.then(() => ({ val: () => (path in server ? server[path] : null) })),
+      set: () => reject ? Promise.reject(new Error('PERMISSION_DENIED')) : Promise.resolve(),
+      update: () => Promise.resolve()
+    }) };
+    currentUser = { uid: 'u1' };
+    try {
+      cosmeticPurchaseState = { ...owned };
+      equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS, frame: 'frame-gold' };
+      const loading = loadCosmeticCollection(currentUser); // e.g. opening Custom
+      equipCosmetic('frame', 'frame-silver', { preview: false });
+      equipCosmetic('cardBack', 'back-midnight', { preview: false });
+      release(); await loading;
+      assertEqual(equippedCosmetics.frame, 'frame-silver', 'The new frame survives the older server answer');
+      assertEqual(equippedCosmetics.cardBack, 'back-midnight', 'and so does the card back picked after it');
+      assertEqual(document.body.dataset.equippedFrame, 'frame-silver', 'Your cards wear the new frame');
+      // A later load (nothing equipped since) takes the server's word again.
+      server['users/u1/equippedCosmetics'] = { frame: 'frame-silver', cardBack: 'back-midnight' };
+      await loadCosmeticCollection(currentUser);
+      assertEqual(equippedCosmetics.frame, 'frame-silver', 'A fresh load agrees');
+      // The account refusing a save puts the old frame back straight away, with a message.
+      reject = true;
+      equipCosmetic('frame', 'frame-gold', { preview: false });
+      await new Promise(r => setTimeout(r, 0)); await new Promise(r => setTimeout(r, 0));
+      assertEqual(equippedCosmetics.frame, 'frame-silver', 'A refused save does not pretend to be equipped');
+      assertTrue(/Couldn't save/.test(document.getElementById('personalisationStatus').textContent), 'and says so');
+    } finally {
+      db = savedDb; currentUser = savedUser; equippedCosmetics = savedEq; cosmeticPurchaseState = savedOwned; applyEquippedCosmetics();
+    }
   });
   await test('REGRESSION: closing the Themes page (X button and outside click) both work', () => {
     openThemesPanel();

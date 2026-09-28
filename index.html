@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v192 (ShitHead-Deluxe-174) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v193 (ShitHead-Deluxe-175) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -17429,6 +17429,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v193: [
+        ['🎨', 'Classic Felt and Oak Wood are now sharp on every screen, from phones to 4K monitors.'],
+        ['🔧', 'Fixed: a frame you had just equipped could switch back after you picked another item.']
+      ],
       v192: [
         ['💡', 'Press and hold now also works on the Pile, the Base Card and other players\' face-up cards.'],
         ['📝', 'Clearer card descriptions, and your face-up cards remind you they wait until your hand is empty.']
@@ -18001,9 +18005,11 @@ video {
       'jungle': "art/tables/jungle.svg",
       'devilish': "art/tables/devilish.svg",
       'angelic': "art/tables/angelic.svg",
-      // Free photo-like surfaces (tools/make-table-textures.py).
-      'wood': "art/tables/wood.jpg",
-      'felt': "art/tables/felt.jpg"
+      // Free photo-like surfaces (tools/make-table-textures.py): seamless
+      // 1920px tiles repeated at TABLE_TILE_PX (3x pixels: sharp on phones,
+      // PCs and 4K screens alike), lit by CSS gradients (TILED_TABLE_LIGHT).
+      'wood': "art/tables/wood-tile.jpg",
+      'felt': "art/tables/felt-tile.jpg"
     };
     const ILLUSTRATED_TABLES = {
       'table-candyfloss': { art: 'candyfloss', base: '#f0abfc', rim: 'inset 0 0 0 3px #fff1f2,inset 0 0 50px rgba(190,24,93,.25)', label: 'rgba(255,241,242,.95)' },
@@ -18747,9 +18753,19 @@ video {
       'victory-diwali': svfxDiwali, 'victory-christmas': svfxChristmas, 'victory-newyear': svfxNewYear,
       'victory-easter': svfxEaster, 'victory-lunar': svfxLunar, 'victory-ramadan': svfxRamadan
     };
-    function tableArtBackground(id) {
+    // Tiled surfaces repeat at a fixed CSS size (a smaller one in the mini
+    // previews) under their own lamp/vignette; pictures cover the table.
+    const TABLE_TILE_PX = 640;
+    const TILED_TABLE_LIGHT = {
+      wood: 'radial-gradient(ellipse 70% 55% at 42% 40%,rgba(255,236,200,.16),transparent 70%),radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(20,10,4,.5) 100%)',
+      felt: 'radial-gradient(ellipse 75% 60% at 50% 46%,rgba(220,255,230,.12),transparent 70%),radial-gradient(ellipse at 50% 50%,transparent 42%,rgba(0,0,0,.5) 100%)'
+    };
+    function tableArtBackground(id, preview = false) {
       const t = ILLUSTRATED_TABLES[id];
-      return t ? `url('${TABLE_ART[t.art]}') center/cover no-repeat, ${t.base}` : '';
+      if (!t) return '';
+      const light = TILED_TABLE_LIGHT[t.art];
+      if (light) return `${light}, url('${TABLE_ART[t.art]}') 0 0/${preview ? 160 : TABLE_TILE_PX}px repeat, ${t.base}`;
+      return `url('${TABLE_ART[t.art]}') center/cover no-repeat, ${t.base}`;
     }
     // Mirrors the in-game #gameTable look for each theme so previews match.
     const CSS_TABLE_PREVIEWS = {
@@ -18761,7 +18777,7 @@ video {
     };
     function tablePreviewLook(id) {
       const art = ILLUSTRATED_TABLES[id];
-      if (art) return { bg: tableArtBackground(id), rim: art.rim, label: art.label };
+      if (art) return { bg: tableArtBackground(id, true), rim: art.rim, label: art.label };
       return CSS_TABLE_PREVIEWS[id] || CSS_TABLE_PREVIEWS.default;
     }
     function miniTablePreviewHtml(id, name, large = false, cards = {}) {
@@ -19858,7 +19874,9 @@ video {
       if (!isSupportedCosmetic(type, id)) return false;
       const builtIn = BUILT_IN_COSMETICS.some(item => item.id === id && COSMETIC_CATEGORY_TYPES[item.category] === type);
       if (id !== 'default' && !builtIn && !cosmeticPurchaseState[id]) return false;
+      const previousId = equippedCosmetics[type];
       equippedCosmetics[type] = id;
+      stampEquip(type);
       applyEquippedCosmetics();
       renderPersonalisationCosmetics();
       const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES].find(entry => entry.id === id);
@@ -19873,7 +19891,17 @@ video {
         if (type === 'avatar') syncPublicProfile();
         else if (SHOWCASE_TYPES.includes(type)) syncShowcase();
       }).catch(() => {
-        if (status) status.textContent = 'Equipped on this device, but account sync failed.';
+        // The account refused it (a write that fails rather than waiting
+        // offline): put the old one back now rather than letting the next
+        // reload swap it back later without a word.
+        if (equippedCosmetics[type] === id) {
+          equippedCosmetics[type] = previousId;
+          applyEquippedCosmetics();
+          renderPersonalisationCosmetics();
+          if (typeof renderCosmeticShop === 'function') renderCosmeticShop();
+        }
+        const s2 = document.getElementById('personalisationStatus');
+        if (s2) s2.textContent = `Couldn't save ${item ? item.name : 'that'} to your account. Please try again.`;
       });
       return true;
     }
@@ -20085,7 +20113,15 @@ video {
       status.textContent = currentUser ? 'Your equipped choices are saved to your account.' : 'Sign in to load and save purchased cosmetics.';
     }
 
+    // When each slot was last equipped on this device. A collection load
+    // (opening Custom, sign-in, a room resync) reads the server; a slot
+    // equipped after that read began keeps the new pick instead of being
+    // overwritten by the older answer (the "frame reverts" bug).
+    const cosmeticEquipStamp = {};
+    let cosmeticCollectionUid = null;
+    function stampEquip(types) { const now = Date.now(); [].concat(types).forEach(t => { cosmeticEquipStamp[t] = now; }); }
     function loadCosmeticCollection(user = currentUser) {
+      const startedAt = Date.now();
       if (!user) {
         cosmeticPurchaseState = {};
         equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS };
@@ -20098,9 +20134,17 @@ video {
         db.ref(`users/${user.uid}/equippedCosmetics`).once('value'),
         db.ref(`users/${user.uid}/ownedCosmetics`).once('value')
       ]).then(([purchaseSnap, equippedSnap, ownedSnap]) => {
-        cosmeticPurchaseState = { ...(purchaseSnap.val() || {}), ...(ownedSnap.val() || {}) };
+        const fresh = { ...(purchaseSnap.val() || {}), ...(ownedSnap.val() || {}) };
+        // Items are never taken away in play, so keep anything bought on
+        // this device while the read was in flight.
+        cosmeticPurchaseState = cosmeticCollectionUid === user.uid ? { ...cosmeticPurchaseState, ...fresh } : fresh;
+        cosmeticCollectionUid = user.uid;
         const saved = equippedSnap.val() || {};
+        const local = { ...equippedCosmetics };
         equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS, ...saved };
+        Object.keys(cosmeticEquipStamp).forEach(type => {
+          if (cosmeticEquipStamp[type] >= startedAt && type in local) equippedCosmetics[type] = local[type];
+        });
         ['cardBack', 'frame', 'emotes', 'tableTheme', 'burnEffect', 'victoryEffect', 'jokerEffect', 'avatar'].forEach(type => {
           const id = equippedCosmetics[type];
           if (!canRestoreEquippedCosmetic(type, id)) equippedCosmetics[type] = 'default';
@@ -20155,6 +20199,7 @@ video {
       }
       if (!confirm('Unequip every cosmetic and restore all defaults?')) return;
       equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS };
+      stampEquip(Object.keys(DEFAULT_EQUIPPED_COSMETICS));
       applyEquippedCosmetics();
       renderPersonalisationCosmetics();
       renderCosmeticShop();
@@ -25339,6 +25384,7 @@ video {
         equippedCosmetics[t] = ok ? id : 'default';
         if (!ok) fellBack.push(t);
       });
+      stampEquip(LOADOUT_TYPES);
       applyEquippedCosmetics();
       loadoutMenuSlot = null;
       renderPersonalisationCosmetics();
