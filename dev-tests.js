@@ -7434,6 +7434,38 @@ async function runDevTestSuite() {
     }
   });
 
+  await test('REGRESSION: online 1-on-1, a countered Joker leaves both hands (our own effect echo used to put both back)', () => {
+    freshState({ isMultiplayer: true, isHost: false, roomCode: '444444', discardPile: [] });
+    state.localPlayerId = 'p1';
+    const mine = { id: 'jkA', rank: 'JKR', suit: '', isJoker: true }, hers = { id: 'jkP', rank: 'JKR', suit: '', isJoker: true };
+    state.players = [
+      makePlayer({ id: 'p1', name: 'Amit', hand: [makeCard('3'), makeCard('Q'), mine], faceUp: [makeCard('A')], faceDown: [makeCard('7')] }),
+      makePlayer({ id: 'p2', name: 'Pooja', hand: [makeCard('9'), hers, makeCard('5')], faceUp: [makeCard('K')], faceDown: [makeCard('8')] })
+    ];
+    state.drawPile = ['4', '6', '7', '8'].map(r => makeCard(r));
+    state.currentTurnIndex = 0; state.phase = 'PLAY'; state.stateVersion = 5;
+    const roomAtV5 = JSON.parse(JSON.stringify({ phase: 'PLAY', stateVersion: 5, players: state.players, discardPile: [], drawPile: state.drawPile, currentTurnIndex: 0, direction: 1 }));
+    let listener = null;
+    const originalRef = db.ref, originalSync = syncFirebaseGameState;
+    db.ref = () => ({ on: (ev, cb) => { if (ev === 'value') listener = cb; }, update: () => Promise.resolve(), set: () => Promise.resolve(),
+      once: () => Promise.resolve({ val: () => null }), remove: () => Promise.resolve(), onDisconnect: () => ({ set: () => {}, remove: () => {}, cancel: () => {} }) });
+    syncFirebaseGameState = () => { state.stateVersion = (state.stateVersion || 0) + 1; };
+    // The real Joker effect broadcast (skipped while tests run) fires the
+    // room listener at once with the room as last saved; do the same here.
+    const originalFx = playJokerEffectFor;
+    playJokerEffectFor = () => { if (listener) listener({ val: () => ({ ...roomAtV5, lastJokerEffect: { effectId: 'default', by: 'p1', at: Date.now() } }) }); };
+    try {
+      listenToFirebaseRoom('444444');
+      executePlayCards('p1', [mine]);
+      const jokers = state.players.flatMap(p => [...p.hand, ...p.faceUp, ...p.faceDown]).filter(c => c.isJoker);
+      assertEqual(jokers.length, 0, 'Both Jokers are out of the game after the counter');
+      assertEqual(pendingJokerChoice, null, 'No guard left behind once the duel is resolved');
+      assertEqual(state.players[state.currentTurnIndex].id, 'p2', 'The counter wins the next turn');
+    } finally {
+      db.ref = originalRef; syncFirebaseGameState = originalSync; pendingJokerChoice = null; playJokerEffectFor = originalFx;
+    }
+  });
+
   await test('REGRESSION: a stale snapshot cannot erase another player\'s real turn (the "phantom skip with no 8s" bug)', () => {
     freshState({ isMultiplayer: true, isHost: false, roomCode: '777777', drawPile: [] });
     state.localPlayerId = 'p1'; // Amit's client

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-27-v186 (ShitHead-Deluxe-168) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v187 (ShitHead-Deluxe-169) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -9737,8 +9737,25 @@ video {
     }
 
     /* Standard Joker Resolution: Deflects if target has Joker, else target picks up and initiator gets a free turn */
+    // Online, a Joker's play isn't saved until its duel is resolved, and our
+    // own room writes on the way (the Joker effect broadcast) fire the room
+    // listener at once with the room as last saved: Joker still in hand.
+    // That put both Jokers back ("we both kept them") and let the duel run
+    // on replaced seats. pendingJokerChoice makes the listener hold off such
+    // same-version snapshots for the whole play; it stays set only while a
+    // target picker is waiting (cleared when a target is picked, or when a
+    // newer room arrives).
     function handleJokerPlay(initiator, jokerCard) {
       if (isMatchDecided()) return;
+      pendingJokerChoice = state.isMultiplayer ? { version: state.stateVersion || 0, initiatorId: initiator.id, jokerId: jokerCard.id } : null;
+      try {
+        handleJokerPlayNow(initiator, jokerCard);
+      } finally {
+        const pickerOpen = !document.getElementById('floatingJokerBar')?.classList.contains('hidden');
+        if (!pickerOpen) pendingJokerChoice = null;
+      }
+    }
+    function handleJokerPlayNow(initiator, jokerCard) {
       // A second Joker landing directly on top of a first one is never a
       // free choice — the only way a Joker is ever still sitting unresolved
       // on the pile at all is an open challenge waiting on this specific
@@ -9773,13 +9790,6 @@ video {
       }
 
       const targets = state.players.filter(p => !p.hasFinished && p.id !== initiator.id && ((p.hand?.length || 0) + (p.faceUp?.length || 0) + (p.faceDown?.length || 0) > 0));
-      // Online, a player choosing between targets hasn't synced this play
-      // yet, and our own room writes (the effect broadcast just below) fire
-      // the room listener, which would put the room's copy back with the
-      // Joker still on their table. pendingJokerChoice holds such same-state
-      // snapshots off (see activeRoomHandler) until the target is picked.
-      const picksTarget = !initiator.isBot && !(targets.length === 1 && !tutorialActive);
-      pendingJokerChoice = state.isMultiplayer && picksTarget ? { version: state.stateVersion || 0, initiatorId: initiator.id, jokerId: jokerCard.id } : null;
       playJokerEffectFor(initiator);
 
       if (initiator.isBot) {
@@ -16765,6 +16775,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v187: [
+        ['🃏', 'Play Friends and Ranked: a Joker that gets countered now leaves the game, along with the Joker that countered it.']
+      ],
       v186: [
         ['🎓', 'Tutorial: the Bonus Draw lesson works again, the 4 lesson lets you try the refused play, and lessons read more calmly.'],
         ['🃏', 'A short hand spreads out when there is room, instead of overlapping.']
