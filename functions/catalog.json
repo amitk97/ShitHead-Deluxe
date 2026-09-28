@@ -184,6 +184,18 @@
    "name": "Angelic",
    "cost": 2000
   },
+  "table-neon": {
+   "name": "Neon City",
+   "cost": 3000
+  },
+  "table-aurora": {
+   "name": "Northern Lights",
+   "cost": 3000
+  },
+  "table-space": {
+   "name": "Deep Space",
+   "cost": 3000
+  },
   "burn-coloured": {
    "name": "Coloured Flame",
    "cost": 250
@@ -339,6 +351,18 @@
   "avatar-joker-card": {
    "name": "Joker Card",
    "cost": 1000
+  },
+  "avatar-royal-flush": {
+   "name": "Royal Flush",
+   "cost": 2500
+  },
+  "avatar-phoenix": {
+   "name": "Phoenix",
+   "cost": 2500
+  },
+  "avatar-cosmic-ace": {
+   "name": "Cosmic Ace",
+   "cost": 2500
   },
   "back-lunar": {
    "name": "Lucky Envelope",

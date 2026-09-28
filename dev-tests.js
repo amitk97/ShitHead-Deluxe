@@ -2219,7 +2219,7 @@ async function runDevTestSuite() {
     const free = BUILT_IN_COSMETICS.filter(i => i.category === 'Profile Pictures').map(i => i.name);
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
     const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Profile Pictures' && !i.season).map(i => [i.name, i.cost]));
-    assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000 }, 'Shop pictures and prices');
+    assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Phoenix': 2500, 'Cosmic Ace': 2500 }, 'Shop pictures and prices');
     assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Recruiter'], 'Earn-only pictures');
     [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Profile Pictures')
       .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
@@ -2273,7 +2273,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 22, 'All 22 pictures appear in Custom');
+    assertEqual(options.length, 25, 'All 25 pictures appear in Custom');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -5139,6 +5139,7 @@ async function runDevTestSuite() {
   await test('Second-wave table, burn and victory cosmetics are complete and correctly priced', () => {
     const expected = {
       'table-casino': 750, 'table-winter': 750, 'table-midnight': 750, 'table-candyfloss': 750, 'table-royal': 750, 'table-desert': 1000, 'table-jungle': 1000, 'table-devilish': 2000, 'table-angelic': 2000,
+      'table-neon': 3000, 'table-aurora': 3000, 'table-space': 3000,
       'burn-coloured': 250, 'burn-ice': 500, 'burn-electric': 1000, 'burn-paint': 750, 'burn-sweets': 1500, 'burn-smoke': 2000,
       'victory-confetti': 250, 'victory-cards': 1500, 'victory-fireworks': 750, 'victory-sparklers': 750, 'victory-stars': 1000, 'victory-karate': 2000
     };
@@ -6548,6 +6549,63 @@ async function runDevTestSuite() {
       cosmeticPurchaseState = saved; equippedCosmetics = savedEq; applyEquippedCosmetics(); renderPersonalisationCosmetics();
       document.getElementById('themesModal').classList.add('hidden');
     }
+  });
+  await test('4K: every table, card back and picture is vector art or a 3x tile, with no bitmap inside', async () => {
+    const tiled = new Set(Object.keys(TILED_TABLE_LIGHT));
+    Object.entries(TABLE_ART).forEach(([k, src]) => {
+      if (tiled.has(k)) assertTrue(/-tile\.jpg$/.test(src), `${k} is a repeated tile`, src);
+      else assertTrue(/\.svg$/.test(src), `${k} table art is an SVG`, src);
+    });
+    Object.entries(ILLUSTRATED_TABLES).forEach(([id, t]) => {
+      const bg = tableArtBackground(id);
+      assertTrue(tiled.has(t.art) ? bg.includes(`${TABLE_TILE_PX}px repeat`) : bg.includes('.svg'), `${id} is never a stretched bitmap`, bg.slice(0, 80));
+    });
+    const svgs = [...Object.values(TABLE_ART), ...Object.values(SEASONAL_TABLE_ART), ...Object.values(SEASONAL_BACK_ART)].filter(u => /\.svg$/.test(u));
+    assertTrue(svgs.length >= 30, 'every SVG art file is checked', svgs.length);
+    for (const u of svgs) {
+      const text = await (await fetch(u, { cache: 'no-store' })).text();
+      assertTrue(text.includes('<svg') && !/<image|data:image\/(png|jpe?g|webp|gif)/i.test(text), `${u} is pure vector (no embedded bitmap)`);
+    }
+    Object.entries(AVATAR_ART).forEach(([id, a]) => {
+      assertTrue(!/<image|data:image\//i.test(a.art), `${id} picture is pure vector`);
+    });
+    const css = [...document.querySelectorAll('style')].map(el => el.textContent).join('\n');
+    assertTrue(!/url\(['"]?data:image\/(png|jpe?g|webp|gif)/i.test(css), 'no bitmap data URIs in the page CSS');
+  });
+  await test('Premium pictures (Royal Flush, Phoenix, Cosmic Ace) and tables (Neon City, Northern Lights, Deep Space)', async () => {
+    const pics = { 'avatar-royal-flush': 'Royal Flush', 'avatar-phoenix': 'Phoenix', 'avatar-cosmic-ace': 'Cosmic Ace' };
+    const host = document.createElement('div');
+    const hadReduce = document.body.classList.contains('reduce-motion');
+    document.body.classList.remove('reduce-motion');
+    document.body.appendChild(host);
+    try {
+      for (const [id, name] of Object.entries(pics)) {
+        const item = COSMETIC_SHOP_ITEMS.find(i => i.id === id);
+        assertTrue(!!item && item.name === name && item.cost === 2500 && item.animated, `${name} is a 2500 animated picture`, item);
+        assertTrue(COSMETIC_RUNTIME_IDS.avatar.has(id) && AVATAR_ART[id].animated, `${name} has art`);
+        host.innerHTML = avatarHtml(id, 64);
+        const moving = [...host.querySelectorAll('*')].filter(el => getComputedStyle(el).animationName !== 'none');
+        assertTrue(moving.length >= 3, `${name} animates several parts`, moving.length);
+        const names = new Set(moving.map(el => getComputedStyle(el).animationName));
+        assertTrue(names.size >= 2, `${name} mixes at least two motions`, [...names]);
+      }
+      document.body.classList.add('reduce-motion');
+      host.innerHTML = avatarHtml('avatar-phoenix', 64);
+      assertTrue([...host.querySelectorAll('*')].every(el => getComputedStyle(el).animationName === 'none'), 'Reduce Motion stops them');
+    } finally {
+      document.body.classList.toggle('reduce-motion', hadReduce);
+      host.remove();
+    }
+    const tables = { 'table-neon': 'Neon City', 'table-aurora': 'Northern Lights', 'table-space': 'Deep Space' };
+    for (const [id, name] of Object.entries(tables)) {
+      const item = COSMETIC_SHOP_ITEMS.find(i => i.id === id);
+      assertTrue(!!item && item.name === name && item.cost === 3000, `${name} costs 3000`, item);
+      assertTrue(COSMETIC_RUNTIME_IDS.tableTheme.has(id) && !!ILLUSTRATED_TABLES[id], `${name} can be equipped and drawn`);
+      const r = await fetch(TABLE_ART[ILLUSTRATED_TABLES[id].art], { cache: 'no-store' });
+      assertTrue(r.ok, `${name} art loads`);
+    }
+    const topTable = Math.max(...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Table Themes' && !Object.keys(tables).includes(i.id)).map(i => i.cost));
+    assertTrue(topTable <= 3000, 'premium tables cost at least as much as any other table', topTable);
   });
   await test('Custom → All: every item incl. all seasonal ones, folding sections, and a Diamonds / owned / Shop bar', () => {
     const savedOwned = cosmeticPurchaseState, savedCollapsed = [...customAllCollapsed], savedNow = seasonalNowOverride;

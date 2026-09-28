@@ -91,6 +91,7 @@
               newData.val() === 'table-royal' || newData.val() === 'table-desert' ||
               newData.val() === 'table-jungle' || newData.val() === 'table-devilish' ||
               newData.val() === 'table-angelic' ||
+              newData.val().matches(/^table-(neon|aurora|space)$/) ||
               (newData.val().matches(/^table-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^table-(halloween|diwali|christmas|newyear)$/)))))"
           },
@@ -145,6 +146,7 @@
               newData.val() === 'avatar-crown-master' || newData.val() === 'avatar-centurion' ||
               newData.val() === 'avatar-shithead' || newData.val() === 'avatar-gauntlet' ||
               newData.val() === 'avatar-recruiter' ||
+              newData.val().matches(/^avatar-(royal-flush|phoenix|cosmic-ace)$/) ||
               (newData.val().matches(/^avatar-(lunar|valentine|ramadan|easter|summer)(-earned)?$/) ||
               newData.val().matches(/^avatar-(halloween|diwali|christmas|newyear)(-earned)?$/)))))"
           },
