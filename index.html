@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v193 (ShitHead-Deluxe-175) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v194 (ShitHead-Deluxe-176) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -17429,6 +17429,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v194: [
+        ['⚙️', 'Fixed: a setting changed just before closing or refreshing the game could switch back at your next sign-in.']
+      ],
       v193: [
         ['🎨', 'Classic Felt and Oak Wood are now sharp on every screen, from phones to 4K monitors.'],
         ['🔧', 'Fixed: a frame you had just equipped could switch back after you picked another item.']
@@ -21662,29 +21665,58 @@ video {
       }
     }
 
+    // Settings live on the device (localStorage, read at start-up) and in the
+    // account (users/{uid}/settings, applied at sign-in). A change made on
+    // this device is marked unsaved (SETTINGS_UNSAVED_KEY = "<uid>:<n>")
+    // until the account copy is written, so a refresh or closed app inside
+    // the save delay never lets the older account copy overwrite it: at the
+    // next sign-in the device's settings win and are pushed up instead.
+    const SETTINGS_UNSAVED_KEY = 'shithead_settings_unsaved';
+    let settingsChangeSeq = 0;
+    const readSettingsUnsaved = () => { try { return localStorage.getItem(SETTINGS_UNSAVED_KEY) || ''; } catch (e) { return ''; } };
+    // Only a change left unsaved by an earlier visit counts; nothing is saved
+    // to the account until its settings have loaded (settingsLoadedUid), so
+    // automatic adjustments during sign-in never overwrite the account copy.
+    let settingsUnsavedAtStart = readSettingsUnsaved();
+    let settingsLoadedUid = null;
+    function saveSettingsToCloudNow() {
+      clearTimeout(settingsCloudSaveTimer); settingsCloudSaveTimer = null;
+      if (!currentUser || !firebaseAvailable) return Promise.resolve();
+      const marker = readSettingsUnsaved();
+      return db.ref(`users/${currentUser.uid}/settings`).set({
+        ...collectAccountSettings(),
+        updatedAt: firebase.database.ServerValue.TIMESTAMP
+      }).then(() => {
+        try { if (readSettingsUnsaved() === marker) localStorage.removeItem(SETTINGS_UNSAVED_KEY); } catch (e) {}
+      }).catch((error) => console.warn('Account settings save failed', error));
+    }
     function loadAccountSettings(user = currentUser) {
       if (!user || !firebaseAvailable) return Promise.resolve();
       const ref = db.ref(`users/${user.uid}/settings`);
       return ref.once('value').then((snap) => {
         const saved = snap.val();
+        settingsLoadedUid = user.uid;
+        const leftUnsaved = settingsUnsavedAtStart.startsWith(`${user.uid}:`) && readSettingsUnsaved() === settingsUnsavedAtStart;
+        settingsUnsavedAtStart = '';
+        if (leftUnsaved) return saveSettingsToCloudNow();
         if (saved && typeof saved === 'object') {
           applyAccountSettings(saved);
           return;
         }
         return ref.set({ ...collectAccountSettings(), updatedAt: firebase.database.ServerValue.TIMESTAMP });
-      }).catch((error) => console.warn('Account settings sync failed', error));
+      }).catch((error) => { settingsLoadedUid = user.uid; console.warn('Account settings sync failed', error); });
     }
 
     function scheduleSettingsCloudSave() {
-      if (!currentUser || !firebaseAvailable || applyingAccountSettings) return;
+      if (!currentUser || !firebaseAvailable || applyingAccountSettings || settingsLoadedUid !== currentUser.uid) return;
+      try { localStorage.setItem(SETTINGS_UNSAVED_KEY, `${currentUser.uid}:${++settingsChangeSeq}`); } catch (e) {}
       clearTimeout(settingsCloudSaveTimer);
-      settingsCloudSaveTimer = setTimeout(() => {
-        db.ref(`users/${currentUser.uid}/settings`).set({
-          ...collectAccountSettings(),
-          updatedAt: firebase.database.ServerValue.TIMESTAMP
-        }).catch((error) => console.warn('Account settings save failed', error));
-      }, 180);
+      settingsCloudSaveTimer = setTimeout(saveSettingsToCloudNow, 180);
     }
+    // Leaving or hiding the app sends a waiting save straight away.
+    const flushSettingsSave = () => { if (settingsCloudSaveTimer) saveSettingsToCloudNow(); };
+    window.addEventListener('pagehide', flushSettingsSave);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSettingsSave(); });
 
     // STAGE 5 — Profile & Account page logic.
     function refreshProfilePanel() {

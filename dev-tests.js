@@ -7462,6 +7462,54 @@ async function runDevTestSuite() {
       db = savedDb; currentUser = savedUser; equippedCosmetics = savedEq; cosmeticPurchaseState = savedOwned; applyEquippedCosmetics();
     }
   });
+  await test('Settings persist: a change made just before a refresh wins over the older account copy; other devices still sync', async () => {
+    const savedDb = db, savedUser = currentUser, savedPref = historyOpenPref, savedOpen = historyOpen, savedLoaded = settingsLoadedUid, savedStart = settingsUnsavedAtStart;
+    let cloud = { historyOpen: true, handSortByPower: false };
+    const sets = [];
+    let hold = false;
+    db = { ref: (path) => ({
+      once: () => Promise.resolve({ val: () => (path.endsWith('/settings') ? cloud : null) }),
+      set: (v) => { sets.push(v); if (!hold) cloud = { ...v }; return hold ? new Promise(() => {}) : Promise.resolve(); }
+    }) };
+    currentUser = { uid: 'setU' };
+    try {
+      try { localStorage.removeItem(SETTINGS_UNSAVED_KEY); } catch (e) {}
+      settingsUnsavedAtStart = ''; settingsLoadedUid = null;
+      await loadAccountSettings(currentUser);
+      assertEqual(historyOpenPref, true, 'Signed in: the account copy is applied');
+      // Turn Card History off, then "refresh" before the account save lands.
+      hold = true;
+      document.getElementById('setHistoryRow').click();
+      assertEqual(historyOpenPref, false, 'Toggled off');
+      assertEqual(localStorage.getItem('shithead_history_open'), '0', 'Saved on this device at once');
+      assertTrue(readSettingsUnsaved().startsWith('setU:'), 'Marked as not yet saved to the account');
+      clearTimeout(settingsCloudSaveTimer); settingsCloudSaveTimer = null; // the page went away
+      // Next visit: the device read its prefs, the account still says "on".
+      hold = false;
+      settingsUnsavedAtStart = readSettingsUnsaved(); settingsLoadedUid = null;
+      historyOpenPref = readPref('shithead_history_open', true);
+      await loadAccountSettings(currentUser);
+      assertEqual(historyOpenPref, false, 'The newer device choice survives the sign-in');
+      assertEqual(cloud.historyOpen, false, 'and is pushed up to the account');
+      assertEqual(readSettingsUnsaved(), '', 'Nothing left unsaved');
+      // Another device changed it later: that account copy applies here.
+      cloud = { ...cloud, historyOpen: true };
+      settingsUnsavedAtStart = ''; settingsLoadedUid = null;
+      await loadAccountSettings(currentUser);
+      assertEqual(historyOpenPref, true, "Another device's change arrives at sign-in");
+      assertEqual(localStorage.getItem('shithead_history_open'), '1', 'and is kept on this device');
+      // A setting changed before the account copy has loaded never overwrites it.
+      settingsLoadedUid = null; const before = sets.length;
+      scheduleSettingsCloudSave();
+      assertEqual(sets.length, before, 'No save before the account settings have loaded');
+      assertEqual(readSettingsUnsaved(), '', 'and no unsaved mark');
+    } finally {
+      db = savedDb; currentUser = savedUser; historyOpenPref = savedPref; setHistoryOpen(savedOpen);
+      settingsLoadedUid = savedLoaded; settingsUnsavedAtStart = savedStart;
+      clearTimeout(settingsCloudSaveTimer);
+      try { localStorage.removeItem(SETTINGS_UNSAVED_KEY); localStorage.setItem('shithead_history_open', savedPref ? '1' : '0'); } catch (e) {}
+    }
+  });
   await test('REGRESSION: closing the Themes page (X button and outside click) both work', () => {
     openThemesPanel();
     document.getElementById('themesCloseBtn').click();
