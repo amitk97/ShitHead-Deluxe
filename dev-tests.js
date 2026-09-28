@@ -7344,6 +7344,40 @@ async function runDevTestSuite() {
       host.remove();
     }
   });
+  await test('Card history circle: shows the card to beat (5 → base card, 3 → the card under it) and folds per game', () => {
+    const savedPref = historyOpenPref, savedOpen = historyOpen;
+    try {
+      freshState({ discardPile: [makeCard('7'), makeCard('3')] });
+      assertEqual(historyCircleLabel(historyCircleCard()), '7', 'A 3 shows the card under it');
+      state.discardPile = [makeCard('9'), makeCard('3'), makeCard('3')];
+      assertEqual(historyCircleLabel(historyCircleCard()), '9', 'Under several 3s');
+      state.discardPile = [makeCard('3')];
+      assertEqual(historyCircleLabel(historyCircleCard()), '3', 'A 3 that is the base card shows 3');
+      state.discardPile = [makeCard('8'), makeCard('K'), makeCard('5')];
+      state.baseOverrideCard = state.discardPile[0];
+      assertEqual(historyCircleLabel(historyCircleCard()), '8', 'A 5 shows the base card');
+      state.discardPile.push(makeCard('3'));
+      assertEqual(historyCircleLabel(historyCircleCard()), '8', 'A 3 on a 5 shows the base card');
+      state.baseOverrideCard = null; state.discardPile = [];
+      assertEqual(historyCircleLabel(historyCircleCard()), '', 'Empty pile: no rank (the history icon)');
+      const panel = document.getElementById('historyStreamPanel');
+      setHistoryOpen(false);
+      assertTrue(panel.classList.contains('history-collapsed'), 'Closing folds the strip into the circle');
+      assertTrue(!!document.querySelector('#historyCircleBtn svg'), 'Empty pile: the circle shows the history icon');
+      document.getElementById('historyCircleBtn').click();
+      assertTrue(!panel.classList.contains('history-collapsed') && historyOpen, 'Tapping the circle opens it');
+      document.getElementById('histCollapseBtn').click();
+      assertTrue(!historyOpen, 'The strip has its own close button');
+      historyOpenPref = true;
+      hideMatchEndUI();
+      assertTrue(historyOpen, 'A new game starts as the setting says (on = open)');
+      historyOpenPref = false;
+      hideMatchEndUI();
+      assertTrue(!historyOpen, 'Setting off: each game starts as the circle');
+    } finally {
+      historyOpenPref = savedPref; setHistoryOpen(savedOpen);
+    }
+  });
   await test('REGRESSION: closing the Themes page (X button and outside click) both work', () => {
     openThemesPanel();
     document.getElementById('themesCloseBtn').click();

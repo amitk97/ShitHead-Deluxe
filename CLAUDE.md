@@ -191,6 +191,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - A Joker duel is resolved before anyone finishes: `resolveJokerDuelInstant` checks the target for a counter (hand, or face-up when reachable) first, and only an uncontested Joker finishes its player (`checkPlayerFinished(initiator)`).
 - A countered last-card Joker: if cards are left on the pile (the Jokers leave it), its player is NOT finished and picks up at once (`jokerCounterPickup`, no delay, so the seat is never empty), with no victory effect or match end. If the pile is otherwise empty, there's nothing to pick up: they're out, and as they played first they finish ahead of a defender who also went out (`finishOnEmptyJokerPile`, run before the defender's finish check, which is skipped once the match is settled). Tests: "Last card a Joker that gets countered…" / "…on an empty pile, countered…" (2/3/4 players).
 
+## Card history circle
+
+- The history strip (`#historyStreamPanel`) folds into `#historyCircleBtn` (`§ Card history circle`): the panel gets `.history-collapsed` and shrinks to exactly one circle, so Play Matrix / history / Card Powers stack in the left column at the same size with equal 6px gaps. Open/closed is per game (`historyOpen`, reset from the setting in `hideMatchEndUI`); the setting is Display → Card History (`historyOpenPref`, localStorage `shithead_history_open`, synced as `historyOpen`, default on). The ‹ in the strip's header folds it; always open in the tutorial. The circle shows the card to beat with the pile label's logic (`historyCircleCard`: `baseOverrideCard` for a 5, `getEffectiveTopCard` under 3s), a clock icon on an empty pile, and ticks over when it changes (not with Reduce Motion).
+
 ## Pile label
 
 - `#activeConstraintTag` names the top card's power (`CARD_REFERENCE`); a 3 on top shows what really has to be beaten: `Transparent - N` (`transparentPileLabel`: `state.baseOverrideCard` or `getEffectiveTopCard`), `Transparent - Any` when only 3s.

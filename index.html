@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v189 (ShitHead-Deluxe-171) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v190 (ShitHead-Deluxe-172) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -212,6 +212,17 @@
        drag never fights the browser's own attempt to scroll the same axis.
        overscroll-behavior-x:contain stops a swipe that reaches either end
        from bubbling into a page-level bounce/navigation gesture. */
+    /* Card history folds into a circle the size of Play Matrix / Card Powers,
+       between them in the left column (the panel shrinks to exactly one
+       circle, so the three are evenly spaced). */
+    #historyStreamPanel.history-collapsed { background:transparent !important; border-width:0 !important; box-shadow:none !important; padding:0 !important; height:clamp(26px,7.5vw,34px); }
+    #historyStreamPanel.history-collapsed > #histHeaderRow, #historyStreamPanel.history-collapsed > #cardHistoryStream { display:none !important; }
+    .hist-circle { display:none; position:absolute; left:0; top:0; z-index:41; width:clamp(26px,7.5vw,34px); height:clamp(26px,7.5vw,34px); border-radius:9999px; background:rgba(15,23,42,.9); border:2px solid #475569; color:#fde68a; font-weight:900; font-size:clamp(12px,3.6vw,16px); line-height:1; align-items:center; justify-content:center; overflow:hidden; box-shadow:0 10px 15px -3px rgba(0,0,0,.4); padding:0; }
+    #historyStreamPanel.history-collapsed > .hist-circle { display:flex; position:absolute !important; left:0 !important; top:0 !important; margin:0 !important; box-sizing:border-box; flex-shrink:0; width:clamp(26px,7.5vw,34px) !important; height:clamp(26px,7.5vw,34px) !important; }
+    .hist-circle:active { transform:scale(.9); }
+    .hist-circle svg { width:58%; height:58%; color:#cbd5e1; }
+    .hist-circle .hist-rank.is-joker { font-size:.62em; letter-spacing:-.04em; }
+    .hist-collapse-btn { padding:0 5px; border-radius:4px; background:#1e293b; color:#cbd5e1; font-weight:900; font-size:11px; line-height:14px; }
     #cardHistoryStream {
       touch-action: pan-y;
       overscroll-behavior-x: contain;
@@ -5068,6 +5079,11 @@ video {
           <span class="block text-[8px] text-slate-400 leading-snug">Off skips the burn embers, Joker animations and win confetti</span></span>
           <span id="setBigEffectsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
+        <button id="setHistoryRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="history, recent cards, played, circle, collapse, strip">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Card History</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">On: each game starts with the history open. Off: it starts as a circle</span></span>
+          <span id="setHistoryState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">ON</span>
+        </button>
         <button id="setIconsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="icons, power, hints, card info">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Card Power Icons</span>
           <span class="block text-[8px] text-slate-400 leading-snug">Show each card's power on the card</span></span>
@@ -5960,8 +5976,12 @@ video {
           <button id="matrixRefBtn" class="pointer-events-auto rounded-full bg-slate-900/90 border-2 border-slate-600 text-slate-300 shadow-lg flex items-center justify-center transition transform active:scale-90 hover:scale-105 hover:border-amber-500"
             style="width:clamp(26px,7.5vw,34px);height:clamp(26px,7.5vw,34px);font-size:clamp(12px,3.6vw,16px);" data-tip="Play Matrix: what beats what" aria-label="Open the Play Matrix reference">&#9638;</button>
         </div>
-        <div class="flex items-center justify-between w-full text-[8px] uppercase font-black tracking-widest text-slate-400 border-b border-slate-800/80 pb-0.5">
-          <button id="histFirstBtn" class="px-1 py-0.2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded transition font-black text-[8px]">⇤ FIRST</button>
+        <!-- Closed, the strip folds into #historyCircleBtn (the card to beat),
+             in the left column between Play Matrix and Card Powers. -->
+        <button id="historyCircleBtn" type="button" class="hist-circle" aria-label="Open card history" data-tip="Card history"></button>
+        <div id="histHeaderRow" class="flex items-center justify-between w-full text-[8px] uppercase font-black tracking-widest text-slate-400 border-b border-slate-800/80 pb-0.5">
+          <span class="flex items-center gap-1"><button id="histCollapseBtn" type="button" class="hist-collapse-btn" aria-label="Close card history">&#8249;</button>
+          <button id="histFirstBtn" class="px-1 py-0.2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded transition font-black text-[8px]">⇤ FIRST</button></span>
           <span>Recent Card History</span>
           <button id="histLastBtn" class="px-1 py-0.2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded transition font-black text-[8px]">RECENT ⇥</button>
         </div>
@@ -10959,6 +10979,7 @@ video {
     // stale Quick Play / Back to Lobby / Match Stats / Continue Watching
     // button sitting on screen from the previous match.
     function hideMatchEndUI() {
+      historyOpen = historyOpenPref;
       state.blindRevealing = false; // a new match never waits on a leftover blind reveal
       msShown = { bars: {}, rewards: 0, done: new Set(), rankup: null };
       matchWinnerEffectShown = false;
@@ -13639,6 +13660,50 @@ video {
     // § Rendering: the table
     // The seat drawn at the bottom: yours, or the friend you're watching.
     function viewSeatId() { return state.spectating ? state.spectating.seatId : state.localPlayerId; }
+    // § Card history circle
+    // The strip is open or folded into a circle for each game: it starts as
+    // the Card History setting says (historyOpenPref, default on) and the
+    // player can fold/unfold it mid-game (historyOpen, reset each match in
+    // hideMatchEndUI). The circle shows the card to beat, with the same logic
+    // as the pile label: a 5's base card (baseOverrideCard), and a 3 shows
+    // what's under it (getEffectiveTopCard), unless only 3s are left.
+    let historyOpenPref = readPref('shithead_history_open', true);
+    let historyOpen = historyOpenPref;
+    let historyCircleShown = null;
+    function historyCircleCard(pile = state.discardPile) {
+      if (!pile || !pile.length) return null;
+      return state.baseOverrideCard || getEffectiveTopCard(pile);
+    }
+    function historyCircleLabel(card) {
+      if (!card) return '';
+      return card.isJoker || card.rank === 'JOKER' ? 'JKR' : String(card.rank);
+    }
+    function renderHistoryCircle() {
+      const panel = document.getElementById('historyStreamPanel');
+      const btn = document.getElementById('historyCircleBtn');
+      if (!panel || !btn) return;
+      const open = historyOpen || (typeof tutorialActive !== 'undefined' && tutorialActive);
+      panel.classList.toggle('history-collapsed', !open);
+      const label = historyCircleLabel(historyCircleCard());
+      if (label === historyCircleShown) return;
+      historyCircleShown = label;
+      btn.innerHTML = label ? `<span class="hist-rank ${label === 'JKR' ? 'is-joker' : ''}">${label}</span>` : icon('clock');
+      btn.setAttribute('aria-label', label ? `Open card history. Card to beat: ${label}` : 'Open card history');
+      const rank = btn.firstElementChild;
+      if (label && !open && !reduceMotion && rank && typeof rank.animate === 'function') {
+        rank.animate([{ transform: 'translateY(-110%)', opacity: 0 }, { transform: 'translateY(8%)', opacity: 1, offset: .7 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.34,1.56,.64,1)' });
+      }
+    }
+    function setHistoryOpen(open) {
+      historyOpen = !!open;
+      renderHistoryCircle();
+      if (state && Array.isArray(state.players) && state.players.length && typeof render === 'function') {
+        try { render(); } catch (e) { /* table not ready */ }
+      }
+    }
+    document.getElementById('historyCircleBtn')?.addEventListener('click', (e) => { e.stopPropagation(); setHistoryOpen(true); });
+    document.getElementById('histCollapseBtn')?.addEventListener('click', (e) => { e.stopPropagation(); setHistoryOpen(false); });
+
     function render() {
       cleanupDrag(); // a re-render can remove the card element mid-drag; never leave a stuck ghost behind
       const viewId = viewSeatId();
@@ -13868,6 +13933,8 @@ video {
       });
       fitOpponentSeats(oppContainer, oppScale);
       announceLastCards();
+
+      renderHistoryCircle();
 
       // 2. Discard, Deck & Base HUD
       const discardWrapper = document.getElementById('discardCardsWrapper');
@@ -16701,6 +16768,7 @@ video {
       paintToggle(document.getElementById('setMotionState'), reduceMotion);
       paintToggle(document.getElementById('setBigEffectsState'), bigEffectsOn);
       paintToggle(document.getElementById('setOthersEffectsState'), othersEffectsOn);
+      paintToggle(document.getElementById('setHistoryState'), historyOpenPref);
       paintToggle(document.getElementById('setHapticsState'), hapticsOn);
       paintToggle(document.getElementById('setTurnAlertState'), turnAlertOn);
       paintToggle(document.getElementById('setNotifySoundState'), notifySoundOn);
@@ -17239,6 +17307,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v190: [
+        ['🕘', 'Card history can now fold into a circle on the left of the table. It shows the card to beat; tap it to open the history again.'],
+        ['⚙️', 'New setting: Display → Card History chooses whether each game starts with the history open or folded.']
+      ],
       v189: [
         ['🔥', 'Four premium burns: Black Hole, Origami Fold (the cards fold into swans and fly off), Pixel Blast and Lava Melt.'],
         ['🃏', 'Four premium Joker effects: Hypnotist, Vampire, Red Card and Portal.'],
@@ -21353,6 +21425,7 @@ video {
         reduceMotion: !!reduceMotion,
         bigEffectsOn: !!bigEffectsOn,
         othersEffectsOn: !!othersEffectsOn,
+        historyOpen: !!historyOpenPref,
         hapticsOn: !!hapticsOn,
         turnAlertOn: !!turnAlertOn,
         notifySoundOn: !!notifySoundOn,
@@ -21388,6 +21461,7 @@ video {
           ['reduceMotion','shithead_reduce_motion',v => { reduceMotion=v; }],
           ['bigEffectsOn','shithead_big_effects',v => { bigEffectsOn=v; }],
           ['othersEffectsOn','shithead_others_effects',v => { othersEffectsOn=v; }],
+          ['historyOpen','shithead_history_open',v => { historyOpenPref=v; historyOpen=v; renderHistoryCircle(); }],
           ['hapticsOn','shithead_haptics',v => { hapticsOn=v; }],
           ['turnAlertOn','shithead_turn_alert',v => { turnAlertOn=v; }],
           ['notifySoundOn','shithead_notify_sound',v => { notifySoundOn=v; }],
@@ -25538,6 +25612,11 @@ video {
     });
     document.getElementById('setBigEffectsRow').addEventListener('click', () => {
       bigEffectsOn = !bigEffectsOn; writePref('shithead_big_effects', bigEffectsOn);
+      refreshSettingsUI(); scheduleSettingsCloudSave();
+    });
+    document.getElementById('setHistoryRow').addEventListener('click', () => {
+      historyOpenPref = !historyOpenPref; writePref('shithead_history_open', historyOpenPref);
+      setHistoryOpen(historyOpenPref);
       refreshSettingsUI(); scheduleSettingsCloudSave();
     });
     document.getElementById('setOthersEffectsRow').addEventListener('click', () => {
