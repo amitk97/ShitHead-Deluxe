@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v196 (ShitHead-Deluxe-178) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v197 (ShitHead-Deluxe-179) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -933,7 +933,34 @@
     }
     /* A phone turned sideways has no room for the table: ask for upright
        (the installed app is portrait-only already). */
+    /* Update prompt (§ Update prompt): above pages, below nothing critical. */
+    .pp-show-deck .deck-mini-card { transform:scale(.62); transform-origin:center; }
+    #updatePrompt { position:fixed; left:50%; bottom:calc(14px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%); z-index:320; width:min(360px, calc(100vw - 24px)); background:#0b1220; border:1px solid rgba(251,191,36,.7); border-radius:14px; box-shadow:0 14px 30px rgba(0,0,0,.6); padding:12px; color:#e2e8f0; display:flex; flex-direction:column; gap:10px; }
+    #updatePrompt.hidden { display:none; }
+    #updatePrompt .up-row { display:flex; gap:10px; align-items:flex-start; }
+    #updatePrompt .up-icon { color:#fbbf24; flex:none; width:22px; height:22px; }
+    #updatePrompt .up-icon svg { width:22px; height:22px; }
+    #updatePrompt .up-text { display:flex; flex-direction:column; gap:2px; font-size:12px; line-height:1.35; }
+    #updatePrompt .up-text b { font-size:13px; color:#fde68a; }
+    #updatePrompt .up-btns { display:flex; gap:8px; justify-content:flex-end; }
+    #updatePrompt button { font-size:11px; font-weight:900; letter-spacing:.04em; border-radius:10px; padding:7px 14px; }
+    #updatePrompt .up-later { background:transparent; border:1px solid #475569; color:#cbd5e1; }
+    #updatePrompt .up-now { background:#f59e0b; color:#0b1220; }
     #rotateHint { display:none; }
+    #rotateHint .rh-open { display:none; }
+    /* A tiny cover screen (Galaxy Z Flip's outside screen) can't fit the
+       table either: ask to open the phone instead. */
+    @media (max-height: 500px) and (max-width: 520px) and (pointer: coarse) {
+      #rotateHint { display:flex !important; position:fixed; inset:0; z-index:10000; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:#020617; color:#e2e8f0; font-weight:700; font-size:15px; text-align:center; padding:24px; }
+      #rotateHint svg { width:56px; height:56px; color:#fbbf24; }
+      #rotateHint .rh-turn { display:none; }
+      #rotateHint .rh-open { display:inline; }
+    }
+    /* Dual-screen / spanned foldables (a hinge down the middle): keep the
+       table and header on the first screen instead of across the hinge. */
+    @media (horizontal-viewport-segments: 2) {
+      body > header, #gameTable { max-width: env(viewport-segment-width 0 0, 100%); }
+    }
     @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
       #rotateHint { display:flex; position:fixed; inset:0; z-index:10000; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:#020617; color:#e2e8f0; font-weight:700; font-size:15px; text-align:center; padding:24px; }
       #rotateHint svg { width:64px; height:64px; color:#fbbf24; }
@@ -983,6 +1010,40 @@
     .theme-fourcolour { --card-bg: #0f172a; --card-border: #475569; --text-light: #f8fafc; --text-red: #ef4444; }
     .theme-fourcolour .suit-d { color: #60a5fa !important; }
     .theme-fourcolour .suit-c { color: #4ade80 !important; }
+    /* v197 decks. Textured faces use background-image on the face only
+       (never .custom-card-back); fonts load on first use (DECK_FONTS). */
+    .theme-bigprint { --card-bg: #ffffff; --card-border: #0f172a; --text-light: #0b0b0f; --text-red: #c1121f; }
+    .theme-bigprint :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back) { border-width: 3px; }
+    .theme-bigprint :is(.card-base,.card-table,.card-opponent-slot) .card-corner-rank { font-size: clamp(12px, 2.5vh, calc(21px * var(--tbl-k,1))); letter-spacing: -.07em; font-weight: 900; }
+    .theme-bigprint :is(.card-base,.card-table,.card-opponent-slot) .card-corner-suit { font-size: clamp(9px, 1.8vh, calc(15px * var(--tbl-k,1))); }
+    .theme-bigprint .card-tiny .card-corner-rank { font-size: clamp(11px, 2.1vh, 17px); }
+    .theme-bigprint #localHand .card-corner-rank { font-size: min(clamp(12px, 2.5vh, calc(21px * var(--tbl-k,1))), calc((var(--hand-strip, 99px) - 7px) / 1.3)); }
+    .theme-bigprint #localHand .card-tiny .card-corner-rank { font-size: min(clamp(11px, 2.1vh, 17px), calc((var(--hand-strip, 99px) - 7px) / 1.3)); }
+    .theme-bigprint #localHand .card-corner-suit { font-size: min(clamp(9px, 1.8vh, calc(15px * var(--tbl-k,1))), calc(var(--hand-strip, 99px) - 8px)); }
+    .theme-bigprint .card-opponent-slot .opp-corner-text { font-size: calc(clamp(7px, min(2.2vw, 1.6vh), calc(10px * var(--tbl-k,1))) * var(--opp-scale, 1)); font-weight: 900; }
+    .theme-bigprint .card-centre-icon { width: clamp(12px, 2.7vh, calc(24px * var(--tbl-k,1))); height: clamp(12px, 2.7vh, calc(24px * var(--tbl-k,1))); }
+    .theme-lavender { --card-bg: #efe7ff; --card-border: #a78bfa; --text-light: #3b0764; --text-red: #be185d; }
+    .theme-lavender :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back), .deck-mini-card.theme-lavender { background-image: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.75), transparent 60%), linear-gradient(160deg, #f5efff, #e4d6ff); }
+    .theme-royalgold { --card-bg: #0b0a10; --card-border: #d4af37; --text-light: #f5d77a; --text-red: #f43f5e; }
+    .theme-royalgold :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back), .deck-mini-card.theme-royalgold { background-image: radial-gradient(ellipse at 50% 0%, rgba(212,175,55,.22), transparent 65%), linear-gradient(180deg, #16131c, #07060a); box-shadow: inset 0 0 0 1px rgba(245,215,122,.35); }
+    .theme-royalgold :is(.card-base,.card-table,.card-opponent-slot) .card-corner-rank, .deck-mini-card.theme-royalgold .dm-rank { font-family: 'Cinzel', Georgia, serif; }
+    .theme-paper { --card-bg: #fbf8f1; --card-border: #cbbf9f; --text-light: #1f2937; --text-red: #b91c1c; }
+    .theme-paper :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back), .deck-mini-card.theme-paper { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .25 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"), linear-gradient(180deg, #fffdf7, #f3ede0); }
+    .theme-paper :is(.card-base,.card-table,.card-opponent-slot) .card-corner-rank, .deck-mini-card.theme-paper .dm-rank { font-family: Georgia, 'Times New Roman', serif; }
+    .theme-neonnight { --card-bg: #07030f; --card-border: #f472b6; --text-light: #67e8f9; --text-red: #f472b6; }
+    .theme-neonnight :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back), .deck-mini-card.theme-neonnight { background-image: radial-gradient(ellipse at 50% 120%, rgba(244,114,182,.22), transparent 60%), radial-gradient(ellipse at 50% -20%, rgba(103,232,249,.16), transparent 60%); }
+    .theme-neonnight :is(.card-base,.card-table,.card-opponent-slot) :is(.card-corner-rank,.card-corner-suit), .deck-mini-card.theme-neonnight .dm-rank { text-shadow: 0 0 4px currentColor, 0 0 9px currentColor; }
+    .theme-neonnight :is(.card-base,.card-table,.card-opponent-slot) .card-centre-icon { filter: drop-shadow(0 0 4px currentColor); }
+    .theme-frost { --card-bg: rgba(15,23,42,.5); --card-border: rgba(226,232,240,.55); --text-light: #f8fafc; --text-red: #fda4af; }
+    .theme-frost :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back), .deck-mini-card.theme-frost { background-image: linear-gradient(135deg, rgba(255,255,255,.26), rgba(255,255,255,.06) 45%, rgba(255,255,255,.14)); box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+    .theme-blueprint { --card-bg: #123a7a; --card-border: #93c5fd; --text-light: #e0f2fe; --text-red: #fca5a5; }
+    .theme-blueprint :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back), .deck-mini-card.theme-blueprint { background-image: repeating-linear-gradient(0deg, rgba(191,219,254,.14) 0 1px, transparent 1px 8px), repeating-linear-gradient(90deg, rgba(191,219,254,.14) 0 1px, transparent 1px 8px), linear-gradient(180deg, #1d4f9e, #0f2f63); }
+    .theme-blueprint :is(.card-base,.card-table,.card-opponent-slot) .card-corner-rank, .deck-mini-card.theme-blueprint .dm-rank { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; letter-spacing: -.08em; }
+    .theme-chalk { --card-bg: #1d2a24; --card-border: #94a3b8; --text-light: #f1f5f9; --text-red: #fda4af; }
+    .theme-chalk :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back), .deck-mini-card.theme-chalk { background-image: radial-gradient(ellipse at 30% 30%, rgba(241,245,249,.08), transparent 55%), radial-gradient(ellipse at 75% 80%, rgba(241,245,249,.06), transparent 50%), linear-gradient(180deg, #24332c, #17221d); }
+    .theme-chalk :is(.card-base,.card-table,.card-opponent-slot) .card-corner-rank, .deck-mini-card.theme-chalk .dm-rank { font-family: 'Patrick Hand', 'Comic Sans MS', cursive; font-weight: 400; letter-spacing: 0; }
+    /* Light faces: the Joker's amber reads darker on them. */
+    :is(.theme-bigprint,.theme-lavender,.theme-paper) :is(.card-base,.card-table,.card-opponent-slot) .text-amber-400 { color: #b45309 !important; }
     .deck-mini-card { display:flex; box-sizing:border-box; flex-shrink:0; flex-direction:column; justify-content:space-between; width:32px; height:44px; padding:3px; border-radius:6px; background:var(--card-bg); border:1.5px solid var(--card-border); font-weight:900; line-height:1; }
     .deck-mini-card .dm-rank { font-size:11px; color:var(--text-light); }
     .deck-mini-card .dm-suits { display:flex; justify-content:space-between; font-size:8px; }
@@ -1130,6 +1191,21 @@
     }
     .custom-card-back.cosmetic-back-artdeco > svg { position:relative; z-index:2; background:#0a0a0a; border-radius:50%; padding:2px; }
 
+    /* Shop card backs, set 3 (vector, sharp at any size). */
+    .custom-card-back.cosmetic-back-stained {
+      background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 60 88%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3ClinearGradient id=%22l%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fff%22 stop-opacity=%22.35%22/%3E%3Cstop offset=%22.5%22 stop-color=%22%23fff%22 stop-opacity=%220%22/%3E%3Cstop offset=%221%22 stop-color=%22%23fff%22 stop-opacity=%22.12%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2260%22 height=%2288%22 fill=%22%23111%22/%3E%3Cpath d=%22M-5 -18L0 -9L-5 0L-10 -9Z%22 fill=%22%237c3aed%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M5 -18L10 -9L5 0L0 -9Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M15 -18L20 -9L15 0L10 -9Z%22 fill=%22%23047857%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M25 -18L30 -9L25 0L20 -9Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M35 -18L40 -9L35 0L30 -9Z%22 fill=%22%23ca8a04%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M45 -18L50 -9L45 0L40 -9Z%22 fill=%22%23be185d%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M55 -18L60 -9L55 0L50 -9Z%22 fill=%22%23047857%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M65 -18L70 -9L65 0L60 -9Z%22 fill=%22%23047857%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M75 -18L80 -9L75 0L70 -9Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M-10 -9L-5 0L-10 9L-15 0Z%22 fill=%22%23be185d%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M0 -9L5 0L0 9L-5 0Z%22 fill=%22%231d4ed8%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M10 -9L15 0L10 9L5 0Z%22 fill=%22%23ca8a04%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M20 -9L25 0L20 9L15 0Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M30 -9L35 0L30 9L25 0Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M40 -9L45 0L40 9L35 0Z%22 fill=%22%23047857%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M50 -9L55 0L50 9L45 0Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M60 -9L65 0L60 9L55 0Z%22 fill=%22%237c3aed%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M70 -9L75 0L70 9L65 0Z%22 fill=%22%23047857%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M-5 0L0 9L-5 18L-10 9Z%22 fill=%22%23047857%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M5 0L10 9L5 18L0 9Z%22 fill=%22%23047857%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M15 0L20 9L15 18L10 9Z%22 fill=%22%23be185d%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M25 0L30 9L25 18L20 9Z%22 fill=%22%230e7490%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M35 0L40 9L35 18L30 9Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M45 0L50 9L45 18L40 9Z%22 fill=%22%230e7490%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M55 0L60 9L55 18L50 9Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M65 0L70 9L65 18L60 9Z%22 fill=%22%230e7490%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M75 0L80 9L75 18L70 9Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M-10 9L-5 18L-10 27L-15 18Z%22 fill=%22%23ca8a04%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M0 9L5 18L0 27L-5 18Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M10 9L15 18L10 27L5 18Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M20 9L25 18L20 27L15 18Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M30 9L35 18L30 27L25 18Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M40 9L45 18L40 27L35 18Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M50 9L55 18L50 27L45 18Z%22 fill=%22%23be185d%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M60 9L65 18L60 27L55 18Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M70 9L75 18L70 27L65 18Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M-5 18L0 27L-5 36L-10 27Z%22 fill=%22%23047857%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M5 18L10 27L5 36L0 27Z%22 fill=%22%23047857%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M15 18L20 27L15 36L10 27Z%22 fill=%22%23ca8a04%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M25 18L30 27L25 36L20 27Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M35 18L40 27L35 36L30 27Z%22 fill=%22%237c3aed%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M45 18L50 27L45 36L40 27Z%22 fill=%22%231d4ed8%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M55 18L60 27L55 36L50 27Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M65 18L70 27L65 36L60 27Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M75 18L80 27L75 36L70 27Z%22 fill=%22%231d4ed8%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M-10 27L-5 36L-10 45L-15 36Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M0 27L5 36L0 45L-5 36Z%22 fill=%22%230e7490%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M10 27L15 36L10 45L5 36Z%22 fill=%22%231d4ed8%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M20 27L25 36L20 45L15 36Z%22 fill=%22%230e7490%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M30 27L35 36L30 45L25 36Z%22 fill=%22%231d4ed8%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M40 27L45 36L40 45L35 36Z%22 fill=%22%237c3aed%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M50 27L55 36L50 45L45 36Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M60 27L65 36L60 45L55 36Z%22 fill=%22%231d4ed8%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M70 27L75 36L70 45L65 36Z%22 fill=%22%23be185d%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M-5 36L0 45L-5 54L-10 45Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M5 36L10 45L5 54L0 45Z%22 fill=%22%23ca8a04%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M15 36L20 45L15 54L10 45Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M25 36L30 45L25 54L20 45Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M35 36L40 45L35 54L30 45Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M45 36L50 45L45 54L40 45Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M55 36L60 45L55 54L50 45Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M65 36L70 45L65 54L60 45Z%22 fill=%22%23be185d%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M75 36L80 45L75 54L70 45Z%22 fill=%22%23be185d%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M-10 45L-5 54L-10 63L-15 54Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M0 45L5 54L0 63L-5 54Z%22 fill=%22%237c3aed%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M10 45L15 54L10 63L5 54Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M20 45L25 54L20 63L15 54Z%22 fill=%22%23ca8a04%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M30 45L35 54L30 63L25 54Z%22 fill=%22%230e7490%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M40 45L45 54L40 63L35 54Z%22 fill=%22%237c3aed%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M50 45L55 54L50 63L45 54Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M60 45L65 54L60 63L55 54Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M70 45L75 54L70 63L65 54Z%22 fill=%22%23ca8a04%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M-5 54L0 63L-5 72L-10 63Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M5 54L10 63L5 72L0 63Z%22 fill=%22%237c3aed%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M15 54L20 63L15 72L10 63Z%22 fill=%22%230e7490%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M25 54L30 63L25 72L20 63Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M35 54L40 63L35 72L30 63Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M45 54L50 63L45 72L40 63Z%22 fill=%22%230e7490%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M55 54L60 63L55 72L50 63Z%22 fill=%22%237c3aed%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M65 54L70 63L65 72L60 63Z%22 fill=%22%237c3aed%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M75 54L80 63L75 72L70 63Z%22 fill=%22%237c3aed%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M-10 63L-5 72L-10 81L-15 72Z%22 fill=%22%230e7490%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M0 63L5 72L0 81L-5 72Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M10 63L15 72L10 81L5 72Z%22 fill=%22%237c3aed%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M20 63L25 72L20 81L15 72Z%22 fill=%22%237c3aed%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M30 63L35 72L30 81L25 72Z%22 fill=%22%230e7490%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M40 63L45 72L40 81L35 72Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M50 63L55 72L50 81L45 72Z%22 fill=%22%23be185d%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M60 63L65 72L60 81L55 72Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M70 63L75 72L70 81L65 72Z%22 fill=%22%23ca8a04%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M-5 72L0 81L-5 90L-10 81Z%22 fill=%22%230e7490%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M5 72L10 81L5 90L0 81Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M15 72L20 81L15 90L10 81Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M25 72L30 81L25 90L20 81Z%22 fill=%22%23ca8a04%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M35 72L40 81L35 90L30 81Z%22 fill=%22%231d4ed8%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M45 72L50 81L45 90L40 81Z%22 fill=%22%23be185d%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M55 72L60 81L55 90L50 81Z%22 fill=%22%23be185d%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M65 72L70 81L65 90L60 81Z%22 fill=%22%237c3aed%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M75 72L80 81L75 90L70 81Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M-10 81L-5 90L-10 99L-15 90Z%22 fill=%22%23ca8a04%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M0 81L5 90L0 99L-5 90Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M10 81L15 90L10 99L5 90Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M20 81L25 90L20 99L15 90Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M30 81L35 90L30 99L25 90Z%22 fill=%22%23047857%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M40 81L45 90L40 99L35 90Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M50 81L55 90L50 99L45 90Z%22 fill=%22%23f59e0b%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M60 81L65 90L60 99L55 90Z%22 fill=%22%23b91c1c%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M70 81L75 90L70 99L65 90Z%22 fill=%22%230e7490%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M-5 90L0 99L-5 108L-10 99Z%22 fill=%22%231d4ed8%22 fill-opacity=%220.7%22/%3E%3Cpath d=%22M5 90L10 99L5 108L0 99Z%22 fill=%22%23047857%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M15 90L20 99L15 108L10 99Z%22 fill=%22%230e7490%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M25 90L30 99L25 108L20 99Z%22 fill=%22%23be185d%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M35 90L40 99L35 108L30 99Z%22 fill=%22%23be185d%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M45 90L50 99L45 108L40 99Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M55 90L60 99L55 108L50 99Z%22 fill=%22%237c3aed%22 fill-opacity=%220.6%22/%3E%3Cpath d=%22M65 90L70 99L65 108L60 99Z%22 fill=%22%230e7490%22 fill-opacity=%220.8%22/%3E%3Cpath d=%22M75 90L80 99L75 108L70 99Z%22 fill=%22%237c3aed%22 fill-opacity=%220.8%22/%3E%3Cg stroke=%22%230b0b0b%22 stroke-width=%221.1%22 fill=%22none%22%3E%3Cpath d=%22M-70 -2L20 90%22/%3E%3Cpath d=%22M130 -2L40 90%22/%3E%3Cpath d=%22M-60 -2L30 90%22/%3E%3Cpath d=%22M120 -2L30 90%22/%3E%3Cpath d=%22M-50 -2L40 90%22/%3E%3Cpath d=%22M110 -2L20 90%22/%3E%3Cpath d=%22M-40 -2L50 90%22/%3E%3Cpath d=%22M100 -2L10 90%22/%3E%3Cpath d=%22M-30 -2L60 90%22/%3E%3Cpath d=%22M90 -2L0 90%22/%3E%3Cpath d=%22M-20 -2L70 90%22/%3E%3Cpath d=%22M80 -2L-10 90%22/%3E%3Cpath d=%22M-10 -2L80 90%22/%3E%3Cpath d=%22M70 -2L-20 90%22/%3E%3Cpath d=%22M0 -2L90 90%22/%3E%3Cpath d=%22M60 -2L-30 90%22/%3E%3Cpath d=%22M10 -2L100 90%22/%3E%3Cpath d=%22M50 -2L-40 90%22/%3E%3Cpath d=%22M20 -2L110 90%22/%3E%3Cpath d=%22M40 -2L-50 90%22/%3E%3Cpath d=%22M30 -2L120 90%22/%3E%3Cpath d=%22M30 -2L-60 90%22/%3E%3Cpath d=%22M40 -2L130 90%22/%3E%3Cpath d=%22M20 -2L-70 90%22/%3E%3Cpath d=%22M50 -2L140 90%22/%3E%3Cpath d=%22M10 -2L-80 90%22/%3E%3Cpath d=%22M60 -2L150 90%22/%3E%3Cpath d=%22M0 -2L-90 90%22/%3E%3C/g%3E%3Ccircle cx=%2230%22 cy=%2244%22 r=%2219.5%22 fill=%22%230b0b0b%22/%3E%3Cpath d=%22M30 44L47 44A17 17 0 0 1 44.7 52.5Z%22 fill=%22%23b91c1c%22/%3E%3Cpath d=%22M30 44L44.7 52.5A17 17 0 0 1 38.5 58.7Z%22 fill=%22%231d4ed8%22/%3E%3Cpath d=%22M30 44L38.5 58.7A17 17 0 0 1 30 61Z%22 fill=%22%23f59e0b%22/%3E%3Cpath d=%22M30 44L30 61A17 17 0 0 1 21.5 58.7Z%22 fill=%22%23b91c1c%22/%3E%3Cpath d=%22M30 44L21.5 58.7A17 17 0 0 1 15.3 52.5Z%22 fill=%22%231d4ed8%22/%3E%3Cpath d=%22M30 44L15.3 52.5A17 17 0 0 1 13 44Z%22 fill=%22%23f59e0b%22/%3E%3Cpath d=%22M30 44L13 44A17 17 0 0 1 15.3 35.5Z%22 fill=%22%23b91c1c%22/%3E%3Cpath d=%22M30 44L15.3 35.5A17 17 0 0 1 21.5 29.3Z%22 fill=%22%231d4ed8%22/%3E%3Cpath d=%22M30 44L21.5 29.3A17 17 0 0 1 30 27Z%22 fill=%22%23f59e0b%22/%3E%3Cpath d=%22M30 44L30 27A17 17 0 0 1 38.5 29.3Z%22 fill=%22%23b91c1c%22/%3E%3Cpath d=%22M30 44L38.5 29.3A17 17 0 0 1 44.7 35.5Z%22 fill=%22%231d4ed8%22/%3E%3Cpath d=%22M30 44L44.7 35.5A17 17 0 0 1 47 44Z%22 fill=%22%23f59e0b%22/%3E%3Ccircle cx=%2241.8%22 cy=%2247.2%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2238.7%22 cy=%2252.7%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2233.2%22 cy=%2255.8%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2226.8%22 cy=%2255.8%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2221.3%22 cy=%2252.7%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2218.2%22 cy=%2247.2%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2218.2%22 cy=%2240.8%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2221.3%22 cy=%2235.3%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2226.8%22 cy=%2232.2%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2233.2%22 cy=%2232.2%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2238.7%22 cy=%2235.3%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2241.8%22 cy=%2240.8%22 r=%222.3%22 fill=%22%23fde68a%22 fill-opacity=%22.9%22 stroke=%22%230b0b0b%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2230%22 cy=%2244%22 r=%2217%22 fill=%22none%22 stroke=%22%230b0b0b%22 stroke-width=%221.4%22/%3E%3Cg stroke=%22%230b0b0b%22 stroke-width=%221%22%3E%3Cpath d=%22M30 44L47 44%22/%3E%3Cpath d=%22M30 44L44.7 52.5%22/%3E%3Cpath d=%22M30 44L38.5 58.7%22/%3E%3Cpath d=%22M30 44L30 61%22/%3E%3Cpath d=%22M30 44L21.5 58.7%22/%3E%3Cpath d=%22M30 44L15.3 52.5%22/%3E%3Cpath d=%22M30 44L13 44%22/%3E%3Cpath d=%22M30 44L15.3 35.5%22/%3E%3Cpath d=%22M30 44L21.5 29.3%22/%3E%3Cpath d=%22M30 44L30 27%22/%3E%3Cpath d=%22M30 44L38.5 29.3%22/%3E%3Cpath d=%22M30 44L44.7 35.5%22/%3E%3C/g%3E%3Ccircle cx=%2230%22 cy=%2244%22 r=%225.5%22 fill=%22%237c3aed%22 stroke=%22%230b0b0b%22 stroke-width=%221.2%22/%3E%3Ccircle cx=%2230%22 cy=%2244%22 r=%222.2%22 fill=%22%23fef3c7%22/%3E%3Crect width=%2260%22 height=%2288%22 fill=%22url(%23l)%22/%3E%3C/svg%3E") center / cover no-repeat, #111;
+      border-color:#fde68a !important; color:#fde68a;
+      box-shadow: inset 0 0 0 2px #0b0b0b, inset 0 0 14px rgba(0,0,0,.45);
+    }
+    .custom-card-back.cosmetic-back-stained > svg { visibility:hidden; }
+    .custom-card-back.cosmetic-back-stained::before { display:none; }
+    .custom-card-back.cosmetic-back-dragon {
+      background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 60 88%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3CradialGradient id=%22s%22 cx=%22.5%22 cy=%22.15%22 r=%22.95%22%3E%3Cstop offset=%220%22 stop-color=%22%2399f6e4%22/%3E%3Cstop offset=%22.35%22 stop-color=%22%2314b8a6%22/%3E%3Cstop offset=%22.75%22 stop-color=%22%23115e59%22/%3E%3Cstop offset=%221%22 stop-color=%22%23042f2e%22/%3E%3C/radialGradient%3E%3ClinearGradient id=%22ir%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%2322d3ee%22 stop-opacity=%22.3%22/%3E%3Cstop offset=%22.5%22 stop-color=%22%23a855f7%22 stop-opacity=%220%22/%3E%3Cstop offset=%221%22 stop-color=%22%23a855f7%22 stop-opacity=%22.5%22/%3E%3C/linearGradient%3E%3Cpattern id=%22p%22 width=%2212%22 height=%229%22 patternUnits=%22userSpaceOnUse%22%3E%3Crect width=%2212%22 height=%229%22 fill=%22%23021a19%22/%3E%3Cpath d=%22M-6 4.5Q0 16 6 4.5ZM6 4.5Q12 16 18 4.5Z%22 fill=%22url(%23s)%22 stroke=%22%23022c22%22 stroke-width=%22.6%22/%3E%3Cpath d=%22M0 0Q6 11.5 12 0Z%22 fill=%22url(%23s)%22 stroke=%22%23022c22%22 stroke-width=%22.6%22/%3E%3Cpath d=%22M2.4 .9Q6 6.5 9.6 .9%22 fill=%22none%22 stroke=%22%23ccfbf1%22 stroke-opacity=%22.55%22 stroke-width=%22.45%22/%3E%3C/pattern%3E%3CradialGradient id=%22g%22 cx=%22.5%22 cy=%22.5%22 r=%22.5%22%3E%3Cstop offset=%220%22 stop-color=%22%23fde68a%22/%3E%3Cstop offset=%22.6%22 stop-color=%22%23d97706%22/%3E%3Cstop offset=%221%22 stop-color=%22%2378350f%22/%3E%3C/radialGradient%3E%3CradialGradient id=%22iris%22 cx=%22.5%22 cy=%22.5%22 r=%22.5%22%3E%3Cstop offset=%220%22 stop-color=%22%23fef08a%22/%3E%3Cstop offset=%22.45%22 stop-color=%22%23f59e0b%22/%3E%3Cstop offset=%22.85%22 stop-color=%22%23b45309%22/%3E%3Cstop offset=%221%22 stop-color=%22%23451a03%22/%3E%3C/radialGradient%3E%3CradialGradient id=%22glow%22 cx=%22.5%22 cy=%22.5%22 r=%22.5%22%3E%3Cstop offset=%220%22 stop-color=%22%23fbbf24%22 stop-opacity=%22.55%22/%3E%3Cstop offset=%221%22 stop-color=%22%23fbbf24%22 stop-opacity=%220%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width=%2260%22 height=%2288%22 fill=%22url(%23p)%22/%3E%3Crect width=%2260%22 height=%2288%22 fill=%22url(%23ir)%22/%3E%3Ccircle cx=%2230%22 cy=%2244%22 r=%2220%22 fill=%22url(%23glow)%22/%3E%3Ccircle cx=%2230%22 cy=%2244%22 r=%2213%22 fill=%22%2304201e%22 stroke=%22url(%23g)%22 stroke-width=%222.4%22/%3E%3Cpath d=%22M19.5 44Q30 33 40.5 44Q30 55 19.5 44Z%22 fill=%22url(%23iris)%22 stroke=%22%231c1917%22 stroke-width=%22.8%22/%3E%3Cpath d=%22M30 36.5Q27.6 44 30 51.5Q32.4 44 30 36.5Z%22 fill=%22%230c0a09%22/%3E%3Cellipse cx=%2233.2%22 cy=%2240.8%22 rx=%221.6%22 ry=%221%22 fill=%22%23fff%22 fill-opacity=%22.75%22/%3E%3Ccircle cx=%2230%22 cy=%2244%22 r=%2210.2%22 fill=%22none%22 stroke=%22%23fde68a%22 stroke-opacity=%22.4%22 stroke-width=%22.5%22/%3E%3C/svg%3E") center / cover no-repeat, #021a19;
+      border-color:#d97706 !important; color:#fde68a;
+      box-shadow: inset 0 0 0 1px #fde68a, inset 0 0 16px rgba(0,0,0,.55), 0 0 8px rgba(20,184,166,.35);
+    }
+    .custom-card-back.cosmetic-back-dragon > svg { visibility:hidden; }
+    .custom-card-back.cosmetic-back-dragon::before { display:none; }
     /* Premium frames. Split frames colour the top-left and bottom-right edges
        differently; Dashed and Neon draw inside the card with an outline; the
        moving ones (Neon flicker, Spectrum) animate outline/border colour and
@@ -1403,7 +1479,8 @@
     .card-zone-label-row--table {
       position:absolute;
       z-index:20;
-      right:calc(50% + clamp(81px, 13vh, 118px) + 6px);
+      /* Never past the screen's left edge (a folded Galaxy Fold is 344px wide). */
+      right:min(calc(50% + clamp(81px, 13vh, 118px) + 6px), calc(100% - 56px));
       top:50%;
       transform:translateY(-50%);
       width:auto;
@@ -1614,6 +1691,10 @@
     @keyframes av-tail { from { transform:rotate(-6deg) scaleY(.94); } to { transform:rotate(6deg) scaleY(1.06); } }
     .av-ember { transform-box:fill-box; transform-origin:center; animation:av-ember 2s ease-out infinite; }
     @keyframes av-ember { 0% { transform:translateY(0) scale(1); opacity:0; } 20% { opacity:1; } 100% { transform:translateY(-26px) scale(.3); opacity:0; } }
+    .av-phx-wing { transform-box:view-box; transform-origin:29.2px 31.5px; animation:av-phx-wing 1.7s cubic-bezier(.45,0,.35,1) infinite; }
+    @keyframes av-phx-wing { 0%,100% { transform:rotate(-9deg); } 48% { transform:rotate(13deg) scale(1.03,.94); } }
+    .av-phx-tail { transform-box:view-box; transform-origin:31.5px 43px; animation:av-phx-tail 2.6s ease-in-out infinite alternate; }
+    @keyframes av-phx-tail { from { transform:rotate(-5deg) scaleY(.96); } to { transform:rotate(5deg) scaleY(1.04); } }
     .av-float { animation:av-float 3s ease-in-out infinite alternate; }
     @keyframes av-float { from { transform:translateY(1.2px); } to { transform:translateY(-1.2px); } }
     .av-pulse { transform-box:fill-box; transform-origin:center; animation:av-pulse 2.2s ease-in-out infinite; }
@@ -4526,7 +4607,7 @@ video {
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 theme-obsidian select-none">
-  <div id="rotateHint" role="alert" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></svg><span>Turn your phone upright to play.</span></div>
+  <div id="rotateHint" role="alert" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></svg><span class="rh-turn">Turn your phone upright to play.</span><span class="rh-open">Open your phone to play. This screen is too small for the table.</span></div>
   <!-- Shared two-tone navigation icon pack. A navy rounded tile, bold pale
        linework and one bright accent keep every icon coherent in dark mode. -->
   <!-- UI icon set (icon(), tierBadge()): one line style; the Diamond and tier badges are the only full-colour ones. -->
@@ -5262,6 +5343,11 @@ video {
                off-screen) rather than being expected to pass the old ones.
              ============================================================ -->
         <div id="settingsTab-access" class="settings-body settings-tab-panel" data-settings-panel="access" role="tabpanel">
+        <button id="setBigPrintRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="big print, large, cards, text, font, size, read, eyesight, deck">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Big Print Cards</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Large, high-contrast ranks and suits (the Big Print deck)</span></span>
+          <span id="setBigPrintState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
         <button id="setContrastRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="contrast, brightness, visibility, colors, colours">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">High Contrast</span>
           <span class="block text-[8px] text-slate-400 leading-snug">Brighter cards and stronger outlines</span></span>
@@ -13180,7 +13266,9 @@ video {
         'back-arcade': 'cosmetic-back-arcade',
         'back-space': 'cosmetic-back-space',
         'back-tartan': 'cosmetic-back-tartan',
-        'back-artdeco': 'cosmetic-back-artdeco'
+        'back-artdeco': 'cosmetic-back-artdeco',
+        'back-dragon': 'cosmetic-back-dragon',
+        'back-stained': 'cosmetic-back-stained'
       };
       if (cosmeticBackClasses[equippedCosmetics.cardBack]) return cosmeticBackClasses[equippedCosmetics.cardBack];
       if (typeof SEASONAL_BACK_IDS !== 'undefined' && SEASONAL_BACK_IDS.has(equippedCosmetics.cardBack)) return getCosmeticBackClass(equippedCosmetics.cardBack);
@@ -13269,6 +13357,12 @@ video {
       const k = t ? parseFloat(getComputedStyle(t).getPropertyValue('--tbl-k')) : NaN;
       return k > 0 ? k : 1;
     }
+    // How much of an overlapped hand card must stay visible: [fraction of
+    // the card, minimum px]. Big Print's larger ranks need a wider strip so
+    // "10" is never covered by the next card.
+    function handMinStrip() {
+      return state?.deckTheme === 'theme-bigprint' ? [0.46, 30] : [0.34, 22];
+    }
     function computeHandCardMetrics(maxRowSize, rowCount = 1, availableHeightPx = null) {
       const vh = window.innerHeight / 100;
       // What the card would naturally be if only viewport height mattered
@@ -13285,8 +13379,9 @@ video {
       let visibleFraction = 0.52;
       let widthBasedWidth = availableWidthPx / (1 + (maxRowSize - 1) * visibleFraction);
       if (widthBasedWidth < heightBasedWidth && maxRowSize > 1) {
-        const tight = availableWidthPx / (1 + (maxRowSize - 1) * 0.34);
-        visibleFraction = Math.min(0.52, Math.max(0.34, 22 / Math.min(heightBasedWidth, tight)));
+        const [minFrac, minStrip] = handMinStrip();
+        const tight = availableWidthPx / (1 + (maxRowSize - 1) * minFrac);
+        visibleFraction = Math.min(0.52, Math.max(minFrac, minStrip / Math.min(heightBasedWidth, tight)));
         widthBasedWidth = availableWidthPx / (1 + (maxRowSize - 1) * visibleFraction);
       }
 
@@ -13819,6 +13914,8 @@ video {
       if (!tip) { tip = document.createElement('div'); tip.id = 'cardHoldTip'; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); }
       tip.innerHTML = cardHoldHtml(info.card, info.own, info);
       tip.classList.remove('hidden');
+      // In the tutorial the bubble sits above the spotlight and the caption.
+      tip.style.zIndex = (typeof tutorialActive !== 'undefined' && tutorialActive) ? '90' : '';
       const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
       const left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
       // Never under the header (it sits above the table): cards near the top
@@ -14561,6 +14658,7 @@ video {
       renderCardReference();
       schedulePileInspectHint(isMyTurn);
       fitHandToTable();
+      markHandStrip();
       positionDirectionBadge();
       renderGauntletHud();
     }
@@ -14611,6 +14709,20 @@ video {
       const cs = getComputedStyle(hand);
       return hand.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0) - 4;
     }
+    // --hand-strip on #localHand = the narrowest visible strip of an
+    // overlapped hand card (px). Big Print caps its corner text by it, so a
+    // huge hand shrinks the index instead of letting the next card cover it.
+    function markHandStrip() {
+      const hand = document.getElementById('localHand');
+      if (!hand) return;
+      let strip = Infinity;
+      [...hand.children].forEach(row => {
+        const cs = [...row.children];
+        for (let i = 0; i + 1 < cs.length; i++) strip = Math.min(strip, cs[i + 1].getBoundingClientRect().left - cs[i].getBoundingClientRect().left);
+      });
+      if (strip === Infinity || !(strip > 0)) hand.style.removeProperty('--hand-strip');
+      else hand.style.setProperty('--hand-strip', `${Math.round(strip)}px`);
+    }
     function fitHandToTable() {
       const hand = document.getElementById('localHand');
       const table = document.getElementById('gameTable');
@@ -14640,7 +14752,7 @@ video {
         // the card, at least 22px) to let the cards grow wider.
         const k = Math.max(...rows.map(r => r.children.length), 1);
         const cap = HAND_MAX_CARD_H * tableScale();
-        const byWidth = k > 1 ? (handRowWidth() / (1 + (k - 1) * 0.34)) / 0.69 : cap;
+        const byWidth = k > 1 ? (handRowWidth() / (1 + (k - 1) * handMinStrip()[0])) / 0.69 : cap;
         newH = Math.min(byHeight, byWidth, cap);
         if (!(newH > h + 1)) return;
       }
@@ -14648,7 +14760,7 @@ video {
       // Growing: re-space the longest row across the full width at the new size.
       const kMax = Math.max(...rows.map(r => r.children.length), 1);
       const growW = newH * 0.69;
-      const growVis = kMax > 1 ? Math.min(HAND_MAX_VISIBLE, Math.max(0.34, 22 / growW, (handRowWidth() / growW - 1) / (kMax - 1))) : 0.52;
+      const growVis = kMax > 1 ? Math.min(HAND_MAX_VISIBLE, Math.max(handMinStrip()[0], handMinStrip()[1] / growW, (handRowWidth() / growW - 1) / (kMax - 1))) : 0.52;
       const growMargin = -(growW * (1 - growVis));
       // These are the cards render() just drew: resize them instantly. The
       // card's own margin/size transition would otherwise slide the whole
@@ -16663,12 +16775,14 @@ video {
     // click handler.
     // The Arcade deck's pixel font is only fetched once someone uses or
     // previews that deck (falls back to monospace until it arrives).
+    const DECK_FONTS = { 'theme-arcade': ['arcadeDeckFont', 'Press+Start+2P'], 'theme-chalk': ['chalkDeckFont', 'Patrick+Hand'] };
     function ensureDeckFont(themeClass) {
-      if (themeClass !== 'theme-arcade' || document.getElementById('arcadeDeckFont')) return;
+      const font = DECK_FONTS[themeClass];
+      if (!font || document.getElementById(font[0])) return;
       const link = document.createElement('link');
-      link.id = 'arcadeDeckFont';
+      link.id = font[0];
       link.rel = 'stylesheet';
-      link.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';
+      link.href = `https://fonts.googleapis.com/css2?family=${font[1]}&display=swap`;
       document.head.appendChild(link);
     }
     ensureDeckFont(state.deckTheme);
@@ -16678,6 +16792,7 @@ video {
       applyAccessibilityPrefs(); // className was just fully replaced above, which wipes high-contrast/reduce-motion -- reapply them
       state.deckTheme = themeClass;
       try { localStorage.setItem('shithead_deck_theme', themeClass); } catch (e) {}
+      if (typeof syncShowcase === 'function' && typeof currentUser !== 'undefined' && currentUser) syncShowcase();
       scheduleSettingsCloudSave();
       saveGameState();
       render();
@@ -16978,6 +17093,7 @@ video {
       paintToggle(document.getElementById('setEmotesState'), !emotesMuted);
       paintToggle(document.getElementById('setFullscreenState'), !!document.fullscreenElement);
       paintToggle(document.getElementById('setContrastState'), highContrast);
+      paintToggle(document.getElementById('setBigPrintState'), state.deckTheme === 'theme-bigprint');
       paintToggle(document.getElementById('setHideHelpersState'), !hideHelperIcons);
       paintToggle(document.getElementById('setMotionState'), reduceMotion);
       paintToggle(document.getElementById('setBigEffectsState'), bigEffectsOn);
@@ -17521,6 +17637,13 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v197: [
+        ['🃏', 'Eight new decks: Big Print (free, also in Settings → Accessibility), Lavender, Paper Classic, Blueprint, Chalkboard, Frosted Glass, Neon Night and Royal Gold.'],
+        ['🎴', 'Two new card backs: Dragon Scale and Stained Glass.'],
+        ['🔥', 'The Phoenix picture has been redrawn, and Burn Flame, Transparent Ghost and Frozen look sharper.'],
+        ['🔄', 'When a new version is out, the game offers to update itself.'],
+        ['📱', 'Better on foldable phones. The tutorial no longer covers Card Powers or the card you hold.']
+      ],
       v196: [
         ['🛍️', 'New in the Shop: three animated premium pictures (Royal Flush, Phoenix, Cosmic Ace) and three premium tables (Neon City, Northern Lights, Deep Space).'],
         ['🖥️', 'Tablets and computers now get a bigger table and home screen. A phone turned sideways asks to be turned upright.'],
@@ -17897,8 +18020,21 @@ video {
       <linearGradient id="av-m-clay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fb923c"/><stop offset=".5" stop-color="#c2410c"/><stop offset="1" stop-color="#7c2d12"/></linearGradient>
       <linearGradient id="av-m-ginger" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3a263"/><stop offset=".55" stop-color="#b86b2b"/><stop offset="1" stop-color="#7c4214"/></linearGradient>
       <linearGradient id="av-m-phoenix" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fef08a"/><stop offset=".45" stop-color="#f97316"/><stop offset="1" stop-color="#b91c1c"/></linearGradient>
+      <radialGradient id="av-phx-prim" gradientUnits="userSpaceOnUse" cx="29" cy="31" r="26"><stop offset="0" stop-color="#fde68a"/><stop offset=".35" stop-color="#f59e0b"/><stop offset=".62" stop-color="#ea580c"/><stop offset=".85" stop-color="#b91c1c"/><stop offset="1" stop-color="#7f1d1d"/></radialGradient>
+      <radialGradient id="av-phx-sec" gradientUnits="userSpaceOnUse" cx="29" cy="31" r="17"><stop offset="0" stop-color="#fff7d6"/><stop offset=".4" stop-color="#fbbf24"/><stop offset=".8" stop-color="#f97316"/><stop offset="1" stop-color="#dc2626"/></radialGradient>
+      <radialGradient id="av-phx-cov" gradientUnits="userSpaceOnUse" cx="29" cy="31" r="10"><stop offset="0" stop-color="#fffbeb"/><stop offset=".6" stop-color="#fcd34d"/><stop offset="1" stop-color="#f59e0b"/></radialGradient>
+      <radialGradient id="av-phx-tail" gradientUnits="userSpaceOnUse" cx="31.5" cy="43" r="23"><stop offset="0" stop-color="#fbbf24"/><stop offset=".45" stop-color="#ea580c"/><stop offset=".8" stop-color="#b91c1c"/><stop offset="1" stop-color="#fcd34d"/></radialGradient>
+      <linearGradient id="av-phx-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcd34d"/><stop offset=".35" stop-color="#f97316"/><stop offset=".75" stop-color="#dc2626"/><stop offset="1" stop-color="#7f1d1d"/></linearGradient>
+      <radialGradient id="av-phx-head" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff7d6"/><stop offset=".45" stop-color="#fbbf24"/><stop offset="1" stop-color="#c2410c"/></radialGradient>
+      <radialGradient id="av-phx-halo" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fdba74" stop-opacity=".7"/><stop offset=".55" stop-color="#ea580c" stop-opacity=".28"/><stop offset="1" stop-color="#7c2d12" stop-opacity="0"/></radialGradient>
+      <filter id="av-phx-blur" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.6"/></filter>
+      <filter id="av-phx-bloom" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur in="SourceGraphic" stdDeviation="1.1" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 .1  0 .8 0 0 .02  0 0 .4 0 0  0 0 0 .75 0" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       <radialGradient id="av-m-cosmos" cx="45%" cy="40%" r="75%"><stop offset="0" stop-color="#4c1d95"/><stop offset=".6" stop-color="#1e1b4b"/><stop offset="1" stop-color="#050314"/></radialGradient>
       <radialGradient id="av-m-glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#e9d5ff" stop-opacity=".75"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0"/></radialGradient>
+      <radialGradient id="av-ghost-halo" cx="50%" cy="45%" r="50%"><stop offset="0" stop-color="#e0f2fe" stop-opacity=".35"/><stop offset="1" stop-color="#e0f2fe" stop-opacity="0"/></radialGradient>
+      <radialGradient id="av-ghost-body" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="#ffffff" stop-opacity=".85"/><stop offset=".55" stop-color="#e2e8f0" stop-opacity=".55"/><stop offset="1" stop-color="#94a3b8" stop-opacity=".25"/></radialGradient>
+      <linearGradient id="av-ice-block" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0f2fe" stop-opacity=".9"/><stop offset=".45" stop-color="#7dd3fc" stop-opacity=".55"/><stop offset="1" stop-color="#1e40af" stop-opacity=".6"/></linearGradient>
+      <linearGradient id="av-ice-sheen" x1="0" y1="0" x2="1" y2=".4"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".35" stop-color="#fff" stop-opacity=".06"/><stop offset=".6" stop-color="#bae6fd" stop-opacity=".25"/><stop offset="1" stop-color="#fff" stop-opacity=".05"/></linearGradient>
       <linearGradient id="av-shine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
       <clipPath id="av-clip-tile" clipPathUnits="userSpaceOnUse"><rect x="3" y="3" width="58" height="58" rx="14"/></clipPath>
       <clipPath id="av-clip-card" clipPathUnits="userSpaceOnUse"><rect x="19" y="11" width="26" height="40" rx="4"/></clipPath>
@@ -17925,6 +18061,58 @@ video {
       <text x="22.5" y="20.5" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="8" fill="${rankColor}">${rank}</text>
       ${emblem}`;
 
+
+    // Phoenix (premium picture): a Fawkes-style firebird built from real
+    // feathers. Each wing is layered primaries, secondaries and coverts
+    // (every feather a curved blade with a lit shaft), coloured by distance
+    // from the shoulder (gold at the body, crimson to ember at the tips);
+    // a bloom filter, a flame aura, flowing tail plumes with golden eyes,
+    // a flickering crest and rising embers finish it.
+    const AV_SPARK_RAW = (x, y, s, c = '#fff', cls = '') => `<g class="av-twinkle ${cls}"><path d="m${x} ${y - 4 * s * .25} ${s * .25} ${3 * s * .25} ${3 * s * .25} ${s * .25} ${-3 * s * .25} ${s * .25} ${-s * .25} ${3 * s * .25} ${-s * .25} ${-3 * s * .25} ${-3 * s * .25} ${-s * .25} ${3 * s * .25} ${-s * .25}Z" fill="${c}"/></g>`;
+    const AV_PHOENIX = (() => {
+      const f = (n) => (Math.round(n * 100) / 100).toString();
+      const feather = (x, y, ang, len, wid, fill, bend = 0.12) => {
+        const a = ang * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), px = -sa, py = ca;
+        const tx = x + ca * len + px * len * bend, ty = y + sa * len + py * len * bend;
+        const mx = x + ca * len * 0.5, my = y + sa * len * 0.5;
+        return `<path d="M${f(x)} ${f(y)}Q${f(mx + px * wid)} ${f(my + py * wid)} ${f(tx)} ${f(ty)}Q${f(mx - px * wid * 0.55)} ${f(my - py * wid * 0.55)} ${f(x)} ${f(y)}Z" fill="${fill}" stroke="rgba(69,10,10,.55)" stroke-width=".28"/>`
+          + `<path d="M${f(x)} ${f(y)}Q${f(mx + px * wid * 0.2)} ${f(my + py * wid * 0.2)} ${f(tx)} ${f(ty)}" fill="none" stroke="rgba(255,244,214,.55)" stroke-width=".3" stroke-linecap="round"/>`;
+      };
+      const sx = 29.2, sy = 30.5;
+      let wing = '';
+      for (let i = 0; i < 9; i++) wing += feather(sx - 1 + i * 0.25, sy + 1 - i * 0.2, -183 + i * 10.5, 26 - i * 0.9, 4.4, 'url(#av-phx-prim)', 0.14);
+      for (let i = 0; i < 7; i++) wing += feather(sx, sy + 1.5, -172 + i * 11, 17 - i * 0.6, 4.2, 'url(#av-phx-sec)', 0.12);
+      for (let i = 0; i < 5; i++) wing += feather(sx + 0.5, sy + 1, -162 + i * 12, 10, 3.6, 'url(#av-phx-cov)', 0.08);
+      const wingG = `<g class="av-phx-wing">${wing}</g>`;
+      const tail = [[-104, 19, 3.8], [-76, 19, 3.8], [-90, 22, 4]].map(([ang, len, w]) => {
+        const a = (-ang) * Math.PI / 180;
+        const tx = 31.5 + Math.cos(a) * len, ty = 43 + Math.sin(a) * len;
+        return feather(31.5, 43, -ang, len, w, 'url(#av-phx-tail)', ang === -90 ? 0.05 : ang < -90 ? 0.18 : -0.18)
+          + `<ellipse cx="${f(tx - Math.cos(a) * 2.2)}" cy="${f(ty - Math.sin(a) * 2.2)}" rx="1.25" ry="1.7" fill="url(#av-m-gold)" stroke="#7f1d1d" stroke-width=".35"/>`;
+      }).join('');
+      const ember = (x, y, r, c, d, dur = 2.2) => `<circle class="av-ember" style="animation-delay:${d}s;animation-duration:${dur}s" cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
+      return `
+        <circle class="av-pulse" cx="31.5" cy="31" r="23" fill="url(#av-phx-halo)"/>
+        <g opacity=".55" filter="url(#av-phx-blur)">
+          <g class="av-flicker"><path d="${AV_FLAME}" transform="translate(31.5 33) scale(1.05 1.2) translate(-32 -32)" fill="#ea580c"/></g>
+          <g class="av-flicker av-flicker-2"><path d="${AV_FLAME}" transform="translate(31.5 34) scale(.7 .85) translate(-32 -32)" fill="#fbbf24"/></g>
+        </g>
+        ${ember(16, 58, 0.9, '#fde047', 0)}${ember(47, 57, 0.8, '#fb923c', -0.4, 2.6)}${ember(24, 52, 0.6, '#fef08a', -1.1)}
+        ${ember(40, 60, 1, '#f97316', -1.6, 2.4)}${ember(33, 62, 0.7, '#fde047', -0.8, 1.9)}${ember(10, 46, 0.6, '#fdba74', -1.9, 2.8)}${ember(54, 44, 0.7, '#fef08a', -0.2, 2.5)}
+        <g class="av-bob" filter="url(#av-phx-bloom)">
+          <g class="av-phx-tail">${tail}</g>
+          ${wingG}
+          <g transform="translate(63 0) scale(-1 1)">${wingG}</g>
+          <path d="M31.5 45C26.6 41.2 27 33.6 29.3 28.6c1.1-2.4.4-4.6-1-6.6l5.3-1.2c.5 3.4.1 5.8 1.4 8.4 2.4 4.6 1.8 12.2-3.5 15.8Z" fill="url(#av-phx-body)" stroke="rgba(69,10,10,.6)" stroke-width=".4"/>
+          <path d="M30 29.5c.8 3 .9 6.6.2 10.4M32.6 29.2c.6 3.2.5 6.6-.4 10" fill="none" stroke="rgba(254,243,199,.45)" stroke-width=".35" stroke-linecap="round"/>
+          <g class="av-flicker"><path d="M31.6 15.2c-.6-2.8-2.4-4.6-4-5.6 1.6.2 2.8 1 3.6 2 .1-1.8.6-3.4 1.8-4.6-.4 1.6-.3 3.2.3 4.6.8-1.2 2-2 3.6-2.2-1.6 1.2-2.8 3.2-3.2 5.8Z" fill="url(#av-m-flame)"/></g>
+          <ellipse cx="30.6" cy="18.6" rx="3.7" ry="3.3" fill="url(#av-phx-head)" stroke="rgba(69,10,10,.6)" stroke-width=".4"/>
+          <path d="M27.4 18.1c-2.2.2-3.5 1.5-3.9 3.3 1.2-.9 2.3-1 3.8-.9.4-.8.4-1.6.1-2.4Z" fill="url(#av-m-gold)" stroke="#78350f" stroke-width=".35"/>
+          <path d="M28.6 17.2c.9-.8 2-.9 2.8-.4" fill="none" stroke="#7f1d1d" stroke-width=".45" stroke-linecap="round"/>
+          <circle cx="29.7" cy="18.1" r=".8" fill="#1c0a03"/><circle cx="29.45" cy="17.85" r=".28" fill="#fff"/>
+        </g>
+        ${AV_SPARK_RAW(52, 14, 2.2, '#fff7d6', '')}${AV_SPARK_RAW(11, 20, 1.8, '#fde68a', 'av-twinkle-2')}`;
+    })();
     const AVATAR_ART = {
       'avatar-crown-bronze': { tone: 'bronze', art: AV_CROWN('bronze') + AV_CROWN_GEMS('#7c2d12') },
       'avatar-suit-spades':  { tone: 'navy', art: `<path d="${AV_SPADE}" fill="url(#av-m-pearl)" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>` },
@@ -17940,20 +18128,39 @@ video {
         <path d="M25 43c0-12 3.5-21.5 7-28.5 3.5 7 7 16.5 7 28.5Z" fill="#10b981" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"/>
         <rect x="17" y="42" width="30" height="7" rx="2.5" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
         <circle cx="9.5" cy="22.5" r="3.2" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.35)"/><circle cx="32" cy="14.5" r="3.2" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.35)"/><circle cx="54.5" cy="22.5" r="3.2" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.35)"/>` },
-      'avatar-burn-flame':   { tone: 'ember', art: `<path d="${AV_FLAME}" fill="url(#av-m-flame)" stroke="rgba(0,0,0,.3)" stroke-width="1.2" stroke-linejoin="round"/><path d="${AV_FLAME_CORE}" fill="url(#av-m-core)"/>` },
+      // Burn Flame: a layered bonfire (outer ember, orange body, gold heart,
+      // white-hot core) with a heat halo, a bed of coals and drifting sparks.
+      'avatar-burn-flame':   { tone: 'ember', art: `
+        <circle cx="32" cy="34" r="22" fill="url(#av-phx-halo)"/>
+        <ellipse cx="32" cy="50.5" rx="15" ry="3.2" fill="#1c0a03"/><ellipse cx="32" cy="49.6" rx="12" ry="2.2" fill="#9a3412" opacity=".9"/>
+        <path d="M22 50c1.5-1.2 3.5-1.4 5-.6M36 49.4c1.6-.9 3.6-.9 5.2.2" stroke="#fb923c" stroke-width="1.1" stroke-linecap="round" fill="none" opacity=".85"/>
+        <path d="M32 8.5c5.2 9.3 16.5 14.6 16.5 28 0 9.6-7.4 14.5-16.5 14.5S15.5 46.1 15.5 36.5c0-7.8 4.4-12.8 7.8-17.1.2 6.6 3.3 9.7 5.6 10-1.1-7.3-.4-13.8 3.1-20.9Z" fill="#b91c1c" stroke="rgba(0,0,0,.35)" stroke-width="1"/>
+        <path d="M32 13.5c4.4 8.2 13.4 12.8 13.4 23.8 0 8-6 11.8-13.4 11.8s-13.4-3.8-13.4-11.8c0-6.4 3.4-10.4 6.2-14 .3 5.4 2.6 8 4.5 8.3-.9-6-.3-11.6 2.7-18.1Z" fill="url(#av-m-flame)"/>
+        <path d="M32 24c3.3 5.3 8.8 8.3 8.8 15 0 5.3-4 8.3-8.8 8.3s-8.8-3-8.8-8.3c0-4.2 2.3-6.8 4.2-9.2.3 3.2 1.7 5 2.9 5.3-.5-3.8-.1-7.2 1.7-11.1Z" fill="#fbbf24"/>
+        <path d="M32 33.5c2.4 3.3 5 5.2 5 9 0 3.1-2.3 4.8-5 4.8s-5-1.7-5-4.8c0-3.4 2.6-5.6 5-9Z" fill="url(#av-m-core)"/>
+        <path d="M26.2 22.5c-1.9 3-3.2 6.3-2.9 10.4" stroke="#fde68a" stroke-width="1" stroke-linecap="round" fill="none" opacity=".7"/>
+        <circle cx="47" cy="17" r="1" fill="#fde047"/><circle cx="17.5" cy="21" r=".8" fill="#fb923c"/><circle cx="44" cy="10" r=".6" fill="#fef08a"/><circle cx="21" cy="12.5" r=".6" fill="#fdba74"/>` },
+      // Transparent Ghost: see-through, lit from inside, with a wispy tail,
+      // hollow glowing eyes and a trail of mist.
       'avatar-ghost':        { tone: 'ghost', art: `
-        <path d="M19 51V30c0-9.5 5.8-16 13-16s13 6.5 13 16v21l-4.3-4-4.3 4-4.4-4-4.4 4-4.3-4Z" fill="rgba(226,232,240,.5)" stroke="rgba(255,255,255,.85)" stroke-width="1.4" stroke-linejoin="round"/>
-        <path d="M24 22c1.5-2.5 4-4 7-4.3" stroke="rgba(255,255,255,.7)" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-        <ellipse cx="27" cy="31" rx="2.6" ry="3.6" fill="#0f172a"/><ellipse cx="37" cy="31" rx="2.6" ry="3.6" fill="#0f172a"/>
-        <ellipse cx="32" cy="39.5" rx="2.4" ry="2.8" fill="#0f172a" opacity=".85"/>` },
+        <circle cx="32" cy="30" r="21" fill="url(#av-ghost-halo)"/>
+        <path d="M18 52.5c3-1.6 6.2-1.8 9-.4M39 53c2.6-1.4 5.6-1.5 8.2-.3" stroke="rgba(226,232,240,.35)" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+        <path d="M18.5 49.5V29.5c0-9.6 6-16.5 13.5-16.5s13.5 6.9 13.5 16.5v20l-3.4-3.6-3.3 4.4-3.4-4.4-3.4 4.4-3.4-4.4-3.3 4.4-3.4-4.4Z" fill="url(#av-ghost-body)" stroke="rgba(255,255,255,.9)" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M23 22c1.8-3 4.6-4.8 8-5.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".85"/>
+        <path d="M22 30c0 8 1 14 3 18" stroke="rgba(255,255,255,.35)" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <ellipse cx="27" cy="30.5" rx="3" ry="4.2" fill="#0b1220"/><ellipse cx="37" cy="30.5" rx="3" ry="4.2" fill="#0b1220"/>
+        <ellipse cx="27" cy="31.3" rx="1.3" ry="1.8" fill="#7dd3fc"/><ellipse cx="37" cy="31.3" rx="1.3" ry="1.8" fill="#7dd3fc"/>
+        <ellipse cx="32" cy="39.8" rx="2.4" ry="3" fill="#0b1220" opacity=".85"/>` },
+      // Frozen: an Ace of spades locked inside a cracked block of ice, frost
+      // creeping over it, with glints and a snowflake.
       'avatar-frozen':       { tone: 'ice', art: `
-        <circle cx="32" cy="34" r="16" fill="url(#av-m-frost)" stroke="rgba(0,0,0,.3)" stroke-width="1.2"/>
-        <path d="M19.5 24.5c3-5.5 7.5-8.5 12.5-8.5s9.5 3 12.5 8.5" fill="none" stroke="#f0f9ff" stroke-width="3" stroke-linecap="round"/>
-        <path d="m22 25 1.3 4.5 1.4-4.2M30 21.5l1.4 5 1.4-5M39 24.3l1.3 4.6 1.4-4.4" fill="#f0f9ff" stroke="#f0f9ff" stroke-width="1" stroke-linejoin="round"/>
-        <path d="M24.5 31.5 29 33M39.5 31.5 35 33" stroke="#0c2a4a" stroke-width="2" stroke-linecap="round"/>
-        <rect x="24.5" y="38" width="15" height="6" rx="2" fill="#f8fafc" stroke="#0c2a4a" stroke-width="1.2"/>
-        <path d="M28.2 38v6M32 38v6M35.8 38v6M24.5 41h15" stroke="#0c2a4a" stroke-width=".9"/>` },
-
+        <rect x="16" y="11" width="32" height="42" rx="5" fill="url(#av-ice-block)" stroke="#e0f2fe" stroke-width="1.3"/>
+        <g opacity=".75" transform="rotate(-6 32 32)">${avCard('A', '#0c4a6e', `<path d="${AV_SPADE}" transform="translate(32 33) scale(.5) translate(-32 -32)" fill="#0c4a6e"/>`)}</g>
+        <rect x="16" y="11" width="32" height="42" rx="5" fill="url(#av-ice-sheen)"/>
+        <path d="M22 15l5 7 -2 5 6 4M42 20l-4 6 3 4-5 5M20 44l6-3 3 4" stroke="#f0f9ff" stroke-width=".7" fill="none" opacity=".8" stroke-linejoin="round"/>
+        <path d="M16.6 46c3-1 5.5-3.5 6.5-7M47.4 17c-2.6.6-4.6 2.5-5.4 5.2" stroke="#fff" stroke-width="1.1" stroke-linecap="round" fill="none" opacity=".75"/>
+        <g stroke="#f0f9ff" stroke-width="1.1" stroke-linecap="round" transform="translate(47.5 49.5)"><path d="M0-5V5M-4.3-2.5 4.3 2.5M-4.3 2.5 4.3-2.5"/><path d="M-1.4-3.6 0-2.3 1.4-3.6M-1.4 3.6 0 2.3 1.4 3.6" fill="none" stroke-width=".8"/></g>
+        <path d="m19 12.5.8 2.1 2.1.8-2.1.8-.8 2.1-.8-2.1-2.1-.8 2.1-.8Z" fill="#fff"/>` },
       'avatar-burning-ten':  { tone: 'ember', animated: true, art: `
         <g class="av-flicker"><path d="${AV_FLAME}" transform="translate(21 27) scale(.62 .72) translate(-32 -32)" fill="url(#av-m-flame)"/></g>
         <g class="av-flicker av-flicker-2"><path d="${AV_FLAME}" transform="translate(43 25) scale(.7 .8) translate(-32 -32)" fill="url(#av-m-flame)"/></g>
@@ -18024,18 +18231,7 @@ video {
         <g class="av-rf" style="--a:-34deg"><rect x="24" y="23" width="16" height="24" rx="2.4" fill="url(#av-m-ivory)" stroke="url(#av-m-gold)" stroke-width="1.1"/><text x="25.6" y="29.2" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="4.6" fill="#0f172a" letter-spacing="-.4">10</text><path d="${AV_SPADE}" transform="translate(32 37) scale(.2) translate(-32 -32)" fill="#0f172a"/></g><g class="av-rf" style="--a:-17deg"><rect x="24" y="23" width="16" height="24" rx="2.4" fill="url(#av-m-ivory)" stroke="url(#av-m-gold)" stroke-width="1.1"/><text x="25.6" y="29.2" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="5.4" fill="#0f172a" letter-spacing="-.4">J</text><path d="${AV_SPADE}" transform="translate(32 37) scale(.2) translate(-32 -32)" fill="#0f172a"/></g><g class="av-rf" style="--a:0deg"><rect x="24" y="23" width="16" height="24" rx="2.4" fill="url(#av-m-ivory)" stroke="url(#av-m-gold)" stroke-width="1.1"/><text x="25.6" y="29.2" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="5.4" fill="#0f172a" letter-spacing="-.4">Q</text><path d="${AV_SPADE}" transform="translate(32 37) scale(.2) translate(-32 -32)" fill="#0f172a"/></g><g class="av-rf" style="--a:17deg"><rect x="24" y="23" width="16" height="24" rx="2.4" fill="url(#av-m-ivory)" stroke="url(#av-m-gold)" stroke-width="1.1"/><text x="25.6" y="29.2" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="5.4" fill="#0f172a" letter-spacing="-.4">K</text><path d="${AV_SPADE}" transform="translate(32 37) scale(.2) translate(-32 -32)" fill="#0f172a"/></g><g class="av-rf" style="--a:34deg"><rect x="24" y="23" width="16" height="24" rx="2.4" fill="url(#av-m-ivory)" stroke="url(#av-m-gold)" stroke-width="1.1"/><text x="25.6" y="29.2" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="5.4" fill="#0f172a" letter-spacing="-.4">A</text><path d="${AV_SPADE}" transform="translate(32 37) scale(.2) translate(-32 -32)" fill="#0f172a"/></g>
         <g class="av-twinkle "><path d="m12 16.8 0.96 2.24 2.24 0.96-2.24 0.96-0.96 2.24-0.96-2.24-2.24-0.96 2.24-0.96Z" fill="#fff7d6"/></g><g class="av-twinkle av-twinkle-2"><path d="m52 15.4 0.78 1.82 1.82 0.78-1.82 0.78-0.78 1.82-0.78-1.82-1.82-0.78 1.82-0.78Z" fill="#fff"/></g><g class="av-twinkle av-twinkle-3"><path d="m50 49.8 0.66 1.54 1.54 0.66-1.54 0.66-0.66 1.54-0.66-1.54-1.54-0.66 1.54-0.66Z" fill="#fde68a"/></g>
         <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
-      'avatar-phoenix':      { tone: 'ember', animated: true, art: `
-        <circle class="av-ember" style="animation-delay:0s" cx="18" cy="56" r="1.1" fill="#fde047"/><circle class="av-ember" style="animation-delay:-0.5s" cx="46" cy="54" r="1" fill="#fb923c"/><circle class="av-ember" style="animation-delay:-1s" cx="24" cy="50" r="0.8" fill="#fef08a"/><circle class="av-ember" style="animation-delay:-1.4s" cx="41" cy="58" r="1.2" fill="#f97316"/><circle class="av-ember" style="animation-delay:-0.8s" cx="33" cy="60" r="0.9" fill="#fde047"/>
-        <g class="av-bob">
-          <g class="av-wing"><path d="M29 31C22 22 13 16 5 15c4 4 5 7 4 9 4 0 6 2 6 4 3 0 5 2 5 4 3 0 6 2 9 4Z" fill="url(#av-m-phoenix)" stroke="rgba(0,0,0,.35)" stroke-width="1" stroke-linejoin="round"/></g>
-          <g transform="translate(64 0) scale(-1 1)"><g class="av-wing"><path d="M29 31C22 22 13 16 5 15c4 4 5 7 4 9 4 0 6 2 6 4 3 0 5 2 5 4 3 0 6 2 9 4Z" fill="url(#av-m-phoenix)" stroke="rgba(0,0,0,.35)" stroke-width="1" stroke-linejoin="round"/></g></g>
-          <g class="av-tail"><path d="M32 42c-2 6-6 9-8 15 5-3 7-6 8-9 1 3 3 6 8 9-2-6-6-9-8-15Z" fill="url(#av-m-flame)"/><path d="M32 44c-1 6-1 11 0 17 1-6 1-11 0-17Z" fill="#fde047"/></g>
-          <g class="av-flicker"><path d="M32 17c-1-3-3-5-4-7 2 1 3 2 4 3 0-2 0-3 1-5 1 2 1 4 1 5 1-1 2-2 4-3-1 2-3 4-4 7Z" fill="url(#av-m-flame)"/></g>
-          <path d="M32 16.5c3.5 0 5 3 4 7 2 5 1.5 12-4 21-5.5-9-6-16-4-21-1-4 .5-7 4-7Z" fill="url(#av-m-flame)" stroke="rgba(0,0,0,.35)" stroke-width="1"/>
-          <circle cx="32" cy="20" r="3.8" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.35)" stroke-width=".9"/>
-          <circle cx="30.6" cy="19.5" r=".75" fill="#1c0a03"/><circle cx="33.4" cy="19.5" r=".75" fill="#1c0a03"/>
-          <path d="m32 21.4 1.3 2-1.3.9-1.3-.9Z" fill="#b45309"/>
-        </g>` },
+      'avatar-phoenix':      { tone: 'ember', animated: true, art: AV_PHOENIX },
       'avatar-cosmic-ace':   { tone: 'cosmos', animated: true, art: `
         <g class="av-twinkle "><path d="m11 11.4 0.78 1.82 1.82 0.78-1.82 0.78-0.78 1.82-0.78-1.82-1.82-0.78 1.82-0.78Z" fill="#fff"/></g><g class="av-twinkle av-twinkle-2"><path d="m53 10 0.60 1.40 1.40 0.60-1.40 0.60-0.60 1.40-0.60-1.40-1.40-0.60 1.40-0.60Z" fill="#e9d5ff"/></g><g class="av-twinkle av-twinkle-3"><path d="m54 47.6 0.72 1.68 1.68 0.72-1.68 0.72-0.72 1.68-0.72-1.68-1.68-0.72 1.68-0.72Z" fill="#fff"/></g><g class="av-twinkle av-twinkle-4"><path d="m9 48.2 0.54 1.26 1.26 0.54-1.26 0.54-0.54 1.26-0.54-1.26-1.26-0.54 1.26-0.54Z" fill="#c7d2fe"/></g>
         <g transform="rotate(-18 32 31)">
@@ -19523,6 +19719,8 @@ video {
       { id: 'back-arcade', category: 'Card Backs', name: 'Retro Arcade', cost: 150, tones: ['#1e1b4b','#a3e635','#2e1065'] },
       { id: 'back-artdeco', category: 'Card Backs', name: 'Art Deco', cost: 150, tones: ['#0a0a0a','#d4af37','#fde68a'] },
       { id: 'back-space', category: 'Card Backs', name: 'Space', cost: 200, tones: ['#0b1026','#f59e0b','#60a5fa'] },
+      { id: 'back-dragon', category: 'Card Backs', name: 'Dragon Scale', cost: 400, tones: ['#021a19','#14b8a6','#d97706'] },
+      { id: 'back-stained', category: 'Card Backs', name: 'Stained Glass', cost: 400, tones: ['#111111','#b91c1c','#1d4ed8'] },
       { id: 'frame-silver', category: 'Frames', name: 'Silver Edge', cost: 35, tones: ['#1e293b','#cbd5e1','#60a5fa'] },
       { id: 'frame-gold', category: 'Frames', name: 'Golden Crown', cost: 60, tones: ['#422006','#fbbf24','#fef3c7'] },
       { id: 'frame-diamond', category: 'Frames', name: 'Diamond Aura', cost: 90, tones: ['#083344','#22d3ee','#e0f2fe'] },
@@ -19541,6 +19739,13 @@ video {
       { id: 'deck-casino', category: 'Decks', name: 'Classic Casino', cost: 250, theme: 'theme-casino', tones: ['#faf7ef','#b91c1c','#111827'] },
       { id: 'deck-arcade', category: 'Decks', name: 'Arcade', cost: 250, theme: 'theme-arcade', tones: ['#0a0a12','#a3e635','#f472b6'] },
       { id: 'deck-fourcolour', category: 'Decks', name: 'Four-Colour', cost: 750, theme: 'theme-fourcolour', tones: ['#0f172a','#60a5fa','#4ade80'] },
+      { id: 'deck-lavender', category: 'Decks', name: 'Lavender', cost: 250, theme: 'theme-lavender', tones: ['#efe7ff','#a78bfa','#3b0764'] },
+      { id: 'deck-paper', category: 'Decks', name: 'Paper Classic', cost: 250, theme: 'theme-paper', tones: ['#fbf8f1','#b91c1c','#1f2937'] },
+      { id: 'deck-blueprint', category: 'Decks', name: 'Blueprint', cost: 500, theme: 'theme-blueprint', tones: ['#123a7a','#93c5fd','#e0f2fe'] },
+      { id: 'deck-chalk', category: 'Decks', name: 'Chalkboard', cost: 500, theme: 'theme-chalk', tones: ['#1d2a24','#f1f5f9','#fda4af'] },
+      { id: 'deck-frost', category: 'Decks', name: 'Frosted Glass', cost: 500, theme: 'theme-frost', tones: ['#1e293b','#e2e8f0','#fda4af'] },
+      { id: 'deck-neonnight', category: 'Decks', name: 'Neon Night', cost: 500, theme: 'theme-neonnight', tones: ['#07030f','#67e8f9','#f472b6'] },
+      { id: 'deck-royalgold', category: 'Decks', name: 'Royal Gold', cost: 1000, theme: 'theme-royalgold', tones: ['#0b0a10','#d4af37','#f43f5e'] },
       { id: 'emotes-savage', category: 'Emote Packs', name: 'Savage Set', cost: 45, tones: ['#3f1420','#fb7185','#c084fc'] },
       { id: 'emotes-victory', category: 'Emote Packs', name: 'Victory Pack', cost: 50, tones: ['#172033','#fbbf24','#60a5fa'] },
       { id: 'emotes-chaos', category: 'Emote Packs', name: 'Chaos Pack', cost: 200, tones: ['#172033','#f43f5e','#a855f7'] },
@@ -19618,6 +19823,7 @@ video {
       { id: 'deck-emerald', category: 'Decks', name: 'Emerald', cost: 0, builtIn: true, theme: 'theme-emerald', tones: ['#064e3b','#fca5a5','#ecfdf5'] },
       { id: 'deck-cyber', category: 'Decks', name: 'Cyber', cost: 0, builtIn: true, theme: 'theme-cyber', tones: ['#1e1b4b','#fb7185','#38bdf8'] },
       { id: 'deck-crimson', category: 'Decks', name: 'Crimson', cost: 0, builtIn: true, theme: 'theme-crimson', tones: ['#450a0a','#fb7185','#fef2f2'] },
+      { id: 'deck-bigprint', category: 'Decks', name: 'Big Print', cost: 0, builtIn: true, theme: 'theme-bigprint', tones: ['#ffffff','#0b0b0f','#c1121f'] },
       // Free tables: real-looking wood and card-room felt.
       { id: 'table-wood', category: 'Table Themes', name: 'Oak Wood', cost: 0, builtIn: true, tones: ['#6b4226','#a06a3c','#f3d9b1'] },
       { id: 'table-felt', category: 'Table Themes', name: 'Classic Felt', cost: 0, builtIn: true, tones: ['#1f5a36','#2f7a4a','#d1fae5'] },
@@ -19663,9 +19869,9 @@ video {
       'Joker Effects': 'jokerEffect', 'Profile Pictures': 'avatar', 'Decks': 'deck'
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
-      cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco', ...seasonalIdsOf('cardBack')]),
+      cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco','back-dragon','back-stained', ...seasonalIdsOf('cardBack')]),
       frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet','frame-split-crimson','frame-split-royal','frame-split-noir','frame-dashed-gold','frame-neon-tube','frame-spectrum', ...seasonalIdsOf('frame')]),
-      deck: new Set(['deck-obsidian','deck-emerald','deck-cyber','deck-crimson','deck-casino','deck-arcade','deck-fourcolour']),
+      deck: new Set(['deck-obsidian','deck-emerald','deck-cyber','deck-crimson','deck-bigprint','deck-casino','deck-arcade','deck-fourcolour','deck-lavender','deck-paper','deck-blueprint','deck-chalk','deck-frost','deck-neonnight','deck-royalgold']),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania', ...seasonalIdsOf('emotes')]),
       tableTheme: new Set(['table-wood','table-felt','table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic','table-neon','table-aurora','table-space', ...seasonalIdsOf('tableTheme')]),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke','burn-blackhole','burn-origami','burn-pixel','burn-lava', ...seasonalIdsOf('burnEffect')]),
@@ -19798,7 +20004,11 @@ video {
     }
     function syncShowcase() {
       if (!currentUser || typeof db === 'undefined') return Promise.resolve();
-      return db.ref(`publicProfiles/${currentUser.uid}/showcase`).set(getShowcaseLoadout()).catch(() => {});
+      // The deck is written on its own so a showcase write never fails as a
+      // whole on rules that don't know the deck key yet.
+      return db.ref(`publicProfiles/${currentUser.uid}/showcase`).set(getShowcaseLoadout())
+        .then(() => db.ref(`publicProfiles/${currentUser.uid}/showcase/deck`).set(equippedIdOf('deck')))
+        .catch(() => {});
     }
     function cosmeticDisplayName(type, id) {
       if (!id || id === 'default') return 'Default';
@@ -19817,6 +20027,7 @@ video {
       };
       const table = pick('tableTheme'), back = pick('cardBack'), frame = pick('frame');
       const burn = pick('burnEffect'), victory = pick('victoryEffect'), joker = pick('jokerEffect'), emotes = pick('emotes');
+      const deck = pick('deck');
       const chip = (icon, label, type, id) => `<div class="pp-show ${id === 'default' ? 'is-default' : ''}"><span class="pp-show-icon">${icon}</span><span class="pp-show-text"><small>${label}</small><b>${cosmeticDisplayName(type, id)}</b></span></div>`;
       const emoteIcon = (emotes !== 'default' && EMOTE_PACKS[emotes]?.[0]) || '😂';
       return `<div class="pp-showcase"><div class="pp-section">Showcase</div>
@@ -19825,6 +20036,7 @@ video {
           ${chip('🂠', 'Card back', 'cardBack', back)}${chip('▢', 'Frame', 'frame', frame)}
           ${chip(burnPreviewIcon(burn), 'Burn', 'burnEffect', burn)}${chip(victoryPreviewIcon(victory), 'Victory', 'victoryEffect', victory)}
           ${chip(jokerPreviewIcon(joker), 'Joker', 'jokerEffect', joker)}${chip(emoteIcon, 'Emotes', 'emotes', emotes)}
+          ${deck !== 'default' ? chip(`<span class="pp-show-deck">${deckMiniCardHtml(deckItems().find(d => d.id === deck))}</span>`, 'Deck', 'deck', deck) : ''}
         </div></div>`;
     }
     function renderPlayerPopupHuman(player, profile, friendState) {
@@ -21145,7 +21357,7 @@ video {
     function getCosmeticBackClass(id) {
       if (SEASONAL_BACK_IDS.has(id)) return `cosmetic-${id} season-back`;
       return { 'back-midnight':'cosmetic-back-midnight','back-emerald':'cosmetic-back-emerald','back-neon':'cosmetic-back-neon','back-crimson':'cosmetic-back-crimson','back-nebula':'cosmetic-back-nebula','back-inferno':'cosmetic-back-inferno',
-        'back-arcade':'cosmetic-back-arcade','back-space':'cosmetic-back-space','back-tartan':'cosmetic-back-tartan','back-artdeco':'cosmetic-back-artdeco' }[id] || 'back-obsidian';
+        'back-arcade':'cosmetic-back-arcade','back-space':'cosmetic-back-space','back-tartan':'cosmetic-back-tartan','back-artdeco':'cosmetic-back-artdeco','back-dragon':'cosmetic-back-dragon','back-stained':'cosmetic-back-stained' }[id] || 'back-obsidian';
     }
 
     function getCosmeticFrameStyle(id) {
@@ -25959,6 +26171,19 @@ video {
       slider.dispatchEvent(new Event('input'));
     });
 
+    // Big Print Cards (Accessibility) equips the free Big Print deck; turning
+    // it off puts back the deck worn before (shithead_deck_before_bigprint).
+    document.getElementById('setBigPrintRow').addEventListener('click', () => {
+      if (state.deckTheme === 'theme-bigprint') {
+        let back = 'theme-obsidian';
+        try { back = localStorage.getItem('shithead_deck_before_bigprint') || back; } catch (e) {}
+        selectDeckTheme(back === 'theme-bigprint' ? 'theme-obsidian' : back);
+      } else {
+        try { localStorage.setItem('shithead_deck_before_bigprint', state.deckTheme || 'theme-obsidian'); } catch (e) {}
+        selectDeckTheme('theme-bigprint');
+      }
+      refreshSettingsUI();
+    });
     document.getElementById('setContrastRow').addEventListener('click', () => {
       highContrast = !highContrast; writePref('shithead_high_contrast', highContrast);
       applyAccessibilityPrefs(); refreshSettingsUI(); render(); scheduleSettingsCloudSave();
@@ -26703,6 +26928,63 @@ video {
       notifyBanner(message);
       setTimeout(reloadCleanly, 1200);
     }
+    // § Update prompt: a phone or installed app still running an older build
+    // (left open, or restored from the background) is told a new version is
+    // ready. The live page's BUILD stamp is read with no cache; if it's newer
+    // than ours, #updatePrompt offers Update now (refresh the service worker,
+    // reload: a game in progress resumes) or Later (asks again in 30 min).
+    const UPDATE_CHECK_MS = 15 * 60 * 1000;
+    let lastUpdateCheck = 0, updatePromptSnoozeUntil = 0, updateNotifiedFor = '';
+    function newerBuildIn(html) {
+      const m = String(html || '').match(/BUILD:\s*\d{4}-\d{2}-\d{2}-(v\d+)/);
+      if (!m) return null;
+      return gameVersionNumber(m[1]) > gameVersionNumber(getGameVersionLabel()) ? m[1] : null;
+    }
+    async function checkForNewVersion(force = false) {
+      if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return null;
+      if (!/^https?:$/.test(location.protocol) || /[?&]dev-tests=1/.test(location.search)) return null;
+      if (!force && Date.now() - lastUpdateCheck < 5 * 60 * 1000) return null;
+      lastUpdateCheck = Date.now();
+      try {
+        const r = await fetch(`/?v=${Date.now()}`, { cache: 'no-store' });
+        if (!r.ok) return null;
+        const newer = newerBuildIn(await r.text());
+        if (newer) showUpdatePrompt(newer);
+        return newer;
+      } catch (e) { return null; }
+    }
+    function showUpdatePrompt(version) {
+      if (Date.now() < updatePromptSnoozeUntil && updateNotifiedFor === version) return;
+      updateNotifiedFor = version;
+      let el = document.getElementById('updatePrompt');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'updatePrompt';
+        el.setAttribute('role', 'alertdialog');
+        el.setAttribute('aria-live', 'polite');
+        document.body.appendChild(el);
+      }
+      const inGame = typeof state !== 'undefined' && state.phase && state.phase !== 'LOBBY' && !tutorialActive;
+      el.innerHTML = `<div class="up-row"><span class="up-icon">${icon('refresh')}</span><div class="up-text"><b>Update available</b><span>A new version (${escapeHtml(version)}) is ready.${inGame ? ' Your game carries on after the update.' : ''}</span></div></div>
+        <div class="up-btns"><button type="button" class="up-later">Later</button><button type="button" class="up-now">Update now</button></div>`;
+      el.classList.remove('hidden');
+      el.querySelector('.up-later').onclick = () => { updatePromptSnoozeUntil = Date.now() + 30 * 60 * 1000; el.classList.add('hidden'); };
+      el.querySelector('.up-now').onclick = () => applyUpdateNow();
+    }
+    async function applyUpdateNow() {
+      const el = document.getElementById('updatePrompt');
+      if (el) el.querySelector('.up-now').textContent = 'Updating…';
+      try { if (typeof saveGameState === 'function' && !state.isMultiplayer) saveGameState(); } catch (e) {}
+      try {
+        const reg = await navigator.serviceWorker?.getRegistration?.();
+        await reg?.update?.();
+      } catch (e) {}
+      reloadCleanly();
+    }
+    setTimeout(() => checkForNewVersion(true), 15000);
+    setInterval(() => checkForNewVersion(true), UPDATE_CHECK_MS);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForNewVersion(); });
+    window.addEventListener('online', () => checkForNewVersion());
     function reloadCleanly() {
       if (!hasBackGuard()) { location.reload(); return; }
       ignoreNextPopstate = true;
@@ -27928,6 +28210,7 @@ video {
         target: ['#pileZone', '#localHand'],
         scene: { hand: [['4', '♣'], ['8', '♦'], ['J', '♠']], pile: [['6', '♥']] },
         require: { holdCheck: true },
+        captionPlace: 'middle',
         coachNote: "Hold any card you can see, any time in a game, to check it.",
         noteTarget: ['#pileZone', '#localHand']
       },
@@ -28604,6 +28887,23 @@ video {
         if (step.matchSpotlightWidthPair) syncSpotlightBoxWidths(...step.matchSpotlightWidthPair);
       }
     }
+    // The Card Powers / Play Matrix steps: the opened panel sits centred on
+    // the screen, just below the caption, so the caption never covers it.
+    function tutorialPlaceRefPanel(cap) {
+      const step = tutorialActive ? TUTORIAL_STEPS[tutorialStep] : null;
+      const which = step?.require?.tapCheck;
+      const id = which === '#cardRefBtn' ? 'cardRefPanel' : which === '#matrixRefBtn' ? 'matrixRefPanel' : null;
+      const panel = id && document.getElementById(id);
+      if (!panel || panel.classList.contains('hidden')) return;
+      const pr = panel.getBoundingClientRect();
+      if (!pr.width) return;
+      const capR = cap.getBoundingClientRect();
+      const m = 6;
+      const left = Math.max(m, (window.innerWidth - pr.width) / 2);
+      const top = Math.max(m, Math.min(capR.bottom + 10, window.innerHeight - pr.height - m));
+      if (Math.abs(pr.left - left) > 0.5) panel.style.left = `${left}px`;
+      if (Math.abs(pr.top - top) > 0.5) panel.style.top = `${top}px`;
+    }
     function drawTutorialSpotlight(selector) {
       const cap = document.getElementById('tutorialCaption');
       const holesGroup = document.getElementById('tutorialSpotlightHoles');
@@ -28658,10 +28958,23 @@ video {
       }
       // If the highlighted element is itself up there, drop below it instead
       // so the caption never covers its own spotlight.
-      if (rect && rect.height > 0 && rect.bottom < arenaTop && rect.bottom + capH + 10 < arenaTop) {
+      const refPanelStep = tutorialActive && /RefBtn$/.test(TUTORIAL_STEPS[tutorialStep]?.require?.tapCheck || '');
+      if (!refPanelStep && rect && rect.height > 0 && rect.bottom < arenaTop && rect.bottom + capH + 10 < arenaTop) {
         top = rect.bottom + 10;
       }
+      // captionPlace 'middle': between the Pile and the Hand, so the hold
+      // bubble (it opens above the Pile or the held card) stays in view.
+      const stepNow = tutorialActive ? TUTORIAL_STEPS[tutorialStep] : null;
+      if (stepNow && stepNow.captionPlace === 'middle') {
+        const pileR = document.getElementById('pileZone')?.getBoundingClientRect();
+        const handR = document.getElementById('localHand')?.getBoundingClientRect();
+        if (pileR && handR && pileR.height && handR.height) {
+          const lo = pileR.bottom + 6, hi = handR.top - capH - 6;
+          top = hi >= lo ? (lo + hi) / 2 : Math.max(lo, (pileR.bottom + handR.top - capH) / 2);
+        }
+      }
       cap.style.top = `${Math.max(m, Math.min(top, window.innerHeight - capH - m))}px`;
+      tutorialPlaceRefPanel(cap);
 
       holesGroup.innerHTML = '';
       bordersGroup.innerHTML = '';

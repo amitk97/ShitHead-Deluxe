@@ -138,6 +138,15 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   await denied('equip an unowned premium picture', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-cosmic-ace'));
   await denied('equip an unowned premium table', db => set(ref(db, 'users/alice/equippedCosmetics/tableTheme'), 'table-neon'));
   await denied('equip a made-up table', db => set(ref(db, 'users/alice/equippedCosmetics/tableTheme'), 'table-neonx'));
+  // v197: new card backs and decks are sold at their price; backs equip once owned.
+  await admin('users/alice/diamonds', 'PUT', 1400);
+  r = await call('alice', { action: 'buyItem', itemId: 'back-dragon' });
+  ok(r.diamonds === 1000, 'buy Dragon Scale (400)', r);
+  r = await call('alice', { action: 'buyItem', itemId: 'deck-royalgold' });
+  ok(r.diamonds === 0, 'buy Royal Gold deck (1000)', r);
+  await allowed('equip a new card back', db => set(ref(db, 'users/alice/equippedCosmetics/cardBack'), 'back-dragon'));
+  await denied('equip an unowned new card back', db => set(ref(db, 'users/alice/equippedCosmetics/cardBack'), 'back-stained'));
+  await allowed('showcase a deck', db => set(ref(db, 'publicProfiles/alice/showcase/deck'), 'deck-royalgold'));
   await admin('users/alice/diamonds', 'PUT', 960);
 
   // AmitK test account

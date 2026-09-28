@@ -45,7 +45,7 @@
               (newData.val() === 'back-midnight' || newData.val() === 'back-emerald' ||
               newData.val() === 'back-neon' || newData.val() === 'back-crimson' ||
               newData.val() === 'back-nebula' || newData.val() === 'back-inferno' ||
-              newData.val().matches(/^back-(arcade|space|tartan|artdeco)$/) ||
+              newData.val().matches(/^back-(arcade|space|tartan|artdeco|dragon|stained)$/) ||
               (newData.val().matches(/^back-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^back-(halloween|diwali|christmas|newyear)$/)))))"
           },
@@ -434,7 +434,7 @@
         },
         "showcase": {
           "$type": {
-            ".validate": "($type.matches(/^(tableTheme|cardBack|frame)$/) ||
+            ".validate": "($type.matches(/^(tableTheme|cardBack|frame|deck)$/) ||
               $type.matches(/^(burnEffect|victoryEffect|jokerEffect|emotes)$/)) &&
               newData.isString() && newData.val().matches(/^[a-z0-9-]{3,40}$/)"
           }

@@ -6550,6 +6550,103 @@ async function runDevTestSuite() {
       document.getElementById('themesModal').classList.add('hidden');
     }
   });
+  await test('Update prompt: a newer live build offers Update now / Later; an older or equal one does nothing', () => {
+    const cur = gameVersionNumber(getGameVersionLabel());
+    assertEqual(newerBuildIn(`<!-- BUILD: 2030-01-01-v${cur + 1} (x) -->`), `v${cur + 1}`, 'a newer build is spotted');
+    assertEqual(newerBuildIn(`<!-- BUILD: 2030-01-01-v${cur} (x) -->`), null, 'the same build is not');
+    assertEqual(newerBuildIn(`<!-- BUILD: 2020-01-01-v${cur - 1} (x) -->`), null, 'nor an older one');
+    assertEqual(newerBuildIn('no stamp'), null, 'a page without a stamp is ignored');
+    const saved = [updatePromptSnoozeUntil, updateNotifiedFor];
+    try {
+      showUpdatePrompt(`v${cur + 1}`);
+      const el = document.getElementById('updatePrompt');
+      assertTrue(!!el && !el.classList.contains('hidden'), 'the prompt shows');
+      assertTrue(/Update available/.test(el.textContent) && !!el.querySelector('.up-now') && !!el.querySelector('.up-later'), 'with Update now and Later');
+      assertTrue(!/[\u{1F300}-\u{1FAFF}]/u.test(el.textContent), 'no emoji');
+      el.querySelector('.up-later').click();
+      assertTrue(el.classList.contains('hidden'), 'Later hides it');
+      showUpdatePrompt(`v${cur + 1}`);
+      assertTrue(el.classList.contains('hidden'), 'and it stays snoozed for that version');
+      assertTrue(+getComputedStyle(el).zIndex > 202, 'it sits above the header and pages');
+    } finally {
+      [updatePromptSnoozeUntil, updateNotifiedFor] = saved;
+      document.getElementById('updatePrompt')?.remove();
+    }
+  });
+  await test('Decks v197: Big Print is free and on the Accessibility tab; Lavender + 6 more in the Shop', () => {
+    const big = BUILT_IN_COSMETICS.find(i => i.id === 'deck-bigprint');
+    assertTrue(!!big && big.cost === 0 && big.theme === 'theme-bigprint', 'Big Print is a free deck');
+    const shop = { 'deck-lavender': 250, 'deck-paper': 250, 'deck-blueprint': 500, 'deck-chalk': 500, 'deck-frost': 500, 'deck-neonnight': 500, 'deck-royalgold': 1000 };
+    Object.entries(shop).forEach(([id, cost]) => {
+      const it = COSMETIC_SHOP_ITEMS.find(i => i.id === id);
+      assertTrue(!!it && it.cost === cost && it.category === 'Decks' && COSMETIC_RUNTIME_IDS.deck.has(id), `${id} is a ${cost} deck`, it);
+    });
+    assertTrue(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Decks').length >= 10, 'ten decks in the Shop');
+    assertTrue(showcaseHtml({ deck: 'deck-lavender' }).includes('Lavender'), 'the deck shows in the Showcase');
+    const row = document.getElementById('setBigPrintRow');
+    assertTrue(!!row && row.closest('#settingsTab-access'), 'Big Print Cards sits in Accessibility');
+    const before = state.deckTheme;
+    try {
+      selectDeckTheme('theme-emerald');
+      row.click();
+      assertEqual(state.deckTheme, 'theme-bigprint', 'turning it on wears the Big Print deck');
+      assertEqual(document.getElementById('setBigPrintState').textContent.trim(), 'ON', 'and the switch reads ON');
+      assertEqual(handMinStrip()[1], 30, 'overlapped hand cards keep a wider strip');
+      row.click();
+      assertEqual(state.deckTheme, 'theme-emerald', 'turning it off puts the old deck back');
+    } finally { selectDeckTheme(before); }
+  });
+  await test('Big Print: with a huge hand no rank or suit is covered by the next card', async () => {
+    const before = state.deckTheme;
+    const saved = JSON.parse(JSON.stringify({ players: state.players, phase: state.phase, localPlayerId: state.localPlayerId }));
+    try {
+      selectDeckTheme('theme-bigprint');
+      state.phase = 'PLAY';
+      state.localPlayerId = 'p0';
+      const ranks = ['10','J','Q','K','A','2','3','4','5','6','7','8','9'];
+      state.players = [{ id: 'p0', name: 'Me', hand: Array.from({ length: 30 }, (_, i) => ({ rank: ranks[i % 13], suit: ['♠','♥','♦','♣'][i % 4], id: 'bp' + i })), faceUp: [], faceDown: [] },
+        { id: 'p1', name: 'Bot', isBot: true, hand: [], faceUp: [], faceDown: [] }];
+      render();
+      await new Promise(r => setTimeout(r, 300));
+      let covered = 0, checked = 0;
+      [...document.getElementById('localHand').children].forEach(row => {
+        const cs = [...row.children];
+        cs.slice(0, -1).forEach((c, i) => {
+          const edge = Math.max(c.querySelector('.card-corner-rank').getBoundingClientRect().right, c.querySelector('.card-corner-suit').getBoundingClientRect().right);
+          checked++;
+          if (edge > cs[i + 1].getBoundingClientRect().left + 0.5) covered++;
+        });
+      });
+      assertTrue(checked > 10, 'cards were measured', checked);
+      assertEqual(covered, 0, 'no index is covered');
+    } finally {
+      Object.assign(state, saved);
+      selectDeckTheme(before);
+    }
+  });
+  await test('Card backs v197: Dragon Scale and Stained Glass are vector, priced, previewable', () => {
+    ['back-dragon', 'back-stained'].forEach(id => {
+      const it = COSMETIC_SHOP_ITEMS.find(i => i.id === id);
+      assertTrue(!!it && it.cost === 400 && COSMETIC_RUNTIME_IDS.cardBack.has(id), `${id} costs 400`, it);
+      assertEqual(getCosmeticBackClass(id), `cosmetic-${id}`, 'has its own look');
+      const host = document.createElement('div');
+      host.innerHTML = cosmeticPreview(it, 'cardBack');
+      document.body.appendChild(host);
+      const bg = getComputedStyle(host.firstElementChild).backgroundImage;
+      host.remove();
+      assertTrue(/svg\+xml/.test(bg) && !/image\/(png|jpe?g)/.test(bg), `${id} is drawn from vector art`);
+    });
+  });
+  await test('Tutorial layout: Card Powers opens centred under the caption; the hold step puts the caption between Pile and Hand', () => {
+    const hold = TUTORIAL_MODULE_QUICK_START.find(st => st.require?.holdCheck);
+    assertEqual(hold?.captionPlace, 'middle', 'the hold step asks for the middle');
+    assertTrue(typeof tutorialPlaceRefPanel === 'function', 'the panel placer exists');
+  });
+  await test('Phoenix picture: built from many feathers with bloom, embers and moving wings/tail', () => {
+    const art = AVATAR_ART['avatar-phoenix'].art;
+    assertTrue((art.match(/<path/g) || []).length > 60, 'dozens of shaped parts', (art.match(/<path/g) || []).length);
+    assertTrue(/av-phx-bloom/.test(art) && /av-phx-wing/.test(art) && /av-phx-tail/.test(art) && /av-ember/.test(art), 'bloom, wings, tail and embers');
+  });
   await test('Devices: the table scales up on tablets/PCs only, and a sideways phone is asked to turn upright', () => {
     const css = [...document.querySelectorAll('style')].map(el => el.textContent).join('\n');
     assertTrue(/@media \(min-width: 700px\) and \(min-height: 700px\)[\s\S]{0,80}--tbl-k: 1\.3/.test(css), 'tablets raise the table scale');
@@ -7348,7 +7445,7 @@ async function runDevTestSuite() {
     ['Obsidian', 'Emerald', 'Cyber', 'Crimson', 'Classic Casino', 'Arcade', 'Four-Colour'].forEach((name) => {
       assertTrue(area.innerHTML.includes(name), `${name} must appear`);
     });
-    assertEqual(area.children.length, 7, 'Seven decks, no placeholder cards');
+    assertEqual(area.children.length, 15, 'Fifteen decks (5 free, 10 Shop), no placeholder cards');
     assertTrue(!area.innerHTML.includes('Coming Soon'), 'The old Coming Soon placeholder is gone');
     document.getElementById('themesModal').classList.add('hidden');
   });
@@ -7378,8 +7475,8 @@ async function runDevTestSuite() {
       openThemesPanel();
       const area = document.getElementById('themesGridArea');
       const tiles = [...area.querySelectorAll('[data-equip-type="deck"]')];
-      assertEqual(tiles.length, 7, 'Four free decks and three Shop decks');
-      ['deck-obsidian', 'deck-emerald', 'deck-cyber', 'deck-crimson'].forEach(id => assertTrue(!area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is free`));
+      assertEqual(tiles.length, 15, 'Five free decks and ten Shop decks');
+      ['deck-obsidian', 'deck-emerald', 'deck-cyber', 'deck-crimson', 'deck-bigprint'].forEach(id => assertTrue(!area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is free`));
       ['deck-casino', 'deck-arcade', 'deck-fourcolour'].forEach(id => assertTrue(area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is locked until bought`));
       assertTrue(area.querySelector('[data-equip-id="deck-fourcolour"]').textContent.includes('750'), 'Four-Colour shows its premium price');
       assertEqual(equipCosmetic('deck', 'deck-casino'), false, 'An unowned deck cannot be equipped');

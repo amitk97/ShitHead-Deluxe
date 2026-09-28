@@ -40,6 +40,14 @@
    "name": "Space",
    "cost": 200
   },
+  "back-dragon": {
+   "name": "Dragon Scale",
+   "cost": 400
+  },
+  "back-stained": {
+   "name": "Stained Glass",
+   "cost": 400
+  },
   "frame-silver": {
    "name": "Silver Edge",
    "cost": 35
@@ -99,6 +107,34 @@
   "deck-fourcolour": {
    "name": "Four-Colour",
    "cost": 750
+  },
+  "deck-lavender": {
+   "name": "Lavender",
+   "cost": 250
+  },
+  "deck-paper": {
+   "name": "Paper Classic",
+   "cost": 250
+  },
+  "deck-blueprint": {
+   "name": "Blueprint",
+   "cost": 500
+  },
+  "deck-chalk": {
+   "name": "Chalkboard",
+   "cost": 500
+  },
+  "deck-frost": {
+   "name": "Frosted Glass",
+   "cost": 500
+  },
+  "deck-neonnight": {
+   "name": "Neon Night",
+   "cost": 500
+  },
+  "deck-royalgold": {
+   "name": "Royal Gold",
+   "cost": 1000
   },
   "emotes-savage": {
    "name": "Savage Set",
@@ -731,6 +767,7 @@
   "deck-emerald",
   "deck-cyber",
   "deck-crimson",
+  "deck-bigprint",
   "table-wood",
   "table-felt",
   "avatar-crown-bronze",
