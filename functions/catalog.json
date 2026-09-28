@@ -24,6 +24,22 @@
    "name": "Inferno Circuit",
    "cost": 200
   },
+  "back-tartan": {
+   "name": "Tartan",
+   "cost": 100
+  },
+  "back-arcade": {
+   "name": "Retro Arcade",
+   "cost": 150
+  },
+  "back-artdeco": {
+   "name": "Art Deco",
+   "cost": 150
+  },
+  "back-space": {
+   "name": "Space",
+   "cost": 200
+  },
   "frame-silver": {
    "name": "Silver Edge",
    "cost": 35
@@ -47,6 +63,42 @@
   "frame-darkness": {
    "name": "Darkness",
    "cost": 250
+  },
+  "frame-split-crimson": {
+   "name": "Crimson & White",
+   "cost": 500
+  },
+  "frame-split-royal": {
+   "name": "Royal & Gold",
+   "cost": 500
+  },
+  "frame-split-noir": {
+   "name": "Noir & Pink",
+   "cost": 500
+  },
+  "frame-dashed-gold": {
+   "name": "Dashed Gold",
+   "cost": 600
+  },
+  "frame-neon-tube": {
+   "name": "Neon Tube",
+   "cost": 750
+  },
+  "frame-spectrum": {
+   "name": "Spectrum Spin",
+   "cost": 1000
+  },
+  "deck-casino": {
+   "name": "Classic Casino",
+   "cost": 250
+  },
+  "deck-arcade": {
+   "name": "Arcade",
+   "cost": 250
+  },
+  "deck-fourcolour": {
+   "name": "Four-Colour",
+   "cost": 750
   },
   "emotes-savage": {
    "name": "Savage Set",
@@ -603,6 +655,10 @@
  },
  "builtIn": [
   "emotes-classic",
+  "deck-obsidian",
+  "deck-emerald",
+  "deck-cyber",
+  "deck-crimson",
   "table-wood",
   "table-felt",
   "avatar-crown-bronze",

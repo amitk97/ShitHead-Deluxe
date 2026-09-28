@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v187 (ShitHead-Deluxe-169) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v188 (ShitHead-Deluxe-170) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -921,6 +921,21 @@
     .theme-emerald { --card-bg: #064e3b; --card-border: #059669; --text-light: #ecfdf5; --text-red: #fca5a5; }
     .theme-cyber { --card-bg: #1e1b4b; --card-border: #818cf8; --text-light: #38bdf8; --text-red: #fb7185; }
     .theme-crimson { --card-bg: #450a0a; --card-border: #991b1b; --text-light: #fef2f2; --text-red: #fb7185; }
+    /* Shop decks (card faces): same variables as the free themes above. */
+    .theme-casino { --card-bg: #faf7ef; --card-border: #c9b98f; --text-light: #111827; --text-red: #b91c1c; }
+    .theme-casino :is(.card-base,.card-table,.card-opponent-slot) .text-amber-400 { color: #b45309 !important; }
+    .theme-arcade { --card-bg: #0a0a12; --card-border: #22d3ee; --text-light: #a3e635; --text-red: #f472b6; }
+    .theme-arcade :is(.card-base,.card-table,.card-opponent-slot,.deck-mini-card) :is(.card-corner-rank,.dm-rank) { font-family: 'Press Start 2P', ui-monospace, monospace; font-size: .74em; letter-spacing: -.06em; }
+    /* Four-Colour: every suit its own colour (getSuitStyle adds suit-s/h/d/c). */
+    .theme-fourcolour { --card-bg: #0f172a; --card-border: #475569; --text-light: #f8fafc; --text-red: #ef4444; }
+    .theme-fourcolour .suit-d { color: #60a5fa !important; }
+    .theme-fourcolour .suit-c { color: #4ade80 !important; }
+    .deck-mini-card { display:flex; flex-direction:column; justify-content:space-between; width:32px; height:44px; padding:3px; border-radius:6px; background:var(--card-bg); border:1.5px solid var(--card-border); font-weight:900; line-height:1; }
+    .deck-mini-card .dm-rank { font-size:11px; color:var(--text-light); }
+    .deck-mini-card .dm-suits { display:flex; justify-content:space-between; font-size:8px; }
+    .deck-mini-card.is-big { width:64px; height:92px; padding:6px; border-radius:10px; border-width:2px; }
+    .deck-mini-card.is-big .dm-rank { font-size:20px; }
+    .deck-mini-card.is-big .dm-suits { font-size:14px; }
 
     /* Solid Black Border Frame & Cloth Weave Card Back */
     .custom-card-back {
@@ -1024,6 +1039,63 @@
       border-color:#f59e0b !important;
       box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #b45309,0 0 10px rgba(245,158,11,.7),0 3px 8px rgba(0,0,0,.55) !important;
     }
+    /* Shop card backs, set 2. */
+    .custom-card-back.cosmetic-back-arcade {
+      background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-2 -3 15 14' fill='%23a3e635'><path d='M2 0h1v1h-1zM8 0h1v1h-1zM3 1h1v1h-1zM7 1h1v1h-1zM2 2h7v1h-7zM1 3h2v1h-2zM4 3h3v1h-3zM8 3h2v1h-2zM0 4h11v1h-11zM0 5h1v1h-1zM2 5h7v1h-7zM10 5h1v1h-1zM0 6h1v1h-1zM2 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM3 7h2v1h-2zM6 7h2v1h-2z'/></svg>") center / 78% auto no-repeat,
+        repeating-conic-gradient(#1e1b4b 0 25%, #2e1065 0 50%) 0 0 / 10px 10px;
+      border-color:#a3e635 !important; color:#a3e635;
+      box-shadow:inset 0 0 0 2px #0a0a12, inset 0 0 12px rgba(163,230,53,.35);
+    }
+    .custom-card-back.cosmetic-back-space {
+      background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 88'><ellipse cx='30' cy='44' rx='20' ry='5' fill='none' stroke='%23fde68a' stroke-width='2' transform='rotate(-18 30 44)'/><circle cx='30' cy='44' r='11' fill='%23f59e0b'/><circle cx='26' cy='40' r='4' fill='%23fcd34d' opacity='.55'/><path d='M10 44 A20 5 0 0 0 50 44' fill='none' stroke='%23fde68a' stroke-width='2' transform='rotate(-18 30 44)'/><circle cx='14' cy='17' r='4.5' fill='%2360a5fa'/><circle cx='47' cy='72' r='3' fill='%23f472b6'/><circle cx='48' cy='14' r='.9' fill='white'/><circle cx='9' cy='60' r='.8' fill='white'/><circle cx='22' cy='76' r='.7' fill='white'/><circle cx='52' cy='40' r='.7' fill='white'/><circle cx='36' cy='10' r='.6' fill='white'/></svg>") center / cover no-repeat,
+        radial-gradient(ellipse at 30% 25%, #1e3a8a 0, #0b1026 55%, #02030a 100%);
+      border-color:#fcd34d !important; color:#fde68a;
+    }
+    .custom-card-back.cosmetic-back-arcade > svg, .custom-card-back.cosmetic-back-space > svg { display:none; }
+    .custom-card-back.cosmetic-back-arcade::before, .custom-card-back.cosmetic-back-space::before { display:none; }
+    .custom-card-back.cosmetic-back-tartan {
+      background:
+        repeating-linear-gradient(0deg, transparent 0 7px, rgba(250,204,21,.8) 7px 8px, transparent 8px 22px),
+        repeating-linear-gradient(90deg, transparent 0 7px, rgba(250,204,21,.8) 7px 8px, transparent 8px 22px),
+        repeating-linear-gradient(0deg, rgba(20,83,45,.55) 0 5px, transparent 5px 11px),
+        repeating-linear-gradient(90deg, rgba(20,83,45,.55) 0 5px, transparent 5px 11px),
+        repeating-linear-gradient(0deg, rgba(15,23,42,.5) 12px 16px, transparent 16px 22px),
+        repeating-linear-gradient(90deg, rgba(15,23,42,.5) 12px 16px, transparent 16px 22px),
+        #b91c1c;
+      border-color:#fde68a !important; color:#fde68a;
+    }
+    .custom-card-back.cosmetic-back-tartan > svg { filter:drop-shadow(0 1px 1px #000); }
+    .custom-card-back.cosmetic-back-artdeco {
+      background:
+        repeating-conic-gradient(from -90deg at 50% 100%, rgba(212,175,55,.85) 0 2.5deg, transparent 2.5deg 10deg),
+        radial-gradient(circle at 50% 100%, #1c1917 0 30%, #0a0a0a 70%);
+      border-color:#d4af37 !important; color:#fde68a;
+    }
+    .custom-card-back.cosmetic-back-artdeco::after {
+      content:''; position:absolute; inset:4px; border:1px solid rgba(212,175,55,.9); border-radius:calc(.75rem - 4px);
+      box-shadow: inset 0 0 0 2px #0a0a0a, inset 0 0 0 3px rgba(212,175,55,.6); pointer-events:none;
+    }
+    .custom-card-back.cosmetic-back-artdeco > svg { position:relative; z-index:2; background:#0a0a0a; border-radius:50%; padding:2px; }
+
+    /* Premium frames. Split frames colour the top-left and bottom-right edges
+       differently; Dashed and Neon draw inside the card with an outline; the
+       moving ones (Neon flicker, Spectrum) animate outline/border colour and
+       leave playable/selected cards alone so their green/gold edge shows. */
+    body[data-equipped-frame="frame-split-crimson"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) { box-shadow:inset 2.5px 2.5px 0 #e11d48,inset -2.5px -2.5px 0 #f8fafc,0 0 8px rgba(225,29,72,.45) !important; }
+    body[data-equipped-frame="frame-split-royal"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) { box-shadow:inset 2.5px 2.5px 0 #2563eb,inset -2.5px -2.5px 0 #fbbf24,0 0 8px rgba(37,99,235,.45) !important; }
+    body[data-equipped-frame="frame-split-noir"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) { box-shadow:inset 2.5px 2.5px 0 #000,inset 3.5px 3.5px 0 #52525b,inset -2.5px -2.5px 0 #ec4899,0 0 8px rgba(236,72,153,.45) !important; }
+    body[data-equipped-frame="frame-dashed-gold"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) { outline:2px dashed #fbbf24; outline-offset:-5px; box-shadow:0 0 7px rgba(251,191,36,.45) !important; }
+    body[data-equipped-frame="frame-neon-tube"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) { outline:2px solid #f472b6; outline-offset:-4px; box-shadow:0 0 10px rgba(244,114,182,.75),inset 0 0 9px rgba(244,114,182,.45) !important; animation:fx-neon-flicker 4.5s infinite; }
+    body[data-equipped-frame="frame-neon-tube"] :is(.card-base,.card-table,.custom-card-back):is(.animate-legal-glow,.card-selected):not(.opponent-cosmetic-card) { animation:none; }
+    body[data-equipped-frame="frame-spectrum"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) { box-shadow:0 0 9px rgba(168,85,247,.55) !important; }
+    body[data-equipped-frame="frame-spectrum"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card):not(.animate-legal-glow):not(.card-selected) { border-style:solid; border-width:2px; animation:fx-spectrum 2.6s linear infinite; }
+    @keyframes fx-neon-flicker { 0%, 86%, 90%, 94%, 100% { outline-color:#f472b6; } 88%, 92% { outline-color:#5b1d3a; } }
+    @keyframes fx-spectrum {
+      0%, 100% { border-color:#f43f5e #f59e0b #22d3ee #a855f7; }
+      25% { border-color:#a855f7 #f43f5e #f59e0b #22d3ee; }
+      50% { border-color:#22d3ee #a855f7 #f43f5e #f59e0b; }
+      75% { border-color:#f59e0b #22d3ee #a855f7 #f43f5e; }
+    }
     /* Darkness: a matt, true-black edge with no glow at all. */
     body[data-equipped-frame="frame-darkness"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) {
       border-color:#000 !important; box-shadow:inset 0 0 0 3px #000 !important;
@@ -1074,21 +1146,6 @@
     .vcp-back-face { position:absolute; inset:0; border-radius:5px; border:1px solid rgba(148,163,184,.7); }
     @keyframes cosmetic-card-shower { to { transform:translate3d(var(--drift),110vh,0) rotate(var(--spin)); opacity:.15; } }
 
-    /* Deck themes are choices, not full-size gameplay exhibits. Keep them
-       consistent with every other compact Personalisation option. */
-    #themesGridArea { gap:.5rem; }
-    #themesGridArea .theme-option-card {
-      min-height:82px; padding:.5rem; text-align:left;
-      display:grid !important;
-      grid-template-columns:38px minmax(0,1fr);
-      grid-template-rows:auto auto;
-      grid-template-areas:"preview copy" "preview action";
-      column-gap:.5rem; row-gap:.35rem; align-items:center;
-    }
-    #themesGridArea .theme-option-preview { grid-area:preview; width:32px; height:46px; flex:none; border-radius:.5rem; }
-    #themesGridArea .theme-option-copy { grid-area:copy; min-width:0; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    #themesGridArea .theme-option-action { grid-area:action; width:100%; min-width:0; max-width:100%; padding:.3rem .2rem; justify-self:stretch; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    @media (max-width:390px) { #themesGridArea { grid-template-columns:minmax(0,1fr) !important; } }
     #localTableSlots .card-face-up { z-index:2; background-color:var(--card-bg) !important; isolation:isolate; }
     body.high-contrast #localTableSlots .card-face-up { background-color:#05070d !important; }
 
@@ -5692,7 +5749,7 @@ video {
         <div class="hscroll-wrap is-sticky"><button type="button" class="hscroll-btn prev" aria-label="Scroll sections left" tabindex="-1">‹</button><div id="customTabBar" class="cosmetic-tab-bar hscroll" role="tablist" aria-label="Custom sections"></div><button type="button" class="hscroll-btn next" aria-label="Scroll sections right" tabindex="-1">›</button></div>
         <div data-custom-panel="all"><div id="personalisationAll" class="custom-all"></div></div>
         <div data-custom-panel="avatar" class="hidden"><div id="personalisationAvatars" class="avatar-picker-grid"></div></div>
-        <div data-custom-panel="deck" class="hidden"><div id="themesGridArea" class="grid grid-cols-2 gap-3 py-1"></div></div>
+        <div data-custom-panel="deck" class="hidden"><div id="themesGridArea" class="cosmetic-tile-grid py-1"></div></div>
         <div data-custom-panel="cardBack" class="hidden"><div id="personalisationCardBacks" class="cosmetic-tile-grid"></div></div>
         <div data-custom-panel="frame" class="hidden"><div id="personalisationFrames" class="cosmetic-tile-grid"></div></div>
         <div data-custom-panel="emotes" class="hidden"><div id="personalisationEmotes" class="cosmetic-tile-grid"></div></div>
@@ -12631,9 +12688,11 @@ video {
       }
     }
 
+    // The suit-* class lets a deck colour each suit on its own (Four-Colour).
+    const SUIT_CLASS = { '♠': 'suit-s', '♥': 'suit-h', '♦': 'suit-d', '♣': 'suit-c' };
     function getSuitStyle(suit) {
       const isRed = suit === '♥' || suit === '♦';
-      return isRed ? 'text-[var(--text-red)]' : 'text-[var(--text-light)]';
+      return `${isRed ? 'text-[var(--text-red)]' : 'text-[var(--text-light)]'} ${SUIT_CLASS[suit] || ''}`.trim();
     }
 
     function getThemeDeckBackClass() {
@@ -12643,7 +12702,11 @@ video {
         'back-neon': 'cosmetic-back-neon',
         'back-crimson': 'cosmetic-back-crimson',
         'back-nebula': 'cosmetic-back-nebula',
-        'back-inferno': 'cosmetic-back-inferno'
+        'back-inferno': 'cosmetic-back-inferno',
+        'back-arcade': 'cosmetic-back-arcade',
+        'back-space': 'cosmetic-back-space',
+        'back-tartan': 'cosmetic-back-tartan',
+        'back-artdeco': 'cosmetic-back-artdeco'
       };
       if (cosmeticBackClasses[equippedCosmetics.cardBack]) return cosmeticBackClasses[equippedCosmetics.cardBack];
       if (typeof SEASONAL_BACK_IDS !== 'undefined' && SEASONAL_BACK_IDS.has(equippedCosmetics.cardBack)) return getCosmeticBackClass(equippedCosmetics.cardBack);
@@ -15928,7 +15991,19 @@ video {
     // of which UI it was picked from — exactly the existing lobby-picker
     // logic, just named and reusable instead of living inline in one
     // click handler.
+    // The Arcade deck's pixel font is only fetched once someone uses or
+    // previews that deck (falls back to monospace until it arrives).
+    function ensureDeckFont(themeClass) {
+      if (themeClass !== 'theme-arcade' || document.getElementById('arcadeDeckFont')) return;
+      const link = document.createElement('link');
+      link.id = 'arcadeDeckFont';
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';
+      document.head.appendChild(link);
+    }
+    ensureDeckFont(state.deckTheme);
     function selectDeckTheme(themeClass) {
+      ensureDeckFont(themeClass);
       document.body.className = `bg-slate-950 text-slate-100 flex flex-col justify-between ${themeClass} relative select-none`;
       applyAccessibilityPrefs(); // className was just fully replaced above, which wipes high-contrast/reduce-motion -- reapply them
       state.deckTheme = themeClass;
@@ -16775,6 +16850,11 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v188: [
+        ['🛒', 'New in the Shop: decks that change your card faces (Classic Casino, Arcade and the premium Four-Colour).'],
+        ['🎴', 'Four new card backs: Tartan, Retro Arcade, Art Deco and Space.'],
+        ['✨', 'Six premium frames, including two-tone, dashed and moving ones.']
+      ],
       v187: [
         ['🃏', 'Play Friends and Ranked: a Joker that gets countered now leaves the game, along with the Joker that countered it.']
       ],
@@ -18559,12 +18639,28 @@ video {
       { id: 'back-crimson', category: 'Card Backs', name: 'Crimson Flame', cost: 60, tones: ['#3f0b1b','#fb7185','#fbbf24'] },
       { id: 'back-nebula', category: 'Card Backs', name: 'Royal Nebula', cost: 200, tones: ['#09051f','#a855f7','#67e8f9'] },
       { id: 'back-inferno', category: 'Card Backs', name: 'Inferno Circuit', cost: 200, tones: ['#1c0710','#f43f5e','#fbbf24'] },
+      { id: 'back-tartan', category: 'Card Backs', name: 'Tartan', cost: 100, tones: ['#7f1d1d','#b91c1c','#fde68a'] },
+      { id: 'back-arcade', category: 'Card Backs', name: 'Retro Arcade', cost: 150, tones: ['#1e1b4b','#a3e635','#2e1065'] },
+      { id: 'back-artdeco', category: 'Card Backs', name: 'Art Deco', cost: 150, tones: ['#0a0a0a','#d4af37','#fde68a'] },
+      { id: 'back-space', category: 'Card Backs', name: 'Space', cost: 200, tones: ['#0b1026','#f59e0b','#60a5fa'] },
       { id: 'frame-silver', category: 'Frames', name: 'Silver Edge', cost: 35, tones: ['#1e293b','#cbd5e1','#60a5fa'] },
       { id: 'frame-gold', category: 'Frames', name: 'Golden Crown', cost: 60, tones: ['#422006','#fbbf24','#fef3c7'] },
       { id: 'frame-diamond', category: 'Frames', name: 'Diamond Aura', cost: 90, tones: ['#083344','#22d3ee','#e0f2fe'] },
       { id: 'frame-obsidian-throne', category: 'Frames', name: 'Obsidian Throne', cost: 200, tones: ['#030712','#8b5cf6','#ddd6fe'] },
       { id: 'frame-emerald-sovereign', category: 'Frames', name: 'Emerald Sovereign', cost: 200, tones: ['#022c22','#34d399','#d1fae5'] },
       { id: 'frame-darkness', category: 'Frames', name: 'Darkness', cost: 250, tones: ['#000000','#000000','#1f2937'] },
+      // Premium frames (the owner's call): two-tone, dashed and moving edges.
+      { id: 'frame-split-crimson', category: 'Frames', name: 'Crimson & White', cost: 500, tones: ['#e11d48','#e11d48','#f8fafc'] },
+      { id: 'frame-split-royal', category: 'Frames', name: 'Royal & Gold', cost: 500, tones: ['#2563eb','#2563eb','#fbbf24'] },
+      { id: 'frame-split-noir', category: 'Frames', name: 'Noir & Pink', cost: 500, tones: ['#000000','#1f2937','#ec4899'] },
+      { id: 'frame-dashed-gold', category: 'Frames', name: 'Dashed Gold', cost: 600, tones: ['#422006','#fbbf24','#fef3c7'] },
+      { id: 'frame-neon-tube', category: 'Frames', name: 'Neon Tube', cost: 750, animated: true, tones: ['#500724','#f472b6','#fce7f3'] },
+      { id: 'frame-spectrum', category: 'Frames', name: 'Spectrum Spin', cost: 1000, animated: true, tones: ['#2e1065','#a855f7','#22d3ee'] },
+      // Decks change the faces of your own cards (a deck theme, § Deck themes);
+      // Four-Colour is premium.
+      { id: 'deck-casino', category: 'Decks', name: 'Classic Casino', cost: 250, theme: 'theme-casino', tones: ['#faf7ef','#b91c1c','#111827'] },
+      { id: 'deck-arcade', category: 'Decks', name: 'Arcade', cost: 250, theme: 'theme-arcade', tones: ['#0a0a12','#a3e635','#f472b6'] },
+      { id: 'deck-fourcolour', category: 'Decks', name: 'Four-Colour', cost: 750, theme: 'theme-fourcolour', tones: ['#0f172a','#60a5fa','#4ade80'] },
       { id: 'emotes-savage', category: 'Emote Packs', name: 'Savage Set', cost: 45, tones: ['#3f1420','#fb7185','#c084fc'] },
       { id: 'emotes-victory', category: 'Emote Packs', name: 'Victory Pack', cost: 50, tones: ['#172033','#fbbf24','#60a5fa'] },
       { id: 'emotes-chaos', category: 'Emote Packs', name: 'Chaos Pack', cost: 200, tones: ['#172033','#f43f5e','#a855f7'] },
@@ -18619,6 +18715,11 @@ video {
     // saves, but is intentionally not a purchasable Shop item.
     const BUILT_IN_COSMETICS = [
       { id: 'emotes-classic', category: 'Emote Packs', name: 'Classic Reactions', cost: 0, builtIn: true, tones: ['#172033','#34d399','#fbbf24'] },
+      // The four original decks stay free.
+      { id: 'deck-obsidian', category: 'Decks', name: 'Obsidian', cost: 0, builtIn: true, theme: 'theme-obsidian', tones: ['#0f172a','#ef4444','#f8fafc'] },
+      { id: 'deck-emerald', category: 'Decks', name: 'Emerald', cost: 0, builtIn: true, theme: 'theme-emerald', tones: ['#064e3b','#fca5a5','#ecfdf5'] },
+      { id: 'deck-cyber', category: 'Decks', name: 'Cyber', cost: 0, builtIn: true, theme: 'theme-cyber', tones: ['#1e1b4b','#fb7185','#38bdf8'] },
+      { id: 'deck-crimson', category: 'Decks', name: 'Crimson', cost: 0, builtIn: true, theme: 'theme-crimson', tones: ['#450a0a','#fb7185','#fef2f2'] },
       // Free tables: real-looking wood and card-room felt.
       { id: 'table-wood', category: 'Table Themes', name: 'Oak Wood', cost: 0, builtIn: true, tones: ['#6b4226','#a06a3c','#f3d9b1'] },
       { id: 'table-felt', category: 'Table Themes', name: 'Classic Felt', cost: 0, builtIn: true, tones: ['#1f5a36','#2f7a4a','#d1fae5'] },
@@ -18661,11 +18762,12 @@ video {
     const COSMETIC_CATEGORY_TYPES = Object.freeze({
       'Card Backs': 'cardBack', 'Frames': 'frame', 'Emote Packs': 'emotes',
       'Table Themes': 'tableTheme', 'Burn Effects': 'burnEffect', 'Victory Effects': 'victoryEffect',
-      'Joker Effects': 'jokerEffect', 'Profile Pictures': 'avatar'
+      'Joker Effects': 'jokerEffect', 'Profile Pictures': 'avatar', 'Decks': 'deck'
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
-      cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno', ...seasonalIdsOf('cardBack')]),
-      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet', ...seasonalIdsOf('frame')]),
+      cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco', ...seasonalIdsOf('cardBack')]),
+      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet','frame-split-crimson','frame-split-royal','frame-split-noir','frame-dashed-gold','frame-neon-tube','frame-spectrum', ...seasonalIdsOf('frame')]),
+      deck: new Set(['deck-obsidian','deck-emerald','deck-cyber','deck-crimson','deck-casino','deck-arcade','deck-fourcolour']),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania', ...seasonalIdsOf('emotes')]),
       tableTheme: new Set(['table-wood','table-felt','table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic', ...seasonalIdsOf('tableTheme')]),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke', ...seasonalIdsOf('burnEffect')]),
@@ -19004,8 +19106,28 @@ video {
       return type === 'burnEffect' ? playShopBurnPreview(id, box.firstElementChild) : playJokerPreview(id, box.firstElementChild);
     }
 
+    // Decks are the deck theme (a card-face preference kept with Settings,
+    // not an equipped cosmetic): the four originals are free, the rest are
+    // bought in the Shop. Equipping one just selects its theme.
+    function deckItems() { return [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS].filter(item => item.category === 'Decks'); }
+    function deckItemForTheme(theme) { return deckItems().find(item => item.theme === theme) || null; }
+    function equippedIdOf(type) {
+      return type === 'deck' ? (deckItemForTheme(state.deckTheme)?.id || 'deck-obsidian') : equippedCosmetics[type];
+    }
+    function equipDeck(id) {
+      const item = deckItems().find(entry => entry.id === id);
+      if (!item || (!item.builtIn && !cosmeticPurchaseState[id])) return false;
+      selectDeckTheme(item.theme);
+      renderPersonalisationCosmetics();
+      const status = document.getElementById('personalisationStatus');
+      if (status) status.textContent = `${item.name} deck equipped.`;
+      if (id === lastPurchasedCosmeticId) lastPurchasedCosmeticId = null;
+      if (typeof renderCosmeticShop === 'function') renderCosmeticShop();
+      return true;
+    }
     function equipCosmetic(type, id, options = {}) {
       const { preview = true, sync = true } = options;
+      if (type === 'deck') return equipDeck(id);
       if (!isSupportedCosmetic(type, id)) return false;
       const builtIn = BUILT_IN_COSMETICS.some(item => item.id === id && COSMETIC_CATEGORY_TYPES[item.category] === type);
       if (id !== 'default' && !builtIn && !cosmeticPurchaseState[id]) return false;
@@ -19035,7 +19157,13 @@ video {
       return `<span class="frame-mini-card" style="${style}"><span>A</span><span>♠</span></span>`;
     }
 
+    // A small card in the deck's own colours: an Ace and all four suits.
+    function deckMiniCardHtml(item, big = false) {
+      const suits = ['♠', '♥', '♦', '♣'].map(s => `<span class="${getSuitStyle(s)}">${s}</span>`).join('');
+      return `<span class="deck-mini-card ${item?.theme || 'theme-obsidian'} ${big ? 'is-big' : ''}"><span class="dm-rank">A</span><span class="dm-suits">${suits}</span></span>`;
+    }
     function cosmeticPreview(item, type) {
+      if (type === 'deck') return deckMiniCardHtml(item);
       if (!item) {
         if (type === 'tableTheme') return miniTablePreviewHtml('default');
         if (type === 'emotes') return '<span class="text-xl" data-keep-emoji>😂</span>';
@@ -19141,7 +19269,7 @@ video {
         const open = !customAllCollapsed.has(type);
         const tiles = !open ? '' : type === 'avatar'
           ? `<div class="avatar-picker-grid">${items.map(avatarOptionHtml).join('')}</div>`
-          : `<div class="cosmetic-tile-grid">${[null, ...items].map(item => personalisationOptionHtml(item, type, equippedCosmetics[type])).join('')}</div>`;
+          : `<div class="cosmetic-tile-grid">${(type === 'deck' ? items : [null, ...items]).map(item => personalisationOptionHtml(item, type, equippedIdOf(type))).join('')}</div>`;
         return `<section class="cat-section" data-custom-section="${type}">
           <button type="button" class="cat-head" data-custom-section-toggle="${type}" aria-expanded="${open}"><span class="cat-head-title">${tab.label}</span><span class="cat-head-count">${have}/${items.length}</span><span class="cat-head-chev" aria-hidden="true">▾</span></button>
           ${tiles}
@@ -19285,7 +19413,7 @@ video {
       const type = btn.dataset.equipType;
       const id = btn.dataset.equipId;
       if (btn.hasAttribute('data-locked')) { openLockedCosmetic(id); return; }
-      const previous = type === 'avatar' ? resolveAvatarId(equippedCosmetics.avatar) : equippedCosmetics[type];
+      const previous = type === 'avatar' ? resolveAvatarId(equippedCosmetics.avatar) : equippedIdOf(type);
       if (!equipCosmetic(type, id) || motionOff()) return;
       // Equip snap: the new pick pops and "slots in" with a click; the old
       // one eases back from a faded state.
@@ -19368,6 +19496,7 @@ video {
       { category: 'Profile Pictures', label: 'Pictures' },
       { category: 'Table Themes', label: 'Tables' },
       { category: 'Card Backs', label: 'Card Backs' },
+      { category: 'Decks', label: 'Decks' },
       { category: 'Frames', label: 'Frames' },
       { category: 'Burn Effects', label: 'Burn' },
       { category: 'Joker Effects', label: 'Joker' },
@@ -19400,7 +19529,7 @@ video {
         const owned = !!cosmeticPurchaseState[item.id];
         const affordable = balance >= item.cost;
         const type = COSMETIC_CATEGORY_TYPES[item.category];
-        const equipped = equippedCosmetics[type] === item.id;
+        const equipped = equippedIdOf(type) === item.id;
         const equipLabel = lastPurchasedCosmeticId === item.id ? 'EQUIP NOW' : 'EQUIP';
         const isNew = newCosmeticIds.has(item.id);
         const shortfall = Math.max(0, item.cost - balance);
@@ -19995,7 +20124,7 @@ video {
       if (shopFilter === 'affordable') return !owned && balance >= item.cost;
       if (shopFilter === 'owned') return owned;
       if (shopFilter === 'unowned') return !owned;
-      if (shopFilter === 'equipped') return owned && equippedCosmetics[type] === item.id;
+      if (shopFilter === 'equipped') return owned && equippedIdOf(type) === item.id;
       return true;
     }
 
@@ -20023,12 +20152,14 @@ video {
         burnEffect: 'Plays when you burn the pile',
         victoryEffect: 'Plays when you finish in first place',
         jokerEffect: 'Plays over the table when you play a Joker',
-        avatar: 'Your picture in games, Friends and the leaderboard'
+        avatar: 'Your picture in games, Friends and the leaderboard',
+        deck: 'Changes the faces of your cards'
       }[type] || 'Custom item';
     }
 
     function shopCosmeticThumbnail(item, type) {
       if (type === 'avatar') return avatarHtml(item.id, 40);
+      if (type === 'deck') { ensureDeckFont(item.theme); return deckMiniCardHtml(item); }
       if (type === 'tableTheme') return `<span style="display:block;width:120px">${miniTablePreviewHtml(item.id)}</span>`;
       if (type === 'emotes') return `<span class="text-[13px] leading-tight text-center" data-keep-emoji>${(EMOTE_PACKS[item.id] || []).slice(0, 4).join('')}</span>`;
       if (type === 'cardBack') return `<span class="w-7 h-[42px] rounded-md custom-card-back ${getCosmeticBackClass(item.id)} border border-slate-500 flex items-center justify-center shadow-md">${getEmblemSvg()}</span>`;
@@ -20054,6 +20185,8 @@ video {
         demo = `<div class="shop-preview-stage"><div class="avatar-demo">${avatarHtml(item.id, 84)}<div class="avatar-demo-list"><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>IN GAME</span></span><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>#1 <small>Leaderboard</small></span></span><span class="avatar-demo-chip">${avatarHtml(item.id, 22)}<span>FRIENDS</span></span></div></div></div>`;
       } else if (type === 'jokerEffect') {
         demo = `<div class="jfx-stage" data-shop-joker-stage><div class="jfx-stage-hint">${jokerPreviewIcon(item.id)}</div></div>`;
+      } else if (type === 'deck') {
+        demo = `<div class="shop-preview-stage" style="gap:10px">${deckMiniCardHtml(item, true)}<span class="deck-mini-card ${item.theme} is-big"><span class="dm-rank ${getSuitStyle('♦')}">10</span><span class="dm-suits"><span class="${getSuitStyle('♦')}">♦</span><span class="${getSuitStyle('♣')}">♣</span></span></span></div>`;
       } else if (type === 'victoryEffect') {
         demo = `<div class="shop-preview-stage"><div class="text-center"><div class="text-5xl">${victoryPreviewIcon(item.id)}</div><div class="text-[8px] text-slate-400 mt-1">Tap below to play the win animation</div></div></div>`;
       }
@@ -20092,7 +20225,8 @@ video {
 
     function getCosmeticBackClass(id) {
       if (SEASONAL_BACK_IDS.has(id)) return `cosmetic-${id} season-back`;
-      return { 'back-midnight':'cosmetic-back-midnight','back-emerald':'cosmetic-back-emerald','back-neon':'cosmetic-back-neon','back-crimson':'cosmetic-back-crimson','back-nebula':'cosmetic-back-nebula','back-inferno':'cosmetic-back-inferno' }[id] || 'back-obsidian';
+      return { 'back-midnight':'cosmetic-back-midnight','back-emerald':'cosmetic-back-emerald','back-neon':'cosmetic-back-neon','back-crimson':'cosmetic-back-crimson','back-nebula':'cosmetic-back-nebula','back-inferno':'cosmetic-back-inferno',
+        'back-arcade':'cosmetic-back-arcade','back-space':'cosmetic-back-space','back-tartan':'cosmetic-back-tartan','back-artdeco':'cosmetic-back-artdeco' }[id] || 'back-obsidian';
     }
 
     function getCosmeticFrameStyle(id) {
@@ -20103,7 +20237,13 @@ video {
         'frame-obsidian-throne': 'box-shadow:inset 0 0 0 2px #8b5cf6,0 0 9px rgba(139,92,246,.68)!important',
         'frame-emerald-sovereign': 'box-shadow:inset 0 0 0 2px #34d399,0 0 9px rgba(52,211,153,.68)!important',
         'frame-darkness': 'border-color:#000!important;box-shadow:inset 0 0 0 3px #000!important',
-        'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #b45309,0 0 9px rgba(245,158,11,.75)!important'
+        'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #b45309,0 0 9px rgba(245,158,11,.75)!important',
+        'frame-split-crimson': 'box-shadow:inset 2.5px 2.5px 0 #e11d48,inset -2.5px -2.5px 0 #f8fafc,0 0 8px rgba(225,29,72,.45)!important',
+        'frame-split-royal': 'box-shadow:inset 2.5px 2.5px 0 #2563eb,inset -2.5px -2.5px 0 #fbbf24,0 0 8px rgba(37,99,235,.45)!important',
+        'frame-split-noir': 'box-shadow:inset 2.5px 2.5px 0 #000,inset 3.5px 3.5px 0 #52525b,inset -2.5px -2.5px 0 #ec4899,0 0 8px rgba(236,72,153,.45)!important',
+        'frame-dashed-gold': 'outline:2px dashed #fbbf24;outline-offset:-5px;box-shadow:0 0 7px rgba(251,191,36,.45)!important',
+        'frame-neon-tube': 'outline:2px solid #f472b6;outline-offset:-4px;box-shadow:0 0 10px rgba(244,114,182,.75),inset 0 0 9px rgba(244,114,182,.45)!important;animation:fx-neon-flicker 4.5s infinite',
+        'frame-spectrum': 'border-style:solid;border-width:2px;box-shadow:0 0 9px rgba(168,85,247,.55)!important;animation:fx-spectrum 2.6s linear infinite'
       };
       if (SEASONAL_FRAME_STYLES[id]) return `box-shadow:${SEASONAL_FRAME_STYLES[id][0]}!important`;
       return styles[id] || '';
@@ -20122,7 +20262,13 @@ video {
         'frame-obsidian-throne': 'box-shadow:0 0 0 1px #8b5cf6,0 0 5px rgba(139,92,246,.5)!important',
         'frame-emerald-sovereign': 'box-shadow:0 0 0 1px #34d399,0 0 5px rgba(52,211,153,.5)!important',
         'frame-darkness': 'border-color:#000!important;box-shadow:0 0 0 1px #000!important',
-        'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:0 0 0 1px #fbbf24,0 0 5px rgba(245,158,11,.55)!important'
+        'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:0 0 0 1px #fbbf24,0 0 5px rgba(245,158,11,.55)!important',
+        'frame-split-crimson': 'box-shadow:-1.5px -1.5px 0 0 #e11d48,1.5px 1.5px 0 0 #f8fafc!important',
+        'frame-split-royal': 'box-shadow:-1.5px -1.5px 0 0 #2563eb,1.5px 1.5px 0 0 #fbbf24!important',
+        'frame-split-noir': 'box-shadow:-1.5px -1.5px 0 0 #000,1.5px 1.5px 0 0 #ec4899!important',
+        'frame-dashed-gold': 'outline:1px dashed #fbbf24;outline-offset:-2px;box-shadow:0 0 4px rgba(251,191,36,.45)!important',
+        'frame-neon-tube': 'outline:1px solid #f472b6;outline-offset:-2px;box-shadow:0 0 5px rgba(244,114,182,.6)!important',
+        'frame-spectrum': 'border-style:solid;animation:fx-spectrum 2.6s linear infinite;box-shadow:0 0 5px rgba(168,85,247,.5)!important'
       };
       if (SEASONAL_FRAME_STYLES[id]) return `box-shadow:${SEASONAL_FRAME_STYLES[id][1]}!important`;
       return styles[id] || '';
@@ -20709,7 +20855,7 @@ video {
       try {
         const speed = Number(settings.speedIndex);
         if (Number.isInteger(speed) && speed >= 0 && speed < SPEED_PRESETS.length) updateSpeedByIndex(speed);
-        if (['theme-obsidian','theme-emerald','theme-cyber','theme-crimson'].includes(settings.deckTheme)) selectDeckTheme(settings.deckTheme);
+        if (deckItemForTheme(settings.deckTheme)) selectDeckTheme(settings.deckTheme);
 
         if (typeof settings.selectAllOfRank === 'boolean') {
           selectAllOfRank = settings.selectAllOfRank;
@@ -24398,43 +24544,13 @@ video {
     // only the top 50 records. Players are ordered by their live online/ranked
     // rating points, highest first. Firebase rules must allow public reads of
     // /leaderboard while keeping writes tied to the claimed username.
-    // Personalisation's Deck Themes section. The exact four existing deck themes (no
-    // others exist in the code — see the theme-btn buttons in the lobby
-    // and getThemeDeckBackClass), each rendered with the same classes and
-    // emblem SVG real face-down cards use, so the preview is genuine
-    // rather than invented. Selecting a card calls the same
-    // selectDeckTheme used by the lobby's own theme row.
-    const DECK_THEMES = [
-      { id: 'theme-obsidian', name: 'Obsidian', back: 'back-obsidian' },
-      { id: 'theme-emerald', name: 'Emerald', back: 'back-emerald' },
-      { id: 'theme-cyber', name: 'Cyber', back: 'back-cyber' },
-      { id: 'theme-crimson', name: 'Crimson', back: 'back-crimson' }
-    ];
-    function themeCardHtml(theme) {
-      const isActive = state.deckTheme === theme.id;
-      return `
-        <div class="theme-option-card flex items-center gap-2 bg-slate-900/60 border-2 ${isActive ? 'border-amber-500' : 'border-slate-800'} rounded-xl">
-          <div class="theme-option-preview custom-card-back ${theme.back} flex items-center justify-center shadow-md">${getEmblemSvg()}</div>
-          <span class="theme-option-copy text-[9px] font-black text-white uppercase tracking-wide leading-tight">${theme.name}</span>
-          <button data-theme="${theme.id}" ${isActive ? 'disabled' : ''} class="theme-option-action themes-page-select-btn text-[8px] font-black rounded-lg border transition ${isActive ? 'border-emerald-500 text-emerald-400 cursor-default' : 'border-slate-600 text-slate-300 hover:border-amber-500 hover:text-amber-400'}">${isActive ? '\u2713 APPLIED' : 'SELECT'}</button>
-        </div>`;
-    }
-    // No unlock system exists yet — this is a plain visual placeholder,
-    // not fake progress or a fake reward.
-    function comingSoonThemeCardHtml() {
-      return `
-        <div class="theme-option-card flex items-center gap-2 bg-slate-900/30 border-2 border-dashed border-slate-700 rounded-xl text-left">
-          <span class="theme-option-preview flex items-center justify-center text-lg">\u{1F512}</span>
-          <span class="theme-option-copy text-[9px] font-black text-slate-500 uppercase tracking-wide">Coming Soon</span>
-        </div>`;
-    }
+    // Custom → Deck: every deck as a tile (free, owned, or locked with its
+    // Shop price); taps go through the page's equip handler (equipDeck).
     function renderThemesPanelActiveState() {
       const area = document.getElementById('themesGridArea');
       if (!area) return;
-      area.innerHTML = DECK_THEMES.map(themeCardHtml).join('') + comingSoonThemeCardHtml();
-      area.querySelectorAll('.themes-page-select-btn').forEach((btn) => {
-        btn.addEventListener('click', () => selectDeckTheme(btn.dataset.theme));
-      });
+      area.className = 'cosmetic-tile-grid py-1';
+      area.innerHTML = sortByValue(deckItems()).map(item => personalisationOptionHtml(item, 'deck', equippedIdOf('deck'))).join('');
     }
     // § Saved loadouts (Custom)
     // Up to 3 complete looks per account, switched in one tap from the strip
@@ -24542,7 +24658,7 @@ video {
       { key: 'all', label: 'All' },
       { key: 'avatar', label: 'Pictures' },
       { key: 'deck', label: 'Deck' },
-      ...COSMETIC_TABS.filter(tab => tab.category !== 'Profile Pictures').map(tab => ({ key: COSMETIC_CATEGORY_TYPES[tab.category], label: tab.label }))
+      ...COSMETIC_TABS.filter(tab => tab.category !== 'Profile Pictures' && tab.category !== 'Decks').map(tab => ({ key: COSMETIC_CATEGORY_TYPES[tab.category], label: tab.label }))
     ];
     let customTab = 'avatar';
     function setCustomTab(key) {

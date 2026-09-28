@@ -2096,10 +2096,6 @@ async function runDevTestSuite() {
     ['speedIndex','selectAllOfRank','masterVolume','showCardIcons','highContrast','hideHelperIcons','reduceMotion','bigEffectsOn','hapticsOn','dealAnimationOn','emotesMuted']
       .forEach(key => assertTrue(Object.prototype.hasOwnProperty.call(prefs,key), key+' must sync across devices'));
   });
-  await test('REGRESSION: Custom deck-theme controls have separate grid areas for name and action', () => {
-    const css = document.querySelector('style')?.textContent || '';
-    assertTrue(css.includes('grid-template-areas:"preview copy" "preview action"'), 'Theme name and SELECT/APPLIED must not overlap');
-  });
   await test('REGRESSION: the live Deck count uses a protected badge above card-back artwork', () => {
     freshState({ drawPile: generateDeck().slice(0,36), players: [makePlayer({ id: 'p1', hand: [makeCard('4')] }), makePlayer({ id: 'p2', isBot: true })] });
     render();
@@ -5104,11 +5100,20 @@ async function runDevTestSuite() {
   await test('REGRESSION: every Shop cosmetic equips through its real runtime category', () => {
     const previousEquipped = { ...equippedCosmetics };
     const previousPurchases = cosmeticPurchaseState;
+    const previousDeck = state.deckTheme, originalSave = saveGameState;
+    saveGameState = () => {};
     try {
       cosmeticPurchaseState = Object.fromEntries(COSMETIC_SHOP_ITEMS.map(item => [item.id, true]));
       COSMETIC_SHOP_ITEMS.forEach(item => {
         const type = COSMETIC_CATEGORY_TYPES[item.category];
         assertTrue(!!type, `${item.id} must have an equip category`);
+        if (type === 'deck') {
+          // Decks select a deck theme (card faces) instead of an equipped slot.
+          assertTrue(equipCosmetic(type, item.id), `${item.id} must equip successfully`);
+          assertEqual(equippedIdOf('deck'), item.id, `${item.id} must become the selected deck`);
+          assertTrue(document.body.classList.contains(item.theme), `${item.id} must change the card faces`);
+          return;
+        }
         assertTrue(isSupportedCosmetic(type, item.id), `${item.id} must have a live game renderer`);
         assertTrue(equipCosmetic(type, item.id, { preview: false, sync: false }), `${item.id} must equip successfully`);
         assertEqual(equippedCosmetics[type], item.id, `${item.id} must become the selected ${type}`);
@@ -5120,6 +5125,8 @@ async function runDevTestSuite() {
     } finally {
       cosmeticPurchaseState = previousPurchases;
       equippedCosmetics = previousEquipped;
+      selectDeckTheme(previousDeck || 'theme-obsidian');
+      saveGameState = originalSave;
       applyEquippedCosmetics();
       renderPersonalisationCosmetics();
     }
@@ -6186,7 +6193,7 @@ async function runDevTestSuite() {
     renderCosmeticShop();
     let tabs = tabNames();
     assertTrue(tabs[tabs.length - 1].includes('Seasonal'), 'With no event near, Seasonal is the last tab');
-    assertEqual(tabs.slice(0, -1), ['All', 'Pictures', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'All, then Pictures, then table and cards, then effects');
+    assertEqual(tabs.slice(0, -1), ['All', 'Pictures', 'Tables', 'Card Backs', 'Decks', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'All, then Pictures, then table and cards, then effects');
     seasonalNowOverride = '2026-10-12T12:00:00'; // 3 days before Halloween
     renderCosmeticShop();
     assertTrue(tabNames()[0] === 'All' && tabNames()[1].includes('Seasonal'), 'Seasonal leads (after All) when an event starts within 3 days');
@@ -7206,17 +7213,15 @@ async function runDevTestSuite() {
       assertTrue(seats.find(p => p.id === 'p2').isHost, 'The next player becomes host');
     } finally { db = originalDb; }
   });
-  await test('openThemesPanel opens the modal and shows the real theme grid, with an honest Coming Soon placeholder and no fake unlock progress', () => {
+  await test('openThemesPanel opens the modal and shows every deck (the four free ones and the Shop ones)', () => {
     openThemesPanel();
     const area = document.getElementById('themesGridArea');
     assertTrue(!document.getElementById('themesModal').classList.contains('hidden'), 'openThemesPanel must show the modal');
-    ['Obsidian', 'Emerald', 'Cyber', 'Crimson'].forEach((name) => {
-      assertTrue(area.innerHTML.includes(name), `${name} must appear — it's one of the real, existing deck themes`);
+    ['Obsidian', 'Emerald', 'Cyber', 'Crimson', 'Classic Casino', 'Arcade', 'Four-Colour'].forEach((name) => {
+      assertTrue(area.innerHTML.includes(name), `${name} must appear`);
     });
-    const cardCount = area.children.length;
-    assertEqual(cardCount, 5, 'Exactly 4 real theme cards plus 1 Coming Soon card — no invented themes, no fake unlock slots');
-    assertTrue(area.innerHTML.includes('Coming Soon'), 'A placeholder for future unlockable themes must be present and honestly labelled');
-    assertTrue(!/progress|unlock(ed|s)?\s*\d|reward/i.test(area.innerHTML.replace('Coming Soon', '')), 'No fake unlock progress or fake rewards may be implied for the Coming Soon card');
+    assertEqual(area.children.length, 7, 'Seven decks, no placeholder cards');
+    assertTrue(!area.innerHTML.includes('Coming Soon'), 'The old Coming Soon placeholder is gone');
     document.getElementById('themesModal').classList.add('hidden');
   });
   await test('REGRESSION: Challenges exposes exactly Daily, Weekly, Ranked, Bots (+ Seasonal during events) top tabs', () => {
@@ -7238,41 +7243,44 @@ async function runDevTestSuite() {
     currentUser=originalUser; db=originalDb;
   });
 
-  await test('REGRESSION: the Themes page previews are the real card-back visuals, not invented swatches', () => {
-    openThemesPanel();
-    const area = document.getElementById('themesGridArea');
-    ['back-obsidian', 'back-emerald', 'back-cyber', 'back-crimson'].forEach((cls) => {
-      assertTrue(area.innerHTML.includes(cls), `The ${cls} preview must use the exact same class real face-down cards render with`);
-    });
-    assertTrue(area.querySelectorAll('.custom-card-back').length === 4, 'Each of the 4 theme cards must render an actual card-back element, not a plain color swatch');
-    document.getElementById('themesModal').classList.add('hidden');
+  await test('Custom → Deck: every deck is a tile; the 4 originals are free, Shop decks are locked until bought', () => {
+    const savedPurchases = cosmeticPurchaseState;
+    try {
+      cosmeticPurchaseState = {};
+      openThemesPanel();
+      const area = document.getElementById('themesGridArea');
+      const tiles = [...area.querySelectorAll('[data-equip-type="deck"]')];
+      assertEqual(tiles.length, 7, 'Four free decks and three Shop decks');
+      ['deck-obsidian', 'deck-emerald', 'deck-cyber', 'deck-crimson'].forEach(id => assertTrue(!area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is free`));
+      ['deck-casino', 'deck-arcade', 'deck-fourcolour'].forEach(id => assertTrue(area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is locked until bought`));
+      assertTrue(area.querySelector('[data-equip-id="deck-fourcolour"]').textContent.includes('750'), 'Four-Colour shows its premium price');
+      assertEqual(equipCosmetic('deck', 'deck-casino'), false, 'An unowned deck cannot be equipped');
+    } finally {
+      cosmeticPurchaseState = savedPurchases;
+      document.getElementById('themesModal').classList.add('hidden');
+    }
   });
-  await test('REGRESSION: Personalisation deck themes use the same compact footprint as other cosmetic options', () => {
-    openThemesPanel();
-    const area = document.getElementById('themesGridArea');
-    assertEqual(area.querySelectorAll('.theme-option-card').length, 5, 'Every theme choice, including Coming Soon, must use the compact option component');
-    assertEqual(area.querySelectorAll('.theme-option-preview').length, 5, 'Each compact theme option must have one small preview');
-    assertTrue(area.querySelectorAll('.theme-option-card .card-base').length === 0, 'Personalisation must not reuse full gameplay card sizing for deck-theme choices');
-    document.getElementById('themesModal').classList.add('hidden');
-  });
-  await test('REGRESSION: the active theme shows APPLIED and cannot be re-selected; selecting a theme from the Themes page updates it everywhere', () => {
-    freshState({ deckTheme: 'theme-obsidian' });
-    state.deckTheme = 'theme-cyber';
-    openThemesPanel();
-    const area = document.getElementById('themesGridArea');
-    const activeBtn = Array.from(area.querySelectorAll('.themes-page-select-btn')).find(b => b.dataset.theme === 'theme-cyber');
-    assertTrue(activeBtn.disabled, 'The currently-active theme card must show a disabled, already-applied state');
-    assertTrue(activeBtn.textContent.includes('APPLIED'), 'The active theme must read APPLIED, not SELECT');
-
-    const originalSave = saveGameState;
+  await test('Custom → Deck: tapping a deck applies its theme everywhere; the active one is marked', () => {
+    const originalSave = saveGameState, savedPurchases = cosmeticPurchaseState;
     saveGameState = () => {};
-    const emeraldBtn = Array.from(area.querySelectorAll('.themes-page-select-btn')).find(b => b.dataset.theme === 'theme-emerald');
-    emeraldBtn.click();
-    saveGameState = originalSave;
-
-    assertEqual(state.deckTheme, 'theme-emerald', 'Clicking a theme card must actually apply it, via the same selectDeckTheme the lobby uses');
-    assertTrue(document.body.className.includes('theme-emerald'), "The chosen theme's class must be applied to the document body, exactly like the lobby picker does");
-    document.getElementById('themesModal').classList.add('hidden');
+    try {
+      freshState({ deckTheme: 'theme-cyber' });
+      openThemesPanel();
+      cosmeticPurchaseState = { 'deck-fourcolour': { cost: 750 } };
+      renderThemesPanelActiveState();
+      const area = document.getElementById('themesGridArea');
+      assertEqual(area.querySelector('[data-equip-id="deck-cyber"]').getAttribute('aria-pressed'), 'true', 'The active deck is marked');
+      area.querySelector('[data-equip-id="deck-fourcolour"]').click();
+      assertEqual(state.deckTheme, 'theme-fourcolour', 'The owned Four-Colour deck is applied');
+      assertTrue(document.body.className.includes('theme-fourcolour'), "The deck's class is on the page");
+      assertTrue(getSuitStyle('♦').includes('suit-d') && getSuitStyle('♣').includes('suit-c'), 'Suits carry their own class so Four-Colour can colour them');
+      area.querySelector('[data-equip-id="deck-emerald"]').click();
+      assertEqual(state.deckTheme, 'theme-emerald', 'Back to a free deck');
+    } finally {
+      saveGameState = originalSave; cosmeticPurchaseState = savedPurchases;
+      selectDeckTheme('theme-obsidian');
+      document.getElementById('themesModal').classList.add('hidden');
+    }
   });
   await test('REGRESSION: closing the Themes page (X button and outside click) both work', () => {
     openThemesPanel();
