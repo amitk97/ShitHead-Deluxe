@@ -127,6 +127,17 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   await allowed('equip a premium burn', db => set(ref(db, 'users/alice/equippedCosmetics/burnEffect'), 'burn-origami'));
   await denied('equip an unowned premium Joker', db => set(ref(db, 'users/alice/equippedCosmetics/jokerEffect'), 'joker-portal'));
   await denied('equip an unowned premium victory', db => set(ref(db, 'users/alice/equippedCosmetics/victoryEffect'), 'victory-origami'));
+  // Premium pictures (2500) and tables (3000), v196.
+  await admin('users/alice/diamonds', 'PUT', 5600);
+  r = await call('alice', { action: 'buyItem', itemId: 'avatar-phoenix' });
+  ok(r.diamonds === 3100, 'buy Phoenix (2500)', r);
+  r = await call('alice', { action: 'buyItem', itemId: 'table-space' });
+  ok(r.diamonds === 100, 'buy Deep Space (3000)', r);
+  await allowed('equip a premium picture', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-phoenix'));
+  await allowed('equip a premium table', db => set(ref(db, 'users/alice/equippedCosmetics/tableTheme'), 'table-space'));
+  await denied('equip an unowned premium picture', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-cosmic-ace'));
+  await denied('equip an unowned premium table', db => set(ref(db, 'users/alice/equippedCosmetics/tableTheme'), 'table-neon'));
+  await denied('equip a made-up table', db => set(ref(db, 'users/alice/equippedCosmetics/tableTheme'), 'table-neonx'));
   await admin('users/alice/diamonds', 'PUT', 960);
 
   // AmitK test account
