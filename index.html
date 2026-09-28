@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v194 (ShitHead-Deluxe-176) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v195 (ShitHead-Deluxe-177) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -13199,6 +13199,15 @@ video {
     // With room to spare a short hand spreads out, up to the whole card plus
     // a small gap (a 3-card hand used to overlap by half on any phone).
     const HAND_MAX_VISIBLE = 1.06;
+    // The room a hand row really has: the player area (capped at 768px on
+    // PCs and tablets) less the hand's padding, never the whole window. On a
+    // phone they're the same; on a PC the window-wide figure let a long
+    // single row "fit" and then spill out of the hand sideways.
+    function handAvailableWidth() {
+      const zone = typeof document !== 'undefined' && document.getElementById('localPlayerZone');
+      const zoneW = zone && zone.clientWidth > 0 ? zone.clientWidth : window.innerWidth;
+      return Math.max(200, Math.min(zoneW, window.innerWidth) - 48);
+    }
     function computeHandCardMetrics(maxRowSize, rowCount = 1, availableHeightPx = null) {
       const vh = window.innerHeight / 100;
       // What the card would naturally be if only viewport height mattered
@@ -13208,7 +13217,7 @@ video {
       // How much horizontal room a row of maxRowSize overlapping cards can
       // actually have — the hand container has px-4 (16px) padding each
       // side, plus a small extra safety margin.
-      const availableWidthPx = Math.max(200, window.innerWidth - 48);
+      const availableWidthPx = handAvailableWidth();
       // How much of each overlapped card stays visible. A small hand keeps
       // a relaxed 52%; a long row only needs the rank-and-suit strip (at
       // least 22px, about a third of the card), so its cards can be bigger.
@@ -13325,7 +13334,7 @@ video {
     function bestHandRows(hand, availableHeightPx) {
       const fallback = computeHandRows(hand);
       if (hand.length <= 10) return fallback;
-      const availW = Math.max(200, window.innerWidth - 48);
+      const availW = handAvailableWidth();
       let best = fallback, bestW = -1;
       [1, 2, 3].forEach((r) => {
         const rows = computeHandRows(hand, r);
@@ -13751,9 +13760,13 @@ video {
       tip.classList.remove('hidden');
       const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
       const left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+      // Never under the header (it sits above the table): cards near the top
+      // (an opponent's face-up row) get the bubble below them instead.
+      const headerBottom = document.querySelector('body > header')?.getBoundingClientRect().bottom || 0;
+      const minTop = Math.max(8, headerBottom + 6);
       const above = r.top - h - 10;
       tip.style.left = `${left}px`;
-      tip.style.top = `${above > 8 ? above : Math.min(window.innerHeight - h - 8, r.bottom + 10)}px`;
+      tip.style.top = `${above >= minTop ? above : Math.max(minTop, Math.min(window.innerHeight - h - 8, r.bottom + 10))}px`;
       cardHoldShownAt = Date.now();
       if (typeof Haptics !== 'undefined') Haptics.vibrate?.(8);
     }
@@ -17429,6 +17442,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v195: [
+        ['🖥️', 'Fixed: on a computer, a big hand could run off both sides of the screen.'],
+        ['💡', 'Fixed: holding an opponent\'s face-up card now shows the whole description, below the card when there\'s no room above.']
+      ],
       v194: [
         ['⚙️', 'Fixed: a setting changed just before closing or refreshing the game could switch back at your next sign-in.']
       ],

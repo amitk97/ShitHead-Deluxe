@@ -7510,6 +7510,42 @@ async function runDevTestSuite() {
       try { localStorage.removeItem(SETTINGS_UNSAVED_KEY); localStorage.setItem('shithead_history_open', savedPref ? '1' : '0'); } catch (e) {}
     }
   });
+  await test('REGRESSION (PC): a big hand is laid out for the hand area, not the whole window (it spilled out sideways)', () => {
+    const real = handAvailableWidth;
+    try {
+      handAvailableWidth = () => 720; // a 1896px-wide PC window, 768px player area
+      const hand = Array.from({ length: 12 }, (_, i) => makeCard(['7', '8', '9', 'J', 'K', 'A'][i % 6]));
+      [260, 180, 140].forEach((availH) => {
+        const rows = bestHandRows(hand, availH);
+        const k = Math.max(...rows.map(r => r.length));
+        const m = computeHandCardMetrics(k, rows.length, availH);
+        const rowWidth = m.width + (k - 1) * (m.width + m.marginLeft);
+        assertTrue(rowWidth <= 721, `Every row fits the hand area (height ${availH}: ${rows.length} row(s), ${Math.round(rowWidth)}px)`);
+      });
+    } finally { handAvailableWidth = real; }
+    const zone = document.getElementById('localPlayerZone');
+    if (zone.clientWidth > 0) assertTrue(handAvailableWidth() <= zone.clientWidth, 'Measured from the player area');
+  });
+  await test('Card hold bubble never sits under the header (opponent cards near the top)', async () => {
+    freshState({ phase: 'PLAY', discardPile: [] });
+    const opp = makePlayer({ id: 'oppTop', faceUp: [makeCard('J')] });
+    state.players = [makePlayer({ id: 'you' }), opp]; state.localPlayerId = 'you';
+    const el = document.createElement('div');
+    el.dataset.cardId = opp.faceUp[0].id;
+    el.style.cssText = 'position:fixed;left:200px;top:30px;width:40px;height:56px';
+    document.getElementById('gameTable').appendChild(el);
+    try {
+      el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 210, clientY: 40 }));
+      await new Promise(r => setTimeout(r, CARD_HOLD_MS + 80));
+      const tip = document.getElementById('cardHoldTip');
+      const headerBottom = document.querySelector('body > header').getBoundingClientRect().bottom;
+      assertTrue(tip && !tip.classList.contains('hidden'), 'The bubble shows');
+      assertTrue(tip.getBoundingClientRect().top >= headerBottom, `It starts below the header (${Math.round(tip.getBoundingClientRect().top)} vs ${Math.round(headerBottom)})`);
+      assertTrue(/Odds/.test(tip.textContent) && /odd card/.test(tip.textContent), 'with the whole description');
+    } finally {
+      el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })); el.remove(); hideCardHold();
+    }
+  });
   await test('REGRESSION: closing the Themes page (X button and outside click) both work', () => {
     openThemesPanel();
     document.getElementById('themesCloseBtn').click();
