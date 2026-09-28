@@ -7382,7 +7382,7 @@ async function runDevTestSuite() {
     CARD_REFERENCE.forEach(([rank]) => {
       const text = CARD_HOLD_TEXT[rank];
       assertTrue(!!text, `${rank} has hold text`);
-      assertTrue(text.split(/\s+/).length <= 18, `${rank} hold text is short (${text.split(/\s+/).length} words)`);
+      assertTrue(text.split(/\s+/).length <= 25, `${rank} hold text is short (${text.split(/\s+/).length} words)`);
     });
     const hand = [makeCard('4'), makeCard('9')], down = makeCard('A');
     freshState({ phase: 'PLAY', discardPile: [makeCard('6')], activeConstraint: 'EVEN' });
@@ -7393,6 +7393,19 @@ async function runDevTestSuite() {
     assertTrue(/You can play it now/.test(cardHoldHtml(hand[0], true)), 'A 4 can go on a 6');
     assertTrue(/Can't go on the 6/.test(cardHoldHtml(hand[1], true)), 'A 9 is refused on a 6');
     assertTrue(/Drop|Base/.test(cardHoldHtml(makeCard('5'), false)) && /bottom card/.test(cardHoldHtml(makeCard('5'), false)), 'The 5 uses the short text');
+    const up = makeCard('4');
+    state.players[0].faceUp = [up];
+    const upInfo = holdCardInfo(mk(up));
+    assertTrue(/once your hand is empty/.test(cardHoldHtml(upInfo.card, upInfo.own, upInfo)), 'Your face-up card waits for an empty hand');
+    state.players[0].hand = [];
+    const upInfo2 = holdCardInfo(mk(up));
+    assertTrue(/You can play it now/.test(cardHoldHtml(upInfo2.card, upInfo2.own, upInfo2)), 'With an empty hand, the face-up 4 can go on the 6');
+    state.players[0].hand = hand;
+    state.discardPile = [makeCard('8'), makeCard('6')];
+    const pileHit = holdTargetAt(document.getElementById('discardPileContainer'));
+    assertTrue(pileHit && pileHit.info.card.rank === '6', 'Holding the Pile reads its top card');
+    const baseHit = holdTargetAt(document.getElementById('bottomCardPreview'));
+    assertTrue(baseHit && baseHit.info.card.rank === '8' && /Base card/.test(cardHoldHtml(baseHit.info.card, false, baseHit.info)), 'Holding the Base Card reads the bottom card');
     const table = document.getElementById('gameTable'), el = mk(hand[1]);
     let clicked = 0; el.onclick = () => { clicked += 1; };
     table.appendChild(el);

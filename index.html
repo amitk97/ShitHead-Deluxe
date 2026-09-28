@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v191 (ShitHead-Deluxe-173) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v192 (ShitHead-Deluxe-174) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -231,7 +231,8 @@
     #cardHoldTip .ch-text { font-size:12px; line-height:1.35; }
     #cardHoldTip .ch-ok { font-size:11px; font-weight:800; color:#4ade80; }
     #cardHoldTip .ch-no { font-size:11px; font-weight:800; color:#f87171; }
-    #gameTable [data-card-id] { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+    #gameTable :is([data-card-id], #discardPileContainer, #bottomCardPreview) { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+    #cardHoldTip .ch-where { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8; }
     #cardHistoryStream {
       touch-action: pan-y;
       overscroll-behavior-x: contain;
@@ -13678,20 +13679,20 @@ video {
     // Letting go closes it and swallows the tap, so a hold never selects.
     const CARD_HOLD_MS = 450;
     const CARD_HOLD_TEXT = {
-      '2': 'Goes on anything but a Jack. Anything can follow it.',
-      '3': 'Goes on anything but a 6. Beat the card under it.',
-      '4': 'Only goes on a 2, 3, 4, 6 or 7.',
-      '5': 'Beat the bottom card of the Pile. On an 8 or 9, the 5s skip or reverse instead.',
-      '6': 'The next card must be even.',
-      '7': 'The next card must be 7 or lower, or a Joker.',
-      '8': 'Skips one player for each 8 played.',
-      '9': 'An odd number of 9s reverses play.',
-      '10': 'Burns the Pile and you go again. Not on a 7 or Jack.',
-      'J': 'The next card must be odd.',
-      'Q': 'A standard high card.',
-      'K': 'A standard high card, above the Queen.',
-      'A': 'The highest standard card.',
-      'JOKER': 'Choose a player to pick up the Pile, unless they counter with a Joker.'
+      '2': 'Can be played on anything except a Jack. It resets the Pile, so any card can follow it.',
+      '3': 'Can be played on anything except a 6. It is see-through: the next player must beat the card underneath it.',
+      '4': 'The weakest card. It can only be played on a 2, 3, 4, 6 or 7.',
+      '5': 'The next player must beat the bottom card of the Pile. If it is an 8 or 9, the 5s skip or reverse instead.',
+      '6': 'The next player must play an even card.',
+      '7': 'The next player must play a 7 or lower, or a Joker.',
+      '8': 'Skips the next player. Play more 8s together to skip more players.',
+      '9': 'Reverses the direction of play. An even number of 9s keeps it the same.',
+      '10': 'Burns the Pile, and then you play again. It cannot be played on a 7 or a Jack.',
+      'J': 'The next player must play an odd card.',
+      'Q': 'A high card with no special power.',
+      'K': 'A high card with no special power. It beats a Queen.',
+      'A': 'The highest normal card, with no special power.',
+      'JOKER': 'Choose a player to pick up the whole Pile. They can block it with a Joker of their own.'
     };
     const RANK_WORDS = { J: 'Jack', Q: 'Queen', K: 'King', A: 'Ace', JOKER: 'Joker' };
     // The card behind an element, from the zones anyone can see; null for
@@ -13700,27 +13701,45 @@ video {
       const id = el?.dataset?.cardId;
       if (!id || el.classList.contains('custom-card-back')) return null;
       const me = state.players?.find(p => p.id === state.localPlayerId);
-      const mine = me && [...(me.hand || []), ...(me.faceUp || [])].find(c => c && c.id === id);
-      if (mine) return { card: mine, own: true };
+      const inHand = me && (me.hand || []).find(c => c && c.id === id);
+      if (inHand) return { card: inHand, own: 'hand' };
+      const myUp = me && (me.faceUp || []).find(c => c && c.id === id);
+      if (myUp) return { card: myUp, own: 'faceUp', handLeft: (me.hand || []).length };
       const up = (state.players || []).flatMap(p => p.faceUp || []).find(c => c && c.id === id);
       if (up) return { card: up, own: false };
       const pile = (state.discardPile || []).find(c => c && c.id === id);
       return pile ? { card: pile, own: false } : null;
     }
-    function cardHoldHtml(card, own) {
+    // What a press lands on: a card with an id, the Pile (its top card) or
+    // the Base Card box (the Pile's bottom card).
+    function holdTargetAt(node) {
+      const cardEl = node?.closest?.('#gameTable [data-card-id]');
+      if (cardEl) { const info = holdCardInfo(cardEl); return info ? { el: cardEl, info } : null; }
+      const pile = state.discardPile || [];
+      if (!pile.length) return null;
+      const pileEl = node?.closest?.('#gameTable #discardPileContainer');
+      if (pileEl) return { el: pileEl, info: { card: pile[pile.length - 1], own: false } };
+      const baseEl = node?.closest?.('#gameTable #bottomCardPreview');
+      if (baseEl) return { el: baseEl, info: { card: pile[0], own: false, base: true } };
+      return null;
+    }
+    function cardHoldHtml(card, own, extra = {}) {
       const rank = card.isJoker ? 'JOKER' : String(card.rank);
       const power = (CARD_REFERENCE.find(([r]) => r === rank) || [])[1] || '';
       const name = RANK_WORDS[rank] || rank;
       let status = '';
-      if (own && state.phase === 'PLAY') {
+      if (own === 'faceUp' && extra.handLeft > 0 && state.phase === 'PLAY') {
+        status = '<span class="ch-no">Play this once your hand is empty.</span>';
+      } else if (own && state.phase === 'PLAY') {
         const ok = isPlayLegal(card, state.discardPile || [], state.activeConstraint);
         const target = historyCircleLabel(historyCircleCard());
         status = ok ? '<span class="ch-ok">You can play it now.</span>'
           : `<span class="ch-no">Can't go on ${target ? `the ${RANK_WORDS[target] || target}` : 'this Pile'} now.</span>`;
       }
-      return `<span class="ch-title">${escapeHtml(name)} <span class="ch-power">${escapeHtml(power)}</span></span><span class="ch-text">${escapeHtml(CARD_HOLD_TEXT[rank] || '')}</span>${status}`;
+      const where = extra.base ? '<span class="ch-where">Base card</span>' : '';
+      return `${where}<span class="ch-title">${escapeHtml(name)} <span class="ch-power">${escapeHtml(power)}</span></span><span class="ch-text">${escapeHtml(CARD_HOLD_TEXT[rank] || '')}</span>${status}`;
     }
-    let cardHoldTimer = null, cardHoldStart = null, cardHoldShownAt = 0;
+    let cardHoldTimer = null, cardHoldStart = null, cardHoldShownAt = 0, cardHoldEl = null;
     function hideCardHold() {
       clearTimeout(cardHoldTimer); cardHoldTimer = null; cardHoldStart = null;
       document.getElementById('cardHoldTip')?.classList.add('hidden');
@@ -13728,7 +13747,7 @@ video {
     function showCardHold(el, info) {
       let tip = document.getElementById('cardHoldTip');
       if (!tip) { tip = document.createElement('div'); tip.id = 'cardHoldTip'; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); }
-      tip.innerHTML = cardHoldHtml(info.card, info.own);
+      tip.innerHTML = cardHoldHtml(info.card, info.own, info);
       tip.classList.remove('hidden');
       const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
       const left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
@@ -13740,10 +13759,11 @@ video {
     }
     document.addEventListener('pointerdown', (e) => {
       hideCardHold();
-      const el = e.target.closest?.('#gameTable [data-card-id]');
-      if (!el || (typeof tutorialActive !== 'undefined' && tutorialActive)) return;
-      const info = holdCardInfo(el);
-      if (!info) return;
+      if (typeof tutorialActive !== 'undefined' && tutorialActive) return;
+      const hit = holdTargetAt(e.target);
+      if (!hit) return;
+      const { el, info } = hit;
+      cardHoldEl = el;
       cardHoldStart = { x: e.clientX, y: e.clientY };
       cardHoldTimer = setTimeout(() => { cardHoldTimer = null; if (el.isConnected) showCardHold(el, info); }, CARD_HOLD_MS);
     }, true);
@@ -13756,11 +13776,11 @@ video {
     }, true));
     // The tap that ends a hold must not select or play the card.
     document.addEventListener('click', (e) => {
-      if (cardHoldShownAt && Date.now() - cardHoldShownAt < 2500 && e.target.closest?.('#gameTable [data-card-id]')) {
+      if (cardHoldShownAt && Date.now() - cardHoldShownAt < 2500 && cardHoldEl && cardHoldEl.contains(e.target)) {
         cardHoldShownAt = 0; e.stopPropagation(); e.preventDefault();
       }
     }, true);
-    document.addEventListener('contextmenu', (e) => { if (e.target.closest?.('#gameTable [data-card-id]')) e.preventDefault(); });
+    document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.preventDefault(); });
 
     // § Card history circle
     // The strip is open or folded into a circle for each game: it starts as
@@ -13963,7 +13983,7 @@ video {
               const skewClass = hasDown ? 'transform rotate-[3deg] translate-x-0.5 -translate-y-1 shadow-md' : '';
               const flipClass = shouldPopCard(upCard.id) ? 'mi-flip-in' : '';
               slotContent += `
-                <div class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] p-0.5 flex flex-col justify-between select-none ${skewClass} ${flipClass}" style="${getOpponentCosmeticFrameStyle(p.cosmetics?.frame)}">
+                <div data-card-id="${upCard.id}" class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] p-0.5 flex flex-col justify-between select-none ${skewClass} ${flipClass}" style="${getOpponentCosmeticFrameStyle(p.cosmetics?.frame)}">
                   <div class="flex flex-col opp-corner-text font-black leading-none ${sCol}">
                     <span>${upCard.isJoker ? 'JKR' : upCard.rank}</span>${upCard.isJoker ? '' : `<span>${upCard.suit}</span>`}
                   </div>
@@ -17409,6 +17429,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v192: [
+        ['💡', 'Press and hold now also works on the Pile, the Base Card and other players\' face-up cards.'],
+        ['📝', 'Clearer card descriptions, and your face-up cards remind you they wait until your hand is empty.']
+      ],
       v191: [
         ['💡', 'Press and hold any card you can see to read what it does, and whether you can play it now.']
       ],
