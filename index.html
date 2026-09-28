@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v190 (ShitHead-Deluxe-172) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v191 (ShitHead-Deluxe-173) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -223,6 +223,15 @@
     .hist-circle svg { width:58%; height:58%; color:#cbd5e1; }
     .hist-circle .hist-rank.is-joker { font-size:.62em; letter-spacing:-.04em; }
     .hist-collapse-btn { padding:0 5px; border-radius:4px; background:#1e293b; color:#cbd5e1; font-weight:900; font-size:11px; line-height:14px; }
+    /* Press-and-hold card info (§ Card hold info). z 63: over the table, under the emote picker. */
+    #cardHoldTip { position:fixed; z-index:63; max-width:min(260px, calc(100vw - 16px)); padding:8px 10px; border-radius:12px; background:rgba(2,6,23,.96); border:1px solid rgba(251,191,36,.7); box-shadow:0 10px 25px rgba(0,0,0,.55); color:#e2e8f0; pointer-events:none; display:flex; flex-direction:column; gap:3px; }
+    #cardHoldTip.hidden { display:none; }
+    #cardHoldTip .ch-title { font-weight:900; font-size:13px; color:#fde68a; }
+    #cardHoldTip .ch-power { font-size:10px; font-weight:800; color:#0f172a; background:#fbbf24; border-radius:4px; padding:1px 5px; margin-left:4px; text-transform:uppercase; letter-spacing:.04em; }
+    #cardHoldTip .ch-text { font-size:12px; line-height:1.35; }
+    #cardHoldTip .ch-ok { font-size:11px; font-weight:800; color:#4ade80; }
+    #cardHoldTip .ch-no { font-size:11px; font-weight:800; color:#f87171; }
+    #gameTable [data-card-id] { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
     #cardHistoryStream {
       touch-action: pan-y;
       overscroll-behavior-x: contain;
@@ -13660,6 +13669,99 @@ video {
     // § Rendering: the table
     // The seat drawn at the bottom: yours, or the friend you're watching.
     function viewSeatId() { return state.spectating ? state.spectating.seatId : state.localPlayerId; }
+    // § Card hold info
+    // Press and hold a card you can see (your hand, any face-up card, the
+    // Pile) for CARD_HOLD_MS to read what it does: its power (CARD_REFERENCE)
+    // and a short line (CARD_HOLD_TEXT, shortened from the Guide), plus, for
+    // your own cards during play, whether it can go on the Pile now. Face-down
+    // cards never answer (the card is looked up in the visible zones only).
+    // Letting go closes it and swallows the tap, so a hold never selects.
+    const CARD_HOLD_MS = 450;
+    const CARD_HOLD_TEXT = {
+      '2': 'Goes on anything but a Jack. Anything can follow it.',
+      '3': 'Goes on anything but a 6. Beat the card under it.',
+      '4': 'Only goes on a 2, 3, 4, 6 or 7.',
+      '5': 'Beat the bottom card of the Pile. On an 8 or 9, the 5s skip or reverse instead.',
+      '6': 'The next card must be even.',
+      '7': 'The next card must be 7 or lower, or a Joker.',
+      '8': 'Skips one player for each 8 played.',
+      '9': 'An odd number of 9s reverses play.',
+      '10': 'Burns the Pile and you go again. Not on a 7 or Jack.',
+      'J': 'The next card must be odd.',
+      'Q': 'A standard high card.',
+      'K': 'A standard high card, above the Queen.',
+      'A': 'The highest standard card.',
+      'JOKER': 'Choose a player to pick up the Pile, unless they counter with a Joker.'
+    };
+    const RANK_WORDS = { J: 'Jack', Q: 'Queen', K: 'King', A: 'Ace', JOKER: 'Joker' };
+    // The card behind an element, from the zones anyone can see; null for
+    // face-down or unknown cards.
+    function holdCardInfo(el) {
+      const id = el?.dataset?.cardId;
+      if (!id || el.classList.contains('custom-card-back')) return null;
+      const me = state.players?.find(p => p.id === state.localPlayerId);
+      const mine = me && [...(me.hand || []), ...(me.faceUp || [])].find(c => c && c.id === id);
+      if (mine) return { card: mine, own: true };
+      const up = (state.players || []).flatMap(p => p.faceUp || []).find(c => c && c.id === id);
+      if (up) return { card: up, own: false };
+      const pile = (state.discardPile || []).find(c => c && c.id === id);
+      return pile ? { card: pile, own: false } : null;
+    }
+    function cardHoldHtml(card, own) {
+      const rank = card.isJoker ? 'JOKER' : String(card.rank);
+      const power = (CARD_REFERENCE.find(([r]) => r === rank) || [])[1] || '';
+      const name = RANK_WORDS[rank] || rank;
+      let status = '';
+      if (own && state.phase === 'PLAY') {
+        const ok = isPlayLegal(card, state.discardPile || [], state.activeConstraint);
+        const target = historyCircleLabel(historyCircleCard());
+        status = ok ? '<span class="ch-ok">You can play it now.</span>'
+          : `<span class="ch-no">Can't go on ${target ? `the ${RANK_WORDS[target] || target}` : 'this Pile'} now.</span>`;
+      }
+      return `<span class="ch-title">${escapeHtml(name)} <span class="ch-power">${escapeHtml(power)}</span></span><span class="ch-text">${escapeHtml(CARD_HOLD_TEXT[rank] || '')}</span>${status}`;
+    }
+    let cardHoldTimer = null, cardHoldStart = null, cardHoldShownAt = 0;
+    function hideCardHold() {
+      clearTimeout(cardHoldTimer); cardHoldTimer = null; cardHoldStart = null;
+      document.getElementById('cardHoldTip')?.classList.add('hidden');
+    }
+    function showCardHold(el, info) {
+      let tip = document.getElementById('cardHoldTip');
+      if (!tip) { tip = document.createElement('div'); tip.id = 'cardHoldTip'; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); }
+      tip.innerHTML = cardHoldHtml(info.card, info.own);
+      tip.classList.remove('hidden');
+      const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+      const left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+      const above = r.top - h - 10;
+      tip.style.left = `${left}px`;
+      tip.style.top = `${above > 8 ? above : Math.min(window.innerHeight - h - 8, r.bottom + 10)}px`;
+      cardHoldShownAt = Date.now();
+      if (typeof Haptics !== 'undefined') Haptics.vibrate?.(8);
+    }
+    document.addEventListener('pointerdown', (e) => {
+      hideCardHold();
+      const el = e.target.closest?.('#gameTable [data-card-id]');
+      if (!el || (typeof tutorialActive !== 'undefined' && tutorialActive)) return;
+      const info = holdCardInfo(el);
+      if (!info) return;
+      cardHoldStart = { x: e.clientX, y: e.clientY };
+      cardHoldTimer = setTimeout(() => { cardHoldTimer = null; if (el.isConnected) showCardHold(el, info); }, CARD_HOLD_MS);
+    }, true);
+    document.addEventListener('pointermove', (e) => {
+      if (cardHoldTimer && cardHoldStart && Math.hypot(e.clientX - cardHoldStart.x, e.clientY - cardHoldStart.y) > 8) hideCardHold();
+    }, true);
+    ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => {
+      clearTimeout(cardHoldTimer); cardHoldTimer = null;
+      document.getElementById('cardHoldTip')?.classList.add('hidden');
+    }, true));
+    // The tap that ends a hold must not select or play the card.
+    document.addEventListener('click', (e) => {
+      if (cardHoldShownAt && Date.now() - cardHoldShownAt < 2500 && e.target.closest?.('#gameTable [data-card-id]')) {
+        cardHoldShownAt = 0; e.stopPropagation(); e.preventDefault();
+      }
+    }, true);
+    document.addEventListener('contextmenu', (e) => { if (e.target.closest?.('#gameTable [data-card-id]')) e.preventDefault(); });
+
     // § Card history circle
     // The strip is open or folded into a circle for each game: it starts as
     // the Card History setting says (historyOpenPref, default on) and the
@@ -17307,6 +17409,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v191: [
+        ['💡', 'Press and hold any card you can see to read what it does, and whether you can play it now.']
+      ],
       v190: [
         ['🕘', 'Card history can now fold into a circle on the left of the table. It shows the card to beat; tap it to open the history again.'],
         ['⚙️', 'New setting: Display → Card History chooses whether each game starts with the history open or folded.']

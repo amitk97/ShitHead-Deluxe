@@ -7378,6 +7378,39 @@ async function runDevTestSuite() {
       historyOpenPref = savedPref; setHistoryOpen(savedOpen);
     }
   });
+  await test('Card hold info: every card has a short line, face-down cards stay secret, and a hold never selects', async () => {
+    CARD_REFERENCE.forEach(([rank]) => {
+      const text = CARD_HOLD_TEXT[rank];
+      assertTrue(!!text, `${rank} has hold text`);
+      assertTrue(text.split(/\s+/).length <= 18, `${rank} hold text is short (${text.split(/\s+/).length} words)`);
+    });
+    const hand = [makeCard('4'), makeCard('9')], down = makeCard('A');
+    freshState({ phase: 'PLAY', discardPile: [makeCard('6')], activeConstraint: 'EVEN' });
+    state.players = [makePlayer({ id: state.localPlayerId || 'you', hand, faceDown: [down] })];
+    state.localPlayerId = state.players[0].id;
+    const mk = (card) => { const el = document.createElement('div'); el.dataset.cardId = card.id; el.style.cssText = 'position:fixed;left:40px;top:300px;width:40px;height:56px'; return el; };
+    assertEqual(holdCardInfo(mk(down)), null, 'A face-down card never answers');
+    assertTrue(/You can play it now/.test(cardHoldHtml(hand[0], true)), 'A 4 can go on a 6');
+    assertTrue(/Can't go on the 6/.test(cardHoldHtml(hand[1], true)), 'A 9 is refused on a 6');
+    assertTrue(/Drop|Base/.test(cardHoldHtml(makeCard('5'), false)) && /bottom card/.test(cardHoldHtml(makeCard('5'), false)), 'The 5 uses the short text');
+    const table = document.getElementById('gameTable'), el = mk(hand[1]);
+    let clicked = 0; el.onclick = () => { clicked += 1; };
+    table.appendChild(el);
+    try {
+      el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 50, clientY: 310 }));
+      await new Promise(r => setTimeout(r, CARD_HOLD_MS + 80));
+      const tip = document.getElementById('cardHoldTip');
+      assertTrue(tip && !tip.classList.contains('hidden') && /Nine|9/.test(tip.textContent) && /Reverse/.test(tip.textContent), 'Holding shows the card, its power and text');
+      el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      el.click();
+      assertTrue(tip.classList.contains('hidden'), 'Letting go closes it');
+      assertEqual(clicked, 0, 'The tap that ends a hold does not select the card');
+      el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 50, clientY: 310 }));
+      el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      el.click();
+      assertEqual(clicked, 1, 'A normal tap still works');
+    } finally { el.remove(); hideCardHold(); }
+  });
   await test('REGRESSION: closing the Themes page (X button and outside click) both work', () => {
     openThemesPanel();
     document.getElementById('themesCloseBtn').click();
