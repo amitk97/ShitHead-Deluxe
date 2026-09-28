@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v199 (ShitHead-Deluxe-181) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v200 (ShitHead-Deluxe-182) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -17647,6 +17647,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v200: [
+        ['👥', 'Fixed: friends could show as online for hours after closing the game or signing out.']
+      ],
       v199: [
         ['🏆', 'Tap a player\'s picture or name on the leaderboard to open their profile, add them as a friend or ignore them.'],
         ['🚫', 'Players you ignore no longer show on the leaderboard.'],
@@ -20064,7 +20067,7 @@ video {
       const badge = hasProfile
         ? `<span class="pp-badge ${tier.cls}" style="${tier.style}">${tier.name} · ${Math.round(profile.rating != null ? profile.rating : 500)}</span>`
         : `<span class="pp-badge" style="border-color:#475569;color:#cbd5e1">Guest player</span>`;
-      const online = hasProfile ? `<div class="pp-sub ${profile.online ? 'is-online' : ''}">● ${profile.online ? 'Online now' : 'Offline'}</div>` : '';
+      const online = hasProfile ? `<div class="pp-sub ${isProfileOnline(profile) ? 'is-online' : ''}">● ${isProfileOnline(profile) ? 'Online now' : 'Offline'}</div>` : '';
       let actions = '';
       if (hasProfile && currentUser && player.uid !== currentUser.uid) {
         const friendHtml = friendState === 'friends'
@@ -22328,6 +22331,7 @@ video {
       // the queue and this device can stop getting the account's alerts.
       if (rankedHeartbeatTimer || rankedAssignmentRef) cancelRankedSearch();
       const finishSignOut = () => {
+        endPresence(); // queued first, so it's sent while still signed in
         const signOut = auth && typeof auth.signOut === 'function' ? auth.signOut() : Promise.resolve();
         return Promise.resolve(signOut).catch((e) => console.warn('Sign out failed', e)).finally(resetAfterSignOut);
       };
@@ -24747,17 +24751,60 @@ video {
     // connection actually drops — covering a closed tab or lost network,
     // not just a clean sign-out, which a normal .set() on sign-out could
     // never catch on its own.
+    // Presence: publicProfiles/{uid}/online (true only while the game is on
+    // screen) + /seen (server time, refreshed every minute while visible).
+    // A backgrounded or signed-out app goes offline at once; a phone that
+    // vanished without saying goodbye reads offline once `seen` is over
+    // PRESENCE_STALE_MS old (isProfileOnline), whatever `online` still says.
+    const PRESENCE_BEAT_MS = 60 * 1000;
+    const PRESENCE_STALE_MS = 3 * 60 * 1000;
+    let presenceUid = null, presenceConnected = false, presenceBeatTimer = null;
+    function isProfileOnline(profile) {
+      if (!profile || profile.online !== true) return false;
+      if (typeof profile.seen === 'number') return serverNow() - profile.seen < PRESENCE_STALE_MS;
+      return true; // older builds don't write `seen` yet
+    }
+    function writePresence(online) {
+      if (!presenceUid || !firebaseAvailable) return Promise.resolve();
+      try {
+        const set = (path, value) => Promise.resolve(db.ref(`publicProfiles/${presenceUid}/${path}`).set(value)).catch(() => {});
+        const stamp = firebase?.database?.ServerValue?.TIMESTAMP ?? Date.now();
+        return Promise.all([set('online', !!online), set('seen', stamp)]);
+      } catch (e) { return Promise.resolve(); }
+    }
+    function presenceVisible() { return document.visibilityState !== 'hidden'; }
     function setupPresence() {
       if (!currentUser || !firebaseAvailable) return;
+      presenceUid = currentUser.uid;
       const presenceRef = db.ref(`publicProfiles/${currentUser.uid}/online`);
       db.ref('.info/connected').on('value', (snap) => {
-        if (snap.val() === true) {
+        presenceConnected = snap.val() === true;
+        if (presenceConnected && presenceUid) {
           presenceRef.onDisconnect().set(false);
-          presenceRef.set(true);
-          db.ref(`publicProfiles/${currentUser.uid}/playing`).onDisconnect().remove();
+          writePresence(presenceVisible());
+          db.ref(`publicProfiles/${presenceUid}/playing`).onDisconnect().remove();
           lastPlayingKey = null; syncPlayingStatus(); // re-assert after a reconnect
         }
       });
+      clearInterval(presenceBeatTimer);
+      presenceBeatTimer = setInterval(() => {
+        if (presenceUid && presenceConnected && presenceVisible()) writePresence(true);
+      }, PRESENCE_BEAT_MS);
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (presenceUid && presenceConnected) writePresence(presenceVisible());
+    });
+    // Sign-out: say offline while still signed in (the rules need the owner),
+    // then stop, so the flag can't stay true after the account has gone.
+    function endPresence() {
+      clearInterval(presenceBeatTimer);
+      presenceBeatTimer = null;
+      if (!presenceUid || !firebaseAvailable) { presenceUid = null; return Promise.resolve(); }
+      const uid = presenceUid;
+      try { db.ref(`publicProfiles/${uid}/online`).onDisconnect().cancel(); } catch (e) {}
+      const done = writePresence(false);
+      presenceUid = null;
+      return done;
     }
 
     // --- Friends panel -------------------------------------------------
@@ -24792,10 +24839,11 @@ video {
       const rawName = profile.username || profile.name || 'Player';
       const name = escapeHtml(rawName);
       const safeUid = escapeAttr(uid);
-      const presenceClass = profile.online ? 'online' : 'offline';
-      const playing = profile.online ? friendPlaying(profile) : null;
+      const isOnline = isProfileOnline(profile);
+      const presenceClass = isOnline ? 'online' : 'offline';
+      const playing = isOnline ? friendPlaying(profile) : null;
       const onlineHtml = type === 'friend'
-        ? `<span class="friend-status ${playing ? 'playing' : presenceClass}">${playing ? `🎮 In a match · ${playing.label}` : profile.online ? 'Online' : 'Offline'}</span>` : '';
+        ? `<span class="friend-status ${playing ? 'playing' : presenceClass}">${playing ? `🎮 In a match · ${playing.label}` : isOnline ? 'Online' : 'Offline'}</span>` : '';
       // Friend requests use a synthetic profile ({username, from the
       // request itself) with no rating — publicProfiles was never fetched
       // for them, so this naturally stays blank there rather than showing
@@ -24827,7 +24875,7 @@ video {
       }
       return `<div class="friend-row">
         <div class="friend-main">
-          <span class="presence-dot ${presenceClass}" title="${profile.online ? 'Online' : 'Offline'}"></span>
+          <span class="presence-dot ${presenceClass}" title="${isOnline ? 'Online' : 'Offline'}"></span>
           ${avatarHtml(profile.avatar, 40)}
           <div class="friend-info">
             <span class="friend-name" title="${escapeAttr(rawName)}">${name}</span>
@@ -24852,6 +24900,7 @@ video {
       if (!friendProfileWatch) return;
       friendProfileWatch.refs.forEach(ref => { if (typeof ref.off === 'function') ref.off(); });
       clearTimeout(friendProfileWatch.timer);
+      clearInterval(friendProfileWatch.tick);
       friendProfileWatch = null;
     }
     function paintFriendsList(profiles) {
@@ -24859,8 +24908,8 @@ video {
       const results = Object.entries(profiles).map(([uid, profile]) => ({ uid, profile: profile || {} }));
       // Online friends first (then A-Z), with a count on top.
       const nameOf = (r) => String(r.profile.username || r.profile.name || '').toLowerCase();
-      results.sort((a, b) => (!!b.profile.online - !!a.profile.online) || nameOf(a).localeCompare(nameOf(b)));
-      const online = results.filter(r => r.profile.online).length;
+      results.sort((a, b) => (isProfileOnline(b.profile) - isProfileOnline(a.profile)) || nameOf(a).localeCompare(nameOf(b)));
+      const online = results.filter(r => isProfileOnline(r.profile)).length;
       area.innerHTML = `<p class="friends-online-count">${online} of ${results.length} online</p>`
         + results.map(({ uid, profile }) => friendRowHtml(uid, profile, 'friend')).join('');
     }
@@ -24872,8 +24921,13 @@ video {
         const uids = Object.keys(snap.val() || {});
         if (uids.length === 0) { showFriendsEmpty("You haven't added any friends yet."); return; }
         document.getElementById('friendsEmptyMsg').classList.add('hidden');
-        const watch = friendProfileWatch = { profiles: {}, refs: [], timer: null };
+        const watch = friendProfileWatch = { profiles: {}, refs: [], timer: null, tick: null };
         let pending = uids.length;
+        // Repaint now and then so a friend whose `seen` goes stale drops to
+        // offline even though nothing in their profile changed.
+        watch.tick = setInterval(() => {
+          if (friendProfileWatch === watch && pending === 0 && currentFriendsTab === 'friends') paintFriendsList(watch.profiles);
+        }, 30000);
         uids.forEach((uid) => {
           const ref = db.ref(`publicProfiles/${uid}`);
           watch.refs.push(ref);

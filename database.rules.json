@@ -410,6 +410,9 @@
         "online": {
           ".validate": "newData.isBoolean()"
         },
+        "seen": {
+          ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+        },
         "playing": {
           ".validate": "newData.hasChildren(['mode', 'at']) && newData.child('at').isNumber() &&
             newData.child('mode').isString() &&

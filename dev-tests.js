@@ -6584,6 +6584,17 @@ async function runDevTestSuite() {
     assertTrue(/down the left/.test(step.coachNote) && /along the top/.test(step.coachNote) && !/Row =|✓|✗/.test(step.coachNote), 'the tutorial says it in plain words', step.coachNote);
     assertTrue(/card you want to play/.test(document.getElementById('matrixRefHint').textContent), 'and so does the panel key');
   });
+  await test('Presence: a friend reads online only while their game is on screen and seen in the last 3 minutes', () => {
+    const now = serverNow();
+    assertEqual(isProfileOnline({ online: true, seen: now - 30 * 1000 }), true, 'seen 30s ago = online');
+    assertEqual(isProfileOnline({ online: true, seen: now - 4 * 60 * 1000 }), false, 'seen 4 min ago = offline even if the flag is stuck on');
+    assertEqual(isProfileOnline({ online: false, seen: now }), false, 'flag off = offline');
+    assertEqual(isProfileOnline({ online: true }), true, 'an older build without seen still counts');
+    assertEqual(isProfileOnline(null), false, 'no profile = offline');
+    const row = friendRowHtml('u1', { username: 'Sam', online: true, seen: now - 10 * 60 * 1000 }, 'friend');
+    assertTrue(/Offline/.test(row) && !/presence-dot online/.test(row), 'a stale friend is drawn offline');
+    assertTrue(typeof endPresence === 'function' && /endPresence\(\)/.test(String(performSignOut)), 'sign-out goes offline first');
+  });
   await test('Update prompt: a newer live build offers Update now / Later; an older or equal one does nothing', () => {
     const cur = gameVersionNumber(getGameVersionLabel());
     assertEqual(newerBuildIn(`<!-- BUILD: 2030-01-01-v${cur + 1} (x) -->`), `v${cur + 1}`, 'a newer build is spotted');
