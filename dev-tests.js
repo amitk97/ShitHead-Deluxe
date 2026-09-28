@@ -6627,7 +6627,7 @@ async function runDevTestSuite() {
   await test('Card backs v197: Dragon Scale and Stained Glass are vector, priced, previewable', () => {
     ['back-dragon', 'back-stained'].forEach(id => {
       const it = COSMETIC_SHOP_ITEMS.find(i => i.id === id);
-      assertTrue(!!it && it.cost === 400 && COSMETIC_RUNTIME_IDS.cardBack.has(id), `${id} costs 400`, it);
+      assertTrue(!!it && it.cost === 1000 && COSMETIC_RUNTIME_IDS.cardBack.has(id), `${id} costs 1000`, it);
       assertEqual(getCosmeticBackClass(id), `cosmetic-${id}`, 'has its own look');
       const host = document.createElement('div');
       host.innerHTML = cosmeticPreview(it, 'cardBack');

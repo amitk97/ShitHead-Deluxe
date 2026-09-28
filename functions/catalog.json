@@ -42,11 +42,11 @@
   },
   "back-dragon": {
    "name": "Dragon Scale",
-   "cost": 400
+   "cost": 1000
   },
   "back-stained": {
    "name": "Stained Glass",
-   "cost": 400
+   "cost": 1000
   },
   "frame-silver": {
    "name": "Silver Edge",
