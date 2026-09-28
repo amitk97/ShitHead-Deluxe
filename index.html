@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v207 (ShitHead-Deluxe-189) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v208 (ShitHead-Deluxe-190) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -784,6 +784,27 @@
     #spectateBar { position:fixed; left:50%; transform:translateX(-50%); top:calc(var(--header-h) + 6px); z-index:64; display:flex; align-items:center; gap:10px; padding:6px 8px 6px 12px; border-radius:999px; border:1px solid #0891b2; background:rgba(8,47,73,.92); color:#a5f3fc; font-size:11px; font-weight:900; box-shadow:0 6px 18px rgba(0,0,0,.45); white-space:nowrap; max-width:calc(100vw - 24px); }
     #spectateBar button { padding:4px 12px; border-radius:999px; background:#0891b2; color:#020617; font-weight:900; font-size:10px; letter-spacing:.08em; }
     body.spectating #gameTable { pointer-events:none; }
+    /* Home screen (§ Home screen): the lobby's own cover is replaced by the
+       dimmed table backdrop, and the panel starts below the header. */
+    #homeBackdrop { display:none; position:fixed; inset:0; z-index:69; pointer-events:none; background-color:#020617; }
+    body.lobby-open #homeBackdrop { display:block; }
+    body.lobby-open #lobbyScreen { background:transparent !important; }
+    #lobbyScreen { padding-top:calc(var(--header-h) + 10px) !important; padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 12px) !important; }
+    #homeCardTip { position:fixed; z-index:71; pointer-events:none; }
+    #homeCardTip.hidden { display:none; }
+    #homeCardTip .home-tip-inner { width:100%; height:100%; display:flex; align-items:center; gap:12px; transition:opacity .26s var(--ease-soft, ease), transform .26s var(--ease-soft, ease); }
+    #homeCardTip .home-tip-inner.home-tip-out { opacity:0; transform:translateY(6px); }
+    #homeCardTip.home-tip-below .home-tip-inner { padding:8px 12px; border-radius:14px; background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.18); box-sizing:border-box; }
+    #homeCardTip.home-tip-side .home-tip-inner { flex-direction:column; justify-content:center; text-align:center; gap:14px; }
+    #homeCardTip .home-tip-art { flex:none; display:flex; align-items:center; justify-content:center; }
+    #homeCardTip .home-tip-card { position:relative !important; width:44px !important; height:62px !important; font-size:12px; margin:0 !important; filter:drop-shadow(0 6px 14px rgba(0,0,0,.55)); }
+    #homeCardTip.home-tip-side .home-tip-art { width:140px; height:196px; }
+    #homeCardTip.home-tip-side .home-tip-card { zoom:2.2; }
+    #homeCardTip .home-tip-text { min-width:0; color:#cbd5e1; font-size:11px; line-height:1.35; font-weight:600; }
+    #homeCardTip.home-tip-side .home-tip-text { font-size:13px; }
+    #homeCardTip .home-tip-name { display:block; color:#fcd34d; font-size:10px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; margin-bottom:2px; }
+    #homeCardTip.home-tip-side .home-tip-name { font-size:12px; }
+    body.reduce-motion #homeCardTip .home-tip-inner { transition:none; }
     body.lobby-open #opponentsContainer, body.lobby-open #centerArena, body.lobby-open #localPlayerZone,
     body.lobby-open #gauntletHud, body.lobby-open #floatingJokerBar, body.lobby-open #leaveGameBtn { visibility:hidden !important; }
     body.spectating #roomCodeBadge { display:none !important; }
@@ -7835,6 +7856,7 @@ video {
     //   § Invite links
     //   § Referrals (?ref=CODE invite links, Profile → Invite Friends)
     //   § Phone back gesture
+    //   § Home screen: dimmed table backdrop, rotating card tip, panel fit
     //   § Tutorial
     //   § Page start-up
 
@@ -16824,9 +16846,16 @@ video {
       document.head.appendChild(link);
     }
     ensureDeckFont(state.deckTheme);
+    // Swaps only the deck theme class on <body>; every other body class
+    // (lobby-open, spectating, reduce-motion…) is left alone.
+    function setBodyDeckTheme(themeClass) {
+      const b = document.body;
+      [...b.classList].filter(c => c.startsWith('theme-')).forEach(c => b.classList.remove(c));
+      b.classList.add('bg-slate-950', 'text-slate-100', 'flex', 'flex-col', 'justify-between', 'relative', 'select-none', themeClass || 'theme-obsidian');
+    }
     function selectDeckTheme(themeClass) {
       ensureDeckFont(themeClass);
-      document.body.className = `bg-slate-950 text-slate-100 flex flex-col justify-between ${themeClass} relative select-none`;
+      setBodyDeckTheme(themeClass);
       applyAccessibilityPrefs(); // className was just fully replaced above, which wipes high-contrast/reduce-motion -- reapply them
       state.deckTheme = themeClass;
       try { localStorage.setItem('shithead_deck_theme', themeClass); } catch (e) {}
@@ -17252,6 +17281,8 @@ video {
     function syncLobbyOpen() {
       const lobby = document.getElementById('lobbyScreen');
       document.body.classList.toggle('lobby-open', !!lobby && !lobby.classList.contains('hidden'));
+      // Next frame: at start-up this runs before the seasonal code exists.
+      requestAnimationFrame(() => refreshHomeScreen());
     }
     new MutationObserver(syncLobbyOpen).observe(document.getElementById('lobbyScreen'), { attributes: true, attributeFilter: ['class'] });
     syncLobbyOpen();
@@ -17691,6 +17722,11 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v208: [
+        ['🏠', 'The home screen now shows your table softly in the background, or the event table while an event is on.'],
+        ['🃏', 'Where there is room, the home screen shows a card and its power, changing every few seconds.'],
+        ['🖥️', 'Fixed: on some laptops the top of the home screen was hidden under the header.']
+      ],
       v207: [
         ['🃏', 'Joker Duel lesson: a deck only has two Jokers, so now just Rival holds the other one, and you pick Rival to see the counter.']
       ],
@@ -20042,6 +20078,7 @@ video {
       document.body.dataset.equippedVictoryEffect = equippedCosmetics.victoryEffect;
       document.body.dataset.equippedJokerEffect = equippedCosmetics.jokerEffect || 'default';
       document.body.dataset.equippedAvatar = equippedCosmetics.avatar || 'default';
+      if (typeof refreshHomeBackdrop === 'function' && document.body.classList.contains('lobby-open')) refreshHomeBackdrop();
       refreshOwnAvatarDisplays();
       try { localStorage.setItem('shithead_equipped_cosmetics', JSON.stringify(equippedCosmetics)); } catch (e) {}
       publishLocalCosmeticsToRoom();
@@ -27105,6 +27142,141 @@ video {
       notifyBanner(message);
       setTimeout(reloadCleanly, 1200);
     }
+    // § Home screen: dimmed table backdrop, rotating card tip, panel fit
+    // Behind the home panel: the player's equipped table (the default one
+    // when signed out), or the live seasonal event's table, heavily dimmed
+    // and never animated (#homeBackdrop, shown by body.lobby-open).
+    // #homeCardTip shows one power card (5–J, Joker) and its rule, changing
+    // every HOME_TIP_MS, only where there is free room: below the panel on
+    // phones, in the side space on wide screens; otherwise not at all.
+    const HOME_TIP_RANKS = ['5', '6', '7', '8', '9', '10', 'J', 'JOKER'];
+    const HOME_TIP_MS = 8000;
+    const HOME_BACKDROP_DIM = 'linear-gradient(rgba(2,6,23,.62),rgba(2,6,23,.74))';
+    let homeTipRank = null, homeTipTimer = null;
+    function homeBackdropTableId() {
+      const live = typeof activeSeasonalEvents === 'function' ? activeSeasonalEvents()[0] : null;
+      if (live && ILLUSTRATED_TABLES[`table-${live.event.id}`]) return `table-${live.event.id}`;
+      return currentUser ? (equippedCosmetics.tableTheme || 'default') : 'default';
+    }
+    function homeBackdropCss(id) {
+      if (ILLUSTRATED_TABLES[id]) return { bg: tableArtBackground(id) };
+      return CSS_TABLE_PREVIEWS[id] || CSS_TABLE_PREVIEWS.default;
+    }
+    function refreshHomeBackdrop() {
+      let el = document.getElementById('homeBackdrop');
+      if (!el) { el = document.createElement('div'); el.id = 'homeBackdrop'; el.setAttribute('aria-hidden', 'true'); document.body.prepend(el); }
+      const id = homeBackdropTableId();
+      if (el.dataset.table === id) return;
+      const look = homeBackdropCss(id);
+      el.dataset.table = id;
+      el.style.background = `${HOME_BACKDROP_DIM}, ${look.bg}`;
+      el.style.backgroundSize = look.size ? `auto, ${look.size}` : '';
+    }
+    // Tablets/PCs zoom the panel up (CSS); never past what fits under the
+    // header, so its top (the title) is never hidden and nothing scrolls.
+    function fitHomePanel() {
+      const lobby = document.getElementById('lobbyScreen');
+      const panel = lobby?.querySelector(':scope > div.bg-slate-900');
+      if (!panel || lobby.classList.contains('hidden')) return;
+      panel.style.zoom = '';
+      const base = parseFloat(getComputedStyle(panel).zoom) || 1;
+      if (base <= 1) return;
+      const cs = getComputedStyle(lobby);
+      const room = lobby.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const natural = panel.getBoundingClientRect().height / base;
+      const fit = Math.max(1, Math.min(base, room / natural));
+      if (fit < base) panel.style.zoom = String(Math.floor(fit * 100) / 100);
+    }
+    function pickHomeTipRank() {
+      const pool = HOME_TIP_RANKS.filter(r => r !== homeTipRank);
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+    function homeTipCard(rank) {
+      const suits = ['♠', '♥', '♦', '♣'];
+      const card = rank === 'JOKER'
+        ? { id: 'home_tip_joker', rank: 'JOKER', suit: 'JOKER', isJoker: true }
+        : { id: `home_tip_${rank}`, rank, suit: suits[Math.floor(Math.random() * 4)] };
+      const el = createCardElement(card);
+      el.classList.add('home-tip-card');
+      el.removeAttribute('data-card-id');
+      return el;
+    }
+    function fillHomeTip(tip, rank) {
+      const name = rank === 'JOKER' ? 'Joker' : (RANK_WORDS[rank] || rank);
+      const power = (CARD_REFERENCE.find(r => r[0] === rank) || [])[1] || '';
+      tip.querySelector('.home-tip-art').replaceChildren(homeTipCard(rank));
+      tip.querySelector('.home-tip-name').textContent = `${name} · ${power}`;
+      tip.querySelector('.home-tip-rule').textContent = CARD_HOLD_TEXT[rank] || '';
+    }
+    function homeTipElement() {
+      let tip = document.getElementById('homeCardTip');
+      if (!tip) {
+        tip = document.createElement('div');
+        tip.id = 'homeCardTip';
+        tip.className = 'hidden';
+        tip.setAttribute('aria-hidden', 'true');
+        tip.innerHTML = '<div class="home-tip-inner"><div class="home-tip-art"></div><div class="home-tip-text"><b class="home-tip-name"></b><span class="home-tip-rule"></span></div></div>';
+        document.body.appendChild(tip);
+      }
+      return tip;
+    }
+    // Places the tip in free space or hides it; never moves anything else.
+    function layoutHomeTip() {
+      const tip = homeTipElement();
+      const lobby = document.getElementById('lobbyScreen');
+      const panel = lobby?.querySelector(':scope > div.bg-slate-900');
+      const open = !!panel && !lobby.classList.contains('hidden') && !(typeof tutorialActive !== 'undefined' && tutorialActive);
+      if (!open) { tip.classList.add('hidden'); return; }
+      const r = panel.getBoundingClientRect();
+      const W = window.innerWidth, H = window.innerHeight;
+      // The lobby's bottom padding is the home bar plus a small margin.
+      const bottomSafe = parseFloat(getComputedStyle(lobby).paddingBottom) || 0;
+      const GAP = 8, STRIP_H = 68, SIDE_W = 200, SIDE_H = 330;
+      const below = H - bottomSafe - r.bottom;
+      tip.classList.remove('home-tip-side', 'home-tip-below');
+      if (r.left >= SIDE_W + 2 * GAP && r.height >= SIDE_H && H >= 480) {
+        const w = Math.min(260, r.left - 2 * GAP);
+        tip.classList.add('home-tip-side');
+        tip.style.cssText = `left:${(r.left - w) / 2}px;top:${r.top + (r.height - SIDE_H) / 2}px;width:${w}px;height:${SIDE_H}px;`;
+      } else if (below >= STRIP_H + 2 * GAP) {
+        const w = Math.min(r.width, W - 32);
+        tip.classList.add('home-tip-below');
+        tip.style.cssText = `left:${(W - w) / 2}px;top:${r.bottom + (below - STRIP_H) / 2}px;width:${w}px;height:${STRIP_H}px;`;
+      } else {
+        tip.classList.add('hidden');
+        return;
+      }
+      if (!homeTipRank) { homeTipRank = pickHomeTipRank(); fillHomeTip(tip, homeTipRank); }
+      tip.classList.remove('hidden');
+    }
+    function rotateHomeTip() {
+      const tip = homeTipElement();
+      if (tip.classList.contains('hidden') || document.hidden) return;
+      homeTipRank = pickHomeTipRank();
+      const inner = tip.querySelector('.home-tip-inner');
+      if (motionOff()) { fillHomeTip(tip, homeTipRank); return; }
+      inner.classList.add('home-tip-out');
+      setTimeout(() => { fillHomeTip(tip, homeTipRank); inner.classList.remove('home-tip-out'); }, 260);
+    }
+    function refreshHomeScreen() {
+      const open = document.body.classList.contains('lobby-open');
+      if (open) { refreshHomeBackdrop(); fitHomePanel(); }
+      layoutHomeTip();
+      if (open && !homeTipTimer) homeTipTimer = setInterval(rotateHomeTip, HOME_TIP_MS);
+      if (!open && homeTipTimer) { clearInterval(homeTipTimer); homeTipTimer = null; }
+    }
+    (function watchHomeScreen() {
+      const lobby = document.getElementById('lobbyScreen');
+      const panel = lobby?.querySelector(':scope > div.bg-slate-900');
+      let queued = false;
+      const soon = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; refreshHomeScreen(); }); };
+      window.addEventListener('resize', soon);
+      lobby?.addEventListener('scroll', soon, { passive: true });
+      // The panel changes height when a mode opens (Play Friends, Ranked).
+      if (panel && window.ResizeObserver) new ResizeObserver(soon).observe(panel);
+      soon();
+    })();
+
     // § Update prompt: a phone or installed app still running an older build
     // (left open, or restored from the background) is told a new version is
     // ready. The live page's BUILD stamp is read with no cache; if it's newer
@@ -29832,14 +30004,14 @@ video {
       // Apply persistent preferences even when there is no interrupted match
       // to restore. Previously theme/speed only repainted on the restore path,
       // making a saved choice appear forgotten on a fresh visit.
-      document.body.className = `bg-slate-950 text-slate-100 flex flex-col justify-between ${state.deckTheme || 'theme-obsidian'} relative select-none`;
+      setBodyDeckTheme(state.deckTheme);
       applyAccessibilityPrefs();
       updateSpeedByIndex(state.speedIndex ?? DEFAULT_SPEED_INDEX);
 
       const restored = loadGameState();
       savedGameChecked = true;
       if (restored && state.phase !== 'LOBBY') {
-        document.body.className = `bg-slate-950 text-slate-100 flex flex-col justify-between ${state.deckTheme || 'theme-obsidian'} relative select-none`;
+        setBodyDeckTheme(state.deckTheme);
         applyAccessibilityPrefs(); // className was just fully replaced above, which wipes high-contrast/reduce-motion -- reapply them
         dismissLobbyAndStart();
         updateSpeedByIndex(state.speedIndex ?? DEFAULT_SPEED_INDEX);

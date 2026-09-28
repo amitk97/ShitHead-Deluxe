@@ -1783,6 +1783,64 @@ async function runDevTestSuite() {
       assertTrue(state.players[0].hand.length >= pileBefore, 'Rival countered: the Pile came back to you');
     } finally { endTutorial(false); }
   });
+  await test('Home screen backdrop: equipped table signed in, default signed out, the event table during an event', () => {
+    const saved = { user: currentUser, table: equippedCosmetics.tableTheme, over: typeof seasonalNowOverride !== 'undefined' ? seasonalNowOverride : null };
+    try {
+      seasonalNowOverride = '2026-06-10T12:00';
+      equippedCosmetics.tableTheme = 'table-neon';
+      currentUser = null;
+      assertEqual(homeBackdropTableId(), 'default', 'Signed out: the default table');
+      currentUser = { uid: 'home_bg_test' };
+      assertEqual(homeBackdropTableId(), 'table-neon', 'Signed in: the equipped table');
+      seasonalNowOverride = '2026-10-25T12:00';
+      assertEqual(homeBackdropTableId(), 'table-halloween', 'During Halloween: the event table');
+      const bg = document.getElementById('homeBackdrop') || (refreshHomeBackdrop(), document.getElementById('homeBackdrop'));
+      bg.dataset.table = ''; refreshHomeBackdrop();
+      const img = getComputedStyle(bg).backgroundImage; assertTrue(img.startsWith('linear-gradient(rgba(2, 6, 23, 0.62)') && img.includes('url('), 'Heavily dimmed event table: ' + img.slice(0, 80));
+      assertEqual(getComputedStyle(bg).animationName, 'none', 'Not animated');
+    } finally {
+      currentUser = saved.user; equippedCosmetics.tableTheme = saved.table; seasonalNowOverride = saved.over;
+      const bg = document.getElementById('homeBackdrop'); if (bg) { bg.dataset.table = ''; refreshHomeBackdrop(); }
+    }
+  });
+  await test('Home screen card tip: the eight power cards, each with its rule; never over the panel or off screen', async () => {
+    assertEqual(HOME_TIP_RANKS, ['5', '6', '7', '8', '9', '10', 'J', 'JOKER'], 'Cards 5–10, Jack and Joker');
+    HOME_TIP_RANKS.forEach(r => assertTrue(!!CARD_HOLD_TEXT[r] && CARD_REFERENCE.some(x => x[0] === r), r + ' has a rule and a power'));
+    const lobby = document.getElementById('lobbyScreen');
+    const wasHidden = lobby.classList.contains('hidden');
+    lobby.classList.remove('hidden');
+    try {
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      refreshHomeScreen();
+      const panel = lobby.querySelector(':scope > div.bg-slate-900').getBoundingClientRect();
+      const header = document.querySelector('header').getBoundingClientRect();
+      assertTrue(panel.top >= header.bottom - 1 || lobby.scrollHeight > lobby.clientHeight, 'The panel starts below the header');
+      const tip = document.getElementById('homeCardTip');
+      if (!tip.classList.contains('hidden')) {
+        const t = tip.getBoundingClientRect();
+        assertTrue(t.bottom <= panel.top || t.top >= panel.bottom || t.right <= panel.left || t.left >= panel.right, 'The tip never covers the panel');
+        assertTrue(t.left >= 0 && t.right <= innerWidth && t.top >= 0 && t.bottom <= innerHeight, 'The tip stays on screen');
+      }
+      const first = homeTipRank; rotateHomeTip();
+      await new Promise(r => setTimeout(r, 300));
+      if (!tip.classList.contains('hidden')) assertTrue(homeTipRank !== first, 'It moves on to a different card');
+    } finally {
+      if (wasHidden) lobby.classList.add('hidden');
+      await new Promise(r => setTimeout(r, 0));
+    }
+  });
+  await test('Changing the deck keeps every other page class (lobby-open, reduce-motion)', () => {
+    const before = state.deckTheme;
+    document.body.classList.add('home-class-probe');
+    try {
+      selectDeckTheme('theme-emerald');
+      assertTrue(document.body.classList.contains('home-class-probe'), 'Other classes stay');
+      assertTrue(document.body.classList.contains('theme-emerald') && [...document.body.classList].filter(c => c.startsWith('theme-')).length === 1, 'Exactly one deck theme class');
+    } finally {
+      document.body.classList.remove('home-class-probe');
+      selectDeckTheme(before || 'theme-obsidian');
+    }
+  });
   await test('REGRESSION: the tutorial never writes a restorable saved game', () => {
     freshState(); tutorialTestSetup();
     try { localStorage.removeItem('shithead_game_state'); } catch (e) {}
