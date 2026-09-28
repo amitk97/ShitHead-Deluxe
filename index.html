@@ -13769,10 +13769,27 @@ video {
       tip.style.top = `${above >= minTop ? above : Math.max(minTop, Math.min(window.innerHeight - h - 8, r.bottom + 10))}px`;
       cardHoldShownAt = Date.now();
       if (typeof Haptics !== 'undefined') Haptics.vibrate?.(8);
+      if (tutorialWantsHold()) tutorialOnHold(el.id === 'discardPileContainer' ? 'pile' : info.own ? 'own' : 'other');
+    }
+    // Quick Start's hold step (require.holdCheck): hold the Pile and one of
+    // your own cards, in either order, to continue.
+    let tutorialHoldsDone = new Set();
+    function tutorialWantsHold() {
+      return typeof tutorialActive !== 'undefined' && tutorialActive && tutorialAwaitingAction && !!TUTORIAL_STEPS[tutorialStep]?.require?.holdCheck;
+    }
+    function tutorialOnHold(kind) {
+      if (kind === 'other') return;
+      tutorialHoldsDone.add(kind);
+      document.getElementById(kind === 'pile' ? 'discardPileContainer' : 'localHand')?.classList.remove('tutorial-glow');
+      if (tutorialHoldsDone.has('pile') && tutorialHoldsDone.has('own')) {
+        tutorialAwaitingAction = false;
+        const step = TUTORIAL_STEPS[tutorialStep];
+        tutorialDelay(() => { hideCardHold(); showCoachNote(step); }, 900);
+      }
     }
     document.addEventListener('pointerdown', (e) => {
       hideCardHold();
-      if (typeof tutorialActive !== 'undefined' && tutorialActive) return;
+      if (typeof tutorialActive !== 'undefined' && tutorialActive && !tutorialWantsHold()) return;
       const hit = holdTargetAt(e.target);
       if (!hit) return;
       const { el, info } = hit;
@@ -27787,6 +27804,14 @@ video {
         noteTarget: '#cardRefPanel'
       },
       {
+        text: "Press and hold any card to see what it does. Hold the Pile, then one of yours.",
+        target: ['#pileZone', '#localHand'],
+        scene: { hand: [['4', '♣'], ['8', '♦'], ['J', '♠']], pile: [['6', '♥']] },
+        require: { holdCheck: true },
+        coachNote: "Hold any card you can see, any time in a game, to check it.",
+        noteTarget: ['#pileZone', '#localHand']
+      },
+      {
         text: "The ▦ Play Matrix shows which card can go on which. Tap the glowing ▦.",
         target: '#matrixRefBtn',
         require: { tapCheck: '#matrixRefBtn' },
@@ -28305,6 +28330,11 @@ video {
       document.getElementById('localTableSlots')?.classList.toggle('tutorial-glow', !!tapSel && !refBtnTap && tapSel.includes('#localTableSlots'));
       document.getElementById('cardRefBtn')?.classList.toggle('tutorial-glow', tapSel === '#cardRefBtn');
       document.getElementById('matrixRefBtn')?.classList.toggle('tutorial-glow', tapSel === '#matrixRefBtn');
+      // Hold step: the Pile and the hand glow until each has been held.
+      const holdStep = !!(step.require && step.require.holdCheck);
+      if (holdStep) tutorialHoldsDone = new Set();
+      document.getElementById('discardPileContainer')?.classList.toggle('tutorial-glow', holdStep);
+      document.getElementById('localHand')?.classList.toggle('tutorial-glow', holdStep);
       // The Card Powers / Play Matrix panel opened by a tap step closes once the lesson moves on.
       if (tapSel !== '#cardRefBtn' && typeof cardRefOpen !== 'undefined' && cardRefOpen) toggleCardReference(true);
       if (tapSel !== '#matrixRefBtn' && typeof matrixRefOpen !== 'undefined' && matrixRefOpen) toggleMatrixReference(true);
@@ -28623,6 +28653,10 @@ video {
       }
       if (step.require.tapCheck) {
         notifyBanner('Tap the highlighted area for this step.');
+        return false;
+      }
+      if (step.require.holdCheck) {
+        notifyBanner('Press and hold the Pile, then one of your cards.');
         return false;
       }
       const want = step.require;
@@ -29073,6 +29107,7 @@ video {
       resetPileInspectHint();
       document.getElementById('playSelectedBtn')?.classList.remove('tutorial-glow');
       document.getElementById('cardRefBtn')?.classList.remove('tutorial-glow');
+      ['discardPileContainer', 'localHand'].forEach(id => document.getElementById(id)?.classList.remove('tutorial-glow'));
       document.getElementById('matrixRefBtn')?.classList.remove('tutorial-glow');
       if (typeof cardRefOpen !== 'undefined' && cardRefOpen) toggleCardReference(true);
       if (typeof matrixRefOpen !== 'undefined' && matrixRefOpen) toggleMatrixReference(true);

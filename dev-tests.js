@@ -1135,8 +1135,8 @@ async function runDevTestSuite() {
     }
   });
 
-  await test('Quick Start: at most 8 short steps, and the Tutorial button starts it the first time', () => {
-    assertTrue(TUTORIAL_MODULE_QUICK_START.length <= 8, 'No more than 8 steps');
+  await test('Quick Start: at most 9 short steps, and the Tutorial button starts it the first time', () => {
+    assertTrue(TUTORIAL_MODULE_QUICK_START.length <= 9, 'No more than 9 steps');
     TUTORIAL_MODULE_QUICK_START.forEach((step, i) => {
       assertTrue(step.text.split(/\s+/).length <= 18, `Step ${i + 1} is one short sentence (${step.text.split(/\s+/).length} words)`);
       if (step.coachNote) assertTrue(step.coachNote.split(/\s+/).length <= 18, `Step ${i + 1} note is short`);
@@ -1599,6 +1599,29 @@ async function runDevTestSuite() {
       const zone = document.getElementById('localPlayerZone');
       assertTrue(Number(banner.style.zIndex) > Number(zone.style.zIndex || 0), `Bonus prompt (${banner.style.zIndex}) above the lifted play area (${zone.style.zIndex})`);
       state.pendingFollowUp = null;
+    } finally { endTutorial(false); }
+  });
+  await test('Quick Start teaches press and hold: the step waits for a hold on the Pile AND one of your cards', async () => {
+    freshState(); tutorialTestSetup();
+    try {
+      launchTutorialModule('quick_start');
+      const idx = TUTORIAL_STEPS.findIndex(st => st.require && st.require.holdCheck);
+      assertTrue(idx > 0 && TUTORIAL_STEPS[idx - 1].require?.tapCheck === '#cardRefBtn', 'Right after the Card Powers step');
+      showTutorialStep(idx);
+      const pile = document.getElementById('discardPileContainer'), hand = document.getElementById('localHand');
+      assertTrue(pile.classList.contains('tutorial-glow') && hand.classList.contains('tutorial-glow'), 'The Pile and the hand glow');
+      const hold = async (el) => {
+        const r = el.getBoundingClientRect();
+        el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: r.left + 5, clientY: r.top + 5 }));
+        await new Promise(res => setTimeout(res, CARD_HOLD_MS + 60));
+        el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      };
+      await hold(pile);
+      assertTrue(!pile.classList.contains('tutorial-glow'), 'The Pile stops glowing once held');
+      assertTrue(tutorialAwaitingAction, 'Still waiting for one of your cards');
+      await hold(hand.querySelector('[data-card-id]'));
+      assertTrue(!tutorialAwaitingAction, 'Both held: the step is done');
+      assertTrue(TUTORIAL_STEPS[idx].text.split(/\s+/).length <= 18, 'Short text');
     } finally { endTutorial(false); }
   });
   await test('REGRESSION: tutorial Continue hides while the Coach plays (a second tap skipped the 3 lesson\'s Coach 3)', () => {
