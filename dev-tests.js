@@ -6550,6 +6550,19 @@ async function runDevTestSuite() {
       document.getElementById('themesModal').classList.add('hidden');
     }
   });
+  await test('Devices: the table scales up on tablets/PCs only, and a sideways phone is asked to turn upright', () => {
+    const css = [...document.querySelectorAll('style')].map(el => el.textContent).join('\n');
+    assertTrue(/@media \(min-width: 700px\) and \(min-height: 700px\)[\s\S]{0,80}--tbl-k: 1\.3/.test(css), 'tablets raise the table scale');
+    assertTrue(/@media \(min-width: 1100px\) and \(min-height: 800px\)[\s\S]{0,80}--tbl-k: 1\.45/.test(css), 'PCs raise it further');
+    const k = tableScale();
+    const big = innerWidth >= 700 && innerHeight >= 700;
+    assertTrue(big ? k > 1 : k === 1, 'tableScale() follows the screen', { k, w: innerWidth, h: innerHeight });
+    const hint = document.getElementById('rotateHint');
+    assertTrue(!!hint && hint.parentElement === document.body, 'the rotate prompt sits at the top level');
+    assertTrue(getComputedStyle(hint).display === 'none' || !matchMedia('(orientation: landscape) and (max-height: 500px) and (pointer: coarse)').matches ? getComputedStyle(hint).display === 'none' : true, 'hidden unless a phone is on its side');
+    assertTrue(/\(orientation: landscape\) and \(max-height: 500px\) and \(pointer: coarse\)/.test(css), 'only touch phones on their side get it');
+    assertTrue(!/[\u{1F300}-\u{1FAFF}]/u.test(hint.textContent), 'no emoji in the prompt');
+  });
   await test('4K: every table, card back and picture is vector art or a 3x tile, with no bitmap inside', async () => {
     const tiled = new Set(Object.keys(TILED_TABLE_LIGHT));
     Object.entries(TABLE_ART).forEach(([k, src]) => {

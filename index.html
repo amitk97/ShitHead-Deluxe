@@ -258,11 +258,11 @@
     /* Card contents scale with the card itself (same vh basis as .card-base),
        so ranks, suits and icons stay inside the card at every size — and stay
        correct for any future theme or size change. */
-    .card-corner-rank { font-size: clamp(8px, 1.65vh, 14px); }
-    .card-corner-suit { font-size: clamp(6px, 1.2vh, 10px); }
-    .card-corner-icon { width: clamp(5px, 1.15vh, 9px); height: clamp(5px, 1.15vh, 9px); }
-    .card-centre-icon { width: clamp(10px, 2.2vh, 20px); height: clamp(10px, 2.2vh, 20px); }
-    .card-centre-suit { font-size: clamp(11px, 2.3vh, 20px); }
+    .card-corner-rank { font-size: clamp(8px, 1.65vh, calc(14px * var(--tbl-k,1))); }
+    .card-corner-suit { font-size: clamp(6px, 1.2vh, calc(10px * var(--tbl-k,1))); }
+    .card-corner-icon { width: clamp(5px, 1.15vh, calc(9px * var(--tbl-k,1))); height: clamp(5px, 1.15vh, calc(9px * var(--tbl-k,1))); }
+    .card-centre-icon { width: clamp(10px, 2.2vh, calc(20px * var(--tbl-k,1))); height: clamp(10px, 2.2vh, calc(20px * var(--tbl-k,1))); }
+    .card-centre-suit { font-size: clamp(11px, 2.3vh, calc(20px * var(--tbl-k,1))); }
     /* Very small hand cards (large hands) drop the corner icon entirely —
        at that size it is unreadable anyway and only risks crowding. */
     .card-tiny .card-corner-icon { display: none; }
@@ -886,13 +886,17 @@
     }
 
     /* Viewport-Anchored Card Scaling */
+    /* --tbl-k: the table scale. 1 on phones; tablets and PCs raise it
+       (media queries below) so the table fills big screens instead of
+       sitting small in the middle. Card caps, card text, the hand's cap
+       (tableScale() in JS) and the player's area width all follow it. */
     .card-base {
-      width: clamp(52px, 8.5vh, 82px);
-      height: clamp(75px, 12.5vh, 120px);
+      width: clamp(52px, 8.5vh, calc(82px * var(--tbl-k,1)));
+      height: clamp(75px, 12.5vh, calc(120px * var(--tbl-k,1)));
     }
     .card-opponent-slot {
-      width: calc(clamp(30px, min(8vw, 6.0vh), 52px) * var(--opp-scale, 1));
-      height: calc(clamp(43px, min(11.5vw, 8.8vh), 76px) * var(--opp-scale, 1));
+      width: calc(clamp(30px, min(8vw, 6.0vh), calc(52px * var(--tbl-k,1))) * var(--opp-scale, 1));
+      height: calc(clamp(43px, min(11.5vw, 8.8vh), calc(76px * var(--tbl-k,1))) * var(--opp-scale, 1));
     }
     /* Opponent card rank/suit text scales down in step with the card itself
        (which now also shrinks based on available width, not just height) —
@@ -900,15 +904,43 @@
     .opponent-card-centre { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; pointer-events:none; }
     .card-opponent-slot .card-centre-icon { width:calc(clamp(10px,2.2vh,20px) * var(--opp-scale,1)); height:calc(clamp(10px,2.2vh,20px) * var(--opp-scale,1)); }
     .opp-corner-text {
-      font-size: calc(clamp(5px, min(1.7vw, 1.25vh), 8px) * var(--opp-scale, 1));
+      font-size: calc(clamp(5px, min(1.7vw, 1.25vh), calc(8px * var(--tbl-k,1))) * var(--opp-scale, 1));
     }
     .opp-center-text {
-      font-size: calc(clamp(8px, min(2.5vw, 1.9vh), 12px) * var(--opp-scale, 1));
+      font-size: calc(clamp(8px, min(2.5vw, 1.9vh), calc(12px * var(--tbl-k,1))) * var(--opp-scale, 1));
     }
     .card-table {
-      width: clamp(46px, 7.5vh, 68px);
-      height: clamp(66px, 11.0vh, 98px);
+      width: clamp(46px, 7.5vh, calc(68px * var(--tbl-k,1)));
+      height: clamp(66px, 11.0vh, calc(98px * var(--tbl-k,1)));
     }
+    /* Tablets (portrait or landscape) and PCs: a bigger table. Phones keep 1. */
+    @media (min-width: 700px) and (min-height: 700px) {
+      #gameTable { --tbl-k: 1.3; }
+      #gameTable #localPlayerZone { max-width: 56rem; }
+      #gameTable #centerArena { max-height: 34vh; }
+    }
+    /* The home panel is laid out for phones; tablets and PCs zoom it up
+       (the screen scrolls if a tall mode runs past the bottom). */
+    @media (min-width: 700px) and (min-height: 760px) {
+      #lobbyScreen > div.bg-slate-900 { zoom: 1.25; }
+    }
+    @media (min-width: 1100px) and (min-height: 900px) {
+      #lobbyScreen > div.bg-slate-900 { zoom: 1.4; }
+    }
+    @media (min-width: 1100px) and (min-height: 800px) {
+      #gameTable { --tbl-k: 1.45; }
+      #gameTable #localPlayerZone { max-width: 64rem; }
+    }
+    /* A phone turned sideways has no room for the table: ask for upright
+       (the installed app is portrait-only already). */
+    #rotateHint { display:none; }
+    @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+      #rotateHint { display:flex; position:fixed; inset:0; z-index:10000; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:#020617; color:#e2e8f0; font-weight:700; font-size:15px; text-align:center; padding:24px; }
+      #rotateHint svg { width:64px; height:64px; color:#fbbf24; }
+      body.reduce-motion #rotateHint svg { animation:none; }
+      #rotateHint svg { animation:rotate-hint 2.4s var(--ease-soft, ease-in-out) infinite; }
+    }
+    @keyframes rotate-hint { 0%,25% { transform:rotate(90deg); } 55%,100% { transform:rotate(0deg); } }
 
     .brand-logo-rendered {
       font-family: 'Cinzel', Georgia, serif;
@@ -4494,6 +4526,7 @@ video {
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 theme-obsidian select-none">
+  <div id="rotateHint" role="alert" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></svg><span>Turn your phone upright to play.</span></div>
   <!-- Shared two-tone navigation icon pack. A navy rounded tile, bold pale
        linework and one bright accent keep every icon coherent in dark mode. -->
   <!-- UI icon set (icon(), tierBadge()): one line style; the Diamond and tier badges are the only full-colour ones. -->
@@ -13229,11 +13262,18 @@ video {
       const zoneW = zone && zone.clientWidth > 0 ? zone.clientWidth : window.innerWidth;
       return Math.max(200, Math.min(zoneW, window.innerWidth) - 48);
     }
+    // The table scale (--tbl-k on #gameTable): 1 on phones, more on
+    // tablets and PCs (see the .card-base CSS).
+    function tableScale() {
+      const t = typeof document !== 'undefined' && document.getElementById('gameTable');
+      const k = t ? parseFloat(getComputedStyle(t).getPropertyValue('--tbl-k')) : NaN;
+      return k > 0 ? k : 1;
+    }
     function computeHandCardMetrics(maxRowSize, rowCount = 1, availableHeightPx = null) {
       const vh = window.innerHeight / 100;
       // What the card would naturally be if only viewport height mattered
       // (matches .card-base's own clamp bounds).
-      const heightBasedWidth = Math.min(82, Math.max(52, 8.5 * vh));
+      const heightBasedWidth = Math.min(82 * tableScale(), Math.max(52, 8.5 * vh));
 
       // How much horizontal room a row of maxRowSize overlapping cards can
       // actually have — the hand container has px-4 (16px) padding each
@@ -14599,8 +14639,9 @@ video {
         // The longest row may overlap down to its rank strip (a third of
         // the card, at least 22px) to let the cards grow wider.
         const k = Math.max(...rows.map(r => r.children.length), 1);
-        const byWidth = k > 1 ? (handRowWidth() / (1 + (k - 1) * 0.34)) / 0.69 : HAND_MAX_CARD_H;
-        newH = Math.min(byHeight, byWidth, HAND_MAX_CARD_H);
+        const cap = HAND_MAX_CARD_H * tableScale();
+        const byWidth = k > 1 ? (handRowWidth() / (1 + (k - 1) * 0.34)) / 0.69 : cap;
+        newH = Math.min(byHeight, byWidth, cap);
         if (!(newH > h + 1)) return;
       }
       const ratio = newH / h;
