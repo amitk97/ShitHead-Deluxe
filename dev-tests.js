@@ -4600,7 +4600,7 @@ async function runDevTestSuite() {
     await new Promise((r) => setTimeout(r, 0));
     listeners.leaderboard({ val: () => ({ bo: { username: 'Bo', rating: 900, avatar: 'avatar-crown-diamond' } }) });
     const lbHtml = document.getElementById('leaderboardArea').innerHTML;
-    assertEqual(lbHtml, (() => { const d = document.createElement('div'); d.innerHTML = leaderboardRowHtml({ username: 'Bo', rating: 900, avatar: 'avatar-crown-diamond' }, 1); return d.innerHTML; })(), 'A changed picture must repaint the open Leaderboard');
+    assertEqual(lbHtml, (() => { const d = document.createElement('div'); d.innerHTML = leaderboardRowHtml({ usernameKey: 'bo', username: 'Bo', rating: 900, avatar: 'avatar-crown-diamond' }, 1); return d.innerHTML; })(), 'A changed picture must repaint the open Leaderboard');
     document.getElementById('leaderboardModal').classList.add('hidden');
     await new Promise((r) => setTimeout(r, 0));
     assertTrue(!listeners.leaderboard, 'Closing the Leaderboard must stop listening');
@@ -6549,6 +6549,40 @@ async function runDevTestSuite() {
       cosmeticPurchaseState = saved; equippedCosmetics = savedEq; applyEquippedCosmetics(); renderPersonalisationCosmetics();
       document.getElementById('themesModal').classList.add('hidden');
     }
+  });
+  await test('Leaderboard: tapping another player opens their card; ignored players are hidden', () => {
+    const other = leaderboardRowHtml({ uid: 'u9', username: 'Sam', avatar: 'avatar-joker', count: 3 }, 1, 'challenges');
+    const host = document.createElement('div'); host.innerHTML = other;
+    const who = host.querySelector('.lb-who');
+    assertTrue(!!who && who.dataset.lbUid === 'u9' && who.getAttribute('role') === 'button', 'the picture + name are a button carrying the uid');
+    const ranked = document.createElement('div');
+    ranked.innerHTML = leaderboardRowHtml({ usernameKey: 'sam', username: 'Sam', rating: 700, wins: 1, losses: 0 }, 2, 'ranked');
+    assertEqual(ranked.querySelector('.lb-who')?.dataset.lbKey, 'sam', 'ranked rows carry their username key');
+    assertTrue(typeof openProfileCard === 'function' && typeof showPlayerPopupFor === 'function', 'the card opens outside a match too');
+    const saved = leaderboardIgnored;
+    try {
+      leaderboardIgnored = { uids: new Set(['u9']), names: new Set(['bob']), forUid: 'me' };
+      assertTrue(leaderboardIsIgnored({ uid: 'u9', username: 'Sam' }), 'an ignored uid is hidden from the boards');
+      assertTrue(leaderboardIsIgnored({ usernameKey: 'bob', username: 'Bob' }), 'an ignored name is hidden from Ranked');
+      assertTrue(!leaderboardIsIgnored({ uid: 'u2', username: 'Amy' }), 'others stay');
+      leaderboardHideIgnored('u5', 'Zed');
+      assertTrue(leaderboardIsIgnored({ uid: 'u5' }) && leaderboardIsIgnored({ username: 'zed' }), 'ignoring from the card hides them at once');
+    } finally { leaderboardIgnored = saved; }
+  });
+  await test('Hover hints never cover a card description; the Play Matrix is explained in plain words', () => {
+    const tip = document.getElementById('dynamicTooltip');
+    const hold = document.getElementById('cardHoldTip') || Object.assign(document.createElement('div'), { id: 'cardHoldTip' });
+    if (!hold.parentElement) document.body.appendChild(hold);
+    const wasHidden = hold.classList.contains('hidden');
+    try {
+      hold.classList.remove('hidden');
+      const pile = document.getElementById('discardPileContainer');
+      pile.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      assertTrue(!tip.classList.contains('visible'), 'no hint while a card description is showing');
+    } finally { hold.classList.toggle('hidden', wasHidden); window.hideDynamicTip?.(); }
+    const step = TUTORIAL_MODULE_QUICK_START.find(st => st.require?.tapCheck === '#matrixRefBtn');
+    assertTrue(/down the left/.test(step.coachNote) && /along the top/.test(step.coachNote) && !/Row =|✓|✗/.test(step.coachNote), 'the tutorial says it in plain words', step.coachNote);
+    assertTrue(/card you want to play/.test(document.getElementById('matrixRefHint').textContent), 'and so does the panel key');
   });
   await test('Update prompt: a newer live build offers Update now / Later; an older or equal one does nothing', () => {
     const cur = gameVersionNumber(getGameVersionLabel());
