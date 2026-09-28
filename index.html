@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v206 (ShitHead-Deluxe-188) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-28-v207 (ShitHead-Deluxe-189) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -10296,7 +10296,20 @@ video {
           const btn = document.createElement('button');
           btn.className = "py-2 px-3 min-w-[92px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-black tracking-wider uppercase rounded-lg text-[10px] text-center transition transform hover:scale-105";
           btn.textContent = target.name;
+          // A lesson can ask for one target (Joker Duel: "pick Rival").
+          const wanted = tutorialActive ? TUTORIAL_STEPS[tutorialStep]?.jokerTarget : null;
+          if (wanted && target.id !== wanted) {
+            btn.classList.add('opacity-40');
+            btn.dataset.tutorialLocked = '1';
+          } else if (wanted) {
+            btn.classList.add('tutorial-glow');
+          }
           btn.onclick = () => {
+            if (btn.dataset.tutorialLocked) {
+              const want = state.players.find(p => p.id === wanted);
+              notifyBanner(`Pick ${want ? want.name : 'the highlighted player'} this time.`);
+              return;
+            }
             bar.classList.add('hidden');
             pendingJokerChoice = null;
             // Act on the live seats (a room update may have replaced the
@@ -10314,6 +10327,8 @@ video {
           };
           container.appendChild(btn);
         });
+        // Above the tutorial's lifted play area (z 80), like Bonus Draw's prompt.
+        bar.style.zIndex = tutorialActive ? '84' : '';
         bar.classList.remove('hidden');
       }
     }
@@ -17676,6 +17691,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v207: [
+        ['🃏', 'Joker Duel lesson: a deck only has two Jokers, so now just Rival holds the other one, and you pick Rival to see the counter.']
+      ],
       v206: [
         ['🔥', 'Snap Burn lesson: the Snap Burn banner at the bottom no longer hides behind your cards. Tap either Snap Burn button.'],
         ['🏠', 'The home screen no longer shows the last lesson or game behind it.'],
@@ -28002,16 +28020,20 @@ video {
         coachNote: "No counter. Whoever you picked took the whole Pile, and you go again. Your Joker's burnt either way."
       },
       {
-        text: "One more Joker, this time both opponents have one too. Play it and pick either one.",
+        // A deck has two Jokers, so only one opponent can hold the other one:
+        // Rival. The picker only lets you pick Rival here (jokerTarget).
+        text: "New deal. This time Rival holds the other Joker. Play yours and pick Rival.",
         target: '#localHand [data-rank="JOKER"]',
         scene: {
           hand: [['JOKER', 'JOKER']],
           pile: [['Q', '♠', 'you'], ['A', '♦', 'coach'], ['A', '♣', 'rival']],
-          coach: [['JOKER', 'JOKER'], ['4', '♦']], rival: [['JOKER', 'JOKER'], ['5', '♥']]
+          coach: [['4', '♦'], ['6', '♣']], rival: [['JOKER', 'JOKER'], ['5', '♥']]
         },
         require: { rank: 'JOKER' },
+        jokerTarget: 'tut_rival',
+        jokerPromptText: "Pick Rival.",
         noteTarget: '#pileZone',
-        coachNote: "Countered. The Pile comes straight back to you, and both Jokers burn. That's the risk with every Joker."
+        coachNote: "Countered. Rival's Joker sent the Pile straight back to you, and both Jokers burn. That's the risk with every Joker."
       }
     ];
 
@@ -29443,7 +29465,13 @@ video {
         }
         return;
       }
-      if (!document.getElementById('floatingJokerBar')?.classList.contains('hidden')) return;
+      if (!document.getElementById('floatingJokerBar')?.classList.contains('hidden')) {
+        if (step.jokerPromptText) {
+          document.getElementById('tutorialText').textContent = step.jokerPromptText;
+          requestAnimationFrame(() => positionTutorialUI('#floatingJokerBar'));
+        }
+        return;
+      }
       if (step.postPlayNote) {
         tutorialDelay(() => {
           tutorialShowInterimNote(step.postPlayNote, step.postPlayNoteTarget);

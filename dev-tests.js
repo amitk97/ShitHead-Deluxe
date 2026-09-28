@@ -1759,6 +1759,30 @@ async function runDevTestSuite() {
       await new Promise(res => setTimeout(res, 0));
     }
   });
+  await test('Joker Duel lesson: only two Jokers in play, and the counter step makes you pick Rival, who counters', () => {
+    freshState(); tutorialTestSetup();
+    try {
+      launchTutorialModule('joker_duel');
+      const idx = TUTORIAL_MODULE_JOKER_DUEL.findIndex(st => st.jokerTarget);
+      assertTrue(idx > 0, 'A step asks for a particular target');
+      showTutorialStep(idx);
+      const jokers = state.players.flatMap(p => [...p.hand, ...p.faceUp, ...p.faceDown]).filter(c => c.isJoker);
+      assertEqual(jokers.length, 2, 'Exactly two Jokers on the table (yours and one other)');
+      const rival = state.players.find(p => p.id === 'tut_rival'), coach = state.players.find(p => p.id === 'tut_bot');
+      assertTrue(rival.hand.some(c => c.isJoker) && !coach.hand.some(c => c.isJoker), 'Rival holds the other Joker, not the Coach');
+      assertTrue(/pick Rival/.test(TUTORIAL_MODULE_JOKER_DUEL[idx].text), 'The text says to pick Rival');
+      const pileBefore = state.discardPile.length;
+      executePlayCards('tut_you', state.players[0].hand.filter(c => c.isJoker));
+      const btns = [...document.querySelectorAll('#jokerInlineTargets button')];
+      const coachBtn = btns.find(b => b.textContent === 'Coach'), rivalBtn = btns.find(b => b.textContent === 'Rival');
+      assertTrue(!!coachBtn && !!rivalBtn, 'The picker offers both');
+      coachBtn.click();
+      assertTrue(!document.getElementById('floatingJokerBar').classList.contains('hidden'), 'Picking Coach is refused');
+      rivalBtn.click();
+      assertTrue(document.getElementById('floatingJokerBar').classList.contains('hidden'), 'Picking Rival goes ahead');
+      assertTrue(state.players[0].hand.length >= pileBefore, 'Rival countered: the Pile came back to you');
+    } finally { endTutorial(false); }
+  });
   await test('REGRESSION: the tutorial never writes a restorable saved game', () => {
     freshState(); tutorialTestSetup();
     try { localStorage.removeItem('shithead_game_state'); } catch (e) {}
