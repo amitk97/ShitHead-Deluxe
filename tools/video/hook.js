@@ -33,12 +33,12 @@ const OUT = path.join(__dirname, 'shithead-hook-blind-flip.webm');
   await ev(() => { V.hideCaption(); V.botPlay(1, 'K'); });
   await wait(page, 1200);
 
-  // Your last card: a 2 goes on anything.
+  // Your last card: a 2, which beats the King (a 2 goes on anything but a Jack).
   await ev(() => V.caption('Your turn. One card. One flip.'));
   await wait(page, 1300);
   await ev(() => V.meBlind(0));
   await wait(page, 1500);
-  await ev(() => { V.caption('A 2 goes on anything. YOU WIN 🏆'); if (!document.querySelector('#victoryFxLayer .rbat')) playVictoryEffect('victory-halloween'); });
+  await ev(() => { V.caption('A 2 beats the King. YOU WIN 🏆'); if (!document.querySelector('#victoryFxLayer .rbat')) playVictoryEffect('victory-halloween'); });
   await wait(page, 2600);
 
   await ev(() => { V.hideCaption(); V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">The card game you played<br>at uni. Now on your phone.</div><div class="url">shithead-pro.web.app</div><div class="sub">Free · no download</div>`); });

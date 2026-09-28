@@ -15,7 +15,7 @@ the scripts in `tools/video/`. Social apps prefer MP4: open a file in CapCut
 Suggested captions:
 
 - **Hook:** "Last card. Face down. Everything on one flip 😱 #shithead #cardgame #palace"
-- **Gauntlet:** "5 bots. 3 lives. Nobody's beaten the Boss first try 😈 #cardgames #shithead"
+- **Gauntlet:** "5 bots. 3 lives. A new run every day. Can you beat the Boss? 😈 #cardgames #shithead"
 - **Uni:** "The card game every uni kitchen knew 🍻 Now on your phone. #shithead #uni #cardgame #palace #karma"
 
 The game goes by Shithead, Palace, Karma and Shed, so use all of those in

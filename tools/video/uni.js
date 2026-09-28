@@ -37,7 +37,7 @@ const OUT = path.join(__dirname, 'shithead-uni.webm');
   await ev(() => V.botPlay(1, 'K')); await wait(page, 1000);
 
   // A 2 resets it.
-  await ev(() => V.caption('A 2 goes on anything and resets it 🔄'));
+  await ev(() => V.caption('A 2 resets it (on anything but a Jack) 🔄'));
   await wait(page, 500);
   await ev(() => V.botPlay(2, '2')); await wait(page, 1800);
 
