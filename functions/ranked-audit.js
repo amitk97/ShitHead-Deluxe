@@ -243,6 +243,10 @@ function auditTransition(before, after, ctx) {
     if (!b || b.hasFinished || !a.hasFinished) return;
     if (!seatCards(a).length) return;
     if (a.isBot) return;
+    // A stalemate draw ends the game for everyone still holding cards. It
+    // can't be checked from one write (it needs the whole run of turns), so
+    // it's noted, soft, for the owner to look at.
+    if (a.drew) { add('draw', false, `drew holding ${seatCards(a).length} cards (${Number(after.stalemate?.turns) || 0} turns without progress)`, id); return; }
     const others = [...afterSeats.values()].filter((s) => s.id !== id);
     const othersDone = others.every((s) => s.hasFinished);
     // The last one left is the ShitHead: finished last, still holding cards.

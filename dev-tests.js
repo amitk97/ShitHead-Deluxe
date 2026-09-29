@@ -92,7 +92,7 @@ async function runDevTestSuite() {
       // here, that leaks into whichever test runs next and makes
       // isLocalPlayersTurnNow() falsely false for them.
       burnResolving: false, turnTransitionLocked: false, blindRevealing: false,
-      turnDeadline: null, localPlayerId: 'p1', difficulty: 'medium', players: []
+      turnDeadline: null, localPlayerId: 'p1', difficulty: 'medium', players: [], stalemate: null
     }, overrides || {});
   }
 
@@ -2200,6 +2200,67 @@ async function runDevTestSuite() {
     const players = [1, 2, 3, 4].map(n => makePlayer({ id: `p${n}`, name: `P${n}`, hasFinished: true, finishRank: n }));
     const html = buildFinalStandingsHtml(players, 'p1', false);
     [1, 2, 3, 4].forEach(n => assertTrue(html.includes(`#${n}`) && html.includes(`P${n}`), `Seat ${n} must appear in a 4-player standings box`));
+  });
+  await test(`Stalemate: the same position coming round ${STALEMATE_REPEATS} times ends in a draw (warned first); nobody wins it`, () => {
+    const x = makeCard('4'), y = makeCard('K');
+    const a = makePlayer({ id: 'p1', name: 'Amit', hand: [x, makeCard('5')] });
+    const b = makePlayer({ id: 'p2', name: 'Pooja', isBot: true, hand: [y] });
+    freshState({ players: [a, b], drawPile: [], discardPile: [] });
+    const banners = [];
+    const savedBanner = notifyBanner;
+    notifyBanner = (msg) => banners.push(msg);
+    try {
+      // A loop: Amit plays his 4, Pooja picks it up, plays it back, Amit picks it up.
+      const steps = [
+        () => { a.hand = a.hand.filter(c => c !== x); state.discardPile = [x]; state.currentTurnIndex = 1; },
+        () => { b.hand.push(...state.discardPile); state.discardPile = []; state.currentTurnIndex = 0; },
+        () => { b.hand = b.hand.filter(c => c !== x); state.discardPile = [x]; state.currentTurnIndex = 0; },
+        () => { a.hand.push(...state.discardPile); state.discardPile = []; state.currentTurnIndex = 0; }
+      ];
+      noteStalemateTurn();
+      noteStalemateTurn(); // the same position twice in a row is counted once
+      let ended = false, n = 0;
+      while (!ended && n < 100) { steps[n % 4](); n++; noteStalemateTurn(); ended = checkStalemate(); }
+      assertTrue(ended && n === (STALEMATE_REPEATS - 1) * 4, `Coming round the ${STALEMATE_REPEATS}th time ends it (after ${n} turns)`);
+      assertTrue(banners.some(m => /ends in a draw soon/.test(m)), 'Players are warned one time round before');
+      assertEqual(state.phase, 'FINISHED', 'The match is over');
+      assertTrue(a.drew && b.drew && a.finishRank === 1 && b.finishRank === 1, 'Both drew and share the place');
+      assertEqual(matchPlacingInfo(a).title, 'Draw', 'The summary says Draw');
+      assertTrue(!isShitHead(a) && !isShitHead(b), 'Nobody is the ShitHead');
+      assertTrue(buildFinalStandingsHtml([a, b], 'p1', false).includes('Draw'), 'Final Standings marks the draw');
+      assertTrue(/Draw/.test(matchHistoryHtml([{ at: Date.now(), mode: 'bots', label: 'Vs Bots', place: 1, of: 2, draw: true, players: [], stats: {} }])), 'Match History shows a draw, not a win');
+    } finally { notifyBanner = savedBanner; hideMatchEndUI(); }
+  });
+  await test(`Stalemate: a backstop after ${STALEMATE_TURNS} turns without progress; a burn, a draw from the Deck or a table card starts the count again`, () => {
+    const a = makePlayer({ id: 'p1', hand: Array.from({ length: 200 }, (_, i) => makeCard(String(4 + (i % 5)))) });
+    const b = makePlayer({ id: 'p2', hand: [makeCard('K')], faceUp: [makeCard('Q')] });
+    freshState({ players: [a, b], drawPile: [], discardPile: [] });
+    const savedBanner = notifyBanner;
+    notifyBanner = () => {};
+    try {
+      const play = () => { state.discardPile.push(a.hand.shift()); state.currentTurnIndex ^= 1; noteStalemateTurn(); return checkStalemate(); };
+      noteStalemateTurn();
+      for (let i = 0; i < 40; i++) play();
+      assertEqual(state.stalemate.turns, 40, 'Each new position is a turn without progress');
+      b.hand.push(b.faceUp.pop()); // a table card leaves the table
+      noteStalemateTurn();
+      assertEqual(state.stalemate.turns, 0, 'A table card is progress');
+      let ended = false, n = 0;
+      while (!ended && n < 400) { ended = play(); n++; }
+      assertTrue(ended && n === STALEMATE_TURNS, `The backstop lands on turn ${STALEMATE_TURNS} (got ${n})`);
+      assertTrue(a.drew && b.drew, 'Both drew');
+    } finally { notifyBanner = savedBanner; hideMatchEndUI(); }
+  });
+  await test('Stalemate: online, only the match driver calls the draw', () => {
+    const a = makePlayer({ id: 'p1', hand: [makeCard('4')] }), b = makePlayer({ id: 'p2', hand: [makeCard('5')] });
+    freshState({ players: [a, b], stalemate: { key: 'x', sig: 'y', turns: STALEMATE_TURNS } });
+    state.stalemate.key = stalemateKey();
+    const savedAuth = hasMatchAuthority;
+    try {
+      state.isMultiplayer = true;
+      hasMatchAuthority = () => false;
+      assertTrue(!checkStalemate() && state.phase === 'PLAY', 'Another phone never ends the match');
+    } finally { hasMatchAuthority = savedAuth; state.isMultiplayer = false; }
   });
   await test('REGRESSION: showMatchEndUI hides the Turn Indicator and shows the Final Standings box; hideMatchEndUI reverses it', () => {
     freshState({ isMultiplayer: false, isRanked: false, drawPile: [] });

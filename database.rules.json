@@ -7,8 +7,10 @@
         "createdAt"
       ],
       "$roomCode": {
-        ".read": true,
-        ".write": "$roomCode.matches(/^[0-9]{6}$/)",
+        ".read": "data.child('isRanked').val() !== true || auth != null",
+        ".write": "$roomCode.matches(/^[0-9]{6}$/) &&
+          ((data.child('isRanked').val() !== true && newData.child('isRanked').val() !== true) ||
+          auth != null)",
         ".validate": "newData.hasChildren(['phase'])"
       }
     },

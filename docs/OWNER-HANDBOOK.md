@@ -152,6 +152,7 @@ The support inbox is **support.shitheaddeluxe@gmail.com**. The "Contact Support"
 ### How Ranked points work
 - Each game: the usual rating change (beating a stronger player gives more), plus **10 bonus points for every win**.
 - Win streak bonus, once when the streak reaches: 2 wins **+5**, 3 **+10**, 5 **+15**, 10 **+20** (and +20 again at 20, 30…). Losing streaks cost nothing extra.
+- If a game gets stuck with the same cards going round (the same position six times, or 150 turns without a burn, a card drawn or a table card played), it ends in a **draw**: nobody wins, nobody is the ShitHead, and in Ranked the rating change is small and streaks are kept.
 - The numbers are `RANKED_BONUS` in `index.html`; changing them needs the catalog export (leave that to a developer or AI).
 
 ## 9. Your test account

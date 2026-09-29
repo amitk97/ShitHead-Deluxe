@@ -282,6 +282,15 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   }
   ok(JSON.stringify(streakRuns) === JSON.stringify([[2, 5, true], [3, 10, true], [4, 0, true], [5, 15, true]]), 'win streak bonuses: +5 at 2, +10 at 3, none at 4, +15 at 5 (never stacked)', streakRuns);
   ok(limited.error && /a lot today/.test(limited.error.message), 'sixth scored match against the same opponent today refused (first one earlier + 4 more)', limited);
+  // A stalemate draw: nobody wins, level Elo, no win bonus, streaks and W/L kept
+  const bobBefore = await admin('users/bob');
+  await admin('rankedMembers/600000', 'PUT', { carol: Date.now(), bob: Date.now() });
+  await admin('rooms/600000', 'PUT', { isRanked: true, matchId: 'rk_draw', players: [{ uid: 'carol', finishRank: 1, drew: true }, { uid: 'bob', finishRank: 1, drew: true }] });
+  r = await call('bob', { action: 'rankedResult', roomCode: '600000' });
+  const bobAfter = await admin('users/bob');
+  ok(r.drew && !r.won && r.winBonus === 0 && r.streakBonus === 0 && r.to - r.from === r.elo && r.elo > 0, 'draw: level Elo only (the lower rating gains a little)', r);
+  ok(bobAfter.losses === bobBefore.losses && bobAfter.wins === bobBefore.wins && bobAfter.rankedStats.draws === 1
+    && bobAfter.rankedStats.currentLossStreak === bobBefore.rankedStats.currentLossStreak, 'draw: wins, losses and streaks unchanged, draws counted', bobAfter.rankedStats);
   await admin('rooms/222222', 'PUT', { isRanked: false, players: [{ uid: 'alice', finishRank: 1 }, { uid: 'bob', finishRank: 2 }] });
   r = await call('alice', { action: 'rankedResult', roomCode: '222222' });
   ok(r.error, 'casual room is not Ranked', r);

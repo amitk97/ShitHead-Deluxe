@@ -432,7 +432,7 @@ actions.matchWin = async ({ uid, data }) => {
     const room = (await db().ref(`rooms/${code}`).once('value')).val();
     const seats = Object.values(room?.players || {});
     const me = seats.find(p => p && p.uid === uid);
-    if (!room || room.isRanked || !me || me.finishRank !== 1 || seats.length < 2) fail('failed-precondition', 'That win could not be checked.');
+    if (!room || room.isRanked || !me || me.finishRank !== 1 || me.drew || seats.length < 2) fail('failed-precondition', 'That win could not be checked.');
   }
   const legacy = await legacyOwned(uid);
   const now = Date.now();
@@ -832,7 +832,11 @@ actions.rankedResult = async ({ uid, data }) => {
   const results = {};
   for (let i = 0; i < players.length; i++) {
     const p = players[i];
-    const won = p.finishRank === 1;
+    // A stalemate draw (the game's endInStalemate): the drawn seats share a
+    // place, so Elo already scores them as level; nobody wins it, and it
+    // leaves both win and losing streaks as they were.
+    const drew = !!p.seat.drew;
+    const won = p.finishRank === 1 && !drew;
     const gs = p.seat.gameStats || {};
     const stat = (key) => Math.max(0, Math.min(RANKED_STAT_CAPS[key], Math.floor(num(gs[key]))));
     const opponent = players.find(q => q.uid !== p.uid);
@@ -843,11 +847,11 @@ actions.rankedResult = async ({ uid, data }) => {
         if (user.processedRankedMatches[resultId]) return { noop: true };
         const previousRating = num(user.rating, 500);
         const rs = user.rankedStats || {};
-        const newStreak = won ? num(rs.currentStreak) + 1 : 0;
+        const newStreak = won ? num(rs.currentStreak) + 1 : drew ? num(rs.currentStreak) : 0;
         const winBonus = won ? num(RANKED_BONUS.win) : 0;
         const streakBonus = won ? rankedStreakBonus(newStreak) : 0;
         const newRating = Math.max(0, previousRating + deltas[i] + winBonus + streakBonus);
-        const lossStreak = won ? 0 : num(rs.currentLossStreak) + 1;
+        const lossStreak = won ? 0 : drew ? num(rs.currentLossStreak) : num(rs.currentLossStreak) + 1;
         user.rankedStats = {
           burnt: num(rs.burnt) + stat('burnt'),
           jokersPlayed: num(rs.jokersPlayed) + stat('jokersPlayed'),
@@ -856,7 +860,8 @@ actions.rankedResult = async ({ uid, data }) => {
           currentLossStreak: lossStreak,
           bestLossStreak: Math.max(num(rs.bestLossStreak), lossStreak),
           highestRating: Math.max(num(rs.highestRating, previousRating), newRating),
-          lowestRating: Math.min(num(rs.lowestRating, previousRating), newRating)
+          lowestRating: Math.min(num(rs.lowestRating, previousRating), newRating),
+          draws: num(rs.draws) + (drew ? 1 : 0)
         };
         const cs = user.challengeStats || {};
         user.challengeStats = {
@@ -866,7 +871,7 @@ actions.rankedResult = async ({ uid, data }) => {
         };
         user.rating = newRating;
         user.wins = num(user.wins) + (won ? 1 : 0);
-        user.losses = num(user.losses) + (won ? 0 : 1);
+        user.losses = num(user.losses) + (won || drew ? 0 : 1);
         user.processedRankedMatches[resultId] = { rank: p.finishRank, appliedAt: now };
         user.processedRankedMatches = pruneMap(user.processedRankedMatches);
         if (opponent) user.lastRankedOpponent = { uid: opponent.uid, at: now };
@@ -888,7 +893,7 @@ actions.rankedResult = async ({ uid, data }) => {
         }
         claimed.push(...grantMilestones(user, now));
         const newAvatars = grantEarnedAvatars(user, legacy, now);
-        return { user, result: { from: previousRating, to: newRating, won, elo: deltas[i], winBonus, streak: newStreak, streakBonus, diamondsAwarded: amount, claimed, newAvatars } };
+        return { user, result: { from: previousRating, to: newRating, won, drew, elo: deltas[i], winBonus, streak: newStreak, streakBonus, diamondsAwarded: amount, claimed, newAvatars } };
       });
       const u = res.user;
       results[p.uid] = {

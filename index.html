@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v214 (ShitHead-Deluxe-195) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v215 (ShitHead-Deluxe-195) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -6403,7 +6403,7 @@ video {
     <div class="bg-slate-900 border-2 border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[88vh] overflow-hidden flex flex-col guide-font">
       <div class="border-b border-slate-800 pb-3 space-y-2">
         <div class="flex justify-between items-center gap-3">
-          <div class="shrink-0">
+          <div style="min-width:0; flex:1 1 auto;">
             <h3 class="brand-logo-rendered text-2xl tracking-wide leading-none">Guide & Strategy</h3>
             <p class="text-[11px] font-bold text-slate-400 mt-0.5">Comprehensive rules, card powers, tips and hotkeys</p>
           </div>
@@ -7922,7 +7922,7 @@ video {
       '🎨': 'sparkle', '🔑': 'lock', '📋': 'cards', '🏠': 'online', '📶': 'online', '🔕': 'bell', '🙈': 'eye', '🪵': 'cards',
       '🗂': 'cards', '🖐': 'cards', '🏷': 'gift', '📱': 'share', '🎴': 'cards', '📐': 'cards', '📳': 'bell', '🧨': 'burst',
       '🔽': 'refresh', '🎯': 'star', '💔': 'close', '🚫': 'close', '⚑': 'warning', '📖': 'cards', '🖼': 'sparkle', '🙋': 'users',
-      '👋': 'users', '📅': 'clock', '📥': 'share', '📜': 'cards', '🧪': 'sparkle', '👕': 'sparkle', '🎇': 'ev-newyear', '⬇': 'download', '👆': 'tap'
+      '👋': 'users', '🤝': 'users', '📅': 'clock', '📥': 'share', '📜': 'cards', '🧪': 'sparkle', '👕': 'sparkle', '🎇': 'ev-newyear', '⬇': 'download', '👆': 'tap'
     };
     const EMOJI_ICON_RE = new RegExp(`(?:${Object.keys(EMOJI_ICON).join('|')})\uFE0F?`, 'gu');
     const EMOJI_KEEP = '#emoteLayer, [data-keep-emoji], .emote-float, .effect-mini-tile, .shop-burn-core, .jfx-stage, .jfx-stage-hint, .pp-show-icon, .bfx, #jokerFxLayer, #victoryFxLayer, #burnFxLayer, .shop-preview-stage, textarea, script, style';
@@ -8306,6 +8306,7 @@ video {
         state.direction = data.direction || 1;
         state.activeConstraint = data.activeConstraint || null;
         state.baseOverrideCard = data.baseOverrideCard || null;
+        state.stalemate = data.stalemate || null;
         state.turnDeadline = data.turnDeadline || null;
         state.turnTimerMs = data.turnTimerMs || state.turnTimerMs;
         state.stateVersion = typeof data.stateVersion === 'number' ? data.stateVersion : state.stateVersion;
@@ -8544,6 +8545,7 @@ video {
           playedHistory: state.playedHistory,
           activeConstraint: state.activeConstraint,
           baseOverrideCard: state.baseOverrideCard || null,
+          stalemate: state.stalemate || null,
           localPlayerId: state.localPlayerId,
           selectedBotCount: state.selectedBotCount,
           selectedPlayCardIds: state.selectedPlayCardIds || [],
@@ -11089,7 +11091,7 @@ video {
           // the server's real result once it arrives (rankedRatingDraft).
           const real = isYou && rankedRatingDraft;
           const from = real ? rankedRatingDraft.from : (p.rating || 500);
-          const newRating = real ? rankedRatingDraft.to : Math.max(0, from + (deltas[idx] || 0) + (p.finishRank === 1 ? RANKED_BONUS.win : 0));
+          const newRating = real ? rankedRatingDraft.to : Math.max(0, from + (deltas[idx] || 0) + (p.finishRank === 1 && !p.drew ? RANKED_BONUS.win : 0));
           const delta = Math.round(newRating - from);
           const sign = delta > 0 ? '+' : '';
           const colorClass = delta > 0 ? 'text-emerald-400' : (delta < 0 ? 'text-rose-400' : 'text-slate-400');
@@ -11100,7 +11102,7 @@ video {
             <span class="flex items-center gap-1.5 font-black text-[11px] uppercase tracking-wide truncate ${isYou ? 'text-amber-400' : 'text-slate-200'}">
               <span class="text-slate-500 shrink-0">#${p.finishRank}</span>
               ${avatarHtml(getPlayerAvatarId(p), 20)}
-              <span class="truncate">${escapeHtml(p.name)}${isYou ? ' (You)' : ''}</span>
+              <span class="truncate">${escapeHtml(p.name)}${isYou ? ' (You)' : ''}${p.drew ? ' · Draw' : ''}</span>
             </span>
             ${ratingHtml}
           </div>`;
@@ -11161,7 +11163,7 @@ video {
       // winner's equipped effect here as the reliable match-end path on every
       // client, including guests receiving the result from Firebase.
       if (!matchWinnerEffectShown) {
-        const winner = state.players.find(p => p.finishRank === 1);
+        const winner = state.players.find(p => p.finishRank === 1 && !p.drew);
         if (winner) triggerEquippedVictoryEffect(winner);
       }
 
@@ -11223,6 +11225,7 @@ video {
       matchHistoryCurrentId = null; // the next finish is a new entry
       departedStatPlayers = []; // players who left the last match's stats
       rankedRatingDraft = null; // the last match's server rating result
+      state.stalemate = null;
       if (typeof lastCardAlerted !== 'undefined') lastCardAlerted.clear();
       if (typeof resetMatchSummary === 'function') resetMatchSummary();
       document.getElementById('quickPlayMatchBtn')?.classList.add('hidden');
@@ -12805,7 +12808,7 @@ video {
       gauntletReportedMatch = state.matchId;
       try { localStorage.removeItem('shithead_game_state'); } catch (e) {} // finished: never restore it
       const me = state.players.find(p => p.id === state.localPlayerId);
-      gauntletPending = { runId: g.runId, won: me?.finishRank === 1, local: !!g.local, round: g.round };
+      gauntletPending = { runId: g.runId, won: me?.finishRank === 1 && !me.drew, local: !!g.local, round: g.round };
       if (!g.local && currentUser) gauntletStore.set(GAUNTLET_PENDING_KEY, { uid: currentUser.uid, runId: g.runId, won: gauntletPending.won, round: g.round });
       gauntletStore.set(GAUNTLET_BETWEEN_KEY, { owner: gauntletOwner(g.local), at: Date.now() });
       updateGauntletEndButton();
@@ -12925,6 +12928,74 @@ video {
     }
 
     // § Turn loop
+    // § Stalemate draw
+    // Only a few things move a game towards its end: a card drawn from the
+    // Deck, a Face-Up or Face-Down card played, a burn (cards leave the
+    // game) and a player finishing. Without any of them the same cards just
+    // go round the hands and the Pile, and players can loop for ever.
+    // stalemateKey() is built from those counters (each only moves one way);
+    // while it stays the same, every play or pickup is a turn without
+    // progress, and each position (who holds what, the Pile, whose turn) is
+    // counted by a short hash. The match ends in a draw for everyone still
+    // playing (endInStalemate: they share the next place, nobody wins it and
+    // nobody is the ShitHead) when the exact same position comes round
+    // STALEMATE_REPEATS times (a real loop), or after STALEMATE_TURNS turns
+    // without progress. In 800 fuzzed bot games that all ended on their own,
+    // a position came round at most 4 times and the longest stretch without
+    // progress was 133 turns, so neither fires in a normal game. A banner warns
+    // before either. Repeated calls for one position never double count
+    // (stalemateSig). state.stalemate is saved with the game and synced.
+    const STALEMATE_TURNS = 150, STALEMATE_WARN = 10, STALEMATE_REPEATS = 6;
+    function stalemateKey() {
+      const active = state.players.filter(p => !p.hasFinished);
+      const table = active.reduce((n, p) => n + (p.faceUp || []).length + (p.faceDown || []).length, 0);
+      const inGame = state.players.reduce((n, p) => n + (p.hand || []).length + (p.faceUp || []).length + (p.faceDown || []).length, 0)
+        + (state.discardPile || []).length + (state.drawPile || []).length;
+      return `${(state.drawPile || []).length}|${table}|${inGame}|${active.length}`;
+    }
+    function stalemateSig() {
+      const ids = (cards) => (cards || []).map(c => c.id).join(',');
+      const text = [
+        state.players.map(p => ids([...(p.hand || [])].sort((a, b) => (a.id < b.id ? -1 : 1)))).join('/'),
+        ids(state.discardPile), state.currentTurnIndex, state.direction, state.activeConstraint || '', state.baseOverrideCard?.id || ''
+      ].join('|');
+      let h = 0x811c9dc5; // FNV-1a
+      for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+      return `h${h.toString(36)}`;
+    }
+    function noteStalemateTurn() {
+      if (state.phase !== 'PLAY' || tutorialActive) return;
+      const key = stalemateKey(), sig = stalemateSig();
+      const cur = state.stalemate;
+      if (!cur || cur.key !== key) { state.stalemate = { key, sig, turns: 0, seen: { [sig]: 1 }, repeats: 1 }; return; }
+      if (cur.sig === sig) return;
+      const seen = { ...(cur.seen || {}) };
+      seen[sig] = (seen[sig] || 0) + 1;
+      state.stalemate = { key, sig, turns: (cur.turns || 0) + 1, seen, repeats: Math.max(cur.repeats || 1, seen[sig]), warned: !!cur.warned };
+    }
+    function checkStalemate() {
+      const s = state.stalemate;
+      if (!s || state.phase !== 'PLAY' || tutorialActive) return false;
+      if (state.isMultiplayer && !hasMatchAuthority()) return false;
+      if (s.turns >= STALEMATE_TURNS || (s.repeats || 0) >= STALEMATE_REPEATS) { endInStalemate(); return true; }
+      if (!s.warned && (s.turns >= STALEMATE_TURNS - STALEMATE_WARN || (s.repeats || 0) >= STALEMATE_REPEATS - 1)) {
+        s.warned = true;
+        notifyBanner('The same cards keep going round: the game ends in a draw soon unless someone burns, draws or plays a table card.');
+      }
+      return false;
+    }
+    function endInStalemate() {
+      const finished = state.players.filter(p => p.hasFinished).length;
+      const drawn = state.players.filter(p => !p.hasFinished);
+      drawn.forEach((p) => { p.hasFinished = true; p.finishRank = finished + 1; p.drew = true; });
+      notifyBanner(`${drawn.map(p => p.name).join(' and ')} drew: the same cards kept going round.`);
+      state.phase = 'FINISHED';
+      endFastForwardIfActive();
+      saveGameState();
+      if (state.isMultiplayer) syncFirebaseGameState();
+      showMatchEndUI();
+    }
+
     function triggerNextTurn() {
       // Cancel any previously-scheduled bot action FIRST, unconditionally —
       // before any early return below. A plain (non-burn) scripted Coach
@@ -12941,7 +13012,11 @@ video {
       // can read the explanation before a card lands. Inert in normal play.
       if (tutorialActive && tutorialBotPaused) return;
       const activePlayers = state.players.filter(p => !p.hasFinished);
-      
+      if (activePlayers.length > 1) {
+        noteStalemateTurn();
+        if (checkStalemate()) return;
+      }
+
       if (activePlayers.length === 1) {
         const shitheadPlayer = activePlayers[0];
         // Explicit last place, not just "whoever's left" — needed both for
@@ -14477,7 +14552,7 @@ video {
           <div class="finished-box-wrap">
           <div class="w-full max-w-sm ${lost ? 'h-20 border-amber-600' : 'h-16 border-amber-500'} shrink-0 bg-slate-950/80 rounded-2xl border-2 flex flex-col items-center justify-center p-2 shadow-2xl">
             <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest">MATCH FINISHED</span>
-            <span class="text-base font-black text-amber-400 tracking-wider">FINISHED #${placing}</span>
+            <span class="text-base font-black text-amber-400 tracking-wider">${local.drew ? 'DRAW' : `FINISHED #${placing}`}</span>
             ${lost ? '<span class="text-2xl leading-none mt-0.5">\u{1F4A9}</span>' : ''}
           </div>
           ${offerLeave ? '<button type="button" id="finishedLeaveBtn" class="finished-leave-btn" onclick="leaveBotMatch()">LEAVE</button>' : ''}
@@ -15152,6 +15227,7 @@ video {
     let rejectedSaves = 0;
     function syncFirebaseGameState() {
       if (!state.isMultiplayer || !state.roomCode || state.spectating) return;
+      if (state.phase === 'PLAY' && state.players.filter(p => !p.hasFinished).length > 1) noteStalemateTurn(); // counted before it's saved
       const baseVersion = state.stateVersion || 0;
       state.stateVersion = baseVersion + 1;
       const syncedState = {
@@ -15165,6 +15241,7 @@ video {
         playedHistory: state.playedHistory || [],
         activeConstraint: state.activeConstraint || null,
         baseOverrideCard: state.baseOverrideCard || null,
+        stalemate: state.stalemate || null,
         turnDeadline: state.turnDeadline || null,
         turnTimerMs: state.turnTimerMs || 15000,
         stateVersion: state.stateVersion,
@@ -16122,6 +16199,7 @@ video {
           state.direction = data.direction || 1;
           state.activeConstraint = data.activeConstraint || null;
           state.baseOverrideCard = data.baseOverrideCard || null;
+          state.stalemate = data.stalemate || null;
           state.turnDeadline = data.turnDeadline || null;
 
           // Reveals the game table if this client is only now catching up to
@@ -17601,6 +17679,7 @@ video {
         place: shithead ? n : placeOf(me),
         of: n,
         shithead: !!shithead,
+        ...(me.drew ? { draw: true } : {}),
         players: [...matchStatsPlayers()].sort((a, b) => placeOf(a) - placeOf(b))
           .map((p) => {
             const g = p.gameStats || {};
@@ -17680,14 +17759,14 @@ video {
     }
     function matchHistoryHtml(list, now = Date.now()) {
       if (!list.length) return '<p class="text-[10px] text-slate-400 text-center leading-snug py-6 px-1">No matches yet. Every game you finish will show up here.</p>';
-      const wins = list.filter(e => e.place === 1).length;
+      const wins = list.filter(e => e.place === 1 && !e.draw).length;
       const shitheads = list.filter(e => e.shithead).length;
       const gems = list.reduce((sum, e) => sum + (Number(e.diamonds) || 0), 0);
       const ord = (n) => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
       const rows = list.map((e) => {
-        const won = e.place === 1;
-        const emoji = won ? '🏆' : e.shithead ? '💩' : e.place === 2 ? '🥈' : e.place === 3 ? '🥉' : '🎖️';
-        const title = won ? 'Won' : e.shithead ? 'ShitHead' : `${ord(e.place)} of ${e.of}`;
+        const won = e.place === 1 && !e.draw;
+        const emoji = e.draw ? '🤝' : won ? '🏆' : e.shithead ? '💩' : e.place === 2 ? '🥈' : e.place === 3 ? '🥉' : '🎖️';
+        const title = e.draw ? 'Draw' : won ? 'Won' : e.shithead ? 'ShitHead' : `${ord(e.place)} of ${e.of}`;
         const edge = won ? '#f59e0b' : e.shithead ? '#b45309' : '#64748b';
         const d = e.rating ? e.rating.to - e.rating.from : null;
         const side = [
@@ -17776,6 +17855,11 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v215: [
+        ['🤝', 'Games can no longer get stuck: if the same cards keep going round with no progress, the game ends in a draw.'],
+        ['🛡', 'Ranked rooms are now only open to signed-in players.'],
+        ['📖', 'The Guide\'s close button no longer slips off the edge on narrow folded phones.']
+      ],
       v214: [
         ['🏆', 'Ranked wins are worth more: every win adds 10 bonus points on top of the usual change.'],
         ['🔥', 'Win streak bonus in Ranked: +5 at 2 wins in a row, +10 at 3, +15 at 5 and +20 at 10. Losing streaks cost nothing extra.']
@@ -21068,6 +21152,7 @@ video {
       if (!me) return { emoji: '🃏', title: 'Match over', edge: '#475569', glow: 'rgba(71,85,105,.25)' };
       if (!me.hasFinished && typeof isShitHead === 'function' && isShitHead(me)) return { emoji: '💩', title: "You're the ShitHead", edge: '#b45309', glow: 'rgba(180,83,9,.25)' };
       const rank = me.finishRank || n;
+      if (me.drew) return { emoji: '🤝', title: 'Draw', edge: '#64748b', glow: 'rgba(100,116,139,.25)' };
       if (rank === 1) return { emoji: '🏆', title: 'You won', edge: '#f59e0b', glow: 'rgba(245,158,11,.28)' };
       return { emoji: rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🎖️', title: `${rank}${rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th'} place`, edge: '#94a3b8', glow: 'rgba(148,163,184,.22)' };
     }
@@ -25702,6 +25787,7 @@ video {
       state.direction = data.direction || 1;
       state.activeConstraint = data.activeConstraint || null;
       state.baseOverrideCard = data.baseOverrideCard || null;
+      state.stalemate = data.stalemate || null;
       state.turnDeadline = data.turnDeadline || null;
       state.selectedPlayCardIds = [];
       render();
