@@ -25,7 +25,7 @@ from Ranked rating, and a natural gate for features like staked series.
   playing; the match limits already stop farming).
 - Levels 1–99 from the table `XP_RULES.levels` (RuneScape-style, doubled in v225:
   ~240–600 XP a level early, doubling about every 7 levels at the top; level 5 = 954,
-  level 20 = 2,172 (~37 typical games), level 50 = 20,948, level 92 ≈ half of
+  level 10 = 2,172 (~37 typical games), level 20 = 4,772 (~80), level 50 = 20,948, level 92 ≈ half of
   level 99 = 1,400,000). XP keeps counting past 99 up to 100,000,000.
 - Level-up Diamonds: 20 a level, 100 on every 10th level instead (not both).
 - Back-dating: the first time an account gets XP (or signs in) with the switch on,
