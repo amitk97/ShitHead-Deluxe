@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-28-v209 (ShitHead-Deluxe-191) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v210 (ShitHead-Deluxe-192) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -621,8 +621,7 @@
       #hamburgerDragHandle { display: none; }
       #hamburgerDrawer > div:nth-child(2) { padding: 18px !important; }
       #hamburgerAccountLabel { font-size: 17px !important; }
-      #hamburgerAccountSub { font-size: 12px !important; margin-top: 3px !important; }
-      #drawerGuideShortcutBtn, #drawerSettingsShortcutBtn, #drawerChallengesShortcutBtn, #drawerShopShortcutBtn { width: 44px !important; height: 44px !important; }
+      #drawerGuideShortcutBtn, #drawerSettingsShortcutBtn, #drawerChallengesShortcutBtn, #drawerShopShortcutBtn { height: 44px !important; }
       #drawerGuideShortcutBtn .pack-icon, #drawerSettingsShortcutBtn .pack-icon, #drawerChallengesShortcutBtn .pack-icon, #drawerShopShortcutBtn .pack-icon { width: 31px; height: 31px; }
       #hamburgerDrawer nav { padding: 10px !important; }
       .hamburger-menu-item { padding: 13px 15px !important; border-radius: 12px !important; font-size: 14px !important; gap: 12px !important; }
@@ -784,6 +783,19 @@
     #spectateBar { position:fixed; left:50%; transform:translateX(-50%); top:calc(var(--header-h) + 6px); z-index:64; display:flex; align-items:center; gap:10px; padding:6px 8px 6px 12px; border-radius:999px; border:1px solid #0891b2; background:rgba(8,47,73,.92); color:#a5f3fc; font-size:11px; font-weight:900; box-shadow:0 6px 18px rgba(0,0,0,.45); white-space:nowrap; max-width:calc(100vw - 24px); }
     #spectateBar button { padding:4px 12px; border-radius:999px; background:#0891b2; color:#020617; font-weight:900; font-size:10px; letter-spacing:.08em; }
     body.spectating #gameTable { pointer-events:none; }
+    /* Desktop Site note: sized by --dsk (layout width ÷ screen width) so it reads at phone size. */
+    #desktopSiteNote { position:fixed; left:50%; top:calc(var(--header-h) + 8px); transform:translateX(-50%); z-index:330; width:calc(340px * var(--dsk, 1)); max-width:calc(100vw - 16px); box-sizing:border-box; display:flex; flex-direction:column; gap:calc(6px * var(--dsk, 1)); padding:calc(12px * var(--dsk, 1)) calc(14px * var(--dsk, 1)); border-radius:calc(14px * var(--dsk, 1)); background:#0f172a; border:1px solid rgba(245,158,11,.6); color:#e2e8f0; font-size:calc(13px * var(--dsk, 1)); line-height:1.35; box-shadow:0 12px 40px rgba(0,0,0,.6); text-align:center; }
+    #desktopSiteNote b { color:#fbbf24; font-size:calc(14px * var(--dsk, 1)); }
+    #desktopSiteNote button { align-self:center; margin-top:calc(4px * var(--dsk, 1)); padding:calc(7px * var(--dsk, 1)) calc(22px * var(--dsk, 1)); border-radius:calc(10px * var(--dsk, 1)); background:#f59e0b; color:#0f172a; font-weight:900; font-size:calc(13px * var(--dsk, 1)); }
+    /* Menu account header: centred username (+ picture) over four even buttons. */
+    #hamburgerAccountHead { display:flex; flex-direction:column; align-items:center; gap:10px; padding:14px 14px 12px; }
+    #hamburgerAccountHead .drawer-who { display:flex; align-items:center; justify-content:center; gap:10px; max-width:100%; min-width:0; }
+    #hamburgerAccountHead .drawer-avatar { flex:none; display:flex; }
+    #hamburgerAccountHead .drawer-avatar.hidden { display:none; }
+    #hamburgerAccountHead .drawer-name { min-width:0; font-size:16px; font-weight:900; color:#fbbf24; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #hamburgerAccountHead .drawer-quick { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; width:100%; }
+    #hamburgerAccountHead .drawer-quick button { height:2.5rem; display:flex; align-items:center; justify-content:center; }
+    #hamburgerAccountHead .drawer-quick .pack-icon { width:26px; height:26px; }
     /* Home screen (§ Home screen): the lobby's own cover is replaced by the
        dimmed table backdrop, and the panel starts below the header. */
     #homeBackdrop { display:none; position:fixed; inset:0; z-index:69; pointer-events:none; background-color:#020617; }
@@ -4826,16 +4838,18 @@ video {
   <div id="hamburgerOverlay" class="hidden fixed inset-0 z-[86] bg-slate-950/80"></div>
   <div id="hamburgerDrawer" class="bg-slate-950 shadow-2xl overflow-y-auto" role="menu" aria-label="Main menu">
     <div id="hamburgerDragHandle"></div>
-    <div class="p-4 border-b border-slate-800 flex items-center justify-between gap-3">
-      <div class="min-w-0">
-        <div id="hamburgerAccountLabel" class="text-sm font-black text-amber-400 truncate">Not signed in</div>
-        <div id="hamburgerAccountSub" class="text-[10px] text-slate-500 mt-0.5">Sign in for friends &amp; stats</div>
+    <!-- Account header: the player's username (never their real name) and
+         picture, centred, over one even row of four quick buttons. -->
+    <div id="hamburgerAccountHead" class="border-b border-slate-800">
+      <div class="drawer-who">
+        <span id="hamburgerAccountAvatar" class="drawer-avatar hidden" data-own-avatar="34"></span>
+        <div id="hamburgerAccountLabel" class="drawer-name">Not signed in</div>
       </div>
-      <div class="flex items-center gap-2 shrink-0" aria-label="Quick access">
-        <button id="drawerChallengesShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-amber-500 transition" style="height:2.25rem" aria-label="Open Challenges" title="Challenges"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-challenges"/></svg></button>
-        <button id="drawerShopShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-cyan-500 transition" style="height:2.25rem" aria-label="Open Shop" title="Shop"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg></button>
-        <button id="drawerGuideShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-emerald-500 transition" style="height:2.25rem" aria-label="Open Guide &amp; Strategy" title="Guide &amp; Strategy"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></button>
-        <button id="drawerSettingsShortcutBtn" class="w-9 rounded-xl border border-slate-700 bg-slate-900 hover:border-sky-500 transition" style="height:2.25rem" aria-label="Open Settings" title="Settings"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg></button>
+      <div class="drawer-quick" aria-label="Quick access">
+        <button id="drawerChallengesShortcutBtn" class="rounded-xl border border-slate-700 bg-slate-900 hover:border-amber-500 transition" aria-label="Open Challenges" title="Challenges"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-challenges"/></svg></button>
+        <button id="drawerShopShortcutBtn" class="rounded-xl border border-slate-700 bg-slate-900 hover:border-cyan-500 transition" aria-label="Open Shop" title="Shop"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg></button>
+        <button id="drawerGuideShortcutBtn" class="rounded-xl border border-slate-700 bg-slate-900 hover:border-emerald-500 transition" aria-label="Open Guide &amp; Strategy" title="Guide &amp; Strategy"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></button>
+        <button id="drawerSettingsShortcutBtn" class="rounded-xl border border-slate-700 bg-slate-900 hover:border-sky-500 transition" aria-label="Open Settings" title="Settings"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg></button>
       </div>
     </div>
     <!-- Menu order per the agreed target: Profile, Stats, Personalisation, Friends,
@@ -17728,6 +17742,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v210: [
+        ['👤', 'The menu now shows your username and profile picture, centred, with the quick buttons in one even row.'],
+        ['📱', 'If a phone browser has Desktop Site switched on, the game now says how to turn it off (it makes everything tiny).']
+      ],
       v209: [
         ['🃏', 'The home screen card and its power are centred, and fit in the installed app too.']
       ],
@@ -22579,18 +22597,28 @@ video {
     // info at all (moved to Profile, see Stage 5), so this now only
     // keeps the hamburger drawer's own small account label in sync —
     // Profile's refreshProfilePanel() is the real account UI now.
+    // The drawer shows the player's username (never the account's real
+    // name) with their picture; signed out it just says so.
+    let hamburgerUsernameFor = null;
     function updateHamburgerAccountLabel() {
       const drawerLabel = document.getElementById('hamburgerAccountLabel');
-      const drawerSub = document.getElementById('hamburgerAccountSub');
+      const drawerAvatar = document.getElementById('hamburgerAccountAvatar');
       if (!drawerLabel) return;
       document.getElementById('menuSignOutBtn')?.classList.toggle('hidden', !currentUser);
       document.getElementById('menuErrorReportsBtn')?.classList.toggle('hidden', !isGameOwner());
+      drawerAvatar?.classList.toggle('hidden', !currentUser);
       if (currentUser) {
-        drawerLabel.textContent = currentUser.displayName || currentUser.email || 'Signed in';
-        drawerSub.textContent = 'Tap your profile for your ranked rating';
+        const uid = currentUser.uid;
+        if (hamburgerUsernameFor !== uid) drawerLabel.textContent = 'Player';
+        if (drawerAvatar) drawerAvatar.innerHTML = avatarHtml(equippedCosmetics.avatar, 34);
+        getOrCreateUserProfile(uid).then((profile) => {
+          if (currentUser?.uid !== uid) return;
+          hamburgerUsernameFor = uid;
+          drawerLabel.textContent = profile?.username || 'Player';
+        }).catch(() => {});
       } else {
+        hamburgerUsernameFor = null;
         drawerLabel.textContent = 'Not signed in';
-        drawerSub.textContent = 'Sign in for friends & stats';
       }
     }
 
@@ -27298,6 +27326,35 @@ video {
       setTimeout(soon, 800);
       soon();
     })();
+
+    // "Desktop site" on a phone (Chrome's ⋮ menu, Safari's Request Desktop
+    // Website) makes the browser ignore the page's phone viewport and lay it
+    // out 980px wide, shrunk to fit: every card looks tiny. Zooming the page
+    // back up isn't safe (positions of pop-ups, flights and the tutorial
+    // spotlight come out scaled, and the tablet CSS still applies), so the
+    // game says how to switch it off instead, drawn at a readable size.
+    function isDesktopSiteOnPhone() {
+      const touch = (navigator.maxTouchPoints || 0) > 0 || !!window.matchMedia?.('(pointer: coarse)').matches;
+      const screenW = Math.min(screen.width || 0, screen.height || 0);
+      return touch && screenW > 0 && screenW < 600 && window.innerWidth > screenW * 1.3;
+    }
+    function showDesktopSiteNote() {
+      if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return;
+      try { if (sessionStorage.getItem('shithead_desktop_site_note')) return; } catch (e) {}
+      if (!isDesktopSiteOnPhone() || document.getElementById('desktopSiteNote')) return;
+      const k = window.innerWidth / Math.min(screen.width, screen.height);
+      const note = document.createElement('div');
+      note.id = 'desktopSiteNote';
+      note.setAttribute('role', 'alert');
+      note.style.setProperty('--dsk', String(k));
+      note.innerHTML = '<b>Desktop Site is on</b><span>That makes the game tiny on a phone. Open your browser menu and switch off “Desktop site”.</span><button type="button">OK</button>';
+      note.querySelector('button').addEventListener('click', () => {
+        note.remove();
+        try { sessionStorage.setItem('shithead_desktop_site_note', '1'); } catch (e) {}
+      });
+      document.body.appendChild(note);
+    }
+    setTimeout(showDesktopSiteNote, 600);
 
     // § Update prompt: a phone or installed app still running an older build
     // (left open, or restored from the background) is told a new version is

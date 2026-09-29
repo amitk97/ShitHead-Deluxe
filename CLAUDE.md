@@ -180,6 +180,11 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - The panel starts below the header (`#lobbyScreen` padding-top `--header-h`), and `fitHomePanel` lowers the CSS zoom (1.25 / 1.4 on big screens) so it always fits: the title was hidden under the header on 1280×800 laptops.
 - Never replace `document.body.className` (it wiped `lobby-open`, `reduce-motion`, `spectating`…): deck themes go through `setBodyDeckTheme`, which swaps only the `theme-*` class.
 
+## Menu header & Desktop Site
+
+- The menu (`#hamburgerAccountHead`) shows the player's **username** (from `getOrCreateUserProfile`, never the account's real/display name or email) with their picture (`#hamburgerAccountAvatar`, a `data-own-avatar` slot), centred, over the four quick buttons in an even 4-column grid (`.drawer-quick`); no extra line under the name. Signed out: "Not signed in", no picture (`updateHamburgerAccountLabel`).
+- "Desktop site" on a phone (Chrome ⋮ menu / Safari Request Desktop Website) ignores the viewport meta and lays the page out 980px wide, so everything is tiny. Zooming the page back up is NOT safe (tested: `getBoundingClientRect` and `style.left` disagree by the zoom, so pop-ups, flights and the tutorial spotlight land in the wrong place, and media queries still see 980px so tablet CSS applies). Instead `isDesktopSiteOnPhone` (touch, screen < 600px, layout > 1.3× the screen) shows `#desktopSiteNote` once per session, sized by `--dsk` so it reads at phone size, telling the player to switch it off.
+
 ## Pages fit every phone
 
 - The header (z-index 202) is above every page, so every `div.fixed.inset-0.flex.items-center.justify-center` pop-up/page starts BELOW it (`top: var(--header-h)`: 2.75rem, or 60px from 768px wide, plus `--safe-top`) and caps its panel at the space left (`100dvh - --header-h` less padding and the home bar), scrolling inside, so its top and X are never covered on phones or PC. The match summary (`.ms-scrim`/`.ms-card`) does the same; Settings/Shop/Custom/Guide/Tutorial hub have their own `top` rule (iPhone Safari's `vh` includes hidden toolbars). Exclusions use `:not(:where(...))` so they add no specificity (plain `:not(#id)` outranked pages' own ID rules). A dev test checks tall content in every page still fits below the header.

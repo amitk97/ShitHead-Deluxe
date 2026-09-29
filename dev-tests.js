@@ -4984,16 +4984,47 @@ async function runDevTestSuite() {
     assertTrue(!modal.innerText.includes('Account'), 'The word "Account" must not appear anywhere in Settings any more');
     assertTrue(typeof updateAccountUI === 'undefined', 'The old Settings-specific updateAccountUI function must be gone, not left as dead code');
   });
-  await test('REGRESSION: the hamburger drawer account label still updates correctly after the Settings cleanup', () => {
-    currentUser = { uid: 'u1', email: 'test@x.com', displayName: null };
-    updateHamburgerAccountLabel();
-    assertEqual(document.getElementById('hamburgerAccountLabel').textContent, 'test@x.com', "Signed-in state must show the account's email");
-    assertTrue(document.getElementById('hamburgerAccountSub').textContent.includes('your profile for your ranked rating'), 'The hint points to the Profile (your ranked rating)');
-    currentUser = null;
-    updateHamburgerAccountLabel();
-    assertEqual(document.getElementById('hamburgerAccountLabel').textContent, 'Not signed in', 'Signed-out state must still work');
+  await test('Menu header: the username (never the real name) and picture, centred, over four even quick buttons', async () => {
+    const realProfile = getOrCreateUserProfile;
+    try {
+      getOrCreateUserProfile = () => Promise.resolve({ username: 'AmitK' });
+      currentUser = { uid: 'u1', email: 'test@x.com', displayName: 'Amit Kumar-Smith' };
+      updateHamburgerAccountLabel();
+      const label = document.getElementById('hamburgerAccountLabel');
+      assertTrue(label.textContent !== 'Amit Kumar-Smith' && label.textContent !== 'test@x.com', 'Never the real name or email');
+      await new Promise(r => setTimeout(r, 0));
+      assertEqual(label.textContent, 'AmitK', 'The username');
+      assertTrue(!document.getElementById('hamburgerAccountAvatar').classList.contains('hidden'), 'The picture shows');
+      assertTrue(!document.getElementById('hamburgerAccountSub'), 'No extra line under the name');
+      const quick = document.querySelector('#hamburgerAccountHead .drawer-quick');
+      assertEqual(getComputedStyle(quick).display, 'grid', 'Quick buttons are an even grid');
+      assertEqual(quick.querySelectorAll('button').length, 4, 'Four quick buttons');
+      currentUser = null;
+      updateHamburgerAccountLabel();
+      assertEqual(label.textContent, 'Not signed in', 'Signed out');
+      assertTrue(document.getElementById('hamburgerAccountAvatar').classList.contains('hidden'), 'No picture when signed out');
+    } finally { getOrCreateUserProfile = realProfile; currentUser = null; }
   });
 
+  await test('Desktop Site on a phone is detected (layout far wider than a small touch screen), and not elsewhere', () => {
+    const saved = { sw: Object.getOwnPropertyDescriptor(Screen.prototype, 'width'), sh: Object.getOwnPropertyDescriptor(Screen.prototype, 'height'), tp: Object.getOwnPropertyDescriptor(Navigator.prototype, 'maxTouchPoints') };
+    const set = (w, h, touch) => {
+      Object.defineProperty(screen, 'width', { configurable: true, get: () => w });
+      Object.defineProperty(screen, 'height', { configurable: true, get: () => h });
+      Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, get: () => touch });
+    };
+    try {
+      set(412, 915, 5);
+      assertEqual(isDesktopSiteOnPhone(), innerWidth > 412 * 1.3, 'A phone screen far narrower than the layout');
+      set(Math.max(innerWidth, 1200), 900, 5);
+      assertTrue(!isDesktopSiteOnPhone(), 'Not on a big screen');
+      set(412, 915, 0);
+      const coarse = !!matchMedia('(pointer: coarse)').matches;
+      assertTrue(coarse || !isDesktopSiteOnPhone(), 'Not without touch');
+    } finally {
+      delete screen.width; delete screen.height; delete navigator.maxTouchPoints;
+    }
+  });
   await test('REGRESSION: the Profile page hides the Danger Zone and password-change row when signed out', () => {
     currentUser = null;
     document.getElementById('menuProfileBtn').click();
