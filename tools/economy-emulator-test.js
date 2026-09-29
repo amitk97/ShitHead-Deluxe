@@ -610,10 +610,10 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     // Back-dating: past play becomes XP once (unit check of the sums).
     const xpMod = require('../functions/xp');
     const pastUser = { matchCounters: { finished: 10, wins: 4 }, wins: 2, losses: 1, rankedStats: { draws: 1 }, gauntlet: { botsBeaten: 7 }, completedChallenges: { daily_a: {}, weekly_b: {}, other: {} } };
-    ok(xpMod.pastXp(pastUser) === 1910, 'past play: 10 games, 4 wins, 4 Ranked (2 won), 7 Gauntlet bots, a daily and a weekly = 1910 XP', xpMod.pastXp(pastUser));
+    ok(xpMod.pastXp(pastUser) === 1660, 'past play: 10 games, 4 wins, 4 Ranked (2 won), 7 Gauntlet bots, a daily and a weekly = 1660 XP', xpMod.pastXp(pastUser));
     let paid = 0;
     const bf = xpMod.backfill(pastUser, 1, (u, n) => { paid += n; });
-    ok(bf.level === 8 && paid === 140 && pastUser.activityInbox.level_backfill?.backfill && !pastUser.activityInbox.level_5, 'back-dating reaches level 8, pays 140 Diamonds with one mail', { bf, paid });
+    ok(bf.level === 7 && paid === 120 && pastUser.activityInbox.level_backfill?.backfill && !pastUser.activityInbox.level_5, 'back-dating reaches level 7, pays 120 Diamonds with one mail', { bf, paid });
     ok(xpMod.backfill(pastUser, 2, () => {}) === null, 'back-dating happens only once');
     ok(xpMod.gauntletBotXp(0) === 40 && xpMod.gauntletBotXp(2) === 80 && xpMod.gauntletBotXp(3) === 120 && xpMod.gauntletBotXp(4) === 200, 'Gauntlet XP scales with the bot');
     ok(xpMod.levelFor(953) === 4 && xpMod.levelFor(954) === 5 && xpMod.levelFor(1400000) === 99 && xpMod.levelFor(9e9) === 99, 'level table: 954 = level 5, 1,400,000 = level 99, never past 99');

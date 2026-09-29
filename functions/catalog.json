@@ -1511,7 +1511,7 @@
    "boss": 200
   },
   "daily": 50,
-  "weekly": 350,
+  "weekly": 100,
   "levelUpDiamonds": 20,
   "milestoneEvery": 10,
   "milestoneDiamonds": 100,

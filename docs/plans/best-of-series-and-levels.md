@@ -21,7 +21,7 @@ from Ranked rating, and a natural gate for features like staked series.
 - **Built (v222–v224, owner's numbers).** XP per event: finish a game 25, first game of
   the UK day +50, win +75 (Vs Bots / Play Friends), Ranked game +25, Ranked win +150
   (instead of +75), Gauntlet bot beaten 40 / 80 / 120 / 200 (easy / medium / hard /
-  boss), daily challenge 50, weekly 350. **No daily cap** (owner: it discourages
+  boss), daily challenge 50, weekly 100 (was 350 until v226). **No daily cap** (owner: it discourages
   playing; the match limits already stop farming).
 - Levels 1–99 from the table `XP_RULES.levels` (RuneScape-style, doubled in v225:
   ~240–600 XP a level early, doubling about every 7 levels at the top; level 5 = 954,

@@ -158,7 +158,7 @@ The support inbox is **support.shitheaddeluxe@gmail.com**. The "Contact Support"
 ### XP & levels (your on/off switch)
 - **Menu → XP & Levels: Off/On** (only you see it). Tap it and confirm; every player's game follows within about 10 seconds. Turning it off hides the level screens and stops XP, but nobody loses what they've earned.
 - When it's on, each player's past games, wins, Ranked games, Gauntlet bots and daily/weekly challenges are turned into XP once (at their next sign-in or game), and the levels they pass pay their Diamonds with one Inbox mail.
-- XP per game: finish 25, first game of the day +50, win +75, Ranked game +25, Ranked win +150, Gauntlet bots 40/80/120/200, daily challenge 50, weekly 350. Levels 1–99 (doubled in v225: level 5 = 954 XP, level 10 = 2,172, level 50 = 20,948, level 99 = 1,400,000). A level already paid never pays again. 20 💎 a level, 100 💎 every 10th level. No daily limit.
+- XP per game: finish 25, first game of the day +50, win +75, Ranked game +25, Ranked win +150, Gauntlet bots 40/80/120/200, daily challenge 50, weekly 100. Levels 1–99 (doubled in v225: level 5 = 954 XP, level 10 = 2,172, level 50 = 20,948, level 99 = 1,400,000). A level already paid never pays again. 20 💎 a level, 100 💎 every 10th level. No daily limit.
 - The numbers are `XP_RULES` in `index.html`; changing them needs the catalog export (leave that to a developer or AI).
 
 ## 9. Your test account

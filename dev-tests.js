@@ -7131,7 +7131,7 @@ async function runDevTestSuite() {
     assertEqual(XP_RULES.maxXp, 100000000, 'XP stops at 100 million');
     assertTrue(XP_RULES.win > XP_RULES.firstGameOfDay, 'a win pays more than the first game of the day');
     assertEqual(XP_RULES.rankedWin, XP_RULES.win * 2, 'a Ranked win pays double');
-    assertEqual(XP_RULES.weekly, XP_RULES.daily * 7, 'a weekly pays 7 dailies');
+    assertEqual(XP_RULES.weekly, 100, 'a weekly challenge pays 100 XP');
     const g = XP_RULES.gauntletBot;
     assertTrue(g.easy < g.medium && g.medium < g.hard && g.hard < g.boss, 'Gauntlet XP scales with the bot');
     assertTrue(!('dailyCap' in XP_RULES), 'no daily XP cap');
@@ -7146,6 +7146,7 @@ async function runDevTestSuite() {
       playerXp = { total: 2160, level: 9 };
       refreshXpDisplays();
       assertTrue(document.getElementById('hamburgerLevel').classList.contains('hidden'), 'no menu level badge while off');
+      assertTrue(document.getElementById('headerXpBar').classList.contains('hidden'), 'no header XP bar while off');
       assertTrue(document.getElementById('profileXpSection').classList.contains('hidden'), 'no Profile XP bar while off');
       assertEqual(matchSummaryXpHtml(), '', 'no XP in the match summary while off');
       assertTrue(!friendRowHtml('u1', { username: 'Pal', rating: 600, level: 7 }, 'friend').includes('xp-badge'), 'no level on friends while off');
@@ -7160,6 +7161,18 @@ async function runDevTestSuite() {
       assertTrue(html.includes('+45 XP') && html.includes('data-levelup="10"') && html.includes('Lv 10'), 'the summary shows +XP, the level and the level up', html);
       assertTrue(matchRewardLog.length === toasts + 1 && matchRewardLog[matchRewardLog.length - 1].reward === 100, 'the level-up Diamonds join the match rewards');
       assertTrue(!document.getElementById('hamburgerLevel').classList.contains('hidden'), 'menu level badge once on');
+      const hdr = document.getElementById('headerXpBar');
+      assertTrue(!hdr.classList.contains('hidden'), 'the header XP bar shows once on');
+      assertEqual(document.getElementById('headerXpFill').style.width, `${xpProgress(2205).pct}%`, 'the header bar shows progress to the next level');
+      const hr = hdr.getBoundingClientRect(), head = document.querySelector('body > header').getBoundingClientRect();
+      assertTrue(Math.abs(hr.bottom - head.bottom) < 1 && hr.height <= 10, 'a thin strip on the bottom edge of the header', { hr, head });
+      showHeaderXpTip(false);
+      const tipText = document.getElementById('headerXpTip').textContent;
+      assertTrue(/Level 10/.test(tipText) && /XP to level 11/.test(tipText), 'hover/tap shows the level and the XP still needed', tipText);
+      hideHeaderXpTip();
+      assertTrue(document.getElementById('headerXpTip').classList.contains('hidden'), 'and hides again');
+      const colour = (el) => getComputedStyle(el).backgroundImage;
+      assertEqual(colour(document.getElementById('headerXpFill')), colour(document.querySelector('#profileXpBody .xp-bar > i')), 'the header bar and the Profile bar are the same colour');
       assertTrue(!document.getElementById('profileXpSection').classList.contains('hidden') && document.getElementById('profileXpBody').textContent.includes('to level 11'), 'Profile shows the bar to the next level');
       assertTrue(friendRowHtml('u1', { username: 'Pal', rating: 600, level: 7 }, 'friend').includes('Lv 7'), 'friends show their level');
       assertTrue(renderPlayerPopupHuman({ uid: 'u1', name: 'Pal' }, { loaded: true, rating: 600, level: 7 }, null).includes('Lv 7'), 'player cards show the level');

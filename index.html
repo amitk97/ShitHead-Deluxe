@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v225 (ShitHead-Deluxe-201) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v226 (ShitHead-Deluxe-202) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -519,7 +519,21 @@
     .xp-card { display:flex; align-items:center; gap:10px; padding:10px; border-radius:12px; border:1px solid #1e293b; background:rgba(15,23,42,.6); }
     .xp-card-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
     .xp-bar { display:block; height:8px; border-radius:999px; background:#0f172a; border:1px solid #1e293b; overflow:hidden; }
-    .xp-bar > i { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#0ea5e9,#7dd3fc); transition:width .6s var(--ease-soft); }
+    .xp-bar > i { display:block; height:100%; border-radius:inherit; background:var(--xp-fill); transition:width .6s var(--ease-soft); }
+    /* One XP colour everywhere (Profile bar, header bar, match summary). */
+    :root { --xp-fill: linear-gradient(90deg,#0ea5e9,#22d3ee 60%,#a5f3fc); --xp-edge: rgba(56,189,248,.55); --xp-glow: rgba(34,211,238,.55); }
+    /* The header's XP bar: a 5px strip on the header's bottom edge with its
+       own border; its hit area is a little taller so it can be tapped. */
+    .hdr-xp { position:absolute; left:0; right:0; bottom:-1px; height:9px; display:flex; align-items:flex-end; cursor:pointer; z-index:1; outline:none; -webkit-tap-highlight-color:transparent; }
+    .hdr-xp-track { display:block; width:100%; height:5px; background:#06121f; border-top:1px solid var(--xp-edge); border-bottom:1px solid rgba(8,47,73,.9); overflow:hidden; }
+    .hdr-xp-track > i { display:block; height:100%; width:0; background:var(--xp-fill); box-shadow:0 0 6px var(--xp-glow); transition:width .7s var(--ease-soft); }
+    .hdr-xp:hover .hdr-xp-track, .hdr-xp:focus-visible .hdr-xp-track, .hdr-xp.is-open .hdr-xp-track { border-top-color:#67e8f9; }
+    .hdr-xp.xp-pulse .hdr-xp-track > i { animation: hdrXpPulse 1s var(--ease-soft); }
+    @keyframes hdrXpPulse { 0%,100% { filter:none; } 35% { filter:brightness(1.7) drop-shadow(0 0 4px #67e8f9); } }
+    body.reduce-motion .hdr-xp-track > i { transition:none; animation:none !important; }
+    .hdr-xp-tip { position:fixed; z-index:205; top:calc(var(--header-h) + 6px); padding:7px 11px; border-radius:10px; border:1px solid var(--xp-edge); background:rgba(2,6,23,.96); box-shadow:0 8px 24px rgba(0,0,0,.5); color:#e0f2fe; font-size:11px; font-weight:700; line-height:1.35; white-space:nowrap; pointer-events:none; transform:translateX(-50%); }
+    .hdr-xp-tip b { color:#67e8f9; font-weight:900; }
+    .hdr-xp-tip small { display:block; color:#94a3b8; font-size:10px; font-weight:600; }
     .xp-card-sub { font-size:10px; color:#94a3b8; font-weight:700; }
     #hamburgerAccountHead .drawer-level { display:inline-flex; flex-shrink:0; }
     .profile-xp { margin-top:10px; }
@@ -4905,7 +4919,11 @@ video {
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-menu"/></svg>
       </button>
     </div>
+    <!-- § XP & levels: the thin XP bar along the bottom of the header
+       (hover / tap for the level and XP to the next one). -->
+  <div id="headerXpBar" class="hdr-xp hidden" role="progressbar" aria-label="XP to the next level" aria-valuemin="0" aria-valuemax="100" tabindex="0"><span class="hdr-xp-track"><i id="headerXpFill"></i></span></div>
   </header>
+  <div id="headerXpTip" class="hdr-xp-tip hidden" role="tooltip"></div>
 
   <!-- HAMBURGER DRAWER — one shared menu, opened from the ONE persistent
        header's hamburgerBtn (now visible in both the lobby and active
@@ -17956,6 +17974,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v226: [
+        ['📈', 'A thin XP bar along the bottom of the header shows how close you are to your next level. Hover or tap it for the numbers.', WN_KEY],
+        ['📅', 'Weekly challenges now give 100 XP.']
+      ],
       v225: [
         ['📈', 'Levels are here: every game, win, challenge and Gauntlet bot earns XP. Climb from level 1 to 99, with Diamonds for every level and 100 on every 10th. Your past games already count.', WN_KEY],
         ['📈', 'Levels now take more XP to reach, so there is more to play for. Levels you have already been paid for never pay twice.']
@@ -23478,7 +23500,7 @@ video {
       rankedWin: 150,      // on top, a Ranked win (double a regular win)
       gauntletBot: { easy: 40, medium: 80, hard: 120, boss: 200 }, // each Gauntlet bot beaten
       daily: 50,           // each daily challenge
-      weekly: 350,         // each weekly challenge (7x a daily)
+      weekly: 100,         // each weekly challenge (owner, v226)
       levelUpDiamonds: 20, // every level up…
       milestoneEvery: 10,  // …except every 10th level, which pays instead
       milestoneDiamonds: 100,
@@ -23567,8 +23589,81 @@ video {
       if (!currentUser || !playerXp?.level || typeof db === 'undefined') return;
       db.ref(`publicProfiles/${currentUser.uid}/level`).set(playerXp.level).catch(() => {});
     }
-    // Menu header badge + Profile's XP bar.
+    // The header's XP bar (§ XP & levels): width = progress to the next
+    // level; a level up fills it to the end, then it starts again from 0.
+    let headerXpShown = null; // { level, pct } last drawn
+    function xpTipHtml(total) {
+      const p = xpProgress(total);
+      return p.max
+        ? `<b>Level ${p.level}</b> · top level<small>${p.total.toLocaleString('en-GB')} XP in total</small>`
+        : `<b>Level ${p.level}</b> · ${(p.need - p.into).toLocaleString('en-GB')} XP to level ${p.level + 1}<small>${p.into.toLocaleString('en-GB')} / ${p.need.toLocaleString('en-GB')} XP · ${p.total.toLocaleString('en-GB')} in total</small>`;
+    }
+    function refreshHeaderXpBar() {
+      const bar = document.getElementById('headerXpBar');
+      const fill = document.getElementById('headerXpFill');
+      if (!bar || !fill) return;
+      const on = xpShown() && !!currentUser && !!playerXp;
+      bar.classList.toggle('hidden', !on);
+      if (!on) { hideHeaderXpTip(); headerXpShown = null; return; }
+      const p = xpProgress(playerXp.total);
+      bar.setAttribute('aria-valuenow', String(p.pct));
+      bar.setAttribute('aria-valuetext', `Level ${p.level}, ${p.pct}% to level ${Math.min(XP_MAX_LEVEL, p.level + 1)}`);
+      const was = headerXpShown;
+      headerXpShown = { level: p.level, pct: p.pct };
+      const tip = document.getElementById('headerXpTip');
+      if (tip && !tip.classList.contains('hidden')) tip.innerHTML = xpTipHtml(playerXp.total);
+      if (!was || motionOff()) { fill.style.width = `${p.pct}%`; return; }
+      if (was.level === p.level && was.pct === p.pct) return;
+      bar.classList.remove('xp-pulse'); void bar.offsetWidth; bar.classList.add('xp-pulse');
+      if (p.level > was.level) {
+        // Level up: run to the end, then start the new level from empty.
+        fill.style.width = '100%';
+        setTimeout(() => {
+          fill.style.transition = 'none'; fill.style.width = '0%'; void fill.offsetWidth;
+          fill.style.transition = ''; fill.style.width = `${xpProgress(playerXp?.total || 0).pct}%`;
+        }, 750);
+      } else fill.style.width = `${p.pct}%`;
+    }
+    let headerXpTipTimer = null;
+    function showHeaderXpTip(autoHide) {
+      const tip = document.getElementById('headerXpTip');
+      const bar = document.getElementById('headerXpBar');
+      if (!tip || !bar || bar.classList.contains('hidden') || !playerXp) return;
+      tip.innerHTML = xpTipHtml(playerXp.total);
+      tip.classList.remove('hidden');
+      bar.classList.add('is-open');
+      // Centred under the filled end of the bar, kept on screen.
+      const r = bar.getBoundingClientRect();
+      const x = r.left + (r.width * xpProgress(playerXp.total).pct) / 100;
+      const half = tip.offsetWidth / 2 + 8;
+      tip.style.left = `${Math.max(half, Math.min(window.innerWidth - half, x))}px`;
+      clearTimeout(headerXpTipTimer);
+      if (autoHide) headerXpTipTimer = setTimeout(hideHeaderXpTip, 4000);
+    }
+    function hideHeaderXpTip() {
+      clearTimeout(headerXpTipTimer);
+      document.getElementById('headerXpTip')?.classList.add('hidden');
+      document.getElementById('headerXpBar')?.classList.remove('is-open');
+    }
+    (function wireHeaderXpBar() {
+      const bar = document.getElementById('headerXpBar');
+      if (!bar) return;
+      const hover = window.matchMedia && matchMedia('(hover: hover)').matches;
+      bar.addEventListener('mouseenter', () => { if (hover) showHeaderXpTip(false); });
+      bar.addEventListener('mouseleave', () => { if (hover) hideHeaderXpTip(); });
+      bar.addEventListener('focus', () => showHeaderXpTip(false));
+      bar.addEventListener('blur', hideHeaderXpTip);
+      bar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (hover) return;
+        if (bar.classList.contains('is-open')) hideHeaderXpTip(); else showHeaderXpTip(true);
+      });
+      document.addEventListener('pointerdown', (e) => { if (!bar.contains(e.target)) hideHeaderXpTip(); }, true);
+      window.addEventListener('resize', hideHeaderXpTip);
+    })();
+    // Menu header badge + Profile's XP bar + the header bar.
     function refreshXpDisplays() {
+      refreshHeaderXpBar();
       const on = xpShown() && !!currentUser && !!playerXp;
       const menu = document.getElementById('hamburgerLevel');
       if (menu) { menu.classList.toggle('hidden', !on); menu.innerHTML = on ? xpLevelBadge(xpLevelFor(playerXp.total)) : ''; }
@@ -23587,7 +23682,7 @@ video {
       const gained = matchXpLog.gained;
       const ups = matchXpLog.levelUps.map(u => `<div class="ms-levelup" data-levelup="${u.level}"><small>Level Up</small>Level ${u.level}${u.reward ? ` <span>+💎 ${u.reward}</span>` : ''}</div>`).join('');
       return `<div class="ms-section"><div class="ms-label">XP</div>
-        <div class="ms-progress">${xpLevelBadge(p.level)}<span class="ms-bar" style="--bar:#38bdf8"><i data-bar="xp" style="width:${p.pct}%"></i></span><b class="ms-xp-gain">${gained > 0 ? `+${gained} XP` : '+0 XP'}</b></div>${ups}</div>`;
+        <div class="ms-progress">${xpLevelBadge(p.level)}<span class="ms-bar" style="--bar:var(--xp-fill)"><i data-bar="xp" style="width:${p.pct}%"></i></span><b class="ms-xp-gain">${gained > 0 ? `+${gained} XP` : '+0 XP'}</b></div>${ups}</div>`;
     }
 
     // The Gauntlet as challenges: the first clear (Bots tab) and a fixed daily
