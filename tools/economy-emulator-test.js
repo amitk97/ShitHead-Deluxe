@@ -93,6 +93,12 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   await denied('wrong tier for the rating', db => update(ref(db, 'publicProfiles/alice'), { rating: 500, tier: 'Master' }));
   await denied('fake leaderboard rating', db => set(ref(db, 'leaderboard/alice'), { username: 'Alice', rating: 2400, tier: 'Master', wins: 0, losses: 0 }));
   await allowed('real leaderboard entry', db => set(ref(db, 'leaderboard/alice'), { username: 'Alice', rating: 500, tier: 'Bronze', wins: 0, losses: 0 }));
+  await denied('fake leaderboard level', db => update(ref(db, 'leaderboard/alice'), { level: 50 }));
+  await admin('users/alice/xp', 'PUT', { total: 2200, level: 10 });
+  await allowed('real leaderboard level', db => update(ref(db, 'leaderboard/alice'), { level: 10 }));
+  await allowed('the phone updates its entry without touching the level', db => update(ref(db, 'leaderboard/alice'), { username: 'Alice', rating: 500, tier: 'Bronze', wins: 0, losses: 0 }));
+  await admin('users/alice/xp', 'DELETE');
+  await admin('leaderboard/alice/level', 'DELETE');
   await admin('users/alice/challengeInbox', 'PUT', { x: { name: 'X', reward: 1, completedAt: 1 } });
   await allowed('delete an inbox note', db => remove(ref(db, 'users/alice/challengeInbox/x')));
   await denied('write an inbox note', db => set(ref(db, 'users/alice/challengeInbox/y'), { name: 'Y', reward: 999, completedAt: 1 }));
@@ -655,9 +661,12 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     ok(x.xp && x.xp.level === 40 && !x.xp.levelUps.length && num0(await admin('users/xena/diamonds')) === 0, 'reaching level 40 again pays nothing (already paid up to 43)', x.xp);
     await admin('users/xmig', 'PUT', { username: 'Xmig', xp: { total: 7198, level: 43 } });
     await admin('publicProfiles/xmig', 'PUT', { username: 'Xmig', level: 43 });
+    await admin('leaderboard/xmig', 'PUT', { username: 'Xmig', rating: 500, tier: 'Bronze', wins: 0, losses: 0, level: 43 });
+    await admin('boards/challenges/xmig', 'PUT', { name: 'Xmig', count: 3, at: 1, level: 43 });
     await admin('config/xpTableDone', 'DELETE');
     const fixedN = await xpMod.migrateAll();
     ok(fixedN >= 1 && (await admin('users/xmig/xp/level')) === 28 && (await admin('publicProfiles/xmig/level')) === 28 && (await admin('config/xpTableDone')) === 2, 'every account (and its public level) is re-levelled once', fixedN);
+    ok((await admin('leaderboard/xmig/level')) === 28 && (await admin('boards/challenges/xmig/level')) === 28 && (await admin('boards/gauntlet/xmig')) === null, 'the leaderboards show the new level (no new entries made)');
     ok((await xpMod.migrateAll()) === 0, 'the re-levelling runs once per table');
     await admin('config/features/xp', 'PUT', false);
     await sleep(11000);

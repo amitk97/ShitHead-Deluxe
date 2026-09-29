@@ -135,7 +135,7 @@ const gauntletBotXp = (round) => {
 
 // Re-levels EVERY account after a table change (tableVersion), once per
 // table: fixes users/{uid}/xp/level and the public copy other players see
-// (publicProfiles/{uid}/level, only if the profile still exists). Accounts
+// (publicProfiles, the leaderboards: boards.syncLevel, existing entries only). Accounts
 // that play re-level themselves anyway (addXp); this covers everyone else.
 let migratedTable = 0;
 async function migrateAll() {
@@ -157,8 +157,8 @@ async function migrateAll() {
       return holder.xp;
     });
     if (level) {
-      const pub = root.ref(`publicProfiles/${uid}`);
-      if ((await pub.once('value')).exists()) await pub.child('level').set(level);
+      // Public profile, Ranked leaderboard and board entries (only existing ones).
+      await require('./boards').syncLevel(uid, typeof u.username === 'string' ? u.username : null, level);
       fixed++;
     }
   }

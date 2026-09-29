@@ -7147,6 +7147,9 @@ async function runDevTestSuite() {
       refreshXpDisplays();
       assertTrue(document.getElementById('hamburgerLevel').classList.contains('hidden'), 'no menu level badge while off');
       assertTrue(document.getElementById('headerXpBar').classList.contains('hidden'), 'no header XP bar while off');
+      assertEqual(seatLevelBadge({ cosmetics: { level: 12 } }), '', 'no level on table seats while off');
+      assertTrue(!('level' in getPublicCosmeticLoadout()), 'no level sent with your seat while off');
+      assertTrue(!leaderboardRowHtml({ username: 'Pal', uid: 'u9', count: 3, level: 7 }, 2, 'challenges').includes('xp-badge'), 'no level on leaderboards while off');
       assertTrue(document.getElementById('profileXpSection').classList.contains('hidden'), 'no Profile XP bar while off');
       assertEqual(matchSummaryXpHtml(), '', 'no XP in the match summary while off');
       assertTrue(!friendRowHtml('u1', { username: 'Pal', rating: 600, level: 7 }, 'friend').includes('xp-badge'), 'no level on friends while off');
@@ -7177,6 +7180,16 @@ async function runDevTestSuite() {
       assertTrue(friendRowHtml('u1', { username: 'Pal', rating: 600, level: 7 }, 'friend').includes('Lv 7'), 'friends show their level');
       assertTrue(renderPlayerPopupHuman({ uid: 'u1', name: 'Pal' }, { loaded: true, rating: 600, level: 7 }, null).includes('Lv 7'), 'player cards show the level');
       assertTrue(ACTIVITY_MAIL_TYPES.includes('level'), 'level-up mail shows in the Inbox');
+      assertTrue(/Lv 12/.test(seatLevelBadge({ name: 'Pal', cosmetics: { level: 12 } })), 'other players show their level on their table seat');
+      assertEqual(seatLevelBadge({ name: 'Bot', isBot: true, cosmetics: { level: 12 } }), '', 'bots have no level');
+      assertEqual(getPublicCosmeticLoadout().level, 10, 'your level travels with your seat');
+      for (const id of ['hamburgerLevel', 'profileLevelBadge', 'handZoneLevel']) {
+        const el = document.getElementById(id);
+        assertTrue(!el.classList.contains('hidden') && /Lv 10/.test(el.textContent), `${id} shows your level`);
+      }
+      assertTrue(/Lv 7/.test(leaderboardRowHtml({ username: 'Pal', uid: 'u9', count: 3, level: 7 }, 2, 'challenges')), 'board rows show the level');
+      assertTrue(/Lv 7/.test(leaderboardRowHtml({ username: 'Pal', usernameKey: 'pal', rating: 700, wins: 3, losses: 1, level: 7 }, 2, 'ranked')), 'Ranked rows show the level');
+      assertTrue(/Lv 10/.test(leaderboardRowHtml({ username: 'Me', uid: 'xp_test', count: 3, level: 3 }, 1, 'challenges')), 'your own row shows your current level');
       const pastMail = inboxItemHtml({ type: 'level', backfill: true, level: 16, xp: 1910, reward: 380, id: 'level_backfill' });
       assertTrue(/level 16/.test(pastMail) && /1,910 XP/.test(pastMail) && /380/.test(pastMail), 'the back-dated XP mail says the level, XP and Diamonds', pastMail);
       assertEqual(document.getElementById('menuXpSwitchLabel').textContent, 'XP & Levels: On', 'the owner switch shows the live state');

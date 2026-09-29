@@ -57,7 +57,8 @@ async function onUserChanged(uid, before, after, { force = false } = {}) {
     tasks.push((async () => {
       if (a[board] <= 0) { await db().ref(`boards/${board}/${uid}`).remove(); return; }
       const avatar = (await db().ref(`publicProfiles/${uid}/avatar`).once('value')).val();
-      await db().ref(`boards/${board}/${uid}`).set({ name, count: a[board], at: Date.now(), ...(typeof avatar === 'string' ? { avatar } : {}) });
+      const level = Number(after.xp && after.xp.level) || 0;
+      await db().ref(`boards/${board}/${uid}`).set({ name, count: a[board], at: Date.now(), ...(typeof avatar === 'string' ? { avatar } : {}), ...(level > 0 ? { level } : {}) });
       if (a[board] > b[board] || force) {
         const t = await congratulate(uid, board, await placeOn(`boards/${board}`, 'count', a[board], uid));
         if (t) mailed.push({ board, tier: t });
@@ -70,8 +71,28 @@ async function onUserChanged(uid, before, after, { force = false } = {}) {
       if (t) mailed.push({ board: 'ranked', tier: t });
     })());
   }
+  // A new level (XP & levels) reaches every place other players see it.
+  const levelBefore = Number(before && before.xp && before.xp.level) || 0;
+  const levelAfter = Number(after.xp && after.xp.level) || 0;
+  if (levelAfter > 0 && (force || levelAfter !== levelBefore)) tasks.push(syncLevel(uid, name, levelAfter));
   await Promise.all(tasks);
   return mailed;
+}
+
+// Writes a player's level onto the entries that already exist (never adds
+// one): their public profile, the Ranked leaderboard and the server boards.
+async function syncLevel(uid, name, level) {
+  const paths = [`publicProfiles/${uid}`, ...Object.keys(BOARDS).map(board => `boards/${board}/${uid}`)];
+  if (name) paths.push(`leaderboard/${name.toLowerCase()}`);
+  const updates = {};
+  await Promise.all(paths.map(async (path) => {
+    const snap = await db().ref(path).once('value');
+    if (!snap.exists() || Number(snap.child('level').val()) === level) return;
+    if (path.startsWith('leaderboard/') && snap.child('username').val() !== name) return;
+    updates[`${path}/level`] = level;
+  }));
+  if (Object.keys(updates).length) await db().ref().update(updates);
+  return Object.keys(updates).length;
 }
 
 // A new picture or name reaches the player's existing board entries at once
@@ -99,4 +120,4 @@ async function refreshProfile(uid) {
 // Hidden while an account is being deleted; erased with it.
 const boardPaths = (uid) => Object.keys(BOARDS).map(board => `boards/${board}/${uid}`);
 
-module.exports = { BOARDS, TIERS, onUserChanged, placeOn, boardPaths, refreshProfile };
+module.exports = { syncLevel, BOARDS, TIERS, onUserChanged, placeOn, boardPaths, refreshProfile };

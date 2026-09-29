@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v226 (ShitHead-Deluxe-202) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v227 (ShitHead-Deluxe-203) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -536,6 +536,11 @@
     .hdr-xp-tip small { display:block; color:#94a3b8; font-size:10px; font-weight:600; }
     .xp-card-sub { font-size:10px; color:#94a3b8; font-weight:700; }
     #hamburgerAccountHead .drawer-level { display:inline-flex; flex-shrink:0; }
+    .xp-badge-sm { height:14px; padding:0 4px; font-size:8px; border-radius:5px; }
+    .xp-badge-seat { height:calc(var(--opp-name-size, 9px) + 5px); padding:0 4px; font-size:max(8px, calc(var(--opp-name-size, 9px) - 1px)); border-radius:5px; margin-left:4px; }
+    .hand-level { display:inline-flex; align-items:center; margin-left:5px; vertical-align:middle; }
+    #profileLevelBadge { display:inline-flex; margin-left:6px; flex-shrink:0; }
+    #profileLevelBadge.hidden, .hand-level.hidden, #hamburgerAccountHead .drawer-level.hidden, .hdr-xp.hidden, .hdr-xp-tip.hidden { display:none; }
     .profile-xp { margin-top:10px; }
     .ms-xp-gain { color:#7dd3fc; white-space:nowrap; }
     .ms-levelup { position:relative; overflow:hidden; margin:8px auto 0; width:fit-content; padding:6px 14px; border-radius:12px; border:2px solid #38bdf8; color:#bae6fd; background:rgba(8,47,73,.5); font-weight:900; font-size:12px; letter-spacing:.08em; text-transform:uppercase; text-align:center; }
@@ -5767,7 +5772,7 @@ video {
           <div id="profileHeaderCard" class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-start gap-3">
             <button id="profileAvatarBtn" type="button" class="profile-avatar-btn" aria-label="Change profile picture"><span class="inline-flex items-center justify-center" data-own-avatar="68"></span><span class="profile-avatar-hint">Tap to change</span></button>
             <div class="min-w-0">
-              <span class="profile-name-row"><span id="profileUsernameText" class="block text-sm font-black text-white truncate">Not signed in</span><button id="profileEditNameBtn" type="button" class="profile-edit-name hidden" aria-label="Change username">✎</button></span>
+              <span class="profile-name-row"><span id="profileUsernameText" class="block text-sm font-black text-white truncate">Not signed in</span><span id="profileLevelBadge" class="hidden"></span><button id="profileEditNameBtn" type="button" class="profile-edit-name hidden" aria-label="Change username">✎</button></span>
               <span id="profileNameEditor" class="hidden profile-name-editor"><input id="profileNameInput" type="text" maxlength="12" autocomplete="off" placeholder="New username" /><button id="profileNameSaveBtn" type="button" class="profile-name-save">Save</button><button id="profileNameCancelBtn" type="button" class="profile-name-cancel" aria-label="Cancel">✕</button></span>
               <span id="profileNameStatus" class="hidden profile-name-status"></span>
               <span id="profileRatingText" class="profile-rating-row text-[10px] text-slate-400">&nbsp;</span>
@@ -6406,7 +6411,7 @@ video {
 
       <!-- Hand Row (Fanned Stack) -->
       <div id="localHandCardZone" class="w-full flex flex-col justify-center items-center relative isolate z-20 mt-0.5" aria-label="Cards currently in your hand">
-        <div class="card-zone-label-row" aria-hidden="true"><span id="handZoneLabel" class="card-zone-label card-zone-label--hand table-label-pill">Hand</span></div>
+        <div class="card-zone-label-row" aria-hidden="true"><span id="handZoneLabel" class="card-zone-label card-zone-label--hand table-label-pill">Hand</span><span id="handZoneLevel" class="hand-level hidden"></span></div>
         <!-- Fanned Hand Container -->
         <div id="localHand" data-drop-zone="hand" class="relative isolate z-20 flex flex-col items-center justify-end max-w-full overflow-x-auto px-4 pt-7 pb-1 custom-scrollbar min-h-[75px] max-h-[60vh]"></div>
       </div>
@@ -14519,7 +14524,7 @@ video {
         oppDiv.innerHTML = `
           <div class="opp-head" role="button" tabindex="0" data-player-popup="${escapeAttr(p.id)}" aria-label="View ${escapeAttr(p.name)}'s profile">
             ${avatarHtml(getPlayerAvatarId(p), oppAvatarSize, isTurn ? 'opp-avatar-turn' : '')}
-            <span class="opp-name font-black text-slate-100 uppercase" title="${escapeAttr(p.name)}">${escapeHtml(p.name)}</span>
+            <span class="opp-name font-black text-slate-100 uppercase" title="${escapeAttr(p.name)}">${escapeHtml(p.name)}</span>${seatLevelBadge(p)}
           </div>
           <div class="flex opp-slot-row">
             ${tableSlotsHtml}
@@ -17974,6 +17979,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v227: [
+        ['📈', 'Levels now show everywhere: on the table next to each player, on every leaderboard, on your Profile and by your Hand.', WN_KEY]
+      ],
       v226: [
         ['📈', 'A thin XP bar along the bottom of the header shows how close you are to your next level. Hover or tap it for the numbers.', WN_KEY],
         ['📅', 'Weekly challenges now give 100 XP.']
@@ -20418,7 +20426,10 @@ video {
         burnEffect: equippedCosmetics.burnEffect || 'default',
         victoryEffect: equippedCosmetics.victoryEffect || 'default',
         jokerEffect: equippedCosmetics.jokerEffect || 'default',
-        avatar: equippedCosmetics.avatar || 'default'
+        avatar: equippedCosmetics.avatar || 'default',
+        // Your level rides along with your seat (§ XP & levels), so other
+        // players see it on the table; only while XP is on.
+        ...(typeof playerXp !== 'undefined' && playerXp && xpShown() ? { level: xpLevelFor(playerXp.total) } : {})
       };
     }
 
@@ -23661,12 +23672,22 @@ video {
       document.addEventListener('pointerdown', (e) => { if (!bar.contains(e.target)) hideHeaderXpTip(); }, true);
       window.addEventListener('resize', hideHeaderXpTip);
     })();
+    // A table seat's level (other players carry it in their seat's
+    // cosmetics; bots have none).
+    function seatLevelBadge(p) {
+      const L = Number(p?.cosmetics?.level);
+      return xpShown() && !p?.isBot && L > 0 ? xpLevelBadge(L, 'xp-badge-seat') : '';
+    }
     // Menu header badge + Profile's XP bar + the header bar.
     function refreshXpDisplays() {
       refreshHeaderXpBar();
       const on = xpShown() && !!currentUser && !!playerXp;
-      const menu = document.getElementById('hamburgerLevel');
-      if (menu) { menu.classList.toggle('hidden', !on); menu.innerHTML = on ? xpLevelBadge(xpLevelFor(playerXp.total)) : ''; }
+      const myLevel = on ? xpLevelFor(playerXp.total) : 0;
+      // Menu header, Profile (next to the name) and the table (by your Hand).
+      [['hamburgerLevel', ''], ['profileLevelBadge', ''], ['handZoneLevel', 'xp-badge-sm']].forEach(([id, cls]) => {
+        const el = document.getElementById(id);
+        if (el) { el.classList.toggle('hidden', !on); el.innerHTML = on ? xpLevelBadge(myLevel, cls) : ''; }
+      });
       const section = document.getElementById('profileXpSection');
       if (section) {
         const show = xpShown() && !!currentUser;
@@ -25534,7 +25555,8 @@ video {
           }).catch(() => {})
         ]));
         const leaderboardWrite = username
-          ? db.ref(`leaderboard/${username.toLowerCase()}`).set({ username, rating: profile.rating != null ? profile.rating : 500, tier, wins: profile.wins || 0, losses: profile.losses || 0, avatar })
+          // update (not set): the server keeps the entry's `level` current.
+          ? db.ref(`leaderboard/${username.toLowerCase()}`).update({ username, rating: profile.rating != null ? profile.rating : 500, tier, wins: profile.wins || 0, losses: profile.losses || 0, avatar })
           : Promise.resolve();
         return Promise.all([publicProfileWrite, leaderboardWrite]).catch((e) => console.warn('syncPublicProfile failed', e));
       });
@@ -26800,7 +26822,7 @@ video {
           rows.push({ usernameKey: key, ...entry, score: Number(entry.rating) || 0 });
         } else {
           if (typeof entry.name !== 'string' || !entry.name.trim() || !(Number(entry.count) > 0)) return;
-          rows.push({ uid: key, username: entry.name, avatar: entry.avatar, count: Number(entry.count), score: Number(entry.count) });
+          rows.push({ uid: key, username: entry.name, avatar: entry.avatar, level: entry.level, count: Number(entry.count), score: Number(entry.count) });
         }
       });
       rows.sort((a, b) => (b.score - a.score) || String(a.username).localeCompare(String(b.username), undefined, { sensitivity: 'base' }));
@@ -26926,6 +26948,8 @@ video {
         : !!(currentUser && p.uid === currentUser.uid);
       // Top three get a gold / silver / bronze place disc (no emoji medals).
       const medal = rank <= 3 ? `<span class="lb-place is-${rank}" aria-label="Place ${rank}">${rank}</span>` : `#${rank}`;
+      // Level (§ XP & levels): your own from your XP, others' from the board.
+      const lbLevel = !xpShown() ? 0 : isMe && playerXp ? xpLevelFor(playerXp.total) : Number(p.level) || 0;
       let sub, pill;
       if (tab === 'ranked') {
         const tier = getRankTier(p.rating || 500);
@@ -26941,7 +26965,7 @@ video {
         <div${who || ' class="flex items-center gap-2 min-w-0"'}>
           <span class="text-[10px] font-black text-slate-500" style="width:22px;text-align:center;${rank <= 3 ? 'font-size:17px;line-height:1;' : ''}">${medal}</span>
           ${avatarHtml(isMe && tab !== 'ranked' ? resolveAvatarId(equippedCosmetics.avatar) : p.avatar, 30)}
-          <div class="min-w-0"><div class="text-xs font-bold text-white truncate">${escapeHtml(String(p.username || 'Player'))}${isMe ? ' <span class=\"text-amber-300 text-[8px]\">YOU</span>' : ''}</div><div class="text-[8px] text-slate-500">${sub}</div></div>
+          <div class="min-w-0"><div class="text-xs font-bold text-white truncate">${escapeHtml(String(p.username || 'Player'))}${lbLevel ? ` ${xpLevelBadge(lbLevel, 'xp-badge-sm')}` : ''}${isMe ? ' <span class=\"text-amber-300 text-[8px]\">YOU</span>' : ''}</div><div class="text-[8px] text-slate-500">${sub}</div></div>
         </div>
         ${pill}
       </div>`;

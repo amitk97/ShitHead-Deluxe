@@ -376,9 +376,14 @@
           ".validate": "!newData.exists() || (newData.isString() &&
             newData.val().matches(/^(default|avatar-[a-z-]{3,30})$/))"
         },
+        "level": {
+          ".validate": "newData.isNumber() && newData.val() ===
+            root.child('users').child(root.child('usernames').child($name).val())
+              .child('xp').child('level').val()"
+        },
         "$other": {
           ".validate": "$other === 'username' || $other === 'rating' || $other === 'tier' ||
-            $other === 'wins' || $other === 'losses' || $other === 'avatar'"
+            $other === 'wins' || $other === 'losses' || $other === 'avatar' || $other === 'level'"
         }
       }
     },
