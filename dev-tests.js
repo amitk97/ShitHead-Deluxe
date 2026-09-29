@@ -7135,7 +7135,9 @@ async function runDevTestSuite() {
     const g = XP_RULES.gauntletBot;
     assertTrue(g.easy < g.medium && g.medium < g.hard && g.hard < g.boss, 'Gauntlet XP scales with the bot');
     assertTrue(!('dailyCap' in XP_RULES), 'no daily XP cap');
-    assertEqual(XP_RULES.seriesLevel, 10, 'Best of series unlocks at level 10');
+    assertEqual(SERIES_RULES.level, 20, 'Best of series unlocks at level 20 (owner)');
+    assertEqual(JSON.stringify(serverEconomyCatalog().series), JSON.stringify(SERIES_RULES), 'the server gets the same series rules');
+    assertEqual([SERIES_RULES.bestOf[3], SERIES_RULES.bestOf[5]], [30, 50], 'entries: Best of 3 = 30, Best of 5 = 50');
     assertEqual(JSON.stringify(serverEconomyCatalog().xp), JSON.stringify(XP_RULES), 'the server gets the same XP table');
   });
   await test('XP & levels: screens stay hidden while the switch is off and show the server\'s XP when it is on', () => {

@@ -25,7 +25,7 @@ from Ranked rating, and a natural gate for features like staked series.
   playing; the match limits already stop farming).
 - Levels 1–99 from the table `XP_RULES.levels` (RuneScape-style, doubled in v225:
   ~240–600 XP a level early, doubling about every 7 levels at the top; level 5 = 954,
-  level 10 = 2,172 (~37 typical games), level 50 = 20,948, level 92 ≈ half of
+  level 20 = 2,172 (~37 typical games), level 50 = 20,948, level 92 ≈ half of
   level 99 = 1,400,000). XP keeps counting past 99 up to 100,000,000.
 - Level-up Diamonds: 20 a level, 100 on every 10th level instead (not both).
 - Back-dating: the first time an account gets XP (or signs in) with the switch on,
@@ -46,11 +46,11 @@ from Ranked rating, and a natural gate for features like staked series.
 
 **Who can play:**
 - Both players **signed in** with a **verified email** (Diamonds are involved).
-- **Both at level 10 or higher** (owner's decision, `XP_RULES.seriesLevel`; ~37
+- **Both at level 20 or higher** (owner's decision, `SERIES_RULES.level`; ~80
   typical games; it doubles as anti-abuse because a brand-new throwaway account
   can't join).
 - Optional: allow an *unstaked* "friendly" series for any signed-in player, and only
-  require level 10 for staked series. (Owner to decide.)
+  require level 20 for staked series. (Owner to decide.)
 
 **Setting it up:**
 - When the host creates a room with exactly 2 human seats, a "Series" choice appears:
@@ -120,8 +120,8 @@ use the Ranked safety machinery:
 - Invite pop-up: "Amit challenges you to a Best of 3 · entry 30 💎 · winner takes 120 💎".
 - Table: score pill + "Game n of m"; match summary shows the series score; the final
   summary shows the payout.
-- Locked state (below level 10 or signed out): the selector shows a lock and
-  "Reach level 10 to play series".
+- Locked state (below level 20 or signed out): the selector shows a lock and
+  "Reach level 20 to play series".
 
 ---
 
@@ -129,7 +129,7 @@ use the Ranked safety machinery:
 
 1. XP: done (v222–v224, `functions/xp.js`, screens, owner switch in the menu).
 2. Series server actions: `seriesCreate` (checks both players: signed in, verified,
-   level ≥ 10, funds; takes entries → escrow), `seriesGame` (reads the room, records a
+   level ≥ 20, funds; takes entries → escrow), `seriesGame` (reads the room, records a
    game win for the right seat, idempotent per matchId), `seriesForfeit`,
    `seriesAbandon` (refunds), payout on the deciding game. All via `userTx` (mind the
    transaction pitfall in `CLAUDE.md`).

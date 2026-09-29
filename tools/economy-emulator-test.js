@@ -700,6 +700,108 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     ok((await tryWrite('xena', db => set(ref(db, 'publicProfiles/xena/level'), 99))) === 'denied', 'blocked: publishing a fake level');
   }
 
+  // Best of series (v231): entries held by the server, pot matched, forfeits.
+  {
+    const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+    const code = '424242';
+    const lvl20 = 4772; // total XP for level 20
+    await admin('config/features/xp', 'PUT', true);
+    for (const [u, name] of [['sera', 'Sera'], ['serb', 'Serb']]) {
+      await call(u, { action: 'init' });
+      await admin(`users/${u}/username`, 'PUT', name);
+      await admin(`users/${u}/diamonds`, 'PUT', 1000);
+      await admin(`users/${u}/xp`, 'PUT', { total: lvl20, level: 20, backfilled: true, table: 2 });
+    }
+    const room = (phase, extra = {}) => ({ phase, isRanked: false, matchId: extra.matchId || 'lobby',
+      players: [{ id: 'p_host', uid: 'sera', name: 'Sera', isHost: true, isBot: false, finishRank: extra.a ?? null, drew: !!extra.drew },
+        { id: 'p_b', uid: 'serb', name: 'Serb', isHost: false, isBot: !!extra.bBot, substituteMoveCount: extra.bTurns || 0, finishRank: extra.b ?? null, drew: !!extra.drew }] });
+    await admin(`rooms/${code}`, 'PUT', room('LOBBY'));
+    await sleep(11000); // the XP switch is re-read at most every 10s
+    const sc = (u, data) => call(u, { action: 'series', roomCode: code, ...data });
+    ok((await tryWrite('sera', db => set(ref(db, `series/${code}`), { status: 'live' }))) === 'denied', 'blocked: a phone writing a series');
+    ok((await tryWrite('sera', db => set(ref(db, 'users/sera/series'), { room: code, id: 'x', status: 'live' }))) === 'denied', 'blocked: a phone writing its own series record');
+    let r = await sc('serb', { op: 'create', bestOf: 3 });
+    ok(r.error, 'only the host can start a series', r);
+    await admin('users/serb/xp', 'PUT', { total: 100, level: 1, backfilled: true, table: 2 });
+    r = await sc('sera', { op: 'create', bestOf: 3 });
+    ok(r.error && /level 20/.test(r.error.message), 'both players must be level 20+', r);
+    await admin('users/serb/xp', 'PUT', { total: lvl20, level: 20, backfilled: true, table: 2 });
+    r = await call('sera', { action: 'series', roomCode: code, op: 'create', bestOf: 3 }, undefined, false);
+    ok(r.error, 'a series needs a verified email', r);
+    r = await sc('sera', { op: 'create', bestOf: 3 });
+    ok(r.series && r.series.status === 'pending' && r.series.pot === 120, 'Best of 3: the host pays 30, the pot is 120 (server matches it)', r);
+    ok(num0(await admin('users/sera/diamonds')) === 970 && (await admin('users/sera/series'))?.status === 'pending', 'host entry taken; the account knows its series');
+    r = await sc('serb', { op: 'accept' });
+    ok(r.series && r.series.status === 'live' && num0(await admin('users/serb/diamonds')) === 970, 'the other player pays 30 on accepting: series live', r);
+    ok((await admin('users/sera/series'))?.status === 'live', 'both accounts know the series is live (for rejoining)');
+    await admin(`rooms/${code}`, 'PUT', room('FINISHED', { matchId: 'g1', a: 1, b: 2 }));
+    r = await sc('sera', { op: 'game', matchId: 'g1' });
+    ok(r.series && r.series.wins.sera === 1 && r.series.played === 1, 'game 1 to Sera (1-0)', r);
+    r = await sc('serb', { op: 'game', matchId: 'g1' });
+    ok(r.series && r.series.wins.sera === 1 && r.series.played === 1, 'the same game never counts twice');
+    await admin(`rooms/${code}`, 'PUT', room('FINISHED', { matchId: 'g2', a: 2, b: 1 }));
+    r = await sc('serb', { op: 'game', matchId: 'g2' });
+    ok(r.error && /too quick/.test(r.error.message), 'a game reported moments after the last one does not count', r);
+    await admin(`series/${code}/lastGameAt`, 'PUT', Date.now() - 61000);
+    r = await sc('serb', { op: 'game', matchId: 'g2' });
+    ok(r.series && r.series.wins.serb === 1, 'game 2 to Serb (1-1)', r);
+    await admin(`series/${code}/lastGameAt`, 'PUT', Date.now() - 61000);
+    await admin(`rooms/${code}`, 'PUT', room('FINISHED', { matchId: 'g3', drew: true, a: 1, b: 1 }));
+    r = await sc('sera', { op: 'game', matchId: 'g3' });
+    ok(r.series && r.series.played === 3 && r.series.wins.sera === 1 && r.series.wins.serb === 1 && r.series.status === 'live', 'a stalemate draw is played but nobody scores', r);
+    await admin(`series/${code}/lastGameAt`, 'PUT', Date.now() - 61000);
+    await admin(`rooms/${code}`, 'PUT', room('FINISHED', { matchId: 'g4', a: 1, b: 2 }));
+    r = await sc('serb', { op: 'game', matchId: 'g4' });
+    ok(r.series && r.series.status === 'done' && r.series.winner === 'sera', 'Sera wins the series 2-1', r);
+    ok(num0(await admin('users/sera/diamonds')) === 1090 && num0(await admin('users/serb/diamonds')) === 970, 'the winner gets the 120 pot (30 in, +90); the loser is down 30');
+    const sid = r.series.id;
+    const [mailA, mailB] = [await admin(`users/sera/activityInbox/series_${sid}`), await admin(`users/serb/activityInbox/series_${sid}`)];
+    ok(mailA?.type === 'series' && mailA.won === true && mailA.pot === 120 && mailB?.won === false && mailA.score === '2–1', 'both get a result mail', [mailA, mailB]);
+    ok((await admin('users/sera/series')) === null && (await admin('users/serb/series')) === null, 'both accounts are free for a new series');
+    r = await sc('sera', { op: 'status' });
+    ok(num0(await admin('users/sera/diamonds')) === 1090, 'settling again never pays twice');
+
+    // Called off before the first game: entries back.
+    await admin(`rooms/${code}`, 'PUT', room('LOBBY'));
+    r = await sc('sera', { op: 'create', bestOf: 5 });
+    ok(r.series && r.series.fee === 50 && r.series.pot === 200, 'Best of 5: 50 each, pot 200', r);
+    await sc('serb', { op: 'accept' });
+    r = await sc('serb', { op: 'cancel' });
+    ok(r.series && r.series.status === 'cancelled' && num0(await admin('users/sera/diamonds')) === 1090 && num0(await admin('users/serb/diamonds')) === 970, 'calling it off before a game refunds both', r);
+
+    // Leaving mid-series forfeits it.
+    r = await sc('sera', { op: 'create', bestOf: 3 });
+    await sc('serb', { op: 'accept' });
+    await admin(`series/${code}/played`, 'PUT', 1);
+    r = await sc('sera', { op: 'cancel' });
+    ok(r.error, 'after a game, calling it off is refused (leaving forfeits)', r);
+    r = await sc('sera', { op: 'forfeit' });
+    ok(r.series && r.series.winner === 'serb' && r.series.reason === 'forfeit', 'forfeiting hands the series to the other player', r);
+    ok(num0(await admin('users/serb/diamonds')) === 1060 && num0(await admin('users/sera/diamonds')) === 1060, 'forfeit: the other player gets the 120 pot');
+
+    // The other player left: their stand-in bot must have played 5 turns and they must be away.
+    r = await sc('sera', { op: 'create', bestOf: 3 });
+    await sc('serb', { op: 'accept' });
+    await admin(`rooms/${code}`, 'PUT', room('PLAY', { bBot: true, bTurns: 3 }));
+    await admin('publicProfiles/serb', 'PUT', { username: 'Serb', online: false, seen: Date.now() - 120000 });
+    r = await sc('sera', { op: 'claimForfeit' });
+    ok(r.error && /time to come back/.test(r.error.message), 'no forfeit before the stand-in has played 5 turns', r);
+    await admin(`rooms/${code}`, 'PUT', room('PLAY', { bBot: true, bTurns: 5 }));
+    await admin('publicProfiles/serb', 'PUT', { username: 'Serb', online: true, seen: Date.now() });
+    r = await sc('sera', { op: 'claimForfeit' });
+    ok(r.error, 'no forfeit while they are still online', r);
+    await admin('publicProfiles/serb', 'PUT', { username: 'Serb', online: false, seen: Date.now() - 120000 });
+    r = await sc('sera', { op: 'claimForfeit' });
+    ok(r.series && r.series.winner === 'sera' && r.series.reason === 'forfeit', 'after 5 stand-in turns away, the series goes to the player who stayed', r);
+
+    // A few a day.
+    await admin(`rooms/${code}`, 'PUT', room('LOBBY'));
+    await admin('users/sera/seriesDay', 'PUT', { day: new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()), count: 5 });
+    r = await sc('sera', { op: 'create', bestOf: 3 });
+    ok(r.error && /a day/.test(r.error.message), '5 series a day per player', r);
+    await admin('config/features/xp', 'PUT', false);
+  }
+
   // A new picture or name reaches existing board entries (publicProfiles trigger → refreshProfile)
   const boardsMod = require('../functions/boards');
   await admin('publicProfiles/dave/avatar', 'PUT', 'avatar-ghost');

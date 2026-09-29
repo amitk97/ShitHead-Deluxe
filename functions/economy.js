@@ -1107,6 +1107,226 @@ actions.claimGift = async ({ uid, data }) => {
   return { itemId: item.id, asDiamonds: !!res.asDiamonds, value: num(res.value), diamonds: num(res.user.diamonds) };
 };
 
+// ---- Best of series (Play Friends, 2 players) -------------------------------
+// series/{room} (server-only, readable by signed-in players):
+//   { id, room, bestOf, need, fee, pot, host, guest, names, wins {uid: n},
+//     games {matchId: uid|'draw'}, played, status pending|live|done|cancelled,
+//     winner, reason, createdAt, updatedAt, lastGameAt, settled {uid: true} }
+// Both players must be level CAT.series.level+, signed in with a verified
+// email, and pay the entry (CAT.series.bestOf[n]) up front: the host on
+// `create`, the other player on `accept`. The server matches the pot, so the
+// winner gets fee x 4. A game counts once (by matchId) and needs the room to
+// show it finished; a stalemate draw counts as played with no winner.
+// Leaving forfeits; a player whose stand-in bot has played CAT.series.
+// forfeitTurns turns and who hasn't been seen for a minute can be claimed as a
+// forfeit by the other. users/{uid}/series = { room, id, status } (the game
+// rejoins it at sign-in); money moves are idempotent via users/{uid}/seriesLedger.
+const SERIES = CAT.series || {};
+const SERIES_STALE_MS = 24 * 60 * 60 * 1000;
+const seriesRef = (code) => db().ref(`series/${code}`);
+const seriesActive = (s) => !!s && (s.status === 'pending' || s.status === 'live');
+async function seriesPlayerLevel(uid) {
+  const x = (await db().ref(`users/${uid}/xp`).once('value')).val() || {};
+  return xp.levelFor(num(x.total));
+}
+// Takes or returns an entry (and clears/sets users/{uid}/series) exactly once.
+async function seriesMoney(uid, key, delta, s, mail) {
+  const now = Date.now();
+  return userTx(uid, (user) => {
+    user.seriesLedger = user.seriesLedger || {};
+    if (user.seriesLedger[key]) return { noop: true, already: true };
+    if (delta < 0 && num(user.diamonds) < -delta) return { error: `You need ${-delta} Diamonds to play this series.` };
+    addDiamonds(user, delta);
+    user.seriesLedger[key] = { at: now, amount: delta };
+    user.seriesLedger = pruneMap(user.seriesLedger, 60);
+    if (s) user.series = seriesActive(s) ? { room: s.room, id: s.id, status: s.status, bestOf: s.bestOf } : null;
+    if (mail) { user.activityInbox = user.activityInbox || {}; user.activityInbox[`series_${s.id}`] = { type: 'series', sentAt: now, ...mail }; }
+    return { user };
+  });
+}
+// Pays / refunds whatever a finished series still owes (safe to run again).
+async function settleSeries(s) {
+  if (!s || seriesActive(s)) return s;
+  const players = [s.host, s.guest].filter(Boolean);
+  for (const u of players) {
+    if (s.settled && s.settled[u]) continue;
+    const other = players.find(p => p !== u);
+    const score = `${num(s.wins?.[u])}–${num(s.wins?.[other])}`;
+    const base = { bestOf: s.bestOf, opponent: clip(s.names?.[other] || 'Your opponent', 20), score, reason: s.reason || null };
+    if (s.status === 'done') {
+      const won = s.winner === u;
+      await seriesMoney(u, `${s.id}_${won ? 'won' : 'lost'}`, won ? num(s.pot) : 0, s, { ...base, won, pot: won ? num(s.pot) : 0, fee: num(s.fee) });
+    } else {
+      const paid = !!(s.paid && s.paid[u]);
+      await seriesMoney(u, `${s.id}_refund`, paid ? num(s.fee) : 0, s, { ...base, cancelled: true, refund: paid ? num(s.fee) : 0 });
+    }
+    await seriesRef(s.room).child(`settled/${u}`).set(true);
+    s.settled = { ...(s.settled || {}), [u]: true };
+  }
+  return s;
+}
+// Moves a series on inside a transaction on series/{room}; returns the new value.
+// The first pass sees the (empty) local cache: unless we're creating the
+// series, return null there so Firebase re-runs with the server's value.
+async function seriesTx(code, change, { create = false } = {}) {
+  let err = null;
+  const res = await seriesRef(code).transaction((cur) => {
+    err = null;
+    if (cur === null && !create) return null;
+    const next = change(cur ? JSON.parse(JSON.stringify(cur)) : null);
+    if (next && next.error) { err = next.error; return; }
+    if (next === undefined) return; // nothing to change
+    return next;
+  }, undefined, false);
+  if (err) fail('failed-precondition', err);
+  return res.snapshot.val();
+}
+function finishSeries(s, winner, reason, now) {
+  s.status = 'done'; s.winner = winner; s.reason = reason; s.updatedAt = now;
+  return s;
+}
+actions.series = async ({ uid, auth, data }) => {
+  const op = data.op;
+  if (!['status', 'create', 'accept', 'cancel', 'game', 'forfeit', 'claimForfeit'].includes(op)) fail('invalid-argument', 'Unknown series step.');
+  const code = clip(data.roomCode, 6);
+  if (!/^\d{6}$/.test(code)) fail('invalid-argument', 'Bad room.');
+  const now = Date.now();
+  let s = (await seriesRef(code).once('value')).val();
+  // A series nobody has touched for a day is called off (entries back).
+  if (seriesActive(s) && now - num(s.updatedAt) > SERIES_STALE_MS) {
+    s = await seriesTx(code, (cur) => (seriesActive(cur) && now - num(cur.updatedAt) > SERIES_STALE_MS ? { ...cur, status: 'cancelled', reason: 'expired', updatedAt: now } : undefined));
+  }
+  if (s && !seriesActive(s)) s = await settleSeries(s);
+  if (op === 'status') return { series: s || null };
+
+  const room = (await db().ref(`rooms/${code}`).once('value')).val();
+  const seats = Object.values(room?.players || {}).filter(Boolean);
+  const mine = seats.find(p => p.uid === uid);
+  const isMember = s && (s.host === uid || s.guest === uid);
+
+  if (op === 'create') {
+    const bestOf = num(data.bestOf);
+    const fee = num(SERIES.bestOf?.[bestOf]);
+    if (!fee) fail('invalid-argument', 'Choose Best of 3 or Best of 5.');
+    if (!(await xp.enabled())) fail('failed-precondition', 'Series need levels, which are switched off right now.');
+    if (!auth?.token?.email_verified) fail('failed-precondition', 'Verify your email address first.');
+    if (!room || room.isRanked) fail('failed-precondition', 'Series are only for Play Friends rooms.');
+    const humans = seats.filter(p => !p.isBot && p.uid);
+    if (seats.length !== 2 || humans.length !== 2) fail('failed-precondition', 'A series needs exactly two signed-in players and no bots.');
+    if (!mine || !mine.isHost) fail('failed-precondition', 'Only the host can start a series.');
+    if (['SWAP', 'PLAY'].includes(room.phase)) fail('failed-precondition', 'Wait for this game to finish first.');
+    if (seriesActive(s)) fail('failed-precondition', 'A series is already set up in this room.');
+    const other = humans.find(p => p.uid !== uid);
+    const [myLevel, theirLevel] = await Promise.all([seriesPlayerLevel(uid), seriesPlayerLevel(other.uid)]);
+    if (myLevel < num(SERIES.level)) fail('failed-precondition', `Series unlock at level ${num(SERIES.level)}.`);
+    if (theirLevel < num(SERIES.level)) fail('failed-precondition', `${clip(other.name, 20)} needs to reach level ${num(SERIES.level)} first.`);
+    const id = `s${now.toString(36)}${nodeCrypto.randomInt(1e9).toString(36)}`;
+    const draft = {
+      id, room: code, bestOf, need: Math.ceil(bestOf / 2), fee, pot: fee * 4, host: uid, guest: other.uid,
+      names: { [uid]: clip(mine.name, 20), [other.uid]: clip(other.name, 20) },
+      wins: { [uid]: 0, [other.uid]: 0 }, played: 0, status: 'pending', paid: { [uid]: true },
+      createdAt: now, updatedAt: now
+    };
+    // One series at a time per player, and a few a day.
+    const today = ukDateKey(new Date(now));
+    const dayCount = (user) => (user.seriesDay && user.seriesDay.day === today ? num(user.seriesDay.count) : 0);
+    await userTx(uid, (user) => {
+      if (seriesActive(user.series) && user.series.room !== code) return { error: 'Finish your other series first.' };
+      if (dayCount(user) >= num(SERIES.perDay, 5)) return { error: `You can start ${num(SERIES.perDay, 5)} series a day. Come back tomorrow.` };
+      return { noop: true };
+    });
+    await seriesMoney(uid, `${id}_entry`, -fee, draft);
+    try {
+      s = await seriesTx(code, (cur) => (seriesActive(cur) ? { error: 'A series is already set up in this room.' } : draft), { create: true });
+    } catch (e) {
+      await seriesMoney(uid, `${id}_refund`, fee, { ...draft, status: 'cancelled' });
+      throw e;
+    }
+    await userTx(uid, (user) => { user.seriesDay = { day: today, count: dayCount(user) + 1 }; return { user }; });
+    return { series: s };
+  }
+
+  if (!s || !seriesActive(s)) fail('failed-precondition', 'There is no series going on in this room.');
+  if (!isMember) fail('permission-denied', 'You are not in this series.');
+  const other = s.host === uid ? s.guest : s.host;
+
+  if (op === 'accept') {
+    if (uid !== s.guest || s.status !== 'pending') fail('failed-precondition', 'Nothing to accept.');
+    if (!auth?.token?.email_verified) fail('failed-precondition', 'Verify your email address first.');
+    if ((await seriesPlayerLevel(uid)) < num(SERIES.level)) fail('failed-precondition', `Series unlock at level ${num(SERIES.level)}.`);
+    await userTx(uid, (user) => (seriesActive(user.series) && user.series.room !== code ? { error: 'Finish your other series first.' } : { noop: true }));
+    await seriesMoney(uid, `${s.id}_entry`, -num(s.fee), { ...s, status: 'live' });
+    try {
+      s = await seriesTx(code, (cur) => (cur && cur.id === s.id && cur.status === 'pending'
+        ? { ...cur, status: 'live', paid: { ...(cur.paid || {}), [uid]: true }, updatedAt: now } : { error: 'That series was called off.' }));
+    } catch (e) {
+      await seriesMoney(uid, `${s.id}_refund`, num(s.fee), { ...s, status: 'cancelled' });
+      throw e;
+    }
+    // The host's record says live too (for rejoining).
+    await db().ref(`users/${s.host}/series`).set({ room: code, id: s.id, status: 'live', bestOf: s.bestOf });
+    return { series: s };
+  }
+
+  if (op === 'cancel') {
+    // Before the first game only: after that, leaving is a forfeit.
+    s = await seriesTx(code, (cur) => (cur && cur.id === s.id && seriesActive(cur) && !num(cur.played)
+      ? { ...cur, status: 'cancelled', reason: 'called-off', updatedAt: now } : { error: 'Games have been played: leaving now forfeits the series.' }));
+    return { series: await settleSeries(s) };
+  }
+
+  if (op === 'forfeit' || op === 'claimForfeit') {
+    let loser = uid;
+    if (op === 'claimForfeit') {
+      // The other player left: their stand-in bot has played its turns and
+      // they haven't been seen for a minute (only they can write that).
+      loser = other;
+      const seat = seats.find(p => p.uid === other);
+      const turns = num(seat?.substituteMoveCount);
+      const pub = (await db().ref(`publicProfiles/${other}`).once('value')).val() || {};
+      const away = pub.online !== true || now - num(pub.seen) > 60 * 1000;
+      if (!seat || !seat.isBot || turns < num(SERIES.forfeitTurns, 5) || !away) fail('failed-precondition', 'They still have time to come back.');
+    }
+    if (s.status === 'pending') {
+      s = await seriesTx(code, (cur) => (cur && cur.id === s.id && seriesActive(cur) ? { ...cur, status: 'cancelled', reason: 'called-off', updatedAt: now } : undefined));
+    } else {
+      const winner = loser === s.host ? s.guest : s.host;
+      s = await seriesTx(code, (cur) => (cur && cur.id === s.id && seriesActive(cur) ? finishSeries(cur, winner, 'forfeit', now) : undefined));
+    }
+    return { series: await settleSeries(s) };
+  }
+
+  // op === 'game': a finished game in the room counts once.
+  if (s.status !== 'live') fail('failed-precondition', 'The series has not started yet.');
+  const matchId = clip(data.matchId, 80);
+  if (!KEY_RE.test(matchId)) fail('invalid-argument', 'Bad match id.');
+  if (!room || room.matchId !== matchId || room.phase !== 'FINISHED') fail('failed-precondition', 'That game could not be checked.');
+  if (s.games && s.games[matchId]) return { series: s };
+  const hostSeat = seats.find(p => p.uid === s.host), guestSeat = seats.find(p => p.uid === s.guest);
+  if (!hostSeat || !guestSeat) fail('failed-precondition', 'That game could not be checked.');
+  const drew = !!(hostSeat.drew || guestSeat.drew);
+  const winnerSeat = drew ? null : [hostSeat, guestSeat].find(p => num(p.finishRank, 99) === 1);
+  if (!drew && !winnerSeat) fail('failed-precondition', 'That game has no winner yet.');
+  if (now - num(s.lastGameAt) < num(SERIES.minGameMs, 60000)) fail('failed-precondition', 'That game was too quick to count.');
+  s = await seriesTx(code, (cur) => {
+    if (!cur || cur.id !== s.id || cur.status !== 'live') return { error: 'The series has ended.' };
+    if (cur.games && cur.games[matchId]) return undefined;
+    cur.games = { ...(cur.games || {}), [matchId]: drew ? 'draw' : winnerSeat.uid };
+    cur.played = num(cur.played) + 1;
+    cur.lastGameAt = now; cur.updatedAt = now;
+    if (!drew) cur.wins = { ...(cur.wins || {}), [winnerSeat.uid]: num(cur.wins?.[winnerSeat.uid]) + 1 };
+    const leader = [cur.host, cur.guest].sort((a, b) => num(cur.wins?.[b]) - num(cur.wins?.[a]))[0];
+    if (num(cur.wins?.[leader]) >= num(cur.need)) return finishSeries(cur, leader, 'won', now);
+    // Endless draws: after twice the games, the leader takes it (level = entries back).
+    if (cur.played >= cur.bestOf * 2) {
+      if (num(cur.wins?.[cur.host]) === num(cur.wins?.[cur.guest])) { cur.status = 'cancelled'; cur.reason = 'drawn'; return cur; }
+      return finishSeries(cur, leader, 'won', now);
+    }
+    return cur;
+  });
+  return { series: s ? await settleSeries(s) : (await seriesRef(code).once('value')).val() };
+};
+
 exports.economy = onCall({ region: 'europe-west1', cors: true, maxInstances: 20 }, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) fail('unauthenticated', 'Please sign in.');

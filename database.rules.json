@@ -256,6 +256,15 @@
         "xp": {
           ".validate": "newData.hasChildren(['total', 'level'])"
         },
+        "series": {
+          ".validate": "newData.hasChildren(['room', 'id', 'status'])"
+        },
+        "seriesDay": {
+          ".validate": "newData.hasChildren(['day', 'count'])"
+        },
+        "seriesLedger": {
+          ".validate": "newData.hasChildren()"
+        },
         "lastRankedOpponent": {
           ".validate": "newData.hasChildren(['uid', 'at'])"
         },
@@ -611,6 +620,11 @@
             ".validate": "$other === 'uid' || $other === 'v' || $other === 'device'"
           }
         }
+      }
+    },
+    "series": {
+      "$roomCode": {
+        ".read": "auth != null"
       }
     },
     "config": {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v230 (ShitHead-Deluxe-206) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v231 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -18016,6 +18016,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v231: [
+        ['🛠️', 'Groundwork for Best of series between friends.']
+      ],
       v230: [
         ['🏆', 'New Levels leaderboard: see who has the most XP of all time, or who has earned the most this week (it starts again every Monday).', WN_KEY]
       ],
@@ -23562,7 +23565,6 @@ video {
       levelUpDiamonds: 20, // every level up…
       milestoneEvery: 10,  // …except every 10th level, which pays instead
       milestoneDiamonds: 100,
-      seriesLevel: 10,     // Best of series (later) unlock at this level
       maxXp: 100000000,
       // Bump when `levels` changes: the server re-levels every account from
       // its total XP (never paying a level's Diamonds twice).
@@ -23589,6 +23591,17 @@ video {
       while (level < XP_MAX_LEVEL && (Number(total) || 0) >= XP_RULES.levels[level + 1]) level++;
       return level;
     }
+    // § Best of series (v231): Play Friends, two signed-in players, both
+    // level `level`+. Each pays the entry for the length they pick; the
+    // server matches the pot, so the winner gets fee x 4 (Best of 3: 120).
+    // Exported to the catalog as `series` (functions/economy.js actions.series).
+    const SERIES_RULES = {
+      level: 20,                 // owner: series unlock at level 20
+      bestOf: { 3: 30, 5: 50 },  // entry per player
+      perDay: 5,                 // series one player can start in a UK day
+      forfeitTurns: 5,           // a stand-in bot plays this many turns, then the absent player forfeits
+      minGameMs: 60000           // games reported closer together than this don't count
+    };
     // What the player sees (v223). Everything stays hidden until the switch
     // is on: xpFeatureOn follows config/features/xp live (readable by all),
     // playerXp is the account's users/{uid}/xp ({total, level}, from the
@@ -23805,6 +23818,7 @@ video {
         referral: JSON.parse(JSON.stringify(REFERRAL)),
         rankedBonus: JSON.parse(JSON.stringify(RANKED_BONUS)),
         xp: JSON.parse(JSON.stringify(XP_RULES)),
+        series: JSON.parse(JSON.stringify(SERIES_RULES)),
         rankTiers: [['Master', 2000], ['Platinum', 1800], ['Gold', 1500], ['Silver', 1000], ['Bronze', 500], ['Novice', 0]].map(([name, min]) => {
           if (getRankTier(min).name !== name) throw new Error(`Rank tier table out of date at ${name}`);
           return { name, min };

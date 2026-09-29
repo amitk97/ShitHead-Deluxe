@@ -1515,7 +1515,6 @@
   "levelUpDiamonds": 20,
   "milestoneEvery": 10,
   "milestoneDiamonds": 100,
-  "seriesLevel": 10,
   "maxXp": 100000000,
   "tableVersion": 2,
   "levels": [
@@ -1620,6 +1619,16 @@
    1267384,
    1400000
   ]
+ },
+ "series": {
+  "level": 20,
+  "bestOf": {
+   "3": 30,
+   "5": 50
+  },
+  "perDay": 5,
+  "forfeitTurns": 5,
+  "minGameMs": 60000
  },
  "rankTiers": [
   {
