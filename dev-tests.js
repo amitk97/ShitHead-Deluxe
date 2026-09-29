@@ -2251,6 +2251,36 @@ async function runDevTestSuite() {
       assertTrue(a.drew && b.drew, 'Both drew');
     } finally { notifyBanner = savedBanner; hideMatchEndUI(); }
   });
+  await test('Draws: the hidden Draw a Game challenge (420) shows as ??? until earned; draws count in Stats and Match History; a draw is reported', async () => {
+    const def = CHALLENGE_DEFS.draws.find(c => c.id === 'draw-a-game');
+    assertTrue(def && def.reward === 420 && def.hidden && def.name === 'Draw a Game', 'Draw a Game pays 420 and is hidden');
+    assertEqual(serverEconomyCatalog().challengeDefs.draws, CHALLENGE_DEFS.draws, 'The server pays from the same numbers');
+    const savedEco = challengeEconomy, savedUser = currentUser, savedLoaded = challengeEconomyLoadedForUid;
+    try {
+      currentUser = savedUser || { uid: 'test-uid' };
+      challengeEconomyLoadedForUid = currentUser.uid;
+      challengeEconomy = { ...savedEco, completedChallenges: {} };
+      renderChallengesPanel();
+      const hidden = document.getElementById('challengesHiddenList').textContent;
+      assertTrue(/\?\?\?/.test(hidden) && !/Draw a Game/.test(hidden), 'Before: a mystery row, the name stays secret');
+      challengeEconomy = { ...savedEco, completedChallenges: { 'draw-a-game': { completedAt: 1, reward: 420 } } };
+      renderChallengesPanel();
+      assertTrue(/Draw a Game/.test(document.getElementById('challengesHiddenList').textContent), 'After: the real name');
+      assertEqual(challengeNameForKey('draw-a-game'), { name: 'Draw a Game', group: 'Hidden' }, 'Completed list names it');
+    } finally { challengeEconomy = savedEco; currentUser = savedUser; challengeEconomyLoadedForUid = savedLoaded; renderChallengesPanel(); }
+    const html = buildRankedStatsHtml({ wins: 3, losses: 2, rating: 520, rankedStats: { draws: 1 } });
+    assertTrue(/Ranked draws/.test(html) && />6</.test(html), 'Ranked stats list draws and count them as games played');
+    const mh = matchHistoryHtml([{ at: Date.now(), place: 1, of: 2, draw: true, players: [], stats: {} }, { at: Date.now(), place: 1, of: 2, players: [], stats: {} }]);
+    assertTrue(/<b>1<\/b><span>Draws/.test(mh), 'Match History counts draws');
+    const savedUser2 = currentUser;
+    const calls = fakeEconomy({ matchFinished: () => ({ claimed: [], diamonds: 0 }) });
+    try {
+      currentUser = { uid: 'test-uid' };
+      freshState({ players: [makePlayer({ id: 'p1', drew: true, hasFinished: true, finishRank: 1 })], matchId: 'm_draw' });
+      await reportMatchFinished();
+      assertEqual(calls[0], ['matchFinished', { matchId: 'm_draw', drew: true }], 'A Vs Bots draw is reported');
+    } finally { callEconomy = offlineEconomy; currentUser = savedUser2; }
+  });
   await test('Stalemate: online, only the match driver calls the draw', () => {
     const a = makePlayer({ id: 'p1', hand: [makeCard('4')] }), b = makePlayer({ id: 'p2', hand: [makeCard('5')] });
     freshState({ players: [a, b], stalemate: { key: 'x', sig: 'y', turns: STALEMATE_TURNS } });

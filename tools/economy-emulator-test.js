@@ -291,6 +291,16 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok(r.drew && !r.won && r.winBonus === 0 && r.streakBonus === 0 && r.to - r.from === r.elo && r.elo > 0, 'draw: level Elo only (the lower rating gains a little)', r);
   ok(bobAfter.losses === bobBefore.losses && bobAfter.wins === bobBefore.wins && bobAfter.rankedStats.draws === 1
     && bobAfter.rankedStats.currentLossStreak === bobBefore.rankedStats.currentLossStreak, 'draw: wins, losses and streaks unchanged, draws counted', bobAfter.rankedStats);
+  ok(r.claimed.some(c => c.id === 'draw-a-game' && c.reward === 420), 'draw: the hidden Draw a Game challenge pays 420', r.claimed);
+  // Casual online: a draw claim needs the room to show this seat drawn
+  await admin('rooms/600001', 'PUT', { isRanked: false, phase: 'FINISHED', players: [{ uid: 'alice', finishRank: 1 }, { uid: 'carol', finishRank: 2 }] });
+  r = await call('alice', { action: 'matchFinished', matchId: 'm_fake_draw', drew: true, roomCode: '600001' });
+  ok(!(await admin('users/alice/matchCounters/draws')) && !r.claimed.some(c => c.id === 'draw-a-game'), 'a draw the room doesn\'t show is not counted', r);
+  // Vs Bots: the phone reports it (counted even straight after another finish)
+  r = await call('alice', { action: 'matchFinished', matchId: 'm_bot_draw', drew: true });
+  ok((await admin('users/alice/matchCounters/draws')) === 1 && r.claimed.some(c => c.id === 'draw-a-game'), 'a Vs Bots draw counts and pays Draw a Game', r);
+  r = await call('alice', { action: 'matchFinished', matchId: 'm_bot_draw', drew: true });
+  ok((await admin('users/alice/matchCounters/draws')) === 1 && !r.claimed.length, 'the same match twice counts once, paid once', r);
   await admin('rooms/222222', 'PUT', { isRanked: false, players: [{ uid: 'alice', finishRank: 1 }, { uid: 'bob', finishRank: 2 }] });
   r = await call('alice', { action: 'rankedResult', roomCode: '222222' });
   ok(r.error, 'casual room is not Ranked', r);

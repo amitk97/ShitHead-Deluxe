@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v215 (ShitHead-Deluxe-195) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v216 (ShitHead-Deluxe-195) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5903,6 +5903,7 @@ video {
           <div id="challengesDailyGauntletList" class="flex flex-col gap-1.5 pt-1.5"></div>
           <div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase tracking-wider text-amber-400 mb-1">Getting Started</div><div id="challengesTutorialList" class="flex flex-col gap-1.5"></div></div>
           <div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase tracking-wider text-emerald-400 mb-1">Friends</div><div id="challengesRecruitList" class="flex flex-col gap-1.5"></div></div>
+          <div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase tracking-wider text-violet-400 mb-1">Hidden</div><div id="challengesHiddenList" class="flex flex-col gap-1.5"></div></div>
         </section>
         <section id="challengeTabDone" data-challenge-panel="done" class="hidden">
           <div class="done-head"><button type="button" id="challengesDoneBack" class="done-back">‹ Back</button><span id="challengesDoneSummary"></span></div>
@@ -17592,7 +17593,8 @@ video {
     function buildRankedStatsHtml(profile) {
       const wins = profile.wins || 0;
       const losses = profile.losses || 0;
-      const played = wins + losses;
+      const draws = (profile.rankedStats && profile.rankedStats.draws) || 0;
+      const played = wins + losses + draws;
       if (played === 0) {
         return `<p class="text-[10px] text-slate-400 text-center leading-snug py-6 px-1">You haven't played a Ranked match yet. Your stats will appear here after your first game.</p>`;
       }
@@ -17609,6 +17611,7 @@ video {
         ['Ranked matches won', wins],
         ['Win percentage', `${winPct}%`],
         ['Total ranked losses', losses],
+        ['Ranked draws', draws],
         ['Highest rating reached', highest],
         ['Lowest rating reached', lowest],
         ['Best winning streak', rs.bestStreak || 0],
@@ -17761,6 +17764,7 @@ video {
       if (!list.length) return '<p class="text-[10px] text-slate-400 text-center leading-snug py-6 px-1">No matches yet. Every game you finish will show up here.</p>';
       const wins = list.filter(e => e.place === 1 && !e.draw).length;
       const shitheads = list.filter(e => e.shithead).length;
+      const draws = list.filter(e => e.draw).length;
       const gems = list.reduce((sum, e) => sum + (Number(e.diamonds) || 0), 0);
       const ord = (n) => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
       const rows = list.map((e) => {
@@ -17781,7 +17785,7 @@ video {
           <div class="mh-detail">${everyoneTable(e.players) || `<div class="mh-order">${(e.players || []).map((p, i) => `<span class="${p.me ? 'me' : ''}">${i + 1}. ${escapeHtml(p.name)}${p.bot ? ' 🤖' : ''}</span>`).join('')}</div>
           <div class="mh-stats">${stat(st.played, 'Played')}${stat(st.pickedUp, 'Picked up')}${stat(st.burnt, 'Burns')}${stat(st.jokers, 'Jokers')}${stat(st.turns, 'Turns')}</div>`}</div></details>`;
       }).join('');
-      return `<div class="mh-summary"><div><b>${list.length}</b><span>Matches</span></div><div><b>${wins}</b><span>Wins</span></div><div><b>${Math.round((wins / list.length) * 100)}%</b><span>Win rate</span></div><div><b>${shitheads}</b><span>ShitHeads</span></div><div><b>💎${gems}</b><span>Earned</span></div></div>
+      return `<div class="mh-summary"><div><b>${list.length}</b><span>Matches</span></div><div><b>${wins}</b><span>Wins</span></div><div><b>${Math.round((wins / list.length) * 100)}%</b><span>Win rate</span></div><div><b>${shitheads}</b><span>ShitHeads</span></div><div><b>${draws}</b><span>Draws</span></div><div><b>💎${gems}</b><span>Earned</span></div></div>
         <div class="mh-list">${rows}</div>
         <p class="text-[8px] text-slate-600 text-center pt-2">Your last ${MATCH_HISTORY_LIMIT} matches. Tap one for the details.</p>`;
     }
@@ -17855,6 +17859,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v216: [
+        ['🤝', 'Draws now count in your stats: Match History and Ranked stats show how many games you have drawn.'],
+        ['✨', 'There is a hidden challenge to find. Keep playing.']
+      ],
       v215: [
         ['🤝', 'Games can no longer get stuck: if the same cards keep going round with no progress, the game ends in a draw.'],
         ['🛡', 'Ranked rooms are now only open to signed-in players.'],
@@ -23162,6 +23170,11 @@ video {
       // games (REFERRAL.gamesNeeded); counted by the server (referralStats).
       recruits: [
         { id: 'recruit-five', name: 'Recruiter', target: 5, reward: 250 }
+      ],
+      // Hidden: shown as "???" until earned. A stalemate draw in any mode,
+      // counted by the server (matchCounters.draws + rankedStats.draws).
+      draws: [
+        { id: 'draw-a-game', name: 'Draw a Game', target: 1, reward: 420, hidden: true, desc: 'Draw a game: the same cards kept going round until nobody could win.' }
       ]
     };
 
@@ -23907,7 +23920,11 @@ video {
     function reportMatchFinished() {
       if (typeof currentUser === 'undefined' || !currentUser) return Promise.resolve(null);
       const matchId = state.matchId || (state.matchId = generateMatchId());
-      return callEconomy('matchFinished', { matchId }).then((res) => {
+      // A stalemate draw is reported too (the hidden Draw a Game challenge);
+      // online the server checks the room says so.
+      const me = state.players.find(p => p.id === state.localPlayerId);
+      const extra = me?.drew ? { drew: true, ...(state.isMultiplayer && state.roomCode ? { roomCode: state.roomCode } : {}) } : {};
+      return callEconomy('matchFinished', { matchId, ...extra }).then((res) => {
         if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
         applyServerClaims(res.claimed);
         noteReferralProgress(res.referral);
@@ -24120,7 +24137,7 @@ video {
       if (/^referral_/.test(key)) return { name: 'Invite bonus', group: 'Friends' };
       const gs = GETTING_STARTED_CHALLENGES.find(c => c.id === key);
       if (gs) return { name: gs.name, group: 'Getting Started' };
-      const groupNames = { rankedBurns: 'Ranked', rankedStreaks: 'Ranked', rankedJokerDeflects: 'Ranked', rankedSnapBurns: 'Ranked', rankedGamesPlayed: 'Ranked', endingCards: 'Ranked', rankTiers: 'Ranked', botMatches: 'Bots', recruits: 'Friends' };
+      const groupNames = { rankedBurns: 'Ranked', rankedStreaks: 'Ranked', rankedJokerDeflects: 'Ranked', rankedSnapBurns: 'Ranked', rankedGamesPlayed: 'Ranked', endingCards: 'Ranked', rankTiers: 'Ranked', botMatches: 'Bots', recruits: 'Friends', draws: 'Hidden' };
       for (const [g, defs] of Object.entries(CHALLENGE_DEFS)) {
         const def = defs.find(c => c.id === key);
         if (def) return { name: def.name, group: groupNames[g] || 'Milestones' };
@@ -24187,7 +24204,7 @@ video {
     }
 
     const CHALLENGES_SIGN_IN_MSG = '<p class="text-[9px] text-slate-500 text-center py-2">Sign in to track this.</p>';
-    const CHALLENGES_LIST_IDS = ['challengesSeasonalList', 'challengesTutorialList', 'challengesDailyList', 'challengesWeeklyList', 'challengesRankedBurnsList', 'challengesRankedStreaksList', 'challengesRankedJokerList', 'challengesRankedSnapList', 'challengesRankedGamesList', 'challengesEndingCardsList', 'challengesRankTiersList', 'challengesBotMatchesList', 'challengesGauntletList', 'challengesDailyGauntletList', 'challengesRecruitList'];
+    const CHALLENGES_LIST_IDS = ['challengesSeasonalList', 'challengesTutorialList', 'challengesDailyList', 'challengesWeeklyList', 'challengesRankedBurnsList', 'challengesRankedStreaksList', 'challengesRankedJokerList', 'challengesRankedSnapList', 'challengesRankedGamesList', 'challengesEndingCardsList', 'challengesRankTiersList', 'challengesBotMatchesList', 'challengesGauntletList', 'challengesDailyGauntletList', 'challengesRecruitList', 'challengesHiddenList'];
 
     // Builds every section's HTML from challengeEconomy + CHALLENGE_DEFS.
     // Guests get an honest "sign in" prompt in every section rather than
@@ -24234,7 +24251,7 @@ video {
       document.getElementById('challengesModalDoneWrap')?.classList.toggle('hidden', !currentUser);
       if (!currentUser) {
         CHALLENGES_LIST_IDS.filter(id => !/Gauntlet/.test(id)).forEach((id) => setListHtml(id, CHALLENGES_SIGN_IN_MSG));
-        ['challengesGauntletList', 'challengesDailyGauntletList', 'challengesRecruitList'].forEach(id => setListHtml(id, ''));
+        ['challengesGauntletList', 'challengesDailyGauntletList', 'challengesRecruitList', 'challengesHiddenList'].forEach(id => setListHtml(id, ''));
         return;
       }
 
@@ -24281,7 +24298,7 @@ video {
       setListHtml('challengesRankedStreaksList', renderMilestoneGroup(CHALLENGE_DEFS.rankedStreaks, rs.bestStreak || 0));
       setListHtml('challengesRankedJokerList', renderMilestoneGroup(CHALLENGE_DEFS.rankedJokerDeflects, (cs.jokerDeflects || 0) + liveChallengeStatDelta('jokerDeflects')));
       setListHtml('challengesRankedSnapList', renderMilestoneGroup(CHALLENGE_DEFS.rankedSnapBurns, (cs.snapBurns || 0) + liveChallengeStatDelta('snapBurns')));
-      const gamesPlayed = (challengeEconomy.wins || 0) + (challengeEconomy.losses || 0);
+      const gamesPlayed = (challengeEconomy.wins || 0) + (challengeEconomy.losses || 0) + (rs.draws || 0);
       setListHtml('challengesRankedGamesList', renderMilestoneGroup(CHALLENGE_DEFS.rankedGamesPlayed, gamesPlayed));
 
       setListHtml('challengesEndingCardsList', CHALLENGE_DEFS.endingCards.map((c) => {
@@ -24309,6 +24326,10 @@ video {
         const have = Math.min((referralStatusCache && referralStatusCache.recruited) || 0, c.target);
         return renderChallengeRowHTML(c.name, `${have}/${c.target} — ${challengeDescription(c)}`, c.reward, !!done[c.id], challengeDescription(c));
       }).join(''));
+      // Hidden challenges: a mystery row until earned, then the real one.
+      setListHtml('challengesHiddenList', CHALLENGE_DEFS.draws.map((c) => (done[c.id]
+        ? renderChallengeRowHTML(c.name, challengeDescription(c), c.reward, true, challengeDescription(c))
+        : renderChallengeRowHTML('???', 'A hidden challenge. Keep playing to find it.', c.reward, false, 'A hidden challenge. Keep playing to find it.'))).join(''));
       const doneCount = document.getElementById('challengesModalDoneCount');
       if (doneCount) doneCount.textContent = String(Object.keys(done || {}).length);
 

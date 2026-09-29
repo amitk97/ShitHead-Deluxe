@@ -1421,6 +1421,16 @@
     "target": 5,
     "reward": 250
    }
+  ],
+  "draws": [
+   {
+    "id": "draw-a-game",
+    "name": "Draw a Game",
+    "target": 1,
+    "reward": 420,
+    "hidden": true,
+    "desc": "Draw a game: the same cards kept going round until nobody could win."
+   }
   ]
  },
  "difficultyUnlocks": [

@@ -205,7 +205,7 @@ const sumValues = (obj) => Object.values(obj || {}).reduce((s, n) => s + num(n),
 // Milestone challenges the server can check from the account's own totals.
 function milestoneEligible(user) {
   const cs = user.challengeStats || {}, rs = user.rankedStats || {}, dw = user.difficultyWins || {};
-  const games = num(user.wins) + num(user.losses);
+  const games = num(user.wins) + num(user.losses) + num(rs.draws);
   const d = CAT.challengeDefs;
   const out = [];
   const add = (defs, value) => defs.forEach(c => { if (value >= c.target) out.push(c); });
@@ -218,6 +218,8 @@ function milestoneEligible(user) {
   if (games > 0) d.rankTiers.forEach(c => { if (num(user.rating, 500) >= c.minRating) out.push({ ...c, target: c.minRating }); });
   d.botMatches.forEach(c => { if (num(dw[c.difficulty]) >= c.target) out.push(c); });
   add(d.recruits || [], num(user.referralStats?.recruits));
+  // Hidden: Draw a Game (a stalemate draw in any mode).
+  add(d.draws || [], num(user.matchCounters?.draws) + num(rs.draws));
   return out;
 }
 function playedAMatch(user) {
@@ -476,11 +478,25 @@ actions.matchFinished = async ({ uid, data }) => {
   const matchId = clip(data.matchId, 80);
   if (!KEY_RE.test(matchId)) fail('invalid-argument', 'Bad match id.');
   const now = Date.now();
+  // A stalemate draw (the hidden Draw a Game challenge). Online, the room
+  // must show this account's seat as drawn; Vs Bots is the phone's word,
+  // like its wins.
+  let drew = data.drew === true;
+  if (drew && data.roomCode !== undefined) {
+    const code = clip(data.roomCode, 6);
+    const room = /^\d{6}$/.test(code) ? (await db().ref(`rooms/${code}`).once('value')).val() : null;
+    drew = !!Object.values(room?.players || {}).find(p => p && p.uid === uid && p.drew);
+  }
   const res = await userTx(uid, (user) => {
     const counters = user.matchCounters = user.matchCounters || {};
     const recent = counters.recentFinished || {};
     if (recent[matchId]) return { noop: true };
-    if (now - num(counters.lastFinishedAt) < 20 * 1000) return { noop: true, capped: 'too-soon' };
+    if (drew) counters.draws = num(counters.draws) + 1;
+    if (now - num(counters.lastFinishedAt) < 20 * 1000) {
+      if (!drew) return { noop: true, capped: 'too-soon' };
+      counters.recentFinished = pruneMap({ ...recent, [matchId]: { at: now } }, 20);
+      return { user, claimed: grantMilestones(user, now), referral: null };
+    }
     counters.finished = num(counters.finished) + 1;
     counters.lastFinishedAt = now;
     counters.recentFinished = pruneMap({ ...recent, [matchId]: { at: now } }, 20);
