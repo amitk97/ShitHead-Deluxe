@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v211 (ShitHead-Deluxe-193) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v212 (ShitHead-Deluxe-194) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -783,6 +783,7 @@
     #spectateBar { position:fixed; left:50%; transform:translateX(-50%); top:calc(var(--header-h) + 6px); z-index:64; display:flex; align-items:center; gap:10px; padding:6px 8px 6px 12px; border-radius:999px; border:1px solid #0891b2; background:rgba(8,47,73,.92); color:#a5f3fc; font-size:11px; font-weight:900; box-shadow:0 6px 18px rgba(0,0,0,.45); white-space:nowrap; max-width:calc(100vw - 24px); }
     #spectateBar button { padding:4px 12px; border-radius:999px; background:#0891b2; color:#020617; font-weight:900; font-size:10px; letter-spacing:.08em; }
     body.spectating #gameTable { pointer-events:none; }
+    #startTutorialBtn.tutorial-new { border-color:#f59e0b !important; color:#fcd34d !important; background:rgba(245,158,11,.12) !important; box-shadow:0 0 0 1px rgba(245,158,11,.35), 0 0 18px rgba(245,158,11,.25); }
     /* Desktop Site note: sized by --dsk (layout width ÷ screen width) so it reads at phone size. */
     #desktopSiteNote { position:fixed; left:50%; top:calc(var(--header-h) + 8px); transform:translateX(-50%); z-index:330; width:calc(340px * var(--dsk, 1)); max-width:calc(100vw - 16px); box-sizing:border-box; display:flex; flex-direction:column; gap:calc(6px * var(--dsk, 1)); padding:calc(12px * var(--dsk, 1)) calc(14px * var(--dsk, 1)); border-radius:calc(14px * var(--dsk, 1)); background:#0f172a; border:1px solid rgba(245,158,11,.6); color:#e2e8f0; font-size:calc(13px * var(--dsk, 1)); line-height:1.35; box-shadow:0 12px 40px rgba(0,0,0,.6); text-align:center; }
     #desktopSiteNote b { color:#fbbf24; font-size:calc(14px * var(--dsk, 1)); }
@@ -793,6 +794,8 @@
     #hamburgerAccountHead .drawer-avatar { flex:none; display:flex; }
     #hamburgerAccountHead .drawer-avatar.hidden { display:none; }
     #hamburgerAccountHead .drawer-name { min-width:0; font-size:16px; font-weight:900; color:#fbbf24; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #hamburgerAccountHead .drawer-signin { padding:7px 28px; border-radius:10px; background:#f59e0b; color:#0f172a; font-size:12px; font-weight:900; letter-spacing:.04em; }
+    #hamburgerAccountHead .drawer-signin.hidden { display:none; }
     #hamburgerAccountHead .drawer-quick { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; width:100%; }
     #hamburgerAccountHead .drawer-quick button { height:2.5rem; display:flex; align-items:center; justify-content:center; }
     #hamburgerAccountHead .drawer-quick .pack-icon { width:26px; height:26px; }
@@ -1917,6 +1920,7 @@
     .ms-reward b { color:#67e8f9; font-weight:900; white-space:nowrap; }
     .ms-reward.total { margin-top:3px; padding-top:6px; border-top:1px solid #155e75; font-weight:900; color:#fff; }
     .ms-none { font-size:10px; color:#64748b; text-align:center; padding:4px 0; }
+    .ms-signin { display:block; margin:4px auto 0; padding:6px 22px; border-radius:10px; background:#f59e0b; color:#0f172a; font-size:11px; font-weight:900; letter-spacing:.04em; }
     .ms-progress { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:10px; border:1px solid #1e293b; background:rgba(15,23,42,.7); font-size:10px; font-weight:700; color:#cbd5e1; margin-top:4px; }
     .ms-bar { flex:1; height:6px; border-radius:999px; background:#1e293b; overflow:hidden; min-width:50px; }
     .ms-bar i { display:block; height:100%; border-radius:inherit; background:var(--bar,#f59e0b); }
@@ -4845,6 +4849,7 @@ video {
         <span id="hamburgerAccountAvatar" class="drawer-avatar hidden" data-own-avatar="34"></span>
         <div id="hamburgerAccountLabel" class="drawer-name">Not signed in</div>
       </div>
+      <button id="drawerSignInBtn" type="button" class="drawer-signin hidden">Sign In</button>
       <div class="drawer-quick" aria-label="Quick access">
         <button id="drawerChallengesShortcutBtn" class="rounded-xl border border-slate-700 bg-slate-900 hover:border-amber-500 transition" aria-label="Open Challenges" title="Challenges"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-challenges"/></svg></button>
         <button id="drawerShopShortcutBtn" class="rounded-xl border border-slate-700 bg-slate-900 hover:border-cyan-500 transition" aria-label="Open Shop" title="Shop"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg></button>
@@ -4994,7 +4999,7 @@ video {
                the Tutorial Hub — the old single 25-step walkthrough
                (TUTORIAL_STEPS_FULL_LEGACY) is fully sidelined and no longer
                reachable from anywhere in the UI. -->
-          <button id="startTutorialBtn" class="w-full mt-2 py-2 bg-slate-800/80 hover:bg-slate-700 border border-slate-600 font-black rounded-xl transition tracking-wider text-slate-300 text-xs active:scale-95 cursor-pointer flex items-center justify-center gap-2"><svg class="pack-icon" style="width:22px;height:22px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-tutorial"/></svg><span>Tutorial</span></button>
+          <button id="startTutorialBtn" class="w-full mt-2 py-2 bg-slate-800/80 hover:bg-slate-700 border border-slate-600 font-black rounded-xl transition tracking-wider text-slate-300 text-xs active:scale-95 cursor-pointer flex items-center justify-center gap-2"><svg class="pack-icon" style="width:22px;height:22px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-tutorial"/></svg><span id="startTutorialLabel">Tutorial</span></button>
         </div>
 
         <!-- Multiplayer Setup -->
@@ -9163,7 +9168,7 @@ video {
       hideMatchEndUI();
 
       const pNameInput = document.getElementById('playerNameInput');
-      const pName = (pNameInput && pNameInput.value.trim()) ? pNameInput.value.trim() : 'Player 1';
+      const pName = (pNameInput && pNameInput.value.trim()) ? pNameInput.value.trim() : 'You';
       localStorage.setItem('shithead_player_name', pName);
       
       state.isMultiplayer = false;
@@ -16645,7 +16650,9 @@ video {
     // device and, when signed in, in users/{uid}/settings (see
     // collectAccountSettings) so every device starts where you left off.
     function readBotPrefs() {
-      let count = 3, difficulty = 'medium';
+      // A first visit starts gentle: one Easy bot. After that the last
+      // choice is remembered.
+      let count = 1, difficulty = 'easy';
       try {
         const c = Number(localStorage.getItem('shithead_bot_count'));
         if ([1, 2, 3].includes(c)) count = c;
@@ -16907,8 +16914,7 @@ video {
     const startSingleBtn = document.getElementById('startSingleBtn');
     if (startSingleBtn) {
       startSingleBtn.onclick = () => {
-        if (!requireValidName()) return;
-        runShuffleIntro(() => startSinglePlayerGame(state.selectedBotCount || 3));
+        runShuffleIntro(() => startSinglePlayerGame(state.selectedBotCount || 1));
       };
     }
 
@@ -17750,6 +17756,11 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v212: [
+        ['🎓', 'New players start against one Easy bot, and the Tutorial button stands out until you have tried it.'],
+        ['🙂', 'Vs Bots and the Tutorial no longer need a nickname first.'],
+        ['🔑', 'A Sign In button in the menu and on the match summary when you are not signed in.']
+      ],
       v211: [
         ['🤖', 'Lots of new bot names from the UK, USA, France, India, Germany and Italy.']
       ],
@@ -21060,7 +21071,7 @@ video {
         ? (matchRewardLog.length
           ? `<div class="ms-rewards">${matchRewardLog.map((r, i) => `<div class="ms-reward" data-reward-index="${i}"><span>${escapeHtml(r.name)}</span><b>+💎 ${r.reward}</b></div>`).join('')}${matchRewardLog.length > 1 ? `<div class="ms-reward total"><span>Total</span><b>+💎 ${total}</b></div>` : ''}</div>`
           : '<p class="ms-none">No Diamonds this match — wins and challenges pay out.</p>')
-        : '<p class="ms-none">Sign in to earn Diamonds from wins and challenges.</p>';
+        : '<p class="ms-none">Sign in to earn Diamonds from wins and challenges.</p><button type="button" class="ms-signin" data-ms-signin>Sign In</button>';
       const progress = [];
       const daily = challengeEconomy?.dailyChallengeState;
       if (currentUser && daily?.challengeIds?.length) {
@@ -22618,6 +22629,7 @@ video {
       document.getElementById('menuSignOutBtn')?.classList.toggle('hidden', !currentUser);
       document.getElementById('menuErrorReportsBtn')?.classList.toggle('hidden', !isGameOwner());
       drawerAvatar?.classList.toggle('hidden', !currentUser);
+      document.getElementById('drawerSignInBtn')?.classList.toggle('hidden', !!currentUser);
       if (currentUser) {
         const uid = currentUser.uid;
         if (hamburgerUsernameFor !== uid) drawerLabel.textContent = 'Player';
@@ -26568,7 +26580,6 @@ video {
     // button opens the hub (Quick Start is its first row).
     document.getElementById('startTutorialBtn').addEventListener('click', () => {
       if (getTutorialProgress()[QUICK_START_MODULE.id]) { openTutorialHub(); return; }
-      if (!requireValidName()) return;
       launchTutorialModule(QUICK_START_MODULE.id, { fromHub: false });
     });
     document.getElementById('tutorialHubCloseBtn')?.addEventListener('click', () => closeTutorialHub());
@@ -27316,9 +27327,19 @@ video {
       inner.classList.add('home-tip-out');
       setTimeout(() => { fillHomeTip(tip, homeTipRank); inner.classList.remove('home-tip-out'); }, 260);
     }
+    // Until Quick Start is done, the Tutorial button stands out so a new
+    // player knows where to begin.
+    function refreshTutorialNudge() {
+      const btn = document.getElementById('startTutorialBtn');
+      const label = document.getElementById('startTutorialLabel');
+      if (!btn || !label || typeof getTutorialProgress !== 'function') return;
+      const isNew = !getTutorialProgress()[QUICK_START_MODULE.id];
+      btn.classList.toggle('tutorial-new', isNew);
+      label.textContent = isNew ? 'New Here? 1-Minute Tutorial' : 'Tutorial';
+    }
     function refreshHomeScreen() {
       const open = document.body.classList.contains('lobby-open');
-      if (open) { refreshHomeBackdrop(); fitHomePanel(); }
+      if (open) { refreshHomeBackdrop(); refreshTutorialNudge(); fitHomePanel(); }
       layoutHomeTip();
       if (open && !homeTipTimer) homeTipTimer = setInterval(rotateHomeTip, HOME_TIP_MS);
       if (!open && homeTipTimer) { clearInterval(homeTipTimer); homeTipTimer = null; }
@@ -27366,6 +27387,11 @@ video {
       document.body.appendChild(note);
     }
     setTimeout(showDesktopSiteNote, 600);
+
+    // Sign-in shortcuts for guests: the menu's Sign In and the match
+    // summary's "Sign in to earn Diamonds" button.
+    document.getElementById('drawerSignInBtn')?.addEventListener('click', () => { closeHamburgerMenu(); openAuthModal(); });
+    document.addEventListener('click', (e) => { if (e.target.closest?.('[data-ms-signin]')) openAuthModal(); });
 
     // § Update prompt: a phone or installed app still running an older build
     // (left open, or restored from the background) is told a new version is
@@ -28897,7 +28923,6 @@ video {
     }
 
     function openTutorialHub() {
-      if (!requireValidName()) return;
       openTutorialHubInternal();
     }
 
@@ -29091,7 +29116,6 @@ video {
 
     let tutorialPrevSelectAll = null;
     function startTutorial(moduleSteps, playerCount = 2) {
-      if (!requireValidName()) return;
       TUTORIAL_STEPS = moduleSteps || TUTORIAL_STEPS_FULL_LEGACY;
       tutorialActive = true;
       tutorialStep = 0;
@@ -29127,13 +29151,17 @@ video {
       // Table cards are cosmetic during the tutorial — the lesson is about the
       // hand. A big draw pile keeps the "deck isn't empty" rule intact so
       // face-up cards stay correctly locked throughout.
-      const filler = generateDeck();
+      // The deck's two Jokers go to the very bottom of the Deck, never onto
+      // the table: a lesson's scripted Jokers must be the only ones in play.
+      const fullDeck = generateDeck();
+      const fillerJokers = fullDeck.filter(c => c.isJoker);
+      const filler = fullDeck.filter(c => !c.isJoker);
       state.players.forEach(p => {
         p.faceDown = filler.splice(0, 3).map((c, i) => ({ ...c, slotIndex: i }));
         p.faceUp = filler.splice(0, 3).map((c, i) => ({ ...c, slotIndex: i }));
         p.hand = filler.splice(0, 3);
       });
-      state.drawPile = filler;
+      state.drawPile = [...fillerJokers, ...filler];
 
       resetPileInspectHint();
       dismissLobbyAndStart();

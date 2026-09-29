@@ -180,6 +180,11 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - The panel starts below the header (`#lobbyScreen` padding-top `--header-h`), and `fitHomePanel` lowers the CSS zoom (1.25 / 1.4 on big screens) so it always fits: the title was hidden under the header on 1280×800 laptops.
 - Never replace `document.body.className` (it wiped `lobby-open`, `reduce-motion`, `spectating`…): deck themes go through `setBodyDeckTheme`, which swaps only the `theme-*` class.
 
+## First visit (new player)
+
+- A first visit (no saved bot prefs) starts at **1 bot, Easy** (`readBotPrefs`). Vs Bots and every tutorial start without a nickname (the player is "You"); only online play (host/join/Ranked) still asks for one (`requireValidName`). Until Quick Start is done the lobby Tutorial button is highlighted and reads "New Here? 1-Minute Tutorial" (`refreshTutorialNudge`, `.tutorial-new`). Guests get a Sign In button in the menu (`#drawerSignInBtn`) and on the match summary (`[data-ms-signin]`), both → `openAuthModal`.
+- Lessons deal their random filler without Jokers; the deck's two Jokers sit at the bottom of the Deck (`startTutorial`), so a lesson's scripted Jokers are the only ones on the table. A walkthrough script for a fresh visitor lived in the session scratchpad (new-player run: first load → Quick Start → first game → menu/profile); rebuild it with Playwright if needed.
+
 ## Menu header & Desktop Site
 
 - The menu (`#hamburgerAccountHead`) shows the player's **username** (from `getOrCreateUserProfile`, never the account's real/display name or email) with their picture (`#hamburgerAccountAvatar`, a `data-own-avatar` slot), centred, over the four quick buttons in an even 4-column grid (`.drawer-quick`); no extra line under the name. Signed out: "Not signed in", no picture (`updateHamburgerAccountLabel`).

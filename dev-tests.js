@@ -5040,6 +5040,30 @@ async function runDevTestSuite() {
       }
     } finally { input.value = before; freshState(); }
   });
+  await test('A new player: one Easy bot by default, no nickname needed for Vs Bots, the Tutorial stands out, Sign In is offered', () => {
+    const keys = ['shithead_bot_count', 'shithead_difficulty', 'shithead_tutorial_progress'];
+    const saved = keys.map(k => { try { return localStorage.getItem(k); } catch (e) { return null; } });
+    const input = document.getElementById('playerNameInput');
+    const nameBefore = input.value;
+    try {
+      keys.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+      assertEqual(readBotPrefs(), { count: 1, difficulty: 'easy' }, 'First visit: one Easy bot');
+      input.value = '';
+      freshState(); startSinglePlayerGame(1);
+      assertEqual(state.players[0].name, 'You', 'No nickname needed for Vs Bots');
+      freshState();
+      refreshTutorialNudge();
+      assertTrue(document.getElementById('startTutorialBtn').classList.contains('tutorial-new'), 'The Tutorial button stands out for a new player');
+      localStorage.setItem('shithead_tutorial_progress', JSON.stringify({ quick_start: true }));
+      refreshTutorialNudge();
+      assertTrue(!document.getElementById('startTutorialBtn').classList.contains('tutorial-new'), 'Not once Quick Start is done');
+      currentUser = null; updateHamburgerAccountLabel();
+      assertTrue(!document.getElementById('drawerSignInBtn').classList.contains('hidden'), 'The menu offers Sign In when signed out');
+    } finally {
+      keys.forEach((k, i) => { try { if (saved[i] === null) localStorage.removeItem(k); else localStorage.setItem(k, saved[i]); } catch (e) {} });
+      input.value = nameBefore; freshState(); refreshTutorialNudge();
+    }
+  });
   await test('REGRESSION: the Profile page hides the Danger Zone and password-change row when signed out', () => {
     currentUser = null;
     document.getElementById('menuProfileBtn').click();
