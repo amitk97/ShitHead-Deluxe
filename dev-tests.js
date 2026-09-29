@@ -7195,7 +7195,7 @@ async function runDevTestSuite() {
     const topTable = Math.max(...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Table Themes' && !Object.keys(tables).includes(i.id)).map(i => i.cost));
     assertTrue(topTable <= 3000, 'premium tables cost at least as much as any other table', topTable);
   });
-  await test('Premium photo pictures (Sapphire Sovereign, Crimson Inferno, Scarlet Guardian, Turtley): 5000, animated, flat when small', async () => {
+  await test('Premium photo pictures (Sapphire Sovereign, Crimson Inferno, Scarlet Guardian, Turtley): 5000, animated at every size', async () => {
     const pics = { 'avatar-sapphire-sovereign': 'Sapphire Sovereign', 'avatar-crimson-inferno': 'Crimson Inferno', 'avatar-scarlet-guardian': 'Scarlet Guardian', 'avatar-turtley': 'Turtley' };
     const host = document.createElement('div');
     const hadReduce = document.body.classList.contains('reduce-motion');
@@ -7215,11 +7215,21 @@ async function runDevTestSuite() {
         const hrefs = [...host.innerHTML.matchAll(/href="([^"]+)"/g)].map(m => m[1]);
         for (const u of hrefs) assertTrue(!!(await size(u)), `${u} loads`);
         assertEqual(JSON.stringify(await size(hrefs[0])), '[512,512]', `${name} base is 512px`);
-        host.innerHTML = avatarHtml(id, 40);
-        const small = [...host.innerHTML.matchAll(/href="([^"]+)"/g)].map(m => m[1]);
-        assertEqual(small.length, 1, `${name} draws one flat image in a small slot`);
-        assertEqual(JSON.stringify(await size(small[0])), '[160,160]', `${name} small copy is 160px`);
-        assertTrue(!host.firstElementChild.hasAttribute('data-av-anim'), 'nothing moves in a small slot');
+        // Shop, Custom, compact lists/menu/table and full previews must all animate.
+        for (const px of [18, 20, 22, 28, 30, 32, 34, 40, 42, 52, 64, 84]) {
+          host.innerHTML = avatarHtml(id, px);
+          assertTrue(host.firstElementChild.hasAttribute('data-av-anim'), `${name} is watched at ${px}px`);
+          const parts = [...host.querySelectorAll('*')].filter(el => getComputedStyle(el).animationName !== 'none');
+          assertTrue(parts.length >= 3, `${name} keeps its animated parts at ${px}px`);
+          const animations = host.getAnimations({ subtree: true });
+          const movement = animations.find(a => a.effect.getKeyframes().some(k => k.transform && k.transform !== 'none'));
+          assertTrue(!!movement, `${name} has actual motion at ${px}px`);
+          movement.pause();
+          movement.currentTime = 0;
+          const before = getComputedStyle(movement.effect.target).transform;
+          movement.currentTime = 1100;
+          assertTrue(getComputedStyle(movement.effect.target).transform !== before, `${name} changes pose at ${px}px`);
+        }
       }
       const top = Math.max(...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Profile Pictures').map(i => i.cost));
       assertEqual(top, 5000, 'nothing in Profile Pictures costs more');

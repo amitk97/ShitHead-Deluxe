@@ -1,4 +1,4 @@
-<!-- README-VERSION: v200 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
+<!-- README-VERSION: v220 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
 # 💩 ShitHead Deluxe
 
 **The classic card game ShitHead, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
@@ -55,6 +55,11 @@ Tap the **ⓘ** button during a game for every card's power, and the **▦ Play 
 Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, Joker.**
 
 ## Features
+
+- **Premium animated pictures**: Sapphire Sovereign roars, Crimson Inferno chuckles, Scarlet Guardian flaps and Turtley snaps. Their animations play in Shop, Custom and compact player pictures, with Reduce Motion support.
+- **Ranked win bonuses**: wins add 10 points on top of Elo, with extra bonuses at win-streak milestones.
+- **Stalemate draws**: games end in a draw when the same cards keep circulating without progress; draws appear in Ranked stats and Match History.
+- **Refreshed home and tutorial**: rotating card-power tips, your table background, clearer practice lessons and an easy one-bot start.
 
 - **Vs Bots** with four difficulties (Easy → Boss) that unlock as you win, playable offline. Close the app mid-game and it picks up exactly where you left off.
 - **The Gauntlet**: beat 5 bots in a row (Easy, Easy, Medium, Hard, Boss) with 3 lives. The first clear wins an exclusive picture and frame, then Diamonds every day you beat it again.

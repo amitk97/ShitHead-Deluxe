@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v219 (ShitHead-Deluxe-197) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v220 (ShitHead-Deluxe-197) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -17927,6 +17927,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v220: [
+        ['✨', 'Animated profile pictures now move in Shop, Custom and every picture size.']
+      ],
       v219: [
         ['✨', 'New premium picture: Turtley, a jewelled emerald turtle that snaps its jaws.', WN_KEY],
         ['✨', 'The premium pictures come alive: Sapphire Sovereign roars, Crimson Inferno chuckles and Scarlet Guardian flaps its wings.', WN_KEY],
@@ -18694,15 +18697,12 @@ video {
     function resolveAvatarId(id) {
       return AVATAR_ART[id] ? id : DEFAULT_AVATAR_ID;
     }
-    // size (px, optional): a premium photo picture under 64px draws its flat
-    // 160px copy instead of the full-size layers (never a big file in a
-    // small slot, and nothing moving that small).
+    // Every size keeps the animated layers, including Shop, Custom and
+    // compact player pictures. Visibility and Reduce Motion control playback.
     function avatarSvg(id, size = 64) {
       const art = AVATAR_ART[resolveAvatarId(id)];
       if (art.photo) {
-        const body = size < 64
-          ? `<image href="${art.small}" x="2" y="2" width="60" height="60"/>`
-          : `<svg x="2" y="2" width="60" height="60" viewBox="0 0 1000 1000" overflow="hidden">${art.art}</svg>`;
+        const body = `<svg x="2" y="2" width="60" height="60" viewBox="0 0 1000 1000" overflow="hidden">${art.art}</svg>`;
         return `<svg viewBox="0 0 64 64" class="avatar-svg" aria-hidden="true" focusable="false">${body}</svg>`;
       }
       const [, , rim] = AVATAR_TONES[art.tone];
@@ -18747,7 +18747,7 @@ video {
     function avatarHtml(id, size = 32, extraClass = '') {
       const item = getAvatarItem(resolveAvatarId(id));
       const art = AVATAR_ART[resolveAvatarId(id)];
-      const anim = art?.animated && !(art.photo && size < 64) ? ' data-av-anim' : '';
+      const anim = art?.animated ? ' data-av-anim' : '';
       return `<span class="avatar-tile ${extraClass}"${anim} style="width:${size}px;height:${size}px" role="img" aria-label="${item ? escapeAttr(item.name) : 'Profile picture'}">${avatarSvg(id, size)}</span>`;
     }
     // Animated pictures only move while they can be seen: one shared
