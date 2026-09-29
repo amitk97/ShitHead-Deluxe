@@ -5064,6 +5064,30 @@ async function runDevTestSuite() {
       input.value = nameBefore; freshState(); refreshTutorialNudge();
     }
   });
+  await test('The Deck, Pile and Base Card never move: power labels, a big Pile, an empty Deck and Snap Burn leave them in place', async () => {
+    freshState();
+    startSinglePlayerGame(1);
+    try {
+      state.phase = 'PLAY'; state.currentTurnIndex = 0; render();
+      const pos = () => ['drawPile', 'discardPileContainer', 'bottomCardPreview'].map(id => { const r = document.getElementById(id).getBoundingClientRect(); return [Math.round(r.left * 10), Math.round(r.top * 10)].join(','); }).join(' ');
+      state.discardPile = []; render();
+      const base = pos();
+      const steps = [
+        () => { state.discardPile = [{ id: 'm1', rank: '3', suit: '♥' }]; state.activeConstraint = deriveConstraintFromRank('3'); },
+        () => { state.discardPile.push({ id: 'm2', rank: '9', suit: '♥' }); state.activeConstraint = deriveConstraintFromRank('9'); },
+        () => { for (let i = 0; i < 9; i++) state.discardPile.push({ id: 'm3' + i, rank: 'K', suit: '♠' }); state.activeConstraint = null; },
+        () => { state.drawPile = []; },
+        () => { state.discardPile = [{ id: 'k1', rank: 'K', suit: '♠' }, { id: 'k2', rank: 'K', suit: '♥' }, { id: 'k3', rank: 'K', suit: '♦' }]; state.players[0].hand.push({ id: 'k4', rank: 'K', suit: '♣' }); state.currentTurnIndex = 1; }
+      ];
+      for (const step of steps) {
+        step(); render();
+        await new Promise(r => requestAnimationFrame(r));
+        assertEqual(pos(), base, 'The centre row stayed put');
+      }
+      const snap = document.getElementById('snapBurnBtn').getBoundingClientRect();
+      assertTrue(snap.right <= innerWidth, 'Snap Burn stays on screen');
+    } finally { freshState(); }
+  });
   await test('REGRESSION: the Profile page hides the Danger Zone and password-change row when signed out', () => {
     currentUser = null;
     document.getElementById('menuProfileBtn').click();

@@ -243,6 +243,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - The history strip (`#historyStreamPanel`) folds into `#historyCircleBtn` (`§ Card history circle`): the panel gets `.history-collapsed` and shrinks to exactly one circle, so Play Matrix / history / Card Powers stack in the left column at the same size with equal 6px gaps. Open/closed is per game (`historyOpen`, reset from the setting in `hideMatchEndUI`); the setting is Display → Card History (`historyOpenPref`, localStorage `shithead_history_open`, synced as `historyOpen`, default on). The ‹ in the strip's header folds it; always open in the tutorial. The circle shows the card to beat with the pile label's logic (`historyCircleCard`: `baseOverrideCard` for a 5, `getEffectiveTopCard` under 3s), a clock icon on an empty pile, and ticks over when it changes (not with Reduce Motion).
 
+## Centre row never moves
+
+- `#centerStacksRow` (Deck, Pile, Base Card) has fixed-width columns (`#deckZone`/`#pileZone` = the `.card-base` width, `#baseCardHud` = `.card-table`), cards aligned to the top; labels may spill past a column, centred, without widening it. The Pile's power tag sits on its own reserved line (`#pileConstraintLine`, kept at full height while empty). `#snapBurnBtn` is absolutely placed beside the Base Card, or over it (`.snap-over-base`) when there's no room or it would hit the emote button. The big-Pile warning (`.pile-danger`) only glows (no wobble, no border). Before v213 a growing Pile label or Snap Burn slid the whole row up to ~45px; a test now fails if any of the three moves.
+
 ## Pile label
 
 - `#activeConstraintTag` names the top card's power (`CARD_REFERENCE`); a 3 on top shows what really has to be beaten: `Transparent - N` (`transparentPileLabel`: `state.baseOverrideCard` or `getEffectiveTopCard`), `Transparent - Any` when only 3s.

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v212 (ShitHead-Deluxe-194) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v213 (ShitHead-Deluxe-195) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -783,6 +783,18 @@
     #spectateBar { position:fixed; left:50%; transform:translateX(-50%); top:calc(var(--header-h) + 6px); z-index:64; display:flex; align-items:center; gap:10px; padding:6px 8px 6px 12px; border-radius:999px; border:1px solid #0891b2; background:rgba(8,47,73,.92); color:#a5f3fc; font-size:11px; font-weight:900; box-shadow:0 6px 18px rgba(0,0,0,.45); white-space:nowrap; max-width:calc(100vw - 24px); }
     #spectateBar button { padding:4px 12px; border-radius:999px; background:#0891b2; color:#020617; font-weight:900; font-size:10px; letter-spacing:.08em; }
     body.spectating #gameTable { pointer-events:none; }
+    /* The centre row never moves: each column is exactly its card's width
+       (labels may spill past it, centred), the Pile's power tag has its own
+       reserved line, and Snap Burn floats beside the Base Card (or over it
+       where there's no room) instead of joining the row. */
+    #centerStacksRow { align-items:flex-start !important; }
+    #deckZone, #pileZone { flex:none; width:clamp(52px, 8.5vh, calc(82px * var(--tbl-k,1))); }
+    #baseCardHud { flex:none; width:clamp(46px, 7.5vh, calc(68px * var(--tbl-k,1))); }
+    #deckZone > *, #pileZone > *, #baseCardHud > * { flex:none; white-space:nowrap; }
+    #pileConstraintLine { height:13px; display:flex; justify-content:center; align-items:center; white-space:nowrap; }
+    #pileConstraintLine #activeConstraintTag.hidden { display:inline-block !important; visibility:hidden; }
+    #snapBurnBtn { position:absolute; top:0; left:calc(100% + 12px); z-index:5; }
+    #snapBurnBtn.snap-over-base { left:auto; right:0; }
     #startTutorialBtn.tutorial-new { border-color:#f59e0b !important; color:#fcd34d !important; background:rgba(245,158,11,.12) !important; box-shadow:0 0 0 1px rgba(245,158,11,.35), 0 0 18px rgba(245,158,11,.25); }
     /* Desktop Site note: sized by --dsk (layout width ÷ screen width) so it reads at phone size. */
     #desktopSiteNote { position:fixed; left:50%; top:calc(var(--header-h) + 8px); transform:translateX(-50%); z-index:330; width:calc(340px * var(--dsk, 1)); max-width:calc(100vw - 16px); box-sizing:border-box; display:flex; flex-direction:column; gap:calc(6px * var(--dsk, 1)); padding:calc(12px * var(--dsk, 1)) calc(14px * var(--dsk, 1)); border-radius:calc(14px * var(--dsk, 1)); background:#0f172a; border:1px solid rgba(245,158,11,.6); color:#e2e8f0; font-size:calc(13px * var(--dsk, 1)); line-height:1.35; box-shadow:0 12px 40px rgba(0,0,0,.6); text-align:center; }
@@ -3345,21 +3357,14 @@ video {
    class itself is only ever applied when Reduce Motion is off (see
    render()), so disabling that setting removes this entirely rather than
    just freezing it mid-animation. */
+/* A big Pile glows red; it never moves or changes size (a wobble and a
+   2px border used to nudge it and the cards inside it). */
 @keyframes pileDangerPulse {
-  0%, 100% {
-    transform: translate(0, 0) rotate(0deg);
-    box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.35), inset 0 0 10px rgba(239, 68, 68, 0.2);
-  }
-  25% { transform: translate(-1px, 0.5px) rotate(-0.3deg); }
-  50% {
-    transform: translate(1px, -0.5px) rotate(0.3deg);
-    box-shadow: 0 0 20px 6px rgba(239, 68, 68, 0.8), inset 0 0 16px rgba(239, 68, 68, 0.4);
-  }
-  75% { transform: translate(-1px, -0.5px) rotate(-0.2deg); }
+  0%, 100% { box-shadow: 0 0 0 2px #ef4444, 0 0 8px 2px rgba(239, 68, 68, 0.35), inset 0 0 10px rgba(239, 68, 68, 0.2); }
+  50% { box-shadow: 0 0 0 2px #ef4444, 0 0 20px 6px rgba(239, 68, 68, 0.8), inset 0 0 16px rgba(239, 68, 68, 0.4); }
 }
 .pile-danger {
   animation: pileDangerPulse 1.4s ease-in-out infinite;
-  border: 2px solid #ef4444 !important;
 }
 .cardref-resize-handle {
   position: absolute;
@@ -6096,8 +6101,10 @@ video {
       <span id="gameDirectionBadge" class="hidden bg-slate-900/90 border-slate-600 text-amber-300 font-black shadow-lg" data-tip="Play Direction" aria-label="Play direction">
       </span>
 
-      <!-- Center Stacks -->
-      <div class="relative flex items-center justify-center gap-5 md:gap-8 my-0.5">
+      <!-- Center Stacks: fixed-width columns (see #centerStacksRow CSS) so
+           the Deck, Pile and Base Card never move when a label grows or the
+           Snap Burn button appears. -->
+      <div id="centerStacksRow" class="relative flex items-center justify-center gap-5 md:gap-8 my-0.5">
 
         <!-- Deck -->
         <div id="deckZone" class="flex flex-col items-center gap-0.5">
@@ -6126,8 +6133,8 @@ video {
           </div>
           <div class="flex items-center gap-1.5 bg-slate-950/80 px-2 py-0.2 rounded border border-slate-800 shadow">
             <span class="text-[9px] font-black uppercase tracking-widest text-slate-300">Pile (<span id="discardCount">0</span>)</span>
-            <span id="activeConstraintTag" class="hidden px-1 py-0.2 rounded text-[8px] font-black bg-amber-500 text-slate-950 uppercase tracking-widest animate-pulse">EVEN</span>
           </div>
+          <div id="pileConstraintLine"><span id="activeConstraintTag" class="hidden px-1 py-0.2 rounded text-[8px] font-black bg-amber-500 text-slate-950 uppercase tracking-widest animate-pulse">EVEN</span></div>
         </div>
 
         <!-- Base Card HUD -->
@@ -13314,6 +13321,12 @@ video {
       if (opportunity) {
         snapBtn.classList.remove('hidden');
         snapToast.classList.remove('hidden');
+        // Beside the Base Card when the screen has room, over it when not.
+        snapBtn.classList.remove('snap-over-base');
+        const sr = snapBtn.getBoundingClientRect();
+        const emote = document.getElementById('emoteToggleBtn')?.getBoundingClientRect();
+        const hitsEmote = emote && emote.width && sr.right > emote.left && sr.left < emote.right && sr.bottom > emote.top && sr.top < emote.bottom;
+        if (sr.right > window.innerWidth - 4 || hitsEmote) snapBtn.classList.add('snap-over-base');
         snapToast.querySelector('span:nth-child(2)').textContent = `SNAP BURN NOW • ${opportunity.burnInfo.needed}× ${opportunity.burnInfo.topRank}`;
         snapBtn.classList.toggle('tutorial-glow', tutorialActive && !!TUTORIAL_STEPS[tutorialStep]?.require?.requireSnap);
         snapToast.classList.toggle('tutorial-glow', tutorialActive && !!TUTORIAL_STEPS[tutorialStep]?.require?.requireSnap);
@@ -17756,6 +17769,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v213: [
+        ['🃏', 'The Deck, Pile and Base Card now stay perfectly still: no more sliding when a power card lands or Snap Burn appears.']
+      ],
       v212: [
         ['🎓', 'New players start against one Easy bot, and the Tutorial button stands out until you have tried it.'],
         ['🙂', 'Vs Bots and the Tutorial no longer need a nickname first.'],
