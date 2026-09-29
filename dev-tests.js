@@ -5025,6 +5025,21 @@ async function runDevTestSuite() {
       delete screen.width; delete screen.height; delete navigator.maxTouchPoints;
     }
   });
+  await test('Bot names: plain letters only, no repeats, removed names gone, never the player\'s own name', () => {
+    assertTrue(BOT_NAMES.every(n => /^[A-Za-z]+$/.test(n)), 'Only plain letters (no accents or special characters)');
+    assertEqual(new Set(BOT_NAMES).size, BOT_NAMES.length, 'No repeats');
+    ['Fatima', 'Soren', 'Zainab', 'Zara', 'Lukas', 'Mateo'].forEach(n => assertTrue(!BOT_NAMES.includes(n), n + ' removed'));
+    const input = document.getElementById('playerNameInput');
+    const before = input.value;
+    try {
+      input.value = 'Harry';
+      for (let i = 0; i < 25; i++) {
+        freshState();
+        startSinglePlayerGame(3);
+        assertTrue(!state.players.slice(1).some(p => p.name === 'Harry'), 'No bot shares the player\'s name');
+      }
+    } finally { input.value = before; freshState(); }
+  });
   await test('REGRESSION: the Profile page hides the Danger Zone and password-change row when signed out', () => {
     currentUser = null;
     document.getElementById('menuProfileBtn').click();

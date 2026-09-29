@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v210 (ShitHead-Deluxe-192) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v211 (ShitHead-Deluxe-193) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -8358,11 +8358,19 @@ video {
     // arrays above.
     const DEFAULT_SPEED_INDEX = 1;
 
+    // Plain letters only (no accents), so every name reads the same on any device.
     const BOT_NAMES = [
-      "Camille", "Diya", "Elena", "Emma", "Ethan", "Fatima",
-      "Freja", "Giulia", "Lucas", "Lukas", "Mateo", "Mia",
-      "Noah", "Oliver", "Priya", "Rohan", "Sophia", "Soren",
-      "Tariq", "Vikram", "Zainab", "Zara"
+      "Adriana", "Aisha", "Aishwarya", "Alejandro", "Alessandro", "Alfie", "Alice", "Amelia",
+      "Anaya", "Antoine", "Arjun", "Ava", "Ben", "Brooklyn", "Caitlin", "Camille",
+      "Carter", "Chiara", "Chloe", "Daisy", "Daksh", "Diya", "Elena", "Ellie",
+      "Emma", "Ethan", "Felix", "Francesca", "Freddie", "Freja", "George", "Giulia",
+      "Grace", "Hannah", "Harper", "Harry", "Harsh", "Hugo", "Ishaan", "Isla",
+      "Jack", "Jade", "Jules", "Juliette", "Katie", "Kavya", "Kiara", "Lea",
+      "Lena", "Leonardo", "Liam", "Logan", "Lorenzo", "Lucas", "Luis", "Madison",
+      "Manon", "Marco", "Margaux", "Marie", "Martina", "Mason", "Mathis", "Matteo",
+      "Max", "Meera", "Mia", "Mila", "Milan", "Noah", "Oliver", "Omar",
+      "Oscar", "Paul", "Poppy", "Priya", "Rachel", "Riley", "Riya", "Rohan",
+      "Ruby", "Serena", "Sophia", "Tariq", "Vanessa", "Vikram", "Wyatt"
     ];
 
     const SUITS = ['♠', '♥', '♦', '♣'];
@@ -9197,7 +9205,7 @@ video {
       } else if (reuseBotNames && reuseBotNames.length === botCount) {
         rawPicked = reuseBotNames.slice();
       } else {
-        rawPicked = shuffle([...BOT_NAMES]).slice(0, botCount);
+        rawPicked = shuffle(BOT_NAMES.filter(n => n.toLowerCase() !== String(pName || '').trim().toLowerCase())).slice(0, botCount);
         rawPicked.sort((a, b) => a.localeCompare(b));
       }
 
@@ -17742,6 +17750,9 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v211: [
+        ['🤖', 'Lots of new bot names from the UK, USA, France, India, Germany and Italy.']
+      ],
       v210: [
         ['👤', 'The menu now shows your username and profile picture, centred, with the quick buttons in one even row.'],
         ['📱', 'If a phone browser has Desktop Site switched on, the game now says how to turn it off (it makes everything tiny).']
