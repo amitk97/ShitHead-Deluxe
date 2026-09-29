@@ -64,6 +64,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Hand Sort (Gameplay tab, `handSortByPower`, localStorage `shithead_hand_sort_power`, synced as `handSortByPower` in `users/{uid}/settings`): OFF (default) sorts the hand by rank 2→A (`HAND_SORT_VALUES`), ON by power (`POWER_SORT_ORDER`). Applied in `render` via `handSortValue`.
 - Turn Alert (`turnAlertOn`, `audio/turn.mp3` at `TURN_ALERT_GAIN` = 8% of the volume: the owner wants it faint) chimes in `render` when `isMyTurn` goes false → true. Notification Sound (`notifySoundOn`, `audio/notify.mp3`) chimes when `notifyNewInboxItems` sees a new invite/request/gift. Both default on and sync to `users/{uid}/settings`.
 
+## Card flight accessibility
+
+- `spawnCardFlight` and `spawnMiniCardFlight` skip visual projectiles with Reduce Motion; pickup fallback goes through the same guard. Do not rely on shortened CSS transitions: the removal timer otherwise leaves a blank ghost card on the pile. Turning Reduce Motion on clears active pile flights and queued flights recheck the preference. High Contrast gives flying-card labels white text on their dark background.
+
 ## Blind flip reveal
 
 - Every face-down (blind) play goes through a reveal first (`playBlindReveal`, gated at the top of `executePlayCards`; the real play reruns with `{ revealed: true }`): the card rises over the pile, the table dims, it wobbles and turns edge-on, then snaps over glowing green (playable) or red (forced pickup). ~1.2s for you, ~0.8s for others (`BLIND_REVEAL_MS`). Sounds are synthesised (`playRevealTension` / `playRevealResult`).

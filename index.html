@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v220 (ShitHead-Deluxe-197) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v221 (ShitHead-Deluxe-197) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -308,6 +308,7 @@
     }
     body.high-contrast .text-\[var\(--text-red\)\] { color: #ff5c5c !important; }
     body.high-contrast .text-\[var\(--text-light\)\] { color: #ffffff !important; }
+    body.high-contrast .flying-card { color:#ffffff !important; }
     body.high-contrast .card-corner-rank, body.high-contrast .card-corner-suit { text-shadow: 0 0 2px #000; }
     body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after {
       animation-duration: 0.001ms !important; animation-iteration-count: 1 !important;
@@ -7779,7 +7780,9 @@ video {
     }
 
     function spawnCardFlight(fromEl, toEl, count = 1, cardData = null) {
-      if (!fromEl || !toEl) return;
+      // CSS shortening the transition still leaves a ghost card over the pile.
+      // Reduced motion renders the updated cards directly, without projectiles.
+      if (!fromEl || !toEl || motionOff()) return;
       const layer = document.getElementById('flightLayer');
       const fromRect = fromEl.getBoundingClientRect();
       const toRect = toEl.getBoundingClientRect();
@@ -7788,6 +7791,7 @@ video {
       
       for (let i = 0; i < numProjectiles; i++) {
         setTimeout(() => {
+          if (motionOff()) return; // The preference may change during a staggered flight.
           const el = document.createElement('div');
           el.className = 'flying-card card-opponent-slot rounded-lg bg-amber-500/90 border border-amber-300 shadow-2xl flex items-center justify-center text-slate-950 font-black';
           el.style.left = `${fromRect.left + (fromRect.width / 2) - 18}px`;
@@ -9120,7 +9124,7 @@ video {
       return `<div class="${extraClass} custom-card-back opponent-cosmetic-card ${style.backClass}" style="${style.frameStyle};${extraStyle}"></div>`;
     }
     function spawnMiniCardFlight(fromEl, toEl) {
-      if (!fromEl || !toEl) return;
+      if (!fromEl || !toEl || motionOff()) return;
       const fromRect = fromEl.getBoundingClientRect();
       const toRect = toEl.getBoundingClientRect();
       const card = document.createElement('div');
@@ -12384,6 +12388,7 @@ video {
     function applyAccessibilityPrefs() {
       document.body.classList.toggle('high-contrast', highContrast);
       document.body.classList.toggle('reduce-motion', reduceMotion);
+      if (reduceMotion) document.querySelectorAll('#flightLayer .flying-card').forEach(el => el.remove());
       const matrixLayer = document.getElementById('matrixRefLayer');
       const cardLayer = document.getElementById('cardRefLayer');
       if (matrixLayer) matrixLayer.classList.toggle('hidden', hideHelperIcons);
@@ -17927,6 +17932,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v221: [
+        ['♿', 'Reduce Motion no longer leaves flashing card shapes over the pile; High Contrast keeps moving card text readable.']
+      ],
       v220: [
         ['✨', 'Animated profile pictures now move in Shop, Custom and every picture size.']
       ],

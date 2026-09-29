@@ -8549,6 +8549,37 @@ async function runDevTestSuite() {
 
     reduceMotion = wasReduceMotion;
   });
+  await test('REGRESSION: Reduce Motion skips play, draw, pickup and deal flight ghosts; High Contrast flights stay readable', async () => {
+    const saved = { reduceMotion, highContrast, running: devTestSuiteRunning };
+    const layer = document.getElementById('flightLayer');
+    const from = document.getElementById('drawPile'), to = document.getElementById('discardPileContainer');
+    try {
+      devTestSuiteRunning = false; // Exercise actual visuals, not the suite's motion bypass.
+      highContrast = true; reduceMotion = true; applyAccessibilityPrefs();
+      const before = document.body.querySelectorAll('.custom-card-back').length;
+      spawnCardFlight(from, to, 2, { rank: 'Q' });
+      spawnCardFlight(from, to, 2);
+      spawnPickupFan(to, from, 3);
+      spawnMiniCardFlight(from, to);
+      await new Promise(r => setTimeout(r, 120));
+      assertEqual(layer.querySelectorAll('.flying-card').length, 0, 'no pile or draw ghosts with Reduce Motion');
+      assertEqual(document.body.querySelectorAll('.custom-card-back').length, before, 'no pickup or deal ghosts');
+      reduceMotion = false; applyAccessibilityPrefs();
+      spawnCardFlight(from, to, 3, { rank: 'Q' });
+      await new Promise(r => setTimeout(r, 10));
+      const flight = layer.querySelector('.flying-card');
+      assertTrue(!!flight && flight.textContent === 'Q', 'normal motion still creates a readable card');
+      assertEqual(getComputedStyle(flight).color, 'rgb(255, 255, 255)', 'high contrast text is white on the dark card');
+      reduceMotion = true; applyAccessibilityPrefs();
+      await new Promise(r => setTimeout(r, 120));
+      assertEqual(layer.querySelectorAll('.flying-card').length, 0, 'enabling Reduce Motion clears active and queued flights');
+    } finally {
+      layer.querySelectorAll('.flying-card').forEach(el => el.remove());
+      reduceMotion = saved.reduceMotion; highContrast = saved.highContrast; devTestSuiteRunning = saved.running;
+      applyAccessibilityPrefs();
+    }
+  });
+
   await test('REGRESSION: Reduce Motion turns Pile Danger Flash off entirely, not just the animation', () => {
     freshState({ drawPile: [] });
     state.players = [makePlayer({ id: 'p1' }), makePlayer({ id: 'p2', isBot: true })];
