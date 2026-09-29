@@ -7154,7 +7154,7 @@ async function runDevTestSuite() {
     Object.entries(AVATAR_ART).forEach(([id, a]) => {
       assertTrue(!/data:image\//i.test(a.art), `${id} picture embeds no bitmap data URI`);
       // the premium photo pictures are the only raster ones: sized files, never stretched past them
-      if (a.photo) assertTrue([...a.art.matchAll(/href="([^"]+)"/g)].every(m => /^art\/avatars\/[a-z-]+\.webp$/.test(m[1])), `${id} only uses its own art/avatars files`);
+      if (a.photo) assertTrue([...a.art.matchAll(/href="([^"]+)"/g)].every(m => /^art\/avatars\/[a-z-]+\.webp(\?v=\d+)?$/.test(m[1])), `${id} only uses its own art/avatars files`);
       else assertTrue(!/<image/i.test(a.art), `${id} picture is pure vector`);
     });
     const css = [...document.querySelectorAll('style')].map(el => el.textContent).join('\n');

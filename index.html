@@ -18424,7 +18424,10 @@ video {
           ],
           glows: [], snap: [101.9, 593.0], snapOn: 'head' }
       };
-      const src = (file) => `art/avatars/${file}.webp`;
+      // ART_V: bump whenever these files are rebuilt (art caches for a day, and
+      // an old base under new moving layers would draw a part twice)
+      const ART_V = 219;
+      const src = (file) => `art/avatars/${file}.webp?v=${ART_V}`;
       const art = {};
       let defs = `<linearGradient id="av-px-band" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
         <radialGradient id="av-px-ember"><stop offset="0" stop-color="#fff7d6"/><stop offset=".35" stop-color="#ffc233" stop-opacity=".95"/><stop offset="1" stop-color="#ff4d00" stop-opacity="0"/></radialGradient>`;
