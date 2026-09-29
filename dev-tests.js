@@ -2533,7 +2533,7 @@ async function runDevTestSuite() {
     const free = BUILT_IN_COSMETICS.filter(i => i.category === 'Profile Pictures').map(i => i.name);
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
     const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Profile Pictures' && !i.season).map(i => [i.name, i.cost]));
-    assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Phoenix': 2500, 'Cosmic Ace': 2500 }, 'Shop pictures and prices');
+    assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Phoenix': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000 }, 'Shop pictures and prices');
     assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Recruiter'], 'Earn-only pictures');
     [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Profile Pictures')
       .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
@@ -2587,7 +2587,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 25, 'All 25 pictures appear in Custom');
+    assertEqual(options.length, 28, 'All 28 pictures appear in Custom');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -7152,7 +7152,10 @@ async function runDevTestSuite() {
       assertTrue(text.includes('<svg') && !/<image|data:image\/(png|jpe?g|webp|gif)/i.test(text), `${u} is pure vector (no embedded bitmap)`);
     }
     Object.entries(AVATAR_ART).forEach(([id, a]) => {
-      assertTrue(!/<image|data:image\//i.test(a.art), `${id} picture is pure vector`);
+      assertTrue(!/data:image\//i.test(a.art), `${id} picture embeds no bitmap data URI`);
+      // the premium photo pictures are the only raster ones: sized files, never stretched past them
+      if (a.photo) assertTrue([...a.art.matchAll(/href="([^"]+)"/g)].every(m => /^art\/avatars\/[a-z-]+\.webp$/.test(m[1])), `${id} only uses its own art/avatars files`);
+      else assertTrue(!/<image/i.test(a.art), `${id} picture is pure vector`);
     });
     const css = [...document.querySelectorAll('style')].map(el => el.textContent).join('\n');
     assertTrue(!/url\(['"]?data:image\/(png|jpe?g|webp|gif)/i.test(css), 'no bitmap data URIs in the page CSS');
@@ -7191,6 +7194,49 @@ async function runDevTestSuite() {
     }
     const topTable = Math.max(...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Table Themes' && !Object.keys(tables).includes(i.id)).map(i => i.cost));
     assertTrue(topTable <= 3000, 'premium tables cost at least as much as any other table', topTable);
+  });
+  await test('Premium photo pictures (Sapphire Sovereign, Crimson Inferno, Scarlet Guardian): 5000, animated, flat when small', async () => {
+    const pics = { 'avatar-sapphire-sovereign': 'Sapphire Sovereign', 'avatar-crimson-inferno': 'Crimson Inferno', 'avatar-scarlet-guardian': 'Scarlet Guardian' };
+    const host = document.createElement('div');
+    const hadReduce = document.body.classList.contains('reduce-motion');
+    document.body.classList.remove('reduce-motion');
+    document.body.appendChild(host);
+    const size = (u) => new Promise((res) => { const im = new Image(); im.onload = () => res([im.naturalWidth, im.naturalHeight]); im.onerror = () => res(null); im.src = u; });
+    try {
+      for (const [id, name] of Object.entries(pics)) {
+        const item = COSMETIC_SHOP_ITEMS.find(i => i.id === id);
+        assertTrue(!!item && item.name === name && item.cost === 5000 && item.animated && item.category === 'Profile Pictures', `${name} is a 5000 animated picture in the Shop`, item);
+        assertTrue(COSMETIC_RUNTIME_IDS.avatar.has(id) && AVATAR_ART[id].photo, `${name} has art`);
+        host.innerHTML = avatarHtml(id, 96);
+        const moving = [...host.querySelectorAll('*')].filter(el => getComputedStyle(el).animationName !== 'none');
+        assertTrue(moving.length >= 3, `${name} animates several parts`, moving.length);
+        assertTrue(moving.every(el => 6 % parseFloat(getComputedStyle(el).animationDuration) === 0), `${name} loops seamlessly every 6s`, moving.map(el => getComputedStyle(el).animationDuration));
+        assertTrue(host.firstElementChild.hasAttribute('data-av-anim'), `${name} is watched (paused offscreen / app hidden)`);
+        const hrefs = [...host.innerHTML.matchAll(/href="([^"]+)"/g)].map(m => m[1]);
+        for (const u of hrefs) assertTrue(!!(await size(u)), `${u} loads`);
+        assertEqual(JSON.stringify(await size(hrefs[0])), '[512,512]', `${name} base is 512px`);
+        host.innerHTML = avatarHtml(id, 40);
+        const small = [...host.innerHTML.matchAll(/href="([^"]+)"/g)].map(m => m[1]);
+        assertEqual(small.length, 1, `${name} draws one flat image in a small slot`);
+        assertEqual(JSON.stringify(await size(small[0])), '[160,160]', `${name} small copy is 160px`);
+        assertTrue(!host.firstElementChild.hasAttribute('data-av-anim'), 'nothing moves in a small slot');
+      }
+      const top = Math.max(...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Profile Pictures').map(i => i.cost));
+      assertEqual(top, 5000, 'nothing in Profile Pictures costs more');
+      document.body.classList.add('reduce-motion');
+      host.innerHTML = Object.keys(pics).map(id => avatarHtml(id, 96)).join('');
+      assertTrue([...host.querySelectorAll('*')].every(el => getComputedStyle(el).animationName === 'none'), 'Reduce Motion stops them');
+      const sparks = [...host.querySelectorAll('.av-px-ember, .av-px-spark')];
+      assertTrue(sparks.length === 4 && sparks.every(el => getComputedStyle(el).opacity === '0'), 'with Reduce Motion the ember and sparks stay hidden (the still picture shows)');
+      document.body.classList.remove('reduce-motion');
+      document.body.classList.add('app-hidden');
+      assertTrue([...host.querySelectorAll('.av-px-sweep')].every(el => getComputedStyle(el).animationPlayState === 'paused'), 'a hidden app pauses them');
+    } finally {
+      document.body.classList.remove('app-hidden');
+      if (document.hidden) document.body.classList.add('app-hidden');
+      document.body.classList.toggle('reduce-motion', hadReduce);
+      host.remove();
+    }
   });
   await test('Custom → All: every item incl. all seasonal ones, folding sections, and a Diamonds / owned / Shop bar', () => {
     const savedOwned = cosmeticPurchaseState, savedCollapsed = [...customAllCollapsed], savedNow = seasonalNowOverride;

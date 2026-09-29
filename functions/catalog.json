@@ -400,6 +400,18 @@
    "name": "Cosmic Ace",
    "cost": 2500
   },
+  "avatar-sapphire-sovereign": {
+   "name": "Sapphire Sovereign",
+   "cost": 5000
+  },
+  "avatar-crimson-inferno": {
+   "name": "Crimson Inferno",
+   "cost": 5000
+  },
+  "avatar-scarlet-guardian": {
+   "name": "Scarlet Guardian",
+   "cost": 5000
+  },
   "back-lunar": {
    "name": "Lucky Envelope",
    "cost": 300,

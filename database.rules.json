@@ -149,6 +149,8 @@
               newData.val() === 'avatar-shithead' || newData.val() === 'avatar-gauntlet' ||
               newData.val() === 'avatar-recruiter' ||
               newData.val().matches(/^avatar-(royal-flush|phoenix|cosmic-ace)$/) ||
+              newData.val().matches(/^avatar-(sapphire-sovereign|crimson-inferno)$/) ||
+              newData.val() === 'avatar-scarlet-guardian' ||
               (newData.val().matches(/^avatar-(lunar|valentine|ramadan|easter|summer)(-earned)?$/) ||
               newData.val().matches(/^avatar-(halloween|diwali|christmas|newyear)(-earned)?$/)))))"
           },

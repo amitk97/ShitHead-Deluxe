@@ -147,6 +147,22 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   await allowed('equip a new card back', db => set(ref(db, 'users/alice/equippedCosmetics/cardBack'), 'back-dragon'));
   await denied('equip an unowned new card back', db => set(ref(db, 'users/alice/equippedCosmetics/cardBack'), 'back-stained'));
   await allowed('showcase a deck', db => set(ref(db, 'publicProfiles/alice/showcase/deck'), 'deck-royalgold'));
+  // v218: premium photo pictures at 5000.
+  await admin('users/alice/diamonds', 'PUT', 4999);
+  r = await call('alice', { action: 'buyItem', itemId: 'avatar-sapphire-sovereign' });
+  ok(r.error && /need 5000/.test(r.error.message), 'Sapphire Sovereign refused at 4999', r);
+  await admin('users/alice/diamonds', 'PUT', 10000);
+  r = await call('alice', { action: 'buyItem', itemId: 'avatar-sapphire-sovereign' });
+  ok(r.diamonds === 5000, 'buy Sapphire Sovereign (5000)', r);
+  r = await call('alice', { action: 'buyItem', itemId: 'avatar-sapphire-sovereign' });
+  ok(r.error && /owned/i.test(r.error.message) && (await admin('users/alice/diamonds')) === 5000, 'no buying Sapphire Sovereign twice', r);
+  r = await call('alice', { action: 'buyItem', itemId: 'avatar-crimson-inferno' });
+  ok(r.diamonds === 0, 'buy Crimson Inferno (5000)', r);
+  ok((await admin('users/alice/ownedCosmetics/avatar-sapphire-sovereign')) !== null && (await admin('users/alice/ownedCosmetics/avatar-crimson-inferno')) !== null, 'both saved to the account');
+  await allowed('equip a premium photo picture', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-sapphire-sovereign'));
+  await allowed('equip the other one', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-crimson-inferno'));
+  await denied('equip an unowned premium photo picture', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-scarlet-guardian'));
+  await denied('equip a made-up picture', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-sapphire-sovereignx'));
   await admin('users/alice/diamonds', 'PUT', 960);
 
   // AmitK test account
@@ -228,6 +244,13 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok((await admin(`users/bob/ownedCosmetics/table-royal`)) !== null && (await admin(`gifts/bob/${gid}`)) === null, 'gift owned and removed');
   r = await call('bob', { action: 'claimGift', giftId: gid });
   ok(r.error, 'a gift opens once', r);
+  await admin('users/alice/diamonds', 'PUT', 5000);
+  r = await call('alice', { action: 'sendGift', itemId: 'avatar-scarlet-guardian', friendUid: 'bob', friendName: 'Bob' });
+  ok(r.diamonds === 0 && r.giftId, 'gift Scarlet Guardian (5000)', r);
+  r = await call('bob', { action: 'claimGift', giftId: r.giftId });
+  ok(r.itemId === 'avatar-scarlet-guardian' && !r.asDiamonds && (await admin('users/bob/ownedCosmetics/avatar-scarlet-guardian')) !== null, 'bob opens the premium picture', r);
+  ok((await tryWrite('bob', db => set(ref(db, 'users/bob/equippedCosmetics/avatar'), 'avatar-scarlet-guardian'))) === 'ok', 'bob equips the gifted picture');
+  await admin('users/alice/diamonds', 'PUT', 50);
 
   // Ranked
   await admin('rankedMembers/123456', 'PUT', { alice: Date.now(), bob: Date.now() });

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v217 (ShitHead-Deluxe-195) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v218 (ShitHead-Deluxe-196) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1768,6 +1768,37 @@
     .av-orbit-back { animation:av-orbit-back 4.2s linear infinite; }
     @keyframes av-orbit-front { 0%,49% { opacity:1; } 51%,99% { opacity:0; } 100% { opacity:1; } }
     @keyframes av-orbit-back { 0%,49% { opacity:0; } 51%,99% { opacity:1; } 100% { opacity:0; } }
+    /* Premium photo pictures (Sapphire Sovereign, Crimson Inferno, Scarlet Guardian): one 6s loop each, CSS only. */
+    .av-px-sapphire-sovereign-tail, .av-px-crimson-inferno-tail, .av-px-scarlet-guardian-wing { transform-box:fill-box; animation:6s ease-in-out infinite; }
+    .av-px-sapphire-sovereign-tail { animation-name:av-px-lion-tail; }
+    @keyframes av-px-lion-tail { 0%,100% { transform:rotate(-1.6deg); } 50% { transform:rotate(1.8deg); } }
+    .av-px-crimson-inferno-tail { animation-name:av-px-devil-tail; }
+    @keyframes av-px-devil-tail { 0%,100% { transform:rotate(0deg); } 20% { transform:rotate(5deg); } 45% { transform:rotate(-3deg); } 70% { transform:rotate(4deg); } }
+    .av-px-scarlet-guardian-wing { animation-name:av-px-bird-wing; }
+    .av-px-rise { animation:av-px-rise 3s ease-out infinite; }
+    @keyframes av-px-rise { 0% { opacity:0; transform:translate(0,0) scale(.6); } 15% { opacity:1; } 70% { opacity:.8; } 100% { opacity:0; transform:translate(18px,-150px) scale(.3); } }
+    @keyframes av-px-bird-wing { 0%,80%,100% { transform:rotate(0deg); } 30% { transform:rotate(-1.8deg) scale(1.01); } 50% { transform:rotate(.8deg); } 65% { transform:rotate(-.4deg); } }
+    .av-px-glow { transform-box:fill-box; transform-origin:center; opacity:.45; mix-blend-mode:screen; }
+    .av-px-sapphire-sovereign-glow { animation:av-px-gem 3s ease-in-out infinite; }
+    @keyframes av-px-gem { 0%,100% { opacity:.2; transform:scale(.8); } 50% { opacity:.9; transform:scale(1.12); } }
+    .av-px-crimson-inferno-glow { opacity:0; animation:av-px-eyes 6s ease-in-out infinite; }
+    @keyframes av-px-eyes { 0%,42%,62%,100% { opacity:0; transform:scale(.7); } 48%,55% { opacity:1; transform:scale(1.1); } }
+    .av-px-sweep { animation:6s ease-in-out infinite; }
+    .av-px-sapphire-sovereign-sweep { animation-name:av-px-sweep-a; }
+    .av-px-scarlet-guardian-sweep { animation-name:av-px-sweep-b; }
+    @keyframes av-px-sweep-a { 0%,12% { transform:translateX(0); } 48%,100% { transform:translateX(1700px); } }
+    @keyframes av-px-sweep-b { 0%,50% { transform:translateX(0); } 86%,100% { transform:translateX(1700px); } }
+    .av-px-ember { animation:av-px-ember 6s linear infinite; }
+    @keyframes av-px-ember { 0%,8% { opacity:0; transform:translate(0,0) scale(.6); } 10% { opacity:1; transform:translate(0,0) scale(1); } 16% { transform:translate(24.2px,-194.4px); } 22% { opacity:1; transform:translate(41.1px,-340.1px); } 26% { opacity:1; transform:translate(54.8px,-390.3px) scale(1.2); } 28%,100% { opacity:0; transform:translate(54.8px,-390.3px) scale(.6); } }
+    .av-px-spark { animation:6s linear infinite; }
+    .av-px-spark-0 { animation-name:av-px-spark-0; }
+    .av-px-spark-1 { animation-name:av-px-spark-1; }
+    .av-px-spark-2 { animation-name:av-px-spark-2; }
+    @keyframes av-px-spark-0 { 0%,25% { opacity:0; transform:translate(0,0); } 26% { opacity:1; transform:translate(0,0); } 30% { transform:translate(-84.6px,-55.1px); } 34% { transform:translate(-72.5px,-148.2px); } 38% { opacity:1; transform:translate(-65.3px,-233.2px) scale(1); } 41% { opacity:1; transform:translate(-65.3px,-233.2px) scale(1.9); } 46%,100% { opacity:0; transform:translate(-65.3px,-233.2px) scale(.5); } }
+    @keyframes av-px-spark-1 { 0%,25% { opacity:0; transform:translate(0,0); } 26% { opacity:1; transform:translate(0,0); } 32% { transform:translate(12px,-119.9px); } 38% { opacity:1; transform:translate(21.7px,-272.1px) scale(1); } 41% { opacity:1; transform:translate(21.7px,-272.1px) scale(2.1); } 46%,100% { opacity:0; transform:translate(21.7px,-272.1px) scale(.5); } }
+    @keyframes av-px-spark-2 { 0%,25% { opacity:0; transform:translate(0,0); } 26% { opacity:1; transform:translate(0,0); } 30% { transform:translate(92.5px,-55.1px); } 34% { transform:translate(96.6px,-140.1px); } 38% { opacity:1; transform:translate(100.6px,-208.9px) scale(1); } 41% { opacity:1; transform:translate(100.6px,-208.9px) scale(1.9); } 46%,100% { opacity:0; transform:translate(100.6px,-208.9px) scale(.5); } }
+    /* Animated pictures pause offscreen and while the app is hidden (avatarMotionWatch). */
+    .av-still .avatar-svg *, body.app-hidden .avatar-svg * { animation-play-state:paused !important; }
     body.reduce-motion .avatar-svg * { animation:none !important; }
     /* Opponent seat: [picture + name] / cards / [bot · status · timer].
        The head and status rows take their width from the card row
@@ -17878,6 +17909,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v218: [
+        ['✨', 'Three new animated premium pictures in the Shop: Sapphire Sovereign, Crimson Inferno and Scarlet Guardian.', WN_KEY]
+      ],
       v217: [
         ['✨', "What's New now shows only the big updates, all of them since you last played."]
       ],
@@ -18316,8 +18350,66 @@ video {
       night:   ['#1e3a8a', '#050a1c', '#c4b5fd'],
       pastel:  ['#7c3aed', '#1e1433', '#f0abfc'],
       lacquer: ['#b91c1c', '#1c0303', '#fbbf24'],
-      moon:    ['#1e40af', '#050b24', '#fde68a']
+      moon:    ['#1e40af', '#050b24', '#fde68a'],
+      // Premium photo pictures (their own art draws the frame)
+      sovereign: ['#1d3a8a', '#050b1f', '#c9a14a'],
+      inferno:   ['#5c1414', '#0a0612', '#c9a14a'],
+      guardian:  ['#5c1a24', '#080a18', '#c9a14a']
     };
+
+    // Premium photo pictures (5000): Sapphire Sovereign (crowned lion),
+    // Crimson Inferno (devil with a trident), Scarlet Guardian (firebird).
+    // The owner's own artwork, built by tools/make-premium-avatars.py into
+    // art/avatars/: a 512px base with the moving part patched out, the part
+    // as its own cut-out, a greyscale sheen mask and a 160px flat copy that
+    // small slots (under 64px) use instead. Drawn in a 1000-unit square that
+    // covers the tile; the art has its own gold frame, so no tile rim.
+    // Every loop is 6s of plain CSS (.av-px-* below), stopped by Reduce
+    // Motion and paused offscreen / in a hidden app (avatarMotionWatch).
+    // Layout numbers come from the build script's output.
+    const PREMIUM_PHOTO_AVATARS = (() => {
+      const LAYOUT = {
+        'avatar-sapphire-sovereign': { file: 'sapphire-sovereign', tone: 'sovereign', glow: '#7cc4ff', sheen: true,
+          parts: { tail: { x: 681.0, y: 136.7, w: 249.6, h: 554.0, ox: 8.3, oy: 92.3 } },
+          glows: [[483.3, 85.1, 27.1], [551.0, 75.3, 27.1], [634.0, 116.2, 23.9]] },
+        'avatar-crimson-inferno': { file: 'crimson-inferno', tone: 'inferno', glow: '#ffb020',
+          parts: { tail: { x: 89.4, y: 438.9, w: 197.2, h: 301.2, ox: 42.8, oy: 97.6 } },
+          glows: [[455.7, 340.1, 46.7], [558.0, 344.1, 46.7]],
+          ember: [[735.1, 712.6], [759.3, 518.2], [776.2, 372.5], [789.9, 322.3]],
+          prongs: [[[789.9, 322.3], [705.3, 267.2], [717.4, 174.1], [724.6, 89.1]],
+                   [[789.9, 322.3], [801.9, 202.4], [811.6, 50.2]],
+                   [[789.9, 322.3], [882.4, 267.2], [886.5, 182.2], [890.5, 113.4]]] },
+        'avatar-scarlet-guardian': { file: 'scarlet-guardian', tone: 'guardian', sheen: true,
+          parts: { wing: { x: 471.3, y: 21.8, w: 417.1, h: 568.0, ox: -0.2, oy: 75.6 } },
+          glows: [], embers: [[250, 820], [170, 560], [820, 700], [905, 520], [760, 900]] }
+      };
+      const src = (file) => `art/avatars/${file}.webp`;
+      const art = {};
+      let defs = `<linearGradient id="av-px-band" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+        <radialGradient id="av-px-ember"><stop offset="0" stop-color="#fff7d6"/><stop offset=".35" stop-color="#ffc233" stop-opacity=".95"/><stop offset="1" stop-color="#ff4d00" stop-opacity="0"/></radialGradient>`;
+      Object.entries(LAYOUT).forEach(([id, L]) => {
+        const key = id.replace('avatar-', '');
+        defs += `<radialGradient id="av-px-glow-${key}"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".3" stop-color="${L.glow || '#fff'}" stop-opacity=".7"/><stop offset="1" stop-color="${L.glow || '#fff'}" stop-opacity="0"/></radialGradient>`;
+        if (L.sheen) defs += `<mask id="av-px-sheen-${key}" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000"><image href="${src(L.file + '-sheen')}" width="1000" height="1000"/></mask>`;
+        const parts = Object.entries(L.parts).map(([name, p]) =>
+          `<image class="av-px-${key}-${name}" style="transform-origin:${p.ox}% ${p.oy}%" href="${src(L.file + '-' + name)}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" preserveAspectRatio="none"/>`).join('');
+        const glows = L.glows.map(([x, y, r], i) =>
+          `<circle class="av-px-glow av-px-${key}-glow" style="animation-delay:${(-i * 0.4).toFixed(1)}s" cx="${x}" cy="${y}" r="${r * 1.6}" fill="url(#av-px-glow-${key})"/>`).join('');
+        const rising = (L.embers || []).map(([x, y], i) =>
+          `<g transform="translate(${x} ${y})"><circle class="av-px-rise" style="animation-delay:${(-i * 0.6).toFixed(1)}s" r="15" fill="url(#av-px-ember)" opacity="0"/></g>`).join('');
+        const sheen = L.sheen ? `<g mask="url(#av-px-sheen-${key})"><g transform="rotate(18 500 500)"><rect class="av-px-sweep av-px-${key}-sweep" x="-420" y="-300" width="260" height="1600" fill="url(#av-px-band)"/></g></g>` : '';
+        // the ember climbs the shaft from the origin of its own keyframes
+        let ember = '';
+        if (L.ember) {
+          const [ex, ey] = L.ember[0];
+          ember = `<g transform="translate(${ex} ${ey})"><circle class="av-px-ember" r="30" fill="url(#av-px-ember)" opacity="0"/></g>`
+            + L.prongs.map((path, i) => `<g transform="translate(${path[0][0]} ${path[0][1]})"><circle class="av-px-spark av-px-spark-${i}" r="22" fill="url(#av-px-ember)" opacity="0"/></g>`).join('');
+        }
+        art[id] = { tone: L.tone, animated: true, photo: true, small: src(L.file + '-sm'),
+          art: `<image href="${src(L.file)}" width="1000" height="1000"/>${parts}${glows}${sheen}${ember}${rising}` };
+      });
+      return { defs, art, LAYOUT };
+    })();
 
     // One hidden <defs> block shared by every picture on the page. Kept out of
     // display:none so gradients and clip paths always resolve.
@@ -18358,6 +18450,7 @@ video {
       <linearGradient id="av-shine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
       <clipPath id="av-clip-tile" clipPathUnits="userSpaceOnUse"><rect x="3" y="3" width="58" height="58" rx="14"/></clipPath>
       <clipPath id="av-clip-card" clipPathUnits="userSpaceOnUse"><rect x="19" y="11" width="26" height="40" rx="4"/></clipPath>
+      ${PREMIUM_PHOTO_AVATARS.defs}
     </defs></svg>`;
 
     const AV_CROWN = (metal) => `
@@ -18570,6 +18663,7 @@ video {
           <path d="M59 31a27 8 0 0 1-54 0" fill="none" stroke="rgba(196,181,253,.7)" stroke-width="1"/>
           <g class="av-orbit"><g class="av-orbit-front"><circle cx="32" cy="31" r="3.4" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.4)" stroke-width=".8"/><circle cx="31" cy="30" r="1" fill="#fff" opacity=".7"/></g></g>
         </g>` },
+      ...PREMIUM_PHOTO_AVATARS.art
     };
 
     document.body.insertAdjacentHTML('afterbegin', AVATAR_DEFS_SVG);
@@ -18606,8 +18700,17 @@ video {
     function resolveAvatarId(id) {
       return AVATAR_ART[id] ? id : DEFAULT_AVATAR_ID;
     }
-    function avatarSvg(id) {
+    // size (px, optional): a premium photo picture under 64px draws its flat
+    // 160px copy instead of the full-size layers (never a big file in a
+    // small slot, and nothing moving that small).
+    function avatarSvg(id, size = 64) {
       const art = AVATAR_ART[resolveAvatarId(id)];
+      if (art.photo) {
+        const body = size < 64
+          ? `<image href="${art.small}" x="2" y="2" width="60" height="60"/>`
+          : `<svg x="2" y="2" width="60" height="60" viewBox="0 0 1000 1000" overflow="hidden">${art.art}</svg>`;
+        return `<svg viewBox="0 0 64 64" class="avatar-svg" aria-hidden="true" focusable="false">${body}</svg>`;
+      }
       const [, , rim] = AVATAR_TONES[art.tone];
       return `<svg viewBox="0 0 64 64" class="avatar-svg" aria-hidden="true" focusable="false">
         <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#av-bg-${art.tone})" stroke="${rim}" stroke-width="2"/>
@@ -18649,8 +18752,29 @@ video {
     }
     function avatarHtml(id, size = 32, extraClass = '') {
       const item = getAvatarItem(resolveAvatarId(id));
-      return `<span class="avatar-tile ${extraClass}" style="width:${size}px;height:${size}px" role="img" aria-label="${item ? escapeAttr(item.name) : 'Profile picture'}">${avatarSvg(id)}</span>`;
+      const art = AVATAR_ART[resolveAvatarId(id)];
+      const anim = art?.animated && !(art.photo && size < 64) ? ' data-av-anim' : '';
+      return `<span class="avatar-tile ${extraClass}"${anim} style="width:${size}px;height:${size}px" role="img" aria-label="${item ? escapeAttr(item.name) : 'Profile picture'}">${avatarSvg(id, size)}</span>`;
     }
+    // Animated pictures only move while they can be seen: one shared
+    // IntersectionObserver pauses any that are offscreen (.av-still), and a
+    // hidden app pauses them all (body.app-hidden). No per-picture timers:
+    // every loop is plain CSS.
+    const avatarMotionWatch = (() => {
+      if (typeof IntersectionObserver !== 'function') return null;
+      const io = new IntersectionObserver((entries) => entries.forEach(e => e.target.classList.toggle('av-still', !e.isIntersecting)));
+      let queued = false;
+      const scan = () => {
+        queued = false;
+        document.querySelectorAll('[data-av-anim]:not([data-av-watched])').forEach((el) => { el.setAttribute('data-av-watched', ''); io.observe(el); });
+      };
+      new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(scan); } }).observe(document.body, { childList: true, subtree: true });
+      const syncHidden = () => document.body.classList.toggle('app-hidden', document.hidden);
+      document.addEventListener('visibilitychange', syncHidden);
+      syncHidden();
+      scan();
+      return { io, scan };
+    })();
 
 
     // ============================================================
@@ -20132,7 +20256,11 @@ video {
       { id: 'avatar-joker-card', category: 'Profile Pictures', name: 'Joker Card', cost: 1000, animated: true, tones: ['#2e1065','#a855f7','#fbbf24'] },
       { id: 'avatar-royal-flush', category: 'Profile Pictures', name: 'Royal Flush', cost: 2500, animated: true, tones: ['#150f03','#fbbf24','#f8fafc'] },
       { id: 'avatar-phoenix', category: 'Profile Pictures', name: 'Phoenix', cost: 2500, animated: true, tones: ['#170704','#f97316','#fde047'] },
-      { id: 'avatar-cosmic-ace', category: 'Profile Pictures', name: 'Cosmic Ace', cost: 2500, animated: true, tones: ['#05030f','#a78bfa','#fcd34d'] }
+      { id: 'avatar-cosmic-ace', category: 'Profile Pictures', name: 'Cosmic Ace', cost: 2500, animated: true, tones: ['#05030f','#a78bfa','#fcd34d'] },
+      // Premium emblems (5000): the top of the Shop's picture range.
+      { id: 'avatar-sapphire-sovereign', category: 'Profile Pictures', name: 'Sapphire Sovereign', cost: 5000, animated: true, tones: ['#050b1f','#3b82f6','#fbbf24'] },
+      { id: 'avatar-crimson-inferno', category: 'Profile Pictures', name: 'Crimson Inferno', cost: 5000, animated: true, tones: ['#0a0612','#ef4444','#fbbf24'] },
+      { id: 'avatar-scarlet-guardian', category: 'Profile Pictures', name: 'Scarlet Guardian', cost: 5000, animated: true, tones: ['#080a18','#dc2626','#fde047'] }
     ];
     // Classic Reactions ships with the game. It remains selectable for old
     // saves, but is intentionally not a purchasable Shop item.
