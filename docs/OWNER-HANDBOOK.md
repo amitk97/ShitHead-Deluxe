@@ -183,4 +183,4 @@ The support inbox is **support.shitheaddeluxe@gmail.com**. The "Contact Support"
 
 ## 11. Ideas already agreed for later
 
-Best of 3/5 series between friends, a weekly puzzle, a tournament mode (once there are more players). Further off: "you've been overtaken" leaderboard mail, clubs, a season pass. The full list, and the ideas you rejected, are at the end of `CLAUDE.md`.
+A weekly puzzle, a tournament mode (once there are more players). Further off: "you've been overtaken" leaderboard mail, clubs, a season pass. The full list, and the ideas you rejected, are at the end of `CLAUDE.md`.

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v233 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v234 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -531,6 +531,19 @@
     .series-modal-status { font-size:10px; color:#fda4af; }
     .series-modal-actions { display:flex; flex-direction:column; gap:6px; }
     .series-modal-actions .series-btn { padding:9px; font-size:11px; }
+    #seriesModal[data-mode="result"] #seriesAcceptBtn, #seriesModal[data-mode="result"] #seriesDeclineBtn { display:none; }
+    .series-hud { position:absolute; top:8px; left:6px; z-index:30; display:flex; flex-direction:column; align-items:center; gap:1px; width:58px;
+      padding:5px 3px; border-radius:12px; background:rgba(2,6,23,.82); border:1px solid rgba(245,158,11,.55);
+      box-shadow:0 4px 12px rgba(0,0,0,.45); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); pointer-events:none; }
+    .series-hud.hidden { display:none; }
+    .series-hud .sh-title { display:flex; align-items:center; gap:4px; font-size:9px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:#fcd34d; }
+    .series-hud .sh-title .ic { width:11px; height:11px; }
+    .series-hud .sh-score { display:flex; align-items:center; gap:5px; font-size:10px; color:#e2e8f0; min-width:0; }
+    .series-hud .sh-score b { font-weight:800; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .series-hud .sh-score em { font-style:normal; font-weight:900; font-size:15px; line-height:1.1; color:#fff; }
+    .series-hud .sh-next { font-size:8px; font-weight:700; color:#94a3b8; text-align:center; line-height:1.15; }
+    .inbox-activity--series { background:rgba(69,26,3,.35); border-color:rgba(245,158,11,.6); }
+    .inbox-activity--series .inbox-activity-accent { color:#fcd34d; }
     .custom-inline-preview { grid-column:1 / -1; border:1px solid rgba(34,211,238,.35); border-radius:12px; background:rgba(2,6,23,.6); padding:6px; }
     .custom-inline-preview > .shop-preview-stage, .custom-inline-preview > .jfx-stage { margin:0; }
     #challengeTabs { display:flex; gap:4px; }
@@ -924,7 +937,7 @@
     #homeCardTip.home-tip-side .home-tip-name { font-size:12px; }
     body.reduce-motion #homeCardTip .home-tip-inner { transition:none; }
     body.lobby-open #opponentsContainer, body.lobby-open #centerArena, body.lobby-open #localPlayerZone,
-    body.lobby-open #gauntletHud, body.lobby-open #floatingJokerBar, body.lobby-open #leaveGameBtn { visibility:hidden !important; }
+    body.lobby-open #gauntletHud, body.lobby-open #seriesHud, body.lobby-open #floatingJokerBar, body.lobby-open #leaveGameBtn { visibility:hidden !important; }
     body.spectating #roomCodeBadge { display:none !important; }
     body.spectating #swapControlBar, body.spectating #playActionControls, body.spectating #sacrificeControlBar, body.spectating #emoteLayer, body.spectating #matchEndButtonRow { display:none !important; }
     body.spectating #opponentsContainer { margin-top:40px; }
@@ -6262,6 +6275,7 @@ video {
 
     <!-- ZONE 1: OPPONENTS (TOP TIER: MAX 17VH) -->
     <div id="gauntletHud" class="gauntlet-hud hidden" role="status" aria-live="polite"></div>
+    <div id="seriesHud" class="series-hud hidden" role="status" aria-live="polite"></div>
     <div id="opponentsContainer" class="w-full flex justify-center items-start gap-1.5 md:gap-6 min-h-[58px] shrink-0 z-10 px-2" style="overflow:visible;padding-top:8px;padding-bottom:8px"></div>
 
     <!-- ZONE 2: CENTER ARENA (MIDDLE TIER: MAX 30VH) -->
@@ -6558,7 +6572,7 @@ video {
       </div>
     </div>
   </div>
-  <div id="seriesModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[86] flex items-center justify-center p-4">
+  <div id="seriesModal" data-mode="invite" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[86] flex items-center justify-center p-4">
     <div class="series-modal-card">
       <div class="series-modal-icon" aria-hidden="true"><svg class="ic"><use href="#ic-swords"/></svg></div>
       <h2 id="seriesModalTitle" class="series-modal-title">Series challenge</h2>
@@ -11371,6 +11385,7 @@ video {
       // opponent's own "FINISHED #N" tag and your own table area, so
       // there's no single glance that shows the whole result.
       renderFinalStandings();
+      if (state.isMultiplayer && !state.isRanked) seriesMatchEnded(); // § Best of series
       const gauntletGame = !state.isMultiplayer && !!state.gauntlet;
       if (gauntletGame) gauntletMatchEnded(); // its own pop-up instead of the summary
       else scheduleMatchSummary();
@@ -13256,7 +13271,8 @@ video {
         // same bot; if two briefly do, the transactional save keeps one move.
         const upcoming = state.players[state.currentTurnIndex];
         if (upcoming && upcoming.isBot) {
-          state.botActionTimer = setTimeout(checkTurnAndAct, state.turnDelay);
+          const wait = upcoming.isSeriesSubstitute ? Math.max(state.turnDelay, state.turnTimerMs || 15000) : state.turnDelay;
+          state.botActionTimer = setTimeout(checkTurnAndAct, wait);
         }
       }
     }
@@ -13322,6 +13338,10 @@ video {
             applyRankedConcession(current);
             return;
           }
+        }
+        if (current.isSeriesSubstitute) {
+          current.substituteMoveCount = (current.substituteMoveCount || 0) + 1;
+          maybeClaimSeriesForfeit(current);
         }
         if ((current.hand && current.hand.length > 0) || (current.faceUp && current.faceUp.length > 0)) {
           if (validMoves.length > 0) {
@@ -15044,6 +15064,7 @@ video {
       markHandStrip();
       positionDirectionBadge();
       renderGauntletHud();
+      renderSeriesHud();
     }
 
     // The direction badge shares the left-hand column with the Play Matrix
@@ -15944,7 +15965,10 @@ video {
       // exactly the situation the 5-move concession cap below exists to
       // handle, so ranked always falls through to bot substitution even at
       // exactly 2 players, where a normal room would just end the match.
-      if (state.players.length <= 2 && !state.isRanked) {
+      // A live Best of series keeps going too: a stand-in plays while the
+      // player has a chance to come back (§ Best of series).
+      const inSeries = seriesLiveHere();
+      if (state.players.length <= 2 && !state.isRanked && !inSeries) {
         state.players.splice(idx, 1);
         state.players.forEach(p => { p.hasFinished = false; p.finishRank = null; p.isReady = p.isBot; });
         notifyBanner(`🚫 ${removed.name} ${cause} — not enough players left, match ended.`);
@@ -15965,7 +15989,10 @@ video {
         // Deliberately NOT whatever the table's own difficulty is set to —
         // this is a stand-in to keep the match moving, not a new opponent
         // for anyone to face at full strength.
-        difficulty: Math.random() < 0.5 ? 'easy' : 'medium',
+        // A series stand-in is always Medium (owner) and uses the whole turn
+        // time on every move (triggerNextTurn), so the player can get back.
+        difficulty: inSeries ? 'medium' : (Math.random() < 0.5 ? 'easy' : 'medium'),
+        isSeriesSubstitute: inSeries,
         // Ranked-only: caps how many turns the stand-in bot can play before
         // the departed player is ruled to have conceded (see the counter
         // in checkTurnAndAct and applyRankedConcession). Left undefined for
@@ -16454,14 +16481,14 @@ video {
         
         let kickBtn = '';
         if (state.isHost && !state.isRanked && !p.isHost && p.id !== state.localPlayerId) {
-          kickBtn = `<button onclick="kickPlayer('${p.id}')" class="ml-2 px-2 py-0.5 bg-rose-900/60 hover:bg-rose-800 text-rose-300 text-[10px] rounded font-bold border border-rose-700">Kick</button>`;
+          kickBtn = `<button onclick="kickPlayer('${p.id}')" style="margin-right:8px" class="px-2 py-0.5 bg-rose-900/60 hover:bg-rose-800 text-rose-300 text-[10px] rounded font-bold border border-rose-700">Kick</button>`;
         }
 
         div.innerHTML = `
           <span>${escapeHtml(p.name)} ${p.isHost ? '(Host)' : ''}</span>
           <div class="flex items-center">
-            <span class="${p.isBot ? 'text-amber-400' : 'text-emerald-400'}">${p.isBot ? 'AI Bot' : 'Connected'}</span>
             ${kickBtn}
+            <span class="${p.isBot ? 'text-amber-400' : 'text-emerald-400'}">${p.isBot ? 'AI Bot' : 'Connected'}</span>
           </div>
         `;
         list.appendChild(div);
@@ -18087,6 +18114,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v234: [
+        ['⚔️', 'Best of series is here: at level 20, challenge a friend in Play Friends to a Best of 3 or Best of 5. You both pay the entry and the winner takes four times it.', WN_KEY],
+        ['🔄', 'Lost connection in a series? A bot keeps your seat warm while you get back, and signing in takes you straight back to it.'],
+        ['👥', 'The Kick button in the Play Friends lobby now sits before the player\'s status.']
+      ],
       v233: [
         ['🛠️', 'Best of series in the Play Friends lobby now folds away, and stays folded until you reach level 20.']
       ],
@@ -23727,9 +23759,8 @@ video {
     // player gets #seriesModal to accept (pays their entry) or decline (calls
     // it off, the host's entry goes back). Games, the score pill and the
     // result screen come next (section 3).
-    // Until the games themselves count (section 3), only the owner sees the
-    // picker, so nobody pays an entry into a series that can't finish yet.
-    const SERIES_LOBBY_OPEN = false;
+    // Open to everyone since v234 (the games count); false = owner only.
+    const SERIES_LOBBY_OPEN = true;
     var seriesState = null;
     let seriesWatch = null;          // { code, ref, handler }
     let seriesBusy = false;
@@ -23755,13 +23786,16 @@ video {
     }
     function onSeriesChanged() {
       renderSeriesPanel();
+      noteSeriesTransition();
+      renderSeriesHud();
       const s = seriesState;
       const me = currentUser && currentUser.uid;
       if (s && s.status === 'pending' && me && s.guest === me && seriesModalShownFor !== s.id) {
         seriesModalShownFor = s.id;
         openSeriesModal();
       }
-      if (!s || s.status !== 'pending' || s.guest !== me) document.getElementById('seriesModal')?.classList.add('hidden');
+      const modal = document.getElementById('seriesModal');
+      if (modal && modal.dataset.mode === 'invite' && (!s || s.status !== 'pending' || s.guest !== me)) modal.classList.add('hidden');
     }
     // Why the host can't start a series right now ('' = they can).
     function seriesBlockReason() {
@@ -23876,7 +23910,10 @@ video {
       document.getElementById('seriesModalText').innerHTML = `<b>${escapeHtml(seriesOtherName(s))}</b> challenges you to a Best of ${s.bestOf}. First to ${s.need} wins.`;
       document.getElementById('seriesModalPot').innerHTML = `<span><b>${s.fee} ${gem}</b>Entry</span><span><b>${s.pot} ${gem}</b>Winner takes</span>`;
       document.getElementById('seriesModalStatus').classList.add('hidden');
-      document.getElementById('seriesModal').classList.remove('hidden');
+      const modal = document.getElementById('seriesModal');
+      modal.dataset.mode = 'invite';
+      document.getElementById('seriesLaterBtn').textContent = 'Not now';
+      modal.classList.remove('hidden');
     }
     // Guards for the lobby while a series is set up.
     function seriesBlocksLobbyAction(what) {
@@ -23907,6 +23944,186 @@ video {
     document.getElementById('seriesAcceptBtn')?.addEventListener('click', acceptSeries);
     document.getElementById('seriesDeclineBtn')?.addEventListener('click', cancelSeries);
     document.getElementById('seriesLaterBtn')?.addEventListener('click', () => document.getElementById('seriesModal').classList.add('hidden'));
+    // Playing a series (v234). Every finished game in a live series room is
+    // reported by both phones (economy `series` op `game`, counted once by
+    // matchId); the host starts the next game on its own after
+    // SERIES_NEXT_GAME_MS. #seriesHud shows the score on the table, and the
+    // end of a series (won, forfeit, called off) opens #seriesModal with the
+    // result. A player who drops out gets a Medium stand-in bot that uses the
+    // whole turn time on every move (owner: time to reconnect); after
+    // SERIES_RULES.forfeitTurns stand-in turns the player still here claims
+    // the series (the server checks the other player really is away).
+    // Leaving mid-series forfeits it (before the first game: called off).
+    const SERIES_NEXT_GAME_MS = 10000;
+    let seriesNextAt = 0;            // when the host's next game starts (0 = not waiting)
+    let seriesNextTimer = null;
+    let seriesReportedMatch = null;  // matchId this phone has reported
+    let seriesResultShownFor = null; // series id whose result pop-up has opened
+    let seriesLastSeen = null;       // last active series seen here (for the result pop-up)
+    let seriesForfeitClaimAt = 0;
+    const seriesLiveHere = () => !!seriesRoomCode() && !!seriesState && seriesState.status === 'live' && seriesState.room === state.roomCode;
+    const seriesActiveHere = () => !!seriesRoomCode() && seriesIsActive(seriesState) && seriesState.room === state.roomCode;
+    function seriesScoreFor(s) {
+      const me = currentUser && currentUser.uid;
+      const other = s.host === me ? s.guest : s.host;
+      return { mine: Number(s.wins?.[me]) || 0, theirs: Number(s.wins?.[other]) || 0, other: (s.names && s.names[other]) || 'Your opponent' };
+    }
+    // Called from showMatchEndUI on every phone.
+    function seriesMatchEnded() {
+      if (!seriesLiveHere() || !state.matchId || seriesReportedMatch === state.matchId) return;
+      const matchId = state.matchId;
+      seriesReportedMatch = matchId;
+      const attempt = (n) => seriesCallQuiet('game', { matchId }).then((res) => {
+        const s = res && res.series;
+        if (s && s.status === 'live' && state.isHost) scheduleSeriesNextGame(matchId);
+      }).catch((e) => {
+        const msg = (e && e.message) || '';
+        // The final placings reach the room a moment after the phones see them.
+        if (n < 4 && /could not be checked|no winner yet|reach the server/i.test(seriesError(e))) { setTimeout(() => attempt(n + 1), 1500); return; }
+        if (/too quick/i.test(msg)) notifyBanner("That game was too quick to count for the series.");
+        else if (!/has ended/i.test(msg)) notifyBanner(seriesError(e));
+        if (seriesLiveHere() && state.isHost) scheduleSeriesNextGame(matchId);
+      });
+      attempt(0);
+    }
+    // Like seriesCall, but never blocked by a lobby button press in flight.
+    async function seriesCallQuiet(op, extra = {}) {
+      const code = seriesRoomCode();
+      if (!code) return null;
+      const res = await callEconomy('series', { op, roomCode: code, ...extra });
+      if (res && 'series' in res) { seriesState = res.series; onSeriesChanged(); }
+      return res;
+    }
+    function scheduleSeriesNextGame(matchId) {
+      clearTimeout(seriesNextTimer);
+      seriesNextAt = Date.now() + SERIES_NEXT_GAME_MS;
+      renderSeriesHud();
+      const tick = () => {
+        if (!seriesNextAt) return;
+        if (Date.now() < seriesNextAt) { renderSeriesHud(); seriesNextTimer = setTimeout(tick, 500); return; }
+        seriesNextAt = 0;
+        renderSeriesHud();
+        // Only while this game is still the one on the table, the series is
+        // still on and both players are really here.
+        const bothHere = state.players.length === 2 && state.players.every(p => !p.isBot);
+        if (state.phase !== 'FINISHED' || state.matchId !== matchId || !seriesLiveHere() || !state.isHost || !bothHere) return;
+        document.getElementById('matchSummaryModal')?.classList.add('hidden');
+        document.getElementById('quickPlayMatchBtn')?.click();
+      };
+      seriesNextTimer = setTimeout(tick, 500);
+    }
+    function cancelSeriesNextGame() { clearTimeout(seriesNextTimer); seriesNextAt = 0; }
+    // The score pill, top-left of the table (like the Gauntlet's hearts).
+    function renderSeriesHud() {
+      const hud = document.getElementById('seriesHud');
+      if (!hud) return;
+      const s = seriesActiveHere() ? seriesState : null;
+      const show = !!s && s.status === 'live' && ['SWAP', 'PLAY', 'FINISHED'].includes(state.phase);
+      hud.classList.toggle('hidden', !show);
+      if (!show) { hud.innerHTML = ''; return; }
+      const sc = seriesScoreFor(s);
+      const game = Math.min(Number(s.played) + (state.phase === 'FINISHED' ? 0 : 1), s.bestOf * 2) || 1;
+      const secs = seriesNextAt ? Math.max(0, Math.ceil((seriesNextAt - Date.now()) / 1000)) : 0;
+      const next = state.phase === 'FINISHED'
+        ? (secs ? `Next in ${secs}s` : 'Next game')
+        : `Game ${game}`;
+      hud.title = `Best of ${s.bestOf} against ${sc.other}: you ${sc.mine}, ${sc.other} ${sc.theirs}. First to ${s.need} wins.`;
+      hud.innerHTML = `<span class="sh-title">${icon('swords')}Bo${s.bestOf}</span>
+        <span class="sh-score"><em>${sc.mine}–${sc.theirs}</em></span>
+        <span class="sh-next">${next}</span>`;
+    }
+    // The end of a series: who won and what was paid.
+    function openSeriesResult(s) {
+      const me = currentUser && currentUser.uid;
+      if (!s || !me || (s.host !== me && s.guest !== me)) return;
+      const sc = seriesScoreFor(s);
+      const gem = icon('gem');
+      let title, text, pot;
+      if (s.status === 'done') {
+        const won = s.winner === me;
+        title = won ? 'You won the series' : `${sc.other} won the series`;
+        text = s.reason === 'forfeit'
+          ? (won ? `${escapeHtml(sc.other)} left the series, so it's yours.` : 'You left the series, so it counts as a loss.')
+          : `Best of ${s.bestOf}, ${sc.mine} – ${sc.theirs}.`;
+        pot = won ? `<span><b>+${s.pot} ${gem}</b>Winnings</span>` : `<span><b>${s.fee} ${gem}</b>Entry lost</span>`;
+      } else {
+        title = 'Series called off';
+        text = s.reason === 'drawn' ? 'The series ended level.' : s.reason === 'expired' ? 'The series ran out of time.' : 'Nobody won this series.';
+        pot = s.paid && s.paid[me] ? `<span><b>${s.fee} ${gem}</b>Entry returned</span>` : '';
+      }
+      document.getElementById('seriesModalTitle').textContent = title;
+      document.getElementById('seriesModalText').innerHTML = text;
+      document.getElementById('seriesModalPot').innerHTML = pot;
+      document.getElementById('seriesModalStatus').classList.add('hidden');
+      const modal = document.getElementById('seriesModal');
+      modal.dataset.mode = 'result';
+      document.getElementById('seriesLaterBtn').textContent = 'Close';
+      modal.classList.remove('hidden');
+    }
+    // Watches the series move from active to finished.
+    function noteSeriesTransition() {
+      const s = seriesState;
+      if (seriesIsActive(s)) { seriesLastSeen = s; return; }
+      if (s && seriesLastSeen && seriesLastSeen.id === s.id && seriesResultShownFor !== s.id) {
+        seriesResultShownFor = s.id;
+        cancelSeriesNextGame();
+        openSeriesResult(s);
+      }
+      seriesLastSeen = null;
+    }
+    // Called after a stand-in has played for the absent player.
+    function maybeClaimSeriesForfeit(sub) {
+      if (!sub || !sub.isSeriesSubstitute || !seriesLiveHere()) return;
+      if ((sub.substituteMoveCount || 0) < SERIES_RULES.forfeitTurns) return;
+      if (Date.now() - seriesForfeitClaimAt < 20000) return;
+      seriesForfeitClaimAt = Date.now();
+      // After the move has reached the room (the server counts its turns).
+      setTimeout(() => {
+        seriesCallQuiet('claimForfeit').then((res) => {
+          if (res && res.series && res.series.status === 'done' && state.phase === 'PLAY') {
+            const seat = state.players.find(p => p.id === sub.id);
+            if (seat && !seat.hasFinished) applyRankedConcession(seat);
+          }
+        }).catch(() => {}); // they still have time: tried again after a later stand-in move
+      }, 1500);
+    }
+    // Leaving a series room: before the first game it's called off (entries
+    // back); after that it's a forfeit. Resolves false if the player stays.
+    async function seriesBeforeLeave() {
+      if (!seriesActiveHere()) return true;
+      const s = seriesState;
+      const played = Number(s.played) || 0;
+      const forfeit = s.status === 'live' && played > 0;
+      const other = seriesScoreFor(s).other;
+      const msg = forfeit
+        ? `Leave the series? It counts as a forfeit: ${other} wins the ${s.pot} Diamonds.`
+        : 'Leave the room? The series is called off and the entries go back.';
+      if (!confirm(msg)) return false;
+      try { await seriesCallQuiet(forfeit ? 'forfeit' : 'cancel'); } catch (e) { console.warn('Series leave not recorded', e); }
+      return true;
+    }
+    // Signed in on any device with a series still on: straight back into it.
+    let seriesRejoinTried = false;
+    async function seriesAutoRejoin() {
+      if (seriesRejoinTried || !currentUser || state.isMultiplayer || typeof db === 'undefined' || !db) return false;
+      seriesRejoinTried = true;
+      try {
+        const uid = currentUser.uid;
+        const rec = (await db.ref(`users/${uid}/series`).once('value')).val();
+        if (!rec || !seriesIsActive(rec) || !/^\d{6}$/.test(String(rec.room || ''))) return false;
+        const [sSnap, roomSnap] = await Promise.all([db.ref(`series/${rec.room}`).once('value'), db.ref(`rooms/${rec.room}`).once('value')]);
+        const s = sSnap.val(), data = roomSnap.val();
+        if (state.isMultiplayer || !seriesIsActive(s) || s.id !== rec.id || !data || !isRoomVersionCompatible(data)) return false;
+        const seat = roomPlayerList(data.players).find(p => p && p.id && p.uid === uid);
+        if (!seat) return false;
+        document.getElementById('rejoinModal')?.classList.add('hidden');
+        rejoinRoomSeat(rec.room, data, seat, `Back in your Best of ${s.bestOf}.`);
+        return true;
+      } catch (e) {
+        console.warn('Series rejoin check failed', e);
+        return false;
+      }
+    }
     // What the player sees (v223). Everything stays hidden until the switch
     // is on: xpFeatureOn follows config/features/xp live (readable by all),
     // playerXp is the account's users/{uid}/xp ({total, level}, from the
@@ -25480,6 +25697,7 @@ video {
         isBot: false,
         name: playerRecord.name.replace(/\s*\(Bot\)$/, ''),
         isRankedSubstitute: false,
+        isSeriesSubstitute: false,
         substituteMoveCount: 0
       };
     }
@@ -25536,6 +25754,12 @@ video {
     function attemptMatchReconnect() {
       if (matchReconnectAttempted || typeof db === 'undefined' || !db) return;
       if (state.isMultiplayer) return; // already in a room this page load
+      // A Best of series still on for this account wins: straight back in,
+      // from any device, no prompt (§ Best of series).
+      if (currentUser && !seriesRejoinTried) {
+        seriesAutoRejoin().then((done) => { if (done) matchReconnectAttempted = true; else attemptMatchReconnect(); });
+        return;
+      }
       const record = joinedRoomRecord();
       if (!record) return;
       matchReconnectAttempted = true;
@@ -25559,40 +25783,49 @@ video {
           : findMyRejoinSeat(players, record);
         if (!mySeat) { forgetJoinedRoom(); return; }
 
-        const reclaimSeat = () => {
-          resetRoomMembershipConfirmation();
-          state.isMultiplayer = true;
-          state.isRanked = !!data.isRanked;
-          state.isHost = mySeat.id === 'p_host' || mySeat.id === data.hostId;
-          state.roomCode = code;
-          state.localPlayerId = mySeat.id;
-          rememberJoinedRoom(code);
-          notifyBanner(data.isRanked ? 'Reconnected to your Ranked match.' : 'Back in your match.');
-          // The listener's first snapshot rebuilds the UI for whatever phase
-          // the match is in, the same path a normal join uses.
-          listenToFirebaseRoom(code);
-        };
-        const rejoin = () => {
-          if (!mySeat.isBot) { reclaimSeat(); return; }
-          // A bot took the seat while this player was away: hand it back
-          // (same id, so nothing else in the room changes).
-          updatePlayersAtomic(code, (list) => {
-            const idx = list.findIndex(p => p.id === mySeat.id);
-            if (idx === -1 || !list[idx].isBot) return list;
-            const next = [...list];
-            next[idx] = reclaimSubstitutedSeat(list[idx]);
-            return next;
-          }, (error, committed) => {
-            if (!error && committed) reclaimSeat();
-            else { forgetJoinedRoom(); notifyBanner('Could not get back into that match.'); }
-          });
-        };
+        const rejoin = () => rejoinRoomSeat(code, data, mySeat, data.isRanked ? 'Reconnected to your Ranked match.' : 'Back in your match.');
 
         if (data.isRanked) { rejoin(); return; }
         showRejoinPrompt(code, mySeat, rejoin);
       }, (error) => {
         console.warn('Match reconnect check failed', error);
       });
+    }
+
+    // Takes this player's seat back in a room (a bot stand-in is handed back,
+    // same id) and starts listening. Used by the rejoin prompt, Ranked and
+    // a Best of series (seriesAutoRejoin).
+    function rejoinRoomSeat(code, data, mySeat, message) {
+      const reclaimSeat = () => {
+        resetRoomMembershipConfirmation();
+        state.isMultiplayer = true;
+        state.isRanked = !!data.isRanked;
+        state.isHost = mySeat.id === 'p_host' || mySeat.id === data.hostId || !!mySeat.isHost;
+        state.roomCode = code;
+        state.localPlayerId = mySeat.id;
+        rememberJoinedRoom(code);
+        notifyBanner(message);
+        // The listener's first snapshot rebuilds the UI for whatever phase
+        // the match is in, the same path a normal join uses.
+        listenToFirebaseRoom(code);
+      };
+      const rejoin = () => {
+        if (!mySeat.isBot) { reclaimSeat(); return; }
+        // A bot took the seat while this player was away: hand it back
+        // (same id, so nothing else in the room changes).
+        updatePlayersAtomic(code, (list) => {
+          const idx = list.findIndex(p => p.id === mySeat.id);
+          if (idx === -1 || !list[idx].isBot) return list;
+          const next = [...list];
+          next[idx] = reclaimSubstitutedSeat(list[idx]);
+          return next;
+        }, (error, committed) => {
+          if (!error && committed) reclaimSeat();
+          else { forgetJoinedRoom(); notifyBanner('Could not get back into that match.'); }
+        });
+      };
+
+      rejoin();
     }
 
     function showRejoinPrompt(code, seat, onRejoin) {
@@ -26387,6 +26620,23 @@ video {
           <p class="inbox-activity-accent text-[10px] mt-1">${capped
             ? `They count toward Recruiter, but only ${REFERRAL.monthlyCap} invites a month pay Diamonds.`
             : `You're friends now. You get 💎 ${REFERRAL.inviterReward} (and they get 💎 ${REFERRAL.newPlayerReward}) once they've played ${REFERRAL.gamesNeeded} games.`}</p>
+          <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
+        </div>`;
+      }
+      if (item.type === 'series') {
+        // § Best of series: the server mails the result (series_<id>).
+        const opp = escapeHtml(item.opponent || 'your opponent');
+        const heading = item.cancelled ? 'Series called off' : item.won ? 'Series won' : 'Series lost';
+        const line = item.cancelled
+          ? `Best of ${Number(item.bestOf) || 3} with ${opp}`
+          : `Best of ${Number(item.bestOf) || 3} ${item.won ? 'against' : 'to'} ${opp}${item.score ? `, ${escapeHtml(item.score)}` : ''}${item.reason === 'forfeit' ? ' (forfeit)' : ''}`;
+        const money = item.cancelled
+          ? (Number(item.refund) > 0 ? `💎 ${Number(item.refund)} entry returned` : 'No entry was taken.')
+          : item.won ? `💎 ${Number(item.pot) || 0} added to your Diamonds` : `Your 💎 ${Number(item.fee) || 0} entry went to the winner.`;
+        return `<div class="inbox-activity--series border rounded-xl px-2.5 py-2">
+          <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${heading}</p>
+          <p class="text-xs font-bold text-white">${line}</p>
+          <p class="inbox-activity-accent text-[10px] mt-1">${money}</p>
           <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
         </div>`;
       }
@@ -27970,6 +28220,15 @@ video {
     document.getElementById('leaveGameBtn').addEventListener('click', () => {
       if (state.spectating) { stopSpectating(); return; }
       const midMatch = state.phase === 'PLAY' || state.phase === 'SWAP';
+      if (state.isMultiplayer && seriesActiveHere()) {
+        seriesBeforeLeave().then((go) => {
+          if (!go) return;
+          if (midMatch) { Health.matchLeft(); Health.save(); }
+          forgetJoinedRoom();
+          leaveMultiplayerRoom().then(reloadCleanly);
+        });
+        return;
+      }
       const msg = midMatch && state.isRanked && state.isMultiplayer
         ? "Leave this Ranked match? A bot takes your seat and it counts as a LOSS: your rating will go down."
         : midMatch
@@ -28540,7 +28799,8 @@ video {
       try { sessionStorage.removeItem('shithead_return_to_ranked'); } catch (e) {}
       reloadCleanly();
     }
-    function leaveRoomAndReload() {
+    async function leaveRoomAndReload() {
+      if (!(await seriesBeforeLeave())) return;
       forgetJoinedRoom();
       leaveMultiplayerRoom().then(reloadCleanly);
     }

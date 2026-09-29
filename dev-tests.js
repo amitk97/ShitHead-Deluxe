@@ -4690,6 +4690,7 @@ async function runDevTestSuite() {
     freshState({ isMultiplayer: false, isHost: false, isRanked: false, roomCode: null, localPlayerId: null });
     currentUser = { uid: 'uid_amit' };
     matchReconnectAttempted = false;
+    seriesRejoinTried = true; // no Best of series in these rooms
     forgetJoinedRoom(); sessionStorage.setItem('shithead_joined_room', '112233');
     const fakeRoom = {
       isRanked: true, phase: 'PLAY',
@@ -4716,6 +4717,7 @@ async function runDevTestSuite() {
     freshState({ isMultiplayer: false, isHost: false, isRanked: false, roomCode: null, localPlayerId: null });
     currentUser = { uid: 'uid_amit' };
     matchReconnectAttempted = false;
+    seriesRejoinTried = true; // no Best of series in these rooms
     forgetJoinedRoom(); sessionStorage.setItem('shithead_joined_room', '445566');
     const fakeRoom = {
       isRanked: true, phase: 'PLAY',
@@ -7208,6 +7210,82 @@ async function runDevTestSuite() {
       xpFeatureOn = was.on; playerXp = was.xp; callEconomy = was.econ; window.confirm = was.confirm; seriesState = was.series; watchSeriesRoom = was.watch; isGameOwner = was.owner;
       modal.classList.add('hidden');
       renderSeriesPanel();
+    }
+  });
+  await test('Best of series play: a dropped player gets a Medium stand-in that uses the whole turn time; games are reported and the host starts the next one', async () => {
+    const was = { series: seriesState, econ: callEconomy, sync: syncFirebaseGameState, auth: hasMatchAuthority, st: window.setTimeout, turnTimerMs: state.turnTimerMs, roomCode: state.roomCode, isRanked: state.isRanked, isHost: state.isHost, matchId: state.matchId, turnDelay: state.turnDelay };
+    try {
+      currentUser = { uid: 'h_uid', email: 'h@example.com' };
+      freshState({ isMultiplayer: true, isRanked: false, isHost: true, roomCode: '424242', localPlayerId: 'p_host', phase: 'PLAY', currentTurnIndex: 1, spectating: null });
+      state.turnTimerMs = 25000; state.turnDelay = 900;
+      state.players = [
+        { id: 'p_host', uid: 'h_uid', name: 'Hosty', hand: [], faceUp: [], faceDown: [] },
+        { id: 'p_room1', uid: 'g_uid', name: 'Guesty', hand: [], faceUp: [], faceDown: [] }
+      ];
+      seriesState = { id: 'sx', room: '424242', bestOf: 3, need: 2, fee: 30, pot: 120, host: 'h_uid', guest: 'g_uid', names: { h_uid: 'Hosty', g_uid: 'Guesty' }, wins: { h_uid: 0, g_uid: 0 }, status: 'live', played: 1 };
+      syncFirebaseGameState = () => {};
+      hasMatchAuthority = () => true;
+      const delays = [];
+      window.setTimeout = (fn, ms) => { delays.push(ms); return 0; };
+      removePlayerFromMatch('p_room1', 'disconnected');
+      window.setTimeout = was.st;
+      const sub = state.players[1];
+      assertTrue(state.players.length === 2 && sub.isBot && sub.isSeriesSubstitute, 'a 2-player series room keeps going with a stand-in');
+      assertEqual(sub.difficulty, 'medium', 'the stand-in is Medium');
+      assertEqual(sub.uid, 'g_uid', 'the seat still belongs to the absent player');
+      assertTrue(delays.includes(25000), 'the stand-in waits the whole turn time before it moves');
+      // Game reporting and the next game.
+      state.phase = 'FINISHED'; state.matchId = 'm_series_1'; state.players[1] = { ...state.players[1], isBot: false, isSeriesSubstitute: false };
+      const calls = fakeEconomy({ series: (d) => ({ series: { ...seriesState, played: 2, wins: { h_uid: 1, g_uid: 0 } } }) });
+      seriesReportedMatch = null;
+      seriesMatchEnded();
+      await new Promise(r => setTimeout(r, 20));
+      assertEqual(calls[0], ['series', { op: 'game', roomCode: '424242', matchId: 'm_series_1' }], 'the finished game is reported to the server');
+      assertTrue(seriesNextAt > Date.now(), 'the host counts down to the next game');
+      const hud = document.getElementById('seriesHud');
+      renderSeriesHud();
+      assertTrue(!hud.classList.contains('hidden') && /1–0/.test(hud.textContent) && /Next in/.test(hud.textContent), 'the table shows the score and the countdown');
+      cancelSeriesNextGame();
+      // Leaving after a game has been played is a forfeit.
+      const conf = window.confirm; window.confirm = () => true;
+      const leaveCalls = fakeEconomy({ series: () => ({ series: { ...seriesState, status: 'done', winner: 'g_uid', reason: 'forfeit' } }) });
+      assertTrue(await seriesBeforeLeave(), 'the player can leave');
+      window.confirm = conf;
+      assertEqual(leaveCalls[0][1].op, 'forfeit', 'leaving mid-series forfeits it');
+      assertTrue(!document.getElementById('seriesModal').classList.contains('hidden') && /Guesty won the series/.test(document.getElementById('seriesModalTitle').textContent), 'the result pop-up says who won');
+    } finally {
+      window.setTimeout = was.st;
+      cancelSeriesNextGame();
+      seriesState = was.series; callEconomy = was.econ; syncFirebaseGameState = was.sync; hasMatchAuthority = was.auth;
+      Object.assign(state, { turnTimerMs: was.turnTimerMs, roomCode: was.roomCode, isRanked: was.isRanked, isHost: was.isHost, matchId: was.matchId, turnDelay: was.turnDelay, isMultiplayer: false, players: [] });
+      if (state.botActionTimer) clearTimeout(state.botActionTimer);
+      document.getElementById('seriesModal').classList.add('hidden');
+      renderSeriesHud();
+    }
+  });
+  await test('Best of series: signing in with a series on goes straight back into its room; the Inbox shows the result mail', async () => {
+    const was = { db, listen: listenToFirebaseRoom, tried: seriesRejoinTried };
+    try {
+      freshState({ isMultiplayer: false, roomCode: null, localPlayerId: null, isRanked: false });
+      currentUser = { uid: 'g_uid' };
+      const room = { phase: 'PLAY', clientVersion: getGameVersionLabel(), players: [{ id: 'p_host', uid: 'h_uid', name: 'Hosty', isHost: true }, { id: 'p_room1', uid: 'g_uid', name: 'Guesty' }] };
+      const data = {
+        'users/g_uid/series': { room: '424242', id: 'sx', status: 'live', bestOf: 3 },
+        'series/424242': { id: 'sx', room: '424242', status: 'live', bestOf: 3 },
+        'rooms/424242': room
+      };
+      db = { ref: (path) => ({ once: () => Promise.resolve({ val: () => data[path] ?? null, exists: () => data[path] != null }) }) };
+      let listened = null;
+      listenToFirebaseRoom = (code) => { listened = code; };
+      seriesRejoinTried = false;
+      const done = await seriesAutoRejoin();
+      assertTrue(done && listened === '424242' && state.localPlayerId === 'p_room1', 'the player is put straight back into the series room, in their own seat');
+      const html = inboxItemHtml({ id: 'series_sx', type: 'series', won: true, bestOf: 3, opponent: 'Hosty', score: '2–1', pot: 120 });
+      assertTrue(/Series won/.test(html) && /120/.test(html) && /Hosty/.test(html), 'the Inbox shows the series result');
+    } finally {
+      db = was.db; listenToFirebaseRoom = was.listen; seriesRejoinTried = was.tried;
+      forgetJoinedRoom();
+      Object.assign(state, { isMultiplayer: false, roomCode: null, players: [] });
     }
   });
   await test('Profile sections fold with a chevron and stay folded', () => {
