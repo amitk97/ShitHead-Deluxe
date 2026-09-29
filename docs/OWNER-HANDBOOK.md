@@ -149,6 +149,11 @@ The support inbox is **support.shitheaddeluxe@gmail.com**. The "Contact Support"
 
 ---
 
+### How Ranked points work
+- Each game: the usual rating change (beating a stronger player gives more), plus **10 bonus points for every win**.
+- Win streak bonus, once when the streak reaches: 2 wins **+5**, 3 **+10**, 5 **+15**, 10 **+20** (and +20 again at 20, 30…). Losing streaks cost nothing extra.
+- The numbers are `RANKED_BONUS` in `index.html`; changing them needs the catalog export (leave that to a developer or AI).
+
 ## 9. Your test account
 
 - **`AmitK`** (amirk2197@googlemail.com) got a one-off 999,999 Diamonds for trying the Shop, and can buy seasonal items out of season.

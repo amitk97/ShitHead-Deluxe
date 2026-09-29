@@ -1467,6 +1467,15 @@
   "picture": "avatar-recruiter",
   "pictureName": "Recruiter"
  },
+ "rankedBonus": {
+  "win": 10,
+  "streak": {
+   "2": 5,
+   "3": 10,
+   "5": 15,
+   "10": 20
+  }
+ },
  "rankTiers": [
   {
    "name": "Master",

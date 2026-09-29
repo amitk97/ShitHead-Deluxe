@@ -250,15 +250,15 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   await denied('read the server deal', db => get(ref(db, 'rankedDeals/123456')));
   const aBefore = await admin('users/alice/diamonds');
   r = await call('alice', { action: 'rankedResult', roomCode: '123456' });
-  ok(r.won && r.from === 500 && r.to === 516 && r.diamondsAwarded === 20, 'Ranked win: +16 from server ratings (not the room\'s 9999), +20 Diamonds', r);
+  ok(r.won && r.from === 500 && r.to === 526 && r.elo === 16 && r.winBonus === 10 && r.streak === 1 && r.streakBonus === 0 && r.diamondsAwarded === 20, 'Ranked win: +16 Elo from server ratings (not the room\'s 9999) + 10 win bonus, +20 Diamonds', r);
   ok(r.claimed.some(c => c.id === 'kingpin') && r.claimed.some(c => c.id === 'gotcha'), 'ending card + deflect challenges', r.claimed);
   ok(r.challengeStats.snapBurns === 12, 'per-match cap on reported snap burns', r.challengeStats);
   const rb = await call('bob', { action: 'rankedResult', roomCode: '123456' });
-  ok(rb.from === 500 && rb.to === 484 && !rb.won, 'bob gets the stored result', rb);
+  ok(rb.from === 500 && rb.to === 484 && !rb.won && rb.winBonus === 0 && rb.streakBonus === 0, 'bob gets the stored result (a loss is only the Elo change)', rb);
   r = await call('alice', { action: 'rankedResult', roomCode: '123456' });
-  ok(r.to === 516, 'scoring twice changes nothing', r);
-  ok((await admin('users/alice/rating')) === 516 && (await admin('users/bob/rating')) === 484, 'ratings saved once');
-  ok((await admin('publicProfiles/alice/rating')) === 516, 'public rating updated by the server');
+  ok(r.to === 526, 'scoring twice changes nothing', r);
+  ok((await admin('users/alice/rating')) === 526 && (await admin('users/bob/rating')) === 484, 'ratings saved once');
+  ok((await admin('publicProfiles/alice/rating')) === 526, 'public rating updated by the server');
   r = await call('carol', { action: 'rankedResult', roomCode: '123456' });
   ok(r.error, 'a stranger can\'t score the room', r);
   // A fake room with a victim who never sat there is refused
@@ -272,12 +272,15 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok(await tryWrite('alice', db => set(ref(db, 'rankedMembers/444444/alice'), 1)) === 'denied', 'blocked: a back-dated seat marker');
   // The same two accounts: at most 5 scored matches a day
   let limited = null;
+  const streakRuns = [];
   for (let i = 0; i < 6; i++) {
     const code = String(500000 + i);
     await admin(`rankedMembers/${code}`, 'PUT', { alice: Date.now(), bob: Date.now() });
     await admin(`rooms/${code}`, 'PUT', { isRanked: true, matchId: `rk_pair_${i}`, players: [{ uid: 'alice', finishRank: 1 }, { uid: 'bob', finishRank: 2 }] });
     limited = await call('alice', { action: 'rankedResult', roomCode: code });
+    if (!limited.error) streakRuns.push([limited.streak, limited.streakBonus, limited.to - limited.from === limited.elo + 10 + limited.streakBonus]);
   }
+  ok(JSON.stringify(streakRuns) === JSON.stringify([[2, 5, true], [3, 10, true], [4, 0, true], [5, 15, true]]), 'win streak bonuses: +5 at 2, +10 at 3, none at 4, +15 at 5 (never stacked)', streakRuns);
   ok(limited.error && /a lot today/.test(limited.error.message), 'sixth scored match against the same opponent today refused (first one earlier + 4 more)', limited);
   await admin('rooms/222222', 'PUT', { isRanked: false, players: [{ uid: 'alice', finishRank: 1 }, { uid: 'bob', finishRank: 2 }] });
   r = await call('alice', { action: 'rankedResult', roomCode: '222222' });

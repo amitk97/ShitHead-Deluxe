@@ -135,6 +135,18 @@ function pairwiseEloDeltas(players, K = 32) {
   });
 }
 
+// Ranked points on top of Elo (catalog rankedBonus; index.html RANKED_BONUS):
+// a flat bonus for every win, so the pool of points grows instead of staying
+// zero-sum around 500, plus a one-off bonus when a win streak reaches 2, 3, 5
+// and 10 (then every further 10). No extra loss for losing streaks.
+const RANKED_BONUS = CAT.rankedBonus || { win: 10, streak: { 2: 5, 3: 10, 5: 15, 10: 20 } };
+function rankedStreakBonus(streak, table = RANKED_BONUS.streak) {
+  const n = Math.floor(num(streak));
+  if (table[n]) return num(table[n]);
+  const top = Math.max(...Object.keys(table).map(Number));
+  return n > top && n % top === 0 ? num(table[top]) : 0;
+}
+
 // ---- Who is calling ------------------------------------------------------------
 const isAmitK = (auth) => !!auth?.token?.email_verified && String(auth.token.email || '').toLowerCase() === AMITK_EMAIL;
 
@@ -830,9 +842,11 @@ actions.rankedResult = async ({ uid, data }) => {
         user.processedRankedMatches = user.processedRankedMatches || {};
         if (user.processedRankedMatches[resultId]) return { noop: true };
         const previousRating = num(user.rating, 500);
-        const newRating = Math.max(0, previousRating + deltas[i]);
         const rs = user.rankedStats || {};
         const newStreak = won ? num(rs.currentStreak) + 1 : 0;
+        const winBonus = won ? num(RANKED_BONUS.win) : 0;
+        const streakBonus = won ? rankedStreakBonus(newStreak) : 0;
+        const newRating = Math.max(0, previousRating + deltas[i] + winBonus + streakBonus);
         const lossStreak = won ? 0 : num(rs.currentLossStreak) + 1;
         user.rankedStats = {
           burnt: num(rs.burnt) + stat('burnt'),
@@ -874,7 +888,7 @@ actions.rankedResult = async ({ uid, data }) => {
         }
         claimed.push(...grantMilestones(user, now));
         const newAvatars = grantEarnedAvatars(user, legacy, now);
-        return { user, result: { from: previousRating, to: newRating, won, diamondsAwarded: amount, claimed, newAvatars } };
+        return { user, result: { from: previousRating, to: newRating, won, elo: deltas[i], winBonus, streak: newStreak, streakBonus, diamondsAwarded: amount, claimed, newAvatars } };
       });
       const u = res.user;
       results[p.uid] = {
@@ -1044,4 +1058,4 @@ exports.economy = onCall({ region: 'europe-west1', cors: true, maxInstances: 20 
 });
 
 // For the unit tests.
-exports._test = { actions, pickDailyIds, pickWeeklyIds, ukDateKey, ukWeekKey, shiftDateKey, activeSeasonWindows, pairwiseEloDeltas, tierName, challengeForKey, milestoneEligible, unlockedDifficulties };
+exports._test = { actions, pickDailyIds, pickWeeklyIds, ukDateKey, ukWeekKey, shiftDateKey, activeSeasonWindows, pairwiseEloDeltas, rankedStreakBonus, RANKED_BONUS, tierName, challengeForKey, milestoneEligible, unlockedDifficulties };

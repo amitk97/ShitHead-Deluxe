@@ -2176,6 +2176,22 @@ async function runDevTestSuite() {
     assertTrue(/\u2605\d+ \(\+\d+\)/.test(html), "The winner's line must show a new rating and a '+N' gain");
     assertTrue(/\u2605\d+ \(-\d+\)/.test(html), "The loser's line must show a new rating and a '-N' loss");
   });
+  await test('Ranked: a win earns the Elo change plus a win bonus, and streak bonuses land once at 2, 3, 5 and 10 wins', () => {
+    const winner = makePlayer({ id: 'p1', name: 'Amit', hasFinished: true, finishRank: 1, rating: 500, uid: 'u1' });
+    const loser = makePlayer({ id: 'p2', name: 'Pooja', hasFinished: true, finishRank: 2, rating: 500, uid: 'u2' });
+    const saved = rankedRatingDraft;
+    try {
+      rankedRatingDraft = null;
+      const html = buildFinalStandingsHtml([winner, loser], 'p2', true);
+      assertTrue(html.includes(`\u2605${500 + 16 + RANKED_BONUS.win} (+${16 + RANKED_BONUS.win})`), 'Equal ratings: the winner gets 16 + the win bonus');
+      assertTrue(html.includes('\u2605484 (-16)'), 'The loser only loses the Elo change');
+      rankedRatingDraft = { from: 500, to: 541, streak: 3, streakBonus: 10 };
+      assertTrue(buildFinalStandingsHtml([winner, loser], 'p1', true).includes('\u2605541 (+41)'), "Your own line shows the server's real result");
+    } finally { rankedRatingDraft = saved; }
+    const bonus = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 20, 25, 30].map(n => rankedStreakBonus(n));
+    assertEqual(bonus, [0, 5, 10, 0, 15, 0, 0, 0, 0, 20, 0, 20, 0, 20], 'Streak bonuses never stack and repeat every 10');
+    assertEqual(serverEconomyCatalog().rankedBonus, RANKED_BONUS, 'The server reads the same numbers');
+  });
   await test('buildFinalStandingsHtml returns nothing while the match is still in progress', () => {
     const stillPlaying = makePlayer({ id: 'p1', hasFinished: false, finishRank: null });
     assertEqual(buildFinalStandingsHtml([stillPlaying], 'p1', false), '', 'No finished players yet means no standings to show');
@@ -5387,7 +5403,7 @@ async function runDevTestSuite() {
       applyRankedRatingUpdate();
       await new Promise(r => setTimeout(r, 1100));
       assertEqual(calls, [['rankedResult', { roomCode: '123456' }]], 'Only the room is sent, never a rating');
-      assertEqual(matchSummaryRating, { from: 500, to: 516 }, 'The summary shows the server\'s result');
+      assertEqual({ from: matchSummaryRating.from, to: matchSummaryRating.to }, { from: 500, to: 516 }, 'The summary shows the server\'s result');
       assertEqual(challengeEconomy.rating, 516, 'Rating from the server');
     } finally {
       state.players = saved.players; state.roomCode = saved.roomCode; state.localPlayerId = saved.local;

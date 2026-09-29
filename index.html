@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v213 (ShitHead-Deluxe-195) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v214 (ShitHead-Deluxe-195) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1919,6 +1919,7 @@
     .ms-emoji { font-size:40px; line-height:1; }
     .ms-title { margin-top:4px; font-size:19px; font-weight:900; color:#fff; text-transform:uppercase; letter-spacing:.04em; }
     .ms-mode { font-size:10px; font-weight:800; color:#94a3b8; letter-spacing:.08em; text-transform:uppercase; }
+    .ms-streak { margin:6px auto 0; width:fit-content; font-size:11px; font-weight:800; color:#fbbf24; }
     .ms-rating { display:flex; align-items:center; justify-content:center; gap:8px; margin:10px auto 0; padding:6px 12px; width:fit-content; border-radius:999px; border:1px solid #334155; background:rgba(15,23,42,.8); font-size:12px; font-weight:900; color:#fff; }
     .ms-rating .up { color:#34d399; } .ms-rating .down { color:#fb7185; }
     .ms-section { margin-top:12px; }
@@ -11083,10 +11084,15 @@ video {
         let ratingHtml = '';
         if (deltas) {
           const idx = players.indexOf(p);
-          const delta = deltas[idx] || 0;
+          // Winner: Elo + the flat win bonus (the streak bonus depends on
+          // their record, which only the server knows). Your own line uses
+          // the server's real result once it arrives (rankedRatingDraft).
+          const real = isYou && rankedRatingDraft;
+          const from = real ? rankedRatingDraft.from : (p.rating || 500);
+          const newRating = real ? rankedRatingDraft.to : Math.max(0, from + (deltas[idx] || 0) + (p.finishRank === 1 ? RANKED_BONUS.win : 0));
+          const delta = Math.round(newRating - from);
           const sign = delta > 0 ? '+' : '';
           const colorClass = delta > 0 ? 'text-emerald-400' : (delta < 0 ? 'text-rose-400' : 'text-slate-400');
-          const newRating = Math.max(0, (p.rating || 500) + delta);
           ratingHtml = `<span class="text-[10px] font-black ${colorClass}">\u2605${newRating} (${sign}${delta})</span>`;
         }
         return `
@@ -11216,6 +11222,7 @@ video {
       matchWinnerEffectShown = false;
       matchHistoryCurrentId = null; // the next finish is a new entry
       departedStatPlayers = []; // players who left the last match's stats
+      rankedRatingDraft = null; // the last match's server rating result
       if (typeof lastCardAlerted !== 'undefined') lastCardAlerted.clear();
       if (typeof resetMatchSummary === 'function') resetMatchSummary();
       document.getElementById('quickPlayMatchBtn')?.classList.add('hidden');
@@ -17769,6 +17776,10 @@ video {
     // gets that build's notes. Add an entry here with each BUILD bump that
     // players would notice; a build with no entry shows nothing.
     const WHATS_NEW = {
+      v214: [
+        ['🏆', 'Ranked wins are worth more: every win adds 10 bonus points on top of the usual change.'],
+        ['🔥', 'Win streak bonus in Ranked: +5 at 2 wins in a row, +10 at 3, +15 at 5 and +20 at 10. Losing streaks cost nothing extra.']
+      ],
       v213: [
         ['🃏', 'The Deck, Pile and Base Card now stay perfectly still: no more sliding when a power card lands or Snap Burn appears.']
       ],
@@ -21077,6 +21088,9 @@ video {
       if (matchSummaryRating) {
         const d = Math.round(matchSummaryRating.to - matchSummaryRating.from);
         rating = `<div class="ms-rating">Rating ${Math.round(matchSummaryRating.from)} → ${Math.round(matchSummaryRating.to)} <span class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d}</span></div>`;
+        if (matchSummaryRating.streakBonus > 0) {
+          rating += `<div class="ms-streak">Win streak ${matchSummaryRating.streak}: +${matchSummaryRating.streakBonus} bonus</div>`;
+        }
         const fromTier = getRankTier(matchSummaryRating.from), toTier = getRankTier(matchSummaryRating.to);
         if (d > 0 && fromTier.name !== toTier.name) {
           rating += `<div class="ms-rankup ${toTier.cls}" style="${toTier.style}" data-rankup="${toTier.name}"><small>Rank Up</small>${toTier.name}</div>`;
@@ -23092,6 +23106,20 @@ video {
       recruiterTarget: 5,
       picture: 'avatar-recruiter', pictureName: 'Recruiter'
     };
+    // Ranked points on top of the Elo change (economy rankedResult, from the
+    // catalog export): every win adds `win`, and a win streak adds a one-off
+    // bonus when it reaches 2, 3, 5 and 10 wins (then again every 10 more).
+    // They never stack and losing streaks cost nothing extra.
+    const RANKED_BONUS = {
+      win: 10,
+      streak: { 2: 5, 3: 10, 5: 15, 10: 20 }
+    };
+    function rankedStreakBonus(streak, table = RANKED_BONUS.streak) {
+      const n = Math.floor(Number(streak) || 0);
+      if (table[n]) return Number(table[n]);
+      const top = Math.max(...Object.keys(table).map(Number));
+      return n > top && n % top === 0 ? Number(table[top]) : 0;
+    }
     // The Gauntlet as challenges: the first clear (Bots tab) and a fixed daily
     // one (Daily tab). Their completion keys are written by the server.
     const GAUNTLET_CHALLENGES = {
@@ -23141,6 +23169,7 @@ video {
         difficultyUnlocks: DIFF_UNLOCK_RULES,
         gauntlet: JSON.parse(JSON.stringify(GAUNTLET)),
         referral: JSON.parse(JSON.stringify(REFERRAL)),
+        rankedBonus: JSON.parse(JSON.stringify(RANKED_BONUS)),
         rankTiers: [['Master', 2000], ['Platinum', 1800], ['Gold', 1500], ['Silver', 1000], ['Bronze', 500], ['Novice', 0]].map(([name, min]) => {
           if (getRankTier(min).name !== name) throw new Error(`Rank tier table out of date at ${name}`);
           return { name, min };
@@ -24861,10 +24890,11 @@ video {
       });
       new Promise(r => setTimeout(r, 800)).then(() => attempt(4)).then((res) => {
         if (currentUser?.uid !== uid) return;
-        rankedRatingDraft = { from: res.from, to: res.to };
+        rankedRatingDraft = { from: res.from, to: res.to, streak: Number(res.streak) || 0, streakBonus: Number(res.streakBonus) || 0 };
         matchSummaryRating = rankedRatingDraft;
         patchMatchHistory();
         refreshMatchSummary();
+        renderFinalStandings();
         challengeEconomy.rating = Number.isFinite(Number(res.rating)) ? Number(res.rating) : challengeEconomy.rating;
         challengeEconomy.wins = res.wins || 0;
         challengeEconomy.losses = res.losses || 0;
