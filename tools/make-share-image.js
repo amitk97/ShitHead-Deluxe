@@ -1,4 +1,4 @@
-// Builds icons/share-preview-v2.jpg (1200×630), the picture link previews show
+// Builds icons/share-preview-v3.jpg (1200×630), the picture link previews show
 // (WhatsApp, iMessage, Discord, X, Facebook… via the og:image tag in
 // index.html). Everything that matters sits in the middle 630×630, because
 // some apps crop the preview to a square. The middle shows the four premium
@@ -30,6 +30,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   .pics img{width:84px;height:84px;border-radius:12px;box-shadow:0 0 22px rgba(251,191,36,.35),0 8px 20px rgba(0,0,0,.6)}
   .pills{display:flex;gap:10px;margin-top:18px}
   .pill{padding:8px 16px;border-radius:999px;border:2px solid #f59e0b;background:rgba(120,53,15,.45);color:#fde68a;font-weight:800;font-size:21px}
+  .pill.xp{border-color:#22d3ee;background:rgba(8,47,73,.6);color:#a5f3fc}
 </style></head><body>
   <div class="phone l"><img src="data:image/png;base64,${b64('docs/screenshots/table.png')}"></div>
   <div class="phone r"><img src="data:image/png;base64,${b64('docs/screenshots/home.png')}"></div>
@@ -38,7 +39,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     <div class="logo">ShitHead</div><div class="deluxe">DELUXE</div>
     <div class="tag">The classic card game.<br>Free on your phone.</div>
     <div class="pics">${['sapphire-sovereign', 'crimson-inferno', 'scarlet-guardian', 'turtley'].map(n => `<img src="data:image/webp;base64,${b64('art/avatars/' + n + '-sm.webp')}">`).join('')}</div>
-    <div class="pills"><span class="pill">vs Bots</span><span class="pill">Friends</span><span class="pill">Ranked</span></div>
+    <div class="pills"><span class="pill">vs Bots</span><span class="pill">Friends</span><span class="pill">Ranked</span><span class="pill xp">Levels 1–99</span></div>
   </div>
 </body></html>`;
 
@@ -47,7 +48,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
   await page.setContent(html, { waitUntil: 'networkidle' }).catch(() => {});
   await page.evaluate(() => document.fonts.ready);
-  const out = path.join(ROOT, 'icons/share-preview-v2.jpg');
+  const out = path.join(ROOT, 'icons/share-preview-v3.jpg');
   await page.screenshot({ path: out, type: 'jpeg', quality: 86 });
   await browser.close();
   console.log('saved', out, fs.statSync(out).size, 'bytes');

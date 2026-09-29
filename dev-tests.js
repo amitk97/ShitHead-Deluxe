@@ -4954,13 +4954,13 @@ async function runDevTestSuite() {
   await test('Link previews: Open Graph and Twitter tags point at the real preview picture', async () => {
     const meta = (sel) => document.querySelector(sel)?.getAttribute('content') || '';
     const img = meta('meta[property="og:image"]');
-    assertEqual(img, 'https://shithead-pro.web.app/icons/share-preview-v2.jpg', 'og:image is an absolute address on the game domain (apps never resolve relative ones)');
+    assertEqual(img, 'https://shithead-pro.web.app/icons/share-preview-v3.jpg', 'og:image is an absolute address on the game domain (apps never resolve relative ones)');
     assertEqual(meta('meta[name="twitter:image"]'), img, 'X uses the same picture');
     assertEqual(meta('meta[name="twitter:card"]'), 'summary_large_image', 'X shows the large picture');
     assertEqual([meta('meta[property="og:image:width"]'), meta('meta[property="og:image:height"]')], ['1200', '630'], 'The size apps expect for a wide preview');
     ['og:title', 'og:description', 'og:url'].forEach(k => assertTrue(meta(`meta[property="${k}"]`).length > 10, `${k} is set`));
     assertTrue(meta('meta[name="description"]').length > 50, 'Search engines get a description');
-    const res = await fetch('/icons/share-preview-v2.jpg');
+    const res = await fetch('/icons/share-preview-v3.jpg');
     const bytes = res.ok ? new Uint8Array(await res.arrayBuffer()) : new Uint8Array();
     assertTrue(bytes[0] === 0xFF && bytes[1] === 0xD8, 'The picture file is there and is a real JPEG', res.status);
     assertTrue(bytes.length < 300 * 1024, 'Small enough for WhatsApp to show it (under 300 KB)', bytes.length);
@@ -7204,6 +7204,30 @@ async function runDevTestSuite() {
       playerXp = was.xp; matchXpLog = was.log;
       setXpFeature(was.on);
     }
+  });
+  await test('Dragging a card never leaves a stuck copy behind (the table redrew mid-drag)', () => {
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+    try {
+      const el = document.createElement('div'); el.dataset.cardId = 'c_7';
+      parent.appendChild(el);
+      const ds = { el, dragging: true };
+      beginDraggingElement(ds, 50, 50);
+      assertEqual(el.parentNode, document.body, 'the dragged card follows the pointer at the top level');
+      // The hand is redrawn while it's held: a fresh copy of the same card appears.
+      const fresh = document.createElement('div'); fresh.dataset.cardId = 'c_7';
+      parent.appendChild(fresh);
+      endDraggingElement(ds);
+      assertTrue(!el.isConnected, 'the stale copy is dropped, not put back');
+      assertEqual(parent.querySelectorAll('[data-card-id="c_7"]').length, 1, 'only one copy of the card');
+      // Nothing redrew: the card goes back where it was, with no drag styles left.
+      const el2 = document.createElement('div'); el2.dataset.cardId = 'c_8';
+      parent.appendChild(el2);
+      const ds2 = { el: el2, dragging: true };
+      beginDraggingElement(ds2, 50, 50);
+      endDraggingElement(ds2);
+      assertTrue(el2.parentNode === parent && !el2.style.position && !el2.style.transform && !el2.classList.contains('drag-ghost'), 'an unchanged table gets the card back, snapped into place');
+    } finally { parent.remove(); }
   });
   await test('Phoenix is gone from the game; Turtley took its place', () => {
     assertTrue(!AVATAR_ART['avatar-phoenix'] && !COSMETIC_SHOP_ITEMS.some(i => i.id === 'avatar-phoenix'), 'no Phoenix art or Shop item');

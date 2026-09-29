@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v227 (ShitHead-Deluxe-203) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v228 (ShitHead-Deluxe-204) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -33,7 +33,7 @@
   <meta property="og:title" content="ShitHead Deluxe: the classic card game" />
   <meta property="og:description" content="Free on your phone. Play bots, your friends online or Ranked. No download needed." />
   <meta property="og:url" content="https://shithead-pro.web.app/" />
-  <meta property="og:image" content="https://shithead-pro.web.app/icons/share-preview-v2.jpg" />
+  <meta property="og:image" content="https://shithead-pro.web.app/icons/share-preview-v3.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -41,7 +41,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="ShitHead Deluxe: the classic card game" />
   <meta name="twitter:description" content="Free on your phone. Play bots, your friends online or Ranked. No download needed." />
-  <meta name="twitter:image" content="https://shithead-pro.web.app/icons/share-preview-v2.jpg" />
+  <meta name="twitter:image" content="https://shithead-pro.web.app/icons/share-preview-v3.jpg" />
   <link rel="canonical" href="https://shithead-pro.web.app/" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#020617" />
@@ -538,7 +538,7 @@
     #hamburgerAccountHead .drawer-level { display:inline-flex; flex-shrink:0; }
     .xp-badge-sm { height:14px; padding:0 4px; font-size:8px; border-radius:5px; }
     .xp-badge-seat { height:calc(var(--opp-name-size, 9px) + 5px); padding:0 4px; font-size:max(8px, calc(var(--opp-name-size, 9px) - 1px)); border-radius:5px; margin-left:4px; }
-    .hand-level { display:inline-flex; align-items:center; margin-left:5px; vertical-align:middle; }
+    .hand-level { display:inline-flex; align-items:center; vertical-align:middle; }
     #profileLevelBadge { display:inline-flex; margin-left:6px; flex-shrink:0; }
     #profileLevelBadge.hidden, .hand-level.hidden, #hamburgerAccountHead .drawer-level.hidden, .hdr-xp.hidden, .hdr-xp-tip.hidden { display:none; }
     .profile-xp { margin-top:10px; }
@@ -1618,6 +1618,11 @@
        so render() can keep setting the label's text to plain "Hand". */
     /* A little breathing room so a fanned hand never tucks under the label. */
     .card-zone-label-row:has(#handZoneLabel) { padding-bottom:5px; }
+    /* Hand label centred on the screen; your level sits just to its right
+       (a 3-column grid, so the badge never pushes the label off centre). */
+    .card-zone-label-row:has(#handZoneLevel) { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; }
+    #handZoneLabel { grid-column:2; }
+    #handZoneLevel { grid-column:3; justify-self:start; margin-left:6px; }
     #handZoneLabel::after { content:'\2193'; margin-left:4px; font-size:1.2em; line-height:1; }
     /* The Deck (card-base) is wider than the Base Card (card-table). Equal
        side columns keep the pile, and the table cards and hand below it, on
@@ -16602,6 +16607,15 @@ video {
       // which wipes and rebuilds the hand/table from scratch anyway — this
       // restoration mainly matters for the "dropped somewhere invalid, nothing
       // changed" case, so the card doesn't just vanish from the hand.
+      // If the hand/table was redrawn during the drag (a bot's move, a room
+      // update), this element is a stale copy: putting it back would leave
+      // two of the same card overlapping ("stuck" cards). Drop it instead;
+      // cleanupDrag redraws so everything snaps into place.
+      const cid = el.dataset.cardId;
+      const parent = dragState.origParent;
+      const stale = !parent || !parent.isConnected
+        || (cid && Array.from(parent.children).some(c => c !== el && c.dataset && c.dataset.cardId === cid));
+      if (stale) { el.remove(); return; }
       if (dragState.origParent) {
         if (dragState.origNextSibling && dragState.origNextSibling.parentNode === dragState.origParent) {
           dragState.origParent.insertBefore(el, dragState.origNextSibling);
@@ -16712,9 +16726,20 @@ video {
 
     function cleanupDrag() {
       if (!dragState) return;
-      if (dragState.dragging) endDraggingElement(dragState);
+      const wasDragging = dragState.dragging;
+      if (wasDragging) endDraggingElement(dragState);
       dragState = null;
+      // Snap every card back into its laid-out place (a drop on nothing, a
+      // cancelled gesture or a mid-drag redraw used to leave cards half-way).
+      if (wasDragging) requestAnimationFrame(() => {
+        if (dragState) return;
+        document.querySelectorAll('body > .drag-ghost').forEach(el => el.remove());
+        render();
+      });
     }
+    // The app losing focus mid-drag (a call, switching apps) ends it too.
+    window.addEventListener('blur', () => cleanupDrag());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) cleanupDrag(); });
 
     function handleCardDrop(card, zone, pointerX) {
       if (!zone) return;
@@ -17979,6 +18004,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v228: [
+        ['🃏', 'Cards always snap back into place after a swap or a drag, even if the table changes while you hold one.'],
+        ['📐', 'The Hand label sits in the middle again, with your level just to its right.']
+      ],
       v227: [
         ['📈', 'Levels now show everywhere: on the table next to each player, on every leaderboard, on your Profile and by your Hand.', WN_KEY]
       ],

@@ -1,4 +1,4 @@
-<!-- README-VERSION: v220 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
+<!-- README-VERSION: v228 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
 # 💩 ShitHead Deluxe
 
 **The classic card game ShitHead, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
@@ -56,10 +56,10 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 
 ## Features
 
+- **XP & levels 1–99**: every game, win, Ranked game, Gauntlet bot and challenge earns XP (a win 75, a Ranked win 150, the first game of the day +50). Levels follow a RuneScape-style curve (level 92 is half-way to 99) and pay Diamonds: 20 a level, 100 on every 10th. A thin XP bar along the bottom of the header shows your progress (hover or tap it for the numbers), and your level shows on the table, on every leaderboard, on your Profile and in your friends list. Games you played before levels existed counted too.
 - **Premium animated pictures**: Sapphire Sovereign roars, Crimson Inferno chuckles, Scarlet Guardian flaps and Turtley snaps. Their animations play in Shop, Custom and compact player pictures, with Reduce Motion support.
 - **Ranked win bonuses**: wins add 10 points on top of Elo, with extra bonuses at win-streak milestones.
 - **Stalemate draws**: games end in a draw when the same cards keep circulating without progress; draws appear in Ranked stats and Match History.
-- **Refreshed home and tutorial**: rotating card-power tips, your table background, clearer practice lessons and an easy one-bot start.
 
 - **Vs Bots** with four difficulties (Easy → Boss) that unlock as you win, playable offline. Close the app mid-game and it picks up exactly where you left off.
 - **The Gauntlet**: beat 5 bots in a row (Easy, Easy, Medium, Hard, Boss) with 3 lives. The first clear wins an exclusive picture and frame, then Diamonds every day you beat it again.
@@ -69,7 +69,7 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 - **Challenges and Diamonds**: daily and weekly challenges, the Daily Gauntlet, a login streak and milestones. During every seasonal event a Seasonal tab adds four big event-long challenges and a Season Complete bonus. Tap your completed count to see every challenge you've finished.
 - **Shop and Custom** (each opens on an All tab with every item in folding sections): tables, card backs, frames, burn effects with their own sounds, **Joker effects** (a short animation over the table whenever you play a Joker: Jester's Grin, Jack-in-the-Box, Magic Trick, Glitch and more, plus a Pumpkin Joker, Santa Joker and others for each seasonal event), victory effects, emote packs and profile pictures, plus seasonal events (Halloween, Christmas, Diwali, Lunar New Year and more). Premium items too: animated pictures (Royal Flush, Cosmic Ace, and the 5000 3D ones: Sapphire Sovereign, Crimson Inferno, Scarlet Guardian, Turtley), vector tables (Neon City, Northern Lights, Deep Space), cinematic burns, Joker and victory effects, and card backs like Dragon Scale and Stained Glass. **Decks** change the card faces (Lavender, Paper Classic, Blueprint, Chalkboard, Frosted Glass, Neon Night, Royal Gold and more). Earn-only pictures and frames for Ranked tiers, the Gauntlet and recruiting friends. All art is vector or high-resolution, so it stays sharp on 4K screens. Two free tables (Oak Wood and Classic Felt), up to 3 saved looks you can switch in one tap, and a **Collection** page showing everything you own and how to get the rest.
 - **Friends**: friend requests, gifts, game invites and a public showcase of your look (deck included), with push notifications and an online status that only shows while the game is actually open. Invite friends with your own link and you both earn Diamonds once they've played a few games.
-- **Leaderboards**: Ranked rating, challenges completed and Gauntlet bots beaten, with an Inbox message when you reach the top 10, #3, #2 or #1. Tap anyone to open their profile, add them as a friend or ignore them.
+- **Leaderboards**: Ranked rating, challenges completed and Gauntlet bots beaten (with everyone's level), with an Inbox message when you reach the top 10, #3, #2 or #1. Tap anyone to open their profile, add them as a friend or ignore them.
 - **Match summary** with stats and a shareable result card, plus a full match history.
 - **Built for every screen**: the hand resizes to fill your screen, the table grows on tablets and computers, foldables are supported (a small cover screen asks you to open the phone), and a phone turned sideways asks to be turned upright. Settings (Hand Sort, Turn Alert, Card History, Show Others' Effects and more) follow your account across devices, and an accessibility **Big Print** deck gives large, high-contrast ranks that stay readable in any hand.
 - **Always up to date**: when a new version is out, the game offers to update itself, and a game in progress carries on afterwards.
@@ -81,6 +81,6 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 - It's hosted on **Firebase Hosting**, and every push to `main` deploys automatically.
 - **Firebase Realtime Database** handles online rooms, profiles and friends.
 - **Firebase Auth** handles sign-in (Google or email).
-- **Cloud Functions** ([`functions/`](functions)) handle the economy: Diamonds, purchases, gifts, challenges, the Gauntlet, referrals and Ranked results are checked and saved on the server, so they can't be edited from the browser. They also deal Ranked games, audit every Ranked move, keep the leaderboards, and send push notifications.
+- **Cloud Functions** ([`functions/`](functions)) handle the economy: Diamonds, XP and levels, purchases, gifts, challenges, the Gauntlet, referrals and Ranked results are checked and saved on the server, so they can't be edited from the browser. They also deal Ranked games, audit every Ranked move, keep the leaderboards, and send push notifications.
 - A service worker makes the game installable and lets Vs Bots play offline.
 - A developer test suite runs in the browser: open `index.html?dev-tests=1`.
