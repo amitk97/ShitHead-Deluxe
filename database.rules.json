@@ -414,6 +414,10 @@
             newData.parent().child('rating').val() >= 1000 ? 'Silver' :
             newData.parent().child('rating').val() >= 500 ? 'Bronze' : 'Novice')"
         },
+        "level": {
+          ".validate": "newData.isNumber() &&
+            newData.val() === root.child('users').child($uid).child('xp').child('level').val()"
+        },
         "online": {
           ".validate": "newData.isBoolean()"
         },

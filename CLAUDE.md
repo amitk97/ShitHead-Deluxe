@@ -113,7 +113,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - The phone can't delete `users/{uid}` itself (no blanket write), so account deletion must always go through the server.
 - Game: Profile → Your data (`#profileDataSection`, `downloadMyData`: server copy + `thisDevice` = this device's `shithead_*` localStorage minus the push token, saved as `shithead-data-<name>-<date>.json`; share sheet on iPhone). Delete account (`deleteFinalBtn`, password re-check kept) → `deleteAccount` request → `performSignOut`. Sign-in runs `pendingAccountDeletion` first: a pending deletion shows `#keepAccountModal` (Back can't skip it) and nothing public starts until Keep (`startSignedInSession`, the old body of the signed-in branch of `onAuthStateChanged`); "Continue deleting" signs out. Sign-in help: `#authHelpToggle` / `#authHelpPanel` (reset link, `resendVerificationEmail`, Google tip, 7-day note, support). Privacy policy describes both. End to end: `tools/account-e2e.js` (a real page on the emulators: download, delete, sign back in → Keep, delete again, purge; same `functions/.env.local` setup as `tools/referral-e2e.js`).
 
-## XP & levels (v222: built, OFF behind a switch)
+## XP & levels (v222 engine, v223 screens: OFF behind a switch)
 
 - **The switch:** database `config/features/xp` (boolean; rules: anyone reads, only the owner's verified email writes). Off/absent = no XP is awarded and (from section 2) no XP UI shows. The server re-reads it at most every 10s (`functions/xp.js` `enabled`).
 - **Server only:** `functions/xp.js` `award(user, parts, now, addDiamonds)` runs inside the existing `userTx` mutators:
@@ -127,7 +127,8 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - **Level curve:** level L needs `curve * (L-1)^1.5` (level 5 = 800). A level up pays `levelUpDiamonds`, or `milestoneDiamonds` every `milestoneEvery`-th level, and mails `activityInbox/level_<L>` (type `level`).
 - **Numbers:** `XP_RULES` in index.html (`§ XP & levels`, next to `RANKED_BONUS`), exported to the catalog as `xp`; `xpLevelFor` / `xpForLevel` mirror the server.
 - **Tests:** emulator block "XP & levels" in `tools/economy-emulator-test.js`; dev test "XP & levels".
-- **Plan:** `docs/plans/best-of-series-and-levels.md`. Section 2 = screens (badge, Profile bar, match summary, level mail), section 3 = owner toggle in the menu.
+- **Screens (v223, all hidden while off):** `xpFeatureOn` follows the switch live (`watchXpSwitch`, body class `xp-on`); `playerXp` = the account's {total, level} (profile at sign-in, then every reply). Every economy reply goes through `noteXpResult(res.xp)` (matchFinished, matchWin, rankedResult, claim, gauntlet): updates `playerXp`, adds to `matchXpLog` (reset in `resetMatchSummary`), toasts level-up Diamonds (they join the match's rewards). Shown: menu header badge `#hamburgerLevel`, Profile `#profileXpSection` (`xpBarHtml`), match summary XP section (`matchSummaryXpHtml`: level badge, bar `data-bar="xp"`, +N XP, LEVEL UP rows), Inbox mail type `level`, and other players' level on player cards and friends' rows from `publicProfiles/{uid}/level` (rules: must equal `users/{uid}/xp/level`; written by `syncPublicProfile` / `publishXpLevel`). Badge = `xpLevelBadge(level)`.
+- **Plan:** `docs/plans/best-of-series-and-levels.md`. Section 3 = owner toggle in the menu.
 
 ## Premium effects (v189)
 

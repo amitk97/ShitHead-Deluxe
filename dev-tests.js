@@ -7125,6 +7125,42 @@ async function runDevTestSuite() {
     assertEqual(xpLevelFor(10 ** 9), XP_RULES.maxLevel, 'capped at the max level');
     assertEqual(JSON.stringify(serverEconomyCatalog().xp), JSON.stringify(XP_RULES), 'the server gets the same XP table');
   });
+  await test('XP & levels: screens stay hidden while the switch is off and show the server\'s XP when it is on', () => {
+    const was = { on: xpFeatureOn, xp: playerXp, log: matchXpLog };
+    try {
+      currentUser = { uid: 'xp_test', email: 'x@example.com' };
+      setXpFeature(false);
+      playerXp = { total: 790, level: 4 };
+      refreshXpDisplays();
+      assertTrue(document.getElementById('hamburgerLevel').classList.contains('hidden'), 'no menu level badge while off');
+      assertTrue(document.getElementById('profileXpSection').classList.contains('hidden'), 'no Profile XP bar while off');
+      assertEqual(matchSummaryXpHtml(), '', 'no XP in the match summary while off');
+      assertTrue(!friendRowHtml('u1', { username: 'Pal', rating: 600, level: 7 }, 'friend').includes('xp-badge'), 'no level on friends while off');
+      assertTrue(!renderPlayerPopupHuman({ uid: 'u1', name: 'Pal' }, { loaded: true, rating: 600, level: 7 }, null).includes('xp-badge'), 'no level on player cards while off');
+      matchXpLog = { gained: 0, levelUps: [], capped: false };
+      const toasts = matchRewardLog.length;
+      noteXpResult({ gained: 45, capped: false, total: 835, level: 5, levelUps: [{ level: 5, reward: 100 }] });
+      assertTrue(xpFeatureOn, 'a server reply with XP means the switch is on');
+      assertEqual(playerXp.level, 5, 'the level comes from the server');
+      assertEqual(matchXpLog.gained, 45, 'this match\'s XP is counted');
+      const html = matchSummaryXpHtml();
+      assertTrue(html.includes('+45 XP') && html.includes('data-levelup="5"') && html.includes('Lv 5'), 'the summary shows +XP, the level and the level up', html);
+      assertTrue(matchRewardLog.length === toasts + 1 && matchRewardLog[matchRewardLog.length - 1].reward === 100, 'the level-up Diamonds join the match rewards');
+      assertTrue(!document.getElementById('hamburgerLevel').classList.contains('hidden'), 'menu level badge once on');
+      assertTrue(!document.getElementById('profileXpSection').classList.contains('hidden') && document.getElementById('profileXpBody').textContent.includes('to level 6'), 'Profile shows the bar to the next level');
+      assertTrue(friendRowHtml('u1', { username: 'Pal', rating: 600, level: 7 }, 'friend').includes('Lv 7'), 'friends show their level');
+      assertTrue(renderPlayerPopupHuman({ uid: 'u1', name: 'Pal' }, { loaded: true, rating: 600, level: 7 }, null).includes('Lv 7'), 'player cards show the level');
+      assertTrue(ACTIVITY_MAIL_TYPES.includes('level'), 'level-up mail shows in the Inbox');
+      assertEqual(xpProgress(800).pct, 0, 'a new level starts an empty bar');
+      assertTrue(xpProgress(10 ** 9).max, 'the top level has a full bar');
+      resetMatchSummary();
+      assertEqual(matchXpLog.gained, 0, 'a new match starts from 0 XP');
+    } finally {
+      matchRewardLog.length = 0;
+      playerXp = was.xp; matchXpLog = was.log;
+      setXpFeature(was.on);
+    }
+  });
   await test('Phoenix is gone from the game; Turtley took its place', () => {
     assertTrue(!AVATAR_ART['avatar-phoenix'] && !COSMETIC_SHOP_ITEMS.some(i => i.id === 'avatar-phoenix'), 'no Phoenix art or Shop item');
     assertEqual(resolveAvatarId('avatar-phoenix'), DEFAULT_AVATAR_ID, 'an old equipped Phoenix shows the default picture');

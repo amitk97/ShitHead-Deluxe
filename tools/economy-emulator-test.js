@@ -638,6 +638,10 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
     x = await call('xena', { action: 'matchFinished', matchId: 'xp_m5' });
     ok(x.xp === null, 'switched off again: XP stops', x.xp);
+    // The public copy of the level (player card, friends) must equal the real one.
+    const realLevel = (await admin('users/xena/xp'))?.level;
+    ok((await tryWrite('xena', db => set(ref(db, 'publicProfiles/xena/level'), realLevel))) !== 'denied', 'a player can publish their real level', realLevel);
+    ok((await tryWrite('xena', db => set(ref(db, 'publicProfiles/xena/level'), 99))) === 'denied', 'blocked: publishing a fake level');
   }
 
   // A new picture or name reaches existing board entries (publicProfiles trigger → refreshProfile)
