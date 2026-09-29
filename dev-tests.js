@@ -7140,6 +7140,86 @@ async function runDevTestSuite() {
     assertEqual([SERIES_RULES.bestOf[3], SERIES_RULES.bestOf[5]], [30, 50], 'entries: Best of 3 = 30, Best of 5 = 50');
     assertEqual(JSON.stringify(serverEconomyCatalog().xp), JSON.stringify(XP_RULES), 'the server gets the same XP table');
   });
+  await test('Best of series lobby: locked below level 20, the host picks a length and the other player gets the accept pop-up', async () => {
+    const saved = { players: state.players, isMultiplayer: state.isMultiplayer, isRanked: state.isRanked, roomCode: state.roomCode, isHost: state.isHost, localPlayerId: state.localPlayerId, phase: state.phase, spectating: state.spectating };
+    const was = { on: xpFeatureOn, xp: playerXp, econ: callEconomy, confirm: window.confirm, series: seriesState, watch: watchSeriesRoom, owner: isGameOwner };
+    const panel = document.getElementById('seriesPanel');
+    const modal = document.getElementById('seriesModal');
+    try {
+      watchSeriesRoom = () => {};
+      isGameOwner = () => true; // the picker is owner-only until games count (SERIES_LOBBY_OPEN)
+      window.confirm = () => true;
+      currentUser = { uid: 'host_u', email: 'h@example.com' };
+      setXpFeature(true);
+      Object.assign(state, { isMultiplayer: true, isRanked: false, roomCode: '424242', isHost: true, localPlayerId: 'p1', phase: 'LOBBY', spectating: null });
+      state.players = [
+        { id: 'p1', uid: 'host_u', name: 'Hosty', isHost: true, cosmetics: { level: 12 } },
+        { id: 'p2', uid: 'guest_u', name: 'Guesty', cosmetics: { level: 25 } }
+      ];
+      seriesState = null;
+      playerXp = { total: xpForLevel(12), level: 12 };
+      isGameOwner = () => false;
+      renderSeriesPanel();
+      assertTrue(SERIES_LOBBY_OPEN || panel.classList.contains('hidden'), 'until games count, only the owner sees the series choice');
+      isGameOwner = () => true;
+      renderSeriesPanel();
+      assertTrue(!panel.classList.contains('hidden'), 'the host sees the series choice');
+      assertTrue([...panel.querySelectorAll('[data-series-best]')].every(b => b.disabled), 'Best of 3/5 are locked below level 20');
+      assertTrue(/Reach level 20/.test(panel.textContent), 'the lock says which level unlocks it');
+      playerXp = { total: xpForLevel(20), level: 20 };
+      state.players.push({ id: 'b1', name: 'Bot', isBot: true });
+      renderSeriesPanel();
+      assertTrue(/exactly two players and no bots/.test(panel.textContent), 'no series with a bot in the room');
+      state.players.pop();
+      renderSeriesPanel();
+      const pick = panel.querySelector('[data-series-best="3"]');
+      assertTrue(pick && !pick.disabled, 'level 20 + two players: Best of 3 can be picked');
+      const calls = fakeEconomy({ series: (d) => ({ series: { id: 'sx', room: d.roomCode, bestOf: d.bestOf, need: 2, fee: 30, pot: 120, host: 'host_u', guest: 'guest_u', names: { host_u: 'Hosty', guest_u: 'Guesty' }, status: 'pending', played: 0 } }) });
+      await createSeries(3);
+      assertEqual(calls[0], ['series', { op: 'create', roomCode: '424242', bestOf: 3 }], 'the host asks the server to create a Best of 3');
+      assertTrue(/waiting for Guesty/.test(panel.textContent), 'the host waits for the other player');
+      assertTrue(seriesBlocksLobbyAction('start'), 'Start Match waits for the accept');
+      assertTrue(modal.classList.contains('hidden'), 'the host never gets the accept pop-up');
+      // The other player's phone.
+      currentUser = { uid: 'guest_u', email: 'g@example.com' };
+      state.isHost = false; state.localPlayerId = 'p2';
+      onSeriesChanged();
+      assertTrue(!modal.classList.contains('hidden'), 'the other player gets the accept pop-up');
+      assertTrue(/Hosty/.test(document.getElementById('seriesModalText').textContent) && /120/.test(document.getElementById('seriesModalPot').textContent), 'it names the host and the pot');
+      fakeEconomy({ series: () => ({ series: { ...seriesState, status: 'live', paid: { host_u: true, guest_u: true }, wins: { host_u: 0, guest_u: 0 } } }) });
+      await acceptSeries();
+      assertTrue(modal.classList.contains('hidden'), 'accepting closes the pop-up');
+      assertTrue(/0 – 0/.test(panel.textContent), 'the live series shows the score');
+      assertTrue(!seriesBlocksLobbyAction('start'), 'a live series lets the host start the next game');
+      assertTrue(seriesBlocksLobbyAction('bot'), 'no bots in a series room');
+    } finally {
+      Object.assign(state, saved);
+      xpFeatureOn = was.on; playerXp = was.xp; callEconomy = was.econ; window.confirm = was.confirm; seriesState = was.series; watchSeriesRoom = was.watch; isGameOwner = was.owner;
+      modal.classList.add('hidden');
+      renderSeriesPanel();
+    }
+  });
+  await test('Profile sections fold with a chevron and stay folded', () => {
+    const heads = [...document.querySelectorAll('#profileModal .profile-sec-head')];
+    const titleOf = (h) => h.querySelector('.cat-head-title').textContent.trim();
+    const titles = heads.map(titleOf);
+    ['Public Profile', 'Invite Friends', 'Account', 'Your Data', 'Danger Zone'].forEach(t => assertTrue(titles.includes(t), `"${t}" has a folding heading`));
+    assertTrue(heads.every(h => h.querySelector('.cat-head-chev')), 'every heading has a chevron');
+    const was = localStorage.getItem('shithead_profile_collapsed');
+    const acct = heads.find(h => titleOf(h) === 'Account');
+    const body = acct.parentElement.querySelector('.profile-sec-body');
+    const startOpen = acct.getAttribute('aria-expanded') === 'true';
+    try {
+      acct.click();
+      assertEqual(acct.getAttribute('aria-expanded'), String(!startOpen), 'tapping the heading folds / unfolds it');
+      assertEqual(body.hidden, startOpen, 'its body hides with it');
+      assertEqual(JSON.parse(localStorage.getItem('shithead_profile_collapsed')).includes('account'), startOpen, 'the fold is remembered');
+      assertTrue(!!document.getElementById('profileAccountActionBtn') && !!document.getElementById('profileXpSection'), 'the sections keep their contents');
+    } finally {
+      acct.click();
+      if (was === null) localStorage.removeItem('shithead_profile_collapsed'); else localStorage.setItem('shithead_profile_collapsed', was);
+    }
+  });
   await test('XP & levels: screens stay hidden while the switch is off and show the server\'s XP when it is on', () => {
     const was = { on: xpFeatureOn, xp: playerXp, log: matchXpLog };
     try {

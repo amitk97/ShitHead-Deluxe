@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v231 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v232 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -483,6 +483,47 @@
     .cat-head-chev { flex:none; width:20px; height:20px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#fcd34d; border:1px solid rgba(148,163,184,.35); transition:transform .18s var(--ease-snappy, ease); }
     .cat-head[aria-expanded="false"] .cat-head-chev { transform:rotate(-90deg); }
     .cat-section:has(> .cat-head[aria-expanded="false"]) { margin-bottom:4px; }
+    .profile-sec-head { margin-bottom:6px; }
+    .profile-sec-head[aria-expanded="false"] { margin-bottom:0; }
+    .profile-sec-danger { border-color:#9f1239; }
+    .profile-sec-danger .cat-head-title, .profile-sec-danger .cat-head-chev { color:#fb7185; }
+    .profile-sec-body[hidden] { display:none !important; }
+    .series-panel { background:#020617; border:1px solid #1e293b; border-radius:10px; padding:6px 10px; display:flex; flex-direction:column; gap:5px; }
+    .series-panel.hidden { display:none; }
+    .series-head { display:flex; align-items:center; gap:6px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8; }
+    .series-head .ic { width:14px; height:14px; color:#fcd34d; }
+    .series-choices { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px; }
+    .series-choice { display:flex; flex-direction:column; align-items:center; gap:1px; padding:5px 2px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#e2e8f0; font-size:10px; font-weight:900; line-height:1.1; }
+    .series-choice small { font-size:9px; font-weight:800; color:#94a3b8; display:flex; align-items:center; gap:2px; }
+    .series-choice small .ic { width:10px; height:10px; }
+    .series-choice[aria-pressed="true"] { border-color:#f59e0b; background:rgba(245,158,11,.14); color:#fcd34d; }
+    .series-choice:disabled:not([aria-pressed="true"]) { opacity:.45; cursor:not-allowed; }
+    .series-choice[aria-pressed="true"]:disabled { cursor:default; }
+    #profileDangerZone .profile-sec-body > div { border-color:#9f1239; background:rgba(76,5,25,.3); }
+    .series-note { font-size:9px; color:#94a3b8; line-height:1.35; display:flex; align-items:center; gap:4px; }
+    .series-note .ic { width:11px; height:11px; flex:none; }
+    .series-note.series-lock { color:#fcd34d; }
+    .series-status { font-size:10px; color:#e2e8f0; line-height:1.35; }
+    .series-status b { color:#fcd34d; }
+    .series-score { display:flex; align-items:center; justify-content:center; gap:8px; font-size:12px; font-weight:900; color:#fff; }
+    .series-score em { font-style:normal; color:#fcd34d; font-size:14px; }
+    .series-row-btns { display:flex; gap:6px; }
+    .series-btn { flex:1; padding:6px 8px; border-radius:10px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; border:1px solid #475569; color:#cbd5e1; background:transparent; }
+    .series-btn-primary { background:linear-gradient(180deg,#fbbf24,#d97706); border-color:#f59e0b; color:#0f172a; }
+    .series-btn-danger { border-color:#be123c; color:#fda4af; }
+    .series-btn:disabled { opacity:.5; }
+    .series-btn-quiet { font-size:10px; font-weight:800; color:#94a3b8; padding:4px; background:none; border:none; }
+    .series-modal-card { width:100%; max-width:20rem; background:#0f172a; border:1px solid rgba(245,158,11,.5); border-radius:16px; padding:18px; text-align:center; display:flex; flex-direction:column; gap:10px; box-shadow:0 25px 50px -12px rgba(0,0,0,.6); }
+    .series-modal-icon { margin:0 auto; width:44px; height:44px; border-radius:999px; display:flex; align-items:center; justify-content:center; background:rgba(245,158,11,.14); color:#fcd34d; }
+    .series-modal-icon .ic { width:24px; height:24px; }
+    .series-modal-title { font-size:14px; font-weight:900; color:#fcd34d; letter-spacing:.04em; }
+    .series-modal-text { font-size:12px; color:#e2e8f0; line-height:1.45; }
+    .series-modal-pot { display:flex; justify-content:center; gap:14px; font-size:10px; color:#94a3b8; }
+    .series-modal-pot b { display:flex; align-items:center; justify-content:center; gap:3px; font-size:14px; color:#fff; }
+    .series-modal-pot b .ic { width:14px; height:14px; }
+    .series-modal-status { font-size:10px; color:#fda4af; }
+    .series-modal-actions { display:flex; flex-direction:column; gap:6px; }
+    .series-modal-actions .series-btn { padding:9px; font-size:11px; }
     .custom-inline-preview { grid-column:1 / -1; border:1px solid rgba(34,211,238,.35); border-radius:12px; background:rgba(2,6,23,.6); padding:6px; }
     .custom-inline-preview > .shop-preview-stage, .custom-inline-preview > .jfx-stage { margin:0; }
     #challengeTabs { display:flex; gap:4px; }
@@ -5170,6 +5211,10 @@ video {
               <div id="turnTimerBtnRow" class="grid grid-cols-3 gap-1.5"></div>
             </div>
 
+            <!-- Best of series (§ Best of series): the host picks a length,
+                 the other player accepts; drawn by renderSeriesPanel. -->
+            <div id="seriesPanel" class="hidden series-panel"></div>
+
             <div class="flex justify-between items-center text-xs">
               <span class="text-slate-400 font-bold">Connected Players / Bots:</span>
               <span id="playerCounter" class="font-black text-emerald-400 text-sm">1 / 4</span>
@@ -6506,6 +6551,21 @@ video {
       </div>
     </div>
   </div>
+  <div id="seriesModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[86] flex items-center justify-center p-4">
+    <div class="series-modal-card">
+      <div class="series-modal-icon" aria-hidden="true"><svg class="ic"><use href="#ic-swords"/></svg></div>
+      <h2 id="seriesModalTitle" class="series-modal-title">Series challenge</h2>
+      <p id="seriesModalText" class="series-modal-text"></p>
+      <div id="seriesModalPot" class="series-modal-pot"></div>
+      <p id="seriesModalStatus" class="series-modal-status hidden"></p>
+      <div class="series-modal-actions">
+        <button id="seriesAcceptBtn" type="button" class="series-btn series-btn-primary">Accept</button>
+        <button id="seriesDeclineBtn" type="button" class="series-btn series-btn-danger">Decline</button>
+        <button id="seriesLaterBtn" type="button" class="series-btn-quiet">Not now</button>
+      </div>
+    </div>
+  </div>
+
   <div id="needHumanModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-600/50 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
       <div class="text-4xl">🙋</div>
@@ -8101,7 +8161,7 @@ video {
     ['matchStatsModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
-     'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal'].forEach((id) => {
+     'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'seriesModal'].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.parentElement !== document.body) document.body.appendChild(el);
     });
@@ -11464,6 +11524,7 @@ video {
       collapseDeckThemeSection();
 
       updateLobbyPlayerList();
+      watchSeriesRoom();
     }
 
     // Ranked's own minimal "matched" view — deliberately NOT a reuse of
@@ -15620,6 +15681,7 @@ video {
     }
 
     function addBotToMultiplayerLobby() {
+      if (seriesBlocksLobbyAction('bot')) return;
       if (!state.isHost || !state.roomCode) return;
       // An online room needs 2 human players, and the table seats 4 — so at
       // most 2 seats can go to bots. Checking total players alone couldn't
@@ -16397,6 +16459,8 @@ video {
         `;
         list.appendChild(div);
       });
+      watchSeriesRoom();
+      renderSeriesPanel();
     }
 
     function canStartMultiplayerGame() {
@@ -18016,6 +18080,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v232: [
+        ['👤', 'Profile sections now fold away: tap a heading to open or close it.'],
+        ['🛠️', 'Best of series: the lobby choice and the accept pop-up (not open to everyone yet).']
+      ],
       v231: [
         ['🛠️', 'Groundwork for Best of series between friends.']
       ],
@@ -22957,6 +23025,47 @@ video {
       document.getElementById('profileModal').classList.remove('hidden');
     }
     document.getElementById('profileCloseBtn').addEventListener('click', () => document.getElementById('profileModal').classList.add('hidden'));
+    // Profile sections fold like the Shop's (tap the heading; the chevron
+    // turns). Folded ones are remembered in localStorage shithead_profile_collapsed.
+    const PROFILE_COLLAPSED_KEY = 'shithead_profile_collapsed';
+    function profileCollapsedSet() {
+      try { return new Set(JSON.parse(localStorage.getItem(PROFILE_COLLAPSED_KEY) || '[]')); } catch (_) { return new Set(); }
+    }
+    function setupProfileSections() {
+      const scroll = document.querySelector('#profileModal .overflow-y-auto');
+      if (!scroll || scroll.dataset.foldReady) return;
+      scroll.dataset.foldReady = '1';
+      const folded = profileCollapsedSet();
+      [...scroll.children].forEach(section => {
+        const head = section.firstElementChild;
+        if (!head || head.tagName !== 'SPAN' || !head.classList.contains('tracking-widest')) return;
+        const title = head.textContent.trim();
+        const key = title.toLowerCase().replace(/[^a-z]+/g, '-');
+        const body = document.createElement('div');
+        body.className = 'profile-sec-body';
+        while (head.nextSibling) body.appendChild(head.nextSibling);
+        const open = !folded.has(key);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cat-head profile-sec-head' + (head.classList.contains('text-rose-500') ? ' profile-sec-danger' : '');
+        btn.dataset.profileSection = key;
+        btn.setAttribute('aria-expanded', String(open));
+        btn.innerHTML = `<span class="cat-head-title">${title}</span><span class="cat-head-chev" aria-hidden="true">▾</span>`;
+        body.hidden = !open;
+        head.replaceWith(btn);
+        section.appendChild(body);
+        section.classList.add('profile-sec');
+        btn.addEventListener('click', () => {
+          const nowOpen = btn.getAttribute('aria-expanded') !== 'true';
+          btn.setAttribute('aria-expanded', String(nowOpen));
+          body.hidden = !nowOpen;
+          const set = profileCollapsedSet();
+          if (nowOpen) set.delete(key); else set.add(key);
+          try { localStorage.setItem(PROFILE_COLLAPSED_KEY, JSON.stringify([...set])); } catch (_) {}
+        });
+      });
+    }
+    setupProfileSections();
     // Tapping your own picture jumps straight to the picture picker in Custom.
     document.getElementById('profileAvatarBtn').addEventListener('click', () => {
       document.getElementById('profileModal').classList.add('hidden');
@@ -23602,6 +23711,175 @@ video {
       forfeitTurns: 5,           // a stand-in bot plays this many turns, then the absent player forfeits
       minGameMs: 60000           // games reported closer together than this don't count
     };
+    // Lobby side (v232): series/{room} is watched while you're in a Play
+    // Friends room (seriesState). The host picks Single / Best of 3 / Best of 5
+    // in #seriesPanel (locked below level SERIES_RULES.level); the other
+    // player gets #seriesModal to accept (pays their entry) or decline (calls
+    // it off, the host's entry goes back). Games, the score pill and the
+    // result screen come next (section 3).
+    // Until the games themselves count (section 3), only the owner sees the
+    // picker, so nobody pays an entry into a series that can't finish yet.
+    const SERIES_LOBBY_OPEN = false;
+    var seriesState = null;
+    let seriesWatch = null;          // { code, ref, handler }
+    let seriesBusy = false;
+    let seriesModalShownFor = null;  // series id the accept pop-up has opened for
+    const seriesIsActive = (s) => !!s && (s.status === 'pending' || s.status === 'live');
+    const seriesPot = (bestOf) => (SERIES_RULES.bestOf[bestOf] || 0) * 4;
+    function seriesRoomCode() {
+      return state.isMultiplayer && !state.isRanked && !state.spectating && state.roomCode ? state.roomCode : null;
+    }
+    function watchSeriesRoom() {
+      const code = (typeof currentUser !== 'undefined' && currentUser) ? seriesRoomCode() : null;
+      if (seriesWatch && seriesWatch.code === code) return;
+      if (seriesWatch) { try { seriesWatch.ref.off('value', seriesWatch.handler); } catch (_) {} }
+      seriesWatch = null;
+      seriesState = null;
+      if (!code || typeof db === 'undefined' || !db) { renderSeriesPanel(); return; }
+      const ref = db.ref(`series/${code}`);
+      const handler = (snap) => { seriesState = snap.val(); onSeriesChanged(); };
+      seriesWatch = { code, ref, handler };
+      try { ref.on('value', handler, () => {}); } catch (_) {}
+    }
+    function onSeriesChanged() {
+      renderSeriesPanel();
+      const s = seriesState;
+      const me = currentUser && currentUser.uid;
+      if (s && s.status === 'pending' && me && s.guest === me && seriesModalShownFor !== s.id) {
+        seriesModalShownFor = s.id;
+        openSeriesModal();
+      }
+      if (!s || s.status !== 'pending' || s.guest !== me) document.getElementById('seriesModal')?.classList.add('hidden');
+    }
+    // Why the host can't start a series right now ('' = they can).
+    function seriesBlockReason() {
+      const myLevel = playerXp ? xpLevelFor(playerXp.total) : 0;
+      if (myLevel < SERIES_RULES.level) return `Reach level ${SERIES_RULES.level} to play a series (you're level ${myLevel || 1}).`;
+      const humans = state.players.filter(p => !p.isBot);
+      if (state.players.length !== 2 || humans.length !== 2) return 'A series needs exactly two players and no bots.';
+      const other = humans.find(p => p.id !== state.localPlayerId);
+      if (!other || !other.uid) return `${escapeHtml(other?.name || 'The other player')} needs to sign in first.`;
+      const theirs = Number(other.cosmetics?.level) || 0;
+      if (theirs && theirs < SERIES_RULES.level) return `${escapeHtml(other.name)} needs to reach level ${SERIES_RULES.level} first.`;
+      if (state.phase === 'SWAP' || state.phase === 'PLAY') return 'Wait for this game to finish first.';
+      return '';
+    }
+    function seriesOtherName(s) {
+      const me = currentUser && currentUser.uid;
+      const other = s.host === me ? s.guest : s.host;
+      return (s.names && s.names[other]) || 'Your opponent';
+    }
+    function renderSeriesPanel() {
+      const panel = document.getElementById('seriesPanel');
+      if (!panel) return;
+      const code = seriesRoomCode();
+      const me = currentUser && currentUser.uid;
+      const s = seriesIsActive(seriesState) ? seriesState : null;
+      const open = SERIES_LOBBY_OPEN || (typeof isGameOwner === 'function' && isGameOwner()) || !!s;
+      if (!code || !me || !xpShown() || !open || (!s && !state.isHost)) { panel.classList.add('hidden'); panel.innerHTML = ''; return; }
+      panel.classList.remove('hidden');
+      const head = `<div class="series-head">${icon('swords')}<span>Best of series</span></div>`;
+      const gem = icon('gem');
+      const busy = seriesBusy ? ' disabled' : '';
+      if (!s) {
+        const why = seriesBlockReason();
+        const locked = !playerXp || xpLevelFor(playerXp.total) < SERIES_RULES.level;
+        const choice = (n) => `<button type="button" class="series-choice" data-series-best="${n}" aria-pressed="false"${why || seriesBusy ? ' disabled' : ''}>Best of ${n}<small>${SERIES_RULES.bestOf[n]} ${gem} entry</small></button>`;
+        panel.innerHTML = `${head}
+          <div class="series-choices">
+            <button type="button" class="series-choice" aria-pressed="true" disabled>Single<small>No entry</small></button>
+            ${choice(3)}${choice(5)}
+          </div>
+          <p class="series-note${locked ? ' series-lock' : ''}">${why ? `${locked ? icon('lock') : ''}${why}` : `Each player pays the entry. The server matches the pot, so the winner takes 4x (Best of 3: ${seriesPot(3)}, Best of 5: ${seriesPot(5)}).`}</p>`;
+        return;
+      }
+      const other = escapeHtml(seriesOtherName(s));
+      if (s.status === 'pending') {
+        panel.innerHTML = s.host === me
+          ? `${head}<p class="series-status">Best of ${s.bestOf}: waiting for <b>${other}</b> to accept. Winner takes ${s.pot} ${gem}.</p>
+            <div class="series-row-btns"><button type="button" class="series-btn series-btn-danger" data-series-act="cancel"${busy}>Call Off</button></div>`
+          : `${head}<p class="series-status"><b>${other}</b> challenges you to a Best of ${s.bestOf}. Entry ${s.fee} ${gem}, winner takes ${s.pot} ${gem}.</p>
+            <div class="series-row-btns"><button type="button" class="series-btn series-btn-primary" data-series-act="accept"${busy}>Accept</button><button type="button" class="series-btn series-btn-danger" data-series-act="cancel"${busy}>Decline</button></div>`;
+        return;
+      }
+      // Live: the score so far. Before the first game either player can still call it off.
+      const mine = Number(s.wins?.[me]) || 0;
+      const theirs = Number(s.wins?.[s.host === me ? s.guest : s.host]) || 0;
+      const played = Number(s.played) || 0;
+      panel.innerHTML = `${head}
+        <div class="series-score"><span>You</span><em>${mine} – ${theirs}</em><span>${other}</span></div>
+        <p class="series-note">Best of ${s.bestOf} · first to ${s.need} · winner takes ${s.pot} ${gem}. ${state.isHost ? 'Start Match plays the next game.' : 'The host starts the next game.'}</p>
+        ${played ? '' : `<div class="series-row-btns"><button type="button" class="series-btn series-btn-danger" data-series-act="cancel"${busy}>Call Off</button></div>`}`;
+    }
+    function seriesError(e) {
+      const msg = (e && e.message) || '';
+      return !msg || /internal|network|unavailable|deadline|failed to fetch/i.test(msg) ? "Couldn't reach the server. Try again." : msg;
+    }
+    async function seriesCall(op, extra = {}) {
+      const code = seriesRoomCode();
+      if (!code || seriesBusy) return null;
+      seriesBusy = true; renderSeriesPanel();
+      try {
+        const res = await callEconomy('series', { op, roomCode: code, ...extra });
+        if (res && 'series' in res) { seriesState = res.series; onSeriesChanged(); }
+        return res;
+      } finally {
+        seriesBusy = false; renderSeriesPanel();
+      }
+    }
+    async function createSeries(bestOf) {
+      const fee = SERIES_RULES.bestOf[bestOf];
+      const other = state.players.find(p => !p.isBot && p.id !== state.localPlayerId);
+      const name = other ? other.name : 'your opponent';
+      if (!confirm(`Start a Best of ${bestOf} with ${name}?\n\nYou both pay ${fee} Diamonds. The winner takes ${seriesPot(bestOf)}.`)) return;
+      try { await seriesCall('create', { bestOf }); notifyBanner(`Series sent. Waiting for ${name} to accept.`); }
+      catch (e) { notifyBanner(seriesError(e)); }
+    }
+    async function acceptSeries() {
+      const status = document.getElementById('seriesModalStatus');
+      try {
+        await seriesCall('accept');
+        document.getElementById('seriesModal')?.classList.add('hidden');
+        notifyBanner('Series on. Good luck.');
+      } catch (e) {
+        const modalOpen = status && !document.getElementById('seriesModal').classList.contains('hidden');
+        if (modalOpen) { status.textContent = seriesError(e); status.classList.remove('hidden'); }
+        else notifyBanner(seriesError(e));
+      }
+    }
+    async function cancelSeries() {
+      try { await seriesCall('cancel'); document.getElementById('seriesModal')?.classList.add('hidden'); notifyBanner('Series called off. Entries go back.'); }
+      catch (e) { notifyBanner(seriesError(e)); }
+    }
+    function openSeriesModal() {
+      const s = seriesState;
+      if (!s || s.status !== 'pending') return;
+      const gem = icon('gem');
+      document.getElementById('seriesModalTitle').textContent = `Best of ${s.bestOf}`;
+      document.getElementById('seriesModalText').innerHTML = `<b>${escapeHtml(seriesOtherName(s))}</b> challenges you to a Best of ${s.bestOf}. First to ${s.need} wins.`;
+      document.getElementById('seriesModalPot').innerHTML = `<span><b>${s.fee} ${gem}</b>Entry</span><span><b>${s.pot} ${gem}</b>Winner takes</span>`;
+      document.getElementById('seriesModalStatus').classList.add('hidden');
+      document.getElementById('seriesModal').classList.remove('hidden');
+    }
+    // Guards for the lobby while a series is set up.
+    function seriesBlocksLobbyAction(what) {
+      const s = seriesState;
+      if (!seriesIsActive(s) || !seriesRoomCode()) return false;
+      if (what === 'bot') { notifyBanner('Series are one against one: no bots.'); return true; }
+      if (what === 'start' && s.status === 'pending') { notifyBanner(`Waiting for ${seriesOtherName(s)} to accept the series.`); return true; }
+      return false;
+    }
+    document.getElementById('seriesPanel')?.addEventListener('click', (e) => {
+      const pick = e.target.closest('[data-series-best]');
+      if (pick && !pick.disabled) { createSeries(Number(pick.dataset.seriesBest)); return; }
+      const act = e.target.closest('[data-series-act]');
+      if (!act || act.disabled) return;
+      if (act.dataset.seriesAct === 'accept') acceptSeries();
+      else if (act.dataset.seriesAct === 'cancel') cancelSeries();
+    });
+    document.getElementById('seriesAcceptBtn')?.addEventListener('click', acceptSeries);
+    document.getElementById('seriesDeclineBtn')?.addEventListener('click', cancelSeries);
+    document.getElementById('seriesLaterBtn')?.addEventListener('click', () => document.getElementById('seriesModal').classList.add('hidden'));
     // What the player sees (v223). Everything stays hidden until the switch
     // is on: xpFeatureOn follows config/features/xp live (readable by all),
     // playerXp is the account's users/{uid}/xp ({total, level}, from the
@@ -23742,6 +24020,7 @@ video {
     // Menu header badge + Profile's XP bar + the header bar.
     function refreshXpDisplays() {
       refreshHeaderXpBar();
+      renderSeriesPanel();
       const on = xpShown() && !!currentUser && !!playerXp;
       const myLevel = on ? xpLevelFor(playerXp.total) : 0;
       // Menu header, Profile (next to the name) and the table (by your Hand).
@@ -27628,6 +27907,7 @@ video {
     document.getElementById('addBotBtn').addEventListener('click', addBotToMultiplayerLobby);
     document.getElementById('removeBotBtn').addEventListener('click', removeBotFromMultiplayerLobby);
     document.getElementById('startMultiGameBtn').addEventListener('click', () => {
+      if (seriesBlocksLobbyAction('start')) return;
       if (!canStartMultiplayerGame()) return;
       broadcastShuffleStart();
       runShuffleIntro(startMultiplayerGame);
@@ -27887,7 +28167,7 @@ video {
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn', changelogModal: 'changelogCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
-      needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', referralWelcomeModal: 'referralWelcomeCloseBtn', keepAccountModal: null, whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
+      seriesModal: 'seriesLaterBtn', needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', referralWelcomeModal: 'referralWelcomeCloseBtn', keepAccountModal: null, whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
       victoryOverlay: 'closeVictoryBtn', floatingJokerBar: null,
       followUpToastBanner: () => resolveFollowUpPlay(false)
     };
