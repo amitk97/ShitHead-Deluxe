@@ -4362,6 +4362,23 @@ async function runDevTestSuite() {
       assertTrue(!showWhatsNew('v1'), 'A version with no notes shows nothing');
     } finally { modal.classList.add('hidden'); }
   });
+  await test("The owner's Changelog page lists every version and change, key ones tagged; only the owner sees it in the menu", () => {
+    Object.entries(WHATS_NEW).forEach(([v, rows]) => rows.forEach(r => assertTrue(r.length === 2 || r[2] === WN_KEY, `${v}: a note's third element can only be WN_KEY`)));
+    const html = changelogHtml();
+    const box = document.createElement('div'); box.innerHTML = html;
+    assertEqual(box.querySelectorAll('.cl-version').length, Object.keys(WHATS_NEW).length, 'One heading per version');
+    assertEqual(box.querySelectorAll('li').length, Object.values(WHATS_NEW).flat().length, 'Every change is listed');
+    assertEqual(box.querySelectorAll('.cl-key').length, Object.values(WHATS_NEW).flat().filter(isKeyNote).length, 'Key changes are tagged');
+    assertTrue(EXCLUSIVE_PAGE_IDS.includes('changelogModal') && !!BACK_LAYERS.changelogModal, 'A normal menu page (one at a time, Back closes it)');
+    const savedUser = currentUser;
+    try {
+      currentUser = null; updateHamburgerAccountLabel();
+      assertTrue(document.getElementById('menuChangelogBtn').classList.contains('hidden'), 'Hidden from everyone but the owner');
+    } finally { currentUser = savedUser; updateHamburgerAccountLabel(); }
+    openChangelog();
+    assertTrue(!document.getElementById('changelogModal').classList.contains('hidden'), 'It opens');
+    document.getElementById('changelogCloseBtn').click();
+  });
   await test('The README is refreshed every 20 versions from v180 (text + screenshots)', async () => {
     let text = null;
     try { const r = await fetch('README.md', { cache: 'no-store' }); if (r.ok) text = await r.text(); } catch (e) {}
@@ -4376,9 +4393,11 @@ async function runDevTestSuite() {
     assertTrue(Array.isArray(WHATS_NEW[GAME_BUILD.version]) && WHATS_NEW[GAME_BUILD.version].length > 0,
       `WHATS_NEW['${GAME_BUILD.version}'] must describe this build (every release gets an entry)`);
     const cur = Number(GAME_BUILD.version.slice(1));
-    const skipped = whatsNewNotesSince(`v${cur - 3}`);
-    const expected = [cur, cur - 1, cur - 2].flatMap(n => WHATS_NEW[`v${n}`] || []).slice(0, WHATS_NEW_MAX_ROWS);
-    assertEqual(skipped, expected, 'A player three updates behind sees all three, newest first');
+    const skipped = whatsNewNotesSince(`v${cur - 6}`);
+    const expected = [0, 1, 2, 3, 4, 5].flatMap(d => (WHATS_NEW[`v${cur - d}`] || []).filter(r => r[2] === WN_KEY)).slice(0, WHATS_NEW_MAX_ROWS);
+    assertEqual(skipped, expected, 'A player six updates behind sees every key note from all six, newest first');
+    assertTrue(skipped.length > 0 && skipped.every(r => r[2] === WN_KEY), 'Only key notes, never the small fixes');
+    assertTrue(!whatsNewNotesSince('v212', 'v213').length, 'A version with only small fixes shows nothing');
     const row = document.getElementById('setWhatsNewRow');
     assertTrue(!!row && !!row.closest('#settingsTab-sound'), "The What's New switch lives in Sound & Alerts");
     const was = whatsNewOn;
@@ -4811,7 +4830,7 @@ async function runDevTestSuite() {
   // ---- STAGE 1: hamburger menu restructure + responsive presentation ----
   await test('REGRESSION: the hamburger menu has all 9 items in the agreed order, with no duplicates', () => {
     // Error Reports is owner-only (hidden for everyone else).
-    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuShopBtn', 'menuGuideBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuErrorReportsBtn', 'menuInstallBtn', 'menuSignOutBtn'];
+    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuShopBtn', 'menuGuideBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuErrorReportsBtn', 'menuChangelogBtn', 'menuInstallBtn', 'menuSignOutBtn'];
     const nav = document.querySelector('#hamburgerDrawer nav');
     const actualOrder = Array.from(nav.querySelectorAll('button')).map(b => b.id);
     assertEqual(actualOrder, expectedOrder, 'Menu items must appear in exactly the agreed order: Profile, Stats, Personalisation, Friends, Leaderboard, Challenges, Shop, Guide & Strategy, Settings, Support, Sign Out (signed in only)');

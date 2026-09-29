@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v216 (ShitHead-Deluxe-195) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v217 (ShitHead-Deluxe-195) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -851,6 +851,11 @@
     .ptr-indicator.is-ready .ptr-icon { transform: rotate(180deg); }
     .ptr-indicator.is-busy .ptr-icon { animation: ptr-spin .8s linear infinite; }
     @keyframes ptr-spin { to { transform: rotate(360deg); } }
+    #whatsNewList { overflow-y:auto; min-height:0; flex:1 1 auto; }
+    .cl-version { margin:12px 0 6px; display:flex; align-items:baseline; gap:8px; font-size:11px; font-weight:900; color:#fbbf24; letter-spacing:.04em; }
+    .cl-version small { font-size:9px; font-weight:800; color:#64748b; letter-spacing:.06em; text-transform:uppercase; }
+    .whats-new-list li.cl-minor { opacity:.72; }
+    .whats-new-list li .cl-key { margin-left:auto; flex-shrink:0; font-size:8px; font-weight:900; letter-spacing:.06em; color:#fbbf24; border:1px solid rgba(251,191,36,.45); border-radius:999px; padding:1px 6px; align-self:center; }
     .whats-new-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
     .whats-new-list li { display:flex; gap:10px; align-items:flex-start; font-size:12px; line-height:1.35; color:#cbd5e1; background:rgba(15,23,42,.7); border:1px solid #1e293b; border-radius:12px; padding:8px 10px; }
     .whats-new-list li > span:first-child { font-size:18px; line-height:1; flex-shrink:0; }
@@ -4881,6 +4886,7 @@ video {
       <button id="menuSettingsBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg></span><span>Settings</span></button>
       <button id="menuSupportBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-support"/></svg></span><span>Support</span></button>
       <button id="menuErrorReportsBtn" class="hamburger-menu-item hidden"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#2a1016" stroke="#7f1d1d"/><path d="M16 8.5l8.5 15h-17z" fill="none" stroke="#fb7185" stroke-width="2" stroke-linejoin="round"/><path d="M16 14v4.5" stroke="#fb7185" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="21" r="1.2" fill="#fb7185"/></svg></span><span>Error Reports</span></button>
+      <button id="menuChangelogBtn" class="hamburger-menu-item hidden"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#231a08" stroke="#78350f"/><path d="M10 9.5h12M10 14h12M10 18.5h8M10 23h6" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></svg></span><span>Changelog</span></button>
       <button id="menuInstallBtn" class="hamburger-menu-item hidden"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#052e1c" stroke="#047857"/><rect x="10" y="6.5" width="12" height="19" rx="2.5" fill="none" stroke="#6ee7b7" stroke-width="2"/><path d="M16 10.5v8M12.5 15.5 16 19l3.5-3.5" stroke="#34d399" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Install App</span></button>
       <button id="menuSignOutBtn" class="hamburger-menu-item hidden menu-sign-out"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#2a1016" stroke="#7f1d1d"/><path d="M14 8H9.5A1.5 1.5 0 0 0 8 9.5v13A1.5 1.5 0 0 0 9.5 24H14" stroke="#fda4af" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M18 11l5 5-5 5M23 16H13" stroke="#fb7185" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Sign Out</span></button>
     </nav>
@@ -6329,6 +6335,16 @@ video {
   </div>
 
   <!-- NEED-ANOTHER-HUMAN MODAL -->
+  <div id="changelogModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[95] flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/60 rounded-2xl max-w-sm w-full shadow-2xl" style="padding:16px; display:flex; flex-direction:column; gap:8px;">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2" style="flex-shrink:0;">
+        <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Changelog</span>
+        <button id="changelogCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
+      </div>
+      <p id="changelogSummary" class="text-[10px] text-slate-400" style="flex-shrink:0;"></p>
+      <div id="changelogList" style="overflow-y:auto; min-height:0; flex:1 1 auto;"></div>
+    </div>
+  </div>
   <div id="whatsNewModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[95] flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/60 rounded-2xl max-w-sm w-full shadow-2xl" style="padding:20px; display:flex; flex-direction:column; gap:12px;">
       <div class="text-center">
@@ -7971,7 +7987,7 @@ video {
     ['matchStatsModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
-     'matchSummaryModal', 'errorReportsModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal'].forEach((id) => {
+     'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal'].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.parentElement !== document.body) document.body.appendChild(el);
     });
@@ -17329,7 +17345,7 @@ video {
     const MENU_PAGE_IDS = [
       'profileModal', 'statsModal', 'themesModal', 'friendsModal',
       'leaderboardModal', 'challengesModal', 'shopModal', 'rulesModal',
-      'settingsModal', 'supportModal', 'tutorialHubScreen', 'errorReportsModal', 'collectionModal'
+      'settingsModal', 'supportModal', 'tutorialHubScreen', 'errorReportsModal', 'collectionModal', 'changelogModal'
     ];
     // Every scrolling panel gets the floating Jump to top/bottom button,
     // including in-game ones that aren't hamburger menu pages.
@@ -17856,21 +17872,27 @@ video {
 
     // "What's new" once after an update: a returning player whose last seen
     // version (localStorage shithead_seen_version) differs from this build
-    // gets that build's notes. Add an entry here with each BUILD bump that
-    // players would notice; a build with no entry shows nothing.
+    // gets every KEY note since then (a third element WN_KEY: new features,
+    // items, modes, challenges, scoring). Fixes, wording and layout tweaks
+    // stay unmarked: they only show on the owner's Changelog page. Every
+    // BUILD bump needs an entry (a test checks); mark its exciting lines key.
+    const WN_KEY = 'key';
     const WHATS_NEW = {
+      v217: [
+        ['✨', "What's New now shows only the big updates, all of them since you last played."]
+      ],
       v216: [
-        ['🤝', 'Draws now count in your stats: Match History and Ranked stats show how many games you have drawn.'],
-        ['✨', 'There is a hidden challenge to find. Keep playing.']
+        ['🤝', 'Draws now count in your stats: Match History and Ranked stats show how many games you have drawn.', WN_KEY],
+        ['✨', 'There is a hidden challenge to find. Keep playing.', WN_KEY]
       ],
       v215: [
-        ['🤝', 'Games can no longer get stuck: if the same cards keep going round with no progress, the game ends in a draw.'],
+        ['🤝', 'Games can no longer get stuck: if the same cards keep going round with no progress, the game ends in a draw.', WN_KEY],
         ['🛡', 'Ranked rooms are now only open to signed-in players.'],
         ['📖', 'The Guide\'s close button no longer slips off the edge on narrow folded phones.']
       ],
       v214: [
-        ['🏆', 'Ranked wins are worth more: every win adds 10 bonus points on top of the usual change.'],
-        ['🔥', 'Win streak bonus in Ranked: +5 at 2 wins in a row, +10 at 3, +15 at 5 and +20 at 10. Losing streaks cost nothing extra.']
+        ['🏆', 'Ranked wins are worth more: every win adds 10 bonus points on top of the usual change.', WN_KEY],
+        ['🔥', 'Win streak bonus in Ranked: +5 at 2 wins in a row, +10 at 3, +15 at 5 and +20 at 10. Losing streaks cost nothing extra.', WN_KEY]
       ],
       v213: [
         ['🃏', 'The Deck, Pile and Base Card now stay perfectly still: no more sliding when a power card lands or Snap Burn appears.']
@@ -17881,7 +17903,7 @@ video {
         ['🔑', 'A Sign In button in the menu and on the match summary when you are not signed in.']
       ],
       v211: [
-        ['🤖', 'Lots of new bot names from the UK, USA, France, India, Germany and Italy.']
+        ['🤖', 'Lots of new bot names from the UK, USA, France, India, Germany and Italy.', WN_KEY]
       ],
       v210: [
         ['👤', 'The menu now shows your username and profile picture, centred, with the quick buttons in one even row.'],
@@ -17891,8 +17913,8 @@ video {
         ['🃏', 'The home screen card and its power are centred, and fit in the installed app too.']
       ],
       v208: [
-        ['🏠', 'The home screen now shows your table softly in the background, or the event table while an event is on.'],
-        ['🃏', 'Where there is room, the home screen shows a card and its power, changing every few seconds.'],
+        ['🏠', 'The home screen now shows your table softly in the background, or the event table while an event is on.', WN_KEY],
+        ['🃏', 'Where there is room, the home screen shows a card and its power, changing every few seconds.', WN_KEY],
         ['🖥️', 'Fixed: on some laptops the top of the home screen was hidden under the header.']
       ],
       v207: [
@@ -17924,7 +17946,7 @@ video {
         ['👥', 'Fixed: friends could show as online for hours after closing the game or signing out.']
       ],
       v199: [
-        ['🏆', 'Tap a player\'s picture or name on the leaderboard to open their profile, add them as a friend or ignore them.'],
+        ['🏆', 'Tap a player\'s picture or name on the leaderboard to open their profile, add them as a friend or ignore them.', WN_KEY],
         ['💡', 'The "Click to inspect pile cards" hint no longer covers a card\'s description.'],
         ['▦', 'The tutorial explains the Play Matrix in plain words.']
       ],
@@ -17932,16 +17954,16 @@ video {
         ['🎴', 'Dragon Scale and Stained Glass are now 1000 Diamonds each.']
       ],
       v197: [
-        ['🃏', 'Eight new decks: Big Print (free, also in Settings → Accessibility), Lavender, Paper Classic, Blueprint, Chalkboard, Frosted Glass, Neon Night and Royal Gold.'],
-        ['🎴', 'Two new card backs: Dragon Scale and Stained Glass.'],
-        ['🔥', 'The Phoenix picture has been redrawn, and Burn Flame, Transparent Ghost and Frozen look sharper.'],
-        ['🔄', 'When a new version is out, the game offers to update itself.'],
+        ['🃏', 'Eight new decks: Big Print (free, also in Settings → Accessibility), Lavender, Paper Classic, Blueprint, Chalkboard, Frosted Glass, Neon Night and Royal Gold.', WN_KEY],
+        ['🎴', 'Two new card backs: Dragon Scale and Stained Glass.', WN_KEY],
+        ['🔥', 'The Phoenix picture has been redrawn, and Burn Flame, Transparent Ghost and Frozen look sharper.', WN_KEY],
+        ['🔄', 'When a new version is out, the game offers to update itself.', WN_KEY],
         ['📱', 'Better on foldable phones. The tutorial no longer covers Card Powers or the card you hold.']
       ],
       v196: [
-        ['🛍️', 'New in the Shop: three animated premium pictures (Royal Flush, Phoenix, Cosmic Ace) and three premium tables (Neon City, Northern Lights, Deep Space).'],
-        ['🖥️', 'Tablets and computers now get a bigger table and home screen. A phone turned sideways asks to be turned upright.'],
-        ['💡', 'The Quick Start tutorial now shows how to press and hold a card to read what it does.']
+        ['🛍️', 'New in the Shop: three animated premium pictures (Royal Flush, Phoenix, Cosmic Ace) and three premium tables (Neon City, Northern Lights, Deep Space).', WN_KEY],
+        ['🖥️', 'Tablets and computers now get a bigger table and home screen. A phone turned sideways asks to be turned upright.', WN_KEY],
+        ['💡', 'The Quick Start tutorial now shows how to press and hold a card to read what it does.', WN_KEY]
       ],
       v195: [
         ['🖥️', 'Fixed: on a computer, a big hand could run off both sides of the screen.'],
@@ -17959,22 +17981,22 @@ video {
         ['📝', 'Clearer card descriptions, and your face-up cards remind you they wait until your hand is empty.']
       ],
       v191: [
-        ['💡', 'Press and hold any card you can see to read what it does, and whether you can play it now.']
+        ['💡', 'Press and hold any card you can see to read what it does, and whether you can play it now.', WN_KEY]
       ],
       v190: [
-        ['🕘', 'Card History can now fold into a circle on the left of the table. It shows the card to beat; tap it to open the history again.'],
+        ['🕘', 'Card History can now fold into a circle on the left of the table. It shows the card to beat; tap it to open the history again.', WN_KEY],
         ['⚙️', 'New setting: Display → Card History chooses whether each game starts with the history open or folded.']
       ],
       v189: [
-        ['🔥', 'Four premium burns: Black Hole, Origami Fold (the cards fold into swans and fly off), Pixel Blast and Lava Melt.'],
-        ['🃏', 'Four premium Joker effects: Hypnotist, Vampire, Red Card and Portal.'],
-        ['🏆', 'Four premium victories: Trophy Lift, Rocket Launch, Origami Flock and Lion\'s Roar.'],
+        ['🔥', 'Four premium burns: Black Hole, Origami Fold (the cards fold into swans and fly off), Pixel Blast and Lava Melt.', WN_KEY],
+        ['🃏', 'Four premium Joker effects: Hypnotist, Vampire, Red Card and Portal.', WN_KEY],
+        ['🏆', 'Four premium victories: Trophy Lift, Rocket Launch, Origami Flock and Lion\'s Roar.', WN_KEY],
         ['🎴', 'Shop and Custom previews are now the same size for every item, and Retro Arcade and Space show properly.']
       ],
       v188: [
-        ['🛒', 'New in the Shop: decks that change your card faces (Classic Casino, Arcade and the premium Four-Colour).'],
-        ['🎴', 'Four new card backs: Tartan, Retro Arcade, Art Deco and Space.'],
-        ['✨', 'Six premium frames, including two-tone, dashed and moving ones.']
+        ['🛒', 'New in the Shop: decks that change your card faces (Classic Casino, Arcade and the premium Four-Colour).', WN_KEY],
+        ['🎴', 'Four new card backs: Tartan, Retro Arcade, Art Deco and Space.', WN_KEY],
+        ['✨', 'Six premium frames, including two-tone, dashed and moving ones.', WN_KEY]
       ],
       v187: [
         ['🃏', 'Play Friends and Ranked: a Joker that gets countered now leaves the game, along with the Joker that countered it.']
@@ -17993,15 +18015,15 @@ video {
         ['🃏', 'Play Friends: a Joker played with more than one player to pick from now leaves your table properly, instead of coming back to you.']
       ],
       v182: [
-        ['⚔️', 'The Gauntlet starts again from the first Easy bot every day, with full lives.'],
+        ['⚔️', 'The Gauntlet starts again from the first Easy bot every day, with full lives.', WN_KEY],
         ['🎴', 'The Select All Of A Rank button in the header is full size again on iPhones, with a green or red dot for on and off.']
       ],
       v181: [
         ['⚔️', 'The Gauntlet button sits centred and wider once every bot difficulty is unlocked.']
       ],
       v180: [
-        ['🃏', 'Bigger cards in big hands: the hand now fills the space under "Hand" and picks the best number of rows for your screen.'],
-        ['👀', 'When a 3 is on the Pile, its label tells you what you really have to beat, e.g. "Transparent - Q".']
+        ['🃏', 'Bigger cards in big hands: the hand now fills the space under "Hand" and picks the best number of rows for your screen.', WN_KEY],
+        ['👀', 'When a 3 is on the Pile, its label tells you what you really have to beat, e.g. "Transparent - Q".', WN_KEY]
       ],
       v179: [
         ['🎨', 'A cleaner look: softer page frames, easier-to-read small text, and one clear gold button for buying in the Shop.']
@@ -18010,8 +18032,8 @@ video {
         ['✏️', 'Calmer, clearer wording across the game: shorter messages at the table, and less shouting.']
       ],
       v177: [
-        ['🗂️', 'Collection: see every item in the game, the ones you own in colour. Open it from your Profile or by tapping the owned count in Custom.'],
-        ['✅', 'Tap "completed" on the Challenges page to see every challenge you\'ve finished and the Diamonds they paid.']
+        ['🗂️', 'Collection: see every item in the game, the ones you own in colour. Open it from your Profile or by tapping the owned count in Custom.', WN_KEY],
+        ['✅', 'Tap "completed" on the Challenges page to see every challenge you\'ve finished and the Diamonds they paid.', WN_KEY]
       ],
       v176: [
         ['🛠️', 'Fixed: the home screen could get stuck part-way down after reconnecting, and the room code stayed in the header after leaving Play Friends.'],
@@ -18022,7 +18044,7 @@ video {
         ['💎', 'A bigger Diamond balance in the header, and drawn icons for every seasonal event.']
       ],
       v174: [
-        ['💎', 'A fresh look: new drawn icons across the game instead of emoji, a new Diamond, and rank badges for every tier (the crown pictures match their tier colours).'],
+        ['💎', 'A fresh look: new drawn icons across the game instead of emoji, a new Diamond, and rank badges for every tier (the crown pictures match their tier colours).', WN_KEY],
         ['🎮', 'Vs Bots, Online Room and Ranked now have their own icons on the home screen.']
       ],
       v173: [
@@ -18032,30 +18054,30 @@ video {
         ['🎨', 'The Shop now has a Custom button in its header, so you can try on what you just bought straight away.']
       ],
       v171: [
-        ['👕', 'Saved looks in Custom: keep up to 3 complete loadouts and switch between them in one tap.']
+        ['👕', 'Saved looks in Custom: keep up to 3 complete loadouts and switch between them in one tap.', WN_KEY]
       ],
       v170: [
-        ['🙈', "New setting (Display): Show Others' Effects. Turn it off to see other players' burn, Joker and victory effects in the plain default style."]
+        ['🙈', "New setting (Display): Show Others' Effects. Turn it off to see other players' burn, Joker and victory effects in the plain default style.", WN_KEY]
       ],
       v169: [
-        ['🎉', 'Seasonal challenges: during every event a new Seasonal tab in Challenges has four big event-long challenges, plus a Season Complete bonus.']
+        ['🎉', 'Seasonal challenges: during every event a new Seasonal tab in Challenges has four big event-long challenges, plus a Season Complete bonus.', WN_KEY]
       ],
       v168: [
-        ['🪵', 'Two new free tables in Custom: Oak Wood and Classic Felt, with real wood grain and felt texture.'],
+        ['🪵', 'Two new free tables in Custom: Oak Wood and Classic Felt, with real wood grain and felt texture.', WN_KEY],
         ['🃏', "A Joker as your last card on an empty pile now wins, even if it's countered: there's nothing to pick up, so you're out."]
       ],
       v167: [
         ['🃏', "Fixed: if your last card is a Joker and it's countered, you don't finish. You pick up the pile, and the victory waits until the game is really over."]
       ],
       v166: [
-        ['🗂️', 'Custom has a new All tab with every item in the game, seasonal ones included, in sections that fold away.'],
+        ['🗂️', 'Custom has a new All tab with every item in the game, seasonal ones included, in sections that fold away.', WN_KEY],
         ['💎', 'Custom now shows your Diamonds, how many items you own, and a shortcut to the Shop.'],
         ['🔥', 'Burn and Joker previews in Custom now play right under the effect you tap.'],
-        ['🛒', 'The Shop opens on a new All tab with every item in folding sections, and the Name Change Token at the top.']
+        ['🛒', 'The Shop opens on a new All tab with every item in folding sections, and the Name Change Token at the top.', WN_KEY]
       ],
       v165: [
-        ['🃏', 'New in the Shop: Joker Effects. A short animation plays over the table whenever you play a Joker, and everyone at the table sees it.'],
-        ['🎃', "Every seasonal event gets its own Joker Effect too, from the Pumpkin Joker's BOO! to Santa Joker's HO HO HO!"],
+        ['🃏', 'New in the Shop: Joker Effects. A short animation plays over the table whenever you play a Joker, and everyone at the table sees it.', WN_KEY],
+        ['🎃', "Every seasonal event gets its own Joker Effect too, from the Pumpkin Joker's BOO! to Santa Joker's HO HO HO!", WN_KEY],
         ['⚔️', 'The Guide has a new Gauntlet section, and Key Terms now cover the newer features.'],
         ['🛠️', 'Fixed: countering a Joker with your last card now finishes you properly, and the game carries on.']
       ],
@@ -18073,8 +18095,8 @@ video {
         ['🖼️', 'A new profile picture now shows straight away on the Challenges and Gauntlet leaderboards.']
       ],
       v160: [
-        ['🏅', 'Leaderboard has new tabs: Challenges (most challenges completed) and Gauntlet (most Gauntlet bots beaten).'],
-        ['🥇', 'Reach the top 10, #3, #2 or #1 on any leaderboard and a congratulations message lands in your Inbox.']
+        ['🏅', 'Leaderboard has new tabs: Challenges (most challenges completed) and Gauntlet (most Gauntlet bots beaten).', WN_KEY],
+        ['🥇', 'Reach the top 10, #3, #2 or #1 on any leaderboard and a congratulations message lands in your Inbox.', WN_KEY]
       ],
       v159: [
         ['⬇', 'Profile → Your Data → Download My Data saves a copy of everything stored about your account.'],
@@ -18103,12 +18125,12 @@ video {
         ['🎁', 'Invite links now work for brand-new players straight after sign-up, and the "You joined" message waits until you have picked your username.']
       ],
       v151: [
-        ['🔗', 'Invite friends! Friends → Invite Friends shares your own link. When a friend signs up with it and plays 3 games, you get 💎 100 and they get 💎 50.'],
-        ['👥', 'Profile → Invite Friends shows your code, who joined and how many games they have played.'],
-        ['🏅', 'Recruit 5 players to earn the Recruiter picture and challenge.']
+        ['🔗', 'Invite friends! Friends → Invite Friends shares your own link. When a friend signs up with it and plays 3 games, you get 💎 100 and they get 💎 50.', WN_KEY],
+        ['👥', 'Profile → Invite Friends shows your code, who joined and how many games they have played.', WN_KEY],
+        ['🏅', 'Recruit 5 players to earn the Recruiter picture and challenge.', WN_KEY]
       ],
       v150: [
-        ['🏆', 'Challenges: the Gauntlet is now a challenge (Bots tab), plus a Daily Gauntlet worth 50 💎 every day. The top of the page shows how many challenges you have completed.'],
+        ['🏆', 'Challenges: the Gauntlet is now a challenge (Bots tab), plus a Daily Gauntlet worth 50 💎 every day. The top of the page shows how many challenges you have completed.', WN_KEY],
         ['☰', 'Challenges and the Shop are now one tap away at the top of the menu.'],
         ['🃏', 'Your showcase shows your cards the way they look in the game, with your frame on them.'],
         ['✕', 'The Play Matrix has a close button.']
@@ -18123,29 +18145,29 @@ video {
         ['🎨', 'Gauntlet round labels use the same colours as the difficulty buttons.']
       ],
       v147: [
-        ['⚔️', 'New: the Gauntlet! Beat 5 bots in a row (Easy, Easy, Medium, Hard, Boss) with 3 lives. Find it under the bot buttons.'],
-        ['🏆', 'Beat it for the first time to win 200 💎, the Gauntlet Champion picture and the Gauntlet Gold frame. Then 50 💎 each day you beat it.']
+        ['⚔️', 'New: the Gauntlet! Beat 5 bots in a row (Easy, Easy, Medium, Hard, Boss) with 3 lives. Find it under the bot buttons.', WN_KEY],
+        ['🏆', 'Beat it for the first time to win 200 💎, the Gauntlet Champion picture and the Gauntlet Gold frame. Then 50 💎 each day you beat it.', WN_KEY]
       ],
       v146: [
         ['🔒', 'Online games are steadier: two players acting at the same moment can no longer undo each other\'s move.'],
         ['📱', "If the host's app goes into the background, another player's phone keeps the game (and its bots) moving."]
       ],
       v145: [
-        ['🎴', 'Ranked matches are now dealt by the server: nobody can rig the deal.']
+        ['🎴', 'Ranked matches are now dealt by the server: nobody can rig the deal.', WN_KEY]
       ],
       v144: [
         ['🛡️', 'Ranked is checked on the server now: every move in a Ranked match is verified, so a tampered game can be spotted.']
       ],
       v143: [
-        ['⚑', "Report a player: tap their name at the table, then REPORT (cheating, offensive name, abuse, quitting)."]
+        ['⚑', "Report a player: tap their name at the table, then REPORT (cheating, offensive name, abuse, quitting).", WN_KEY]
       ],
       v142: [
-        ['🎮', 'Friends list shows who is in a match, and in which mode.'],
-        ['👀', "Tap WATCH to spectate a friend's online or Ranked game live (Ranked hands stay hidden)."]
+        ['🎮', 'Friends list shows who is in a match, and in which mode.', WN_KEY],
+        ['👀', "Tap WATCH to spectate a friend's online or Ranked game live (Ranked hands stay hidden).", WN_KEY]
       ],
       v141: [
         ['📊', 'Match Stats still show players who left, even after you reload or rejoin.'],
-        ['📜', "Match History now keeps everyone's numbers: tap a match to compare."]
+        ['📜', "Match History now keeps everyone's numbers: tap a match to compare.", WN_KEY]
       ],
       v140: [
         ['✨', "What's New now lists everything you missed if you skipped a few updates."],
@@ -18161,35 +18183,35 @@ video {
         ['🖼️', 'Friends list and Leaderboard update live: new profile pictures show straight away.']
       ],
       v136: [
-        ['🂠', 'Face-down cards now fly from your table to the Pile before they flip.'],
+        ['🂠', 'Face-down cards now fly from your table to the Pile before they flip.', WN_KEY],
         ['📖', 'New Swap Phase section in Guide & Strategy: what to put face-up and why.']
       ],
       v134: [
-        ['🔗', 'Invite links: in an Online Room, tap SHARE INVITE LINK and send it on WhatsApp or anywhere. Friends tap it to jump straight into your room.'],
-        ['🃏', 'Hand Sort (Settings → Gameplay): turn it on to sort your hand by power (4 up to A, then 10, 2, 3, Joker) instead of by rank.']
+        ['🔗', 'Invite links: in an Online Room, tap SHARE INVITE LINK and send it on WhatsApp or anywhere. Friends tap it to jump straight into your room.', WN_KEY],
+        ['🃏', 'Hand Sort (Settings → Gameplay): turn it on to sort your hand by power (4 up to A, then 10, 2, 3, Joker) instead of by rank.', WN_KEY]
       ],
       v130: [
-        ['🎯', 'New Getting Started challenges: play your first game (ShitHead Virgin) and win your first game (Beginner), 20 Diamonds each.']
+        ['🎯', 'New Getting Started challenges: play your first game (ShitHead Virgin) and win your first game (Beginner), 20 Diamonds each.', WN_KEY]
       ],
       v129: [
         ['💎', 'Finish the Quick Start tutorial for 50 Diamonds.'],
         ['🎓', 'Tutorial Graduate now pays 200 Diamonds: complete Quick Start and every tutorial lesson.']
       ],
       v126: [
-        ['⚡', 'New one-minute Quick Start: tap Tutorial to learn the whole game in 6 quick steps.'],
-        ['☝️', "Last card alert: you'll see (and hear) when a player is down to their final card."],
-        ['📤', 'Share your result: tap SHARE on the match summary to send a picture of your game to friends.'],
-        ['📴', 'Play Vs Bots with no signal: once the app has been opened online, it works offline too.'],
-        ['🦇', 'The Bat Swarm victory now has real flapping bats.']
+        ['⚡', 'New one-minute Quick Start: tap Tutorial to learn the whole game in 6 quick steps.', WN_KEY],
+        ['☝️', "Last card alert: you'll see (and hear) when a player is down to their final card.", WN_KEY],
+        ['📤', 'Share your result: tap SHARE on the match summary to send a picture of your game to friends.', WN_KEY],
+        ['📴', 'Play Vs Bots with no signal: once the app has been opened online, it works offline too.', WN_KEY],
+        ['🦇', 'The Bat Swarm victory now has real flapping bats.', WN_KEY]
       ],
       v115: [
-        ['📜', 'Match History: menu → Stats shows your last 30 matches, with the finishing order, your stats, Diamonds earned and rating changes.'],
-        ['🔥', 'Burns now have sound! Every Burn effect has its own, from ice shattering to candy pops, and everyone at the table hears yours.'],
+        ['📜', 'Match History: menu → Stats shows your last 30 matches, with the finishing order, your stats, Diamonds earned and rating changes.', WN_KEY],
+        ['🔥', 'Burns now have sound! Every Burn effect has its own, from ice shattering to candy pops, and everyone at the table hears yours.', WN_KEY],
         ['🃏', 'Fixed: countering a Joker now tops your hand back up to 3 straight away.']
       ],
       v114: [
-        ['🔄', 'Closed the app mid-match? Open it again to jump straight back into your seat, even if a bot was covering for you.'],
-        ['🃏', 'Blind flips online: everyone at the table now watches the card turn over, not just the player flipping it.'],
+        ['🔄', 'Closed the app mid-match? Open it again to jump straight back into your seat, even if a bot was covering for you.', WN_KEY],
+        ['🃏', 'Blind flips online: everyone at the table now watches the card turn over, not just the player flipping it.', WN_KEY],
         ['👥', 'Friends shows who is online first. Invite friends straight into the room you are in from the lobby.'],
         ['🔃', 'Pull down on your Inbox or Friends list to refresh it.'],
         ['📳', 'Your turn now gives a short buzz too (Settings → Vibration).'],
@@ -18199,20 +18221,24 @@ video {
     };
     const SEEN_VERSION_KEY = 'shithead_seen_version';
     const versionNumber = (v) => Number(String(v || '').replace(/^v/, '')) || 0;
-    // Every note newer than `seen` up to `version`, newest first (a player
-    // who skipped a few updates sees all of them), capped to stay readable.
+    // Every KEY note newer than `seen` up to `version`, newest first: a
+    // player who skipped a few updates sees all the big ones together.
+    const isKeyNote = (row) => row[2] === WN_KEY;
     function whatsNewNotesSince(seen, version = GAME_BUILD.version) {
       const from = versionNumber(seen), to = versionNumber(version);
       return Object.keys(WHATS_NEW).filter(v => versionNumber(v) > from && versionNumber(v) <= to)
         .sort((a, b) => versionNumber(b) - versionNumber(a))
-        .flatMap(v => WHATS_NEW[v]).slice(0, WHATS_NEW_MAX_ROWS);
+        .flatMap(v => WHATS_NEW[v].filter(isKeyNote)).slice(0, WHATS_NEW_MAX_ROWS);
     }
-    const WHATS_NEW_MAX_ROWS = 8;
+    const WHATS_NEW_MAX_ROWS = 40;
+    const whatsNewRowHtml = ([mark, text]) => `<li><span>${icon(EMOJI_ICON[String(mark).replace(/\uFE0F/g, '')] || 'sparkle')}</span><span>${escapeHtml(text)}</span></li>`;
     function showWhatsNew(version = GAME_BUILD.version, seen = null) {
       const notes = seen ? whatsNewNotesSince(seen, version) : WHATS_NEW[version];
       if (!notes || !notes.length) return false;
-      document.getElementById('whatsNewVersion').textContent = `Version ${version.replace(/^v/, '')}${GAME_BUILD.date ? ` · ${GAME_BUILD.date}` : ''}`;
-      document.getElementById('whatsNewList').innerHTML = notes.map(([mark, text]) => `<li><span>${icon(EMOJI_ICON[String(mark).replace(/\uFE0F/g, '')] || 'sparkle')}</span><span>${escapeHtml(text)}</span></li>`).join('');
+      document.getElementById('whatsNewVersion').textContent = seen && versionNumber(seen) < versionNumber(version) - 1
+        ? `Since you last played · version ${seen.replace(/^v/, '')} → ${version.replace(/^v/, '')}`
+        : `Version ${version.replace(/^v/, '')}${GAME_BUILD.date ? ` · ${GAME_BUILD.date}` : ''}`;
+      document.getElementById('whatsNewList').innerHTML = notes.map(whatsNewRowHtml).join('');
       document.getElementById('whatsNewModal').classList.remove('hidden');
       return true;
     }
@@ -22202,6 +22228,28 @@ video {
       loadErrorReports();
     });
     document.getElementById('errorReportsCloseBtn').addEventListener('click', () => document.getElementById('errorReportsModal').classList.add('hidden'));
+    // Owner-only Changelog: every version's notes, newest first; the key
+    // ones (what returning players see in What's New) are tagged KEY.
+    function changelogHtml() {
+      return Object.keys(WHATS_NEW).sort((a, b) => versionNumber(b) - versionNumber(a)).map((v) => {
+        const rows = WHATS_NEW[v];
+        const keys = rows.filter(isKeyNote).length;
+        return `<div class="cl-version">${v}${v === GAME_BUILD.version ? ' <small>live</small>' : ''}<small>${keys ? `${keys} key` : 'minor only'}</small></div>
+          <ul class="whats-new-list">${rows.map(r => whatsNewRowHtml(r).replace('<li>', `<li class="${isKeyNote(r) ? '' : 'cl-minor'}">`).replace(/<\/li>$/, `${isKeyNote(r) ? '<span class="cl-key">KEY</span>' : ''}</li>`)).join('')}</ul>`;
+      }).join('');
+    }
+    function openChangelog() {
+      const all = Object.values(WHATS_NEW).flat();
+      document.getElementById('changelogSummary').textContent = `${Object.keys(WHATS_NEW).length} versions, ${all.length} changes (${all.filter(isKeyNote).length} key: returning players see these).`;
+      document.getElementById('changelogList').innerHTML = changelogHtml();
+      document.getElementById('changelogModal').classList.remove('hidden');
+    }
+    document.getElementById('menuChangelogBtn').addEventListener('click', () => {
+      closeHamburgerMenu();
+      if (!isGameOwner()) return;
+      openChangelog();
+    });
+    document.getElementById('changelogCloseBtn').addEventListener('click', () => document.getElementById('changelogModal').classList.add('hidden'));
     document.getElementById('errorReportsRefreshBtn').addEventListener('click', loadErrorReports);
     document.getElementById('errorReportsClearBtn').addEventListener('click', () => {
       const path = { players: 'playerReports', audit: 'rankedAudit', health: 'health' }[reportsTab] || 'errorReports';
@@ -22751,6 +22799,7 @@ video {
       if (!drawerLabel) return;
       document.getElementById('menuSignOutBtn')?.classList.toggle('hidden', !currentUser);
       document.getElementById('menuErrorReportsBtn')?.classList.toggle('hidden', !isGameOwner());
+      document.getElementById('menuChangelogBtn')?.classList.toggle('hidden', !isGameOwner());
       drawerAvatar?.classList.toggle('hidden', !currentUser);
       document.getElementById('drawerSignInBtn')?.classList.toggle('hidden', !!currentUser);
       if (currentUser) {
@@ -27072,7 +27121,7 @@ video {
     // player is typing into a room-code field. M and I are deliberately
     // NOT gated by this (see below) — they need to work precisely when
     // something IS open, to close it.
-    const BLOCKING_OVERLAY_IDS = ['authModal', 'challengesModal', 'deleteAccountModal', 'friendsModal', 'inboxModal', 'leaderboardModal', 'matchStatsModal', 'needHumanModal', 'pileInspectModal', 'profileModal', 'rulesModal', 'settingsModal', 'shopModal', 'statsModal', 'supportModal', 'themesModal', 'usernameModal', 'errorReportsModal', 'rejoinModal', 'whatsNewModal'];
+    const BLOCKING_OVERLAY_IDS = ['authModal', 'challengesModal', 'deleteAccountModal', 'friendsModal', 'inboxModal', 'leaderboardModal', 'matchStatsModal', 'needHumanModal', 'pileInspectModal', 'profileModal', 'rulesModal', 'settingsModal', 'shopModal', 'statsModal', 'supportModal', 'themesModal', 'usernameModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal'];
     // Every page and pop-up springs in as it opens, whatever opened it.
     (function watchOverlayEntrances() {
       const ids = [...BLOCKING_OVERLAY_IDS, 'tutorialHubScreen', 'matchSummaryModal', 'difficultyUnlockPopup'];
@@ -27269,7 +27318,7 @@ video {
       dailyRewardModal: () => closeDailyReward(), playerPopup: 'playerPopupClose', matchSummaryModal: 'matchSummaryClose',
       authModal: 'authCloseBtn', usernameModal: null, difficultyUnlockPopup: 'difficultyUnlockPopupBtn',
       matchStatsModal: 'matchStatsCloseBtn', friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
-      leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn',
+      leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn', changelogModal: 'changelogCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
       needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', referralWelcomeModal: 'referralWelcomeCloseBtn', keepAccountModal: null, whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
