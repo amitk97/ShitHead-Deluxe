@@ -130,10 +130,12 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   // Premium pictures (2500) and tables (3000), v196.
   await admin('users/alice/diamonds', 'PUT', 5600);
   r = await call('alice', { action: 'buyItem', itemId: 'avatar-phoenix' });
-  ok(r.diamonds === 3100, 'buy Phoenix (2500)', r);
+  ok(r.error && (await admin('users/alice/diamonds')) === 5600, 'Phoenix is no longer sold', r);
+  r = await call('alice', { action: 'buyItem', itemId: 'avatar-royal-flush' });
+  ok(r.diamonds === 3100, 'buy Royal Flush (2500)', r);
   r = await call('alice', { action: 'buyItem', itemId: 'table-space' });
   ok(r.diamonds === 100, 'buy Deep Space (3000)', r);
-  await allowed('equip a premium picture', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-phoenix'));
+  await allowed('equip a premium picture', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-royal-flush'));
   await allowed('equip a premium table', db => set(ref(db, 'users/alice/equippedCosmetics/tableTheme'), 'table-space'));
   await denied('equip an unowned premium picture', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-cosmic-ace'));
   await denied('equip an unowned premium table', db => set(ref(db, 'users/alice/equippedCosmetics/tableTheme'), 'table-neon'));
@@ -158,6 +160,10 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok(r.error && /owned/i.test(r.error.message) && (await admin('users/alice/diamonds')) === 5000, 'no buying Sapphire Sovereign twice', r);
   r = await call('alice', { action: 'buyItem', itemId: 'avatar-crimson-inferno' });
   ok(r.diamonds === 0, 'buy Crimson Inferno (5000)', r);
+  await admin('users/alice/diamonds', 'PUT', 5000);
+  r = await call('alice', { action: 'buyItem', itemId: 'avatar-turtley' });
+  ok(r.diamonds === 0, 'buy Turtley (5000)', r);
+  await allowed('equip Turtley', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-turtley'));
   ok((await admin('users/alice/ownedCosmetics/avatar-sapphire-sovereign')) !== null && (await admin('users/alice/ownedCosmetics/avatar-crimson-inferno')) !== null, 'both saved to the account');
   await allowed('equip a premium photo picture', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-sapphire-sovereign'));
   await allowed('equip the other one', db => set(ref(db, 'users/alice/equippedCosmetics/avatar'), 'avatar-crimson-inferno'));

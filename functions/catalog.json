@@ -392,10 +392,6 @@
    "name": "Royal Flush",
    "cost": 2500
   },
-  "avatar-phoenix": {
-   "name": "Phoenix",
-   "cost": 2500
-  },
   "avatar-cosmic-ace": {
    "name": "Cosmic Ace",
    "cost": 2500
@@ -410,6 +406,10 @@
   },
   "avatar-scarlet-guardian": {
    "name": "Scarlet Guardian",
+   "cost": 5000
+  },
+  "avatar-turtley": {
+   "name": "Turtley",
    "cost": 5000
   },
   "back-lunar": {

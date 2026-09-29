@@ -1,0 +1,200 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Turtley, the 5000 premium picture: a faceted emerald turtle with a gold
+     shell grid, rendered with three.js. tools/make-turtley.js loads this page
+     and calls renderPass(...) for the full picture and each moving layer. -->
+<style>html,body{margin:0;background:transparent}canvas{display:block}</style>
+<script type="importmap">{ "imports": { "three": "./three.module.js", "three/addons/": "./addons/" } }</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const SIZE = 1254;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(SIZE, SIZE);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.setClearColor(0x000000, 0);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.45;
+
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+camera.position.set(-2.3, 3.9, 7.0);
+camera.lookAt(-0.55, 0.78, 0.25);
+
+// Lights: warm key from the top left, emerald/teal rim from behind, soft fill.
+const key = new THREE.DirectionalLight(0xfff1d6, 2.6); key.position.set(-4, 7, 5); scene.add(key);
+const rim = new THREE.DirectionalLight(0x5eead4, 2.2); rim.position.set(4, 3, -6); scene.add(rim);
+const rim2 = new THREE.DirectionalLight(0xfde68a, 1.1); rim2.position.set(5, 1, 3); scene.add(rim2);
+scene.add(new THREE.HemisphereLight(0x9bd8ff, 0x0b1020, 0.25));
+
+const gold = new THREE.MeshPhysicalMaterial({ color: 0xe0b04a, metalness: 1, roughness: 0.22, clearcoat: 0.4 });
+const goldDark = new THREE.MeshPhysicalMaterial({ color: 0x9a6b1c, metalness: 1, roughness: 0.35 });
+const emerald = new THREE.MeshPhysicalMaterial({ color: 0x0b7d40, metalness: 0.3, roughness: 0.1, clearcoat: 1, clearcoatRoughness: 0.04, flatShading: true, envMapIntensity: 0.7 });
+const emeraldDeep = new THREE.MeshPhysicalMaterial({ color: 0x055a30, metalness: 0.3, roughness: 0.14, clearcoat: 1, flatShading: true, envMapIntensity: 0.6 });
+const skin = new THREE.MeshPhysicalMaterial({ color: 0x0c7a42, metalness: 0.25, roughness: 0.2, clearcoat: 1, flatShading: true, envMapIntensity: 0.55 });
+const belly = new THREE.MeshPhysicalMaterial({ color: 0xd9c46a, metalness: 0.5, roughness: 0.3, clearcoat: 0.6, flatShading: true });
+const eyeBlack = new THREE.MeshPhysicalMaterial({ color: 0x05070a, metalness: 0.2, roughness: 0.05, clearcoat: 1 });
+const iris = new THREE.MeshStandardMaterial({ color: 0xffb020, emissive: 0xff8a00, emissiveIntensity: 1.4, roughness: 0.2 });
+const white = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+const turtle = new THREE.Group(); scene.add(turtle);
+const groups = { body: new THREE.Group(), head: new THREE.Group(), jaw: new THREE.Group() };
+Object.values(groups).forEach(g => turtle.add(g));
+
+// ---- shell: a gold dome with a honeycomb of faceted emerald scutes ----
+const SX = 1.45, SY = 0.95, SZ = 1.18;
+const shellDark = new THREE.MeshPhysicalMaterial({ color: 0x02331b, metalness: 0.4, roughness: 0.3, clearcoat: 1 });
+const dome = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2), shellDark);
+dome.scale.set(SX, SY, SZ); dome.position.y = 0.32; groups.body.add(dome);
+const shellY = (x, z) => { const t = 1 - (x / SX) ** 2 - (z / SZ) ** 2; return t <= 0 ? null : SY * Math.sqrt(t); };
+const tileGeo = (() => {
+  const g = new THREE.CylinderGeometry(0.262, 0.285, 0.05, 6, 1);
+  const cap = new THREE.CylinderGeometry(0.2, 0.262, 0.05, 6, 1); cap.translate(0, 0.05, 0);
+  const merged = new THREE.BufferGeometry();
+  const a = g.toNonIndexed(), b = cap.toNonIndexed();
+  const pos = new Float32Array(a.attributes.position.array.length + b.attributes.position.array.length);
+  pos.set(a.attributes.position.array); pos.set(b.attributes.position.array, a.attributes.position.array.length);
+  merged.setAttribute('position', new THREE.BufferAttribute(pos, 3)); merged.computeVertexNormals();
+  return merged;
+})();
+const shellNormal = (x, z) => { const y = shellY(x, z); return new THREE.Vector3(2 * x / (SX * SX), 2 * y / (SY * SY), 2 * z / (SZ * SZ)).normalize(); };
+// one faceted gem in a gold bezel, sitting on the dome at (x, z)
+function gem(x, z, s, mat) {
+  const n = shellNormal(x, z);
+  const tile = new THREE.Mesh(tileGeo, mat);
+  tile.position.set(x, shellY(x, z) + 0.32, z);
+  tile.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n);
+  tile.rotateY(Math.PI / 6);
+  tile.scale.set(s, 1, s);
+  groups.body.add(tile);
+  const bezel = new THREE.Mesh(bezelGeo, gold);
+  bezel.position.copy(tile.position); bezel.quaternion.copy(tile.quaternion); bezel.scale.set(s, s, s);
+  groups.body.add(bezel);
+}
+const R = 0.29;                                   // hex grid spacing
+const bezelGeo = new THREE.TorusGeometry(0.285, 0.028, 6, 6); bezelGeo.rotateX(Math.PI / 2); bezelGeo.rotateY(Math.PI / 6); bezelGeo.translate(0, 0.02, 0);
+for (let row = -5; row <= 5; row++) {
+  for (let col = -6; col <= 6; col++) {
+    const x = col * R * Math.sqrt(3) + (row & 1 ? R * Math.sqrt(3) / 2 : 0);
+    const z = row * R * 1.5;
+    const k = (x / SX) ** 2 + (z / SZ) ** 2;
+    if (k > 0.62) continue;
+    gem(x, z, Math.min(1.12, 1 / Math.max(shellNormal(x, z).y, 0.7)), k < 0.3 ? emerald : emeraldDeep);
+  }
+}
+// two rings of smaller gems down the sides to the rim
+[[0.84, 22, 0.8], [0.955, 30, 0.6]].forEach(([r, n, sc], ring) => {
+  for (let i = 0; i < n; i++) {
+    const a = (i + ring * 0.5) / n * Math.PI * 2;
+    gem(SX * r * Math.cos(a), SZ * r * Math.sin(a), sc, ring ? emeraldDeep : emerald);
+  }
+});
+// gold rim round the shell edge, and the belly plate under it
+const rimRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.075, 20, 160), gold);
+rimRing.rotation.x = Math.PI / 2; rimRing.scale.set(SX + 0.04, SZ + 0.04, 1.2); rimRing.position.y = 0.33; groups.body.add(rimRing);
+const marg = new THREE.Mesh(new THREE.TorusGeometry(1, 0.11, 8, 48), emeraldDeep);
+marg.rotation.x = Math.PI / 2; marg.scale.set(SX - 0.02, SZ - 0.02, 0.9); marg.position.y = 0.36; groups.body.add(marg);
+const plastron = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), belly);
+plastron.scale.set(SX * 0.95, 0.22, SZ * 0.9); plastron.position.y = 0.28; groups.body.add(plastron);
+
+// ---- legs: stubby faceted limbs with gold claws ----
+function leg(x, z, ry, len = 0.62, front = false) {
+  const g = new THREE.Group();
+  const limb = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, len, 5, 8), skin);
+  limb.rotation.z = Math.PI / 2; limb.position.x = -len / 2; limb.scale.set(1, 1, 0.85); g.add(limb);
+  const foot = new THREE.Mesh(new THREE.IcosahedronGeometry(0.27, 2), skin);
+  foot.scale.set(1.15, 0.55, 1); foot.position.set(-len - 0.05, -0.12, 0); g.add(foot);
+  for (let i = -1; i <= 1; i++) {
+    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 6), gold);
+    claw.rotation.z = Math.PI / 2 + 0.35; claw.position.set(-len - 0.3, -0.16, i * 0.13); g.add(claw);
+  }
+  g.position.set(x, 0.32, z); g.rotation.y = ry; g.rotation.z = front ? 0.35 : 0.25;
+  groups.body.add(g);
+}
+leg(-0.95, 0.72, -0.55, 0.62, true);     // front, near side
+leg(-0.95, -0.72, 0.55, 0.62, true);     // front, far side
+leg(0.95, 0.75, -2.55, 0.45);            // back, near
+leg(0.95, -0.75, 2.55, 0.45);            // back, far
+const tail = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.5, 7), skin);
+tail.rotation.z = -Math.PI / 2 - 0.25; tail.position.set(1.62, 0.28, 0); groups.body.add(tail);
+
+// ---- neck + head (skull with the upper beak), then the lower jaw ----
+const NECK_BASE = new THREE.Vector3(-1.2, 0.55, 0.12);
+const HEAD = new THREE.Vector3(-2.02, 1.36, 0.3);
+const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, NECK_BASE.distanceTo(HEAD) * 0.85, 8, 14), skin);
+neck.position.copy(NECK_BASE).lerp(HEAD, 0.5);
+neck.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), HEAD.clone().sub(NECK_BASE).normalize());
+groups.head.add(neck);
+const skull = new THREE.Mesh(new THREE.IcosahedronGeometry(0.46, 3), skin);
+skull.scale.set(1.2, 0.86, 0.95); skull.position.copy(HEAD); groups.head.add(skull);
+const snout = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 3), skin);
+snout.scale.set(1.35, 0.6, 0.86); snout.position.copy(HEAD).add(new THREE.Vector3(-0.38, -0.02, 0)); groups.head.add(snout);
+const beakTop = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.26, 10), gold);
+beakTop.rotation.z = Math.PI / 2 + 0.6; beakTop.position.copy(HEAD).add(new THREE.Vector3(-0.74, -0.08, 0)); groups.head.add(beakTop);
+// a small gem on the crown of the head
+{
+  const top = HEAD.clone().add(new THREE.Vector3(0.05, 0.37, 0));
+  const g = new THREE.Mesh(tileGeo, emerald); g.position.copy(top); g.scale.set(0.55, 1, 0.55); g.rotation.z = 0.25; groups.head.add(g);
+  const b = new THREE.Mesh(bezelGeo, gold); b.position.copy(top); b.scale.set(0.55, 0.55, 0.55); b.rotation.z = 0.25; groups.head.add(b);
+}
+// inside of the mouth: seen only when the jaw drops
+const mouthIn = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 10), new THREE.MeshStandardMaterial({ color: 0x5a0f1a, roughness: 0.6 }));
+mouthIn.scale.set(1.05, 0.26, 0.6); mouthIn.position.copy(HEAD).add(new THREE.Vector3(-0.3, -0.12, 0)); groups.head.add(mouthIn);
+// eyes on both sides; the iris turns to look at the viewer
+turtle.rotation.y = 0.62; turtle.updateMatrixWorld(true);
+for (const side of [1, -1]) {
+  const e = new THREE.Group();
+  const pos = HEAD.clone().add(new THREE.Vector3(-0.2, 0.11, 0.36 * side));
+  e.position.copy(pos);
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.13, 24, 16), eyeBlack); e.add(ball);
+  const look = turtle.worldToLocal(camera.position.clone()).sub(pos).normalize();
+  const out = new THREE.Vector3(-0.55, 0.05, side).normalize().lerp(look, side > 0 ? 0.7 : 0.2).normalize();
+  const ir = new THREE.Mesh(new THREE.SphereGeometry(0.075, 18, 12), iris); ir.position.copy(out).multiplyScalar(0.075); e.add(ir);
+  const pup = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 8), eyeBlack); pup.position.copy(out).multiplyScalar(0.108); e.add(pup);
+  const glint = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), white);
+  glint.position.copy(out).multiplyScalar(0.125).add(new THREE.Vector3(0.02, 0.05, 0)); e.add(glint);
+  const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.2, 4, 8), gold);
+  brow.position.set(0.01, 0.15, 0.03 * side); brow.rotation.set(0, 0, Math.PI / 2 - 0.35); e.add(brow);
+  e.remove(brow);
+  groups.head.add(e);
+}
+// the lower jaw, hinged at the back of the mouth
+const HINGE = HEAD.clone().add(new THREE.Vector3(0.05, -0.17, 0));
+const jawPivot = new THREE.Group(); jawPivot.position.copy(HINGE); groups.jaw.add(jawPivot);
+const jaw = new THREE.Mesh(new THREE.IcosahedronGeometry(0.34, 3), skin);
+jaw.scale.set(1.3, 0.42, 0.8); jaw.position.set(-0.38, -0.08, 0); jawPivot.add(jaw);
+const beakLow = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.2, 10), gold);
+beakLow.rotation.z = Math.PI / 2 - 0.35; beakLow.position.set(-0.8, -0.06, 0); jawPivot.add(beakLow);
+
+
+// Draw one pass: only the named groups are visible in colour; `occluders`
+// are drawn to depth only, so a layer is hidden where the body would cover it.
+window.renderPass = (show, occluders = [], jawOpen = 0) => {
+  jawPivot.rotation.z = jawOpen;
+  const all = Object.entries(groups);
+  const restore = [];
+  all.forEach(([name, g]) => {
+    g.visible = show.includes(name) || occluders.includes(name);
+    // occluders go first (renderOrder -1) so their depth is there before the layer draws
+    g.traverse(o => { if (o.isMesh) { restore.push([o, o.material]); o.renderOrder = 0; if (occluders.includes(name) && !show.includes(name)) { o.material = o.material.clone(); o.material.colorWrite = false; o.renderOrder = -1; } } });
+  });
+  renderer.render(scene, camera);
+  restore.forEach(([o, m]) => { o.material = m; });
+  return renderer.domElement.toDataURL('image/png');
+};
+// screen position (px) of a 3D point, for pivots and the snap flash
+window.project = (name) => {
+  const p = { hinge: HINGE, head: NECK_BASE, beak: HEAD.clone().add(new THREE.Vector3(-0.84, -0.2, 0)) }[name].clone().applyMatrix4(turtle.matrixWorld).project(camera);
+  return [(p.x + 1) / 2 * SIZE, (1 - p.y) / 2 * SIZE];
+};
+window.ready = true;
+</script>
+</body></html>

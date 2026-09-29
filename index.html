@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v218 (ShitHead-Deluxe-196) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v219 (ShitHead-Deluxe-197) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -33,7 +33,7 @@
   <meta property="og:title" content="ShitHead Deluxe: the classic card game" />
   <meta property="og:description" content="Free on your phone. Play bots, your friends online or Ranked. No download needed." />
   <meta property="og:url" content="https://shithead-pro.web.app/" />
-  <meta property="og:image" content="https://shithead-pro.web.app/icons/share-preview.jpg" />
+  <meta property="og:image" content="https://shithead-pro.web.app/icons/share-preview-v2.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -41,7 +41,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="ShitHead Deluxe: the classic card game" />
   <meta name="twitter:description" content="Free on your phone. Play bots, your friends online or Ranked. No download needed." />
-  <meta name="twitter:image" content="https://shithead-pro.web.app/icons/share-preview.jpg" />
+  <meta name="twitter:image" content="https://shithead-pro.web.app/icons/share-preview-v2.jpg" />
   <link rel="canonical" href="https://shithead-pro.web.app/" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#020617" />
@@ -1754,10 +1754,6 @@
     @keyframes av-tail { from { transform:rotate(-6deg) scaleY(.94); } to { transform:rotate(6deg) scaleY(1.06); } }
     .av-ember { transform-box:fill-box; transform-origin:center; animation:av-ember 2s ease-out infinite; }
     @keyframes av-ember { 0% { transform:translateY(0) scale(1); opacity:0; } 20% { opacity:1; } 100% { transform:translateY(-26px) scale(.3); opacity:0; } }
-    .av-phx-wing { transform-box:view-box; transform-origin:29.2px 31.5px; animation:av-phx-wing 1.7s cubic-bezier(.45,0,.35,1) infinite; }
-    @keyframes av-phx-wing { 0%,100% { transform:rotate(-9deg); } 48% { transform:rotate(13deg) scale(1.03,.94); } }
-    .av-phx-tail { transform-box:view-box; transform-origin:31.5px 43px; animation:av-phx-tail 2.6s ease-in-out infinite alternate; }
-    @keyframes av-phx-tail { from { transform:rotate(-5deg) scaleY(.96); } to { transform:rotate(5deg) scaleY(1.04); } }
     .av-float { animation:av-float 3s ease-in-out infinite alternate; }
     @keyframes av-float { from { transform:translateY(1.2px); } to { transform:translateY(-1.2px); } }
     .av-pulse { transform-box:fill-box; transform-origin:center; animation:av-pulse 2.2s ease-in-out infinite; }
@@ -1768,35 +1764,57 @@
     .av-orbit-back { animation:av-orbit-back 4.2s linear infinite; }
     @keyframes av-orbit-front { 0%,49% { opacity:1; } 51%,99% { opacity:0; } 100% { opacity:1; } }
     @keyframes av-orbit-back { 0%,49% { opacity:0; } 51%,99% { opacity:1; } 100% { opacity:0; } }
-    /* Premium photo pictures (Sapphire Sovereign, Crimson Inferno, Scarlet Guardian): one 6s loop each, CSS only. */
-    .av-px-sapphire-sovereign-tail, .av-px-crimson-inferno-tail, .av-px-scarlet-guardian-wing { transform-box:fill-box; animation:6s ease-in-out infinite; }
+    /* Premium photo pictures (Sapphire Sovereign, Crimson Inferno, Scarlet Guardian): one 6s loop each, CSS only.
+       Parts turn about their pivot (inline transform-origin, in the picture's 1000-unit square). */
+    .av-px-part { transform-box:view-box; animation:6s ease-in-out infinite; }
+    /* Sapphire Sovereign roars: rears back, throws the head up with the jaw wide, shakes, settles. */
+    .av-px-sapphire-sovereign-head { animation-name:av-px-lion-head; }
+    @keyframes av-px-lion-head { 0%,12%,70%,100% { transform:rotate(0) scale(1); } 20% { transform:rotate(-1.6deg) scale(.99); } 27% { transform:rotate(2.6deg) scale(1.035); } 31% { transform:rotate(2deg) scale(1.04); } 35% { transform:rotate(2.8deg) scale(1.04); } 39% { transform:rotate(2deg) scale(1.04); } 43% { transform:rotate(2.8deg) scale(1.04); } 47% { transform:rotate(2.2deg) scale(1.035); } 58% { transform:rotate(.3deg) scale(1.005); } }
+    .av-px-sapphire-sovereign-jaw { animation-name:av-px-lion-jaw; }
+    @keyframes av-px-lion-jaw { 0%,20%,62%,100% { transform:rotate(0); } 27% { transform:rotate(-17deg); } 33% { transform:rotate(-14deg); } 39% { transform:rotate(-17deg); } 45% { transform:rotate(-14deg); } 51% { transform:rotate(-16deg); } }
     .av-px-sapphire-sovereign-tail { animation-name:av-px-lion-tail; }
-    @keyframes av-px-lion-tail { 0%,100% { transform:rotate(-1.6deg); } 50% { transform:rotate(1.8deg); } }
+    @keyframes av-px-lion-tail { 0%,100% { transform:rotate(-1.4deg); } 27% { transform:rotate(2.6deg); } 36% { transform:rotate(-.6deg); } 45% { transform:rotate(2.2deg); } 70% { transform:rotate(.6deg); } }
+    .av-px-sapphire-sovereign-gem { animation:av-px-gem 6s ease-in-out infinite; }
+    @keyframes av-px-gem { 0%,18%,64%,100% { opacity:.2; transform:scale(.8); } 30%,50% { opacity:.75; transform:scale(1.1); } 82% { opacity:.45; transform:scale(.95); } }
+    .av-px-sapphire-sovereign-eye { opacity:0; animation:av-px-lion-eye 6s ease-in-out infinite; }
+    @keyframes av-px-lion-eye { 0%,22%,56%,100% { opacity:0; transform:scale(.6); } 28%,48% { opacity:1; transform:scale(1.15); } }
+    .av-px-ring { transform-box:fill-box; transform-origin:100% 50%; animation:av-px-ring 6s ease-out infinite; }
+    .av-px-ring-2 { animation-delay:.35s; } .av-px-ring-3 { animation-delay:.7s; }
+    @keyframes av-px-ring { 0%,26% { opacity:0; transform:translateX(0) scale(.5); } 28% { opacity:.9; } 44%,100% { opacity:0; transform:translateX(-150px) scale(2.8); } }
+    /* Crimson Inferno chuckles: the whole devil heaves from the feet, eyes flaring, tail wagging; then the ember runs up the trident. */
+    .av-px-crimson-inferno-body { animation-name:av-px-devil-chuckle; }
+    @keyframes av-px-devil-chuckle { 0%,6%,44%,100% { transform:rotate(0) scale(1,1); } 10% { transform:rotate(-.8deg) scale(1.012,.975); } 13% { transform:rotate(-1.2deg) scale(.996,1.008); } 16% { transform:rotate(-1.4deg) scale(1.013,.972); } 19% { transform:rotate(-1.6deg) scale(.996,1.008); } 22% { transform:rotate(-1.8deg) scale(1.013,.972); } 25% { transform:rotate(-1.8deg) scale(.996,1.008); } 28% { transform:rotate(-1.6deg) scale(1.012,.975); } 31% { transform:rotate(-1.4deg) scale(.997,1.006); } 34% { transform:rotate(-1.2deg) scale(1.01,.98); } 38% { transform:rotate(-.6deg) scale(1,1); } }
     .av-px-crimson-inferno-tail { animation-name:av-px-devil-tail; }
-    @keyframes av-px-devil-tail { 0%,100% { transform:rotate(0deg); } 20% { transform:rotate(5deg); } 45% { transform:rotate(-3deg); } 70% { transform:rotate(4deg); } }
-    .av-px-scarlet-guardian-wing { animation-name:av-px-bird-wing; }
-    .av-px-rise { animation:av-px-rise 3s ease-out infinite; }
-    @keyframes av-px-rise { 0% { opacity:0; transform:translate(0,0) scale(.6); } 15% { opacity:1; } 70% { opacity:.8; } 100% { opacity:0; transform:translate(18px,-150px) scale(.3); } }
-    @keyframes av-px-bird-wing { 0%,80%,100% { transform:rotate(0deg); } 30% { transform:rotate(-1.8deg) scale(1.01); } 50% { transform:rotate(.8deg); } 65% { transform:rotate(-.4deg); } }
-    .av-px-glow { transform-box:fill-box; transform-origin:center; opacity:.45; mix-blend-mode:screen; }
-    .av-px-sapphire-sovereign-glow { animation:av-px-gem 3s ease-in-out infinite; }
-    @keyframes av-px-gem { 0%,100% { opacity:.2; transform:scale(.8); } 50% { opacity:.9; transform:scale(1.12); } }
-    .av-px-crimson-inferno-glow { opacity:0; animation:av-px-eyes 6s ease-in-out infinite; }
-    @keyframes av-px-eyes { 0%,42%,62%,100% { opacity:0; transform:scale(.7); } 48%,55% { opacity:1; transform:scale(1.1); } }
-    .av-px-sweep { animation:6s ease-in-out infinite; }
-    .av-px-sapphire-sovereign-sweep { animation-name:av-px-sweep-a; }
-    .av-px-scarlet-guardian-sweep { animation-name:av-px-sweep-b; }
-    @keyframes av-px-sweep-a { 0%,12% { transform:translateX(0); } 48%,100% { transform:translateX(1700px); } }
-    @keyframes av-px-sweep-b { 0%,50% { transform:translateX(0); } 86%,100% { transform:translateX(1700px); } }
+    @keyframes av-px-devil-tail { 0%,6%,40%,100% { transform:rotate(0); } 11% { transform:rotate(7deg); } 16% { transform:rotate(-4deg); } 21% { transform:rotate(7deg); } 26% { transform:rotate(-4deg); } 31% { transform:rotate(6deg); } 36% { transform:rotate(-2deg); } 70% { transform:rotate(3deg); } }
+    .av-px-crimson-inferno-eye { opacity:0; animation:av-px-eyes 6s ease-in-out infinite; }
+    @keyframes av-px-eyes { 0%,7%,44%,100% { opacity:0; transform:scale(.7); } 11%,17%,23%,29%,35% { opacity:1; transform:scale(1.15); } 14%,20%,26%,32% { opacity:.55; transform:scale(.95); } }
     .av-px-ember { animation:av-px-ember 6s linear infinite; }
-    @keyframes av-px-ember { 0%,8% { opacity:0; transform:translate(0,0) scale(.6); } 10% { opacity:1; transform:translate(0,0) scale(1); } 16% { transform:translate(24.2px,-194.4px); } 22% { opacity:1; transform:translate(41.1px,-340.1px); } 26% { opacity:1; transform:translate(54.8px,-390.3px) scale(1.2); } 28%,100% { opacity:0; transform:translate(54.8px,-390.3px) scale(.6); } }
+    @keyframes av-px-ember { 0%,48% { opacity:0; transform:translate(0,0) scale(.6); } 50% { opacity:1; transform:translate(0,0) scale(1); } 56% { transform:translate(24.2px,-194.4px); } 62% { opacity:1; transform:translate(41.1px,-340.1px); } 66% { opacity:1; transform:translate(54.8px,-390.3px) scale(1.2); } 68%,100% { opacity:0; transform:translate(54.8px,-390.3px) scale(.6); } }
     .av-px-spark { animation:6s linear infinite; }
     .av-px-spark-0 { animation-name:av-px-spark-0; }
     .av-px-spark-1 { animation-name:av-px-spark-1; }
     .av-px-spark-2 { animation-name:av-px-spark-2; }
-    @keyframes av-px-spark-0 { 0%,25% { opacity:0; transform:translate(0,0); } 26% { opacity:1; transform:translate(0,0); } 30% { transform:translate(-84.6px,-55.1px); } 34% { transform:translate(-72.5px,-148.2px); } 38% { opacity:1; transform:translate(-65.3px,-233.2px) scale(1); } 41% { opacity:1; transform:translate(-65.3px,-233.2px) scale(1.9); } 46%,100% { opacity:0; transform:translate(-65.3px,-233.2px) scale(.5); } }
-    @keyframes av-px-spark-1 { 0%,25% { opacity:0; transform:translate(0,0); } 26% { opacity:1; transform:translate(0,0); } 32% { transform:translate(12px,-119.9px); } 38% { opacity:1; transform:translate(21.7px,-272.1px) scale(1); } 41% { opacity:1; transform:translate(21.7px,-272.1px) scale(2.1); } 46%,100% { opacity:0; transform:translate(21.7px,-272.1px) scale(.5); } }
-    @keyframes av-px-spark-2 { 0%,25% { opacity:0; transform:translate(0,0); } 26% { opacity:1; transform:translate(0,0); } 30% { transform:translate(92.5px,-55.1px); } 34% { transform:translate(96.6px,-140.1px); } 38% { opacity:1; transform:translate(100.6px,-208.9px) scale(1); } 41% { opacity:1; transform:translate(100.6px,-208.9px) scale(1.9); } 46%,100% { opacity:0; transform:translate(100.6px,-208.9px) scale(.5); } }
+    @keyframes av-px-spark-0 { 0%,65% { opacity:0; transform:translate(0,0); } 66% { opacity:1; transform:translate(0,0); } 70% { transform:translate(-84.6px,-55.1px); } 74% { transform:translate(-72.5px,-148.2px); } 78% { opacity:1; transform:translate(-65.3px,-233.2px) scale(1); } 81% { opacity:1; transform:translate(-65.3px,-233.2px) scale(1.9); } 86%,100% { opacity:0; transform:translate(-65.3px,-233.2px) scale(.5); } }
+    @keyframes av-px-spark-1 { 0%,65% { opacity:0; transform:translate(0,0); } 66% { opacity:1; transform:translate(0,0); } 72% { transform:translate(12px,-119.9px); } 78% { opacity:1; transform:translate(21.7px,-272.1px) scale(1); } 81% { opacity:1; transform:translate(21.7px,-272.1px) scale(2.1); } 86%,100% { opacity:0; transform:translate(21.7px,-272.1px) scale(.5); } }
+    @keyframes av-px-spark-2 { 0%,65% { opacity:0; transform:translate(0,0); } 66% { opacity:1; transform:translate(0,0); } 70% { transform:translate(92.5px,-55.1px); } 74% { transform:translate(96.6px,-140.1px); } 78% { opacity:1; transform:translate(100.6px,-208.9px) scale(1); } 81% { opacity:1; transform:translate(100.6px,-208.9px) scale(1.9); } 86%,100% { opacity:0; transform:translate(100.6px,-208.9px) scale(.5); } }
+    /* Scarlet Guardian flaps: two strong beats (up, down with the wing foreshortened), then a glide. */
+    .av-px-scarlet-guardian-wing { animation-name:av-px-bird-flap; }
+    @keyframes av-px-bird-flap { 0%,62%,100% { transform:rotate(0) scale(1); } 8% { transform:rotate(-5deg) scale(.97); } 18% { transform:rotate(11deg) scale(.88,.93); } 28% { transform:rotate(-5deg) scale(.97); } 38% { transform:rotate(11deg) scale(.88,.93); } 48% { transform:rotate(-2deg) scale(.99); } 56% { transform:rotate(1deg); } }
+    /* Turtley snaps: pulls back, lunges with the jaw open, SNAP (a gold clack at the beak), then a quick double chomp. */
+    .av-px-turtley-head { animation-name:av-px-turtle-head; }
+    @keyframes av-px-turtle-head { 0%,8%,34%,40%,64%,100% { transform:translate(0,0) rotate(0); } 15% { transform:translate(8px,2px) rotate(2deg); } 20% { transform:translate(-24px,5px) rotate(-3deg); } 26% { transform:translate(-16px,3px) rotate(-2deg); } 45% { transform:translate(4px,0) rotate(1deg); } 49% { transform:translate(-18px,4px) rotate(-2deg); } 52% { transform:translate(-10px,2px) rotate(-1deg); } 56% { transform:translate(-20px,4px) rotate(-2.5deg); } }
+    .av-px-turtley-jaw { animation-name:av-px-turtle-jaw; }
+    @keyframes av-px-turtle-jaw { 0%,8%,20%,42%,49%,56%,100% { transform:rotate(0); } 16% { transform:rotate(-26deg); } 45% { transform:rotate(-22deg); } 52.5% { transform:rotate(-18deg); } }
+    .av-px-snap { transform-box:fill-box; transform-origin:center; animation:av-px-snap 6s ease-out infinite; }
+    @keyframes av-px-snap { 0%,19.5%,25%,48.5%,53%,55.5%,60%,100% { opacity:0; transform:scale(.5); } 20.5%,49.5%,56.5% { opacity:1; transform:scale(1.1); } }
+    .av-px-glow { transform-box:fill-box; transform-origin:center; opacity:.45; mix-blend-mode:screen; }
+    .av-px-sweep { animation:6s ease-in-out infinite; }
+    .av-px-sapphire-sovereign-sweep { animation-name:av-px-sweep-a; }
+    .av-px-scarlet-guardian-sweep { animation-name:av-px-sweep-b; }
+    @keyframes av-px-sweep-a { 0%,64% { transform:translateX(0); } 94%,100% { transform:translateX(1700px); } }
+    @keyframes av-px-sweep-b { 0%,58% { transform:translateX(0); } 90%,100% { transform:translateX(1700px); } }
+    .av-px-rise { animation:av-px-rise 3s ease-out infinite; }
+    @keyframes av-px-rise { 0% { opacity:0; transform:translate(0,0) scale(.6); } 15% { opacity:1; } 70% { opacity:.8; } 100% { opacity:0; transform:translate(18px,-150px) scale(.3); } }
     /* Animated pictures pause offscreen and while the app is hidden (avatarMotionWatch). */
     .av-still .avatar-svg *, body.app-hidden .avatar-svg * { animation-play-state:paused !important; }
     body.reduce-motion .avatar-svg * { animation:none !important; }
@@ -17909,6 +17927,12 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v219: [
+        ['✨', 'New premium picture: Turtley, a jewelled emerald turtle that snaps its jaws.', WN_KEY],
+        ['✨', 'The premium pictures come alive: Sapphire Sovereign roars, Crimson Inferno chuckles and Scarlet Guardian flaps its wings.', WN_KEY],
+        ['🔗', 'Game links shared in chats now show a fresh preview picture.'],
+        ['✨', 'The Phoenix picture has been retired.']
+      ],
       v218: [
         ['✨', 'Three new animated premium pictures in the Shop: Sapphire Sovereign, Crimson Inferno and Scarlet Guardian.', WN_KEY]
       ],
@@ -18354,7 +18378,8 @@ video {
       // Premium photo pictures (their own art draws the frame)
       sovereign: ['#1d3a8a', '#050b1f', '#c9a14a'],
       inferno:   ['#5c1414', '#0a0612', '#c9a14a'],
-      guardian:  ['#5c1a24', '#080a18', '#c9a14a']
+      guardian:  ['#5c1a24', '#080a18', '#c9a14a'],
+      turtley:   ['#065f46', '#03140c', '#c9a14a']
     };
 
     // Premium photo pictures (5000): Sapphire Sovereign (crowned lion),
@@ -18368,45 +18393,70 @@ video {
     // Motion and paused offscreen / in a hidden app (avatarMotionWatch).
     // Layout numbers come from the build script's output.
     const PREMIUM_PHOTO_AVATARS = (() => {
+      // parts are drawn in order; a part with a parent moves inside it (the
+      // lion's jaw rides on its head); glows/ember sit on a part ('on') so
+      // they move with it. px/py = the part's pivot in the 1000-unit square.
       const LAYOUT = {
         'avatar-sapphire-sovereign': { file: 'sapphire-sovereign', tone: 'sovereign', glow: '#7cc4ff', sheen: true,
-          parts: { tail: { x: 681.0, y: 136.7, w: 249.6, h: 554.0, ox: 8.3, oy: 92.3 } },
-          glows: [[483.3, 85.1, 27.1], [551.0, 75.3, 27.1], [634.0, 116.2, 23.9]] },
+          parts: [
+            { name: 'head', x: 327.0, y: 19.6, w: 386.7, h: 525.4, px: 550.2, py: 523.7 },
+            { name: 'jaw', parent: 'head', x: 365.2, y: 241.4, w: 86.2, h: 83.5, px: 440.2, py: 255.3 },
+            { name: 'tail', x: 681.0, y: 136.7, w: 249.6, h: 554.0, px: 701.8, py: 648.1 }
+          ],
+          glows: [[483.3, 85.1, 27.1, 'head', 'gem'], [551.0, 75.3, 27.1, 'head', 'gem'], [634.0, 116.2, 23.9, 'head', 'gem'],
+                  [436.2, 178.4, 20.7, 'head', 'eye']],
+          roar: [352, 268] },
         'avatar-crimson-inferno': { file: 'crimson-inferno', tone: 'inferno', glow: '#ffb020',
-          parts: { tail: { x: 89.4, y: 438.9, w: 197.2, h: 301.2, ox: 42.8, oy: 97.6 } },
-          glows: [[455.7, 340.1, 46.7], [558.0, 344.1, 46.7]],
-          ember: [[735.1, 712.6], [759.3, 518.2], [776.2, 372.5], [789.9, 322.3]],
-          prongs: [[[789.9, 322.3], [705.3, 267.2], [717.4, 174.1], [724.6, 89.1]],
-                   [[789.9, 322.3], [801.9, 202.4], [811.6, 50.2]],
-                   [[789.9, 322.3], [882.4, 267.2], [886.5, 182.2], [890.5, 113.4]]] },
+          parts: [
+            { name: 'body', x: 106.3, y: 26.7, w: 818.0, h: 949.0, px: 505.6, py: 947.4 },
+            { name: 'tail', x: 89.4, y: 438.9, w: 197.2, h: 301.2, px: 173.9, py: 732.8 }
+          ],
+          glows: [[455.7, 340.1, 46.7, 'body', 'eye'], [558.0, 344.1, 46.7, 'body', 'eye']],
+          ember: [735.1, 712.6], prongs: [[789.9, 322.3], [789.9, 322.3], [789.9, 322.3]], emberOn: 'body' },
         'avatar-scarlet-guardian': { file: 'scarlet-guardian', tone: 'guardian', sheen: true,
-          parts: { wing: { x: 471.3, y: 21.8, w: 417.1, h: 568.0, ox: -0.2, oy: 75.6 } },
-          glows: [], embers: [[250, 820], [170, 560], [820, 700], [905, 520], [760, 900]] }
+          parts: [{ name: 'wing', x: 471.3, y: 21.8, w: 417.1, h: 568.0, px: 475.3, py: 448.0 }],
+          glows: [], embers: [[250, 820], [170, 560], [820, 700], [905, 520], [760, 900]] },
+        // Turtley: a 3D render (tools/turtley). The head lunges and the jaw snaps shut.
+        'avatar-turtley': { file: 'turtley', tone: 'turtley', glow: '#6ee7b7',
+          parts: [
+            { name: 'head', x: 97.3, y: 299.8, w: 371.6, h: 318.2, px: 421.0, py: 557.6 },
+            { name: 'jaw', parent: 'head', x: 100.5, y: 549.4, w: 208.9, h: 72.6, px: 307.6, py: 487.2 }
+          ],
+          glows: [], snap: [101.9, 593.0], snapOn: 'head' }
       };
       const src = (file) => `art/avatars/${file}.webp`;
       const art = {};
-      let defs = `<linearGradient id="av-px-band" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      let defs = `<linearGradient id="av-px-band" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
         <radialGradient id="av-px-ember"><stop offset="0" stop-color="#fff7d6"/><stop offset=".35" stop-color="#ffc233" stop-opacity=".95"/><stop offset="1" stop-color="#ff4d00" stop-opacity="0"/></radialGradient>`;
       Object.entries(LAYOUT).forEach(([id, L]) => {
         const key = id.replace('avatar-', '');
         defs += `<radialGradient id="av-px-glow-${key}"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".3" stop-color="${L.glow || '#fff'}" stop-opacity=".7"/><stop offset="1" stop-color="${L.glow || '#fff'}" stop-opacity="0"/></radialGradient>`;
         if (L.sheen) defs += `<mask id="av-px-sheen-${key}" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000"><image href="${src(L.file + '-sheen')}" width="1000" height="1000"/></mask>`;
-        const parts = Object.entries(L.parts).map(([name, p]) =>
-          `<image class="av-px-${key}-${name}" style="transform-origin:${p.ox}% ${p.oy}%" href="${src(L.file + '-' + name)}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" preserveAspectRatio="none"/>`).join('');
-        const glows = L.glows.map(([x, y, r], i) =>
-          `<circle class="av-px-glow av-px-${key}-glow" style="animation-delay:${(-i * 0.4).toFixed(1)}s" cx="${x}" cy="${y}" r="${r * 1.6}" fill="url(#av-px-glow-${key})"/>`).join('');
+        const glowsOn = (part) => L.glows.filter(g => g[3] === part).map(([x, y, r, , kind], i) =>
+          `<circle class="av-px-glow av-px-${key}-${kind}" style="animation-delay:${(-i * 0.4).toFixed(1)}s" cx="${x}" cy="${y}" r="${r * (kind === 'gem' ? 1 : 1.15)}" fill="url(#av-px-glow-${key})"/>`).join('');
+        // the ember climbs the shaft, then three sparks run to the prong tips
+        const emberOn = (part) => (L.ember && L.emberOn === part)
+          ? `<g transform="translate(${L.ember[0]} ${L.ember[1]})"><circle class="av-px-ember" r="30" fill="url(#av-px-ember)" opacity="0"/></g>`
+            + L.prongs.map(([x, y], i) => `<g transform="translate(${x} ${y})"><circle class="av-px-spark av-px-spark-${i}" r="22" fill="url(#av-px-ember)" opacity="0"/></g>`).join('')
+          : '';
+        // the clack of a snapping jaw: a gold flash with three short rays at the beak
+        const snapOn = (part) => (L.snap && L.snapOn === part)
+          ? `<g transform="translate(${L.snap[0]} ${L.snap[1]})"><g class="av-px-snap" opacity="0"><circle r="26" fill="url(#av-px-ember)"/>`
+            + [-150, -180, 150].map(a => `<path d="M${Math.cos(a * Math.PI / 180) * 38} ${Math.sin(a * Math.PI / 180) * 38}L${Math.cos(a * Math.PI / 180) * 78} ${Math.sin(a * Math.PI / 180) * 78}" stroke="#fde68a" stroke-width="9" stroke-linecap="round"/>`).join('')
+            + '</g></g>'
+          : '';
+        const partSvg = (p) => `<g class="av-px-part av-px-${key}-${p.name}" style="transform-origin:${p.px}px ${p.py}px">`
+          + `<image href="${src(L.file + '-' + p.name)}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" preserveAspectRatio="none"/>`
+          + L.parts.filter(c => c.parent === p.name).map(partSvg).join('') + glowsOn(p.name) + emberOn(p.name) + snapOn(p.name) + '</g>';
+        const parts = L.parts.filter(p => !p.parent).map(partSvg).join('');
+        // roar: sound rings rolling out of the lion's mouth
+        const roar = L.roar ? [1, 2, 3].map(i =>
+          `<g transform="translate(${L.roar[0]} ${L.roar[1]})"><path class="av-px-ring av-px-ring-${i}" d="M-38 -32A50 50 0 0 0 -38 32" fill="none" stroke="#93c5fd" stroke-width="6" stroke-linecap="round" opacity="0"/></g>`).join('') : '';
+        const sheen = L.sheen ? `<g mask="url(#av-px-sheen-${key})"><g transform="rotate(18 500 500)"><rect class="av-px-sweep av-px-${key}-sweep" x="-420" y="-300" width="260" height="1600" fill="url(#av-px-band)"/></g></g>` : '';
         const rising = (L.embers || []).map(([x, y], i) =>
           `<g transform="translate(${x} ${y})"><circle class="av-px-rise" style="animation-delay:${(-i * 0.6).toFixed(1)}s" r="15" fill="url(#av-px-ember)" opacity="0"/></g>`).join('');
-        const sheen = L.sheen ? `<g mask="url(#av-px-sheen-${key})"><g transform="rotate(18 500 500)"><rect class="av-px-sweep av-px-${key}-sweep" x="-420" y="-300" width="260" height="1600" fill="url(#av-px-band)"/></g></g>` : '';
-        // the ember climbs the shaft from the origin of its own keyframes
-        let ember = '';
-        if (L.ember) {
-          const [ex, ey] = L.ember[0];
-          ember = `<g transform="translate(${ex} ${ey})"><circle class="av-px-ember" r="30" fill="url(#av-px-ember)" opacity="0"/></g>`
-            + L.prongs.map((path, i) => `<g transform="translate(${path[0][0]} ${path[0][1]})"><circle class="av-px-spark av-px-spark-${i}" r="22" fill="url(#av-px-ember)" opacity="0"/></g>`).join('');
-        }
         art[id] = { tone: L.tone, animated: true, photo: true, small: src(L.file + '-sm'),
-          art: `<image href="${src(L.file)}" width="1000" height="1000"/>${parts}${glows}${sheen}${ember}${rising}` };
+          art: `<image href="${src(L.file)}" width="1000" height="1000"/>${parts}${glowsOn(undefined)}${roar}${sheen}${rising}` };
       });
       return { defs, art, LAYOUT };
     })();
@@ -18432,15 +18482,7 @@ video {
       <linearGradient id="av-m-clay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fb923c"/><stop offset=".5" stop-color="#c2410c"/><stop offset="1" stop-color="#7c2d12"/></linearGradient>
       <linearGradient id="av-m-ginger" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3a263"/><stop offset=".55" stop-color="#b86b2b"/><stop offset="1" stop-color="#7c4214"/></linearGradient>
       <linearGradient id="av-m-phoenix" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fef08a"/><stop offset=".45" stop-color="#f97316"/><stop offset="1" stop-color="#b91c1c"/></linearGradient>
-      <radialGradient id="av-phx-prim" gradientUnits="userSpaceOnUse" cx="29" cy="31" r="26"><stop offset="0" stop-color="#fde68a"/><stop offset=".35" stop-color="#f59e0b"/><stop offset=".62" stop-color="#ea580c"/><stop offset=".85" stop-color="#b91c1c"/><stop offset="1" stop-color="#7f1d1d"/></radialGradient>
-      <radialGradient id="av-phx-sec" gradientUnits="userSpaceOnUse" cx="29" cy="31" r="17"><stop offset="0" stop-color="#fff7d6"/><stop offset=".4" stop-color="#fbbf24"/><stop offset=".8" stop-color="#f97316"/><stop offset="1" stop-color="#dc2626"/></radialGradient>
-      <radialGradient id="av-phx-cov" gradientUnits="userSpaceOnUse" cx="29" cy="31" r="10"><stop offset="0" stop-color="#fffbeb"/><stop offset=".6" stop-color="#fcd34d"/><stop offset="1" stop-color="#f59e0b"/></radialGradient>
-      <radialGradient id="av-phx-tail" gradientUnits="userSpaceOnUse" cx="31.5" cy="43" r="23"><stop offset="0" stop-color="#fbbf24"/><stop offset=".45" stop-color="#ea580c"/><stop offset=".8" stop-color="#b91c1c"/><stop offset="1" stop-color="#fcd34d"/></radialGradient>
-      <linearGradient id="av-phx-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcd34d"/><stop offset=".35" stop-color="#f97316"/><stop offset=".75" stop-color="#dc2626"/><stop offset="1" stop-color="#7f1d1d"/></linearGradient>
-      <radialGradient id="av-phx-head" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff7d6"/><stop offset=".45" stop-color="#fbbf24"/><stop offset="1" stop-color="#c2410c"/></radialGradient>
       <radialGradient id="av-phx-halo" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fdba74" stop-opacity=".7"/><stop offset=".55" stop-color="#ea580c" stop-opacity=".28"/><stop offset="1" stop-color="#7c2d12" stop-opacity="0"/></radialGradient>
-      <filter id="av-phx-blur" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.6"/></filter>
-      <filter id="av-phx-bloom" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur in="SourceGraphic" stdDeviation="1.1" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 .1  0 .8 0 0 .02  0 0 .4 0 0  0 0 0 .75 0" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       <radialGradient id="av-m-cosmos" cx="45%" cy="40%" r="75%"><stop offset="0" stop-color="#4c1d95"/><stop offset=".6" stop-color="#1e1b4b"/><stop offset="1" stop-color="#050314"/></radialGradient>
       <radialGradient id="av-m-glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#e9d5ff" stop-opacity=".75"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0"/></radialGradient>
       <radialGradient id="av-ghost-halo" cx="50%" cy="45%" r="50%"><stop offset="0" stop-color="#e0f2fe" stop-opacity=".35"/><stop offset="1" stop-color="#e0f2fe" stop-opacity="0"/></radialGradient>
@@ -18475,57 +18517,7 @@ video {
       ${emblem}`;
 
 
-    // Phoenix (premium picture): a Fawkes-style firebird built from real
-    // feathers. Each wing is layered primaries, secondaries and coverts
-    // (every feather a curved blade with a lit shaft), coloured by distance
-    // from the shoulder (gold at the body, crimson to ember at the tips);
-    // a bloom filter, a flame aura, flowing tail plumes with golden eyes,
-    // a flickering crest and rising embers finish it.
     const AV_SPARK_RAW = (x, y, s, c = '#fff', cls = '') => `<g class="av-twinkle ${cls}"><path d="m${x} ${y - 4 * s * .25} ${s * .25} ${3 * s * .25} ${3 * s * .25} ${s * .25} ${-3 * s * .25} ${s * .25} ${-s * .25} ${3 * s * .25} ${-s * .25} ${-3 * s * .25} ${-3 * s * .25} ${-s * .25} ${3 * s * .25} ${-s * .25}Z" fill="${c}"/></g>`;
-    const AV_PHOENIX = (() => {
-      const f = (n) => (Math.round(n * 100) / 100).toString();
-      const feather = (x, y, ang, len, wid, fill, bend = 0.12) => {
-        const a = ang * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), px = -sa, py = ca;
-        const tx = x + ca * len + px * len * bend, ty = y + sa * len + py * len * bend;
-        const mx = x + ca * len * 0.5, my = y + sa * len * 0.5;
-        return `<path d="M${f(x)} ${f(y)}Q${f(mx + px * wid)} ${f(my + py * wid)} ${f(tx)} ${f(ty)}Q${f(mx - px * wid * 0.55)} ${f(my - py * wid * 0.55)} ${f(x)} ${f(y)}Z" fill="${fill}" stroke="rgba(69,10,10,.55)" stroke-width=".28"/>`
-          + `<path d="M${f(x)} ${f(y)}Q${f(mx + px * wid * 0.2)} ${f(my + py * wid * 0.2)} ${f(tx)} ${f(ty)}" fill="none" stroke="rgba(255,244,214,.55)" stroke-width=".3" stroke-linecap="round"/>`;
-      };
-      const sx = 29.2, sy = 30.5;
-      let wing = '';
-      for (let i = 0; i < 9; i++) wing += feather(sx - 1 + i * 0.25, sy + 1 - i * 0.2, -183 + i * 10.5, 26 - i * 0.9, 4.4, 'url(#av-phx-prim)', 0.14);
-      for (let i = 0; i < 7; i++) wing += feather(sx, sy + 1.5, -172 + i * 11, 17 - i * 0.6, 4.2, 'url(#av-phx-sec)', 0.12);
-      for (let i = 0; i < 5; i++) wing += feather(sx + 0.5, sy + 1, -162 + i * 12, 10, 3.6, 'url(#av-phx-cov)', 0.08);
-      const wingG = `<g class="av-phx-wing">${wing}</g>`;
-      const tail = [[-104, 19, 3.8], [-76, 19, 3.8], [-90, 22, 4]].map(([ang, len, w]) => {
-        const a = (-ang) * Math.PI / 180;
-        const tx = 31.5 + Math.cos(a) * len, ty = 43 + Math.sin(a) * len;
-        return feather(31.5, 43, -ang, len, w, 'url(#av-phx-tail)', ang === -90 ? 0.05 : ang < -90 ? 0.18 : -0.18)
-          + `<ellipse cx="${f(tx - Math.cos(a) * 2.2)}" cy="${f(ty - Math.sin(a) * 2.2)}" rx="1.25" ry="1.7" fill="url(#av-m-gold)" stroke="#7f1d1d" stroke-width=".35"/>`;
-      }).join('');
-      const ember = (x, y, r, c, d, dur = 2.2) => `<circle class="av-ember" style="animation-delay:${d}s;animation-duration:${dur}s" cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
-      return `
-        <circle class="av-pulse" cx="31.5" cy="31" r="23" fill="url(#av-phx-halo)"/>
-        <g opacity=".55" filter="url(#av-phx-blur)">
-          <g class="av-flicker"><path d="${AV_FLAME}" transform="translate(31.5 33) scale(1.05 1.2) translate(-32 -32)" fill="#ea580c"/></g>
-          <g class="av-flicker av-flicker-2"><path d="${AV_FLAME}" transform="translate(31.5 34) scale(.7 .85) translate(-32 -32)" fill="#fbbf24"/></g>
-        </g>
-        ${ember(16, 58, 0.9, '#fde047', 0)}${ember(47, 57, 0.8, '#fb923c', -0.4, 2.6)}${ember(24, 52, 0.6, '#fef08a', -1.1)}
-        ${ember(40, 60, 1, '#f97316', -1.6, 2.4)}${ember(33, 62, 0.7, '#fde047', -0.8, 1.9)}${ember(10, 46, 0.6, '#fdba74', -1.9, 2.8)}${ember(54, 44, 0.7, '#fef08a', -0.2, 2.5)}
-        <g class="av-bob" filter="url(#av-phx-bloom)">
-          <g class="av-phx-tail">${tail}</g>
-          ${wingG}
-          <g transform="translate(63 0) scale(-1 1)">${wingG}</g>
-          <path d="M31.5 45C26.6 41.2 27 33.6 29.3 28.6c1.1-2.4.4-4.6-1-6.6l5.3-1.2c.5 3.4.1 5.8 1.4 8.4 2.4 4.6 1.8 12.2-3.5 15.8Z" fill="url(#av-phx-body)" stroke="rgba(69,10,10,.6)" stroke-width=".4"/>
-          <path d="M30 29.5c.8 3 .9 6.6.2 10.4M32.6 29.2c.6 3.2.5 6.6-.4 10" fill="none" stroke="rgba(254,243,199,.45)" stroke-width=".35" stroke-linecap="round"/>
-          <g class="av-flicker"><path d="M31.6 15.2c-.6-2.8-2.4-4.6-4-5.6 1.6.2 2.8 1 3.6 2 .1-1.8.6-3.4 1.8-4.6-.4 1.6-.3 3.2.3 4.6.8-1.2 2-2 3.6-2.2-1.6 1.2-2.8 3.2-3.2 5.8Z" fill="url(#av-m-flame)"/></g>
-          <ellipse cx="30.6" cy="18.6" rx="3.7" ry="3.3" fill="url(#av-phx-head)" stroke="rgba(69,10,10,.6)" stroke-width=".4"/>
-          <path d="M27.4 18.1c-2.2.2-3.5 1.5-3.9 3.3 1.2-.9 2.3-1 3.8-.9.4-.8.4-1.6.1-2.4Z" fill="url(#av-m-gold)" stroke="#78350f" stroke-width=".35"/>
-          <path d="M28.6 17.2c.9-.8 2-.9 2.8-.4" fill="none" stroke="#7f1d1d" stroke-width=".45" stroke-linecap="round"/>
-          <circle cx="29.7" cy="18.1" r=".8" fill="#1c0a03"/><circle cx="29.45" cy="17.85" r=".28" fill="#fff"/>
-        </g>
-        ${AV_SPARK_RAW(52, 14, 2.2, '#fff7d6', '')}${AV_SPARK_RAW(11, 20, 1.8, '#fde68a', 'av-twinkle-2')}`;
-    })();
     const AVATAR_ART = {
       'avatar-crown-bronze': { tone: 'bronze', art: AV_CROWN('bronze') + AV_CROWN_GEMS('#7c2d12') },
       'avatar-suit-spades':  { tone: 'navy', art: `<path d="${AV_SPADE}" fill="url(#av-m-pearl)" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>` },
@@ -18644,7 +18636,6 @@ video {
         <g class="av-rf" style="--a:-34deg"><rect x="24" y="23" width="16" height="24" rx="2.4" fill="url(#av-m-ivory)" stroke="url(#av-m-gold)" stroke-width="1.1"/><text x="25.6" y="29.2" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="4.6" fill="#0f172a" letter-spacing="-.4">10</text><path d="${AV_SPADE}" transform="translate(32 37) scale(.2) translate(-32 -32)" fill="#0f172a"/></g><g class="av-rf" style="--a:-17deg"><rect x="24" y="23" width="16" height="24" rx="2.4" fill="url(#av-m-ivory)" stroke="url(#av-m-gold)" stroke-width="1.1"/><text x="25.6" y="29.2" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="5.4" fill="#0f172a" letter-spacing="-.4">J</text><path d="${AV_SPADE}" transform="translate(32 37) scale(.2) translate(-32 -32)" fill="#0f172a"/></g><g class="av-rf" style="--a:0deg"><rect x="24" y="23" width="16" height="24" rx="2.4" fill="url(#av-m-ivory)" stroke="url(#av-m-gold)" stroke-width="1.1"/><text x="25.6" y="29.2" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="5.4" fill="#0f172a" letter-spacing="-.4">Q</text><path d="${AV_SPADE}" transform="translate(32 37) scale(.2) translate(-32 -32)" fill="#0f172a"/></g><g class="av-rf" style="--a:17deg"><rect x="24" y="23" width="16" height="24" rx="2.4" fill="url(#av-m-ivory)" stroke="url(#av-m-gold)" stroke-width="1.1"/><text x="25.6" y="29.2" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="5.4" fill="#0f172a" letter-spacing="-.4">K</text><path d="${AV_SPADE}" transform="translate(32 37) scale(.2) translate(-32 -32)" fill="#0f172a"/></g><g class="av-rf" style="--a:34deg"><rect x="24" y="23" width="16" height="24" rx="2.4" fill="url(#av-m-ivory)" stroke="url(#av-m-gold)" stroke-width="1.1"/><text x="25.6" y="29.2" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="5.4" fill="#0f172a" letter-spacing="-.4">A</text><path d="${AV_SPADE}" transform="translate(32 37) scale(.2) translate(-32 -32)" fill="#0f172a"/></g>
         <g class="av-twinkle "><path d="m12 16.8 0.96 2.24 2.24 0.96-2.24 0.96-0.96 2.24-0.96-2.24-2.24-0.96 2.24-0.96Z" fill="#fff7d6"/></g><g class="av-twinkle av-twinkle-2"><path d="m52 15.4 0.78 1.82 1.82 0.78-1.82 0.78-0.78 1.82-0.78-1.82-1.82-0.78 1.82-0.78Z" fill="#fff"/></g><g class="av-twinkle av-twinkle-3"><path d="m50 49.8 0.66 1.54 1.54 0.66-1.54 0.66-0.66 1.54-0.66-1.54-1.54-0.66 1.54-0.66Z" fill="#fde68a"/></g>
         <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
-      'avatar-phoenix':      { tone: 'ember', animated: true, art: AV_PHOENIX },
       'avatar-cosmic-ace':   { tone: 'cosmos', animated: true, art: `
         <g class="av-twinkle "><path d="m11 11.4 0.78 1.82 1.82 0.78-1.82 0.78-0.78 1.82-0.78-1.82-1.82-0.78 1.82-0.78Z" fill="#fff"/></g><g class="av-twinkle av-twinkle-2"><path d="m53 10 0.60 1.40 1.40 0.60-1.40 0.60-0.60 1.40-0.60-1.40-1.40-0.60 1.40-0.60Z" fill="#e9d5ff"/></g><g class="av-twinkle av-twinkle-3"><path d="m54 47.6 0.72 1.68 1.68 0.72-1.68 0.72-0.72 1.68-0.72-1.68-1.68-0.72 1.68-0.72Z" fill="#fff"/></g><g class="av-twinkle av-twinkle-4"><path d="m9 48.2 0.54 1.26 1.26 0.54-1.26 0.54-0.54 1.26-0.54-1.26-1.26-0.54 1.26-0.54Z" fill="#c7d2fe"/></g>
         <g transform="rotate(-18 32 31)">
@@ -20255,12 +20246,12 @@ video {
       { id: 'avatar-fanned-hand', category: 'Profile Pictures', name: 'Fanned Hand', cost: 1000, animated: true, tones: ['#0f172a','#e11d48','#fbbf24'] },
       { id: 'avatar-joker-card', category: 'Profile Pictures', name: 'Joker Card', cost: 1000, animated: true, tones: ['#2e1065','#a855f7','#fbbf24'] },
       { id: 'avatar-royal-flush', category: 'Profile Pictures', name: 'Royal Flush', cost: 2500, animated: true, tones: ['#150f03','#fbbf24','#f8fafc'] },
-      { id: 'avatar-phoenix', category: 'Profile Pictures', name: 'Phoenix', cost: 2500, animated: true, tones: ['#170704','#f97316','#fde047'] },
       { id: 'avatar-cosmic-ace', category: 'Profile Pictures', name: 'Cosmic Ace', cost: 2500, animated: true, tones: ['#05030f','#a78bfa','#fcd34d'] },
       // Premium emblems (5000): the top of the Shop's picture range.
       { id: 'avatar-sapphire-sovereign', category: 'Profile Pictures', name: 'Sapphire Sovereign', cost: 5000, animated: true, tones: ['#050b1f','#3b82f6','#fbbf24'] },
       { id: 'avatar-crimson-inferno', category: 'Profile Pictures', name: 'Crimson Inferno', cost: 5000, animated: true, tones: ['#0a0612','#ef4444','#fbbf24'] },
-      { id: 'avatar-scarlet-guardian', category: 'Profile Pictures', name: 'Scarlet Guardian', cost: 5000, animated: true, tones: ['#080a18','#dc2626','#fde047'] }
+      { id: 'avatar-scarlet-guardian', category: 'Profile Pictures', name: 'Scarlet Guardian', cost: 5000, animated: true, tones: ['#080a18','#dc2626','#fde047'] },
+      { id: 'avatar-turtley', category: 'Profile Pictures', name: 'Turtley', cost: 5000, animated: true, tones: ['#03140c','#10b981','#fbbf24'] }
     ];
     // Classic Reactions ships with the game. It remains selectable for old
     // saves, but is intentionally not a purchasable Shop item.

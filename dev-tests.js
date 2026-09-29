@@ -2533,7 +2533,7 @@ async function runDevTestSuite() {
     const free = BUILT_IN_COSMETICS.filter(i => i.category === 'Profile Pictures').map(i => i.name);
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
     const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Profile Pictures' && !i.season).map(i => [i.name, i.cost]));
-    assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Phoenix': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000 }, 'Shop pictures and prices');
+    assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000, 'Turtley': 5000 }, 'Shop pictures and prices');
     assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Recruiter'], 'Earn-only pictures');
     [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Profile Pictures')
       .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
@@ -4954,13 +4954,13 @@ async function runDevTestSuite() {
   await test('Link previews: Open Graph and Twitter tags point at the real preview picture', async () => {
     const meta = (sel) => document.querySelector(sel)?.getAttribute('content') || '';
     const img = meta('meta[property="og:image"]');
-    assertEqual(img, 'https://shithead-pro.web.app/icons/share-preview.jpg', 'og:image is an absolute address on the game domain (apps never resolve relative ones)');
+    assertEqual(img, 'https://shithead-pro.web.app/icons/share-preview-v2.jpg', 'og:image is an absolute address on the game domain (apps never resolve relative ones)');
     assertEqual(meta('meta[name="twitter:image"]'), img, 'X uses the same picture');
     assertEqual(meta('meta[name="twitter:card"]'), 'summary_large_image', 'X shows the large picture');
     assertEqual([meta('meta[property="og:image:width"]'), meta('meta[property="og:image:height"]')], ['1200', '630'], 'The size apps expect for a wide preview');
     ['og:title', 'og:description', 'og:url'].forEach(k => assertTrue(meta(`meta[property="${k}"]`).length > 10, `${k} is set`));
     assertTrue(meta('meta[name="description"]').length > 50, 'Search engines get a description');
-    const res = await fetch('/icons/share-preview.jpg');
+    const res = await fetch('/icons/share-preview-v2.jpg');
     const bytes = res.ok ? new Uint8Array(await res.arrayBuffer()) : new Uint8Array();
     assertTrue(bytes[0] === 0xFF && bytes[1] === 0xD8, 'The picture file is there and is a real JPEG', res.status);
     assertTrue(bytes.length < 300 * 1024, 'Small enough for WhatsApp to show it (under 300 KB)', bytes.length);
@@ -7117,10 +7117,10 @@ async function runDevTestSuite() {
     assertEqual(hold?.captionPlace, 'middle', 'the hold step asks for the middle');
     assertTrue(typeof tutorialPlaceRefPanel === 'function', 'the panel placer exists');
   });
-  await test('Phoenix picture: built from many feathers with bloom, embers and moving wings/tail', () => {
-    const art = AVATAR_ART['avatar-phoenix'].art;
-    assertTrue((art.match(/<path/g) || []).length > 60, 'dozens of shaped parts', (art.match(/<path/g) || []).length);
-    assertTrue(/av-phx-bloom/.test(art) && /av-phx-wing/.test(art) && /av-phx-tail/.test(art) && /av-ember/.test(art), 'bloom, wings, tail and embers');
+  await test('Phoenix is gone from the game; Turtley took its place', () => {
+    assertTrue(!AVATAR_ART['avatar-phoenix'] && !COSMETIC_SHOP_ITEMS.some(i => i.id === 'avatar-phoenix'), 'no Phoenix art or Shop item');
+    assertEqual(resolveAvatarId('avatar-phoenix'), DEFAULT_AVATAR_ID, 'an old equipped Phoenix shows the default picture');
+    assertTrue(!!AVATAR_ART['avatar-turtley']?.photo, 'Turtley is a premium photo picture');
   });
   await test('Devices: the table scales up on tablets/PCs only, and a sideways phone is asked to turn upright', () => {
     const css = [...document.querySelectorAll('style')].map(el => el.textContent).join('\n');
@@ -7160,8 +7160,8 @@ async function runDevTestSuite() {
     const css = [...document.querySelectorAll('style')].map(el => el.textContent).join('\n');
     assertTrue(!/url\(['"]?data:image\/(png|jpe?g|webp|gif)/i.test(css), 'no bitmap data URIs in the page CSS');
   });
-  await test('Premium pictures (Royal Flush, Phoenix, Cosmic Ace) and tables (Neon City, Northern Lights, Deep Space)', async () => {
-    const pics = { 'avatar-royal-flush': 'Royal Flush', 'avatar-phoenix': 'Phoenix', 'avatar-cosmic-ace': 'Cosmic Ace' };
+  await test('Premium pictures (Royal Flush, Cosmic Ace) and tables (Neon City, Northern Lights, Deep Space)', async () => {
+    const pics = { 'avatar-royal-flush': 'Royal Flush', 'avatar-cosmic-ace': 'Cosmic Ace' };
     const host = document.createElement('div');
     const hadReduce = document.body.classList.contains('reduce-motion');
     document.body.classList.remove('reduce-motion');
@@ -7178,7 +7178,7 @@ async function runDevTestSuite() {
         assertTrue(names.size >= 2, `${name} mixes at least two motions`, [...names]);
       }
       document.body.classList.add('reduce-motion');
-      host.innerHTML = avatarHtml('avatar-phoenix', 64);
+      host.innerHTML = avatarHtml('avatar-royal-flush', 64);
       assertTrue([...host.querySelectorAll('*')].every(el => getComputedStyle(el).animationName === 'none'), 'Reduce Motion stops them');
     } finally {
       document.body.classList.toggle('reduce-motion', hadReduce);
@@ -7195,8 +7195,8 @@ async function runDevTestSuite() {
     const topTable = Math.max(...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Table Themes' && !Object.keys(tables).includes(i.id)).map(i => i.cost));
     assertTrue(topTable <= 3000, 'premium tables cost at least as much as any other table', topTable);
   });
-  await test('Premium photo pictures (Sapphire Sovereign, Crimson Inferno, Scarlet Guardian): 5000, animated, flat when small', async () => {
-    const pics = { 'avatar-sapphire-sovereign': 'Sapphire Sovereign', 'avatar-crimson-inferno': 'Crimson Inferno', 'avatar-scarlet-guardian': 'Scarlet Guardian' };
+  await test('Premium photo pictures (Sapphire Sovereign, Crimson Inferno, Scarlet Guardian, Turtley): 5000, animated, flat when small', async () => {
+    const pics = { 'avatar-sapphire-sovereign': 'Sapphire Sovereign', 'avatar-crimson-inferno': 'Crimson Inferno', 'avatar-scarlet-guardian': 'Scarlet Guardian', 'avatar-turtley': 'Turtley' };
     const host = document.createElement('div');
     const hadReduce = document.body.classList.contains('reduce-motion');
     document.body.classList.remove('reduce-motion');
