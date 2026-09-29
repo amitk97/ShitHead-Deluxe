@@ -7117,6 +7117,14 @@ async function runDevTestSuite() {
     assertEqual(hold?.captionPlace, 'middle', 'the hold step asks for the middle');
     assertTrue(typeof tutorialPlaceRefPanel === 'function', 'the panel placer exists');
   });
+  await test('XP & levels: the level curve matches the server, and nothing shows while the switch is off', () => {
+    assertEqual(xpLevelFor(0), 1, 'everyone starts at level 1');
+    assertEqual(xpForLevel(5), 800, 'level 5 needs 800 XP (about 25-30 games)');
+    assertEqual(xpLevelFor(799), 4, 'one short of level 5');
+    assertEqual(xpLevelFor(800), 5, 'level 5 at 800');
+    assertEqual(xpLevelFor(10 ** 9), XP_RULES.maxLevel, 'capped at the max level');
+    assertEqual(JSON.stringify(serverEconomyCatalog().xp), JSON.stringify(XP_RULES), 'the server gets the same XP table');
+  });
   await test('Phoenix is gone from the game; Turtley took its place', () => {
     assertTrue(!AVATAR_ART['avatar-phoenix'] && !COSMETIC_SHOP_ITEMS.some(i => i.id === 'avatar-phoenix'), 'no Phoenix art or Shop item');
     assertEqual(resolveAvatarId('avatar-phoenix'), DEFAULT_AVATAR_ID, 'an old equipped Phoenix shows the default picture');

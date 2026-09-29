@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v221 (ShitHead-Deluxe-197) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v222 (ShitHead-Deluxe-198) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7951,6 +7951,7 @@ video {
     //   § Accounts and sign-in
     //   § Ranked matchmaking
     //   § Challenges and Diamonds economy (paid by the server: functions/economy.js)
+    //   § XP & levels (server-awarded; off until config/features/xp is true)
     //   § Social: profiles, presence, friends, invites, inbox
     //   § Spectating a friend's match (read-only)
     //   § Reports (player reports from the player card)
@@ -17932,6 +17933,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v222: [
+        ['🛠️', 'Behind-the-scenes groundwork for an upcoming feature.']
+      ],
       v221: [
         ['♿', 'Reduce Motion no longer leaves flashing card shapes over the pile; High Contrast keeps moving card text readable.']
       ],
@@ -23397,6 +23401,32 @@ video {
       const top = Math.max(...Object.keys(table).map(Number));
       return n > top && n % top === 0 ? Number(table[top]) : 0;
     }
+    // § XP & levels (built v222, OFF until the owner flicks the switch:
+    // database config/features/xp = true). XP is only ever added by the
+    // server (functions/economy.js awardXp) from the reward actions it already
+    // runs; this table is exported to it through the catalog. Level L needs
+    // XP_RULES.curve * (L-1)^1.5 total XP: level 5 ≈ 800 XP ≈ 25-30 games.
+    const XP_RULES = {
+      finish: 20,          // any finished game (Vs Bots, Play Friends, Ranked; draws too)
+      win: 15,             // on top, for a Vs Bots / Play Friends / Ranked win
+      ranked: 10,          // on top, for any Ranked game
+      firstGameOfDay: 25,  // the first finished game of the UK day
+      gauntletBot: 15,     // each Gauntlet bot beaten
+      daily: 10,           // each daily challenge
+      weekly: 40,          // each weekly challenge
+      dailyCap: 600,       // most XP one account can earn in a UK day
+      curve: 100,
+      maxLevel: 100,
+      levelUpDiamonds: 25, // every level up…
+      milestoneEvery: 5,   // …and every 5th level instead pays
+      milestoneDiamonds: 100
+    };
+    const xpForLevel = (level) => Math.round(XP_RULES.curve * Math.pow(Math.max(0, level - 1), 1.5));
+    function xpLevelFor(total) {
+      let level = 1;
+      while (level < XP_RULES.maxLevel && (Number(total) || 0) >= xpForLevel(level + 1)) level++;
+      return level;
+    }
     // The Gauntlet as challenges: the first clear (Bots tab) and a fixed daily
     // one (Daily tab). Their completion keys are written by the server.
     const GAUNTLET_CHALLENGES = {
@@ -23447,6 +23477,7 @@ video {
         gauntlet: JSON.parse(JSON.stringify(GAUNTLET)),
         referral: JSON.parse(JSON.stringify(REFERRAL)),
         rankedBonus: JSON.parse(JSON.stringify(RANKED_BONUS)),
+        xp: JSON.parse(JSON.stringify(XP_RULES)),
         rankTiers: [['Master', 2000], ['Platinum', 1800], ['Gold', 1500], ['Silver', 1000], ['Bronze', 500], ['Novice', 0]].map(([name, min]) => {
           if (getRankTier(min).name !== name) throw new Error(`Rank tier table out of date at ${name}`);
           return { name, min };

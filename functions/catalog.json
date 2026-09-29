@@ -1498,6 +1498,21 @@
    "10": 20
   }
  },
+ "xp": {
+  "finish": 20,
+  "win": 15,
+  "ranked": 10,
+  "firstGameOfDay": 25,
+  "gauntletBot": 15,
+  "daily": 10,
+  "weekly": 40,
+  "dailyCap": 600,
+  "curve": 100,
+  "maxLevel": 100,
+  "levelUpDiamonds": 25,
+  "milestoneEvery": 5,
+  "milestoneDiamonds": 100
+ },
  "rankTiers": [
   {
    "name": "Master",

@@ -21,6 +21,9 @@
 //   deleteAccount request (7-day recovery window) / cancel / status (functions/account.js)
 //   rankedResult  score a finished Ranked room for every seat, once
 //   buyItem / buyBundle / buyNameToken / sendGift / claimGift
+//
+// XP (functions/xp.js) rides along on matchFinished, matchWin, rankedResult,
+// claim and gauntlet: only while the owner's switch config/features/xp is on.
 'use strict';
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
@@ -50,6 +53,7 @@ const RANKED_PAIR_PER_DAY = 5; // processedMatchRewards / processedRankedMatches
 
 const db = () => admin.database();
 const boards = require('./boards');
+const xp = require('./xp'); // XP & levels: off until config/features/xp is true
 const fail = (code, message) => { throw new HttpsError(code, message); };
 const clip = (value, max) => String(value == null ? '' : value).slice(0, max);
 const num = (value, fallback = 0) => { const n = Number(value); return value !== null && value !== undefined && value !== '' && Number.isFinite(n) ? n : fallback; };
@@ -410,14 +414,17 @@ actions.claim = async ({ uid, data }) => {
   const id = clip(data.id, 80);
   if (!/^[A-Za-z0-9_-]+$/.test(id)) fail('invalid-argument', 'Unknown challenge.');
   const now = new Date();
+  const xpOn = await xp.enabled();
   const res = await userTx(uid, (user) => {
     if (user.completedChallenges?.[id]) return { noop: true, already: true };
     const def = challengeForKey(id, user, now);
     if (def.error) return { error: def.error };
     recordClaim(user, id, def.name, def.reward, now.getTime());
-    return { user, awarded: { id, name: def.name, reward: def.reward } };
+    const kind = id.startsWith('daily_') ? 'daily' : id.startsWith('weekly_') ? 'weekly' : null;
+    const xpRes = xpOn && kind ? xp.award(user, [[kind, xp.RULES[kind]]], now.getTime(), addDiamonds) : null;
+    return { user, awarded: { id, name: def.name, reward: def.reward }, xp: xpRes };
   });
-  return { awarded: res.awarded || null, already: !!res.already, diamonds: num(res.user.diamonds) };
+  return { awarded: res.awarded || null, already: !!res.already, diamonds: num(res.user.diamonds), xp: res.xp || null };
 };
 
 // A Vs Bots win pays Diamonds and counts towards difficulty unlocks; any
@@ -438,6 +445,7 @@ actions.matchWin = async ({ uid, data }) => {
   }
   const legacy = await legacyOwned(uid);
   const now = Date.now();
+  const xpOn = await xp.enabled();
   const res = await userTx(uid, (user) => {
     user.processedMatchRewards = user.processedMatchRewards || {};
     if (user.processedMatchRewards[matchId]) return { noop: true, already: true };
@@ -465,9 +473,11 @@ actions.matchWin = async ({ uid, data }) => {
     const seasonWins = countSeasonWin(user, new Date(now));
     const claimed = grantMilestones(user, now);
     const newAvatars = grantEarnedAvatars(user, legacy, now);
-    return { user, amount, unlocked, seasonWins, claimed, newAvatars };
+    const xpRes = xpOn ? xp.award(user, [['win', xp.RULES.win]], now, addDiamonds) : null;
+    return { user, amount, unlocked, seasonWins, claimed, newAvatars, xp: xpRes };
   });
   return {
+    xp: res.xp || null,
     already: !!res.already, capped: res.capped || null, diamondsAwarded: num(res.amount), diamonds: num(res.user.diamonds),
     difficultyWins: res.user.difficultyWins || {}, unlockedDifficulty: res.unlocked || null,
     seasonWins: res.user.seasonWins || {}, claimed: res.claimed || [], newAvatars: res.newAvatars || []
@@ -487,6 +497,7 @@ actions.matchFinished = async ({ uid, data }) => {
     const room = /^\d{6}$/.test(code) ? (await db().ref(`rooms/${code}`).once('value')).val() : null;
     drew = !!Object.values(room?.players || {}).find(p => p && p.uid === uid && p.drew);
   }
+  const xpOn = await xp.enabled();
   const res = await userTx(uid, (user) => {
     const counters = user.matchCounters = user.matchCounters || {};
     const recent = counters.recentFinished || {};
@@ -497,15 +508,19 @@ actions.matchFinished = async ({ uid, data }) => {
       counters.recentFinished = pruneMap({ ...recent, [matchId]: { at: now } }, 20);
       return { user, claimed: grantMilestones(user, now), referral: null };
     }
+    // XP: the first game of the UK day counts before `day` below moves on.
+    const firstToday = counters.finishedDay !== ukDateKey(new Date(now));
+    counters.finishedDay = ukDateKey(new Date(now));
     counters.finished = num(counters.finished) + 1;
     counters.lastFinishedAt = now;
     counters.recentFinished = pruneMap({ ...recent, [matchId]: { at: now } }, 20);
     const referral = referralGameCounted(user, now);
     const claimed = grantMilestones(user, now);
-    return { user, claimed, referral };
+    const xpRes = xpOn ? xp.award(user, [['finish', xp.RULES.finish], ['firstGameOfDay', firstToday ? xp.RULES.firstGameOfDay : 0]], now, addDiamonds) : null;
+    return { user, claimed, referral, xp: xpRes };
   });
   if (res.referral) await referralReportToInviter(uid, res.user, res.referral, now);
-  return { claimed: res.claimed || [], diamonds: num(res.user.diamonds), referral: res.referral ? { games: res.referral.games, paid: !!res.referral.paid } : null };
+  return { claimed: res.claimed || [], diamonds: num(res.user.diamonds), referral: res.referral ? { games: res.referral.games, paid: !!res.referral.paid } : null, xp: res.xp || null };
 };
 
 // Scores a finished Ranked room for every seat at once (idempotent: the
@@ -719,7 +734,10 @@ actions.gauntlet = async ({ uid, data }) => {
     const g = (await db().ref(`users/${uid}/gauntlet`).once('value')).val() || {};
     return status(g);
   }
+  const xpOn = await xp.enabled();
+  let xpRes = null;
   const res = await userTx(uid, (user) => {
+    xpRes = null;
     const g = user.gauntlet = user.gauntlet || {};
     if (op === 'start') {
       if (g.doneDay === today) return { error: "You've already beaten the Gauntlet today. Come back tomorrow!" };
@@ -750,6 +768,7 @@ actions.gauntlet = async ({ uid, data }) => {
     run.playing = false;
     run.round = num(run.round) + 1;
     g.botsBeaten = num(g.botsBeaten) + 1; // Gauntlet board
+    if (xpOn) xpRes = xp.award(user, [['gauntletBot', xp.RULES.gauntletBot]], now, addDiamonds);
     if (run.round < G.rounds.length) return { user };
     // Beaten: once a day.
     g.run = null;
@@ -777,7 +796,7 @@ actions.gauntlet = async ({ uid, data }) => {
   });
   return {
     ...status(res.user.gauntlet || {}), over: !!res.over, completed: !!res.completed, forfeited: !!res.forfeited,
-    diamondsAwarded: num(res.amount), first: !!res.first, newItems: res.newItems || [], diamonds: num(res.user.diamonds)
+    diamondsAwarded: num(res.amount), first: !!res.first, newItems: res.newItems || [], diamonds: num(res.user.diamonds), xp: xpRes
   };
 };
 
@@ -842,6 +861,7 @@ actions.rankedResult = async ({ uid, data }) => {
     }
   }
   const ratings = await Promise.all(uids.map(u => db().ref(`users/${u}/rating`).once('value').then(s => num(s.val(), 500))));
+  const xpOn = await xp.enabled();
   const players = seats.map((p, i) => ({ uid: p.uid, finishRank: num(p.finishRank, 99), rating: ratings[i], seat: p }));
   const deltas = pairwiseEloDeltas(players);
   const now = Date.now();
@@ -909,7 +929,8 @@ actions.rankedResult = async ({ uid, data }) => {
         }
         claimed.push(...grantMilestones(user, now));
         const newAvatars = grantEarnedAvatars(user, legacy, now);
-        return { user, result: { from: previousRating, to: newRating, won, drew, elo: deltas[i], winBonus, streak: newStreak, streakBonus, diamondsAwarded: amount, claimed, newAvatars } };
+        const xpRes = xpOn ? xp.award(user, [['ranked', xp.RULES.ranked], ['win', won ? xp.RULES.win : 0]], now, addDiamonds) : null;
+        return { user, result: { from: previousRating, to: newRating, won, drew, elo: deltas[i], winBonus, streak: newStreak, streakBonus, diamondsAwarded: amount, claimed, newAvatars, xp: xpRes } };
       });
       const u = res.user;
       results[p.uid] = {

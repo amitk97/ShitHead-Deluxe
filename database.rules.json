@@ -253,6 +253,9 @@
         "boardBest": {
           ".validate": "newData.hasChildren()"
         },
+        "xp": {
+          ".validate": "newData.hasChildren(['total', 'level'])"
+        },
         "lastRankedOpponent": {
           ".validate": "newData.hasChildren(['uid', 'at'])"
         },
@@ -598,6 +601,16 @@
           "$other": {
             ".validate": "$other === 'uid' || $other === 'v' || $other === 'device'"
           }
+        }
+      }
+    },
+    "config": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email === 'amirk2197@googlemail.com' &&
+        auth.token.email_verified === true",
+      "features": {
+        "$feature": {
+          ".validate": "newData.isBoolean()"
         }
       }
     },

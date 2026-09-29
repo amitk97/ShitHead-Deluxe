@@ -597,6 +597,49 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok(gone.every(v => v === null), 'purge: erased everywhere, including friends\' lists, requests, username and code', gone);
   ok((await admin('boards/challenges/gina')) === null && (await admin('boards/gauntlet/gina')) === null, 'purge: off the boards too');
 
+  // XP & levels (v222): nothing happens until the owner's switch config/features/xp is on
+  {
+    const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+    const ukToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    await call('xena', { action: 'init' });
+    await admin('config/features/xp', 'DELETE');
+    await sleep(11000); // the server re-reads the switch at most every 10s
+    let x = await call('xena', { action: 'matchFinished', matchId: 'xp_m0' });
+    ok(x && !x.error && x.xp === null && (await admin('users/xena/xp')) === null, 'XP switch off: a finished game adds no XP', x);
+    ok((await tryWrite('xena', db => set(ref(db, 'users/xena/xp'), { total: 99999, level: 50 }))) === 'denied', 'blocked: a phone writing its own XP');
+    ok((await tryWrite('xena', db => set(ref(db, 'config/features/xp'), true))) === 'denied', 'blocked: a player flicking the XP switch');
+    await admin('config/features/xp', 'PUT', true);
+    await sleep(11000);
+    await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
+    await admin('users/xena/matchCounters/finishedDay', 'DELETE');
+    x = await call('xena', { action: 'matchFinished', matchId: 'xp_m1' });
+    ok(x.xp && x.xp.gained === 45 && x.xp.total === 45 && x.xp.level === 1, 'XP on: first game of the day = 20 + 25', x.xp);
+    await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
+    x = await call('xena', { action: 'matchFinished', matchId: 'xp_m2' });
+    ok(x.xp && x.xp.gained === 20 && x.xp.total === 65, 'XP on: the next game = 20', x.xp);
+    x = await call('xena', { action: 'matchFinished', matchId: 'xp_m2' });
+    ok(!x.xp, 'the same game never pays XP twice', x.xp);
+    await admin('users/xena/xp', 'PUT', { total: 790, level: 4, day: ukToday, today: 0 });
+    await admin('users/xena/diamonds', 'PUT', 0);
+    await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
+    x = await call('xena', { action: 'matchFinished', matchId: 'xp_m3' });
+    ok(x.xp && x.xp.level === 5 && x.xp.levelUps.length === 1 && x.xp.levelUps[0].reward === 100, 'reaching level 5 (800 XP) is a milestone: 100 Diamonds', x.xp);
+    ok(num0(await admin('users/xena/diamonds')) === 100 && (await admin('users/xena/activityInbox/level_5'))?.type === 'level', 'level-up Diamonds paid and a level mail sent');
+    await admin('users/xena/xp/today', 'PUT', 590);
+    await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
+    x = await call('xena', { action: 'matchFinished', matchId: 'xp_m4' });
+    ok(x.xp && x.xp.gained === 10 && x.xp.capped, 'the daily cap (600) stops XP farming', x.xp);
+    await admin('users/xena/xp/today', 'PUT', 0);
+    await admin('users/xena/matchCounters/lastWinAt', 'PUT', 0);
+    x = await call('xena', { action: 'matchWin', mode: 'bots', difficulty: 'easy', matchId: 'xp_w1' });
+    ok(x.xp && x.xp.gained === 15, 'a win adds 15 XP on top', x.xp);
+    await admin('config/features/xp', 'PUT', false);
+    await sleep(11000);
+    await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
+    x = await call('xena', { action: 'matchFinished', matchId: 'xp_m5' });
+    ok(x.xp === null, 'switched off again: XP stops', x.xp);
+  }
+
   // A new picture or name reaches existing board entries (publicProfiles trigger → refreshProfile)
   const boardsMod = require('../functions/boards');
   await admin('publicProfiles/dave/avatar', 'PUT', 'avatar-ghost');
