@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v228 (ShitHead-Deluxe-204) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v229 (ShitHead-Deluxe-205) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -6273,10 +6273,10 @@ video {
              right-hand end. Anchoring to this bar (not the arena's midpoint)
              keeps it still when the multiplayer timer changes arena height.
              NOTE: shown in bot mode for testing; restrict before release. -->
-        <div id="emoteLayer" class="hidden absolute pointer-events-none" style="z-index:65; right:0; top:calc((clamp(34px,10vw,46px) + 6px) * -1); height:clamp(34px,10vw,46px);">
+        <div id="emoteLayer" class="hidden absolute pointer-events-none" style="z-index:65; right:0; top:calc((clamp(26px,7.5vw,34px) + 6px) * -1); height:clamp(26px,7.5vw,34px);">
           <div class="relative">
             <button id="emoteToggleBtn" class="pointer-events-auto rounded-full bg-slate-900/90 border-2 border-amber-500/70 shadow-lg flex items-center justify-center transition transform active:scale-90 hover:scale-105"
-              style="width:clamp(34px,10vw,46px);height:clamp(34px,10vw,46px);font-size:clamp(18px,5.5vw,26px);" aria-label="Send a reaction">😄</button>
+              style="width:clamp(26px,7.5vw,34px);height:clamp(26px,7.5vw,34px);font-size:clamp(14px,4.2vw,19px);" aria-label="Send a reaction">😄</button>
             <div id="emoteFan" class="hidden absolute pointer-events-auto" style="right:0;bottom:0;width:0;height:0;"></div>
           </div>
         </div>
@@ -18004,6 +18004,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v229: [
+        ['😄', 'The emote button is now the same size as the other round table buttons.']
+      ],
       v228: [
         ['🃏', 'Cards always snap back into place after a swap or a drag, even if the table changes while you hold one.'],
         ['📐', 'The Hand label sits in the middle again, with your level just to its right.']
