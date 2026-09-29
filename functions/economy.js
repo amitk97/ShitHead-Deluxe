@@ -383,9 +383,11 @@ actions.sync = async ({ uid }) => {
   const now = Date.now();
   const xpOn = await xp.enabled();
   const res = await userTx(uid, (user) => {
+    // A bigger level table (tableVersion): this account's level again.
+    const releveled = xpOn && xp.relevel(user);
     // XP for past play, once (the first sign-in after the switch goes on).
     const past = xpOn ? xp.backfill(user, now, addDiamonds) : null;
-    const xpRes = past ? xpResult(user, [], now, past) : null;
+    const xpRes = past ? xpResult(user, [], now, past) : releveled ? { gained: 0, total: user.xp.total, level: user.xp.level, levelUps: [] } : null;
     const claimed = grantMilestones(user, now);
     const newAvatars = grantEarnedAvatars(user, legacy, now);
     // A first Gauntlet clear from before it was a challenge: record it (already paid).
@@ -400,8 +402,10 @@ actions.sync = async ({ uid }) => {
       user.completedChallenges['gauntlet-first'] = { completedAt: num(user.gauntlet.firstDoneAt), reward: num(CAT.gauntlet.firstReward) };
       backfilled = true;
     }
-    return claimed.length || newAvatars.length || backfilled || past ? { user, claimed, newAvatars, xp: xpRes } : { noop: true, claimed: [], newAvatars: [] };
+    return claimed.length || newAvatars.length || backfilled || past || releveled ? { user, claimed, newAvatars, xp: xpRes } : { noop: true, claimed: [], newAvatars: [] };
   });
+  // After a level-table change, fix every account's level once (xp.migrateAll).
+  if (xpOn) { try { await xp.migrateAll(); } catch (e) { logger.warn('xp migrate failed', { error: String(e) }); } }
   // Make sure this player is on the Challenges / Gauntlet boards (older accounts).
   try { await boards.onUserChanged(uid, null, res.user, { force: true }); } catch (e) { logger.warn('boards backfill failed', { uid, error: String(e) }); }
   return { claimed: res.claimed || [], newAvatars: res.newAvatars || [], diamonds: num(res.user.diamonds), xp: res.xp || null };

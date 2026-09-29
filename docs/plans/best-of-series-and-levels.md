@@ -23,10 +23,10 @@ from Ranked rating, and a natural gate for features like staked series.
   (instead of +75), Gauntlet bot beaten 40 / 80 / 120 / 200 (easy / medium / hard /
   boss), daily challenge 50, weekly 350. **No daily cap** (owner: it discourages
   playing; the match limits already stop farming).
-- Levels 1–99 from the table `XP_RULES.levels` (RuneScape-style: ~120–300 XP a level
-  early, doubling about every 7 levels at the top; level 5 = 477 XP ≈ 5+ games,
-  level 10 = 1,086, level 92 = 349,976 = half of level 99 = 700,000). XP keeps
-  counting past 99 up to 100,000,000.
+- Levels 1–99 from the table `XP_RULES.levels` (RuneScape-style, doubled in v225:
+  ~240–600 XP a level early, doubling about every 7 levels at the top; level 5 = 954,
+  level 10 = 2,172 (~37 typical games), level 50 = 20,948, level 92 ≈ half of
+  level 99 = 1,400,000). XP keeps counting past 99 up to 100,000,000.
 - Level-up Diamonds: 20 a level, 100 on every 10th level instead (not both).
 - Back-dating: the first time an account gets XP (or signs in) with the switch on,
   its past games, wins, Ranked games/wins, Gauntlet bots and daily/weekly
@@ -46,7 +46,7 @@ from Ranked rating, and a natural gate for features like staked series.
 
 **Who can play:**
 - Both players **signed in** with a **verified email** (Diamonds are involved).
-- **Both at level 10 or higher** (owner's decision, `XP_RULES.seriesLevel`; ~19
+- **Both at level 10 or higher** (owner's decision, `XP_RULES.seriesLevel`; ~37
   typical games; it doubles as anti-abuse because a brand-new throwaway account
   can't join).
 - Optional: allow an *unstaked* "friendly" series for any signed-in player, and only

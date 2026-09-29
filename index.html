@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v224 (ShitHead-Deluxe-200) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v225 (ShitHead-Deluxe-201) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -17956,6 +17956,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v225: [
+        ['📈', 'Levels are here: every game, win, challenge and Gauntlet bot earns XP. Climb from level 1 to 99, with Diamonds for every level and 100 on every 10th. Your past games already count.', WN_KEY],
+        ['📈', 'Levels now take more XP to reach, so there is more to play for. Levels you have already been paid for never pay twice.']
+      ],
       v224: [
         ['🛠️', 'The groundwork for an upcoming feature is finished.']
       ],
@@ -23460,11 +23464,11 @@ video {
       return n > top && n % top === 0 ? Number(table[top]) : 0;
     }
     // § XP & levels (built v222, numbers v224; OFF until the owner flicks the
-    // switch: database config/features/xp = true). XP is only ever added by
+    // switch: database config/features/xp = true; table doubled v225). XP is only ever added by
     // the server (functions/xp.js) from the reward actions it already runs;
     // this table is exported to it through the catalog. Levels 1–99 on a
-    // RuneScape-style curve (steady ~120-300 XP a level early on, then about
-    // doubling every 7 levels; level 92 is half of 99). XP keeps counting past
+    // RuneScape-style curve (steady ~240-600 XP a level early on, then about
+    // doubling every 7 levels; level 92 is half of 99 = 1,400,000). XP keeps counting past
     // 99 up to maxXp. No daily cap (the match limits already stop farming).
     const XP_RULES = {
       finish: 25,          // any finished game (Vs Bots, Play Friends, Ranked; draws too)
@@ -23480,18 +23484,22 @@ video {
       milestoneDiamonds: 100,
       seriesLevel: 10,     // Best of series (later) unlock at this level
       maxXp: 100000000,
-      // levels[L] = total XP needed for level L (levels[0] unused).
+      // Bump when `levels` changes: the server re-levels every account from
+      // its total XP (never paying a level's Diamonds twice).
+      tableVersion: 2,
+      // levels[L] = total XP needed for level L (levels[0] unused). v225
+      // doubled every level (owner: 30 games had reached level 43).
       levels: [
-        0, 0, 119, 238, 357, 477, 598, 719, 840, 963,
-        1086, 1210, 1335, 1461, 1589, 1717, 1848, 1979, 2113, 2248,
-        2386, 2526, 2668, 2814, 2963, 3115, 3272, 3433, 3598, 3769,
-        3946, 4130, 4321, 4520, 4728, 4946, 5175, 5416, 5670, 5939,
-        6225, 6529, 6852, 7198, 7569, 7966, 8394, 8855, 9352, 9891,
-        10474, 11107, 11796, 12545, 13362, 14253, 15227, 16292, 17458, 18736,
-        20137, 21676, 23365, 25222, 27265, 29512, 31986, 34710, 37713, 41022,
-        44671, 48695, 53135, 58035, 63444, 69416, 76010, 83293, 91339, 100227,
-        110049, 120902, 132898, 146156, 160812, 177013, 194926, 214730, 236628, 260842,
-        287618, 317229, 349976, 386192, 426247, 470548, 519548, 573745, 633692, 700000
+        0, 0, 238, 476, 714, 954, 1196, 1438, 1680, 1926,
+        2172, 2420, 2670, 2922, 3178, 3434, 3696, 3958, 4226, 4496,
+        4772, 5052, 5336, 5628, 5926, 6230, 6544, 6866, 7196, 7538,
+        7892, 8260, 8642, 9040, 9456, 9892, 10350, 10832, 11340, 11878,
+        12450, 13058, 13704, 14396, 15138, 15932, 16788, 17710, 18704, 19782,
+        20948, 22214, 23592, 25090, 26724, 28506, 30454, 32584, 34916, 37472,
+        40274, 43352, 46730, 50444, 54530, 59024, 63972, 69420, 75426, 82044,
+        89342, 97390, 106270, 116070, 126888, 138832, 152020, 166586, 182678, 200454,
+        220098, 241804, 265796, 292312, 321624, 354026, 389852, 429460, 473256, 521684,
+        575236, 634458, 699952, 772384, 852494, 941096, 1039096, 1147490, 1267384, 1400000
       ]
     };
     const XP_MAX_LEVEL = XP_RULES.levels.length - 1;
@@ -23563,7 +23571,7 @@ video {
     function refreshXpDisplays() {
       const on = xpShown() && !!currentUser && !!playerXp;
       const menu = document.getElementById('hamburgerLevel');
-      if (menu) { menu.classList.toggle('hidden', !on); menu.innerHTML = on ? xpLevelBadge(playerXp.level) : ''; }
+      if (menu) { menu.classList.toggle('hidden', !on); menu.innerHTML = on ? xpLevelBadge(xpLevelFor(playerXp.total)) : ''; }
       const section = document.getElementById('profileXpSection');
       if (section) {
         const show = xpShown() && !!currentUser;

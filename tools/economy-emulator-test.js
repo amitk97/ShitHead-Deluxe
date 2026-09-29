@@ -613,10 +613,10 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     ok(xpMod.pastXp(pastUser) === 1910, 'past play: 10 games, 4 wins, 4 Ranked (2 won), 7 Gauntlet bots, a daily and a weekly = 1910 XP', xpMod.pastXp(pastUser));
     let paid = 0;
     const bf = xpMod.backfill(pastUser, 1, (u, n) => { paid += n; });
-    ok(bf.level === 16 && paid === 380 && pastUser.activityInbox.level_backfill?.backfill && !pastUser.activityInbox.level_10, 'back-dating reaches level 16, pays 380 Diamonds with one mail', { bf, paid });
+    ok(bf.level === 8 && paid === 140 && pastUser.activityInbox.level_backfill?.backfill && !pastUser.activityInbox.level_5, 'back-dating reaches level 8, pays 140 Diamonds with one mail', { bf, paid });
     ok(xpMod.backfill(pastUser, 2, () => {}) === null, 'back-dating happens only once');
     ok(xpMod.gauntletBotXp(0) === 40 && xpMod.gauntletBotXp(2) === 80 && xpMod.gauntletBotXp(3) === 120 && xpMod.gauntletBotXp(4) === 200, 'Gauntlet XP scales with the bot');
-    ok(xpMod.levelFor(476) === 4 && xpMod.levelFor(477) === 5 && xpMod.levelFor(700000) === 99 && xpMod.levelFor(9e9) === 99, 'level table: 477 = level 5, 700,000 = level 99, never past 99');
+    ok(xpMod.levelFor(953) === 4 && xpMod.levelFor(954) === 5 && xpMod.levelFor(1400000) === 99 && xpMod.levelFor(9e9) === 99, 'level table: 954 = level 5, 1,400,000 = level 99, never past 99');
     await admin('config/features/xp', 'PUT', true);
     await sleep(11000);
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
@@ -625,10 +625,10 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     ok(x.xp && x.xp.gained === 75 && x.xp.backfill?.xp === 25 && x.xp.total === 100 && x.xp.level === 1, 'XP on: the game from before (25) is back-dated, then this first game of the day = 25 + 50', x.xp);
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
     x = await call('xena', { action: 'matchFinished', matchId: 'xp_m2' });
-    ok(x.xp && x.xp.gained === 25 && x.xp.total === 125 && x.xp.level === 2 && x.xp.levelUps[0]?.reward === 20 && !x.xp.backfill, 'the next game = 25, level 2 pays 20 Diamonds, no second back-dating', x.xp);
+    ok(x.xp && x.xp.gained === 25 && x.xp.total === 125 && x.xp.level === 1 && !x.xp.levelUps.length && !x.xp.backfill, 'the next game = 25, no second back-dating', x.xp);
     x = await call('xena', { action: 'matchFinished', matchId: 'xp_m2' });
     ok(!x.xp, 'the same game never pays XP twice', x.xp);
-    await admin('users/xena/xp', 'PUT', { total: 1080, level: 9, backfilled: true });
+    await admin('users/xena/xp', 'PUT', { total: 2160, level: 9, backfilled: true, table: 2 });
     await admin('users/xena/diamonds', 'PUT', 0);
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
     x = await call('xena', { action: 'matchFinished', matchId: 'xp_m3' });
@@ -642,6 +642,23 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     await admin('users/xena/matchCounters/lastWinAt', 'PUT', 0);
     x = await call('xena', { action: 'matchWin', mode: 'bots', difficulty: 'easy', matchId: 'xp_w1' });
     ok(x.xp && x.xp.gained === 75, 'a win adds 75 XP on top', x.xp);
+    // The level table doubled (v225): an account levelled on the old table
+    // is re-levelled from its total, and levels already paid never pay again.
+    await admin('users/xena/xp', 'PUT', { total: 7198, level: 43, backfilled: true });
+    await admin('users/xena/diamonds', 'PUT', 0);
+    await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
+    x = await call('xena', { action: 'matchFinished', matchId: 'xp_m6' });
+    ok(x.xp && x.xp.level === 28 && !x.xp.levelUps.length && num0(await admin('users/xena/diamonds')) === 0 && (await admin('users/xena/xp/paidLevel')) === 43, 'old level 43 (7,198 XP) is level 28 on the doubled table, nothing paid', x.xp);
+    await admin('users/xena/xp/total', 'PUT', 12440);
+    await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
+    x = await call('xena', { action: 'matchFinished', matchId: 'xp_m7' });
+    ok(x.xp && x.xp.level === 40 && !x.xp.levelUps.length && num0(await admin('users/xena/diamonds')) === 0, 'reaching level 40 again pays nothing (already paid up to 43)', x.xp);
+    await admin('users/xmig', 'PUT', { username: 'Xmig', xp: { total: 7198, level: 43 } });
+    await admin('publicProfiles/xmig', 'PUT', { username: 'Xmig', level: 43 });
+    await admin('config/xpTableDone', 'DELETE');
+    const fixedN = await xpMod.migrateAll();
+    ok(fixedN >= 1 && (await admin('users/xmig/xp/level')) === 28 && (await admin('publicProfiles/xmig/level')) === 28 && (await admin('config/xpTableDone')) === 2, 'every account (and its public level) is re-levelled once', fixedN);
+    ok((await xpMod.migrateAll()) === 0, 'the re-levelling runs once per table');
     await admin('config/features/xp', 'PUT', false);
     await sleep(11000);
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);

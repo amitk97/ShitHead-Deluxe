@@ -3,11 +3,15 @@
 // config/features/xp = true (owner-only write). While off, nothing is added
 // and nothing changes for players.
 //
-// users/{uid}/xp = { total, level, backfilled }
+// users/{uid}/xp = { total, level, backfilled, paidLevel, table }
 //   total  all XP ever earned (never goes down, stops at xp.maxXp)
 //   level  1–99, from the catalog's xp.levels table (total XP per level:
 //          a RuneScape-style curve, level 92 is half of 99)
 //   backfilled  past play was turned into XP once (see backfill)
+//   paidLevel   the highest level whose Diamonds were paid (never paid twice,
+//               even if a bigger table moves the account back down)
+//   table       the xp.tableVersion the level was worked out with; an older
+//               one is re-levelled from the total (relevel / migrateAll)
 // A level up pays Diamonds (xp.levelUpDiamonds, or xp.milestoneDiamonds
 // instead on every xp.milestoneEvery-th level) and sends an activityInbox
 // 'level' mail. There is no daily cap: the match limits already stop farming.
@@ -41,15 +45,32 @@ async function enabled() {
 }
 const resetCache = () => { cached = { at: 0, on: false }; };
 
+// A table change (tableVersion): work the level out again from the total.
+// The levels already paid stay paid (paidLevel = the old level), so moving
+// back down never pays the same level's Diamonds twice. Returns true when
+// something changed.
+function relevel(user) {
+  const xp = user.xp;
+  if (!xp || num(xp.table) === num(RULES.tableVersion, 1)) return false;
+  xp.paidLevel = Math.max(num(xp.paidLevel), num(xp.level, 1));
+  xp.level = levelFor(num(xp.total));
+  xp.table = num(RULES.tableVersion, 1);
+  return true;
+}
+
 // Adds `amount` XP (mutates `user`) and pays/mails the levels passed.
 function addXp(user, amount, now, addDiamonds, { mailEach = true } = {}) {
+  relevel(user);
   const xp = user.xp = user.xp || {};
+  xp.table = num(RULES.tableVersion, 1);
   const before = num(xp.total);
   const beforeLevel = levelFor(before);
   xp.total = Math.min(num(RULES.maxXp, 1e8), before + Math.max(0, Math.round(amount)));
   xp.level = levelFor(xp.total);
   const levelUps = [];
-  for (let L = beforeLevel + 1; L <= xp.level; L++) {
+  const paidUpTo = Math.max(beforeLevel, num(xp.paidLevel));
+  if (xp.level > num(xp.paidLevel)) xp.paidLevel = xp.level;
+  for (let L = paidUpTo + 1; L <= xp.level; L++) {
     const reward = levelReward(L);
     if (reward) addDiamonds(user, reward);
     if (mailEach) {
@@ -112,4 +133,38 @@ const gauntletBotXp = (round) => {
   return num((RULES.gauntletBot || {})[rounds[round]]);
 };
 
-module.exports = { RULES, enabled, award, backfill, pastXp, gauntletBotXp, levelFor, xpForLevel, resetCache };
+// Re-levels EVERY account after a table change (tableVersion), once per
+// table: fixes users/{uid}/xp/level and the public copy other players see
+// (publicProfiles/{uid}/level, only if the profile still exists). Accounts
+// that play re-level themselves anyway (addXp); this covers everyone else.
+let migratedTable = 0;
+async function migrateAll() {
+  const want = num(RULES.tableVersion, 1);
+  if (migratedTable === want) return 0;
+  const root = admin.database();
+  const doneRef = root.ref('config/xpTableDone');
+  if (num((await doneRef.once('value')).val()) === want) { migratedTable = want; return 0; }
+  const users = (await root.ref('users').once('value')).val() || {};
+  let fixed = 0;
+  for (const [uid, u] of Object.entries(users)) {
+    if (!u || !u.xp || num(u.xp.table) === want) continue;
+    let level = null;
+    await root.ref(`users/${uid}/xp`).transaction((xp) => {
+      if (xp === null) return null;
+      const holder = { xp };
+      relevel(holder);
+      level = holder.xp.level;
+      return holder.xp;
+    });
+    if (level) {
+      const pub = root.ref(`publicProfiles/${uid}`);
+      if ((await pub.once('value')).exists()) await pub.child('level').set(level);
+      fixed++;
+    }
+  }
+  await doneRef.set(want);
+  migratedTable = want;
+  return fixed;
+}
+
+module.exports = { RULES, enabled, award, backfill, pastXp, gauntletBotXp, levelFor, xpForLevel, relevel, migrateAll, resetCache };

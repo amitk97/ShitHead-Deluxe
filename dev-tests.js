@@ -7121,9 +7121,9 @@ async function runDevTestSuite() {
     const L = XP_RULES.levels;
     assertEqual(L.length, 100, 'levels 1 to 99');
     assertEqual(xpLevelFor(0), 1, 'everyone starts at level 1');
-    assertEqual(xpForLevel(5), 477, 'level 5 needs 477 XP');
+    assertEqual(xpForLevel(5), 954, 'level 5 needs 954 XP (doubled in v225)');
     assertTrue(4 * (XP_RULES.finish + XP_RULES.win) + XP_RULES.firstGameOfDay < xpForLevel(5), 'even four straight wins (with the first-game bonus) are short of level 5');
-    assertEqual(xpForLevel(99), 700000, 'level 99 = 700,000 XP');
+    assertEqual(xpForLevel(99), 1400000, 'level 99 = 1,400,000 XP');
     assertTrue(Math.abs(xpForLevel(92) / xpForLevel(99) - 0.5) < 0.001, 'level 92 is half of 99', xpForLevel(92));
     for (let i = 2; i < L.length; i++) assertTrue(L[i] > L[i - 1], 'every level needs more XP than the one before', i);
     assertTrue(xpForLevel(77) / xpForLevel(70) > 1.8, 'about doubling every 7 levels at the top');
@@ -7143,7 +7143,7 @@ async function runDevTestSuite() {
     try {
       currentUser = { uid: 'xp_test', email: 'x@example.com' };
       setXpFeature(false);
-      playerXp = { total: 1080, level: 9 };
+      playerXp = { total: 2160, level: 9 };
       refreshXpDisplays();
       assertTrue(document.getElementById('hamburgerLevel').classList.contains('hidden'), 'no menu level badge while off');
       assertTrue(document.getElementById('profileXpSection').classList.contains('hidden'), 'no Profile XP bar while off');
@@ -7152,7 +7152,7 @@ async function runDevTestSuite() {
       assertTrue(!renderPlayerPopupHuman({ uid: 'u1', name: 'Pal' }, { loaded: true, rating: 600, level: 7 }, null).includes('xp-badge'), 'no level on player cards while off');
       matchXpLog = { gained: 0, levelUps: [] };
       const toasts = matchRewardLog.length;
-      noteXpResult({ gained: 45, total: 1100, level: 10, levelUps: [{ level: 10, reward: 100 }] });
+      noteXpResult({ gained: 45, total: 2205, level: 10, levelUps: [{ level: 10, reward: 100 }] });
       assertTrue(xpFeatureOn, 'a server reply with XP means the switch is on');
       assertEqual(playerXp.level, 10, 'the level comes from the server');
       assertEqual(matchXpLog.gained, 45, 'this match\'s XP is counted');
@@ -7169,7 +7169,7 @@ async function runDevTestSuite() {
       assertEqual(document.getElementById('menuXpSwitchLabel').textContent, 'XP & Levels: On', 'the owner switch shows the live state');
       updateHamburgerAccountLabel();
       assertTrue(document.getElementById('menuXpSwitchBtn').classList.contains('hidden'), 'only the owner sees the XP switch');
-      assertEqual(xpProgress(477).pct, 0, 'a new level starts an empty bar');
+      assertEqual(xpProgress(954).pct, 0, 'a new level starts an empty bar');
       assertTrue(xpProgress(10 ** 9).max, 'the top level has a full bar');
       resetMatchSummary();
       assertEqual(matchXpLog.gained, 0, 'a new match starts from 0 XP');
