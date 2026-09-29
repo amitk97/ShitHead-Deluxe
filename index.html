@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v223 (ShitHead-Deluxe-199) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v224 (ShitHead-Deluxe-200) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -4955,6 +4955,7 @@ video {
       <button id="menuSupportBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-support"/></svg></span><span>Support</span></button>
       <button id="menuErrorReportsBtn" class="hamburger-menu-item hidden"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#2a1016" stroke="#7f1d1d"/><path d="M16 8.5l8.5 15h-17z" fill="none" stroke="#fb7185" stroke-width="2" stroke-linejoin="round"/><path d="M16 14v4.5" stroke="#fb7185" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="21" r="1.2" fill="#fb7185"/></svg></span><span>Error Reports</span></button>
       <button id="menuChangelogBtn" class="hamburger-menu-item hidden"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#231a08" stroke="#78350f"/><path d="M10 9.5h12M10 14h12M10 18.5h8M10 23h6" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></svg></span><span>Changelog</span></button>
+      <button id="menuXpSwitchBtn" class="hamburger-menu-item hidden"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#082f49" stroke="#0369a1"/><path d="M9 21l5-5 4 3 5-8" stroke="#7dd3fc" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span id="menuXpSwitchLabel">XP &amp; Levels: Off</span></button>
       <button id="menuInstallBtn" class="hamburger-menu-item hidden"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#052e1c" stroke="#047857"/><rect x="10" y="6.5" width="12" height="19" rx="2.5" fill="none" stroke="#6ee7b7" stroke-width="2"/><path d="M16 10.5v8M12.5 15.5 16 19l3.5-3.5" stroke="#34d399" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Install App</span></button>
       <button id="menuSignOutBtn" class="hamburger-menu-item hidden menu-sign-out"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#2a1016" stroke="#7f1d1d"/><path d="M14 8H9.5A1.5 1.5 0 0 0 8 9.5v13A1.5 1.5 0 0 0 9.5 24H14" stroke="#fda4af" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M18 11l5 5-5 5M23 16H13" stroke="#fb7185" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Sign Out</span></button>
     </nav>
@@ -17955,6 +17956,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v224: [
+        ['🛠️', 'The groundwork for an upcoming feature is finished.']
+      ],
       v223: [
         ['🛠️', 'More groundwork for an upcoming feature.']
       ],
@@ -21326,12 +21330,12 @@ video {
     // late rewards arrive), Ranked rating change, and progress towards the
     // daily challenges and any seasonal picture.
     let matchRewardLog = [];
-    let matchXpLog = { gained: 0, levelUps: [], capped: false }; // XP added this match (§ XP & levels)
+    let matchXpLog = { gained: 0, levelUps: [] }; // XP added this match (§ XP & levels)
     let matchSummaryRating = null;
     let matchSummaryTimer = null;
     function resetMatchSummary() {
       matchRewardLog = [];
-      matchXpLog = { gained: 0, levelUps: [], capped: false };
+      matchXpLog = { gained: 0, levelUps: [] };
       matchSummaryRating = null;
       clearTimeout(matchSummaryTimer);
       document.getElementById('matchSummaryModal')?.classList.add('hidden');
@@ -22416,6 +22420,25 @@ video {
       if (!isGameOwner()) return;
       openChangelog();
     });
+    // § XP & levels: the owner's switch (config/features/xp; the rules let
+    // only the owner's verified email write it). Everyone's game follows it
+    // live, and the server within ~10 seconds.
+    function refreshXpSwitchLabel() {
+      const label = document.getElementById('menuXpSwitchLabel');
+      if (label) label.textContent = `XP & Levels: ${xpFeatureOn ? 'On' : 'Off'}`;
+    }
+    document.getElementById('menuXpSwitchBtn').addEventListener('click', () => {
+      if (!isGameOwner()) return;
+      const turnOn = !xpFeatureOn;
+      const msg = turnOn
+        ? 'Turn XP & Levels ON for every player? Levels, XP bars and level-up Diamonds appear at once, and each player gets XP for their past games at their next sign-in.'
+        : 'Turn XP & Levels OFF for every player? XP stops being earned and the level screens hide. Nobody loses the XP they have.';
+      if (!confirm(msg)) return;
+      closeHamburgerMenu();
+      db.ref('config/features/xp').set(turnOn)
+        .then(() => { notifyBanner(`XP & Levels are ${turnOn ? 'on' : 'off'} for everyone.`); if (turnOn) setTimeout(syncServerEconomy, 11000); })
+        .catch(() => notifyBanner('Couldn\'t change the XP switch. Check the rules are published.'));
+    });
     document.getElementById('changelogCloseBtn').addEventListener('click', () => document.getElementById('changelogModal').classList.add('hidden'));
     document.getElementById('errorReportsRefreshBtn').addEventListener('click', loadErrorReports);
     document.getElementById('errorReportsClearBtn').addEventListener('click', () => {
@@ -22968,6 +22991,7 @@ video {
       document.getElementById('menuSignOutBtn')?.classList.toggle('hidden', !currentUser);
       document.getElementById('menuErrorReportsBtn')?.classList.toggle('hidden', !isGameOwner());
       document.getElementById('menuChangelogBtn')?.classList.toggle('hidden', !isGameOwner());
+      document.getElementById('menuXpSwitchBtn')?.classList.toggle('hidden', !isGameOwner());
       drawerAvatar?.classList.toggle('hidden', !currentUser);
       document.getElementById('drawerSignInBtn')?.classList.toggle('hidden', !!currentUser);
       if (currentUser) {
@@ -23435,30 +23459,46 @@ video {
       const top = Math.max(...Object.keys(table).map(Number));
       return n > top && n % top === 0 ? Number(table[top]) : 0;
     }
-    // § XP & levels (built v222, OFF until the owner flicks the switch:
-    // database config/features/xp = true). XP is only ever added by the
-    // server (functions/economy.js awardXp) from the reward actions it already
-    // runs; this table is exported to it through the catalog. Level L needs
-    // XP_RULES.curve * (L-1)^1.5 total XP: level 5 ≈ 800 XP ≈ 25-30 games.
+    // § XP & levels (built v222, numbers v224; OFF until the owner flicks the
+    // switch: database config/features/xp = true). XP is only ever added by
+    // the server (functions/xp.js) from the reward actions it already runs;
+    // this table is exported to it through the catalog. Levels 1–99 on a
+    // RuneScape-style curve (steady ~120-300 XP a level early on, then about
+    // doubling every 7 levels; level 92 is half of 99). XP keeps counting past
+    // 99 up to maxXp. No daily cap (the match limits already stop farming).
     const XP_RULES = {
-      finish: 20,          // any finished game (Vs Bots, Play Friends, Ranked; draws too)
-      win: 15,             // on top, for a Vs Bots / Play Friends / Ranked win
-      ranked: 10,          // on top, for any Ranked game
-      firstGameOfDay: 25,  // the first finished game of the UK day
-      gauntletBot: 15,     // each Gauntlet bot beaten
-      daily: 10,           // each daily challenge
-      weekly: 40,          // each weekly challenge
-      dailyCap: 600,       // most XP one account can earn in a UK day
-      curve: 100,
-      maxLevel: 100,
-      levelUpDiamonds: 25, // every level up…
-      milestoneEvery: 5,   // …and every 5th level instead pays
-      milestoneDiamonds: 100
+      finish: 25,          // any finished game (Vs Bots, Play Friends, Ranked; draws too)
+      firstGameOfDay: 50,  // on top, the first finished game of the UK day
+      win: 75,             // on top, a Vs Bots / Play Friends win
+      ranked: 25,          // on top, any Ranked game
+      rankedWin: 150,      // on top, a Ranked win (double a regular win)
+      gauntletBot: { easy: 40, medium: 80, hard: 120, boss: 200 }, // each Gauntlet bot beaten
+      daily: 50,           // each daily challenge
+      weekly: 350,         // each weekly challenge (7x a daily)
+      levelUpDiamonds: 20, // every level up…
+      milestoneEvery: 10,  // …except every 10th level, which pays instead
+      milestoneDiamonds: 100,
+      seriesLevel: 10,     // Best of series (later) unlock at this level
+      maxXp: 100000000,
+      // levels[L] = total XP needed for level L (levels[0] unused).
+      levels: [
+        0, 0, 119, 238, 357, 477, 598, 719, 840, 963,
+        1086, 1210, 1335, 1461, 1589, 1717, 1848, 1979, 2113, 2248,
+        2386, 2526, 2668, 2814, 2963, 3115, 3272, 3433, 3598, 3769,
+        3946, 4130, 4321, 4520, 4728, 4946, 5175, 5416, 5670, 5939,
+        6225, 6529, 6852, 7198, 7569, 7966, 8394, 8855, 9352, 9891,
+        10474, 11107, 11796, 12545, 13362, 14253, 15227, 16292, 17458, 18736,
+        20137, 21676, 23365, 25222, 27265, 29512, 31986, 34710, 37713, 41022,
+        44671, 48695, 53135, 58035, 63444, 69416, 76010, 83293, 91339, 100227,
+        110049, 120902, 132898, 146156, 160812, 177013, 194926, 214730, 236628, 260842,
+        287618, 317229, 349976, 386192, 426247, 470548, 519548, 573745, 633692, 700000
+      ]
     };
-    const xpForLevel = (level) => Math.round(XP_RULES.curve * Math.pow(Math.max(0, level - 1), 1.5));
+    const XP_MAX_LEVEL = XP_RULES.levels.length - 1;
+    const xpForLevel = (level) => XP_RULES.levels[Math.max(1, Math.min(XP_MAX_LEVEL, level))] || 0;
     function xpLevelFor(total) {
       let level = 1;
-      while (level < XP_RULES.maxLevel && (Number(total) || 0) >= xpForLevel(level + 1)) level++;
+      while (level < XP_MAX_LEVEL && (Number(total) || 0) >= XP_RULES.levels[level + 1]) level++;
       return level;
     }
     // What the player sees (v223). Everything stays hidden until the switch
@@ -23478,14 +23518,15 @@ video {
       xpFeatureOn = !!on;
       document.body.classList.toggle('xp-on', xpFeatureOn);
       refreshXpDisplays();
+      if (typeof refreshXpSwitchLabel === 'function') refreshXpSwitchLabel();
     }
     // Where a total sits within its level: {level, into, need, pct, max}.
     function xpProgress(total) {
       const t = Math.max(0, Number(total) || 0);
       const level = xpLevelFor(t);
-      if (level >= XP_RULES.maxLevel) return { level, into: 0, need: 0, pct: 100, max: true };
+      if (level >= XP_MAX_LEVEL) return { level, total: t, into: 0, need: 0, pct: 100, max: true };
       const from = xpForLevel(level), to = xpForLevel(level + 1);
-      return { level, into: t - from, need: to - from, pct: Math.max(0, Math.min(100, Math.round(((t - from) / (to - from)) * 100))), max: false };
+      return { level, total: t, into: t - from, need: to - from, pct: Math.max(0, Math.min(100, Math.round(((t - from) / (to - from)) * 100))), max: false };
     }
     function xpLevelBadge(level, extra = '') {
       const L = Math.max(1, Math.round(Number(level) || 1));
@@ -23493,7 +23534,7 @@ video {
     }
     function xpBarHtml(total) {
       const p = xpProgress(total);
-      const next = p.max ? 'Top level' : `${p.into} / ${p.need} XP to level ${p.level + 1}`;
+      const next = p.max ? `Top level · ${p.total.toLocaleString('en-GB')} XP` : `${p.into.toLocaleString('en-GB')} / ${p.need.toLocaleString('en-GB')} XP to level ${p.level + 1}`;
       return `<div class="xp-card">${xpLevelBadge(p.level, 'xp-badge-lg')}<div class="xp-card-main"><span class="xp-bar"><i style="width:${p.pct}%"></i></span><span class="xp-card-sub">${next}</span></div></div>`;
     }
     // Every server reply that added XP comes through here.
@@ -23502,7 +23543,8 @@ video {
       const before = playerXp?.level || 1;
       playerXp = { total: Number(x.total) || 0, level: Number(x.level) || 1 };
       if (Number(x.gained) > 0) matchXpLog.gained += Number(x.gained);
-      if (x.capped) matchXpLog.capped = true;
+      // The one-time XP for games played before levels existed.
+      if (x.backfill && Number(x.backfill.reward) > 0) enqueueChallengeToast(`Level ${Number(x.backfill.level) || playerXp.level} from past games`, Number(x.backfill.reward), -1);
       (x.levelUps || []).forEach((u) => {
         if (!u || !(u.level > 0)) return;
         matchXpLog.levelUps.push({ level: Number(u.level), reward: Number(u.reward) || 0 });
@@ -23536,9 +23578,8 @@ video {
       const p = xpProgress(playerXp.total);
       const gained = matchXpLog.gained;
       const ups = matchXpLog.levelUps.map(u => `<div class="ms-levelup" data-levelup="${u.level}"><small>Level Up</small>Level ${u.level}${u.reward ? ` <span>+💎 ${u.reward}</span>` : ''}</div>`).join('');
-      const note = matchXpLog.capped ? '<p class="ms-none">Daily XP limit reached. More tomorrow.</p>' : '';
       return `<div class="ms-section"><div class="ms-label">XP</div>
-        <div class="ms-progress">${xpLevelBadge(p.level)}<span class="ms-bar" style="--bar:#38bdf8"><i data-bar="xp" style="width:${p.pct}%"></i></span><b class="ms-xp-gain">${gained > 0 ? `+${gained} XP` : '+0 XP'}</b></div>${ups}${note}</div>`;
+        <div class="ms-progress">${xpLevelBadge(p.level)}<span class="ms-bar" style="--bar:#38bdf8"><i data-bar="xp" style="width:${p.pct}%"></i></span><b class="ms-xp-gain">${gained > 0 ? `+${gained} XP` : '+0 XP'}</b></div>${ups}</div>`;
     }
 
     // The Gauntlet as challenges: the first clear (Bots tab) and a fixed daily
@@ -23983,6 +24024,7 @@ video {
         if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
         applyServerClaims(res.claimed);
         applyNewAvatars(res.newAvatars);
+        noteXpResult(res.xp); // XP for past games, the first time levels are on
         return res;
       }).catch((e) => { console.warn('Economy sync failed', e.message); return null; })
         .finally(() => { economySyncInFlight = null; });
@@ -25860,9 +25902,9 @@ video {
         const L = Math.max(1, Math.round(Number(item.level) || 1));
         return `<div class="inbox-activity--level border rounded-xl px-2.5 py-2">
           <div class="flex items-center gap-2">${xpLevelBadge(L, 'xp-badge-lg')}<div class="min-w-0">
-          <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">Level up</p>
-          <p class="text-xs font-bold text-white">You reached level ${L}</p>
-          <p class="inbox-activity-accent text-[10px] mt-1">${Number(item.reward) > 0 ? `💎 ${Number(item.reward)} added to your Diamonds` : 'Keep playing to reach the next level.'}</p>
+          <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${item.backfill ? 'Levels are here' : 'Level up'}</p>
+          <p class="text-xs font-bold text-white">${item.backfill ? `Your past games put you on level ${L}` : `You reached level ${L}`}</p>
+          <p class="inbox-activity-accent text-[10px] mt-1">${item.backfill ? `${(Number(item.xp) || 0).toLocaleString('en-GB')} XP from games and challenges you've already played. ` : ''}${Number(item.reward) > 0 ? `💎 ${Number(item.reward)} added to your Diamonds` : 'Keep playing to reach the next level.'}</p>
           </div></div>
           <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
         </div>`;

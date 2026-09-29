@@ -18,13 +18,19 @@ from Ranked rating, and a natural gate for features like staked series.
 - **XP is only ever added by the server** (economy actions that already run after a
   game: `matchFinished`, `matchWin`, `rankedResult`, `claim`, `gauntlet`). Never trust a
   number sent by the phone.
-- Suggested XP per event (tune later):
-  - finish a game 20, win +15, Ranked game +10 extra, Gauntlet bot beaten 15,
-    daily challenge 10, weekly 40, first game of the UK day +25.
-  - Cap: at most ~600 XP per UK day (same idea as `MATCH_LIMITS`), so farming bots
-    can't race levels.
-- Level curve: level n needs `100 * n^1.5` total XP (roughly: level 5 after ~25–30
-  games over 1–2 days; level 10 about a week of regular play; level 30+ long term).
+- **Built (v222–v224, owner's numbers).** XP per event: finish a game 25, first game of
+  the UK day +50, win +75 (Vs Bots / Play Friends), Ranked game +25, Ranked win +150
+  (instead of +75), Gauntlet bot beaten 40 / 80 / 120 / 200 (easy / medium / hard /
+  boss), daily challenge 50, weekly 350. **No daily cap** (owner: it discourages
+  playing; the match limits already stop farming).
+- Levels 1–99 from the table `XP_RULES.levels` (RuneScape-style: ~120–300 XP a level
+  early, doubling about every 7 levels at the top; level 5 = 477 XP ≈ 5+ games,
+  level 10 = 1,086, level 92 = 349,976 = half of level 99 = 700,000). XP keeps
+  counting past 99 up to 100,000,000.
+- Level-up Diamonds: 20 a level, 100 on every 10th level instead (not both).
+- Back-dating: the first time an account gets XP (or signs in) with the switch on,
+  its past games, wins, Ranked games/wins, Gauntlet bots and daily/weekly
+  challenges become XP once, levels passed pay their Diamonds, one mail.
 - Show: level badge next to the name (player card, Profile, leaderboards), a thin XP bar
   on the Profile and in the match summary (`matchSummaryHtml`: "+45 XP").
 - Level-up rewards (server-paid, once each): a few Diamonds per level; milestone
@@ -40,10 +46,11 @@ from Ranked rating, and a natural gate for features like staked series.
 
 **Who can play:**
 - Both players **signed in** with a **verified email** (Diamonds are involved).
-- **Both at level 5 or higher** (owner's idea; my recommendation: yes, and it doubles
-  as anti-abuse because a brand-new throwaway account can't join).
+- **Both at level 10 or higher** (owner's decision, `XP_RULES.seriesLevel`; ~19
+  typical games; it doubles as anti-abuse because a brand-new throwaway account
+  can't join).
 - Optional: allow an *unstaked* "friendly" series for any signed-in player, and only
-  require level 5 for staked series. (Owner to decide.)
+  require level 10 for staked series. (Owner to decide.)
 
 **Setting it up:**
 - When the host creates a room with exactly 2 human seats, a "Series" choice appears:
@@ -113,19 +120,16 @@ use the Ranked safety machinery:
 - Invite pop-up: "Amit challenges you to a Best of 3 · entry 30 💎 · winner takes 120 💎".
 - Table: score pill + "Game n of m"; match summary shows the series score; the final
   summary shows the payout.
-- Locked state (below level 5 or signed out): the selector shows a lock and
-  "Reach level 5 to play series".
+- Locked state (below level 10 or signed out): the selector shows a lock and
+  "Reach level 10 to play series".
 
 ---
 
 ## 3. Implementation checklist (this codebase)
 
-1. XP: server `userTx` helpers in `functions/economy.js` (`addXp(u, amount, reason)` with
-   the daily cap), call from each action; `users/{uid}/xp` + `xpDay` server-only in the
-   rules; catalog numbers in `index.html` → `node tools/export-catalog.js`; UI (badge, bar,
-   summary line); dev tests + emulator tests (`tools/economy-emulator-test.js`).
+1. XP: done (v222–v224, `functions/xp.js`, screens, owner switch in the menu).
 2. Series server actions: `seriesCreate` (checks both players: signed in, verified,
-   level ≥ 5, funds; takes entries → escrow), `seriesGame` (reads the room, records a
+   level ≥ 10, funds; takes entries → escrow), `seriesGame` (reads the room, records a
    game win for the right seat, idempotent per matchId), `seriesForfeit`,
    `seriesAbandon` (refunds), payout on the deciding game. All via `userTx` (mind the
    transaction pitfall in `CLAUDE.md`).

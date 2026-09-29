@@ -54,6 +54,15 @@ const RANKED_PAIR_PER_DAY = 5; // processedMatchRewards / processedRankedMatches
 const db = () => admin.database();
 const boards = require('./boards');
 const xp = require('./xp'); // XP & levels: off until config/features/xp is true
+// An action's XP: `past` is the account's one-time XP for play from before
+// levels (xp.backfill, taken at the start of the mutator, before this
+// action changes any counter), then this action's own parts.
+function xpResult(user, parts, now, past) {
+  const res = xp.award(user, parts, now, addDiamonds);
+  if (!past || !past.gained) return res;
+  const cur = res || { gained: 0, total: user.xp.total, level: user.xp.level, levelUps: [] };
+  return { ...cur, backfill: { xp: past.gained, level: past.level, reward: past.levelUps.reduce((sum, u) => sum + u.reward, 0) } };
+}
 const fail = (code, message) => { throw new HttpsError(code, message); };
 const clip = (value, max) => String(value == null ? '' : value).slice(0, max);
 const num = (value, fallback = 0) => { const n = Number(value); return value !== null && value !== undefined && value !== '' && Number.isFinite(n) ? n : fallback; };
@@ -372,7 +381,11 @@ actions.init = async ({ uid, auth }) => {
 actions.sync = async ({ uid }) => {
   const legacy = await legacyOwned(uid);
   const now = Date.now();
+  const xpOn = await xp.enabled();
   const res = await userTx(uid, (user) => {
+    // XP for past play, once (the first sign-in after the switch goes on).
+    const past = xpOn ? xp.backfill(user, now, addDiamonds) : null;
+    const xpRes = past ? xpResult(user, [], now, past) : null;
     const claimed = grantMilestones(user, now);
     const newAvatars = grantEarnedAvatars(user, legacy, now);
     // A first Gauntlet clear from before it was a challenge: record it (already paid).
@@ -387,11 +400,11 @@ actions.sync = async ({ uid }) => {
       user.completedChallenges['gauntlet-first'] = { completedAt: num(user.gauntlet.firstDoneAt), reward: num(CAT.gauntlet.firstReward) };
       backfilled = true;
     }
-    return claimed.length || newAvatars.length || backfilled ? { user, claimed, newAvatars } : { noop: true, claimed: [], newAvatars: [] };
+    return claimed.length || newAvatars.length || backfilled || past ? { user, claimed, newAvatars, xp: xpRes } : { noop: true, claimed: [], newAvatars: [] };
   });
   // Make sure this player is on the Challenges / Gauntlet boards (older accounts).
   try { await boards.onUserChanged(uid, null, res.user, { force: true }); } catch (e) { logger.warn('boards backfill failed', { uid, error: String(e) }); }
-  return { claimed: res.claimed || [], newAvatars: res.newAvatars || [], diamonds: num(res.user.diamonds) };
+  return { claimed: res.claimed || [], newAvatars: res.newAvatars || [], diamonds: num(res.user.diamonds), xp: res.xp || null };
 };
 
 actions.streak = async ({ uid }) => {
@@ -419,9 +432,10 @@ actions.claim = async ({ uid, data }) => {
     if (user.completedChallenges?.[id]) return { noop: true, already: true };
     const def = challengeForKey(id, user, now);
     if (def.error) return { error: def.error };
+    const past = xpOn ? xp.backfill(user, now.getTime(), addDiamonds) : null;
     recordClaim(user, id, def.name, def.reward, now.getTime());
     const kind = id.startsWith('daily_') ? 'daily' : id.startsWith('weekly_') ? 'weekly' : null;
-    const xpRes = xpOn && kind ? xp.award(user, [[kind, xp.RULES[kind]]], now.getTime(), addDiamonds) : null;
+    const xpRes = xpOn ? xpResult(user, kind ? [[kind, xp.RULES[kind]]] : [], now.getTime(), past) : null;
     return { user, awarded: { id, name: def.name, reward: def.reward }, xp: xpRes };
   });
   return { awarded: res.awarded || null, already: !!res.already, diamonds: num(res.user.diamonds), xp: res.xp || null };
@@ -454,6 +468,7 @@ actions.matchWin = async ({ uid, data }) => {
     if (counters.day !== today) { counters.day = today; counters.winsToday = 0; }
     if (num(counters.winsToday) >= MATCH_LIMITS.perDay) return { noop: true, capped: 'daily' };
     if (now - num(counters.lastWinAt) < MATCH_LIMITS.minGapMs) return { noop: true, capped: 'too-soon' };
+    const past = xpOn ? xp.backfill(user, now, addDiamonds) : null;
     let amount = 0, unlocked = null;
     if (mode === 'bots') {
       const open = unlockedDifficulties(user.difficultyWins);
@@ -473,7 +488,7 @@ actions.matchWin = async ({ uid, data }) => {
     const seasonWins = countSeasonWin(user, new Date(now));
     const claimed = grantMilestones(user, now);
     const newAvatars = grantEarnedAvatars(user, legacy, now);
-    const xpRes = xpOn ? xp.award(user, [['win', xp.RULES.win]], now, addDiamonds) : null;
+    const xpRes = xpOn ? xpResult(user, [['win', xp.RULES.win]], now, past) : null;
     return { user, amount, unlocked, seasonWins, claimed, newAvatars, xp: xpRes };
   });
   return {
@@ -502,6 +517,7 @@ actions.matchFinished = async ({ uid, data }) => {
     const counters = user.matchCounters = user.matchCounters || {};
     const recent = counters.recentFinished || {};
     if (recent[matchId]) return { noop: true };
+    const past = xpOn ? xp.backfill(user, now, addDiamonds) : null;
     if (drew) counters.draws = num(counters.draws) + 1;
     if (now - num(counters.lastFinishedAt) < 20 * 1000) {
       if (!drew) return { noop: true, capped: 'too-soon' };
@@ -516,7 +532,7 @@ actions.matchFinished = async ({ uid, data }) => {
     counters.recentFinished = pruneMap({ ...recent, [matchId]: { at: now } }, 20);
     const referral = referralGameCounted(user, now);
     const claimed = grantMilestones(user, now);
-    const xpRes = xpOn ? xp.award(user, [['finish', xp.RULES.finish], ['firstGameOfDay', firstToday ? xp.RULES.firstGameOfDay : 0]], now, addDiamonds) : null;
+    const xpRes = xpOn ? xpResult(user, [['finish', xp.RULES.finish], ['firstGameOfDay', firstToday ? xp.RULES.firstGameOfDay : 0]], now, past) : null;
     return { user, claimed, referral, xp: xpRes };
   });
   if (res.referral) await referralReportToInviter(uid, res.user, res.referral, now);
@@ -765,10 +781,12 @@ actions.gauntlet = async ({ uid, data }) => {
     if (won && now - num(run.lastAt) < GAUNTLET_MIN_GAME_MS) return { error: 'That game was too quick to count.' };
     run.lastAt = now;
     if (!won) return loseLife() ? { user, over: true } : { user };
+    const past = xpOn ? xp.backfill(user, now, addDiamonds) : null;
+    const botXp = xp.gauntletBotXp(num(run.round)); // scales with the bot's difficulty
     run.playing = false;
     run.round = num(run.round) + 1;
     g.botsBeaten = num(g.botsBeaten) + 1; // Gauntlet board
-    if (xpOn) xpRes = xp.award(user, [['gauntletBot', xp.RULES.gauntletBot]], now, addDiamonds);
+    if (xpOn) xpRes = xpResult(user, [['gauntletBot', botXp]], now, past);
     if (run.round < G.rounds.length) return { user };
     // Beaten: once a day.
     g.run = null;
@@ -881,6 +899,7 @@ actions.rankedResult = async ({ uid, data }) => {
       const res = await userTx(p.uid, (user) => {
         user.processedRankedMatches = user.processedRankedMatches || {};
         if (user.processedRankedMatches[resultId]) return { noop: true };
+        const past = xpOn ? xp.backfill(user, now, addDiamonds) : null;
         const previousRating = num(user.rating, 500);
         const rs = user.rankedStats || {};
         const newStreak = won ? num(rs.currentStreak) + 1 : drew ? num(rs.currentStreak) : 0;
@@ -929,7 +948,7 @@ actions.rankedResult = async ({ uid, data }) => {
         }
         claimed.push(...grantMilestones(user, now));
         const newAvatars = grantEarnedAvatars(user, legacy, now);
-        const xpRes = xpOn ? xp.award(user, [['ranked', xp.RULES.ranked], ['win', won ? xp.RULES.win : 0]], now, addDiamonds) : null;
+        const xpRes = xpOn ? xpResult(user, [['ranked', xp.RULES.ranked], ['rankedWin', won ? xp.RULES.rankedWin : 0]], now, past) : null;
         return { user, result: { from: previousRating, to: newRating, won, drew, elo: deltas[i], winBonus, streak: newStreak, streakBonus, diamondsAwarded: amount, claimed, newAvatars, xp: xpRes } };
       });
       const u = res.user;

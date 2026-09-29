@@ -3,28 +3,31 @@
 // config/features/xp = true (owner-only write). While off, nothing is added
 // and nothing changes for players.
 //
-// users/{uid}/xp = { total, level, day, today }
-//   total  all XP ever earned (never goes down)
-//   level  the level for that total (catalog xp.curve * (L-1)^1.5 per level)
-//   day / today  the UK day and the XP earned on it (capped at xp.dailyCap)
-// A level up pays Diamonds (xp.levelUpDiamonds, or xp.milestoneDiamonds on
-// every xp.milestoneEvery-th level) and sends an activityInbox 'level' mail.
+// users/{uid}/xp = { total, level, backfilled }
+//   total  all XP ever earned (never goes down, stops at xp.maxXp)
+//   level  1–99, from the catalog's xp.levels table (total XP per level:
+//          a RuneScape-style curve, level 92 is half of 99)
+//   backfilled  past play was turned into XP once (see backfill)
+// A level up pays Diamonds (xp.levelUpDiamonds, or xp.milestoneDiamonds
+// instead on every xp.milestoneEvery-th level) and sends an activityInbox
+// 'level' mail. There is no daily cap: the match limits already stop farming.
 'use strict';
 
 const admin = require('firebase-admin');
 const CAT = require('./catalog.json');
 
 const RULES = CAT.xp || {};
+const LEVELS = RULES.levels || [0, 0]; // LEVELS[L] = total XP for level L
+const MAX_LEVEL = LEVELS.length - 1;
 const num = (v, f = 0) => { const n = Number(v); return v !== null && v !== undefined && v !== '' && Number.isFinite(n) ? n : f; };
-const ukDateKey = (date = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 
-const xpForLevel = (level) => Math.round(num(RULES.curve, 100) * Math.pow(Math.max(0, level - 1), 1.5));
+const xpForLevel = (level) => LEVELS[Math.max(1, Math.min(MAX_LEVEL, level))] || 0;
 function levelFor(total) {
   let level = 1;
-  const max = num(RULES.maxLevel, 100);
-  while (level < max && num(total) >= xpForLevel(level + 1)) level++;
+  while (level < MAX_LEVEL && num(total) >= LEVELS[level + 1]) level++;
   return level;
 }
+const levelReward = (L) => (num(RULES.milestoneEvery) > 0 && L % num(RULES.milestoneEvery) === 0 ? num(RULES.milestoneDiamonds) : num(RULES.levelUpDiamonds));
 
 // The switch, read at most every 10s per server instance (so flicking it
 // takes effect within about 10 seconds).
@@ -38,32 +41,75 @@ async function enabled() {
 }
 const resetCache = () => { cached = { at: 0, on: false }; };
 
+// Adds `amount` XP (mutates `user`) and pays/mails the levels passed.
+function addXp(user, amount, now, addDiamonds, { mailEach = true } = {}) {
+  const xp = user.xp = user.xp || {};
+  const before = num(xp.total);
+  const beforeLevel = levelFor(before);
+  xp.total = Math.min(num(RULES.maxXp, 1e8), before + Math.max(0, Math.round(amount)));
+  xp.level = levelFor(xp.total);
+  const levelUps = [];
+  for (let L = beforeLevel + 1; L <= xp.level; L++) {
+    const reward = levelReward(L);
+    if (reward) addDiamonds(user, reward);
+    if (mailEach) {
+      user.activityInbox = user.activityInbox || {};
+      user.activityInbox[`level_${L}`] = { type: 'level', level: L, reward, sentAt: now };
+    }
+    levelUps.push({ level: L, reward });
+  }
+  return { gained: xp.total - before, total: xp.total, level: xp.level, levelUps };
+}
+
+// XP for what an account did before levels existed, worked out from its
+// records (each counted once, never again): games finished, wins, Ranked
+// games and wins, Gauntlet bots (runs always go easy, easy, medium, hard,
+// boss) and daily/weekly challenges. Runs before the first XP an account
+// gets, so the game being reported isn't counted twice. The levels it passes
+// pay their Diamonds, with ONE mail for the lot.
+function pastXp(user) {
+  const c = user.matchCounters || {};
+  const rs = user.rankedStats || {};
+  const rankedWins = num(user.wins);
+  const rankedGames = rankedWins + num(user.losses) + num(rs.draws);
+  const casualWins = num(c.wins);
+  const finished = Math.max(num(c.finished), casualWins + rankedGames);
+  const rounds = (CAT.gauntlet && CAT.gauntlet.rounds) || [];
+  const perBot = RULES.gauntletBot || {};
+  const bots = num(user.gauntlet?.botsBeaten);
+  let gauntlet = 0;
+  for (let i = 0; i < bots && rounds.length; i++) gauntlet += num(perBot[rounds[i % rounds.length]]);
+  const keys = Object.keys(user.completedChallenges || {});
+  const daily = keys.filter(k => k.startsWith('daily_')).length;
+  const weekly = keys.filter(k => k.startsWith('weekly_')).length;
+  return finished * num(RULES.finish) + casualWins * num(RULES.win) + rankedGames * num(RULES.ranked)
+    + rankedWins * num(RULES.rankedWin) + gauntlet + daily * num(RULES.daily) + weekly * num(RULES.weekly);
+}
+function backfill(user, now, addDiamonds) {
+  if (user.xp && user.xp.backfilled) return null;
+  const amount = pastXp(user);
+  const res = addXp(user, amount, now, addDiamonds, { mailEach: false });
+  user.xp.backfilled = true;
+  if (res.levelUps.length) {
+    user.activityInbox = user.activityInbox || {};
+    user.activityInbox.level_backfill = { type: 'level', backfill: true, level: res.level, xp: res.gained, reward: res.levelUps.reduce((s, u) => s + u.reward, 0), sentAt: now };
+  }
+  return res;
+}
+
 // Adds XP inside a users/{uid} transaction (mutates `user`). `parts` is a
 // list of [reason, amount]. Returns { gained, total, level, levelUps } or
 // null when nothing was added. `addDiamonds` pays level-up rewards.
 function award(user, parts, now, addDiamonds) {
   const wanted = parts.reduce((s, [, n]) => s + Math.max(0, num(n)), 0);
   if (!wanted) return null;
-  const today = ukDateKey(new Date(now));
-  const xp = user.xp = user.xp || {};
-  if (xp.day !== today) { xp.day = today; xp.today = 0; }
-  const room = Math.max(0, num(RULES.dailyCap, 600) - num(xp.today));
-  const gained = Math.min(wanted, room);
-  if (!gained) return { gained: 0, capped: true, total: num(xp.total), level: num(xp.level, 1), levelUps: [] };
-  const before = levelFor(num(xp.total));
-  xp.total = num(xp.total) + gained;
-  xp.today = num(xp.today) + gained;
-  xp.level = levelFor(xp.total);
-  const levelUps = [];
-  for (let L = before + 1; L <= xp.level; L++) {
-    const milestone = num(RULES.milestoneEvery) > 0 && L % num(RULES.milestoneEvery) === 0;
-    const reward = milestone ? num(RULES.milestoneDiamonds) : num(RULES.levelUpDiamonds);
-    if (reward) addDiamonds(user, reward);
-    user.activityInbox = user.activityInbox || {};
-    user.activityInbox[`level_${L}`] = { type: 'level', level: L, reward, sentAt: now };
-    levelUps.push({ level: L, reward });
-  }
-  return { gained, capped: gained < wanted, total: xp.total, level: xp.level, levelUps };
+  return addXp(user, wanted, now, addDiamonds);
 }
 
-module.exports = { RULES, enabled, award, levelFor, xpForLevel, resetCache };
+// Gauntlet XP for beating the bot of round `round` (0-based).
+const gauntletBotXp = (round) => {
+  const rounds = (CAT.gauntlet && CAT.gauntlet.rounds) || [];
+  return num((RULES.gauntletBot || {})[rounds[round]]);
+};
+
+module.exports = { RULES, enabled, award, backfill, pastXp, gauntletBotXp, levelFor, xpForLevel, resetCache };

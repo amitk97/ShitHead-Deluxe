@@ -600,7 +600,6 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   // XP & levels (v222): nothing happens until the owner's switch config/features/xp is on
   {
     const sleep = (ms) => new Promise(res => setTimeout(res, ms));
-    const ukToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
     await call('xena', { action: 'init' });
     await admin('config/features/xp', 'DELETE');
     await sleep(11000); // the server re-reads the switch at most every 10s
@@ -608,31 +607,41 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     ok(x && !x.error && x.xp === null && (await admin('users/xena/xp')) === null, 'XP switch off: a finished game adds no XP', x);
     ok((await tryWrite('xena', db => set(ref(db, 'users/xena/xp'), { total: 99999, level: 50 }))) === 'denied', 'blocked: a phone writing its own XP');
     ok((await tryWrite('xena', db => set(ref(db, 'config/features/xp'), true))) === 'denied', 'blocked: a player flicking the XP switch');
+    // Back-dating: past play becomes XP once (unit check of the sums).
+    const xpMod = require('../functions/xp');
+    const pastUser = { matchCounters: { finished: 10, wins: 4 }, wins: 2, losses: 1, rankedStats: { draws: 1 }, gauntlet: { botsBeaten: 7 }, completedChallenges: { daily_a: {}, weekly_b: {}, other: {} } };
+    ok(xpMod.pastXp(pastUser) === 1910, 'past play: 10 games, 4 wins, 4 Ranked (2 won), 7 Gauntlet bots, a daily and a weekly = 1910 XP', xpMod.pastXp(pastUser));
+    let paid = 0;
+    const bf = xpMod.backfill(pastUser, 1, (u, n) => { paid += n; });
+    ok(bf.level === 16 && paid === 380 && pastUser.activityInbox.level_backfill?.backfill && !pastUser.activityInbox.level_10, 'back-dating reaches level 16, pays 380 Diamonds with one mail', { bf, paid });
+    ok(xpMod.backfill(pastUser, 2, () => {}) === null, 'back-dating happens only once');
+    ok(xpMod.gauntletBotXp(0) === 40 && xpMod.gauntletBotXp(2) === 80 && xpMod.gauntletBotXp(3) === 120 && xpMod.gauntletBotXp(4) === 200, 'Gauntlet XP scales with the bot');
+    ok(xpMod.levelFor(476) === 4 && xpMod.levelFor(477) === 5 && xpMod.levelFor(700000) === 99 && xpMod.levelFor(9e9) === 99, 'level table: 477 = level 5, 700,000 = level 99, never past 99');
     await admin('config/features/xp', 'PUT', true);
     await sleep(11000);
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
     await admin('users/xena/matchCounters/finishedDay', 'DELETE');
     x = await call('xena', { action: 'matchFinished', matchId: 'xp_m1' });
-    ok(x.xp && x.xp.gained === 45 && x.xp.total === 45 && x.xp.level === 1, 'XP on: first game of the day = 20 + 25', x.xp);
+    ok(x.xp && x.xp.gained === 75 && x.xp.backfill?.xp === 25 && x.xp.total === 100 && x.xp.level === 1, 'XP on: the game from before (25) is back-dated, then this first game of the day = 25 + 50', x.xp);
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
     x = await call('xena', { action: 'matchFinished', matchId: 'xp_m2' });
-    ok(x.xp && x.xp.gained === 20 && x.xp.total === 65, 'XP on: the next game = 20', x.xp);
+    ok(x.xp && x.xp.gained === 25 && x.xp.total === 125 && x.xp.level === 2 && x.xp.levelUps[0]?.reward === 20 && !x.xp.backfill, 'the next game = 25, level 2 pays 20 Diamonds, no second back-dating', x.xp);
     x = await call('xena', { action: 'matchFinished', matchId: 'xp_m2' });
     ok(!x.xp, 'the same game never pays XP twice', x.xp);
-    await admin('users/xena/xp', 'PUT', { total: 790, level: 4, day: ukToday, today: 0 });
+    await admin('users/xena/xp', 'PUT', { total: 1080, level: 9, backfilled: true });
     await admin('users/xena/diamonds', 'PUT', 0);
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
     x = await call('xena', { action: 'matchFinished', matchId: 'xp_m3' });
-    ok(x.xp && x.xp.level === 5 && x.xp.levelUps.length === 1 && x.xp.levelUps[0].reward === 100, 'reaching level 5 (800 XP) is a milestone: 100 Diamonds', x.xp);
-    ok(num0(await admin('users/xena/diamonds')) === 100 && (await admin('users/xena/activityInbox/level_5'))?.type === 'level', 'level-up Diamonds paid and a level mail sent');
-    await admin('users/xena/xp/today', 'PUT', 590);
+    ok(x.xp && x.xp.level === 10 && x.xp.levelUps.length === 1 && x.xp.levelUps[0].reward === 100, 'level 10 pays 100 Diamonds (instead of 20)', x.xp);
+    ok(num0(await admin('users/xena/diamonds')) === 100 && (await admin('users/xena/activityInbox/level_10'))?.type === 'level', 'level-up Diamonds paid and a level mail sent');
+    await admin('users/xena/xp', 'PUT', { total: 99999990, level: 99, backfilled: true });
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
     x = await call('xena', { action: 'matchFinished', matchId: 'xp_m4' });
-    ok(x.xp && x.xp.gained === 10 && x.xp.capped, 'the daily cap (600) stops XP farming', x.xp);
-    await admin('users/xena/xp/today', 'PUT', 0);
+    ok(x.xp && x.xp.total === 100000000 && x.xp.level === 99 && x.xp.gained === 10, 'no daily cap; XP stops at 100 million, level stays 99', x.xp);
+    await admin('users/xena/xp', 'PUT', { total: 200, level: 2, backfilled: true });
     await admin('users/xena/matchCounters/lastWinAt', 'PUT', 0);
     x = await call('xena', { action: 'matchWin', mode: 'bots', difficulty: 'easy', matchId: 'xp_w1' });
-    ok(x.xp && x.xp.gained === 15, 'a win adds 15 XP on top', x.xp);
+    ok(x.xp && x.xp.gained === 75, 'a win adds 75 XP on top', x.xp);
     await admin('config/features/xp', 'PUT', false);
     await sleep(11000);
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);

@@ -113,22 +113,16 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - The phone can't delete `users/{uid}` itself (no blanket write), so account deletion must always go through the server.
 - Game: Profile → Your data (`#profileDataSection`, `downloadMyData`: server copy + `thisDevice` = this device's `shithead_*` localStorage minus the push token, saved as `shithead-data-<name>-<date>.json`; share sheet on iPhone). Delete account (`deleteFinalBtn`, password re-check kept) → `deleteAccount` request → `performSignOut`. Sign-in runs `pendingAccountDeletion` first: a pending deletion shows `#keepAccountModal` (Back can't skip it) and nothing public starts until Keep (`startSignedInSession`, the old body of the signed-in branch of `onAuthStateChanged`); "Continue deleting" signs out. Sign-in help: `#authHelpToggle` / `#authHelpPanel` (reset link, `resendVerificationEmail`, Google tip, 7-day note, support). Privacy policy describes both. End to end: `tools/account-e2e.js` (a real page on the emulators: download, delete, sign back in → Keep, delete again, purge; same `functions/.env.local` setup as `tools/referral-e2e.js`).
 
-## XP & levels (v222 engine, v223 screens: OFF behind a switch)
+## XP & levels (v222 engine, v223 screens, v224 owner's numbers + switch: OFF until the owner flips it)
 
-- **The switch:** database `config/features/xp` (boolean; rules: anyone reads, only the owner's verified email writes). Off/absent = no XP is awarded and (from section 2) no XP UI shows. The server re-reads it at most every 10s (`functions/xp.js` `enabled`).
-- **Server only:** `functions/xp.js` `award(user, parts, now, addDiamonds)` runs inside the existing `userTx` mutators:
-  - `matchFinished` gives `finish` + `firstGameOfDay` (tracked by `matchCounters.finishedDay`);
-  - `matchWin` gives `win`;
-  - `rankedResult` gives `ranked` + `win`;
-  - `gauntlet` gives `gauntletBot` per bot beaten;
-  - `claim` gives `daily` / `weekly`.
-  - Each returns `xp: {gained, capped, total, level, levelUps}` (null when off).
-- **Stored:** `users/{uid}/xp` = {total, level, day, today}; a server-only user field (named in the rules with no `.write`). Daily cap `dailyCap` (UK day).
-- **Level curve:** level L needs `curve * (L-1)^1.5` (level 5 = 800). A level up pays `levelUpDiamonds`, or `milestoneDiamonds` every `milestoneEvery`-th level, and mails `activityInbox/level_<L>` (type `level`).
-- **Numbers:** `XP_RULES` in index.html (`§ XP & levels`, next to `RANKED_BONUS`), exported to the catalog as `xp`; `xpLevelFor` / `xpForLevel` mirror the server.
-- **Tests:** emulator block "XP & levels" in `tools/economy-emulator-test.js`; dev test "XP & levels".
-- **Screens (v223, all hidden while off):** `xpFeatureOn` follows the switch live (`watchXpSwitch`, body class `xp-on`); `playerXp` = the account's {total, level} (profile at sign-in, then every reply). Every economy reply goes through `noteXpResult(res.xp)` (matchFinished, matchWin, rankedResult, claim, gauntlet): updates `playerXp`, adds to `matchXpLog` (reset in `resetMatchSummary`), toasts level-up Diamonds (they join the match's rewards). Shown: menu header badge `#hamburgerLevel`, Profile `#profileXpSection` (`xpBarHtml`), match summary XP section (`matchSummaryXpHtml`: level badge, bar `data-bar="xp"`, +N XP, LEVEL UP rows), Inbox mail type `level`, and other players' level on player cards and friends' rows from `publicProfiles/{uid}/level` (rules: must equal `users/{uid}/xp/level`; written by `syncPublicProfile` / `publishXpLevel`). Badge = `xpLevelBadge(level)`.
-- **Plan:** `docs/plans/best-of-series-and-levels.md`. Section 3 = owner toggle in the menu.
+- **The switch:** database `config/features/xp` (boolean; rules: anyone reads, only the owner's verified email writes). Owner: menu → "XP & Levels: On/Off" (`#menuXpSwitchBtn`, `isGameOwner()` only, confirm first). Off/absent = no XP is awarded and no XP UI shows. The server re-reads it at most every 10s (`functions/xp.js` `enabled`).
+- **Numbers (owner's, v224):** `XP_RULES` in index.html (`§ XP & levels`), exported to the catalog as `xp`. Finish 25, first game of the UK day +50, win +75 (Vs Bots / Play Friends), Ranked game +25, Ranked win +150 (instead of the win's 75), Gauntlet bot `gauntletBot` easy 40 / medium 80 / hard 120 / boss 200 (by the round's bot, `xp.gauntletBotXp`), daily challenge 50, weekly 350 (7x). **No daily cap** (owner: it discourages playing). XP stops at `maxXp` 100,000,000.
+- **Levels 1–99:** the table `XP_RULES.levels` (total XP per level; RuneScape-style, level 5 = 477 so it takes 5+ games, level 10 = 1,086, level 92 = 349,976 = half of 99 = 700,000). `xpLevelFor` / `xpForLevel` read it; the server uses the same table. A level up pays 20 💎, or 100 💎 on every 10th level instead (not both), and mails `activityInbox/level_<L>` (type `level`).
+- **Server only:** `functions/xp.js` inside the existing `userTx` mutators (`xpResult` in economy.js): `matchFinished` finish + firstGameOfDay (`matchCounters.finishedDay`), `matchWin` win, `rankedResult` ranked + rankedWin, `gauntlet` gauntletBot, `claim` daily/weekly. Each returns `xp: {gained, total, level, levelUps, backfill?}` (null when off). Stored `users/{uid}/xp` = {total, level, backfilled} (server-only).
+- **Back-dating (once per account):** `xp.backfill` runs at the START of each mutator (before it changes any counter, so the reported game isn't counted twice) and in `sync` at sign-in: `pastXp` = games finished (max of `matchCounters.finished` and wins + Ranked games), casual wins (`matchCounters.wins`), Ranked games/wins (`wins`/`losses`/`rankedStats.draws`), Gauntlet `botsBeaten` (rounds in order), daily_/weekly_ completions. Levels passed pay their Diamonds with ONE mail `level_backfill` ({backfill: true, level, xp, reward}); the reply's `xp.backfill` toasts it.
+- **Screens (all hidden while off):** `xpFeatureOn` follows the switch live (`watchXpSwitch`, body class `xp-on`); `playerXp` = the account's {total, level}. Every economy reply goes through `noteXpResult(res.xp)` (matchFinished, matchWin, rankedResult, claim, gauntlet, sync): updates `playerXp`, adds to `matchXpLog` (reset in `resetMatchSummary`), toasts level-up Diamonds. Shown: menu header badge `#hamburgerLevel`, Profile `#profileXpSection` (`xpBarHtml`), match summary XP section (`matchSummaryXpHtml`), Inbox mail type `level`, other players' level on player cards and friends' rows from `publicProfiles/{uid}/level` (rules: must equal `users/{uid}/xp/level`). Badge = `xpLevelBadge(level)`.
+- **Tests:** emulator block "XP & levels" in `tools/economy-emulator-test.js` (incl. back-dating sums); dev tests "XP & levels".
+- **Best of series** (next, not built): locked until level 10 (`XP_RULES.seriesLevel`). Plan: `docs/plans/best-of-series-and-levels.md`.
 
 ## Premium effects (v189)
 
@@ -399,7 +393,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Owner's later list (don't build until asked), in suggested order
 
-1. Best of 3 / 5 series between friends (casual rooms only; Ranked stays single games), to be built together with XP & levels (series locked to level 5+, signed in, verified; Diamond entry fees 30/50 held by the server, winner gets the pot + a server match). Full design: `docs/plans/best-of-series-and-levels.md`.
+1. Best of 3 / 5 series between friends (casual rooms only; Ranked stays single games), built on XP & levels (series locked to level 10+, signed in, verified; Diamond entry fees 30/50 held by the server, winner gets the pot + a server match). Full design: `docs/plans/best-of-series-and-levels.md`.
 2. Weekly puzzle (not a daily one).
 3. Tournament mode (friends' bracket; needs more players first).
 4. Far down the line (liked, not yet): "you've been overtaken" leaderboard mail, clubs, a season pass.

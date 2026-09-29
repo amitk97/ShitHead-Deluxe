@@ -155,6 +155,12 @@ The support inbox is **support.shitheaddeluxe@gmail.com**. The "Contact Support"
 - If a game gets stuck with the same cards going round (the same position six times, or 150 turns without a burn, a card drawn or a table card played), it ends in a **draw**: nobody wins, nobody is the ShitHead, and in Ranked the rating change is small and streaks are kept.
 - The numbers are `RANKED_BONUS` in `index.html`; changing them needs the catalog export (leave that to a developer or AI).
 
+### XP & levels (your on/off switch)
+- **Menu → XP & Levels: Off/On** (only you see it). Tap it and confirm; every player's game follows within about 10 seconds. Turning it off hides the level screens and stops XP, but nobody loses what they've earned.
+- When it's on, each player's past games, wins, Ranked games, Gauntlet bots and daily/weekly challenges are turned into XP once (at their next sign-in or game), and the levels they pass pay their Diamonds with one Inbox mail.
+- XP per game: finish 25, first game of the day +50, win +75, Ranked game +25, Ranked win +150, Gauntlet bots 40/80/120/200, daily challenge 50, weekly 350. Levels 1–99 (level 5 = 477 XP, level 10 = 1,086, level 99 = 700,000). 20 💎 a level, 100 💎 every 10th level. No daily limit.
+- The numbers are `XP_RULES` in `index.html`; changing them needs the catalog export (leave that to a developer or AI).
+
 ## 9. Your test account
 
 - **`AmitK`** (amirk2197@googlemail.com) got a one-off 999,999 Diamonds for trying the Shop, and can buy seasonal items out of season.
