@@ -648,6 +648,27 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     await admin('users/xena/matchCounters/lastWinAt', 'PUT', 0);
     x = await call('xena', { action: 'matchWin', mode: 'bots', difficulty: 'easy', matchId: 'xp_w1' });
     ok(x.xp && x.xp.gained === 75, 'a win adds 75 XP on top', x.xp);
+    // Levels leaderboard: All-time (total XP) and This week (XP since Monday, UK).
+    ok(xpMod.ukWeekKey(new Date('2026-09-29T12:00:00Z')) === '2026-W40', 'the server uses the same week keys as the game');
+    await admin('users/xena/username', 'PUT', 'Xena');
+    await admin('users/xena/xp', 'PUT', { total: 5000, level: 19, backfilled: true, table: 2, week: '2001-W01', weekXp: 999 });
+    await admin('users/xena/matchCounters/lastWinAt', 'PUT', 0);
+    x = await call('xena', { action: 'matchWin', mode: 'bots', difficulty: 'easy', matchId: 'xp_w2' });
+    await sleep(800);
+    const wk = `xpweek_${xpMod.ukWeekKey(new Date())}`;
+    const allTime = await admin('boards/levels/xena'), thisWeek = await admin(`boards/${wk}/xena`);
+    ok(allTime && allTime.count === 5075 && allTime.name === 'Xena' && allTime.level === xpMod.levelFor(5075), 'All-time board: total XP with the level', allTime);
+    ok(thisWeek && thisWeek.count === 75, 'This week board: only XP earned this week (XP from an old week starts again from 0)', thisWeek);
+    ok((await admin('users/xena/xp/week')) === xpMod.ukWeekKey(new Date()), 'the weekly counter follows the UK week');
+    await admin('boards/xpweek_2001-W01', 'PUT', { ghost: { name: 'Old', count: 5 } });
+    const oldWeek = `xpweek_${xpMod.ukWeekKey(new Date(Date.now() - 14 * 86400000))}`;
+    await admin(`boards/${oldWeek}`, 'PUT', { ghost: { name: 'Old', count: 5 } });
+    await admin('users/xena/matchCounters/lastWinAt', 'PUT', 0);
+    await call('xena', { action: 'matchWin', mode: 'bots', difficulty: 'easy', matchId: 'xp_w3' });
+    await sleep(800);
+    ok((await admin(`boards/${oldWeek}`)) === null, 'weeks before last week are cleared away');
+    ok(require('../functions/boards').boardPaths('xena').includes(`boards/${wk}/xena`) && require('../functions/boards').boardPaths('xena').includes('boards/levels/xena'), 'account deletion also clears the Levels boards');
+    await admin('boards/xpweek_2001-W01', 'DELETE');
     // The level table doubled (v225): an account levelled on the old table
     // is re-levelled from its total, and levels already paid never pay again.
     await admin('users/xena/xp', 'PUT', { total: 7198, level: 43, backfilled: true });

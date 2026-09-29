@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v229 (ShitHead-Deluxe-205) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v230 (ShitHead-Deluxe-206) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -900,6 +900,12 @@
     .stats-tab { flex:1; padding:6px 0; border-radius:10px; border:2px solid #334155; background:#1e293b; color:#cbd5e1; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
     .stats-tab[aria-selected="true"] { border-color:#f59e0b; background:rgba(120,53,15,.4); color:#fcd34d; }
     .lb-count-pill { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:8px; border:1px solid #f59e0b; background:rgba(120,53,15,.35); color:#fcd34d; font-size:10px; font-weight:900; white-space:nowrap; }
+    /* Levels tab (§ XP & levels): XP colours, and the All-time / This week switch. */
+    .lb-count-pill.lb-xp-pill { border-color:var(--xp-edge); background:rgba(8,47,73,.55); color:#a5f3fc; }
+    .lb-levels-switch { display:flex; justify-content:center; gap:4px; margin:2px auto 6px; padding:3px; width:fit-content; border-radius:999px; border:1px solid #1e293b; background:#0b1220; flex-shrink:0; }
+    .lb-levels-switch.hidden { display:none; }
+    .lb-levels-switch button { padding:4px 12px; border-radius:999px; font-size:10px; font-weight:800; color:#94a3b8; transition: background-color .16s var(--ease-snappy), color .16s var(--ease-snappy); }
+    .lb-levels-switch button[aria-pressed="true"] { background:rgba(8,47,73,.9); color:#a5f3fc; box-shadow:inset 0 0 0 1px var(--xp-edge); }
     .mh-summary { display:flex; justify-content:space-around; background:rgba(15,23,42,.7); border:1px solid rgba(245,158,11,.35); border-radius:12px; padding:8px 4px; margin-bottom:8px; }
     .mh-summary div { display:flex; flex-direction:column; align-items:center; }
     .mh-summary b { font-size:15px; font-weight:900; color:#fcd34d; }
@@ -5665,6 +5671,12 @@ video {
         <button type="button" role="tab" class="stats-tab" data-lb-tab="ranked">Ranked</button>
         <button type="button" role="tab" class="stats-tab" data-lb-tab="challenges">Challenges</button>
         <button type="button" role="tab" class="stats-tab" data-lb-tab="gauntlet">Gauntlet</button>
+        <button type="button" role="tab" class="stats-tab hidden" data-lb-tab="levels">Levels</button>
+      </div>
+      <!-- Levels tab only: All-time (total XP) or This week (XP since Monday, UK). -->
+      <div id="lbLevelsSwitch" class="lb-levels-switch hidden" role="group" aria-label="Levels leaderboard period">
+        <button type="button" data-lb-period="all">All-time</button>
+        <button type="button" data-lb-period="week">This week</button>
       </div>
       <p id="leaderboardTabNote" class="text-[9px] text-slate-500 text-center mb-2" style="flex-shrink:0;"></p>
       <div class="mb-2" style="flex-shrink:0;">
@@ -18004,6 +18016,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v230: [
+        ['🏆', 'New Levels leaderboard: see who has the most XP of all time, or who has earned the most this week (it starts again every Monday).', WN_KEY]
+      ],
       v229: [
         ['😄', 'The emote button is now the same size as the other round table buttons.']
       ],
@@ -23592,6 +23607,7 @@ video {
       document.body.classList.toggle('xp-on', xpFeatureOn);
       refreshXpDisplays();
       if (typeof refreshXpSwitchLabel === 'function') refreshXpSwitchLabel();
+      try { refreshLeaderboardTabs(); } catch (e) {} // the Levels tab follows the switch
     }
     // Where a total sits within its level: {level, into, need, pct, max}.
     function xpProgress(total) {
@@ -25959,7 +25975,7 @@ video {
     const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level'];
     // Congratulations from the server (functions/boards.js) the first time a
     // player reaches the top 10, #3, #2 or #1 on a leaderboard.
-    const BOARD_NAMES = { ranked: 'Ranked', challenges: 'Challenges', gauntlet: 'Gauntlet' };
+    const BOARD_NAMES = { ranked: 'Ranked', challenges: 'Challenges', gauntlet: 'Gauntlet', levels: 'Levels' };
     function boardMailText(item) {
       const board = BOARD_NAMES[item.board] || 'Leaderboard';
       const tier = Number(item.tier) || 10;
@@ -26839,8 +26855,30 @@ video {
     const LEADERBOARD_TABS = {
       ranked: { path: 'leaderboard', note: 'Ranked rating', empty: 'No ranked players yet.' },
       challenges: { path: 'boards/challenges', note: 'Challenges completed (running total)', empty: 'No challenges completed yet.' },
-      gauntlet: { path: 'boards/gauntlet', note: 'Gauntlet bots beaten (every bot, not just full runs)', empty: 'No Gauntlet bots beaten yet.' }
+      gauntlet: { path: 'boards/gauntlet', note: 'Gauntlet bots beaten (every bot, not just full runs)', empty: 'No Gauntlet bots beaten yet.' },
+      // § XP & levels: only shown while XP is on. All-time = total XP
+      // (boards/levels); This week = XP since Monday, UK time
+      // (boards/xpweek_<week>, a fresh board each week).
+      levels: { path: 'boards/levels', note: 'Total XP · your level beside your name', empty: 'Nobody has earned XP yet.' }
     };
+    let lbLevelsPeriod = (() => { try { return localStorage.getItem('shithead_lb_levels_period') === 'week' ? 'week' : 'all'; } catch (e) { return 'all'; } })();
+    const leaderboardTabShown = (tab) => tab !== 'levels' || xpShown();
+    function leaderboardPath(tab) {
+      if (tab === 'levels' && lbLevelsPeriod === 'week') return `boards/xpweek_${getUkWeekKey()}`;
+      return LEADERBOARD_TABS[tab].path;
+    }
+    function leaderboardNote(tab) {
+      if (tab === 'levels' && lbLevelsPeriod === 'week') return 'XP earned this week · resets every Monday (UK time)';
+      return LEADERBOARD_TABS[tab].note;
+    }
+    function refreshLeaderboardTabs() {
+      document.querySelector('[data-lb-tab="levels"]')?.classList.toggle('hidden', !xpShown());
+      const sw = document.getElementById('lbLevelsSwitch');
+      if (sw) {
+        sw.classList.toggle('hidden', leaderboardTab !== 'levels');
+        sw.querySelectorAll('[data-lb-period]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lbPeriod === lbLevelsPeriod)));
+      }
+    }
     const LEADERBOARD_REST = 'https://shithead-pro-default-rtdb.europe-west1.firebasedatabase.app/';
     let leaderboardTab = (() => { try { const t = localStorage.getItem('shithead_leaderboard_tab'); return LEADERBOARD_TABS[t] ? t : 'ranked'; } catch (e) { return 'ranked'; } })();
     // Board rows, best first (ties by name). Ranked needs a username; the
@@ -26864,9 +26902,12 @@ video {
     }
     function openLeaderboardPanel(tab) {
       if (tab && LEADERBOARD_TABS[tab]) leaderboardTab = tab;
+      if (!leaderboardTabShown(leaderboardTab)) leaderboardTab = 'ranked';
       try { localStorage.setItem('shithead_leaderboard_tab', leaderboardTab); } catch (e) {}
-      const cfg = LEADERBOARD_TABS[leaderboardTab];
       const shownTab = leaderboardTab;
+      const cfg = { ...LEADERBOARD_TABS[shownTab], path: leaderboardPath(shownTab), note: leaderboardNote(shownTab) };
+      if (shownTab === 'levels' && lbLevelsPeriod === 'week') cfg.empty = 'No XP earned yet this week. Play a game to take the top spot.';
+      refreshLeaderboardTabs();
       const freshOpen = document.getElementById('leaderboardModal').classList.contains('hidden');
       document.getElementById('leaderboardModal').classList.remove('hidden');
       document.querySelectorAll('[data-lb-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.lbTab === shownTab)));
@@ -26973,6 +27014,12 @@ video {
     document.querySelectorAll('[data-lb-tab]').forEach(b => b.addEventListener('click', () => {
       if (b.dataset.lbTab !== leaderboardTab) openLeaderboardPanel(b.dataset.lbTab);
     }));
+    document.querySelectorAll('[data-lb-period]').forEach(b => b.addEventListener('click', () => {
+      if (b.dataset.lbPeriod === lbLevelsPeriod) return;
+      lbLevelsPeriod = b.dataset.lbPeriod === 'week' ? 'week' : 'all';
+      try { localStorage.setItem('shithead_lb_levels_period', lbLevelsPeriod); } catch (e) {}
+      openLeaderboardPanel('levels');
+    }));
     function leaderboardRowHtml(p, rank, tab = 'ranked') {
       const myName = document.getElementById('playerNameInput')?.value?.trim();
       const isMe = tab === 'ranked'
@@ -26989,8 +27036,16 @@ video {
         pill = `<span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border font-black text-[10px] w-fit ${tier.cls}" style="${tier.style}">${tierBadge(tier.name)}${tier.name} · ${Math.round(p.rating || 500)}</span>`;
       } else {
         const n = Number(p.count) || 0;
-        sub = tab === 'challenges' ? `${n} challenge${n === 1 ? '' : 's'} completed` : `${n} Gauntlet bot${n === 1 ? '' : 's'} beaten`;
-        pill = `<span class="lb-count-pill">${tab === 'challenges' ? '🏅' : '⚔️'} ${n}</span>`;
+        if (tab === 'levels') {
+          // Total XP (All-time) or XP since Monday (This week).
+          const week = lbLevelsPeriod === 'week';
+          const xpText = `${n.toLocaleString('en-GB')} XP`;
+          sub = week ? 'XP this week' : `Level ${Math.max(1, Number(p.level) || xpLevelFor(n))}`;
+          pill = `<span class="lb-count-pill lb-xp-pill">${week ? '+' : ''}${xpText}</span>`;
+        } else {
+          sub = tab === 'challenges' ? `${n} challenge${n === 1 ? '' : 's'} completed` : `${n} Gauntlet bot${n === 1 ? '' : 's'} beaten`;
+          pill = `<span class="lb-count-pill">${tab === 'challenges' ? '🏅' : '⚔️'} ${n}</span>`;
+        }
       }
       const who = isMe ? '' : ` role="button" tabindex="0" class="lb-who flex items-center gap-2 min-w-0" data-lb-uid="${escapeAttr(String(p.uid || ''))}" data-lb-key="${escapeAttr(String(p.usernameKey || ''))}" data-lb-name="${escapeAttr(String(p.username || ''))}" data-lb-avatar="${escapeAttr(String(p.avatar || ''))}" aria-label="Open ${escapeAttr(String(p.username || 'player'))}'s profile"`;
       return `<div class="flex items-center justify-between gap-2 border rounded-xl px-2.5 py-2 ${isMe ? 'bg-amber-950/40 border-amber-600' : 'bg-slate-900/60 border-slate-800'}" data-lb-row="${escapeHtml(String(p.username || ''))}">

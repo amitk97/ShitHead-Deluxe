@@ -4985,7 +4985,7 @@ async function runDevTestSuite() {
     db = { ref: (path) => liveRef(path, boards[path] || { bo: { username: 'Bo', rating: 900 } }) };
     currentUser = { uid: 'u1' };
     const tabs = [...document.querySelectorAll('#leaderboardModal [data-lb-tab]')].map(b => b.dataset.lbTab);
-    assertEqual(tabs, ['ranked', 'challenges', 'gauntlet'], 'Tabs: Ranked, Challenges, Gauntlet');
+    assertEqual(tabs, ['ranked', 'challenges', 'gauntlet', 'levels'], 'Tabs: Ranked, Challenges, Gauntlet, Levels (Levels only while XP is on)');
     openLeaderboardPanel('challenges');
     await new Promise((r) => setTimeout(r, 0));
     assertTrue(reads.some(([p, f]) => p === 'boards/challenges' && f === 'count'), 'The Challenges board is read by count', reads);
@@ -7202,6 +7202,30 @@ async function runDevTestSuite() {
     } finally {
       matchRewardLog.length = 0;
       playerXp = was.xp; matchXpLog = was.log;
+      setXpFeature(was.on);
+    }
+  });
+  await test('Levels leaderboard: All-time (total XP) and This week (XP since Monday), shown only while XP is on', () => {
+    const was = { on: xpFeatureOn, period: lbLevelsPeriod, tab: leaderboardTab };
+    try {
+      setXpFeature(false);
+      assertTrue(document.querySelector('[data-lb-tab="levels"]').classList.contains('hidden'), 'no Levels tab while XP is off');
+      assertTrue(!leaderboardTabShown('levels'), 'a saved Levels tab falls back to Ranked while off');
+      setXpFeature(true);
+      assertTrue(!document.querySelector('[data-lb-tab="levels"]').classList.contains('hidden'), 'the Levels tab shows once XP is on');
+      assertEqual(BOARD_NAMES.levels, 'Levels', 'board mail names the Levels board');
+      lbLevelsPeriod = 'all';
+      assertEqual(leaderboardPath('levels'), 'boards/levels', 'All-time reads the total-XP board');
+      const all = leaderboardRowHtml({ username: 'Pooh', uid: 'u9', count: 9120, level: 34 }, 4, 'levels');
+      assertTrue(/9,120 XP/.test(all) && /Level 34/.test(all) && /Lv 34/.test(all), 'All-time rows show total XP and the level', all);
+      lbLevelsPeriod = 'week';
+      assertEqual(leaderboardPath('levels'), `boards/xpweek_${getUkWeekKey()}`, 'This week reads this week\'s board');
+      assertEqual(getUkWeekKey(new Date('2026-09-29T12:00:00Z')), '2026-W40', 'the same week keys as the server');
+      const week = leaderboardRowHtml({ username: 'Pooh', uid: 'u9', count: 450, level: 34 }, 1, 'levels');
+      assertTrue(/\+450 XP/.test(week) && /XP this week/.test(week), 'This week rows show the XP earned since Monday', week);
+      assertTrue(/Monday/.test(leaderboardNote('levels')), 'the note says when the week resets');
+    } finally {
+      lbLevelsPeriod = was.period; leaderboardTab = was.tab;
       setXpFeature(was.on);
     }
   });

@@ -3,7 +3,9 @@
 // config/features/xp = true (owner-only write). While off, nothing is added
 // and nothing changes for players.
 //
-// users/{uid}/xp = { total, level, backfilled, paidLevel, table }
+// users/{uid}/xp = { total, level, backfilled, paidLevel, table, week, weekXp }
+//   week / weekXp  the UK week key and the XP earned in it (Levels board,
+//                  "This week"; back-dated XP doesn't count)
 //   total  all XP ever earned (never goes down, stops at xp.maxXp)
 //   level  1–99, from the catalog's xp.levels table (total XP per level:
 //          a RuneScape-style curve, level 92 is half of 99)
@@ -31,6 +33,20 @@ function levelFor(total) {
   while (level < MAX_LEVEL && num(total) >= LEVELS[level + 1]) level++;
   return level;
 }
+// The UK week (Monday start), same keys as the weekly challenges
+// ('2026-W40'); the Levels leaderboard's "This week" view counts XP per week.
+const ukDateKey = (date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+function ukWeekKey(date = new Date()) {
+  const [y, m, dd] = ukDateKey(date).split('-').map(Number);
+  const d = new Date(Date.UTC(y, m - 1, dd));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+// XP earned in `week` (0 when the account's counter belongs to another week).
+const weekXp = (user, week) => (user && user.xp && user.xp.week === week ? num(user.xp.weekXp) : 0);
 const levelReward = (L) => (num(RULES.milestoneEvery) > 0 && L % num(RULES.milestoneEvery) === 0 ? num(RULES.milestoneDiamonds) : num(RULES.levelUpDiamonds));
 
 // The switch, read at most every 10s per server instance (so flicking it
@@ -59,7 +75,7 @@ function relevel(user) {
 }
 
 // Adds `amount` XP (mutates `user`) and pays/mails the levels passed.
-function addXp(user, amount, now, addDiamonds, { mailEach = true } = {}) {
+function addXp(user, amount, now, addDiamonds, { mailEach = true, countWeek = true } = {}) {
   relevel(user);
   const xp = user.xp = user.xp || {};
   xp.table = num(RULES.tableVersion, 1);
@@ -79,7 +95,14 @@ function addXp(user, amount, now, addDiamonds, { mailEach = true } = {}) {
     }
     levelUps.push({ level: L, reward });
   }
-  return { gained: xp.total - before, total: xp.total, level: xp.level, levelUps };
+  // This week's XP (never the one-time back-dated XP).
+  const gained = xp.total - before;
+  if (countWeek && gained > 0) {
+    const week = ukWeekKey(new Date(now));
+    if (xp.week !== week) { xp.week = week; xp.weekXp = 0; }
+    xp.weekXp = num(xp.weekXp) + gained;
+  }
+  return { gained, total: xp.total, level: xp.level, levelUps };
 }
 
 // XP for what an account did before levels existed, worked out from its
@@ -109,7 +132,7 @@ function pastXp(user) {
 function backfill(user, now, addDiamonds) {
   if (user.xp && user.xp.backfilled) return null;
   const amount = pastXp(user);
-  const res = addXp(user, amount, now, addDiamonds, { mailEach: false });
+  const res = addXp(user, amount, now, addDiamonds, { mailEach: false, countWeek: false });
   user.xp.backfilled = true;
   if (res.levelUps.length) {
     user.activityInbox = user.activityInbox || {};
@@ -167,4 +190,4 @@ async function migrateAll() {
   return fixed;
 }
 
-module.exports = { RULES, enabled, award, backfill, pastXp, gauntletBotXp, levelFor, xpForLevel, relevel, migrateAll, resetCache };
+module.exports = { RULES, enabled, award, backfill, pastXp, gauntletBotXp, levelFor, xpForLevel, relevel, migrateAll, resetCache, ukWeekKey, weekXp };
