@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v234 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v235 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -22,6 +22,18 @@
     if (/\.github\.io$/i.test(location.hostname) || location.hostname === 'shithead-pro.firebaseapp.com') {
       location.replace('https://shithead-pro.web.app/' + location.search + location.hash);
     }
+    // --app-h = the real screen height. The installed iPhone app can give
+    // 100dvh as ~47px less than the screen (black-translucent status bar),
+    // which left a dark strip under the table and a hand sized for room
+    // that wasn't there (then shrunk to tiny cards). The page's height and
+    // the table's come from this instead.
+    (function trackAppHeight() {
+      const set = () => document.documentElement.style.setProperty('--app-h', `${window.innerHeight}px`);
+      set();
+      ['resize', 'orientationchange', 'pageshow'].forEach(ev => window.addEventListener(ev, set));
+      window.visualViewport?.addEventListener('resize', set);
+      setTimeout(set, 300); setTimeout(set, 1200);
+    })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>ShitHead</title>
@@ -120,6 +132,7 @@
     html, body {
       height: 100%;
       height: 100dvh;
+      height: var(--app-h, 100dvh);
       margin: 0;
       padding: 0;
       overflow: hidden;
@@ -147,7 +160,7 @@
     #actionBanner { top: calc(0.75rem + var(--safe-top)); }
     #connectionStatusBanner { top: calc(3rem + var(--safe-top)); }
     /* The table fills what's left under the (taller, on iPhone) header. */
-    main#gameTable { height: calc(100dvh - 2.75rem - var(--safe-top)); max-height: calc(100dvh - 2.75rem - var(--safe-top)); }
+    main#gameTable { height: calc(var(--app-h, 100dvh) - 2.75rem - var(--safe-top)); max-height: calc(var(--app-h, 100dvh) - 2.75rem - var(--safe-top)); }
     /* Play direction: a circle the size of the Card Powers button, in the
        left-hand column with the Play Matrix button, level with the middle of
        the Deck (placed by positionDirectionBadge). */
@@ -692,7 +705,7 @@
       #headerDiamondBtn .header-gem .ic-gem { width: 24px !important; height: 24px !important; }
       #headerDiamondCount { font-size: 17px !important; }
       #roomCodeBadge { font-size: 14px !important; }
-      #gameTable { height: calc(100dvh - 60px - var(--safe-top)) !important; max-height: calc(100dvh - 60px - var(--safe-top)) !important; }
+      #gameTable { height: calc(var(--app-h, 100dvh) - 60px - var(--safe-top)) !important; max-height: calc(var(--app-h, 100dvh) - 60px - var(--safe-top)) !important; }
       #hamburgerDrawer {
         left: auto;
         right: 18px;
@@ -10891,7 +10904,7 @@ video {
       const remaining = (player.hand?.length || 0) + (player.faceUp?.length || 0) + (player.faceDown?.length || 0);
       if (remaining === 0 && !player.hasFinished) {
         player.hasFinished = true;
-        const finishedCount = state.players.filter(p => p.hasFinished).length;
+        const finishedCount = state.players.filter(p => p.hasFinished && !p.conceded).length;
         player.finishRank = finishedCount;
 
         // Challenges: fires for ANY placement (this function is only ever
@@ -13239,7 +13252,7 @@ video {
         // Explicit last place, not just "whoever's left" — needed both for
         // the pairwise rating formula (every seat needs a real finishRank)
         // and for ranked concessions, which rely on this same field.
-        shitheadPlayer.finishRank = state.players.length;
+        shitheadPlayer.finishRank = state.players.length - concededCount();
         shitheadPlayer.hasFinished = true;
         notifyBanner(`${shitheadPlayer.name} is the ShitHead.`);
         state.phase = 'FINISHED';
@@ -13289,14 +13302,20 @@ video {
     // Ranked), a mid-match concession needs real design thought about
     // exactly which placement the remaining players end up with — this
     // only fully resolves the case Ranked actually has today.
+    // Ranked, Play Friends (v235) and a series use it: with 3+ players the
+    // others carry on, and places are counted without the players ruled out
+    // (they fill the last places, see placesTaken / conceded).
+    const STAND_IN_TURNS = 5;
+    const concededCount = () => state.players.filter(p => p.conceded).length;
     function applyRankedConcession(conceder) {
       conceder.hasFinished = true;
-      conceder.finishRank = state.players.length;
-      notifyBanner(`🏳️ ${conceder.name.replace(' (Bot)', '')} conceded after being away too long.`);
+      conceder.conceded = true;
+      conceder.finishRank = state.players.length - (concededCount() - 1);
+      notifyBanner(`${conceder.name.replace(' (Bot)', '')} was away too long and is out of this game.`);
       const stillActive = state.players.filter(p => !p.hasFinished);
       if (stillActive.length === 1) {
         stillActive[0].hasFinished = true;
-        stillActive[0].finishRank = 1;
+        stillActive[0].finishRank = state.players.filter(p => p.hasFinished && !p.conceded && p !== stillActive[0]).length + 1;
         state.phase = 'FINISHED';
         endFastForwardIfActive();
         saveGameState();
@@ -13332,9 +13351,9 @@ video {
       render();
       const validMoves = getLegalMovesForPlayer(current, state.discardPile, state.activeConstraint);
       if (current.isBot) {
-        if (current.isRankedSubstitute) {
+        if (current.isRankedSubstitute || current.isCasualSubstitute) {
           current.substituteMoveCount = (current.substituteMoveCount || 0) + 1;
-          if (current.substituteMoveCount > 5) {
+          if (current.substituteMoveCount > STAND_IN_TURNS) {
             applyRankedConcession(current);
             return;
           }
@@ -13729,8 +13748,14 @@ video {
         handPad = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
       }
       const chrome = 24; // row gaps and the player zone's own bottom padding
-      const budget = window.innerHeight - used - chrome - handPad;
-      return Math.max(50, Math.min(budget, window.innerHeight * 0.46));
+      // Measured to where the table really ends (the installed iPhone app's
+      // window can be taller than the page: the old innerHeight figure drew
+      // the hand too big, then fitHandToTable shrank it to tiny cards).
+      const table = document.getElementById('gameTable');
+      const tableBottom = table ? table.getBoundingClientRect().bottom : 0;
+      const screenH = tableBottom > 100 ? Math.min(window.innerHeight, tableBottom) : window.innerHeight;
+      const budget = screenH - used - chrome - handPad;
+      return Math.max(50, Math.min(budget, screenH * 0.46));
     }
 
     // Back rows of a 2-3 row hand show at least this much of each card (the
@@ -15989,10 +16014,12 @@ video {
         // Deliberately NOT whatever the table's own difficulty is set to —
         // this is a stand-in to keep the match moving, not a new opponent
         // for anyone to face at full strength.
-        // A series stand-in is always Medium (owner) and uses the whole turn
-        // time on every move (triggerNextTurn), so the player can get back.
-        difficulty: inSeries ? 'medium' : (Math.random() < 0.5 ? 'easy' : 'medium'),
+        // Every stand-in is Medium (owner, v235); a series one also uses the
+        // whole turn time on every move (triggerNextTurn).
+        difficulty: 'medium',
         isSeriesSubstitute: inSeries,
+        // Play Friends: the same 5-turn cut-off as Ranked (owner, v235).
+        isCasualSubstitute: !state.isRanked && !inSeries,
         // Ranked-only: caps how many turns the stand-in bot can play before
         // the departed player is ruled to have conceded (see the counter
         // in checkTurnAndAct and applyRankedConcession). Left undefined for
@@ -16347,16 +16374,32 @@ video {
             state.players = incomingPlayers;
           }
 
+          // Still in the app when the signal came back, but a stand-in took
+          // the seat meanwhile: take it straight back (or, after its 5
+          // turns, say this game has gone on without us).
+          if (hasConfirmedRoomMembership && !state.players.some(p => p.id === state.localPlayerId)
+            && (data.phase === 'PLAY' || data.phase === 'SWAP')) {
+            const standIn = findMyStandInSeat(state.players);
+            if (standIn && !standIn.conceded) { reclaimStandInInPlace(code, standIn); }
+            else if (standIn && standIn.conceded && !standInOutShown) {
+              standInOutShown = true;
+              notifyBanner("You were away too long, so you're out of this game. You'll be dealt in to the next one.");
+            }
+          }
           const stillHere = state.players.some(p => p.id === state.localPlayerId);
           // Only a transition from "confirmed present" to "absent" is a real
           // kick. Straight after joining, the first snapshot can predate our
           // own write landing — treating that as removal reloaded the page a
           // split second after joining.
-          if (stillHere) hasConfirmedRoomMembership = true;
+          if (stillHere) {
+            hasConfirmedRoomMembership = true;
+            const meNow = state.players.find(p => p.id === state.localPlayerId);
+            if (meNow && !meNow.isBot) lastLocalSeat = { name: meNow.name, uid: meNow.uid || null };
+          }
           // The host role can be passed on when the host leaves.
           const myRecord = state.players.find(p => p.id === state.localPlayerId);
           if (!state.isRanked && myRecord && typeof myRecord.isHost === 'boolean') state.isHost = myRecord.isHost;
-          if (!stillHere && !state.isHost && hasConfirmedRoomMembership) {
+          if (!stillHere && !state.isHost && hasConfirmedRoomMembership && !findMyStandInSeat(state.players)) {
             alert("You have been removed from the room by the host.");
             forgetJoinedRoom();
             location.reload();
@@ -16568,6 +16611,9 @@ video {
           isReady: p.isBot ? true : false,
           hasFinished: false,
           finishRank: null,
+          conceded: false,
+          // A stand-in still in the seat gets its 5 turns again this game.
+          ...(p.isBot && (p.isCasualSubstitute || p.isSeriesSubstitute) ? { substituteMoveCount: 0 } : {}),
           gameStats: freshStatsScope(),
           lobbyStats
         };
@@ -18114,6 +18160,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v235: [
+        ['🔄', 'Dropped out of a Play Friends or Ranked game? You now go straight back into your seat, even if the app stayed open while your signal came back.', WN_KEY],
+        ['🤖', 'The bot that covers for a missing player is always Medium now. After 5 of its turns in Play Friends, the missing player is out of that game and the rest play on.'],
+        ['📱', 'Fixed tiny hand cards and a dark strip under the table in the iPhone home-screen app.']
+      ],
       v234: [
         ['⚔️', 'Best of series is here: at level 20, challenge a friend in Play Friends to a Best of 3 or Best of 5. You both pay the entry and the winner takes four times it.', WN_KEY],
         ['🔄', 'Lost connection in a series? A bot keeps your seat warm while you get back, and signing in takes you straight back to it.'],
@@ -25691,6 +25742,36 @@ video {
     // asks first. The seat is found by uid, then the stored player id, then
     // the name (a bot stand-in keeps the name with " (Bot)" on the end).
     // Bot stand-ins are handed straight back to the returning player.
+    // The stand-in playing this player's seat: same account (uid), or the
+    // same name with " (Bot)" on the end for a guest.
+    let lastLocalSeat = null;   // {name, uid} of our own seat, last seen live
+    let standInOutShown = false;
+    function findMyStandInSeat(players) {
+      const uid = (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) || lastLocalSeat?.uid || null;
+      return (players || []).find(p => p && p.isBot && (
+        (uid && p.uid === uid) || (lastLocalSeat?.name && p.name === `${lastLocalSeat.name} (Bot)`))) || null;
+    }
+    // Hands a stand-in seat back without reloading (the app stayed open).
+    let standInReclaimBusy = false;
+    function reclaimStandInInPlace(code, seat) {
+      if (standInReclaimBusy || !code) return;
+      standInReclaimBusy = true;
+      updatePlayersAtomic(code, (list) => {
+        const idx = list.findIndex(p => p.id === seat.id);
+        if (idx === -1 || !list[idx].isBot || list[idx].conceded) return list;
+        const next = [...list];
+        next[idx] = reclaimSubstitutedSeat(list[idx]);
+        return next;
+      }, (error, committed) => {
+        standInReclaimBusy = false;
+        if (error || !committed) return;
+        state.localPlayerId = seat.id;
+        rememberJoinedRoom(code);
+        setupPresenceTracking(code, seat.id);
+        notifyBanner("You're back in the game.");
+        render();
+      });
+    }
     function reclaimSubstitutedSeat(playerRecord) {
       return {
         ...playerRecord,
@@ -25698,6 +25779,7 @@ video {
         name: playerRecord.name.replace(/\s*\(Bot\)$/, ''),
         isRankedSubstitute: false,
         isSeriesSubstitute: false,
+        isCasualSubstitute: false,
         substituteMoveCount: 0
       };
     }
@@ -25785,8 +25867,14 @@ video {
 
         const rejoin = () => rejoinRoomSeat(code, data, mySeat, data.isRanked ? 'Reconnected to your Ranked match.' : 'Back in your match.');
 
-        if (data.isRanked) { rejoin(); return; }
-        showRejoinPrompt(code, mySeat, rejoin);
+        // Ruled out after the stand-in's 5 turns: that game goes on without them.
+        if (mySeat.conceded) {
+          forgetJoinedRoom();
+          notifyBanner("You were away too long, so you're out of that game.");
+          return;
+        }
+        // Ranked and Play Friends both go straight back in (owner, v235).
+        rejoin();
       }, (error) => {
         console.warn('Match reconnect check failed', error);
       });

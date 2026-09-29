@@ -4627,7 +4627,7 @@ async function runDevTestSuite() {
     forgetJoinedRoom();
     assertEqual(joinedRoomRecord(), null, 'forgetJoinedRoom clears it');
   });
-  await test('A casual match asks before rejoining, then hands a bot stand-in back by name', () => {
+  await test('A casual match rejoins straight away (no question) and hands a bot stand-in back by name', () => {
     freshState({ isMultiplayer: false, isHost: false, isRanked: false, roomCode: null, localPlayerId: null });
     const savedUser = currentUser;
     currentUser = null;
@@ -4650,10 +4650,7 @@ async function runDevTestSuite() {
     try {
       attemptMatchReconnect();
       const modal = document.getElementById('rejoinModal');
-      assertTrue(!modal.classList.contains('hidden'), 'A casual rejoin must ask first');
-      assertEqual(listenedCode, null, 'Nothing is joined until the player says yes');
-      document.getElementById('rejoinYesBtn').click();
-      assertTrue(modal.classList.contains('hidden'), 'The prompt closes');
+      assertTrue(modal.classList.contains('hidden'), 'No rejoin question any more (owner, v235)');
       assertEqual(state.localPlayerId, 'p_bot_q1', 'Takes back the stand-in seat named "Jamie (Bot)", not a real bot that happens to be called Jamie');
       assertTrue(atomicList.find(p => p.id === 'p_bot_q1').isBot === false, 'The seat is human again');
       assertEqual(listenedCode, '135790', 'Listens to the room');
@@ -4665,25 +4662,73 @@ async function runDevTestSuite() {
       document.getElementById('rejoinModal').classList.add('hidden');
     }
   });
-  await test('"No thanks" on the rejoin prompt forgets the match', () => {
+  await test('A player ruled out after the stand-in\'s 5 turns is not put back into that game', () => {
     freshState({ isMultiplayer: false, roomCode: null, localPlayerId: null });
     const savedUser = currentUser;
     currentUser = null;
     matchReconnectAttempted = false;
     localStorage.setItem('shithead_active_match', JSON.stringify({ code: '246801', at: Date.now(), playerId: 'p_me', name: 'Jamie' }));
-    const fakeRoom = { phase: 'SWAP', players: [{ id: 'p_host', name: 'Pooja', isBot: false }, { id: 'p_me', name: 'Jamie', isBot: false }] };
+    const fakeRoom = { phase: 'PLAY', players: [{ id: 'p_host', name: 'Pooja', isBot: false }, { id: 'p_bot_me', name: 'Jamie (Bot)', isBot: true, hasFinished: true, conceded: true, finishRank: 3 }, { id: 'p_c', name: 'Sam', isBot: false }] };
     const originalDb = db, originalListen = listenToFirebaseRoom;
     let listened = false;
     listenToFirebaseRoom = () => { listened = true; };
     db = { ref: () => ({ once: (event, successCb) => successCb({ exists: () => true, val: () => fakeRoom }) }) };
     try {
       attemptMatchReconnect();
-      document.getElementById('rejoinNoBtn').click();
-      assertTrue(!listened, 'Declining does not join');
-      assertEqual(joinedRoomRecord(), null, 'Declining forgets the stored match');
+      assertTrue(!listened, 'The game goes on without them');
+      assertEqual(joinedRoomRecord(), null, 'The stored match is forgotten');
     } finally {
       db = originalDb; listenToFirebaseRoom = originalListen; currentUser = savedUser;
       forgetJoinedRoom();
+    }
+  });
+  await test('Play Friends stand-ins are Medium and, after 5 turns, the absent player is out (last place) while the others play on', () => {
+    const was = { sync: syncFirebaseGameState, auth: hasMatchAuthority, st: window.setTimeout };
+    try {
+      freshState({ isMultiplayer: true, isRanked: false, isHost: true, roomCode: '555111', localPlayerId: 'p_host', phase: 'PLAY', currentTurnIndex: 0 });
+      state.players = [
+        makePlayer({ id: 'p_host', name: 'Amit', hand: [makeCard('K', 'S')] }),
+        makePlayer({ id: 'p_b', name: 'Jamie', hand: [makeCard('5', 'H'), makeCard('6', 'H')] }),
+        makePlayer({ id: 'p_c', name: 'Sam', hand: [makeCard('7', 'H')] })
+      ];
+      syncFirebaseGameState = () => {};
+      hasMatchAuthority = () => true;
+      window.setTimeout = () => 0;
+      removePlayerFromMatch('p_b', 'disconnected');
+      const sub = state.players[1];
+      assertTrue(sub.isBot && sub.isCasualSubstitute && sub.difficulty === 'medium', 'a Medium stand-in with the cut-off takes the seat');
+      sub.substituteMoveCount = 5;
+      state.currentTurnIndex = 1;
+      checkTurnAndAct();
+      assertTrue(sub.hasFinished && sub.conceded && sub.finishRank === 3, 'after 5 stand-in turns the absent player is out, in last place');
+      assertEqual(state.phase, 'PLAY', 'the other two play on');
+      // A later finisher still takes 1st, not a place after the ruled-out player.
+      state.players[0].hand = []; state.players[0].faceUp = []; state.players[0].faceDown = [];
+      checkPlayerFinished(state.players[0]);
+      assertEqual(state.players[0].finishRank, 1, 'the next player out is 1st');
+    } finally {
+      window.setTimeout = was.st; syncFirebaseGameState = was.sync; hasMatchAuthority = was.auth;
+      if (state.botActionTimer) clearTimeout(state.botActionTimer);
+      Object.assign(state, { isMultiplayer: false, roomCode: null, players: [] });
+    }
+  });
+  await test('Still in the app when the signal returns: the stand-in seat is taken straight back', () => {
+    const was = { atomic: updatePlayersAtomic, presence: setupPresenceTracking };
+    try {
+      freshState({ isMultiplayer: true, roomCode: '555222', localPlayerId: 'p_me', phase: 'PLAY' });
+      currentUser = { uid: 'u_me' };
+      const players = [{ id: 'p_host', name: 'Pooja', isBot: false }, { id: 'p_bot_x', name: 'Me (Bot)', uid: 'u_me', isBot: true, isCasualSubstitute: true, substituteMoveCount: 2 }];
+      let written = null;
+      updatePlayersAtomic = (code, updater, done) => { written = updater(players); done(null, true); };
+      setupPresenceTracking = () => {};
+      const seat = findMyStandInSeat(players);
+      assertTrue(seat && seat.id === 'p_bot_x', 'finds its own stand-in by account');
+      reclaimStandInInPlace('555222', seat);
+      assertTrue(written && written[1].isBot === false && written[1].name === 'Me', 'the seat is human again');
+      assertEqual(state.localPlayerId, 'p_bot_x', 'this phone plays that seat');
+    } finally {
+      updatePlayersAtomic = was.atomic; setupPresenceTracking = was.presence;
+      Object.assign(state, { isMultiplayer: false, roomCode: null, players: [] });
     }
   });
   await test('REGRESSION: attemptMatchReconnect silently rejoins a Ranked match where the player was never substituted', () => {
