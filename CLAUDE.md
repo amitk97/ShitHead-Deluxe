@@ -378,7 +378,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Owner's later list (don't build until asked), in suggested order
 
-1. Best of 3 / 5 series between friends (casual rooms only; Ranked stays single games).
+1. Best of 3 / 5 series between friends (casual rooms only; Ranked stays single games), to be built together with XP & levels (series locked to level 5+, signed in, verified; Diamond entry fees 30/50 held by the server, winner gets the pot + a server match). Full design: `docs/plans/best-of-series-and-levels.md`.
 2. Weekly puzzle (not a daily one).
 3. Tournament mode (friends' bracket; needs more players first).
 4. Far down the line (liked, not yet): "you've been overtaken" leaderboard mail, clubs, a season pass.
