@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v232 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-29-v233 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -492,6 +492,13 @@
     .series-panel.hidden { display:none; }
     .series-head { display:flex; align-items:center; gap:6px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8; }
     .series-head .ic { width:14px; height:14px; color:#fcd34d; }
+    button.series-head { width:100%; background:none; border:none; padding:0; text-align:left; cursor:pointer; }
+    button.series-head > span:nth-of-type(1) { flex:1; }
+    .series-head .cat-head-chev { width:18px; height:18px; font-size:11px; }
+    .series-head[aria-expanded="false"] .cat-head-chev { transform:rotate(-90deg); }
+    .series-head-lock { display:flex; align-items:center; gap:3px; font-size:9px; font-weight:800; letter-spacing:.02em; text-transform:none; color:#fcd34d; }
+    .series-head-lock .ic { width:10px; height:10px; }
+    .series-panel.series-folded > :not(.series-head) { display:none; }
     .series-choices { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px; }
     .series-choice { display:flex; flex-direction:column; align-items:center; gap:1px; padding:5px 2px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#e2e8f0; font-size:10px; font-weight:900; line-height:1.1; }
     .series-choice small { font-size:9px; font-weight:800; color:#94a3b8; display:flex; align-items:center; gap:2px; }
@@ -18080,6 +18087,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v233: [
+        ['🛠️', 'Best of series in the Play Friends lobby now folds away, and stays folded until you reach level 20.']
+      ],
       v232: [
         ['👤', 'Profile sections now fold away: tap a heading to open or close it.'],
         ['🛠️', 'Best of series: the lobby choice and the accept pop-up (not open to everyone yet).']
@@ -23724,6 +23734,7 @@ video {
     let seriesWatch = null;          // { code, ref, handler }
     let seriesBusy = false;
     let seriesModalShownFor = null;  // series id the accept pop-up has opened for
+    let seriesPanelOpen = null;      // the player's own open/closed pick on this visit (null = by level)
     const seriesIsActive = (s) => !!s && (s.status === 'pending' || s.status === 'live');
     const seriesPot = (bestOf) => (SERIES_RULES.bestOf[bestOf] || 0) * 4;
     function seriesRoomCode() {
@@ -23735,6 +23746,7 @@ video {
       if (seriesWatch) { try { seriesWatch.ref.off('value', seriesWatch.handler); } catch (_) {} }
       seriesWatch = null;
       seriesState = null;
+      seriesPanelOpen = null;
       if (!code || typeof db === 'undefined' || !db) { renderSeriesPanel(); return; }
       const ref = db.ref(`series/${code}`);
       const handler = (snap) => { seriesState = snap.val(); onSeriesChanged(); };
@@ -23778,7 +23790,12 @@ video {
       const open = SERIES_LOBBY_OPEN || (typeof isGameOwner === 'function' && isGameOwner()) || !!s;
       if (!code || !me || !xpShown() || !open || (!s && !state.isHost)) { panel.classList.add('hidden'); panel.innerHTML = ''; return; }
       panel.classList.remove('hidden');
-      const head = `<div class="series-head">${icon('swords')}<span>Best of series</span></div>`;
+      // Folded below level 20 (the player can open it to look); the choice
+      // lasts until they leave the Play Friends page (seriesPanelOpen reset).
+      const lvl = playerXp ? xpLevelFor(playerXp.total) : 0;
+      const expanded = seriesPanelOpen ?? lvl >= SERIES_RULES.level;
+      panel.classList.toggle('series-folded', !expanded);
+      const head = `<button type="button" class="series-head" data-series-toggle aria-expanded="${expanded}">${icon('swords')}<span>Best of series</span>${expanded ? '' : (lvl < SERIES_RULES.level ? `<small class="series-head-lock">${icon('lock')}Level ${SERIES_RULES.level}</small>` : '')}<span class="cat-head-chev" aria-hidden="true">▾</span></button>`;
       const gem = icon('gem');
       const busy = seriesBusy ? ' disabled' : '';
       if (!s) {
@@ -23870,6 +23887,8 @@ video {
       return false;
     }
     document.getElementById('seriesPanel')?.addEventListener('click', (e) => {
+      const tog = e.target.closest('[data-series-toggle]');
+      if (tog) { seriesPanelOpen = tog.getAttribute('aria-expanded') !== 'true'; renderSeriesPanel(); return; }
       const pick = e.target.closest('[data-series-best]');
       if (pick && !pick.disabled) { createSeries(Number(pick.dataset.seriesBest)); return; }
       const act = e.target.closest('[data-series-act]');
@@ -23877,6 +23896,14 @@ video {
       if (act.dataset.seriesAct === 'accept') acceptSeries();
       else if (act.dataset.seriesAct === 'cancel') cancelSeries();
     });
+    // Leaving the Play Friends page folds it back (by level) next time.
+    (() => {
+      const multi = document.getElementById('multiOptions');
+      if (!multi) return;
+      new MutationObserver(() => {
+        if (multi.classList.contains('hidden') && seriesPanelOpen !== null) { seriesPanelOpen = null; renderSeriesPanel(); }
+      }).observe(multi, { attributes: true, attributeFilter: ['class'] });
+    })();
     document.getElementById('seriesAcceptBtn')?.addEventListener('click', acceptSeries);
     document.getElementById('seriesDeclineBtn')?.addEventListener('click', cancelSeries);
     document.getElementById('seriesLaterBtn')?.addEventListener('click', () => document.getElementById('seriesModal').classList.add('hidden'));
