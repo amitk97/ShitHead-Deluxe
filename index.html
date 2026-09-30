@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v254 (ShitHead-Deluxe-214) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v255 (ShitHead-Deluxe-215) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -789,11 +789,11 @@
          compact 44px header so it does not steal vertical game space. */
       body > header { height: calc(60px + var(--safe-top)) !important; padding: calc(7px + var(--safe-top)) 18px 7px !important; }
       body > header .brand-logo-rendered { font-size: 32px !important; }
-      #leaveGameBtn, #multiSelectToggleBtn, #headerInboxBtn, #hamburgerBtn {
+      #leaveGameBtn, #multiSelectToggleBtn, #headerInboxBtn, #hamburgerBtn, #headerShopBtn {
         width: 38px !important;
         height: 38px !important;
       }
-      #leaveGameBtn svg, #multiSelectToggleBtn svg, #headerInboxBtn > svg, #hamburgerBtn svg {
+      #leaveGameBtn svg, #multiSelectToggleBtn svg, #headerInboxBtn > svg, #hamburgerBtn svg, #headerShopBtn svg {
         width: 38px !important;
         height: 38px !important;
       }
@@ -1935,11 +1935,18 @@
     @supports (transition-timing-function: linear(0, 1)) { :root { --ease-spring: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1); } }
     /* ---- Microinteractions (all neutralised by body.reduce-motion) ---- */
     :is(.cosmetic-tab, .settings-row, #hamburgerDrawer nav button, #lobbyScreen button, #matchEndButtonRow button,
-        .ms-actions button, #playSelectedBtn, #swapControlBar button, #headerInboxBtn, #hamburgerBtn, #headerDiamondBtn,
+        .ms-actions button, #playSelectedBtn, #swapControlBar button, #headerInboxBtn, #hamburgerBtn, #headerDiamondBtn, #headerShopBtn,
         #matrixRefBtn, #cardRefBtn, #emoteToggleBtn):not(:disabled) { transition-property: transform, scale, background-color, border-color, color, box-shadow, opacity; transition-timing-function: var(--ease-snappy); transition-duration: .16s; }
     :is(.cosmetic-tab, .settings-row, #hamburgerDrawer nav button, #lobbyScreen button, #matchEndButtonRow button,
-        .ms-actions button, #playSelectedBtn, #swapControlBar button, #headerInboxBtn, #hamburgerBtn, #headerDiamondBtn,
+        .ms-actions button, #playSelectedBtn, #swapControlBar button, #headerInboxBtn, #hamburgerBtn, #headerDiamondBtn, #headerShopBtn,
         #matrixRefBtn, #cardRefBtn, #emoteToggleBtn):not(:disabled):active { scale: .95; }
+    /* Wide headers and rows never shrink when pressed (v255): a 95% press
+       pulled a full-width header's right edge ~14px in, so a tap on its
+       chevron was let go outside the button and lost. They brighten instead. */
+    :is(.series-head, .cat-head, .settings-row, .accordion-toggle):active { scale: 1 !important; transform: none; filter: brightness(1.15); }
+    /* Header Shop button: tablets and PCs only (phones keep the Menu → Shop). */
+    #headerShopBtn { display:none; }
+    @media (min-width: 700px) { #headerShopBtn { display:flex; } }
     /* A touched card only glows darker: moving it (the old 6px lift) slid it
        out from under the finger, so letting go tapped the card below (v237). */
     .hand-card:active { filter: drop-shadow(0 8px 10px rgba(0,0,0,.45)) brightness(1.08); }
@@ -5165,6 +5172,10 @@ video {
            silently produce no CSS at all instead of an obvious error. -->
       <button id="leaveGameBtn" class="hidden h-7 flex items-center justify-center bg-transparent hover:brightness-125 rounded-lg transition tip-below" style="width:1.75rem;" data-tip="Exit" aria-label="Exit game">
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-exit"/></svg>
+      </button>
+      <!-- Shop (v255, owner): tablets and PCs only (700px+), left of the Diamonds. -->
+      <button id="headerShopBtn" class="header-shop-btn h-7 items-center justify-center bg-transparent hover:brightness-125 rounded transition tip-below" style="width:1.75rem;" data-tip="Shop" aria-label="Shop">
+        <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg>
       </button>
       <button id="headerDiamondBtn" class="header-gem-btn flex items-center justify-center text-cyan-300 transition tip-below" data-tip="Diamonds" aria-label="Diamond balance">
         <span class="header-gem" aria-hidden="true"><svg class="ic ic-gem"><use href="#ic-gem"/></svg></span>
@@ -17983,6 +17994,68 @@ video {
       if (b) showModeIntro(b.dataset.modeIntro);
     });
 
+    // § Press guard (v255): a tap is never lost because its button changed
+    // under the finger. Two ways that happened: the button shrank on press
+    // (the 95% press-in pulled a wide header's edge away, so the release
+    // landed outside it: the "chevron doesn't always work" bug), or it was
+    // redrawn between press and release (a list refreshed from the server).
+    // If a quick tap (under 10px of movement, under 400ms) is let go inside where
+    // the pressed button was, it goes to that button, or to its redrawn copy
+    // (found by id or its data-* attributes). Hand cards have their own
+    // (handTapRedirected), so they're left alone.
+    (function pressGuard() {
+      const PRESSABLE = 'button, [role="button"], .settings-row';
+      const PRESS_GUARD_MS = 400; // quick taps only: holds (CARD_HOLD_MS, 450ms) keep their own meaning
+      let press = null;
+      const keyOf = (el) => {
+        if (el.id) return `#${CSS.escape(el.id)}`;
+        const attrs = [...el.attributes].filter(a => a.name.startsWith('data-') && !/^data-(av-|tip|state|watched)/.test(a.name));
+        return attrs.length ? attrs.map(a => `[${a.name}="${CSS.escape(a.value)}"]`).join('') : null;
+      };
+      const within = (r, x, y) => x >= r.left - 2 && x <= r.right + 2 && y >= r.top - 2 && y <= r.bottom + 2;
+      const resolve = (p) => {
+        if (p.el.isConnected) return p.el;
+        const found = p.key ? document.querySelectorAll(p.key) : [];
+        return found.length === 1 ? found[0] : null;
+      };
+      document.addEventListener('pointerdown', (e) => {
+        press = null;
+        if (e.button > 0 || !e.isPrimary) return;
+        const el = e.target.closest?.(PRESSABLE);
+        if (!el || el.closest('#localHand') || el.disabled) return;
+        press = { el, key: keyOf(el), rect: el.getBoundingClientRect(), x: e.clientX, y: e.clientY, t: Date.now(), done: false };
+      }, true);
+      document.addEventListener('pointerup', (e) => {
+        const p = press;
+        if (!p || !e.isPrimary) return;
+        p.upX = e.clientX; p.upY = e.clientY;
+        // No click at all (Chrome drops it when the pressed button was removed):
+        // send it on once this event loop turn is over.
+        setTimeout(() => {
+          if (p.done || press !== p) return;
+          press = null;
+          if (Date.now() - p.t > PRESS_GUARD_MS || Math.hypot(p.upX - p.x, p.upY - p.y) > 10 || !within(p.rect, p.upX, p.upY)) return;
+          if (p.el.isConnected) return; // still there: its own click (or none, on purpose)
+          const el = resolve(p);
+          if (el && !el.disabled) el.click();
+        }, 0);
+      }, true);
+      document.addEventListener('click', (e) => {
+        const p = press;
+        if (!p || !e.isTrusted) return;
+        p.done = true; press = null;
+        if (p.el.contains(e.target)) return;
+        if (Date.now() - p.t > PRESS_GUARD_MS || Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10 || !within(p.rect, e.clientX, e.clientY)) return;
+        const el = resolve(p);
+        if (!el || el.disabled || el.contains(e.target)) return;
+        // Released beside a shrunken button (its parent got the click), or on its redrawn copy's spot.
+        if (!e.target.contains(el) && el.isConnected && p.el === el) return;
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        el.click();
+      }, true);
+    })();
+
     // UI Bindings
     document.getElementById('navHomeLogoBtn').addEventListener('click', returnToHomeScreen);
     // Shared between all 3 mode buttons so their active/inactive look never
@@ -19281,6 +19354,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v255: [
+        ['🛒', 'On tablets and computers the Shop has its own button in the header, next to your Diamonds.'],
+        ['🔧', 'Folding sections (Best Of Series, Shop, Custom, Guide and others) now open and close on every tap.']
+      ],
       v254: [
         ['⚔️', 'Two new Gauntlets: Hard (Medium, three Hard, then the Boss, 2 lives) at Lvl 30 once you have beaten the Easy Gauntlet, and Boss (three Boss bots, 1 life) at Lvl 50 once you have beaten Easy once and Hard 3 times.', WN_KEY],
         ['🏆', 'Beat the Hard Gauntlet for 400 Diamonds, the Gauntlet Conqueror avatar and the Crimson Gauntlet frame; beat the Boss Gauntlet for 600 Diamonds, the Gauntlet Overlord avatar and the Amethyst Gauntlet frame.', WN_KEY],
@@ -23904,6 +23981,7 @@ video {
     // Same as the Challenges / Shop rows further down the menu.
     document.getElementById('drawerChallengesShortcutBtn').addEventListener('click', () => document.getElementById('menuChallengesBtn').click());
     document.getElementById('drawerShopShortcutBtn').addEventListener('click', () => document.getElementById('menuShopBtn').click());
+    document.getElementById('headerShopBtn')?.addEventListener('click', () => { if (typeof closeHamburgerMenu === 'function') closeHamburgerMenu(); openShopPanel(); });
     document.getElementById('challengesShopBtn').addEventListener('click', () => {
       document.getElementById('challengesModal').classList.add('hidden');
       document.getElementById('menuShopBtn').click();

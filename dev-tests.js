@@ -6755,6 +6755,22 @@ async function runDevTestSuite() {
     } finally { gauntletRestore(saved); }
   });
 
+  await test('Header Shop button on tablets and PCs; wide headers never shrink when pressed (v255)', () => {
+    const btn = document.getElementById('headerShopBtn');
+    assertTrue(!!btn && btn.nextElementSibling?.id === 'headerDiamondBtn', 'The Shop button sits just left of the Diamonds');
+    const css = [...document.styleSheets].flatMap(sh => { try { return [...sh.cssRules]; } catch (e) { return []; } });
+    const media = css.find(r => r.media && /min-width:\s*700px/.test(r.media.mediaText) && /#headerShopBtn/.test(r.cssText));
+    assertTrue(!!media && /display:\s*flex/.test(media.cssText), 'Shown from 700px wide (tablets and PCs)');
+    assertTrue(css.some(r => /\.series-head/.test(r.selectorText || '') && /:active/.test(r.selectorText || '') && /scale:\s*1/.test(r.cssText)), 'Section headers keep their size when pressed');
+    const real = openShopPanel;
+    let opened = false;
+    openShopPanel = () => { opened = true; };
+    try {
+      btn.click();
+      assertTrue(opened, 'It opens the Shop');
+    } finally { openShopPanel = real; }
+  });
+
   await test('Gauntlet modes (v254): Hard and Boss, their locks, one a day, lives and rewards', async () => {
     const saved = gauntletSaved();
     try {
