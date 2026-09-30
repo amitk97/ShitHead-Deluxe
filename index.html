@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v236 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v237 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1787,7 +1787,9 @@
     :is(.cosmetic-tab, .settings-row, #hamburgerDrawer nav button, #lobbyScreen button, #matchEndButtonRow button,
         .ms-actions button, #playSelectedBtn, #swapControlBar button, #headerInboxBtn, #hamburgerBtn, #headerDiamondBtn,
         #matrixRefBtn, #cardRefBtn, #emoteToggleBtn):not(:disabled):active { scale: .95; }
-    .hand-card:active { translate: 0 -6px; filter: drop-shadow(0 8px 10px rgba(0,0,0,.45)); }
+    /* A touched card only glows darker: moving it (the old 6px lift) slid it
+       out from under the finger, so letting go tapped the card below (v237). */
+    .hand-card:active { filter: drop-shadow(0 8px 10px rgba(0,0,0,.45)) brightness(1.08); }
     @keyframes miPulse { 0% { box-shadow: 0 0 0 0 rgba(245,158,11,.75); scale: 1; } 40% { scale: 1.06; } 100% { box-shadow: 0 0 0 16px rgba(245,158,11,0); scale: 1; } }
     .mi-pulse-once { animation: miPulse .55s ease-out; }
     @keyframes miSlideIn { from { translate: 0 -10px; opacity: 0; scale: .9; } to { translate: 0 0; opacity: 1; scale: 1; } }
@@ -13791,7 +13793,24 @@ video {
 
     // Back rows of a 2-3 row hand show at least this much of each card (the
     // rank and suit sit in the top part), so the cards can be larger.
-    const HAND_ROW_MIN_VISIBLE = 0.42;
+    const HAND_ROW_MIN_VISIBLE = 0.5; // v237: 0.42 made back-row cards hard to tap
+    // Overlapped cards: a tap goes to the card the finger first touched, even
+    // if the release lands on the card beside or below it (v237: "I tap a
+    // card and it jumps to the one underneath").
+    let handPress = null;
+    document.addEventListener('pointerdown', (e) => {
+      const c = e.target && e.target.closest ? e.target.closest('#localHand .hand-card[data-card-id]') : null;
+      handPress = c ? { id: c.dataset.cardId, at: Date.now() } : null;
+    }, true);
+    function handTapRedirected(id) {
+      const p = handPress;
+      handPress = null;
+      if (!p || p.id === id || Date.now() - p.at > 900) return false;
+      const el = [...document.querySelectorAll('#localHand .hand-card[data-card-id]')].find(x => x.dataset.cardId === p.id);
+      if (!el) return false;
+      el.click();
+      return true;
+    }
     // With room to spare a short hand spreads out, up to the whole card plus
     // a small gap (a 3-card hand used to overlap by half on any phone).
     const HAND_MAX_VISIBLE = 1.06;
@@ -15024,11 +15043,13 @@ video {
             // the pile (see stagedPlayPreview below) — the hand just shows a
             // dimmed placeholder so its slot doesn't just vanish.
             cardEl.classList.add('mi-staged');
-            cardEl.style.pointerEvents = 'none';
+            // Still tappable: a second tap unselects it (with pointer-events
+            // off the tap went through to the card underneath, v237).
           }
           cardEl.style.zIndex = isSwapSelected ? '500' : String(iInRow + 1);
           cardEl.onclick = () => {
             if (wasCardJustDragged(card.id)) return;
+            if (handTapRedirected(card.id)) return;
             if (state.phase === 'SWAP') {
               handleSwapHandClick(card.id);
             } else if (state.phase === 'PLAY' && isMyTurn) {
@@ -18191,6 +18212,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v237: [
+        ['👆', 'Tapping a card in a big hand now picks the card you touched, not the one next to or under it. Tap a selected card again to put it back.'],
+        ['🃏', 'Big hands show more of each card in the back row, so they are easier to tap.']
+      ],
       v236: [
         ['📱', 'iPhone home-screen app: the table now reaches the bottom of the screen and your hand cards are bigger.']
       ],

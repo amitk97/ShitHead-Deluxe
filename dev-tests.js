@@ -7333,6 +7333,25 @@ async function runDevTestSuite() {
       Object.assign(state, { isMultiplayer: false, roomCode: null, players: [] });
     }
   });
+  await test('A tap on an overlapped hand card goes to the card the finger touched first, and a selected card stays tappable', () => {
+    const hand = document.getElementById('localHand');
+    const mk = (id) => { const el = document.createElement('div'); el.className = 'hand-card'; el.dataset.cardId = id; hand.appendChild(el); return el; };
+    const a = mk('tap_a'), b = mk('tap_b');
+    let clicked = [];
+    a.onclick = () => { if (handTapRedirected('tap_a')) return; clicked.push('a'); };
+    b.onclick = () => { if (handTapRedirected('tap_b')) return; clicked.push('b'); };
+    try {
+      a.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      b.click(); // the release landed on the card below
+      assertEqual(clicked, ['a'], 'the card first touched gets the tap');
+      clicked = [];
+      b.click(); // no press first (keyboard, tests): the card itself
+      assertEqual(clicked, ['b'], 'a plain click still works');
+      const css = [...document.styleSheets].flatMap(sh => { try { return [...sh.cssRules]; } catch (_) { return []; } })
+        .filter(r => r.selectorText === '.hand-card:active').map(r => r.style.translate || r.style.transform).join('');
+      assertTrue(!/px/.test(css), 'touching a hand card never moves it out from under the finger');
+    } finally { a.remove(); b.remove(); }
+  });
   await test('Profile sections fold with a chevron and stay folded', () => {
     const heads = [...document.querySelectorAll('#profileModal .profile-sec-head')];
     const titleOf = (h) => h.querySelector('.cat-head-title').textContent.trim();
