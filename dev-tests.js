@@ -4613,6 +4613,21 @@ async function runDevTestSuite() {
     freshState({ isMultiplayer: false });
     assertTrue(friendRowHtml('u1', { username: 'Jamie', online: false }, 'friend').includes('friend-status offline'), 'Shows Offline');
   });
+  await test('Home nickname row: picture | name | level on one line, and the longest username fits', () => {
+    const input = document.getElementById('playerNameInput');
+    const avatar = document.getElementById('homeNameAvatar'), level = document.getElementById('homeNameLevel');
+    assertTrue(!!avatar && !!level && input.closest('.home-name-row') === avatar.parentElement, 'Picture, name and level share one row');
+    assertEqual(input.maxLength, 12, 'Usernames are at most 12 characters');
+    const cs = getComputedStyle(input);
+    const cv = document.createElement('canvas').getContext('2d');
+    cv.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const room = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    if (input.offsetParent) assertTrue(cv.measureText('WWWWWWWWWWWW').width <= room, `12 W's fit (${Math.round(cv.measureText('WWWWWWWWWWWW').width)} <= ${Math.round(room)})`);
+    const realUser = currentUser;
+    currentUser = null; updateHamburgerAccountLabel(); refreshXpDisplays();
+    assertTrue(avatar.classList.contains('hidden') && level.classList.contains('hidden'), 'Signed out: just the name box');
+    currentUser = realUser;
+  });
   await test('Friends list: highest level first, then online, then A-Z', () => {
     const area = document.getElementById('friendsListArea');
     const before = area.innerHTML;

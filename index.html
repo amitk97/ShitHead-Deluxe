@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v241 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v242 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1719,6 +1719,21 @@
     .card-zone-label-row:has(#handZoneLevel) { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; }
     #handZoneLabel { grid-column:2; }
     #handZoneLevel { grid-column:3; justify-self:start; margin-left:6px; }
+    /* Home nickname row (v242): picture | name | level on one line. The box
+       fits the longest username (12 of the widest letter, "W") and stays
+       centred whether or not the picture/level show (1fr auto 1fr). */
+    .home-name-row { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; column-gap:6px; }
+    #playerNameInput.home-name-input { grid-column:2; width:calc(12 * 1.06em + 24px); padding-left:10px; padding-right:10px; }
+    .home-name-avatar { grid-column:1; justify-self:end; display:inline-flex; width:36px; height:36px; padding:0; border:0; background:none; border-radius:10px; cursor:pointer; }
+    .home-name-avatar.hidden, .home-name-level.hidden { display:none; }
+    .home-name-level { grid-column:3; justify-self:start; display:inline-flex; align-items:center; }
+    @media (max-width:340px) {
+      .home-name-row { column-gap:4px; }
+      #playerNameInput.home-name-input { font-size:12.5px; padding-left:6px; padding-right:6px; width:calc(12 * 1.06em + 16px); }
+      .home-name-avatar { width:28px; height:28px; }
+      .home-name-avatar > * { transform:scale(.78); transform-origin:center; }
+      .home-name-level .xp-badge { font-size:9px; padding:2px 4px; }
+    }
     #handZoneLabel::after { content:'\2193'; margin-left:4px; font-size:1.2em; line-height:1; }
     /* The Deck (card-base) is wider than the Base Card (card-table). Equal
        side columns keep the pile, and the table cards and hand below it, on
@@ -5107,7 +5122,11 @@ video {
       <div class="space-y-2.5">
         <div>
           <label class="block text-xs font-black tracking-wider uppercase text-slate-400 mb-1 text-center">Your Nickname</label>
-          <input type="text" id="playerNameInput" maxlength="12" placeholder="e.g. Alex" class="w-full bg-slate-950 border-2 border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold focus:border-amber-400 outline-none text-white transition text-center" style="text-align:center" />
+          <div class="home-name-row">
+            <button id="homeNameAvatar" type="button" class="home-name-avatar hidden" data-own-avatar="36" aria-label="Your profile"></button>
+            <input type="text" id="playerNameInput" maxlength="12" placeholder="e.g. Alex" class="home-name-input bg-slate-950 border-2 border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold focus:border-amber-400 outline-none text-white transition text-center" style="text-align:center" />
+            <span id="homeNameLevel" class="home-name-level hidden"></span>
+          </div>
           <p id="nameRequiredMsg" class="hidden text-[10px] font-bold text-rose-400 mt-1">Please enter a nickname to continue.</p>
         </div>
 
@@ -18222,6 +18241,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v242: [
+        ['🏠', 'Home screen: your profile picture and level now sit either side of your nickname.']
+      ],
       v241: [
         ['👥', 'Friends are now listed by level, highest first.'],
         ['🛡️', 'Ranked: a match that fails the server\'s cheat checks no longer counts for rating or Diamonds.']
@@ -22807,6 +22829,7 @@ video {
     // the same destinations and icons as the hamburger menu, so there is only
     // one source of truth for page-opening behaviour.
     document.getElementById('lobbyProfileShortcut')?.addEventListener('click', () => document.getElementById('menuProfileBtn')?.click());
+    document.getElementById('homeNameAvatar')?.addEventListener('click', () => document.getElementById('menuProfileBtn')?.click());
     document.getElementById('lobbyPersonalisationShortcut')?.addEventListener('click', () => document.getElementById('menuThemesBtn')?.click());
     document.getElementById('lobbyGuideShortcut')?.addEventListener('click', () => document.getElementById('menuGuideBtn')?.click());
     document.getElementById('lobbySettingsShortcut')?.addEventListener('click', () => document.getElementById('menuSettingsBtn')?.click());
@@ -23375,11 +23398,14 @@ video {
       document.getElementById('menuChangelogBtn')?.classList.toggle('hidden', !isGameOwner());
       document.getElementById('menuXpSwitchBtn')?.classList.toggle('hidden', !isGameOwner());
       drawerAvatar?.classList.toggle('hidden', !currentUser);
+      document.getElementById('homeNameAvatar')?.classList.toggle('hidden', !currentUser); // home nickname row (v242)
       document.getElementById('drawerSignInBtn')?.classList.toggle('hidden', !!currentUser);
       if (currentUser) {
         const uid = currentUser.uid;
         if (hamburgerUsernameFor !== uid) drawerLabel.textContent = 'Player';
         if (drawerAvatar) drawerAvatar.innerHTML = avatarHtml(equippedCosmetics.avatar, 34);
+        const homeAvatar = document.getElementById('homeNameAvatar');
+        if (homeAvatar) homeAvatar.innerHTML = avatarHtml(equippedCosmetics.avatar, 36);
         getOrCreateUserProfile(uid).then((profile) => {
           if (currentUser?.uid !== uid) return;
           hamburgerUsernameFor = uid;
@@ -24484,7 +24510,7 @@ video {
       const on = xpShown() && !!currentUser && !!playerXp;
       const myLevel = on ? xpLevelFor(playerXp.total) : 0;
       // Menu header, Profile (next to the name) and the table (by your Hand).
-      [['hamburgerLevel', ''], ['profileLevelBadge', ''], ['handZoneLevel', 'xp-badge-sm']].forEach(([id, cls]) => {
+      [['hamburgerLevel', ''], ['profileLevelBadge', ''], ['handZoneLevel', 'xp-badge-sm'], ['homeNameLevel', '']].forEach(([id, cls]) => {
         const el = document.getElementById(id);
         if (el) { el.classList.toggle('hidden', !on); el.innerHTML = on ? xpLevelBadge(myLevel, cls) : ''; }
       });
