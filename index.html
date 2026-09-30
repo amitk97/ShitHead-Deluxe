@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v257 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v258 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5988,8 +5988,8 @@ video {
         <button type="button" role="tab" class="stats-tab" data-lb-tab="gauntlet">Gauntlet</button>
         <button type="button" role="tab" class="stats-tab hidden" data-lb-tab="levels">Levels</button>
       </div>
-      <!-- Levels tab only: All-time (total XP) or This week (XP since Monday, UK). -->
-      <div id="lbLevelsSwitch" class="lb-levels-switch hidden" role="group" aria-label="Levels leaderboard period">
+      <!-- Non-ranked boards: all-time or this UK week (Monday start). -->
+      <div id="lbLevelsSwitch" class="lb-levels-switch hidden" role="group" aria-label="Leaderboard period">
         <button type="button" data-lb-period="all">All-time</button>
         <button type="button" data-lb-period="week">This week</button>
       </div>
@@ -7076,6 +7076,7 @@ video {
             <p data-term="best-of-series"><strong class="text-amber-400">Best Of Series:</strong> Play Friends only: two players at Lvl 20 or above play a Best of 3 or Best of 5. Each pays an entry, the game matches the pot, and the series winner takes it all.</p>
             <p data-term="blind-card"><strong class="text-amber-400">Blind Card:</strong> See <em>Face-Down Cards</em>.</p>
             <p data-term="bonus-draw"><strong class="text-amber-400">Bonus Draw:</strong> If the card you draw right after playing matches the rank you just played, you get offered a free follow-up play with it before the turn passes &mdash; a way to chain extra plays in one turn.</p>
+            <p data-term="boss-gauntlet"><strong class="text-amber-400">Boss Gauntlet:</strong> A daily run against 3 Boss bots with 1 life, unlocked at Level 50 after beating Easy once and Hard three times. Beat all three to complete the run. Choose it on the Gauntlet page; you may enter one Gauntlet mode per day.</p>
             <p data-term="burn"><strong class="text-amber-400">Burn:</strong> The entire Pile is removed from the game permanently &mdash; not picked up by anyone. Caused by a 10, by four of a kind, or by a Joker duel. Whoever burnt it plays again immediately on an empty Pile &mdash; unless that was their last card, in which case they finish and the next player carries on.</p>
             <p data-term="card-history"><strong class="text-amber-400">Card History:</strong> The circle in the left column on the table. It shows the card you have to beat; tap it to open the list of recent plays.</p>
             <p data-term="card-powers"><strong class="text-amber-400">Card Powers:</strong> The &#9432; button on the table: what every card does. Press and hold any card on the table for the same information.</p>
@@ -7093,6 +7094,7 @@ video {
             <p data-term="four-of-a-kind"><strong class="text-amber-400">Four Of A Kind:</strong> All four cards of one rank on top of the Pile burn it, whether they were played together or across several turns. See <em>Burn</em> and <em>Snap Burn</em>.</p>
             <p data-term="gauntlet"><strong class="text-amber-400">Gauntlet:</strong> Vs Bots games in a row against tough bots, with a few lives: Easy (5 bots, 3 lives), Hard (5 bots, 2 lives, Lvl 30) or Boss (3 Boss bots, 1 life, Lvl 50). One a day. See <em>The Gauntlet</em> above.</p>
             <p data-term="hand"><strong class="text-amber-400">Hand:</strong> The cards only you can see, held off the table. You play from here first, and top back up to three from the Deck after each turn while the Deck lasts.</p>
+            <p data-term="hard-gauntlet"><strong class="text-amber-400">Hard Gauntlet:</strong> A daily run against 5 tough bots with 2 lives, unlocked at Level 30 after beating Easy once. Losing costs a life and you retry that bot. Choose it on the Gauntlet page; you may enter one Gauntlet mode per day.</p>
             <p data-term="joker"><strong class="text-amber-400">Joker:</strong> The strongest card. Play it on anything, then choose an opponent to pick up the Pile. See <em>Duel</em>.</p>
             <p data-term="joker-effect"><strong class="text-amber-400">Joker Effect:</strong> A cosmetic animation that plays over the table whenever you play a Joker, bought in the Shop&rsquo;s Joker tab. Everyone at the table sees it, online too.</p>
             <p data-term="last-card"><strong class="text-amber-400">Last Card:</strong> A player down to one card in total gets a pulsing <strong>&#9757;&#65039; LAST CARD</strong> badge and a warning, so nobody sneaks out unnoticed.</p>
@@ -7171,7 +7173,7 @@ video {
       notify: "audio/notify.mp3"   // New invite / friend request / gift
     };
     // Clips for the owner's effects (v257, made by tools/make-effect-sounds.py).
-    const EFFECT_CLIPS = { 'lion-roar': 'audio/lion-roar.mp3', boo: 'audio/boo.mp3', fireworks: 'audio/fireworks.mp3' };
+    const EFFECT_CLIPS = { 'lion-roar': 'audio/lion-roar.mp3?v=258', boo: 'audio/boo.mp3', fireworks: 'audio/fireworks.mp3?v=258' };
     // The your-turn chime plays softer than the card sounds.
     const TURN_ALERT_GAIN = 0.08; // a faint cue, well under the card sounds
 
@@ -7235,15 +7237,9 @@ video {
         // Effect clips (§ Owner effects: lion roar, ghost's BOO, fireworks)
         // load a few seconds after start-up, off the critical path.
         this.clipBuffers = new Map();
-        setTimeout(() => Object.entries(EFFECT_CLIPS).forEach(([name, src]) => {
-          fetch(src).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
-            .then(data => new Promise((resolve, reject) => {
-              const p = this.ctx.decodeAudioData(data, resolve, reject);
-              if (p && p.then) p.then(resolve, reject);
-            }))
-            .then(buffer => this.clipBuffers.set(name, buffer))
-            .catch(() => {});
-        }), 3000);
+        this.clipSources = new Map();
+        this.clipLoads = new Map();
+        setTimeout(() => Object.keys(EFFECT_CLIPS).forEach(name => this.loadEffectClip(name)), 3000);
         ['pointerdown', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, unlock, { capture: true, passive: true }));
         document.addEventListener('visibilitychange', () => { if (!document.hidden) unlock(); });
       }
@@ -7431,6 +7427,19 @@ video {
       }
       /* An effect's recorded clip (EFFECT_CLIPS), `delay` seconds from now,
          at the card sounds' volume. Silent until it has loaded. */
+      loadEffectClip(name) {
+        if (!this.ctx || !EFFECT_CLIPS[name]) return Promise.resolve(null);
+        if (this.clipBuffers?.has(name)) return Promise.resolve(this.clipBuffers.get(name));
+        if (this.clipLoads?.has(name)) return this.clipLoads.get(name);
+        const promise = fetch(EFFECT_CLIPS[name]).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+          .then(data => new Promise((resolve, reject) => {
+            const p = this.ctx.decodeAudioData(data, resolve, reject);
+            if (p?.then) p.then(resolve, reject);
+          })).then(buffer => { this.clipBuffers.set(name, buffer); return buffer; })
+          .catch(() => { this.clipLoads.delete(name); return null; });
+        this.clipLoads.set(name, promise);
+        return promise;
+      }
       playEffectClip(name, delay = 0, level = 1) {
         const ctx = this.ctx;
         if (!this.enabled || !ctx || ctx.state !== 'running') return false;
@@ -7441,9 +7450,16 @@ video {
           const src = ctx.createBufferSource(); src.buffer = buffer;
           const g = ctx.createGain(); g.gain.value = vol * level;
           src.connect(g).connect(ctx.destination);
+          this.stopEffectClip(name);
+          this.clipSources.set(name, src);
+          src.onended = () => { if (this.clipSources.get(name) === src) this.clipSources.delete(name); };
           src.start(ctx.currentTime + Math.max(0, delay));
           return true;
         } catch (e) { return false; }
+      }
+      stopEffectClip(name) {
+        const src = this.clipSources?.get(name);
+        if (src) { try { src.stop(); } catch (e) {} this.clipSources.delete(name); }
       }
       playBurnSound(effectId = 'default') {
         const kit = this._burnKit();
@@ -11964,7 +11980,8 @@ video {
       }
     }
     // ---- § Owner effects (v257): the owner's own art, cut into layers ----
-    // tools/make-owner-effects.py cuts the pictures (docs/avatar-art/src) into
+    // The complete gold burst is art/effects/fireworks-gold.svg; the other
+    // layers come from tools/make-owner-effects.py, which cuts the pictures (docs/avatar-art/src) into
     // art/effects/*.webp with real transparency and prints OWNER_FX_LAYOUT:
     // each layer's box [x, y, w, h] in its picture's 1000-unit square. An
     // effect draws the picture in a square of side S and moves the layers.
@@ -11972,29 +11989,35 @@ video {
     // effect), the Jack-o'-Lantern avatar and the Cobweb card back. Sounds:
     // EFFECT_CLIPS (tools/make-effect-sounds.py). Bump OWNER_FX_V when the
     // files are rebuilt (art caches a day).
-    const OWNER_FX_V = 257;
-    const OWNER_FX_LAYOUT = {"pumpkinAvatar":{"eyes":[[364,510],[653,549]],"mouth":[492,715],"embers":[[172,205],[835,282],[95,321],[910,397],[905,851]]},"pumpkin":{"ghost":[525.5,98.9,343.7,354.1],"boo":[102.9,104.5,437.8,338.1],"pumpkin":[234.4,326.2,567.8,535.9],"bg":[59.0,69.4,885.2,873.2]},"lion":{"head":[217.7,171.5,578.1,638.8],"bg":[0.0,18.3,1000.0,927.4]},"fireworks":{"red":[40.7,63.8,422.6,423.4],"blue":[546.3,83.7,405.1,407.5],"purple":[27.9,434.6,399.5,407.5],"green":[598.1,458.5,379.6,403.5],"gold":[0.0,14.4,1000.0,962.5],"centres":{"red":[251,275],"blue":[750,287],"purple":[223,638],"green":[801,662],"gold":[501,501]}}};
+    const OWNER_FX_V = 258;
+    const OWNER_FX_LAYOUT = {"pumpkinAvatar":{"eyes":[[364,510],[653,549]],"mouth":[492,715],"embers":[[172,205],[835,282],[95,321],[910,397],[905,851]]},"pumpkin":{"ghost":[525.5,98.9,343.7,354.1],"boo":[102.9,104.5,437.8,338.1],"pumpkin":[234.4,326.2,567.8,535.9],"bg":[59.0,69.4,885.2,873.2]},"lion":{"head":[217.7,171.5,578.1,638.8],"bg":[0.0,18.3,1000.0,927.4]},"fireworks":{"red":[40.7,63.8,422.6,423.4],"blue":[546.3,83.7,405.1,407.5],"purple":[27.9,434.6,399.5,407.5],"green":[598.1,458.5,379.6,403.5],"gold":[0,0,1000,1000],"centres":{"red":[251,275],"blue":[750,287],"purple":[223,638],"green":[801,662],"gold":[501,501]}}};
     const OWNER_FX_FILES = {
       'victory-lion': ['lion-bg', 'lion-head'],
-      'victory-fireworks': ['fireworks-gold', 'fireworks-red', 'fireworks-blue', 'fireworks-purple', 'fireworks-green'],
+      'victory-fireworks': ['fireworks-gold', 'fireworks-gold-art', 'fireworks-red', 'fireworks-blue', 'fireworks-purple', 'fireworks-green'],
       'joker-halloween': ['pumpkin-bg', 'pumpkin-pumpkin', 'pumpkin-ghost', 'pumpkin-boo']
     };
-    const ownerFxSrc = (name) => `art/effects/${name}.webp?v=${OWNER_FX_V}`;
+    const ownerFxSrc = (name) => `art/effects/${name === 'fireworks-gold-art' ? 'fireworks-gold' : name}.${name === 'fireworks-gold' ? 'svg' : 'webp'}?v=${OWNER_FX_V}`;
     // Fetch an effect's layers ahead of time (every player's equipped
     // effects at the table), so the first play isn't waiting on the network.
     const ownerFxLoaded = new Set();
+    const ownerFxImages = new Map();
     function preloadOwnerFx(ids) {
       (ids || []).forEach(id => (OWNER_FX_FILES[id] || []).forEach(name => {
         if (ownerFxLoaded.has(name)) return;
         ownerFxLoaded.add(name);
-        try { const img = new Image(); img.decoding = 'async'; img.src = ownerFxSrc(name); } catch (e) {}
+        try { const img = new Image(); img.decoding = 'async'; img.src = ownerFxSrc(name); ownerFxImages.set(name, img); img.decode?.().catch(() => {}); } catch (e) {}
       }));
     }
     // One layer: `box` from the layout, in the square of side S at (ox, oy).
     function ofxLayer(host, name, box, S, ox, oy) {
       const [x, y, w, h] = box;
-      return bfxAdd(host, `<img src="${ownerFxSrc(name)}" alt="" draggable="false" style="display:block;width:100%;height:100%;pointer-events:none">`,
+      const el = bfxAdd(host, `<img src="${ownerFxSrc(name)}" alt="" draggable="false" style="display:block;width:100%;height:100%;pointer-events:none">`,
         ox + (x + w / 2) * S / 1000, oy + (y + h / 2) * S / 1000, w * S / 1000, h * S / 1000);
+      // Keep the original ring and crystal artwork over a complete burst.
+      if (name === 'fireworks-gold') {
+        el.insertAdjacentHTML('beforeend', `<img src="${ownerFxSrc('fireworks-gold-art')}" alt="" draggable="false" style="position:absolute;left:0;top:1.44%;width:100%;height:96.25%;pointer-events:none">`);
+      }
+      return el;
     }
     // Timed keyframes: each step eases on its own, so the beats land on time
     // (a whole-animation ease-out would bring every beat forward).
@@ -12015,17 +12038,16 @@ video {
     function vfxLion(layer) {
       const [W, H] = vfxSize(layer);
       const S = Math.min(W * 1.04, H * .72, 640), cx = W / 2, cy = H * .44, ox = cx - S / 2, oy = cy - S / 2;
-      const L = OWNER_FX_LAYOUT.lion, roarAt = 450, total = 3500;
+      const L = OWNER_FX_LAYOUT.lion, roarAt = 450, total = 4200;
       audio.playEffectClip('lion-roar', 0, 0.55); // about as loud as the other effects (peaks ~0.5)
       ofxVignette(layer, W, H, 'rgba(30,16,2,.78)', total);
       // Rays turning slowly behind everything.
       const rays = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:repeating-conic-gradient(rgba(253,224,71,.30) 0 7deg,transparent 7deg 18deg);-webkit-mask-image:radial-gradient(circle,#000 20%,transparent 68%);mask-image:radial-gradient(circle,#000 20%,transparent 68%)"></div>', cx, cy, S * 1.7, S * 1.7);
       bfxAnimate(rays, [{ transform: 'scale(.5) rotate(0deg)', opacity: 0 }, { transform: 'scale(1) rotate(25deg)', opacity: 1, offset: .2 }, { transform: 'scale(1.05) rotate(110deg)', opacity: .9, offset: .85 }, { transform: 'scale(1.1) rotate(130deg)', opacity: 0 }], { duration: total - roarAt, delay: roarAt, easing: 'linear' });
       // The ring of light bursts out with the roar and pulses once more.
-      const bg = ofxLayer(layer, 'lion-bg', L.bg, S, ox, oy);
-      bfxAnimate(bg, ofxEase([{ transform: 'scale(.45)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: .1 }, { transform: 'scale(1)', opacity: 1, offset: .18 },
-        { transform: 'scale(1.05)', opacity: 1, offset: .4 }, { transform: 'scale(1)', opacity: 1, offset: .55 }, { transform: 'scale(1.02)', opacity: 1, offset: .85 }, { transform: 'scale(1.12)', opacity: 0 }]),
-        { duration: total - roarAt, delay: roarAt, easing: 'linear' });
+      const lionGroup = bfxAdd(layer, '', cx, cy, S, S);
+      lionGroup.style.willChange = 'transform, opacity';
+      ofxLayer(lionGroup, 'lion-bg', L.bg, S, 0, 0);
       // Shockwaves from his mouth.
       const [mx, my] = ofxPt(S, ox, oy, [500, 560]);
       [0, 220, 440].forEach((d, i) => {
@@ -12033,8 +12055,8 @@ video {
         bfxAnimate(ring, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(.3)', opacity: 1, offset: .02 }, { transform: 'scale(6)', opacity: 0 }], { duration: 1200, delay: roarAt + d, easing: 'cubic-bezier(.2,.7,.3,1)' });
       });
       // Gold dust and crystals blasting out.
-      for (let i = 0; i < 30; i++) {
-        const a = (i / 30) * Math.PI * 2 + bfxRand(-.1, .1), d = bfxRand(.6, 1) * Math.max(W, H) * .6;
+      for (let i = 0; i < 18; i++) {
+        const a = (i / 18) * Math.PI * 2 + bfxRand(-.1, .1), d = bfxRand(.6, 1) * Math.max(W, H) * .6;
         const dust = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:#fde68a;box-shadow:0 0 8px #fbbf24"></div>', mx, my, 6, 6);
         bfxAnimate(dust, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .02 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: 0 }], { duration: bfxRand(900, 1300), delay: roarAt + bfxRand(0, 300), easing: 'ease-out' });
       }
@@ -12044,23 +12066,23 @@ video {
         bfxAnimate(gem, [{ transform: 'translate(0,0) scale(0) rotate(0deg)', opacity: 0 }, { transform: 'translate(0,0) scale(1) rotate(40deg)', opacity: 1, offset: .08 },
           { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) scale(.8) rotate(${bfxRand(300, 700)}deg)`, opacity: 0 }], { duration: bfxRand(1300, 1700), delay: roarAt + bfxRand(0, 200), easing: 'cubic-bezier(.15,.7,.4,1)' });
       }
-      // The head: surges in, roars (shaking), holds, rises away.
-      const head = ofxLayer(layer, 'lion-head', L.head, S, ox, oy);
-      head.style.filter = 'drop-shadow(0 10px 22px rgba(0,0,0,.55))';
-      const shake = [.16, .18, .2, .22, .24, .26, .28, .3, .32, .34].map((o, i) => ({ transform: `translate(${i % 2 ? 5 : -5}px,${i % 3 - 1}px) scale(1.1) rotate(${i % 2 ? 1.5 : -1.5}deg)`, opacity: 1, offset: o }));
-      bfxAnimate(head, ofxEase([{ transform: 'scale(.25) rotate(-8deg)', opacity: 0 }, { transform: 'scale(1.1) rotate(2deg)', opacity: 1, offset: .1 }, { transform: 'scale(1) rotate(0deg)', opacity: 1, offset: .128 },
-        { transform: 'scale(1.12) rotate(0deg)', opacity: 1, offset: .145 }, ...shake, { transform: 'scale(1.06) rotate(0deg)', opacity: 1, offset: .45 },
-        { transform: 'scale(1.03) rotate(0deg)', opacity: 1, offset: .86 }, { transform: 'scale(.95) translateY(-24px)', opacity: 0 }]), { duration: total, easing: 'linear' });
+      // Head and halo share one reveal, roar pulse and fade: one continuous effect.
+      const head = ofxLayer(lionGroup, 'lion-head', L.head, S, 0, 0);
+      bfxAnimate(lionGroup, ofxEase([
+        { transform: 'scale(.35)', opacity: 0 },
+        { transform: 'scale(1)', opacity: 1, offset: roarAt / total },
+        { transform: 'scale(1.06)', opacity: 1, offset: .23 },
+        { transform: 'scale(1)', opacity: 1, offset: .48 },
+        { transform: 'scale(1.02)', opacity: 1, offset: .82 },
+        { transform: 'scale(.96) translateY(-16px)', opacity: 0 }
+      ], 'ease-in-out'), { duration: total, easing: 'linear' });
       // His eyes flash as he roars.
       [[431, 393], [586, 393]].forEach((p, i) => {
         const [x, y] = ofxPt(S, ox, oy, p);
         const glint = bfxAdd(layer, bfxStar4('#ffffff'), x, y, S * .09, S * .09);
         bfxAnimate(glint, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(45deg)', opacity: 1, offset: .35 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 600, delay: roarAt + 80 + i * 60 });
       });
-      setTimeout(() => {
-        const table = document.getElementById('gameTable');
-        if (layer.isConnected && table) { table.classList.add('animate-screen-shake'); setTimeout(() => table.classList.remove('animate-screen-shake'), 450); }
-      }, roarAt);
+
     }
     // Fireworks (the owner's art): five rockets streak up and burst in turn,
     // gold in the middle first, then red, blue, purple and green, each
@@ -12070,7 +12092,7 @@ video {
     function vfxFireworks(layer) {
       const [W, H] = vfxSize(layer);
       const S = Math.min(W * 1.06, H * .76, 720), cx = W / 2, cy = H * .42, ox = cx - S / 2, oy = cy - S / 2;
-      const F = OWNER_FX_LAYOUT.fireworks, total = 3500;
+      const F = OWNER_FX_LAYOUT.fireworks, total = 4200;
       const tones = { gold: '#fde047', red: '#f87171', blue: '#60a5fa', purple: '#e879f9', green: '#34d399' };
       audio.playEffectClip('fireworks', 0, 0.5);
       ofxVignette(layer, W, H, 'rgba(8,6,30,.72)', total);
@@ -12088,9 +12110,9 @@ video {
         const burst = ofxLayer(layer, `fireworks-${name}`, F[name], S, ox, oy);
         burst.style.transformOrigin = `${((F.centres[name][0] - F[name][0]) / F[name][2] * 100).toFixed(1)}% ${((F.centres[name][1] - F[name][1]) / F[name][3] * 100).toFixed(1)}%`;
         const life = total - at;
-        bfxAnimate(burst, [{ transform: 'scale(.12)', opacity: 0, filter: 'brightness(2.2)' }, { transform: 'scale(.92)', opacity: 1, filter: 'brightness(1.8)', offset: .07 },
-          { transform: 'scale(1.02)', opacity: 1, filter: 'brightness(1.05)', offset: .18 }, { transform: 'scale(1.05) translateY(0)', opacity: 1, filter: 'brightness(1)', offset: .62 },
-          { transform: `scale(1.08) translateY(${S * .05}px)`, opacity: 0, filter: 'brightness(.8)' }], { duration: life, delay: at, easing: 'cubic-bezier(.2,.8,.3,1)' });
+        bfxAnimate(burst, ofxEase([{ transform: 'scale(.12)', opacity: 0 }, { transform: 'scale(.92)', opacity: 1, offset: .07 },
+          { transform: 'scale(1.02)', opacity: 1, offset: .18 }, { transform: 'scale(1.05) translateY(0)', opacity: 1, offset: .62 },
+          { transform: `scale(1.08) translateY(${S * .05}px)`, opacity: 0 }]), { duration: life, delay: at, easing: 'linear' });
         // Twinkles round it.
         const r = (name === 'gold' ? .36 : .16) * S;
         for (let j = 0; j < (name === 'gold' ? 9 : 5); j++) {
@@ -12101,7 +12123,7 @@ video {
       });
       // Glitter falling after the show.
       const colours = Object.values(tones);
-      for (let i = 0; i < 34; i++) {
+      for (let i = 0; i < 22; i++) {
         const x = bfxRand(W * .08, W * .92), s = bfxRand(3, 6);
         const bit = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:${colours[i % colours.length]};box-shadow:0 0 6px ${colours[i % colours.length]}"></div>`, x, oy + bfxRand(.1, .5) * S, s, s);
         bfxAnimate(bit, [{ transform: 'translate(0,0)', opacity: 0 }, { opacity: 1, offset: .15 }, { transform: `translate(${bfxRand(-20, 20)}px,${bfxRand(.25, .45) * H}px)`, opacity: 0 }], { duration: bfxRand(1400, 1900), delay: bfxRand(1400, 1900), easing: 'ease-in' });
@@ -12113,11 +12135,24 @@ video {
       const run = { 'victory-sparklers': vfxSparklers, 'victory-stars': vfxFiveStars, 'victory-karate': vfxKarate,
         'victory-trophy': vfxTrophy, 'victory-rocket': vfxRocket, 'victory-origami': vfxOrigamiFlock, 'victory-lion': vfxLion, 'victory-fireworks': vfxFireworks }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
       if (!run) return false;
-      run(layer);
+      const host = document.createElement('div');
+      host.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+      layer.replaceChildren(host);
+      preloadOwnerFx([effect]);
+      const images = (OWNER_FX_FILES[effect] || []).map(name => ownerFxImages.get(name)).filter(Boolean);
+      const start = () => { if (!host.isConnected) return; run(host); setTimeout(() => host.remove(), 4200); };
+      const clip = effect === 'victory-lion' ? 'lion-roar' : effect === 'victory-fireworks' ? 'fireworks' : null;
+      if (!devTestSuiteRunning && (images.some(img => !img.complete || !img.naturalWidth) || (clip && audio.enabled && !audio.clipBuffers?.has(clip)))) {
+        Promise.all([...images.map(img => img.decode?.().catch(() => {})), clip && audio.enabled ? audio.loadEffectClip(clip) : null]).then(start);
+      } else start();
       return true;
     }
 
     function playVictoryEffect(effect, cardStyle = null) {
+      audio.stopEffectClip('lion-roar'); audio.stopEffectClip('fireworks');
+      const old = document.getElementById('victoryFxLayer');
+      old?.getAnimations({ subtree: true }).forEach(a => a.cancel());
+      old?.replaceChildren();
       if (playShapeVictoryEffect(effect)) return;
       if (effect === 'victory-cards') {
         // Cards wear the winner's card back and frame, frozen at the start.
@@ -14634,7 +14669,7 @@ video {
       return `${isRed ? 'text-[var(--text-red)]' : 'text-[var(--text-light)]'} ${SUIT_CLASS[suit] || ''}`.trim();
     }
 
-    function getThemeDeckBackClass() {
+    function getThemeDeckBackClass(backId = equippedCosmetics.cardBack) {
       const cosmeticBackClasses = {
         'back-midnight': 'cosmetic-back-midnight',
         'back-emerald': 'cosmetic-back-emerald',
@@ -14649,9 +14684,9 @@ video {
         'back-dragon': 'cosmetic-back-dragon',
         'back-stained': 'cosmetic-back-stained'
       };
-      if (/^back-lvl-/.test(equippedCosmetics.cardBack || '')) return `cosmetic-${equippedCosmetics.cardBack} lvl-back`;
-      if (cosmeticBackClasses[equippedCosmetics.cardBack]) return cosmeticBackClasses[equippedCosmetics.cardBack];
-      if (typeof SEASONAL_BACK_IDS !== 'undefined' && SEASONAL_BACK_IDS.has(equippedCosmetics.cardBack)) return getCosmeticBackClass(equippedCosmetics.cardBack);
+      if (/^back-lvl-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
+      if (cosmeticBackClasses[backId]) return cosmeticBackClasses[backId];
+      if (typeof SEASONAL_BACK_IDS !== 'undefined' && SEASONAL_BACK_IDS.has(backId)) return getCosmeticBackClass(backId);
       if (state.deckTheme === 'theme-emerald') return 'back-emerald';
       if (state.deckTheme === 'theme-cyber') return 'back-cyber';
       if (state.deckTheme === 'theme-crimson') return 'back-crimson';
@@ -15431,6 +15466,7 @@ video {
     document.getElementById('histCollapseBtn')?.addEventListener('click', (e) => { e.stopPropagation(); setHistoryOpen(false); });
 
     function render() {
+      if (state.phase !== 'LOBBY' || state.isMultiplayer || tutorialActive) document.getElementById('updatePrompt')?.classList.add('hidden');
       cleanupDrag(); // a re-render can remove the card element mid-drag; never leave a stuck ghost behind
       const viewId = viewSeatId();
       const local = state.players.find(p => p.id === viewId);
@@ -18965,6 +19001,15 @@ video {
     });
     // Only one page is ever open: the menu pages and the Inbox all count.
     const EXCLUSIVE_PAGE_IDS = [...MENU_PAGE_IDS, 'inboxModal'];
+    document.addEventListener('click', (event) => {
+      const page = event.target;
+      if (![...EXCLUSIVE_PAGE_IDS, 'gauntletModal'].includes(page.id) || page.classList.contains('hidden')) return;
+      if (page.id === 'gauntletModal') { closeGauntlet(); return; }
+      const action = BACK_LAYERS[page.id];
+      if (typeof action === 'string') document.getElementById(action)?.click();
+      else if (typeof action === 'function') action();
+      else page.classList.add('hidden');
+    }, true);
     function closeOtherMenuPages(exceptId = null) {
       EXCLUSIVE_PAGE_IDS.forEach((id) => {
         if (id !== exceptId) document.getElementById(id)?.classList.add('hidden');
@@ -19542,6 +19587,13 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v258: [
+        ['✨', 'Smoother Lion’s Roar and Fireworks victories with matching sound timing and a complete gold firework.'],
+        ['🎴', 'The free card-back preview now follows your equipped deck.'],
+        ['🔄', 'Update prompts wait until you return to the home screen.'],
+        ['📖', 'Tap outside menu pages to close them; Hard and Boss Gauntlet now have their own Key Terms.'],
+        ['🏅', 'Challenges and Gauntlet leaderboards now have All-time and This week views.', WN_KEY]
+      ],
       v257: [
         ['🦁', "Lion's Roar has brand-new art: the lion surges in and roars, with a real roar, gold shockwaves and flying crystals.", WN_KEY],
         ['🎆', 'Fireworks is redrawn: five rockets whistle up and burst in gold, red, blue, purple and green, with the bangs and crackle to match.', WN_KEY],
@@ -22731,6 +22783,7 @@ video {
       const box = document.getElementById('bigPreview');
       if (!box || box.classList.contains('hidden')) return;
       box.classList.add('hidden');
+      if (box.dataset.type === 'victoryEffect') { audio.stopEffectClip('lion-roar'); audio.stopEffectClip('fireworks'); const layer = document.getElementById('victoryFxLayer'); layer?.getAnimations({ subtree: true }).forEach(a => a.cancel()); layer?.replaceChildren(); }
       box.innerHTML = '';
       delete box.dataset.itemId;
     }
@@ -22854,7 +22907,7 @@ video {
       if (type === 'tableTheme') return miniTablePreviewHtml(item ? item.id : 'default');
       if (type === 'frame') return framePreviewCard(item);
       if (type === 'emotes') return `<span class="effect-mini-tile is-emotes" data-keep-emoji>${(EMOTE_PACKS[item ? item.id : 'default'] || EMOTE_PACKS.default).slice(0, 4).map(e => `<span>${e}</span>`).join('')}</span>`;
-      if (type === 'cardBack') return `<span class="cos-mini-card custom-card-back ${item ? getCosmeticBackClass(item.id) : getThemeDeckBackClass()}">${getEmblemSvg()}</span>`;
+      if (type === 'cardBack') return `<span class="cos-mini-card custom-card-back opponent-cosmetic-card ${item ? getCosmeticBackClass(item.id) : getThemeDeckBackClass('default')}">${getEmblemSvg()}</span>`;
       if (type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect') {
         if (!item) return `<span class="effect-mini-tile">${{ burnEffect:'🔥', victoryEffect:'🏆', jokerEffect:'🃏' }[type]}</span>`;
         const icon = type === 'burnEffect' ? burnPreviewIcon(item.id) : type === 'jokerEffect' ? jokerPreviewIcon(item.id) : victoryPreviewIcon(item.id);
@@ -27382,7 +27435,7 @@ video {
     // left alone. Slugs are the Key Terms' data-term ids.
     const KEY_TERM_LINKS = [
       ['Snap Burns?', 'snap-burn'], ['4-of-a-kind|four of a kind', 'four-of-a-kind'],
-      ['Joker challenges?|Deflect', 'duel'], ['Bonus Draw', 'bonus-draw'], ['Gauntlet', 'gauntlet'],
+      ['Joker challenges?|Deflect', 'duel'], ['Bonus Draw', 'bonus-draw'], ['Hard Gauntlet', 'hard-gauntlet'], ['Boss Gauntlet', 'boss-gauntlet'], ['Gauntlet', 'gauntlet'],
       ['Quick Start', 'quick-start'], ['face-down cards?|face-down|blind', 'face-down-cards'],
       ['Face-Up cards?', 'face-up-cards'], ['Transparent', 'transparent-card'],
       ['picking up the pile|picked up|pick up|pickups?', 'pick-up'],
@@ -29851,21 +29904,23 @@ video {
       levels: { path: 'boards/levels', note: 'Total XP · your level beside your name', empty: 'Nobody has earned XP yet.' }
     };
     let lbLevelsPeriod = (() => { try { return localStorage.getItem('shithead_lb_levels_period') === 'week' ? 'week' : 'all'; } catch (e) { return 'all'; } })();
+    const lbActivityPeriods = (() => { try { return JSON.parse(localStorage.getItem('shithead_lb_activity_periods') || '{}'); } catch (e) { return {}; } })();
+    const leaderboardPeriod = (tab) => tab === 'levels' ? lbLevelsPeriod : lbActivityPeriods[tab] === 'week' ? 'week' : 'all';
     const leaderboardTabShown = (tab) => tab !== 'levels' || xpShown();
     function leaderboardPath(tab) {
-      if (tab === 'levels' && lbLevelsPeriod === 'week') return `boards/xpweek_${getUkWeekKey()}`;
+      if (leaderboardPeriod(tab) === 'week') return `boards/${tab === 'levels' ? 'xpweek' : tab + 'week'}_${getUkWeekKey()}`;
       return LEADERBOARD_TABS[tab].path;
     }
     function leaderboardNote(tab) {
-      if (tab === 'levels' && lbLevelsPeriod === 'week') return 'XP earned this week · resets every Monday (UK time)';
+      if (leaderboardPeriod(tab) === 'week') return `${tab === 'levels' ? 'XP earned' : tab === 'challenges' ? 'Challenges completed' : 'Gauntlet bots beaten'} this week · resets every Monday (UK time)`;
       return LEADERBOARD_TABS[tab].note;
     }
     function refreshLeaderboardTabs() {
       document.querySelector('[data-lb-tab="levels"]')?.classList.toggle('hidden', !xpShown());
       const sw = document.getElementById('lbLevelsSwitch');
       if (sw) {
-        sw.classList.toggle('hidden', leaderboardTab !== 'levels');
-        sw.querySelectorAll('[data-lb-period]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lbPeriod === lbLevelsPeriod)));
+        sw.classList.toggle('hidden', leaderboardTab === 'ranked');
+        sw.querySelectorAll('[data-lb-period]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lbPeriod === leaderboardPeriod(leaderboardTab))));
       }
     }
     const LEADERBOARD_REST = 'https://shithead-pro-default-rtdb.europe-west1.firebasedatabase.app/';
@@ -29895,7 +29950,7 @@ video {
       try { localStorage.setItem('shithead_leaderboard_tab', leaderboardTab); } catch (e) {}
       const shownTab = leaderboardTab;
       const cfg = { ...LEADERBOARD_TABS[shownTab], path: leaderboardPath(shownTab), note: leaderboardNote(shownTab) };
-      if (shownTab === 'levels' && lbLevelsPeriod === 'week') cfg.empty = 'No XP earned yet this week. Play a game to take the top spot.';
+      if (leaderboardPeriod(shownTab) === 'week') cfg.empty = 'No results yet this week.';
       refreshLeaderboardTabs();
       const freshOpen = document.getElementById('leaderboardModal').classList.contains('hidden');
       document.getElementById('leaderboardModal').classList.remove('hidden');
@@ -29917,7 +29972,7 @@ video {
         area.innerHTML = shown.map(p => leaderboardRowHtml(p, p.rank, shownTab)).join('');
       };
       const renderRows = (data) => {
-        if (leaderboardTab !== shownTab) return;
+        if (leaderboardTab !== shownTab || leaderboardPath(shownTab) !== cfg.path) return;
         leaderboardRows = leaderboardRowsFrom(shownTab, data);
         paint();
       };
@@ -29926,7 +29981,7 @@ video {
       searchInput.oninput = paint;
 
       const showError = (error) => {
-        if (leaderboardTab !== shownTab) return;
+        if (leaderboardTab !== shownTab || leaderboardPath(shownTab) !== cfg.path) return;
         const code = error && error.code ? ` (${error.code})` : '';
         area.innerHTML = `<p class="text-[10px] text-rose-400 text-center py-4">Couldn’t load the leaderboard${code}. Check your connection and try again.</p>`;
         console.error('Public leaderboard load failed', error);
@@ -30004,10 +30059,10 @@ video {
       if (b.dataset.lbTab !== leaderboardTab) openLeaderboardPanel(b.dataset.lbTab);
     }));
     document.querySelectorAll('[data-lb-period]').forEach(b => b.addEventListener('click', () => {
-      if (b.dataset.lbPeriod === lbLevelsPeriod) return;
-      lbLevelsPeriod = b.dataset.lbPeriod === 'week' ? 'week' : 'all';
-      try { localStorage.setItem('shithead_lb_levels_period', lbLevelsPeriod); } catch (e) {}
-      openLeaderboardPanel('levels');
+      if (b.dataset.lbPeriod === leaderboardPeriod(leaderboardTab)) return;
+      if (leaderboardTab === 'levels') { lbLevelsPeriod = b.dataset.lbPeriod === 'week' ? 'week' : 'all'; try { localStorage.setItem('shithead_lb_levels_period', lbLevelsPeriod); } catch (e) {} }
+      if (leaderboardTab !== 'levels') { lbActivityPeriods[leaderboardTab] = b.dataset.lbPeriod === 'week' ? 'week' : 'all'; try { localStorage.setItem('shithead_lb_activity_periods', JSON.stringify(lbActivityPeriods)); } catch (e) {} }
+      openLeaderboardPanel(leaderboardTab);
     }));
     function leaderboardRowHtml(p, rank, tab = 'ranked') {
       const myName = document.getElementById('playerNameInput')?.value?.trim();
@@ -31253,7 +31308,15 @@ video {
     // than ours, #updatePrompt offers Update now (refresh the service worker,
     // reload: a game in progress resumes) or Later (asks again in 30 min).
     const UPDATE_CHECK_MS = 15 * 60 * 1000;
-    let lastUpdateCheck = 0, updatePromptSnoozeUntil = 0, updateNotifiedFor = '';
+    let lastUpdateCheck = 0, updatePromptSnoozeUntil = 0, updateNotifiedFor = '', pendingUpdateVersion = '';
+    function updatePromptAllowed() {
+      const lobby = document.getElementById('lobbyScreen');
+      return !!lobby && !lobby.classList.contains('hidden') && state.phase === 'LOBBY' && !state.roomCode && !state.isMultiplayer && !tutorialActive && !isAnyOverlayOpen() && document.getElementById('tutorialHubScreen').classList.contains('hidden');
+    }
+    function refreshUpdatePrompt() {
+      if (!updatePromptAllowed()) { document.getElementById('updatePrompt')?.classList.add('hidden'); return; }
+      if (pendingUpdateVersion) showUpdatePrompt(pendingUpdateVersion);
+    }
     function newerBuildIn(html) {
       const m = String(html || '').match(/BUILD:\s*\d{4}-\d{2}-\d{2}-(v\d+)/);
       if (!m) return null;
@@ -31273,6 +31336,8 @@ video {
       } catch (e) { return null; }
     }
     function showUpdatePrompt(version) {
+      pendingUpdateVersion = version;
+      if (!updatePromptAllowed()) { document.getElementById('updatePrompt')?.classList.add('hidden'); return; }
       if (Date.now() < updatePromptSnoozeUntil && updateNotifiedFor === version) return;
       updateNotifiedFor = version;
       let el = document.getElementById('updatePrompt');
@@ -31283,14 +31348,14 @@ video {
         el.setAttribute('aria-live', 'polite');
         document.body.appendChild(el);
       }
-      const inGame = typeof state !== 'undefined' && state.phase && state.phase !== 'LOBBY' && !tutorialActive;
-      el.innerHTML = `<div class="up-row"><span class="up-icon">${icon('refresh')}</span><div class="up-text"><b>Update available</b><span>A new version (${escapeHtml(version)}) is ready.${inGame ? ' Your game carries on after the update.' : ''}</span></div></div>
+      el.innerHTML = `<div class="up-row"><span class="up-icon">${icon('refresh')}</span><div class="up-text"><b>Update available</b><span>A new version (${escapeHtml(version)}) is ready.</span></div></div>
         <div class="up-btns"><button type="button" class="up-later">Later</button><button type="button" class="up-now">Update Now</button></div>`;
       el.classList.remove('hidden');
       el.querySelector('.up-later').onclick = () => { updatePromptSnoozeUntil = Date.now() + 30 * 60 * 1000; el.classList.add('hidden'); };
       el.querySelector('.up-now').onclick = () => applyUpdateNow();
     }
     async function applyUpdateNow() {
+      if (!updatePromptAllowed()) { refreshUpdatePrompt(); return; }
       const el = document.getElementById('updatePrompt');
       if (el) el.querySelector('.up-now').textContent = 'Updating…';
       try { if (typeof saveGameState === 'function' && !state.isMultiplayer) saveGameState(); } catch (e) {}
@@ -31298,8 +31363,14 @@ video {
         const reg = await navigator.serviceWorker?.getRegistration?.();
         await reg?.update?.();
       } catch (e) {}
-      reloadCleanly();
+      if (updatePromptAllowed()) reloadCleanly();
+      else refreshUpdatePrompt();
     }
+    const updateHomeObserver = new MutationObserver(refreshUpdatePrompt);
+    ['lobbyScreen', 'tutorialHubScreen', ...BLOCKING_OVERLAY_IDS].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) updateHomeObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
+    });
     setTimeout(() => checkForNewVersion(true), 15000);
     setInterval(() => checkForNewVersion(true), UPDATE_CHECK_MS);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForNewVersion(); });

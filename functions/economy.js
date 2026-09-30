@@ -864,6 +864,9 @@ actions.gauntlet = async ({ uid, data }) => {
     run.playing = false;
     run.round = num(run.round) + 1;
     g.botsBeaten = num(g.botsBeaten) + 1; // Gauntlet board (every mode)
+    const boardWeek = xp.ukWeekKey(new Date(now));
+    g.weekBotsBeaten = (g.week === boardWeek ? num(g.weekBotsBeaten) : 0) + 1;
+    g.week = boardWeek;
     if (xpOn) xpRes = xpResult(user, [['gauntletBot', botXp]], now, past);
     if (run.round < M.rounds.length) return { user };
     // Beaten: once a day.

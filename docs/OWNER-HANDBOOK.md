@@ -181,3 +181,9 @@ The support inbox is **support.shitheaddeluxe@gmail.com**. The "Contact Support"
 ## 11. Ideas already agreed for later
 
 A weekly puzzle, a tournament mode (once there are more players). Further off: "you've been overtaken" leaderboard mail, clubs, a season pass. The full list, and the ideas you rejected, are at the end of `CLAUDE.md`.
+
+### Weekly Challenges and Gauntlet leaderboards (v258)
+
+Challenges and Gauntlet have All-time / This week pills, like Levels. Each tab remembers its period. Weeks start Monday in UK time. Challenges count existing server completion timestamps; Gauntlet counts bots beaten after v258 tracking starts (old wins have no timestamps and are not invented as weekly wins). The server writes `boards/challengesweek_<week>` and `boards/gauntletweek_<week>`; names, avatars and levels stay in sync and account deletion removes these entries too. The existing public, server-only boards rules already cover these paths. Functions deploy automatically with changes to `functions/`; check that workflow as well as Hosting.
+
+Update prompts are queued during matches, tutorials and open menu pages, and appear on the home screen. Starting a match hides a visible prompt, and Update Now checks again before reloading.

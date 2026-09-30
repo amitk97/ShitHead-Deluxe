@@ -91,6 +91,9 @@ def trim_tail(x, floor=0.002):
 
 
 def write_mp3(x, name, peak=0.89):
+    if name in ('lion-roar.mp3', 'fireworks.mp3'):
+        x = x[:int(SR * 4.2)].copy()
+        x[-int(SR * .3):] *= np.linspace(1, 0, int(SR * .3))
     x = trim_tail(x)
     x = x / (np.abs(x).max() + 1e-9) * peak
     fade = int(SR * 0.03)
@@ -106,7 +109,7 @@ def write_mp3(x, name, peak=0.89):
 
 
 def lion_roar():
-    dur = 2.1
+    dur = 4.2
     n = int(SR * dur)
     t = np.arange(n) / SR
     # Pitch: rises into the roar, holds with a wobble, sags as it rumbles out.
@@ -126,11 +129,12 @@ def lion_roar():
     y = biquad(src, 'bandpass', 420, 1.8) * 1.0 + biquad(src, 'bandpass', 950, 2.2) * 0.8 + biquad(src, 'bandpass', 2300, 3) * 0.25
     y += biquad(voice, 'lowpass', 180, 0.9) * 0.9
     y = np.tanh(y * 2.2)  # saturation: the rough edge
-    roar = y * env(n, [(0, 0), (.33, 0), (.5, 1), (1.05, .95), (1.55, .45), (2.05, 0)])
+    roar = y * env(n, [(0, 0), (.4, 0), (.55, 1), (1.1, .95), (1.7, .45), (2.3, 0), (4.2, 0)])
     # The breath in before it.
     inhale = biquad(noise, 'bandpass', 1400, 1.2) * env(n, [(0, 0), (.25, .18), (.34, .05), (.36, 0)])
-    thump = np.sin(2 * np.pi * np.cumsum(np.interp(t, [.35, .6], [60, 38]) / SR)) * env(n, [(.34, 0), (.37, .8), (.8, 0)])
-    return reverb(roar + inhale + thump * 0.6, mix=0.25, size=1.3)
+    thump = np.sin(2 * np.pi * np.cumsum(np.interp(t, [.45, .7], [60, 38]) / SR)) * env(n, [(.43, 0), (.46, .8), (.9, 0), (4.2, 0)])
+    tail = biquad(noise, 'bandpass', 3400, 1.1) * env(n, [(0, 0), (.8, 0), (1.1, .035), (3.4, .015), (4.15, 0)])
+    return reverb(roar + inhale + thump * 0.6 + tail, mix=0.25, size=1.3)
 
 
 def ghost_boo():
@@ -164,7 +168,7 @@ def ghost_boo():
 
 
 def fireworks():
-    dur = FIREWORK_BURSTS[-1] + 2.0
+    dur = 4.2
     n = int(SR * dur)
     out = np.zeros(n)
     t_all = np.arange(n) / SR
@@ -190,7 +194,7 @@ def fireworks():
         out[s: s + L] += b[: n - s]
         # Crackle: a shower of tiny pops as the stars burn out.
         for _ in range(60 if big else 34):
-            c = at + 0.15 + RNG.random() ** 0.8 * 1.3
+            c = at + 0.15 + RNG.random() ** 0.8 * 2.6
             cs = int(c * SR)
             cl = int(SR * 0.012)
             if cs + cl >= n:

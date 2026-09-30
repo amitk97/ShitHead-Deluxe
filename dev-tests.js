@@ -2773,14 +2773,14 @@ async function runDevTestSuite() {
         assertTrue(r.ok, `${f} art file exists`);
       }
     }
-    [['victory-lion', 2], ['victory-fireworks', 5]].forEach(([id, n]) => {
+    [['victory-lion', 2], ['victory-fireworks', 6]].forEach(([id, n]) => {
       layer.innerHTML = '';
       playVictoryEffect(id);
       const imgs = [...layer.querySelectorAll('.bfx img')].map(i => i.getAttribute('src'));
       assertEqual(imgs.length, n, `${id} draws its ${n} art layers`);
-      assertTrue(imgs.every(src => /^art\/effects\/[a-z-]+\.webp\?v=\d+$/.test(src)), `${id} layers come from art/effects`);
+      assertTrue(imgs.every(src => /^art\/effects\/[a-z-]+\.(?:webp|svg)\?v=\d+$/.test(src)), `${id} layers come from art/effects`);
       const ends = [...layer.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
-      assertTrue(ends.length > 20 && Math.max(...ends) <= 4000, `${id} is animated and ends within 4s`, Math.max(...ends));
+      assertTrue(ends.length > 20 && Math.max(...ends) <= 4200, `${id} is animated and ends within 4.2s`, Math.max(...ends));
     });
     layer.innerHTML = '';
     const stage = document.createElement('div');
@@ -7666,7 +7666,10 @@ async function runDevTestSuite() {
     assertEqual(newerBuildIn(`<!-- BUILD: 2030-01-01-v${cur} (x) -->`), null, 'the same build is not');
     assertEqual(newerBuildIn(`<!-- BUILD: 2020-01-01-v${cur - 1} (x) -->`), null, 'nor an older one');
     assertEqual(newerBuildIn('no stamp'), null, 'a page without a stamp is ignored');
-    const saved = [updatePromptSnoozeUntil, updateNotifiedFor];
+    const saved = [updatePromptSnoozeUntil, updateNotifiedFor, pendingUpdateVersion];
+    const home = document.getElementById('lobbyScreen'), homeClass = home.className, oldPhase = state.phase, oldRoom = state.roomCode, oldMulti = state.isMultiplayer, oldTutorial = tutorialActive, oldOverlayCheck = isAnyOverlayOpen;
+    home.classList.remove('hidden'); state.phase = 'LOBBY'; state.roomCode = null; state.isMultiplayer = false; tutorialActive = false; isAnyOverlayOpen = () => false;
+    document.getElementById('tutorialHubScreen').classList.add('hidden');
     try {
       showUpdatePrompt(`v${cur + 1}`);
       const el = document.getElementById('updatePrompt');
@@ -7679,9 +7682,54 @@ async function runDevTestSuite() {
       assertTrue(el.classList.contains('hidden'), 'and it stays snoozed for that version');
       assertTrue(+getComputedStyle(el).zIndex > 202, 'it sits above the header and pages');
     } finally {
-      [updatePromptSnoozeUntil, updateNotifiedFor] = saved;
+      [updatePromptSnoozeUntil, updateNotifiedFor, pendingUpdateVersion] = saved;
+      home.className = homeClass; state.phase = oldPhase; state.roomCode = oldRoom; state.isMultiplayer = oldMulti; tutorialActive = oldTutorial; isAnyOverlayOpen = oldOverlayCheck;
       document.getElementById('updatePrompt')?.remove();
     }
+  });
+  await test('Updates wait through matches and tutorials until the home screen', () => {
+    const saved = { state: { ...state }, pending: pendingUpdateVersion, snooze: updatePromptSnoozeUntil, notified: updateNotifiedFor, tutorial: tutorialActive, check: isAnyOverlayOpen, cls: document.getElementById('lobbyScreen').className };
+    try {
+      isAnyOverlayOpen = () => false; updatePromptSnoozeUntil = 0;
+      document.getElementById('tutorialHubScreen').classList.add('hidden');
+      document.getElementById('lobbyScreen').classList.add('hidden');
+      state.phase = 'PLAY'; tutorialActive = false;
+      showUpdatePrompt('v9999');
+      assertTrue(!document.getElementById('updatePrompt') || document.getElementById('updatePrompt').classList.contains('hidden'), 'no match prompt');
+      assertEqual(pendingUpdateVersion, 'v9999', 'version queued');
+      state.phase = 'LOBBY'; state.isMultiplayer = false; state.roomCode = null;
+      document.getElementById('lobbyScreen').classList.remove('hidden'); tutorialActive = true;
+      refreshUpdatePrompt();
+      assertTrue(!document.getElementById('updatePrompt') || document.getElementById('updatePrompt').classList.contains('hidden'), 'no tutorial prompt');
+      tutorialActive = false; refreshUpdatePrompt();
+      assertTrue(!document.getElementById('updatePrompt').classList.contains('hidden'), 'queued version appears at home');
+      state.phase = 'SWAP'; refreshUpdatePrompt();
+      assertTrue(document.getElementById('updatePrompt').classList.contains('hidden'), 'starting a match hides the prompt');
+    } finally { Object.assign(state, saved.state); pendingUpdateVersion = saved.pending; updatePromptSnoozeUntil = saved.snooze; updateNotifiedFor = saved.notified; tutorialActive = saved.tutorial; isAnyOverlayOpen = saved.check; document.getElementById('lobbyScreen').className = saved.cls; document.getElementById('updatePrompt')?.remove(); }
+  });
+  await test('Free card back follows the equipped deck, never the purchased back', () => {
+    const oldBack = equippedCosmetics.cardBack, oldTheme = state.deckTheme;
+    try {
+      state.deckTheme = 'theme-emerald'; equippedCosmetics.cardBack = 'back-crimson';
+      assertTrue(cosmeticPreview(null, 'cardBack').includes('back-emerald'), 'free tile shows Emerald deck back');
+      assertTrue(!cosmeticPreview(null, 'cardBack').includes('cosmetic-back-crimson'), 'paid back does not contaminate free tile');
+      assertTrue(getThemeDeckBackClass().includes('cosmetic-back-crimson'), 'game still shows equipped paid back');
+      state.deckTheme = 'theme-cyber';
+      assertTrue(cosmeticPreview(null, 'cardBack').includes('back-cyber'), 'changing deck updates free preview');
+    } finally { equippedCosmetics.cardBack = oldBack; state.deckTheme = oldTheme; }
+  });
+  await test('Challenges and Gauntlet have independent weekly leaderboard periods', () => {
+    const oldTab = leaderboardTab, oldPeriods = { ...lbActivityPeriods };
+    try {
+      lbActivityPeriods.challenges = 'week'; lbActivityPeriods.gauntlet = 'all';
+      assertEqual(leaderboardPath('challenges'), `boards/challengesweek_${getUkWeekKey()}`, 'weekly challenges path');
+      assertEqual(leaderboardPath('gauntlet'), 'boards/gauntlet', 'all-time Gauntlet path');
+      leaderboardTab = 'challenges'; refreshLeaderboardTabs();
+      assertTrue(!document.getElementById('lbLevelsSwitch').classList.contains('hidden'), 'period pills visible');
+      lbActivityPeriods.gauntlet = 'week';
+      assertEqual(leaderboardPath('gauntlet'), `boards/gauntletweek_${getUkWeekKey()}`, 'weekly Gauntlet path');
+      assertTrue(linkKeyTerms('Hard Gauntlet and Boss Gauntlet').includes('data-term="hard-gauntlet"'), 'specific Hard term link');
+    } finally { Object.keys(lbActivityPeriods).forEach(k => delete lbActivityPeriods[k]); Object.assign(lbActivityPeriods, oldPeriods); leaderboardTab = oldTab; refreshLeaderboardTabs(); }
   });
   await test('Decks v197: Big Print is free and on the Accessibility tab; Lavender + 6 more in the Shop', () => {
     const big = BUILT_IN_COSMETICS.find(i => i.id === 'deck-bigprint');

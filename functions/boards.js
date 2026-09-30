@@ -27,7 +27,7 @@ const BOARDS = {
 const xpMod = () => require('./xp');
 const weekBoard = (now = Date.now()) => `xpweek_${xpMod().ukWeekKey(new Date(now))}`;
 const WEEK_MS = 7 * 86400000;
-const liveWeekBoards = (now = Date.now()) => [weekBoard(now), weekBoard(now - WEEK_MS)];
+const liveWeekBoards = (now = Date.now()) => [now, now - WEEK_MS].flatMap(at => ['xpweek', 'challengesweek', 'gauntletweek'].map(prefix => `${prefix}_${xpMod().ukWeekKey(new Date(at))}`));
 const boardKeys = (now = Date.now()) => [...Object.keys(BOARDS), ...liveWeekBoards(now)];
 const counts = (u) => ({
   challenges: BOARDS.challenges(u),
@@ -35,6 +35,14 @@ const counts = (u) => ({
   levels: BOARDS.levels(u),
   ranked: u && Number.isFinite(Number(u.rating)) && (Number(u.wins) || 0) + (Number(u.losses) || 0) > 0 ? Number(u.rating) : null
 });
+// Challenge completion timestamps already exist; historical Gauntlet wins
+// have no trustworthy timestamps and must never be invented as weekly wins.
+function weeklyCounts(user, week) {
+  return {
+    challenges: Object.values(user?.completedChallenges || {}).filter(c => Number(c?.completedAt) > 0 && xpMod().ukWeekKey(new Date(Number(c.completedAt))) === week).length,
+    gauntlet: user?.gauntlet?.week === week ? Number(user.gauntlet.weekBotsBeaten) || 0 : 0
+  };
+}
 const tierFor = (rank) => TIERS.find(t => rank <= t) || null;
 
 // 1 + how many entries are strictly above `value` (only up to 10 are read).
@@ -99,6 +107,24 @@ async function onUserChanged(uid, before, after, { force = false } = {}) {
       await db().ref().update({ [`boards/${weekBoard(now - 2 * WEEK_MS)}`]: null, [`boards/${weekBoard(now - 3 * WEEK_MS)}`]: null });
     })());
   }
+  const weeklyA = weeklyCounts(after, week), weeklyB = weeklyCounts(before || {}, week);
+  for (const kind of ['challenges', 'gauntlet']) {
+    if (!name || (!force && weeklyA[kind] === weeklyB[kind])) continue;
+    tasks.push((async () => {
+      const path = `boards/${kind}week_${week}/${uid}`;
+      if (weeklyA[kind] <= 0) { await db().ref(path).remove(); return; }
+      const avatar = (await db().ref(`publicProfiles/${uid}/avatar`).once('value')).val();
+      const level = Number(after.xp?.level) || 0;
+      await db().ref(path).set({ name, count: weeklyA[kind], at: Date.now(), ...(typeof avatar === 'string' ? { avatar } : {}), ...(level > 0 ? { level } : {}) });
+    })());
+  }
+  // Same retention as XP: this and last week; account deletion/profile sync
+  // include all three weekly boards through boardKeys.
+  if (force || weeklyA.challenges !== weeklyB.challenges || weeklyA.gauntlet !== weeklyB.gauntlet) {
+    const old = {};
+    for (const age of [2, 3]) for (const kind of ['challenges', 'gauntlet']) old[`boards/${kind}week_${xpMod().ukWeekKey(new Date(Date.now() - age * WEEK_MS))}`] = null;
+    tasks.push(db().ref().update(old));
+  }
   // A new level (XP & levels) reaches every place other players see it.
   const levelBefore = Number(before && before.xp && before.xp.level) || 0;
   const levelAfter = Number(after.xp && after.xp.level) || 0;
@@ -149,4 +175,4 @@ async function refreshProfile(uid) {
 // boards are already gone, see onUserChanged).
 const boardPaths = (uid) => boardKeys().map(board => `boards/${board}/${uid}`);
 
-module.exports = { syncLevel, BOARDS, TIERS, onUserChanged, placeOn, boardPaths, refreshProfile, weekBoard };
+module.exports = { syncLevel, BOARDS, TIERS, onUserChanged, placeOn, boardPaths, refreshProfile, weekBoard, weeklyCounts };
