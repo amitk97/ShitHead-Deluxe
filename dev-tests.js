@@ -3937,11 +3937,108 @@ async function runDevTestSuite() {
     const entry = buildMatchHistoryEntry();
     assertEqual(entry.players.map(p => p.st), [[4, 0, 0, 0, entry.players[0].st[4]], [0, 6, 0, 0, entry.players[1].st[4]]], 'Each player carries Played/Picked/Burnt/JKR/Turns');
     const box = document.createElement('div');
-    box.innerHTML = matchHistoryHtml([{ ...entry, id: 'x' }]);
+    box.innerHTML = historyGameHtml({ ...entry, id: 'x' });
     assertEqual(box.querySelectorAll('.mh-everyone .mh-row:not(.mh-head)').length, 2, 'The detail lists everyone');
     const old = { ...entry, id: 'y', players: [{ name: 'Me', me: true }] };
-    box.innerHTML = matchHistoryHtml([old]);
+    box.innerHTML = historyGameHtml(old);
     assertTrue(!!box.querySelector('.mh-order') && !box.querySelector('.mh-everyone'), 'Older entries keep the old layout');
+  });
+
+  await test('Match History: a game opens its full stats, and a signed-in player opens their card (v252)', async () => {
+    freshState({ drawPile: [] });
+    const me = makePlayer({ id: 'p1', name: 'Me', hasFinished: true, finishRank: 1 });
+    const friend = makePlayer({ id: 'p2', name: 'Pal' }); friend.uid = 'uidPal';
+    const bot = makePlayer({ id: 'p3', name: 'Bo', isBot: true });
+    state.players = [me, friend, bot]; state.localPlayerId = 'p1';
+    const entry = { ...buildMatchHistoryEntry(), id: 'g1', label: 'Play Friends', diamonds: 12, rating: { from: 500, to: 530 } };
+    assertEqual(entry.players.find(p => p.name === 'Pal').uid, 'uidPal', 'A human opponent\'s uid is saved with the game');
+    assertTrue(!('uid' in entry.players.find(p => p.name === 'Bo')), 'Bots carry no uid');
+    const area = document.getElementById('statsContentArea');
+    const savedHtml = area.innerHTML;
+    const modal = document.getElementById('historyGameModal');
+    const savedOpen = openProfileCard;
+    let opened = null;
+    openProfileCard = (who) => { opened = who; };
+    const savedUser = currentUser;
+    try {
+      area.innerHTML = matchHistoryHtml([entry]);
+      const row = area.querySelector('[data-mh-id="g1"]');
+      assertTrue(!!row && !row.querySelector('.mh-everyone'), 'The list row is compact');
+      row.click();
+      assertTrue(!modal.classList.contains('hidden'), 'Tapping a game opens its stats');
+      assertTrue((parseInt(getComputedStyle(modal).zIndex, 10) || 0) > (parseInt(getComputedStyle(document.getElementById('statsModal')).zIndex, 10) || 0), 'It opens above the Stats page');
+      const body = modal.textContent;
+      assertTrue(/Won/.test(body) && /500 → 530/.test(body) && /Finishing order/.test(body), 'Result, rating and order shown');
+      assertEqual(modal.querySelectorAll('[data-mh-player]').length, 1, 'Only the human opponent is a button (not me, not the bot)');
+      currentUser = { uid: 'meUid' };
+      modal.querySelector('[data-mh-player]').click();
+      await new Promise(r => setTimeout(r, 0));
+      assertEqual(opened && opened.uid, 'uidPal', 'Their player card opens');
+      modal.click();
+      assertTrue(modal.classList.contains('hidden'), 'A tap outside closes it');
+    } finally {
+      openProfileCard = savedOpen; currentUser = savedUser;
+      area.innerHTML = savedHtml; modal.classList.add('hidden');
+    }
+  });
+
+  await test('Mode intro: once per mode, skipped with history, links to the Guide (v252)', () => {
+    const saved = modeIntroSeen, wasRunning = devTestSuiteRunning;
+    const savedStore = localStorage.getItem(MODE_INTRO_KEY);
+    const modal = document.getElementById('modeIntroModal');
+    const guide = document.getElementById('rulesModal');
+    const savedRead = readLocalMatchHistory;
+    try {
+      devTestSuiteRunning = false;
+      modeIntroSeen = {};
+      readLocalMatchHistory = () => [];
+      assertTrue(maybeShowModeIntro('ranked'), 'First visit to Ranked shows the card');
+      assertTrue(!modal.classList.contains('hidden') && /Ranked/.test(modal.textContent), 'The Ranked card is up');
+      assertEqual(modal.querySelectorAll('.mode-intro-tiers > span').length, 6, 'Six tier badges');
+      assertEqual(modal.querySelectorAll('.mode-intro-list svg').length, 4, 'Every line has a real icon');
+      modal.querySelector('[data-mode-intro-ok]').click();
+      assertTrue(modal.classList.contains('hidden'), 'Got It closes it');
+      assertTrue(!maybeShowModeIntro('ranked'), 'Not shown twice');
+      readLocalMatchHistory = () => [{ mode: 'online' }];
+      assertTrue(!maybeShowModeIntro('online'), 'A player who has played Play Friends skips it');
+      assertTrue(modeIntroSeen.online, 'and it is marked seen');
+      assertTrue(showModeIntro('online'), 'The link shows it again any time');
+      modal.querySelector('[data-mode-intro-guide]').click();
+      const sec = guide.querySelector('[data-guide-section="friends"]');
+      assertTrue(!guide.classList.contains('hidden') && !sec.querySelector('.accordion-content').classList.contains('hidden'), 'More in the Guide opens the Play Friends section');
+      ['ranked', 'friends', 'series'].forEach(k => assertTrue(!!guide.querySelector(`[data-guide-section="${k}"] .accordion-content`), `Guide has a ${k} section`));
+      assertTrue(!!document.querySelector('#rankedOptions [data-mode-intro="ranked"]') && !!document.querySelector('#multiOptions [data-mode-intro="online"]'), 'Both mode panels link to their card');
+    } finally {
+      modeIntroSeen = saved; devTestSuiteRunning = wasRunning; readLocalMatchHistory = savedRead;
+      if (savedStore === null) localStorage.removeItem(MODE_INTRO_KEY); else localStorage.setItem(MODE_INTRO_KEY, savedStore);
+      modal.classList.add('hidden'); guide.classList.add('hidden');
+    }
+  });
+
+  await test('Locked items preview in Custom and the Collection, with See In Shop (v252)', () => {
+    const locked = COSMETIC_SHOP_ITEMS.find(item => item.category === 'Card Backs' && !item.season && !cosmeticPurchaseState[item.id]);
+    const earned = LEVEL_REWARDS.find(item => !cosmeticPurchaseState[item.id]);
+    const box = document.getElementById('bigPreview');
+    const shop = document.getElementById('shopModal');
+    try {
+      assertTrue(previewLockedCosmetic(locked.id), 'A locked Shop item opens the big preview');
+      assertTrue(!box.classList.contains('hidden') && !!box.querySelector('[data-bp-shop]'), 'with See In Shop');
+      closeBigPreview();
+      if (earned) {
+        previewLockedCosmetic(earned.id);
+        assertTrue(!box.classList.contains('hidden') && !box.querySelector('[data-bp-shop]'), 'An earn-only item previews without a Shop button');
+        assertTrue(/Lvl|level/i.test(box.querySelector('.bp-status').textContent), 'and says how to earn it');
+        closeBigPreview();
+      }
+      openCollection();
+      document.querySelector(`#collectionBody [data-coll-id="${locked.id}"]`).click();
+      assertTrue(!box.classList.contains('hidden'), 'Tapping a locked Collection tile previews it');
+      box.querySelector('[data-bp-shop]').click();
+      assertTrue(box.classList.contains('hidden') && document.getElementById('collectionModal').classList.contains('hidden'), 'See In Shop closes the preview and the Collection');
+    } finally {
+      closeBigPreview();
+      shop.classList.add('hidden'); document.getElementById('collectionModal').classList.add('hidden');
+    }
   });
 
   await test('REGRESSION: Match Stats number columns actually lay out side by side, not stacked', () => {

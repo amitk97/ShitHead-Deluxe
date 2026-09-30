@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v251 (ShitHead-Deluxe-211) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v252 (ShitHead-Deluxe-212) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -675,6 +675,7 @@
     #bigPreview .bp-kind { font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#67e8f9; margin-top:2px; }
     #bigPreview .bp-stage { margin:14px 0 10px; min-height:220px; display:flex; align-items:center; justify-content:center; }
     #bigPreview .bp-status { font-size:11px; font-weight:700; color:#cbd5e1; }
+    #bigPreview .bp-shop { margin-top:10px; width:100%; padding:9px; border-radius:12px; background:linear-gradient(180deg,#fbbf24,#d97706); color:#1c1204; font-size:11px; font-weight:900; }
     #bigPreview .bp-play { margin-top:10px; width:100%; padding:9px; border-radius:12px; border:1px solid #475569; color:#e2e8f0; font-size:11px; font-weight:900; }
     #bigPreview .bp-stage-fx { width:100%; height:280px; min-height:280px; }
     #bigPreview .bp-card { width:150px !important; height:210px !important; max-width:none !important; max-height:none !important; }
@@ -1070,6 +1071,23 @@
     .mh-summary span { font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8; }
     .mh-list { display:flex; flex-direction:column; gap:6px; }
     .mh-item { background:rgba(15,23,42,.7); border:1px solid #1e293b; border-left:3px solid var(--mh-edge, #475569); border-radius:10px; }
+    .mh-item[data-mh-id] { cursor:pointer; }
+    .mh-item[data-mh-id]:hover, .mh-item[data-mh-id]:focus-visible { border-color:#475569; outline:none; }
+    .mh-line { display:flex; align-items:center; gap:8px; padding:7px 9px; }
+    .mh-chev { color:#64748b; font-weight:900; font-size:16px; line-height:1; }
+    .mh-player { background:none; border:0; padding:0; text-align:left; font:inherit; cursor:pointer; text-decoration:underline; text-decoration-color:rgba(251,191,36,.55); text-underline-offset:2px; }
+    .mh-player:hover, .mh-player:focus-visible { color:#fcd34d; }
+    .mh-order .mh-player, .mh-order .mh-name { background:#1e293b; border-radius:999px; padding:2px 7px; font-weight:800; font-size:9px; color:#e2e8f0; }
+    .hg-head { display:flex; align-items:center; gap:10px; }
+    .hg-emoji { font-size:30px; line-height:1; }
+    .hg-title { font-size:16px; font-weight:900; color:#f8fafc; }
+    .hg-sub { font-size:10px; font-weight:700; color:#94a3b8; }
+    .hg-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .hg-chip { font-size:10px; font-weight:900; border-radius:999px; padding:3px 9px; border:1px solid #334155; }
+    .hg-chip.gem { color:#67e8f9; } .hg-chip.up { color:#34d399; } .hg-chip.down { color:#fb7185; }
+    .hg-label { margin:12px 0 5px; font-size:9px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; color:#fbbf24; }
+    .hg-table .mh-row { grid-template-columns:minmax(0,1fr) repeat(5, 40px); font-size:10px; padding:5px 4px; }
+    .hg-note { margin-top:10px; font-size:9px; color:#64748b; text-align:center; }
     .mh-item > summary { list-style:none; display:flex; align-items:center; gap:8px; padding:7px 9px; cursor:pointer; }
     .mh-item > summary::-webkit-details-marker { display:none; }
     .mh-emoji { font-size:20px; line-height:1; flex-shrink:0; }
@@ -2456,6 +2474,16 @@
       background:linear-gradient(180deg,#fcd34d,#f59e0b); box-shadow:0 4px 14px rgba(245,158,11,.35); transition:transform .12s var(--ease-snappy); }
     .gauntlet-go:active { transform:scale(.96); }
     .gauntlet-go:disabled { background:#334155; color:#94a3b8; box-shadow:none; }
+    .mode-intro-emblem svg { width:40px; height:40px; color:#fbbf24; }
+    .mode-intro-list { list-style:none; margin:.8rem 0 0; padding:0; display:flex; flex-direction:column; gap:.5rem; text-align:left; }
+    .mode-intro-list li { display:flex; gap:.55rem; align-items:flex-start; font-size:.76rem; line-height:1.45; color:#e2e8f0; }
+    .mode-intro-list li svg { flex:none; width:18px; height:18px; margin-top:1px; color:#fbbf24; }
+    .mode-intro-tiers { display:flex; justify-content:center; gap:.35rem; margin-top:.6rem; }
+    .mode-intro-tiers span { display:flex; flex-direction:column; align-items:center; gap:2px; }
+    .mode-intro-tiers svg { width:26px; height:26px; }
+    .mode-intro-tiers small { font-size:.52rem; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em; }
+    .mode-intro-line { font-size:10px; color:#94a3b8; text-align:center; line-height:1.4; }
+    .mode-intro-link { background:none; border:0; padding:0; font:inherit; font-weight:800; color:#fbbf24; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
     .gauntlet-alt { width:100%; padding:.4rem; font-size:.65rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#94a3b8; }
     .gauntlet-alt:hover { color:#e2e8f0; }
     body.reduce-motion .gh-heart.gh-lost { animation:none; }
@@ -5323,6 +5351,7 @@ video {
 
         <!-- Multiplayer Setup -->
         <div id="multiOptions" class="hidden space-y-2 pt-1">
+          <p class="mode-intro-line">Your own table with friends. <button type="button" class="mode-intro-link" data-mode-intro="online">How Play Friends works</button></p>
           <div class="flex gap-2">
             <button id="hostRoomBtn" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 font-black tracking-wider rounded-xl text-slate-950 transition text-xs">HOST NEW ROOM</button>
           </div>
@@ -5398,7 +5427,7 @@ video {
                for exactly what that means and doesn't mean. Labelled Beta
                in the UI itself, not just in a code comment, so the caveat
                is visible to players. -->
-          <p class="text-[9px] text-slate-500 text-center leading-snug">Ranked (Beta) — auto-matched 1v1, rated. Results aren't yet server-verified, same trust level as Online Room today.</p>
+          <p class="mode-intro-line">Auto-matched 1v1, for your rating. <button type="button" class="mode-intro-link" data-mode-intro="ranked">How Ranked works</button></p>
 
           <div id="rankedSignedOut" class="bg-slate-950/50 p-3 rounded-xl border border-slate-800 text-center space-y-2">
             <p class="text-[11px] font-bold text-slate-300">Sign in to play Ranked and keep a rating across devices.</p>
@@ -5502,6 +5531,15 @@ video {
 
 
   <!-- End-of-match stats -->
+  <div id="historyGameModal" style="z-index:100" class="hidden fixed inset-0 bg-slate-950/85 flex items-center justify-center p-3" role="dialog" aria-modal="true" aria-label="Match details">
+    <div class="w-full max-w-md bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl px-3 py-3">
+      <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
+        <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">Match Details</span>
+        <button id="historyGameCloseBtn" type="button" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
+      </div>
+      <div id="historyGameBody" class="max-h-[66vh] overflow-y-auto"></div>
+    </div>
+  </div>
   <div id="matchStatsModal" class="hidden fixed inset-0 z-[86] bg-slate-950/85 flex items-center justify-center p-3">
     <div class="w-full max-w-md bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl px-2 py-3">
       <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
@@ -6704,6 +6742,12 @@ video {
       <div id="gauntletModalBody"></div>
     </div>
   </div>
+  <div id="modeIntroModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modeIntroTitle">
+    <div class="gauntlet-card mode-intro-card">
+      <button type="button" id="modeIntroCloseBtn" class="gauntlet-close" aria-label="Close">✕</button>
+      <div id="modeIntroBody"></div>
+    </div>
+  </div>
   <div id="rejoinModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-emerald-600/50 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
       <div class="text-4xl">🔄</div>
@@ -6887,6 +6931,59 @@ video {
             <p><strong class="text-amber-300">Offline:</strong> you can play it with no signal or signed out, just without Diamonds or rewards.</p>
             <p><strong class="text-amber-300">Good to know:</strong> Gauntlet wins don't count toward unlocking bot difficulties or normal Vs Bots Diamonds. Every bot you beat does count on the <strong>Gauntlet leaderboard</strong>, even in runs you don't finish.</p>
             <p><strong class="text-amber-300">Challenges:</strong> <em>Gauntlet Champion</em> (first clear) is in the Bots tab; the daily Gauntlet win is in the Daily tab.</p>
+          </div>
+        </div>
+
+        <!-- Section 3c: Ranked, Play Friends, Best Of Series (v252) -->
+        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="ranked">
+          <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
+            <span>Ranked</span>
+            <span class="chevron transform transition-transform duration-200">&#9660;</span>
+          </button>
+          <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
+            <p><strong>Ranked</strong> is one-on-one online against a real player, for your rating. Sign in, open <strong class="text-amber-300">Ranked</strong> on the home screen and press <strong>Find Game</strong>: you&rsquo;re matched with the next player looking.</p>
+            <p><strong class="text-amber-300">Rating:</strong> everyone starts at 500. Win and it goes up, lose and it goes down. Beating a higher-rated player earns more than beating a lower one, and losing to a lower-rated player costs more. A draw moves both ratings toward each other, with no bonus.</p>
+            <p><strong class="text-amber-300">Win bonus:</strong> every win adds <strong>+10</strong> on top.</p>
+            <p><strong class="text-amber-300">Win streak bonus:</strong> wins in a row add a one-off extra: <strong>+5</strong> at 2 wins, <strong>+10</strong> at 3, <strong>+15</strong> at 5, and <strong>+20</strong> at 10 and every 10 after. A losing streak costs nothing extra.</p>
+            <p><strong class="text-amber-300">Tiers:</strong> Novice, Bronze (500+), Silver (1000+), Gold (1500+), Platinum (1800+) and Master (2000+). Reaching Silver, Gold, Platinum and Master each earns that crown avatar.</p>
+            <p><strong class="text-amber-300">Rewards:</strong> a win pays <strong>💎 20</strong> and XP (+25 for any Ranked game, +150 for a win). Ranked games also count toward the Ranked challenges and the Ranked leaderboard.</p>
+            <p><strong class="text-amber-300">Leaving:</strong> leaving a Ranked game counts as a loss.</p>
+            <p><strong class="text-amber-300">If your app closes:</strong> a Medium bot keeps your seat. Come back before it has taken 5 turns and you carry on; after that you&rsquo;re out of that game and finish last.</p>
+            <p><strong class="text-amber-300">Fair play:</strong> the server deals the cards and checks every move. A game that fails the checks isn&rsquo;t scored, and the same two players are scored at most 5 times a day.</p>
+          </div>
+        </div>
+
+        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="friends">
+          <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
+            <span>Play Friends</span>
+            <span class="chevron transform transition-transform duration-200">&#9660;</span>
+          </button>
+          <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
+            <p><strong>Play Friends</strong> is your own table with the people you choose. Open <strong class="text-amber-300">Play Friends</strong> on the home screen.</p>
+            <p><strong class="text-amber-300">Hosting:</strong> press <strong>Host New Room</strong> and share the 6-digit code or the invite link. The host adds bots, sets the turn timer and starts the game.</p>
+            <p><strong class="text-amber-300">Joining:</strong> type a friend&rsquo;s code, tap their invite link, or accept an invite in your Inbox. You don&rsquo;t need an account to join a friend&rsquo;s room.</p>
+            <p><strong class="text-amber-300">Players:</strong> up to 4 at a table. Empty seats can be filled with bots.</p>
+            <p><strong class="text-amber-300">Friends list:</strong> Menu &rarr; Friends shows who&rsquo;s online. Invite a friend straight into your room, or tap their &ldquo;In a match&rdquo; status to watch their game.</p>
+            <p><strong class="text-amber-300">If someone&rsquo;s app closes:</strong> a Medium bot keeps their seat until they&rsquo;re back. After 5 bot turns they&rsquo;re out of that game.</p>
+            <p><strong class="text-amber-300">Rewards:</strong> finishing and winning earn XP, and the games count toward your challenges.</p>
+          </div>
+        </div>
+
+        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="series">
+          <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
+            <span>Best Of Series</span>
+            <span class="chevron transform transition-transform duration-200">&#9660;</span>
+          </button>
+          <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
+            <p>A <strong>Best Of Series</strong> is a run of Play Friends games between two players, played for Diamonds.</p>
+            <p><strong class="text-amber-300">Who can play:</strong> exactly two signed-in players, both <strong>Lvl 20</strong> or above, with no bots at the table.</p>
+            <p><strong class="text-amber-300">Starting one:</strong> in the room, the host picks <strong>Best of 3</strong> or <strong>Best of 5</strong>; the other player accepts or declines.</p>
+            <p><strong class="text-amber-300">Entry and prize:</strong> each player pays <strong>💎 30</strong> (Best of 3) or <strong>💎 50</strong> (Best of 5). The game matches the pot, so the series winner takes <strong>💎 120</strong> or <strong>💎 200</strong>.</p>
+            <p><strong class="text-amber-300">Playing:</strong> first to 2 wins (Best of 3) or 3 wins (Best of 5). The next game starts on its own 10 seconds after each one, and the score sits in the top-left corner. A draw doesn&rsquo;t count for either player. If a series runs very long, the player ahead wins it; if it&rsquo;s level, both get their entry back.</p>
+            <p><strong class="text-amber-300">Calling it off:</strong> before the first game, either player can call it off and both entries go back.</p>
+            <p><strong class="text-amber-300">Leaving:</strong> after the first game, leaving hands the series to the other player.</p>
+            <p><strong class="text-amber-300">If your app closes:</strong> a Medium bot plays your seat, using the full turn time for each move. Come back within 5 of its turns and you carry on; after that the series goes to the other player.</p>
+            <p><strong class="text-amber-300">Limit:</strong> you can start up to 5 series a day.</p>
           </div>
         </div>
 
@@ -8344,7 +8441,7 @@ video {
     // browsers' compositing) made their position:fixed boxes start at the
     // table's top instead of the screen's, pushing the top and X of a tall
     // page (e.g. Profile on iPhone) under the header.
-    ['matchStatsModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
+    ['matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
      'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'seriesModal'].forEach((id) => {
@@ -17303,6 +17400,96 @@ video {
       }
     }
 
+    // § Mode intro (v252, owner): a one-screen card the first time a player
+    // opens Ranked or Play Friends (maybeShowModeIntro from the mode tabs):
+    // a few short lines, Got It (continues) and More in the Guide (opens that
+    // mode's Guide section, openGuideSection). Seen once per mode, remembered
+    // on the device (localStorage shithead_mode_intro) and on the account
+    // (settings.modeIntroSeen); skipped for a player who already has a game
+    // in that mode in Match History, in the tutorial and in the test suite.
+    // The "How … works" link on each mode panel shows it again any time.
+    const MODE_INTRO_KEY = 'shithead_mode_intro';
+    let modeIntroSeen = (() => { try { return JSON.parse(localStorage.getItem(MODE_INTRO_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+    function markModeIntroSeen(mode) {
+      if (modeIntroSeen[mode]) return;
+      modeIntroSeen = { ...modeIntroSeen, [mode]: true };
+      try { localStorage.setItem(MODE_INTRO_KEY, JSON.stringify(modeIntroSeen)); } catch (e) {}
+      if (typeof scheduleSettingsCloudSave === 'function') scheduleSettingsCloudSave();
+    }
+    const MODE_INTROS = {
+      ranked: {
+        icon: 'ranked', title: 'Ranked', lead: 'One-on-one against a real player, for your rating.', guide: 'ranked',
+        lines: [
+          ['leader', 'Everyone starts at 500. Win and your rating goes up; lose and it goes down.'],
+          ['star', 'A win also gives a bonus, plus extra for a win streak (at 2, 3, 5 and 10 wins).'],
+          ['warning', 'Leaving counts as a loss. If your app closes, a bot keeps your seat for 5 turns while you get back.'],
+          ['trophy', 'Climb through the tiers and onto the Ranked leaderboard:']
+        ],
+        tiers: true
+      },
+      online: {
+        icon: 'friends4', title: 'Play Friends', lead: 'Your own table with friends.', guide: 'friends',
+        lines: [
+          ['link', 'Host a room and share the code or invite link, or join a friend\'s room with their code.'],
+          ['friends4', 'Up to 4 players. Empty seats can be filled with bots.'],
+          ['bot', 'If someone\'s app closes, a bot keeps their seat until they\'re back.'],
+          ['gem', 'At Lvl 20 you can play a Best Of Series (3 or 5 games) for Diamonds.']
+        ]
+      }
+    };
+    function modeIntroHtml(mode) {
+      const m = MODE_INTROS[mode];
+      const tiers = m.tiers ? `<div class="mode-intro-tiers">${['Novice', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Master'].map(t => `<span>${tierBadge(t)}<small>${t}</small></span>`).join('')}</div>` : '';
+      return `<div class="gauntlet-emblem mode-intro-emblem" aria-hidden="true">${icon(m.icon)}</div>
+        <div id="modeIntroTitle" class="gauntlet-title">${m.title}</div>
+        <p class="gauntlet-text">${m.lead}</p>
+        <ul class="mode-intro-list">${m.lines.map(([ic, t]) => `<li>${icon(ic)}<span>${escapeHtml(t)}</span></li>`).join('')}</ul>
+        ${tiers}
+        <div class="gauntlet-actions"><button type="button" class="gauntlet-go" data-mode-intro-ok>Got It</button>
+        <button type="button" class="gauntlet-alt" data-mode-intro-guide="${m.guide}">More in the Guide</button></div>`;
+    }
+    function showModeIntro(mode) {
+      if (!MODE_INTROS[mode]) return false;
+      document.getElementById('modeIntroBody').innerHTML = modeIntroHtml(mode);
+      document.getElementById('modeIntroModal').dataset.mode = mode;
+      document.getElementById('modeIntroModal').classList.remove('hidden');
+      markModeIntroSeen(mode);
+      return true;
+    }
+    function closeModeIntro() { document.getElementById('modeIntroModal')?.classList.add('hidden'); }
+    function maybeShowModeIntro(mode, { force = false } = {}) {
+      if (!force) {
+        if (modeIntroSeen[mode] || tutorialActive) return false;
+        if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return false;
+        if (readLocalMatchHistory().some(e => e.mode === mode)) { markModeIntroSeen(mode); return false; }
+      }
+      return showModeIntro(mode);
+    }
+    // Opens the Guide on one section (data-guide-section), unfolded, scrolled to it.
+    function openGuideSection(key) {
+      const guide = document.getElementById('rulesModal');
+      const sec = guide?.querySelector(`[data-guide-section="${CSS.escape(key)}"]`);
+      if (!sec) return false;
+      guide.classList.remove('hidden');
+      const content = sec.querySelector('.accordion-content');
+      if (content) {
+        content.classList.remove('hidden');
+        const chevron = sec.querySelector('.chevron');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+      }
+      requestAnimationFrame(() => sec.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }));
+      return true;
+    }
+    document.getElementById('modeIntroModal').addEventListener('click', (e) => {
+      if (e.target.closest('[data-mode-intro-ok]') || e.target.closest('#modeIntroCloseBtn') || e.target.id === 'modeIntroModal') { closeModeIntro(); return; }
+      const g = e.target.closest('[data-mode-intro-guide]');
+      if (g) { closeModeIntro(); openGuideSection(g.dataset.modeIntroGuide); }
+    });
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest && e.target.closest('[data-mode-intro]');
+      if (b) showModeIntro(b.dataset.modeIntro);
+    });
+
     // UI Bindings
     document.getElementById('navHomeLogoBtn').addEventListener('click', returnToHomeScreen);
     // Shared between all 3 mode buttons so their active/inactive look never
@@ -17345,6 +17532,7 @@ video {
       document.getElementById('modeSingleBtn').className = MODE_BTN_INACTIVE;
       document.getElementById('modeRankedBtn').className = MODE_BTN_INACTIVE;
       syncRoomCodeBadge();
+      maybeShowModeIntro('online');
     });
 
     document.getElementById('modeRankedBtn').addEventListener('click', () => {
@@ -17357,6 +17545,7 @@ video {
       document.getElementById('modeMultiBtn').className = MODE_BTN_INACTIVE;
       refreshRankedUI();
       syncRoomCodeBadge();
+      maybeShowModeIntro('ranked');
     });
     // Set by the in-game Exit button when leaving a Ranked match (and by
     // returnToRankedLobby's reload) so the fresh page load this triggers
@@ -18360,7 +18549,9 @@ video {
         players: [...matchStatsPlayers()].sort((a, b) => placeOf(a) - placeOf(b))
           .map((p) => {
             const g = p.gameStats || {};
-            return { name: String(p.name || 'Player').replace(/\s*\(Bot\)$/, '').slice(0, 16), bot: !!p.isBot, me: p.id === me.id,
+            // uid (humans only, v252): Match History opens their player card.
+            const uid = p.isBot ? null : (p.id === me.id ? currentUser?.uid : p.uid) || null;
+            return { name: String(p.name || 'Player').replace(/\s*\(Bot\)$/, '').slice(0, 16), bot: !!p.isBot, me: p.id === me.id, ...(uid ? { uid } : {}),
               left: !!p.departed, st: [g.played || 0, g.pickedUp || 0, g.burnt || 0, g.jokersPlayed || 0, g.turns || 0] };
           }),
         stats: { played: st.played || 0, pickedUp: st.pickedUp || 0, burnt: st.burnt || 0, jokers: st.jokersPlayed || 0, turns: st.turns || 0 },
@@ -18427,14 +18618,6 @@ video {
       const d = Math.round(h / 24); if (d < 7) return `${d}d ago`;
       return new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
     }
-    // Every player's numbers for one match (entries saved before v141 only
-    // have the local player's, so they fall back to the old layout).
-    function everyoneTable(players) {
-      if (!Array.isArray(players) || !players.length || !players.every(p => Array.isArray(p.st))) return '';
-      const head = ['Played', 'Picked', 'Burnt', 'JKR', 'Turns'].map(h => `<span>${h}</span>`).join('');
-      const rows = players.map((p, i) => `<div class="mh-row${p.me ? ' me' : ''}"><span class="mh-name">${i + 1}. ${escapeHtml(p.name)}${p.bot ? ' 🤖' : ''}${p.left ? ' <em>(left)</em>' : ''}</span>${p.st.map(v => `<span>${Number(v) || 0}</span>`).join('')}</div>`).join('');
-      return `<div class="mh-everyone"><div class="mh-row mh-head"><span class="mh-name"></span>${head}</div>${rows}</div>`;
-    }
     function matchHistoryHtml(list, now = Date.now()) {
       if (!list.length) return '<p class="text-[10px] text-slate-400 text-center leading-snug py-6 px-1">No matches yet. Every game you finish will show up here.</p>';
       const wins = list.filter(e => e.place === 1 && !e.draw).length;
@@ -18442,28 +18625,96 @@ video {
       const draws = list.filter(e => e.draw).length;
       const gems = list.reduce((sum, e) => sum + (Number(e.diamonds) || 0), 0);
       const ord = (n) => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
+      matchHistoryShown = list;
       const rows = list.map((e) => {
         const won = e.place === 1 && !e.draw;
-        const emoji = e.draw ? '🤝' : won ? '🏆' : e.shithead ? '💩' : e.place === 2 ? '🥈' : e.place === 3 ? '🥉' : '🎖️';
-        const title = e.draw ? 'Draw' : won ? 'Won' : e.shithead ? 'ShitHead' : `${ord(e.place)} of ${e.of}`;
-        const edge = won ? '#f59e0b' : e.shithead ? '#b45309' : '#64748b';
+        const { emoji, title, edge } = matchHistoryLook(e);
         const d = e.rating ? e.rating.to - e.rating.from : null;
         const side = [
           e.diamonds > 0 ? `<span class="gem">+💎${e.diamonds}</span>` : '',
           d !== null ? `<span class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d} rating</span>` : ''
         ].join('');
-        const st = e.stats || {};
-        const stat = (v, l) => `<div><b>${Number(v) || 0}</b><span>${l}</span></div>`;
-        return `<details class="mh-item" style="--mh-edge:${edge}"><summary><span class="mh-emoji" aria-hidden="true">${emoji}</span>
+        return `<div class="mh-item" role="button" tabindex="0" data-mh-id="${escapeAttr(String(e.id || ''))}" style="--mh-edge:${edge}" aria-label="${escapeAttr(`${title}, ${e.label || ''}: full stats`)}"><div class="mh-line"><span class="mh-emoji" aria-hidden="true">${emoji}</span>
           <span class="mh-main"><span class="mh-title">${title}</span><span class="mh-sub">${escapeHtml(e.label || '')} · ${timeAgo(e.at, now)}</span></span>
-          <span class="mh-side">${side}</span></summary>
-          <div class="mh-detail">${everyoneTable(e.players) || `<div class="mh-order">${(e.players || []).map((p, i) => `<span class="${p.me ? 'me' : ''}">${i + 1}. ${escapeHtml(p.name)}${p.bot ? ' 🤖' : ''}</span>`).join('')}</div>
-          <div class="mh-stats">${stat(st.played, 'Played')}${stat(st.pickedUp, 'Picked up')}${stat(st.burnt, 'Burns')}${stat(st.jokers, 'Jokers')}${stat(st.turns, 'Turns')}</div>`}</div></details>`;
+          <span class="mh-side">${side}</span><span class="mh-chev" aria-hidden="true">›</span></div></div>`;
       }).join('');
       return `<div class="mh-summary"><div><b>${list.length}</b><span>Matches</span></div><div><b>${wins}</b><span>Wins</span></div><div><b>${Math.round((wins / list.length) * 100)}%</b><span>Win rate</span></div><div><b>${shitheads}</b><span>ShitHeads</span></div><div><b>${draws}</b><span>Draws</span></div><div><b>💎${gems}</b><span>Earned</span></div></div>
         <div class="mh-list">${rows}</div>
-        <p class="text-[8px] text-slate-600 text-center pt-2">Your last ${MATCH_HISTORY_LIMIT} matches. Tap one for the details.</p>`;
+        <p class="text-[8px] text-slate-600 text-center pt-2">Your last ${MATCH_HISTORY_LIMIT} matches. Tap one for its full stats.</p>`;
     }
+    // § Match History details (v252, owner): a game opens its full stats in a
+    // pop-up (#historyGameModal): result, mode, date, rating and Diamonds, and
+    // every player's numbers. A signed-in player's name opens their player
+    // card (uid saved with the entry; older entries look the name up in
+    // usernames/). Bots and guests have no card.
+    let matchHistoryShown = [];
+    function matchHistoryLook(e) {
+      const won = e.place === 1 && !e.draw;
+      const ord = (n) => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
+      return {
+        emoji: e.draw ? '🤝' : won ? '🏆' : e.shithead ? '💩' : e.place === 2 ? '🥈' : e.place === 3 ? '🥉' : '🎖️',
+        title: e.draw ? 'Draw' : won ? 'Won' : e.shithead ? 'ShitHead' : `${ord(e.place)} of ${e.of}`,
+        edge: won ? '#f59e0b' : e.shithead ? '#b45309' : '#64748b'
+      };
+    }
+    function historyPlayerNameHtml(p, i) {
+      const label = `${i + 1}. ${escapeHtml(p.name)}${p.bot ? ' 🤖' : ''}${p.left ? ' <em>(left)</em>' : ''}`;
+      if (p.bot || p.me) return `<span class="mh-name">${label}</span>`;
+      return `<button type="button" class="mh-name mh-player" data-mh-player="${escapeAttr(p.name)}"${p.uid ? ` data-uid="${escapeAttr(p.uid)}"` : ''} aria-label="Open ${escapeAttr(p.name)}'s player card">${label}</button>`;
+    }
+    function historyGameHtml(e) {
+      const { emoji, title } = matchHistoryLook(e);
+      const d = e.rating ? e.rating.to - e.rating.from : null;
+      const when = new Date(e.at || 0).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const chips = [
+        e.diamonds > 0 ? `<span class="hg-chip gem">+💎${e.diamonds}</span>` : '',
+        d !== null ? `<span class="hg-chip ${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d} rating · ${e.rating.from} → ${e.rating.to}</span>` : ''
+      ].join('');
+      const players = Array.isArray(e.players) ? e.players : [];
+      const full = players.length && players.every(p => Array.isArray(p.st));
+      const head = ['Played', 'Picked', 'Burnt', 'Jokers', 'Turns'].map(h => `<span>${h}</span>`).join('');
+      const table = full
+        ? `<div class="mh-everyone hg-table"><div class="mh-row mh-head"><span class="mh-name"></span>${head}</div>${players.map((p, i) =>
+            `<div class="mh-row${p.me ? ' me' : ''}">${historyPlayerNameHtml(p, i)}${p.st.map(v => `<span>${Number(v) || 0}</span>`).join('')}</div>`).join('')}</div>`
+        : `<div class="mh-order">${players.map((p, i) => historyPlayerNameHtml(p, i)).join('')}</div>`;
+      const st = e.stats || {};
+      const stat = (v, l) => `<div><b>${Number(v) || 0}</b><span>${l}</span></div>`;
+      return `<div class="hg-head"><span class="hg-emoji" aria-hidden="true">${emoji}</span><div><div class="hg-title">${title}</div><div class="hg-sub">${escapeHtml(e.label || '')} · ${escapeHtml(when)}</div></div></div>
+        ${chips ? `<div class="hg-chips">${chips}</div>` : ''}
+        <div class="hg-label">Finishing order</div>${table}
+        <div class="hg-label">You</div><div class="mh-stats">${stat(st.played, 'Played')}${stat(st.pickedUp, 'Picked up')}${stat(st.burnt, 'Burns')}${stat(st.jokers, 'Jokers')}${stat(st.turns, 'Turns')}</div>
+        ${players.some(p => !p.bot && !p.me) ? '<p class="hg-note">Tap a player to see their card.</p>' : ''}`;
+    }
+    function openHistoryGame(id) {
+      const e = matchHistoryShown.find(x => x.id === id);
+      if (!e) return false;
+      document.getElementById('historyGameBody').innerHTML = historyGameHtml(e);
+      document.getElementById('historyGameModal').classList.remove('hidden');
+      return true;
+    }
+    function openHistoryPlayer(btn) {
+      const name = btn.dataset.mhPlayer;
+      if (!currentUser) { notifyBanner('Sign in to see player cards.'); return; }
+      const find = btn.dataset.uid ? Promise.resolve(btn.dataset.uid)
+        : db.ref(`usernames/${String(name || '').toLowerCase()}`).once('value').then(snap => snap.val()).catch(() => null);
+      find.then((uid) => {
+        if (!uid) { notifyBanner(`${name} wasn't signed in, so there's no player card.`); return; }
+        openProfileCard({ uid, name }, btn);
+      });
+    }
+    document.getElementById('statsContentArea')?.addEventListener('click', (ev) => {
+      const item = ev.target.closest('[data-mh-id]');
+      if (item) openHistoryGame(item.dataset.mhId);
+    });
+    document.getElementById('statsContentArea')?.addEventListener('keydown', (ev) => {
+      const item = ev.target.closest?.('[data-mh-id]');
+      if (item && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); openHistoryGame(item.dataset.mhId); }
+    });
+    document.getElementById('historyGameModal')?.addEventListener('click', (ev) => {
+      const p = ev.target.closest('[data-mh-player]');
+      if (p) { openHistoryPlayer(p); return; }
+      if (ev.target.id === 'historyGameModal' || ev.target.closest('#historyGameCloseBtn')) document.getElementById('historyGameModal').classList.add('hidden');
+    });
     function renderMatchHistoryPanel() {
       const area = document.getElementById('statsContentArea');
       area.innerHTML = matchHistoryHtml(readLocalMatchHistory());
@@ -18537,6 +18788,12 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v252: [
+        ['📜', 'Match History: tap a game to see its full stats, and tap a player in it to open their player card.', WN_KEY],
+        ['📖', 'The Guide now explains Ranked, Play Friends and Best Of Series.', WN_KEY],
+        ['💡', 'Opening Ranked or Play Friends for the first time shows a short card on how it works. Tap "How it works" to see it again.'],
+        ['👀', 'Tap an item you don\'t own yet in Custom or the Collection to preview it.', WN_KEY]
+      ],
       v251: [
         ['🏆', 'New earn-only avatars for levelling up: Rookie Rogue (10), Card Shark (25), Burn King (50), Chaos Jester (75) and The ShitHead (99).', WN_KEY],
         ['🃏', 'New earn-only card backs: First Burn (10), Shark\'s Mark (30), Inferno (50), Chaos Crown (70) and Master of the Pile (99).', WN_KEY],
@@ -21507,6 +21764,18 @@ video {
       else if (type === 'jokerEffect') playJokerPreview(id, box.querySelector('.jfx-stage'));
       else if (type === 'victoryEffect') playVictoryEffect(id);
     }
+    // Locked items preview too (v252, owner), except hidden ones (an item
+    // marked hidden: true stays a mystery until earned). One you can buy
+    // gets a See In Shop button (openLockedCosmetic).
+    function bigPreviewShopButton(item) {
+      if (item.builtIn || cosmeticPurchaseState[item.id] || !COSMETIC_SHOP_ITEMS.some(i => i.id === item.id)) return '';
+      return `<button type="button" class="bp-shop" data-bp-shop>See In Shop</button>`;
+    }
+    function previewLockedCosmetic(id) {
+      const item = bigPreviewItem(id);
+      if (!item || item.hidden) return openLockedCosmetic(id);
+      return openBigPreview(id);
+    }
     function openBigPreview(id) {
       const item = bigPreviewItem(id);
       const type = item && COSMETIC_CATEGORY_TYPES[item.category];
@@ -21522,6 +21791,7 @@ video {
         <div class="bp-stage">${bigPreviewStageHtml(item, type)}</div>
         <div class="bp-status">${escapeHtml(bigPreviewStatus(item))}</div>
         ${animated ? '<button type="button" class="bp-play" data-bp-play>Play Again</button>' : ''}
+        ${bigPreviewShopButton(item)}
       </div>`;
       box.classList.remove('hidden');
       if (typeof springIn === 'function' && !reduceMotion) springIn(box.firstElementChild);
@@ -21538,6 +21808,13 @@ video {
     }
     document.getElementById('bigPreview')?.addEventListener('click', (e) => {
       if (e.target.closest('[data-bp-play]')) { playBigPreviewEffect(); return; }
+      if (e.target.closest('[data-bp-shop]')) {
+        const id = e.currentTarget.dataset.itemId;
+        closeBigPreview();
+        document.getElementById('collectionModal')?.classList.add('hidden');
+        openLockedCosmetic(id);
+        return;
+      }
       if (e.target.closest('[data-bp-close]') || !e.target.closest('.bp-panel')) closeBigPreview();
     });
     document.addEventListener('keydown', (e) => {
@@ -21808,6 +22085,7 @@ video {
       document.getElementById('collectionStatus').innerHTML = `<b>${escapeHtml(item.name)}</b> · ${isCosmeticOwned(item) ? (item.builtIn ? 'Free for everyone' : 'Owned') : escapeHtml(customLockedStatus(item))}`;
       document.querySelectorAll('#collectionBody .coll-tile.is-picked').forEach(t => t.classList.remove('is-picked'));
       tile.classList.add('is-picked');
+      if (!isCosmeticOwned(item) && !item.hidden) openBigPreview(item.id);
     });
     document.getElementById('profileCollectionBtn').addEventListener('click', () => { document.getElementById('profileModal').classList.add('hidden'); openCollection(); });
     document.getElementById('customOwnedBtn').addEventListener('click', () => { document.getElementById('themesModal').classList.add('hidden'); openCollection(); });
@@ -21902,7 +22180,7 @@ video {
       if (!btn || btn.disabled) return;
       const type = btn.dataset.equipType;
       const id = btn.dataset.equipId;
-      if (btn.hasAttribute('data-locked')) { openLockedCosmetic(id); return; }
+      if (btn.hasAttribute('data-locked')) { previewLockedCosmetic(id); return; }
       const previous = type === 'avatar' ? resolveAvatarId(equippedCosmetics.avatar) : equippedIdOf(type);
       if (!equipCosmetic(type, id) || motionOff()) return;
       // Equip snap: the new pick pops and "slots in" with a click; the old
@@ -23392,6 +23670,7 @@ video {
         dealAnimationOn: !!dealAnimationOn,
         handSortByPower: !!handSortByPower,
         whatsNewOn: !!whatsNewOn,
+        modeIntroSeen: { ranked: !!modeIntroSeen.ranked, online: !!modeIntroSeen.online },
         emotesMuted: !!emotesMuted,
         botCount: readBotPrefs().count,
         botDifficulty: readBotPrefs().difficulty
@@ -23405,6 +23684,10 @@ video {
         const speed = Number(settings.speedIndex);
         if (Number.isInteger(speed) && speed >= 0 && speed < SPEED_PRESETS.length) updateSpeedByIndex(speed);
         if (deckItemForTheme(settings.deckTheme)) selectDeckTheme(settings.deckTheme);
+        if (settings.modeIntroSeen && typeof settings.modeIntroSeen === 'object') {
+          ['ranked', 'online'].forEach((m) => { if (settings.modeIntroSeen[m]) modeIntroSeen = { ...modeIntroSeen, [m]: true }; });
+          try { localStorage.setItem(MODE_INTRO_KEY, JSON.stringify(modeIntroSeen)); } catch (e) {}
+        }
 
         if (typeof settings.selectAllOfRank === 'boolean') {
           selectAllOfRank = settings.selectAllOfRank;
@@ -28477,8 +28760,9 @@ video {
       if (tab) setCustomTab(tab.dataset.customTab);
     });
     setCustomTab('all');
-    // Tapping something you don't own in Custom: Shop items open the Shop on
-    // that item; earn-only pictures say how to earn them.
+    // Something you don't own: Shop items open the Shop on that item;
+    // earn-only ones say how to earn them. Custom's locked tiles preview
+    // first (previewLockedCosmetic), and the preview's See In Shop comes here.
     function openLockedCosmetic(id) {
       const shopItem = COSMETIC_SHOP_ITEMS.find(item => item.id === id);
       if (!shopItem) {
@@ -29655,7 +29939,7 @@ video {
       giftOpenModal: 'giftOpenClose', giftModal: 'giftModalClose', installHelpModal: 'installHelpClose',
       dailyRewardModal: () => closeDailyReward(), playerPopup: 'playerPopupClose', matchSummaryModal: 'matchSummaryClose',
       authModal: 'authCloseBtn', usernameModal: null, difficultyUnlockPopup: 'difficultyUnlockPopupBtn',
-      matchStatsModal: 'matchStatsCloseBtn', friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
+      matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn', changelogModal: 'changelogCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
