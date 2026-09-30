@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v237 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v238 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -15559,6 +15559,7 @@ video {
         if (current === null) return null; // cache not loaded yet: Firebase re-runs this with the server's copy
         if ((Number(current.stateVersion) || 0) !== baseVersion) return; // someone else saved first
         const next = { ...current, ...syncedState };
+        if (!syncedState.matchId && current.matchId) next.matchId = current.matchId; // never blank the game's id
         if (syncedState.jokerTurnOwnerId === null) delete next.jokerTurnOwnerId;
         return next;
       }, (error, committed, snapshot) => {
@@ -15913,6 +15914,7 @@ video {
       const code = state.roomCode;
       const myId = state.localPlayerId;
       const inMatch = state.phase === 'PLAY' || state.phase === 'SWAP';
+      leftRoomOnPurpose = code; // the room listener must not hand the stand-in back (v238)
       const me = state.players.find(p => p.id === myId);
       const othersHere = state.players.some(p => p.id !== myId && !p.isBot);
       let write;
@@ -16451,7 +16453,7 @@ video {
           // The host role can be passed on when the host leaves.
           const myRecord = state.players.find(p => p.id === state.localPlayerId);
           if (!state.isRanked && myRecord && typeof myRecord.isHost === 'boolean') state.isHost = myRecord.isHost;
-          if (!stillHere && !state.isHost && hasConfirmedRoomMembership && !findMyStandInSeat(state.players)) {
+          if (!stillHere && !state.isHost && hasConfirmedRoomMembership && leftRoomOnPurpose !== code && !findMyStandInSeat(state.players)) {
             alert("You have been removed from the room by the host.");
             forgetJoinedRoom();
             location.reload();
@@ -16491,6 +16493,10 @@ video {
           }
         } else if (data.phase === 'SWAP') {
           state.phase = 'SWAP';
+          // The new game's id: without it the other phones kept the last
+          // game's id and wrote it back with every move, so a Best of series
+          // saw the next game as "already counted" and never moved on (v238).
+          state.matchId = data.matchId || state.matchId;
           state.drawPile = data.drawPile || [];
           state.discardPile = data.discardPile || [];
           state.currentTurnIndex = data.currentTurnIndex || 0;
@@ -18212,6 +18218,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v238: [
+        ['🛠️', 'Best of series: fixed the next game not counting, which left a series stuck after game 1.'],
+        ['⚔️', 'Missed the end of a series? You now see the result the next time you open the game.'],
+        ['🛠️', 'Leaving a match now really leaves it: the stand-in bot keeps your seat instead of handing it straight back to you.']
+      ],
       v237: [
         ['👆', 'Tapping a card in a big hand now picks the card you touched, not the one next to or under it. Tap a selected card again to put it back.'],
         ['🃏', 'Big hands show more of each card in the back row, so they are easier to tap.']
@@ -24155,19 +24166,37 @@ video {
       const me = currentUser && currentUser.uid;
       if (!s || !me || (s.host !== me && s.guest !== me)) return;
       const sc = seriesScoreFor(s);
+      showSeriesResultPopup({
+        id: s.id, bestOf: s.bestOf, opponent: sc.other, reason: s.reason, fee: s.fee, pot: s.pot,
+        cancelled: s.status !== 'done', won: s.status === 'done' && s.winner === me,
+        score: `${sc.mine} – ${sc.theirs}`, refund: s.paid && s.paid[me] ? s.fee : 0
+      });
+    }
+    // The result pop-up, from a live series or from its Inbox mail (a
+    // player who wasn't there when it ended: seriesMissedResult). Shown once
+    // per series (localStorage shithead_series_seen).
+    const SERIES_SEEN_KEY = 'shithead_series_seen';
+    function seriesResultSeen(id) {
+      try { return (JSON.parse(localStorage.getItem(SERIES_SEEN_KEY) || '[]')).includes(id); } catch (_) { return false; }
+    }
+    function markSeriesResultSeen(id) {
+      try { const l = JSON.parse(localStorage.getItem(SERIES_SEEN_KEY) || '[]').filter(x => x !== id); l.push(id); localStorage.setItem(SERIES_SEEN_KEY, JSON.stringify(l.slice(-20))); } catch (_) {}
+    }
+    function showSeriesResultPopup(r) {
+      if (r.id) markSeriesResultSeen(r.id);
       const gem = icon('gem');
+      const other = escapeHtml(r.opponent || 'Your opponent');
       let title, text, pot;
-      if (s.status === 'done') {
-        const won = s.winner === me;
-        title = won ? 'You won the series' : `${sc.other} won the series`;
-        text = s.reason === 'forfeit'
-          ? (won ? `${escapeHtml(sc.other)} left the series, so it's yours.` : 'You left the series, so it counts as a loss.')
-          : `Best of ${s.bestOf}, ${sc.mine} – ${sc.theirs}.`;
-        pot = won ? `<span><b>+${s.pot} ${gem}</b>Winnings</span>` : `<span><b>${s.fee} ${gem}</b>Entry lost</span>`;
+      if (!r.cancelled) {
+        title = r.won ? 'You won the series' : `${other} won the series`;
+        text = r.reason === 'forfeit'
+          ? (r.won ? `${other} left the series, so it's yours.` : "You were away too long (or left), so the series went to your opponent.")
+          : `Best of ${r.bestOf}, ${escapeHtml(r.score || '')}.`;
+        pot = r.won ? `<span><b>+${Number(r.pot) || 0} ${gem}</b>Winnings</span>` : `<span><b>${Number(r.fee) || 0} ${gem}</b>Entry lost</span>`;
       } else {
         title = 'Series called off';
-        text = s.reason === 'drawn' ? 'The series ended level.' : s.reason === 'expired' ? 'The series ran out of time.' : 'Nobody won this series.';
-        pot = s.paid && s.paid[me] ? `<span><b>${s.fee} ${gem}</b>Entry returned</span>` : '';
+        text = r.reason === 'drawn' ? 'The series ended level.' : r.reason === 'expired' ? 'The series ran out of time.' : 'Nobody won this series.';
+        pot = Number(r.refund) > 0 ? `<span><b>${Number(r.refund)} ${gem}</b>Entry returned</span>` : '';
       }
       document.getElementById('seriesModalTitle').textContent = title;
       document.getElementById('seriesModalText').innerHTML = text;
@@ -24178,11 +24207,22 @@ video {
       document.getElementById('seriesLaterBtn').textContent = 'Close';
       modal.classList.remove('hidden');
     }
+    // Back after a series ended without you (forfeit, called off): its
+    // result from the Inbox mail, once, if it ended in the last day.
+    async function seriesMissedResult(uid) {
+      try {
+        const snap = await db.ref(`users/${uid}/activityInbox`).orderByKey().startAt('series_').endAt('series_\uf8ff').limitToLast(5).once('value');
+        const mails = Object.entries(snap.val() || {}).map(([k, m]) => ({ ...m, id: k.replace(/^series_/, '') }))
+          .filter(m => m && m.type === 'series' && Date.now() - (Number(m.sentAt) || 0) < 24 * 3600 * 1000 && !seriesResultSeen(m.id))
+          .sort((a, b) => (b.sentAt || 0) - (a.sentAt || 0));
+        if (mails.length && !state.isMultiplayer) showSeriesResultPopup(mails[0]);
+      } catch (_) {}
+    }
     // Watches the series move from active to finished.
     function noteSeriesTransition() {
       const s = seriesState;
       if (seriesIsActive(s)) { seriesLastSeen = s; return; }
-      if (s && seriesLastSeen && seriesLastSeen.id === s.id && seriesResultShownFor !== s.id) {
+      if (s && seriesLastSeen && seriesLastSeen.id === s.id && seriesResultShownFor !== s.id && !seriesResultSeen(s.id)) {
         seriesResultShownFor = s.id;
         cancelSeriesNextGame();
         openSeriesResult(s);
@@ -24228,7 +24268,7 @@ video {
       try {
         const uid = currentUser.uid;
         const rec = (await db.ref(`users/${uid}/series`).once('value')).val();
-        if (!rec || !seriesIsActive(rec) || !/^\d{6}$/.test(String(rec.room || ''))) return false;
+        if (!rec || !seriesIsActive(rec) || !/^\d{6}$/.test(String(rec.room || ''))) { setTimeout(() => seriesMissedResult(uid), 2500); return false; }
         const [sSnap, roomSnap] = await Promise.all([db.ref(`series/${rec.room}`).once('value'), db.ref(`rooms/${rec.room}`).once('value')]);
         const s = sSnap.val(), data = roomSnap.val();
         if (state.isMultiplayer || !seriesIsActive(s) || s.id !== rec.id || !data || !isRoomVersionCompatible(data)) return false;
@@ -25813,7 +25853,9 @@ video {
     // same name with " (Bot)" on the end for a guest.
     let lastLocalSeat = null;   // {name, uid} of our own seat, last seen live
     let standInOutShown = false;
+    let leftRoomOnPurpose = null; // room code this player chose to leave: never take its stand-in back
     function findMyStandInSeat(players) {
+      if (leftRoomOnPurpose && leftRoomOnPurpose === state.roomCode) return null;
       const uid = (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) || lastLocalSeat?.uid || null;
       return (players || []).find(p => p && p.isBot && (
         (uid && p.uid === uid) || (lastLocalSeat?.name && p.name === `${lastLocalSeat.name} (Bot)`))) || null;
