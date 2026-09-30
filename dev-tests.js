@@ -4630,6 +4630,12 @@ async function runDevTestSuite() {
       assertEqual(getComputedStyle(badge).fontSize, cs.fontSize, 'The level text is the same size as the name');
     }
     assertEqual(level.textContent, 'Lvl 42', 'Levels read "Lvl"');
+    avatar.classList.remove('hidden'); avatar.innerHTML = avatarHtml('default', 64);
+    if (input.offsetParent) {
+      const ra = avatar.getBoundingClientRect(), rl = document.querySelector('.home-name-label').getBoundingClientRect(), ri = input.getBoundingClientRect();
+      assertTrue(Math.abs(ra.top - rl.top) < 1 && Math.abs(ra.bottom - ri.bottom) < 1, `The picture runs from the top of the label to the bottom of the name box (${Math.round(ra.top)}-${Math.round(ra.bottom)} vs ${Math.round(rl.top)}-${Math.round(ri.bottom)})`);
+      assertTrue(Math.abs(ra.width - ra.height) < 0.5, 'The picture stays square');
+    }
     const realUser = currentUser;
     currentUser = null; updateHamburgerAccountLabel(); refreshXpDisplays();
     assertTrue(avatar.classList.contains('hidden') && level.classList.contains('hidden'), 'Signed out: just the name box');

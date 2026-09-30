@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v243 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v244 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1719,18 +1719,21 @@
     .card-zone-label-row:has(#handZoneLevel) { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; }
     #handZoneLabel { grid-column:2; }
     #handZoneLevel { grid-column:3; justify-self:start; margin-left:6px; }
-    /* Home nickname row (v242, v243): picture | name | level on one line,
-       centred. Everything is sized in em from the row's font size, which
-       follows the screen width (up to the old 14px), so the three always
-       fit; the name box holds the longest username (12 of the widest
-       letter), and the level box matches it: same height, border, corners
-       and text size. */
-    .home-name-row { font-size:clamp(11px, 3.55vw, 14px); display:flex; justify-content:center; align-items:stretch; gap:.4em; }
-    #playerNameInput.home-name-input { font-size:1em; line-height:1.4em; padding:.55em .55em; width:calc(12 * 1.02em + 1.1em + 4px + 2px); min-width:0; }
-    .home-name-avatar { align-self:center; display:inline-flex; width:2.6em; height:2.6em; flex-shrink:0; padding:0; border:0; background:none; border-radius:10px; cursor:pointer; }
+    /* Home nickname row (v242-v244): the label over the name box, the
+       picture on the left spanning from the top of the label to the bottom
+       of the box (v244, owner), the level box on the right. Everything is
+       sized in em from the row's font size, which follows the screen width
+       (up to 14px), so it always fits one row; the name box holds the
+       longest username (12 of the widest letter) and the level box matches
+       it: same height, border, corners and text size. Picture height =
+       label line (16px) + row gap (4px) + name box (2.5em + 4px). */
+    .home-name-row { font-size:clamp(10px, 3.3vw, 14px); display:grid; grid-template-columns:auto auto auto; justify-content:center; column-gap:.4em; row-gap:4px; }
+    .home-name-label { grid-column:2; grid-row:1; line-height:16px; margin:0; }
+    #playerNameInput.home-name-input { grid-column:2; grid-row:2; font-size:1em; line-height:1.4em; padding:.55em .55em; width:calc(12 * 1.02em + 1.1em + 4px + 2px); min-width:0; }
+    .home-name-avatar { grid-column:1; grid-row:1 / 3; align-self:start; display:inline-flex; width:calc(2.5em + 24px); height:calc(2.5em + 24px); padding:0; border:0; background:none; border-radius:12px; cursor:pointer; }
     .home-name-avatar .avatar-tile, .home-name-avatar .avatar-tile > svg { width:100% !important; height:100% !important; }
     .home-name-avatar.hidden, .home-name-level.hidden { display:none; }
-    .home-name-level { display:flex; flex-shrink:0; }
+    .home-name-level { grid-column:3; grid-row:2; display:flex; }
     .xp-badge.xp-badge-home { height:auto; font-size:1em; font-weight:700; letter-spacing:normal; padding:0 .6em; border-width:2px; border-radius:.75rem; }
     #handZoneLabel::after { content:'\2193'; margin-left:4px; font-size:1.2em; line-height:1; }
     /* The Deck (card-base) is wider than the Base Card (card-table). Equal
@@ -5119,9 +5122,9 @@ video {
 
       <div class="space-y-2.5">
         <div>
-          <label class="block text-xs font-black tracking-wider uppercase text-slate-400 mb-1 text-center">Your Nickname</label>
           <div class="home-name-row">
-            <button id="homeNameAvatar" type="button" class="home-name-avatar hidden" data-own-avatar="36" aria-label="Your profile"></button>
+            <label for="playerNameInput" class="home-name-label block text-xs font-black tracking-wider uppercase text-slate-400 text-center">Your Nickname</label>
+            <button id="homeNameAvatar" type="button" class="home-name-avatar hidden" data-own-avatar="64" aria-label="Your profile"></button>
             <input type="text" id="playerNameInput" maxlength="12" placeholder="e.g. Alex" class="home-name-input bg-slate-950 border-2 border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold focus:border-amber-400 outline-none text-white transition text-center" style="text-align:center" />
             <span id="homeNameLevel" class="home-name-level hidden"></span>
           </div>
@@ -18239,6 +18242,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v244: [
+        ['🏠', 'Home screen: a bigger profile picture beside your nickname.']
+      ],
       v243: [
         ['🏠', 'Home screen: the level box now matches the nickname box, and levels read "Lvl".']
       ],
@@ -23406,7 +23412,7 @@ video {
         if (hamburgerUsernameFor !== uid) drawerLabel.textContent = 'Player';
         if (drawerAvatar) drawerAvatar.innerHTML = avatarHtml(equippedCosmetics.avatar, 34);
         const homeAvatar = document.getElementById('homeNameAvatar');
-        if (homeAvatar) homeAvatar.innerHTML = avatarHtml(equippedCosmetics.avatar, 36);
+        if (homeAvatar) homeAvatar.innerHTML = avatarHtml(equippedCosmetics.avatar, 64);
         getOrCreateUserProfile(uid).then((profile) => {
           if (currentUser?.uid !== uid) return;
           hamburgerUsernameFor = uid;
