@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v256 (ShitHead-Deluxe-216) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v257 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7170,6 +7170,8 @@ video {
       turn: "audio/turn.mp3",      // Your-turn alert
       notify: "audio/notify.mp3"   // New invite / friend request / gift
     };
+    // Clips for the owner's effects (v257, made by tools/make-effect-sounds.py).
+    const EFFECT_CLIPS = { 'lion-roar': 'audio/lion-roar.mp3', boo: 'audio/boo.mp3', fireworks: 'audio/fireworks.mp3' };
     // The your-turn chime plays softer than the card sounds.
     const TURN_ALERT_GAIN = 0.08; // a faint cue, well under the card sounds
 
@@ -7230,6 +7232,18 @@ video {
             silent.start(0);
           } catch (e) {}
         };
+        // Effect clips (§ Owner effects: lion roar, ghost's BOO, fireworks)
+        // load a few seconds after start-up, off the critical path.
+        this.clipBuffers = new Map();
+        setTimeout(() => Object.entries(EFFECT_CLIPS).forEach(([name, src]) => {
+          fetch(src).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+            .then(data => new Promise((resolve, reject) => {
+              const p = this.ctx.decodeAudioData(data, resolve, reject);
+              if (p && p.then) p.then(resolve, reject);
+            }))
+            .then(buffer => this.clipBuffers.set(name, buffer))
+            .catch(() => {});
+        }), 3000);
         ['pointerdown', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, unlock, { capture: true, passive: true }));
         document.addEventListener('visibilitychange', () => { if (!document.hidden) unlock(); });
       }
@@ -7412,7 +7426,24 @@ video {
           o.connect(g).connect(out); o.start(t0 + at); o.stop(t0 + at + dur + 0.02);
         };
         const scatter = (n, from, to, fn) => { for (let i = 0; i < n; i++) fn(from + Math.random() * (to - from), i); };
-        return { noise, tone, scatter };
+        const clip = (name, at = 0, level = 1) => this.playEffectClip(name, at, level);
+        return { noise, tone, scatter, clip };
+      }
+      /* An effect's recorded clip (EFFECT_CLIPS), `delay` seconds from now,
+         at the card sounds' volume. Silent until it has loaded. */
+      playEffectClip(name, delay = 0, level = 1) {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return false;
+        const buffer = this.clipBuffers && this.clipBuffers.get(name);
+        const vol = this.riffleEl.volume;
+        if (!buffer || !vol) return false;
+        try {
+          const src = ctx.createBufferSource(); src.buffer = buffer;
+          const g = ctx.createGain(); g.gain.value = vol * level;
+          src.connect(g).connect(ctx.destination);
+          src.start(ctx.currentTime + Math.max(0, delay));
+          return true;
+        } catch (e) { return false; }
       }
       playBurnSound(effectId = 'default') {
         const kit = this._burnKit();
@@ -7683,11 +7714,12 @@ video {
         k.scatter(8, 0.76, 1.2, (at) => k.noise({ at, dur: 0.03, type: 'highpass', f0: 3800, level: 0.16 }));
         k.tone({ at: 1.3, dur: 0.18, f0: 400, f1: 70, level: 0.35 });
       },
-      // Pumpkin Joker: a spooky wobble, then the ghost's rising BOO.
+      // Pumpkin Joker: a spooky wobble as the pumpkin shakes, a whoosh as
+      // the ghost bursts out, and the ghost's own voice: "Boooo!"
       'joker-halloween': (k) => {
-        k.tone({ dur: 0.55, type: 'triangle', f0: 330, f1: 220, level: 0.14, vibrato: 14, attack: 0.08 });
-        k.tone({ at: 0.58, dur: 0.55, f0: 140, f1: 260, level: 0.3, vibrato: 10, attack: 0.05 });
-        k.noise({ at: 0.58, dur: 0.4, type: 'bandpass', f0: 500, f1: 900, q: 2, level: 0.18, attack: 0.05 });
+        k.tone({ dur: 0.5, type: 'triangle', f0: 330, f1: 220, level: 0.12, vibrato: 14, attack: 0.08 });
+        k.noise({ at: 0.46, dur: 0.3, type: 'bandpass', f0: 400, f1: 1800, q: 1.2, level: 0.2, attack: 0.06 });
+        if (!k.clip('boo', 0.5, 0.6)) k.tone({ at: 0.55, dur: 0.55, f0: 140, f1: 260, level: 0.3, vibrato: 10, attack: 0.05 });
       },
       // Santa Joker: sleigh bells and three deep HO notes.
       'joker-christmas': (k) => {
@@ -11931,48 +11963,155 @@ video {
           { duration: bfxRand(3000, 4200), delay: bfxRand(0, 1600), easing: 'linear' });
       }
     }
-    // Lion's Roar: a lion's head surges in, opens its jaws and roars, sending
-    // gold shockwaves across the screen.
+    // ---- § Owner effects (v257): the owner's own art, cut into layers ----
+    // tools/make-owner-effects.py cuts the pictures (docs/avatar-art/src) into
+    // art/effects/*.webp with real transparency and prints OWNER_FX_LAYOUT:
+    // each layer's box [x, y, w, h] in its picture's 1000-unit square. An
+    // effect draws the picture in a square of side S and moves the layers.
+    // Used by Lion's Roar and Fireworks (victories), the Pumpkin Joker (Joker
+    // effect), the Jack-o'-Lantern avatar and the Cobweb card back. Sounds:
+    // EFFECT_CLIPS (tools/make-effect-sounds.py). Bump OWNER_FX_V when the
+    // files are rebuilt (art caches a day).
+    const OWNER_FX_V = 257;
+    const OWNER_FX_LAYOUT = {"pumpkinAvatar":{"eyes":[[364,510],[653,549]],"mouth":[492,715],"embers":[[172,205],[835,282],[95,321],[910,397],[905,851]]},"pumpkin":{"ghost":[525.5,98.9,343.7,354.1],"boo":[102.9,104.5,437.8,338.1],"pumpkin":[234.4,326.2,567.8,535.9],"bg":[59.0,69.4,885.2,873.2]},"lion":{"head":[217.7,171.5,578.1,638.8],"bg":[0.0,18.3,1000.0,927.4]},"fireworks":{"red":[40.7,63.8,422.6,423.4],"blue":[546.3,83.7,405.1,407.5],"purple":[27.9,434.6,399.5,407.5],"green":[598.1,458.5,379.6,403.5],"gold":[0.0,14.4,1000.0,962.5],"centres":{"red":[251,275],"blue":[750,287],"purple":[223,638],"green":[801,662],"gold":[501,501]}}};
+    const OWNER_FX_FILES = {
+      'victory-lion': ['lion-bg', 'lion-head'],
+      'victory-fireworks': ['fireworks-gold', 'fireworks-red', 'fireworks-blue', 'fireworks-purple', 'fireworks-green'],
+      'joker-halloween': ['pumpkin-bg', 'pumpkin-pumpkin', 'pumpkin-ghost', 'pumpkin-boo']
+    };
+    const ownerFxSrc = (name) => `art/effects/${name}.webp?v=${OWNER_FX_V}`;
+    // Fetch an effect's layers ahead of time (every player's equipped
+    // effects at the table), so the first play isn't waiting on the network.
+    const ownerFxLoaded = new Set();
+    function preloadOwnerFx(ids) {
+      (ids || []).forEach(id => (OWNER_FX_FILES[id] || []).forEach(name => {
+        if (ownerFxLoaded.has(name)) return;
+        ownerFxLoaded.add(name);
+        try { const img = new Image(); img.decoding = 'async'; img.src = ownerFxSrc(name); } catch (e) {}
+      }));
+    }
+    // One layer: `box` from the layout, in the square of side S at (ox, oy).
+    function ofxLayer(host, name, box, S, ox, oy) {
+      const [x, y, w, h] = box;
+      return bfxAdd(host, `<img src="${ownerFxSrc(name)}" alt="" draggable="false" style="display:block;width:100%;height:100%;pointer-events:none">`,
+        ox + (x + w / 2) * S / 1000, oy + (y + h / 2) * S / 1000, w * S / 1000, h * S / 1000);
+    }
+    // Timed keyframes: each step eases on its own, so the beats land on time
+    // (a whole-animation ease-out would bring every beat forward).
+    const ofxEase = (frames, easing = 'ease-out') => frames.map(f => ({ easing, ...f }));
+    const ofxPt = (S, ox, oy, [x, y]) => [ox + x * S / 1000, oy + y * S / 1000];
+    // A soft dark pool behind a victory, so its glow reads on any table.
+    function ofxVignette(layer, W, H, tint, duration) {
+      const el = bfxAdd(layer, `<div style="width:100%;height:100%;background:radial-gradient(circle at 50% 44%, ${tint}, rgba(2,6,23,.35) 55%, transparent 80%)"></div>`, W / 2, H / 2, W, H);
+      bfxAnimate(el, [{ opacity: 0 }, { opacity: 1, offset: .1 }, { opacity: 1, offset: .82 }, { opacity: 0 }], { duration, easing: 'linear' });
+    }
+    // A cut gem that spins out (Lion's Roar crystals).
+    const OFX_GEM = (c) => `<svg width="100%" height="100%" viewBox="0 0 20 24"><path d="M10 0 20 8 10 24 0 8Z" fill="${c}" stroke="#fff7d6" stroke-width="1"/><path d="M10 0 14 8 10 24 6 8Z" fill="#fff" opacity=".45"/></svg>`;
+
+    // Lion's Roar (the owner's art): the lion's head surges in; with the roar
+    // its ring of gold light bursts out behind it, shockwaves and gold dust
+    // blast across the screen, crystals spin away, his eyes flash and the
+    // table shakes, while the head shakes with the roar (audio: lion-roar).
     function vfxLion(layer) {
       const [W, H] = vfxSize(layer);
-      const size = Math.min(250, W * .62), cx = W / 2, cy = H * .42, roarAt = 650;
-      const mane = Array.from({ length: 16 }, (_, i) => `<path d="M80 80 L${(80 + Math.cos((i / 16) * Math.PI * 2 - .2) * 74).toFixed(1)} ${(80 + Math.sin((i / 16) * Math.PI * 2 - .2) * 74).toFixed(1)} L${(80 + Math.cos((i / 16) * Math.PI * 2 + .2) * 74).toFixed(1)} ${(80 + Math.sin((i / 16) * Math.PI * 2 + .2) * 74).toFixed(1)}Z" fill="${i % 2 ? '#b45309' : '#d97706'}"/>`).join('');
-      const head = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 160 160">${mane}<circle cx="80" cy="80" r="60" fill="#c2410c"/>
-        <circle cx="42" cy="40" r="11" fill="#f59e0b" stroke="#7c2d12" stroke-width="2.5"/><circle cx="118" cy="40" r="11" fill="#f59e0b" stroke="#7c2d12" stroke-width="2.5"/>
-        <ellipse cx="80" cy="84" rx="46" ry="50" fill="#fbbf24" stroke="#7c2d12" stroke-width="2.5"/>
-        <path d="M54 66l16 5M106 66l-16 5" stroke="#7c2d12" stroke-width="4" stroke-linecap="round"/>
-        <ellipse cx="62" cy="78" rx="6" ry="5" fill="#1c1917"/><ellipse cx="98" cy="78" rx="6" ry="5" fill="#1c1917"/><circle cx="64" cy="76" r="1.8" fill="#fff"/><circle cx="100" cy="76" r="1.8" fill="#fff"/>
-        <ellipse cx="80" cy="108" rx="24" ry="17" fill="#fde68a"/>
-        <path d="M70 94h20l-10 10Z" fill="#7c2d12"/><path d="M80 104v6M66 112q14 8 28 0" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`, cx, cy, size, size);
-      bfxAnimate(head, [{ transform: 'scale(.2) rotate(-10deg)', opacity: 0 }, { transform: 'scale(1.08) rotate(2deg)', opacity: 1, offset: .14 },
-        { transform: 'scale(1) rotate(0)', opacity: 1, offset: .2 }, { transform: 'scale(1.12)', opacity: 1, offset: .26 }, { transform: 'scale(1.1) translateX(-3px)', opacity: 1, offset: .32 },
-        { transform: 'scale(1.1) translateX(3px)', opacity: 1, offset: .38 }, { transform: 'scale(1.05)', opacity: 1, offset: .82 }, { transform: 'scale(.9) translateY(-20px)', opacity: 0 }], { duration: 3200, easing: 'ease-out' });
-      // The open jaws, over the muzzle.
-      const jaw = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 60 44"><path d="M4 6Q30 -2 56 6Q54 40 30 42Q6 40 4 6Z" fill="#7f1d1d" stroke="#451a03" stroke-width="3"/><path d="M12 7l4 10 4-9M40 8l4 9 4-10" fill="#fff"/><path d="M14 38l4-9 4 10M38 39l4-10 4 9" fill="#fff"/><ellipse cx="30" cy="30" rx="10" ry="6" fill="#f472b6"/></svg>`, cx, cy + size * .22, size * .34, size * .26);
-      jaw.style.transformOrigin = '50% 0%';
-      bfxAnimate(jaw, [{ transform: 'scale(.6,0)', opacity: 0 }, { transform: 'scale(.6,0)', opacity: 1, offset: .01 }, { transform: 'scale(1.05,1.1)', opacity: 1, offset: .08 },
-        { transform: 'scale(1,1)', opacity: 1, offset: .75 }, { transform: 'scale(.8,.2)', opacity: 0 }], { duration: 2000, delay: roarAt - 60, easing: 'ease-out' });
-      [0, 200, 400].forEach((d, i) => {
-        const ring = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;border:${6 - i * 1.5}px solid #fbbf24;box-shadow:0 0 18px rgba(251,191,36,.8),inset 0 0 18px rgba(251,191,36,.6)"></div>`, cx, cy + size * .25, size * .5, size * .5);
-        bfxAnimate(ring, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(.3)', opacity: 1, offset: .02 }, { transform: 'scale(4.5)', opacity: 0 }], { duration: 1100, delay: roarAt + d, easing: 'cubic-bezier(.2,.7,.3,1)' });
+      const S = Math.min(W * 1.04, H * .72, 640), cx = W / 2, cy = H * .44, ox = cx - S / 2, oy = cy - S / 2;
+      const L = OWNER_FX_LAYOUT.lion, roarAt = 450, total = 3500;
+      audio.playEffectClip('lion-roar', 0, 0.55); // about as loud as the other effects (peaks ~0.5)
+      ofxVignette(layer, W, H, 'rgba(30,16,2,.78)', total);
+      // Rays turning slowly behind everything.
+      const rays = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:repeating-conic-gradient(rgba(253,224,71,.30) 0 7deg,transparent 7deg 18deg);-webkit-mask-image:radial-gradient(circle,#000 20%,transparent 68%);mask-image:radial-gradient(circle,#000 20%,transparent 68%)"></div>', cx, cy, S * 1.7, S * 1.7);
+      bfxAnimate(rays, [{ transform: 'scale(.5) rotate(0deg)', opacity: 0 }, { transform: 'scale(1) rotate(25deg)', opacity: 1, offset: .2 }, { transform: 'scale(1.05) rotate(110deg)', opacity: .9, offset: .85 }, { transform: 'scale(1.1) rotate(130deg)', opacity: 0 }], { duration: total - roarAt, delay: roarAt, easing: 'linear' });
+      // The ring of light bursts out with the roar and pulses once more.
+      const bg = ofxLayer(layer, 'lion-bg', L.bg, S, ox, oy);
+      bfxAnimate(bg, ofxEase([{ transform: 'scale(.45)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: .1 }, { transform: 'scale(1)', opacity: 1, offset: .18 },
+        { transform: 'scale(1.05)', opacity: 1, offset: .4 }, { transform: 'scale(1)', opacity: 1, offset: .55 }, { transform: 'scale(1.02)', opacity: 1, offset: .85 }, { transform: 'scale(1.12)', opacity: 0 }]),
+        { duration: total - roarAt, delay: roarAt, easing: 'linear' });
+      // Shockwaves from his mouth.
+      const [mx, my] = ofxPt(S, ox, oy, [500, 560]);
+      [0, 220, 440].forEach((d, i) => {
+        const ring = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;border:${6 - i * 1.5}px solid #fde047;box-shadow:0 0 18px rgba(251,191,36,.85),inset 0 0 18px rgba(251,191,36,.6)"></div>`, mx, my, S * .3, S * .3);
+        bfxAnimate(ring, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(.3)', opacity: 1, offset: .02 }, { transform: 'scale(6)', opacity: 0 }], { duration: 1200, delay: roarAt + d, easing: 'cubic-bezier(.2,.7,.3,1)' });
       });
-      for (let i = 0; i < 26; i++) {
-        const a = (i / 26) * Math.PI * 2, d = bfxRand(.6, 1) * Math.max(W, H) * .55;
-        const dust = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:#fde68a;box-shadow:0 0 6px #fbbf24"></div>', cx, cy + size * .25, 6, 6);
-        bfxAnimate(dust, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .02 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: 0 }], { duration: bfxRand(800, 1200), delay: roarAt + bfxRand(0, 300), easing: 'ease-out' });
+      // Gold dust and crystals blasting out.
+      for (let i = 0; i < 30; i++) {
+        const a = (i / 30) * Math.PI * 2 + bfxRand(-.1, .1), d = bfxRand(.6, 1) * Math.max(W, H) * .6;
+        const dust = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:#fde68a;box-shadow:0 0 8px #fbbf24"></div>', mx, my, 6, 6);
+        bfxAnimate(dust, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .02 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: 0 }], { duration: bfxRand(900, 1300), delay: roarAt + bfxRand(0, 300), easing: 'ease-out' });
       }
-      const word = bfxAdd(layer, `<div class="vfx-chop-text" style="font-size:${Math.min(46, W * .11)}px;display:flex;align-items:center;justify-content:center;width:100%;height:100%">ROAR!</div>`, cx, cy - size * .66, 240, 60);
-      bfxAnimate(word, [{ transform: 'scale(.3) rotate(-6deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(-6deg)', opacity: 1, offset: .15 }, { transform: 'scale(1) rotate(-6deg)', opacity: 1, offset: .8 }, { transform: 'scale(1.1) rotate(-6deg) translateY(-12px)', opacity: 0 }], { duration: 1700, delay: roarAt });
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2 + bfxRand(-.2, .2), d = bfxRand(.45, .75) * Math.max(W, H), s = bfxRand(14, 26);
+        const gem = bfxAdd(layer, OFX_GEM(i % 3 ? '#facc15' : '#fde68a'), cx + Math.cos(a) * S * .3, cy + Math.sin(a) * S * .3, s, s * 1.2);
+        bfxAnimate(gem, [{ transform: 'translate(0,0) scale(0) rotate(0deg)', opacity: 0 }, { transform: 'translate(0,0) scale(1) rotate(40deg)', opacity: 1, offset: .08 },
+          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) scale(.8) rotate(${bfxRand(300, 700)}deg)`, opacity: 0 }], { duration: bfxRand(1300, 1700), delay: roarAt + bfxRand(0, 200), easing: 'cubic-bezier(.15,.7,.4,1)' });
+      }
+      // The head: surges in, roars (shaking), holds, rises away.
+      const head = ofxLayer(layer, 'lion-head', L.head, S, ox, oy);
+      head.style.filter = 'drop-shadow(0 10px 22px rgba(0,0,0,.55))';
+      const shake = [.16, .18, .2, .22, .24, .26, .28, .3, .32, .34].map((o, i) => ({ transform: `translate(${i % 2 ? 5 : -5}px,${i % 3 - 1}px) scale(1.1) rotate(${i % 2 ? 1.5 : -1.5}deg)`, opacity: 1, offset: o }));
+      bfxAnimate(head, ofxEase([{ transform: 'scale(.25) rotate(-8deg)', opacity: 0 }, { transform: 'scale(1.1) rotate(2deg)', opacity: 1, offset: .1 }, { transform: 'scale(1) rotate(0deg)', opacity: 1, offset: .128 },
+        { transform: 'scale(1.12) rotate(0deg)', opacity: 1, offset: .145 }, ...shake, { transform: 'scale(1.06) rotate(0deg)', opacity: 1, offset: .45 },
+        { transform: 'scale(1.03) rotate(0deg)', opacity: 1, offset: .86 }, { transform: 'scale(.95) translateY(-24px)', opacity: 0 }]), { duration: total, easing: 'linear' });
+      // His eyes flash as he roars.
+      [[431, 393], [586, 393]].forEach((p, i) => {
+        const [x, y] = ofxPt(S, ox, oy, p);
+        const glint = bfxAdd(layer, bfxStar4('#ffffff'), x, y, S * .09, S * .09);
+        bfxAnimate(glint, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(45deg)', opacity: 1, offset: .35 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 600, delay: roarAt + 80 + i * 60 });
+      });
       setTimeout(() => {
         const table = document.getElementById('gameTable');
-        if (layer.isConnected && table) { table.classList.add('animate-screen-shake'); setTimeout(() => table.classList.remove('animate-screen-shake'), 400); }
+        if (layer.isConnected && table) { table.classList.add('animate-screen-shake'); setTimeout(() => table.classList.remove('animate-screen-shake'), 450); }
       }, roarAt);
+    }
+    // Fireworks (the owner's art): five rockets streak up and burst in turn,
+    // gold in the middle first, then red, blue, purple and green, each
+    // flashing open, glittering and drifting down as it fades (audio:
+    // fireworks, the same beats: FIREWORK_BURSTS in tools/make-effect-sounds.py).
+    const FIREWORK_BURSTS = [['gold', 450], ['red', 750], ['blue', 950], ['purple', 1200], ['green', 1400]];
+    function vfxFireworks(layer) {
+      const [W, H] = vfxSize(layer);
+      const S = Math.min(W * 1.06, H * .76, 720), cx = W / 2, cy = H * .42, ox = cx - S / 2, oy = cy - S / 2;
+      const F = OWNER_FX_LAYOUT.fireworks, total = 3500;
+      const tones = { gold: '#fde047', red: '#f87171', blue: '#60a5fa', purple: '#e879f9', green: '#34d399' };
+      audio.playEffectClip('fireworks', 0, 0.5);
+      ofxVignette(layer, W, H, 'rgba(8,6,30,.72)', total);
+      FIREWORK_BURSTS.forEach(([name, at], i) => {
+        const [bx, by] = ofxPt(S, ox, oy, F.centres[name]);
+        // The rocket's trail.
+        const rise = Math.min(420, at - 20);
+        const trail = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:3px;background:linear-gradient(to top,transparent,${tones[name]} 70%,#fff);box-shadow:0 0 10px ${tones[name]}"></div>`, bx, by, 5, 34);
+        bfxAnimate(trail, [{ transform: `translate(${(i % 2 ? -1 : 1) * 18}px,${H - by + 40}px)`, opacity: 0 }, { transform: `translate(${(i % 2 ? -1 : 1) * 12}px,${(H - by) * .7}px)`, opacity: 1, offset: .15 },
+          { transform: 'translate(0,0)', opacity: 1, offset: .95 }, { transform: 'translate(0,0) scale(.3)', opacity: 0 }], { duration: rise, delay: at - rise, easing: 'cubic-bezier(.3,.6,.5,1)' });
+        // The flash as it opens.
+        const flash = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff,${tones[name]}88 35%,transparent 70%)"></div>`, bx, by, S * (name === 'gold' ? .7 : .38), S * (name === 'gold' ? .7 : .38));
+        bfxAnimate(flash, [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .25 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 420, delay: at, easing: 'ease-out' });
+        // The burst itself: opens bright, glitters, drifts down and fades.
+        const burst = ofxLayer(layer, `fireworks-${name}`, F[name], S, ox, oy);
+        burst.style.transformOrigin = `${((F.centres[name][0] - F[name][0]) / F[name][2] * 100).toFixed(1)}% ${((F.centres[name][1] - F[name][1]) / F[name][3] * 100).toFixed(1)}%`;
+        const life = total - at;
+        bfxAnimate(burst, [{ transform: 'scale(.12)', opacity: 0, filter: 'brightness(2.2)' }, { transform: 'scale(.92)', opacity: 1, filter: 'brightness(1.8)', offset: .07 },
+          { transform: 'scale(1.02)', opacity: 1, filter: 'brightness(1.05)', offset: .18 }, { transform: 'scale(1.05) translateY(0)', opacity: 1, filter: 'brightness(1)', offset: .62 },
+          { transform: `scale(1.08) translateY(${S * .05}px)`, opacity: 0, filter: 'brightness(.8)' }], { duration: life, delay: at, easing: 'cubic-bezier(.2,.8,.3,1)' });
+        // Twinkles round it.
+        const r = (name === 'gold' ? .36 : .16) * S;
+        for (let j = 0; j < (name === 'gold' ? 9 : 5); j++) {
+          const a = bfxRand(0, Math.PI * 2), d = bfxRand(.3, 1) * r, s = bfxRand(10, 20);
+          const tw = bfxAdd(layer, bfxStar4(j % 2 ? '#ffffff' : tones[name]), bx + Math.cos(a) * d, by + Math.sin(a) * d, s, s);
+          bfxAnimate(tw, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.2) rotate(45deg)', opacity: 1, offset: .4 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 500, delay: at + bfxRand(200, 1500) });
+        }
+      });
+      // Glitter falling after the show.
+      const colours = Object.values(tones);
+      for (let i = 0; i < 34; i++) {
+        const x = bfxRand(W * .08, W * .92), s = bfxRand(3, 6);
+        const bit = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:${colours[i % colours.length]};box-shadow:0 0 6px ${colours[i % colours.length]}"></div>`, x, oy + bfxRand(.1, .5) * S, s, s);
+        bfxAnimate(bit, [{ transform: 'translate(0,0)', opacity: 0 }, { opacity: 1, offset: .15 }, { transform: `translate(${bfxRand(-20, 20)}px,${bfxRand(.25, .45) * H}px)`, opacity: 0 }], { duration: bfxRand(1400, 1900), delay: bfxRand(1400, 1900), easing: 'ease-in' });
+      }
     }
     function playShapeVictoryEffect(effect) {
       const layer = document.getElementById('victoryFxLayer');
       if (!layer) return false;
       const run = { 'victory-sparklers': vfxSparklers, 'victory-stars': vfxFiveStars, 'victory-karate': vfxKarate,
-        'victory-trophy': vfxTrophy, 'victory-rocket': vfxRocket, 'victory-origami': vfxOrigamiFlock, 'victory-lion': vfxLion }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
+        'victory-trophy': vfxTrophy, 'victory-rocket': vfxRocket, 'victory-origami': vfxOrigamiFlock, 'victory-lion': vfxLion, 'victory-fireworks': vfxFireworks }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
       if (!run) return false;
       run(layer);
       return true;
@@ -12004,10 +12143,6 @@ video {
         return;
       }
       if (typeof confetti !== 'function') return;
-      if (effect === 'victory-fireworks') {
-        [[.2,.45],[.5,.3],[.8,.48]].forEach(([x,y], i) => setTimeout(() => confetti({ particleCount:90, spread:100, startVelocity:42, origin:{x,y}, colors:['#fde047','#c084fc','#22d3ee','#ffffff'] }), i * 260));
-        return;
-      }
       if (effect === 'victory-confetti') {
         confetti({ particleCount:260, spread:150, startVelocity:48, origin:{y:.58}, colors:['#f59e0b','#ec4899','#22d3ee','#10b981','#ffffff'] });
         return;
@@ -15943,6 +16078,8 @@ video {
       fitHandToTable();
       markHandStrip();
       positionDirectionBadge();
+      // The owner-art effects anyone at the table might play: fetch their layers early.
+      if (state.phase && state.phase !== 'SETUP') preloadOwnerFx([equippedCosmetics.victoryEffect, equippedCosmetics.jokerEffect, ...(state.players || []).flatMap(p => [p?.cosmetics?.victoryEffect, p?.cosmetics?.jokerEffect])]);
       renderGauntletHud();
       renderSeriesHud();
     }
@@ -19405,6 +19542,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v257: [
+        ['🦁', "Lion's Roar has brand-new art: the lion surges in and roars, with a real roar, gold shockwaves and flying crystals.", WN_KEY],
+        ['🎆', 'Fireworks is redrawn: five rockets whistle up and burst in gold, red, blue, purple and green, with the bangs and crackle to match.', WN_KEY],
+        ['🎃', 'Halloween refresh: the Pumpkin Joker ghost bursts out with a spooky "Boooo!", the Jack-o\'-Lantern avatar flickers with candlelight, and the Cobweb card back is redrawn.', WN_KEY]
+      ],
       v256: [
         ['🏆', 'Beating the Boss Gauntlet again on a later day now pays 200 Diamonds.', WN_KEY],
         ['✨', 'Burn King, Chaos Jester and The ShitHead avatars now move: glowing eyes, flickering flames, glinting gems and a gleam across the shades.', WN_KEY],
@@ -20812,7 +20954,7 @@ video {
     const SEASONAL_BACK_ART = {
       "valentine": "art/backs/valentine.svg",
       "summer": "art/backs/summer.svg",
-      "halloween": "art/backs/halloween.svg",
+      "halloween": "art/backs/halloween-cobweb.webp?v=257", // the owner's Cobweb art (v257)
       "diwali": "art/backs/diwali.svg",
       "christmas": "art/backs/christmas.svg",
       "newyear": "art/backs/newyear.svg",
@@ -21467,21 +21609,41 @@ video {
       jfxWord(host, g, 'WILD!', { color: '#c084fc', delay: 760 });
     }
     // ---- Seasonal ----
-    // Halloween, Pumpkin Joker: a grinning jack-o'-lantern in a jester hat,
-    // then a ghost bursts out of it: BOO!
+    // Halloween, Pumpkin Joker (the owner's art, § Owner effects): purple
+    // mist swirls in, the grinning jester pumpkin pops up and shakes, then a
+    // ghost bursts out of it with a "Boooo!" (audio: boo) as BOO! slams in.
     function jfxHalloween(host, g) {
-      jfxScrim(host, 'rgba(67,20,7,.55)');
-      const k = g.k;
-      const pumpkin = sfxSvg(120, 130, `<g transform="translate(14 0) scale(.92)">${jfxHatBody('#7c3aed', '#f97316', '#16a34a')}</g>
-        <ellipse cx="60" cy="92" rx="54" ry="38" fill="#f97316" stroke="#7c2d12" stroke-width="3"/><path d="M40 58c-8 20-8 50 0 70M80 58c8 20 8 50 0 70M60 55v76" stroke="#c2410c" stroke-width="3" fill="none"/>
-        <path class="jfx-flicker" d="M32 82l12-12 12 12ZM64 82l12-12 12 12Z" fill="#fde047"/>
-        <path class="jfx-flicker" d="M28 100q32 24 64 0l-8 6-6-6-7 7-7-7-7 7-7-7-6 6Z" fill="#fde047"/>`);
-      jfxHero(host, g, pumpkin, 150, 162, { y: g.cy + 10 * k });
-      const ghost = bfxAdd(host, SFX_GHOST, g.cx, g.cy, 80 * k, 96 * k);
-      bfxAnimate(ghost, [{ transform: 'translate(0,0) scale(.3)', opacity: 0, offset: 0 }, { transform: 'translate(0,0) scale(.3)', opacity: 0, offset: .38 },
-        { transform: `translate(${80 * k}px,${-110 * k}px) scale(1.5) rotate(-8deg)`, opacity: 1, offset: .55 }, { transform: `translate(${96 * k}px,${-124 * k}px) scale(1.6) rotate(6deg)`, opacity: 1, offset: .8 },
-        { transform: `translate(${140 * k}px,${-180 * k}px) scale(1.7)`, opacity: 0 }], { duration: JOKER_FX_MS - 40, easing: 'ease-out' });
-      jfxWord(host, g, 'BOO!', { x: g.cx - 60 * k, y: g.cy - 120 * k, color: '#a3e635', delay: 620, size: 50, tilt: -10 });
+      jfxScrim(host, 'rgba(59,7,100,.55)');
+      const P = OWNER_FX_LAYOUT.pumpkin, T = JOKER_FX_MS - 60;
+      const S = Math.min(g.W * .98, 400 * g.k), ox = g.cx - S / 2, oy = g.cy - S / 2;
+      const bg = ofxLayer(host, 'pumpkin-bg', P.bg, S, ox, oy);
+      bfxAnimate(bg, ofxEase([{ transform: 'scale(.85) rotate(-10deg)', opacity: 0 }, { transform: 'scale(1) rotate(-2deg)', opacity: 1, offset: .22 },
+        { transform: 'scale(1.02) rotate(3deg)', opacity: 1, offset: .82 }, { transform: 'scale(1.06) rotate(5deg)', opacity: 0 }]), { duration: T, easing: 'linear' });
+      const pumpkin = ofxLayer(host, 'pumpkin-pumpkin', P.pumpkin, S, ox, oy);
+      pumpkin.style.transformOrigin = '50% 90%';
+      bfxAnimate(pumpkin, ofxEase([{ transform: 'scale(.2) rotate(-12deg)', opacity: 0 }, { transform: 'scale(1.12,1.06) rotate(3deg)', opacity: 1, offset: .16 }, { transform: 'scale(1) rotate(0deg)', opacity: 1, offset: .23 },
+        { transform: 'rotate(-6deg)', opacity: 1, offset: .27 }, { transform: 'rotate(6deg)', opacity: 1, offset: .31 }, { transform: 'rotate(-5deg)', opacity: 1, offset: .34 },
+        { transform: 'scale(1.1,.88) rotate(0deg)', opacity: 1, offset: .37 }, { transform: 'scale(.95,1.08)', opacity: 1, offset: .42 }, { transform: 'scale(1)', opacity: 1, offset: .5 },
+        { transform: 'scale(1)', opacity: 1, offset: .84 }, { transform: 'scale(.9) translateY(10px)', opacity: 0 }]), { duration: T, easing: 'linear' });
+      // The ghost flies out of the pumpkin's top to its place, then floats.
+      const ghost = ofxLayer(host, 'pumpkin-ghost', P.ghost, S, ox, oy);
+      const dx = (518 - (P.ghost[0] + P.ghost[2] / 2)) * S / 1000, dy = (430 - (P.ghost[1] + P.ghost[3] / 2)) * S / 1000;
+      bfxAnimate(ghost, ofxEase([{ transform: `translate(${dx}px,${dy}px) scale(.2)`, opacity: 0 }, { transform: `translate(${dx}px,${dy}px) scale(.2)`, opacity: 0, offset: .36 },
+        { transform: `translate(${dx * .6}px,${dy * .6}px) scale(.5) rotate(-12deg)`, opacity: 1, offset: .4 }, { transform: 'translate(0,0) scale(1.14) rotate(-5deg)', opacity: 1, offset: .5 },
+        { transform: 'translate(0,-4px) scale(1) rotate(3deg)', opacity: 1, offset: .58 }, { transform: 'translate(0,4px) rotate(-3deg)', opacity: 1, offset: .7 },
+        { transform: 'translate(0,-3px) rotate(2deg)', opacity: 1, offset: .84 }, { transform: 'translate(14px,-26px) rotate(6deg)', opacity: 0 }]), { duration: T, easing: 'linear' });
+      const boo = ofxLayer(host, 'pumpkin-boo', P.boo, S, ox, oy);
+      bfxAnimate(boo, ofxEase([{ transform: 'scale(.3) rotate(-14deg)', opacity: 0 }, { transform: 'scale(.3) rotate(-14deg)', opacity: 0, offset: .42 },
+        { transform: 'scale(1.35) rotate(-4deg)', opacity: 1, offset: .5 }, { transform: 'scale(.94) rotate(1deg)', opacity: 1, offset: .56 }, { transform: 'scale(1.04) rotate(0deg)', opacity: 1, offset: .62 },
+        { transform: 'scale(1) rotate(0deg)', opacity: 1, offset: .84 }, { transform: 'scale(1.06) translateY(-8px)', opacity: 0 }]), { duration: T, easing: 'linear' });
+      // Green sparkles where the ghost comes out.
+      const [sx, sy] = ofxPt(S, ox, oy, [560, 420]);
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2, d = bfxRand(.12, .3) * S, s = bfxRand(10, 18);
+        const el = bfxAdd(host, bfxStar4(i % 2 ? '#d9f99d' : '#c084fc'), sx, sy, s, s);
+        bfxAnimate(el, [{ transform: 'translate(0,0) scale(0)', opacity: 0 }, { transform: `translate(${Math.cos(a) * d * .6}px,${Math.sin(a) * d * .6}px) scale(1.2) rotate(45deg)`, opacity: 1, offset: .4 },
+          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) scale(0) rotate(90deg)`, opacity: 0 }], { duration: 600, delay: 560 + bfxRand(0, 120), easing: 'ease-out' });
+      }
     }
     // Christmas, Santa Joker: Santa in a jester hat: HO HO HO! in the snow.
     function jfxChristmas(host, g) {
@@ -22063,6 +22225,25 @@ video {
       holder.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
       holder.innerHTML = `<defs>${defs}</defs>`;
       document.body.appendChild(holder);
+    })();
+    // Jack-o'-Lantern (v257, the owner's art, § Owner effects): the picture in
+    // the shared tile; the candle inside flickers through the eyes and grin,
+    // a warm glow breathes and embers drift up (one loop, paused offscreen,
+    // still with Reduce Motion). Uses #levelAvatarDefs' gradients and clip.
+    (function installPumpkinAvatar() {
+      const M = OWNER_FX_LAYOUT.pumpkinAvatar;
+      let motion = '';
+      M.eyes.forEach(([x, y], i) => { motion += `<circle class="av-lx-flicker" style="animation-delay:${(i * 0.23).toFixed(2)}s" cx="${x}" cy="${y}" r="120" fill="url(#lx-flame)"/>`; });
+      motion += `<ellipse class="av-lx-flicker" style="animation-delay:.51s" cx="${M.mouth[0]}" cy="${M.mouth[1]}" rx="230" ry="130" fill="url(#lx-flame)"/>`;
+      M.eyes.forEach(([x, y]) => { motion += `<circle class="av-lx-eye" cx="${x}" cy="${y}" r="70" fill="url(#lx-eye-fire)"/>`; });
+      M.embers.forEach(([x, y], i) => { motion += `<circle class="av-gx-spark" style="animation-delay:${(i * 0.9).toFixed(1)}s" cx="${x}" cy="${y + 120}" r="${9 + (i % 2) * 4}" fill="${i % 2 ? '#fdba74' : '#fb923c'}"/>`; });
+      AVATAR_ART['avatar-halloween'] = {
+        photo: true, tone: 'pumpkin', animated: true,
+        art: `<rect width="1000" height="1000" rx="234" fill="#1a0a04"/>`
+          + `<image href="art/avatars/halloween-pumpkin.webp?v=${OWNER_FX_V}" width="1000" height="1000" preserveAspectRatio="xMidYMid slice" style="clip-path:inset(0 round 234px)"/>`
+          + `<g clip-path="url(#lx-tile)">${motion}</g>`
+          + `<rect x="12" y="12" width="976" height="976" rx="222" fill="none" stroke="#f97316" stroke-width="22" opacity=".9"/>`
+      };
     })();
     // Card backs: the art fills the back (the emblem and pattern layers hide).
     (function installLevelBackStyles() {

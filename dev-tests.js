@@ -2765,6 +2765,49 @@ async function runDevTestSuite() {
       'Trophy Lift': 2500, 'Rocket Launch': 2500, 'Origami Flock': 2500, "Lion's Roar": 2500 }, 'Victory effect prices');
   });
 
+  await test("Owner effects (v257): Lion's Roar, Fireworks, Pumpkin Joker, Jack-o'-Lantern and Cobweb use the owner's art, with their sounds", async () => {
+    const layer = document.getElementById('victoryFxLayer');
+    for (const [id, files] of Object.entries(OWNER_FX_FILES)) {
+      for (const f of files) {
+        const r = await fetch(ownerFxSrc(f), { cache: 'no-store' });
+        assertTrue(r.ok, `${f} art file exists`);
+      }
+    }
+    [['victory-lion', 2], ['victory-fireworks', 5]].forEach(([id, n]) => {
+      layer.innerHTML = '';
+      playVictoryEffect(id);
+      const imgs = [...layer.querySelectorAll('.bfx img')].map(i => i.getAttribute('src'));
+      assertEqual(imgs.length, n, `${id} draws its ${n} art layers`);
+      assertTrue(imgs.every(src => /^art\/effects\/[a-z-]+\.webp\?v=\d+$/.test(src)), `${id} layers come from art/effects`);
+      const ends = [...layer.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
+      assertTrue(ends.length > 20 && Math.max(...ends) <= 4000, `${id} is animated and ends within 4s`, Math.max(...ends));
+    });
+    layer.innerHTML = '';
+    const stage = document.createElement('div');
+    stage.style.cssText = 'position:fixed;left:0;top:0;width:380px;height:410px';
+    document.body.appendChild(stage);
+    try {
+      const host = document.createElement('div'); host.className = 'jfx-host'; stage.appendChild(host);
+      JOKER_FX['joker-halloween'](host, jfxGeom(host, true));
+      assertEqual(host.querySelectorAll('.bfx img').length, 4, 'Pumpkin Joker: mist, pumpkin, ghost and BOO! layers');
+      const ends = [...host.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
+      assertTrue(Math.max(...ends) <= JOKER_FX_MS && Math.max(...ends) > 1000, 'Pumpkin Joker ends inside JOKER_FX_MS and lasts over a second');
+      // The ghost is still hidden a third of the way in, and out by half-way (on the "Boooo!").
+      const ghost = [...host.querySelectorAll('.bfx')].find(el => /pumpkin-ghost/.test(el.innerHTML));
+      const anim = ghost.getAnimations()[0];
+      anim.pause(); anim.currentTime = 450;
+      assertTrue(Number(getComputedStyle(ghost).opacity) < .05, 'the ghost waits inside the pumpkin');
+      anim.currentTime = 760;
+      assertTrue(Number(getComputedStyle(ghost).opacity) > .95, 'the ghost is out with the BOO');
+    } finally { stage.remove(); }
+    assertEqual(Object.keys(EFFECT_CLIPS).sort(), ['boo', 'fireworks', 'lion-roar'], 'three effect clips');
+    for (const src of Object.values(EFFECT_CLIPS)) assertTrue((await fetch(src, { cache: 'no-store' })).ok, `${src} exists`);
+    assertTrue(/k\.clip\('boo'/.test(String(JOKER_SOUNDS['joker-halloween'])), "the Pumpkin Joker's sound says Boo");
+    assertTrue(/lion-roar/.test(String(vfxLion)) && /'fireworks'/.test(String(vfxFireworks)), 'the victories play their own sounds');
+    const av = AVATAR_ART['avatar-halloween'];
+    assertTrue(av.photo && av.animated && av.art.includes('art/avatars/halloween-pumpkin.webp'), "Jack-o'-Lantern is the owner's picture, animated");
+    assertTrue(/halloween-cobweb\.webp/.test(SEASONAL_BACK_ART.halloween), 'Cobweb card back is the owner\'s picture');
+  });
   await test('Premium effects (4 burns, 4 victories): the dearest of their kind, their own sounds, and nothing left behind', () => {
     const burns = ['burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava'];
     const wins = ['victory-trophy', 'victory-rocket', 'victory-origami', 'victory-lion'];
