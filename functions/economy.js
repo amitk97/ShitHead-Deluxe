@@ -33,7 +33,6 @@ const CAT = require('./catalog.json');
 Object.entries(CAT.items).forEach(([id, item]) => { item.id = id; });
 const { seasonalWindowsForYear } = require('./seasons');
 const nodeCrypto = require('crypto');
-const { DECK_SIZE } = require('./rules');
 
 const MAX_DIAMONDS = 999999;
 const AMITK_EMAIL = 'amirk2197@googlemail.com';
@@ -564,53 +563,11 @@ actions.matchFinished = async ({ uid, data }) => {
 // Scores a finished Ranked room for every seat at once (idempotent: the
 // second player's call just reads the stored result). Ratings come from the
 // server's own records, not from the room.
-// The host's phone deals, so it could deal itself a great hand. In Ranked
-// the server decides instead: it shuffles the seats and the 54 cards
-// (c_1…c_54, crypto-random) once per match and keeps them in rankedDeals
-// (server-only); the host deals exactly that and the Ranked audit checks the
-// first dealt state against it. One deal per room: a new one only once the
-// last is 10 minutes old, so a host can't keep asking until it likes one.
-const RANKED_REDEAL_MS = 10 * 60 * 1000;
-function shuffledCopy(list) {
-  const out = [...list];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = nodeCrypto.randomInt(i + 1);
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
-}
-actions.rankedDeal = async ({ uid, data }) => {
-  const code = clip(data.roomCode, 6);
-  const matchId = clip(data.matchId, 80);
-  if (!/^\d{6}$/.test(code) || !KEY_RE.test(matchId)) fail('invalid-argument', 'Bad match.');
-  const room = (await db().ref(`rooms/${code}`).once('value')).val();
-  if (!room || room.isRanked !== true) fail('failed-precondition', 'Not a Ranked room.');
-  const uids = Object.values(room.players || {}).filter(Boolean).map(p => p.uid).filter(Boolean);
-  if (uids.length < 2 || new Set(uids).size !== uids.length || !uids.includes(uid)) fail('permission-denied', 'You are not at that table.');
-  const member = num((await db().ref(`rankedMembers/${code}/${uid}`).once('value')).val(), 0);
-  if (!member) fail('permission-denied', 'You are not at that table.');
-  const ref = db().ref(`rankedDeals/${code}`);
-  let deal = null, refused = false;
-  const tx = await ref.transaction((cur) => {
-    deal = null; refused = false;
-    if (cur && cur.matchId === matchId) { deal = cur; return; } // the same match asking again
-    if (cur && Date.now() - num(cur.at) < RANKED_REDEAL_MS) { refused = true; return; }
-    deal = {
-      matchId,
-      at: Date.now(),
-      by: uid,
-      order: shuffledCopy(uids),
-      deck: shuffledCopy(Array.from({ length: DECK_SIZE }, (_, i) => `c_${i + 1}`))
-    };
-    return deal;
-  }, undefined, false);
-  if (!tx.committed && !deal) {
-    const cur = tx.snapshot.val();
-    if (cur && cur.matchId === matchId) deal = cur;
-  }
-  if (!deal) fail('resource-exhausted', refused ? 'This table was dealt a moment ago.' : 'Could not deal.');
-  return { matchId: deal.matchId, order: deal.order, deck: deal.deck };
-};
+// Legacy browsers must never receive a full shuffled deck again.
+actions.rankedDeal = async () => fail('failed-precondition', 'Ranked has changed. Return home and reopen the game.');
+const rankedServer = require('./ranked');
+actions.rankedStart = rankedServer.start;
+actions.rankedMove = rankedServer.move;
 
 // Gauntlet: five 1-bot games in a row (CAT.gauntlet.rounds: easy, easy,
 // medium, hard, boss) with 3 lives. The server keeps the run (users/{uid}/
@@ -904,31 +861,21 @@ actions.gauntlet = async ({ uid, data }) => {
 actions.rankedResult = async ({ uid, data }) => {
   const code = clip(data.roomCode, 6);
   if (!/^\d{6}$/.test(code)) fail('invalid-argument', 'Bad room.');
-  const room = (await db().ref(`rooms/${code}`).once('value')).val();
+  const room = (await db().ref(`rankedGames/${code}`).once('value')).val();
+  if (!room || room.authority !== 1) fail('failed-precondition', 'That match was not run by the Ranked server.');
   if (!room || room.isRanked !== true) fail('failed-precondition', 'Not a Ranked room.');
   const seats = Object.values(room.players || {}).filter(Boolean);
   if (seats.length < 2 || seats.length > 4) fail('failed-precondition', 'Not a Ranked table.');
   if (room.phase !== 'FINISHED' || seats.some(p => !p.uid || p.finishRank == null)) fail('failed-precondition', 'The match has not finished.');
   const uids = seats.map(p => p.uid);
   if (new Set(uids).size !== uids.length || !uids.includes(uid)) fail('permission-denied', 'You were not in that match.');
-  // A browser cannot create a scoring identity by changing the room's matchId.
-  // Bind the result and participant set to the server's original deal.
-  const deal = (await db().ref(`rankedDeals/${code}`).once('value')).val();
-  if (!deal || deal.matchId !== room.matchId || !Array.isArray(deal.order) ||
-      deal.order.length !== uids.length || [...deal.order].sort().join('|') !== [...uids].sort().join('|')) {
-    fail('failed-precondition', 'That match does not have a matching server deal.');
-  }
   // Every seat must have entered this room itself (rankedMembers is only
   // writable by that account), within the last day.
   const members = await Promise.all(uids.map(u => db().ref(`rankedMembers/${code}/${u}`).once('value').then(s => num(s.val(), 0))));
   if (members.some(at => !at || Date.now() - at > 24 * 60 * 60 * 1000)) fail('failed-precondition', 'That match could not be checked.');
-  // The Ranked audit (index.js auditRankedRoom) has checked every write to
-  // this room. While RANKED_AUDIT_ENFORCE is off it only records what it
-  // found on the result (shadow mode); on, a match with a hard finding isn't
-  // scored.
-  const auditRef = db().ref(`rankedAudit/${code}/${String(room.matchId || 'none').replace(/[.#$[\]/]/g, '_').slice(0, 200)}/counts`);
-  if (RANKED_AUDIT_ENFORCE) await new Promise(r => setTimeout(r, 1500)); // let the last write's audit land
-  const audit = (await auditRef.once('value')).val() || { hard: 0, soft: 0 };
+  // Canonical state is private and only server move transactions can change it.
+  // Legacy asynchronous room-audit counts are not the authority for these games.
+  const audit = { hard: 0, soft: 0 };
   const resultId = (room.matchId && KEY_RE.test(room.matchId) ? room.matchId : `${code}_${[...uids].sort().join('_')}`).slice(0, 700).replace(/[.#$[\]/]/g, '_');
   const markerRef = db().ref(`rankedResults/${resultId}`);
   // A scoring that died half-way (older than a minute) may be retried: each
@@ -952,6 +899,9 @@ actions.rankedResult = async ({ uid, data }) => {
     await markerRef.update({ state: 'done', results: Object.fromEntries(uids.map(u => [u, refused])) });
     fail('failed-precondition', 'This match didn\'t pass the Ranked checks, so it doesn\'t count for rating.');
   }
+  // Preserve finish XP, first-game progress and referrals using verified
+  // canonical participants, rather than a separate browser finish report.
+  for (const seat of seats) await actions.matchFinished({uid:seat.uid,data:{matchId:resultId,drew:!!seat.drew}});
   // The same two accounts are scored at most RANKED_PAIR_PER_DAY times a
   // day (stops feeding rating with a second account).
   if (uids.length === 2) {

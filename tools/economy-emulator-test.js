@@ -274,16 +274,11 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
       { id: 'p_room1', uid: 'bob', finishRank: 2, rating: 500, gameStats: { burnt: 3 } }
     ]
   });
-  // The server deals Ranked (seat order + deck), once per room
-  r = await call('carol', { action: 'rankedDeal', roomCode: '123456', matchId: 'rk_1' });
-  ok(r.error, 'no deal for someone not at the table', r);
-  const deal = await call('alice', { action: 'rankedDeal', roomCode: '123456', matchId: 'rk_1' });
-  ok(deal.matchId === 'rk_1' && deal.order.sort().join() === 'alice,bob' && new Set(deal.deck).size === 54, 'a member gets the full shuffled deal', deal);
-  r = await call('bob', { action: 'rankedDeal', roomCode: '123456', matchId: 'rk_1' });
-  ok(r.deck && r.deck.join() === deal.deck.join(), 'asking again for the same match gives the same deal');
-  r = await call('alice', { action: 'rankedDeal', roomCode: '123456', matchId: 'rk_2' });
-  ok(r.error, 'no fresh deal for the same room straight away (no fishing for a good hand)', r);
-  await denied('read the server deal', db => get(ref(db, 'rankedDeals/123456')));
+  // Only canonical server games can score; the legacy full-deck API is retired.
+  r = await call('alice', { action: 'rankedDeal', roomCode: '123456', matchId: 'rk_1' });
+  ok(r.error, 'the old full-deck endpoint is refused', r);
+  await admin('rankedGames/123456', 'PUT', { ...(await admin('rooms/123456')), authority: 1 });
+  await denied('read the canonical server game', db => get(ref(db, 'rankedGames/123456')));
   const aBefore = await admin('users/alice/diamonds');
   r = await call('alice', { action: 'rankedResult', roomCode: '123456' });
   ok(r.won && r.from === 500 && r.to === 526 && r.elo === 16 && r.winBonus === 10 && r.streak === 1 && r.streakBonus === 0 && r.diamondsAwarded === 20, 'Ranked win: +16 Elo from server ratings (not the room\'s 9999) + 10 win bonus, +20 Diamonds', r);
@@ -313,7 +308,7 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     const code = String(500000 + i);
     await admin(`rankedMembers/${code}`, 'PUT', { alice: Date.now(), bob: Date.now() });
     await admin(`rooms/${code}`, 'PUT', { isRanked: true, phase: 'FINISHED', matchId: `rk_pair_${i}`, players: [{ uid: 'alice', finishRank: 1 }, { uid: 'bob', finishRank: 2 }] });
-    await call('alice', { action: 'rankedDeal', roomCode: code, matchId: `rk_pair_${i}` });
+    await admin(`rankedGames/${code}`, 'PUT', { ...(await admin(`rooms/${code}`)), authority: 1 });
     limited = await call('alice', { action: 'rankedResult', roomCode: code });
     if (!limited.error) streakRuns.push([limited.streak, limited.streakBonus, limited.to - limited.from === limited.elo + 10 + limited.streakBonus]);
   }
@@ -323,7 +318,7 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   const bobBefore = await admin('users/bob');
   await admin('rankedMembers/600000', 'PUT', { carol: Date.now(), bob: Date.now() });
   await admin('rooms/600000', 'PUT', { isRanked: true, phase: 'FINISHED', matchId: 'rk_draw', players: [{ uid: 'carol', finishRank: 1, drew: true }, { uid: 'bob', finishRank: 1, drew: true }] });
-  await call('bob', { action: 'rankedDeal', roomCode: '600000', matchId: 'rk_draw' });
+  await admin('rankedGames/600000', 'PUT', { ...(await admin('rooms/600000')), authority: 1 });
   r = await call('bob', { action: 'rankedResult', roomCode: '600000' });
   const bobAfter = await admin('users/bob');
   ok(r.drew && !r.won && r.winBonus === 0 && r.streakBonus === 0 && r.to - r.from === r.elo && r.elo > 0, 'draw: level Elo only (the lower rating gains a little)', r);

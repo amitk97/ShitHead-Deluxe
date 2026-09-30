@@ -7,12 +7,16 @@ const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
 const S = process.env.SH_VIDEO_DEPS || ROOT, file = path.join(ROOT, 'index.html');
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(process.env.SH_CHROMIUM ? {executablePath:process.env.SH_CHROMIUM,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader']} : {});
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+  const fonts = Object.fromEntries([['Outfit','outfit'],['Cinzel','cinzel'],['Plus Jakarta Sans','plus-jakarta-sans']].map(([name,id])=>[id,{name,file:path.join(S,'node_modules/@fontsource-variable',id,'files',`${id}-latin-wght-normal.woff2`)}]));
+  let html=fs.readFileSync(file,'utf8');
+  if(Object.values(fonts).every(f=>fs.existsSync(f.file)))html=html.replace(/@import url\('https:\/\/fonts.googleapis.com[^']+'\);/,Object.entries(fonts).map(([id,f])=>`@font-face{font-family:'${f.name}';font-style:normal;font-weight:100 900;src:url('/test-font-${id}.woff2') format('woff2');}`).join('\n'));
   await page.route('**/*', (route) => {
     const u = new URL(route.request().url());
     if (u.hostname === 'game.local') {
-      if (u.pathname === '/index.html' || u.pathname === '/') return route.fulfill({ body: fs.readFileSync(file), contentType: 'text/html' });
+      const font=u.pathname.match(/^\/test-font-(.+)\.woff2$/);if(font&&fonts[font[1]])return route.fulfill({body:fs.readFileSync(fonts[font[1]].file),contentType:'font/woff2'});
+      if (u.pathname === '/index.html' || u.pathname === '/') return route.fulfill({ body: html, contentType: 'text/html' });
       const local = path.join(path.dirname(file), decodeURIComponent(u.pathname));
       const types = { '.svg': 'image/svg+xml', '.mp3': 'audio/mpeg', '.js': 'text/javascript' };
       if (fs.existsSync(local)) return route.fulfill({ body: fs.readFileSync(local), contentType: types[path.extname(local)] || 'application/octet-stream' });

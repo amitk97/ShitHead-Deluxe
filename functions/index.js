@@ -250,3 +250,6 @@ exports.auditRankedRoom = functionsV1.region(REGION).database.instance(INSTANCE)
     logger.warn('Ranked audit finding', { code, matchId: after.matchId, uid, kinds: findings.map((f) => f.kind) });
     return null;
   });
+
+// Clients request precise deadline ticks; this also resumes unattended games.
+exports.rankedTimeouts = onSchedule({schedule: 'every 1 minutes',region: REGION}, () => require('./ranked').sweep());

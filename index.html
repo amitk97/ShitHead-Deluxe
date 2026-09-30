@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v261 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v262 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -9279,6 +9279,7 @@ video {
     // Pull the room fresh — used after a reconnect or when returning to the
     // app, where we may have missed updates entirely.
     function resyncRoomFromServer(reason) {
+      if (isServerRanked() && state.serverAuthority) { ensureRankedView(state.roomCode); rankedTick(true); return; }
       if (!state.isMultiplayer || !state.roomCode) return;
       db.ref(`rooms/${state.roomCode}`).once('value', (snap) => {
         if (!snap.exists()) {
@@ -9893,6 +9894,7 @@ video {
     // their own local copy starts, so everyone sees it at effectively the
     // same moment rather than the board just jumping straight to a dealt hand.
     function broadcastShuffleStart() {
+      if (isServerRanked()) return;
       if (state.isMultiplayer && state.roomCode) {
         db.ref(`rooms/${state.roomCode}/shufflingStartedAt`).set(Date.now());
       }
@@ -10347,6 +10349,7 @@ video {
     }
 
     function finishLocalSwap() {
+      if (isServerRanked()) { rankedRequest('ready'); return; }
       // Tutorial only: the lesson decides when Ready is meaningful, so it can
       // acknowledge the step rather than starting a real match. Always falls
       // through to normal behaviour outside the tutorial.
@@ -10463,6 +10466,7 @@ video {
     }
 
     function executePlayCards(playerId, cardsToPlay, isBlind = false, chainedRankCount = 0, opts = {}) {
+      if (isServerRanked()) { if (playerId === state.localPlayerId) rankedRequest('play', {cardIds:(cardsToPlay || []).map(c => c.id)}); return; }
       if (isMatchDecided()) return;
       // A blind flip is revealing: nothing else plays until it lands.
       if (state.blindRevealing && !opts.revealed) return;
@@ -10772,6 +10776,7 @@ video {
 
     const BONUS_FOLLOW_UP_MS = 8000;
     function resolveFollowUpPlay(shouldPlay) {
+      if (isServerRanked()) { rankedRequest('bonus', {accept:!!shouldPlay}); return; }
       const pending = state.pendingFollowUp;
       if (!pending) return;
       if (tutorialActive && !shouldPlay) {
@@ -10854,6 +10859,7 @@ video {
       });
     }
     function saveFinalMatchStats() {
+      if (isServerRanked()) return;
       if (state.spectating || !state.isMultiplayer || !state.roomCode || !state.matchId || typeof db === 'undefined' || !firebaseAvailable) return;
       const matchId = state.matchId;
       const known = matchStatsPlayers().filter(p => p.gameStats || p.lobbyStats).map(statsCopy);
@@ -11185,6 +11191,7 @@ video {
     // Moves the chosen face-up card(s) into the hand, then runs the normal
     // pickup — the sacrificed card(s) end up mixed in with the picked-up pile.
     function executePickupWithSacrifice(playerId, sacrificeCards) {
+      if (isServerRanked()) { if (playerId === state.localPlayerId) rankedRequest('pickup', {cardIds:(sacrificeCards || []).map(c => c.id)}); return; }
       if (isMatchDecided()) return;
       const player = state.players.find(p => p.id === playerId);
       if (!player || !sacrificeCards || sacrificeCards.length === 0) {
@@ -11208,6 +11215,7 @@ video {
     // timer applies, and times out into a random (medium-style) choice if
     // they don't decide — the game can never stall waiting on this.
     function beginFaceUpSacrificeChoice(playerId) {
+      if (isServerRanked()) return;
       if (!stillHasNoLegalMove(state.players.find(p => p.id === playerId))) return;
       state.pendingFaceUpSacrifice = { playerId };
       state.selectedSacrificeIds = [];
@@ -11253,6 +11261,7 @@ video {
     // Multiplayer safety net: if the player hasn't chosen within the 15s
     // window, resolve it for them with a random (medium-style) choice.
     function resolveFaceUpSacrificeTimeout() {
+      if (isServerRanked()) { rankedTick(true); return; }
       const pending = state.pendingFaceUpSacrifice;
       if (!pending) return;
       const player = state.players.find(p => p.id === pending.playerId);
@@ -11268,6 +11277,7 @@ video {
     // advanceTurn(1) silently overrides that decision and hands the turn to
     // the wrong player.
     function executePickup(playerId, skipTurnAdvance = false) {
+      if (isServerRanked()) { if (playerId === state.localPlayerId) rankedRequest('pickup'); return; }
       if (isMatchDecided()) return;
       // Same reasoning as the guard at the top of executePlayCards — picking
       // up a pile that's mid-burn would scoop up the not-yet-cleared burning
@@ -11628,6 +11638,7 @@ video {
     // corrects its own Hand only, so two clients can never race to "fix"
     // the same thing and reintroduce the very problem this guards against.
     function enforceLocalHandRefillInvariant() {
+      if (isServerRanked()) return;
       if (!state.isMultiplayer || state.phase !== 'PLAY') return;
       const me = state.players.find(p => p.id === state.localPlayerId);
       if (!me || me.hasFinished) return;
@@ -13536,6 +13547,15 @@ video {
     let lastUrgentTickSec = null;
     function updateMultiplayerTimerDisplays() {
       const current = state.players[state.currentTurnIndex];
+      if (isServerRanked()) {
+        rankedTick();
+        if (current && state.phase === 'PLAY') {
+          const sec = Math.max(0, Math.ceil((state.turnDeadline - serverNow()) / 1000));
+          if (current.id !== state.localPlayerId) showOpponentTimerBadge(current.id, sec);
+          else { clearOpponentTimerBadges(); const badge=document.getElementById('turnTimerBadge'); const text=document.getElementById('turnTimerText'); if (badge) badge.classList.remove('hidden'); if (text) text.textContent=sec+'s'; }
+        }
+        return;
+      }
 
       // Track turn changes independently of the early-returns below, so the
       // host backstop's one-shot guard resets correctly every time the turn
@@ -13637,6 +13657,7 @@ video {
     // timeout, and by the host's backstop acting on behalf of someone whose
     // client isn't responding at all — same underlying logic either way.
     function autoPlayOnTimeout(player) {
+      if (isServerRanked()) { rankedTick(true); return; }
       if (!player || player.hasFinished || state.phase !== 'PLAY') return;
       if (state.players[state.currentTurnIndex]?.id !== player.id) return; // turn already moved on
       const isSelf = player.id === state.localPlayerId;
@@ -14213,6 +14234,7 @@ video {
     }
 
     function triggerNextTurn() {
+      if (isServerRanked()) { rankedTick(); return; }
       // Cancel any previously-scheduled bot action FIRST, unconditionally —
       // before any early return below. A plain (non-burn) scripted Coach
       // reply briefly flips tutorialBotPaused false just long enough to play
@@ -14316,6 +14338,7 @@ video {
     }
 
     function checkTurnAndAct() {
+      if (isServerRanked()) return;
       if (state.phase !== 'PLAY') return;
       // Mid-burn the pile still shows the burnt cards and their constraint
       // (e.g. "7 or lower"). finishBurn re-triggers the turn once it's clear,
@@ -16304,6 +16327,7 @@ video {
           return;
         }
       }
+      if (isServerRanked() && state.selectedSwapFaceUpSlot !== null && state.selectedSwapFaceUpSlot !== slotIdx) { state.selectedSwapFaceUpSlot = slotIdx; render(); return; }
       if (state.selectedSwapFaceUpSlot !== null && state.selectedSwapFaceUpSlot !== slotIdx) {
         const fromSlot = state.selectedSwapFaceUpSlot;
         const temp = local.faceUp[fromSlot];
@@ -16320,6 +16344,7 @@ video {
     }
 
     function executeSwap(handCardId, faceUpCardId) {
+      if (isServerRanked()) { rankedRequest('swap', {handId:handCardId, faceUpId:faceUpCardId}); return; }
       const local = state.players.find(p => p.id === state.localPlayerId);
       const hIdx = (local.hand || []).findIndex(c => c.id === handCardId);
       const fIdx = (local.faceUp || []).findIndex(c => c.id === faceUpCardId);
@@ -16628,7 +16653,98 @@ video {
     // A Joker played online whose target is still being picked (handleJokerPlay).
     let pendingJokerChoice = null;
     let rejectedSaves = 0;
+    // § Server-owned Ranked: public room counts + this account's private view.
+    let rankedViewRef = null, rankedViewCode = null, rankedMoveBusy = false, rankedTickAt = 0;
+    let rankedEventVersion = 0, rankedRequestPromise = Promise.resolve();
+    function isServerRanked() { return state.isMultiplayer && state.isRanked && !state.spectating && !tutorialActive; }
+    function rankedRequest(op, fields = {}, quiet = false) {
+      if (!isServerRanked() || !state.roomCode || !currentUser || !state.matchId) return Promise.resolve(null);
+      if (rankedMoveBusy) {
+        if (op === 'tick') return Promise.resolve(null);
+        const queuedCode = state.roomCode, queuedMatch = state.matchId;
+        return rankedRequestPromise.then(() => state.roomCode === queuedCode && state.matchId === queuedMatch ? rankedRequest(op, fields, quiet) : null);
+      }
+      rankedMoveBusy = true;
+      const roomCode = state.roomCode;
+      const payload = { roomCode, matchId: state.matchId, version: state.stateVersion, requestId: crypto.randomUUID(), op, ...fields };
+      rankedRequestPromise = callEconomy('rankedMove', payload).then(res => {
+        if (state.roomCode === roomCode && res.view) applyRankedView(res.view);
+        return res;
+      }).catch(error => {
+        if (!quiet) notifyBanner(error.message || 'Could not send that move. Please try again.');
+        return null;
+      }).finally(() => { rankedMoveBusy = false; });
+      return rankedRequestPromise;
+    }
+    function rankedTick(force = false) {
+      if (!isServerRanked() || !state.serverAuthority || state.phase === 'FINISHED' || rankedMoveBusy) return;
+      const now = Date.now(); if (!force && now - rankedTickAt < 5000) return;
+      rankedTickAt = now;
+      return rankedRequest('tick', { active: !document.hidden }, true);
+    }
+    function ensureRankedView(code) {
+      if (!currentUser || code !== state.roomCode) return;
+      if (rankedViewCode === code && rankedViewRef?.key === currentUser.uid) return;
+      if (rankedViewRef) rankedViewRef.off();
+      if (rankedViewCode !== code) { state.serverAuthority = 0; state.stateVersion = 0; rankedEventVersion = 0; rankedTickAt = 0; state.rankedStartRetries = 0; }
+      rankedViewCode = code;
+      rankedViewRef = db.ref(`rankedViews/${code}/${currentUser.uid}`);
+      rankedViewRef.on('value', snap => { if (code === state.roomCode && snap.val()) applyRankedView(snap.val()); }, () => {
+        notifyBanner('Ranked is waiting for its private-card permissions. Please return home and retry shortly.');
+      });
+    }
+    function applyRankedView(data) {
+      if (!isServerRanked() || data.authority !== 1 || !data.players?.some(p => p.uid === currentUser?.uid)) return;
+      if (state.serverAuthority && data.matchId === state.matchId && data.stateVersion <= state.stateVersion) return;
+      const fresh = data.matchId !== state.matchId || !state.serverAuthority;
+      const oldPhase = state.phase, oldTurn = state.currentTurnIndex;
+      if (fresh) { state.rankedRatingApplied = false; hideMatchEndUI(); resetMatchSummary(); matchHistoryCurrentId = null; rankedEventVersion = data.event?.version || 0; }
+      state.serverAuthority = 1;
+      state.matchId = data.matchId; state.phase = data.phase; state.stateVersion = data.stateVersion;
+      state.players = roomPlayerList(data.players).map(p => ({ ...p, hand:p.hand || [], faceUp:p.faceUp || [], faceDown:p.faceDown || [] }));
+      state.localPlayerId = state.players.find(p => p.uid === currentUser.uid).id;
+      state.currentTurnIndex = data.currentTurnIndex; state.direction = data.direction;
+      state.drawPile = data.drawPile || []; state.discardPile = data.discardPile || []; state.playedHistory = data.playedHistory || [];
+      state.activeConstraint = data.activeConstraint || null; state.baseOverrideCard = data.baseOverrideCard || null;
+      state.turnDeadline = data.turnDeadline; state.turnTimerMs = data.turnTimerMs;
+      state.pendingFollowUp = data.pendingFollowUp?.cardId ? data.pendingFollowUp : null;
+      state.pendingFaceUpSacrifice = data.pendingFaceUpSacrifice || null;
+      state.burnResolving = false; state.blindRevealing = false;
+      clearStaleSelections(); hasConfirmedRoomMembership = true;
+      dismissLobbyAndStart();
+      document.getElementById('swapControlBar')?.classList.toggle('hidden', data.phase !== 'SWAP');
+      document.getElementById('playActionControls')?.classList.toggle('hidden', data.phase !== 'PLAY');
+      document.getElementById('followUpToastBanner')?.classList.toggle('hidden', !state.pendingFollowUp);
+      document.getElementById('sacrificeControlBar')?.classList.toggle('hidden', !state.pendingFaceUpSacrifice || state.pendingFaceUpSacrifice.playerId !== state.localPlayerId);
+      render(); updateDirectionBadge();
+      const event = data.event;
+      if (event && event.version > rankedEventVersion) {
+        rankedEventVersion = event.version;
+        const actor = state.players.find(p => p.id === event.playerId);
+        if (event.type === 'burn') { const r=document.getElementById('discardPileContainer')?.getBoundingClientRect(); if (r) triggerEquippedBurnEffect(r.left+r.width/2, r.top+r.height/2, actor); audio.playBurnSound(event.effectId); }
+        else if (event.type === 'joker') {
+          const effectFor = (id, effect) => id === state.localPlayerId ? effect : othersEffect(effect);
+          playJokerEffect(effectFor(event.playerId, event.effectId));
+          if (event.counter) { const match = state.matchId; setTimeout(() => {
+            if (state.matchId === match && isServerRanked()) playJokerEffect(effectFor(event.counterPlayerId, event.counterEffectId), {counter:true});
+          }, JOKER_FX_MIN_MS); }
+        }
+        else if (event.type === 'pickup') { audio.pickupSequence(1); }
+        else if (event.type === 'play' || event.type === 'blind') {
+          audio.playCardPlace();
+          if (event.cards?.length) spawnCardFlight(getPlayerAnimationTarget(event.playerId), document.getElementById('discardPileContainer'), event.cards.length, event.cards[0]);
+          if (event.failed) notifyBanner('The face-down card could not be played; the pile was picked up.');
+        }
+      }
+      if (data.phase === 'FINISHED') showMatchEndUI();
+      else if (data.phase === 'PLAY' && (oldPhase !== 'PLAY' || oldTurn !== data.currentTurnIndex)) {
+        if (state.players[data.currentTurnIndex]?.id === state.localPlayerId) audio.turnNotify?.();
+      }
+      if (!fresh && data.phase === 'PLAY') rankedTick();
+    }
+
     function syncFirebaseGameState() {
+      if (isServerRanked()) return;
       if (!state.isMultiplayer || !state.roomCode || state.spectating) return;
       if (state.phase === 'PLAY' && state.players.filter(p => !p.hasFinished).length > 1) noteStalemateTurn(); // counted before it's saved
       const baseVersion = state.stateVersion || 0;
@@ -17012,6 +17128,7 @@ video {
     // A leaving host passes the host role on. Resolves after the write, or
     // after 2s at most so a bad connection can't trap anyone on the page.
     function leaveMultiplayerRoom() {
+      if (isServerRanked() && state.serverAuthority) return state.phase === 'FINISHED' ? Promise.resolve() : rankedRequest('concede');
       if (state.spectating) return Promise.resolve();
       if (!state.isMultiplayer || !state.roomCode || !state.localPlayerId) return Promise.resolve();
       const code = state.roomCode;
@@ -17115,6 +17232,7 @@ video {
       return driver ? driver.id : null;
     }
     function hasMatchAuthority() {
+      if (isServerRanked()) return false;
       if (state.spectating) return false; // a spectator never acts for anyone
       if (!state.isMultiplayer) return true;
       return matchAuthorityId() === state.localPlayerId;
@@ -17254,6 +17372,7 @@ video {
     const disconnectGraceTimers = {};
 
     function watchForDisconnectedPlayers(code) {
+      if (isServerRanked()) return;
       db.ref(`rooms/${code}/presence`).on('value', (snap) => {
         const presence = snap.val() || {};
         roomPresence = presence;
@@ -17385,6 +17504,13 @@ video {
       activeRoomHandler = (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
+        if (data.authority === 1 && state.isRanked) {
+          if (data.lastEmote?.at && data.lastEmote.at !== lastHandledEmoteAt) {
+            lastHandledEmoteAt = data.lastEmote.at;
+            if (data.lastEmote.playerId !== state.localPlayerId) showEmoteFloat(data.lastEmote.emoji, data.lastEmote.playerId);
+          }
+          ensureRankedView(code); return;
+        }
         if (!isRoomVersionCompatible(data)) {
           setConnectionBanner('lost');
           if (gameVersionNumber(data.clientVersion) > gameVersionNumber(getGameVersionLabel())) {
@@ -17715,27 +17841,27 @@ video {
       return true;
     }
 
-    // Ranked is dealt by the server (economy rankedDeal: seat order + a
-    // crypto-shuffled deck the Ranked audit checks the deal against), so the
-    // host can't deal itself a good hand. If the server is unavailable,
-    // stay in the lobby and let the host retry.
+    // Server Ranked starts with only this account's filtered view.
     let rankedDealPending = false;
-    function requestRankedDeal(matchId, attempt = 0) {
-      return callEconomy('rankedDeal', { roomCode: state.roomCode, matchId }).catch((e) => {
-        if (attempt >= 2) throw e;
-        return new Promise(r => setTimeout(r, 800 * (attempt + 1))).then(() => requestRankedDeal(matchId, attempt + 1));
-      });
-    }
     function startMultiplayerGame(opts) {
       if (!canStartMultiplayerGame()) return;
       opts = (opts && typeof opts === 'object') ? opts : {};
-      if (state.isRanked && !opts.serverDeal && !opts.localDeal) {
+      if (state.isRanked) {
         if (rankedDealPending) return;
         rankedDealPending = true;
-        const matchId = generateMatchId();
-        requestRankedDeal(matchId)
-          .then((deal) => { rankedDealPending = false; startMultiplayerGame({ serverDeal: deal }); })
-          .catch((e) => { rankedDealPending = false; console.warn('Server deal unavailable', e); notifyBanner('Could not start Ranked: the server deal is unavailable. Please try again.'); });
+        ensureRankedView(state.roomCode);
+        const code = state.roomCode;
+        callEconomy('rankedStart', {roomCode:code}).then(res => {
+          if (state.roomCode === code && res.view) applyRankedView(res.view);
+        }).catch(error => {
+          if (state.roomCode !== code) return;
+          state.rankedAutoStarted = false;
+          if (!state.serverAuthority && (state.rankedStartRetries || 0) < 3) {
+            state.rankedStartRetries = (state.rankedStartRetries || 0) + 1;
+            setTimeout(() => { if (state.roomCode === code && isServerRanked() && state.isHost && !state.serverAuthority) startMultiplayerGame(); }, 2000);
+          } else notifyBanner(error.message || 'Could not start Ranked. Return home and retry.');
+        })
+          .finally(() => { rankedDealPending = false; });
         return;
       }
       // Same guarantee as startSinglePlayerGame: a new match actually
@@ -19590,6 +19716,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v262: [
+        ['🛡️', 'Ranked now keeps hidden cards on the server and checks every move before updating the table.', WN_KEY]
+      ],
       v261: [
         ['🛡️', 'Stronger match checks: online wins use the actual match ID, and Ranked results require the matching server deal.'],
         ['🔄', 'Ranked stays in the lobby to retry if its server deal cannot be loaded.']
@@ -22390,6 +22519,7 @@ video {
     }
 
     function publishLocalCosmeticsToRoom() {
+      if (isServerRanked()) return;
       if (!state?.isMultiplayer || !state.roomCode || !state.localPlayerId) return;
       const loadout = getPublicCosmeticLoadout();
       const local = state.players?.find(player => player.id === state.localPlayerId);
@@ -27191,6 +27321,7 @@ video {
     // A finished real match (never the tutorial), from recordMatchHistory:
     // the server counts it and pays ShitHead Virgin / Beginner if due.
     function reportMatchFinished() {
+      if (isServerRanked()) return Promise.resolve(null);
       if (typeof currentUser === 'undefined' || !currentUser) return Promise.resolve(null);
       const matchId = state.matchId || (state.matchId = generateMatchId());
       // A stalemate draw is reported too (the hidden Draw a Game challenge);
@@ -27984,6 +28115,7 @@ video {
     // Hands a stand-in seat back without reloading (the app stayed open).
     let standInReclaimBusy = false;
     function reclaimStandInInPlace(code, seat) {
+      if (isServerRanked()) { ensureRankedView(code); rankedTick(true); return; }
       if (standInReclaimBusy || !code) return;
       standInReclaimBusy = true;
       updatePlayersAtomic(code, (list) => {
@@ -28128,7 +28260,7 @@ video {
         listenToFirebaseRoom(code);
       };
       const rejoin = () => {
-        if (!mySeat.isBot) { reclaimSeat(); return; }
+        if (data.authority === 1 || !mySeat.isBot) { reclaimSeat(); return; }
         // A bot took the seat while this player was away: hand it back
         // (same id, so nothing else in the room changes).
         updatePlayersAtomic(code, (list) => {

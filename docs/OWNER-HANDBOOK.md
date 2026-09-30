@@ -137,12 +137,9 @@ The support inbox is **support.shitheaddeluxe@gmail.com**. The "Contact Support"
 
 ## 8. Ranked cheat protection
 
-- **What happens today (switched on in v241):** every Ranked game is checked by the server (the **Ranked Audit** tab). A match with a **hard** finding (a move that's impossible in an honest game, e.g. cards appearing, vanishing or being played for someone else) doesn't count: no rating change, no Diamonds, and both players see "This match didn't pass the Ranked checks". Soft findings (timing oddities) are only recorded.
-- **Keep an eye on:** menu → Error Reports → **Ranked Audit**. If honest players start losing matches to it, switch it off:
-  1. Open `functions/economy.js` on GitHub.
-  2. Change `const RANKED_AUDIT_ENFORCE = true;` to `false`.
-  3. Commit to `main`.
-  4. The functions workflow deploys it (a few minutes). Matches are then always scored again, and findings are just recorded.
+- **v262 Ranked:** the server holds hidden cards and checks moves before accepting them. Players receive their own hand, public face-up cards and card counts; blind values and the stock stay on the server. The server controls deadlines, reconnect stand-ins, placings and rating rewards.
+- **Publishing:** wait for both Hosting and Functions workflows to succeed, then paste the complete updated rules into Firebase Console. Without those rules, private view subscriptions cannot work correctly. See [Ranked server details](RANKED-SERVER.md).
+- **Remaining work:** casual games, solo/Gauntlet rewards and some challenge claims still have trust gaps. This release does not make every game mode cheat-proof. The old Ranked Audit tab remains historical diagnostics; turning its enforcement switch off does not bypass the new move validator.
 
 ---
 
@@ -191,4 +188,4 @@ Update prompts are queued during matches, tutorials and open menu pages, and app
 
 ## Browser Inspect and cheating
 
-The [30 September security audit](SECURITY-AUDIT-2026-09-30.md) found that browsers receive hidden card values and can modify shared room state. Wallet writes and Shop prices are server-protected, but some game and challenge rewards still trust browser reports. v261 binds online win claims to the actual match ID, requires the matching server deal and participants for Ranked scoring, and keeps Ranked in the lobby when server dealing fails. These are limited protections: server-held cards and server-validated moves are still needed. No database rules changed in v261.
+The [30 September security audit](SECURITY-AUDIT-2026-09-30.md) found that browsers receive hidden card values and can modify shared room state. Wallet writes and Shop prices are server-protected, but some game and challenge rewards still trust browser reports. v261 binds online win claims to the actual match ID, requires the matching server deal and participants for Ranked scoring, and keeps Ranked in the lobby when server dealing fails. v262 implements server-held cards and server-validated moves for Ranked, with updated database permissions. Casual/solo and challenge verification remain future work.

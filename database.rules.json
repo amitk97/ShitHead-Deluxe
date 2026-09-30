@@ -8,10 +8,30 @@
       ],
       "$roomCode": {
         ".read": "data.child('isRanked').val() !== true || auth != null",
-        ".write": "$roomCode.matches(/^[0-9]{6}$/) &&
+        ".write": "!root.child('rankedGames').child($roomCode).exists() &&
+          $roomCode.matches(/^[0-9]{6}$/) &&
           ((data.child('isRanked').val() !== true && newData.child('isRanked').val() !== true) ||
           auth != null)",
-        ".validate": "newData.hasChildren(['phase'])"
+        ".validate": "newData.hasChildren(['phase'])",
+        "presence": {
+          "$seat": {
+            ".write": "auth != null &&
+              root.child('rankedGames').child($roomCode).child('seatUids').child($seat).val() ===
+                auth.uid",
+            ".validate": "newData.hasChildren(['status', 'at']) &&
+              newData.child('status').isString() &&
+              newData.child('status').val().matches(/^(connected|away|disconnected|left)$/) &&
+              newData.child('at').isNumber() && newData.child('at').val() <= now + 60000"
+          }
+        },
+        "lastEmote": {
+          ".write": "auth != null &&
+            root.child('rankedGames').child($roomCode).child('seatUids')
+              .child(newData.child('playerId').val()).val() === auth.uid",
+          ".validate": "newData.hasChildren(['playerId', 'emoji', 'at']) &&
+            newData.child('emoji').isString() && newData.child('emoji').val().length <= 20 &&
+            newData.child('at').isNumber() && newData.child('at').val() <= now + 60000"
+        }
       }
     },
     "users": {
@@ -330,6 +350,19 @@
         },
         "$other": {
           ".validate": false
+        }
+      }
+    },
+    "rankedGames": {
+      ".read": false,
+      ".write": false,
+      ".indexOn": ["phase", "updatedAt"]
+    },
+    "rankedViews": {
+      "$roomCode": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false
         }
       }
     },

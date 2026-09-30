@@ -2,6 +2,12 @@
 
 Scope: v260 client, server functions and repository database rules; first hardening changes in v261. Tests used isolated in-memory records and real server handlers. No live player records were modified. This is a source audit, not confirmation that the Firebase Console currently has the repository rules deployed.
 
+## v262 follow-up
+
+Ranked now uses a server-only canonical game, crypto-random opaque card handles, explicit public/private views and atomic validated move intents. Browser room writes no longer decide Ranked results; `rankedResult` reads only the server-owned FINISHED record. The full-deck legacy callable is disabled. Opponent hands, all blind values and stock order are omitted from client data. These protections require the v262 Functions deployment and repository database rules to be published. Casual/solo card disclosure and unverified solo/Gauntlet/challenge claims remain open.
+
+Validation: 20 engine checks including 40 complete card-conservation simulations; real database-emulator access-denial and callable tests; two Chromium clients checked private views, Ready, moves, reconnect subscription and concession. See `docs/RANKED-SERVER.md`. The wider browser suite remains partly red; baseline comparison and clock-fixture corrections are documented there. The original findings below describe the pre-migration audit.
+
 ## Answers
 
 **Can Inspect reveal face-down cards? Yes.** `syncFirebaseGameState` uploads whole `players` and `drawPile` objects; browsers subscribe to the whole room. They receive ranks, suits and predictable card IDs for hands, face-down cards and the ordered remaining deck. Solo bot games also hold these values locally. The card-back presentation does not remove these values from browser memory or network responses.

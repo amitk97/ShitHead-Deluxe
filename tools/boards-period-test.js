@@ -35,7 +35,7 @@ const boards=require('../functions/boards'),xp=require('../functions/xp');
  put('users/alice',after);put('publicProfiles/alice/avatar','avatar-ghost');await boards.refreshProfile('alice');
  assert.equal(get(`boards/gauntletweek_${week}/alice/avatar`),'avatar-ghost');
  const economy = require('../functions/economy')._test.actions;
- const runUser = {username:'Runner',diamonds:0,gauntlet:{botsBeaten:8,week:lastWeek,weekBotsBeaten:8,run:{id:'run',mode:'easy',round:0,lives:3,startedAt:now-60000,lastAt:now-60000,playing:true}}};
+ const runUser = {username:'Runner',diamonds:0,gauntlet:{botsBeaten:8,week:lastWeek,weekBotsBeaten:8,run:{id:'run',mode:'easy',round:0,lives:3,startedAt:now,lastAt:now-60000,playing:true}}};
  put('users/runner',runUser);
  await economy.gauntlet({uid:'runner',data:{op:'result',runId:'run',won:true}});
  assert.equal(get('users/runner/gauntlet/week'),week);

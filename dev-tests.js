@@ -83,7 +83,7 @@ async function runDevTestSuite() {
   }
   function freshState(overrides) {
     Object.assign(state, {
-      phase: 'PLAY', isMultiplayer: false, isHost: false, direction: 1, currentTurnIndex: 0,
+      phase: 'PLAY', isMultiplayer: false, isRanked: false, serverAuthority: 0, stateVersion: 0, isHost: false, direction: 1, currentTurnIndex: 0,
       discardPile: [], drawPile: [], playedHistory: [], activeConstraint: null, baseOverrideCard: null,
       lastJokerInitiatorId: null,
       pendingFollowUp: null, pendingFaceUpSacrifice: null, selectedSacrificeIds: [], selectedPlayCardIds: [],
@@ -4432,7 +4432,7 @@ async function runDevTestSuite() {
   });
 
   // ---- REGRESSION: Ranked match authority isn't tied to isHost ----
-  await test('hasMatchAuthority: exactly one phone drives a match, Ranked and casual alike, and it moves when that app goes away', () => {
+  await test('hasMatchAuthority: casual elects one phone; Ranked always remains server-owned', () => {
     const saved = roomPresence;
     try {
       [false, true].forEach((ranked) => {
@@ -4440,16 +4440,16 @@ async function runDevTestSuite() {
         roomPresence = { p_host: { status: 'connected' }, p_room1: { status: 'connected' } };
         freshState({ isMultiplayer: true, isHost: true, isRanked: ranked, localPlayerId: 'p_host' });
         state.players = [host, guest];
-        assertTrue(hasMatchAuthority(), 'The first open seat drives');
+        assertEqual(hasMatchAuthority(), !ranked, 'Only casual has a browser driver');
         freshState({ isMultiplayer: true, isHost: false, isRanked: ranked, localPlayerId: 'p_room1' });
         state.players = [host, guest];
         assertTrue(!hasMatchAuthority(), 'Only one phone drives, so two never move the same bot');
         roomPresence = { p_host: { status: 'disconnected' } };
-        assertTrue(hasMatchAuthority(), 'REGRESSION: when the first seat drops, the next player takes over, or the match freezes');
+        assertEqual(hasMatchAuthority(), !ranked, 'Casual transfers its driver; Ranked stays server-owned');
       });
     } finally { roomPresence = saved; }
   });
-  await test('REGRESSION: a Ranked guest (non-host) can substitute a bot for a disconnected host', () => {
+  await test('SECURITY: a Ranked guest cannot substitute a bot for another account', () => {
     // Before this fix, removePlayerFromMatch bailed out for anyone who
     // wasn't isHost — meaning if the ORIGINAL host was the one who
     // disconnected in a Ranked match, literally nobody's client was
@@ -4464,8 +4464,7 @@ async function runDevTestSuite() {
     syncFirebaseGameState = () => {};
     try { removePlayerFromMatch('p_host', 'disconnected'); } finally { syncFirebaseGameState = originalSync; roomPresence = savedPresence; }
     const seat = state.players.find(p => p.name.startsWith('Departed'));
-    assertTrue(!!seat && seat.isBot, "The departed host's seat must be handed to a substitute bot, driven by the guest's own client");
-    assertTrue(seat.isRankedSubstitute, 'The substitute must be marked Ranked-only so the 5-turn concession cap applies');
+    assertTrue(!!seat && !seat.isBot, 'A browser cannot replace a Ranked opponent; server deadlines control stand-ins');
   });
   await test('REGRESSION: Ranked hides all kick controls, for host and guest alike', () => {
     freshState({ isMultiplayer: true, isHost: true, isRanked: true, roomCode: '555555', localPlayerId: 'p_host' });
@@ -4655,31 +4654,25 @@ async function runDevTestSuite() {
     assertEqual(h.modes.find(m => m.mode === 'bots'), { mode: 'bots', started: 4, finished: 2, left: 1, abandoned: 1 }, 'Started = finished + left + abandoned');
     assertEqual([h.rejectedSaves, h.errors], [1, 2], 'Problems counted');
   });
-  await test('Ranked matches are dealt from the server (seat order + deck); a local deal only without the server', async () => {
-    freshState({ phase: 'LOBBY' });
-    state.isMultiplayer = true; state.isRanked = true; state.isHost = true; state.roomCode = '515151';
-    state.players = [makePlayer({ id: 'p_host', uid: 'alice', name: 'Alice' }), makePlayer({ id: 'p_room1', uid: 'bob', name: 'Bob' })];
-    state.localPlayerId = 'p_host';
-    const synced = [];
-    db = { ref: (path) => ({ update: (v) => { synced.push([path, v]); return Promise.resolve(); }, set: () => Promise.resolve(), transaction: () => Promise.resolve({}), once: () => Promise.resolve({ val: () => null }) }) };
-    const deck = Array.from({ length: 54 }, (_, i) => `c_${54 - i}`);
-    const calls = fakeEconomy({ rankedDeal: (d) => ({ matchId: d.matchId, order: ['bob', 'alice'], deck }) });
-    startMultiplayerGame();
-    await new Promise(r => setTimeout(r, 20));
-    assertEqual(calls.map(c => c[0]), ['rankedDeal'], 'The host asks the server for the deal');
-    assertEqual(state.players.map(p => p.uid), ['bob', 'alice'], "Seats in the server's order (Bob goes first)");
-    assertEqual(state.players[0].hand.map(c => c.id), deck.slice(0, 3), "Bob's hand is the top of the server's deck");
-    assertEqual(state.players[1].faceDown.map(c => c.id), deck.slice(15, 18), 'Then face-up, face-down, seat by seat');
-    assertEqual(state.drawPile.map(c => c.id), deck.slice(18), 'The rest is the Deck, in order');
-    assertEqual(state.players[0].hand[0].rank, deckCardById('c_54').rank, 'Ids turn back into the same cards');
-    assertEqual(state.matchId, calls[0][1].matchId, 'The match id the server dealt for');
-    fakeEconomy({});
-    state.phase = 'LOBBY';
-    startMultiplayerGame();
-    await new Promise(r => setTimeout(r, 2800));
-    assertEqual(state.phase, 'SWAP', 'No server: the match still starts with a local deal');
-    assertEqual(state.players.flatMap(p => [...p.hand, ...p.faceUp, ...p.faceDown]).length + state.drawPile.length, 54, 'A full local deck');
-    hideMatchEndUI();
+  await test('Ranked starts from a private server view and stays in the lobby when the server fails', async () => {
+    const saved = {ref:rankedViewRef,code:rankedViewCode,event:rankedEventVersion};
+    freshState({phase:'LOBBY',isMultiplayer:true,isRanked:true,isHost:true,roomCode:'515151'});
+    currentUser = {uid:'alice'};
+    state.players = [makePlayer({id:'p_host',uid:'alice'}),makePlayer({id:'p_room1',uid:'bob'})];state.localPlayerId='p_host';
+    db = {ref:()=>({key:'alice',on:()=>{},off:()=>{}})};
+    const hidden = i=>({id:`hidden-${i}`,rank:'4',suit:'♠',hidden:true});
+    const view={authority:1,isRanked:true,matchId:'opaque-match',phase:'SWAP',stateVersion:1,currentTurnIndex:0,direction:1,turnTimerMs:15000,turnDeadline:Date.now()+60000,
+      players:[{...makePlayer({id:'p_room1',uid:'bob',isReady:false}),hand:[hidden(0),hidden(1),hidden(2)],faceUp:[makeCard('8')],faceDown:[hidden(3)]},
+        {...makePlayer({id:'p_host',uid:'alice',isReady:false}),hand:[makeCard('7','♠','opaque-own')],faceUp:[makeCard('6')],faceDown:[hidden(4)]}],drawPile:[hidden(5)],discardPile:[]};
+    try {
+      const calls=fakeEconomy({rankedStart:()=>({view})});startMultiplayerGame();await new Promise(r=>setTimeout(r,20));
+      assertEqual(calls.map(c=>c[0]),['rankedStart'],'No full deck request');
+      assertEqual(state.phase,'SWAP','The private view starts swap');assertEqual(state.players.map(p=>p.uid),['bob','alice'],'Server owns seat order');
+      assertTrue(state.players[0].hand.every(c=>c.hidden),'Opponent hand masked');assertTrue(state.players.every(p=>p.faceDown.every(c=>c.hidden)),'All blind values masked');
+      assertEqual(state.players[1].hand[0].id,'opaque-own','Own hand comes from authenticated view');assertTrue(state.drawPile.every(c=>c.hidden),'Stock masked');
+      state.phase='LOBBY';state.serverAuthority=0;fakeEconomy({});startMultiplayerGame();await new Promise(r=>setTimeout(r,20));
+      assertEqual(state.phase,'LOBBY','A failed server request never deals locally');
+    } finally {rankedViewRef=saved.ref;rankedViewCode=saved.code;rankedEventVersion=saved.event;hideMatchEndUI();}
   });
   await test("The server's copy of the play rules (functions/rules.js) matches isPlayLegal everywhere", async () => {
     let src = null;
@@ -9135,7 +9128,7 @@ async function runDevTestSuite() {
   await test('REGRESSION: expired inbox invites are identified for cleanup', () => {
     const originalUser=currentUser, originalDb=db; let updates=null;
     currentUser={uid:'cleanup-test'}; db={ref:()=>({update:(u)=>{updates=u;return Promise.resolve();}})};
-    const expired=cleanupExpiredInvites({old:{sentAt:Date.now()-GAME_INVITE_EXPIRY_MS-1000},fresh:{sentAt:Date.now()}});
+    const expired=cleanupExpiredInvites({old:{sentAt:serverNow()-GAME_INVITE_EXPIRY_MS-1000},fresh:{sentAt:serverNow()}});
     assertTrue(expired.includes('old')&&!expired.includes('fresh'),'Only expired invites should be cleaned');
     assertTrue(updates && updates.old===null,'Cleanup must delete expired Firebase child keys');
     currentUser=originalUser; db=originalDb;
@@ -9434,7 +9427,7 @@ async function runDevTestSuite() {
 
     state.direction = 1; state.currentTurnIndex = 0;
     advanceTurn(1);
-    const remaining = state.turnDeadline - Date.now();
+    const remaining = state.turnDeadline - serverNow();
     assertTrue(remaining > casualMs - 1000 && remaining <= casualMs, `The actual per-turn deadline must reflect the configured Casual timer (${casualMs}ms), not the old hardcoded 15s (got ~${Math.round(remaining / 1000)}s)`);
   });
 
