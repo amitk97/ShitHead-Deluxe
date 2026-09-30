@@ -4641,6 +4641,36 @@ async function runDevTestSuite() {
     assertTrue(avatar.classList.contains('hidden') && level.classList.contains('hidden'), 'Signed out: just the name box');
     currentUser = realUser;
   });
+  await test('Profile showcase: tapping an item opens Custom on its tab, scrolled to that item', async () => {
+    const realEquipped = { ...equippedCosmetics };
+    const frames = COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames');
+    const lastFrame = sortByValue(frames)[frames.length - 1];
+    try {
+      equippedCosmetics = { ...equippedCosmetics, frame: lastFrame.id, burnEffect: 'default' };
+      renderProfileShowcase();
+      const chip = document.querySelector(`#profileShowcase [data-showcase-type="frame"][data-showcase-id="${lastFrame.id}"]`);
+      assertTrue(!!chip && chip.tagName === 'BUTTON', 'Your own showcase items are buttons');
+      assertTrue(!!document.querySelector('#profileShowcase [data-showcase-type="tableTheme"]'), 'The table preview is a button too');
+      assertTrue(!showcaseHtml(getShowcaseLoadout()).includes('data-showcase-type'), "Other players' showcases don't link anywhere");
+      document.getElementById('profileModal').classList.remove('hidden');
+      chip.click();
+      await new Promise(r => setTimeout(r, 800)); // a smooth scroll
+      assertTrue(!document.getElementById('themesModal').classList.contains('hidden') && document.getElementById('profileModal').classList.contains('hidden'), 'Custom opens in place of Profile');
+      assertEqual(customTab, 'frame', 'On the Frames tab');
+      const tile = visibleCustomPanel().querySelector(`[data-equip-id="${lastFrame.id}"]`);
+      assertTrue(!!tile && tile.classList.contains('custom-focus'), 'The item glows');
+      const r = tile.getBoundingClientRect();
+      assertTrue(r.top >= 0 && r.bottom <= window.innerHeight, `The item is scrolled into view (${Math.round(r.top)}-${Math.round(r.bottom)} of ${window.innerHeight})`);
+      document.querySelector('#profileShowcase [data-showcase-type="burnEffect"]').click();
+      await new Promise(r => setTimeout(r, 60));
+      assertEqual(customTab, 'burnEffect', 'Default items open their tab too');
+    } finally {
+      equippedCosmetics = realEquipped;
+      document.getElementById('themesModal').classList.add('hidden');
+      document.getElementById('profileModal').classList.add('hidden');
+      setCustomTab('all');
+    }
+  });
   await test('Friends list: highest level first, then online, then A-Z', () => {
     const area = document.getElementById('friendsListArea');
     const before = area.innerHTML;

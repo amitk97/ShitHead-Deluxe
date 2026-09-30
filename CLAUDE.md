@@ -358,7 +358,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Showcase & daily streak
 
-- Showcase: equipped table/card back/frame/burn/victory/emotes are mirrored to `publicProfiles/{uid}/showcase` (`syncShowcase`) and shown on the in-game player card and the Profile page (`showcaseHtml`). New cosmetic types that should be shown need adding to `SHOWCASE_TYPES` and the `showcase` rule.
+- Showcase: equipped table/card back/frame/burn/victory/emotes are mirrored to `publicProfiles/{uid}/showcase` (`syncShowcase`) and shown on the in-game player card and the Profile page (`showcaseHtml`). On your own Profile (`renderProfileShowcase`, `showcaseHtml(…, { link: true })`, deck included) every item and the table preview are buttons (`data-showcase-type/id`) → `openShowcaseItemInCustom`: Custom on that item's tab (`setCustomTab`), scrolled to its tile with a short gold glow (`focusCustomTile`, `.custom-focus`; refocused after `openThemesPanel`'s collection load redraws the tiles). Other players' cards don't link (v245, owner). New cosmetic types that should be shown need adding to `SHOWCASE_TYPES` and the `showcase` rule.
 - Daily login streak: `claimDailyLoginReward` → server `streak`: one claim per UK calendar day (`localDateKey` is the UK date), `DAILY_STREAK_REWARDS` Diamonds. The 7-day track repeats; a missed day restarts at Day 1.
 - Locked Custom tiles use `data-locked` (not `disabled`) so tapping opens that item in the Shop (`openLockedCosmetic`).
 

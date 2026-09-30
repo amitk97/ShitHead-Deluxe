@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v244 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v245 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -2267,6 +2267,14 @@
     .pp-section { font-size:9px; font-weight:900; letter-spacing:.14em; color:#64748b; text-transform:uppercase; margin-bottom:5px; }
     .pp-show-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; margin-top:6px; }
     .pp-show { display:flex; align-items:center; gap:6px; min-width:0; padding:5px 6px; border-radius:9px; background:rgba(15,23,42,.8); border:1px solid #1e293b; }
+    /* Your own Profile showcase: each item opens Custom on it (v245). */
+    .pp-show.pp-show-link { width:100%; text-align:left; font:inherit; color:inherit; cursor:pointer; transition:border-color .15s var(--ease-soft), background .15s var(--ease-soft); }
+    .pp-show.pp-show-link:hover, .pp-show.pp-show-link:focus-visible { border-color:rgba(251,191,36,.6); background:rgba(30,41,59,.9); outline:none; }
+    .pp-show-table-link { display:block; width:100%; padding:0; border:0; background:none; font:inherit; color:inherit; cursor:pointer; border-radius:12px; }
+    .pp-show-table-link:focus-visible { outline:2px solid rgba(251,191,36,.7); outline-offset:2px; }
+    #themesModal .custom-focus { outline:2px solid #fbbf24; outline-offset:2px; box-shadow:0 0 18px rgba(251,191,36,.55); animation:customFocusPulse 1.6s var(--ease-soft); }
+    @keyframes customFocusPulse { 0%, 60% { box-shadow:0 0 22px rgba(251,191,36,.75); } 100% { box-shadow:0 0 0 rgba(251,191,36,0); } }
+    body.reduce-motion #themesModal .custom-focus { animation:none; }
     .pp-show-icon { flex:none; width:20px; text-align:center; font-size:14px; line-height:1; }
     .pp-show-text { min-width:0; line-height:1.15; }
     .pp-show-text small { display:block; font-size:7px; font-weight:900; letter-spacing:.1em; color:#64748b; text-transform:uppercase; }
@@ -18242,6 +18250,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v245: [
+        ['🎨', 'Profile: tap anything in your showcase to jump straight to it in Custom.']
+      ],
       v244: [
         ['🏠', 'Home screen: a bigger profile picture beside your nickname.']
       ],
@@ -20865,7 +20876,9 @@ video {
       return { 'victory-cards': '🃏', 'victory-fireworks': '🎆', 'victory-sparklers': '🎇', 'victory-stars': '⭐', 'victory-karate': '🥋',
         'victory-trophy': '🏆', 'victory-rocket': '🚀', 'victory-origami': '🦢', 'victory-lion': '🦁' }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('victory-', '')]?.victoryIcon || '🏆';
     }
-    function showcaseHtml(showcase) {
+    // opts.link (your own Profile only): every item is a button that opens
+    // Custom on its tab, scrolled to that item (openShowcaseItemInCustom).
+    function showcaseHtml(showcase, opts = {}) {
       if (!showcase) return '';
       const pick = type => {
         const id = showcase[type];
@@ -20874,10 +20887,13 @@ video {
       const table = pick('tableTheme'), back = pick('cardBack'), frame = pick('frame');
       const burn = pick('burnEffect'), victory = pick('victoryEffect'), joker = pick('jokerEffect'), emotes = pick('emotes');
       const deck = pick('deck');
-      const chip = (icon, label, type, id) => `<div class="pp-show ${id === 'default' ? 'is-default' : ''}"><span class="pp-show-icon">${icon}</span><span class="pp-show-text"><small>${label}</small><b>${cosmeticDisplayName(type, id)}</b></span></div>`;
+      const link = (type, id) => opts.link ? ` data-showcase-type="${type}" data-showcase-id="${escapeAttr(id)}"` : '';
+      const tag = opts.link ? 'button' : 'div';
+      const chip = (icon, label, type, id) => `<${tag}${opts.link ? ' type="button"' : ''} class="pp-show ${id === 'default' ? 'is-default' : ''}${opts.link ? ' pp-show-link' : ''}"${link(type, id)}${opts.link ? ` aria-label="${escapeAttr(`${label}: ${cosmeticDisplayName(type, id)}. Open in Custom`)}"` : ''}><span class="pp-show-icon">${icon}</span><span class="pp-show-text"><small>${label}</small><b>${cosmeticDisplayName(type, id)}</b></span></${tag}>`;
       const emoteIcon = (emotes !== 'default' && EMOTE_PACKS[emotes]?.[0]) || '😂';
+      const tablePreview = miniTablePreviewHtml(table, cosmeticDisplayName('tableTheme', table) + ' table', false, { backId: back, frameId: frame });
       return `<div class="pp-showcase"><div class="pp-section">Showcase</div>
-        ${miniTablePreviewHtml(table, cosmeticDisplayName('tableTheme', table) + ' table', false, { backId: back, frameId: frame })}
+        ${opts.link ? `<button type="button" class="pp-show-table-link"${link('tableTheme', table)} aria-label="${escapeAttr(`Table: ${cosmeticDisplayName('tableTheme', table)}. Open in Custom`)}">${tablePreview}</button>` : tablePreview}
         <div class="pp-show-grid">
           ${chip('🂠', 'Card back', 'cardBack', back)}${chip('▢', 'Frame', 'frame', frame)}
           ${chip(burnPreviewIcon(burn), 'Burn', 'burnEffect', burn)}${chip(victoryPreviewIcon(victory), 'Victory', 'victoryEffect', victory)}
@@ -23228,7 +23244,7 @@ video {
     }
     function renderProfileShowcase() {
       const slot = document.getElementById('profileShowcase');
-      if (slot) slot.innerHTML = showcaseHtml(getShowcaseLoadout()).replace('<div class="pp-section">Showcase</div>', '<div class="pp-section">Your showcase · what other players see</div>');
+      if (slot) slot.innerHTML = showcaseHtml({ ...getShowcaseLoadout(), deck: equippedIdOf('deck') }, { link: true }).replace('<div class="pp-section">Showcase</div>', '<div class="pp-section">Your showcase · what other players see</div>');
     }
     function openProfilePanel() {
       refreshProfilePanel();
@@ -27745,9 +27761,35 @@ video {
       renderThemesPanelActiveState();
       renderPersonalisationCosmetics();
       document.getElementById('themesModal').classList.remove('hidden');
-      loadCosmeticCollection();
+      const loading = loadCosmeticCollection();
       loadSavedLoadouts();
+      return loading;
     }
+    // Your Profile showcase → Custom (v245, owner): the item's own tab,
+    // scrolled to its tile, which glows for a moment. Focused again once the
+    // collection load has redrawn the tiles.
+    function focusCustomTile(type, id) {
+      const tile = visibleCustomPanel()?.querySelector(`[data-equip-type="${type}"][data-equip-id="${CSS.escape(id)}"]`);
+      if (!tile) return null;
+      tile.scrollIntoView?.({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+      tile.classList.add('custom-focus');
+      setTimeout(() => tile.classList.remove('custom-focus'), 1800);
+      return tile;
+    }
+    function openShowcaseItemInCustom(type, id) {
+      document.getElementById('profileModal')?.classList.add('hidden');
+      const loading = openThemesPanel();
+      setCustomTab(type);
+      let tile = null;
+      requestAnimationFrame(() => { tile = focusCustomTile(type, id); });
+      Promise.resolve(loading).then(() => requestAnimationFrame(() => {
+        if (customTab === type && (!tile || !tile.isConnected)) tile = focusCustomTile(type, id);
+      })).catch(() => {});
+    }
+    document.getElementById('profileShowcase')?.addEventListener('click', (event) => {
+      const item = event.target.closest('[data-showcase-type]');
+      if (item) openShowcaseItemInCustom(item.dataset.showcaseType, item.dataset.showcaseId);
+    });
     document.getElementById('themesCloseBtn').addEventListener('click', () => document.getElementById('themesModal').classList.add('hidden'));
     document.getElementById('shopCustomBtn').addEventListener('click', () => {
       document.getElementById('shopModal').classList.add('hidden');
