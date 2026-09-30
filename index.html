@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v239 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v240 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -8123,6 +8123,7 @@ video {
     //   § Accounts and sign-in
     //   § Ranked matchmaking
     //   § Challenges and Diamonds economy (paid by the server: functions/economy.js)
+    //   § Weekly challenge events (Streaker, Social Week, Pile Diver… once per match)
     //   § XP & levels (server-awarded; off until config/features/xp is true)
     //   § Social: profiles, presence, friends, invites, inbox
     //   § Spectating a friend's match (read-only)
@@ -9800,6 +9801,8 @@ video {
         if (cardsToPlay.length >= 3) playEvents.push('rank-triple');
         if (cardsToPlay.length >= 5) playEvents.push('five-card-turn');
         if (playedFromFaceDown) playEvents.push('play-facedown');
+        // Weekly Reset Week / See-Through count every card (three 2s = 3).
+        if (!cardsToPlay[0].isJoker && (cardRank === '2' || cardRank === '3')) cardsToPlay.forEach(() => playEvents.push(cardRank === '2' ? 'twos-played' : 'threes-played'));
         if (playEvents.length) notifyChallengeEvent(player, playEvents);
       }
 
@@ -18059,6 +18062,7 @@ video {
       entry.id = id;
       matchHistoryCurrentId = id;
       reportMatchFinished();
+      try { weeklyMatchEnded(); } catch (e) { console.warn('Weekly challenge check skipped', e); } // § Weekly challenge events
       writeLocalMatchHistory([entry, ...readLocalMatchHistory().filter(e => e.id !== id)]);
       if (currentUser && typeof db !== 'undefined' && firebaseAvailable) {
         const uid = currentUser.uid;
@@ -18218,6 +18222,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v240: [
+        ['📅', 'Weekly challenges: 5 a week from Monday 5 October, with 10 new ones including Streaker, Pile Diver, Gauntlet Runner and Daily Grinder.', WN_KEY],
+        ['🔥', 'Weekly targets from next week: Bonfire Week 10 burns; Bot Hunter, Ranked Week, Snap Happy and Four Play 5 each.']
+      ],
       v239: [
         ['🛠️', 'Ranked: Find Game now keeps searching after a match instead of asking you to try again.']
       ],
@@ -23693,7 +23701,15 @@ video {
     if (DAILY_CHALLENGE_POOL.length !== 20) console.warn('DAILY_CHALLENGE_POOL should have exactly 20 entries, has', DAILY_CHALLENGE_POOL.length);
 
     const WEEKLY_CHALLENGE_REWARD = 100;
-    const WEEKLY_CHALLENGE_POOL = [
+    // The weekly rules are versioned by UK week so a change never reaches
+    // back into a week already under way (owner, v240): up to 2026-W40 the
+    // first pool, 3 picked a week; from 2026-W41 the second, 5 a week, with
+    // bigger targets and 10 new challenges. Pool ids are the challenge
+    // events they count (notifyChallengeEvent / bumpWeeklyChallengeProgress);
+    // the weekly-only ones are sent from § Weekly challenge events.
+    // Completion keys (weekly_<week>_<id>) are read against their own week's
+    // rules, so a finished week still shows what it asked for.
+    const WEEKLY_CHALLENGE_POOL_V1 = [
       { id:'burn-once', name:'Bonfire Week', desc:'Burn the pile 5 times.', target:5 },
       { id:'play-joker', name:'Joker Week', desc:'Play 5 Jokers.', target:5 },
       { id:'win-any-match', name:'Winning Habit', desc:'Win 5 matches in any mode.', target:5 },
@@ -23703,6 +23719,41 @@ video {
       { id:'snap-burn-once', name:'Snap Happy', desc:'Complete 3 Snap Burns.', target:3 },
       { id:'four-of-a-kind-burn', name:'Four Play', desc:'Complete 3 four-of-a-kind burns.', target:3 }
     ];
+    const WEEKLY_CHALLENGE_POOL_V2 = [
+      { id:'burn-once', name:'Bonfire Week', desc:'Burn the pile 10 times.', target:10 },
+      { id:'play-joker', name:'Joker Week', desc:'Play 5 Jokers.', target:5 },
+      { id:'win-any-match', name:'Winning Habit', desc:'Win 5 matches in any mode.', target:5 },
+      { id:'beat-a-bot', name:'Bot Hunter', desc:'Beat a Bot 5 times.', target:5 },
+      { id:'finish-any-match', name:'Card Marathon', desc:'Finish 10 matches.', target:10 },
+      { id:'win-ranked-match', name:'Ranked Week', desc:'Win 5 Ranked matches.', target:5 },
+      { id:'snap-burn-once', name:'Snap Happy', desc:'Complete 5 Snap Burns.', target:5 },
+      { id:'four-of-a-kind-burn', name:'Four Play', desc:'Complete 5 four-of-a-kind burns.', target:5 },
+      { id:'play-facedown', name:'Blind Luck', desc:'Play 10 face-down cards.', target:10 },
+      { id:'comeback-season', name:'Comeback Season', desc:'Win 5 matches after picking up more than 5 cards from the pile.', target:5 },
+      { id:'rank-triple', name:'Triple Trouble', desc:'Play 3 or more of a rank in one turn, 10 times.', target:10 },
+      { id:'twos-played', name:'Reset Week', desc:'Play ten 2s.', target:10 },
+      { id:'threes-played', name:'See-Through', desc:'Play ten 3s.', target:10 },
+      { id:'gauntlet-runner', name:'Gauntlet Runner', desc:'Beat 10 Gauntlet bots.', target:10 },
+      { id:'friends-match', name:'Social Week', desc:'Finish 5 Play Friends matches.', target:5 },
+      { id:'daily-grinder', name:'Daily Grinder', desc:'Complete 10 daily challenges.', target:10 },
+      { id:'win-streak', name:'Streaker', desc:'Win 3 matches in a row, any mode.', target:3 },
+      { id:'pile-diver', name:'Pile Diver', desc:'Pick up a pile of 15 or more cards and still win that match.', target:1 }
+    ];
+    // Oldest first; `from` = the first UK week the rule applies to.
+    const WEEKLY_CHALLENGE_RULES = [
+      { from: '', picks: 3, pool: WEEKLY_CHALLENGE_POOL_V1 },
+      { from: '2026-W41', picks: 5, pool: WEEKLY_CHALLENGE_POOL_V2 }
+    ];
+    // Week keys are zero-padded ("2026-W41"), so they compare as text.
+    function weeklyRulesFor(weekKey) {
+      const key = String(weekKey || '');
+      let rule = WEEKLY_CHALLENGE_RULES[0];
+      WEEKLY_CHALLENGE_RULES.forEach((r) => { if (key >= r.from) rule = r; });
+      return rule;
+    }
+    // The first pool, kept under its old name for the catalog's `weeklyPool`
+    // (servers from before v240 read it; newer ones read `weeklyRules`).
+    const WEEKLY_CHALLENGE_POOL = WEEKLY_CHALLENGE_POOL_V1;
 
     // --- Ranked one-time challenges (career-cumulative, Ranked only) ---
     // Only the TARGET thresholds were spec'd exactly (e.g. "Burner
@@ -24493,6 +24544,7 @@ video {
         weeklyReward: WEEKLY_CHALLENGE_REWARD,
         dailyPool: DAILY_CHALLENGE_POOL.map(c => ({ id: c.id, name: c.name, target: c.target })),
         weeklyPool: WEEKLY_CHALLENGE_POOL.map(c => ({ id: c.id, name: c.name, target: c.target })),
+        weeklyRules: WEEKLY_CHALLENGE_RULES.map(r => ({ from: r.from, picks: r.picks, pool: r.pool.map(c => ({ id: c.id, name: c.name, target: c.target })) })),
         seasonalChallenges: SEASONAL_CHALLENGES.map(c => ({ id: c.id, name: c.name, target: c.target, reward: c.reward })),
         seasonalChallengeBonus: { ...SEASONAL_CHALLENGE_BONUS },
         gettingStarted: GETTING_STARTED_CHALLENGES.map(c => ({ id: c.id, name: c.name, reward: c.reward })),
@@ -24562,7 +24614,7 @@ video {
       let def = defOrId, id = typeof defOrId === 'string' ? defOrId : defOrId?.id;
       if (typeof defOrId === 'string') {
         if (/^daily_/.test(id)) return getDailyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
-        if (/^weekly_/.test(id)) return getWeeklyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
+        if (/^weekly_/.test(id)) return getWeeklyChallengeDef(id.split('_').slice(2).join('_'), id.split('_')[1])?.desc || '';
         if (/^season_/.test(id)) {
           const cid = id.split('_').slice(2).join('_');
           return (cid === SEASONAL_CHALLENGE_BONUS.id ? SEASONAL_CHALLENGE_BONUS : SEASONAL_CHALLENGES.find(c => c.id === cid))?.desc || '';
@@ -24604,17 +24656,21 @@ video {
       const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
       return `${d.getUTCFullYear()}-W${String(week).padStart(2,'0')}`;
     }
+    // The same seeded shuffle as the daily picks, n from the end (the server
+    // copies it: functions/economy.js pickWeeklyIds).
     function pickWeeklyChallengeIds(weekKey) {
+      const rule = weeklyRulesFor(weekKey), n = rule.picks;
       const rng = mulberry32(hashStringToSeed(`weekly-${weekKey}`));
-      const pool = WEEKLY_CHALLENGE_POOL.map(c => c.id);
-      for (let i=pool.length-1; i>pool.length-4; i--) { const j=Math.floor(rng()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
-      return pool.slice(pool.length-3);
+      const pool = rule.pool.map(c => c.id);
+      for (let i=pool.length-1; i>pool.length-1-n; i--) { const j=Math.floor(rng()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+      return pool.slice(pool.length-n);
     }
-    function getWeeklyChallengeDef(id) { return WEEKLY_CHALLENGE_POOL.find(c => c.id === id) || null; }
+    // weekKey defaults to this week; pass the key's own week for old completions.
+    function getWeeklyChallengeDef(id, weekKey = getUkWeekKey()) { return weeklyRulesFor(weekKey).pool.find(c => c.id === id) || null; }
     function weeklyCompletionKey(weekKey,id) { return `weekly_${weekKey}_${id}`; }
     function ensureWeeklyChallengeState(existing) {
       const weekKey=getUkWeekKey();
-      if (existing && existing.weekKey===weekKey && Array.isArray(existing.challengeIds) && existing.challengeIds.length===3) return {state:existing,changed:false};
+      if (existing && existing.weekKey===weekKey && Array.isArray(existing.challengeIds) && existing.challengeIds.length===weeklyRulesFor(weekKey).picks) return {state:existing,changed:false};
       return {state:{weekKey,challengeIds:pickWeeklyChallengeIds(weekKey),progress:{}},changed:true};
     }
 
@@ -24868,6 +24924,7 @@ video {
         if (!c || !c.id) return;
         challengeEconomy.completedChallenges[c.id] = { completedAt: Date.now(), reward: c.reward };
         enqueueChallengeToast(c.name || c.id, c.reward, getChallengePriority(c.id));
+        if (/^daily_/.test(c.id)) bumpWeeklyChallengeProgress(['daily-grinder']); // § Weekly challenge events
       });
       updateDiamondHeader();
       renderChallengesModalIfOpen();
@@ -25063,20 +25120,61 @@ video {
       });
     }
 
-    function bumpWeeklyChallengeProgress(eventIds) {
+    // An id listed n times counts n (e.g. three 2s played together).
+    // opts.setAtLeast: progress becomes at least that value instead (Streaker's best run).
+    function bumpWeeklyChallengeProgress(eventIds, opts = {}) {
       const weekly = challengeEconomy.weeklyChallengeState;
       if (!weekly || !currentUser) return;
       if (!weekly.progress || typeof weekly.progress !== 'object') weekly.progress = {};
       const picked = new Set(weekly.challengeIds || []);
-      eventIds.forEach((id) => {
+      const counts = new Map();
+      eventIds.forEach((id) => counts.set(id, (counts.get(id) || 0) + 1));
+      counts.forEach((n, id) => {
         if (!picked.has(id)) return;
-        const def=getWeeklyChallengeDef(id); if (!def) return;
+        const def=getWeeklyChallengeDef(id, weekly.weekKey); if (!def) return;
         const key=weeklyCompletionKey(weekly.weekKey,id);
         if (challengeEconomy.completedChallenges[key]) return;
-        weekly.progress[id]=(weekly.progress[id]||0)+1;
+        const before = weekly.progress[id]||0;
+        const after = opts.setAtLeast != null ? Math.max(before, opts.setAtLeast) : before + n;
+        if (after === before) return;
+        weekly.progress[id]=after;
         db.ref(`users/${currentUser.uid}/weeklyChallengeState/progress/${id}`).set(weekly.progress[id]).catch(e=>console.warn('Failed to persist weekly progress',id,e));
         if (weekly.progress[id]>=def.target) claimChallenge(key,WEEKLY_CHALLENGE_REWARD,def.name); else renderChallengesModalIfOpen();
       });
+    }
+
+    // § Weekly challenge events
+    // The weekly-only challenges (v240 pool) that aren't a single play or
+    // finish: counted once per match from recordMatchHistory (never the
+    // tutorial), plus daily claims (Daily Grinder, from applyServerClaims).
+    // Streaker keeps the current run in weeklyChallengeState.streakRun
+    // (player-writable, reset with the week); progress = the best run.
+    const WEEKLY_COMEBACK_MIN_PICKED = 6;   // Comeback Season: "more than 5" cards picked up
+    const WEEKLY_PILE_DIVER_MIN = 15;       // Pile Diver: one pickup of 15+
+    function weeklyMatchEnded() {
+      const me = state.players.find(p => p.id === state.localPlayerId);
+      if (!me || state.spectating || !currentUser) return;
+      const won = me.finishRank === 1 && !me.drew;
+      const g = me.gameStats || {};
+      const events = [];
+      if (state.isMultiplayer && !state.isRanked) events.push('friends-match');
+      if (won && (g.pickedUp || 0) >= WEEKLY_COMEBACK_MIN_PICKED) events.push('comeback-season');
+      if (won && (g.biggestPickup || 0) >= WEEKLY_PILE_DIVER_MIN) events.push('pile-diver');
+      if (won && !state.isMultiplayer && state.gauntlet) events.push('gauntlet-runner');
+      if (events.length) notifyChallengeEvent(me, events);
+      weeklyStreakNote(won);
+    }
+    function weeklyStreakNote(won) {
+      const weekly = challengeEconomy.weeklyChallengeState;
+      if (!weekly || !currentUser) return;
+      const run = won ? (Number(weekly.streakRun) || 0) + 1 : 0;
+      weekly.streakRun = run;
+      db.ref(`users/${currentUser.uid}/weeklyChallengeState/streakRun`).set(run).catch(e => console.warn('Weekly streak not saved', e));
+      if (run) bumpWeeklyChallengeProgress(['win-streak'], { setAtLeast: run });
+    }
+    // Leaving a match part-way through counts as a loss for Streaker.
+    function weeklyStreakBroken() {
+      try { if (!state.spectating && !(typeof tutorialActive !== 'undefined' && tutorialActive)) weeklyStreakNote(false); } catch (e) {}
     }
 
     // § Seasonal challenges
@@ -25367,7 +25465,7 @@ video {
     function challengeNameForKey(key) {
       const tail = String(key).split('_').slice(2).join('_');
       if (/^daily_/.test(key)) return { name: getDailyChallengeDef(tail)?.name || 'Daily challenge', group: 'Daily' };
-      if (/^weekly_/.test(key)) return { name: getWeeklyChallengeDef(tail)?.name || 'Weekly challenge', group: 'Weekly' };
+      if (/^weekly_/.test(key)) return { name: getWeeklyChallengeDef(tail, key.split('_')[1])?.name || 'Weekly challenge', group: 'Weekly' };
       if (/^season_/.test(key)) {
         const inst = String(key).split('_')[1] || '';
         const ev = SEASONAL_EVENT_BY_ID[inst.split('-')[0]];
@@ -25524,7 +25622,7 @@ video {
       setListHtml('challengesDailyList', dailyHtml);
       const weekly = challengeEconomy.weeklyChallengeState;
       const weeklyHtml = weekly ? weekly.challengeIds.map((id) => {
-        const def=getWeeklyChallengeDef(id); if (!def) return '';
+        const def=getWeeklyChallengeDef(id, weekly.weekKey); if (!def) return '';
         const completed=!!challengeEconomy.completedChallenges[weeklyCompletionKey(weekly.weekKey,id)];
         const progress=Math.min((weekly.progress&&weekly.progress[id])||0,def.target);
         return renderChallengeRowHTML(def.name, `${progress}/${def.target} — ${def.desc}`, WEEKLY_CHALLENGE_REWARD, completed, def.desc);
@@ -28433,7 +28531,7 @@ video {
       if (state.isMultiplayer && seriesActiveHere()) {
         seriesBeforeLeave().then((go) => {
           if (!go) return;
-          if (midMatch) { Health.matchLeft(); Health.save(); }
+          if (midMatch) { Health.matchLeft(); Health.save(); weeklyStreakBroken(); }
           forgetJoinedRoom();
           leaveMultiplayerRoom().then(reloadCleanly);
         });
@@ -28445,7 +28543,7 @@ video {
           ? "Leave this match? Your progress in it will be lost and you can't rejoin."
           : "Return to the main menu?";
       if (confirm(msg)) {
-        if (midMatch) { Health.matchLeft(); Health.save(); }
+        if (midMatch) { Health.matchLeft(); Health.save(); weeklyStreakBroken(); }
         forgetJoinedRoom();
         localStorage.removeItem('shithead_game_state');
         // Only a signed-in player should be returned to the Ranked lobby.

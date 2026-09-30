@@ -5448,6 +5448,7 @@ async function runDevTestSuite() {
     // functions/economy.js must pick the same ids (tools/economy-emulator-test.js checks the same fixture).
     assertEqual(pickDailyChallengeIds('2026-09-17'), ['beat-a-bot', 'win-any-match', 'burn-with-ten'], 'Daily picks for 2026-09-17');
     assertEqual(pickWeeklyChallengeIds('2026-W38'), ['burn-once', 'snap-burn-once', 'win-any-match'], 'Weekly picks for 2026-W38');
+    assertEqual(pickWeeklyChallengeIds('2026-W41'), ['snap-burn-once', 'win-streak', 'pile-diver', 'play-facedown', 'rank-triple'], 'Weekly picks for 2026-W41 (5 a week from then)');
     assertEqual(getUkWeekKey(new Date('2026-09-17T12:00:00Z')), '2026-W38', 'UK week key');
   });
 
@@ -8385,6 +8386,77 @@ async function runDevTestSuite() {
     const tabs=[...document.querySelectorAll('[data-challenge-tab]')].map(b=>b.dataset.challengeTab);
     assertEqual(tabs,['daily','weekly','ranked','bots','seasonal'],'Challenge tabs must be Daily, Weekly, Ranked, Bots in that order');
     assertEqual(pickWeeklyChallengeIds('2026-W39').length,3,'Each week must select exactly 3 challenges');
+  });
+  await test('Weekly challenges (v240): the new rules start with 2026-W41 and never reach back into an earlier week', () => {
+    assertEqual(pickWeeklyChallengeIds('2026-W40').length, 3, 'Up to 2026-W40: 3 a week');
+    assertTrue(pickWeeklyChallengeIds('2026-W40').every(id => WEEKLY_CHALLENGE_POOL_V1.some(c => c.id === id)), 'Up to 2026-W40: the first pool');
+    assertEqual(pickWeeklyChallengeIds('2026-W41').length, 5, 'From 2026-W41: 5 a week');
+    assertEqual(new Set(pickWeeklyChallengeIds('2027-W12')).size, 5, 'Five different challenges');
+    assertEqual(getWeeklyChallengeDef('burn-once', '2026-W40').target, 5, 'An old week keeps its old target');
+    assertEqual(getWeeklyChallengeDef('burn-once', '2026-W41').target, 10, 'Bonfire Week: 10 burns from W41');
+    [['beat-a-bot', 5], ['win-ranked-match', 5], ['snap-burn-once', 5], ['four-of-a-kind-burn', 5]].forEach(([id, n]) => assertEqual(getWeeklyChallengeDef(id, '2026-W41').target, n, `${id} target from W41`));
+    assertEqual(WEEKLY_CHALLENGE_POOL_V2.length, 18, '8 old + 10 new');
+    assertEqual(getWeeklyChallengeDef('pile-diver', '2026-W40'), null, 'New challenges are not in old weeks');
+    assertTrue(/15 or more/.test(challengeDescription('weekly_2026-W41_pile-diver')), 'Completion keys read their own week');
+    assertTrue(/Burn the pile 5 times/.test(challengeDescription('weekly_2026-W39_burn-once')), 'An old completion keeps its old wording');
+    // A week already under way keeps its 3 picks.
+    const kept = { weekKey: 'x', challengeIds: ['a', 'b', 'c'], progress: {} };
+    const realKey = getUkWeekKey();
+    kept.weekKey = realKey;
+    const res = ensureWeeklyChallengeState({ ...kept, challengeIds: pickWeeklyChallengeIds(realKey) });
+    assertTrue(!res.changed, 'This week\'s saved picks stay as they are');
+    assertEqual(weeklyRulesFor('2026-W40').picks, 3, 'Rule lookup: before');
+    assertEqual(weeklyRulesFor('2027-W01').picks, 5, 'Rule lookup: next year');
+    const cat = serverEconomyCatalog();
+    assertEqual(cat.weeklyRules.map(r => [r.from, r.picks, r.pool.length]), [['', 3, 8], ['2026-W41', 5, 18]], 'The server gets both rules');
+  });
+  await test('Weekly challenges (v240): each new challenge counts the right thing', async () => {
+    const realState = challengeEconomy.weeklyChallengeState, realDaily = challengeEconomy.dailyChallengeState, realDone = challengeEconomy.completedChallenges;
+    const realPlayers = state.players, realLocal = state.localPlayerId, realMulti = state.isMultiplayer, realRanked = state.isRanked, realG = state.gauntlet;
+    const writes = {};
+    db = { ref: (path) => ({ set: (v) => { writes[path] = v; return Promise.resolve(); } }) };
+    currentUser = { uid: 'wk' };
+    const all = WEEKLY_CHALLENGE_POOL_V2.map(c => c.id);
+    challengeEconomy.completedChallenges = {};
+    challengeEconomy.dailyChallengeState = { dateKey: 'x', challengeIds: [], progress: {} };
+    challengeEconomy.weeklyChallengeState = { weekKey: '2026-W41', challengeIds: all, progress: {} };
+    const prog = (id) => challengeEconomy.weeklyChallengeState.progress[id] || 0;
+    try {
+      bumpWeeklyChallengeProgress(['twos-played', 'twos-played', 'twos-played']);
+      assertEqual(prog('twos-played'), 3, 'Three 2s played together count 3');
+      const me = { id: 'me', name: 'Me', finishRank: 1, gameStats: { pickedUp: 16, biggestPickup: 15 } };
+      state.players = [me, { id: 'b', name: 'Bot', finishRank: 2 }]; state.localPlayerId = 'me';
+      state.isMultiplayer = true; state.isRanked = false; state.gauntlet = null;
+      weeklyMatchEnded();
+      assertEqual(prog('friends-match'), 1, 'Social Week: a Play Friends match');
+      assertEqual(prog('comeback-season'), 1, 'Comeback Season: won after 16 cards picked up');
+      assertEqual(prog('pile-diver'), 1, 'Pile Diver: won after a 15-card pickup');
+      assertEqual(prog('win-streak'), 1, 'Streaker: a run of 1');
+      me.gameStats = { pickedUp: 5, biggestPickup: 5 };
+      state.isMultiplayer = false; state.gauntlet = { round: 2 };
+      weeklyMatchEnded();
+      assertEqual(prog('comeback-season'), 1, 'Exactly 5 cards picked up is not "more than 5"');
+      assertEqual(prog('friends-match'), 1, 'Vs Bots is not a Play Friends match');
+      assertEqual(prog('gauntlet-runner'), 1, 'Gauntlet Runner: a Gauntlet bot beaten');
+      assertEqual(prog('win-streak'), 2, 'Streaker: a run of 2');
+      weeklyStreakBroken();
+      assertEqual(challengeEconomy.weeklyChallengeState.streakRun, 0, 'Leaving mid-match breaks the run');
+      assertEqual(prog('win-streak'), 2, 'The best run so far is kept');
+      state.gauntlet = null;
+      weeklyMatchEnded(); weeklyMatchEnded();
+      assertEqual(prog('win-streak'), 2, 'A new run only counts once it beats the best');
+      me.finishRank = 2; weeklyMatchEnded();
+      assertEqual(writes['users/wk/weeklyChallengeState/streakRun'], 0, 'A loss resets the run');
+      me.finishRank = 1; me.drew = true; weeklyMatchEnded();
+      assertEqual(challengeEconomy.weeklyChallengeState.streakRun, 0, 'A draw is not a win');
+      applyServerClaims([{ id: 'daily_2026-10-05_burn-once', name: 'Burn the Pile', reward: 25 }]);
+      assertEqual(prog('daily-grinder'), 1, 'Daily Grinder: a daily challenge completed');
+      applyServerClaims([{ id: 'weekly_2026-W41_burn-once', name: 'Bonfire Week', reward: 100 }]);
+      assertEqual(prog('daily-grinder'), 1, 'Only daily challenges count for Daily Grinder');
+    } finally {
+      challengeEconomy.weeklyChallengeState = realState; challengeEconomy.dailyChallengeState = realDaily; challengeEconomy.completedChallenges = realDone;
+      state.players = realPlayers; state.localPlayerId = realLocal; state.isMultiplayer = realMulti; state.isRanked = realRanked; state.gauntlet = realG;
+    }
   });
   await test('REGRESSION: leaderboard search UI exists and rows can show public W/L counts', () => {
     assertTrue(!!document.getElementById('leaderboardSearchInput'),'Leaderboard search field must exist');

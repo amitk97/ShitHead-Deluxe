@@ -193,6 +193,7 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   // Same fixture as the game's dev test: the server must pick what the game shows.
   ok(JSON.stringify(_test.pickDailyIds('2026-09-17')) === JSON.stringify(['beat-a-bot', 'win-any-match', 'burn-with-ten']), 'daily picks match the game');
   ok(JSON.stringify(_test.pickWeeklyIds('2026-W38')) === JSON.stringify(['burn-once', 'snap-burn-once', 'win-any-match']), 'weekly picks match the game');
+  ok(JSON.stringify(_test.pickWeeklyIds('2026-W41')) === JSON.stringify(['snap-burn-once', 'win-streak', 'pile-diver', 'play-facedown', 'rank-triple']), 'weekly picks from 2026-W41 (5 a week) match the game');
   const today = _test.ukDateKey();
   const picks = _test.pickDailyIds(today);
   const notPicked = cat.dailyPool.map(c => c.id).find(id => !picks.includes(id));

@@ -101,17 +101,29 @@ function mulberry32(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-function pickThree(poolIds, seedText) {
+function pickN(poolIds, seedText, n = 3) {
   const rng = mulberry32(hashStringToSeed(seedText));
   const pool = [...poolIds];
-  for (let i = pool.length - 1; i > pool.length - 4; i--) {
+  for (let i = pool.length - 1; i > pool.length - 1 - n; i--) {
     const j = Math.floor(rng() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  return pool.slice(pool.length - 3);
+  return pool.slice(pool.length - n);
 }
-const pickDailyIds = (dateKey) => pickThree(CAT.dailyPool.map(c => c.id), dateKey);
-const pickWeeklyIds = (weekKey) => pickThree(CAT.weeklyPool.map(c => c.id), `weekly-${weekKey}`);
+// The weekly rules are versioned by UK week (the game's weeklyRulesFor):
+// each rule applies from its `from` week (zero-padded keys compare as text).
+function weeklyRuleFor(weekKey) {
+  const rules = Array.isArray(CAT.weeklyRules) && CAT.weeklyRules.length
+    ? CAT.weeklyRules : [{ from: '', picks: 3, pool: CAT.weeklyPool }];
+  let rule = rules[0];
+  rules.forEach((r) => { if (String(weekKey) >= String(r.from || '')) rule = r; });
+  return rule;
+}
+const pickDailyIds = (dateKey) => pickN(CAT.dailyPool.map(c => c.id), dateKey, 3);
+const pickWeeklyIds = (weekKey) => {
+  const rule = weeklyRuleFor(weekKey);
+  return pickN(rule.pool.map(c => c.id), `weekly-${weekKey}`, rule.picks);
+};
 
 // ---- Seasons ---------------------------------------------------------------
 // Events on now, with a few hours' slack either side for players' time zones.
@@ -304,7 +316,7 @@ function challengeForKey(id, user, now) {
     const [, weekKey, poolId] = weekly;
     const thisWeek = ukWeekKey(now), lastWeek = ukWeekKey(new Date(now.getTime() - 7 * 864e5));
     if (weekKey !== thisWeek && weekKey !== lastWeek) return { error: 'That weekly challenge has expired.' };
-    const def = CAT.weeklyPool.find(c => c.id === poolId);
+    const def = weeklyRuleFor(weekKey).pool.find(c => c.id === poolId);
     if (!def || !pickWeeklyIds(weekKey).includes(poolId)) return { error: 'Not one of that week\'s challenges.' };
     return { name: def.name, reward: CAT.weeklyReward };
   }

@@ -1099,6 +1099,150 @@
    "target": 3
   }
  ],
+ "weeklyRules": [
+  {
+   "from": "",
+   "picks": 3,
+   "pool": [
+    {
+     "id": "burn-once",
+     "name": "Bonfire Week",
+     "target": 5
+    },
+    {
+     "id": "play-joker",
+     "name": "Joker Week",
+     "target": 5
+    },
+    {
+     "id": "win-any-match",
+     "name": "Winning Habit",
+     "target": 5
+    },
+    {
+     "id": "beat-a-bot",
+     "name": "Bot Hunter",
+     "target": 3
+    },
+    {
+     "id": "finish-any-match",
+     "name": "Card Marathon",
+     "target": 10
+    },
+    {
+     "id": "win-ranked-match",
+     "name": "Ranked Week",
+     "target": 3
+    },
+    {
+     "id": "snap-burn-once",
+     "name": "Snap Happy",
+     "target": 3
+    },
+    {
+     "id": "four-of-a-kind-burn",
+     "name": "Four Play",
+     "target": 3
+    }
+   ]
+  },
+  {
+   "from": "2026-W41",
+   "picks": 5,
+   "pool": [
+    {
+     "id": "burn-once",
+     "name": "Bonfire Week",
+     "target": 10
+    },
+    {
+     "id": "play-joker",
+     "name": "Joker Week",
+     "target": 5
+    },
+    {
+     "id": "win-any-match",
+     "name": "Winning Habit",
+     "target": 5
+    },
+    {
+     "id": "beat-a-bot",
+     "name": "Bot Hunter",
+     "target": 5
+    },
+    {
+     "id": "finish-any-match",
+     "name": "Card Marathon",
+     "target": 10
+    },
+    {
+     "id": "win-ranked-match",
+     "name": "Ranked Week",
+     "target": 5
+    },
+    {
+     "id": "snap-burn-once",
+     "name": "Snap Happy",
+     "target": 5
+    },
+    {
+     "id": "four-of-a-kind-burn",
+     "name": "Four Play",
+     "target": 5
+    },
+    {
+     "id": "play-facedown",
+     "name": "Blind Luck",
+     "target": 10
+    },
+    {
+     "id": "comeback-season",
+     "name": "Comeback Season",
+     "target": 5
+    },
+    {
+     "id": "rank-triple",
+     "name": "Triple Trouble",
+     "target": 10
+    },
+    {
+     "id": "twos-played",
+     "name": "Reset Week",
+     "target": 10
+    },
+    {
+     "id": "threes-played",
+     "name": "See-Through",
+     "target": 10
+    },
+    {
+     "id": "gauntlet-runner",
+     "name": "Gauntlet Runner",
+     "target": 10
+    },
+    {
+     "id": "friends-match",
+     "name": "Social Week",
+     "target": 5
+    },
+    {
+     "id": "daily-grinder",
+     "name": "Daily Grinder",
+     "target": 10
+    },
+    {
+     "id": "win-streak",
+     "name": "Streaker",
+     "target": 3
+    },
+    {
+     "id": "pile-diver",
+     "name": "Pile Diver",
+     "target": 1
+    }
+   ]
+  }
+ ],
  "seasonalChallenges": [
   {
    "id": "finish-any-match",
