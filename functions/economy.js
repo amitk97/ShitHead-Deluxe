@@ -477,7 +477,7 @@ actions.matchWin = async ({ uid, data }) => {
     const room = (await db().ref(`rooms/${code}`).once('value')).val();
     const seats = Object.values(room?.players || {});
     const me = seats.find(p => p && p.uid === uid);
-    if (!room || room.isRanked || !me || me.finishRank !== 1 || me.drew || seats.length < 2) fail('failed-precondition', 'That win could not be checked.');
+    if (!room || room.isRanked || room.matchId !== matchId || !me || me.finishRank !== 1 || me.drew || seats.length < 2) fail('failed-precondition', 'That win could not be checked.');
   }
   const legacy = await legacyOwned(uid);
   const now = Date.now();
@@ -908,9 +908,16 @@ actions.rankedResult = async ({ uid, data }) => {
   if (!room || room.isRanked !== true) fail('failed-precondition', 'Not a Ranked room.');
   const seats = Object.values(room.players || {}).filter(Boolean);
   if (seats.length < 2 || seats.length > 4) fail('failed-precondition', 'Not a Ranked table.');
-  if (seats.some(p => !p.uid || p.finishRank == null)) fail('failed-precondition', 'The match has not finished.');
+  if (room.phase !== 'FINISHED' || seats.some(p => !p.uid || p.finishRank == null)) fail('failed-precondition', 'The match has not finished.');
   const uids = seats.map(p => p.uid);
   if (new Set(uids).size !== uids.length || !uids.includes(uid)) fail('permission-denied', 'You were not in that match.');
+  // A browser cannot create a scoring identity by changing the room's matchId.
+  // Bind the result and participant set to the server's original deal.
+  const deal = (await db().ref(`rankedDeals/${code}`).once('value')).val();
+  if (!deal || deal.matchId !== room.matchId || !Array.isArray(deal.order) ||
+      deal.order.length !== uids.length || [...deal.order].sort().join('|') !== [...uids].sort().join('|')) {
+    fail('failed-precondition', 'That match does not have a matching server deal.');
+  }
   // Every seat must have entered this room itself (rankedMembers is only
   // writable by that account), within the last day.
   const members = await Promise.all(uids.map(u => db().ref(`rankedMembers/${code}/${u}`).once('value').then(s => num(s.val(), 0))));

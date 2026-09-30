@@ -187,3 +187,8 @@ A weekly puzzle, a tournament mode (once there are more players). Further off: "
 Challenges and Gauntlet have All-time / This week pills, like Levels. Each tab remembers its period. Weeks start Monday in UK time. Challenges count existing server completion timestamps; Gauntlet counts bots beaten after v258 tracking starts (old wins have no timestamps and are not invented as weekly wins). The server writes `boards/challengesweek_<week>` and `boards/gauntletweek_<week>`; names, avatars and levels stay in sync and account deletion removes these entries too. The existing public, server-only boards rules already cover these paths. Functions deploy automatically with changes to `functions/`; check that workflow as well as Hosting.
 
 Update prompts are queued during matches, tutorials and open menu pages, and appear on the home screen. Starting a match hides a visible prompt, and Update Now checks again before reloading.
+
+
+## Browser Inspect and cheating
+
+The [30 September security audit](SECURITY-AUDIT-2026-09-30.md) found that browsers receive hidden card values and can modify shared room state. Wallet writes and Shop prices are server-protected, but some game and challenge rewards still trust browser reports. v261 binds online win claims to the actual match ID, requires the matching server deal and participants for Ranked scoring, and keeps Ranked in the lobby when server dealing fails. These are limited protections: server-held cards and server-validated moves are still needed. No database rules changed in v261.

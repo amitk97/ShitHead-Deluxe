@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v260 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v261 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -17717,8 +17717,8 @@ video {
 
     // Ranked is dealt by the server (economy rankedDeal: seat order + a
     // crypto-shuffled deck the Ranked audit checks the deal against), so the
-    // host can't deal itself a good hand. Without a connection to the server
-    // it falls back to a local deal, which the audit flags.
+    // host can't deal itself a good hand. If the server is unavailable,
+    // stay in the lobby and let the host retry.
     let rankedDealPending = false;
     function requestRankedDeal(matchId, attempt = 0) {
       return callEconomy('rankedDeal', { roomCode: state.roomCode, matchId }).catch((e) => {
@@ -17735,7 +17735,7 @@ video {
         const matchId = generateMatchId();
         requestRankedDeal(matchId)
           .then((deal) => { rankedDealPending = false; startMultiplayerGame({ serverDeal: deal }); })
-          .catch((e) => { rankedDealPending = false; console.warn('Server deal unavailable, dealing locally', e); startMultiplayerGame({ localDeal: true, matchId }); });
+          .catch((e) => { rankedDealPending = false; console.warn('Server deal unavailable', e); notifyBanner('Could not start Ranked: the server deal is unavailable. Please try again.'); });
         return;
       }
       // Same guarantee as startSinglePlayerGame: a new match actually
@@ -19590,6 +19590,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v261: [
+        ['🛡️', 'Stronger match checks: online wins use the actual match ID, and Ranked results require the matching server deal.'],
+        ['🔄', 'Ranked stays in the lobby to retry if its server deal cannot be loaded.']
+      ],
       v260: [
         ['📖', 'Tap the rotating home card to jump to its highlighted Card Powers entry in the Guide.', WN_KEY],
         ['ℹ️', 'Home mode information boxes are centred.']

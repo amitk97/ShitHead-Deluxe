@@ -312,7 +312,8 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   for (let i = 0; i < 6; i++) {
     const code = String(500000 + i);
     await admin(`rankedMembers/${code}`, 'PUT', { alice: Date.now(), bob: Date.now() });
-    await admin(`rooms/${code}`, 'PUT', { isRanked: true, matchId: `rk_pair_${i}`, players: [{ uid: 'alice', finishRank: 1 }, { uid: 'bob', finishRank: 2 }] });
+    await admin(`rooms/${code}`, 'PUT', { isRanked: true, phase: 'FINISHED', matchId: `rk_pair_${i}`, players: [{ uid: 'alice', finishRank: 1 }, { uid: 'bob', finishRank: 2 }] });
+    await call('alice', { action: 'rankedDeal', roomCode: code, matchId: `rk_pair_${i}` });
     limited = await call('alice', { action: 'rankedResult', roomCode: code });
     if (!limited.error) streakRuns.push([limited.streak, limited.streakBonus, limited.to - limited.from === limited.elo + 10 + limited.streakBonus]);
   }
@@ -321,7 +322,8 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   // A stalemate draw: nobody wins, level Elo, no win bonus, streaks and W/L kept
   const bobBefore = await admin('users/bob');
   await admin('rankedMembers/600000', 'PUT', { carol: Date.now(), bob: Date.now() });
-  await admin('rooms/600000', 'PUT', { isRanked: true, matchId: 'rk_draw', players: [{ uid: 'carol', finishRank: 1, drew: true }, { uid: 'bob', finishRank: 1, drew: true }] });
+  await admin('rooms/600000', 'PUT', { isRanked: true, phase: 'FINISHED', matchId: 'rk_draw', players: [{ uid: 'carol', finishRank: 1, drew: true }, { uid: 'bob', finishRank: 1, drew: true }] });
+  await call('bob', { action: 'rankedDeal', roomCode: '600000', matchId: 'rk_draw' });
   r = await call('bob', { action: 'rankedResult', roomCode: '600000' });
   const bobAfter = await admin('users/bob');
   ok(r.drew && !r.won && r.winBonus === 0 && r.streakBonus === 0 && r.to - r.from === r.elo && r.elo > 0, 'draw: level Elo only (the lower rating gains a little)', r);
