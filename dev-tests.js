@@ -4623,6 +4623,13 @@ async function runDevTestSuite() {
     cv.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
     const room = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     if (input.offsetParent) assertTrue(cv.measureText('WWWWWWWWWWWW').width <= room, `12 W's fit (${Math.round(cv.measureText('WWWWWWWWWWWW').width)} <= ${Math.round(room)})`);
+    level.classList.remove('hidden'); level.innerHTML = xpLevelBadge(42, 'xp-badge-home');
+    if (input.offsetParent) {
+      const badge = level.firstElementChild;
+      assertTrue(Math.abs(badge.getBoundingClientRect().height - input.getBoundingClientRect().height) < 1, 'The level box is as tall as the name box');
+      assertEqual(getComputedStyle(badge).fontSize, cs.fontSize, 'The level text is the same size as the name');
+    }
+    assertEqual(level.textContent, 'Lvl 42', 'Levels read "Lvl"');
     const realUser = currentUser;
     currentUser = null; updateHamburgerAccountLabel(); refreshXpDisplays();
     assertTrue(avatar.classList.contains('hidden') && level.classList.contains('hidden'), 'Signed out: just the name box');
@@ -7427,7 +7434,7 @@ async function runDevTestSuite() {
       assertEqual(playerXp.level, 10, 'the level comes from the server');
       assertEqual(matchXpLog.gained, 45, 'this match\'s XP is counted');
       const html = matchSummaryXpHtml();
-      assertTrue(html.includes('+45 XP') && html.includes('data-levelup="10"') && html.includes('Lv 10'), 'the summary shows +XP, the level and the level up', html);
+      assertTrue(html.includes('+45 XP') && html.includes('data-levelup="10"') && html.includes('Lvl 10'), 'the summary shows +XP, the level and the level up', html);
       assertTrue(matchRewardLog.length === toasts + 1 && matchRewardLog[matchRewardLog.length - 1].reward === 100, 'the level-up Diamonds join the match rewards');
       assertTrue(!document.getElementById('hamburgerLevel').classList.contains('hidden'), 'menu level badge once on');
       const hdr = document.getElementById('headerXpBar');
@@ -7443,19 +7450,19 @@ async function runDevTestSuite() {
       const colour = (el) => getComputedStyle(el).backgroundImage;
       assertEqual(colour(document.getElementById('headerXpFill')), colour(document.querySelector('#profileXpBody .xp-bar > i')), 'the header bar and the Profile bar are the same colour');
       assertTrue(!document.getElementById('profileXpSection').classList.contains('hidden') && document.getElementById('profileXpBody').textContent.includes('to level 11'), 'Profile shows the bar to the next level');
-      assertTrue(friendRowHtml('u1', { username: 'Pal', rating: 600, level: 7 }, 'friend').includes('Lv 7'), 'friends show their level');
-      assertTrue(renderPlayerPopupHuman({ uid: 'u1', name: 'Pal' }, { loaded: true, rating: 600, level: 7 }, null).includes('Lv 7'), 'player cards show the level');
+      assertTrue(friendRowHtml('u1', { username: 'Pal', rating: 600, level: 7 }, 'friend').includes('Lvl 7'), 'friends show their level');
+      assertTrue(renderPlayerPopupHuman({ uid: 'u1', name: 'Pal' }, { loaded: true, rating: 600, level: 7 }, null).includes('Lvl 7'), 'player cards show the level');
       assertTrue(ACTIVITY_MAIL_TYPES.includes('level'), 'level-up mail shows in the Inbox');
-      assertTrue(/Lv 12/.test(seatLevelBadge({ name: 'Pal', cosmetics: { level: 12 } })), 'other players show their level on their table seat');
+      assertTrue(/Lvl 12/.test(seatLevelBadge({ name: 'Pal', cosmetics: { level: 12 } })), 'other players show their level on their table seat');
       assertEqual(seatLevelBadge({ name: 'Bot', isBot: true, cosmetics: { level: 12 } }), '', 'bots have no level');
       assertEqual(getPublicCosmeticLoadout().level, 10, 'your level travels with your seat');
       for (const id of ['hamburgerLevel', 'profileLevelBadge', 'handZoneLevel']) {
         const el = document.getElementById(id);
-        assertTrue(!el.classList.contains('hidden') && /Lv 10/.test(el.textContent), `${id} shows your level`);
+        assertTrue(!el.classList.contains('hidden') && /Lvl 10/.test(el.textContent), `${id} shows your level`);
       }
-      assertTrue(/Lv 7/.test(leaderboardRowHtml({ username: 'Pal', uid: 'u9', count: 3, level: 7 }, 2, 'challenges')), 'board rows show the level');
-      assertTrue(/Lv 7/.test(leaderboardRowHtml({ username: 'Pal', usernameKey: 'pal', rating: 700, wins: 3, losses: 1, level: 7 }, 2, 'ranked')), 'Ranked rows show the level');
-      assertTrue(/Lv 10/.test(leaderboardRowHtml({ username: 'Me', uid: 'xp_test', count: 3, level: 3 }, 1, 'challenges')), 'your own row shows your current level');
+      assertTrue(/Lvl 7/.test(leaderboardRowHtml({ username: 'Pal', uid: 'u9', count: 3, level: 7 }, 2, 'challenges')), 'board rows show the level');
+      assertTrue(/Lvl 7/.test(leaderboardRowHtml({ username: 'Pal', usernameKey: 'pal', rating: 700, wins: 3, losses: 1, level: 7 }, 2, 'ranked')), 'Ranked rows show the level');
+      assertTrue(/Lvl 10/.test(leaderboardRowHtml({ username: 'Me', uid: 'xp_test', count: 3, level: 3 }, 1, 'challenges')), 'your own row shows your current level');
       const pastMail = inboxItemHtml({ type: 'level', backfill: true, level: 16, xp: 1910, reward: 380, id: 'level_backfill' });
       assertTrue(/level 16/.test(pastMail) && /1,910 XP/.test(pastMail) && /380/.test(pastMail), 'the back-dated XP mail says the level, XP and Diamonds', pastMail);
       assertEqual(document.getElementById('menuXpSwitchLabel').textContent, 'XP & Levels: On', 'the owner switch shows the live state');
@@ -7483,7 +7490,7 @@ async function runDevTestSuite() {
       lbLevelsPeriod = 'all';
       assertEqual(leaderboardPath('levels'), 'boards/levels', 'All-time reads the total-XP board');
       const all = leaderboardRowHtml({ username: 'Pooh', uid: 'u9', count: 9120, level: 34 }, 4, 'levels');
-      assertTrue(/9,120 XP/.test(all) && /Level 34/.test(all) && /Lv 34/.test(all), 'All-time rows show total XP and the level', all);
+      assertTrue(/9,120 XP/.test(all) && /Level 34/.test(all) && /Lvl 34/.test(all), 'All-time rows show total XP and the level', all);
       lbLevelsPeriod = 'week';
       assertEqual(leaderboardPath('levels'), `boards/xpweek_${getUkWeekKey()}`, 'This week reads this week\'s board');
       assertEqual(getUkWeekKey(new Date('2026-09-29T12:00:00Z')), '2026-W40', 'the same week keys as the server');

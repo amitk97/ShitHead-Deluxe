@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v242 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v243 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1719,21 +1719,19 @@
     .card-zone-label-row:has(#handZoneLevel) { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; }
     #handZoneLabel { grid-column:2; }
     #handZoneLevel { grid-column:3; justify-self:start; margin-left:6px; }
-    /* Home nickname row (v242): picture | name | level on one line. The box
-       fits the longest username (12 of the widest letter, "W") and stays
-       centred whether or not the picture/level show (1fr auto 1fr). */
-    .home-name-row { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; column-gap:6px; }
-    #playerNameInput.home-name-input { grid-column:2; width:calc(12 * 1.06em + 24px); padding-left:10px; padding-right:10px; }
-    .home-name-avatar { grid-column:1; justify-self:end; display:inline-flex; width:36px; height:36px; padding:0; border:0; background:none; border-radius:10px; cursor:pointer; }
+    /* Home nickname row (v242, v243): picture | name | level on one line,
+       centred. Everything is sized in em from the row's font size, which
+       follows the screen width (up to the old 14px), so the three always
+       fit; the name box holds the longest username (12 of the widest
+       letter), and the level box matches it: same height, border, corners
+       and text size. */
+    .home-name-row { font-size:clamp(11px, 3.55vw, 14px); display:flex; justify-content:center; align-items:stretch; gap:.4em; }
+    #playerNameInput.home-name-input { font-size:1em; line-height:1.4em; padding:.55em .55em; width:calc(12 * 1.02em + 1.1em + 4px + 2px); min-width:0; }
+    .home-name-avatar { align-self:center; display:inline-flex; width:2.6em; height:2.6em; flex-shrink:0; padding:0; border:0; background:none; border-radius:10px; cursor:pointer; }
+    .home-name-avatar .avatar-tile, .home-name-avatar .avatar-tile > svg { width:100% !important; height:100% !important; }
     .home-name-avatar.hidden, .home-name-level.hidden { display:none; }
-    .home-name-level { grid-column:3; justify-self:start; display:inline-flex; align-items:center; }
-    @media (max-width:340px) {
-      .home-name-row { column-gap:4px; }
-      #playerNameInput.home-name-input { font-size:12.5px; padding-left:6px; padding-right:6px; width:calc(12 * 1.06em + 16px); }
-      .home-name-avatar { width:28px; height:28px; }
-      .home-name-avatar > * { transform:scale(.78); transform-origin:center; }
-      .home-name-level .xp-badge { font-size:9px; padding:2px 4px; }
-    }
+    .home-name-level { display:flex; flex-shrink:0; }
+    .xp-badge.xp-badge-home { height:auto; font-size:1em; font-weight:700; letter-spacing:normal; padding:0 .6em; border-width:2px; border-radius:.75rem; }
     #handZoneLabel::after { content:'\2193'; margin-left:4px; font-size:1.2em; line-height:1; }
     /* The Deck (card-base) is wider than the Base Card (card-table). Equal
        side columns keep the pile, and the table cards and hand below it, on
@@ -18241,6 +18239,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v243: [
+        ['🏠', 'Home screen: the level box now matches the nickname box, and levels read "Lvl".']
+      ],
       v242: [
         ['🏠', 'Home screen: your profile picture and level now sit either side of your nickname.']
       ],
@@ -24396,7 +24397,7 @@ video {
     }
     function xpLevelBadge(level, extra = '') {
       const L = Math.max(1, Math.round(Number(level) || 1));
-      return `<span class="xp-badge${extra ? ` ${extra}` : ''}" title="Level ${L}" aria-label="Level ${L}">Lv ${L}</span>`;
+      return `<span class="xp-badge${extra ? ` ${extra}` : ''}" title="Level ${L}" aria-label="Level ${L}">Lvl ${L}</span>`;
     }
     function xpBarHtml(total) {
       const p = xpProgress(total);
@@ -24510,7 +24511,7 @@ video {
       const on = xpShown() && !!currentUser && !!playerXp;
       const myLevel = on ? xpLevelFor(playerXp.total) : 0;
       // Menu header, Profile (next to the name) and the table (by your Hand).
-      [['hamburgerLevel', ''], ['profileLevelBadge', ''], ['handZoneLevel', 'xp-badge-sm'], ['homeNameLevel', '']].forEach(([id, cls]) => {
+      [['hamburgerLevel', ''], ['profileLevelBadge', ''], ['handZoneLevel', 'xp-badge-sm'], ['homeNameLevel', 'xp-badge-home']].forEach(([id, cls]) => {
         const el = document.getElementById(id);
         if (el) { el.classList.toggle('hidden', !on); el.innerHTML = on ? xpLevelBadge(myLevel, cls) : ''; }
       });
