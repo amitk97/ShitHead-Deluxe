@@ -1686,7 +1686,7 @@
     ],
     "lives": 1,
     "firstReward": 600,
-    "dailyReward": 150,
+    "dailyReward": 200,
     "level": 50,
     "needs": {
      "easy": 1,

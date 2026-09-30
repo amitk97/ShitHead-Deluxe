@@ -2678,7 +2678,9 @@ async function runDevTestSuite() {
     document.querySelector('#customTabBar [data-custom-tab="cardBack"]').click();
     assertTrue(!document.querySelector('[data-custom-panel="cardBack"]').classList.contains('hidden') && document.querySelector('[data-custom-panel="avatar"]').classList.contains('hidden'), 'Only the chosen tab shows');
     const tiles = [...document.querySelectorAll('#personalisationCardBacks .cosmetic-tile')];
-    assertTrue(tiles.length >= 2 && Math.abs(tiles[0].getBoundingClientRect().top - tiles[1].getBoundingClientRect().top) < 2, 'Tiles sit at least two to a row');
+    // (v256: tiles sit in folding groups, so compare two Shop tiles.)
+    assertTrue(tiles.length >= 3 && Math.abs(tiles[1].getBoundingClientRect().top - tiles[2].getBoundingClientRect().top) < 2, 'Tiles sit at least two to a row');
+    assertTrue(!!document.querySelector('#personalisationCardBacks [data-custom-group-toggle="cardBack:free"]') && !!document.querySelector('#personalisationCardBacks [data-custom-group-toggle="cardBack:level"]'), 'Grouped with folding heads (Free, Shop, Earn by levelling up)');
     openCustomAtAvatars();
     assertTrue(!document.querySelector('[data-custom-panel="avatar"]').classList.contains('hidden'), 'The profile shortcut opens the Pictures tab');
     document.getElementById('themesModal').classList.add('hidden');
@@ -6753,6 +6755,28 @@ async function runDevTestSuite() {
       assertTrue(/\+200/.test(body) && /Gauntlet Champion/.test(body) && /Gauntlet Gold/.test(body), 'The reward and both items are shown');
       assertTrue(isSupportedCosmetic('frame', 'frame-gauntlet') && isSupportedCosmetic('avatar', 'avatar-gauntlet'), 'Both can be equipped');
     } finally { gauntletRestore(saved); }
+  });
+
+  await test('v256: Custom groups fold and remember; mode tips; tutorial hold waits to be read; level avatars move', () => {
+    openThemesPanel();
+    setCustomTab('burnEffect');
+    const head = document.querySelector('#personalisationBurnEffects [data-custom-group-toggle="burnEffect:level"]');
+    assertTrue(!!head && head.getAttribute('aria-expanded') === 'true', 'Earn by levelling up group is open by default');
+    try {
+      head.click();
+      assertTrue(!document.querySelector('#personalisationBurnEffects [data-equip-id="burn-lvl-spark-snap"]'), 'Folding hides its items');
+      assertTrue(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]').includes('burnEffect:level'), 'and is remembered');
+      assertTrue(!!focusCustomTile('burnEffect', 'burn-lvl-spark-snap'), 'Focusing an item in a folded group opens it');
+    } finally {
+      customGroupsCollapsed.clear(); localStorage.removeItem(CUSTOM_GROUPS_KEY); renderPersonalisationCosmetics();
+      document.getElementById('themesModal').classList.add('hidden');
+    }
+    ['modeSingleBtn', 'modeMultiBtn', 'modeRankedBtn'].forEach(id => assertTrue(!!document.querySelector(`#${id} [data-mode-tip]`), `${id} has its ⓘ`));
+    assertTrue(Object.keys(MODE_TIPS).length === 3, 'Each mode explains itself');
+    assertTrue(TUTORIAL_HOLD_READ_MS >= 2000 && TUTORIAL_HOLD_READ_MS <= 3000, 'The hold step waits 2-3s so the card can be read');
+    ['avatar-lvl-burn-king', 'avatar-lvl-chaos-jester', 'avatar-lvl-the-shithead'].forEach(id => assertTrue(AVATAR_ART[id].animated && /av-gx-glint/.test(AVATAR_ART[id].art), `${id} is animated`));
+    assertTrue(!AVATAR_ART['avatar-lvl-rookie-rogue'].animated, 'the others stay still');
+    assertEqual(GAUNTLET.modes.boss.dailyReward, 200, 'Boss Gauntlet daily win pays 200');
   });
 
   await test('Header Shop button on tablets and PCs; wide headers never shrink when pressed (v255)', () => {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v255 (ShitHead-Deluxe-215) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v256 (ShitHead-Deluxe-216) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -437,6 +437,11 @@
        from its top: flex centring pushed the top out of reach. */
     #lobbyScreen { align-items:flex-start !important; }
     #lobbyScreen > :not(script) { margin-top:auto; margin-bottom:auto; }
+    /* Mode ⓘ (v256): top-right of each mode button; opens the shared info bubble. */
+    .mode-btn { position:relative; }
+    #modeSingleBtn > .mode-tip, #modeMultiBtn > .mode-tip, #modeRankedBtn > .mode-tip { position:absolute; top:4px; right:4px; left:auto; width:16px; height:16px; border-radius:50%; border:1.2px solid currentColor; opacity:.7;
+      font:italic 900 10px/13px Georgia,'Times New Roman',serif; text-align:center; cursor:help; user-select:none; }
+    .mode-tip:hover, .mode-tip:focus-visible { opacity:1; outline:none; }
     .mode-btn { display:grid; grid-template-rows:24px 20px 14px; justify-items:center; align-items:center; row-gap:2px; padding:10px 4px; min-width:0; }
     .mode-btn .mode-ic { width:22px; height:22px; }
     .mode-btn .mode-name { font-size:14px; font-weight:900; line-height:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
@@ -627,6 +632,15 @@
     .av-gx-spark { animation:avGxSpark 4.8s linear infinite; opacity:0; }
     @keyframes avGxSpark { 0% { transform:translateY(0); opacity:0; } 15% { opacity:.9; } 70% { opacity:.6; } 100% { transform:translateY(-420px); opacity:0; } }
     body.reduce-motion :is(.av-gx-shine, .av-gx-glint, .av-gx-spark) { animation:none; opacity:0; }
+    /* Level avatars (v256): eye glow, flame flicker, a gleam sweep. */
+    .av-lx-eye { mix-blend-mode:screen; animation:avLxEye 5s ease-in-out infinite; opacity:.25; }
+    @keyframes avLxEye { 0%, 100% { opacity:.25; } 20% { opacity:.95; } 26% { opacity:.4; } 32% { opacity:1; } 55% { opacity:.3; } }
+    .av-lx-flicker { mix-blend-mode:screen; transform-box:fill-box; transform-origin:center; animation:avLxFlicker 1.9s ease-in-out infinite; opacity:.35; }
+    @keyframes avLxFlicker { 0%, 100% { opacity:.3; transform:scale(1); } 35% { opacity:.75; transform:scale(1.08); } 60% { opacity:.45; transform:scale(.96); } }
+    .av-lx-sweep { animation:avLxSweep 5s ease-in-out infinite; opacity:0; }
+    @keyframes avLxSweep { 0%, 50% { transform:translateX(0); opacity:0; } 54% { opacity:1; } 72% { transform:translateX(var(--dx)); opacity:1; } 76%, 100% { transform:translateX(var(--dx)); opacity:0; } }
+    body.reduce-motion :is(.av-lx-eye, .av-lx-flicker, .av-lx-sweep) { animation:none; }
+    body.reduce-motion .av-lx-sweep { opacity:0; }
     body.reduce-motion .av-gx-heart { animation:none; opacity:.35; }
     .av-lvl-glow { animation:avLvlGlow 2.4s ease-in-out infinite; }
     @keyframes avLvlGlow { 50% { opacity:.85; } }
@@ -1871,6 +1885,7 @@
     #infoPop { position:fixed; z-index:330; max-width:min(280px, calc(100vw - 24px)); background:#0f172a; color:#e2e8f0; border:1px solid rgba(251,191,36,.45); border-radius:12px; padding:9px 11px; font-size:11px; line-height:1.4; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.55); opacity:0; transform:translateY(4px); transition:opacity .15s var(--ease-soft, ease), transform .15s var(--ease-soft, ease); pointer-events:auto; text-align:left; }
     #infoPop.show { opacity:1; transform:none; }
     #infoPop p + p { margin-top:4px; }
+    #infoPop b { color:#fbbf24; font-weight:900; }
     body.reduce-motion #infoPop { transition:none; }
     #handZoneLabel::after { content:'\2193'; margin-left:4px; font-size:1.2em; line-height:1; }
     /* The Deck (card-base) is wider than the Base Card (card-table). Equal
@@ -2430,6 +2445,7 @@
     .pp-note { margin-top:14px; border:1px dashed #334155; border-radius:12px; padding:12px; text-align:center; font-size:11px; color:#94a3b8; line-height:1.4; }
     .pp-note b { color:#fcd34d; }
     .avatar-picker-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .custom-group-head { grid-column:1 / -1; margin-top:4px; }
     .avatar-picker-label { grid-column:1 / -1; font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:#64748b; margin-top:4px; }
     .avatar-option { display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px 7px; border-radius:12px; border:1px solid #334155; background:rgba(15,23,42,.6); text-align:center; transition:border-color .15s, background .15s; }
     .avatar-option:not(:disabled):hover { border-color:#f59e0b; }
@@ -2469,14 +2485,14 @@
     .gauntlet-info { position:relative; flex:none; width:22px; height:22px; border-radius:50%; border:1.5px solid #64748b; background:#0f172a;
       color:#cbd5e1; font:italic 900 12px/19px Georgia,'Times New Roman',serif; text-align:center; cursor:help; user-select:none; }
     .gauntlet-info:hover, .gauntlet-info:focus-visible, .gauntlet-info.open { border-color:#f59e0b; color:#fde68a; outline:none; }
-    .gauntlet-tip { position:absolute; bottom:calc(100% + 9px); left:50%; width:min(236px, 72vw); transform:translate(-50%, 4px); z-index:40;
+    .gauntlet-tip { position:absolute; bottom:calc(100% + 9px); right:-8px; left:auto; width:min(236px, 72vw); transform:translateY(4px); z-index:40;
       padding:.6rem .7rem; border-radius:.75rem; background:#0b1120; border:1px solid rgba(245,158,11,.6); box-shadow:0 10px 24px rgba(0,0,0,.6);
       color:#e2e8f0; font:600 11px/1.45 system-ui,-apple-system,'Segoe UI',sans-serif; font-style:normal; text-align:left; letter-spacing:0;
       opacity:0; visibility:hidden; pointer-events:none; transition:opacity .15s var(--ease-soft), transform .15s var(--ease-soft), visibility 0s .15s; }
     .gauntlet-tip b { display:block; color:#fbbf24; font-weight:900; font-size:11px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:.15rem; }
-    .gauntlet-tip::after { content:''; position:absolute; top:100%; left:50%; margin-left:-6px; border:6px solid transparent; border-top-color:rgba(245,158,11,.6); }
+    .gauntlet-tip::after { content:''; position:absolute; top:100%; right:13px; left:auto; border:6px solid transparent; border-top-color:rgba(245,158,11,.6); }
     .gauntlet-info:hover .gauntlet-tip, .gauntlet-info:focus-visible .gauntlet-tip, .gauntlet-info.open .gauntlet-tip {
-      opacity:1; visibility:visible; transform:translate(-50%, 0); transition:opacity .15s var(--ease-soft), transform .15s var(--ease-soft); }
+      opacity:1; visibility:visible; transform:none; transition:opacity .15s var(--ease-soft), transform .15s var(--ease-soft); }
     .gauntlet-hud { position:absolute; top:8px; left:6px; z-index:30; display:flex; flex-direction:column; align-items:center; gap:3px;
       padding:6px 4px 5px; border-radius:12px; background:rgba(2,6,23,.82); border:1px solid rgba(245,158,11,.55);
       box-shadow:0 4px 12px rgba(0,0,0,.45); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); pointer-events:none; }
@@ -5328,16 +5344,19 @@ video {
             <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-bot"/></svg>
             <span class="mode-name">Vs Bots</span>
             <span class="mode-sub">1-3 AI players</span>
+            <span class="mode-tip" data-mode-tip="bots" role="button" tabindex="0" aria-label="What is Vs Bots?">i</span>
           </button>
           <button id="modeMultiBtn" class="mode-btn rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition">
             <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-friends4"/></svg>
             <span class="mode-name">Play Friends</span>
             <span class="mode-sub">Host or join</span>
+            <span class="mode-tip" data-mode-tip="online" role="button" tabindex="0" aria-label="What is Play Friends?">i</span>
           </button>
           <button id="modeRankedBtn" class="mode-btn rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition">
             <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-ranked"/></svg>
             <span class="mode-name">Ranked</span>
             <span class="mode-sub">Matched 1v1</span>
+            <span class="mode-tip" data-mode-tip="ranked" role="button" tabindex="0" aria-label="What is Ranked?">i</span>
           </button>
         </div>
 
@@ -6980,7 +6999,7 @@ video {
               <div class="gt-row" role="row"><b role="rowheader">Lives</b><span>3</span><span>2</span><span>1</span></div>
               <div class="gt-row" role="row"><b role="rowheader">Unlock</b><span>Everyone</span><span>Lvl 30 and Easy beaten once</span><span>Lvl 50, Easy beaten once and Hard beaten 3 times</span></div>
               <div class="gt-row" role="row"><b role="rowheader">First clear</b><span>💎 200, <em>Gauntlet Champion</em> avatar, <em>Gauntlet Gold</em> frame</span><span>💎 400, <em>Gauntlet Conqueror</em> avatar, <em>Crimson Gauntlet</em> frame</span><span>💎 600, <em>Gauntlet Overlord</em> avatar, <em>Amethyst Gauntlet</em> frame</span></div>
-              <div class="gt-row" role="row"><b role="rowheader">Daily win</b><span>💎 50</span><span>💎 100</span><span>💎 150</span></div>
+              <div class="gt-row" role="row"><b role="rowheader">Daily win</b><span>💎 50</span><span>💎 100</span><span>💎 200</span></div>
             </div>
             <p><strong class="text-amber-300">Lives:</strong> win a game and you move on to the next round. Lose one and you lose a life and face the <em>same</em> bot again. Run out of lives and the run is over. The hearts and round number sit in the top-left corner of the table.</p>
             <p><strong class="text-amber-300">One Gauntlet a day:</strong> the first mode you start on a day is your Gauntlet for that day (UK time). The other modes open again at midnight. You can retry that mode after running out of lives, until you beat it.</p>
@@ -15190,14 +15209,20 @@ video {
     function tutorialWantsHold() {
       return typeof tutorialActive !== 'undefined' && tutorialActive && tutorialAwaitingAction && !!TUTORIAL_STEPS[tutorialStep]?.require?.holdCheck;
     }
+    // The hold step (v256, owner): each card's info stays up after letting go,
+    // and after the second hold the lesson waits TUTORIAL_HOLD_READ_MS so the
+    // player can read it before the note moves on.
+    const TUTORIAL_HOLD_READ_MS = 2800;
+    let tutorialHoldKeep = false;
     function tutorialOnHold(kind) {
       if (kind === 'other') return;
       tutorialHoldsDone.add(kind);
       document.getElementById(kind === 'pile' ? 'discardPileContainer' : 'localHand')?.classList.remove('tutorial-glow');
       if (tutorialHoldsDone.has('pile') && tutorialHoldsDone.has('own')) {
         tutorialAwaitingAction = false;
+        tutorialHoldKeep = true;
         const step = TUTORIAL_STEPS[tutorialStep];
-        tutorialDelay(() => { hideCardHold(); showCoachNote(step); }, 900);
+        tutorialDelay(() => { tutorialHoldKeep = false; hideCardHold(); showCoachNote(step); }, TUTORIAL_HOLD_READ_MS);
       }
     }
     document.addEventListener('pointerdown', (e) => {
@@ -15215,6 +15240,7 @@ video {
     }, true);
     ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => {
       clearTimeout(cardHoldTimer); cardHoldTimer = null;
+      if (tutorialWantsHold() || tutorialHoldKeep) return; // the lesson keeps it up to read
       document.getElementById('cardHoldTip')?.classList.add('hidden');
     }, true));
     // The tap that ends a hold must not select or play the card.
@@ -16330,6 +16356,31 @@ video {
       document.addEventListener('mouseover', (e) => {
         const b = target(e); if (!b || infoPopAnchor === b || !window.matchMedia('(hover: hover)').matches) return;
         showInfoPop(b, speedLockPopHtml(b.dataset.speedLock), { hover: true });
+      });
+    })();
+
+    // Home mode ⓘ (v256, owner): what each mode is, in the shared info bubble
+    // (tap to toggle, hover on PC); the tap never switches mode.
+    const MODE_TIPS = {
+      bots: '<p><b>Vs Bots</b></p><p>Play against 1 to 3 computer players at the difficulty you pick. Wins unlock harder bots, and the Gauntlet lives here too.</p>',
+      online: '<p><b>Play Friends</b></p><p>Host a private table and share the code or link, or join a friend\'s table. Up to 4 players; empty seats can be bots.</p>',
+      ranked: '<p><b>Ranked</b></p><p>One-on-one against a real player near your level. Win to raise your rating and climb the tiers and the leaderboard.</p>'
+    };
+    (function wireModeTips() {
+      const target = (e) => e.target.closest && e.target.closest('[data-mode-tip]');
+      document.addEventListener('click', (e) => {
+        const t = target(e); if (!t) return;
+        e.preventDefault(); e.stopPropagation();
+        showInfoPop(t, MODE_TIPS[t.dataset.modeTip] || '', { toggle: true });
+      }, true);
+      document.addEventListener('keydown', (e) => {
+        const t = target(e); if (!t || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault(); e.stopPropagation();
+        showInfoPop(t, MODE_TIPS[t.dataset.modeTip] || '', { toggle: true });
+      }, true);
+      document.addEventListener('mouseover', (e) => {
+        const t = target(e); if (!t || infoPopAnchor === t || !window.matchMedia('(hover: hover)').matches) return;
+        showInfoPop(t, MODE_TIPS[t.dataset.modeTip] || '', { hover: true });
       });
     })();
 
@@ -19354,6 +19405,14 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v256: [
+        ['🏆', 'Beating the Boss Gauntlet again on a later day now pays 200 Diamonds.', WN_KEY],
+        ['✨', 'Burn King, Chaos Jester and The ShitHead avatars now move: glowing eyes, flickering flames, glinting gems and a gleam across the shades.', WN_KEY],
+        ['📂', 'Custom is split into folding groups (Free, Shop, Earn in Ranked, the Gauntlet, levelling up, Seasonal) that remember how you left them.'],
+        ['ℹ️', 'Vs Bots, Play Friends and Ranked each have a small ⓘ that explains the mode.'],
+        ['📖', 'Quick Start: Card Powers always fits on screen, and the hold step waits a moment so you can read the card.'],
+        ['🔧', 'The Gauntlet info box stays on screen.']
+      ],
       v255: [
         ['🛒', 'On tablets and computers the Shop has its own button in the header, next to your Diamonds.'],
         ['🔧', 'Folding sections (Best Of Series, Shop, Custom, Guide and others) now open and close on every tap.']
@@ -21946,15 +22005,65 @@ video {
     const LEVEL_BACK_IDS = LEVEL_REWARDS.filter(r => r.category === 'Card Backs').map(r => r.id);
     // Avatars: the photo art in the shared rounded tile with a rim in its own
     // colour; The ShitHead (Lvl 99) also breathes a gold glow.
-    LEVEL_REWARDS.filter(r => r.category === 'Avatars').forEach((r) => {
-      AVATAR_ART[r.id] = {
-        photo: true, tone: 'gold', animated: !!r.animated,
-        art: `<rect width="1000" height="1000" rx="234" fill="#07070c"/>`
-          + `<image href="${r.file}" width="1000" height="1000" preserveAspectRatio="xMidYMid slice" style="clip-path:inset(0 round 234px)"/>`
-          + (r.animated ? `<rect class="av-lvl-glow" x="10" y="10" width="980" height="980" rx="226" fill="none" stroke="${r.tone}" stroke-width="44" opacity=".25"/>` : '')
-          + `<rect x="12" y="12" width="976" height="976" rx="222" fill="none" stroke="${r.tone}" stroke-width="22" opacity=".9"/>`
-      };
-    });
+    // Moving light on three of them (v256, owner), in the art's 1000-unit
+    // space, one 5s loop like the Gauntlet crests (paused offscreen, still
+    // with Reduce Motion): Burn King's skull eyes glow, its flames flicker and
+    // embers rise; Chaos Jester's eyes flash, its bells glint, a shine
+    // crosses the Joker card and purple sparkles drift up; The ShitHead's
+    // sunglasses catch a gleam and its crown and chain glint. Gradients and
+    // clips live once in #levelAvatarDefs.
+    const LEVEL_AVATAR_MOTION = {
+      'avatar-lvl-burn-king': { eyes: [[438, 446], [622, 440]], eyeTone: 'lx-eye-fire', eyeR: 46,
+        flicker: [[110, 420, 150], [890, 430, 150], [500, 110, 170], [250, 900, 140], [760, 900, 140]], flickerTone: 'lx-flame',
+        glints: [[500, 95], [310, 250], [700, 250]], sparks: ['#fdba74', '#f97316'] },
+      'avatar-lvl-chaos-jester': { eyes: [[436, 470], [618, 468]], eyeTone: 'lx-eye-fire', eyeR: 40,
+        glints: [[182, 470], [858, 500], [500, 205], [270, 575]], sparks: ['#d8b4fe', '#f0abfc'],
+        sweep: { clip: '<rect x="150" y="520" width="330" height="360" rx="30" transform="rotate(-14 315 700)"/>', from: [120, 700], dx: 420 } },
+      'avatar-lvl-the-shithead': { glints: [[515, 250], [590, 600], [905, 180], [460, 300]], sparks: ['#fde68a', '#fb923c'],
+        sweep: { clip: '<rect x="405" y="378" width="265" height="72" rx="30"/>', from: [370, 414], dx: 360 } }
+    };
+    function levelAvatarMotion(id) {
+      const M = LEVEL_AVATAR_MOTION[id];
+      if (!M) return { defs: '', art: '' };
+      const key = id.replace('avatar-lvl-', 'lx-');
+      let defs = '', art = '';
+      (M.flicker || []).forEach(([x, y, r], i) => { art += `<circle class="av-lx-flicker" style="animation-delay:${(i * 0.37).toFixed(2)}s" cx="${x}" cy="${y}" r="${r}" fill="url(#${M.flickerTone})"/>`; });
+      (M.eyes || []).forEach(([x, y]) => { art += `<circle class="av-lx-eye" cx="${x}" cy="${y}" r="${M.eyeR}" fill="url(#${M.eyeTone})"/>`; });
+      if (M.sweep) {
+        defs += `<clipPath id="${key}-sweep">${M.sweep.clip}</clipPath>`;
+        const [x, y] = M.sweep.from;
+        art += `<g clip-path="url(#${key}-sweep)"><polygon class="av-lx-sweep" style="--dx:${M.sweep.dx}px" points="${x - 70},${y - 260} ${x + 30},${y - 260} ${x + 70},${y + 260} ${x - 30},${y + 260}" fill="url(#lx-gleam)"/></g>`;
+      }
+      (M.glints || []).forEach(([x, y], i) => { art += `<g transform="translate(${x} ${y})"><path class="av-gx-glint" style="animation-delay:${(1.1 + i * 0.45).toFixed(2)}s" d="M0 -40 6 -6 40 0 6 6 0 40 -6 6 -40 0 -6 -6Z" fill="#fff"/></g>`; });
+      [[180, 930], [330, 980], [520, 950], [690, 990], [830, 920], [420, 900]].forEach(([x, y], i) => {
+        art += `<circle class="av-gx-spark" style="animation-delay:${(i * 0.8).toFixed(1)}s" cx="${x}" cy="${y}" r="${6 + (i % 3) * 2}" fill="${M.sparks[i % 2]}"/>`;
+      });
+      return { defs, art: `<g clip-path="url(#lx-tile)">${art}</g>` };
+    }
+    (function installLevelAvatars() {
+      let defs = `<clipPath id="lx-tile"><rect width="1000" height="1000" rx="234"/></clipPath>
+        <radialGradient id="lx-eye-fire"><stop offset="0" stop-color="#fff7ed" stop-opacity=".95"/><stop offset=".3" stop-color="#fb923c" stop-opacity=".8"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/></radialGradient>
+        <radialGradient id="lx-flame"><stop offset="0" stop-color="#fde68a" stop-opacity=".55"/><stop offset=".45" stop-color="#f97316" stop-opacity=".3"/><stop offset="1" stop-color="#b91c1c" stop-opacity="0"/></radialGradient>
+        <linearGradient id="lx-gleam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`;
+      LEVEL_REWARDS.filter(r => r.category === 'Avatars').forEach((r) => {
+        const motion = levelAvatarMotion(r.id);
+        defs += motion.defs;
+        AVATAR_ART[r.id] = {
+          photo: true, tone: 'gold', animated: !!r.animated || !!motion.art,
+          art: `<rect width="1000" height="1000" rx="234" fill="#07070c"/>`
+            + `<image href="${r.file}" width="1000" height="1000" preserveAspectRatio="xMidYMid slice" style="clip-path:inset(0 round 234px)"/>`
+            + motion.art
+            + (r.animated ? `<rect class="av-lvl-glow" x="10" y="10" width="980" height="980" rx="226" fill="none" stroke="${r.tone}" stroke-width="44" opacity=".25"/>` : '')
+            + `<rect x="12" y="12" width="976" height="976" rx="222" fill="none" stroke="${r.tone}" stroke-width="22" opacity=".9"/>`
+        };
+      });
+      const holder = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      holder.id = 'levelAvatarDefs';
+      holder.setAttribute('width', '0'); holder.setAttribute('height', '0'); holder.setAttribute('aria-hidden', 'true');
+      holder.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+      holder.innerHTML = `<defs>${defs}</defs>`;
+      document.body.appendChild(holder);
+    })();
     // Card backs: the art fills the back (the emblem and pattern layers hide).
     (function installLevelBackStyles() {
       const css = LEVEL_REWARDS.filter(r => r.category === 'Card Backs').map(r =>
@@ -22611,19 +22720,52 @@ video {
       </button>`;
     }
 
+    // § Custom groups (v256, owner): every Custom tab is split into folding
+    // groups (Free, Shop, Earn in Ranked / the Gauntlet / by inviting friends /
+    // by levelling up, Seasonal), each with a chevron head and an owned/total
+    // count. Folded groups are remembered per tab (localStorage
+    // shithead_custom_groups_collapsed, keys "<type>:<group>").
+    const CUSTOM_GROUPS = [['free', 'Free'], ['shop', 'Shop'], ['ranked', 'Earn in Ranked'], ['gauntlet', 'Earn in the Gauntlet'],
+      ['friends', 'Earn by inviting friends'], ['level', 'Earn by levelling up'], ['seasonal', 'Seasonal']];
+    const CUSTOM_GROUPS_KEY = 'shithead_custom_groups_collapsed';
+    const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
+    function customGroupOf(item) {
+      if (!item || item.builtIn) return 'free';
+      if (item.season) return 'seasonal';
+      if (LEVEL_REWARDS.includes(item)) return 'level';
+      if (item.gauntlet || EARNED_FRAMES.includes(item)) return 'gauntlet';
+      if (item.referral) return 'friends';
+      if (item.earned || EARNED_AVATARS.includes(item)) return 'ranked';
+      return 'shop';
+    }
+    function customGroupedHtml(type, items, render) {
+      const byGroup = new Map();
+      items.forEach((item) => { const g = customGroupOf(item); if (!byGroup.has(g)) byGroup.set(g, []); byGroup.get(g).push(item); });
+      return CUSTOM_GROUPS.filter(([g]) => byGroup.has(g)).map(([g, label]) => {
+        const list = byGroup.get(g), key = `${type}:${g}`, open = !customGroupsCollapsed.has(key);
+        const owned = list.filter(item => !item || item.builtIn || cosmeticPurchaseState[item.id]).length;
+        return `<button type="button" class="cat-head custom-group-head" data-custom-group-toggle="${key}" aria-expanded="${open}"><span class="cat-head-title">${label}</span><span class="cat-head-count">${owned}/${list.length}</span><span class="cat-head-chev" aria-hidden="true">▾</span></button>${open ? list.map(render).join('') : ''}`;
+      }).join('');
+    }
+    // A folded group opens when something needs to show one of its items.
+    function openCustomGroupFor(type, id) {
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(i => i.id === id);
+      const key = `${type}:${customGroupOf(item || null)}`;
+      if (!customGroupsCollapsed.delete(key)) return false;
+      try { localStorage.setItem(CUSTOM_GROUPS_KEY, JSON.stringify([...customGroupsCollapsed])); } catch (e) {}
+      renderPersonalisationCosmetics();
+      return true;
+    }
     function renderPersonalisationAvatars() {
       const grid = document.getElementById('personalisationAvatars');
       if (!grid) return;
       const shopAvatars = sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Avatars' && !item.season));
       const freeAvatars = sortByValue(BUILT_IN_COSMETICS.filter(item => item.category === 'Avatars'));
       const seasonalAvatars = [...sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Avatars' && item.season)), ...SEASONAL_EARNED_AVATARS].filter(isCosmeticListed);
-      grid.innerHTML = `<span class="avatar-picker-label">Free</span>${freeAvatars.map(avatarOptionHtml).join('')}
-        <span class="avatar-picker-label">Shop</span>${shopAvatars.map(avatarOptionHtml).join('')}
-        <span class="avatar-picker-label">Earn in Ranked</span>${EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral).map(avatarOptionHtml).join('')}
-        <span class="avatar-picker-label">Earn in the Gauntlet</span>${EARNED_AVATARS.filter(item => item.gauntlet).map(avatarOptionHtml).join('')}
-        <span class="avatar-picker-label">Earn by inviting friends</span>${EARNED_AVATARS.filter(item => item.referral).map(avatarOptionHtml).join('')}
-        <span class="avatar-picker-label">Earn by levelling up</span>${LEVEL_REWARDS.filter(item => item.category === 'Avatars').map(avatarOptionHtml).join('')}
-        ${seasonalAvatars.length ? `<span class="avatar-picker-label">Seasonal</span>${seasonalAvatars.map(avatarOptionHtml).join('')}` : ''}`;
+      grid.innerHTML = customGroupedHtml('avatar', [...freeAvatars, ...shopAvatars,
+        ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral),
+        ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral),
+        ...LEVEL_REWARDS.filter(item => item.category === 'Avatars'), ...seasonalAvatars], avatarOptionHtml);
     }
 
     // Custom → All: every item in the game, seasonal ones included (owned or
@@ -22741,13 +22883,13 @@ video {
       const victories = document.getElementById('personalisationVictoryEffects');
       const jokers = document.getElementById('personalisationJokerEffects');
       if (!backs || !frames || !emotes || !tables || !burns || !victories || !jokers) return;
-      backs.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs')), ...LEVEL_REWARDS.filter(i => i.category === 'Card Backs')].map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('');
-      frames.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames')), ...EARNED_FRAMES, ...LEVEL_REWARDS.filter(i => i.category === 'Frames')].map(i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame)).join('');
-      emotes.innerHTML = [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs')])].map(i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes)).join('');
-      tables.innerHTML = [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Table Themes'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes')]), ...LEVEL_REWARDS.filter(i => i.category === 'Table Themes')].map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('');
-      burns.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Burn Effects')), ...LEVEL_REWARDS.filter(i => i.category === 'Burn Effects')].map(i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect)).join('');
-      victories.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Victory Effects'))].map(i => personalisationOptionHtml(i, 'victoryEffect', equippedCosmetics.victoryEffect)).join('');
-      jokers.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Joker Effects'))].map(i => personalisationOptionHtml(i, 'jokerEffect', equippedCosmetics.jokerEffect)).join('');
+      backs.innerHTML = customGroupedHtml('cardBack', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs')), ...LEVEL_REWARDS.filter(i => i.category === 'Card Backs')], i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack));
+      frames.innerHTML = customGroupedHtml('frame', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames')), ...EARNED_FRAMES, ...LEVEL_REWARDS.filter(i => i.category === 'Frames')], i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame));
+      emotes.innerHTML = customGroupedHtml('emotes', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs')])], i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes));
+      tables.innerHTML = customGroupedHtml('tableTheme', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Table Themes'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes')]), ...LEVEL_REWARDS.filter(i => i.category === 'Table Themes')], i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme));
+      burns.innerHTML = customGroupedHtml('burnEffect', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Burn Effects')), ...LEVEL_REWARDS.filter(i => i.category === 'Burn Effects')], i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect));
+      victories.innerHTML = customGroupedHtml('victoryEffect', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Victory Effects'))], i => personalisationOptionHtml(i, 'victoryEffect', equippedCosmetics.victoryEffect));
+      jokers.innerHTML = customGroupedHtml('jokerEffect', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Joker Effects'))], i => personalisationOptionHtml(i, 'jokerEffect', equippedCosmetics.jokerEffect));
       const status = document.getElementById('personalisationStatus');
       status.textContent = currentUser ? 'Your equipped choices are saved to your account.' : 'Sign in to load and save purchased cosmetics.';
     }
@@ -22806,6 +22948,14 @@ video {
     }
 
     document.getElementById('themesModal').addEventListener('click', (event) => {
+      const groupBtn = event.target.closest('[data-custom-group-toggle]');
+      if (groupBtn) {
+        const key = groupBtn.dataset.customGroupToggle;
+        if (customGroupsCollapsed.has(key)) customGroupsCollapsed.delete(key); else customGroupsCollapsed.add(key);
+        try { localStorage.setItem(CUSTOM_GROUPS_KEY, JSON.stringify([...customGroupsCollapsed])); } catch (e) {}
+        renderPersonalisationCosmetics();
+        return;
+      }
       const sectionBtn = event.target.closest('[data-custom-section-toggle]');
       if (sectionBtn) {
         const type = sectionBtn.dataset.customSectionToggle;
@@ -25325,7 +25475,7 @@ video {
           picture: 'avatar-gauntlet', pictureName: 'Gauntlet Champion', frame: 'frame-gauntlet', frameName: 'Gauntlet Gold' },
         hard: { name: 'Hard', rounds: ['medium', 'hard', 'hard', 'hard', 'boss'], lives: 2, firstReward: 400, dailyReward: 100, level: 30, needs: { easy: 1 },
           picture: 'avatar-gauntlet-hard', pictureName: 'Gauntlet Conqueror', frame: 'frame-gauntlet-hard', frameName: 'Crimson Gauntlet' },
-        boss: { name: 'Boss', rounds: ['boss', 'boss', 'boss'], lives: 1, firstReward: 600, dailyReward: 150, level: 50, needs: { easy: 1, hard: 3 },
+        boss: { name: 'Boss', rounds: ['boss', 'boss', 'boss'], lives: 1, firstReward: 600, dailyReward: 200, level: 50, needs: { easy: 1, hard: 3 },
           picture: 'avatar-gauntlet-boss', pictureName: 'Gauntlet Overlord', frame: 'frame-gauntlet-boss', frameName: 'Amethyst Gauntlet' }
       }
     };
@@ -26026,7 +26176,7 @@ video {
     // one (Daily tab). Their completion keys are written by the server.
     const GAUNTLET_CHALLENGES = {
       first: { id: 'gauntlet-first', name: 'Gauntlet Champion', desc: 'Beat all 5 Gauntlet bots for the first time.' },
-      daily: { id: 'gauntlet_daily', name: 'Daily Gauntlet', desc: "Beat today's Gauntlet (one a day): 50 Diamonds for Easy, 100 for Hard, 150 for Boss." },
+      daily: { id: 'gauntlet_daily', name: 'Daily Gauntlet', desc: "Beat today's Gauntlet (one a day): 50 Diamonds for Easy, 100 for Hard, 200 for Boss." },
       // v254: each harder mode's first clear (key gauntlet-<mode>-first).
       hard: { id: 'gauntlet-hard-first', name: 'Hard Gauntlet Champion', desc: 'Beat the Hard Gauntlet for the first time.' },
       boss: { id: 'gauntlet-boss-first', name: 'Boss Gauntlet Champion', desc: 'Beat the Boss Gauntlet for the first time.' }
@@ -29467,7 +29617,8 @@ video {
     // scrolled to its tile, which glows for a moment. Focused again once the
     // collection load has redrawn the tiles.
     function focusCustomTile(type, id) {
-      const tile = visibleCustomPanel()?.querySelector(`[data-equip-type="${type}"][data-equip-id="${CSS.escape(id)}"]`);
+      let tile = visibleCustomPanel()?.querySelector(`[data-equip-type="${type}"][data-equip-id="${CSS.escape(id)}"]`);
+      if (!tile && openCustomGroupFor(type, id)) tile = visibleCustomPanel()?.querySelector(`[data-equip-type="${type}"][data-equip-id="${CSS.escape(id)}"]`);
       if (!tile) return null;
       tile.scrollIntoView?.({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
       tile.classList.add('custom-focus');
@@ -32913,8 +33064,22 @@ video {
       if (!pr.width) return;
       const capR = cap.getBoundingClientRect();
       const m = 6;
-      const left = Math.max(m, (window.innerWidth - pr.width) / 2);
-      const top = Math.max(m, Math.min(capR.bottom + 10, window.innerHeight - pr.height - m));
+      // The whole panel must show below the caption (v256: on PCs the saved
+      // zoom made it taller than the space left, so it slid up under the
+      // caption). Shrink it to fit for the lesson only; the player's own zoom
+      // comes back the next time they open it.
+      const baseH = panel.offsetHeight, baseW = panel.offsetWidth;
+      const scaleNow = baseH ? pr.height / baseH : 1;
+      const room = window.innerHeight - (capR.bottom + 10) - m;
+      const fit = baseH && pr.height > room + 0.5 ? Math.max(0.4, room / baseH) : scaleNow;
+      if (Math.abs(fit - scaleNow) > 0.005) {
+        panel.style.transformOrigin = 'top left';
+        panel.style.transform = `scale(${fit})`;
+        panel.querySelectorAll('.cardref-resize-handle').forEach(h => { h.style.transform = `scale(${1 / fit})`; });
+      }
+      const w = baseW * fit, h = baseH * fit;
+      const left = Math.max(m, (window.innerWidth - w) / 2);
+      const top = Math.max(m, Math.min(capR.bottom + 10, window.innerHeight - h - m));
       if (Math.abs(pr.left - left) > 0.5) panel.style.left = `${left}px`;
       if (Math.abs(pr.top - top) > 0.5) panel.style.top = `${top}px`;
     }
@@ -33560,6 +33725,8 @@ video {
         updateMultiSelectToggleUI();
       }
       tutorialActive = false;
+      tutorialHoldKeep = false;
+      if (typeof hideCardHold === 'function') hideCardHold();
       tutorialBotPaused = false;
       tutorialStep = 0;
       tutorialSnapshots = [];
