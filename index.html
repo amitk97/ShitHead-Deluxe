@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v259 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v260 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -687,9 +687,9 @@
     .term-link { display:inline; padding:0; margin:0; border:0; background:none; font:inherit; color:inherit; text-decoration:underline; text-decoration-color:rgba(251,191,36,.7); text-underline-offset:2px; text-decoration-thickness:1px; cursor:pointer; }
     .term-link:hover, .term-link:focus-visible { color:#fbbf24; }
     #rulesModal [data-term] { border-radius:8px; transition:background-color .4s var(--ease-soft, ease), box-shadow .4s var(--ease-soft, ease); }
-    #rulesModal [data-term].term-focus { background:rgba(251,191,36,.14); box-shadow:0 0 0 2px rgba(251,191,36,.75); padding:4px 6px; margin:0 -6px; animation:termFocusPulse 1.2s ease-in-out 2; }
+    #rulesModal .term-focus { background:rgba(251,191,36,.14); box-shadow:0 0 0 2px rgba(251,191,36,.75); padding:4px 6px; margin:0 -6px; animation:termFocusPulse 1.2s ease-in-out 2; }
     @keyframes termFocusPulse { 50% { box-shadow:0 0 0 4px rgba(251,191,36,.35), 0 0 18px rgba(251,191,36,.45); } }
-    body.reduce-motion #rulesModal [data-term].term-focus { animation:none; }
+    body.reduce-motion #rulesModal .term-focus { animation:none; }
     /* § Big preview (press and hold an item). Above pages (95), below the
        victory layer (110) so a victory preview plays over it. */
     #bigPreview { position:fixed; inset:0; z-index:105; display:flex; align-items:center; justify-content:center; padding:calc(var(--header-h, 2.75rem) + var(--safe-top, 0px) + 12px) 16px 16px; background:rgba(2,6,23,.82); backdrop-filter:blur(4px); }
@@ -1038,7 +1038,8 @@
     body.lobby-open #homeBackdrop { display:block; }
     body.lobby-open #lobbyScreen { background:transparent !important; }
     #lobbyScreen { padding-top:calc(var(--header-h) + 10px) !important; padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 12px) !important; }
-    #homeCardTip { position:fixed; z-index:71; pointer-events:none; }
+    #homeCardTip { position:fixed; z-index:71; pointer-events:auto; padding:0; border:0; background:none; font:inherit; text-align:inherit; cursor:pointer; }
+    #homeCardTip:focus-visible { outline:2px solid #fbbf24; outline-offset:3px; border-radius:14px; }
     #homeCardTip.hidden { display:none; }
     #homeCardTip .home-tip-inner { width:100%; height:100%; display:flex; align-items:center; gap:12px; transition:opacity .26s var(--ease-soft, ease), transform .26s var(--ease-soft, ease); }
     #homeCardTip .home-tip-inner.home-tip-out { opacity:0; transform:translateY(6px); }
@@ -1883,6 +1884,7 @@
     #settingsSpeedLockBtn { margin-left:2px; }
     /* A small explanation bubble anchored to a button (showInfoPop). */
     #infoPop { position:fixed; z-index:330; max-width:min(280px, calc(100vw - 24px)); background:#0f172a; color:#e2e8f0; border:1px solid rgba(251,191,36,.45); border-radius:12px; padding:9px 11px; font-size:11px; line-height:1.4; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.55); opacity:0; transform:translateY(4px); transition:opacity .15s var(--ease-soft, ease), transform .15s var(--ease-soft, ease); pointer-events:auto; text-align:left; }
+    #infoPop.info-pop-centred { text-align:center; }
     #infoPop.show { opacity:1; transform:none; }
     #infoPop p + p { margin-top:4px; }
     #infoPop b { color:#fbbf24; font-weight:900; }
@@ -6921,49 +6923,49 @@ video {
           </button>
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="2">
                 <strong class="text-amber-400 font-bold">2</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-2"/></svg><strong class="text-amber-400 font-bold"> (Reset) ⭐:</strong> Can be played on anything (except a Jack). Resets the Pile so anything can be played on it!
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="3">
                 <strong class="text-amber-400 font-bold">3</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-3"/></svg><strong class="text-amber-400 font-bold"> (Transparent) ⭐:</strong> Can be played on anything (except a 6). Transparent — the next player must match or beat whatever card is underneath it instead.
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="4">
                 <strong class="text-amber-400 font-bold">4</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-4"/></svg><strong class="text-amber-400 font-bold"> (Low):</strong> The most restrictive card. Can be played on a 2, 3, 4, 6, or 7 &mdash; and nothing else.
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="5">
                 <strong class="text-amber-400 font-bold">5</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-5"/></svg><strong class="text-amber-400 font-bold"> (Drop Base):</strong> The next player must beat whatever card is at the very bottom (base) of the Pile. If that base card is an 8, the 5s played act as 8s instead — the number of 5s determines how many players get skipped. If the base card is a 9, the 5s act as 9s instead — an odd number reverses direction, an even number maintains it.
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="6">
                 <strong class="text-amber-400 font-bold">6</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-6"/></svg><strong class="text-amber-400 font-bold"> (Evens):</strong> The next player must play an even card (2, 4, 6, 8, 10, Queen, Ace, or Joker).
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="7">
                 <strong class="text-amber-400 font-bold">7</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-7"/></svg><strong class="text-amber-400 font-bold"> (7 or Lower):</strong> The next player must play a card of rank 7 or lower — a Joker can also always be played here, regardless of the constraint.
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="8">
                 <strong class="text-amber-400 font-bold">8</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-8"/></svg><strong class="text-amber-400 font-bold"> (Skip):</strong> Playing multiple 8s together skips that many opponents. Skip everyone at the table and it becomes your turn again.
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="9">
                 <strong class="text-amber-400 font-bold">9</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-9"/></svg><strong class="text-amber-400 font-bold"> (Reverse):</strong> An odd number of 9s reverses the direction, while an even number of 9s maintains direction.
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="10">
                 <strong class="text-amber-400 font-bold">10</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-10"/></svg><strong class="text-amber-400 font-bold"> (Burner) ⭐:</strong> Instantly burns and clears the Pile permanently, and the player of the 10 then plays another card!
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="J">
                 <strong class="text-amber-400 font-bold">Jack</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-J"/></svg><strong class="text-amber-400 font-bold"> (Odds):</strong> The next player must play an odd card (3, 5, 7, 9, Jack, King, or Joker).
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="Q">
                 <strong class="text-amber-400 font-bold">Queen</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-Q"/></svg><strong class="text-amber-400 font-bold">:</strong> Standard high card (Rank 12).
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="K">
                 <strong class="text-amber-400 font-bold">King</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-K"/></svg><strong class="text-amber-400 font-bold">:</strong> Standard high card (Rank 13).
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="A">
                 <strong class="text-amber-400 font-bold">Ace</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-A"/></svg><strong class="text-amber-400 font-bold"> ⭐:</strong> The highest ranking standard card (Rank 14).
               </div>
               <div class="p-2 bg-slate-950 rounded border border-slate-800">
                 <strong class="text-amber-400 font-bold">4-of-a-Kind Burn:</strong> Four identical ranks played in a row burn the Pile immediately.
               </div>
-              <div class="p-2 bg-slate-950 rounded border border-amber-600/40 md:col-span-2">
+              <div class="p-2 bg-slate-950 rounded border border-amber-600/40 md:col-span-2" data-guide-power="JOKER">
                 <strong class="text-amber-400 font-bold">Joker</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-JOKER"/></svg><strong class="text-amber-400 font-bold"> (Duel):</strong> Playable on anything! Forces a targeted opponent to pick up the Pile. If they counter with a Joker, it is deflected back! If the target has no Joker and picks up, the player who played the Joker gets another turn. All Jokers used in a duel are permanently burnt.
               </div>
             </div>
@@ -16493,6 +16495,7 @@ video {
       pop.id = 'infoPop';
       pop.setAttribute('role', 'tooltip');
       if (opts.hover) pop.dataset.hover = '1';
+      if (opts.centered) pop.classList.add('info-pop-centred');
       pop.innerHTML = html;
       document.body.appendChild(pop);
       infoPopAnchor = anchor;
@@ -16501,7 +16504,7 @@ video {
       const top0 = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 44;
       let top = r.top - ph - 8;
       if (top < top0 + 4) top = r.bottom + 8;
-      const left = Math.max(12, Math.min(window.innerWidth - pw - 12, r.left + r.width / 2 - pw / 2));
+      const left = Math.max(12, Math.min(window.innerWidth - pw - 12, (opts.centered ? window.innerWidth / 2 : r.left + r.width / 2) - pw / 2));
       pop.style.left = `${left}px`; pop.style.top = `${Math.max(4, top)}px`;
       requestAnimationFrame(() => pop.classList.add('show'));
       if (opts.hover) {
@@ -16544,16 +16547,16 @@ video {
       document.addEventListener('click', (e) => {
         const t = target(e); if (!t) return;
         e.preventDefault(); e.stopPropagation();
-        showInfoPop(t, MODE_TIPS[t.dataset.modeTip] || '', { toggle: true });
+        showInfoPop(t, MODE_TIPS[t.dataset.modeTip] || '', { toggle: true, centered: true });
       }, true);
       document.addEventListener('keydown', (e) => {
         const t = target(e); if (!t || (e.key !== 'Enter' && e.key !== ' ')) return;
         e.preventDefault(); e.stopPropagation();
-        showInfoPop(t, MODE_TIPS[t.dataset.modeTip] || '', { toggle: true });
+        showInfoPop(t, MODE_TIPS[t.dataset.modeTip] || '', { toggle: true, centered: true });
       }, true);
       document.addEventListener('mouseover', (e) => {
         const t = target(e); if (!t || infoPopAnchor === t || !window.matchMedia('(hover: hover)').matches) return;
-        showInfoPop(t, MODE_TIPS[t.dataset.modeTip] || '', { hover: true });
+        showInfoPop(t, MODE_TIPS[t.dataset.modeTip] || '', { hover: true, centered: true });
       });
     })();
 
@@ -19587,6 +19590,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v260: [
+        ['📖', 'Tap the rotating home card to jump to its highlighted Card Powers entry in the Guide.', WN_KEY],
+        ['ℹ️', 'Home mode information boxes are centred.']
+      ],
       v259: [
         ['🎨', 'Tap an item in another player’s showcase to find it directly in Custom.', WN_KEY]
       ],
@@ -27473,7 +27480,14 @@ video {
     let guideReturnTo = null;
     function openGuideTerm(slug) {
       const guide = document.getElementById('rulesModal');
-      const term = guide?.querySelector(`[data-term="${CSS.escape(slug)}"]`);
+      return openGuideEntry(guide?.querySelector(`[data-term="${CSS.escape(slug)}"]`));
+    }
+    function openGuidePower(rank) {
+      const guide = document.getElementById('rulesModal');
+      return openGuideEntry(guide?.querySelector(`[data-guide-power="${CSS.escape(rank)}"]`));
+    }
+    function openGuideEntry(term) {
+      const guide = document.getElementById('rulesModal');
       if (!guide || !term) return false;
       const from = EXCLUSIVE_PAGE_IDS.find(id => !document.getElementById(id)?.classList.contains('hidden')) || null;
       if (from) document.getElementById(from).classList.add('hidden');
@@ -31181,6 +31195,8 @@ video {
     function fillHomeTip(tip, rank) {
       const name = rank === 'JOKER' ? 'Joker' : (RANK_WORDS[rank] || rank);
       const power = (CARD_REFERENCE.find(r => r[0] === rank) || [])[1] || '';
+      tip.dataset.rank = rank;
+      tip.setAttribute('aria-label', `${name}: ${power}. Open Card Powers in the Guide`);
       tip.querySelector('.home-tip-art').replaceChildren(homeTipCard(rank));
       tip.querySelector('.home-tip-name').textContent = `${name} · ${power}`;
       tip.querySelector('.home-tip-rule').textContent = CARD_HOLD_TEXT[rank] || '';
@@ -31188,10 +31204,11 @@ video {
     function homeTipElement() {
       let tip = document.getElementById('homeCardTip');
       if (!tip) {
-        tip = document.createElement('div');
+        tip = document.createElement('button');
+        tip.type = 'button';
+        tip.addEventListener('click', () => openGuidePower(tip.dataset.rank));
         tip.id = 'homeCardTip';
         tip.className = 'hidden';
-        tip.setAttribute('aria-hidden', 'true');
         tip.innerHTML = '<div class="home-tip-inner"><div class="home-tip-art"></div><div class="home-tip-text"><b class="home-tip-name"></b><span class="home-tip-rule"></span></div></div>';
         document.body.appendChild(tip);
       }

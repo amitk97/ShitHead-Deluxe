@@ -1831,6 +1831,31 @@ async function runDevTestSuite() {
       const bg = document.getElementById('homeBackdrop'); if (bg) { bg.dataset.table = ''; refreshHomeBackdrop(); }
     }
   });
+  await test('Home cards open their specific highlighted Card Powers entry', async () => {
+    const guide = document.getElementById('rulesModal');
+    const search = document.getElementById('guideSearchInput');
+    const savedSearch = search.value;
+    const tip = homeTipElement();
+    try {
+      assertEqual(tip.tagName, 'BUTTON', 'Home card is keyboard accessible');
+      for (const rank of HOME_TIP_RANKS) {
+        search.value = 'unrelated'; search.dispatchEvent(new Event('input'));
+        fillHomeTip(tip, rank); tip.click();
+        await new Promise(r => requestAnimationFrame(r));
+        const entry = guide.querySelector(`[data-guide-power="${rank}"]`);
+        assertTrue(!guide.classList.contains('hidden'), rank + ': Guide opens');
+        assertTrue(entry.classList.contains('term-focus'), rank + ': exact entry highlighted');
+        assertTrue(!entry.closest('.accordion-content').classList.contains('hidden'), 'Card Powers expanded');
+        assertEqual(search.value, '', 'Previous search cleared');
+        assertEqual(guide.querySelectorAll('.term-focus').length, 1, 'Only current entry highlighted');
+      }
+    } finally {
+      guide.classList.add('hidden');
+      guide.querySelectorAll('.term-focus').forEach(el => el.classList.remove('term-focus'));
+      search.value = savedSearch; search.dispatchEvent(new Event('input'));
+      if (homeTipRank) fillHomeTip(tip, homeTipRank);
+    }
+  });
   await test('Home screen card tip: the eight power cards, each with its rule; never over the panel or off screen', async () => {
     assertEqual(HOME_TIP_RANKS, ['5', '6', '7', '8', '9', '10', 'J', 'JOKER'], 'Cards 5–10, Jack and Joker');
     HOME_TIP_RANKS.forEach(r => assertTrue(!!CARD_HOLD_TEXT[r] && CARD_REFERENCE.some(x => x[0] === r), r + ' has a rule and a power'));
