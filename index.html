@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v246 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v247 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1735,6 +1735,11 @@
     .home-name-avatar.hidden, .home-name-level.hidden { display:none; }
     .home-name-level { grid-column:3; grid-row:2; display:flex; }
     .xp-badge.xp-badge-home { height:auto; font-size:1em; font-weight:700; letter-spacing:normal; padding:0 .6em; border-width:2px; border-radius:.75rem; }
+    /* Speed locks (v247) */
+    #lobbySpeedTicks .speed-locked { color:#64748b; display:inline-flex; align-items:center; gap:2px; }
+    #lobbySpeedTicks .speed-locked svg { width:9px; height:9px; }
+    .speed-lock-note { display:block; margin-top:3px; font-size:9px; font-weight:700; color:#94a3b8; text-align:center; }
+    #settingsSpeedLockNote.speed-lock-note { text-align:left; font-size:8px; margin-top:1px; color:#fbbf24; }
     #handZoneLabel::after { content:'\2193'; margin-left:4px; font-size:1.2em; line-height:1; }
     /* The Deck (card-base) is wider than the Base Card (card-table). Equal
        side columns keep the pile, and the table cards and hand below it, on
@@ -5226,6 +5231,7 @@ video {
             <div id="lobbySpeedTicks" class="flex justify-between text-[9px] text-slate-400 px-1 font-mono mt-0.5 font-bold">
               <span>0.5x</span><span>1x</span><span>2x</span><span>4x</span>
             </div>
+            <p id="lobbySpeedLockNote" class="speed-lock-note hidden"></p>
           </div>
 
           <button id="startSingleBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 font-black rounded-xl shadow-lg transition tracking-wider text-slate-950 text-sm active:scale-95 cursor-pointer">START GAME</button>
@@ -5489,7 +5495,7 @@ video {
         <div id="settingsTab-gameplay" class="settings-body settings-tab-panel" data-settings-panel="gameplay" role="tabpanel">
           <div class="settings-searchable flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="speed, pace, fast, slow, bot speed, tempo, opponent turn">
             <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Game Speed</span>
-            <span class="block text-[8px] text-slate-400">How fast opponents take their turn</span></span>
+            <span class="block text-[8px] text-slate-400">How fast opponents take their turn</span><span id="settingsSpeedLockNote" class="speed-lock-note hidden"></span></span>
             <span class="flex items-center gap-1.5 shrink-0">
               <input type="range" id="headerSpeedSlider" min="0" max="3" step="1" value="1" class="w-16 accent-amber-400 cursor-pointer h-1" />
               <span id="speedDisplayLabel" class="text-[9px] font-mono font-black text-amber-400 w-8 text-right">1.0x</span>
@@ -8658,6 +8664,32 @@ video {
     // lands, without needing to touch the slider at all. Index 1 in both
     // arrays above.
     const DEFAULT_SPEED_INDEX = 1;
+    // Speed locks (v247, owner): 0.5x and 1x for everyone; 2x needs a signed-in
+    // player at level 5, 4x at level 10 (so players learn the game before
+    // speeding through it). With XP & Levels switched off, signing in is
+    // enough. The chosen speed is kept as a preference (speedWantedIndex,
+    // saved locally and to the account) and play runs at the fastest speed
+    // allowed right now, so a level 12 player's 4x isn't lost while their
+    // level loads at sign-in.
+    const SPEED_UNLOCK_LEVELS = [0, 0, 5, 10];
+    let speedWantedIndex = null;
+    function speedLevelNow() {
+      return (typeof playerXp !== 'undefined' && playerXp) ? xpLevelFor(playerXp.total) : 0;
+    }
+    // '' = allowed, else why not.
+    function speedLockReason(idx) {
+      const need = SPEED_UNLOCK_LEVELS[idx] || 0;
+      if (!need) return '';
+      const label = `${SPEED_PRESETS[idx]}x speed`;
+      if (typeof currentUser === 'undefined' || !currentUser) return `Sign in to use ${label}.`;
+      if (typeof xpShown === 'function' && !xpShown()) return '';
+      return speedLevelNow() >= need ? '' : `${label} unlocks at Lvl ${need}.`;
+    }
+    function maxAllowedSpeedIndex() {
+      let max = 0;
+      SPEED_PRESETS.forEach((_, i) => { if (!speedLockReason(i)) max = i; });
+      return max;
+    }
 
     // Plain letters only (no accents), so every name reads the same on any device.
     const BOT_NAMES = [
@@ -15473,8 +15505,16 @@ video {
       lastShownDirection = state.direction;
     }
 
-    function updateSpeedByIndex(idx) {
-      state.speedIndex = parseInt(idx);
+    // opts.user: the player moved a slider (a locked speed snaps back with the
+    // reason); opts.noSave: just re-apply the locks (sign-in, level change).
+    function updateSpeedByIndex(idx, opts = {}) {
+      let wanted = parseInt(idx);
+      if (!Number.isInteger(wanted) || wanted < 0 || wanted >= SPEED_PRESETS.length) wanted = DEFAULT_SPEED_INDEX;
+      const reason = speedLockReason(wanted);
+      if (opts.user && reason) { notifyBanner(reason); wanted = maxAllowedSpeedIndex(); }
+      speedWantedIndex = wanted;
+      state.speedIndex = Math.min(wanted, maxAllowedSpeedIndex());
+      refreshSpeedLocks();
       const mult = SPEED_PRESETS[state.speedIndex];
       state.turnDelay = SPEED_DELAYS[state.speedIndex];
       
@@ -15483,9 +15523,33 @@ video {
       document.getElementById('lobbySpeedVal').textContent = txt;
       document.getElementById('headerSpeedSlider').value = state.speedIndex;
       document.getElementById('lobbySpeedSlider').value = state.speedIndex;
-      try { localStorage.setItem('shithead_speed_index', String(state.speedIndex)); } catch (e) {}
+      if (opts.noSave) return;
+      try { localStorage.setItem('shithead_speed_index', String(speedWantedIndex)); } catch (e) {}
       saveGameState();
       scheduleSettingsCloudSave();
+    }
+    // Re-applies the locks to the chosen speed (sign-in/out, level change).
+    function reapplySpeedLocks() {
+      if (speedWantedIndex === null) return;
+      updateSpeedByIndex(speedWantedIndex, { noSave: true });
+    }
+    // Lock marks on the lobby's 2x/4x ticks and a line saying how to unlock.
+    function refreshSpeedLocks() {
+      const ticks = document.querySelectorAll('#lobbySpeedTicks > span');
+      const notes = [];
+      ticks.forEach((tick, i) => {
+        const reason = speedLockReason(i);
+        tick.classList.toggle('speed-locked', !!reason);
+        tick.innerHTML = `${SPEED_PRESETS[i]}x${reason ? icon('lock') : ''}`;
+        tick.title = reason;
+        if (reason) notes.push(reason);
+      });
+      const signIn = notes.some(n => /^Sign in/.test(n));
+      const note = !notes.length ? '' : signIn ? 'Sign in to use 2x and 4x.' : notes.map(n => n.replace(' speed unlocks at', ' at').replace(/\.$/, '')).join(', ') + '.';
+      ['lobbySpeedLockNote', 'settingsSpeedLockNote'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = note; el.classList.toggle('hidden', !note); }
+      });
     }
 
     function returnToHomeScreen() {
@@ -17394,8 +17458,8 @@ video {
       btn.addEventListener('click', () => selectDeckTheme(btn.dataset.theme));
     });
 
-    document.getElementById('headerSpeedSlider').addEventListener('input', (e) => updateSpeedByIndex(e.target.value));
-    document.getElementById('lobbySpeedSlider').addEventListener('input', (e) => updateSpeedByIndex(e.target.value));
+    document.getElementById('headerSpeedSlider').addEventListener('input', (e) => updateSpeedByIndex(e.target.value, { user: true }));
+    document.getElementById('lobbySpeedSlider').addEventListener('input', (e) => updateSpeedByIndex(e.target.value, { user: true }));
 
     const startSingleBtn = document.getElementById('startSingleBtn');
     if (startSingleBtn) {
@@ -18293,6 +18357,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v247: [
+        ['⏩', 'Game speed: 2x now unlocks at Lvl 5 and 4x at Lvl 10 (sign in to use them). 0.5x and 1x are open to everyone.', WN_KEY]
+      ],
       v246: [
         ['↩️', 'Back on your phone now returns to the page you came from, like Custom back to Profile.']
       ],
@@ -22940,7 +23007,7 @@ video {
 
     function collectAccountSettings() {
       return {
-        speedIndex: Number.isInteger(state?.speedIndex) ? state.speedIndex : DEFAULT_SPEED_INDEX,
+        speedIndex: Number.isInteger(speedWantedIndex) ? speedWantedIndex : Number.isInteger(state?.speedIndex) ? state.speedIndex : DEFAULT_SPEED_INDEX,
         deckTheme: state?.deckTheme || 'theme-obsidian',
         selectAllOfRank: !!selectAllOfRank,
         masterVolume: Math.max(0, Math.min(100, Number(masterVolume) || 0)),
@@ -23468,6 +23535,7 @@ video {
       document.getElementById('menuXpSwitchBtn')?.classList.toggle('hidden', !isGameOwner());
       drawerAvatar?.classList.toggle('hidden', !currentUser);
       document.getElementById('homeNameAvatar')?.classList.toggle('hidden', !currentUser); // home nickname row (v242)
+      reapplySpeedLocks(); // 2x/4x need an account (v247)
       document.getElementById('drawerSignInBtn')?.classList.toggle('hidden', !!currentUser);
       if (currentUser) {
         const uid = currentUser.uid;
@@ -24575,6 +24643,7 @@ video {
     // Menu header badge + Profile's XP bar + the header bar.
     function refreshXpDisplays() {
       refreshHeaderXpBar();
+      reapplySpeedLocks(); // 2x/4x follow your level (v247)
       renderSeriesPanel();
       const on = xpShown() && !!currentUser && !!playerXp;
       const myLevel = on ? xpLevelFor(playerXp.total) : 0;

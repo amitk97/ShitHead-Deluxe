@@ -4698,6 +4698,42 @@ async function runDevTestSuite() {
       closeOtherMenuPages(); await tick();
     }
   });
+  await test('Game speed: 0.5x/1x for everyone, 2x at Lvl 5 and 4x at Lvl 10 when signed in', () => {
+    const realUser = currentUser, realXp = playerXp, realOn = xpFeatureOn, realWanted = speedWantedIndex, realIdx = state.speedIndex;
+    const banners = []; const realBanner = notifyBanner; notifyBanner = (m) => banners.push(m);
+    try {
+      xpFeatureOn = true;
+      currentUser = null; playerXp = null;
+      updateSpeedByIndex(0, { user: true }); assertEqual(state.speedIndex, 0, 'Signed out: 0.5x');
+      updateSpeedByIndex(1, { user: true }); assertEqual(state.speedIndex, 1, 'Signed out: 1x');
+      updateSpeedByIndex(2, { user: true });
+      assertEqual(state.speedIndex, 1, 'Signed out: 2x snaps back to 1x');
+      assertTrue(/Sign in to use 2x/.test(banners.pop() || ''), 'and says to sign in');
+      assertTrue(document.querySelectorAll('#lobbySpeedTicks .speed-locked').length === 2, '2x and 4x show a lock');
+      assertTrue(/Sign in/.test(document.getElementById('lobbySpeedLockNote').textContent), 'The lobby says how to unlock');
+      currentUser = { uid: 'spd' }; playerXp = { total: xpForLevel(4) };
+      updateSpeedByIndex(2, { user: true });
+      assertEqual(state.speedIndex, 1, 'Level 4: 2x is still locked');
+      assertTrue(/unlocks at Lvl 5/.test(banners.pop() || ''), 'and says which level');
+      playerXp = { total: xpForLevel(5) };
+      updateSpeedByIndex(3, { user: true });
+      assertEqual(state.speedIndex, 2, 'Level 5: 4x snaps to 2x');
+      assertTrue(/unlocks at Lvl 10/.test(banners.pop() || ''), '4x unlocks at level 10');
+      playerXp = { total: xpForLevel(10) };
+      updateSpeedByIndex(3, { user: true }); assertEqual(state.speedIndex, 3, 'Level 10: 4x');
+      assertEqual(document.querySelectorAll('#lobbySpeedTicks .speed-locked').length, 0, 'No locks left');
+      // A saved 4x survives signing out and back in.
+      currentUser = null; reapplySpeedLocks();
+      assertEqual(state.speedIndex, 1, 'Signed out: plays at 1x');
+      assertEqual(speedWantedIndex, 3, 'but 4x is still the saved choice');
+      currentUser = { uid: 'spd' }; reapplySpeedLocks();
+      assertEqual(state.speedIndex, 3, 'Signed back in at level 10: 4x again');
+      assertEqual(collectAccountSettings().speedIndex, 3, 'The account keeps the chosen speed');
+    } finally {
+      notifyBanner = realBanner; currentUser = realUser; playerXp = realXp; xpFeatureOn = realOn;
+      speedWantedIndex = realWanted; updateSpeedByIndex(realIdx ?? DEFAULT_SPEED_INDEX, { noSave: true });
+    }
+  });
   await test('Friends list: highest level first, then online, then A-Z', () => {
     const area = document.getElementById('friendsListArea');
     const before = area.innerHTML;
