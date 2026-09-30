@@ -354,6 +354,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Phone back gesture
 
 - Back (Android gesture/button; a left-edge swipe in the installed iPhone app) closes the top pop-up/page (`BACK_LAYERS`: element id → its close button or function; `null` = must be answered, Back does nothing), then the menu; at a table it clicks Exit (the "Leave this match?" confirm); in a Ranked search it cancels; in an online lobby it offers to leave. Only the bare home screen lets Back exit the app.
+- Page trail (v246, owner): a menu page opened from another (showcase → Custom, Custom → Shop, Profile → Collection, Inbox → leaderboard…) remembers it in `pageTrail` (set by `exclusivePageObserver`: the page still showing, or one hidden ≤ `PAGE_TRAIL_WINDOW_MS` (80ms) before, i.e. by the same button), and Back (`handleBack` → `backToPreviousPage`) reopens it as it was left (unhidden, so its scroll stays; Friends/Leaderboard/Inbox reopen via `PAGE_REOPENERS` because their live lists stop when hidden). Chains work (Shop → Custom → Profile → closed); the ✕ still just closes. Test: "Back goes to the page you came from…".
 - One `{ shBackGuard: true }` history entry exists whenever there's something to go back from (`syncBackGuard`, driven by a MutationObserver on those elements); closing with an on-screen button drops it again. A new pop-up/page needs an entry in `BACK_LAYERS`. Reloads after leaving a match/room go through `reloadCleanly`.
 
 ## Showcase & daily streak

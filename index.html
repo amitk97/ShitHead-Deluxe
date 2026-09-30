@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v245 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v246 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -17786,11 +17786,54 @@ video {
     // Watches the pages themselves rather than every button that opens one
     // (menu, header mailbox, keyboard shortcuts, links between pages), so
     // whichever page was opened last is the one left showing.
+    // Page trail (v246, owner): a page opened from another page (Profile's
+    // showcase → Custom, Custom → Shop, Profile → Collection, the Inbox →
+    // a leaderboard…) remembers where it came from, so the phone's Back
+    // returns there instead of to the home screen (handleBack →
+    // backToPreviousPage). The page it came from is the one still showing,
+    // or the one hidden just before (buttons often close their own page
+    // first). The ✕ still closes the page.
+    const pageTrail = {};            // page id → the page it was opened from
+    const pageHiddenAt = {};         // page id → when it was last hidden
+    let pageTrailRestoring = null;   // the page Back is reopening (not a new visit)
+    const PAGE_TRAIL_WINDOW_MS = 80; // a button that closes its page and opens the next does both at once; a ✕ then a tap never lands this close
     const exclusivePageObserver = new MutationObserver((records) => {
+      const now = Date.now();
+      records.forEach(({ target, oldValue }) => {
+        if (target.classList.contains('hidden') && !/(^|\s)hidden(\s|$)/.test(oldValue || '')) pageHiddenAt[target.id] = now;
+      });
       const opened = records.filter(({ target, oldValue }) =>
         /(^|\s)hidden(\s|$)/.test(oldValue || '') && !target.classList.contains('hidden'));
-      if (opened.length) closeOtherMenuPages(opened[opened.length - 1].target.id);
+      if (!opened.length) return;
+      const id = opened[opened.length - 1].target.id;
+      const restoring = pageTrailRestoring;
+      pageTrailRestoring = null;
+      if (restoring !== id) {
+        const stillOpen = EXCLUSIVE_PAGE_IDS.find(other => other !== id && !document.getElementById(other)?.classList.contains('hidden'));
+        const justClosed = EXCLUSIVE_PAGE_IDS.filter(other => other !== id && now - (pageHiddenAt[other] || 0) <= PAGE_TRAIL_WINDOW_MS)
+          .sort((a, b) => pageHiddenAt[b] - pageHiddenAt[a])[0];
+        const from = stillOpen || justClosed;
+        if (from && pageTrail[from] !== id) pageTrail[id] = from; else delete pageTrail[id];
+      }
+      closeOtherMenuPages(id);
     });
+    // Reopens a page as it was left (scroll position and all); pages with
+    // live lists that stop listening once hidden are opened afresh.
+    const PAGE_REOPENERS = {
+      friendsModal: () => openFriendsPanel(),
+      leaderboardModal: () => openLeaderboardPanel(),
+      inboxModal: () => openInboxPanel()
+    };
+    function backToPreviousPage(closedId) {
+      const from = pageTrail[closedId];
+      delete pageTrail[closedId];
+      if (!from || !document.getElementById(closedId)?.classList.contains('hidden')) return false;
+      if (EXCLUSIVE_PAGE_IDS.some(id => !document.getElementById(id)?.classList.contains('hidden'))) return false;
+      pageTrailRestoring = from;
+      if (PAGE_REOPENERS[from]) PAGE_REOPENERS[from]();
+      else document.getElementById(from)?.classList.remove('hidden');
+      return true;
+    }
     EXCLUSIVE_PAGE_IDS.forEach((id) => {
       const page = document.getElementById(id);
       if (page) exclusivePageObserver.observe(page, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
@@ -18250,8 +18293,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v246: [
+        ['↩️', 'Back on your phone now returns to the page you came from, like Custom back to Profile.']
+      ],
       v245: [
-        ['🎨', 'Profile: tap anything in your showcase to jump straight to it in Custom.']
+        ['🎨', 'Profile: tap anything in your showcase to jump straight to it in Custom.', WN_KEY]
       ],
       v244: [
         ['🏠', 'Home screen: a bigger profile picture beside your nickname.']
@@ -28892,7 +28938,8 @@ video {
     }
     function handleBack() {
       const layer = topBackLayer();
-      if (layer) { layer.close(); return; }
+      // A page opened from another page goes back to it (page trail, v246).
+      if (layer) { layer.close(); if (EXCLUSIVE_PAGE_IDS.includes(layer.id)) backToPreviousPage(layer.id); return; }
       const action = screenBackAction();
       if (action) action();
     }

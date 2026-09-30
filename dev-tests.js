@@ -4671,6 +4671,33 @@ async function runDevTestSuite() {
       setCustomTab('all');
     }
   });
+  await test('Back goes to the page you came from: Profile → Custom → Collection, then back, back, closed', async () => {
+    const tick = () => new Promise(r => setTimeout(r, 30));
+    const shown = (id) => !document.getElementById(id).classList.contains('hidden');
+    const openNow = () => EXCLUSIVE_PAGE_IDS.filter(shown);
+    try {
+      closeOtherMenuPages(); await tick();
+      document.getElementById('profileModal').classList.remove('hidden'); await tick();
+      renderProfileShowcase();
+      document.querySelector('#profileShowcase [data-showcase-type="frame"]').click(); await tick();
+      assertEqual(openNow(), ['themesModal'], 'The showcase opens Custom');
+      document.getElementById('customOwnedBtn').click(); await tick();
+      assertEqual(openNow(), ['collectionModal'], 'Custom → Collection');
+      handleBack(); await tick();
+      assertEqual(openNow(), ['themesModal'], 'Back from the Collection: Custom');
+      handleBack(); await tick();
+      assertEqual(openNow(), ['profileModal'], 'Back from Custom: Profile');
+      handleBack(); await tick();
+      assertEqual(openNow(), [], 'Back from Profile (opened from home): closed');
+      document.getElementById('profileModal').classList.remove('hidden'); await tick();
+      document.getElementById('profileCloseBtn').click(); await new Promise(r => setTimeout(r, 200));
+      document.getElementById('themesModal').classList.remove('hidden'); await tick();
+      handleBack(); await tick();
+      assertEqual(openNow(), [], 'A page opened after the last one was closed with ✕ just closes');
+    } finally {
+      closeOtherMenuPages(); await tick();
+    }
+  });
   await test('Friends list: highest level first, then online, then A-Z', () => {
     const area = document.getElementById('friendsListArea');
     const before = area.innerHTML;
