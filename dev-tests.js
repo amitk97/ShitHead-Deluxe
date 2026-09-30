@@ -8238,6 +8238,36 @@ async function runDevTestSuite() {
     assertTrue(findRankedMatch.toString().includes("decision.action === 'claim') return null"), 'Claiming takes the opponent out of the queue in the same transaction');
     assertTrue(waitForRankedMatch.toString().includes('onDisconnect().remove()'), 'A waiting ticket is removed automatically if the connection drops');
   });
+  await test('Find Game after a Ranked game keeps searching when the last opponent is waiting (no "try again", no extra presses)', async () => {
+    const realRandom = Math.random, realCreate = createRankedRoom, realEnter = enterRankedRoom, realBanner = notifyBanner;
+    const now = serverNow();
+    let queue = { uid: 'opp', name: 'Opp', rating: 500, ts: now, v: getGameVersionLabel() };
+    const tx = [], banners = [], created = [];
+    db = { ref: (path) => ({
+      once: () => Promise.resolve({ exists: () => true, val: () => (path.endsWith('lastRankedOpponent') ? { uid: 'opp', at: now - 60000 } : { rating: 500, wins: 1, losses: 0, diamonds: 10 }) }),
+      transaction: (fn, done) => { const next = fn(queue); tx.push(next === null ? 'claim' : next === queue ? 'skip' : 'wait'); if (next !== undefined) queue = next; done && done(null, true); return Promise.resolve(); },
+      set: () => Promise.resolve(), remove: () => Promise.resolve(), on: () => {}, off: () => {},
+      onDisconnect: () => ({ remove: () => {}, cancel: () => {} })
+    }) };
+    currentUser = { uid: 'me', displayName: 'Me' };
+    Math.random = () => 0; // the skip roll always says "skip"
+    notifyBanner = (m) => banners.push(m);
+    createRankedRoom = (me, opp) => { created.push(opp.uid); return '123456'; };
+    enterRankedRoom = () => {};
+    try {
+      findRankedMatch();
+      await new Promise(r => setTimeout(r, 150));
+      assertEqual(tx.join(','), 'skip', 'The recent opponent is passed over at first');
+      assertTrue(!banners.some(b => /try again/i.test(b)), 'No "try again" banner: the search goes on');
+      assertTrue(!!rankedSearchTimer, 'The search screen stays up');
+      rankedSearchStartedAt = Date.now() - RANKED_REMATCH_GRACE_MS - 1; // nobody else came along
+      await new Promise(r => setTimeout(r, RANKED_REMATCH_RETRY_MS + 300));
+      assertEqual(created.join(','), 'opp', 'After the grace time Find Game pairs with them on its own');
+    } finally {
+      Math.random = realRandom; createRankedRoom = realCreate; enterRankedRoom = realEnter; notifyBanner = realBanner;
+      rankedSearchToken++; rankedSearchStartedAt = 0; stopRankedHeartbeat(); stopRankedSearchClock();
+    }
+  });
   await test("Turn deadlines use Firebase's server time, not this phone's clock", () => {
     const savedOffset = serverTimeOffsetMs;
     try {

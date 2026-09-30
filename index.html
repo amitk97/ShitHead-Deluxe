@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v238 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v239 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -18218,6 +18218,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v239: [
+        ['🛠️', 'Ranked: Find Game now keeps searching after a match instead of asking you to try again.']
+      ],
       v238: [
         ['🛠️', 'Best of series: fixed the next game not counting, which left a series stuck after game 1.'],
         ['⚔️', 'Missed the end of a series? You now see the result the next time you open the game.'],
@@ -26048,6 +26051,14 @@ video {
     // just made LESS likely to pair again for a while, not impossible.
     const RANKED_REMATCH_COOLDOWN_MS = 10 * 60 * 1000;
     const RANKED_REMATCH_SKIP_CHANCE = 0.7;
+    // A skip never ends the search (v239): Find Game keeps looking on its own
+    // (RANKED_REMATCH_RETRY_MS), giving someone else a chance to pair for up
+    // to RANKED_REMATCH_GRACE_MS, then takes the recent opponent anyway.
+    // Before, a skip stopped the search with "try again", so after a Ranked
+    // game Find Game needed several presses.
+    const RANKED_REMATCH_RETRY_MS = 2000;
+    const RANKED_REMATCH_GRACE_MS = 8000;
+    let rankedSearchStartedAt = 0;
     // The queue is one "waiting" ticket. While waiting, a player's ticket is
     // refreshed every few seconds and removed automatically if their
     // connection drops; anyone searching treats a ticket that hasn't been
@@ -26096,6 +26107,7 @@ video {
       const myName = pNameInput.value.trim() || currentUser.displayName || 'Player';
       const searchToken = ++rankedSearchToken;
       const stillSearching = () => searchToken === rankedSearchToken && !!currentUser;
+      if (!options.keepClock || !rankedSearchStartedAt) rankedSearchStartedAt = Date.now();
       stopRankedHeartbeat();
       stopRankedAssignmentListener();
       Promise.all([
@@ -26106,7 +26118,7 @@ video {
         const myTicket = { uid: currentUser.uid, name: myName, rating: finiteRating(profile.rating), cosmetics: getPublicCosmeticLoadout(), ts: serverNow(), v: getGameVersionLabel() };
         if (!options.keepClock || !rankedSearchTimer) startRankedSearchClock();
         refreshRankedUI();
-        const skipRoll = Math.random() < RANKED_REMATCH_SKIP_CHANCE;
+        const skipRoll = Date.now() - rankedSearchStartedAt < RANKED_REMATCH_GRACE_MS && Math.random() < RANKED_REMATCH_SKIP_CHANCE;
         let decision = null;
         db.ref('matchmaking/waiting').transaction((current) => {
           decision = decideRankedQueueAction(current, myTicket, lastOpponent, skipRoll);
@@ -26130,8 +26142,8 @@ video {
             return;
           }
           if (decision.action === 'skip') {
-            stopRankedSearchClock(); refreshRankedUI();
-            notifyBanner('⏱️ Looking for a different opponent — try again in a moment.');
+            // Still searching: look again in a moment (the search screen stays up).
+            setTimeout(() => { if (stillSearching()) findRankedMatch({ keepClock: true }); }, RANKED_REMATCH_RETRY_MS);
             return;
           }
           if (decision.action === 'claim') {
@@ -26221,6 +26233,7 @@ video {
 
     function cancelRankedSearch() {
       rankedSearchToken++;
+      rankedSearchStartedAt = 0;
       stopRankedHeartbeat();
       removeOwnRankedTicket();
       stopRankedAssignmentListener();
