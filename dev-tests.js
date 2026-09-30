@@ -4821,7 +4821,16 @@ async function runDevTestSuite() {
       const chip = document.querySelector(`#profileShowcase [data-showcase-type="frame"][data-showcase-id="${lastFrame.id}"]`);
       assertTrue(!!chip && chip.tagName === 'BUTTON', 'Your own showcase items are buttons');
       assertTrue(!!document.querySelector('#profileShowcase [data-showcase-type="tableTheme"]'), 'The table preview is a button too');
-      assertTrue(!showcaseHtml(getShowcaseLoadout()).includes('data-showcase-type'), "Other players' showcases don't link anywhere");
+      const popupBody = document.getElementById('playerPopupBody');
+      popupBody.innerHTML = renderPlayerPopupHuman({ name: 'Other player', cosmetics: { frame: lastFrame.id } }, { loaded: false }, null);
+      const otherChip = popupBody.querySelector(`[data-showcase-type="frame"][data-showcase-id="${lastFrame.id}"]`);
+      assertTrue(!!otherChip && otherChip.tagName === 'BUTTON', 'Other players’ showcase items are buttons too');
+      document.getElementById('playerPopup').classList.remove('hidden');
+      otherChip.querySelector('b').click();
+      await new Promise(r => setTimeout(r, 60));
+      assertTrue(document.getElementById('playerPopup').classList.contains('hidden'), 'The player card closes');
+      assertEqual(customTab, 'frame', 'Another player’s item opens its Custom tab');
+      assertEqual(equippedCosmetics.frame, lastFrame.id, 'Viewing another showcase does not equip anything');
       document.getElementById('profileModal').classList.remove('hidden');
       chip.click();
       await new Promise(r => setTimeout(r, 800)); // a smooth scroll

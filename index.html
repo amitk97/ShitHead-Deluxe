@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v258 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v259 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -19587,6 +19587,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v259: [
+        ['🎨', 'Tap an item in another player’s showcase to find it directly in Custom.', WN_KEY]
+      ],
       v258: [
         ['✨', 'Smoother Lion’s Roar and Fireworks victories with matching sound timing and a complete gold firework.'],
         ['🎴', 'The free card-back preview now follows your equipped deck.'],
@@ -22477,7 +22480,7 @@ video {
       return { 'victory-cards': '🃏', 'victory-fireworks': '🎆', 'victory-sparklers': '🎇', 'victory-stars': '⭐', 'victory-karate': '🥋',
         'victory-trophy': '🏆', 'victory-rocket': '🚀', 'victory-origami': '🦢', 'victory-lion': '🦁' }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('victory-', '')]?.victoryIcon || '🏆';
     }
-    // opts.link (your own Profile only): every item is a button that opens
+    // Linked showcases: every item is a button that opens
     // Custom on its tab, scrolled to that item (openShowcaseItemInCustom).
     function showcaseHtml(showcase, opts = {}) {
       if (!showcase) return '';
@@ -22527,7 +22530,7 @@ video {
       return `<div class="pp-head">${avatarHtml(getPlayerAvatarId(player), 64)}
           <div class="min-w-0"><div id="playerPopupName" class="pp-name">${escapeHtml(player.name)}${hasProfile && xpShown() && profile.level > 0 ? ` ${xpLevelBadge(profile.level)}` : ''}</div>${badge}${online}</div></div>
         ${hasProfile ? playerPopupStatsHtml(profile.stats || {}, profile) : '<div class="pp-note">This player isn\'t signed in, so they don\'t have a rank or stats yet.</div>'}
-        ${showcaseHtml(profile.showcase || player.cosmetics)}
+        ${showcaseHtml(profile.showcase || player.cosmetics, { link: true })}
         ${actions}`;
     }
     function renderPlayerPopupBot(player) {
@@ -22590,6 +22593,12 @@ video {
     document.getElementById('playerPopupClose').addEventListener('click', closePlayerPopup);
     document.getElementById('playerPopup').addEventListener('click', (event) => {
       if (event.target.id === 'playerPopup') { closePlayerPopup(); return; }
+      const item = event.target.closest('[data-showcase-type]');
+      if (item) {
+        closePlayerPopup();
+        openShowcaseItemInCustom(item.dataset.showcaseType, item.dataset.showcaseId);
+        return;
+      }
       const btn = event.target.closest('[data-pp-action]');
       if (!btn || !currentUser) return;
       const uid = btn.dataset.uid;
