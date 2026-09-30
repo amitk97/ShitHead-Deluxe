@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-29-v235 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v236 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -27,8 +27,22 @@
     // which left a dark strip under the table and a hand sized for room
     // that wasn't there (then shrunk to tiny cards). The page's height and
     // the table's come from this instead.
+    // v236: the home-screen app on recent iOS also reports innerHeight a
+    // status bar (~47px) short of the screen (owner's video: the table
+    // stopped at 763 of 844px). There, the screen's own height is used.
     (function trackAppHeight() {
-      const set = () => document.documentElement.style.setProperty('--app-h', `${window.innerHeight}px`);
+      const appH = () => {
+        let h = window.innerHeight;
+        if (navigator.standalone === true && window.screen) {
+          const portrait = window.innerHeight >= window.innerWidth;
+          const long = Math.max(screen.width, screen.height), short = Math.min(screen.width, screen.height);
+          const sw = portrait ? short : long, sh = portrait ? long : short;
+          if (Math.abs(sw - window.innerWidth) <= 2 && sh > h && sh - h <= 80) h = sh;
+        }
+        return h;
+      };
+      window.shAppHeight = appH;
+      const set = () => document.documentElement.style.setProperty('--app-h', `${appH()}px`);
       set();
       ['resize', 'orientationchange', 'pageshow'].forEach(ev => window.addEventListener(ev, set));
       window.visualViewport?.addEventListener('resize', set);
@@ -148,7 +162,9 @@
       /* Respect notches / home-indicator areas when wrapped as a native app */
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
-      padding-bottom: env(safe-area-inset-bottom);
+      /* The home bar (iPhones without a Home button): stay clear of it, but
+         its full 34px was wasted under the hand. */
+      padding-bottom: max(0px, calc(env(safe-area-inset-bottom, 0px) - 12px));
     }
     /* Installed iPhone app (black-translucent status bar): the page starts
        under the clock/battery, so the header grows by the notch height and
@@ -8422,6 +8438,20 @@ video {
         rec.v = GAME_BUILD.version;
         rec.app = !!(window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone);
         rec.frames.ms = Math.round(rec.frames.ms);
+        // Screen sizes (in counts: no rules change), to check phone layouts.
+        try {
+          const cs = getComputedStyle(document.body);
+          const probe = document.createElement('div');
+          probe.style.cssText = 'position:fixed;top:0;left:0;height:env(safe-area-inset-top,0px);width:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none';
+          document.body.appendChild(probe);
+          const view = { viewScreenW: screen.width, viewScreenH: screen.height, viewInnerW: innerWidth, viewInnerH: innerHeight,
+            viewAppH: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-h')) || 0,
+            viewSafeTop: probe.offsetHeight, viewSafeBottom: probe.offsetWidth,
+            viewTableBottom: Math.round(document.getElementById('gameTable')?.getBoundingClientRect().bottom || 0),
+            viewBodyPad: Math.round(parseFloat(cs.paddingBottom) || 0) };
+          probe.remove();
+          Object.entries(view).forEach(([k, n]) => { rec.counts[k] = Math.max(0, Math.min(100000, Math.round(Number(n) || 0))); });
+        } catch (_) {}
         db.ref(`health/${localDateKey(new Date(rec.at))}/${id}`).set(rec).catch(() => {});
       }
       function touch() { dirty = true; if (!saveTimer) saveTimer = setTimeout(save, 15000); }
@@ -13753,7 +13783,8 @@ video {
       // the hand too big, then fitHandToTable shrank it to tiny cards).
       const table = document.getElementById('gameTable');
       const tableBottom = table ? table.getBoundingClientRect().bottom : 0;
-      const screenH = tableBottom > 100 ? Math.min(window.innerHeight, tableBottom) : window.innerHeight;
+      const winH = typeof window.shAppHeight === 'function' ? window.shAppHeight() : window.innerHeight;
+      const screenH = tableBottom > 100 ? Math.min(winH, tableBottom) : winH;
       const budget = screenH - used - chrome - handPad;
       return Math.max(50, Math.min(budget, screenH * 0.46));
     }
@@ -18160,6 +18191,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v236: [
+        ['📱', 'iPhone home-screen app: the table now reaches the bottom of the screen and your hand cards are bigger.']
+      ],
       v235: [
         ['🔄', 'Dropped out of a Play Friends or Ranked game? You now go straight back into your seat, even if the app stayed open while your signal came back.', WN_KEY],
         ['🤖', 'The bot that covers for a missing player is always Medium now. After 5 of its turns in Play Friends, the missing player is out of that game and the rest play on.'],
@@ -22559,7 +22593,14 @@ video {
         loadMedian: median(sessions.map(r => Number(r.loadMs) || 0)), loadP90: p90(sessions.map(r => Number(r.loadMs) || 0)),
         fps: frameMs ? Math.round((frames / frameMs) * 1000) : 0, slowPct: frames ? Math.round((slow / frames) * 1000) / 10 : 0,
         jankySessions: sessions.filter(r => r.frames && r.frames.n > 300 && r.frames.slow / r.frames.n > 0.05).length,
-        modes, rejectedSaves: count('rejectedSave'), errors: count('errors')
+        modes, rejectedSaves: count('rejectedSave'), errors: count('errors'),
+        // Distinct screens seen (device, app?, screen WxH, window H, page H, table bottom, notch/home bar).
+        screens: Object.entries(sessions.reduce((acc, r) => {
+          const c = r.counts || {};
+          if (!c.viewScreenH) return acc;
+          const k = `${r.device}${r.app ? ' app' : ''} · ${c.viewScreenW}×${c.viewScreenH} · window ${c.viewInnerH} · page ${c.viewAppH} · table ends ${c.viewTableBottom} · notch ${c.viewSafeTop} / home bar ${c.viewSafeBottom}`;
+          acc[k] = (acc[k] || 0) + 1; return acc;
+        }, {})).sort((a, b) => b[1] - a[1]).slice(0, 8)
       };
     }
     function renderHealth(data) {
@@ -22578,7 +22619,8 @@ video {
           + row('Janky sessions', h.jankySessions, 'more than 5% slow frames')),
         box('Matches', h.modes.filter(m => m.started).map(m => row(m.mode[0].toUpperCase() + m.mode.slice(1),
           `${m.finished}/${m.started} finished`, `${m.left} left · ${m.abandoned} abandoned (app closed)`)).join('') || row('Matches', 'none yet')),
-        box('Problems', row('Online saves rejected', h.rejectedSaves, 'two phones saved at once; the later one reloaded the table') + row('Errors', h.errors, 'details in the ERRORS tab'))
+        box('Problems', row('Online saves rejected', h.rejectedSaves, 'two phones saved at once; the later one reloaded the table') + row('Errors', h.errors, 'details in the ERRORS tab')),
+        box('Screens', h.screens.length ? h.screens.map(([k, n]) => `<div class="py-1 border-b border-slate-800 text-slate-300">${escapeHtml(k)} <b class="text-white">×${n}</b></div>`).join('') : row('Screens', 'none yet'))
       ].join('');
     }
     // The server's Ranked audit (functions/ranked-audit.js) flags writes to a
