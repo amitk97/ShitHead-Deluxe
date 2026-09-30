@@ -2587,7 +2587,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 28, 'All 28 pictures appear in Custom');
+    assertEqual(options.length, 33, 'All 33 avatars appear in Custom (incl. the 5 level rewards)');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -2873,8 +2873,8 @@ async function runDevTestSuite() {
     smoke.forEach(a => a.cancel());
     stage.querySelectorAll('.bfx').forEach(n => n.remove());
     renderPersonalisationAvatars();
-    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-8);
-    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Recruiter'], 'Earn-only pictures in milestone order, then the Gauntlet, then inviting friends');
+    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-13);
+    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Recruiter', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
   });
 
   await test('Accessibility settings exist and apply', () => {
@@ -4744,31 +4744,34 @@ async function runDevTestSuite() {
       speedWantedIndex = realWanted; updateSpeedByIndex(realIdx ?? DEFAULT_SPEED_INDEX, { noSave: true });
     }
   });
-  await test('Level rewards: a card back at Lvl 15, a frame at Lvl 25 and a table at Lvl 50, earn-only and granted by the server', () => {
-    assertEqual(LEVEL_REWARDS.map(r => [r.id, r.level]), [['back-rising-star', 15], ['frame-ascendant', 25], ['table-summit', 50]], 'The three rewards');
+  await test('Level rewards (v251): the owner\'s earn-only avatars and card backs, granted by the server', () => {
+    assertEqual(LEVEL_REWARDS.map(r => [r.id, r.level]), [
+      ['avatar-lvl-rookie-rogue', 10], ['avatar-lvl-card-shark', 25], ['avatar-lvl-burn-king', 50], ['avatar-lvl-chaos-jester', 75], ['avatar-lvl-the-shithead', 99],
+      ['back-lvl-first-burn', 10], ['back-lvl-sharks-mark', 30], ['back-lvl-inferno', 50], ['back-lvl-chaos-crown', 70], ['back-lvl-master-pile', 99]], 'The ten rewards');
     assertEqual(XP_RULES.rewards.map(r => r.id), LEVEL_REWARDS.map(r => r.id), 'Exported to the server catalog');
+    assertTrue(!['back-rising-star', 'frame-ascendant', 'table-summit'].some(id => bigPreviewItem(id)), 'The v248 set is gone');
     LEVEL_REWARDS.forEach((r) => {
       const type = COSMETIC_CATEGORY_TYPES[r.category];
       assertTrue(isSupportedCosmetic(type, r.id), `${r.id} can be equipped`);
       assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.id === r.id), `${r.id} is never sold`);
       assertTrue(customAllItems(type).some(i => i.id === r.id), `${r.id} is listed in Custom → All`);
+      assertTrue(/\.webp\?v=\d+$/.test(r.file), `${r.id} uses its HD art file`);
     });
-    assertEqual(getCosmeticBackClass('back-rising-star'), 'cosmetic-back-rising-star', 'The card back has its art');
-    assertTrue(/summit\.svg/.test(TABLE_ART.summit), 'The table is vector art');
-    assertTrue(!!getCosmeticFrameStyle('frame-ascendant') && !!getOpponentCosmeticFrameStyle('frame-ascendant'), 'The frame is drawn for you and for opponents');
+    assertEqual(getCosmeticBackClass('back-lvl-inferno'), 'cosmetic-back-lvl-inferno lvl-back', 'Card backs get their art class');
+    assertTrue(/lvl-rookie-rogue\.webp/.test(avatarHtml('avatar-lvl-rookie-rogue', 40)), 'Avatars draw their art');
     const real = { ...cosmeticPurchaseState }, realBanner = notifyBanner; const banners = []; notifyBanner = (m) => banners.push(m);
     try {
-      delete cosmeticPurchaseState['back-rising-star'];
+      delete cosmeticPurchaseState['back-lvl-first-burn'];
       renderPersonalisationCosmetics();
-      const tile = document.querySelector('#personalisationCardBacks [data-equip-id="back-rising-star"]');
-      assertTrue(!!tile && tile.hasAttribute('data-locked') && /Reach Lvl 15/.test(tile.textContent), 'Locked in Custom with its level');
-      assertEqual(nextLevelReward(3)?.id, 'back-rising-star', 'Profile names the next reward');
-      applyLevelRewards([{ id: 'back-rising-star', name: 'Rising Star', level: 15 }]);
-      assertTrue(!!cosmeticPurchaseState['back-rising-star'], 'Owned once the server grants it');
-      assertTrue(/Rising Star/.test(banners.pop() || ''), 'with a banner');
-      assertTrue(!document.querySelector('#personalisationCardBacks [data-equip-id="back-rising-star"]').hasAttribute('data-locked'), 'and unlocked in Custom');
-      const mail = inboxItemHtml({ id: 'unlock_table-summit', type: 'shop', unlocked: true, name: 'Summit', requirement: 'Reach Lvl 50' });
-      assertTrue(/Table unlocked/.test(mail) && /mini-table/.test(mail), 'The unlock mail names a table and shows it');
+      const tile = document.querySelector('#personalisationCardBacks [data-equip-id="back-lvl-first-burn"]');
+      assertTrue(!!tile && tile.hasAttribute('data-locked') && /Reach Lvl 10/.test(tile.textContent), 'Locked in Custom with its level');
+      delete cosmeticPurchaseState['avatar-lvl-rookie-rogue'];
+      assertEqual(nextLevelReward(3)?.level, 10, 'Profile names the next reward (lowest level first)');
+      applyLevelRewards([{ id: 'back-lvl-first-burn', name: 'First Burn', level: 10 }]);
+      assertTrue(!!cosmeticPurchaseState['back-lvl-first-burn'], 'Owned once the server grants it');
+      assertTrue(/First Burn/.test(banners.pop() || ''), 'with a banner');
+      const mail = inboxItemHtml({ id: 'unlock_avatar-lvl-card-shark', type: 'shop', unlocked: true, name: 'Card Shark', requirement: 'Reach Lvl 25' });
+      assertTrue(/Avatar unlocked/.test(mail), 'The unlock mail names an avatar');
     } finally {
       cosmeticPurchaseState = real; notifyBanner = realBanner; renderPersonalisationCosmetics();
     }
@@ -4878,7 +4881,7 @@ async function runDevTestSuite() {
   await test('Mail links: tapping a mail opens what it is about', async () => {
     const wait = () => new Promise(r => setTimeout(r, 60));
     const shown = (id) => !document.getElementById(id).classList.contains('hidden');
-    const back = LEVEL_REWARDS[0];
+    const back = LEVEL_REWARDS.find(r => r.category === 'Card Backs');
     assertTrue(typeof mailTarget({ type: 'shop', id: `unlock_${back.id}`, unlocked: true, name: back.name }) === 'function', 'an unlock mail has a target');
     ['rank', 'level', 'referral', 'request', 'season', 'series'].forEach(type => assertTrue(typeof mailTarget({ type, id: 'x' }) === 'function', `${type} mail opens something`));
     assertTrue(typeof mailTarget({ type: 'board', id: 'board_levels_10', board: 'levels' }) === 'function', 'board mail');
@@ -4903,7 +4906,7 @@ async function runDevTestSuite() {
   });
   await test('v250: level badge colours, look slots by level, own leaderboard row, Pending requests, tap-to-watch', async () => {
     const cls = (L) => (xpLevelBadge(L).match(/xp-tier-(\w+)/) || [])[1] || '';
-    assertEqual([19, 20, 39, 40, 60, 80, 98, 99].map(cls), ['', 'bronze', 'bronze', 'silver', 'gold', 'purple', 'purple', 'max'], 'Tiers at 20/40/60/80/99');
+    assertEqual([19, 20, 39, 40, 60, 80, 98, 99].map(cls), ['white', 'bronze', 'bronze', 'silver', 'gold', 'purple', 'purple', 'max'], 'Tiers at 20/40/60/80/99');
     const realOn = xpFeatureOn, realXp = playerXp, realUser = currentUser;
     try {
       xpFeatureOn = true; currentUser = { uid: 'u1' }; playerXp = { total: xpForLevel(12) };

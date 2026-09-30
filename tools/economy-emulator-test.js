@@ -691,17 +691,17 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     ok((await admin('leaderboard/xmig/level')) === 28 && (await admin('boards/challenges/xmig/level')) === 28 && (await admin('boards/gauntlet/xmig')) === null, 'the leaderboards show the new level (no new entries made)');
     ok((await xpMod.migrateAll()) === 0, 'the re-levelling runs once per table');
     // Level rewards (v248): free cosmetics at Lvl 15 / 25 / 50, granted once.
-    await admin('users/xena/xp', 'PUT', { total: xpMod.xpForLevel(15) - 10, level: 14, backfilled: true, table: 2, paidLevel: 14 });
+    await admin('users/xena/xp', 'PUT', { total: xpMod.xpForLevel(10) - 10, level: 9, backfilled: true, table: 2, paidLevel: 9 });
     await admin('users/xena/ownedCosmetics', 'DELETE');
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
     x = await call('xena', { action: 'matchFinished', matchId: 'xp_r1' });
-    ok(x.xp && x.xp.level === 15 && (x.xp.rewards || []).map(r => r.id).join() === 'back-rising-star', 'reaching Lvl 15 grants the Rising Star card back', x.xp);
-    ok((await admin('users/xena/ownedCosmetics/back-rising-star')) && (await admin('users/xena/activityInbox/unlock_back-rising-star'))?.unlocked, 'owned, with an unlock mail');
-    ok((await tryWrite('xena', db => set(ref(db, 'users/xena/equippedCosmetics/cardBack'), 'back-rising-star'))) !== 'denied', 'and it can be equipped');
-    ok((await tryWrite('xena', db => set(ref(db, 'users/xena/equippedCosmetics/tableTheme'), 'table-summit'))) === 'denied', 'blocked: equipping the Lvl 50 table without it');
+    ok(x.xp && x.xp.level === 10 && (x.xp.rewards || []).map(r => r.id).sort().join() === 'avatar-lvl-rookie-rogue,back-lvl-first-burn', 'reaching Lvl 10 grants Rookie Rogue and First Burn', x.xp);
+    ok((await admin('users/xena/ownedCosmetics/back-lvl-first-burn')) && (await admin('users/xena/activityInbox/unlock_avatar-lvl-rookie-rogue'))?.unlocked, 'owned, with an unlock mail');
+    ok((await tryWrite('xena', db => set(ref(db, 'users/xena/equippedCosmetics/cardBack'), 'back-lvl-first-burn'))) !== 'denied', 'and it can be equipped');
+    ok((await tryWrite('xena', db => set(ref(db, 'users/xena/equippedCosmetics/cardBack'), 'back-lvl-inferno'))) === 'denied', 'blocked: equipping the Lvl 50 back without it');
     await admin('users/xena/xp', 'PUT', { total: xpMod.xpForLevel(30), level: 30, backfilled: true, table: 2, paidLevel: 30 });
     x = await call('xena', { action: 'sync' });
-    ok((await admin('users/xena/ownedCosmetics/frame-ascendant')) && !(await admin('users/xena/ownedCosmetics/table-summit')) && (x.xp?.rewards || []).some(r => r.id === 'frame-ascendant'), 'sign-in grants rewards already reached (Lvl 25 frame), not later ones', x.xp);
+    ok((await admin('users/xena/ownedCosmetics/avatar-lvl-card-shark')) && !(await admin('users/xena/ownedCosmetics/back-lvl-inferno')) && (x.xp?.rewards || []).some(r => r.id === 'avatar-lvl-card-shark'), 'sign-in grants rewards already reached (Lvl 25 avatar), not later ones', x.xp);
     // Friends are mailed at every 10th level and 99 (one mail per write).
     ok(xpMod.friendMailLevel(8, 23) === 20 && xpMod.friendMailLevel(11, 19) === 0 && xpMod.friendMailLevel(97, 99) === 99, 'friend mail levels: the highest 10th (or 99) crossed');
     await admin('users/xpal', 'PUT', { username: 'Xpal' });

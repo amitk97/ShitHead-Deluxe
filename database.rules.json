@@ -49,6 +49,8 @@
               newData.val() === 'back-nebula' || newData.val() === 'back-inferno' ||
               newData.val().matches(/^back-(arcade|space|tartan|artdeco|dragon|stained)$/) ||
               newData.val() === 'back-rising-star' ||
+              newData.val().matches(/^back-lvl-(first-burn|sharks-mark|inferno|chaos-crown)$/) ||
+              newData.val() === 'back-lvl-master-pile' ||
               (newData.val().matches(/^back-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^back-(halloween|diwali|christmas|newyear)$/)))))"
           },
@@ -152,6 +154,8 @@
               newData.val().matches(/^avatar-(royal-flush|phoenix|cosmic-ace)$/) ||
               newData.val().matches(/^avatar-(sapphire-sovereign|crimson-inferno|turtley)$/) ||
               newData.val() === 'avatar-scarlet-guardian' ||
+              newData.val().matches(/^avatar-lvl-(rookie-rogue|card-shark|burn-king)$/) ||
+              newData.val().matches(/^avatar-lvl-(chaos-jester|the-shithead)$/) ||
               (newData.val().matches(/^avatar-(lunar|valentine|ramadan|easter|summer)(-earned)?$/) ||
               newData.val().matches(/^avatar-(halloween|diwali|christmas|newyear)(-earned)?$/)))))"
           },

@@ -1662,19 +1662,54 @@
   "maxXp": 100000000,
   "rewards": [
    {
-    "id": "back-rising-star",
-    "name": "Rising Star",
-    "level": 15
+    "id": "avatar-lvl-rookie-rogue",
+    "name": "Rookie Rogue",
+    "level": 10
    },
    {
-    "id": "frame-ascendant",
-    "name": "Ascendant",
+    "id": "avatar-lvl-card-shark",
+    "name": "Card Shark",
     "level": 25
    },
    {
-    "id": "table-summit",
-    "name": "Summit",
+    "id": "avatar-lvl-burn-king",
+    "name": "Burn King",
     "level": 50
+   },
+   {
+    "id": "avatar-lvl-chaos-jester",
+    "name": "Chaos Jester",
+    "level": 75
+   },
+   {
+    "id": "avatar-lvl-the-shithead",
+    "name": "The ShitHead",
+    "level": 99
+   },
+   {
+    "id": "back-lvl-first-burn",
+    "name": "First Burn",
+    "level": 10
+   },
+   {
+    "id": "back-lvl-sharks-mark",
+    "name": "Shark's Mark",
+    "level": 30
+   },
+   {
+    "id": "back-lvl-inferno",
+    "name": "Inferno",
+    "level": 50
+   },
+   {
+    "id": "back-lvl-chaos-crown",
+    "name": "Chaos Crown",
+    "level": 70
+   },
+   {
+    "id": "back-lvl-master-pile",
+    "name": "Master of the Pile",
+    "level": 99
    }
   ],
   "tableVersion": 2,

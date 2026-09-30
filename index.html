@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v250 (ShitHead-Deluxe-210) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v251 (ShitHead-Deluxe-211) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -608,6 +608,8 @@
     /* § XP & levels (hidden until the owner's switch is on) */
     .xp-badge { display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; height:16px; padding:0 5px; border-radius:6px; border:1px solid rgba(56,189,248,.7); background:linear-gradient(180deg,#0c4a6e,#082f49); color:#bae6fd; font-size:9px; font-weight:900; letter-spacing:.04em; line-height:1; white-space:nowrap; flex-shrink:0; }
     /* Level tiers (LEVEL_BADGE_TIERS): 20 bronze, 40 silver, 60 gold, 80 purple, 99 shimmering cyan. */
+    .xp-badge.xp-tier-white { border-color:#e2e8f0; background:linear-gradient(180deg,#ffffff,#cbd5e1); color:#0f172a; }
+    .xp-badge-lg.xp-tier-white { box-shadow:0 0 10px rgba(248,250,252,.18); }
     .xp-badge.xp-tier-bronze { border-color:#d08a4e; background:linear-gradient(180deg,#7c3f16,#4a230b); color:#fcd9b6; }
     .xp-badge.xp-tier-silver { border-color:#cbd5e1; background:linear-gradient(180deg,#64748b,#334155); color:#f1f5f9; }
     .xp-badge.xp-tier-gold { border-color:#fbbf24; background:linear-gradient(180deg,#a16207,#713f12); color:#fef3c7; }
@@ -615,6 +617,9 @@
     .xp-badge.xp-tier-max { border-color:#96D6F4; color:#06283a; background:linear-gradient(110deg,#5fb8e0 0%,#96D6F4 35%,#e9f8ff 50%,#96D6F4 65%,#5fb8e0 100%); background-size:250% 100%; animation:xpTierShimmer 3.2s linear infinite; box-shadow:0 0 8px rgba(150,214,244,.55); }
     @keyframes xpTierShimmer { from { background-position:100% 0; } to { background-position:-150% 0; } }
     body.reduce-motion .xp-badge.xp-tier-max { animation:none; }
+    .av-lvl-glow { animation:avLvlGlow 2.4s ease-in-out infinite; }
+    @keyframes avLvlGlow { 50% { opacity:.85; } }
+    body.reduce-motion .av-lvl-glow, .av-still .av-lvl-glow { animation:none; }
     .xp-badge-lg { height:34px; min-width:40px; padding:0 7px; border-radius:10px; font-size:12px; box-shadow:0 0 12px rgba(56,189,248,.25); }
     .xp-card { display:flex; align-items:center; gap:10px; padding:10px; border-radius:12px; border:1px solid #1e293b; background:rgba(15,23,42,.6); }
     .xp-card-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
@@ -1412,16 +1417,6 @@
       border-color:#f59e0b !important;
       box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #b45309,0 0 10px rgba(245,158,11,.7),0 3px 8px rgba(0,0,0,.55) !important;
     }
-    /* Level rewards (v248): Ascendant (Lvl 25), a violet rim inside a gold
-       hairline with a two-tone glow; Rising Star (Lvl 15) card back. */
-    body[data-equipped-frame="frame-ascendant"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) {
-      border-color:#c084fc !important;
-      box-shadow:inset 0 0 0 1px #fef3c7,inset 0 0 0 3px #7c3aed,inset 0 0 0 4px rgba(251,191,36,.85),0 0 10px rgba(168,85,247,.7),0 0 3px rgba(251,191,36,.9),0 3px 8px rgba(0,0,0,.55) !important;
-    }
-    .cosmetic-back-rising-star { background:url("art/backs/rising-star.svg") center/cover no-repeat, #1e1b4b !important; color:#fbbf24; }
-    .custom-card-back.cosmetic-back-rising-star { border-color:#fbbf24 !important; }
-    .custom-card-back.cosmetic-back-rising-star::before, .custom-card-back.cosmetic-back-rising-star::after { display:none; }
-    .cosmetic-back-rising-star > svg { opacity:0; }
     /* Shop card backs, set 2. */
     .custom-card-back.cosmetic-back-arcade {
       background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-2 -3 15 14' fill='%23a3e635'><path d='M2 0h1v1h-1zM8 0h1v1h-1zM3 1h1v1h-1zM7 1h1v1h-1zM2 2h7v1h-7zM1 3h2v1h-2zM4 3h3v1h-3zM8 3h2v1h-2zM0 4h11v1h-11zM0 5h1v1h-1zM2 5h7v1h-7zM10 5h1v1h-1zM0 6h1v1h-1zM2 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM3 7h2v1h-2zM6 7h2v1h-2z'/></svg>") center / 78% auto no-repeat,
@@ -6928,7 +6923,7 @@ video {
             <p data-term="last-card"><strong class="text-amber-400">Last Card:</strong> A player down to one card in total gets a pulsing <strong>&#9757;&#65039; LAST CARD</strong> badge and a warning, so nobody sneaks out unnoticed.</p>
             <p data-term="leaderboard"><strong class="text-amber-400">Leaderboard:</strong> Menu &rarr; Leaderboard: three tabs, <em>Ranked</em> (rating), <em>Challenges</em> (challenges completed) and <em>Gauntlet</em> (bots beaten). Reach the top 10, #3, #2 or #1 and a congratulations message lands in your Inbox.</p>
             <p data-term="level"><strong class="text-amber-400">Level:</strong> You earn XP for finishing games, winning, Ranked, the Gauntlet and challenges. Levels run from 1 to 99; every level up pays Diamonds, and some levels unlock free items (see <em>Level Rewards</em>).</p>
-            <p data-term="level-rewards"><strong class="text-amber-400">Level Rewards:</strong> Free things you unlock by levelling up: 2x game speed at Lvl 5 and 4x at Lvl 10 (signed in), the Rising Star card back at Lvl 15, the Ascendant frame at Lvl 25 and the Summit table at Lvl 50.</p>
+            <p data-term="level-rewards"><strong class="text-amber-400">Level Rewards:</strong> Free things you unlock by levelling up: 2x game speed at Lvl 5 and 4x at Lvl 10 (signed in), a second saved look at Lvl 10 and a third at Lvl 20, and earn-only avatars (Rookie Rogue 10, Card Shark 25, Burn King 50, Chaos Jester 75, The ShitHead 99) and card backs (First Burn 10, Shark&rsquo;s Mark 30, Inferno 50, Chaos Crown 70, Master of the Pile 99). Your level badge also changes colour at 20, 40, 60, 80 and 99.</p>
             <p data-term="lives"><strong class="text-amber-400">Lives:</strong> Your hearts in the Gauntlet. You start with 3; losing a game costs one and you replay the same bot.</p>
             <p data-term="pick-up"><strong class="text-amber-400">Pick Up:</strong> Taking the entire Pile into your Hand because you had no legal move. The setback of the game. If your Hand was already empty, you must also take one Face-Up Card (or several of the same rank) along with it.</p>
             <p data-term="pile"><strong class="text-amber-400">Pile:</strong> The face-up stack in the middle that everyone plays onto. Your card must match or beat the top card of the Pile &mdash; if you can't, you take the whole Pile into your Hand.</p>
@@ -13897,9 +13892,9 @@ video {
         'back-tartan': 'cosmetic-back-tartan',
         'back-artdeco': 'cosmetic-back-artdeco',
         'back-dragon': 'cosmetic-back-dragon',
-        'back-stained': 'cosmetic-back-stained',
-        'back-rising-star': 'cosmetic-back-rising-star'
+        'back-stained': 'cosmetic-back-stained'
       };
+      if (/^back-lvl-/.test(equippedCosmetics.cardBack || '')) return `cosmetic-${equippedCosmetics.cardBack} lvl-back`;
       if (cosmeticBackClasses[equippedCosmetics.cardBack]) return cosmeticBackClasses[equippedCosmetics.cardBack];
       if (typeof SEASONAL_BACK_IDS !== 'undefined' && SEASONAL_BACK_IDS.has(equippedCosmetics.cardBack)) return getCosmeticBackClass(equippedCosmetics.cardBack);
       if (state.deckTheme === 'theme-emerald') return 'back-emerald';
@@ -18542,6 +18537,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v251: [
+        ['🏆', 'New earn-only avatars for levelling up: Rookie Rogue (10), Card Shark (25), Burn King (50), Chaos Jester (75) and The ShitHead (99).', WN_KEY],
+        ['🃏', 'New earn-only card backs: First Burn (10), Shark\'s Mark (30), Inferno (50), Chaos Crown (70) and Master of the Pile (99).', WN_KEY],
+        ['✨', 'Level badges below Lvl 20 are now white.']
+      ],
       v250: [
         ['🏆', 'Level badges change colour as you climb: bronze at 20, silver at 40, gold at 60, purple at 80 and a shimmering cyan at 99.', WN_KEY],
         ['👥', 'A friend request you send now shows as Pending until they accept, and you can accept theirs from their player card.'],
@@ -19518,8 +19518,6 @@ video {
       'neon': "art/tables/neon.svg",
       'aurora': "art/tables/aurora.svg",
       'space': "art/tables/space.svg",
-      // Level reward (Lvl 50): tools/make-level-rewards.py.
-      'summit': "art/tables/summit.svg",
       // Free photo-like surfaces (tools/make-table-textures.py): seamless
       // 1920px tiles repeated at TABLE_TILE_PX (3x pixels: sharp on phones,
       // PCs and 4K screens alike), lit by CSS gradients (TILED_TABLE_LIGHT).
@@ -19536,8 +19534,7 @@ video {
       'table-angelic': { art: 'angelic', base: '#312e81', rim: 'inset 0 0 0 3px #e0f2fe,inset 0 0 50px rgba(224,242,254,.25)', label: 'rgba(224,242,254,.9)' },
       'table-neon': { art: 'neon', base: '#1a0b2e', rim: 'inset 0 0 0 2px #e879f9,inset 0 0 0 4px rgba(34,211,238,.55),inset 0 0 50px rgba(0,0,0,.6)', label: 'rgba(240,171,252,.9)' },
       'table-aurora': { art: 'aurora', base: '#0b1a2e', rim: 'inset 0 0 0 3px #34d399,inset 0 0 0 4px rgba(224,242,254,.3),inset 0 0 50px rgba(0,0,0,.55)', label: 'rgba(110,231,183,.9)' },
-      'table-space': { art: 'space', base: '#05060f', rim: 'inset 0 0 0 3px #6366f1,inset 0 0 0 4px rgba(251,191,36,.35),inset 0 0 52px rgba(0,0,0,.65)', label: 'rgba(199,210,254,.9)' },
-      'table-summit': { art: 'summit', base: '#1e1b4b', rim: 'inset 0 0 0 3px #f59e0b,inset 0 0 0 4px rgba(254,243,199,.35),inset 0 0 52px rgba(0,0,0,.6)', label: 'rgba(253,230,138,.9)' }
+      'table-space': { art: 'space', base: '#05060f', rim: 'inset 0 0 0 3px #6366f1,inset 0 0 0 4px rgba(251,191,36,.35),inset 0 0 52px rgba(0,0,0,.65)', label: 'rgba(199,210,254,.9)' }
     };
     // Seasonal event pictures (shop + earn-only). Same tile, tones and
     // shared metal gradients as every other picture.
@@ -21030,16 +21027,51 @@ video {
     const EARNED_FRAMES = [
       { id: 'frame-gauntlet', category: 'Frames', name: 'Gauntlet Gold', earned: true, cost: 0, requirement: 'Beat the Gauntlet', tones: ['#1c0a02', '#f59e0b', '#fde68a'] }
     ];
-    // Level rewards (v248, owner): free cosmetics that unlock with levels, so
-    // a level is something to show off (§ XP & levels). Never sold or gifted;
+    // Level rewards (v251, owner): earn-only avatars and card backs that
+    // unlock with levels, so a level is something to show off (§ XP & levels).
+    // The owner's own HD artwork, cut from docs/avatar-art/src/
+    // level-rewards-sheet.webp by tools/make-level-rewards.py into
+    // art/avatars/lvl-*.webp and art/backs/lvl-*.webp. Never sold or gifted;
     // the server grants them into ownedCosmetics once the account's level
-    // reaches them (xp.grantLevelRewards, catalog xp.rewards). Art:
-    // tools/make-level-rewards.py (vector).
+    // reaches them (xp.grantLevelRewards, catalog xp.rewards). The v248 set
+    // (Rising Star, Ascendant, Summit) was removed in v251 (owner).
+    const LEVEL_ART_V = 251;
     const LEVEL_REWARDS = [
-      { id: 'back-rising-star', category: 'Card Backs', name: 'Rising Star', earned: true, level: 15, cost: 0, requirement: 'Reach Lvl 15', tones: ['#1e1b4b', '#fbbf24', '#7c3aed'] },
-      { id: 'frame-ascendant', category: 'Frames', name: 'Ascendant', earned: true, level: 25, cost: 0, requirement: 'Reach Lvl 25', tones: ['#2e1065', '#c084fc', '#fbbf24'] },
-      { id: 'table-summit', category: 'Table Themes', name: 'Summit', earned: true, level: 50, cost: 0, requirement: 'Reach Lvl 50', tones: ['#1e1b4b', '#f59e0b', '#7a3f55'] }
-    ];
+      { id: 'avatar-lvl-rookie-rogue', category: 'Avatars', name: 'Rookie Rogue', level: 10, tone: '#c2703a' },
+      { id: 'avatar-lvl-card-shark', category: 'Avatars', name: 'Card Shark', level: 25, tone: '#60a5fa' },
+      { id: 'avatar-lvl-burn-king', category: 'Avatars', name: 'Burn King', level: 50, tone: '#f59e0b' },
+      { id: 'avatar-lvl-chaos-jester', category: 'Avatars', name: 'Chaos Jester', level: 75, tone: '#c084fc' },
+      { id: 'avatar-lvl-the-shithead', category: 'Avatars', name: 'The ShitHead', level: 99, tone: '#fbbf24', animated: true },
+      { id: 'back-lvl-first-burn', category: 'Card Backs', name: 'First Burn', level: 10, tone: '#ea7a36' },
+      { id: 'back-lvl-sharks-mark', category: 'Card Backs', name: "Shark's Mark", level: 30, tone: '#7dd3fc' },
+      { id: 'back-lvl-inferno', category: 'Card Backs', name: 'Inferno', level: 50, tone: '#fb923c' },
+      { id: 'back-lvl-chaos-crown', category: 'Card Backs', name: 'Chaos Crown', level: 70, tone: '#c084fc' },
+      { id: 'back-lvl-master-pile', category: 'Card Backs', name: 'Master of the Pile', level: 99, tone: '#fbbf24' }
+    ].map(r => ({ ...r, earned: true, cost: 0, requirement: `Reach Lvl ${r.level}`, tones: ['#07070c', r.tone, '#f8fafc'],
+      file: `art/${r.category === 'Avatars' ? 'avatars' : 'backs'}/${r.id.replace(/^(avatar|back)-/, '')}.webp?v=${LEVEL_ART_V}` }));
+    const LEVEL_BACK_IDS = LEVEL_REWARDS.filter(r => r.category === 'Card Backs').map(r => r.id);
+    // Avatars: the photo art in the shared rounded tile with a rim in its own
+    // colour; The ShitHead (Lvl 99) also breathes a gold glow.
+    LEVEL_REWARDS.filter(r => r.category === 'Avatars').forEach((r) => {
+      AVATAR_ART[r.id] = {
+        photo: true, tone: 'gold', animated: !!r.animated,
+        art: `<rect width="1000" height="1000" rx="234" fill="#07070c"/>`
+          + `<image href="${r.file}" width="1000" height="1000" preserveAspectRatio="xMidYMid slice" style="clip-path:inset(0 round 234px)"/>`
+          + (r.animated ? `<rect class="av-lvl-glow" x="10" y="10" width="980" height="980" rx="226" fill="none" stroke="${r.tone}" stroke-width="44" opacity=".25"/>` : '')
+          + `<rect x="12" y="12" width="976" height="976" rx="222" fill="none" stroke="${r.tone}" stroke-width="22" opacity=".9"/>`
+      };
+    });
+    // Card backs: the art fills the back (the emblem and pattern layers hide).
+    (function installLevelBackStyles() {
+      const css = LEVEL_REWARDS.filter(r => r.category === 'Card Backs').map(r =>
+        `.cosmetic-${r.id} { background:url("${r.file}") center/cover no-repeat, #07070c !important; color:${r.tone}; }\n` +
+        `.custom-card-back.cosmetic-${r.id} { border-color:${r.tone} !important; box-shadow:0 0 8px ${r.tone}66; }`).join('\n') +
+        '\n.lvl-back::before, .lvl-back::after { display:none !important; }\n.lvl-back > svg { visibility:hidden; }';
+      const style = document.createElement('style');
+      style.id = 'levelBackStyles';
+      style.textContent = css;
+      document.head.appendChild(style);
+    })();
     COSMETIC_SHOP_ITEMS.push(...SEASONAL_SHOP_ITEMS);
     EARNED_AVATARS.push(...SEASONAL_EARNED_AVATARS);
     function avatarPeakRating(u) {
@@ -21047,7 +21079,7 @@ video {
     }
     const FREE_AVATAR_IDS = ['avatar-crown-bronze', 'avatar-suit-spades', 'avatar-suit-hearts', 'avatar-suit-diamonds', 'avatar-suit-clubs'];
     function getAvatarItem(id) {
-      return [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].find(item => item.id === id && item.category === 'Avatars') || null;
+      return [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS, ...LEVEL_REWARDS].find(item => item.id === id && item.category === 'Avatars') || null;
     }
     const COSMETIC_CATEGORY_TYPES = Object.freeze({
       'Card Backs': 'cardBack', 'Frames': 'frame', 'Emote Packs': 'emotes',
@@ -21055,11 +21087,11 @@ video {
       'Joker Effects': 'jokerEffect', 'Avatars': 'avatar', 'Decks': 'deck'
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
-      cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco','back-dragon','back-stained','back-rising-star', ...seasonalIdsOf('cardBack')]),
-      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet','frame-ascendant','frame-split-crimson','frame-split-royal','frame-split-noir','frame-dashed-gold','frame-neon-tube','frame-spectrum', ...seasonalIdsOf('frame')]),
+      cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco','back-dragon','back-stained', ...LEVEL_BACK_IDS, ...seasonalIdsOf('cardBack')]),
+      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet','frame-split-crimson','frame-split-royal','frame-split-noir','frame-dashed-gold','frame-neon-tube','frame-spectrum', ...seasonalIdsOf('frame')]),
       deck: new Set(['deck-obsidian','deck-emerald','deck-cyber','deck-crimson','deck-bigprint','deck-casino','deck-arcade','deck-fourcolour','deck-lavender','deck-paper','deck-blueprint','deck-chalk','deck-frost','deck-neonnight','deck-royalgold']),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania', ...seasonalIdsOf('emotes')]),
-      tableTheme: new Set(['table-wood','table-felt','table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic','table-neon','table-aurora','table-space','table-summit', ...seasonalIdsOf('tableTheme')]),
+      tableTheme: new Set(['table-wood','table-felt','table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic','table-neon','table-aurora','table-space', ...seasonalIdsOf('tableTheme')]),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke','burn-blackhole','burn-origami','burn-pixel','burn-lava', ...seasonalIdsOf('burnEffect')]),
       victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks','victory-sparklers','victory-stars','victory-karate','victory-trophy','victory-rocket','victory-origami','victory-lion', ...seasonalIdsOf('victoryEffect')]),
       jokerEffect: new Set(['joker-grin','joker-jackbox','joker-puppet','joker-magic','joker-glitch','joker-storm','joker-hypnotist','joker-vampire','joker-redcard','joker-portal', ...seasonalIdsOf('jokerEffect')]),
@@ -21675,6 +21707,7 @@ video {
         <span class="avatar-picker-label">Earn in Ranked</span>${EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral).map(avatarOptionHtml).join('')}
         <span class="avatar-picker-label">Earn in the Gauntlet</span>${EARNED_AVATARS.filter(item => item.gauntlet).map(avatarOptionHtml).join('')}
         <span class="avatar-picker-label">Earn by inviting friends</span>${EARNED_AVATARS.filter(item => item.referral).map(avatarOptionHtml).join('')}
+        <span class="avatar-picker-label">Earn by levelling up</span>${LEVEL_REWARDS.filter(item => item.category === 'Avatars').map(avatarOptionHtml).join('')}
         ${seasonalAvatars.length ? `<span class="avatar-picker-label">Seasonal</span>${seasonalAvatars.map(avatarOptionHtml).join('')}` : ''}`;
     }
 
@@ -22689,8 +22722,9 @@ video {
 
     function getCosmeticBackClass(id) {
       if (SEASONAL_BACK_IDS.has(id)) return `cosmetic-${id} season-back`;
+      if (/^back-lvl-/.test(id || '')) return `cosmetic-${id} lvl-back`;
       return { 'back-midnight':'cosmetic-back-midnight','back-emerald':'cosmetic-back-emerald','back-neon':'cosmetic-back-neon','back-crimson':'cosmetic-back-crimson','back-nebula':'cosmetic-back-nebula','back-inferno':'cosmetic-back-inferno',
-        'back-arcade':'cosmetic-back-arcade','back-space':'cosmetic-back-space','back-tartan':'cosmetic-back-tartan','back-artdeco':'cosmetic-back-artdeco','back-dragon':'cosmetic-back-dragon','back-stained':'cosmetic-back-stained','back-rising-star':'cosmetic-back-rising-star' }[id] || 'back-obsidian';
+        'back-arcade':'cosmetic-back-arcade','back-space':'cosmetic-back-space','back-tartan':'cosmetic-back-tartan','back-artdeco':'cosmetic-back-artdeco','back-dragon':'cosmetic-back-dragon','back-stained':'cosmetic-back-stained' }[id] || 'back-obsidian';
     }
 
     function getCosmeticFrameStyle(id) {
@@ -22702,7 +22736,6 @@ video {
         'frame-emerald-sovereign': 'box-shadow:inset 0 0 0 2px #34d399,0 0 9px rgba(52,211,153,.68)!important',
         'frame-darkness': 'border-color:#000!important;box-shadow:inset 0 0 0 3px #000!important',
         'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #b45309,0 0 9px rgba(245,158,11,.75)!important',
-        'frame-ascendant': 'border-color:#c084fc!important;box-shadow:inset 0 0 0 1px #fef3c7,inset 0 0 0 3px #7c3aed,inset 0 0 0 4px rgba(251,191,36,.85),0 0 10px rgba(168,85,247,.7),0 0 3px rgba(251,191,36,.9)!important',
         'frame-split-crimson': 'box-shadow:inset 2.5px 2.5px 0 #e11d48,inset -2.5px -2.5px 0 #f8fafc,0 0 8px rgba(225,29,72,.45)!important',
         'frame-split-royal': 'box-shadow:inset 2.5px 2.5px 0 #2563eb,inset -2.5px -2.5px 0 #fbbf24,0 0 8px rgba(37,99,235,.45)!important',
         'frame-split-noir': 'box-shadow:inset 2.5px 2.5px 0 #000,inset 3.5px 3.5px 0 #52525b,inset -2.5px -2.5px 0 #ec4899,0 0 8px rgba(236,72,153,.45)!important',
@@ -22728,7 +22761,6 @@ video {
         'frame-emerald-sovereign': 'box-shadow:0 0 0 1px #34d399,0 0 5px rgba(52,211,153,.5)!important',
         'frame-darkness': 'border-color:#000!important;box-shadow:0 0 0 1px #000!important',
         'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:0 0 0 1px #fbbf24,0 0 5px rgba(245,158,11,.55)!important',
-        'frame-ascendant': 'border-color:#c084fc!important;box-shadow:0 0 0 1px #fbbf24,0 0 5px rgba(168,85,247,.6)!important',
         'frame-split-crimson': 'box-shadow:-1.5px -1.5px 0 0 #e11d48,1.5px 1.5px 0 0 #f8fafc!important',
         'frame-split-royal': 'box-shadow:-1.5px -1.5px 0 0 #2563eb,1.5px 1.5px 0 0 #fbbf24!important',
         'frame-split-noir': 'box-shadow:-1.5px -1.5px 0 0 #000,1.5px 1.5px 0 0 #ec4899!important',
@@ -24871,7 +24903,7 @@ video {
     }
     // Level badge colours (v250, owner; not a choice yet): the badge takes
     // the colour of the highest tier reached, everywhere a level shows.
-    // Names stay white. Below Lvl 20 it keeps the XP blue.
+    // Names stay white. Below Lvl 20 the badge is white (owner, v251).
     const LEVEL_BADGE_TIERS = [[99, 'max', 'Cyan'], [80, 'purple', 'Purple'], [60, 'gold', 'Gold'], [40, 'silver', 'Silver'], [20, 'bronze', 'Bronze']];
     function levelBadgeTier(level) {
       const L = Number(level) || 0;
@@ -24880,7 +24912,7 @@ video {
     function xpLevelBadge(level, extra = '') {
       const L = Math.max(1, Math.round(Number(level) || 1));
       const tier = levelBadgeTier(L);
-      return `<span class="xp-badge${tier ? ` xp-tier-${tier[1]}` : ''}${extra ? ` ${extra}` : ''}" title="Level ${L}" aria-label="Level ${L}">Lvl ${L}</span>`;
+      return `<span class="xp-badge xp-tier-${tier ? tier[1] : 'white'}${extra ? ` ${extra}` : ''}" title="Level ${L}" aria-label="Level ${L}">Lvl ${L}</span>`;
     }
     function xpBarHtml(total) {
       const p = xpProgress(total);
@@ -24923,7 +24955,7 @@ video {
     }
     // The next level reward still to come (Profile's XP section).
     function nextLevelReward(level) {
-      return LEVEL_REWARDS.find(r => r.level > level && !cosmeticPurchaseState[r.id]) || null;
+      return [...LEVEL_REWARDS].sort((a, b) => a.level - b.level).find(r => r.level > level && !cosmeticPurchaseState[r.id]) || null;
     }
     function publishXpLevel() {
       if (!currentUser || !playerXp?.level || typeof db === 'undefined') return;
@@ -25029,7 +25061,7 @@ video {
       }
     }
     // Profile: the next level reward (a button to its tile in Custom).
-    const LEVEL_REWARD_KIND = { 'Card Backs': 'card back', 'Frames': 'frame', 'Table Themes': 'table' };
+    const LEVEL_REWARD_KIND = { 'Avatars': 'avatar', 'Card Backs': 'card back', 'Frames': 'frame', 'Table Themes': 'table' };
     function levelRewardRowHtml(level) {
       const r = nextLevelReward(level);
       if (!r) return '';
@@ -27617,7 +27649,7 @@ video {
         const unlockedFrame = item.unlocked && /^unlock_frame-/.test(String(item.id || ''));
         // Level rewards (v248) can be a card back, a frame or a table.
         const levelItem = item.unlocked ? LEVEL_REWARDS.find(r => `unlock_${r.id}` === item.id) : null;
-        const unlockKind = levelItem ? ({ 'Card Backs': 'Card back', 'Frames': 'Frame', 'Table Themes': 'Table' }[levelItem.category] || 'Item') : unlockedFrame ? 'Frame' : 'Avatar';
+        const unlockKind = levelItem ? ({ 'Avatars': 'Avatar', 'Card Backs': 'Card back', 'Frames': 'Frame', 'Table Themes': 'Table' }[levelItem.category] || 'Item') : unlockedFrame ? 'Frame' : 'Avatar';
         const heading = isRank ? `Rank ${item.direction === 'up' ? 'up' : 'down'}` : item.unlocked ? `${unlockKind} unlocked` : 'Shop purchase';
         const detail = isRank
           ? `${escapeHtml(item.fromTier)} → ${escapeHtml(item.toTier)}`
