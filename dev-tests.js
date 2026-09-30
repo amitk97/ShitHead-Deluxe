@@ -4901,6 +4901,29 @@ async function runDevTestSuite() {
       area.innerHTML = before;
     } finally { currentUser = realUser; closeOtherMenuPages(); }
   });
+  await test('v250: level badge colours, look slots by level, own leaderboard row, Pending requests, tap-to-watch', async () => {
+    const cls = (L) => (xpLevelBadge(L).match(/xp-tier-(\w+)/) || [])[1] || '';
+    assertEqual([19, 20, 39, 40, 60, 80, 98, 99].map(cls), ['', 'bronze', 'bronze', 'silver', 'gold', 'purple', 'purple', 'max'], 'Tiers at 20/40/60/80/99');
+    const realOn = xpFeatureOn, realXp = playerXp, realUser = currentUser;
+    try {
+      xpFeatureOn = true; currentUser = { uid: 'u1' }; playerXp = { total: xpForLevel(12) };
+      assertEqual(LOADOUT_SLOTS.map(loadoutSlotLockLevel), [0, 0, 20], 'Lvl 12: slots 1-2 open, slot 3 needs Lvl 20');
+      playerXp = { total: xpForLevel(5) };
+      assertEqual(LOADOUT_SLOTS.map(loadoutSlotLockLevel), [0, 10, 20], 'Lvl 5: only slot 1');
+      renderLoadouts();
+      assertEqual(document.querySelectorAll('#customLoadouts [data-loadout-locked]').length, 2, 'Two locked tiles');
+      assertTrue(!saveLoadout('s2', 'x'), 'A locked slot cannot be saved to');
+      const row = leaderboardRowHtml({ username: 'Me', uid: 'u1', count: 500, level: 3 }, 1, 'levels');
+      assertTrue(/class="lb-who[^"]*" data-lb-uid="u1"/.test(row), 'Your own row opens your card');
+      assertTrue(!/>Level \d+</.test(row), 'No "Level N" subtitle on the Levels board');
+      const pending = renderPlayerPopupHuman({ uid: 'u9', name: 'Zed' }, { loaded: true, rating: 500 }, 'sent');
+      assertTrue(/PENDING/.test(pending) && !/ADD FRIEND/.test(pending), 'A sent request shows Pending');
+      assertTrue(/ACCEPT FRIEND/.test(renderPlayerPopupHuman({ uid: 'u9', name: 'Zed' }, { loaded: true, rating: 500 }, 'incoming')), 'Theirs can be accepted');
+      const now = serverNow();
+      const fr = friendRowHtml('u9', { username: 'Zed', online: true, seen: now, playing: { mode: 'online', room: '123456', at: now } }, 'friend');
+      assertTrue(/friend-status[^"]*friend-watch-btn[^"]*"/.test(fr.replace(/class="friend-status playing friend-watch-btn/, 'class="friend-status playing friend-watch-btn')) && /data-room="123456"[^>]*class="friend-status/.test(fr), 'The In a match status is a Watch button');
+    } finally { xpFeatureOn = realOn; playerXp = realXp; currentUser = realUser; renderLoadouts(); }
+  });
   await test('Friends list: highest level first, then online, then A-Z', () => {
     const area = document.getElementById('friendsListArea');
     const before = area.innerHTML;

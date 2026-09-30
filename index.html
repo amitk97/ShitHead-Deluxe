@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v249 (ShitHead-Deluxe-209) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v250 (ShitHead-Deluxe-210) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -491,6 +491,8 @@
     .coll-status b { color:#e2e8f0; }
     .loadout-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin-bottom:8px; }
     .loadout-slot { position:relative; display:flex; flex-direction:column; gap:3px; padding:5px; border-radius:12px; border:1px solid #334155; background:rgba(15,23,42,.7); text-align:center; cursor:pointer; min-width:0; }
+    .loadout-slot.loadout-locked { align-items:center; justify-content:center; color:#64748b; border-style:dashed; font-size:10px; font-weight:800; }
+    .loadout-slot.loadout-locked svg { width:14px; height:14px; }
     .loadout-slot.is-active { border-color:#f59e0b; box-shadow:0 0 0 1px #f59e0b, 0 0 12px rgba(245,158,11,.25); }
     .loadout-slot .mini-table { height:40px; border-radius:7px; }
     .loadout-slot .mini-table-name { display:none; }
@@ -605,6 +607,14 @@
     .inbox-activity--level .inbox-activity-accent { color:#7dd3fc; }
     /* § XP & levels (hidden until the owner's switch is on) */
     .xp-badge { display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; height:16px; padding:0 5px; border-radius:6px; border:1px solid rgba(56,189,248,.7); background:linear-gradient(180deg,#0c4a6e,#082f49); color:#bae6fd; font-size:9px; font-weight:900; letter-spacing:.04em; line-height:1; white-space:nowrap; flex-shrink:0; }
+    /* Level tiers (LEVEL_BADGE_TIERS): 20 bronze, 40 silver, 60 gold, 80 purple, 99 shimmering cyan. */
+    .xp-badge.xp-tier-bronze { border-color:#d08a4e; background:linear-gradient(180deg,#7c3f16,#4a230b); color:#fcd9b6; }
+    .xp-badge.xp-tier-silver { border-color:#cbd5e1; background:linear-gradient(180deg,#64748b,#334155); color:#f1f5f9; }
+    .xp-badge.xp-tier-gold { border-color:#fbbf24; background:linear-gradient(180deg,#a16207,#713f12); color:#fef3c7; }
+    .xp-badge.xp-tier-purple { border-color:#c084fc; background:linear-gradient(180deg,#6b21a8,#3b0764); color:#f3e8ff; }
+    .xp-badge.xp-tier-max { border-color:#96D6F4; color:#06283a; background:linear-gradient(110deg,#5fb8e0 0%,#96D6F4 35%,#e9f8ff 50%,#96D6F4 65%,#5fb8e0 100%); background-size:250% 100%; animation:xpTierShimmer 3.2s linear infinite; box-shadow:0 0 8px rgba(150,214,244,.55); }
+    @keyframes xpTierShimmer { from { background-position:100% 0; } to { background-position:-150% 0; } }
+    body.reduce-motion .xp-badge.xp-tier-max { animation:none; }
     .xp-badge-lg { height:34px; min-width:40px; padding:0 7px; border-radius:10px; font-size:12px; box-shadow:0 0 12px rgba(56,189,248,.25); }
     .xp-card { display:flex; align-items:center; gap:10px; padding:10px; border-radius:12px; border:1px solid #1e293b; background:rgba(15,23,42,.6); }
     .xp-card-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
@@ -2159,6 +2169,9 @@
     .pp-btn { flex:1; text-align:center; padding:8px 0; border-radius:10px; font-size:10px; font-weight:900; letter-spacing:.06em; border:1px solid #334155; color:#cbd5e1; background:transparent; }
     .pp-btn.primary { border-color:#10b981; color:#34d399; }
     .pp-btn.primary:hover { background:#10b981; color:#022c22; }
+    .friend-status-watch { background:none; border:0; padding:0; font:inherit; cursor:pointer; text-align:left; }
+    .friend-status-watch:hover u, .friend-status-watch:focus-visible u { color:#fde68a; }
+    .pp-btn.pp-pending, .pp-btn.pp-pending:hover { border-color:#f59e0b; color:#fbbf24; background:rgba(245,158,11,.08); cursor:default; }
     .pp-btn:disabled { cursor:default; }
     .pp-btn.report { flex:0 0 auto; padding:8px 10px; border-color:#9f1239; color:#fda4af; }
     .pp-report { margin-top:10px; padding:10px; border:1px solid #9f1239; border-radius:12px; background:rgba(76,5,25,.35); }
@@ -18529,6 +18542,14 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v250: [
+        ['🏆', 'Level badges change colour as you climb: bronze at 20, silver at 40, gold at 60, purple at 80 and a shimmering cyan at 99.', WN_KEY],
+        ['👥', 'A friend request you send now shows as Pending until they accept, and you can accept theirs from their player card.'],
+        ['👀', 'Tap a friend\'s "In a match" status to watch their game.'],
+        ['🔒', 'Saved looks: the second slot unlocks at Lvl 10 and the third at Lvl 20.'],
+        ['🏅', 'Tap your own row on the leaderboard to see your own player card.'],
+        ['📊', 'The XP pop-up in the header now opens in the middle, under the bar.']
+      ],
       v249: [
         ['📬', 'Tap any mail to go straight to what it is about: the item in Custom, the player, the leaderboard, your level or the challenge.', WN_KEY],
         ['👤', 'Profile pictures are now called Avatars everywhere.']
@@ -21225,7 +21246,9 @@ video {
         const friendHtml = friendState === 'friends'
           ? '<span class="pp-friends"><span aria-hidden="true">✔</span> FRIENDS</span>'
           : friendState === 'sent'
-            ? '<button type="button" class="pp-btn primary" disabled>REQUEST SENT</button>'
+            ? '<button type="button" class="pp-btn primary pp-pending" disabled title="Waiting for them to accept">PENDING</button>'
+            : friendState === 'incoming'
+            ? `<button type="button" class="pp-btn primary" data-pp-action="accept" data-uid="${escapeAttr(player.uid)}">ACCEPT FRIEND</button>`
             : `<button type="button" class="pp-btn primary" data-pp-action="friend" data-uid="${escapeAttr(player.uid)}">+ ADD FRIEND</button>`;
         const ignoreHtml = friendState === 'ignored'
           ? '<button type="button" class="pp-btn" disabled>IGNORED</button>'
@@ -21260,6 +21283,12 @@ video {
       if (!uid) return;
       showPlayerPopupFor({ id: `profile-${uid}`, uid, name: name || 'Player', cosmetics: { avatar } }, anchor, { overPages: true });
     }
+    // A friend request we sent that is still waiting (friendRequests/{them}/{me};
+    // the rules let the sender read just their own request).
+    function friendRequestSent(uid) {
+      if (!currentUser || !uid || typeof db === 'undefined') return Promise.resolve(false);
+      return db.ref(`friendRequests/${uid}/${currentUser.uid}`).once('value').then(snap => snap.exists()).catch(() => false);
+    }
     function showPlayerPopupFor(player, anchor, { overPages = false } = {}) {
       playerPopupAnchor = anchor;
       playerPopupPerson = player;
@@ -21278,10 +21307,14 @@ video {
       Promise.all([
         db.ref(`publicProfiles/${player.uid}`).once('value').then(snap => snap.val() || {}),
         me ? db.ref(`friends/${me}/${player.uid}`).once('value').then(snap => snap.val() === true).catch(() => false) : Promise.resolve(false),
-        me ? db.ref(`ignores/${me}/${player.uid}`).once('value').then(snap => snap.val() === true).catch(() => false) : Promise.resolve(false)
-      ]).then(([publicProfile, isFriend, isIgnored]) => {
+        me ? db.ref(`ignores/${me}/${player.uid}`).once('value').then(snap => snap.val() === true).catch(() => false) : Promise.resolve(false),
+        // v250 (owner): a request already sent shows as Pending until they
+        // accept; one they sent us can be accepted right here.
+        me && me !== player.uid ? friendRequestSent(player.uid) : Promise.resolve(false),
+        me && me !== player.uid ? db.ref(`friendRequests/${me}/${player.uid}`).once('value').then(snap => snap.exists()).catch(() => false) : Promise.resolve(false)
+      ]).then(([publicProfile, isFriend, isIgnored, sent, incoming]) => {
         if (token !== playerPopupToken) return;
-        const friendState = isFriend ? 'friends' : isIgnored ? 'ignored' : null;
+        const friendState = isFriend ? 'friends' : isIgnored ? 'ignored' : incoming ? 'incoming' : sent ? 'sent' : null;
         body.innerHTML = renderPlayerPopupHuman(player, { ...publicProfile, loaded: true }, friendState);
         positionPlayerPopup(anchor);
       }).catch(() => {});
@@ -21296,8 +21329,12 @@ video {
         btn.disabled = true;
         getOrCreateUserProfile(currentUser.uid).then(myProfile =>
           db.ref(`friendRequests/${uid}/${currentUser.uid}`).set({ name: myProfile.username || 'Player', sentAt: Date.now() })
-        ).then(() => { btn.textContent = 'REQUEST SENT'; })
+        ).then(() => { btn.textContent = 'PENDING'; btn.classList.add('pp-pending'); btn.title = 'Waiting for them to accept'; })
           .catch(() => { btn.disabled = false; notifyBanner('Could not send that friend request.'); });
+      } else if (btn.dataset.ppAction === 'accept') {
+        btn.disabled = true;
+        acceptFriendRequest(uid);
+        btn.outerHTML = '<span class="pp-friends"><span aria-hidden="true">✔</span> FRIENDS</span>';
       } else if (btn.dataset.ppAction === 'ignore') {
         ignorePerson(uid);
         btn.textContent = 'IGNORED';
@@ -24832,9 +24869,18 @@ video {
       const from = xpForLevel(level), to = xpForLevel(level + 1);
       return { level, total: t, into: t - from, need: to - from, pct: Math.max(0, Math.min(100, Math.round(((t - from) / (to - from)) * 100))), max: false };
     }
+    // Level badge colours (v250, owner; not a choice yet): the badge takes
+    // the colour of the highest tier reached, everywhere a level shows.
+    // Names stay white. Below Lvl 20 it keeps the XP blue.
+    const LEVEL_BADGE_TIERS = [[99, 'max', 'Cyan'], [80, 'purple', 'Purple'], [60, 'gold', 'Gold'], [40, 'silver', 'Silver'], [20, 'bronze', 'Bronze']];
+    function levelBadgeTier(level) {
+      const L = Number(level) || 0;
+      return LEVEL_BADGE_TIERS.find(([min]) => L >= min) || null;
+    }
     function xpLevelBadge(level, extra = '') {
       const L = Math.max(1, Math.round(Number(level) || 1));
-      return `<span class="xp-badge${extra ? ` ${extra}` : ''}" title="Level ${L}" aria-label="Level ${L}">Lvl ${L}</span>`;
+      const tier = levelBadgeTier(L);
+      return `<span class="xp-badge${tier ? ` xp-tier-${tier[1]}` : ''}${extra ? ` ${extra}` : ''}" title="Level ${L}" aria-label="Level ${L}">Lvl ${L}</span>`;
     }
     function xpBarHtml(total) {
       const p = xpProgress(total);
@@ -24926,9 +24972,9 @@ video {
       tip.innerHTML = xpTipHtml(playerXp.total);
       tip.classList.remove('hidden');
       bar.classList.add('is-open');
-      // Centred under the filled end of the bar, kept on screen.
       const r = bar.getBoundingClientRect();
-      const x = r.left + (r.width * xpProgress(playerXp.total).pct) / 100;
+      // Centred under the bar (owner, v250), at the same height as before.
+      const x = r.left + r.width / 2;
       const half = tip.offsetWidth / 2 + 8;
       tip.style.left = `${Math.max(half, Math.min(window.innerWidth - half, x))}px`;
       clearTimeout(headerXpTipTimer);
@@ -24965,6 +25011,7 @@ video {
     function refreshXpDisplays() {
       refreshHeaderXpBar();
       reapplySpeedLocks(); // 2x/4x follow your level (v247)
+      try { renderLoadouts(); } catch (e) { if (!(e instanceof ReferenceError)) throw e; } // look slots unlock with levels (v250)
       renderSeriesPanel();
       const on = xpShown() && !!currentUser && !!playerXp;
       const myLevel = on ? xpLevelFor(playerXp.total) : 0;
@@ -27147,7 +27194,10 @@ video {
       const presenceClass = isOnline ? 'online' : 'offline';
       const playing = isOnline ? friendPlaying(profile) : null;
       const onlineHtml = type === 'friend'
-        ? `<span class="friend-status ${playing ? 'playing' : presenceClass}">${playing ? `🎮 In a match · ${playing.label}` : isOnline ? 'Online' : 'Offline'}</span>` : '';
+        ? (playing && playing.room
+          // Tap the status to watch (owner, v250), same as WATCH.
+          ? `<button type="button" data-uid="${safeUid}" data-name="${escapeAttr(rawName)}" data-room="${escapeAttr(playing.room)}" class="friend-status playing friend-watch-btn friend-status-watch" aria-label="Watch ${escapeAttr(rawName)}'s match">🎮 In a match · ${playing.label} · <u>Watch</u></button>`
+          : `<span class="friend-status ${playing ? 'playing' : presenceClass}">${playing ? `🎮 In a match · ${playing.label}` : isOnline ? 'Online' : 'Offline'}</span>`) : '';
       // Friend requests use a synthetic profile ({username, from the
       // request itself) with no rating — publicProfiles was never fetched
       // for them, so this naturally stays blank there rather than showing
@@ -27344,7 +27394,14 @@ video {
         if (!snap.exists()) { resultEl.textContent = 'No player found with that username.'; return; }
         const uid = snap.val();
         if (uid === currentUser.uid) { resultEl.textContent = 'That\u2019s you.'; return; }
-        resultEl.innerHTML = `Found <b class="text-white">${escapeHtml(name)}</b>! <button id="sendRequestBtn" data-uid="${escapeAttr(uid)}" data-name="${escapeAttr(name)}" class="ml-1 text-[9px] font-black px-2 py-1 rounded-lg border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition">SEND REQUEST</button>`;
+        return Promise.all([
+          db.ref(`friends/${currentUser.uid}/${uid}`).once('value').then(f => f.val() === true).catch(() => false),
+          friendRequestSent(uid)
+        ]).then(([isFriend, sent]) => {
+          if (isFriend) { resultEl.innerHTML = `<b class="text-white">${escapeHtml(name)}</b> is already your friend.`; return; }
+          if (sent) { resultEl.innerHTML = `Request to <b class="text-white">${escapeHtml(name)}</b> is pending: waiting for them to accept.`; return; }
+          resultEl.innerHTML = `Found <b class="text-white">${escapeHtml(name)}</b>! <button id="sendRequestBtn" data-uid="${escapeAttr(uid)}" data-name="${escapeAttr(name)}" class="ml-1 text-[9px] font-black px-2 py-1 rounded-lg border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition">SEND REQUEST</button>`;
+        });
       }).catch((e) => { resultEl.textContent = 'Search failed \u2014 try again.'; console.warn('friend search failed', e); });
     });
     document.getElementById('friendSearchResult').addEventListener('click', (e) => {
@@ -27353,7 +27410,7 @@ video {
       const uid = btn.dataset.uid, name = btn.dataset.name;
       getOrCreateUserProfile(currentUser.uid).then((myProfile) => {
         db.ref(`friendRequests/${uid}/${currentUser.uid}`).set({ name: myProfile.username || 'Player', sentAt: Date.now() })
-          .then(() => { document.getElementById('friendSearchResult').textContent = 'Request sent.'; })
+          .then(() => { document.getElementById('friendSearchResult').textContent = 'Request sent. It shows as pending until they accept.'; })
           .catch((e) => { document.getElementById('friendSearchResult').textContent = 'Could not send that request.'; console.warn('sendFriendRequest failed', e); });
       });
     });
@@ -28256,6 +28313,15 @@ video {
     // through the normal ownership checks: anything no longer owned falls back
     // to the default. The deck theme is a separate free preference.
     const LOADOUT_SLOTS = ['s1', 's2', 's3'];
+    // Slots unlock with levels (owner, v250): slot 1 free, slot 2 at Lvl 10,
+    // slot 3 at Lvl 20. With XP switched off every slot is open. A look saved
+    // in a slot before it was locked stays saved, just unusable until then.
+    const LOADOUT_SLOT_LEVELS = [0, 10, 20];
+    function loadoutSlotLockLevel(slot) {
+      const need = LOADOUT_SLOT_LEVELS[LOADOUT_SLOTS.indexOf(slot)] || 0;
+      if (!need || typeof xpShown !== 'function' || !xpShown()) return 0;
+      return speedLevelNow() >= need ? 0 : need;
+    }
     const LOADOUT_TYPES = ['avatar', 'tableTheme', 'cardBack', 'frame', 'burnEffect', 'jokerEffect', 'victoryEffect', 'emotes'];
     let savedLoadouts = {};
     let savedLoadoutsUid = null;
@@ -28279,6 +28345,8 @@ video {
       if (!currentUser) { strip.innerHTML = '<div class="loadout-guest">Sign in to save up to 3 looks and switch in one tap</div>'; return; }
       strip.innerHTML = LOADOUT_SLOTS.map((slot, i) => {
         const l = savedLoadouts[slot];
+        const lockLvl = loadoutSlotLockLevel(slot);
+        if (lockLvl) return `<button type="button" class="loadout-slot loadout-locked" data-loadout-locked="${lockLvl}" aria-label="Slot ${i + 1} unlocks at Lvl ${lockLvl}">${icon('lock')}<span>Lvl ${lockLvl}</span></button>`;
         if (!l) return `<button type="button" class="loadout-slot loadout-empty" data-loadout-save="${slot}" aria-label="Save your current look in slot ${i + 1}"><b>+</b>Save current</button>`;
         const worn = loadoutIsWorn(l);
         const menu = loadoutMenuSlot === slot ? `<span class="loadout-menu">
@@ -28295,7 +28363,7 @@ video {
       }).join('');
     }
     function saveLoadout(slot, name) {
-      if (!currentUser) return false;
+      if (!currentUser || loadoutSlotLockLevel(slot)) return false;
       if (savedLoadoutsUid !== currentUser.uid) { savedLoadouts = {}; savedLoadoutsUid = currentUser.uid; }
       const l = { name: String(name || '').trim().slice(0, 16) || `Look ${LOADOUT_SLOTS.indexOf(slot) + 1}`, items: currentLookItems(), at: Date.now() };
       savedLoadouts = { ...savedLoadouts, [slot]: l };
@@ -28309,7 +28377,7 @@ video {
     }
     function wearLoadout(slot) {
       const l = savedLoadouts[slot];
-      if (!l) return false;
+      if (!l || loadoutSlotLockLevel(slot)) return false;
       const fellBack = [];
       LOADOUT_TYPES.forEach(t => {
         const id = l.items?.[t] || 'default';
@@ -28333,6 +28401,12 @@ video {
     }
     document.getElementById('customLoadouts').addEventListener('click', (event) => {
       const t = event.target;
+      const locked = t.closest('[data-loadout-locked]');
+      if (locked) {
+        event.stopPropagation();
+        showInfoPop(locked, `<p>This look slot unlocks at Lvl ${locked.dataset.loadoutLocked}. You're Lvl ${speedLevelNow()}: finish games to earn XP.</p>`, { toggle: true });
+        return;
+      }
       const empty = t.closest('[data-loadout-save]');
       if (empty) { const slot = empty.dataset.loadoutSave; saveLoadout(slot, prompt('Name this look', `Look ${LOADOUT_SLOTS.indexOf(slot) + 1}`) ?? `Look ${LOADOUT_SLOTS.indexOf(slot) + 1}`); return; }
       const more = t.closest('[data-loadout-menu]');
@@ -28596,8 +28670,8 @@ video {
       const key = who.dataset.lbKey || String(name || '').toLowerCase();
       const find = uidNow ? Promise.resolve(uidNow) : db.ref(`usernames/${key}`).once('value').then(s => s.val());
       find.then((uid) => {
-        if (!uid || uid === currentUser.uid) return;
-        openProfileCard({ uid, name, avatar }, who);
+        if (!uid) return;
+        openProfileCard(uid === currentUser.uid ? { uid, name, avatar: resolveAvatarId(equippedCosmetics.avatar) } : { uid, name, avatar }, who);
       }).catch(() => notifyBanner('Could not open that profile.'));
     }
     document.getElementById('leaderboardArea').addEventListener('click', (e) => {
@@ -28637,20 +28711,22 @@ video {
           // Total XP (All-time) or XP since Monday (This week).
           const week = lbLevelsPeriod === 'week';
           const xpText = `${n.toLocaleString('en-GB')} XP`;
-          sub = week ? 'XP this week' : `Level ${Math.max(1, Number(p.level) || xpLevelFor(n))}`;
+          sub = week ? 'XP this week' : ''; // the level is already the badge by the name (owner, v250)
           pill = `<span class="lb-count-pill lb-xp-pill">${week ? '+' : ''}${xpText}</span>`;
         } else {
           sub = tab === 'challenges' ? `${n} challenge${n === 1 ? '' : 's'} completed` : `${n} Gauntlet bot${n === 1 ? '' : 's'} beaten`;
           pill = `<span class="lb-count-pill">${tab === 'challenges' ? '🏅' : '⚔️'} ${n}</span>`;
         }
       }
-      const who = isMe ? '' : ` role="button" tabindex="0" class="lb-who flex items-center gap-2 min-w-0" data-lb-uid="${escapeAttr(String(p.uid || ''))}" data-lb-key="${escapeAttr(String(p.usernameKey || ''))}" data-lb-name="${escapeAttr(String(p.username || ''))}" data-lb-avatar="${escapeAttr(String(p.avatar || ''))}" aria-label="Open ${escapeAttr(String(p.username || 'player'))}'s profile"`;
+      // Your own row opens your own card too (owner, v250).
+      const whoUid = isMe && currentUser ? currentUser.uid : p.uid;
+      const who = ` role="button" tabindex="0" class="lb-who flex items-center gap-2 min-w-0" data-lb-uid="${escapeAttr(String(whoUid || ''))}" data-lb-key="${escapeAttr(String(p.usernameKey || ''))}" data-lb-name="${escapeAttr(String(p.username || ''))}" data-lb-avatar="${escapeAttr(String(p.avatar || ''))}" aria-label="Open ${escapeAttr(String(p.username || 'player'))}'s profile"`;
       const peekData = `data-lb-uid="${escapeAttr(String(isMe && currentUser ? currentUser.uid : p.uid || ''))}" data-lb-key="${escapeAttr(String(p.usernameKey || ''))}" data-lb-name="${escapeAttr(String(p.username || ''))}"`;
       return `<div class="flex items-center justify-between gap-2 border rounded-xl px-2.5 py-2 ${isMe ? 'bg-amber-950/40 border-amber-600' : 'bg-slate-900/60 border-slate-800'}" data-lb-row="${escapeHtml(String(p.username || ''))}" ${peekData}>
-        <div${who || ' class="flex items-center gap-2 min-w-0"'}>
+        <div${who}>
           <span class="text-[10px] font-black text-slate-500" style="width:22px;text-align:center;${rank <= 3 ? 'font-size:17px;line-height:1;' : ''}">${medal}</span>
           ${avatarHtml(isMe && tab !== 'ranked' ? resolveAvatarId(equippedCosmetics.avatar) : p.avatar, 30)}
-          <div class="min-w-0"><div class="text-xs font-bold text-white truncate">${escapeHtml(String(p.username || 'Player'))}${lbLevel ? ` ${xpLevelBadge(lbLevel, 'xp-badge-sm')}` : ''}${isMe ? ' <span class=\"text-amber-300 text-[8px]\">YOU</span>' : ''}</div><div class="text-[8px] text-slate-500">${sub}</div></div>
+          <div class="min-w-0"><div class="text-xs font-bold text-white truncate">${escapeHtml(String(p.username || 'Player'))}${lbLevel ? ` ${xpLevelBadge(lbLevel, 'xp-badge-sm')}` : ''}${isMe ? ' <span class=\"text-amber-300 text-[8px]\">YOU</span>' : ''}</div>${sub ? `<div class="text-[8px] text-slate-500">${sub}</div>` : ''}</div>
         </div>
         <button type="button" class="lb-peek" aria-label="Quick stats for ${escapeAttr(String(p.username || 'this player'))}">${pill}</button>
       </div>`;
@@ -28661,7 +28737,7 @@ video {
     function leaderboardPeekHtml(name, prof) {
       const st = prof?.stats || {};
       const rows = [];
-      if (xpShown() && Number(prof?.level) > 0) rows.push(['Level', `Lvl ${Number(prof.level)}`]);
+      if (xpShown() && Number(prof?.level) > 0) rows.push(['Level', xpLevelBadge(Number(prof.level), 'xp-badge-sm')]);
       if (prof?.rating != null) { const t = getRankTier(prof.rating); rows.push(['Ranked', `${tierBadge(t.name)} ${t.name} · ${Math.round(prof.rating)}`]); }
       const games = Number(st.games) || 0, wins = Number(st.wins) || 0;
       if (games) rows.push(['Ranked games', `${games} · ${wins} won (${Math.round(wins * 100 / games)}%)`]);

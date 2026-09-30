@@ -489,6 +489,7 @@
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
         "$fromUid": {
+          ".read": "auth != null && auth.uid === $fromUid",
           ".write": "auth != null && ((!newData.exists() && (auth.uid === $fromUid ||
             auth.uid === $uid)) || (!data.exists() && auth.uid === $fromUid && auth.uid !== $uid))",
           ".validate": "newData.hasChildren(['name', 'sentAt']) &&
