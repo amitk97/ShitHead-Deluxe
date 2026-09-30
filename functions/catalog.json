@@ -830,6 +830,16 @@
    "requirement": "Beat the Gauntlet",
    "type": "gauntlet"
   },
+  "avatar-gauntlet-hard": {
+   "name": "Gauntlet Conqueror",
+   "requirement": "Beat the Hard Gauntlet",
+   "type": "gauntlet"
+  },
+  "avatar-gauntlet-boss": {
+   "name": "Gauntlet Overlord",
+   "requirement": "Beat the Boss Gauntlet",
+   "type": "gauntlet"
+  },
   "avatar-recruiter": {
    "name": "Recruiter",
    "requirement": "Recruit 5 players",
@@ -1620,7 +1630,74 @@
   "picture": "avatar-gauntlet",
   "pictureName": "Gauntlet Champion",
   "frame": "frame-gauntlet",
-  "frameName": "Gauntlet Gold"
+  "frameName": "Gauntlet Gold",
+  "modeOrder": [
+   "easy",
+   "hard",
+   "boss"
+  ],
+  "modes": {
+   "easy": {
+    "name": "Easy",
+    "rounds": [
+     "easy",
+     "easy",
+     "medium",
+     "hard",
+     "boss"
+    ],
+    "lives": 3,
+    "firstReward": 200,
+    "dailyReward": 50,
+    "level": 0,
+    "needs": {},
+    "picture": "avatar-gauntlet",
+    "pictureName": "Gauntlet Champion",
+    "frame": "frame-gauntlet",
+    "frameName": "Gauntlet Gold"
+   },
+   "hard": {
+    "name": "Hard",
+    "rounds": [
+     "medium",
+     "hard",
+     "hard",
+     "hard",
+     "boss"
+    ],
+    "lives": 2,
+    "firstReward": 400,
+    "dailyReward": 100,
+    "level": 30,
+    "needs": {
+     "easy": 1
+    },
+    "picture": "avatar-gauntlet-hard",
+    "pictureName": "Gauntlet Conqueror",
+    "frame": "frame-gauntlet-hard",
+    "frameName": "Crimson Gauntlet"
+   },
+   "boss": {
+    "name": "Boss",
+    "rounds": [
+     "boss",
+     "boss",
+     "boss"
+    ],
+    "lives": 1,
+    "firstReward": 600,
+    "dailyReward": 150,
+    "level": 50,
+    "needs": {
+     "easy": 1,
+     "hard": 3
+    },
+    "picture": "avatar-gauntlet-boss",
+    "pictureName": "Gauntlet Overlord",
+    "frame": "frame-gauntlet-boss",
+    "frameName": "Amethyst Gauntlet"
+   }
+  }
  },
  "referral": {
   "gamesNeeded": 3,

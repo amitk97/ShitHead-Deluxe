@@ -753,24 +753,68 @@ actions.deleteAccount = async ({ uid, data }) => {
 };
 
 const GAUNTLET_MIN_GAME_MS = 30000; // a real game against a bot takes longer than this
-actions.gauntlet = async ({ uid, data }) => {
+// Modes (v254): easy | hard | boss (CAT.gauntlet.modes; an older catalog has
+// only the top-level Easy fields). Easy's record stays at the top of
+// users/{uid}/gauntlet (completions, firstDoneAt, doneDay, failed); Hard and
+// Boss keep theirs under gauntlet/modes/{mode}. g.run.mode names the run's
+// mode (none = easy) and g.dayMode = {day, mode} the one mode played today.
+const gauntletModes = () => {
   const G = CAT.gauntlet;
+  return G.modes || { easy: { name: 'Easy', rounds: G.rounds, lives: G.lives, firstReward: G.firstReward, dailyReward: G.dailyReward,
+    level: 0, needs: {}, picture: G.picture, pictureName: G.pictureName, frame: G.frame, frameName: G.frameName } };
+};
+const gauntletStats = (g, mode, create) => {
+  if (mode === 'easy') return g;
+  if (create) { g.modes = g.modes || {}; g.modes[mode] = g.modes[mode] || {}; }
+  return (g.modes && g.modes[mode]) || {};
+};
+// Why a mode can't be started (null = it can): level and earlier modes beaten.
+function gauntletLockReason(user, mode) {
+  const M = gauntletModes()[mode];
+  if (!M) return 'Unknown Gauntlet.';
+  const g = user.gauntlet || {};
+  const level = num(user.xp && user.xp.level, 1);
+  if (level < num(M.level)) return `Reach Lvl ${num(M.level)} to unlock the ${M.name} Gauntlet.`;
+  for (const [need, times] of Object.entries(M.needs || {})) {
+    const have = num(gauntletStats(g, need).completions);
+    if (have < num(times)) {
+      const N = gauntletModes()[need] || { name: need };
+      return num(times) === 1 ? `Beat the ${N.name} Gauntlet first.` : `Beat the ${N.name} Gauntlet ${num(times)} times first (${have} so far).`;
+    }
+  }
+  return null;
+}
+actions.gauntlet = async ({ uid, data }) => {
+  const MODES = gauntletModes();
   const op = data.op; // start (a new run, its first game begins) | begin (the next game) | result | status
   if (!['start', 'begin', 'result', 'status'].includes(op)) fail('invalid-argument', 'Unknown Gauntlet step.');
   const now = Date.now();
   const today = ukDateKey(new Date(now));
   // A run belongs to the UK day it started on: the next day the Gauntlet
-  // starts again from the first Easy bot (full lives), never from where an
+  // starts again from the first bot (full lives), never from where an
   // old run stopped.
   const runDay = (run) => ukDateKey(new Date(num(run.startedAt) || num(run.lastAt) || 0));
   const liveRun = (g) => (g.run && runDay(g.run) === today ? g.run : null);
-  const status = (g) => ({
-    run: liveRun(g) ? { id: g.run.id, round: num(g.run.round), lives: num(g.run.lives), playing: !!g.run.playing, day: today } : null,
-    doneToday: g.doneDay === today, completions: num(g.completions), firstDone: !!g.firstDoneAt
-  });
+  const runMode = (run) => (run && MODES[run.mode] ? run.mode : 'easy');
+  const todayMode = (g) => (g.dayMode && g.dayMode.day === today && MODES[g.dayMode.mode] ? g.dayMode.mode : (liveRun(g) ? runMode(g.run) : (g.doneDay === today ? 'easy' : null)));
+  const status = (user) => {
+    const g = user.gauntlet || {};
+    const run = liveRun(g);
+    const modes = {};
+    Object.keys(MODES).forEach((m) => {
+      const st = gauntletStats(g, m);
+      modes[m] = { completions: num(st.completions), firstDone: !!st.firstDoneAt, doneToday: st.doneDay === today, locked: gauntletLockReason(user, m) };
+    });
+    return {
+      run: run ? { id: run.id, mode: runMode(run), round: num(run.round), lives: num(run.lives), playing: !!run.playing, day: today } : null,
+      todayMode: todayMode(g), modes,
+      // Easy's, for builds before v254:
+      doneToday: g.doneDay === today, completions: num(g.completions), firstDone: !!g.firstDoneAt
+    };
+  };
   if (op === 'status') {
-    const g = (await db().ref(`users/${uid}/gauntlet`).once('value')).val() || {};
-    return status(g);
+    const [g, level] = await Promise.all([db().ref(`users/${uid}/gauntlet`).once('value'), db().ref(`users/${uid}/xp/level`).once('value')]);
+    return status({ gauntlet: g.val() || {}, xp: { level: level.val() } });
   }
   const xpOn = await xp.enabled();
   let xpRes = null;
@@ -778,17 +822,29 @@ actions.gauntlet = async ({ uid, data }) => {
     xpRes = null;
     const g = user.gauntlet = user.gauntlet || {};
     if (op === 'start') {
-      if (g.doneDay === today) return { error: "You've already beaten the Gauntlet today. Come back tomorrow!" };
-      g.run = { id: `g${now.toString(36)}${nodeCrypto.randomInt(1e9).toString(36)}`, round: 0, lives: G.lives, startedAt: now, lastAt: now, playing: true };
+      const mode = data.mode == null ? 'easy' : String(data.mode);
+      const M = MODES[mode];
+      if (!M) return { error: 'Unknown Gauntlet.' };
+      const live = liveRun(g);
+      if (live && runMode(live) !== mode) return { error: `Finish your ${MODES[runMode(live)].name} Gauntlet first: win it or run out of lives.` };
+      const dayMode = todayMode(g);
+      if (dayMode && dayMode !== mode) return { error: `Today's Gauntlet is ${MODES[dayMode].name}. You can play a different one from midnight (UK time).` };
+      if (gauntletStats(g, mode).doneDay === today) return { error: `You've already beaten the ${mode === 'easy' ? '' : `${M.name} `}Gauntlet today. Come back tomorrow!` };
+      const locked = gauntletLockReason(user, mode);
+      if (locked) return { error: locked };
+      g.run = { id: `g${now.toString(36)}${nodeCrypto.randomInt(1e9).toString(36)}`, mode, round: 0, lives: num(M.lives), startedAt: now, lastAt: now, playing: true };
+      g.dayMode = { day: today, mode };
       return { user };
     }
     const run = liveRun(g);
     if (!run || run.id !== clip(data.runId, 40)) return { error: g.run && !run ? "That Gauntlet run has ended: it's a new day, so the Gauntlet starts again from the first bot." : 'That Gauntlet run has ended.' };
+    const mode = runMode(run), M = MODES[mode];
+    const stats = gauntletStats(g, mode, true);
     const loseLife = () => {
       run.lives = num(run.lives) - 1;
       run.playing = false;
       if (run.lives > 0) return false;
-      g.run = null; g.failed = num(g.failed) + 1;
+      g.run = null; stats.failed = num(stats.failed) + 1;
       return true;
     };
     if (op === 'begin') {
@@ -804,38 +860,40 @@ actions.gauntlet = async ({ uid, data }) => {
     run.lastAt = now;
     if (!won) return loseLife() ? { user, over: true } : { user };
     const past = xpOn ? xp.backfill(user, now, addDiamonds) : null;
-    const botXp = xp.gauntletBotXp(num(run.round)); // scales with the bot's difficulty
+    const botXp = xp.gauntletBotXp(num(run.round), mode); // scales with the bot's difficulty
     run.playing = false;
     run.round = num(run.round) + 1;
-    g.botsBeaten = num(g.botsBeaten) + 1; // Gauntlet board
+    g.botsBeaten = num(g.botsBeaten) + 1; // Gauntlet board (every mode)
     if (xpOn) xpRes = xpResult(user, [['gauntletBot', botXp]], now, past);
-    if (run.round < G.rounds.length) return { user };
+    if (run.round < M.rounds.length) return { user };
     // Beaten: once a day.
     g.run = null;
-    g.doneDay = today;
-    g.completions = num(g.completions) + 1;
-    const first = !g.firstDoneAt;
-    const amount = first ? num(G.firstReward) : num(G.dailyReward);
+    stats.doneDay = today;
+    stats.completions = num(stats.completions) + 1;
+    const first = !stats.firstDoneAt;
+    const amount = first ? num(M.firstReward) : num(M.dailyReward);
     const newItems = [];
     user.activityInbox = user.activityInbox || {};
     if (first) {
-      g.firstDoneAt = now;
+      stats.firstDoneAt = now;
       user.ownedCosmetics = user.ownedCosmetics || {};
-      [[G.picture, G.pictureName], [G.frame, G.frameName]].forEach(([id, name]) => {
-        if (!user.ownedCosmetics[id]) {
+      [[M.picture, M.pictureName], [M.frame, M.frameName]].forEach(([id, name]) => {
+        if (id && !user.ownedCosmetics[id]) {
           user.ownedCosmetics[id] = { cost: 0, purchasedAt: now };
-          user.activityInbox[`unlock_${id}`] = { type: 'shop', unlocked: true, name, cost: 0, requirement: 'Beat the Gauntlet', sentAt: now };
+          user.activityInbox[`unlock_${id}`] = { type: 'shop', unlocked: true, name, cost: 0, requirement: mode === 'easy' ? 'Beat the Gauntlet' : `Beat the ${M.name} Gauntlet`, sentAt: now };
           newItems.push({ id, name });
         }
       });
     }
-    // Completed challenges: 'gauntlet-first' (Bots tab) or the day's
-    // 'gauntlet_<date>' (Daily tab); pays and mails like any challenge.
-    recordClaim(user, first ? 'gauntlet-first' : `gauntlet_${today}`, first ? 'Gauntlet Champion' : 'Daily Gauntlet', amount, now);
+    // Completed challenges: 'gauntlet-first' / 'gauntlet-<mode>-first' or
+    // the day's 'gauntlet_<date>' (one mode a day); pays and mails like any challenge.
+    const firstKey = mode === 'easy' ? 'gauntlet-first' : `gauntlet-${mode}-first`;
+    const firstName = mode === 'easy' ? 'Gauntlet Champion' : `${M.name} Gauntlet Champion`;
+    recordClaim(user, first ? firstKey : `gauntlet_${today}`, first ? firstName : (mode === 'easy' ? 'Daily Gauntlet' : `Daily ${M.name} Gauntlet`), amount, now);
     return { user, completed: true, amount, first, newItems };
   });
   return {
-    ...status(res.user.gauntlet || {}), over: !!res.over, completed: !!res.completed, forfeited: !!res.forfeited,
+    ...status(res.user), over: !!res.over, completed: !!res.completed, forfeited: !!res.forfeited,
     diamondsAwarded: num(res.amount), first: !!res.first, newItems: res.newItems || [], diamonds: num(res.user.diamonds), xp: xpRes
   };
 };

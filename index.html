@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v253 (ShitHead-Deluxe-213) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v254 (ShitHead-Deluxe-214) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -617,6 +617,17 @@
     .xp-badge.xp-tier-max { border-color:#96D6F4; color:#06283a; background:linear-gradient(110deg,#5fb8e0 0%,#96D6F4 35%,#e9f8ff 50%,#96D6F4 65%,#5fb8e0 100%); background-size:250% 100%; animation:xpTierShimmer 3.2s linear infinite; box-shadow:0 0 8px rgba(150,214,244,.55); }
     @keyframes xpTierShimmer { from { background-position:100% 0; } to { background-position:-150% 0; } }
     body.reduce-motion .xp-badge.xp-tier-max { animation:none; }
+    /* Gauntlet avatars (v254): blade shine, gem glints, heart glow, sparks. */
+    .av-gx-shine { animation:avGxShine 5s ease-in-out infinite; opacity:0; }
+    @keyframes avGxShine { 0%, 8% { transform:translate(0,0); opacity:0; } 12% { opacity:1; } 30% { transform:translate(var(--dx),var(--dy)); opacity:1; } 34%, 100% { transform:translate(var(--dx),var(--dy)); opacity:0; } }
+    .av-gx-glint { transform-box:fill-box; transform-origin:center; animation:avGxGlint 5s ease-out infinite; transform:scale(0); }
+    @keyframes avGxGlint { 0%, 100% { transform:scale(0) rotate(0deg); opacity:0; } 4% { transform:scale(1) rotate(30deg); opacity:1; } 12% { transform:scale(0) rotate(80deg); opacity:0; } }
+    .av-gx-heart { mix-blend-mode:screen; transform-box:fill-box; transform-origin:center; animation:avGxHeart 2.5s ease-in-out infinite; opacity:.25; }
+    @keyframes avGxHeart { 50% { opacity:.7; transform:scale(1.08); } }
+    .av-gx-spark { animation:avGxSpark 4.8s linear infinite; opacity:0; }
+    @keyframes avGxSpark { 0% { transform:translateY(0); opacity:0; } 15% { opacity:.9; } 70% { opacity:.6; } 100% { transform:translateY(-420px); opacity:0; } }
+    body.reduce-motion :is(.av-gx-shine, .av-gx-glint, .av-gx-spark) { animation:none; opacity:0; }
+    body.reduce-motion .av-gx-heart { animation:none; opacity:.35; }
     .av-lvl-glow { animation:avLvlGlow 2.4s ease-in-out infinite; }
     @keyframes avLvlGlow { 50% { opacity:.85; } }
     body.reduce-motion .av-lvl-glow, .av-still .av-lvl-glow { animation:none; }
@@ -1430,6 +1441,34 @@
       box-shadow:inset 0 0 0 1px #d1fae5,inset 0 0 0 2px #34d399,0 0 9px rgba(16,185,129,.68),0 3px 8px rgba(0,0,0,.55) !important;
     }
 
+    /* Guide tables (v254): label column + one column per option. */
+    .guide-table { display:grid; gap:1px; background:#1e293b; border:1px solid #334155; border-radius:10px; overflow:hidden; font-size:11px; }
+    .guide-table .gt-row { display:grid; grid-template-columns:62px repeat(3, minmax(0, 1fr)); gap:1px; }
+    .guide-table .gt-row > * { background:#0b1220; padding:5px 6px; line-height:1.35; }
+    .guide-table .gt-head > * { font-weight:900; text-transform:uppercase; letter-spacing:.04em; color:#fbbf24; font-size:10px; }
+    .guide-table .gt-row > b { color:#cbd5e1; font-size:10px; }
+    /* Gauntlet mode cards (v254) in the Gauntlet pop-up. */
+    .gauntlet-modes { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin:4px 0 8px; }
+    .gauntlet-mode { display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 4px; border-radius:12px; border:1.5px solid #334155; background:#0f172a; color:#e2e8f0; transition:transform .15s var(--ease-snappy, ease); }
+    .gauntlet-mode b { display:inline-flex; align-items:center; gap:4px; font-size:13px; font-weight:900; letter-spacing:.02em; }
+    .gauntlet-mode b svg { width:12px; height:12px; }
+    .gauntlet-mode small { font-size:9px; color:#94a3b8; font-weight:700; }
+    .gauntlet-mode.is-easy b { color:#6ee7b7; } .gauntlet-mode.is-hard b { color:#fda4af; } .gauntlet-mode.is-boss b { color:#d8b4fe; }
+    .gauntlet-mode[aria-selected="true"].is-easy { border-color:#10b981; background:#052e22; box-shadow:0 0 12px rgba(16,185,129,.35); }
+    .gauntlet-mode[aria-selected="true"].is-hard { border-color:#e11d48; background:#2a0a12; box-shadow:0 0 12px rgba(225,29,72,.35); }
+    .gauntlet-mode[aria-selected="true"].is-boss { border-color:#a855f7; background:#1e0b33; box-shadow:0 0 12px rgba(168,85,247,.35); }
+    .gauntlet-mode.is-shut:not([aria-selected="true"]) { opacity:.6; }
+    .gauntlet-mode-intro { margin-top:0 !important; }
+    .gauntlet-shut { color:#e2e8f0; }
+    /* Crimson Gauntlet / Amethyst Gauntlet (earn-only, v254). */
+    body[data-equipped-frame="frame-gauntlet-hard"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) {
+      border-color:#e11d48 !important;
+      box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #9f1239,0 0 10px rgba(225,29,72,.7),0 3px 8px rgba(0,0,0,.55) !important;
+    }
+    body[data-equipped-frame="frame-gauntlet-boss"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) {
+      border-color:#a855f7 !important;
+      box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #6b21a8,0 0 10px rgba(168,85,247,.75),0 3px 8px rgba(0,0,0,.55) !important;
+    }
     /* Gauntlet Gold (earn-only): a hammered gold edge with a bronze inner rim. */
     body[data-equipped-frame="frame-gauntlet"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) {
       border-color:#f59e0b !important;
@@ -5317,7 +5356,7 @@ video {
               <!-- Gauntlet: under the bot count, level with the unlock bar. -->
               <div class="gauntlet-row">
                 <button type="button" id="gauntletBtn" class="gauntlet-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg><span>GAUNTLET</span></button>
-                <span class="gauntlet-info" id="gauntletInfo" tabindex="0" role="button" aria-label="What is the Gauntlet?" aria-describedby="gauntletTip">i<span class="gauntlet-tip" id="gauntletTip" role="tooltip"><b>The Gauntlet</b>Take on 5 bots in a row: Easy, Easy, Medium, Hard, then the Boss. You have 3 lives. Can you reach the end before they run out?</span></span>
+                <span class="gauntlet-info" id="gauntletInfo" tabindex="0" role="button" aria-label="What is the Gauntlet?" aria-describedby="gauntletTip">i<span class="gauntlet-tip" id="gauntletTip" role="tooltip"><b>The Gauntlet</b>Take on bots in a row with a few lives. Easy for everyone; Hard unlocks at Lvl 30 and Boss at Lvl 50. One Gauntlet a day.</span></span>
               </div>
               <div id="difficultyProgressWrap" class="hidden mt-1.5 px-1">
                 <div class="flex items-center justify-between text-[8px] font-bold text-slate-400 mb-0.5">
@@ -6917,20 +6956,29 @@ video {
         </div>
 
         <!-- Section 3b: The Gauntlet -->
-        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60">
+        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="gauntlet">
           <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
             <span>The Gauntlet</span>
             <span class="chevron transform transition-transform duration-200">&#9660;</span>
           </button>
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
-            <p>The <strong>Gauntlet</strong> is a Vs Bots challenge: <strong>five one-on-one games in a row</strong>, each against a tougher bot. Start it from the <strong class="text-amber-300">GAUNTLET</strong> button on the home screen, under the bot count.</p>
-            <p><strong class="text-amber-300">The rounds:</strong> 1 Easy, 2 Easy, 3 Medium, 4 Hard, 5 Boss. The hearts and round number sit in the top-left corner of the table.</p>
-            <p><strong class="text-amber-300">Lives:</strong> you have 3. Win a game and you move on to the next round. Lose one and you lose a life and face the <em>same</em> bot again. Lose all 3 and the run is over.</p>
+            <p>The <strong>Gauntlet</strong> is a Vs Bots challenge: <strong>one-on-one games in a row</strong>, each against a tough bot. Start it from the <strong class="text-amber-300">GAUNTLET</strong> button on the home screen, under the bot count, and pick a mode.</p>
+            <div class="guide-table" role="table" aria-label="Gauntlet modes">
+              <div class="gt-row gt-head" role="row"><span role="columnheader"></span><span role="columnheader">Easy</span><span role="columnheader">Hard</span><span role="columnheader">Boss</span></div>
+              <div class="gt-row" role="row"><b role="rowheader">Bots</b><span>Easy, Easy, Medium, Hard, Boss</span><span>Medium, Hard, Hard, Hard, Boss</span><span>Boss, Boss, Boss</span></div>
+              <div class="gt-row" role="row"><b role="rowheader">Lives</b><span>3</span><span>2</span><span>1</span></div>
+              <div class="gt-row" role="row"><b role="rowheader">Unlock</b><span>Everyone</span><span>Lvl 30 and Easy beaten once</span><span>Lvl 50, Easy beaten once and Hard beaten 3 times</span></div>
+              <div class="gt-row" role="row"><b role="rowheader">First clear</b><span>💎 200, <em>Gauntlet Champion</em> avatar, <em>Gauntlet Gold</em> frame</span><span>💎 400, <em>Gauntlet Conqueror</em> avatar, <em>Crimson Gauntlet</em> frame</span><span>💎 600, <em>Gauntlet Overlord</em> avatar, <em>Amethyst Gauntlet</em> frame</span></div>
+              <div class="gt-row" role="row"><b role="rowheader">Daily win</b><span>💎 50</span><span>💎 100</span><span>💎 150</span></div>
+            </div>
+            <p><strong class="text-amber-300">Lives:</strong> win a game and you move on to the next round. Lose one and you lose a life and face the <em>same</em> bot again. Run out of lives and the run is over. The hearts and round number sit in the top-left corner of the table.</p>
+            <p><strong class="text-amber-300">One Gauntlet a day:</strong> the first mode you start on a day is your Gauntlet for that day (UK time). The other modes open again at midnight. You can retry that mode after running out of lives, until you beat it.</p>
+            <p><strong class="text-amber-300">Finish what you start:</strong> while a run is in progress you can't start a different mode. A run ends when you beat every bot or run out of lives. At midnight any run in progress ends and the next day starts fresh.</p>
             <p><strong class="text-amber-300">Leaving:</strong> a game you start and don't finish counts as a loss, so leaving a game you're losing still costs a life. Closing the app is fine: the Gauntlet remembers exactly where you were, mid-game or between games.</p>
-            <p><strong class="text-amber-300">Rewards:</strong> beat all five for the first time and you get <strong>💎 200</strong>, the <strong>Gauntlet Champion</strong> avatar and the <strong>Gauntlet Gold</strong> card frame, which only Gauntlet champions can have. After that, every day you beat it pays <strong>💎 50</strong>. It can be beaten once a day (it opens again at midnight, UK time).</p>
-            <p><strong class="text-amber-300">Offline:</strong> you can play it with no signal or signed out, just without Diamonds or rewards.</p>
-            <p><strong class="text-amber-300">Good to know:</strong> Gauntlet wins don't count toward unlocking bot difficulties or normal Vs Bots Diamonds. Every bot you beat does count on the <strong>Gauntlet leaderboard</strong>, even in runs you don't finish.</p>
-            <p><strong class="text-amber-300">Challenges:</strong> <em>Gauntlet Champion</em> (first clear) is in the Bots tab; the daily Gauntlet win is in the Daily tab.</p>
+            <p><strong class="text-amber-300">Rewards:</strong> each mode's first clear gives its Diamonds, avatar and card frame, which only its champions can have. After that, every day you beat it pays its daily Diamonds. Every bot you beat also gives XP: 40 Easy, 80 Medium, 120 Hard, 200 Boss.</p>
+            <p><strong class="text-amber-300">Offline:</strong> you can play the Easy Gauntlet with no signal or signed out, just without Diamonds or rewards. Hard and Boss need you to be signed in.</p>
+            <p><strong class="text-amber-300">Good to know:</strong> Gauntlet wins don't count toward unlocking bot difficulties or normal Vs Bots Diamonds. Every bot you beat, in any mode, counts on the <strong>Gauntlet leaderboard</strong>, even in runs you don't finish.</p>
+            <p><strong class="text-amber-300">Challenges:</strong> <em>Gauntlet Champion</em>, <em>Hard Gauntlet Champion</em> and <em>Boss Gauntlet Champion</em> (first clears) are in the Bots tab; the daily Gauntlet win is in the Daily tab.</p>
           </div>
         </div>
 
@@ -7013,7 +7061,7 @@ video {
             <p data-term="face-down-cards"><strong class="text-amber-400">Face-Down Cards:</strong> Three cards dealt beneath your Face-Up Cards that nobody ever sees. Only playable once your Hand, the Deck <em>and</em> your Face-Up Cards are all gone. You flip one blind &mdash; if it isn't legal, you pick up the Pile.</p>
             <p data-term="face-up-cards"><strong class="text-amber-400">Face-Up Cards:</strong> Three cards on the table in front of you, visible to everyone. Only playable once your Hand and the Deck are both empty. Because you play them last, the Swap Phase is your chance to stock them with strong cards.</p>
             <p data-term="four-of-a-kind"><strong class="text-amber-400">Four Of A Kind:</strong> All four cards of one rank on top of the Pile burn it, whether they were played together or across several turns. See <em>Burn</em> and <em>Snap Burn</em>.</p>
-            <p data-term="gauntlet"><strong class="text-amber-400">Gauntlet:</strong> Five Vs Bots games in a row against tougher and tougher bots (Easy, Easy, Medium, Hard, Boss) with 3 lives. See <em>The Gauntlet</em> above.</p>
+            <p data-term="gauntlet"><strong class="text-amber-400">Gauntlet:</strong> Vs Bots games in a row against tough bots, with a few lives: Easy (5 bots, 3 lives), Hard (5 bots, 2 lives, Lvl 30) or Boss (3 Boss bots, 1 life, Lvl 50). One a day. See <em>The Gauntlet</em> above.</p>
             <p data-term="hand"><strong class="text-amber-400">Hand:</strong> The cards only you can see, held off the table. You play from here first, and top back up to three from the Deck after each turn while the Deck lasts.</p>
             <p data-term="joker"><strong class="text-amber-400">Joker:</strong> The strongest card. Play it on anything, then choose an opponent to pick up the Pile. See <em>Duel</em>.</p>
             <p data-term="joker-effect"><strong class="text-amber-400">Joker Effect:</strong> A cosmetic animation that plays over the table whenever you play a Joker, bought in the Shop&rsquo;s Joker tab. Everyone at the table sees it, online too.</p>
@@ -10134,7 +10182,7 @@ video {
           id: `p_bot_${i+1}`,
           name: name,
           isBot: true,
-          ...(state.gauntlet ? { difficulty: GAUNTLET.rounds[state.gauntlet.round] || 'boss' } : {}),
+          ...(state.gauntlet ? { difficulty: gauntletRounds(gauntletModeOf(state.gauntlet))[state.gauntlet.round] || 'boss' } : {}),
           avatar: state.gauntlet?.bot?.avatar || pickBotAvatar(state.players),
           hand: [],
           faceUp: [],
@@ -10180,7 +10228,7 @@ video {
       saveGameState();
       render();
       notifyBanner(state.gauntlet
-        ? `⚔️ Gauntlet round ${state.gauntlet.round + 1}/${GAUNTLET.rounds.length}: ${gauntletRoundLabel(state.gauntlet.round)} bot. choose your 3 Face-Up cards.`
+        ? `⚔️ ${gauntletModeOf(state.gauntlet) === 'easy' ? 'Gauntlet' : `${gauntletMode(gauntletModeOf(state.gauntlet)).name} Gauntlet`} round ${state.gauntlet.round + 1}/${gauntletRounds(gauntletModeOf(state.gauntlet)).length}: ${gauntletRoundLabel(state.gauntlet.round)} bot. choose your 3 Face-Up cards.`
         : "Swap phase: choose your 3 Face-Up cards.");
     }
 
@@ -13411,7 +13459,8 @@ video {
     }
 
     // § Gauntlet: five one-bot games in a row with three lives
-    // Easy, Easy, Medium, Hard, Boss (GAUNTLET.rounds). A win moves to the
+    // Easy, Easy, Medium, Hard, Boss (GAUNTLET.modes.easy; Hard and Boss
+    // modes since v254, see GAUNTLET). A win moves to the
     // next bot, a loss costs a life and replays the same bot. Signed in, the
     // server keeps the run and pays (economy `gauntlet`: start → result →
     // begin → result …; a game begun and never reported costs a life, so
@@ -13442,7 +13491,14 @@ video {
     let gauntletLastView = null;      // what the pop-up shows after a game
     let gauntletHudLives = null;      // lives last drawn (for the heart-lost pop)
 
-    const gauntletRoundLabel = (round) => GAUNTLET_LABELS[GAUNTLET.rounds[round]] || 'Boss';
+    // Modes (v254): GAUNTLET.modes easy | hard | boss; state.gauntlet.mode
+    // (none = easy). Signed out or offline only Easy can be played.
+    const gauntletModeOf = (g) => (g && GAUNTLET.modes[g.mode] ? g.mode : 'easy');
+    const gauntletMode = (mode) => GAUNTLET.modes[mode] || GAUNTLET.modes.easy;
+    const gauntletRounds = (mode) => gauntletMode(mode).rounds;
+    const gauntletTitle = (mode) => (mode === 'easy' ? 'The Gauntlet' : `The ${gauntletMode(mode).name} Gauntlet`);
+    const gauntletRoundLabel = (round, mode = gauntletModeOf(state.gauntlet)) => GAUNTLET_LABELS[gauntletRounds(mode)[round]] || 'Boss';
+    let gauntletPickedMode = null; // the mode card chosen in the pop-up
     function gauntletUsesServer() { return !!currentUser && !isOffline(); }
     // A run belongs to the UK day it started on (like the server's): the
     // next day the Gauntlet starts again from the first Easy bot.
@@ -13456,10 +13512,11 @@ video {
     // This device's twin of the server action (no rewards, no daily limit).
     function gauntletLocalStep(op, data) {
       const g = gauntletLocalRead();
-      const status = () => ({ run: g.run ? { ...g.run } : null, doneToday: false, completions: g.completions || 0, firstDone: false, local: true });
+      const status = () => ({ run: g.run ? { ...g.run, mode: 'easy' } : null, doneToday: false, completions: g.completions || 0, firstDone: false, local: true });
       if (op === 'status') return status();
       if (op === 'start') {
-        g.run = { id: `local${Date.now().toString(36)}`, round: 0, lives: GAUNTLET.lives, playing: true, day: localDateKey() };
+        if (data.mode && data.mode !== 'easy') throw new Error(`Sign in to play the ${gauntletMode(data.mode).name} Gauntlet.`);
+        g.run = { id: `local${Date.now().toString(36)}`, mode: 'easy', round: 0, lives: GAUNTLET.modes.easy.lives, playing: true, day: localDateKey() };
         gauntletLocalWrite(g);
         return status();
       }
@@ -13478,7 +13535,7 @@ video {
       } else {
         run.playing = false;
         run.round += 1;
-        if (run.round >= GAUNTLET.rounds.length) { g.run = null; g.completions = (g.completions || 0) + 1; res = { completed: true }; }
+        if (run.round >= GAUNTLET.modes.easy.rounds.length) { g.run = null; g.completions = (g.completions || 0) + 1; res = { completed: true }; }
       }
       gauntletLocalWrite(g);
       return { ...status(), ...res };
@@ -13486,7 +13543,7 @@ video {
     function gauntletCall(op, data = {}, local = !gauntletUsesServer()) {
       const remember = (res) => {
         if (res && 'run' in res) {
-          gauntletStore.set(GAUNTLET_LAST_KEY, res.run ? { owner: gauntletOwner(local), round: res.run.round, lives: res.run.lives, day: res.run.day || localDateKey() } : null);
+          gauntletStore.set(GAUNTLET_LAST_KEY, res.run ? { owner: gauntletOwner(local), mode: gauntletModeOf(res.run), round: res.run.round, lives: res.run.lives, day: res.run.day || localDateKey() } : null);
           refreshGauntletLobbyBtn();
         }
         return res;
@@ -13502,7 +13559,8 @@ video {
       if (!label) return;
       const last = gauntletStore.get(GAUNTLET_LAST_KEY);
       const mine = last && last.owner === (gauntletUsesServer() ? currentUser.uid : 'device') && last.day === localDateKey();
-      label.textContent = mine ? `CONTINUE ${last.round + 1}/${GAUNTLET.rounds.length}` : 'GAUNTLET';
+      const lastMode = gauntletModeOf(last);
+      label.textContent = mine ? `${lastMode === 'easy' ? 'CONTINUE' : gauntletMode(lastMode).name.toUpperCase()} ${last.round + 1}/${gauntletRounds(lastMode).length}` : 'GAUNTLET';
     }
     // A signed-in game's result that never reached the server (no signal,
     // app closed or crashed) is sent as soon as it can be, so a win is never
@@ -13532,34 +13590,39 @@ video {
     window.addEventListener('online', () => { setTimeout(flushGauntletPending, 1500); });
 
     // ---- The pop-up (welcome, after each game, errors) ----
-    function gauntletHeartsHtml(lives, lostIndex = -1) {
-      return `<div class="gh-hearts" aria-label="${lives} of ${GAUNTLET.lives} lives left">${Array.from({ length: GAUNTLET.lives }, (_, i) =>
+    function gauntletHeartsHtml(lives, lostIndex = -1, mode = gauntletModeOf(state.gauntlet)) {
+      const max = gauntletMode(mode).lives;
+      return `<div class="gh-hearts" aria-label="${lives} of ${max} ${max === 1 ? 'life' : 'lives'} left">${Array.from({ length: max }, (_, i) =>
         `<svg class="gh-heart${i >= lives ? ' is-empty' : ''}${i === lostIndex ? ' gh-lost' : ''}" viewBox="0 0 24 24" aria-hidden="true">${GAUNTLET_HEART}</svg>`).join('')}</div>`;
     }
-    function gauntletTrackHtml(done, now) {
-      return `<div class="gauntlet-track">${GAUNTLET.rounds.map((d, i) => {
+    function gauntletTrackHtml(done, now, mode = gauntletModeOf(state.gauntlet)) {
+      return `<div class="gauntlet-track">${gauntletRounds(mode).map((d, i) => {
         const cls = i < done ? 'is-done' : i === now ? 'is-now' : '';
         return `<div class="gauntlet-step ${cls}${d === 'boss' ? ' is-boss' : ''}"><b>${i < done ? '✓' : i + 1}</b><span style="color:${GAUNTLET_DIFF_TONES[d]}">${d === 'medium' ? 'Med' : GAUNTLET_LABELS[d]}</span></div>`;
       }).join('')}</div>`;
     }
-    function gauntletRewardHtml(st) {
+    function gauntletRewardHtml(st, mode = 'easy') {
+      const M = gauntletMode(mode);
       if (st.local) return `<div class="gauntlet-reward">${currentUser ? 'Offline: this run is just for fun.' : '<b>Sign in</b> to earn Diamonds and the Gauntlet rewards.'}</div>`;
-      if (st.firstDone) return `<div class="gauntlet-reward">Beat it today: <b>${GAUNTLET.dailyReward} 💎</b> (once a day)</div>`;
-      return `<div class="gauntlet-reward">First time you beat it: <b>${GAUNTLET.firstReward} 💎</b> + the ${gauntletItemLink('picture')} avatar + the ${gauntletItemLink('frame')} frame.<br>Then <b>${GAUNTLET.dailyReward} 💎</b> every day you beat it again.<div id="gauntletPreview" class="gauntlet-preview hidden" aria-live="polite"></div></div>`;
+      const firstDone = st.modes ? st.modes[mode]?.firstDone : (mode === 'easy' && st.firstDone);
+      if (firstDone) return `<div class="gauntlet-reward">Beat it today: <b>${M.dailyReward} 💎</b> (once a day)</div>`;
+      return `<div class="gauntlet-reward">First time you beat it: <b>${M.firstReward} 💎</b> + the ${gauntletItemLink('picture', mode)} avatar + the ${gauntletItemLink('frame', mode)} frame.<br>Then <b>${M.dailyReward} 💎</b> every day you beat it again.<div id="gauntletPreview" class="gauntlet-preview hidden" aria-live="polite"></div></div>`;
     }
     // Tap a reward's name to see it: the picture large, or the frame on a
     // few cards the way it looks at the table.
-    function gauntletItemLink(kind) {
-      const name = kind === 'picture' ? GAUNTLET.pictureName : GAUNTLET.frameName;
-      return `<button type="button" class="gauntlet-item-link" data-gauntlet-preview="${kind}" aria-expanded="false">${name}</button>`;
+    function gauntletItemLink(kind, mode = 'easy') {
+      const M = gauntletMode(mode);
+      const name = kind === 'picture' ? M.pictureName : M.frameName;
+      return `<button type="button" class="gauntlet-item-link" data-gauntlet-preview="${kind}" data-gauntlet-mode="${mode}" aria-expanded="false">${name}</button>`;
     }
-    function gauntletPreviewHtml(kind) {
+    function gauntletPreviewHtml(kind, mode = 'easy') {
+      const M = gauntletMode(mode);
       if (kind === 'picture') {
-        return `<div class="gauntlet-preview-art">${avatarHtml(GAUNTLET.picture, 96)}</div><div class="gauntlet-preview-name">${GAUNTLET.pictureName}</div><div class="gauntlet-preview-note">Earn-only avatar</div>`;
+        return `<div class="gauntlet-preview-art">${avatarHtml(M.picture, 96)}</div><div class="gauntlet-preview-name">${M.pictureName}</div><div class="gauntlet-preview-note">Earn-only avatar</div>`;
       }
-      const style = getCosmeticFrameStyle(GAUNTLET.frame).replace(/!important/g, '');
+      const style = getCosmeticFrameStyle(M.frame).replace(/!important/g, '');
       const card = (rank, suit, red) => `<span class="gauntlet-frame-card" style="${style}"><b style="color:${red ? '#f87171' : '#e2e8f0'}">${rank}</b><i style="color:${red ? '#f87171' : '#e2e8f0'}">${suit}</i></span>`;
-      return `<div class="gauntlet-preview-art gauntlet-frame-fan">${card('K', '♥', true)}${card('A', '♠')}${card('10', '♦', true)}</div><div class="gauntlet-preview-name">${GAUNTLET.frameName}</div><div class="gauntlet-preview-note">Earn-only card frame</div>`;
+      return `<div class="gauntlet-preview-art gauntlet-frame-fan">${card('K', '♥', true)}${card('A', '♠')}${card('10', '♦', true)}</div><div class="gauntlet-preview-name">${M.frameName}</div><div class="gauntlet-preview-note">Earn-only card frame</div>`;
     }
     function toggleGauntletPreview(btn) {
       const box = document.getElementById('gauntletPreview');
@@ -13569,67 +13632,100 @@ video {
       document.querySelectorAll('[data-gauntlet-preview]').forEach(b => b.setAttribute('aria-expanded', String(!open && b === btn)));
       if (open) { box.classList.add('hidden'); box.dataset.kind = ''; return; }
       box.dataset.kind = kind;
-      box.innerHTML = gauntletPreviewHtml(kind);
+      box.innerHTML = gauntletPreviewHtml(kind, btn.dataset.gauntletMode || 'easy');
       box.classList.remove('hidden');
       if (typeof springIn === 'function' && !reduceMotion) springIn(box);
     }
     function gauntletItemsHtml(items) {
       if (!items || !items.length) return '';
       return `<div class="gauntlet-items">${items.map(item => {
-        const art = item.id === GAUNTLET.picture ? avatarHtml(item.id, 52) : framePreviewCard(EARNED_FRAMES.find(f => f.id === item.id));
+        const art = AVATAR_ART[item.id] ? avatarHtml(item.id, 52) : framePreviewCard(EARNED_FRAMES.find(f => f.id === item.id));
         return `<figure>${art}<figcaption>${escapeHtml(item.name)}</figcaption></figure>`;
+      }).join('')}</div>`;
+    }
+    const GAUNTLET_MODE_INTRO = {
+      easy: 'Five bots, one at a time, each tougher than the last. Lose a game and you face the same bot again, for a life. Lose all 3 lives and the run is over.',
+      hard: 'Five tough bots: Medium, three Hard, then the Boss. Lose a game and you face the same bot again, for a life. Lose both lives and the run is over.',
+      boss: 'Three Boss bots in a row, with one life. One loss and the run is over.'
+    };
+    // Can this mode be played now? { open } or { why, kind: locked | today | done }.
+    function gauntletModeState(st, mode) {
+      const M = gauntletMode(mode);
+      if (mode !== 'easy' && st.local) return { why: currentUser ? `You're offline. The ${M.name} Gauntlet needs a connection.` : `Sign in to play the ${M.name} Gauntlet.`, kind: 'locked' };
+      const info = st.modes ? st.modes[mode] : (mode === 'easy' ? { doneToday: st.doneToday, firstDone: st.firstDone } : null);
+      if (!info) return { why: `The ${M.name} Gauntlet isn't ready yet. Try again in a few minutes.`, kind: 'locked' };
+      if (info.locked) return { why: info.locked, kind: 'locked' };
+      if (st.todayMode && st.todayMode !== mode) return { why: `Today's Gauntlet is ${gauntletMode(st.todayMode).name}. You can play a different one from midnight (UK time).`, kind: 'today' };
+      if (info.doneToday) return { why: `Beaten today. ${mode === 'easy' ? 'The Gauntlet' : `The ${M.name} Gauntlet`} opens again at midnight (UK time).`, kind: 'done' };
+      return { open: true };
+    }
+    function gauntletModePickerHtml(st, picked) {
+      return `<div class="gauntlet-modes" role="tablist" aria-label="Gauntlet mode">${GAUNTLET.modeOrder.map((m) => {
+        const M = gauntletMode(m), ms = gauntletModeState(st, m);
+        const badge = ms.open ? '' : ms.kind === 'done' ? icon('check') : icon('lock');
+        return `<button type="button" role="tab" class="gauntlet-mode is-${m}${ms.open ? '' : ' is-shut'}" data-gauntlet-pick="${m}" aria-selected="${m === picked}">
+          <b>${M.name}${badge}</b><small>${M.rounds.length} bots · ${M.lives} ${M.lives === 1 ? 'life' : 'lives'}</small></button>`;
       }).join('')}</div>`;
     }
     function gauntletModalHtml(v) {
       const head = (emblem, title, text) => `<div class="gauntlet-emblem" aria-hidden="true">${emblem}</div><div id="gauntletTitle" class="gauntlet-title">${title}</div>${text ? `<p class="gauntlet-text">${text}</p>` : ''}`;
-      const go = (label, action, disabled) => `<button type="button" class="gauntlet-go" data-gauntlet-action="${action}"${disabled ? ' disabled' : ''}>${label}</button>`;
-      const alt = (label, action) => `<button type="button" class="gauntlet-alt" data-gauntlet-action="${action}">${label}</button>`;
+      const go = (label, action, disabled, mode) => `<button type="button" class="gauntlet-go" data-gauntlet-action="${action}"${mode ? ` data-gauntlet-mode="${mode}"` : ''}${disabled ? ' disabled' : ''}>${label}</button>`;
+      const alt = (label, action, mode) => `<button type="button" class="gauntlet-alt" data-gauntlet-action="${action}"${mode ? ` data-gauntlet-mode="${mode}"` : ''}>${label}</button>`;
       const inGame = state.phase && state.phase !== 'LOBBY';
       const leave = alt(inGame ? 'Leave (your run is saved)' : 'Not now', 'leave');
       if (v.kind === 'loading') return head('⚔️', 'The Gauntlet', 'Loading…');
       if (v.kind === 'error') return head('⚠️', 'The Gauntlet', escapeHtml(v.message || 'Something went wrong.')) +
-        `<div class="gauntlet-actions">${v.retry ? go('TRY AGAIN', v.retry) : ''}${alt(inGame ? 'Leave' : 'Close', 'leave')}</div>`;
+        `<div class="gauntlet-actions">${v.retry ? go('TRY AGAIN', v.retry, false, v.mode) : ''}${alt(inGame ? 'Leave' : 'Close', 'leave')}</div>`;
       if (v.kind === 'welcome') {
         const st = v.status, run = st.run;
-        const intro = 'Five bots, one at a time, each tougher than the last. Lose a game and you face the same bot again, for a life. Lose all 3 lives and the run is over.';
-        let body = gauntletTrackHtml(run ? run.round : 0, run ? run.round : 0) + gauntletHeartsHtml(run ? run.lives : GAUNTLET.lives);
-        let actions;
-        if (st.doneToday) {
-          body += `<div class="gauntlet-reward">✓ <b>Beaten today.</b> The Gauntlet opens again at midnight (UK time).</div>`;
-          actions = go('COME BACK TOMORROW', 'none', true) + alt('Close', 'leave');
-        } else if (run) {
-          body += gauntletRewardHtml(st) + (run.playing ? `<p class="gauntlet-note">Your last Gauntlet game wasn't finished, so it counts as a loss.</p>` : '');
-          actions = go(`CONTINUE · ROUND ${run.round + 1}`, 'begin') + alt('Start a new run', 'start') + alt('Not now', 'leave');
-        } else {
-          body += gauntletRewardHtml(st);
-          actions = go('ENTER THE GAUNTLET', 'start') + alt('Not now', 'leave');
+        if (run) {
+          const mode = gauntletModeOf(run), n = gauntletRounds(mode).length;
+          const body = gauntletTrackHtml(run.round, run.round, mode) + gauntletHeartsHtml(run.lives, -1, mode) + gauntletRewardHtml(st, mode) +
+            (run.playing ? `<p class="gauntlet-note">Your last Gauntlet game wasn't finished, so it counts as a loss.</p>` : '');
+          const actions = go(`CONTINUE · ROUND ${run.round + 1}`, 'begin') + alt('Start a new run', 'start', mode) + alt('Not now', 'leave');
+          return head('⚔️', `Welcome back to ${gauntletTitle(mode)}`, `Round ${run.round + 1} of ${n} is waiting: the <b>${gauntletRoundLabel(run.round, mode)}</b> bot.`) + body +
+            `<p class="gauntlet-note">Finish this run (win it, or run out of lives) before playing another Gauntlet.</p><div class="gauntlet-actions">${actions}</div>`;
         }
-        return head('⚔️', run ? 'Welcome back to the Gauntlet' : 'Welcome to the Gauntlet', run ? `Round ${run.round + 1} of ${GAUNTLET.rounds.length} is waiting: the <b>${gauntletRoundLabel(run.round)}</b> bot.` : intro) + body +
-          `<p class="gauntlet-note">Gauntlet wins don't count toward unlocking bot difficulties.</p><div class="gauntlet-actions">${actions}</div>`;
+        const pick = v.mode || gauntletPickedMode || st.todayMode || 'easy';
+        const mode = GAUNTLET.modes[pick] ? pick : 'easy', M = gauntletMode(mode), ms = gauntletModeState(st, mode);
+        let body = gauntletModePickerHtml(st, mode) + `<p class="gauntlet-text gauntlet-mode-intro">${GAUNTLET_MODE_INTRO[mode]}</p>` + gauntletTrackHtml(0, 0, mode) + gauntletHeartsHtml(M.lives, -1, mode);
+        let actions;
+        if (ms.open) {
+          body += gauntletRewardHtml(st, mode);
+          actions = go(mode === 'easy' ? 'ENTER THE GAUNTLET' : `ENTER THE ${M.name.toUpperCase()} GAUNTLET`, 'start', false, mode) + alt('Not now', 'leave');
+        } else {
+          body += `<div class="gauntlet-reward gauntlet-shut">${ms.kind === 'done' ? '✓ ' : ''}<b>${escapeHtml(ms.why)}</b></div>`;
+          actions = go(ms.kind === 'locked' ? 'LOCKED' : 'COME BACK TOMORROW', 'none', true) + alt('Close', 'leave');
+        }
+        return head('⚔️', 'Welcome to the Gauntlet', '') + body +
+          `<p class="gauntlet-note">One Gauntlet a day. Gauntlet wins don't count toward unlocking bot difficulties.</p><div class="gauntlet-actions">${actions}</div>`;
       }
       const r = v.res, run = r.run;
+      const mode = run ? gauntletModeOf(run) : gauntletModeOf(state.gauntlet || { mode: v.mode });
+      const n = gauntletRounds(mode).length;
       if (v.kind === 'won') {
-        return head('🗡️', `Round ${run.round} beaten`, `Next up: <b>${gauntletRoundLabel(run.round)}</b> bot (round ${run.round + 1} of ${GAUNTLET.rounds.length}).`) +
-          gauntletTrackHtml(run.round, run.round) + gauntletHeartsHtml(run.lives) +
+        return head('🗡️', `Round ${run.round} beaten`, `Next up: <b>${gauntletRoundLabel(run.round, mode)}</b> bot (round ${run.round + 1} of ${n}).`) +
+          gauntletTrackHtml(run.round, run.round, mode) + gauntletHeartsHtml(run.lives, -1, mode) +
           `<div class="gauntlet-actions">${go('CONTINUE GAUNTLET', 'begin')}${leave}</div>`;
       }
       if (v.kind === 'lost') {
-        return head('💔', 'You lost a life', `${v.forfeited ? 'A game you left counts as a loss. ' : ''}Face the <b>${gauntletRoundLabel(run.round)}</b> bot again.`) +
-          gauntletTrackHtml(run.round, run.round) + gauntletHeartsHtml(run.lives, run.lives) +
+        return head('💔', 'You lost a life', `${v.forfeited ? 'A game you left counts as a loss. ' : ''}Face the <b>${gauntletRoundLabel(run.round, mode)}</b> bot again.`) +
+          gauntletTrackHtml(run.round, run.round, mode) + gauntletHeartsHtml(run.lives, run.lives, mode) +
           `<div class="gauntlet-actions">${go('TRY AGAIN', 'begin')}${leave}</div>`;
       }
       if (v.kind === 'over') {
         const reached = Number.isFinite(v.round) ? v.round : 0;
-        return head('☠️', 'Game over', `You ran out of lives on round ${reached + 1} (${gauntletRoundLabel(reached)} bot).`) +
-          gauntletTrackHtml(reached, reached) + gauntletHeartsHtml(0, 0) +
-          `<div class="gauntlet-actions">${go('START A NEW RUN', 'start')}${alt(inGame ? 'Leave' : 'Close', 'leave')}</div>`;
+        const lives = gauntletMode(mode).lives;
+        return head('☠️', 'Game over', `You ran out of ${lives === 1 ? 'life' : 'lives'} on round ${reached + 1} (${gauntletRoundLabel(reached, mode)} bot).`) +
+          gauntletTrackHtml(reached, reached, mode) + gauntletHeartsHtml(0, 0, mode) +
+          `<div class="gauntlet-actions">${go('START A NEW RUN', 'start', false, mode)}${alt(inGame ? 'Leave' : 'Close', 'leave')}</div>`;
       }
       // completed
       const paid = Number(r.diamondsAwarded) || 0;
       const reward = r.local ? `<div class="gauntlet-reward">${currentUser ? 'Played offline, so no rewards this time.' : '<b>Sign in</b> next time to earn Diamonds and the Gauntlet rewards.'}</div>`
-        : `<div class="gauntlet-reward"><b>+${paid} 💎</b>${r.first ? ` and two things only Gauntlet champions have:${gauntletItemsHtml(r.newItems)}` : ' for today’s win. Come back tomorrow for more.'}</div>`;
-      return head('🏆', 'Gauntlet beaten', 'All five bots down. Well played.') +
-        gauntletTrackHtml(GAUNTLET.rounds.length, -1) + gauntletHeartsHtml(v.lives) + reward +
+        : `<div class="gauntlet-reward"><b>+${paid} 💎</b>${r.first ? ` and two things only ${mode === 'easy' ? 'Gauntlet' : `${gauntletMode(mode).name} Gauntlet`} champions have:${gauntletItemsHtml(r.newItems)}` : ' for today’s win. Come back tomorrow for more.'}</div>`;
+      return head('🏆', `${mode === 'easy' ? 'Gauntlet' : `${gauntletMode(mode).name} Gauntlet`} beaten`, `All ${n === 3 ? 'three' : 'five'} bots down. Well played.`) +
+        gauntletTrackHtml(n, -1, mode) + gauntletHeartsHtml(v.lives, -1, mode) + reward +
         `<div class="gauntlet-actions">${go(inGame ? 'BACK TO THE LOBBY' : 'DONE', 'leave')}</div>`;
     }
     function showGauntlet(view) {
@@ -13646,7 +13742,7 @@ video {
       flushGauntletPending().then(() => gauntletCall('status')).then((status) => showGauntlet({ kind: 'welcome', status }))
         .catch((e) => showGauntlet({ kind: 'error', message: e.message, retry: 'welcome' }));
     }
-    function gauntletAction(action) {
+    function gauntletAction(action, mode) {
       if (action === 'welcome') return openGauntletWelcome();
       if (action === 'leave') {
         gauntletStore.set(GAUNTLET_BETWEEN_KEY, null);
@@ -13658,8 +13754,9 @@ video {
       const btns = document.querySelectorAll('#gauntletModalBody button');
       btns.forEach(b => { b.disabled = true; });
       if (action === 'start') {
-        return gauntletCall('start').then((res) => startGauntletGame(res))
-          .catch((e) => showGauntlet({ kind: 'error', message: e.message, retry: 'start' }));
+        const m = mode || gauntletPickedMode || gauntletModeOf(state.gauntlet);
+        return gauntletCall('start', m === 'easy' ? {} : { mode: m }).then((res) => startGauntletGame(res))
+          .catch((e) => showGauntlet({ kind: 'error', message: e.message, retry: 'start', mode: m }));
       }
       if (action === 'begin') {
         const g = state.gauntlet && !state.gauntlet.ended ? state.gauntlet : null;
@@ -13679,8 +13776,14 @@ video {
     document.getElementById('gauntletModalBody').addEventListener('click', (e) => {
       const preview = e.target.closest('[data-gauntlet-preview]');
       if (preview) { toggleGauntletPreview(preview); return; }
+      const pick = e.target.closest('[data-gauntlet-pick]');
+      if (pick && gauntletLastView?.kind === 'welcome') {
+        gauntletPickedMode = pick.dataset.gauntletPick;
+        showGauntlet({ ...gauntletLastView, mode: gauntletPickedMode });
+        return;
+      }
       const btn = e.target.closest('[data-gauntlet-action]');
-      if (btn && !btn.disabled) gauntletAction(btn.dataset.gauntletAction);
+      if (btn && !btn.disabled) gauntletAction(btn.dataset.gauntletAction, btn.dataset.gauntletMode);
     });
     document.getElementById('gauntletCloseBtn').addEventListener('click', () => gauntletAction('leave'));
     document.getElementById('gauntletBtn').addEventListener('click', openGauntletWelcome);
@@ -13698,7 +13801,8 @@ video {
       closeGauntlet();
       gauntletPending = null;
       gauntletStore.set(GAUNTLET_BETWEEN_KEY, null);
-      const gauntlet = { runId: run.id, round: run.round, lives: run.lives, local: !!res.local, day: run.day || localDateKey() };
+      const gauntlet = { runId: run.id, mode: gauntletModeOf(run), round: run.round, lives: run.lives, local: !!res.local, day: run.day || localDateKey() };
+      gauntletPickedMode = gauntlet.mode;
       const prior = state.gauntlet;
       if (prior && prior.bot && prior.round === run.round && prior.runId === run.id) gauntlet.bot = prior.bot; // the same bot again
       hideMatchEndUI();
@@ -13714,8 +13818,8 @@ video {
       gauntletReportedMatch = state.matchId;
       try { localStorage.removeItem('shithead_game_state'); } catch (e) {} // finished: never restore it
       const me = state.players.find(p => p.id === state.localPlayerId);
-      gauntletPending = { runId: g.runId, won: me?.finishRank === 1 && !me.drew, local: !!g.local, round: g.round };
-      if (!g.local && currentUser) gauntletStore.set(GAUNTLET_PENDING_KEY, { uid: currentUser.uid, runId: g.runId, won: gauntletPending.won, round: g.round });
+      gauntletPending = { runId: g.runId, mode: gauntletModeOf(g), won: me?.finishRank === 1 && !me.drew, local: !!g.local, round: g.round };
+      if (!g.local && currentUser) gauntletStore.set(GAUNTLET_PENDING_KEY, { uid: currentUser.uid, runId: g.runId, mode: gauntletPending.mode, won: gauntletPending.won, round: g.round });
       gauntletStore.set(GAUNTLET_BETWEEN_KEY, { owner: gauntletOwner(g.local), at: Date.now() });
       updateGauntletEndButton();
       const testing = typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning;
@@ -13760,14 +13864,15 @@ video {
         if (typeof refreshInboxBadge === 'function') refreshInboxBadge();
       }
       updateDiamondHeader();
-      const g = state.gauntlet || { runId: p.runId, local: p.local };
+      const g = state.gauntlet || { runId: p.runId, mode: p.mode, local: p.local };
+      const gMode = gauntletModeOf(g);
       if (res.completed && !res.local && challengeEconomy.completedChallenges) {
-        const key = res.first ? GAUNTLET_CHALLENGES.first.id : `gauntlet_${localDateKey()}`;
+        const key = res.first ? gauntletFirstKey(gMode) : `gauntlet_${localDateKey()}`;
         challengeEconomy.completedChallenges[key] = { completedAt: Date.now(), reward: Number(res.diamondsAwarded) || 0 };
         renderChallengesModalIfOpen();
       }
       if (res.completed) {
-        state.gauntlet = { ...g, round: GAUNTLET.rounds.length, ended: true };
+        state.gauntlet = { ...g, round: gauntletRounds(gMode).length, ended: true };
         renderGauntletHud();
         return { kind: 'done', res, lives: g.lives };
       }
@@ -13809,15 +13914,17 @@ video {
       if (!show) { gauntletHudLives = null; return; }
       const lives = Math.max(0, g.lives);
       const lost = gauntletHudLives !== null && lives < gauntletHudLives ? lives : -1;
-      const key = `${lives}|${g.round}|${lost}`;
+      const key = `${gauntletModeOf(g)}|${lives}|${g.round}|${lost}`;
       if (hud.dataset.key === key && lost < 0) return;
       hud.dataset.key = key;
       gauntletHudLives = lives;
-      const beaten = g.round >= GAUNTLET.rounds.length;
-      const roundText = beaten ? 'Beaten' : `Round ${g.round + 1}/${GAUNTLET.rounds.length} · ${gauntletRoundLabel(g.round)}`;
-      hud.setAttribute('aria-label', `Gauntlet: ${lives} of ${GAUNTLET.lives} lives, ${roundText}`);
-      const diff = GAUNTLET.rounds[g.round];
-      hud.innerHTML = `${gauntletHeartsHtml(lives, lost)}<div class="gh-round" aria-hidden="true">${beaten ? '<b>🏆</b>' : `<b>${g.round + 1}/${GAUNTLET.rounds.length}</b><span style="color:${GAUNTLET_DIFF_TONES[diff]}">${DIFF_LABELS[diff]}</span>`}</div>`;
+      const mode = gauntletModeOf(g), rounds = gauntletRounds(mode);
+      const beaten = g.round >= rounds.length;
+      const roundText = beaten ? 'Beaten' : `Round ${g.round + 1}/${rounds.length} · ${gauntletRoundLabel(g.round, mode)}`;
+      hud.setAttribute('aria-label', `${gauntletTitle(mode)}: ${lives} of ${gauntletMode(mode).lives} lives, ${roundText}`);
+      const diff = rounds[g.round];
+      hud.dataset.mode = mode;
+      hud.innerHTML = `${gauntletHeartsHtml(lives, lost, mode)}<div class="gh-round" aria-hidden="true">${beaten ? '<b>🏆</b>' : `<b>${g.round + 1}/${rounds.length}</b><span style="color:${GAUNTLET_DIFF_TONES[diff]}">${DIFF_LABELS[diff]}</span>`}</div>`;
     }
 
     // Closed on the Continue / Try again screen: reopen the run at start-up
@@ -19174,6 +19281,13 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v254: [
+        ['⚔️', 'Two new Gauntlets: Hard (Medium, three Hard, then the Boss, 2 lives) at Lvl 30 once you have beaten the Easy Gauntlet, and Boss (three Boss bots, 1 life) at Lvl 50 once you have beaten Easy once and Hard 3 times.', WN_KEY],
+        ['🏆', 'Beat the Hard Gauntlet for 400 Diamonds, the Gauntlet Conqueror avatar and the Crimson Gauntlet frame; beat the Boss Gauntlet for 600 Diamonds, the Gauntlet Overlord avatar and the Amethyst Gauntlet frame.', WN_KEY],
+        ['✨', 'The Gauntlet Champion avatar has new animated art, with shining swords and glinting gems. If you own it, it has changed over by itself.', WN_KEY],
+        ['📅', 'One Gauntlet a day: the first one you start is your Gauntlet for that day, and a run must be finished before you can start another.'],
+        ['📖', 'The Guide explains all three Gauntlets.']
+      ],
       v253: [
         ['🔥', 'Six new burn effects to earn by levelling up: Spark Snap (5), Smoke Burst (20), Inferno Sweep (40), Hellfire Spiral (60), Royal Incineration (80) and The ShitStorm (99).', WN_KEY]
       ],
@@ -19976,19 +20090,8 @@ video {
         <path d="M30 26.5c.5-3.5 3-5.5 5.5-6.5-.5 2.5 0 4.5 1.5 6" fill="url(#av-m-poo)" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"/>
         <circle cx="27.5" cy="38" r="2.6" fill="#fff"/><circle cx="36.5" cy="38" r="2.6" fill="#fff"/><circle cx="28" cy="38.4" r="1.2" fill="#1c0f06"/><circle cx="37" cy="38.4" r="1.2" fill="#1c0f06"/>
         <path d="M27 46.5c3 2.5 7 2.5 10 0" fill="none" stroke="#1c0f06" stroke-width="1.6" stroke-linecap="round"/>` },
-      // Gauntlet Champion (earn-only): crossed swords behind a gold shield
-      // carrying the crimson heart of the Gauntlet's lives.
-      'avatar-gauntlet':     { tone: 'gold', animated: true, art: `
-        <g stroke="rgba(0,0,0,.45)" stroke-width="1" stroke-linejoin="round">
-          <g transform="rotate(-42 32 30)"><path d="M30.7 4 32 1.5 33.3 4l.9 37h-4.4Z" fill="url(#av-m-silver)"/><rect x="23.5" y="41" width="17" height="3.6" rx="1.6" fill="url(#av-m-gold)"/><rect x="30.3" y="44.6" width="3.4" height="7.6" rx="1.2" fill="#78350f"/><circle cx="32" cy="54.2" r="2.5" fill="url(#av-m-gold)"/></g>
-          <g transform="rotate(42 32 30)"><path d="M30.7 4 32 1.5 33.3 4l.9 37h-4.4Z" fill="url(#av-m-silver)"/><rect x="23.5" y="41" width="17" height="3.6" rx="1.6" fill="url(#av-m-gold)"/><rect x="30.3" y="44.6" width="3.4" height="7.6" rx="1.2" fill="#78350f"/><circle cx="32" cy="54.2" r="2.5" fill="url(#av-m-gold)"/></g>
-          <g transform="translate(32 31) scale(.74) translate(-32 -32)">
-            <path d="M18.5 18.5c5 .8 9.5-.6 13.5-3.5 4 2.9 8.5 4.3 13.5 3.5v13c0 9-6 14.5-13.5 18-7.5-3.5-13.5-9-13.5-18Z" fill="url(#av-m-gold)" stroke-width="1.6"/>
-            <path d="M22 21.5c3.7.3 7-.7 10-2.7 3 2 6.3 3 10 2.7v10c0 6.8-4.4 11-10 13.9-5.6-2.9-10-7.1-10-13.9Z" fill="#7f1d1d" stroke="none"/>
-            <path d="${AV_HEART}" transform="translate(32 31.5) scale(.33) translate(-32 -32)" fill="url(#av-m-crimson)" stroke="#fecaca" stroke-width="2.4"/>
-          </g>
-        </g>
-        <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
+      // Gauntlet Champion (earn-only): the owner's green crest (v254), drawn
+      // from its photo art after this table (installGauntletAvatars).
       // Recruiter (earn-only): a friend brought to the table, with a gold +.
       'avatar-recruiter':    { tone: 'green', animated: true, art: `
         <g stroke="rgba(0,0,0,.4)" stroke-width="1.1">
@@ -20076,6 +20179,63 @@ video {
     }
     // Every size keeps the animated layers, including Shop, Custom and
     // compact player pictures. Visibility and Reduce Motion control playback.
+    // § Gauntlet avatars (v254): the owner's three crests, one per mode
+    // (avatar-gauntlet = Easy, green; -hard = crimson; -boss = amethyst), as
+    // photo tiles (tools/make-gauntlet-avatars.py: art/avatars/gauntlet-*.webp
+    // and GAUNTLET_AVATAR_LAYOUT) under a gold rim, with moving light on
+    // top: a shine runs up each sword blade in turn, the gems glint, the heart
+    // glows and a few sparks rise. One 5s loop; paused offscreen or hidden
+    // (avatarMotionWatch), stopped by Reduce Motion (the still art shows).
+    const GAUNTLET_ART_V = 254;
+    const GAUNTLET_AVATAR_LAYOUT = {"easy":{"blades":[[[100,92],[301,321],34],[[918,92],[701,321],34]],"gems":[[500,148],[500,316],[204,809],[788,809]],"heart":[500,517,115]},"hard":{"blades":[[[93,61],[315,293],41],[[912,61],[686,293],41]],"gems":[[495,94],[498,268],[498,676],[177,798],[820,798]],"heart":[500,481,117]},"boss":{"blades":[[[93,63],[313,293],41],[[910,63],[686,293],41]],"gems":[[498,99],[500,284],[500,690],[498,822],[178,798],[820,798]],"heart":[500,500,111]}};
+    const GAUNTLET_AVATAR_GLOW = { easy: '#4ade80', hard: '#fb7185', boss: '#d8b4fe' };
+    function gauntletAvatarArt(mode) {
+      const L = GAUNTLET_AVATAR_LAYOUT[mode], glow = GAUNTLET_AVATAR_GLOW[mode], id = `gx-${mode}`;
+      const f = (n) => Math.round(n * 10) / 10;
+      let bladeClips = '';
+      const blades = L.blades.map(([[tx, ty], [bx, by], w], i) => {
+        const len = Math.hypot(bx - tx, by - ty), dx = (bx - tx) / len, dy = (by - ty) / len, nx = -dy, ny = dx;
+        const pts = [[tx, ty], [tx + dx * w * 1.3 + nx * w, ty + dy * w * 1.3 + ny * w], [bx + nx * w, by + ny * w], [bx - nx * w, by - ny * w], [tx + dx * w * 1.3 - nx * w, ty + dy * w * 1.3 - ny * w]];
+        // The gleam: a soft band across the blade, starting at its base and
+        // travelling to the tip (--dx/--dy), clipped to the blade's shape.
+        const g = 30; // half the gleam's width along the blade
+        const band = [[bx + nx * w * 2 + dx * g, by + ny * w * 2 + dy * g], [bx + nx * w * 2 - dx * g, by + ny * w * 2 - dy * g], [bx - nx * w * 2 - dx * g, by - ny * w * 2 - dy * g], [bx - nx * w * 2 + dx * g, by - ny * w * 2 + dy * g]];
+        bladeClips += `<clipPath id="${id}-b${i}"><polygon points="${pts.map(p => p.map(f).join(',')).join(' ')}"/></clipPath>`;
+        return `<g clip-path="url(#${id}-b${i})"><polygon class="av-gx-shine" style="--dx:${f(tx - bx)}px;--dy:${f(ty - by)}px;animation-delay:${i * 0.45}s" points="${band.map(p => p.map(f).join(',')).join(' ')}" fill="url(#${id}-gleam)"/></g>`;
+      }).join('');
+      const glints = L.gems.map(([x, y], i) => `<g transform="translate(${x} ${y})"><path class="av-gx-glint" style="animation-delay:${1.3 + i * 0.32}s" d="M0 -44 7 -7 44 0 7 7 0 44 -7 7 -44 0 -7 -7Z" fill="#fff"/></g>`).join('');
+      const [hx, hy, hr] = L.heart;
+      const sparks = [[160, 900], [300, 960], [720, 950], [860, 880], [420, 980], [580, 930]].map(([x, y], i) =>
+        `<circle class="av-gx-spark" style="animation-delay:${i * 0.8}s" cx="${x}" cy="${y}" r="${7 + (i % 3) * 2}" fill="${i % 2 ? '#fde68a' : glow}"/>`).join('');
+      // Gradients and clips live once in #gauntletAvatarDefs (ids must be unique).
+      const defs = `<linearGradient id="${id}-gleam" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+          <radialGradient id="${id}-heart"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".35" stop-color="${glow}" stop-opacity=".7"/><stop offset="1" stop-color="${glow}" stop-opacity="0"/></radialGradient>
+          <clipPath id="${id}-tile"><rect width="1000" height="1000" rx="234"/></clipPath>${bladeClips}`;
+      return { defs, art: `
+        <rect width="1000" height="1000" rx="234" fill="#07070c"/>
+        <image href="art/avatars/gauntlet-${mode}.webp?v=${GAUNTLET_ART_V}" width="1000" height="1000" preserveAspectRatio="xMidYMid slice" style="clip-path:inset(0 round 234px)"/>
+        <g clip-path="url(#${id}-tile)">
+          <circle class="av-gx-heart" cx="${hx}" cy="${hy}" r="${Math.round(hr * 1.5)}" fill="url(#${id}-heart)"/>
+          ${blades}${glints}${sparks}
+        </g>
+        <rect x="17" y="17" width="966" height="966" rx="217" fill="none" stroke="url(#av-m-gold)" stroke-width="34"/>
+        <rect x="35" y="35" width="930" height="930" rx="200" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="5"/>
+        <rect x="4" y="4" width="992" height="992" rx="230" fill="none" stroke="rgba(255,244,184,.55)" stroke-width="4"/>` };
+    }
+    (function installGauntletAvatars() {
+      let defs = '';
+      [['avatar-gauntlet', 'easy'], ['avatar-gauntlet-hard', 'hard'], ['avatar-gauntlet-boss', 'boss']].forEach(([aid, mode]) => {
+        const made = gauntletAvatarArt(mode);
+        defs += made.defs;
+        AVATAR_ART[aid] = { photo: true, tone: 'gold', animated: true, art: made.art };
+      });
+      const holder = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      holder.id = 'gauntletAvatarDefs';
+      holder.setAttribute('width', '0'); holder.setAttribute('height', '0'); holder.setAttribute('aria-hidden', 'true');
+      holder.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+      holder.innerHTML = `<defs>${defs}</defs>`;
+      document.body.appendChild(holder);
+    })();
     function avatarSvg(id, size = 64) {
       const art = AVATAR_ART[resolveAvatarId(id)];
       if (art.photo) {
@@ -21666,12 +21826,16 @@ video {
       { id: 'avatar-centurion', category: 'Avatars', name: 'Centurion', earned: true, requirement: 'Play 100 ranked games', isEarned: (u) => ((Number(u?.wins) || 0) + (Number(u?.losses) || 0)) >= 100 },
       { id: 'avatar-shithead', category: 'Avatars', name: 'ShitHead', earned: true, requirement: 'Lose 10 ranked games in a row', isEarned: (u) => (Number(u?.rankedStats?.bestLossStreak) || 0) >= 10 },
       { id: 'avatar-gauntlet', category: 'Avatars', name: 'Gauntlet Champion', earned: true, gauntlet: true, requirement: 'Beat the Gauntlet', isEarned: () => false },
+      { id: 'avatar-gauntlet-hard', category: 'Avatars', name: 'Gauntlet Conqueror', earned: true, gauntlet: true, requirement: 'Beat the Hard Gauntlet', isEarned: () => false },
+      { id: 'avatar-gauntlet-boss', category: 'Avatars', name: 'Gauntlet Overlord', earned: true, gauntlet: true, requirement: 'Beat the Boss Gauntlet', isEarned: () => false },
       { id: 'avatar-recruiter', category: 'Avatars', name: 'Recruiter', earned: true, referral: true, requirement: 'Recruit 5 players', isEarned: () => false }
     ];
     // Earn-only frames: never sold or gifted, shown locked in Custom until
     // the server grants them (Gauntlet Gold: beat the Gauntlet once).
     const EARNED_FRAMES = [
-      { id: 'frame-gauntlet', category: 'Frames', name: 'Gauntlet Gold', earned: true, cost: 0, requirement: 'Beat the Gauntlet', tones: ['#1c0a02', '#f59e0b', '#fde68a'] }
+      { id: 'frame-gauntlet', category: 'Frames', name: 'Gauntlet Gold', earned: true, cost: 0, requirement: 'Beat the Gauntlet', tones: ['#1c0a02', '#f59e0b', '#fde68a'] },
+      { id: 'frame-gauntlet-hard', category: 'Frames', name: 'Crimson Gauntlet', earned: true, cost: 0, requirement: 'Beat the Hard Gauntlet', tones: ['#1c0206', '#e11d48', '#fde68a'] },
+      { id: 'frame-gauntlet-boss', category: 'Frames', name: 'Amethyst Gauntlet', earned: true, cost: 0, requirement: 'Beat the Boss Gauntlet', tones: ['#12031f', '#a855f7', '#fde68a'] }
     ];
     // Level rewards (v251, owner): earn-only avatars and card backs that
     // unlock with levels, so a level is something to show off (§ XP & levels).
@@ -21741,7 +21905,7 @@ video {
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
       cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco','back-dragon','back-stained', ...LEVEL_BACK_IDS, ...seasonalIdsOf('cardBack')]),
-      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet','frame-split-crimson','frame-split-royal','frame-split-noir','frame-dashed-gold','frame-neon-tube','frame-spectrum', ...seasonalIdsOf('frame')]),
+      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet','frame-gauntlet-hard','frame-gauntlet-boss','frame-split-crimson','frame-split-royal','frame-split-noir','frame-dashed-gold','frame-neon-tube','frame-spectrum', ...seasonalIdsOf('frame')]),
       deck: new Set(['deck-obsidian','deck-emerald','deck-cyber','deck-crimson','deck-bigprint','deck-casino','deck-arcade','deck-fourcolour','deck-lavender','deck-paper','deck-blueprint','deck-chalk','deck-frost','deck-neonnight','deck-royalgold']),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania', ...seasonalIdsOf('emotes')]),
       tableTheme: new Set(['table-wood','table-felt','table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic','table-neon','table-aurora','table-space', ...seasonalIdsOf('tableTheme')]),
@@ -22892,7 +23056,7 @@ video {
       const bots = state.players.filter(p => p.isBot).length;
       if (state.isRanked) return 'Ranked match';
       if (state.isMultiplayer) return `Online · ${state.players.length} players`;
-      if (state.gauntlet) return `Gauntlet · Round ${Math.min(state.gauntlet.round, GAUNTLET.rounds.length - 1) + 1} · ${gauntletRoundLabel(Math.min(state.gauntlet.round, GAUNTLET.rounds.length - 1))}`;
+      if (state.gauntlet) { const gm = gauntletModeOf(state.gauntlet), gr = Math.min(state.gauntlet.round, gauntletRounds(gm).length - 1); return `${gm === 'easy' ? 'Gauntlet' : `${gauntletMode(gm).name} Gauntlet`} · Round ${gr + 1} · ${gauntletRoundLabel(gr, gm)}`; }
       const diff = String(state.difficulty || 'medium');
       return `Vs ${bots} bot${bots === 1 ? '' : 's'} · ${diff.charAt(0).toUpperCase() + diff.slice(1)}`;
     }
@@ -23411,6 +23575,8 @@ video {
         'frame-emerald-sovereign': 'box-shadow:inset 0 0 0 2px #34d399,0 0 9px rgba(52,211,153,.68)!important',
         'frame-darkness': 'border-color:#000!important;box-shadow:inset 0 0 0 3px #000!important',
         'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #b45309,0 0 9px rgba(245,158,11,.75)!important',
+        'frame-gauntlet-hard': 'border-color:#e11d48!important;box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #9f1239,0 0 9px rgba(225,29,72,.75)!important',
+        'frame-gauntlet-boss': 'border-color:#a855f7!important;box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #6b21a8,0 0 9px rgba(168,85,247,.75)!important',
         'frame-split-crimson': 'box-shadow:inset 2.5px 2.5px 0 #e11d48,inset -2.5px -2.5px 0 #f8fafc,0 0 8px rgba(225,29,72,.45)!important',
         'frame-split-royal': 'box-shadow:inset 2.5px 2.5px 0 #2563eb,inset -2.5px -2.5px 0 #fbbf24,0 0 8px rgba(37,99,235,.45)!important',
         'frame-split-noir': 'box-shadow:inset 2.5px 2.5px 0 #000,inset 3.5px 3.5px 0 #52525b,inset -2.5px -2.5px 0 #ec4899,0 0 8px rgba(236,72,153,.45)!important',
@@ -23436,6 +23602,8 @@ video {
         'frame-emerald-sovereign': 'box-shadow:0 0 0 1px #34d399,0 0 5px rgba(52,211,153,.5)!important',
         'frame-darkness': 'border-color:#000!important;box-shadow:0 0 0 1px #000!important',
         'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:0 0 0 1px #fbbf24,0 0 5px rgba(245,158,11,.55)!important',
+        'frame-gauntlet-hard': 'border-color:#e11d48!important;box-shadow:0 0 0 1px #fda4af,0 0 5px rgba(225,29,72,.55)!important',
+        'frame-gauntlet-boss': 'border-color:#a855f7!important;box-shadow:0 0 0 1px #d8b4fe,0 0 5px rgba(168,85,247,.55)!important',
         'frame-split-crimson': 'box-shadow:-1.5px -1.5px 0 0 #e11d48,1.5px 1.5px 0 0 #f8fafc!important',
         'frame-split-royal': 'box-shadow:-1.5px -1.5px 0 0 #2563eb,1.5px 1.5px 0 0 #fbbf24!important',
         'frame-split-noir': 'box-shadow:-1.5px -1.5px 0 0 #000,1.5px 1.5px 0 0 #ec4899!important',
@@ -25061,13 +25229,27 @@ video {
     // after changing any price, reward or challenge, re-run the exporter.
     // Gauntlet (Vs Bots): 5 one-bot games in a row, 3 lives. Rewards are paid
     // by the server (economy gauntlet) from these values (catalog export).
+    // Three modes (v254, owner): Easy for everyone; Hard at Lvl 30 once Easy
+    // is beaten; Boss at Lvl 50 once Easy is beaten and Hard 3 times. One
+    // mode a UK day, and a run in progress must end (won, or out of lives)
+    // before another mode can start. The top-level fields are Easy's (kept
+    // for older servers and builds).
     const GAUNTLET = {
       rounds: ['easy', 'easy', 'medium', 'hard', 'boss'],
       lives: 3,
       firstReward: 200,
       dailyReward: 50,
       picture: 'avatar-gauntlet', pictureName: 'Gauntlet Champion',
-      frame: 'frame-gauntlet', frameName: 'Gauntlet Gold'
+      frame: 'frame-gauntlet', frameName: 'Gauntlet Gold',
+      modeOrder: ['easy', 'hard', 'boss'],
+      modes: {
+        easy: { name: 'Easy', rounds: ['easy', 'easy', 'medium', 'hard', 'boss'], lives: 3, firstReward: 200, dailyReward: 50, level: 0, needs: {},
+          picture: 'avatar-gauntlet', pictureName: 'Gauntlet Champion', frame: 'frame-gauntlet', frameName: 'Gauntlet Gold' },
+        hard: { name: 'Hard', rounds: ['medium', 'hard', 'hard', 'hard', 'boss'], lives: 2, firstReward: 400, dailyReward: 100, level: 30, needs: { easy: 1 },
+          picture: 'avatar-gauntlet-hard', pictureName: 'Gauntlet Conqueror', frame: 'frame-gauntlet-hard', frameName: 'Crimson Gauntlet' },
+        boss: { name: 'Boss', rounds: ['boss', 'boss', 'boss'], lives: 1, firstReward: 600, dailyReward: 150, level: 50, needs: { easy: 1, hard: 3 },
+          picture: 'avatar-gauntlet-boss', pictureName: 'Gauntlet Overlord', frame: 'frame-gauntlet-boss', frameName: 'Amethyst Gauntlet' }
+      }
     };
     // Referrals: invite links (?ref=CODE). Paid by the server (economy
     // referral + matchFinished) from these values (catalog export).
@@ -25766,13 +25948,20 @@ video {
     // one (Daily tab). Their completion keys are written by the server.
     const GAUNTLET_CHALLENGES = {
       first: { id: 'gauntlet-first', name: 'Gauntlet Champion', desc: 'Beat all 5 Gauntlet bots for the first time.' },
-      daily: { id: 'gauntlet_daily', name: 'Daily Gauntlet', desc: 'Beat all 5 Gauntlet bots today.' }
+      daily: { id: 'gauntlet_daily', name: 'Daily Gauntlet', desc: "Beat today's Gauntlet (one a day): 50 Diamonds for Easy, 100 for Hard, 150 for Boss." },
+      // v254: each harder mode's first clear (key gauntlet-<mode>-first).
+      hard: { id: 'gauntlet-hard-first', name: 'Hard Gauntlet Champion', desc: 'Beat the Hard Gauntlet for the first time.' },
+      boss: { id: 'gauntlet-boss-first', name: 'Boss Gauntlet Champion', desc: 'Beat the Boss Gauntlet for the first time.' }
     };
+    const gauntletFirstChallenge = (mode) => (mode === 'easy' ? GAUNTLET_CHALLENGES.first : GAUNTLET_CHALLENGES[mode]);
+    const gauntletFirstKey = (mode) => gauntletFirstChallenge(mode).id;
     function gauntletBeatenToday(done = {}) {
       const today = localDateKey();
       if (done[`gauntlet_${today}`]) return true;
-      const first = done[GAUNTLET_CHALLENGES.first.id];
-      return !!first && localDateKey(new Date(Number(first.completedAt) || 0)) === today;
+      return GAUNTLET.modeOrder.some((m) => {
+        const first = done[gauntletFirstKey(m)];
+        return !!first && localDateKey(new Date(Number(first.completedAt) || 0)) === today;
+      });
     }
     const EARNED_AVATAR_RULES = {
       'avatar-crown-silver': { type: 'peakRating', min: 1000 },
@@ -25782,6 +25971,8 @@ video {
       'avatar-centurion': { type: 'rankedGames', min: 100 },
       'avatar-shithead': { type: 'lossStreak', min: 10 },
       'avatar-gauntlet': { type: 'gauntlet' }, // granted by the gauntlet action itself
+      'avatar-gauntlet-hard': { type: 'gauntlet' },
+      'avatar-gauntlet-boss': { type: 'gauntlet' },
       'avatar-recruiter': { type: 'recruits', min: 5 }
     };
     function serverEconomyCatalog() {
@@ -25881,7 +26072,8 @@ video {
         }
         const gettingStarted = GETTING_STARTED_CHALLENGES.find(c => c.id === id);
         if (gettingStarted) return gettingStarted.desc;
-        if (id === GAUNTLET_CHALLENGES.first.id) return GAUNTLET_CHALLENGES.first.desc;
+        const gFirst = GAUNTLET.modeOrder.map(gauntletFirstChallenge).find(c => c.id === id);
+        if (gFirst) return gFirst.desc;
         if (/^referral_joined_/.test(id)) return `You played ${REFERRAL.gamesNeeded} games after joining with a friend's invite.`;
         if (/^referral_/.test(id)) return `A friend you invited has played ${REFERRAL.gamesNeeded} games.`;
         if (/^gauntlet_\d{4}-\d{2}-\d{2}$/.test(id)) return GAUNTLET_CHALLENGES.daily.desc;
@@ -26733,7 +26925,8 @@ video {
         return { name: def?.name || 'Seasonal challenge', group: ev ? `${ev.name} ${inst.split('-')[1] || ''}`.trim() : 'Seasonal' };
       }
       if (/^gauntlet_\d{4}-\d{2}-\d{2}$/.test(key)) return { name: GAUNTLET_CHALLENGES.daily.name, group: 'Gauntlet' };
-      if (key === GAUNTLET_CHALLENGES.first.id) return { name: GAUNTLET_CHALLENGES.first.name, group: 'Gauntlet' };
+      const gFirst = GAUNTLET.modeOrder.map(gauntletFirstChallenge).find(c => c.id === key);
+      if (gFirst) return { name: gFirst.name, group: 'Gauntlet' };
       if (/^referral_/.test(key)) return { name: 'Invite bonus', group: 'Friends' };
       const gs = GETTING_STARTED_CHALLENGES.find(c => c.id === key);
       if (gs) return { name: gs.name, group: 'Getting Started' };
@@ -26993,8 +27186,10 @@ video {
       // Gauntlet: first clear (Bots) and the fixed Daily Gauntlet (paid by
       // the server's gauntlet action, recorded as completed challenges).
       const done = challengeEconomy.completedChallenges;
-      setListHtml('challengesGauntletList', renderChallengeRowHTML(GAUNTLET_CHALLENGES.first.name, GAUNTLET_CHALLENGES.first.desc,
-        GAUNTLET.firstReward, !!done[GAUNTLET_CHALLENGES.first.id], GAUNTLET_CHALLENGES.first.desc));
+      setListHtml('challengesGauntletList', GAUNTLET.modeOrder.map((m) => {
+        const c = gauntletFirstChallenge(m);
+        return renderChallengeRowHTML(c.name, c.desc, gauntletMode(m).firstReward, !!done[c.id], c.desc);
+      }).join(''));
       setListHtml('challengesDailyGauntletList', renderChallengeRowHTML(GAUNTLET_CHALLENGES.daily.name, GAUNTLET_CHALLENGES.daily.desc,
         GAUNTLET.dailyReward, gauntletBeatenToday(done), GAUNTLET_CHALLENGES.daily.desc));
       // Recruiter: friends who joined with your invite and played their games.
@@ -33393,7 +33588,7 @@ video {
         }
         render();
         notifyBanner(state.gauntlet && !state.isMultiplayer
-          ? `⚔️ Gauntlet restored: round ${state.gauntlet.round + 1} of ${GAUNTLET.rounds.length}, right where you left it.`
+          ? `⚔️ ${gauntletTitle(gauntletModeOf(state.gauntlet)).replace(/^The /, '')} restored: round ${state.gauntlet.round + 1} of ${gauntletRounds(gauntletModeOf(state.gauntlet)).length}, right where you left it.`
           : "Game restored from previous session!");
         if (state.phase === 'PLAY' && !state.isMultiplayer) {
           triggerNextTurn();

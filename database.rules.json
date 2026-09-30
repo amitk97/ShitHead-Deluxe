@@ -63,6 +63,7 @@
               newData.val() === 'frame-diamond' || newData.val() === 'frame-obsidian-throne' ||
               newData.val() === 'frame-emerald-sovereign' || newData.val() === 'frame-darkness' ||
               newData.val() === 'frame-gauntlet' || newData.val() === 'frame-ascendant' ||
+              newData.val().matches(/^frame-gauntlet-(hard|boss)$/) ||
               newData.val().matches(/^frame-(split-crimson|split-royal|split-noir)$/) ||
               newData.val().matches(/^frame-(dashed-gold|neon-tube|spectrum)$/) ||
               (newData.val().matches(/^frame-(lunar|valentine|ramadan|easter|summer)$/) ||
@@ -152,6 +153,7 @@
               newData.val() === 'avatar-crown-gold' || newData.val() === 'avatar-crown-diamond' ||
               newData.val() === 'avatar-crown-master' || newData.val() === 'avatar-centurion' ||
               newData.val() === 'avatar-shithead' || newData.val() === 'avatar-gauntlet' ||
+              newData.val().matches(/^avatar-gauntlet-(hard|boss)$/) ||
               newData.val() === 'avatar-recruiter' ||
               newData.val().matches(/^avatar-(royal-flush|phoenix|cosmic-ace)$/) ||
               newData.val().matches(/^avatar-(sapphire-sovereign|crimson-inferno|turtley)$/) ||

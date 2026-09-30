@@ -199,8 +199,9 @@ function award(user, parts, now, addDiamonds) {
 }
 
 // Gauntlet XP for beating the bot of round `round` (0-based).
-const gauntletBotXp = (round) => {
-  const rounds = (CAT.gauntlet && CAT.gauntlet.rounds) || [];
+const gauntletBotXp = (round, mode = 'easy') => {
+  const G = CAT.gauntlet || {};
+  const rounds = (G.modes && G.modes[mode] && G.modes[mode].rounds) || G.rounds || [];
   return num((RULES.gauntletBot || {})[rounds[round]]);
 };
 

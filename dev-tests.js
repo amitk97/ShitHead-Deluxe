@@ -2562,7 +2562,7 @@ async function runDevTestSuite() {
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
     const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Avatars' && !i.season).map(i => [i.name, i.cost]));
     assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000, 'Turtley': 5000 }, 'Shop pictures and prices');
-    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Recruiter'], 'Earn-only pictures');
+    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter'], 'Earn-only pictures');
     [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Avatars')
       .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
   });
@@ -2615,7 +2615,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 33, 'All 33 avatars appear in Custom (incl. the 5 level rewards)');
+    assertEqual(options.length, 35, 'All 35 avatars appear in Custom (incl. the 5 level rewards and 3 Gauntlet crests)');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -2901,8 +2901,8 @@ async function runDevTestSuite() {
     smoke.forEach(a => a.cancel());
     stage.querySelectorAll('.bfx').forEach(n => n.remove());
     renderPersonalisationAvatars();
-    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-13);
-    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Recruiter', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
+    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-15);
+    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
   });
 
   await test('Accessibility settings exist and apply', () => {
@@ -6645,7 +6645,7 @@ async function runDevTestSuite() {
     currentUser = saved.user; gauntletUsesServer = saved.usesServer; runShuffleIntro = saved.shuffle;
     challengeEconomy.diamonds = saved.diamonds; cosmeticPurchaseState = saved.owned; state.gauntlet = saved.g; state.isMultiplayer = saved.mp;
     if (saved.local === null) localStorage.removeItem(GAUNTLET_LOCAL_KEY); else localStorage.setItem(GAUNTLET_LOCAL_KEY, saved.local);
-    gauntletPending = null; gauntletLastView = null; closeGauntlet();
+    gauntletPending = null; gauntletLastView = null; gauntletPickedMode = null; closeGauntlet();
     document.getElementById('gauntletHud').classList.add('hidden');
   };
   const endGauntletGame = (won) => {
@@ -6755,6 +6755,55 @@ async function runDevTestSuite() {
     } finally { gauntletRestore(saved); }
   });
 
+  await test('Gauntlet modes (v254): Hard and Boss, their locks, one a day, lives and rewards', async () => {
+    const saved = gauntletSaved();
+    try {
+      assertEqual(GAUNTLET.modes.hard.rounds, ['medium', 'hard', 'hard', 'hard', 'boss'], 'Hard: Medium, three Hard, then the Boss');
+      assertEqual([GAUNTLET.modes.easy.lives, GAUNTLET.modes.hard.lives, GAUNTLET.modes.boss.lives], [3, 2, 1], 'Lives 3 / 2 / 1');
+      assertEqual(GAUNTLET.modes.boss.rounds, ['boss', 'boss', 'boss'], 'Boss: three Boss bots');
+      assertEqual([GAUNTLET.modes.hard.level, GAUNTLET.modes.boss.level], [30, 50], 'Unlock levels');
+      assertEqual(GAUNTLET.modes.boss.needs, { easy: 1, hard: 3 }, 'Boss needs Easy once and Hard 3 times');
+      assertEqual(GAUNTLET.modes.boss.firstReward, 600, 'Boss first clear pays 600');
+      assertEqual(serverEconomyCatalog().gauntlet.modes.boss.firstReward, 600, 'Exported to the server');
+      const mk = (over = {}) => ({ run: null, todayMode: null, modes: { easy: { completions: 1, firstDone: true, doneToday: false, locked: null },
+        hard: { completions: 0, firstDone: false, doneToday: false, locked: null }, boss: { completions: 0, firstDone: false, doneToday: false, locked: 'Reach Lvl 50 to unlock the Boss Gauntlet.' } }, ...over });
+      assertTrue(gauntletModeState(mk(), 'hard').open, 'Hard open when the server says so');
+      assertEqual(gauntletModeState(mk(), 'boss').why, 'Reach Lvl 50 to unlock the Boss Gauntlet.', "The server's lock reason is shown");
+      assertTrue(/Today's Gauntlet is Easy/.test(gauntletModeState(mk({ todayMode: 'easy' }), 'hard').why || ''), 'One Gauntlet a day');
+      assertTrue(/Sign in/.test(gauntletModeState({ local: true, run: null }, 'hard').why || '') || /offline/.test(gauntletModeState({ local: true, run: null }, 'hard').why || ''), 'Signed out: Easy only');
+      currentUser = { uid: 'g-uid' };
+      gauntletUsesServer = () => true;
+      let sent = null;
+      fakeEconomy({ gauntlet: (d) => { sent = d; return d.op === 'status' ? mk() : { ...mk(), run: { id: 'gh1', mode: 'hard', round: 0, lives: 2, playing: true, day: localDateKey() } }; } });
+      showGauntlet({ kind: 'welcome', status: mk() });
+      const body = document.getElementById('gauntletModalBody');
+      assertEqual(body.querySelectorAll('[data-gauntlet-pick]').length, 3, 'Three mode cards');
+      body.querySelector('[data-gauntlet-pick="boss"]').click();
+      assertTrue(/Lvl 50/.test(body.textContent) && body.querySelector('.gauntlet-go').disabled, 'A locked mode says why and cannot start');
+      body.querySelector('[data-gauntlet-pick="hard"]').click();
+      assertEqual(body.querySelectorAll('.gh-hearts .gh-heart').length, 2, 'Hard shows 2 hearts');
+      assertTrue(/400/.test(body.textContent) && /Gauntlet Conqueror/.test(body.textContent), 'Hard reward: 400 and its avatar');
+      const realIntro = runShuffleIntro; runShuffleIntro = (cb) => cb();
+      try {
+        body.querySelector('.gauntlet-go').click();
+        await new Promise(r => setTimeout(r, 0));
+      } finally { runShuffleIntro = realIntro; }
+      assertEqual(sent && sent.op === 'start' && sent.mode, 'hard', 'Start asks the server for the Hard Gauntlet');
+      assertEqual(state.gauntlet.mode, 'hard', 'The game is a Hard run');
+      assertEqual(state.players[1].difficulty, 'medium', 'Hard round 1 is the Medium bot');
+      renderGauntletHud();
+      assertEqual(document.querySelectorAll('#gauntletHud .gh-heart').length, 2, 'The HUD shows the mode\'s lives');
+      assertEqual(gauntletFirstKey('boss'), 'gauntlet-boss-first', 'Each mode has its own first-clear challenge');
+      assertEqual(challengeNameForKey('gauntlet-hard-first').name, 'Hard Gauntlet Champion', 'and it is named in the Completed list');
+      ['avatar-gauntlet', 'avatar-gauntlet-hard', 'avatar-gauntlet-boss'].forEach((id) => {
+        assertTrue(AVATAR_ART[id].photo && AVATAR_ART[id].animated && /gauntlet-\w+\.webp/.test(AVATAR_ART[id].art), `${id} is the owner's animated crest`);
+        assertTrue(isSupportedCosmetic('avatar', id), `${id} can be equipped`);
+      });
+      ['frame-gauntlet-hard', 'frame-gauntlet-boss'].forEach((id) => assertTrue(isSupportedCosmetic('frame', id) && !!getCosmeticFrameStyle(id) && !!getOpponentCosmeticFrameStyle(id), `${id} is a working frame`));
+      assertTrue(!!document.querySelector('#rulesModal [data-guide-section="gauntlet"] .guide-table'), 'The Guide has the modes table');
+    } finally { gauntletRestore(saved); closeGauntlet(); }
+  });
+
   await test('Gauntlet: the frame and picture are earn-only (never in the Shop, never giftable)', () => {
     assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.id === 'frame-gauntlet' || i.id === 'avatar-gauntlet'), 'Not sold');
     const cat = serverEconomyCatalog();
@@ -6798,7 +6847,7 @@ async function runDevTestSuite() {
       endGauntletGame(true);
       await gauntletMatchEnded();
       assertEqual(gauntletLastView.kind, 'error', 'No signal: the result waits');
-      assertEqual(gauntletStore.get(GAUNTLET_PENDING_KEY), { uid: 'g-uid', runId: 'g5', won: true, round: 1 }, 'Kept on the phone');
+      assertEqual(gauntletStore.get(GAUNTLET_PENDING_KEY), { uid: 'g-uid', runId: 'g5', mode: 'easy', won: true, round: 1 }, 'Kept on the phone');
       assertTrue(!!gauntletStore.get(GAUNTLET_BETWEEN_KEY), 'Remembered as between games');
       assertTrue(localStorage.getItem('shithead_game_state') === null, 'The finished game is never restored');
       const calls = fakeEconomy({ gauntlet: (d) => d.op === 'result'
@@ -7043,7 +7092,7 @@ async function runDevTestSuite() {
       assertTrue(Math.abs(btn.left - counts[0].left) < 1, 'Lined up with them on the left');
       assertTrue(info.left >= btn.right && info.right <= counts[2].right + 1, 'ⓘ on the right, within the column');
       assertTrue(Math.abs((info.top + info.height / 2) - (btn.top + btn.height / 2)) < 1.5, 'ⓘ level with the button');
-      assertTrue(/5 bots in a row/.test(document.getElementById('gauntletTip').textContent), 'The tip explains the Gauntlet');
+      assertTrue(/bots in a row/.test(document.getElementById('gauntletTip').textContent) && /Lvl 30/.test(document.getElementById('gauntletTip').textContent), 'The tip explains the Gauntlet and its modes');
       currentUser = null;
       localStorage.removeItem(GAUNTLET_LOCAL_KEY);
       openGauntletWelcome();

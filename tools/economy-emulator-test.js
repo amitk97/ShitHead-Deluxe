@@ -466,6 +466,57 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   g = await call('dave', { action: 'gauntlet', op: 'start' });
   ok(g.run && g.run.round === 0 && g.run.lives === 3, 'the new day starts at the first Easy bot with full lives', g);
 
+  // Gauntlet modes (v254): Hard (Lvl 30 + Easy beaten), Boss (Lvl 50 + Easy once + Hard 3 times),
+  // one mode a UK day, a run in progress must end before another mode.
+  const xpAt = (L) => ({ total: cat.xp.levels[L], level: L, backfilled: true, paidLevel: L, table: cat.xp.tableVersion });
+  const yesterday = { day: '2000-01-01', mode: 'easy' };
+  r = await call('dave', { action: 'gauntlet', op: 'start', mode: 'hard' });
+  ok(r.error && /Finish your Easy Gauntlet first/.test(r.error.message), 'a run in progress must end before another mode', r);
+  await admin('users/dave/gauntlet/run', 'DELETE');
+  r = await call('dave', { action: 'gauntlet', op: 'start', mode: 'hard' });
+  ok(r.error && /Today's Gauntlet is Easy/.test(r.error.message), 'one Gauntlet mode a day', r);
+  await admin('users/dave/gauntlet/dayMode', 'PUT', yesterday);
+  await admin('users/dave/xp', 'PUT', xpAt(29));
+  r = await call('dave', { action: 'gauntlet', op: 'start', mode: 'hard' });
+  ok(r.error && /Reach Lvl 30/.test(r.error.message), 'Hard needs Lvl 30', r);
+  g = await call('dave', { action: 'gauntlet', op: 'status' });
+  ok(g.modes && /Lvl 30/.test(g.modes.hard.locked || '') && /Lvl 50/.test(g.modes.boss.locked || '') && !g.modes.easy.locked, 'status names each lock', g.modes);
+  await admin('users/dave/xp', 'PUT', xpAt(30));
+  g = await call('dave', { action: 'gauntlet', op: 'start', mode: 'hard' });
+  ok(g.run && g.run.mode === 'hard' && g.run.lives === 2 && g.todayMode === 'hard', 'Hard starts with 2 lives', g);
+  r = await gGame(g.run.id, false, false);
+  ok(r.run && r.run.lives === 1, 'a Hard loss costs one of the 2 lives', r);
+  const dBefore = await admin('users/dave/diamonds');
+  for (let i = 0; i < 5; i++) r = await gGame(g.run.id, true);
+  ok(r.completed && r.first && r.diamondsAwarded === 400 && r.diamonds === dBefore + 400 && r.newItems.length === 2, 'beating Hard the first time pays 400 + avatar + frame', r);
+  const hOwned = await admin('users/dave/ownedCosmetics');
+  ok(hOwned['avatar-gauntlet-hard'] && hOwned['frame-gauntlet-hard'], 'Hard avatar and frame owned', Object.keys(hOwned));
+  ok((await admin('users/dave/completedChallenges/gauntlet-hard-first'))?.reward === 400, 'Hard first clear is its own challenge');
+  ok((await admin('users/dave/gauntlet/modes/hard/completions')) === 1 && (await admin('users/dave/gauntlet/completions')) >= 1, "Hard's record is kept apart from Easy's");
+  await daveCan('equip the Hard Gauntlet avatar', db => set(ref(db, 'users/dave/equippedCosmetics/avatar'), 'avatar-gauntlet-hard'));
+  await daveCan('equip the Crimson Gauntlet frame', db => set(ref(db, 'users/dave/equippedCosmetics/frame'), 'frame-gauntlet-hard'));
+  await denied('equip the Boss Gauntlet avatar without it', db => set(ref(db, 'users/dave/equippedCosmetics/avatar'), 'avatar-gauntlet-boss'));
+  r = await call('dave', { action: 'gauntlet', op: 'start', mode: 'boss' });
+  ok(r.error && /Today's Gauntlet is Hard/.test(r.error.message), 'no Boss on a Hard day', r);
+  await admin('users/dave/gauntlet/dayMode', 'PUT', yesterday);
+  r = await call('dave', { action: 'gauntlet', op: 'start', mode: 'boss' });
+  ok(r.error && /Reach Lvl 50/.test(r.error.message), 'Boss needs Lvl 50', r);
+  await admin('users/dave/xp', 'PUT', xpAt(50));
+  r = await call('dave', { action: 'gauntlet', op: 'start', mode: 'boss' });
+  ok(r.error && /Hard Gauntlet 3 times first \(1 so far\)/.test(r.error.message), 'Boss needs Hard beaten 3 times', r);
+  await admin('users/dave/gauntlet/modes/hard/completions', 'PUT', 3);
+  g = await call('dave', { action: 'gauntlet', op: 'start', mode: 'boss' });
+  ok(g.run && g.run.mode === 'boss' && g.run.lives === 1, 'Boss starts with 1 life', g);
+  r = await gGame(g.run.id, true, false);
+  ok(r.run && r.run.round === 1 && r.run.lives === 1, 'a Boss bot beaten moves the run on', r);
+  r = await gGame(g.run.id, false);
+  ok(r.over && !r.run, 'one Boss loss ends the run', r);
+  r = await call('dave', { action: 'gauntlet', op: 'start', mode: 'easy' });
+  ok(r.error && /Today's Gauntlet is Boss/.test(r.error.message), 'no Easy on a Boss day, even after the run ended', r);
+  g = await call('dave', { action: 'gauntlet', op: 'start', mode: 'boss' });
+  for (let i = 0; i < 3; i++) r = await gGame(g.run.id, true, i > 0);
+  ok(r.completed && r.first && r.diamondsAwarded === 600 && r.newItems.map(x => x.id).sort().join() === 'avatar-gauntlet-boss,frame-gauntlet-boss', 'beating Boss pays 600 + avatar + frame', r);
+
   // Referrals: invite codes, linking new players, rewards after 3 real games
   await call('carol', { action: 'init' });
   await admin('users/carol/username', 'PUT', 'Carol');
@@ -545,11 +596,11 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok((await erinCan(db => set(ref(db, 'referralCodes/ERIN'), { uid: 'erin' }))) === 'denied', 'blocked: making your own code by hand');
 
   // Leaderboards the server keeps (boards/challenges, boards/gauntlet) and top-place mail
-  ok((await admin('users/dave/gauntlet/botsBeaten')) === 11, 'Gauntlet: every bot beaten is counted (2 clears + 1 win = 11)', await admin('users/dave/gauntlet/botsBeaten'));
+  ok((await admin('users/dave/gauntlet/botsBeaten')) === 20, 'Gauntlet: every bot beaten is counted in every mode (Easy 2 clears + 1 win, Hard 5, Boss 1 + 3 = 20)', await admin('users/dave/gauntlet/botsBeaten'));
   await admin('users/dave/username', 'PUT', 'Dave'); // every real account has one
   await call('dave', { action: 'sync' });
   const gb = await admin('boards/gauntlet/dave');
-  ok(gb && gb.count === 11 && gb.name === 'Dave', 'Gauntlet board entry kept by the server', gb);
+  ok(gb && gb.count === 20 && gb.name === 'Dave', 'Gauntlet board entry kept by the server', gb);
   const daveDone = Object.keys((await admin('users/dave/completedChallenges')) || {}).length;
   ok((await admin('boards/challenges/dave'))?.count === daveDone, 'Challenges board: challenges completed', [await admin('boards/challenges/dave'), daveDone]);
   let mail = await admin('users/dave/activityInbox/board_gauntlet_1');
@@ -557,9 +608,9 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   ok((await admin('users/alice/activityInbox/board_ranked_1'))?.board === 'ranked', 'Ranked #1 is congratulated too');
   // Older account: bots beaten back-filled at sign-in (5 per clear), overtakes dave
   await call('jon', { action: 'init' });
-  await admin('users/jon', 'PATCH', { username: 'Jon', gauntlet: { completions: 3, firstDoneAt: 1 } });
+  await admin('users/jon', 'PATCH', { username: 'Jon', gauntlet: { completions: 5, firstDoneAt: 1 } });
   await call('jon', { action: 'sync' });
-  ok((await admin('users/jon/gauntlet/botsBeaten')) === 15 && (await admin('boards/gauntlet/jon'))?.count === 15, 'older accounts are back-filled at sign-in', await admin('boards/gauntlet/jon'));
+  ok((await admin('users/jon/gauntlet/botsBeaten')) === 25 && (await admin('boards/gauntlet/jon'))?.count === 25, 'older accounts are back-filled at sign-in', await admin('boards/gauntlet/jon'));
   ok((await admin('users/jon/activityInbox/board_gauntlet_1'))?.rank === 1, 'the new #1 is congratulated');
   ok((await admin('users/dave/boardBest/gauntlet')) === 1, 'the best place mailed is remembered');
   await admin('users/dave/activityInbox/board_gauntlet_1', 'DELETE');
@@ -695,7 +746,7 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     await admin('users/xena/ownedCosmetics', 'DELETE');
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
     x = await call('xena', { action: 'matchFinished', matchId: 'xp_r1' });
-    ok(x.xp && x.xp.level === 10 && (x.xp.rewards || []).map(r => r.id).sort().join() === 'avatar-lvl-rookie-rogue,back-lvl-first-burn', 'reaching Lvl 10 grants Rookie Rogue and First Burn', x.xp);
+    ok(x.xp && x.xp.level === 10 && (x.xp.rewards || []).map(r => r.id).sort().join() === 'avatar-lvl-rookie-rogue,back-lvl-first-burn,burn-lvl-spark-snap', 'reaching Lvl 10 grants Rookie Rogue, First Burn and (Lvl 5) Spark Snap', x.xp);
     ok((await admin('users/xena/ownedCosmetics/back-lvl-first-burn')) && (await admin('users/xena/activityInbox/unlock_avatar-lvl-rookie-rogue'))?.unlocked, 'owned, with an unlock mail');
     ok((await tryWrite('xena', db => set(ref(db, 'users/xena/equippedCosmetics/cardBack'), 'back-lvl-first-burn'))) !== 'denied', 'and it can be equipped');
     ok((await tryWrite('xena', db => set(ref(db, 'users/xena/equippedCosmetics/cardBack'), 'back-lvl-inferno'))) === 'denied', 'blocked: equipping the Lvl 50 back without it');
