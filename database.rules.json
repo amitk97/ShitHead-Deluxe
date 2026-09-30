@@ -109,6 +109,8 @@
               newData.val() === 'burn-electric' || newData.val() === 'burn-paint' ||
               newData.val() === 'burn-sweets' || newData.val() === 'burn-smoke' ||
               newData.val().matches(/^burn-(blackhole|origami|pixel|lava)$/) ||
+              newData.val().matches(/^burn-lvl-(spark-snap|smoke-burst|inferno-sweep)$/) ||
+              newData.val().matches(/^burn-lvl-(hellfire-spiral|royal-incineration|shitstorm)$/) ||
               (newData.val().matches(/^burn-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^burn-(halloween|diwali|christmas|newyear)$/)))))"
           },

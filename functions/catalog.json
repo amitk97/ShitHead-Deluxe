@@ -1710,6 +1710,36 @@
     "id": "back-lvl-master-pile",
     "name": "Master of the Pile",
     "level": 99
+   },
+   {
+    "id": "burn-lvl-spark-snap",
+    "name": "Spark Snap",
+    "level": 5
+   },
+   {
+    "id": "burn-lvl-smoke-burst",
+    "name": "Smoke Burst",
+    "level": 20
+   },
+   {
+    "id": "burn-lvl-inferno-sweep",
+    "name": "Inferno Sweep",
+    "level": 40
+   },
+   {
+    "id": "burn-lvl-hellfire-spiral",
+    "name": "Hellfire Spiral",
+    "level": 60
+   },
+   {
+    "id": "burn-lvl-royal-incineration",
+    "name": "Royal Incineration",
+    "level": 80
+   },
+   {
+    "id": "burn-lvl-shitstorm",
+    "name": "The ShitStorm",
+    "level": 99
    }
   ],
   "tableVersion": 2,

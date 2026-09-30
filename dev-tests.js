@@ -1160,9 +1160,37 @@ async function runDevTestSuite() {
     }
     assertEqual(calls, [['launch', 'quick_start', false], ['hub']], 'First tap: Quick Start; after that: the hub');
   });
+  await test('Level burns (v253): six earn-only burns, animated, each with its own sound, over within 2.1s', () => {
+    const ids = LEVEL_REWARDS.filter(r => r.category === 'Burn Effects').map(r => r.id);
+    assertEqual(ids, LEVEL_BURN_IDS, 'The six level burns');
+    const stage = testBurnStage();
+    ids.forEach((id) => {
+      assertTrue(isSupportedCosmetic('burnEffect', id), `${id} can be equipped`);
+      assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.id === id), `${id} is never sold`);
+      assertTrue(typeof BURN_SOUNDS[id] === 'function' && !Object.keys(BURN_SOUNDS).some(o => o !== id && BURN_SOUNDS[o] === BURN_SOUNDS[id]), `${id} has its own sound`);
+      assertTrue(burnPreviewIcon(id) !== '🔥' || id === 'burn-lvl-inferno-sweep', `${id} has its own preview icon`);
+      stage.querySelectorAll('.bfx, .bfx-flash').forEach(n => n.remove());
+      playBurnFx(id, stage, 120, 80, 1);
+      const pieces = [...stage.querySelectorAll('.bfx')];
+      assertTrue(pieces.length > 20, `${id} draws its pieces (${pieces.length})`);
+      assertEqual(pieces.filter(el => el.getAnimations().length === 0).length, 0, `${id}: every piece is animated`);
+      const ends = pieces.flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
+      assertTrue(ends.every(e => Number.isFinite(e)) && Math.max(...ends) <= 2100, `${id} ends within 2.1s (got ${Math.round(Math.max(...ends))}ms)`);
+      assertTrue(Math.max(...ends) >= 800, `${id} lasts long enough to see`);
+    });
+    stage.querySelectorAll('.bfx, .bfx-flash').forEach(n => n.remove());
+    const real = { ...cosmeticPurchaseState };
+    try {
+      ids.forEach(id => delete cosmeticPurchaseState[id]);
+      renderPersonalisationCosmetics();
+      const tile = document.querySelector('#personalisationBurnEffects [data-equip-id="burn-lvl-shitstorm"]');
+      assertTrue(!!tile && tile.hasAttribute('data-locked') && /Reach Lvl 99/.test(tile.textContent), 'Locked in Custom → Burn with its level');
+      assertEqual(nextLevelReward(1)?.id, 'burn-lvl-spark-snap', 'Spark Snap is the first level reward (Lvl 5)');
+    } finally { cosmeticPurchaseState = real; renderPersonalisationCosmetics(); }
+  });
   await test('Every Burn cosmetic (and the default) has its own burn sound', () => {
     assertTrue(typeof BURN_SOUNDS.default === 'function', 'A default burn sound exists');
-    const missing = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && typeof BURN_SOUNDS[i.id] !== 'function').map(i => i.id);
+    const missing = [...COSMETIC_SHOP_ITEMS, ...LEVEL_REWARDS].filter(i => i.category === 'Burn Effects' && typeof BURN_SOUNDS[i.id] !== 'function').map(i => i.id);
     assertEqual(missing, [], 'Burn items without a sound');
     const p = makePlayer({ id: 'x', cosmetics: { burnEffect: 'burn-ice' } });
     assertEqual(burnEffectIdFor(p), 'burn-ice', "A player's equipped burn picks the sound");
@@ -2775,7 +2803,7 @@ async function runDevTestSuite() {
     shopTab = savedTab; shopFilter = savedFilter; renderCosmeticShop();
     renderPersonalisationCosmetics();
     const burnNames = [...document.querySelectorAll('#personalisationBurnEffects .avatar-option-name')].map(n => n.textContent).slice(1);
-    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show', 'Black Hole', 'Lava Melt', 'Origami Fold', 'Pixel Blast'], 'Custom burn tiles in value order');
+    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show', 'Black Hole', 'Lava Melt', 'Origami Fold', 'Pixel Blast', 'Spark Snap', 'Smoke Burst', 'Inferno Sweep', 'Hellfire Spiral', 'Royal Incineration', 'The ShitStorm'], 'Custom burn tiles in value order, then the level burns by level');
   });
   await test('REGRESSION: Card Shower and the deal freeze the relevant player\'s card style at the start', () => {
     const saved = { ...equippedCosmetics };
@@ -4844,7 +4872,8 @@ async function runDevTestSuite() {
   await test('Level rewards (v251): the owner\'s earn-only avatars and card backs, granted by the server', () => {
     assertEqual(LEVEL_REWARDS.map(r => [r.id, r.level]), [
       ['avatar-lvl-rookie-rogue', 10], ['avatar-lvl-card-shark', 25], ['avatar-lvl-burn-king', 50], ['avatar-lvl-chaos-jester', 75], ['avatar-lvl-the-shithead', 99],
-      ['back-lvl-first-burn', 10], ['back-lvl-sharks-mark', 30], ['back-lvl-inferno', 50], ['back-lvl-chaos-crown', 70], ['back-lvl-master-pile', 99]], 'The ten rewards');
+      ['back-lvl-first-burn', 10], ['back-lvl-sharks-mark', 30], ['back-lvl-inferno', 50], ['back-lvl-chaos-crown', 70], ['back-lvl-master-pile', 99],
+      ['burn-lvl-spark-snap', 5], ['burn-lvl-smoke-burst', 20], ['burn-lvl-inferno-sweep', 40], ['burn-lvl-hellfire-spiral', 60], ['burn-lvl-royal-incineration', 80], ['burn-lvl-shitstorm', 99]], 'The sixteen rewards');
     assertEqual(XP_RULES.rewards.map(r => r.id), LEVEL_REWARDS.map(r => r.id), 'Exported to the server catalog');
     assertTrue(!['back-rising-star', 'frame-ascendant', 'table-summit'].some(id => bigPreviewItem(id)), 'The v248 set is gone');
     LEVEL_REWARDS.forEach((r) => {
@@ -4852,7 +4881,7 @@ async function runDevTestSuite() {
       assertTrue(isSupportedCosmetic(type, r.id), `${r.id} can be equipped`);
       assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.id === r.id), `${r.id} is never sold`);
       assertTrue(customAllItems(type).some(i => i.id === r.id), `${r.id} is listed in Custom → All`);
-      assertTrue(/\.webp\?v=\d+$/.test(r.file), `${r.id} uses its HD art file`);
+      if (r.category !== 'Burn Effects') assertTrue(/\.webp\?v=\d+$/.test(r.file), `${r.id} uses its HD art file`);
     });
     assertEqual(getCosmeticBackClass('back-lvl-inferno'), 'cosmetic-back-lvl-inferno lvl-back', 'Card backs get their art class');
     assertTrue(/lvl-rookie-rogue\.webp/.test(avatarHtml('avatar-lvl-rookie-rogue', 40)), 'Avatars draw their art');
@@ -4863,7 +4892,7 @@ async function runDevTestSuite() {
       const tile = document.querySelector('#personalisationCardBacks [data-equip-id="back-lvl-first-burn"]');
       assertTrue(!!tile && tile.hasAttribute('data-locked') && /Reach Lvl 10/.test(tile.textContent), 'Locked in Custom with its level');
       delete cosmeticPurchaseState['avatar-lvl-rookie-rogue'];
-      assertEqual(nextLevelReward(3)?.level, 10, 'Profile names the next reward (lowest level first)');
+      assertEqual(nextLevelReward(6)?.level, 10, 'Profile names the next reward (lowest level first)');
       applyLevelRewards([{ id: 'back-lvl-first-burn', name: 'First Burn', level: 10 }]);
       assertTrue(!!cosmeticPurchaseState['back-lvl-first-burn'], 'Owned once the server grants it');
       assertTrue(/First Burn/.test(banners.pop() || ''), 'with a banner');
