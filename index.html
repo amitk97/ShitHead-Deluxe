@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v247 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v248 (ShitHead-Deluxe-208) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -625,6 +625,52 @@
     .hdr-xp-tip b { color:#67e8f9; font-weight:900; }
     .hdr-xp-tip small { display:block; color:#94a3b8; font-size:10px; font-weight:600; }
     .xp-card-sub { font-size:10px; color:#94a3b8; font-weight:700; }
+    #emoteToggleBtn { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; touch-action:manipulation; }
+    .lb-peek { flex:none; background:none; border:0; padding:0; cursor:pointer; border-radius:10px; }
+    .lb-peek:hover > *, .lb-peek:focus-visible > * { filter:brightness(1.2); }
+    [data-lb-row] { -webkit-touch-callout:none; }
+    .lb-peek-card { min-width:190px; }
+    .lb-peek-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:12px; color:#fff; }
+    .lb-peek-card dl { display:grid; grid-template-columns:auto 1fr; gap:3px 12px; margin:0; }
+    .lb-peek-card dt { color:#94a3b8; font-weight:700; }
+    .lb-peek-card dd { margin:0; color:#f8fafc; font-weight:800; text-align:right; display:flex; align-items:center; justify-content:flex-end; gap:4px; }
+    .lb-peek-card dd svg { width:13px; height:13px; }
+    .inbox-unlock-thumb { flex:none; display:flex; align-items:center; justify-content:center; min-width:42px; }
+    .inbox-unlock-thumb .mini-table { transform:scale(.5); transform-origin:center; margin:-20px -30px; }
+    .term-link { display:inline; padding:0; margin:0; border:0; background:none; font:inherit; color:inherit; text-decoration:underline; text-decoration-color:rgba(251,191,36,.7); text-underline-offset:2px; text-decoration-thickness:1px; cursor:pointer; }
+    .term-link:hover, .term-link:focus-visible { color:#fbbf24; }
+    #rulesModal [data-term] { border-radius:8px; transition:background-color .4s var(--ease-soft, ease), box-shadow .4s var(--ease-soft, ease); }
+    #rulesModal [data-term].term-focus { background:rgba(251,191,36,.14); box-shadow:0 0 0 2px rgba(251,191,36,.75); padding:4px 6px; margin:0 -6px; animation:termFocusPulse 1.2s ease-in-out 2; }
+    @keyframes termFocusPulse { 50% { box-shadow:0 0 0 4px rgba(251,191,36,.35), 0 0 18px rgba(251,191,36,.45); } }
+    body.reduce-motion #rulesModal [data-term].term-focus { animation:none; }
+    /* § Big preview (press and hold an item). Above pages (95), below the
+       victory layer (110) so a victory preview plays over it. */
+    #bigPreview { position:fixed; inset:0; z-index:105; display:flex; align-items:center; justify-content:center; padding:calc(var(--header-h, 2.75rem) + var(--safe-top, 0px) + 12px) 16px 16px; background:rgba(2,6,23,.82); backdrop-filter:blur(4px); }
+    #bigPreview.hidden { display:none; }
+    #bigPreview .bp-panel { position:relative; width:min(360px, 100%); max-height:100%; overflow:auto; background:#0f172a; border:1px solid rgba(251,191,36,.45); border-radius:18px; padding:16px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.6); }
+    #bigPreview .bp-close { position:absolute; top:8px; right:10px; width:30px; height:30px; border-radius:999px; color:#94a3b8; font-size:16px; font-weight:900; }
+    #bigPreview .bp-name { font-size:17px; font-weight:900; color:#fff; padding:0 28px; }
+    #bigPreview .bp-kind { font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#67e8f9; margin-top:2px; }
+    #bigPreview .bp-stage { margin:14px 0 10px; min-height:220px; display:flex; align-items:center; justify-content:center; }
+    #bigPreview .bp-status { font-size:11px; font-weight:700; color:#cbd5e1; }
+    #bigPreview .bp-play { margin-top:10px; width:100%; padding:9px; border-radius:12px; border:1px solid #475569; color:#e2e8f0; font-size:11px; font-weight:900; }
+    #bigPreview .bp-stage-fx { width:100%; height:280px; min-height:280px; }
+    #bigPreview .bp-card { width:150px !important; height:210px !important; max-width:none !important; max-height:none !important; }
+    #bigPreview .bp-frame { display:flex; flex-direction:column; justify-content:space-between; padding:10px 12px; }
+    #bigPreview .bp-rank { font-size:40px; line-height:1; text-align:left; }
+    #bigPreview .bp-suit { font-size:56px; line-height:1; text-align:right; }
+    #bigPreview .bp-avatar { display:flex; }
+    #bigPreview .bp-table { width:100%; display:flex; justify-content:center; transform:scale(1.12); transform-origin:center; margin:14px 0; }
+    #bigPreview .bp-deck { display:flex; gap:14px; transform:scale(1.8); margin:40px 0; }
+    #bigPreview .bp-victory { font-size:96px; line-height:1; }
+    #bigPreview .bp-emotes { display:grid; grid-template-columns:repeat(3, 64px); gap:12px; }
+    #bigPreview .bp-emotes span { width:64px; height:64px; border-radius:999px; background:#1e293b; border:1px solid rgba(251,191,36,.5); display:flex; align-items:center; justify-content:center; font-size:34px; }
+    :is(#themesModal [data-equip-id], #collectionModal [data-coll-id], #shopModal [data-shop-row]) { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+    .xp-reward-next { display:flex; align-items:center; gap:10px; width:100%; margin-top:8px; padding:6px 10px; border-radius:12px; border:1px solid rgba(148,163,184,.35); background:rgba(15,23,42,.6); text-align:left; font-size:11px; font-weight:800; color:#e2e8f0; cursor:pointer; }
+    .xp-reward-next:hover { border-color:rgba(251,191,36,.6); }
+    .xp-reward-next small { display:block; font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:#fbbf24; }
+    .xp-reward-art { flex:none; display:flex; align-items:center; justify-content:center; width:56px; height:44px; }
+    .xp-reward-art .mini-table { transform:scale(.55); transform-origin:center; }
     #hamburgerAccountHead .drawer-level { display:inline-flex; flex-shrink:0; }
     .xp-badge-sm { height:14px; padding:0 4px; font-size:8px; border-radius:5px; }
     .xp-badge-seat { height:calc(var(--opp-name-size, 9px) + 5px); padding:0 4px; font-size:max(8px, calc(var(--opp-name-size, 9px) - 1px)); border-radius:5px; margin-left:4px; }
@@ -1349,6 +1395,16 @@
       border-color:#f59e0b !important;
       box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #b45309,0 0 10px rgba(245,158,11,.7),0 3px 8px rgba(0,0,0,.55) !important;
     }
+    /* Level rewards (v248): Ascendant (Lvl 25), a violet rim inside a gold
+       hairline with a two-tone glow; Rising Star (Lvl 15) card back. */
+    body[data-equipped-frame="frame-ascendant"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) {
+      border-color:#c084fc !important;
+      box-shadow:inset 0 0 0 1px #fef3c7,inset 0 0 0 3px #7c3aed,inset 0 0 0 4px rgba(251,191,36,.85),0 0 10px rgba(168,85,247,.7),0 0 3px rgba(251,191,36,.9),0 3px 8px rgba(0,0,0,.55) !important;
+    }
+    .cosmetic-back-rising-star { background:url("art/backs/rising-star.svg") center/cover no-repeat, #1e1b4b !important; color:#fbbf24; }
+    .custom-card-back.cosmetic-back-rising-star { border-color:#fbbf24 !important; }
+    .custom-card-back.cosmetic-back-rising-star::before, .custom-card-back.cosmetic-back-rising-star::after { display:none; }
+    .cosmetic-back-rising-star > svg { opacity:0; }
     /* Shop card backs, set 2. */
     .custom-card-back.cosmetic-back-arcade {
       background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-2 -3 15 14' fill='%23a3e635'><path d='M2 0h1v1h-1zM8 0h1v1h-1zM3 1h1v1h-1zM7 1h1v1h-1zM2 2h7v1h-7zM1 3h2v1h-2zM4 3h3v1h-3zM8 3h2v1h-2zM0 4h11v1h-11zM0 5h1v1h-1zM2 5h7v1h-7zM10 5h1v1h-1zM0 6h1v1h-1zM2 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM3 7h2v1h-2zM6 7h2v1h-2z'/></svg>") center / 78% auto no-repeat,
@@ -1738,8 +1794,15 @@
     /* Speed locks (v247) */
     #lobbySpeedTicks .speed-locked { color:#64748b; display:inline-flex; align-items:center; gap:2px; }
     #lobbySpeedTicks .speed-locked svg { width:9px; height:9px; }
-    .speed-lock-note { display:block; margin-top:3px; font-size:9px; font-weight:700; color:#94a3b8; text-align:center; }
-    #settingsSpeedLockNote.speed-lock-note { text-align:left; font-size:8px; margin-top:1px; color:#fbbf24; }
+    .speed-lock-btn { display:inline-flex; align-items:center; justify-content:center; padding:3px; margin:-3px -3px -3px -1px; border-radius:6px; color:#94a3b8; cursor:help; background:none; border:0; vertical-align:middle; }
+    .speed-lock-btn:hover, .speed-lock-btn:focus-visible { color:#fbbf24; background:rgba(251,191,36,.12); }
+    .speed-lock-btn svg { width:10px; height:10px; }
+    #settingsSpeedLockBtn { margin-left:2px; }
+    /* A small explanation bubble anchored to a button (showInfoPop). */
+    #infoPop { position:fixed; z-index:330; max-width:min(280px, calc(100vw - 24px)); background:#0f172a; color:#e2e8f0; border:1px solid rgba(251,191,36,.45); border-radius:12px; padding:9px 11px; font-size:11px; line-height:1.4; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.55); opacity:0; transform:translateY(4px); transition:opacity .15s var(--ease-soft, ease), transform .15s var(--ease-soft, ease); pointer-events:auto; text-align:left; }
+    #infoPop.show { opacity:1; transform:none; }
+    #infoPop p + p { margin-top:4px; }
+    body.reduce-motion #infoPop { transition:none; }
     #handZoneLabel::after { content:'\2193'; margin-left:4px; font-size:1.2em; line-height:1; }
     /* The Deck (card-base) is wider than the Base Card (card-table). Equal
        side columns keep the pile, and the table cards and hand below it, on
@@ -4969,6 +5032,7 @@ video {
   <canvas id="particleCanvas"></canvas>
   <div id="burnFxLayer" aria-hidden="true"></div>
   <div id="victoryFxLayer" aria-hidden="true"></div>
+  <div id="bigPreview" class="hidden" role="dialog" aria-modal="true" aria-label="Item preview"></div>
   <div id="jokerFxLayer" aria-hidden="true"></div>
 
   <!-- Snap Burn Banner -->
@@ -5231,7 +5295,6 @@ video {
             <div id="lobbySpeedTicks" class="flex justify-between text-[9px] text-slate-400 px-1 font-mono mt-0.5 font-bold">
               <span>0.5x</span><span>1x</span><span>2x</span><span>4x</span>
             </div>
-            <p id="lobbySpeedLockNote" class="speed-lock-note hidden"></p>
           </div>
 
           <button id="startSingleBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 font-black rounded-xl shadow-lg transition tracking-wider text-slate-950 text-sm active:scale-95 cursor-pointer">START GAME</button>
@@ -5494,8 +5557,8 @@ video {
 
         <div id="settingsTab-gameplay" class="settings-body settings-tab-panel" data-settings-panel="gameplay" role="tabpanel">
           <div class="settings-searchable flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="speed, pace, fast, slow, bot speed, tempo, opponent turn">
-            <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Game Speed</span>
-            <span class="block text-[8px] text-slate-400">How fast opponents take their turn</span><span id="settingsSpeedLockNote" class="speed-lock-note hidden"></span></span>
+            <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Game Speed <button type="button" id="settingsSpeedLockBtn" class="speed-lock-btn hidden" data-speed-lock="" aria-label="Locked speeds"></button></span>
+            <span class="block text-[8px] text-slate-400">How fast opponents take their turn</span></span>
             <span class="flex items-center gap-1.5 shrink-0">
               <input type="range" id="headerSpeedSlider" min="0" max="3" step="1" value="1" class="w-16 accent-amber-400 cursor-pointer h-1" />
               <span id="speedDisplayLabel" class="text-[9px] font-mono font-black text-amber-400 w-8 text-right">1.0x</span>
@@ -6419,7 +6482,7 @@ video {
         <div id="emoteLayer" class="hidden absolute pointer-events-none" style="z-index:65; right:0; top:calc((clamp(26px,7.5vw,34px) + 6px) * -1); height:clamp(26px,7.5vw,34px);">
           <div class="relative">
             <button id="emoteToggleBtn" class="pointer-events-auto rounded-full bg-slate-900/90 border-2 border-amber-500/70 shadow-lg flex items-center justify-center transition transform active:scale-90 hover:scale-105"
-              style="width:clamp(26px,7.5vw,34px);height:clamp(26px,7.5vw,34px);font-size:clamp(14px,4.2vw,19px);" aria-label="Send a reaction">😄</button>
+              style="width:clamp(26px,7.5vw,34px);height:clamp(26px,7.5vw,34px);font-size:clamp(14px,4.2vw,19px);" aria-label="Send a reaction (hold to send your last one again)" data-tip="Emotes (hold: send your last one again)">😄</button>
             <div id="emoteFan" class="hidden absolute pointer-events-auto" style="right:0;bottom:0;width:0;height:0;"></div>
           </div>
         </div>
@@ -6819,38 +6882,58 @@ video {
             <span class="chevron transform transition-transform duration-200">&#9660;</span>
           </button>
           <div class="accordion-content hidden p-4 space-y-2.5 border-t border-slate-800 text-[11.5px] leading-relaxed text-slate-300">
-            <p><strong class="text-amber-400">Base Card:</strong> The card at the very bottom of the Pile &mdash; the first one played since the last Burn. Normally irrelevant, but a 5 drops the target down to it, so the next player must beat the Base Card instead of the top one.</p>
-            <p><strong class="text-amber-400">Blind Card:</strong> See <em>Face-Down Cards</em>.</p>
-            <p><strong class="text-amber-400">Bonus Draw:</strong> If the card you draw right after playing matches the rank you just played, you get offered a free follow-up play with it before the turn passes &mdash; a way to chain extra plays in one turn.</p>
-            <p><strong class="text-amber-400">Burn:</strong> The entire Pile is removed from the game permanently &mdash; not picked up by anyone. Caused by a 10, by four of a kind, or by a Joker duel. Whoever burnt it plays again immediately on an empty Pile &mdash; unless that was their last card, in which case they finish and the next player carries on.</p>
-            <p><strong class="text-amber-400">Challenges:</strong> Goals that pay Diamonds: Getting Started, daily and weekly picks, Bots, Ranked and Friends milestones. Menu &rarr; Challenges shows every one and what it asks for.</p>
-            <p><strong class="text-amber-400">Constraint:</strong> A restriction the previous card placed on your turn. A 6 forces an EVEN card, a Jack forces an ODD card, and a 7 forces a card of rank 7 or lower. The banner shows the active constraint.</p>
-            <p><strong class="text-amber-400">Deck:</strong> The face-down stack you draw from. After each turn you top your Hand back up to three cards while the Deck lasts. Once it's empty, no more topping up &mdash; and your Table Cards become reachable.</p>
-            <p><strong class="text-amber-400">Diamonds:</strong> The game&rsquo;s currency (💎). Earned from wins, challenges, the daily login streak and the Gauntlet; spent in the Shop on cosmetics or gifts for friends.</p>
-            <p><strong class="text-amber-400">Direction:</strong> Which way turn order flows around the table. A 9 flips it &mdash; an odd number played at once reverses it, an even number leaves it unchanged. A 5 played on a 9 base, or a 3 played over a 9, both act as a 9 for this purpose too.</p>
-            <p><strong class="text-amber-400">Duel (Joker Duel):</strong> When you play a Joker you choose an opponent to pick up the Pile. If that opponent holds a Joker they may counter with it, and the Pile bounces back to you instead. Both Jokers are burnt either way. Whoever wins the duel plays next; if their Joker was their last card, they finish and the next player carries on.</p>
-            <p><strong class="text-amber-400">Face-Down Cards:</strong> Three cards dealt beneath your Face-Up Cards that nobody ever sees. Only playable once your Hand, the Deck <em>and</em> your Face-Up Cards are all gone. You flip one blind &mdash; if it isn't legal, you pick up the Pile.</p>
-            <p><strong class="text-amber-400">Face-Up Cards:</strong> Three cards on the table in front of you, visible to everyone. Only playable once your Hand and the Deck are both empty. Because you play them last, the Swap Phase is your chance to stock them with strong cards.</p>
-            <p><strong class="text-amber-400">Gauntlet:</strong> Five Vs Bots games in a row against tougher and tougher bots (Easy, Easy, Medium, Hard, Boss) with 3 lives. See <em>The Gauntlet</em> above.</p>
-            <p><strong class="text-amber-400">Hand:</strong> The cards only you can see, held off the table. You play from here first, and top back up to three from the Deck after each turn while the Deck lasts.</p>
-            <p><strong class="text-amber-400">Joker Effect:</strong> A cosmetic animation that plays over the table whenever you play a Joker, bought in the Shop&rsquo;s Joker tab. Everyone at the table sees it, online too.</p>
-            <p><strong class="text-amber-400">Last Card:</strong> A player down to one card in total gets a pulsing <strong>&#9757;&#65039; LAST CARD</strong> badge and a warning, so nobody sneaks out unnoticed.</p>
-            <p><strong class="text-amber-400">Leaderboard:</strong> Menu &rarr; Leaderboard: three tabs, <em>Ranked</em> (rating), <em>Challenges</em> (challenges completed) and <em>Gauntlet</em> (bots beaten). Reach the top 10, #3, #2 or #1 and a congratulations message lands in your Inbox.</p>
-            <p><strong class="text-amber-400">Lives:</strong> Your hearts in the Gauntlet. You start with 3; losing a game costs one and you replay the same bot.</p>
-            <p><strong class="text-amber-400">Pick Up:</strong> Taking the entire Pile into your Hand because you had no legal move. The setback of the game. If your Hand was already empty, you must also take one Face-Up Card (or several of the same rank) along with it.</p>
-            <p><strong class="text-amber-400">Pile:</strong> The face-up stack in the middle that everyone plays onto. Your card must match or beat the top card of the Pile &mdash; if you can't, you take the whole Pile into your Hand.</p>
-            <p><strong class="text-amber-400">Power Cards:</strong> The five strongest cards &mdash; 2 (Reset), 3 (Transparent), 10 (Burner), Ace (highest rank) and Joker. Worth saving rather than spending, and worth putting in your Face-Up Cards during the Swap Phase.</p>
-            <p><strong class="text-amber-400">Rank:</strong> A card's value, ignoring suit. Suits never matter in ShitHead &mdash; only rank. That's also why several cards of the same rank can be played together in one turn.</p>
-            <p><strong class="text-amber-400">Ranked:</strong> One-on-one online games against a real player, scored with a rating. Win and your rating goes up; lose and it goes down. Leaving a Ranked game counts as a loss.</p>
-            <p><strong class="text-amber-400">Rating:</strong> Your Ranked score (everyone starts at 500). It decides your Tier and your place on the Ranked leaderboard.</p>
-            <p><strong class="text-amber-400">Reset:</strong> The 2. It can be played on almost anything (except a Jack) and clears the target, so the next player may follow it with any card at all.</p>
-            <p><strong class="text-amber-400">Seasonal Event:</strong> Halloween, Christmas, Diwali and more: while an event is on, its themed items are sold in the Shop&rsquo;s Seasonal tab, and winning 3 games earns that event&rsquo;s picture.</p>
-            <p><strong class="text-amber-400">ShitHead:</strong> The loser &mdash; the last player still holding cards once everyone else has emptied their Hand, Face-Up and Face-Down cards.</p>
-            <p><strong class="text-amber-400">Snap Burn:</strong> Completing four of a kind <em>out of turn</em>. If the top of the Pile already shows some of a rank and you hold the rest, a Snap Burn button appears and you can burn the Pile immediately, even when it isn't your turn.</p>
-            <p><strong class="text-amber-400">Swap Phase:</strong> The setup round before play begins, where you trade cards between your Hand and your Face-Up Cards. Since Face-Up Cards are played last, this is where you protect your Power Cards. Press READY when done.</p>
-            <p><strong class="text-amber-400">Table Cards:</strong> Collective term for your Face-Up and Face-Down Cards &mdash; everything in front of you rather than in your Hand.</p>
-            <p><strong class="text-amber-400">Tier:</strong> Your Ranked rank from your rating: Novice, Bronze (500+), Silver (1000+), Gold (1500+), Platinum (1800+) and Master (2000+).</p>
-            <p><strong class="text-amber-400">Transparent Card:</strong> The 3. It sets no target of its own, so the next player must beat whatever card sits underneath it. Playable on anything except a 6.</p>
+            <p data-term="base-card"><strong class="text-amber-400">Base Card:</strong> The card at the very bottom of the Pile &mdash; the first one played since the last Burn. Normally irrelevant, but a 5 drops the target down to it, so the next player must beat the Base Card instead of the top one.</p>
+            <p data-term="best-of-series"><strong class="text-amber-400">Best Of Series:</strong> Play Friends only: two players at Lvl 20 or above play a Best of 3 or Best of 5. Each pays an entry, the game matches the pot, and the series winner takes it all.</p>
+            <p data-term="blind-card"><strong class="text-amber-400">Blind Card:</strong> See <em>Face-Down Cards</em>.</p>
+            <p data-term="bonus-draw"><strong class="text-amber-400">Bonus Draw:</strong> If the card you draw right after playing matches the rank you just played, you get offered a free follow-up play with it before the turn passes &mdash; a way to chain extra plays in one turn.</p>
+            <p data-term="burn"><strong class="text-amber-400">Burn:</strong> The entire Pile is removed from the game permanently &mdash; not picked up by anyone. Caused by a 10, by four of a kind, or by a Joker duel. Whoever burnt it plays again immediately on an empty Pile &mdash; unless that was their last card, in which case they finish and the next player carries on.</p>
+            <p data-term="card-history"><strong class="text-amber-400">Card History:</strong> The circle in the left column on the table. It shows the card you have to beat; tap it to open the list of recent plays.</p>
+            <p data-term="card-powers"><strong class="text-amber-400">Card Powers:</strong> The &#9432; button on the table: what every card does. Press and hold any card on the table for the same information.</p>
+            <p data-term="challenges"><strong class="text-amber-400">Challenges:</strong> Goals that pay Diamonds: Getting Started, daily and weekly picks, Bots, Ranked and Friends milestones. Menu &rarr; Challenges shows every one and what it asks for.</p>
+            <p data-term="constraint"><strong class="text-amber-400">Constraint:</strong> A restriction the previous card placed on your turn. A 6 forces an EVEN card, a Jack forces an ODD card, and a 7 forces a card of rank 7 or lower. The banner shows the active constraint.</p>
+            <p data-term="custom"><strong class="text-amber-400">Custom:</strong> Menu &rarr; Custom: equip the pictures, tables, card backs, frames, decks, effects and emotes you own. Press and hold any item there (or in the Shop) for a big preview.</p>
+            <p data-term="daily-challenges"><strong class="text-amber-400">Daily Challenges:</strong> Three new goals every UK day (Challenges &rarr; Daily tab), each paying Diamonds and XP.</p>
+            <p data-term="deck"><strong class="text-amber-400">Deck:</strong> The face-down stack you draw from. After each turn you top your Hand back up to three cards while the Deck lasts. Once it's empty, no more topping up &mdash; and your Table Cards become reachable.</p>
+            <p data-term="diamonds"><strong class="text-amber-400">Diamonds:</strong> The game&rsquo;s currency (💎). Earned from wins, challenges, the daily login streak and the Gauntlet; spent in the Shop on cosmetics or gifts for friends.</p>
+            <p data-term="direction"><strong class="text-amber-400">Direction:</strong> Which way turn order flows around the table. A 9 flips it &mdash; an odd number played at once reverses it, an even number leaves it unchanged. A 5 played on a 9 base, or a 3 played over a 9, both act as a 9 for this purpose too.</p>
+            <p data-term="draw"><strong class="text-amber-400">Draw:</strong> When the same cards keep going round and nobody can ever get out, the game ends in a draw: nobody wins and nobody is the ShitHead.</p>
+            <p data-term="duel"><strong class="text-amber-400">Duel (Joker Duel):</strong> When you play a Joker you choose an opponent to pick up the Pile. If that opponent holds a Joker they may counter with it, and the Pile bounces back to you instead. Both Jokers are burnt either way. Whoever wins the duel plays next; if their Joker was their last card, they finish and the next player carries on.</p>
+            <p data-term="face-down-cards"><strong class="text-amber-400">Face-Down Cards:</strong> Three cards dealt beneath your Face-Up Cards that nobody ever sees. Only playable once your Hand, the Deck <em>and</em> your Face-Up Cards are all gone. You flip one blind &mdash; if it isn't legal, you pick up the Pile.</p>
+            <p data-term="face-up-cards"><strong class="text-amber-400">Face-Up Cards:</strong> Three cards on the table in front of you, visible to everyone. Only playable once your Hand and the Deck are both empty. Because you play them last, the Swap Phase is your chance to stock them with strong cards.</p>
+            <p data-term="four-of-a-kind"><strong class="text-amber-400">Four Of A Kind:</strong> All four cards of one rank on top of the Pile burn it, whether they were played together or across several turns. See <em>Burn</em> and <em>Snap Burn</em>.</p>
+            <p data-term="gauntlet"><strong class="text-amber-400">Gauntlet:</strong> Five Vs Bots games in a row against tougher and tougher bots (Easy, Easy, Medium, Hard, Boss) with 3 lives. See <em>The Gauntlet</em> above.</p>
+            <p data-term="hand"><strong class="text-amber-400">Hand:</strong> The cards only you can see, held off the table. You play from here first, and top back up to three from the Deck after each turn while the Deck lasts.</p>
+            <p data-term="joker"><strong class="text-amber-400">Joker:</strong> The strongest card. Play it on anything, then choose an opponent to pick up the Pile. See <em>Duel</em>.</p>
+            <p data-term="joker-effect"><strong class="text-amber-400">Joker Effect:</strong> A cosmetic animation that plays over the table whenever you play a Joker, bought in the Shop&rsquo;s Joker tab. Everyone at the table sees it, online too.</p>
+            <p data-term="last-card"><strong class="text-amber-400">Last Card:</strong> A player down to one card in total gets a pulsing <strong>&#9757;&#65039; LAST CARD</strong> badge and a warning, so nobody sneaks out unnoticed.</p>
+            <p data-term="leaderboard"><strong class="text-amber-400">Leaderboard:</strong> Menu &rarr; Leaderboard: three tabs, <em>Ranked</em> (rating), <em>Challenges</em> (challenges completed) and <em>Gauntlet</em> (bots beaten). Reach the top 10, #3, #2 or #1 and a congratulations message lands in your Inbox.</p>
+            <p data-term="level"><strong class="text-amber-400">Level:</strong> You earn XP for finishing games, winning, Ranked, the Gauntlet and challenges. Levels run from 1 to 99; every level up pays Diamonds, and some levels unlock free items (see <em>Level Rewards</em>).</p>
+            <p data-term="level-rewards"><strong class="text-amber-400">Level Rewards:</strong> Free things you unlock by levelling up: 2x game speed at Lvl 5 and 4x at Lvl 10 (signed in), the Rising Star card back at Lvl 15, the Ascendant frame at Lvl 25 and the Summit table at Lvl 50.</p>
+            <p data-term="lives"><strong class="text-amber-400">Lives:</strong> Your hearts in the Gauntlet. You start with 3; losing a game costs one and you replay the same bot.</p>
+            <p data-term="pick-up"><strong class="text-amber-400">Pick Up:</strong> Taking the entire Pile into your Hand because you had no legal move. The setback of the game. If your Hand was already empty, you must also take one Face-Up Card (or several of the same rank) along with it.</p>
+            <p data-term="pile"><strong class="text-amber-400">Pile:</strong> The face-up stack in the middle that everyone plays onto. Your card must match or beat the top card of the Pile &mdash; if you can't, you take the whole Pile into your Hand.</p>
+            <p data-term="play-friends"><strong class="text-amber-400">Play Friends:</strong> Online rooms with friends: share the room code or an invite link, add bots to fill empty seats, and play a Best Of Series once you're both Lvl 20.</p>
+            <p data-term="play-matrix"><strong class="text-amber-400">Play Matrix:</strong> The &#9638; button on the table: a grid showing which card can go on which.</p>
+            <p data-term="power-cards"><strong class="text-amber-400">Power Cards:</strong> The five strongest cards &mdash; 2 (Reset), 3 (Transparent), 10 (Burner), Ace (highest rank) and Joker. Worth saving rather than spending, and worth putting in your Face-Up Cards during the Swap Phase.</p>
+            <p data-term="quick-start"><strong class="text-amber-400">Quick Start:</strong> The one-minute tutorial for new players. The Tutorial page has longer lessons on every rule.</p>
+            <p data-term="rank"><strong class="text-amber-400">Rank:</strong> A card's value, ignoring suit. Suits never matter in ShitHead &mdash; only rank. That's also why several cards of the same rank can be played together in one turn.</p>
+            <p data-term="ranked"><strong class="text-amber-400">Ranked:</strong> One-on-one online games against a real player, scored with a rating. Win and your rating goes up; lose and it goes down. Leaving a Ranked game counts as a loss.</p>
+            <p data-term="rating"><strong class="text-amber-400">Rating:</strong> Your Ranked score (everyone starts at 500). It decides your Tier and your place on the Ranked leaderboard.</p>
+            <p data-term="recruit"><strong class="text-amber-400">Recruit:</strong> Share your invite link (Profile or Friends). When a new player joins with it and plays 3 games, you both get Diamonds. Recruit 5 for the Recruiter picture.</p>
+            <p data-term="reset"><strong class="text-amber-400">Reset:</strong> The 2. It can be played on almost anything (except a Jack) and clears the target, so the next player may follow it with any card at all.</p>
+            <p data-term="seasonal-event"><strong class="text-amber-400">Seasonal Event:</strong> Halloween, Christmas, Diwali and more: while an event is on, its themed items are sold in the Shop&rsquo;s Seasonal tab, and winning 3 games earns that event&rsquo;s picture.</p>
+            <p data-term="select-all-of-a-rank"><strong class="text-amber-400">Select All Of A Rank:</strong> With it on (the header button, or S on a keyboard), tapping a card selects every card of that rank in your Hand.</p>
+            <p data-term="shithead"><strong class="text-amber-400">ShitHead:</strong> The loser &mdash; the last player still holding cards once everyone else has emptied their Hand, Face-Up and Face-Down cards.</p>
+            <p data-term="skip"><strong class="text-amber-400">Skip:</strong> The 8. The next player misses their turn.</p>
+            <p data-term="snap-burn"><strong class="text-amber-400">Snap Burn:</strong> Completing four of a kind <em>out of turn</em>. If the top of the Pile already shows some of a rank and you hold the rest, a Snap Burn button appears and you can burn the Pile immediately, even when it isn't your turn.</p>
+            <p data-term="stand-in"><strong class="text-amber-400">Stand-In:</strong> If a player's app closes during an online game, a Medium bot plays their seat until they're back. After 5 of its turns the absent player is out of that game.</p>
+            <p data-term="swap-phase"><strong class="text-amber-400">Swap Phase:</strong> The setup round before play begins, where you trade cards between your Hand and your Face-Up Cards. Since Face-Up Cards are played last, this is where you protect your Power Cards. Press READY when done.</p>
+            <p data-term="table-cards"><strong class="text-amber-400">Table Cards:</strong> Collective term for your Face-Up and Face-Down Cards &mdash; everything in front of you rather than in your Hand.</p>
+            <p data-term="tier"><strong class="text-amber-400">Tier:</strong> Your Ranked rank from your rating: Novice, Bronze (500+), Silver (1000+), Gold (1500+), Platinum (1800+) and Master (2000+).</p>
+            <p data-term="transparent-card"><strong class="text-amber-400">Transparent Card:</strong> The 3. It sets no target of its own, so the next player must beat whatever card sits underneath it. Playable on anything except a 6.</p>
+            <p data-term="vs-bots"><strong class="text-amber-400">Vs Bots:</strong> Games against computer players at Easy, Medium, Hard or Boss. Win games to unlock the next difficulty. Works offline too.</p>
+            <p data-term="weekly-challenges"><strong class="text-amber-400">Weekly Challenges:</strong> Five goals every UK week (Monday to Sunday) on the Challenges page, each paying Diamonds and XP.</p>
+            <p data-term="win-streak"><strong class="text-amber-400">Win Streak:</strong> Wins in a row. In Ranked a streak adds bonus rating on top of the win: +5 at 2 wins, +10 at 3, +15 at 5 and +20 at 10 and every 10 after.</p>
           </div>
         </div>
 
@@ -6870,6 +6953,7 @@ video {
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">F11 or F</span> : Toggle Fullscreen</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">M</span> : Toggle the menu open/closed</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">I</span> : Toggle the Inbox open/closed</div>
+              <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">Esc</span> : Close every menu and page, back to the home screen (or the table during a game)</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-emerald-400 font-bold">1, 2, 3 (Face-Up Phase)</span> : Select the 1st, 2nd, or 3rd Face-Up Card, then press ENTER to play it</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-emerald-400 font-bold">1, 2, 3 (Blind Phase)</span> : Instantly play the 1st, 2nd, or 3rd Face-Down Card (no Enter needed)</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-emerald-400 font-bold">ENTER</span> : Play Selected Card(s)</div>
@@ -13640,12 +13724,25 @@ video {
       });
     }
 
+    // Hold the emote button (CARD_HOLD_MS) to send your last emote again
+    // (v248); a tap still opens the fan. Remembered on this device.
+    let lastSentEmote = (() => { try { return localStorage.getItem('shithead_last_emote') || ''; } catch (e) { return ''; } })();
+    function resendLastEmote() {
+      if (!lastSentEmote) { notifyBanner('Send an emote first, then hold the button to send it again.'); return false; }
+      if (emoteFanOpen) toggleEmoteFan(true);
+      sendEmote(lastSentEmote);
+      const btn = document.getElementById('emoteToggleBtn');
+      if (btn && btn.animate && !motionOff()) btn.animate([{ scale: 1 }, { scale: 1.25 }, { scale: 1 }], { duration: 320, easing: EASE.spring });
+      return true;
+    }
     function sendEmote(emoji) {
       if (!canSendEmote()) {
         notifyBanner('Slow down a moment.');
         return;
       }
       emoteSendTimes.push(Date.now());
+      lastSentEmote = emoji;
+      try { localStorage.setItem('shithead_last_emote', emoji); } catch (e) {}
       const local = state.players.find(p => p.id === state.localPlayerId);
       const senderName = local ? local.name : 'You';
       showEmoteFloat(emoji, state.localPlayerId);
@@ -13780,7 +13877,8 @@ video {
         'back-tartan': 'cosmetic-back-tartan',
         'back-artdeco': 'cosmetic-back-artdeco',
         'back-dragon': 'cosmetic-back-dragon',
-        'back-stained': 'cosmetic-back-stained'
+        'back-stained': 'cosmetic-back-stained',
+        'back-rising-star': 'cosmetic-back-rising-star'
       };
       if (cosmeticBackClasses[equippedCosmetics.cardBack]) return cosmeticBackClasses[equippedCosmetics.cardBack];
       if (typeof SEASONAL_BACK_IDS !== 'undefined' && SEASONAL_BACK_IDS.has(equippedCosmetics.cardBack)) return getCosmeticBackClass(equippedCosmetics.cardBack);
@@ -15533,24 +15631,91 @@ video {
       if (speedWantedIndex === null) return;
       updateSpeedByIndex(speedWantedIndex, { noSave: true });
     }
-    // Lock marks on the lobby's 2x/4x ticks and a line saying how to unlock.
+    // The full explanation behind a lock (tap/hover on the lock).
+    function speedLockExplain(idx) {
+      const need = SPEED_UNLOCK_LEVELS[idx] || 0;
+      const label = `${SPEED_PRESETS[idx]}x speed`;
+      const xpOn = typeof xpShown !== 'function' || xpShown();
+      if (!currentUser) return xpOn ? `${label} is locked. Sign in and reach Lvl ${need} to unlock it.` : `${label} is locked. Sign in to unlock it.`;
+      return `${label} unlocks at Lvl ${need}. You're Lvl ${speedLevelNow()}: finish games to earn XP.`;
+    }
+    // Lock buttons on the lobby's 2x/4x ticks (and one by Settings' Game
+    // Speed): hover on PC or tap shows why and how to unlock (showInfoPop).
     function refreshSpeedLocks() {
       const ticks = document.querySelectorAll('#lobbySpeedTicks > span');
-      const notes = [];
+      const locked = [];
       ticks.forEach((tick, i) => {
         const reason = speedLockReason(i);
         tick.classList.toggle('speed-locked', !!reason);
-        tick.innerHTML = `${SPEED_PRESETS[i]}x${reason ? icon('lock') : ''}`;
-        tick.title = reason;
-        if (reason) notes.push(reason);
+        tick.innerHTML = reason
+          ? `${SPEED_PRESETS[i]}x<button type="button" class="speed-lock-btn" data-speed-lock="${i}" aria-label="${escapeAttr(speedLockExplain(i))}">${icon('lock')}</button>`
+          : `${SPEED_PRESETS[i]}x`;
+        tick.removeAttribute('title');
+        if (reason) locked.push(i);
       });
-      const signIn = notes.some(n => /^Sign in/.test(n));
-      const note = !notes.length ? '' : signIn ? 'Sign in to use 2x and 4x.' : notes.map(n => n.replace(' speed unlocks at', ' at').replace(/\.$/, '')).join(', ') + '.';
-      ['lobbySpeedLockNote', 'settingsSpeedLockNote'].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) { el.textContent = note; el.classList.toggle('hidden', !note); }
-      });
+      const sb = document.getElementById('settingsSpeedLockBtn');
+      if (sb) {
+        sb.classList.toggle('hidden', !locked.length);
+        sb.dataset.speedLock = locked.join(',');
+        if (!sb.innerHTML) sb.innerHTML = icon('lock');
+        sb.setAttribute('aria-label', locked.map(speedLockExplain).join(' '));
+      }
     }
+    // One small bubble for short explanations anchored to a button: tap
+    // (opts.toggle: a second tap closes it) or hover on PC (opts.hover: closes
+    // when the pointer leaves). Closes on any other tap, Escape or scroll.
+    let infoPopAnchor = null;
+    function hideInfoPop() {
+      const pop = document.getElementById('infoPop');
+      if (pop) pop.remove();
+      infoPopAnchor = null;
+    }
+    function showInfoPop(anchor, html, opts = {}) {
+      if (!anchor) return;
+      if (opts.toggle && infoPopAnchor === anchor && !document.getElementById('infoPop')?.dataset.hover) { hideInfoPop(); return; }
+      hideInfoPop();
+      const pop = document.createElement('div');
+      pop.id = 'infoPop';
+      pop.setAttribute('role', 'tooltip');
+      if (opts.hover) pop.dataset.hover = '1';
+      pop.innerHTML = html;
+      document.body.appendChild(pop);
+      infoPopAnchor = anchor;
+      const r = anchor.getBoundingClientRect();
+      const pw = pop.offsetWidth, ph = pop.offsetHeight;
+      const top0 = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 44;
+      let top = r.top - ph - 8;
+      if (top < top0 + 4) top = r.bottom + 8;
+      const left = Math.max(12, Math.min(window.innerWidth - pw - 12, r.left + r.width / 2 - pw / 2));
+      pop.style.left = `${left}px`; pop.style.top = `${Math.max(4, top)}px`;
+      requestAnimationFrame(() => pop.classList.add('show'));
+      if (opts.hover) {
+        const leave = (e) => { if (!anchor.contains(e.relatedTarget) && infoPopAnchor === anchor) { hideInfoPop(); } anchor.removeEventListener('mouseleave', leave); };
+        anchor.addEventListener('mouseleave', leave);
+      }
+    }
+    document.addEventListener('pointerdown', (e) => {
+      if (!infoPopAnchor) return;
+      if (e.target.closest('#infoPop') || infoPopAnchor.contains(e.target)) return;
+      hideInfoPop();
+    }, true);
+    window.addEventListener('scroll', () => { if (infoPopAnchor) hideInfoPop(); }, true);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && infoPopAnchor) { hideInfoPop(); e.stopImmediatePropagation(); } }, true);
+    function speedLockPopHtml(list) {
+      return String(list).split(',').filter(Boolean).map(i => `<p>${escapeHtml(speedLockExplain(Number(i)))}</p>`).join('');
+    }
+    (function wireSpeedLockTips() {
+      const target = (e) => e.target.closest && e.target.closest('[data-speed-lock]');
+      document.addEventListener('click', (e) => {
+        const b = target(e); if (!b) return;
+        e.preventDefault(); e.stopPropagation();
+        showInfoPop(b, speedLockPopHtml(b.dataset.speedLock), { toggle: true });
+      }, true);
+      document.addEventListener('mouseover', (e) => {
+        const b = target(e); if (!b || infoPopAnchor === b || !window.matchMedia('(hover: hover)').matches) return;
+        showInfoPop(b, speedLockPopHtml(b.dataset.speedLock), { hover: true });
+      });
+    })();
 
     function returnToHomeScreen() {
       if (confirm("Return to Main Menu?")) {
@@ -18357,6 +18522,16 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v248: [
+        ['🏆', 'Level rewards: the Rising Star card back at Lvl 15, the Ascendant frame at Lvl 25 and the Summit table at Lvl 50, free.', WN_KEY],
+        ['✨', 'Press and hold any item in Custom or the Shop for a big preview that plays the effect.', WN_KEY],
+        ['📬', 'Friends get a mail when you reach every 10th level, and level 99.', WN_KEY],
+        ['📖', 'Challenge words like Snap Burn and Gauntlet open the Guide on that term; more Key Terms added.'],
+        ['😄', 'Hold the emote button to send your last emote again.'],
+        ['📊', 'Tap a leaderboard score, or hold a row, for a quick look at that player\'s stats.'],
+        ['⌨️', 'Escape closes every menu and page in one press on PC.'],
+        ['🔒', 'Tap or hover the lock on 2x and 4x speed to see how to unlock them.']
+      ],
       v247: [
         ['⏩', 'Game speed: 2x now unlocks at Lvl 5 and 4x at Lvl 10 (sign in to use them). 0.5x and 1x are open to everyone.', WN_KEY]
       ],
@@ -19311,6 +19486,8 @@ video {
       'neon': "art/tables/neon.svg",
       'aurora': "art/tables/aurora.svg",
       'space': "art/tables/space.svg",
+      // Level reward (Lvl 50): tools/make-level-rewards.py.
+      'summit': "art/tables/summit.svg",
       // Free photo-like surfaces (tools/make-table-textures.py): seamless
       // 1920px tiles repeated at TABLE_TILE_PX (3x pixels: sharp on phones,
       // PCs and 4K screens alike), lit by CSS gradients (TILED_TABLE_LIGHT).
@@ -19327,7 +19504,8 @@ video {
       'table-angelic': { art: 'angelic', base: '#312e81', rim: 'inset 0 0 0 3px #e0f2fe,inset 0 0 50px rgba(224,242,254,.25)', label: 'rgba(224,242,254,.9)' },
       'table-neon': { art: 'neon', base: '#1a0b2e', rim: 'inset 0 0 0 2px #e879f9,inset 0 0 0 4px rgba(34,211,238,.55),inset 0 0 50px rgba(0,0,0,.6)', label: 'rgba(240,171,252,.9)' },
       'table-aurora': { art: 'aurora', base: '#0b1a2e', rim: 'inset 0 0 0 3px #34d399,inset 0 0 0 4px rgba(224,242,254,.3),inset 0 0 50px rgba(0,0,0,.55)', label: 'rgba(110,231,183,.9)' },
-      'table-space': { art: 'space', base: '#05060f', rim: 'inset 0 0 0 3px #6366f1,inset 0 0 0 4px rgba(251,191,36,.35),inset 0 0 52px rgba(0,0,0,.65)', label: 'rgba(199,210,254,.9)' }
+      'table-space': { art: 'space', base: '#05060f', rim: 'inset 0 0 0 3px #6366f1,inset 0 0 0 4px rgba(251,191,36,.35),inset 0 0 52px rgba(0,0,0,.65)', label: 'rgba(199,210,254,.9)' },
+      'table-summit': { art: 'summit', base: '#1e1b4b', rim: 'inset 0 0 0 3px #f59e0b,inset 0 0 0 4px rgba(254,243,199,.35),inset 0 0 52px rgba(0,0,0,.6)', label: 'rgba(253,230,138,.9)' }
     };
     // Seasonal event pictures (shop + earn-only). Same tile, tones and
     // shared metal gradients as every other picture.
@@ -20820,6 +20998,16 @@ video {
     const EARNED_FRAMES = [
       { id: 'frame-gauntlet', category: 'Frames', name: 'Gauntlet Gold', earned: true, cost: 0, requirement: 'Beat the Gauntlet', tones: ['#1c0a02', '#f59e0b', '#fde68a'] }
     ];
+    // Level rewards (v248, owner): free cosmetics that unlock with levels, so
+    // a level is something to show off (§ XP & levels). Never sold or gifted;
+    // the server grants them into ownedCosmetics once the account's level
+    // reaches them (xp.grantLevelRewards, catalog xp.rewards). Art:
+    // tools/make-level-rewards.py (vector).
+    const LEVEL_REWARDS = [
+      { id: 'back-rising-star', category: 'Card Backs', name: 'Rising Star', earned: true, level: 15, cost: 0, requirement: 'Reach Lvl 15', tones: ['#1e1b4b', '#fbbf24', '#7c3aed'] },
+      { id: 'frame-ascendant', category: 'Frames', name: 'Ascendant', earned: true, level: 25, cost: 0, requirement: 'Reach Lvl 25', tones: ['#2e1065', '#c084fc', '#fbbf24'] },
+      { id: 'table-summit', category: 'Table Themes', name: 'Summit', earned: true, level: 50, cost: 0, requirement: 'Reach Lvl 50', tones: ['#1e1b4b', '#f59e0b', '#7a3f55'] }
+    ];
     COSMETIC_SHOP_ITEMS.push(...SEASONAL_SHOP_ITEMS);
     EARNED_AVATARS.push(...SEASONAL_EARNED_AVATARS);
     function avatarPeakRating(u) {
@@ -20835,11 +21023,11 @@ video {
       'Joker Effects': 'jokerEffect', 'Profile Pictures': 'avatar', 'Decks': 'deck'
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
-      cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco','back-dragon','back-stained', ...seasonalIdsOf('cardBack')]),
-      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet','frame-split-crimson','frame-split-royal','frame-split-noir','frame-dashed-gold','frame-neon-tube','frame-spectrum', ...seasonalIdsOf('frame')]),
+      cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco','back-dragon','back-stained','back-rising-star', ...seasonalIdsOf('cardBack')]),
+      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet','frame-ascendant','frame-split-crimson','frame-split-royal','frame-split-noir','frame-dashed-gold','frame-neon-tube','frame-spectrum', ...seasonalIdsOf('frame')]),
       deck: new Set(['deck-obsidian','deck-emerald','deck-cyber','deck-crimson','deck-bigprint','deck-casino','deck-arcade','deck-fourcolour','deck-lavender','deck-paper','deck-blueprint','deck-chalk','deck-frost','deck-neonnight','deck-royalgold']),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania', ...seasonalIdsOf('emotes')]),
-      tableTheme: new Set(['table-wood','table-felt','table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic','table-neon','table-aurora','table-space', ...seasonalIdsOf('tableTheme')]),
+      tableTheme: new Set(['table-wood','table-felt','table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic','table-neon','table-aurora','table-space','table-summit', ...seasonalIdsOf('tableTheme')]),
       burnEffect: new Set(['burn-coloured','burn-ice','burn-electric','burn-paint','burn-sweets','burn-smoke','burn-blackhole','burn-origami','burn-pixel','burn-lava', ...seasonalIdsOf('burnEffect')]),
       victoryEffect: new Set(['victory-confetti','victory-cards','victory-fireworks','victory-sparklers','victory-stars','victory-karate','victory-trophy','victory-rocket','victory-origami','victory-lion', ...seasonalIdsOf('victoryEffect')]),
       jokerEffect: new Set(['joker-grin','joker-jackbox','joker-puppet','joker-magic','joker-glitch','joker-storm','joker-hypnotist','joker-vampire','joker-redcard','joker-portal', ...seasonalIdsOf('jokerEffect')]),
@@ -20899,7 +21087,7 @@ video {
 
     function isSupportedCosmetic(type, id) {
       if (id === 'default') return Object.prototype.hasOwnProperty.call(DEFAULT_EQUIPPED_COSMETICS, type);
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES].find(entry => entry.id === id);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
       return !!item && COSMETIC_CATEGORY_TYPES[item.category] === type && !!COSMETIC_RUNTIME_IDS[type]?.has(id);
     }
 
@@ -20982,7 +21170,7 @@ video {
     }
     function cosmeticDisplayName(type, id) {
       if (!id || id === 'default') return 'Default';
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_FRAMES].find(entry => entry.id === id && COSMETIC_CATEGORY_TYPES[entry.category] === type);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id && COSMETIC_CATEGORY_TYPES[entry.category] === type);
       return item ? item.name : 'Default';
     }
     function victoryPreviewIcon(id) {
@@ -21205,6 +21393,104 @@ video {
       return type === 'burnEffect' ? playShopBurnPreview(id, box.firstElementChild) : playJokerPreview(id, box.firstElementChild);
     }
 
+    // § Big preview (v248, owner): press and hold any item in Custom, the
+    // Shop or the Collection (CARD_HOLD_MS) for a big preview over the page;
+    // effects play in it (victories run full screen on #victoryFxLayer,
+    // above it). A tap still does what it always did (equip, the preview
+    // under the tile, Shop buttons); the click after a hold is swallowed.
+    // Closes on ✕, a tap outside the item, Escape or Back (BACK_LAYERS).
+    function bigPreviewItem(id) {
+      return [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(i => i.id === id) || null;
+    }
+    function bigPreviewStatus(item) {
+      if (item.builtIn || cosmeticPurchaseState[item.id]) return 'You own this.';
+      return customLockedStatus(item);
+    }
+    function bigPreviewStageHtml(item, type) {
+      const id = item.id;
+      if (type === 'burnEffect') return `<div class="shop-preview-stage bp-stage-fx" data-shop-burn-stage><div class="shop-burn-core">${burnPreviewIcon(id)}</div></div>`;
+      if (type === 'jokerEffect') return `<div class="jfx-stage bp-stage-fx"><div class="jfx-stage-hint">${jokerPreviewIcon(id)}</div></div>`;
+      if (type === 'victoryEffect') return `<div class="bp-victory" data-keep-emoji>${victoryPreviewIcon(id)}</div>`;
+      if (type === 'avatar') return `<div class="bp-avatar">${avatarHtml(id, 200)}</div>`;
+      if (type === 'tableTheme') return `<div class="bp-table">${miniTablePreviewHtml(id, '', true, { backId: equippedCosmetics.cardBack || 'default', frameId: equippedCosmetics.frame || 'default' })}</div>`;
+      if (type === 'cardBack') return `<div class="bp-card card-base relative rounded-xl custom-card-back ${getCosmeticBackClass(id)} border-2 border-slate-500 flex items-center justify-center">${getEmblemSvg()}</div>`;
+      if (type === 'frame') return `<div class="bp-card bp-frame card-base relative rounded-xl bg-slate-900 border-2 font-black text-white" style="border-color:${item.tones[1]};${getCosmeticFrameStyle(id)}"><span class="bp-rank">A</span><span class="bp-suit">♠</span></div>`;
+      if (type === 'deck') { ensureDeckFont(item.theme); return `<div class="bp-deck">${deckMiniCardHtml(item, true)}<span class="deck-mini-card ${item.theme} is-big"><span class="dm-rank ${getSuitStyle('♦')}">10</span><span class="dm-suits"><span class="${getSuitStyle('♦')}">♦</span></span></span></div>`; }
+      if (type === 'emotes') return `<div class="bp-emotes" data-keep-emoji>${(EMOTE_PACKS[id] || []).map(e => `<span>${e}</span>`).join('')}</div>`;
+      return '';
+    }
+    function playBigPreviewEffect() {
+      const box = document.getElementById('bigPreview');
+      const id = box?.dataset.itemId, type = box?.dataset.type;
+      if (!id) return;
+      if (type === 'burnEffect') playShopBurnPreview(id, box.querySelector('[data-shop-burn-stage]'), 1);
+      else if (type === 'jokerEffect') playJokerPreview(id, box.querySelector('.jfx-stage'));
+      else if (type === 'victoryEffect') playVictoryEffect(id);
+    }
+    function openBigPreview(id) {
+      const item = bigPreviewItem(id);
+      const type = item && COSMETIC_CATEGORY_TYPES[item.category];
+      const box = document.getElementById('bigPreview');
+      if (!item || !type || !box) return false;
+      const animated = type === 'burnEffect' || type === 'jokerEffect' || type === 'victoryEffect';
+      box.dataset.itemId = id;
+      box.dataset.type = type;
+      box.innerHTML = `<div class="bp-panel">
+        <button type="button" class="bp-close" data-bp-close aria-label="Close preview">✕</button>
+        <div class="bp-name">${escapeHtml(item.name)}</div>
+        <div class="bp-kind">${escapeHtml(item.category.replace(/s$/, ''))}</div>
+        <div class="bp-stage">${bigPreviewStageHtml(item, type)}</div>
+        <div class="bp-status">${escapeHtml(bigPreviewStatus(item))}</div>
+        ${animated ? '<button type="button" class="bp-play" data-bp-play>Play Again</button>' : ''}
+      </div>`;
+      box.classList.remove('hidden');
+      if (typeof springIn === 'function' && !reduceMotion) springIn(box.firstElementChild);
+      if (animated) requestAnimationFrame(playBigPreviewEffect);
+      if (typeof syncBackGuard === 'function') syncBackGuard();
+      return true;
+    }
+    function closeBigPreview() {
+      const box = document.getElementById('bigPreview');
+      if (!box || box.classList.contains('hidden')) return;
+      box.classList.add('hidden');
+      box.innerHTML = '';
+      delete box.dataset.itemId;
+    }
+    document.getElementById('bigPreview')?.addEventListener('click', (e) => {
+      if (e.target.closest('[data-bp-play]')) { playBigPreviewEffect(); return; }
+      if (e.target.closest('[data-bp-close]') || !e.target.closest('.bp-panel')) closeBigPreview();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !document.getElementById('bigPreview')?.classList.contains('hidden')) { closeBigPreview(); e.stopImmediatePropagation(); }
+    }, true);
+    const BIG_PREVIEW_TILES = '#themesModal [data-equip-id], #collectionModal [data-coll-id], #shopModal [data-shop-row]';
+    (function wireBigPreviewHold() {
+      let hold = null, swallowClick = false;
+      const cancel = () => { if (hold) { clearTimeout(hold.timer); hold = null; } };
+      document.addEventListener('pointerdown', (e) => {
+        swallowClick = false; // only the click of the hold's own release is eaten
+        if (e.button > 0) return;
+        const tile = e.target.closest && e.target.closest(BIG_PREVIEW_TILES);
+        if (!tile) return;
+        const id = tile.dataset.equipId || tile.dataset.collId || tile.dataset.shopRow;
+        if (!id || id === 'default' || !bigPreviewItem(id)) return;
+        cancel();
+        hold = { x: e.clientX, y: e.clientY, timer: setTimeout(() => {
+          hold = null;
+          if (openBigPreview(id)) { swallowClick = true; if (navigator.vibrate) try { navigator.vibrate(8); } catch (err) {} }
+        }, CARD_HOLD_MS) };
+      }, true);
+      document.addEventListener('pointermove', (e) => { if (hold && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > 8) cancel(); }, true);
+      ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, cancel, true));
+      document.addEventListener('scroll', cancel, true);
+      document.addEventListener('click', (e) => {
+        if (!swallowClick) return;
+        swallowClick = false;
+        e.preventDefault(); e.stopPropagation();
+      }, true);
+      document.addEventListener('contextmenu', (e) => { if (e.target.closest && e.target.closest(BIG_PREVIEW_TILES)) e.preventDefault(); }, true);
+    })();
+
     // Decks are the deck theme (a card-face preference kept with Settings,
     // not an equipped cosmetic): the four originals are free, the rest are
     // bought in the Shop. Equipping one just selects its theme.
@@ -21235,7 +21521,7 @@ video {
       stampEquip(type);
       applyEquippedCosmetics();
       renderPersonalisationCosmetics();
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES].find(entry => entry.id === id);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
       const effectsDisabled = (type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect') && !bigEffectsOn;
       const status = document.getElementById('personalisationStatus');
       if (status) status.textContent = `${item ? item.name : 'Default'} equipped.${effectsDisabled ? ' Effects are currently disabled in Settings.' : ''}`;
@@ -21355,7 +21641,7 @@ video {
       const category = Object.keys(COSMETIC_CATEGORY_TYPES).find(key => COSMETIC_CATEGORY_TYPES[key] === type);
       const bySeason = (items) => SEASONAL_EVENTS.flatMap(ev => sortByValue(items.filter(item => item.season === ev.id)));
       const shop = COSMETIC_SHOP_ITEMS.filter(item => item.category === category);
-      const earned = [...EARNED_AVATARS, ...EARNED_FRAMES].filter(item => item.category === category);
+      const earned = [...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].filter(item => item.category === category);
       const free = BUILT_IN_COSMETICS.filter(item => item.category === category);
       return [
         ...sortByValue([...free, ...shop.filter(item => !item.season)]),
@@ -21436,7 +21722,7 @@ video {
     document.getElementById('collectionBody').addEventListener('click', (event) => {
       const tile = event.target.closest('[data-coll-id]');
       if (!tile) return;
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES].find(i => i.id === tile.dataset.collId);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(i => i.id === tile.dataset.collId);
       if (!item) return;
       document.getElementById('collectionStatus').innerHTML = `<b>${escapeHtml(item.name)}</b> · ${isCosmeticOwned(item) ? (item.builtIn ? 'Free for everyone' : 'Owned') : escapeHtml(customLockedStatus(item))}`;
       document.querySelectorAll('#collectionBody .coll-tile.is-picked').forEach(t => t.classList.remove('is-picked'));
@@ -21458,10 +21744,10 @@ video {
       const victories = document.getElementById('personalisationVictoryEffects');
       const jokers = document.getElementById('personalisationJokerEffects');
       if (!backs || !frames || !emotes || !tables || !burns || !victories || !jokers) return;
-      backs.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs'))].map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('');
-      frames.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames')), ...EARNED_FRAMES].map(i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame)).join('');
+      backs.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs')), ...LEVEL_REWARDS.filter(i => i.category === 'Card Backs')].map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('');
+      frames.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames')), ...EARNED_FRAMES, ...LEVEL_REWARDS.filter(i => i.category === 'Frames')].map(i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame)).join('');
       emotes.innerHTML = [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs')])].map(i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes)).join('');
-      tables.innerHTML = [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Table Themes'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes')])].map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('');
+      tables.innerHTML = [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Table Themes'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes')]), ...LEVEL_REWARDS.filter(i => i.category === 'Table Themes')].map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('');
       burns.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Burn Effects'))].map(i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect)).join('');
       victories.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Victory Effects'))].map(i => personalisationOptionHtml(i, 'victoryEffect', equippedCosmetics.victoryEffect)).join('');
       jokers.innerHTML = [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Joker Effects'))].map(i => personalisationOptionHtml(i, 'jokerEffect', equippedCosmetics.jokerEffect)).join('');
@@ -22324,13 +22610,13 @@ video {
       return `<div class="flex items-start justify-between gap-2 mb-1"><div><div class="text-[10px] font-black text-white">${item.name}</div><div class="text-[8px] uppercase tracking-wider text-cyan-300">${item.category.slice(0, -1)} preview</div></div><button type="button" data-close-shop-preview class="text-slate-400 text-lg leading-none" aria-label="Close preview">×</button></div><div class="min-h-[106px] flex items-center justify-center">${demo}</div>${isAnimated ? `<button type="button" data-play-shop-effect="${item.id}" class="mt-2 w-full rounded-lg border border-cyan-500 py-1.5 text-[9px] font-black text-cyan-300">PLAY EFFECT</button>` : ''}<p class="mt-2 text-center text-[8px] text-slate-500">Preview only — no Diamonds have been spent.</p>`;
     }
 
-    function playShopBurnPreview(id, stage) {
+    function playShopBurnPreview(id, stage, scale = .62) {
       if (!stage) return false;
       audio.playBurnSound(id);
       stage.querySelectorAll('.shop-burn-particle, .bfx, .bfx-flash').forEach(node => node.remove());
       if (SHAPE_BURN_EFFECTS.has(id)) {
         const rect = stage.getBoundingClientRect();
-        return playBurnFx(id, stage, (rect.width || 240) / 2, (rect.height || 132) * .62, .62);
+        return playBurnFx(id, stage, (rect.width || 240) / 2, (rect.height || 132) * .62, scale);
       }
       const kind = id === 'burn-ice' ? 'ice' : id === 'burn-electric' ? 'electric' : '';
       const palette = id === 'burn-ice' ? ['#e0f2fe','#7dd3fc','#38bdf8']
@@ -22356,7 +22642,7 @@ video {
     function getCosmeticBackClass(id) {
       if (SEASONAL_BACK_IDS.has(id)) return `cosmetic-${id} season-back`;
       return { 'back-midnight':'cosmetic-back-midnight','back-emerald':'cosmetic-back-emerald','back-neon':'cosmetic-back-neon','back-crimson':'cosmetic-back-crimson','back-nebula':'cosmetic-back-nebula','back-inferno':'cosmetic-back-inferno',
-        'back-arcade':'cosmetic-back-arcade','back-space':'cosmetic-back-space','back-tartan':'cosmetic-back-tartan','back-artdeco':'cosmetic-back-artdeco','back-dragon':'cosmetic-back-dragon','back-stained':'cosmetic-back-stained' }[id] || 'back-obsidian';
+        'back-arcade':'cosmetic-back-arcade','back-space':'cosmetic-back-space','back-tartan':'cosmetic-back-tartan','back-artdeco':'cosmetic-back-artdeco','back-dragon':'cosmetic-back-dragon','back-stained':'cosmetic-back-stained','back-rising-star':'cosmetic-back-rising-star' }[id] || 'back-obsidian';
     }
 
     function getCosmeticFrameStyle(id) {
@@ -22368,6 +22654,7 @@ video {
         'frame-emerald-sovereign': 'box-shadow:inset 0 0 0 2px #34d399,0 0 9px rgba(52,211,153,.68)!important',
         'frame-darkness': 'border-color:#000!important;box-shadow:inset 0 0 0 3px #000!important',
         'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #b45309,0 0 9px rgba(245,158,11,.75)!important',
+        'frame-ascendant': 'border-color:#c084fc!important;box-shadow:inset 0 0 0 1px #fef3c7,inset 0 0 0 3px #7c3aed,inset 0 0 0 4px rgba(251,191,36,.85),0 0 10px rgba(168,85,247,.7),0 0 3px rgba(251,191,36,.9)!important',
         'frame-split-crimson': 'box-shadow:inset 2.5px 2.5px 0 #e11d48,inset -2.5px -2.5px 0 #f8fafc,0 0 8px rgba(225,29,72,.45)!important',
         'frame-split-royal': 'box-shadow:inset 2.5px 2.5px 0 #2563eb,inset -2.5px -2.5px 0 #fbbf24,0 0 8px rgba(37,99,235,.45)!important',
         'frame-split-noir': 'box-shadow:inset 2.5px 2.5px 0 #000,inset 3.5px 3.5px 0 #52525b,inset -2.5px -2.5px 0 #ec4899,0 0 8px rgba(236,72,153,.45)!important',
@@ -22393,6 +22680,7 @@ video {
         'frame-emerald-sovereign': 'box-shadow:0 0 0 1px #34d399,0 0 5px rgba(52,211,153,.5)!important',
         'frame-darkness': 'border-color:#000!important;box-shadow:0 0 0 1px #000!important',
         'frame-gauntlet': 'border-color:#f59e0b!important;box-shadow:0 0 0 1px #fbbf24,0 0 5px rgba(245,158,11,.55)!important',
+        'frame-ascendant': 'border-color:#c084fc!important;box-shadow:0 0 0 1px #fbbf24,0 0 5px rgba(168,85,247,.6)!important',
         'frame-split-crimson': 'box-shadow:-1.5px -1.5px 0 0 #e11d48,1.5px 1.5px 0 0 #f8fafc!important',
         'frame-split-royal': 'box-shadow:-1.5px -1.5px 0 0 #2563eb,1.5px 1.5px 0 0 #fbbf24!important',
         'frame-split-noir': 'box-shadow:-1.5px -1.5px 0 0 #000,1.5px 1.5px 0 0 #ec4899!important',
@@ -24067,6 +24355,8 @@ video {
       milestoneEvery: 10,  // …except every 10th level, which pays instead
       milestoneDiamonds: 100,
       maxXp: 100000000,
+      // Free cosmetics unlocked by level (LEVEL_REWARDS; granted by the server).
+      rewards: LEVEL_REWARDS.map(r => ({ id: r.id, name: r.name, level: r.level })),
       // Bump when `levels` changes: the server re-levels every account from
       // its total XP (never paying a level's Diamonds twice).
       tableVersion: 2,
@@ -24553,10 +24843,30 @@ video {
         matchXpLog.levelUps.push({ level: Number(u.level), reward: Number(u.reward) || 0 });
         if (u.reward > 0) enqueueChallengeToast(`Level ${u.level}`, Number(u.reward), -1);
       });
+      applyLevelRewards(x.rewards);
       if (!xpFeatureOn) setXpFeature(true); // the server only adds XP while the switch is on
       refreshXpDisplays();
       refreshMatchSummary();
       if (playerXp.level !== before) publishXpLevel();
+    }
+    // Level rewards the server just granted ({ id, name, level }): owned at
+    // once (Custom, Collection) with a banner and the Inbox unlock mail.
+    function applyLevelRewards(list) {
+      if (!Array.isArray(list) || !list.length) return;
+      const now = Date.now();
+      list.forEach((r) => {
+        if (!r || !r.id) return;
+        cosmeticPurchaseState[r.id] = { cost: 0, purchasedAt: now };
+        newCosmeticIds.add(r.id);
+      });
+      persistNewCosmetics();
+      renderPersonalisationCosmetics();
+      if (typeof refreshInboxBadge === 'function') refreshInboxBadge();
+      notifyBanner(`Level reward unlocked: ${list.map(r => r.name).join(', ')}. Equip it in Custom.`);
+    }
+    // The next level reward still to come (Profile's XP section).
+    function nextLevelReward(level) {
+      return LEVEL_REWARDS.find(r => r.level > level && !cosmeticPurchaseState[r.id]) || null;
     }
     function publishXpLevel() {
       if (!currentUser || !playerXp?.level || typeof db === 'undefined') return;
@@ -24657,9 +24967,21 @@ video {
         const show = xpShown() && !!currentUser;
         section.classList.toggle('hidden', !show);
         const body = document.getElementById('profileXpBody');
-        if (show && body) body.innerHTML = xpBarHtml(playerXp?.total || 0);
+        if (show && body) body.innerHTML = xpBarHtml(playerXp?.total || 0) + levelRewardRowHtml(myLevel);
       }
     }
+    // Profile: the next level reward (a button to its tile in Custom).
+    const LEVEL_REWARD_KIND = { 'Card Backs': 'card back', 'Frames': 'frame', 'Table Themes': 'table' };
+    function levelRewardRowHtml(level) {
+      const r = nextLevelReward(level);
+      if (!r) return '';
+      const type = COSMETIC_CATEGORY_TYPES[r.category];
+      return `<button type="button" class="xp-reward-next" data-showcase-type="${type}" data-showcase-id="${r.id}"><span class="xp-reward-art">${cosmeticPreview(r, type)}</span><span><small>Lvl ${r.level} reward</small>${escapeHtml(r.name)} ${LEVEL_REWARD_KIND[r.category] || ''}</span></button>`;
+    }
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest && e.target.closest('.xp-reward-next');
+      if (b) openShowcaseItemInCustom(b.dataset.showcaseType, b.dataset.showcaseId);
+    });
     // The match summary's XP rows: "+45 XP", the level bar, level ups.
     function matchSummaryXpHtml() {
       if (!xpShown() || !currentUser || !playerXp) return '';
@@ -25662,7 +25984,7 @@ video {
       const fmt = (t) => t ? new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
       setListHtml('challengesDoneList', rows.length ? rows.map(r => `<div class="done-row">
           <span class="done-tick" aria-hidden="true">${icon('check')}</span>
-          <span class="done-main"><b>${escapeHtml(r.name)}</b><small>${escapeHtml(r.group)}${r.at ? ` · ${fmt(r.at)}` : ''} · ${escapeHtml(challengeDescription(r.key) || '')}</small></span>
+          <span class="done-main"><b>${escapeHtml(r.name)}</b><small>${escapeHtml(r.group)}${r.at ? ` · ${fmt(r.at)}` : ''} · ${linkKeyTerms(escapeHtml(challengeDescription(r.key) || ''))}</small></span>
           <span class="done-reward">${r.reward ? `${icon('gem')} ${r.reward}` : ''}</span>
         </div>`).join('') : '<p class="text-[10px] text-slate-400 text-center py-4">No challenges completed yet. Play a game to start on today\'s.</p>');
     }
@@ -25681,6 +26003,82 @@ video {
     document.getElementById('challengesModalDoneWrap').addEventListener('click', () => { if (currentUser) showCompletedChallenges(true); });
     document.getElementById('challengesDoneBack').addEventListener('click', () => showCompletedChallenges(false));
 
+    // § Key-term links (v248, owner): the objectives in challenge text
+    // (Snap Burn, Burn, Gauntlet…) are underlined buttons that open the
+    // Guide's Key Terms on that word, scrolled to it and highlighted
+    // (openGuideTerm). Each term links once per line; text inside tags is
+    // left alone. Slugs are the Key Terms' data-term ids.
+    const KEY_TERM_LINKS = [
+      ['Snap Burns?', 'snap-burn'], ['4-of-a-kind|four of a kind', 'four-of-a-kind'],
+      ['Joker challenges?|Deflect', 'duel'], ['Bonus Draw', 'bonus-draw'], ['Gauntlet', 'gauntlet'],
+      ['Quick Start', 'quick-start'], ['face-down cards?|face-down|blind', 'face-down-cards'],
+      ['Face-Up cards?', 'face-up-cards'], ['Transparent', 'transparent-card'],
+      ['picking up the pile|picked up|pick up|pickups?', 'pick-up'],
+      ['burn(?:s|t|ed)?(?: the pile)?', 'burn'], ['Jokers?', 'joker'], ['Ranked', 'ranked'],
+      ['rating', 'rating'], ['Vs Bots|bots?', 'vs-bots'], ['Recruit', 'recruit'],
+      ['in a row|streak', 'win-streak'], ['Draw a game', 'draw'], ['skip', 'skip'],
+      ['Play Friends', 'play-friends'], ['same rank', 'rank'], ['last card', 'last-card'],
+      ['seasonal', 'seasonal-event'], ['daily challenges?', 'daily-challenges'], ['weekly challenges?', 'weekly-challenges'],
+      ['level', 'level']
+    ];
+    const KEY_TERM_RE = new RegExp(KEY_TERM_LINKS.map(([re]) => `\\b(${re})\\b`).join('|'), 'gi');
+    function linkKeyTerms(html) {
+      if (!html) return html;
+      const used = new Set();
+      return String(html).split(/(<[^>]*>)/).map((part, i) => {
+        if (i % 2) return part; // a tag
+        return part.replace(KEY_TERM_RE, (m, ...groups) => {
+          const idx = groups.slice(0, KEY_TERM_LINKS.length).findIndex(g => g !== undefined);
+          const slug = KEY_TERM_LINKS[idx]?.[1];
+          if (!slug || used.has(slug)) return m;
+          used.add(slug);
+          return `<button type="button" class="term-link" data-term="${slug}">${m}</button>`;
+        });
+      }).join('');
+    }
+    let guideReturnTo = null;
+    function openGuideTerm(slug) {
+      const guide = document.getElementById('rulesModal');
+      const term = guide?.querySelector(`[data-term="${CSS.escape(slug)}"]`);
+      if (!guide || !term) return false;
+      const from = EXCLUSIVE_PAGE_IDS.find(id => !document.getElementById(id)?.classList.contains('hidden')) || null;
+      if (from) document.getElementById(from).classList.add('hidden');
+      guideReturnTo = from;
+      const search = document.getElementById('guideSearchInput');
+      if (search && search.value) { search.value = ''; search.dispatchEvent(new Event('input')); }
+      const content = term.closest('.accordion-content');
+      if (content) {
+        content.classList.remove('hidden');
+        const chevron = content.previousElementSibling?.querySelector('.chevron');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+      }
+      guide.classList.remove('hidden');
+      guide.querySelectorAll('.term-focus').forEach(el => el.classList.remove('term-focus'));
+      term.classList.add('term-focus');
+      setTimeout(() => term.classList.remove('term-focus'), 4200);
+      requestAnimationFrame(() => term.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' }));
+      return true;
+    }
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest && e.target.closest('[data-friend-level-uid]');
+      if (b) openProfileCard({ uid: b.dataset.friendLevelUid, name: b.dataset.friendLevelName, avatar: b.dataset.friendLevelAvatar || undefined }, b);
+    });
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest && e.target.closest('.term-link');
+      if (!link) return;
+      e.preventDefault(); e.stopPropagation();
+      openGuideTerm(link.dataset.term);
+    });
+    // Closing the Guide after a term link goes back to the page it came from.
+    new MutationObserver(() => {
+      const guide = document.getElementById('rulesModal');
+      if (!guideReturnTo || !guide.classList.contains('hidden')) return;
+      const back = guideReturnTo;
+      guideReturnTo = null;
+      if (EXCLUSIVE_PAGE_IDS.some(id => !document.getElementById(id)?.classList.contains('hidden'))) return;
+      document.getElementById(back)?.classList.remove('hidden');
+    }).observe(document.getElementById('rulesModal'), { attributes: true, attributeFilter: ['class'] });
+
     function renderChallengeRowHTML(name, progressText, reward, completed, desc = '', lead = '') {
       const rightSide = completed
         ? '<span class="text-emerald-400 text-xs font-black" aria-label="Completed">&#10003;</span>'
@@ -25688,7 +26086,7 @@ video {
       return `<div class="flex items-center justify-between px-2 py-1.5 bg-slate-900/70 border border-slate-800 rounded-lg">
         <div class="flex items-center gap-2 min-w-0">${lead ? `<span class="ch-row-lead">${lead}</span>` : ''}<div class="flex flex-col">
           <span class="text-[10px] font-bold text-slate-200">${name}</span>
-          <span class="text-[9px] text-slate-500">${completed ? (desc || 'Completed') : progressText}</span>
+          <span class="text-[9px] text-slate-500">${linkKeyTerms(completed ? (desc || 'Completed') : progressText)}</span>
         </div></div>
         ${rightSide}
       </div>`;
@@ -27003,7 +27401,7 @@ video {
       if (e.target.id === 'inboxModal') document.getElementById('inboxModal').classList.add('hidden');
     });
     // Mail kinds stored under users/{uid}/activityInbox.
-    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level'];
+    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level', 'friendLevel'];
     // Congratulations from the server (functions/boards.js) the first time a
     // player reaches the top 10, #3, #2 or #1 on a leaderboard.
     const BOARD_NAMES = { ranked: 'Ranked', challenges: 'Challenges', gauntlet: 'Gauntlet', levels: 'Levels' };
@@ -27130,10 +27528,29 @@ video {
           <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
         </div>`;
       }
+      if (item.type === 'friendLevel') {
+        // A friend reached a 10th level or 99 (server xp.mailFriendsOnLevel).
+        const L = Math.max(1, Math.round(Number(item.level) || 1));
+        const name = escapeHtml(String(item.name || 'A friend'));
+        return `<div class="inbox-activity--level border rounded-xl px-2.5 py-2">
+          <div class="flex items-center gap-2">${avatarHtml(item.avatar || 'default', 34)}<div class="min-w-0">
+          <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${L >= 99 ? 'Top level' : 'Friend levelled up'}</p>
+          <p class="text-xs font-bold text-white">${name} reached level ${L} ${xpLevelBadge(L, 'xp-badge-sm')}</p>
+          <p class="inbox-activity-accent text-[10px] mt-1">${L >= 99 ? 'Level 99 is the highest there is.' : 'Every 10th level is a milestone.'}</p>
+          </div></div>
+          <div class="flex gap-1.5 mt-2">
+            ${item.uid ? `<button type="button" data-friend-level-uid="${escapeAttr(String(item.uid))}" data-friend-level-name="${escapeAttr(String(item.name || ''))}" data-friend-level-avatar="${escapeAttr(String(item.avatar || ''))}" class="inbox-activity-accent flex-1 text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">VIEW PLAYER</button>` : ''}
+            <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent flex-1 text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
+          </div>
+        </div>`;
+      }
       if (item.type === 'rank' || item.type === 'shop') {
         const isRank = item.type === 'rank';
         const unlockedFrame = item.unlocked && /^unlock_frame-/.test(String(item.id || ''));
-        const heading = isRank ? `Rank ${item.direction === 'up' ? 'up' : 'down'}` : item.unlocked ? (unlockedFrame ? 'Frame unlocked' : 'Profile picture unlocked') : 'Shop purchase';
+        // Level rewards (v248) can be a card back, a frame or a table.
+        const levelItem = item.unlocked ? LEVEL_REWARDS.find(r => `unlock_${r.id}` === item.id) : null;
+        const unlockKind = levelItem ? ({ 'Card Backs': 'Card back', 'Frames': 'Frame', 'Table Themes': 'Table' }[levelItem.category] || 'Item') : unlockedFrame ? 'Frame' : 'Profile picture';
+        const heading = isRank ? `Rank ${item.direction === 'up' ? 'up' : 'down'}` : item.unlocked ? `${unlockKind} unlocked` : 'Shop purchase';
         const detail = isRank
           ? `${escapeHtml(item.fromTier)} → ${escapeHtml(item.toTier)}`
           : escapeHtml(item.name);
@@ -27143,7 +27560,7 @@ video {
         // Shop mail keys are shop_<itemId>; unlock mail keys are unlock_<itemId>.
         const avatarId = String(item.id || '').replace(/^(shop|unlock)_/, '');
         const frameItem = unlockedFrame ? EARNED_FRAMES.find(f => f.id === avatarId) : null;
-        const thumb = AVATAR_ART[avatarId] ? avatarHtml(avatarId, 34) : frameItem ? framePreviewCard(frameItem) : '';
+        const thumb = levelItem ? `<span class="inbox-unlock-thumb">${cosmeticPreview(levelItem, COSMETIC_CATEGORY_TYPES[levelItem.category])}</span>` : AVATAR_ART[avatarId] ? avatarHtml(avatarId, 34) : frameItem ? framePreviewCard(frameItem) : '';
         return `<div class="inbox-activity--${item.type} border rounded-xl px-2.5 py-2">
           <div class="flex items-center gap-2">${thumb}<div class="min-w-0">
           <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${heading}</p>
@@ -27853,7 +28270,7 @@ video {
     function openLockedCosmetic(id) {
       const shopItem = COSMETIC_SHOP_ITEMS.find(item => item.id === id);
       if (!shopItem) {
-        const earned = [...EARNED_AVATARS, ...EARNED_FRAMES].find(item => item.id === id);
+        const earned = [...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(item => item.id === id);
         const status = document.getElementById('personalisationStatus');
         if (status && earned) status.textContent = `${earned.name}: ${earned.requirement}.`;
         return false;
@@ -28122,15 +28539,72 @@ video {
         }
       }
       const who = isMe ? '' : ` role="button" tabindex="0" class="lb-who flex items-center gap-2 min-w-0" data-lb-uid="${escapeAttr(String(p.uid || ''))}" data-lb-key="${escapeAttr(String(p.usernameKey || ''))}" data-lb-name="${escapeAttr(String(p.username || ''))}" data-lb-avatar="${escapeAttr(String(p.avatar || ''))}" aria-label="Open ${escapeAttr(String(p.username || 'player'))}'s profile"`;
-      return `<div class="flex items-center justify-between gap-2 border rounded-xl px-2.5 py-2 ${isMe ? 'bg-amber-950/40 border-amber-600' : 'bg-slate-900/60 border-slate-800'}" data-lb-row="${escapeHtml(String(p.username || ''))}">
+      const peekData = `data-lb-uid="${escapeAttr(String(isMe && currentUser ? currentUser.uid : p.uid || ''))}" data-lb-key="${escapeAttr(String(p.usernameKey || ''))}" data-lb-name="${escapeAttr(String(p.username || ''))}"`;
+      return `<div class="flex items-center justify-between gap-2 border rounded-xl px-2.5 py-2 ${isMe ? 'bg-amber-950/40 border-amber-600' : 'bg-slate-900/60 border-slate-800'}" data-lb-row="${escapeHtml(String(p.username || ''))}" ${peekData}>
         <div${who || ' class="flex items-center gap-2 min-w-0"'}>
           <span class="text-[10px] font-black text-slate-500" style="width:22px;text-align:center;${rank <= 3 ? 'font-size:17px;line-height:1;' : ''}">${medal}</span>
           ${avatarHtml(isMe && tab !== 'ranked' ? resolveAvatarId(equippedCosmetics.avatar) : p.avatar, 30)}
           <div class="min-w-0"><div class="text-xs font-bold text-white truncate">${escapeHtml(String(p.username || 'Player'))}${lbLevel ? ` ${xpLevelBadge(lbLevel, 'xp-badge-sm')}` : ''}${isMe ? ' <span class=\"text-amber-300 text-[8px]\">YOU</span>' : ''}</div><div class="text-[8px] text-slate-500">${sub}</div></div>
         </div>
-        ${pill}
+        <button type="button" class="lb-peek" aria-label="Quick stats for ${escapeAttr(String(p.username || 'this player'))}">${pill}</button>
       </div>`;
     }
+    // Quick stats peek (v248, owner): tap a row's score, or press and hold
+    // anywhere on a row (right-click on PC), for a small card of that
+    // player's public numbers (publicProfiles/{uid}: level, rating, stats).
+    function leaderboardPeekHtml(name, prof) {
+      const st = prof?.stats || {};
+      const rows = [];
+      if (xpShown() && Number(prof?.level) > 0) rows.push(['Level', `Lvl ${Number(prof.level)}`]);
+      if (prof?.rating != null) { const t = getRankTier(prof.rating); rows.push(['Ranked', `${tierBadge(t.name)} ${t.name} · ${Math.round(prof.rating)}`]); }
+      const games = Number(st.games) || 0, wins = Number(st.wins) || 0;
+      if (games) rows.push(['Ranked games', `${games} · ${wins} won (${Math.round(wins * 100 / games)}%)`]);
+      if (Number(st.peak) > 0) rows.push(['Peak rating', String(Number(st.peak))]);
+      if (Number(st.bestStreak) > 0) rows.push(['Best win streak', String(Number(st.bestStreak))]);
+      if (Number(st.burnt) > 0) rows.push(['Ranked burns', String(Number(st.burnt))]);
+      if (Number(st.jokers) > 0) rows.push(['Ranked Jokers', String(Number(st.jokers))]);
+      return `<div class="lb-peek-card"><div class="lb-peek-head">${avatarHtml(prof?.avatar || 'default', 28)}<b>${escapeHtml(name || prof?.username || 'Player')}</b></div>${rows.length
+        ? `<dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>` : '<p>No stats yet.</p>'}</div>`;
+    }
+    function openLeaderboardPeek(row) {
+      if (!row) return;
+      if (!currentUser) { notifyBanner('Sign in to see player stats.'); return; }
+      const name = row.dataset.lbName;
+      const key = row.dataset.lbKey || String(name || '').toLowerCase();
+      const anchor = row.querySelector('.lb-peek') || row;
+      showInfoPop(anchor, '<p>Loading…</p>');
+      const find = row.dataset.lbUid ? Promise.resolve(row.dataset.lbUid) : db.ref(`usernames/${key}`).once('value').then(s => s.val());
+      find.then(uid => uid ? db.ref(`publicProfiles/${uid}`).once('value').then(s => s.val()) : null).then((prof) => {
+        if (infoPopAnchor !== anchor) return; // closed meanwhile
+        showInfoPop(anchor, leaderboardPeekHtml(name, prof || {}));
+      }).catch(() => { if (infoPopAnchor === anchor) showInfoPop(anchor, '<p>Could not load their stats.</p>'); });
+    }
+    (function wireLeaderboardPeek() {
+      const area = document.getElementById('leaderboardArea');
+      if (!area) return;
+      let hold = null, held = false;
+      const cancel = () => { if (hold) { clearTimeout(hold.timer); hold = null; } };
+      area.addEventListener('pointerdown', (e) => {
+        held = false;
+        const row = e.target.closest('[data-lb-row]');
+        if (!row || e.button > 0) return;
+        hold = { x: e.clientX, y: e.clientY, timer: setTimeout(() => { hold = null; held = true; openLeaderboardPeek(row); }, CARD_HOLD_MS) };
+      });
+      area.addEventListener('pointermove', (e) => { if (hold && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > 8) cancel(); });
+      ['pointerup', 'pointercancel'].forEach(t => area.addEventListener(t, cancel));
+      area.addEventListener('scroll', cancel, true);
+      area.addEventListener('click', (e) => {
+        if (held) { held = false; e.preventDefault(); e.stopImmediatePropagation(); return; }
+        const peek = e.target.closest('.lb-peek');
+        if (peek) { e.stopImmediatePropagation(); if (infoPopAnchor === peek) hideInfoPop(); else openLeaderboardPeek(peek.closest('[data-lb-row]')); }
+      }, true);
+      area.addEventListener('contextmenu', (e) => {
+        const row = e.target.closest('[data-lb-row]');
+        if (!row) return;
+        e.preventDefault();
+        openLeaderboardPeek(row);
+      });
+    })();
     document.getElementById('leaderboardCloseBtn').addEventListener('click', () => document.getElementById('leaderboardModal').classList.add('hidden'));
     // Live lists stop listening once their page is hidden (close button,
     // Back, another page opening over it…).
@@ -28600,10 +29074,24 @@ video {
     if (!IS_DEV_TEST_PAGE) handleInviteLinkOnLoad();
     if (!IS_DEV_TEST_PAGE) setTimeout(() => handleReferralLinkOnLoad(), 0); // defined further down
 
-    document.getElementById('emoteToggleBtn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleEmoteFan();
-    });
+    (function wireEmoteButton() {
+      const btn = document.getElementById('emoteToggleBtn');
+      let hold = null, held = false;
+      const cancel = () => { if (hold) { clearTimeout(hold.timer); hold = null; } };
+      btn.addEventListener('pointerdown', (e) => {
+        held = false;
+        if (e.button > 0) return;
+        hold = { x: e.clientX, y: e.clientY, timer: setTimeout(() => { hold = null; held = true; if (navigator.vibrate) try { navigator.vibrate(8); } catch (err) {} resendLastEmote(); }, CARD_HOLD_MS) };
+      });
+      btn.addEventListener('pointermove', (e) => { if (hold && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > 8) cancel(); });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => btn.addEventListener(t, cancel));
+      btn.addEventListener('contextmenu', (e) => e.preventDefault());
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (held) { held = false; return; } // the hold already sent it
+        toggleEmoteFan();
+      });
+    })();
     // Tapping anywhere else dismisses the fan without sending anything.
     document.addEventListener('click', () => {
       if (emoteFanOpen) toggleEmoteFan(true);
@@ -28958,7 +29446,7 @@ video {
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
       seriesModal: 'seriesLaterBtn', needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', referralWelcomeModal: 'referralWelcomeCloseBtn', keepAccountModal: null, whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
-      victoryOverlay: 'closeVictoryBtn', floatingJokerBar: null,
+      victoryOverlay: 'closeVictoryBtn', floatingJokerBar: null, bigPreview: () => closeBigPreview(),
       followUpToastBanner: () => resolveFollowUpPlay(false)
     };
     const isShownOnScreen = (el) => !!el && !el.classList.contains('hidden') && el.getClientRects().length > 0;
@@ -29012,6 +29500,33 @@ video {
       const action = screenBackAction();
       if (action) action();
     }
+    // Escape on PC (v248, owner): closes every open menu, page and pop-up in
+    // one press, back to the home screen (or the table during a game). It
+    // stops at anything that must be answered (BACK_LAYERS null) and never
+    // touches in-game prompts (Bonus Draw, the Joker bar). In a text box
+    // the first Escape just leaves the box.
+    const ESCAPE_STOPS = new Set(['followUpToastBanner', 'floatingJokerBar']);
+    function escapeToHome() {
+      guideReturnTo = null;
+      Object.keys(pageTrail).forEach(k => delete pageTrail[k]);
+      let closed = 0;
+      for (let i = 0; i < 16; i++) {
+        const layer = topBackLayer();
+        if (!layer || ESCAPE_STOPS.has(layer.id) || BACK_LAYERS[layer.id] === null) break;
+        layer.close();
+        closed++;
+        const el = document.getElementById(layer.id);
+        if (layer.id !== 'hamburgerDrawer' && el && isShownOnScreen(el)) break; // it didn't close
+        if (layer.id === 'hamburgerDrawer' && document.getElementById('hamburgerDrawer')?.classList.contains('open')) break;
+      }
+      return closed;
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      const t = e.target;
+      if (t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && !/^(checkbox|radio|range|button)$/i.test(t.type)))) { t.blur(); return; }
+      if (escapeToHome()) e.preventDefault();
+    });
     window.addEventListener('popstate', () => {
       if (ignoreNextPopstate) { ignoreNextPopstate = false; return; }
       handleBack();

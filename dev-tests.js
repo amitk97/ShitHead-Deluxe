@@ -1994,7 +1994,7 @@ async function runDevTestSuite() {
   });
   await test('Challenges: completed rows and the completion mail say what the challenge was', () => {
     const row = renderChallengeRowHTML('Burner', '20/20', 50, true, challengeDescription('burner'));
-    assertTrue(row.includes('Burn the pile 20 times in Ranked.'), 'A completed row shows its description');
+    assertTrue(row.replace(/<[^>]+>/g, '').includes('Burn the pile 20 times in Ranked.'), 'A completed row shows its description');
     assertTrue(!row.includes('>Completed<'), 'A completed row no longer just says Completed');
     const all = Object.values(CHALLENGE_DEFS).flat();
     assertEqual(all.filter(c => !challengeDescription(c.id)).map(c => c.id), [], 'Every challenge has a description');
@@ -4710,7 +4710,17 @@ async function runDevTestSuite() {
       assertEqual(state.speedIndex, 1, 'Signed out: 2x snaps back to 1x');
       assertTrue(/Sign in to use 2x/.test(banners.pop() || ''), 'and says to sign in');
       assertTrue(document.querySelectorAll('#lobbySpeedTicks .speed-locked').length === 2, '2x and 4x show a lock');
-      assertTrue(/Sign in/.test(document.getElementById('lobbySpeedLockNote').textContent), 'The lobby says how to unlock');
+      assertTrue(!document.getElementById('lobbySpeedLockNote'), 'No subtitle under the slider');
+      const lockBtn = document.querySelector('#lobbySpeedTicks [data-speed-lock="2"]');
+      assertTrue(!!lockBtn, 'The 2x lock is a button');
+      lockBtn.click();
+      const pop = document.getElementById('infoPop');
+      assertTrue(!!pop && /Sign in and reach Lvl 5/.test(pop.textContent), 'Tapping the lock explains sign-in and Lvl 5: ' + (pop && pop.textContent));
+      lockBtn.click();
+      assertTrue(!document.getElementById('infoPop'), 'A second tap closes it');
+      document.querySelector('#lobbySpeedTicks [data-speed-lock="3"]').click();
+      assertTrue(/Lvl 10/.test(document.getElementById('infoPop').textContent), '4x says Lvl 10');
+      hideInfoPop();
       currentUser = { uid: 'spd' }; playerXp = { total: xpForLevel(4) };
       updateSpeedByIndex(2, { user: true });
       assertEqual(state.speedIndex, 1, 'Level 4: 2x is still locked');
@@ -4733,6 +4743,130 @@ async function runDevTestSuite() {
       notifyBanner = realBanner; currentUser = realUser; playerXp = realXp; xpFeatureOn = realOn;
       speedWantedIndex = realWanted; updateSpeedByIndex(realIdx ?? DEFAULT_SPEED_INDEX, { noSave: true });
     }
+  });
+  await test('Level rewards: a card back at Lvl 15, a frame at Lvl 25 and a table at Lvl 50, earn-only and granted by the server', () => {
+    assertEqual(LEVEL_REWARDS.map(r => [r.id, r.level]), [['back-rising-star', 15], ['frame-ascendant', 25], ['table-summit', 50]], 'The three rewards');
+    assertEqual(XP_RULES.rewards.map(r => r.id), LEVEL_REWARDS.map(r => r.id), 'Exported to the server catalog');
+    LEVEL_REWARDS.forEach((r) => {
+      const type = COSMETIC_CATEGORY_TYPES[r.category];
+      assertTrue(isSupportedCosmetic(type, r.id), `${r.id} can be equipped`);
+      assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.id === r.id), `${r.id} is never sold`);
+      assertTrue(customAllItems(type).some(i => i.id === r.id), `${r.id} is listed in Custom → All`);
+    });
+    assertEqual(getCosmeticBackClass('back-rising-star'), 'cosmetic-back-rising-star', 'The card back has its art');
+    assertTrue(/summit\.svg/.test(TABLE_ART.summit), 'The table is vector art');
+    assertTrue(!!getCosmeticFrameStyle('frame-ascendant') && !!getOpponentCosmeticFrameStyle('frame-ascendant'), 'The frame is drawn for you and for opponents');
+    const real = { ...cosmeticPurchaseState }, realBanner = notifyBanner; const banners = []; notifyBanner = (m) => banners.push(m);
+    try {
+      delete cosmeticPurchaseState['back-rising-star'];
+      renderPersonalisationCosmetics();
+      const tile = document.querySelector('#personalisationCardBacks [data-equip-id="back-rising-star"]');
+      assertTrue(!!tile && tile.hasAttribute('data-locked') && /Reach Lvl 15/.test(tile.textContent), 'Locked in Custom with its level');
+      assertEqual(nextLevelReward(3)?.id, 'back-rising-star', 'Profile names the next reward');
+      applyLevelRewards([{ id: 'back-rising-star', name: 'Rising Star', level: 15 }]);
+      assertTrue(!!cosmeticPurchaseState['back-rising-star'], 'Owned once the server grants it');
+      assertTrue(/Rising Star/.test(banners.pop() || ''), 'with a banner');
+      assertTrue(!document.querySelector('#personalisationCardBacks [data-equip-id="back-rising-star"]').hasAttribute('data-locked'), 'and unlocked in Custom');
+      const mail = inboxItemHtml({ id: 'unlock_table-summit', type: 'shop', unlocked: true, name: 'Summit', requirement: 'Reach Lvl 50' });
+      assertTrue(/Table unlocked/.test(mail) && /mini-table/.test(mail), 'The unlock mail names a table and shows it');
+    } finally {
+      cosmeticPurchaseState = real; notifyBanner = realBanner; renderPersonalisationCosmetics();
+    }
+  });
+  await test('Press and hold an item in Custom for a big preview; a tap still equips as before', async () => {
+    const wait = (ms) => new Promise(r => setTimeout(r, ms));
+    try {
+      closeOtherMenuPages();
+      document.getElementById('themesModal').classList.remove('hidden');
+      setCustomTab('burnEffect'); renderPersonalisationCosmetics();
+      const tile = visibleCustomPanel().querySelector('[data-equip-id]:not([data-equip-id="default"])');
+      assertTrue(!!tile, 'A burn tile');
+      const r = tile.getBoundingClientRect();
+      const at = { clientX: r.left + 5, clientY: r.top + 5, bubbles: true, pointerId: 1, button: 0 };
+      tile.dispatchEvent(new PointerEvent('pointerdown', at));
+      await wait(CARD_HOLD_MS + 80);
+      const box = document.getElementById('bigPreview');
+      assertTrue(!box.classList.contains('hidden'), 'The hold opens the big preview');
+      assertEqual(box.dataset.itemId, tile.dataset.equipId, 'for that item');
+      assertTrue(!!box.querySelector('[data-shop-burn-stage]') && !!box.querySelector('[data-bp-play]'), 'with a stage that plays the effect and Play Again');
+      const equippedBefore = equippedCosmetics.burnEffect;
+      tile.dispatchEvent(new PointerEvent('pointerup', at));
+      tile.click();
+      assertEqual(equippedCosmetics.burnEffect, equippedBefore, 'Letting go does not equip it');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      assertTrue(box.classList.contains('hidden'), 'Escape closes the preview first');
+      assertTrue(!document.getElementById('themesModal').classList.contains('hidden'), 'and leaves Custom open');
+      ['avatar', 'tableTheme', 'cardBack', 'frame', 'deck', 'emotes', 'victoryEffect', 'jokerEffect'].forEach((type) => {
+        const item = customAllItems(type)[0];
+        assertTrue(openBigPreview(item.id), `${type}: a big preview`);
+        assertTrue(!!document.querySelector('#bigPreview .bp-stage > *'), `${type}: something is drawn`);
+        closeBigPreview();
+      });
+    } finally {
+      closeBigPreview(); closeOtherMenuPages();
+    }
+  });
+  await test('Challenge text links its key terms to the Guide, which opens on the term and goes back to Challenges', async () => {
+    const html = linkKeyTerms('3/5 — Complete a Snap Burn, then burn the pile in the Gauntlet.');
+    assertTrue(/data-term="snap-burn">Snap Burn</.test(html), 'Snap Burn links');
+    assertTrue(/data-term="burn">burn the pile</.test(html), 'burn the pile links');
+    assertTrue(/data-term="gauntlet">Gauntlet</.test(html), 'Gauntlet links');
+    assertEqual((linkKeyTerms('Burn it, burn it again').match(/term-link/g) || []).length, 1, 'Each term links once');
+    assertEqual(linkKeyTerms('<b class="burn">x</b>'), '<b class="burn">x</b>', 'Tags are left alone');
+    KEY_TERM_LINKS.forEach(([, slug]) => assertTrue(!!document.querySelector(`#rulesModal [data-term="${slug}"]`), `Key Terms has "${slug}"`));
+    const terms = [...document.querySelectorAll('#rulesModal [data-term]')].map(p => p.textContent.split(':')[0].toLowerCase());
+    assertEqual(terms, [...terms].sort(), 'Key Terms stay alphabetical');
+    const wait = () => new Promise(r => setTimeout(r, 60));
+    try {
+      closeOtherMenuPages();
+      document.getElementById('challengesModal').classList.remove('hidden'); await wait();
+      const probe = document.createElement('div'); probe.innerHTML = linkKeyTerms('Complete a Snap Burn.');
+      document.getElementById('challengesModal').appendChild(probe);
+      probe.querySelector('.term-link').click(); await wait();
+      assertTrue(!document.getElementById('rulesModal').classList.contains('hidden'), 'The Guide opens');
+      assertTrue(document.getElementById('challengesModal').classList.contains('hidden'), 'over Challenges, which closes');
+      const term = document.querySelector('#rulesModal [data-term="snap-burn"]');
+      assertTrue(term.classList.contains('term-focus'), 'The term is highlighted');
+      assertTrue(!term.closest('.accordion-content').classList.contains('hidden'), 'Key Terms is open');
+      probe.remove();
+      document.getElementById('closeRulesBtn').click(); await wait();
+      assertTrue(!document.getElementById('challengesModal').classList.contains('hidden'), 'Closing the Guide goes back to Challenges');
+    } finally {
+      document.getElementById('rulesModal').classList.add('hidden'); closeOtherMenuPages();
+    }
+  });
+  await test('Escape closes every menu and page in one press; the Guide lists it', async () => {
+    const wait = () => new Promise(r => setTimeout(r, 40));
+    try {
+      closeOtherMenuPages();
+      document.getElementById('settingsModal').classList.remove('hidden');
+      document.getElementById('rulesModal').classList.remove('hidden');
+      document.getElementById('profileModal').classList.remove('hidden'); await wait();
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); await wait();
+      ['settingsModal', 'rulesModal', 'profileModal'].forEach(id => assertTrue(document.getElementById(id).classList.contains('hidden'), `${id} closed`));
+      assertTrue(/Esc/.test(document.getElementById('rulesModal').textContent) && /back to the home screen/.test(document.getElementById('rulesModal').textContent), 'Keyboard Shortcuts lists Esc');
+    } finally {
+      ['settingsModal', 'rulesModal'].forEach(id => document.getElementById(id).classList.add('hidden')); closeOtherMenuPages();
+    }
+  });
+  await test('Emote button: hold to send your last emote again; leaderboard rows give a quick stats peek; friend level mail', async () => {
+    const realSend = sendEmote, realLast = lastSentEmote, sent = [];
+    try {
+      sendEmote = (e) => sent.push(e);
+      lastSentEmote = '🔥';
+      assertTrue(resendLastEmote(), 'Resends');
+      assertEqual(sent, ['🔥'], 'the last emote');
+      const btn = document.getElementById('emoteToggleBtn');
+      assertTrue(/hold/i.test(btn.getAttribute('aria-label')), 'The button says it can be held');
+    } finally { sendEmote = realSend; lastSentEmote = realLast; }
+    const row = leaderboardRowHtml({ username: 'Zara', uid: 'u1', rating: 1600, wins: 3, losses: 1 }, 4, 'ranked');
+    assertTrue(/class="lb-peek"/.test(row) && /data-lb-uid="u1"/.test(row), 'Rows carry a stats peek button');
+    const peek = leaderboardPeekHtml('Zara', { rating: 1600, stats: { games: 4, wins: 3, peak: 1650, bestStreak: 2 } });
+    assertTrue(/Gold/.test(peek) && /4 · 3 won \(75%\)/.test(peek) && /1650/.test(peek), 'The peek shows tier, games, peak');
+    const mail = inboxItemHtml({ id: 'friendlevel_u1_20', type: 'friendLevel', uid: 'u1', name: 'Zara', level: 20 });
+    assertTrue(/Zara reached level 20/.test(mail) && /VIEW PLAYER/.test(mail), 'A friend levelling up is mailed');
+    assertTrue(ACTIVITY_MAIL_TYPES.includes('friendLevel'), 'and listed in the Inbox');
+    assertTrue(/Top level/.test(inboxItemHtml({ id: 'x', type: 'friendLevel', uid: 'u1', name: 'Zara', level: 99 })), 'Level 99 has its own heading');
   });
   await test('Friends list: highest level first, then online, then A-Z', () => {
     const area = document.getElementById('friendsListArea');
@@ -7770,7 +7904,7 @@ async function runDevTestSuite() {
       const heads = [...document.querySelectorAll('#personalisationAll [data-custom-section-toggle]')];
       assertEqual(heads.map(h => h.querySelector('.cat-head-title').textContent), COSMETIC_TABS.map(t => t.label), 'One section per type');
       const ids = new Set([...document.querySelectorAll('#personalisationAll [data-equip-id]')].map(b => b.dataset.equipId));
-      const everything = [...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...BUILT_IN_COSMETICS.filter(i => COSMETIC_TABS.some(t => t.category === i.category))];
+      const everything = [...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS, ...BUILT_IN_COSMETICS.filter(i => COSMETIC_TABS.some(t => t.category === i.category))];
       const missing = everything.filter(i => !ids.has(i.id)).map(i => i.id);
       assertEqual(missing, [], 'Every item is in All, seasonal ones included');
       const halloweenTable = document.querySelector('#personalisationAll [data-equip-id="table-halloween"]');

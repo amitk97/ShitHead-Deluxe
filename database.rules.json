@@ -48,6 +48,7 @@
               newData.val() === 'back-neon' || newData.val() === 'back-crimson' ||
               newData.val() === 'back-nebula' || newData.val() === 'back-inferno' ||
               newData.val().matches(/^back-(arcade|space|tartan|artdeco|dragon|stained)$/) ||
+              newData.val() === 'back-rising-star' ||
               (newData.val().matches(/^back-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^back-(halloween|diwali|christmas|newyear)$/)))))"
           },
@@ -59,7 +60,7 @@
               (newData.val() === 'frame-silver' || newData.val() === 'frame-gold' ||
               newData.val() === 'frame-diamond' || newData.val() === 'frame-obsidian-throne' ||
               newData.val() === 'frame-emerald-sovereign' || newData.val() === 'frame-darkness' ||
-              newData.val() === 'frame-gauntlet' ||
+              newData.val() === 'frame-gauntlet' || newData.val() === 'frame-ascendant' ||
               newData.val().matches(/^frame-(split-crimson|split-royal|split-noir)$/) ||
               newData.val().matches(/^frame-(dashed-gold|neon-tube|spectrum)$/) ||
               (newData.val().matches(/^frame-(lunar|valentine|ramadan|easter|summer)$/) ||
@@ -93,7 +94,7 @@
               newData.val() === 'table-royal' || newData.val() === 'table-desert' ||
               newData.val() === 'table-jungle' || newData.val() === 'table-devilish' ||
               newData.val() === 'table-angelic' ||
-              newData.val().matches(/^table-(neon|aurora|space)$/) ||
+              newData.val().matches(/^table-(neon|aurora|space|summit)$/) ||
               (newData.val().matches(/^table-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^table-(halloween|diwali|christmas|newyear)$/)))))"
           },

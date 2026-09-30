@@ -102,7 +102,55 @@ function addXp(user, amount, now, addDiamonds, { mailEach = true, countWeek = tr
     if (xp.week !== week) { xp.week = week; xp.weekXp = 0; }
     xp.weekXp = num(xp.weekXp) + gained;
   }
-  return { gained, total: xp.total, level: xp.level, levelUps };
+  const rewards = grantLevelRewards(user, now);
+  return { gained, total: xp.total, level: xp.level, levelUps, ...(rewards.length ? { rewards } : {}) };
+}
+
+// Level rewards (catalog xp.rewards, v248): free cosmetics that unlock at a
+// level (a card back at 15, a frame at 25, a table at 50). Granted into
+// ownedCosmetics with an unlock mail once the account's level reaches them:
+// in addXp and at sign-in (economy sync, for accounts already past them).
+function grantLevelRewards(user, now) {
+  const level = num(user.xp && user.xp.level);
+  const out = [];
+  (RULES.rewards || []).forEach((r) => {
+    if (level < num(r.level) || (user.ownedCosmetics && user.ownedCosmetics[r.id])) return;
+    user.ownedCosmetics = user.ownedCosmetics || {};
+    user.ownedCosmetics[r.id] = { cost: 0, purchasedAt: now, level: num(r.level) };
+    user.activityInbox = user.activityInbox || {};
+    user.activityInbox[`unlock_${r.id}`] = { type: 'shop', unlocked: true, name: String(r.name).slice(0, 80), cost: 0, requirement: `Reach Lvl ${num(r.level)}`, sentAt: now };
+    out.push({ id: r.id, name: r.name, level: num(r.level) });
+  });
+  return out;
+}
+
+// Friends hear about big levels (v248, owner): every 10th level and 99.
+// Called after a users/{uid} write commits (economy userTx); only the
+// highest such level crossed by one write is mailed (a back-dated jump of
+// many levels sends one mail), and never for a re-levelled table.
+const FRIEND_MAIL_MAX = 300;
+const friendMailLevel = (from, to) => {
+  let best = 0;
+  for (let L = from + 1; L <= to; L++) if (L % 10 === 0 || L === MAX_LEVEL) best = L;
+  return best;
+};
+async function mailFriendsOnLevel(uid, before, after) {
+  const b = before && before.xp, a = after && after.xp;
+  if (!a || !b || after.deletion) return 0;
+  if (num(a.table) !== num(b.table)) return 0;
+  const L = friendMailLevel(num(b.level, 1), num(a.level, 1));
+  const name = typeof after.username === 'string' ? after.username : null;
+  if (!L || !name) return 0;
+  const root = admin.database();
+  const friends = Object.keys((await root.ref(`friends/${uid}`).once('value')).val() || {}).slice(0, FRIEND_MAIL_MAX);
+  const avatar = (await root.ref(`publicProfiles/${uid}/avatar`).once('value')).val();
+  const now = Date.now();
+  const updates = {};
+  friends.forEach((fid) => {
+    updates[`users/${fid}/activityInbox/friendlevel_${uid}_${L}`] = { type: 'friendLevel', uid, name: name.slice(0, 24), level: L, sentAt: now, ...(typeof avatar === 'string' ? { avatar } : {}) };
+  });
+  if (friends.length) await root.ref().update(updates);
+  return friends.length;
 }
 
 // XP for what an account did before levels existed, worked out from its
@@ -190,4 +238,4 @@ async function migrateAll() {
   return fixed;
 }
 
-module.exports = { RULES, enabled, award, backfill, pastXp, gauntletBotXp, levelFor, xpForLevel, relevel, migrateAll, resetCache, ukWeekKey, weekXp };
+module.exports = { RULES, enabled, award, grantLevelRewards, mailFriendsOnLevel, friendMailLevel, backfill, pastXp, gauntletBotXp, levelFor, xpForLevel, relevel, migrateAll, resetCache, ukWeekKey, weekXp };

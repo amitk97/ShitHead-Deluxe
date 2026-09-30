@@ -1660,6 +1660,23 @@
   "milestoneEvery": 10,
   "milestoneDiamonds": 100,
   "maxXp": 100000000,
+  "rewards": [
+   {
+    "id": "back-rising-star",
+    "name": "Rising Star",
+    "level": 15
+   },
+   {
+    "id": "frame-ascendant",
+    "name": "Ascendant",
+    "level": 25
+   },
+   {
+    "id": "table-summit",
+    "name": "Summit",
+    "level": 50
+   }
+  ],
   "tableVersion": 2,
   "levels": [
    0,

@@ -690,6 +690,30 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     ok(fixedN >= 1 && (await admin('users/xmig/xp/level')) === 28 && (await admin('publicProfiles/xmig/level')) === 28 && (await admin('config/xpTableDone')) === 2, 'every account (and its public level) is re-levelled once', fixedN);
     ok((await admin('leaderboard/xmig/level')) === 28 && (await admin('boards/challenges/xmig/level')) === 28 && (await admin('boards/gauntlet/xmig')) === null, 'the leaderboards show the new level (no new entries made)');
     ok((await xpMod.migrateAll()) === 0, 'the re-levelling runs once per table');
+    // Level rewards (v248): free cosmetics at Lvl 15 / 25 / 50, granted once.
+    await admin('users/xena/xp', 'PUT', { total: xpMod.xpForLevel(15) - 10, level: 14, backfilled: true, table: 2, paidLevel: 14 });
+    await admin('users/xena/ownedCosmetics', 'DELETE');
+    await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
+    x = await call('xena', { action: 'matchFinished', matchId: 'xp_r1' });
+    ok(x.xp && x.xp.level === 15 && (x.xp.rewards || []).map(r => r.id).join() === 'back-rising-star', 'reaching Lvl 15 grants the Rising Star card back', x.xp);
+    ok((await admin('users/xena/ownedCosmetics/back-rising-star')) && (await admin('users/xena/activityInbox/unlock_back-rising-star'))?.unlocked, 'owned, with an unlock mail');
+    ok((await tryWrite('xena', db => set(ref(db, 'users/xena/equippedCosmetics/cardBack'), 'back-rising-star'))) !== 'denied', 'and it can be equipped');
+    ok((await tryWrite('xena', db => set(ref(db, 'users/xena/equippedCosmetics/tableTheme'), 'table-summit'))) === 'denied', 'blocked: equipping the Lvl 50 table without it');
+    await admin('users/xena/xp', 'PUT', { total: xpMod.xpForLevel(30), level: 30, backfilled: true, table: 2, paidLevel: 30 });
+    x = await call('xena', { action: 'sync' });
+    ok((await admin('users/xena/ownedCosmetics/frame-ascendant')) && !(await admin('users/xena/ownedCosmetics/table-summit')) && (x.xp?.rewards || []).some(r => r.id === 'frame-ascendant'), 'sign-in grants rewards already reached (Lvl 25 frame), not later ones', x.xp);
+    // Friends are mailed at every 10th level and 99 (one mail per write).
+    ok(xpMod.friendMailLevel(8, 23) === 20 && xpMod.friendMailLevel(11, 19) === 0 && xpMod.friendMailLevel(97, 99) === 99, 'friend mail levels: the highest 10th (or 99) crossed');
+    await admin('users/xpal', 'PUT', { username: 'Xpal' });
+    await admin('friends/xena', 'PUT', { xpal: true });
+    await admin('users/xena/xp', 'PUT', { total: xpMod.xpForLevel(40) - 10, level: 39, backfilled: true, table: 2, paidLevel: 39 });
+    await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
+    x = await call('xena', { action: 'matchFinished', matchId: 'xp_r2' });
+    const fmail = await admin('users/xpal/activityInbox/friendlevel_xena_40');
+    ok(x.xp?.level === 40 && fmail && fmail.type === 'friendLevel' && fmail.name === 'Xena' && fmail.level === 40, 'a friend is mailed when you reach level 40', fmail);
+    await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);
+    await call('xena', { action: 'matchFinished', matchId: 'xp_r3' });
+    ok(Object.keys((await admin('users/xpal/activityInbox')) || {}).length === 1, 'no mail for a level that is not a 10th');
     await admin('config/features/xp', 'PUT', false);
     await sleep(11000);
     await admin('users/xena/matchCounters/lastFinishedAt', 'PUT', 0);

@@ -62,7 +62,8 @@ function xpResult(user, parts, now, past) {
   const res = xp.award(user, parts, now, addDiamonds);
   if (!past || !past.gained) return res;
   const cur = res || { gained: 0, total: user.xp.total, level: user.xp.level, levelUps: [] };
-  return { ...cur, backfill: { xp: past.gained, level: past.level, reward: past.levelUps.reduce((sum, u) => sum + u.reward, 0) } };
+  const rewards = [...(past.rewards || []), ...(cur.rewards || [])];
+  return { ...cur, ...(rewards.length ? { rewards } : {}), backfill: { xp: past.gained, level: past.level, reward: past.levelUps.reduce((sum, u) => sum + u.reward, 0) } };
 }
 const fail = (code, message) => { throw new HttpsError(code, message); };
 const clip = (value, max) => String(value == null ? '' : value).slice(0, max);
@@ -208,6 +209,7 @@ async function userTx(uid, mutate) {
   // Leaderboards + congratulations (functions/boards.js); never fails the action.
   if (result.committed && outcome && !outcome.noop) {
     try { outcome.boardMail = await boards.onUserChanged(uid, before, saved); } catch (e) { logger.warn('boards update failed', { uid, error: String(e) }); }
+    try { await xp.mailFriendsOnLevel(uid, before, saved); } catch (e) { logger.warn('friend level mail failed', { uid, error: String(e) }); }
   }
   return { ...(outcome || {}), user: saved };
 }
@@ -403,6 +405,8 @@ actions.sync = async ({ uid }) => {
     const xpRes = past ? xpResult(user, [], now, past) : releveled ? { gained: 0, total: user.xp.total, level: user.xp.level, levelUps: [] } : null;
     const claimed = grantMilestones(user, now);
     const newAvatars = grantEarnedAvatars(user, legacy, now);
+    // Level rewards for accounts already past their level (xp.grantLevelRewards).
+    const levelRewards = xpOn ? xp.grantLevelRewards(user, now) : [];
     // A first Gauntlet clear from before it was a challenge: record it (already paid).
     let backfilled = false;
     // Gauntlet bots beaten from before they were counted: 5 per clear + this run's.
@@ -415,7 +419,8 @@ actions.sync = async ({ uid }) => {
       user.completedChallenges['gauntlet-first'] = { completedAt: num(user.gauntlet.firstDoneAt), reward: num(CAT.gauntlet.firstReward) };
       backfilled = true;
     }
-    return claimed.length || newAvatars.length || backfilled || past || releveled ? { user, claimed, newAvatars, xp: xpRes } : { noop: true, claimed: [], newAvatars: [] };
+    const xpOut = levelRewards.length ? { ...(xpRes || { gained: 0, total: num(user.xp?.total), level: num(user.xp?.level, 1), levelUps: [] }), rewards: levelRewards } : xpRes;
+    return claimed.length || newAvatars.length || backfilled || past || releveled || levelRewards.length ? { user, claimed, newAvatars, xp: xpOut } : { noop: true, claimed: [], newAvatars: [] };
   });
   // After a level-table change, fix every account's level once (xp.migrateAll).
   if (xpOn) { try { await xp.migrateAll(); } catch (e) { logger.warn('xp migrate failed', { error: String(e) }); } }
