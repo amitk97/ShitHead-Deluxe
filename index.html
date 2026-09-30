@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v240 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v241 (ShitHead-Deluxe-207) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -18222,6 +18222,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v241: [
+        ['👥', 'Friends are now listed by level, highest first.'],
+        ['🛡️', 'Ranked: a match that fails the server\'s cheat checks no longer counts for rating or Diamonds.']
+      ],
       v240: [
         ['📅', 'Weekly challenges: 5 a week from Monday 5 October, with 10 new ones including Streaker, Pile Diver, Gauntlet Runner and Daily Grinder.', WN_KEY],
         ['🔥', 'Weekly targets from next week: Bonfire Week 10 burns; Bot Hunter, Ranked Week, Snap Happy and Four Play 5 each.']
@@ -26396,7 +26400,8 @@ video {
       if (players.some((p) => p.finishRank == null)) return; // every seat needs a settled placement
       const roomCode = state.roomCode, uid = currentUser.uid;
       const attempt = (tries) => callEconomy('rankedResult', { roomCode }).catch((error) => {
-        if (tries > 0 && !/opponent a lot/.test(error.message)) return new Promise(r => setTimeout(r, 2000)).then(() => attempt(tries - 1));
+        // Final answers (pair limit, a match that failed the Ranked checks) are never retried.
+        if (tries > 0 && !/opponent a lot|Ranked checks/.test(error.message)) return new Promise(r => setTimeout(r, 2000)).then(() => attempt(tries - 1));
         throw error;
       });
       new Promise(r => setTimeout(r, 800)).then(() => attempt(4)).then((res) => {
@@ -26421,7 +26426,7 @@ video {
         syncPublicProfile(); // rating moved — keep the friends-visible copy current
       }).catch((error) => {
         console.warn('Ranked rating update failed', error.message);
-        notifyBanner(/opponent a lot/.test(error.message) ? `⚠️ ${error.message}` : '⚠️ Your Ranked result couldn’t be saved — check your connection.');
+        notifyBanner(/opponent a lot|Ranked checks/.test(error.message) ? `⚠️ ${error.message}` : '⚠️ Your Ranked result couldn’t be saved — check your connection.');
       });
     }
 
@@ -26632,9 +26637,10 @@ video {
     function paintFriendsList(profiles) {
       const area = document.getElementById('friendsListArea');
       const results = Object.entries(profiles).map(([uid, profile]) => ({ uid, profile: profile || {} }));
-      // Online friends first (then A-Z), with a count on top.
+      // Highest level first (owner, v241), then online, then A-Z, with a count on top.
       const nameOf = (r) => String(r.profile.username || r.profile.name || '').toLowerCase();
-      results.sort((a, b) => (isProfileOnline(b.profile) - isProfileOnline(a.profile)) || nameOf(a).localeCompare(nameOf(b)));
+      const levelOf = (r) => Number(r.profile.level) || 0;
+      results.sort((a, b) => (levelOf(b) - levelOf(a)) || (isProfileOnline(b.profile) - isProfileOnline(a.profile)) || nameOf(a).localeCompare(nameOf(b)));
       const online = results.filter(r => isProfileOnline(r.profile)).length;
       area.innerHTML = `<p class="friends-online-count">${online} of ${results.length} online</p>`
         + results.map(({ uid, profile }) => friendRowHtml(uid, profile, 'friend')).join('');

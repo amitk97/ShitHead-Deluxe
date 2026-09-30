@@ -4613,6 +4613,21 @@ async function runDevTestSuite() {
     freshState({ isMultiplayer: false });
     assertTrue(friendRowHtml('u1', { username: 'Jamie', online: false }, 'friend').includes('friend-status offline'), 'Shows Offline');
   });
+  await test('Friends list: highest level first, then online, then A-Z', () => {
+    const area = document.getElementById('friendsListArea');
+    const before = area.innerHTML;
+    const now = serverNow();
+    paintFriendsList({
+      a: { username: 'Zed', level: 12, online: false },
+      b: { username: 'Amy', level: 40, online: false },
+      c: { username: 'Bob', level: 12, online: true, seen: now },
+      d: { username: 'Cat', online: true, seen: now },
+      e: { username: 'Abe', level: 12, online: false }
+    });
+    const names = [...area.innerHTML.matchAll(/Amy|Bob|Zed|Cat|Abe/g)].map(m => m[0]).filter((n, i, all) => all.indexOf(n) === i);
+    assertEqual(names, ['Amy', 'Bob', 'Abe', 'Zed', 'Cat'], 'Level 40, then level 12 (online Bob first, then A-Z), then no level');
+    area.innerHTML = before;
+  });
   await test('The joined room survives the app being killed (localStorage), and expires', () => {
     freshState({ localPlayerId: 'p_ab12', players: [makePlayer({ id: 'p_ab12', name: 'Jamie' })] });
     forgetJoinedRoom();

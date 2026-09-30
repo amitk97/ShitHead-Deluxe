@@ -45,10 +45,11 @@ const MATCH_LIMITS = { minGapMs: 45 * 1000, perDay: 40 };
 const RANKED_STAT_CAPS = { burnt: 60, jokersPlayed: 8, challengeBurns: 20, jokerDeflects: 8, snapBurns: 12 };
 const SEASON_SLACK_MS = 14 * 60 * 60 * 1000; // phones' local dates vs the server's UTC
 const PROCESSED_KEEP = 200;
-// Off = shadow mode: the Ranked audit's findings are recorded on each result
-// (rankedResults/{matchId}/audit) and shown to the owner, but every match is
-// still scored. Turn on once real honest games show no hard findings.
-const RANKED_AUDIT_ENFORCE = false;
+// On (owner, v241): a Ranked match with a hard audit finding isn't scored
+// (both players get "didn't pass the Ranked checks"). Off = shadow mode: the
+// findings are only recorded on each result (rankedResults/{matchId}/audit).
+// If honest players ever lose matches to it, set it back to false.
+const RANKED_AUDIT_ENFORCE = true;
 const RANKED_PAIR_PER_DAY = 5; // processedMatchRewards / processedRankedMatches entries kept
 
 const db = () => admin.database();

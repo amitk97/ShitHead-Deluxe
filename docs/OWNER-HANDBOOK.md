@@ -137,15 +137,12 @@ The support inbox is **support.shitheaddeluxe@gmail.com**. The "Contact Support"
 
 ## 8. Ranked cheat protection
 
-- **What happens today:** every Ranked game is checked by the server (the **Ranked Audit** tab), but it runs in *watch-only* mode. Matches are always scored, and suspicious ones are just recorded.
-- **When to switch it on:** once you've seen plenty of real Ranked games with **no hard findings**.
-- **How to switch it on:**
+- **What happens today (switched on in v241):** every Ranked game is checked by the server (the **Ranked Audit** tab). A match with a **hard** finding (a move that's impossible in an honest game, e.g. cards appearing, vanishing or being played for someone else) doesn't count: no rating change, no Diamonds, and both players see "This match didn't pass the Ranked checks". Soft findings (timing oddities) are only recorded.
+- **Keep an eye on:** menu → Error Reports → **Ranked Audit**. If honest players start losing matches to it, switch it off:
   1. Open `functions/economy.js` on GitHub.
-  2. Change `const RANKED_AUDIT_ENFORCE = false;` to `true`.
+  2. Change `const RANKED_AUDIT_ENFORCE = true;` to `false`.
   3. Commit to `main`.
-  4. The functions workflow deploys it.
-- **What changes:** matches with hard findings stop counting towards ratings.
-- **If honest players start losing matches:** set it back to `false`.
+  4. The functions workflow deploys it (a few minutes). Matches are then always scored again, and findings are just recorded.
 
 ---
 
