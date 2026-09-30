@@ -2530,12 +2530,12 @@ async function runDevTestSuite() {
   });
 
   await test('REGRESSION: profile picture catalogue matches the owner spec', () => {
-    const free = BUILT_IN_COSMETICS.filter(i => i.category === 'Profile Pictures').map(i => i.name);
+    const free = BUILT_IN_COSMETICS.filter(i => i.category === 'Avatars').map(i => i.name);
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
-    const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Profile Pictures' && !i.season).map(i => [i.name, i.cost]));
+    const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Avatars' && !i.season).map(i => [i.name, i.cost]));
     assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000, 'Turtley': 5000 }, 'Shop pictures and prices');
     assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Recruiter'], 'Earn-only pictures');
-    [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Profile Pictures')
+    [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Avatars')
       .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
   });
   await test('REGRESSION: every profile picture renders as the same 1:1 rounded square', () => {
@@ -2646,7 +2646,7 @@ async function runDevTestSuite() {
   await test('REGRESSION: Custom is organised into tabs with tiles, at least 2 per row', () => {
     openThemesPanel();
     const tabs = [...document.querySelectorAll('#customTabBar [data-custom-tab]')].map(b => b.textContent.trim());
-    assertEqual(tabs, ['All', 'Pictures', 'Deck', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'Custom tabs');
+    assertEqual(tabs, ['All', 'Avatars', 'Deck', 'Tables', 'Card Backs', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'Custom tabs');
     document.querySelector('#customTabBar [data-custom-tab="cardBack"]').click();
     assertTrue(!document.querySelector('[data-custom-panel="cardBack"]').classList.contains('hidden') && document.querySelector('[data-custom-panel="avatar"]').classList.contains('hidden'), 'Only the chosen tab shows');
     const tiles = [...document.querySelectorAll('#personalisationCardBacks .cosmetic-tile')];
@@ -4868,6 +4868,39 @@ async function runDevTestSuite() {
     assertTrue(ACTIVITY_MAIL_TYPES.includes('friendLevel'), 'and listed in the Inbox');
     assertTrue(/Top level/.test(inboxItemHtml({ id: 'x', type: 'friendLevel', uid: 'u1', name: 'Zara', level: 99 })), 'Level 99 has its own heading');
   });
+  await test('Avatars: the Shop and Custom call profile pictures Avatars, never Pictures', () => {
+    assertEqual(COSMETIC_TABS.find(t => t.category === 'Avatars')?.label, 'Avatars', 'Shop tab label');
+    assertTrue(CUSTOM_TABS.some(t => t.key === 'avatar' && t.label === 'Avatars'), 'Custom tab label');
+    assertTrue(!Object.keys(COSMETIC_CATEGORY_TYPES).includes('Profile Pictures'), 'No "Profile Pictures" category left');
+    const visible = [...document.querySelectorAll('#shopModal, #themesModal, #profileModal, #collectionModal, #rulesModal')].map(el => el.textContent).join(' ');
+    assertTrue(!/picture/i.test(visible.replace(/\s+/g, ' ')), 'No "picture" wording on those pages');
+  });
+  await test('Mail links: tapping a mail opens what it is about', async () => {
+    const wait = () => new Promise(r => setTimeout(r, 60));
+    const shown = (id) => !document.getElementById(id).classList.contains('hidden');
+    const back = LEVEL_REWARDS[0];
+    assertTrue(typeof mailTarget({ type: 'shop', id: `unlock_${back.id}`, unlocked: true, name: back.name }) === 'function', 'an unlock mail has a target');
+    ['rank', 'level', 'referral', 'request', 'season', 'series'].forEach(type => assertTrue(typeof mailTarget({ type, id: 'x' }) === 'function', `${type} mail opens something`));
+    assertTrue(typeof mailTarget({ type: 'board', id: 'board_levels_10', board: 'levels' }) === 'function', 'board mail');
+    assertTrue(typeof mailTarget({ type: 'friendLevel', id: 'f', uid: 'u1', name: 'Zara', level: 20 }) === 'function', 'friend level mail → their card');
+    assertTrue(typeof mailTarget({ type: 'gift', id: 'g', direction: 'received', name: back.name }) === 'function', 'a gift mail → the item');
+    assertTrue(typeof mailTarget({ type: 'challenge', id: 'burner', name: 'Burner' }) === 'function', 'a challenge mail → Challenges');
+    const html = inboxMailCardHtml({ type: 'shop', id: `unlock_${back.id}`, unlocked: true, name: back.name, requirement: 'Reach Lvl 15' }, 0);
+    assertTrue(/^\s*<div data-mail-idx="0" role="link"/.test(html), 'The card is a link');
+    const realUser = currentUser;
+    try {
+      closeOtherMenuPages(); await wait();
+      document.getElementById('inboxModal').classList.remove('hidden');
+      inboxRenderedItems = [{ type: 'shop', id: `unlock_${back.id}`, unlocked: true, name: back.name, requirement: 'Reach Lvl 15' }];
+      const area = document.getElementById('inboxArea');
+      const before = area.innerHTML;
+      area.innerHTML = inboxRenderedItems.map(inboxMailCardHtml).join('');
+      area.querySelector('[data-mail-idx] p').click(); await wait();
+      assertTrue(shown('themesModal') && !shown('inboxModal'), 'An unlock mail opens Custom');
+      assertEqual(customTab, 'cardBack', 'on the Card Backs tab');
+      area.innerHTML = before;
+    } finally { currentUser = realUser; closeOtherMenuPages(); }
+  });
   await test('Friends list: highest level first, then online, then A-Z', () => {
     const area = document.getElementById('friendsListArea');
     const before = area.innerHTML;
@@ -6000,7 +6033,7 @@ async function runDevTestSuite() {
       seasonalNowOverride = '2026-12-01T12:00:00';
       cosmeticPurchaseState = { 'table-halloween': { cost: 1500 } };
       assertTrue(isCosmeticListed(table), 'Owned seasonal items stay in Custom after the event');
-      assertTrue(!COSMETIC_SHOP_ITEMS.filter(i => i.season).some(i => i.category === 'Profile Pictures' && !isSupportedCosmetic('avatar', i.id)), 'Seasonal pictures have art');
+      assertTrue(!COSMETIC_SHOP_ITEMS.filter(i => i.season).some(i => i.category === 'Avatars' && !isSupportedCosmetic('avatar', i.id)), 'Seasonal pictures have art');
     } finally {
       seasonalNowOverride = savedNow; currentUser = savedUser; cosmeticPurchaseState = savedOwned;
     }
@@ -6224,7 +6257,7 @@ async function runDevTestSuite() {
       shopTab = 'Frames'; renderCosmeticShop();
       const gold = document.querySelector('[data-shop-equip-id="frame-gold"]');
       assertEqual(gold?.textContent.trim(), 'EQUIP NOW', 'A newly purchased item must offer EQUIP NOW');
-      shopTab = 'Profile Pictures';
+      shopTab = 'Avatars';
     } finally {
       cosmeticPurchaseState = savedPurchases;
       equippedCosmetics = savedEquipped;
@@ -6987,14 +7020,14 @@ async function runDevTestSuite() {
 
   await test('Shop is organised into section tabs and all five filters render correctly', () => {
     const savedFilter = shopFilter, savedTab = shopTab;
-    shopFilter = 'all'; shopTab = 'Profile Pictures'; renderCosmeticShop();
+    shopFilter = 'all'; shopTab = 'Avatars'; renderCosmeticShop();
     const savedNow = seasonalNowOverride;
     const tabNames = () => [...document.querySelectorAll('#shopTabBar [data-shop-tab]')].map(b => b.textContent.replace(/\d+/g, '').trim());
     seasonalNowOverride = '2026-09-24T12:00:00'; // 21 days before Halloween
     renderCosmeticShop();
     let tabs = tabNames();
     assertTrue(tabs[tabs.length - 1].includes('Seasonal'), 'With no event near, Seasonal is the last tab');
-    assertEqual(tabs.slice(0, -1), ['All', 'Pictures', 'Tables', 'Card Backs', 'Decks', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'All, then Pictures, then table and cards, then effects');
+    assertEqual(tabs.slice(0, -1), ['All', 'Avatars', 'Tables', 'Card Backs', 'Decks', 'Frames', 'Burn', 'Joker', 'Victory', 'Emotes'], 'All, then Avatars, then table and cards, then effects');
     seasonalNowOverride = '2026-10-12T12:00:00'; // 3 days before Halloween
     renderCosmeticShop();
     assertTrue(tabNames()[0] === 'All' && tabNames()[1].includes('Seasonal'), 'Seasonal leads (after All) when an event starts within 3 days');
@@ -7847,7 +7880,7 @@ async function runDevTestSuite() {
     try {
       for (const [id, name] of Object.entries(pics)) {
         const item = COSMETIC_SHOP_ITEMS.find(i => i.id === id);
-        assertTrue(!!item && item.name === name && item.cost === 5000 && item.animated && item.category === 'Profile Pictures', `${name} is a 5000 animated picture in the Shop`, item);
+        assertTrue(!!item && item.name === name && item.cost === 5000 && item.animated && item.category === 'Avatars', `${name} is a 5000 animated picture in the Shop`, item);
         assertTrue(COSMETIC_RUNTIME_IDS.avatar.has(id) && AVATAR_ART[id].photo, `${name} has art`);
         host.innerHTML = avatarHtml(id, 96);
         const moving = [...host.querySelectorAll('*')].filter(el => getComputedStyle(el).animationName !== 'none');
@@ -7873,7 +7906,7 @@ async function runDevTestSuite() {
           assertTrue(getComputedStyle(movement.effect.target).transform !== before, `${name} changes pose at ${px}px`);
         }
       }
-      const top = Math.max(...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Profile Pictures').map(i => i.cost));
+      const top = Math.max(...COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Avatars').map(i => i.cost));
       assertEqual(top, 5000, 'nothing in Profile Pictures costs more');
       document.body.classList.add('reduce-motion');
       host.innerHTML = Object.keys(pics).map(id => avatarHtml(id, 96)).join('');
@@ -7960,7 +7993,7 @@ async function runDevTestSuite() {
       showShopPurchaseSuccess(COSMETIC_SHOP_ITEMS[0]);
       assertTrue(!document.getElementById('shopPurchaseSuccess').classList.contains('hidden'), 'Purchase success animation panel must become visible');
     } finally {
-      newCosmeticIds = savedNew; cosmeticPurchaseState = savedPurchases; challengeEconomy.diamonds = savedDiamonds; shopTab = 'Profile Pictures'; renderCosmeticShop();
+      newCosmeticIds = savedNew; cosmeticPurchaseState = savedPurchases; challengeEconomy.diamonds = savedDiamonds; shopTab = 'Avatars'; renderCosmeticShop();
     }
   });
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v248 (ShitHead-Deluxe-208) — bump this on every release. It is the game's
+<!-- BUILD: 2026-09-30-v249 (ShitHead-Deluxe-209) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -637,6 +637,13 @@
     .lb-peek-card dd svg { width:13px; height:13px; }
     .inbox-unlock-thumb { flex:none; display:flex; align-items:center; justify-content:center; min-width:42px; }
     .inbox-unlock-thumb .mini-table { transform:scale(.5); transform-origin:center; margin:-20px -30px; }
+    #inboxArea [data-mail-idx] { cursor:pointer; position:relative; transition:box-shadow .15s var(--ease-soft, ease), transform .15s var(--ease-snappy, ease); }
+    #inboxArea [data-mail-idx]:hover, #inboxArea [data-mail-idx]:focus-visible { box-shadow:0 0 0 1px rgba(251,191,36,.6); outline:none; }
+    #inboxArea [data-mail-idx]:active { transform:scale(.985); }
+    #inboxArea [data-mail-idx]::after { content:'›'; position:absolute; top:6px; right:10px; font-size:16px; font-weight:900; line-height:1; color:rgba(251,191,36,.75); pointer-events:none; }
+    .mail-focus { animation:mailFocusPulse 1.2s ease-in-out 2; border-radius:12px; }
+    @keyframes mailFocusPulse { 50% { box-shadow:0 0 0 2px rgba(251,191,36,.8), 0 0 18px rgba(251,191,36,.45); } }
+    body.reduce-motion .mail-focus { animation:none; box-shadow:0 0 0 2px rgba(251,191,36,.8); }
     .term-link { display:inline; padding:0; margin:0; border:0; background:none; font:inherit; color:inherit; text-decoration:underline; text-decoration-color:rgba(251,191,36,.7); text-underline-offset:2px; text-decoration-thickness:1px; cursor:pointer; }
     .term-link:hover, .term-link:focus-visible { color:#fbbf24; }
     #rulesModal [data-term] { border-radius:8px; transition:background-color .4s var(--ease-soft, ease), box-shadow .4s var(--ease-soft, ease); }
@@ -5980,7 +5987,7 @@ video {
         <div>
           <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Public Profile</span>
           <div id="profileHeaderCard" class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-start gap-3">
-            <button id="profileAvatarBtn" type="button" class="profile-avatar-btn" aria-label="Change profile picture"><span class="inline-flex items-center justify-center" data-own-avatar="68"></span><span class="profile-avatar-hint">Tap to change</span></button>
+            <button id="profileAvatarBtn" type="button" class="profile-avatar-btn" aria-label="Change avatar"><span class="inline-flex items-center justify-center" data-own-avatar="68"></span><span class="profile-avatar-hint">Tap to change</span></button>
             <div class="min-w-0">
               <span class="profile-name-row"><span id="profileUsernameText" class="block text-sm font-black text-white truncate">Not signed in</span><span id="profileLevelBadge" class="hidden"></span><button id="profileEditNameBtn" type="button" class="profile-edit-name hidden" aria-label="Change username">✎</button></span>
               <span id="profileNameEditor" class="hidden profile-name-editor"><input id="profileNameInput" type="text" maxlength="12" autocomplete="off" placeholder="New username" /><button id="profileNameSaveBtn" type="button" class="profile-name-save">Save</button><button id="profileNameCancelBtn" type="button" class="profile-name-cancel" aria-label="Cancel">✕</button></span>
@@ -6868,7 +6875,7 @@ video {
             <p><strong class="text-amber-300">The rounds:</strong> 1 Easy, 2 Easy, 3 Medium, 4 Hard, 5 Boss. The hearts and round number sit in the top-left corner of the table.</p>
             <p><strong class="text-amber-300">Lives:</strong> you have 3. Win a game and you move on to the next round. Lose one and you lose a life and face the <em>same</em> bot again. Lose all 3 and the run is over.</p>
             <p><strong class="text-amber-300">Leaving:</strong> a game you start and don't finish counts as a loss, so leaving a game you're losing still costs a life. Closing the app is fine: the Gauntlet remembers exactly where you were, mid-game or between games.</p>
-            <p><strong class="text-amber-300">Rewards:</strong> beat all five for the first time and you get <strong>💎 200</strong>, the <strong>Gauntlet Champion</strong> profile picture and the <strong>Gauntlet Gold</strong> card frame, which only Gauntlet champions can have. After that, every day you beat it pays <strong>💎 50</strong>. It can be beaten once a day (it opens again at midnight, UK time).</p>
+            <p><strong class="text-amber-300">Rewards:</strong> beat all five for the first time and you get <strong>💎 200</strong>, the <strong>Gauntlet Champion</strong> avatar and the <strong>Gauntlet Gold</strong> card frame, which only Gauntlet champions can have. After that, every day you beat it pays <strong>💎 50</strong>. It can be beaten once a day (it opens again at midnight, UK time).</p>
             <p><strong class="text-amber-300">Offline:</strong> you can play it with no signal or signed out, just without Diamonds or rewards.</p>
             <p><strong class="text-amber-300">Good to know:</strong> Gauntlet wins don't count toward unlocking bot difficulties or normal Vs Bots Diamonds. Every bot you beat does count on the <strong>Gauntlet leaderboard</strong>, even in runs you don't finish.</p>
             <p><strong class="text-amber-300">Challenges:</strong> <em>Gauntlet Champion</em> (first clear) is in the Bots tab; the daily Gauntlet win is in the Daily tab.</p>
@@ -6891,7 +6898,7 @@ video {
             <p data-term="card-powers"><strong class="text-amber-400">Card Powers:</strong> The &#9432; button on the table: what every card does. Press and hold any card on the table for the same information.</p>
             <p data-term="challenges"><strong class="text-amber-400">Challenges:</strong> Goals that pay Diamonds: Getting Started, daily and weekly picks, Bots, Ranked and Friends milestones. Menu &rarr; Challenges shows every one and what it asks for.</p>
             <p data-term="constraint"><strong class="text-amber-400">Constraint:</strong> A restriction the previous card placed on your turn. A 6 forces an EVEN card, a Jack forces an ODD card, and a 7 forces a card of rank 7 or lower. The banner shows the active constraint.</p>
-            <p data-term="custom"><strong class="text-amber-400">Custom:</strong> Menu &rarr; Custom: equip the pictures, tables, card backs, frames, decks, effects and emotes you own. Press and hold any item there (or in the Shop) for a big preview.</p>
+            <p data-term="custom"><strong class="text-amber-400">Custom:</strong> Menu &rarr; Custom: equip the avatars, tables, card backs, frames, decks, effects and emotes you own. Press and hold any item there (or in the Shop) for a big preview.</p>
             <p data-term="daily-challenges"><strong class="text-amber-400">Daily Challenges:</strong> Three new goals every UK day (Challenges &rarr; Daily tab), each paying Diamonds and XP.</p>
             <p data-term="deck"><strong class="text-amber-400">Deck:</strong> The face-down stack you draw from. After each turn you top your Hand back up to three cards while the Deck lasts. Once it's empty, no more topping up &mdash; and your Table Cards become reachable.</p>
             <p data-term="diamonds"><strong class="text-amber-400">Diamonds:</strong> The game&rsquo;s currency (💎). Earned from wins, challenges, the daily login streak and the Gauntlet; spent in the Shop on cosmetics or gifts for friends.</p>
@@ -6919,9 +6926,9 @@ video {
             <p data-term="rank"><strong class="text-amber-400">Rank:</strong> A card's value, ignoring suit. Suits never matter in ShitHead &mdash; only rank. That's also why several cards of the same rank can be played together in one turn.</p>
             <p data-term="ranked"><strong class="text-amber-400">Ranked:</strong> One-on-one online games against a real player, scored with a rating. Win and your rating goes up; lose and it goes down. Leaving a Ranked game counts as a loss.</p>
             <p data-term="rating"><strong class="text-amber-400">Rating:</strong> Your Ranked score (everyone starts at 500). It decides your Tier and your place on the Ranked leaderboard.</p>
-            <p data-term="recruit"><strong class="text-amber-400">Recruit:</strong> Share your invite link (Profile or Friends). When a new player joins with it and plays 3 games, you both get Diamonds. Recruit 5 for the Recruiter picture.</p>
+            <p data-term="recruit"><strong class="text-amber-400">Recruit:</strong> Share your invite link (Profile or Friends). When a new player joins with it and plays 3 games, you both get Diamonds. Recruit 5 for the Recruiter avatar.</p>
             <p data-term="reset"><strong class="text-amber-400">Reset:</strong> The 2. It can be played on almost anything (except a Jack) and clears the target, so the next player may follow it with any card at all.</p>
-            <p data-term="seasonal-event"><strong class="text-amber-400">Seasonal Event:</strong> Halloween, Christmas, Diwali and more: while an event is on, its themed items are sold in the Shop&rsquo;s Seasonal tab, and winning 3 games earns that event&rsquo;s picture.</p>
+            <p data-term="seasonal-event"><strong class="text-amber-400">Seasonal Event:</strong> Halloween, Christmas, Diwali and more: while an event is on, its themed items are sold in the Shop&rsquo;s Seasonal tab, and winning 3 games earns that event&rsquo;s avatar.</p>
             <p data-term="select-all-of-a-rank"><strong class="text-amber-400">Select All Of A Rank:</strong> With it on (the header button, or S on a keyboard), tapping a card selects every card of that rank in your Hand.</p>
             <p data-term="shithead"><strong class="text-amber-400">ShitHead:</strong> The loser &mdash; the last player still holding cards once everyone else has emptied their Hand, Face-Up and Face-Down cards.</p>
             <p data-term="skip"><strong class="text-amber-400">Skip:</strong> The 8. The next player misses their turn.</p>
@@ -13047,7 +13054,7 @@ video {
     function gauntletRewardHtml(st) {
       if (st.local) return `<div class="gauntlet-reward">${currentUser ? 'Offline: this run is just for fun.' : '<b>Sign in</b> to earn Diamonds and the Gauntlet rewards.'}</div>`;
       if (st.firstDone) return `<div class="gauntlet-reward">Beat it today: <b>${GAUNTLET.dailyReward} 💎</b> (once a day)</div>`;
-      return `<div class="gauntlet-reward">First time you beat it: <b>${GAUNTLET.firstReward} 💎</b> + the ${gauntletItemLink('picture')} picture + the ${gauntletItemLink('frame')} frame.<br>Then <b>${GAUNTLET.dailyReward} 💎</b> every day you beat it again.<div id="gauntletPreview" class="gauntlet-preview hidden" aria-live="polite"></div></div>`;
+      return `<div class="gauntlet-reward">First time you beat it: <b>${GAUNTLET.firstReward} 💎</b> + the ${gauntletItemLink('picture')} avatar + the ${gauntletItemLink('frame')} frame.<br>Then <b>${GAUNTLET.dailyReward} 💎</b> every day you beat it again.<div id="gauntletPreview" class="gauntlet-preview hidden" aria-live="polite"></div></div>`;
     }
     // Tap a reward's name to see it: the picture large, or the frame on a
     // few cards the way it looks at the table.
@@ -13057,7 +13064,7 @@ video {
     }
     function gauntletPreviewHtml(kind) {
       if (kind === 'picture') {
-        return `<div class="gauntlet-preview-art">${avatarHtml(GAUNTLET.picture, 96)}</div><div class="gauntlet-preview-name">${GAUNTLET.pictureName}</div><div class="gauntlet-preview-note">Earn-only profile picture</div>`;
+        return `<div class="gauntlet-preview-art">${avatarHtml(GAUNTLET.picture, 96)}</div><div class="gauntlet-preview-name">${GAUNTLET.pictureName}</div><div class="gauntlet-preview-note">Earn-only avatar</div>`;
       }
       const style = getCosmeticFrameStyle(GAUNTLET.frame).replace(/!important/g, '');
       const card = (rank, suit, red) => `<span class="gauntlet-frame-card" style="${style}"><b style="color:${red ? '#f87171' : '#e2e8f0'}">${rank}</b><i style="color:${red ? '#f87171' : '#e2e8f0'}">${suit}</i></span>`;
@@ -18522,6 +18529,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v249: [
+        ['📬', 'Tap any mail to go straight to what it is about: the item in Custom, the player, the leaderboard, your level or the challenge.', WN_KEY],
+        ['👤', 'Profile pictures are now called Avatars everywhere.']
+      ],
       v248: [
         ['🏆', 'Level rewards: the Rising Star card back at Lvl 15, the Ascendant frame at Lvl 25 and the Summit table at Lvl 50, free.', WN_KEY],
         ['✨', 'Press and hold any item in Custom or the Shop for a big preview that plays the effect.', WN_KEY],
@@ -19447,7 +19458,7 @@ video {
       const item = getAvatarItem(resolveAvatarId(id));
       const art = AVATAR_ART[resolveAvatarId(id)];
       const anim = art?.animated ? ' data-av-anim' : '';
-      return `<span class="avatar-tile ${extraClass}"${anim} style="width:${size}px;height:${size}px" role="img" aria-label="${item ? escapeAttr(item.name) : 'Profile picture'}">${avatarSvg(id, size)}</span>`;
+      return `<span class="avatar-tile ${extraClass}"${anim} style="width:${size}px;height:${size}px" role="img" aria-label="${item ? escapeAttr(item.name) : 'Avatar'}">${avatarSvg(id, size)}</span>`;
     }
     // Animated pictures only move while they can be seen: one shared
     // IntersectionObserver pauses any that are offscreen (.av-still), and a
@@ -19701,7 +19712,7 @@ video {
     ];
     const SEASONAL_EVENT_BY_ID = Object.fromEntries(SEASONAL_EVENTS.map(ev => [ev.id, ev]));
     const SEASONAL_KIND_PREFIX = { tableTheme: 'table', cardBack: 'back', frame: 'frame', burnEffect: 'burn', victoryEffect: 'victory', avatar: 'avatar', emotes: 'emotes', jokerEffect: 'joker' };
-    const SEASONAL_TYPE_CATEGORY = Object.freeze({ cardBack: 'Card Backs', frame: 'Frames', emotes: 'Emote Packs', tableTheme: 'Table Themes', burnEffect: 'Burn Effects', victoryEffect: 'Victory Effects', avatar: 'Profile Pictures', jokerEffect: 'Joker Effects' });
+    const SEASONAL_TYPE_CATEGORY = Object.freeze({ cardBack: 'Card Backs', frame: 'Frames', emotes: 'Emote Packs', tableTheme: 'Table Themes', burnEffect: 'Burn Effects', victoryEffect: 'Victory Effects', avatar: 'Avatars', jokerEffect: 'Joker Effects' });
     const seasonalItemId = (type, eventId) => `${SEASONAL_KIND_PREFIX[type]}-${eventId}`;
     const seasonalIdsOf = (type) => SEASONAL_EVENTS.map(ev => seasonalItemId(type, ev.id));
     const SEASONAL_BACK_IDS = new Set(seasonalIdsOf('cardBack'));
@@ -19710,7 +19721,7 @@ video {
       ...(type === 'avatar' && SEASONAL_AVATAR_ART[seasonalItemId(type, ev.id)]?.animated ? { animated: true } : {})
     })));
     const SEASONAL_EARNED_AVATARS = SEASONAL_EVENTS.map(ev => ({
-      id: `avatar-${ev.id}-earned`, category: 'Profile Pictures', name: ev.names.earned, earned: true, season: ev.id,
+      id: `avatar-${ev.id}-earned`, category: 'Avatars', name: ev.names.earned, earned: true, season: ev.id,
       animated: !!SEASONAL_AVATAR_ART[`avatar-${ev.id}-earned`]?.animated,
       requirement: `Win ${SEASONAL_EARN_WINS} games during ${ev.name}`,
       isEarned: (u) => seasonalWinsFor(u?.seasonWins, ev.id) >= SEASONAL_EARN_WINS
@@ -20941,22 +20952,22 @@ video {
       { id: 'joker-vampire', category: 'Joker Effects', name: 'Vampire', cost: 3500, tones: ['#111827','#991b1b','#e2e8f0'] },
       { id: 'joker-redcard', category: 'Joker Effects', name: 'Red Card', cost: 3500, tones: ['#14532d','#dc2626','#ffffff'] },
       { id: 'joker-portal', category: 'Joker Effects', name: 'Portal', cost: 3500, tones: ['#020617','#0e7490','#a855f7'] },
-      { id: 'avatar-ace-spades', category: 'Profile Pictures', name: 'Ace of Spades', cost: 200, tones: ['#1e293b','#cbd5e1','#f8fafc'] },
-      { id: 'avatar-queen-hearts', category: 'Profile Pictures', name: 'Queen of Hearts', cost: 200, tones: ['#3f0b1b','#e11d48','#fbbf24'] },
-      { id: 'avatar-joker', category: 'Profile Pictures', name: 'Joker', cost: 200, tones: ['#2e1065','#a855f7','#10b981'] },
-      { id: 'avatar-burn-flame', category: 'Profile Pictures', name: 'Burn Flame', cost: 500, tones: ['#431407','#f97316','#fcd34d'] },
-      { id: 'avatar-ghost', category: 'Profile Pictures', name: 'Transparent Ghost', cost: 500, tones: ['#1e293b','#94a3b8','#f8fafc'] },
-      { id: 'avatar-frozen', category: 'Profile Pictures', name: 'Frozen', cost: 500, tones: ['#0c4a6e','#38bdf8','#e0f2fe'] },
-      { id: 'avatar-burning-ten', category: 'Profile Pictures', name: 'Burning 10', cost: 1000, animated: true, tones: ['#431407','#f97316','#fcd34d'] },
-      { id: 'avatar-fanned-hand', category: 'Profile Pictures', name: 'Fanned Hand', cost: 1000, animated: true, tones: ['#0f172a','#e11d48','#fbbf24'] },
-      { id: 'avatar-joker-card', category: 'Profile Pictures', name: 'Joker Card', cost: 1000, animated: true, tones: ['#2e1065','#a855f7','#fbbf24'] },
-      { id: 'avatar-royal-flush', category: 'Profile Pictures', name: 'Royal Flush', cost: 2500, animated: true, tones: ['#150f03','#fbbf24','#f8fafc'] },
-      { id: 'avatar-cosmic-ace', category: 'Profile Pictures', name: 'Cosmic Ace', cost: 2500, animated: true, tones: ['#05030f','#a78bfa','#fcd34d'] },
+      { id: 'avatar-ace-spades', category: 'Avatars', name: 'Ace of Spades', cost: 200, tones: ['#1e293b','#cbd5e1','#f8fafc'] },
+      { id: 'avatar-queen-hearts', category: 'Avatars', name: 'Queen of Hearts', cost: 200, tones: ['#3f0b1b','#e11d48','#fbbf24'] },
+      { id: 'avatar-joker', category: 'Avatars', name: 'Joker', cost: 200, tones: ['#2e1065','#a855f7','#10b981'] },
+      { id: 'avatar-burn-flame', category: 'Avatars', name: 'Burn Flame', cost: 500, tones: ['#431407','#f97316','#fcd34d'] },
+      { id: 'avatar-ghost', category: 'Avatars', name: 'Transparent Ghost', cost: 500, tones: ['#1e293b','#94a3b8','#f8fafc'] },
+      { id: 'avatar-frozen', category: 'Avatars', name: 'Frozen', cost: 500, tones: ['#0c4a6e','#38bdf8','#e0f2fe'] },
+      { id: 'avatar-burning-ten', category: 'Avatars', name: 'Burning 10', cost: 1000, animated: true, tones: ['#431407','#f97316','#fcd34d'] },
+      { id: 'avatar-fanned-hand', category: 'Avatars', name: 'Fanned Hand', cost: 1000, animated: true, tones: ['#0f172a','#e11d48','#fbbf24'] },
+      { id: 'avatar-joker-card', category: 'Avatars', name: 'Joker Card', cost: 1000, animated: true, tones: ['#2e1065','#a855f7','#fbbf24'] },
+      { id: 'avatar-royal-flush', category: 'Avatars', name: 'Royal Flush', cost: 2500, animated: true, tones: ['#150f03','#fbbf24','#f8fafc'] },
+      { id: 'avatar-cosmic-ace', category: 'Avatars', name: 'Cosmic Ace', cost: 2500, animated: true, tones: ['#05030f','#a78bfa','#fcd34d'] },
       // Premium emblems (5000): the top of the Shop's picture range.
-      { id: 'avatar-sapphire-sovereign', category: 'Profile Pictures', name: 'Sapphire Sovereign', cost: 5000, animated: true, tones: ['#050b1f','#3b82f6','#fbbf24'] },
-      { id: 'avatar-crimson-inferno', category: 'Profile Pictures', name: 'Crimson Inferno', cost: 5000, animated: true, tones: ['#0a0612','#ef4444','#fbbf24'] },
-      { id: 'avatar-scarlet-guardian', category: 'Profile Pictures', name: 'Scarlet Guardian', cost: 5000, animated: true, tones: ['#080a18','#dc2626','#fde047'] },
-      { id: 'avatar-turtley', category: 'Profile Pictures', name: 'Turtley', cost: 5000, animated: true, tones: ['#03140c','#10b981','#fbbf24'] }
+      { id: 'avatar-sapphire-sovereign', category: 'Avatars', name: 'Sapphire Sovereign', cost: 5000, animated: true, tones: ['#050b1f','#3b82f6','#fbbf24'] },
+      { id: 'avatar-crimson-inferno', category: 'Avatars', name: 'Crimson Inferno', cost: 5000, animated: true, tones: ['#0a0612','#ef4444','#fbbf24'] },
+      { id: 'avatar-scarlet-guardian', category: 'Avatars', name: 'Scarlet Guardian', cost: 5000, animated: true, tones: ['#080a18','#dc2626','#fde047'] },
+      { id: 'avatar-turtley', category: 'Avatars', name: 'Turtley', cost: 5000, animated: true, tones: ['#03140c','#10b981','#fbbf24'] }
     ];
     // Classic Reactions ships with the game. It remains selectable for old
     // saves, but is intentionally not a purchasable Shop item.
@@ -20972,11 +20983,11 @@ video {
       { id: 'table-wood', category: 'Table Themes', name: 'Oak Wood', cost: 0, builtIn: true, tones: ['#6b4226','#a06a3c','#f3d9b1'] },
       { id: 'table-felt', category: 'Table Themes', name: 'Classic Felt', cost: 0, builtIn: true, tones: ['#1f5a36','#2f7a4a','#d1fae5'] },
       // Free profile pictures. Bronze Crown is also what 'default' shows.
-      { id: 'avatar-crown-bronze', category: 'Profile Pictures', name: 'Bronze Crown', cost: 0, builtIn: true },
-      { id: 'avatar-suit-spades', category: 'Profile Pictures', name: 'Spades', cost: 0, builtIn: true },
-      { id: 'avatar-suit-hearts', category: 'Profile Pictures', name: 'Hearts', cost: 0, builtIn: true },
-      { id: 'avatar-suit-diamonds', category: 'Profile Pictures', name: 'Diamonds', cost: 0, builtIn: true },
-      { id: 'avatar-suit-clubs', category: 'Profile Pictures', name: 'Clubs', cost: 0, builtIn: true }
+      { id: 'avatar-crown-bronze', category: 'Avatars', name: 'Bronze Crown', cost: 0, builtIn: true },
+      { id: 'avatar-suit-spades', category: 'Avatars', name: 'Spades', cost: 0, builtIn: true },
+      { id: 'avatar-suit-hearts', category: 'Avatars', name: 'Hearts', cost: 0, builtIn: true },
+      { id: 'avatar-suit-diamonds', category: 'Avatars', name: 'Diamonds', cost: 0, builtIn: true },
+      { id: 'avatar-suit-clubs', category: 'Avatars', name: 'Clubs', cost: 0, builtIn: true }
     ];
     // Earn-only profile pictures: never sold. Unlocked by ranked milestones
     // (see grantEarnedAvatars) and then recorded in ownedCosmetics like any
@@ -20984,14 +20995,14 @@ video {
     // Platinum Crown keeps its original id (avatar-crown-diamond) so existing
     // ownership and the Database Rules id list stay valid.
     const EARNED_AVATARS = [
-      { id: 'avatar-crown-silver', category: 'Profile Pictures', name: 'Silver Crown', earned: true, requirement: 'Reach Silver rank', isEarned: (u) => avatarPeakRating(u) >= 1000 },
-      { id: 'avatar-crown-gold', category: 'Profile Pictures', name: 'Gold Crown', earned: true, requirement: 'Reach Gold rank', isEarned: (u) => avatarPeakRating(u) >= 1500 },
-      { id: 'avatar-crown-diamond', category: 'Profile Pictures', name: 'Platinum Crown', earned: true, animated: true, requirement: 'Reach Platinum rank', isEarned: (u) => avatarPeakRating(u) >= 1800 },
-      { id: 'avatar-crown-master', category: 'Profile Pictures', name: 'Master Crown', earned: true, animated: true, requirement: 'Reach Master rank', isEarned: (u) => avatarPeakRating(u) >= 2000 },
-      { id: 'avatar-centurion', category: 'Profile Pictures', name: 'Centurion', earned: true, requirement: 'Play 100 ranked games', isEarned: (u) => ((Number(u?.wins) || 0) + (Number(u?.losses) || 0)) >= 100 },
-      { id: 'avatar-shithead', category: 'Profile Pictures', name: 'ShitHead', earned: true, requirement: 'Lose 10 ranked games in a row', isEarned: (u) => (Number(u?.rankedStats?.bestLossStreak) || 0) >= 10 },
-      { id: 'avatar-gauntlet', category: 'Profile Pictures', name: 'Gauntlet Champion', earned: true, gauntlet: true, requirement: 'Beat the Gauntlet', isEarned: () => false },
-      { id: 'avatar-recruiter', category: 'Profile Pictures', name: 'Recruiter', earned: true, referral: true, requirement: 'Recruit 5 players', isEarned: () => false }
+      { id: 'avatar-crown-silver', category: 'Avatars', name: 'Silver Crown', earned: true, requirement: 'Reach Silver rank', isEarned: (u) => avatarPeakRating(u) >= 1000 },
+      { id: 'avatar-crown-gold', category: 'Avatars', name: 'Gold Crown', earned: true, requirement: 'Reach Gold rank', isEarned: (u) => avatarPeakRating(u) >= 1500 },
+      { id: 'avatar-crown-diamond', category: 'Avatars', name: 'Platinum Crown', earned: true, animated: true, requirement: 'Reach Platinum rank', isEarned: (u) => avatarPeakRating(u) >= 1800 },
+      { id: 'avatar-crown-master', category: 'Avatars', name: 'Master Crown', earned: true, animated: true, requirement: 'Reach Master rank', isEarned: (u) => avatarPeakRating(u) >= 2000 },
+      { id: 'avatar-centurion', category: 'Avatars', name: 'Centurion', earned: true, requirement: 'Play 100 ranked games', isEarned: (u) => ((Number(u?.wins) || 0) + (Number(u?.losses) || 0)) >= 100 },
+      { id: 'avatar-shithead', category: 'Avatars', name: 'ShitHead', earned: true, requirement: 'Lose 10 ranked games in a row', isEarned: (u) => (Number(u?.rankedStats?.bestLossStreak) || 0) >= 10 },
+      { id: 'avatar-gauntlet', category: 'Avatars', name: 'Gauntlet Champion', earned: true, gauntlet: true, requirement: 'Beat the Gauntlet', isEarned: () => false },
+      { id: 'avatar-recruiter', category: 'Avatars', name: 'Recruiter', earned: true, referral: true, requirement: 'Recruit 5 players', isEarned: () => false }
     ];
     // Earn-only frames: never sold or gifted, shown locked in Custom until
     // the server grants them (Gauntlet Gold: beat the Gauntlet once).
@@ -21015,12 +21026,12 @@ video {
     }
     const FREE_AVATAR_IDS = ['avatar-crown-bronze', 'avatar-suit-spades', 'avatar-suit-hearts', 'avatar-suit-diamonds', 'avatar-suit-clubs'];
     function getAvatarItem(id) {
-      return [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].find(item => item.id === id && item.category === 'Profile Pictures') || null;
+      return [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].find(item => item.id === id && item.category === 'Avatars') || null;
     }
     const COSMETIC_CATEGORY_TYPES = Object.freeze({
       'Card Backs': 'cardBack', 'Frames': 'frame', 'Emote Packs': 'emotes',
       'Table Themes': 'tableTheme', 'Burn Effects': 'burnEffect', 'Victory Effects': 'victoryEffect',
-      'Joker Effects': 'jokerEffect', 'Profile Pictures': 'avatar', 'Decks': 'deck'
+      'Joker Effects': 'jokerEffect', 'Avatars': 'avatar', 'Decks': 'deck'
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
       cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco','back-dragon','back-stained','back-rising-star', ...seasonalIdsOf('cardBack')]),
@@ -21619,9 +21630,9 @@ video {
     function renderPersonalisationAvatars() {
       const grid = document.getElementById('personalisationAvatars');
       if (!grid) return;
-      const shopAvatars = sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Profile Pictures' && !item.season));
-      const freeAvatars = sortByValue(BUILT_IN_COSMETICS.filter(item => item.category === 'Profile Pictures'));
-      const seasonalAvatars = [...sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Profile Pictures' && item.season)), ...SEASONAL_EARNED_AVATARS].filter(isCosmeticListed);
+      const shopAvatars = sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Avatars' && !item.season));
+      const freeAvatars = sortByValue(BUILT_IN_COSMETICS.filter(item => item.category === 'Avatars'));
+      const seasonalAvatars = [...sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Avatars' && item.season)), ...SEASONAL_EARNED_AVATARS].filter(isCosmeticListed);
       grid.innerHTML = `<span class="avatar-picker-label">Free</span>${freeAvatars.map(avatarOptionHtml).join('')}
         <span class="avatar-picker-label">Shop</span>${shopAvatars.map(avatarOptionHtml).join('')}
         <span class="avatar-picker-label">Earn in Ranked</span>${EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral).map(avatarOptionHtml).join('')}
@@ -21903,7 +21914,7 @@ video {
     // Your picture first, then by where items show up: the table and cards
     // you look at all game, then the big moments (burns, wins), then emotes.
     const COSMETIC_TABS = [
-      { category: 'Profile Pictures', label: 'Pictures' },
+      { category: 'Avatars', label: 'Avatars' },
       { category: 'Table Themes', label: 'Tables' },
       { category: 'Card Backs', label: 'Card Backs' },
       { category: 'Decks', label: 'Decks' },
@@ -22574,7 +22585,7 @@ video {
         burnEffect: 'Plays when you burn the pile',
         victoryEffect: 'Plays when you finish in first place',
         jokerEffect: 'Plays over the table when you play a Joker',
-        avatar: 'Your picture in games, Friends and the leaderboard',
+        avatar: 'Your avatar in games, Friends and the leaderboard',
         deck: 'Changes the faces of your cards'
       }[type] || 'Custom item';
     }
@@ -25430,7 +25441,7 @@ video {
       persistNewCosmetics();
       renderPersonalisationCosmetics();
       if (typeof refreshInboxBadge === 'function') refreshInboxBadge();
-      notifyBanner(`🏆 Profile picture unlocked: ${newAvatars.map(item => item.name).join(', ')}`);
+      notifyBanner(`🏆 Avatar unlocked: ${newAvatars.map(item => item.name).join(', ')}`);
     }
     // Pays anything the account already qualifies for (economy `sync`).
     let economySyncInFlight = null;
@@ -27401,7 +27412,7 @@ video {
       if (e.target.id === 'inboxModal') document.getElementById('inboxModal').classList.add('hidden');
     });
     // Mail kinds stored under users/{uid}/activityInbox.
-    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level', 'friendLevel'];
+    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level', 'friendLevel', 'series'];
     // Congratulations from the server (functions/boards.js) the first time a
     // player reaches the top 10, #3, #2 or #1 on a leaderboard.
     const BOARD_NAMES = { ranked: 'Ranked', challenges: 'Challenges', gauntlet: 'Gauntlet', levels: 'Levels' };
@@ -27549,7 +27560,7 @@ video {
         const unlockedFrame = item.unlocked && /^unlock_frame-/.test(String(item.id || ''));
         // Level rewards (v248) can be a card back, a frame or a table.
         const levelItem = item.unlocked ? LEVEL_REWARDS.find(r => `unlock_${r.id}` === item.id) : null;
-        const unlockKind = levelItem ? ({ 'Card Backs': 'Card back', 'Frames': 'Frame', 'Table Themes': 'Table' }[levelItem.category] || 'Item') : unlockedFrame ? 'Frame' : 'Profile picture';
+        const unlockKind = levelItem ? ({ 'Card Backs': 'Card back', 'Frames': 'Frame', 'Table Themes': 'Table' }[levelItem.category] || 'Item') : unlockedFrame ? 'Frame' : 'Avatar';
         const heading = isRank ? `Rank ${item.direction === 'up' ? 'up' : 'down'}` : item.unlocked ? `${unlockKind} unlocked` : 'Shop purchase';
         const detail = isRank
           ? `${escapeHtml(item.fromTier)} → ${escapeHtml(item.toTier)}`
@@ -27636,15 +27647,110 @@ video {
         document.getElementById('inboxClearAllBtn').classList.toggle('hidden', !items.some(isClearableInboxItem));
         if (items.length === 0) { area.innerHTML = ''; document.getElementById('inboxEmptyMsg').classList.remove('hidden'); return; }
         document.getElementById('inboxEmptyMsg').classList.add('hidden');
-        area.innerHTML = items.map(inboxItemHtml).join('');
-        // Senders' pictures arrive a moment later from their public profiles.
+        inboxRenderedItems = items;
+        area.innerHTML = items.map(inboxMailCardHtml).join('');
+        // Senders' avatars arrive a moment later from their public profiles.
         const people = items.filter(item => item.type === 'request' || item.type === 'invite');
         Promise.all(people.map(item => db.ref(`publicProfiles/${item.type === 'request' ? item.uid : item.fromUid}/avatar`).once('value')
           .then(snap => { item.avatar = snap.val(); }).catch(() => {})))
-          .then(() => { if (people.length && currentUser?.uid === uid) area.innerHTML = items.map(inboxItemHtml).join(''); });
+          .then(() => { if (people.length && currentUser?.uid === uid) area.innerHTML = items.map(inboxMailCardHtml).join(''); });
       }).catch((e) => { area.innerHTML = ''; console.warn('renderInbox failed', e); });
     }
+    // § Mail links (v249, owner): tapping a mail (anywhere but its buttons)
+    // opens what it is about: the item's tile in Custom, the player's card,
+    // Friends → Requests, Challenges → Completed, the leaderboard, Profile's
+    // Level or Invite section, Match History, the seasonal Shop, or a big
+    // preview of a gift before it is opened (mailTarget). The Inbox closes
+    // and Back returns to it (page trail).
+    let inboxRenderedItems = [];
+    function mailItemByName(name) {
+      return [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(i => i.name === name) || null;
+    }
+    function openCustomTileFromMail(item) {
+      if (!item) return false;
+      const type = COSMETIC_CATEGORY_TYPES[item.category];
+      if (!type) return false;
+      openShowcaseItemInCustom(type, item.id);
+      return true;
+    }
+    function openProfileSection(sectionEl) {
+      openProfilePanel();
+      const sec = sectionEl?.closest('.profile-sec');
+      const head = sec?.querySelector(':scope > .profile-sec-head');
+      if (head && head.getAttribute('aria-expanded') !== 'true') head.click();
+      requestAnimationFrame(() => {
+        sectionEl?.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+        flashMailFocus(sec || sectionEl);
+      });
+    }
+    function flashMailFocus(el) {
+      if (!el) return;
+      el.classList.remove('mail-focus'); void el.offsetWidth; el.classList.add('mail-focus');
+      setTimeout(() => el.classList.remove('mail-focus'), 2600);
+    }
+    // What a mail opens, or null (invites and requests keep their buttons too).
+    function mailTarget(item) {
+      if (!item) return null;
+      const itemFromId = () => bigPreviewItem(String(item.id || '').replace(/^(shop|unlock)_/, ''));
+      switch (item.type) {
+        case 'giftIn': return bigPreviewItem(item.itemId) ? () => openBigPreview(item.itemId) : null;
+        case 'gift': {
+          const it = mailItemByName(item.name);
+          if (!it) return null;
+          return item.direction === 'sent' && !cosmeticPurchaseState[it.id] && !it.builtIn
+            ? () => { if (!openLockedCosmetic(it.id)) openCustomTileFromMail(it); }
+            : () => openCustomTileFromMail(it);
+        }
+        case 'shop': return itemFromId() ? () => openCustomTileFromMail(itemFromId()) : null;
+        case 'rank': return () => openLeaderboardPanel('ranked');
+        case 'board': return () => openLeaderboardPanel(item.board);
+        case 'level': return () => openProfileSection(document.getElementById('profileXpSection'));
+        case 'referral': return () => openProfileSection(document.getElementById('profileReferralSection'));
+        case 'friendLevel': return item.uid ? (el) => openProfileCard({ uid: item.uid, name: item.name, avatar: item.avatar || undefined }, el) : null;
+        case 'invite': return item.fromUid ? (el) => openProfileCard({ uid: item.fromUid, name: item.fromName, avatar: item.avatar || undefined }, el) : null;
+        case 'request': return () => { openFriendsPanel(); switchFriendsTab('requests'); };
+        case 'season': return () => { shopTab = SEASONAL_TAB; shopTabPicked = true; openShopPanel(); };
+        case 'series': return () => {
+          statsTab = 'history';
+          renderStatsPanel();
+          document.getElementById('statsModal').classList.remove('hidden');
+        };
+        case 'challenge': return () => {
+          document.getElementById('menuChallengesBtn').click();
+          showCompletedChallenges(true);
+          requestAnimationFrame(() => {
+            const row = [...document.querySelectorAll('#challengesModal .done-main b')].find(b => b.textContent === String(item.name || ''));
+            const box = row?.closest('.done-main')?.parentElement;
+            box?.scrollIntoView({ block: 'center' });
+            flashMailFocus(box);
+          });
+        };
+        default: return null;
+      }
+    }
+    function inboxMailCardHtml(item, i) {
+      const html = inboxItemHtml(item);
+      if (!html || !mailTarget(item)) return html;
+      return html.replace(/^\s*<div /, `<div data-mail-idx="${i}" role="link" tabindex="0" aria-label="Open: ${escapeAttr(inboxMailLabel(item))}" `);
+    }
+    function inboxMailLabel(item) {
+      return String(item.name || item.fromName || item.board || item.type || 'mail');
+    }
+    function openMailTarget(card) {
+      const item = inboxRenderedItems[Number(card.dataset.mailIdx)];
+      const go = mailTarget(item);
+      if (!go) return false;
+      // Player cards open over the Inbox; everything else replaces it.
+      if (item.type !== 'friendLevel' && item.type !== 'invite' && item.type !== 'giftIn') document.getElementById('inboxModal')?.classList.add('hidden');
+      go(card);
+      return true;
+    }
+    document.getElementById('inboxArea').addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('[data-mail-idx]')) { e.preventDefault(); openMailTarget(e.target); }
+    });
     document.getElementById('inboxArea').addEventListener('click', (e) => {
+      const card = e.target.closest('[data-mail-idx]');
+      if (card && !e.target.closest('button, a, input')) { openMailTarget(card); return; }
       const claimBtn = e.target.closest('[data-claim-gift]');
       if (claimBtn) { claimBtn.disabled = true; claimGift(claimBtn.dataset.claimGift).finally(() => renderInbox()); return; }
       const boardBtn = e.target.closest('[data-board-open]');
@@ -28248,9 +28354,9 @@ video {
 
     const CUSTOM_TABS = [
       { key: 'all', label: 'All' },
-      { key: 'avatar', label: 'Pictures' },
+      { key: 'avatar', label: 'Avatars' },
       { key: 'deck', label: 'Deck' },
-      ...COSMETIC_TABS.filter(tab => tab.category !== 'Profile Pictures' && tab.category !== 'Decks').map(tab => ({ key: COSMETIC_CATEGORY_TYPES[tab.category], label: tab.label }))
+      ...COSMETIC_TABS.filter(tab => tab.category !== 'Avatars' && tab.category !== 'Decks').map(tab => ({ key: COSMETIC_CATEGORY_TYPES[tab.category], label: tab.label }))
     ];
     let customTab = 'avatar';
     function setCustomTab(key) {
@@ -29395,7 +29501,7 @@ video {
         ? `<div class="ref-code-row"><div class="min-w-0" style="flex:1"><div class="ref-code">${escapeHtml(st.code)}</div><span class="ref-link">${escapeHtml(referralLinkFor(st.code).replace('https://', ''))}</span></div>
             <button type="button" class="ref-btn" data-ref-action="share">SHARE</button><button type="button" class="ref-btn" data-ref-action="copy">COPY</button></div>`
         : `<button type="button" class="ref-invite-btn" data-ref-action="share" style="margin:0"><span aria-hidden="true">🔗</span><span>GET MY INVITE LINK</span></button>`;
-      const how = `<p class="ref-how">When a friend signs up with your link and plays <b>${REFERRAL.gamesNeeded} games</b>, you get <b>💎 ${REFERRAL.inviterReward}</b> and they get <b>💎 ${REFERRAL.newPlayerReward}</b>. You're made friends automatically. Recruit <b>${REFERRAL.recruiterTarget}</b> to earn the <b>${REFERRAL.pictureName}</b> picture. Up to ${REFERRAL.monthlyCap} paid invites a month.</p>`;
+      const how = `<p class="ref-how">When a friend signs up with your link and plays <b>${REFERRAL.gamesNeeded} games</b>, you get <b>💎 ${REFERRAL.inviterReward}</b> and they get <b>💎 ${REFERRAL.newPlayerReward}</b>. You're made friends automatically. Recruit <b>${REFERRAL.recruiterTarget}</b> to earn the <b>${REFERRAL.pictureName}</b> avatar. Up to ${REFERRAL.monthlyCap} paid invites a month.</p>`;
       const stats = `<div class="ref-stat-row"><div class="ref-stat"><b>${Math.min(st.recruited || 0, REFERRAL.recruiterTarget)}/${REFERRAL.recruiterTarget}</b><span>Recruiter</span></div>
         <div class="ref-stat"><b>${(st.recruits || []).length}</b><span>Joined</span></div>
         <div class="ref-stat"><b>${st.paidThisMonth || 0}/${REFERRAL.monthlyCap}</b><span>Paid this month</span></div></div>`;
