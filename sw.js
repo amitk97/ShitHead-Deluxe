@@ -4,7 +4,7 @@
 // every deploy reaches players straight away; the cached copy is only used
 // when offline. Game files (sounds, art, fonts, the Firebase and confetti
 // scripts) are served from the cache and refreshed in the background.
-const CACHE = 'shithead-shell-v4';
+const CACHE = 'shithead-shell-v5';
 const ASSET_CACHE = 'shithead-assets-v1';
 const DATA_CACHE = 'shithead-data-v1'; // small saved data (event calendar), kept across updates
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];

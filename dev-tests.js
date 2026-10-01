@@ -131,7 +131,9 @@ async function runDevTestSuite() {
           layers.forEach(layer=>{const b=layer.getBoundingClientRect();assertTrue(b.left>=host.left-.5&&b.top>=host.top-.5&&b.right<=host.right+.5&&b.bottom<=host.bottom+.5,`${id}: layer stays in its tile at ${time}ms`);});
         }
         if (id==='avatar-cosmic-ace') {
-          assertEqual(stage.querySelectorAll('[data-orbit]').length,2,'exactly two moving rings');
+          assertEqual(stage.querySelectorAll('[data-orbit]').length,2,'exactly two stationary rings');
+          assertTrue([...stage.querySelectorAll('[data-orbit], [data-orbit] *')].every(el=>getComputedStyle(el).animationName==='none'),'rings and highlights never animate');
+          assertTrue(layers.every(el=>el.tagName.toLowerCase()==='polygon' && el.getAttribute('points').trim().split(/\s+/).length===10),'five-point stars, not plus signs');
           assertTrue(stage.querySelector('image').getAttribute('href').includes('-clean.webp'),'no baked ring under the moving rings');
           const star=layers[0]; animations.forEach(a=>a.currentTime=0);const a=star.getBoundingClientRect();animations.forEach(a=>a.currentTime=1500);const b=star.getBoundingClientRect();
           assertTrue(Math.abs((a.left+a.right)-(b.left+b.right))<1&&Math.abs((a.top+a.bottom)-(b.top+b.bottom))<1,'star glistens about a fixed centre');
@@ -150,6 +152,56 @@ async function runDevTestSuite() {
       animations.forEach(a=>a.currentTime=850);const early=tear.getBoundingClientRect();animations.forEach(a=>a.currentTime=1950);const late=tear.getBoundingClientRect();
       assertTrue(late.top>early.top+8,'tear falls down the cheek');animations.forEach(a=>a.currentTime=2800);assertEqual(getComputedStyle(tear).opacity,'0','old tear disappears before the next one forms');
     } finally { animations.forEach(a=>a.cancel());stage.remove(); }
+  });
+
+  await test('Cosmetic art: every table fills the home viewport and stays sharp at phone, tablet, desktop and 4K sizes', () => {
+    const savedTable=equippedCosmetics.tableTheme, wasLobby=document.body.classList.contains('lobby-open');
+    const stage=document.createElement('div');stage.style.cssText='position:fixed;left:-10000px;top:0;pointer-events:none';document.body.appendChild(stage);
+    try {
+      document.body.classList.add('lobby-open');
+      for (const id of new Set([...Object.keys(CSS_TABLE_PREVIEWS),...Object.keys(ILLUSTRATED_TABLES)])) {
+        equippedCosmetics.tableTheme=id;refreshHomeBackdrop();
+        const bg=document.getElementById('homeBackdrop'),css=getComputedStyle(bg),bounds=bg.getBoundingClientRect();
+        assertTrue(Math.abs(bounds.left)<1&&Math.abs(bounds.right-innerWidth)<1&&Math.abs(bounds.top)<1&&Math.abs(bounds.bottom-innerHeight)<1,`${id}: backdrop covers the full viewport`);
+        assertEqual(bg.dataset.table,id,`${id}: actual equipped theme`);
+        const art=ILLUSTRATED_TABLES[id],isTile=art&&TILED_TABLE_LIGHT[art.art];
+        if (art&&!isTile) assertTrue(css.backgroundSize.includes('cover'),`${id}: scene uses cover, never intrinsic portrait sizing`);
+        if (isTile) assertTrue(css.backgroundSize.includes(`${TABLE_TILE_PX}px`)&&css.backgroundRepeat.includes('repeat'),`${id}: seamless high-resolution tiles retain their density`);
+        for (const [w,h] of [[320,568],[390,844],[768,1024],[1920,1080],[3840,2160]]) {
+          const frame=document.createElement('div');frame.style.cssText=`width:${w}px;height:${h}px;background:${bg.style.background}`;stage.replaceChildren(frame);
+          assertEqual(getComputedStyle(frame).backgroundSize,css.backgroundSize,`${id}: matching fill at ${w}x${h}`);
+        }
+      }
+    } finally {
+      stage.remove();equippedCosmetics.tableTheme=savedTable;refreshHomeBackdrop();
+      document.body.classList.toggle('lobby-open',wasLobby);
+    }
+  });
+  await test('Cosmetic art: the default SH card back previews on tap and hold without equipping on release', async () => {
+    const saved={tab:customTab,back:equippedCosmetics.cardBack};
+    try {
+      closeOtherMenuPages();document.getElementById('themesModal').classList.remove('hidden');
+      equippedCosmetics.cardBack='default';setCustomTab('cardBack');renderPersonalisationCosmetics();
+      const tile=visibleCustomPanel().querySelector('[data-equip-type="cardBack"][data-equip-id="default"]');
+      assertTrue(!!tile,'default card back tile exists');tile.click();
+      const box=document.getElementById('bigPreview');
+      assertTrue(!box.classList.contains('hidden'),'tap opens the equipped default preview');
+      assertEqual(box.dataset.type,'cardBack','default resolves to its card-back category');
+      assertTrue(box.querySelector('.bp-card.cosmetic-back-default'),'white textured SH artwork');
+      assertTrue(!box.querySelector('[data-bp-shop]'),'free default has no purchase action');closeBigPreview();
+      equippedCosmetics.cardBack='back-cobalt-linen';renderPersonalisationCosmetics();
+      const holdTile=visibleCustomPanel().querySelector('[data-equip-type="cardBack"][data-equip-id="default"]');
+      const b=holdTile.getBoundingClientRect(),at={clientX:b.left+5,clientY:b.top+5,bubbles:true,pointerId:1,button:0};
+      holdTile.dispatchEvent(new PointerEvent('pointerdown',at));
+      await new Promise(r=>setTimeout(r,CARD_HOLD_MS+80));
+      assertTrue(!box.classList.contains('hidden')&&box.dataset.itemId==='default','hold previews an unequipped default back');
+      holdTile.dispatchEvent(new PointerEvent('pointerup',at));holdTile.click();
+      assertEqual(equippedCosmetics.cardBack,'back-cobalt-linen','release does not equip the previewed default');
+      closeBigPreview();holdTile.dispatchEvent(new PointerEvent('pointerdown',at));holdTile.dispatchEvent(new PointerEvent('pointercancel',at));
+    } finally {
+      closeBigPreview();equippedCosmetics.cardBack=saved.back;setCustomTab(saved.tab);renderPersonalisationCosmetics();
+      document.getElementById('themesModal').classList.add('hidden');
+    }
   });
 
   await test('3 is playable on a King (Transparent is a wildcard)', () => {
@@ -1866,21 +1918,18 @@ async function runDevTestSuite() {
       assertTrue(state.players[0].hand.length >= pileBefore, 'Rival countered: the Pile came back to you');
     } finally { endTutorial(false); }
   });
-  await test('Home screen backdrop: equipped table signed in, default signed out, the event table during an event', () => {
-    const saved = { user: currentUser, table: equippedCosmetics.tableTheme, over: typeof seasonalNowOverride !== 'undefined' ? seasonalNowOverride : null };
+  await test('Home screen backdrop always honours the equipped table, including guests and event dates', () => {
+    const saved = { user: currentUser, table: equippedCosmetics.tableTheme, over: seasonalNowOverride };
     try {
       seasonalNowOverride = '2026-06-10T12:00';
-      equippedCosmetics.tableTheme = 'table-neon';
-      currentUser = null;
-      assertEqual(homeBackdropTableId(), 'default', 'Signed out: the default table');
-      currentUser = { uid: 'home_bg_test' };
-      assertEqual(homeBackdropTableId(), 'table-neon', 'Signed in: the equipped table');
+      equippedCosmetics.tableTheme = 'table-neon'; currentUser = null;
+      assertEqual(homeBackdropTableId(), 'table-neon', 'Guest equipped table');
+      currentUser = { uid:'home_bg_test' };
+      assertEqual(homeBackdropTableId(), 'table-neon', 'Signed-in equipped table');
       seasonalNowOverride = '2026-10-25T12:00';
-      assertEqual(homeBackdropTableId(), 'table-halloween', 'During Halloween: the event table');
-      const bg = document.getElementById('homeBackdrop') || (refreshHomeBackdrop(), document.getElementById('homeBackdrop'));
-      bg.dataset.table = ''; refreshHomeBackdrop();
-      const img = getComputedStyle(bg).backgroundImage; assertTrue(img.startsWith('linear-gradient(rgba(2, 6, 23, 0.62)') && img.includes('url('), 'Heavily dimmed event table: ' + img.slice(0, 80));
-      assertEqual(getComputedStyle(bg).animationName, 'none', 'Not animated');
+      assertEqual(homeBackdropTableId(), 'table-neon', 'Event cannot replace equipped table');
+      equippedCosmetics.tableTheme = 'default';
+      assertEqual(homeBackdropTableId(), 'default', 'Default choice is also respected');
     } finally {
       currentUser = saved.user; equippedCosmetics.tableTheme = saved.table; seasonalNowOverride = saved.over;
       const bg = document.getElementById('homeBackdrop'); if (bg) { bg.dataset.table = ''; refreshHomeBackdrop(); }

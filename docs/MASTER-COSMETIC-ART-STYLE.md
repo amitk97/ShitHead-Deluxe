@@ -152,3 +152,16 @@ When creating or changing a cosmetic:
 6. Preview the finished cosmetic/effect at actual in-game size before considering it complete.
 
 This document is the source of truth for cosmetic visual and effect style unless the owner explicitly asks for a one-off exception.
+
+## Table backgrounds: mandatory responsive HD rule
+
+Every current and future table must fill the complete home-screen viewport and game-table surface on phones, tablets, landscape screens, desktop and 4K displays. The home background must use the equipped table, including guest/free selections; a seasonal event must not replace the player's choice.
+
+- Prefer resolution-independent SVG scenes and CSS gradients. Existing table SVGs are true vector images and stay sharp beyond 4K; do not replace them with enlarged low-resolution screenshots.
+- Scene images use centred `cover` with preserved proportions, no side bars, no phone-width wrapper and no `contain` or intrinsic `auto` sizing. Keep defining details in a safe central area and extend colour, texture and decoration to every edge. Edge decorations can crop naturally when aspect ratios change; never stretch the illustration to fit.
+- Raster scene masters, if added, must be at least 3840 × 2160, with an appropriate portrait crop where the scene needs it. Use optimised responsive image sources; do not send a full uncompressed 4K image to every phone.
+- Seamless surface textures repeat at their intended CSS size. Supply at least 3 source pixels per CSS pixel (the current 1920px felt/wood tiles repeat at 640px), without stretching a single tile across the viewport.
+- The full-viewport backdrop must live outside the centred lobby panel. Apply the background as one complete shorthand; do not clear `backgroundSize` afterwards, which resets `cover` and caused the portrait-strip bug.
+- Before shipping, check 320 × 568, 390 × 844, 768 × 1024, 1920 × 1080 and 3840 × 2160. Verify full edge coverage, preserved aspect ratio, no seams, sharpness and readable controls under the dim overlay.
+
+Run `node tools/v268-client-test.js` for table source quality and preview routing, then the live `?dev-tests=1&test-filter=cosmetic-art` checks for actual CSS fitting and interaction.

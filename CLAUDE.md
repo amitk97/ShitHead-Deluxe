@@ -1,5 +1,15 @@
 # ShitHead Deluxe
 
+## Codex update — 1 October 2026, v268
+
+Home table backgrounds now fill the entire viewport. The previous `refreshHomeBackdrop` reset `backgroundSize` after applying `cover`, leaving SVGs at their intrinsic portrait ratio on desktop. Preserve the background shorthand and only set an explicit size list for CSS patterns that need it. All table themes share this rule: vector scenes remain sharp above 4K, 1920px felt/wood tiles repeat at 640px, and CSS gradient tables remain resolution-independent. The home screen always uses the equipped theme (including guest/free choices); events no longer override it. Follow the new mandatory responsive HD table section in `docs/MASTER-COSMETIC-ART-STYLE.md` for every future table.
+
+Owner changed Cosmic Ace direction: its two rings are now completely stationary; no moving ring highlights. Only the five-point star polygons glint at fixed centres. Do not restore spinning, precessing or orbiting animation from the v267 notes below. Royal Flush and falling tears remain unchanged.
+
+The default white SH card back supports big preview. Tap an equipped back to preview, or hold any back (including an unequipped default) to preview without equipping; the release click is swallowed. The shared default ID must resolve with its `cardBack` type so it cannot be mistaken for a default from another category.
+
+Validation: `node tools/v268-client-test.js`, `node tools/v265-art-test.js`, v264 client syntax/victory/update tests, and the live cosmetic-art checks. No catalog, economy or database-rule changes.
+
 ## Codex correction — 1 October 2026, v267
 
 The owner supplied screenshots/videos showing v265 fitting and animation defects. These are corrected: card backs use tightly cropped `art/backs/approved-v267/` prints, `background-size:100% 100%`, no additional CSS border, and matching proportional corner radii. Keep all four artwork edges in the visible card; do not restore `cover`. Clubs and Diamonds now include the previously cut-off top rim. Approved photo avatars render edge to edge inside a clipped 1000-unit SVG, with SVG animation transform origins explicitly based on that view box.

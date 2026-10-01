@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-01-v267 (ShitHead-Deluxe-220) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-01-v268 (ShitHead-Deluxe-220) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1034,7 +1034,7 @@
     #hamburgerAccountHead .drawer-quick .pack-icon { width:26px; height:26px; }
     /* Home screen (§ Home screen): the lobby's own cover is replaced by the
        dimmed table backdrop, and the panel starts below the header. */
-    #homeBackdrop { display:none; position:fixed; inset:0; z-index:69; pointer-events:none; background-color:#020617; }
+    #homeBackdrop { display:none; position:fixed; inset:0; width:100%; height:100%; max-width:none; z-index:69; pointer-events:none; background-color:#020617; }
     body.lobby-open #homeBackdrop { display:block; }
     body.lobby-open #lobbyScreen { background:transparent !important; }
     #lobbyScreen { padding-top:calc(var(--header-h) + 10px) !important; padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 12px) !important; }
@@ -19738,6 +19738,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v268: [[ '🖼️', 'Full-screen equipped table backgrounds on every device, star-only Cosmic Ace glints, and default card-back previews.', WN_KEY ]],
       v267: [[ '🎨', 'Correctly fitted card-back art and avatar borders, with rebuilt Cosmic Ace, Royal Flush and falling-tear animations.', WN_KEY ]],
       v266: [[ '🎴', 'The three free linen card backs are available in the Card Backs tab as well as All.', WN_KEY ]],
       v265: [
@@ -22496,7 +22497,13 @@ video {
     const APPROVED_BACK_FILES = {"back-ramadan": "art/backs/approved-v267/back-ramadan.webp", "back-newyear": "art/backs/approved-v267/back-newyear.webp", "back-christmas": "art/backs/approved-v267/back-christmas.webp", "back-halloween": "art/backs/approved-v267/back-halloween.webp", "back-valentine": "art/backs/approved-v267/back-valentine.webp", "back-lunar": "art/backs/approved-v267/back-lunar.webp", "back-diwali": "art/backs/approved-v267/back-diwali.webp", "back-easter": "art/backs/approved-v267/back-easter.webp", "back-summer": "art/backs/approved-v267/back-summer.webp", "back-cobalt-linen": "art/backs/approved-v267/back-cobalt-linen.webp", "back-sage-linen": "art/backs/approved-v267/back-sage-linen.webp", "back-plum-linen": "art/backs/approved-v267/back-plum-linen.webp", "back-midnight": "art/backs/approved-v267/back-midnight.webp", "back-emerald": "art/backs/approved-v267/back-emerald.webp", "back-crimson": "art/backs/approved-v267/back-crimson.webp", "back-neon": "art/backs/approved-v267/back-neon.webp", "back-tartan": "art/backs/approved-v267/back-tartan.webp", "back-artdeco": "art/backs/approved-v267/back-artdeco.webp", "back-arcade": "art/backs/approved-v267/back-arcade.webp", "back-inferno": "art/backs/approved-v267/back-inferno.webp", "back-nebula": "art/backs/approved-v267/back-nebula.webp", "back-space": "art/backs/approved-v267/back-space.webp", "back-dragon": "art/backs/approved-v267/back-dragon.webp", "back-stained": "art/backs/approved-v267/back-stained.webp", "default": "art/backs/approved-v267/default.webp"};
     (function installApprovedCosmeticArt() {
       const image = id => `<image href="${APPROVED_AVATAR_FILES[id] || `art/avatars/approved-v265/${id}.webp`}" width="1000" height="1000" preserveAspectRatio="none"/>`;
-      const star = (x,y,delay) => `<path class="av-art-star" style="animation-delay:${delay}s;transform-origin:${x}px ${y}px" d="M${x} ${y-24}l7 17 17 7-17 7-7 17-7-17-17-7 17-7Z" fill="#fff1a7"/>`;
+      const star = (x,y,delay) => {
+        const points = Array.from({length:10}, (_,i) => {
+          const angle = -Math.PI/2 + i*Math.PI/5, radius = i%2 ? 12 : 29;
+          return `${(x+Math.cos(angle)*radius).toFixed(2)},${(y+Math.sin(angle)*radius).toFixed(2)}`;
+        }).join(' ');
+        return `<polygon class="av-art-star" data-star-points="5" style="animation-delay:${delay}s;transform-origin:${x}px ${y}px" points="${points}" fill="#fff1a7"/>`;
+      };
       const animations = {};
       // One clean crown plate and five complete, isolated cards. Nothing is baked underneath.
       const ranks = ['10','J','Q','K','A'];
@@ -22508,10 +22515,9 @@ video {
           + `<path class="av-art-card-glint" d="M375 383h25l216 336h-25Z" fill="#fff" opacity=".3"/>` + '</g>';
       });
       animations['avatar-royal-flush'] = image('avatar-royal-flush') + cards;
-      // Two genuine orbit layers, with rear portions occluded by the stationary Ace.
-      // Flowing highlights circle the tracks; their planes gently precess in opposite directions.
+      // Stationary rings around the Ace. Only the five-point stars glint (owner, v268).
       const cosmicDefs = `<defs><linearGradient id="v267-orbit-gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a46af3"/><stop offset=".5" stop-color="#fff1a8"/><stop offset="1" stop-color="#f4be57"/></linearGradient><linearGradient id="v267-orbit-violet"><stop stop-color="#bd73ff"/><stop offset=".6" stop-color="#f6d5ff"/><stop offset="1" stop-color="#aa54ed"/></linearGradient><mask id="v267-orbit-depth" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000"><rect width="1000" height="1000" fill="white"/><path d="M190 225Q188 202 218 189L626 135Q660 127 672 165L767 802Q778 835 749 850L342 891Q310 897 298 860Z" fill="black"/><rect y="545" width="1000" height="455" fill="white"/></mask></defs>`;
-      const ring = (n,color) => `<g class="av-art-orbit av-art-orbit-${n}" data-orbit="${n}" style="transform-origin:500px 520px"><ellipse cx="500" cy="520" rx="390" ry="140" fill="none" stroke="${color}" stroke-width="7" opacity=".85"/><ellipse class="av-art-ring-flow" cx="500" cy="520" rx="390" ry="140" pathLength="1000" fill="none" stroke="#fff4d8" stroke-width="11" stroke-linecap="round" stroke-dasharray="22 978"/></g>`;
+      const ring = (n,color) => `<g class="av-art-orbit av-art-orbit-${n}" data-orbit="${n}" style="transform-origin:500px 520px"><ellipse cx="500" cy="520" rx="390" ry="140" fill="none" stroke="${color}" stroke-width="7" opacity=".85"/></g>`;
       animations['avatar-cosmic-ace'] = cosmicDefs + image('avatar-cosmic-ace')
         + `<g mask="url(#v267-orbit-depth)">${ring(1,'url(#v267-orbit-gold)')}${ring(2,'url(#v267-orbit-violet)')}</g>`
         + star(150,330,0) + star(825,230,-1.1) + star(845,755,-2.2) + star(175,810,-.6) + star(785,470,-1.7);
@@ -22545,13 +22551,8 @@ video {
         @keyframes av-art-fan{0%,12%,100%{transform:translate(0,0) rotate(0)}35%,65%{transform:translate(var(--fan-x),var(--fan-y)) rotate(var(--fan-angle))}}
         .av-art-card-glint{animation:av-art-glint 4s ease-in-out infinite}
         @keyframes av-art-glint{0%,32%,70%,100%{opacity:0}48%{opacity:.45}}
-        .av-art-orbit-1{transform:rotate(-25deg);animation:av-art-orbit-one 12s linear infinite}
-        .av-art-orbit-2{transform:rotate(28deg);animation:av-art-orbit-two 15s linear infinite}
-        @keyframes av-art-orbit-one{from{transform:rotate(-25deg)}to{transform:rotate(335deg)}}
-        @keyframes av-art-orbit-two{from{transform:rotate(28deg)}to{transform:rotate(-332deg)}}
-        .av-art-ring-flow{animation:av-art-ring-flow 5s linear infinite}
-        .av-art-orbit-2 .av-art-ring-flow{animation-duration:6s;animation-direction:reverse}
-        @keyframes av-art-ring-flow{from{stroke-dashoffset:0}to{stroke-dashoffset:-1000}}
+        .av-art-orbit-1{transform:rotate(-25deg)}
+        .av-art-orbit-2{transform:rotate(28deg)}
         .av-art-star{animation:av-art-star 3s ease-in-out infinite}
         @keyframes av-art-star{0%,100%{opacity:.3;transform:scale(.65)}50%{opacity:1;transform:scale(1.05)}}
         .av-art-flame{animation:av-art-flame .85s ease-in-out infinite alternate}
@@ -22991,10 +22992,12 @@ video {
     // § Big preview (v248, owner): press and hold any item in Custom, the
     // Shop or the Collection (CARD_HOLD_MS) for a big preview over the page;
     // effects play in it (victories run full screen on #victoryFxLayer,
-    // above it). A tap still does what it always did (equip, the preview
-    // under the tile, Shop buttons); the click after a hold is swallowed.
+    // above it). Tapping an equipped card back previews it; other taps equip
+    // or use the existing Shop buttons. The click after a hold is swallowed.
     // Closes on ✕, a tap outside the item, Escape or Back (BACK_LAYERS).
-    function bigPreviewItem(id) {
+    function bigPreviewItem(id, type = '') {
+      // 'default' is shared by several categories; resolve it with the tile type.
+      if (id === 'default' && type === 'cardBack') return { id, name:'Default Card Back', category:'Card Backs', builtIn:true };
       return [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(i => i.id === id) || null;
     }
     function bigPreviewStatus(item) {
@@ -23034,8 +23037,8 @@ video {
       if (!item || item.hidden) return openLockedCosmetic(id);
       return openBigPreview(id);
     }
-    function openBigPreview(id) {
-      const item = bigPreviewItem(id);
+    function openBigPreview(id, typeHint = '') {
+      const item = bigPreviewItem(id, typeHint);
       const type = item && COSMETIC_CATEGORY_TYPES[item.category];
       const box = document.getElementById('bigPreview');
       if (!item || !type || !box) return false;
@@ -23089,11 +23092,12 @@ video {
         const tile = e.target.closest && e.target.closest(BIG_PREVIEW_TILES);
         if (!tile) return;
         const id = tile.dataset.equipId || tile.dataset.collId || tile.dataset.shopRow;
-        if (!id || id === 'default' || !bigPreviewItem(id)) return;
+        const type = tile.dataset.equipType || '';
+        if (!id || !bigPreviewItem(id, type)) return;
         cancel();
         hold = { x: e.clientX, y: e.clientY, timer: setTimeout(() => {
           hold = null;
-          if (openBigPreview(id)) { swallowClick = true; if (navigator.vibrate) try { navigator.vibrate(8); } catch (err) {} }
+          if (openBigPreview(id, type)) { swallowClick = true; if (navigator.vibrate) try { navigator.vibrate(8); } catch (err) {} }
         }, CARD_HOLD_MS) };
       }, true);
       document.addEventListener('pointermove', (e) => { if (hold && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > 8) cancel(); }, true);
@@ -23202,7 +23206,7 @@ video {
       const owned = id === 'default' || !!item?.builtIn || !!cosmeticPurchaseState[id];
       const active = id === activeId;
       // Tile layout, shared with the profile-picture tiles.
-      const status = active ? '✓ EQUIPPED' : owned ? 'Tap to equip' : customLockedStatus(item);
+      const status = active ? (type === 'cardBack' ? '✓ EQUIPPED · Tap to preview' : '✓ EQUIPPED') : owned ? 'Tap to equip' : customLockedStatus(item);
       return `<button type="button" data-equip-type="${type}" data-equip-id="${id}" ${owned ? '' : 'data-locked aria-disabled="true"'} aria-pressed="${active}" class="cosmetic-option-card cosmetic-tile avatar-option">
         <span class="avatar-option-art">${cosmeticPreview(item, type)}${owned ? '' : '<span class="avatar-option-lock" aria-hidden="true">🔒</span>'}${item?.season ? `<span class="season-badge" title="${SEASONAL_EVENT_BY_ID[item.season].name}">${SEASONAL_EVENT_BY_ID[item.season].emoji}</span>` : ''}</span>
         <span class="avatar-option-name">${name}</span>
@@ -23482,6 +23486,7 @@ video {
       const id = btn.dataset.equipId;
       if (btn.hasAttribute('data-locked')) { previewLockedCosmetic(id); return; }
       const previous = type === 'avatar' ? resolveAvatarId(equippedCosmetics.avatar) : equippedIdOf(type);
+      if (type === 'cardBack' && id === previous) { openBigPreview(id, type); return; }
       if (!equipCosmetic(type, id) || motionOff()) return;
       // Equip snap: the new pick pops and "slots in" with a click; the old
       // one eases back from a faded state.
@@ -31424,8 +31429,8 @@ video {
       else checkForNewVersion(true);
     }
     // § Home screen: dimmed table backdrop, rotating card tip, panel fit
-    // Behind the home panel: the player's equipped table (the default one
-    // when signed out), or the live seasonal event's table, heavily dimmed
+    // Behind the home panel: the player's equipped table, including local
+    // guest/free selections, heavily dimmed
     // and never animated (#homeBackdrop, shown by body.lobby-open).
     // #homeCardTip shows one power card (5–J, Joker) and its rule, changing
     // every HOME_TIP_MS, only where there is free room: below the panel on
@@ -31435,9 +31440,9 @@ video {
     const HOME_BACKDROP_DIM = 'linear-gradient(rgba(2,6,23,.62),rgba(2,6,23,.74))';
     let homeTipRank = null, homeTipTimer = null;
     function homeBackdropTableId() {
-      const live = typeof activeSeasonalEvents === 'function' ? activeSeasonalEvents()[0] : null;
-      if (live && ILLUSTRATED_TABLES[`table-${live.event.id}`]) return `table-${live.event.id}`;
-      return currentUser ? (equippedCosmetics.tableTheme || 'default') : 'default';
+      // The home screen always honours the player's equipped table, including
+      // local free choices while signed out. Events must not replace that choice.
+      return equippedCosmetics.tableTheme || 'default';
     }
     function homeBackdropCss(id) {
       if (ILLUSTRATED_TABLES[id]) return { bg: tableArtBackground(id) };
@@ -31451,7 +31456,10 @@ video {
       const look = homeBackdropCss(id);
       el.dataset.table = id;
       el.style.background = `${HOME_BACKDROP_DIM}, ${look.bg}`;
-      el.style.backgroundSize = look.size ? `auto, ${look.size}` : '';
+      // The shorthand above already sets cover for every scene and repeat for
+      // seamless textures. Clearing backgroundSize would reset cover to auto,
+      // showing only an intrinsic portrait strip on desktop.
+      if (look.size) el.style.backgroundSize = `auto, ${look.size}`;
     }
     // Tablets/PCs zoom the panel up (CSS); never past what fits under the
     // header, so its top (the title) is never hidden and nothing scrolls.
