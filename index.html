@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-01-v268 (ShitHead-Deluxe-220) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-01-v270 (ShitHead-Deluxe-220) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5062,6 +5062,16 @@ video {
 }
 
   </style>
+<style id="responsiveFullSceneStyles">
+#gameTable,.mini-table,#homeBackdrop { isolation:isolate; }
+.responsive-scene { position:absolute; inset:0; z-index:-1; pointer-events:none; overflow:hidden; }
+.responsive-scene > svg { display:block; width:100%; height:100%; }
+#gameTable #playSelectedBtn:disabled { opacity:1; background:#463b22; color:#dfd2af; box-shadow:0 1px 8px #0007; }
+#homeBackdrop::after { content:""; position:absolute; inset:0; background:rgba(2,6,23,.84); pointer-events:none; }
+/* Opaque card faces and contrasting pill labels remain above the scene. */
+#gameTable .seat-name,#gameTable .table-label { text-shadow:0 1px 3px #020617; }
+</style>
+<script src="art/tables/full-scenes-v270/scenes.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 theme-obsidian select-none">
   <div id="rotateHint" role="alert" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></svg><span class="rh-turn">Turn your phone upright to play.</span><span class="rh-open">Open your phone to play. This screen is too small for the table.</span></div>
@@ -19738,6 +19748,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v270: [[ '🌄', 'Responsive full-scene tables with extended landscapes, complete large features and matching previews.', WN_KEY ]],
       v268: [[ '🖼️', 'Full-screen equipped table backgrounds on every device, star-only Cosmic Ace glints, and default card-back previews.', WN_KEY ]],
       v267: [[ '🎨', 'Correctly fitted card-back art and avatar borders, with rebuilt Cosmic Ace, Royal Flush and falling-tear animations.', WN_KEY ]],
       v266: [[ '🎴', 'The three free linen card backs are available in the Card Backs tab as well as All.', WN_KEY ]],
@@ -21594,7 +21605,8 @@ video {
       'victory-easter': svfxEaster, 'victory-lunar': svfxLunar, 'victory-ramadan': svfxRamadan
     };
     // Tiled surfaces repeat at a fixed CSS size (a smaller one in the mini
-    // previews) under their own lamp/vignette; pictures cover the table.
+    // previews) under their own lamp/vignette; responsive scene layers extend
+    // across actual host dimensions and keep every defining feature complete.
     const TABLE_TILE_PX = 640;
     const TILED_TABLE_LIGHT = {
       wood: 'radial-gradient(ellipse 70% 55% at 42% 40%,rgba(255,236,200,.16),transparent 70%),radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(20,10,4,.5) 100%)',
@@ -21605,7 +21617,7 @@ video {
       if (!t) return '';
       const light = TILED_TABLE_LIGHT[t.art];
       if (light) return `${light}, url('${TABLE_ART[t.art]}') 0 0/${preview ? 160 : TABLE_TILE_PX}px repeat, ${t.base}`;
-      return `url('${TABLE_ART[t.art]}') center/cover no-repeat, ${t.base}`;
+      return t.base; // Complete anchored scene is drawn by ShTableScenes.
     }
     // Mirrors the in-game #gameTable look for each theme so previews match.
     const CSS_TABLE_PREVIEWS = {
@@ -22678,6 +22690,7 @@ video {
       document.body.dataset.equippedFrame = equippedCosmetics.frame || 'default';
       document.body.dataset.equippedEmotes = equippedCosmetics.emotes;
       document.body.dataset.equippedTableTheme = equippedCosmetics.tableTheme || 'default';
+      ShTableScenes.refresh();
       document.body.dataset.equippedBurnEffect = equippedCosmetics.burnEffect;
       document.body.dataset.equippedVictoryEffect = equippedCosmetics.victoryEffect;
       document.body.dataset.equippedJokerEffect = equippedCosmetics.jokerEffect || 'default';
@@ -31455,11 +31468,11 @@ video {
       if (el.dataset.table === id) return;
       const look = homeBackdropCss(id);
       el.dataset.table = id;
-      el.style.background = `${HOME_BACKDROP_DIM}, ${look.bg}`;
-      // The shorthand above already sets cover for every scene and repeat for
-      // seamless textures. Clearing backgroundSize would reset cover to auto,
-      // showing only an intrinsic portrait strip on desktop.
-      if (look.size) el.style.backgroundSize = `auto, ${look.size}`;
+      el.style.background = look.bg;
+      ShTableScenes.draw(el, id);
+      // The independent scene renderer extends its terrain and uniformly scales
+      // anchored features. Only the legacy seamless surface uses repeat sizing.
+      el.style.backgroundSize = look.size || 'auto';
     }
     // Tablets/PCs zoom the panel up (CSS); never past what fits under the
     // header, so its top (the title) is never hidden and nothing scrolls.

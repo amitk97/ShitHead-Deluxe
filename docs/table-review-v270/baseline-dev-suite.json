@@ -1,0 +1,112 @@
+{
+  "pass": 557,
+  "total": 578,
+  "failures": [
+    {
+      "name": "Cosmetic art: the default SH card back previews on tap and hold without equipping on release",
+      "pass": false,
+      "error": "hold previews an unequipped default back"
+    },
+    {
+      "name": "REGRESSION: Custom is organised into tabs with tiles, at least 2 per row",
+      "pass": false,
+      "error": "Tiles sit at least two to a row"
+    },
+    {
+      "name": "Friends show when they are in a match; WATCH opens it read-only from their seat",
+      "pass": false,
+      "error": "Watching the friend's seat"
+    },
+    {
+      "name": "Profile showcase: tapping an item opens Custom on its tab, scrolled to that item",
+      "pass": false,
+      "error": "Viewing another showcase does not equip anything — expected \"frame-spectrum\", got \"default\""
+    },
+    {
+      "name": "Back goes to the page you came from: Profile → Custom → Collection, then back, back, closed",
+      "pass": false,
+      "error": "Back from Custom: Profile — expected [\"profileModal\"], got []"
+    },
+    {
+      "name": "Press and hold an item in Custom for a big preview; a tap still equips as before",
+      "pass": false,
+      "error": "The hold opens the big preview"
+    },
+    {
+      "name": "REGRESSION: the hamburger menu has all 9 items in the agreed order, with no duplicates",
+      "pass": false,
+      "error": "No id anywhere in the document may be duplicated — expected [], got [\"approved-joker-bg\",\"approved-joker-card\",\"v267-orbit-gold\",\"v267-orbit-violet\",\"v267-orbit-depth\",\"v267-tear-fill\"]"
+    },
+    {
+      "name": "Server economy: a call that trips the Firebase Messaging bug is sent directly instead",
+      "pass": false,
+      "error": "You need a connection for that."
+    },
+    {
+      "name": "Server economy: a finished match and the daily login streak are recorded by the server",
+      "pass": false,
+      "error": "Streak day and reward come from the server — expected {\"count\":2,\"reward\":15}, got null"
+    },
+    {
+      "name": "Server economy: a finished Ranked match is scored by the server from the room",
+      "pass": false,
+      "error": "Only the room is sent, never a rating — expected [[\"rankedResult\",{\"roomCode\":\"123456\"}]], got [[\"rankedResult\",{\"roomCode\":\"123456\"}],[\"init\",{}]]"
+    },
+    {
+      "name": "Seasonal mail: one \"event is here\" and one \"last day\" mail per event, never re-sent after reading",
+      "pass": false,
+      "error": "The first visit during Halloween sends its mail"
+    },
+    {
+      "name": "Gauntlet: a result that could not reach the server is kept and sent later (a win is never lost)",
+      "pass": false,
+      "error": "Sent once there is a signal — expected [\"gauntlet\",{\"op\":\"result\",\"runId\":\"g5\",\"won\":true}], got undefined"
+    },
+    {
+      "name": "Referrals: a ?ref= link is remembered, cleaned from the address bar and claimed once signed in",
+      "pass": false,
+      "error": "Claimed with the code — expected [\"referral\",{\"op\":\"claim\",\"code\":\"AMITK\"}], got undefined"
+    },
+    {
+      "name": "Big Print: with a huge hand no rank or suit is covered by the next card",
+      "pass": false,
+      "error": "no index is covered — expected 0, got 3"
+    },
+    {
+      "name": "Card backs v197: Dragon Scale and Stained Glass are vector, priced, previewable",
+      "pass": false,
+      "error": "back-dragon is drawn from vector art"
+    },
+    {
+      "name": "4K: every table, card back and picture is vector art or a 3x tile, with no bitmap inside",
+      "pass": false,
+      "error": "avatar-crown-bronze only uses its own art/avatars files"
+    },
+    {
+      "name": "Premium pictures (Royal Flush, Cosmic Ace) and tables (Neon City, Northern Lights, Deep Space)",
+      "pass": false,
+      "error": "Cosmic Ace mixes at least two motions"
+    },
+    {
+      "name": "Custom → All: every item incl. all seasonal ones, folding sections, and a Diamonds / owned / Shop bar",
+      "pass": false,
+      "error": "Sections count owned / total — expected \"1/29\", got \"4/29\""
+    },
+    {
+      "name": "REGRESSION: Google sign-in is enabled and clicking it opens a real Google pop-up sign-in (redirect only as the fallback)",
+      "pass": false,
+      "error": "Clicking it must first try a real Google pop-up sign-in"
+    },
+    {
+      "name": "Old-room cleanup removes only rooms over 2 days old and idle, with the one query the rules allow",
+      "pass": false,
+      "error": "Cannot read properties of null (reading 'path')"
+    },
+    {
+      "name": "Settings persist: a change made just before a refresh wins over the older account copy; other devices still sync",
+      "pass": false,
+      "error": "Marked as not yet saved to the account"
+    }
+  ],
+  "errors": []
+}

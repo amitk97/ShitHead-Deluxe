@@ -73,6 +73,29 @@ async function runDevTestSuite() {
       callEconomy = saved.callEconomy;
     }
   }
+  await test('Cosmetic art: full table scenes keep every main feature complete and large at all six required sizes', async () => {
+    const host=document.createElement('div');host.className='mini-table';
+    host.style.cssText='position:fixed;left:0;top:0;opacity:0;pointer-events:none;max-width:none;border:0;padding:0;z-index:-20';
+    document.body.append(host);
+    try {
+      for(const [w,h] of [[390,844],[360,640],[768,1024],[1366,768],[1920,1080],[3840,2160]]) {
+        host.style.width=w+'px';host.style.height=h+'px';
+        for(const key of Object.keys(ShTableScenes.themes)) {
+          host.dataset.tablePreview='table-'+key;ShTableScenes.draw(host,'table-'+key);
+          const svg=host.querySelector('svg'),box=svg.getBoundingClientRect();
+          assertTrue(Math.abs(box.width-w)<1 && Math.abs(box.height-h)<1,key+': scene covers host');
+          const main=[...svg.querySelectorAll('[data-scene-feature]')];
+          assertTrue(main.length>0 || ['wood','felt','casino','royal'].includes(key),key+': main features present');
+          for(const el of main) {
+            const r=el.getBoundingClientRect(),unit=Math.min(w,h),m=Math.max(.12,+el.dataset.minUnit);
+            assertTrue(r.left>=box.left-.5 && r.right<=box.right+.5 && r.top>=box.top-.5 && r.bottom<=box.bottom+.5,key+' '+el.dataset.sceneFeature+': complete at '+w+'x'+h);
+            assertTrue(Math.max(r.width,r.height)>=unit*m-.6,key+' '+el.dataset.sceneFeature+': large at '+w+'x'+h);
+            const matrix=el.getCTM();assertTrue(Math.abs(Math.hypot(matrix.a,matrix.b)-Math.hypot(matrix.c,matrix.d))<.01,key+': uniform scale');
+          }
+        }
+      }
+    } finally {host.remove();}
+  });
   function makeCard(rank, suit, id) {
     return { id: id || `${rank}_${suit || 'x'}_${Math.random().toString(36).slice(2)}`, rank, suit: suit || '♠', isJoker: rank === 'JOKER' };
   }
@@ -154,28 +177,22 @@ async function runDevTestSuite() {
     } finally { animations.forEach(a=>a.cancel());stage.remove(); }
   });
 
-  await test('Cosmetic art: every table fills the home viewport and stays sharp at phone, tablet, desktop and 4K sizes', () => {
-    const savedTable=equippedCosmetics.tableTheme, wasLobby=document.body.classList.contains('lobby-open');
-    const stage=document.createElement('div');stage.style.cssText='position:fixed;left:-10000px;top:0;pointer-events:none';document.body.appendChild(stage);
+  await test('Cosmetic art: every table uses the same full scene on home and previews', () => {
+    const saved=equippedCosmetics.tableTheme,wasLobby=document.body.classList.contains('lobby-open');
+    const stage=document.createElement('div');stage.className='mini-table';stage.style.cssText='position:fixed;left:0;top:0;width:390px;height:844px;opacity:0';document.body.append(stage);
     try {
       document.body.classList.add('lobby-open');
-      for (const id of new Set([...Object.keys(CSS_TABLE_PREVIEWS),...Object.keys(ILLUSTRATED_TABLES)])) {
-        equippedCosmetics.tableTheme=id;refreshHomeBackdrop();
-        const bg=document.getElementById('homeBackdrop'),css=getComputedStyle(bg),bounds=bg.getBoundingClientRect();
-        assertTrue(Math.abs(bounds.left)<1&&Math.abs(bounds.right-innerWidth)<1&&Math.abs(bounds.top)<1&&Math.abs(bounds.bottom-innerHeight)<1,`${id}: backdrop covers the full viewport`);
-        assertEqual(bg.dataset.table,id,`${id}: actual equipped theme`);
-        const art=ILLUSTRATED_TABLES[id],isTile=art&&TILED_TABLE_LIGHT[art.art];
-        if (art&&!isTile) assertTrue(css.backgroundSize.includes('cover'),`${id}: scene uses cover, never intrinsic portrait sizing`);
-        if (isTile) assertTrue(css.backgroundSize.includes(`${TABLE_TILE_PX}px`)&&css.backgroundRepeat.includes('repeat'),`${id}: seamless high-resolution tiles retain their density`);
-        for (const [w,h] of [[320,568],[390,844],[768,1024],[1920,1080],[3840,2160]]) {
-          const frame=document.createElement('div');frame.style.cssText=`width:${w}px;height:${h}px;background:${bg.style.background}`;stage.replaceChildren(frame);
-          assertEqual(getComputedStyle(frame).backgroundSize,css.backgroundSize,`${id}: matching fill at ${w}x${h}`);
-        }
+      for(const key of Object.keys(ShTableScenes.themes)) {
+        const id='table-'+key;equippedCosmetics.tableTheme=id;refreshHomeBackdrop();
+        const home=document.getElementById('homeBackdrop'),r=home.getBoundingClientRect();
+        assertTrue(Math.abs(r.left)<1&&Math.abs(r.right-innerWidth)<1&&Math.abs(r.top)<1&&Math.abs(r.bottom-innerHeight)<1,id+': full viewport');
+        assertEqual(home.dataset.table,id,id+': equipped table retained');
+        assertEqual(home.querySelector('svg').dataset.fullScene,id,id+': shared home scene');
+        stage.dataset.tablePreview=id;ShTableScenes.draw(stage,id);
+        assertEqual(stage.querySelector('svg').dataset.fullScene,id,id+': shared preview scene');
+        assertTrue(!stage.querySelector('svg').querySelector('[preserveAspectRatio*=slice]'),id+': no cropped scene');
       }
-    } finally {
-      stage.remove();equippedCosmetics.tableTheme=savedTable;refreshHomeBackdrop();
-      document.body.classList.toggle('lobby-open',wasLobby);
-    }
+    } finally {stage.remove();equippedCosmetics.tableTheme=saved;refreshHomeBackdrop();document.body.classList.toggle('lobby-open',wasLobby);}
   });
   await test('Cosmetic art: the default SH card back previews on tap and hold without equipping on release', async () => {
     const saved={tab:customTab,back:equippedCosmetics.cardBack};
@@ -8282,7 +8299,7 @@ async function runDevTestSuite() {
     });
     Object.entries(ILLUSTRATED_TABLES).forEach(([id, t]) => {
       const bg = tableArtBackground(id);
-      assertTrue(tiled.has(t.art) ? bg.includes(`${TABLE_TILE_PX}px repeat`) : bg.includes('.svg'), `${id} is never a stretched bitmap`, bg.slice(0, 80));
+      assertTrue(tiled.has(t.art) ? bg.includes(`${TABLE_TILE_PX}px repeat`) : !/<image\b/.test(ShTableScenes.scene(id,1920,1080)), `${id} is never a stretched bitmap`);
     });
     const svgs = [...Object.values(TABLE_ART), ...Object.values(SEASONAL_TABLE_ART), ...Object.values(SEASONAL_BACK_ART)].filter(u => /\.svg$/.test(u));
     assertTrue(svgs.length >= 30, 'every SVG art file is checked', svgs.length);

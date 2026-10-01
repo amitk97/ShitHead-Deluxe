@@ -10,6 +10,7 @@ const DATA_CACHE = 'shithead-data-v1'; // small saved data (event calendar), kep
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 // Everything a Vs Bots game needs with no signal, fetched when the app installs.
 const OFFLINE_ASSETS = [
+  '/art/tables/full-scenes-v270/scenes.js',
   '/art/avatars/approved-v267/royal-card-10.webp',
   '/art/avatars/approved-v267/royal-card-J.webp',
   '/art/avatars/approved-v267/royal-card-Q.webp',

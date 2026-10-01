@@ -1,5 +1,10 @@
 # ShitHead Deluxe
 
+## Full-scene tables v270 — owner approved 1 October 2026
+
+The v269 safe-area icon draft was rejected and never pushed. Main is v268 (ba516fc). Do not use or publish responsive-v269. The replacement uses `art/tables/full-scenes-v270/scenes.js`: a world-sized SVG with independent uniformly scaled large features, extended terrain, edge anchors and scattered detail. `ShTableScenes` shares rendering between game, home and every mini/big table preview, with ResizeObserver/visualViewport updates. No IDs, names, prices, ownership, server catalog or rules change. See the replaced full-scene table section in `docs/MASTER-COSMETIC-ART-STYLE.md`. Owner approved the contact sheet and instructed publication, with final changes: Fireside is an indoor panelled Christmas room without tree/snowflake/window artwork; Candlelit Dinner has no flowers or petals; Casino retains the original green diagonal-line surface without chips/suits; Royal retains the original purple fine crosshatching without crowns; Jungle is a dense layered forest with trees, canopy, vines and undergrowth. Preserve these directions.
+
+
 ## Codex update — 1 October 2026, v268
 
 Home table backgrounds now fill the entire viewport. The previous `refreshHomeBackdrop` reset `backgroundSize` after applying `cover`, leaving SVGs at their intrinsic portrait ratio on desktop. Preserve the background shorthand and only set an explicit size list for CSS patterns that need it. All table themes share this rule: vector scenes remain sharp above 4K, 1920px felt/wood tiles repeat at 640px, and CSS gradient tables remain resolution-independent. The home screen always uses the equipped theme (including guest/free choices); events no longer override it. Follow the new mandatory responsive HD table section in `docs/MASTER-COSMETIC-ART-STYLE.md` for every future table.
@@ -213,7 +218,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## Premium pictures & tables (v196)
 
 - Pictures 2500 (animated, several moving parts each, CSS in the `.av-rf` … `.av-orbit` block, all stopped by Reduce Motion): Royal Flush (`avatar-royal-flush`, cards fan out via `--a`), Cosmic Ace (`avatar-cosmic-ace`, tone `cosmos`, a moon on `av-orbit` drawn twice: behind/in front of the card by opacity). Rules match them with one regex line.
-- Tables 3000: Neon City / Northern Lights / Deep Space (`table-neon|aurora|space`), pure SVG from `tools/make-premium-tables.py`. Tall phones crop the sides of cover art, so keep a scene's key features in the middle third.
+- Tables 3000: Neon City / Northern Lights / Deep Space (`table-neon|aurora|space`), pure SVG from `tools/make-premium-tables.py`. The owner's full-scene rule supersedes the original generator: keep complete, large independently anchored features and extend the landscape for every screen shape; never crop defining art.
 - 4K test: every `TABLE_ART` / seasonal table / card back is SVG (or a 3× tile) with no embedded bitmap, and no picture or page CSS uses a bitmap data URI.
 
 ## Devices (phones, tablets, PC)

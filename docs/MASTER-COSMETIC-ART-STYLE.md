@@ -153,15 +153,19 @@ When creating or changing a cosmetic:
 
 This document is the source of truth for cosmetic visual and effect style unless the owner explicitly asks for a one-off exception.
 
-## Table backgrounds: mandatory responsive HD rule
+## Tables: mandatory responsive full-scene rule
 
-Every current and future table must fill the complete home-screen viewport and game-table surface on phones, tablets, landscape screens, desktop and 4K displays. The home background must use the equipped table, including guest/free selections; a seasonal event must not replace the player's choice.
+Every table is a full-screen scene, with defining features spread across it. The owner rejected the v269 small isolated motifs. Never shrink the whole artwork into a contained icon or reserve a small safe area away from the cards. Ignore older instructions allowing feature cropping.
 
-- Prefer resolution-independent SVG scenes and CSS gradients. Existing table SVGs are true vector images and stay sharp beyond 4K; do not replace them with enlarged low-resolution screenshots.
-- Scene images use centred `cover` with preserved proportions, no side bars, no phone-width wrapper and no `contain` or intrinsic `auto` sizing. Keep defining details in a safe central area and extend colour, texture and decoration to every edge. Edge decorations can crop naturally when aspect ratios change; never stretch the illustration to fit.
-- Raster scene masters, if added, must be at least 3840 × 2160, with an appropriate portrait crop where the scene needs it. Use optimised responsive image sources; do not send a full uncompressed 4K image to every phone.
-- Seamless surface textures repeat at their intended CSS size. Supply at least 3 source pixels per CSS pixel (the current 1920px felt/wood tiles repeat at 640px), without stretching a single tile across the viewport.
-- The full-viewport backdrop must live outside the centred lobby panel. Apply the background as one complete shorthand; do not clear `backgroundSize` afterwards, which resets `cover` and caused the portrait-strip bug.
-- Before shipping, check 320 × 568, 390 × 844, 768 × 1024, 1920 × 1080 and 3840 × 2160. Verify full edge coverage, preserved aspect ratio, no seams, sharpness and readable controls under the dim overlay.
+1. **Build independent layers:** a filling sky/gradient/texture, a horizon/ground band pinned to the bottom and extended across the full width, left/right features anchored to their respective edges, top features and details scattered throughout. Extend sky, ground, landscape or pattern when the screen changes shape. Never use blank bars or a reduced whole picture.
+2. **Keep features large and complete:** use one uniform scale based on the smaller host dimension for each feature. Preserve circular geometry, wing proportions and full Rangoli bounds. Include strokes and any glow inside each feature's bounds. Do not stretch SVGs or use background-size 100% 100%. Only the filling background and continuous texture may crop; no defining feature may cross the screen edge.
+3. **Responsive composition:** widen the landscape and reposition edge anchors on PC, tablet, ultra-wide and folded phones. Extend sky and ground vertically on tall phones. Every defining feature remains recognisable at every size. Recompute on resize, zoom, orientation and host-layout changes.
+4. **Gameplay contrast:** the art may sit behind Deck/Pile, seats and cards. Use subdued contrast through those regions, readable opaque card faces and pill labels. Never hide art to fit it between controls. Keep the premium style: lighting, depth, controlled glow and complete silhouettes.
+5. **All views share the renderer:** game, equipped dimmed home backdrop, Shop, Custom, Collection, showcase and big preview. No animations on tables. Home extends across the viewport and keeps the equipped table during events.
+6. **Resolution:** SVG/CSS is preferred. The two existing free seamless 1920px wood/felt textures repeat at 640 CSS pixels (3× source density); never stretch them across a screen. Version new asset filenames and add them to service-worker offline assets.
+7. **Validation:** real games in progress at 390×844, 360×640, 768×1024, 1366×768, 1920×1080 and 3840×2160. Inspect all 138 images visually for scene coverage, large complete features, proportions, continuation and card/control readability. Also test 200% zoom and folded/ultra-wide layouts. A dev test must measure every main feature's painted bounds and minimum relative size, at each required size. Geometry checks do not establish art quality.
+8. **Owner approval:** show one contact sheet of all 23 themes at all six required sizes. Wait for explicit owner approval before replacing live art or pushing to main. Main deploys automatically. Rejected v269 art must never be published.
 
-Run `node tools/v268-client-test.js` for table source quality and preview routing, then the live `?dev-tests=1&test-filter=cosmetic-art` checks for actual CSS fitting and interaction.
+### Owner-approved theme details (1 October 2026)
+
+Casino uses the existing deep green surface with subtle diagonals running top-left to bottom-right; Royal uses the existing purple surface with fine gold crosshatching. Both are continuous patterns, with no chips, suit symbols or crowns. Preserve fixed, uniform pattern spacing through the shared responsive renderer. Fireside is an indoor Christmas room with fireplace, garlands and wreath, without trees or snowflakes. Candlelit Dinner has no flowers or petals. Jungle is a dense forest with layered canopy, trunks, vines and undergrowth, rather than isolated oversized leaves.

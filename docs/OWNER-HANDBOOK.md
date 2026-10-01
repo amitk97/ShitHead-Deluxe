@@ -167,7 +167,7 @@ The support inbox is **support.shitheaddeluxe@gmail.com**. The "Contact Support"
 ## 10. Things that run by themselves
 
 - **Seasonal events** (Lunar New Year, Valentine's, Ramadan, Easter, Summer, Halloween, Diwali, Christmas, New Year) start and end on their own.
-  - They include their Shop items, challenges, table art on the home screen, and a notification on the first day.
+  - They include their Shop items, challenges and a notification on the first day. Your equipped table stays on the home screen; events do not replace it.
   - Diwali dates are stored up to 2040; after that they need adding.
 - **Daily login rewards, daily/weekly challenges, the Gauntlet and leaderboards** all reset on the **UK** day and week.
 - **Deleted accounts** are erased every night at 03:30 UK time, 7 days after the request.
