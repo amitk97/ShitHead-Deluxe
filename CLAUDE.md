@@ -1,5 +1,16 @@
 # ShitHead Deluxe
 
+## Codex handoff — 1 October 2026, v265
+
+Owner-approved art is now installed in `art/avatars/approved-v265/` (34 avatars) and `art/backs/approved-v265/` (25 backs). The original approved sheets and exact crop manifest are in `docs/approved-art/v265/`. Suit, holiday, Chinese New Year dragon, card and achievement avatars use the new art through the shared renderer; Jack-o'‑Lantern, crowns and level rewards keep their existing designs. Centurion still unlocks at 100 ranked games and now shows a gold helmet and large 100.
+
+The default back is white textured with only a centred SH logo, across all deck themes. Cobalt Linen, Sage Linen and Plum Linen are free built-in backs, registered in both the client and server catalog. The redesigned paid/seasonal backs keep their existing IDs and ownership. Royal Flush fans/stacks five cards with a glint, Cosmic Ace has a rotating orbit and twinkles, Burning 10 flickers with rising embers, Joker Card tilts and sparkles, and ShitHead sobs with falling tears. All five pause offscreen/in the background and respect reduced motion. New art is included in service-worker offline assets.
+
+The preceding v264 updates are already live: Lion/Fireworks finish in 2.5s with synchronized audio and complete fireworks art; both players must press Ready before each next best-of-series game (server-enforced); update prompts queue until home and never force a mid-match reload. Preserve these behaviours. No database rules changed in v265.
+
+Validation: `node tools/v265-art-test.js`, v264 client, series readiness, ranked server and security-boundary tests pass; mobile crops and layered Royal Flush were rendered/reviewed. Before v265, the live v264 browser suite was 568/573: existing failures in New Year Joker timing (1716ms vs 1500ms), profile showcase equipment isolation, Profile/Custom back navigation, hold preview, and the older 4K asset assertion (already fails on the v263 crown raster). These are recorded follow-up issues, not silently marked passing.
+
+
 Single-file web game (`index.html`) on Firebase Hosting + Realtime Database (project `shithead-pro`).
 
 - Finding your way: the BUILD comment at the top has a FILE MAP; the GAMEPLAY ENGINE script opens with a MAP and each section starts with a `// § Name` marker (search `// § `). New code goes in the matching section; a new section gets a marker and a line in the map.

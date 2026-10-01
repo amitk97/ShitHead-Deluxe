@@ -7734,15 +7734,15 @@ async function runDevTestSuite() {
       assertTrue(document.getElementById('updatePrompt').classList.contains('hidden'), 'starting a match hides the prompt');
     } finally { Object.assign(state, saved.state); pendingUpdateVersion = saved.pending; updatePromptSnoozeUntil = saved.snooze; updateNotifiedFor = saved.notified; tutorialActive = saved.tutorial; isAnyOverlayOpen = saved.check; document.getElementById('lobbyScreen').className = saved.cls; document.getElementById('updatePrompt')?.remove(); }
   });
-  await test('Free card back follows the equipped deck, never the purchased back', () => {
+  await test('Default card back uses white SH art across decks, never the purchased back', () => {
     const oldBack = equippedCosmetics.cardBack, oldTheme = state.deckTheme;
     try {
       state.deckTheme = 'theme-emerald'; equippedCosmetics.cardBack = 'back-crimson';
-      assertTrue(cosmeticPreview(null, 'cardBack').includes('back-emerald'), 'free tile shows Emerald deck back');
+      assertTrue(cosmeticPreview(null, 'cardBack').includes('cosmetic-back-default'), 'free tile shows white SH back');
       assertTrue(!cosmeticPreview(null, 'cardBack').includes('cosmetic-back-crimson'), 'paid back does not contaminate free tile');
       assertTrue(getThemeDeckBackClass().includes('cosmetic-back-crimson'), 'game still shows equipped paid back');
       state.deckTheme = 'theme-cyber';
-      assertTrue(cosmeticPreview(null, 'cardBack').includes('back-cyber'), 'changing deck updates free preview');
+      assertTrue(cosmeticPreview(null, 'cardBack').includes('cosmetic-back-default'), 'changing deck keeps white SH default');
     } finally { equippedCosmetics.cardBack = oldBack; state.deckTheme = oldTheme; }
   });
   await test('Challenges and Gauntlet have independent weekly leaderboard periods', () => {

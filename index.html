@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-01-v264 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-01-v265 (ShitHead-Deluxe-218) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -14726,10 +14726,8 @@ video {
       if (/^back-lvl-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
       if (cosmeticBackClasses[backId]) return cosmeticBackClasses[backId];
       if (typeof SEASONAL_BACK_IDS !== 'undefined' && SEASONAL_BACK_IDS.has(backId)) return getCosmeticBackClass(backId);
-      if (state.deckTheme === 'theme-emerald') return 'back-emerald';
-      if (state.deckTheme === 'theme-cyber') return 'back-cyber';
-      if (state.deckTheme === 'theme-crimson') return 'back-crimson';
-      return 'back-obsidian';
+      if (['back-cobalt-linen','back-sage-linen','back-plum-linen'].includes(backId)) return `cosmetic-${backId}`;
+      return 'cosmetic-back-default';
     }
 
     function getEmblemSvg() {
@@ -19740,6 +19738,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v265: [
+        ['🎨', 'New art for suit, seasonal and card avatars, including the 100-ranked-games Centurion.', WN_KEY],
+        ['🃏', 'Redesigned themed card backs, a white textured SH default, and three free linen colours.', WN_KEY],
+        ['✨', 'Royal Flush, Cosmic Ace, Burning 10, Joker Card and ShitHead have new looping animations.', WN_KEY]
+      ],
       v264: [
         ["✨", "Shorter, seamless Lion and Fireworks victories, with a complete opening firework."],
         ["🤝", "Both players choose Ready before the next series game begins.", WN_KEY],
@@ -22327,6 +22330,10 @@ video {
     // Classic Reactions ships with the game. It remains selectable for old
     // saves, but is intentionally not a purchasable Shop item.
     const BUILT_IN_COSMETICS = [
+      { id: 'back-cobalt-linen', category: 'Card Backs', name: 'Cobalt Linen', cost: 0, builtIn: true, tones: ['#24468b','#e8dfcd','#d6c59a'] },
+      { id: 'back-sage-linen', category: 'Card Backs', name: 'Sage Linen', cost: 0, builtIn: true, tones: ['#718a72','#e8dfcd','#d6c59a'] },
+      { id: 'back-plum-linen', category: 'Card Backs', name: 'Plum Linen', cost: 0, builtIn: true, tones: ['#69365e','#e8dfcd','#d6c59a'] },
+
       { id: 'emotes-classic', category: 'Emote Packs', name: 'Classic Reactions', cost: 0, builtIn: true, tones: ['#172033','#34d399','#fbbf24'] },
       // The four original decks stay free.
       { id: 'deck-obsidian', category: 'Decks', name: 'Obsidian', cost: 0, builtIn: true, theme: 'theme-obsidian', tones: ['#0f172a','#ef4444','#f8fafc'] },
@@ -22478,6 +22485,79 @@ video {
           + `<rect x="12" y="12" width="976" height="976" rx="222" fill="none" stroke="#f97316" stroke-width="22" opacity=".9"/>`
       };
     })();
+    // § Approved cosmetic art (v265): shared by seats, profiles, Custom and Shop.
+    // Stable item IDs preserve ownership. Jack-o'-Lantern stays on its v257 art.
+    const APPROVED_AVATAR_IDS = ["avatar-suit-spades", "avatar-suit-hearts", "avatar-suit-clubs", "avatar-suit-diamonds", "avatar-lunar", "avatar-valentine-earned", "avatar-valentine", "avatar-ramadan-earned", "avatar-ramadan", "avatar-easter-earned", "avatar-easter", "avatar-summer-earned", "avatar-summer", "avatar-halloween-earned", "avatar-diwali-earned", "avatar-diwali", "avatar-christmas-earned", "avatar-christmas", "avatar-newyear-earned", "avatar-newyear", "avatar-lunar-earned", "avatar-ace-spades", "avatar-joker", "avatar-queen-hearts", "avatar-burn-flame", "avatar-frozen", "avatar-ghost", "avatar-burning-ten", "avatar-fanned-hand", "avatar-joker-card", "avatar-cosmic-ace", "avatar-royal-flush", "avatar-shithead", "avatar-centurion"];
+    const APPROVED_BACK_IDS = ["back-ramadan", "back-newyear", "back-christmas", "back-halloween", "back-valentine", "back-lunar", "back-diwali", "back-easter", "back-summer", "back-cobalt-linen", "back-sage-linen", "back-plum-linen", "back-midnight", "back-emerald", "back-crimson", "back-neon", "back-tartan", "back-artdeco", "back-arcade", "back-inferno", "back-nebula", "back-space", "back-dragon", "back-stained", "default"];
+    (function installApprovedCosmeticArt() {
+      const image = id => `<image href="art/avatars/approved-v265/${id}.webp" width="1000" height="1000"/>`;
+      const star = (x,y,delay) => `<path class="av-art-star" style="animation-delay:${delay}s;transform-origin:${x}px ${y}px" d="M${x} ${y-24}l7 17 17 7-17 7-7 17-7-17-17-7 17-7Z" fill="#fff1a7"/>`;
+      const animations = {};
+      // Five complete cards: stack -> fan -> glint -> stack. No empty layers.
+      const ranks = ['10','J','Q','K','A'];
+      let cards = '';
+      ranks.forEach((rank,i) => {
+        const angle = (i-2)*17, x = (i-2)*84;
+        cards += `<g class="av-art-card" style="--fan-angle:${angle}deg;--fan-x:${x}px;--fan-y:${Math.abs(i-2)*20}px;transform-origin:500px 850px">`
+          + `<g transform="translate(500 585) rotate(-23) translate(-757 -610)"><g clip-path="url(#approved-rf-face)">${image('avatar-royal-flush')}</g></g>`
+          + `<rect x="370" y="359" width="95" height="96" rx="8" fill="#f2ece7"/>`
+          + `<text x="383" y="431" font-family="Arial,sans-serif" font-weight="900" font-size="74" fill="#142034">${rank}</text>`
+          + `<path class="av-art-card-glint" d="M370 365h38l225 442h-38Z" fill="#fff" opacity=".35"/>` + '</g>';
+      });
+      const royal = `<defs><clipPath id="approved-rf-face"><path d="M706 344Q723 328 743 337L940 424Q974 442 957 476L811 860Q794 891 767 877L574 792Q545 779 558 747Z"/></clipPath><linearGradient id="approved-card-face" x2=".85" y2="1"><stop stop-color="#fff"/><stop offset=".55" stop-color="#f6f0e9"/><stop offset="1" stop-color="#cec5bb"/></linearGradient><radialGradient id="approved-royal-bg"><stop stop-color="#b47c19"/><stop offset="1" stop-color="#442300"/></radialGradient></defs>`
+        + image('avatar-royal-flush') + `<path d="M63 340H937V817Q937 937 817 937H183Q63 937 63 817Z" fill="url(#approved-royal-bg)"/>`
+        + cards + star(180,330,0) + star(820,330,.8) + star(500,890,1.6);
+      animations['avatar-royal-flush'] = royal;
+      animations['avatar-cosmic-ace'] = image('avatar-cosmic-ace')
+        + `<g class="av-art-orbit" style="transform-origin:500px 515px"><ellipse cx="500" cy="515" rx="400" ry="125" transform="rotate(-22 500 515)" fill="none" stroke="#fbd271" stroke-width="8" opacity=".75"/><circle cx="858" cy="405" r="19" fill="#fff4b0"/></g>`
+        + star(180,395,0) + star(810,215,1.2) + star(830,775,2.4);
+      let flames = '';
+      [180,260,735,815].forEach((x,i) => {
+        flames += `<path class="av-art-flame" style="animation-delay:${-i*.23}s;transform-origin:${x}px 800px" d="M${x} 820q-65-65-15-155-4 70 25 80 42-65 18-145 80 80 32 170-22 45-60 50Z" fill="#ff9b12" opacity=".8"/><circle class="av-art-ember" style="animation-delay:${-i*.7}s" cx="${x}" cy="700" r="10" fill="#ffe59b"/>`;
+      });
+      animations['avatar-burning-ten'] = image('avatar-burning-ten') + flames;
+      // The card itself tilts inside a stationary rim; a hat glint accents the joke.
+      animations['avatar-joker-card'] = `<defs><radialGradient id="approved-joker-bg"><stop stop-color="#6a1daf"/><stop offset="1" stop-color="#280449"/></radialGradient><clipPath id="approved-joker-card"><path d="M166 189L699 102Q735 94 749 143L897 778Q904 824 861 839L350 949Q297 957 282 904L153 253Q139 210 166 189Z"/></clipPath></defs>`
+        + image('avatar-joker-card') + `<rect x="66" y="70" width="868" height="860" rx="160" fill="url(#approved-joker-bg)"/>`
+        + `<g class="av-art-joker" style="transform-origin:500px 600px"><g clip-path="url(#approved-joker-card)">${image('avatar-joker-card')}</g></g>` + star(775,400,0) + star(285,770,1.8);
+      const tears = [280,710].map((x,i) => `<path class="av-art-tear" style="animation-delay:${i ? '-2' : '0'}s" d="M${x} 677q-44 72-44 98a44 44 0 0088 0q0-26-44-98Z" fill="#34cbfa" stroke="#a1edff" stroke-width="5"/><path class="av-art-tear" style="animation-delay:${i ? '-2' : '0'}s" d="M${x-17} 741q-13 30 0 40" fill="none" stroke="#effcff" stroke-width="9" stroke-linecap="round"/>`).join('');
+      animations['avatar-shithead'] = `<g class="av-art-sob" style="transform-origin:500px 650px">${image('avatar-shithead')}</g>` + tears;
+      APPROVED_AVATAR_IDS.forEach(id => {
+        AVATAR_ART[id] = {photo:true,tone:AVATAR_ART[id]?.tone || 'gold',animated:!!animations[id],art:animations[id] || image(id)};
+      });
+      const css = APPROVED_BACK_IDS.map(id => {
+        const cls = id === 'default' ? 'cosmetic-back-default' : `cosmetic-${id}`;
+        // Face-down cards are square in the game. Centre the print, keep its emblem readable.
+        return `.custom-card-back.${cls}{background:#111 url("art/backs/approved-v265/${id}.webp") center/cover no-repeat!important;border-color:${id === 'default' ? '#d3c4a4' : '#8e7858'}!important}`
+          + `.custom-card-back.${cls}::before,.custom-card-back.${cls}::after{display:none!important}`
+          + `.custom-card-back.${cls}>svg,.custom-card-back.${cls}>.absolute.inset-\\[5px\\]{display:none!important}`;
+      }).join('\n');
+      const style = document.createElement('style');style.id='approvedCosmeticStyles';
+      style.textContent=css+`
+        .av-art-card{animation:av-art-fan 4s ease-in-out infinite;transform:translate(var(--fan-x),var(--fan-y)) rotate(var(--fan-angle))}
+        @keyframes av-art-fan{0%,12%,100%{transform:translate(0,0) rotate(0)}35%,65%{transform:translate(var(--fan-x),var(--fan-y)) rotate(var(--fan-angle))}}
+        .av-art-card-glint{animation:av-art-glint 4s ease-in-out infinite}
+        @keyframes av-art-glint{0%,32%,70%,100%{opacity:0}48%{opacity:.45}}
+        .av-art-orbit{animation:av-art-orbit 6s linear infinite}
+        @keyframes av-art-orbit{to{transform:rotate(360deg)}}
+        .av-art-star{animation:av-art-star 3s ease-in-out infinite}
+        @keyframes av-art-star{0%,100%{opacity:.3;transform:scale(.65)}50%{opacity:1;transform:scale(1.05)}}
+        .av-art-flame{animation:av-art-flame .85s ease-in-out infinite alternate}
+        @keyframes av-art-flame{from{transform:scale(.92, .88);opacity:.55}to{transform:scale(1.04,1.12);opacity:.9}}
+        .av-art-ember{animation:av-art-ember 2.6s ease-out infinite}
+        @keyframes av-art-ember{0%{transform:translateY(0);opacity:0}20%{opacity:.8}100%{transform:translateY(-400px);opacity:0}}
+        .av-art-joker{animation:av-art-joker 4s ease-in-out infinite}
+        @keyframes av-art-joker{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}65%{transform:rotate(4deg)}}
+        .av-art-sob{animation:av-art-sob 4s ease-in-out infinite}
+        @keyframes av-art-sob{0%,45%,100%{transform:translateY(0)}50%,60%{transform:translateY(8px)}55%,65%{transform:translateY(-3px)}}
+        .av-art-tear{animation:av-art-tear 4s ease-in-out infinite}
+        @keyframes av-art-tear{0%,15%{transform:translateY(-18px);opacity:0}25%,45%{opacity:1}80%,100%{transform:translateY(150px);opacity:0}}
+        body.reduce-motion [class*="av-art-"]{animation:none!important}
+        body.reduce-motion .av-art-card-glint,body.reduce-motion .av-art-ember,body.reduce-motion .av-art-tear{display:none}
+        @media(prefers-reduced-motion:reduce){[class*="av-art-"]{animation:none!important}.av-art-card-glint,.av-art-ember,.av-art-tear{display:none}}
+      `;document.head.appendChild(style);
+    })();
+
     // Card backs: the art fills the back (the emblem and pattern layers hide).
     (function installLevelBackStyles() {
       const css = LEVEL_REWARDS.filter(r => r.category === 'Card Backs').map(r =>
@@ -22504,7 +22584,7 @@ video {
       'Joker Effects': 'jokerEffect', 'Avatars': 'avatar', 'Decks': 'deck'
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
-      cardBack: new Set(['back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco','back-dragon','back-stained', ...LEVEL_BACK_IDS, ...seasonalIdsOf('cardBack')]),
+      cardBack: new Set(['back-cobalt-linen','back-sage-linen','back-plum-linen','back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco','back-dragon','back-stained', ...LEVEL_BACK_IDS, ...seasonalIdsOf('cardBack')]),
       frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet','frame-gauntlet-hard','frame-gauntlet-boss','frame-split-crimson','frame-split-royal','frame-split-noir','frame-dashed-gold','frame-neon-tube','frame-spectrum', ...seasonalIdsOf('frame')]),
       deck: new Set(['deck-obsidian','deck-emerald','deck-cyber','deck-crimson','deck-bigprint','deck-casino','deck-arcade','deck-fourcolour','deck-lavender','deck-paper','deck-blueprint','deck-chalk','deck-frost','deck-neonnight','deck-royalgold']),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania', ...seasonalIdsOf('emotes')]),
@@ -24209,10 +24289,11 @@ video {
     }
 
     function getCosmeticBackClass(id) {
+      if (['back-cobalt-linen','back-sage-linen','back-plum-linen'].includes(id)) return `cosmetic-${id}`;
       if (SEASONAL_BACK_IDS.has(id)) return `cosmetic-${id} season-back`;
       if (/^back-lvl-/.test(id || '')) return `cosmetic-${id} lvl-back`;
       return { 'back-midnight':'cosmetic-back-midnight','back-emerald':'cosmetic-back-emerald','back-neon':'cosmetic-back-neon','back-crimson':'cosmetic-back-crimson','back-nebula':'cosmetic-back-nebula','back-inferno':'cosmetic-back-inferno',
-        'back-arcade':'cosmetic-back-arcade','back-space':'cosmetic-back-space','back-tartan':'cosmetic-back-tartan','back-artdeco':'cosmetic-back-artdeco','back-dragon':'cosmetic-back-dragon','back-stained':'cosmetic-back-stained' }[id] || 'back-obsidian';
+        'back-arcade':'cosmetic-back-arcade','back-space':'cosmetic-back-space','back-tartan':'cosmetic-back-tartan','back-artdeco':'cosmetic-back-artdeco','back-dragon':'cosmetic-back-dragon','back-stained':'cosmetic-back-stained' }[id] || 'cosmetic-back-default';
     }
 
     function getCosmeticFrameStyle(id) {

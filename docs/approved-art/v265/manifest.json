@@ -1,0 +1,606 @@
+{
+  "version": 265,
+  "sources": {
+    "suits": "docs/approved-art/v265/suits.webp",
+    "holidays": "docs/approved-art/v265/holidays.webp",
+    "dragon": "docs/approved-art/v265/dragon.webp",
+    "achievements": "docs/approved-art/v265/achievements.webp",
+    "seasonal-backs": "docs/approved-art/v265/seasonal-backs.webp",
+    "themed-backs": "docs/approved-art/v265/themed-backs.webp",
+    "default-back": "docs/approved-art/v265/default-back.webp"
+  },
+  "avatars": {
+    "avatar-suit-spades": {
+      "file": "art/avatars/approved-v265/avatar-suit-spades.webp",
+      "source": "suits",
+      "crop": [
+        114,
+        137,
+        577,
+        570
+      ]
+    },
+    "avatar-suit-hearts": {
+      "file": "art/avatars/approved-v265/avatar-suit-hearts.webp",
+      "source": "suits",
+      "crop": [
+        653,
+        137,
+        1116,
+        570
+      ]
+    },
+    "avatar-suit-clubs": {
+      "file": "art/avatars/approved-v265/avatar-suit-clubs.webp",
+      "source": "suits",
+      "crop": [
+        114,
+        725,
+        577,
+        1126
+      ]
+    },
+    "avatar-suit-diamonds": {
+      "file": "art/avatars/approved-v265/avatar-suit-diamonds.webp",
+      "source": "suits",
+      "crop": [
+        653,
+        725,
+        1116,
+        1126
+      ]
+    },
+    "avatar-lunar": {
+      "file": "art/avatars/approved-v265/avatar-lunar.webp",
+      "source": "holidays",
+      "crop": [
+        49,
+        88,
+        300,
+        316
+      ]
+    },
+    "avatar-valentine-earned": {
+      "file": "art/avatars/approved-v265/avatar-valentine-earned.webp",
+      "source": "holidays",
+      "crop": [
+        350,
+        88,
+        602,
+        316
+      ]
+    },
+    "avatar-valentine": {
+      "file": "art/avatars/approved-v265/avatar-valentine.webp",
+      "source": "holidays",
+      "crop": [
+        649,
+        88,
+        901,
+        316
+      ]
+    },
+    "avatar-ramadan-earned": {
+      "file": "art/avatars/approved-v265/avatar-ramadan-earned.webp",
+      "source": "holidays",
+      "crop": [
+        947,
+        88,
+        1203,
+        316
+      ]
+    },
+    "avatar-ramadan": {
+      "file": "art/avatars/approved-v265/avatar-ramadan.webp",
+      "source": "holidays",
+      "crop": [
+        49,
+        375,
+        300,
+        602
+      ]
+    },
+    "avatar-easter-earned": {
+      "file": "art/avatars/approved-v265/avatar-easter-earned.webp",
+      "source": "holidays",
+      "crop": [
+        350,
+        375,
+        602,
+        602
+      ]
+    },
+    "avatar-easter": {
+      "file": "art/avatars/approved-v265/avatar-easter.webp",
+      "source": "holidays",
+      "crop": [
+        649,
+        375,
+        901,
+        602
+      ]
+    },
+    "avatar-summer-earned": {
+      "file": "art/avatars/approved-v265/avatar-summer-earned.webp",
+      "source": "holidays",
+      "crop": [
+        947,
+        375,
+        1203,
+        602
+      ]
+    },
+    "avatar-summer": {
+      "file": "art/avatars/approved-v265/avatar-summer.webp",
+      "source": "holidays",
+      "crop": [
+        49,
+        660,
+        300,
+        889
+      ]
+    },
+    "avatar-halloween-earned": {
+      "file": "art/avatars/approved-v265/avatar-halloween-earned.webp",
+      "source": "holidays",
+      "crop": [
+        350,
+        660,
+        602,
+        889
+      ]
+    },
+    "avatar-diwali-earned": {
+      "file": "art/avatars/approved-v265/avatar-diwali-earned.webp",
+      "source": "holidays",
+      "crop": [
+        649,
+        660,
+        901,
+        889
+      ]
+    },
+    "avatar-diwali": {
+      "file": "art/avatars/approved-v265/avatar-diwali.webp",
+      "source": "holidays",
+      "crop": [
+        947,
+        660,
+        1203,
+        889
+      ]
+    },
+    "avatar-christmas-earned": {
+      "file": "art/avatars/approved-v265/avatar-christmas-earned.webp",
+      "source": "holidays",
+      "crop": [
+        49,
+        945,
+        300,
+        1172
+      ]
+    },
+    "avatar-christmas": {
+      "file": "art/avatars/approved-v265/avatar-christmas.webp",
+      "source": "holidays",
+      "crop": [
+        350,
+        945,
+        602,
+        1172
+      ]
+    },
+    "avatar-newyear-earned": {
+      "file": "art/avatars/approved-v265/avatar-newyear-earned.webp",
+      "source": "holidays",
+      "crop": [
+        649,
+        945,
+        901,
+        1172
+      ]
+    },
+    "avatar-newyear": {
+      "file": "art/avatars/approved-v265/avatar-newyear.webp",
+      "source": "holidays",
+      "crop": [
+        947,
+        945,
+        1203,
+        1172
+      ]
+    },
+    "avatar-lunar-earned": {
+      "file": "art/avatars/approved-v265/avatar-lunar-earned.webp",
+      "source": "dragon",
+      "crop": [
+        261,
+        87,
+        986,
+        781
+      ]
+    },
+    "avatar-ace-spades": {
+      "file": "art/avatars/approved-v265/avatar-ace-spades.webp",
+      "source": "achievements",
+      "crop": [
+        29,
+        111,
+        256,
+        335
+      ]
+    },
+    "avatar-joker": {
+      "file": "art/avatars/approved-v265/avatar-joker.webp",
+      "source": "achievements",
+      "crop": [
+        278,
+        111,
+        502,
+        335
+      ]
+    },
+    "avatar-queen-hearts": {
+      "file": "art/avatars/approved-v265/avatar-queen-hearts.webp",
+      "source": "achievements",
+      "crop": [
+        523,
+        111,
+        750,
+        335
+      ]
+    },
+    "avatar-burn-flame": {
+      "file": "art/avatars/approved-v265/avatar-burn-flame.webp",
+      "source": "achievements",
+      "crop": [
+        771,
+        111,
+        999,
+        335
+      ]
+    },
+    "avatar-frozen": {
+      "file": "art/avatars/approved-v265/avatar-frozen.webp",
+      "source": "achievements",
+      "crop": [
+        29,
+        394,
+        256,
+        618
+      ]
+    },
+    "avatar-ghost": {
+      "file": "art/avatars/approved-v265/avatar-ghost.webp",
+      "source": "achievements",
+      "crop": [
+        278,
+        394,
+        502,
+        618
+      ]
+    },
+    "avatar-burning-ten": {
+      "file": "art/avatars/approved-v265/avatar-burning-ten.webp",
+      "source": "achievements",
+      "crop": [
+        523,
+        394,
+        750,
+        618
+      ]
+    },
+    "avatar-fanned-hand": {
+      "file": "art/avatars/approved-v265/avatar-fanned-hand.webp",
+      "source": "achievements",
+      "crop": [
+        771,
+        394,
+        999,
+        618
+      ]
+    },
+    "avatar-joker-card": {
+      "file": "art/avatars/approved-v265/avatar-joker-card.webp",
+      "source": "achievements",
+      "crop": [
+        29,
+        682,
+        256,
+        912
+      ]
+    },
+    "avatar-cosmic-ace": {
+      "file": "art/avatars/approved-v265/avatar-cosmic-ace.webp",
+      "source": "achievements",
+      "crop": [
+        278,
+        682,
+        502,
+        912
+      ]
+    },
+    "avatar-royal-flush": {
+      "file": "art/avatars/approved-v265/avatar-royal-flush.webp",
+      "source": "achievements",
+      "crop": [
+        523,
+        682,
+        750,
+        912
+      ]
+    },
+    "avatar-shithead": {
+      "file": "art/avatars/approved-v265/avatar-shithead.webp",
+      "source": "achievements",
+      "crop": [
+        771,
+        682,
+        999,
+        912
+      ]
+    },
+    "avatar-centurion": {
+      "file": "art/avatars/approved-v265/avatar-centurion.webp",
+      "source": "achievements",
+      "crop": [
+        307,
+        982,
+        717,
+        1391
+      ]
+    }
+  },
+  "backs": {
+    "back-ramadan": {
+      "file": "art/backs/approved-v265/back-ramadan.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        165,
+        80,
+        375,
+        343
+      ]
+    },
+    "back-newyear": {
+      "file": "art/backs/approved-v265/back-newyear.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        501,
+        80,
+        716,
+        343
+      ]
+    },
+    "back-christmas": {
+      "file": "art/backs/approved-v265/back-christmas.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        831,
+        80,
+        1039,
+        343
+      ]
+    },
+    "back-halloween": {
+      "file": "art/backs/approved-v265/back-halloween.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        1165,
+        80,
+        1375,
+        343
+      ]
+    },
+    "back-valentine": {
+      "file": "art/backs/approved-v265/back-valentine.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        165,
+        395,
+        375,
+        642
+      ]
+    },
+    "back-lunar": {
+      "file": "art/backs/approved-v265/back-lunar.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        501,
+        395,
+        716,
+        642
+      ]
+    },
+    "back-diwali": {
+      "file": "art/backs/approved-v265/back-diwali.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        831,
+        395,
+        1039,
+        642
+      ]
+    },
+    "back-easter": {
+      "file": "art/backs/approved-v265/back-easter.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        1165,
+        395,
+        1375,
+        642
+      ]
+    },
+    "back-summer": {
+      "file": "art/backs/approved-v265/back-summer.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        165,
+        691,
+        375,
+        953
+      ]
+    },
+    "back-cobalt-linen": {
+      "file": "art/backs/approved-v265/back-cobalt-linen.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        501,
+        691,
+        716,
+        953
+      ]
+    },
+    "back-sage-linen": {
+      "file": "art/backs/approved-v265/back-sage-linen.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        831,
+        691,
+        1039,
+        953
+      ]
+    },
+    "back-plum-linen": {
+      "file": "art/backs/approved-v265/back-plum-linen.webp",
+      "source": "seasonal-backs",
+      "crop": [
+        1165,
+        691,
+        1375,
+        953
+      ]
+    },
+    "back-midnight": {
+      "file": "art/backs/approved-v265/back-midnight.webp",
+      "source": "themed-backs",
+      "crop": [
+        29,
+        151,
+        252,
+        478
+      ]
+    },
+    "back-emerald": {
+      "file": "art/backs/approved-v265/back-emerald.webp",
+      "source": "themed-backs",
+      "crop": [
+        279,
+        151,
+        501,
+        478
+      ]
+    },
+    "back-crimson": {
+      "file": "art/backs/approved-v265/back-crimson.webp",
+      "source": "themed-backs",
+      "crop": [
+        525,
+        151,
+        747,
+        478
+      ]
+    },
+    "back-neon": {
+      "file": "art/backs/approved-v265/back-neon.webp",
+      "source": "themed-backs",
+      "crop": [
+        778,
+        151,
+        1000,
+        478
+      ]
+    },
+    "back-tartan": {
+      "file": "art/backs/approved-v265/back-tartan.webp",
+      "source": "themed-backs",
+      "crop": [
+        29,
+        565,
+        252,
+        908
+      ]
+    },
+    "back-artdeco": {
+      "file": "art/backs/approved-v265/back-artdeco.webp",
+      "source": "themed-backs",
+      "crop": [
+        279,
+        565,
+        501,
+        908
+      ]
+    },
+    "back-arcade": {
+      "file": "art/backs/approved-v265/back-arcade.webp",
+      "source": "themed-backs",
+      "crop": [
+        525,
+        565,
+        747,
+        908
+      ]
+    },
+    "back-inferno": {
+      "file": "art/backs/approved-v265/back-inferno.webp",
+      "source": "themed-backs",
+      "crop": [
+        778,
+        565,
+        1000,
+        908
+      ]
+    },
+    "back-nebula": {
+      "file": "art/backs/approved-v265/back-nebula.webp",
+      "source": "themed-backs",
+      "crop": [
+        29,
+        987,
+        252,
+        1347
+      ]
+    },
+    "back-space": {
+      "file": "art/backs/approved-v265/back-space.webp",
+      "source": "themed-backs",
+      "crop": [
+        279,
+        987,
+        501,
+        1347
+      ]
+    },
+    "back-dragon": {
+      "file": "art/backs/approved-v265/back-dragon.webp",
+      "source": "themed-backs",
+      "crop": [
+        525,
+        987,
+        747,
+        1347
+      ]
+    },
+    "back-stained": {
+      "file": "art/backs/approved-v265/back-stained.webp",
+      "source": "themed-backs",
+      "crop": [
+        778,
+        987,
+        1000,
+        1347
+      ]
+    },
+    "default": {
+      "file": "art/backs/approved-v265/default.webp",
+      "source": "default-back",
+      "crop": [
+        437,
+        66,
+        1073,
+        915
+      ]
+    }
+  }
+}
