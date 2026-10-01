@@ -15,6 +15,11 @@ for(const theme of ['theme-obsidian','theme-emerald','theme-cyber','theme-crimso
 const builtIn=vm.runInContext('BUILT_IN_COSMETICS.map(i=>i.id)',ctx),catalog=require('../functions/catalog.json');assert.deepEqual([...builtIn],catalog.builtIn);
 for(const id of ['back-cobalt-linen','back-sage-linen','back-plum-linen']){assert(ctx.isSupportedCosmetic('cardBack',id));assert(ctx.canRestoreEquippedCosmetic('cardBack',id,{}));assert.equal(ctx.getThemeDeckBackClass(id),'cosmetic-'+id);}
 assert(!ctx.canRestoreEquippedCosmetic('cardBack','back-crimson',{}));
+const nodes=Object.fromEntries(['personalisationCardBacks','personalisationFrames','personalisationEmotes','personalisationTableThemes','personalisationBurnEffects','personalisationVictoryEffects','personalisationJokerEffects','personalisationStatus'].map(id=>[id,{}]));
+Object.assign(ctx,{renderPersonalisationAvatars:()=>{},renderPersonalisationAll:()=>{},renderLoadouts:()=>{},sortByValue:a=>a,isCosmeticListed:()=>true,customGroupedHtml:(type,items)=>items.map(i=>i?.id || 'default').join(','),personalisationOptionHtml:()=>'',currentUser:null});ctx.document.getElementById=id=>nodes[id];
+vm.runInContext(between('    function renderPersonalisationCosmetics() {','    // When each slot was last equipped'),ctx);ctx.renderPersonalisationCosmetics();
+for(const id of ['back-cobalt-linen','back-sage-linen','back-plum-linen'])assert(nodes.personalisationCardBacks.innerHTML.includes(id),`dedicated Card Backs tab: ${id}`);
+
 for(const id of ['avatar-royal-flush','avatar-cosmic-ace','avatar-burning-ten','avatar-joker-card','avatar-shithead'])assert(ctx.AVATAR_ART[id].animated,id);
 const royal=ctx.AVATAR_ART['avatar-royal-flush'].art;assert.equal((royal.match(/class="av-art-card"/g)||[]).length,5);for(const rank of ['10','J','Q','K','A'])assert(royal.includes('>'+rank+'</text>'));
 assert(styles[0].textContent.includes('body.reduce-motion'));assert(styles[0].textContent.includes('@media(prefers-reduced-motion:reduce)'));

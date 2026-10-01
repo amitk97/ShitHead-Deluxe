@@ -1,8 +1,10 @@
 # ShitHead Deluxe
 
-## Codex handoff — 1 October 2026, v265
+## Codex handoff — 1 October 2026, v265–v266
 
 Owner-approved art is now installed in `art/avatars/approved-v265/` (34 avatars) and `art/backs/approved-v265/` (25 backs). The original approved sheets and exact crop manifest are in `docs/approved-art/v265/`. Suit, holiday, Chinese New Year dragon, card and achievement avatars use the new art through the shared renderer; Jack-o'‑Lantern, crowns and level rewards keep their existing designs. Centurion still unlocks at 100 ranked games and now shows a gold helmet and large 100.
+
+v266 follow-up: live browser review caught that the dedicated Card Backs tab originally omitted built-in backs (All already listed them). It now includes all three free linen backs; the art test exercises the real tab renderer.
 
 The default back is white textured with only a centred SH logo, across all deck themes. Cobalt Linen, Sage Linen and Plum Linen are free built-in backs, registered in both the client and server catalog. The redesigned paid/seasonal backs keep their existing IDs and ownership. Royal Flush fans/stacks five cards with a glint, Cosmic Ace has a rotating orbit and twinkles, Burning 10 flickers with rising embers, Joker Card tilts and sparkles, and ShitHead sobs with falling tears. All five pause offscreen/in the background and respect reduced motion. New art is included in service-worker offline assets.
 

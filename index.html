@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-01-v265 (ShitHead-Deluxe-218) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-01-v266 (ShitHead-Deluxe-219) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -19738,6 +19738,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v266: [[ '🎴', 'The three free linen card backs are available in the Card Backs tab as well as All.', WN_KEY ]],
       v265: [
         ['🎨', 'New art for suit, seasonal and card avatars, including the 100-ranked-games Centurion.', WN_KEY],
         ['🃏', 'Redesigned themed card backs, a white textured SH default, and three free linen colours.', WN_KEY],
@@ -23385,7 +23386,7 @@ video {
       const victories = document.getElementById('personalisationVictoryEffects');
       const jokers = document.getElementById('personalisationJokerEffects');
       if (!backs || !frames || !emotes || !tables || !burns || !victories || !jokers) return;
-      backs.innerHTML = customGroupedHtml('cardBack', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs')), ...LEVEL_REWARDS.filter(i => i.category === 'Card Backs')], i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack));
+      backs.innerHTML = customGroupedHtml('cardBack', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Card Backs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs')]), ...LEVEL_REWARDS.filter(i => i.category === 'Card Backs')], i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack));
       frames.innerHTML = customGroupedHtml('frame', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames')), ...EARNED_FRAMES, ...LEVEL_REWARDS.filter(i => i.category === 'Frames')], i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame));
       emotes.innerHTML = customGroupedHtml('emotes', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs')])], i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes));
       tables.innerHTML = customGroupedHtml('tableTheme', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Table Themes'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes')]), ...LEVEL_REWARDS.filter(i => i.category === 'Table Themes')], i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme));
