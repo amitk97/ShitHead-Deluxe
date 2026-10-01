@@ -1,4 +1,4 @@
-// Server-owned two-player Ranked engine. No client snapshots are accepted.
+// Server-owned online engine. Ranked defaults remain two-player. No client snapshots are accepted.
 'use strict';
 const crypto = require('node:crypto');
 const { SUITS, RANKS, isPlayLegal, getEffectiveTopCard, deriveConstraintFromRank, RANK_VALUES } = require('./rules');
@@ -20,28 +20,44 @@ const legal = (g,c) => isPlayLegal(c,g.discardPile,g.activeConstraint,g.baseOver
 const zone = (g,p) => p.hand.length ? 'hand' : g.drawPile.length ? 'hand' : p.faceUp.length ? 'faceUp' : 'faceDown';
 const bump = (p,k,n=1) => { p.gameStats[k]=(p.gameStats[k]||0)+n; p.lobbyStats[k]=(p.lobbyStats[k]||0)+n; };
 function shuffled(list) { const a=[...list]; for(let i=a.length-1;i>0;i--){const j=crypto.randomInt(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; }
-function newGame(players, now=Date.now(), previous=null) {
-  if(players.length!==2 || new Set(players.map(p=>p.uid)).size!==2 || players.some(p=>!p.uid)) fail('Ranked needs two different signed-in players.');
+function newGame(players, now=Date.now(), previous=null, options={}) {
+  const ranked=options.isRanked!==false;
+  if(ranked&&(players.length!==2 || new Set(players.map(p=>p.uid)).size!==2 || players.some(p=>!p.uid))) fail('Ranked needs two different signed-in players.');
+  if(!ranked&&(players.length<2||players.length>4||players.filter(p=>p.isBot).length>2||players.every(p=>p.isBot)||new Set(players.map(p=>p.id)).size!==players.length||players.some(p=>!p.id||(!p.isBot&&!p.uid))||new Set(players.filter(p=>!p.isBot).map(p=>p.uid)).size!==players.filter(p=>!p.isBot).length))fail('Choose two to four distinct seats.');
   const deck=[];
   for(const suit of SUITS) for(const rank of RANKS) deck.push({id:crypto.randomUUID(),rank,suit,isJoker:false});
   for(let i=0;i<2;i++) deck.push({id:crypto.randomUUID(),rank:'JOKER',suit:'JOKER',isJoker:true});
   const cards=shuffled(deck);
-  const seats=shuffled(players).map(p=>({id:p.id,uid:p.uid,name:String(p.name||'Player').slice(0,30),isHost:p.id==='p_host',isBot:false,
+  const seats=shuffled(players).map(p=>({id:p.id,uid:p.uid||null,name:String(p.name||'Player').slice(0,30),isHost:p.id==='p_host',isBot:!ranked&&!!p.isBot,isPermanentBot:!ranked&&!!p.isBot,
     cosmetics:clone(p.cosmetics||{}),rating:Number(p.rating)||500,hand:cards.splice(0,3),faceUp:cards.splice(0,3).map((c,i)=>({...c,slotIndex:i})),
-    faceDown:cards.splice(0,3).map((c,i)=>({...c,slotIndex:i})),isReady:false,hasFinished:false,finishRank:null,
+    faceDown:cards.splice(0,3).map((c,i)=>({...c,slotIndex:i})),isReady:!ranked&&!!p.isBot,hasFinished:false,finishRank:null,
     gameStats:{},lobbyStats:{matches:1},lastSeen:now,substituteMoveCount:0}));
-  return {authority:1,isRanked:true,matchId:crypto.randomUUID(),phase:'SWAP',players:seats,drawPile:cards,discardPile:[],burntCards:[],playedHistory:[],
+  return {authority:1,isRanked:ranked,matchId:crypto.randomUUID(),phase:'SWAP',players:seats,drawPile:cards,discardPile:[],burntCards:[],playedHistory:[],
     currentTurnIndex:0,direction:1,activeConstraint:null,baseOverrideCard:null,stateVersion:(previous?.stateVersion||0)+1,
-    createdAt:now,updatedAt:now,turnTimerMs:15000,turnDeadline:now+60000,requests:{},stalemateTurns:0};
+    createdAt:now,updatedAt:now,turnTimerMs:ranked?15000:([15000,30000,45000,60000].includes(options.turnTimerMs)?options.turnTimerMs:15000),turnDeadline:now+60000,requests:{},stalemateTurns:0};
 }
 function refill(g,p) {const drawn=[];while(p.hand.length<3&&g.drawPile.length){const c=g.drawPile.pop();p.hand.push(c);drawn.push(c);}return drawn;}
-function endIfEmpty(g,p) {
-  if(count(p)!==0||g.drawPile.length)return false;
-  p.hasFinished=true;p.finishRank=1;p.lobbyStats.wins=(p.lobbyStats.wins||0)+1;
-  const other=g.players.find(q=>q!==p);other.hasFinished=true;other.finishRank=2;
-  g.phase='FINISHED';g.turnDeadline=null;g.pendingFollowUp=null;g.pendingFaceUpSacrifice=null;return true;
+function nextLiving(g,index,steps=1) {
+  let next=index;
+  for(let step=0;step<steps;step++){
+    let attempts=0;
+    do {next=(next+g.direction+g.players.length)%g.players.length;} while(g.players[next].hasFinished&&++attempts<g.players.length);
+  }
+  return next;
 }
-function turn(g,index,now) {g.currentTurnIndex=index;g.turnDeadline=now+g.turnTimerMs;prepareChoice(g);}
+function endIfEmpty(g,p,now) {
+  if(p.hasFinished||count(p)!==0||g.drawPile.length)return false;
+  p.hasFinished=true;p.finishRank=1+g.players.filter(q=>q!==p&&q.hasFinished).length;
+  if(p.finishRank===1)p.lobbyStats.wins=(p.lobbyStats.wins||0)+1;
+  const remaining=g.players.filter(q=>!q.hasFinished);
+  g.pendingFollowUp=null;g.pendingFaceUpSacrifice=null;
+  if(remaining.length<=1){
+    if(remaining[0]){remaining[0].hasFinished=true;remaining[0].finishRank=g.players.length;}
+    g.phase='FINISHED';g.turnDeadline=null;
+  }else turn(g,nextLiving(g,g.players.indexOf(p)),now);
+  return true;
+}
+function turn(g,index,now) {g.currentTurnIndex=index;g.turnDeadline=now+(g.players[index].isPermanentBot?1000:g.turnTimerMs);prepareChoice(g);}
 function prepareChoice(g) {
   g.pendingFaceUpSacrifice=null;
   if(g.phase!=='PLAY'||g.pendingFollowUp)return;
@@ -58,10 +74,14 @@ function burn(g,p,now,snap) {
   g.burntCards.push(...g.discardPile);g.discardPile=[];g.activeConstraint=null;g.baseOverrideCard=null;g.pendingFollowUp=null;
   g.playedHistory.push({type:'burn',playerName:p.name});refill(g,p);
   g.event={type:'burn',playerId:p.id,effectId:p.cosmetics.burnEffect||'default'};
-  if(!endIfEmpty(g,p))turn(g,g.players.indexOf(p),now);
+  if(!endIfEmpty(g,p,now))turn(g,g.players.indexOf(p),now);
 }
-function joker(g,p,now) {
-  const other=g.players.find(q=>q!==p);g.burntCards.push(...g.discardPile.filter(c=>c.isJoker));g.discardPile=g.discardPile.filter(c=>!c.isJoker);
+function joker(g,p,now,targetId=null) {
+  const targets=g.players.filter(q=>q!==p&&!q.hasFinished);
+  if(targets.length>1&&!targetId){g.pendingJoker={playerId:p.id};g.turnDeadline=now+8000;return;}
+  const other=targetId?targets.find(q=>q.id===targetId):targets[0];
+  if(!other)fail('Choose a player still in this match.');
+  g.pendingJoker=null;g.burntCards.push(...g.discardPile.filter(c=>c.isJoker));g.discardPile=g.discardPile.filter(c=>!c.isJoker);
   const z=other.hand.some(c=>c.isJoker)?'hand':zone(g,other)==='faceUp'?'faceUp':null;
   const counter=z&&other[z].find(c=>c.isJoker);
   g.event={type:'joker',playerId:p.id,effectId:p.cosmetics.jokerEffect||'default',counter:!!counter};
@@ -72,17 +92,21 @@ function joker(g,p,now) {
     if(z==='hand')refill(g,other);
     refill(g,p);
     collect(g,p); // Empty original Joker player only finishes after pickup is known.
-    if(endIfEmpty(g,p))return;
+    endIfEmpty(g,p,now);
+    if(g.phase==='FINISHED')return;
     refill(g,p);
-    if(endIfEmpty(g,other))return;
-    turn(g,g.players.indexOf(other),now);
+    endIfEmpty(g,other,now);
+    if(g.phase==='FINISHED')return;
+    turn(g,other.hasFinished?nextLiving(g,g.players.indexOf(other)):g.players.indexOf(other),now);
   }else{
     collect(g,other);refill(g,p);
-    if(!endIfEmpty(g,p))turn(g,g.players.indexOf(p),now);
+    if(!endIfEmpty(g,p,now))turn(g,g.players.indexOf(p),now);
   }
 }
 function play(g,p,ids,now,{followUp=false,auto=false}={}) {
   if(!Array.isArray(ids)||!ids.length||ids.length>54||new Set(ids).size!==ids.length)fail('Choose different cards.');
+  if(p.hasFinished)fail('You have already finished.');
+  if(g.pendingJoker)fail('Choose the Joker target first.');
   const current=g.players[g.currentTurnIndex];
   const all=[...p.hand,...p.faceUp,...p.faceDown];const selected=ids.map(id=>all.find(c=>c.id===id));
   if(selected.some(c=>!c))fail('Those cards are not yours.');
@@ -108,7 +132,7 @@ function play(g,p,ids,now,{followUp=false,auto=false}={}) {
   if(selected[0].isJoker)bump(p,'jokersPlayed',selected.length);
   g.discardPile.push(...selected);log(g,p,selected,blindFail);
   g.event={type:blind?'blind':'play',playerId:p.id,cards:clone(selected),failed:blindFail};
-  if(blindFail){collect(g,p);turn(g,1-g.players.indexOf(p),now);return;}
+  if(blindFail){collect(g,p);turn(g,nextLiving(g,g.players.indexOf(p)),now);return;}
   if(rank==='10'||(run+selected.length>=4&&!selected[0].isJoker)){burn(g,p,now,snap);return;}
   g.activeConstraint=null;g.baseOverrideCard=null;
   if(selected[0].isJoker){joker(g,p,now);return;}
@@ -118,16 +142,17 @@ function play(g,p,ids,now,{followUp=false,auto=false}={}) {
   if(rank!=='3')g.activeConstraint=deriveConstraintFromRank(rank);
   const amount=selected.length+chain;
   if(effect==='9'&&amount%2)g.direction*=-1;
-  // With two seats any 8 skips the sole opponent and returns to its player.
-  const next=effect==='8'?g.players.indexOf(p):1-g.players.indexOf(p);
+  const next=nextLiving(g,g.players.indexOf(p),effect==='8'?Math.min(amount,g.players.filter(q=>q!==p&&!q.hasFinished).length)+1:1);
   const drawn=refill(g,p);
-  if(endIfEmpty(g,p))return;
+  if(endIfEmpty(g,p,now))return;
   turn(g,next,now);
   const bonus=drawn.find(c=>c.rank===rank&&!c.isJoker);
   if(bonus){g.pendingFollowUp={playerId:p.id,cardId:bonus.id,resumeIndex:next,chainedRankCount:amount};g.pendingFaceUpSacrifice=null;g.currentTurnIndex=g.players.indexOf(p);g.turnDeadline=now+8000;}
 }
 function pickup(g,p,ids,now,auto=false) {
   if(g.players[g.currentTurnIndex]!==p)fail('It is not your turn.');
+  if(p.hasFinished)fail('You have already finished.');
+  if(g.pendingJoker)fail('Choose the Joker target first.');
   if(g.pendingFollowUp)fail('Answer the bonus draw first.');
   if(!auto&&now>g.turnDeadline)fail('Your turn has timed out.');
   const z=zone(g,p);
@@ -139,16 +164,17 @@ function pickup(g,p,ids,now,auto=false) {
     if(cards.some(c=>!c)||cards.some(c=>c.rank!==cards[0].rank))fail('Choose your own face-up cards of one rank.');
     p.faceUp=p.faceUp.filter(c=>!ids.includes(c.id));p.hand.push(...cards);
   }else if(p.hand.some(c=>legal(g,c)))fail('You have a legal play.');
-  collect(g,p);g.pendingFaceUpSacrifice=null;g.event={type:'pickup',playerId:p.id};turn(g,1-g.players.indexOf(p),now);
+  collect(g,p);g.pendingFaceUpSacrifice=null;g.event={type:'pickup',playerId:p.id};turn(g,nextLiving(g,g.players.indexOf(p)),now);
 }
-function finishConcession(g,p) {p.conceded=true;p.hasFinished=true;p.finishRank=2;const q=g.players.find(q=>q!==p);q.hasFinished=true;q.finishRank=1;g.phase='FINISHED';g.turnDeadline=null;g.pendingFollowUp=null;g.pendingFaceUpSacrifice=null;g.event={type:'concede',playerId:p.id};}
+function finishConcession(g,p) {if(!g.isRanked)fail('Casual departures require a server-controlled replacement.');p.conceded=true;p.hasFinished=true;p.finishRank=2;const q=g.players.find(q=>q!==p);q.hasFinished=true;q.finishRank=1;g.phase='FINISHED';g.turnDeadline=null;g.pendingFollowUp=null;g.pendingFaceUpSacrifice=null;g.event={type:'concede',playerId:p.id};}
 function expire(g,now) {
   if(g.phase==='FINISHED'||now<g.turnDeadline)return false;
   if(g.phase==='SWAP'){g.players.forEach(p=>p.isReady=true);g.phase='PLAY';turn(g,0,now);return true;}
   const p=g.players[g.currentTurnIndex];
+  if(g.pendingJoker){const target=g.players.filter(q=>q!==p&&!q.hasFinished).sort((a,b)=>count(a)-count(b))[0];joker(g,p,now,target.id);return true;}
   if(g.pendingFollowUp){const next=g.pendingFollowUp.resumeIndex;g.pendingFollowUp=null;turn(g,next,now);return true;}
   const away=now-p.lastSeen>=45000;
-  if(away){p.isBot=true;p.isRankedSubstitute=true;p.substituteMoveCount++;if(p.substituteMoveCount>5){finishConcession(g,p);return true;}}
+  if(away&&!p.isPermanentBot){p.isBot=true;p.isRankedSubstitute=true;p.substituteMoveCount++;if(g.isRanked&&p.substituteMoveCount>5){finishConcession(g,p);return true;}}
   const z=zone(g,p),moves=p[z].filter(c=>legal(g,c)).sort((a,b)=>RANK_VALUES[a.rank]-RANK_VALUES[b.rank]);
   if(z==='faceDown')play(g,p,[p.faceDown[0].id],now,{auto:true});
   else if(moves.length){const selected=moves[0];play(g,p,p[z].filter(c=>c.rank===selected.rank).map(c=>c.id),now,{auto:true});}
@@ -156,14 +182,14 @@ function expire(g,now) {
   return true;
 }
 function mutate(current,uid,request,now=Date.now()) {
-  const g=hydrate(current),p=g.players.find(p=>p.uid===uid);if(!p)fail('You are not at this table.');
+  const g=hydrate(current),p=uid&&g.players.find(p=>p.uid===uid);if(!p)fail('You are not at this table.');
   if(request.matchId!==g.matchId)fail('That match has ended.');
   if(!/^[a-zA-Z0-9_-]{8,80}$/.test(request.requestId||''))fail('Bad move request.');
   const key=crypto.createHash('sha256').update(uid+'|'+request.requestId).digest('hex');
   if(g.requests[key])return {game:g,duplicate:true};
   if(request.op==='tick'){
     const returning=p.isBot&&request.active===true;
-    if(request.active===true){p.lastSeen=now;if(!p.conceded){p.isBot=false;p.isRankedSubstitute=false;p.substituteMoveCount=0;}}
+    if(request.active===true){p.lastSeen=now;if(!p.conceded&&!p.isPermanentBot){p.isBot=false;p.isRankedSubstitute=false;p.substituteMoveCount=0;}}
     const changed=expire(g,now);
     if(!changed&&!returning){g.updatedAt=now;return {game:g,tick:true};}
   }else{
@@ -179,14 +205,15 @@ function mutate(current,uid,request,now=Date.now()) {
         const slot=p.faceUp[f].slotIndex,temp=p.hand[h];p.hand[h]={...p.faceUp[f]};delete p.hand[h].slotIndex;p.faceUp[f]={...temp,slotIndex:slot};
       }else if(request.op==='ready'){p.isReady=true;if(g.players.every(q=>q.isReady)){g.phase='PLAY';turn(g,0,now);}}
       else fail('Finish swapping first.');
-    }else if(request.op==='play')play(g,p,request.cardIds,now);
+    }else if(request.op==='target'){if(!g.pendingJoker||g.pendingJoker.playerId!==p.id)fail('There is no Joker choice for you.');if(now>g.turnDeadline)fail('The Joker window has ended.');joker(g,p,now,request.targetId);}
+    else if(request.op==='play')play(g,p,request.cardIds,now);
     else if(request.op==='pickup')pickup(g,p,request.cardIds||[],now);
     else if(request.op==='bonus'){
       const pending=g.pendingFollowUp;if(!pending||pending.playerId!==p.id)fail('There is no bonus draw for you.');
       if(now>g.turnDeadline)fail('The bonus window has ended.');
       if(request.accept===true)play(g,p,[pending.cardId],now,{followUp:true});
       else{g.pendingFollowUp=null;turn(g,pending.resumeIndex,now);}
-    }else fail('Unknown Ranked move.');
+    }else fail('Unknown game move.');
     p.lastSeen=now;
   }
   g.requests[key]={at:now};const keys=Object.keys(g.requests);if(keys.length>100)delete g.requests[keys[0]];
@@ -203,15 +230,16 @@ const hidden=(n,prefix)=>Array.from({length:n},(_,i)=>({id:`${prefix}-${i}`,rank
 function view(value,uid=null) {
   const g=hydrate(value);
   // Explicit allowlist: never spread canonical game state into client data.
-  const out={authority:1,isRanked:true,matchId:g.matchId,phase:g.phase,stateVersion:g.stateVersion,createdAt:g.createdAt,updatedAt:g.updatedAt,
+  const out={authority:1,isRanked:g.isRanked,matchId:g.matchId,phase:g.phase,stateVersion:g.stateVersion,createdAt:g.createdAt,updatedAt:g.updatedAt,
     currentTurnIndex:g.currentTurnIndex,direction:g.direction,turnTimerMs:g.turnTimerMs,turnDeadline:g.turnDeadline,
     activeConstraint:g.activeConstraint,baseOverrideCard:g.baseOverrideCard,discardPile:clone(g.discardPile),playedHistory:clone(g.playedHistory.slice(-25)),
-    drawPile:hidden(g.drawPile.length,'stock'),players:g.players.map(p=>({id:p.id,uid:p.uid,name:p.name,isHost:p.isHost,isBot:p.isBot,isRankedSubstitute:!!p.isRankedSubstitute,
+    drawPile:hidden(g.drawPile.length,'stock'),players:g.players.map(p=>({id:p.id,uid:p.uid||null,name:p.name,isHost:p.isHost,isBot:p.isBot,isRankedSubstitute:!!p.isRankedSubstitute,
       substituteMoveCount:p.substituteMoveCount,cosmetics:clone(p.cosmetics),rating:p.rating,isReady:p.isReady,hasFinished:p.hasFinished,finishRank:p.finishRank,conceded:!!p.conceded,drew:!!p.drew,
       gameStats:clone(p.gameStats),lobbyStats:clone(p.lobbyStats),lastPlayRank:p.lastPlayRank||null,
-      hand:uid===p.uid?clone(p.hand):hidden(p.hand.length,p.id+'-hand'),faceUp:clone(p.faceUp),faceDown:p.faceDown.map(c=>({id:c.id,slotIndex:c.slotIndex,rank:'4',suit:'♠',hidden:true}))}))};
-  if(g.pendingFollowUp)out.pendingFollowUp=uid===g.players.find(p=>p.id===g.pendingFollowUp.playerId)?.uid?clone(g.pendingFollowUp):{playerId:g.pendingFollowUp.playerId};
+      hand:uid&&uid===p.uid?clone(p.hand):hidden(p.hand.length,p.id+'-hand'),faceUp:clone(p.faceUp),faceDown:p.faceDown.map(c=>({id:c.id,slotIndex:c.slotIndex,rank:'4',suit:'♠',hidden:true}))}))};
+  if(g.pendingFollowUp)out.pendingFollowUp=uid&&uid===g.players.find(p=>p.id===g.pendingFollowUp.playerId)?.uid?clone(g.pendingFollowUp):{playerId:g.pendingFollowUp.playerId};
   if(g.pendingFaceUpSacrifice)out.pendingFaceUpSacrifice=clone(g.pendingFaceUpSacrifice);
+  if(g.pendingJoker)out.pendingJoker=clone(g.pendingJoker);
   if(g.event)out.event=clone(g.event);
   return clone(out);
 }

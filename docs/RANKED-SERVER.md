@@ -30,3 +30,11 @@ The full v262 browser run passed 567/573. Four failures also reproduce against t
 ## Remaining limits
 
 This migration covers Ranked. Casual rooms still share browser-owned cards/state. Solo bot/Gauntlet results and some selected challenge claims still trust reports. Local UI changes are always possible; they cannot alter canonical Ranked cards or placings. Admission relies on self-owned account markers and does not prevent collusion or multiple accounts. Spectators see masked public Ranked data. Historical legacy server deals may still exist in Admin-only storage; no client API returns them.
+
+## Play Friends engine preparation — not connected yet
+
+The engine also accepts an explicit `{isRanked:false}` option for two to four distinct seats, including up to two permanent bots. Ranked callers retain the existing two-account default. Casual turns follow direction and skip finished seats; eights cap skips at the number of opponents; finishing places remain ordered while remaining players continue. A multiplayer Joker creates a timed target choice restricted to its initiator. The server chooses a live target if that choice expires. Permanent bots use short server deadlines and do not concede after five substitute turns.
+
+`node tools/casual-engine-test.js` covers these rules, guest/public masking, bot identity rejection and 60 complete three/four-player simulations with conservation of all 54 cards. The existing Ranked engine suite additionally simulates 40 two-player games.
+
+This prepares the engine only. Play Friends still uses its existing browser-owned room protocol. Guest admission, callable lobby operations, private views, client integration and canonical casual reward verification remain to be implemented before that mode can claim server protection. No new database rules are required for this preparation.
