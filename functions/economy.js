@@ -1223,7 +1223,7 @@ function finishSeries(s, winner, reason, now) {
 }
 actions.series = async ({ uid, auth, data }) => {
   const op = data.op;
-  if (!['status', 'create', 'accept', 'cancel', 'game', 'forfeit', 'claimForfeit'].includes(op)) fail('invalid-argument', 'Unknown series step.');
+  if (!['status', 'create', 'accept', 'cancel', 'game', 'readyNext', 'startNext', 'forfeit', 'claimForfeit'].includes(op)) fail('invalid-argument', 'Unknown series step.');
   const code = clip(data.roomCode, 6);
   if (!/^\d{6}$/.test(code)) fail('invalid-argument', 'Bad room.');
   const now = Date.now();
@@ -1304,6 +1304,27 @@ actions.series = async ({ uid, auth, data }) => {
     return { series: s };
   }
 
+  if (op === 'readyNext' || op === 'startNext') {
+    const matchId = clip(data.matchId, 80);
+    if (!KEY_RE.test(matchId) || !room || room.phase !== 'FINISHED' || room.matchId !== matchId || !mine || mine.isBot) fail('failed-precondition', 'Wait for the current game to finish.');
+    if (seats.length !== 2 || seats.some(p => p.isBot) || !seats.some(p => p.uid === s.host) || !seats.some(p => p.uid === s.guest)) fail('failed-precondition', 'Both series players must be here.');
+    if (op === 'startNext' && !mine.isHost) fail('permission-denied', 'Only the current host can start the next game.');
+    const nextMatchId = nodeCrypto.randomUUID();
+    s = await seriesTx(code, (cur) => {
+      if (!cur || cur.id !== s.id || cur.status !== 'live' || !(cur.games?.[matchId] || cur.skippedGames?.[matchId])) return { error:'That game has not been counted or the series has ended.' };
+      const round = cur.nextRound?.matchId === matchId ? cur.nextRound : { matchId, ready:{} };
+      if (op === 'readyNext') round.ready = { ...(round.ready || {}), [uid]:true };
+      else {
+        if (!round.ready?.[cur.host] || !round.ready?.[cur.guest]) return { error:'Both players must press Ready.' };
+        round.started = true;
+        round.nextMatchId = round.nextMatchId || nextMatchId;
+      }
+      cur.nextRound = round; cur.updatedAt = now;
+      return cur;
+    });
+    return { series:s };
+  }
+
   if (op === 'cancel') {
     // Before the first game only: after that, leaving is a forfeit.
     s = await seriesTx(code, (cur) => (cur && cur.id === s.id && seriesActive(cur) && !num(cur.played)
@@ -1337,19 +1358,31 @@ actions.series = async ({ uid, auth, data }) => {
   const matchId = clip(data.matchId, 80);
   if (!KEY_RE.test(matchId)) fail('invalid-argument', 'Bad match id.');
   if (!room || room.matchId !== matchId || room.phase !== 'FINISHED') fail('failed-precondition', 'That game could not be checked.');
-  if (s.games && s.games[matchId]) return { series: s };
+  if (s.games?.[matchId] || s.skippedGames?.[matchId]) return { series:s, skipped:!!s.skippedGames?.[matchId] };
   const hostSeat = seats.find(p => p.uid === s.host), guestSeat = seats.find(p => p.uid === s.guest);
   if (!hostSeat || !guestSeat) fail('failed-precondition', 'That game could not be checked.');
   const drew = !!(hostSeat.drew || guestSeat.drew);
   const winnerSeat = drew ? null : [hostSeat, guestSeat].find(p => num(p.finishRank, 99) === 1);
   if (!drew && !winnerSeat) fail('failed-precondition', 'That game has no winner yet.');
-  if (now - num(s.lastGameAt) < num(SERIES.minGameMs, 60000)) fail('failed-precondition', 'That game was too quick to count.');
+  if (now - num(s.lastGameAt) < num(SERIES.minGameMs, 60000)) {
+    // A disqualified fast game still needs a deliberate Ready from each player.
+    // It earns no score or payout, but must not strand the series between games.
+    s = await seriesTx(code, cur => {
+      if (!cur || cur.id !== s.id || cur.status !== 'live') return { error:'The series has ended.' };
+      if (cur.games?.[matchId] || cur.skippedGames?.[matchId]) return undefined;
+      cur.skippedGames = { ...(cur.skippedGames || {}), [matchId]:true };
+      delete cur.nextRound; cur.updatedAt = now;
+      return cur;
+    });
+    return { series:s, skipped:true };
+  }
   s = await seriesTx(code, (cur) => {
     if (!cur || cur.id !== s.id || cur.status !== 'live') return { error: 'The series has ended.' };
     if (cur.games && cur.games[matchId]) return undefined;
     cur.games = { ...(cur.games || {}), [matchId]: drew ? 'draw' : winnerSeat.uid };
     cur.played = num(cur.played) + 1;
     cur.lastGameAt = now; cur.updatedAt = now;
+    delete cur.nextRound; // Readiness belongs only to the game just finished.
     if (!drew) cur.wins = { ...(cur.wins || {}), [winnerSeat.uid]: num(cur.wins?.[winnerSeat.uid]) + 1 };
     const leader = [cur.host, cur.guest].sort((a, b) => num(cur.wins?.[b]) - num(cur.wins?.[a]))[0];
     if (num(cur.wins?.[leader]) >= num(cur.need)) return finishSeries(cur, leader, 'won', now);

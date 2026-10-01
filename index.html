@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-01-v263 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-01-v264 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7070,7 +7070,7 @@ video {
             <p><strong class="text-amber-300">Who can play:</strong> exactly two signed-in players, both <strong>Lvl 20</strong> or above, with no bots at the table.</p>
             <p><strong class="text-amber-300">Starting one:</strong> in the room, the host picks <strong>Best of 3</strong> or <strong>Best of 5</strong>; the other player accepts or declines.</p>
             <p><strong class="text-amber-300">Entry and prize:</strong> each player pays <strong>💎 30</strong> (Best of 3) or <strong>💎 50</strong> (Best of 5). The game matches the pot, so the series winner takes <strong>💎 120</strong> or <strong>💎 200</strong>.</p>
-            <p><strong class="text-amber-300">Playing:</strong> first to 2 wins (Best of 3) or 3 wins (Best of 5). The next game starts on its own 10 seconds after each one, and the score sits in the top-left corner. A draw doesn&rsquo;t count for either player. If a series runs very long, the player ahead wins it; if it&rsquo;s level, both get their entry back.</p>
+            <p><strong class="text-amber-300">Playing:</strong> first to 2 wins (Best of 3) or 3 wins (Best of 5). Both players press Ready before the next game starts, and the score sits in the top-left corner. A draw doesn&rsquo;t count for either player. If a series runs very long, the player ahead wins it; if it&rsquo;s level, both get their entry back.</p>
             <p><strong class="text-amber-300">Calling it off:</strong> before the first game, either player can call it off and both entries go back.</p>
             <p><strong class="text-amber-300">Leaving:</strong> after the first game, leaving hands the series to the other player.</p>
             <p><strong class="text-amber-300">If your app closes:</strong> a Medium bot plays your seat, using the full turn time for each move. Come back within 5 of its turns and you carry on; after that the series goes to the other player.</p>
@@ -7186,7 +7186,7 @@ video {
       notify: "audio/notify.mp3"   // New invite / friend request / gift
     };
     // Clips for the owner's effects (v257, made by tools/make-effect-sounds.py).
-    const EFFECT_CLIPS = { 'lion-roar': 'audio/lion-roar.mp3?v=258', boo: 'audio/boo.mp3', fireworks: 'audio/fireworks.mp3?v=258' };
+    const EFFECT_CLIPS = { 'lion-roar': 'audio/lion-roar-v264.mp3', boo: 'audio/boo.mp3', fireworks: 'audio/fireworks-v264.mp3' };
     // The your-turn chime plays softer than the card sounds.
     const TURN_ALERT_GAIN = 0.08; // a faint cue, well under the card sounds
 
@@ -7889,6 +7889,9 @@ video {
       return el;
     }
     function bfxAnimate(el, keyframes, options) {
+      // All visual beats and their tails share the shortened owner victory clock.
+      const speed = Number(el.closest('[data-owner-fx-speed]')?.dataset.ownerFxSpeed) || 1;
+      if (speed !== 1) options = { ...options, duration:(options.duration || 1000) / speed, delay:(options.delay || 0) / speed };
       const total = (options.duration || 1000) + (options.delay || 0);
       if (typeof el.animate !== 'function') { setTimeout(() => el.remove(), total); return; }
       const anim = el.animate(keyframes, { fill: 'both', ...options });
@@ -12013,14 +12016,16 @@ video {
     // effect), the Jack-o'-Lantern avatar and the Cobweb card back. Sounds:
     // EFFECT_CLIPS (tools/make-effect-sounds.py). Bump OWNER_FX_V when the
     // files are rebuilt (art caches a day).
-    const OWNER_FX_V = 258;
+    const OWNER_FX_V = 264;
+    const OWNER_VICTORY_MS = 2500;
+    const OWNER_VICTORY_SPEED = 4200 / OWNER_VICTORY_MS;
     const OWNER_FX_LAYOUT = {"pumpkinAvatar":{"eyes":[[364,510],[653,549]],"mouth":[492,715],"embers":[[172,205],[835,282],[95,321],[910,397],[905,851]]},"pumpkin":{"ghost":[525.5,98.9,343.7,354.1],"boo":[102.9,104.5,437.8,338.1],"pumpkin":[234.4,326.2,567.8,535.9],"bg":[59.0,69.4,885.2,873.2]},"lion":{"head":[217.7,171.5,578.1,638.8],"bg":[0.0,18.3,1000.0,927.4]},"fireworks":{"red":[40.7,63.8,422.6,423.4],"blue":[546.3,83.7,405.1,407.5],"purple":[27.9,434.6,399.5,407.5],"green":[598.1,458.5,379.6,403.5],"gold":[0,0,1000,1000],"centres":{"red":[251,275],"blue":[750,287],"purple":[223,638],"green":[801,662],"gold":[501,501]}}};
     const OWNER_FX_FILES = {
       'victory-lion': ['lion-bg', 'lion-head'],
-      'victory-fireworks': ['fireworks-gold', 'fireworks-gold-art', 'fireworks-red', 'fireworks-blue', 'fireworks-purple', 'fireworks-green'],
+      'victory-fireworks': ['fireworks-gold', 'fireworks-red', 'fireworks-blue', 'fireworks-purple', 'fireworks-green'],
       'joker-halloween': ['pumpkin-bg', 'pumpkin-pumpkin', 'pumpkin-ghost', 'pumpkin-boo']
     };
-    const ownerFxSrc = (name) => `art/effects/${name === 'fireworks-gold-art' ? 'fireworks-gold' : name}.${name === 'fireworks-gold' ? 'svg' : 'webp'}?v=${OWNER_FX_V}`;
+    const ownerFxSrc = (name) => `art/effects/${name === 'fireworks-gold' ? 'fireworks-gold-complete-v264' : name}.webp?v=${OWNER_FX_V}`;
     // Fetch an effect's layers ahead of time (every player's equipped
     // effects at the table), so the first play isn't waiting on the network.
     const ownerFxLoaded = new Set();
@@ -12037,10 +12042,6 @@ video {
       const [x, y, w, h] = box;
       const el = bfxAdd(host, `<img src="${ownerFxSrc(name)}" alt="" draggable="false" style="display:block;width:100%;height:100%;pointer-events:none">`,
         ox + (x + w / 2) * S / 1000, oy + (y + h / 2) * S / 1000, w * S / 1000, h * S / 1000);
-      // Keep the original ring and crystal artwork over a complete burst.
-      if (name === 'fireworks-gold') {
-        el.insertAdjacentHTML('beforeend', `<img src="${ownerFxSrc('fireworks-gold-art')}" alt="" draggable="false" style="position:absolute;left:0;top:1.44%;width:100%;height:96.25%;pointer-events:none">`);
-      }
       return el;
     }
     // Timed keyframes: each step eases on its own, so the beats land on time
@@ -12060,6 +12061,7 @@ video {
     // blast across the screen, crystals spin away, his eyes flash and the
     // table shakes, while the head shakes with the roar (audio: lion-roar).
     function vfxLion(layer) {
+      layer.dataset.ownerFxSpeed = OWNER_VICTORY_SPEED;
       const [W, H] = vfxSize(layer);
       const S = Math.min(W * 1.04, H * .72, 640), cx = W / 2, cy = H * .44, ox = cx - S / 2, oy = cy - S / 2;
       const L = OWNER_FX_LAYOUT.lion, roarAt = 450, total = 4200;
@@ -12114,6 +12116,7 @@ video {
     // fireworks, the same beats: FIREWORK_BURSTS in tools/make-effect-sounds.py).
     const FIREWORK_BURSTS = [['gold', 450], ['red', 750], ['blue', 950], ['purple', 1200], ['green', 1400]];
     function vfxFireworks(layer) {
+      layer.dataset.ownerFxSpeed = OWNER_VICTORY_SPEED;
       const [W, H] = vfxSize(layer);
       const S = Math.min(W * 1.06, H * .76, 720), cx = W / 2, cy = H * .42, ox = cx - S / 2, oy = cy - S / 2;
       const F = OWNER_FX_LAYOUT.fireworks, total = 4200;
@@ -12164,7 +12167,7 @@ video {
       layer.replaceChildren(host);
       preloadOwnerFx([effect]);
       const images = (OWNER_FX_FILES[effect] || []).map(name => ownerFxImages.get(name)).filter(Boolean);
-      const start = () => { if (!host.isConnected) return; run(host); setTimeout(() => host.remove(), 4200); };
+      const start = () => { if (!host.isConnected) return; run(host); setTimeout(() => host.remove(), ['victory-lion', 'victory-fireworks'].includes(effect) ? OWNER_VICTORY_MS : 4200); };
       const clip = effect === 'victory-lion' ? 'lion-roar' : effect === 'victory-fireworks' ? 'fireworks' : null;
       if (!devTestSuiteRunning && (images.some(img => !img.complete || !img.naturalWidth) || (clip && audio.enabled && !audio.clipBuffers?.has(clip)))) {
         Promise.all([...images.map(img => img.decode?.().catch(() => {})), clip && audio.enabled ? audio.loadEffectClip(clip) : null]).then(start);
@@ -17525,11 +17528,10 @@ video {
         if (!isRoomVersionCompatible(data)) {
           setConnectionBanner('lost');
           if (gameVersionNumber(data.clientVersion) > gameVersionNumber(getGameVersionLabel())) {
-            // This phone is behind: update, and the rejoin at start-up
-            // (attemptMatchReconnect) brings it back into this room.
+            // Queue the newer version for home, never interrupt this match.
             updateToLatestVersion('This match is on a newer version of the game. Updating now.', data.clientVersion);
           } else {
-            notifyBanner(`This room is on an older version (${data.clientVersion}). Ask the other players to close and reopen the game.`);
+            if (updatePromptAllowed()) notifyBanner(`This room is on an older version (${data.clientVersion}).`);
           }
           return;
         }
@@ -17857,6 +17859,12 @@ video {
     function startMultiplayerGame(opts) {
       if (!canStartMultiplayerGame()) return;
       opts = (opts && typeof opts === 'object') ? opts : {};
+      if (seriesLiveHere() && (Number(seriesState.played) > 0 || seriesState.skippedGames?.[state.matchId])) {
+        const round = seriesState.nextRound;
+        if (!round?.started || round.matchId !== state.matchId || opts.matchId !== round.nextMatchId || !round.ready?.[seriesState.host] || !round.ready?.[seriesState.guest]) {
+          notifyBanner('Both players must press Ready before the next series game.'); return;
+        }
+      }
       if (state.isRanked) {
         if (rankedDealPending) return;
         rankedDealPending = true;
@@ -18873,7 +18881,11 @@ video {
     document.getElementById('followUpPlayBtn').addEventListener('click', () => resolveFollowUpPlay(true));
     document.getElementById('followUpSkipBtn').addEventListener('click', () => resolveFollowUpPlay(false));
 
-    document.getElementById('quickPlayMatchBtn').addEventListener('click', (e) => {
+    document.getElementById('quickPlayMatchBtn').addEventListener('click', () => {
+      if (seriesLiveHere() && state.phase === 'FINISHED') { readySeriesNextGame(); return; }
+      beginQuickPlayMatch();
+    });
+    function beginQuickPlayMatch(opts = {}) {
       if (!state.isMultiplayer && state.gauntlet) { gauntletEndButtonAction(); return; }
       hideMatchEndUI(); // never leave a stale Quick Play / Match Stats visible while the next match sets up
       // Quick Play against bots should feel like continuing the same table,
@@ -18890,16 +18902,17 @@ video {
             // syncing anything — leaving the host with no Quick Play button
             // to retry once someone rejoins, unless it's restored here.
             if (!canStartMultiplayerGame()) {
+              if (opts.matchId) seriesStartingMatch = null;
               showMatchEndUI();
               return;
             }
-            startMultiplayerGame();
+            startMultiplayerGame(opts);
           }
         } else {
           startSinglePlayerGame(state.selectedBotCount || 3, priorBotNames);
         }
       });
-    });
+    }
     document.getElementById('playAgainMatchBtn').addEventListener('click', () => {
       if (state.isRanked) { returnToRankedLobby(); return; }
       returnToMultiplayerLobby();
@@ -19727,6 +19740,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v264: [
+        ["✨", "Shorter, seamless Lion and Fireworks victories, with a complete opening firework."],
+        ["🤝", "Both players choose Ready before the next series game begins.", WN_KEY],
+        ["🔄", "Updates wait until you return to the home screen."]
+      ],
       v263: [
         ["👑", "Five redesigned crown avatars, with a Platinum glint and animated Master glow.", WN_KEY]
       ],
@@ -23737,7 +23755,7 @@ video {
     function matchSummaryAgainAction() {
       const quick = document.getElementById('quickPlayMatchBtn');
       const lobby = document.getElementById('playAgainMatchBtn');
-      if (quick && !quick.classList.contains('hidden')) return { label: quick.disabled ? 'WAITING FOR HOST…' : 'REMATCH', disabled: quick.disabled, button: quick };
+      if (quick && !quick.classList.contains('hidden')) return { label: seriesLiveHere() ? quick.textContent.trim() : quick.disabled ? 'WAITING FOR HOST…' : 'REMATCH', disabled: quick.disabled, button: quick };
       if (lobby && !lobby.classList.contains('hidden')) return { label: state.isRanked ? 'FIND ANOTHER MATCH' : 'BACK TO LOBBY', disabled: false, button: lobby };
       return { label: 'REMATCH', disabled: true, button: null };
     }
@@ -26160,17 +26178,16 @@ video {
     document.getElementById('seriesLaterBtn')?.addEventListener('click', () => document.getElementById('seriesModal').classList.add('hidden'));
     // Playing a series (v234). Every finished game in a live series room is
     // reported by both phones (economy `series` op `game`, counted once by
-    // matchId); the host starts the next game on its own after
-    // SERIES_NEXT_GAME_MS. #seriesHud shows the score on the table, and the
+    // matchId); both players explicitly confirm readiness for the next game. #seriesHud shows the score on the table, and the
     // end of a series (won, forfeit, called off) opens #seriesModal with the
     // result. A player who drops out gets a Medium stand-in bot that uses the
     // whole turn time on every move (owner: time to reconnect); after
     // SERIES_RULES.forfeitTurns stand-in turns the player still here claims
     // the series (the server checks the other player really is away).
     // Leaving mid-series forfeits it (before the first game: called off).
-    const SERIES_NEXT_GAME_MS = 10000;
-    let seriesNextAt = 0;            // when the host's next game starts (0 = not waiting)
-    let seriesNextTimer = null;
+    let seriesReadyBusy = false;
+    let seriesStartingMatch = null;
+    let seriesStartRetryAt = 0;
     let seriesReportedMatch = null;  // matchId this phone has reported
     let seriesResultShownFor = null; // series id whose result pop-up has opened
     let seriesLastSeen = null;       // last active series seen here (for the result pop-up)
@@ -26189,14 +26206,15 @@ video {
       seriesReportedMatch = matchId;
       const attempt = (n) => seriesCallQuiet('game', { matchId }).then((res) => {
         const s = res && res.series;
-        if (s && s.status === 'live' && state.isHost) scheduleSeriesNextGame(matchId);
+        if (res?.skipped) notifyBanner('That game was too quick to count for the series. Both players can ready up to try again.');
+        if (s && s.status === 'live') renderSeriesHud();
       }).catch((e) => {
         const msg = (e && e.message) || '';
         // The final placings reach the room a moment after the phones see them.
         if (n < 4 && /could not be checked|no winner yet|reach the server/i.test(seriesError(e))) { setTimeout(() => attempt(n + 1), 1500); return; }
         if (/too quick/i.test(msg)) notifyBanner("That game was too quick to count for the series.");
         else if (!/has ended/i.test(msg)) notifyBanner(seriesError(e));
-        if (seriesLiveHere() && state.isHost) scheduleSeriesNextGame(matchId);
+        renderSeriesHud();
       });
       attempt(0);
     }
@@ -26208,25 +26226,52 @@ video {
       if (res && 'series' in res) { seriesState = res.series; onSeriesChanged(); }
       return res;
     }
-    function scheduleSeriesNextGame(matchId) {
-      clearTimeout(seriesNextTimer);
-      seriesNextAt = Date.now() + SERIES_NEXT_GAME_MS;
-      renderSeriesHud();
-      const tick = () => {
-        if (!seriesNextAt) return;
-        if (Date.now() < seriesNextAt) { renderSeriesHud(); seriesNextTimer = setTimeout(tick, 500); return; }
-        seriesNextAt = 0;
-        renderSeriesHud();
-        // Only while this game is still the one on the table, the series is
-        // still on and both players are really here.
-        const bothHere = state.players.length === 2 && state.players.every(p => !p.isBot);
-        if (state.phase !== 'FINISHED' || state.matchId !== matchId || !seriesLiveHere() || !state.isHost || !bothHere) return;
-        document.getElementById('matchSummaryModal')?.classList.add('hidden');
-        document.getElementById('quickPlayMatchBtn')?.click();
-      };
-      seriesNextTimer = setTimeout(tick, 500);
+    function seriesNextRound() {
+      return seriesLiveHere() && seriesState.nextRound?.matchId === state.matchId ? seriesState.nextRound : null;
     }
-    function cancelSeriesNextGame() { clearTimeout(seriesNextTimer); seriesNextAt = 0; }
+    async function readySeriesNextGame() {
+      if (!seriesLiveHere() || state.phase !== 'FINISHED' || seriesReadyBusy || !(seriesState.games?.[state.matchId] || seriesState.skippedGames?.[state.matchId])) return;
+      if (seriesNextRound()?.ready?.[currentUser?.uid]) return;
+      seriesReadyBusy = true; renderSeriesReadyControls();
+      try { await seriesCallQuiet('readyNext', { matchId:state.matchId }); }
+      catch (e) { notifyBanner(seriesError(e)); }
+      finally { seriesReadyBusy = false; renderSeriesHud(); refreshMatchSummary(); }
+    }
+    function renderSeriesReadyControls() {
+      if (!seriesLiveHere() || state.phase !== 'FINISHED') return;
+      const btn = document.getElementById('quickPlayMatchBtn');
+      if (!btn) return;
+      const round = seriesNextRound(), uid = currentUser?.uid;
+      const mine = !!round?.ready?.[uid];
+      const both = !!round?.ready?.[seriesState.host] && !!round?.ready?.[seriesState.guest];
+      const recorded = !!(seriesState.games?.[state.matchId] || seriesState.skippedGames?.[state.matchId]);
+      const label = !recorded ? 'CONFIRMING RESULT…' : seriesReadyBusy ? 'SAVING READY…' : both ? 'STARTING NEXT GAME…' : mine ? 'READY · WAITING FOR OPPONENT' : 'READY FOR NEXT GAME';
+      btn.classList.remove('hidden');
+      document.getElementById('playAgainMatchBtn')?.classList.add('hidden');
+      btn.disabled = !recorded || seriesReadyBusy || mine;
+      btn.innerHTML = `<svg class="match-end-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-quick-play"/></svg><span>${label}</span>`;
+      const summary = document.getElementById('matchSummaryAgain');
+      if (summary) { summary.textContent = label; summary.disabled = btn.disabled; }
+    }
+    async function maybeStartReadySeriesGame() {
+      if (!seriesLiveHere() || state.phase !== 'FINISHED' || !state.isHost || seriesStartingMatch === state.matchId || Date.now() < seriesStartRetryAt) return;
+      const round = seriesNextRound(), s = seriesState;
+      if (!round?.ready?.[s.host] || !round.ready?.[s.guest] || state.players.length !== 2 || state.players.some(p => p.isBot)) return;
+      const matchId = state.matchId, code = state.roomCode;
+      seriesStartingMatch = matchId;
+      try {
+        const res = await seriesCallQuiet('startNext', { matchId });
+        if (state.roomCode !== code || state.matchId !== matchId || state.phase !== 'FINISHED' || !seriesLiveHere() || !state.isHost) return;
+        const nextMatchId = res?.series?.nextRound?.nextMatchId;
+        if (!nextMatchId) throw new Error('The next game could not be confirmed.');
+        document.getElementById('matchSummaryModal')?.classList.add('hidden');
+        beginQuickPlayMatch({ matchId:nextMatchId });
+      } catch (e) {
+        seriesStartingMatch = null; seriesStartRetryAt = Date.now() + 3000; notifyBanner(seriesError(e));
+        setTimeout(() => { if (state.roomCode === code && state.matchId === matchId) maybeStartReadySeriesGame(); }, 3100);
+      }
+    }
+    function cancelSeriesNextGame() { seriesStartingMatch = null; seriesReadyBusy = false; seriesStartRetryAt = 0; }
     // The score pill, top-left of the table (like the Gauntlet's hearts).
     function renderSeriesHud() {
       const hud = document.getElementById('seriesHud');
@@ -26237,14 +26282,13 @@ video {
       if (!show) { hud.innerHTML = ''; return; }
       const sc = seriesScoreFor(s);
       const game = Math.min(Number(s.played) + (state.phase === 'FINISHED' ? 0 : 1), s.bestOf * 2) || 1;
-      const secs = seriesNextAt ? Math.max(0, Math.ceil((seriesNextAt - Date.now()) / 1000)) : 0;
-      const next = state.phase === 'FINISHED'
-        ? (secs ? `Next in ${secs}s` : 'Next game')
-        : `Game ${game}`;
+      const next = state.phase === 'FINISHED' ? 'Ready when you are' : `Game ${game}`;
       hud.title = `Best of ${s.bestOf} against ${sc.other}: you ${sc.mine}, ${sc.other} ${sc.theirs}. First to ${s.need} wins.`;
       hud.innerHTML = `<span class="sh-title">${icon('swords')}Bo${s.bestOf}</span>
         <span class="sh-score"><em>${sc.mine}–${sc.theirs}</em></span>
         <span class="sh-next">${next}</span>`;
+      renderSeriesReadyControls();
+      maybeStartReadySeriesGame();
     }
     // The end of a series: who won and what was paid.
     function openSeriesResult(s) {
@@ -31284,10 +31328,9 @@ video {
     // old page (no signal) can't loop.
     function updateToLatestVersion(message, targetVersion = 'latest') {
       if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return;
-      const key = `shithead_update_tried_${targetVersion}`;
-      try { if (sessionStorage.getItem(key)) { notifyBanner('Please close and reopen the game to update it.'); return; } sessionStorage.setItem(key, '1'); } catch (e) {}
-      notifyBanner(message);
-      setTimeout(reloadCleanly, 1200);
+      // Compatibility checks queue an update; they never interrupt or reload a match.
+      if (/^v\d+$/.test(targetVersion)) showUpdatePrompt(targetVersion);
+      else checkForNewVersion(true);
     }
     // § Home screen: dimmed table backdrop, rotating card tip, panel fit
     // Behind the home panel: the player's equipped table (the default one
@@ -31493,7 +31536,7 @@ video {
     let lastUpdateCheck = 0, updatePromptSnoozeUntil = 0, updateNotifiedFor = '', pendingUpdateVersion = '';
     function updatePromptAllowed() {
       const lobby = document.getElementById('lobbyScreen');
-      return !!lobby && !lobby.classList.contains('hidden') && state.phase === 'LOBBY' && !state.roomCode && !state.isMultiplayer && !tutorialActive && !isAnyOverlayOpen() && document.getElementById('tutorialHubScreen').classList.contains('hidden');
+      return !!lobby && !lobby.classList.contains('hidden') && state.phase === 'LOBBY' && !state.roomCode && !state.isMultiplayer && !state.spectating && !tutorialActive && !isAnyOverlayOpen() && document.getElementById('tutorialHubScreen').classList.contains('hidden');
     }
     function refreshUpdatePrompt() {
       if (!updatePromptAllowed()) { document.getElementById('updatePrompt')?.classList.add('hidden'); return; }

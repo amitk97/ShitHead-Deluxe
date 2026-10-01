@@ -1,7 +1,7 @@
 // Best of series end to end: two real signed-in game pages against the
 // emulators play a Best of 3 in a Play Friends room.
 //   full       the host sets it up, the other player accepts, entries are
-//              taken, every game counts, the next game starts by itself, the
+//              taken, every game counts, both players ready up for the next, the
 //              winner is paid 4x the entry, both get the result + Inbox mail
 //   back-4     mid-game Bob's app closes; a Medium stand-in plays his seat
 //              using the whole turn time; after 4 stand-in turns Bob opens
@@ -178,7 +178,7 @@ const AUTOPLAY = () => {
       report('full: entries taken', aPre - a0 === 30 && bPre - b0 === 30, `Alice ${aPre} → ${a0}, Bob ${bPre} → ${b0}`);
       await clearGap(code);
       await startGame(A, B);
-      const problems = new Set(); const games = new Set(); let autoNext = 0, lastMatch = null, hudSeen = false, lastSig = '';
+      const problems = new Set(); const games = new Set(); let readyNext = 0, lastMatch = null, hudSeen = false, lastSig = '';
       const t0 = Date.now(); let s = null;
       while (Date.now() - t0 < 600000) {
         const room = await admin(`rooms/${code}`);
@@ -186,16 +186,20 @@ const AUTOPLAY = () => {
         s = await admin(`series/${code}`);
         const sig = `${room?.phase} ${room?.matchId?.slice(0, 12)} ` + vals(room?.players).map(p => `${p.name}:${(p.hand || []).length}/${(p.faceUp || []).length}/${(p.faceDown || []).length}#${p.finishRank ?? '-'}`).join(' ') + ` | series ${s?.status} ${JSON.stringify(s?.wins)}`;
         if (sig !== lastSig) { console.log(`  [${Math.round((Date.now() - t0) / 1000)}s v${room?.stateVersion}] ${sig}`); lastSig = sig; }
-        if (room?.matchId && room.matchId !== lastMatch) { if (lastMatch) autoNext++; lastMatch = room.matchId; }
+        if (room?.matchId && room.matchId !== lastMatch) { if (lastMatch) readyNext++; lastMatch = room.matchId; }
         if (room?.phase === 'PLAY' && !hudSeen) hudSeen = await A.page.evaluate(() => !document.getElementById('seriesHud').classList.contains('hidden'));
         Object.keys(s?.games || {}).forEach(g => games.add(g));
         if (s && s.status !== 'live') break;
+        if (room?.phase === 'FINISHED' && s?.games?.[room.matchId] && !s.nextRound?.started) {
+          // Both humans explicitly confirm this finished game before the next deal.
+          await Promise.all([A.page.evaluate(() => readySeriesNextGame()), B.page.evaluate(() => readySeriesNextGame())]);
+        }
         if (room?.phase === 'PLAY') await clearGap(code);
         await sleep(400);
       }
       report('full: series finished', s && s.status === 'done', `${s?.status} after ${s?.played} games, ${Math.round((Date.now() - t0) / 1000)}s`);
       report('full: every game counted once', s && Object.keys(s.games || {}).length === s.played, JSON.stringify(s?.games));
-      report('full: next game started by itself', autoNext >= 1, `${autoNext} automatic next game(s)`);
+      report('full: next game started after both players confirmed', readyNext >= 1, `${readyNext} confirmed next game(s)`);
       report('full: score shown on the table', hudSeen, hudSeen ? 'pill visible' : 'never saw the pill');
       report('full: no duplicated cards', !problems.size, [...problems].slice(0, 3).join('; ') || 'none');
       await sleep(4000);

@@ -2798,14 +2798,14 @@ async function runDevTestSuite() {
         assertTrue(r.ok, `${f} art file exists`);
       }
     }
-    [['victory-lion', 2], ['victory-fireworks', 6]].forEach(([id, n]) => {
+    [['victory-lion', 2], ['victory-fireworks', 5]].forEach(([id, n]) => {
       layer.innerHTML = '';
       playVictoryEffect(id);
       const imgs = [...layer.querySelectorAll('.bfx img')].map(i => i.getAttribute('src'));
       assertEqual(imgs.length, n, `${id} draws its ${n} art layers`);
-      assertTrue(imgs.every(src => /^art\/effects\/[a-z-]+\.(?:webp|svg)\?v=\d+$/.test(src)), `${id} layers come from art/effects`);
+      assertTrue(imgs.every(src => /^art\/effects\/[a-z0-9-]+\.(?:webp|svg)\?v=\d+$/.test(src)), `${id} layers come from art/effects`);
       const ends = [...layer.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
-      assertTrue(ends.length > 20 && Math.max(...ends) <= 4200, `${id} is animated and ends within 4.2s`, Math.max(...ends));
+      assertTrue(ends.length > 20 && Math.max(...ends) <= OWNER_VICTORY_MS, `${id} is animated and ends within 2.5s`, Math.max(...ends));
     });
     layer.innerHTML = '';
     const stage = document.createElement('div');
@@ -7920,7 +7920,7 @@ async function runDevTestSuite() {
       renderSeriesPanel();
     }
   });
-  await test('Best of series play: a dropped player gets a Medium stand-in that uses the whole turn time; games are reported and the host starts the next one', async () => {
+  await test('Best of series play: a dropped player gets a Medium stand-in that uses the whole turn time; games are reported and wait for player readiness', async () => {
     const was = { series: seriesState, econ: callEconomy, sync: syncFirebaseGameState, auth: hasMatchAuthority, st: window.setTimeout, turnTimerMs: state.turnTimerMs, roomCode: state.roomCode, isRanked: state.isRanked, isHost: state.isHost, matchId: state.matchId, turnDelay: state.turnDelay };
     try {
       currentUser = { uid: 'h_uid', email: 'h@example.com' };
@@ -7944,15 +7944,16 @@ async function runDevTestSuite() {
       assertTrue(delays.includes(25000), 'the stand-in waits the whole turn time before it moves');
       // Game reporting and the next game.
       state.phase = 'FINISHED'; state.matchId = 'm_series_1'; state.players[1] = { ...state.players[1], isBot: false, isSeriesSubstitute: false };
-      const calls = fakeEconomy({ series: (d) => ({ series: { ...seriesState, played: 2, wins: { h_uid: 1, g_uid: 0 } } }) });
+      const calls = fakeEconomy({ series: (d) => ({ series: { ...seriesState, played: 2, games: { m_series_1:'h_uid' }, wins: { h_uid: 1, g_uid: 0 } } }) });
       seriesReportedMatch = null;
       seriesMatchEnded();
       await new Promise(r => setTimeout(r, 20));
       assertEqual(calls[0], ['series', { op: 'game', roomCode: '424242', matchId: 'm_series_1' }], 'the finished game is reported to the server');
-      assertTrue(seriesNextAt > Date.now(), 'the host counts down to the next game');
+      assertTrue(!seriesNextRound(), 'reporting a game never marks either player ready');
+      assertTrue(/READY FOR NEXT GAME/.test(document.getElementById('quickPlayMatchBtn').textContent), 'the host must explicitly press Ready');
       const hud = document.getElementById('seriesHud');
       renderSeriesHud();
-      assertTrue(!hud.classList.contains('hidden') && /1–0/.test(hud.textContent) && /Next in/.test(hud.textContent), 'the table shows the score and the countdown');
+      assertTrue(!hud.classList.contains('hidden') && /1–0/.test(hud.textContent) && /Ready when you are/.test(hud.textContent), 'the table shows the score and waits for readiness');
       cancelSeriesNextGame();
       // Leaving after a game has been played is a forfeit.
       const conf = window.confirm; window.confirm = () => true;

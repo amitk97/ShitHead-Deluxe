@@ -103,8 +103,9 @@ def write_mp3(x, name, peak=0.89):
         with wave.open(wav, 'wb') as w:
             w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
             w.writeframes((x * 32767).astype('<i2').tobytes())
-        out = os.path.join(ROOT, 'audio', name)
-        subprocess.run([ffmpeg(), '-y', '-loglevel', 'error', '-i', wav, '-codec:a', 'libmp3lame', '-b:a', '96k', out], check=True)
+        victory = name in ('lion-roar.mp3', 'fireworks.mp3')
+        out = os.path.join(ROOT, 'audio', name.replace('.mp3', '-v264.mp3') if victory else name)
+        subprocess.run([ffmpeg(), '-y', '-loglevel', 'error', '-i', wav, *(['-af', 'atempo=1.68'] if victory else []), '-codec:a', 'libmp3lame', '-b:a', '96k', out], check=True)
     print(out, f'{len(x) / SR:.2f}s', f'{os.path.getsize(out) // 1024}KB')
 
 
