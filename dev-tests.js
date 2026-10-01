@@ -58,6 +58,7 @@ async function runDevTestSuite() {
   // even when it failed half-way through swapping in a fake. Without this
   // one failing test leaked its fake db into every test after it.
   async function test(name, fn) {
+    if (new URLSearchParams(location.search).get('test-filter') === 'cosmetic-art' && !name.startsWith('Cosmetic art:')) return;
     const saved = { db, dbRef: db && db.ref, auth, currentUser, syncFirebaseGameState, burnInstantResolveForTests, bigEffectsOn, reduceMotion, callEconomy };
     try {
       await fn();
@@ -97,6 +98,60 @@ async function runDevTestSuite() {
   }
 
   // ---- isPlayLegal: the three wildcards and their documented exceptions ----
+  await test('Cosmetic art: all approved backs fit square, mobile and large-preview cards', async () => {
+    const stage = document.createElement('div'); document.body.appendChild(stage);
+    try {
+      for (const id of APPROVED_BACK_IDS) {
+        const file = APPROVED_BACK_FILES[id], image = new Image(); image.src = file; await image.decode();
+        assertTrue(image.naturalWidth >= 512 && image.naturalHeight >= 720, `${id}: full production print loads`);
+        for (const [width,height] of [[64,64],[32,45],[150,210]]) {
+          stage.innerHTML = `<div class="custom-card-back ${getCosmeticBackClass(id)}" style="width:${width}px;height:${height}px"><svg></svg></div>`;
+          const el = stage.firstElementChild, css = getComputedStyle(el);
+          assertEqual(css.backgroundSize, '100% 100%', `${id}: all four print edges fit ${width}x${height}`);
+          assertEqual(css.borderTopWidth, '0px', `${id}: no second UI border`);
+          assertEqual(getComputedStyle(el,'::before').display, 'none', `${id}: no old checker pattern`);
+          assertEqual(getComputedStyle(el.querySelector('svg')).display, 'none', `${id}: no old centre emblem`);
+        }
+      }
+    } finally { stage.remove(); }
+  });
+  await test('Cosmetic art: Royal Flush and star layers remain within the avatar throughout their loops', async () => {
+    const stage = document.createElement('div'); stage.style.cssText='position:fixed;top:100px;left:100px;width:128px;height:128px'; document.body.appendChild(stage);
+    const paused = [];
+    try {
+      for (const id of ['avatar-royal-flush','avatar-cosmic-ace']) {
+        stage.innerHTML = avatarHtml(id,128);
+        await new Promise(resolve=>requestAnimationFrame(resolve));
+        const animations = document.getAnimations().filter(a=>stage.contains(a.effect?.target)); animations.forEach(a=>{a.pause();paused.push(a);});
+        const host=stage.getBoundingClientRect();
+        const layers=[...stage.querySelectorAll(id==='avatar-royal-flush'?'.av-art-card > image':'.av-art-star')];
+        assertEqual(layers.length,id==='avatar-royal-flush'?5:5,`${id}: complete independent layers`);
+        for (const time of [0,600,1400,2200,3200,4000]) {
+          animations.forEach(a=>a.currentTime=time);
+          layers.forEach(layer=>{const b=layer.getBoundingClientRect();assertTrue(b.left>=host.left-.5&&b.top>=host.top-.5&&b.right<=host.right+.5&&b.bottom<=host.bottom+.5,`${id}: layer stays in its tile at ${time}ms`);});
+        }
+        if (id==='avatar-cosmic-ace') {
+          assertEqual(stage.querySelectorAll('[data-orbit]').length,2,'exactly two moving rings');
+          assertTrue(stage.querySelector('image').getAttribute('href').includes('-clean.webp'),'no baked ring under the moving rings');
+          const star=layers[0]; animations.forEach(a=>a.currentTime=0);const a=star.getBoundingClientRect();animations.forEach(a=>a.currentTime=1500);const b=star.getBoundingClientRect();
+          assertTrue(Math.abs((a.left+a.right)-(b.left+b.right))<1&&Math.abs((a.top+a.bottom)-(b.top+b.bottom))<1,'star glistens about a fixed centre');
+        }
+      }
+    } finally { paused.forEach(a=>a.cancel());stage.remove(); }
+  });
+  await test('Cosmetic art: ShitHead tears form at the eyes, fall and disappear over dry cheeks', async () => {
+    const stage=document.createElement('div');stage.style.cssText='position:fixed;top:100px;left:100px;width:128px;height:128px';document.body.appendChild(stage);
+    let animations=[];
+    try {
+      stage.innerHTML=avatarHtml('avatar-shithead',128);await new Promise(resolve=>requestAnimationFrame(resolve));
+      assertTrue(stage.querySelector('image').getAttribute('href').includes('avatar-shithead-clean.webp'),'clean dry face, no stuck tear image');
+      assertEqual(stage.querySelectorAll('[data-tear-origin]').length,2,'each eye has its own droplet');
+      const tear=stage.querySelector('.av-art-tear');animations=document.getAnimations().filter(a=>stage.contains(a.effect?.target));animations.forEach(a=>a.pause());
+      animations.forEach(a=>a.currentTime=850);const early=tear.getBoundingClientRect();animations.forEach(a=>a.currentTime=1950);const late=tear.getBoundingClientRect();
+      assertTrue(late.top>early.top+8,'tear falls down the cheek');animations.forEach(a=>a.currentTime=2800);assertEqual(getComputedStyle(tear).opacity,'0','old tear disappears before the next one forms');
+    } finally { animations.forEach(a=>a.cancel());stage.remove(); }
+  });
+
   await test('3 is playable on a King (Transparent is a wildcard)', () => {
     freshState();
     assertTrue(isPlayLegal(makeCard('3'), [makeCard('K')], null), '3 should be legal on a King');

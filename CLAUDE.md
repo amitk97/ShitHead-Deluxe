@@ -1,5 +1,13 @@
 # ShitHead Deluxe
 
+## Codex correction — 1 October 2026, v267
+
+The owner supplied screenshots/videos showing v265 fitting and animation defects. These are corrected: card backs use tightly cropped `art/backs/approved-v267/` prints, `background-size:100% 100%`, no additional CSS border, and matching proportional corner radii. Keep all four artwork edges in the visible card; do not restore `cover`. Clubs and Diamonds now include the previously cut-off top rim. Approved photo avatars render edge to edge inside a clipped 1000-unit SVG, with SVG animation transform origins explicitly based on that view box.
+
+Three rebuilt animations use clean plates in `art/avatars/approved-v267/`: Cosmic Ace has no baked rings and exactly two independently rotating, depth-masked orbit layers with flowing highlights and fixed-centre glistening stars. Royal Flush has a clean crown-only plate and five separate transparent complete 10/J/Q/K/A card assets; never clip pieces from an already fanned mockup or patch new ranks over it. ShitHead has a dry face, with two independently animated droplets that form at the eye corners, fall and fully disappear; never animate new tears over baked-in tear artwork. The rim remains stationary. Retain reduced-motion/offscreen/background pausing.
+
+`docs/approved-art/v267/manifest.json` records new files and exact crop bounds. `node tools/v265-art-test.js` now verifies the corrected registration, complete layers and fitting styles. The real-browser checks can be run at `?dev-tests=1&test-filter=cosmetic-art`: all 25 backs at square/mobile/large-preview sizes, Royal Flush and star bounds throughout loops, exactly two rings, and eye-origin tears that fall/fade. Prior victory/readiness/update-prompt fixes remain intact. No economy or database rules changed.
+
 ## Codex handoff — 1 October 2026, v265–v266
 
 Owner-approved art is now installed in `art/avatars/approved-v265/` (34 avatars) and `art/backs/approved-v265/` (25 backs). The original approved sheets and exact crop manifest are in `docs/approved-art/v265/`. Suit, holiday, Chinese New Year dragon, card and achievement avatars use the new art through the shared renderer; Jack-o'‑Lantern, crowns and level rewards keep their existing designs. Centurion still unlocks at 100 ranked games and now shows a gold helmet and large 100.

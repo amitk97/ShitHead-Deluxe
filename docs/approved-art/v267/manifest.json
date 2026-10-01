@@ -1,0 +1,278 @@
+{
+  "version": 267,
+  "avatarOverrides": {
+    "avatar-cosmic-ace": "art/avatars/approved-v267/avatar-cosmic-ace-clean.webp",
+    "avatar-shithead": "art/avatars/approved-v267/avatar-shithead-clean.webp",
+    "avatar-royal-flush": "art/avatars/approved-v267/avatar-royal-flush-clean.webp",
+    "avatar-suit-clubs": "art/avatars/approved-v267/avatar-suit-clubs.webp",
+    "avatar-suit-diamonds": "art/avatars/approved-v267/avatar-suit-diamonds.webp"
+  },
+  "cardBacks": {
+    "back-ramadan": {
+      "file": "art/backs/approved-v267/back-ramadan.webp",
+      "crop": [
+        165,
+        81,
+        374,
+        343
+      ]
+    },
+    "back-newyear": {
+      "file": "art/backs/approved-v267/back-newyear.webp",
+      "crop": [
+        503,
+        81,
+        706,
+        343
+      ]
+    },
+    "back-christmas": {
+      "file": "art/backs/approved-v267/back-christmas.webp",
+      "crop": [
+        831,
+        81,
+        1038,
+        343
+      ]
+    },
+    "back-halloween": {
+      "file": "art/backs/approved-v267/back-halloween.webp",
+      "crop": [
+        1165,
+        81,
+        1374,
+        343
+      ]
+    },
+    "back-valentine": {
+      "file": "art/backs/approved-v267/back-valentine.webp",
+      "crop": [
+        165,
+        396,
+        374,
+        641
+      ]
+    },
+    "back-lunar": {
+      "file": "art/backs/approved-v267/back-lunar.webp",
+      "crop": [
+        503,
+        396,
+        706,
+        641
+      ]
+    },
+    "back-diwali": {
+      "file": "art/backs/approved-v267/back-diwali.webp",
+      "crop": [
+        831,
+        396,
+        1038,
+        641
+      ]
+    },
+    "back-easter": {
+      "file": "art/backs/approved-v267/back-easter.webp",
+      "crop": [
+        1165,
+        396,
+        1374,
+        641
+      ]
+    },
+    "back-summer": {
+      "file": "art/backs/approved-v267/back-summer.webp",
+      "crop": [
+        165,
+        692,
+        374,
+        951
+      ]
+    },
+    "back-cobalt-linen": {
+      "file": "art/backs/approved-v267/back-cobalt-linen.webp",
+      "crop": [
+        503,
+        692,
+        706,
+        951
+      ]
+    },
+    "back-sage-linen": {
+      "file": "art/backs/approved-v267/back-sage-linen.webp",
+      "crop": [
+        831,
+        692,
+        1038,
+        951
+      ]
+    },
+    "back-plum-linen": {
+      "file": "art/backs/approved-v267/back-plum-linen.webp",
+      "crop": [
+        1165,
+        692,
+        1374,
+        951
+      ]
+    },
+    "back-midnight": {
+      "file": "art/backs/approved-v267/back-midnight.webp",
+      "crop": [
+        30,
+        152,
+        252,
+        479
+      ]
+    },
+    "back-emerald": {
+      "file": "art/backs/approved-v267/back-emerald.webp",
+      "crop": [
+        278,
+        152,
+        500,
+        479
+      ]
+    },
+    "back-crimson": {
+      "file": "art/backs/approved-v267/back-crimson.webp",
+      "crop": [
+        526,
+        152,
+        748,
+        479
+      ]
+    },
+    "back-neon": {
+      "file": "art/backs/approved-v267/back-neon.webp",
+      "crop": [
+        774,
+        152,
+        997,
+        479
+      ]
+    },
+    "back-tartan": {
+      "file": "art/backs/approved-v267/back-tartan.webp",
+      "crop": [
+        30,
+        566,
+        252,
+        908
+      ]
+    },
+    "back-artdeco": {
+      "file": "art/backs/approved-v267/back-artdeco.webp",
+      "crop": [
+        278,
+        566,
+        500,
+        908
+      ]
+    },
+    "back-arcade": {
+      "file": "art/backs/approved-v267/back-arcade.webp",
+      "crop": [
+        526,
+        566,
+        748,
+        908
+      ]
+    },
+    "back-inferno": {
+      "file": "art/backs/approved-v267/back-inferno.webp",
+      "crop": [
+        774,
+        566,
+        997,
+        908
+      ]
+    },
+    "back-nebula": {
+      "file": "art/backs/approved-v267/back-nebula.webp",
+      "crop": [
+        30,
+        989,
+        252,
+        1344
+      ]
+    },
+    "back-space": {
+      "file": "art/backs/approved-v267/back-space.webp",
+      "crop": [
+        278,
+        989,
+        500,
+        1344
+      ]
+    },
+    "back-dragon": {
+      "file": "art/backs/approved-v267/back-dragon.webp",
+      "crop": [
+        526,
+        989,
+        748,
+        1344
+      ]
+    },
+    "back-stained": {
+      "file": "art/backs/approved-v267/back-stained.webp",
+      "crop": [
+        774,
+        989,
+        997,
+        1344
+      ]
+    },
+    "default": {
+      "file": "art/backs/approved-v267/default.webp"
+    }
+  },
+  "layers": {
+    "10": {
+      "file": "art/avatars/approved-v267/royal-card-10.webp",
+      "atlasCrop": [
+        45,
+        94,
+        428,
+        618
+      ]
+    },
+    "J": {
+      "file": "art/avatars/approved-v267/royal-card-J.webp",
+      "atlasCrop": [
+        467,
+        94,
+        852,
+        619
+      ]
+    },
+    "Q": {
+      "file": "art/avatars/approved-v267/royal-card-Q.webp",
+      "atlasCrop": [
+        891,
+        94,
+        1321,
+        619
+      ]
+    },
+    "K": {
+      "file": "art/avatars/approved-v267/royal-card-K.webp",
+      "atlasCrop": [
+        1321,
+        94,
+        1756,
+        619
+      ]
+    },
+    "A": {
+      "file": "art/avatars/approved-v267/royal-card-A.webp",
+      "atlasCrop": [
+        1756,
+        94,
+        2129,
+        619
+      ]
+    }
+  }
+}
