@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-09-30-v262 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-01-v263 (ShitHead-Deluxe-217) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -2133,6 +2133,17 @@
     .av-px-rise { animation:av-px-rise 3s ease-out infinite; }
     @keyframes av-px-rise { 0% { opacity:0; transform:translate(0,0) scale(.6); } 15% { opacity:1; } 70% { opacity:.8; } 100% { opacity:0; transform:translate(18px,-150px) scale(.3); } }
     /* Animated pictures pause offscreen and while the app is hidden (avatarMotionWatch). */
+
+    /* Crown collection: short CSS-only loops, paused by avatarMotionWatch. */
+    .av-crown-glint { opacity:0; transform-box:fill-box; transform-origin:center; animation:av-crown-glint 6s ease-in-out infinite; }
+    .av-crown-glint.second { animation-delay:2.4s; }
+    @keyframes av-crown-glint { 0%,66%,86%,100% { opacity:0; transform:scale(.45); } 74% { opacity:.9; transform:scale(1); } }
+    .av-crown-aura { opacity:.12; transform-box:fill-box; transform-origin:center; animation:av-crown-aura 5s ease-in-out infinite; }
+    @keyframes av-crown-aura { 0%,100% { opacity:.12; transform:scale(.94); } 50% { opacity:.48; transform:scale(1.07); } }
+    .av-crown-spark { opacity:0; animation:av-crown-spark 5s ease-out infinite; }
+    @keyframes av-crown-spark { 0%,12%,82%,100% { opacity:0; transform:translateY(0); } 25% { opacity:.7; } 75% { opacity:0; transform:translateY(-190px); } }
+    body.reduce-motion :is(.av-crown-glint,.av-crown-spark) { opacity:0; }
+    body.reduce-motion .av-crown-aura { opacity:.12; }
     .av-still .avatar-svg *, body.app-hidden .avatar-svg * { animation-play-state:paused !important; }
     body.reduce-motion .avatar-svg * { animation:none !important; }
     /* Opponent seat: [picture + name] / cards / [bot · status · timer].
@@ -19716,6 +19727,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v263: [
+        ["👑", "Five redesigned crown avatars, with a Platinum glint and animated Master glow.", WN_KEY]
+      ],
       v262: [
         ['🛡️', 'Ranked now keeps hidden cards on the server and checks every move before updating the table.', WN_KEY]
       ],
@@ -20488,8 +20502,20 @@ video {
 
 
     const AV_SPARK_RAW = (x, y, s, c = '#fff', cls = '') => `<g class="av-twinkle ${cls}"><path d="m${x} ${y - 4 * s * .25} ${s * .25} ${3 * s * .25} ${3 * s * .25} ${s * .25} ${-3 * s * .25} ${s * .25} ${-s * .25} ${3 * s * .25} ${-s * .25} ${-3 * s * .25} ${-3 * s * .25} ${-s * .25} ${3 * s * .25} ${-s * .25}Z" fill="${c}"/></g>`;
+    // § Crown avatars (v263). Viewports use the owner's approved mockup
+    // directly; labels stay outside the crop. Existing IDs preserve ownership.
+    function crownAvatarArt(rank) {
+      const xs = { bronze:28, silver:430, gold:833, platinum:1237, master:1640 };
+      const tone = { bronze:'bronze', silver:'silver', gold:'gold', platinum:'cyan', master:'purple' }[rank];
+      const animated = rank === 'platinum' || rank === 'master';
+      const glint = (x, y, delay = '') => `<path class="av-crown-glint ${delay}" d="M${x} ${y-38}l8 30 30 8-30 8-8 30-8-30-30-8 30-8Z" fill="#fff"/>`;
+      const aura = rank === 'master' ? `<ellipse class="av-crown-aura" cx="510" cy="573" rx="146" ry="150" fill="none" stroke="#c084fc" stroke-width="12"/>` : '';
+      const sparks = rank === 'master' ? [260,380,640,760].map((x,i) => `<circle class="av-crown-spark" cx="${x}" cy="800" r="${i%2?5:7}" fill="#e9c5ff" style="animation-delay:${i*.8}s"/>`).join('') : '';
+      return { photo:true, tone, animated, art:`<svg width="1000" height="1000" viewBox="${xs[rank]} 109 386 386" overflow="hidden"><image href="art/avatars/crowns-v263.png" width="2048" height="683"/></svg>${aura}${animated ? glint(510,rank === 'master' ? 570 : 550) + glint(510,145,'second') : ''}${sparks}` };
+    }
+
     const AVATAR_ART = {
-      'avatar-crown-bronze': { tone: 'bronze', art: AV_CROWN('bronze') + AV_CROWN_GEMS('#7c2d12') },
+      'avatar-crown-bronze': crownAvatarArt('bronze'),
       'avatar-suit-spades':  { tone: 'navy', art: `<path d="${AV_SPADE}" fill="url(#av-m-pearl)" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>` },
       'avatar-suit-hearts':  { tone: 'navy', art: `<path d="${AV_HEART}" fill="url(#av-m-crimson)" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>` },
       'avatar-suit-diamonds':{ tone: 'navy', art: `<path d="${AV_DIAMOND}" fill="url(#av-m-crimson)" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"/><path d="M32 17 26 32" stroke="rgba(255,255,255,.4)" stroke-width="1.4" stroke-linecap="round"/>` },
@@ -20579,16 +20605,10 @@ video {
       'avatar-centurion':    { tone: 'red', art: `
         <text x="32" y="38" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="21" fill="#ef4444" stroke="#7f1d1d" stroke-width=".8" letter-spacing="-1">100</text>
         <path d="M13.5 43.5 50 41.5M15.5 48.5 47 46.8" stroke="#ef4444" stroke-width="2.6" stroke-linecap="round"/>` },
-      'avatar-crown-silver': { tone: 'silver', art: AV_CROWN('silver') + AV_CROWN_GEMS('#1d4ed8') },
-      'avatar-crown-gold':   { tone: 'gold', art: AV_CROWN('gold') + AV_CROWN_GEMS('#b91c1c') },
-      'avatar-crown-diamond':{ tone: 'cyan', animated: true, art: AV_CROWN('diamond') + AV_CROWN_GEMS('#ecfeff') + `
-        <g class="av-twinkle"><path d="m45 11 1.2 3.3 3.3 1.2-3.3 1.2L45 20l-1.2-3.3-3.3-1.2 3.3-1.2Z" fill="#fff"/></g>
-        <g class="av-twinkle av-twinkle-2"><path d="m19 12 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z" fill="#cffafe"/></g>` },
-      'avatar-crown-master': { tone: 'purple', animated: true, art: AV_CROWN('master') + AV_CROWN_GEMS('#fdf4ff') + `
-        <g class="av-twinkle"><path d="m48 9 1.3 3.7 3.7 1.3-3.7 1.3L48 19l-1.3-3.7-3.7-1.3 3.7-1.3Z" fill="#fff"/></g>
-        <g class="av-twinkle av-twinkle-2"><path d="m15 10 1 2.8 2.8 1-2.8 1-1 2.8-1-2.8-2.8-1 2.8-1Z" fill="#f5d0fe"/></g>
-        <g class="av-twinkle av-twinkle-3"><path d="m53 44 .9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9Z" fill="#e9d5ff"/></g>
-        <g class="av-twinkle av-twinkle-4"><path d="m10 42 .8 2.1 2.1.8-2.1.8-.8 2.1-.8-2.1-2.1-.8 2.1-.8Z" fill="#fff"/></g>` },
+      'avatar-crown-silver': crownAvatarArt('silver'),
+      'avatar-crown-gold': crownAvatarArt('gold'),
+      'avatar-crown-diamond': crownAvatarArt('platinum'),
+      'avatar-crown-master': crownAvatarArt('master'),
       // Premium animated pictures (2500): richer loops, same tile and metals.
       'avatar-royal-flush':  { tone: 'gold', animated: true, art: `
         <g class="av-bob"><g transform="translate(32 13) scale(.3) translate(-32 -32)">${AV_CROWN('gold')}${AV_CROWN_GEMS('#b91c1c')}</g></g>

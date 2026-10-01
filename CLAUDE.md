@@ -43,6 +43,10 @@ Single-file web game (`index.html`) on Firebase Hosting + Realtime Database (pro
 
 A write to a parent node re-runs `.validate` on every child, so a whole-`users/{uid}` transaction fails if any existing child (e.g. `equippedCosmetics`) no longer satisfies its rule. `equippedCosmetics` rules accept ownership from `users/{uid}/ownedCosmetics` (canonical) or the legacy `shopPurchases/{uid}/cosmetics` mirror.
 
+## Crown avatars (v263)
+
+- The five crown avatars use the approved artwork atlas `art/avatars/crowns-v263.png`, cropped through SVG viewports in `crownAvatarArt`. Existing IDs and rank requirements are unchanged (Platinum retains `avatar-crown-diamond`). Platinum has occasional gem glints; Master has a breathing violet gem glow and rising sparks. Shared Reduced Motion, offscreen and background animation guards apply. The atlas is included in service-worker offline assets.
+
 ## Profile pictures
 
 - Profile page sections fold (v232, `setupProfileSections`): each top-level heading span in `#profileModal`'s scroll area becomes a `.cat-head.profile-sec-head` button with a chevron and its contents move into `.profile-sec-body`; folded keys (`public-profile`, `account`, …) are kept in localStorage `shithead_profile_collapsed`. A new Profile section = a `<div>` whose first child is the usual `tracking-widest` heading span.
