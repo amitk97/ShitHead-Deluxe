@@ -16717,16 +16717,30 @@ video {
         notifyBanner('Ranked is waiting for its private-card permissions. Please return home and retry shortly.');
       });
     }
+    // Compare canonical counters, rather than the latest animation event: a
+    // snapshot can contain several moves, and repeated snapshots must not count twice.
+    function notifyRankedBurnChallenges(previous, player) {
+      if (!previous || !player) return;
+      const before = previous.gameStats || {}, after = player.gameStats || {};
+      const delta = key => Math.max(0, Math.floor((after[key] || 0) - (before[key] || 0)));
+      const events = [];
+      for (let i = 0; i < delta('snapBurns'); i++) events.push('snap-burn-once');
+      for (let i = 0; i < delta('challengeBurns'); i++) events.push('burn-once');
+      if (events.length) notifyChallengeEvent(player, events);
+    }
+
     function applyRankedView(data) {
       if (!isServerRanked() || data.authority !== 1 || !data.players?.some(p => p.uid === currentUser?.uid)) return;
       if (state.serverAuthority && data.matchId === state.matchId && data.stateVersion <= state.stateVersion) return;
       const fresh = data.matchId !== state.matchId || !state.serverAuthority;
       const oldPhase = state.phase, oldTurn = state.currentTurnIndex;
+      const previousLocal = fresh ? null : state.players.find(p => p.id === state.localPlayerId);
       if (fresh) { state.rankedRatingApplied = false; hideMatchEndUI(); resetMatchSummary(); matchHistoryCurrentId = null; rankedEventVersion = data.event?.version || 0; }
       state.serverAuthority = 1;
       state.matchId = data.matchId; state.phase = data.phase; state.stateVersion = data.stateVersion;
       state.players = roomPlayerList(data.players).map(p => ({ ...p, hand:p.hand || [], faceUp:p.faceUp || [], faceDown:p.faceDown || [] }));
       state.localPlayerId = state.players.find(p => p.uid === currentUser.uid).id;
+      notifyRankedBurnChallenges(previousLocal, state.players.find(p => p.id === state.localPlayerId));
       state.currentTurnIndex = data.currentTurnIndex; state.direction = data.direction;
       state.drawPile = data.drawPile || []; state.discardPile = data.discardPile || []; state.playedHistory = data.playedHistory || [];
       state.activeConstraint = data.activeConstraint || null; state.baseOverrideCard = data.baseOverrideCard || null;
