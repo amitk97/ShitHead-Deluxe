@@ -1,5 +1,9 @@
 # ShitHead Deluxe
 
+## v271 — random free bot card backs
+
+Native bots in solo/Gauntlet, online lobbies and tutorials choose from Default SH and the free built-in Card Backs when created. Store the choice on `player.cosmetics.cardBack` so saves and room snapshots keep it stable. `ensureBotCardBacks` fills older missing choices deterministically from seat ID/name so clients agree. Preserve existing loadouts, including human cosmetics carried by stand-ins. No catalog, price, ownership or rules changes.
+
 ## Full-scene tables v270 — owner approved 1 October 2026
 
 The v269 safe-area icon draft was rejected and never pushed. Main is v268 (ba516fc). Do not use or publish responsive-v269. The replacement uses `art/tables/full-scenes-v270/scenes.js`: a world-sized SVG with independent uniformly scaled large features, extended terrain, edge anchors and scattered detail. `ShTableScenes` shares rendering between game, home and every mini/big table preview, with ResizeObserver/visualViewport updates. No IDs, names, prices, ownership, server catalog or rules change. See the replaced full-scene table section in `docs/MASTER-COSMETIC-ART-STYLE.md`. Owner approved the contact sheet and instructed publication, with final changes: Fireside is an indoor panelled Christmas room without tree/snowflake/window artwork; Candlelit Dinner has no flowers or petals; Casino retains the original green diagonal-line surface without chips/suits; Royal retains the original purple fine crosshatching without crowns; Jungle is a dense layered forest with trees, canopy, vines and undergrowth. Preserve these directions.

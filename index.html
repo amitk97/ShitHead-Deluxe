@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-01-v270 (ShitHead-Deluxe-220) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-01-v271 (ShitHead-Deluxe-220) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -10290,6 +10290,7 @@ video {
           isBot: true,
           ...(state.gauntlet ? { difficulty: gauntletRounds(gauntletModeOf(state.gauntlet))[state.gauntlet.round] || 'boss' } : {}),
           avatar: state.gauntlet?.bot?.avatar || pickBotAvatar(state.players),
+          cosmetics: { cardBack: pickBotCardBack() },
           hand: [],
           faceUp: [],
           faceDown: [],
@@ -15618,6 +15619,7 @@ video {
       oppContainer.style.setProperty('--opp-seat-w', `${Math.floor(seatW)}px`);
       oppContainer.style.setProperty('--opp-name-size', opponentCount <= 1 ? '12px' : opponentCount === 2 ? '10px' : '8px');
       ensureBotAvatars(state.players);
+      ensureBotCardBacks(state.players);
       const oppAvatarSize = Math.round(18 * oppScale);
       state.players.filter(p => p.id !== viewId).forEach(p => {
         const isTurn = currentTurnPlayer && currentTurnPlayer.id === p.id && !p.hasFinished;
@@ -17052,6 +17054,7 @@ video {
         name: `${botName} (Bot)`,
         isHost: false,
         isBot: true,
+        cosmetics: { cardBack: pickBotCardBack() },
         hand: [],
         faceUp: [],
         faceDown: [],
@@ -19748,6 +19751,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v271: [[ '🎴', 'Bots now choose randomly from the free card backs and keep their choice throughout the match.', WN_KEY ]],
       v270: [[ '🌄', 'Responsive full-scene tables with extended landscapes, complete large features and matching previews.', WN_KEY ]],
       v268: [[ '🖼️', 'Full-screen equipped table backgrounds on every device, star-only Cosmic Ace glints, and default card-back previews.', WN_KEY ]],
       v267: [[ '🎨', 'Correctly fitted card-back art and avatar borders, with rebuilt Cosmic Ace, Royal Flush and falling-tear animations.', WN_KEY ]],
@@ -20798,6 +20802,23 @@ video {
       const options = FREE_AVATAR_IDS.filter(id => !taken.has(id));
       const pool = options.length ? options : FREE_AVATAR_IDS;
       return pool[Math.floor(Math.random() * pool.length)];
+    }
+    // Native bots carry their random free back in the saved/shared seat.
+    // Older seats use a stable hash so clients and rerenders agree.
+    function freeBotCardBackIds() {
+      return ['default', ...BUILT_IN_COSMETICS.filter(item => item.category === 'Card Backs' && item.cost === 0).map(item => item.id)];
+    }
+    function pickBotCardBack() {
+      const pool = freeBotCardBackIds();
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+    function ensureBotCardBacks(players = []) {
+      const pool = freeBotCardBackIds();
+      players.forEach(p => {
+        if (!p?.isBot || p.cosmetics?.cardBack) return;
+        const seed = Array.from(String(p.id || '') + ':' + String(p.name || '')).reduce((hash, ch) => (Math.imul(hash, 31) + ch.charCodeAt(0)) >>> 0, 0);
+        p.cosmetics = { ...p.cosmetics, cardBack: pool[seed % pool.length] };
+      });
     }
     function ensureBotAvatars(players = []) {
       const used = new Set();
@@ -33403,13 +33424,13 @@ video {
         // isReady must start FALSE: the swap lesson needs a live "Ready"
         // button, and a pre-readied player renders it disabled as "Waiting...".
         { id: 'tut_you', name: localName, isBot: false, hand: [], faceUp: [], faceDown: [], isReady: false, hasFinished: false, finishRank: null },
-        { id: 'tut_bot', name: 'Coach', isBot: true, hand: [], faceUp: [], faceDown: [], isReady: true, hasFinished: false, finishRank: null }
+        { id: 'tut_bot', name: 'Coach', isBot: true, cosmetics: { cardBack: pickBotCardBack() }, hand: [], faceUp: [], faceDown: [], isReady: true, hasFinished: false, finishRank: null }
       ];
       // A third seat, only for modules that genuinely need one — the Joker
       // Duel lesson can't show a real choice-of-target picker with only one
       // possible opponent to pick.
       if (playerCount >= 3) {
-        state.players.push({ id: 'tut_rival', name: 'Rival', isBot: true, hand: [], faceUp: [], faceDown: [], isReady: true, hasFinished: false, finishRank: null });
+        state.players.push({ id: 'tut_rival', name: 'Rival', isBot: true, cosmetics: { cardBack: pickBotCardBack() }, hand: [], faceUp: [], faceDown: [], isReady: true, hasFinished: false, finishRank: null });
       }
       // Table cards are cosmetic during the tutorial — the lesson is about the
       // hand. A big draw pile keeps the "deck isn't empty" rule intact so
