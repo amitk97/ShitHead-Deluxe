@@ -191,7 +191,7 @@ function scene(id,W,H){
   for(let y=H*.86;y<H;y+=u*.07)pieces.push(path(`M0 ${y}H${W}`,'none','#79513b',u*.002,.35));
   place('wall-wreath',wreathArt(),.5,.17,.32,1,.23);
   const fire=rect(9,19,82,72,'#4e322e',3)+rect(18,29,64,52,'#120d16',2)+path('M29 74Q23 49 43 40Q34 61 48 56Q54 34 60 30Q74 56 69 74Z','#cf8750')+path('M42 74Q38 60 51 53Q55 65 62 74Z','#edce82')+rect(5,17,90,8,url('metal'),2)+rect(5,89,90,7,'#826248',2);
-  place('fireplace',fire,.52,.94,.58,1,.44);for(let x=pad;x+u*.13<W-pad;x+=u*.13)feature('garland-'+Math.round(x),wreathArt(),x,0,u*.13,u*.13,.08);break;
+  place('fireplace',fire,.52,.94,.58,1,.44);break; // v274 (owner): no row of wreaths along the top
  case 'newyear':
   skyline(.88,'#10192d');skyline(.98,'#080f20');place('left-firework',firework('#e6c477'),0,.18,.40,1,.30);place('right-firework',firework('#cb9fc6'),1,.36,.34,1,.25);stars(90,'#efd8a4');break;
  case 'casino':

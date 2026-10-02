@@ -1112,7 +1112,7 @@ async function runDevTestSuite() {
       assertEqual(below, [], 'Pages that would open underneath the summary');
     } finally { summary.classList.add('hidden'); }
   });
-  await test('Vs Bots: a Leave button sits under MATCH FINISHED (never online)', () => {
+  await test('A Leave button sits under MATCH FINISHED (online only once the match is over; v274)', () => {
     freshState({ phase: 'FINISHED', isMultiplayer: false, localPlayerId: 'me', drawPile: [], discardPile: [] });
     state.players = [makePlayer({ id: 'me', hasFinished: true, finishRank: 1 }), makePlayer({ id: 'b1', isBot: true, hasFinished: true, finishRank: 2 })];
     render();
@@ -1121,7 +1121,10 @@ async function runDevTestSuite() {
     assertTrue(btn.previousElementSibling && btn.previousElementSibling.textContent.includes('MATCH FINISHED'), 'It sits under the MATCH FINISHED box');
     state.isMultiplayer = true;
     render();
-    assertTrue(!document.getElementById('finishedLeaveBtn'), 'Online matches keep their own end-of-match options');
+    assertTrue(!!document.getElementById('finishedLeaveBtn'), 'Online matches offer it too once FINISHED (v274, owner)');
+    state.phase = 'PLAY';
+    render();
+    assertTrue(!document.getElementById('finishedLeaveBtn'), 'Online, never while the match is still being played');
     state.isMultiplayer = false;
   });
   await test('The direction icon has its own colour for clockwise and anticlockwise', () => {
@@ -2783,6 +2786,40 @@ async function runDevTestSuite() {
     const box = seat.getBoundingClientRect();
     assertTrue(cards.left - box.left >= 6 && box.right - cards.right >= 6, 'Seats leave room around the cards for frame glows');
   });
+  await test('End of match (v274): Ranked keeps its buttons, its card history reads, Fireside has no wreath row, Leave fits each mode', () => {
+    // The Ranked server logs one entry per play with a cards list.
+    const hist = normalizePlayedHistory([
+      { type: 'play', playerName: 'A', cards: [{ id: 'x', rank: '7', suit: '♠', isJoker: false }, { id: 'y', rank: '7', suit: '♥', isJoker: false }], blindFailed: false },
+      { type: 'pickup', playerName: 'B' }, { type: 'play', playerName: 'B', cards: [{ id: 'z', rank: 'JOKER', suit: 'JOKER', isJoker: true }] },
+      { type: 'play', playerName: 'C', rank: 'K', suit: '♦' }, { type: 'play', playerName: 'D' }]);
+    assertEqual(hist.map(h => h.type === 'play' ? `${h.playerName}${h.rank}${h.isJoker ? '*' : h.suit}` : h.type), ['A7♠', 'A7♥', 'pickup', 'BJOKER*', 'CK♦'], 'Server plays spread into one entry per card; empty ones dropped');
+    const scene = JSON.stringify(ShTableScenes.scene('christmas', 390, 844));
+    assertTrue(/wall-wreath/.test(scene) && !/garland/.test(scene), 'Fireside keeps its wall wreath but no row of wreaths along the top');
+    const saved = { user: currentUser, mp: state.isMultiplayer, ranked: state.isRanked, room: state.roomCode, players: state.players, phase: state.phase, matchId: state.matchId, auth: state.serverAuthority, local: state.localPlayerId };
+    try {
+      currentUser = { uid: 'u1' };
+      Object.assign(state, { isMultiplayer: true, isRanked: true, roomCode: 'TEST', serverAuthority: 0, matchId: null });
+      const seat = (id, uid, rank) => ({ id, uid, name: id, hand: [], faceUp: [], faceDown: [], hasFinished: true, finishRank: rank, gameStats: {} });
+      applyRankedView({ authority: 1, matchId: 'rk-end', phase: 'FINISHED', stateVersion: 3, players: [seat('p1', 'u1', 1), seat('p2', 'u2', 2)], currentTurnIndex: 0, direction: 1, playedHistory: [] });
+      const row = document.getElementById('matchEndButtonRow');
+      assertTrue(row.getClientRects().length > 0, 'The Ranked end row is on screen (its container is no longer hidden)');
+      assertTrue(row.querySelector('#playAgainMatchBtn').textContent.includes('RANKED') && !row.querySelector('#matchStatsBtn').classList.contains('hidden'), 'Match Stats + Return To Ranked');
+      assertTrue(!!document.getElementById('finishedLeaveBtn'), 'Leave under the finished box in Ranked');
+      assertTrue(finishedLeaveOffered(), 'Ranked offers Leave once finished');
+      state.isRanked = false;
+      assertTrue(finishedLeaveOffered(), 'Play Friends offers Leave once finished');
+      state.phase = 'PLAY';
+      assertTrue(!finishedLeaveOffered(), 'Never online while the match is still on');
+      state.isMultiplayer = false;
+      assertTrue(finishedLeaveOffered(), 'Vs Bots / Gauntlet always offer Leave');
+    } finally {
+      hideMatchEndUI();
+      currentUser = saved.user;
+      Object.assign(state, { isMultiplayer: saved.mp, isRanked: saved.ranked, roomCode: saved.room, players: saved.players, phase: saved.phase, matchId: saved.matchId, serverAuthority: saved.auth, localPlayerId: saved.local });
+      document.getElementById('matchSummaryModal')?.classList.add('hidden');
+    }
+  });
+
   await test('Table cards never overlap: every Face-Up / Face-Down slot sits apart, for opponents and you (v272)', () => {
     const overlaps = (rects) => {
       let n = 0;

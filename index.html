@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v273 (ShitHead-Deluxe-222) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v274 (ShitHead-Deluxe-223) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5077,7 +5077,7 @@ video {
 /* Opaque card faces and contrasting pill labels remain above the scene. */
 #gameTable .seat-name,#gameTable .table-label { text-shadow:0 1px 3px #020617; }
 </style>
-<script src="art/tables/full-scenes-v270/scenes.js"></script>
+<script src="art/tables/full-scenes-v270/scenes.js?v=274"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 theme-obsidian select-none">
   <div id="rotateHint" role="alert" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></svg><span class="rh-turn">Turn your phone upright to play.</span><span class="rh-open">Open your phone to play. This screen is too small for the table.</span></div>
@@ -9342,7 +9342,7 @@ video {
         state.matchId = data.matchId || state.matchId;
         state.drawPile = data.drawPile || [];
         state.discardPile = data.discardPile || [];
-        state.playedHistory = data.playedHistory || [];
+        state.playedHistory = normalizePlayedHistory(data.playedHistory);
         state.currentTurnIndex = Number.isInteger(data.currentTurnIndex) ? data.currentTurnIndex : state.currentTurnIndex;
         if (state.phase === 'PLAY' && state.currentTurnIndex !== previousResyncTurnIndex) beginTurnTransitionLock();
         state.direction = data.direction || 1;
@@ -10476,6 +10476,25 @@ video {
         isJoker: c.isJoker,
         blindFailed: !!(meta && meta.blindFailed)
       })));
+    }
+    // The Ranked server (functions/ranked-game.js log) writes one entry per
+    // play with a cards list; the strip draws one entry per card. Spread
+    // those out (and drop anything without a card) so Ranked never shows
+    // "undefined undefined" (v274). Firebase may also send lists as objects.
+    function normalizePlayedHistory(list) {
+      const items = Array.isArray(list) ? list : (list && typeof list === 'object' ? Object.values(list) : []);
+      const out = [];
+      items.forEach(item => {
+        if (!item || typeof item !== 'object') return;
+        if (item.type === 'pickup' || item.type === 'burn') { out.push(item); return; }
+        const cards = item.cards ? (Array.isArray(item.cards) ? item.cards : Object.values(item.cards)) : null;
+        if (cards) {
+          cards.forEach(c => { if (c && c.rank) out.push({ type: 'play', playerName: item.playerName, rank: c.rank, suit: c.suit || '', isJoker: !!c.isJoker || c.rank === 'JOKER', blindFailed: !!item.blindFailed }); });
+          return;
+        }
+        if (item.rank) out.push(item);
+      });
+      return out.slice(-PLAYED_HISTORY_LIMIT);
     }
     function recordPickupHistory(playerName) { pushHistory({ type: 'pickup', playerName }); }
     function recordBurnHistory(playerName) { pushHistory({ type: 'burn', playerName }); }
@@ -15879,9 +15898,11 @@ video {
         const lost = !local.hasFinished;
         // The ShitHead's placing is simply last: one behind everyone who finished.
         const placing = lost ? state.players.filter(p => p.hasFinished).length + 1 : local.finishRank;
-        // Vs Bots: a Leave button under the box, straight back to the home
-        // screen (the player's part of the match is over, so no confirm).
-        const offerLeave = !state.isMultiplayer && !tutorialActive;
+        // A Leave button under the box, straight back to the home screen
+        // (v274, owner: Vs Bots, Gauntlet, Ranked and Play Friends alike).
+        // Online only once the whole match is over, and never during a live
+        // Best of series: leaving one forfeits it (the Exit button asks).
+        const offerLeave = finishedLeaveOffered();
         tableSlots.innerHTML = `
           <div class="finished-box-wrap">
           <div class="w-full max-w-sm ${lost ? 'h-20 border-amber-600' : 'h-16 border-amber-500'} shrink-0 bg-slate-950/80 rounded-2xl border-2 flex flex-col items-center justify-center p-2 shadow-2xl">
@@ -15889,7 +15910,7 @@ video {
             <span class="text-base font-black text-amber-400 tracking-wider">${local.drew ? 'DRAW' : `FINISHED #${placing}`}</span>
             ${lost ? '<span class="text-2xl leading-none mt-0.5">\u{1F4A9}</span>' : ''}
           </div>
-          ${offerLeave ? '<button type="button" id="finishedLeaveBtn" class="finished-leave-btn" onclick="leaveBotMatch()">LEAVE</button>' : ''}
+          ${offerLeave ? '<button type="button" id="finishedLeaveBtn" class="finished-leave-btn" onclick="leaveFinishedMatch()">LEAVE</button>' : ''}
           </div>
         `;
       } else {
@@ -16756,7 +16777,7 @@ video {
       state.localPlayerId = state.players.find(p => p.uid === currentUser.uid).id;
       notifyRankedBurnChallenges(previousLocal, state.players.find(p => p.id === state.localPlayerId));
       state.currentTurnIndex = data.currentTurnIndex; state.direction = data.direction;
-      state.drawPile = data.drawPile || []; state.discardPile = data.discardPile || []; state.playedHistory = data.playedHistory || [];
+      state.drawPile = data.drawPile || []; state.discardPile = data.discardPile || []; state.playedHistory = normalizePlayedHistory(data.playedHistory);
       state.activeConstraint = data.activeConstraint || null; state.baseOverrideCard = data.baseOverrideCard || null;
       state.turnDeadline = data.turnDeadline; state.turnTimerMs = data.turnTimerMs;
       state.pendingFollowUp = data.pendingFollowUp?.cardId ? data.pendingFollowUp : null;
@@ -16765,7 +16786,8 @@ video {
       clearStaleSelections(); hasConfirmedRoomMembership = true;
       dismissLobbyAndStart();
       document.getElementById('swapControlBar')?.classList.toggle('hidden', data.phase !== 'SWAP');
-      document.getElementById('playActionControls')?.classList.toggle('hidden', data.phase !== 'PLAY');
+      // FINISHED keeps it: the end-of-match row (Match Stats / Return To Ranked) lives inside (v274).
+      document.getElementById('playActionControls')?.classList.toggle('hidden', data.phase !== 'PLAY' && data.phase !== 'FINISHED');
       document.getElementById('followUpToastBanner')?.classList.toggle('hidden', !state.pendingFollowUp);
       document.getElementById('sacrificeControlBar')?.classList.toggle('hidden', !state.pendingFaceUpSacrifice || state.pendingFaceUpSacrifice.playerId !== state.localPlayerId);
       render(); updateDirectionBadge();
@@ -17803,7 +17825,7 @@ video {
           state.matchId = data.matchId || state.matchId;
           state.drawPile = data.drawPile || [];
           state.discardPile = data.discardPile || [];
-          state.playedHistory = data.playedHistory || [];
+          state.playedHistory = normalizePlayedHistory(data.playedHistory);
           state.currentTurnIndex = data.currentTurnIndex || 0;
           if (state.phase === 'PLAY' && state.currentTurnIndex !== previousSyncedTurnIndex) beginTurnTransitionLock();
           state.jokerTurnOwnerId = data.jokerTurnOwnerId || null;
@@ -19779,6 +19801,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v274: [
+        [ '🏁', 'The end of every match has the same buttons: Match Stats, the next step for that mode, and Leave under your result. Ranked shows Return To Ranked again.' ],
+        [ '🃏', 'Ranked card history shows the cards played instead of "undefined".' ],
+        [ '🎄', 'Fireside no longer has a row of wreaths along the top of the table.' ]
+      ],
       v273: [[ '🎨', 'Custom has the Shop filters: All, Owned, Not Owned and Equipped.', WN_KEY ]],
       v272: [[ '🃏', "Opponents' Face-Up and Face-Down cards no longer overlap each other." ]],
       v271: [[ '🎴', 'Bots now choose randomly from the free card backs and keep their choice throughout the match.', WN_KEY ]],
@@ -23915,7 +23942,7 @@ video {
       const quick = document.getElementById('quickPlayMatchBtn');
       const lobby = document.getElementById('playAgainMatchBtn');
       if (quick && !quick.classList.contains('hidden')) return { label: seriesLiveHere() ? quick.textContent.trim() : quick.disabled ? 'WAITING FOR HOST…' : 'REMATCH', disabled: quick.disabled, button: quick };
-      if (lobby && !lobby.classList.contains('hidden')) return { label: state.isRanked ? 'FIND ANOTHER MATCH' : 'BACK TO LOBBY', disabled: false, button: lobby };
+      if (lobby && !lobby.classList.contains('hidden')) return { label: state.isRanked ? 'RETURN TO RANKED' : 'BACK TO LOBBY', disabled: false, button: lobby };
       return { label: 'REMATCH', disabled: true, button: null };
     }
     function refreshMatchSummary() {
@@ -29742,7 +29769,7 @@ video {
       state.matchId = data.matchId || state.matchId;
       state.drawPile = data.drawPile || [];
       state.discardPile = data.discardPile || [];
-      state.playedHistory = data.playedHistory || [];
+      state.playedHistory = normalizePlayedHistory(data.playedHistory);
       state.currentTurnIndex = data.currentTurnIndex || 0;
       state.jokerTurnOwnerId = data.jokerTurnOwnerId || null;
       state.direction = data.direction || 1;
@@ -31841,6 +31868,18 @@ video {
     }
     // Vs Bots only (the Leave button under "MATCH FINISHED"): back to the
     // home screen without restoring this game.
+    function finishedLeaveOffered() {
+      if (tutorialActive || state.spectating) return false;
+      if (!state.isMultiplayer) return true;
+      if (state.phase !== 'FINISHED') return false;
+      try { return !seriesLiveHere(); } catch (e) { return true; }
+    }
+    function leaveFinishedMatch() {
+      if (!state.isMultiplayer) { leaveBotMatch(); return; }
+      if (!finishedLeaveOffered()) return;
+      try { sessionStorage.removeItem('shithead_return_to_ranked'); } catch (e) {}
+      leaveRoomAndReload();
+    }
     function leaveBotMatch() {
       if (state.isMultiplayer) return;
       try { localStorage.removeItem('shithead_game_state'); } catch (e) {}
