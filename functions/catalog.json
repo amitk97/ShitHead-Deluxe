@@ -1739,6 +1739,7 @@
   "levelUpDiamonds": 20,
   "milestoneEvery": 10,
   "milestoneDiamonds": 100,
+  "maxLevelDiamonds": 999,
   "maxXp": 100000000,
   "rewards": [
    {

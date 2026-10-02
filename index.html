@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v284 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v285 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -19963,6 +19963,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v285: [
+        [ '💎', 'Reaching level 99 now pays 999 Diamonds.', WN_KEY ]
+      ],
       v284: [
         [ '🧭', 'Every page now shows its icon next to its title, like the Shop.' ]
       ],
@@ -26352,6 +26355,7 @@ video {
       levelUpDiamonds: 20, // every level up…
       milestoneEvery: 10,  // …except every 10th level, which pays instead
       milestoneDiamonds: 100,
+      maxLevelDiamonds: 999, // the top level (99) pays this instead (owner, v285)
       maxXp: 100000000,
       // Free cosmetics unlocked by level (LEVEL_REWARDS; granted by the server).
       rewards: LEVEL_REWARDS.map(r => ({ id: r.id, name: r.name, level: r.level })),
@@ -27079,6 +27083,7 @@ video {
     const LADDER_SPEEDS = ['0.5×', '1×', '2×', '4×'];
     const LADDER_KIND = { 'Avatars': 'Avatar', 'Card Backs': 'Card Back', 'Burn Effects': 'Burn', 'Frames': 'Frame', 'Table Themes': 'Table', 'Victory Effects': 'Victory', 'Joker Effects': 'Joker', 'Emote Packs': 'Emotes' };
     function ladderMilestoneDiamonds(L) {
+      if (L === XP_MAX_LEVEL && XP_RULES.maxLevelDiamonds) return XP_RULES.maxLevelDiamonds;
       return L % XP_RULES.milestoneEvery === 0 ? XP_RULES.milestoneDiamonds : XP_RULES.levelUpDiamonds;
     }
     // level → [{kind:'item', item} | {kind:'unlock', icon, name, tone, tip} | {kind:'badge', level}]
@@ -27153,7 +27158,7 @@ video {
         if (pieces.length || milestone) {
           const got = L <= level, final = L === XP_MAX_LEVEL, fresh = got && L > from;
           const status = fresh ? `<span class="ll-new-tag">New · just unlocked</span>` : got ? `<span class="ll-done">${icon('check')} Unlocked</span>` : `<span class="ll-away">${fmt(xpForLevel(L) - total)} XP away</span>`;
-          html += `<div class="ll-row ${got ? 'got' : 'locked'} ${fresh ? 'll-new' : ''} ${milestone ? 'big' : ''} ${final ? 'final' : ''}" data-ladder-level="${L}"><span class="ll-node" data-ladder-node="${L}">${got ? icon('check') : L}</span><div class="ll-card">${final ? `<div class="ll-final-title">Max Level · Lvl ${L}</div>` : ''}<div class="ll-head">${xpLevelBadge(L)}${status}${ladderGem(ladderMilestoneDiamonds(L))}</div>${pieces.length ? `<div class="ll-pieces">${pieces.map(ladderPieceHtml).join('')}</div>` : `<div class="ll-only">Milestone level: ${XP_RULES.milestoneDiamonds} Diamonds.</div>`}</div></div>`;
+          html += `<div class="ll-row ${got ? 'got' : 'locked'} ${fresh ? 'll-new' : ''} ${milestone ? 'big' : ''} ${final ? 'final' : ''}" data-ladder-level="${L}"><span class="ll-node" data-ladder-node="${L}">${got ? icon('check') : L}</span><div class="ll-card">${final ? `<div class="ll-final-title">Max Level · Lvl ${L}</div>` : ''}<div class="ll-head">${xpLevelBadge(L)}${status}${ladderGem(ladderMilestoneDiamonds(L))}</div>${pieces.length ? `<div class="ll-pieces">${pieces.map(ladderPieceHtml).join('')}</div>` : `<div class="ll-only">Milestone level: ${ladderMilestoneDiamonds(L)} Diamonds.</div>`}</div></div>`;
         } else if (L !== level) html += gap(L, L);
         if (L === level) html += here;
         prev = L;

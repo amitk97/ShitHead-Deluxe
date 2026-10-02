@@ -2878,6 +2878,8 @@ async function runDevTestSuite() {
       assertEqual(LEVEL_REWARDS.filter(r => !ids.includes(r.id)).map(r => r.id), [], 'Every level reward is on the ladder');
       assertTrue(!!modal.querySelector(`[data-ladder-level="${XP_MAX_LEVEL}"].final`), 'The last card is the max level, from the level table');
       for (let L = 10; L <= XP_MAX_LEVEL; L += 10) assertTrue(!!modal.querySelector(`[data-ladder-level="${L}"]`), `Milestone ${L} has its own row`);
+      assertEqual([ladderMilestoneDiamonds(XP_MAX_LEVEL), ladderMilestoneDiamonds(90), ladderMilestoneDiamonds(42)], [999, 100, 20], 'Level 99 pays 999 Diamonds, every 10th 100, others 20 (v285)');
+      assertTrue(modal.querySelector(`[data-ladder-level="${XP_MAX_LEVEL}"]`).textContent.includes('999'), 'The max level row shows 999');
       assertTrue(!!modal.querySelector(`[data-ladder-level="${SERIES_RULES.level}"]`) && modal.textContent.includes('Best Of Series'), 'Unlocks (series, speeds, Gauntlets, look slots) are listed');
       assertTrue(modal.querySelector('[data-ladder-level="30"]').classList.contains('got') && modal.querySelector('[data-ladder-level="40"]').classList.contains('locked'), 'Levels behind you are unlocked, ahead locked');
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));

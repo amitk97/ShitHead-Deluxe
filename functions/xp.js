@@ -47,7 +47,9 @@ function ukWeekKey(date = new Date()) {
 }
 // XP earned in `week` (0 when the account's counter belongs to another week).
 const weekXp = (user, week) => (user && user.xp && user.xp.week === week ? num(user.xp.weekXp) : 0);
-const levelReward = (L) => (num(RULES.milestoneEvery) > 0 && L % num(RULES.milestoneEvery) === 0 ? num(RULES.milestoneDiamonds) : num(RULES.levelUpDiamonds));
+// The top level pays xp.maxLevelDiamonds (999, owner v285) instead.
+const levelReward = (L) => (L === MAX_LEVEL && num(RULES.maxLevelDiamonds) > 0 ? num(RULES.maxLevelDiamonds)
+  : num(RULES.milestoneEvery) > 0 && L % num(RULES.milestoneEvery) === 0 ? num(RULES.milestoneDiamonds) : num(RULES.levelUpDiamonds));
 
 // The switch, read at most every 10s per server instance (so flicking it
 // takes effect within about 10 seconds).
