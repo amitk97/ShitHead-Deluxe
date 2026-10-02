@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v297 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v298 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7369,7 +7369,7 @@ video {
   </div>
 
   <script src="art/burns/level-v294/effects.js?v=295"></script>
-  <script src="art/burns/level-3d/burns3d.js?v=299"></script>
+  <script src="art/burns/level-3d/burns3d.js?v=300"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
   <script>
     const AUDIO_SOURCES = {
@@ -7769,7 +7769,7 @@ video {
       'burn-lvl-spark-snap': k => ShLevelBurns.sound('burn-lvl-spark-snap', k),
       'burn-lvl-smoke-burst': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-smoke-burst', k) : ShLevelBurns.sound('burn-lvl-smoke-burst', k)),
       'burn-lvl-inferno-sweep': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-inferno-sweep', k) : ShLevelBurns.sound('burn-lvl-inferno-sweep', k)),
-      'burn-lvl-hellfire-spiral': k => ShLevelBurns.sound('burn-lvl-hellfire-spiral', k),
+      'burn-lvl-hellfire-spiral': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-hellfire-spiral', k) : ShLevelBurns.sound('burn-lvl-hellfire-spiral', k)),
       'burn-lvl-royal-incineration': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-royal-incineration', k) : ShLevelBurns.sound('burn-lvl-royal-incineration', k)),
       'burn-lvl-shitstorm': k => ShLevelBurns.sound('burn-lvl-shitstorm', k),
       // Seasonal burns
@@ -8476,7 +8476,10 @@ video {
       const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
       return levelBurn3d('burn-lvl-inferno-sweep', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-inferno-sweep', host, x, y, k, calm);
     }
-    function bfxHellfireSpiral(host, x, y, k) { return ShLevelBurns.play('burn-lvl-hellfire-spiral', host, x, y, k, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches); }
+    function bfxHellfireSpiral(host, x, y, k) {
+      const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+      return levelBurn3d('burn-lvl-hellfire-spiral', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-hellfire-spiral', host, x, y, k, calm);
+    }
     function bfxRoyalIncineration(host, x, y, k) {
       const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
       return levelBurn3d('burn-lvl-royal-incineration', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-royal-incineration', host, x, y, k, calm);
@@ -19807,6 +19810,8 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v298: [[ '👑', 'Royal Incineration (Lvl 80) is reborn: a jewelled gold crown descends over your card as golden fire bursts out beneath it.', WN_KEY ],
+        [ '🌪️', 'Hellfire Spiral (Lvl 60) is reborn: a magma tornado rears up out of the Pile and spins your card away.', WN_KEY ]],
       v297: [[ '💨', 'Smoke Burst (Lvl 20) is reborn: a rolling cloud of smoke and fire bursts out of the Pile around your card.', WN_KEY ],
         [ '🃏', 'Burning cards that flip over now show the card back of the player who burned them.' ]],
       v296: [[ '👻', 'Ghost Flames is reborn: a spectral wraith rises from blue-violet fire and tears the Pile apart, with new sound.', WN_KEY ],

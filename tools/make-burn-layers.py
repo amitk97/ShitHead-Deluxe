@@ -4,7 +4,7 @@ layers.webp = two slots side by side (slot 0 left, slot 1 right). The painted
 cards are removed and their gap filled with the surrounding art, because the
 game burns the real pile card in front; every edge fades softly. Also writes
 the Shop/Custom tile. Needs numpy, pillow, opencv-python-headless.
-Run: python3 tools/make-burn-layers.py [ghost-flames|smoke-burst|royal-incineration]"""
+Run: python3 tools/make-burn-layers.py [ghost-flames|smoke-burst|royal-incineration|hellfire-spiral]"""
 import sys
 from PIL import Image
 import numpy as np, cv2
@@ -145,4 +145,66 @@ def royal_incineration():
     crown_a = soft
     save_atlas([(f, crown_a), (fire, fire_a)], 'art/burns/royal-incineration/layers.webp')
 
-{'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
+def patch_match(f, mask, polys, reach=90, step=6):
+    """Fills each polygon with the shifted patch of the same picture whose border best
+    matches the polygon's surroundings (and holds none of the other polygons)."""
+    H, W, _ = f.shape
+    out = f.copy()
+    for p in polys:
+        one = np.zeros((H, W), np.uint8)
+        cv2.fillPoly(one, [p], 255)
+        one = cv2.dilate(one, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11)))
+        ring = (cv2.dilate(one, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))) > 0) & (one == 0)
+        ys, xs = np.nonzero(one)
+        best = None
+        for dy in range(-reach, reach + 1, step):
+            for dx in range(-reach, reach + 1, step):
+                if abs(dx) + abs(dy) < 20: continue
+                sy, sx = ys + dy, xs + dx
+                if sy.min() < 0 or sx.min() < 0 or sy.max() >= H or sx.max() >= W or mask[sy, sx].any(): continue
+                ry, rx = np.nonzero(ring); qy, qx = np.clip(ry + dy, 0, H - 1), np.clip(rx + dx, 0, W - 1)
+                cost = np.abs(f[qy, qx] - f[ry, rx]).mean()
+                if best is None or cost < best[0]: best = (cost, dy, dx)
+        _, dy, dx = best
+        m = cv2.GaussianBlur(one.astype(np.float32) / 255, (15, 15), 0)[..., None]
+        out = out * (1 - m) + np.roll(f, (-dy, -dx), (0, 1)) * m
+    return out
+
+def hellfire_spiral():
+    full = Image.open('docs/avatar-art/src/burn-hellfire-spiral.webp').convert('RGB')
+    full.crop((10, 6, 456, 462)).resize((384, 393), Image.LANCZOS).save('art/burns/hellfire-spiral/tile.webp', quality=90)
+    src = np.asarray(full)[12:456, 16:450]  # inside the gold frame
+    H, W, _ = src.shape
+    yy, xx = np.mgrid[0:H, 0:W] / [[[H]], [[W]]]
+    # The painted cards caught in the vortex (hand-traced, pixels inside the frame), each filled
+    # with the best-matching nearby patch of the same tornado.
+    cards = [np.array(c, np.int32) for c in [[(107, 67), (145, 44), (181, 97), (169, 126), (142, 126)],
+             [(85, 162), (114, 141), (134, 196), (121, 224), (99, 212)],
+             [(126, 205), (153, 191), (179, 210), (176, 265), (155, 265), (146, 252)],
+             [(276, 154), (301, 145), (316, 165), (303, 179), (281, 174)],
+             [(389, 192), (416, 202), (422, 226), (406, 254), (385, 241)],
+             [(48, 174), (66, 176), (70, 196), (54, 198)],
+             [(33, 310), (55, 278), (76, 304), (71, 351), (46, 351)],
+             [(64, 303), (81, 298), (136, 318), (145, 397), (119, 400), (80, 374)],
+             [(303, 280), (361, 250), (367, 280), (347, 322), (318, 322)],
+             [(343, 320), (396, 288), (406, 320), (376, 352)],
+             [(328, 350), (376, 333), (382, 361), (345, 382)],
+             [(374, 354), (421, 348), (424, 376), (379, 379)],
+             [(338, 119), (361, 120), (361, 141), (341, 142)]]]
+    mask = np.zeros((H, W), np.uint8)
+    for c in cards: cv2.fillPoly(mask, [c], 255)
+    mask = cv2.dilate(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (13, 13)))
+    f = patch_match(src.astype(np.float32) / 255, mask, cards)
+    # A whole funnel: wide, ragged top that fades out inside the picture, narrowing to the base;
+    # the dark smoke round it stays faintly, every edge soft.
+    noise = lambda n, seed: cv2.resize(np.random.default_rng(seed).random((n, n)).astype(np.float32), (W, H), interpolation=cv2.INTER_CUBIC)
+    lump = .6 * noise(5, 21) + .4 * noise(11, 22)
+    half = .48 - .16 * yy + .14 * (lump - .5)  # funnel half-width by height
+    top = .02 + .16 * ((xx - .5) / .5) ** 2 + .08 * lump  # a rounded, ragged crown to the funnel
+    funnel = (1 - ss(.6, 1.05, np.abs(xx - .5) / half)) * ss(top, top + .16, yy) * (1 - ss(.9, 1, yy))
+    bright = ss(.02, .24, f.max(2))  # the dark magma bands stay solid
+    col = np.clip(f / np.maximum(bright[..., None], .3), 0, 1)
+    front = funnel * ss(.84, .92, yy) * (1 - ss(.97, 1, yy))  # the rubble at the base, in front of the card
+    save_atlas([(col, bright * funnel), (col, bright * front)], 'art/burns/hellfire-spiral/layers.webp')
+
+{'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
