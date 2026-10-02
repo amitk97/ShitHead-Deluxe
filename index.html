@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v291 (ShitHead-Deluxe-231) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v292 (ShitHead-Deluxe-232) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -16718,6 +16718,7 @@ video {
       if (lastShownDirection !== null && lastShownDirection !== state.direction && !motionOff() && badge.animate) {
         badge.animate([{ rotate: '0deg', scale: 1 }, { rotate: `${state.direction === 1 ? 360 : -360}deg`, scale: 1.25, offset: .7 }, { rotate: `${state.direction === 1 ? 360 : -360}deg`, scale: 1 }], { duration: 650, easing: EASE.spring });
       }
+      if (lastShownDirection !== null && lastShownDirection !== state.direction && state.phase === 'PLAY' && (state.discardPile || []).slice(-1)[0]?.rank === '9') setTimeout(() => showHelperTip('nine-reverse', badge), 700); // § Helper tips
       lastShownDirection = state.direction;
     }
 
@@ -18091,6 +18092,7 @@ video {
     }
 
     function updateLobbyPlayerList() {
+      if (state.isHost && !state.isRanked) setTimeout(() => showHelperTip('host-invite', '#shareInviteLinkBtn'), 600); // § Helper tips
       const list = document.getElementById('connectedPlayersList');
       const counter = document.getElementById('playerCounter');
       list.innerHTML = '';
@@ -20025,6 +20027,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v292: [
+        [ '💡', 'Seven more helper tips: Face-Up and Face-Down cards, Bonus Draw, inviting friends, equipping in Custom, spending Diamonds, the 9 and Ranked ratings.' ]
+      ],
       v291: [
         [ '💡', 'Helper tips: short one-time tips explain things the first time you meet them. Turn them off in Settings → Display → Helper Tips.', WN_KEY ],
         [ '🪜', 'The Level Ladder now names the weekly unlocks: a 6th weekly challenge at Lvl 45 and a 7th at Lvl 65.' ],
@@ -27875,7 +27880,10 @@ video {
       const headerEl = document.getElementById('headerDiamondCount');
       if (headerEl) {
         rollDiamondCount(headerEl, lastPaintedDiamonds, exact);
-        if (lastPaintedDiamonds !== null && exact > lastPaintedDiamonds) spawnDiamondGain(document.getElementById('headerDiamondBtn'), exact - lastPaintedDiamonds);
+        if (lastPaintedDiamonds !== null && exact > lastPaintedDiamonds) {
+          spawnDiamondGain(document.getElementById('headerDiamondBtn'), exact - lastPaintedDiamonds);
+          setTimeout(() => showHelperTip('diamonds-shop', '#headerDiamondBtn'), 1200); // § Helper tips
+        }
         headerEl.title = exact.toLocaleString(); // exact value always available on hover/long-press
         // A fresh baseline (sign-in, sign-out) never keeps an old flash.
         if (lastPaintedDiamonds === null) headerEl.classList.remove('diamond-flash-up', 'diamond-flash-down');
@@ -28263,7 +28271,14 @@ video {
       'ladder-tap': "Tap a reward to preview it, or equip it once it's yours.",
       'friends-invite': 'Share your invite link: you both get Diamonds after 3 games.',
       'weekly-reroll': 'You can swap one weekly challenge a week.',
-      'first-day-xp': 'Your first game each day gives bonus XP.'
+      'first-day-xp': 'Your first game each day gives bonus XP.',
+      'hand-empty': 'Now play your Face-Up cards, then the Face-Down ones blind.',
+      'bonus-draw': 'You drew the same card, so you can play it straight away.',
+      'host-invite': 'Share the room code or invite link to bring friends in.',
+      'custom-equip': 'Double-tap an item to equip it.',
+      'diamonds-shop': 'Spend Diamonds in the Shop: tap the gem.',
+      'nine-reverse': '9 reverses the direction of play.',
+      'ranked-rating': 'Ranked uses a rating: win to climb tiers, from Bronze to Master.'
     };
     const HELPER_TIPS_SEEN_KEY = 'shithead_tips_seen';
     const HELPER_TIP_MS = 8000;
@@ -28340,9 +28355,12 @@ video {
       const local = state.players.find(p => p.id === state.localPlayerId);
       if (!local || local.hasFinished) return;
       const myTurn = state.players[state.currentTurnIndex]?.id === local.id;
+      if (state.pendingFollowUp && state.pendingFollowUp.playerId === local.id && showHelperTip('bonus-draw', '#followUpToastBanner')) return;
+      if (state.isRanked && showHelperTip('ranked-rating', '#opponentsContainer')) return;
       if ((local.hand || []).some(c => c.isJoker || c.rank === 'JOKER') && showHelperTip('joker', '#localHand [data-rank="JOKER"]')) return;
       if (!myTurn) return;
       if (showHelperTip('hold-card', '#localHand [data-card-id]')) return;
+      if (!(local.hand || []).length && (local.faceUp || []).length && showHelperTip('hand-empty', '#localTableSlots')) return;
       let games = 0;
       try { games = readLocalMatchHistory().length; } catch (e) {}
       if (games >= HELPER_TIP_MATRIX_GAMES && !hideHelperIcons) showHelperTip('play-matrix', '#matrixRefBtn');
@@ -31261,6 +31279,7 @@ video {
       renderThemesPanelActiveState();
       renderPersonalisationCosmetics();
       document.getElementById('themesModal').classList.remove('hidden');
+      setTimeout(() => showHelperTip('custom-equip', '#customEquipHint'), 700); // § Helper tips
       const loading = loadCosmeticCollection();
       loadSavedLoadouts();
       return loading;

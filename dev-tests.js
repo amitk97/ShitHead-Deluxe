@@ -1768,7 +1768,14 @@ async function runDevTestSuite() {
     const savedSeen = localStorage.getItem('shithead_tips_seen'), savedOn = helperTipsOn;
     try {
       localStorage.removeItem('shithead_tips_seen'); helperTipsOn = true; hideHelperTip();
-      assertEqual(Object.keys(HELPER_TIPS).length, 9, 'Nine tips');
+      assertEqual(Object.keys(HELPER_TIPS).length, 16, 'Sixteen tips (v292 added seven)');
+      assertEqual(HELPER_TIPS['hand-empty'], 'Now play your Face-Up cards, then the Face-Down ones blind.', 'Hand runs out');
+      assertEqual(HELPER_TIPS['bonus-draw'], 'You drew the same card, so you can play it straight away.', 'Bonus Draw');
+      assertEqual(HELPER_TIPS['host-invite'], 'Share the room code or invite link to bring friends in.', 'Hosting');
+      assertEqual(HELPER_TIPS['custom-equip'], 'Double-tap an item to equip it.', 'Custom');
+      assertEqual(HELPER_TIPS['diamonds-shop'], 'Spend Diamonds in the Shop: tap the gem.', 'Diamonds');
+      assertEqual(HELPER_TIPS['nine-reverse'], '9 reverses the direction of play.', 'The 9');
+      assertEqual(HELPER_TIPS['ranked-rating'], 'Ranked uses a rating: win to climb tiers, from Bronze to Master.', 'Ranked');
       assertEqual(HELPER_TIPS['hold-card'], 'Hold any card to see what it does.', 'The first-game tip');
       assertTrue(/four of a kind even when it's not your turn/.test(HELPER_TIPS['snap-burn']) && /give the Pile to someone else/.test(HELPER_TIPS.joker), 'Snap Burn and Joker tips');
       const anchor = document.getElementById('headerInboxBtn');
