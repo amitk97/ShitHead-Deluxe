@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v287 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v288 (ShitHead-Deluxe-228) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -10669,6 +10669,15 @@ video {
     function executePlayCards(playerId, cardsToPlay, isBlind = false, chainedRankCount = 0, opts = {}) {
       if (isServerRanked()) { if (playerId === state.localPlayerId) rankedRequest('play', {cardIds:(cardsToPlay || []).map(c => c.id)}); return; }
       if (isMatchDecided()) return;
+      // A Bonus Draw offer is open for this player (v288): only its own card
+      // may play, and only through resolveFollowUpPlay, which closes the
+      // prompt. A hotkey or the Play button used to play it directly and
+      // leave the prompt on screen.
+      const followUp = state.pendingFollowUp;
+      if (followUp && followUp.playerId === playerId) {
+        if (!isBlind && cardsToPlay && cardsToPlay.length === 1 && cardsToPlay[0].id === followUp.cardId) resolveFollowUpPlay(true);
+        return;
+      }
       // A blind flip is revealing: nothing else plays until it lands.
       if (state.blindRevealing && !opts.revealed) return;
       if (isBlind && !opts.revealed && shouldRevealBlind() && cardsToPlay && cardsToPlay[0] && !state.burnResolving) {
@@ -19967,6 +19976,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v288: [
+        [ '⌨️', 'Bonus Draw on a keyboard: pressing the drawn card\'s key (or Enter) plays it and closes the prompt.' ]
+      ],
       v287: [
         [ '🦁', "Lion's Roar has a real lion's roar, and the Pumpkin Joker gets a proper crowd boo." ]
       ],
@@ -32555,6 +32567,21 @@ video {
       const local = state.players.find(p => p.id === state.localPlayerId);
       const current = state.players[state.currentTurnIndex];
       if (!local || !current || current.id !== local.id || local.hasFinished) return;
+
+      // Bonus Draw open: its card's key (or Enter) takes it, Escape skips it
+      // (the back layer), every other card key is ignored (v288).
+      const followUp = state.pendingFollowUp;
+      if (followUp && followUp.playerId === local.id) {
+        const bonus = (local.hand || []).find(c => c.id === followUp.cardId);
+        const k = e.key.toUpperCase();
+        const keyRank = k === '1' ? '10' : k;
+        if (bonus && (k === 'ENTER' || keyRank === bonus.rank)) {
+          e.preventDefault();
+          state.selectedPlayCardIds = [];
+          resolveFollowUpPlay(true);
+        }
+        return;
+      }
 
       const hasHand = local.hand && local.hand.length > 0;
       const hasFaceUp = local.faceUp && local.faceUp.length > 0;

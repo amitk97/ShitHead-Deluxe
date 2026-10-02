@@ -10112,6 +10112,33 @@ async function runDevTestSuite() {
     assertEqual(state.currentTurnIndex, 0, 'Two total 8s in a 3-player table must skip BOTH opponents and return the turn to the player who played them — landing back on Amit, not Raj');
   });
 
+  await test('Bonus Draw by keyboard (v288): the card\'s key takes the bonus and closes the prompt; other plays wait', () => {
+    freshState({ discardPile: [makeCard('4')] });
+    const six1 = makeCard('6', '♠');
+    const six2 = makeCard('6', '♥');
+    const amit = makePlayer({ id: 'p1', hand: [six1, makeCard('9'), makeCard('K')] });
+    const pooja = makePlayer({ id: 'p2', hand: [makeCard('4'), makeCard('5'), makeCard('7')] });
+    state.players = [amit, pooja];
+    state.localPlayerId = 'p1';
+    state.currentTurnIndex = 0;
+    state.drawPile = [makeCard('Q'), six2];
+    executePlayCards('p1', [six1]);
+    assertTrue(!!state.pendingFollowUp, 'Drawing another 6 offers a Bonus Draw');
+    const banner = document.getElementById('followUpToastBanner');
+    assertTrue(!banner.classList.contains('hidden'), 'The Bonus Draw prompt shows');
+    // Another card through the normal play path is refused while it's open.
+    const pileBefore = state.discardPile.length;
+    executePlayCards('p1', [amit.hand.find(c => c.rank === 'K')]);
+    assertEqual(state.discardPile.length, pileBefore, 'Another card cannot be played over the Bonus Draw');
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'K', bubbles: true }));
+    assertEqual(state.discardPile.length, pileBefore, 'Another rank key is ignored while the Bonus Draw is open');
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '6', bubbles: true }));
+    assertTrue(!state.pendingFollowUp, 'The 6 key takes the bonus');
+    assertEqual(state.discardPile[state.discardPile.length - 1].id, six2.id, 'The bonus 6 is on the Pile');
+    assertTrue(banner.classList.contains('hidden'), 'The Bonus Draw prompt is closed');
+    state.pendingFollowUp = null; render();
+  });
+
   await test('REGRESSION: the lobby speed slider tick labels stay in sync with SPEED_PRESETS', () => {
     const ticks = document.getElementById('lobbySpeedTicks');
     assertTrue(!!ticks, '#lobbySpeedTicks must exist');

@@ -375,6 +375,10 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - `#multiSelectToggleBtn` lives on the table, not in the header: a round button the size of `#cardRefBtn` inside `#handCountWrap`, directly left of `#handCountBadge` (near the thumb). State = the corner dot (`.rank-toggle-dot`, green on / red off) plus the toggled classes in `updateMultiSelectToggleUI`. Lesson copy, the hint banners and the Guide's Key Term say "beside your hand count". Dev test "Select All Of A Rank sits left of the hand count…".
 
+## Bonus Draw guard (v288)
+
+- While `state.pendingFollowUp` is open for a player, `executePlayCards` plays nothing for them except the bonus card itself, which it routes through `resolveFollowUpPlay(true)` (that clears the offer and hides `#followUpToastBanner`). The keyboard handler takes the bonus with the card's rank key or Enter and ignores other card keys; Escape skips it (`BACK_LAYERS`). Before, pressing 6 again played the card directly and left the prompt on screen. Dev test "Bonus Draw by keyboard (v288)…".
+
 ## Card hold info
 
 - Press and hold (`CARD_HOLD_MS` 450ms, cancelled by an 8px move) any visible card in `#gameTable` (your hand, any face-up card incl. opponents' — their slot div carries `data-card-id` — the Pile = its top card, the Base Card box `#bottomCardPreview` = the Pile's bottom card; `holdTargetAt`) → your own face-up cards say "Play this once your hand is empty." while you hold any hand cards; `#cardHoldTip` bubble (z 63) above it (below it when that would go under the header, e.g. the top opponent's cards): name, power (`CARD_REFERENCE`), the short line from `CARD_HOLD_TEXT` (full sentences, ≤25 words each, shortened from the Guide; keep both in step when a rule changes), and for your own cards in PLAY "You can play it now." / "Can't go on the X now." (`isPlayLegal` + the history circle's card to beat). `holdCardInfo` only finds cards in visible zones, so face-down cards never answer. Letting go hides it and the following click is swallowed (a hold never selects); long-press callout/selection is blocked on cards. Off in the tutorial. `§ Card hold info`.
