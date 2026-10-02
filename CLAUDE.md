@@ -1,5 +1,9 @@
 # ShitHead Deluxe
 
+## v294 — cinematic level-reward burns
+
+The six existing level Burns now use `art/burns/level-v294/effects.js`: transparent sprite components, independent card/spark trajectories, 1.25–2.05 second sequences, and unique sounds using the same impact clock. Thumbnails use the approved concept sheet; gameplay never animates the rectangular thumbnail. The ShitStorm now uses the approved mischievous mascot, Royal Incineration the ruby crown. Keep IDs, levels, ownership and the server catalog unchanged. Both the game preference and OS reduced motion select a short stationary dissolve, including previews. The module clears repeated previews and backgrounded effects; assets are in the service-worker offline list. Run `node tools/level-burns-browser-test.js` with Playwright and `SH_CHROMIUM` pointing to Chromium, plus the existing client/art tests.
+
 ## v271 — random free bot card backs
 
 Native bots in solo/Gauntlet, online lobbies and tutorials choose from Default SH and the free built-in Card Backs when created. Store the choice on `player.cosmetics.cardBack` so saves and room snapshots keep it stable. `ensureBotCardBacks` fills older missing choices deterministically from seat ID/name so clients agree. Preserve existing loadouts, including human cosmetics carried by stand-ins. No catalog, price, ownership or rules changes.

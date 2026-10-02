@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v293 (ShitHead-Deluxe-233) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v294 (ShitHead-Deluxe-233) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1787,6 +1787,9 @@
     .shop-row-table { padding:0 8px 8px; }
     .cosmetic-tile .avatar-option-art .mini-table { width:100%; }
     .cosmetic-tile .avatar-option-art:has(.mini-table) { align-self:stretch; }
+    .effect-mini-tile > svg { width:100%; height:100%; border-radius:inherit; }
+    .shop-burn-core:has(> svg) { width:72px; height:72px; overflow:hidden; }
+    .lb294-piece svg { overflow:hidden !important; }
     .shop-burn-core { width:54px; height:72px; border-radius:10px; border:2px solid #64748b; background:#111827; display:flex; align-items:center; justify-content:center; font-size:28px; }
     .shop-burn-particle { position:absolute; left:50%; top:60%; width:9px; height:14px; border-radius:60% 40% 55% 45%; background:var(--particle-color); box-shadow:0 0 10px var(--particle-color); pointer-events:none; animation:shop-burn-burst .85s ease-out forwards; }
     .shop-burn-particle.ice { width:11px; height:11px; border-radius:2px; transform:rotate(45deg); }
@@ -7365,6 +7368,7 @@ video {
     </div>
   </div>
 
+  <script src="art/burns/level-v294/effects.js"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
   <script>
     const AUDIO_SOURCES = {
@@ -7760,66 +7764,13 @@ video {
         k.scatter(9, 0.76, 1.45, (at) => { const f = 90 + Math.random() * 90; k.tone({ at, dur: 0.1, f0: f, f1: f * 2.2, level: 0.13 }); });
         k.noise({ at: 1.35, dur: 0.55, type: 'highpass', f0: 4000, f1: 1500, level: 0.08, attack: 0.05 });
       },
-      // Level burns (v253), each following its animation beat for beat.
-      // Spark Snap: a sharp snap and crackle as the sparks fly (0.05s), a
-      // bright ring whoosh, then a few embers ticking.
-      'burn-lvl-spark-snap': (k) => {
-        k.noise({ dur: 0.05, type: 'highpass', f0: 2500, level: 0.5 });
-        k.tone({ at: 0.04, dur: 0.12, type: 'triangle', f0: 1800, f1: 600, level: 0.14 });
-        k.scatter(14, 0.05, 0.4, (at) => k.noise({ at, dur: 0.015, type: 'bandpass', f0: 3000 + Math.random() * 3000, q: 5, level: 0.4 }));
-        k.noise({ at: 0.08, dur: 0.45, type: 'bandpass', f0: 1800, f1: 600, q: 1.2, level: 0.2, attack: 0.03 });
-        k.scatter(5, 0.3, 0.7, (at) => k.tone({ at, dur: 0.05, type: 'triangle', f0: 2400 + Math.random() * 1200, level: 0.05 }));
-      },
-      // Smoke Burst: a deep red thump with the flash (and its second pulse at
-      // 0.3s), cracking veins, the smoke's long dark rush, embers crackling.
-      'burn-lvl-smoke-burst': (k) => {
-        k.tone({ dur: 0.35, f0: 110, f1: 38, level: 0.5, attack: 0.005 });
-        k.noise({ dur: 0.18, type: 'lowpass', f0: 1800, f1: 300, level: 0.4 });
-        k.tone({ at: 0.29, dur: 0.2, f0: 90, f1: 45, level: 0.25 });
-        k.scatter(6, 0.04, 0.35, (at) => k.noise({ at, dur: 0.04, type: 'bandpass', f0: 1400, q: 3, level: 0.3 }));
-        k.noise({ at: 0.1, dur: 1.4, type: 'bandpass', f0: 380, f1: 150, q: 0.7, level: 0.42, attack: 0.25 });
-        k.scatter(10, 0.3, 1.2, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 4000, level: 0.18 }));
-      },
-      // Inferno Sweep: the flame ring roaring once round the pile (a panned
-      // rising roar over 0.8s), the pile catching, then the swirl of ash.
-      'burn-lvl-inferno-sweep': (k) => {
-        k.noise({ at: 0.05, dur: 0.85, type: 'bandpass', f0: 500, f1: 2200, q: 0.9, level: 0.45, attack: 0.1 });
-        k.tone({ at: 0.05, dur: 0.85, type: 'sawtooth', f0: 70, f1: 110, level: 0.08, attack: 0.1 });
-        fireWhoosh(k, 0.55);
-        k.noise({ at: 0.62, dur: 0.9, type: 'bandpass', f0: 1600, f1: 400, q: 1, level: 0.25, attack: 0.1 });
-        k.scatter(10, 0.4, 1.4, (at) => k.noise({ at, dur: 0.025, type: 'highpass', f0: 3500, level: 0.2 }));
-      },
-      // Hellfire Spiral: a low hellish drone as the rune circle lights, the
-      // vortex's rising, whirling roar (vibrato) and embers crackling up.
-      'burn-lvl-hellfire-spiral': (k) => {
-        k.tone({ dur: 1.6, f0: 55, f1: 48, level: 0.3, attack: 0.15 });
-        k.tone({ dur: 1.4, type: 'sawtooth', f0: 82, f1: 330, level: 0.07, attack: 0.3, vibrato: 7 });
-        k.noise({ at: 0.15, dur: 1.4, type: 'bandpass', f0: 300, f1: 2600, q: 1.1, level: 0.45, attack: 0.35 });
-        k.noise({ at: 0.08, dur: 0.3, type: 'lowpass', f0: 1200, f1: 200, level: 0.3 });
-        k.scatter(12, 0.3, 1.5, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 3500, q: 4, level: 0.3 }));
-      },
-      // Royal Incineration: a bright golden chord as the light pillar rises,
-      // a regal bell when the crown lands (0.3s), golden fire, twinkles.
-      'burn-lvl-royal-incineration': (k) => {
-        [523, 659, 784, 1047].forEach((f, i) => k.tone({ at: i * 0.04, dur: 1.2, type: 'triangle', f0: f, level: 0.07, attack: 0.15 }));
-        k.tone({ at: 0.3, dur: 1.0, f0: 1568, level: 0.12 });
-        k.tone({ at: 0.3, dur: 0.8, type: 'triangle', f0: 3136, level: 0.05 });
-        k.tone({ at: 0.35, dur: 0.4, f0: 98, f1: 60, level: 0.3 });
-        fireWhoosh(k, 0.45);
-        k.scatter(10, 0.5, 1.5, (at) => k.tone({ at, dur: 0.25, type: 'triangle', f0: 2000 + Math.random() * 2500, level: 0.05 }));
-      },
-      // The ShitStorm: the air is sucked in, a huge boom with the gold flash
-      // and shockwaves (0.24s, 0.42s, 0.62s), the throne's dark chord, the
-      // storm's roaring wind and the suits and sparks rattling out.
-      'burn-lvl-shitstorm': (k) => {
-        k.noise({ dur: 0.24, type: 'bandpass', f0: 3000, f1: 300, q: 1, level: 0.25, attack: 0.15 });
-        k.tone({ at: 0.24, dur: 0.7, f0: 70, f1: 28, level: 0.55, attack: 0.005 });
-        k.noise({ at: 0.24, dur: 0.5, type: 'lowpass', f0: 2500, f1: 150, level: 0.5 });
-        [0.42, 0.62].forEach((at) => k.tone({ at, dur: 0.3, f0: 60, f1: 35, level: 0.3 }));
-        [110, 131, 165].forEach((f) => k.tone({ at: 0.32, dur: 1.3, type: 'sawtooth', f0: f, level: 0.045, attack: 0.1 }));
-        k.noise({ at: 0.3, dur: 1.6, type: 'bandpass', f0: 400, f1: 1800, q: 0.8, level: 0.38, attack: 0.3 });
-        k.scatter(18, 0.3, 1.2, (at) => k.noise({ at, dur: 0.03, type: 'bandpass', f0: 2000 + Math.random() * 3000, q: 3, level: 0.25 }));
-      },
+      // Level burns v294: shared visual/audio timing in the layered renderer.
+      'burn-lvl-spark-snap': k => ShLevelBurns.sound('burn-lvl-spark-snap', k),
+      'burn-lvl-smoke-burst': k => ShLevelBurns.sound('burn-lvl-smoke-burst', k),
+      'burn-lvl-inferno-sweep': k => ShLevelBurns.sound('burn-lvl-inferno-sweep', k),
+      'burn-lvl-hellfire-spiral': k => ShLevelBurns.sound('burn-lvl-hellfire-spiral', k),
+      'burn-lvl-royal-incineration': k => ShLevelBurns.sound('burn-lvl-royal-incineration', k),
+      'burn-lvl-shitstorm': k => ShLevelBurns.sound('burn-lvl-shitstorm', k),
       // Seasonal burns
       'burn-valentine': (k) => { fireWhoosh(k, 0.5); [784, 988, 1175].forEach((f, i) => k.tone({ at: 0.08 + i * 0.1, dur: 0.5, type: 'triangle', f0: f, level: 0.12 })); },
       // Cannonball: a deep plunk into the water and a big splash (flash +
@@ -8502,217 +8453,12 @@ video {
       }
     }
 
-    // Lvl 5 Spark Snap: a snap of white-gold light, sparks shooting out and
-    // a small ember ring racing across the table (~1s).
-    function bfxSparkSnap(host, x, y, k) {
-      lbPileBurn(host, x, y, k, { glow: '#fb923c', cards: 2, dur: 380 });
-      lbGlow(host, x, y, 130 * k, 130 * k, 'radial-gradient(circle,#fff,rgba(254,215,170,.9) 18%,rgba(249,115,22,.45) 40%,transparent 68%)',
-        [{ transform: 'scale(.15)', opacity: 0 }, { transform: 'scale(.8)', opacity: 1, offset: .15 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 420, delay: 60, easing: 'ease-out' });
-      lbRing(host, x, y + 6 * k, k, { w: 200, color: '#f97316', core: '#fed7aa', width: 2.6, dash: '3 5', delay: 80, dur: 820, from: .15, to: 1.25 });
-      lbSparks(host, x, y, k, { n: 14, colors: ['#fde68a', '#fb923c'], dist: [30, 80], len: [8, 16], delay: [260, 340], dur: [300, 420] });
-      lbRing(host, x, y + 6 * k, k, { w: 120, color: '#fbbf24', core: '#fff', width: 1.2, delay: 60, dur: 520, from: .2, to: 1.1 });
-      lbSparks(host, x, y, k, { n: 36, colors: ['#fff7ed', '#fdba74', '#fb923c', '#fde047'], dist: [60, 170], len: [14, 32], delay: [40, 140], dur: [420, 700] });
-      lbSparks(host, x, y, k, { n: 8, colors: ['#fdba74'], dist: [90, 170], len: [18, 34], delay: [60, 120], dur: [520, 700], up: 1 });
-      lbEmbers(host, x, y + 4 * k, k, { n: 16, spread: 70, rise: [40, 100], delay: [180, 450], dur: [550, 800] });
-      lbSmoke(host, x, y, k, { n: 4, fill: 'radial-gradient(circle,rgba(120,113,108,.45),transparent 70%)', rise: [40, 80], size: [30, 50], delay: [150, 250], dur: [600, 750] });
-    }
-    // Lvl 20 Smoke Burst: a red flash, glowing cracks through the pile,
-    // charred scraps flung out, a column of dark smoke and drifting embers.
-    function bfxSmokeBurst(host, x, y, k) {
-      lbPileBurn(host, x, y, k, { glow: '#ef4444', cards: 3, dur: 650 });
-      lbGlow(host, x, y, 170 * k, 150 * k, 'radial-gradient(circle,#fee2e2,rgba(239,68,68,.85) 22%,rgba(127,29,29,.45) 45%,transparent 70%)',
-        [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .12 }, { transform: 'scale(.8)', opacity: .35, offset: .3 }, { transform: 'scale(1.1)', opacity: .8, offset: .42 }, { transform: 'scale(1.5)', opacity: 0 }], { duration: 700, easing: 'ease-out' });
-      // Cracks of red light across the table under the pile.
-      const cracks = [];
-      for (let i = 0; i < 9; i++) {
-        let px = 100, py = 50; const a = (i / 9) * Math.PI * 2 + bfxRand(-.2, .2), pts = [`${px},${py}`];
-        for (let s = 1; s <= 4; s++) { px = 100 + Math.cos(a + bfxRand(-.35, .35)) * s * 22; py = 50 + Math.sin(a + bfxRand(-.35, .35)) * s * 11; pts.push(`${px.toFixed(1)},${py.toFixed(1)}`); }
-        cracks.push(pts.join(' '));
-      }
-      const veins = bfxAdd(host, bfxSvg(200, 100, cracks.map(p => `<polyline points="${p}" fill="none" stroke="#dc2626" stroke-width="5" opacity=".5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="${p}" fill="none" stroke="#fecaca" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`).join('')), x, y + 8 * k, 200 * k, 100 * k);
-      veins.style.filter = `drop-shadow(0 0 ${5 * k}px #ef4444)`;
-      bfxAnimate(veins, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .2 }, { transform: 'scale(1.05)', opacity: .8, offset: .6 }, { transform: 'scale(1.1)', opacity: 0 }], { duration: 1000, delay: 40, easing: 'ease-out' });
-      lbShards(host, x, y, k, { n: 16, edge: '#ef4444', dist: [60, 140], delay: [60, 220], dur: [950, 1300] });
-      lbSmoke(host, x, y, k, { n: 24, fill: (i) => i % 5 === 2 ? 'radial-gradient(circle,rgba(185,28,28,.55),rgba(69,10,10,.35) 50%,transparent 70%)' : 'radial-gradient(circle,rgba(20,13,13,.97),rgba(10,6,6,.6) 50%,transparent 70%)', rise: [120, 230], size: [55, 115], delay: [80, 380], dur: [1150, 1550] });
-      lbEmbers(host, x, y, k, { n: 24, colors: ['#fca5a5', '#ef4444', '#f97316'], spread: 70, rise: [90, 190], delay: [200, 700], dur: [800, 1150] });
-    }
-    // Lvl 40 Inferno Sweep: a ring of flame races round the pile, the cards
-    // catch and burn, and scorched scraps are swept out in a spiral.
-    function bfxInfernoSweep(host, x, y, k) {
-      const fire = ['#9a3412', '#f97316', '#fef3c7'];
-      lbGlow(host, x, y + 10 * k, 260 * k, 110 * k, 'radial-gradient(ellipse,rgba(251,146,60,.55),rgba(154,52,18,.3) 45%,transparent 70%)',
-        [{ opacity: 0 }, { opacity: 1, offset: .3 }, { opacity: .9, offset: .7 }, { opacity: 0 }], { duration: 1800, easing: 'ease-in-out' });
-      // The sweep: a bright head runs once round the ellipse; flame tongues
-      // spring up behind it in order.
-      const RX = 110 * k, RY = 42 * k, N = 20;
-      const head = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff,#fde68a 30%,rgba(249,115,22,.6) 55%,transparent 72%)"></div>', x, y + 10 * k, 46 * k, 46 * k);
-      bfxAnimate(head, Array.from({ length: 13 }, (_, i) => { const a = Math.PI / 2 + (i / 12) * Math.PI * 2; return { transform: `translate(${Math.cos(a) * RX}px,${Math.sin(a) * RY}px) scale(${i === 0 || i === 12 ? .4 : 1})`, opacity: i === 12 ? 0 : 1 }; }), { duration: 760, delay: 60, easing: 'linear' });
-      for (let i = 0; i < N; i++) {
-        const a = Math.PI / 2 + (i / N) * Math.PI * 2, fx = x + Math.cos(a) * RX, fy = y + 10 * k + Math.sin(a) * RY;
-        const back = Math.sin(a) < 0, size = (back ? 34 : 46) * k * bfxRand(.85, 1.15);
-        const el = lbFlame(host, fx, fy, k, size, fire, null, { duration: bfxRand(720, 880), delay: 60 + (i / N) * 760, easing: 'ease-in-out' });
-        el.style.zIndex = back ? 1 : 3;
-      }
-      lbRing(host, x, y + 10 * k, k, { w: 240, color: '#f97316', core: '#fde68a', width: 2, delay: 700, dur: 700, from: .95, to: 1.3 });
-      lbPileBurn(host, x, y, k, { glow: '#f97316', cards: 3, delay: 300, dur: 800 });
-      for (let i = 0; i < 5; i++) lbFlame(host, x + (i - 2) * 12 * k, y + 6 * k, k, bfxRand(50, 72) * k, fire, null, { duration: bfxRand(900, 1100), delay: 380 + i * 50, easing: 'ease-in-out' });
-      // Ash swept outward in a turning spiral.
-      for (let i = 0; i < 20; i++) {
-        const a0 = bfxRand(0, Math.PI * 2), s = bfxRand(8, 15) * k;
-        const el = bfxAdd(host, lbShardSvg('#fb923c', '#1c1310'), x, y, s, s);
-        el.style.filter = `drop-shadow(0 0 ${3 * k}px #f97316)`;
-        bfxAnimate(el, [0, .25, .5, .75, 1].map((t) => { const a = a0 + t * 2.4, r = (20 + t * bfxRand(110, 160)) * k; return { transform: `translate(${Math.cos(a) * r}px,${Math.sin(a) * r * .45 - t * 50 * k}px) rotate(${t * 540}deg) scale(${1 - t * .5})`, opacity: t === 0 ? 0 : t === 1 ? 0 : 1 }; }), { duration: bfxRand(900, 1150), delay: bfxRand(620, 860), easing: 'ease-out' });
-      }
-      lbEmbers(host, x, y, k, { n: 20, spread: 110, rise: [60, 150], delay: [400, 900], dur: [700, 1000] });
-      lbSmoke(host, x, y, k, { n: 8, fill: 'radial-gradient(circle,rgba(68,54,48,.6),transparent 70%)', rise: [90, 160], size: [40, 70], delay: [800, 1000], dur: [800, 1000], spread: 60 });
-    }
-    // Lvl 60 Hellfire Spiral: a rune circle lights under the pile, a fire
-    // vortex rises and pulls glowing card pieces up in a spiral.
-    function bfxHellfireSpiral(host, x, y, k) {
-      const fire = ['#7f1d1d', '#ef4444', '#fde68a'];
-      const runes = Array.from({ length: 12 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return `<path d="M${50 + Math.cos(a) * 40} ${50 + Math.sin(a) * 40} L${50 + Math.cos(a) * 46} ${50 + Math.sin(a) * 46}" />`; }).join('');
-      const star = Array.from({ length: 5 }, (_, i) => { const a = -Math.PI / 2 + (i * 4 * Math.PI) / 5; return `${(50 + Math.cos(a) * 36).toFixed(1)},${(50 + Math.sin(a) * 36).toFixed(1)}`; }).join(' ');
-      const circle = bfxAdd(host, bfxSvg(100, 100, `<g fill="none" stroke="#f87171" stroke-width="1.6"><circle cx="50" cy="50" r="47"/><circle cx="50" cy="50" r="38" stroke-dasharray="4 3"/><polygon points="${star}" stroke-width="1.2"/><g stroke="#fecaca" stroke-width="2">${runes}</g></g>`), x, y + 10 * k, 230 * k, 230 * k);
-      circle.style.filter = `drop-shadow(0 0 ${6 * k}px #ef4444)`;
-      bfxAnimate(circle, [{ transform: 'scaleY(.36) rotate(0deg) scale(.3)', opacity: 0 }, { transform: 'scaleY(.36) rotate(60deg) scale(1)', opacity: 1, offset: .2 },
-        { transform: 'scaleY(.36) rotate(220deg) scale(1)', opacity: 1, offset: .8 }, { transform: 'scaleY(.36) rotate(270deg) scale(1.1)', opacity: 0 }], { duration: 1900, easing: 'linear' });
-      lbGlow(host, x, y, 150 * k, 150 * k, 'radial-gradient(circle,#fff7ed,rgba(239,68,68,.8) 25%,rgba(127,29,29,.35) 50%,transparent 70%)',
-        [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .2 }, { transform: 'scale(1.4)', opacity: 0 }], { duration: 520, delay: 80, easing: 'ease-out' });
-      lbPileBurn(host, x, y, k, { glow: '#ef4444', cards: 3, delay: 100, dur: 700 });
-      // The column: a hot core of light and flames stacked in a twisting spiral.
-      const core = bfxAdd(host, `<div style="width:100%;height:100%;border-radius:50%;filter:blur(${10 * k}px);background:linear-gradient(0deg,rgba(255,237,213,.95),rgba(251,146,60,.8) 35%,rgba(220,38,38,.5) 70%,transparent)"></div>`, x, y - 110 * k, 60 * k, 240 * k);
-      core.style.transformOrigin = '50% 100%'; core.style.mixBlendMode = 'screen';
-      bfxAnimate(core, [{ transform: 'scaleY(0) scaleX(.5)', opacity: 0 }, { transform: 'scaleY(.7) scaleX(1)', opacity: 1, offset: .3 }, { transform: 'scaleY(1) scaleX(.8)', opacity: .9, offset: .75 }, { transform: 'scaleY(1.1) scaleX(.3)', opacity: 0 }], { duration: 1500, delay: 180, easing: 'ease-out' });
-      for (let i = 0; i < 16; i++) {
-        const t = i / 15, a = t * Math.PI * 3.2, r = (26 - 14 * t) * k, h = (70 - 30 * t) * k;
-        const fx = x + Math.cos(a) * r, fy = y + 6 * k - t * 190 * k;
-        const el = lbFlame(host, fx, fy, k, h, i % 3 ? fire : ['#b91c1c', '#fb923c', '#fff7ed'],
-          [{ transform: `rotate(${Math.sin(a) * 25}deg) scale(.2,.1)`, opacity: 0 }, { transform: `rotate(${Math.sin(a) * 25}deg) scale(1,1.2)`, opacity: 1, offset: .25 },
-            { transform: `rotate(${-Math.sin(a) * 20}deg) scale(.8,1.5) translateX(${Math.cos(a) * 10}px)`, opacity: 1, offset: .6 }, { transform: `rotate(${Math.sin(a) * 30}deg) scale(.3,1.8) translateY(-20%)`, opacity: 0 }],
-          { duration: bfxRand(700, 900), delay: 220 + i * 45, easing: 'ease-in-out' });
-        el.style.zIndex = Math.sin(a) > 0 ? 3 : 1;
-      }
-      // Fire ribbons and card pieces winding up the vortex.
-      const helix = (el, a0, r0, H, turns, spin, opts) => bfxAnimate(el, Array.from({ length: 9 }, (_, i) => {
-        const t = i / 8, a = a0 + t * turns * Math.PI * 2, r = r0 * (1 - .45 * t) * k, depth = Math.sin(a);
-        return { transform: `translate(${Math.cos(a) * r}px,${-t * H * k + depth * 6 * k}px) rotate(${t * spin}deg) scale(${.75 + .3 * depth})`, opacity: t === 0 || t === 1 ? 0 : 1, zIndex: depth > 0 ? 3 : 1 };
-      }), opts);
-      for (let i = 0; i < 10; i++) {
-        const gid = `bfx-g-${++bfxGradientSeq}`;
-        const el = bfxAdd(host, bfxSvg(60, 20, `<defs><linearGradient id="${gid}"><stop offset="0" stop-color="#ef4444" stop-opacity="0"/><stop offset=".6" stop-color="#fb923c"/><stop offset="1" stop-color="#fff7ed"/></linearGradient></defs><path d="M2 15C18 2 38 2 58 8 40 13 20 16 2 15Z" fill="url(#${gid})"/>`), x, y, 70 * k, 24 * k);
-        el.style.mixBlendMode = 'screen'; el.style.filter = `drop-shadow(0 0 ${4 * k}px #f97316)`;
-        helix(el, (i / 10) * Math.PI * 2, 60, 230, 1.6, 200, { duration: 1300, delay: 240 + i * 45, easing: 'ease-in' });
-      }
-      for (let i = 0; i < 16; i++) {
-        const card = i % 3 === 0;
-        const el = bfxAdd(host, card ? lbCardSvg(true) : lbShardSvg('#fb923c', '#2a1410'), x, y, (card ? 20 : bfxRand(9, 14)) * k, (card ? 28 : bfxRand(9, 14)) * k);
-        el.style.filter = `drop-shadow(0 0 ${4 * k}px #f97316)`;
-        helix(el, bfxRand(0, Math.PI * 2), bfxRand(40, 80), bfxRand(200, 280), bfxRand(1.2, 1.8), bfxRand(-400, 400), { duration: bfxRand(1250, 1550), delay: bfxRand(200, 480), easing: 'ease-in' });
-      }
-      lbEmbers(host, x, y, k, { n: 26, colors: ['#fecaca', '#ef4444', '#fb923c'], spread: 50, rise: [160, 260], delay: [250, 800], dur: [800, 1150] });
-      lbSmoke(host, x, y - 40 * k, k, { n: 8, fill: 'radial-gradient(circle,rgba(69,20,15,.55),transparent 70%)', rise: [150, 230], size: [50, 80], delay: [400, 700], dur: [1000, 1250], spread: 40 });
-    }
-    // The crown sigil (Royal Incineration) in gold.
-    function lbCrownSvg(gid) {
-      return bfxSvg(120, 100, `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbeb"/><stop offset=".45" stop-color="#fcd34d"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs>
-        <g fill="none" stroke="url(#${gid})" stroke-linejoin="round" stroke-linecap="round">
-        <path d="M14 70 8 26 36 50 60 8 84 50 112 26 106 70Z" stroke-width="5"/><path d="M14 70 8 26 36 50 60 8 84 50 112 26 106 70Z" stroke="#fff" stroke-width="1.4" opacity=".8"/>
-        <ellipse cx="60" cy="76" rx="48" ry="7" stroke-width="5"/><path d="M36 50 40 64M84 50 80 64M60 8V60" stroke-width="2.4"/></g>
-        <g fill="url(#${gid})"><circle cx="8" cy="24" r="5"/><circle cx="60" cy="6" r="6"/><circle cx="112" cy="24" r="5"/><path d="M60 64 66 72 60 80 54 72Z"/></g>
-        <g transform="translate(48 82) scale(1.2)" fill="url(#${gid})">${LB_SUITS.spade}</g>`);
-    }
-    // Lvl 80 Royal Incineration: a pillar of golden light, a crown sigil
-    // over the pile, and the cards thrown up in regal golden fire.
-    function bfxRoyalIncineration(host, x, y, k) {
-      const gold = ['#92400e', '#f59e0b', '#fffbeb'];
-      for (let i = 0; i < 5; i++) {
-        const w = [70, 34, 22, 14, 10][i] * k, h = 280 * k;
-        const beam = bfxAdd(host, `<div style="width:100%;height:100%;background:linear-gradient(0deg,rgba(251,191,36,.0),rgba(253,230,138,${i ? .55 : .35}) 30%,rgba(255,251,235,${i ? .8 : .45}) 60%,transparent);filter:blur(${(i ? 2 : 8) * k}px)"></div>`, x + (i ? (i % 2 ? -1 : 1) * i * 12 * k : 0), y - h / 2 + 10 * k, w, h);
-        beam.style.transformOrigin = '50% 100%';
-        bfxAnimate(beam, [{ transform: 'scaleY(0)', opacity: 0 }, { transform: 'scaleY(1)', opacity: 1, offset: .3 }, { transform: 'scaleY(1.02)', opacity: .8, offset: .75 }, { transform: 'scaleY(1.05) scaleX(.3)', opacity: 0 }], { duration: 1600, delay: i * 50, easing: 'ease-out' });
-      }
-      lbRing(host, x, y + 10 * k, k, { w: 200, color: '#f59e0b', core: '#fef3c7', width: 2, delay: 150, dur: 900, from: .3, to: 1.2 });
-      lbRing(host, x, y + 10 * k, k, { w: 140, color: '#fbbf24', core: '#fff', width: 1.2, dash: '2 4', delay: 250, dur: 900, from: .3, to: 1.3 });
-      const crown = bfxAdd(host, lbCrownSvg(`bfx-g-${++bfxGradientSeq}`), x, y - 118 * k, 120 * k, 100 * k);
-      crown.style.filter = `drop-shadow(0 0 ${8 * k}px #fbbf24) drop-shadow(0 0 ${2 * k}px #fff)`;
-      bfxAnimate(crown, [{ transform: 'translateY(20px) scale(.3)', opacity: 0 }, { transform: 'translateY(-4px) scale(1.08)', opacity: 1, offset: .22 },
-        { transform: 'translateY(0) scale(1)', opacity: 1, offset: .35 }, { transform: 'translateY(-8px) scale(1)', opacity: 1, offset: .75 }, { transform: 'translateY(-20px) scale(1.15)', opacity: 0 }], { duration: 1750, delay: 220, easing: 'ease-in-out' });
-      lbPileBurn(host, x, y, k, { glow: '#fbbf24', cards: 3, delay: 350, dur: 800 });
-      for (let i = 0; i < 9; i++) lbFlame(host, x + (i - 4) * 13 * k, y + 8 * k, k, bfxRand(46, 78) * k * (1 - Math.abs(i - 4) * .08), gold, null, { duration: bfxRand(1000, 1250), delay: 380 + Math.abs(i - 4) * 40, easing: 'ease-in-out' });
-      // Cards thrown out, burning at the edges.
-      for (let i = 0; i < 8; i++) {
-        const side = i % 2 ? 1 : -1, el = bfxAdd(host, lbCardSvg(i % 4 === 3, ['spade', 'club', 'heart', 'diamond'][i % 4], i % 4 > 1 ? '#b91c1c' : '#111827'), x, y, 26 * k, 36 * k);
-        el.style.filter = `drop-shadow(0 0 ${6 * k}px #f59e0b)`;
-        const dx = side * bfxRand(70, 140) * k, dy = -bfxRand(40, 120) * k, rot = side * bfxRand(120, 300);
-        bfxAnimate(el, [{ transform: 'translate(0,0) rotate(0) scale(.6)', opacity: 0, filter: 'brightness(1)' }, { transform: `translate(${dx * .2}px,${dy * .3}px) rotate(${rot * .2}deg) scale(1)`, opacity: 1, offset: .12 },
-          { transform: `translate(${dx * .75}px,${dy}px) rotate(${rot * .7}deg) scale(.9)`, opacity: 1, filter: 'brightness(1.3) sepia(.5)', offset: .6 },
-          { transform: `translate(${dx}px,${dy + 40 * k}px) rotate(${rot}deg) scale(.5)`, opacity: 0, filter: 'brightness(.2)' }], { duration: bfxRand(1000, 1250), delay: 420 + i * 30, easing: 'cubic-bezier(.2,.6,.4,1)' });
-      }
-      for (let i = 0; i < 20; i++) {
-        const a = bfxRand(0, Math.PI * 2), d = bfxRand(50, 140) * k, s = bfxRand(8, 15) * k;
-        const st = bfxAdd(host, bfxStar4(['#fffbeb', '#fde68a', '#fbbf24'][i % 3]), x + bfxRand(-20, 20) * k, y - bfxRand(0, 120) * k, s, s);
-        bfxAnimate(st, [{ transform: 'translate(0,0) scale(0) rotate(0)', opacity: 0 }, { transform: `translate(${Math.cos(a) * d * .4}px,${Math.sin(a) * d * .4}px) scale(1.1) rotate(90deg)`, opacity: 1, offset: .4 },
-          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) scale(0) rotate(180deg)`, opacity: 0 }], { duration: bfxRand(700, 950), delay: bfxRand(500, 1000), easing: 'ease-out' });
-      }
-      lbEmbers(host, x, y, k, { n: 18, colors: ['#fef3c7', '#fbbf24', '#f59e0b'], spread: 70, rise: [110, 200], delay: [500, 1000], dur: [700, 1000] });
-    }
-    // The ShitStorm's throne sigil: a black-and-gold crown of the four suits.
-    function lbThroneSvg(gid) {
-      const suit = (s, tx, ty, sc, fill) => `<g transform="translate(${tx} ${ty}) scale(${sc})" fill="${fill}" stroke="url(#${gid})" stroke-width="${1.6 / sc * 1.4}" stroke-linejoin="round">${LB_SUITS[s]}</g>`;
-      return bfxSvg(140, 130, `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbeb"/><stop offset=".5" stop-color="#fbbf24"/><stop offset="1" stop-color="#92400e"/></linearGradient></defs>
-        <path d="M20 112 12 52 38 76 50 34 70 60 90 34 102 76 128 52 120 112Z" fill="#0c0a09" stroke="url(#${gid})" stroke-width="4" stroke-linejoin="round"/>
-        <path d="M30 104 26 72M110 104 114 72M70 112V84" stroke="url(#${gid})" stroke-width="2" opacity=".8"/>
-        <rect x="16" y="108" width="108" height="12" rx="4" fill="#1c1917" stroke="url(#${gid})" stroke-width="3"/>
-        ${suit('spade', 44, 0, 2.6, '#0c0a09')}${suit('club', 6, 54, 1.7, '#0c0a09')}${suit('diamond', 100, 54, 1.7, '#b91c1c')}${suit('heart', 53, 84, 1.7, '#b91c1c')}`);
-    }
-    // Lvl 99 The ShitStorm: the sky goes dark, gold shockwaves rip across
-    // the table, a crown of the four suits rises out of a black-and-gold
-    // fire tornado and a storm of suits and burning cards tears outward.
-    function bfxShitStorm(host, x, y, k) {
-      lbGlow(host, x, y, 260 * k, 260 * k, 'radial-gradient(circle,rgba(0,0,0,.85),rgba(12,10,9,.6) 45%,transparent 72%)',
-        [{ transform: 'scale(1.4)', opacity: 0 }, { transform: 'scale(.6)', opacity: 1, offset: .5 }, { transform: 'scale(1.6)', opacity: 0 }], { duration: 1900, easing: 'ease-in-out' });
-      lbGlow(host, x, y, 190 * k, 190 * k, 'radial-gradient(circle,#fff,rgba(253,230,138,.95) 20%,rgba(245,158,11,.5) 42%,transparent 70%)',
-        [{ transform: 'scale(.1)', opacity: 0 }, { transform: 'scale(.1)', opacity: 1, offset: .02 }, { transform: 'scale(1.2)', opacity: .9, offset: .3 }, { transform: 'scale(1.7)', opacity: 0 }], { duration: 650, delay: 240, easing: 'ease-out' });
-      [240, 420, 620].forEach((d, i) => lbRing(host, x, y + 10 * k, k, { w: 260, color: i === 1 ? '#dc2626' : '#f59e0b', core: '#fef3c7', width: 2.2 - i * .4, delay: d, dur: 900, from: .15, to: 1.35 }));
-      lbPileBurn(host, x, y, k, { glow: '#fbbf24', cards: 4, delay: 180, dur: 700 });
-      // The tornado: black smoke and gold fire winding up round the column.
-      const helix = (el, a0, r0, H, turns, spin, opts) => bfxAnimate(el, Array.from({ length: 9 }, (_, i) => {
-        const t = i / 8, a = a0 + t * turns * Math.PI * 2, r = (r0 * (.5 + .7 * t)) * k;
-        return { transform: `translate(${Math.cos(a) * r}px,${-t * H * k}px) rotate(${t * spin}deg) scale(${.5 + t})`, opacity: t === 0 || t === 1 ? 0 : 1 };
-      }), opts);
-      for (let i = 0; i < 18; i++) {
-        const s = bfxRand(40, 70) * k;
-        const el = bfxAdd(host, `<div style="width:100%;height:100%;border-radius:50%;filter:blur(${5 * k}px);background:${i % 4 === 1 ? 'radial-gradient(circle,rgba(251,191,36,.7),rgba(146,64,14,.35) 50%,transparent 70%)' : 'radial-gradient(circle,rgba(10,8,8,.95),rgba(28,25,23,.55) 50%,transparent 70%)'}"></div>`, x, y, s, s);
-        helix(el, (i / 18) * Math.PI * 2, 30, bfxRand(170, 230), 1.4, 160, { duration: bfxRand(1250, 1500), delay: 260 + i * 18, easing: 'ease-in' });
-      }
-      for (let i = 0; i < 4; i++) lbFlame(host, x + (i - 1.5) * 12 * k, y + 6 * k, k, bfxRand(80, 110) * k, i % 2 ? ['#1c1917', '#f59e0b', '#fffbeb'] : ['#78350f', '#fbbf24', '#fff'],
-        [{ transform: 'scale(.3,.05)', opacity: 0 }, { transform: 'scale(.9,1.3)', opacity: 1, offset: .25 }, { transform: 'scale(.7,1.8) skewX(8deg)', opacity: 1, offset: .6 }, { transform: 'scale(.4,2.3)', opacity: 0 }], { duration: 1300, delay: 300 + i * 50, easing: 'ease-in-out' });
-      // The throne sigil.
-      const throne = bfxAdd(host, lbThroneSvg(`bfx-g-${++bfxGradientSeq}`), x, y - 130 * k, 140 * k, 130 * k);
-      throne.style.filter = `drop-shadow(0 0 ${9 * k}px #f59e0b) drop-shadow(0 0 ${2 * k}px #fff7ed)`;
-      bfxAnimate(throne, [{ transform: 'translateY(60px) scale(.2) rotate(-8deg)', opacity: 0 }, { transform: 'translateY(-6px) scale(1.12) rotate(2deg)', opacity: 1, offset: .2 },
-        { transform: 'translateY(0) scale(1) rotate(0)', opacity: 1, offset: .32 }, { transform: 'translateY(-6px) scale(1.02)', opacity: 1, offset: .78 }, { transform: 'translateY(-26px) scale(1.25)', opacity: 0 }], { duration: 1750, delay: 320, easing: 'ease-in-out' });
-      // The storm of suits.
-      const kinds = [['spade', '#0c0a09'], ['club', '#0c0a09'], ['heart', '#b91c1c'], ['diamond', '#b91c1c']];
-      for (let i = 0; i < 36; i++) {
-        const [s, fill] = kinds[i % 4], sz = bfxRand(10, 22) * k, a0 = bfxRand(0, Math.PI * 2), d = bfxRand(90, 190) * k;
-        const el = bfxAdd(host, lbSuitSvg(s, fill, '#fbbf24', 1.4), x, y - 30 * k, sz, sz);
-        el.style.filter = `drop-shadow(0 0 ${3 * k}px #f59e0b)`;
-        bfxAnimate(el, [0, .3, .65, 1].map(t => { const a = a0 + t * 1.6, r = d * t; return { transform: `translate(${Math.cos(a) * r}px,${Math.sin(a) * r * .75 - t * 30 * k}px) rotate(${t * bfxRand(300, 600)}deg) scale(${t === 0 ? .2 : 1 - t * .3})`, opacity: t === 0 || t === 1 ? 0 : 1 }; }), { duration: bfxRand(1050, 1400), delay: bfxRand(280, 560), easing: 'cubic-bezier(.2,.6,.4,1)' });
-      }
-      // Burning cards torn outward.
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2 + bfxRand(-.2, .2), d = bfxRand(110, 170) * k;
-        const el = bfxAdd(host, lbCardSvg(i % 2 === 0, ['spade', 'heart', 'club', 'diamond'][i % 4], i % 4 === 1 || i % 4 === 3 ? '#b91c1c' : '#111827'), x, y - 20 * k, 26 * k, 36 * k);
-        el.style.filter = `drop-shadow(0 0 ${6 * k}px #f59e0b)`;
-        const rot = bfxRand(-360, 360);
-        bfxAnimate(el, [{ transform: 'translate(0,0) rotate(0) scale(.4)', opacity: 0, filter: 'brightness(1)' }, { transform: `translate(${Math.cos(a) * d * .3}px,${Math.sin(a) * d * .3}px) rotate(${rot * .3}deg) scale(1)`, opacity: 1, offset: .15 },
-          { transform: `translate(${Math.cos(a) * d * .8}px,${Math.sin(a) * d * .7}px) rotate(${rot * .8}deg) scale(.95)`, opacity: 1, filter: 'brightness(1.4) sepia(.6)', offset: .65 },
-          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d * .8 + 30 * k}px) rotate(${rot}deg) scale(.5)`, opacity: 0, filter: 'brightness(.1)' }], { duration: bfxRand(1050, 1300), delay: 300 + i * 25, easing: 'cubic-bezier(.2,.6,.4,1)' });
-      }
-      lbSparks(host, x, y, k, { n: 28, colors: ['#fffbeb', '#fde68a', '#f59e0b', '#fca5a5'], dist: [90, 190], len: [16, 36], delay: [240, 340], dur: [500, 780] });
-      lbEmbers(host, x, y, k, { n: 24, colors: ['#fef3c7', '#fbbf24', '#ef4444'], spread: 90, rise: [140, 240], delay: [500, 1100], dur: [700, 950] });
-    }
+    function bfxSparkSnap(host, x, y, k) { return ShLevelBurns.play('burn-lvl-spark-snap', host, x, y, k, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches); }
+    function bfxSmokeBurst(host, x, y, k) { return ShLevelBurns.play('burn-lvl-smoke-burst', host, x, y, k, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches); }
+    function bfxInfernoSweep(host, x, y, k) { return ShLevelBurns.play('burn-lvl-inferno-sweep', host, x, y, k, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches); }
+    function bfxHellfireSpiral(host, x, y, k) { return ShLevelBurns.play('burn-lvl-hellfire-spiral', host, x, y, k, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches); }
+    function bfxRoyalIncineration(host, x, y, k) { return ShLevelBurns.play('burn-lvl-royal-incineration', host, x, y, k, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches); }
+    function bfxShitStorm(host, x, y, k) { return ShLevelBurns.play('burn-lvl-shitstorm', host, x, y, k, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches); }
     function playBurnFx(id, host, x, y, scale = 1) {
       if (!host) return false;
       ({ 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
@@ -8730,6 +8476,7 @@ video {
       bfxAnimate(el, [{ opacity: 0 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 700, easing: 'ease-out' });
     }
     function playBurnEffect(effect, x, y) {
+      if (ShLevelBurns.index(effect) >= 0) return playBurnFx(effect, document.getElementById('burnFxLayer'), x, y, .72);
       if (typeof reduceMotion !== 'undefined' && reduceMotion) return playCalmBurn(x, y);
       if (effect === 'burn-ice') return triggerBurnEmberExplosion(x, y, ['#e0f2fe','#7dd3fc','#38bdf8','#ffffff'], 70);
       if (SHAPE_BURN_EFFECTS.has(effect)) {
@@ -20034,6 +19781,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v294: [[ '🔥', 'The six level-reward Burns now have cinematic artwork, layered animations and matching sounds.' ]],
       v293: [
         [ '💡', 'Ten more helper tips: pickups, burns, the 3, last cards, swapping, Gauntlet lives, the Inbox, levelling up and Ranked.' ]
       ],
@@ -23371,6 +23119,7 @@ video {
     }
 
     function burnPreviewIcon(id) {
+      if (ShLevelBurns.index(id) >= 0) return ShLevelBurns.icon(id);
       return { 'burn-ice': '❄️', 'burn-electric': '⚡', 'burn-sweets': '🍬', 'burn-paint': '🎨', 'burn-smoke': '💨',
         'burn-blackhole': '🕳️', 'burn-origami': '🦢', 'burn-pixel': '👾', 'burn-lava': '🌋',
         'burn-lvl-spark-snap': '✨', 'burn-lvl-smoke-burst': '💨', 'burn-lvl-inferno-sweep': '🔥', 'burn-lvl-hellfire-spiral': '🌪️', 'burn-lvl-royal-incineration': '👑', 'burn-lvl-shitstorm': '💩' }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('burn-', '')]?.burnIcon || '🔥';
@@ -24760,6 +24509,7 @@ video {
 
     function playShopBurnPreview(id, stage, scale = .62) {
       if (!stage) return false;
+      ShLevelBurns.clear(stage);
       audio.playBurnSound(id);
       stage.querySelectorAll('.shop-burn-particle, .bfx, .bfx-flash').forEach(node => node.remove());
       if (SHAPE_BURN_EFFECTS.has(id)) {

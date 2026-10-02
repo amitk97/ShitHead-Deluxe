@@ -169,3 +169,14 @@ Every table is a full-screen scene, with defining features spread across it. The
 ### Owner-approved theme details (1 October 2026)
 
 Casino uses the existing deep green surface with subtle diagonals running top-left to bottom-right; Royal uses the existing purple surface with fine gold crosshatching. Both are continuous patterns, with no chips, suit symbols or crowns. Preserve fixed, uniform pattern spacing through the shared responsive renderer. Fireside is an indoor Christmas room with fireplace, garlands and wreath, without trees or snowflakes. Candlelit Dinner has no flowers or petals. Jungle is a dense forest with layered canopy, trunks, vines and undergrowth, rather than isolated oversized leaves.
+
+## Cinematic animation construction — level-burn reference (v294)
+
+The six level-reward Burns in `art/burns/level-v294/` establish the owner-approved direction for future Burn, Joker and other animations: sculpted game-stylised forms, convincing material depth, saturated focal colours, controlled bloom and clear themed actions. Use paper folds, dimensional metal/gems, volumetric smoke and weighted liquid where relevant.
+
+- Thumbnails may show a composed action diorama. In play, use transparent components; never slide, rotate or zoom an entire framed thumbnail as the effect.
+- Separate subject, cards, glow, smoke, fire arcs and fragments. Give each an action appropriate to its material.
+- Each effect needs a distinct silhouette and movement: sparks snap, smoke expands, fire sweeps, a vortex rises, a crown releases gold fire, and the ShitStorm mascot appears within a whirlwind.
+- Build anticipation, one dominant payoff and a clean finish within 1–2.5 seconds. Time the unique sound from the same impact constants as the animation.
+- Keep the presentation background/frame out of gameplay. Limit the footprint around the affected cards and use a moderate particle budget.
+- Inspect at 40px and at preview size; simplify details that disappear. Provide a stationary reduced-motion dissolve, clean replay behaviour, and background cleanup.
