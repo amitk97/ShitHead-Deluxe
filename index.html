@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v275 (ShitHead-Deluxe-224) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v276 (ShitHead-Deluxe-225) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -19274,7 +19274,10 @@ video {
         const justClosed = EXCLUSIVE_PAGE_IDS.filter(other => other !== id && now - (pageHiddenAt[other] || 0) <= PAGE_TRAIL_WINDOW_MS)
           .sort((a, b) => pageHiddenAt[b] - pageHiddenAt[a])[0];
         const from = stillOpen || justClosed;
-        if (from && pageTrail[from] !== id) pageTrail[id] = from; else delete pageTrail[id];
+        // The newest move wins: Custom → Profile → (showcase) Custom makes Back
+        // from Custom go to Profile and drops Profile's old link back to Custom,
+        // instead of losing both (v276; before, Back from Custom just closed).
+        if (from) { if (pageTrail[from] === id) delete pageTrail[from]; pageTrail[id] = from; } else delete pageTrail[id];
       }
       closeOtherMenuPages(id);
     });
@@ -19816,6 +19819,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v276: [
+        [ '↩️', 'Back from Custom returns to Profile when you opened it from your showcase.' ],
+        [ '👆', 'Holding an item in Custom right after switching tabs opens its big preview.' ],
+        [ '🎨', 'Signed out, your free table, card back and other free picks stay equipped when you open Custom.' ]
+      ],
       v275: [
         [ '🏆', "Gauntlet: once a run is finished, View Result shows it again." ],
         [ '📌', 'Card Powers and the Play Matrix stay where you put them while cards are played.' ],
@@ -22643,6 +22651,18 @@ video {
       // Clean dry cheeks. Each droplet forms at an eye, falls, then disappears.
       const tears = [[315,668,0],[687,666,-1.5]].map(([x,y,delay]) => `<g transform="translate(${x} ${y})" data-tear-origin="${x},${y}"><g class="av-art-tear" style="animation-delay:${delay}s;transform-origin:0px 0px"><path d="M0-24C-7-10-32 19-32 39a32 32 0 0064 0C32 19 7-10 0-24Z" fill="url(#v267-tear-fill)" stroke="#a4eaff" stroke-width="3"/><path d="M-14 28q-9 18 0 28" fill="none" stroke="#edffff" stroke-width="5" stroke-linecap="round"/></g></g>`).join('');
       animations['avatar-shithead'] = `<defs><radialGradient id="v267-tear-fill" cx=".3" cy=".3"><stop stop-color="#d8ffff"/><stop offset=".45" stop-color="#46d4fd"/><stop offset="1" stop-color="#0789c9"/></radialGradient></defs>` + image('avatar-shithead') + tears;
+      // Gradients, masks and clips are drawn once in a shared hidden SVG
+      // (#approvedAvatarDefs), never inside each tile: several copies of the
+      // same avatar on one page repeated their ids (v276).
+      const sharedDefs = [];
+      Object.keys(animations).forEach(id => {
+        animations[id] = animations[id].replace(/<defs>([\s\S]*?)<\/defs>/g, (m, inner) => { sharedDefs.push(inner); return ''; });
+      });
+      if (sharedDefs.length && typeof document.getElementById === 'function' && document.body && !document.getElementById('approvedAvatarDefs')) {
+        const holder = document.createElement('div');
+        holder.innerHTML = `<svg id="approvedAvatarDefs" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs>${sharedDefs.join('')}</defs></svg>`;
+        document.body.prepend(holder.firstElementChild);
+      }
       APPROVED_AVATAR_IDS.forEach(id => {
         AVATAR_ART[id] = {photo:true,edgeToEdge:true,tone:AVATAR_ART[id]?.tone || 'gold',animated:!!animations[id],art:animations[id] || image(id)};
       });
@@ -23206,14 +23226,19 @@ video {
         const type = tile.dataset.equipType || '';
         if (!id || !bigPreviewItem(id, type)) return;
         cancel();
-        hold = { x: e.clientX, y: e.clientY, timer: setTimeout(() => {
+        hold = { tile, x: e.clientX, y: e.clientY, timer: setTimeout(() => {
           hold = null;
           if (openBigPreview(id, type)) { swallowClick = true; if (navigator.vibrate) try { navigator.vibrate(8); } catch (err) {} }
         }, CARD_HOLD_MS) };
       }, true);
       document.addEventListener('pointermove', (e) => { if (hold && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > 8) cancel(); }, true);
       ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, cancel, true));
-      document.addEventListener('scroll', cancel, true);
+      // Only a scroll that moves the held tile cancels (v276): a tab strip
+      // gliding to its selected tab used to cancel every hold made just after.
+      document.addEventListener('scroll', (e) => {
+        const t = e.target;
+        if (hold && (t === document || t === document.documentElement || !t.contains || t.contains(hold.tile))) cancel();
+      }, true);
       document.addEventListener('click', (e) => {
         if (!swallowClick) return;
         swallowClick = false;
@@ -23531,8 +23556,12 @@ video {
     function loadCosmeticCollection(user = currentUser) {
       const startedAt = Date.now();
       if (!user) {
+        // A guest owns only the free items: keep any free pick (Oak Wood, a
+        // linen back…) instead of resetting it every time Custom opens (v276).
+        const kept = { ...equippedCosmetics };
         cosmeticPurchaseState = {};
         equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS };
+        Object.keys(kept).forEach(type => { if (type in equippedCosmetics && canRestoreEquippedCosmetic(type, kept[type], {})) equippedCosmetics[type] = kept[type]; });
         applyEquippedCosmetics();
         renderPersonalisationCosmetics();
         return Promise.resolve();

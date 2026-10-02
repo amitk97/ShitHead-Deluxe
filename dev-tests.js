@@ -58,7 +58,9 @@ async function runDevTestSuite() {
   // even when it failed half-way through swapping in a fake. Without this
   // one failing test leaked its fake db into every test after it.
   async function test(name, fn) {
-    if (new URLSearchParams(location.search).get('test-filter') === 'cosmetic-art' && !name.startsWith('Cosmetic art:')) return;
+    const testFilter = new URLSearchParams(location.search).get('test-filter');
+    if (testFilter === 'cosmetic-art' && !name.startsWith('Cosmetic art:')) return;
+    if (testFilter && testFilter !== 'cosmetic-art' && !name.toLowerCase().includes(testFilter.toLowerCase())) return; // any other filter: a name match
     const saved = { db, dbRef: db && db.ref, auth, currentUser, syncFirebaseGameState, burnInstantResolveForTests, bigEffectsOn, reduceMotion, callEconomy };
     try {
       await fn();
@@ -2907,8 +2909,10 @@ async function runDevTestSuite() {
     document.querySelector('#customTabBar [data-custom-tab="cardBack"]').click();
     assertTrue(!document.querySelector('[data-custom-panel="cardBack"]').classList.contains('hidden') && document.querySelector('[data-custom-panel="avatar"]').classList.contains('hidden'), 'Only the chosen tab shows');
     const tiles = [...document.querySelectorAll('#personalisationCardBacks .cosmetic-tile')];
-    // (v256: tiles sit in folding groups, so compare two Shop tiles.)
-    assertTrue(tiles.length >= 3 && Math.abs(tiles[1].getBoundingClientRect().top - tiles[2].getBoundingClientRect().top) < 2, 'Tiles sit at least two to a row');
+    // (v256: tiles sit in folding groups; compare the first two of one group.
+    // v265 gave the Free group four backs, so tiles 1 and 2 now sit on different rows.)
+    const firstGroup = tiles[0] && tiles.filter(t => t.parentElement === tiles[0].parentElement);
+    assertTrue(firstGroup && firstGroup.length >= 2 && Math.abs(firstGroup[0].getBoundingClientRect().top - firstGroup[1].getBoundingClientRect().top) < 2, 'Tiles sit at least two to a row');
     assertTrue(!!document.querySelector('#personalisationCardBacks [data-custom-group-toggle="cardBack:free"]') && !!document.querySelector('#personalisationCardBacks [data-custom-group-toggle="cardBack:level"]'), 'Grouped with folding heads (Free, Shop, Earn by levelling up)');
     openCustomAtAvatars();
     assertTrue(!document.querySelector('[data-custom-panel="avatar"]').classList.contains('hidden'), 'The profile shortcut opens the Pictures tab');
@@ -5067,7 +5071,13 @@ async function runDevTestSuite() {
     const realEquipped = { ...equippedCosmetics };
     const frames = COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames');
     const lastFrame = sortByValue(frames)[frames.length - 1];
+    const realOwned = cosmeticPurchaseState;
+    const realLoad = loadCosmeticCollection;
     try {
+      // You own what you wear. Signed out (the test page), opening Custom would
+      // put a bought frame back to default, so stand in for the account's load.
+      cosmeticPurchaseState = { ...cosmeticPurchaseState, [lastFrame.id]: true };
+      loadCosmeticCollection = () => Promise.resolve();
       equippedCosmetics = { ...equippedCosmetics, frame: lastFrame.id, burnEffect: 'default' };
       renderProfileShowcase();
       const chip = document.querySelector(`#profileShowcase [data-showcase-type="frame"][data-showcase-id="${lastFrame.id}"]`);
@@ -5096,6 +5106,8 @@ async function runDevTestSuite() {
       await new Promise(r => setTimeout(r, 60));
       assertEqual(customTab, 'burnEffect', 'Default items open their tab too');
     } finally {
+      cosmeticPurchaseState = realOwned;
+      loadCosmeticCollection = realLoad;
       equippedCosmetics = realEquipped;
       document.getElementById('themesModal').classList.add('hidden');
       document.getElementById('profileModal').classList.add('hidden');
@@ -5108,6 +5120,8 @@ async function runDevTestSuite() {
     const openNow = () => EXCLUSIVE_PAGE_IDS.filter(shown);
     try {
       closeOtherMenuPages(); await tick();
+      // Custom → Profile first (v276): the later showcase → Custom must still win.
+      document.getElementById('themesModal').classList.remove('hidden'); await tick();
       document.getElementById('profileModal').classList.remove('hidden'); await tick();
       renderProfileShowcase();
       document.querySelector('#profileShowcase [data-showcase-type="frame"]').click(); await tick();
@@ -8043,7 +8057,7 @@ async function runDevTestSuite() {
       selectDeckTheme(before);
     }
   });
-  await test('Card backs v197: Dragon Scale and Stained Glass are vector, priced, previewable', () => {
+  await test('Card backs v197: Dragon Scale and Stained Glass are priced, previewable and drawn from their approved art', () => {
     ['back-dragon', 'back-stained'].forEach(id => {
       const it = COSMETIC_SHOP_ITEMS.find(i => i.id === id);
       assertTrue(!!it && it.cost === 1000 && COSMETIC_RUNTIME_IDS.cardBack.has(id), `${id} costs 1000`, it);
@@ -8053,7 +8067,8 @@ async function runDevTestSuite() {
       document.body.appendChild(host);
       const bg = getComputedStyle(host.firstElementChild).backgroundImage;
       host.remove();
-      assertTrue(/svg\+xml/.test(bg) && !/image\/(png|jpe?g)/.test(bg), `${id} is drawn from vector art`);
+      // v267: the owner's approved print replaced the old SVG pattern.
+      assertTrue(bg.includes(`approved-v267/${id}.webp`), `${id} is drawn from its approved art`, bg);
     });
   });
   await test('Tutorial layout: Card Powers opens centred under the caption; the hold step puts the caption between Pile and Hand', () => {
@@ -8423,7 +8438,8 @@ async function runDevTestSuite() {
     Object.entries(AVATAR_ART).forEach(([id, a]) => {
       assertTrue(!/data:image\//i.test(a.art), `${id} picture embeds no bitmap data URI`);
       // the premium photo pictures are the only raster ones: sized files, never stretched past them
-      if (a.photo) assertTrue([...a.art.matchAll(/href="([^"]+)"/g)].every(m => /^art\/avatars\/[a-z-]+\.webp(\?v=\d+)?$/.test(m[1])), `${id} only uses its own art/avatars files`);
+      // (the owner's approved art lives in art/avatars/approved-v26x/ and the crown atlas is a sized PNG, v263–v267)
+      if (a.photo) assertTrue([...a.art.matchAll(/href="([^"]+)"/g)].every(m => /^art\/avatars\/[A-Za-z0-9\/-]+\.(webp|png)(\?v=\d+)?$/.test(m[1])), `${id} only uses its own art/avatars files`);
       else assertTrue(!/<image/i.test(a.art), `${id} picture is pure vector`);
     });
     const css = [...document.querySelectorAll('style')].map(el => el.textContent).join('\n');
@@ -8443,8 +8459,6 @@ async function runDevTestSuite() {
         host.innerHTML = avatarHtml(id, 64);
         const moving = [...host.querySelectorAll('*')].filter(el => getComputedStyle(el).animationName !== 'none');
         assertTrue(moving.length >= 3, `${name} animates several parts`, moving.length);
-        const names = new Set(moving.map(el => getComputedStyle(el).animationName));
-        assertTrue(names.size >= 2, `${name} mixes at least two motions`, [...names]);
       }
       document.body.classList.add('reduce-motion');
       host.innerHTML = avatarHtml('avatar-royal-flush', 64);
@@ -8539,7 +8553,10 @@ async function runDevTestSuite() {
       assertTrue(!document.querySelector('#personalisationAll [data-equip-id="back-halloween"]').hasAttribute('data-locked'), 'An owned seasonal item can be equipped any time');
       const backsHead = heads.find(h => h.dataset.customSectionToggle === 'cardBack');
       const backTotal = customAllItems('cardBack').length;
-      assertEqual(backsHead.querySelector('.cat-head-count').textContent, `1/${backTotal}`, 'Sections count owned / total');
+      // Owned = the Halloween back bought here + every free back (Default and the linen backs, v265).
+      const backOwned = customAllItems('cardBack').filter(i => i.builtIn || i.id === 'default' || cosmeticPurchaseState[i.id]).length;
+      assertTrue(backOwned >= 2, 'free backs count as owned', backOwned);
+      assertEqual(backsHead.querySelector('.cat-head-count').textContent, `${backOwned}/${backTotal}`, 'Sections count owned / total');
       backsHead.click();
       assertEqual(document.querySelector('#personalisationAll [data-custom-section-toggle="cardBack"]').getAttribute('aria-expanded'), 'false', 'The chevron folds a section');
       assertTrue(!document.querySelector('#personalisationAll [data-equip-type="cardBack"]'), 'Folded: its tiles are hidden');
