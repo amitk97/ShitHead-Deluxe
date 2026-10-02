@@ -387,16 +387,16 @@ void main(){
   // while it burns, the floor shockwave thump, then cooling embers.
   function sound(id, k) {
     if (id !== 'burn-lvl-inferno-sweep') return;
-    k.noise({ dur: .3, type: 'bandpass', f0: 300, f1: 1500, q: .7, level: .16, attack: .22 });
-    k.noise({ at: .26, dur: .16, type: 'lowpass', f0: 2200, f1: 400, level: .42, attack: .008 });
-    k.tone({ at: .26, dur: .3, f0: 110, f1: 46, level: .4 });
-    k.noise({ at: .3, dur: .75, type: 'bandpass', f0: 500, f1: 1700, q: .6, level: .3, attack: .06 });
-    k.tone({ at: .3, dur: .65, type: 'sawtooth', f0: 62, f1: 78, vibrato: 7, level: .06, attack: .08 });
-    [.34, .41, .47, .55, .6, .68, .74, .81, .88].forEach((at, n) => k.noise({ at, dur: .028, type: 'highpass', f0: 2600 + n * 160, level: .2 }));
-    k.tone({ at: .52, dur: .34, f0: 82, f1: 38, level: .34 });
-    k.noise({ at: .52, dur: .4, type: 'lowpass', f0: 900, f1: 160, level: .24 });
-    k.noise({ at: .9, dur: .5, type: 'highpass', f0: 3200, f1: 1800, level: .07, attack: .05 });
-    [1, 1.12, 1.21, 1.33, 1.44].forEach((at, n) => k.noise({ at, dur: .02, type: 'highpass', f0: 3600 - n * 200, level: .1 - n * .012 }));
+    k.noise({ dur: .3, type: 'bandpass', f0: 300, f1: 1500, q: .7, level: .106, attack: .22 });
+    k.noise({ at: .26, dur: .16, type: 'lowpass', f0: 2200, f1: 400, level: .277, attack: .008 });
+    k.tone({ at: .26, dur: .3, f0: 110, f1: 46, level: .264 });
+    k.noise({ at: .3, dur: .75, type: 'bandpass', f0: 500, f1: 1700, q: .6, level: .198, attack: .06 });
+    k.tone({ at: .3, dur: .65, type: 'sawtooth', f0: 62, f1: 78, vibrato: 7, level: .040, attack: .08 });
+    [.34, .41, .47, .55, .6, .68, .74, .81, .88].forEach((at, n) => k.noise({ at, dur: .028, type: 'highpass', f0: 2600 + n * 160, level: .132 }));
+    k.tone({ at: .52, dur: .34, f0: 82, f1: 38, level: .224 });
+    k.noise({ at: .52, dur: .4, type: 'lowpass', f0: 900, f1: 160, level: .158 });
+    k.noise({ at: .9, dur: .5, type: 'highpass', f0: 3200, f1: 1800, level: .046, attack: .05 });
+    [1, 1.12, 1.21, 1.33, 1.44].forEach((at, n) => k.noise({ at, dur: .02, type: 'highpass', f0: 3600 - n * 200, level: .066 - n * .008 }));
   }
   window.ShLevel3D = { has, play, still, clear, icon, sound, effects: EFFECTS };
 })();
