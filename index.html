@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v283 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v284 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -962,6 +962,9 @@
     #hamburgerOverlay { z-index:201 !important; }
     .pack-icon { display:inline-block; width:24px; height:24px; vertical-align:middle; }
     .pack-icon-lg { width:42px; height:42px; }
+    .page-title-has-icon { display:inline-flex !important; align-items:center; gap:8px; }
+    .page-title-has-icon .page-title-icon { flex:none; }
+    #rulesModal h3.page-title-has-icon .page-title-icon { width:28px; height:28px; }
     /* One chevron scale for every collapsible surface: Settings, Tutorial
        Hub, Challenges, deck themes and the Guide accordions. */
     .settings-chev, .section-chevron, .chevron {
@@ -9119,6 +9122,24 @@ video {
      'playerPopup', 'challengeToast', 'signOutConfirm', 'dailyRewardModal', 'giftModal', 'giftOpenModal', 'installHelpModal'].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.parentElement !== document.body) document.body.appendChild(el);
+    });
+    // v284 (owner): every menu page shows its menu icon beside its title,
+    // the way Shop and Custom already did.
+    const PAGE_TITLE_ICONS = {
+      profileModal: 'ui-profile', statsModal: 'ui-stats', friendsModal: 'ui-friends', leaderboardModal: 'ui-leaderboard',
+      challengesModal: 'ui-challenges', levelLadderModal: 'ui-ladder', rulesModal: 'ui-guide', settingsModal: 'ui-settings',
+      supportModal: 'ui-support', inboxModal: 'ui-mail'
+    };
+    Object.entries(PAGE_TITLE_ICONS).forEach(([id, icon]) => {
+      const page = document.getElementById(id);
+      const title = !page ? null
+        : id === 'rulesModal' ? page.querySelector('h3')
+        : id === 'levelLadderModal' ? page.querySelector('.ll-title > span')
+        : page.querySelector('span.text-amber-400.tracking-widest');
+      if (!title || title.querySelector('.page-title-icon')) return;
+      title.querySelectorAll(':scope > svg').forEach(svg => svg.remove());
+      title.classList.add('page-title-has-icon');
+      title.insertAdjacentHTML('afterbegin', `<svg class="pack-icon page-title-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#${icon}"/></svg>`);
     });
     // Google sign-in runs its redirect handler (/__/auth/handler) on the
     // SAME domain the game is served from. With the default firebaseapp.com
@@ -19942,9 +19963,12 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v284: [
+        [ '🧭', 'Every page now shows its icon next to its title, like the Shop.' ]
+      ],
       v283: [
         [ '👤', 'Profile now has its own button in the header, next to the Inbox.' ],
-        [ '🪜', 'Level Ladder is in the menu, with a new ladder icon. Challenges has a new target icon.' ]
+        [ '🪜', 'Level Ladder is in the menu, with a new ladder icon. Challenges has a new target icon.', WN_KEY ]
       ],
       v282: [
         [ '👆', 'Select All Of A Rank moved from the header to the table, just left of your hand count, so it sits under your thumb.' ]

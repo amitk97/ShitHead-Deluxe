@@ -368,7 +368,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 ## Header & menu icons (v283, owner)
 
-- Header right: `#headerProfileBtn` (`#ui-profile`, opens `openProfilePanel`) where Select All Of A Rank was, then Inbox, then the menu; it shares the desktop 38px sizing rule. Menu: `#menuLadderBtn` (`#ui-ladder`, after Challenges, opens `openLevelLadder`; hidden by `body:not(.xp-on)`). `#ui-challenges` is the owner's mockup: three thin green target rings with an Ace of Spades driven into the bullseye and a small puncture beside its tip (no trophy). Icons keep the shared style: 32-unit tile `#172033`, `#cbd5e1` line art, one or two accents. Dev test "Header Profile button, Level Ladder menu entry…".
+- Header right: `#headerProfileBtn` (`#ui-profile`, opens `openProfilePanel`) where Select All Of A Rank was, then Inbox, then the menu; it shares the desktop 38px sizing rule. Menu: `#menuLadderBtn` (`#ui-ladder`, after Challenges, opens `openLevelLadder`; hidden by `body:not(.xp-on)`). `#ui-challenges` is the owner's mockup: three thin green target rings with an Ace of Spades driven into the bullseye and a small puncture beside its tip (no trophy). Icons keep the shared style: 32-unit tile `#172033`, `#cbd5e1` line art, one or two accents. Dev test "Header Profile button, Level Ladder menu entry…". v284 (owner): every menu page shows its menu icon left of its title (`PAGE_TITLE_ICONS`, installed at start-up after the move-to-body list; `.page-title-has-icon`; the Guide's big title gets a 28px one; Shop/Custom already had theirs). A new menu page = an entry there (dev test "Every menu page shows its menu icon…").
 
 ## Select All Of A Rank button (v282, owner)
 

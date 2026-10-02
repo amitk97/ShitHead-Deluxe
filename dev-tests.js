@@ -1714,6 +1714,14 @@ async function runDevTestSuite() {
     assertEqual(selected, 3, 'The toggle should select all three Kings');
     assertEqual(left, 0, 'Un-staging must clear the whole rank, never leave a partial selection');
   });
+  await test('Every menu page shows its menu icon beside its title (v284)', () => {
+    const want = { profileModal: 'ui-profile', statsModal: 'ui-stats', friendsModal: 'ui-friends', leaderboardModal: 'ui-leaderboard', challengesModal: 'ui-challenges', levelLadderModal: 'ui-ladder', rulesModal: 'ui-guide', settingsModal: 'ui-settings', supportModal: 'ui-support', inboxModal: 'ui-mail', shopModal: 'ui-shop', themesModal: 'ui-personalise' };
+    for (const [id, icon] of Object.entries(want)) {
+      const use = document.querySelector(`#${id} use[href="#${icon}"]`);
+      assertTrue(!!use, `#${id} shows #${icon} by its title`);
+      assertEqual(document.querySelectorAll(`#${id} .page-title-icon`).length <= 1, true, `#${id} has one title icon`);
+    }
+  });
   await test('Header Profile button, Level Ladder menu entry and the new Challenges icon (v283)', async () => {
     const hp = document.getElementById('headerProfileBtn');
     assertTrue(!!hp && !!hp.closest('header') && !!hp.querySelector('use[href="#ui-profile"]'), 'Profile sits in the header with the Profile icon');
