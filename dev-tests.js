@@ -1754,6 +1754,97 @@ async function runDevTestSuite() {
       currentUser = saved.user; playerXp = saved.xp; refreshXpDisplays();
     }
   });
+  await test('v290: a Level Ladder tap opens the big preview (never equips); its Equip button does', () => {
+    const saved = { eq: { ...equippedCosmetics }, owned: cosmeticPurchaseState, on: xpFeatureOn, user: currentUser, xp: playerXp };
+    try {
+      xpFeatureOn = true; document.body.classList.add('xp-on');
+      currentUser = { uid: 'ladder-equip-test' }; playerXp = { total: xpForLevel(30), level: 30 };
+      const reward = LEVEL_REWARDS.find(r => r.category === 'Card Backs' && r.level <= 30);
+      cosmeticPurchaseState = { ...saved.owned, [reward.id]: { cost: 0 } };
+      equippedCosmetics.cardBack = 'default';
+      openLevelLadder();
+      const tile = document.querySelector(`#levelLadderModal [data-ladder-id="${reward.id}"]`);
+      assertTrue(!!tile, 'The reward is on the ladder');
+      tile.click();
+      assertEqual(equippedCosmetics.cardBack, 'default', 'A tap does not equip');
+      const box = document.getElementById('bigPreview');
+      assertTrue(!box.classList.contains('hidden') && box.dataset.itemId === reward.id, 'It opens the big preview');
+      const equip = box.querySelector('[data-bp-equip]');
+      assertTrue(!!equip, 'The preview has an Equip button for an owned item');
+      equip.click();
+      assertEqual(equippedCosmetics.cardBack, reward.id, 'Equip equips it');
+      assertTrue(/Equipped/.test(box.querySelector('.bp-equip').textContent), 'The button then reads Equipped');
+      closeBigPreview();
+      cosmeticPurchaseState = { ...saved.owned };
+      openBigPreview(reward.id, 'cardBack');
+      assertTrue(!box.querySelector('.bp-equip'), 'No Equip button for an item you do not own');
+      closeBigPreview();
+    } finally {
+      closeBigPreview(); document.getElementById('levelLadderModal').classList.add('hidden');
+      try { localStorage.removeItem('shithead_ladder_seen_ladder-equip-test'); } catch (e) {}
+      equippedCosmetics = saved.eq; cosmeticPurchaseState = saved.owned; applyEquippedCosmetics();
+      xpFeatureOn = saved.on; document.body.classList.toggle('xp-on', !!saved.on); currentUser = saved.user; playerXp = saved.xp; refreshXpDisplays();
+    }
+  });
+  await test('v290: extra daily challenges at Lvl 35/55 and weekly at 45/65; the first picks never change', () => {
+    const saved = xpFeatureOn;
+    try {
+      xpFeatureOn = true;
+      assertEqual(XP_RULES.extraDaily, [35, 55], 'Daily extras at 35 and 55');
+      assertEqual(XP_RULES.extraWeekly, [45, 65], 'Weekly extras at 45 and 65');
+      assertEqual(serverEconomyCatalog().xp.extraDaily, [35, 55], 'The server reads the same levels');
+      const day = '2026-10-02', week = '2026-W41';
+      const base = pickDailyChallengeIds(day);
+      assertEqual(extraChallengePicks(XP_RULES.extraDaily, 34), 0, 'Lvl 34: 3 daily');
+      assertEqual(extraChallengePicks(XP_RULES.extraDaily, 35), 1, 'Lvl 35: a 4th daily');
+      assertEqual(extraChallengePicks(XP_RULES.extraDaily, 55), 2, 'Lvl 55: a 5th daily');
+      const five = pickDailyChallengeIds(day, 2);
+      assertEqual(five.length, 5, 'Five picks');
+      assertEqual(five.slice(0, 3), base, 'The usual three stay first and unchanged');
+      assertEqual(new Set(five).size, 5, 'No repeats');
+      const wBase = pickWeeklyChallengeIds(week), wMore = pickWeeklyChallengeIds(week, 2);
+      assertEqual(wMore.slice(0, wBase.length), wBase, 'Weekly extras go after the week\'s own picks');
+      assertEqual(wMore.length, wBase.length + 2, 'Two extra weekly at Lvl 65');
+      assertEqual(extraChallengePicks(XP_RULES.extraWeekly, 45), 1, 'Lvl 45: one extra weekly');
+      const kept = ensureDailyChallengeState({ dateKey: getTodayUKDateKey(), challengeIds: pickDailyChallengeIds(getTodayUKDateKey()), progress: { x: 1 } }, 1);
+      assertTrue(kept.changed && kept.state.challengeIds.length === 4 && kept.state.progress.x === 1, 'Levelling up adds the 4th and keeps progress');
+      xpFeatureOn = false;
+      assertEqual(extraChallengePicks(XP_RULES.extraDaily, 99), 0, 'No extras while XP is off');
+      xpFeatureOn = true;
+      const ladder = ladderRewards();
+      assertTrue([35, 55].every(L => ladder.get(L).some(p => /daily challenge/.test(p.name))) && [45, 65].every(L => ladder.get(L).some(p => /weekly challenge/.test(p.name))), 'All four show on the Level Ladder');
+    } finally { xpFeatureOn = saved; }
+  });
+  await test('v290: Quick Start steps 1 and 2 show the same table (hands, Face-Up, Face-Down)', () => {
+    freshState(); tutorialTestSetup();
+    try {
+      launchTutorialModule('quick_start');
+      const snap = () => state.players.map(p => [p.hand, p.faceUp, p.faceDown].map(z => (z || []).map(c => `${c.rank}${c.suit}`).join(',')).join('|')).join(' / ');
+      showTutorialStep(0);
+      const first = snap();
+      showTutorialStep(1);
+      assertEqual(snap(), first, 'Nothing changes between step 1 and step 2');
+      assertTrue(state.players[0].hand.some(c => c.rank === 'Q'), 'Step 1 already shows the hand used in step 2');
+    } finally { endTutorial(false); }
+  });
+  await test('v290: every Challenges section folds with a chevron and shows done/total', () => {
+    try { localStorage.removeItem('shithead_challenges_collapsed'); } catch (e) {}
+    const heads = [...document.querySelectorAll('#challengesModal .ch-sec-head')];
+    const titles = heads.map(h => h.textContent.replace(/[▾\d\/]/g, '').trim());
+    ['Today', 'Getting Started', 'Friends', 'Hidden', 'Burns', 'Win Streaks', 'Gauntlet', 'This Week'].forEach(t => assertTrue(titles.includes(t), `${t} has a folding head`));
+    assertTrue(heads.every(h => h.querySelector('.cat-head-chev')), 'Every head has a chevron');
+    const burns = heads.find(h => h.dataset.chSec === 'challengesRankedBurnsList');
+    burns.click();
+    assertEqual(burns.getAttribute('aria-expanded'), 'false', 'A tap folds it');
+    assertTrue(JSON.parse(localStorage.getItem('shithead_challenges_collapsed')).includes('challengesRankedBurnsList'), 'Remembered');
+    burns.click();
+    assertEqual(burns.getAttribute('aria-expanded'), 'true', 'A second tap opens it');
+    const list = document.getElementById('challengesRankedBurnsList');
+    list.innerHTML = renderChallengeRowHTML('A', 'x', 1, true) + renderChallengeRowHTML('B', 'y', 1, false);
+    updateChallengeSectionCounts();
+    assertEqual(burns.querySelector('.ch-sec-count').textContent, '1/2', 'The head counts what is done');
+    try { localStorage.removeItem('shithead_challenges_collapsed'); } catch (e) {}
+  });
   await test('v289: Play Friends timers run Blitz, Balanced, Casual left to right', () => {
     assertEqual(TURN_TIMER_PRESETS.map(p => p.id), ['blitz', 'balanced', 'casual'], 'Shortest time on the left');
     renderTurnTimerButtons();
@@ -3004,7 +3095,10 @@ async function runDevTestSuite() {
       const a = scroll.getBoundingClientRect(), h = here.getBoundingClientRect();
       assertTrue(h.top >= a.top && h.bottom <= a.bottom, '"You are here" is on screen when it opens');
       modal.querySelector('[data-ladder-id="back-lvl-sharks-mark"]').click();
-      assertEqual(equippedCosmetics.cardBack, 'back-lvl-sharks-mark', 'Tapping an owned reward equips it');
+      assertEqual(equippedCosmetics.cardBack !== 'back-lvl-sharks-mark' || false, true, 'A tap opens the big preview, never equips (v290)');
+      document.querySelector('#bigPreview [data-bp-equip]').click();
+      closeBigPreview();
+      assertEqual(equippedCosmetics.cardBack, 'back-lvl-sharks-mark', 'Its Equip button equips it');
       modal.querySelector('[data-ladder-id="avatar-lvl-burn-king"]').click();
       assertTrue(!document.getElementById('bigPreview').classList.contains('hidden'), 'Tapping a locked reward previews it');
       closeBigPreview();
@@ -3017,8 +3111,8 @@ async function runDevTestSuite() {
       // Friends sit at their levels; tapping a level shows its XP.
       paintLadderFriends([{ uid: 'f1', username: 'Elena', avatar: 'default', level: 42 }, { uid: 'f2', username: 'Bob', avatar: 'default', level: 40 }, { uid: 'f3', username: 'Sam', avatar: 'default', level: 35 }]);
       assertTrue(!!modal.querySelector('[data-ladder-level="40"] [data-ladder-friend="f2"]'), 'A friend on a reward level sits on its card');
-      assertTrue(!!modal.querySelector('[data-ladder-here] [data-ladder-friend="f3"]'), 'A friend at your level sits on "You are here"');
-      assertTrue(!!modal.querySelector('[data-ladder-range="41-49"] [data-ladder-friend="f1"]'), 'A friend between rewards sits on that folded line');
+      assertTrue(!!ladderElementForLevel(35)?.querySelector('[data-ladder-friend="f3"]'), 'A friend at your level sits on your level (its row, or "You are here")');
+      assertTrue(!!modal.querySelector('[data-ladder-range="41-44"] [data-ladder-friend="f1"]'), 'A friend between rewards sits on that folded line');
       // Six friends on one level: ordered by total XP, then online, then name; "+2" lists them all (v280).
       const now = Date.now();
       const crowd = [['c1', 'Zed', 100], ['c2', 'Amy', 900], ['c3', 'Bea', 500], ['c4', 'Cal', 500], ['c5', 'Dan', 300], ['c6', 'Eve', 50]]
@@ -9268,7 +9362,7 @@ async function runDevTestSuite() {
   });
 
   await test("REGRESSION: the Challenges Ranked tab has its 7 categories in alphabetical order", () => {
-    const labels = [...document.querySelectorAll('#challengeTabRanked > .text-\\[8px\\]')].map((h) => h.textContent.trim());
+    const labels = [...document.querySelectorAll('#challengeTabRanked > .ch-sec')].map((h) => h.dataset.chTitle);
     assertEqual(labels, ['Burns', 'Ending Cards', 'Games Played', 'Joker Deflects', 'Rank Tiers', 'Snap Burns', 'Win Streaks'], 'Ranked categories must be exactly these 7, in alphabetical order');
     assertTrue(!document.getElementById('challengesModal').innerText.includes('Ranked \u2014'), 'The old "Ranked \u2014 " prefix must be gone');
   });

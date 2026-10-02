@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v289 (ShitHead-Deluxe-229) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v290 (ShitHead-Deluxe-230) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -462,6 +462,14 @@
     .custom-equip-hint .ic { width:12px; height:12px; color:#fbbf24; flex-shrink:0; }
     .custom-equip-hint b { color:#e2e8f0; }
     #themesModal [data-equip-id] { touch-action:manipulation; }
+    .ch-sec { margin-bottom:10px; }
+    .ch-sec.is-folded > [id$="List"] { display:none; }
+    .ch-sec.is-empty { display:none; }
+    .ch-sec-head { padding:6px 10px; margin-bottom:6px; font-size:9px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+    .ch-sec-head .cat-head-title { flex:1; }
+    .ch-sec-count { font-size:9px; font-weight:800; color:#94a3b8; letter-spacing:0; }
+    .ch-tone-cyan { color:#22d3ee; } .ch-tone-amber { color:#fbbf24; } .ch-tone-emerald { color:#34d399; }
+    .ch-tone-violet { color:#a78bfa; } .ch-tone-sky { color:#38bdf8; } .ch-tone-slate { color:#cbd5e1; }
     .ch-reroll-btn { width:26px; height:26px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #34d399; color:#6ee7b7; background:rgba(6,78,59,.35); }
     .ch-reroll-btn .ic { width:14px; height:14px; }
     .ch-reroll-btn:disabled { opacity:.5; }
@@ -727,6 +735,8 @@
     #bigPreview .bp-kind { font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#67e8f9; margin-top:2px; }
     #bigPreview .bp-stage { margin:14px 0 10px; min-height:220px; display:flex; align-items:center; justify-content:center; }
     #bigPreview .bp-status { font-size:11px; font-weight:700; color:#cbd5e1; }
+    #bigPreview .bp-equip { margin-top:10px; width:100%; padding:9px; border-radius:12px; background:linear-gradient(180deg,#fbbf24,#d97706); color:#1c1204; font-size:11px; font-weight:900; }
+    #bigPreview .bp-equip.is-on { background:transparent; border:1px solid #34d399; color:#6ee7b7; }
     #bigPreview .bp-shop { margin-top:10px; width:100%; padding:9px; border-radius:12px; background:linear-gradient(180deg,#fbbf24,#d97706); color:#1c1204; font-size:11px; font-weight:900; }
     #bigPreview .bp-play { margin-top:10px; width:100%; padding:9px; border-radius:12px; border:1px solid #475569; color:#e2e8f0; font-size:11px; font-weight:900; }
     #bigPreview .bp-stage-fx { width:100%; height:280px; min-height:280px; }
@@ -6484,11 +6494,11 @@ video {
           <button type="button" data-challenge-tab="seasonal" role="tab" aria-selected="false" class="challenge-tab hidden rounded-lg border border-slate-700 px-2 py-2 text-[9px] font-black uppercase tracking-wider text-slate-400">Seasonal</button>
         </div>
         <section id="challengeTabDaily" data-challenge-panel="daily">
-          <div id="challengesDailyList" class="flex flex-col gap-1.5 pt-1"></div>
-          <div id="challengesDailyGauntletList" class="flex flex-col gap-1.5 pt-1.5"></div>
-          <div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase tracking-wider text-amber-400 mb-1">Getting Started</div><div id="challengesTutorialList" class="flex flex-col gap-1.5"></div></div>
-          <div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase tracking-wider text-emerald-400 mb-1">Friends</div><div id="challengesRecruitList" class="flex flex-col gap-1.5"></div></div>
-          <div class="mt-3 border-t border-slate-800 pt-2"><div class="text-[8px] font-black uppercase tracking-wider text-violet-400 mb-1">Hidden</div><div id="challengesHiddenList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Today" data-ch-tone="cyan"><div id="challengesDailyList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Daily Gauntlet" data-ch-tone="amber"><div id="challengesDailyGauntletList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Getting Started" data-ch-tone="amber"><div id="challengesTutorialList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Friends" data-ch-tone="emerald"><div id="challengesRecruitList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Hidden" data-ch-tone="violet"><div id="challengesHiddenList" class="flex flex-col gap-1.5"></div></div>
         </section>
         <section id="challengeTabDone" data-challenge-panel="done" class="hidden">
           <div class="done-head"><button type="button" id="challengesDoneBack" class="done-back">‹ Back</button><span id="challengesDoneSummary"></span></div>
@@ -6501,22 +6511,21 @@ video {
         <section id="challengeTabWeekly" data-challenge-panel="weekly" class="hidden">
           <div class="mb-2 text-[8px] text-slate-500">Resets every Monday (UK time).</div>
           <div id="challengesWeeklyReroll" class="ch-reroll-note hidden"></div>
-          <div id="challengesWeeklyList" class="flex flex-col gap-1.5"></div>
+          <div class="ch-sec" data-ch-title="This Week" data-ch-tone="cyan"><div id="challengesWeeklyList" class="flex flex-col gap-1.5"></div></div>
         </section>
         <section id="challengeTabRanked" data-challenge-panel="ranked" class="hidden">
-          <div class="text-[8px] font-black uppercase tracking-wider text-sky-400 mb-1">Burns</div><div id="challengesRankedBurnsList" class="flex flex-col gap-1.5 mb-3"></div>
-          <div class="text-[8px] font-black uppercase tracking-wider text-sky-400 mb-1">Ending Cards</div><div id="challengesEndingCardsList" class="flex flex-col gap-1.5 mb-3"></div>
-          <div class="text-[8px] font-black uppercase tracking-wider text-sky-400 mb-1">Games Played</div><div id="challengesRankedGamesList" class="flex flex-col gap-1.5 mb-3"></div>
-          <div class="text-[8px] font-black uppercase tracking-wider text-sky-400 mb-1">Joker Deflects</div><div id="challengesRankedJokerList" class="flex flex-col gap-1.5 mb-3"></div>
-          <div class="text-[8px] font-black uppercase tracking-wider text-sky-400 mb-1">Rank Tiers</div><div id="challengesRankTiersList" class="flex flex-col gap-1.5 mb-3"></div>
-          <div class="text-[8px] font-black uppercase tracking-wider text-sky-400 mb-1">Snap Burns</div><div id="challengesRankedSnapList" class="flex flex-col gap-1.5 mb-3"></div>
-          <div class="text-[8px] font-black uppercase tracking-wider text-sky-400 mb-1">Win Streaks</div><div id="challengesRankedStreaksList" class="flex flex-col gap-1.5 mb-3"></div>
+          <div class="ch-sec" data-ch-title="Burns" data-ch-tone="sky"><div id="challengesRankedBurnsList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Ending Cards" data-ch-tone="sky"><div id="challengesEndingCardsList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Games Played" data-ch-tone="sky"><div id="challengesRankedGamesList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Joker Deflects" data-ch-tone="sky"><div id="challengesRankedJokerList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Rank Tiers" data-ch-tone="sky"><div id="challengesRankTiersList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Snap Burns" data-ch-tone="sky"><div id="challengesRankedSnapList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Win Streaks" data-ch-tone="sky"><div id="challengesRankedStreaksList" class="flex flex-col gap-1.5"></div></div>
         </section>
         <section id="challengeTabBots" data-challenge-panel="bots" class="hidden">
           <div class="mb-2 text-[8px] text-slate-500">Bot match milestones across every difficulty.</div>
-          <div id="challengesBotMatchesList" class="flex flex-col gap-1.5 mb-3"></div>
-          <div class="text-[8px] font-black uppercase tracking-wider text-amber-400 mb-1">Gauntlet</div>
-          <div id="challengesGauntletList" class="flex flex-col gap-1.5"></div>
+          <div class="ch-sec" data-ch-title="Bot Matches" data-ch-tone="sky"><div id="challengesBotMatchesList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="Gauntlet" data-ch-tone="amber"><div id="challengesGauntletList" class="flex flex-col gap-1.5"></div></div>
         </section>
       </div>
     </div>
@@ -19998,6 +20007,12 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v290: [
+        [ '📅', 'More challenges as you level up: a 4th daily challenge at Lvl 35 and a 5th at Lvl 55, plus an extra weekly challenge at Lvl 45 and another at Lvl 65.', WN_KEY ],
+        [ '🪜', 'Level Ladder: tapping a reward opens its big preview, with an Equip button.' ],
+        [ '📂', 'Challenges: every section folds away with its own chevron and shows how many you have done.' ],
+        [ '🎓', 'Quick Start: the first step already shows the table you play on in step 2.' ]
+      ],
       v289: [
         [ '🔄', 'Weekly Reroll: from Lvl 40, swap one weekly challenge for a different one each week.', WN_KEY ],
         [ '👆', 'Custom: double-tap an item to equip it, so a stray tap never changes your look.' ],
@@ -23388,6 +23403,19 @@ video {
       if (item.builtIn || cosmeticPurchaseState[item.id] || !COSMETIC_SHOP_ITEMS.some(i => i.id === item.id)) return '';
       return `<button type="button" class="bp-shop" data-bp-shop>See In Shop</button>`;
     }
+    // Owned items get an Equip button in the big preview (v290, owner): the
+    // Level Ladder opens the preview instead of equipping on a tap.
+    function bigPreviewEquippedNow(item, type) {
+      const now = type === 'avatar' ? resolveAvatarId(equippedCosmetics.avatar) : equippedIdOf(type);
+      return now === item.id;
+    }
+    function bigPreviewEquipButton(item, type) {
+      const owned = item.id === 'default' || !!item.builtIn || !!cosmeticPurchaseState[item.id];
+      if (!owned) return '';
+      return bigPreviewEquippedNow(item, type)
+        ? '<button type="button" class="bp-equip is-on" disabled>Equipped</button>'
+        : '<button type="button" class="bp-equip" data-bp-equip>Equip</button>';
+    }
     function previewLockedCosmetic(id) {
       const item = bigPreviewItem(id);
       if (!item || item.hidden) return openLockedCosmetic(id);
@@ -23408,6 +23436,7 @@ video {
         <div class="bp-stage">${bigPreviewStageHtml(item, type)}</div>
         <div class="bp-status">${escapeHtml(bigPreviewStatus(item))}</div>
         ${animated ? '<button type="button" class="bp-play" data-bp-play>Play Again</button>' : ''}
+        ${bigPreviewEquipButton(item, type)}
         ${bigPreviewShopButton(item)}
       </div>`;
       box.classList.remove('hidden');
@@ -23426,6 +23455,20 @@ video {
     }
     document.getElementById('bigPreview')?.addEventListener('click', (e) => {
       if (e.target.closest('[data-bp-play]')) { playBigPreviewEffect(); return; }
+      const equipBtn = e.target.closest('[data-bp-equip]');
+      if (equipBtn) {
+        const box = e.currentTarget, id = box.dataset.itemId, type = box.dataset.type;
+        const item = bigPreviewItem(id, type);
+        if (item && equipCosmetic(type, id, { preview: false })) {
+          equipBtn.outerHTML = '<button type="button" class="bp-equip is-on" disabled>Equipped</button>';
+          notifyBanner(`${item.name} equipped.`);
+          document.querySelectorAll('#levelLadderModal [data-ladder-id]').forEach(t => {
+            const chip = t.querySelector('.ll-equip');
+            if (chip && t.dataset.equipType === type) chip.textContent = t.dataset.ladderId === id ? 'Equipped' : 'Equip';
+          });
+        }
+        return;
+      }
       if (e.target.closest('[data-bp-shop]')) {
         const id = e.currentTarget.dataset.itemId;
         closeBigPreview();
@@ -26451,6 +26494,8 @@ video {
       maxLevelDiamonds: 999, // the top level (99) pays this instead (owner, v285)
       giftLevel: 2,          // sending gifts unlocks here (owner, v289)
       weeklyRerollLevel: 40, // one weekly challenge reroll a UK week (owner, v289)
+      extraDaily: [35, 55],  // each adds one more daily challenge (owner, v290)
+      extraWeekly: [45, 65], // each adds one more weekly challenge (owner, v290)
       maxXp: 100000000,
       // Free cosmetics unlocked by level (LEVEL_REWARDS; granted by the server).
       rewards: LEVEL_REWARDS.map(r => ({ id: r.id, name: r.name, level: r.level })),
@@ -27087,6 +27132,7 @@ video {
     // Menu header badge + Profile's XP bar + the header bar.
     function refreshXpDisplays() {
       refreshHeaderXpBar();
+      try { refreshChallengeSlots(); } catch (e) { if (!(e instanceof ReferenceError)) throw e; } // extra challenges by level (v290)
       reapplySpeedLocks(); // 2x/4x follow your level (v247)
       try { renderLoadouts(); } catch (e) { if (!(e instanceof ReferenceError)) throw e; } // look slots unlock with levels (v250)
       renderSeriesPanel();
@@ -27189,6 +27235,8 @@ video {
       SPEED_UNLOCK_LEVELS.forEach((L, i) => { if (L > 0) add(L, { kind: 'unlock', icon: 'bolt', tone: '#38bdf8', name: `${LADDER_SPEEDS[i] || ''} game speed`, tip: `Play Vs Bots at ${LADDER_SPEEDS[i]} speed (signed in).` }); });
       LOADOUT_SLOT_LEVELS.forEach((L, i) => { if (L > 0) add(L, { kind: 'unlock', icon: 'save', tone: '#a78bfa', name: `Saved look ${i + 1}`, tip: `A ${i === 1 ? 'second' : i === 2 ? 'third' : 'new'} saved look in Custom.` }); });
       add(XP_RULES.giftLevel, { kind: 'unlock', icon: 'gift', tone: '#f9a8d4', name: 'Gifting', tip: 'Send Shop items to your friends as gifts.' });
+      (XP_RULES.extraDaily || []).forEach((L, i) => add(L, { kind: 'unlock', icon: 'check', tone: '#34d399', name: `${['4th', '5th', '6th'][i] || 'Extra'} daily challenge`, tip: 'One more daily challenge every day.' }));
+      (XP_RULES.extraWeekly || []).forEach((L, i) => add(L, { kind: 'unlock', icon: 'check', tone: '#22d3ee', name: `Extra weekly challenge`, tip: 'One more weekly challenge every week.' }));
       add(XP_RULES.weeklyRerollLevel, { kind: 'unlock', icon: 'refresh', tone: '#34d399', name: 'Weekly Reroll', tip: 'Swap one weekly challenge for a different one, once a week.' });
       add(SERIES_RULES.level, { kind: 'unlock', icon: 'swords', tone: '#f472b6', name: 'Best Of Series', tip: 'Play a Best of 3 or 5 against a friend for Diamonds.' });
       Object.entries(GAUNTLET.modes || {}).forEach(([key, m]) => { if (m.level > 0) add(m.level, { kind: 'unlock', icon: key === 'boss' ? 'crown' : 'shield', tone: key === 'boss' ? '#c084fc' : '#f87171', name: `${m.name} Gauntlet`, tip: `${m.name} Gauntlet opens at level ${m.level}${m.needs ? ' once you have beaten the easier Gauntlets' : ''}.` }); });
@@ -27461,10 +27509,8 @@ video {
         if (node) { showInfoPop(node, ladderLevelTipHtml(node.dataset.ladderNode), { toggle: true }); return; }
         const tile = e.target.closest('[data-ladder-id]');
         if (!tile) return;
-        const item = LEVEL_REWARDS.find(r => r.id === tile.dataset.ladderId);
-        const type = tile.dataset.equipType;
-        if (item && isCosmeticOwned(item) && equipCosmetic(type, item.id)) { notifyBanner(`${item.name} equipped.`); return; }
-        openBigPreview(tile.dataset.ladderId, type);
+        // A tap never equips (v290, owner): the big preview has the Equip button.
+        openBigPreview(tile.dataset.ladderId, tile.dataset.equipType);
       });
       // Your level, wherever it shows, opens the ladder.
       document.addEventListener('click', (e) => {
@@ -27581,14 +27627,38 @@ video {
     // Deterministic pick of exactly 3 distinct indices from the pool via
     // a seeded partial Fisher-Yates — the same seed always yields the
     // same 3 ids, in the same order, every time it's called.
-    function pickDailyChallengeIds(dateKey) {
+    // extra = more picks from the same shuffle (level extras, v290); the
+    // first three never change, the extras come first in the list.
+    function pickDailyChallengeIds(dateKey, extra = 0) {
       const rng = mulberry32(hashStringToSeed(dateKey));
       const pool = DAILY_CHALLENGE_POOL.map((c) => c.id);
-      for (let i = pool.length - 1; i > pool.length - 4; i--) {
+      const n = Math.min(pool.length, 3 + extra);
+      for (let i = pool.length - 1; i > pool.length - 1 - n; i--) {
         const j = Math.floor(rng() * (i + 1));
         [pool[i], pool[j]] = [pool[j], pool[i]];
       }
-      return pool.slice(pool.length - 3);
+      return [...pool.slice(pool.length - 3), ...pool.slice(pool.length - n, pool.length - 3)];
+    }
+    // § Extra challenges by level (v290, owner): XP_RULES.extraDaily /
+    // extraWeekly levels each add one pick (the server checks claims the same
+    // way: userDailyIds / userWeeklyIds). None while XP is off.
+    function extraChallengePicks(levels, level) {
+      if (typeof xpShown === 'function' && !xpShown()) return 0;
+      return (levels || []).filter(L => level >= L).length;
+    }
+    function challengeLevelOf(xpRecord) {
+      return xpRecord && Number.isFinite(Number(xpRecord.total)) ? xpLevelFor(Number(xpRecord.total)) : 0;
+    }
+    // Re-checks today's / this week's picks after the level (or the XP
+    // switch) changes, keeping all progress, and saves them if they grew.
+    function refreshChallengeSlots() {
+      if (!currentUser || challengeEconomyLoadedForUid !== currentUser.uid) return;
+      const lvl = challengeLevelOf(playerXp);
+      const d = ensureDailyChallengeState(challengeEconomy.dailyChallengeState, extraChallengePicks(XP_RULES.extraDaily, lvl));
+      const w = ensureWeeklyChallengeState(challengeEconomy.weeklyChallengeState, challengeEconomy.weeklyReroll, extraChallengePicks(XP_RULES.extraWeekly, lvl));
+      if (d.changed) { challengeEconomy.dailyChallengeState = d.state; db.ref(`users/${currentUser.uid}/dailyChallengeState`).set(d.state).catch(() => {}); }
+      if (w.changed) { challengeEconomy.weeklyChallengeState = w.state; db.ref(`users/${currentUser.uid}/weeklyChallengeState`).set(w.state).catch(() => {}); }
+      if (d.changed || w.changed) renderChallengesModalIfOpen();
     }
     // What each challenge asks for, in one sentence: shown on every row
     // (in progress or completed) and in the "Challenge completed" mail.
@@ -27643,12 +27713,13 @@ video {
     }
     // The same seeded shuffle as the daily picks, n from the end (the server
     // copies it: functions/economy.js pickWeeklyIds).
-    function pickWeeklyChallengeIds(weekKey) {
-      const rule = weeklyRulesFor(weekKey), n = rule.picks;
+    function pickWeeklyChallengeIds(weekKey, extra = 0) {
+      const rule = weeklyRulesFor(weekKey), n = Math.min(rule.pool.length, rule.picks + extra);
       const rng = mulberry32(hashStringToSeed(`weekly-${weekKey}`));
       const pool = rule.pool.map(c => c.id);
       for (let i=pool.length-1; i>pool.length-1-n; i--) { const j=Math.floor(rng()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
-      return pool.slice(pool.length-n);
+      const base = Math.min(n, rule.picks); // level extras listed after the week's own picks
+      return [...pool.slice(pool.length-base), ...pool.slice(pool.length-n, pool.length-base)];
     }
     // weekKey defaults to this week; pass the key's own week for old completions.
     function getWeeklyChallengeDef(id, weekKey = getUkWeekKey()) { return weeklyRulesFor(weekKey).pool.find(c => c.id === id) || null; }
@@ -27656,19 +27727,20 @@ video {
     // This week's picks for the account: its Weekly Reroll swapped in
     // (users/{uid}/weeklyReroll = {week, from, to}, server-only; the server's
     // userWeeklyIds does the same).
-    function weeklyIdsFor(weekKey, reroll) {
-      const ids = pickWeeklyChallengeIds(weekKey);
+    function weeklyIdsFor(weekKey, reroll, extra = 0) {
+      const ids = pickWeeklyChallengeIds(weekKey, extra);
       if (reroll && reroll.week === weekKey && ids.includes(reroll.from) && reroll.to && !ids.includes(reroll.to)) ids[ids.indexOf(reroll.from)] = reroll.to;
       return ids;
     }
-    function ensureWeeklyChallengeState(existing, reroll) {
+    function ensureWeeklyChallengeState(existing, reroll, extra = 0) {
       const weekKey=getUkWeekKey();
-      const ids = weeklyIdsFor(weekKey, reroll);
+      const ids = weeklyIdsFor(weekKey, reroll, extra);
       const same = existing && existing.weekKey===weekKey && Array.isArray(existing.challengeIds);
       if (same && existing.challengeIds.join() === ids.join()) return {state:existing,changed:false};
-      // Same week, new picks (a reroll): keep the progress on the others.
+      // Same week, new picks (a reroll or a level extra): keep the progress
+      // (a rerolled-out challenge's count goes, so it can't come back).
       const progress = {};
-      if (same && existing.progress) ids.forEach(id => { if (existing.progress[id]) progress[id] = existing.progress[id]; });
+      if (same && existing.progress) Object.keys(existing.progress).forEach(id => { if (existing.progress[id] && !(reroll && reroll.week === weekKey && reroll.from === id)) progress[id] = existing.progress[id]; });
       return {state:{...(same ? existing : {}), weekKey, challengeIds:ids, progress}, changed:true};
     }
 
@@ -27793,22 +27865,19 @@ video {
     // Ensures this UK day's 3 daily challenges are selected and that
     // progress resets when the UK date has rolled over since the
     // player's last visit. Returns the (possibly just-reset) state.
-    function ensureDailyChallengeState(existingState) {
+    function ensureDailyChallengeState(existingState, extra = 0) {
       const todayKey = getTodayUKDateKey();
+      const ids = pickDailyChallengeIds(todayKey, extra);
       if (existingState && existingState.dateKey === todayKey) {
-        const challengeIds = Array.isArray(existingState.challengeIds)
-          ? existingState.challengeIds.filter((id) => !!getDailyChallengeDef(id))
-          : [];
-        if (challengeIds.length === 3) {
-          const progress = existingState.progress && typeof existingState.progress === 'object'
-            ? existingState.progress
-            : {};
-          const normalized = { ...existingState, challengeIds, progress };
-          const changed = !existingState.progress || challengeIds.length !== (existingState.challengeIds || []).length;
-          return { state: normalized, changed };
-        }
+        // Progress is kept for every id (a pick hidden while XP was off
+        // keeps its count for when it comes back).
+        const progress = existingState.progress && typeof existingState.progress === 'object'
+          ? existingState.progress
+          : {};
+        const same = Array.isArray(existingState.challengeIds) && existingState.challengeIds.join() === ids.join();
+        return { state: { ...existingState, challengeIds: ids, progress }, changed: !same || !existingState.progress };
       }
-      const fresh = { dateKey: todayKey, challengeIds: pickDailyChallengeIds(todayKey), progress: {} };
+      const fresh = { dateKey: todayKey, challengeIds: ids, progress: {} };
       return { state: fresh, changed: true };
     }
 
@@ -27840,8 +27909,9 @@ video {
       // the AmitK test account its one-time balance; the profile is read after.
       return ensureServerProfile().catch((e) => console.warn('Economy init failed', e))
         .then(() => getOrCreateUserProfile(currentUser.uid)).then((profile) => {
-          const { state: dailyState, changed } = ensureDailyChallengeState(profile.dailyChallengeState);
-          const { state: weeklyState, changed: weeklyChanged } = ensureWeeklyChallengeState(profile.weeklyChallengeState, profile.weeklyReroll);
+          const lvl = challengeLevelOf(profile.xp);
+          const { state: dailyState, changed } = ensureDailyChallengeState(profile.dailyChallengeState, extraChallengePicks(XP_RULES.extraDaily, lvl));
+          const { state: weeklyState, changed: weeklyChanged } = ensureWeeklyChallengeState(profile.weeklyChallengeState, profile.weeklyReroll, extraChallengePicks(XP_RULES.extraWeekly, lvl));
           profile.weeklyChallengeState = weeklyState;
           if (weeklyChanged) db.ref(`users/${currentUser.uid}/weeklyChallengeState`).set(weeklyState).catch(e => console.warn('Weekly challenge rollover failed', e));
           challengeEconomy = {
@@ -28178,7 +28248,7 @@ video {
         const r = res && res.reroll;
         if (!r) throw new Error('No reroll came back.');
         challengeEconomy.weeklyReroll = r;
-        const { state: next } = ensureWeeklyChallengeState(challengeEconomy.weeklyChallengeState, r);
+        const { state: next } = ensureWeeklyChallengeState(challengeEconomy.weeklyChallengeState, r, extraChallengePicks(XP_RULES.extraWeekly, challengeLevelOf(playerXp)));
         challengeEconomy.weeklyChallengeState = next;
         if (currentUser) db.ref(`users/${currentUser.uid}/weeklyChallengeState`).set(next).catch(e => console.warn('Weekly reroll not saved', e));
         const to = getWeeklyChallengeDef(r.to, next.weekKey);
@@ -28692,6 +28762,53 @@ video {
     // UK day rolls a fresh set in), so it never fights a player who
     // manually reopens the section to admire their completed list.
     let dailyAutoCollapseArmed = true;
+    // § Challenge sections (v290, owner): every group on the Challenges page
+    // (Today, Getting Started, Friends, Burns…) is a .ch-sec with a folding
+    // head (chevron + done/total); folded keys (the list ids) are kept in
+    // localStorage shithead_challenges_collapsed.
+    const CHALLENGE_SECTIONS_KEY = 'shithead_challenges_collapsed';
+    function challengeSectionsFolded() {
+      try { return new Set(JSON.parse(localStorage.getItem(CHALLENGE_SECTIONS_KEY) || '[]')); } catch (e) { return new Set(); }
+    }
+    function setupChallengeSections() {
+      const folded = challengeSectionsFolded();
+      document.querySelectorAll('#challengesModal .ch-sec:not([data-ch-ready])').forEach(sec => {
+        sec.dataset.chReady = '1';
+        const list = sec.querySelector('[id$="List"]');
+        const key = list ? list.id : sec.dataset.chTitle;
+        const open = !folded.has(key);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `cat-head ch-sec-head ch-tone-${sec.dataset.chTone || 'slate'}`;
+        btn.dataset.chSec = key;
+        btn.setAttribute('aria-expanded', String(open));
+        btn.innerHTML = `<span class="cat-head-title">${escapeHtml(sec.dataset.chTitle || '')}</span><span class="ch-sec-count"></span><span class="cat-head-chev" aria-hidden="true">▾</span>`;
+        sec.insertBefore(btn, sec.firstChild);
+        sec.classList.toggle('is-folded', !open);
+        btn.addEventListener('click', () => {
+          const nowOpen = btn.getAttribute('aria-expanded') !== 'true';
+          btn.setAttribute('aria-expanded', String(nowOpen));
+          sec.classList.toggle('is-folded', !nowOpen);
+          const set = challengeSectionsFolded();
+          if (nowOpen) set.delete(key); else set.add(key);
+          try { localStorage.setItem(CHALLENGE_SECTIONS_KEY, JSON.stringify([...set])); } catch (e) {}
+        });
+      });
+    }
+    // done/total on each head, from the rows drawn in its list.
+    function updateChallengeSectionCounts() {
+      document.querySelectorAll('#challengesModal .ch-sec').forEach(sec => {
+        const count = sec.querySelector('.ch-sec-count');
+        const list = sec.querySelector('[id$="List"]');
+        if (!count || !list) return;
+        const rows = [...list.children].filter(el => el.matches('div.flex.items-center.justify-between'));
+        const done = rows.filter(el => el.querySelector('[aria-label="Completed"]')).length;
+        count.textContent = rows.length ? `${done}/${rows.length}` : '';
+        sec.classList.toggle('is-empty', !rows.length && !list.textContent.trim());
+      });
+    }
+    setupChallengeSections();
+
     function maybeAutoCollapseDailySection(allComplete) {
       const head = document.getElementById('challengesDailyHead');
       const body = document.getElementById('challengesDailyBody');
@@ -28730,6 +28847,7 @@ video {
       if (!currentUser) {
         CHALLENGES_LIST_IDS.filter(id => !/Gauntlet/.test(id)).forEach((id) => setListHtml(id, CHALLENGES_SIGN_IN_MSG));
         ['challengesGauntletList', 'challengesDailyGauntletList', 'challengesRecruitList', 'challengesHiddenList'].forEach(id => setListHtml(id, ''));
+        updateChallengeSectionCounts();
         return;
       }
 
@@ -28822,6 +28940,7 @@ video {
         const progress = Math.min(dw[c.difficulty] || 0, c.target);
         return renderChallengeRowHTML(c.name, `${progress}/${c.target} \u2014 ${challengeDescription(c)}`, c.reward, completed, challengeDescription(c));
       }).join(''));
+      updateChallengeSectionCounts();
     }
 
     // Called after every economy mutation (a claim, a fresh sign-in/out,
@@ -33828,15 +33947,19 @@ video {
     // sentence per step, on the real table. Everything else (Core Path,
     // Card Powers, Advanced) stays in the hub for anyone who wants more.
     // Not counted towards the "complete every lesson" challenge.
+    // Steps 1 and 2 share one table (owner, v290): the same hands, Face-Up
+    // and Face-Down cards, so nothing changes when the first play starts.
+    const QS_FIRST_DEAL = { hand: [['7', '♣'], ['Q', '♠'], ['K', '♦']], faceUp: [['2', '♣'], ['J', '♦'], ['A', '♣']], pile: [['Q', '♥']], coach: [['A', '♠']], coachFaceUp: [['8', '♦'], ['5', '♠'], ['9', '♥']], drawPile: [['4', '♦'], ['6', '♣']] };
     const TUTORIAL_MODULE_QUICK_START = [
       {
         text: "Get rid of all your cards. The last player holding cards is the ShitHead. 💩",
-        target: null
+        target: null,
+        scene: QS_FIRST_DEAL
       },
       {
         text: "Play a card equal to or higher than the Pile. Tap your Queen or King, then Play.",
         target: ['#localHand', '#pileZone'],
-        scene: { hand: [['7', '♣'], ['Q', '♠'], ['K', '♦']], faceUp: [['2', '♣'], ['J', '♦'], ['A', '♣']], pile: [['Q', '♥']], coach: [['A', '♠']], drawPile: [['4', '♦'], ['6', '♣']] },
+        scene: QS_FIRST_DEAL,
         require: { rank: ['Q', 'K'] },
         coachPlays: [['A', '♠']],
         coachNote: "Coach beat you with an Ace, the highest plain card.",

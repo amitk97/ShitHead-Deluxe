@@ -1742,6 +1742,14 @@
   "maxLevelDiamonds": 999,
   "giftLevel": 2,
   "weeklyRerollLevel": 40,
+  "extraDaily": [
+   35,
+   55
+  ],
+  "extraWeekly": [
+   45,
+   65
+  ],
   "maxXp": 100000000,
   "rewards": [
    {

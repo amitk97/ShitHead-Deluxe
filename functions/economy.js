@@ -121,15 +121,22 @@ function weeklyRuleFor(weekKey) {
   rules.forEach((r) => { if (String(weekKey) >= String(r.from || '')) rule = r; });
   return rule;
 }
-const pickDailyIds = (dateKey) => pickN(CAT.dailyPool.map(c => c.id), dateKey, 3);
-const pickWeeklyIds = (weekKey) => {
+// extra = more picks from the same seeded shuffle; the first picks never
+// change (pickN takes from the end), so extras only add to the list.
+const pickDailyIds = (dateKey, extra = 0) => pickN(CAT.dailyPool.map(c => c.id), dateKey, Math.min(CAT.dailyPool.length, 3 + extra));
+const pickWeeklyIds = (weekKey, extra = 0) => {
   const rule = weeklyRuleFor(weekKey);
-  return pickN(rule.pool.map(c => c.id), `weekly-${weekKey}`, rule.picks);
+  return pickN(rule.pool.map(c => c.id), `weekly-${weekKey}`, Math.min(rule.pool.length, rule.picks + extra));
 };
-// The account's own picks: the week's picks with its reroll swapped in
-// (users/{uid}/weeklyReroll = {week, from, to}, server-only; owner, v289).
+// Extra challenges by level (v290, owner): xp.extraDaily / xp.extraWeekly
+// list the levels that each add one more pick.
+const userLevel = (user) => xp.levelFor(num(user && user.xp && user.xp.total));
+const extraPicks = (levels, L) => (Array.isArray(levels) ? levels.filter(n => L >= num(n)).length : 0);
+const userDailyIds = (user, dateKey) => pickDailyIds(dateKey, extraPicks(xp.RULES.extraDaily, userLevel(user)));
+// The account's own picks: the week's picks (plus its level extras) with its
+// reroll swapped in (users/{uid}/weeklyReroll = {week, from, to}, server-only; v289).
 function userWeeklyIds(user, weekKey) {
-  const ids = pickWeeklyIds(weekKey);
+  const ids = pickWeeklyIds(weekKey, extraPicks(xp.RULES.extraWeekly, userLevel(user)));
   const r = user && user.weeklyReroll;
   if (r && r.week === weekKey && ids.includes(r.from) && r.to && !ids.includes(r.to)) ids[ids.indexOf(r.from)] = r.to;
   return ids;
@@ -319,7 +326,7 @@ function challengeForKey(id, user, now) {
     const today = ukDateKey(now);
     if (dateKey !== today && dateKey !== shiftDateKey(today, -1)) return { error: 'That daily challenge has expired.' };
     const def = CAT.dailyPool.find(c => c.id === poolId);
-    if (!def || !pickDailyIds(dateKey).includes(poolId)) return { error: 'Not one of that day\'s challenges.' };
+    if (!def || !userDailyIds(user, dateKey).includes(poolId)) return { error: 'Not one of that day\'s challenges.' };
     return { name: def.name, reward: CAT.dailyReward };
   }
   const weekly = /^weekly_(\d{4}-W\d{2})_([a-z0-9-]+)$/.exec(id);
@@ -1450,4 +1457,4 @@ exports.economy = onCall({ region: 'europe-west1', cors: true, maxInstances: 20 
 });
 
 // For the unit tests.
-exports._test = { actions, pickDailyIds, pickWeeklyIds, userWeeklyIds, ukDateKey, ukWeekKey, shiftDateKey, activeSeasonWindows, pairwiseEloDeltas, rankedStreakBonus, RANKED_BONUS, tierName, challengeForKey, milestoneEligible, unlockedDifficulties };
+exports._test = { actions, pickDailyIds, pickWeeklyIds, userWeeklyIds, userDailyIds, ukDateKey, ukWeekKey, shiftDateKey, activeSeasonWindows, pairwiseEloDeltas, rankedStreakBonus, RANKED_BONUS, tierName, challengeForKey, milestoneEligible, unlockedDifficulties };
