@@ -1754,6 +1754,45 @@ async function runDevTestSuite() {
       currentUser = saved.user; playerXp = saved.xp; refreshXpDisplays();
     }
   });
+  await test('v291: a tap outside the match summary card closes it; a tap inside does not', () => {
+    const modal = document.getElementById('matchSummaryModal');
+    modal.classList.remove('hidden');
+    try {
+      modal.firstElementChild.click();
+      assertTrue(!modal.classList.contains('hidden'), 'A tap on the card keeps it open');
+      modal.click();
+      assertTrue(modal.classList.contains('hidden'), 'A tap outside closes it');
+    } finally { modal.classList.add('hidden'); }
+  });
+  await test('v291: helper tips show once each, beside what they explain, and Settings turns them off', () => {
+    const savedSeen = localStorage.getItem('shithead_tips_seen'), savedOn = helperTipsOn;
+    try {
+      localStorage.removeItem('shithead_tips_seen'); helperTipsOn = true; hideHelperTip();
+      assertEqual(Object.keys(HELPER_TIPS).length, 9, 'Nine tips');
+      assertEqual(HELPER_TIPS['hold-card'], 'Hold any card to see what it does.', 'The first-game tip');
+      assertTrue(/four of a kind even when it's not your turn/.test(HELPER_TIPS['snap-burn']) && /give the Pile to someone else/.test(HELPER_TIPS.joker), 'Snap Burn and Joker tips');
+      const anchor = document.getElementById('headerInboxBtn');
+      assertTrue(!showHelperTip('shop-hold', anchor), 'Never while the test suite (or a lesson) runs unless forced');
+      assertTrue(showHelperTip('shop-hold', anchor, { force: true }), 'Shows beside its anchor');
+      const tip = document.getElementById('helperTip');
+      assertTrue(!!tip && tip.textContent.includes('Hold any item to see it big.'), 'It says its text');
+      assertTrue(!showHelperTip('ladder-tap', anchor, { force: true }), 'One tip at a time');
+      tip.querySelector('[data-helper-tip-ok]').click();
+      assertTrue(!document.getElementById('helperTip'), 'Got It closes it');
+      assertTrue(!showHelperTip('shop-hold', anchor, { force: true }), 'Each tip shows only once');
+      helperTipsOn = false;
+      assertTrue(!showHelperTip('ladder-tap', anchor, { force: true }), 'Off in Settings: no tips');
+      document.getElementById('setHelperTipsRow').click();
+      assertTrue(helperTipsOn && /ON/.test(document.getElementById('setHelperTipsState').textContent), 'The Settings row turns them back on');
+      assertTrue('helperTipsOn' in collectAccountSettings(), 'Synced with the account');
+      const ladder = ladderRewards();
+      assertTrue(ladder.get(45).some(p => p.name === '6th weekly challenge') && ladder.get(65).some(p => p.name === '7th weekly challenge'), 'Ladder: 6th weekly at 45, 7th at 65');
+      assertTrue(ladder.get(35).some(p => p.name === '4th daily challenge') && ladder.get(55).some(p => p.name === '5th daily challenge'), 'Ladder: 4th daily at 35, 5th at 55');
+    } finally {
+      hideHelperTip(); helperTipsOn = savedOn;
+      try { if (savedSeen === null) localStorage.removeItem('shithead_tips_seen'); else localStorage.setItem('shithead_tips_seen', savedSeen); } catch (e) {}
+    }
+  });
   await test('v290: a Level Ladder tap opens the big preview (never equips); its Equip button does', () => {
     const saved = { eq: { ...equippedCosmetics }, owned: cosmeticPurchaseState, on: xpFeatureOn, user: currentUser, xp: playerXp };
     try {

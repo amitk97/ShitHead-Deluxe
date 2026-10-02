@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v290 (ShitHead-Deluxe-230) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v291 (ShitHead-Deluxe-231) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -462,6 +462,15 @@
     .custom-equip-hint .ic { width:12px; height:12px; color:#fbbf24; flex-shrink:0; }
     .custom-equip-hint b { color:#e2e8f0; }
     #themesModal [data-equip-id] { touch-action:manipulation; }
+    /* § Helper tips (v291) */
+    .helper-tip { position:fixed; z-index:340; max-width:min(280px, calc(100vw - 20px)); display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:12px; border:1px solid rgba(251,191,36,.6); background:linear-gradient(180deg,#1e293b,#0f172a); box-shadow:0 10px 28px rgba(0,0,0,.55), 0 0 0 3px rgba(251,191,36,.12); color:#e2e8f0; font-size:11px; font-weight:700; line-height:1.3; opacity:0; transform:translateY(4px); transition:opacity .2s var(--ease-soft, ease), transform .2s var(--ease-soft, ease); }
+    .helper-tip.show { opacity:1; transform:none; }
+    .helper-tip::after { content:''; position:absolute; left:var(--arrow-x, 50%); bottom:-6px; width:10px; height:10px; margin-left:-5px; transform:rotate(45deg); background:#0f172a; border-right:1px solid rgba(251,191,36,.6); border-bottom:1px solid rgba(251,191,36,.6); }
+    .helper-tip.below::after { bottom:auto; top:-6px; background:#1e293b; border:0; border-left:1px solid rgba(251,191,36,.6); border-top:1px solid rgba(251,191,36,.6); }
+    .helper-tip-icon .ic { width:16px; height:16px; color:#fbbf24; display:block; }
+    .helper-tip-text { flex:1; }
+    .helper-tip-ok { flex-shrink:0; padding:4px 8px; border-radius:8px; background:linear-gradient(180deg,#fbbf24,#d97706); color:#1c1204; font-size:9px; font-weight:900; letter-spacing:.04em; }
+    body.reduce-motion .helper-tip { transition:none; }
     .ch-sec { margin-bottom:10px; }
     .ch-sec.is-folded > [id$="List"] { display:none; }
     .ch-sec.is-empty { display:none; }
@@ -5887,6 +5896,11 @@ video {
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Helper Icons</span>
           <span class="block text-[8px] text-slate-400 leading-snug">The Card Powers &amp; Play Matrix buttons on the table</span></span>
           <span id="setHideHelpersState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
+        </button>
+        <button id="setHelperTipsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="tips, hints, help, first time, explain">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Helper Tips</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Short one-time tips that explain things as you meet them</span></span>
+          <span id="setHelperTipsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">ON</span>
         </button>
         <button id="setOthersEffectsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="opponents, others, effects, burn, joker, victory, hide, cosmetics">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Show Others' Effects</span>
@@ -13718,6 +13732,7 @@ video {
     // know the rules and find the extra icons around the History strip
     // cluttered rather than helpful.
     let hideHelperIcons = readPref('shithead_hide_helpers', false);
+    let helperTipsOn = readPref('shithead_helper_tips', true); // Settings → Helper Tips (v291)
     let bigEffectsOn = readPref('shithead_big_effects', true);
     // Show Others' Effects (Display): off shows everyone else's burn, Joker
     // and victory effects in the default style (the play is still shown).
@@ -14924,6 +14939,7 @@ video {
       if (opportunity) {
         snapBtn.classList.remove('hidden');
         snapToast.classList.remove('hidden');
+        requestAnimationFrame(() => showHelperTip('snap-burn', snapBtn)); // § Helper tips
         // Beside the Base Card when the screen has room, over it when not.
         snapBtn.classList.remove('snap-over-base');
         const sr = snapBtn.getBoundingClientRect();
@@ -16398,6 +16414,7 @@ video {
       fitHandToTable();
       markHandStrip();
       positionDirectionBadge();
+      try { helperTipsOnTable(); } catch (e) { if (!(e instanceof ReferenceError)) throw e; } // § Helper tips
       // The owner-art effects anyone at the table might play: fetch their layers early.
       if (state.phase && state.phase !== 'SETUP') preloadOwnerFx([equippedCosmetics.victoryEffect, equippedCosmetics.jokerEffect, ...(state.players || []).flatMap(p => [p?.cosmetics?.victoryEffect, p?.cosmetics?.jokerEffect])]);
       renderGauntletHud();
@@ -19326,6 +19343,7 @@ video {
       paintToggle(document.getElementById('setContrastState'), highContrast);
       paintToggle(document.getElementById('setBigPrintState'), state.deckTheme === 'theme-bigprint');
       paintToggle(document.getElementById('setHideHelpersState'), !hideHelperIcons);
+      paintToggle(document.getElementById('setHelperTipsState'), helperTipsOn);
       paintToggle(document.getElementById('setMotionState'), reduceMotion);
       paintToggle(document.getElementById('setBigEffectsState'), bigEffectsOn);
       paintToggle(document.getElementById('setOthersEffectsState'), othersEffectsOn);
@@ -19494,7 +19512,7 @@ video {
       const lobby = document.getElementById('lobbyScreen');
       document.body.classList.toggle('lobby-open', !!lobby && !lobby.classList.contains('hidden'));
       // Next frame: at start-up this runs before the seasonal code exists.
-      requestAnimationFrame(() => refreshHomeScreen());
+      requestAnimationFrame(() => { refreshHomeScreen(); try { helperTipsOnHome(); } catch (e) {} });
     }
     new MutationObserver(syncLobbyOpen).observe(document.getElementById('lobbyScreen'), { attributes: true, attributeFilter: ['class'] });
     syncLobbyOpen();
@@ -20007,6 +20025,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v291: [
+        [ '💡', 'Helper tips: short one-time tips explain things the first time you meet them. Turn them off in Settings → Display → Helper Tips.', WN_KEY ],
+        [ '🪜', 'The Level Ladder now names the weekly unlocks: a 6th weekly challenge at Lvl 45 and a 7th at Lvl 65.' ],
+        [ '👆', 'Tap outside the match summary to close it.' ]
+      ],
       v290: [
         [ '📅', 'More challenges as you level up: a 4th daily challenge at Lvl 35 and a 5th at Lvl 55, plus an extra weekly challenge at Lvl 45 and another at Lvl 65.', WN_KEY ],
         [ '🪜', 'Level Ladder: tapping a reward opens its big preview, with an Equip button.' ],
@@ -24461,6 +24484,9 @@ video {
     document.getElementById('matchSummaryShare').innerHTML = /iphone|ipad|ipod|macintosh|mac os/i.test(navigator.userAgent) ? SHARE_ICON_APPLE : SHARE_ICON_OTHER;
     document.getElementById('matchSummaryShare').addEventListener('click', () => { shareMatchResult(); });
     document.getElementById('matchSummaryClose').addEventListener('click', closeMatchSummary);
+    // A tap outside the card closes it too (v291, owner), in every mode: the
+    // summary only reports; Ready / Rematch / Return stay on the table row.
+    document.getElementById('matchSummaryModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeMatchSummary(); });
     document.getElementById('matchSummaryTable').addEventListener('click', closeMatchSummary);
     document.getElementById('matchSummaryStats').addEventListener('click', () => { closeMatchSummary(); document.getElementById('matchStatsBtn')?.click(); });
     document.getElementById('matchSummaryAgain').addEventListener('click', () => {
@@ -24847,6 +24873,7 @@ video {
       closeOtherMenuPages('shopModal');
       if (!currentUser) { openAuthModal(); return; }
       document.getElementById('shopModal').classList.remove('hidden');
+      setTimeout(() => showHelperTip('shop-hold', '#shopModal [data-shop-row]'), 900); // § Helper tips
       if (!shopTabPicked) shopTab = restoredShopTab(seasonalTabLeads());
       clearShopActionNotice();
       setNameTokenStatus('Loading…');
@@ -25420,6 +25447,7 @@ video {
         showCardIcons: !!showCardIcons,
         highContrast: !!highContrast,
         hideHelperIcons: !!hideHelperIcons,
+        helperTipsOn: !!helperTipsOn,
         reduceMotion: !!reduceMotion,
         bigEffectsOn: !!bigEffectsOn,
         othersEffectsOn: !!othersEffectsOn,
@@ -25461,6 +25489,7 @@ video {
           ['showCardIcons','shithead_card_icons',v => { showCardIcons=v; }],
           ['highContrast','shithead_high_contrast',v => { highContrast=v; }],
           ['hideHelperIcons','shithead_hide_helpers',v => { hideHelperIcons=v; }],
+          ['helperTipsOn','shithead_helper_tips',v => { helperTipsOn=v; if (!v) hideHelperTip(); }],
           ['reduceMotion','shithead_reduce_motion',v => { reduceMotion=v; }],
           ['bigEffectsOn','shithead_big_effects',v => { bigEffectsOn=v; }],
           ['othersEffectsOn','shithead_others_effects',v => { othersEffectsOn=v; }],
@@ -27223,6 +27252,10 @@ video {
     // here by itself. It opens scrolled to your level ("You are here").
     const LADDER_SPEEDS = ['0.5×', '1×', '2×', '4×'];
     const LADDER_KIND = { 'Avatars': 'Avatar', 'Card Backs': 'Card Back', 'Burn Effects': 'Burn', 'Frames': 'Frame', 'Table Themes': 'Table', 'Victory Effects': 'Victory', 'Joker Effects': 'Joker', 'Emote Packs': 'Emotes' };
+    function ordinalNumber(n) {
+      const t = n % 100, u = n % 10;
+      return `${n}${t >= 11 && t <= 13 ? 'th' : u === 1 ? 'st' : u === 2 ? 'nd' : u === 3 ? 'rd' : 'th'}`;
+    }
     function ladderMilestoneDiamonds(L) {
       if (L === XP_MAX_LEVEL && XP_RULES.maxLevelDiamonds) return XP_RULES.maxLevelDiamonds;
       return L % XP_RULES.milestoneEvery === 0 ? XP_RULES.milestoneDiamonds : XP_RULES.levelUpDiamonds;
@@ -27235,8 +27268,9 @@ video {
       SPEED_UNLOCK_LEVELS.forEach((L, i) => { if (L > 0) add(L, { kind: 'unlock', icon: 'bolt', tone: '#38bdf8', name: `${LADDER_SPEEDS[i] || ''} game speed`, tip: `Play Vs Bots at ${LADDER_SPEEDS[i]} speed (signed in).` }); });
       LOADOUT_SLOT_LEVELS.forEach((L, i) => { if (L > 0) add(L, { kind: 'unlock', icon: 'save', tone: '#a78bfa', name: `Saved look ${i + 1}`, tip: `A ${i === 1 ? 'second' : i === 2 ? 'third' : 'new'} saved look in Custom.` }); });
       add(XP_RULES.giftLevel, { kind: 'unlock', icon: 'gift', tone: '#f9a8d4', name: 'Gifting', tip: 'Send Shop items to your friends as gifts.' });
-      (XP_RULES.extraDaily || []).forEach((L, i) => add(L, { kind: 'unlock', icon: 'check', tone: '#34d399', name: `${['4th', '5th', '6th'][i] || 'Extra'} daily challenge`, tip: 'One more daily challenge every day.' }));
-      (XP_RULES.extraWeekly || []).forEach((L, i) => add(L, { kind: 'unlock', icon: 'check', tone: '#22d3ee', name: `Extra weekly challenge`, tip: 'One more weekly challenge every week.' }));
+      (XP_RULES.extraDaily || []).forEach((L, i) => add(L, { kind: 'unlock', icon: 'check', tone: '#34d399', name: `${ordinalNumber(3 + i + 1)} daily challenge`, tip: 'One more daily challenge every day.' }));
+      const weeklyBase = WEEKLY_CHALLENGE_RULES[WEEKLY_CHALLENGE_RULES.length - 1].picks; // 5 a week from 2026-W41
+      (XP_RULES.extraWeekly || []).forEach((L, i) => add(L, { kind: 'unlock', icon: 'check', tone: '#22d3ee', name: `${ordinalNumber(weeklyBase + i + 1)} weekly challenge`, tip: 'One more weekly challenge every week.' }));
       add(XP_RULES.weeklyRerollLevel, { kind: 'unlock', icon: 'refresh', tone: '#34d399', name: 'Weekly Reroll', tip: 'Swap one weekly challenge for a different one, once a week.' });
       add(SERIES_RULES.level, { kind: 'unlock', icon: 'swords', tone: '#f472b6', name: 'Best Of Series', tip: 'Play a Best of 3 or 5 against a friend for Diamonds.' });
       Object.entries(GAUNTLET.modes || {}).forEach(([key, m]) => { if (m.level > 0) add(m.level, { kind: 'unlock', icon: key === 'boss' ? 'crown' : 'shield', tone: key === 'boss' ? '#c084fc' : '#f87171', name: `${m.name} Gauntlet`, tip: `${m.name} Gauntlet opens at level ${m.level}${m.needs ? ' once you have beaten the easier Gauntlets' : ''}.` }); });
@@ -27379,6 +27413,7 @@ video {
       });
       loadLadderExtras();
       loadLadderFriends();
+      setTimeout(() => showHelperTip('ladder-tap', '#levelLadderScroll [data-ladder-id]'), 700); // § Helper tips
       return true;
     }
     // Tap a level (its circle or a folded line): the total XP it needs (v278).
@@ -28212,6 +28247,116 @@ video {
       });
     }
 
+    // § Helper tips (v291, owner): short one-time tips shown the first time a
+    // player meets something (HELPER_TIPS). Each shows once per device
+    // (localStorage shithead_tips_seen), one at a time, beside what it is
+    // about, never in a lesson or the test suite; Settings → Helper Tips
+    // (helperTipsOn, synced) turns them off. Triggers: helperTipsOnTable (end
+    // of render), checkSnapBurnEligibility, openShopPanel, openLevelLadder,
+    // the empty Friends list, the Weekly tab and the home screen.
+    const HELPER_TIPS = {
+      'hold-card': 'Hold any card to see what it does.',
+      'snap-burn': "Snap Burn: you can complete four of a kind even when it's not your turn.",
+      'joker': 'Play a Joker to give the Pile to someone else.',
+      'play-matrix': 'Not sure what beats what? Tap ▦.',
+      'shop-hold': 'Hold any item to see it big.',
+      'ladder-tap': "Tap a reward to preview it, or equip it once it's yours.",
+      'friends-invite': 'Share your invite link: you both get Diamonds after 3 games.',
+      'weekly-reroll': 'You can swap one weekly challenge a week.',
+      'first-day-xp': 'Your first game each day gives bonus XP.'
+    };
+    const HELPER_TIPS_SEEN_KEY = 'shithead_tips_seen';
+    const HELPER_TIP_MS = 8000;
+    const HELPER_TIP_MATRIX_GAMES = 3; // the Play Matrix tip waits for a few finished games
+    let helperTipNow = null; // { key, anchor, timer, watch }
+    function helperTipsSeen() {
+      try { return new Set(JSON.parse(localStorage.getItem(HELPER_TIPS_SEEN_KEY) || '[]')); } catch (e) { return new Set(); }
+    }
+    function helperTipSeen(key) { return helperTipsSeen().has(key); }
+    function markHelperTipSeen(key) {
+      const seen = helperTipsSeen(); seen.add(key);
+      try { localStorage.setItem(HELPER_TIPS_SEEN_KEY, JSON.stringify([...seen])); } catch (e) {}
+    }
+    function hideHelperTip() {
+      if (!helperTipNow) return;
+      clearTimeout(helperTipNow.timer); clearInterval(helperTipNow.watch);
+      document.getElementById('helperTip')?.remove();
+      helperTipNow = null;
+    }
+    function helperTipVisible(el) {
+      if (!el || !el.isConnected) return false;
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight && !el.closest('.hidden');
+    }
+    // Shows the tip once; returns true when it showed. opts.force skips the
+    // lesson / test-suite guards (tests only).
+    function showHelperTip(key, anchor, opts = {}) {
+      const text = HELPER_TIPS[key];
+      if (!text || !helperTipsOn || helperTipNow || helperTipSeen(key)) return false;
+      if (!opts.force && (tutorialActive || devTestSuiteRunning || state.spectating)) return false;
+      const el = typeof anchor === 'string' ? document.querySelector(anchor) : anchor;
+      if (!helperTipVisible(el)) return false;
+      markHelperTipSeen(key);
+      const tip = document.createElement('div');
+      tip.id = 'helperTip';
+      tip.className = 'helper-tip';
+      tip.setAttribute('role', 'status');
+      tip.dataset.helperTipKey = key;
+      tip.innerHTML = `<span class="helper-tip-icon">${icon('sparkle')}</span><span class="helper-tip-text">${escapeHtml(text)}</span><button type="button" class="helper-tip-ok" data-helper-tip-ok>Got It</button>`;
+      document.body.appendChild(tip);
+      placeHelperTip(tip, el);
+      requestAnimationFrame(() => tip.classList.add('show'));
+      // The table redraws its cards often: a selector anchor is looked up
+      // again (and the tip follows it); it closes only once it has gone.
+      const selector = typeof anchor === 'string' ? anchor : null;
+      helperTipNow = {
+        key, anchor: el,
+        timer: setTimeout(hideHelperTip, opts.ms || HELPER_TIP_MS),
+        watch: setInterval(() => {
+          let target = helperTipNow && helperTipNow.anchor;
+          if (!helperTipVisible(target) && selector) target = document.querySelector(selector);
+          if (!helperTipVisible(target)) { hideHelperTip(); return; }
+          if (target !== helperTipNow.anchor) { helperTipNow.anchor = target; placeHelperTip(tip, target); }
+        }, 250)
+      };
+      return true;
+    }
+    function placeHelperTip(tip, el) {
+      const r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+      const top0 = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 44) + 6;
+      let top = r.top - th - 10, below = false;
+      if (top < top0) { top = r.bottom + 10; below = true; }
+      const left = Math.max(10, Math.min(window.innerWidth - tw - 10, r.left + r.width / 2 - tw / 2));
+      tip.style.left = `${left}px`; tip.style.top = `${Math.min(window.innerHeight - th - 8, Math.max(top0, top))}px`;
+      tip.style.setProperty('--arrow-x', `${Math.max(14, Math.min(tw - 14, r.left + r.width / 2 - left))}px`);
+      tip.classList.toggle('below', below);
+    }
+    document.addEventListener('click', (e) => {
+      if (e.target.closest && e.target.closest('[data-helper-tip-ok]')) { e.preventDefault(); hideHelperTip(); }
+    });
+    // Table tips, after every render.
+    function helperTipsOnTable() {
+      if (!helperTipsOn || helperTipNow || tutorialActive || state.phase !== 'PLAY' || state.spectating) return;
+      const local = state.players.find(p => p.id === state.localPlayerId);
+      if (!local || local.hasFinished) return;
+      const myTurn = state.players[state.currentTurnIndex]?.id === local.id;
+      if ((local.hand || []).some(c => c.isJoker || c.rank === 'JOKER') && showHelperTip('joker', '#localHand [data-rank="JOKER"]')) return;
+      if (!myTurn) return;
+      if (showHelperTip('hold-card', '#localHand [data-card-id]')) return;
+      let games = 0;
+      try { games = readLocalMatchHistory().length; } catch (e) {}
+      if (games >= HELPER_TIP_MATRIX_GAMES && !hideHelperIcons) showHelperTip('play-matrix', '#matrixRefBtn');
+    }
+    // Home screen: the first day someone plays (shithead_first_day).
+    function helperTipsOnHome() {
+      if (!helperTipsOn || !document.body.classList.contains('lobby-open')) return;
+      const today = localDateKey();
+      let first = null;
+      try { first = localStorage.getItem('shithead_first_day'); if (!first) { first = today; localStorage.setItem('shithead_first_day', today); } } catch (e) { return; }
+      if (first !== today || !currentUser || (typeof xpShown === 'function' && !xpShown())) return;
+      showHelperTip('first-day-xp', '#startSingleBtn');
+    }
+
     // § Weekly reroll (v289, owner)
     // From level XP_RULES.weeklyRerollLevel, one weekly challenge a UK week
     // can be swapped for another from the week's pool (server: economy
@@ -28229,7 +28374,10 @@ video {
       const st = weeklyRerollState();
       el.classList.toggle('hidden', st === 'off');
       if (st === 'locked') el.innerHTML = `${icon('lock')}<span><b>Weekly Reroll</b> unlocks at Lvl ${XP_RULES.weeklyRerollLevel}: swap one challenge a week.</span>`;
-      else if (st === 'ready') el.innerHTML = `${icon('refresh')}<span><b>Weekly Reroll</b> ready: tap ${icon('refresh')} on a challenge to swap it. Once a week.</span>`;
+      else if (st === 'ready') {
+        el.innerHTML = `${icon('refresh')}<span><b>Weekly Reroll</b> ready: tap ${icon('refresh')} on a challenge to swap it. Once a week.</span>`;
+        setTimeout(() => showHelperTip('weekly-reroll', '#challengesWeeklyList [data-weekly-reroll]'), 300);
+      }
       else if (st === 'used') {
         const r = challengeEconomy.weeklyReroll, wk = getUkWeekKey();
         const from = getWeeklyChallengeDef(r.from, wk)?.name || 'a challenge', to = getWeeklyChallengeDef(r.to, wk)?.name || 'a new one';
@@ -29913,7 +30061,7 @@ video {
       area.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-4">Loading\u2026</p>';
       db.ref(`friends/${currentUser.uid}`).once('value').then((snap) => {
         const uids = Object.keys(snap.val() || {});
-        if (uids.length === 0) { showFriendsEmpty("You haven't added any friends yet."); return; }
+        if (uids.length === 0) { showFriendsEmpty("You haven't added any friends yet."); setTimeout(() => showHelperTip('friends-invite', '#friendsInviteBtn'), 300); return; }
         document.getElementById('friendsEmptyMsg').classList.add('hidden');
         const watch = friendProfileWatch = { profiles: {}, refs: [], timer: null, tick: null };
         let pending = uids.length;
@@ -31661,6 +31809,11 @@ video {
     document.getElementById('setHideHelpersRow').addEventListener('click', () => {
       hideHelperIcons = !hideHelperIcons; writePref('shithead_hide_helpers', hideHelperIcons);
       applyAccessibilityPrefs(); refreshSettingsUI(); scheduleSettingsCloudSave();
+    });
+    document.getElementById('setHelperTipsRow').addEventListener('click', () => {
+      helperTipsOn = !helperTipsOn; writePref('shithead_helper_tips', helperTipsOn);
+      if (!helperTipsOn) hideHelperTip();
+      refreshSettingsUI(); scheduleSettingsCloudSave();
     });
     document.getElementById('setMotionRow').addEventListener('click', () => {
       reduceMotion = !reduceMotion; writePref('shithead_reduce_motion', reduceMotion);
