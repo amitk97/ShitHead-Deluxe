@@ -1740,6 +1740,8 @@
   "milestoneEvery": 10,
   "milestoneDiamonds": 100,
   "maxLevelDiamonds": 999,
+  "giftLevel": 2,
+  "weeklyRerollLevel": 40,
   "maxXp": 100000000,
   "rewards": [
    {

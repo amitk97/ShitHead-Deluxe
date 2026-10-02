@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v288 (ShitHead-Deluxe-228) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v289 (ShitHead-Deluxe-229) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -279,6 +279,15 @@
     /* Tutorial: a second highlight for a control that isn't the spotlight
        target — used on PLAY SELECTED CARD(S) so the player can see the next
        thing to press. */
+    /* Lessons always show the cards you can play in green (owner, v289),
+       whatever frame is equipped: frames set !important edges that hid it. */
+    body.tutorial-on :is(#localHand, #localTableSlots) .animate-legal-glow:not(.opponent-cosmetic-card) {
+      border-color: #34d399 !important; outline-color: #34d399 !important;
+      box-shadow: 0 0 14px rgba(52, 211, 153, 0.9), inset 0 0 0 2.5px #34d399 !important;
+    }
+    body.tutorial-on :is(#localHand, #localTableSlots) .animate-legal-glow.tutorial-glow:not(.opponent-cosmetic-card) {
+      box-shadow: 0 0 16px rgba(52, 211, 153, 0.95), inset 0 0 0 2.5px #34d399, 0 0 0 4px rgba(251, 191, 36, 0.55) !important;
+    }
     .tutorial-glow {
       border: 2px solid #fbbf24 !important;
       box-shadow: 0 0 22px rgba(251, 191, 36, 0.85), 0 0 0 4px rgba(251, 191, 36, 0.18) !important;
@@ -447,6 +456,18 @@
     .mode-btn .mode-name { font-size:14px; font-weight:900; line-height:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
     .mode-btn .mode-sub { font-size:9px; font-weight:700; line-height:14px; opacity:.78; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
     .ch-row-lead .ic-tier { width:22px; height:22px; display:block; }
+    /* The match summary's Level Ladder button sits centred (owner, v289). */
+    .xp-ladder-link.ms-ladder-link { display:flex; width:max-content; margin-left:auto; margin-right:auto; }
+    .custom-equip-hint { display:flex; align-items:center; justify-content:center; gap:6px; margin:0 0 8px; font-size:9px; color:#94a3b8; text-align:center; }
+    .custom-equip-hint .ic { width:12px; height:12px; color:#fbbf24; flex-shrink:0; }
+    .custom-equip-hint b { color:#e2e8f0; }
+    #themesModal [data-equip-id] { touch-action:manipulation; }
+    .ch-reroll-btn { width:26px; height:26px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #34d399; color:#6ee7b7; background:rgba(6,78,59,.35); }
+    .ch-reroll-btn .ic { width:14px; height:14px; }
+    .ch-reroll-btn:disabled { opacity:.5; }
+    .ch-reroll-note { display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:6px 8px; border-radius:8px; border:1px solid #1e293b; background:rgba(15,23,42,.7); font-size:9px; color:#94a3b8; }
+    .ch-reroll-note .ic { width:12px; height:12px; flex-shrink:0; color:#34d399; }
+    .ch-reroll-note b { color:#e2e8f0; }
     .lb-place { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:999px; font-size:11px; font-weight:900; color:#1f2937; box-shadow:inset 0 -2px 0 rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.6); }
     .lb-place.is-1 { background:linear-gradient(#fff4b8,#fbbf24 55%,#a16207); }
     .lb-place.is-2 { background:linear-gradient(#ffffff,#cbd5e1 55%,#64748b); }
@@ -6479,6 +6500,7 @@ video {
         </section>
         <section id="challengeTabWeekly" data-challenge-panel="weekly" class="hidden">
           <div class="mb-2 text-[8px] text-slate-500">Resets every Monday (UK time).</div>
+          <div id="challengesWeeklyReroll" class="ch-reroll-note hidden"></div>
           <div id="challengesWeeklyList" class="flex flex-col gap-1.5"></div>
         </section>
         <section id="challengeTabRanked" data-challenge-panel="ranked" class="hidden">
@@ -6565,6 +6587,7 @@ video {
           <button data-custom-filter="unowned" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">NOT OWNED</button>
           <button data-custom-filter="equipped" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">EQUIPPED</button>
         </div><button type="button" class="hscroll-btn next" aria-label="Scroll filters right" tabindex="-1">›</button></div>
+        <p id="customEquipHint" class="custom-equip-hint"><svg class="ic ic-tap" aria-hidden="true" focusable="false"><use href="#ic-tap"/></svg><span><b>Double-tap</b> an item to equip it. Hold it to see it big.</span></p>
         <div data-custom-panel="all"><div id="personalisationAll" class="custom-all"></div></div>
         <div data-custom-panel="avatar" class="hidden"><div id="personalisationAvatars" class="avatar-picker-grid"></div></div>
         <div data-custom-panel="deck" class="hidden"><div id="themesGridArea" class="cosmetic-tile-grid py-1"></div></div>
@@ -6654,7 +6677,7 @@ video {
       <div id="matrixRefScroll" class="overflow-auto custom-scrollbar" style="max-height:55vh;">
         <table id="matrixRefTable" class="border-collapse" style="font-size:8px; line-height:1.1;"></table>
       </div>
-      <p id="matrixRefHint" class="text-[7px] text-slate-400 mt-1 pt-1 border-t border-slate-700 leading-tight" style="max-width:220px;">Left: the card you want to play. Top: the card on the Pile. <span class="text-emerald-400 font-bold">&#10003;</span> you can play it, <span class="text-rose-500 font-bold">&#10007;</span> you can't.</p>
+      <p id="matrixRefHint" class="text-[7px] text-slate-400 mt-1 pt-1 border-t border-slate-700 leading-tight" style="max-width:220px;">Left: the card you want to play. Top: the card on the Pile. <span class="text-emerald-400 font-bold">&#10003;</span> means you can play your card on it, <span class="text-rose-500 font-bold">&#10007;</span> means you can't.</p>
       <div class="cardref-resize-handle" data-corner="tl" style="left:-7px; top:-7px; transform-origin: top left; cursor:nwse-resize;" data-tip="Drag to resize · pinch on mobile"></div>
       <div class="cardref-resize-handle" data-corner="tr" style="right:-7px; top:-7px; transform-origin: top right; cursor:nesw-resize;" data-tip="Drag to resize · pinch on mobile"></div>
       <div class="cardref-resize-handle" data-corner="bl" style="left:-7px; bottom:-7px; transform-origin: bottom left; cursor:nesw-resize;" data-tip="Drag to resize · pinch on mobile"></div>
@@ -9540,13 +9563,12 @@ video {
     // "2x" and "4x" mean exactly that, not just a label. Default is 1x.
     // Multiplayer only: how long a human has before a bot auto-plays a
     // random legal move for them. Host-configurable in the lobby, before
-    // the match starts. Ordered fastest-to-slowest doesn't matter here —
-    // this is the display order in the lobby UI, casual (most forgiving)
-    // first.
+    // the match starts. This is the display order in the lobby UI:
+    // shortest time on the left, Casual on the right (owner, v289).
     const TURN_TIMER_PRESETS = [
-      { id: 'casual', label: 'Casual', ms: 25000 },
+      { id: 'blitz', label: 'Blitz', ms: 10000 },
       { id: 'balanced', label: 'Balanced', ms: 15000 },
-      { id: 'blitz', label: 'Blitz', ms: 10000 }
+      { id: 'casual', label: 'Casual', ms: 25000 }
     ];
 
     const SPEED_PRESETS = [0.5, 1, 2, 4];
@@ -19976,6 +19998,14 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v289: [
+        [ '🔄', 'Weekly Reroll: from Lvl 40, swap one weekly challenge for a different one each week.', WN_KEY ],
+        [ '👆', 'Custom: double-tap an item to equip it, so a stray tap never changes your look.' ],
+        [ '🎁', 'Gifting unlocks at Lvl 2.' ],
+        [ '⏱️', 'Play Friends turn timers now run Blitz, Balanced, Casual from left to right.' ],
+        [ '🎓', 'Quick Start always shows the cards you can play in green, and explains the Play Matrix more clearly.' ],
+        [ '📈', 'The match summary\'s Level Ladder button is centred.' ]
+      ],
       v288: [
         [ '⌨️', 'Bonus Draw on a keyboard: pressing the drawn card\'s key (or Enter) plays it and closes the prompt.' ]
       ],
@@ -23798,6 +23828,20 @@ video {
       return syncServerEconomy().then(res => (res && res.newAvatars) || []);
     }
 
+    const CUSTOM_EQUIP_TAP_MS = 450;
+    let customLastTap = null; // { key, at }
+    // true when this tap is the second one on the same item in time.
+    function customEquipSecondTap(type, id) {
+      const key = `${type}:${id}`, now = Date.now();
+      const second = !!customLastTap && customLastTap.key === key && now - customLastTap.at <= CUSTOM_EQUIP_TAP_MS;
+      customLastTap = second ? null : { key, at: now };
+      return second;
+    }
+    function cosmeticDisplayName(type, id) {
+      if (id === 'default') return 'Default';
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
+      return item ? item.name : 'This item';
+    }
     document.getElementById('themesModal').addEventListener('click', (event) => {
       const groupBtn = event.target.closest('[data-custom-group-toggle]');
       if (groupBtn) {
@@ -23822,7 +23866,18 @@ video {
       if (btn.hasAttribute('data-locked')) { previewLockedCosmetic(id); return; }
       const previous = type === 'avatar' ? resolveAvatarId(equippedCosmetics.avatar) : equippedIdOf(type);
       if (type === 'cardBack' && id === previous) { openBigPreview(id, type); return; }
-      if (!equipCosmetic(type, id) || motionOff()) return;
+      // Double-tap to equip (v289, owner): the first tap previews the item
+      // and says how to equip it, a second tap on it within
+      // CUSTOM_EQUIP_TAP_MS equips, so a stray tap never swaps a look.
+      if (id !== previous && !customEquipSecondTap(type, id)) {
+        if (!btn.isConnected) return;
+        previewEquippedCosmetic(type, id);
+        showInfoPop(btn, `<b>${escapeHtml(cosmeticDisplayName(type, id))}</b><br>Double-tap to equip.`);
+        return;
+      }
+      if (id === previous) { showInfoPop(btn, 'Equipped. Hold any item to see it big.'); return; }
+      hideInfoPop();
+      if (!equipCosmetic(type, id, { preview: false }) || motionOff()) return;
       // Equip snap: the new pick pops and "slots in" with a click; the old
       // one eases back from a faded state.
       const modal = visibleCustomPanel() || document.getElementById('themesModal');
@@ -24396,7 +24451,15 @@ video {
       banner.classList.toggle('hidden', !giftTarget);
       if (giftTarget) banner.innerHTML = `<span>🎁 Choosing a gift for <b>${escapeHtml(giftTarget.name)}</b> — tap GIFT on any item.</span><button type="button" id="giftModeCancel">CANCEL</button>`;
     }
+    // Gifting unlocks at XP_RULES.giftLevel (owner, v289; the server checks
+    // too). With XP switched off there is no lock, like the speed locks.
+    function giftLockReason() {
+      if (typeof xpShown === 'function' && !xpShown()) return '';
+      return speedLevelNow() >= XP_RULES.giftLevel ? '' : `Gifting unlocks at Lvl ${XP_RULES.giftLevel}. Finish a few games to get there.`;
+    }
     function startGiftForFriend(uid, name) {
+      const lock = giftLockReason();
+      if (lock) { notifyBanner(lock); return; }
       giftTarget = { uid, name: name || 'your friend' };
       document.getElementById('friendsModal')?.classList.add('hidden');
       openShopPanel();
@@ -24409,6 +24472,8 @@ video {
     function openGiftModal(itemId) {
       const item = giftableItem(itemId);
       if (!item || !currentUser) return;
+      const lock = giftLockReason();
+      if (lock) { showShopActionNotice(lock, 'error'); notifyBanner(lock); return; }
       giftModalItemId = item.id;
       const type = COSMETIC_CATEGORY_TYPES[item.category];
       document.getElementById('giftModalItem').innerHTML = `<span class="shrink-0" style="${type === 'tableTheme' ? 'width:110px' : ''}">${shopCosmeticThumbnail(item, type)}</span><span class="min-w-0"><span class="gift-item-name block">${escapeHtml(item.name)}</span><span class="gift-item-sub block">${escapeHtml(item.category.replace(/s$/, ''))} · 💎 ${item.cost}</span></span>`;
@@ -26384,6 +26449,8 @@ video {
       milestoneEvery: 10,  // …except every 10th level, which pays instead
       milestoneDiamonds: 100,
       maxLevelDiamonds: 999, // the top level (99) pays this instead (owner, v285)
+      giftLevel: 2,          // sending gifts unlocks here (owner, v289)
+      weeklyRerollLevel: 40, // one weekly challenge reroll a UK week (owner, v289)
       maxXp: 100000000,
       // Free cosmetics unlocked by level (LEVEL_REWARDS; granted by the server).
       rewards: LEVEL_REWARDS.map(r => ({ id: r.id, name: r.name, level: r.level })),
@@ -27097,7 +27164,7 @@ video {
       const climbFrom = matchXpLog.levelUps.length ? Math.min(...matchXpLog.levelUps.map(u => u.level)) - 1 : 0;
       const ups = matchXpLog.levelUps.map(u => `<button type="button" class="ms-levelup" data-levelup="${u.level}" data-open-ladder data-ladder-from="${climbFrom}"><small>Level Up</small>Level ${u.level}${u.reward ? ` <span>+💎 ${u.reward}</span>` : ''}<small class="ms-levelup-see">See your rewards ›</small></button>`).join('');
       return `<div class="ms-section"><div class="ms-label">XP</div>
-        <div class="ms-progress">${xpLevelBadge(p.level)}<span class="ms-bar" style="--bar:var(--xp-fill)"><i data-bar="xp" style="width:${p.pct}%"></i></span><b class="ms-xp-gain">${gained > 0 ? `+${gained} XP` : '+0 XP'}</b></div>${ups}<button type="button" class="xp-ladder-link" data-open-ladder${climbFrom ? ` data-ladder-from="${climbFrom}"` : ''}>Level Ladder ›</button></div>`;
+        <div class="ms-progress">${xpLevelBadge(p.level)}<span class="ms-bar" style="--bar:var(--xp-fill)"><i data-bar="xp" style="width:${p.pct}%"></i></span><b class="ms-xp-gain">${gained > 0 ? `+${gained} XP` : '+0 XP'}</b></div>${ups}<button type="button" class="xp-ladder-link ms-ladder-link" data-open-ladder${climbFrom ? ` data-ladder-from="${climbFrom}"` : ''}>Level Ladder ›</button></div>`;
     }
 
 
@@ -27121,6 +27188,8 @@ video {
       LEVEL_REWARDS.slice().sort((a, b) => a.level - b.level).forEach(item => add(item.level, { kind: 'item', item }));
       SPEED_UNLOCK_LEVELS.forEach((L, i) => { if (L > 0) add(L, { kind: 'unlock', icon: 'bolt', tone: '#38bdf8', name: `${LADDER_SPEEDS[i] || ''} game speed`, tip: `Play Vs Bots at ${LADDER_SPEEDS[i]} speed (signed in).` }); });
       LOADOUT_SLOT_LEVELS.forEach((L, i) => { if (L > 0) add(L, { kind: 'unlock', icon: 'save', tone: '#a78bfa', name: `Saved look ${i + 1}`, tip: `A ${i === 1 ? 'second' : i === 2 ? 'third' : 'new'} saved look in Custom.` }); });
+      add(XP_RULES.giftLevel, { kind: 'unlock', icon: 'gift', tone: '#f9a8d4', name: 'Gifting', tip: 'Send Shop items to your friends as gifts.' });
+      add(XP_RULES.weeklyRerollLevel, { kind: 'unlock', icon: 'refresh', tone: '#34d399', name: 'Weekly Reroll', tip: 'Swap one weekly challenge for a different one, once a week.' });
       add(SERIES_RULES.level, { kind: 'unlock', icon: 'swords', tone: '#f472b6', name: 'Best Of Series', tip: 'Play a Best of 3 or 5 against a friend for Diamonds.' });
       Object.entries(GAUNTLET.modes || {}).forEach(([key, m]) => { if (m.level > 0) add(m.level, { kind: 'unlock', icon: key === 'boss' ? 'crown' : 'shield', tone: key === 'boss' ? '#c084fc' : '#f87171', name: `${m.name} Gauntlet`, tip: `${m.name} Gauntlet opens at level ${m.level}${m.needs ? ' once you have beaten the easier Gauntlets' : ''}.` }); });
       LEVEL_BADGE_TIERS.forEach(([L, , label]) => add(L, { kind: 'badge', level: L, name: `${label} badge` }));
@@ -27584,10 +27653,23 @@ video {
     // weekKey defaults to this week; pass the key's own week for old completions.
     function getWeeklyChallengeDef(id, weekKey = getUkWeekKey()) { return weeklyRulesFor(weekKey).pool.find(c => c.id === id) || null; }
     function weeklyCompletionKey(weekKey,id) { return `weekly_${weekKey}_${id}`; }
-    function ensureWeeklyChallengeState(existing) {
+    // This week's picks for the account: its Weekly Reroll swapped in
+    // (users/{uid}/weeklyReroll = {week, from, to}, server-only; the server's
+    // userWeeklyIds does the same).
+    function weeklyIdsFor(weekKey, reroll) {
+      const ids = pickWeeklyChallengeIds(weekKey);
+      if (reroll && reroll.week === weekKey && ids.includes(reroll.from) && reroll.to && !ids.includes(reroll.to)) ids[ids.indexOf(reroll.from)] = reroll.to;
+      return ids;
+    }
+    function ensureWeeklyChallengeState(existing, reroll) {
       const weekKey=getUkWeekKey();
-      if (existing && existing.weekKey===weekKey && Array.isArray(existing.challengeIds) && existing.challengeIds.length===weeklyRulesFor(weekKey).picks) return {state:existing,changed:false};
-      return {state:{weekKey,challengeIds:pickWeeklyChallengeIds(weekKey),progress:{}},changed:true};
+      const ids = weeklyIdsFor(weekKey, reroll);
+      const same = existing && existing.weekKey===weekKey && Array.isArray(existing.challengeIds);
+      if (same && existing.challengeIds.join() === ids.join()) return {state:existing,changed:false};
+      // Same week, new picks (a reroll): keep the progress on the others.
+      const progress = {};
+      if (same && existing.progress) ids.forEach(id => { if (existing.progress[id]) progress[id] = existing.progress[id]; });
+      return {state:{...(same ? existing : {}), weekKey, challengeIds:ids, progress}, changed:true};
     }
 
     // --- Firebase schema wiring -----------------------------------------
@@ -27759,7 +27841,7 @@ video {
       return ensureServerProfile().catch((e) => console.warn('Economy init failed', e))
         .then(() => getOrCreateUserProfile(currentUser.uid)).then((profile) => {
           const { state: dailyState, changed } = ensureDailyChallengeState(profile.dailyChallengeState);
-          const { state: weeklyState, changed: weeklyChanged } = ensureWeeklyChallengeState(profile.weeklyChallengeState);
+          const { state: weeklyState, changed: weeklyChanged } = ensureWeeklyChallengeState(profile.weeklyChallengeState, profile.weeklyReroll);
           profile.weeklyChallengeState = weeklyState;
           if (weeklyChanged) db.ref(`users/${currentUser.uid}/weeklyChallengeState`).set(weeklyState).catch(e => console.warn('Weekly challenge rollover failed', e));
           challengeEconomy = {
@@ -27768,6 +27850,7 @@ video {
             dailyChallengeState: dailyState,
             weeklyChallengeState: weeklyState,
             seasonalChallengeState: profile.seasonalChallengeState || {},
+            weeklyReroll: profile.weeklyReroll || null,
             rating: profile.rating || 500,
             wins: profile.wins || 0,
             losses: profile.losses || 0,
@@ -28058,6 +28141,59 @@ video {
         if (weekly.progress[id]>=def.target) claimChallenge(key,WEEKLY_CHALLENGE_REWARD,def.name); else renderChallengesModalIfOpen();
       });
     }
+
+    // § Weekly reroll (v289, owner)
+    // From level XP_RULES.weeklyRerollLevel, one weekly challenge a UK week
+    // can be swapped for another from the week's pool (server: economy
+    // weeklyReroll, stored server-only in users/{uid}/weeklyReroll). The
+    // new challenge starts from 0. Hidden while XP is off.
+    function weeklyRerollState() {
+      if (!currentUser || (typeof xpShown === 'function' && !xpShown())) return 'off';
+      if (speedLevelNow() < XP_RULES.weeklyRerollLevel) return 'locked';
+      const r = challengeEconomy.weeklyReroll;
+      return r && r.week === getUkWeekKey() ? 'used' : 'ready';
+    }
+    function renderWeeklyRerollNote() {
+      const el = document.getElementById('challengesWeeklyReroll');
+      if (!el) return;
+      const st = weeklyRerollState();
+      el.classList.toggle('hidden', st === 'off');
+      if (st === 'locked') el.innerHTML = `${icon('lock')}<span><b>Weekly Reroll</b> unlocks at Lvl ${XP_RULES.weeklyRerollLevel}: swap one challenge a week.</span>`;
+      else if (st === 'ready') el.innerHTML = `${icon('refresh')}<span><b>Weekly Reroll</b> ready: tap ${icon('refresh')} on a challenge to swap it. Once a week.</span>`;
+      else if (st === 'used') {
+        const r = challengeEconomy.weeklyReroll, wk = getUkWeekKey();
+        const from = getWeeklyChallengeDef(r.from, wk)?.name || 'a challenge', to = getWeeklyChallengeDef(r.to, wk)?.name || 'a new one';
+        el.innerHTML = `${icon('check')}<span>This week's reroll swapped <b>${escapeHtml(from)}</b> for <b>${escapeHtml(to)}</b>. Next one on Monday.</span>`;
+      }
+    }
+    let weeklyRerollBusy = false;
+    function rerollWeeklyChallenge(id) {
+      const weekly = challengeEconomy.weeklyChallengeState;
+      const def = weekly && getWeeklyChallengeDef(id, weekly.weekKey);
+      if (!def || weeklyRerollBusy || weeklyRerollState() !== 'ready') return Promise.resolve(false);
+      if (!confirm(`Swap ${def.name} for a different weekly challenge?\n\nYou can reroll once a week. Its progress is lost.`)) return Promise.resolve(false);
+      weeklyRerollBusy = true;
+      document.querySelectorAll('[data-weekly-reroll]').forEach(b => { b.disabled = true; });
+      return callEconomy('weeklyReroll', { id }).then((res) => {
+        const r = res && res.reroll;
+        if (!r) throw new Error('No reroll came back.');
+        challengeEconomy.weeklyReroll = r;
+        const { state: next } = ensureWeeklyChallengeState(challengeEconomy.weeklyChallengeState, r);
+        challengeEconomy.weeklyChallengeState = next;
+        if (currentUser) db.ref(`users/${currentUser.uid}/weeklyChallengeState`).set(next).catch(e => console.warn('Weekly reroll not saved', e));
+        const to = getWeeklyChallengeDef(r.to, next.weekKey);
+        notifyBanner(`New weekly challenge: ${to ? to.name : 'ready'}.`);
+        return true;
+      }).catch((e) => {
+        const msg = e && e.code && /precondition/.test(e.code) && e.message ? e.message : 'Could not reroll right now. Please try again.';
+        notifyBanner(msg);
+        return false;
+      }).finally(() => { weeklyRerollBusy = false; renderChallengesModalIfOpen(); });
+    }
+    document.getElementById('challengesWeeklyList')?.addEventListener('click', (e) => {
+      const btn = e.target.closest && e.target.closest('[data-weekly-reroll]');
+      if (btn) { e.preventDefault(); e.stopPropagation(); rerollWeeklyChallenge(btn.dataset.weeklyReroll); }
+    });
 
     // § Weekly challenge events
     // The weekly-only challenges (v240 pool) that aren't a single play or
@@ -28514,7 +28650,7 @@ video {
       document.getElementById(back)?.classList.remove('hidden');
     }).observe(document.getElementById('rulesModal'), { attributes: true, attributeFilter: ['class'] });
 
-    function renderChallengeRowHTML(name, progressText, reward, completed, desc = '', lead = '') {
+    function renderChallengeRowHTML(name, progressText, reward, completed, desc = '', lead = '', extra = '') {
       const rightSide = completed
         ? '<span class="text-emerald-400 text-xs font-black" aria-label="Completed">&#10003;</span>'
         : `<span class="flex items-center gap-1 text-[10px] font-black text-cyan-300">&#128142; ${reward}</span>`;
@@ -28523,7 +28659,7 @@ video {
           <span class="text-[10px] font-bold text-slate-200">${name}</span>
           <span class="text-[9px] text-slate-500">${linkKeyTerms(completed ? (desc || 'Completed') : progressText)}</span>
         </div></div>
-        ${rightSide}
+        ${extra ? `<span class="flex items-center gap-2 shrink-0">${extra}${rightSide}</span>` : rightSide}
       </div>`;
     }
 
@@ -28590,6 +28726,7 @@ video {
 
     function renderChallengesPanel() {
       document.getElementById('challengesModalDoneWrap')?.classList.toggle('hidden', !currentUser);
+      renderWeeklyRerollNote();
       if (!currentUser) {
         CHALLENGES_LIST_IDS.filter(id => !/Gauntlet/.test(id)).forEach((id) => setListHtml(id, CHALLENGES_SIGN_IN_MSG));
         ['challengesGauntletList', 'challengesDailyGauntletList', 'challengesRecruitList', 'challengesHiddenList'].forEach(id => setListHtml(id, ''));
@@ -28626,9 +28763,12 @@ video {
         const def=getWeeklyChallengeDef(id, weekly.weekKey); if (!def) return '';
         const completed=!!challengeEconomy.completedChallenges[weeklyCompletionKey(weekly.weekKey,id)];
         const progress=Math.min((weekly.progress&&weekly.progress[id])||0,def.target);
-        return renderChallengeRowHTML(def.name, `${progress}/${def.target} — ${def.desc}`, WEEKLY_CHALLENGE_REWARD, completed, def.desc);
+        const reroll = !completed && weeklyRerollState() === 'ready'
+          ? `<button type="button" class="ch-reroll-btn" data-weekly-reroll="${escapeAttr(id)}" data-tip="Swap for a different challenge" aria-label="Reroll ${escapeAttr(def.name)}">${icon('refresh')}</button>` : '';
+        return renderChallengeRowHTML(def.name, `${progress}/${def.target} — ${def.desc}`, WEEKLY_CHALLENGE_REWARD, completed, def.desc, '', reroll);
       }).join('') : '<p class="text-[9px] text-slate-500 text-center py-2">Loading challenges…</p>';
       setListHtml('challengesWeeklyList', weeklyHtml);
+      renderWeeklyRerollNote();
       renderSeasonalChallenges();
       const allDailyComplete = !!daily && daily.challengeIds.length > 0 && daily.challengeIds.every((id) => challengeEconomy.completedChallenges[dailyCompletionKey(daily.dateKey, id)]);
       maybeAutoCollapseDailySection(allDailyComplete);
@@ -33703,7 +33843,7 @@ video {
         noteTarget: ['#discardPileContainer [data-rank="A"]']
       },
       {
-        text: "Nothing in your hand beats it, so tap the Pile to pick it up.",
+        text: "Nothing in your hand beats it, so tap the Pile to pick it up. (Pickups are usually automatic.)",
         target: ['#discardPileContainer [data-rank="A"]', '#localHand'],
         require: { pickup: true },
         coachNote: "Picked up. None of your cards could go on the Pile, so it all comes into your Hand.",
@@ -33737,7 +33877,7 @@ video {
         text: "The ▦ Play Matrix shows which card can go on which. Tap the glowing ▦.",
         target: '#matrixRefBtn',
         require: { tapCheck: '#matrixRefBtn' },
-        coachNote: "Find your card down the left, the Pile's card along the top. A tick means it plays.",
+        coachNote: "Find your card on the left, the Pile's on top. A tick means yours can go on it.",
         noteTarget: '#matrixRefPanel'
       },
       {
@@ -34156,6 +34296,7 @@ video {
     function startTutorial(moduleSteps, playerCount = 2) {
       TUTORIAL_STEPS = moduleSteps || TUTORIAL_STEPS_FULL_LEGACY;
       tutorialActive = true;
+      document.body.classList.add('tutorial-on');
       tutorialStep = 0;
       tutorialSnapshots = [];
       tutorialPrevSelectAll = selectAllOfRank;
@@ -35089,6 +35230,7 @@ video {
         updateMultiSelectToggleUI();
       }
       tutorialActive = false;
+      document.body.classList.remove('tutorial-on');
       tutorialHoldKeep = false;
       if (typeof hideCardHold === 'function') hideCardHold();
       tutorialBotPaused = false;

@@ -12,6 +12,7 @@
 //   sync          pay any milestone challenge / earn-only picture already met
 //   streak        daily login reward (one per UK calendar day)
 //   claim         one challenge by completion key (daily_…, weekly_…, season_…, id)
+//   weeklyReroll  swap one weekly challenge for another, once a UK week (level-locked)
 //   matchWin      a Vs Bots or casual online win (caps: see MATCH_LIMITS)
 //   matchFinished a finished match (ShitHead Virgin / Beginner)
 //   rankedDeal    the server's seat order + shuffled deck for a Ranked match
@@ -125,6 +126,14 @@ const pickWeeklyIds = (weekKey) => {
   const rule = weeklyRuleFor(weekKey);
   return pickN(rule.pool.map(c => c.id), `weekly-${weekKey}`, rule.picks);
 };
+// The account's own picks: the week's picks with its reroll swapped in
+// (users/{uid}/weeklyReroll = {week, from, to}, server-only; owner, v289).
+function userWeeklyIds(user, weekKey) {
+  const ids = pickWeeklyIds(weekKey);
+  const r = user && user.weeklyReroll;
+  if (r && r.week === weekKey && ids.includes(r.from) && r.to && !ids.includes(r.to)) ids[ids.indexOf(r.from)] = r.to;
+  return ids;
+}
 
 // ---- Seasons ---------------------------------------------------------------
 // Events on now, with a few hours' slack either side for players' time zones.
@@ -319,7 +328,7 @@ function challengeForKey(id, user, now) {
     const thisWeek = ukWeekKey(now), lastWeek = ukWeekKey(new Date(now.getTime() - 7 * 864e5));
     if (weekKey !== thisWeek && weekKey !== lastWeek) return { error: 'That weekly challenge has expired.' };
     const def = weeklyRuleFor(weekKey).pool.find(c => c.id === poolId);
-    if (!def || !pickWeeklyIds(weekKey).includes(poolId)) return { error: 'Not one of that week\'s challenges.' };
+    if (!def || !userWeeklyIds(user, weekKey).includes(poolId)) return { error: 'Not one of that week\'s challenges.' };
     return { name: def.name, reward: CAT.weeklyReward };
   }
   // Seasonal: only while that event instance is on (with the usual slack).
@@ -442,6 +451,30 @@ actions.streak = async ({ uid }) => {
     return { user, claimed: { count, reward } };
   });
   return { claimed: res.claimed || null, streak: res.user.loginStreak || null, diamonds: num(res.user.diamonds) };
+};
+
+// One weekly challenge swapped for another, once a UK week, from level
+// xp.weeklyRerollLevel (owner, v289). Not for one already completed.
+actions.weeklyReroll = async ({ uid, data }) => {
+  const from = clip(data.id, 40);
+  if (!/^[a-z0-9-]+$/.test(from)) fail('invalid-argument', 'Unknown challenge.');
+  if (!(await xp.enabled())) fail('failed-precondition', 'Rerolls need levels, which are switched off right now.');
+  const need = num(xp.RULES.weeklyRerollLevel) || 40;
+  const now = new Date();
+  const week = ukWeekKey(now);
+  const res = await userTx(uid, (user) => {
+    if (xp.levelFor(num(user.xp?.total)) < need) return { error: `Weekly rerolls unlock at level ${need}.` };
+    if (user.weeklyReroll?.week === week) return { error: 'You have already rerolled a challenge this week.' };
+    const ids = userWeeklyIds(user, week);
+    if (!ids.includes(from)) return { error: 'That is not one of this week\'s challenges.' };
+    if (user.completedChallenges?.[`weekly_${week}_${from}`]) return { error: 'That challenge is already complete.' };
+    const options = weeklyRuleFor(week).pool.map(c => c.id).filter(id => !ids.includes(id));
+    if (!options.length) return { error: 'There is nothing to swap it for.' };
+    const to = options[nodeCrypto.randomInt(options.length)];
+    user.weeklyReroll = { week, from, to, at: now.getTime() };
+    return { user, reroll: user.weeklyReroll };
+  });
+  return { reroll: res.reroll || res.user.weeklyReroll || null };
 };
 
 actions.claim = async ({ uid, data }) => {
@@ -1090,6 +1123,11 @@ actions.sendGift = async ({ uid, auth, data }) => {
   if (!friendUid || friendUid === uid || !KEY_RE.test(friendUid)) fail('invalid-argument', 'Choose a friend.');
   const isFriend = (await db().ref(`friends/${uid}/${friendUid}`).once('value')).val() === true;
   if (!isFriend) fail('permission-denied', 'Gifts can only be sent to friends.');
+  // Gifting unlocks at xp.giftLevel (owner, v289); no lock while XP is off.
+  const giftLevel = num(xp.RULES.giftLevel);
+  if (giftLevel > 1 && await xp.enabled() && (await seriesPlayerLevel(uid)) < giftLevel) {
+    fail('failed-precondition', `Gifting unlocks at level ${giftLevel}.`);
+  }
   const giftId = db().ref(`gifts/${friendUid}`).push().key;
   const sentAt = now.getTime();
   const toName = clip(data.friendName || 'a friend', 12);
@@ -1412,4 +1450,4 @@ exports.economy = onCall({ region: 'europe-west1', cors: true, maxInstances: 20 
 });
 
 // For the unit tests.
-exports._test = { actions, pickDailyIds, pickWeeklyIds, ukDateKey, ukWeekKey, shiftDateKey, activeSeasonWindows, pairwiseEloDeltas, rankedStreakBonus, RANKED_BONUS, tierName, challengeForKey, milestoneEligible, unlockedDifficulties };
+exports._test = { actions, pickDailyIds, pickWeeklyIds, userWeeklyIds, ukDateKey, ukWeekKey, shiftDateKey, activeSeasonWindows, pairwiseEloDeltas, rankedStreakBonus, RANKED_BONUS, tierName, challengeForKey, milestoneEligible, unlockedDifficulties };

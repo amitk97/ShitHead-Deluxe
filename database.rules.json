@@ -294,6 +294,9 @@
         "seriesLedger": {
           ".validate": "newData.hasChildren()"
         },
+        "weeklyReroll": {
+          ".validate": "newData.hasChildren(['week', 'from', 'to'])"
+        },
         "lastRankedOpponent": {
           ".validate": "newData.hasChildren(['uid', 'at'])"
         },

@@ -1754,6 +1754,98 @@ async function runDevTestSuite() {
       currentUser = saved.user; playerXp = saved.xp; refreshXpDisplays();
     }
   });
+  await test('v289: Play Friends timers run Blitz, Balanced, Casual left to right', () => {
+    assertEqual(TURN_TIMER_PRESETS.map(p => p.id), ['blitz', 'balanced', 'casual'], 'Shortest time on the left');
+    renderTurnTimerButtons();
+    const labels = [...document.querySelectorAll('#turnTimerBtnRow button')].map(b => b.textContent.replace(/\d+s$/, '').trim());
+    assertEqual(labels, ['Blitz', 'Balanced', 'Casual'], 'The lobby buttons follow that order');
+  });
+  await test('v289: Custom equips on a double-tap; one tap only previews and says how', () => {
+    const saved = { eq: { ...equippedCosmetics }, owned: cosmeticPurchaseState, now: Date.now };
+    let clock = 1e12;
+    try {
+      openThemesPanel();
+      cosmeticPurchaseState = { 'frame-gold': { cost: 1 } };
+      equippedCosmetics.frame = 'default';
+      setCustomTab('frame');
+      renderPersonalisationCosmetics();
+      const tile = () => visibleCustomPanel().querySelector('[data-equip-type="frame"][data-equip-id="frame-gold"]');
+      assertTrue(!!tile(), 'The owned frame has a tile');
+      assertTrue(/Double-tap/.test(document.getElementById('customEquipHint').textContent), 'Custom says to double-tap');
+      Date.now = () => clock;
+      tile().click();
+      assertEqual(equippedCosmetics.frame, 'default', 'One tap does not equip');
+      assertTrue(/Double-tap to equip/.test(document.getElementById('infoPop')?.textContent || ''), 'One tap explains how to equip');
+      clock += 1000; tile().click();
+      assertEqual(equippedCosmetics.frame, 'default', 'Two slow taps do not equip');
+      clock += 200; tile().click();
+      assertEqual(equippedCosmetics.frame, 'frame-gold', 'A double-tap equips');
+      assertEqual(getComputedStyle(tile()).touchAction, 'manipulation', 'A double-tap never zooms the page');
+    } finally {
+      Date.now = saved.now; hideInfoPop();
+      equippedCosmetics = saved.eq; cosmeticPurchaseState = saved.owned; applyEquippedCosmetics();
+      document.getElementById('themesModal').classList.add('hidden');
+    }
+  });
+  await test('v289: gifting unlocks at Lvl 2 (no lock while XP is off) and the server checks it', () => {
+    const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp };
+    try {
+      assertEqual(XP_RULES.giftLevel, 2, 'Gifting is a Lvl 2 unlock');
+      assertEqual(serverEconomyCatalog().xp.giftLevel, 2, 'The server reads the same level');
+      currentUser = { uid: 'gift-lock-test' };
+      xpFeatureOn = true; playerXp = { total: 0, level: 1 };
+      assertTrue(/Lvl 2/.test(giftLockReason()), 'Level 1 cannot gift');
+      startGiftForFriend('friend-x', 'Sam');
+      assertTrue(!giftTarget, 'The Friends gift button is refused below Lvl 2');
+      playerXp = { total: xpForLevel(2), level: 2 };
+      assertEqual(giftLockReason(), '', 'Level 2 can gift');
+      xpFeatureOn = false; playerXp = { total: 0, level: 1 };
+      assertEqual(giftLockReason(), '', 'No lock while XP is off');
+      assertTrue(ladderRewards().get(2).some(p => p.name === 'Gifting'), 'The Level Ladder shows it at Lvl 2');
+    } finally {
+      giftTarget = null; renderGiftBanner();
+      document.getElementById('shopModal').classList.add('hidden');
+      xpFeatureOn = saved.on; currentUser = saved.user; playerXp = saved.xp;
+    }
+  });
+  await test('v289: Weekly Reroll at Lvl 40 swaps one weekly challenge once a week', async () => {
+    const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp, econ: challengeEconomy, confirm: window.confirm, set: db, loaded: challengeEconomyLoadedForUid };
+    try {
+      const week = getUkWeekKey();
+      const picks = pickWeeklyChallengeIds(week);
+      const pool = weeklyRulesFor(week).pool.map(c => c.id);
+      const swapIn = pool.find(id => !picks.includes(id));
+      xpFeatureOn = true; currentUser = { uid: 'reroll-test' }; challengeEconomyLoadedForUid = 'reroll-test';
+      challengeEconomy = { ...saved.econ, completedChallenges: {}, weeklyReroll: null,
+        weeklyChallengeState: { weekKey: week, challengeIds: picks.slice(), progress: { [picks[0]]: 2, [picks[1]]: 3 } } };
+      db = { ref: () => ({ set: () => Promise.resolve(), once: () => Promise.resolve({ val: () => null }) }) };
+      playerXp = { total: xpForLevel(39), level: 39 };
+      assertEqual(weeklyRerollState(), 'locked', 'Locked below Lvl 40');
+      renderChallengesPanel();
+      assertTrue(!document.querySelector('[data-weekly-reroll]'), 'No reroll buttons while locked');
+      assertTrue(/Lvl 40/.test(document.getElementById('challengesWeeklyReroll').textContent), 'The Weekly tab says when it unlocks');
+      playerXp = { total: xpForLevel(40), level: 40 };
+      renderChallengesPanel();
+      assertEqual(document.querySelectorAll('#challengesWeeklyList [data-weekly-reroll]').length, picks.length, 'Each open weekly challenge has a reroll button');
+      const calls = fakeEconomy({ weeklyReroll: (d) => ({ reroll: { week, from: d.id, to: swapIn, at: 1 } }) });
+      window.confirm = () => true;
+      await rerollWeeklyChallenge(picks[0]);
+      assertEqual(calls[0], ['weeklyReroll', { id: picks[0] }], 'The server picks the new challenge');
+      const ids = challengeEconomy.weeklyChallengeState.challengeIds;
+      assertTrue(ids.includes(swapIn) && !ids.includes(picks[0]) && ids.length === picks.length, 'The new challenge takes its place');
+      assertEqual(challengeEconomy.weeklyChallengeState.progress[swapIn] || 0, 0, 'It starts from 0');
+      assertEqual(challengeEconomy.weeklyChallengeState.progress[picks[1]], 3, 'The others keep their progress');
+      assertEqual(weeklyRerollState(), 'used', 'Used for this week');
+      renderChallengesPanel();
+      assertTrue(!document.querySelector('[data-weekly-reroll]'), 'No more reroll buttons this week');
+      assertEqual(weeklyIdsFor(week, challengeEconomy.weeklyReroll).join(), ids.join(), 'A reload rebuilds the same picks');
+      assertEqual(ladderRewards().get(40).filter(p => p.name === 'Weekly Reroll').length, 1, 'The Level Ladder shows it at Lvl 40');
+    } finally {
+      window.confirm = saved.confirm; db = saved.set; challengeEconomyLoadedForUid = saved.loaded;
+      xpFeatureOn = saved.on; currentUser = saved.user; playerXp = saved.xp; challengeEconomy = saved.econ;
+      document.getElementById('challengesModal')?.classList.add('hidden');
+    }
+  });
   await test('Select All Of A Rank sits left of the hand count, the size of the Card Powers button (v282)', () => {
     const btn = document.getElementById('multiSelectToggleBtn');
     const badge = document.getElementById('handCountBadge');
@@ -1811,6 +1903,27 @@ async function runDevTestSuite() {
       assertTrue(Number(banner.style.zIndex) > Number(zone.style.zIndex || 0), `Bonus prompt (${banner.style.zIndex}) above the lifted play area (${zone.style.zIndex})`);
       state.pendingFollowUp = null;
     } finally { endTutorial(false); }
+  });
+  await test('v289: lessons show playable cards in green even with a frame equipped; Quick Start copy', () => {
+    freshState(); tutorialTestSetup();
+    const prevFrame = document.body.dataset.equippedFrame;
+    try {
+      document.body.dataset.equippedFrame = 'frame-split-crimson';
+      launchTutorialModule('quick_start');
+      showTutorialStep(1);
+      assertTrue(document.body.classList.contains('tutorial-on'), 'The lesson marks the page');
+      const legal = document.querySelector('#localHand .animate-legal-glow');
+      assertTrue(!!legal, 'A playable card is marked');
+      const cs = getComputedStyle(legal);
+      assertTrue(/52, 211, 153/.test(cs.boxShadow) && cs.borderTopColor === 'rgb(52, 211, 153)', `It is green, not the frame (${cs.borderTopColor} / ${cs.boxShadow})`);
+      const pickup = TUTORIAL_MODULE_QUICK_START.find(st => /tap the Pile to pick it up/.test(st.text || ''));
+      assertTrue(/\(Pickups are usually automatic\.\)$/.test(pickup.text), 'The pickup step says pickups are usually automatic');
+      assertTrue(TUTORIAL_MODULE_QUICK_START.some(st => /A tick means yours can go on it\./.test(st.coachNote || '')), 'The Play Matrix step explains a tick plainly');
+    } finally {
+      endTutorial(false);
+      if (prevFrame === undefined) delete document.body.dataset.equippedFrame; else document.body.dataset.equippedFrame = prevFrame;
+    }
+    assertTrue(!document.body.classList.contains('tutorial-on'), 'Ending the lesson clears it');
   });
   await test('Quick Start teaches press and hold: the step waits for a hold on the Pile AND one of your cards', async () => {
     freshState(); tutorialTestSetup();
@@ -8120,7 +8233,7 @@ async function runDevTestSuite() {
       assertTrue(!tip.classList.contains('visible'), 'no hint while a card description is showing');
     } finally { hold.classList.toggle('hidden', wasHidden); window.hideDynamicTip?.(); }
     const step = TUTORIAL_MODULE_QUICK_START.find(st => st.require?.tapCheck === '#matrixRefBtn');
-    assertTrue(/down the left/.test(step.coachNote) && /along the top/.test(step.coachNote) && !/Row =|✓|✗/.test(step.coachNote), 'the tutorial says it in plain words', step.coachNote);
+    assertTrue(/on the left/.test(step.coachNote) && /on top/.test(step.coachNote) && /can go on it/.test(step.coachNote) && !/Row =|✓|✗/.test(step.coachNote), 'the tutorial says it in plain words', step.coachNote);
     assertTrue(/card you want to play/.test(document.getElementById('matrixRefHint').textContent), 'and so does the panel key');
   });
   await test('Presence: a friend reads online only while their game is on screen and seen in the last 3 minutes', () => {
@@ -9623,9 +9736,12 @@ async function runDevTestSuite() {
       const area = document.getElementById('themesGridArea');
       assertEqual(area.querySelector('[data-equip-id="deck-cyber"]').getAttribute('aria-pressed'), 'true', 'The active deck is marked');
       area.querySelector('[data-equip-id="deck-fourcolour"]').click();
+      assertEqual(state.deckTheme, 'theme-cyber', 'One tap only previews (double-tap to equip, v289)');
+      area.querySelector('[data-equip-id="deck-fourcolour"]').click();
       assertEqual(state.deckTheme, 'theme-fourcolour', 'The owned Four-Colour deck is applied');
       assertTrue(document.body.className.includes('theme-fourcolour'), "The deck's class is on the page");
       assertTrue(getSuitStyle('♦').includes('suit-d') && getSuitStyle('♣').includes('suit-c'), 'Suits carry their own class so Four-Colour can colour them');
+      area.querySelector('[data-equip-id="deck-emerald"]').click();
       area.querySelector('[data-equip-id="deck-emerald"]').click();
       assertEqual(state.deckTheme, 'theme-emerald', 'Back to a free deck');
     } finally {

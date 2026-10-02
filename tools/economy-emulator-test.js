@@ -697,6 +697,34 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     await admin('users/xena/matchCounters/lastWinAt', 'PUT', 0);
     x = await call('xena', { action: 'matchWin', mode: 'bots', difficulty: 'easy', matchId: 'xp_w1' });
     ok(x.xp && x.xp.gained === 75, 'a win adds 75 XP on top', x.xp);
+    // v289: gifting unlocks at level 2; Weekly Reroll at level 40, once a UK week.
+    {
+      const eco = require('../functions/economy')._test;
+      await admin('users/alice/xp', 'PUT', { total: 0, level: 1, backfilled: true });
+      await admin('users/alice/diamonds', 'PUT', 5000);
+      let g = await call('alice', { action: 'sendGift', itemId: 'table-royal', friendUid: 'bob', friendName: 'Bob' });
+      ok(g.error && /level 2/.test(g.error.message), 'v289: a level 1 player cannot send gifts', g);
+      await admin('users/alice/xp', 'PUT', { total: xpMod.xpForLevel(2), level: 2, backfilled: true });
+      g = await call('alice', { action: 'sendGift', itemId: 'table-royal', friendUid: 'bob', friendName: 'Bob' });
+      ok(!g.error && g.giftId, 'v289: level 2 can send gifts', g);
+      const wk = eco.ukWeekKey(new Date());
+      const picks = eco.pickWeeklyIds(wk);
+      await admin('users/xena/xp', 'PUT', { total: xpMod.xpForLevel(39), level: 39, backfilled: true });
+      let rr = await call('xena', { action: 'weeklyReroll', id: picks[0] });
+      ok(rr.error && /level 40/.test(rr.error.message), 'v289: Weekly Reroll is locked below level 40', rr);
+      await admin('users/xena/xp', 'PUT', { total: xpMod.xpForLevel(40), level: 40, backfilled: true });
+      rr = await call('xena', { action: 'weeklyReroll', id: 'not-a-pick' });
+      ok(rr.error, 'v289: only one of this week\'s challenges can be rerolled', rr);
+      rr = await call('xena', { action: 'weeklyReroll', id: picks[0] });
+      const to = rr.reroll && rr.reroll.to;
+      ok(rr.reroll && rr.reroll.week === wk && rr.reroll.from === picks[0] && to && !picks.includes(to), 'v289: level 40 rerolls a weekly challenge into a new one', rr);
+      ok((await call('xena', { action: 'weeklyReroll', id: picks[1] })).error, 'v289: only one reroll a week');
+      ok((await tryWrite('xena', db => set(ref(db, 'users/xena/weeklyReroll'), { week: wk, from: picks[1], to: picks[0] }))) === 'denied', 'v289: blocked: a phone writing its own reroll');
+      const c1 = await call('xena', { action: 'claim', id: `weekly_${wk}_${to}` });
+      ok(c1.awarded && c1.awarded.id === `weekly_${wk}_${to}`, 'v289: the rerolled-in challenge can be claimed', c1);
+      const c0 = await call('xena', { action: 'claim', id: `weekly_${wk}_${picks[0]}` });
+      ok(c0.error, 'v289: the swapped-out challenge cannot', c0);
+    }
     // Levels leaderboard: All-time (total XP) and This week (XP since Monday, UK).
     ok(xpMod.ukWeekKey(new Date('2026-09-29T12:00:00Z')) === '2026-W40', 'the server uses the same week keys as the game');
     await admin('users/xena/username', 'PUT', 'Xena');
