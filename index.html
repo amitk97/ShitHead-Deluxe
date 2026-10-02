@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v285 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v286 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5325,7 +5325,7 @@ video {
       <button id="headerShopBtn" class="header-shop-btn h-7 items-center justify-center bg-transparent hover:brightness-125 rounded transition tip-below" style="width:1.75rem;" data-tip="Shop" aria-label="Shop">
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg>
       </button>
-      <button id="headerDiamondBtn" class="header-gem-btn flex items-center justify-center text-cyan-300 transition tip-below" data-tip="Diamonds" aria-label="Diamond balance">
+      <button id="headerDiamondBtn" class="header-gem-btn flex items-center justify-center text-cyan-300 transition tip-below" data-tip="Diamonds · Click to open the Shop" aria-label="Diamonds: open the Shop">
         <span class="header-gem" aria-hidden="true"><svg class="ic ic-gem"><use href="#ic-gem"/></svg></span>
         <span id="headerDiamondCount" class="text-[11px] font-black leading-none tabular-nums" title="0">0</span>
       </button>
@@ -19963,6 +19963,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v286: [
+        [ '💎', 'The Diamonds in the header now say they open the Shop.' ]
+      ],
       v285: [
         [ '💎', 'Reaching level 99 now pays 999 Diamonds.', WN_KEY ]
       ],
@@ -24741,6 +24744,12 @@ video {
     }
     document.getElementById('menuShopBtn').addEventListener('click', openShopPanel);
     document.getElementById('headerDiamondBtn').addEventListener('click', openShopPanel);
+    // v286 (owner): the hint says where the Diamonds go; phones say Tap.
+    try {
+      if (window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches) {
+        document.getElementById('headerDiamondBtn').setAttribute('data-tip', 'Diamonds · Tap to open the Shop');
+      }
+    } catch (e) {}
     document.getElementById('profileChangeUsernameBtn').addEventListener('click', () => {
       if (nameChangeTokenState?.usedAt) return;
       if (currentUser && nameChangeTokenState) { openProfileNameEditor(); return; }

@@ -1722,6 +1722,10 @@ async function runDevTestSuite() {
       assertEqual(document.querySelectorAll(`#${id} .page-title-icon`).length <= 1, true, `#${id} has one title icon`);
     }
   });
+  await test('The header Diamonds hint says they open the Shop (v286)', () => {
+    const tip = document.getElementById('headerDiamondBtn').getAttribute('data-tip');
+    assertTrue(/^Diamonds · (Click|Tap) to open the Shop$/.test(tip), 'Got: ' + tip);
+  });
   await test('Header Profile button, Level Ladder menu entry and the new Challenges icon (v283)', async () => {
     const hp = document.getElementById('headerProfileBtn');
     assertTrue(!!hp && !!hp.closest('header') && !!hp.querySelector('use[href="#ui-profile"]'), 'Profile sits in the header with the Profile icon');

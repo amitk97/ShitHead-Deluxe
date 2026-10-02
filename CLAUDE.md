@@ -279,7 +279,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - Seasonal events have their own icons (`#ic-ev-<event>`, mapped from `ev.emoji`), What's New rows always draw an icon (unmapped → sparkle), 💩 → `#ic-poo`, ☝️ → `#ic-lastcard`. Only effect tile art, emote content and the Shop/Custom emote previews (`data-keep-emoji`) still show emoji. A dev test ("No emoji used as UI icons") scans the header, home screen, Shop, Challenges, Custom, Settings and What's New.
 - Header Shop button `#headerShopBtn` (v255, owner): left of the Diamonds, shown from 700px wide (tablets, PCs) only; phones use Menu → Shop.
 - Mode ⓘ (v256, owner): each home mode button has a `.mode-tip[data-mode-tip]` (top-right) → `showInfoPop` with `MODE_TIPS` (tap toggles, hover on PC; the tap never switches mode). The Gauntlet ⓘ tip opens leftward from the ⓘ (anchored right) so it stays on screen.
-- Home mode buttons (`.mode-btn`): three fixed rows, icon / name / subtitle; the second mode is called **Play Friends** (was Online Room). The header Diamond has no pill (`.header-gem-btn`).
+- Home mode buttons (`.mode-btn`): three fixed rows, icon / name / subtitle; the second mode is called **Play Friends** (was Online Room). The header Diamond has no pill (`.header-gem-btn`). Its hint (v286, owner) reads "Diamonds · Click to open the Shop" ("Tap" on touch screens, set at start-up), and a tap/click opens the Shop.
 
 ## Microinteractions & flips
 
