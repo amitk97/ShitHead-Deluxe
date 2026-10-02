@@ -7369,7 +7369,7 @@ video {
   </div>
 
   <script src="art/burns/level-v294/effects.js?v=295"></script>
-  <script src="art/burns/level-3d/burns3d.js?v=297"></script>
+  <script src="art/burns/level-3d/burns3d.js?v=298"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
   <script>
     const AUDIO_SOURCES = {
@@ -7767,7 +7767,7 @@ video {
       },
       // Level burns v294: shared visual/audio timing in the layered renderer.
       'burn-lvl-spark-snap': k => ShLevelBurns.sound('burn-lvl-spark-snap', k),
-      'burn-lvl-smoke-burst': k => ShLevelBurns.sound('burn-lvl-smoke-burst', k),
+      'burn-lvl-smoke-burst': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-smoke-burst', k) : ShLevelBurns.sound('burn-lvl-smoke-burst', k)),
       'burn-lvl-inferno-sweep': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-inferno-sweep', k) : ShLevelBurns.sound('burn-lvl-inferno-sweep', k)),
       'burn-lvl-hellfire-spiral': k => ShLevelBurns.sound('burn-lvl-hellfire-spiral', k),
       'burn-lvl-royal-incineration': k => ShLevelBurns.sound('burn-lvl-royal-incineration', k),
@@ -8455,14 +8455,22 @@ video {
     }
 
     function bfxSparkSnap(host, x, y, k) { return ShLevelBurns.play('burn-lvl-spark-snap', host, x, y, k, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches); }
-    function bfxSmokeBurst(host, x, y, k) { return ShLevelBurns.play('burn-lvl-smoke-burst', host, x, y, k, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches); }
+    function bfxSmokeBurst(host, x, y, k) {
+      const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+      return levelBurn3d('burn-lvl-smoke-burst', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-smoke-burst', host, x, y, k, calm);
+    }
+    // Any card part that turns over in a 3D burn shows the burning player's own card back.
+    function burnBackClass() {
+      const p = burnFxPlayer, own = !p || p.id === state?.localPlayerId;
+      return getThemeDeckBackClass((p && p.cosmetics && p.cosmetics.cardBack) || (own ? equippedCosmetics.cardBack : 'default'));
+    }
     // 3D level burns (v296): only the real top Pile card burns; previews burn a lone 10.
     function levelBurn3d(id, host, x, y, k, calm) {
       if (!window.ShLevel3D || !ShLevel3D.has(id)) return false;
       const onTable = host && host.id === 'burnFxLayer';
-      const cardEl = onTable ? document.querySelector('#discardCardsWrapper > [data-card-id]:last-child') : null;
+      const cardEls = onTable ? [...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')] : [];
       const pile = onTable ? document.getElementById('discardPileContainer') : null;
-      return ShLevel3D.play(id, host, x, y, k, calm, { cardEl, cardH: pile && pile.offsetHeight });
+      return ShLevel3D.play(id, host, x, y, k, calm, { cardEls, cardH: pile && pile.offsetHeight, backClass: burnBackClass() });
     }
     function bfxInfernoSweep(host, x, y, k) {
       const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -8509,7 +8517,9 @@ video {
       if (player && player.id !== state?.localPlayerId && !othersEffectsOn) return 'default';
       return player?.cosmetics?.burnEffect || (player?.id === state?.localPlayerId ? ownEffect : 'default') || 'default';
     }
+    let burnFxPlayer = null; // whose burn is playing, for effects that show their card back
     function triggerEquippedBurnEffect(x, y, player = null) {
+      burnFxPlayer = player;
       try {
         playBurnEffect(burnEffectIdFor(player), x, y);
       } catch (error) {
@@ -17626,6 +17636,7 @@ video {
                 const pile = document.getElementById('discardPileContainer');
                 if (!pile) return;
                 const rect = pile.getBoundingClientRect();
+                burnFxPlayer = (state.players || []).find(p => p.id === data.lastCosmeticEffect.playerId) || null;
                 playBurnEffect(othersEffect(data.lastCosmeticEffect.effectId), rect.left + rect.width / 2, rect.top + rect.height / 2);
               } catch (error) {
                 console.warn('Remote burn cosmetic skipped safely:', error);
@@ -21479,7 +21490,7 @@ video {
     // the wraith rises from spectral fire and strikes, and the real pile cards are torn away burning.
     function sbfxHalloween(host, x, y, k) {
       const cardEls = host.id === 'burnFxLayer' ? [...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')] : [];
-      if (window.ShLevel3D && ShLevel3D.play('burn-halloween', host, x, y, k, false, { cardEls })) return;
+      if (window.ShLevel3D && ShLevel3D.play('burn-halloween', host, x, y, k, false, { cardEls, backClass: burnBackClass() })) return;
       sfxFlash(host, x, y, k, '#a78bfa', 160, 800);
     }
     function sbfxDiwali(host, x, y, k) {
