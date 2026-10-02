@@ -1,5 +1,9 @@
 # ShitHead Deluxe
 
+## v295 — restore rich level-burn choreography
+
+Owner rejected v294 motion as too basic. The same six effects now combine detailed art with directional spark streaks, ground shockwaves, trailing smoke, sequential ring ignition, depth-ordered helical debris and gold light shafts. Secondary sound beats match their delays. Preserve the shared cleanup/reduced-motion path. The script URL and offline entry carry `?v=295` for cache invalidation.
+
 ## v294 — cinematic level-reward burns
 
 The six existing level Burns now use `art/burns/level-v294/effects.js`: transparent sprite components, independent card/spark trajectories, 1.25–2.05 second sequences, and unique sounds using the same impact clock. Thumbnails use the approved concept sheet; gameplay never animates the rectangular thumbnail. The ShitStorm now uses the approved mischievous mascot, Royal Incineration the ruby crown. Keep IDs, levels, ownership and the server catalog unchanged. Both the game preference and OS reduced motion select a short stationary dissolve, including previews. The module clears repeated previews and backgrounded effects; assets are in the service-worker offline list. Run `node tools/level-burns-browser-test.js` with Playwright and `SH_CHROMIUM` pointing to Chromium, plus the existing client/art tests.
