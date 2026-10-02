@@ -6,7 +6,10 @@
 (() => {
   'use strict';
   const EFFECTS = {
-    'burn-lvl-inferno-sweep': { dur: 1.6, box: [4.8, 3.6, .5, .64], tile: 'art/burns/level-3d/inferno-sweep-tile.webp' },
+    // Inferno Sweep (Lvl 40): the owner's swirl of fire, swept across by a whip of flame; the rubble in front.
+    'burn-lvl-inferno-sweep': { dur: 2.0, box: [5, 5, .5, .6], tile: 'art/burns/inferno-sweep/tile.webp', art: 'art/burns/inferno-sweep/layers.webp?v=1', layout: [5, 413 / 437, .5, .55] },
+    // Spark Snap (Lvl 5): the owner's spark explosion, snapping out from the card; the rubble in front.
+    'burn-lvl-spark-snap': { dur: 1.9, box: [5, 5.4, .5, .55], tile: 'art/burns/spark-snap/tile.webp', art: 'art/burns/spark-snap/layers.webp?v=1', layout: [4.4, 412 / 434, .615, .525] },
     // Painted-art burns: the owner's approved tile cut into two layers (tools/make-burn-layers.py),
     // brought to life in WebGL. layout: art width in card heights, height/width, where the Pile sits.
     // Ghost Flames (seasonal Halloween): a ghost layer and a fire layer; every pile card burns.
@@ -106,8 +109,10 @@ void main(){
   if(uv.x<0.||uv.x>1.||uv.y<0.||uv.y>1.)discard;
   vec4 c=texture2D(u_tex2,vec2((uv.x+v_k.y)*.5,uv.y));
   float fld=fbm(v_uv*5.+vec2(0.,t*.5))*.62+(1.-v_uv.y)*.38;
-  if(v_loc.x>.5)fld=fbm(v_uv*5.+vec2(0.,t*.5))*.55+length(v_uv-.5)*.9; // radial: the centre first
+  if(v_loc.x>1.5)fld=fbm(v_uv*5.+vec2(0.,t*.5))*.3+v_uv.x*.75+abs(v_uv.y-.55)*.12; // sweep: left to right
+  else if(v_loc.x>.5)fld=fbm(v_uv*5.+vec2(0.,t*.5))*.55+length(v_uv-.5)*.9; // radial: the centre first
   float m=smoothstep(fld-.1,fld+.02,v_k.z*1.18);
+  if(v_loc.x>1.5)m*=1.-smoothstep(fld-.1,fld+.02,(v_loc.x-2.)*1.18); // ...and burns out behind it
   float detail=.78+.5*fbm(v_uv*vec2(13.,17.)+vec2(t*.3,-t*1.5));
   vec3 col=c.rgb*detail+v_col.rgb*m*(1.-m)*3.*c.a;
   col+=gl*vec3(1.,.84,.5)*pow(max(0.,sin((uv.x*1.7-t*2.8)*6.2832+uv.y*3.)),10.)*.6*c.a; // highlights sweeping round: it spins
@@ -192,8 +197,8 @@ void main(){
   // cards: the real pile cards (top card last), each with its offset from the top card.
   function makeSim(cards, opts) {
     const top = cards[cards.length - 1], rand = rng(opts.seed || 1931), R = (a, b) => a + (b - a) * rand();
-    const kind = { 'burn-halloween': 'ghost', 'burn-lvl-smoke-burst': 'smoke', 'burn-lvl-royal-incineration': 'royal', 'burn-lvl-hellfire-spiral': 'spiral', 'burn-lvl-shitstorm': 'spiral' }[opts.id] || 'inferno', ghost = kind === 'ghost', smoke = kind === 'smoke', royal = kind === 'royal', spiral = kind === 'spiral';
-    const n = cards.length, T = smoke ? .2 : royal ? .42 : spiral ? .3 : .62, storm = opts.id === 'burn-lvl-shitstorm';
+    const kind = { 'burn-halloween': 'ghost', 'burn-lvl-smoke-burst': 'smoke', 'burn-lvl-royal-incineration': 'royal', 'burn-lvl-hellfire-spiral': 'spiral', 'burn-lvl-shitstorm': 'spiral', 'burn-lvl-spark-snap': 'snap' }[opts.id] || 'inferno', ghost = kind === 'ghost', smoke = kind === 'smoke', royal = kind === 'royal', spiral = kind === 'spiral', snap = kind === 'snap';
+    const n = cards.length, T = smoke ? .2 : royal ? .42 : spiral ? .3 : snap ? .26 : .62, storm = opts.id === 'burn-lvl-shitstorm';
     const S = { t: 0, kind, storm, ghost, T, slots: n + 1, layout: (EFFECTS[opts.id] || {}).layout, artK: opts.artK || 1, calm: !!opts.calm, flames: [], embers: [], smoke: [], shards: [], acc: {}, n, ar: top.W / top.H,
       cards: cards.map((c, i) => ({ i, ar: c.W / c.H, rot0: -c.rot * Math.PI / 180, ox: (c.dx || 0) / top.H, oy: -(c.dy || 0) / top.H, last: -.3,
         side: n === 1 ? .55 : i === n - 1 ? .45 : (i % 2 ? 1 : -1) * (.9 + .2 * i) })) };
@@ -201,7 +206,7 @@ void main(){
     S.waveX = t => t < .26 ? -1.5 + (t / .26) * (1.5 - hw) : t < .9 ? -hw + (t - .26) / .64 * (hw * 2 + .15) : hw + .15 + (t - .9) / .3 * 1.6;
     S.front = (c, t) => S.calm ? -.25 + clamp(t / .7) * 1.45
       : ghost ? -.25 + clamp((t - T - .03 - c.i * .06) / .75) * 1.45
-      : smoke ? -.25 + clamp((t - .78) / .7) * 1.45 : royal ? -.25 + clamp((t - .9) / .62) * 1.45 : spiral ? -.25 + clamp((t - .85) / .62) * 1.45 : -.25 + clamp((t - .24) / .66) * 1.45;
+      : smoke ? -.25 + clamp((t - .78) / .7) * 1.45 : royal ? -.25 + clamp((t - .9) / .62) * 1.45 : spiral ? -.25 + clamp((t - .85) / .62) * 1.45 : snap ? -.25 + clamp((t - .62) / .62) * 1.45 : -.25 + clamp((t - .24) / .66) * 1.45;
     S.pose = (c, t) => {
       if (S.calm) return { rx: 0, ry: 0, rz: c.rot0, tx: c.ox, ty: c.oy, tz: 0, heat: clamp(t / .3) };
       if (smoke) {
@@ -209,6 +214,12 @@ void main(){
         const tr = smooth(0, T, t), e = ease((t - T) / .5), w = Math.sin(t * 7) * .06 * e;
         if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 50) * .02 * tr, tx: c.ox, ty: c.oy, tz: .03 * tr, heat: .5 * tr };
         return { rx: -.2 * e + w, ry: .35 * Math.sin(t * 3.2) * e, rz: c.rot0 + .1 * Math.sin(t * 2.4) * e, tx: c.ox, ty: c.oy + .14 * e, tz: .45 * e, heat: 1 };
+      }
+      if (snap) {
+        // Fizzes as the charge builds, then the snap kicks it back and spins it (its back flashes past).
+        const tr = smooth(0, T, t), e = ease((t - T) / .35), u = Math.max(0, t - T);
+        if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 70) * .03 * tr, tx: c.ox, ty: c.oy, tz: .03 * tr, heat: .6 * tr };
+        return { rx: -.35 * e, ry: 2.2 * u + .8 * u * u, rz: c.rot0 - .25 * e, tx: c.ox, ty: c.oy + .06 * e, tz: .4 * e, heat: 1 };
       }
       if (spiral) {
         // Shudders as the vortex wakes, then is lifted and spun by it (its back turns to us).
@@ -235,12 +246,13 @@ void main(){
     S.light = (p, pose, t) => {
       if (ghost) { const g = smooth(.1, .5, t) * (1 - smooth(1.4, 1.9, t)); return [1 + .2 * g, 1 + .3 * g, 1 + .75 * g]; }
       if (smoke) { const g = smooth(.05, .3, t) * (1 - smooth(1.4, 1.9, t)); return [1 + .8 * g, 1 + .3 * g, 1 + .1 * g]; }
+      if (snap) { const g = smooth(.02, T, t) * (1 - smooth(1.3, 1.8, t)) + 1.4 * smooth(T - .02, T, t) * (1 - smooth(T, T + .25, t)); return [1 + .9 * g, 1 + .75 * g, 1 + .35 * g]; }
       if (spiral) { const g = smooth(.05, .35, t) * (1 - smooth(1.4, 1.9, t)) + .7 * smooth(T - .03, T, t) * (1 - smooth(T, T + .3, t)); return storm ? [1 + .85 * g, 1 + .6 * g, 1 + .2 * g] : [1 + .9 * g, 1 + .32 * g, 1 + .08 * g]; }
       if (royal) { const g = smooth(.05, .4, t) * (1 - smooth(1.4, 1.9, t)) + .8 * smooth(T - .03, T, t) * (1 - smooth(T, T + .3, t)); return [1 + .8 * g, 1 + .6 * g, 1 + .22 * g]; }
       const f = S.calm ? .25 * pose.heat : 1.1 * Math.exp(-Math.pow(p[0] - S.waveX(t), 2) / .3) * pose.heat;
       return [1 + .9 * f, 1 + .38 * f, 1 + .05 * f];
     };
-    S.cardZ = t => ghost ? .3 : smoke || royal || spiral ? .35 : S.pose(S.cards[0], t).tz;
+    S.cardZ = t => ghost ? .3 : smoke || royal || spiral || snap ? .35 : S.pose(S.cards[0], t).tz;
     // Card local (u,v) -> view space, with the edge ahead of the fire curling.
     S.cardPoint = (c, u, v, pose, front) => {
       const fu = (front - .16 * (1 - v)) / .82, d = u - fu;
@@ -281,6 +293,17 @@ void main(){
           if (t > T && t < 1.5) emit('puff', 22, dt, () => { const a = R(0, 6.28), r = R(.4, 1.5); S.smoke.push({ col: [.52, .47, .52], p: [Math.cos(a) * r, .05 + Math.sin(a) * r * .8, R(-.5, .2)], v: [Math.cos(a) * .3, .25 + Math.sin(a) * .2, 0], age: 0, life: R(.9, 1.3), size: R(.45, .8), seed: rand() }); });
           if (t > T && t < 1.6) emit('ember', 45, dt, () => S.embers.push({ p: [R(-1, 1), R(-.4, .8), R(-.3, .6)], v: [R(-.3, .3), R(.4, 1.1), R(-.1, .2)], age: 0, life: R(.5, .9), size: R(1.6, 3.4), seed: rand() * 6.28 }));
           S.cards.forEach(c => burnCard(c, t, dt));
+        } else if (snap) {
+          // Sparks are sucked in to the card as the charge builds; on the snap a sphere of white-gold
+          // spark streaks and charred fragments blasts out, and sparks keep fizzing out of the burst.
+          if (t < T) emit('charge', 60, dt, () => { const a = R(0, 6.28), r = R(.8, 1.6), p = [Math.cos(a) * r, Math.sin(a) * r * .8, R(-.3, .4)]; S.embers.push({ pal: 2, p, v: p.map(q => -q * 3.2), age: 0, life: .3, size: R(1.4, 2.6), seed: rand() * 6.28 }); });
+          if (t > T && t < T + .03) for (let i = 0; i < 70; i++) {
+            const a = R(0, 6.28), e = R(-.7, .7), sp = R(2.2, 5);
+            S.embers.push({ pal: 2, p: [0, .05, .3], v: [Math.cos(a) * Math.cos(e) * sp, Math.sin(a) * Math.cos(e) * sp * .85, Math.sin(e) * sp * .6], age: 0, life: R(.35, .8), size: R(2, 5), seed: rand() * 6.28 });
+            if (i % 3 === 0) S.shards.push({ c: n - 1, p: [Math.cos(a) * .2, .05 + Math.sin(a) * .2, R(0, .4)], uv: [R(.1, .9), R(.1, .9)], v: [Math.cos(a) * sp * .45, Math.sin(a) * sp * .35 + .5, R(-.4, .9)], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-12, 12), R(-12, 12), R(-8, 8)], s: R(.03, .06), age: 0, life: R(.6, 1), seed: rand(), char: .3 });
+          }
+          if (t > T && t < 1.3) emit('fizz', 55, dt, () => { const a = R(0, 6.28), sp = R(1, 2.6); S.embers.push({ pal: 2, p: [R(-.3, .3), R(-.2, .3), R(0, .4)], v: [Math.cos(a) * sp, Math.sin(a) * sp * .8, R(-.2, .4)], age: 0, life: R(.3, .6), size: R(1.4, 3), seed: rand() * 6.28 }); });
+          S.cards.forEach(c => burnCard(c, t, dt));
         } else if (spiral) {
           // Sparks, embers and charred fragments are drawn in round the funnel and carried up it
           // (orbits: in front of the card on the near side, behind it on the far side); dark smoke
@@ -318,6 +341,12 @@ void main(){
           });
           if (t < 1.1) emit('ember', 125, dt, () => S.embers.push({ p: [X + R(-.15, .1), FLOOR + R(0, .25), R(-.5, .5)], v: [R(.3, 1.3), R(.6, 1.7), R(-.35, .35)], age: 0, life: R(.5, 1), size: R(2, 4.6), seed: rand() * 6.28 }));
           if (t < 1.2) emit('smoke', 13, dt, () => S.smoke.push({ p: [X - R(.25, .5), FLOOR + R(.1, .35), R(-.45, .35)], v: [R(.05, .25), R(.35, .6), 0], age: 0, life: R(.8, 1.15), size: R(.3, .45), seed: rand() }));
+          // The whip strikes the card: a blast of fragments and sparks thrown the way it travels.
+          if (S.layout && t > .5 && t < .53) for (let i = 0; i < 26; i++) {
+            const a = R(-.9, .9), sp = R(1.4, 3.4);
+            S.embers.push({ p: [0, 0, .3], v: [Math.cos(a) * sp, Math.sin(a) * sp * .7 + .3, R(-.3, .6)], age: 0, life: R(.4, .8), size: R(2, 4.6), seed: rand() * 6.28 });
+            if (i % 2) S.shards.push({ c: n - 1, p: [R(-.2, .2), R(-.3, .3), R(0, .4)], uv: [R(.1, .9), R(.1, .9)], v: [Math.cos(a) * sp * .6, Math.sin(a) * sp * .4 + .4, R(-.3, .8)], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-11, 11), R(-11, 11), R(-8, 8)], s: R(.035, .065), age: 0, life: R(.6, 1), seed: rand(), char: .25 });
+          }
           burnCard(S.cards[0], t, dt);
         }
       }
@@ -394,7 +423,7 @@ void main(){
     // The owner's art as depth layers (S.layout: width in card heights, height/width, Pile u/v).
     const [LW, LR, PU, PV] = S.layout || [1, 1, .5, .5], K = S.artK, AW = LW * K, AH = AW * LR;
     const layer = (arr, slot, z, s, dy, reveal, flow, glow, radial, alpha = 1, swirl = 0, sx = 1, sh = 0, dx = 0) => {
-      const P = [[0, 0], [1, 0], [1, 1], [0, 1]], L = [radial ? 1 : 0, swirl];
+      const P = [[0, 0], [1, 0], [1, 1], [0, 1]], L = [radial === true ? 1 : radial || 0, swirl];
       quad(arr, P.map(([u, v]) => proj((u - PU) * AW * s * sx + sh * (PV - v) * AH * s + dx, (PV - v) * AH * s + dy, z)), P, [L, L, L, L], [...glow, alpha], [7, slot, reveal, flow]);
     };
     const artAt = (u, v, s, dy, z) => [(u - PU) * AW * s, (PV - v) * AH * s + dy, z];
@@ -415,6 +444,26 @@ void main(){
       if (flash > 0) glowAt(out.back, [0, .05, 0], 1.6, [1, .85, .6, flash]);
       glowAt(out.back, [0, 0, -.2], 1.5 * K, [1, .35, .1, .45 * smooth(T, T + .2, t) * out1 * (.8 + .2 * Math.sin(t * 23))]);
       for (const [d, col] of [[0, [.95, .9, .9]], [.1, [1, .5, .2]]]) { const rt = (t - T - d) / .6; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 1.8 * ease(rt), (1 - rt) * .8, col); }
+    } else if (S.kind === 'snap' && !S.calm) {
+      // The charge glows and tightens; the snap: a white-gold flash, the painted burst exploding
+      // out from the card, spinning light beams in every direction, floor rings; then it fades.
+      const T = S.T, out1 = 1 - smooth(1.3, 1.85, t), grow = .3 + .72 * ease((t - T + .02) / .3) + .05 * Math.max(0, t - T);
+      glowAt(out.back, [0, 0, 0], .5 + .5 * smooth(0, T, t), [1, .85, .45, .9 * smooth(0, T, t) * (1 - smooth(T, T + .2, t))]);
+      if (R.art) {
+        layer(out.art, 0, -.3, grow, 0, smooth(T - .02, T + .22, t) * out1, 1.1, [1, .9, .55], true, 1.25);
+        layer(out.artFront, 1, .6, 1, 0, smooth(T, T + .25, t) * out1, .6, [1, .8, .4], true, 1.25);
+      }
+      const flash = bump(T - .03, T + .01, T + .3);
+      if (flash > 0) glowAt(out.back, [0, .05, 0], 2.2, [1, .95, .8, flash]);
+      glowAt(out.back, [0, 0, -.2], 1.2 * K, [1, .7, .25, .5 * smooth(T, T + .1, t) * out1 * (.75 + .25 * Math.sin(t * 31))]);
+      const [ox, oy, os] = proj(0, 0, -.2), beam = smooth(T - .02, T + .06, t) * (1 - smooth(1.0, 1.6, t));
+      if (beam > 0) for (let i = 0; i < 14; i++) {
+        const a = i * .449 + .5 * Math.sin(i * 3.7) + .35 * (t - T), L = F * os * K * (2.6 + 1.2 * Math.sin(i * 2.1)) * (.4 + .6 * ease((t - T) / .3));
+        const w0 = F * os * .015, w1 = F * os * K * (.05 + .04 * (i % 3)), dx = Math.cos(a), dy = Math.sin(a), ex = ox + dx * L, ey = oy + dy * L;
+        quad(out.back, [[ox + dy * w0, oy - dx * w0], [ox - dy * w0, oy + dx * w0], [ex - dy * w1, ey + dx * w1], [ex + dy * w1, ey - dx * w1]], Z4, [[0, -1], [0, 1], [.5, 1], [.5, -1]],
+          [1, .82, .4, beam * (.6 + .3 * Math.sin(t * 11 + i * 2.3))], [2, 0, 0, 0]);
+      }
+      for (const [d, col] of [[0, [1, .95, .7]], [.08, [1, .7, .25]]]) { const rt = (t - T - d) / .5; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 2 * ease(rt), (1 - rt) * .9, col); }
     } else if (S.kind === 'spiral' && !S.calm) {
       // The magma vortex rears up out of the card (bottom first) and keeps turning: its painted
       // bands travel round it, a hot core glows up its axis, the rubble at its base sits in front
@@ -508,6 +557,24 @@ void main(){
       if (fl > 0) billboard(out.back, [0, 0, 0], .9, [1, .8, .5, fl], [6, 0, 0, 0]);
       const rt = (t - .52) / .55;
       if (rt > 0 && rt < 1) ring(FLOOR, .2 + 1.3 * ease(rt), (1 - rt) * .9, [1, .57, .27]);
+      if (R.art) {
+        // The owner's fire swirl is swept in left to right behind the whip and burns out behind it.
+        const sweepIn = smooth(.02, .85, t), sweepOut = smooth(.6, 1.9, t);
+        layer(out.art, 0, -.3, 1, 0, sweepIn, 1.6, [1, .5, .12], 2 + sweepOut, 1.25, .5);
+        layer(out.artFront, 1, .6, 1, 0, smooth(.45, .75, t) * (1 - smooth(1.45, 1.95, t)), .6, [1, .5, .12], false, 1.25);
+        // The whip: a lash of fire cracking across in an arc, its head blazing white-hot.
+        const lash = (x, z) => [x, .17 * x * x - .08, z];
+        for (let i = 0; i < 46; i++) {
+          const f = i / 45, x = X - 2.6 * K * (1 - f), w = (.1 + .26 * f * f) * K, a = (.35 + .65 * f) * smooth(0, .12, t) * (1 - smooth(1.05, 1.4, t));
+          if (a <= 0) continue;
+          const p = lash(x, .25 * Math.sin(x * 1.3 + t * 4)), q = projW(p), r2 = w * F * q[2];
+          quad(out.front, [[q[0] - r2 * 1.6, q[1] - r2], [q[0] + r2 * 1.6, q[1] - r2], [q[0] + r2 * 1.6, q[1] + r2], [q[0] - r2 * 1.6, q[1] + r2]], Z4, LOC,
+            f > .88 ? [1, .92, .65, a] : [1, .38 + .4 * f, .08, a * (.85 + .15 * Math.sin(i * 1.7 + t * 30))], [2, 0, 0, 0]);
+          if (i % 3 === 0) glowAt(out.back, p, w * 2.4, [1, .4, .08, a * .35]);
+        }
+        const hit = bump(.48, .53, .8);
+        if (hit > 0) glowAt(out.front, [0, 0, .3], 1.4, [1, .7, .3, hit]);
+      }
     }
     for (const m of S.smoke) {
       const a = m.age / m.life, alpha = .24 * smooth(0, .2, a) * (1 - smooth(.5, 1, a));
@@ -632,7 +699,7 @@ void main(){
     // The painted scene fits the screen width and the room above the Pile (under the header), so its
     // top is never cut off; the cards stay their real size.
     const hw = host.clientWidth || 390, hh = host.clientHeight || 844, [LW, LR, , LV] = fx.layout || [];
-    const artK = fx.art ? Math.min(1, hw * .98 / (LW * H), Math.max(0, y - 52) / (LW * LR * LV * H)) : 1;
+    const LU = (fx.layout || [])[2], artK = fx.art ? Math.min(1, hw * .98 / (LW * H * 2 * Math.max(LU, 1 - LU)), Math.max(0, y - 52) / (LW * LR * LV * H)) : 1;
     // A painted scene gets the whole layer, so its smoke is never cut by a canvas edge.
     const [bw, bh, bx, by] = fx.box, x0 = fx.art ? 0 : Math.max(0, x - H * bw * bx), y0 = fx.art ? 0 : Math.max(0, y - H * bh * by);
     const ox = Math.round(x0), oy = Math.round(y0), cw = Math.round(fx.art ? hw : Math.min(hw, x + H * bw * (1 - bx)) - ox), ch = Math.round(fx.art ? hh : Math.min(hh, y + H * bh * (1 - by)) - oy);
@@ -703,6 +770,8 @@ void main(){
       k.tone({ at: .3, dur: .65, type: 'sawtooth', f0: 62, f1: 78, vibrato: 7, level: .040, attack: .08 });
       [.34, .41, .47, .55, .6, .68, .74, .81, .88].forEach((at, n) => k.noise({ at, dur: .028, type: 'highpass', f0: 2600 + n * 160, level: .132 }));
       k.tone({ at: .52, dur: .34, f0: 82, f1: 38, level: .224 });
+      k.noise({ at: .5, dur: .045, type: 'highpass', f0: 2200, level: .3 }); // the whip cracks on the card
+      k.tone({ at: .5, dur: .14, type: 'sawtooth', f0: 900, f1: 160, level: .07, attack: .002 });
       k.noise({ at: .52, dur: .4, type: 'lowpass', f0: 900, f1: 160, level: .158 });
       k.noise({ at: .9, dur: .5, type: 'highpass', f0: 3200, f1: 1800, level: .046, attack: .05 });
       [1, 1.12, 1.21, 1.33, 1.44].forEach((at, n) => k.noise({ at, dur: .02, type: 'highpass', f0: 3600 - n * 200, level: .066 - n * .008 }));
@@ -766,6 +835,20 @@ void main(){
       [.46, .63, .81, 1.0, 1.25].forEach((at, n) => k.tone({ at, dur: .22, f0: 2637 + n * 220, f1: 2600 + n * 220, level: .035, attack: .004 }));
       [.88, .95, 1.02, 1.09, 1.17, 1.25, 1.33, 1.41].forEach((at, n) => k.noise({ at, dur: .028, type: 'bandpass', f0: 2100 + n * 150, q: 3, level: .13 }));
       k.noise({ at: 1.45, dur: .5, type: 'bandpass', f0: 800, f1: 260, q: .7, level: .07, attack: .1 });
+    },
+    // Spark Snap: a fizzing, rising crackle as the charge builds (0–0.26), the SNAP at 0.26 (a
+    // sharp electric crack, a bright zap and a deep thump), sizzling sparks raining out, crackles as
+    // the card burns away (0.65–1.25) and a fading hiss.
+    'burn-lvl-spark-snap': k => {
+      k.noise({ dur: .26, type: 'highpass', f0: 2500, f1: 6000, level: .08, attack: .22 });
+      [.06, .11, .15, .19, .22].forEach((at, n) => k.noise({ at, dur: .015, type: 'highpass', f0: 4000 + n * 300, level: .05 + n * .015 }));
+      k.noise({ at: .26, dur: .06, type: 'highpass', f0: 2500, level: .38 });
+      k.tone({ at: .26, dur: .22, type: 'sawtooth', f0: 1600, f1: 220, level: .1, attack: .002 });
+      k.tone({ at: .26, dur: .4, f0: 90, f1: 38, level: .3 });
+      k.noise({ at: .27, dur: .35, type: 'lowpass', f0: 3000, f1: 300, level: .22, attack: .004 });
+      [.34, .39, .45, .5, .57, .63, .7, .78].forEach((at, n) => k.noise({ at, dur: .02, type: 'highpass', f0: 3200 + (n % 3) * 500, level: .1 - n * .007 }));
+      [.68, .75, .83, .91, .99, 1.07, 1.16, 1.24].forEach((at, n) => k.noise({ at, dur: .028, type: 'bandpass', f0: 2300 + n * 140, q: 3, level: .12 }));
+      k.noise({ at: 1.2, dur: .55, type: 'highpass', f0: 3600, f1: 1800, level: .05, attack: .1 });
     },
     // Ghost Flames: cold rush as the fire rises (0–0.4), a two-voice moan as the wraith
     // gathers, a glassy chime as its eyes flare (0.55), the strike (0.62: thump + tear),

@@ -4,7 +4,7 @@ layers.webp = two slots side by side (slot 0 left, slot 1 right). The painted
 cards are removed and their gap filled with the surrounding art, because the
 game burns the real pile card in front; every edge fades softly. Also writes
 the Shop/Custom tile. Needs numpy, pillow, opencv-python-headless.
-Run: python3 tools/make-burn-layers.py [ghost-flames|smoke-burst|royal-incineration|hellfire-spiral|shitstorm]"""
+Run: python3 tools/make-burn-layers.py [ghost-flames|smoke-burst|royal-incineration|hellfire-spiral|shitstorm|spark-snap|inferno-sweep]"""
 import sys
 from PIL import Image
 import numpy as np, cv2
@@ -156,17 +156,22 @@ def patch_match(f, mask, polys, reach=90, step=6):
         one = cv2.dilate(one, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11)))
         ring = (cv2.dilate(one, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))) > 0) & (one == 0)
         ys, xs = np.nonzero(one)
-        best, r = None, reach
-        while best is None:  # nothing clean in reach (a big card near an edge): look twice as far
+        if not len(ys): continue  # traced card lies outside this crop
+        best = None
+        for r, strict in ((reach, True), (reach * 2, True), (reach * 2, False)):
+            # Clean patches first (nearby, then twice as far); with none at all (a big card in a
+            # field of cards) the patch least covered by other cards wins.
             for dy in range(-r, r + 1, step):
                 for dx in range(-r, r + 1, step):
                     if abs(dx) + abs(dy) < 20: continue
                     sy, sx = ys + dy, xs + dx
-                    if sy.min() < 0 or sx.min() < 0 or sy.max() >= H or sx.max() >= W or mask[sy, sx].any(): continue
+                    if sy.min() < 0 or sx.min() < 0 or sy.max() >= H or sx.max() >= W: continue
+                    covered = mask[sy, sx].mean() / 255
+                    if strict and covered: continue
                     ry, rx = np.nonzero(ring); qy, qx = np.clip(ry + dy, 0, H - 1), np.clip(rx + dx, 0, W - 1)
-                    cost = np.abs(f[qy, qx] - f[ry, rx]).mean()
+                    cost = np.abs(f[qy, qx] - f[ry, rx]).mean() + 2 * covered
                     if best is None or cost < best[0]: best = (cost, dy, dx)
-            r *= 2
+            if best: break
         _, dy, dx = best
         m = cv2.GaussianBlur(one.astype(np.float32) / 255, (15, 15), 0)[..., None]
         out = out * (1 - m) + np.roll(f, (-dy, -dx), (0, 1)) * m
@@ -249,4 +254,71 @@ def shitstorm():
     col = np.clip(f / np.maximum(bright[..., None], .3), 0, 1)
     save_atlas([(col, bright * storm), (src.astype(np.float32) / 255, face)], 'art/burns/shitstorm/layers.webp')
 
-{'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral, 'shitstorm': shitstorm}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
+def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=False):
+    """A burst around one point (`centre`, u v of the crop): the painted cards (hand-traced,
+    source pixels) filled with smooth inpainted colour plus fire detail from the best nearby
+    patch (a pasted patch showed the card's outline in big gaps), a lumpy soft outline, and
+    the rubble below `front_from` as a second layer drawn in front of the game card.
+    mirror: a radial burst; gaps are filled from the opposite side, reflected through the
+    centre (rays stay radial), where that side is clean."""
+    full = Image.open(f'docs/avatar-art/src/burn-{name}.webp').convert('RGB')
+    full.crop(tile_box).resize((384, round(384 * (tile_box[3] - tile_box[1]) / (tile_box[2] - tile_box[0]))), Image.LANCZOS).save(f'art/burns/{name}/tile.webp', quality=90)
+    x0, y0, x1, y1 = box
+    src = np.asarray(full)[y0:y1, x0:x1]
+    H, W, _ = src.shape
+    polys = [np.array([(x - x0, y - y0) for x, y in c], np.int32) for c in cards]
+    hard = np.zeros((H, W), np.uint8)
+    for c in polys: cv2.fillPoly(hard, [c], 255)
+    mask = cv2.dilate(hard, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (13, 13)))
+    f = src.astype(np.float32) / 255
+    pm = patch_match(f, mask, polys)
+    low = cv2.inpaint(src, mask, 21, cv2.INPAINT_TELEA).astype(np.float32) / 255
+    fill = np.clip(low + pm - cv2.GaussianBlur(pm, (0, 0), 3), 0, 1)
+    m = cv2.GaussianBlur(mask.astype(np.float32) / 255, (31, 31), 0)[..., None]
+    g = f * (1 - m) + fill * m
+    cu, cv = centre
+    if mirror:
+        cx, cy = round(cu * W), round(cv * H)
+        yy, xx = np.mgrid[0:H, 0:W]
+        ry, rx = 2 * cy - yy, 2 * cx - xx  # the point opposite, through the centre
+        inside = np.clip(np.minimum.reduce([ry, H - 1 - ry, rx, W - 1 - rx]) / 40, 0, 1)  # fades out near the picture edge
+        ry, rx = np.clip(ry, 0, H - 1), np.clip(rx, 0, W - 1)
+        V = 1 - m[..., 0]
+        take = np.clip(V[ry, rx] * inside - V, 0, 1)[..., None]  # where the opposite side is cleaner
+        g = g * (1 - take) + g[ry, rx] * take
+    yy, xx = np.mgrid[0:H, 0:W] / [[[H]], [[W]]]
+    noise = lambda n, sd: cv2.resize(np.random.default_rng(sd).random((n, n)).astype(np.float32), (W, H), interpolation=cv2.INTER_CUBIC)
+    lump = .6 * noise(5, seed) + .4 * noise(11, seed + 1)
+    r = np.hypot((xx - cu) / max(cu, 1 - cu), (yy - cv) / max(cv, 1 - cv)) * (1.2 - .3 * lump)
+    burst = (1 - ss(.55, 1.0, r)) * (1 - ss(.9, 1, yy))
+    bright = ss(.05, .3, g.max(2))
+    col = np.clip(g / np.maximum(bright[..., None], .3), 0, 1)
+    front = burst * ss(front_from, front_from + .08, yy)
+    save_atlas([(col, bright * burst), (col, bright * front)], f'art/burns/{name}/layers.webp')
+
+def spark_snap():
+    painted_burst('spark-snap', (18, 16, 452, 428), [[(141, 134), (247, 104), (282, 220), (177, 257)],
+             [(104, 185), (150, 175), (174, 254), (125, 262)],
+             [(35, 232), (105, 218), (127, 282), (53, 290)],
+             [(316, 128), (382, 120), (384, 202), (323, 214)],
+             [(358, 233), (422, 228), (424, 302), (363, 307)],
+             [(393, 45), (430, 45), (430, 120), (393, 120)],
+             [(160, 40), (192, 40), (192, 85), (160, 85)],
+             [(240, 58), (265, 58), (265, 85), (240, 85)],
+             [(38, 148), (85, 148), (85, 195), (38, 195)],
+             [(30, 298), (82, 298), (82, 335), (30, 335)],
+             [(100, 333), (167, 333), (167, 382), (100, 382)],
+             [(255, 320), (313, 305), (318, 345), (265, 372)],
+             [(98, 381), (135, 381), (135, 399), (98, 399)]], (.615, .525), .8, (16, 12, 456, 432), 41, mirror=True)
+
+def inferno_sweep():
+    painted_burst('inferno-sweep', (15, 17, 452, 430), [[(146, 188), (162, 163), (240, 153), (285, 265), (185, 284), (146, 240)],
+             [(293, 163), (364, 153), (390, 195), (382, 292), (330, 307), (298, 250)],
+             [(338, 253), (442, 278), (432, 322), (343, 312)],
+             [(43, 300), (105, 278), (167, 308), (162, 377), (108, 377), (48, 332)],
+             [(198, 115), (230, 115), (230, 142), (198, 142)],
+             [(264, 130), (283, 130), (283, 155), (264, 155)],
+             [(100, 193), (125, 193), (125, 222), (100, 222)],
+             [(128, 380), (205, 358), (215, 372), (140, 402)]], (.5, .55), .84, (12, 14, 460, 436), 51)
+
+{'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral, 'shitstorm': shitstorm, 'spark-snap': spark_snap, 'inferno-sweep': inferno_sweep}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()

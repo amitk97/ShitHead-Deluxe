@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v299 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v300 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7369,7 +7369,7 @@ video {
   </div>
 
   <script src="art/burns/level-v294/effects.js?v=295"></script>
-  <script src="art/burns/level-3d/burns3d.js?v=301"></script>
+  <script src="art/burns/level-3d/burns3d.js?v=302"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
   <script>
     const AUDIO_SOURCES = {
@@ -7766,7 +7766,7 @@ video {
         k.noise({ at: 1.35, dur: 0.55, type: 'highpass', f0: 4000, f1: 1500, level: 0.08, attack: 0.05 });
       },
       // Level burns v294: shared visual/audio timing in the layered renderer.
-      'burn-lvl-spark-snap': k => ShLevelBurns.sound('burn-lvl-spark-snap', k),
+      'burn-lvl-spark-snap': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-spark-snap', k) : ShLevelBurns.sound('burn-lvl-spark-snap', k)),
       'burn-lvl-smoke-burst': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-smoke-burst', k) : ShLevelBurns.sound('burn-lvl-smoke-burst', k)),
       'burn-lvl-inferno-sweep': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-inferno-sweep', k) : ShLevelBurns.sound('burn-lvl-inferno-sweep', k)),
       'burn-lvl-hellfire-spiral': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-hellfire-spiral', k) : ShLevelBurns.sound('burn-lvl-hellfire-spiral', k)),
@@ -8454,7 +8454,10 @@ video {
       }
     }
 
-    function bfxSparkSnap(host, x, y, k) { return ShLevelBurns.play('burn-lvl-spark-snap', host, x, y, k, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches); }
+    function bfxSparkSnap(host, x, y, k) {
+      const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+      return levelBurn3d('burn-lvl-spark-snap', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-spark-snap', host, x, y, k, calm);
+    }
     function bfxSmokeBurst(host, x, y, k) {
       const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
       return levelBurn3d('burn-lvl-smoke-burst', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-smoke-burst', host, x, y, k, calm);
@@ -19813,6 +19816,8 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v300: [[ '✨', 'Spark Snap (Lvl 5) is reborn: a charge crackles round your card, then snaps into a white-gold explosion of sparks and light.', WN_KEY ],
+        [ '🔥', 'Inferno Sweep (Lvl 40) is reborn: a whip of fire lashes across the Pile and sweeps your card away in a swirl of flame.', WN_KEY ]],
       v299: [[ '💩', 'The ShitStorm (Lvl 99) is reborn: a grinning storm whirls up out of the Pile in a blaze of gold and spins your card away.', WN_KEY ],
         [ '🌪️', 'Tall burns now shrink to fit the space above the Pile, so they are never cut off at the top of the screen.' ]],
       v298: [[ '👑', 'Royal Incineration (Lvl 80) is reborn: a jewelled gold crown descends over your card as golden fire bursts out beneath it.', WN_KEY ],
