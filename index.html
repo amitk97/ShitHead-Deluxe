@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v281 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v282 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -897,7 +897,8 @@
       transition: transform 0.25s ease-out;
     }
     #hamburgerDrawer.open { transform: translateY(0); }
-    #multiSelectToggleBtn .rank-toggle-dot { position: absolute; right: -2px; bottom: -2px; width: 9px; height: 9px; border-radius: 50%; background: #f43f5e; border: 2px solid #0f172a; pointer-events: none; }
+    #multiSelectToggleBtn .rank-toggle-svg { width: 86%; height: 86%; }
+    #multiSelectToggleBtn .rank-toggle-dot { position: absolute; right: -3px; bottom: -3px; width: 9px; height: 9px; border-radius: 50%; background: #f43f5e; border: 2px solid #0f172a; pointer-events: none; }
     #multiSelectToggleBtn[data-on="1"] .rank-toggle-dot { background: #34d399; }
     #multiSelectToggleBtn[data-on="0"] svg { opacity: .72; }
     #hamburgerDragHandle { display: block; width: 40px; height: 4px; border-radius: 999px; background: #475569; margin: 10px auto 2px; flex-shrink: 0; }
@@ -906,11 +907,11 @@
          compact 44px header so it does not steal vertical game space. */
       body > header { height: calc(60px + var(--safe-top)) !important; padding: calc(7px + var(--safe-top)) 18px 7px !important; }
       body > header .brand-logo-rendered { font-size: 32px !important; }
-      #leaveGameBtn, #multiSelectToggleBtn, #headerInboxBtn, #hamburgerBtn, #headerShopBtn {
+      #leaveGameBtn, #headerInboxBtn, #hamburgerBtn, #headerShopBtn {
         width: 38px !important;
         height: 38px !important;
       }
-      #leaveGameBtn svg, #multiSelectToggleBtn svg, #headerInboxBtn > svg, #hamburgerBtn svg, #headerShopBtn svg {
+      #leaveGameBtn svg, #headerInboxBtn > svg, #hamburgerBtn svg, #headerShopBtn svg {
         width: 38px !important;
         height: 38px !important;
       }
@@ -5343,7 +5344,6 @@ video {
 
     <!-- Right Controls -->
     <div class="flex-1 flex items-center justify-end gap-1.5 min-w-0">
-      <button id="multiSelectToggleBtn" class="relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 rounded transition tip-below" style="width:1.75rem;" data-tip="Select All Of A Rank: OFF (S)" aria-label="Select All Of A Rank: OFF (S)"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-select-rank"/></svg></button>
       <button id="headerInboxBtn" class="relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Inbox" data-tip="Inbox">
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-mail"/></svg>
         <span id="inboxBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 flex items-center justify-center rounded-full inbox-badge--friend text-white text-[8px] font-black leading-none">0</span>
@@ -6795,8 +6795,12 @@ video {
             style="width:clamp(26px,7.5vw,34px);height:clamp(26px,7.5vw,34px);font-size:clamp(13px,4vw,17px);" data-tip="Card Powers" aria-label="Card Powers">i</button>
         </div>
 
-        <!-- Hand count sits bottom-RIGHT, directly under the emote button. -->
-        <div id="handCountWrap" class="absolute z-40" style="right:0; bottom:calc((clamp(26px,7.5vw,34px) + 6px) * -1); height:clamp(26px,7.5vw,34px);">
+        <!-- Hand count sits bottom-RIGHT, directly under the emote button.
+             v282 (owner): Select All Of A Rank sits just left of it (was in
+             the header), near the thumb, the same size as the ⓘ button. -->
+        <div id="handCountWrap" class="absolute z-40 flex items-center" style="right:0; gap:6px; bottom:calc((clamp(26px,7.5vw,34px) + 6px) * -1); height:clamp(26px,7.5vw,34px);">
+          <button id="multiSelectToggleBtn" class="relative rounded-full bg-slate-900/90 border-2 border-slate-600 shadow-lg flex items-center justify-center transition active:scale-90 hover:brightness-125"
+            style="width:clamp(26px,7.5vw,34px);height:clamp(26px,7.5vw,34px);" data-tip="Select All Of A Rank: OFF (S)" aria-label="Select All Of A Rank: OFF (S)"><svg class="rank-toggle-svg" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-select-rank"/></svg></button>
           <div id="handCountBadge" class="rounded-full bg-slate-900/90 border-2 border-slate-600 text-slate-200 shadow-lg flex items-center justify-center gap-1 font-black px-2"
             style="height:clamp(26px,7.5vw,34px);font-size:clamp(11px,3.2vw,14px);" data-tip="Cards in your hand" aria-label="Cards in your hand">
             <span aria-hidden="true">🂠</span><span id="handCountValue">0</span>
@@ -7259,7 +7263,7 @@ video {
             <p data-term="recruit"><strong class="text-amber-400">Recruit:</strong> Share your invite link (Profile or Friends). When a new player joins with it and plays 3 games, you both get Diamonds. Recruit 5 for the Recruiter avatar.</p>
             <p data-term="reset"><strong class="text-amber-400">Reset:</strong> The 2. It can be played on almost anything (except a Jack) and clears the target, so the next player may follow it with any card at all.</p>
             <p data-term="seasonal-event"><strong class="text-amber-400">Seasonal Event:</strong> Halloween, Christmas, Diwali and more: while an event is on, its themed items are sold in the Shop&rsquo;s Seasonal tab, and winning 3 games earns that event&rsquo;s avatar.</p>
-            <p data-term="select-all-of-a-rank"><strong class="text-amber-400">Select All Of A Rank:</strong> With it on (the header button, or S on a keyboard), tapping a card selects every card of that rank in your Hand.</p>
+            <p data-term="select-all-of-a-rank"><strong class="text-amber-400">Select All Of A Rank:</strong> With it on (the round button left of your hand count, or S on a keyboard), tapping a card selects every card of that rank in your Hand.</p>
             <p data-term="shithead"><strong class="text-amber-400">ShitHead:</strong> The loser &mdash; the last player still holding cards once everyone else has emptied their Hand, Face-Up and Face-Down cards.</p>
             <p data-term="skip"><strong class="text-amber-400">Skip:</strong> The 8. The next player misses their turn.</p>
             <p data-term="snap-burn"><strong class="text-amber-400">Snap Burn:</strong> Completing four of a kind <em>out of turn</em>. If the top of the Pile already shows some of a rank and you hold the rest, a Snap Burn button appears and you can burn the Pile immediately, even when it isn't your turn.</p>
@@ -12802,7 +12806,7 @@ video {
       if (!btn) return;
       // Keep the full-size tile (the old text glyph shrank it to a speck on
       // iPhones); a coloured dot in the corner shows ON (green) / OFF (red).
-      if (!btn.querySelector('svg')) btn.innerHTML = '<svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-select-rank"/></svg>';
+      if (!btn.querySelector('svg')) btn.innerHTML = '<svg class="rank-toggle-svg" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-select-rank"/></svg>';
       if (!btn.querySelector('.rank-toggle-dot')) btn.insertAdjacentHTML('beforeend', '<span class="rank-toggle-dot" aria-hidden="true"></span>');
       btn.dataset.on = selectAllOfRank ? '1' : '0';
       const label = `Select All Of A Rank: ${selectAllOfRank ? 'ON' : 'OFF'} (S)`;
@@ -16551,8 +16555,8 @@ video {
       const tutStep = tutorialActive ? TUTORIAL_STEPS[tutorialStep] : null;
       if (tutStep?.require?.toggleRankSelect && tutorialAwaitingAction) {
         notifyBanner(tutStep.require.toggleRankSelect === 'off'
-          ? 'Tap the Select All Of A Rank button in the header to switch it off first.'
-          : 'Tap the Select All Of A Rank button in the header first.');
+          ? 'Tap the Select All Of A Rank button beside your hand count to switch it off first.'
+          : 'Tap the Select All Of A Rank button beside your hand count first.');
         return;
       }
       if (!isLocalPlayersTurnNow()) {
@@ -19931,6 +19935,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v282: [
+        [ '👆', 'Select All Of A Rank moved from the header to the table, just left of your hand count, so it sits under your thumb.' ]
+      ],
       v281: [
         [ '🛠️', 'Player cards, gift pop-ups, sign-out and reward messages now always show on top of the page you opened them from.' ]
       ],
@@ -32755,7 +32762,7 @@ video {
         coachNote: "Burnt! The Coach goes again immediately after burning and drops a 4 on the empty Pile. Take a look at the Recent Card History strip below — it shows exactly what got burned and by whom."
       },
       {
-        text: "See the Select All Of A Rank button in the header (the three cards)? Switch it on. While it's on, tapping one card of a rank grabs every card of that rank at once — perfect for playing sets in a single tap.",
+        text: "See the Select All Of A Rank button beside your hand count (the three cards)? Switch it on. While it's on, tapping one card of a rank grabs every card of that rank at once — perfect for playing sets in a single tap.",
         target: '#multiSelectToggleBtn',
         require: { toggleRankSelect: 'on' },
         coachNote: "Toggle's live. You can flip it on or off whenever suits you — it's a tactic, not a setting you're stuck with."
@@ -33211,7 +33218,7 @@ video {
       // (toggleCardSelection refuses while a toggleRankSelect step waits),
       // and stays locked on for the rest of the lesson (tutorialAllowToggleOff).
       {
-        text: "First, switch on Select All Of A Rank in the header. Then one tap grabs every card of that rank.",
+        text: "First, switch on Select All Of A Rank beside your hand count. Then one tap grabs every card of that rank.",
         target: '#multiSelectToggleBtn',
         scene: { hand: [['9', '♥'], ['9', '♣']], faceUp: [['9', '♦'], ['K', '♠'], ['Q', '♣']], pile: [['4', '♦']], emptyDeck: true, toggle: false },
         require: { toggleRankSelect: 'on' },
@@ -34533,8 +34540,8 @@ video {
       }
       if (step.require.toggleRankSelect) {
         notifyBanner(step.require.toggleRankSelect === 'off'
-          ? 'Tap the Select All Of A Rank button in the header to switch it off first.'
-          : 'Tap the Select All Of A Rank button in the header first.');
+          ? 'Tap the Select All Of A Rank button beside your hand count to switch it off first.'
+          : 'Tap the Select All Of A Rank button beside your hand count first.');
         return false;
       }
       if (step.require.tapCheck) {

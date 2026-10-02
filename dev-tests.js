@@ -1714,6 +1714,19 @@ async function runDevTestSuite() {
     assertEqual(selected, 3, 'The toggle should select all three Kings');
     assertEqual(left, 0, 'Un-staging must clear the whole rank, never leave a partial selection');
   });
+  await test('Select All Of A Rank sits left of the hand count, the size of the Card Powers button (v282)', () => {
+    const btn = document.getElementById('multiSelectToggleBtn');
+    const badge = document.getElementById('handCountBadge');
+    assertTrue(!btn.closest('header'), 'The button is no longer in the header');
+    assertTrue(btn.parentElement === badge.parentElement && btn.nextElementSibling === badge, 'It sits directly before the hand count');
+    freshState({ drawPile: [] });
+    state.players = [makePlayer({ id: 'p1', hand: [makeCard('4')] }), makePlayer({ id: 'p2', isBot: true })];
+    state.localPlayerId = 'p1';
+    render();
+    const b = btn.getBoundingClientRect(), h = badge.getBoundingClientRect(), i = document.getElementById('cardRefBtn').getBoundingClientRect();
+    assertTrue(b.right <= h.left - 2 && Math.abs((b.top + b.bottom) / 2 - (h.top + h.bottom) / 2) < 1.5, 'Left of the badge, on the same line');
+    assertTrue(Math.abs(b.width - i.width) < 1 && Math.abs(b.height - i.height) < 1, `Same size as the Card Powers button (${b.width}x${b.height} vs ${i.width}x${i.height})`);
+  });
   await test('Rank toggle is green when ON and red when OFF', () => {
     const btn = document.getElementById('multiSelectToggleBtn');
     const prev = selectAllOfRank;
@@ -1736,7 +1749,8 @@ async function runDevTestSuite() {
     selectAllOfRank = prev; updateMultiSelectToggleUI();
     assertTrue(!!svg, 'The select-rank tile must stay after a toggle');
     assertEqual(text, '', 'No text glyph in the button');
-    assertTrue(!!box && box.width >= 24, 'The tile keeps its size, got ' + (box && box.width));
+    const bw = btn.getBoundingClientRect().width;
+    assertTrue(!!box && bw >= 24 && box.width >= bw * 0.7, 'The tile keeps its size, got ' + (box && box.width) + ' in ' + bw);
     assertTrue(!!btn.querySelector('.rank-toggle-dot'), 'An ON/OFF dot shows the state');
   });
   await test('Tutorial lessons: no random Face-Up card shares a rank the lesson uses, and Bonus Draw\'s PLAY IT is on top', () => {
@@ -1898,7 +1912,7 @@ async function runDevTestSuite() {
     const html = document.documentElement.innerHTML;
     ['Select all of a rank', 'Snap to Burn', 'Tap SNAP', 'SNAP BURN button', 'Tap Play it', 'Keep my account<', 'Update now<'].forEach(bad =>
       assertTrue(!html.includes(bad), 'Found "' + bad + '"'));
-    assertTrue(document.getElementById('multiSelectToggleBtn').getAttribute('data-tip').startsWith('Select All Of A Rank'), 'The header tip says Select All Of A Rank');
+    assertTrue(document.getElementById('multiSelectToggleBtn').getAttribute('data-tip').startsWith('Select All Of A Rank'), 'The button tip says Select All Of A Rank');
   });
   await test('The home screen shows an empty table, even straight after a lesson', async () => {
     freshState(); tutorialTestSetup();
@@ -2579,7 +2593,7 @@ async function runDevTestSuite() {
     // drawer, then Diamond added, then Fullscreen removed from the
     // header entirely (still reachable from Settings) — still must
     // fit and stay clear of each other on a 320px phone.
-    const ids = ['hamburgerBtn', 'multiSelectToggleBtn', 'navHomeLogoBtn', 'headerDiamondBtn', 'headerInboxBtn', 'leaveGameBtn'];
+    const ids = ['hamburgerBtn', 'navHomeLogoBtn', 'headerDiamondBtn', 'headerInboxBtn', 'leaveGameBtn'];
     const boxes = ids.map(id => {
       const el = document.getElementById(id);
       if (!el) return null;
