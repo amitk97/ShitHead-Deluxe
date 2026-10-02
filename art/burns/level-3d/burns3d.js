@@ -12,7 +12,9 @@
     // Ghost Flames (seasonal Halloween): a ghost layer and a fire layer; every pile card burns.
     'burn-halloween': { dur: 2.0, box: [6.4, 5.8, .55, .78] /* previews */, tile: 'art/burns/ghost-flames/tile.webp', art: 'art/burns/ghost-flames/layers.webp?v=1', cards: 'all', layout: [5.6, 288 / 395, .58, .74] },
     // Smoke Burst (Lvl 20): the cloud and its front puffs; only the top card shows (the rest hide).
-    'burn-lvl-smoke-burst': { dur: 2.0, box: [6, 6.2, .5, .52], tile: 'art/burns/smoke-burst/tile.webp', art: 'art/burns/smoke-burst/layers.webp?v=1', layout: [4.8, 404 / 439, .5, .52] }
+    'burn-lvl-smoke-burst': { dur: 2.0, box: [6, 6.2, .5, .52], tile: 'art/burns/smoke-burst/tile.webp', art: 'art/burns/smoke-burst/layers.webp?v=1', layout: [4.8, 404 / 439, .5, .52] },
+    // Royal Incineration (Lvl 80): the crown (whole, its own layer) and the golden fire burst under it.
+    'burn-lvl-royal-incineration': { dur: 2.0, box: [5, 5.4, .5, .66], tile: 'art/burns/royal-incineration/tile.webp', art: 'art/burns/royal-incineration/layers.webp?v=1', layout: [4.2, 436 / 432, .49, .68] }
   };
   const artImages = {};
   const artFor = id => { const src = EFFECTS[id].art; if (!src) return null; if (!artImages[src]) { artImages[src] = new Image(); artImages[src].src = src; } return artImages[src]; };
@@ -183,8 +185,8 @@ void main(){
   // cards: the real pile cards (top card last), each with its offset from the top card.
   function makeSim(cards, opts) {
     const top = cards[cards.length - 1], rand = rng(opts.seed || 1931), R = (a, b) => a + (b - a) * rand();
-    const kind = { 'burn-halloween': 'ghost', 'burn-lvl-smoke-burst': 'smoke' }[opts.id] || 'inferno', ghost = kind === 'ghost', smoke = kind === 'smoke';
-    const n = cards.length, T = smoke ? .2 : .62;
+    const kind = { 'burn-halloween': 'ghost', 'burn-lvl-smoke-burst': 'smoke', 'burn-lvl-royal-incineration': 'royal' }[opts.id] || 'inferno', ghost = kind === 'ghost', smoke = kind === 'smoke', royal = kind === 'royal';
+    const n = cards.length, T = smoke ? .2 : royal ? .42 : .62;
     const S = { t: 0, kind, ghost, T, slots: n + 1, layout: (EFFECTS[opts.id] || {}).layout, artK: opts.artK || 1, calm: !!opts.calm, flames: [], embers: [], smoke: [], shards: [], acc: {}, n, ar: top.W / top.H,
       cards: cards.map((c, i) => ({ i, ar: c.W / c.H, rot0: -c.rot * Math.PI / 180, ox: (c.dx || 0) / top.H, oy: -(c.dy || 0) / top.H, last: -.3,
         side: n === 1 ? .55 : i === n - 1 ? .45 : (i % 2 ? 1 : -1) * (.9 + .2 * i) })) };
@@ -192,7 +194,7 @@ void main(){
     S.waveX = t => t < .26 ? -1.5 + (t / .26) * (1.5 - hw) : t < .9 ? -hw + (t - .26) / .64 * (hw * 2 + .15) : hw + .15 + (t - .9) / .3 * 1.6;
     S.front = (c, t) => S.calm ? -.25 + clamp(t / .7) * 1.45
       : ghost ? -.25 + clamp((t - T - .03 - c.i * .06) / .75) * 1.45
-      : smoke ? -.25 + clamp((t - .78) / .7) * 1.45 : -.25 + clamp((t - .24) / .66) * 1.45;
+      : smoke ? -.25 + clamp((t - .78) / .7) * 1.45 : royal ? -.25 + clamp((t - .9) / .62) * 1.45 : -.25 + clamp((t - .24) / .66) * 1.45;
     S.pose = (c, t) => {
       if (S.calm) return { rx: 0, ry: 0, rz: c.rot0, tx: c.ox, ty: c.oy, tz: 0, heat: clamp(t / .3) };
       if (smoke) {
@@ -200,6 +202,12 @@ void main(){
         const tr = smooth(0, T, t), e = ease((t - T) / .5), w = Math.sin(t * 7) * .06 * e;
         if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 50) * .02 * tr, tx: c.ox, ty: c.oy, tz: .03 * tr, heat: .5 * tr };
         return { rx: -.2 * e + w, ry: .35 * Math.sin(t * 3.2) * e, rz: c.rot0 + .1 * Math.sin(t * 2.4) * e, tx: c.ox, ty: c.oy + .14 * e, tz: .45 * e, heat: 1 };
+      }
+      if (royal) {
+        // Trembles as the crown comes down, then rises toward it on the strike and hangs in the fire.
+        const tr = smooth(0, T, t), e = ease((t - T) / .45);
+        if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 46) * .022 * tr, tx: c.ox, ty: c.oy, tz: .04 * tr, heat: .5 * tr };
+        return { rx: -.16 * e + Math.sin(t * 6) * .04 * e, ry: .28 * Math.sin(t * 2.7) * e, rz: c.rot0 + .07 * Math.sin(t * 2.1) * e, tx: c.ox, ty: c.oy + .05 * e, tz: .38 * e, heat: 1 };
       }
       if (ghost) {
         // Trembles as the wraith gathers, then is ripped away and tumbles out.
@@ -214,10 +222,11 @@ void main(){
     S.light = (p, pose, t) => {
       if (ghost) { const g = smooth(.1, .5, t) * (1 - smooth(1.4, 1.9, t)); return [1 + .2 * g, 1 + .3 * g, 1 + .75 * g]; }
       if (smoke) { const g = smooth(.05, .3, t) * (1 - smooth(1.4, 1.9, t)); return [1 + .8 * g, 1 + .3 * g, 1 + .1 * g]; }
+      if (royal) { const g = smooth(.05, .4, t) * (1 - smooth(1.4, 1.9, t)) + .8 * smooth(T - .03, T, t) * (1 - smooth(T, T + .3, t)); return [1 + .8 * g, 1 + .6 * g, 1 + .22 * g]; }
       const f = S.calm ? .25 * pose.heat : 1.1 * Math.exp(-Math.pow(p[0] - S.waveX(t), 2) / .3) * pose.heat;
       return [1 + .9 * f, 1 + .38 * f, 1 + .05 * f];
     };
-    S.cardZ = t => ghost ? .3 : smoke ? .35 : S.pose(S.cards[0], t).tz;
+    S.cardZ = t => ghost ? .3 : smoke || royal ? .35 : S.pose(S.cards[0], t).tz;
     // Card local (u,v) -> view space, with the edge ahead of the fire curling.
     S.cardPoint = (c, u, v, pose, front) => {
       const fu = (front - .16 * (1 - v)) / .82, d = u - fu;
@@ -257,6 +266,19 @@ void main(){
           }
           if (t > T && t < 1.5) emit('puff', 22, dt, () => { const a = R(0, 6.28), r = R(.4, 1.5); S.smoke.push({ col: [.52, .47, .52], p: [Math.cos(a) * r, .05 + Math.sin(a) * r * .8, R(-.5, .2)], v: [Math.cos(a) * .3, .25 + Math.sin(a) * .2, 0], age: 0, life: R(.9, 1.3), size: R(.45, .8), seed: rand() }); });
           if (t > T && t < 1.6) emit('ember', 45, dt, () => S.embers.push({ p: [R(-1, 1), R(-.4, .8), R(-.3, .6)], v: [R(-.3, .3), R(.4, 1.1), R(-.1, .2)], age: 0, life: R(.5, .9), size: R(1.6, 3.4), seed: rand() * 6.28 }));
+          S.cards.forEach(c => burnCard(c, t, dt));
+        } else if (royal) {
+          // Gold sparks rise toward the descending crown; on the strike a ring of golden sparks and
+          // charred fragments bursts out, gold flames lick up round the card and embers drift.
+          if (t < T) emit('rise', 46, dt, () => S.embers.push({ pal: 2, p: [R(-.9, .9), FLOOR + R(0, .3), R(-.3, .5)], v: [R(-.15, .15), R(.9, 1.8), 0], age: 0, life: R(.4, .7), size: R(1.4, 2.8), seed: rand() * 6.28 }));
+          if (t > T && t < T + .03) for (let i = 0; i < 40; i++) {
+            const a = R(0, 6.28), sp = R(1.3, 3);
+            S.embers.push({ pal: i % 3 ? 2 : 0, p: [0, .05, .3], v: [Math.cos(a) * sp, Math.sin(a) * sp * .8 + .5, R(-.6, .9)], age: 0, life: R(.5, 1.05), size: R(2, 4.8), seed: rand() * 6.28 });
+            if (i % 2) S.shards.push({ c: n - 1, p: [Math.cos(a) * .22, .05 + Math.sin(a) * .22, R(0, .4)], uv: [R(.1, .9), R(.1, .9)], v: [Math.cos(a) * sp * .75, Math.sin(a) * sp * .55 + .6, R(-.4, .9)], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-10, 10), R(-10, 10), R(-7, 7)], s: R(.035, .07), age: 0, life: R(.7, 1.1), seed: rand(), char: .25 });
+          }
+          if (t > T && t < 1.4) emit('flame', 30, dt, () => S.flames.push({ x: R(-.75, .75), y: FLOOR, z: R(-.35, .6), w: R(.22, .36), h: R(.4, .8), age: 0, life: R(.35, .6), seed: rand(), lean: R(-.12, .12) }));
+          if (t > T && t < 1.6) emit('ember', 48, dt, () => S.embers.push({ pal: rand() < .6 ? 2 : 0, p: [R(-1.1, 1.1), R(-.4, .9), R(-.3, .6)], v: [R(-.3, .3), R(.4, 1.1), R(-.1, .2)], age: 0, life: R(.5, .9), size: R(1.4, 3.2), seed: rand() * 6.28 }));
+          if (t > T + .1 && t < 1.3) emit('frag', 6, dt, () => S.shards.push({ c: n - 1, p: [R(-.9, .9), R(.6, 1.2), R(-.2, .5)], uv: [R(.1, .9), R(.1, .9)], v: [R(-.3, .3), R(-.2, .2), R(-.1, .3)], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-8, 8), R(-8, 8), R(-6, 6)], s: R(.03, .05), age: 0, life: R(.6, .9), seed: rand(), char: .35 }));
           S.cards.forEach(c => burnCard(c, t, dt));
         } else if (ghost) {
           // Cold wisps and violet haze rise around the Pile the whole time.
@@ -338,10 +360,11 @@ void main(){
     const cardZ = S.cardZ(t);
     // The owner's art as depth layers (S.layout: width in card heights, height/width, Pile u/v).
     const [LW, LR, PU, PV] = S.layout || [1, 1, .5, .5], K = S.artK, AW = LW * K, AH = AW * LR;
-    const layer = (arr, slot, z, s, dy, reveal, flow, glow, radial) => {
+    const layer = (arr, slot, z, s, dy, reveal, flow, glow, radial, alpha = 1) => {
       const P = [[0, 0], [1, 0], [1, 1], [0, 1]];
-      quad(arr, P.map(([u, v]) => proj((u - PU) * AW * s, (PV - v) * AH * s + dy, z)), P, radial ? [[1, 0], [1, 0], [1, 0], [1, 0]] : Z4, [...glow, 1], [7, slot, reveal, flow]);
+      quad(arr, P.map(([u, v]) => proj((u - PU) * AW * s, (PV - v) * AH * s + dy, z)), P, radial ? [[1, 0], [1, 0], [1, 0], [1, 0]] : Z4, [...glow, alpha], [7, slot, reveal, flow]);
     };
+    const artAt = (u, v, s, dy, z) => [(u - PU) * AW * s, (PV - v) * AH * s + dy, z];
     const vol = (arr, x0, x1, y0, y1, z, inten, seed) => {
       const P = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => proj(x, y, z));
       quad(arr, P, Z4, UP, [1, 1, 1, 1], [8, seed, 0, inten]);
@@ -359,6 +382,44 @@ void main(){
       if (flash > 0) glowAt(out.back, [0, .05, 0], 1.6, [1, .85, .6, flash]);
       glowAt(out.back, [0, 0, -.2], 1.5 * K, [1, .35, .1, .45 * smooth(T, T + .2, t) * out1 * (.8 + .2 * Math.sin(t * 23))]);
       for (const [d, col] of [[0, [.95, .9, .9]], [.1, [1, .5, .2]]]) { const rt = (t - T - d) / .6; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 1.8 * ease(rt), (1 - rt) * .8, col); }
+    } else if (S.kind === 'royal' && !S.calm) {
+      // The crown materialises high up and comes down; on the strike it lands (a pulse of light
+      // through its gold), the painted fire bursts out from the card, gold light rays fan out
+      // behind the crown, its jewels glint in turn and the floor rings; then it all burns away.
+      const T = S.T, out1 = 1 - smooth(1.45, 1.95, t), land = ease((t - .02) / (T - .02));
+      const strike = bump(T - .03, T + .02, T + .32), cs = 1 + .045 * strike;
+      const cdy = 1.3 * (1 - land) + .03 * Math.sin((t - T) * 5.5) * smooth(T, T + .25, t) + .3 * smooth(1.45, 1.95, t);
+      const grow = .35 + .65 * ease((t - T + .02) / .45) + .04 * Math.max(0, t - T);
+      const CU = .49, CV = .2, cc = artAt(CU, CV, cs, cdy, -.3), core = artAt(CU, .5, 1, 0, -.3);
+      glowAt(out.back, [0, 0, 0], .9, [1, .7, .25, .6 * smooth(0, T, t) * (1 - smooth(T, T + .3, t))]);
+      glowAt(out.back, cc, 1.5 * K, [1, .62, .18, (.25 + .3 * strike) * land * out1]);
+      if (R.art) {
+        layer(out.art, 1, -.35, grow, 0, smooth(T - .02, T + .28, t) * out1, 1.6, [1, .75, .3], true);
+        layer(out.artFront, 0, -.3, cs, cdy, smooth(0, .26, t) * (1 - smooth(1.5, 1.95, t)), .12, [1, .8, .35]);
+        // Light running through the gold as it lands, and once more as the card catches.
+        const shine = .55 * strike + .22 * bump(.95, 1.1, 1.35);
+        if (shine > 0) layer(out.front, 0, -.3, cs, cdy, 1, .12, [1, .8, .35], false, shine);
+      }
+      // Light rays: long soft beams from the heart of the fire, slowly turning.
+      const [ox, oy, os] = proj(...core), rayA = (.18 * land + .82 * smooth(T - .05, T + .2, t)) * out1;
+      if (rayA > 0) for (let i = 0; i < 16; i++) {
+        const a = -Math.PI / 2 + (i - 7.5) * .21 + .05 * Math.sin(t * .9 + i) + (i % 2 ? .04 : -.04) * t;
+        const L = F * os * K * (3.4 + 1.1 * Math.sin(i * 2.3) + .6 * strike) * (.6 + .4 * grow), w0 = F * os * .02, w1 = F * os * K * (.1 + .06 * (i % 3));
+        const dx = Math.cos(a), dy = Math.sin(a), ex = ox + dx * L, ey = oy + dy * L;
+        quad(out.back, [[ox + dy * w0, oy - dx * w0], [ox - dy * w0, oy + dx * w0], [ex - dy * w1, ey + dx * w1], [ex + dy * w1, ey - dx * w1]], Z4, [[0, -1], [0, 1], [.5, 1], [.5, -1]],
+          [1, .72, .28, rayA * (.55 + .25 * Math.sin(t * 7 + i * 1.7))], [2, 0, 0, 0]);
+      }
+      // The jewels glint one after another once the crown has landed (and again as it leaves).
+      [[.491, .197], [.236, .255], [.75, .255], [.491, .048], [.194, .105], [.792, .105]].forEach(([u, v], i) => {
+        const g = bump(T + .04 + i * .1, T + .12 + i * .1, T + .38 + i * .1) + .7 * bump(1.2 + i * .05, 1.27 + i * .05, 1.45 + i * .05);
+        if (g <= 0) return;
+        const p = artAt(u, v, cs, cdy, -.3), [px, py, ps] = proj(...p), r = (i < 3 ? .5 : .35) * F * ps * K * g, h = .022 * F * ps;
+        glowAt(out.front, p, (i < 3 ? .2 : .14) * K, [1, .45, .4, g]);
+        for (const [ux, uy] of [[1, 0], [0, 1]]) quad(out.front, [[px - ux * r - uy * h, py - uy * r - ux * h], [px + ux * r - uy * h, py + uy * r - ux * h], [px + ux * r + uy * h, py + uy * r + ux * h], [px - ux * r + uy * h, py - uy * r + ux * h]], Z4, [[-1, 0], [1, 0], [1, 0], [-1, 0]], [1, .9, .75, g], [2, 0, 0, 0]);
+      });
+      if (strike > 0) glowAt(out.back, [0, .05, 0], 1.7, [1, .85, .55, strike]);
+      glowAt(out.back, [0, FLOOR + .1, 0], 1.4 * K, [1, .55, .15, .5 * smooth(T, T + .2, t) * out1 * (.8 + .2 * Math.sin(t * 21))]);
+      for (const [d, col] of [[0, [1, .9, .6]], [.1, [1, .6, .2]]]) { const rt = (t - T - d) / .6; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 1.9 * ease(rt), (1 - rt) * .85, col); }
     } else if (S.ghost && !S.calm) {
       // The owner's art in two depth layers: the fire bank, and the wraith above it,
       // which rises, lunges at the Pile on the strike and drifts apart.
@@ -423,7 +484,7 @@ void main(){
     }
     // Shards: small pieces of the real cards, tumbling in 3D as they burn out.
     for (const s of S.shards) {
-      const a = s.age / s.life, heat = clamp(1 - a / .7), alpha = 1 - smooth(.65, 1, a), sz = s.s * (1 - .35 * a);
+      const a = s.age / s.life, heat = clamp(1 - a / .7 - (s.char || 0) * .5), alpha = 1 - smooth(.65, 1, a), sz = s.s * (1 - .35 * a);
       const [ax, ay, az] = s.a, cxr = Math.cos(ax), sxr = Math.sin(ax), cyr = Math.cos(ay), syr = Math.sin(ay), czr = Math.cos(az), szr = Math.sin(az);
       const corner = ([lx, ly]) => {
         let x = lx * sz, y = ly * sz, z = 0;
@@ -450,7 +511,7 @@ void main(){
       const r = e.size * cam.px * head[2] * (1 - .5 * a), dx = head[0] - tail[0], dy = head[1] - tail[1], l = Math.hypot(dx, dy) || 1;
       const ux = dx / l, uy = dy / l, ext = l * .5 + r;
       const mx = (head[0] + tail[0]) / 2, my = (head[1] + tail[1]) / 2;
-      const col = e.pal ? (a < .4 ? [.75, .95, 1] : a < .7 ? [.5, .62, 1] : [.62, .32, .95]) : a < .35 ? [1, .78, .35] : a < .7 ? [1, .45, .1] : [.85, .18, .04];
+      const col = e.pal === 2 ? (a < .35 ? [1, .95, .72] : a < .7 ? [1, .78, .3] : [1, .5, .12]) : e.pal ? (a < .4 ? [.75, .95, 1] : a < .7 ? [.5, .62, 1] : [.62, .32, .95]) : a < .35 ? [1, .78, .35] : a < .7 ? [1, .45, .1] : [.85, .18, .04];
       const arr = (e.p[1] * SP + e.p[2] * CP) > cardZ ? out.front : out.back;
       quad(arr, [[mx - ux * ext + uy * r, my - uy * ext - ux * r], [mx + ux * ext + uy * r, my + uy * ext - ux * r], [mx + ux * ext - uy * r, my + uy * ext + ux * r], [mx - ux * ext - uy * r, my - uy * ext + ux * r]], Z4, LOC, [...col, 1 - smooth(.6, 1, a)], [2, e.seed, 0, 0]);
     }
@@ -600,6 +661,24 @@ void main(){
       [.82, .9, .97, 1.05, 1.12, 1.2, 1.28, 1.36, 1.44].forEach((at, n) => k.noise({ at, dur: .028, type: 'bandpass', f0: 2200 + n * 140, q: 3, level: .15 }));
       [.5, .63, .74, 1.55, 1.68].forEach((at, n) => k.noise({ at, dur: .02, type: 'highpass', f0: 3600 - n * 150, level: .08 }));
       k.noise({ at: 1.35, dur: .6, type: 'highpass', f0: 3000, f1: 1500, level: .05, attack: .15 });
+    },
+    // Royal Incineration: a shimmering rise and a choir swell as the crown comes down (0–0.42);
+    // the landing at 0.42 (deep boom, a bright metal clang, a short brass fanfare), the fire
+    // roaring out, three glass chimes as the jewels glint (0.46, 0.56, 0.66), crackles as the
+    // card burns away (0.9–1.5), a second shimmer as it catches (1.0) and a soft fading tail.
+    'burn-lvl-royal-incineration': k => {
+      k.noise({ dur: .42, type: 'bandpass', f0: 600, f1: 3200, q: 1.2, level: .09, attack: .35 });
+      [523, 659, 784].forEach((f0, n) => k.tone({ at: .04 + n * .03, dur: .5, type: 'triangle', f0, f1: f0, level: .045, attack: .3, vibrato: 5 }));
+      k.tone({ at: .42, dur: .55, f0: 74, f1: 30, level: .36 });
+      k.noise({ at: .42, dur: .4, type: 'lowpass', f0: 2600, f1: 200, level: .3, attack: .004 });
+      [1319, 1976, 2637].forEach((f0, n) => k.tone({ at: .42, dur: .55 - n * .1, f0, f1: f0 * .995, level: .07 - n * .015, attack: .003 }));
+      [196, 294, 392].forEach((f0, n) => k.tone({ at: .43, dur: .42, type: 'sawtooth', f0, f1: f0, level: .03 - n * .006, attack: .02 }));
+      k.noise({ at: .46, dur: 1.05, type: 'bandpass', f0: 900, f1: 260, q: .6, level: .15, attack: .1 });
+      [2637, 3136, 3520].forEach((f0, n) => k.tone({ at: .46 + n * .1, dur: .3, f0, f1: f0, level: .05, attack: .004 }));
+      [.92, .99, 1.06, 1.13, 1.2, 1.28, 1.36, 1.44].forEach((at, n) => k.noise({ at, dur: .028, type: 'bandpass', f0: 2300 + n * 140, q: 3, level: .14 }));
+      k.noise({ at: .95, dur: .45, type: 'bandpass', f0: 1800, f1: 4200, q: 1, level: .05, attack: .1 });
+      [1.2, 1.25, 1.3].forEach((at, n) => k.tone({ at, dur: .3, f0: 3136 - n * 400, f1: 3100 - n * 400, level: .03, attack: .004 }));
+      k.noise({ at: 1.45, dur: .5, type: 'highpass', f0: 3200, f1: 1600, level: .05, attack: .12 });
     },
     // Ghost Flames: cold rush as the fire rises (0–0.4), a two-voice moan as the wraith
     // gathers, a glassy chime as its eyes flare (0.55), the strike (0.62: thump + tear),

@@ -4,7 +4,7 @@ layers.webp = two slots side by side (slot 0 left, slot 1 right). The painted
 cards are removed and their gap filled with the surrounding art, because the
 game burns the real pile card in front; every edge fades softly. Also writes
 the Shop/Custom tile. Needs numpy, pillow, opencv-python-headless.
-Run: python3 tools/make-burn-layers.py [ghost-flames|smoke-burst]"""
+Run: python3 tools/make-burn-layers.py [ghost-flames|smoke-burst|royal-incineration]"""
 import sys
 from PIL import Image
 import numpy as np, cv2
@@ -80,4 +80,69 @@ def smoke_burst():
                              lambda yy, xx, h: oval(yy, xx) * ss(.58, .8, yy)],                   # front puffs
         'art/burns/smoke-burst/layers.webp', patch=patch)
 
-{'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
+def save_atlas(layers, out, scale=2):
+    """layers: two (rgb 0..1, alpha 0..1) pairs, written side by side."""
+    H, W, _ = layers[0][0].shape
+    atlas = Image.new('RGBA', (W * scale * 2, H * scale))
+    for i, (col, a) in enumerate(layers):
+        atlas.paste(Image.fromarray((np.dstack([np.clip(col, 0, 1), np.clip(a, 0, 1)]) * 255).astype(np.uint8), 'RGBA').resize((W * scale, H * scale), Image.LANCZOS), (i * W * scale, 0))
+    atlas.save(out, quality=92)
+    print(out, atlas.size)
+
+def royal_incineration():
+    full = Image.open('docs/avatar-art/src/burn-royal-incineration.webp').convert('RGB')
+    full.crop((32, 18, 476, 466)).resize((384, 387), Image.LANCZOS).save('art/burns/royal-incineration/tile.webp', quality=90)
+    X0, Y0 = 38, 24
+    src = np.asarray(full)[Y0:460, X0:470]  # inside the gold frame
+    H, W, _ = src.shape
+    yy, xx = np.mgrid[0:H, 0:W] / [[[H]], [[W]]]
+    poly = lambda pts: np.array([(x - X0, y - Y0) for x, y in pts], np.int32)
+    # The crown, traced by hand (source pixels): a solid layer of its own, whole.
+    crown = np.zeros((H, W), np.uint8)
+    cv2.fillPoly(crown, [poly([(85, 96), (105, 95), (118, 62), (128, 60), (140, 72), (150, 78), (168, 90), (185, 84), (195, 88), (215, 80),
+                               (225, 58), (240, 45), (250, 31), (260, 45), (275, 58), (285, 80), (305, 88), (315, 84), (332, 90), (350, 78),
+                               (362, 72), (374, 60), (384, 62), (395, 90), (426, 97), (419, 130), (411, 165), (398, 192), (392, 225),
+                               (350, 237), (250, 242), (150, 237), (113, 226), (105, 198), (94, 170), (83, 135), (78, 100)])], 255)
+    # The painted Aces: filled with the charred debris and burning fragments from the bottom of the
+    # same painting (mirrored and tiled), so their place reads as more of the burning wreckage.
+    cards = [[(180, 240), (235, 240), (280, 300), (272, 330), (240, 357), (210, 355), (195, 310)],
+             [(147, 267), (185, 250), (197, 310), (165, 340), (150, 325)],
+             [(107, 292), (145, 285), (160, 335), (125, 345)],
+             [(60, 285), (75, 265), (112, 282), (100, 317), (65, 302)],
+             [(340, 307), (400, 302), (405, 317), (385, 355), (345, 345)],
+             [(410, 257), (435, 245), (452, 260), (430, 285), (412, 275)],
+             [(65, 340), (120, 345), (125, 375), (70, 372)],
+             [(390, 385), (445, 365), (452, 375), (410, 397)],
+             [(410, 327), (437, 322), (440, 337), (415, 342)]]
+    band = src[375 - Y0:452 - Y0, 45 - X0:385 - X0]
+    f = src.astype(np.float32) / 255
+    rng = np.random.default_rng(5)
+    for c in cards:
+        one = np.zeros((H, W), np.uint8)
+        cv2.fillPoly(one, [poly(c)], 255)
+        one = cv2.dilate(one, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15)))
+        ys, xs = np.nonzero(one)
+        y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+        k = max(1, (y1 - y0) / (band.shape[0] - 4))  # big gaps take a closer (larger) look at the wreckage
+        bw, bh = int((x1 - x0) / k) + 1, int((y1 - y0) / k) + 1
+        bx = rng.integers(0, band.shape[1] - bw)
+        piece = cv2.resize(band[:bh, bx:bx + bw], (x1 - x0, y1 - y0), interpolation=cv2.INTER_CUBIC).astype(np.float32) / 255
+        m = cv2.GaussianBlur(one.astype(np.float32) / 255, (17, 17), 0)[y0:y1, x0:x1, None]
+        f[y0:y1, x0:x1] = f[y0:y1, x0:x1] * (1 - m) + piece * m
+    # Under the crown: its own glow (inpainted), so the fire behind it never shows a hole.
+    cm = cv2.dilate(crown, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
+    behind = cv2.inpaint((f * 255).astype(np.uint8), cm, 15, cv2.INPAINT_TELEA).astype(np.float32) / 255
+    soft = cv2.GaussianBlur(crown.astype(np.float32) / 255, (7, 7), 0)
+    # The burst: alpha from brightness (the dark sky goes clear), inside a lumpy outline.
+    noise = lambda n, seed: cv2.resize(np.random.default_rng(seed).random((n, n)).astype(np.float32), (W, H), interpolation=cv2.INTER_CUBIC)
+    lump = .65 * noise(5, 11) + .35 * noise(13, 12)
+    r = np.hypot((xx - .5) / .52, (yy - .52) / .5) * (1.25 - .32 * lump)
+    burst = (1 - ss(.5, 1.0, r)) * ss(0, .06, yy) * (1 - ss(.86, 1, yy))
+    halo = cv2.GaussianBlur(cm.astype(np.float32) / 255, (31, 31), 0)
+    bright = ss(.1, .5, behind.max(2))
+    fire_a = bright * burst * (1 - .45 * halo)
+    fire = np.clip(behind / np.maximum(bright[..., None], .3), 0, 1)  # un-premultiply by the brightness only
+    crown_a = soft
+    save_atlas([(f, crown_a), (fire, fire_a)], 'art/burns/royal-incineration/layers.webp')
+
+{'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
