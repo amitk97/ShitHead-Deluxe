@@ -1,5 +1,14 @@
 # ShitHead Deluxe
 
+## Painted-art burns (owner, October 2026) — the new burn style
+
+The owner rejected the older burn styling (flat CSS/SVG shapes, simple vector ghosts, the v294/v295 sprite burns) as cheap. New and reworked Burns follow the owner's painted concept tiles (the "Burn Effects" collection sheets) **exactly**, with special effects and several moving layers. Never use the existing burns as a style reference; only borrow their positioning, clock and sound plumbing.
+
+- Build: the owner's tile is cut into transparent depth layers by a tool (e.g. `tools/make-ghost-flames.py`: painted cards removed and their gap filled, soft fades on every edge, source kept in `docs/avatar-art/src/`), then brought to life in WebGL by `art/burns/level-3d/burns3d.js` (`ShLevel3D`): flowing smoke distortion, fine moving detail, noise dissolve in and out, procedural spectral fire, glowing eyes/flashes, floor shockwaves, embers, and the REAL pile cards as lit 3D meshes that burn with glowing edges and break into shards. No vector redraws of painted art.
+- The scene fits the screen width (cards stay their real size), never shows a hard canvas or picture edge, ends within 2.1s, has its own sound on the same clock, and the Shop/Custom tile is the owner's tile itself.
+- First one: Ghost Flames (`burn-halloween`). Record it on a phone-size table before showing the owner (`rec3.js` method: slow the effect clock and re-time screenshots; Playwright's fake clock stalls the WebGL loop).
+
+
 ## v295 — restore rich level-burn choreography
 
 Owner rejected v294 motion as too basic. The same six effects now combine detailed art with directional spark streaks, ground shockwaves, trailing smoke, sequential ring ignition, depth-ordered helical debris and gold light shafts. Secondary sound beats match their delays. Preserve the shared cleanup/reduced-motion path. The script URL and offline entry carry `?v=295` for cache invalidation.
