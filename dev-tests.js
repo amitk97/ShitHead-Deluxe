@@ -2857,6 +2857,36 @@ async function runDevTestSuite() {
     document.getElementById('themesModal').classList.add('hidden');
   });
 
+  await test('Custom has the Shop filters: All, Owned, Not Owned and Equipped hide the other tiles on every tab (v273)', () => {
+    openThemesPanel();
+    try {
+      assertEqual([...document.querySelectorAll('#customFilterBar [data-custom-filter]')].map(b => b.dataset.customFilter), ['all', 'owned', 'unowned', 'equipped'], 'Four filter chips like the Shop');
+      for (const tab of ['all', 'avatar', 'cardBack']) {
+        setCustomTab(tab);
+        const tiles = () => [...visibleCustomPanel().querySelectorAll('[data-equip-id]')];
+        const shown = () => tiles().filter(el => getComputedStyle(el).display !== 'none');
+        document.querySelector('#customFilterBar [data-custom-filter="all"]').click();
+        assertEqual(shown().length, tiles().length, `${tab}: All shows every tile`);
+        document.querySelector('#customFilterBar [data-custom-filter="owned"]').click();
+        assertTrue(shown().length > 0 && shown().every(el => !el.hasAttribute('data-locked')), `${tab}: Owned shows only owned tiles`);
+        setCustomFilter('unowned');
+        assertTrue(shown().length > 0 && shown().every(el => el.hasAttribute('data-locked')), `${tab}: Not Owned shows only locked tiles`);
+        setCustomFilter('equipped');
+        assertTrue(shown().length > 0 && shown().every(el => el.getAttribute('aria-pressed') === 'true'), `${tab}: Equipped shows only equipped tiles`);
+      }
+      setCustomTab('avatar');
+      setCustomFilter('owned');
+      const emptyOpenHeads = [...visibleCustomPanel().querySelectorAll('.custom-group-head[aria-expanded="true"]')].filter(h => getComputedStyle(h).display !== 'none')
+        .filter(h => { for (let n = h.nextElementSibling; n && !n.classList.contains('custom-group-head'); n = n.nextElementSibling) if (n.matches('[data-equip-id]') && getComputedStyle(n).display !== 'none') return false; return true; });
+      assertEqual(emptyOpenHeads.length, 0, 'An open group with nothing left to show is hidden');
+      focusCustomTile('avatar', 'default');
+      assertEqual(customFilter, 'all', 'Jumping to an item clears the filter so its tile shows');
+    } finally {
+      setCustomFilter('all');
+      document.getElementById('themesModal').classList.add('hidden');
+    }
+  });
+
   await test('REGRESSION: Profile username row shows SHOP/OWNED/USED and edits inline next to the name', () => {
     const savedUser = currentUser, savedToken = nameChangeTokenState;
     try {

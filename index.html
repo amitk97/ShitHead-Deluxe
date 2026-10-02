@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v272 (ShitHead-Deluxe-221) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v273 (ShitHead-Deluxe-222) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -632,6 +632,12 @@
     .av-gx-spark { animation:avGxSpark 4.8s linear infinite; opacity:0; }
     @keyframes avGxSpark { 0% { transform:translateY(0); opacity:0; } 15% { opacity:.9; } 70% { opacity:.6; } 100% { transform:translateY(-420px); opacity:0; } }
     body.reduce-motion :is(.av-gx-shine, .av-gx-glint, .av-gx-spark) { animation:none; opacity:0; }
+    /* Custom filters (v273, owner): ALL / OWNED / NOT OWNED / EQUIPPED, like the Shop. */
+    #themesModal[data-custom-filter="owned"] [data-custom-panel] [data-equip-id][data-locked],
+    #themesModal[data-custom-filter="unowned"] [data-custom-panel] [data-equip-id]:not([data-locked]),
+    #themesModal[data-custom-filter="equipped"] [data-custom-panel] [data-equip-id]:not([aria-pressed="true"]),
+    #themesModal .custom-filter-hidden { display:none !important; }
+    .custom-filter-empty { margin:14px 0 4px; text-align:center; font-size:10px; font-weight:800; color:#94a3b8; }
     /* Level avatars (v256): eye glow, flame flicker, a gleam sweep. */
     .av-lx-eye { mix-blend-mode:screen; animation:avLxEye 5s ease-in-out infinite; opacity:.25; }
     @keyframes avLxEye { 0%, 100% { opacity:.25; } 20% { opacity:.95; } 26% { opacity:.4; } 32% { opacity:1; } 55% { opacity:.3; } }
@@ -6437,6 +6443,13 @@ video {
       <div class="overflow-y-auto pr-1" style="flex:1;">
         <div id="customLoadouts" class="loadout-strip" aria-label="Saved looks"></div>
         <div class="hscroll-wrap is-sticky"><button type="button" class="hscroll-btn prev" aria-label="Scroll sections left" tabindex="-1">‹</button><div id="customTabBar" class="cosmetic-tab-bar hscroll" role="tablist" aria-label="Custom sections"></div><button type="button" class="hscroll-btn next" aria-label="Scroll sections right" tabindex="-1">›</button></div>
+        <div class="hscroll-wrap"><button type="button" class="hscroll-btn prev" aria-label="Scroll filters left" tabindex="-1">‹</button>
+        <div id="customFilterBar" class="flex gap-1 overflow-x-auto pb-2 hscroll" aria-label="Custom filters">
+          <button data-custom-filter="all" class="shop-filter-btn shrink-0 rounded-full border border-emerald-500 px-2 py-1 text-[8px] font-black text-emerald-300">ALL</button>
+          <button data-custom-filter="owned" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">OWNED</button>
+          <button data-custom-filter="unowned" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">NOT OWNED</button>
+          <button data-custom-filter="equipped" class="shop-filter-btn shrink-0 rounded-full border border-slate-700 px-2 py-1 text-[8px] font-black text-slate-400">EQUIPPED</button>
+        </div><button type="button" class="hscroll-btn next" aria-label="Scroll filters right" tabindex="-1">›</button></div>
         <div data-custom-panel="all"><div id="personalisationAll" class="custom-all"></div></div>
         <div data-custom-panel="avatar" class="hidden"><div id="personalisationAvatars" class="avatar-picker-grid"></div></div>
         <div data-custom-panel="deck" class="hidden"><div id="themesGridArea" class="cosmetic-tile-grid py-1"></div></div>
@@ -6447,6 +6460,7 @@ video {
         <div data-custom-panel="burnEffect" class="hidden"><div id="personalisationBurnEffects" class="cosmetic-tile-grid"></div></div>
         <div data-custom-panel="jokerEffect" class="hidden"><div id="personalisationJokerEffects" class="cosmetic-tile-grid"></div></div>
         <div data-custom-panel="victoryEffect" class="hidden"><div id="personalisationVictoryEffects" class="cosmetic-tile-grid"></div></div>
+        <p id="customFilterEmpty" class="hidden custom-filter-empty" role="status"></p>
         <button id="unequipAllCosmeticsBtn" type="button" class="mt-3 w-full rounded-xl border border-rose-700 bg-rose-950/30 px-3 py-2 text-[9px] font-black uppercase tracking-wider text-rose-300 hover:bg-rose-900/50">Unequip All Cosmetics</button>
         <p id="personalisationStatus" class="text-[9px] text-center text-slate-500 pt-2" aria-live="polite"></p>
       </div>
@@ -19765,6 +19779,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v273: [[ '🎨', 'Custom has the Shop filters: All, Owned, Not Owned and Equipped.', WN_KEY ]],
       v272: [[ '🃏', "Opponents' Face-Up and Face-Down cards no longer overlap each other." ]],
       v271: [[ '🎴', 'Bots now choose randomly from the free card backs and keep their choice throughout the match.', WN_KEY ]],
       v270: [[ '🌄', 'Responsive full-scene tables with extended landscapes, complete large features and matching previews.', WN_KEY ]],
@@ -30215,10 +30230,79 @@ video {
       loadSavedLoadouts();
       return loading;
     }
+    // § Custom filters (v273, owner): the Shop's ALL / OWNED / NOT OWNED /
+    // EQUIPPED chips on Custom. CSS hides the tiles (owned = no data-locked,
+    // equipped = aria-pressed), so every tab and every re-render follows the
+    // filter; applyCustomFilter hides open groups/sections left empty and
+    // says so when the whole tab is. Re-applied after any redraw (observer).
+    let customFilter = 'all';
+    const CUSTOM_FILTER_EMPTY = { owned: "You don't own anything here yet.", unowned: 'You own everything here.', equipped: 'Nothing here is equipped.' };
+    function customTileMatches(el) {
+      if (customFilter === 'owned') return !el.hasAttribute('data-locked');
+      if (customFilter === 'unowned') return el.hasAttribute('data-locked');
+      if (customFilter === 'equipped') return el.getAttribute('aria-pressed') === 'true';
+      return true;
+    }
+    function applyCustomFilter() {
+      const modal = document.getElementById('themesModal');
+      if (!modal) return;
+      if (modal.dataset.customFilter !== customFilter) modal.dataset.customFilter = customFilter;
+      modal.querySelectorAll('[data-custom-filter]').forEach(button => {
+        const cls = `shop-filter-btn shrink-0 rounded-full border px-2 py-1 text-[8px] font-black ${button.dataset.customFilter === customFilter ? 'border-emerald-500 text-emerald-300 bg-emerald-950/40' : 'border-slate-700 text-slate-400'}`;
+        if (button.className !== cls) button.className = cls;
+        const pressed = String(button.dataset.customFilter === customFilter);
+        if (button.getAttribute('aria-pressed') !== pressed) button.setAttribute('aria-pressed', pressed);
+      });
+      const filtering = customFilter !== 'all';
+      // A folded group/section stays visible (its contents are unknown until opened).
+      modal.querySelectorAll('[data-custom-panel] .custom-group-head').forEach(head => {
+        let any = false;
+        for (let n = head.nextElementSibling; n && !n.classList.contains('custom-group-head'); n = n.nextElementSibling) {
+          if (n.matches('[data-equip-id]') && customTileMatches(n)) { any = true; break; }
+        }
+        head.classList.toggle('custom-filter-hidden', filtering && head.getAttribute('aria-expanded') === 'true' && !any);
+      });
+      modal.querySelectorAll('[data-custom-panel] .cat-section[data-custom-section]').forEach(section => {
+        const open = section.querySelector('[data-custom-section-toggle]')?.getAttribute('aria-expanded') === 'true';
+        const any = [...section.querySelectorAll('[data-equip-id]')].some(customTileMatches);
+        section.classList.toggle('custom-filter-hidden', filtering && open && !any);
+      });
+      const panel = visibleCustomPanel();
+      const note = document.getElementById('customFilterEmpty');
+      if (note) {
+        const shown = panel && [...panel.querySelectorAll('[data-equip-id]')].some(customTileMatches);
+        const folded = panel && panel.querySelector('[aria-expanded="false"]');
+        const empty = filtering && panel && !shown && !folded;
+        const text = empty ? CUSTOM_FILTER_EMPTY[customFilter] : '';
+        if (note.textContent !== text) note.textContent = text;
+        note.classList.toggle('hidden', !empty);
+      }
+    }
+    function setCustomFilter(filter) {
+      customFilter = CUSTOM_FILTER_EMPTY[filter] ? filter : 'all';
+      applyCustomFilter();
+    }
+    (function watchCustomFilter() {
+      const modal = document.getElementById('themesModal');
+      if (!modal) return;
+      document.getElementById('customFilterBar')?.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-custom-filter]');
+        if (button) setCustomFilter(button.dataset.customFilter);
+      });
+      let queued = false;
+      new MutationObserver(() => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(() => { queued = false; applyCustomFilter(); });
+      }).observe(modal, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-pressed', 'aria-expanded', 'data-locked'] });
+      applyCustomFilter();
+    })();
     // Your Profile showcase → Custom (v245, owner): the item's own tab,
     // scrolled to its tile, which glows for a moment. Focused again once the
     // collection load has redrawn the tiles.
     function focusCustomTile(type, id) {
+      // A tile the filter hides would never be seen: show everything first.
+      if (customFilter !== 'all') setCustomFilter('all');
       let tile = visibleCustomPanel()?.querySelector(`[data-equip-type="${type}"][data-equip-id="${CSS.escape(id)}"]`);
       if (!tile && openCustomGroupFor(type, id)) tile = visibleCustomPanel()?.querySelector(`[data-equip-type="${type}"][data-equip-id="${CSS.escape(id)}"]`);
       if (!tile) return null;
