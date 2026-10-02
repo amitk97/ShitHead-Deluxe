@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v292 (ShitHead-Deluxe-232) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v293 (ShitHead-Deluxe-233) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -10853,6 +10853,7 @@ video {
         // account for burns from before this challenge existed.
         bumpStat(player, 'challengeBurns', 1);
         notifyChallengeEvent(player, [wasOutOfTurnPlay ? 'snap-burn-once' : 'four-of-a-kind-burn', 'burn-once']);
+        if (!tutorialActive) setTimeout(() => showHelperTip('four-burn', '#pileZone'), 500); // § Helper tips
         executeBurn(player, "Four of a kind. The pile is burnt.");
         return;
       }
@@ -10879,6 +10880,7 @@ video {
         }
         bumpStat(player, 'challengeBurns', 1);
         notifyChallengeEvent(player, ['burn-with-ten', 'burn-once']);
+        if (!tutorialActive) setTimeout(() => showHelperTip('ten-burn', '#pileZone'), 500); // § Helper tips
         executeBurn(player, "10 played. The pile is burnt.");
         return;
       }
@@ -11543,6 +11545,7 @@ video {
         console.warn('executePickup ignored — a burn is still resolving.');
         return;
       }
+      if (playerId === state.localPlayerId && !tutorialActive) setTimeout(() => showHelperTip('forced-pickup', '#localHand'), 900); // § Helper tips
       const player = state.players.find(p => p.id === playerId);
       if (!player) return;
       clearStaleSelections();
@@ -14885,6 +14888,7 @@ video {
         lastCardAlerted.add(p.id);
         if (p.id === state.localPlayerId || tutorialActive) return;
         notifyBanner(`${p.name} is on their last card.`);
+        { const seat = getPlayerAnimationTarget(p.id); if (seat) setTimeout(() => showHelperTip('last-card', seat), 400); } // § Helper tips
         audio.playLastCard();
         Haptics.vibrate([20, 60, 20]);
       });
@@ -19809,6 +19813,9 @@ video {
       reportMatchFinished();
       try { weeklyMatchEnded(); } catch (e) { console.warn('Weekly challenge check skipped', e); } // § Weekly challenge events
       writeLocalMatchHistory([entry, ...readLocalMatchHistory().filter(e => e.id !== id)]);
+      // § Helper tips: the first time Ranked is lost twice in a row.
+      const lastTwo = readLocalMatchHistory().slice(0, 2);
+      if (lastTwo.length === 2 && lastTwo.every(e => e.mode === 'ranked' && !e.draw && e.place > 1)) setTimeout(() => showHelperTip('ranked-loss-run', '#matchSummaryModal .ms-rating'), 3200);
       if (currentUser && typeof db !== 'undefined' && firebaseAvailable) {
         const uid = currentUser.uid;
         db.ref(`users/${uid}/matchHistory/${id}`).set(entry).then(() => pruneCloudMatchHistory(uid))
@@ -20027,6 +20034,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v293: [
+        [ '💡', 'Ten more helper tips: pickups, burns, the 3, last cards, swapping, Gauntlet lives, the Inbox, levelling up and Ranked.' ]
+      ],
       v292: [
         [ '💡', 'Seven more helper tips: Face-Up and Face-Down cards, Bonus Draw, inviting friends, equipping in Custom, spending Diamonds, the 9 and Ranked ratings.' ]
       ],
@@ -27057,6 +27067,7 @@ video {
         if (u.reward > 0) enqueueChallengeToast(`Level ${u.level}`, Number(u.reward), -1);
       });
       applyLevelRewards(x.rewards);
+      if ((x.levelUps || []).length) setTimeout(() => showHelperTip('level-up', '#headerXpBar'), 2500); // § Helper tips
       if (!xpFeatureOn) setXpFeature(true); // the server only adds XP while the switch is on
       refreshXpDisplays();
       refreshMatchSummary();
@@ -28278,7 +28289,17 @@ video {
       'custom-equip': 'Double-tap an item to equip it.',
       'diamonds-shop': 'Spend Diamonds in the Shop: tap the gem.',
       'nine-reverse': '9 reverses the direction of play.',
-      'ranked-rating': 'Ranked uses a rating: win to climb tiers, from Bronze to Master.'
+      'ranked-rating': 'Ranked uses a rating: win to climb tiers, from Bronze to Master.',
+      'forced-pickup': 'Picked up. Lower cards are easier to get rid of next turn.',
+      'ten-burn': 'A 10 burns the Pile, and you go again.',
+      'four-burn': 'Four of the same rank in a row burns the Pile too.',
+      'three-played': 'A 3 is transparent: the next player must beat the card under it.',
+      'last-card': 'One card left: try to make them pick up.',
+      'swap-phase': "Swap your best cards onto the table now. You'll need them later.",
+      'gauntlet-lives': 'Lose a game and you lose a life. You replay the same bot.',
+      'inbox-mail': "Tap a mail to jump straight to what it's about.",
+      'level-up': "New level: see what's next on the Level Ladder.",
+      'ranked-loss-run': 'Losses never cost extra. Win streaks earn bonus rating.'
     };
     const HELPER_TIPS_SEEN_KEY = 'shithead_tips_seen';
     const HELPER_TIP_MS = 8000;
@@ -28351,9 +28372,14 @@ video {
     });
     // Table tips, after every render.
     function helperTipsOnTable() {
-      if (!helperTipsOn || helperTipNow || tutorialActive || state.phase !== 'PLAY' || state.spectating) return;
+      if (!helperTipsOn || helperTipNow || tutorialActive || state.spectating) return;
+      if (state.phase === 'SWAP') { showHelperTip('swap-phase', '#localTableSlots'); return; }
+      if (state.phase !== 'PLAY') return;
       const local = state.players.find(p => p.id === state.localPlayerId);
       if (!local || local.hasFinished) return;
+      if (state.gauntlet && showHelperTip('gauntlet-lives', '#gauntletHud')) return;
+      const top = (state.discardPile || []).slice(-1)[0];
+      if (top && top.rank === '3' && !state.burnResolving && showHelperTip('three-played', '#discardPileContainer')) return;
       const myTurn = state.players[state.currentTurnIndex]?.id === local.id;
       if (state.pendingFollowUp && state.pendingFollowUp.playerId === local.id && showHelperTip('bonus-draw', '#followUpToastBanner')) return;
       if (state.isRanked && showHelperTip('ranked-rating', '#opponentsContainer')) return;
@@ -30268,6 +30294,7 @@ video {
       closeOtherMenuPages('inboxModal');
       document.getElementById('inboxModal').classList.remove('hidden');
       renderInbox();
+      setTimeout(() => showHelperTip('inbox-mail', '#inboxModal [data-mail-idx]'), 900); // § Helper tips
     }
     document.getElementById('inboxCloseBtn').addEventListener('click', () => document.getElementById('inboxModal').classList.add('hidden'));
     document.getElementById('inboxModal').addEventListener('click', (e) => {

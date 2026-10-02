@@ -1768,7 +1768,13 @@ async function runDevTestSuite() {
     const savedSeen = localStorage.getItem('shithead_tips_seen'), savedOn = helperTipsOn;
     try {
       localStorage.removeItem('shithead_tips_seen'); helperTipsOn = true; hideHelperTip();
-      assertEqual(Object.keys(HELPER_TIPS).length, 16, 'Sixteen tips (v292 added seven)');
+      assertEqual(Object.keys(HELPER_TIPS).length, 26, 'Twenty-six tips (v292 added seven, v293 ten)');
+      const v293 = { 'forced-pickup': 'Picked up. Lower cards are easier to get rid of next turn.', 'ten-burn': 'A 10 burns the Pile, and you go again.',
+        'four-burn': 'Four of the same rank in a row burns the Pile too.', 'three-played': 'A 3 is transparent: the next player must beat the card under it.',
+        'last-card': 'One card left: try to make them pick up.', 'swap-phase': "Swap your best cards onto the table now. You'll need them later.",
+        'gauntlet-lives': 'Lose a game and you lose a life. You replay the same bot.', 'inbox-mail': "Tap a mail to jump straight to what it's about.",
+        'level-up': "New level: see what's next on the Level Ladder.", 'ranked-loss-run': 'Losses never cost extra. Win streaks earn bonus rating.' };
+      Object.entries(v293).forEach(([k, t]) => assertEqual(HELPER_TIPS[k], t, `v293 tip ${k}`));
       assertEqual(HELPER_TIPS['hand-empty'], 'Now play your Face-Up cards, then the Face-Down ones blind.', 'Hand runs out');
       assertEqual(HELPER_TIPS['bonus-draw'], 'You drew the same card, so you can play it straight away.', 'Bonus Draw');
       assertEqual(HELPER_TIPS['host-invite'], 'Share the room code or invite link to bring friends in.', 'Hosting');
