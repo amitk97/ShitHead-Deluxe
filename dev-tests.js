@@ -1300,6 +1300,15 @@ async function runDevTestSuite() {
       assertTrue(burnPreviewIcon(id) !== '🔥' || id === 'burn-lvl-inferno-sweep', `${id} has its own preview icon`);
       stage.querySelectorAll('.bfx, .bfx-flash').forEach(n => n.remove());
       playBurnFx(id, stage, 120, 80, 1);
+      // 3D burns (v296) draw one WebGL canvas on their own clock and remove it at the end.
+      const canvas3d = stage.querySelector('canvas.lb3d-canvas');
+      if (canvas3d) {
+        const ms = ShLevel3D.effects[id].dur * 1000;
+        assertTrue(ms <= 2100 && ms >= 800, `${id} lasts 0.8–2.1s (${ms}ms)`);
+        ShLevel3D.clear(stage);
+        assertTrue(!stage.querySelector('canvas.lb3d-canvas'), `${id}: its canvas is removed`);
+        return;
+      }
       const pieces = [...stage.querySelectorAll('.bfx')];
       assertTrue(pieces.length > 20, `${id} draws its pieces (${pieces.length})`);
       assertEqual(pieces.filter(el => el.getAnimations().length === 0).length, 0, `${id}: every piece is animated`);

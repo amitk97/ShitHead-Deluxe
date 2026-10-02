@@ -13,6 +13,8 @@ const OFFLINE_ASSETS = [
   '/art/burns/level-v294/effects.js?v=295',
   '/art/burns/level-v294/layers.webp',
   '/art/burns/level-v294/concepts.webp',
+  '/art/burns/level-3d/burns3d.js?v=296',
+  '/art/burns/level-3d/inferno-sweep-tile.webp',
   '/art/tables/full-scenes-v270/scenes.js?v=274',
   '/art/avatars/approved-v267/royal-card-10.webp',
   '/art/avatars/approved-v267/royal-card-J.webp',
