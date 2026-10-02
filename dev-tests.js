@@ -1714,6 +1714,34 @@ async function runDevTestSuite() {
     assertEqual(selected, 3, 'The toggle should select all three Kings');
     assertEqual(left, 0, 'Un-staging must clear the whole rank, never leave a partial selection');
   });
+  await test('Header Profile button, Level Ladder menu entry and the new Challenges icon (v283)', async () => {
+    const hp = document.getElementById('headerProfileBtn');
+    assertTrue(!!hp && !!hp.closest('header') && !!hp.querySelector('use[href="#ui-profile"]'), 'Profile sits in the header with the Profile icon');
+    assertTrue(hp.nextElementSibling && hp.nextElementSibling.id === 'headerInboxBtn', 'It sits where Select All Of A Rank was, left of the Inbox');
+    hp.click();
+    const pm = document.getElementById('profileModal');
+    assertTrue(!pm.classList.contains('hidden'), 'The header Profile button opens Profile');
+    pm.classList.add('hidden');
+    const ch = document.querySelector('#ui-challenges');
+    assertTrue(!!ch && ch.querySelectorAll('circle').length === 3 && !!ch.querySelector('rect[transform], g[transform] rect'), 'Challenges is a three-ring target with the Ace');
+    const lb = document.getElementById('menuLadderBtn');
+    assertTrue(!!lb && !!lb.querySelector('use[href="#ui-ladder"]') && !!document.getElementById('ui-ladder'), 'The menu has Level Ladder with the ladder icon');
+    const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp };
+    try {
+      xpFeatureOn = false; document.body.classList.remove('xp-on');
+      assertEqual(getComputedStyle(lb).display, 'none', 'Hidden while XP is off');
+      xpFeatureOn = true; document.body.classList.add('xp-on');
+      currentUser = { uid: 'menu-ladder-test' }; playerXp = { total: xpForLevel(12) + 5, level: 12 };
+      assertTrue(getComputedStyle(lb).display !== 'none', 'Shown while XP is on');
+      lb.click();
+      assertTrue(!document.getElementById('levelLadderModal').classList.contains('hidden'), 'It opens the Level Ladder');
+    } finally {
+      document.getElementById('levelLadderModal').classList.add('hidden');
+      try { localStorage.removeItem('shithead_ladder_seen_menu-ladder-test'); } catch (e) {}
+      xpFeatureOn = saved.on; document.body.classList.toggle('xp-on', !!saved.on);
+      currentUser = saved.user; playerXp = saved.xp; refreshXpDisplays();
+    }
+  });
   await test('Select All Of A Rank sits left of the hand count, the size of the Card Powers button (v282)', () => {
     const btn = document.getElementById('multiSelectToggleBtn');
     const badge = document.getElementById('handCountBadge');
@@ -2593,7 +2621,7 @@ async function runDevTestSuite() {
     // drawer, then Diamond added, then Fullscreen removed from the
     // header entirely (still reachable from Settings) — still must
     // fit and stay clear of each other on a 320px phone.
-    const ids = ['hamburgerBtn', 'navHomeLogoBtn', 'headerDiamondBtn', 'headerInboxBtn', 'leaveGameBtn'];
+    const ids = ['hamburgerBtn', 'headerProfileBtn', 'navHomeLogoBtn', 'headerDiamondBtn', 'headerInboxBtn', 'leaveGameBtn'];
     const boxes = ids.map(id => {
       const el = document.getElementById(id);
       if (!el) return null;
@@ -5809,10 +5837,10 @@ async function runDevTestSuite() {
   // ---- STAGE 1: hamburger menu restructure + responsive presentation ----
   await test('REGRESSION: the hamburger menu has all 9 items in the agreed order, with no duplicates', () => {
     // Error Reports is owner-only (hidden for everyone else).
-    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuShopBtn', 'menuGuideBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuErrorReportsBtn', 'menuChangelogBtn', 'menuXpSwitchBtn', 'menuInstallBtn', 'menuSignOutBtn'];
+    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuLadderBtn', 'menuShopBtn', 'menuGuideBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuErrorReportsBtn', 'menuChangelogBtn', 'menuXpSwitchBtn', 'menuInstallBtn', 'menuSignOutBtn'];
     const nav = document.querySelector('#hamburgerDrawer nav');
     const actualOrder = Array.from(nav.querySelectorAll('button')).map(b => b.id);
-    assertEqual(actualOrder, expectedOrder, 'Menu items must appear in exactly the agreed order: Profile, Stats, Personalisation, Friends, Leaderboard, Challenges, Shop, Guide & Strategy, Settings, Support, Sign Out (signed in only)');
+    assertEqual(actualOrder, expectedOrder, 'Menu items must appear in exactly the agreed order: Profile, Stats, Personalisation, Friends, Leaderboard, Challenges, Level Ladder, Shop, Guide & Strategy, Settings, Support, Sign Out (signed in only)');
     assertTrue(!document.getElementById('menuInboxBtn'), 'Inbox must not also still be inside the drawer now that it lives in the header');
     const allIds = Array.from(document.querySelectorAll('[id]')).map(el => el.id);
     const seen = {};

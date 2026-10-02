@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v282 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v283 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -897,6 +897,7 @@
       transition: transform 0.25s ease-out;
     }
     #hamburgerDrawer.open { transform: translateY(0); }
+    body:not(.xp-on) #menuLadderBtn { display: none; }
     #multiSelectToggleBtn .rank-toggle-svg { width: 86%; height: 86%; }
     #multiSelectToggleBtn .rank-toggle-dot { position: absolute; right: -3px; bottom: -3px; width: 9px; height: 9px; border-radius: 50%; background: #f43f5e; border: 2px solid #0f172a; pointer-events: none; }
     #multiSelectToggleBtn[data-on="1"] .rank-toggle-dot { background: #34d399; }
@@ -907,11 +908,11 @@
          compact 44px header so it does not steal vertical game space. */
       body > header { height: calc(60px + var(--safe-top)) !important; padding: calc(7px + var(--safe-top)) 18px 7px !important; }
       body > header .brand-logo-rendered { font-size: 32px !important; }
-      #leaveGameBtn, #headerInboxBtn, #hamburgerBtn, #headerShopBtn {
+      #leaveGameBtn, #headerProfileBtn, #headerInboxBtn, #hamburgerBtn, #headerShopBtn {
         width: 38px !important;
         height: 38px !important;
       }
-      #leaveGameBtn svg, #headerInboxBtn > svg, #hamburgerBtn svg, #headerShopBtn svg {
+      #leaveGameBtn svg, #headerProfileBtn svg, #headerInboxBtn > svg, #hamburgerBtn svg, #headerShopBtn svg {
         width: 38px !important;
         height: 38px !important;
       }
@@ -5249,7 +5250,8 @@ video {
     <symbol id="ui-personalise" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><rect x="8" y="6.5" width="14" height="19" rx="3" fill="#263449" stroke="#cbd5e1" stroke-width="2" transform="rotate(-7 15 16)"/><path d="m22.5 8 .8 2.1 2.2.8-2.2.8-.8 2.1-.8-2.1-2.2-.8 2.2-.8.8-2.1Z" fill="#c084fc"/><path d="M11.2 19.8c2-2.8 4.7-4.3 7.8-4.5" stroke="#34d399" stroke-width="2.1" stroke-linecap="round"/></symbol>
     <symbol id="ui-friends" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><circle cx="12.5" cy="12" r="3.5" fill="#263449" stroke="#cbd5e1" stroke-width="2"/><circle cx="21.5" cy="13" r="2.8" fill="#263449" stroke="#60a5fa" stroke-width="2"/><path d="M6 25c.5-5 2.8-7.2 6.5-7.2s6 2.2 6.5 7.2M18.4 19.2c1-.8 2-1.2 3.3-1.2 2.6 0 4.2 2 4.6 5.8" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="ui-leaderboard" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M6 25v-8h7v8M13 25V8h7v17M20 25V14h6v11" fill="#263449" stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"/><path d="M15.5 12h2M8.5 20.5h2M22 17.5h2" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></symbol>
-    <symbol id="ui-challenges" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M11 7h10v5c0 4.1-2 6.3-5 6.3S11 16.1 11 12V7Z" fill="#5f451b" stroke="#fbbf24" stroke-width="2"/><path d="M11 9H7.5v2.2c0 2.8 1.6 4.3 4.1 4.3M21 9h3.5v2.2c0 2.8-1.6 4.3-4.1 4.3M16 18.3V23M12 25h8" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="ui-challenges" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><g fill="none" stroke="#34d399" stroke-width="1.45"><circle cx="13" cy="18" r="9.3"/><circle cx="13" cy="18" r="6.1"/><circle cx="13" cy="18" r="2.9"/></g><path d="m11.9 17.6.6.5-.5.4.7.3-.4.6" fill="none" stroke="#94a3b8" stroke-width=".7" stroke-linejoin="round"/><g transform="translate(0 1.3) rotate(20 20 12.5)"><rect x="15.5" y="6" width="9" height="13" rx="1.7" fill="#263449" stroke="#cbd5e1" stroke-width="1.25"/><path d="M17.1 10.4 18.1 7.6l1 2.8M17.5 9.4h1.2" fill="none" stroke="#cbd5e1" stroke-width=".85" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.2 11.3c-.8 1.1-2.3 1.9-2.3 3.1 0 .9 1 1.4 1.9.8l-.4 1.4h1.6l-.4-1.4c.9.6 1.9.1 1.9-.8 0-1.2-1.5-2-2.3-3.1Z" fill="#cbd5e1"/></g></symbol>
+    <symbol id="ui-ladder" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M11 26 12.2 6M21 26 19.8 6" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/><path d="M11.6 21.5h8.8M11.9 16.8h8.2M12.1 12.1h7.8" stroke="#60a5fa" stroke-width="1.9" stroke-linecap="round"/><path d="M12.4 7.6h7.2" stroke="#fbbf24" stroke-width="2.1" stroke-linecap="round"/><path d="m24.5 5.5.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8Z" fill="#fbbf24"/></symbol>
     <symbol id="ui-shop" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M6.5 8h3l2.2 11.2h11.8l2-7.5H11" fill="#263449" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="24" r="1.8" fill="#34d399"/><circle cx="22" cy="24" r="1.8" fill="#34d399"/></symbol>
     <symbol id="ui-guide" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M12.2 12a4.2 4.2 0 1 1 6.1 3.7c-1.6.8-2.3 1.6-2.3 3" fill="none" stroke="#34d399" stroke-width="2.8" stroke-linecap="round"/><circle cx="16" cy="23.2" r="1.5" fill="#cbd5e1"/></symbol>
     <symbol id="ui-settings" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="m16 7 2 .6 1.6-1 2.8 2.8-1 1.6.6 2 2 .8v4l-2 .8-.6 2 1 1.6-2.8 2.8-1.6-1-2 .6-.8 2h-4l-.8-2-2-.6-1.6 1L4 22.3l1-1.6-.6-2-2-.8v-4l2-.8.6-2-1-1.6 2.8-2.8 1.6 1 2-.6.8-2h4l.8 2Z" transform="translate(2 0)" fill="#263449" stroke="#cbd5e1" stroke-width="1.7" stroke-linejoin="round"/><circle cx="16" cy="15.8" r="3.4" fill="none" stroke="#60a5fa" stroke-width="2"/></symbol>
@@ -5344,6 +5346,7 @@ video {
 
     <!-- Right Controls -->
     <div class="flex-1 flex items-center justify-end gap-1.5 min-w-0">
+      <button id="headerProfileBtn" class="relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Profile" data-tip="Profile"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-profile"/></svg></button>
       <button id="headerInboxBtn" class="relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Inbox" data-tip="Inbox">
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-mail"/></svg>
         <span id="inboxBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 flex items-center justify-center rounded-full inbox-badge--friend text-white text-[8px] font-black leading-none">0</span>
@@ -5402,6 +5405,7 @@ video {
       <button id="menuFriendsBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-friends"/></svg></span><span>Friends</span></button>
       <button id="menuLeaderboardBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-leaderboard"/></svg></span><span>Leaderboard</span></button>
       <button id="menuChallengesBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-challenges"/></svg></span><span>Challenges</span></button>
+      <button id="menuLadderBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-ladder"/></svg></span><span>Level Ladder</span></button>
       <button id="menuShopBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg></span><span>Shop</span></button>
       <div class="border-t border-slate-800" style="margin: 4px 0;"></div>
       <button id="menuGuideBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></span><span>Guide &amp; Strategy</span></button>
@@ -19486,6 +19490,9 @@ video {
     // (matching the item-soon tag already on the button) until their
     // dedicated stages build them out.
     document.getElementById('menuProfileBtn').addEventListener('click', () => { closeHamburgerMenu(); openProfilePanel(); });
+    // v283 (owner): Profile in the header, where Select All Of A Rank was.
+    document.getElementById('headerProfileBtn').addEventListener('click', () => { closeHamburgerMenu(); openProfilePanel(); });
+    document.getElementById('menuLadderBtn').addEventListener('click', () => { closeHamburgerMenu(); openLevelLadder(); });
     // STAGE 7 — Support email composer. Email credentials never belong in
     // client-side HTML, so the form opens a pre-filled draft in the user's
     // configured email app and lets the user perform the final send.
@@ -19935,6 +19942,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v283: [
+        [ '👤', 'Profile now has its own button in the header, next to the Inbox.' ],
+        [ '🪜', 'Level Ladder is in the menu, with a new ladder icon. Challenges has a new target icon.' ]
+      ],
       v282: [
         [ '👆', 'Select All Of A Rank moved from the header to the table, just left of your hand count, so it sits under your thumb.' ]
       ],
