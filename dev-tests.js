@@ -2809,6 +2809,47 @@ async function runDevTestSuite() {
     }
   });
 
+  await test('Level Ladder (v277): opens from your level, shows every level reward, sits on "You are here", equips owned rewards', async () => {
+    const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp, owned: cosmeticPurchaseState, eq: { ...equippedCosmetics } };
+    const modal = document.getElementById('levelLadderModal');
+    try {
+      xpFeatureOn = true; document.body.classList.add('xp-on');
+      currentUser = { uid: 'ladder-test' };
+      const total = xpForLevel(35) + 10;
+      playerXp = { total, level: 35, week: getUkWeekKey(), weekXp: 500 };
+      cosmeticPurchaseState = Object.fromEntries(LEVEL_REWARDS.filter(r => r.level <= 35).map(r => [r.id, true]));
+      refreshXpDisplays();
+      for (const id of ['homeNameLevel', 'profileLevelBadge', 'hamburgerLevel']) {
+        modal.classList.add('hidden');
+        document.getElementById(id).click();
+        assertTrue(!modal.classList.contains('hidden'), `Tapping #${id} opens the Level Ladder`);
+      }
+      const ids = [...modal.querySelectorAll('[data-ladder-id]')].map(el => el.dataset.ladderId);
+      assertEqual(LEVEL_REWARDS.filter(r => !ids.includes(r.id)).map(r => r.id), [], 'Every level reward is on the ladder');
+      assertTrue(!!modal.querySelector(`[data-ladder-level="${XP_MAX_LEVEL}"].final`), 'The last card is the max level, from the level table');
+      for (let L = 10; L <= XP_MAX_LEVEL; L += 10) assertTrue(!!modal.querySelector(`[data-ladder-level="${L}"]`), `Milestone ${L} has its own row`);
+      assertTrue(!!modal.querySelector(`[data-ladder-level="${SERIES_RULES.level}"]`) && modal.textContent.includes('Best Of Series'), 'Unlocks (series, speeds, Gauntlets, look slots) are listed');
+      assertTrue(modal.querySelector('[data-ladder-level="30"]').classList.contains('got') && modal.querySelector('[data-ladder-level="40"]').classList.contains('locked'), 'Levels behind you are unlocked, ahead locked');
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const scroll = document.getElementById('levelLadderScroll'), here = modal.querySelector('[data-ladder-here]');
+      const a = scroll.getBoundingClientRect(), h = here.getBoundingClientRect();
+      assertTrue(h.top >= a.top && h.bottom <= a.bottom, '"You are here" is on screen when it opens');
+      modal.querySelector('[data-ladder-id="back-lvl-sharks-mark"]').click();
+      assertEqual(equippedCosmetics.cardBack, 'back-lvl-sharks-mark', 'Tapping an owned reward equips it');
+      modal.querySelector('[data-ladder-id="avatar-lvl-burn-king"]').click();
+      assertTrue(!document.getElementById('bigPreview').classList.contains('hidden'), 'Tapping a locked reward previews it');
+      closeBigPreview();
+      xpFeatureOn = false;
+      modal.classList.add('hidden');
+      assertEqual(openLevelLadder(), false, 'Not while levels are switched off');
+    } finally {
+      closeBigPreview(); modal.classList.add('hidden');
+      xpFeatureOn = saved.on; document.body.classList.toggle('xp-on', !!saved.on);
+      currentUser = saved.user; playerXp = saved.xp; cosmeticPurchaseState = saved.owned; equippedCosmetics = saved.eq;
+      applyEquippedCosmetics(); refreshXpDisplays();
+    }
+  });
+
   await test('End of match (v274): Ranked keeps its buttons, its card history reads, Fireside has no wreath row, Leave fits each mode', () => {
     // The Ranked server logs one entry per play with a cards list.
     const hist = normalizePlayedHistory([
