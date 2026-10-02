@@ -770,11 +770,11 @@ void main(){
       k.tone({ at: .3, dur: .65, type: 'sawtooth', f0: 62, f1: 78, vibrato: 7, level: .040, attack: .08 });
       [.34, .41, .47, .55, .6, .68, .74, .81, .88].forEach((at, n) => k.noise({ at, dur: .028, type: 'highpass', f0: 2600 + n * 160, level: .132 }));
       k.tone({ at: .52, dur: .34, f0: 82, f1: 38, level: .224 });
-      k.noise({ at: .5, dur: .045, type: 'highpass', f0: 2200, level: .3 }); // the whip cracks on the card
-      k.tone({ at: .5, dur: .14, type: 'sawtooth', f0: 900, f1: 160, level: .07, attack: .002 });
+      k.noise({ at: .5, dur: .045, type: 'highpass', f0: 2200, level: .14 }); // the whip cracks on the card
+      k.tone({ at: .5, dur: .14, type: 'sawtooth', f0: 900, f1: 160, level: .04, attack: .002 });
       k.noise({ at: .52, dur: .4, type: 'lowpass', f0: 900, f1: 160, level: .158 });
       k.noise({ at: .9, dur: .5, type: 'highpass', f0: 3200, f1: 1800, level: .046, attack: .05 });
-      [1, 1.12, 1.21, 1.33, 1.44].forEach((at, n) => k.noise({ at, dur: .02, type: 'highpass', f0: 3600 - n * 200, level: .066 - n * .008 }));
+      [1, 1.12, 1.21, 1.33, 1.44].forEach((at, n) => k.noise({ at, dur: .02, type: 'bandpass', f0: 3600 - n * 200, q: 3, level: .066 - n * .008 }));
     },
     // Smoke Burst: heat hiss building under the card (0–0.2), the blast at 0.2 (deep boom,
     // cracking burst, floor ring), the cloud rolling out, crackles as the card burns
