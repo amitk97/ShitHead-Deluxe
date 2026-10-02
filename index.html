@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v280 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v281 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -9105,7 +9105,10 @@ video {
     ['matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
-     'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal'].forEach((id) => {
+     'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
+     // v281: #gameTable is isolation:isolate (v270 table scenes), so anything
+     // left inside it can never sit above a page, whatever its z-index.
+     'playerPopup', 'challengeToast', 'signOutConfirm', 'dailyRewardModal', 'giftModal', 'giftOpenModal', 'installHelpModal'].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.parentElement !== document.body) document.body.appendChild(el);
     });
@@ -19928,6 +19931,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v281: [
+        [ '🛠️', 'Player cards, gift pop-ups, sign-out and reward messages now always show on top of the page you opened them from.' ]
+      ],
       v280: [
         [ '👥', 'Level Ladder: tap +N on a level to see every friend there. Friends on the same level are ordered by XP.' ]
       ],
@@ -27232,8 +27238,10 @@ video {
       return `<div class="ll-friend-list"><b>${list.length} friends here</b>${list.map(f => ladderFriendChipHtml(f, { full: true })).join('')}</div>`;
     }
     function openLadderFriend(btn) {
+      // From the +N list, point the card at the +N button: the list row goes away with the bubble.
+      const anchor = btn.closest('#infoPop') && infoPopAnchor && infoPopAnchor.isConnected ? infoPopAnchor : btn;
       hideInfoPop();
-      openProfileCard({ uid: btn.dataset.ladderFriend, name: btn.dataset.name, avatar: btn.dataset.avatar }, btn);
+      openProfileCard({ uid: btn.dataset.ladderFriend, name: btn.dataset.name, avatar: btn.dataset.avatar }, anchor);
     }
     // The bubble lives outside the ladder page, so its rows need their own listener.
     document.addEventListener('click', (e) => {

@@ -2877,6 +2877,46 @@ async function runDevTestSuite() {
       applyEquippedCosmetics(); refreshXpDisplays();
     }
   });
+  await test('Pop-ups sit above pages (v281): nothing high is left inside the isolated table, and the Ladder friend card is on top', async () => {
+    const table = document.getElementById('gameTable');
+    const trapped = [...table.querySelectorAll('*')].filter(el => { const cs = getComputedStyle(el); return cs.position === 'fixed' && (parseInt(cs.zIndex) || 0) > 95; }).map(el => el.id || el.className);
+    assertEqual(trapped, [], 'No pop-up above page level lives inside #gameTable (its isolation would put it under every page)');
+    for (const id of ['playerPopup', 'challengeToast', 'signOutConfirm', 'giftModal', 'giftOpenModal', 'dailyRewardModal', 'installHelpModal']) {
+      const el = document.getElementById(id);
+      if (el) assertTrue(el.parentElement === document.body, `#${id} is at the top level of the page`);
+    }
+    const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp };
+    const modal = document.getElementById('levelLadderModal');
+    try {
+      xpFeatureOn = true; document.body.classList.add('xp-on');
+      currentUser = { uid: 'ladder-card-test' };
+      playerXp = { total: xpForLevel(35) + 5, level: 35 };
+      openLevelLadder();
+      paintLadderFriends([{ uid: 'k1', username: 'Kim', avatar: 'default', level: 35 }]);
+      modal.querySelector('[data-ladder-friend="k1"]').click();
+      const card = document.getElementById('playerPopupBody').getBoundingClientRect();
+      const hit = document.elementFromPoint(card.left + card.width / 2, card.top + Math.min(40, card.height / 2));
+      assertTrue(!!hit && !!hit.closest('#playerPopup'), 'A friend\'s card from the Level Ladder shows over the Ladder');
+    } finally {
+      document.getElementById('playerPopupClose')?.click();
+      modal.classList.add('hidden');
+      xpFeatureOn = saved.on; document.body.classList.toggle('xp-on', !!saved.on);
+      currentUser = saved.user; playerXp = saved.xp;
+      refreshXpDisplays();
+    }
+  });
+  await test('Every menu page closes with a tap outside its panel', async () => {
+    for (const id of [...MENU_PAGE_IDS, 'inboxModal']) {
+      const m = document.getElementById(id);
+      if (!m) continue;
+      m.classList.remove('hidden');
+      m.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await new Promise(r => setTimeout(r, 30));
+      const closed = m.classList.contains('hidden');
+      m.classList.add('hidden');
+      assertTrue(closed, `#${id} closes on a tap outside`);
+    }
+  });
   await test('Level Ladder "New" dot (v279): shows for unseen level rewards, never for old levels, clears on opening and climbs from the last level seen', async () => {
     const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp };
     const modal = document.getElementById('levelLadderModal');
