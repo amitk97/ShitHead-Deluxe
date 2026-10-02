@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v278 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v279 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -806,6 +806,11 @@
     .ll-friend-more { font-size:9px; font-weight:800; color:#94a3b8; align-self:center; }
     button.ms-levelup { cursor:pointer; display:block; font-family:inherit; }
     .ms-levelup .ms-levelup-see { margin-top:2px; color:#fde68a; opacity:1; letter-spacing:.08em; }
+    /* "New" dot on your level (v279): unseen Level Ladder rewards. */
+    .ll-new-dot { position:relative; }
+    .ll-new-dot::after { content:''; position:absolute; top:-3px; right:-3px; width:9px; height:9px; border-radius:50%; background:#fbbf24; box-shadow:0 0 0 2px #0f172a, 0 0 8px rgba(251,191,36,.9); pointer-events:none; animation:llDotPulse 1.8s ease-in-out infinite; }
+    @keyframes llDotPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.25); } }
+    body.reduce-motion .ll-new-dot::after { animation:none; }
     .xp-ladder-link { display:inline-flex; align-items:center; gap:4px; margin-top:8px; padding:5px 10px; border-radius:10px; border:1px solid rgba(245,158,11,.5); background:rgba(120,53,15,.25); color:#fcd34d; font-size:10px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; }
     #homeNameLevel, #profileLevelBadge, #hamburgerLevel, #headerXpBar { cursor:pointer; }
     .xp-reward-next { display:flex; align-items:center; gap:10px; width:100%; margin-top:8px; padding:6px 10px; border-radius:12px; border:1px solid rgba(148,163,184,.35); background:rgba(15,23,42,.6); text-align:left; font-size:11px; font-weight:800; color:#e2e8f0; cursor:pointer; }
@@ -19919,6 +19924,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v279: [
+        [ '✨', 'A gold dot on your level means the Level Ladder has new rewards for you to see.' ]
+      ],
       v278: [
         [ '⭐', 'Level Ladder: your friends now appear at their levels, and a level up climbs the ladder to show what you just unlocked.', WN_KEY ],
         [ '👆', 'Tap any level on the Level Ladder to see how much XP it needs.' ]
@@ -26935,6 +26943,7 @@ video {
         const el = document.getElementById(id);
         if (el) { el.classList.toggle('hidden', !on); el.innerHTML = on ? xpLevelBadge(myLevel, cls) : ''; }
       });
+      paintLadderNewDots(on ? myLevel : 0);
       const section = document.getElementById('profileXpSection');
       if (section) {
         const show = xpShown() && !!currentUser;
@@ -26942,6 +26951,44 @@ video {
         const body = document.getElementById('profileXpBody');
         if (show && body) body.innerHTML = xpBarHtml(playerXp?.total || 0) + levelRewardRowHtml(myLevel) + `<button type="button" class="xp-ladder-link" data-open-ladder>Level Ladder ›</button>`;
       }
+    }
+    // "New" dots (v279, owner): a gold dot on your level (home, Profile, menu)
+    // while a level you've reached has a reward or unlock you haven't looked at
+    // on the Level Ladder yet. The highest level seen there is kept per account
+    // on this device (localStorage shithead_ladder_seen_<uid>); the first time
+    // an account is seen it starts at its current level, so nobody gets a dot
+    // for old levels. Opening the ladder clears it (and climbs from there).
+    const LADDER_DOT_IDS = ['hamburgerLevel', 'profileLevelBadge', 'homeNameLevel'];
+    function ladderSeenKey() { return currentUser ? `shithead_ladder_seen_${currentUser.uid}` : ''; }
+    function ladderSeenLevel(level) {
+      const key = ladderSeenKey();
+      if (!key) return level;
+      let seen = null;
+      try { seen = localStorage.getItem(key); } catch (e) {}
+      if (seen == null || !Number.isFinite(Number(seen))) {
+        if (level > 0) { try { localStorage.setItem(key, String(level)); } catch (e) {} }
+        return level;
+      }
+      return Number(seen);
+    }
+    function markLadderSeen(level) {
+      const key = ladderSeenKey();
+      if (key && level > 0) { try { localStorage.setItem(key, String(Math.max(level, Number(localStorage.getItem(key)) || 0))); } catch (e) {} }
+    }
+    function ladderHasNewSince(seen, level) {
+      if (!(level > seen)) return false;
+      for (const L of ladderRewards().keys()) if (L > seen && L <= level) return true;
+      return false;
+    }
+    function paintLadderNewDots(level) {
+      const fresh = level > 0 && ladderHasNewSince(ladderSeenLevel(level), level);
+      LADDER_DOT_IDS.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.classList.contains('ll-new-dot') !== fresh) el.classList.toggle('ll-new-dot', fresh);
+        if (fresh) el.setAttribute('aria-label', 'Your level: new rewards on the Level Ladder');
+        else el.removeAttribute('aria-label');
+      });
     }
     // Profile: the next level reward (a button to its tile in Custom).
     const LEVEL_REWARD_KIND = { 'Avatars': 'avatar', 'Card Backs': 'card back', 'Frames': 'frame', 'Table Themes': 'table', 'Burn Effects': 'burn' };
@@ -27110,7 +27157,16 @@ video {
       if (!xpShown()) { notifyBanner('Levels are switched off at the moment.'); return false; }
       document.getElementById('hamburgerDrawer')?.classList.contains('open') && closeHamburgerMenu();
       ladderExtras = { weekXp: null, rank: null };
-      const view = renderLevelLadder(Number(opts.from));
+      // Unseen rewards (the "New" dot, v279) glow and climb like a level up.
+      const curLevel = playerXp ? xpLevelFor(playerXp.total) : 0;
+      let from = Number(opts.from);
+      if (currentUser && curLevel) {
+        const seen = ladderSeenLevel(curLevel);
+        if (!Number.isFinite(from) && ladderHasNewSince(seen, curLevel)) from = seen;
+        markLadderSeen(curLevel);
+        paintLadderNewDots(curLevel);
+      }
+      const view = renderLevelLadder(from);
       document.getElementById('levelLadderModal').classList.remove('hidden');
       requestAnimationFrame(() => {
         scrollLadderTo(document.querySelector('#levelLadderScroll [data-ladder-here]'));

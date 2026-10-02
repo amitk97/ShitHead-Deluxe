@@ -2864,6 +2864,40 @@ async function runDevTestSuite() {
       applyEquippedCosmetics(); refreshXpDisplays();
     }
   });
+  await test('Level Ladder "New" dot (v279): shows for unseen level rewards, never for old levels, clears on opening and climbs from the last level seen', async () => {
+    const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp };
+    const modal = document.getElementById('levelLadderModal');
+    const key = 'shithead_ladder_seen_ladder-dot-test';
+    const dot = () => ['homeNameLevel', 'profileLevelBadge', 'hamburgerLevel'].map(id => document.getElementById(id).classList.contains('ll-new-dot'));
+    try {
+      localStorage.removeItem(key);
+      xpFeatureOn = true; document.body.classList.add('xp-on');
+      currentUser = { uid: 'ladder-dot-test' };
+      playerXp = { total: xpForLevel(12) + 5, level: 12 };
+      refreshXpDisplays();
+      assertEqual(dot(), [false, false, false], 'A first look at an account starts at its level: no dot for old levels');
+      assertEqual(localStorage.getItem(key), '12', 'The level seen is stored');
+      const next = [...ladderRewards().keys()].filter(L => L > 12).sort((a, b) => a - b)[0];
+      playerXp = { total: xpForLevel(next) + 5, level: next };
+      refreshXpDisplays();
+      assertEqual(dot(), [true, true, true], `Reaching Lvl ${next} (a reward) shows the dot`);
+      document.getElementById('homeNameLevel').click();
+      assertTrue(!modal.classList.contains('hidden'), 'The ladder opens');
+      assertTrue(modal.querySelectorAll('.ll-new').length > 0, 'The unseen rewards glow as new');
+      assertEqual(dot(), [false, false, false], 'Opening the ladder clears the dot');
+      assertEqual(localStorage.getItem(key), String(next), 'The new level is remembered');
+      modal.classList.add('hidden');
+      xpFeatureOn = false; document.body.classList.remove('xp-on');
+      refreshXpDisplays();
+      assertEqual(dot(), [false, false, false], 'No dot while XP is off');
+    } finally {
+      try { localStorage.removeItem(key); } catch (e) {}
+      modal.classList.add('hidden');
+      xpFeatureOn = saved.on; document.body.classList.toggle('xp-on', !!saved.on);
+      currentUser = saved.user; playerXp = saved.xp;
+      refreshXpDisplays();
+    }
+  });
 
   await test('End of match (v274): Ranked keeps its buttons, its card history reads, Fireside has no wreath row, Leave fits each mode', () => {
     // The Ranked server logs one entry per play with a cards list.
