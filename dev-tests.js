@@ -2786,6 +2786,27 @@ async function runDevTestSuite() {
     const box = seat.getBoundingClientRect();
     assertTrue(cards.left - box.left >= 6 && box.right - cards.right >= 6, 'Seats leave room around the cards for frame glows');
   });
+  await test('Card Powers and Play Matrix stay where they were placed while cards are played (v275)', () => {
+    const pos = (id) => { const el = document.getElementById(id); return `${el.style.left}|${el.style.top}`; };
+    const row = document.getElementById('turnIndicatorRow');
+    try {
+      freshState({ phase: 'PLAY', localPlayerId: 'me' });
+      state.players = [makePlayer({ id: 'me', hand: [makeCard('4')] }), makePlayer({ id: 'b1', isBot: true })];
+      toggleCardReference(); toggleMatrixReference();
+      const card = pos('cardRefPanel'), matrix = pos('matrixRefPanel');
+      // A play: the hand changes, the HUD row the Matrix default hangs off moves.
+      state.players[0].hand = [makeCard('K'), makeCard('JOKER')];
+      if (row) row.style.marginTop = '120px';
+      renderCardReference(); renderMatrixReference(); render();
+      assertEqual(pos('cardRefPanel'), card, 'Card Powers did not move');
+      assertEqual(pos('matrixRefPanel'), matrix, 'Play Matrix did not move');
+    } finally {
+      if (row) row.style.marginTop = '';
+      if (cardRefOpen) toggleCardReference(true);
+      if (matrixRefOpen) toggleMatrixReference(true);
+    }
+  });
+
   await test('End of match (v274): Ranked keeps its buttons, its card history reads, Fireside has no wreath row, Leave fits each mode', () => {
     // The Ranked server logs one entry per play with a cards list.
     const hist = normalizePlayedHistory([
@@ -3018,7 +3039,7 @@ async function runDevTestSuite() {
       assertEqual(imgs.length, n, `${id} draws its ${n} art layers`);
       assertTrue(imgs.every(src => /^art\/effects\/[a-z0-9-]+\.(?:webp|svg)\?v=\d+$/.test(src)), `${id} layers come from art/effects`);
       const ends = [...layer.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
-      assertTrue(ends.length > 20 && Math.max(...ends) <= OWNER_VICTORY_MS, `${id} is animated and ends within 2.5s`, Math.max(...ends));
+      assertTrue(ends.length > 20 && Math.max(...ends) <= OWNER_VICTORY_MS, `${id} is animated and ends within OWNER_VICTORY_MS (2s since v275)`, Math.max(...ends));
     });
     layer.innerHTML = '';
     const stage = document.createElement('div');

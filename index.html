@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v274 (ShitHead-Deluxe-223) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v275 (ShitHead-Deluxe-224) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7210,7 +7210,7 @@ video {
       notify: "audio/notify.mp3"   // New invite / friend request / gift
     };
     // Clips for the owner's effects (v257, made by tools/make-effect-sounds.py).
-    const EFFECT_CLIPS = { 'lion-roar': 'audio/lion-roar-v264.mp3', boo: 'audio/boo.mp3', fireworks: 'audio/fireworks-v264.mp3' };
+    const EFFECT_CLIPS = { 'lion-roar': 'audio/lion-roar-v275.mp3', boo: 'audio/boo.mp3', fireworks: 'audio/fireworks-v275.mp3' };
     // The your-turn chime plays softer than the card sounds.
     const TURN_ALERT_GAIN = 0.08; // a faint cue, well under the card sounds
 
@@ -12061,7 +12061,7 @@ video {
     // EFFECT_CLIPS (tools/make-effect-sounds.py). Bump OWNER_FX_V when the
     // files are rebuilt (art caches a day).
     const OWNER_FX_V = 264;
-    const OWNER_VICTORY_MS = 2500;
+    const OWNER_VICTORY_MS = 2000; // v275 (owner): was 2.5s
     const OWNER_VICTORY_SPEED = 4200 / OWNER_VICTORY_MS;
     const OWNER_FX_LAYOUT = {"pumpkinAvatar":{"eyes":[[364,510],[653,549]],"mouth":[492,715],"embers":[[172,205],[835,282],[95,321],[910,397],[905,851]]},"pumpkin":{"ghost":[525.5,98.9,343.7,354.1],"boo":[102.9,104.5,437.8,338.1],"pumpkin":[234.4,326.2,567.8,535.9],"bg":[59.0,69.4,885.2,873.2]},"lion":{"head":[217.7,171.5,578.1,638.8],"bg":[0.0,18.3,1000.0,927.4]},"fireworks":{"red":[40.7,63.8,422.6,423.4],"blue":[546.3,83.7,405.1,407.5],"purple":[27.9,434.6,399.5,407.5],"green":[598.1,458.5,379.6,403.5],"gold":[0,0,1000,1000],"centres":{"red":[251,275],"blue":[750,287],"purple":[223,638],"green":[801,662],"gold":[501,501]}}};
     const OWNER_FX_FILES = {
@@ -12107,7 +12107,8 @@ video {
     function vfxLion(layer) {
       layer.dataset.ownerFxSpeed = OWNER_VICTORY_SPEED;
       const [W, H] = vfxSize(layer);
-      const S = Math.min(W * 1.04, H * .72, 640), cx = W / 2, cy = H * .44, ox = cx - S / 2, oy = cy - S / 2;
+      const S = Math.min(W * .84, H * .56, 520), cx = W / 2, cy = H * .44, // v275: smaller, fits a phone
+             ox = cx - S / 2, oy = cy - S / 2;
       const L = OWNER_FX_LAYOUT.lion, roarAt = 450, total = 4200;
       audio.playEffectClip('lion-roar', 0, 0.55); // about as loud as the other effects (peaks ~0.5)
       ofxVignette(layer, W, H, 'rgba(30,16,2,.78)', total);
@@ -12162,7 +12163,8 @@ video {
     function vfxFireworks(layer) {
       layer.dataset.ownerFxSpeed = OWNER_VICTORY_SPEED;
       const [W, H] = vfxSize(layer);
-      const S = Math.min(W * 1.06, H * .76, 720), cx = W / 2, cy = H * .42, ox = cx - S / 2, oy = cy - S / 2;
+      const S = Math.min(W * .9, H * .6, 580), cx = W / 2, cy = H * .42, // v275: smaller, fits a phone
+             ox = cx - S / 2, oy = cy - S / 2;
       const F = OWNER_FX_LAYOUT.fireworks, total = 4200;
       const tones = { gold: '#fde047', red: '#f87171', blue: '#60a5fa', purple: '#e879f9', green: '#34d399' };
       audio.playEffectClip('fireworks', 0, 0.5);
@@ -12908,13 +12910,19 @@ video {
       if (hint) {
         hint.textContent = zone ? 'Bright = Your Cards' : 'Face-down cards stay hidden.';
       }
-      positionCardRefPanel();
+      positionCardRefPanel({ keep: true });
     }
 
-    function positionCardRefPanel() {
+    // Placed once when opened (and again on a window resize); the refresh
+    // after every play only keeps it on screen, so it never jumps about as
+    // its contents or the table below change (v275, owner).
+    let cardRefPlaced = false;
+    function positionCardRefPanel(opts) {
       const panel = document.getElementById('cardRefPanel');
       if (!panel || !cardRefOpen) return;
       applyCardRefZoom();
+      if (opts && opts.keep && cardRefPlaced) return; // applyCardRefZoom already kept it on screen
+      cardRefPlaced = true;
       // offsetWidth/Height are the pre-transform box — the actual on-screen
       // footprint (needed for clamping against the viewport) is that times
       // the current zoom, since transform-origin is top-left. cardRefZoom
@@ -13151,6 +13159,7 @@ video {
       btn.classList.toggle('text-amber-400', cardRefOpen);
       btn.classList.toggle('border-slate-600', !cardRefOpen);
       btn.classList.toggle('text-slate-300', !cardRefOpen);
+      cardRefPlaced = false;
       if (cardRefOpen) renderCardReference();
     }
 
@@ -13260,7 +13269,7 @@ video {
       });
       html += '</tbody>';
       table.innerHTML = html;
-      positionMatrixRefPanel();
+      positionMatrixRefPanel({ keep: true });
     }
 
     // Default position: deliberately anchored to where the hand-count badge
@@ -13281,10 +13290,13 @@ video {
       return { left: 6, top: Math.max(6, (window.innerHeight - h) / 2) };
     }
 
-    function positionMatrixRefPanel() {
+    let matrixRefPlaced = false; // same as cardRefPlaced (v275)
+    function positionMatrixRefPanel(opts) {
       const panel = document.getElementById('matrixRefPanel');
       if (!panel || !matrixRefOpen) return;
       applyMatrixRefZoom();
+      if (opts && opts.keep && matrixRefPlaced) return;
+      matrixRefPlaced = true;
       const w = (panel.offsetWidth || 300) * matrixRefZoom, h = (panel.offsetHeight || 340) * matrixRefZoom;
       const saved = loadMatrixRefPosition();
       let left, top;
@@ -13447,6 +13459,7 @@ video {
       btn.classList.toggle('text-amber-400', matrixRefOpen);
       btn.classList.toggle('border-slate-600', !matrixRefOpen);
       btn.classList.toggle('text-slate-300', !matrixRefOpen);
+      matrixRefPlaced = false;
       if (matrixRefOpen) renderMatrixReference();
     }
 
@@ -14172,14 +14185,16 @@ video {
       if (!btn || !state.gauntlet || state.isMultiplayer || state.phase !== 'FINISHED') return;
       const kind = gauntletPending ? 'wait' : gauntletLastView?.kind;
       const label = kind === 'won' ? 'CONTINUE<br>GAUNTLET' : kind === 'lost' ? 'TRY<br>AGAIN' : kind === 'over' ? 'NEW<br>RUN'
-        : kind === 'done' ? 'BACK TO<br>LOBBY' : kind === 'error' ? 'TRY<br>AGAIN' : 'SAVING…';
+        : kind === 'done' ? 'VIEW<br>RESULT' : kind === 'error' ? 'TRY<br>AGAIN' : 'SAVING…';
       btn.innerHTML = `<svg class="match-end-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-quick-play"/></svg><span>${label}</span>`;
       btn.disabled = kind === 'wait';
     }
     function gauntletEndButtonAction() {
       const v = gauntletLastView;
       if (!v) return;
-      const action = v.kind === 'won' || v.kind === 'lost' ? 'begin' : v.kind === 'over' ? 'start' : v.kind === 'done' ? 'leave' : v.retry;
+      // A finished run reopens its result pop-up (v275, owner); Leave under the box goes home.
+      if (v.kind === 'done') { showGauntlet(v); return; }
+      const action = v.kind === 'won' || v.kind === 'lost' ? 'begin' : v.kind === 'over' ? 'start' : v.retry;
       if (action) gauntletAction(action);
     }
 
@@ -19801,6 +19816,11 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v275: [
+        [ '🏆', "Gauntlet: once a run is finished, View Result shows it again." ],
+        [ '📌', 'Card Powers and the Play Matrix stay where you put them while cards are played.' ],
+        [ '🦁', "Lion's Roar and Fireworks are quicker and a little smaller, so they fit phone screens." ]
+      ],
       v274: [
         [ '🏁', 'The end of every match has the same buttons: Match Stats, the next step for that mode, and Leave under your result. Ranked shows Return To Ranked again.' ],
         [ '🃏', 'Ranked card history shows the cards played instead of "undefined".' ],
@@ -30882,8 +30902,8 @@ video {
     initMatrixRefDrag();
     initMatrixRefZoomControls();
     initHistoryDragScroll();
-    window.addEventListener('resize', positionCardRefPanel);
-    window.addEventListener('resize', positionMatrixRefPanel);
+    window.addEventListener('resize', () => positionCardRefPanel());
+    window.addEventListener('resize', () => positionMatrixRefPanel());
 
     // Guards a button so it only fires on a genuine tap — a press that
     // STARTS on this element and is released without significant movement.

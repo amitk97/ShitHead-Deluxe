@@ -4,12 +4,12 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const html=fs.readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
 function between(a,b){return html.slice(html.indexOf(a),html.indexOf(b,html.indexOf(a)));}
 let animations=[],sounds=[];
-const ctx={console,Math,Number,setTimeout:()=>0,OWNER_VICTORY_MS:2500,OWNER_VICTORY_SPEED:1.68,
+const ctx={console,Math,Number,setTimeout:()=>0,OWNER_VICTORY_MS:2000,OWNER_VICTORY_SPEED:2.1,
  audio:{playEffectClip:(...args)=>sounds.push(args)},vfxSize:()=>[390,844],bfxRand:(a,b)=>(a+b)/2,bfxStar4:()=>'<star/>',OFX_GEM:()=>'<gem/>',
  bfxAdd:(root,text)=>({style:{},text,dataset:{},closest:()=>root,animate:(frames,options)=>{const result={frames,options};animations.push(result);return result;},remove:()=>{}})};
 ctx.ofxLayer=(root,name)=>ctx.bfxAdd(root,name);vm.createContext(ctx);
 vm.runInContext(between('    const OWNER_FX_LAYOUT =','    const OWNER_FX_FILES =')+between('    const ofxEase =','    // A soft dark pool')+between('    function ofxVignette(','    // A cut gem')+between('    function bfxAnimate(','    function bfxLightning(')+between('    function vfxLion(','    // Fireworks (')+between('    const FIREWORK_BURSTS =','    function playShapeVictoryEffect('),ctx);
-for(const name of ['vfxLion','vfxFireworks']){animations=[];sounds=[];ctx[name]({dataset:{}});assert(animations.length>20);assert(Math.max(...animations.map(a=>a.options.duration+(a.options.delay||0)))<=2500.001);assert.equal(sounds.length,1);assert.equal(sounds[0][0],name==='vfxLion'?'lion-roar':'fireworks');assert(animations.filter(a=>(a.options.delay||0)>0).every(a=>a.frames[0].opacity===0),'delayed layers start hidden, no empty placeholders');}
+for(const name of ['vfxLion','vfxFireworks']){animations=[];sounds=[];ctx[name]({dataset:{}});assert(animations.length>20);assert(Math.max(...animations.map(a=>a.options.duration+(a.options.delay||0)))<=2000.001);assert.equal(sounds.length,1);assert.equal(sounds[0][0],name==='vfxLion'?'lion-roar':'fireworks');assert(animations.filter(a=>(a.options.delay||0)>0).every(a=>a.frames[0].opacity===0),'delayed layers start hidden, no empty placeholders');}
 assert(!html.includes('fireworks-gold-art'),'cutout overlay removed');assert(html.includes('fireworks-gold-complete-v264'),'complete gold artwork used');
 const hidden=new Set(['tutorialHubScreen']);
 const nodes={lobbyScreen:{classList:{contains:()=>hidden.has('lobbyScreen')}},tutorialHubScreen:{classList:{contains:()=>hidden.has('tutorialHubScreen')}}};

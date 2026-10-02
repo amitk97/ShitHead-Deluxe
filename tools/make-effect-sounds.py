@@ -22,6 +22,11 @@ SR = 44100
 RNG = np.random.default_rng(257)
 # Seconds from the start of the Fireworks victory to each burst (vfxFireworks).
 FIREWORK_BURSTS = [0.45, 0.75, 0.95, 1.2, 1.4]
+# The victories play 4.2s of animation in OWNER_VICTORY_MS (index.html): 2.0s
+# since v275 (2.5s in v264), so the clips are sped up by 4.2 / 2.0 = 2.1 with
+# pitch kept (atempo goes up to 2 per stage, hence two stages).
+VICTORY_SUFFIX = '-v275.mp3'
+VICTORY_TEMPO = 'atempo=1.5,atempo=1.4'
 
 
 def ffmpeg():
@@ -104,8 +109,8 @@ def write_mp3(x, name, peak=0.89):
             w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
             w.writeframes((x * 32767).astype('<i2').tobytes())
         victory = name in ('lion-roar.mp3', 'fireworks.mp3')
-        out = os.path.join(ROOT, 'audio', name.replace('.mp3', '-v264.mp3') if victory else name)
-        subprocess.run([ffmpeg(), '-y', '-loglevel', 'error', '-i', wav, *(['-af', 'atempo=1.68'] if victory else []), '-codec:a', 'libmp3lame', '-b:a', '96k', out], check=True)
+        out = os.path.join(ROOT, 'audio', name.replace('.mp3', VICTORY_SUFFIX) if victory else name)
+        subprocess.run([ffmpeg(), '-y', '-loglevel', 'error', '-i', wav, *(['-af', VICTORY_TEMPO] if victory else []), '-codec:a', 'libmp3lame', '-b:a', '96k', out], check=True)
     print(out, f'{len(x) / SR:.2f}s', f'{os.path.getsize(out) // 1024}KB')
 
 
