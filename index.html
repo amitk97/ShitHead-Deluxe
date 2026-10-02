@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v279 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v280 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -803,7 +803,11 @@
     .ll-gap .ll-friends { border-top:0; margin:0 0 0 auto; padding:0; }
     .ll-friend { display:inline-flex; align-items:center; gap:4px; padding:1px 7px 1px 1px; border-radius:999px; border:1px solid rgba(148,163,184,.35); background:rgba(15,23,42,.85); color:#e2e8f0; font-size:9px; font-weight:800; max-width:140px; cursor:pointer; }
     .ll-friend > span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .ll-friend-more { font-size:9px; font-weight:800; color:#94a3b8; align-self:center; }
+    .ll-friend-more { font-size:9px; font-weight:800; color:#e2e8f0; align-self:center; padding:3px 8px; border-radius:999px; border:1px solid rgba(245,158,11,.55); background:rgba(120,53,15,.35); cursor:pointer; }
+    .ll-friend-list { display:flex; flex-direction:column; gap:5px; max-height:min(50vh, 320px); overflow-y:auto; min-width:180px; }
+    .ll-friend-list > b { font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:#fcd34d; }
+    .ll-friend.ll-friend-row { max-width:none; width:100%; padding:2px 8px 2px 2px; font-size:11px; border-radius:12px; }
+    .ll-friend-row small { display:block; font-size:9px; font-weight:700; color:#94a3b8; }
     button.ms-levelup { cursor:pointer; display:block; font-family:inherit; }
     .ms-levelup .ms-levelup-see { margin-top:2px; color:#fde68a; opacity:1; letter-spacing:.08em; }
     /* "New" dot on your level (v279): unseen Level Ladder rewards. */
@@ -16721,7 +16725,7 @@ video {
       if (e.target.closest('#infoPop') || infoPopAnchor.contains(e.target)) return;
       hideInfoPop();
     }, true);
-    window.addEventListener('scroll', () => { if (infoPopAnchor) hideInfoPop(); }, true);
+    window.addEventListener('scroll', (e) => { if (infoPopAnchor && !(e.target instanceof Element && e.target.closest('#infoPop'))) hideInfoPop(); }, true); // a list inside the bubble may scroll
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && infoPopAnchor) { hideInfoPop(); e.stopImmediatePropagation(); } }, true);
     function speedLockPopHtml(list) {
       return String(list).split(',').filter(Boolean).map(i => `<p>${escapeHtml(speedLockExplain(Number(i)))}</p>`).join('');
@@ -19924,6 +19928,9 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v280: [
+        [ '👥', 'Level Ladder: tap +N on a level to see every friend there. Friends on the same level are ordered by XP.' ]
+      ],
       v279: [
         [ '✨', 'A gold dot on your level means the Level Ladder has new rewards for you to see.' ]
       ],
@@ -27195,14 +27202,46 @@ video {
       try {
         db.ref(`friends/${uid}`).once('value').then((snap) => {
           const ids = Object.keys(snap.val() || {}).slice(0, 60);
-          return Promise.all(ids.map(f => db.ref(`publicProfiles/${f}`).once('value').then(p => ({ uid: f, ...(p.val() || {}) })).catch(() => null)));
+          // Total XP (the Levels board's count) breaks ties between friends on one level (v280).
+          return Promise.all(ids.map(f => Promise.all([
+            db.ref(`publicProfiles/${f}`).once('value').then(p => p.val() || {}),
+            db.ref(`boards/levels/${f}/count`).once('value').then(c => Number(c.val()) || 0).catch(() => 0)
+          ]).then(([p, xp]) => ({ uid: f, ...p, xp })).catch(() => null)));
         }).then((list) => {
           if (token !== ladderFriendsToken || document.getElementById('levelLadderModal')?.classList.contains('hidden')) return;
           paintLadderFriends((list || []).filter(f => f && Number(f.level) > 0 && !f.deleted));
         }).catch(() => {});
       } catch (e) {}
     }
+    // Several friends on one row (v280): highest level first, then most total
+    // XP (closest to the next level), then online, then A-Z. Four chips show;
+    // "+N" opens the whole row's list in the info bubble.
+    const LADDER_FRIENDS_SHOWN = 4;
+    let ladderFriendGroups = [];
+    function ladderFriendOrder(a, b) {
+      return (Number(b.level) - Number(a.level)) || ((Number(b.xp) || 0) - (Number(a.xp) || 0))
+        || ((isProfileOnline(b) ? 1 : 0) - (isProfileOnline(a) ? 1 : 0))
+        || String(a.username || '').localeCompare(String(b.username || ''), 'en', { sensitivity: 'base' });
+    }
+    function ladderFriendChipHtml(f, opts = {}) {
+      const name = f.username || 'Friend', lvl = Number(f.level);
+      const extra = opts.full ? `<small>${(Number(f.xp) || 0) > 0 ? `${Math.round(f.xp).toLocaleString('en-GB')} XP` : ''}${isProfileOnline(f) ? ' · online' : ''}</small>` : '';
+      return `<button type="button" class="ll-friend${opts.full ? ' ll-friend-row' : ''}" data-ladder-friend="${escapeHtml(f.uid)}" data-name="${escapeHtml(name)}" data-avatar="${escapeHtml(f.avatar || 'default')}" title="${escapeHtml(name)} · Lvl ${lvl}" aria-label="${escapeHtml(name)}, level ${lvl}">${avatarHtml(f.avatar || 'default', opts.full ? 28 : 22)}<span>${escapeHtml(name)} · ${lvl}${extra}</span></button>`;
+    }
+    function ladderFriendListHtml(list) {
+      return `<div class="ll-friend-list"><b>${list.length} friends here</b>${list.map(f => ladderFriendChipHtml(f, { full: true })).join('')}</div>`;
+    }
+    function openLadderFriend(btn) {
+      hideInfoPop();
+      openProfileCard({ uid: btn.dataset.ladderFriend, name: btn.dataset.name, avatar: btn.dataset.avatar }, btn);
+    }
+    // The bubble lives outside the ladder page, so its rows need their own listener.
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest && e.target.closest('#infoPop [data-ladder-friend]');
+      if (b) { e.preventDefault(); openLadderFriend(b); }
+    });
     function paintLadderFriends(friends) {
+      ladderFriendGroups = [];
       const scroll = document.getElementById('levelLadderScroll');
       if (!scroll) return;
       scroll.querySelectorAll('.ll-friends').forEach(el => el.remove());
@@ -27214,12 +27253,14 @@ video {
         groups.get(el).push(f);
       });
       groups.forEach((list, el) => {
-        list.sort((a, b) => b.level - a.level);
-        const shown = list.slice(0, 4), more = list.length - shown.length;
+        list.sort(ladderFriendOrder);
+        const shown = list.slice(0, LADDER_FRIENDS_SHOWN), more = list.length - shown.length;
         const wrap = document.createElement('div');
         wrap.className = 'll-friends';
-        wrap.innerHTML = shown.map(f => `<button type="button" class="ll-friend" data-ladder-friend="${escapeHtml(f.uid)}" data-name="${escapeHtml(f.username || 'Friend')}" data-avatar="${escapeHtml(f.avatar || 'default')}" title="${escapeHtml(f.username || 'Friend')} · Lvl ${Number(f.level)}" aria-label="${escapeHtml(f.username || 'Friend')}, level ${Number(f.level)}">${avatarHtml(f.avatar || 'default', 22)}<span>${escapeHtml(f.username || 'Friend')} · ${Number(f.level)}</span></button>`).join('')
-          + (more > 0 ? `<span class="ll-friend-more">+${more}</span>` : '');
+        const key = String(ladderFriendGroups.length);
+        ladderFriendGroups.push(list);
+        wrap.innerHTML = shown.map(ladderFriendChipHtml).join('')
+          + (more > 0 ? `<button type="button" class="ll-friend-more" data-ladder-more="${key}" aria-label="Show all ${list.length} friends here">+${more}</button>` : '');
         (el.querySelector('.ll-card, .ll-here-card') || el).appendChild(wrap);
       });
       placeLadderLine(false);
@@ -27261,7 +27302,9 @@ video {
         const tip = e.target.closest('[data-ladder-tip]');
         if (tip) { showInfoPop(tip, escapeHtml(tip.dataset.ladderTip), { toggle: true }); return; }
         const friend = e.target.closest('[data-ladder-friend]');
-        if (friend) { openProfileCard({ uid: friend.dataset.ladderFriend, name: friend.dataset.name, avatar: friend.dataset.avatar }, friend); return; }
+        if (friend) { openLadderFriend(friend); return; }
+        const more = e.target.closest('[data-ladder-more]');
+        if (more) { const list = ladderFriendGroups[Number(more.dataset.ladderMore)]; if (list) showInfoPop(more, ladderFriendListHtml(list), { toggle: true }); return; }
         const node = e.target.closest('[data-ladder-node]');
         if (node) { showInfoPop(node, ladderLevelTipHtml(node.dataset.ladderNode), { toggle: true }); return; }
         const tile = e.target.closest('[data-ladder-id]');

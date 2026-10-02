@@ -2850,6 +2850,19 @@ async function runDevTestSuite() {
       assertTrue(!!modal.querySelector('[data-ladder-level="40"] [data-ladder-friend="f2"]'), 'A friend on a reward level sits on its card');
       assertTrue(!!modal.querySelector('[data-ladder-here] [data-ladder-friend="f3"]'), 'A friend at your level sits on "You are here"');
       assertTrue(!!modal.querySelector('[data-ladder-range="41-49"] [data-ladder-friend="f1"]'), 'A friend between rewards sits on that folded line');
+      // Six friends on one level: ordered by total XP, then online, then name; "+2" lists them all (v280).
+      const now = Date.now();
+      const crowd = [['c1', 'Zed', 100], ['c2', 'Amy', 900], ['c3', 'Bea', 500], ['c4', 'Cal', 500], ['c5', 'Dan', 300], ['c6', 'Eve', 50]]
+        .map(([uid, username, xp]) => ({ uid, username, avatar: 'default', level: 40, xp, online: uid === 'c4', seen: now }));
+      paintLadderFriends(crowd);
+      const chips = [...modal.querySelectorAll('[data-ladder-level="40"] .ll-friends > [data-ladder-friend]')].map(b => b.dataset.ladderFriend);
+      assertEqual(chips, ['c2', 'c4', 'c3', 'c5'], 'Most XP first; on equal XP an online friend first');
+      const more = modal.querySelector('[data-ladder-level="40"] [data-ladder-more]');
+      assertTrue(!!more && more.textContent.trim() === '+2' && more.tagName === 'BUTTON', '"+2" is a button');
+      more.click();
+      const pop = document.getElementById('infoPop');
+      assertEqual([...pop.querySelectorAll('[data-ladder-friend]')].map(b => b.dataset.ladderFriend), ['c2', 'c4', 'c3', 'c5', 'c1', 'c6'], 'Its list shows every friend on that row, in order');
+      hideInfoPop();
       assertTrue(ladderLevelTipHtml('60').includes(xpForLevel(60).toLocaleString('en-GB')) && ladderLevelTipHtml('30').includes('reached'), 'A level tip gives its total XP');
       modal.querySelector('[data-ladder-node="60"]').click();
       assertTrue(document.getElementById('infoPop')?.textContent.includes('Lvl 60'), 'Tapping a level shows its XP');
