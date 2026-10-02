@@ -3265,6 +3265,16 @@ async function runDevTestSuite() {
     assertEqual(Object.keys(EFFECT_CLIPS).sort(), ['boo', 'fireworks', 'lion-roar'], 'three effect clips');
     for (const src of Object.values(EFFECT_CLIPS)) assertTrue((await fetch(src, { cache: 'no-store' })).ok, `${src} exists`);
     assertTrue(/k\.clip\('boo'/.test(String(JOKER_SOUNDS['joker-halloween'])), "the Pumpkin Joker's sound says Boo");
+    // v287: the owner's own boo and roar, fitted to the animations.
+    assertTrue(/boo-v287/.test(EFFECT_CLIPS.boo) && /lion-roar-v287/.test(EFFECT_CLIPS['lion-roar']), "the owner's boo and roar recordings are used");
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
+      const len = async (src) => (await ac.decodeAudioData(await (await fetch(src, { cache: 'no-store' })).arrayBuffer())).duration;
+      const booLen = await len(EFFECT_CLIPS.boo), roarLen = await len(EFFECT_CLIPS['lion-roar']);
+      assertTrue(0.5 + booLen <= JOKER_FX_MS / 1000 + 0.05, `the boo (played at 0.5s, ${booLen.toFixed(2)}s long) ends with the Joker effect`);
+      assertTrue(roarLen <= OWNER_VICTORY_MS / 1000 + 0.05, `the roar (${roarLen.toFixed(2)}s) ends with the 2s victory`);
+      ac.close?.();
+    } catch (e) { if (!/decode|AudioContext/i.test(String(e && e.message))) throw e; }
     assertTrue(/lion-roar/.test(String(vfxLion)) && /'fireworks'/.test(String(vfxFireworks)), 'the victories play their own sounds');
     const av = AVATAR_ART['avatar-halloween'];
     assertTrue(av.photo && av.animated && av.art.includes('art/avatars/halloween-pumpkin.webp'), "Jack-o'-Lantern is the owner's picture, animated");

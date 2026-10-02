@@ -79,7 +79,7 @@ const OFFLINE_ASSETS = [
 
   '/art/avatars/crowns-v263.png',
   '/audio/riffle.mp3', '/audio/place.mp3', '/audio/take.mp3', '/audio/turn.mp3', '/audio/notify.mp3',
-  '/audio/lion-roar-v275.mp3', '/audio/boo.mp3', '/audio/fireworks-v275.mp3',
+  '/audio/lion-roar-v287.mp3', '/audio/boo-v287.mp3', '/audio/fireworks-v275.mp3',
   '/art/effects/fireworks-gold-complete-v264.webp?v=264',
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js',
