@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v277 (ShitHead-Deluxe-226) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v278 (ShitHead-Deluxe-227) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -790,6 +790,22 @@
     .ll-how[open] summary::after { transform:rotate(180deg); }
     .ll-xp { display:grid; grid-template-columns:1fr auto; gap:2px 10px; margin-top:6px; color:#94a3b8; }
     .ll-xp span:nth-child(2n) { color:#e2e8f0; font-weight:800; text-align:right; }
+    .ll-node, .ll-gap [data-ladder-node] { cursor:pointer; }
+    .ll-gap > span[data-ladder-node]:not(.ll-tick) { display:inline-flex; align-items:center; gap:5px; }
+    .ll-row.ll-new .ll-card { border-color:#fde68a; box-shadow:0 0 0 1px rgba(253,230,138,.5),0 0 22px rgba(251,191,36,.45); animation:ll-new-glow 2.2s ease-in-out infinite; }
+    @keyframes ll-new-glow { 50% { box-shadow:0 0 0 1px rgba(253,230,138,.8),0 0 32px rgba(251,191,36,.7); } }
+    body.reduce-motion .ll-row.ll-new .ll-card { animation:none; }
+    .ll-gap.ll-new { color:#fde68a; }
+    .ll-new-tag { color:#fde68a; font-weight:900; letter-spacing:.06em; text-transform:uppercase; font-size:9px; }
+    .ll-equip { display:none; margin-top:2px; padding:1px 6px; border-radius:999px; background:#f59e0b; color:#1c1917; font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+    .ll-row.ll-new .ll-equip { display:inline-block; }
+    .ll-friends { display:flex; flex-wrap:wrap; gap:4px; margin-top:7px; padding-top:6px; border-top:1px dashed rgba(148,163,184,.25); }
+    .ll-gap .ll-friends { border-top:0; margin:0 0 0 auto; padding:0; }
+    .ll-friend { display:inline-flex; align-items:center; gap:4px; padding:1px 7px 1px 1px; border-radius:999px; border:1px solid rgba(148,163,184,.35); background:rgba(15,23,42,.85); color:#e2e8f0; font-size:9px; font-weight:800; max-width:140px; cursor:pointer; }
+    .ll-friend > span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ll-friend-more { font-size:9px; font-weight:800; color:#94a3b8; align-self:center; }
+    button.ms-levelup { cursor:pointer; display:block; font-family:inherit; }
+    .ms-levelup .ms-levelup-see { margin-top:2px; color:#fde68a; opacity:1; letter-spacing:.08em; }
     .xp-ladder-link { display:inline-flex; align-items:center; gap:4px; margin-top:8px; padding:5px 10px; border-radius:10px; border:1px solid rgba(245,158,11,.5); background:rgba(120,53,15,.25); color:#fcd34d; font-size:10px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; }
     #homeNameLevel, #profileLevelBadge, #hamburgerLevel, #headerXpBar { cursor:pointer; }
     .xp-reward-next { display:flex; align-items:center; gap:10px; width:100%; margin-top:8px; padding:6px 10px; border-radius:12px; border:1px solid rgba(148,163,184,.35); background:rgba(15,23,42,.6); text-align:left; font-size:11px; font-weight:800; color:#e2e8f0; cursor:pointer; }
@@ -19903,6 +19919,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v278: [
+        [ '⭐', 'Level Ladder: your friends now appear at their levels, and a level up climbs the ladder to show what you just unlocked.', WN_KEY ],
+        [ '👆', 'Tap any level on the Level Ladder to see how much XP it needs.' ]
+      ],
       v277: [
         [ '⭐', 'New: the Level Ladder. Tap your level anywhere to see your XP and every reward on the way to the top.', WN_KEY ]
       ],
@@ -26940,9 +26960,10 @@ video {
       if (!xpShown() || !currentUser || !playerXp) return '';
       const p = xpProgress(playerXp.total);
       const gained = matchXpLog.gained;
-      const ups = matchXpLog.levelUps.map(u => `<div class="ms-levelup" data-levelup="${u.level}"><small>Level Up</small>Level ${u.level}${u.reward ? ` <span>+💎 ${u.reward}</span>` : ''}</div>`).join('');
+      const climbFrom = matchXpLog.levelUps.length ? Math.min(...matchXpLog.levelUps.map(u => u.level)) - 1 : 0;
+      const ups = matchXpLog.levelUps.map(u => `<button type="button" class="ms-levelup" data-levelup="${u.level}" data-open-ladder data-ladder-from="${climbFrom}"><small>Level Up</small>Level ${u.level}${u.reward ? ` <span>+💎 ${u.reward}</span>` : ''}<small class="ms-levelup-see">See your rewards ›</small></button>`).join('');
       return `<div class="ms-section"><div class="ms-label">XP</div>
-        <div class="ms-progress">${xpLevelBadge(p.level)}<span class="ms-bar" style="--bar:var(--xp-fill)"><i data-bar="xp" style="width:${p.pct}%"></i></span><b class="ms-xp-gain">${gained > 0 ? `+${gained} XP` : '+0 XP'}</b></div>${ups}<button type="button" class="xp-ladder-link" data-open-ladder>Level Ladder ›</button></div>`;
+        <div class="ms-progress">${xpLevelBadge(p.level)}<span class="ms-bar" style="--bar:var(--xp-fill)"><i data-bar="xp" style="width:${p.pct}%"></i></span><b class="ms-xp-gain">${gained > 0 ? `+${gained} XP` : '+0 XP'}</b></div>${ups}<button type="button" class="xp-ladder-link" data-open-ladder${climbFrom ? ` data-ladder-from="${climbFrom}"` : ''}>Level Ladder ›</button></div>`;
     }
 
 
@@ -26974,7 +26995,7 @@ video {
       if (piece.kind === 'item') {
         const it = piece.item, type = COSMETIC_CATEGORY_TYPES[it.category];
         const art = type === 'avatar' ? avatarHtml(it.id, 44) : cosmeticPreview(it, type);
-        return `<button type="button" class="ll-piece" data-ladder-id="${it.id}" data-equip-type="${type}"><span class="ll-piece-art">${art}</span><span class="ll-pname">${escapeHtml(it.name)}</span><span class="ll-pkind">${LADDER_KIND[it.category] || ''}</span></button>`;
+        return `<button type="button" class="ll-piece" data-ladder-id="${it.id}" data-equip-type="${type}"><span class="ll-piece-art">${art}</span><span class="ll-pname">${escapeHtml(it.name)}</span><span class="ll-pkind">${LADDER_KIND[it.category] || ''}</span><span class="ll-equip">${equippedCosmetics[type] === it.id ? 'Equipped' : 'Equip'}</span></button>`;
       }
       if (piece.kind === 'badge') return `<button type="button" class="ll-piece" data-ladder-tip="${escapeHtml(`Your level badge turns ${piece.name.replace(' badge', '').toLowerCase()} at level ${piece.level}.`)}"><span class="ll-piece-art">${xpLevelBadge(piece.level, 'xp-badge-lg')}</span><span class="ll-pname">${escapeHtml(piece.name)}</span><span class="ll-pkind">Badge</span></button>`;
       return `<button type="button" class="ll-piece" data-ladder-tip="${escapeHtml(piece.tip)}"><span class="ll-piece-art"><span class="ll-unlock" style="--t:${piece.tone}">${icon(piece.icon)}</span></span><span class="ll-pname">${escapeHtml(piece.name)}</span><span class="ll-pkind">Unlock</span></button>`;
@@ -27011,14 +27032,14 @@ video {
         <div class="ll-stats"><div class="ll-stat"><b>${fmt(p.total)}</b><small>Total XP</small></div><div class="ll-stat"><b data-ladder-week>${weekXp == null ? '–' : fmt(weekXp)}</b><small>This week</small></div><div class="ll-stat"><b data-ladder-rank>${ladderExtras.rank || '–'}</b><small>Levels board</small></div></div>
         ${nextHtml}${signedIn ? '' : '<div class="ll-signin">Sign in to earn XP and climb the ladder.</div>'}`;
     }
-    function levelLadderRowsHtml(total, level, rewards) {
+    function levelLadderRowsHtml(total, level, rewards, from = level) {
       const fmt = (n) => Math.round(n).toLocaleString('en-GB');
       const milestones = Array.from({ length: Math.floor(XP_MAX_LEVEL / XP_RULES.milestoneEvery) }, (_, i) => (i + 1) * XP_RULES.milestoneEvery);
       const stops = [...new Set([...rewards.keys(), ...milestones, level, XP_MAX_LEVEL])].filter(L => L >= 1 && L <= XP_MAX_LEVEL).sort((a, b) => a - b);
       const p = xpProgress(total);
       let html = '', prev = 1;
-      const gap = (a, b) => b < a ? '' : `<div class="ll-gap ${b <= level ? 'got' : ''}"><span class="ll-tick"></span>Lvl ${a === b ? a : `${a}–${b}`} · ${ladderGem(XP_RULES.levelUpDiamonds)} ${a === b ? '' : 'each'}</div>`;
-      const here = `<div class="ll-here" data-ladder-here><span class="ll-node">${level}</span><div class="ll-here-card"><div class="ll-here-top">You are here</div><div class="ll-here-sub">${xpLevelBadge(level)}<span>${p.max ? 'Top level' : `${fmt(p.need - p.into)} XP to Lvl ${level + 1}`}</span></div><span class="ll-bar" style="height:6px;margin-top:6px"><i style="width:${p.pct}%"></i></span></div></div>`;
+      const gap = (a, b) => b < a ? '' : `<div class="ll-gap ${b <= level ? 'got' : ''} ${from < b && a <= level ? 'll-new' : ''}" data-ladder-range="${a}-${b}"><span class="ll-tick" data-ladder-node="${a}-${b}"></span><span data-ladder-node="${a}-${b}">Lvl ${a === b ? a : `${a}–${b}`} · ${ladderGem(XP_RULES.levelUpDiamonds)} ${a === b ? '' : 'each'}</span></div>`;
+      const here = `<div class="ll-here" data-ladder-here data-ladder-level-here="${level}"><span class="ll-node" data-ladder-node="${level}">${level}</span><div class="ll-here-card"><div class="ll-here-top">You are here</div><div class="ll-here-sub">${xpLevelBadge(level)}<span>${p.max ? 'Top level' : `${fmt(p.need - p.into)} XP to Lvl ${level + 1}`}</span></div><span class="ll-bar" style="height:6px;margin-top:6px"><i style="width:${p.pct}%"></i></span></div></div>`;
       if (level === 1) html += here;
       stops.forEach((L) => {
         if (L === 1) return;
@@ -27028,9 +27049,9 @@ video {
         const pieces = rewards.get(L) || [];
         const milestone = L % XP_RULES.milestoneEvery === 0 || L === XP_MAX_LEVEL;
         if (pieces.length || milestone) {
-          const got = L <= level, final = L === XP_MAX_LEVEL;
-          const status = got ? `<span class="ll-done">${icon('check')} Unlocked</span>` : `<span class="ll-away">${fmt(xpForLevel(L) - total)} XP away</span>`;
-          html += `<div class="ll-row ${got ? 'got' : 'locked'} ${milestone ? 'big' : ''} ${final ? 'final' : ''}" data-ladder-level="${L}"><span class="ll-node">${got ? icon('check') : L}</span><div class="ll-card">${final ? `<div class="ll-final-title">Max Level · Lvl ${L}</div>` : ''}<div class="ll-head">${xpLevelBadge(L)}${status}${ladderGem(ladderMilestoneDiamonds(L))}</div>${pieces.length ? `<div class="ll-pieces">${pieces.map(ladderPieceHtml).join('')}</div>` : `<div class="ll-only">Milestone level: ${XP_RULES.milestoneDiamonds} Diamonds.</div>`}</div></div>`;
+          const got = L <= level, final = L === XP_MAX_LEVEL, fresh = got && L > from;
+          const status = fresh ? `<span class="ll-new-tag">New · just unlocked</span>` : got ? `<span class="ll-done">${icon('check')} Unlocked</span>` : `<span class="ll-away">${fmt(xpForLevel(L) - total)} XP away</span>`;
+          html += `<div class="ll-row ${got ? 'got' : 'locked'} ${fresh ? 'll-new' : ''} ${milestone ? 'big' : ''} ${final ? 'final' : ''}" data-ladder-level="${L}"><span class="ll-node" data-ladder-node="${L}">${got ? icon('check') : L}</span><div class="ll-card">${final ? `<div class="ll-final-title">Max Level · Lvl ${L}</div>` : ''}<div class="ll-head">${xpLevelBadge(L)}${status}${ladderGem(ladderMilestoneDiamonds(L))}</div>${pieces.length ? `<div class="ll-pieces">${pieces.map(ladderPieceHtml).join('')}</div>` : `<div class="ll-only">Milestone level: ${XP_RULES.milestoneDiamonds} Diamonds.</div>`}</div></div>`;
         } else if (L !== level) html += gap(L, L);
         if (L === level) html += here;
         prev = L;
@@ -27042,19 +27063,27 @@ video {
       <span>Win (Vs Bots / Play Friends)</span><span>${XP_RULES.win}</span><span>Ranked game / Ranked win</span><span>${XP_RULES.ranked} / ${XP_RULES.rankedWin}</span>
       <span>Gauntlet bot beaten</span><span>${Math.min(...Object.values(XP_RULES.gauntletBot))}–${Math.max(...Object.values(XP_RULES.gauntletBot))}</span>
       <span>Daily / weekly challenge</span><span>${XP_RULES.daily} / ${XP_RULES.weekly}</span></div></details>`;
-    function renderLevelLadder() {
+    function renderLevelLadder(from) {
       const signedIn = !!currentUser && !!playerXp;
       const total = signedIn ? playerXp.total : 0;
       const level = signedIn ? xpLevelFor(total) : 1;
       const rewards = ladderRewards();
       document.getElementById('levelLadderHero').innerHTML = levelLadderHeroHtml(total, level, signedIn, rewards);
       const scroll = document.getElementById('levelLadderScroll');
-      scroll.innerHTML = LADDER_HOW() + `<div class="ll-line"><i></i></div>` + levelLadderRowsHtml(total, level, rewards)
+      const climbFrom = Number.isFinite(from) && from >= 1 && from < level ? from : level;
+      scroll.innerHTML = LADDER_HOW() + `<div class="ll-line"><i></i></div>` + levelLadderRowsHtml(total, level, rewards, climbFrom)
         + '<p class="ll-help">Tap a reward you own to equip it. Tap or hold any other to preview it.</p>';
-      return { scroll, level };
+      return { scroll, level, from: climbFrom };
+    }
+    // The ladder element that holds a level: its own row, "You are here", or the folded line around it.
+    function ladderElementForLevel(L) {
+      const scroll = document.getElementById('levelLadderScroll');
+      if (!scroll) return null;
+      return scroll.querySelector(`[data-ladder-level="${L}"]`) || scroll.querySelector(`[data-ladder-level-here="${L}"]`)
+        || [...scroll.querySelectorAll('[data-ladder-range]')].find(el => { const [a, b] = el.dataset.ladderRange.split('-').map(Number); return L >= a && L <= b; }) || null;
     }
     // The gold line runs from the first stop to the last and fills up to "You are here".
-    function placeLadderLine(animate) {
+    function placeLadderLine(animate, from) {
       const scroll = document.getElementById('levelLadderScroll');
       const line = scroll?.querySelector('.ll-line'), fill = line?.querySelector('i');
       const stops = scroll ? [...scroll.querySelectorAll('.ll-row, .ll-here, .ll-gap')] : [];
@@ -27064,7 +27093,10 @@ video {
       line.style.height = `${Math.max(0, last.offsetTop - first.offsetTop + 10)}px`;
       const target = here ? Math.max(0, here.offsetTop - first.offsetTop + 8) : 0;
       if (!animate || reduceMotion) { fill.style.transition = 'none'; fill.style.height = `${target}px`; void fill.offsetHeight; fill.style.transition = ''; return; }
-      fill.style.height = '0px';
+      // A level-up climbs from the old level (v278); a normal open fills from the bottom rung.
+      const fromEl = Number.isFinite(from) ? ladderElementForLevel(from) : null;
+      const start = fromEl ? Math.max(0, Math.min(target, fromEl.offsetTop - first.offsetTop + 8)) : 0;
+      fill.style.transition = 'none'; fill.style.height = `${start}px`; void fill.offsetHeight; fill.style.transition = fromEl ? 'height 1.6s var(--ease-soft, ease-out)' : '';
       requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.height = `${target}px`; }));
     }
     function scrollLadderTo(el) {
@@ -27072,18 +27104,69 @@ video {
       if (!scroll || !el) return;
       scroll.scrollTop = Math.max(0, el.offsetTop - scroll.clientHeight / 2 + el.offsetHeight / 2);
     }
-    function openLevelLadder() {
+    // opts.from: the level before a level up (match summary, level mail): the
+    // line climbs from there and the rewards just unlocked glow (v278).
+    function openLevelLadder(opts = {}) {
       if (!xpShown()) { notifyBanner('Levels are switched off at the moment.'); return false; }
       document.getElementById('hamburgerDrawer')?.classList.contains('open') && closeHamburgerMenu();
       ladderExtras = { weekXp: null, rank: null };
-      renderLevelLadder();
+      const view = renderLevelLadder(Number(opts.from));
       document.getElementById('levelLadderModal').classList.remove('hidden');
       requestAnimationFrame(() => {
         scrollLadderTo(document.querySelector('#levelLadderScroll [data-ladder-here]'));
-        placeLadderLine(true);
+        placeLadderLine(true, view.from < view.level ? view.from : undefined);
       });
       loadLadderExtras();
+      loadLadderFriends();
       return true;
+    }
+    // Tap a level (its circle or a folded line): the total XP it needs (v278).
+    function ladderLevelTipHtml(spec) {
+      const total = playerXp?.total || 0, fmt = (n) => Math.round(n).toLocaleString('en-GB');
+      const line = (L) => {
+        const need = xpForLevel(L);
+        return `<b>Lvl ${L}</b> needs ${fmt(need)} total XP${need <= total ? ' · reached' : ` · ${fmt(need - total)} to go`}`;
+      };
+      const [a, b] = String(spec).split('-').map(Number);
+      return b && b !== a ? `${line(a)}<br>${line(b)}` : line(a);
+    }
+    // Friends on the ladder (v278): their avatars at their levels, from
+    // friends/{uid} and each friend's public level. Tap one for their card.
+    let ladderFriendsToken = 0;
+    function loadLadderFriends() {
+      if (!currentUser || typeof db === 'undefined' || !db) return;
+      const token = ++ladderFriendsToken, uid = currentUser.uid;
+      try {
+        db.ref(`friends/${uid}`).once('value').then((snap) => {
+          const ids = Object.keys(snap.val() || {}).slice(0, 60);
+          return Promise.all(ids.map(f => db.ref(`publicProfiles/${f}`).once('value').then(p => ({ uid: f, ...(p.val() || {}) })).catch(() => null)));
+        }).then((list) => {
+          if (token !== ladderFriendsToken || document.getElementById('levelLadderModal')?.classList.contains('hidden')) return;
+          paintLadderFriends((list || []).filter(f => f && Number(f.level) > 0 && !f.deleted));
+        }).catch(() => {});
+      } catch (e) {}
+    }
+    function paintLadderFriends(friends) {
+      const scroll = document.getElementById('levelLadderScroll');
+      if (!scroll) return;
+      scroll.querySelectorAll('.ll-friends').forEach(el => el.remove());
+      const groups = new Map();
+      friends.forEach((f) => {
+        const el = ladderElementForLevel(Math.min(XP_MAX_LEVEL, Number(f.level)));
+        if (!el) return;
+        if (!groups.has(el)) groups.set(el, []);
+        groups.get(el).push(f);
+      });
+      groups.forEach((list, el) => {
+        list.sort((a, b) => b.level - a.level);
+        const shown = list.slice(0, 4), more = list.length - shown.length;
+        const wrap = document.createElement('div');
+        wrap.className = 'll-friends';
+        wrap.innerHTML = shown.map(f => `<button type="button" class="ll-friend" data-ladder-friend="${escapeHtml(f.uid)}" data-name="${escapeHtml(f.username || 'Friend')}" data-avatar="${escapeHtml(f.avatar || 'default')}" title="${escapeHtml(f.username || 'Friend')} · Lvl ${Number(f.level)}" aria-label="${escapeHtml(f.username || 'Friend')}, level ${Number(f.level)}">${avatarHtml(f.avatar || 'default', 22)}<span>${escapeHtml(f.username || 'Friend')} · ${Number(f.level)}</span></button>`).join('')
+          + (more > 0 ? `<span class="ll-friend-more">+${more}</span>` : '');
+        (el.querySelector('.ll-card, .ll-here-card') || el).appendChild(wrap);
+      });
+      placeLadderLine(false);
     }
     // This week's XP and your place on the Levels board (all-time), read once per opening.
     function loadLadderExtras() {
@@ -27121,6 +27204,10 @@ video {
         if (jump) { scrollLadderTo(modal.querySelector(`[data-ladder-level="${jump.dataset.ladderJump}"]`)); return; }
         const tip = e.target.closest('[data-ladder-tip]');
         if (tip) { showInfoPop(tip, escapeHtml(tip.dataset.ladderTip), { toggle: true }); return; }
+        const friend = e.target.closest('[data-ladder-friend]');
+        if (friend) { openProfileCard({ uid: friend.dataset.ladderFriend, name: friend.dataset.name, avatar: friend.dataset.avatar }, friend); return; }
+        const node = e.target.closest('[data-ladder-node]');
+        if (node) { showInfoPop(node, ladderLevelTipHtml(node.dataset.ladderNode), { toggle: true }); return; }
         const tile = e.target.closest('[data-ladder-id]');
         if (!tile) return;
         const item = LEVEL_REWARDS.find(r => r.id === tile.dataset.ladderId);
@@ -27133,7 +27220,7 @@ video {
         const t = e.target.closest && e.target.closest('#homeNameLevel, #profileLevelBadge, #hamburgerLevel, [data-open-ladder]');
         if (!t || t.classList.contains('hidden')) return;
         e.preventDefault();
-        openLevelLadder();
+        openLevelLadder(t.dataset.ladderFrom ? { from: Number(t.dataset.ladderFrom) } : {});
       });
       window.addEventListener('resize', () => { if (!modal.classList.contains('hidden')) placeLadderLine(false); });
       modal.addEventListener('toggle', () => placeLadderLine(false), true); // the How To Earn XP fold moves the line
@@ -29872,7 +29959,7 @@ video {
         case 'shop': return itemFromId() ? () => openCustomTileFromMail(itemFromId()) : null;
         case 'rank': return () => openLeaderboardPanel('ranked');
         case 'board': return () => openLeaderboardPanel(item.board);
-        case 'level': return () => openLevelLadder();
+        case 'level': return () => openLevelLadder(item.level > 1 && !item.backfill ? { from: Number(item.level) - 1 } : {});
         case 'referral': return () => openProfileSection(document.getElementById('profileReferralSection'));
         case 'friendLevel': return item.uid ? (el) => openProfileCard({ uid: item.uid, name: item.name, avatar: item.avatar || undefined }, el) : null;
         case 'invite': return item.fromUid ? (el) => openProfileCard({ uid: item.fromUid, name: item.fromName, avatar: item.avatar || undefined }, el) : null;

@@ -2809,7 +2809,7 @@ async function runDevTestSuite() {
     }
   });
 
-  await test('Level Ladder (v277): opens from your level, shows every level reward, sits on "You are here", equips owned rewards', async () => {
+  await test('Level Ladder (v277–v278): opens from your level, shows every level reward, sits on "You are here", equips owned rewards, climbs, friends, level tips', async () => {
     const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp, owned: cosmeticPurchaseState, eq: { ...equippedCosmetics } };
     const modal = document.getElementById('levelLadderModal');
     try {
@@ -2839,6 +2839,21 @@ async function runDevTestSuite() {
       modal.querySelector('[data-ladder-id="avatar-lvl-burn-king"]').click();
       assertTrue(!document.getElementById('bigPreview').classList.contains('hidden'), 'Tapping a locked reward previews it');
       closeBigPreview();
+      // v278: a level up climbs from the old level; what it unlocked glows with Equip.
+      modal.classList.add('hidden');
+      openLevelLadder({ from: 29 });
+      assertTrue(modal.querySelector('[data-ladder-level="30"]').classList.contains('ll-new'), 'A level just passed glows');
+      assertTrue(!modal.querySelector('[data-ladder-level="25"]').classList.contains('ll-new'), 'Older levels do not');
+      assertTrue(getComputedStyle(modal.querySelector('[data-ladder-level="30"] .ll-equip')).display !== 'none', 'Just-unlocked rewards say Equip');
+      // Friends sit at their levels; tapping a level shows its XP.
+      paintLadderFriends([{ uid: 'f1', username: 'Elena', avatar: 'default', level: 42 }, { uid: 'f2', username: 'Bob', avatar: 'default', level: 40 }, { uid: 'f3', username: 'Sam', avatar: 'default', level: 35 }]);
+      assertTrue(!!modal.querySelector('[data-ladder-level="40"] [data-ladder-friend="f2"]'), 'A friend on a reward level sits on its card');
+      assertTrue(!!modal.querySelector('[data-ladder-here] [data-ladder-friend="f3"]'), 'A friend at your level sits on "You are here"');
+      assertTrue(!!modal.querySelector('[data-ladder-range="41-49"] [data-ladder-friend="f1"]'), 'A friend between rewards sits on that folded line');
+      assertTrue(ladderLevelTipHtml('60').includes(xpForLevel(60).toLocaleString('en-GB')) && ladderLevelTipHtml('30').includes('reached'), 'A level tip gives its total XP');
+      modal.querySelector('[data-ladder-node="60"]').click();
+      assertTrue(document.getElementById('infoPop')?.textContent.includes('Lvl 60'), 'Tapping a level shows its XP');
+      hideInfoPop();
       xpFeatureOn = false;
       modal.classList.add('hidden');
       assertEqual(openLevelLadder(), false, 'Not while levels are switched off');
