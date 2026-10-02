@@ -2783,6 +2783,31 @@ async function runDevTestSuite() {
     const box = seat.getBoundingClientRect();
     assertTrue(cards.left - box.left >= 6 && box.right - cards.right >= 6, 'Seats leave room around the cards for frame glows');
   });
+  await test('Table cards never overlap: every Face-Up / Face-Down slot sits apart, for opponents and you (v272)', () => {
+    const overlaps = (rects) => {
+      let n = 0;
+      for (let i = 0; i + 1 < rects.length; i++) for (const a of rects[i]) for (const b of rects[i + 1]) {
+        if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0.5 && Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top)) n++;
+      }
+      return n;
+    };
+    for (const bots of [1, 2, 3]) {
+      freshState({ phase: 'PLAY' });
+      // Worst case: every slot has a Face-Down card, with a tilted Face-Up card on some.
+      const seat = (id, isBot) => makePlayer({ id, isBot, hand: [makeCard('4')],
+        faceDown: [makeCard('5'), makeCard('6'), makeCard('7')], faceUp: [makeCard('8'), makeCard('9'), makeCard('K')] });
+      state.players = [seat('p1', false)];
+      for (let i = 0; i < bots; i++) state.players.push(seat(`p_bot_${i}`, true));
+      state.players.slice(1).forEach(p => { p.faceUp = [p.faceUp[0]]; });
+      render();
+      document.querySelectorAll('.opp-slot-row').forEach(row => {
+        const rects = [...row.children].map(slot => [...slot.children].map(c => c.getBoundingClientRect()));
+        assertEqual(overlaps(rects), 0, `${bots} opponent(s): no opponent table card overlaps its neighbour`);
+      });
+      const own = [...document.querySelectorAll('#localTableSlots > *')].map(slot => [slot.getBoundingClientRect()]);
+      assertEqual(overlaps(own), 0, `${bots} opponent(s): your own table slots never overlap`);
+    }
+  });
   await test('REGRESSION: tapping an opponent opens their player card (bot and friend states)', () => {
     freshState({ phase: 'PLAY', difficulty: 'hard' });
     state.players = [makePlayer({ id: 'p1', hand: [makeCard('4')] }), makePlayer({ id: 'p2', name: 'Sophia', isBot: true, avatar: 'avatar-suit-hearts' })];

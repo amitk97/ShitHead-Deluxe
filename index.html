@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-01-v271 (ShitHead-Deluxe-220) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-02-v272 (ShitHead-Deluxe-221) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -1183,12 +1183,12 @@
       z-index: 120 !important;
     }
 
-    /* Opponent table cards overlap slightly (like a mini fan) instead of sitting
-       fully side-by-side, so 3 opponents' cards fit on narrow mobile screens
-       without needing to scroll. The leading (top-left) rank/suit stays visible
-       on every card even when partially covered by the next one. */
+    /* Opponent table cards never overlap (owner, v272): each Face-Up /
+       Face-Down slot sits side by side with a gap wide enough for the
+       Face-Up card's small tilt over its Face-Down card. Seats still fit
+       3 opponents on narrow phones (the cards shrink with the screen). */
     .opp-slot-row > *:not(:first-child) {
-      margin-left: calc(clamp(-16px, -2.4vw, -8px) * var(--opp-scale, 1));
+      margin-left: calc(6px * var(--opp-scale, 1));
     }
 
     /* Viewport-Anchored Card Scaling */
@@ -19765,6 +19765,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v272: [[ '🃏', "Opponents' Face-Up and Face-Down cards no longer overlap each other." ]],
       v271: [[ '🎴', 'Bots now choose randomly from the free card backs and keep their choice throughout the match.', WN_KEY ]],
       v270: [[ '🌄', 'Responsive full-scene tables with extended landscapes, complete large features and matching previews.', WN_KEY ]],
       v268: [[ '🖼️', 'Full-screen equipped table backgrounds on every device, star-only Cosmic Ace glints, and default card-back previews.', WN_KEY ]],
