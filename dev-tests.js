@@ -1815,6 +1815,33 @@ async function runDevTestSuite() {
       try { if (savedSeen === null) localStorage.removeItem('shithead_tips_seen'); else localStorage.setItem('shithead_tips_seen', savedSeen); } catch (e) {}
     }
   });
+  await test('v301: the home snapshot paints a returning account at once, never another account; an unknown level never locks the speed', () => {
+    const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp, eco: { ...challengeEconomy }, loaded: challengeEconomyLoadedForUid, snap: localStorage.getItem(HOME_SNAPSHOT_KEY), auth: authStateResolved };
+    try {
+      authStateResolved = true; // the sign-in answer has arrived
+      setXpFeature(false); playerXp = null; challengeEconomyLoadedForUid = null;
+      localStorage.setItem(HOME_SNAPSHOT_KEY, JSON.stringify({ uid: 'snap-a', xp: xpForLevel(38), xpOn: true, diamonds: 737000 }));
+      currentUser = { uid: 'snap-a' };
+      assertTrue(applyHomeSnapshot(currentUser), 'The same account uses its snapshot');
+      assertEqual(xpLevelFor(playerXp.total), 38, 'Its level is painted');
+      const lvl = document.getElementById('homeNameLevel');
+      assertTrue(!lvl.classList.contains('hidden') && /38/.test(lvl.textContent), 'The home level badge shows straight away');
+      assertTrue(/737/.test(document.getElementById('headerDiamondCount').textContent), 'The Diamonds show straight away');
+      assertEqual(speedLockReason(3), '', 'Lvl 38 keeps 4x');
+      playerXp = null;
+      assertEqual(speedLockReason(3), '', 'A level still loading never locks 4x');
+      challengeEconomyLoadedForUid = 'snap-a';
+      assertTrue(/Lvl 10/.test(speedLockReason(3)), 'A loaded account with no level does lock it');
+      challengeEconomyLoadedForUid = null;
+      currentUser = { uid: 'snap-b' };
+      assertTrue(!applyHomeSnapshot(currentUser), 'Another account never sees it');
+      assertEqual(localStorage.getItem(HOME_SNAPSHOT_KEY), null, 'and it is dropped');
+    } finally {
+      currentUser = saved.user; playerXp = saved.xp; challengeEconomy = saved.eco; challengeEconomyLoadedForUid = saved.loaded; authStateResolved = saved.auth;
+      setXpFeature(saved.on); updateDiamondHeader();
+      if (saved.snap === null) localStorage.removeItem(HOME_SNAPSHOT_KEY); else localStorage.setItem(HOME_SNAPSHOT_KEY, saved.snap);
+    }
+  });
   await test('v290: a Level Ladder tap opens the big preview (never equips); its Equip button does', () => {
     const saved = { eq: { ...equippedCosmetics }, owned: cosmeticPurchaseState, on: xpFeatureOn, user: currentUser, xp: playerXp };
     try {

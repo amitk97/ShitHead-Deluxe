@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-02-v300 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-03-v301 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
-       <head>   domain redirect · precompiled Tailwind <style> · game <style> (themes, motion, pages)
-       <body>   header · menu drawer · home/lobby · game table · pages and pop-ups
+       <head>   domain redirect · meta tags (link previews, app)
+       <body>   loading screen (first paint) · precompiled Tailwind <style> · game <style> (themes,
+                motion, pages) · Firebase scripts · header · menu drawer · home/lobby · game table ·
+                pages and pop-ups
        scripts  SOUND ENGINE · BURN EMBER ENGINE · KINETIC PROJECTILE ENGINE (card flights,
                 blind reveal) · GAMEPLAY ENGINE (everything else; its own map is at the top)
        outside  dev-tests.js (index.html?dev-tests=1) · art/ · audio/ · sw.js · functions/ (push
@@ -76,6 +78,60 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ShitHead" />
+</head>
+<!-- The body opens here, before the big style sheets and the Firebase scripts, so the
+     loading screen below is the first thing painted (v301): styles and scripts after it
+     still block the page, but not this screen. -->
+<body class="bg-slate-950 text-slate-100 theme-obsidian select-none">
+  <style>
+    /* § Loading screen (v301): plain CSS, no web fonts needed to show it. */
+    #bootSplash { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: clamp(28px, 6vh, 56px); padding: 24px 16px 12vh; background: radial-gradient(ellipse 80% 55% at 50% 38%, #0b2a5c 0%, #071a3d 45%, #020617 100%);
+      transition: opacity .28s ease-out; }
+    #bootSplash.boot-out { opacity: 0; pointer-events: none; }
+    #bootSplash .boot-logo { margin: 0; font-family: 'Cinzel', Georgia, 'Times New Roman', serif; font-weight: 900; font-size: clamp(46px, 16vw, 104px); line-height: 1;
+      letter-spacing: .5px; color: #b91c1c; background: linear-gradient(180deg, #f87171 0%, #b91c1c 40%, #5e0a0a 100%); -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; filter: drop-shadow(0 1px 0 #fde047) drop-shadow(0 -1px 0 #b45309) drop-shadow(0 3px 8px rgba(0,0,0,.9)); }
+    #bootSplash .boot-fan { position: relative; width: clamp(180px, 52vw, 300px); height: clamp(100px, 30vw, 170px); }
+    #bootSplash .boot-fan img { position: absolute; left: 50%; top: 0; width: 38%; aspect-ratio: 5 / 7; height: auto; margin-left: -19%; border-radius: 8%;
+      background: #ece7da; box-shadow: 0 10px 24px rgba(0,0,0,.55); object-fit: fill; }
+    #bootSplash .boot-fan img:nth-child(1) { transform: translateX(-62%) rotate(-12deg); transform-origin: 50% 110%; }
+    #bootSplash .boot-fan img:nth-child(3) { transform: translateX(62%) rotate(12deg); transform-origin: 50% 110%; }
+    #bootSplash .boot-fan img:nth-child(2) { z-index: 1; top: -4%; }
+    #bootSplash .boot-bar { position: relative; width: clamp(160px, 52vw, 280px); height: 3px; border-radius: 3px; background: rgba(180,83,9,.45); overflow: hidden; }
+    #bootSplash .boot-bar i { position: absolute; top: 0; bottom: 0; width: 38%; border-radius: inherit; background: linear-gradient(90deg, transparent, #fbbf24, #fde68a, #fbbf24, transparent);
+      animation: boot-bar 1.4s ease-in-out infinite; }
+    @keyframes boot-bar { from { left: -40%; } to { left: 102%; } }
+    #bootSplash .boot-text { margin: -8px 0 0; font: 500 15px/1.3 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #cbd5e1; letter-spacing: .2px; }
+    @media (prefers-reduced-motion: reduce) { #bootSplash .boot-bar i { animation: none; left: 31%; } #bootSplash { transition: none; } }
+  </style>
+  <div id="bootSplash" role="status" aria-live="polite">
+    <h1 class="boot-logo">ShitHead</h1>
+    <div class="boot-fan" aria-hidden="true"><img src="art/backs/approved-v267/default.webp" alt=""><img src="art/backs/approved-v267/default.webp" alt=""><img src="art/backs/approved-v267/default.webp" alt=""></div>
+    <div class="boot-bar" aria-hidden="true"><i></i></div>
+    <p class="boot-text">Getting your table ready…</p>
+  </div>
+  <script>
+    // The loading screen hides once, when the home screen is ready (the game calls
+    // shBootReveal: signed out, or signed in with the level and Diamonds known), and at
+    // the latest 1.5s after the page has loaded, so a slow server never holds it.
+    (function bootSplash() {
+      const el = document.getElementById('bootSplash');
+      let gone = false;
+      window.shBootReveal = () => {
+        if (gone) return; gone = true;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          el.classList.add('boot-out');
+          setTimeout(() => el.remove(), 320);
+        }));
+      };
+      if (/[?&]dev-tests=1/.test(location.search)) { gone = true; el.remove(); return; }
+      document.addEventListener('DOMContentLoaded', () => {
+        if (!window.firebase) window.shBootReveal(); // offline / no Firebase: nothing to wait for
+        setTimeout(window.shBootReveal, 1500);
+      });
+    })();
+  </script>
   
   <!-- ============================================================
        TAILWIND CSS — compiled and inlined at build time, not loaded
@@ -5223,8 +5279,6 @@ video {
 #gameTable .seat-name,#gameTable .table-label { text-shadow:0 1px 3px #020617; }
 </style>
 <script src="art/tables/full-scenes-v270/scenes.js?v=274"></script>
-</head>
-<body class="bg-slate-950 text-slate-100 theme-obsidian select-none">
   <div id="rotateHint" role="alert" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></svg><span class="rh-turn">Turn your phone upright to play.</span><span class="rh-open">Open your phone to play. This screen is too small for the table.</span></div>
   <!-- Shared two-tone navigation icon pack. A navy rounded tile, bold pale
        linework and one bright accent keep every icon coherent in dark mode. -->
@@ -9399,6 +9453,9 @@ video {
       const need = SPEED_UNLOCK_LEVELS[idx] || 0;
       if (!need) return '';
       const label = `${SPEED_PRESETS[idx]}x speed`;
+      // Still finding out who's here, or their level (v301): keep the saved speed rather
+      // than locking it and handing it back a moment later (the 1x/4x flicker at start-up).
+      try { if (!authStateResolved || (currentUser && xpShown() && !playerXp && challengeEconomyLoadedForUid !== currentUser.uid)) return ''; } catch (e) { return ''; }
       if (typeof currentUser === 'undefined' || !currentUser) return `Sign in to use ${label}.`;
       if (typeof xpShown === 'function' && !xpShown()) return '';
       return speedLevelNow() >= need ? '' : `${label} unlocks at Lvl ${need}.`;
@@ -19816,6 +19873,8 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v301: [[ '⚡', 'The game opens faster: a loading screen shows straight away, and your level and Diamonds are on the home screen from the start.', WN_KEY ],
+        [ '⏩', 'Your chosen game speed no longer flicks back to 1x while the game is starting.' ]],
       v300: [[ '✨', 'Spark Snap (Lvl 5) is reborn: a charge crackles round your card, then snaps into a white-gold explosion of sparks and light.', WN_KEY ],
         [ '🔥', 'Inferno Sweep (Lvl 40) is reborn: a whip of fire lashes across the Pile and sweeps your card away in a swirl of flame.', WN_KEY ]],
       v299: [[ '💩', 'The ShitStorm (Lvl 99) is reborn: a grinning storm whirls up out of the Pile in a blaze of gold and spins your card away.', WN_KEY ],
@@ -25482,6 +25541,7 @@ video {
     // plain Vs Bots home screen as a guest (no name, no Diamonds).
     let signOutResetting = false;
     function resetAfterSignOut() {
+      clearHomeSnapshot(); // § Home snapshot: never shown to the next account
       if (signOutResetting) return;
       signOutResetting = true;
       referralStatusCache = null;
@@ -25885,6 +25945,7 @@ video {
         const wasSignedIn = !!currentUser;
         currentUser = user;
         if (wasSignedIn && !user) resetAfterSignOut();
+        const fromSnapshot = user ? applyHomeSnapshot(user) : (clearHomeSnapshot(), false); // § Home snapshot
         clearTimeout(settingsCloudSaveTimer);
         updateHamburgerAccountLabel();
         refreshRankedUI();
@@ -25905,6 +25966,10 @@ video {
           if (!IS_DEV_TEST_PAGE) attemptMatchReconnect();
           initChallengeEconomy(); loadCosmeticCollection(null);
         }
+        // The loading screen goes once the home screen is complete: signed out, or signed in
+        // with this device's snapshot painted (otherwise refreshXpDisplays reveals it when
+        // the real level and Diamonds arrive, or the loading screen's own 1.5s cap does).
+        if (!user || fromSnapshot) window.shBootReveal?.();
       });
       // Google sign-in is a pop-up, with a redirect as the fallback (and in
       // the installed iPhone app); see the googleSignInBtn handler. This
@@ -26804,6 +26869,29 @@ video {
     var xpFeatureOn = false;
     var playerXp = null;
     function xpShown() { return !!xpFeatureOn; }
+    // § Home snapshot (v301): the last real level, Diamonds and XP switch of the account
+    // signed in on this device, so a returning player's home screen is complete at once
+    // (behind the loading screen) instead of filling in as the server answers. Display
+    // only: the server still owns every balance and unlock, and its values replace these.
+    const HOME_SNAPSHOT_KEY = 'shithead_home_snapshot';
+    function readHomeSnapshot() { try { return JSON.parse(localStorage.getItem(HOME_SNAPSHOT_KEY) || 'null'); } catch (e) { return null; } }
+    function clearHomeSnapshot() { try { localStorage.removeItem(HOME_SNAPSHOT_KEY); } catch (e) {} }
+    function saveHomeSnapshot() {
+      if (!currentUser || challengeEconomyLoadedForUid !== currentUser.uid) return; // only real values
+      try { localStorage.setItem(HOME_SNAPSHOT_KEY, JSON.stringify({ uid: currentUser.uid, xp: playerXp ? playerXp.total : null, xpOn: !!xpFeatureOn, diamonds: challengeEconomy.diamonds || 0 })); } catch (e) {}
+    }
+    // At sign-in: paint this account's saved values until the real ones load (true when used).
+    // Another account's snapshot is dropped, never shown.
+    function applyHomeSnapshot(user) {
+      const snap = readHomeSnapshot();
+      if (!snap || snap.uid !== user.uid) { clearHomeSnapshot(); return false; }
+      if (challengeEconomyLoadedForUid === user.uid) return false;
+      if (snap.xpOn && !xpFeatureOn) setXpFeature(true); // the live switch corrects it if it changed
+      if (!playerXp && snap.xp != null) playerXp = { total: Number(snap.xp) || 0, level: xpLevelFor(Number(snap.xp) || 0), week: null, weekXp: 0 };
+      challengeEconomy.diamonds = Number(snap.diamonds) || 0;
+      refreshXpDisplays(); updateDiamondHeader();
+      return true;
+    }
     function watchXpSwitch() {
       if (typeof db === 'undefined' || !db) return;
       try { db.ref('config/features/xp').on('value', (snap) => setXpFeature(snap.val() === true), () => {}); } catch (e) {}
@@ -26979,6 +27067,7 @@ video {
         if (el) { el.classList.toggle('hidden', !on); el.innerHTML = on ? xpLevelBadge(myLevel, cls) : ''; }
       });
       paintLadderNewDots(on ? myLevel : 0);
+      if (currentUser && challengeEconomyLoadedForUid === currentUser.uid) { saveHomeSnapshot(); window.shBootReveal?.(); } // the real level is in
       const section = document.getElementById('profileXpSection');
       if (section) {
         const show = xpShown() && !!currentUser;
@@ -27698,6 +27787,7 @@ video {
         const el = document.getElementById(id);
         if (el) el.textContent = display;
       });
+      saveHomeSnapshot();
       lastPaintedDiamonds = exact;
     }
     (function setupDiamondFlashCleanup() {

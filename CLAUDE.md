@@ -1,5 +1,12 @@
 # ShitHead Deluxe
 
+## v301 — faster start (owner)
+
+- **Loading screen** `#bootSplash` (inline style + markup + script at the very top of `<body>`): `<head>` closes right after the meta tags, so the splash paints (~0.14s) before the render-blocking game CSS, Google Fonts, Firebase and confetti scripts (first paint was ~1.8s). It uses the current logo look (`.brand-logo-rendered` copy), three default SH backs and a gold bar (still with reduced motion). `window.shBootReveal()` fades it out once: signed out, signed in with a home snapshot painted, the real economy loaded (`refreshXpDisplays`), no Firebase at all, or 1.5s after DOMContentLoaded at the latest. Never on the test page. `#rotateHint` (z 10000) stays above it.
+- **Home snapshot** (`§ Home snapshot`, localStorage `shithead_home_snapshot` = {uid, xp, xpOn, diamonds}): saved once the account's economy has loaded (`refreshXpDisplays`, `updateDiamondHeader`), applied in `onAuthStateChanged` before the server answers so level, avatar slot and Diamonds show at once; another uid or sign-out clears it. The server's values replace it when they arrive.
+- **Speed lock while unknown:** `speedLockReason` returns '' until auth has answered and, signed in with XP on, until the level has loaded, so a saved 2x/4x no longer drops to 1x and back at start-up.
+- Not done (step 4 of the plan): serving the cached page first on repeat launches (`sw.js` stays network-first).
+
 ## Painted-art burns (owner, October 2026) — the new burn style
 
 The owner rejected the older burn styling (flat CSS/SVG shapes, simple vector ghosts, the v294/v295 sprite burns) as cheap. New and reworked Burns follow the owner's painted concept tiles (the "Burn Effects" collection sheets) **exactly**, with special effects and several moving layers. Never use the existing burns as a style reference; only borrow their positioning, clock and sound plumbing.
