@@ -254,14 +254,14 @@ def shitstorm():
     col = np.clip(f / np.maximum(bright[..., None], .3), 0, 1)
     save_atlas([(col, bright * storm), (src.astype(np.float32) / 255, face)], 'art/burns/shitstorm/layers.webp')
 
-def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=False, clear=False, strip=None, block=36, full=False):
+def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=False, clear=False, strip=None, block=36, whole=False, reach=1):
     """A burst around one point (`centre`, u v of the crop): the painted cards (hand-traced,
     source pixels) filled with smooth inpainted colour plus fire detail from the best nearby
     patch (a pasted patch showed the card's outline in big gaps), a lumpy soft outline, and
     the rubble below `front_from` as a second layer drawn in front of the game card.
     mirror: a radial burst; gaps are filled from the opposite side, reflected through the
     centre (rays stay radial), where that side is clean; mirror='x' reflects left-right only.
-    full: slot 1 is the whole keyed picture (no outline) instead of the front rubble, for the
+    whole: slot 1 is the whole keyed picture (no outline) instead of the front rubble, for the
     engine to cut sprites and a front strip from.
     clear: what the mirror can't fill fades out instead (the 3D fire burns there behind the card).
     strip: (a, b) crop x range of clean fire, or a list of them: the gaps are quilted from small random
@@ -313,13 +313,13 @@ def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=F
     yy, xx = np.mgrid[0:H, 0:W] / [[[H]], [[W]]]
     noise = lambda n, sd: cv2.resize(np.random.default_rng(sd).random((n, n)).astype(np.float32), (W, H), interpolation=cv2.INTER_CUBIC)
     lump = .6 * noise(5, seed) + .4 * noise(11, seed + 1)
-    r = np.hypot((xx - cu) / max(cu, 1 - cu), (yy - cv) / max(cv, 1 - cv)) * (1.2 - .3 * lump)
+    r = np.hypot((xx - cu) / max(cu, 1 - cu), (yy - cv) / max(cv, 1 - cv)) * (1.2 - .3 * lump) / reach  # reach > 1: a wider soft outline
     burst = (1 - ss(.55, 1.0, r)) * (1 - ss(.9, 1, yy))
     if clear: burst = burst * (1 - (m[..., 0] if mirror else cv2.GaussianBlur(mask.astype(np.float32) / 255, (0, 0), 22)))
     bright = ss(.05, .3, g.max(2))
     col = np.clip(g / np.maximum(bright[..., None], .3), 0, 1)
     front = burst * ss(front_from, front_from + .08, yy)
-    save_atlas([(col, bright * burst), (col, bright if full else bright * front)], f'art/burns/{name}/layers.webp')
+    save_atlas([(col, bright * burst), (col, bright if whole else bright * front)], f'art/burns/{name}/layers.webp')
 
 def spark_snap():
     painted_burst('spark-snap', (18, 16, 452, 428), [[(141, 134), (247, 104), (282, 220), (177, 257)],
@@ -380,6 +380,21 @@ def confectionery():
              [(135, 120), (272, 59), (295, 110), (325, 260), (280, 290), (215, 280), (160, 240)],
              [(77, 175), (125, 140), (150, 150), (165, 215), (125, 240), (100, 235)],
              [(300, 95), (345, 87), (350, 150), (455, 180), (440, 235), (390, 280), (350, 250), (320, 190)],
-             [(350, 360), (470, 312), (475, 330), (440, 380), (390, 400)]], (.586, .55), .8, (6, 6, 508, 424), 91, clear=True, full=True)
+             [(350, 360), (470, 312), (475, 330), (440, 380), (390, 400)]], (.586, .55), .8, (6, 6, 508, 424), 91, clear=True, whole=True)
 
-{'default': default_burn, 'coloured-flame': coloured_flame, 'electric-blast': electric_blast, 'confectionery': confectionery, 'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral, 'shitstorm': shitstorm, 'spark-snap': spark_snap, 'inferno-sweep': inferno_sweep}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
+def lava_melt():
+    # Lava Melt: the molten field; the painted cards quilted from the fire either side at the same height,
+    # the rocks in the lower half in front of the card (it sinks behind them).
+    painted_burst('lava-melt', (8, 8, 506, 446), [
+             [(131, 89), (249, 52), (270, 95), (280, 215), (250, 242), (220, 240), (160, 220)],
+             [(300, 107), (345, 100), (367, 150), (360, 215), (325, 235), (305, 200)]],
+             (.396, .36), .5, (6, 6, 508, 448), 101, strip=[(10, 125), (378, 504)], block=30)
+
+def origami_fold():
+    # Origami Fold: the paper swan stays (it is the effect); only the Ace's big spade on its body is
+    # painted out (that is where the real card sits); the paper scraps below are in front of the card.
+    painted_burst('origami-fold', (8, 8, 506, 446), [
+             [(226, 232), (258, 228), (288, 270), (290, 312), (230, 314), (222, 270)]],
+             (.486, .62), .84, (6, 6, 508, 448), 111, reach=1.3)
+
+{'default': default_burn, 'coloured-flame': coloured_flame, 'electric-blast': electric_blast, 'confectionery': confectionery, 'lava-melt': lava_melt, 'origami-fold': origami_fold, 'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral, 'shitstorm': shitstorm, 'spark-snap': spark_snap, 'inferno-sweep': inferno_sweep}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()

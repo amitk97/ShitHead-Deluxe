@@ -6,6 +6,10 @@
 (() => {
   'use strict';
   const EFFECTS = {
+    // Origami Fold (Shop, premium): the owner's paper swan folds itself round the card, then flies off.
+    'burn-origami': { dur: 2.0, box: [5, 5.4, .5, .62], tile: 'art/burns/origami-fold/tile.webp', art: 'art/burns/origami-fold/layers.webp?v=1', layout: [4.4, 438 / 498, .486, .62] },
+    // Lava Melt (Shop, premium): the owner's molten field; the card sinks into it behind the front rocks.
+    'burn-lava': { dur: 2.0, box: [5, 5.4, .5, .4], tile: 'art/burns/lava-melt/tile.webp', art: 'art/burns/lava-melt/layers.webp?v=1', layout: [4.6, 438 / 498, .396, .36] },
     // Stupendous Confectionery (Shop, premium): the owner's candy explosion; the painted candies are cut
     // out as sprites (u0, v0, u1, v1 of the picture) that burst out from the card and tumble.
     'burn-sweets': { dur: 2.0, box: [5, 5.4, .5, .55], tile: 'art/burns/confectionery/tile.webp', art: 'art/burns/confectionery/layers.webp?v=1', layout: [4.4, 414 / 498, .586, .55],
@@ -97,6 +101,7 @@ void main(){
   float rl=.6+.4*h1(vec2(seg,v_k.y*13.));float d=length(v_loc)/rl;if(d>1.)discard;
   float heat=v_k.w;
   vec3 tex=texture2D(u_tex,v_uv).rgb;
+  if(heat<0.){gl_FragColor=vec4(tex*v_col.rgb*(.85+.15*v_loc.y),1.)*v_col.a;return;} // a clean paper scrap
   vec3 col=mix(tex*v_col.rgb,vec3(.07,.03,.015),.2+.55*(1.-heat));
   col=mix(col,vec3(.32,.3,.29),smoothstep(.15,0.,heat)*.7);
   float e=smoothstep(.45,1.,d);
@@ -213,8 +218,8 @@ void main(){
   // cards: the real pile cards (top card last), each with its offset from the top card.
   function makeSim(cards, opts) {
     const top = cards[cards.length - 1], rand = rng(opts.seed || 1931), R = (a, b) => a + (b - a) * rand();
-    const kind = { 'burn-halloween': 'ghost', 'burn-lvl-smoke-burst': 'smoke', 'burn-lvl-royal-incineration': 'royal', 'burn-lvl-hellfire-spiral': 'spiral', 'burn-lvl-shitstorm': 'spiral', 'burn-lvl-spark-snap': 'snap', 'default': 'blaze', 'burn-coloured': 'spectral', 'burn-electric': 'bolt', 'burn-sweets': 'candy' }[opts.id] || 'inferno', ghost = kind === 'ghost', smoke = kind === 'smoke', royal = kind === 'royal', spiral = kind === 'spiral', snap = kind === 'snap', blaze = kind === 'blaze', spectral = kind === 'spectral', bolt = kind === 'bolt', candy = kind === 'candy';
-    const n = cards.length, T = smoke ? .2 : royal ? .42 : spiral ? .3 : snap ? .26 : blaze ? .16 : spectral ? .22 : bolt ? .24 : candy ? .18 : .62, storm = opts.id === 'burn-lvl-shitstorm';
+    const kind = { 'burn-halloween': 'ghost', 'burn-lvl-smoke-burst': 'smoke', 'burn-lvl-royal-incineration': 'royal', 'burn-lvl-hellfire-spiral': 'spiral', 'burn-lvl-shitstorm': 'spiral', 'burn-lvl-spark-snap': 'snap', 'default': 'blaze', 'burn-coloured': 'spectral', 'burn-electric': 'bolt', 'burn-sweets': 'candy', 'burn-lava': 'lava', 'burn-origami': 'paper' }[opts.id] || 'inferno', ghost = kind === 'ghost', smoke = kind === 'smoke', royal = kind === 'royal', spiral = kind === 'spiral', snap = kind === 'snap', blaze = kind === 'blaze', spectral = kind === 'spectral', bolt = kind === 'bolt', candy = kind === 'candy', lava = kind === 'lava', paper = kind === 'paper';
+    const n = cards.length, T = smoke ? .2 : royal ? .42 : spiral ? .3 : snap ? .26 : blaze ? .16 : spectral ? .22 : bolt ? .24 : candy ? .18 : lava ? .22 : paper ? .3 : .62, storm = opts.id === 'burn-lvl-shitstorm';
     const S = { t: 0, kind, storm, ghost, T, slots: n + 1, layout: (EFFECTS[opts.id] || {}).layout, artK: opts.artK || 1, calm: !!opts.calm, flames: [], embers: [], smoke: [], shards: [], acc: {}, n, ar: top.W / top.H,
       cards: cards.map((c, i) => ({ i, ar: c.W / c.H, rot0: -c.rot * Math.PI / 180, ox: (c.dx || 0) / top.H, oy: -(c.dy || 0) / top.H, last: -.3,
         side: n === 1 ? .55 : i === n - 1 ? .45 : (i % 2 ? 1 : -1) * (.9 + .2 * i) })) };
@@ -222,7 +227,7 @@ void main(){
     S.waveX = t => t < .26 ? -1.5 + (t / .26) * (1.5 - hw) : t < .9 ? -hw + (t - .26) / .64 * (hw * 2 + .15) : hw + .15 + (t - .9) / .3 * 1.6;
     S.front = (c, t) => S.calm ? -.25 + clamp(t / .7) * 1.45
       : ghost ? -.25 + clamp((t - T - .03 - c.i * .06) / .75) * 1.45
-      : smoke ? -.25 + clamp((t - .78) / .7) * 1.45 : royal ? -.25 + clamp((t - .9) / .62) * 1.45 : spiral ? -.25 + clamp((t - .85) / .62) * 1.45 : snap ? -.25 + clamp((t - .62) / .62) * 1.45 : blaze ? -.25 + clamp((t - .72) / .72) * 1.45 : spectral ? -.25 + clamp((t - .8) / .68) * 1.45 : bolt ? -.25 + clamp((t - .62) / .66) * 1.45 : candy ? -.25 + clamp((t - .8) / .66) * 1.45 : -.25 + clamp((t - .24) / .66) * 1.45;
+      : smoke ? -.25 + clamp((t - .78) / .7) * 1.45 : royal ? -.25 + clamp((t - .9) / .62) * 1.45 : spiral ? -.25 + clamp((t - .85) / .62) * 1.45 : snap ? -.25 + clamp((t - .62) / .62) * 1.45 : blaze ? -.25 + clamp((t - .72) / .72) * 1.45 : spectral ? -.25 + clamp((t - .8) / .68) * 1.45 : bolt ? -.25 + clamp((t - .62) / .66) * 1.45 : candy ? -.25 + clamp((t - .8) / .66) * 1.45 : lava ? -.25 + clamp((t - .95) / .7) * 1.45 : paper ? -.25 + clamp((t - .9) / .6) * 1.45 : -.25 + clamp((t - .24) / .66) * 1.45;
     S.pose = (c, t) => {
       if (S.calm) return { rx: 0, ry: 0, rz: c.rot0, tx: c.ox, ty: c.oy, tz: 0, heat: clamp(t / .3) };
       if (smoke) {
@@ -236,6 +241,19 @@ void main(){
         const tr = smooth(0, T, t), e = ease((t - T) / .35), u = Math.max(0, t - T);
         if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 70) * .03 * tr, tx: c.ox, ty: c.oy, tz: .03 * tr, heat: .6 * tr };
         return { rx: -.35 * e, ry: 2.2 * u + .8 * u * u, rz: c.rot0 - .25 * e, tx: c.ox, ty: c.oy + .06 * e, tz: .4 * e, heat: 1 };
+      }
+      if (paper) {
+        // Rustles as the scraps gather, then folds over (its back, the burner's, comes up) as the swan
+        // closes round it, and burns inside the fold.
+        const tr = smooth(0, T, t), e = ease((t - T) / .45);
+        if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 34) * .03 * tr, tx: c.ox, ty: c.oy, tz: .03 * tr, heat: .3 * tr };
+        return { rx: -.5 * e + .1 * Math.sin(t * 4) * e, ry: 2.6 * e, rz: c.rot0 + .3 * e, tx: c.ox, ty: c.oy + .08 * e, tz: .32 * e, heat: 1 };
+      }
+      if (lava) {
+        // Shudders as the ground heats, jolts on the eruption, then tilts and sinks slowly into the lava.
+        const tr = smooth(0, T, t), e = ease((t - T) / .3), u = Math.max(0, t - T - .15), sink = Math.min(.75, .55 * u * u + .2 * u);
+        if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 48) * .02 * tr, tx: c.ox, ty: c.oy, tz: .03 * tr, heat: .5 * tr };
+        return { rx: -.12 * e - .25 * smooth(.4, 1.6, t), ry: .12 * Math.sin(t * 2.2) * e, rz: c.rot0 + .12 * smooth(.5, 1.6, t), tx: c.ox, ty: c.oy + .06 * e - sink, tz: .2 * e, heat: 1 };
       }
       if (candy) {
         // Wobbles like a lid about to pop, then the burst pops it up and spins it (its back comes round).
@@ -286,6 +304,8 @@ void main(){
     // Card light: the passing fire (Inferno) or the wraith's cold glow (Ghost).
     S.light = (p, pose, t) => {
       if (ghost) { const g = smooth(.1, .5, t) * (1 - smooth(1.4, 1.9, t)); return [1 + .2 * g, 1 + .3 * g, 1 + .75 * g]; }
+      if (paper) { const g = smooth(.02, .4, t) * (1 - smooth(1.4, 1.85, t)) + .7 * smooth(T - .02, T, t) * (1 - smooth(T, T + .3, t)); return [1 + .6 * g, 1 + .45 * g, 1 + .25 * g]; }
+      if (lava) { const g = (smooth(.02, .3, t) * (1 - smooth(1.5, 1.9, t)) + .8 * smooth(T - .02, T, t) * (1 - smooth(T, T + .3, t))) * (.85 + .15 * Math.sin(t * 9)); return [1 + 1.05 * g, 1 + .4 * g, 1 + .02 * g]; }
       if (candy) { const g = smooth(.02, .3, t) * (1 - smooth(1.4, 1.85, t)) + .7 * smooth(T - .02, T, t) * (1 - smooth(T, T + .25, t)); return [1 + .7 * g, 1 + .45 * g, 1 + .55 * g]; }
       if (bolt) { const z = S.zap ? S.zap(t) : 0, g = smooth(.02, T, t) * (1 - smooth(1.3, 1.8, t)) * (.7 + .3 * Math.sin(t * 61)) + 1.6 * z; return [1 + .55 * g, 1 + .8 * g, 1 + 1.1 * g]; }
       if (spectral) { const g = smooth(.02, .35, t) * (1 - smooth(1.4, 1.85, t)) + .9 * smooth(T - .02, T, t) * (1 - smooth(T, T + .3, t)); return [1 + .55 * g, 1 + .3 * g, 1 + .95 * g]; }
@@ -297,7 +317,7 @@ void main(){
       const f = S.calm ? .25 * pose.heat : 1.1 * Math.exp(-Math.pow(p[0] - S.waveX(t), 2) / .3) * pose.heat;
       return [1 + .9 * f, 1 + .38 * f, 1 + .05 * f];
     };
-    S.cardZ = t => ghost ? .3 : smoke || royal || spiral || snap || blaze || spectral || bolt || candy ? .35 : S.pose(S.cards[0], t).tz;
+    S.cardZ = t => ghost ? .3 : smoke || royal || spiral || snap || blaze || spectral || bolt || candy || paper ? .35 : lava ? .2 : S.pose(S.cards[0], t).tz;
     // Card local (u,v) -> view space, with the edge ahead of the fire curling.
     S.cardPoint = (c, u, v, pose, front) => {
       const fu = (front - .16 * (1 - v)) / .82, d = u - fu;
@@ -337,6 +357,30 @@ void main(){
           }
           if (t > T && t < 1.5) emit('puff', 22, dt, () => { const a = R(0, 6.28), r = R(.4, 1.5); S.smoke.push({ col: [.52, .47, .52], p: [Math.cos(a) * r, .05 + Math.sin(a) * r * .8, R(-.5, .2)], v: [Math.cos(a) * .3, .25 + Math.sin(a) * .2, 0], age: 0, life: R(.9, 1.3), size: R(.45, .8), seed: rand() }); });
           if (t > T && t < 1.6) emit('ember', 45, dt, () => S.embers.push({ p: [R(-1, 1), R(-.4, .8), R(-.3, .6)], v: [R(-.3, .3), R(.4, 1.1), R(-.1, .2)], age: 0, life: R(.5, .9), size: R(1.6, 3.4), seed: rand() * 6.28 }));
+          S.cards.forEach(c => burnCard(c, t, dt));
+        } else if (paper) {
+          // Paper scraps whirl in from all round and gather at the card; on the fold a puff of warm
+          // sparks; later scraps flutter down as the swan takes off.
+          if (t < T - .05) emit('gather', 48, dt, () => {
+            const a = R(0, 6.28), r = R(1.3, 2), p = [Math.cos(a) * r, .1 + Math.sin(a) * r * .7, R(-.3, .5)], k2 = 1 / (T - t + .05);
+            S.shards.push({ c: n - 1, p, uv: [R(.1, .9), R(.1, .9)], v: p.map((q, i) => -q * k2 * (i === 2 ? .5 : 1) + (i === 1 ? .2 : 0)), a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-7, 7), R(-7, 7), R(-5, 5)], s: R(.09, .15), age: 0, life: T - t + .05, seed: rand(), paper: 1, still: 1 });
+          });
+          if (t > T && t < T + .03) for (let i = 0; i < 26; i++) { const a = R(0, 6.28), sp = R(.8, 2); S.embers.push({ pal: 2, p: [0, .05, .3], v: [Math.cos(a) * sp, Math.sin(a) * sp * .8 + .3, R(-.3, .6)], age: 0, life: R(.4, .8), size: R(1.6, 3.4), seed: rand() * 6.28 }); }
+          if (t > 1.15 && t < 1.7) emit('flutter', 14, dt, () => S.shards.push({ c: n - 1, p: [R(-1.2, 1.4), R(.6, 1.5), R(-.3, .5)], uv: [R(.1, .9), R(.1, .9)], v: [R(-.2, .2), R(-.3, -.1), 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-4, 4), R(-4, 4), R(-3, 3)], s: R(.04, .08), age: 0, life: R(.6, .9), seed: rand(), paper: 1, still: 1 }));
+          S.cards.forEach(c => burnCard(c, t, dt));
+        } else if (lava) {
+          // The ground glows and spits; the eruption throws up gobbets of magma that arc and fall back
+          // (glowing, cooling) and chunks of black rock; lava keeps bubbling and spitting, flames lick
+          // up from the cracks, and dark smoke rolls off as the card sinks.
+          if (t < T) emit('spit', 30, dt, () => S.embers.push({ p: [R(-1, 1), FLOOR + R(0, .15), R(-.3, .5)], v: [R(-.2, .2), R(.6, 1.2), 0], age: 0, life: R(.25, .45), size: R(1.4, 2.6), seed: rand() * 6.28, fall: 1 }));
+          if (t > T && t < T + .03) for (let i = 0; i < 46; i++) {
+            const a = R(.25, 2.9), sp = R(1.6, 3.6);
+            S.embers.push({ p: [R(-.4, .4), FLOOR + .1, R(-.2, .5)], v: [Math.cos(a) * sp * .8, Math.sin(a) * sp, R(-.4, .6)], age: 0, life: R(.7, 1.2), size: R(3, 7), seed: rand() * 6.28, fall: 1 });
+            if (i % 3 === 0) S.shards.push({ c: n - 1, p: [R(-.4, .4), FLOOR + .1, R(-.2, .5)], uv: [R(.1, .9), R(.1, .9)], v: [Math.cos(a) * sp * .55, Math.sin(a) * sp * .7, R(-.3, .6)], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-8, 8), R(-8, 8), R(-6, 6)], s: R(.06, .11), age: 0, life: R(.8, 1.2), seed: rand(), char: 1 });
+          }
+          if (t > T && t < 1.4) emit('bubble', 26, dt, () => S.embers.push({ p: [R(-1.3, 1.3), FLOOR + R(0, .2), R(-.4, .6)], v: [R(-.3, .3), R(.6, 1.5), 0], age: 0, life: R(.4, .7), size: R(2.4, 5), seed: rand() * 6.28, fall: 1 }));
+          if (t > T && t < 1.5) emit('flame', 24, dt, () => S.flames.push({ x: R(-1.3, 1.3), y: FLOOR, z: R(-.5, .6), w: R(.16, .28), h: R(.3, .6), age: 0, life: R(.3, .5), seed: rand(), lean: R(-.06, .06) }));
+          if (t > T + .2 && t < 1.5) emit('smoke', 9, dt, () => S.smoke.push({ col: [.12, .08, .06], p: [R(-1, 1), R(.3, 1.2), R(-.5, .1)], v: [R(-.1, .1), R(.35, .6), 0], age: 0, life: R(.8, 1.2), size: R(.4, .7), seed: rand() }));
           S.cards.forEach(c => burnCard(c, t, dt));
         } else if (candy) {
           // Sugar sparkles fizz round the card; the pop throws out a fountain of hundreds-and-thousands
@@ -473,8 +517,8 @@ void main(){
       for (const m of S.smoke) { m.age += dt; m.p[0] += m.v[0] * dt; m.p[1] += m.v[1] * dt; }
       for (const s of S.shards) {
         if (s.orb) continue;
-        s.age += dt; s.v[1] += (s.age < .35 ? .3 : -1.1) * dt;
-        for (let i = 0; i < 3; i++) { s.v[i] *= 1 - .8 * dt; s.p[i] += s.v[i] * dt; s.a[i] += s.w[i] * dt; }
+        s.age += dt; if (!s.still) s.v[1] += (s.age < .35 ? .3 : -1.1) * dt;
+        for (let i = 0; i < 3; i++) { if (!s.still) s.v[i] *= 1 - .8 * dt; s.p[i] += s.v[i] * dt; s.a[i] += s.w[i] * dt; }
       }
       const live = a => a.filter(o => o.age < o.life);
       S.flames = live(S.flames); S.embers = live(S.embers); S.smoke = live(S.smoke); S.shards = live(S.shards);
@@ -565,7 +609,36 @@ void main(){
       const P = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => [px + a * hw * c - b * hh * sn, py + a * hw * sn + b * hh * c]);
       quad(arr, P, [[(u0 + 1) * .5, v0], [(u1 + 1) * .5, v0], [(u1 + 1) * .5, v1], [(u0 + 1) * .5, v1]], LOC, [1, 1, 1, alpha], [9, 0, 0, 0]);
     };
-    if (S.kind === 'candy' && !S.calm) {
+    if (S.kind === 'paper' && !S.calm) {
+      // A warm glow gathers as the scraps fly in; the fold: a soft flash and the painted swan folding out
+      // round the card (from its heart outwards, a little overshoot); it glows as the card burns inside;
+      // then it beats its wings (a pulse across it) and lifts away up and to the right, fading.
+      const T = S.T, f = ease((t - T + .02) / .35), sc = .82 + .18 * f + .04 * Math.sin(Math.PI * clamp((t - T) / .35));
+      const fly = smooth(1.2, 1.95, t), flap = .06 * Math.sin((t - 1.2) * 15) * smooth(1.15, 1.3, t), out1 = 1 - smooth(1.55, 1.98, t);
+      glowAt(out.back, [0, 0, 0], .8, [1, .75, .45, .6 * smooth(0, T, t) * (1 - smooth(T, T + .3, t))]);
+      if (R.art) {
+        layer(out.art, 0, -.35, sc * (1 - .25 * fly), .9 * fly * fly * K, smooth(T - .03, T + .32, t) * out1, .25, [1, .8, .5], true, 1.25, 0, 1 + flap, 0, .7 * fly * K);
+        layer(out.artFront, 1, .6, 1, 0, smooth(T - .05, T + .25, t) * (1 - smooth(1.5, 1.95, t)), .2, [1, .8, .5], false, 1.15);
+      }
+      const flash = bump(T - .03, T + .02, T + .3);
+      if (flash > 0) glowAt(out.back, [0, .05, 0], 1.5, [1, .92, .8, flash]);
+      glowAt(out.back, [0, .1, -.4], 1.2 * K, [1, .62, .3, .35 * smooth(T, T + .3, t) * (1 - smooth(1.2, 1.7, t))]);
+      for (const [d, col] of [[0, [1, .92, .8]], [.1, [1, .7, .4]]]) { const rt = (t - T - d) / .55; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 1.6 * ease(rt), (1 - rt) * .7, col); }
+    } else if (S.kind === 'lava' && !S.calm) {
+      // The ground glows red under the card; the eruption: a flash, the painted lava field welling up out
+      // of the ground (bottom first, seeping and flowing) and pulsing with heat, the front rocks with
+      // their lava rivers in front of the sinking card, a heat glow; then it cools and darkens away.
+      const T = S.T, out1 = 1 - smooth(1.5, 1.95, t), pulse = .85 + .15 * Math.sin(t * 8.5), well = .75 + .25 * ease((t - T + .02) / .5);
+      glowAt(out.back, [0, FLOOR + .05, 0], 1.2 * K, [1, .3, .05, .8 * smooth(0, T, t) * (1 - .4 * smooth(T, T + .5, t)) * out1]);
+      if (R.art) {
+        layer(out.art, 0, -.3, well, (PV - 1) * AH * (1 - well), smooth(T - .04, T + .4, t) * out1, 1.3, [1, .35, .05], false, 1.2 * pulse);
+        layer(out.artFront, 1, .45, 1, 0, smooth(T - .04, T + .3, t) * out1, 1.1, [1, .4, .05], false, 1.25);
+      }
+      const flash = bump(T - .03, T + .02, T + .3);
+      if (flash > 0) glowAt(out.back, [0, 0, 0], 1.6, [1, .6, .25, flash]);
+      glowAt(out.back, [0, FLOOR + .3, -.3], 1.6 * K, [1, .32, .05, .45 * smooth(T, T + .3, t) * out1 * pulse]);
+      for (const [d, col] of [[0, [1, .6, .25]], [.12, [1, .3, .05]]]) { const rt = (t - T - d) / .7; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 1.7 * ease(rt), (1 - rt) * .8, col); }
+    } else if (S.kind === 'candy' && !S.calm) {
       // The card wobbles; the POP: a bright flash, the painted candy burst bursting out round the card,
       // and every painted candy flying out of the card to where it was painted (overshooting, tumbling,
       // some in front of the card, some behind), then falling away; floor rings in candy colours.
@@ -834,7 +907,7 @@ void main(){
       // A shard flipped over shows the card back.
       const ci = (P[1][0] - P[0][0]) * (P[3][1] - P[0][1]) - (P[1][1] - P[0][1]) * (P[3][0] - P[0][0]) > 0 ? S.n : s.c || 0;
       const uv = LOC.map(([lx, ly]) => [(ci + clamp(s.uv[0] + lx * tu)) / S.slots, clamp(s.uv[1] - ly * tv)]);
-      quad(out.mid, P, uv, LOC, [1, 1, 1, alpha], [4, s.seed, 0, heat]);
+      quad(out.mid, P, uv, LOC, [1, 1, 1, s.paper ? Math.min(alpha, smooth(0, .08, s.age)) : alpha], [4, s.seed, 0, s.paper ? -1 : heat]);
     }
     // Flames and embers in front of the cards add over them; those behind sit under them.
     for (const f of S.flames) {
@@ -975,6 +1048,32 @@ void main(){
 
   // Sounds on the same clocks as the scenes.
   const SOUNDS = {
+    // Origami Fold: papery rustles as the scraps whirl in (0–0.3), the fold at 0.3 (a soft thump, a run of
+    // crisp creases and a warm chime), a crackle as the card burns in the fold (0.9–1.45), three wing beats
+    // as the swan lifts away (1.25, 1.45, 1.65) and scraps settling.
+    'burn-origami': k => {
+      [.02, .07, .12, .17, .21, .25].forEach((at, n) => k.noise({ at, dur: .06, type: 'bandpass', f0: 2600 + (n % 3) * 500, q: 1.6, level: .05 + n * .01, attack: .02 }));
+      k.tone({ at: .3, dur: .3, f0: 120, f1: 60, level: .32 });
+      [.3, .33, .36, .39, .42].forEach((at, n) => k.noise({ at, dur: .02, type: 'bandpass', f0: 3400 - n * 200, q: 4, level: .16 }));
+      [784, 988, 1175, 1568].forEach((f0, n) => k.tone({ at: .32 + n * .03, dur: .55, type: 'triangle', f0, f1: f0, level: .035, attack: .006 }));
+      [.92, 1.0, 1.08, 1.16, 1.25, 1.34, 1.43].forEach((at, n) => k.noise({ at, dur: .026, type: 'bandpass', f0: 2300 + n * 130, q: 3, level: .1 }));
+      [1.25, 1.45, 1.65].forEach((at, n) => k.noise({ at, dur: .16, type: 'bandpass', f0: 380 + n * 40, f1: 900, q: 1.1, level: .28 - n * .05, attack: .05 }));
+      [1.55, 1.68, 1.8].forEach((at, n) => k.noise({ at, dur: .05, type: 'bandpass', f0: 3000 - n * 300, q: 1.5, level: .05 }));
+    },
+    // Lava Melt: a deep rising rumble and hiss as the ground heats (0–0.22), the eruption at 0.22 (a
+    // heavy boom, a rock crack and a gush), thick bubbling gloops through the melt, gobbets splatting
+    // down (0.7–1.2), a long sizzle as the card sinks and burns (0.95–1.65) and the rumble fading.
+    'burn-lava': k => {
+      k.tone({ dur: 1.7, f0: 34, f1: 44, level: .16, attack: .2, vibrato: 3 });
+      k.noise({ dur: .24, type: 'bandpass', f0: 200, f1: 700, q: .8, level: .08, attack: .2 });
+      k.tone({ at: .22, dur: .6, f0: 62, f1: 26, level: .36 });
+      k.noise({ at: .22, dur: .05, type: 'bandpass', f0: 1800, q: .7, level: .26 });
+      k.noise({ at: .23, dur: .5, type: 'lowpass', f0: 1200, f1: 150, level: .26, attack: .01 });
+      [.36, .47, .58, .66, .78, .9, 1.05, 1.2, 1.33].forEach((at, n) => k.tone({ at, dur: .12, f0: 210 - (n % 3) * 30, f1: 70, level: .1, attack: .01 }));
+      [.72, .8, .9, 1.0, 1.12].forEach((at, n) => k.noise({ at, dur: .06, type: 'lowpass', f0: 900, f1: 200, level: .1 - n * .01 }));
+      k.noise({ at: .95, dur: .75, type: 'bandpass', f0: 3200, f1: 2200, q: .9, level: .07, attack: .1 });
+      [1.0, 1.08, 1.16, 1.24, 1.33, 1.42, 1.52].forEach((at, n) => k.noise({ at, dur: .026, type: 'bandpass', f0: 2200 + n * 120, q: 3, level: .1 }));
+    },
     // Stupendous Confectionery: a wobbly, squeaky stretch as the lid strains (0–0.18), the POP at 0.18
     // (a cork pop, a bright sparkle chord and a soft thump), a run of bubbly pops as the candies fly
     // (0.2–0.5), a glockenspiel arpeggio, sweets clattering down (0.7–1.3), crackles as the card goes,

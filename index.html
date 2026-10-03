@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-03-v303 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-03-v304 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7431,7 +7431,7 @@ video {
   </div>
 
   <script src="art/burns/level-v294/effects.js?v=295"></script>
-  <script src="art/burns/level-3d/burns3d.js?v=304"></script>
+  <script src="art/burns/level-3d/burns3d.js?v=305"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
   <script>
     const AUDIO_SOURCES = {
@@ -7803,6 +7803,7 @@ video {
       // Origami Fold: a crisp paper crease for each fold (card, triangle,
       // kite, swan), then wing beats fading as the swans fly off.
       'burn-origami': (k) => {
+        if (window.ShLevel3D) return ShLevel3D.sound('burn-origami', k);
         [0.02, 0.16, 0.3, 0.42].forEach((at, i) => {
           k.noise({ at, dur: 0.06, type: 'bandpass', f0: 3200 - i * 300, q: 2.5, level: 0.6 });
           k.noise({ at: at + 0.03, dur: 0.05, type: 'highpass', f0: 5000, level: 0.12 });
@@ -7822,6 +7823,7 @@ video {
       // Lava Melt: a sizzle as the cards heat, a heavy slump into the pool,
       // blorping bubbles, then a hiss as it cools and sinks away.
       'burn-lava': (k) => {
+        if (window.ShLevel3D) return ShLevel3D.sound('burn-lava', k);
         k.noise({ dur: 0.5, type: 'highpass', f0: 2500, f1: 4500, level: 0.11, attack: 0.15 });
         k.tone({ at: 0.32, dur: 0.7, f0: 70, f1: 45, level: 0.28, attack: 0.1 });
         k.noise({ at: 0.32, dur: 0.4, type: 'lowpass', f0: 600, f1: 200, level: 0.2, attack: 0.05 });
@@ -19888,6 +19890,10 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v304: [[ '🔥', 'Five Shop burns are reborn as painted 3D scenes: Coloured Flame, Electric Blast, Stupendous Confectionery, Lava Melt and Origami Fold, each with its own new sound.', WN_KEY ],
+        [ '⚡', 'Electric Blast strikes your card with real lightning; Stupendous Confectionery sends painted sweets tumbling out of the Pile.', WN_KEY ],
+        [ '🦢', 'Origami Fold folds a paper swan round your card, then it flies away. Lava Melt sinks your card into a field of molten rock.', WN_KEY ],
+        [ '🖼️', 'Every reworked burn now shows its painted artwork as its icon in the Shop and Custom.' ]],
       v303: [[ '🔥', 'The Default Burn is reborn: the coals glow, then real fire roars up around your card and burns it away in a shower of sparks and ash.', WN_KEY ]],
       v302: [[ '✨', 'A new app icon: three Emerald Court cards behind a big red and gold SH.', WN_KEY ],
         [ '🃏', 'The loading screen now says ShitHead Deluxe, in the same lettering as the home screen.' ]],
@@ -23498,7 +23504,7 @@ video {
       if (type === 'emotes') return `<span class="effect-mini-tile is-emotes" data-keep-emoji>${(EMOTE_PACKS[item ? item.id : 'default'] || EMOTE_PACKS.default).slice(0, 4).map(e => `<span>${e}</span>`).join('')}</span>`;
       if (type === 'cardBack') return `<span class="cos-mini-card custom-card-back opponent-cosmetic-card ${item ? getCosmeticBackClass(item.id) : getThemeDeckBackClass('default')}">${getEmblemSvg()}</span>`;
       if (type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect') {
-        if (!item) return `<span class="effect-mini-tile">${{ burnEffect:'🔥', victoryEffect:'🏆', jokerEffect:'🃏' }[type]}</span>`;
+        if (!item) return `<span class="effect-mini-tile">${type === 'burnEffect' ? burnPreviewIcon('default') : { victoryEffect:'🏆', jokerEffect:'🃏' }[type]}</span>`;
         const icon = type === 'burnEffect' ? burnPreviewIcon(item.id) : type === 'jokerEffect' ? jokerPreviewIcon(item.id) : victoryPreviewIcon(item.id);
         return `<span class="effect-mini-tile" style="background:linear-gradient(135deg,${item.tones[0]},${item.tones[1]});border-color:${item.tones[2]}">${icon}</span>`;
       }

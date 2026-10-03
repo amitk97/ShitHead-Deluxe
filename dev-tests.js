@@ -1815,6 +1815,18 @@ async function runDevTestSuite() {
       try { if (savedSeen === null) localStorage.removeItem('shithead_tips_seen'); else localStorage.setItem('shithead_tips_seen', savedSeen); } catch (e) {}
     }
   });
+  await test('v304: the six reworked burns are painted 3D scenes with their tile as the icon and their own sound', () => {
+    const tiles = { default: 'default', 'burn-coloured': 'coloured-flame', 'burn-electric': 'electric-blast', 'burn-sweets': 'confectionery', 'burn-lava': 'lava-melt', 'burn-origami': 'origami-fold' };
+    for (const [id, dir] of Object.entries(tiles)) {
+      assertTrue(window.ShLevel3D && ShLevel3D.has(id), `${id} plays in 3D`);
+      assertTrue(burnPreviewIcon(id).includes(`art/burns/${dir}/tile.webp`), `${id} shows its painted tile as the icon`);
+      assertTrue(SHAPE_BURN_EFFECTS.has(id), `${id} goes through playBurnFx`);
+      assertTrue(ShLevel3D.effects[id].dur <= 2.1, `${id} ends within 2.1s`);
+    }
+    assertTrue(cosmeticPreview(null, 'burnEffect').includes('art/burns/default/tile.webp'), 'the Default tile shows its painted tile');
+    const srcs = Object.keys(tiles).map(id => String(BURN_SOUNDS[id]));
+    assertEqual(new Set(srcs).size, srcs.length, 'each has its own sound recipe');
+  });
   await test('v301: the home snapshot paints a returning account at once, never another account; an unknown level never locks the speed', () => {
     const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp, eco: { ...challengeEconomy }, loaded: challengeEconomyLoadedForUid, snap: localStorage.getItem(HOME_SNAPSHOT_KEY), auth: authStateResolved };
     try {
@@ -3491,8 +3503,10 @@ async function runDevTestSuite() {
     }
     return stage;
   }
-  await test('REGRESSION: shape burn effects draw real shapes in previews and games', () => {
-    const stage = testBurnStage();
+  await test('REGRESSION: shape burn effects draw real shapes in previews and games (their no-WebGL fallbacks)', () => {
+    const stage = testBurnStage(), keep3d = window.ShLevel3D;
+    window.ShLevel3D = undefined; // the painted 3D burns (v304) replace these where WebGL runs
+    try {
     [['burn-electric', 'polyline'], ['burn-coloured', 'path'], ['burn-sweets', 'ellipse'], ['burn-paint', 'path'], ['burn-smoke', 'div'],
       ['burn-blackhole', 'circle'], ['burn-origami', 'path'], ['burn-pixel', 'div'], ['burn-lava', 'ellipse']].forEach(([id, shape]) => {
       assertTrue(playShopBurnPreview(id, stage), `${id} must play in the preview stage`);
@@ -3503,6 +3517,7 @@ async function runDevTestSuite() {
     playBurnEffect('burn-smoke', 100, 100);
     assertTrue(document.getElementById('burnFxLayer').querySelectorAll('.bfx').length > 0 && particles.length === before, 'In games, shape effects use their own layer, not the ember canvas');
     document.getElementById('burnFxLayer').innerHTML = '';
+    } finally { window.ShLevel3D = keep3d; }
     const prices = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && !i.season).map(i => [i.name, i.cost]));
     assertEqual(prices, { 'Coloured Flame': 250, 'Ice Shatter': 500, 'Electric Blast': 1000, 'Paint Splats': 750, 'Stupendous Confectionery': 1500, 'Smoke Show': 2000,
       'Black Hole': 2500, 'Origami Fold': 2500, 'Pixel Blast': 2500, 'Lava Melt': 2500 }, 'Burn effect prices');
@@ -3588,7 +3603,9 @@ async function runDevTestSuite() {
     assertTrue(burns.every(id => !Object.keys(BURN_SOUNDS).some(o => o !== id && BURN_SOUNDS[o] === BURN_SOUNDS[id])), 'No burn sound is shared');
     // Every piece a burn draws finishes (and is removed) within ~2s: Lava
     // Melt's pool sinks away, so no scorch mark stays on the table.
-    const stage = testBurnStage();
+    const stage = testBurnStage(), keep3d = window.ShLevel3D;
+    window.ShLevel3D = undefined; // the no-WebGL fallbacks (the painted 3D burns have their own test)
+    try {
     burns.forEach(id => {
       stage.querySelectorAll('.bfx, .bfx-flash').forEach(n => n.remove());
       playBurnFx(id, stage, 120, 80, 1);
@@ -3599,6 +3616,7 @@ async function runDevTestSuite() {
       assertTrue(Math.max(...ends) <= 2100, `${id} ends within 2.1s (got ${Math.round(Math.max(...ends))}ms)`);
       assertTrue(ends.every(e => Number.isFinite(e)), `${id}: nothing runs forever`);
     });
+    } finally { window.ShLevel3D = keep3d; }
     stage.querySelectorAll('.bfx, .bfx-flash').forEach(n => n.remove());
     assertTrue(/ori-wing/.test(bfxSwanSvg()), 'Swans have a flapping wing');
   });
