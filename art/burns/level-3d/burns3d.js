@@ -7,7 +7,7 @@
   'use strict';
   const EFFECTS = {
     // Origami Fold (Shop, premium): the owner's paper swan folds itself round the card, then flies off.
-    'burn-origami': { dur: 2.0, box: [5, 5.4, .5, .62], tile: 'art/burns/origami-fold/tile.webp', art: 'art/burns/origami-fold/layers.webp?v=1', layout: [4.4, 438 / 498, .486, .62] },
+    'burn-origami': { iconOnly: true /* v305: folded procedurally from the real card in index.html; tile + sound only */, dur: 2.0, box: [5, 5.4, .5, .62], tile: 'art/burns/origami-fold/tile.webp', art: 'art/burns/origami-fold/layers.webp?v=1', layout: [4.4, 438 / 498, .486, .62] },
     // Lava Melt (Shop, premium): the owner's molten field; the card sinks into it behind the front rocks.
     'burn-lava': { dur: 2.0, box: [5, 5.4, .5, .4], tile: 'art/burns/lava-melt/tile.webp', art: 'art/burns/lava-melt/layers.webp?v=1', layout: [4.6, 438 / 498, .396, .36] },
     // Stupendous Confectionery (Shop, premium): the owner's candy explosion; the painted candies are cut
@@ -40,7 +40,7 @@
   };
   const artImages = {};
   const artFor = id => { const src = EFFECTS[id].art; if (!src) return null; if (!artImages[src]) { artImages[src] = new Image(); artImages[src].src = src; } return artImages[src]; };
-  const has = id => !!EFFECTS[id];
+  const has = id => !!EFFECTS[id] && !EFFECTS[id].iconOnly;
   const D = 4.2, PITCH = 22 * Math.PI / 180, CP = Math.cos(PITCH), SP = Math.sin(PITCH);
   const FLOOR = -.5 * CP - .02;
   const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -1048,17 +1048,21 @@ void main(){
 
   // Sounds on the same clocks as the scenes.
   const SOUNDS = {
-    // Origami Fold: papery rustles as the scraps whirl in (0–0.3), the fold at 0.3 (a soft thump, a run of
-    // crisp creases and a warm chime), a crackle as the card burns in the fold (0.9–1.45), three wing beats
-    // as the swan lifts away (1.25, 1.45, 1.65) and scraps settling.
+    // Origami Fold (v305, the real card folded in index.html, same clock): the card lifting with a papery
+    // rustle (0–0.25), two sharp creases as the flaps fold over (0.44, 0.51), a swish as the sheet turns,
+    // a crisp tuck as each piece lands (0.96–1.14), a warm chime as the swan is made (1.16), wing beats
+    // (1.2, 1.44, 1.6, 1.76) and a whoosh as it flies off (1.2–1.95).
     'burn-origami': k => {
-      [.02, .07, .12, .17, .21, .25].forEach((at, n) => k.noise({ at, dur: .06, type: 'bandpass', f0: 2600 + (n % 3) * 500, q: 1.6, level: .05 + n * .01, attack: .02 }));
-      k.tone({ at: .3, dur: .3, f0: 120, f1: 60, level: .32 });
-      [.3, .33, .36, .39, .42].forEach((at, n) => k.noise({ at, dur: .02, type: 'bandpass', f0: 3400 - n * 200, q: 4, level: .16 }));
-      [784, 988, 1175, 1568].forEach((f0, n) => k.tone({ at: .32 + n * .03, dur: .55, type: 'triangle', f0, f1: f0, level: .035, attack: .006 }));
-      [.92, 1.0, 1.08, 1.16, 1.25, 1.34, 1.43].forEach((at, n) => k.noise({ at, dur: .026, type: 'bandpass', f0: 2300 + n * 130, q: 3, level: .1 }));
-      [1.25, 1.45, 1.65].forEach((at, n) => k.noise({ at, dur: .16, type: 'bandpass', f0: 380 + n * 40, f1: 900, q: 1.1, level: .28 - n * .05, attack: .05 }));
-      [1.55, 1.68, 1.8].forEach((at, n) => k.noise({ at, dur: .05, type: 'bandpass', f0: 3000 - n * 300, q: 1.5, level: .05 }));
+      // v305, on index.html's fold clock (bfxOrigami, 2.0s): paper lifts (0-0.14), the two kite folds
+      // crease at 0.34 / 0.44, the fold in half swishes over and creases at 0.74, the neck (1.0) and
+      // head (1.16) tuck in, a chime as the swan is made, wing beats at 1.2 / 1.44 / 1.72 as it flies.
+      [.02, .08, .14, .22, .3].forEach((at, n) => k.noise({ at, dur: .06, type: 'bandpass', f0: 2400 + (n % 3) * 500, q: 1.6, level: .13 + n * .026, attack: .02 }));
+      [.34, .44, .74].forEach(at => { k.noise({ at, dur: .025, type: 'bandpass', f0: 3200, q: 3, level: .572 }); k.tone({ at, dur: .08, f0: 180, f1: 90, level: .312, attack: .003 }); });
+      k.noise({ at: .5, dur: .26, type: 'bandpass', f0: 600, f1: 1800, q: 1, level: .234, attack: .15 });
+      [1.0, 1.16].forEach((at, n) => k.noise({ at, dur: .02, type: 'bandpass', f0: 3600 - n * 300, q: 4, level: .416 }));
+      [784, 988, 1175, 1568].forEach((f0, n) => k.tone({ at: 1.16 + n * .025, dur: .6, type: 'triangle', f0, f1: f0, level: .104, attack: .006 }));
+      [1.2, 1.44, 1.72].forEach((at, n) => k.noise({ at, dur: .14, type: 'bandpass', f0: 380 + n * 40, f1: 900, q: 1.1, level: .676 - n * .104, attack: .04 }));
+      k.noise({ at: 1.2, dur: .7, type: 'bandpass', f0: 500, f1: 2400, q: .8, level: .208, attack: .3 });
     },
     // Lava Melt: a deep rising rumble and hiss as the ground heats (0–0.22), the eruption at 0.22 (a
     // heavy boom, a rock crack and a gush), thick bubbling gloops through the melt, gobbets splatting

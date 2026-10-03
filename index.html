@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-03-v304 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-03-v305 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7431,7 +7431,7 @@ video {
   </div>
 
   <script src="art/burns/level-v294/effects.js?v=295"></script>
-  <script src="art/burns/level-3d/burns3d.js?v=305"></script>
+  <script src="art/burns/level-3d/burns3d.js?v=306"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
   <script>
     const AUDIO_SOURCES = {
@@ -8294,46 +8294,204 @@ video {
       }
     }
 
-    // Origami Fold: the top cards fold, crease by crease (card, triangle,
-    // kite), into paper swans that flap off the screen.
+    // Origami Fold (v305, owner: procedural, no pictures): the REAL top Pile card (a clone of its own
+    // element, so its face is exact and vector-sharp at any DPI) is folded like paper. Every crease is a
+    // line: the card is cut along it into pieces (clip-path polygons, `oriClip`) and the pieces on one
+    // side turn 180deg in 3D about that line (`rotate3d` round the crease), landing on top. Folds, in
+    // order: both sides in to a kite, the kite in half, the neck up, the head down; then the two halves
+    // open and beat as wings and the swan flies up off the screen. Every outside surface is the burner's
+    // own equipped back (`burnBackClass`), as on real paper; the inside is the card's face. Gold sparkles
+    // at each crease, paper scraps drift down. Never put a CSS filter on a preserve-3d box (it flattens
+    // it and the backs never show): shading lives on the leaf faces only. The same goes for `will-change:
+    // opacity` (the .bfx class has it), so the 3D boxes override it with `will-change:transform`.
+    const ORI_MS = 2000;
+    // Keep the part of a convex polygon on the side of the line through `a` (direction `d`) where `s`
+    // is (Sutherland-Hodgman with one edge).
+    function oriClip(poly, a, d, s) {
+      const side = p => (p[0] - a[0]) * d[1] - (p[1] - a[1]) * d[0], want = Math.sign(side(s)) || 1, out = [];
+      for (let i = 0; i < poly.length; i++) {
+        const p = poly[i], q = poly[(i + 1) % poly.length], sp = side(p) * want, sq = side(q) * want;
+        if (sp >= 0) out.push(p);
+        if ((sp > 0 && sq < 0) || (sp < 0 && sq > 0)) { const t = sp / (sp - sq); out.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]); }
+      }
+      return out.length > 2 ? out : null;
+    }
     function bfxOrigami(host, x, y, k) {
-      const [W] = bfxHostSize(host);
-      const stageFrames = (first) => [
-        first ? { transform: 'perspective(400px) rotateY(0) scale(1)', opacity: 1 } : { transform: 'perspective(400px) rotateY(90deg) scale(.9)', opacity: 0 },
-        { transform: 'perspective(400px) rotateY(0) scale(1)', opacity: 1, offset: first ? .1 : .3 },
-        { transform: 'perspective(400px) rotateY(0) scale(1)', opacity: 1, offset: .72 },
-        { transform: 'perspective(400px) rotateX(80deg) scale(.85)', opacity: 0 }];
-      const shapes = [
-        (s) => bfxMiniCard('#f8fafc', '#dc2626'),
-        (s) => bfxSvg(100, 100, '<path d="M10 22H90L50 86Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/><path d="M50 22V86" stroke="#94a3b8" stroke-width="1.5"/><path d="M50 22 90 22 50 86Z" fill="#e2e8f0"/>'),
-        (s) => bfxSvg(100, 100, '<path d="M50 4 72 46 50 96 28 46Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/><path d="M50 4 72 46 50 96Z" fill="#e2e8f0"/><path d="M50 4V96M28 46H72" stroke="#94a3b8" stroke-width="1.2"/>')
-      ];
-      [-1, 0, 1].forEach((side, i) => {
-        const cx = x + side * 46 * k, cy = y + (side ? 6 : -4) * k, scale = side ? .82 : 1, lag = i * 55;
-        const sizes = [[40, 56], [70, 70], [62, 70]];
-        shapes.forEach((make, n) => {
-          const el = bfxAdd(host, make(), cx, cy, sizes[n][0] * k * scale, sizes[n][1] * k * scale);
-          bfxAnimate(el, stageFrames(n === 0), { duration: 175, delay: lag + n * 140, easing: 'ease-in-out' });
-        });
-        // The swan: flips in at 0.42s, hops, then flaps away off the screen.
-        const sw = 96 * k * scale, sh = 77 * k * scale;
-        const tx = side < 0 ? -(cx + sw) : side > 0 ? (W - cx) + sw : bfxRand(-30, 30) * k;
-        const ty = -(cy + sh) * (side ? .75 : 1.05);
-        const swan = bfxAdd(host, `<div style="width:100%;height:100%;${side < 0 ? 'transform:scaleX(-1)' : ''}">${bfxSwanSvg()}</div>`, cx, cy, sw, sh);
-        bfxAnimate(swan, [
-          { transform: 'perspective(400px) rotateY(90deg) translate(0,0)', opacity: 0 },
-          { transform: 'perspective(400px) rotateY(0) translate(0,0)', opacity: 1, offset: .1 },
-          { transform: `translate(0,${-10 * k}px) rotate(${side * 4}deg)`, opacity: 1, offset: .22 },
-          ...[.4, .6, .8, 1].map(t => ({ transform: `translate(${tx * t * t}px,${-10 * k + ty * Math.pow(t, 1.4) + Math.sin(t * 9) * 8 * k}px) rotate(${side * 10 - 8}deg) scale(${1 + t * .25})`, opacity: 1 }))
-        ], { duration: 1100, delay: 400 + lag, easing: 'ease-in' });
+      const onTable = host.id === 'burnFxLayer';
+      const pileEls = onTable ? [...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')] : [];
+      const top = pileEls.filter(el => el.offsetWidth).pop(), hr = host.getBoundingClientRect();
+      let W, H, cx, cy, src;
+      if (top) {
+        const r = top.getBoundingClientRect();
+        W = top.offsetWidth; H = top.offsetHeight; cx = r.left + r.width / 2 - hr.left; cy = r.top + r.height / 2 - hr.top; src = top;
+      } else {
+        H = Math.round(Math.max(56, Math.min(110, (hr.height || 160) * .5))); W = Math.round(H * .7);
+        cx = x; cy = y + H * .25;
+        src = createCardElement({ id: 'ori-preview', rank: '10', suit: '♠' });
+      }
+      // On the table the layer is the whole screen (the swan can fly anywhere); in a preview, its stage.
+      const layer = document.createElement('div');
+      layer.className = 'ori3d';
+      layer.style.cssText = `position:absolute;inset:0;pointer-events:none;overflow:visible;perspective:${Math.round(H * 8)}px;perspective-origin:${cx}px ${cy}px`;
+      host.appendChild(layer);
+      // Every Pile card (and the Empty Pile tag) hides while the copy folds: the Pile looks empty at once.
+      const hidden = onTable ? [...pileEls, ...document.querySelectorAll('#pileZone .empty-zone-pill')] : [];
+      hidden.forEach(el => { el.style.setProperty('transition', 'none', 'important'); el.style.setProperty('visibility', 'hidden', 'important'); }); // no fade: transition-all would keep it up
+      const anims = [];
+      const done = () => { layer.remove(); hidden.forEach(el => { el.style.removeProperty('visibility'); el.style.removeProperty('transition'); }); };
+      const safety = () => anims.some(a => a.playState === 'paused') ? setTimeout(safety, 1000) : done();
+      setTimeout(safety, ORI_MS + 4000); // normally the flight's own end clears it
+      const anim = (el, frames, easing = 'linear') => { const a = el.animate && el.animate(frames, { duration: ORI_MS, fill: 'both', easing }); if (a) anims.push(a); return a; };
+      const radius = getComputedStyle(src).borderRadius || '8px', backCls = burnBackClass();
+      const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      const norm = ([a, b]) => { const l = Math.hypot(a, b) || 1; return [a / l, b / l]; };
+      const reflect = (p, a, d) => { const vx = p[0] - a[0], vy = p[1] - a[1], t = vx * d[0] + vy * d[1]; return [a[0] + 2 * t * d[0] - vx, a[1] + 2 * t * d[1] - vy]; };
+      const centroid = poly => poly.reduce((s, p) => [s[0] + p[0] / poly.length, s[1] + p[1] / poly.length], [0, 0]);
+
+      // ---- The folding, worked out flat (card pixels, y down). The swan is displayed turned 90deg, so
+      // "up" on screen is -x here and its head end (the kite's top point) faces right.
+      const T = [W / 2, 0], up = d => [d[1], -d[0]]; // screen direction -> card direction
+      let pieces = [{ orig: [[0, 0], [W, 0], [W, H], [0, H]], world: [[0, 0], [W, 0], [W, H], [0, H]], z: 0, A: null, folds: [] }];
+      const folds = [];
+      // A fold: cut every piece along the crease, turn those on the `mover` side over the line onto the top.
+      const fold = (a, d, mover, t0, t1) => {
+        d = norm(d);
+        const next = [], moving = [];
+        for (const p of pieces) {
+          for (const keepMover of [true, false]) {
+            const sideRef = keepMover ? mover : (() => { const n = [-d[1], d[0]], m = (mover[0] - a[0]) * n[0] + (mover[1] - a[1]) * n[1]; return [mover[0] - 2 * m * n[0], mover[1] - 2 * m * n[1]]; })();
+            const w = oriClip(p.world, a, d, sideRef);
+            if (!w) continue;
+            // Map the cut back onto the flat card: undo this piece's folds (each one a reflection).
+            let o = w;
+            for (let f = p.folds.length - 1; f >= 0; f--) { const F = folds[p.folds[f]]; o = o.map(q => reflect(q, F.a, F.d)); }
+            const q = { orig: o, world: w, z: p.z, folds: p.folds.slice() };
+            (keepMover ? moving : next).push(q);
+          }
+        }
+        const zTop = Math.max(...pieces.map(p => p.z)), zMax = Math.max(...moving.map(p => p.z)), c = (zTop + 1 + zMax) / 2;
+        const F = { a, d, t0, t1, c, i: folds.length };
+        // Swing toward the viewer: pick the turn whose halfway point lifts the moving side's centre up (+z).
+        const mid = centroid(moving.flatMap(p => p.world));
+        F.sign = (typeof DOMMatrix === 'function' ? new DOMMatrix().translate(a[0], a[1], c).rotateAxisAngle(d[0], d[1], 0, 90).translate(-a[0], -a[1], -c).transformPoint(new DOMPoint(mid[0], mid[1], 0)).z : 1) >= c ? 1 : -1;
+        folds.push(F);
+        for (const p of moving) { p.world = p.world.map(q => reflect(q, a, d)); p.z = 2 * c - p.z; p.folds.push(F.i); }
+        pieces = next.concat(moving);
+        return F;
+      };
+      fold(T, [-W / 2, H], [0, 0], .07, .17);                // left side in to the centre line
+      fold(T, [W / 2, H], [W, 0], .12, .22);                 // right side in: a kite
+      const half = fold(T, [0, 1], [W, H / 2], .25, .37);    // kite in half down its middle
+      const neckDir = norm(up([.16, -1])), neckAt = [W / 2, H * .5];
+      fold(neckAt, [neckDir[0], neckDir[1] - 1], T, .4, .5); // the point folds up into the neck
+      const tip = reflect(T, neckAt, norm([neckDir[0], neckDir[1] - 1]));
+      const headDir = norm(up([1, .9])), headAt = [tip[0] - neckDir[0] * H * .15, tip[1] - neckDir[1] * H * .15];
+      fold(headAt, [neckDir[0] + headDir[0], neckDir[1] + headDir[1]], tip, .5, .58); // and the head down
+      const neckFold = folds.length - 2;
+
+      // ---- The swan's frame: turned 90deg, centred where the card was and a little above it.
+      const all = pieces.flatMap(p => p.world), xs = all.map(p => p[0]), ys = all.map(p => p[1]);
+      const bc = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+      const S = 1.3;
+      const fly = document.createElement('div'), group = document.createElement('div');
+      fly.className = 'bfx'; group.className = 'bfx';
+      fly.style.cssText = `position:absolute;left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;will-change:transform;transform-style:preserve-3d;transform-origin:50% 50%`;
+      group.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;will-change:transform;transform-style:preserve-3d;transform-origin:0 0`;
+      const glow = document.createElement('div'), shadow = document.createElement('div');
+      glow.className = 'bfx'; shadow.className = 'bfx';
+      glow.style.cssText = `position:absolute;left:${cx - H * 1.1}px;top:${cy - H * 1.3}px;width:${H * 2.2}px;height:${H * 2.2}px;border-radius:50%;background:radial-gradient(closest-side,rgba(253,230,138,.55),rgba(251,191,36,.18) 55%,transparent)`;
+      shadow.style.cssText = `position:absolute;left:${cx - W * .8}px;top:${cy + H * .36}px;width:${W * 1.6}px;height:${H * .28}px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.5),transparent)`;
+      layer.append(shadow, glow, fly);
+      fly.appendChild(group);
+      const groupAt = t => {
+        const lift = ease(Math.min(1, t / .07)), turn = ease(Math.max(0, Math.min(1, (t - .25) / .17)));
+        const px = W / 2 + (bc[0] - W / 2) * turn, py = H / 2 + (bc[1] - H / 2) * turn, s = 1 + .1 * lift + (S - 1.1) * turn;
+        return `translate3d(${W / 2}px,${H / 2 - H * (.16 * lift + .12 * turn)}px,${36 * lift}px) rotateX(${14 * lift * (1 - turn)}deg) rotateY(${-22 * turn}deg) rotate(${90 * turn}deg) scale(${s}) translate(${-px}px,${-py}px)`;
+      };
+      // Times worth a keyframe: every 1/80th, so each curve is followed closely.
+      const TIMES = Array.from({ length: 81 }, (_, i) => i / 80);
+      anim(group, TIMES.map(t => ({ offset: t, transform: groupAt(t) })));
+      // Wings: after the head, both halves open from the keel and beat (the near half more).
+      const beat = [[.5, 0], [.6, 34], [.66, 4], [.72, 40], [.79, 2], [.86, 40], [.93, 4], [1, 30]];
+      const wingAt = t => {
+        if (t <= beat[0][0]) return 0;
+        for (let i = 1; i < beat.length; i++) if (t <= beat[i][0]) { const [t0, a0] = beat[i - 1], [t1, a1] = beat[i]; return a0 + (a1 - a0) * ease((t - t0) / (t1 - t0)); }
+        return beat[beat.length - 1][1];
+      };
+      const keelA = [W / 2, 0], keelD = [0, 1], zSplit = half.c;
+      // Which way about the keel lifts a piece off the page toward the viewer (sign of z at +90deg).
+      const lifts = (p, c) => new DOMMatrix().translate(keelA[0], 0, c).rotateAxisAngle(0, 1, 0, 90).translate(-keelA[0], 0, -c).transformPoint(new DOMPoint(...centroid(p.world), p.z)).z > c ? 1 : -1;
+      pieces.forEach((p, n) => {
+        const inNeck = p.folds.includes(neckFold), near = p.folds.includes(half.i);
+        const wingC = near ? zSplit : zSplit - .5, wingSign = inNeck ? 0 : (typeof DOMMatrix === 'function' ? lifts(p, wingC) : 1) * (near ? 1 : -.45);
+        const tf = t => {
+          let s = `translate3d(${keelA[0]}px,0px,${wingC}px) rotate3d(${keelD[0]},${keelD[1]},0,${(wingSign * wingAt(t)).toFixed(2)}deg) translate3d(${-keelA[0]}px,0px,${-wingC}px)`;
+          for (let f = folds.length - 1; f >= 0; f--) {
+            const F = folds[f], on = p.folds.includes(f), u = on ? ease(Math.max(0, Math.min(1, (t - F.t0) / (F.t1 - F.t0)))) : 0;
+            s += ` translate3d(${F.a[0]}px,${F.a[1]}px,${F.c}px) rotate3d(${F.d[0]},${F.d[1]},0,${(F.sign * 180 * u).toFixed(2)}deg) translate3d(${-F.a[0]}px,${-F.a[1]}px,${-F.c}px)`;
+          }
+          return s;
+        };
+        const el = document.createElement('div');
+        el.className = 'bfx';
+        el.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;will-change:transform;transform-style:preserve-3d;transform-origin:0 0`;
+        const pct = (pts, mirror) => `polygon(${pts.map(([u, v]) => `${((mirror ? W - u : u) / W * 100).toFixed(3)}% ${(v / H * 100).toFixed(3)}%`).join(',')})`;
+        const edge = (pts, mirror, shade, line) => `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="position:absolute;left:0;top:0;overflow:visible"><polygon points="${pts.map(([u, v]) => `${mirror ? W - u : u},${v}`).join(' ')}" fill="rgba(${shade > 0 ? '255,255,255' : '0,0,0'},${Math.abs(shade)})" stroke="rgba(255,255,255,${line})" stroke-width="1" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+        const shade = [-.14, .06, -.06, .1, -.1, 0, -.18, .04][n % 8];
+        const face = src.cloneNode(true);
+        face.removeAttribute('id'); face.querySelectorAll('[id]').forEach(q => q.removeAttribute('id'));
+        face.removeAttribute('data-card-id'); face.querySelectorAll('[data-card-id]').forEach(q => q.removeAttribute('data-card-id')); face.classList.add('ori-face');
+        face.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;margin:0;transform:none;animation:none;transition:none;opacity:1;visibility:visible`;
+        const faceSide = document.createElement('div');
+        faceSide.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;backface-visibility:hidden;-webkit-backface-visibility:hidden;clip-path:${pct(p.orig)}`;
+        faceSide.appendChild(face);
+        faceSide.insertAdjacentHTML('beforeend', edge(p.orig, false, -.03, .07));
+        const backSide = document.createElement('div');
+        backSide.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;transform:rotateY(180deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;clip-path:${pct(p.orig, true)}`;
+        backSide.innerHTML = `<div class="custom-card-back ${backCls}" style="position:absolute;left:0;top:0;width:${W}px;height:${H}px;border-radius:${radius};margin:0"></div>` + edge(p.orig, true, shade, .45);
+        el.append(faceSide, backSide);
+        group.appendChild(el);
+        anim(el, TIMES.map(t => ({ offset: t, transform: tf(t) })));
+        // Which side faces the viewer, from the folds themselves (an odd number of turns past halfway =
+        // the back): the cloned card's own layers don't always honour backface-visibility.
+        const flips = t => p.folds.filter(f => (t - folds[f].t0) / (folds[f].t1 - folds[f].t0) >= .5).length % 2;
+        anim(faceSide, TIMES.map(t => ({ offset: t, opacity: flips(t) ? 0 : 1 })));
+        anim(backSide, TIMES.map(t => ({ offset: t, opacity: flips(t) ? 1 : 0 })));
       });
-      // A puff of paper scraps as the folds finish.
-      for (let i = 0; i < 12; i++) {
-        const a = bfxRand(-Math.PI, 0), d = bfxRand(30, 70) * k, s = bfxRand(6, 11) * k;
-        const bit = bfxAdd(host, bfxSvg(10, 10, `<path d="M0 0 10 3 3 10Z" fill="${['#f8fafc', '#e2e8f0', '#fde68a', '#fbcfe8'][i % 4]}"/>`), x, y, s, s);
-        bfxAnimate(bit, [{ transform: 'translate(0,0) rotate(0)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .02 },
-          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) rotate(${bfxRand(-200, 200)}deg)`, opacity: 1, offset: .5 },
-          { transform: `translate(${Math.cos(a) * d * 1.2}px,${Math.sin(a) * d + 40 * k}px) rotate(${bfxRand(-400, 400)}deg)`, opacity: 0 }], { duration: bfxRand(800, 1100), delay: 390 + bfxRand(0, 80), easing: 'ease-out' });
+      // The flight: still until the swan is made, then up and away off the top of the screen.
+      const vw = host.clientWidth || innerWidth;
+      const flight = anim(fly, [
+        { transform: 'translate3d(0,0,0) scale(1)', offset: 0 },
+        { transform: 'translate3d(0,0,0) scale(1)', offset: .6, easing: 'cubic-bezier(.5,0,.75,.35)' },
+        { transform: `translate3d(${vw * .4}px,${-(cy + H * 2.6)}px,90px) rotate(-24deg) scale(.7)`, offset: 1 }
+      ]);
+      if (flight) flight.onfinish = done; else setTimeout(done, ORI_MS);
+      anim(shadow, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)', offset: .07 }, { opacity: .9, transform: 'scale(1.2)', offset: .58 }, { opacity: 0, transform: 'scale(.4)', offset: .78 }, { opacity: 0, transform: 'scale(.4)' }]);
+      anim(glow, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(.4)', offset: .5 }, { opacity: 1, transform: 'scale(1)', offset: .6 }, { opacity: 0, transform: 'translateY(-40%) scale(1.3)', offset: .8 }, { opacity: 0, transform: 'scale(1.3)' }]);
+      // Gold sparkles burst from each crease as it snaps flat and when the swan is made.
+      const burst = (n, at, spread, size, ox = 0, oy = 0) => {
+        for (let i = 0; i < n; i++) {
+          const el = document.createElement('div'), ang = Math.random() * Math.PI * 2, d = spread * (.4 + Math.random() * .6), sz = size * (.5 + Math.random() * .7);
+          el.className = 'bfx';
+          el.style.cssText = `position:absolute;left:${cx + ox - sz / 2}px;top:${cy + oy - sz / 2}px;width:${sz}px;height:${sz}px;border-radius:50%;background:radial-gradient(circle,#fff,#fde68a 40%,rgba(251,191,36,0) 72%)`;
+          layer.appendChild(el);
+          anim(el, [{ opacity: 0, transform: 'translate(0,0) scale(.3)', offset: 0 }, { opacity: 0, transform: 'translate(0,0) scale(.3)', offset: at },
+            { opacity: 1, transform: `translate(${Math.cos(ang) * d * .4}px,${Math.sin(ang) * d * .4}px) scale(1)`, offset: at + .03 },
+            { opacity: 0, transform: `translate(${Math.cos(ang) * d}px,${Math.sin(ang) * d + H * .15}px) scale(.2)`, offset: Math.min(1, at + .2) },
+            { opacity: 0, transform: 'translate(0,0) scale(.2)', offset: 1 }]);
+        }
+      };
+      burst(8, .17, H * .7, H * .08, -W * .25, -H * .2); burst(8, .22, H * .7, H * .08, W * .25, -H * .2); burst(10, .37, H * .8, H * .08, 0, -H * .3);
+      burst(26, .58, H * 1.7, H * .11, 0, -H * .35);
+      for (let i = 0; i < 16; i++) {
+        const el = document.createElement('div'), sz = H * (.06 + Math.random() * .08), x0 = cx + (Math.random() - .3) * Math.min(vw, H * 5) * .6;
+        const drop = H * (2 + Math.random() * 2.5), spin = (Math.random() - .5) * 900, start = .6 + Math.random() * .14, paper = i % 3;
+        el.className = paper ? 'bfx' : `bfx custom-card-back ${backCls}`;
+        el.style.cssText = `position:absolute;left:${x0}px;top:${cy - H * (1 + Math.random())}px;width:${sz}px;height:${sz * 1.3}px;border-radius:2px;${paper ? 'background:#f8fafc;' : ''}box-shadow:0 1px 2px rgba(0,0,0,.35);clip-path:polygon(0 0,100% ${Math.random() * 40}%,${60 + Math.random() * 40}% 100%,0 ${50 + Math.random() * 50}%)`;
+        layer.appendChild(el);
+        anim(el, [{ opacity: 0, transform: 'translate(0,0) rotate(0deg) rotateX(0deg)', offset: 0 }, { opacity: 0, transform: 'translate(0,0) rotate(0deg) rotateX(0deg)', offset: start },
+          { opacity: 1, transform: `translate(${(Math.random() - .5) * 40}px,${drop * .3}px) rotate(${spin * .3}deg) rotateX(${spin * .5}deg)`, offset: start + .08 },
+          { opacity: 0, transform: `translate(${(Math.random() - .5) * 120}px,${drop}px) rotate(${spin}deg) rotateX(${spin * 1.4}deg)`, offset: 1 }]);
       }
     }
 
@@ -19890,6 +20048,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v305: [[ '🦢', 'Origami Fold now folds your real card: it creases into a kite, folds in half, lifts its neck and head, shows your card back on every fold, beats its wings and flies off the screen.', WN_KEY ]],
       v304: [[ '🔥', 'Five Shop burns are reborn as painted 3D scenes: Coloured Flame, Electric Blast, Stupendous Confectionery, Lava Melt and Origami Fold, each with its own new sound.', WN_KEY ],
         [ '⚡', 'Electric Blast strikes your card with real lightning; Stupendous Confectionery sends painted sweets tumbling out of the Pile.', WN_KEY ],
         [ '🦢', 'Origami Fold folds a paper swan round your card, then it flies away. Lava Melt sinks your card into a field of molten rock.', WN_KEY ],
@@ -23240,7 +23399,7 @@ video {
     }
 
     function burnPreviewIcon(id) {
-      if (window.ShLevel3D && ShLevel3D.has(id)) return ShLevel3D.icon(id);
+      if (window.ShLevel3D && ShLevel3D.icon(id)) return ShLevel3D.icon(id); // its tile, even for one played without it (Origami)
       if (ShLevelBurns.index(id) >= 0) return ShLevelBurns.icon(id);
       return { 'burn-ice': '❄️', 'burn-electric': '⚡', 'burn-sweets': '🍬', 'burn-paint': '🎨', 'burn-smoke': '💨',
         'burn-blackhole': '🕳️', 'burn-origami': '🦢', 'burn-pixel': '👾', 'burn-lava': '🌋',
@@ -24634,7 +24793,7 @@ video {
       ShLevelBurns.clear(stage);
       if (window.ShLevel3D) ShLevel3D.clear(stage);
       audio.playBurnSound(id);
-      stage.querySelectorAll('.shop-burn-particle, .bfx, .bfx-flash').forEach(node => node.remove());
+      stage.querySelectorAll('.shop-burn-particle, .bfx, .bfx-flash, .ori3d').forEach(node => node.remove());
       if (SHAPE_BURN_EFFECTS.has(id)) {
         const rect = stage.getBoundingClientRect();
         return playBurnFx(id, stage, (rect.width || 240) / 2, (rect.height || 132) * .62, scale);
