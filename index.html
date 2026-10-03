@@ -74,6 +74,7 @@
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#020617" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="preload" href="art/fonts/cinzel-latin-v26.woff2" as="font" type="font/woff2" crossorigin />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -84,14 +85,21 @@
      still block the page, but not this screen. -->
 <body class="bg-slate-950 text-slate-100 theme-obsidian select-none">
   <style>
-    /* § Loading screen (v301): plain CSS, no web fonts needed to show it. */
+    /* § Loading screen (v301): plain CSS. The logo font is our own copy of Cinzel (preloaded above);
+       'optional' uses it only if it is ready at once (cached), so the logo never swaps font mid-screen. */
+    @font-face { font-family: 'ShBoot Cinzel'; src: url(art/fonts/cinzel-latin-v26.woff2) format('woff2'); font-weight: 400 900; font-display: optional; }
     #bootSplash { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: clamp(28px, 6vh, 56px); padding: 24px 16px 12vh; background: radial-gradient(ellipse 80% 55% at 50% 38%, #0b2a5c 0%, #071a3d 45%, #020617 100%);
       transition: opacity .28s ease-out; }
     #bootSplash.boot-out { opacity: 0; pointer-events: none; }
-    #bootSplash .boot-logo { margin: 0; font-family: 'Cinzel', Georgia, 'Times New Roman', serif; font-weight: 900; font-size: clamp(46px, 16vw, 104px); line-height: 1;
+    #bootSplash .boot-logo { margin: 0; font-family: 'ShBoot Cinzel', Georgia, 'Times New Roman', serif; font-weight: 900; font-size: clamp(46px, 16vw, 104px); line-height: 1;
       letter-spacing: .5px; color: #b91c1c; background: linear-gradient(180deg, #f87171 0%, #b91c1c 40%, #5e0a0a 100%); -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent; filter: drop-shadow(0 1px 0 #fde047) drop-shadow(0 -1px 0 #b45309) drop-shadow(0 3px 8px rgba(0,0,0,.9)); }
+    #bootSplash .boot-brand { display: flex; flex-direction: column; align-items: center; }
+    /* Same treatment as the home screen's .brand-subtitle under the logo. */
+    #bootSplash .boot-sub { margin: .1em 0 0; padding-left: .36em; font-family: 'ShBoot Cinzel', Georgia, serif; font-weight: 700; font-style: italic; letter-spacing: .36em;
+      text-transform: uppercase; font-size: clamp(18px, 6.4vw, 42px); line-height: 1.2; color: #f59e0b; background: linear-gradient(180deg, #fde68a 0%, #f59e0b 55%, #b45309 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
     #bootSplash .boot-fan { position: relative; width: clamp(180px, 52vw, 300px); height: clamp(100px, 30vw, 170px); }
     #bootSplash .boot-fan img { position: absolute; left: 50%; top: 0; width: 38%; aspect-ratio: 5 / 7; height: auto; margin-left: -19%; border-radius: 8%;
       background: #ece7da; box-shadow: 0 10px 24px rgba(0,0,0,.55); object-fit: fill; }
@@ -106,7 +114,7 @@
     @media (prefers-reduced-motion: reduce) { #bootSplash .boot-bar i { animation: none; left: 31%; } #bootSplash { transition: none; } }
   </style>
   <div id="bootSplash" role="status" aria-live="polite">
-    <h1 class="boot-logo">ShitHead</h1>
+    <div class="boot-brand"><h1 class="boot-logo">ShitHead</h1><p class="boot-sub">Deluxe</p></div>
     <div class="boot-fan" aria-hidden="true"><img src="art/backs/approved-v267/default.webp" alt=""><img src="art/backs/approved-v267/default.webp" alt=""><img src="art/backs/approved-v267/default.webp" alt=""></div>
     <div class="boot-bar" aria-hidden="true"><i></i></div>
     <p class="boot-text">Getting your table ready…</p>
