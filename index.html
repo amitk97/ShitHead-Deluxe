@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-03-v307 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-03-v308 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7431,7 +7431,7 @@ video {
   </div>
 
   <script src="art/burns/level-v294/effects.js?v=295"></script>
-  <script src="art/burns/level-3d/burns3d.js?v=308"></script>
+  <script src="art/burns/level-3d/burns3d.js?v=309"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
   <script>
     const AUDIO_SOURCES = {
@@ -8138,30 +8138,92 @@ video {
       }
     }
     const BFX_FLAME_PATH = 'M32 11c4 8.5 14 13 14 25.5C46 45 40 52 32 52s-14-7-14-15.5c0-7 4-11.5 7-15.5 0 6 3 9 5 9-1-6.5-.5-12.5 2-19Z';
+    // Coloured Flame (v308, owner: procedural; every flame its own element): spectral violet, pink,
+    // cyan and indigo flames, each an SVG tongue with its own flicker, sway, size and life (sampled
+    // from its own sine mix), ignite under the REAL top card (0-CF_START) and lick it. From CF_START a
+    // jagged burning edge climbs the card to the top by CF_END (clip-path, a white-pink-violet-char
+    // glow riding it); a band of card just above the edge curls over in 3D about the edge (its own
+    // preserve-3d box, rotateX), so its underside, the burner's own back, shows; the card itself
+    // tilts back, rises in the heat and warps. Edge flames ride the burning edge up the card, a bed of
+    // flames stays below, spectral sparks and coloured haze rise, and the fire dies down by 2.0s.
+    // Sound: ShLevel3D.sound('burn-coloured') on the same times.
+    const CF_MS = 2000, CF_START = .3, CF_END = 1.55;
+    const CF_PALETTE = [['#4c1d95', '#a855f7', '#e9d5ff'], ['#831843', '#ec4899', '#fbcfe8'], ['#155e75', '#22d3ee', '#cffafe'], ['#312e81', '#6366f1', '#c7d2fe']];
     function bfxColouredFlame(host, x, y, k) {
-      const palettes = [['#a855f7', '#f0abfc'], ['#ec4899', '#fde68a'], ['#06b6d4', '#a5f3fc'], ['#6366f1', '#c4b5fd'], ['#f43f5e', '#fcd34d'], ['#22d3ee', '#f0abfc'], ['#d946ef', '#fbcfe8']];
-      palettes.forEach(([base, tip], i) => {
-        const id = `bfx-g-${++bfxGradientSeq}`;
-        const size = bfxRand(58, 96) * k;
-        const svg = `<svg width="${size}" height="${size * 1.1}" viewBox="10 8 44 46"><defs><linearGradient id="${id}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${base}"/><stop offset=".6" stop-color="${tip}"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs>
-          <path d="${BFX_FLAME_PATH}" fill="url(#${id})" opacity=".92"/><path d="M32 29c3 4 7 7 7 12 0 4.5-3 7.5-7 7.5s-7-3-7-7.5c0-3.5 3-7 7-12Z" fill="#fff" opacity=".7"/></svg>`;
-        const ox = (i - (palettes.length - 1) / 2) * 18 * k + bfxRand(-6, 6) * k;
-        const el = bfxAdd(host, svg, x + ox, y - size * .35, size, size * 1.1);
-        el.style.transformOrigin = '50% 100%';
-        const dur = bfxRand(1100, 1500);
-        bfxAnimate(el, [
-          { transform: 'scale(.3,.1) translateY(0)', opacity: 0 },
-          { transform: 'scale(1,1.15) translateY(-4px)', opacity: 1, offset: .2 },
-          { transform: 'scale(.9,.95) translateY(-10px) skewX(4deg)', opacity: 1, offset: .45 },
-          { transform: 'scale(1.05,1.2) translateY(-18px) skewX(-4deg)', opacity: .9, offset: .7 },
-          { transform: 'scale(.6,1.4) translateY(-38px)', opacity: 0 }
-        ], { duration: dur, delay: i * 45, easing: 'ease-in-out' });
-      });
-      for (let i = 0; i < 18; i++) {
-        const c = palettes[i % palettes.length][1];
-        const ember = bfxAdd(host, `<div style="width:100%;height:100%;border-radius:50%;background:${c};box-shadow:0 0 6px ${c}"></div>`, x + bfxRand(-45, 45) * k, y, 4 * k, 4 * k);
-        bfxAnimate(ember, [{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${bfxRand(-30, 30) * k}px, ${bfxRand(-120, -70) * k}px)`, opacity: 0 }], { duration: bfxRand(900, 1400), delay: bfxRand(100, 500), easing: 'ease-out' });
+      const { layer, W, H, cx, cy, radius, backCls, anim, end, face } = procBurnStage(host, x, y, CF_MS);
+      const D = CF_MS / 1000, N = 80, rand = (a, b) => a + Math.random() * (b - a), id = ++pfxSeq;
+      const TIMES = Array.from({ length: N + 1 }, (_, i) => i / N), clamp = v => Math.max(0, Math.min(1, v));
+      const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const add = (css, html = '', cls = 'bfx') => { const el = document.createElement('div'); el.className = cls; el.style.cssText = css; el.innerHTML = html; layer.appendChild(el); return el; };
+      // How far the burn has climbed (card pixels from the top: H = untouched, 0 = gone), and the heat.
+      const cutAt = T => H * (1 - clamp((T - CF_START) / (CF_END - CF_START)) ** 1.35 * 1.04);
+      const lift = T => -H * (.06 * ease(clamp(T / .3)) + .1 * clamp((T - CF_START) / (CF_END - CF_START)));
+      const tilt = T => 22 * ease(clamp((T - CF_START) / (CF_END - CF_START)));
+      const edgeY = T => cy - H / 2 + lift(T) + cutAt(T) * Math.cos(tilt(T) * Math.PI / 180);
+      // ---- Glow behind it all and coloured haze.
+      const glow = add(`position:absolute;left:${cx - H * 1.3}px;top:${cy - H * 1.2}px;width:${H * 2.6}px;height:${H * 2.6}px;border-radius:50%;z-index:0;background:radial-gradient(closest-side,rgba(192,132,252,.5),rgba(236,72,153,.22) 45%,rgba(34,211,238,.08) 70%,transparent)`);
+      anim(glow, TIMES.map(o => { const T = o * D, on = clamp(T / .3) * (1 - clamp((T - 1.6) / .38)); return { offset: o, opacity: on * (.75 + .25 * Math.sin(T * 17)), transform: `translateY(${lift(T)}px) scale(${.6 + .5 * on})` }; }));
+      // ---- The card: main face above the curl band, the curling band, all in one 3D box.
+      const box = add(`position:absolute;left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;will-change:transform;transform-style:preserve-3d;transform-origin:50% 100%`);
+      const band = H * .14, sway = rand(5, 9) * (Math.random() < .5 ? -1 : 1);
+      const main = document.createElement('div');
+      main.style.cssText = `position:absolute;inset:0`;
+      const char = document.createElement('div');
+      const charBg = (deep) => `linear-gradient(to top,#fdf4ff 0,#f0abfc 3%,#c084fc 7%,rgba(88,28,135,.9) 13%,rgba(30,10,40,${deep}) 24%,rgba(30,10,40,0) 42%)`;
+      char.style.cssText = `position:absolute;left:-2px;top:0;width:${W + 4}px;height:${H}px;background:${charBg(.6)}`;
+      main.append(face(), char);
+      const curl = document.createElement('div'); // the band just above the edge, curling over
+      curl.style.cssText = `position:absolute;inset:0;will-change:transform;transform-style:preserve-3d`;
+      const cFront = document.createElement('div'), cBack = document.createElement('div');
+      cFront.style.cssText = `position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden`;
+      const cFrontChar = document.createElement('div');
+      cFrontChar.style.cssText = `position:absolute;inset:0;background:linear-gradient(to top,rgba(240,171,252,.9),rgba(88,28,135,.55) 8%,rgba(20,8,28,.35) 14%)`;
+      cFront.append(face(), cFrontChar);
+      cBack.style.cssText = `position:absolute;inset:0;transform:rotateX(180deg);backface-visibility:hidden;-webkit-backface-visibility:hidden`;
+      cBack.innerHTML = `<div class="custom-card-back ${backCls}" style="position:absolute;left:0;top:0;width:${W}px;height:${H}px;border-radius:${radius};margin:0"></div><div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(240,171,252,.85),rgba(88,28,135,.5) 8%,rgba(20,8,28,.3) 14%)"></div>`;
+      curl.append(cFront, cBack);
+      box.append(main, curl);
+      const jag = Array.from({ length: 9 }, () => rand(0, 6.3)), wob = (j, T) => H * (.03 * Math.sin(j * 2.3 + T * 16 + jag[j]) + .018 * Math.sin(j * 4.9 - T * 11));
+      const edgePts = (c, T, rev) => { const p = jag.map((_, j) => [110 - j * 15, c + wob(j, T)]); return (rev ? p.reverse() : p).map(([u, v]) => `${u.toFixed(1)}% ${v.toFixed(1)}px`); };
+      const curlAngle = T => T < CF_START ? 0 : Math.min(118, 30 + 88 * clamp((T - CF_START) / .35)) + 6 * Math.sin(T * 13);
+      anim(box, TIMES.map(o => { const T = o * D, m = clamp((T - CF_START) / (CF_END - CF_START));
+        return { offset: o, transform: `translateY(${lift(T).toFixed(2)}px) rotateX(${tilt(T).toFixed(2)}deg) rotateY(${(sway * Math.sin(T * 3.1) * m).toFixed(2)}deg) skewX(${(Math.sin(T * 8) * 3 * m).toFixed(2)}deg) scale(${(1 - .08 * m).toFixed(3)})` }; }));
+      anim(main, TIMES.map(o => { const T = o * D, c = cutAt(T) - band;
+        return { offset: o, clipPath: `polygon(-10% -10%, 110% -10%, ${edgePts(Math.max(c, -H * .2), T).join(', ')})`,
+          filter: `drop-shadow(0 0 ${(3 + 12 * clamp(T / .3)).toFixed(1)}px rgba(192,132,252,${(.3 + .5 * clamp(T / .3)).toFixed(2)}))` }; }));
+      anim(char, TIMES.map(o => { const T = o * D; return { offset: o, opacity: clamp((T - CF_START + .2) / .25), transform: `translateY(${(cutAt(T) - band - H + H * .02).toFixed(1)}px)` }; }));
+      anim(curl, TIMES.map(o => { const T = o * D, c = cutAt(T); return { offset: o, transformOrigin: `50% ${c.toFixed(1)}px`, transform: `rotateX(${(-curlAngle(T)).toFixed(2)}deg)` }; }));
+      // The band's clip: between the edge and a band above it (the back is mirrored top to bottom).
+      const bandPoly = (T, mirror) => { const c = cutAt(T), top = edgePts(c - band, T).map(s => s.replace(/(-?[\d.]+)px$/, (m0, v) => `${(mirror ? H - v : +v).toFixed(1)}px`)), bot = edgePts(c, T, true).map(s => s.replace(/(-?[\d.]+)px$/, (m0, v) => `${(mirror ? H - v : +v).toFixed(1)}px`)); return `polygon(${top.join(', ')}, ${bot.join(', ')})`; };
+      const backShows = T => curlAngle(T) > 90, fadeOut = T => 1 - clamp((T - CF_END + .05) / .12);
+      anim(cFront, TIMES.map(o => { const T = o * D; return { offset: o, clipPath: bandPoly(T, false), opacity: T < CF_START || backShows(T) ? 0 : fadeOut(T) }; }));
+      const lastCard = anim(cBack, TIMES.map(o => { const T = o * D; return { offset: o, clipPath: bandPoly(T, true), opacity: T >= CF_START && backShows(T) ? fadeOut(T) : 0 }; }));
+      // ---- Flames: each its own SVG tongue, gradient and life.
+      const flame = (pal, n) => `<svg viewBox="0 0 40 100" width="100%" height="100%" style="overflow:visible"><defs><linearGradient id="cf${id}-${n}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${pal[0]}" stop-opacity=".2"/><stop offset=".22" stop-color="${pal[1]}" stop-opacity=".95"/><stop offset=".7" stop-color="${pal[2]}" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+        <path d="M20 100C6 96 2 78 8 62C12 50 10 38 16 22C18 30 20 34 22 30C26 20 24 10 20 0C32 14 38 34 36 52C35 64 38 74 34 86C31 96 26 100 20 100Z" fill="url(#cf${id}-${n})"/>
+        <path d="M20 98C13 95 12 84 15 75C17 69 17 62 20 54C22 62 25 66 25 74C27 82 27 94 20 98Z" fill="#fdf4ff" opacity=".85"/></svg>`;
+      let n = 0;
+      const spawn = ({ fx, base, w, h, z, t0, t1, ride }) => {
+        const pal = CF_PALETTE[n % CF_PALETTE.length], el = add(`position:absolute;left:${fx - w / 2}px;top:${-h}px;width:${w}px;height:${h}px;z-index:${z};mix-blend-mode:screen;transform-origin:50% 100%`, flame(pal, n++));
+        const f1 = rand(9, 15), f2 = rand(5, 8), ph = rand(0, 6.3), sw = rand(6, 14);
+        anim(el, TIMES.map(o => { const T = o * D, life = clamp((T - t0) / .18) * (1 - clamp((T - t1) / .3)), by = ride ? edgeY(T) : base;
+          return { offset: o, opacity: life > 0 ? Math.min(1, life * 1.3) : 0,
+            transform: `translateY(${by.toFixed(1)}px) skewX(${(Math.sin(T * f2 + ph) * sw).toFixed(2)}deg) scale(${(life * (1 + .12 * Math.sin(T * f1 + ph))).toFixed(3)},${(life * (1 + .3 * Math.sin(T * f1 * 1.3 + ph * 2) + .15 * Math.sin(T * f2 * 2.1))).toFixed(3)})` }; }));
+      };
+      for (let i = 0; i < 9; i++) spawn({ fx: cx + (i / 8 - .5) * W * 1.05 + rand(-4, 4), w: H * rand(.18, .26), h: H * rand(.26, .4), z: i % 2 ? 4 : 2, t0: CF_START - .1 + rand(0, .12), t1: CF_END - .25 + rand(0, .1), ride: true });
+      for (let i = 0; i < 14; i++) { const depth = rand(-1, 1); spawn({ fx: cx + rand(-1, 1) * W * 1.15, base: cy + H * (.5 + .12 * depth), w: H * rand(.24, .38) * (1 + .25 * depth), h: H * rand(.45, .85) * (1 + .2 * depth), z: depth > .3 ? 4 : 1, t0: rand(0, .22), t1: rand(1.4, 1.65), ride: false }); }
+      // ---- Spectral sparks and coloured haze rising.
+      for (let i = 0; i < 40; i++) {
+        const t0 = rand(.1, 1.55), life = rand(.35, .45), s = H * rand(.02, .045), rise = H * rand(1.1, 2.6), sw = rand(-.5, .5) * H, col = ['#e9d5ff', '#f9a8d4', '#a5f3fc', '#c7d2fe'][i % 4];
+        const el = add(`position:absolute;left:${cx + rand(-.8, .8) * W - s / 2}px;top:${cy + rand(-.1, .5) * H}px;width:${s}px;height:${s}px;z-index:4;border-radius:50%;background:#fff;box-shadow:0 0 ${s * 2.5}px ${s * .8}px ${col}`);
+        anim(el, [{ offset: 0, opacity: 0, transform: 'translate(0,0)' }, { offset: t0 / D, opacity: 0, transform: 'translate(0,0)' }, { offset: t0 / D + .01, opacity: 1, transform: 'translate(0,0)' },
+          { offset: (t0 + life * .5) / D, opacity: 1, transform: `translate(${sw * .5}px,${-rise * .5}px)` }, { offset: (t0 + life) / D, opacity: 0, transform: `translate(${sw}px,${-rise}px) scale(.3)` }, { offset: 1, opacity: 0, transform: 'scale(.3)' }]);
       }
+      for (let i = 0; i < 6; i++) {
+        const t0 = rand(.3, 1.3), s = H * rand(.6, .9), el = add(`position:absolute;left:${cx + rand(-.5, .5) * W - s / 2}px;top:${cy - H * .6 - s / 2}px;width:${s}px;height:${s}px;z-index:1;border-radius:50%;background:radial-gradient(closest-side,${['rgba(168,85,247,.28)', 'rgba(236,72,153,.22)', 'rgba(34,211,238,.2)'][i % 3]},transparent)`);
+        anim(el, [{ offset: 0, opacity: 0, transform: 'scale(.5)' }, { offset: t0 / D, opacity: 0, transform: 'scale(.5)' }, { offset: (t0 + .2) / D, opacity: 1, transform: `translate(${rand(-.2, .2) * H}px,${-H * .4}px) scale(1)` }, { offset: Math.min(1, (t0 + .65) / D), opacity: 0, transform: `translate(${rand(-.4, .4) * H}px,${-H * 1.3}px) scale(1.8)` }, { offset: 1, opacity: 0, transform: 'scale(1.8)' }]);
+      }
+      end(lastCard);
     }
     function bfxBlobPath(r, bumps) {
       const pts = [];
@@ -20277,6 +20339,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v308: [[ '🔥', 'Coloured Flame now sets your real card alight: violet, pink and blue flames, each moving on its own, burn it from the bottom up while its edge curls over.', WN_KEY ]],
       v307: [[ '🌋', 'Lava Melt now sinks your real card into a bubbling pool of lava ringed by rocks: it burns away at the surface, softens as it goes under, then the lava cools and sinks away.', WN_KEY ]],
       v306: [[ '🍬', 'Stupendous Confectionery now bursts your real card open like a sweet wrapper: dozens of sweets, each flying, tumbling and bouncing on its own, with your card back on the torn halves.', WN_KEY ]],
       v305: [[ '🦢', 'Origami Fold now folds your real card: it creases into a kite, folds in half, lifts its neck and head, shows your card back on every fold, beats its wings and flies off the screen.', WN_KEY ]],

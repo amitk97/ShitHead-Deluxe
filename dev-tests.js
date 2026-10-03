@@ -1821,6 +1821,7 @@ async function runDevTestSuite() {
       if (id === 'burn-origami') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /oriClip/.test(String(bfxOrigami)), 'Origami Fold folds the real card (v305), not the painted scene');
       else if (id === 'burn-sweets') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /procBurnStage/.test(String(bfxSweets)), 'Stupendous Confectionery is procedural (v306), not the painted scene');
       else if (id === 'burn-lava') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /procBurnStage/.test(String(bfxLavaMelt)), 'Lava Melt is procedural (v307), not the painted scene');
+      else if (id === 'burn-coloured') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /procBurnStage/.test(String(bfxColouredFlame)), 'Coloured Flame is procedural (v308), not the painted scene');
       else assertTrue(window.ShLevel3D && ShLevel3D.has(id), `${id} plays in 3D`);
       assertTrue(burnPreviewIcon(id).includes(`art/burns/${dir}/tile.webp`), `${id} shows its painted tile as the icon`);
       assertTrue(SHAPE_BURN_EFFECTS.has(id), `${id} goes through playBurnFx`);
@@ -3702,6 +3703,31 @@ async function runDevTestSuite() {
       sheet.getAnimations({ subtree: true }).forEach(a => a.finish());
       await new Promise(r => setTimeout(r, 30));
       assertTrue(!layer.querySelector('.pfx-layer') && getComputedStyle(card).visibility !== 'hidden', 'Nothing is left behind and the Pile shows again');
+    } finally { wrap.innerHTML = keep; layer.querySelectorAll('.pfx-layer').forEach(n => n.remove()); }
+  });
+
+  await test('v308: Coloured Flame burns the real card upward with independent flames; its curling edge shows the burner\'s back', async () => {
+    const layer = document.getElementById('burnFxLayer'), wrap = document.getElementById('discardCardsWrapper'), keep = wrap.innerHTML;
+    try {
+      layer.querySelectorAll('.pfx-layer').forEach(n => n.remove());
+      wrap.innerHTML = '';
+      ['cf-under', 'cf-test-top'].forEach(cid => { const c = createCardElement({ id: cid, rank: '10', suit: '♠' }); c.dataset.cardId = cid; wrap.appendChild(c); });
+      bfxColouredFlame(layer, 100, 100, 1);
+      const sheet = layer.querySelector('.pfx-layer');
+      assertTrue(!!sheet && [...wrap.children].every(c => getComputedStyle(c).visibility === 'hidden'), 'Every Pile card hides: only the copy of the top card is shown');
+      const flames = [...sheet.children].filter(el => el.querySelector('svg linearGradient'));
+      assertTrue(flames.length >= 20, `Many separate flames (${flames.length})`);
+      assertEqual(new Set(flames.map(el => JSON.stringify(el.getAnimations()[0].effect.getKeyframes().map(f => f.transform)))).size, flames.length, 'Every flame moves on its own');
+      const backs = sheet.querySelectorAll('.custom-card-back.' + burnBackClass().split(' ')[0]);
+      assertEqual(backs.length, 1, "The curling edge's underside is the burner's back");
+      const curl = backs[0].parentElement.parentElement;
+      assertTrue(curl.getAnimations()[0].effect.getKeyframes().some(f => /rotateX\(-1[01]\d/.test(f.transform)), 'The edge curls over in 3D');
+      assertTrue([...sheet.querySelectorAll('[style*="preserve-3d"]')].every(el => el.getAnimations().every(a => !a.effect.getKeyframes().some(f => 'opacity' in f || 'filter' in f))), 'No 3D box is flattened (no opacity or filter on them)');
+      const ends = [...sheet.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
+      assertTrue(Math.max(...ends) <= 2100, `It ends within 2.1s (${Math.round(Math.max(...ends))}ms)`);
+      sheet.getAnimations({ subtree: true }).forEach(a => a.finish());
+      await new Promise(r => setTimeout(r, 30));
+      assertTrue(!layer.querySelector('.pfx-layer') && [...wrap.children].every(c => getComputedStyle(c).visibility !== 'hidden'), 'Nothing is left behind and the Pile shows again');
     } finally { wrap.innerHTML = keep; layer.querySelectorAll('.pfx-layer').forEach(n => n.remove()); }
   });
 

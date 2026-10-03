@@ -18,7 +18,7 @@
     // Electric Blast (Shop): the owner's lightning burst; strikes and arcs drawn live, rock shards fly.
     'burn-electric': { dur: 1.9, box: [5, 5.4, .5, .5], tile: 'art/burns/electric-blast/tile.webp', art: 'art/burns/electric-blast/layers.webp?v=1', layout: [4.4, 414 / 498, .526, .5] },
     // Coloured Flame (Shop): the owner's spectral flames swirling round the card.
-    'burn-coloured': { dur: 1.9, box: [5, 5.4, .5, .55], tile: 'art/burns/coloured-flame/tile.webp', art: 'art/burns/coloured-flame/layers.webp?v=1', layout: [4.4, 402 / 498, .47, .55] },
+    'burn-coloured': { iconOnly: true /* v308: procedural in index.html (bfxColouredFlame); tile + sound only */, dur: 1.9, box: [5, 5.4, .5, .55], tile: 'art/burns/coloured-flame/tile.webp', art: 'art/burns/coloured-flame/layers.webp?v=1', layout: [4.4, 402 / 498, .47, .55] },
     // Default Burn (everyone's burn until they equip one): the owner's fire bursting up out of the coals.
     'default': { dur: 1.9, box: [5, 5.4, .5, .6], tile: 'art/burns/default/tile.webp', art: 'art/burns/default/layers.webp?v=1', layout: [4.4, 402 / 498, .45, .6] },
     // Inferno Sweep (Lvl 40): the owner's swirl of fire, swept across by a whip of flame; the rubble in front.
@@ -1112,19 +1112,21 @@ void main(){
       [.68, .76, .84, .92, 1.0, 1.08, 1.17, 1.26].forEach((at, n) => k.noise({ at, dur: .026, type: 'bandpass', f0: 2300 + n * 130, q: 3, level: .1 }));
       k.tone({ at: .9, dur: .8, type: 'sawtooth', f0: 120, f1: 60, level: .025, attack: .1, vibrato: 25 });
     },
-    // Coloured Flame: a breathy, glassy swell as the flames gather (0–0.22), the ignition at 0.22 (a
-    // soft thump, a bright airy whoosh and a shimmering chord), a hollow ghostly roar with rising
-    // crystal glints, crackles as the card burns away (0.8–1.45) and a fading shimmer.
+    // Coloured Flame (v308, on bfxColouredFlame's clock in index.html: CF_START .3, CF_END 1.55): a
+    // breathy, glassy swell as the spectral flames gather under the card (0-0.3), the catch at 0.3 (a
+    // soft thump, an airy whoosh and a shimmering chord), a hollow ghostly roar with crystal glints and
+    // crackles as the burning edge climbs the card, the last flare as it is consumed (1.55), a shimmer.
     'burn-coloured': k => {
-      k.noise({ dur: .26, type: 'bandpass', f0: 900, f1: 3400, q: 1.4, level: .08, attack: .2 });
-      [880, 1175].forEach((f0, n) => k.tone({ at: .04 + n * .04, dur: .3, type: 'triangle', f0, f1: f0 * 1.06, level: .035, attack: .18 }));
-      k.tone({ at: .22, dur: .4, f0: 88, f1: 40, level: .26 });
-      k.noise({ at: .2, dur: .45, type: 'bandpass', f0: 500, f1: 2600, q: .8, level: .28, attack: .04 });
-      [659, 831, 988, 1319].forEach((f0, n) => k.tone({ at: .23 + n * .012, dur: .7, type: 'triangle', f0, f1: f0, level: .04, attack: .01, vibrato: 6 }));
-      k.noise({ at: .3, dur: 1.15, type: 'bandpass', f0: 420, f1: 900, q: .6, level: .14, attack: .12 });
-      [.38, .52, .66, .8, .95].forEach((at, n) => k.tone({ at, dur: .22, f0: 1760 + n * 220, f1: 1800 + n * 220, level: .03, attack: .005 }));
-      [.82, .89, .96, 1.03, 1.11, 1.19, 1.27, 1.35, 1.43].forEach((at, n) => k.noise({ at, dur: .026, type: 'bandpass', f0: 2300 + n * 130, q: 3, level: .12 }));
-      k.noise({ at: 1.35, dur: .55, type: 'bandpass', f0: 3600, f1: 2200, q: 1, level: .05, attack: .12 });
+      k.noise({ dur: .32, type: 'bandpass', f0: 900, f1: 3400, q: 1.4, level: .1, attack: .22 });
+      [880, 1175].forEach((f0, n) => k.tone({ at: .04 + n * .05, dur: .32, type: 'triangle', f0, f1: f0 * 1.06, level: .04, attack: .2 }));
+      k.tone({ at: .3, dur: .4, f0: 88, f1: 40, level: .26 });
+      k.noise({ at: .28, dur: .45, type: 'bandpass', f0: 500, f1: 2600, q: .8, level: .28, attack: .04 });
+      [659, 831, 988, 1319].forEach((f0, n) => k.tone({ at: .31 + n * .012, dur: .7, type: 'triangle', f0, f1: f0, level: .04, attack: .01, vibrato: 6 }));
+      k.noise({ at: .35, dur: 1.3, type: 'bandpass', f0: 420, f1: 900, q: .6, level: .14, attack: .12 });
+      [.48, .66, .84, 1.02, 1.2, 1.38].forEach((at, n) => k.tone({ at, dur: .22, f0: 1760 + n * 220, f1: 1800 + n * 220, level: .03, attack: .005 }));
+      [.42, .53, .63, .74, .85, .95, 1.06, 1.16, 1.27, 1.37, 1.47].forEach((at, n) => k.noise({ at, dur: .026, type: 'bandpass', f0: 2300 + (n % 5) * 160, q: 3, level: .12 }));
+      k.noise({ at: 1.52, dur: .3, type: 'bandpass', f0: 700, f1: 2200, q: .9, level: .16, attack: .03 });
+      [1319, 1661, 1976].forEach((f0, n) => k.tone({ at: 1.55 + n * .03, dur: .45, type: 'triangle', f0, f1: f0, level: .03, attack: .01 }));
     },
     // Default Burn: coals hissing and spitting (0–0.16), the whoosh as the fire goes up at 0.16 (a soft
     // deep thump and a rushing burst), the fire roaring with crackles and pops, the card crackling as
