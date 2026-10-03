@@ -9,7 +9,7 @@
     // Origami Fold (Shop, premium): the owner's paper swan folds itself round the card, then flies off.
     'burn-origami': { iconOnly: true /* v305: folded procedurally from the real card in index.html; tile + sound only */, dur: 2.0, box: [5, 5.4, .5, .62], tile: 'art/burns/origami-fold/tile.webp', art: 'art/burns/origami-fold/layers.webp?v=1', layout: [4.4, 438 / 498, .486, .62] },
     // Lava Melt (Shop, premium): the owner's molten field; the card sinks into it behind the front rocks.
-    'burn-lava': { dur: 2.0, box: [5, 5.4, .5, .4], tile: 'art/burns/lava-melt/tile.webp', art: 'art/burns/lava-melt/layers.webp?v=1', layout: [4.6, 438 / 498, .396, .36] },
+    'burn-lava': { iconOnly: true /* v307: procedural in index.html (bfxLavaMelt); tile + sound only */, dur: 2.0, box: [5, 5.4, .5, .4], tile: 'art/burns/lava-melt/tile.webp', art: 'art/burns/lava-melt/layers.webp?v=1', layout: [4.6, 438 / 498, .396, .36] },
     // Stupendous Confectionery (Shop, premium): the owner's candy explosion; the painted candies are cut
     // out as sprites (u0, v0, u1, v1 of the picture) that burst out from the card and tumble.
     'burn-sweets': { iconOnly: true /* v306: procedural in index.html (bfxSweets); tile + sound only */, dur: 2.0, box: [5, 5.4, .5, .55], tile: 'art/burns/confectionery/tile.webp', art: 'art/burns/confectionery/layers.webp?v=1', layout: [4.4, 414 / 498, .586, .55],
@@ -1064,19 +1064,22 @@ void main(){
       [1.2, 1.44, 1.72].forEach((at, n) => k.noise({ at, dur: .14, type: 'bandpass', f0: 380 + n * 40, f1: 900, q: 1.1, level: .676 - n * .104, attack: .04 }));
       k.noise({ at: 1.2, dur: .7, type: 'bandpass', f0: 500, f1: 2400, q: .8, level: .208, attack: .3 });
     },
-    // Lava Melt: a deep rising rumble and hiss as the ground heats (0–0.22), the eruption at 0.22 (a
-    // heavy boom, a rock crack and a gush), thick bubbling gloops through the melt, gobbets splatting
-    // down (0.7–1.2), a long sizzle as the card sinks and burns (0.95–1.65) and the rumble fading.
+    // Lava Melt (v307, on bfxLavaMelt's clock in index.html: LAVA_TOUCH .4, LAVA_GONE 1.55, LAVA_POPS): a
+    // deep rumble as the pool wells up (0-0.25), the card's hiss and plop as it touches the lava (0.4),
+    // a sizzle with crackles all the way down, a gloop for every bubble that pops, a gulp as the lava
+    // swallows it (1.55), then the crust ticking as it cools.
     'burn-lava': k => {
-      k.tone({ dur: 1.7, f0: 34, f1: 44, level: .16, attack: .2, vibrato: 3 });
-      k.noise({ dur: .24, type: 'bandpass', f0: 200, f1: 700, q: .8, level: .08, attack: .2 });
-      k.tone({ at: .22, dur: .6, f0: 62, f1: 26, level: .36 });
-      k.noise({ at: .22, dur: .05, type: 'bandpass', f0: 1800, q: .7, level: .26 });
-      k.noise({ at: .23, dur: .5, type: 'lowpass', f0: 1200, f1: 150, level: .26, attack: .01 });
-      [.36, .47, .58, .66, .78, .9, 1.05, 1.2, 1.33].forEach((at, n) => k.tone({ at, dur: .12, f0: 210 - (n % 3) * 30, f1: 70, level: .1, attack: .01 }));
-      [.72, .8, .9, 1.0, 1.12].forEach((at, n) => k.noise({ at, dur: .06, type: 'lowpass', f0: 900, f1: 200, level: .1 - n * .01 }));
-      k.noise({ at: .95, dur: .75, type: 'bandpass', f0: 3200, f1: 2200, q: .9, level: .07, attack: .1 });
-      [1.0, 1.08, 1.16, 1.24, 1.33, 1.42, 1.52].forEach((at, n) => k.noise({ at, dur: .026, type: 'bandpass', f0: 2200 + n * 120, q: 3, level: .1 }));
+      k.tone({ dur: 1.9, f0: 34, f1: 42, level: .18, attack: .2, vibrato: 3 });
+      k.noise({ dur: .3, type: 'bandpass', f0: 180, f1: 700, q: .8, level: .12, attack: .2 });
+      k.noise({ at: .4, dur: .28, type: 'bandpass', f0: 4200, f1: 2600, q: .8, level: .3, attack: .01 });
+      k.tone({ at: .4, dur: .2, f0: 190, f1: 60, level: .34, attack: .004 });
+      k.noise({ at: .41, dur: .32, type: 'lowpass', f0: 1500, f1: 200, level: .22, attack: .01 });
+      k.noise({ at: .45, dur: 1.1, type: 'bandpass', f0: 3000, f1: 2200, q: .9, level: .1, attack: .1 });
+      [.5, .58, .67, .74, .83, .9, .99, 1.07, 1.16, 1.25, 1.33, 1.42].forEach((at, n) => k.noise({ at, dur: .022, type: 'bandpass', f0: 2100 + (n % 4) * 300, q: 3, level: .13 }));
+      [.3, .46, .58, .7, .83, .95, 1.08, 1.2, 1.33, 1.5, 1.62].forEach((at, n) => k.tone({ at, dur: .12, f0: 230 - (n % 3) * 35, f1: 70, level: .15, attack: .006 }));
+      k.tone({ at: 1.55, dur: .32, f0: 130, f1: 45, level: .3, attack: .01 });
+      k.noise({ at: 1.55, dur: .28, type: 'lowpass', f0: 900, f1: 150, level: .18, attack: .01 });
+      [1.66, 1.74, 1.8, 1.88].forEach((at, n) => k.noise({ at, dur: .02, type: 'bandpass', f0: 1600 + n * 250, q: 4, level: .09 - n * .015 }));
     },
     // Stupendous Confectionery (v306: on bfxSweets' clock in index.html): a wobbly, squeaky stretch as the card jiggles (0–0.18), the POP at 0.18
     // (a cork pop, a bright sparkle chord and a soft thump), a run of bubbly pops as the candies fly

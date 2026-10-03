@@ -1820,6 +1820,7 @@ async function runDevTestSuite() {
     for (const [id, dir] of Object.entries(tiles)) {
       if (id === 'burn-origami') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /oriClip/.test(String(bfxOrigami)), 'Origami Fold folds the real card (v305), not the painted scene');
       else if (id === 'burn-sweets') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /procBurnStage/.test(String(bfxSweets)), 'Stupendous Confectionery is procedural (v306), not the painted scene');
+      else if (id === 'burn-lava') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /procBurnStage/.test(String(bfxLavaMelt)), 'Lava Melt is procedural (v307), not the painted scene');
       else assertTrue(window.ShLevel3D && ShLevel3D.has(id), `${id} plays in 3D`);
       assertTrue(burnPreviewIcon(id).includes(`art/burns/${dir}/tile.webp`), `${id} shows its painted tile as the icon`);
       assertTrue(SHAPE_BURN_EFFECTS.has(id), `${id} goes through playBurnFx`);
@@ -3667,6 +3668,35 @@ async function runDevTestSuite() {
       const paths = new Set(sweets.map(el => JSON.stringify(el.getAnimations()[0].effect.getKeyframes().map(f => f.transform))));
       assertEqual(paths.size, sweets.length, 'Every sweet moves on its own path');
       assertTrue([...sheet.querySelectorAll('[style*="preserve-3d"]')].every(el => getComputedStyle(el).willChange === 'transform' && el.getAnimations().every(a => !a.effect.getKeyframes().some(f => 'opacity' in f))), 'The 3D halves are never flattened (no opacity on them)');
+      const ends = [...sheet.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
+      assertTrue(Math.max(...ends) <= 2100, `It ends within 2.1s (${Math.round(Math.max(...ends))}ms)`);
+      sheet.getAnimations({ subtree: true }).forEach(a => a.finish());
+      await new Promise(r => setTimeout(r, 30));
+      assertTrue(!layer.querySelector('.pfx-layer') && getComputedStyle(card).visibility !== 'hidden', 'Nothing is left behind and the Pile shows again');
+    } finally { wrap.innerHTML = keep; layer.querySelectorAll('.pfx-layer').forEach(n => n.remove()); }
+  });
+
+  await test('v307: Lava Melt sinks the real card into a lava pool, burning it away at the surface, with rocks that each move on their own', async () => {
+    const layer = document.getElementById('burnFxLayer'), wrap = document.getElementById('discardCardsWrapper'), keep = wrap.innerHTML;
+    try {
+      layer.querySelectorAll('.pfx-layer').forEach(n => n.remove());
+      wrap.innerHTML = '';
+      const card = createCardElement({ id: 'lava-test-top', rank: '10', suit: '♠' });
+      card.dataset.cardId = 'lava-test-top';
+      wrap.appendChild(card);
+      bfxLavaMelt(layer, 100, 100, 1);
+      const sheet = layer.querySelector('.pfx-layer');
+      assertTrue(!!sheet && getComputedStyle(card).visibility === 'hidden', 'It draws over the screen and the real Pile card hides');
+      assertTrue(!!sheet.querySelector('feTurbulence') && !!sheet.querySelector('feDisplacementMap'), 'The lava flows (vector turbulence + displacement)');
+      const face = sheet.querySelector('.pfx-face'), cut = face.parentElement, box = cut.parentElement;
+      const clips = cut.getAnimations()[0].effect.getKeyframes().map(f => f.clipPath);
+      assertTrue(new Set(clips).size > 40, 'The burning edge moves every frame');
+      const moves = box.getAnimations()[0].effect.getKeyframes().map(f => f.transform);
+      const skews = moves.map(m => Math.abs(parseFloat((m.match(/skewX\(([-\d.]+)/) || [0, 0])[1]))), squash = parseFloat(moves[78].match(/scale\([-\d.]+,\s*([-\d.]+)/)[1]);
+      assertTrue(skews[0] < .01 && Math.max(...skews) > 2 && squash < .9, `The card softens (skew, squash) as it sinks (${Math.max(...skews).toFixed(1)}deg, ${squash})`);
+      const rocks = [...sheet.children].filter(el => el.querySelector('svg clipPath'));
+      assertTrue(rocks.length >= 8, `Rocks round the pool (${rocks.length})`);
+      assertEqual(new Set(rocks.map(el => JSON.stringify(el.getAnimations()[0].effect.getKeyframes().map(f => f.transform)))).size, rocks.length, 'Every rock moves on its own');
       const ends = [...sheet.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
       assertTrue(Math.max(...ends) <= 2100, `It ends within 2.1s (${Math.round(Math.max(...ends))}ms)`);
       sheet.getAnimations({ subtree: true }).forEach(a => a.finish());

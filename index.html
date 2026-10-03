@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-03-v306 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-03-v307 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7431,7 +7431,7 @@ video {
   </div>
 
   <script src="art/burns/level-v294/effects.js?v=295"></script>
-  <script src="art/burns/level-3d/burns3d.js?v=307"></script>
+  <script src="art/burns/level-3d/burns3d.js?v=308"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
   <script>
     const AUDIO_SOURCES = {
@@ -8665,44 +8665,134 @@ video {
       }
     }
 
-    // Lava Melt: the cards glow red-hot, droop and melt into a bubbling
-    // lava pool that then cools and sinks away, leaving the table clean.
-    function bfxLavaMelt(host, x, y, k) {
-      const gid = `bfx-g-${++bfxGradientSeq}`;
-      const poolY = y + 30 * k;
-      const pool = bfxAdd(host, bfxSvg(160, 50, `<defs><radialGradient id="${gid}" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#fef08a"/><stop offset=".35" stop-color="#f97316"/><stop offset=".75" stop-color="#b91c1c"/><stop offset="1" stop-color="#450a0a" stop-opacity="0"/></radialGradient></defs><ellipse cx="80" cy="25" rx="78" ry="23" fill="url(#${gid})"/>`), x, poolY, 170 * k, 52 * k);
-      bfxAnimate(pool, [{ transform: 'scale(0,.2)', opacity: 0, filter: 'brightness(1)' }, { transform: 'scale(0,.2)', opacity: 0, offset: .16 },
-        { transform: 'scale(1,1)', opacity: 1, offset: .42 }, { transform: 'scale(1.04,.95)', opacity: 1, filter: 'brightness(1.15)', offset: .66 },
-        { transform: 'scale(.7,.35) translateY(10px)', opacity: .7, filter: 'brightness(.45)', offset: .86 }, { transform: 'scale(.3,0) translateY(16px)', opacity: 0, filter: 'brightness(.3)' }],
-        { duration: 1950, easing: 'ease-in-out' });
-      [-34, 0, 34].forEach((ox, i) => {
-        const cx = x + ox * k, cy = y - 4 * k + (i === 1 ? -6 : 0) * k, rot = [-10, 3, 12][i];
-        const card = bfxAdd(host, `<div style="width:100%;height:100%;transform:rotate(${rot}deg)">${bfxMiniCard('#f8fafc', '#111827')}</div>`, cx, cy, 40 * k, 56 * k);
-        card.style.transformOrigin = '50% 100%';
-        const melt = [{ transform: 'scale(1,1) skewX(0)', opacity: 1 }, { transform: 'scale(1,1) skewX(0)', opacity: 1, offset: .3 },
-          { transform: 'scale(1.1,.75) skewX(6deg) translateY(6px)', opacity: 1, offset: .55 }, { transform: 'scale(1.45,.3) skewX(-5deg) translateY(18px)', opacity: .9, offset: .8 },
-          { transform: 'scale(1.7,.05) translateY(30px)', opacity: 0 }];
-        bfxAnimate(card, melt, { duration: 1000, delay: i * 50, easing: 'ease-in' });
-        const hot = bfxAdd(host, `<div style="width:100%;height:100%;transform:rotate(${rot}deg);border-radius:${5 * k}px;background:linear-gradient(180deg,#fde047,#f97316 45%,#dc2626);box-shadow:0 0 ${14 * k}px #f97316"></div>`, cx, cy, 40 * k, 56 * k);
-        hot.style.transformOrigin = '50% 100%';
-        bfxAnimate(hot, melt.map((f, n) => ({ ...f, opacity: [0, .95, 1, .95, 0][n] })), { duration: 1000, delay: i * 50, easing: 'ease-in' });
-        for (let d = 0; d < 2; d++) {
-          const drip = bfxAdd(host, `<div style="width:100%;height:100%;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:linear-gradient(#fde047,#f97316);box-shadow:0 0 6px #f97316"></div>`, cx + bfxRand(-12, 12) * k, cy + 24 * k, 6 * k, 9 * k);
-          bfxAnimate(drip, [{ transform: 'translateY(0) scale(0)', opacity: 0 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: .2 },
-            { transform: `translateY(${bfxRand(14, 26) * k}px) scale(1,1.3)`, opacity: 1, offset: .8 }, { transform: `translateY(${bfxRand(28, 34) * k}px) scale(1.4,.4)`, opacity: 0 }], { duration: 520, delay: 420 + i * 60 + d * 170, easing: 'ease-in' });
-        }
+    // Lava Melt (v307, owner: procedural, the card melts into a live environment): a pool of lava wells
+    // up under the Pile (one SVG, its flow and dark crust veins from an animated feTurbulence +
+    // feDisplacementMap, so it stays vector-sharp), faceted rocks rise round its rim and bob, each its own
+    // element with its own depth, turn and lava-lit underside. The REAL top card lifts in the heat, then
+    // sinks: from the moment its bottom edge touches the surface (LAVA_TOUCH) a flickering jagged cut
+    // follows the surface up the card (clip-path) with a white-hot charred edge, and the card softens
+    // (squash, skew wobble, orange glow) until it is swallowed (LAVA_GONE). Splash, ripples, steam,
+    // embers and bubbles popping at LAVA_POPS; then the pool cools to crust and sinks away. Sound:
+    // ShLevel3D.sound('burn-lava') on the same times.
+    const LAVA_MS = 2000, LAVA_TOUCH = .4, LAVA_GONE = 1.55, LAVA_POPS = [.3, .46, .58, .7, .83, .95, 1.08, 1.2, 1.33, 1.5, 1.62];
+    let pfxSeq = 0;
+    function lavaRockSvg(id, r) {
+      const rand = (a, b) => a + Math.random() * (b - a), n = 7 + (Math.random() * 3 | 0);
+      const pts = Array.from({ length: n }, (_, i) => {
+        const a = -Math.PI + (i + rand(-.3, .3)) / n * Math.PI * 2, d = r * rand(.66, 1.05);
+        return [Math.cos(a) * d, Math.min(Math.sin(a) * d, r * .42)];
       });
-      for (let i = 0; i < 11; i++) {
-        const bx = x + bfxRand(-58, 58) * k, s = bfxRand(7, 14) * k;
-        const bubble = bfxAdd(host, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fef9c3,#fb923c 55%,#c2410c);box-shadow:0 0 6px #fb923c"></div>`, bx, poolY + bfxRand(-6, 4) * k, s, s);
-        bfxAnimate(bubble, [{ transform: 'translateY(0) scale(0)', opacity: 0 }, { transform: `translateY(${-4 * k}px) scale(1)`, opacity: 1, offset: .55 },
-          { transform: `translateY(${-9 * k}px) scale(1.5)`, opacity: 0 }], { duration: bfxRand(280, 420), delay: bfxRand(760, 1350), easing: 'ease-out' });
+      const apex = [rand(-.25, .25) * r, -.3 * r], f = v => v.toFixed(1);
+      const facets = pts.map((p, i) => {
+        const q = pts[(i + 1) % n], mx = (p[0] + q[0]) / 2 - apex[0], my = (p[1] + q[1]) / 2 - apex[1], l = Math.hypot(mx, my) || 1;
+        const b = (-.6 * mx - .8 * my) / l;
+        return `<path d="M${f(apex[0])} ${f(apex[1])}L${f(p[0])} ${f(p[1])}L${f(q[0])} ${f(q[1])}Z" fill="${b > 0 ? `rgba(255,236,220,${(.2 * b).toFixed(2)})` : `rgba(0,0,0,${(-.38 * b).toFixed(2)})`}"/>`;
+      }).join('');
+      const poly = pts.map(p => p.map(f).join(' ')).join(' ');
+      const crack = () => { let x = rand(-.5, .5) * r, y = .35 * r, d = `M${f(x)} ${f(y)}`; for (let i = 0; i < 3; i++) { x += rand(-.18, .18) * r; y -= rand(.12, .22) * r; d += `L${f(x)} ${f(y)}`; } return d; };
+      const cracks = [crack(), crack()].map(d => `<path d="${d}" stroke="#f97316" stroke-width="${f(r * .14)}" fill="none" opacity=".35" stroke-linecap="round"/><path d="${d}" stroke="#fde68a" stroke-width="${f(r * .045)}" fill="none" stroke-linecap="round"><animate attributeName="opacity" values=".45;1;.45" dur="${rand(.5, .8).toFixed(2)}s" repeatCount="indefinite"/></path>`).join('');
+      return `<svg viewBox="${f(-1.2 * r)} ${f(-1.1 * r)} ${f(2.4 * r)} ${f(2 * r)}" width="100%" height="100%" style="overflow:visible"><defs>
+        <linearGradient id="rk${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#78716c"/><stop offset=".45" stop-color="#292524"/><stop offset="1" stop-color="#140c09"/></linearGradient>
+        <linearGradient id="rl${id}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fb923c" stop-opacity=".95"/><stop offset=".4" stop-color="#c2410c" stop-opacity=".25"/><stop offset=".6" stop-color="#c2410c" stop-opacity="0"/></linearGradient>
+        <clipPath id="rc${id}"><polygon points="${poly}"/></clipPath></defs>
+        <polygon points="${poly}" fill="url(#rk${id})"/><g clip-path="url(#rc${id})">${facets}<rect x="${f(-1.2 * r)}" y="${f(-1.1 * r)}" width="${f(2.4 * r)}" height="${f(2 * r)}" fill="url(#rl${id})"/>${cracks}</g>
+        <polygon points="${poly}" fill="none" stroke="#0c0a09" stroke-width="${f(r * .04)}" stroke-linejoin="round"/></svg>`;
+    }
+    function bfxLavaMelt(host, x, y, k) {
+      const { layer, W, H, cx, cy, anim, end, face } = procBurnStage(host, x, y, LAVA_MS);
+      const D = LAVA_MS / 1000, N = 80, rand = (a, b) => a + Math.random() * (b - a), id = ++pfxSeq;
+      const TIMES = Array.from({ length: N + 1 }, (_, i) => i / N), clamp = v => Math.max(0, Math.min(1, v));
+      const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const S = cy + H * .62, dy0 = S - (cy + H / 2), rx = Math.max(W * 1.9, H * 1.3), ry = rx * .26; // surface line and pool size
+      const add = (css, html = '', cls = 'bfx') => { const el = document.createElement('div'); el.className = cls; el.style.cssText = 'position:absolute;' + css; el.innerHTML = html; layer.appendChild(el); return el; };
+      // ---- The pool: halo, dark rim, flowing lava (turbulence displacement + crust veins), a cooling skin.
+      const pw = rx * 2.7, ph = ry * 4.6, pcx = pw / 2, pcy = ph / 2;
+      const pool = add(`left:${cx - pcx}px;top:${S - pcy}px;width:${pw}px;height:${ph}px;z-index:2`, `<svg width="${pw}" height="${ph}" viewBox="0 0 ${pw} ${ph}" style="overflow:visible"><defs>
+        <radialGradient id="lg${id}"><stop offset="0" stop-color="#fff7c2"/><stop offset=".18" stop-color="#fde047"/><stop offset=".38" stop-color="#fb923c"/><stop offset=".62" stop-color="#ea580c"/><stop offset=".84" stop-color="#b91c1c"/><stop offset="1" stop-color="#450a0a"/></radialGradient>
+        <radialGradient id="lh${id}"><stop offset="0" stop-color="#fb923c" stop-opacity=".6"/><stop offset=".55" stop-color="#ea580c" stop-opacity=".22"/><stop offset="1" stop-color="#ea580c" stop-opacity="0"/></radialGradient>
+        <filter id="lf${id}" x="-15%" y="-40%" width="130%" height="180%"><feTurbulence type="fractalNoise" baseFrequency="${(3 / rx).toFixed(4)} ${(9 / rx).toFixed(4)}" numOctaves="3" seed="${id % 97}" result="n"><animate attributeName="baseFrequency" dur="2s" repeatCount="indefinite" values="${(3 / rx).toFixed(4)} ${(9 / rx).toFixed(4)};${(3.6 / rx).toFixed(4)} ${(10.5 / rx).toFixed(4)};${(3 / rx).toFixed(4)} ${(9 / rx).toFixed(4)}"/></feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="${(ry * .5).toFixed(1)}" xChannelSelector="R" yChannelSelector="G" result="d"/>
+          <feColorMatrix in="n" type="matrix" values="0 0 0 0 .16  0 0 0 0 .04  0 0 0 0 .02  0 0 0 -4.5 2.55" result="v"/><feComposite in="v" in2="d" operator="in" result="vd"/>
+          <feMerge><feMergeNode in="d"/><feMergeNode in="vd"/></feMerge></filter></defs>
+        <ellipse cx="${pcx}" cy="${pcy}" rx="${rx * 1.35}" ry="${ry * 2.1}" fill="url(#lh${id})"/>
+        <ellipse cx="${pcx}" cy="${pcy}" rx="${rx * 1.05}" ry="${ry * 1.12}" fill="#1c0a05"/>
+        <g filter="url(#lf${id})"><ellipse cx="${pcx}" cy="${pcy}" rx="${rx}" ry="${ry}" fill="url(#lg${id})"/></g>
+        <ellipse class="lava-skin" cx="${pcx}" cy="${pcy}" rx="${rx * 1.06}" ry="${ry * 1.14}" fill="#1c0a05" opacity="0"/></svg>`);
+      const poolAnim = anim(pool, [{ transform: 'scale(.05,.02)', opacity: 0 }, { transform: 'scale(1.08,1.12)', opacity: 1, offset: .1, easing: 'ease-out' }, { transform: 'scale(1,1)', opacity: 1, offset: .16 },
+        { transform: 'scale(1.03,.97)', opacity: 1, offset: .45 }, { transform: 'scale(1,1.04)', opacity: 1, offset: .74 }, { transform: 'scale(.9,.9)', opacity: 1, offset: .86 }, { transform: 'scale(.2,.15)', opacity: 0, offset: 1 }]);
+      anim(pool.querySelector('.lava-skin'), [{ opacity: 0 }, { opacity: 0, offset: .74 }, { opacity: .9, offset: .9 }, { opacity: .9 }]);
+      // ---- Rocks round the rim (not in front of the card), each rising, bobbing, turning, then sinking.
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2 + rand(-.15, .15);
+        if (Math.sin(a) > 0 && Math.abs(Math.cos(a)) < .35) continue;
+        const f = rand(.86, 1.06), depth = Math.sin(a), r = H * rand(.2, .34) * (1 + .3 * depth);
+        const rxp = cx + Math.cos(a) * rx * f, ryp = S + Math.sin(a) * ry * f;
+        const el = add(`left:${rxp - r * 1.2}px;top:${ryp - r * .95}px;width:${r * 2.4}px;height:${r * 2}px;z-index:${depth > 0 ? 5 : 1}`, lavaRockSvg(`${id}-${i}`, r));
+        const t0 = rand(0, .2), t1 = rand(1.45, 1.6), fb = rand(.7, 1.2), ph0 = rand(0, 6.3), spinY = rand(10, 22);
+        anim(el, TIMES.map(o => {
+          const T = o * D, e = ease(clamp((T - t0) / .3)), s = ease(clamp((T - t1) / .35));
+          const ty = (1 - e) * r * 1.2 + Math.sin(T * 6.28 * fb + ph0) * H * .025 + s * r * 1.4;
+          return { offset: o, opacity: e * (1 - s), transform: `translateY(${ty.toFixed(2)}px) rotate(${(Math.sin(T * 4 * fb + ph0) * 4).toFixed(2)}deg) rotateY(${(Math.sin(T * 1.7 + ph0) * spinY).toFixed(2)}deg) scale(${(.7 + .3 * e).toFixed(3)})` };
+        }));
       }
-      for (let i = 0; i < 12; i++) {
-        const ember = bfxAdd(host, `<div style="width:100%;height:100%;border-radius:50%;background:#fdba74;box-shadow:0 0 6px #f97316"></div>`, x + bfxRand(-50, 50) * k, poolY, 3.5 * k, 3.5 * k);
-        bfxAnimate(ember, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .1 },
-          { transform: `translate(${bfxRand(-20, 20) * k}px,${-bfxRand(50, 100) * k}px)`, opacity: 0 }], { duration: bfxRand(700, 1000), delay: bfxRand(500, 1000), easing: 'ease-out' });
+      // ---- The card: lifts in the heat, sinks, burns away at the surface and softens as it goes.
+      const box = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3`);
+      const cut = add(`left:0;top:0;width:${W}px;height:${H}px;overflow:visible`, '', '');
+      box.appendChild(cut);
+      const char = document.createElement('div'), tint = document.createElement('div');
+      tint.style.cssText = `position:absolute;inset:0;border-radius:8px;background:linear-gradient(to top,rgba(234,88,12,.45),rgba(234,88,12,.08) 70%)`;
+      char.style.cssText = `position:absolute;left:-2px;top:0;width:${W + 4}px;height:${H}px;background:linear-gradient(to top,#fffbe6 0,#fde047 3%,#f97316 7%,rgba(124,45,18,.85) 14%,rgba(41,17,8,.55) 26%,rgba(41,17,8,0) 45%)`;
+      cut.append(face(), tint, char);
+      const dy = T => T < .2 ? -.1 * H * ease(T / .2) : T < LAVA_TOUCH ? -.1 * H + (dy0 + .1 * H) * ((T - .2) / (LAVA_TOUCH - .2)) ** 2 : dy0 + H * 1.06 * (1 - (1 - clamp((T - LAVA_TOUCH) / (LAVA_GONE - LAVA_TOUCH))) ** 1.5);
+      const cutAt = T => H + dy0 - dy(T); // the surface, in the card's own pixels
+      const melt = T => clamp((T - LAVA_TOUCH) / (LAVA_GONE - LAVA_TOUCH)), heat = T => clamp(T / LAVA_TOUCH);
+      const jag = Array.from({ length: 9 }, () => rand(0, 6.3));
+      anim(box, TIMES.map(o => {
+        const T = o * D, m = melt(T), h = heat(T), c = cutAt(T);
+        return { offset: o, transformOrigin: `50% ${Math.min(c, H).toFixed(1)}px`,
+          transform: `translateY(${dy(T).toFixed(2)}px) rotate(${(Math.sin(T * 5) * 2 * m).toFixed(2)}deg) skewX(${(Math.sin(T * 9) * 6 * m).toFixed(2)}deg) scale(${(1 + .05 * m + .025 * Math.sin(T * 13) * m).toFixed(3)},${(1 - .16 * m).toFixed(3)})`,
+          filter: `drop-shadow(0 0 ${(2 + 14 * h).toFixed(1)}px rgba(249,115,22,${(.2 + .6 * h).toFixed(2)})) drop-shadow(0 ${(4 * m).toFixed(1)}px ${(8 * m).toFixed(1)}px rgba(220,38,38,${(.6 * m).toFixed(2)}))` };
+      }));
+      anim(cut, TIMES.map(o => {
+        const T = o * D, c = Math.min(cutAt(T), H * 1.1), edge = jag.map((p, j) => `${(110 - j * 15).toFixed(1)}% ${(c + H * (.035 * Math.sin(j * 2.1 + T * 14 + p) + .02 * Math.sin(j * 5.3 - T * 9))).toFixed(1)}px`);
+        return { offset: o, clipPath: `polygon(-10% -10%, 110% -10%, ${edge.join(', ')})` };
+      }));
+      anim(char, TIMES.map(o => { const T = o * D; return { offset: o, opacity: clamp((T - LAVA_TOUCH + .06) / .1), transform: `translateY(${(cutAt(T) - H + H * .03).toFixed(1)}px)` }; }));
+      anim(tint, TIMES.map(o => ({ offset: o, opacity: heat(o * D) })));
+      // The white-hot seam where the card meets the lava.
+      const seam = add(`left:${cx - W * .75}px;top:${S - H * .13}px;width:${W * 1.5}px;height:${H * .26}px;z-index:4;border-radius:50%;background:radial-gradient(closest-side,#fffbe6,rgba(253,224,71,.85) 35%,rgba(234,88,12,.4) 65%,transparent)`);
+      anim(seam, TIMES.map(o => { const T = o * D, on = T >= LAVA_TOUCH - .02 && T <= LAVA_GONE + .05; return { offset: o, opacity: on ? .75 + .25 * Math.sin(T * 40) : 0, transform: `scaleX(${on ? (1 - .3 * melt(T)).toFixed(3) : .3})` }; }));
+      // ---- Splash, ripples, bubbles, steam and embers.
+      const p = T => T / D;
+      for (let i = 0; i < 8; i++) {
+        const side = i % 2 ? 1 : -1, s = H * rand(.04, .075), vx = side * H * rand(1.4, 3), vy = -H * rand(2.4, 4), g = H * 14, x0 = cx + side * W * rand(.4, .55), life = (-2 * vy / g) * .98;
+        const el = add(`left:${x0 - s / 2}px;top:${S - s / 2}px;width:${s}px;height:${s * 1.15}px;z-index:4;border-radius:50% 50% 45% 45%;background:radial-gradient(circle at 40% 35%,#fffbe6,#fbbf24 35%,#ea580c 70%,#7f1d1d)`);
+        anim(el, [{ offset: 0, opacity: 0, transform: 'translate(0,0) scale(.3)' }, { offset: p(LAVA_TOUCH), opacity: 0, transform: 'translate(0,0) scale(.3)' },
+          ...[.15, .35, .55, .75, 1].map(u => { const t = u * life; return { offset: p(LAVA_TOUCH + t), opacity: u < 1 ? 1 : 0, transform: `translate(${(vx * t).toFixed(1)}px,${(vy * t + g * t * t / 2).toFixed(1)}px) scale(${(1 - u * .4).toFixed(2)},${(1 + Math.abs(vy + g * t) / H * .08).toFixed(2)})` }; }),
+          { offset: 1, opacity: 0, transform: 'translate(0,0) scale(.3)' }]);
       }
+      [LAVA_TOUCH, LAVA_TOUCH + .12, LAVA_TOUCH + .26, LAVA_GONE].forEach((at, i) => {
+        const el = add(`left:${cx - W * .6}px;top:${S - H * .1}px;width:${W * 1.2}px;height:${H * .2}px;z-index:2;border-radius:50%;border:${Math.max(1.5, H * .02)}px solid rgba(254,240,138,.8)`);
+        anim(el, [{ offset: 0, opacity: 0, transform: 'scale(.4)' }, { offset: p(at), opacity: 0, transform: 'scale(.4)' }, { offset: p(at) + .01, opacity: .9, transform: 'scale(.5)' }, { offset: Math.min(1, p(at + .38)), opacity: 0, transform: `scale(${2.2 + i * .2})` }, { offset: 1, opacity: 0, transform: 'scale(2.6)' }]);
+      });
+      LAVA_POPS.forEach(at => {
+        const u = rand(-1, 1), v = rand(-1, 1) * Math.sqrt(1 - u * u) * .7, s = H * rand(.1, .2), bx = cx + u * rx * .8, by = S + v * ry;
+        const bub = add(`left:${bx - s / 2}px;top:${by - s * .35}px;width:${s}px;height:${s * .7}px;z-index:2;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fffbe6,#fbbf24 30%,#ea580c 65%,#991b1b)`);
+        const ring = add(`left:${bx - s}px;top:${by - s * .4}px;width:${s * 2}px;height:${s * .8}px;z-index:2;border-radius:50%;border:1.5px solid rgba(253,224,71,.85)`);
+        anim(bub, [{ offset: 0, opacity: 0, transform: 'scale(0)' }, { offset: p(at - .22), opacity: 0, transform: 'scale(0)' }, { offset: p(at - .2), opacity: 1, transform: 'scale(.3)' }, { offset: p(at), opacity: 1, transform: 'scale(1.1,1.2)' }, { offset: p(at) + .006, opacity: 0, transform: 'scale(1.4)' }, { offset: 1, opacity: 0, transform: 'scale(1.4)' }]);
+        anim(ring, [{ offset: 0, opacity: 0, transform: 'scale(.3)' }, { offset: p(at), opacity: 0, transform: 'scale(.3)' }, { offset: p(at) + .006, opacity: 1, transform: 'scale(.5)' }, { offset: Math.min(1, p(at + .3)), opacity: 0, transform: 'scale(1.6)' }, { offset: 1, opacity: 0, transform: 'scale(1.6)' }]);
+      });
+      for (let i = 0; i < 7; i++) {
+        const t0 = rand(LAVA_TOUCH, 1.3), s = H * rand(.4, .6), el = add(`left:${cx + rand(-.4, .4) * W - s / 2}px;top:${S - s * .8}px;width:${s}px;height:${s}px;z-index:4;border-radius:50%;background:radial-gradient(closest-side,rgba(255,237,225,.38),rgba(214,211,209,.12) 60%,transparent)`);
+        anim(el, [{ offset: 0, opacity: 0, transform: 'translate(0,0) scale(.4)' }, { offset: p(t0), opacity: 0, transform: 'translate(0,0) scale(.4)' }, { offset: p(t0 + .15), opacity: 1, transform: `translate(${rand(-.2, .2) * H}px,${-H * .4}px) scale(.9)` }, { offset: p(t0 + .6), opacity: 0, transform: `translate(${rand(-.4, .4) * H}px,${-H * 1.5}px) scale(2)` }, { offset: 1, opacity: 0, transform: 'scale(2)' }]);
+      }
+      for (let i = 0; i < 28; i++) {
+        const t0 = rand(.15, 1.4), life = rand(.4, .55), s = H * rand(.025, .05), rise = H * rand(1.2, 2.6), sway = rand(-.4, .4) * H;
+        const el = add(`left:${cx + rand(-.85, .85) * rx - s / 2}px;top:${S + rand(-.5, .3) * ry}px;width:${s}px;height:${s}px;z-index:4;border-radius:50%;background:#fde68a;box-shadow:0 0 ${s * 2}px ${s * .6}px rgba(249,115,22,.85)`);
+        anim(el, [{ offset: 0, opacity: 0, transform: 'translate(0,0)' }, { offset: p(t0), opacity: 0, transform: 'translate(0,0)' }, { offset: p(t0) + .01, opacity: 1, transform: 'translate(0,0)' },
+          { offset: p(t0 + life * .5), opacity: 1, transform: `translate(${sway * .6}px,${-rise * .55}px)` }, { offset: p(t0 + life), opacity: 0, transform: `translate(${sway}px,${-rise}px) scale(.4)` }, { offset: 1, opacity: 0, transform: 'scale(.4)' }]);
+      }
+      end(poolAnim);
     }
     // ---- Level burns (v253, owner's art): earn-only, one per level band ----
     // Spark Snap (5), Smoke Burst (20), Inferno Sweep (40), Hellfire Spiral
@@ -20187,6 +20277,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v307: [[ '🌋', 'Lava Melt now sinks your real card into a bubbling pool of lava ringed by rocks: it burns away at the surface, softens as it goes under, then the lava cools and sinks away.', WN_KEY ]],
       v306: [[ '🍬', 'Stupendous Confectionery now bursts your real card open like a sweet wrapper: dozens of sweets, each flying, tumbling and bouncing on its own, with your card back on the torn halves.', WN_KEY ]],
       v305: [[ '🦢', 'Origami Fold now folds your real card: it creases into a kite, folds in half, lifts its neck and head, shows your card back on every fold, beats its wings and flies off the screen.', WN_KEY ]],
       v304: [[ '🔥', 'Five Shop burns are reborn as painted 3D scenes: Coloured Flame, Electric Blast, Stupendous Confectionery, Lava Melt and Origami Fold, each with its own new sound.', WN_KEY ],
