@@ -9,7 +9,7 @@ const NAR = path.join(__dirname, 'narration');
 const T = JSON.parse(fs.readFileSync(path.join(NAR, 'timing.json'), 'utf8'));
 const OUT = path.join(__dirname, 'shithead-how-to-play-silent.webm');
 const SHOTS = process.argv.includes('--shots');
-const PAD = 0.55; // quiet gap between scenes (s)
+const PAD = 0.8; // quiet gap between scenes (s)
 (async () => {
   const g = await openGame(OUT); const { page } = g;
   let n = 0;

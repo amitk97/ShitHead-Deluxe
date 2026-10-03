@@ -10,7 +10,7 @@ the scripts in `tools/video/`. Social apps prefer MP4: open a file in CapCut
 | `shithead-gauntlet.webm` | 24s | "5 bots, 3 lives, can you beat them all?" | `gauntlet.js` |
 | `shithead-uni.webm` | 25s | "Remember this one?" The rules everyone knows, played fast | `uni.js` |
 | `shithead-promo.webm` | 32s | Promo: plays, burn, blind flip, Joker, last card, win | `promo.js` |
-| `shithead-how-to-play.webm` / `.mp4` | 90s | How to play with a voiceover (British male, excited), every move cued to the narration | `narrate.py` → `howto-voice.js` → `mux-voice.py` |
+| `shithead-how-to-play.webm` / `.mp4` | 112s | How to play with a voiceover (British male, excited), every move cued to the narration | `narrate.py` → `howto-voice.js` → `mux-voice.py` |
 
 Suggested captions:
 

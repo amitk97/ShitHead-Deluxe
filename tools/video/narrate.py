@@ -39,13 +39,15 @@ S = [
  [("Empty all your cards to escape!",.16,1.32,1.2),("The last player left holding cards is the Shithead!",.25,1.32,.6),
   ("Good luck...",.14,1.28,.8),("and don't let it be you!",.05,1.32,1.2)],
 ]
+# Owner: "slow it down a bit" (after the first cut): every phrase's pace x PACE, pauses x GAPS.
+PACE, GAPS = 0.88, 1.4
 durs=[];starts=[]
 for i,scene in enumerate(S):
     out=[];st0=[]
     for t,gap,sp,st in scene:
         st0.append(round(sum(len(o) for o in out)/24000,2))
-        a,sr=k.create(t,voice=V,speed=sp,lang="en-gb"); sf.write(os.path.join(D, "p.wav"),a,sr)
+        a,sr=k.create(t,voice=V,speed=sp*PACE,lang="en-gb"); sf.write(os.path.join(D, "p.wav"),a,sr)
         subprocess.run([FF,"-y","-loglevel","error","-i",os.path.join(D, "p.wav"),"-af",f"rubberband=pitch={2**(st/12):.4f}",os.path.join(D, "q.wav")],check=True)
-        b,_=sf.read(os.path.join(D, "q.wav"),dtype="float32"); out+=[b,np.zeros(int(sr*gap),dtype="float32")]
+        b,_=sf.read(os.path.join(D, "q.wav"),dtype="float32"); out+=[b,np.zeros(int(sr*gap*GAPS),dtype="float32")]
     x=np.concatenate(out); sf.write(os.path.join(D, f"scene-{i+1:02d}.wav"),x,sr); durs.append(round(len(x)/sr,2)); starts.append(st0)
 json.dump({"durs":durs,"starts":starts},open(os.path.join(D, "timing.json"),"w")); print(durs, sum(durs))
