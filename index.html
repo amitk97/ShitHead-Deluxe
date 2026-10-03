@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-03-v308 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-03-v309 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -112,12 +112,26 @@
     @keyframes boot-bar { from { left: -40%; } to { left: 102%; } }
     #bootSplash .boot-text { margin: -8px 0 0; font: 500 15px/1.3 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #cbd5e1; letter-spacing: .2px; }
     @media (prefers-reduced-motion: reduce) { #bootSplash .boot-bar i { animation: none; left: 31%; } #bootSplash { transition: none; } }
+    /* Hand-off from Android's own launch screen (v309, owner): the installed app opens on the system's
+       icon screen (the app icon on the manifest's navy), which no page can remove. Its first frame here
+       is that same screen, the icon then shrinks and fades as this screen fades in, so it morphs instead
+       of jumping. Android installed app only (class set by the script below), never with Reduce Motion. */
+    #bootSplash .boot-handoff { display: none; }
+    #bootSplash.boot-from-app .boot-handoff { display: block; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: #040419;
+      animation: boot-handoff-bg .42s ease-out .06s both; }
+    #bootSplash .boot-handoff img { position: absolute; left: 50%; top: calc(50% - 6px); width: 252px; height: 252px; margin: -126px 0 0 -126px; border-radius: 30%;
+      animation: boot-handoff-icon .38s cubic-bezier(.4,0,.6,1) .06s both; }
+    #bootSplash.boot-from-app > :not(.boot-handoff) { animation: boot-handoff-in .45s cubic-bezier(.2,.8,.2,1) .1s both; }
+    @keyframes boot-handoff-bg { to { background-color: rgba(4,4,25,0); } }
+    @keyframes boot-handoff-icon { to { opacity: 0; transform: scale(.72); } }
+    @keyframes boot-handoff-in { from { opacity: 0; transform: scale(.96); } }
   </style>
   <div id="bootSplash" role="status" aria-live="polite">
     <div class="boot-brand"><h1 class="boot-logo">ShitHead</h1><p class="boot-sub">Deluxe</p></div>
     <div class="boot-fan" aria-hidden="true"><img src="art/backs/approved-v267/default.webp" alt=""><img src="art/backs/approved-v267/default.webp" alt=""><img src="art/backs/approved-v267/default.webp" alt=""></div>
     <div class="boot-bar" aria-hidden="true"><i></i></div>
     <p class="boot-text">Getting your table ready…</p>
+    <div class="boot-handoff" aria-hidden="true"><img src="icons/splash-handoff-v309.webp" alt=""></div>
   </div>
   <script>
     // The loading screen hides once, when the home screen is ready (the game calls
@@ -134,6 +148,10 @@
         }));
       };
       if (/[?&]dev-tests=1/.test(location.search)) { gone = true; el.remove(); return; }
+      try {
+        if (/Android/i.test(navigator.userAgent) && matchMedia('(display-mode: standalone)').matches
+          && !matchMedia('(prefers-reduced-motion: reduce)').matches) el.classList.add('boot-from-app');
+      } catch (e) {}
       document.addEventListener('DOMContentLoaded', () => {
         if (!window.firebase) window.shBootReveal(); // offline / no Firebase: nothing to wait for
         setTimeout(window.shBootReveal, 1500);
@@ -20339,6 +20357,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v309: [[ '✨', 'Opening the installed app on Android now flows smoothly from the app icon into the loading screen.' ]],
       v308: [[ '🔥', 'Coloured Flame now sets your real card alight: violet, pink and blue flames, each moving on its own, burn it from the bottom up while its edge curls over.', WN_KEY ]],
       v307: [[ '🌋', 'Lava Melt now sinks your real card into a bubbling pool of lava ringed by rocks: it burns away at the surface, softens as it goes under, then the lava cools and sinks away.', WN_KEY ]],
       v306: [[ '🍬', 'Stupendous Confectionery now bursts your real card open like a sweet wrapper: dozens of sweets, each flying, tumbling and bouncing on its own, with your card back on the torn halves.', WN_KEY ]],
