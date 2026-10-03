@@ -35,7 +35,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   <div class="phone l"><img src="data:image/png;base64,${b64('docs/screenshots/table.png')}"></div>
   <div class="phone r"><img src="data:image/png;base64,${b64('docs/screenshots/home.png')}"></div>
   <div class="mid">
-    <img class="icon" src="data:image/png;base64,${b64('icons/icon-512.png')}">
+    <img class="icon" src="data:image/png;base64,${b64('icons/icon-512-v302.png')}">
     <div class="logo">ShitHead</div><div class="deluxe">DELUXE</div>
     <div class="tag">The classic card game.<br>Free on your phone.</div>
     <div class="pics">${['sapphire-sovereign', 'crimson-inferno', 'scarlet-guardian', 'turtley'].map(n => `<img src="data:image/webp;base64,${b64('art/avatars/' + n + '-sm.webp')}">`).join('')}</div>

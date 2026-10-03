@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-03-v301 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-03-v302 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -73,7 +73,7 @@
   <link rel="canonical" href="https://shithead-pro.web.app/" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#020617" />
-  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon-v302.png" />
   <link rel="preload" href="art/fonts/cinzel-latin-v26.woff2" as="font" type="font/woff2" crossorigin />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -6328,7 +6328,7 @@ video {
 
   <div id="installHelpModal" class="hidden gift-scrim" role="dialog" aria-modal="true" aria-labelledby="installHelpTitle">
     <div class="gift-card install-card">
-      <img src="/icons/icon-192.png" alt="" class="install-icon" width="64" height="64">
+      <img src="/icons/icon-192-v302.png" alt="" class="install-icon" width="64" height="64">
       <div id="installHelpTitle" class="install-title">Install ShitHead</div>
       <div id="installHelpBody" class="install-body"></div>
       <button type="button" id="installHelpClose" class="install-close">GOT IT</button>
@@ -19881,6 +19881,8 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v302: [[ '✨', 'A new app icon: three Emerald Court cards behind a big red and gold SH.', WN_KEY ],
+        [ '🃏', 'The loading screen now says ShitHead Deluxe, in the same lettering as the home screen.' ]],
       v301: [[ '⚡', 'The game opens faster: a loading screen shows straight away, and your level and Diamonds are on the home screen from the start.', WN_KEY ],
         [ '⏩', 'Your chosen game speed no longer flicks back to 1x while the game is starting.' ]],
       v300: [[ '✨', 'Spark Snap (Lvl 5) is reborn: a charge crackles round your card, then snaps into a white-gold explosion of sparks and light.', WN_KEY ],
@@ -30853,7 +30855,7 @@ video {
 
     function showAppNotification(title, body, tag, evenIfVisible = false, open = 'inbox') {
       if (!notificationsActive() || (!evenIfVisible && document.visibilityState === 'visible')) return;
-      const options = { body, tag: `shithead-${tag}`, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', data: { open } };
+      const options = { body, tag: `shithead-${tag}`, icon: '/icons/icon-192-v302.png', badge: '/icons/icon-192-v302.png', data: { open } };
       const viaWorker = appServiceWorker?.showNotification
         ? appServiceWorker.showNotification(title, options)
         : Promise.reject(new Error('no service worker'));

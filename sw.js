@@ -7,7 +7,7 @@
 const CACHE = 'shithead-shell-v5';
 const ASSET_CACHE = 'shithead-assets-v1';
 const DATA_CACHE = 'shithead-data-v1'; // small saved data (event calendar), kept across updates
-const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
+const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192-v302.png', '/icons/icon-512-v302.png'];
 // Everything a Vs Bots game needs with no signal, fetched when the app installs.
 const OFFLINE_ASSETS = [
   '/art/fonts/cinzel-latin-v26.woff2',
@@ -204,8 +204,8 @@ function showGameNotification({ title, body, tag, open }) {
     body: body || '',
     // Same tags as the in-game alerts, so one thing never alerts twice.
     tag: `shithead-${tag || 'update'}`,
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
+    icon: '/icons/icon-192-v302.png',
+    badge: '/icons/icon-192-v302.png',
     data: { open: open || 'inbox' }
   });
 }
