@@ -1,6 +1,6 @@
 # ShitHead Deluxe videos
 
-Portrait 780×1688 WebM (VP8, 30fps, no sound), recorded from the real game by
+Portrait 780×1688 WebM (VP8, 30fps; only the how-to-play has sound), recorded from the real game by
 the scripts in `tools/video/`. Social apps prefer MP4: open a file in CapCut
 (free), add music, export as MP4.
 
@@ -10,7 +10,7 @@ the scripts in `tools/video/`. Social apps prefer MP4: open a file in CapCut
 | `shithead-gauntlet.webm` | 24s | "5 bots, 3 lives, can you beat them all?" | `gauntlet.js` |
 | `shithead-uni.webm` | 25s | "Remember this one?" The rules everyone knows, played fast | `uni.js` |
 | `shithead-promo.webm` | 32s | Promo: plays, burn, blind flip, Joker, last card, win | `promo.js` |
-| `shithead-how-to-play.webm` | 73s | How to play, step by step | `howto.js` |
+| `shithead-how-to-play.webm` / `.mp4` | 90s | How to play with a voiceover (British male, excited), every move cued to the narration | `narrate.py` → `howto-voice.js` → `mux-voice.py` |
 
 Suggested captions:
 
@@ -24,3 +24,7 @@ hashtags and descriptions. Every clip ends on shithead-pro.web.app.
 Re-record (needs Playwright + Chromium and `SH_VIDEO_DEPS` with
 `firebase@10.12.0` + `canvas-confetti@1.6.0`):
 `SH_VIDEO_DEPS=/path node tools/video/hook.js`, then move the output here.
+
+How-to-play voiceover: `KOKORO_DIR=<kokoro-v1.0.onnx + voices-v1.0.bin> FFMPEG_FULL=<ffmpeg with rubberband, libopus, libx264> python3 tools/video/narrate.py`,
+then `node tools/video/howto-voice.js`, then `python3 tools/video/mux-voice.py` (writes the WebM and the MP4). The script text lives in `narrate.py`;
+each scene of `howto-voice.js` starts on its line and cues moves to the phrase times in `narration/timing.json`.

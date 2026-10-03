@@ -2,3 +2,6 @@ deps/
 *.webm
 *.webm.marks.json
 *.png
+narration/*.wav
+narration/marks.json
+*.mp4
