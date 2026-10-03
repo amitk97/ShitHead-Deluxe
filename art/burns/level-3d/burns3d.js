@@ -6,6 +6,15 @@
 (() => {
   'use strict';
   const EFFECTS = {
+    // Stupendous Confectionery (Shop, premium): the owner's candy explosion; the painted candies are cut
+    // out as sprites (u0, v0, u1, v1 of the picture) that burst out from the card and tumble.
+    'burn-sweets': { dur: 2.0, box: [5, 5.4, .5, .55], tile: 'art/burns/confectionery/tile.webp', art: 'art/burns/confectionery/layers.webp?v=1', layout: [4.4, 414 / 498, .586, .55],
+      sprites: [[.118, .017, .371, .314], [.641, .014, .799, .217], [.032, .251, .157, .396], [.064, .517, .205, .693], [.044, .734, .209, .937], [.823, .527, .924, .647],
+        [.783, .674, .863, .785], [.787, .135, .884, .266], [.516, .019, .592, .126], [.335, .705, .486, .891], [.892, .005, .962, .072], [.386, .041, .442, .114]] },
+    // Electric Blast (Shop): the owner's lightning burst; strikes and arcs drawn live, rock shards fly.
+    'burn-electric': { dur: 1.9, box: [5, 5.4, .5, .5], tile: 'art/burns/electric-blast/tile.webp', art: 'art/burns/electric-blast/layers.webp?v=1', layout: [4.4, 414 / 498, .526, .5] },
+    // Coloured Flame (Shop): the owner's spectral flames swirling round the card.
+    'burn-coloured': { dur: 1.9, box: [5, 5.4, .5, .55], tile: 'art/burns/coloured-flame/tile.webp', art: 'art/burns/coloured-flame/layers.webp?v=1', layout: [4.4, 402 / 498, .47, .55] },
     // Default Burn (everyone's burn until they equip one): the owner's fire bursting up out of the coals.
     'default': { dur: 1.9, box: [5, 5.4, .5, .6], tile: 'art/burns/default/tile.webp', art: 'art/burns/default/layers.webp?v=1', layout: [4.4, 402 / 498, .45, .6] },
     // Inferno Sweep (Lvl 40): the owner's swirl of fire, swept across by a whip of flame; the rubble in front.
@@ -120,7 +129,7 @@ void main(){
   col+=gl*vec3(1.,.84,.5)*pow(max(0.,sin((uv.x*1.7-t*2.8)*6.2832+uv.y*3.)),10.)*.6*c.a; // highlights sweeping round: it spins
   float o=c.a*m; // v_col.a above 1 makes a layer fully opaque (solid magma)
   gl_FragColor=vec4(col*o*min(v_col.a,1.),o*min(1.,.8*v_col.a));
- } else {
+ } else if(k<8.5){
   // Spectral fire volume: domain-warped noise rising, violet edges, cyan body, white core.
   vec2 p=v_loc;float t=u_time*1.5+v_k.y*9.;
   vec2 q=vec2(p.x*2.4,p.y*2.8-t*1.6);
@@ -130,6 +139,11 @@ void main(){
   vec3 c=mix(vec3(.32,.12,.78),vec3(.3,.86,1.),smoothstep(.35,.8,f));
   c=mix(c,vec3(.94,.92,1.),smoothstep(.8,1.,f))*f*v_k.w;
   gl_FragColor=vec4(c,max(c.r,max(c.g,c.b))*.7);
+ } else {
+  // A painted sprite (atlas coords in v_uv), its rectangle faded to soft edges.
+  vec4 c=texture2D(u_tex2,v_uv);vec2 q=abs(v_loc);
+  float a=c.a*(1.-smoothstep(.7,1.,q.x))*(1.-smoothstep(.7,1.,q.y))*v_col.a;
+  gl_FragColor=vec4(c.rgb*v_col.rgb*a,a);
  }
 }`;
 
@@ -199,8 +213,8 @@ void main(){
   // cards: the real pile cards (top card last), each with its offset from the top card.
   function makeSim(cards, opts) {
     const top = cards[cards.length - 1], rand = rng(opts.seed || 1931), R = (a, b) => a + (b - a) * rand();
-    const kind = { 'burn-halloween': 'ghost', 'burn-lvl-smoke-burst': 'smoke', 'burn-lvl-royal-incineration': 'royal', 'burn-lvl-hellfire-spiral': 'spiral', 'burn-lvl-shitstorm': 'spiral', 'burn-lvl-spark-snap': 'snap', 'default': 'blaze' }[opts.id] || 'inferno', ghost = kind === 'ghost', smoke = kind === 'smoke', royal = kind === 'royal', spiral = kind === 'spiral', snap = kind === 'snap', blaze = kind === 'blaze';
-    const n = cards.length, T = smoke ? .2 : royal ? .42 : spiral ? .3 : snap ? .26 : blaze ? .16 : .62, storm = opts.id === 'burn-lvl-shitstorm';
+    const kind = { 'burn-halloween': 'ghost', 'burn-lvl-smoke-burst': 'smoke', 'burn-lvl-royal-incineration': 'royal', 'burn-lvl-hellfire-spiral': 'spiral', 'burn-lvl-shitstorm': 'spiral', 'burn-lvl-spark-snap': 'snap', 'default': 'blaze', 'burn-coloured': 'spectral', 'burn-electric': 'bolt', 'burn-sweets': 'candy' }[opts.id] || 'inferno', ghost = kind === 'ghost', smoke = kind === 'smoke', royal = kind === 'royal', spiral = kind === 'spiral', snap = kind === 'snap', blaze = kind === 'blaze', spectral = kind === 'spectral', bolt = kind === 'bolt', candy = kind === 'candy';
+    const n = cards.length, T = smoke ? .2 : royal ? .42 : spiral ? .3 : snap ? .26 : blaze ? .16 : spectral ? .22 : bolt ? .24 : candy ? .18 : .62, storm = opts.id === 'burn-lvl-shitstorm';
     const S = { t: 0, kind, storm, ghost, T, slots: n + 1, layout: (EFFECTS[opts.id] || {}).layout, artK: opts.artK || 1, calm: !!opts.calm, flames: [], embers: [], smoke: [], shards: [], acc: {}, n, ar: top.W / top.H,
       cards: cards.map((c, i) => ({ i, ar: c.W / c.H, rot0: -c.rot * Math.PI / 180, ox: (c.dx || 0) / top.H, oy: -(c.dy || 0) / top.H, last: -.3,
         side: n === 1 ? .55 : i === n - 1 ? .45 : (i % 2 ? 1 : -1) * (.9 + .2 * i) })) };
@@ -208,7 +222,7 @@ void main(){
     S.waveX = t => t < .26 ? -1.5 + (t / .26) * (1.5 - hw) : t < .9 ? -hw + (t - .26) / .64 * (hw * 2 + .15) : hw + .15 + (t - .9) / .3 * 1.6;
     S.front = (c, t) => S.calm ? -.25 + clamp(t / .7) * 1.45
       : ghost ? -.25 + clamp((t - T - .03 - c.i * .06) / .75) * 1.45
-      : smoke ? -.25 + clamp((t - .78) / .7) * 1.45 : royal ? -.25 + clamp((t - .9) / .62) * 1.45 : spiral ? -.25 + clamp((t - .85) / .62) * 1.45 : snap ? -.25 + clamp((t - .62) / .62) * 1.45 : blaze ? -.25 + clamp((t - .72) / .72) * 1.45 : -.25 + clamp((t - .24) / .66) * 1.45;
+      : smoke ? -.25 + clamp((t - .78) / .7) * 1.45 : royal ? -.25 + clamp((t - .9) / .62) * 1.45 : spiral ? -.25 + clamp((t - .85) / .62) * 1.45 : snap ? -.25 + clamp((t - .62) / .62) * 1.45 : blaze ? -.25 + clamp((t - .72) / .72) * 1.45 : spectral ? -.25 + clamp((t - .8) / .68) * 1.45 : bolt ? -.25 + clamp((t - .62) / .66) * 1.45 : candy ? -.25 + clamp((t - .8) / .66) * 1.45 : -.25 + clamp((t - .24) / .66) * 1.45;
     S.pose = (c, t) => {
       if (S.calm) return { rx: 0, ry: 0, rz: c.rot0, tx: c.ox, ty: c.oy, tz: 0, heat: clamp(t / .3) };
       if (smoke) {
@@ -222,6 +236,25 @@ void main(){
         const tr = smooth(0, T, t), e = ease((t - T) / .35), u = Math.max(0, t - T);
         if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 70) * .03 * tr, tx: c.ox, ty: c.oy, tz: .03 * tr, heat: .6 * tr };
         return { rx: -.35 * e, ry: 2.2 * u + .8 * u * u, rz: c.rot0 - .25 * e, tx: c.ox, ty: c.oy + .06 * e, tz: .4 * e, heat: 1 };
+      }
+      if (candy) {
+        // Wobbles like a lid about to pop, then the burst pops it up and spins it (its back comes round).
+        const tr = smooth(0, T, t), e = ease((t - T) / .4), u = Math.max(0, t - T);
+        if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 55) * .04 * tr, tx: c.ox, ty: c.oy + .02 * Math.abs(Math.sin(t * 40)) * tr, tz: .03 * tr, heat: .3 * tr };
+        return { rx: -.3 * e + .05 * Math.sin(t * 6), ry: 1.6 * u + .7 * u * u, rz: c.rot0 + .35 * Math.sin(u * 4) * e, tx: c.ox, ty: c.oy + .22 * e - .08 * u * u, tz: .42 * e, heat: 1 };
+      }
+      if (bolt) {
+        // Buzzes as the charge builds, then the strike slams it back and spins it (its back flashes past).
+        const tr = smooth(0, T, t), e = ease((t - T) / .3), u = Math.max(0, t - T);
+        if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 90) * .028 * tr, tx: c.ox + Math.sin(t * 77) * .01 * tr, ty: c.oy, tz: .03 * tr, heat: .5 * tr };
+        return { rx: -.4 * e, ry: 1.9 * u + .9 * u * u, rz: c.rot0 + .3 * e, tx: c.ox, ty: c.oy + .05 * e, tz: .4 * e, heat: 1 };
+      }
+      if (spectral) {
+        // Glows violet as the flames gather, then floats up into them and slowly turns (its back,
+        // the burner's, comes round) while it burns.
+        const tr = smooth(0, T, t), e = ease((t - T) / .6), u = Math.max(0, t - T);
+        if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 40) * .015 * tr, tx: c.ox, ty: c.oy, tz: .03 * tr, heat: .45 * tr };
+        return { rx: -.14 * e + Math.sin(t * 5) * .04 * e, ry: 1.25 * u * u + .35 * u, rz: c.rot0 + .08 * Math.sin(t * 2.3) * e, tx: c.ox, ty: c.oy + .15 * e, tz: .4 * e, heat: 1 };
       }
       if (blaze) {
         // Trembles over the glowing coals, then the updraft lifts it into the flames, where it sways as it burns.
@@ -253,6 +286,9 @@ void main(){
     // Card light: the passing fire (Inferno) or the wraith's cold glow (Ghost).
     S.light = (p, pose, t) => {
       if (ghost) { const g = smooth(.1, .5, t) * (1 - smooth(1.4, 1.9, t)); return [1 + .2 * g, 1 + .3 * g, 1 + .75 * g]; }
+      if (candy) { const g = smooth(.02, .3, t) * (1 - smooth(1.4, 1.85, t)) + .7 * smooth(T - .02, T, t) * (1 - smooth(T, T + .25, t)); return [1 + .7 * g, 1 + .45 * g, 1 + .55 * g]; }
+      if (bolt) { const z = S.zap ? S.zap(t) : 0, g = smooth(.02, T, t) * (1 - smooth(1.3, 1.8, t)) * (.7 + .3 * Math.sin(t * 61)) + 1.6 * z; return [1 + .55 * g, 1 + .8 * g, 1 + 1.1 * g]; }
+      if (spectral) { const g = smooth(.02, .35, t) * (1 - smooth(1.4, 1.85, t)) + .9 * smooth(T - .02, T, t) * (1 - smooth(T, T + .3, t)); return [1 + .55 * g, 1 + .3 * g, 1 + .95 * g]; }
       if (blaze) { const g = (smooth(.02, .3, t) * (1 - smooth(1.4, 1.85, t)) + .8 * smooth(T - .02, T, t) * (1 - smooth(T, T + .3, t))) * (.86 + .14 * Math.sin(t * 23)); return [1 + 1 * g, 1 + .45 * g, 1 + .08 * g]; }
       if (smoke) { const g = smooth(.05, .3, t) * (1 - smooth(1.4, 1.9, t)); return [1 + .8 * g, 1 + .3 * g, 1 + .1 * g]; }
       if (snap) { const g = smooth(.02, T, t) * (1 - smooth(1.3, 1.8, t)) + 1.4 * smooth(T - .02, T, t) * (1 - smooth(T, T + .25, t)); return [1 + .9 * g, 1 + .75 * g, 1 + .35 * g]; }
@@ -261,7 +297,7 @@ void main(){
       const f = S.calm ? .25 * pose.heat : 1.1 * Math.exp(-Math.pow(p[0] - S.waveX(t), 2) / .3) * pose.heat;
       return [1 + .9 * f, 1 + .38 * f, 1 + .05 * f];
     };
-    S.cardZ = t => ghost ? .3 : smoke || royal || spiral || snap || blaze ? .35 : S.pose(S.cards[0], t).tz;
+    S.cardZ = t => ghost ? .3 : smoke || royal || spiral || snap || blaze || spectral || bolt || candy ? .35 : S.pose(S.cards[0], t).tz;
     // Card local (u,v) -> view space, with the edge ahead of the fire curling.
     S.cardPoint = (c, u, v, pose, front) => {
       const fu = (front - .16 * (1 - v)) / .82, d = u - fu;
@@ -301,6 +337,50 @@ void main(){
           }
           if (t > T && t < 1.5) emit('puff', 22, dt, () => { const a = R(0, 6.28), r = R(.4, 1.5); S.smoke.push({ col: [.52, .47, .52], p: [Math.cos(a) * r, .05 + Math.sin(a) * r * .8, R(-.5, .2)], v: [Math.cos(a) * .3, .25 + Math.sin(a) * .2, 0], age: 0, life: R(.9, 1.3), size: R(.45, .8), seed: rand() }); });
           if (t > T && t < 1.6) emit('ember', 45, dt, () => S.embers.push({ p: [R(-1, 1), R(-.4, .8), R(-.3, .6)], v: [R(-.3, .3), R(.4, 1.1), R(-.1, .2)], age: 0, life: R(.5, .9), size: R(1.6, 3.4), seed: rand() * 6.28 }));
+          S.cards.forEach(c => burnCard(c, t, dt));
+        } else if (candy) {
+          // Sugar sparkles fizz round the card; the pop throws out a fountain of hundreds-and-thousands
+          // (bright sprinkles) and card pieces; sprinkles keep raining and sugar glitter twinkles.
+          if (t < T) emit('fizz', 40, dt, () => { const a = R(0, 6.28), r = R(.25, .55); S.embers.push({ pal: 2, p: [Math.cos(a) * r, Math.sin(a) * r * .8, R(0, .4)], v: [0, R(.2, .6), 0], age: 0, life: R(.15, .3), size: R(1.2, 2.2), seed: rand() * 6.28 }); });
+          if (t > T && t < T + .03) for (let i = 0; i < 90; i++) {
+            const a = R(0, 6.28), e = R(-.6, .7), sp = R(1.6, 4);
+            S.embers.push({ pal: 4, p: [0, .05, .3], v: [Math.cos(a) * Math.cos(e) * sp, Math.sin(a) * Math.cos(e) * sp * .8 + .8, Math.sin(e) * sp * .6], age: 0, life: R(.6, 1.2), size: R(2, 4), seed: rand() * 6.28, fall: 1 });
+            if (i % 5 === 0) S.shards.push({ c: n - 1, p: [Math.cos(a) * .2, .05 + Math.sin(a) * .2, R(0, .4)], uv: [R(.1, .9), R(.1, .9)], v: [Math.cos(a) * sp * .5, Math.sin(a) * sp * .4 + .7, R(-.4, .9)], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-10, 10), R(-10, 10), R(-7, 7)], s: R(.04, .07), age: 0, life: R(.8, 1.2), seed: rand(), char: .1 });
+          }
+          if (t > T + .1 && t < 1.4) emit('rain', 45, dt, () => S.embers.push({ pal: 4, p: [R(-1.4, 1.4), R(.8, 1.8), R(-.4, .6)], v: [R(-.2, .2), R(-.6, -.2), 0], age: 0, life: R(.5, .9), size: R(1.8, 3.2), seed: rand() * 6.28, fall: 1 }));
+          if (t > T && t < 1.5) emit('glitter', 30, dt, () => S.embers.push({ pal: 2, p: [R(-1.2, 1.2), R(-.3, 1.3), R(-.3, .6)], v: [0, R(-.1, .1), 0], age: 0, life: R(.15, .35), size: R(1.4, 2.6), seed: rand() * 6.28 }));
+          S.cards.forEach(c => burnCard(c, t, dt));
+        } else if (bolt) {
+          // Blue sparks crawl round the card as it charges; the strike blasts out a sphere of sparks and
+          // chunks of shattered rock (charred shards); every later strike throws more sparks.
+          if (t < T) emit('crawl', 50, dt, () => { const a = R(0, 6.28), r = R(.3, .6); S.embers.push({ pal: 1, p: [Math.cos(a) * r, Math.sin(a) * r * .8, R(0, .4)], v: [-Math.sin(a) * 1.5, Math.cos(a) * 1.2, 0], age: 0, life: R(.12, .25), size: R(1.2, 2.4), seed: rand() * 6.28 }); });
+          const hit = BOLT_TIMES.find(b => t - dt <= b && t > b);
+          if (hit !== undefined) {
+            const big = hit === T, cnt = big ? 70 : 16;
+            for (let i = 0; i < cnt; i++) {
+              const a = R(0, 6.28), e = R(-.6, .6), sp = R(1.8, big ? 4.6 : 3);
+              S.embers.push({ pal: i % 3 ? 1 : 2, p: [0, .05, .3], v: [Math.cos(a) * Math.cos(e) * sp, Math.sin(a) * Math.cos(e) * sp * .85, Math.sin(e) * sp * .6], age: 0, life: R(.3, .7), size: R(1.6, 4.2), seed: rand() * 6.28 });
+            }
+            if (big) for (let i = 0; i < 22; i++) {
+              const a = R(0, 6.28), sp = R(1.4, 3.2);
+              S.shards.push({ c: n - 1, p: [Math.cos(a) * .2, .05 + Math.sin(a) * .2, R(0, .4)], uv: [R(.1, .9), R(.1, .9)], v: [Math.cos(a) * sp, Math.sin(a) * sp * .7 + .4, R(-.4, .9)], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-12, 12), R(-12, 12), R(-8, 8)], s: R(.05, .1), age: 0, life: R(.7, 1.1), seed: rand(), char: 1 });
+            }
+          }
+          if (t > T && t < 1.4) emit('spark', 40, dt, () => S.embers.push({ pal: rand() < .7 ? 1 : 2, p: [R(-1, 1), R(-.4, 1), R(-.3, .5)], v: [R(-.6, .6), R(-.2, .8), R(-.2, .3)], age: 0, life: R(.2, .45), size: R(1.4, 3), seed: rand() * 6.28 }));
+          S.cards.forEach(c => burnCard(c, t, dt));
+        } else if (spectral) {
+          // Cold sparks spiral in round the card as the flames gather; on the ignition a burst of
+          // violet, cyan and pink sparks and charred fragments; wisps keep streaming up, coloured
+          // haze rolls off and sparks orbit the card as it burns.
+          if (t < T) emit('gather', 55, dt, () => { const a = R(0, 6.28), r = R(.9, 1.5), p = [Math.cos(a) * r, Math.sin(a) * r * .8, R(-.3, .4)]; S.embers.push({ pal: 1, p, v: p.map(q => -q * 2.8), age: 0, life: .35, size: R(1.4, 2.8), seed: rand() * 6.28 }); });
+          if (t > T && t < T + .03) for (let i = 0; i < 48; i++) {
+            const a = R(0, 6.28), sp = R(1.3, 3.2);
+            S.embers.push({ pal: i % 3 ? 1 : 3, p: [0, .05, .3], v: [Math.cos(a) * sp, Math.sin(a) * sp * .8 + .5, R(-.6, .9)], age: 0, life: R(.5, 1), size: R(2, 4.6), seed: rand() * 6.28 });
+            if (i % 3 === 0) S.shards.push({ c: n - 1, p: [Math.cos(a) * .2, .05 + Math.sin(a) * .2, R(0, .4)], uv: [R(.1, .9), R(.1, .9)], v: [Math.cos(a) * sp * .6, Math.sin(a) * sp * .45 + .5, R(-.4, .9)], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-10, 10), R(-10, 10), R(-7, 7)], s: R(.03, .06), age: 0, life: R(.7, 1.1), seed: rand(), char: .35 });
+          }
+          if (t > T && t < 1.5) emit('wisp', 80, dt, () => S.embers.push({ pal: rand() < .3 ? 3 : 1, p: [R(-1.2, 1.2), FLOOR + R(0, .6), R(-.4, .6)], v: [R(-.35, .35), R(.7, 1.6), R(-.1, .2)], age: 0, life: R(.55, 1), size: R(1.6, 3.6), seed: rand() * 6.28 }));
+          if (t > T && t < 1.45) emit('orbit', 26, dt, () => S.embers.push({ pal: rand() < .5 ? 3 : 1, orb: { r: R(.45, .8), a: R(0, 6.28), w: R(4, 6), y: FLOOR + R(.1, .4), vy: R(.5, 1), pull: 0 }, p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.6, .9), size: R(1.6, 3), seed: rand() * 6.28 }));
+          if (t > T && t < 1.4) emit('haze', 9, dt, () => S.smoke.push({ col: rand() < .5 ? [.42, .2, .62] : [.18, .3, .62], p: [R(-1.3, 1.3), R(-.2, 1.3), R(-.5, .1)], v: [R(-.15, .15), R(.3, .55), 0], age: 0, life: R(.8, 1.2), size: R(.4, .7), seed: rand() }));
           S.cards.forEach(c => burnCard(c, t, dt));
         } else if (blaze) {
           // The coals smoulder and spit sparks; then the fire whooshes up: a burst of embers and ash
@@ -387,7 +467,7 @@ void main(){
       for (const o of [...S.embers, ...S.shards]) if (o.orb) orbitStep(o);
       for (const e of S.embers) {
         if (e.orb) continue;
-        e.age += dt; e.v[0] += Math.sin(t * 9 + e.seed) * .9 * dt; e.v[1] -= .25 * dt;
+        e.age += dt; e.v[0] += Math.sin(t * 9 + e.seed) * .9 * dt; e.v[1] -= (e.fall ? 3.2 : .25) * dt;
         e.v.forEach((_, i) => { e.v[i] *= 1 - .9 * dt; e.p[i] += e.v[i] * dt; });
       }
       for (const m of S.smoke) { m.age += dt; m.p[0] += m.v[0] * dt; m.p[1] += m.v[1] * dt; }
@@ -402,6 +482,10 @@ void main(){
     S.advance = t => { while (S.t + 1 / 120 <= t) S.step(1 / 120); };
     return S;
   }
+
+  const SPRINKLES = [[1, .25, .4], [1, .85, .2], [.3, .9, .4], [.35, .7, 1], [1, .5, .85], [1, .6, .15], [.75, .45, 1]];
+  // Electric Blast: the big strike, then arcs lashing out from the card (sounds share these times).
+  const BOLT_TIMES = [.24, .38, .55, .7, .86, 1.02, 1.18];
 
   // ---- Rendering: everything is projected on the CPU into one triangle stream ----
   function makeRenderer(canvas, faceCanvas, art) {
@@ -458,7 +542,77 @@ void main(){
       const P = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => proj(x, y, z));
       quad(arr, P, Z4, UP, [1, 1, 1, 1], [8, seed, 0, inten]);
     };
-    if (S.kind === 'smoke' && !S.calm) {
+    // A jagged lightning bolt in screen pixels (re-jagged by its seed), a blue glow round a white core,
+    // with forks; returns its points.
+    const lightning = (arr, a, b, seed, w, alpha, forks = 2) => {
+      const r = rng(seed), N = 10, dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, pts = [a];
+      for (let i = 1; i < N; i++) { const f = i / N, j = (r() - .5) * L * .2 * Math.sin(Math.PI * f) + (r() - .5) * L * .05; pts.push([a[0] + dx * f + nx * j, a[1] + dy * f + ny * j]); }
+      pts.push(b);
+      const seg = (p, q, ww, col) => {
+        const ex = q[0] - p[0], ey = q[1] - p[1], l = Math.hypot(ex, ey) || 1, ox = -ey / l * ww, oy = ex / l * ww;
+        quad(arr, [[p[0] + ox, p[1] + oy], [p[0] - ox, p[1] - oy], [q[0] - ox, q[1] - oy], [q[0] + ox, q[1] + oy]], Z4, [[0, -1], [0, 1], [0, 1], [0, -1]], col, [2, 0, 0, 0]);
+      };
+      for (let i = 0; i < N; i++) { seg(pts[i], pts[i + 1], w * 4, [.3, .55, 1, alpha * .55]); seg(pts[i], pts[i + 1], w, [.92, .96, 1, alpha]); }
+      for (let fk = 0; fk < forks; fk++) {
+        const i = 2 + Math.floor(r() * (N - 4)), p = pts[i], ang = Math.atan2(dy, dx) + (r() < .5 ? -1 : 1) * (.4 + r() * .6), fl = L * (.15 + r() * .2);
+        lightning(arr, p, [p[0] + Math.cos(ang) * fl, p[1] + Math.sin(ang) * fl], seed * 7 + fk, w * .55, alpha * .8, 0);
+      }
+      return pts;
+    };
+    // A painted sprite cut from slot 1 of the art (u0 v0 u1 v1), centred at world point w, turned rot.
+    const sprite = (arr, [u0, v0, u1, v1], w, sc, rot, alpha) => {
+      const [px, py, ps] = projW(w), hw = (u1 - u0) * AW * .5 * sc * F * ps, hh = (v1 - v0) * AH * .5 * sc * F * ps, c = Math.cos(rot), sn = Math.sin(rot);
+      const P = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => [px + a * hw * c - b * hh * sn, py + a * hw * sn + b * hh * c]);
+      quad(arr, P, [[(u0 + 1) * .5, v0], [(u1 + 1) * .5, v0], [(u1 + 1) * .5, v1], [(u0 + 1) * .5, v1]], LOC, [1, 1, 1, alpha], [9, 0, 0, 0]);
+    };
+    if (S.kind === 'candy' && !S.calm) {
+      // The card wobbles; the POP: a bright flash, the painted candy burst bursting out round the card,
+      // and every painted candy flying out of the card to where it was painted (overshooting, tumbling,
+      // some in front of the card, some behind), then falling away; floor rings in candy colours.
+      const T = S.T, out1 = 1 - smooth(1.45, 1.95, t), grow = .35 + .7 * ease((t - T + .02) / .35) + .03 * Math.max(0, t - T);
+      glowAt(out.back, [0, 0, 0], .7, [1, .7, .85, .7 * smooth(0, T, t) * (1 - smooth(T, T + .2, t))]);
+      if (R.art) {
+        layer(out.art, 0, -.4, grow, 0, smooth(T - .02, T + .25, t) * out1, .6, [1, .6, .8], true, 1.2);
+        (EFFECTS['burn-sweets'].sprites || []).forEach((b, i) => {
+          const r = rng(i * 977 + 5), l = T + i * .012, f = ease((t - l) / .42), g = Math.max(0, t - l - .42);
+          if (t < l) return;
+          const cu = (b[0] + b[2]) / 2, cv = (b[1] + b[3]) / 2, tgt = artAt(cu, cv, 1, 0, 0), z = i % 3 === 0 ? .55 : -.3;
+          const w = [tgt[0] * f + tgt[0] * .08 * g, tgt[1] * f + .2 * g - 1.6 * g * g, z];
+          const sc = (.25 + .85 * f) * (1 + .08 * Math.sin(f * Math.PI)), rot = (r() - .5) * 2.4 * (1 - f) + (r() - .5) * 2 * g;
+          sprite(i % 3 === 0 ? out.artFront : out.art, b, [w[0], w[1] * CP - w[2] * SP, w[1] * SP + w[2] * CP], sc, rot, smooth(l, l + .06, t) * (1 - smooth(1.45, 1.9, t)));
+        });
+      }
+      const flash = bump(T - .03, T + .02, T + .28);
+      if (flash > 0) glowAt(out.back, [0, .05, 0], 1.7, [1, .9, .95, flash]);
+      glowAt(out.back, [0, 0, -.3], 1.3 * K, [1, .55, .75, .35 * smooth(T, T + .2, t) * out1]);
+      for (const [d, col] of [[0, [1, .5, .8]], [.08, [.5, .9, 1]], [.16, [1, .9, .4]]]) { const rt = (t - T - d) / .55; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 1.9 * ease(rt), (1 - rt) * .8, col); }
+    } else if (S.kind === 'bolt' && !S.calm) {
+      // Arcs crackle round the card as it charges; the strike: bolts slam down from above onto the card,
+      // a white-blue flash, the painted burst exploding out; then arcs keep lashing out from the card to
+      // the edges of the scene, the burst crackling with them; blue floor rings; it fades.
+      const T = S.T, out1 = 1 - smooth(1.3, 1.85, t), grow = .35 + .7 * ease((t - T + .02) / .3) + .04 * Math.max(0, t - T);
+      const zap = tt => BOLT_TIMES.reduce((m, b, i) => Math.max(m, (i ? .55 : 1) * Math.exp(-Math.max(0, tt - b) * 14) * (tt >= b ? 1 : 0)), 0);
+      S.zap = zap;
+      const z = zap(t), [ox, oy, os] = proj(0, 0, .2), u = F * os, flick = Math.floor(t * 24);
+      glowAt(out.back, [0, 0, 0], .5 + .5 * smooth(0, T, t), [.45, .7, 1, .9 * smooth(0, T, t) * (1 - smooth(T, T + .2, t))]);
+      if (t < T) for (let i = 0; i < 3; i++) {
+        const a = flick * 1.7 + i * 2.1, r0 = u * .35, r1 = u * (.55 + .2 * Math.sin(flick + i));
+        lightning(out.front, [ox + Math.cos(a) * r0, oy + Math.sin(a) * r0], [ox + Math.cos(a + .8) * r1, oy + Math.sin(a + .8) * r1], flick * 13 + i, u * .008, .55 * smooth(0, T, t), 0);
+      }
+      if (R.art) {
+        layer(out.art, 0, -.3, grow, 0, smooth(T - .02, T + .2, t) * out1, 1.2, [.5, .75, 1], true, 1.2 + .5 * z);
+        layer(out.artFront, 1, .6, 1, 0, smooth(T, T + .2, t) * out1, .6, [.5, .7, 1], false, 1.15);
+      }
+      BOLT_TIMES.forEach((b, i) => {
+        const age = t - b; if (age < 0 || age > .16) return;
+        const al = (1 - age / .16) * (age < .03 ? 1 : .7 + .3 * Math.sin(age * 90)), sd = i * 101 + Math.floor(age * 40);
+        if (i === 0) for (let k = 0; k < 3; k++) lightning(out.front, [ox + (k - 1) * u * 1.1 + u * .3 * Math.sin(k * 5), oy - u * 3.6 * K], [ox + (k - 1) * u * .08, oy], sd + k * 17, u * .016, al, 3);
+        else for (let k = 0; k < 2; k++) { const a = i * 2.4 + k * 3.3; lightning(out.front, [ox, oy], [ox + Math.cos(a) * u * 2.4 * K, oy + Math.sin(a) * u * 1.6 * K], sd + k * 31, u * .011, al * .9, 2); }
+      });
+      if (z > 0) glowAt(out.back, [0, .05, 0], 1.2 + .9 * z, [.75, .88, 1, Math.min(1, z * 1.1)]);
+      glowAt(out.back, [0, 0, -.2], 1.3 * K, [.35, .6, 1, .45 * smooth(T, T + .1, t) * out1 * (.7 + .3 * Math.sin(t * 47))]);
+      for (const [d, col] of [[0, [.85, .95, 1]], [.08, [.35, .6, 1]]]) { const rt = (t - T - d) / .5; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 2 * ease(rt), (1 - rt) * .9, col); }
+    } else if (S.kind === 'smoke' && !S.calm) {
       // Heat builds under the card, then the blast: a flash, a floor ring and the painted cloud
       // bursting out from the card, rolling and lit by its fire, with puffs in front; it thins away.
       const T = S.T, grow = .3 + .66 * ease((t - T + .02) / .5) + .05 * Math.max(0, t - T), out1 = 1 - smooth(1.4, 1.95, t);
@@ -471,6 +625,24 @@ void main(){
       if (flash > 0) glowAt(out.back, [0, .05, 0], 1.6, [1, .85, .6, flash]);
       glowAt(out.back, [0, 0, -.2], 1.5 * K, [1, .35, .1, .45 * smooth(T, T + .2, t) * out1 * (.8 + .2 * Math.sin(t * 23))]);
       for (const [d, col] of [[0, [.95, .9, .9]], [.1, [1, .5, .2]]]) { const rt = (t - T - d) / .6; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 1.8 * ease(rt), (1 - rt) * .8, col); }
+    } else if (S.kind === 'spectral' && !S.calm) {
+      // Violet light gathers under the card; the ignition: a pink-white flash and the painted flames
+      // bursting out round the card, their ribbons swirling; a column of spectral fire burns behind
+      // the card and a thin veil of it in front; coloured floor rings; then it all thins away.
+      const T = S.T, out1 = 1 - smooth(1.4, 1.9, t), grow = .4 + .6 * ease((t - T + .02) / .45) + .04 * Math.max(0, t - T);
+      glowAt(out.back, [0, 0, 0], .9, [.7, .35, 1, .75 * smooth(0, T, t) * (1 - smooth(T, T + .3, t))]);
+      if (R.art) {
+        layer(out.art, 0, -.35, grow, 0, smooth(T - .03, T + .3, t) * out1, 1.6, [.75, .4, 1], true, 1.2, .8);
+        layer(out.artFront, 1, .6, 1, 0, smooth(T - .05, T + .2, t) * (1 - smooth(1.5, 1.9, t)), .7, [.7, .4, 1], false, 1.15);
+      }
+      const env = smooth(T - .05, T + .25, t) * out1;
+      vol(out.back, -1.3 * K, 1.3 * K, FLOOR - .1, 2.2 * K, -.3, 1.05 * env, .4);
+      vol(out.back, -.8 * K, .9 * K, FLOOR - .1, 1.5 * K, -.15, .7 * env, .9);
+      vol(out.front, -1.2 * K, 1.2 * K, FLOOR - .1, .9 * K, .65, .45 * env, 1.7);
+      const flash = bump(T - .03, T + .02, T + .3);
+      if (flash > 0) glowAt(out.back, [0, .05, 0], 1.7, [1, .8, 1, flash]);
+      glowAt(out.back, [0, .2, -.3], 1.3 * K, [.6, .3, 1, .4 * env * (.8 + .2 * Math.sin(t * 13))]);
+      for (const [d, col] of [[0, [1, .6, 1]], [.1, [.45, .85, 1]]]) { const rt = (t - T - d) / .6; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 1.8 * ease(rt), (1 - rt) * .85, col); }
     } else if (S.kind === 'blaze' && !S.calm) {
       // The coals glow up under the card; the whoosh: a flash, the painted fire shooting up out of
       // the coals (it grows from the floor, bottom first) and flickering, a column of heat behind the
@@ -677,7 +849,7 @@ void main(){
       const r = e.size * cam.px * head[2] * (1 - .5 * a), dx = head[0] - tail[0], dy = head[1] - tail[1], l = Math.hypot(dx, dy) || 1;
       const ux = dx / l, uy = dy / l, ext = l * .5 + r;
       const mx = (head[0] + tail[0]) / 2, my = (head[1] + tail[1]) / 2;
-      const col = e.pal === 2 ? (a < .35 ? [1, .95, .72] : a < .7 ? [1, .78, .3] : [1, .5, .12]) : e.pal ? (a < .4 ? [.75, .95, 1] : a < .7 ? [.5, .62, 1] : [.62, .32, .95]) : a < .35 ? [1, .78, .35] : a < .7 ? [1, .45, .1] : [.85, .18, .04];
+      const col = e.pal === 4 ? SPRINKLES[Math.floor(e.seed * 5) % SPRINKLES.length] : e.pal === 3 ? (a < .4 ? [1, .85, .97] : a < .7 ? [1, .45, .85] : [.75, .2, .7]) : e.pal === 2 ? (a < .35 ? [1, .95, .72] : a < .7 ? [1, .78, .3] : [1, .5, .12]) : e.pal ? (a < .4 ? [.75, .95, 1] : a < .7 ? [.5, .62, 1] : [.62, .32, .95]) : a < .35 ? [1, .78, .35] : a < .7 ? [1, .45, .1] : [.85, .18, .04];
       const arr = (e.p[1] * SP + e.p[2] * CP) > cardZ ? out.front : out.back;
       quad(arr, [[mx - ux * ext + uy * r, my - uy * ext - ux * r], [mx + ux * ext + uy * r, my + uy * ext - ux * r], [mx + ux * ext - uy * r, my + uy * ext + ux * r], [mx - ux * ext - uy * r, my - uy * ext + ux * r]], Z4, LOC, [...col, 1 - smooth(.6, 1, a)], [2, e.seed, 0, 0]);
     }
@@ -803,6 +975,51 @@ void main(){
 
   // Sounds on the same clocks as the scenes.
   const SOUNDS = {
+    // Stupendous Confectionery: a wobbly, squeaky stretch as the lid strains (0–0.18), the POP at 0.18
+    // (a cork pop, a bright sparkle chord and a soft thump), a run of bubbly pops as the candies fly
+    // (0.2–0.5), a glockenspiel arpeggio, sweets clattering down (0.7–1.3), crackles as the card goes,
+    // and a sugary twinkle to finish.
+    'burn-sweets': k => {
+      k.tone({ dur: .18, type: 'triangle', f0: 300, f1: 520, level: .05, attack: .1, vibrato: 18 });
+      k.noise({ at: .18, dur: .05, type: 'bandpass', f0: 1400, q: 1.2, level: .42 });
+      k.tone({ at: .18, dur: .12, type: 'sine', f0: 600, f1: 180, level: .2, attack: .002 });
+      k.tone({ at: .19, dur: .35, f0: 90, f1: 50, level: .26 });
+      [1047, 1319, 1568, 2093].forEach((f0, n) => k.tone({ at: .19 + n * .008, dur: .5, type: 'triangle', f0, f1: f0, level: .035, attack: .004 }));
+      [.22, .26, .3, .34, .39, .44, .5].forEach((at, n) => k.tone({ at, dur: .07, type: 'sine', f0: 520 + (n % 4) * 160, f1: 220, level: .09, attack: .003 }));
+      [1568, 1760, 2093, 2349, 2637, 3136].forEach((f0, n) => k.tone({ at: .3 + n * .07, dur: .35, type: 'triangle', f0, f1: f0, level: .03, attack: .003 }));
+      [.72, .8, .86, .95, 1.02, 1.1, 1.18, 1.27].forEach((at, n) => k.noise({ at, dur: .03, type: 'bandpass', f0: 1800 + (n % 4) * 400, q: 4, level: .09 }));
+      [.85, .93, 1.01, 1.09, 1.17, 1.25, 1.34].forEach((at, n) => k.noise({ at, dur: .026, type: 'bandpass', f0: 2300 + n * 130, q: 3, level: .09 }));
+      [1.45, 1.52, 1.6].forEach((at, n) => k.tone({ at, dur: .3, type: 'triangle', f0: 3136 - n * 260, f1: 3136 - n * 260, level: .025, attack: .004 }));
+    },
+    // Electric Blast: a rising electric buzz with crackles as it charges (0–0.24), the strike at 0.24
+    // (a split-second thunder crack, a bright zap and a deep boom), a zap for every arc that lashes
+    // out after it (BOLT_TIMES), rock clatter, crackles as the card burns away and a dying hum.
+    'burn-electric': k => {
+      k.tone({ dur: .26, type: 'sawtooth', f0: 90, f1: 180, level: .05, attack: .2, vibrato: 30 });
+      [.05, .1, .14, .18, .21].forEach((at, n) => k.noise({ at, dur: .015, type: 'bandpass', f0: 4000 + n * 300, q: 2, level: .05 + n * .012 }));
+      k.noise({ at: .24, dur: .07, type: 'bandpass', f0: 3200, q: .6, level: .4 });
+      k.tone({ at: .24, dur: .2, type: 'sawtooth', f0: 2000, f1: 260, level: .08, attack: .002 });
+      k.tone({ at: .25, dur: .55, f0: 70, f1: 30, level: .32 });
+      k.noise({ at: .26, dur: .6, type: 'lowpass', f0: 1600, f1: 120, level: .2, attack: .01 });
+      BOLT_TIMES.slice(1).forEach((at, n) => { k.noise({ at, dur: .04, type: 'bandpass', f0: 3000 + (n % 3) * 500, q: .9, level: .16 - n * .012 }); k.tone({ at, dur: .1, type: 'sawtooth', f0: 1400 - n * 80, f1: 300, level: .04, attack: .002 }); });
+      [.42, .5, .61, .75].forEach((at, n) => k.noise({ at, dur: .03, type: 'bandpass', f0: 900 + n * 200, q: 2, level: .07 }));
+      [.68, .76, .84, .92, 1.0, 1.08, 1.17, 1.26].forEach((at, n) => k.noise({ at, dur: .026, type: 'bandpass', f0: 2300 + n * 130, q: 3, level: .1 }));
+      k.tone({ at: .9, dur: .8, type: 'sawtooth', f0: 120, f1: 60, level: .025, attack: .1, vibrato: 25 });
+    },
+    // Coloured Flame: a breathy, glassy swell as the flames gather (0–0.22), the ignition at 0.22 (a
+    // soft thump, a bright airy whoosh and a shimmering chord), a hollow ghostly roar with rising
+    // crystal glints, crackles as the card burns away (0.8–1.45) and a fading shimmer.
+    'burn-coloured': k => {
+      k.noise({ dur: .26, type: 'bandpass', f0: 900, f1: 3400, q: 1.4, level: .08, attack: .2 });
+      [880, 1175].forEach((f0, n) => k.tone({ at: .04 + n * .04, dur: .3, type: 'triangle', f0, f1: f0 * 1.06, level: .035, attack: .18 }));
+      k.tone({ at: .22, dur: .4, f0: 88, f1: 40, level: .26 });
+      k.noise({ at: .2, dur: .45, type: 'bandpass', f0: 500, f1: 2600, q: .8, level: .28, attack: .04 });
+      [659, 831, 988, 1319].forEach((f0, n) => k.tone({ at: .23 + n * .012, dur: .7, type: 'triangle', f0, f1: f0, level: .04, attack: .01, vibrato: 6 }));
+      k.noise({ at: .3, dur: 1.15, type: 'bandpass', f0: 420, f1: 900, q: .6, level: .14, attack: .12 });
+      [.38, .52, .66, .8, .95].forEach((at, n) => k.tone({ at, dur: .22, f0: 1760 + n * 220, f1: 1800 + n * 220, level: .03, attack: .005 }));
+      [.82, .89, .96, 1.03, 1.11, 1.19, 1.27, 1.35, 1.43].forEach((at, n) => k.noise({ at, dur: .026, type: 'bandpass', f0: 2300 + n * 130, q: 3, level: .12 }));
+      k.noise({ at: 1.35, dur: .55, type: 'bandpass', f0: 3600, f1: 2200, q: 1, level: .05, attack: .12 });
+    },
     // Default Burn: coals hissing and spitting (0–0.16), the whoosh as the fire goes up at 0.16 (a soft
     // deep thump and a rushing burst), the fire roaring with crackles and pops, the card crackling as
     // it burns away (0.75–1.45), sparks ticking, and the roar dying into a hiss.

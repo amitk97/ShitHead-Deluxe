@@ -7764,7 +7764,7 @@ video {
     const BURN_SOUNDS = {
       default: (k) => (window.ShLevel3D ? ShLevel3D.sound('default', k) : fireWhoosh(k)),
       // Coloured Flame: the fire, plus a rising shimmer of colour.
-      'burn-coloured': (k) => { fireWhoosh(k, 0.8); [660, 880, 1108, 1320, 1760].forEach((f, i) => k.tone({ at: 0.1 + i * 0.06, dur: 0.35, type: 'triangle', f0: f, level: 0.1 })); },
+      'burn-coloured': (k) => { if (window.ShLevel3D) return ShLevel3D.sound('burn-coloured', k); fireWhoosh(k, 0.8); [660, 880, 1108, 1320, 1760].forEach((f, i) => k.tone({ at: 0.1 + i * 0.06, dur: 0.35, type: 'triangle', f0: f, level: 0.1 })); },
       // Ice Shatter: a sharp crack and falling glassy pings.
       'burn-ice': (k) => {
         k.tone({ dur: 0.09, type: 'square', f0: 220, f1: 60, level: 0.25 });
@@ -7773,6 +7773,7 @@ video {
       },
       // Electric Blast: a falling zap, mains buzz and sparks.
       'burn-electric': (k) => {
+        if (window.ShLevel3D) return ShLevel3D.sound('burn-electric', k);
         k.tone({ dur: 0.35, type: 'sawtooth', f0: 1400, f1: 70, level: 0.32 });
         k.tone({ dur: 0.45, type: 'square', f0: 60, f1: 55, level: 0.14 });
         k.scatter(14, 0, 0.5, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 4000, q: 4, level: 0.5 }));
@@ -7783,7 +7784,7 @@ video {
         k.tone({ at, dur: 0.12, f0: 170 - i * 20, f1: 60, level: 0.35 });
       }),
       // Stupendous Confectionery: a scatter of candy pops and a sparkle.
-      'burn-sweets': (k) => { popBurst(k, [0, 0.09, 0.16, 0.27, 0.35, 0.47, 0.55], 1.1); k.tone({ at: 0.5, dur: 0.4, type: 'triangle', f0: 2093, level: 0.08 }); },
+      'burn-sweets': (k) => { if (window.ShLevel3D) return ShLevel3D.sound('burn-sweets', k); popBurst(k, [0, 0.09, 0.16, 0.27, 0.35, 0.47, 0.55], 1.1); k.tone({ at: 0.5, dur: 0.4, type: 'triangle', f0: 2093, level: 0.08 }); },
       // Smoke Show: a slow, soft puff with a low rumble.
       'burn-smoke': (k) => {
         k.noise({ dur: 1.2, type: 'bandpass', f0: 420, f1: 160, q: 0.7, level: 0.45, attack: 0.3 });
@@ -8537,10 +8538,8 @@ video {
       const pile = onTable ? document.getElementById('discardPileContainer') : null;
       return ShLevel3D.play(id, host, x, y, k, calm, { cardEls, cardH: pile && pile.offsetHeight, backClass: burnBackClass() });
     }
-    // Default Burn (v303, owner's painted tile): fire bursting up out of the coals around the top card.
+    // Default Burn without WebGL (the 3D one plays from playBurnFx): the old ember burst.
     function bfxDefaultBurn(host, x, y, k) {
-      const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (levelBurn3d('default', host, x, y, k, calm)) return;
       if (host.id === 'burnFxLayer') triggerBurnEmberExplosion(x, y); else sfxFlash(host, x, y, k, '#f97316', 140, 700);
     }
     function bfxInfernoSweep(host, x, y, k) {
@@ -8561,6 +8560,8 @@ video {
     }
     function playBurnFx(id, host, x, y, scale = 1) {
       if (!host) return false;
+      // Painted-art 3D burns (art/burns/level-3d/burns3d.js); their old effects stay as the fallback.
+      if (window.ShLevel3D && ShLevel3D.has(id) && levelBurn3d(id, host, x, y, scale, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return true;
       ({ default: bfxDefaultBurn, 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
         'burn-blackhole': bfxBlackHole, 'burn-origami': bfxOrigami, 'burn-pixel': bfxPixelBlast, 'burn-lava': bfxLavaMelt,
         'burn-lvl-spark-snap': bfxSparkSnap, 'burn-lvl-smoke-burst': bfxSmokeBurst, 'burn-lvl-inferno-sweep': bfxInfernoSweep,

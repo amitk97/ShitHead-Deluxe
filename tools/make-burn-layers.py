@@ -254,16 +254,18 @@ def shitstorm():
     col = np.clip(f / np.maximum(bright[..., None], .3), 0, 1)
     save_atlas([(col, bright * storm), (src.astype(np.float32) / 255, face)], 'art/burns/shitstorm/layers.webp')
 
-def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=False, clear=False, strip=None):
+def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=False, clear=False, strip=None, block=36, full=False):
     """A burst around one point (`centre`, u v of the crop): the painted cards (hand-traced,
     source pixels) filled with smooth inpainted colour plus fire detail from the best nearby
     patch (a pasted patch showed the card's outline in big gaps), a lumpy soft outline, and
     the rubble below `front_from` as a second layer drawn in front of the game card.
     mirror: a radial burst; gaps are filled from the opposite side, reflected through the
     centre (rays stay radial), where that side is clean; mirror='x' reflects left-right only.
+    full: slot 1 is the whole keyed picture (no outline) instead of the front rubble, for the
+    engine to cut sprites and a front strip from.
     clear: what the mirror can't fill fades out instead (the 3D fire burns there behind the card).
-    strip: (a, b) crop x range of clean rising fire: the gaps are quilted from small random blocks
-    of it at the same height, soft-blended (bands or mirrors repeat visibly; blocks don't)."""
+    strip: (a, b) crop x range of clean fire, or a list of them: the gaps are quilted from small random
+    blocks (half-size `block`) of it at the same height, soft-blended (bands or mirrors repeat visibly)."""
     full = Image.open(f'docs/avatar-art/src/burn-{name}.webp').convert('RGB')
     full.crop(tile_box).resize((384, round(384 * (tile_box[3] - tile_box[1]) / (tile_box[2] - tile_box[0]))), Image.LANCZOS).save(f'art/burns/{name}/tile.webp', quality=90)
     x0, y0, x1, y1 = box
@@ -281,15 +283,16 @@ def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=F
     g = f * (1 - m) + fill * m
     cu, cv = centre
     if strip:
-        a, b = strip
+        ranges = strip if isinstance(strip[0], tuple) else [strip]
         rq = np.random.default_rng(seed + 7)
-        fill, wsum, B = np.zeros_like(g), np.zeros((H, W, 1), np.float32), 36
+        fill, wsum, B = np.zeros_like(g), np.zeros((H, W, 1), np.float32), block
         gy, gx = np.mgrid[-B:B, -B:B]; wk = np.exp(-(gx ** 2 + gy ** 2) / (2 * (B / 3.4) ** 2)).astype(np.float32)[..., None]
         for cy0 in range(0, H + B, B // 2):
             for cx0 in range(0, W + B, B // 2):
                 if m[min(cy0, H - 1), min(cx0, W - 1), 0] < .02: continue
                 for _ in range(20):  # a clean source block at about the same height
-                    sx0, sy0 = int(rq.integers(a + B, b - B)), int(np.clip(cy0 + rq.integers(-14, 15), B, H - B))
+                    a, b = ranges[int(rq.integers(len(ranges)))]; a, b = max(a, 0), min(b, W)
+                    sx0, sy0 = int(rq.integers(a + B, max(a + B + 1, b - B))), int(np.clip(cy0 + rq.integers(-14, 15), B, H - B))
                     if m[sy0 - B:sy0 + B, sx0 - B:sx0 + B].mean() < .05: break
                 y0b, x0b = cy0 - B, cx0 - B
                 ty0, tx0, ty1, tx1 = max(0, y0b), max(0, x0b), min(H, cy0 + B), min(W, cx0 + B)
@@ -312,11 +315,11 @@ def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=F
     lump = .6 * noise(5, seed) + .4 * noise(11, seed + 1)
     r = np.hypot((xx - cu) / max(cu, 1 - cu), (yy - cv) / max(cv, 1 - cv)) * (1.2 - .3 * lump)
     burst = (1 - ss(.55, 1.0, r)) * (1 - ss(.9, 1, yy))
-    if clear: burst = burst * (1 - m[..., 0])
+    if clear: burst = burst * (1 - (m[..., 0] if mirror else cv2.GaussianBlur(mask.astype(np.float32) / 255, (0, 0), 22)))
     bright = ss(.05, .3, g.max(2))
     col = np.clip(g / np.maximum(bright[..., None], .3), 0, 1)
     front = burst * ss(front_from, front_from + .08, yy)
-    save_atlas([(col, bright * burst), (col, bright * front)], f'art/burns/{name}/layers.webp')
+    save_atlas([(col, bright * burst), (col, bright if full else bright * front)], f'art/burns/{name}/layers.webp')
 
 def spark_snap():
     painted_burst('spark-snap', (18, 16, 452, 428), [[(141, 134), (247, 104), (282, 220), (177, 257)],
@@ -352,4 +355,31 @@ def default_burn():
              [(30, 298), (82, 296), (120, 318), (118, 352), (40, 352)],
              [(398, 284), (486, 280), (490, 336), (402, 352)]], (.45, .6), .8, (6, 6, 508, 412), 61, strip=(352, 494))
 
-{'default': default_burn, 'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral, 'shitstorm': shitstorm, 'spark-snap': spark_snap, 'inferno-sweep': inferno_sweep}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
+def coloured_flame():
+    # Coloured Flame: spectral flames swirling round the card; where the painted Aces were the art fades
+    # out softly (the engine's spectral fire burns there, behind the card); the rubble below in front.
+    painted_burst('coloured-flame', (8, 8, 506, 410), [
+             [(118, 118), (200, 78), (254, 78), (268, 108), (294, 168), (322, 248), (318, 294), (250, 304), (206, 284), (146, 216)],
+             [(296, 142), (352, 146), (434, 156), (430, 212), (404, 264), (350, 270), (318, 254)],
+             [(66, 162), (124, 156), (140, 302), (78, 304)],
+             [(12, 302), (68, 298), (84, 352), (16, 354)]], (.47, .55), .8, (6, 6, 508, 412), 71, clear=True)
+
+def electric_blast():
+    # Electric Blast: the lightning burst; the painted cards filled radially from the opposite side of
+    # the blast (rays stay radial), the shattered rock below in front.
+    painted_burst('electric-blast', (8, 8, 506, 422), [
+             [(124, 98), (242, 66), (268, 122), (284, 250), (264, 364), (206, 364), (160, 262)],
+             [(66, 182), (128, 146), (178, 162), (194, 262), (134, 274), (112, 262)],
+             [(346, 150), (380, 120), (468, 192), (454, 282), (432, 324), (366, 324), (340, 250)]],
+             (.526, .5), .82, (6, 6, 508, 424), 81, mirror=True)
+
+def confectionery():
+    # Stupendous Confectionery: the candy burst (cards faded out where they were, soft) and, in slot 1,
+    # the whole keyed picture: the engine cuts the painted candies from it as flying sprites.
+    painted_burst('confectionery', (8, 8, 506, 422), [
+             [(135, 120), (272, 59), (295, 110), (325, 260), (280, 290), (215, 280), (160, 240)],
+             [(77, 175), (125, 140), (150, 150), (165, 215), (125, 240), (100, 235)],
+             [(300, 95), (345, 87), (350, 150), (455, 180), (440, 235), (390, 280), (350, 250), (320, 190)],
+             [(350, 360), (470, 312), (475, 330), (440, 380), (390, 400)]], (.586, .55), .8, (6, 6, 508, 424), 91, clear=True, full=True)
+
+{'default': default_burn, 'coloured-flame': coloured_flame, 'electric-blast': electric_blast, 'confectionery': confectionery, 'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral, 'shitstorm': shitstorm, 'spark-snap': spark_snap, 'inferno-sweep': inferno_sweep}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
