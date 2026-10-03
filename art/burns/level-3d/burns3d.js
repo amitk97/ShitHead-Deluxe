@@ -12,7 +12,7 @@
     'burn-lava': { dur: 2.0, box: [5, 5.4, .5, .4], tile: 'art/burns/lava-melt/tile.webp', art: 'art/burns/lava-melt/layers.webp?v=1', layout: [4.6, 438 / 498, .396, .36] },
     // Stupendous Confectionery (Shop, premium): the owner's candy explosion; the painted candies are cut
     // out as sprites (u0, v0, u1, v1 of the picture) that burst out from the card and tumble.
-    'burn-sweets': { dur: 2.0, box: [5, 5.4, .5, .55], tile: 'art/burns/confectionery/tile.webp', art: 'art/burns/confectionery/layers.webp?v=1', layout: [4.4, 414 / 498, .586, .55],
+    'burn-sweets': { iconOnly: true /* v306: procedural in index.html (bfxSweets); tile + sound only */, dur: 2.0, box: [5, 5.4, .5, .55], tile: 'art/burns/confectionery/tile.webp', art: 'art/burns/confectionery/layers.webp?v=1', layout: [4.4, 414 / 498, .586, .55],
       sprites: [[.118, .017, .371, .314], [.641, .014, .799, .217], [.032, .251, .157, .396], [.064, .517, .205, .693], [.044, .734, .209, .937], [.823, .527, .924, .647],
         [.783, .674, .863, .785], [.787, .135, .884, .266], [.516, .019, .592, .126], [.335, .705, .486, .891], [.892, .005, .962, .072], [.386, .041, .442, .114]] },
     // Electric Blast (Shop): the owner's lightning burst; strikes and arcs drawn live, rock shards fly.
@@ -1078,7 +1078,7 @@ void main(){
       k.noise({ at: .95, dur: .75, type: 'bandpass', f0: 3200, f1: 2200, q: .9, level: .07, attack: .1 });
       [1.0, 1.08, 1.16, 1.24, 1.33, 1.42, 1.52].forEach((at, n) => k.noise({ at, dur: .026, type: 'bandpass', f0: 2200 + n * 120, q: 3, level: .1 }));
     },
-    // Stupendous Confectionery: a wobbly, squeaky stretch as the lid strains (0–0.18), the POP at 0.18
+    // Stupendous Confectionery (v306: on bfxSweets' clock in index.html): a wobbly, squeaky stretch as the card jiggles (0–0.18), the POP at 0.18
     // (a cork pop, a bright sparkle chord and a soft thump), a run of bubbly pops as the candies fly
     // (0.2–0.5), a glockenspiel arpeggio, sweets clattering down (0.7–1.3), crackles as the card goes,
     // and a sugary twinkle to finish.

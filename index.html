@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-03-v305 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-03-v306 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7431,7 +7431,7 @@ video {
   </div>
 
   <script src="art/burns/level-v294/effects.js?v=295"></script>
-  <script src="art/burns/level-3d/burns3d.js?v=306"></script>
+  <script src="art/burns/level-3d/burns3d.js?v=307"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
   <script>
     const AUDIO_SOURCES = {
@@ -8163,26 +8163,6 @@ video {
         bfxAnimate(ember, [{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${bfxRand(-30, 30) * k}px, ${bfxRand(-120, -70) * k}px)`, opacity: 0 }], { duration: bfxRand(900, 1400), delay: bfxRand(100, 500), easing: 'ease-out' });
       }
     }
-    function bfxSweets(host, x, y, k) {
-      const combos = [['#ef4444', '#fff'], ['#f59e0b', '#fff7ed'], ['#10b981', '#ecfdf5'], ['#8b5cf6', '#f5f3ff'], ['#ec4899', '#fdf2f8'], ['#0ea5e9', '#f0f9ff']];
-      for (let i = 0; i < 16; i++) {
-        const [c, w2] = combos[i % combos.length];
-        const size = bfxRand(26, 36) * k;
-        const svg = `<svg width="${size}" height="${size * .6}" viewBox="0 0 50 30">
-          <path d="M14 15 2 5v20Z" fill="${c}" opacity=".85"/><path d="M36 15 48 5v20Z" fill="${c}" opacity=".85"/>
-          <path d="M5 8 9 15 5 22M45 8 41 15 45 22" stroke="${w2}" stroke-width="1.2" fill="none" opacity=".8"/>
-          <ellipse cx="25" cy="15" rx="12" ry="10" fill="${c}" stroke="rgba(0,0,0,.25)"/>
-          <path d="M16 9c3 5 3 7 0 12M22 6c3 6 3 12 0 18M28 6c3 6 3 12 0 18M34 9c3 5 3 7 0 12" stroke="${w2}" stroke-width="2" fill="none" opacity=".9"/>
-          <ellipse cx="21" cy="10" rx="4" ry="2" fill="#fff" opacity=".55"/></svg>`;
-        const el = bfxAdd(host, svg, x, y, size, size * .6);
-        const a = bfxRand(-Math.PI * .95, -Math.PI * .05), v = bfxRand(90, 170) * k, g = 260 * k;
-        const frames = [0, .2, .4, .6, .8, 1].map((t) => ({
-          transform: `translate(${Math.cos(a) * v * t * 1.2}px, ${Math.sin(a) * v * t * 1.2 + g * t * t}px) rotate(${bfxRand(-40, 40) + t * bfxRand(-540, 540)}deg) scale(${t === 0 ? .4 : 1})`,
-          opacity: t < .8 ? 1 : 1 - (t - .8) * 5
-        }));
-        bfxAnimate(el, frames, { duration: bfxRand(1200, 1600), delay: bfxRand(0, 160), easing: 'linear' });
-      }
-    }
     function bfxBlobPath(r, bumps) {
       const pts = [];
       for (let i = 0; i < bumps; i++) {
@@ -8316,7 +8296,11 @@ video {
       }
       return out.length > 2 ? out : null;
     }
-    function bfxOrigami(host, x, y, k) {
+    // Shared by the procedural burns (v305+): the REAL top Pile card (or a lone 10 in a preview), a layer
+    // over the whole screen (on the table) or the preview stage, every Pile card hidden at once (inline,
+    // transition off first: the card's transition-all would keep a visibility change showing), and an
+    // animation helper on the effect's own clock. `end(a)` clears it all when animation `a` finishes.
+    function procBurnStage(host, x, y, ms) {
       const onTable = host.id === 'burnFxLayer';
       const pileEls = onTable ? [...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')] : [];
       const top = pileEls.filter(el => el.offsetWidth).pop(), hr = host.getBoundingClientRect();
@@ -8327,22 +8311,36 @@ video {
       } else {
         H = Math.round(Math.max(56, Math.min(110, (hr.height || 160) * .5))); W = Math.round(H * .7);
         cx = x; cy = y + H * .25;
-        src = createCardElement({ id: 'ori-preview', rank: '10', suit: '♠' });
+        src = createCardElement({ id: 'pfx-preview', rank: '10', suit: '♠' });
       }
-      // On the table the layer is the whole screen (the swan can fly anywhere); in a preview, its stage.
       const layer = document.createElement('div');
-      layer.className = 'ori3d';
+      layer.className = 'pfx-layer';
       layer.style.cssText = `position:absolute;inset:0;pointer-events:none;overflow:visible;perspective:${Math.round(H * 8)}px;perspective-origin:${cx}px ${cy}px`;
       host.appendChild(layer);
-      // Every Pile card (and the Empty Pile tag) hides while the copy folds: the Pile looks empty at once.
       const hidden = onTable ? [...pileEls, ...document.querySelectorAll('#pileZone .empty-zone-pill')] : [];
-      hidden.forEach(el => { el.style.setProperty('transition', 'none', 'important'); el.style.setProperty('visibility', 'hidden', 'important'); }); // no fade: transition-all would keep it up
+      hidden.forEach(el => { el.style.setProperty('transition', 'none', 'important'); el.style.setProperty('visibility', 'hidden', 'important'); });
       const anims = [];
       const done = () => { layer.remove(); hidden.forEach(el => { el.style.removeProperty('visibility'); el.style.removeProperty('transition'); }); };
       const safety = () => anims.some(a => a.playState === 'paused') ? setTimeout(safety, 1000) : done();
-      setTimeout(safety, ORI_MS + 4000); // normally the flight's own end clears it
-      const anim = (el, frames, easing = 'linear') => { const a = el.animate && el.animate(frames, { duration: ORI_MS, fill: 'both', easing }); if (a) anims.push(a); return a; };
-      const radius = getComputedStyle(src).borderRadius || '8px', backCls = burnBackClass();
+      setTimeout(safety, ms + 4000); // normally `end` clears it
+      return {
+        onTable, layer, W, H, cx, cy, src, vw: host.clientWidth || innerWidth,
+        radius: getComputedStyle(src).borderRadius || '8px', backCls: burnBackClass(),
+        anim: (el, frames, easing = 'linear') => { const a = el.animate && el.animate(frames, { duration: ms, fill: 'both', easing }); if (a) anims.push(a); return a; },
+        end: a => { if (a) a.onfinish = done; else setTimeout(done, ms); },
+        // A copy of the card's face: no ids or data-card-id, so nothing mistakes it for the real card.
+        face: () => {
+          const f = src.cloneNode(true);
+          f.removeAttribute('id'); f.removeAttribute('data-card-id');
+          f.querySelectorAll('[id],[data-card-id]').forEach(q => { q.removeAttribute('id'); q.removeAttribute('data-card-id'); });
+          f.classList.add('pfx-face');
+          f.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;margin:0;transform:none;animation:none;transition:none;opacity:1;visibility:visible`;
+          return f;
+        }
+      };
+    }
+    function bfxOrigami(host, x, y, k) {
+      const { layer, W, H, cx, cy, radius, backCls, anim, end, face: cardFace, vw } = procBurnStage(host, x, y, ORI_MS);
       const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
       const norm = ([a, b]) => { const l = Math.hypot(a, b) || 1; return [a / l, b / l]; };
       const reflect = (p, a, d) => { const vx = p[0] - a[0], vy = p[1] - a[1], t = vx * d[0] + vy * d[1]; return [a[0] + 2 * t * d[0] - vx, a[1] + 2 * t * d[1] - vy]; };
@@ -8438,10 +8436,7 @@ video {
         const pct = (pts, mirror) => `polygon(${pts.map(([u, v]) => `${((mirror ? W - u : u) / W * 100).toFixed(3)}% ${(v / H * 100).toFixed(3)}%`).join(',')})`;
         const edge = (pts, mirror, shade, line) => `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="position:absolute;left:0;top:0;overflow:visible"><polygon points="${pts.map(([u, v]) => `${mirror ? W - u : u},${v}`).join(' ')}" fill="rgba(${shade > 0 ? '255,255,255' : '0,0,0'},${Math.abs(shade)})" stroke="rgba(255,255,255,${line})" stroke-width="1" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
         const shade = [-.14, .06, -.06, .1, -.1, 0, -.18, .04][n % 8];
-        const face = src.cloneNode(true);
-        face.removeAttribute('id'); face.querySelectorAll('[id]').forEach(q => q.removeAttribute('id'));
-        face.removeAttribute('data-card-id'); face.querySelectorAll('[data-card-id]').forEach(q => q.removeAttribute('data-card-id')); face.classList.add('ori-face');
-        face.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;margin:0;transform:none;animation:none;transition:none;opacity:1;visibility:visible`;
+        const face = cardFace();
         const faceSide = document.createElement('div');
         faceSide.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;backface-visibility:hidden;-webkit-backface-visibility:hidden;clip-path:${pct(p.orig)}`;
         faceSide.appendChild(face);
@@ -8459,13 +8454,12 @@ video {
         anim(backSide, TIMES.map(t => ({ offset: t, opacity: flips(t) ? 1 : 0 })));
       });
       // The flight: still until the swan is made, then up and away off the top of the screen.
-      const vw = host.clientWidth || innerWidth;
       const flight = anim(fly, [
         { transform: 'translate3d(0,0,0) scale(1)', offset: 0 },
         { transform: 'translate3d(0,0,0) scale(1)', offset: .6, easing: 'cubic-bezier(.5,0,.75,.35)' },
         { transform: `translate3d(${vw * .4}px,${-(cy + H * 2.6)}px,90px) rotate(-24deg) scale(.7)`, offset: 1 }
       ]);
-      if (flight) flight.onfinish = done; else setTimeout(done, ORI_MS);
+      end(flight);
       anim(shadow, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)', offset: .07 }, { opacity: .9, transform: 'scale(1.2)', offset: .58 }, { opacity: 0, transform: 'scale(.4)', offset: .78 }, { opacity: 0, transform: 'scale(.4)' }]);
       anim(glow, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(.4)', offset: .5 }, { opacity: 1, transform: 'scale(1)', offset: .6 }, { opacity: 0, transform: 'translateY(-40%) scale(1.3)', offset: .8 }, { opacity: 0, transform: 'scale(1.3)' }]);
       // Gold sparkles burst from each crease as it snaps flat and when the swan is made.
@@ -8493,6 +8487,151 @@ video {
           { opacity: 1, transform: `translate(${(Math.random() - .5) * 40}px,${drop * .3}px) rotate(${spin * .3}deg) rotateX(${spin * .5}deg)`, offset: start + .08 },
           { opacity: 0, transform: `translate(${(Math.random() - .5) * 120}px,${drop}px) rotate(${spin}deg) rotateX(${spin * 1.4}deg)`, offset: 1 }]);
       }
+    }
+
+    // Stupendous Confectionery (v306, owner: procedural; every sweet its own element): the REAL top Pile
+    // card jiggles like jelly and swells (0-0.18s), then POPS: it tears down a zigzag like a sweet
+    // wrapper, the two halves spin away showing the burner's back, and 26 sweets burst out of it. Each
+    // sweet is its own vector SVG (bonbon, lollipop, peppermint, gumdrop, jelly bean, candy cane, heart)
+    // with its own launch time, speed, spin and tumble, run through its own little physics sim
+    // (gravity, a bounce with squash on the table at its own depth, friction), plus sprinkles, a candy
+    // striped shock ring and sugar twinkles. Sound: ShLevel3D.sound('burn-sweets') on the same clock.
+    const SWEETS_MS = 2000;
+    const SWEET_COLOURS = [['#ef4444', '#fecaca'], ['#ec4899', '#fbcfe8'], ['#f59e0b', '#fde68a'], ['#22c55e', '#bbf7d0'], ['#3b82f6', '#bfdbfe'], ['#a855f7', '#e9d5ff'], ['#14b8a6', '#99f6e4']];
+    // Each sweet: [viewBox w, h, art(main, light)]. Shading is drawn in (no gradients: ids would repeat).
+    const SWEET_SHAPES = [
+      [60, 34, (c, l) => `<path d="M16 17 2 5v24Z" fill="${c}"/><path d="M44 17 58 5v24Z" fill="${c}"/><path d="M5 9 10 17 5 25M55 9 50 17 55 25" stroke="${l}" stroke-width="1.6" fill="none"/>
+        <ellipse cx="30" cy="17" rx="15" ry="12" fill="${c}"/><path d="M19 9c4 6 4 10 0 16M26 6c4 7 4 15 0 22M33 6c4 7 4 15 0 22M40 9c4 6 4 10 0 16" stroke="${l}" stroke-width="2.4" fill="none"/>
+        <path d="M17 22a15 12 0 0 0 26 0a15 9 0 0 1-26 0Z" fill="rgba(0,0,0,.18)"/><ellipse cx="24" cy="11" rx="5" ry="2.4" fill="#fff" opacity=".7"/>`],
+      [40, 66, (c, l) => `<rect x="18" y="34" width="4" height="31" rx="2" fill="#f8fafc"/><rect x="18" y="34" width="1.6" height="31" fill="#cbd5e1"/>
+        <circle cx="20" cy="20" r="18" fill="${c}"/><path d="M20 20c0-3 4-3 4 0 0 6-9 6-9 0 0-9 14-9 14 0 0 12-19 12-19 0 0-15 24-15 24 0" stroke="${l}" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+        <path d="M5 28a18 18 0 0 0 30 0a18 14 0 0 1-30 0Z" fill="rgba(0,0,0,.16)"/><ellipse cx="13" cy="11" rx="5" ry="3" fill="#fff" opacity=".6" transform="rotate(-30 13 11)"/>`],
+      [40, 40, (c) => `<circle cx="20" cy="20" r="18" fill="#fff"/>${[0, 1, 2, 3, 4, 5].map(i => `<path d="M20 20 L${20 + 18 * Math.cos(i * 1.047)} ${20 + 18 * Math.sin(i * 1.047)} A18 18 0 0 1 ${20 + 18 * Math.cos(i * 1.047 + .52)} ${20 + 18 * Math.sin(i * 1.047 + .52)}Z" fill="${c}"/>`).join('')}
+        <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1.5"/><circle cx="20" cy="20" r="4" fill="#fff"/><ellipse cx="13" cy="11" rx="5" ry="2.6" fill="#fff" opacity=".75" transform="rotate(-35 13 11)"/>`],
+      [40, 36, (c, l) => `<path d="M3 34Q3 4 20 4Q37 4 37 34Z" fill="${c}"/><path d="M3 34Q20 28 37 34Z" fill="rgba(0,0,0,.2)"/>
+        ${[[11, 14], [19, 10], [27, 15], [14, 23], [24, 22], [31, 27], [8, 27]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="1.3" fill="${l}"/>`).join('')}<ellipse cx="13" cy="11" rx="4" ry="2.4" fill="#fff" opacity=".6" transform="rotate(-40 13 11)"/>`],
+      [44, 26, (c) => `<path d="M6 13C2 3 16 0 22 5c6 4 14-2 18 6s-4 14-14 13C14 23 9 22 6 13Z" fill="${c}"/><path d="M8 18c6 6 22 7 31-3-4 10-24 11-31 3Z" fill="rgba(0,0,0,.2)"/><ellipse cx="14" cy="8" rx="5" ry="2" fill="#fff" opacity=".65"/>`],
+      [30, 62, (c) => `<path d="M8 60V18a7 7 0 0 1 14 0v4" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M8 60V18a7 7 0 0 1 14 0v4" stroke="${c}" stroke-width="7" fill="none" stroke-dasharray="5 5" stroke-linecap="butt"/>
+        <path d="M5 60V18" stroke="rgba(0,0,0,.15)" stroke-width="1.5"/><path d="M10 56V20" stroke="#fff" stroke-width="1.4" opacity=".7"/>`],
+      [40, 38, (c, l) => `<path d="M20 35C4 24 1 15 4 9c3-6 12-7 16 1 4-8 13-7 16-1 3 6 0 15-16 26Z" fill="${c}"/><path d="M20 35C8 27 4 21 4 15c4 9 20 15 32 0 0 6-4 12-16 20Z" fill="rgba(0,0,0,.16)"/>
+        <path d="M12 18h16M14 23h12" stroke="${l}" stroke-width="2" stroke-linecap="round" opacity=".85"/><ellipse cx="11" cy="10" rx="4" ry="2.2" fill="#fff" opacity=".7" transform="rotate(-35 11 10)"/>`]
+    ];
+    function bfxSweets(host, x, y, k) {
+      const { layer, W, H, cx, cy, radius, backCls, anim, end, face, vw } = procBurnStage(host, x, y, SWEETS_MS);
+      const D = SWEETS_MS / 1000, POP = .18, N = 72, rand = (a, b) => a + Math.random() * (b - a);
+      const TIMES = Array.from({ length: N + 1 }, (_, i) => i / N);
+      const jelly = t => { // the card's squash and stretch before the pop (t in seconds)
+        if (t >= POP) return [1.16, 1.16];
+        const u = t / POP, w = Math.sin(u * Math.PI * 5) * .13 * u;
+        return [1 + w + .14 * u * u, 1 - w * .85 + .14 * u * u];
+      };
+      // A body flying under gravity from `t0`: bounces on its own floor line (its depth on the table)
+      // with a squash, friction and slowing spin; returns its state at each keyframe time.
+      const fly = ({ x0, y0, vx, vy, t0, floor, spin, bounce = .42, g = H * 16 }) => {
+        const out = [];
+        let x = x0, y = y0, r = rand(-30, 30), t = 0, hit = -1, step = 1 / 240;
+        for (const T of TIMES.map(f => f * D)) {
+          while (t < T) {
+            if (t >= t0) {
+              vy += g * step; x += vx * step; y += vy * step; r += spin * step;
+              if (y >= floor && vy > 0) {
+                y = floor; hit = t;
+                if (vy < H * 1.4) { vy = 0; g = 0; } else vy = -vy * bounce;
+                vx *= .62; spin *= .55;
+              }
+              if (g === 0) { vx *= .985; spin *= .97; }
+            }
+            t += step;
+          }
+          const sq = hit >= 0 && T - hit < .09 ? (1 - (T - hit) / .09) * .32 : 0;
+          out.push({ T, x, y, r, sx: 1 + sq, sy: 1 - sq, live: T >= t0 });
+        }
+        return out;
+      };
+      // ---- The card: the two halves of a zigzag tear, wobbling together, then flung apart at the POP.
+      const teeth = 7, zig = Array.from({ length: teeth + 1 }, (_, i) => [W / 2 + (i % 2 ? 1 : -1) * W * .08, H * i / teeth]);
+      const halves = [[[0, 0], ...zig, [0, H]], [...zig, [W, H], [W, 0]]];
+      const pct = (pts, mirror) => `polygon(${pts.map(([u, v]) => `${((mirror ? W - u : u) / W * 100).toFixed(2)}% ${(v / H * 100).toFixed(2)}%`).join(',')})`;
+      const glow = document.createElement('div');
+      glow.className = 'bfx';
+      glow.style.cssText = `position:absolute;left:${cx - H}px;top:${cy - H}px;width:${H * 2}px;height:${H * 2}px;border-radius:50%;background:radial-gradient(closest-side,rgba(251,207,232,.85),rgba(236,72,153,.35) 50%,transparent)`;
+      layer.appendChild(glow);
+      anim(glow, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(.9)', offset: POP / D }, { opacity: 0, transform: 'scale(1.8)', offset: (POP + .25) / D }, { opacity: 0, transform: 'scale(1.8)' }]);
+      let last;
+      halves.forEach((poly, side) => {
+        const dir = side ? 1 : -1, path = fly({ x0: 0, y0: 0, vx: dir * H * rand(2.2, 2.8), vy: -H * rand(4.2, 5), t0: POP, floor: H * 9, spin: dir * rand(90, 160), g: H * 12 });
+        const spinY = dir * rand(190, 220);
+        const box = document.createElement('div');
+        box.className = 'bfx';
+        box.style.cssText = `position:absolute;left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:2;will-change:transform;transform-style:preserve-3d;transform-origin:50% 50%`;
+        const front = document.createElement('div'), back = document.createElement('div');
+        front.style.cssText = `position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;clip-path:${pct(poly)}`;
+        front.appendChild(face());
+        back.style.cssText = `position:absolute;inset:0;transform:rotateY(180deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;clip-path:${pct(poly, true)}`;
+        back.innerHTML = `<div class="custom-card-back ${backCls}" style="position:absolute;left:0;top:0;width:${W}px;height:${H}px;border-radius:${radius};margin:0"></div>`;
+        box.append(front, back);
+        layer.appendChild(box);
+        const ry = T => T < POP ? 0 : spinY * Math.min(1, (T - POP) / .9);
+        anim(box, path.map((p, i) => {
+          const [jx, jy] = jelly(p.T), lift = Math.min(p.T / POP, 1) * -H * .08;
+          return { offset: TIMES[i],
+            transform: `translate(${p.x}px,${p.y + lift}px) rotate(${p.T < POP ? Math.sin(p.T * 40) * 3 : p.r}deg) rotateY(${ry(p.T)}deg) scale(${jx},${jy})` };
+        }));
+        // Fade and face swap live on the leaves: opacity on the 3D box would flatten it (no back).
+        const backShows = T => { const a = ((ry(T) % 360) + 360) % 360; return a > 90 && a < 270; };
+        const fade = T => T > 1.05 ? Math.max(0, 1 - (T - 1.05) / .3) : 1;
+        anim(front, path.map((p, i) => ({ offset: TIMES[i], opacity: backShows(p.T) ? 0 : fade(p.T) })));
+        last = anim(back, path.map((p, i) => ({ offset: TIMES[i], opacity: backShows(p.T) ? fade(p.T) : 0 })));
+      });
+      // ---- The pop: a flash and a candy-striped ring.
+      const flash = document.createElement('div'), ring = document.createElement('div');
+      flash.className = 'bfx'; ring.className = 'bfx';
+      flash.style.cssText = `position:absolute;left:${cx - H}px;top:${cy - H}px;width:${H * 2}px;height:${H * 2}px;border-radius:50%;z-index:4;background:radial-gradient(closest-side,#fff,rgba(253,242,248,.8) 35%,rgba(244,114,182,.3) 60%,transparent)`;
+      ring.style.cssText = `position:absolute;left:${cx - H}px;top:${cy - H}px;width:${H * 2}px;height:${H * 2}px;z-index:1`;
+      ring.innerHTML = `<svg viewBox="0 0 100 100" width="100%" height="100%" style="overflow:visible"><circle cx="50" cy="50" r="40" fill="none" stroke="#fff" stroke-width="2.5"/><circle cx="50" cy="50" r="40" fill="none" stroke="#ec4899" stroke-width="2.5" stroke-dasharray="6 6"/></svg>`;
+      layer.append(flash, ring);
+      const p0 = POP / D;
+      anim(flash, [{ opacity: 0, transform: 'scale(.2)' }, { opacity: 0, transform: 'scale(.2)', offset: p0 }, { opacity: .9, transform: 'scale(.8)', offset: p0 + .015 }, { opacity: 0, transform: 'scale(1.6)', offset: p0 + .1 }, { opacity: 0, transform: 'scale(1.6)' }]);
+      anim(ring, [{ opacity: 0, transform: 'scale(.3) rotate(0deg)' }, { opacity: 0, transform: 'scale(.3) rotate(0deg)', offset: p0 }, { opacity: 1, transform: 'scale(.8) rotate(20deg)', offset: p0 + .03 }, { opacity: 0, transform: 'scale(2.1) rotate(70deg)', offset: p0 + .16 }, { opacity: 0, transform: 'scale(2.1) rotate(70deg)' }]);
+      // ---- The sweets: each its own element on its own path, in waves as the pops sound.
+      const waves = [.18, .22, .26, .3, .34, .39, .44];
+      for (let i = 0; i < 26; i++) {
+        const [vbw, vbh, art] = SWEET_SHAPES[i % SWEET_SHAPES.length], [c, l] = SWEET_COLOURS[(i * 3 + (Math.random() * 7 | 0)) % SWEET_COLOURS.length];
+        const depth = rand(-1, 1), size = H * rand(.3, .44) * (1 + .22 * depth), w = size * vbw / Math.max(vbw, vbh), h = size * vbh / Math.max(vbw, vbh);
+        const ang = -Math.PI / 2 + rand(-1.15, 1.15), sp = H * rand(4.5, 9.5), t0 = waves[i % waves.length] + rand(0, .03);
+        const path = fly({ x0: cx + rand(-.25, .25) * W, y0: cy + rand(-.25, .2) * H, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, t0, floor: cy + H * (.62 + .5 * depth), spin: rand(-720, 720) });
+        const tumble = rand(-900, 900), fadeAt = rand(1.5, 1.8);
+        const el = document.createElement('div');
+        el.className = 'bfx';
+        el.style.cssText = `position:absolute;left:${-w / 2}px;top:${-h / 2}px;width:${w}px;height:${h}px;z-index:${depth > .1 ? 3 : 1}`;
+        el.innerHTML = `<svg viewBox="0 0 ${vbw} ${vbh}" width="100%" height="100%" style="overflow:visible">${art(c, l)}</svg>`;
+        layer.appendChild(el);
+        anim(el, path.map((p, n) => {
+          const age = p.T - t0, grow = p.live ? Math.min(1, .3 + age / .1) : .3;
+          return { offset: TIMES[n], opacity: !p.live ? 0 : p.T > fadeAt ? Math.max(0, 1 - (p.T - fadeAt) / .2) : 1,
+            transform: `translate(${p.x}px,${p.y}px) scale(${p.sx * grow},${p.sy * grow}) rotate(${p.r}deg) rotateY(${p.live ? tumble * Math.min(age, .9) * (1 - Math.min(age, .9) / 1.8) : 0}deg)` };
+        }));
+      }
+      // ---- Sprinkles: tiny sugar rods, quicker and lighter.
+      for (let i = 0; i < 44; i++) {
+        const depth = rand(-1, 1), ang = -Math.PI / 2 + rand(-1.4, 1.4), sp = H * rand(5, 12), t0 = POP + rand(0, .08), fadeAt = rand(1.1, 1.6);
+        const path = fly({ x0: cx + rand(-.3, .3) * W, y0: cy + rand(-.3, .3) * H, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, t0, floor: cy + H * (.62 + .5 * depth), spin: rand(-1400, 1400), bounce: .3 });
+        const el = document.createElement('div');
+        el.className = 'bfx';
+        el.style.cssText = `position:absolute;left:-1.5px;top:-5px;width:${H * .035}px;height:${H * .11}px;border-radius:9px;z-index:${depth > 0 ? 3 : 1};background:${['#f472b6', '#facc15', '#60a5fa', '#4ade80', '#fff', '#c084fc', '#fb923c'][i % 7]}`;
+        layer.appendChild(el);
+        anim(el, path.map((p, n) => ({ offset: TIMES[n], opacity: !p.live ? 0 : p.T > fadeAt ? Math.max(0, 1 - (p.T - fadeAt) / .2) : 1, transform: `translate(${p.x}px,${p.y}px) rotate(${p.r}deg)` })));
+      }
+      // ---- Sugar twinkles over the fallen sweets as it ends.
+      for (let i = 0; i < 9; i++) {
+        const el = document.createElement('div'), at = rand(1.3, 1.65) / D, s = H * rand(.12, .2);
+        el.className = 'bfx';
+        el.style.cssText = `position:absolute;left:${cx + rand(-1.6, 1.6) * H - s / 2}px;top:${cy + rand(-.2, 1.1) * H - s / 2}px;width:${s}px;height:${s}px;z-index:4`;
+        el.innerHTML = '<svg viewBox="0 0 20 20" width="100%" height="100%"><path d="M10 0C11 7 13 9 20 10 13 11 11 13 10 20 9 13 7 11 0 10 7 9 9 7 10 0Z" fill="#fff"/></svg>';
+        layer.appendChild(el);
+        anim(el, [{ opacity: 0, transform: 'scale(0) rotate(0deg)' }, { opacity: 0, transform: 'scale(0) rotate(0deg)', offset: at }, { opacity: 1, transform: 'scale(1) rotate(45deg)', offset: at + .04 }, { opacity: 0, transform: 'scale(0) rotate(90deg)', offset: Math.min(1, at + .1) }, { opacity: 0, transform: 'scale(0) rotate(90deg)' }]);
+      }
+      end(last);
     }
 
     // Pixel Blast: the top card turns into big square pixels, a stepped
@@ -20048,6 +20187,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v306: [[ '🍬', 'Stupendous Confectionery now bursts your real card open like a sweet wrapper: dozens of sweets, each flying, tumbling and bouncing on its own, with your card back on the torn halves.', WN_KEY ]],
       v305: [[ '🦢', 'Origami Fold now folds your real card: it creases into a kite, folds in half, lifts its neck and head, shows your card back on every fold, beats its wings and flies off the screen.', WN_KEY ]],
       v304: [[ '🔥', 'Five Shop burns are reborn as painted 3D scenes: Coloured Flame, Electric Blast, Stupendous Confectionery, Lava Melt and Origami Fold, each with its own new sound.', WN_KEY ],
         [ '⚡', 'Electric Blast strikes your card with real lightning; Stupendous Confectionery sends painted sweets tumbling out of the Pile.', WN_KEY ],
@@ -24793,7 +24933,7 @@ video {
       ShLevelBurns.clear(stage);
       if (window.ShLevel3D) ShLevel3D.clear(stage);
       audio.playBurnSound(id);
-      stage.querySelectorAll('.shop-burn-particle, .bfx, .bfx-flash, .ori3d').forEach(node => node.remove());
+      stage.querySelectorAll('.shop-burn-particle, .bfx, .bfx-flash, .pfx-layer').forEach(node => node.remove());
       if (SHAPE_BURN_EFFECTS.has(id)) {
         const rect = stage.getBoundingClientRect();
         return playBurnFx(id, stage, (rect.width || 240) / 2, (rect.height || 132) * .62, scale);

@@ -1819,6 +1819,7 @@ async function runDevTestSuite() {
     const tiles = { default: 'default', 'burn-coloured': 'coloured-flame', 'burn-electric': 'electric-blast', 'burn-sweets': 'confectionery', 'burn-lava': 'lava-melt', 'burn-origami': 'origami-fold' };
     for (const [id, dir] of Object.entries(tiles)) {
       if (id === 'burn-origami') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /oriClip/.test(String(bfxOrigami)), 'Origami Fold folds the real card (v305), not the painted scene');
+      else if (id === 'burn-sweets') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /procBurnStage/.test(String(bfxSweets)), 'Stupendous Confectionery is procedural (v306), not the painted scene');
       else assertTrue(window.ShLevel3D && ShLevel3D.has(id), `${id} plays in 3D`);
       assertTrue(burnPreviewIcon(id).includes(`art/burns/${dir}/tile.webp`), `${id} shows its painted tile as the icon`);
       assertTrue(SHAPE_BURN_EFFECTS.has(id), `${id} goes through playBurnFx`);
@@ -3625,17 +3626,17 @@ async function runDevTestSuite() {
   await test('v305: Origami Fold folds the real top Pile card into a swan (burner\'s back outside) and leaves the Pile empty', async () => {
     const layer = document.getElementById('burnFxLayer'), wrap = document.getElementById('discardCardsWrapper'), keep = wrap.innerHTML;
     try {
-      layer.querySelectorAll('.ori3d').forEach(n => n.remove());
+      layer.querySelectorAll('.pfx-layer').forEach(n => n.remove());
       wrap.innerHTML = '';
       const card = createCardElement({ id: 'ori-test-top', rank: '10', suit: '♠' });
       card.dataset.cardId = 'ori-test-top';
       wrap.appendChild(card);
       bfxOrigami(layer, 100, 100, 1);
-      const sheet = layer.querySelector('.ori3d');
+      const sheet = layer.querySelector('.pfx-layer');
       assertTrue(!!sheet, 'It draws in the burn layer (over the whole screen)');
       assertEqual(document.querySelectorAll('[data-card-id="ori-test-top"]').length, 1, 'Its copies never pose as the real card');
       assertTrue(getComputedStyle(card).visibility === 'hidden', 'The real Pile card hides while its copy folds');
-      const faces = sheet.querySelectorAll('.ori-face'), backs = [...sheet.querySelectorAll('.custom-card-back.' + burnBackClass().split(' ')[0])].filter(el => !el.classList.contains('bfx')); // not the scraps
+      const faces = sheet.querySelectorAll('.pfx-face'), backs = [...sheet.querySelectorAll('.custom-card-back.' + burnBackClass().split(' ')[0])].filter(el => !el.classList.contains('bfx')); // not the scraps
       assertTrue(faces.length >= 8 && faces.length === backs.length, `The card is cut into pieces, each with its face and the burner's back (${faces.length}/${backs.length})`);
       const boxes = [...sheet.querySelectorAll('[style*="preserve-3d"]')];
       assertTrue(boxes.length > 8 && boxes.every(el => getComputedStyle(el).willChange === 'transform' && getComputedStyle(el).filter === 'none'), 'No 3D box is flattened (no filter, no will-change: opacity)');
@@ -3643,9 +3644,35 @@ async function runDevTestSuite() {
       assertTrue(ends.length > 20 && Math.max(...ends) <= 2100, `It ends within 2.1s (${Math.round(Math.max(...ends))}ms)`);
       sheet.getAnimations({ subtree: true }).forEach(a => a.finish());
       await new Promise(r => setTimeout(r, 30));
-      assertTrue(!layer.querySelector('.ori3d'), 'Nothing is left behind');
+      assertTrue(!layer.querySelector('.pfx-layer'), 'Nothing is left behind');
       assertTrue(getComputedStyle(card).visibility !== 'hidden', 'The Pile card is shown again after');
-    } finally { wrap.innerHTML = keep; layer.querySelectorAll('.ori3d').forEach(n => n.remove()); }
+    } finally { wrap.innerHTML = keep; layer.querySelectorAll('.pfx-layer').forEach(n => n.remove()); }
+  });
+
+  await test('v306: Stupendous Confectionery bursts the real card open; every sweet is its own element on its own path', async () => {
+    const layer = document.getElementById('burnFxLayer'), wrap = document.getElementById('discardCardsWrapper'), keep = wrap.innerHTML;
+    try {
+      layer.querySelectorAll('.pfx-layer').forEach(n => n.remove());
+      wrap.innerHTML = '';
+      const card = createCardElement({ id: 'sweets-test-top', rank: '10', suit: '♠' });
+      card.dataset.cardId = 'sweets-test-top';
+      wrap.appendChild(card);
+      bfxSweets(layer, 100, 100, 1);
+      const sheet = layer.querySelector('.pfx-layer');
+      assertTrue(!!sheet && getComputedStyle(card).visibility === 'hidden', 'It draws over the screen and the real Pile card hides');
+      assertEqual(sheet.querySelectorAll('.pfx-face').length, 2, 'The card tears into two halves');
+      assertEqual([...sheet.querySelectorAll('.custom-card-back.' + burnBackClass().split(' ')[0])].length, 2, "Each half shows the burner's back when it turns");
+      const sweets = [...sheet.children].filter(el => el.querySelector('svg') && el.getAnimations().length === 1 && el.offsetWidth > 15);
+      assertTrue(sweets.length >= 26, `At least 26 separate sweets (${sweets.length})`);
+      const paths = new Set(sweets.map(el => JSON.stringify(el.getAnimations()[0].effect.getKeyframes().map(f => f.transform))));
+      assertEqual(paths.size, sweets.length, 'Every sweet moves on its own path');
+      assertTrue([...sheet.querySelectorAll('[style*="preserve-3d"]')].every(el => getComputedStyle(el).willChange === 'transform' && el.getAnimations().every(a => !a.effect.getKeyframes().some(f => 'opacity' in f))), 'The 3D halves are never flattened (no opacity on them)');
+      const ends = [...sheet.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
+      assertTrue(Math.max(...ends) <= 2100, `It ends within 2.1s (${Math.round(Math.max(...ends))}ms)`);
+      sheet.getAnimations({ subtree: true }).forEach(a => a.finish());
+      await new Promise(r => setTimeout(r, 30));
+      assertTrue(!layer.querySelector('.pfx-layer') && getComputedStyle(card).visibility !== 'hidden', 'Nothing is left behind and the Pile shows again');
+    } finally { wrap.innerHTML = keep; layer.querySelectorAll('.pfx-layer').forEach(n => n.remove()); }
   });
 
   await test('REGRESSION: Shop and Custom tabs list cheapest first, then A-Z', () => {
