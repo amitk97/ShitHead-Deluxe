@@ -4,7 +4,7 @@ layers.webp = two slots side by side (slot 0 left, slot 1 right). The painted
 cards are removed and their gap filled with the surrounding art, because the
 game burns the real pile card in front; every edge fades softly. Also writes
 the Shop/Custom tile. Needs numpy, pillow, opencv-python-headless.
-Run: python3 tools/make-burn-layers.py [ghost-flames|smoke-burst|royal-incineration|hellfire-spiral|shitstorm|spark-snap|inferno-sweep]"""
+Run: python3 tools/make-burn-layers.py [default|ghost-flames|smoke-burst|royal-incineration|hellfire-spiral|shitstorm|spark-snap|inferno-sweep]"""
 import sys
 from PIL import Image
 import numpy as np, cv2
@@ -254,13 +254,16 @@ def shitstorm():
     col = np.clip(f / np.maximum(bright[..., None], .3), 0, 1)
     save_atlas([(col, bright * storm), (src.astype(np.float32) / 255, face)], 'art/burns/shitstorm/layers.webp')
 
-def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=False):
+def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=False, clear=False, strip=None):
     """A burst around one point (`centre`, u v of the crop): the painted cards (hand-traced,
     source pixels) filled with smooth inpainted colour plus fire detail from the best nearby
     patch (a pasted patch showed the card's outline in big gaps), a lumpy soft outline, and
     the rubble below `front_from` as a second layer drawn in front of the game card.
     mirror: a radial burst; gaps are filled from the opposite side, reflected through the
-    centre (rays stay radial), where that side is clean."""
+    centre (rays stay radial), where that side is clean; mirror='x' reflects left-right only.
+    clear: what the mirror can't fill fades out instead (the 3D fire burns there behind the card).
+    strip: (a, b) crop x range of clean rising fire: the gaps are quilted from small random blocks
+    of it at the same height, soft-blended (bands or mirrors repeat visibly; blocks don't)."""
     full = Image.open(f'docs/avatar-art/src/burn-{name}.webp').convert('RGB')
     full.crop(tile_box).resize((384, round(384 * (tile_box[3] - tile_box[1]) / (tile_box[2] - tile_box[0]))), Image.LANCZOS).save(f'art/burns/{name}/tile.webp', quality=90)
     x0, y0, x1, y1 = box
@@ -277,20 +280,39 @@ def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=F
     m = cv2.GaussianBlur(mask.astype(np.float32) / 255, (31, 31), 0)[..., None]
     g = f * (1 - m) + fill * m
     cu, cv = centre
+    if strip:
+        a, b = strip
+        rq = np.random.default_rng(seed + 7)
+        fill, wsum, B = np.zeros_like(g), np.zeros((H, W, 1), np.float32), 36
+        gy, gx = np.mgrid[-B:B, -B:B]; wk = np.exp(-(gx ** 2 + gy ** 2) / (2 * (B / 3.4) ** 2)).astype(np.float32)[..., None]
+        for cy0 in range(0, H + B, B // 2):
+            for cx0 in range(0, W + B, B // 2):
+                if m[min(cy0, H - 1), min(cx0, W - 1), 0] < .02: continue
+                for _ in range(20):  # a clean source block at about the same height
+                    sx0, sy0 = int(rq.integers(a + B, b - B)), int(np.clip(cy0 + rq.integers(-14, 15), B, H - B))
+                    if m[sy0 - B:sy0 + B, sx0 - B:sx0 + B].mean() < .05: break
+                y0b, x0b = cy0 - B, cx0 - B
+                ty0, tx0, ty1, tx1 = max(0, y0b), max(0, x0b), min(H, cy0 + B), min(W, cx0 + B)
+                src_blk = g[sy0 - B + (ty0 - y0b):sy0 - B + (ty1 - y0b), sx0 - B + (tx0 - x0b):sx0 - B + (tx1 - x0b)]
+                wb = wk[ty0 - y0b:ty1 - y0b, tx0 - x0b:tx1 - x0b]
+                fill[ty0:ty1, tx0:tx1] += src_blk * wb; wsum[ty0:ty1, tx0:tx1] += wb
+        g = g * (1 - m) + fill / np.maximum(wsum, 1e-3) * m
     if mirror:
         cx, cy = round(cu * W), round(cv * H)
         yy, xx = np.mgrid[0:H, 0:W]
-        ry, rx = 2 * cy - yy, 2 * cx - xx  # the point opposite, through the centre
+        ry, rx = (yy if mirror == 'x' else 2 * cy - yy), 2 * cx - xx  # the point opposite, through the centre ('x': across a vertical line, for rising fire)
         inside = np.clip(np.minimum.reduce([ry, H - 1 - ry, rx, W - 1 - rx]) / 40, 0, 1)  # fades out near the picture edge
         ry, rx = np.clip(ry, 0, H - 1), np.clip(rx, 0, W - 1)
         V = 1 - m[..., 0]
         take = np.clip(V[ry, rx] * inside - V, 0, 1)[..., None]  # where the opposite side is cleaner
         g = g * (1 - take) + g[ry, rx] * take
+        if clear: m = np.clip(m - take, 0, 1)
     yy, xx = np.mgrid[0:H, 0:W] / [[[H]], [[W]]]
     noise = lambda n, sd: cv2.resize(np.random.default_rng(sd).random((n, n)).astype(np.float32), (W, H), interpolation=cv2.INTER_CUBIC)
     lump = .6 * noise(5, seed) + .4 * noise(11, seed + 1)
     r = np.hypot((xx - cu) / max(cu, 1 - cu), (yy - cv) / max(cv, 1 - cv)) * (1.2 - .3 * lump)
     burst = (1 - ss(.55, 1.0, r)) * (1 - ss(.9, 1, yy))
+    if clear: burst = burst * (1 - m[..., 0])
     bright = ss(.05, .3, g.max(2))
     col = np.clip(g / np.maximum(bright[..., None], .3), 0, 1)
     front = burst * ss(front_from, front_from + .08, yy)
@@ -321,4 +343,13 @@ def inferno_sweep():
              [(100, 193), (125, 193), (125, 222), (100, 222)],
              [(128, 380), (205, 358), (215, 372), (140, 402)]], (.5, .55), .84, (12, 14, 460, 436), 51)
 
-{'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral, 'shitstorm': shitstorm, 'spark-snap': spark_snap, 'inferno-sweep': inferno_sweep}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
+def default_burn():
+    # Default Burn (v303): the fire bursting up out of the coals; the painted Aces filled from the
+    # flames, and the left half of the blaze reflected from the right so the fire stands whole.
+    painted_burst('default', (8, 8, 506, 410), [
+             [(36, 168), (82, 138), (104, 110), (205, 98), (240, 124), (276, 198), (306, 252), (332, 322), (286, 334), (140, 306), (72, 292)],
+             [(230, 98), (282, 104), (358, 122), (364, 254), (342, 308), (300, 304), (268, 232)],
+             [(30, 298), (82, 296), (120, 318), (118, 352), (40, 352)],
+             [(398, 284), (486, 280), (490, 336), (402, 352)]], (.45, .6), .8, (6, 6, 508, 412), 61, strip=(352, 494))
+
+{'default': default_burn, 'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral, 'shitstorm': shitstorm, 'spark-snap': spark_snap, 'inferno-sweep': inferno_sweep}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()

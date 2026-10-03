@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-03-v302 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-03-v303 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7431,7 +7431,7 @@ video {
   </div>
 
   <script src="art/burns/level-v294/effects.js?v=295"></script>
-  <script src="art/burns/level-3d/burns3d.js?v=303"></script>
+  <script src="art/burns/level-3d/burns3d.js?v=304"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
   <script>
     const AUDIO_SOURCES = {
@@ -7762,7 +7762,7 @@ video {
       tone({ at: at + 0.01, dur: 0.05, type: 'triangle', f0: f * 3, level: level * 0.3 });
     });
     const BURN_SOUNDS = {
-      default: (k) => fireWhoosh(k),
+      default: (k) => (window.ShLevel3D ? ShLevel3D.sound('default', k) : fireWhoosh(k)),
       // Coloured Flame: the fire, plus a rising shimmer of colour.
       'burn-coloured': (k) => { fireWhoosh(k, 0.8); [660, 880, 1108, 1320, 1760].forEach((f, i) => k.tone({ at: 0.1 + i * 0.06, dur: 0.35, type: 'triangle', f0: f, level: 0.1 })); },
       // Ice Shatter: a sharp crack and falling glassy pings.
@@ -8079,7 +8079,7 @@ video {
     // scale: 1 in game, smaller inside the Shop/Custom preview stage.
     // ============================================================
     const LEVEL_BURN_IDS = ['burn-lvl-spark-snap', 'burn-lvl-smoke-burst', 'burn-lvl-inferno-sweep', 'burn-lvl-hellfire-spiral', 'burn-lvl-royal-incineration', 'burn-lvl-shitstorm'];
-    const SHAPE_BURN_EFFECTS = new Set(['burn-electric', 'burn-coloured', 'burn-sweets', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', ...LEVEL_BURN_IDS]);
+    const SHAPE_BURN_EFFECTS = new Set(['default', 'burn-electric', 'burn-coloured', 'burn-sweets', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', ...LEVEL_BURN_IDS]);
     let bfxGradientSeq = 0;
     const bfxRand = (min, max) => min + Math.random() * (max - min);
     function bfxAdd(host, html, x, y, w, h) {
@@ -8537,6 +8537,12 @@ video {
       const pile = onTable ? document.getElementById('discardPileContainer') : null;
       return ShLevel3D.play(id, host, x, y, k, calm, { cardEls, cardH: pile && pile.offsetHeight, backClass: burnBackClass() });
     }
+    // Default Burn (v303, owner's painted tile): fire bursting up out of the coals around the top card.
+    function bfxDefaultBurn(host, x, y, k) {
+      const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (levelBurn3d('default', host, x, y, k, calm)) return;
+      if (host.id === 'burnFxLayer') triggerBurnEmberExplosion(x, y); else sfxFlash(host, x, y, k, '#f97316', 140, 700);
+    }
     function bfxInfernoSweep(host, x, y, k) {
       const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
       return levelBurn3d('burn-lvl-inferno-sweep', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-inferno-sweep', host, x, y, k, calm);
@@ -8555,7 +8561,7 @@ video {
     }
     function playBurnFx(id, host, x, y, scale = 1) {
       if (!host) return false;
-      ({ 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
+      ({ default: bfxDefaultBurn, 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
         'burn-blackhole': bfxBlackHole, 'burn-origami': bfxOrigami, 'burn-pixel': bfxPixelBlast, 'burn-lava': bfxLavaMelt,
         'burn-lvl-spark-snap': bfxSparkSnap, 'burn-lvl-smoke-burst': bfxSmokeBurst, 'burn-lvl-inferno-sweep': bfxInfernoSweep,
         'burn-lvl-hellfire-spiral': bfxHellfireSpiral, 'burn-lvl-royal-incineration': bfxRoyalIncineration, 'burn-lvl-shitstorm': bfxShitStorm }[id] || (typeof SEASONAL_BURN_FX !== 'undefined' && SEASONAL_BURN_FX[id]) || (() => {}))(host, x, y, scale);
@@ -19881,6 +19887,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v303: [[ '🔥', 'The Default Burn is reborn: the coals glow, then real fire roars up around your card and burns it away in a shower of sparks and ash.', WN_KEY ]],
       v302: [[ '✨', 'A new app icon: three Emerald Court cards behind a big red and gold SH.', WN_KEY ],
         [ '🃏', 'The loading screen now says ShitHead Deluxe, in the same lettering as the home screen.' ]],
       v301: [[ '⚡', 'The game opens faster: a loading screen shows straight away, and your level and Diamonds are on the home screen from the start.', WN_KEY ],
