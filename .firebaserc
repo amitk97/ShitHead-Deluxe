@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "shithead-pro"
+  },
+  "targets": {
+    "shithead-pro": {
+      "hosting": {
+        "deluxe": [
+          "shithead-deluxe"
+        ],
+        "legacy": [
+          "shithead-pro"
+        ]
+      }
+    }
   }
 }

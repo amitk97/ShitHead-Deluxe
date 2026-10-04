@@ -1,89 +1,178 @@
 {
-  "hosting": {
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/.*/**",
-      "**/node_modules/**",
-      "gha-creds-*.json",
-      "index[0-9]*.html",
-      "CLAUDE.md",
-      "database.rules.json",
-      "functions/**",
-      "_config.yml",
-      "tools/**",
-      "docs/**",
-      "README.md"
-    ],
-    "headers": [
-      {
-        "source": "/art/**",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=86400"
-          }
-        ]
-      },
-      {
-        "source": "/audio/**",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=604800"
-          }
-        ]
-      },
-      {
-        "source": "/dev-tests.js",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "/sw.js",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "/manifest.webmanifest",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/manifest+json"
-          }
-        ]
-      },
-      {
-        "source": "/icons/**",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=86400"
-          }
-        ]
-      }
-    ],
-    "redirects": [
-      {
-        "regex": "^/index[0-9]*\\.html$",
-        "destination": "/",
-        "type": 301
-      }
-    ]
-  },
+  "hosting": [
+    {
+      "target": "deluxe",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/.*/**",
+        "**/node_modules/**",
+        "gha-creds-*.json",
+        "index[0-9]*.html",
+        "CLAUDE.md",
+        "database.rules.json",
+        "functions/**",
+        "_config.yml",
+        "tools/**",
+        "docs/**",
+        "README.md"
+      ],
+      "headers": [
+        {
+          "source": "/art/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=86400"
+            }
+          ]
+        },
+        {
+          "source": "/audio/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800"
+            }
+          ]
+        },
+        {
+          "source": "/dev-tests.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "/sw.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "/manifest.webmanifest",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/manifest+json"
+            }
+          ]
+        },
+        {
+          "source": "/icons/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=86400"
+            }
+          ]
+        }
+      ],
+      "redirects": [
+        {
+          "regex": "^/index[0-9]*\\.html$",
+          "destination": "/",
+          "type": 301
+        }
+      ]
+    },
+    {
+      "target": "legacy",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/.*/**",
+        "**/node_modules/**",
+        "gha-creds-*.json",
+        "index[0-9]*.html",
+        "CLAUDE.md",
+        "database.rules.json",
+        "functions/**",
+        "_config.yml",
+        "tools/**",
+        "docs/**",
+        "README.md"
+      ],
+      "headers": [
+        {
+          "source": "/art/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=86400"
+            }
+          ]
+        },
+        {
+          "source": "/audio/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800"
+            }
+          ]
+        },
+        {
+          "source": "/dev-tests.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "/sw.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "/manifest.webmanifest",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/manifest+json"
+            }
+          ]
+        },
+        {
+          "source": "/icons/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=86400"
+            }
+          ]
+        }
+      ],
+      "redirects": [
+        {
+          "regex": "^/index[0-9]*\\.html$",
+          "destination": "/",
+          "type": 301
+        }
+      ]
+    }
+  ],
   "database": {
     "rules": "database.rules.json"
   },

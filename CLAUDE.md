@@ -1,5 +1,9 @@
 # ShitHead Deluxe
 
+## Additional live address — 4 October 2026
+
+Firebase Hosting now deploys the same current game to two targets in project `shithead-pro`: `deluxe` → `shithead-deluxe.web.app`, and `legacy` → `shithead-pro.web.app`. Keep both targets in `firebase.json` and `.firebaserc`; main deploys both, PR previews use `deluxe`. Accounts, database, Functions and artwork remain the same. This is an additional live address, not a completed canonical-domain migration: existing shared links and auth handler stay unchanged until the new same-site Google OAuth redirect URI is configured and verified. Firebase Auth already authorises `shithead-deluxe.web.app`. Do not redirect the old site before verifying mobile Google sign-in on the new one.
+
 ## v301 — faster start (owner)
 
 - **Loading screen** `#bootSplash` (inline style + markup + script at the very top of `<body>`): `<head>` closes right after the meta tags, so the splash paints (~0.14s) before the render-blocking game CSS, Google Fonts, Firebase and confetti scripts (first paint was ~1.8s). It uses the current logo look (`.brand-logo-rendered` copy), three default SH backs and a gold bar (still with reduced motion). `window.shBootReveal()` fades it out once: signed out, signed in with a home snapshot painted, the real economy loaded (`refreshXpDisplays`), no Firebase at all, or 1.5s after DOMContentLoaded at the latest. Never on the test page. `#rotateHint` (z 10000) stays above it.
