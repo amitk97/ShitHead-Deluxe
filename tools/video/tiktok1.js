@@ -10,10 +10,10 @@ const SILENT = path.join(__dirname, 'tiktok1-silent.webm'), SOUND = path.join(__
 const OUT = path.join(__dirname, 'tiktok1.mp4'), NAR = path.join(__dirname, 'narration');
 const SHOTS = process.argv.includes('--shots');
 const FF = process.env.FFMPEG_FULL || 'ffmpeg';
-const END = 11.1;
+const END = 15.0;
 const LAG = 0.2; // the screencast shows a change ~0.2s after it happens, so the sound waits for the picture
 // Voice lines: [file, start (s)].
-const VOICE = [['burn', 0.0], ['gone', 2.95], ['later', 4.4], ['joker1', 5.75], ['joker2', 8.45], ['follow', 9.7]];
+const VOICE = [['burn', 0.0], ['gone', 3.9], ['later', 5.7], ['joker1', 7.2], ['joker2', 10.4], ['follow', 12.2]];
 
 (async () => {
   const g = await openGame(SILENT, { size: [1080, 1920], frame: [405, 720], audio: true });
@@ -79,38 +79,39 @@ const VOICE = [['burn', 0.0], ['gone', 2.95], ['later', 4.4], ['joker1', 5.75], 
   const t0 = Date.now();
   const at = async (s) => { const d = t0 + s * 1000 - Date.now(); if (d > 0) await wait(page, d); };
 
+  // Each caption is the line being spoken, shown as it starts (VOICE times; both reach
+  // the video LAG late, so they stay together).
+  const say = (name, html) => cap(html);
   // 0.0 Hook: a 22-card Pile, and your 10.
-  await cap('<b>22 cards</b> on the Pile 👀'); await shot('hook');
-  await at(1.25); await ev(() => V.mePlay('10'));
-  await at(2.6); await punch(1.14, 1900);
-  await at(2.95); await cap('<i>BURNT.</i> 🔥');
-  await at(3.4); await shot('burn');
-  // 4.4 Time skip.
-  await at(4.4);
+  await say('burn', '<b>22 cards</b> on the Pile?<br>Watch this! 👀'); await shot('hook');
+  await at(2.6); await ev(() => V.mePlay('10'));
+  await at(3.5); await punch(1.14, 2000);
+  await at(3.9); await say('gone', '<i>GONE!</i> 🔥');
+  await at(4.4); await shot('burn');
+  // 5.7 Time skip (the flash says it while the voice does).
+  await at(5.7);
   await ev(() => { document.getElementById('ttCap').classList.remove('show');
     const f = document.createElement('div'); f.id = 'ttFlash'; f.textContent = 'A few moments later…'; document.body.appendChild(f); });
-  await at(4.7);
+  await at(6.0);
   await ev(() => {
     state.discardPile = [['5','♠'],['7','♦'],['8','♣'],['9','♠'],['J','♦'],['J','♣'],['Q','♠'],['Q','♦'],['K','♥'],['A','♣'],['A','♥'],['K','♦'],['A','♠'],['K','♣']].map(([r, s]) => V.c(r, s));
     V.me().hand = [['4','♣'],['6','♥'],['9','♦']].map(([r, s]) => V.c(r, s));
     V.turnTo(V.bot(0).id); render();
   });
-  await at(5.25); await ev(() => document.getElementById('ttFlash')?.remove());
-  await cap('Then Jake wanted <b>revenge</b> 🎃'); await shot('revenge');
-  // 6.8 The Pumpkin Joker: the whole Pile comes to you.
-  await at(6.7); await cap('');
-  await at(6.8); await ev(() => V.botPlay(0, 'JOKER')); await punch(1.1, 1300, true);
-  await at(7.5); await shot('boo');
-  await at(8.4);
-  const count = await ev(() => V.me().hand.length);
-  await cap(`<b>${count} cards.</b> Karma. 💀`); await ev(() => V.highlight('#localHand', 4)); await shot('karma');
-  // 9.5 CTA.
-  await at(9.5);
+  await at(7.1); await ev(() => document.getElementById('ttFlash')?.remove());
+  await at(7.2); await say('joker1', 'Then my mate drops<br>a <b>Joker</b>… 🎃'); await shot('revenge');
+  // 8.6 The Pumpkin Joker: the whole Pile comes to you (its BOO lands after the line).
+  await at(8.6); await cap(''); await ev(() => V.botPlay(0, 'JOKER')); await punch(1.1, 1400, true);
+  await at(9.3); await shot('boo');
+  await at(10.4);
+  await say('joker2', '…and I get <b>the lot!</b> 💀'); await ev(() => V.highlight('#localHand', 4)); await shot('karma');
+  // 12.0 CTA, held to the end so the link can be read.
+  await at(12.0);
   await ev(() => { V.clearHighlights(); document.getElementById('ttCap').classList.remove('show');
     V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div>
     <div class="line">Follow for Part 2:<br>the card that folds into a swan 🦢</div>
     <div class="url">shithead-deluxe.web.app</div><div class="sub">Free · plays in your browser</div>`); });
-  await at(10.1); await shot('end');
+  await at(13.0); await shot('end');
   await at(END);
   fs.writeFileSync(SOUND, await g.getAudio());
   await finish(g, SILENT, { lead: 0 });
