@@ -1,0 +1,96 @@
+name: One-time Play Matrix render refactor
+
+on:
+  push:
+    branches:
+      - refactor-play-matrix-render
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor-play-matrix-render
+          fetch-depth: 0
+      - name: Extract renderMatrixReference
+        shell: bash
+        run: |
+          set -euo pipefail
+          before=$(wc -l < index.html)
+          echo "INDEX_LINES_BEFORE=$before"
+          python3 <<'PY'
+          from pathlib import Path
+
+          p=Path('index.html')
+          html=p.read_text()
+          marker='    function renderMatrixReference() {'
+          start=html.index(marker)
+          i=start
+          depth=0
+          opened=False
+          in_s=in_d=in_t=False
+          escaped=False
+          end=None
+          while i < len(html):
+              ch=html[i]
+              if escaped:
+                  escaped=False
+              elif ch=='\\':
+                  escaped=True
+              elif not in_d and not in_t and ch=="'":
+                  in_s=not in_s
+              elif not in_s and not in_t and ch=='"':
+                  in_d=not in_d
+              elif not in_s and not in_d and ch=='`':
+                  in_t=not in_t
+              elif not in_s and not in_d and not in_t:
+                  if ch=='{':
+                      depth+=1; opened=True
+                  elif ch=='}':
+                      depth-=1
+                      if opened and depth==0:
+                          end=i+1
+                          break
+              i+=1
+          if end is None:
+              raise RuntimeError('Could not find end of renderMatrixReference')
+          while end < len(html) and html[end] in '\r\n':
+              end+=1
+          block=html[start:end]
+          extracted='\n'.join(line[4:] if line.startswith('    ') else line for line in block.splitlines()).rstrip()+'\n'
+          out=Path('js/play-matrix-ui.js')
+          out.write_text('// Play Matrix rendering only. Data and House Rules legality live in separate files.\n'+extracted)
+          html=html[:start]+html[end:]
+          anchor='  <script src="js/play-matrix-rules.js"></script>\n'
+          if anchor not in html:
+              raise RuntimeError('play-matrix-rules script anchor not found')
+          html=html.replace(anchor, anchor+'  <script src="js/play-matrix-ui.js"></script>\n', 1)
+          p.write_text(html)
+
+          test_path=Path('tools/house-rules-integration-test.js')
+          test=test_path.read_text()
+          needle="const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');\n"
+          addition=needle+"const playMatrixUi=fs.readFileSync(path.join(__dirname,'../js/play-matrix-ui.js'),'utf8');\n"
+          if 'const playMatrixUi=' not in test:
+              test=test.replace(needle, addition, 1)
+          test=test.replace(
+              "['dynamic play matrix',playMatrixRules.includes('function houseMatrixLegal(rowRank, colRank)')&&html.includes('PLAY_MATRIX_RANKS.map((col) => houseMatrixLegal(row, col)')],",
+              "['dynamic play matrix',playMatrixRules.includes('function houseMatrixLegal(rowRank, colRank)')&&playMatrixUi.includes('PLAY_MATRIX_RANKS.map((col) => houseMatrixLegal(row, col)')],"
+          )
+          test_path.write_text(test)
+          PY
+          node --check js/play-matrix-ui.js
+          node tools/house-rules-integration-test.js
+          after=$(wc -l < index.html)
+          echo "INDEX_LINES_AFTER=$after"
+          echo "INDEX_LINES_REMOVED=$((before-after))"
+          rm .github/workflows/one-time-refactor-play-matrix-render.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html js/play-matrix-ui.js tools/house-rules-integration-test.js .github/workflows/one-time-refactor-play-matrix-render.yml
+          git commit -m "Extract Play Matrix renderer"
+          git push origin HEAD:refactor-play-matrix-render
