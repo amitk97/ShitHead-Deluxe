@@ -3,7 +3,7 @@
 
 **The classic card game ShitHead, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
 
-### ▶ [Play now at shithead-pro.web.app](https://shithead-pro.web.app/)
+### ▶ [Play now at shithead-deluxe.web.app](https://shithead-deluxe.web.app/)
 
 Free, no download needed. It runs in any modern browser on phones, foldables, tablets and computers, installs like an app (Add to Home Screen / Install App), and Vs Bots even works offline.
 

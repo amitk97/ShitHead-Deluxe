@@ -59,7 +59,7 @@ const SHOTS = process.argv.includes('--shots');
   await wait(page, 900); await shot('07-win'); await wait(page, 2400);
 
   // End card.
-  await ev(() => { V.hideCaption(); V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">Free on your phone.<br>No download needed.</div><div class="url">shithead-pro.web.app</div><div class="sub">Add it to your home screen 📲</div>`); });
+  await ev(() => { V.hideCaption(); V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">Free on your phone.<br>No download needed.</div><div class="url">shithead-deluxe.web.app</div><div class="sub">Add it to your home screen 📲</div>`); });
   await shot('08-end'); await wait(page, 3600);
   await finish(g, OUT);
   console.log('saved', OUT);

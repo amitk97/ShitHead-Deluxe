@@ -95,7 +95,7 @@ const SHOTS = process.argv.includes('--shots');
   await wait(page, 900); await shot('win'); await wait(page, 1600);
   await cap('The last one still holding cards is the <b style="color:#fbbf24">ShitHead</b> 💩'); await wait(page, 2600);
 
-  await ev(() => { V.hideCaption(); V.card(`<div class="big">💩</div><div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">Ready? Play free now</div><div class="url">shithead-pro.web.app</div><div class="sub">New? Tap Tutorial for the 1-minute Quick Start ⚡</div>`); });
+  await ev(() => { V.hideCaption(); V.card(`<div class="big">💩</div><div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">Ready? Play free now</div><div class="url">shithead-deluxe.web.app</div><div class="sub">New? Tap Tutorial for the 1-minute Quick Start ⚡</div>`); });
   await shot('end'); await wait(page, 4000);
   await finish(g, OUT);
   console.log('saved', OUT);

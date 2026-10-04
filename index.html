@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-03-v309 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-04-v310 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -16,13 +16,14 @@
 <head>
   <meta charset="UTF-8" />
   <script>
-    // The game's home is shithead-pro.web.app. GitHub Pages and the older
-    // firebaseapp.com address hop there before anything loads (Google
+    // The game's home is shithead-deluxe.web.app (owner, v310; the old
+    // shithead-deluxe.web.app still works). GitHub Pages and the firebaseapp.com
+    // addresses hop there before anything loads (Google
     // sign-in is proven there, and this keeps one install, one set of saved
     // settings). Only this page redirects: firebaseapp.com's /__/auth/*
     // pages are Firebase's own and are never touched.
-    if (/\.github\.io$/i.test(location.hostname) || location.hostname === 'shithead-pro.firebaseapp.com') {
-      location.replace('https://shithead-pro.web.app/' + location.search + location.hash);
+    if (/\.github\.io$/i.test(location.hostname) || location.hostname === 'shithead-pro.firebaseapp.com' || location.hostname === 'shithead-deluxe.firebaseapp.com') {
+      location.replace('https://shithead-deluxe.web.app/' + location.search + location.hash);
     }
     // --app-h = the real screen height. The installed iPhone app can give
     // 100dvh as ~47px less than the screen (black-translucent status bar),
@@ -60,8 +61,8 @@
   <meta property="og:site_name" content="ShitHead Deluxe" />
   <meta property="og:title" content="ShitHead Deluxe: the classic card game" />
   <meta property="og:description" content="Free on your phone. Play bots, your friends online or Ranked. No download needed." />
-  <meta property="og:url" content="https://shithead-pro.web.app/" />
-  <meta property="og:image" content="https://shithead-pro.web.app/icons/share-preview-v3.jpg" />
+  <meta property="og:url" content="https://shithead-deluxe.web.app/" />
+  <meta property="og:image" content="https://shithead-deluxe.web.app/icons/share-preview-v3.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -69,8 +70,8 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="ShitHead Deluxe: the classic card game" />
   <meta name="twitter:description" content="Free on your phone. Play bots, your friends online or Ranked. No download needed." />
-  <meta name="twitter:image" content="https://shithead-pro.web.app/icons/share-preview-v3.jpg" />
-  <link rel="canonical" href="https://shithead-pro.web.app/" />
+  <meta name="twitter:image" content="https://shithead-deluxe.web.app/icons/share-preview-v3.jpg" />
+  <link rel="canonical" href="https://shithead-deluxe.web.app/" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#020617" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon-v302.png" />
@@ -9516,6 +9517,7 @@ video {
     // Firebase Hosting serves that handler on every hosting domain; each one
     // listed here must also be an Authorized redirect URI
     // (https://<domain>/__/auth/handler) on the Google OAuth web client.
+    // shithead-deluxe.web.app joins this list once its handler is an Authorized redirect URI (CLAUDE.md, v310).
     const SAME_SITE_AUTH_DOMAINS = ['shithead-pro.web.app', 'shithead-pro.firebaseapp.com'];
     const firebaseConfig = {
       apiKey: "AIzaSyAEU9g6jfZm6M-EcT47skRUvQ-uuszgYZk",
@@ -20357,6 +20359,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v310: [[ '🔗', 'The game has a new home: shithead-deluxe.web.app. Invite links, referral links and shared results now use it; the old address still works.' ]],
       v309: [[ '✨', 'Opening the installed app on Android now flows smoothly from the app icon into the loading screen.' ]],
       v308: [[ '🔥', 'Coloured Flame now sets your real card alight: violet, pink and blue flames, each moving on its own, burn it from the bottom up while its edge curls over.', WN_KEY ]],
       v307: [[ '🌋', 'Lava Melt now sinks your real card into a bubbling pool of lava ringed by rocks: it burns away at the surface, softens as it goes under, then the lava cools and sinks away.', WN_KEY ]],
@@ -24737,7 +24740,7 @@ video {
     // finishing order, stats, Diamonds, rating, the game link) and hands it
     // to the phone's share sheet (WhatsApp, X, Instagram, save to Photos…).
     // Where sharing files isn't supported it downloads the PNG instead.
-    const SHARE_URL = 'https://shithead-pro.web.app';
+    const SHARE_URL = 'https://shithead-deluxe.web.app';
     function matchShareData() {
       const me = state.players.find(p => p.id === state.localPlayerId);
       const place = matchPlacingInfo(me);
@@ -24802,7 +24805,7 @@ video {
         g.font = font(800, 21); g.fillStyle = '#94a3b8'; g.fillText(label.toUpperCase(), x + cw / 2, y + 79);
       });
       // Footer
-      g.textAlign = 'center'; g.font = font(900, 40); g.fillStyle = '#34d399'; g.fillText('Play free → shithead-pro.web.app', W / 2, H - 88);
+      g.textAlign = 'center'; g.font = font(900, 40); g.fillStyle = '#34d399'; g.fillText('Play free → shithead-deluxe.web.app', W / 2, H - 88);
       g.font = font(700, 24); g.fillStyle = '#64748b'; g.fillText(new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }), W / 2, H - 52);
       return c;
     }
@@ -32478,11 +32481,11 @@ video {
       }, 1800);
     });
 
-    // § Invite links: https://shithead-pro.web.app/?join=<code> opens the game
+    // § Invite links: https://shithead-deluxe.web.app/?join=<code> opens the game
     // straight into that room (handleInviteLinkOnLoad). The lobby's Share
     // Invite Link button sends it through the phone's share sheet (WhatsApp
     // etc.), or copies it where sharing isn't available.
-    const INVITE_LINK_BASE = 'https://shithead-pro.web.app/';
+    const INVITE_LINK_BASE = 'https://shithead-deluxe.web.app/';
     function inviteLinkFor(code) { return `${INVITE_LINK_BASE}?join=${encodeURIComponent(code)}`; }
     async function shareInviteLink(code) {
       const url = inviteLinkFor(code);
@@ -32751,7 +32754,7 @@ video {
       return activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement?.isContentEditable;
     }
 
-    // § Referrals: https://shithead-pro.web.app/?ref=<CODE>
+    // § Referrals: https://shithead-deluxe.web.app/?ref=<CODE>
     // The code is remembered from the link (localStorage) until the player is
     // signed in, then the server links the new account to the inviter (economy
     // referral 'claim': new accounts with a verified email only, once). The
@@ -32759,7 +32762,7 @@ video {
     const REF_PENDING_KEY = 'shithead_ref_code';
     const REF_PENDING_MAX_AGE = 30 * 864e5;
     // referralStatusCache (last economy referral 'status') is declared at the top of the script.
-    const referralLinkFor = (code) => `https://shithead-pro.web.app/?ref=${encodeURIComponent(code)}`;
+    const referralLinkFor = (code) => `https://shithead-deluxe.web.app/?ref=${encodeURIComponent(code)}`;
     function pendingReferral() {
       try {
         const p = JSON.parse(localStorage.getItem(REF_PENDING_KEY) || 'null');

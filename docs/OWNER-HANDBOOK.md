@@ -2,7 +2,7 @@
 
 A plain-English guide to running the game without a developer.
 
-- **The game:** https://shithead-pro.web.app
+- **The game:** https://shithead-deluxe.web.app
 - **The code:** GitHub → `amitk97/ShitHead-Deluxe`
 - **The servers:** Firebase project `shithead-pro`, at https://console.firebase.google.com
 
@@ -115,7 +115,7 @@ Server code (`functions/`) and database rules are **not** rolled back by Option 
 | Buying, gifting, rewards or Ranked scores fail ("couldn't reach the server") | The server code is down or didn't deploy | GitHub → Actions → "Deploy notification functions": re-run it. Firebase console → **Functions → Logs** shows the error. Check the project is still on the **Blaze** plan (billing still active). |
 | Everything fails to save; players logged out | Database rules broken or paste incomplete | Re-publish the rules (section 3). |
 | "Deploy to Firebase Hosting" is red | The deploy key or Firebase access expired | Re-run once. If still red, GitHub → Settings → Secrets → `FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO` needs a fresh key (Firebase console → Project settings → Service accounts → Generate new private key). |
-| Google sign-in shows "missing initial state" or fails | A new web address isn't allowed | Firebase console → **Authentication → Settings → Authorized domains**. Only `shithead-pro.web.app` and `shithead-pro.firebaseapp.com` are needed. |
+| Google sign-in shows "missing initial state" or fails | A new web address isn't allowed | Firebase console → **Authentication → Settings → Authorized domains**. Needed: `shithead-deluxe.web.app` (the main address), `shithead-pro.web.app` and `shithead-pro.firebaseapp.com`; each also needs `https://<address>/__/auth/handler` as an Authorized redirect URI on the Google OAuth web client (Google Cloud Console → APIs & Services → Credentials). |
 | Push notifications stopped | Server code down, or players turned them off | Check the functions workflow (first row). Notifications are only sent to players who allowed them. |
 | A player says everything is tiny | "Desktop site" is on in their phone browser | The game already tells them how to switch it off. |
 | A player can't join a friend's room | They're on different versions | Both close and reopen the game (or tap Update Now). |

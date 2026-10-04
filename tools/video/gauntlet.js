@@ -61,7 +61,7 @@ const OUT = path.join(__dirname, 'shithead-gauntlet.webm');
     newItems: [{ id: 'avatar-gauntlet', name: 'Gauntlet Champion' }, { id: 'frame-gauntlet', name: 'Gauntlet Gold' }] } }));
   await wait(page, 3200);
 
-  await ev(() => { closeGauntlet(); V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">Take on the Gauntlet.<br>New run every day.</div><div class="url">shithead-pro.web.app</div><div class="sub">Free · no download</div>`); });
+  await ev(() => { closeGauntlet(); V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">Take on the Gauntlet.<br>New run every day.</div><div class="url">shithead-deluxe.web.app</div><div class="sub">Free · no download</div>`); });
   await wait(page, 3000);
   await finish(g, OUT, { from: 'start', lead: 0.3 });
   console.log('saved', OUT);

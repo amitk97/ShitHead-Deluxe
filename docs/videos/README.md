@@ -19,7 +19,7 @@ Suggested captions:
 - **Uni:** "The card game every uni kitchen knew 🍻 Now on your phone. #shithead #uni #cardgame #palace #karma"
 
 The game goes by Shithead, Palace, Karma and Shed, so use all of those in
-hashtags and descriptions. Every clip ends on shithead-pro.web.app.
+hashtags and descriptions. Every clip ends on shithead-deluxe.web.app.
 
 Re-record (needs Playwright + Chromium and `SH_VIDEO_DEPS` with
 `firebase@10.12.0` + `canvas-confetti@1.6.0`):

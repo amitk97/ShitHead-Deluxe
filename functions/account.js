@@ -32,7 +32,7 @@ async function collectAccountData(uid, authUser = null) {
   const allRequests = await val('friendRequests');
   Object.entries(allRequests || {}).forEach(([to, from]) => { if (from && from[uid]) friendRequestsSent.push({ toUid: to, ...from[uid] }); });
   return {
-    about: 'Everything ShitHead Deluxe stores about your account (shithead-pro.web.app).',
+    about: 'Everything ShitHead Deluxe stores about your account (shithead-deluxe.web.app).',
     exportedAt: new Date().toISOString(),
     account: {
       uid,

@@ -41,7 +41,7 @@ const OUT = path.join(__dirname, 'shithead-hook-blind-flip.webm');
   await ev(() => { V.caption('A 2 beats the King. YOU WIN 🏆'); if (!document.querySelector('#victoryFxLayer .rbat')) playVictoryEffect('victory-halloween'); });
   await wait(page, 2600);
 
-  await ev(() => { V.hideCaption(); V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">The card game you played<br>at uni. Now on your phone.</div><div class="url">shithead-pro.web.app</div><div class="sub">Free · no download</div>`); });
+  await ev(() => { V.hideCaption(); V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">The card game you played<br>at uni. Now on your phone.</div><div class="url">shithead-deluxe.web.app</div><div class="sub">Free · no download</div>`); });
   await wait(page, 2800);
   await finish(g, OUT, { from: 'start', lead: 0 });
   console.log('saved', OUT);

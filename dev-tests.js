@@ -6408,7 +6408,7 @@ async function runDevTestSuite() {
   await test('Link previews: Open Graph and Twitter tags point at the real preview picture', async () => {
     const meta = (sel) => document.querySelector(sel)?.getAttribute('content') || '';
     const img = meta('meta[property="og:image"]');
-    assertEqual(img, 'https://shithead-pro.web.app/icons/share-preview-v3.jpg', 'og:image is an absolute address on the game domain (apps never resolve relative ones)');
+    assertEqual(img, 'https://shithead-deluxe.web.app/icons/share-preview-v3.jpg', 'og:image is an absolute address on the game domain (apps never resolve relative ones)');
     assertEqual(meta('meta[name="twitter:image"]'), img, 'X uses the same picture');
     assertEqual(meta('meta[name="twitter:card"]'), 'summary_large_image', 'X shows the large picture');
     assertEqual([meta('meta[property="og:image:width"]'), meta('meta[property="og:image:height"]')], ['1200', '630'], 'The size apps expect for a wide preview');
@@ -8111,7 +8111,7 @@ async function runDevTestSuite() {
   });
 
   await test('Invite links: ?join=<6 digits> is the only accepted form, and the share link points at the game', () => {
-    assertEqual(inviteLinkFor('123456'), 'https://shithead-pro.web.app/?join=123456', 'Link format');
+    assertEqual(inviteLinkFor('123456'), 'https://shithead-deluxe.web.app/?join=123456', 'Link format');
     assertTrue(!!document.getElementById('shareInviteLinkBtn'), 'The lobby has a Share Invite Link button');
     assertEqual(inviteCodeFromUrl(), null, 'No join code on the test page');
   });

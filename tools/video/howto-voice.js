@@ -174,7 +174,7 @@ const PAD = 0.8; // quiet gap between scenes (s)
     await ev(() => { if (!document.querySelector('#victoryFxLayer *')) playVictoryEffect('victory-halloween'); }); await shot('win');
     await at(s[1]); await cap(`The last one holding cards is the ${Y('ShitHead')}`);
     await at(s[2] - 0.2);
-    await ev(() => { V.hideCaption(); V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">Good luck… and don't let it be you!</div><div class="url">shithead-pro.web.app</div>`); });
+    await ev(() => { V.hideCaption(); V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">Good luck… and don't let it be you!</div><div class="url">shithead-deluxe.web.app</div>`); });
     await wait(page, 600); await shot('end');
     await at(T.durs[10] + 2.2);
   });
