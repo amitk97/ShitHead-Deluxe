@@ -1,0 +1,72 @@
+name: One-time Card Reference UI refactor
+
+on:
+  push:
+    branches:
+      - refactor-card-reference-ui
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor-card-reference-ui
+          fetch-depth: 0
+      - name: Extract Card Powers helper block
+        shell: bash
+        run: |
+          set -euo pipefail
+          before=$(wc -l < index.html)
+          echo "INDEX_LINES_BEFORE=$before"
+          python3 <<'PY'
+          from pathlib import Path
+
+          index_path = Path('index.html')
+          html = index_path.read_text()
+          start_marker = "    const HOUSE_POWER_ICON_RANK = {"
+          end_marker = "    let cardRefOpen = false;"
+          start = html.index(start_marker)
+          end = html.index(end_marker, start)
+          block = html[start:end]
+
+          lines = block.splitlines()
+          extracted = []
+          for line in lines:
+              extracted.append(line[4:] if line.startswith('    ') else line)
+          js = "// House Rules helpers used by the in-game Card Powers reference UI.\n// Rendering and gameplay behaviour intentionally remain in index.html.\n" + "\n".join(extracted).rstrip() + "\n"
+          Path('js/card-reference-ui.js').write_text(js)
+
+          html = html[:start] + html[end:]
+          anchor = '  <script src="js/card-reference-data.js"></script>\n'
+          insertion = anchor + '  <script src="js/card-reference-ui.js"></script>\n'
+          if 'js/card-reference-ui.js' not in html:
+              html = html.replace(anchor, insertion, 1)
+          index_path.write_text(html)
+
+          test_path = Path('tools/house-rules-integration-test.js')
+          test = test_path.read_text()
+          needle = "const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');\n"
+          replacement = needle + "const cardReferenceUi=fs.readFileSync(path.join(__dirname,'../js/card-reference-ui.js'),'utf8');\n"
+          if 'const cardReferenceUi=' not in test:
+              test = test.replace(needle, replacement, 1)
+          test = test.replace(
+              "['dynamic card reference labels',html.includes('function cardReferenceLabel(rank)')&&html.includes('referencePowerIconSvg(rank')],",
+              "['dynamic card reference labels',cardReferenceUi.includes('function cardReferenceLabel(rank)')&&cardReferenceUi.includes('referencePowerIconSvg(rank')],"
+          )
+          test_path.write_text(test)
+          PY
+          node --check js/card-reference-ui.js
+          node tools/house-rules-integration-test.js
+          after=$(wc -l < index.html)
+          echo "INDEX_LINES_AFTER=$after"
+          echo "INDEX_LINES_REMOVED=$((before-after))"
+          rm .github/workflows/one-time-refactor-card-reference-ui.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html js/card-reference-ui.js tools/house-rules-integration-test.js .github/workflows/one-time-refactor-card-reference-ui.yml
+          git commit -m "Extract Card Powers reference helpers"
+          git push origin HEAD:refactor-card-reference-ui
