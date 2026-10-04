@@ -27,18 +27,48 @@ jobs:
           text = p.read_text(encoding='utf-8')
           before = len(text.splitlines())
 
-          start_marker = '    const AVATAR_TONES = {\n'
-          end_marker = '    // Premium photo pictures'
+          start_marker = '    const AVATAR_TONES = {'
           start = text.find(start_marker)
           if start < 0:
               raise SystemExit('AVATAR_TONES start marker not found')
-          end = text.find(end_marker, start)
-          if end < 0:
-              raise SystemExit('AVATAR_TONES end marker not found')
+
+          brace = text.find('{', start)
+          depth = 0
+          quote = None
+          escape = False
+          i = brace
+          while i < len(text):
+              ch = text[i]
+              if quote:
+                  if escape:
+                      escape = False
+                  elif ch == '\\':
+                      escape = True
+                  elif ch == quote:
+                      quote = None
+              else:
+                  if ch in "'\"`":
+                      quote = ch
+                  elif ch == '{':
+                      depth += 1
+                  elif ch == '}':
+                      depth -= 1
+                      if depth == 0:
+                          end = i + 1
+                          while end < len(text) and text[end] in ' \t':
+                              end += 1
+                          if end < len(text) and text[end] == ';':
+                              end += 1
+                          if end < len(text) and text[end] == '\n':
+                              end += 1
+                          break
+              i += 1
+          else:
+              raise SystemExit('Could not find end of AVATAR_TONES object')
 
           block = text[start:end]
-          if not block.rstrip().endswith('};'):
-              raise SystemExit('AVATAR_TONES block does not end cleanly')
+          if 'const AVATAR_TONES = {' not in block:
+              raise SystemExit('Unexpected AVATAR_TONES block')
 
           lines = block.splitlines()
           extracted = '\n'.join(line[4:] if line.startswith('    ') else line for line in lines).rstrip() + '\n'
