@@ -16,13 +16,60 @@ jobs:
         with:
           ref: refactor-card-reference-panel
           fetch-depth: 0
-      - name: Locate Card Reference zoom boundaries
+      - name: Extract Card Reference panel controls
         shell: bash
         run: |
           set -euo pipefail
-          echo "INDEX_LINES_BEFORE=$(wc -l < index.html)"
-          for needle in "cardRefZoom =" "function loadCardRefZoom" "function saveCardRefZoom" "function applyCardRefZoom" "function setCardRefZoom" "function setCardRefZoomFromCorner" "function getReferenceAvailableRanks" "function initCardRefZoomControls" "let matrixRefOpen"; do
-            echo "--- $needle ---"
-            grep -n "$needle" index.html | head -5 || true
-          done
-          sed -n '13360,13765p' index.html
+          before=$(wc -l < index.html)
+          echo "INDEX_LINES_BEFORE=$before"
+          python3 <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          html = p.read_text()
+          pieces = []
+
+          def take(start_marker, end_marker):
+              global html
+              start = html.index(start_marker)
+              end = html.index(end_marker, start)
+              block = html[start:end]
+              pieces.append('\n'.join(line[4:] if line.startswith('    ') else line for line in block.splitlines()).rstrip())
+              html = html[:start] + html[end:]
+
+          # Card Reference zoom/resize state and helpers only.
+          take(
+              '    // How big the card reference panel renders, as a CSS scale factor.\n',
+              '    // Which ranks to leave un-dimmed: the hand while you have one, otherwise\n'
+          )
+          # Card Reference placement only; leave the shared clamp utility in index.html.
+          take(
+              '    // Placed once when opened (and again on a window resize); the refresh\n',
+              "    // Keeps the panel fully on-screen regardless of where it's dragged to,\n"
+          )
+          # Card-specific clamp wrapper, position persistence, drag and resize gestures.
+          take(
+              '    function clampCardRefPosition(left, top, w, h) {\n',
+              '    function toggleCardReference(forceClose) {\n'
+          )
+
+          out = Path('js/card-reference-panel.js')
+          out.write_text('// Card Powers floating panel positioning, persistence, drag and resize behaviour.\n// Shared floating-panel clamping and panel open/close state remain in index.html.\n\n' + '\n\n'.join(pieces) + '\n')
+
+          anchor = '  <script src="js/card-reference-ui.js"></script>\n'
+          if anchor not in html:
+              raise RuntimeError('card-reference-ui script anchor not found')
+          html = html.replace(anchor, anchor + '  <script src="js/card-reference-panel.js"></script>\n', 1)
+          p.write_text(html)
+          PY
+          node --check js/card-reference-panel.js
+          node tools/house-rules-integration-test.js
+          after=$(wc -l < index.html)
+          echo "INDEX_LINES_AFTER=$after"
+          echo "INDEX_LINES_REMOVED=$((before-after))"
+          rm .github/workflows/one-time-refactor-card-reference-panel.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html js/card-reference-panel.js .github/workflows/one-time-refactor-card-reference-panel.yml
+          git commit -m "Extract Card Powers panel controls"
+          git push origin HEAD:refactor-card-reference-panel
