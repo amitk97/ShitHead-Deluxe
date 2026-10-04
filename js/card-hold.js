@@ -303,6 +303,8 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
   }
 
   // Clicking/tapping the existing hand-count badge toggles the fan.
+  // Once clicked, it stays open through all other table interactions. It only
+  // closes if this same badge is clicked again or another opponent is opened.
   container.addEventListener('click', event => {
     const control = event.target.closest('[data-opponent-hand-toggle]');
     if (!control) return;
@@ -350,12 +352,6 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
     hoveredPlayerId = null;
     if (pinnedPlayerId !== String(player.id)) closeSeat(seat);
   });
-
-  document.addEventListener('pointerdown', event => {
-    if (!pinnedPlayerId || event.target.closest('[data-opponent-hand-toggle]')) return;
-    pinnedPlayerId = null;
-    closeAll();
-  }, true);
 
   let syncQueued = false;
   new MutationObserver(() => {
