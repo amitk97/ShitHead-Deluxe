@@ -10,7 +10,7 @@ the scripts in `tools/video/`. Social apps prefer MP4: open a file in CapCut
 | `shithead-gauntlet.webm` | 24s | "5 bots, 3 lives, can you beat them all?" | `gauntlet.js` |
 | `shithead-uni.webm` | 25s | "Remember this one?" The rules everyone knows, played fast | `uni.js` |
 | `shithead-promo.webm` | 32s | Promo: plays, burn, blind flip, Joker, last card, win | `promo.js` |
-| `shithead-tiktok1-jokered.mp4` | 15s | TikTok 1 (1080×1920, game sound + voiceover): your 10 burns a 22-card Pile with Ghost Flames, then Jake's Pumpkin Joker hands you 17 cards | `tiktok1-voice.py` → `tiktok1.js` |
+| `shithead-tiktok1-jokered.mp4` | 14s | TikTok 1 (1080×1920, game sound + voiceover): your 10 burns a 22-card Pile with Ghost Flames, then Jake's Pumpkin Joker hands you 17 cards | `tiktok1-voice.py` → `tiktok1.js` |
 | `shithead-how-to-play.webm` / `.mp4` | 112s | How to play with a voiceover (British male, excited), every move cued to the narration | `narrate.py` → `howto-voice.js` → `mux-voice.py` |
 
 Suggested captions:

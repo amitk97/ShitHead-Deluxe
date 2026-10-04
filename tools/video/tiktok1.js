@@ -10,10 +10,10 @@ const SILENT = path.join(__dirname, 'tiktok1-silent.webm'), SOUND = path.join(__
 const OUT = path.join(__dirname, 'tiktok1.mp4'), NAR = path.join(__dirname, 'narration');
 const SHOTS = process.argv.includes('--shots');
 const FF = process.env.FFMPEG_FULL || 'ffmpeg';
-const END = 15.0;
+const END = 14.0;
 const LAG = 0.2; // the screencast shows a change ~0.2s after it happens, so the sound waits for the picture
 // Voice lines: [file, start (s)].
-const VOICE = [['burn', 0.0], ['gone', 3.9], ['later', 5.7], ['joker1', 7.2], ['joker2', 10.4], ['follow', 12.2]];
+const VOICE = [['burn', 0.0], ['gone', 3.3], ['later', 5.0], ['joker1', 6.6], ['joker2', 9.5], ['follow', 11.0]];
 
 (async () => {
   const g = await openGame(SILENT, { size: [1080, 1920], frame: [405, 720], audio: true });
@@ -82,36 +82,47 @@ const VOICE = [['burn', 0.0], ['gone', 3.9], ['later', 5.7], ['joker1', 7.2], ['
   // Each caption is the line being spoken, shown as it starts (VOICE times; both reach
   // the video LAG late, so they stay together).
   const say = (name, html) => cap(html);
+  // The "A few moments later" card (the owner's picture, upscaled to exactly 1080×1920 by
+  // tools/video/art/README) covers the whole video, on the host page above the game frame.
+  const later = (on) => realPage.evaluate((on) => {
+    let c = document.getElementById('fml');
+    if (!c) {
+      c = document.createElement('img'); c.id = 'fml'; c.src = '/tools/video/art/few-moments-later-1080x1920.png';
+      c.style.cssText = 'position:fixed;left:0;top:0;width:1080px;height:1920px;z-index:10;opacity:0;transform:scale(1.04);transition:opacity .14s ease, transform 1.4s ease-out';
+      document.body.appendChild(c);
+    }
+    requestAnimationFrame(() => { c.style.opacity = on ? '1' : '0'; c.style.transform = on ? 'scale(1)' : 'scale(1.04)'; });
+  }, on);
+  await realPage.evaluate(() => { const i = new Image(); i.src = '/tools/video/art/few-moments-later-1080x1920.png'; return i.decode(); });
   // 0.0 Hook: a 22-card Pile, and your 10.
   await say('burn', '<b>22 cards</b> on the Pile?<br>Watch this! 👀'); await shot('hook');
-  await at(2.6); await ev(() => V.mePlay('10'));
-  await at(3.5); await punch(1.14, 2000);
-  await at(3.9); await say('gone', '<i>GONE!</i> 🔥');
-  await at(4.4); await shot('burn');
-  // 5.7 Time skip (the flash says it while the voice does).
-  await at(5.7);
-  await ev(() => { document.getElementById('ttCap').classList.remove('show');
-    const f = document.createElement('div'); f.id = 'ttFlash'; f.textContent = 'A few moments later…'; document.body.appendChild(f); });
-  await at(6.0);
+  await at(1.7); await ev(() => V.mePlay('10'));
+  await at(3.05); await punch(1.14, 1800);
+  await at(3.3); await say('gone', '<i>GONE!</i> 🔥');
+  await at(3.9); await shot('burn');
+  // 4.9 The burn has finished: "A few moments later…".
+  await at(4.9); await ev(() => document.getElementById('ttCap').classList.remove('show')); await later(true);
+  await at(5.4);
   await ev(() => {
     state.discardPile = [['5','♠'],['7','♦'],['8','♣'],['9','♠'],['J','♦'],['J','♣'],['Q','♠'],['Q','♦'],['K','♥'],['A','♣'],['A','♥'],['K','♦'],['A','♠'],['K','♣']].map(([r, s]) => V.c(r, s));
     V.me().hand = [['4','♣'],['6','♥'],['9','♦']].map(([r, s]) => V.c(r, s));
     V.turnTo(V.bot(0).id); render();
   });
-  await at(7.1); await ev(() => document.getElementById('ttFlash')?.remove());
-  await at(7.2); await say('joker1', 'Then my mate drops<br>a <b>Joker</b>… 🎃'); await shot('revenge');
-  // 8.6 The Pumpkin Joker: the whole Pile comes to you (its BOO lands after the line).
-  await at(8.6); await cap(''); await ev(() => V.botPlay(0, 'JOKER')); await punch(1.1, 1400, true);
-  await at(9.3); await shot('boo');
-  await at(10.4);
+  await at(6.4); await later(false);
+  await at(6.6); await say('joker1', 'Then my mate drops<br>a <b>Joker</b>… 🎃'); await shot('revenge');
+  // 7.8 The Pumpkin Joker: the whole Pile comes to you (its BOO lands after the line).
+  await at(7.8); await cap(''); await ev(() => V.botPlay(0, 'JOKER')); await punch(1.1, 1400, true);
+  await at(8.5); await shot('boo');
+  await at(9.5);
   await say('joker2', '…and I get <b>the lot!</b> 💀'); await ev(() => V.highlight('#localHand', 4)); await shot('karma');
-  // 12.0 CTA, held to the end so the link can be read.
-  await at(12.0);
+  // 10.8 CTA with a question for the comments, held so the link can be read.
+  await at(10.8);
   await ev(() => { V.clearHighlights(); document.getElementById('ttCap').classList.remove('show');
     V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div>
+    <div class="line" style="color:#fbbf24">Would you have played the 10? 👇</div>
     <div class="line">Follow for Part 2:<br>the card that folds into a swan 🦢</div>
     <div class="url">shithead-deluxe.web.app</div><div class="sub">Free · plays in your browser</div>`); });
-  await at(13.0); await shot('end');
+  await at(12.0); await shot('end');
   await at(END);
   fs.writeFileSync(SOUND, await g.getAudio());
   await finish(g, SILENT, { lead: 0 });

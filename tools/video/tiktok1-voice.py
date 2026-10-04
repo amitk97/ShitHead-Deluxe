@@ -7,7 +7,7 @@ D = os.path.join(os.path.dirname(os.path.abspath(__file__)), "narration"); os.ma
 KD = os.environ.get("KOKORO_DIR", "."); FF = os.environ.get("FFMPEG_FULL", "ffmpeg")
 k = Kokoro(os.path.join(KD, "kokoro-v1.0.onnx"), os.path.join(KD, "voices-v1.0.bin"))
 V = k.get_voice_style("bm_george")*.6 + k.get_voice_style("am_puck")*.4
-PACE = 0.88
+PACE = 1.0  # owner: "a bit quicker" than the tutorial's 0.88
 # Each line: phrases of (text, gap after, speed, pitch semitones).
 LINES = {
   "burn":   [("Twenty-two cards on the Pile?", .08, 1.34, 1.2), ("Watch this!", .02, 1.3, 1.8)],
