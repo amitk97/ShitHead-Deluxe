@@ -52,3 +52,12 @@ jobs:
 
       - name: House Rules integration safety checks
         run: node tools/house-rules-integration-test.js
+
+      - name: Install browser test runner
+        run: |
+          npm init -y
+          npm install --no-save --ignore-scripts playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Existing browser gameplay regression suite
+        run: node tools/run-browser-tests.js
