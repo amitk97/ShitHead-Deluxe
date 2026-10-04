@@ -9389,6 +9389,7 @@ video {
 
   <!-- GAMEPLAY ENGINE -->
   <script src="js/card-reference-data.js"></script>
+  <script src="js/play-matrix-data.js"></script>
   <script>
     // MAP OF THIS SCRIPT (search for "// § " to jump between sections):
     //   § Start-up plumbing: pages to <body>, Firebase, error reports, callEconomy
@@ -13371,8 +13372,7 @@ video {
     //    the 3 — not "anything" — the Transparent column here is the base case,
     //    not a shortcut around that pass-through rule.
     // ============================================================
-    const PLAY_MATRIX_RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', 'JOKER'];
-    function houseMatrixLegal(rowRank, colRank) {
+        function houseMatrixLegal(rowRank, colRank) {
       if (!isHouseRulesMatch()) return null;
       if (rowRank === 'JOKER') return state.houseRules.joker !== 'off';
       const rowPower = housePower(rowRank);
@@ -13388,23 +13388,6 @@ video {
       if (colRank === 'JOKER' && colPower === 'pickUp') return false;
       return RANK_VALUES[rowRank] >= RANK_VALUES[colRank];
     }
-
-    const PLAY_MATRIX = {
-      '2':     [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0],
-      '3':     [1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0],
-      '4':     [1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-      '5':     [1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
-      '6':     [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-      '7':     [1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
-      '8':     [1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-      '9':     [1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0],
-      '10':    [1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0],
-      'J':     [1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0],
-      'Q':     [1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0],
-      'K':     [1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0],
-      'A':     [1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0],
-      'JOKER': [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1]
-    };
 
     // Verifies PLAY_MATRIX is well-formed (every rank present, every row the
     // right length, every value strictly 0 or 1) the moment the script
