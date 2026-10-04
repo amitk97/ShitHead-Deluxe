@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-04-v311 (ShitHead-Deluxe-236) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-04-v312 (ShitHead-Deluxe-237) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -10193,15 +10193,20 @@ video {
     // A 3 on top is see-through: the Pile label names the card that really
     // has to be beaten ("Transparent - Q"), from the same rules the legal
     // moves use (a 3 on a 5 carries the 5's base card through).
+    function isTransparentCard(card) {
+      if (!card) return false;
+      const rank = card.isJoker ? 'JOKER' : card.rank;
+      return isHouseRulesMatch() ? housePower(rank) === 'transparent' : rank === '3';
+    }
     function transparentPileLabel(pile = state.discardPile) {
       const target = state.baseOverrideCard || getEffectiveTopCard(pile);
-      if (!target || target.rank === '3') return 'Transparent - Any';
+      if (!target || isTransparentCard(target)) return 'Transparent - Any';
       return `Transparent - ${target.isJoker ? 'Joker' : target.rank}`;
     }
     function getEffectiveTopCard(pile) {
       if (!pile || pile.length === 0) return null;
       for (let i = pile.length - 1; i >= 0; i--) {
-        if (pile[i].rank !== '3') return pile[i];
+        if (!isTransparentCard(pile[i])) return pile[i];
       }
       return pile[0];
     }
@@ -13332,6 +13337,37 @@ video {
       ['10', 'Burn'], ['J', 'Odds'], ['Q', 'High'], ['K', 'High'],
       ['A', 'Highest'], ['JOKER', 'Pick Up']
     ];
+    const HOUSE_POWER_ICON_RANK = {
+      burn:'10', dropBase:'5', evens:'6', none:'Q', odds:'J', pickUp:'JOKER',
+      playLower:'7', reset:'2', reverse:'9', skip:'8', transparent:'3', off:'JOKER'
+    };
+    const HOUSE_POWER_TEXT = {
+      burn:'Burns the whole Pile, then you play again.',
+      dropBase:'The next player must beat the card at the bottom of the Pile.',
+      evens:'The next player must play an even card.',
+      none:'No special power. Normal rank rules apply.',
+      odds:'The next player must play an odd card.',
+      pickUp:'Makes the next opponent pick up the Pile.',
+      playLower:'The next player must play 7 or lower.',
+      reset:'Resets the Pile so anything can follow.',
+      reverse:'Reverses the direction of play.',
+      skip:'Skips the next player.',
+      transparent:'See-through: the next player must beat the effective card underneath.',
+      off:'This card is removed from House Rules matches.'
+    };
+    function cardReferenceLabel(rank) {
+      if (!isHouseRulesMatch()) return (CARD_REFERENCE.find(([r]) => r === rank) || [])[1] || '';
+      const power = housePower(rank);
+      return power === 'off' ? 'Off' : (ShHouseRules.LABEL[power] || power || 'No Power');
+    }
+    function cardReferenceText(rank) {
+      if (!isHouseRulesMatch()) return CARD_HOLD_TEXT[rank] || '';
+      return HOUSE_POWER_TEXT[housePower(rank)] || 'Normal rank rules apply.';
+    }
+    function referencePowerIconSvg(rank, cls, style = '') {
+      const iconRank = isHouseRulesMatch() ? (HOUSE_POWER_ICON_RANK[housePower(rank)] || rank) : rank;
+      return powerIconSvg(iconRank, cls, style);
+    }
     let cardRefOpen = false;
 
     // ============================================================
@@ -13359,6 +13395,23 @@ video {
     //    not a shortcut around that pass-through rule.
     // ============================================================
     const PLAY_MATRIX_RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', 'JOKER'];
+    function houseMatrixLegal(rowRank, colRank) {
+      if (!isHouseRulesMatch()) return null;
+      if (rowRank === 'JOKER') return state.houseRules.joker !== 'off';
+      const rowPower = housePower(rowRank);
+      const colPower = housePower(colRank);
+      const constraint = deriveHouseConstraint(colPower);
+      if (rowPower === 'reset') return constraint !== 'ODD';
+      if (rowPower === 'transparent') return constraint !== 'EVEN';
+      if (rowPower === 'burn') return constraint !== 'LOW7' && constraint !== 'ODD';
+      if (constraint === 'EVEN') return EVENS.includes(rowRank);
+      if (constraint === 'ODD') return ODDS.includes(rowRank);
+      if (constraint === 'LOW7') return RANK_VALUES[rowRank] <= 7 || ['reset','transparent'].includes(rowPower);
+      if (colPower === 'reset' || colPower === 'transparent') return true;
+      if (colRank === 'JOKER' && colPower === 'pickUp') return false;
+      return RANK_VALUES[rowRank] >= RANK_VALUES[colRank];
+    }
+
     const PLAY_MATRIX = {
       '2':     [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0],
       '3':     [1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0],
@@ -13508,15 +13561,16 @@ video {
       if (!list || !cardRefOpen) return;
       const { ranks, zone } = getReferenceAvailableRanks();
       list.innerHTML = '';
-      CARD_REFERENCE.forEach(([rank, label]) => {
+      CARD_REFERENCE.forEach(([rank]) => {
         const has = ranks.has(rank);
+        const label = cardReferenceLabel(rank);
         const row = document.createElement('div');
         row.className = has ? 'text-slate-200' : 'text-slate-600 opacity-45';
         const name = rank === 'JOKER' ? 'JKR' : rank;
         row.className += ' flex items-center gap-1';
         row.innerHTML = `<span class="${has ? 'text-amber-400' : 'text-slate-600'} font-black w-5 shrink-0">${name}</span>`
-          + powerIconSvg(rank, `w-3 h-3 shrink-0 ${has ? 'text-amber-400' : 'text-slate-600'}`)
-          + `<span class="opacity-85 whitespace-nowrap">${label}</span>`;
+          + referencePowerIconSvg(rank, `w-3 h-3 shrink-0 ${has ? 'text-amber-400' : 'text-slate-600'}`)
+          + `<span class="opacity-85 whitespace-nowrap">${escapeHtml(label)}</span>`;
         list.appendChild(row);
       });
       const hint = document.getElementById('cardRefHint');
@@ -13868,7 +13922,9 @@ video {
       });
       html += '</tr></thead><tbody>';
       PLAY_MATRIX_RANKS.forEach((row) => {
-        const rowData = PLAY_MATRIX[row];
+        const rowData = isHouseRulesMatch()
+          ? PLAY_MATRIX_RANKS.map((col) => houseMatrixLegal(row, col) ? 1 : 0)
+          : PLAY_MATRIX[row];
         if (!rowData) return; // Defensive: validatePlayMatrix() already
         // guarantees this can't happen, but a render function should never
         // throw on bad data — it should just skip the broken row.
@@ -16045,7 +16101,7 @@ video {
     }
     function cardHoldHtml(card, own, extra = {}) {
       const rank = card.isJoker ? 'JOKER' : String(card.rank);
-      const power = (CARD_REFERENCE.find(([r]) => r === rank) || [])[1] || '';
+      const power = cardReferenceLabel(rank);
       const name = RANK_WORDS[rank] || rank;
       let status = '';
       if (own === 'faceUp' && extra.handLeft > 0 && state.phase === 'PLAY') {
@@ -16057,7 +16113,7 @@ video {
           : `<span class="ch-no">Can't go on ${target ? `the ${RANK_WORDS[target] || target}` : 'this Pile'} now.</span>`;
       }
       const where = extra.base ? '<span class="ch-where">Base card</span>' : '';
-      return `${where}<span class="ch-title">${escapeHtml(name)} <span class="ch-power">${escapeHtml(power)}</span></span><span class="ch-text">${escapeHtml(CARD_HOLD_TEXT[rank] || '')}</span>${status}`;
+      return `${where}<span class="ch-title">${escapeHtml(name)} <span class="ch-power">${escapeHtml(power)}</span></span><span class="ch-text">${escapeHtml(cardReferenceText(rank))}</span>${status}`;
     }
     let cardHoldTimer = null, cardHoldStart = null, cardHoldShownAt = 0, cardHoldEl = null;
     function hideCardHold() {
@@ -16491,10 +16547,10 @@ video {
       // Burn, or any other card sitting on the Pile showed nothing at all.
       const topCard = state.discardPile && state.discardPile.length > 0 ? state.discardPile[state.discardPile.length - 1] : null;
       const topCardRank = topCard ? (topCard.isJoker ? 'JOKER' : topCard.rank) : null;
-      const topCardLabel = topCardRank ? (CARD_REFERENCE.find(([r]) => r === topCardRank) || [])[1] : null;
-      if (topCardLabel) {
+      const topCardLabel = topCardRank ? cardReferenceLabel(topCardRank) : null;
+      if (topCardLabel && topCardLabel !== 'Off') {
         constraintTag.classList.remove('hidden');
-        constraintTag.textContent = topCardRank === '3' ? transparentPileLabel() : topCardLabel;
+        constraintTag.textContent = topCard && isTransparentCard(topCard) ? transparentPileLabel() : topCardLabel;
       } else {
         constraintTag.classList.add('hidden');
       }
