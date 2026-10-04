@@ -1,0 +1,63 @@
+name: CI / Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: JavaScript and regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: JavaScript syntax checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check js/house-rules.js
+          node --check js/house-rules-bots.js
+          node --check functions/diamond-purchases.js
+          node --check functions/economy.js
+          node --check functions/index.js
+          node --check dev-tests.js
+
+      - name: Install Firebase Functions dependencies
+        working-directory: functions
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Dormant real-money purchase safeguards
+        run: node functions/diamond-purchases.test.js
+
+      - name: House Rules unit tests
+        run: node tools/house-rules-test.js
+
+      - name: House Rules integration safety checks
+        run: node tools/house-rules-integration-test.js
+
+      - name: Install browser test runner
+        run: |
+          npm init -y
+          npm install --no-save --ignore-scripts playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Existing browser gameplay regression suite
+        run: node tools/run-browser-tests.js
