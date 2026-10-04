@@ -1,0 +1,30 @@
+name: One-time Card Reference panel refactor
+
+on:
+  push:
+    branches:
+      - refactor-card-reference-panel
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor-card-reference-panel
+          fetch-depth: 0
+      - name: Locate Card Reference panel boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "INDEX_LINES_BEFORE=$(wc -l < index.html)"
+          for needle in "function positionCardRefPanel" "function loadCardRefPosition" "function saveCardRefPosition" "function initCardRefDrag" "function initCardRefResize" "let matrixRefOpen" "function toggleMatrixReference"; do
+            echo "--- $needle ---"
+            grep -n "$needle" index.html | head -3 || true
+          done
+          start=$(grep -n "function positionCardRefPanel" index.html | head -1 | cut -d: -f1)
+          from=$((start-25)); to=$((start+220))
+          sed -n "${from},${to}p" index.html
