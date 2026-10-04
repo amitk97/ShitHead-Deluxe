@@ -23,3 +23,12 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
           channelId: live
           projectId: shithead-pro
+
+      - name: Verify both live addresses serve this release
+        shell: bash
+        run: |
+          for site in shithead-deluxe shithead-pro; do
+            curl --fail --silent --show-error --location --retry 3 --connect-timeout 15 --max-time 60 "https://${site}.web.app/?deploy=${GITHUB_SHA}" --output "$RUNNER_TEMP/${site}.html"
+            cmp index.html "$RUNNER_TEMP/${site}.html"
+            echo "Verified https://${site}.web.app/ serves the deployed game"
+          done
