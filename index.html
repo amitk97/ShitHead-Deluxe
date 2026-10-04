@@ -11246,6 +11246,7 @@ video {
         }
         if (power === 'pickUp') {
           const target=getNextPlayer();
+          refillHand(player); checkPlayerFinished(player);
           if(target){ state.currentTurnIndex=state.players.findIndex(p=>p.id===player.id); notifyBanner(`${cardRank} played: ${target.name} picks up the pile.`); executePickup(target.id,true); }
           return;
         }
@@ -17520,6 +17521,8 @@ video {
       state.isMultiplayer = true;
       state.isHost = true;
       state.localPlayerId = 'p_host';
+      state.ruleMode = 'standard';
+      state.houseRules = null;
 
       const hostPlayer = {
         id: 'p_host',
