@@ -1,0 +1,30 @@
+name: One-time Card Hold system refactor
+
+on:
+  push:
+    branches:
+      - refactor-card-hold-system
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor-card-hold-system
+          fetch-depth: 0
+      - name: Locate Card Hold boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "INDEX_LINES_BEFORE=$(wc -l < index.html)"
+          for needle in "CARD_HOLD_MS" "RANK_WORDS" "cardHold" "CardHold" "showCard" "hideCard" "hold tooltip" "long-press" "long press"; do
+            echo "--- $needle ---"
+            grep -ni "$needle" index.html | head -20 || true
+          done
+          start=$(grep -n "CARD_HOLD_MS" index.html | head -1 | cut -d: -f1)
+          from=$((start-35)); to=$((start+330))
+          sed -n "${from},${to}p" index.html
