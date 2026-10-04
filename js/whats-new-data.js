@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v313: [[ '🦢', 'Origami Fold remade: your card lifts to the middle of the table, folds into a long-necked swan, hovers and flies away.', WN_KEY ]],
       v312: [[ '🏠', 'House Rules matches now show the chosen card powers everywhere: Card Powers, Play Matrix, Pile labels and card descriptions all follow the match rules.', WN_KEY ]],
       v311: [[ '🃏', 'House Rules is being prepared for Play Friends, with custom card powers, adaptive bots and protected casual-only rewards.', WN_KEY ]],
       v310: [[ '🔗', 'The game has a new home: shithead-deluxe.web.app. Invite links, referral links and shared results now use it; the old address still works.' ]],

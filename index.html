@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-04-v312 (ShitHead-Deluxe-237) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-04-v313 (ShitHead-Deluxe-238) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -7468,7 +7468,7 @@ video {
   </div>
 
   <script src="art/burns/level-v294/effects.js?v=295"></script>
-  <script src="art/burns/level-3d/burns3d.js?v=309"></script>
+  <script src="art/burns/level-3d/burns3d.js?v=313"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
   <script>
     const AUDIO_SOURCES = {
@@ -8439,7 +8439,13 @@ video {
       };
     }
     function bfxOrigami(host, x, y, k) {
-      const { layer, W, H, cx, cy, radius, backCls, anim, end, face: cardFace, vw } = procBurnStage(host, x, y, ORI_MS);
+      const st = procBurnStage(host, x, y, ORI_MS), { layer, cx, cy, radius, backCls, anim, end, vw, onTable } = st;
+      // v311 (owner): the card leaves the Pile, grows and moves to the middle of the screen first. The swan
+      // is built at its full size (the face drawn bigger with zoom, so it stays sharp; scaling a drawn
+      // layer up blurs it) and starts shrunk to the card's size; the stage moves, so sparkles follow.
+      const vh = host.clientHeight || innerHeight, E = onTable ? Math.max(1, Math.min(1.8, vh * .2 / st.H, vw * .36 / st.W)) : 1;
+      const W = st.W * E, H = st.H * E, cardFace = () => { const f = st.face(); f.style.zoom = E; return f; };
+      anim(layer, [{ transform: 'none' }, { transform: `translate(${vw / 2 - cx}px,${vh * .52 - cy}px)`, offset: .1, easing: 'ease-in-out' }, { transform: `translate(${vw / 2 - cx}px,${vh * .52 - cy}px)` }]);
       const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
       const norm = ([a, b]) => { const l = Math.hypot(a, b) || 1; return [a / l, b / l]; };
       const reflect = (p, a, d) => { const vx = p[0] - a[0], vy = p[1] - a[1], t = vx * d[0] + vy * d[1]; return [a[0] + 2 * t * d[0] - vx, a[1] + 2 * t * d[1] - vy]; };
@@ -8476,14 +8482,21 @@ video {
         pieces = next.concat(moving);
         return F;
       };
-      fold(T, [-W / 2, H], [0, 0], .07, .17);                // left side in to the centre line
-      fold(T, [W / 2, H], [W, 0], .12, .22);                 // right side in: a kite
-      const half = fold(T, [0, 1], [W, H / 2], .25, .37);    // kite in half down its middle
-      const neckDir = norm(up([.16, -1])), neckAt = [W / 2, H * .5];
-      fold(neckAt, [neckDir[0], neckDir[1] - 1], T, .4, .5); // the point folds up into the neck
+      // v311 (owner: "a swan with a long neck"): two kites make the long thin point (the neck), then in
+      // half, the tail corner tucked into a boat, the neck up and the head forward. Checked flat first
+      // (outline: boat body, upright neck, beak to the right).
+      const k1 = Math.PI / 6, k2 = Math.PI / 12;
+      fold(T, [-Math.sin(k1), Math.cos(k1)], [0, 0], .1, .17);    // top edges in: a kite
+      fold(T, [Math.sin(k1), Math.cos(k1)], [W, 0], .13, .2);
+      fold(T, [-Math.sin(k2), Math.cos(k2)], [0, H * .3], .2, .26); // and in again: a long thin point
+      fold(T, [Math.sin(k2), Math.cos(k2)], [W, H * .3], .23, .29);
+      const half = fold(T, [0, 1], [W, H / 2], .31, .4);          // in half down its middle
+      fold([W / 2, H * .85], [W * .2 - W / 2, H * .15], [W / 2, H], .41, .46); // tail corner tucked: a boat
+      const neckDir = norm([-1, .12]), neckAt = [W / 2, H * .62];
+      fold(neckAt, [neckDir[0], neckDir[1] - 1], T, .44, .53);     // the point up into a long neck
       const tip = reflect(T, neckAt, norm([neckDir[0], neckDir[1] - 1]));
-      const headDir = norm(up([1, .9])), headAt = [tip[0] - neckDir[0] * H * .15, tip[1] - neckDir[1] * H * .15];
-      fold(headAt, [neckDir[0] + headDir[0], neckDir[1] + headDir[1]], tip, .5, .58); // and the head down
+      const headDir = norm([.4, -1]), headAt = [tip[0] - neckDir[0] * H * .13, tip[1] - neckDir[1] * H * .13];
+      fold(headAt, [neckDir[0] + headDir[0], neckDir[1] + headDir[1]], tip, .53, .59); // and the head forward
       const neckFold = folds.length - 2;
 
       // ---- The swan's frame: turned 90deg, centred where the card was and a little above it.
@@ -8502,14 +8515,14 @@ video {
       fly.appendChild(group);
       const groupAt = t => {
         const lift = ease(Math.min(1, t / .07)), turn = ease(Math.max(0, Math.min(1, (t - .25) / .17)));
-        const px = W / 2 + (bc[0] - W / 2) * turn, py = H / 2 + (bc[1] - H / 2) * turn, s = 1 + .1 * lift + (S - 1.1) * turn;
-        return `translate3d(${W / 2}px,${H / 2 - H * (.16 * lift + .12 * turn)}px,${36 * lift}px) rotateX(${14 * lift * (1 - turn)}deg) rotateY(${-22 * turn}deg) rotate(${90 * turn}deg) scale(${s}) translate(${-px}px,${-py}px)`;
+        const px = W / 2 + (bc[0] - W / 2) * turn, py = H / 2 + (bc[1] - H / 2) * turn, grow = 1 / E + (1 - 1 / E) * ease(Math.min(1, t / .1)), s = grow * (1 + .1 * lift) + (S - 1.1) * turn;
+        return `translate3d(${W / 2}px,${H / 2 - H * (.16 * lift + .12 * turn)}px,${36 * lift}px) rotateX(${14 * lift * (1 - turn)}deg) rotateY(${-12 * turn}deg) rotate(${90 * turn}deg) scale(${s}) translate(${-px}px,${-py}px)`;
       };
       // Times worth a keyframe: every 1/80th, so each curve is followed closely.
       const TIMES = Array.from({ length: 81 }, (_, i) => i / 80);
       anim(group, TIMES.map(t => ({ offset: t, transform: groupAt(t) })));
-      // Wings: after the head, both halves open from the keel and beat (the near half more).
-      const beat = [[.5, 0], [.6, 34], [.66, 4], [.72, 40], [.79, 2], [.86, 40], [.93, 4], [1, 30]];
+      // Wings: after the head, the near half opens a little from the keel and beats.
+      const beat = [[.5, 0], [.6, 10], [.66, 2], [.72, 11], [.79, 2], [.86, 11], [.93, 2], [1, 8]]; // small, so the swan's outline stays readable
       const wingAt = t => {
         if (t <= beat[0][0]) return 0;
         for (let i = 1; i < beat.length; i++) if (t <= beat[i][0]) { const [t0, a0] = beat[i - 1], [t1, a1] = beat[i]; return a0 + (a1 - a0) * ease((t - t0) / (t1 - t0)); }
@@ -8520,7 +8533,7 @@ video {
       const lifts = (p, c) => new DOMMatrix().translate(keelA[0], 0, c).rotateAxisAngle(0, 1, 0, 90).translate(-keelA[0], 0, -c).transformPoint(new DOMPoint(...centroid(p.world), p.z)).z > c ? 1 : -1;
       pieces.forEach((p, n) => {
         const inNeck = p.folds.includes(neckFold), near = p.folds.includes(half.i);
-        const wingC = near ? zSplit : zSplit - .5, wingSign = inNeck ? 0 : (typeof DOMMatrix === 'function' ? lifts(p, wingC) : 1) * (near ? 1 : -.45);
+        const wingC = near ? zSplit : zSplit - .5, wingSign = inNeck || !near ? 0 : (typeof DOMMatrix === 'function' ? lifts(p, wingC) : 1); // only the near side beats: the far one kept the outline whole
         const tf = t => {
           let s = `translate3d(${keelA[0]}px,0px,${wingC}px) rotate3d(${keelD[0]},${keelD[1]},0,${(wingSign * wingAt(t)).toFixed(2)}deg) translate3d(${-keelA[0]}px,0px,${-wingC}px)`;
           for (let f = folds.length - 1; f >= 0; f--) {
@@ -8552,11 +8565,14 @@ video {
         anim(faceSide, TIMES.map(t => ({ offset: t, opacity: flips(t) ? 0 : 1 })));
         anim(backSide, TIMES.map(t => ({ offset: t, opacity: flips(t) ? 1 : 0 })));
       });
-      // The flight: still until the swan is made, then up and away off the top of the screen.
+      // The flight: still until the swan is made, a gentle hover, then up and away off the top of the screen
       const flight = anim(fly, [
         { transform: 'translate3d(0,0,0) scale(1)', offset: 0 },
-        { transform: 'translate3d(0,0,0) scale(1)', offset: .6, easing: 'cubic-bezier(.5,0,.75,.35)' },
-        { transform: `translate3d(${vw * .4}px,${-(cy + H * 2.6)}px,90px) rotate(-24deg) scale(.7)`, offset: 1 }
+        { transform: 'translate3d(0,0,0) scale(1)', offset: .6, easing: 'ease-in-out' },
+        { transform: `translate3d(0,${-H * .1}px,0) rotate(-3deg)`, offset: .68, easing: 'ease-in-out' },
+        { transform: `translate3d(0,${H * .02}px,0) rotate(2deg)`, offset: .75, easing: 'ease-in-out' },
+        { transform: `translate3d(0,${-H * .06}px,0) rotate(-2deg)`, offset: .8, easing: 'cubic-bezier(.5,0,.75,.35)' },
+        { transform: `translate3d(${vw * .3}px,${-(vh * .52 + H * 2)}px,90px) rotate(-24deg) scale(.7)`, offset: 1 }
       ]);
       end(flight);
       anim(shadow, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)', offset: .07 }, { opacity: .9, transform: 'scale(1.2)', offset: .58 }, { opacity: 0, transform: 'scale(.4)', offset: .78 }, { opacity: 0, transform: 'scale(.4)' }]);

@@ -1053,16 +1053,17 @@ void main(){
     // a crisp tuck as each piece lands (0.96–1.14), a warm chime as the swan is made (1.16), wing beats
     // (1.2, 1.44, 1.6, 1.76) and a whoosh as it flies off (1.2–1.95).
     'burn-origami': k => {
-      // v305, on index.html's fold clock (bfxOrigami, 2.0s): paper lifts (0-0.14), the two kite folds
-      // crease at 0.34 / 0.44, the fold in half swishes over and creases at 0.74, the neck (1.0) and
-      // head (1.16) tuck in, a chime as the swan is made, wing beats at 1.2 / 1.44 / 1.72 as it flies.
+      // v311, on index.html's fold clock (bfxOrigami, 2.0s): paper lifts as the card grows (0-0.2), the
+      // four kite folds crease at 0.34 / 0.4 / 0.52 / 0.58, the fold in half swishes over and creases at
+      // 0.8, the tail (0.92), neck (1.06) and head (1.18) tuck in, a chime as the swan is made, wing beats
+      // at 1.2 / 1.44 / 1.72 while it hovers, and a whoosh as it takes off at 1.6.
       [.02, .08, .14, .22, .3].forEach((at, n) => k.noise({ at, dur: .06, type: 'bandpass', f0: 2400 + (n % 3) * 500, q: 1.6, level: .13 + n * .026, attack: .02 }));
-      [.34, .44, .74].forEach(at => { k.noise({ at, dur: .025, type: 'bandpass', f0: 3200, q: 3, level: .572 }); k.tone({ at, dur: .08, f0: 180, f1: 90, level: .312, attack: .003 }); });
-      k.noise({ at: .5, dur: .26, type: 'bandpass', f0: 600, f1: 1800, q: 1, level: .234, attack: .15 });
-      [1.0, 1.16].forEach((at, n) => k.noise({ at, dur: .02, type: 'bandpass', f0: 3600 - n * 300, q: 4, level: .416 }));
-      [784, 988, 1175, 1568].forEach((f0, n) => k.tone({ at: 1.16 + n * .025, dur: .6, type: 'triangle', f0, f1: f0, level: .104, attack: .006 }));
-      [1.2, 1.44, 1.72].forEach((at, n) => k.noise({ at, dur: .14, type: 'bandpass', f0: 380 + n * 40, f1: 900, q: 1.1, level: .676 - n * .104, attack: .04 }));
-      k.noise({ at: 1.2, dur: .7, type: 'bandpass', f0: 500, f1: 2400, q: .8, level: .208, attack: .3 });
+      [.34, .4, .52, .58, .8].forEach((at, n) => { k.noise({ at, dur: .025, type: 'bandpass', f0: 3200 - (n % 2) * 300, q: 3, level: .5 + (n === 4) * .07 }); k.tone({ at, dur: .08, f0: 180, f1: 90, level: .27 + (n === 4) * .04, attack: .003 }); });
+      k.noise({ at: .62, dur: .2, type: 'bandpass', f0: 600, f1: 1800, q: 1, level: .234, attack: .12 });
+      [.92, 1.06, 1.18].forEach((at, n) => k.noise({ at, dur: .02, type: 'bandpass', f0: 3600 - n * 300, q: 4, level: .416 }));
+      [784, 988, 1175, 1568].forEach((f0, n) => k.tone({ at: 1.18 + n * .025, dur: .6, type: 'triangle', f0, f1: f0, level: .104, attack: .006 }));
+      [1.2, 1.44, 1.72].forEach((at, n) => k.noise({ at, dur: .14, type: 'bandpass', f0: 380 + n * 40, f1: 900, q: 1.1, level: .6 - n * .104, attack: .04 }));
+      k.noise({ at: 1.6, dur: .4, type: 'bandpass', f0: 500, f1: 2600, q: .8, level: .26, attack: .2 });
     },
     // Lava Melt (v307, on bfxLavaMelt's clock in index.html: LAVA_TOUCH .4, LAVA_GONE 1.55, LAVA_POPS): a
     // deep rumble as the pool wells up (0-0.25), the card's hiss and plop as it touches the lava (0.4),
