@@ -9389,6 +9389,7 @@ video {
 
   <!-- GAMEPLAY ENGINE -->
   <script src="js/card-reference-data.js"></script>
+  <script src="js/card-reference-ui.js"></script>
   <script src="js/play-matrix-data.js"></script>
   <script>
     // MAP OF THIS SCRIPT (search for "// § " to jump between sections):
@@ -13333,20 +13334,7 @@ video {
     // Availability only: it reflects what you HOLD, not what happens to be
     // legal this instant. It is deliberately not a tactical hint.
     // ============================================================
-        function cardReferenceLabel(rank) {
-      if (!isHouseRulesMatch()) return (CARD_REFERENCE.find(([r]) => r === rank) || [])[1] || '';
-      const power = housePower(rank);
-      return power === 'off' ? 'Off' : (ShHouseRules.LABEL[power] || power || 'No Power');
-    }
-    function cardReferenceText(rank) {
-      if (!isHouseRulesMatch()) return CARD_HOLD_TEXT[rank] || '';
-      return HOUSE_POWER_TEXT[housePower(rank)] || 'Normal rank rules apply.';
-    }
-    function referencePowerIconSvg(rank, cls, style = '') {
-      const iconRank = isHouseRulesMatch() ? (HOUSE_POWER_ICON_RANK[housePower(rank)] || rank) : rank;
-      return powerIconSvg(iconRank, cls, style);
-    }
-    let cardRefOpen = false;
+        let cardRefOpen = false;
 
     // ============================================================
     // PLAY MATRIX DATA
