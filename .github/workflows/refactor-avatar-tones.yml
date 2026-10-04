@@ -37,7 +37,7 @@ jobs:
               raise SystemExit('AVATAR_TONES end marker not found')
 
           block = text[start:end]
-          if "navy:" not in block or "turtley:" not in block:
+          if "navy:" not in block or "bronze:" not in block or "sovereign:" not in block:
               raise SystemExit('Unexpected AVATAR_TONES block')
 
           lines = block.splitlines()
@@ -62,7 +62,7 @@ jobs:
         run: |
           node --check js/avatar-tones.js
           grep -q "const AVATAR_TONES = {" js/avatar-tones.js
-          grep -q "turtley:" js/avatar-tones.js
+          grep -q "sovereign:" js/avatar-tones.js
           grep -q 'src="js/avatar-tones.js"' index.html
           ! grep -q "const AVATAR_TONES = {" index.html
           node tools/house-rules-integration-test.js
