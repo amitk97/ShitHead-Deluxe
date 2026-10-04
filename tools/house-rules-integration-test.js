@@ -1,6 +1,7 @@
 'use strict';
 const fs=require('fs'),path=require('path'),assert=require('assert');
 const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
+const playMatrixUi=fs.readFileSync(path.join(__dirname,'../js/play-matrix-ui.js'),'utf8');
 const playMatrixRules=fs.readFileSync(path.join(__dirname,'../js/play-matrix-rules.js'),'utf8');
 const cardReferenceUi=fs.readFileSync(path.join(__dirname,'../js/card-reference-ui.js'),'utf8');
 const checks=[
@@ -15,7 +16,7 @@ const checks=[
  ['guide section',html.includes('data-guide-section="house-rules"')],
  ['house tag',html.includes('HOUSE RULES')],
  ['dynamic card reference labels',cardReferenceUi.includes('function cardReferenceLabel(rank)')&&cardReferenceUi.includes('referencePowerIconSvg(rank')],
- ['dynamic play matrix',playMatrixRules.includes('function houseMatrixLegal(rowRank, colRank)')&&html.includes('PLAY_MATRIX_RANKS.map((col) => houseMatrixLegal(row, col)')],
+ ['dynamic play matrix',playMatrixRules.includes('function houseMatrixLegal(rowRank, colRank)')&&playMatrixUi.includes('PLAY_MATRIX_RANKS.map((col) => houseMatrixLegal(row, col)')],
  ['dynamic pile power label',html.includes('topCard && isTransparentCard(topCard) ? transparentPileLabel() : topCardLabel')],
  ['house transparent effective top',html.includes("isHouseRulesMatch() ? housePower(rank) === 'transparent' : rank === '3'")],
  ['dynamic hold descriptions',html.includes('escapeHtml(cardReferenceText(rank))')]
