@@ -16,9 +16,45 @@ jobs:
         with:
           ref: refactor-card-hold-system
           fetch-depth: 0
-      - name: Inspect exact Card Hold block
+      - name: Extract Card Hold system
         shell: bash
         run: |
           set -euo pipefail
-          echo "INDEX_LINES_BEFORE=$(wc -l < index.html)"
-          sed -n '15365,15530p' index.html
+          before=$(wc -l < index.html)
+          echo "INDEX_LINES_BEFORE=$before"
+          python3 <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          html = p.read_text()
+          start_marker = '    // § Card hold info\n'
+          end_marker = '    // § Card history circle\n'
+          start = html.index(start_marker)
+          end = html.index(end_marker, start)
+          block = html[start:end]
+          extracted = '\n'.join(line[4:] if line.startswith('    ') else line for line in block.splitlines()).rstrip() + '\n'
+          html = html[:start] + html[end:]
+
+          Path('js/card-hold.js').write_text(
+              '// Card press-and-hold tooltip system, including tutorial hold guidance.\n'
+              '// Relies on existing global game state/rule helpers to preserve behaviour exactly.\n\n'
+              + extracted
+          )
+
+          anchor = '  <script src="js/card-hold-text-data.js"></script>\n'
+          if anchor not in html:
+              raise RuntimeError('card-hold-text-data script anchor not found')
+          html = html.replace(anchor, anchor + '  <script src="js/card-hold.js"></script>\n', 1)
+          p.write_text(html)
+          PY
+          node --check js/card-hold.js
+          node tools/house-rules-integration-test.js
+          after=$(wc -l < index.html)
+          echo "INDEX_LINES_AFTER=$after"
+          echo "INDEX_LINES_REMOVED=$((before-after))"
+          rm .github/workflows/one-time-refactor-card-hold-system.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html js/card-hold.js .github/workflows/one-time-refactor-card-hold-system.yml
+          git commit -m "Extract Card Hold tooltip system"
+          git push origin HEAD:refactor-card-hold-system
