@@ -11,7 +11,12 @@ const checks=[
  ['all humans ready',html.includes("Everyone must review the House Rules and press Ready.")],
  ['dynamic bot scorer',html.includes('ShHouseRulesBots.score')],
  ['guide section',html.includes('data-guide-section="house-rules"')],
- ['house tag',html.includes('HOUSE RULES')]
+ ['house tag',html.includes('HOUSE RULES')],
+ ['dynamic card reference labels',html.includes('function cardReferenceLabel(rank)')&&html.includes('referencePowerIconSvg(rank')],
+ ['dynamic play matrix',html.includes('function houseMatrixLegal(rowRank, colRank)')&&html.includes('PLAY_MATRIX_RANKS.map((col) => houseMatrixLegal(row, col)')],
+ ['dynamic pile power label',html.includes('topCard && isTransparentCard(topCard) ? transparentPileLabel() : topCardLabel')],
+ ['house transparent effective top',html.includes("isHouseRulesMatch() ? housePower(rank) === 'transparent' : rank === '3'")],
+ ['dynamic hold descriptions',html.includes('escapeHtml(cardReferenceText(rank))')]
 ];
 for(const [name,ok] of checks)assert(ok,name);
 console.log('house-rules integration: '+checks.length+' guards passed');
