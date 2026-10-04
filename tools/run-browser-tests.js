@@ -24,9 +24,11 @@ const server=http.createServer((req,res)=>{
     await page.goto('http://127.0.0.1:4173/?dev-tests=1',{waitUntil:'domcontentloaded',timeout:60000});
     await page.waitForFunction(()=>document.body?.innerText?.includes('Rule Engine Test Suite'),null,{timeout:180000});
     const report=await page.locator('body').innerText();
-    console.log(report.slice(0,12000));
     const summary=(report.match(/(\d+)\s*\/\s*(\d+) passed(?:\s*—\s*(\d+) FAILING)?/)||[]);
     if(!summary.length)throw new Error('Developer test report summary was not found.');
+    console.log(summary[0]);
+    const failures=await page.locator('body > div:nth-of-type(2) > div').evaluateAll(rows=>rows.filter(r=>r.textContent.trim().startsWith('❌')).map(r=>r.innerText));
+    if(failures.length)console.error('\nFAILED BROWSER TESTS:\n'+failures.map((x,i)=>`${i+1}. ${x}`).join('\n\n'));
     if(Number(summary[3]||0)>0)throw new Error(summary[3]+' browser regression test(s) failed.');
     if(errors.length)console.warn('Page errors observed:',errors.join(' | '));
   }finally{await browser.close();server.close();}
