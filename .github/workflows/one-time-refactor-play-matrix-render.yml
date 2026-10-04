@@ -16,11 +16,51 @@ jobs:
         with:
           ref: refactor-play-matrix-render
           fetch-depth: 0
-      - name: Locate renderMatrixReference boundaries
+      - name: Extract renderMatrixReference
         shell: bash
         run: |
           set -euo pipefail
-          echo "INDEX_LINES_BEFORE=$(wc -l < index.html)"
-          start=$(grep -n "^    function renderMatrixReference()" index.html | head -1 | cut -d: -f1)
-          echo "START=$start"
-          sed -n "${start},$((start+140))p" index.html
+          before=$(wc -l < index.html)
+          echo "INDEX_LINES_BEFORE=$before"
+          python3 <<'PY'
+          from pathlib import Path
+
+          p=Path('index.html')
+          html=p.read_text()
+          start_marker='    function renderMatrixReference() {'
+          end_marker='    // Default position: deliberately anchored to where the hand-count badge\n'
+          start=html.index(start_marker)
+          end=html.index(end_marker, start)
+          block=html[start:end]
+          extracted='\n'.join(line[4:] if line.startswith('    ') else line for line in block.splitlines()).rstrip()+'\n'
+          Path('js/play-matrix-ui.js').write_text('// Play Matrix rendering only. Data and House Rules legality live in separate files.\n'+extracted)
+          html=html[:start]+html[end:]
+          anchor='  <script src="js/play-matrix-rules.js"></script>\n'
+          if anchor not in html:
+              raise RuntimeError('play-matrix-rules script anchor not found')
+          html=html.replace(anchor, anchor+'  <script src="js/play-matrix-ui.js"></script>\n', 1)
+          p.write_text(html)
+
+          test_path=Path('tools/house-rules-integration-test.js')
+          test=test_path.read_text()
+          needle="const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');\n"
+          addition=needle+"const playMatrixUi=fs.readFileSync(path.join(__dirname,'../js/play-matrix-ui.js'),'utf8');\n"
+          if 'const playMatrixUi=' not in test:
+              test=test.replace(needle, addition, 1)
+          test=test.replace(
+              "['dynamic play matrix',playMatrixRules.includes('function houseMatrixLegal(rowRank, colRank)')&&html.includes('PLAY_MATRIX_RANKS.map((col) => houseMatrixLegal(row, col)')],",
+              "['dynamic play matrix',playMatrixRules.includes('function houseMatrixLegal(rowRank, colRank)')&&playMatrixUi.includes('PLAY_MATRIX_RANKS.map((col) => houseMatrixLegal(row, col)')],"
+          )
+          test_path.write_text(test)
+          PY
+          node --check js/play-matrix-ui.js
+          node tools/house-rules-integration-test.js
+          after=$(wc -l < index.html)
+          echo "INDEX_LINES_AFTER=$after"
+          echo "INDEX_LINES_REMOVED=$((before-after))"
+          rm .github/workflows/one-time-refactor-play-matrix-render.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html js/play-matrix-ui.js tools/house-rules-integration-test.js .github/workflows/one-time-refactor-play-matrix-render.yml
+          git commit -m "Extract Play Matrix renderer"
+          git push origin HEAD:refactor-play-matrix-render
