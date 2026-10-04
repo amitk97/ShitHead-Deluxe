@@ -4,6 +4,7 @@ const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 const playMatrixUi=fs.readFileSync(path.join(__dirname,'../js/play-matrix-ui.js'),'utf8');
 const playMatrixRules=fs.readFileSync(path.join(__dirname,'../js/play-matrix-rules.js'),'utf8');
 const cardReferenceUi=fs.readFileSync(path.join(__dirname,'../js/card-reference-ui.js'),'utf8');
+const cardHold=fs.readFileSync(path.join(__dirname,'../js/card-hold.js'),'utf8');
 const checks=[
  ['modules loaded',html.includes('js/house-rules.js')&&html.includes('js/house-rules-bots.js')],
  ['default standard',html.includes("ruleMode: 'standard'")],
@@ -19,7 +20,7 @@ const checks=[
  ['dynamic play matrix',playMatrixRules.includes('function houseMatrixLegal(rowRank, colRank)')&&playMatrixUi.includes('PLAY_MATRIX_RANKS.map((col) => houseMatrixLegal(row, col)')],
  ['dynamic pile power label',html.includes('topCard && isTransparentCard(topCard) ? transparentPileLabel() : topCardLabel')],
  ['house transparent effective top',html.includes("isHouseRulesMatch() ? housePower(rank) === 'transparent' : rank === '3'")],
- ['dynamic hold descriptions',html.includes('escapeHtml(cardReferenceText(rank))')]
+ ['dynamic hold descriptions',cardHold.includes('escapeHtml(cardReferenceText(rank))')]
 ];
 for(const [name,ok] of checks)assert(ok,name);
 console.log('house-rules integration: '+checks.length+' guards passed');
