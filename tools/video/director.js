@@ -132,6 +132,21 @@ async function openGame(outVideo, opts = {}) {
     return route.abort();
   });
   const errors = []; page.on('pageerror', e => errors.push(e.message));
+  // opts.warp: every frame runs on a clock whose speed the script can change (g.setRate):
+  // slowed down, a heavy effect gets many more screencast frames per second of its own time,
+  // and finish({ virtual: true }) lays the frames out on that clock, so it plays back smooth.
+  if (opts.warp) await page.addInitScript(() => {
+    const pn = performance.now.bind(performance), dn = Date.now, sT = window.setTimeout, sI = window.setInterval, rAF = window.requestAnimationFrame.bind(window);
+    const off = dn() - pn();
+    let r0 = pn(), v0 = r0, rate = 1;
+    const vnow = () => v0 + (pn() - r0) * rate;
+    performance.now = vnow;
+    Date.now = () => Math.floor(vnow() + off);
+    window.requestAnimationFrame = (cb) => rAF(() => cb(vnow()));
+    window.setTimeout = (fn, d, ...a) => sT(fn, (+d || 0) / rate, ...a);
+    window.setInterval = (fn, d, ...a) => sI(fn, (+d || 0) / rate, ...a);
+    window.__vSetRate = (r) => { v0 = vnow(); r0 = pn(); rate = r; };
+  });
   // Fresh visitor with the Halloween look, no pop-ups.
   await page.addInitScript(() => {
     try {
@@ -165,6 +180,16 @@ async function openGame(outVideo, opts = {}) {
   };
   const g = { browser, ctx, page: gamePage, realPage: page, errors, t0, marks: {}, frames, cdp };
   g.mark = (name) => { g.marks[name] = Date.now() / 1000; };
+  // Clock speed log [[real s, rate]] and the virtual time of a real moment.
+  g.rateLog = [[0, 1]];
+  g.virt = (t) => { let v = 0; for (let i = 0; i < g.rateLog.length; i++) { const [a, r] = g.rateLog[i], b = i + 1 < g.rateLog.length ? g.rateLog[i + 1][0] : Infinity; if (t <= a) break; v += (Math.min(t, b) - a) * r; } return v; };
+  if (opts.warp) {
+    await cdp.send('Animation.enable');
+    g.setRate = async (r) => {
+      await Promise.all([frame.evaluate((r) => window.__vSetRate(r), r), page.evaluate((r) => window.__vSetRate(r), r), cdp.send('Animation.setPlaybackRate', { playbackRate: r })]);
+      g.rateLog.push([Date.now() / 1000, r]);
+    };
+  }
   if (opts.audio) {
     // Everything the game plays goes to audio.ctx.destination; tee it into a recorder.
     await frame.evaluate(async () => {
@@ -188,12 +213,16 @@ async function openGame(outVideo, opts = {}) {
   return g;
 }
 
-async function finish(g, outVideo, { fps = 30, from = 'start', lead = 0.45 } = {}) {
+// virtual: lay the frames out on the warp clock (g.setRate); latency = how long after a change
+// its screencast frame is stamped (real s), taken off before mapping.
+async function finish(g, outVideo, { fps = 30, from = 'start', lead = 0.45, virtual = false, latency = 0 } = {}) {
   await g.realPage.waitForTimeout(300);
   await g.cdp.send('Page.stopScreencast').catch(() => {});
   await g.ctx.close(); await g.browser.close();
   // Constant-rate timeline from the (irregular) screencast frames.
-  const frames = g.frames.sort((a, b) => a.t - b.t);
+  let frames = g.frames.sort((a, b) => a.t - b.t);
+  if (virtual) frames = frames.map(f => ({ t: g.virt(f.t - latency), data: f.data }));
+  if (virtual && g.marks[from]) g.marks[from] = g.virt(g.marks[from]);
   const start = (g.marks[from] || frames[0].t) + lead, end = frames[frames.length - 1].t;
   const { spawn } = require('child_process');
   const ffErr = [];

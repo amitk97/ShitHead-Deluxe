@@ -11,11 +11,11 @@ PACE = 1.0  # owner: "a bit quicker" than the tutorial's 0.88
 # Each line: phrases of (text, gap after, speed, pitch semitones).
 LINES = {
   "burn":   [("Twenty-two cards on the Pile?", .08, 1.34, 1.2), ("Watch this!", .02, 1.3, 1.8)],
-  "gone":   [("Gone!", .02, 1.25, 2.0)],
+  "burnt":  [("Burnt!", .02, 1.2, 2.0)],
   "later":  [("A few moments later...", .02, 1.3, -.3)],
   "joker1": [("Then my mate drops a Joker...", .02, 1.36, .6)],
   "joker2": [("and I get the lot!", .02, 1.3, 1.5)],
-  "follow": [("Follow for part two!", .02, 1.34, 1.3)],
+  "prove":  [("Think you can beat the dev?", .12, 1.3, 1.0), ("Prove it!", .02, 1.25, 1.8)],
 }
 out = {}
 for name, phrases in LINES.items():
