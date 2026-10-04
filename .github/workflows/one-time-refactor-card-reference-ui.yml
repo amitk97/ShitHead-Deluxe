@@ -27,17 +27,15 @@ jobs:
 
           index_path = Path('index.html')
           html = index_path.read_text()
-          start_marker = "    const HOUSE_POWER_ICON_RANK = {"
+          start_marker = "    function cardReferenceLabel(rank) {"
           end_marker = "    let cardRefOpen = false;"
           start = html.index(start_marker)
           end = html.index(end_marker, start)
           block = html[start:end]
 
           lines = block.splitlines()
-          extracted = []
-          for line in lines:
-              extracted.append(line[4:] if line.startswith('    ') else line)
-          js = "// House Rules helpers used by the in-game Card Powers reference UI.\n// Rendering and gameplay behaviour intentionally remain in index.html.\n" + "\n".join(extracted).rstrip() + "\n"
+          extracted = [line[4:] if line.startswith('    ') else line for line in lines]
+          js = "// House Rules behaviour helpers used by the in-game Card Powers reference UI.\n// Static reference data lives in card-reference-data.js; rendering stays in index.html.\n" + "\n".join(extracted).rstrip() + "\n"
           Path('js/card-reference-ui.js').write_text(js)
 
           html = html[:start] + html[end:]
