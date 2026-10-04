@@ -9391,6 +9391,7 @@ video {
   <script src="js/card-reference-data.js"></script>
   <script src="js/card-reference-ui.js"></script>
   <script src="js/play-matrix-data.js"></script>
+  <script src="js/play-matrix-rules.js"></script>
   <script>
     // MAP OF THIS SCRIPT (search for "// § " to jump between sections):
     //   § Start-up plumbing: pages to <body>, Firebase, error reports, callEconomy
@@ -13360,24 +13361,7 @@ video {
     //    the 3 — not "anything" — the Transparent column here is the base case,
     //    not a shortcut around that pass-through rule.
     // ============================================================
-        function houseMatrixLegal(rowRank, colRank) {
-      if (!isHouseRulesMatch()) return null;
-      if (rowRank === 'JOKER') return state.houseRules.joker !== 'off';
-      const rowPower = housePower(rowRank);
-      const colPower = housePower(colRank);
-      const constraint = deriveHouseConstraint(colPower);
-      if (rowPower === 'reset') return constraint !== 'ODD';
-      if (rowPower === 'transparent') return constraint !== 'EVEN';
-      if (rowPower === 'burn') return constraint !== 'LOW7' && constraint !== 'ODD';
-      if (constraint === 'EVEN') return EVENS.includes(rowRank);
-      if (constraint === 'ODD') return ODDS.includes(rowRank);
-      if (constraint === 'LOW7') return RANK_VALUES[rowRank] <= 7 || ['reset','transparent'].includes(rowPower);
-      if (colPower === 'reset' || colPower === 'transparent') return true;
-      if (colRank === 'JOKER' && colPower === 'pickUp') return false;
-      return RANK_VALUES[rowRank] >= RANK_VALUES[colRank];
-    }
-
-    // Verifies PLAY_MATRIX is well-formed (every rank present, every row the
+        // Verifies PLAY_MATRIX is well-formed (every rank present, every row the
     // right length, every value strictly 0 or 1) the moment the script
     // loads, rather than failing silently or rendering a broken table the
     // first time a player opens the panel.
