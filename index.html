@@ -6782,7 +6782,7 @@ video {
     <div id="matrixRefPanel" class="hidden fixed z-[68] bg-slate-950 border-2 border-amber-500 rounded-xl shadow-2xl px-2 py-1.5 cursor-grab"
          style="max-width:calc(100vw - 16px); touch-action:none; transform-origin: top left;">
       <div class="flex items-center justify-between mb-1" style="padding-right:18px;">
-        <span class="text-[9px] font-black uppercase tracking-widest text-amber-400">Play Matrix</span>
+        <span id="matrixRefTitle" class="text-[9px] font-black uppercase tracking-widest text-amber-400">Play Matrix</span>
       </div>
       <!-- Close X, top-right like Card Powers'. -->
       <button id="matrixRefCloseBtn" type="button" class="absolute text-slate-400 hover:text-white font-black leading-none" style="top:4px; right:10px; z-index:2; font-size:12px;" aria-label="Close Play Matrix">✕</button>
@@ -13332,6 +13332,59 @@ video {
       ['10', 'Burn'], ['J', 'Odds'], ['Q', 'High'], ['K', 'High'],
       ['A', 'Highest'], ['JOKER', 'Pick Up']
     ];
+    function activeCardReference() {
+      if (!isHouseRulesMatch()) return CARD_REFERENCE;
+      const labels = {
+        burn:'Burn', dropBase:'Drop to Base', evens:'Evens', none:'No Power',
+        odds:'Odds', pickUp:'Pick Up', playLower:'Play Lower', reset:'Reset',
+        reverse:'Reverse', skip:'Skip', transparent:'Transparent', off:'Off'
+      };
+      const rows = ShHouseRules.RANKS.map(rank => [rank, labels[housePower(rank)] || 'No Power']);
+      if (state.houseRules?.joker !== 'off') rows.push(['JOKER', labels[state.houseRules?.joker] || 'No Power']);
+      return rows;
+    }
+
+    function activeReferenceRanks() {
+      return isHouseRulesMatch()
+        ? ShHouseRules.RANKS.concat(state.houseRules?.joker === 'off' ? [] : ['JOKER'])
+        : PLAY_MATRIX_RANKS;
+    }
+
+    function houseMatrixLegal(rowRank, colRank) {
+      if (!isHouseRulesMatch()) return null;
+      if (rowRank === 'JOKER') return state.houseRules?.joker !== 'off';
+      const power = housePower(rowRank);
+      const colPower = colRank === 'JOKER' ? housePower('JOKER') : housePower(colRank);
+      // A column represents the named rank as the governing card. Transparent
+      // passes through in a real pile, but as a standalone matrix base it sets
+      // no target of its own, matching the standard matrix's base-case rule.
+      let constraint = deriveHouseConstraint(colPower);
+      if (colPower === 'reset' || colPower === 'transparent' || colPower === 'burn' || colPower === 'pickUp') constraint = null;
+      if (power === 'reset') return constraint !== 'ODD';
+      if (power === 'transparent') return constraint !== 'EVEN';
+      if (power === 'burn') return constraint !== 'LOW7' && constraint !== 'ODD';
+      if (constraint === 'EVEN') return EVENS.includes(rowRank);
+      if (constraint === 'ODD') return ODDS.includes(rowRank);
+      if (constraint === 'LOW7') return RANK_VALUES[rowRank] <= 7 || ['reset','transparent'].includes(power);
+      if (colPower === 'reset' || colPower === 'transparent') return true;
+      return RANK_VALUES[rowRank] >= RANK_VALUES[colRank];
+    }
+
+    function activePilePowerLabel(rank) {
+      if (!rank) return null;
+      if (!isHouseRulesMatch()) return (CARD_REFERENCE.find(([r]) => r === rank) || [])[1] || null;
+      const power = housePower(rank);
+      const labels = {
+        burn:'Burn — burns the Pile', dropBase:'Drop to Base — play against the Base Card',
+        evens:'Evens — next card must be even', none:'No Power', odds:'Odds — next card must be odd',
+        pickUp:'Pick Up — next player picks up the Pile', playLower:'Play Lower — next card must be 7 or lower',
+        reset:'Reset — clears the target', reverse:'Reverse — changes play direction',
+        skip:'Skip — skips the next player', transparent:'Transparent — use the card underneath',
+        off:'Off'
+      };
+      return labels[power] || 'No Power';
+    }
+
     let cardRefOpen = false;
 
     // ============================================================
@@ -13508,7 +13561,7 @@ video {
       if (!list || !cardRefOpen) return;
       const { ranks, zone } = getReferenceAvailableRanks();
       list.innerHTML = '';
-      CARD_REFERENCE.forEach(([rank, label]) => {
+      activeCardReference().forEach(([rank, label]) => {
         const has = ranks.has(rank);
         const row = document.createElement('div');
         row.className = has ? 'text-slate-200' : 'text-slate-600 opacity-45';
@@ -13860,22 +13913,21 @@ video {
       const table = document.getElementById('matrixRefTable');
       if (!table || !matrixRefOpen) return;
       const { ranks } = getReferenceAvailableRanks();
+      const title=document.getElementById('matrixRefTitle'); if(title) title.textContent=isHouseRulesMatch()?'House Rules · Play Matrix':'Play Matrix';
       const colLabel = (r) => (r === 'JOKER' ? 'JKR' : r);
       let html = '<thead><tr>';
       html += '<th style="padding:1px 4px 1px 1px;" class="text-slate-500 font-bold text-left">&#9660;/&#9658;</th>';
-      PLAY_MATRIX_RANKS.forEach((col) => {
+      const matrixRanks = activeReferenceRanks();
+      matrixRanks.forEach((col) => {
         html += `<th style="padding:1px 3px;" class="text-amber-400 font-black text-center">${colLabel(col)}</th>`;
       });
       html += '</tr></thead><tbody>';
-      PLAY_MATRIX_RANKS.forEach((row) => {
-        const rowData = PLAY_MATRIX[row];
-        if (!rowData) return; // Defensive: validatePlayMatrix() already
-        // guarantees this can't happen, but a render function should never
-        // throw on bad data — it should just skip the broken row.
+      matrixRanks.forEach((row) => {
         const owns = ranks.has(row);
         html += '<tr>';
         html += `<th style="padding:1px 4px 1px 1px;" class="text-left font-black ${owns ? 'text-amber-400' : 'text-slate-500'}">${colLabel(row)}</th>`;
-        rowData.forEach((legal) => {
+        matrixRanks.forEach((col, colIndex) => {
+          const legal = isHouseRulesMatch() ? houseMatrixLegal(row, col) : !!PLAY_MATRIX[row]?.[colIndex];
           html += `<td style="padding:1px 3px;" class="text-center font-black ${legal ? 'text-emerald-400' : 'text-rose-500'}">${legal ? '✓' : '✗'}</td>`;
         });
         html += '</tr>';
@@ -16491,10 +16543,10 @@ video {
       // Burn, or any other card sitting on the Pile showed nothing at all.
       const topCard = state.discardPile && state.discardPile.length > 0 ? state.discardPile[state.discardPile.length - 1] : null;
       const topCardRank = topCard ? (topCard.isJoker ? 'JOKER' : topCard.rank) : null;
-      const topCardLabel = topCardRank ? (CARD_REFERENCE.find(([r]) => r === topCardRank) || [])[1] : null;
+      const topCardLabel = topCardRank ? activePilePowerLabel(topCardRank) : null;
       if (topCardLabel) {
         constraintTag.classList.remove('hidden');
-        constraintTag.textContent = topCardRank === '3' ? transparentPileLabel() : topCardLabel;
+        constraintTag.textContent = isHouseRulesMatch() ? topCardLabel : (topCardRank === '3' ? transparentPileLabel() : topCardLabel);
       } else {
         constraintTag.classList.add('hidden');
       }
