@@ -51,7 +51,9 @@ jobs:
         run: node tools/house-rules-test.js
 
       - name: House Rules integration safety checks
-        run: node tools/house-rules-integration-test.js
+        run: |
+          node tools/house-rules-integration-test.js
+          node tools/house-rules-reference-test.js
 
       - name: Install browser test runner
         run: |
