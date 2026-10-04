@@ -11287,6 +11287,7 @@ video {
         return;
       }
 
+      if (!isHouseRulesMatch()) {
       if (cardRank === '8') {
         const otherActiveCount = state.players.filter(p => !p.hasFinished && p.id !== player.id).length;
         // Playing N eights skips N opponents — but skipping can never go past everyone
@@ -11387,6 +11388,8 @@ video {
         }
       } else {
         advanceTurn(1);
+      }
+
       }
 
       const drawnCards = refillHand(player);
@@ -29140,6 +29143,7 @@ video {
     // A finished real match (never the tutorial), from recordMatchHistory:
     // the server counts it and pays ShitHead Virgin / Beginner if due.
     function reportMatchFinished() {
+      if (state.ruleMode === 'house') return Promise.resolve({houseRules:true,diamondsAwarded:0});
       if (isServerRanked()) return Promise.resolve(null);
       if (typeof currentUser === 'undefined' || !currentUser) return Promise.resolve(null);
       const matchId = state.matchId || (state.matchId = generateMatchId());
