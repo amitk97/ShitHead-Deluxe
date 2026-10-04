@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-04-v310 (ShitHead-Deluxe-235) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-04-v311 (ShitHead-Deluxe-236) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -5728,6 +5728,7 @@ video {
               <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Turn Timer:</span>
               <div id="turnTimerBtnRow" class="grid grid-cols-3 gap-1.5"></div>
             </div>
+            <div id="houseRulesPanel" class="bg-slate-950 px-3 py-2 rounded-lg border border-slate-800"></div>
 
             <!-- Best of series (§ Best of series): the host picks a length,
                  the other player accepts; drawn by renderSeriesPanel. -->
@@ -7351,6 +7352,16 @@ video {
           </div>
         </div>
 
+        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="house-rules">
+          <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs"><span>House Rules</span><span class="chevron transform transition-transform duration-200">&#9660;</span></button>
+          <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
+            <p><strong>House Rules</strong> is a casual Play Friends mode where the host assigns powers to every rank, chooses the Joker behaviour and decides whether four of a kind Burns.</p>
+            <p>Everyone sees the completed rules and must press <strong>Ready</strong> before the match starts. Any host change resets Ready. Signed-in hosts can save up to <strong>3 named variants</strong>; <strong>ShitHead Deluxe</strong> is the only built-in preset.</p>
+            <p>You can play with friends, with a mixture of friends and bots, or against up to <strong>3 bots</strong>. Bots dynamically value the selected powers according to their difficulty.</p>
+            <p><strong>Important:</strong> House Rules is unranked, gives <strong>no Challenge progress</strong> and awards <strong>no Diamonds</strong>.</p>
+          </div>
+        </div>
+
         <!-- Section 4: Key Terms -->
         <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60">
           <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
@@ -7358,6 +7369,9 @@ video {
             <span class="chevron transform transition-transform duration-200">&#9660;</span>
           </button>
           <div class="accordion-content hidden p-4 space-y-2.5 border-t border-slate-800 text-[11.5px] leading-relaxed text-slate-300">
+            <p data-term="house-rules"><strong class="text-amber-400">House Rules:</strong> A casual Play Friends mode where the host customises card powers. It is unranked, gives no Challenge progress and awards no Diamonds. Bots follow the same custom rules.</p>
+            <p data-term="no-power"><strong class="text-amber-400">No Power:</strong> In House Rules, the rank behaves as a normal card with no special effect. Unlike Please Select, it is a valid completed choice.</p>
+            <p data-term="please-select"><strong class="text-amber-400">Please Select:</strong> An unfinished House Rules setting. A match cannot start while any rank, Joker or four-of-a-kind rule still says Please Select.</p>
             <p data-term="base-card"><strong class="text-amber-400">Base Card:</strong> The card at the very bottom of the Pile &mdash; the first one played since the last Burn. Normally irrelevant, but a 5 drops the target down to it, so the next player must beat the Base Card instead of the top one.</p>
             <p data-term="best-of-series"><strong class="text-amber-400">Best Of Series:</strong> Play Friends only: two players at Lvl 20 or above play a Best of 3 or Best of 5. Each pays an entry, the game matches the pot, and the series winner takes it all.</p>
             <p data-term="blind-card"><strong class="text-amber-400">Blind Card:</strong> See <em>Face-Down Cards</em>.</p>
@@ -10087,7 +10101,9 @@ video {
       // state — never persisted (saveGameState) or synced
       // (syncFirebaseGameState), since it must never survive a reload or
       // leak into another client's view of whose turn it is.
-      burnResolving: false
+      burnResolving: false,
+      ruleMode: 'standard',
+      houseRules: null
     };
 
     // Nothing is saved (or cleared) until start-up has restored the last
@@ -10235,7 +10251,32 @@ video {
     }
 
     // § Rules engine: legal moves and constraints
+    function deriveHouseConstraint(power) {
+      if (power === 'evens') return 'EVEN';
+      if (power === 'odds') return 'ODD';
+      if (power === 'playLower') return 'LOW7';
+      return null;
+    }
+    function houseIsPlayLegal(card, discardPile, activeConstraint) {
+      if (!isHouseRulesMatch()) return null;
+      if (card.isJoker) return state.houseRules.joker !== 'off';
+      let topCard=getEffectiveTopCard(discardPile);
+      if(state.baseOverrideCard){topCard=state.baseOverrideCard;if(!activeConstraint)activeConstraint=deriveHouseConstraint(housePower(topCard.rank));}
+      if(!topCard)activeConstraint=null;
+      const p=housePower(card.rank);
+      if(p==='reset') return activeConstraint!=='ODD';
+      if(p==='transparent') return activeConstraint!=='EVEN';
+      if(p==='burn') return activeConstraint!=='LOW7'&&activeConstraint!=='ODD';
+      if(activeConstraint==='EVEN') return EVENS.includes(card.rank);
+      if(activeConstraint==='ODD') return ODDS.includes(card.rank);
+      if(activeConstraint==='LOW7') return RANK_VALUES[card.rank] <= 7 || ['reset','transparent'].includes(p);
+      if(!topCard)return true;
+      if(housePower(topCard.rank)==='reset')return true;
+      return RANK_VALUES[card.rank]>=RANK_VALUES[topCard.rank];
+    }
     function isPlayLegal(card, discardPile, activeConstraint) {
+      const houseLegal = houseIsPlayLegal(card, discardPile, activeConstraint);
+      if (houseLegal !== null) return houseLegal;
       if (card.isJoker) return true;
       let topCard = getEffectiveTopCard(discardPile);
 
@@ -10310,6 +10351,11 @@ video {
     }
 
     function evaluateMoveUtility(bot, candidateRank, candidateCards, discardPile, activeConstraint, difficulty, hasAlternatives) {
+      if (isHouseRulesMatch() && window.ShHouseRulesBots) {
+        const next=getNextPlayer();
+        const nextCards=next?((next.hand?.length||0)+(next.faceUp?.length||0)+(next.faceDown?.length||0)):99;
+        return ShHouseRulesBots.score({rules:state.houseRules,rank:candidateRank,count:candidateCards.length,pileSize:discardPile?.length||0,nextOpponentCards:nextCards,hasAlternatives,difficulty});
+      }
       let score = 0;
       const pileSize = discardPile ? discardPile.length : 0;
       const rankVal = RANK_VALUES[candidateRank];
@@ -11159,7 +11205,7 @@ video {
         if (playEvents.length) notifyChallengeEvent(player, playEvents);
       }
 
-      if (checkFourOfAKindBurn()) {
+      if (checkFourOfAKindBurn() && (!isHouseRulesMatch() || state.houseRules.fourKind === 'burns')) {
         if (tutorialActive && tutorialDeferBurn) {
           state.pendingTutorialBurn = { playerId: player.id, message: "Four of a kind. The pile is burnt." };
           render();
@@ -11191,12 +11237,44 @@ video {
       state.activeConstraint = null;
       state.baseOverrideCard = null;
       
-      if (cardsToPlay[0].isJoker) {
+      if (isHouseRulesMatch()) {
+        const power = housePower(cardsToPlay[0].isJoker ? 'JOKER' : cardRank);
+        if (cardsToPlay[0].isJoker && power === 'pickUp') { handleJokerPlay(player, cardsToPlay[0]); return; }
+        if (power === 'burn') {
+          bumpStat(player, 'challengeBurns', 1);
+          executeBurn(player, `${cardRank} played. The pile is burnt.`); return;
+        }
+        if (power === 'pickUp') {
+          const target=getNextPlayer();
+          if(target){ state.currentTurnIndex=state.players.findIndex(p=>p.id===player.id); notifyBanner(`${cardRank} played: ${target.name} picks up the pile.`); executePickup(target.id,true); }
+          return;
+        }
+        if (power === 'reset') { notifyBanner(`${cardRank} played: the Pile resets.`); advanceTurn(1); }
+        else if (power === 'skip') {
+          const others=state.players.filter(p=>!p.hasFinished&&p.id!==player.id).length, skips=Math.min(effectiveRankCount,others);
+          notifyBanner(`${cardRank} played: ${skips===1?'the next player is skipped':skips+' players are skipped'}.`); advanceTurn(skips+1);
+        } else if (power === 'reverse') {
+          if(effectiveRankCount%2===1)state.direction*=-1; updateDirectionBadge(); notifyBanner(`${cardRank} played: ${effectiveRankCount%2===1?'play reverses':'direction stays the same'}.`); advanceTurn(1);
+        } else if (power === 'evens') { state.activeConstraint='EVEN'; notifyBanner(`${cardRank} played: the next card must be even.`); advanceTurn(1); }
+        else if (power === 'odds') { state.activeConstraint='ODD'; notifyBanner(`${cardRank} played: the next card must be odd.`); advanceTurn(1); }
+        else if (power === 'playLower') { state.activeConstraint='LOW7'; notifyBanner(`${cardRank} played: play lower (7 or lower).`); advanceTurn(1); }
+        else if (power === 'dropBase') {
+          const base=state.discardPile[0]; state.baseOverrideCard=base||null;
+          if(base)state.activeConstraint=deriveHouseConstraint(housePower(base.rank));
+          notifyBanner(base?`${cardRank} played: drop to Base (${base.rank}).`:`${cardRank} played.`); advanceTurn(1);
+        } else if (power === 'transparent') {
+          state.activeConstraint=previousConstraint; state.baseOverrideCard=previousBaseOverride;
+          const under=previousBaseOverride||getEffectiveTopCard(state.discardPile.slice(0,-cardsToPlay.length));
+          const inherited=under?housePower(under.rank):'none';
+          if(inherited==='skip'){const others=state.players.filter(p=>!p.hasFinished&&p.id!==player.id).length;advanceTurn(Math.min(effectiveRankCount,others)+1);}
+          else if(inherited==='reverse'){if(effectiveRankCount%2===1)state.direction*=-1;updateDirectionBadge();advanceTurn(1);}
+          else advanceTurn(1);
+          notifyBanner(`${cardRank} played: Transparent.`);
+        } else { advanceTurn(1); }
+      } else if (cardsToPlay[0].isJoker) {
         handleJokerPlay(player, cardsToPlay[0]);
         return;
-      }
-
-      if (cardRank === '10') {
+      } else if (cardRank === '10') {
         if (tutorialActive && tutorialDeferBurn) {
           state.pendingTutorialBurn = { playerId: player.id, message: "10 played. The pile is burnt." };
           render();
@@ -13075,6 +13153,7 @@ video {
       document.getElementById('hostBotControls')?.classList.toggle('hidden', !state.isHost);
       document.getElementById('hostTimerControls')?.classList.toggle('hidden', !state.isHost);
       renderTurnTimerButtons();
+      renderHouseRulesPanel();
       document.getElementById('startMultiGameBtn')?.classList.toggle('hidden', !state.isHost);
       // The deck theme picker matters during setup, not once you're actually
       // sitting in a room waiting to start — collapse it here so it can't
@@ -17383,6 +17462,8 @@ video {
         stalemate: state.stalemate || null,
         turnDeadline: state.turnDeadline || null,
         turnTimerMs: state.turnTimerMs || 15000,
+        ruleMode: state.ruleMode || 'standard',
+        houseRules: state.ruleMode === 'house' ? (state.houseRules || null) : null,
         stateVersion: state.stateVersion,
         updatedAt: serverNow() // last activity, so old-room cleanup never touches a live game
       };
@@ -17460,6 +17541,8 @@ video {
         hostId: 'p_host',
         players: [hostPlayer],
         turnTimerMs: state.turnTimerMs,
+        ruleMode: 'standard',
+        houseRules: null,
         clientVersion: getGameVersionLabel()
       })).then(({ code }) => {
         state.roomCode = code;
@@ -17633,8 +17716,9 @@ video {
       // tell "the room is full" apart from "this would leave no seat for a
       // second human", so it gave a misleading message in the latter case.
       const botCount = state.players.filter(p => p.isBot).length;
-      if (botCount >= 2) {
-        alert("You can add up to 2 bots. An online room needs at least 2 human players.");
+      const botLimit = state.ruleMode === 'house' ? 3 : 2;
+      if (botCount >= botLimit) {
+        alert(state.ruleMode === 'house' ? "You can add up to 3 bots in House Rules." : "You can add up to 2 bots. An online room needs at least 2 human players.");
         return;
       }
       if (state.players.length >= 4) {
@@ -17650,6 +17734,8 @@ video {
         name: `${botName} (Bot)`,
         isHost: false,
         isBot: true,
+        difficulty: state.difficulty || 'medium',
+        houseRulesReady: true,
         cosmetics: { cardBack: pickBotCardBack() },
         hand: [],
         faceUp: [],
@@ -17664,7 +17750,8 @@ video {
       // whatever the list actually is right as it commits.
       updatePlayersAtomic(state.roomCode, (currentList) => {
         const currentBotCount = currentList.filter(p => p.isBot).length;
-        if (currentBotCount >= 2 || currentList.length >= 4) return currentList;
+        const limit = state.ruleMode === 'house' ? 3 : 2;
+        if (currentBotCount >= limit || currentList.length >= 4) return currentList;
         return [...currentList, { ...newBot, avatar: pickBotAvatar(currentList) }];
       });
     }
@@ -17682,6 +17769,93 @@ video {
     // matches state.turnTimerMs. Re-run any time the lobby view (re)shows,
     // so a value that arrived from Firebase (or was just clicked) is always
     // reflected correctly, never stale.
+    function isHouseRulesMatch() { return state.ruleMode === 'house' && !!state.houseRules && !!window.ShHouseRules; }
+    function housePower(rank) { return isHouseRulesMatch() ? ShHouseRules.power(state.houseRules, rank) : null; }
+    function resetHouseRulesReady() {
+      state.players = (state.players || []).map(p => ({ ...p, houseRulesReady: !!p.isBot }));
+    }
+    function publishHouseRules(nextMode, rules) {
+      if (!state.isHost || !state.roomCode) return;
+      const mode = nextMode === 'house' ? 'house' : 'standard';
+      const nextRules = mode === 'house' ? JSON.parse(JSON.stringify(rules || ShHouseRules.fresh())) : null;
+      state.ruleMode = mode; state.houseRules = nextRules; resetHouseRulesReady();
+      db.ref(`rooms/${state.roomCode}`).update({ ruleMode: mode, houseRules: nextRules, players: state.players, houseRulesChangedAt: firebase.database.ServerValue.TIMESTAMP });
+      renderHouseRulesPanel(); updateLobbyPlayerList();
+    }
+    function setHouseRule(rank, value) {
+      if (!state.isHost || !isHouseRulesMatch()) return;
+      const next=JSON.parse(JSON.stringify(state.houseRules));
+      if(rank==='JOKER') next.joker=value; else if(rank==='FOUR') next.fourKind=value; else next.cards[rank]=value;
+      const v=ShHouseRules.validate(next);
+      // Individual illegal choices and a third use of a power are hard locked.
+      if (value && v.errors.some(e => e.includes('cannot use') || e.includes('can only be assigned'))) { notifyBanner(v.errors[0]); return; }
+      publishHouseRules('house', next);
+    }
+    function houseRulesReadyToggle() {
+      if (state.ruleMode !== 'house' || !state.roomCode) return;
+      const v=ShHouseRules.validate(state.houseRules || {});
+      if (!v.valid) { notifyBanner(v.errors[0]); return; }
+      updatePlayersAtomic(state.roomCode, list => list.map(p => p.id===state.localPlayerId ? {...p,houseRulesReady:!p.houseRulesReady} : p));
+    }
+    function houseOptionHtml(rank,current,isJoker=false) {
+      const used=ShHouseRules.counts(state.houseRules||{});
+      const values=isJoker?ShHouseRules.JOKER:ShHouseRules.POWERS;
+      const label=p=>p==='off'?'Off':(ShHouseRules.LABEL[p]||p);
+      return '<option value="">Please Select</option>'+values.map(p=>{
+        const invalid=!isJoker&&!ShHouseRules.allowed(rank,p);
+        const capped=p!=='none'&&p!=='off'&&(used[p]||0)>=2&&current!==p;
+        return `<option value="${p}" ${p===current?'selected':''} ${invalid||capped?'disabled':''}>${label(p)}${capped?' — 2/2 used':''}</option>`;
+      }).join('');
+    }
+    let houseVariantsCloudLoadedFor='';
+    function loadHouseVariantsFromCloud() {
+      if (!currentUser || houseVariantsCloudLoadedFor===currentUser.uid) return;
+      houseVariantsCloudLoadedFor=currentUser.uid;
+      db.ref(`users/${currentUser.uid}/settings/houseRulesVariants`).once('value').then(s=>{
+        const v=s.val(); if(Array.isArray(v)){try{localStorage.setItem('shithead_house_rules_'+currentUser.uid,JSON.stringify(v.slice(0,3)));}catch(e){} renderHouseRulesPanel();}
+      }).catch(()=>{});
+    }
+    function saveCurrentHouseVariant() {
+      if (!currentUser) { notifyBanner('Sign in to save up to 3 House Rules variants.'); return; }
+      const name=(prompt('Name this House Rules variant:', state.houseRules?.name==='Custom'?'':state.houseRules?.name)||'').trim();
+      if(!name)return;
+      const rules={...JSON.parse(JSON.stringify(state.houseRules)),name};
+      const res=ShHouseRules.saveVariant(currentUser.uid,rules); if(!res.ok){notifyBanner(res.error);return;}
+      db.ref(`users/${currentUser.uid}/settings/houseRulesVariants`).set(res.variants).catch(()=>{});
+      state.houseRules=rules; db.ref(`rooms/${state.roomCode}/houseRules`).set(rules); renderHouseRulesPanel(); notifyBanner('House Rules saved.');
+    }
+    function renderHouseRulesPanel() {
+      const el=document.getElementById('houseRulesPanel'); if(!el||!window.ShHouseRules)return;
+      loadHouseVariantsFromCloud();
+      const house=state.ruleMode==='house', host=!!state.isHost;
+      const rules=state.houseRules||ShHouseRules.fresh(), validation=house?ShHouseRules.validate(rules):{valid:true,errors:[],warnings:[]};
+      const saved=currentUser?ShHouseRules.loadVariants(currentUser.uid):[];
+      const humanReady=(state.players||[]).filter(p=>!p.isBot).filter(p=>p.houseRulesReady).length;
+      const humans=(state.players||[]).filter(p=>!p.isBot).length;
+      el.innerHTML=`
+        <div class="flex items-center justify-between gap-2">
+          <div><span class="text-[10px] font-black uppercase tracking-wider text-amber-300">House Rules</span>
+          <button type="button" id="houseInfoBtn" class="ml-1 w-5 h-5 rounded-full border border-slate-600 text-[11px] font-black text-slate-300">i</button>
+          <div class="text-[9px] font-bold text-slate-500">Unranked · No Challenges · No Diamonds</div></div>
+          ${host?`<select id="houseModeSelect" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[10px] font-black text-white"><option value="standard" ${!house?'selected':''}>Standard</option><option value="house" ${house?'selected':''}>House Rules</option></select>`:`<span class="text-[10px] font-black ${house?'text-amber-300':'text-slate-400'}">${house?'HOUSE RULES':'STANDARD'}</span>`}
+        </div>
+        <div id="houseInfoText" class="hidden mt-2 p-2 rounded bg-slate-900 text-[10px] leading-relaxed text-slate-300 border border-slate-700">The host assigns powers to card ranks. Every player sees the rules before Ready. Bots use the same rules and adapt by difficulty. House Rules never affect Ranked, Challenges or Diamond earnings.</div>
+        ${house?`<div class="mt-2 space-y-2">
+          <div class="flex gap-2"><select id="housePreset" ${host?'':'disabled'} class="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[10px] text-white"><option value="">Custom</option><option value="classic">ShitHead Deluxe</option>${saved.map((v,i)=>`<option value="saved:${i}">${escapeHtml(v.name)}</option>`).join('')}</select>${host&&currentUser?'<button id="houseSaveBtn" class="px-2 py-1 rounded bg-amber-700 text-[10px] font-black">SAVE</button>':''}</div>
+          <div class="grid grid-cols-2 gap-x-2 gap-y-1">${ShHouseRules.RANKS.map(r=>`<label class="flex items-center justify-between gap-1 text-[10px] font-black text-slate-300"><span>${r}</span><select data-house-rank="${r}" ${host?'':'disabled'} class="w-28 bg-slate-900 border border-slate-700 rounded px-1 py-1 text-[9px] text-white">${houseOptionHtml(r,rules.cards?.[r]||'')}</select></label>`).join('')}
+          <label class="flex items-center justify-between gap-1 text-[10px] font-black text-slate-300"><span>Joker</span><select data-house-rank="JOKER" ${host?'':'disabled'} class="w-28 bg-slate-900 border border-slate-700 rounded px-1 py-1 text-[9px] text-white">${houseOptionHtml('JOKER',rules.joker||'',true)}</select></label>
+          <label class="flex items-center justify-between gap-1 text-[10px] font-black text-slate-300"><span>4 of a Kind</span><select data-house-rank="FOUR" ${host?'':'disabled'} class="w-28 bg-slate-900 border border-slate-700 rounded px-1 py-1 text-[9px] text-white"><option value="">Please Select</option><option value="burns" ${rules.fourKind==='burns'?'selected':''}>Burns</option><option value="none" ${rules.fourKind==='none'?'selected':''}>No Power</option></select></label></div>
+          <div class="text-[9px] font-bold ${validation.valid?'text-emerald-400':'text-rose-400'}">${validation.valid?'✓ Rules valid':escapeHtml(validation.errors[0]||'Rules incomplete')}${validation.warnings.length?'<br><span class="text-amber-400">⚠ '+escapeHtml(validation.warnings.join(' '))+'</span>':''}</div>
+          <button id="houseReadyBtn" ${validation.valid?'':'disabled'} class="w-full py-1.5 rounded border ${(state.players.find(p=>p.id===state.localPlayerId)?.houseRulesReady)?'bg-emerald-700 border-emerald-500':'bg-slate-800 border-slate-600'} text-[10px] font-black disabled:opacity-40">${(state.players.find(p=>p.id===state.localPlayerId)?.houseRulesReady)?'✓ READY':'READY FOR HOUSE RULES'} · ${humanReady}/${humans}</button>
+        </div>`:''}`;
+      el.querySelector('#houseInfoBtn')?.addEventListener('click',()=>el.querySelector('#houseInfoText')?.classList.toggle('hidden'));
+      el.querySelector('#houseModeSelect')?.addEventListener('change',e=>publishHouseRules(e.target.value,e.target.value==='house'?ShHouseRules.fresh():null));
+      el.querySelectorAll('[data-house-rank]').forEach(s=>s.addEventListener('change',e=>setHouseRule(e.target.dataset.houseRank,e.target.value)));
+      el.querySelector('#housePreset')?.addEventListener('change',e=>{if(!host)return;const v=e.target.value;if(v==='classic')publishHouseRules('house',ShHouseRules.CLASSIC);else if(v.startsWith('saved:'))publishHouseRules('house',saved[Number(v.split(':')[1])]);});
+      el.querySelector('#houseSaveBtn')?.addEventListener('click',saveCurrentHouseVariant);
+      el.querySelector('#houseReadyBtn')?.addEventListener('click',houseRulesReadyToggle);
+    }
+
     function renderTurnTimerButtons() {
       const row = document.getElementById('turnTimerBtnRow');
       if (!row) return;
@@ -18324,6 +18498,8 @@ video {
         if (typeof data.turnTimerMs === 'number') {
           state.turnTimerMs = data.turnTimerMs;
         }
+        state.ruleMode = data.ruleMode === 'house' ? 'house' : 'standard';
+        state.houseRules = state.ruleMode === 'house' ? (data.houseRules || state.houseRules) : null;
 
         if (isStaleSnapshot) {
           // Skip applying phase/discardPile/currentTurnIndex/etc from this
@@ -18426,6 +18602,8 @@ video {
       const counter = document.getElementById('playerCounter');
       list.innerHTML = '';
       counter.textContent = `${state.players.length} / 4`;
+      const label = counter.previousElementSibling;
+      if (label) label.innerHTML = state.ruleMode === 'house' ? 'Connected Players / Bots: <span class="ml-1 px-1.5 py-0.5 rounded bg-amber-900/60 border border-amber-600 text-amber-300 text-[8px]">HOUSE RULES</span>' : 'Connected Players / Bots:';
       
       state.players.forEach(p => {
         const div = document.createElement('div');
@@ -18447,6 +18625,7 @@ video {
       });
       watchSeriesRoom();
       renderSeriesPanel();
+      renderHouseRulesPanel();
     }
 
     function canStartMultiplayerGame() {
@@ -18455,6 +18634,14 @@ video {
       // wording was misleading, since 2 bots alone would still fail the real
       // requirement just below it anyway.
       const otherHumans = state.players.filter(p => !p.isBot && p.id !== state.localPlayerId).length;
+      if (state.ruleMode === 'house') {
+        const v = window.ShHouseRules ? ShHouseRules.validate(state.houseRules || {}) : {valid:false,errors:['House Rules are still loading.']};
+        if (!v.valid) { notifyBanner(v.errors[0]); return false; }
+        if (state.players.length < 2) { notifyBanner('Add at least one player or bot.'); return false; }
+        const waiting = state.players.filter(p => !p.isBot && !p.houseRulesReady);
+        if (waiting.length) { notifyBanner('Everyone must review the House Rules and press Ready.'); return false; }
+        return true;
+      }
       if (otherHumans < 1) {
         document.getElementById('needHumanRoomCode').textContent = state.roomCode || '------';
         document.getElementById('needHumanModal').classList.remove('hidden');
@@ -18504,7 +18691,8 @@ video {
         ? serverDeal.order.map(uid => state.players.find(p => p.uid === uid))
         : shuffle([...state.players]);
 
-      const deck = seatedByServer ? serverDeal.deck.map(deckCardById) : generateDeck();
+      let deck = seatedByServer ? serverDeal.deck.map(deckCardById) : generateDeck();
+      if (!seatedByServer && state.ruleMode === 'house' && state.houseRules?.joker === 'off') deck = deck.filter(c => !c.isJoker);
       const dealtPlayers = state.players.map(p => {
         // Carried forward on purpose — this is what makes "Lobby Totals"
         // mean something across repeated matches in the same room. Only
@@ -18547,7 +18735,7 @@ video {
       state.drawPile = deck;
       state.currentTurnIndex = 0;
 
-      state.players.filter(p => p.isBot).forEach(bot => botPerformSwap(bot, "medium"));
+      state.players.filter(p => p.isBot).forEach(bot => botPerformSwap(bot, bot.difficulty || state.difficulty || "medium"));
       validateDealIntegrity(state.players);
 
       syncFirebaseGameState();
@@ -19260,6 +19448,7 @@ video {
     // picture that unlocks; this applies what it sends back. Online, the
     // room needs a moment to show the finish, so that call waits and retries.
     function reportMatchWin() {
+      if (state.ruleMode === 'house') return Promise.resolve({houseRules:true,diamondsAwarded:0});
       if (!currentUser) return Promise.resolve(null);
       const mode = state.isMultiplayer ? 'online' : 'bots';
       const payload = { mode, matchId: state.matchId || (state.matchId = generateMatchId()) };
@@ -28577,6 +28766,7 @@ video {
     // guard is what stops this file from ever trying to claim a
     // challenge on someone else's behalf.
     function notifyChallengeEvent(player, eventIds) {
+      if (state.ruleMode === 'house') return;
       if (!player || player.id !== state.localPlayerId || !eventIds || !eventIds.length || !currentUser) return;
       // CRITICAL BUG FIX (unrewarded challenges): dailyChallengeState
       // loads asynchronously after sign-in (initChallengeEconomy's
@@ -36051,5 +36241,7 @@ video {
       refreshGauntletLobbyBtn();
     });
   </script>
+  <script src="js/house-rules.js"></script>
+  <script src="js/house-rules-bots.js"></script>
 </body>
 </html>
