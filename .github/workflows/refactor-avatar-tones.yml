@@ -1,0 +1,77 @@
+name: Refactor avatar tones
+
+on:
+  push:
+    branches:
+      - refactor-avatar-tones
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor-avatar-tones
+          fetch-depth: 0
+      - name: Extract AVATAR_TONES
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          before = len(text.splitlines())
+
+          start_marker = '    const AVATAR_TONES = {\n'
+          end_marker = '    // Premium photo pictures'
+          start = text.find(start_marker)
+          if start < 0:
+              raise SystemExit('AVATAR_TONES start marker not found')
+          end = text.find(end_marker, start)
+          if end < 0:
+              raise SystemExit('AVATAR_TONES end marker not found')
+
+          block = text[start:end]
+          if "navy:" not in block or "turtley:" not in block:
+              raise SystemExit('Unexpected AVATAR_TONES block')
+
+          lines = block.splitlines()
+          extracted = '\n'.join(line[4:] if line.startswith('    ') else line for line in lines).rstrip() + '\n'
+          Path('js/avatar-tones.js').write_text('// Static avatar colour-tone definitions.\n' + extracted, encoding='utf-8')
+
+          text = text[:start] + text[end:]
+          loader = '  <script src="js/whats-new-data.js"></script>\n'
+          insertion = loader + '  <script src="js/avatar-tones.js"></script>\n'
+          if loader not in text:
+              raise SystemExit('Loader insertion point not found')
+          text = text.replace(loader, insertion, 1)
+          p.write_text(text, encoding='utf-8')
+
+          after = len(text.splitlines())
+          print(f'INDEX_LINES_BEFORE={before}')
+          print(f'INDEX_LINES_AFTER={after}')
+          print(f'INDEX_LINES_REMOVED={before-after}')
+          PY
+      - name: Verify extraction
+        shell: bash
+        run: |
+          node --check js/avatar-tones.js
+          grep -q "const AVATAR_TONES = {" js/avatar-tones.js
+          grep -q "turtley:" js/avatar-tones.js
+          grep -q 'src="js/avatar-tones.js"' index.html
+          ! grep -q "const AVATAR_TONES = {" index.html
+          node tools/house-rules-integration-test.js
+      - name: Commit refactor and remove one-off workflow
+        shell: bash
+        run: |
+          rm .github/workflows/refactor-avatar-tones.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html js/avatar-tones.js .github/workflows/refactor-avatar-tones.yml
+          git commit -m "Refactor avatar tones out of index"
+          git push origin HEAD:refactor-avatar-tones
