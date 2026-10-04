@@ -46,6 +46,19 @@ jobs:
               raise RuntimeError('play-matrix-panel script anchor not found')
           html = html.replace(anchor, anchor + '  <script src="js/card-hold.js"></script>\n', 1)
           p.write_text(html)
+
+          t = Path('tools/house-rules-integration-test.js')
+          test = t.read_text()
+          old = "const cardReferenceUi=fs.readFileSync(path.join(__dirname,'../js/card-reference-ui.js'),'utf8');\n"
+          new = old + "const cardHold=fs.readFileSync(path.join(__dirname,'../js/card-hold.js'),'utf8');\n"
+          if old not in test:
+              raise RuntimeError('house-rules test setup anchor not found')
+          test = test.replace(old, new, 1)
+          old_check = " ['dynamic hold descriptions',html.includes('escapeHtml(cardReferenceText(rank))')]"
+          new_check = " ['dynamic hold descriptions',cardHold.includes('escapeHtml(cardReferenceText(rank))')]"
+          if old_check not in test:
+              raise RuntimeError('dynamic hold descriptions guard not found')
+          t.write_text(test.replace(old_check, new_check, 1))
           PY
           node --check js/card-hold.js
           node tools/house-rules-integration-test.js
@@ -55,6 +68,6 @@ jobs:
           rm .github/workflows/one-time-refactor-card-hold-system.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html js/card-hold.js .github/workflows/one-time-refactor-card-hold-system.yml
+          git add index.html js/card-hold.js tools/house-rules-integration-test.js .github/workflows/one-time-refactor-card-hold-system.yml
           git commit -m "Extract Card Hold tooltip system"
           git push origin HEAD:refactor-card-hold-system
