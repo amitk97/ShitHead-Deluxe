@@ -93,11 +93,14 @@ const PAGE_LIB = `
 })();
 `;
 
-async function openGame(outVideo) {
-  const browser = await chromium.launch();
-  // The game runs in a 390×844 frame (a phone screen) drawn 2× on a
+// opts.size = the video [w, h] and opts.frame = the phone screen [w, h] it shows (scaled up to fill it);
+// opts.audio = record the game's own sounds (getAudio() returns a WebM/Opus buffer, timed from mark('start')).
+async function openGame(outVideo, opts = {}) {
+  const [VW, VH] = opts.size || [780, 1688], [FW, FH] = opts.frame || [390, 844], SCALE = VW / FW;
+  const browser = await chromium.launch(opts.audio ? { args: ['--autoplay-policy=no-user-gesture-required'] } : {});
+  // The game runs in a phone-sized frame (390×844 by default) drawn 2× on a
   // 780×1688 page, so the capture is full resolution and still phone layout.
-  const ctx = await browser.newContext({ viewport: { width: 780, height: 1688 }, deviceScaleFactor: 1 });
+  const ctx = await browser.newContext({ viewport: { width: VW, height: VH }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const t0 = Date.now();
   // Full-resolution capture: the browser's screencast at device pixels
@@ -108,12 +111,12 @@ async function openGame(outVideo) {
     frames.push({ t: metadata.timestamp, data: Buffer.from(data, 'base64') });
     cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
   });
-  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: 780, maxHeight: 1688, everyNthFrame: 1 });
+  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: VW, maxHeight: VH, everyNthFrame: 1 });
   const gameRoot = path.resolve(__dirname, '../..');
   await page.route('**/*', (route) => {
     const u = new URL(route.request().url());
     if (u.hostname === 'game.local' && u.pathname === '/__host.html') {
-      return route.fulfill({ contentType: 'text/html', body: '<!doctype html><html><body style="margin:0;background:#020617;overflow:hidden"><iframe id="g" src="/" style="border:0;width:390px;height:844px;transform:scale(2);transform-origin:0 0;display:block"></iframe></body></html>' });
+      return route.fulfill({ contentType: 'text/html', body: '<!doctype html><html><body style="margin:0;background:#020617;overflow:hidden"><iframe id="g" src="/" style="border:0;width:' + FW + 'px;height:' + FH + 'px;transform:scale(' + SCALE + ');transform-origin:0 0;display:block"></iframe></body></html>' });
     }
     if (u.hostname === 'game.local') {
       let p = decodeURIComponent(u.pathname); if (p === '/') p = '/index.html';
@@ -162,6 +165,26 @@ async function openGame(outVideo) {
   };
   const g = { browser, ctx, page: gamePage, realPage: page, errors, t0, marks: {}, frames, cdp };
   g.mark = (name) => { g.marks[name] = Date.now() / 1000; };
+  if (opts.audio) {
+    // Everything the game plays goes to audio.ctx.destination; tee it into a recorder.
+    await frame.evaluate(async () => {
+      const ac = audio.ctx; await ac.resume();
+      const dest = ac.createMediaStreamDestination(), connect = AudioNode.prototype.connect;
+      AudioNode.prototype.connect = function (target, ...rest) {
+        const out = connect.call(this, target, ...rest);
+        if (target === ac.destination) connect.call(this, dest);
+        return out;
+      };
+      window.__vRec = { rec: new MediaRecorder(dest.stream, { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 160000 }), chunks: [] };
+      window.__vRec.rec.ondataavailable = (e) => e.data.size && window.__vRec.chunks.push(e.data);
+    });
+    g.startAudio = async () => { await frame.evaluate(() => window.__vRec.rec.start(250)); g.mark('start'); };
+    g.getAudio = async () => Buffer.from(await frame.evaluate(() => new Promise((res) => {
+      const r = window.__vRec.rec;
+      r.onstop = async () => { const b = new Uint8Array(await new Blob(window.__vRec.chunks).arrayBuffer()); let s = ''; for (let i = 0; i < b.length; i += 32768) s += String.fromCharCode.apply(null, b.subarray(i, i + 32768)); res(btoa(s)); };
+      r.stop();
+    })), 'base64');
+  }
   return g;
 }
 

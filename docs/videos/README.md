@@ -10,10 +10,12 @@ the scripts in `tools/video/`. Social apps prefer MP4: open a file in CapCut
 | `shithead-gauntlet.webm` | 24s | "5 bots, 3 lives, can you beat them all?" | `gauntlet.js` |
 | `shithead-uni.webm` | 25s | "Remember this one?" The rules everyone knows, played fast | `uni.js` |
 | `shithead-promo.webm` | 32s | Promo: plays, burn, blind flip, Joker, last card, win | `promo.js` |
+| `shithead-tiktok1-jokered.mp4` | 9.6s | TikTok 1 (1080×1920, game sound): a mate's Joker dumps 25 cards on you, then Lava Melt revenge | `tiktok1.js` |
 | `shithead-how-to-play.webm` / `.mp4` | 112s | How to play with a voiceover (British male, excited), every move cued to the narration | `narrate.py` → `howto-voice.js` → `mux-voice.py` |
 
 Suggested captions:
 
+- **TikTok 1 (Jokered):** "Never trust your mates at cards 🃏🔥" #cardgame #palacecardgame #satisfying
 - **Hook:** "Last card. Face down. Everything on one flip 😱 #shithead #cardgame #palace"
 - **Gauntlet:** "5 bots. 3 lives. A new run every day. Can you beat the Boss? 😈 #cardgames #shithead"
 - **Uni:** "The card game every uni kitchen knew 🍻 Now on your phone. #shithead #uni #cardgame #palace #karma"
