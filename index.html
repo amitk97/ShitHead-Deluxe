@@ -2389,6 +2389,10 @@
        opponent count in render), with padding so card-frame glows are
        never clipped by the seat edge. */
     .opp-seat { min-width:var(--opp-seat-w, 112px); padding:6px 8px 5px !important; row-gap:8px !important; }
+    /* Keep the three-card row inside the seat's padded content box. The row
+       used to size itself wider than that box at narrow phone widths, leaving
+       cosmetic frame glows flush with / outside the seat edge. */
+    .opp-seat .opp-slot-row { max-width:100%; justify-content:center; box-sizing:border-box; }
     /* Face-up cards sit tilted and nudged up; keep them clear of the picture. */
     .opp-seat .opp-head { margin-bottom:3px; }
     .opp-seat .opp-name { font-size:var(--opp-name-size, 9px); letter-spacing:.03em; }
@@ -20554,6 +20558,7 @@ video {
     // BUILD bump needs an entry (a test checks); mark its exciting lines key.
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v311: [[ '🃏', 'House Rules is being prepared for Play Friends, with custom card powers, adaptive bots and protected casual-only rewards.', WN_KEY ]],
       v310: [[ '🔗', 'The game has a new home: shithead-deluxe.web.app. Invite links, referral links and shared results now use it; the old address still works.' ]],
       v309: [[ '✨', 'Opening the installed app on Android now flows smoothly from the app icon into the loading screen.' ]],
       v308: [[ '🔥', 'Coloured Flame now sets your real card alight: violet, pink and blue flames, each moving on its own, burn it from the bottom up while its edge curls over.', WN_KEY ]],
