@@ -1,0 +1,29 @@
+name: One-time Play Matrix panel refactor
+
+on:
+  push:
+    branches:
+      - refactor-play-matrix-panel
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor-play-matrix-panel
+          fetch-depth: 0
+      - name: Locate Play Matrix panel boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "INDEX_LINES_BEFORE=$(wc -l < index.html)"
+          for needle in "let matrixRefOpen" "function loadMatrixRefZoom" "function applyMatrixRefZoom" "function setMatrixRefZoom" "function defaultMatrixRefPosition" "function positionMatrixRefPanel" "function loadMatrixRefPosition" "function saveMatrixRefPosition" "function initMatrixRefDrag" "function initMatrixRefZoomControls" "function toggleMatrixReference"; do
+            echo "--- $needle ---"
+            grep -n "$needle" index.html | head -3 || true
+          done
+          start=$(grep -n "let matrixRefOpen" index.html | head -1 | cut -d: -f1)
+          sed -n "${start},$((start+430))p" index.html
