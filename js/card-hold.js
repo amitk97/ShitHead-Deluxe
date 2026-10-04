@@ -129,34 +129,39 @@ document.addEventListener('click', (e) => {
 document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.preventDefault(); });
 
 // § Opponent hand fan preview
-// The number under each opponent remains the source of truth. This is only a
-// compact visualisation of that already-public hand count: it never reads or
-// renders the identities of cards in an opponent's hand.
+// This is a visualisation of the already-public hand count only. Card identities
+// are never rendered. The permanent anchor also gives card-flight animations a
+// stable origin/destination even while the visual fan itself is closed.
 (function opponentHandFanPreview() {
   const style = document.createElement('style');
   style.textContent = `
-    #opponentsContainer { padding-top:52px !important; overflow:visible !important; }
+    #opponentsContainer { position:relative; padding-top:60px !important; overflow:visible !important; }
     #opponentsContainer .opp-seat { position:relative; overflow:visible !important; }
-    #opponentsContainer [data-tip="Cards in Hand"] { cursor:pointer; touch-action:manipulation; }
-    #opponentsContainer [data-tip="Cards in Hand"]:focus-visible { outline:2px solid #a855f7; outline-offset:2px; }
-    .opp-hand-preview { position:absolute; left:50%; top:-47px; width:min(calc(100% - 4px), 148px); height:48px; transform:translateX(-50%); pointer-events:none; z-index:35; }
-    .opp-hand-preview-card { position:absolute; left:50%; top:0; border-radius:7px; overflow:hidden; box-shadow:0 3px 8px rgba(0,0,0,.6),0 0 0 1px rgba(148,163,184,.38),0 0 8px rgba(56,189,248,.22); transform-origin:50% 112%; will-change:transform; }
-    .opp-hand-preview-card svg { max-width:72%; max-height:72%; }
-    .opp-hand-preview::after { content:""; position:absolute; left:12%; right:12%; bottom:-2px; height:12px; border-radius:50%; background:radial-gradient(ellipse,rgba(0,0,0,.38),transparent 70%); filter:blur(3px); z-index:-1; }
-    .opp-hand-preview-open [data-tip="Cards in Hand"] { border-color:#a855f7 !important; color:#f5d0fe !important; box-shadow:0 0 8px rgba(168,85,247,.38); }
-    body.reduce-motion .opp-hand-preview-card { transition:none !important; }
+    #opponentsContainer .opp-hand-count { cursor:pointer; touch-action:manipulation; }
+    #opponentsContainer .opp-hand-count:focus-visible { outline:2px solid #a855f7; outline-offset:2px; }
+    .opp-hand-anchor { position:absolute; left:50%; top:-55px; width:min(calc(100% - 4px),154px); height:54px; transform:translateX(-50%); pointer-events:none; z-index:35; }
+    .opp-hand-fan { position:absolute; inset:0; pointer-events:none; opacity:0; visibility:hidden; transform:translateY(5px) scale(.96); transform-origin:50% 100%; transition:opacity .15s ease,transform .18s cubic-bezier(.2,.85,.3,1),visibility 0s linear .18s; }
+    .opp-seat.opp-hand-open .opp-hand-fan { opacity:1; visibility:visible; transform:translateY(0) scale(1); transition:opacity .15s ease,transform .18s cubic-bezier(.2,.85,.3,1); }
+    .opp-hand-fan-card { position:absolute; left:50%; bottom:0; width:var(--opp-fan-card-w,30px); height:var(--opp-fan-card-h,43px); border-radius:6px; overflow:hidden; transform-origin:50% 115%; transform:translateX(-50%) translateX(var(--fan-x,0px)) translateY(var(--fan-y,0px)) rotate(var(--fan-rotate,0deg)); z-index:var(--fan-z,1); box-shadow:0 3px 8px rgba(0,0,0,.55),0 0 0 1px rgba(148,163,184,.38),0 0 7px rgba(56,189,248,.22); }
+    .opp-hand-fan-art { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; margin:0 !important; border-radius:inherit !important; transform:none !important; transform-origin:50% 50% !important; overflow:hidden; }
+    .opp-hand-fan-art svg { width:70%; height:70%; max-width:70%; max-height:70%; }
+    .opp-hand-fan::after { content:""; position:absolute; left:14%; right:14%; bottom:-3px; height:10px; border-radius:50%; background:radial-gradient(ellipse,rgba(0,0,0,.34),transparent 72%); filter:blur(3px); z-index:-1; }
+    .opp-seat.opp-hand-open .opp-hand-count { border-color:#a855f7 !important; color:#f5d0fe !important; box-shadow:0 0 0 1px rgba(168,85,247,.35),0 0 9px rgba(168,85,247,.32); }
+    body.reduce-motion .opp-hand-fan { transition:none !important; }
+    @media (prefers-reduced-motion:reduce) { .opp-hand-fan { transition:none !important; } }
     @media (max-width:420px) {
-      #opponentsContainer { padding-top:48px !important; }
-      .opp-hand-preview { top:-43px; height:44px; }
+      #opponentsContainer { padding-top:56px !important; }
+      .opp-hand-anchor { top:-50px; height:49px; }
     }
   `;
   document.head.appendChild(style);
 
+  const container = document.getElementById('opponentsContainer');
+  if (!container) return;
+
   let pinnedPlayerId = null;
   let hoveredPlayerId = null;
-  let lastOpenPlayerId = null;
   const finePointer = () => window.matchMedia?.('(hover:hover) and (pointer:fine)').matches;
-  const motionDisabled = () => (typeof reduceMotion !== 'undefined' && reduceMotion) || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   function playerForSeat(seat) {
     if (!seat?.id?.startsWith('opp-') || typeof state === 'undefined') return null;
@@ -165,164 +170,220 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
   }
 
   function handControl(seat) {
-    return seat?.querySelector?.('[data-tip="Cards in Hand"]') || null;
+    return seat?.querySelector?.('.opp-hand-count,[data-opponent-hand-toggle],[data-tip="Cards in Hand"]') || null;
   }
 
-  function decorateHandControl(seat) {
+  function ensureAnchor(seat) {
+    if (!seat) return null;
+    let anchor = seat.querySelector(':scope > .opp-hand-anchor');
+    if (!anchor) {
+      anchor = document.createElement('div');
+      anchor.className = 'opp-hand-anchor';
+      anchor.setAttribute('aria-hidden', 'true');
+      anchor.innerHTML = '<div class="opp-hand-fan"></div>';
+      seat.prepend(anchor);
+    }
+    return anchor;
+  }
+
+  function decorateSeat(seat) {
+    const player = playerForSeat(seat);
+    if (!player) return;
+    ensureAnchor(seat);
     const control = handControl(seat);
     if (!control) return;
+    control.classList.add('opp-hand-count');
+    control.dataset.opponentHandToggle = String(player.id);
+    // The generic data-tip bubble was sitting over the playable cards on touch.
+    // The count is self-explanatory and the accessible label carries the detail.
+    if (control.getAttribute('data-tip') === 'Cards in Hand') control.removeAttribute('data-tip');
     control.setAttribute('role', 'button');
     control.setAttribute('tabindex', '0');
-    control.setAttribute('aria-label', 'Show cards in hand');
-    control.setAttribute('aria-expanded', seat.classList.contains('opp-hand-preview-open') ? 'true' : 'false');
-  }
-
-  function removePreview(seat) {
-    if (!seat) return;
-    seat.querySelector('.opp-hand-preview')?.remove();
-    seat.classList.remove('opp-hand-preview-open');
-    const control = handControl(seat);
-    if (control) control.setAttribute('aria-expanded', 'false');
-  }
-
-  function clearPreviews(exceptId = null) {
-    document.querySelectorAll('#opponentsContainer .opp-seat').forEach(seat => {
-      if (!exceptId || seat.id !== `opp-${exceptId}`) removePreview(seat);
-    });
-    if (!exceptId) lastOpenPlayerId = null;
+    control.setAttribute('aria-expanded', seat.classList.contains('opp-hand-open') ? 'true' : 'false');
+    control.setAttribute('aria-label', `${seat.classList.contains('opp-hand-open') ? 'Hide' : 'Show'} ${player.name || 'opponent'}'s ${player.hand?.length || 0} cards in hand`);
   }
 
   function buildCardBack(player) {
-    const card = document.createElement('div');
-    card.className = 'opp-hand-preview-card custom-card-back';
+    const shell = document.createElement('div');
+    shell.className = 'opp-hand-fan-card';
+    const art = document.createElement('div');
+    art.className = 'opp-hand-fan-art custom-card-back';
     try {
       const backClass = typeof getCosmeticBackClass === 'function'
         ? getCosmeticBackClass(player?.cosmetics?.cardBack || 'default')
         : (typeof getThemeDeckBackClass === 'function' ? getThemeDeckBackClass(player?.cosmetics?.cardBack || 'default') : '');
-      if (backClass) card.classList.add(...String(backClass).split(/\s+/).filter(Boolean));
-      if (typeof getEmblemSvg === 'function') card.innerHTML = getEmblemSvg();
+      if (backClass) art.classList.add(...String(backClass).split(/\s+/).filter(Boolean));
+      if (typeof getEmblemSvg === 'function') art.innerHTML = getEmblemSvg();
     } catch (e) {
-      card.style.background = 'linear-gradient(145deg,#0f2948,#071522 60%,#020617)';
+      art.style.background = 'linear-gradient(145deg,#0f2948,#071522 60%,#020617)';
     }
-    return card;
+    shell.appendChild(art);
+    return shell;
   }
 
-  function showPreview(seat, source = 'hover') {
+  function renderFan(seat) {
     const player = playerForSeat(seat);
+    const anchor = ensureAnchor(seat);
+    const fan = anchor?.querySelector('.opp-hand-fan');
     const count = player?.hand?.length || 0;
-    if (!player || player.hasFinished || count < 1) { removePreview(seat); return; }
-    if (source === 'hover' && pinnedPlayerId && pinnedPlayerId !== String(player.id)) return;
+    if (!player || !fan || player.hasFinished || count < 1) {
+      if (fan) fan.replaceChildren();
+      seat?.classList.remove('opp-hand-open');
+      return;
+    }
 
-    const playerId = String(player.id);
-    clearPreviews(playerId);
-    removePreview(seat);
-
-    const fan = document.createElement('div');
-    fan.className = 'opp-hand-preview';
-    fan.setAttribute('aria-hidden', 'true');
-
+    fan.replaceChildren();
     const seatWidth = Math.max(72, seat.getBoundingClientRect().width || 112);
-    const fanWidth = Math.max(66, Math.min(148, seatWidth - 4));
-    const cardW = Math.max(22, Math.min(34, fanWidth * 0.27));
-    const cardH = cardW * 1.42;
-    const usable = Math.max(0, fanWidth - cardW);
-    const step = count > 1 ? Math.min(cardW * 0.56, usable / (count - 1)) : 0;
+    const fanWidth = Math.max(68, Math.min(154, seatWidth - 4));
+    const cardW = Math.max(25, Math.min(31, fanWidth * .25));
+    const cardH = cardW * 1.43;
+    const travel = Math.max(0, fanWidth - cardW);
+    const step = count > 1 ? Math.min(cardW * .54, travel / (count - 1)) : 0;
     const spread = step * Math.max(0, count - 1);
-    const maxRotate = count > 14 ? 9 : count > 8 ? 10 : 12;
+    const maxRotation = count <= 3 ? 9 : count <= 7 ? 13 : count <= 12 ? 11 : 9;
 
     for (let i = 0; i < count; i++) {
       const card = buildCardBack(player);
-      const centred = count > 1 ? (i / (count - 1)) * 2 - 1 : 0;
+      const normal = count === 1 ? 0 : (i / (count - 1)) * 2 - 1;
       const x = i * step - spread / 2;
-      const y = Math.pow(Math.abs(centred), 1.6) * 6;
-      const rot = centred * maxRotate;
-      card.style.width = `${cardW}px`;
-      card.style.height = `${cardH}px`;
-      card.style.zIndex = String(i + 1);
-      card.style.transform = `translate(calc(-50% + ${x}px), ${y}px) rotate(${rot}deg)`;
+      const y = Math.pow(Math.abs(normal), 1.55) * 7;
+      const rotation = normal * maxRotation;
+      card.style.setProperty('--fan-x', `${x}px`);
+      card.style.setProperty('--fan-y', `${y}px`);
+      card.style.setProperty('--fan-rotate', `${rotation}deg`);
+      card.style.setProperty('--fan-z', String(i + 1));
+      card.style.setProperty('--opp-fan-card-w', `${cardW}px`);
+      card.style.setProperty('--opp-fan-card-h', `${cardH}px`);
       fan.appendChild(card);
-
-      if (!motionDisabled() && typeof card.animate === 'function') {
-        card.animate([
-          { transform:'translate(-50%, 11px) rotate(0deg) scale(.88)', opacity:.15 },
-          { transform:`translate(calc(-50% + ${x}px), ${y}px) rotate(${rot}deg) scale(1)`, opacity:1 }
-        ], { duration:170, delay:Math.min(i * 7, 70), easing:'cubic-bezier(.2,.85,.3,1)', fill:'both' });
-      }
     }
+  }
 
-    seat.prepend(fan);
-    seat.classList.add('opp-hand-preview-open');
+  function closeSeat(seat) {
+    if (!seat) return;
+    seat.classList.remove('opp-hand-open');
     const control = handControl(seat);
-    if (control) control.setAttribute('aria-expanded', 'true');
-    lastOpenPlayerId = playerId;
+    if (control) {
+      control.setAttribute('aria-expanded', 'false');
+      const p = playerForSeat(seat);
+      control.setAttribute('aria-label', `Show ${p?.name || 'opponent'}'s ${p?.hand?.length || 0} cards in hand`);
+    }
   }
 
-  function syncPinnedPreview() {
-    const seats = document.querySelectorAll('#opponentsContainer .opp-seat');
-    seats.forEach(decorateHandControl);
-    if (!pinnedPlayerId) return;
-    const seat = document.getElementById(`opp-${pinnedPlayerId}`);
-    if (seat) showPreview(seat, 'pinned');
-    else pinnedPlayerId = null;
+  function closeAll(exceptId = null) {
+    container.querySelectorAll('.opp-seat').forEach(seat => {
+      if (!exceptId || seat.id !== `opp-${exceptId}`) closeSeat(seat);
+    });
   }
 
-  const container = document.getElementById('opponentsContainer');
-  if (!container) return;
-
-  container.addEventListener('pointerover', (event) => {
-    if (!finePointer()) return;
-    const seat = event.target.closest('.opp-seat');
-    if (!seat || seat.contains(event.relatedTarget)) return;
-    const player = playerForSeat(seat);
-    if (!player) return;
-    hoveredPlayerId = String(player.id);
-    showPreview(seat, 'hover');
-  });
-
-  container.addEventListener('pointerout', (event) => {
-    if (!finePointer()) return;
-    const seat = event.target.closest('.opp-seat');
-    if (!seat || seat.contains(event.relatedTarget)) return;
-    const player = playerForSeat(seat);
-    if (!player) return;
-    hoveredPlayerId = null;
-    if (pinnedPlayerId !== String(player.id)) removePreview(seat);
-  });
-
-  container.addEventListener('click', (event) => {
-    const control = event.target.closest('[data-tip="Cards in Hand"]');
-    if (!control) return;
-    const seat = control.closest('.opp-seat');
+  function openSeat(seat, pin = false) {
     const player = playerForSeat(seat);
     if (!player || player.hasFinished || !(player.hand?.length)) return;
     const id = String(player.id);
-    if (pinnedPlayerId === id) {
+    closeAll(id);
+    renderFan(seat);
+    seat.classList.add('opp-hand-open');
+    const control = handControl(seat);
+    if (control) {
+      control.setAttribute('aria-expanded', 'true');
+      control.setAttribute('aria-label', `Hide ${player.name || 'opponent'}'s ${player.hand.length} cards in hand`);
+    }
+    if (pin) pinnedPlayerId = id;
+  }
+
+  function syncSeats() {
+    container.querySelectorAll('.opp-seat').forEach(decorateSeat);
+    if (!pinnedPlayerId) return;
+    const seat = document.getElementById(`opp-${pinnedPlayerId}`);
+    const player = playerForSeat(seat);
+    if (!seat || !player || player.hasFinished || !(player.hand?.length)) {
       pinnedPlayerId = null;
-      if (!finePointer() || hoveredPlayerId !== id) removePreview(seat);
+      return;
+    }
+    openSeat(seat, true);
+  }
+
+  // Clicking/tapping the existing hand-count badge toggles the fan.
+  container.addEventListener('click', event => {
+    const control = event.target.closest('[data-opponent-hand-toggle]');
+    if (!control) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const seat = control.closest('.opp-seat');
+    const player = playerForSeat(seat);
+    if (!player) return;
+    const id = String(player.id);
+    if (pinnedPlayerId === id && seat.classList.contains('opp-hand-open')) {
+      pinnedPlayerId = null;
+      closeSeat(seat);
     } else {
       pinnedPlayerId = id;
-      showPreview(seat, 'pinned');
+      openSeat(seat, true);
     }
   });
 
-  container.addEventListener('keydown', (event) => {
-    const control = event.target.closest('[data-tip="Cards in Hand"]');
+  container.addEventListener('keydown', event => {
+    const control = event.target.closest('[data-opponent-hand-toggle]');
     if (!control || (event.key !== 'Enter' && event.key !== ' ')) return;
     event.preventDefault();
     control.click();
   });
 
-  document.addEventListener('pointerdown', (event) => {
-    if (!pinnedPlayerId || event.target.closest('#opponentsContainer [data-tip="Cards in Hand"]')) return;
+  // Desktop convenience: hover the count itself. A clicked/pinned fan stays open.
+  container.addEventListener('pointerover', event => {
+    if (!finePointer()) return;
+    const control = event.target.closest('[data-opponent-hand-toggle]');
+    if (!control || control.contains(event.relatedTarget)) return;
+    const seat = control.closest('.opp-seat');
+    const player = playerForSeat(seat);
+    if (!player || (pinnedPlayerId && pinnedPlayerId !== String(player.id))) return;
+    hoveredPlayerId = String(player.id);
+    openSeat(seat, false);
+  });
+
+  container.addEventListener('pointerout', event => {
+    if (!finePointer()) return;
+    const control = event.target.closest('[data-opponent-hand-toggle]');
+    if (!control || control.contains(event.relatedTarget)) return;
+    const seat = control.closest('.opp-seat');
+    const player = playerForSeat(seat);
+    if (!player) return;
+    hoveredPlayerId = null;
+    if (pinnedPlayerId !== String(player.id)) closeSeat(seat);
+  });
+
+  document.addEventListener('pointerdown', event => {
+    if (!pinnedPlayerId || event.target.closest('[data-opponent-hand-toggle]')) return;
     pinnedPlayerId = null;
-    clearPreviews();
+    closeAll();
   }, true);
 
   let syncQueued = false;
   new MutationObserver(() => {
     if (syncQueued) return;
     syncQueued = true;
-    requestAnimationFrame(() => { syncQueued = false; syncPinnedPreview(); });
+    requestAnimationFrame(() => {
+      syncQueued = false;
+      syncSeats();
+    });
   }).observe(container, { childList:true });
-  syncPinnedPreview();
+
+  // Keep card-flight physics intact but map other players to the new, stable
+  // hand anchor instead of the whole opponent seat. The anchor exists even
+  // while the fan is visually closed, so pickup/play coordinates never jump.
+  const previousAnimationTarget = window.getPlayerAnimationTarget;
+  window.getPlayerAnimationTarget = function opponentHandAnimationTarget(playerId) {
+    if (typeof state !== 'undefined' && playerId === state.localPlayerId) {
+      return document.getElementById('localHand') || previousAnimationTarget?.(playerId);
+    }
+    const seat = document.getElementById(`opp-${playerId}`);
+    if (seat) return ensureAnchor(seat);
+    return previousAnimationTarget?.(playerId) || container;
+  };
+
+  window.getOpponentHandAnchor = function getOpponentHandAnchor(playerId) {
+    const seat = document.getElementById(`opp-${playerId}`);
+    return seat ? ensureAnchor(seat) : null;
+  };
+
+  syncSeats();
 })();
