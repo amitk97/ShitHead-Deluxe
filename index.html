@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v317 (ShitHead-Deluxe-242) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v318 (ShitHead-Deluxe-243) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -515,16 +515,26 @@
     /* § Mode carousel (v317): a row of seven cards that snaps to the middle;
        the selected mode's card is lit in its own tone. */
     #homeModeGrid { display: none !important; }
-    #modeCarousel { margin: 2px -16px 0; }
-    #modeCarousel .mc-track { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
-      padding: 8px calc(50% - 62px) 12px; overscroll-behavior-x: contain;
-      -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
-    #modeCarousel .mc-track::-webkit-scrollbar { display: none; }
-    .mc-card { flex: 0 0 124px; height: 150px; scroll-snap-align: center; position: relative; border-radius: 18px;
+    #modeCarousel { position: relative; margin: 2px -16px 0; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+    #modeCarousel .mc-track { position: relative; height: 176px; perspective: 900px; overflow: hidden;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); }
+    .mc-card { position: absolute; left: 50%; top: 12px; width: 124px; height: 150px; margin-left: -62px; border-radius: 18px;
       background: #0b1428; border: 1.5px solid #1e293b; color: #e2e8f0; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 6px; padding: 10px 8px; cursor: pointer;
-      transition: transform .28s var(--ease-bouncy), border-color .2s, background-color .2s, box-shadow .2s; }
-    .mc-card:hover { transform: translateY(-3px); }
+      transform: translateX(var(--mc-x, 0px)) translateZ(var(--mc-z, 0px)) rotateY(var(--mc-r, 0deg)) scale(var(--mc-s, 1));
+      opacity: var(--mc-o, 1); z-index: var(--mc-zi, 1); will-change: transform;
+      transition: transform .5s var(--ease-spring), opacity .35s var(--ease-soft), border-color .2s, background-color .2s, box-shadow .25s; }
+    .mc-card.mc-focus:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-tone) 22%, transparent), 0 16px 30px rgba(0,0,0,.5); }
+    .mc-card.mc-focus { border-color: color-mix(in srgb, var(--mc-tone) 55%, #1e293b); }
+    .mc-card.mc-gone { pointer-events: none; }
+    .mc-arrow { position: absolute; top: 50%; z-index: 20; width: 32px; height: 32px; margin-top: -16px; border-radius: 999px;
+      border: 1px solid #334155; background: rgba(2,6,23,.75); color: #cbd5e1; display: none; align-items: center; justify-content: center;
+      cursor: pointer; transition: background-color .16s, border-color .16s, opacity .16s; }
+    .mc-arrow:hover { background: #1e293b; border-color: #fbbf24; }
+    .mc-arrow:disabled { opacity: .3; cursor: default; }
+    .mc-arrow svg { width: 16px; height: 16px; }
+    .mc-arrow[data-mc-step="-1"] { left: 22px; } .mc-arrow[data-mc-step="1"] { right: 22px; }
+    @media (hover: hover) and (pointer: fine) { .mc-arrow { display: flex; } }
     .mc-card:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
     .mc-card[aria-pressed="true"] { border-color: var(--mc-tone); background: color-mix(in srgb, var(--mc-tone) 13%, #0b1428);
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-tone) 18%, transparent), 0 14px 28px rgba(0,0,0,.45); }
@@ -536,7 +546,7 @@
     .mc-card.mc-empty .mc-name { color: #94a3b8; }
     body.reduce-motion .mc-card { transition: none; }
     #homeTutorialRow { margin-top: 10px; }
-    @media (min-width: 700px) { .mc-card { flex-basis: 132px; height: 160px; } #modeCarousel .mc-track { padding-inline: calc(50% - 66px); } }
+    @media (min-width: 700px) { .mc-card { width: 132px; height: 160px; margin-left: -66px; } #modeCarousel .mc-track { height: 186px; } }
     /* Exit / leave confirm (shConfirm): the game's own dialog, never confirm(). */
     #shConfirm { position: fixed; inset: 0; z-index: 350; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(2,6,23,.72); backdrop-filter: blur(3px); }
     #shConfirm.hidden { display: none; }
@@ -5686,6 +5696,8 @@ video {
             <button type="button" class="mc-card" data-mc="6" data-mc-mode="friends" style="--mc-tone:#38bdf8" aria-pressed="false"><span class="mc-num" aria-hidden="true">6</span><svg class="ic mc-ic" aria-hidden="true"><use href="#ic-friends4"/></svg><span class="mc-name">Play Friends</span><span class="mc-sub">Host or join</span></button>
             <button type="button" class="mc-card mc-empty" data-mc="7" data-mc-mode="pin2" style="--mc-tone:#64748b" aria-pressed="false"><span class="mc-num" aria-hidden="true">7</span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" stroke-dasharray="3 3"/><path d="M12 9v6M9 12h6"/></svg><span class="mc-name">Shortcut</span><span class="mc-sub">Pin a mode</span></button>
           </div>
+          <button type="button" class="mc-arrow" data-mc-step="-1" aria-label="Previous mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+          <button type="button" class="mc-arrow" data-mc-step="1" aria-label="Next mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         </div>
         <div id="homeModeGrid" class="grid grid-cols-3 gap-2">
           <!-- Each mode button is three fixed rows: icon, name, subtitle. -->
@@ -31999,40 +32011,126 @@ video {
       const homeOpts = document.getElementById('singleOptions');
       if (homeOpts) new ResizeObserver(() => { if (homeOpts.offsetHeight) document.getElementById('lobbyScreen')?.style.setProperty('--home-opts-h', homeOpts.offsetHeight + 'px'); }).observe(homeOpts);
     }
-    // § Mode carousel (v317): each card presses the old mode switch; the
-    // card of the mode on show is lit and kept in the middle of the row.
+    // § Mode carousel (v318): a 3D row that turns to one card in the middle.
+    // Swipe, the arrows, the mouse wheel or keys 1-7 turn it; tapping a side
+    // card brings it to the middle, tapping the middle card opens its mode
+    // (and remembers it, localStorage shithead_home_mode). The old mode
+    // switches stay hidden and are pressed for it.
+    const HOME_MODE_KEY = 'shithead_home_mode';
     (() => {
-      const track = document.querySelector('#modeCarousel .mc-track');
+      const box = document.getElementById('modeCarousel');
+      const track = box?.querySelector('.mc-track');
       if (!track) return;
-      const panels = { cpu: 'singleOptions', friends: 'multiOptions', ranked: 'rankedOptions' };
-      const click = (id) => document.getElementById(id)?.click();
-      const center = (card, smooth) => track.scrollTo({ left: card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2, behavior: smooth && !motionOff() ? 'smooth' : 'auto' });
-      function syncModeCarousel(smooth) {
-        const mode = Object.keys(panels).find((m) => !document.getElementById(panels[m])?.classList.contains('hidden')) || 'cpu';
-        track.querySelectorAll('.mc-card').forEach((c) => {
-          const on = c.dataset.mcMode === mode;
-          c.setAttribute('aria-pressed', on ? 'true' : 'false');
-          if (on) center(c, smooth);
+      const cards = [...track.querySelectorAll('.mc-card')];
+      const arrows = [...box.querySelectorAll('.mc-arrow')];
+      const PANEL = { cpu: 'singleOptions', gauntlet: 'singleOptions', friends: 'multiOptions', ranked: 'rankedOptions' };
+      const SWITCH = { singleOptions: 'modeSingleBtn', multiOptions: 'modeMultiBtn', rankedOptions: 'modeRankedBtn' };
+      const indexOf = (mode) => Math.max(0, cards.findIndex((c) => c.dataset.mcMode === mode));
+      let saved = null;
+      try { saved = localStorage.getItem(HOME_MODE_KEY); } catch (e) {}
+      let chosen = PANEL[saved] ? saved : 'cpu';
+      let focus = indexOf(chosen);
+      const shownPanel = () => Object.keys(SWITCH).find((id) => !document.getElementById(id)?.classList.contains('hidden')) || 'singleOptions';
+      function paint() {
+        const step = cards[0].offsetWidth * .72;
+        cards.forEach((c, i) => {
+          const d = i - focus, a = Math.abs(d);
+          c.style.setProperty('--mc-x', (Math.sign(d) * (a === 0 ? 0 : a === 1 ? step : step * (1 + (a - 1) * .62))).toFixed(1) + 'px');
+          c.style.setProperty('--mc-z', (-a * 70) + 'px');
+          c.style.setProperty('--mc-r', (-Math.sign(d) * Math.min(a, 2) * 18) + 'deg');
+          c.style.setProperty('--mc-s', (1 - Math.min(a, 3) * .13).toFixed(2));
+          c.style.setProperty('--mc-o', a > 2 ? '0' : a === 2 ? '.55' : '1');
+          c.style.setProperty('--mc-zi', String(10 - a));
+          c.classList.toggle('mc-focus', a === 0);
+          c.classList.toggle('mc-gone', a > 2);
+          c.tabIndex = a === 0 ? 0 : -1;
+          const lit = PANEL[c.dataset.mcMode] === shownPanel() && (c.dataset.mcMode === chosen || PANEL[chosen] !== shownPanel());
+          c.setAttribute('aria-pressed', lit ? 'true' : 'false');
         });
+        arrows[0].disabled = focus === 0;
+        arrows[1].disabled = focus === cards.length - 1;
       }
+      function turnTo(i) {
+        const next = Math.max(0, Math.min(cards.length - 1, i));
+        if (next === focus) return false;
+        focus = next; paint();
+        return true;
+      }
+      function open(card) {
+        const m = card.dataset.mcMode;
+        if (PANEL[m]) {
+          chosen = m;
+          try { localStorage.setItem(HOME_MODE_KEY, m); } catch (e) {}
+          document.getElementById(SWITCH[PANEL[m]])?.click();
+          if (m === 'gauntlet') document.getElementById('gauntletBtn')?.click();
+          paint();
+        } else if (m === 'more') showInfoPop(card, '<b>More modes</b><br>2 vs 2, Puzzles, Randomiser, Multiple Decks and No Mercy are on the way.', { toggle: true });
+        else showInfoPop(card, '<b>Shortcut</b><br>Soon you can pin another mode here.', { toggle: true });
+      }
+      // Taps: a side card turns to the middle; the middle card opens.
+      let swiped = false;
       track.addEventListener('click', (e) => {
         const card = e.target.closest('.mc-card');
-        if (!card) return;
-        const m = card.dataset.mcMode;
-        if (m === 'cpu') click('modeSingleBtn');
-        else if (m === 'friends') click('modeMultiBtn');
-        else if (m === 'ranked') click('modeRankedBtn');
-        else if (m === 'gauntlet') { click('modeSingleBtn'); click('gauntletBtn'); }
-        else if (m === 'more') showInfoPop(card, '<b>More modes</b><br>2 vs 2, Puzzles, Randomiser, Multiple Decks and No Mercy are on the way.', { toggle: true });
-        else showInfoPop(card, '<b>Shortcut</b><br>Soon you can pin another mode here.', { toggle: true });
+        if (!card || swiped) return;
+        const i = cards.indexOf(card);
+        if (i === focus) open(card); else turnTo(i);
       });
-      Object.values(panels).forEach((id) => {
+      arrows.forEach((b) => b.addEventListener('click', () => turnTo(focus + Number(b.dataset.mcStep))));
+      // Swipe (touch or a mouse drag): 40px turns one card, a long flick two.
+      let down = null;
+      track.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; swiped = false; });
+      track.addEventListener('pointerup', (e) => {
+        if (!down) return;
+        const dx = e.clientX - down.x, dy = e.clientY - down.y;
+        down = null;
+        if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+        swiped = true; setTimeout(() => { swiped = false; }, 0);
+        turnTo(focus + (dx < 0 ? 1 : -1) * (Math.abs(dx) > 160 ? 2 : 1));
+      });
+      track.addEventListener('pointercancel', () => { down = null; });
+      // Mouse wheel over the carousel: one card per notch (the page doesn't scroll).
+      let wheelAt = 0;
+      box.addEventListener('wheel', (e) => {
+        const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        if (!d) return;
+        e.preventDefault();
+        if (performance.now() - wheelAt < 220) return;
+        wheelAt = performance.now();
+        turnTo(focus + (d > 0 ? 1 : -1));
+      }, { passive: false });
+      // Keys 1-7 on the home screen pick that card; arrows turn while it has focus.
+      document.addEventListener('keydown', (e) => {
+        if (!document.body.classList.contains('lobby-open') || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName || '') || e.target?.isContentEditable) return;
+        if (typeof tutorialActive !== 'undefined' && tutorialActive) return;
+        if (typeof topBackLayer === 'function' && topBackLayer()) return;
+        if (/^[1-7]$/.test(e.key)) { turnTo(Number(e.key) - 1); e.preventDefault(); }
+        else if (box.contains(e.target) && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+          if (turnTo(focus + (e.key === 'ArrowLeft' ? -1 : 1))) cards[focus].focus({ preventScroll: true });
+          e.preventDefault();
+        }
+      });
+      // A mode switched from elsewhere (an invite link, Return To Ranked):
+      // turn to its card unless the middle card already belongs to it.
+      Object.keys(SWITCH).forEach((id) => {
         const el = document.getElementById(id);
-        if (el) new MutationObserver(() => syncModeCarousel(true)).observe(el, { attributes: true, attributeFilter: ['class'] });
+        if (el) new MutationObserver(() => {
+          if (el.classList.contains('hidden')) return;
+          if (PANEL[chosen] !== id) chosen = id === 'singleOptions' ? 'cpu' : id === 'multiOptions' ? 'friends' : 'ranked';
+          if (PANEL[cards[focus].dataset.mcMode] !== id) focus = indexOf(chosen);
+          paint();
+        }).observe(el, { attributes: true, attributeFilter: ['class'] });
       });
-      new MutationObserver(() => { if (document.body.classList.contains('lobby-open')) requestAnimationFrame(() => syncModeCarousel(false)); })
-        .observe(document.body, { attributes: true, attributeFilter: ['class'] });
-      requestAnimationFrame(() => syncModeCarousel(false));
+      window.addEventListener('resize', paint);
+      // Start on the last mode opened (Play Computer the first time). Play
+      // Friends / Ranked open their options too, when there's a signal.
+      paint();
+      requestAnimationFrame(() => {
+        if (PANEL[chosen] !== 'singleOptions' && shownPanel() === 'singleOptions' && !(typeof isOffline === 'function' && isOffline())) {
+          document.getElementById(SWITCH[PANEL[chosen]])?.click();
+        }
+        paint();
+      });
     })();
     function fitHomePanel() {
       const lobby = document.getElementById('lobbyScreen');

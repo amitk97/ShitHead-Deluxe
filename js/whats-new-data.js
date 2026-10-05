@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v318: [[ '🎡', 'The mode cards now turn in 3D: swipe, use the arrows or mouse wheel, or press 1-7. Tap the middle card to open it; your last mode comes back next time.', WN_KEY ]],
       v317: [[ '🃏', 'A new home screen: swipe through the game modes on one row of cards, with the tutorial at the bottom.', WN_KEY ]],
       v316: [[ '🏠', 'Tap the ShitHead logo during a game to head back to the home screen. It asks first, then skips the loading screen.' ]],
       v315: [[ '🧭', 'A new header: Shop, Custom, Guide and Settings sit along the top of the home screen and tuck into the menu during a game. Exit is always on the left.' ]],
