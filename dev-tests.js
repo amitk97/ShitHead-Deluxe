@@ -5696,7 +5696,9 @@ async function runDevTestSuite() {
     }
     const realUser = currentUser;
     currentUser = null; updateHamburgerAccountLabel(); refreshXpDisplays();
-    assertTrue(avatar.classList.contains('hidden') && level.classList.contains('hidden'), 'Signed out: just the name box');
+    assertTrue(!avatar.classList.contains('hidden') && !level.classList.contains('hidden'), 'Signed out: avatar and level remain visible');
+    assertTrue(avatar.classList.contains('guest-profile') && level.classList.contains('guest-profile'), 'Guest profile is subdued');
+    assertEqual(level.textContent, 'LVL 1', 'Guest starts at level 1');
     currentUser = realUser;
   });
   await test('Profile showcase: tapping an item opens Custom on its tab, scrolled to that item', async () => {
