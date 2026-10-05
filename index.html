@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v320 (ShitHead-Deluxe-245) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v321 (ShitHead-Deluxe-246) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -596,6 +596,16 @@
       cursor: pointer; transition: filter .16s, scale .16s; }
     .mp-go:hover { filter: brightness(1.1); } .mp-go:active { scale: .97; }
     .mp-go svg { width: 20px; height: 20px; }
+    /* § Card expand (v321): the cover that flips and grows from the middle card. */
+    .mc-expand { position: fixed; z-index: 199; box-sizing: border-box; pointer-events: none; overflow: hidden;
+      border-radius: 18px; border: 1.5px solid var(--mc-tone); color: #e2e8f0; will-change: transform, width, height, left, top;
+      background: color-mix(in srgb, var(--mc-tone) 13%, #0b1428); backface-visibility: hidden; }
+    .mc-expand-face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+    .mc-expand .mc-num { position: absolute; top: 8px; left: 10px; font-size: 11px; font-weight: 800; color: #64748b; }
+    .mc-expand .mc-ic { width: 40px; height: 40px; color: var(--mc-tone); }
+    .mc-expand .mc-name { font-size: 14px; font-weight: 900; } .mc-expand .mc-sub { font-size: 11px; font-weight: 600; color: #94a3b8; }
+    .mc-expand.mc-expand-back { background: #0f172a; border-color: color-mix(in srgb, var(--mc-tone) 40%, #1e293b); }
+    .mc-expand.mc-expand-back .mc-expand-face { display: none; }
     /* Exit / leave confirm (shConfirm): the game's own dialog, never confirm(). */
     #shConfirm { position: fixed; inset: 0; z-index: 350; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(2,6,23,.72); backdrop-filter: blur(3px); }
     #shConfirm.hidden { display: none; }
@@ -31986,7 +31996,7 @@ video {
       if (!document.body.classList.contains('lobby-open') && isShownOnScreen(document.getElementById('leaveGameBtn'))) return () => document.getElementById('leaveGameBtn').click();
       if (state.isMultiplayer && state.roomCode && state.isRanked) return () => {}; // a Ranked match is about to start
       if (state.isMultiplayer && state.roomCode && state.phase === 'LOBBY') return () => { if (confirm('Leave this room?')) leaveRoomAndReload(); };
-      if (document.body.classList.contains('lobby-open') && document.getElementById('lobbyScreen')?.classList.contains('mode-page-open')) return () => document.getElementById('modePageBack').click();
+      if (document.body.classList.contains('lobby-open') && (document.getElementById('lobbyScreen')?.classList.contains('mode-page-open') || window.modeExpandRunning?.())) return () => document.getElementById('modePageBack').click();
       return null;
     }
     const wantsBackGuard = () => !!topBackLayer() || !!screenBackAction();
@@ -32174,12 +32184,70 @@ video {
           if (document.getElementById(PANEL[m])?.classList.contains('hidden')) return; // offline: the switch said why
           chosen = m;
           try { localStorage.setItem(HOME_MODE_KEY, m); } catch (e) {}
-          setModePage(m);
           paint();
-        } else if (m === 'more') setModePage('more');
+          enterModePage(card, m);
+        } else if (m === 'more') enterModePage(card, 'more');
         else showInfoPop(card, '<b>Shortcut</b><br>Soon you can pin another mode here.', { toggle: true });
       }
-      document.getElementById('modePageBack').addEventListener('click', () => { setModePage(''); requestAnimationFrame(() => cards[focus].focus({ preventScroll: true })); });
+      // § Card expand (v321): the middle card flips (edge-on at the half-way
+      // point), grows to fill the screen as the page's background, the page
+      // is switched underneath once it covers the screen, then the cover fades.
+      // Reduce Motion / no Web Animations = a plain crossfade. A second tap,
+      // a resize, Back or the app going to the background mid-way finishes
+      // it at once (finishExpand), so nothing is left on screen.
+      const panel = lobby.querySelector(':scope > div');
+      let expand = null;
+      function crossfade() {
+        if (!panel.animate || (typeof motionOff === 'function' && motionOff())) return;
+        panel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' });
+      }
+      function finishExpand() {
+        if (!expand) return;
+        const { cover, anims, mode } = expand;
+        expand = null;
+        anims.forEach((a) => { try { a.cancel(); } catch (e) {} });
+        cover.remove();
+        if (lobby.dataset.modePage !== mode) setModePage(mode);
+      }
+      function enterModePage(card, mode) {
+        if (expand) return finishExpand();
+        const reduced = (typeof motionOff === 'function' && motionOff()) || matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduced || !card.animate) { setModePage(mode); crossfade(); return; }
+        const r = card.getBoundingClientRect();
+        const cover = document.createElement('div');
+        cover.className = 'mc-expand';
+        cover.style.setProperty('--mc-tone', card.style.getPropertyValue('--mc-tone'));
+        cover.innerHTML = '<div class="mc-expand-face">' + card.innerHTML + '</div>';
+        cover.querySelector('.mc-badge')?.remove();
+        document.body.appendChild(cover);
+        const W = innerWidth, H = innerHeight;
+        const at = (k) => ({ left: (r.left * (1 - k)) + 'px', top: (r.top * (1 - k)) + 'px', width: (r.width + (W - r.width) * k) + 'px', height: (r.height + (H - r.height) * k) + 'px' });
+        const half = { duration: 260, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' };
+        try { scheduleBackGuardSync(); } catch (e) {} // Back mid-way returns home, never leaves the site
+        const a1 = cover.animate([{ ...at(0), transform: 'perspective(900px) rotateY(0deg)' }, { ...at(.35), transform: 'perspective(900px) rotateY(90deg)' }], half);
+        expand = { cover, anims: [a1], mode };
+        a1.finished.then(() => {
+          if (!expand || expand.cover !== cover) return;
+          cover.classList.add('mc-expand-back');
+          const a2 = cover.animate([{ ...at(.35), transform: 'perspective(900px) rotateY(-90deg)', borderRadius: '18px' }, { ...at(1), transform: 'perspective(900px) rotateY(0deg)', borderRadius: '0px' }], { ...half, duration: 300, easing: 'cubic-bezier(.22,1,.36,1)' });
+          expand.anims.push(a2);
+          return a2.finished;
+        }).then(() => {
+          if (!expand || expand.cover !== cover) return;
+          setModePage(mode);
+          const a3 = cover.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease-out', fill: 'forwards' });
+          expand.anims.push(a3);
+          return a3.finished;
+        }).then(() => { if (expand && expand.cover === cover) finishExpand(); }).catch(() => {});
+      }
+      window.modeExpandRunning = () => !!expand;
+      ['resize', 'popstate', 'pagehide'].forEach((ev) => window.addEventListener(ev, finishExpand));
+      document.addEventListener('visibilitychange', () => { if (document.hidden) finishExpand(); });
+      document.getElementById('modePageBack').addEventListener('click', () => {
+        finishExpand();
+        setModePage(''); crossfade();
+        requestAnimationFrame(() => cards[focus].focus({ preventScroll: true }));
+      });
       document.getElementById('gauntletPageStart').addEventListener('click', () => document.getElementById('gauntletBtn')?.click());
       // Taps: a side card turns to the middle; the middle card opens.
       let swiped = false;

@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v321: [[ '🃏', 'Opening a mode flips its card over and spreads it across the screen into the mode page.' ]],
       v320: [[ '📄', 'Each mode now opens its own page with a Back button: Play Computer, Play Friends, Ranked, the Gauntlet, and a More Modes preview.', WN_KEY ]],
       v319: [[ '✨', 'The mode cards click into place with a soft card snap and a light buzz, and More Modes wears a glowing New tag.' ]],
       v318: [[ '🎡', 'The mode cards now turn in 3D: swipe, use the arrows or mouse wheel, or press 1-7. Tap the middle card to open it; your last mode comes back next time.', WN_KEY ]],
