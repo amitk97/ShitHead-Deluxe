@@ -142,6 +142,7 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
     .opp-hand-anchor { position:absolute; left:50%; top:-55px; width:min(calc(100% - 4px),154px); height:54px; transform:translateX(-50%); pointer-events:none; z-index:35; }
     .opp-hand-fan { position:absolute; inset:0; pointer-events:none; opacity:0; visibility:hidden; transform:translateY(5px) scale(.96); transform-origin:50% 100%; transition:opacity .15s ease,transform .18s cubic-bezier(.2,.85,.3,1),visibility 0s linear .18s; }
     .opp-seat.opp-hand-open .opp-hand-fan { opacity:1; visibility:visible; transform:translateY(0) scale(1); transition:opacity .15s ease,transform .18s cubic-bezier(.2,.85,.3,1); }
+    .opp-seat.opp-hand-restoring .opp-hand-fan { transition:none !important; }
     .opp-hand-fan-card { position:absolute; left:50%; bottom:0; width:var(--opp-fan-card-w,30px); height:var(--opp-fan-card-h,43px); border-radius:6px; overflow:hidden; transform-origin:50% 115%; transform:translateX(-50%) translateX(var(--fan-x,0px)) translateY(var(--fan-y,0px)) rotate(var(--fan-rotate,0deg)); z-index:var(--fan-z,1); box-shadow:0 3px 8px rgba(0,0,0,.55),0 0 0 1px rgba(148,163,184,.38),0 0 7px rgba(56,189,248,.22); }
     .opp-hand-fan-art { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; margin:0 !important; border-radius:inherit !important; transform:none !important; transform-origin:50% 50% !important; overflow:hidden; }
     .opp-hand-fan-art svg { width:70%; height:70%; max-width:70%; max-height:70%; }
@@ -275,11 +276,12 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
     });
   }
 
-  function openSeat(seat, pin = false) {
+  function openSeat(seat, pin = false, restoring = false) {
     const player = playerForSeat(seat);
     if (!player || player.hasFinished || !(player.hand?.length)) return;
     const id = String(player.id);
     closeAll(id);
+    if (restoring) seat.classList.add('opp-hand-restoring');
     renderFan(seat);
     seat.classList.add('opp-hand-open');
     const control = handControl(seat);
@@ -288,6 +290,7 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
       control.setAttribute('aria-label', `Hide ${player.name || 'opponent'}'s ${player.hand.length} cards in hand`);
     }
     if (pin) pinnedPlayerId = id;
+    if (restoring) requestAnimationFrame(() => requestAnimationFrame(() => seat.classList.remove('opp-hand-restoring')));
   }
 
   function syncSeats() {
@@ -299,7 +302,9 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
       pinnedPlayerId = null;
       return;
     }
-    openSeat(seat, true);
+    // Normal game renders rebuild the opponent row every turn. Restore an
+    // already-open hand instantly so it does not fade/flash on every render.
+    openSeat(seat, true, true);
   }
 
   // Clicking/tapping the existing hand-count badge toggles the fan.
