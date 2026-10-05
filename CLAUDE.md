@@ -1,5 +1,10 @@
 # ShitHead Deluxe
 
+## v329 — home refinements
+
+Home and mode panels sit higher with more vertical padding. Carousel arrows span the tutorial grid and are centred over the tutorial/video row. The video has an explicit fullscreen toggle (native, iOS video, viewport fallback). Each mode header uses the shared mode tooltip. Shortcut slots use Pin, then separate Info/Swap buttons while the selected modes remain coming soon. Gauntlet carousel/page labels reuse the owner/day/lives/round checks from the existing run cache. Hidden carousel paint calls preserve geometry; return routes reset input and repaint, with a ResizeObserver restoring spacing when visible.
+
+
 ## v328 — navigation and tutorial layout
 
 Native touchstart/move/end/cancel drive carousel swipes; desktop keeps mouse events and pen uses pointer events. Ignore emulated mouse input after touch. `.mc-card` is a keyboard-accessible container with a real `.mc-go` button: Go opens a mode page immediately; double-tapping the card also opens it. Single taps focus it. Pin redraws preserve their Go buttons.

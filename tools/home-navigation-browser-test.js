@@ -27,12 +27,60 @@ for(const width of [320,390,768,1440]) {
     const box=sel=>{const r=document.querySelector(sel).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width};};
     return {first:box('[data-mc-jump="first"]'),last:box('[data-mc-jump="last"]'),tutorial:box('#startTutorialBtn'),video:box('#homeTutorialVideo'),overflow:document.documentElement.scrollWidth>innerWidth};
   });
-  assert(Math.abs(layout.first.left-layout.tutorial.left)<1,'Tutorial left aligns');
-  assert(Math.abs(layout.last.right-layout.tutorial.right)<1,'Tutorial right aligns');
+  assert(Math.abs((layout.first.left+layout.last.right)/2-width/2)<1,'Arrows centred under carousel');
+  assert(layout.first.bottom <= layout.tutorial.top,'Arrows above tutorial row');
   assert(layout.video.left>layout.tutorial.right,'Video sits to the right');
   assert(!layout.overflow && layout.video.right<=width,'No horizontal overflow');
-  console.log('PASS tutorial arrow alignment / video column',width);
+  console.log('PASS centred arrows / video column',width);
 }
+// Returning from hidden mode pages must restore actual card spacing, not zero-width geometry.
+await page.setViewportSize({width:390,height:844});
+for (const mode of ['cpu','friends','ranked','gauntlet','more']) {
+  await page.evaluate(mode => setModePage(mode), mode);
+  await page.locator('#modePageInfo').click();
+  assert(await page.locator('#infoPop').isVisible());
+  assert((await page.locator('#infoPop').innerText()).length > 30);
+  await page.evaluate(() => { hideInfoPop(); window.dispatchEvent(new Event('resize')); });
+  await page.locator('#modePageBack').click();
+  await page.waitForTimeout(550);
+  const geometry = await page.evaluate(() => [...document.querySelectorAll('.mc-card:not(.mc-gone)')].map(c=>({x:parseFloat(c.style.getPropertyValue('--mc-x')),w:c.getBoundingClientRect().width})));
+  assert(geometry.length >= 3 && geometry.every(c=>c.w>0));
+  assert(new Set(geometry.map(c=>c.x)).size === geometry.length, 'Distinct restored card positions');
+}
+console.log('PASS all mode help and return geometry after hidden resize');
+await page.evaluate(() => {
+  currentUser=null;
+  gauntletStore.set(GAUNTLET_LAST_KEY,{owner:'device',day:localDateKey(),lives:2,round:1,mode:'easy'});
+  refreshGauntletLobbyBtn();
+});
+assert.equal(await page.locator('[data-mc-mode="gauntlet"] [data-mc-go]').innerText(),'Continue →');
+for (const patch of [{day:'2000-01-01'},{owner:'another-user'},{lives:0},{round:5}]) {
+  await page.evaluate(patch=>{gauntletStore.set(GAUNTLET_LAST_KEY,{owner:'device',day:localDateKey(),lives:2,round:1,mode:'easy',...patch});refreshGauntletLobbyBtn();},patch);
+  assert.equal(await page.locator('[data-mc-mode="gauntlet"] [data-mc-go]').innerText(),'Go →');
+}
+await page.evaluate(()=>{gauntletStore.set(GAUNTLET_LAST_KEY,null);refreshGauntletLobbyBtn();document.querySelector('[data-mc-jump="first"]').click();});
+await page.waitForTimeout(550);
+await page.locator('[data-mc-mode="pin1"] [data-mc-swap]').click();
+await page.locator('[data-mc-pin="twos"]').click();
+assert.equal(await page.locator('[data-mc-mode="pin1"] [data-mc-swap]').innerText(),'Swap');
+await page.locator('[data-mc-mode="pin1"] [data-mc-preview]').click();
+assert((await page.locator('#infoPop').innerText()).includes('Coming soon'));
+await page.evaluate(()=>hideInfoPop());
+await page.locator('[data-mc-mode="pin1"] [data-mc-swap]').click();
+await page.locator('[data-mc-pin="puzzles"]').click();
+assert.equal(await page.locator('[data-mc-mode="pin1"] .mc-name').innerText(),'Puzzles');
+console.log('PASS shortcut Pin / Info / Swap and daily Gauntlet states');
+await page.locator('#homeVideoExpand').click();
+await page.waitForFunction(()=>document.fullscreenElement || document.querySelector('.video-expanded'));
+await page.locator('#homeVideoExpand').click();
+await page.waitForFunction(()=>!document.fullscreenElement && !document.querySelector('.video-expanded'));
+await page.evaluate(()=>{document.getElementById('homeTutorialPlayer').requestFullscreen=()=>Promise.reject(new Error('unsupported'));});
+await page.locator('#homeVideoExpand').click();
+assert(await page.locator('#homeTutorialPlayer').evaluate(el=>el.classList.contains('video-expanded')));
+await page.keyboard.press('Escape');
+assert(!await page.locator('#homeTutorialPlayer').evaluate(el=>el.classList.contains('video-expanded')));
+console.log('PASS native fullscreen toggle and unsupported fallback');
+await page.screenshot({path:'/tmp/ui329-home.png'});
 await page.evaluate(()=>{document.getElementById('settingsModal').classList.remove('hidden');syncBackgroundScrollLock();});
 assert.equal(await page.locator('#navHomeLogoBtn').evaluate(el=>getComputedStyle(el).transitionDuration),'0s');
 await page.evaluate(()=>resetHomeUI());

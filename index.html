@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v328 (ShitHead-Deluxe-251) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v329 (ShitHead-Deluxe-251) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -583,12 +583,23 @@
     .mc-pin-list button:hover, .mc-pin-list button[aria-pressed="true"] { border-color: #fbbf24; }
     .mc-pin-list svg { width: 18px; height: 18px; flex: none; color: #94a3b8; }
     body.reduce-motion .mc-card { transition: none; }
-    #homeTutorialRow { display:grid; grid-template-columns:max-content minmax(80px, 144px); grid-template-rows:auto auto; justify-content:center; align-items:stretch; gap:8px 10px; margin:4px 16px 0; }
-    #homeTutorialRow .mc-controls { grid-column:1; grid-row:1; margin:0; justify-content:space-between; }
+    #homeTutorialRow { display:grid; grid-template-columns:minmax(0, 170px) minmax(0, 144px); grid-template-rows:auto auto; justify-content:center; align-items:stretch; gap:8px 10px; margin:4px 16px 0; }
+    #homeTutorialRow .mc-controls { grid-column:1 / -1; grid-row:1; margin:0 0 8px; justify-content:center; }
     #homeTutorialRow #startTutorialBtn { grid-column:1; grid-row:2; width:100%; min-width:0; margin:0; padding:8px 6px; letter-spacing:.02em; font-size:11px; line-height:1.3; gap:5px; min-height:48px; }
     #startTutorialLabel { max-width:132px; white-space:normal; }
     #homeTutorialRow #startTutorialBtn svg { flex:none; width:18px !important; height:18px !important; }
-    #homeTutorialVideo { grid-column:2; grid-row:1 / 3; display:block; width:100%; height:100%; min-height:88px; max-height:120px; min-width:0; object-fit:contain; background:#020617; border:1px solid #66522c; border-radius:12px; box-shadow:0 6px 16px rgba(0,0,0,.25); }
+    #homeTutorialVideo { display:block; width:100%; height:100%; min-height:88px; max-height:120px; min-width:0; object-fit:contain; background:#020617; border:1px solid #66522c; border-radius:12px; box-shadow:0 6px 16px rgba(0,0,0,.25); }
+    #homeTutorialPlayer { grid-column:2; grid-row:2; position:relative; min-width:0; }
+    #homeVideoExpand { position:absolute; top:5px; right:5px; width:32px; height:32px; border:1px solid #64748b; border-radius:8px; background:#0b1428e8; color:#fff; display:grid; place-items:center; }
+    #homeVideoExpand svg { width:19px; height:19px; }
+    #homeTutorialPlayer:fullscreen, #homeTutorialPlayer.video-expanded { background:#020617; display:grid; place-items:center; }
+    #homeTutorialPlayer.video-expanded { position:fixed; inset:0; z-index:10002; }
+    #homeTutorialPlayer:fullscreen #homeTutorialVideo, #homeTutorialPlayer.video-expanded #homeTutorialVideo { width:100%; height:100%; max-height:100%; border:0; border-radius:0; }
+    #homeTutorialPlayer:fullscreen #homeVideoExpand, #homeTutorialPlayer.video-expanded #homeVideoExpand { top:16px; right:16px; width:44px; height:44px; }
+    #modePageInfo { margin-left:auto; align-self:flex-start; flex:none; width:30px; height:30px; border:1px solid #64748b; border-radius:50%; color:#cbd5e1; background:#0b1428; font:bold 17px Georgia,serif; }
+    .mc-actions { display:flex; gap:5px; margin-top:auto; align-items:center; justify-content:center; }
+    .mc-actions .mc-go { padding:5px 9px; margin-top:0; }
+    .mc-swap { border-style:dashed; background:#0b1428; color:#cbd5e1; }
     @media (max-width:420px) {
       #homeTutorialRow { column-gap:8px; }
       #homeTutorialRow .mc-controls { gap:6px; }
@@ -727,7 +738,9 @@
     /* A tall home screen (e.g. Play Friends with a room open) must scroll
        from its top: flex centring pushed the top out of reach. */
     #lobbyScreen { align-items:flex-start !important; }
-    #lobbyScreen > :not(script) { margin-top:auto; margin-bottom:auto; }
+    #lobbyScreen > :not(script) { margin-top:clamp(12px, 5vh, 48px); margin-bottom:auto; }
+    #lobbyScreen > .bg-slate-900 { padding-top:24px; padding-bottom:24px; }
+    #lobbyScreen .brand-subtitle { margin-bottom:12px; }
     /* Mode ⓘ (v256): top-right of each mode button; opens the shared info bubble. */
     .mode-btn { position:relative; }
     #modeSingleBtn > .mode-tip, #modeMultiBtn > .mode-tip, #modeRankedBtn > .mode-tip { position:absolute; top:4px; right:4px; left:auto; width:16px; height:16px; border-radius:50%; border:1.2px solid currentColor; opacity:.7;
@@ -5792,6 +5805,7 @@ video {
           <button type="button" id="modePageBack" aria-label="Back to the modes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
           <span id="modePageIcon" aria-hidden="true"></span>
           <span class="mph-text"><span id="modePageTitle"></span><span id="modePageSub"></span></span>
+          <button type="button" id="modePageInfo" data-mode-tip="bots" aria-label="About this game mode">i</button>
         </div>
         <div id="homeNameBlock">
           <div class="home-name-row">
@@ -5825,10 +5839,10 @@ video {
             <button type="button" class="mc-arrow" data-mc-jump="last" aria-label="Last mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l6 6-6 6M12 6l6 6-6 6"/></svg></button>
           </div>
           <button id="startTutorialBtn" class="w-full py-2 bg-slate-800/80 hover:bg-slate-700 border border-slate-600 font-black rounded-xl transition tracking-wider text-slate-300 text-xs active:scale-95 cursor-pointer flex items-center justify-center gap-2"><svg class="pack-icon" style="width:22px;height:22px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-tutorial"/></svg><span id="startTutorialLabel">Tutorial</span></button>
-            <video id="homeTutorialVideo" controls playsinline preload="none" poster="media/tutorial-reference-poster.jpg" aria-label="Video tutorial">
+            <div id="homeTutorialPlayer"><video id="homeTutorialVideo" controls playsinline preload="none" poster="media/tutorial-reference-poster.jpg" aria-label="Video tutorial">
               <source src="media/tutorial-reference.mp4" type="video/mp4">
               Your browser does not support embedded video.
-            </video>
+            </video><button type="button" id="homeVideoExpand" aria-label="Expand tutorial video" title="Expand video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div>
           </div>
         </div>
         <div id="homeModeGrid" class="grid grid-cols-3 gap-2">
@@ -14162,7 +14176,11 @@ video {
       const label = document.querySelector('#gauntletBtn span');
       if (!label) return;
       const last = gauntletStore.get(GAUNTLET_LAST_KEY);
-      const mine = last && last.owner === (gauntletUsesServer() ? currentUser.uid : 'device') && last.day === localDateKey();
+      const mine = last && last.owner === (gauntletUsesServer() ? currentUser.uid : 'device') && last.day === localDateKey() && last.lives > 0 && last.round < gauntletRounds(gauntletModeOf(last)).length;
+      const action = document.querySelector('[data-mc-mode="gauntlet"] [data-mc-go]');
+      if (action) action.textContent = mine ? 'Continue →' : 'Go →';
+      const pageAction = document.getElementById('gauntletPageStart');
+      if (pageAction) pageAction.textContent = mine ? 'Continue The Gauntlet →' : 'Open The Gauntlet →';
       const lastMode = gauntletModeOf(last);
       label.textContent = mine ? `${lastMode === 'easy' ? 'CONTINUE' : gauntletMode(lastMode).name.toUpperCase()} ${last.round + 1}/${gauntletRounds(lastMode).length}` : 'GAUNTLET';
     }
@@ -16805,11 +16823,34 @@ video {
       });
     })();
 
+    (() => {
+      const player = document.getElementById('homeTutorialPlayer');
+      const video = document.getElementById('homeTutorialVideo');
+      const button = document.getElementById('homeVideoExpand');
+      const expanded = () => document.fullscreenElement === player || player.classList.contains('video-expanded');
+      const sync = () => { button.setAttribute('aria-label', expanded() ? 'Minimize tutorial video' : 'Expand tutorial video'); button.title = expanded() ? 'Minimize video' : 'Expand video'; };
+      const close = () => { player.classList.remove('video-expanded'); if (document.fullscreenElement === player) document.exitFullscreen().catch(() => {}); sync(); };
+      button.addEventListener('click', async () => {
+        if (expanded()) { close(); return; }
+        try {
+          if (player.requestFullscreen) await player.requestFullscreen();
+          else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+          else player.classList.add('video-expanded');
+        } catch (_) { player.classList.add('video-expanded'); }
+        sync();
+      });
+      document.addEventListener('fullscreenchange', sync);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && expanded()) { e.preventDefault(); close(); } }, true);
+      window.closeHomeVideoFullscreen = close;
+    })();
+
     // Home mode ⓘ (v256, owner): what each mode is, in the shared info bubble
     // (tap to toggle, hover on PC); the tap never switches mode.
     const MODE_TIPS = {
-      bots: '<p><b>Vs Bots</b></p><p>Play against 1 to 3 computer players at the difficulty you pick. Wins unlock harder bots, and the Gauntlet lives here too.</p>',
+      bots: '<p><b>Vs Bots</b></p><p>Play against 1 to 3 computer players at the difficulty you pick. Wins unlock harder bots. Choose the speed and difficulty before starting.</p>',
       online: '<p><b>Play Friends</b></p><p>Host a private table and share the code or link, or join a friend\'s table. Up to 4 players; empty seats can be bots.</p>',
+      gauntlet: '<p><b>Gauntlet</b></p><p>Beat successive bots with limited lives. Easy and Hard have 5 rounds; Boss has 3. Continue an unfinished run on the same UK day. Signed-in players can earn rewards.</p>',
+      more: '<p><b>More Modes</b></p><p>Preview upcoming modes. Pin one to a Shortcut card, then use Swap to change your choice. These modes are not playable yet.</p>',
       ranked: '<p><b>Ranked</b></p><p>One-on-one against a real player near your level. Win to raise your rating and climb the tiers and the leaderboard.</p>'
     };
     (function wireModeTips() {
@@ -32250,7 +32291,9 @@ video {
       let focus = indexOf(chosen);
       const shownPanel = () => Object.keys(SWITCH).find((id) => !document.getElementById(id)?.classList.contains('hidden')) || 'singleOptions';
       function paint() {
-        const step = cards[0].offsetWidth * .86;
+        const width = cards[0].offsetWidth;
+        if (!width) return; // Hidden mode pages must never overwrite the last visible geometry.
+        const step = width * .86;
         cards.forEach((c, i) => {
           const d = i - focus, a = Math.abs(d);
           c.style.setProperty('--mc-x', (Math.sign(d) * (a === 0 ? 0 : a === 1 ? step : step * (1 + (a - 1) * .7))).toFixed(1) + 'px');
@@ -32263,8 +32306,7 @@ video {
           c.classList.toggle('mc-focus', a === 0);
           c.classList.toggle('mc-gone', a > 2);
           c.tabIndex = a === 0 ? 0 : -1;
-          const go = c.querySelector('[data-mc-go]');
-          if (go) go.tabIndex = a > 2 ? -1 : 0;
+          c.querySelectorAll('button').forEach(button => { button.tabIndex = a > 2 ? -1 : 0; });
           const lit = PANEL[c.dataset.mcMode] === shownPanel() && (c.dataset.mcMode === chosen || PANEL[chosen] !== shownPanel());
           c.setAttribute('aria-pressed', lit ? 'true' : 'false');
         });
@@ -32282,10 +32324,14 @@ video {
       // § Mode pages (v320): '' = home (the carousel), else that mode's page.
       const lobby = document.getElementById('lobbyScreen');
       function setModePage(m) {
-        if (m) document.getElementById('homeTutorialVideo')?.pause();
+        if (m) { document.getElementById('homeTutorialVideo')?.pause(); window.closeHomeVideoFullscreen?.(); }
         const card = m && cards[indexOf(m)];
         document.body.classList.toggle('mode-page', !!card);
-        if (!m || !card) { delete lobby.dataset.modePage; lobby.classList.remove('mode-page-open'); return; }
+        if (!m || !card) { delete lobby.dataset.modePage; lobby.classList.remove('mode-page-open'); hideInfoPop(); paint(); requestAnimationFrame(paint); refreshGauntletLobbyBtn(); return; }
+        hideInfoPop();
+        const help = document.getElementById('modePageInfo');
+        help.dataset.modeTip = ({cpu:'bots',friends:'online'})[m] || m;
+        help.setAttribute('aria-label', 'About ' + card.querySelector('.mc-name').textContent);
         lobby.dataset.modePage = m;
         lobby.classList.add('mode-page-open');
         document.getElementById('modePageIcon').innerHTML = card.querySelector('.mc-ic').outerHTML;
@@ -32327,7 +32373,7 @@ video {
         cards.filter((c) => /^pin/.test(c.dataset.mcMode)).forEach((c) => {
           const m = PIN_MODES[pins[c.dataset.mcMode]];
           const num = '<span class="mc-num" aria-hidden="true">' + c.dataset.mc + '</span>';
-          c.innerHTML = num + (m ? pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Pinned · Soon</span><button type="button" class="mc-go" data-mc-go>Go →</button>' : emptyPinHtml);
+          c.innerHTML = num + (m ? pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Coming soon</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-preview>Info</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>' : emptyPinHtml.replace(/data-mc-go(?:="")?>Go →/, 'data-mc-swap>Pin +'));
           c.classList.toggle('mc-pinned', !!m);
         });
       }
@@ -32409,7 +32455,7 @@ video {
       document.addEventListener('visibilitychange', () => { if (document.hidden) finishExpand(); });
       document.getElementById('modePageBack').addEventListener('click', () => {
         finishExpand();
-        setModePage(''); crossfade();
+        window.resetModeCarousel(); crossfade();
         requestAnimationFrame(() => cards[focus].focus({ preventScroll: true }));
       });
       document.getElementById('gauntletPageStart').addEventListener('click', () => document.getElementById('gauntletBtn')?.click());
@@ -32418,6 +32464,8 @@ video {
         const card = e.target.closest('.mc-card');
         if (!card) return;
         if (swiped && (e.detail !== 0 || e.sourceCapabilities?.firesTouchEvents)) { e.preventDefault(); e.stopPropagation(); return; }
+        if (e.target.closest('[data-mc-swap]')) { lastTap = null; turnTo(cards.indexOf(card)); openPinPicker(card); return; }
+        if (e.target.closest('[data-mc-preview]')) { showInfoPop(card, '<b>' + card.querySelector('.mc-name').textContent + '</b><p>Coming soon. Use Swap to choose another shortcut.</p>', {toggle:true}); return; }
         const i = cards.indexOf(card), now = performance.now();
         const direct = !!e.target.closest('[data-mc-go]');
         const doubleTap = lastTap?.card === card && now - lastTap.at < 400;
@@ -32427,7 +32475,7 @@ video {
       });
       track.addEventListener('keydown', (e) => {
         const card = e.target.closest('.mc-card');
-        if (!card || e.target.closest('[data-mc-go]') || !['Enter', ' '].includes(e.key)) return;
+        if (!card || e.target.closest('button') || !['Enter', ' '].includes(e.key)) return;
         e.preventDefault(); turnTo(cards.indexOf(card)); open(card, { immediate: true });
       });
       const arrowGo = (b) => turnTo(b.dataset.mcJump ? (b.dataset.mcJump === 'first' ? 0 : cards.length - 1) : focus + Number(b.dataset.mcStep));
@@ -32583,6 +32631,7 @@ video {
         modePanelObservers.push(observer);
       });
       window.addEventListener('resize', paint);
+      new ResizeObserver(() => { if (track.offsetWidth) paint(); }).observe(track);
       // Start on the home screen, centred on the last mode opened (Play
       // Computer the first time), unless start-up already opened Play
       // Friends or Ranked (Return To Ranked).

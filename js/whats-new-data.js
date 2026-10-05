@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v329: [[ '🃏', 'More room on Home, centred carousel arrows, fullscreen tutorial video, mode help and clearer Shortcut controls. Active Gauntlets show Continue, and cards stay visible when returning Home.' ]],
       v328: [[ '🃏', 'Swipe on mobile, tap Go to open a mode, and double-tap a card to enter. The logo clears open panels, guest badges match signed-in levels, and the home tutorial has a compact video layout.' ]],
       v327: [[ '🃏', 'Drag one mode at a time, or keep holding to browse. Guest profiles now show an avatar and Level 1, with softer card shadows.' ]],
       v326: [[ '🃏', 'The card that flips open into a mode page now matches the new card look.' ]],
