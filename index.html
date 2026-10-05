@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v315 (ShitHead-Deluxe-240) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v316 (ShitHead-Deluxe-241) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -149,6 +149,9 @@
         }));
       };
       if (/[?&]dev-tests=1/.test(location.search)) { gone = true; el.remove(); return; }
+      try { // an in-game reload back to home (reloadCleanly): no splash
+        if (sessionStorage.getItem('shithead_skip_splash')) { sessionStorage.removeItem('shithead_skip_splash'); gone = true; el.remove(); return; }
+      } catch (e) {}
       try {
         if (/Android/i.test(navigator.userAgent) && matchMedia('(display-mode: standalone)').matches
           && !matchMedia('(prefers-reduced-motion: reduce)').matches) el.classList.add('boot-from-app');
@@ -510,7 +513,7 @@
       :is(#leaveGameBtn, #headerShopBtn, #headerCustomBtn, #headerProfileBtn, #headerInboxBtn, #headerGuideBtn, #headerSettingsBtn, #hamburgerBtn) svg { width: 24px !important; height: 24px !important; }
     }
     /* Exit / leave confirm (shConfirm): the game's own dialog, never confirm(). */
-    #shConfirm { position: fixed; inset: 0; z-index: 330; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(2,6,23,.72); backdrop-filter: blur(3px); }
+    #shConfirm { position: fixed; inset: 0; z-index: 350; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(2,6,23,.72); backdrop-filter: blur(3px); }
     #shConfirm.hidden { display: none; }
     #shConfirm .shc-card { width: min(340px, 100%); background: linear-gradient(180deg, #0f172a, #020617); border: 1px solid rgba(245,158,11,.45); border-radius: 18px; padding: 20px 18px 16px; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.04); animation: shcIn .32s var(--ease-bouncy); }
     #shConfirm .shc-icon { width: 44px; height: 44px; margin: 0 auto 8px; display: block; }
@@ -5523,7 +5526,7 @@ video {
     
     <!-- Centered Logo (folds away on the home screen, which has its own) -->
     <div id="headerLogoWrap" class="shrink-0 flex flex-col items-center justify-center px-2">
-      <button id="navHomeLogoBtn" class="flex items-center gap-1 group transition transform hover:scale-105 focus:outline-none tip-below" data-tip="Main Lobby" aria-label="Return to Main Lobby">
+      <button id="navHomeLogoBtn" class="flex items-center gap-1 group transition transform hover:scale-105 focus:outline-none tip-below" data-tip="Home" aria-label="Back to the home screen">
         <span class="brand-logo-rendered text-2xl tracking-wide leading-none">ShitHead</span>
       </button>
 
@@ -16606,12 +16609,10 @@ video {
       });
     })();
 
+    // The header logo (shown away from home, v316): the same game-styled
+    // question as Exit, then straight back to the home screen (no splash).
     function returnToHomeScreen() {
-      if (confirm("Return to Main Menu?")) {
-        forgetJoinedRoom();
-        localStorage.removeItem('shithead_game_state');
-        leaveMultiplayerRoom().then(reloadCleanly);
-      }
+      if (!document.body.classList.contains('lobby-open')) document.getElementById('leaveGameBtn').click();
     }
 
     /* FIREBASE REALTIME STATE SYNC */
@@ -32193,6 +32194,8 @@ video {
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForNewVersion(); });
     window.addEventListener('online', () => checkForNewVersion());
     function reloadCleanly() {
+      // Back to the home screen at once: the boot splash is for cold starts only.
+      try { sessionStorage.setItem('shithead_skip_splash', '1'); } catch (e) {}
       if (!hasBackGuard()) { location.reload(); return; }
       ignoreNextPopstate = true;
       window.addEventListener('popstate', () => location.reload(), { once: true });
