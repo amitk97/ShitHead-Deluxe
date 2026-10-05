@@ -145,7 +145,6 @@ const AVATAR_TONES = {
         gap:2px !important;
       }
       body.home-shell-active .home-header-left { justify-content:flex-start !important; }
-      body.home-shell-active .home-header-right { justify-content:flex-end !important; }
 
       /* In a hosted Friends room the six-digit room code takes the count's place,
          while the Diamond icon itself remains in exactly the same header position. */
@@ -261,6 +260,10 @@ const AVATAR_TONES = {
     const menu = document.getElementById('hamburgerBtn');
     if (!header || !lobby || !leaveBtn || !diamonds || !inbox || !menu) return;
 
+    // Keep the shared header visible above full-screen pages/panels. Only the
+    // dedicated confirmation scrim sits above it.
+    header.style.zIndex = '110';
+
     // The Diamond pill is the Shop entry point, so the separate cart button is
     // redundant in the tighter header. The Diamond icon itself never disappears.
     shop?.classList.remove('home-only-header');
@@ -291,7 +294,7 @@ const AVATAR_TONES = {
       #headerDiamondBtn { display:flex !important; flex:0 0 auto; }
       body.header-room-code-active #headerDiamondCount { display:none !important; }
 
-      #headerExitConfirm { position:fixed; inset:0; z-index:120; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(2,6,23,.86); backdrop-filter:blur(8px); }
+      #headerExitConfirm { position:fixed; inset:0; z-index:140; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(2,6,23,.86); backdrop-filter:blur(8px); }
       #headerExitConfirm.hidden { display:none !important; }
       #headerExitConfirm .hex-card { width:min(340px,calc(100vw - 32px)); border:2px solid #f59e0b; border-radius:18px; background:#020617; box-shadow:0 22px 60px rgba(0,0,0,.65); padding:18px; text-align:center; }
       #headerExitConfirm .hex-icon { width:42px; height:42px; margin:0 auto 10px; }
