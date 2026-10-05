@@ -1,5 +1,5 @@
 // Retakes the README screenshots (docs/screenshots/*.png) from the real game
-// at 390x844 @2x. Run for every README refresh (every 15 versions from v150):
+// at 390x844 @2x. Run for every README refresh (every 20 versions from v180):
 //   NODE_PATH=$(npm root -g) SH_VIDEO_DEPS=/path/with/node_modules node tools/readme-screenshots.js
 // SH_VIDEO_DEPS needs firebase@10.12.0 + canvas-confetti@1.6.0 installed (same as tools/video).
 const { chromium } = require('playwright');
@@ -32,13 +32,15 @@ const S = process.env.SH_VIDEO_DEPS || ROOT, file = path.join(ROOT, 'index.html'
   const OUT = path.join(ROOT, 'docs/screenshots');
   const snap = (n) => page.screenshot({ path: path.join(OUT, n + '.png') });
   await page.goto('https://game.local/index.html');
-  await page.evaluate(() => { localStorage.setItem('shithead_whats_new', '0'); localStorage.setItem('shithead_seen_version', 'x'); localStorage.setItem('shithead_tutorial_progress', JSON.stringify({ quick_start: true })); localStorage.setItem('shithead_player_name', 'Amit'); });
+  await page.evaluate(() => { localStorage.setItem('shithead_whats_new', '0'); localStorage.setItem('shithead_seen_version', 'x'); localStorage.setItem('shithead_tutorial_progress', JSON.stringify({ quick_start: true })); localStorage.setItem('shithead_player_name', 'Amit'); localStorage.setItem('shithead_helper_tips', '0'); });
   await page.goto('https://game.local/index.html');
   await page.waitForTimeout(2500);
   await page.fill('#playerNameInput', 'Amit');
-  await page.evaluate(() => { document.querySelector('.bot-count-btn[data-bots="2"]').click(); });
   await page.waitForTimeout(400);
-  await snap('home');
+  await snap('home'); // the mode carousel (v317+)
+  await page.locator('.mc-card[data-mc-mode="cpu"]').click(); // open Play Computer's page
+  await page.waitForTimeout(1400);
+  await page.evaluate(() => { document.querySelector('.bot-count-btn[data-bots="2"]').click(); });
   await page.click('#startSingleBtn');
   await page.waitForFunction(() => state.phase === 'SWAP', null, { timeout: 15000 });
   await page.waitForTimeout(3500);
@@ -46,7 +48,9 @@ const S = process.env.SH_VIDEO_DEPS || ROOT, file = path.join(ROOT, 'index.html'
   await page.click('#finishSwapBtn');
   await page.waitForTimeout(1500);
   // let the table play out a little: play the lowest legal card a few times
+  const skipBonus = () => page.evaluate(() => { const b = document.getElementById('followUpSkipBtn'); if (b && b.offsetParent) b.click(); });
   for (let i = 0; i < 6; i++) {
+    await skipBonus();
     await page.waitForFunction(() => state.players[state.currentTurnIndex]?.id === state.localPlayerId || state.phase !== 'PLAY', null, { timeout: 20000 }).catch(() => {});
     if (await page.evaluate(() => state.phase !== 'PLAY')) break;
     const played = await page.evaluate(() => {
@@ -62,7 +66,9 @@ const S = process.env.SH_VIDEO_DEPS || ROOT, file = path.join(ROOT, 'index.html'
     await page.waitForTimeout(2200);
   }
   await page.waitForFunction(() => state.players[state.currentTurnIndex]?.id === state.localPlayerId, null, { timeout: 20000 }).catch(() => {});
+  await skipBonus();
   await page.waitForTimeout(1200);
+  await skipBonus();
   await snap('table');
   await page.click('#cardRefBtn');
   await page.waitForTimeout(900);
