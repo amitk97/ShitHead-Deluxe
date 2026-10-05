@@ -6,8 +6,9 @@ Owner's backlog. Don't build an item until the owner asks for it.
 
 - [ ] Update the Tutorial, its step-by-step logic and the Guide's Key Terms so they match the new header and home screen:
   - the header: Exit on the far left, Shop / Custom / Guide / Settings on Home folding into the menu during a game, and the logo asking before it goes home;
-  - the mode carousel (swipe, arrows, mouse wheel, keys 1-7; tap a side card to bring it to the middle, tap the middle card to open it);
+  - the mode carousel (drag or flick, ‹ › held to repeat, « » to the ends, mouse wheel, ←/→ and keys 1-7; tap a side card to bring it to the middle, tap the middle card to open it; Shortcut pins);
   - the mode pages (Play Computer, Play Friends, Ranked, Gauntlet, More Modes) and their Back button.
+- [ ] Add a dedicated "Game Modes" section to the Guide, with its own subsection for each game mode (Play Computer, Gauntlet, Play Friends, Ranked, Best Of Series, and each coming mode as it launches).
 - [ ] Add Key Terms for the carousel and mode pages if lessons or challenges link to them.
 - [ ] Check every lesson step that points at a header or menu button (spotlight selectors, `tapCheck`, caption text).
 - [ ] Rename "Vs Bots" to "Play Computer" everywhere: home, Guide, lessons, Match History and helper tips.
@@ -22,7 +23,8 @@ Owner's backlog. Don't build an item until the owner asks for it.
 
 ## Home carousel follow-ups
 
-- [ ] Shortcut slots 1 and 7: let a player pin an extra mode there (say what they pin and where it's saved; today they only explain themselves).
+- [x] Shortcut slots 1 and 7: pin a coming mode there (v323, placeholder; saved on the device in `shithead_home_pins`). When a mode launches, a pinned card should open it, and the pins could sync to the account.
+- [ ] Long-press on carousel items to reorder them (cards should visually "bounce" when picked up).
 - [ ] Move the Play Computer options' old Gauntlet row out of the code once nothing uses it (it's hidden since v320).
 - [ ] The video box from the owner's wireframe beside the Tutorial button, once a how-to-play video is hosted with the game.
 
