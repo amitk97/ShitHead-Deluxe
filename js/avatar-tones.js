@@ -87,7 +87,6 @@ const AVATAR_TONES = {
         btn.addEventListener('click', () => document.getElementById(targetId)?.click());
       }
       btn.classList.toggle('header-home-only', visibility === 'home');
-      btn.classList.toggle('header-away-only', visibility === 'away');
       btn.classList.toggle('header-persistent', visibility === 'always');
       return btn;
     };
@@ -105,9 +104,9 @@ const AVATAR_TONES = {
     inbox.classList.add('header-persistent');
 
     // Exact owner order.
-    // Home: Exit · Shop · Diamonds/room · Custom · Profile · Mailbox ·
+    // Home: Exit · Shop · Diamonds/value-or-room · Custom · Profile · Mailbox ·
     // Challenges · Guide · Settings · Menu
-    // Away: Exit · Diamonds/room · SH · Custom · Profile · Mailbox · Settings · Menu
+    // Away: Exit · Diamonds/value-or-room · SH · Custom · Profile · Mailbox · Settings · Menu
     left.insertBefore(leaveBtn, left.firstChild);
     left.insertBefore(shop, diamonds);
     if (roomCode && roomCode.parentElement === left) left.insertBefore(diamonds, roomCode);
@@ -142,14 +141,13 @@ const AVATAR_TONES = {
         flex-wrap:nowrap !important;
         gap:var(--header-gap) !important;
       }
-      .home-header-left { flex:0 0 auto !important; }
+      .home-header-left,
       .home-header-right { flex:0 0 auto !important; }
 
       /* Persistent controls never shrink into or under their neighbours. This is
          especially important for Exit, which must remain a clean standalone hit target. */
       .header-persistent,
       #leaveGameBtn,
-      #headerDiamondBtn,
       #headerProfileBtn,
       #headerInboxBtn,
       #homeHeaderCustomBtn,
@@ -168,7 +166,7 @@ const AVATAR_TONES = {
         z-index:3;
         overflow:visible !important;
       }
-      #headerDiamondBtn { display:flex !important; flex:0 0 auto !important; }
+      #headerDiamondBtn { display:flex !important; flex:0 0 auto !important; min-width:0 !important; }
       body.header-room-code-active #headerDiamondCount { display:none !important; }
 
       .home-header-logo {
@@ -228,10 +226,7 @@ const AVATAR_TONES = {
         transform:translateX(10px) scale(.88);
       }
 
-      /* Home hides the centre SH mark and uses the freed width. */
       body.home-shell-active > header { justify-content:center !important; }
-      body.home-shell-active .home-header-left,
-      body.home-shell-active .home-header-right { flex:0 0 auto !important; }
 
       /* Smallest-screen fallback: preserve every hit target and move only Shop +
          Guide into the already-present hamburger menu. */
@@ -317,36 +312,36 @@ const AVATAR_TONES = {
     function elementOuterWidth(el) {
       if (!el) return 0;
       const cs = getComputedStyle(el);
-      if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0 && el.getBoundingClientRect().width < 0.5) return 0;
-      const r = el.getBoundingClientRect();
-      return Math.max(0, r.width);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return 0;
+      return Math.max(0, el.getBoundingClientRect().width);
+    }
+
+    function applyGapForCurrentLayout(edge, maxGap, onHome) {
+      const visibleControls = [...left.children, ...right.children].filter(el => elementOuterWidth(el) > .5);
+      const logoWidth = onHome ? 0 : elementOuterWidth(logo);
+      const available = Math.max(0, header.clientWidth - edge * 2);
+      const fixed = visibleControls.reduce((sum, el) => sum + elementOuterWidth(el), 0) + logoWidth;
+      const gapSlots = Math.max(0, visibleControls.length + (onHome ? -1 : 0));
+      const free = Math.max(0, available - fixed);
+      const gap = gapSlots ? Math.max(0, Math.min(maxGap, free / gapSlots)) : 0;
+      header.style.setProperty('--header-gap', `${gap.toFixed(2)}px`);
+      return { fixed, available };
     }
 
     function fitHeaderSpacing() {
       const onHome = document.body.classList.contains('home-shell-active');
       const edge = window.innerWidth >= 768 ? 8 : 3;
       const maxGap = window.innerWidth >= 768 ? 9 : 5;
-      document.body.classList.remove('header-tiny-home');
       header.style.setProperty('--header-edge', `${edge}px`);
       header.style.setProperty('--header-gap', '0px');
+      document.body.classList.remove('header-tiny-home');
 
       requestAnimationFrame(() => {
-        const allVisible = [...left.children, ...right.children].filter(el => elementOuterWidth(el) > .5);
-        const logoWidth = onHome ? 0 : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sh-logo-size')) || 32;
-        const available = Math.max(0, header.clientWidth - edge * 2);
-        let fixed = allVisible.reduce((sum, el) => sum + elementOuterWidth(el), 0) + logoWidth;
-        let gapSlots = Math.max(0, allVisible.length + (onHome ? -1 : 0));
-
-        if (onHome && fixed > available) {
+        const full = applyGapForCurrentLayout(edge, maxGap, onHome);
+        if (onHome && full.fixed > full.available) {
           document.body.classList.add('header-tiny-home');
-          // Measure again after Shop + Guide have collapsed.
-          requestAnimationFrame(() => fitHeaderSpacing());
-          return;
+          requestAnimationFrame(() => applyGapForCurrentLayout(edge, maxGap, true));
         }
-
-        const free = Math.max(0, available - fixed);
-        const gap = gapSlots ? Math.max(0, Math.min(maxGap, free / gapSlots)) : 0;
-        header.style.setProperty('--header-gap', `${gap.toFixed(2)}px`);
       });
     }
 
@@ -375,8 +370,8 @@ const AVATAR_TONES = {
     window.addEventListener('resize', () => requestAnimationFrame(fitHeaderSpacing));
     if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(fitHeaderSpacing)).observe(header);
 
-    // Keep Exit visible on Home, pages and matches. Older code still toggles the
-    // hidden class on it, so immediately undo that without altering its click logic.
+    // Keep Exit visible on Home, pages and matches. Older game paths still toggle
+    // .hidden on it, so undo only that visibility change, not its existing leave logic.
     new MutationObserver(() => {
       if (leaveBtn.classList.contains('hidden')) leaveBtn.classList.remove('hidden');
     }).observe(leaveBtn, { attributes:true, attributeFilter:['class'] });
@@ -507,12 +502,13 @@ const AVATAR_TONES = {
       }
     }, true);
 
-    // Swap only the two top hamburger quick buttons the owner asked to reverse.
-    // This is intentionally scoped to the drawer and preserves every other row.
+    // Swap only the top quick-row Shop/Challenges positions. All other drawer
+    // entries stay exactly where the existing hamburger menu owns them.
     function swapDrawerShopAndChallenges() {
       const drawer = document.getElementById('hamburgerDrawer');
-      if (!drawer) return;
-      const buttons = [...drawer.querySelectorAll('button')];
+      const quick = drawer?.querySelector('.drawer-quick');
+      if (!quick) return;
+      const buttons = [...quick.querySelectorAll('button')];
       const shopBtn = buttons.find(btn => /shop/i.test(`${btn.id} ${btn.dataset.tip || ''} ${btn.getAttribute('aria-label') || ''} ${btn.textContent || ''}`));
       const challengeBtn = buttons.find(btn => /challenge/i.test(`${btn.id} ${btn.dataset.tip || ''} ${btn.getAttribute('aria-label') || ''} ${btn.textContent || ''}`));
       if (!shopBtn || !challengeBtn || shopBtn.parentElement !== challengeBtn.parentElement) return;
@@ -520,8 +516,8 @@ const AVATAR_TONES = {
       const children = [...parent.children];
       const si = children.indexOf(shopBtn);
       const ci = children.indexOf(challengeBtn);
-      if (si < 0 || ci < 0 || si < ci) return; // desired order is Shop before Challenges
-      const marker = document.createComment('swap-header-quick');
+      if (si < 0 || ci < 0 || si < ci) return;
+      const marker = document.createComment('swap-drawer-quick');
       parent.replaceChild(marker, shopBtn);
       parent.replaceChild(shopBtn, challengeBtn);
       parent.replaceChild(challengeBtn, marker);
