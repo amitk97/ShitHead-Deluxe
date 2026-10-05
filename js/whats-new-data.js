@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v327: [[ '🃏', 'Drag one mode at a time, or keep holding to browse. Guest profiles now show an avatar and Level 1, with softer card shadows.' ]],
       v326: [[ '🃏', 'The card that flips open into a mode page now matches the new card look.' ]],
       v325: [[ '📄', 'The More Modes page shows each coming mode with its own icon, and no longer shows the last mode you opened underneath.' ]],
       v324: [[ '🧭', 'The mode cards are solid and spread wider, the middle one glows in its colour, and they follow your finger with a flick. Hold an arrow to keep turning, or use the arrow keys.' ]],

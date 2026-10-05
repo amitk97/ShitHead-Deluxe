@@ -1,5 +1,10 @@
 # ShitHead Deluxe
 
+## v327 — carousel input and guest profile
+
+Desktop carousel uses explicit mouse down/move/up/leave; touch and pen use pointer events. A 30px horizontal drag steps once; holding beyond that threshold for 450ms repeats at 520ms until release or an end. No velocity projection. Cancel, blur, hidden tab and resize stop the hold; dragged clicks stay suppressed until the next press. Cards retain solid backgrounds and have shared soft shadows. Guest home avatar and LVL 1 remain visible in grey and open Sign In; signed-in cosmetics/level restore normally.
+
+
 ## Additional live address — 4 October 2026
 
 Firebase Hosting now deploys the same current game to two targets in project `shithead-pro`: `deluxe` → `shithead-deluxe.web.app`, and `legacy` → `shithead-pro.web.app`. Keep both targets in `firebase.json` and `.firebaserc`; main deploys both, PR previews use `deluxe`. Accounts, database, Functions and artwork remain the same. v310 (owner): it is now the main address every link points to (see Google sign-in below); since v322 its own `/__/auth/handler` is the same-site auth handler (redirect URI added by the owner). Firebase Auth already authorises `shithead-deluxe.web.app`. Do not redirect the old site before verifying mobile Google sign-in on the new one.

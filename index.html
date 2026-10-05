@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v326 (ShitHead-Deluxe-251) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v327 (ShitHead-Deluxe-251) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -516,9 +516,10 @@
        the selected mode's card is lit in its own tone. */
     #homeModeGrid { display: none !important; }
     #modeCarousel { position: relative; margin: 2px -16px 0; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
-    #modeCarousel .mc-track { position: relative; height: 176px; perspective: 900px; overflow: hidden;
+    #modeCarousel .mc-track { position: relative; height: 176px; perspective: 900px; overflow: hidden; cursor: grab; padding-bottom: 22px; box-sizing: content-box;
       -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); }
     .mc-card { position: absolute; left: 50%; top: 12px; width: 124px; height: 150px; margin-left: -62px; border-radius: 18px;
+      box-shadow: 0 8px 18px rgba(0,0,0,.32), 0 18px 30px rgba(0,0,0,.22);
       background: #0b1428; border: 1.5px solid #1e293b; color: #e2e8f0; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 6px; padding: 10px 8px; cursor: pointer;
       transform: translateX(calc(var(--mc-x, 0px) + var(--mc-dx, 0px))) translateZ(var(--mc-z, 0px)) rotateY(var(--mc-r, 0deg)) scale(var(--mc-s, 1));
@@ -531,7 +532,9 @@
       box-shadow: 0 0 0 1px color-mix(in srgb, var(--mc-tone) 45%, transparent), 0 0 22px color-mix(in srgb, var(--mc-tone) 38%, transparent), 0 14px 28px rgba(0,0,0,.5); }
     .mc-card::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; background: #020617; opacity: var(--mc-dim, 0);
       pointer-events: none; transition: opacity .35s var(--ease-soft); }
+    .mc-track.mc-dragging, .mc-track.mc-dragging .mc-card { cursor: grabbing; }
     .mc-track.mc-dragging .mc-card { transition: none; }
+    .mc-card, .mc-card * { -webkit-user-drag: none; }
     .mc-card.mc-gone { pointer-events: none; }
     /* Controls (v323): « first, ‹ previous, › next, » last. */
     .mc-controls { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 2px; }
@@ -2280,6 +2283,9 @@
     .home-name-avatar { grid-column:1; grid-row:1 / 3; align-self:start; display:inline-flex; width:calc(2.5em + 24px); height:calc(2.5em + 24px); padding:0; border:0; background:none; border-radius:12px; cursor:pointer; }
     .home-name-avatar .avatar-tile, .home-name-avatar .avatar-tile > svg { width:100% !important; height:100% !important; }
     .home-name-avatar.hidden, .home-name-level.hidden { display:none; }
+    .guest-profile { filter: grayscale(1); opacity: .65; }
+    #homeNameLevel.guest-profile { color: #cbd5e1; font-size: 12px; font-weight: 800; }
+    .home-name-avatar.guest-profile svg { width: 100%; height: 100%; }
     .home-name-level { grid-column:3; grid-row:2; display:flex; }
     .xp-badge.xp-badge-home { height:auto; font-size:1em; font-weight:700; letter-spacing:normal; padding:0 .6em; border-width:2px; border-radius:.75rem; }
     /* Speed locks (v247) */
@@ -5760,9 +5766,9 @@ video {
         <div id="homeNameBlock">
           <div class="home-name-row">
             <label for="playerNameInput" class="home-name-label block text-xs font-black tracking-wider uppercase text-slate-400 text-center">Your Nickname</label>
-            <button id="homeNameAvatar" type="button" class="home-name-avatar hidden" data-own-avatar="64" aria-label="Your profile"></button>
+            <button id="homeNameAvatar" type="button" class="home-name-avatar guest-profile" aria-label="Guest profile — sign in"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-profile"/></svg></button>
             <input type="text" id="playerNameInput" maxlength="12" placeholder="e.g. Alex" class="home-name-input bg-slate-950 border-2 border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold focus:border-amber-400 outline-none text-white transition text-center" style="text-align:center" />
-            <span id="homeNameLevel" class="home-name-level hidden"></span>
+            <button type="button" id="homeNameLevel" class="home-name-level guest-profile" aria-label="Guest level 1 — sign in">LVL 1</button>
           </div>
           <p id="nameRequiredMsg" class="hidden text-[10px] font-bold text-rose-400 mt-1">Please enter a nickname to continue.</p>
         </div>
@@ -24831,7 +24837,7 @@ video {
     // the same destinations and icons as the hamburger menu, so there is only
     // one source of truth for page-opening behaviour.
     document.getElementById('lobbyProfileShortcut')?.addEventListener('click', () => document.getElementById('menuProfileBtn')?.click());
-    document.getElementById('homeNameAvatar')?.addEventListener('click', () => document.getElementById('menuProfileBtn')?.click());
+    document.getElementById('homeNameAvatar')?.addEventListener('click', () => currentUser ? document.getElementById('menuProfileBtn')?.click() : openAuthModal());
     document.getElementById('lobbyPersonalisationShortcut')?.addEventListener('click', () => document.getElementById('menuThemesBtn')?.click());
     document.getElementById('lobbyGuideShortcut')?.addEventListener('click', () => document.getElementById('menuGuideBtn')?.click());
     document.getElementById('lobbySettingsShortcut')?.addEventListener('click', () => document.getElementById('menuSettingsBtn')?.click());
@@ -25408,7 +25414,17 @@ video {
       document.getElementById('menuChangelogBtn')?.classList.toggle('hidden', !isGameOwner());
       document.getElementById('menuXpSwitchBtn')?.classList.toggle('hidden', !isGameOwner());
       drawerAvatar?.classList.toggle('hidden', !currentUser);
-      document.getElementById('homeNameAvatar')?.classList.toggle('hidden', !currentUser); // home nickname row (v242)
+      const homeAvatar = document.getElementById('homeNameAvatar');
+      if (homeAvatar) {
+        homeAvatar.classList.remove('hidden');
+        homeAvatar.classList.toggle('guest-profile', !currentUser);
+        homeAvatar.setAttribute('aria-label', currentUser ? 'Your profile' : 'Guest profile — sign in');
+        if (currentUser) homeAvatar.dataset.ownAvatar = '64';
+        else {
+          delete homeAvatar.dataset.ownAvatar;
+          homeAvatar.innerHTML = '<svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-profile"/></svg>';
+        }
+      }
       reapplySpeedLocks(); // 2x/4x need an account (v247)
       document.getElementById('drawerSignInBtn')?.classList.toggle('hidden', !!currentUser);
       if (currentUser) {
@@ -26633,7 +26649,16 @@ video {
       // Menu header, Profile (next to the name) and the table (by your Hand).
       [['hamburgerLevel', ''], ['profileLevelBadge', ''], ['handZoneLevel', 'xp-badge-sm'], ['homeNameLevel', 'xp-badge-home']].forEach(([id, cls]) => {
         const el = document.getElementById(id);
-        if (el) { el.classList.toggle('hidden', !on); el.innerHTML = on ? xpLevelBadge(myLevel, cls) : ''; }
+        if (el) {
+          const guest = id === 'homeNameLevel' && !currentUser;
+          el.classList.toggle('hidden', !on && !guest);
+          el.classList.toggle('guest-profile', guest);
+          el.innerHTML = guest ? 'LVL 1' : on ? xpLevelBadge(myLevel, cls) : '';
+          if (id === 'homeNameLevel') {
+            el.title = guest ? 'Sign in to save your progress' : 'Your level';
+            el.setAttribute('aria-label', guest ? 'Guest level 1 — sign in' : 'Your level');
+          }
+        }
       });
       paintLadderNewDots(on ? myLevel : 0);
       if (currentUser && challengeEconomyLoadedForUid === currentUser.uid) { saveHomeSnapshot(); window.shBootReveal?.(); } // the real level is in
@@ -27016,6 +27041,7 @@ video {
         const t = e.target.closest && e.target.closest('#homeNameLevel, #profileLevelBadge, #hamburgerLevel, [data-open-ladder]');
         if (!t || t.classList.contains('hidden')) return;
         e.preventDefault();
+        if (t.id === 'homeNameLevel' && !currentUser) { openAuthModal(); return; }
         openLevelLadder(t.dataset.ladderFrom ? { from: Number(t.dataset.ladderFrom) } : {});
       });
       window.addEventListener('resize', () => { if (!modal.classList.contains('hidden')) placeLadderLine(false); });
@@ -32330,7 +32356,8 @@ video {
       let swiped = false;
       track.addEventListener('click', (e) => {
         const card = e.target.closest('.mc-card');
-        if (!card || swiped) return;
+        if (swiped && e.detail !== 0) { e.preventDefault(); e.stopPropagation(); return; }
+        if (!card) return;
         const i = cards.indexOf(card);
         if (i === focus) open(card); else turnTo(i);
       });
@@ -32349,45 +32376,73 @@ video {
         ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => b.addEventListener(ev, stopHold));
       });
       window.addEventListener('blur', stopHold);
-      // Drag (touch or mouse, v324): the cards follow the finger, and on
-      // release they carry on by the flick's speed before snapping to a card.
-      let down = null;
-      const dragStep = () => cards[0].offsetWidth * .86;
-      track.addEventListener('pointerdown', (e) => {
-        if (e.button) return;
-        down = { x: e.clientX, y: e.clientY, dx: 0, live: false, pts: [[e.timeStamp, e.clientX]] };
+      // v327: explicit desktop mouse tracking; touch/pen use pointer events.
+      // One step per gesture, unless held beyond the threshold for 450ms.
+      let down = null, dragHold = null;
+      const dragStep = () => cards[0].getBoundingClientRect().width * .86;
+      const stopDragHold = () => { clearTimeout(dragHold); dragHold = null; };
+      const resetPull = () => {
+        track.classList.remove('mc-dragging');
+        track.style.removeProperty('--mc-dx');
+      };
+      const startDrag = (e) => {
+        if (e.button || down) return;
+        if (e.type === 'mousedown') e.preventDefault();
+        down = { x: e.clientX, y: e.clientY, dx: 0, live: false, dir: 0, repeated: false, pointerId: e.pointerId };
         swiped = false;
-      });
-      track.addEventListener('pointermove', (e) => {
-        if (!down) return;
+      };
+      const repeatDrag = () => {
+        if (!down || !down.dir) return;
+        down.repeated = true;
+        resetPull();
+        if (turnTo(focus + down.dir)) dragHold = setTimeout(repeatDrag, 520);
+      };
+      const moveDrag = (e) => {
+        if (!down || (e.pointerId != null && e.pointerId !== down.pointerId)) return;
         const dx = e.clientX - down.x, dy = e.clientY - down.y;
         if (!down.live) {
           if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return;
-          down.live = true; track.classList.add('mc-dragging');
-          try { track.setPointerCapture(e.pointerId); } catch (err) {}
+          down.live = true;
+          if (e.pointerId != null) { try { track.setPointerCapture(e.pointerId); } catch (err) {} }
         }
-        // Past either end the cards resist (a third of the pull).
-        const edge = (dx > 0 && focus === 0) || (dx < 0 && focus === cards.length - 1);
-        down.dx = edge ? dx / 3 : dx;
-        track.style.setProperty('--mc-dx', down.dx.toFixed(1) + 'px');
-        down.pts.push([e.timeStamp, e.clientX]);
-        if (down.pts.length > 6) down.pts.shift();
-      });
-      const endDrag = (e) => {
-        if (!down) return;
-        const d = down; down = null;
-        track.classList.remove('mc-dragging');
-        track.style.removeProperty('--mc-dx');
-        if (!d.live) return;
-        swiped = true; setTimeout(() => { swiped = false; }, 0);
-        if (e.type === 'pointercancel') { paint(); return; }
-        const [t0, x0] = d.pts[0], [t1, x1] = d.pts[d.pts.length - 1];
-        const v = t1 > t0 ? (x1 - x0) / (t1 - t0) : 0; // px per ms
-        const n = Math.round(-(d.dx + v * 220) / dragStep());
-        if (!n || !turnTo(focus + Math.max(-3, Math.min(3, n)))) paint();
+        e.preventDefault();
+        swiped = true;
+        down.dx = dx;
+        const dir = Math.abs(dx) >= 30 ? (dx < 0 ? 1 : -1) : 0;
+        if (dir !== down.dir) {
+          stopDragHold(); down.dir = dir;
+          if (dir) dragHold = setTimeout(repeatDrag, 450);
+        }
+        if (!down.repeated) {
+          const edge = (dx > 0 && focus === 0) || (dx < 0 && focus === cards.length - 1);
+          const pull = Math.max(-dragStep() * .7, Math.min(dragStep() * .7, dx));
+          track.classList.add('mc-dragging');
+          track.style.setProperty('--mc-dx', (edge ? pull / 3 : pull).toFixed(1) + 'px');
+        }
       };
-      track.addEventListener('pointerup', endDrag);
-      track.addEventListener('pointercancel', endDrag);
+      const endDrag = (e) => {
+        if (!down || (e.pointerId != null && e.pointerId !== down.pointerId)) return;
+        const d = down; down = null;
+        stopDragHold(); resetPull();
+        if (d.pointerId != null) { try { track.releasePointerCapture(d.pointerId); } catch (err) {} }
+        if (d.live && !d.repeated && (e.type === 'mouseup' || e.type === 'pointerup' || e.type === 'mouseleave')) {
+          if (d.dir) turnTo(focus + d.dir);
+        }
+        // Keep click suppression until the next genuine press (touch clicks may arrive late).
+      };
+      track.addEventListener('mousedown', startDrag);
+      window.addEventListener('mousemove', moveDrag, { passive: false });
+      window.addEventListener('mouseup', endDrag);
+      track.addEventListener('mouseleave', endDrag);
+      track.addEventListener('dragstart', (e) => e.preventDefault());
+      track.addEventListener('selectstart', (e) => e.preventDefault());
+      track.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') startDrag(e); });
+      track.addEventListener('pointermove', (e) => { if (e.pointerType !== 'mouse') moveDrag(e); }, { passive: false });
+      ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => track.addEventListener(ev, (e) => {
+        if (e.pointerType !== 'mouse') endDrag(e);
+      }));
+      ['blur', 'pagehide', 'resize'].forEach((ev) => window.addEventListener(ev, endDrag));
+      document.addEventListener('visibilitychange', () => { if (document.hidden) { endDrag({ type: 'cancel' }); stopHold(); } });
       // Mouse wheel over the carousel: one card per notch (the page doesn't scroll).
       let wheelAt = 0;
       box.addEventListener('wheel', (e) => {

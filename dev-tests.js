@@ -8286,6 +8286,35 @@ async function runDevTestSuite() {
     assertTrue(document.getElementById('shopModal').classList.contains('hidden') && !document.getElementById('themesModal').classList.contains('hidden'), 'Opens Custom');
     document.getElementById('themesModal').classList.add('hidden');
   });
+  await test('Carousel v327: one-step mouse drag, hold, cancel and guest fallback', async () => {
+    const track = document.querySelector('.mc-track');
+    const focused = () => Number(track.querySelector('.mc-focus').dataset.mc);
+    const mouse = (type, x, target = track) => target.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX: x, clientY: 100 }));
+    const pause = ms => new Promise(r => setTimeout(r, ms));
+    setModePage('');
+    document.querySelector('[data-mc-jump="first"]').click();
+    mouse('mousedown', 300); mouse('mousemove', 80, window); mouse('mouseup', 80, window);
+    assertEqual(focused(), 2, 'Even a long drag advances exactly once');
+    track.querySelector('.mc-focus').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    assertTrue(!window.modeExpandRunning(), 'Release click cannot open the mode');
+    mouse('mousedown', 300); mouse('mousemove', 240, window);
+    for (let waited = 0; focused() < 4 && waited < 3000; waited += 50) await pause(50);
+    assertTrue(focused() >= 4, 'Holding after a swipe advances through modes');
+    mouse('mouseup', 240, window);
+    const released = focused(); await pause(600);
+    assertEqual(focused(), released, 'Release stops repeat');
+    mouse('mousedown', 300); mouse('mousemove', 240, window);
+    window.dispatchEvent(new Event('blur'));
+    await pause(550); assertEqual(focused(), released, 'Blur cancels pending hold');
+    currentUser = null; updateHamburgerAccountLabel(); refreshXpDisplays();
+    assertTrue(!document.getElementById('homeNameAvatar').classList.contains('hidden'), 'Guest avatar remains present');
+    assertEqual(document.getElementById('homeNameLevel').textContent, 'LVL 1', 'Guest level fallback');
+    assertTrue(document.getElementById('homeNameAvatar').classList.contains('guest-profile'), 'Guest is subdued');
+    const side = track.querySelector('.mc-card:not(.mc-focus):not(.mc-gone)');
+    assertEqual(getComputedStyle(side).opacity, '1', 'Visible cards are opaque');
+    assertTrue(getComputedStyle(side).boxShadow !== 'none', 'Side cards also have depth');
+  });
+
   await test('Carousel (v323–v324): « » jump to the ends, a held › repeats, side cards are solid, Shortcut pins are saved', async () => {
     const lobby = document.getElementById('lobbyScreen'), wasHidden = lobby.classList.contains('hidden');
     let savedPins = null; try { savedPins = localStorage.getItem('shithead_home_pins'); } catch (e) {}
