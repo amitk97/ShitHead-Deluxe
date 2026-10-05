@@ -8326,6 +8326,10 @@ async function runDevTestSuite() {
       document.getElementById('modeSingleBtn').click(); setModePage('cpu');
       assertEqual(getComputedStyle(document.querySelector('.gauntlet-row')).display, 'none', 'No Gauntlet row on the Play Computer page');
       assertTrue(isShownOnScreen(document.getElementById('startSingleBtn')), 'Start Game is on the Play Computer page');
+      document.getElementById('rankedOptions').classList.remove('hidden'); setModePage('more');
+      assertEqual(getComputedStyle(document.getElementById('rankedOptions')).display, 'none', 'More Modes never shows the last mode\'s options (v325)');
+      assertEqual(document.querySelectorAll('#moreModesPage .mp-row-ic').length, 5, 'Each coming mode has its icon');
+      document.getElementById('rankedOptions').classList.add('hidden');
       setModePage('gauntlet');
       assertTrue(isShownOnScreen(document.getElementById('gauntletPageStart')), 'The Gauntlet page has its own start button');
       assertEqual(getComputedStyle(document.getElementById('singleOptions')).display, 'none', 'and not the bot options');

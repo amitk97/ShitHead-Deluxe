@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v324 (ShitHead-Deluxe-249) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v325 (ShitHead-Deluxe-250) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -582,7 +582,7 @@
     #lobbyScreen.mode-page-open #modePageHead { display: flex; }
     #lobbyScreen:is([data-mode-page="cpu"], [data-mode-page="gauntlet"], [data-mode-page="more"]) #homeNameBlock { display: none; }
     #lobbyScreen[data-mode-page="cpu"] .gauntlet-row { display: none !important; }
-    #lobbyScreen:is([data-mode-page="gauntlet"], [data-mode-page="more"]) #singleOptions { display: none !important; }
+    #lobbyScreen:is([data-mode-page="gauntlet"], [data-mode-page="more"]) :is(#singleOptions, #multiOptions, #rankedOptions) { display: none !important; }
     #lobbyScreen[data-mode-page="gauntlet"] #gauntletPage, #lobbyScreen[data-mode-page="more"] #moreModesPage { display: block; }
     #modePageHead { align-items: center; gap: 12px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(51,65,85,.6); }
     #modePageBack { width: 40px; height: 40px; flex: none; border-radius: 12px; border: 1px solid #334155; background: #0b1428; color: #e2e8f0;
@@ -606,6 +606,7 @@
     .mp-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #0b1428; }
     .mp-row-text { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: #94a3b8; line-height: 1.4; }
     .mp-row-text b { font-size: 14px; color: #f8fafc; }
+    .mp-row-ic { width: 36px; height: 36px; flex: none; padding: 7px; box-sizing: border-box; border-radius: 11px; color: #c084fc; background: rgba(168,85,247,.16); }
     .mp-soon { flex: none; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #fbbf24;
       border: 1px solid rgba(251,191,36,.5); border-radius: 999px; padding: 3px 8px; }
     .mp-go { margin-top: 10px; width: 100%; min-height: 48px; border: 0; border-radius: 14px; background: #059669; color: #020617;
@@ -32258,6 +32259,11 @@ video {
         hideInfoPop(); paintPins(); Haptics.vibrate([15]);
       });
       paintPins();
+      // More Modes page rows wear the same icons as the pins (same order).
+      document.querySelectorAll('#moreModesPage .mp-row').forEach((row, i) => {
+        const m = Object.values(PIN_MODES)[i];
+        if (m && !row.querySelector('.mc-ic')) row.insertAdjacentHTML('afterbegin', pinSvg(m[1]).replace('mc-ic', 'mc-ic mp-row-ic'));
+      });
       // § Card expand (v321): the middle card flips (edge-on at the half-way
       // point), grows to fill the screen as the page's background, the page
       // is switched underneath once it covers the screen, then the cover fades.
