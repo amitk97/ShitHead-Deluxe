@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v314 (ShitHead-Deluxe-239) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v315 (ShitHead-Deluxe-240) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -485,7 +485,46 @@
        screen (the big one is in the panel); the four shortcuts are one quiet row at the foot of the
        panel; the speed slider lives in Settings; every mode's options share one height, so switching
        mode never moves the panel. */
-    body.lobby-open #navHomeLogoBtn { visibility:hidden; }
+    /* § Header (v315, owner). Home: Exit · Shop · Diamonds · Custom · Profile ·
+       Inbox · Guide · Settings · Menu. Elsewhere Shop/Custom/Guide fold into
+       the menu (slide toward it, fade, small bounce) and the logo takes the
+       middle. A room code replaces the Diamond count. */
+    #headerShopBtn, #headerCustomBtn, #headerGuideBtn, #headerLogoWrap, #navHomeLogoBtn {
+      max-width: 140px; overflow: visible;
+      transition: max-width .38s var(--ease-soft), margin .38s var(--ease-soft), opacity .26s var(--ease-soft), transform .44s var(--ease-bouncy), padding .38s var(--ease-soft) !important;
+    }
+    body:not(.lobby-open) .hdr-home-only {
+      max-width: 0 !important; min-width: 0 !important; margin-left: -6px; opacity: 0; pointer-events: none; overflow: hidden;
+      transform: translateX(var(--to-menu, 60px)) scale(.35);
+    }
+    body.lobby-open #headerLogoWrap { max-width: 0; padding: 0; opacity: 0; overflow: hidden; pointer-events: none; transform: scale(.6); }
+    body.lobby-open #navHomeLogoBtn { max-width: 0; }
+    header:has(#roomCodeBadge:not(.hidden)) #headerDiamondCount { display: none; }
+    body.reduce-motion :is(#headerShopBtn, #headerCustomBtn, #headerGuideBtn, #headerLogoWrap, #navHomeLogoBtn) { transition: none !important; }
+    #homeQuickRow { display: none !important; }
+    @media (max-width: 379px) {
+      body > header { padding-left: 6px !important; padding-right: 6px !important; }
+      body > header > div { gap: 2px !important; }
+      body:not(.lobby-open) .hdr-home-only { margin-left: -2px; }
+      :is(#leaveGameBtn, #headerShopBtn, #headerCustomBtn, #headerProfileBtn, #headerInboxBtn, #headerGuideBtn, #headerSettingsBtn, #hamburgerBtn) { width: 1.5rem !important; }
+      :is(#leaveGameBtn, #headerShopBtn, #headerCustomBtn, #headerProfileBtn, #headerInboxBtn, #headerGuideBtn, #headerSettingsBtn, #hamburgerBtn) svg { width: 24px !important; height: 24px !important; }
+    }
+    /* Exit / leave confirm (shConfirm): the game's own dialog, never confirm(). */
+    #shConfirm { position: fixed; inset: 0; z-index: 330; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(2,6,23,.72); backdrop-filter: blur(3px); }
+    #shConfirm.hidden { display: none; }
+    #shConfirm .shc-card { width: min(340px, 100%); background: linear-gradient(180deg, #0f172a, #020617); border: 1px solid rgba(245,158,11,.45); border-radius: 18px; padding: 20px 18px 16px; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.04); animation: shcIn .32s var(--ease-bouncy); }
+    #shConfirm .shc-icon { width: 44px; height: 44px; margin: 0 auto 8px; display: block; }
+    #shConfirm h2 { font-family: 'Cinzel', serif; font-weight: 900; font-size: 19px; color: #fbbf24; margin: 0 0 6px; letter-spacing: .02em; }
+    #shConfirm p { font-size: 13px; line-height: 1.45; color: #cbd5e1; margin: 0 0 16px; }
+    #shConfirm .shc-row { display: flex; gap: 8px; }
+    #shConfirm .shc-row button { flex: 1; min-height: 42px; border-radius: 12px; font-weight: 900; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; transition: filter .16s var(--ease-snappy), scale .16s var(--ease-snappy); }
+    #shConfirm .shc-row button:hover { filter: brightness(1.15); }
+    #shConfirm .shc-row button:active { scale: .96; }
+    #shConfirm .shc-row button:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+    #shConfirmNo { background: transparent; border: 1px solid #475569; color: #e2e8f0; }
+    #shConfirmYes { background: #dc2626; border: 1px solid #f87171; color: #fff; }
+    @keyframes shcIn { from { opacity: 0; transform: translateY(10px) scale(.94); } to { opacity: 1; transform: none; } }
+    body.reduce-motion #shConfirm .shc-card { animation: none; }
     #homeQuickRow { border-top:1px solid rgba(51,65,85,.6); padding-top:8px; margin-top:12px; }
     #homeQuickRow > .settings-head { display:none; }
     #homeQuickRow #deckThemeBody { gap:4px; }
@@ -1048,11 +1087,11 @@
          compact 44px header so it does not steal vertical game space. */
       body > header { height: calc(60px + var(--safe-top)) !important; padding: calc(7px + var(--safe-top)) 18px 7px !important; }
       body > header .brand-logo-rendered { font-size: 32px !important; }
-      #leaveGameBtn, #headerProfileBtn, #headerInboxBtn, #hamburgerBtn, #headerShopBtn {
+      #leaveGameBtn, #headerProfileBtn, #headerInboxBtn, #hamburgerBtn, #headerShopBtn, #headerCustomBtn, #headerGuideBtn, #headerSettingsBtn {
         width: 38px !important;
         height: 38px !important;
       }
-      #leaveGameBtn svg, #headerProfileBtn svg, #headerInboxBtn > svg, #hamburgerBtn svg, #headerShopBtn svg {
+      #leaveGameBtn svg, #headerProfileBtn svg, #headerInboxBtn > svg, #hamburgerBtn svg, #headerShopBtn svg, #headerCustomBtn svg, #headerGuideBtn svg, #headerSettingsBtn svg {
         width: 38px !important;
         height: 38px !important;
       }
@@ -1309,7 +1348,7 @@
     #homeCardTip.home-tip-side .home-tip-name { font-size:12px; }
     body.reduce-motion #homeCardTip .home-tip-inner { transition:none; }
     body.lobby-open #opponentsContainer, body.lobby-open #centerArena, body.lobby-open #localPlayerZone,
-    body.lobby-open #gauntletHud, body.lobby-open #seriesHud, body.lobby-open #floatingJokerBar, body.lobby-open #leaveGameBtn { visibility:hidden !important; }
+    body.lobby-open #gauntletHud, body.lobby-open #seriesHud, body.lobby-open #floatingJokerBar { visibility:hidden !important; }
     body.spectating #roomCodeBadge { display:none !important; }
     body.spectating #swapControlBar, body.spectating #playActionControls, body.spectating #sacrificeControlBar, body.spectating #emoteLayer, body.spectating #matchEndButtonRow { display:none !important; }
     body.spectating #opponentsContainer { margin-top:40px; }
@@ -2212,9 +2251,6 @@
        pulled a full-width header's right edge ~14px in, so a tap on its
        chevron was let go outside the button and lost. They brighten instead. */
     :is(.series-head, .cat-head, .settings-row, .accordion-toggle):active { scale: 1 !important; transform: none; filter: brightness(1.15); }
-    /* Header Shop button: tablets and PCs only (phones keep the Menu → Shop). */
-    #headerShopBtn { display:none; }
-    @media (min-width: 700px) { #headerShopBtn { display:flex; } }
     /* A touched card only glows darker: moving it (the old 6px lift) slid it
        out from under the finger, so letting go tapped the card below (v237). */
     .hand-card:active { filter: drop-shadow(0 8px 10px rgba(0,0,0,.45)) brightness(1.08); }
@@ -5463,11 +5499,12 @@ video {
            `w-7` class — that class doesn't exist anywhere in this
            project's precompiled Tailwind bundle, so adding it would
            silently produce no CSS at all instead of an obvious error. -->
-      <button id="leaveGameBtn" class="hidden h-7 flex items-center justify-center bg-transparent hover:brightness-125 rounded-lg transition tip-below" style="width:1.75rem;" data-tip="Exit" aria-label="Exit game">
+      <button id="leaveGameBtn" class="h-7 flex items-center justify-center bg-transparent hover:brightness-125 rounded-lg transition tip-below" style="width:1.75rem;" data-tip="Exit" aria-label="Exit game">
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-exit"/></svg>
       </button>
-      <!-- Shop (v255, owner): tablets and PCs only (700px+), left of the Diamonds. -->
-      <button id="headerShopBtn" class="header-shop-btn h-7 items-center justify-center bg-transparent hover:brightness-125 rounded transition tip-below" style="width:1.75rem;" data-tip="Shop" aria-label="Shop">
+      <!-- v315 (owner): Shop / Custom / Guide show on the home screen only and
+           fold into the menu elsewhere (.hdr-home-only, § Header). -->
+      <button id="headerShopBtn" class="header-shop-btn hdr-home-only h-7 items-center justify-center bg-transparent hover:brightness-125 rounded transition tip-below" style="width:1.75rem;" data-tip="Shop" aria-label="Shop">
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg>
       </button>
       <button id="headerDiamondBtn" class="header-gem-btn flex items-center justify-center text-cyan-300 transition tip-below" data-tip="Diamonds · Click to open the Shop" aria-label="Diamonds: open the Shop">
@@ -5484,8 +5521,8 @@ video {
       <span id="roomCodeBadge" class="hidden h-7 px-2 flex items-center justify-center font-mono text-[11px] font-black bg-slate-900 border border-slate-700 text-emerald-400 rounded-lg transition"></span>
     </div>
     
-    <!-- Centered Logo -->
-    <div class="shrink-0 flex flex-col items-center justify-center px-2">
+    <!-- Centered Logo (folds away on the home screen, which has its own) -->
+    <div id="headerLogoWrap" class="shrink-0 flex flex-col items-center justify-center px-2">
       <button id="navHomeLogoBtn" class="flex items-center gap-1 group transition transform hover:scale-105 focus:outline-none tip-below" data-tip="Main Lobby" aria-label="Return to Main Lobby">
         <span class="brand-logo-rendered text-2xl tracking-wide leading-none">ShitHead</span>
       </button>
@@ -5494,11 +5531,14 @@ video {
 
     <!-- Right Controls -->
     <div class="flex-1 flex items-center justify-end gap-1.5 min-w-0">
+      <button id="headerCustomBtn" class="hdr-home-only h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Custom" data-tip="Custom"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg></button>
       <button id="headerProfileBtn" class="relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Profile" data-tip="Profile"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-profile"/></svg></button>
       <button id="headerInboxBtn" class="relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Inbox" data-tip="Inbox">
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-mail"/></svg>
         <span id="inboxBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 flex items-center justify-center rounded-full inbox-badge--friend text-white text-[8px] font-black leading-none">0</span>
       </button>
+      <button id="headerGuideBtn" class="hdr-home-only h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Guide" data-tip="Guide"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></button>
+      <button id="headerSettingsBtn" class="h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Settings" data-tip="Settings"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg></button>
       <!-- Rightmost/outermost element on purpose — the desktop dropdown's
            own fixed `right: 12px` anchor (see the #hamburgerDrawer CSS)
            assumes it sits directly under this button. -->
@@ -5510,6 +5550,15 @@ video {
        (hover / tap for the level and XP to the next one). -->
   <div id="headerXpBar" class="hdr-xp hidden" role="progressbar" aria-label="XP to the next level" aria-valuemin="0" aria-valuemax="100" tabindex="0"><span class="hdr-xp-track"><i id="headerXpFill"></i></span></div>
   </header>
+  <!-- § Header: the game's own yes/no dialog (shConfirm), used by Exit. -->
+  <div id="shConfirm" class="hidden" role="dialog" aria-modal="true" aria-labelledby="shConfirmTitle">
+    <div class="shc-card">
+      <svg class="shc-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-exit"/></svg>
+      <h2 id="shConfirmTitle"></h2>
+      <p id="shConfirmText"></p>
+      <div class="shc-row"><button id="shConfirmNo" type="button"></button><button id="shConfirmYes" type="button"></button></div>
+    </div>
+  </div>
   <div id="headerXpTip" class="hdr-xp-tip hidden" role="tooltip"></div>
 
   <!-- HAMBURGER DRAWER — one shared menu, opened from the ONE persistent
@@ -9550,7 +9599,7 @@ video {
      'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
      // v281: #gameTable is isolation:isolate (v270 table scenes), so anything
      // left inside it can never sit above a page, whatever its z-index.
-     'playerPopup', 'challengeToast', 'signOutConfirm', 'dailyRewardModal', 'giftModal', 'giftOpenModal', 'installHelpModal'].forEach((id) => {
+     'playerPopup', 'challengeToast', 'signOutConfirm', 'dailyRewardModal', 'giftModal', 'giftOpenModal', 'installHelpModal', 'shConfirm'].forEach((id) => {
       const el = document.getElementById(id);
       if (el && el.parentElement !== document.body) document.body.appendChild(el);
     });
@@ -13172,7 +13221,6 @@ video {
         document.getElementById('modeRankedBtn').className = MODE_BTN_INACTIVE;
       }
       document.getElementById('emoteLayer')?.classList.add('hidden');
-      document.getElementById('leaveGameBtn')?.classList.add('hidden');
       document.getElementById('activeDifficultyBadge')?.classList.add('hidden');
       document.getElementById('gameDirectionBadge')?.classList.add('hidden');
 
@@ -13259,7 +13307,6 @@ video {
           : '\u00a0';
       }
       document.getElementById('emoteLayer')?.classList.add('hidden');
-      document.getElementById('leaveGameBtn')?.classList.add('hidden');
       document.getElementById('activeDifficultyBadge')?.classList.add('hidden');
       document.getElementById('gameDirectionBadge')?.classList.add('hidden');
       document.getElementById('swapControlBar')?.classList.add('hidden');
@@ -24286,6 +24333,47 @@ video {
     document.getElementById('drawerChallengesShortcutBtn').addEventListener('click', () => document.getElementById('menuChallengesBtn').click());
     document.getElementById('drawerShopShortcutBtn').addEventListener('click', () => document.getElementById('menuShopBtn').click());
     document.getElementById('headerShopBtn')?.addEventListener('click', () => { if (typeof closeHamburgerMenu === 'function') closeHamburgerMenu(); openShopPanel(); });
+    // § Header (v315): Custom / Guide / Settings reuse the menu's own buttons.
+    [['headerCustomBtn', 'menuThemesBtn'], ['headerGuideBtn', 'menuGuideBtn'], ['headerSettingsBtn', 'menuSettingsBtn']].forEach(([btn, menu]) =>
+      document.getElementById(btn)?.addEventListener('click', () => document.getElementById(menu)?.click()));
+    // Folding buttons slide toward the menu button: measured while shown.
+    function measureHeaderFold() {
+      if (!document.body.classList.contains('lobby-open')) return;
+      const menu = document.getElementById('hamburgerBtn')?.getBoundingClientRect();
+      document.querySelectorAll('.hdr-home-only').forEach((b) => {
+        const r = b.getBoundingClientRect();
+        if (menu && r.width) b.style.setProperty('--to-menu', Math.round(menu.left - r.left) + 'px');
+      });
+    }
+    window.addEventListener('resize', measureHeaderFold);
+    new MutationObserver(measureHeaderFold).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    measureHeaderFold();
+    // The game's own yes/no dialog (never the browser's confirm()).
+    let shConfirmDone = null;
+    function shConfirm({ title, text, yes = 'Yes', no = 'Cancel' }) {
+      shConfirmDone?.(false);
+      const box = document.getElementById('shConfirm');
+      document.getElementById('shConfirmTitle').textContent = title;
+      document.getElementById('shConfirmText').textContent = text;
+      document.getElementById('shConfirmYes').textContent = yes;
+      document.getElementById('shConfirmNo').textContent = no;
+      box.classList.remove('hidden');
+      document.getElementById('shConfirmNo').focus();
+      return new Promise((done) => { shConfirmDone = (v) => { shConfirmDone = null; box.classList.add('hidden'); done(v); }; });
+    }
+    document.getElementById('shConfirmYes').addEventListener('click', () => shConfirmDone?.(true));
+    document.getElementById('shConfirmNo').addEventListener('click', () => shConfirmDone?.(false));
+    document.getElementById('shConfirm').addEventListener('click', (e) => { if (e.target.id === 'shConfirm') shConfirmDone?.(false); });
+    // Exit on the home screen closes the game. Pages can only close a window
+    // a script opened, so when it stays open the dialog says how instead.
+    async function exitAppFromHome() {
+      if (!await shConfirm({ title: 'Leave ShitHead Deluxe?', text: 'Your progress is saved. Come back any time.', yes: 'Exit Game', no: 'Stay' })) return;
+      window.close();
+      setTimeout(() => {
+        if (document.visibilityState === 'hidden') return;
+        shConfirm({ title: 'Almost done', text: 'Close this tab or swipe the app away to finish.', yes: 'OK', no: 'Back' });
+      }, 300);
+    }
     document.getElementById('challengesShopBtn').addEventListener('click', () => {
       document.getElementById('challengesModal').classList.add('hidden');
       document.getElementById('menuShopBtn').click();
@@ -31480,8 +31568,10 @@ video {
       }
     });
 
-    document.getElementById('leaveGameBtn').addEventListener('click', () => {
+    document.getElementById('leaveGameBtn').addEventListener('click', async () => {
       if (state.spectating) { stopSpectating(); return; }
+      if (document.body.classList.contains('lobby-open')) { exitAppFromHome(); return; }
+      if (tutorialActive) { document.getElementById('tutorialSkipBtn')?.click(); return; }
       const midMatch = state.phase === 'PLAY' || state.phase === 'SWAP';
       if (state.isMultiplayer && seriesActiveHere()) {
         seriesBeforeLeave().then((go) => {
@@ -31493,11 +31583,11 @@ video {
         return;
       }
       const msg = midMatch && state.isRanked && state.isMultiplayer
-        ? "Leave this Ranked match? A bot takes your seat and it counts as a LOSS: your rating will go down."
+        ? "A bot takes your seat and it counts as a loss: your rating will go down."
         : midMatch
-          ? "Leave this match? Your progress in it will be lost and you can't rejoin."
-          : "Return to the main menu?";
-      if (confirm(msg)) {
+          ? "Your progress in it will be lost and you can't rejoin."
+          : "Return to the home screen.";
+      if (await shConfirm({ title: midMatch ? 'Leave this match?' : 'Back to home?', text: msg, yes: midMatch ? 'Leave' : 'Go Home', no: 'Stay' })) {
         if (midMatch) { Health.matchLeft(); Health.save(); weeklyStreakBroken(); }
         forgetJoinedRoom();
         localStorage.removeItem('shithead_game_state');
@@ -31708,6 +31798,7 @@ video {
     // It works through one "guard" history entry that exists whenever there
     // is something to go back from.
     const BACK_LAYERS = {
+      shConfirm: 'shConfirmNo',
       deleteAccountModal: () => clickFirstShown(['deleteStep2CancelBtn', 'deleteStep1CancelBtn']),
       giftOpenModal: 'giftOpenClose', giftModal: 'giftModalClose', installHelpModal: 'installHelpClose',
       dailyRewardModal: () => closeDailyReward(), playerPopup: 'playerPopupClose', matchSummaryModal: 'matchSummaryClose',
@@ -31744,7 +31835,7 @@ video {
     function screenBackAction() {
       if (tutorialActive && isShownOnScreen(document.getElementById('tutorialSkipBtn'))) return () => document.getElementById('tutorialSkipBtn').click();
       if (rankedSearchTimer || rankedHeartbeatTimer || rankedAssignmentRef) return () => cancelRankedSearch();
-      if (isShownOnScreen(document.getElementById('leaveGameBtn'))) return () => document.getElementById('leaveGameBtn').click();
+      if (!document.body.classList.contains('lobby-open') && isShownOnScreen(document.getElementById('leaveGameBtn'))) return () => document.getElementById('leaveGameBtn').click();
       if (state.isMultiplayer && state.roomCode && state.isRanked) return () => {}; // a Ranked match is about to start
       if (state.isMultiplayer && state.roomCode && state.phase === 'LOBBY') return () => { if (confirm('Leave this room?')) leaveRoomAndReload(); };
       return null;

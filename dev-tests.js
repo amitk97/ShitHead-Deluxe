@@ -2271,7 +2271,7 @@ async function runDevTestSuite() {
       endTutorial(false);
       assertTrue(!lobby.classList.contains('hidden'), 'Back on the home screen');
       await new Promise(res => setTimeout(res, 0));
-      ['opponentsContainer', 'centerArena', 'localPlayerZone', 'leaveGameBtn'].forEach(id =>
+      ['opponentsContainer', 'centerArena', 'localPlayerZone'].forEach(id =>
         assertEqual(getComputedStyle(document.getElementById(id)).visibility, 'hidden', id + ' is hidden behind the home screen'));
     } finally {
       if (wasHidden) lobby.classList.add('hidden');
@@ -2941,7 +2941,7 @@ async function runDevTestSuite() {
     // drawer, then Diamond added, then Fullscreen removed from the
     // header entirely (still reachable from Settings) — still must
     // fit and stay clear of each other on a 320px phone.
-    const ids = ['hamburgerBtn', 'headerProfileBtn', 'navHomeLogoBtn', 'headerDiamondBtn', 'headerInboxBtn', 'leaveGameBtn'];
+    const ids = ['hamburgerBtn', 'headerProfileBtn', 'navHomeLogoBtn', 'headerDiamondBtn', 'headerInboxBtn', 'leaveGameBtn', 'headerShopBtn', 'headerCustomBtn', 'headerGuideBtn', 'headerSettingsBtn'];
     const boxes = ids.map(id => {
       const el = document.getElementById(id);
       if (!el) return null;
@@ -7729,12 +7729,13 @@ async function runDevTestSuite() {
     assertEqual(GAUNTLET.modes.boss.dailyReward, 200, 'Boss Gauntlet daily win pays 200');
   });
 
-  await test('Header Shop button on tablets and PCs; wide headers never shrink when pressed (v255)', () => {
+  await test('Header Shop button on the home screen (v315); wide headers never shrink when pressed (v255)', () => {
     const btn = document.getElementById('headerShopBtn');
     assertTrue(!!btn && btn.nextElementSibling?.id === 'headerDiamondBtn', 'The Shop button sits just left of the Diamonds');
     const css = [...document.styleSheets].flatMap(sh => { try { return [...sh.cssRules]; } catch (e) { return []; } });
-    const media = css.find(r => r.media && /min-width:\s*700px/.test(r.media.mediaText) && /#headerShopBtn/.test(r.cssText));
-    assertTrue(!!media && /display:\s*flex/.test(media.cssText), 'Shown from 700px wide (tablets and PCs)');
+    assertTrue(btn.classList.contains('hdr-home-only') && ['headerCustomBtn', 'headerGuideBtn'].every(id => document.getElementById(id)?.classList.contains('hdr-home-only')),
+      'Shop, Custom and Guide fold into the menu away from home');
+    assertTrue(css.some(r => /body:not\(\.lobby-open\) \.hdr-home-only/.test(r.selectorText || '') && /max-width:\s*0/.test(r.cssText)), 'They collapse away from home');
     assertTrue(css.some(r => /\.series-head/.test(r.selectorText || '') && /:active/.test(r.selectorText || '') && /scale:\s*1/.test(r.cssText)), 'Section headers keep their size when pressed');
     const real = openShopPanel;
     let opened = false;
@@ -8159,10 +8160,13 @@ async function runDevTestSuite() {
       layer.close();
       assertTrue(!el('usernameModal').classList.contains('hidden'), 'A prompt that must be answered is not dismissed by Back');
       el('usernameModal').classList.add('hidden');
-      const exit = el('leaveGameBtn'), wasHidden = exit.classList.contains('hidden');
-      exit.classList.remove('hidden');
+      // v315: Exit is always shown; on the home screen Back still exits the app.
+      const wasHome = document.body.classList.contains('lobby-open');
+      document.body.classList.add('lobby-open');
+      assertEqual(screenBackAction(), null, 'On the home screen Back does not open the Exit dialog');
+      document.body.classList.remove('lobby-open');
       const action = screenBackAction();
-      if (wasHidden) exit.classList.add('hidden');
+      if (wasHome) document.body.classList.add('lobby-open');
       assertTrue(typeof action === 'function', 'At a table, Back leads to the Leave-match question');
       assertTrue(document.getElementById('leaveRoomBtn') && typeof leaveRoomAndReload === 'function', 'Leave Room leaves and reloads');
     } finally {

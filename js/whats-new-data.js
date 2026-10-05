@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v315: [[ '🧭', 'A new header: Shop, Custom, Guide and Settings sit along the top of the home screen and tuck into the menu during a game. Exit is always on the left.' ]],
       v314: [[ '🏠', 'A calmer home screen: the panel no longer jumps between modes, shortcuts sit in one quiet row, and Game Speed lives in Settings.' ]],
       v313: [[ '🦢', 'Origami Fold remade: your card lifts to the middle of the table, folds into a long-necked swan, hovers and flies away.', WN_KEY ]],
       v312: [[ '🏠', 'House Rules matches now show the chosen card powers everywhere: Card Powers, Play Matrix, Pile labels and card descriptions all follow the match rules.', WN_KEY ]],
