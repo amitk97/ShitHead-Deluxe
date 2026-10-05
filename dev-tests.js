@@ -7735,7 +7735,7 @@ async function runDevTestSuite() {
     const css = [...document.styleSheets].flatMap(sh => { try { return [...sh.cssRules]; } catch (e) { return []; } });
     assertTrue(btn.classList.contains('hdr-home-only') && ['headerCustomBtn', 'headerGuideBtn'].every(id => document.getElementById(id)?.classList.contains('hdr-home-only')),
       'Shop, Custom and Guide fold into the menu away from home');
-    assertTrue(css.some(r => /body:not\(\.lobby-open\) \.hdr-home-only/.test(r.selectorText || '') && /max-width:\s*0/.test(r.cssText)), 'They collapse away from home');
+    assertTrue(css.some(r => /body:not\(\.lobby-open\).*body\.mode-page\) \.hdr-home-only/.test(r.selectorText || '') && /max-width:\s*0/.test(r.cssText)), 'They collapse away from home and on a mode page (v322)');
     assertTrue(css.some(r => /\.series-head/.test(r.selectorText || '') && /:active/.test(r.selectorText || '') && /scale:\s*1/.test(r.cssText)), 'Section headers keep their size when pressed');
     const real = openShopPanel;
     let opened = false;

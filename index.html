@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v321 (ShitHead-Deluxe-246) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v322 (ShitHead-Deluxe-247) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -496,19 +496,19 @@
       max-width: 140px; overflow: visible;
       transition: max-width .38s var(--ease-soft), margin .38s var(--ease-soft), opacity .26s var(--ease-soft), transform .44s var(--ease-bouncy), padding .38s var(--ease-soft) !important;
     }
-    body:not(.lobby-open) .hdr-home-only {
+    :is(body:not(.lobby-open), body.mode-page) .hdr-home-only {
       max-width: 0 !important; min-width: 0 !important; margin-left: -6px; opacity: 0; pointer-events: none; overflow: hidden;
       transform: translateX(var(--to-menu, 60px)) scale(.35);
     }
-    body.lobby-open #headerLogoWrap { max-width: 0; padding: 0; opacity: 0; overflow: hidden; pointer-events: none; transform: scale(.6); }
-    body.lobby-open #navHomeLogoBtn { max-width: 0; }
+    body.lobby-open:not(.mode-page) #headerLogoWrap { max-width: 0; padding: 0; opacity: 0; overflow: hidden; pointer-events: none; transform: scale(.6); }
+    body.lobby-open:not(.mode-page) #navHomeLogoBtn { max-width: 0; }
     header:has(#roomCodeBadge:not(.hidden)) #headerDiamondCount { display: none; }
     body.reduce-motion :is(#headerShopBtn, #headerCustomBtn, #headerGuideBtn, #headerLogoWrap, #navHomeLogoBtn) { transition: none !important; }
     #homeQuickRow { display: none !important; }
     @media (max-width: 379px) {
       body > header { padding-left: 6px !important; padding-right: 6px !important; }
       body > header > div { gap: 2px !important; }
-      body:not(.lobby-open) .hdr-home-only { margin-left: -2px; }
+      :is(body:not(.lobby-open), body.mode-page) .hdr-home-only { margin-left: -2px; }
       :is(#leaveGameBtn, #headerShopBtn, #headerCustomBtn, #headerProfileBtn, #headerInboxBtn, #headerGuideBtn, #headerSettingsBtn, #hamburgerBtn) { width: 1.5rem !important; }
       :is(#leaveGameBtn, #headerShopBtn, #headerCustomBtn, #headerProfileBtn, #headerInboxBtn, #headerGuideBtn, #headerSettingsBtn, #hamburgerBtn) svg { width: 24px !important; height: 24px !important; }
     }
@@ -9789,8 +9789,7 @@ video {
     // Firebase Hosting serves that handler on every hosting domain; each one
     // listed here must also be an Authorized redirect URI
     // (https://<domain>/__/auth/handler) on the Google OAuth web client.
-    // shithead-deluxe.web.app joins this list once its handler is an Authorized redirect URI (CLAUDE.md, v310).
-    const SAME_SITE_AUTH_DOMAINS = ['shithead-pro.web.app', 'shithead-pro.firebaseapp.com'];
+    const SAME_SITE_AUTH_DOMAINS = ['shithead-deluxe.web.app', 'shithead-pro.web.app', 'shithead-pro.firebaseapp.com'];
     const firebaseConfig = {
       apiKey: "AIzaSyAEU9g6jfZm6M-EcT47skRUvQ-uuszgYZk",
       authDomain: SAME_SITE_AUTH_DOMAINS.includes(location.hostname) ? location.hostname : "shithead-pro.firebaseapp.com",
@@ -16768,7 +16767,11 @@ video {
 
     // The header logo (shown away from home, v316): the same game-styled
     // question as Exit, then straight back to the home screen (no splash).
-    function returnToHomeScreen() {
+    async function returnToHomeScreen() {
+      if (document.body.matches('.lobby-open.mode-page')) {
+        if (await shConfirm({ title: 'Back to home?', text: 'Return to the home screen.', yes: 'Go Home', no: 'Stay' })) document.getElementById('modePageBack').click();
+        return;
+      }
       if (!document.body.classList.contains('lobby-open')) document.getElementById('leaveGameBtn').click();
     }
 
@@ -24496,7 +24499,7 @@ video {
       document.getElementById(btn)?.addEventListener('click', () => document.getElementById(menu)?.click()));
     // Folding buttons slide toward the menu button: measured while shown.
     function measureHeaderFold() {
-      if (!document.body.classList.contains('lobby-open')) return;
+      if (!document.body.classList.contains('lobby-open') || document.body.classList.contains('mode-page')) return;
       const menu = document.getElementById('hamburgerBtn')?.getBoundingClientRect();
       document.querySelectorAll('.hdr-home-only').forEach((b) => {
         const r = b.getBoundingClientRect();
@@ -31728,6 +31731,7 @@ video {
 
     document.getElementById('leaveGameBtn').addEventListener('click', async () => {
       if (state.spectating) { stopSpectating(); return; }
+      if (document.body.matches('.lobby-open.mode-page') && document.getElementById('multiLobbyRoom')?.classList.contains('hidden') !== false) { document.getElementById('modePageBack').click(); return; }
       if (document.body.classList.contains('lobby-open')) { exitAppFromHome(); return; }
       if (tutorialActive) { document.getElementById('tutorialSkipBtn')?.click(); return; }
       const midMatch = state.phase === 'PLAY' || state.phase === 'SWAP';
@@ -31745,7 +31749,7 @@ video {
         : midMatch
           ? "Your progress in it will be lost and you can't rejoin."
           : "Return to the home screen.";
-      if (await shConfirm({ title: midMatch ? 'Leave this match?' : 'Back to home?', text: msg, yes: midMatch ? 'Leave' : 'Go Home', no: 'Stay' })) {
+      if (await shConfirm({ title: midMatch ? 'Forfeit this match?' : 'Back to home?', text: msg, yes: midMatch ? 'Forfeit' : 'Go Home', no: 'Stay' })) {
         if (midMatch) { Health.matchLeft(); Health.save(); weeklyStreakBroken(); }
         forgetJoinedRoom();
         localStorage.removeItem('shithead_game_state');
@@ -32166,6 +32170,7 @@ video {
       const lobby = document.getElementById('lobbyScreen');
       function setModePage(m) {
         const card = m && cards[indexOf(m)];
+        document.body.classList.toggle('mode-page', !!card);
         if (!m || !card) { delete lobby.dataset.modePage; lobby.classList.remove('mode-page-open'); return; }
         lobby.dataset.modePage = m;
         lobby.classList.add('mode-page-open');
