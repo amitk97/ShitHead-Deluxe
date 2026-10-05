@@ -8286,6 +8286,37 @@ async function runDevTestSuite() {
     assertTrue(document.getElementById('shopModal').classList.contains('hidden') && !document.getElementById('themesModal').classList.contains('hidden'), 'Opens Custom');
     document.getElementById('themesModal').classList.add('hidden');
   });
+  await test('Carousel (v323–v324): « » jump to the ends, a held › repeats, side cards are solid, Shortcut pins are saved', async () => {
+    const lobby = document.getElementById('lobbyScreen'), wasHidden = lobby.classList.contains('hidden');
+    let savedPins = null; try { savedPins = localStorage.getItem('shithead_home_pins'); } catch (e) {}
+    try {
+      lobby.classList.remove('hidden'); setModePage('');
+      const foc = () => document.querySelector('.mc-card.mc-focus')?.dataset.mcMode;
+      document.querySelector('[data-mc-jump="last"]').click();
+      assertEqual(foc(), 'pin2', '» goes to the last card');
+      assertTrue(document.querySelector('[data-mc-jump="last"]').disabled && document.querySelector('[data-mc-step="1"]').disabled, 'and the forward buttons turn off');
+      document.querySelector('[data-mc-jump="first"]').click();
+      assertEqual(foc(), 'pin1', '« goes to the first card');
+      const next = document.querySelector('[data-mc-step="1"]');
+      next.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }));
+      await new Promise((r) => setTimeout(r, 650));
+      next.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      assertTrue(Number(document.querySelector('.mc-card.mc-focus').dataset.mc) >= 3, 'Holding › keeps turning');
+      const side = document.querySelector('.mc-card:not(.mc-focus):not(.mc-gone)');
+      assertEqual(getComputedStyle(side).opacity, '1', 'Side cards are fully opaque');
+      document.querySelector('[data-mc-jump="first"]').click();
+      document.querySelector('.mc-card[data-mc="1"]').click();
+      const pick = document.querySelector('#infoPop [data-mc-pin="mercy"]');
+      assertTrue(!!pick, 'The middle Shortcut offers the coming modes');
+      pick.click();
+      assertEqual(JSON.parse(localStorage.getItem('shithead_home_pins')).pin1, 'mercy', 'The pin is saved');
+      assertTrue(/No Mercy/.test(document.querySelector('.mc-card[data-mc="1"]').textContent), 'and the card shows it');
+    } finally {
+      try { if (savedPins == null) localStorage.removeItem('shithead_home_pins'); else localStorage.setItem('shithead_home_pins', savedPins); } catch (e) {}
+      hideInfoPop(); if (wasHidden) lobby.classList.add('hidden');
+    }
+  });
+
   await test('Mode pages (v320): Gauntlet has its own page; Play Computer no longer shows the old Gauntlet row', () => {
     const lobby = document.getElementById('lobbyScreen'), wasHidden = lobby.classList.contains('hidden');
     try {
