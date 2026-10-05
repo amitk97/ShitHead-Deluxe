@@ -30,9 +30,8 @@ const AVATAR_TONES = {
   turtley:   ['#065f46', '#03140c', '#c9a14a']
 };
 
-// § Header + Home shell behaviour (owner, v317)
-// One consolidated enhancement owns the responsive header, Home mode persistence,
-// fixed Home mode-card sizing and the game-styled Exit confirmation.
+// § Header + Home shell behaviour (owner, v318)
+// Compact, non-overlapping header with a small SH mark away from Home.
 (() => {
   const HOME_MODE_KEY = 'shithead_home_mode';
 
@@ -60,6 +59,20 @@ const AVATAR_TONES = {
     right.classList.add('home-header-right');
     header.style.zIndex = '110';
 
+    // Replace the wide wordmark inside the centre slot with the saved compact SH
+    // mark. The original children stay in the DOM, hidden, so no other branding
+    // code is broken by this responsive header enhancement.
+    [...logo.children].forEach(el => el.classList.add('header-wide-brand-hidden'));
+    let compactLogo = document.getElementById('headerCompactShLogo');
+    if (!compactLogo) {
+      compactLogo = document.createElement('img');
+      compactLogo.id = 'headerCompactShLogo';
+      compactLogo.src = 'docs/brand/sh-logo-square-2048.png';
+      compactLogo.alt = 'SH';
+      compactLogo.draggable = false;
+      logo.appendChild(compactLogo);
+    }
+
     const makeHeaderButton = (id, label, icon, targetId, visibility = 'always') => {
       let btn = document.getElementById(id);
       if (!btn) {
@@ -75,27 +88,32 @@ const AVATAR_TONES = {
       }
       btn.classList.toggle('header-home-only', visibility === 'home');
       btn.classList.toggle('header-away-only', visibility === 'away');
+      btn.classList.toggle('header-persistent', visibility === 'always');
       return btn;
     };
 
     const challenges = makeHeaderButton('homeHeaderChallengesBtn', 'Challenges', 'ui-challenges', 'menuChallengesBtn', 'home');
     const custom = makeHeaderButton('homeHeaderCustomBtn', 'Custom', 'ui-personalise', 'menuThemesBtn');
-    const settings = makeHeaderButton('homeHeaderSettingsBtn', 'Settings', 'ui-settings', 'menuSettingsBtn', 'home');
+    const settings = makeHeaderButton('homeHeaderSettingsBtn', 'Settings', 'ui-settings', 'menuSettingsBtn');
     const guide = makeHeaderButton('homeHeaderGuideBtn', 'Guide', 'ui-guide', 'menuGuideBtn', 'home');
-    const friends = makeHeaderButton('homeHeaderFriendsBtn', 'Friends', 'ui-friends', 'menuFriendsBtn', 'away');
 
-    // Requested physical grouping:
-    // Home: Exit · Shop · Diamonds/value-or-room · Custom · Profile · Mailbox ·
-    //       Challenges · Guide · Settings · Menu
-    // Away: Exit · Shop · Diamonds/value-or-room · Logo · Custom · Friends ·
-    //       Profile · Mailbox · Menu
+    shop.classList.add('header-home-only');
+    menu.classList.add('header-persistent');
+    leaveBtn.classList.add('header-persistent');
+    diamonds.classList.add('header-persistent');
+    profile.classList.add('header-persistent');
+    inbox.classList.add('header-persistent');
+
+    // Exact owner order.
+    // Home: Exit · Shop · Diamonds/room · Custom · Profile · Mailbox ·
+    // Challenges · Guide · Settings · Menu
+    // Away: Exit · Diamonds/room · SH · Custom · Profile · Mailbox · Settings · Menu
     left.insertBefore(leaveBtn, left.firstChild);
     left.insertBefore(shop, diamonds);
     if (roomCode && roomCode.parentElement === left) left.insertBefore(diamonds, roomCode);
     else if (diamonds.parentElement !== left) left.appendChild(diamonds);
 
     right.appendChild(custom);
-    right.appendChild(friends);
     right.appendChild(profile);
     right.appendChild(inbox);
     right.appendChild(challenges);
@@ -106,8 +124,10 @@ const AVATAR_TONES = {
     const style = document.createElement('style');
     style.id = 'headerHomeShellStyles';
     style.textContent = `
-      :root { --home-head-btn:1.75rem; --header-gap:4px; --header-edge:4px; }
-      @media (min-width:768px) { :root { --home-head-btn:38px; --header-edge:8px; } }
+      :root { --home-head-btn:1.75rem; --header-gap:4px; --header-edge:4px; --sh-logo-size:32px; }
+      @media (min-width:768px) {
+        :root { --home-head-btn:38px; --header-edge:8px; --sh-logo-size:38px; }
+      }
 
       body > header {
         overflow:hidden;
@@ -122,86 +142,107 @@ const AVATAR_TONES = {
         flex-wrap:nowrap !important;
         gap:var(--header-gap) !important;
       }
-      .home-header-logo {
-        min-width:0 !important;
-        flex:1 1 auto !important;
-        max-width:180px;
-        overflow:hidden;
-        opacity:1;
-        transform:translateX(0) scale(1);
-        transition:max-width .28s cubic-bezier(.2,.8,.2,1), opacity .2s ease,
-          transform .28s cubic-bezier(.2,.8,.2,1), padding .28s cubic-bezier(.2,.8,.2,1) !important;
-      }
-      .home-header-logo > * { max-width:100%; }
+      .home-header-left { flex:0 0 auto !important; }
+      .home-header-right { flex:0 0 auto !important; }
 
-      /* Home/away-only icons never pop. They fade, slide a little toward Menu and
-         collapse their width so neighbours glide into the freed space. */
-      .header-home-only,
-      .header-away-only {
-        display:flex !important;
-        flex:0 0 var(--home-head-btn);
-        width:var(--home-head-btn);
-        min-width:0;
-        overflow:hidden;
-        transform-origin:right center;
-        transition:max-width .28s cubic-bezier(.2,.8,.2,1), opacity .18s ease,
-          transform .28s cubic-bezier(.2,.8,.2,1), margin-left .28s cubic-bezier(.2,.8,.2,1) !important;
-      }
-      body:not(.home-shell-active) .header-home-only,
-      body.home-shell-active .header-away-only {
-        max-width:0;
-        opacity:0;
-        pointer-events:none;
-        transform:translateX(10px) scale(.88);
-        margin-left:calc(var(--home-head-btn) * -1);
-      }
-      body.home-shell-active .header-home-only,
-      body:not(.home-shell-active) .header-away-only {
-        max-width:var(--home-head-btn);
-        opacity:1;
-        pointer-events:auto;
-        transform:translateX(0) scale(1);
-        margin-left:0;
-      }
-
+      /* Persistent controls never shrink into or under their neighbours. This is
+         especially important for Exit, which must remain a clean standalone hit target. */
+      .header-persistent,
       #leaveGameBtn,
-      #headerShopBtn {
-        display:flex !important;
-        flex:0 0 var(--home-head-btn);
+      #headerDiamondBtn,
+      #headerProfileBtn,
+      #headerInboxBtn,
+      #homeHeaderCustomBtn,
+      #homeHeaderSettingsBtn,
+      #hamburgerBtn {
+        flex-shrink:0 !important;
+        min-width:var(--home-head-btn);
       }
-      #headerDiamondBtn { display:flex !important; flex:0 0 auto; }
+      #leaveGameBtn {
+        display:flex !important;
+        flex:0 0 var(--home-head-btn) !important;
+        width:var(--home-head-btn) !important;
+        max-width:var(--home-head-btn) !important;
+        margin:0 !important;
+        position:relative;
+        z-index:3;
+        overflow:visible !important;
+      }
+      #headerDiamondBtn { display:flex !important; flex:0 0 auto !important; }
       body.header-room-code-active #headerDiamondCount { display:none !important; }
 
-      /* Home has no small header logo. */
+      .home-header-logo {
+        min-width:0 !important;
+        width:var(--sh-logo-size);
+        max-width:var(--sh-logo-size);
+        flex:0 0 var(--sh-logo-size) !important;
+        overflow:hidden;
+        opacity:1;
+        transform:translateX(0) scale(1);
+        transition:max-width .26s cubic-bezier(.2,.8,.2,1), width .26s cubic-bezier(.2,.8,.2,1),
+          flex-basis .26s cubic-bezier(.2,.8,.2,1), opacity .18s ease,
+          transform .26s cubic-bezier(.2,.8,.2,1), padding .26s cubic-bezier(.2,.8,.2,1) !important;
+      }
+      .home-header-logo .header-wide-brand-hidden { display:none !important; }
+      #headerCompactShLogo {
+        display:block;
+        width:var(--sh-logo-size);
+        height:var(--sh-logo-size);
+        object-fit:contain;
+        border-radius:8px;
+      }
       body.home-shell-active .home-header-logo {
-        flex:0 0 0 !important;
+        width:0 !important;
         max-width:0 !important;
+        flex-basis:0 !important;
         opacity:0;
         padding-left:0 !important;
         padding-right:0 !important;
         pointer-events:none;
-        transform:translateX(10px) scale(.9);
+        transform:translateX(8px) scale(.88);
       }
-      body.home-shell-active .home-header-left,
-      body.home-shell-active .home-header-right { flex:0 1 auto !important; }
 
-      /* On genuinely tiny screens only, Shop and Guide are the first fallback.
-         Their full-size buttons disappear into Menu rather than being shrunk. */
+      /* Home-only icons collapse without negative margins. Removing their actual
+         flex width avoids the overlap visible in the previous header while still
+         giving the transition a smooth fade/slide. */
+      .header-home-only {
+        display:flex !important;
+        flex:0 0 var(--home-head-btn);
+        width:var(--home-head-btn);
+        max-width:var(--home-head-btn);
+        min-width:0;
+        overflow:hidden;
+        opacity:1;
+        transform:translateX(0) scale(1);
+        transform-origin:right center;
+        transition:max-width .24s cubic-bezier(.2,.8,.2,1), width .24s cubic-bezier(.2,.8,.2,1),
+          flex-basis .24s cubic-bezier(.2,.8,.2,1), opacity .16s ease,
+          transform .24s cubic-bezier(.2,.8,.2,1) !important;
+      }
+      body:not(.home-shell-active) .header-home-only {
+        flex-basis:0 !important;
+        width:0 !important;
+        max-width:0 !important;
+        opacity:0;
+        pointer-events:none;
+        transform:translateX(10px) scale(.88);
+      }
+
+      /* Home hides the centre SH mark and uses the freed width. */
+      body.home-shell-active > header { justify-content:center !important; }
+      body.home-shell-active .home-header-left,
+      body.home-shell-active .home-header-right { flex:0 0 auto !important; }
+
+      /* Smallest-screen fallback: preserve every hit target and move only Shop +
+         Guide into the already-present hamburger menu. */
       body.header-tiny-home.home-shell-active #headerShopBtn,
       body.header-tiny-home.home-shell-active #homeHeaderGuideBtn {
+        flex-basis:0 !important;
+        width:0 !important;
         max-width:0 !important;
-        width:var(--home-head-btn);
-        min-width:0 !important;
-        flex-basis:var(--home-head-btn) !important;
         opacity:0 !important;
         pointer-events:none !important;
-        overflow:hidden !important;
         transform:translateX(10px) scale(.88) !important;
-        margin-left:calc(var(--home-head-btn) * -1) !important;
-      }
-      #headerShopBtn {
-        transition:max-width .28s cubic-bezier(.2,.8,.2,1), opacity .18s ease,
-          transform .28s cubic-bezier(.2,.8,.2,1), margin-left .28s cubic-bezier(.2,.8,.2,1) !important;
       }
 
       #leaveGameBtn { order:1; }
@@ -218,9 +259,9 @@ const AVATAR_TONES = {
       body.home-shell-active #hamburgerBtn { order:70; }
 
       body:not(.home-shell-active) #homeHeaderCustomBtn { order:10; }
-      body:not(.home-shell-active) #homeHeaderFriendsBtn { order:20; }
-      body:not(.home-shell-active) #headerProfileBtn { order:30; }
-      body:not(.home-shell-active) #headerInboxBtn { order:40; }
+      body:not(.home-shell-active) #headerProfileBtn { order:20; }
+      body:not(.home-shell-active) #headerInboxBtn { order:30; }
+      body:not(.home-shell-active) #homeHeaderSettingsBtn { order:40; }
       body:not(.home-shell-active) #hamburgerBtn { order:50; }
 
       #lobbySpeedBox { display:none !important; }
@@ -256,11 +297,9 @@ const AVATAR_TONES = {
       #headerExitConfirm .hex-btn:hover { filter:brightness(1.14); }
 
       body.reduce-motion .header-home-only,
-      body.reduce-motion .header-away-only,
-      body.reduce-motion #headerShopBtn,
       body.reduce-motion .home-header-logo { transition:none !important; }
       @media (prefers-reduced-motion:reduce) {
-        .header-home-only, .header-away-only, #headerShopBtn, .home-header-logo { transition:none !important; }
+        .header-home-only, .home-header-logo { transition:none !important; }
         #headerExitConfirm { backdrop-filter:none; }
       }
     `;
@@ -275,46 +314,39 @@ const AVATAR_TONES = {
     const isVisible = el => !!el && !el.classList.contains('hidden');
     const visiblePanel = () => pagePanels.find(isVisible) || null;
 
-    function visibleWidth(el) {
-      if (!el || getComputedStyle(el).display === 'none') return 0;
+    function elementOuterWidth(el) {
+      if (!el) return 0;
+      const cs = getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0 && el.getBoundingClientRect().width < 0.5) return 0;
       const r = el.getBoundingClientRect();
-      return r.width > 0.5 ? r.width : 0;
+      return Math.max(0, r.width);
     }
 
     function fitHeaderSpacing() {
       const onHome = document.body.classList.contains('home-shell-active');
-      const edge = window.innerWidth >= 768 ? 8 : 4;
-      const maxGap = window.innerWidth >= 768 ? 8 : 5;
+      const edge = window.innerWidth >= 768 ? 8 : 3;
+      const maxGap = window.innerWidth >= 768 ? 9 : 5;
       document.body.classList.remove('header-tiny-home');
       header.style.setProperty('--header-edge', `${edge}px`);
       header.style.setProperty('--header-gap', '0px');
 
       requestAnimationFrame(() => {
-        const leftEls = [...left.children].filter(el => visibleWidth(el) > 0);
-        const rightEls = [...right.children].filter(el => visibleWidth(el) > 0);
-        const logoWidth = onHome ? 0 : Math.max(56, Math.min(180, visibleWidth(logo)));
-        let controls = [...leftEls, ...rightEls];
-        let fixed = controls.reduce((sum, el) => sum + visibleWidth(el), 0) + logoWidth;
-        let gaps = Math.max(0, controls.length + (onHome ? 0 : 1));
-        let available = Math.max(0, header.clientWidth - edge * 2);
+        const allVisible = [...left.children, ...right.children].filter(el => elementOuterWidth(el) > .5);
+        const logoWidth = onHome ? 0 : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sh-logo-size')) || 32;
+        const available = Math.max(0, header.clientWidth - edge * 2);
+        let fixed = allVisible.reduce((sum, el) => sum + elementOuterWidth(el), 0) + logoWidth;
+        let gapSlots = Math.max(0, allVisible.length + (onHome ? -1 : 0));
 
         if (onHome && fixed > available) {
           document.body.classList.add('header-tiny-home');
-          controls = [...left.children, ...right.children].filter(el => visibleWidth(el) > 0);
-          fixed = controls.reduce((sum, el) => sum + visibleWidth(el), 0);
-          gaps = Math.max(0, controls.length - 1);
+          // Measure again after Shop + Guide have collapsed.
+          requestAnimationFrame(() => fitHeaderSpacing());
+          return;
         }
 
         const free = Math.max(0, available - fixed);
-        const gap = gaps ? Math.max(0, Math.min(maxGap, free / gaps)) : 0;
+        const gap = gapSlots ? Math.max(0, Math.min(maxGap, free / gapSlots)) : 0;
         header.style.setProperty('--header-gap', `${gap.toFixed(2)}px`);
-
-        if (!onHome) {
-          const nonLogoFree = Math.max(0, available - controls.reduce((sum, el) => sum + visibleWidth(el), 0) - gap * gaps);
-          logo.style.maxWidth = `${Math.max(56, Math.min(180, nonLogoFree))}px`;
-        } else {
-          logo.style.maxWidth = '';
-        }
       });
     }
 
@@ -343,6 +375,8 @@ const AVATAR_TONES = {
     window.addEventListener('resize', () => requestAnimationFrame(fitHeaderSpacing));
     if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(fitHeaderSpacing)).observe(header);
 
+    // Keep Exit visible on Home, pages and matches. Older code still toggles the
+    // hidden class on it, so immediately undo that without altering its click logic.
     new MutationObserver(() => {
       if (leaveBtn.classList.contains('hidden')) leaveBtn.classList.remove('hidden');
     }).observe(leaveBtn, { attributes:true, attributeFilter:['class'] });
@@ -472,6 +506,39 @@ const AVATAR_TONES = {
         });
       }
     }, true);
+
+    // Swap only the two top hamburger quick buttons the owner asked to reverse.
+    // This is intentionally scoped to the drawer and preserves every other row.
+    function swapDrawerShopAndChallenges() {
+      const drawer = document.getElementById('hamburgerDrawer');
+      if (!drawer) return;
+      const buttons = [...drawer.querySelectorAll('button')];
+      const shopBtn = buttons.find(btn => /shop/i.test(`${btn.id} ${btn.dataset.tip || ''} ${btn.getAttribute('aria-label') || ''} ${btn.textContent || ''}`));
+      const challengeBtn = buttons.find(btn => /challenge/i.test(`${btn.id} ${btn.dataset.tip || ''} ${btn.getAttribute('aria-label') || ''} ${btn.textContent || ''}`));
+      if (!shopBtn || !challengeBtn || shopBtn.parentElement !== challengeBtn.parentElement) return;
+      const parent = shopBtn.parentElement;
+      const children = [...parent.children];
+      const si = children.indexOf(shopBtn);
+      const ci = children.indexOf(challengeBtn);
+      if (si < 0 || ci < 0 || si < ci) return; // desired order is Shop before Challenges
+      const marker = document.createComment('swap-header-quick');
+      parent.replaceChild(marker, shopBtn);
+      parent.replaceChild(shopBtn, challengeBtn);
+      parent.replaceChild(challengeBtn, marker);
+    }
+    const drawer = document.getElementById('hamburgerDrawer');
+    if (drawer) {
+      swapDrawerShopAndChallenges();
+      let drawerSwapQueued = false;
+      new MutationObserver(() => {
+        if (drawerSwapQueued) return;
+        drawerSwapQueued = true;
+        requestAnimationFrame(() => {
+          drawerSwapQueued = false;
+          swapDrawerShopAndChallenges();
+        });
+      }).observe(drawer, { childList:true, subtree:true });
+    }
 
     setTimeout(() => {
       if (!lobby.classList.contains('hidden') && modeMap[savedMode]) modeMap[savedMode].click();
