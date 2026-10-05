@@ -7724,7 +7724,7 @@ async function runDevTestSuite() {
       document.getElementById('themesModal').classList.add('hidden');
     }
     ['modeSingleBtn', 'modeMultiBtn', 'modeRankedBtn'].forEach(id => assertTrue(!!document.querySelector(`#${id} [data-mode-tip]`), `${id} has its ⓘ`));
-    assertTrue(Object.keys(MODE_TIPS).length === 3, 'Each mode explains itself');
+    assertTrue(['bots', 'online', 'ranked', 'gauntlet', 'more'].every(k => MODE_TIPS[k]), 'Each mode explains itself (v329: Gauntlet and More Modes too)');
     assertTrue(TUTORIAL_HOLD_READ_MS >= 2000 && TUTORIAL_HOLD_READ_MS <= 3000, 'The hold step waits 2-3s so the card can be read');
     ['avatar-lvl-burn-king', 'avatar-lvl-chaos-jester', 'avatar-lvl-the-shithead'].forEach(id => assertTrue(AVATAR_ART[id].animated && /av-gx-glint/.test(AVATAR_ART[id].art), `${id} is animated`));
     assertTrue(!AVATAR_ART['avatar-lvl-rookie-rogue'].animated, 'the others stay still');
@@ -8293,6 +8293,10 @@ async function runDevTestSuite() {
     const focused = () => Number(track.querySelector('.mc-focus').dataset.mc);
     const mouse = (type, x, target = track) => target.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX: x, clientY: 100 }));
     const pause = ms => new Promise(r => setTimeout(r, ms));
+    // An earlier test may have left the home screen hidden; the carousel only draws while it shows.
+    const lobby = document.getElementById('lobbyScreen'), wasHidden = lobby.classList.contains('hidden');
+    lobby.classList.remove('hidden');
+    try {
     setModePage('');
     document.querySelector('[data-mc-jump="first"]').click();
     mouse('mousedown', 300); mouse('mousemove', 80, window); mouse('mouseup', 80, window);
@@ -8315,6 +8319,7 @@ async function runDevTestSuite() {
     const side = track.querySelector('.mc-card:not(.mc-focus):not(.mc-gone)');
     assertEqual(getComputedStyle(side).opacity, '1', 'Visible cards are opaque');
     assertTrue(getComputedStyle(side).boxShadow !== 'none', 'Side cards also have depth');
+    } finally { if (wasHidden) lobby.classList.add('hidden'); }
   });
 
   await test('Carousel (v323–v324): « » jump to the ends, a held › repeats, side cards are solid, Shortcut pins are saved', async () => {

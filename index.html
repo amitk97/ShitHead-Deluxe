@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v329 (ShitHead-Deluxe-251) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v330 (ShitHead-Deluxe-252) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -32503,7 +32503,9 @@ video {
         track.style.removeProperty('--mc-dx');
       };
       const startDrag = (e) => {
-        if (e.button || down || (e.type === 'mousedown' && performance.now() < ignoreMouseUntil)) return;
+        if (e.button || (e.type === 'mousedown' && performance.now() < ignoreMouseUntil)) return;
+        // A new press replaces one whose release was never seen (let go outside the window).
+        if (down) { stopDragHold(); resetPull(); down = null; }
         if (e.type === 'mousedown') e.preventDefault();
         down = { x: e.clientX, y: e.clientY, dx: 0, live: false, dir: 0, repeated: false, pointerId: e.pointerId };
         swiped = false;
