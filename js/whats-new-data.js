@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v323: [[ '🧭', 'Each mode card has its own colour, and new buttons jump to the first or last card.' ], [ '📌', 'Pin a coming mode (2 vs 2, Puzzles, Randomiser, Multiple Decks or No Mercy) to a Shortcut card, ready for when it launches.', WN_KEY ]],
       v322: [[ '🧭', 'On a mode page, Exit takes you straight back to the modes and the logo returns home. In a game, Exit asks before you forfeit. Google sign-in now works on shithead-deluxe.web.app.' ]],
       v321: [[ '🃏', 'Opening a mode flips its card over and spreads it across the screen into the mode page.' ]],
       v320: [[ '📄', 'Each mode now opens its own page with a Back button: Play Computer, Play Friends, Ranked, the Gauntlet, and a More Modes preview.', WN_KEY ]],

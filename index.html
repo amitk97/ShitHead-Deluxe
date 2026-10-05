@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v322 (ShitHead-Deluxe-247) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v323 (ShitHead-Deluxe-248) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -527,14 +527,15 @@
     .mc-card.mc-focus:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-tone) 22%, transparent), 0 16px 30px rgba(0,0,0,.5); }
     .mc-card.mc-focus { border-color: color-mix(in srgb, var(--mc-tone) 55%, #1e293b); }
     .mc-card.mc-gone { pointer-events: none; }
-    .mc-arrow { position: absolute; top: 50%; z-index: 20; width: 32px; height: 32px; margin-top: -16px; border-radius: 999px;
-      border: 1px solid #334155; background: rgba(2,6,23,.75); color: #cbd5e1; display: none; align-items: center; justify-content: center;
-      cursor: pointer; transition: background-color .16s, border-color .16s, opacity .16s; }
-    .mc-arrow:hover { background: #1e293b; border-color: #fbbf24; }
+    /* Controls (v323): « first, ‹ previous, › next, » last. */
+    .mc-controls { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 2px; }
+    .mc-controls .mc-arrow[data-mc-step="-1"] { margin-right: 22px; }
+    .mc-arrow { width: 36px; height: 36px; border-radius: 999px; border: 1px solid #334155; background: #0b1428; color: #cbd5e1;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color .16s, border-color .16s, opacity .16s; }
+    .mc-arrow:hover:not(:disabled) { background: #1e293b; border-color: #fbbf24; }
+    .mc-arrow:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
     .mc-arrow:disabled { opacity: .3; cursor: default; }
     .mc-arrow svg { width: 16px; height: 16px; }
-    .mc-arrow[data-mc-step="-1"] { left: 22px; } .mc-arrow[data-mc-step="1"] { right: 22px; }
-    @media (hover: hover) and (pointer: fine) { .mc-arrow { display: flex; } }
     .mc-card:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
     .mc-card[aria-pressed="true"] { border-color: var(--mc-tone); background: color-mix(in srgb, var(--mc-tone) 13%, #0b1428);
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-tone) 18%, transparent), 0 14px 28px rgba(0,0,0,.45); }
@@ -551,6 +552,12 @@
     body.reduce-motion .mc-badge { animation: none; }
     .mc-card.mc-empty { background: transparent; border-style: dashed; border-color: #334155; }
     .mc-card.mc-empty .mc-name { color: #94a3b8; }
+    .mc-card.mc-pinned { border-style: dashed; }
+    .mc-pin-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px; }
+    .mc-pin-list button { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; border: 1px solid #334155;
+      background: #0b1428; color: #e2e8f0; font: inherit; font-size: 12px; font-weight: 700; text-align: left; cursor: pointer; }
+    .mc-pin-list button:hover, .mc-pin-list button[aria-pressed="true"] { border-color: #fbbf24; }
+    .mc-pin-list svg { width: 18px; height: 18px; flex: none; color: #94a3b8; }
     body.reduce-motion .mc-card { transition: none; }
     #homeTutorialRow { margin-top: 10px; }
     @media (min-width: 700px) { .mc-card { width: 132px; height: 160px; margin-left: -66px; } #modeCarousel .mc-track { height: 186px; } }
@@ -5754,15 +5761,19 @@ video {
         <div id="modeCarousel" role="group" aria-label="Game modes">
           <div class="mc-track">
             <button type="button" class="mc-card mc-empty" data-mc="1" data-mc-mode="pin1" style="--mc-tone:#64748b" aria-pressed="false"><span class="mc-num" aria-hidden="true">1</span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" stroke-dasharray="3 3"/><path d="M12 9v6M9 12h6"/></svg><span class="mc-name">Shortcut</span><span class="mc-sub">Pin a mode</span></button>
-            <button type="button" class="mc-card" data-mc="2" data-mc-mode="more" style="--mc-tone:#fbbf24" aria-pressed="false"><span class="mc-num" aria-hidden="true">2</span><span class="mc-badge">New</span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><path d="M17 14v6M14 17h6"/></svg><span class="mc-name">More Modes</span><span class="mc-sub">Coming soon</span></button>
-            <button type="button" class="mc-card" data-mc="3" data-mc-mode="gauntlet" style="--mc-tone:#f87171" aria-pressed="false"><span class="mc-num" aria-hidden="true">3</span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg><span class="mc-name">Gauntlet</span><span class="mc-sub">5 bots in a row</span></button>
-            <button type="button" class="mc-card" data-mc="4" data-mc-mode="cpu" style="--mc-tone:#f59e0b" aria-pressed="false"><span class="mc-num" aria-hidden="true">4</span><svg class="ic mc-ic" aria-hidden="true"><use href="#ic-bot"/></svg><span class="mc-name">Play Computer</span><span class="mc-sub">1-3 bots</span></button>
-            <button type="button" class="mc-card" data-mc="5" data-mc-mode="ranked" style="--mc-tone:#a78bfa" aria-pressed="false"><span class="mc-num" aria-hidden="true">5</span><svg class="ic mc-ic" aria-hidden="true"><use href="#ic-ranked"/></svg><span class="mc-name">Ranked</span><span class="mc-sub">Matched 1v1</span></button>
-            <button type="button" class="mc-card" data-mc="6" data-mc-mode="friends" style="--mc-tone:#38bdf8" aria-pressed="false"><span class="mc-num" aria-hidden="true">6</span><svg class="ic mc-ic" aria-hidden="true"><use href="#ic-friends4"/></svg><span class="mc-name">Play Friends</span><span class="mc-sub">Host or join</span></button>
+            <button type="button" class="mc-card" data-mc="2" data-mc-mode="more" style="--mc-tone:#a855f7" aria-pressed="false"><span class="mc-num" aria-hidden="true">2</span><span class="mc-badge">New</span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><path d="M17 14v6M14 17h6"/></svg><span class="mc-name">More Modes</span><span class="mc-sub">Coming soon</span></button>
+            <button type="button" class="mc-card" data-mc="3" data-mc-mode="gauntlet" style="--mc-tone:#f97316" aria-pressed="false"><span class="mc-num" aria-hidden="true">3</span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg><span class="mc-name">Gauntlet</span><span class="mc-sub">Conquer the bots</span></button>
+            <button type="button" class="mc-card" data-mc="4" data-mc-mode="cpu" style="--mc-tone:#22d3ee" aria-pressed="false"><span class="mc-num" aria-hidden="true">4</span><svg class="ic mc-ic" aria-hidden="true"><use href="#ic-bot"/></svg><span class="mc-name">Play Computer</span><span class="mc-sub">1-3 bots</span></button>
+            <button type="button" class="mc-card" data-mc="5" data-mc-mode="ranked" style="--mc-tone:#fbbf24" aria-pressed="false"><span class="mc-num" aria-hidden="true">5</span><svg class="ic mc-ic" aria-hidden="true"><use href="#ic-ranked"/></svg><span class="mc-name">Ranked</span><span class="mc-sub">Matched 1v1</span></button>
+            <button type="button" class="mc-card" data-mc="6" data-mc-mode="friends" style="--mc-tone:#10b981" aria-pressed="false"><span class="mc-num" aria-hidden="true">6</span><svg class="ic mc-ic" aria-hidden="true"><use href="#ic-friends4"/></svg><span class="mc-name">Play Friends</span><span class="mc-sub">Host or join</span></button>
             <button type="button" class="mc-card mc-empty" data-mc="7" data-mc-mode="pin2" style="--mc-tone:#64748b" aria-pressed="false"><span class="mc-num" aria-hidden="true">7</span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" stroke-dasharray="3 3"/><path d="M12 9v6M9 12h6"/></svg><span class="mc-name">Shortcut</span><span class="mc-sub">Pin a mode</span></button>
           </div>
-          <button type="button" class="mc-arrow" data-mc-step="-1" aria-label="Previous mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
-          <button type="button" class="mc-arrow" data-mc-step="1" aria-label="Next mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+          <div class="mc-controls">
+            <button type="button" class="mc-arrow" data-mc-jump="first" aria-label="First mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6l-6 6 6 6M18 6l-6 6 6 6"/></svg></button>
+            <button type="button" class="mc-arrow" data-mc-step="-1" aria-label="Previous mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+            <button type="button" class="mc-arrow" data-mc-step="1" aria-label="Next mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+            <button type="button" class="mc-arrow" data-mc-jump="last" aria-label="Last mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l6 6-6 6M12 6l6 6-6 6"/></svg></button>
+          </div>
         </div>
         <div id="homeModeGrid" class="grid grid-cols-3 gap-2">
           <!-- Each mode button is three fixed rows: icon, name, subtitle. -->
@@ -32131,6 +32142,8 @@ video {
       if (!track) return;
       const cards = [...track.querySelectorAll('.mc-card')];
       const arrows = [...box.querySelectorAll('.mc-arrow')];
+      const atStart = arrows.filter((b) => b.dataset.mcStep === '-1' || b.dataset.mcJump === 'first');
+      const atEnd = arrows.filter((b) => b.dataset.mcStep === '1' || b.dataset.mcJump === 'last');
       const PANEL = { cpu: 'singleOptions', gauntlet: 'singleOptions', friends: 'multiOptions', ranked: 'rankedOptions' };
       const SWITCH = { singleOptions: 'modeSingleBtn', multiOptions: 'modeMultiBtn', rankedOptions: 'modeRankedBtn' };
       const indexOf = (mode) => Math.max(0, cards.findIndex((c) => c.dataset.mcMode === mode));
@@ -32155,8 +32168,8 @@ video {
           const lit = PANEL[c.dataset.mcMode] === shownPanel() && (c.dataset.mcMode === chosen || PANEL[chosen] !== shownPanel());
           c.setAttribute('aria-pressed', lit ? 'true' : 'false');
         });
-        arrows[0].disabled = focus === 0;
-        arrows[1].disabled = focus === cards.length - 1;
+        atStart.forEach((b) => { b.disabled = focus === 0; });
+        atEnd.forEach((b) => { b.disabled = focus === cards.length - 1; });
       }
       function turnTo(i) {
         const next = Math.max(0, Math.min(cards.length - 1, i));
@@ -32192,8 +32205,48 @@ video {
           paint();
           enterModePage(card, m);
         } else if (m === 'more') enterModePage(card, 'more');
-        else showInfoPop(card, '<b>Shortcut</b><br>Soon you can pin another mode here.', { toggle: true });
+        else openPinPicker(card);
       }
+      // § Shortcut pins (v323): slots 1 and 7 hold one of the coming modes
+      // (localStorage shithead_home_pins = {pin1, pin2}). A placeholder: a
+      // pinned card only says it's coming soon until that mode launches.
+      const PIN_KEY = 'shithead_home_pins';
+      const PIN_MODES = {
+        twos: ['2 vs 2', 'M7 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM17 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM3 14a4 4 0 0 1 8 0M13 14a4 4 0 0 1 8 0M7 21v-3M17 21v-3'],
+        puzzles: ['Puzzles', 'M10 4a2 2 0 1 1 4 0v2h4v4h-2a2 2 0 1 0 0 4h2v4h-4v-2a2 2 0 1 0-4 0v2H6v-4h2a2 2 0 1 0 0-4H6V6h4z'],
+        random: ['Randomiser', 'M4 7h3l10 10h3M4 17h3l3-3M14 10l3-3h3M18 4l3 3-3 3M18 14l3 3-3 3'],
+        decks: ['Multiple Decks', 'M7 4h10a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM3 7v12a2 2 0 0 0 2 2h9'],
+        mercy: ['No Mercy', 'M12 3c4.4 0 8 3.1 8 7 0 2.4-1.3 4.4-3 5.6V19a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-3.4C5.3 14.4 4 12.4 4 10c0-3.9 3.6-7 8-7zM9 11h.01M15 11h.01']
+      };
+      const pinSvg = (d) => '<svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+      const emptyPinHtml = cards.find((c) => c.dataset.mcMode === 'pin1').innerHTML.replace(/<span class="mc-num"[^>]*>\d<\/span>/, '');
+      const readPins = () => { try { return JSON.parse(localStorage.getItem(PIN_KEY)) || {}; } catch (e) { return {}; } };
+      function paintPins() {
+        const pins = readPins();
+        cards.filter((c) => /^pin/.test(c.dataset.mcMode)).forEach((c) => {
+          const m = PIN_MODES[pins[c.dataset.mcMode]];
+          const num = '<span class="mc-num" aria-hidden="true">' + c.dataset.mc + '</span>';
+          c.innerHTML = num + (m ? pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Pinned · Soon</span>' : emptyPinHtml);
+          c.classList.toggle('mc-pinned', !!m);
+        });
+      }
+      function openPinPicker(card) {
+        const cur = readPins()[card.dataset.mcMode];
+        const rows = Object.entries(PIN_MODES).map(([id, [name, d]]) =>
+          '<button type="button" data-mc-pin="' + id + '" aria-pressed="' + (id === cur) + '">' + pinSvg(d) + name + '</button>').join('');
+        showInfoPop(card, '<b>' + (cur ? PIN_MODES[cur][0] + ' is coming soon' : 'Pin a mode here') + '</b><br>' +
+          (cur ? 'It opens from here when it launches. Pin another:' : 'It opens from here when it launches.') +
+          '<div class="mc-pin-list" data-mc-slot="' + card.dataset.mcMode + '">' + rows + (cur ? '<button type="button" data-mc-pin="">Clear this shortcut</button>' : '') + '</div>', { toggle: true });
+      }
+      document.addEventListener('click', (e) => {
+        const b = e.target.closest('#infoPop [data-mc-pin]');
+        if (!b) return;
+        const pins = readPins(), slot = b.closest('[data-mc-slot]').dataset.mcSlot;
+        if (b.dataset.mcPin) pins[slot] = b.dataset.mcPin; else delete pins[slot];
+        try { localStorage.setItem(PIN_KEY, JSON.stringify(pins)); } catch (err) {}
+        hideInfoPop(); paintPins(); Haptics.vibrate([15]);
+      });
+      paintPins();
       // § Card expand (v321): the middle card flips (edge-on at the half-way
       // point), grows to fill the screen as the page's background, the page
       // is switched underneath once it covers the screen, then the cover fades.
@@ -32262,7 +32315,7 @@ video {
         const i = cards.indexOf(card);
         if (i === focus) open(card); else turnTo(i);
       });
-      arrows.forEach((b) => b.addEventListener('click', () => turnTo(focus + Number(b.dataset.mcStep))));
+      arrows.forEach((b) => b.addEventListener('click', () => turnTo(b.dataset.mcJump ? (b.dataset.mcJump === 'first' ? 0 : cards.length - 1) : focus + Number(b.dataset.mcStep))));
       // Swipe (touch or a mouse drag): 40px turns one card, a long flick two.
       let down = null;
       track.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; swiped = false; });
