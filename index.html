@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v325 (ShitHead-Deluxe-250) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v326 (ShitHead-Deluxe-251) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -620,8 +620,10 @@
       background: color-mix(in srgb, var(--mc-tone) 13%, #0b1428); backface-visibility: hidden; }
     .mc-expand-face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
     .mc-expand .mc-num { position: absolute; top: 8px; left: 10px; font-size: 11px; font-weight: 800; color: #64748b; }
-    .mc-expand .mc-ic { width: 40px; height: 40px; color: var(--mc-tone); }
-    .mc-expand .mc-name { font-size: 14px; font-weight: 900; } .mc-expand .mc-sub { font-size: 11px; font-weight: 600; color: #94a3b8; }
+    .mc-expand .mc-ic { width: 52px; height: 52px; padding: 7px; box-sizing: border-box; border-radius: 16px; color: var(--mc-tone);
+      background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--mc-tone) 34%, transparent), color-mix(in srgb, var(--mc-tone) 12%, transparent) 70%);
+      filter: drop-shadow(0 0 6px color-mix(in srgb, var(--mc-tone) 60%, transparent)); }
+    .mc-expand .mc-name { font-size: 14px; font-weight: 900; color: #fff; } .mc-expand .mc-sub { font-size: 11px; font-weight: 600; color: #94a3b8; }
     .mc-expand.mc-expand-back { background: #0f172a; border-color: color-mix(in srgb, var(--mc-tone) 40%, #1e293b); }
     .mc-expand.mc-expand-back .mc-expand-face { display: none; }
     /* Exit / leave confirm (shConfirm): the game's own dialog, never confirm(). */

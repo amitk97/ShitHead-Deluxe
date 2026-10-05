@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v326: [[ '🃏', 'The card that flips open into a mode page now matches the new card look.' ]],
       v325: [[ '📄', 'The More Modes page shows each coming mode with its own icon, and no longer shows the last mode you opened underneath.' ]],
       v324: [[ '🧭', 'The mode cards are solid and spread wider, the middle one glows in its colour, and they follow your finger with a flick. Hold an arrow to keep turning, or use the arrow keys.' ]],
       v323: [[ '🧭', 'Each mode card has its own colour, and new buttons jump to the first or last card.' ], [ '📌', 'Pin a coming mode (2 vs 2, Puzzles, Randomiser, Multiple Decks or No Mercy) to a Shortcut card, ready for when it launches.', WN_KEY ]],
