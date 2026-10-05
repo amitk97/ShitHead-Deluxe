@@ -145,7 +145,6 @@ const AVATAR_TONES = {
         gap:2px !important;
       }
       body.home-shell-active .home-header-left { justify-content:flex-start !important; }
-      body.home-shell-active .home-header-right { justify-content:flex-end !important; }
 
       /* In a hosted Friends room the six-digit room code takes the count's place,
          while the Diamond icon itself remains in exactly the same header position. */
@@ -241,4 +240,221 @@ const AVATAR_TONES = {
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initHomeShellPolish, { once:true });
   else initHomeShellPolish();
+})();
+
+// § Header exit / back navigation + Guide shortcut (owner, v315)
+// The Exit control is now always present. On Home it exits the app/site after a
+// game-styled confirmation; on a page it acts as Back; in a live match it asks
+// with the same game-styled confirmation before delegating to the existing leave
+// logic. The existing leave logic remains the single source of truth for cleanup.
+(() => {
+  function initHeaderExitNavigation() {
+    const header = document.querySelector('body > header');
+    const lobby = document.getElementById('lobbyScreen');
+    const leaveBtn = document.getElementById('leaveGameBtn');
+    const diamonds = document.getElementById('headerDiamondBtn');
+    const diamondCount = document.getElementById('headerDiamondCount');
+    const roomCode = document.getElementById('roomCodeBadge');
+    const shop = document.getElementById('headerShopBtn');
+    const inbox = document.getElementById('headerInboxBtn');
+    const menu = document.getElementById('hamburgerBtn');
+    if (!header || !lobby || !leaveBtn || !diamonds || !inbox || !menu) return;
+
+    // Keep the shared header visible above full-screen pages/panels. Only the
+    // dedicated confirmation scrim sits above it.
+    header.style.zIndex = '110';
+
+    // The Diamond pill is the Shop entry point, so the separate cart button is
+    // redundant in the tighter header. The Diamond icon itself never disappears.
+    shop?.classList.remove('home-only-header');
+
+    const right = [...header.children].filter(el => el.tagName === 'DIV')[2];
+    let guide = document.getElementById('homeHeaderGuideBtn');
+    if (!guide) {
+      guide = document.createElement('button');
+      guide.id = 'homeHeaderGuideBtn';
+      guide.type = 'button';
+      guide.className = 'home-only-header relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below';
+      guide.style.width = '1.75rem';
+      guide.dataset.tip = 'Guide';
+      guide.setAttribute('aria-label', 'Guide');
+      guide.innerHTML = '<svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg>';
+      guide.addEventListener('click', () => document.getElementById('menuGuideBtn')?.click());
+    }
+    right?.insertBefore(guide, menu);
+
+    const style = document.createElement('style');
+    style.id = 'headerExitNavigationStyles';
+    style.textContent = `
+      /* Requested Home order is Exit · Diamonds/room · Challenges · Custom ·
+         Settings · Profile · Mailbox · Guide · Menu. The Diamond pill opens Shop,
+         so a second Shop icon is intentionally removed. */
+      #headerShopBtn { display:none !important; }
+      #leaveGameBtn { display:flex !important; flex:0 0 var(--home-head-btn,1.75rem); }
+      #headerDiamondBtn { display:flex !important; flex:0 0 auto; }
+      body.header-room-code-active #headerDiamondCount { display:none !important; }
+
+      #headerExitConfirm { position:fixed; inset:0; z-index:140; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(2,6,23,.86); backdrop-filter:blur(8px); }
+      #headerExitConfirm.hidden { display:none !important; }
+      #headerExitConfirm .hex-card { width:min(340px,calc(100vw - 32px)); border:2px solid #f59e0b; border-radius:18px; background:#020617; box-shadow:0 22px 60px rgba(0,0,0,.65); padding:18px; text-align:center; }
+      #headerExitConfirm .hex-icon { width:42px; height:42px; margin:0 auto 10px; }
+      #headerExitConfirm .hex-title { color:#f8fafc; font-size:15px; font-weight:900; letter-spacing:.04em; text-transform:uppercase; }
+      #headerExitConfirm .hex-copy { margin:8px 0 15px; color:#94a3b8; font-size:11px; font-weight:650; line-height:1.45; }
+      #headerExitConfirm .hex-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+      #headerExitConfirm .hex-btn { min-height:40px; border-radius:11px; border:1px solid #475569; background:#1e293b; color:#e2e8f0; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+      #headerExitConfirm .hex-btn.confirm { border-color:#be123c; background:#4c0519; color:#fda4af; }
+      #headerExitConfirm .hex-btn:hover { filter:brightness(1.14); }
+      body.reduce-motion #headerExitConfirm { backdrop-filter:none; }
+    `;
+    document.head.appendChild(style);
+
+    // Force the intended order without changing any control dimensions.
+    const left = [...header.children].filter(el => el.tagName === 'DIV')[0];
+    if (left) {
+      left.insertBefore(leaveBtn, left.firstChild);
+      left.insertBefore(diamonds, roomCode || null);
+    }
+    const settings = document.getElementById('homeHeaderSettingsBtn');
+    const challenges = document.getElementById('homeHeaderChallengesBtn');
+    const custom = document.getElementById('homeHeaderCustomBtn');
+    const profile = document.getElementById('headerProfileBtn');
+    if (right) {
+      if (challenges) right.insertBefore(challenges, profile);
+      if (custom) right.insertBefore(custom, profile);
+      if (settings) right.insertBefore(settings, profile);
+      right.insertBefore(inbox, guide);
+      right.insertBefore(guide, menu);
+    }
+
+    function buildConfirm() {
+      let modal = document.getElementById('headerExitConfirm');
+      if (modal) return modal;
+      modal = document.createElement('div');
+      modal.id = 'headerExitConfirm';
+      modal.className = 'hidden';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      modal.innerHTML = `<div class="hex-card"><svg class="hex-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-exit"/></svg><div id="headerExitTitle" class="hex-title">Leave ShitHead?</div><p id="headerExitCopy" class="hex-copy"></p><div class="hex-actions"><button type="button" id="headerExitCancel" class="hex-btn">Stay</button><button type="button" id="headerExitConfirmBtn" class="hex-btn confirm">Exit</button></div></div>`;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+      modal.querySelector('#headerExitCancel').addEventListener('click', () => modal.classList.add('hidden'));
+      return modal;
+    }
+
+    let approvedNativeExit = false;
+    let approvedConfirmUntil = 0;
+    const nativeConfirm = window.confirm.bind(window);
+    // The old match-leave handler uses confirm(). We keep its cleanup/ranked/
+    // series logic but suppress only that redundant browser prompt immediately
+    // after our in-game confirmation has already been accepted.
+    window.confirm = function(message) {
+      if (Date.now() < approvedConfirmUntil && /leave|return to the main menu/i.test(String(message || ''))) return true;
+      return nativeConfirm(message);
+    };
+
+    function showExitConfirm({ title, copy, confirmLabel, onConfirm }) {
+      const modal = buildConfirm();
+      modal.querySelector('#headerExitTitle').textContent = title;
+      modal.querySelector('#headerExitCopy').textContent = copy;
+      modal.querySelector('#headerExitConfirmBtn').textContent = confirmLabel;
+      modal.classList.remove('hidden');
+      const yes = modal.querySelector('#headerExitConfirmBtn');
+      yes.onclick = () => { modal.classList.add('hidden'); onConfirm(); };
+      requestAnimationFrame(() => modal.querySelector('#headerExitCancel')?.focus());
+    }
+
+    const pagePanels = [
+      'shopModal','challengesModal','themesModal','settingsModal','profileModal',
+      'rulesModal','friendsModal','leaderboardModal','tutorialHubScreen','statsModal',
+      'supportModal','inboxModal','levelLadderModal','matchStatsModal','historyGameModal'
+    ];
+    const visiblePanel = () => pagePanels.map(id => document.getElementById(id)).find(el => el && !el.classList.contains('hidden')) || null;
+
+    function closeCurrentPage(panel) {
+      if (!panel) return false;
+      const close = panel.querySelector('button[aria-label="Close"],button[id$="CloseBtn"],button[id$="Close"],.pp-x');
+      if (close) close.click();
+      else panel.classList.add('hidden');
+      return true;
+    }
+
+    function exitSite() {
+      // Browser tabs cannot always be programmatically closed. Prefer returning to
+      // the page that launched the game; a direct-opened tab gets a clean blank page.
+      if (history.length > 1) { history.back(); return; }
+      try { window.close(); } catch (e) {}
+      setTimeout(() => {
+        if (!document.hidden) location.replace('about:blank');
+      }, 120);
+    }
+
+    function isLiveMatch() {
+      return typeof state !== 'undefined' && (state.phase === 'PLAY' || state.phase === 'SWAP' || state.phase === 'FINISHED') && lobby.classList.contains('hidden');
+    }
+
+    leaveBtn.addEventListener('click', e => {
+      if (approvedNativeExit) { approvedNativeExit = false; return; }
+
+      const drawer = document.getElementById('hamburgerDrawer');
+      if (drawer?.classList.contains('open')) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (typeof closeHamburgerMenu === 'function') closeHamburgerMenu();
+        else drawer.classList.remove('open');
+        return;
+      }
+
+      const panel = visiblePanel();
+      if (panel) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        closeCurrentPage(panel);
+        return;
+      }
+
+      if (isLiveMatch()) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        const ranked = !!(typeof state !== 'undefined' && state.isRanked && state.isMultiplayer);
+        showExitConfirm({
+          title: ranked ? 'Leave Ranked Match?' : 'Leave Match?',
+          copy: ranked ? 'A bot will take your seat and this counts as a loss, so your rating can go down.' : 'Your progress in this match will be lost and you may not be able to rejoin.',
+          confirmLabel: 'Leave Match',
+          onConfirm: () => {
+            approvedNativeExit = true;
+            approvedConfirmUntil = Date.now() + 4000;
+            leaveBtn.click();
+          }
+        });
+        return;
+      }
+
+      // Home: a deliberate Exit means leaving the web app/site, not navigating
+      // to another in-game page.
+      if (!lobby.classList.contains('hidden')) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        showExitConfirm({
+          title: 'Exit ShitHead?',
+          copy: 'Leave the game and return to where you came from?',
+          confirmLabel: 'Exit Game',
+          onConfirm: exitSite
+        });
+      }
+    }, true);
+
+    function syncHeaderCode() {
+      const active = !!roomCode && !roomCode.classList.contains('hidden') && !!roomCode.textContent.trim();
+      document.body.classList.toggle('header-room-code-active', active);
+      diamondCount?.setAttribute('aria-hidden', active ? 'true' : 'false');
+    }
+    if (roomCode) new MutationObserver(syncHeaderCode).observe(roomCode, { attributes:true, childList:true, characterData:true, subtree:true });
+    syncHeaderCode();
+
+    // The old game code hides Exit in lobby/page transitions. This button is now
+    // global, so immediately restore it whenever that happens.
+    new MutationObserver(() => {
+      if (leaveBtn.classList.contains('hidden')) leaveBtn.classList.remove('hidden');
+    }).observe(leaveBtn, { attributes:true, attributeFilter:['class'] });
+    leaveBtn.classList.remove('hidden');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initHeaderExitNavigation, { once:true });
+  else initHeaderExitNavigation();
 })();
