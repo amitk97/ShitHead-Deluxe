@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-04-v313 (ShitHead-Deluxe-238) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v314 (ShitHead-Deluxe-239) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -481,6 +481,23 @@
       margin:0 auto 3px;
     }
     #deckThemeBody > button > span { display:block; width:100%; text-align:center; }
+    /* § Home layout (v314, owner: cleaner home screen). The header's small logo hides on the home
+       screen (the big one is in the panel); the four shortcuts are one quiet row at the foot of the
+       panel; the speed slider lives in Settings; every mode's options share one height, so switching
+       mode never moves the panel. */
+    body.lobby-open #navHomeLogoBtn { visibility:hidden; }
+    #homeQuickRow { border-top:1px solid rgba(51,65,85,.6); padding-top:8px; margin-top:12px; }
+    #homeQuickRow > .settings-head { display:none; }
+    #homeQuickRow #deckThemeBody { gap:4px; }
+    #homeQuickRow #deckThemeBody > button {
+      min-height:46px; border:0; background:transparent; color:#94a3b8;
+      font-size:10px; font-weight:800; letter-spacing:.02em; border-radius:10px;
+    }
+    #homeQuickRow #deckThemeBody > button:hover { background:rgba(30,41,59,.7); color:#e2e8f0; }
+    #homeQuickRow #deckThemeBody > button:focus-visible { outline:2px solid #fbbf24; outline-offset:1px; }
+    #homeQuickRow #deckThemeBody > button .pack-icon { width:22px; height:22px; margin-bottom:2px; }
+    #lobbySpeedBox { display:none !important; }
+    #multiOptions:not(:has(#multiLobbyRoom:not(.hidden))), #rankedOptions { min-height:var(--home-opts-h, 194px); }
     #modeSingleBtn, #modeMultiBtn, #modeRankedBtn {
       display:flex; flex-direction:column; align-items:center;
       justify-content:center; text-align:center;
@@ -5578,26 +5595,6 @@ video {
           <p id="nameRequiredMsg" class="hidden text-[10px] font-bold text-rose-400 mt-1">Please enter a nickname to continue.</p>
         </div>
 
-        <div>
-          <button class="settings-head w-full flex items-center justify-center relative text-xs font-black uppercase text-slate-400 mb-1" data-target="deckThemeBody" type="button" aria-label="Toggle lobby shortcuts">
-            <span aria-hidden="true">&nbsp;</span>
-            <span class="settings-chev absolute text-slate-400 text-[10px] transition-transform" style="right:0;">&#9660;</span>
-          </button>
-          <div id="deckThemeBody" class="grid grid-cols-4 gap-2">
-            <button id="lobbyProfileShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Profile">
-              <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-profile"/></svg><span>Profile</span>
-            </button>
-            <button id="lobbyPersonalisationShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Custom">
-              <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg><span>Custom</span>
-            </button>
-            <button id="lobbyGuideShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Guide &amp; Strategy">
-              <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg><span>Guide</span>
-            </button>
-            <button id="lobbySettingsShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Settings">
-              <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg><span>Settings</span>
-            </button>
-          </div>
-        </div>
 
         <div class="grid grid-cols-3 gap-2">
           <!-- Each mode button is three fixed rows: icon, name, subtitle. -->
@@ -5683,7 +5680,7 @@ video {
         <div id="multiOptions" class="hidden space-y-2 pt-1">
           <p class="mode-intro-line">Your own table with friends. <button type="button" class="mode-intro-link" data-mode-intro="online">How Play Friends works</button></p>
           <div class="flex gap-2">
-            <button id="hostRoomBtn" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 font-black tracking-wider rounded-xl text-slate-950 transition text-xs">HOST NEW ROOM</button>
+            <button id="hostRoomBtn" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 font-black tracking-wider rounded-xl text-slate-950 transition text-xs">HOST NEW ROOM</button>
           </div>
           <div class="relative flex py-1 items-center">
             <div class="flex-grow border-t border-slate-800"></div>
@@ -5790,6 +5787,28 @@ video {
             <div id="rankedOpponentName" class="flex items-center justify-center gap-2 flex-wrap text-sm font-black text-white">&nbsp;</div>
             <p class="text-[10px] text-slate-400 animate-pulse">Starting match&hellip;</p>
             <button id="rankedConnectedLeaveBtn" class="text-[9px] font-black uppercase tracking-wider text-slate-500 hover:text-rose-400 transition underline">Taking too long? Tap to leave</button>
+          </div>
+        </div>
+
+        <!-- Home quick links (v314): one quiet row at the foot of the panel. -->
+        <div id="homeQuickRow">
+          <button class="settings-head w-full flex items-center justify-center relative text-xs font-black uppercase text-slate-400 mb-1" data-target="deckThemeBody" type="button" aria-label="Toggle lobby shortcuts">
+            <span aria-hidden="true">&nbsp;</span>
+            <span class="settings-chev absolute text-slate-400 text-[10px] transition-transform" style="right:0;">&#9660;</span>
+          </button>
+          <div id="deckThemeBody" class="grid grid-cols-4 gap-2">
+            <button id="lobbyProfileShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Profile">
+              <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-profile"/></svg><span>Profile</span>
+            </button>
+            <button id="lobbyPersonalisationShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Custom">
+              <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-personalise"/></svg><span>Custom</span>
+            </button>
+            <button id="lobbyGuideShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Guide &amp; Strategy">
+              <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg><span>Guide</span>
+            </button>
+            <button id="lobbySettingsShortcut" type="button" class="py-1.5 text-[10px] rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 font-bold transition flex flex-col items-center justify-center gap-0.5" aria-label="Open Settings">
+              <svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg><span>Settings</span>
+            </button>
           </div>
         </div>
       </div>
@@ -31841,6 +31860,11 @@ video {
     }
     // Tablets/PCs zoom the panel up (CSS); never past what fits under the
     // header, so its top (the title) is never hidden and nothing scrolls.
+    // § Home layout (v314): Play Friends and Ranked take Vs Bots' height, so switching mode never moves the panel.
+    if (window.ResizeObserver) {
+      const homeOpts = document.getElementById('singleOptions');
+      if (homeOpts) new ResizeObserver(() => { if (homeOpts.offsetHeight) document.getElementById('lobbyScreen')?.style.setProperty('--home-opts-h', homeOpts.offsetHeight + 'px'); }).observe(homeOpts);
+    }
     function fitHomePanel() {
       const lobby = document.getElementById('lobbyScreen');
       const panel = lobby?.querySelector(':scope > div.bg-slate-900');
