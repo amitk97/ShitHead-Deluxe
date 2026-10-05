@@ -8285,20 +8285,25 @@ async function runDevTestSuite() {
     assertTrue(document.getElementById('shopModal').classList.contains('hidden') && !document.getElementById('themesModal').classList.contains('hidden'), 'Opens Custom');
     document.getElementById('themesModal').classList.add('hidden');
   });
-  await test('Gauntlet button: beside the unlock bar while one shows, otherwise centred across the row', () => {
-    const wrap = document.getElementById('difficultyProgressWrap'), row = document.querySelector('.gauntlet-row');
-    const lobby = document.getElementById('lobbyScreen'), wasHidden = lobby.classList.contains('hidden'), wasBar = wrap.classList.contains('hidden');
+  await test('Mode pages (v320): Gauntlet has its own page; Play Computer no longer shows the old Gauntlet row', () => {
+    const lobby = document.getElementById('lobbyScreen'), wasHidden = lobby.classList.contains('hidden');
     try {
-      lobby.classList.remove('hidden'); document.getElementById('modeSingleBtn').click();
-      wrap.classList.remove('hidden');
-      const grid = row.parentElement.getBoundingClientRect();
-      assertTrue(row.getBoundingClientRect().width < grid.width * 0.6, 'Half width beside the unlock bar');
-      wrap.classList.add('hidden');
-      const r = row.getBoundingClientRect(), b = document.getElementById('gauntletBtn').getBoundingClientRect(), g = row.parentElement.getBoundingClientRect();
-      assertTrue(Math.abs(r.width - g.width) < 2, 'The row spans the grid');
-      const groupMid = (b.left + document.getElementById('gauntletInfo').getBoundingClientRect().right) / 2;
-      assertTrue(Math.abs(groupMid - (g.left + g.width / 2)) < 3 && b.width > g.width * 0.55, 'Centred, with a longer button', [groupMid, g.left + g.width / 2, b.width]);
-    } finally { wrap.classList.toggle('hidden', wasBar); if (wasHidden) lobby.classList.add('hidden'); }
+      lobby.classList.remove('hidden');
+      setModePage('');
+      assertEqual(getComputedStyle(document.getElementById('singleOptions')).display, 'none', 'Home shows the carousel, not the options');
+      document.getElementById('modeSingleBtn').click(); setModePage('cpu');
+      assertEqual(getComputedStyle(document.querySelector('.gauntlet-row')).display, 'none', 'No Gauntlet row on the Play Computer page');
+      assertTrue(isShownOnScreen(document.getElementById('startSingleBtn')), 'Start Game is on the Play Computer page');
+      setModePage('gauntlet');
+      assertTrue(isShownOnScreen(document.getElementById('gauntletPageStart')), 'The Gauntlet page has its own start button');
+      assertEqual(getComputedStyle(document.getElementById('singleOptions')).display, 'none', 'and not the bot options');
+      let opened = false; const real = openGauntletWelcome;
+      document.getElementById('gauntletBtn').removeEventListener('click', openGauntletWelcome);
+      document.getElementById('gauntletBtn').addEventListener('click', () => { opened = true; }, { once: true });
+      document.getElementById('gauntletPageStart').click();
+      document.getElementById('gauntletBtn').addEventListener('click', real);
+      assertTrue(opened, 'Open The Gauntlet opens the Gauntlet pop-up');
+    } finally { setModePage(''); if (wasHidden) lobby.classList.add('hidden'); }
   });
   await test('A 3 on the Pile: the label says what to beat ("Transparent - N")', () => {
     freshState({ discardPile: [makeCard('Q', '♦'), makeCard('3', '♣')] });

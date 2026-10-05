@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v319 (ShitHead-Deluxe-244) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-05-v320 (ShitHead-Deluxe-245) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -554,6 +554,48 @@
     body.reduce-motion .mc-card { transition: none; }
     #homeTutorialRow { margin-top: 10px; }
     @media (min-width: 700px) { .mc-card { width: 132px; height: 160px; margin-left: -66px; } #modeCarousel .mc-track { height: 186px; } }
+    /* § Mode pages (v320): home = logo, nickname, carousel, tutorial. A mode
+       opened from the carousel turns the panel into its page: a head with
+       Back, then that mode's options (Play Computer / Play Friends / Ranked
+       reuse their old panels; Gauntlet and More Modes have their own). */
+    #modePageHead, .mode-page-body { display: none; }
+    #lobbyScreen:not(.mode-page-open) :is(#singleOptions, #multiOptions, #rankedOptions) { display: none !important; }
+    #lobbyScreen.mode-page-open :is(#modeCarousel, #homeTutorialRow) { display: none !important; }
+    #lobbyScreen.mode-page-open .brand-logo-rendered, #lobbyScreen.mode-page-open .brand-subtitle { display: none; }
+    #lobbyScreen.mode-page-open #modePageHead { display: flex; }
+    #lobbyScreen:is([data-mode-page="cpu"], [data-mode-page="gauntlet"], [data-mode-page="more"]) #homeNameBlock { display: none; }
+    #lobbyScreen[data-mode-page="cpu"] .gauntlet-row { display: none !important; }
+    #lobbyScreen:is([data-mode-page="gauntlet"], [data-mode-page="more"]) #singleOptions { display: none !important; }
+    #lobbyScreen[data-mode-page="gauntlet"] #gauntletPage, #lobbyScreen[data-mode-page="more"] #moreModesPage { display: block; }
+    #modePageHead { align-items: center; gap: 12px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(51,65,85,.6); }
+    #modePageBack { width: 40px; height: 40px; flex: none; border-radius: 12px; border: 1px solid #334155; background: #0b1428; color: #e2e8f0;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color .16s, border-color .16s; }
+    #modePageBack:hover { background: #1e293b; border-color: #fbbf24; }
+    #modePageBack:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+    #modePageBack svg { width: 20px; height: 20px; }
+    #lobbyScreen:has(#multiLobbyRoom:not(.hidden)) #modePageBack { visibility: hidden; }
+    #modePageIcon { width: 44px; height: 44px; flex: none; border-radius: 13px; display: flex; align-items: center; justify-content: center;
+      color: var(--mp-tone, #f59e0b); background: color-mix(in srgb, var(--mp-tone, #f59e0b) 14%, #0b1428); }
+    #modePageIcon .mc-ic { width: 28px; height: 28px; }
+    .mph-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; text-align: left; }
+    #modePageTitle { font-size: 20px; font-weight: 900; color: #f8fafc; line-height: 1.15; }
+    #modePageSub { font-size: 12px; font-weight: 600; color: #94a3b8; }
+    .mp-box { background: rgba(2,6,23,.5); border: 1px solid #1e293b; border-radius: 14px; padding: 14px; text-align: left; }
+    .mp-lead { font-size: 13px; line-height: 1.5; color: #cbd5e1; margin: 0 0 10px; }
+    .mp-note { font-size: 12px; line-height: 1.45; color: #94a3b8; margin: 10px 0 0; }
+    .mp-facts, .mp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+    .mp-facts li { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 8px 10px; border-radius: 10px; background: #0b1428; }
+    .mp-facts b { color: #f8fafc; } .mp-facts span { color: #94a3b8; }
+    .mp-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #0b1428; }
+    .mp-row-text { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: #94a3b8; line-height: 1.4; }
+    .mp-row-text b { font-size: 14px; color: #f8fafc; }
+    .mp-soon { flex: none; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #fbbf24;
+      border: 1px solid rgba(251,191,36,.5); border-radius: 999px; padding: 3px 8px; }
+    .mp-go { margin-top: 10px; width: 100%; min-height: 48px; border: 0; border-radius: 14px; background: #059669; color: #020617;
+      font-weight: 900; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px;
+      cursor: pointer; transition: filter .16s, scale .16s; }
+    .mp-go:hover { filter: brightness(1.1); } .mp-go:active { scale: .97; }
+    .mp-go svg { width: 20px; height: 20px; }
     /* Exit / leave confirm (shConfirm): the game's own dialog, never confirm(). */
     #shConfirm { position: fixed; inset: 0; z-index: 350; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(2,6,23,.72); backdrop-filter: blur(3px); }
     #shConfirm.hidden { display: none; }
@@ -5679,7 +5721,13 @@ video {
       </div>
 
       <div class="space-y-2.5">
-        <div>
+        <!-- § Mode pages (v320): the head of an open mode's page. -->
+        <div id="modePageHead">
+          <button type="button" id="modePageBack" aria-label="Back to the modes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+          <span id="modePageIcon" aria-hidden="true"></span>
+          <span class="mph-text"><span id="modePageTitle"></span><span id="modePageSub"></span></span>
+        </div>
+        <div id="homeNameBlock">
           <div class="home-name-row">
             <label for="playerNameInput" class="home-name-label block text-xs font-black tracking-wider uppercase text-slate-400 text-center">Your Nickname</label>
             <button id="homeNameAvatar" type="button" class="home-name-avatar hidden" data-own-avatar="64" aria-label="Your profile"></button>
@@ -5897,6 +5945,33 @@ video {
             <div id="rankedOpponentName" class="flex items-center justify-center gap-2 flex-wrap text-sm font-black text-white">&nbsp;</div>
             <p class="text-[10px] text-slate-400 animate-pulse">Starting match&hellip;</p>
             <button id="rankedConnectedLeaveBtn" class="text-[9px] font-black uppercase tracking-wider text-slate-500 hover:text-rose-400 transition underline">Taking too long? Tap to leave</button>
+          </div>
+        </div>
+
+        <!-- Gauntlet page (v320) -->
+        <div id="gauntletPage" class="mode-page-body">
+          <div class="mp-box">
+            <p class="mp-lead">Beat bots in a row before your lives run out. Lose a game and you face the same bot again.</p>
+            <ul class="mp-facts">
+              <li><b>Easy</b><span>5 bots, 3 lives</span></li>
+              <li><b>Hard</b><span>5 bots, 2 lives · Lvl 30</span></li>
+              <li><b>Boss</b><span>3 Boss bots, 1 life · Lvl 50</span></li>
+            </ul>
+            <p class="mp-note">One mode a day. Your first clear of each earns an Avatar and a Frame.</p>
+          </div>
+          <button type="button" id="gauntletPageStart" class="mp-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg><span>Open The Gauntlet</span></button>
+        </div>
+        <!-- More Modes page (v320) -->
+        <div id="moreModesPage" class="mode-page-body">
+          <div class="mp-box">
+            <p class="mp-lead">New ways to play are on the way.</p>
+            <ul class="mp-list">
+              <li class="mp-row"><span class="mp-row-text"><b>2 vs 2</b><span>Team up with a partner. Your team wins when you are both out.</span></span><span class="mp-soon">Soon</span></li>
+              <li class="mp-row"><span class="mp-row-text"><b>Puzzles</b><span>A set table and one way to win. A new puzzle every week.</span></span><span class="mp-soon">Soon</span></li>
+              <li class="mp-row"><span class="mp-row-text"><b>Randomiser</b><span>Card powers are shuffled every match and shown before the deal.</span></span><span class="mp-soon">Soon</span></li>
+              <li class="mp-row"><span class="mp-row-text"><b>Multiple Decks</b><span>More decks shuffled together for bigger tables.</span></span><span class="mp-soon">Soon</span></li>
+              <li class="mp-row"><span class="mp-row-text"><b>No Mercy</b><span>Queens see hidden cards, no Jokers on a 4, and a King makes the next player take the bottom card.</span></span><span class="mp-soon">Soon</span></li>
+            </ul>
           </div>
         </div>
 
@@ -31911,6 +31986,7 @@ video {
       if (!document.body.classList.contains('lobby-open') && isShownOnScreen(document.getElementById('leaveGameBtn'))) return () => document.getElementById('leaveGameBtn').click();
       if (state.isMultiplayer && state.roomCode && state.isRanked) return () => {}; // a Ranked match is about to start
       if (state.isMultiplayer && state.roomCode && state.phase === 'LOBBY') return () => { if (confirm('Leave this room?')) leaveRoomAndReload(); };
+      if (document.body.classList.contains('lobby-open') && document.getElementById('lobbyScreen')?.classList.contains('mode-page-open')) return () => document.getElementById('modePageBack').click();
       return null;
     }
     const wantsBackGuard = () => !!topBackLayer() || !!screenBackAction();
@@ -32076,18 +32152,35 @@ video {
         audio.playCarouselSnap();
         return true;
       }
+      // § Mode pages (v320): '' = home (the carousel), else that mode's page.
+      const lobby = document.getElementById('lobbyScreen');
+      function setModePage(m) {
+        const card = m && cards[indexOf(m)];
+        if (!m || !card) { delete lobby.dataset.modePage; lobby.classList.remove('mode-page-open'); return; }
+        lobby.dataset.modePage = m;
+        lobby.classList.add('mode-page-open');
+        document.getElementById('modePageIcon').innerHTML = card.querySelector('.mc-ic').outerHTML;
+        document.getElementById('modePageIcon').style.setProperty('--mp-tone', card.style.getPropertyValue('--mc-tone'));
+        document.getElementById('modePageTitle').textContent = card.querySelector('.mc-name').textContent;
+        document.getElementById('modePageSub').textContent = m === 'more' ? 'Coming soon' : card.querySelector('.mc-sub').textContent;
+        lobby.scrollTop = 0;
+      }
+      window.setModePage = setModePage;
       function open(card) {
         const m = card.dataset.mcMode;
         Haptics.vibrate([15]);
         if (PANEL[m]) {
+          document.getElementById(SWITCH[PANEL[m]])?.click();
+          if (document.getElementById(PANEL[m])?.classList.contains('hidden')) return; // offline: the switch said why
           chosen = m;
           try { localStorage.setItem(HOME_MODE_KEY, m); } catch (e) {}
-          document.getElementById(SWITCH[PANEL[m]])?.click();
-          if (m === 'gauntlet') document.getElementById('gauntletBtn')?.click();
+          setModePage(m);
           paint();
-        } else if (m === 'more') showInfoPop(card, '<b>More modes</b><br>2 vs 2, Puzzles, Randomiser, Multiple Decks and No Mercy are on the way.', { toggle: true });
+        } else if (m === 'more') setModePage('more');
         else showInfoPop(card, '<b>Shortcut</b><br>Soon you can pin another mode here.', { toggle: true });
       }
+      document.getElementById('modePageBack').addEventListener('click', () => { setModePage(''); requestAnimationFrame(() => cards[focus].focus({ preventScroll: true })); });
+      document.getElementById('gauntletPageStart').addEventListener('click', () => document.getElementById('gauntletBtn')?.click());
       // Taps: a side card turns to the middle; the middle card opens.
       let swiped = false;
       track.addEventListener('click', (e) => {
@@ -32139,19 +32232,17 @@ video {
           if (el.classList.contains('hidden')) return;
           if (PANEL[chosen] !== id) chosen = id === 'singleOptions' ? 'cpu' : id === 'multiOptions' ? 'friends' : 'ranked';
           if (PANEL[cards[focus].dataset.mcMode] !== id) focus = indexOf(chosen);
+          if (id !== 'singleOptions') setModePage(chosen);
           paint();
         }).observe(el, { attributes: true, attributeFilter: ['class'] });
       });
       window.addEventListener('resize', paint);
-      // Start on the last mode opened (Play Computer the first time). Play
-      // Friends / Ranked open their options too, when there's a signal.
+      // Start on the home screen, centred on the last mode opened (Play
+      // Computer the first time), unless start-up already opened Play
+      // Friends or Ranked (Return To Ranked).
+      const startPanel = shownPanel();
+      if (startPanel !== 'singleOptions') { chosen = startPanel === 'multiOptions' ? 'friends' : 'ranked'; focus = indexOf(chosen); setModePage(chosen); }
       paint();
-      requestAnimationFrame(() => {
-        if (PANEL[chosen] !== 'singleOptions' && shownPanel() === 'singleOptions' && !(typeof isOffline === 'function' && isOffline())) {
-          document.getElementById(SWITCH[PANEL[chosen]])?.click();
-        }
-        paint();
-      });
     })();
     function fitHomePanel() {
       const lobby = document.getElementById('lobbyScreen');
