@@ -59,5 +59,8 @@ jobs:
           npm install --no-save --ignore-scripts playwright@1.55.0
           npx playwright install --with-deps chromium
 
+      - name: Home navigation and reference video
+        run: node tools/home-navigation-browser-test.js --require-video
+
       - name: Existing browser gameplay regression suite
         run: node tools/run-browser-tests.js

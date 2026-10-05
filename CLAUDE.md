@@ -1,5 +1,16 @@
 # ShitHead Deluxe
 
+## v328 — navigation and tutorial layout
+
+Native touchstart/move/end/cancel drive carousel swipes; desktop keeps mouse events and pen uses pointer events. Ignore emulated mouse input after touch. `.mc-card` is a keyboard-accessible container with a real `.mc-go` button: Go opens a mode page immediately; double-tapping the card also opens it. Single taps focus it. Pin redraws preserve their Go buttons.
+
+`resetHomeUI` closes registered panels and overlays, cancels carousel/matchmaking activity, clears both pageTrail and pageHiddenAt (draining pending observer records), and returns to the root home view. Logo navigation retains match/series leave safeguards; Home Exit confirms then shows `appClosingScreen` without unreliable window.close calls. Header layout changes are synchronous CSS, with no fold geometry measurement. Guests use the same `.xp-badge-home` markup/dimensions as signed-in players, with muted colours.
+
+`homeTutorialRow` is a shared grid: carousel controls above the compact tutorial button in column 1, native `homeTutorialVideo` in column 2. The video uses controls, playsinline, object-fit:contain and preload:none, and pauses when leaving Home. The owner-supplied VID-20261003-WA0017.mp4 is at `media/tutorial-reference.mp4` (web-optimised H.264/AAC, original 780×1688 dimensions, faststart). Its poster is a frame from the same clip; media is fetched only on play.
+
+
+Validation for v328: native Chromium touch gestures, swipe-and-hold/release, desktop mouse drag, direct Go and double-tap, logo panel/trail reset, Exit/Return, equal guest/signed-in badge geometry, synchronous header visibility, and exact tutorial/arrow alignment at 320/390/768/1440px passed. The supplied video also passed native playback and pause-on-navigation checks. Run `node tools/home-navigation-browser-test.js --require-video`; CI runs it before the general regression suite.
+
 ## v327 — carousel input and guest profile
 
 Desktop carousel uses explicit mouse down/move/up/leave; touch and pen use pointer events. A 30px horizontal drag steps once; holding beyond that threshold for 450ms repeats at 520ms until release or an end. No velocity projection. Cancel, blur, hidden tab and resize stop the hold; dragged clicks stay suppressed until the next press. Cards retain solid backgrounds and have shared soft shadows. Guest home avatar and LVL 1 remain visible in grey and open Sign In; signed-in cosmetics/level restore normally.
