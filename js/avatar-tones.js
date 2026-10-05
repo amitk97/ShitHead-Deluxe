@@ -30,15 +30,16 @@ const AVATAR_TONES = {
   turtley:   ['#065f46', '#03140c', '#c9a14a']
 };
 
-// § Home header + mode polish (owner, v314)
-// Loaded here because this tiny shared script already runs on every game page.
-// Everything is progressive DOM enhancement: no gameplay or Firebase state changes.
+// § Header + Home shell behaviour (owner, v316)
+// One consolidated enhancement owns the responsive header, Home mode persistence,
+// fixed Home mode-card sizing and the game-styled Exit confirmation.
 (() => {
   const HOME_MODE_KEY = 'shithead_home_mode';
 
-  function initHomeShellPolish() {
+  function initHeaderAndHomeShell() {
     const header = document.querySelector('body > header');
     const lobby = document.getElementById('lobbyScreen');
+    const leaveBtn = document.getElementById('leaveGameBtn');
     const shop = document.getElementById('headerShopBtn');
     const diamonds = document.getElementById('headerDiamondBtn');
     const diamondCount = document.getElementById('headerDiamondCount');
@@ -46,70 +47,111 @@ const AVATAR_TONES = {
     const profile = document.getElementById('headerProfileBtn');
     const inbox = document.getElementById('headerInboxBtn');
     const menu = document.getElementById('hamburgerBtn');
-    if (!header || !lobby || !shop || !diamonds || !profile || !inbox || !menu) return;
+    if (!header || !lobby || !leaveBtn || !shop || !diamonds || !profile || !inbox || !menu) return;
 
     const headerParts = [...header.children].filter(el => el.tagName === 'DIV');
     const left = headerParts[0];
     const logo = headerParts[1];
     const right = headerParts[2];
-    left?.classList.add('home-header-left');
-    logo?.classList.add('home-header-logo');
-    right?.classList.add('home-header-right');
+    if (!left || !logo || !right) return;
 
-    const makeHeaderButton = (id, label, icon, targetId) => {
+    left.classList.add('home-header-left');
+    logo.classList.add('home-header-logo');
+    right.classList.add('home-header-right');
+    header.style.zIndex = '110';
+
+    const makeHeaderButton = (id, label, icon, targetId, transient = false) => {
       let btn = document.getElementById(id);
-      if (btn) return btn;
-      btn = document.createElement('button');
-      btn.id = id;
-      btn.type = 'button';
-      btn.className = 'home-only-header relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below';
-      btn.style.width = '1.75rem';
-      btn.dataset.tip = label;
-      btn.setAttribute('aria-label', label);
-      btn.innerHTML = `<svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#${icon}"/></svg>`;
-      btn.addEventListener('click', () => {
-        const target = document.getElementById(targetId);
-        if (target) target.click();
-      });
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = id;
+        btn.type = 'button';
+        btn.className = 'relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below';
+        btn.style.width = '1.75rem';
+        btn.dataset.tip = label;
+        btn.setAttribute('aria-label', label);
+        btn.innerHTML = `<svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#${icon}"/></svg>`;
+        btn.addEventListener('click', () => document.getElementById(targetId)?.click());
+      }
+      btn.classList.toggle('header-home-transient', transient);
       return btn;
     };
 
-    // Home order: Shop · Diamonds/value (or room code) · Challenges · Custom ·
-    // Settings · Profile · Mailbox · Menu. Existing controls retain their exact
-    // button/icon sizes; only the gaps collapse a little on narrow phones.
-    shop.classList.add('home-only-header');
-    const challenges = makeHeaderButton('homeHeaderChallengesBtn', 'Challenges', 'ui-challenges', 'menuChallengesBtn');
-    const custom = makeHeaderButton('homeHeaderCustomBtn', 'Custom', 'ui-personalise', 'menuThemesBtn');
-    const settings = makeHeaderButton('homeHeaderSettingsBtn', 'Settings', 'ui-settings', 'menuSettingsBtn');
-    right.insertBefore(challenges, profile);
-    right.insertBefore(custom, profile);
-    right.insertBefore(settings, profile);
+    const challenges = makeHeaderButton('homeHeaderChallengesBtn', 'Challenges', 'ui-challenges', 'menuChallengesBtn', true);
+    const custom = makeHeaderButton('homeHeaderCustomBtn', 'Custom', 'ui-personalise', 'menuThemesBtn', false);
+    const settings = makeHeaderButton('homeHeaderSettingsBtn', 'Settings', 'ui-settings', 'menuSettingsBtn', false);
+    const guide = makeHeaderButton('homeHeaderGuideBtn', 'Guide', 'ui-guide', 'menuGuideBtn', true);
+
+    // Home-only controls collapse away once the player leaves Home. Custom,
+    // Profile, Mailbox and Settings remain because they are part of the compact
+    // non-Home header too.
+    shop.classList.add('header-home-transient');
+    menu.classList.add('header-home-transient');
+
+    // Physical grouping: Home reads
+    // Exit · Shop · Diamonds/value-or-room · Challenges · Custom · Settings ·
+    // Profile · Mailbox · Guide · Menu.
+    left.insertBefore(leaveBtn, left.firstChild);
+    left.insertBefore(shop, diamonds);
+    if (roomCode && roomCode.parentElement === left) left.insertBefore(diamonds, roomCode);
+    else if (!diamonds.parentElement || diamonds.parentElement !== left) left.appendChild(diamonds);
+
+    right.appendChild(challenges);
+    right.appendChild(custom);
+    right.appendChild(settings);
+    right.appendChild(profile);
+    right.appendChild(inbox);
+    right.appendChild(guide);
+    right.appendChild(menu);
 
     const style = document.createElement('style');
-    style.id = 'homeShellPolishStyles';
+    style.id = 'headerHomeShellStyles';
     style.textContent = `
       :root { --home-head-btn:1.75rem; }
       @media (min-width:768px) { :root { --home-head-btn:38px; } }
 
-      /* Home-only shortcuts physically collapse toward the hamburger when leaving
-         Home. Their matching rows are already in the drawer, so the motion reads
-         as the shortcuts returning to Menu rather than abruptly disappearing. */
-      #headerShopBtn.home-only-header,
-      .home-only-header {
+      /* Global header layout: no wrapping or overlap. The centre logo is allowed
+         to use the remaining width off Home; button hit-boxes keep their size. */
+      body > header {
+        overflow:hidden;
+        flex-wrap:nowrap !important;
+      }
+      .home-header-left,
+      .home-header-right {
+        min-width:0 !important;
+        flex-wrap:nowrap !important;
+      }
+      .home-header-logo {
+        min-width:0 !important;
+        flex:1 1 auto !important;
+        max-width:min(180px, calc(100vw - 214px));
+        overflow:hidden;
+        opacity:1;
+        transform:translateX(0) scale(1);
+        transition:max-width .26s cubic-bezier(.2,.8,.2,1), opacity .18s ease,
+          transform .26s cubic-bezier(.2,.8,.2,1), padding .26s cubic-bezier(.2,.8,.2,1) !important;
+      }
+      .home-header-logo > * { max-width:100%; }
+
+      /* Home-only icons fade, slide and collapse toward Menu instead of popping
+         out. The negative margin removes their layout footprint only after their
+         width has visually collapsed, so neighbouring icons glide into place. */
+      .header-home-transient {
         display:flex !important;
         flex:0 0 var(--home-head-btn);
+        width:var(--home-head-btn);
         max-width:0;
+        min-width:0;
         opacity:0;
         overflow:hidden;
         pointer-events:none;
-        transform:translateX(18px) scale(.88);
+        transform:translateX(12px) scale(.86);
         transform-origin:right center;
         margin-left:calc(var(--home-head-btn) * -1);
-        transition:max-width .24s var(--ease-soft,ease), opacity .18s ease,
-          transform .24s var(--ease-soft,ease), margin-left .24s var(--ease-soft,ease) !important;
+        transition:max-width .26s cubic-bezier(.2,.8,.2,1), opacity .17s ease,
+          transform .26s cubic-bezier(.2,.8,.2,1), margin-left .26s cubic-bezier(.2,.8,.2,1) !important;
       }
-      body.home-shell-active #headerShopBtn.home-only-header,
-      body.home-shell-active .home-only-header {
+      body.home-shell-active .header-home-transient {
         max-width:var(--home-head-btn);
         opacity:1;
         pointer-events:auto;
@@ -117,46 +159,64 @@ const AVATAR_TONES = {
         margin-left:0;
       }
 
-      .home-header-logo {
-        max-width:220px;
-        opacity:1;
-        overflow:hidden;
-        transition:max-width .24s var(--ease-soft,ease), opacity .16s ease,
-          transform .24s var(--ease-soft,ease), padding .24s var(--ease-soft,ease);
+      #leaveGameBtn {
+        display:flex !important;
+        flex:0 0 var(--home-head-btn);
       }
+      #headerDiamondBtn {
+        display:flex !important;
+        flex:0 0 auto;
+      }
+      body.header-room-code-active #headerDiamondCount { display:none !important; }
+
+      /* Home has no small header logo, allowing the ten requested controls to use
+         the full width without shrinking their button boxes. */
       body.home-shell-active .home-header-logo {
-        max-width:0;
+        flex:0 0 0 !important;
+        max-width:0 !important;
         opacity:0;
         padding-left:0 !important;
         padding-right:0 !important;
         pointer-events:none;
-        transform:translateX(14px) scale(.9);
+        transform:translateX(10px) scale(.9);
       }
       body.home-shell-active > header {
         justify-content:center !important;
-        gap:2px !important;
-        padding-left:4px !important;
-        padding-right:4px !important;
+        gap:1px !important;
+        padding-left:2px !important;
+        padding-right:2px !important;
       }
       body.home-shell-active .home-header-left,
       body.home-shell-active .home-header-right {
-        flex:0 0 auto !important;
-        min-width:0 !important;
-        gap:2px !important;
+        flex:0 1 auto !important;
+        gap:1px !important;
       }
-      body.home-shell-active .home-header-left { justify-content:flex-start !important; }
 
-      /* In a hosted Friends room the six-digit room code takes the count's place,
-         while the Diamond icon itself remains in exactly the same header position. */
-      body.home-shell-active.home-shell-room #headerDiamondCount { display:none !important; }
+      /* Explicit ordering. Off Home the transient items collapse, leaving exactly:
+         Exit · Diamonds/value-or-room · logo · Custom · Profile · Mailbox · Settings. */
+      #leaveGameBtn { order:1; }
+      #headerShopBtn { order:2; }
+      #headerDiamondBtn { order:3; }
+      #roomCodeBadge { order:4; }
 
-      /* Speed is already available in Settings and in-game, so it no longer takes
-         up decision space before a match. */
+      body.home-shell-active #homeHeaderChallengesBtn { order:10; }
+      body.home-shell-active #homeHeaderCustomBtn { order:20; }
+      body.home-shell-active #homeHeaderSettingsBtn { order:30; }
+      body.home-shell-active #headerProfileBtn { order:40; }
+      body.home-shell-active #headerInboxBtn { order:50; }
+      body.home-shell-active #homeHeaderGuideBtn { order:60; }
+      body.home-shell-active #hamburgerBtn { order:70; }
+
+      body:not(.home-shell-active) #homeHeaderCustomBtn { order:10; }
+      body:not(.home-shell-active) #headerProfileBtn { order:20; }
+      body:not(.home-shell-active) #headerInboxBtn { order:30; }
+      body:not(.home-shell-active) #homeHeaderSettingsBtn { order:40; }
+
+      /* Speed belongs in Settings/in-match controls, not the Home decision flow. */
       #lobbySpeedBox { display:none !important; }
 
-      /* One stable mode-card footprint: switching Bots / Friends / Ranked no
-         longer recentres the entire Home panel. A joined/hosted room is the one
-         deliberate exception because its live player/rules controls need space. */
+      /* Stable Home mode-card footprint. A live Friends room can expand because
+         its player/rule controls genuinely need extra room. */
       #singleOptions, #multiOptions, #rankedOptions {
         box-sizing:border-box;
         height:220px;
@@ -171,132 +231,27 @@ const AVATAR_TONES = {
         min-height:220px;
       }
 
-      body.reduce-motion .home-only-header,
-      body.reduce-motion .home-header-logo { transition:none !important; }
-      @media (prefers-reduced-motion:reduce) {
-        .home-only-header, .home-header-logo { transition:none !important; }
+      #headerExitConfirm {
+        position:fixed;
+        inset:0;
+        z-index:140;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:18px;
+        background:rgba(2,6,23,.86);
+        backdrop-filter:blur(8px);
       }
-    `;
-    document.head.appendChild(style);
-
-    const blockingPanels = [
-      'shopModal','challengesModal','themesModal','settingsModal','profileModal',
-      'rulesModal','friendsModal','leaderboardModal','tutorialHubScreen','statsModal',
-      'supportModal','inboxModal','levelLadderModal'
-    ].map(id => document.getElementById(id)).filter(Boolean);
-    const drawer = document.getElementById('hamburgerDrawer');
-
-    const isVisible = el => !!el && !el.classList.contains('hidden');
-    const syncHeaderSurface = () => {
-      const lobbyVisible = !lobby.classList.contains('hidden');
-      const panelOpen = blockingPanels.some(isVisible) || !!drawer?.classList.contains('open');
-      const onHome = lobbyVisible && !panelOpen;
-      document.body.classList.toggle('home-shell-active', onHome);
-      const roomVisible = onHome && roomCode && !roomCode.classList.contains('hidden') && roomCode.textContent.trim();
-      document.body.classList.toggle('home-shell-room', !!roomVisible);
-      if (diamondCount) diamondCount.setAttribute('aria-hidden', roomVisible ? 'true' : 'false');
-    };
-    window.syncHomeShellHeader = syncHeaderSurface;
-
-    const observed = [lobby, roomCode, drawer, ...blockingPanels].filter(Boolean);
-    const observer = new MutationObserver(() => requestAnimationFrame(syncHeaderSurface));
-    observed.forEach(el => observer.observe(el, { attributes:true, attributeFilter:['class'], childList:el === roomCode, characterData:el === roomCode, subtree:el === roomCode }));
-    window.addEventListener('pageshow', syncHeaderSurface);
-    syncHeaderSurface();
-
-    // The four primary paths use the same green action language. Sign-in stays
-    // gold because it is account emphasis rather than starting/continuing play.
-    const hostRoom = document.getElementById('hostRoomBtn');
-    if (hostRoom) {
-      hostRoom.classList.remove('bg-amber-600','hover:bg-amber-500');
-      hostRoom.classList.add('bg-emerald-600','hover:bg-emerald-500');
-    }
-
-    // Persist only the top-level Home mode. Room/search state is intentionally
-    // not persisted here; existing reconnect/session logic owns that separately.
-    const modeMap = {
-      bots: document.getElementById('modeSingleBtn'),
-      friends: document.getElementById('modeMultiBtn'),
-      ranked: document.getElementById('modeRankedBtn')
-    };
-    Object.entries(modeMap).forEach(([mode, btn]) => {
-      btn?.addEventListener('click', () => {
-        try { localStorage.setItem(HOME_MODE_KEY, mode); } catch (e) {}
-      });
-    });
-
-    let savedMode = 'bots';
-    try {
-      const candidate = localStorage.getItem(HOME_MODE_KEY);
-      if (candidate && modeMap[candidate]) savedMode = candidate;
-    } catch (e) {}
-    // Let the main script finish attaching its own mode listeners first, then
-    // restore the player's last picker selection without changing game state.
-    setTimeout(() => {
-      if (!lobby.classList.contains('hidden') && modeMap[savedMode]) modeMap[savedMode].click();
-      syncHeaderSurface();
-    }, 0);
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initHomeShellPolish, { once:true });
-  else initHomeShellPolish();
-})();
-
-// § Header exit / back navigation + Guide shortcut (owner, v315)
-// The Exit control is now always present. On Home it exits the app/site after a
-// game-styled confirmation; on a page it acts as Back; in a live match it asks
-// with the same game-styled confirmation before delegating to the existing leave
-// logic. The existing leave logic remains the single source of truth for cleanup.
-(() => {
-  function initHeaderExitNavigation() {
-    const header = document.querySelector('body > header');
-    const lobby = document.getElementById('lobbyScreen');
-    const leaveBtn = document.getElementById('leaveGameBtn');
-    const diamonds = document.getElementById('headerDiamondBtn');
-    const diamondCount = document.getElementById('headerDiamondCount');
-    const roomCode = document.getElementById('roomCodeBadge');
-    const shop = document.getElementById('headerShopBtn');
-    const inbox = document.getElementById('headerInboxBtn');
-    const menu = document.getElementById('hamburgerBtn');
-    if (!header || !lobby || !leaveBtn || !diamonds || !inbox || !menu) return;
-
-    // Keep the shared header visible above full-screen pages/panels. Only the
-    // dedicated confirmation scrim sits above it.
-    header.style.zIndex = '110';
-
-    // The Diamond pill is the Shop entry point, so the separate cart button is
-    // redundant in the tighter header. The Diamond icon itself never disappears.
-    shop?.classList.remove('home-only-header');
-
-    const right = [...header.children].filter(el => el.tagName === 'DIV')[2];
-    let guide = document.getElementById('homeHeaderGuideBtn');
-    if (!guide) {
-      guide = document.createElement('button');
-      guide.id = 'homeHeaderGuideBtn';
-      guide.type = 'button';
-      guide.className = 'home-only-header relative h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below';
-      guide.style.width = '1.75rem';
-      guide.dataset.tip = 'Guide';
-      guide.setAttribute('aria-label', 'Guide');
-      guide.innerHTML = '<svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg>';
-      guide.addEventListener('click', () => document.getElementById('menuGuideBtn')?.click());
-    }
-    right?.insertBefore(guide, menu);
-
-    const style = document.createElement('style');
-    style.id = 'headerExitNavigationStyles';
-    style.textContent = `
-      /* Requested Home order is Exit · Diamonds/room · Challenges · Custom ·
-         Settings · Profile · Mailbox · Guide · Menu. The Diamond pill opens Shop,
-         so a second Shop icon is intentionally removed. */
-      #headerShopBtn { display:none !important; }
-      #leaveGameBtn { display:flex !important; flex:0 0 var(--home-head-btn,1.75rem); }
-      #headerDiamondBtn { display:flex !important; flex:0 0 auto; }
-      body.header-room-code-active #headerDiamondCount { display:none !important; }
-
-      #headerExitConfirm { position:fixed; inset:0; z-index:140; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(2,6,23,.86); backdrop-filter:blur(8px); }
       #headerExitConfirm.hidden { display:none !important; }
-      #headerExitConfirm .hex-card { width:min(340px,calc(100vw - 32px)); border:2px solid #f59e0b; border-radius:18px; background:#020617; box-shadow:0 22px 60px rgba(0,0,0,.65); padding:18px; text-align:center; }
+      #headerExitConfirm .hex-card {
+        width:min(340px,calc(100vw - 32px));
+        border:2px solid #f59e0b;
+        border-radius:18px;
+        background:#020617;
+        box-shadow:0 22px 60px rgba(0,0,0,.65);
+        padding:18px;
+        text-align:center;
+      }
       #headerExitConfirm .hex-icon { width:42px; height:42px; margin:0 auto 10px; }
       #headerExitConfirm .hex-title { color:#f8fafc; font-size:15px; font-weight:900; letter-spacing:.04em; text-transform:uppercase; }
       #headerExitConfirm .hex-copy { margin:8px 0 15px; color:#94a3b8; font-size:11px; font-weight:650; line-height:1.45; }
@@ -304,27 +259,75 @@ const AVATAR_TONES = {
       #headerExitConfirm .hex-btn { min-height:40px; border-radius:11px; border:1px solid #475569; background:#1e293b; color:#e2e8f0; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
       #headerExitConfirm .hex-btn.confirm { border-color:#be123c; background:#4c0519; color:#fda4af; }
       #headerExitConfirm .hex-btn:hover { filter:brightness(1.14); }
-      body.reduce-motion #headerExitConfirm { backdrop-filter:none; }
+
+      body.reduce-motion .header-home-transient,
+      body.reduce-motion .home-header-logo { transition:none !important; }
+      @media (prefers-reduced-motion:reduce) {
+        .header-home-transient, .home-header-logo { transition:none !important; }
+        #headerExitConfirm { backdrop-filter:none; }
+      }
     `;
     document.head.appendChild(style);
 
-    // Force the intended order without changing any control dimensions.
-    const left = [...header.children].filter(el => el.tagName === 'DIV')[0];
-    if (left) {
-      left.insertBefore(leaveBtn, left.firstChild);
-      left.insertBefore(diamonds, roomCode || null);
+    const pagePanelIds = [
+      'shopModal','challengesModal','themesModal','settingsModal','profileModal',
+      'rulesModal','friendsModal','leaderboardModal','tutorialHubScreen','statsModal',
+      'supportModal','inboxModal','levelLadderModal','matchStatsModal','historyGameModal'
+    ];
+    const pagePanels = pagePanelIds.map(id => document.getElementById(id)).filter(Boolean);
+    const isVisible = el => !!el && !el.classList.contains('hidden');
+    const visiblePanel = () => pagePanels.find(isVisible) || null;
+
+    function syncHeaderSurface() {
+      const lobbyVisible = !lobby.classList.contains('hidden');
+      const pageOpen = pagePanels.some(isVisible);
+      const onHome = lobbyVisible && !pageOpen;
+      document.body.classList.toggle('home-shell-active', onHome);
+
+      const codeActive = !!roomCode && !roomCode.classList.contains('hidden') && !!roomCode.textContent.trim();
+      document.body.classList.toggle('header-room-code-active', codeActive);
+      diamondCount?.setAttribute('aria-hidden', codeActive ? 'true' : 'false');
     }
-    const settings = document.getElementById('homeHeaderSettingsBtn');
-    const challenges = document.getElementById('homeHeaderChallengesBtn');
-    const custom = document.getElementById('homeHeaderCustomBtn');
-    const profile = document.getElementById('headerProfileBtn');
-    if (right) {
-      if (challenges) right.insertBefore(challenges, profile);
-      if (custom) right.insertBefore(custom, profile);
-      if (settings) right.insertBefore(settings, profile);
-      right.insertBefore(inbox, guide);
-      right.insertBefore(guide, menu);
+    window.syncHomeShellHeader = syncHeaderSurface;
+
+    const observer = new MutationObserver(() => requestAnimationFrame(syncHeaderSurface));
+    [lobby, roomCode, ...pagePanels].filter(Boolean).forEach(el => observer.observe(el, {
+      attributes:true,
+      attributeFilter:['class'],
+      childList:el === roomCode,
+      characterData:el === roomCode,
+      subtree:el === roomCode
+    }));
+    window.addEventListener('pageshow', syncHeaderSurface);
+
+    // Keep Exit global even though older game paths still add .hidden to it.
+    new MutationObserver(() => {
+      if (leaveBtn.classList.contains('hidden')) leaveBtn.classList.remove('hidden');
+    }).observe(leaveBtn, { attributes:true, attributeFilter:['class'] });
+    leaveBtn.classList.remove('hidden');
+
+    // Primary play/start language stays green everywhere.
+    const hostRoom = document.getElementById('hostRoomBtn');
+    if (hostRoom) {
+      hostRoom.classList.remove('bg-amber-600','hover:bg-amber-500');
+      hostRoom.classList.add('bg-emerald-600','hover:bg-emerald-500');
     }
+
+    // Persist the last top-level Home mode without persisting transient room/search state.
+    const modeMap = {
+      bots: document.getElementById('modeSingleBtn'),
+      friends: document.getElementById('modeMultiBtn'),
+      ranked: document.getElementById('modeRankedBtn')
+    };
+    Object.entries(modeMap).forEach(([mode, btn]) => btn?.addEventListener('click', () => {
+      try { localStorage.setItem(HOME_MODE_KEY, mode); } catch (e) {}
+    }));
+
+    let savedMode = 'bots';
+    try {
+      const candidate = localStorage.getItem(HOME_MODE_KEY);
+      if (candidate && modeMap[candidate]) savedMode = candidate;
+    } catch (e) {}
 
     function buildConfirm() {
       let modal = document.getElementById('headerExitConfirm');
@@ -337,67 +340,55 @@ const AVATAR_TONES = {
       modal.innerHTML = `<div class="hex-card"><svg class="hex-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-exit"/></svg><div id="headerExitTitle" class="hex-title">Leave ShitHead?</div><p id="headerExitCopy" class="hex-copy"></p><div class="hex-actions"><button type="button" id="headerExitCancel" class="hex-btn">Stay</button><button type="button" id="headerExitConfirmBtn" class="hex-btn confirm">Exit</button></div></div>`;
       document.body.appendChild(modal);
       modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
-      modal.querySelector('#headerExitCancel').addEventListener('click', () => modal.classList.add('hidden'));
+      modal.querySelector('#headerExitCancel')?.addEventListener('click', () => modal.classList.add('hidden'));
       return modal;
     }
-
-    let approvedNativeExit = false;
-    let approvedConfirmUntil = 0;
-    const nativeConfirm = window.confirm.bind(window);
-    // The old match-leave handler uses confirm(). We keep its cleanup/ranked/
-    // series logic but suppress only that redundant browser prompt immediately
-    // after our in-game confirmation has already been accepted.
-    window.confirm = function(message) {
-      if (Date.now() < approvedConfirmUntil && /leave|return to the main menu/i.test(String(message || ''))) return true;
-      return nativeConfirm(message);
-    };
 
     function showExitConfirm({ title, copy, confirmLabel, onConfirm }) {
       const modal = buildConfirm();
       modal.querySelector('#headerExitTitle').textContent = title;
       modal.querySelector('#headerExitCopy').textContent = copy;
-      modal.querySelector('#headerExitConfirmBtn').textContent = confirmLabel;
-      modal.classList.remove('hidden');
       const yes = modal.querySelector('#headerExitConfirmBtn');
+      yes.textContent = confirmLabel;
       yes.onclick = () => { modal.classList.add('hidden'); onConfirm(); };
+      modal.classList.remove('hidden');
       requestAnimationFrame(() => modal.querySelector('#headerExitCancel')?.focus());
     }
-
-    const pagePanels = [
-      'shopModal','challengesModal','themesModal','settingsModal','profileModal',
-      'rulesModal','friendsModal','leaderboardModal','tutorialHubScreen','statsModal',
-      'supportModal','inboxModal','levelLadderModal','matchStatsModal','historyGameModal'
-    ];
-    const visiblePanel = () => pagePanels.map(id => document.getElementById(id)).find(el => el && !el.classList.contains('hidden')) || null;
 
     function closeCurrentPage(panel) {
       if (!panel) return false;
       const close = panel.querySelector('button[aria-label="Close"],button[id$="CloseBtn"],button[id$="Close"],.pp-x');
       if (close) close.click();
       else panel.classList.add('hidden');
+      requestAnimationFrame(syncHeaderSurface);
       return true;
     }
 
     function exitSite() {
-      // Browser tabs cannot always be programmatically closed. Prefer returning to
-      // the page that launched the game; a direct-opened tab gets a clean blank page.
       if (history.length > 1) { history.back(); return; }
       try { window.close(); } catch (e) {}
-      setTimeout(() => {
-        if (!document.hidden) location.replace('about:blank');
-      }, 120);
+      setTimeout(() => { if (!document.hidden) location.replace('about:blank'); }, 120);
     }
 
-    function isLiveMatch() {
-      return typeof state !== 'undefined' && (state.phase === 'PLAY' || state.phase === 'SWAP' || state.phase === 'FINISHED') && lobby.classList.contains('hidden');
-    }
+    const nativeConfirm = window.confirm.bind(window);
+    let approvedNativeExit = false;
+    let approvedConfirmUntil = 0;
+    window.confirm = function(message) {
+      if (Date.now() < approvedConfirmUntil && /leave|return to the main menu/i.test(String(message || ''))) return true;
+      return nativeConfirm(message);
+    };
+
+    const isLiveMatch = () => typeof state !== 'undefined'
+      && (state.phase === 'PLAY' || state.phase === 'SWAP')
+      && lobby.classList.contains('hidden');
 
     leaveBtn.addEventListener('click', e => {
       if (approvedNativeExit) { approvedNativeExit = false; return; }
 
       const drawer = document.getElementById('hamburgerDrawer');
       if (drawer?.classList.contains('open')) {
-        e.preventDefault(); e.stopImmediatePropagation();
+        e.preventDefault();
+        e.stopImmediatePropagation();
         if (typeof closeHamburgerMenu === 'function') closeHamburgerMenu();
         else drawer.classList.remove('open');
         return;
@@ -405,17 +396,21 @@ const AVATAR_TONES = {
 
       const panel = visiblePanel();
       if (panel) {
-        e.preventDefault(); e.stopImmediatePropagation();
+        e.preventDefault();
+        e.stopImmediatePropagation();
         closeCurrentPage(panel);
         return;
       }
 
       if (isLiveMatch()) {
-        e.preventDefault(); e.stopImmediatePropagation();
-        const ranked = !!(typeof state !== 'undefined' && state.isRanked && state.isMultiplayer);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const ranked = !!(state.isRanked && state.isMultiplayer);
         showExitConfirm({
           title: ranked ? 'Leave Ranked Match?' : 'Leave Match?',
-          copy: ranked ? 'A bot will take your seat and this counts as a loss, so your rating can go down.' : 'Your progress in this match will be lost and you may not be able to rejoin.',
+          copy: ranked
+            ? 'A bot will take your seat and this counts as a loss, so your rating can go down.'
+            : 'Your progress in this match will be lost and you may not be able to rejoin.',
           confirmLabel: 'Leave Match',
           onConfirm: () => {
             approvedNativeExit = true;
@@ -426,10 +421,9 @@ const AVATAR_TONES = {
         return;
       }
 
-      // Home: a deliberate Exit means leaving the web app/site, not navigating
-      // to another in-game page.
       if (!lobby.classList.contains('hidden')) {
-        e.preventDefault(); e.stopImmediatePropagation();
+        e.preventDefault();
+        e.stopImmediatePropagation();
         showExitConfirm({
           title: 'Exit ShitHead?',
           copy: 'Leave the game and return to where you came from?',
@@ -439,22 +433,12 @@ const AVATAR_TONES = {
       }
     }, true);
 
-    function syncHeaderCode() {
-      const active = !!roomCode && !roomCode.classList.contains('hidden') && !!roomCode.textContent.trim();
-      document.body.classList.toggle('header-room-code-active', active);
-      diamondCount?.setAttribute('aria-hidden', active ? 'true' : 'false');
-    }
-    if (roomCode) new MutationObserver(syncHeaderCode).observe(roomCode, { attributes:true, childList:true, characterData:true, subtree:true });
-    syncHeaderCode();
-
-    // The old game code hides Exit in lobby/page transitions. This button is now
-    // global, so immediately restore it whenever that happens.
-    new MutationObserver(() => {
-      if (leaveBtn.classList.contains('hidden')) leaveBtn.classList.remove('hidden');
-    }).observe(leaveBtn, { attributes:true, attributeFilter:['class'] });
-    leaveBtn.classList.remove('hidden');
+    setTimeout(() => {
+      if (!lobby.classList.contains('hidden') && modeMap[savedMode]) modeMap[savedMode].click();
+      syncHeaderSurface();
+    }, 0);
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initHeaderExitNavigation, { once:true });
-  else initHeaderExitNavigation();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initHeaderAndHomeShell, { once:true });
+  else initHeaderAndHomeShell();
 })();
