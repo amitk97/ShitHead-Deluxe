@@ -1,7 +1,3 @@
-## v332 — two-step Play Friends hosting
-
-Play Friends opens with Host New Room and Join a Room. Host opens five numbered carousel cards (Coming Soon, House Rules, Standard, Best of Series, Coming Soon); Standard defaults, number and arrow keys browse, and confirmation reserves the room. Series remains gated at level 20. The room code and invite controls sit above four compact seats in a single horizontal row; host settings remain available in the lobby. Browser regression expectations now cover landing/setup visibility, keyboard navigation and horizontal roster geometry.
-
 # ShitHead Deluxe
 
 ## v331 — Play Friends lobby
@@ -663,4 +659,3 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 
 - For new card backs, packs, tables, burns etc. once current themes get stale: **Space, Sport, Animals, Countries/Cities, Cyberpunk, Gothic, Retro, Arcade, Origami** (Origami burn effect: the card folds up when burnt).
 - When one is picked up, follow the usual cosmetic checklist (rules id lists, catalog re-export, a `BURN_SOUNDS` recipe for any Burn item).
-
