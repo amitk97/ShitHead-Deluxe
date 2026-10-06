@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-06-v334 (ShitHead-Deluxe-253) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-06-v335 (ShitHead-Deluxe-253) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -14,7 +14,7 @@
                 tools/export-catalog.js) -->
 <html lang="en" class="dark">
 <head>
-  <link rel="stylesheet" href="css/friends-lobby.css?v=334">
+  <link rel="stylesheet" href="css/friends-lobby.css?v=335">
   <meta charset="UTF-8" />
   <script>
     // The game's home is shithead-deluxe.web.app (owner, v310; the old
@@ -588,7 +588,12 @@
     #homeTutorialRow .mc-controls { grid-column:1 / -1; grid-row:1; margin:0 0 8px; justify-content:center; }
     #homeTutorialRow #startTutorialBtn { grid-column:1; grid-row:2; width:100%; min-width:0; margin:0; padding:8px 6px; letter-spacing:.02em; font-size:11px; line-height:1.3; gap:5px; min-height:56px; }
     #startTutorialLabel { max-width:132px; white-space:normal; }
-    #homeTutorialRow #startTutorialBtn svg { flex:none; width:18px !important; height:18px !important; }
+    #homeTutorialRow #startTutorialBtn { font-size:17px; gap:10px; }
+    #homeTutorialRow .tutorial-icon-box { flex:none; display:grid; place-items:center; width:52px; height:52px; border-radius:16px; color:#e879f9; background:radial-gradient(circle at 35% 30%,rgba(232,121,249,.34),rgba(232,121,249,.12) 70%); box-shadow:inset 0 1px 0 rgba(232,121,249,.4); }
+    #homeTutorialRow #startTutorialBtn svg { flex:none; width:38px !important; height:38px !important; }
+    .series-level-label { display:flex; justify-content:center; align-items:center; gap:4px; color:#fbbf24; font-size:10px; line-height:1.3; }
+    .series-level-label svg { width:13px; height:13px; }
+    .series-choice.series-level-locked { opacity:1; border-color:#806a35; background:#241e16; }
     #homeTutorialVideo { display:block; width:100%; height:100%; min-height:100px; max-height:132px; min-width:0; object-fit:contain; background:#020617; border:1px solid #66522c; border-radius:12px; box-shadow:0 6px 16px rgba(0,0,0,.25); }
     #homeTutorialPlayer { grid-column:2; grid-row:2; position:relative; min-width:0; }
     #homeVideoExpand { position:absolute; top:5px; right:5px; width:32px; height:32px; border:1px solid #64748b; border-radius:8px; background:#0b1428e8; color:#fff; display:grid; place-items:center; }
@@ -606,7 +611,9 @@
       #homeTutorialRow .mc-controls { gap:6px; }
       #homeTutorialRow .mc-arrow { width:32px; height:32px; }
       #homeTutorialRow .mc-arrow[data-mc-step="-1"] { margin-right:8px; }
-      #homeTutorialRow #startTutorialBtn { font-size:10px; }
+      #homeTutorialRow #startTutorialBtn { font-size:15px; gap:6px; }
+      #homeTutorialRow .tutorial-icon-box { width:44px; height:44px; border-radius:14px; }
+      #homeTutorialRow #startTutorialBtn svg { width:32px !important; height:32px !important; }
     }
     @media (min-width: 700px) { .mc-card { width: 132px; height: 194px; margin-left: -66px; } #modeCarousel .mc-track { height: 220px; } }
     /* § Mode pages (v320): home = logo, nickname, carousel, tutorial. A mode
@@ -5830,7 +5837,7 @@ video {
             <div role="button" tabindex="0" class="mc-card" data-mc="4" data-mc-mode="cpu" style="--mc-tone:#22d3ee" aria-pressed="false"><span class="mc-num" aria-hidden="true">4</span><svg class="ic mc-ic" aria-hidden="true"><use href="#ic-bot"/></svg><span class="mc-name">Play Computer</span><span class="mc-sub">1-3 bots</span><button type="button" class="mc-go" data-mc-go>Go →</button></div>
             <div role="button" tabindex="0" class="mc-card" data-mc="5" data-mc-mode="ranked" style="--mc-tone:#fbbf24" aria-pressed="false"><span class="mc-num" aria-hidden="true">5</span><svg class="ic mc-ic" aria-hidden="true"><use href="#ic-ranked"/></svg><span class="mc-name">Ranked</span><span class="mc-sub">Matched 1v1</span><button type="button" class="mc-go" data-mc-go>Go →</button></div>
             <div role="button" tabindex="0" class="mc-card" data-mc="6" data-mc-mode="friends" style="--mc-tone:#10b981" aria-pressed="false"><span class="mc-num" aria-hidden="true">6</span><svg class="ic mc-ic" aria-hidden="true"><use href="#ic-friends4"/></svg><span class="mc-name">Play Friends</span><span class="mc-sub">Host or join</span><button type="button" class="mc-go" data-mc-go>Go →</button></div>
-            <div role="button" tabindex="0" class="mc-card mc-empty" data-mc="7" data-mc-mode="pin2" style="--mc-tone:#64748b" aria-pressed="false"><span class="mc-num" aria-hidden="true">7</span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" stroke-dasharray="3 3"/><path d="M12 9v6M9 12h6"/></svg><span class="mc-name">Shortcut</span><span class="mc-sub">Pin a mode</span><button type="button" class="mc-go" data-mc-go>Go →</button></div>
+            <div role="button" tabindex="0" class="mc-card mc-empty" data-mc="7" data-mc-mode="pin2" style="--mc-tone:#64748b" aria-pressed="false"><span class="mc-num" aria-hidden="true">7</span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" stroke-dasharray="3 3"/><path d="M12 9v6M9 12h6"/></svg><span class="mc-name">Shortcut</span><span class="mc-sub">Pin a mode</span><butt type="button" class="mc-go" data-mc-go>Go →</button></div>
           </div>
           <div id="homeTutorialRow">
           <div class="mc-controls">
@@ -5839,7 +5846,7 @@ video {
             <button type="button" class="mc-arrow" data-mc-step="1" aria-label="Next mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
             <button type="button" class="mc-arrow" data-mc-jump="last" aria-label="Last mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l6 6-6 6M12 6l6 6-6 6"/></svg></button>
           </div>
-          <button id="startTutorialBtn" class="w-full py-2 bg-slate-800/80 hover:bg-slate-700 border border-slate-600 font-black rounded-xl transition tracking-wider text-slate-300 text-xs active:scale-95 cursor-pointer flex items-center justify-center gap-2"><svg class="pack-icon" style="width:22px;height:22px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-tutorial"/></svg><span id="startTutorialLabel">Tutorial</span></button>
+          <button id="startTutorialBtn" class="w-full py-2 bg-slate-800/80 hover:bg-slate-700 border border-slate-600 font-black rounded-xl transition tracking-wider text-slate-300 text-xs active:scale-95 cursor-pointer flex items-center justify-center gap-2"><span class="tutorial-icon-box"><svg class="pack-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-tutorial"/></svg></span><span id="startTutorialLabel">Tutorial</span></button>
             <div id="homeTutorialPlayer"><video id="homeTutorialVideo" controls playsinline preload="none" poster="media/tutorial-reference-poster.jpg" aria-label="Video tutorial">
               <source src="media/tutorial-reference.mp4" type="video/mp4">
               Your browser does not support embedded video.
@@ -6238,7 +6245,7 @@ video {
             <span class="block text-[8px] text-slate-400">How fast opponents take their turn</span></span>
             <span class="flex items-center gap-1.5 shrink-0">
               <input type="range" id="headerSpeedSlider" min="0" max="3" step="1" value="1" class="w-16 accent-amber-400 cursor-pointer h-1" />
-              <span id="speedDisplayLabel" class="text-[9px] font-mono font-black text-amber-400 w-8 text-right">1.0x</span>
+              <span id="speedDisplayLabel" class="text-[9px] font-mono font-black text-amber-400 w-8 text-right">1.0x<an>
               <button id="speedResetBtn" class="text-[10px] font-black px-2 py-0.5 rounded border border-slate-600 text-slate-300 hover:border-amber-500 hover:text-amber-400 transition">RESET</button>
             </span>
           </div>
@@ -6681,7 +6688,7 @@ video {
         </div>
         <div>
           <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Account</span>
-          <div class="bg-slate-900/60 border border-slate-800 rounded-xl divide-y divide-slate-800">
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl divide-de-slate-800">
             <div class="flex items-center justify-between gap-2 px-3 py-2">
               <span class="text-left min-w-0"><span id="profileAccountStatusLabel" class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Not signed in</span>
               <span id="profileAccountStatusSub" class="block text-[8px] text-slate-400 leading-snug">Sign in to save stats across devices</span></span>
@@ -7103,7 +7110,7 @@ video {
       <div id="jokerInlineTargets" class="flex items-center flex-wrap justify-center gap-2 max-w-full"></div>
     </div>
 
-    <!-- ZONE 1: OPPONENTS (TOP TIER: MAX 17VH) -->
+    <!-- ZONE 1: OPPONENTS(TOP TIER: MAX 17VH) -->
     <div id="gauntletHud" class="gauntlet-hud hidden" role="status" aria-live="polite"></div>
     <div id="seriesHud" class="series-hud hidden" role="status" aria-live="polite"></div>
     <div id="opponentsContainer" class="w-full flex justify-center items-start gap-1.5 md:gap-6 min-h-[58px] shrink-0 z-10 px-2" style="overflow:visible;padding-top:8px;padding-bottom:8px"></div>
@@ -7525,8 +7532,7 @@ video {
               </div>
               <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="8">
                 <strong class="text-amber-400 font-bold">8</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-8"/></svg><strong class="text-amber-400 font-bold"> (Skip):</strong> Playing multiple 8s together skips that many opponents. Skip everyone at the table and it becomes your turn again.
-              </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="9">
+              </div      <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="9">
                 <strong class="text-amber-400 font-bold">9</strong><svg class="inline-block w-3 h-3 align-[-1px] text-amber-400 mx-0.5" viewBox="0 0 24 24" aria-hidden="true"><use href="#pw-9"/></svg><strong class="text-amber-400 font-bold"> (Reverse):</strong> An odd number of 9s reverses the direction, while an even number of 9s maintains direction.
               </div>
               <div class="p-2 bg-slate-950 rounded border border-slate-800" data-guide-power="10">
@@ -7640,6 +7646,7 @@ video {
             <p>A <strong>Best Of Series</strong> is a run of Play Friends games between two players, played for Diamonds.</p>
             <p><strong class="text-amber-300">Who can play:</strong> exactly two signed-in players, both <strong>Lvl 20</strong> or above, with no bots at the table.</p>
             <p><strong class="text-amber-300">Starting one:</strong> in the room, the host picks <strong>Best of 3, 5 or 7</strong>; the other player accepts or declines.</p>
+            <p><strong class="text-amber-300">Level requirements:</strong> Best of 3: Level 20 · Best of 5: Level 35 · Best of 7: Level 45. Both players must qualify.</p>
             <p><strong class="text-amber-300">Entry and prize:</strong> each player pays <strong>💎 30</strong> (Best of 3), <strong>💎 50</strong> (Best of 5) or <strong>💎 70</strong> (Best of 7). The game matches the pot, so the series winner takes <strong>💎 120</strong>, <strong>💎 200</strong> or <strong>💎 280</strong>.</p>
             <p><strong class="text-amber-300">Playing:</strong> first to 2 wins (Best of 3), 3 wins (Best of 5) or 4 wins (Best of 7). Both players press Ready before the next game starts, and the score sits in the top-left corner. A draw doesn&rsquo;t count for either player. If a series runs very long, the player ahead wins it; if it&rsquo;s level, both get their entry back.</p>
             <p><strong class="text-amber-300">Calling it off:</strong> before the first game, either player can call it off and both entries go back.</p>
@@ -7667,7 +7674,7 @@ video {
           </button>
           <div class="accordion-content hidden p-4 space-y-2.5 border-t border-slate-800 text-[11.5px] leading-relaxed text-slate-300">
             <p data-term="base-card"><strong class="text-amber-400">Base Card:</strong> The card at the very bottom of the Pile &mdash; the first one played since the last Burn. Normally irrelevant, but a 5 drops the target down to it, so the next player must beat the Base Card instead of the top one.</p>
-            <p data-term="best-of-series"><strong class="text-amber-400">Best Of Series:</strong> Play Friends only: two players at Lvl 20 or above play a Best of 3, 5 or 7. Each pays an entry, the game matches the pot, and the series winner takes it all.</p>
+            <p data-term="best-of-series"><strong class="text-amber-400">Best Of Series:</strong> Play Friends only: two players play Best of 3 at Lvl 20, Best of 5 at Lvl 35, or Best of 7 at Lvl 45. Both players must meet the level requirement. Each pays an entry, the game matches the pot, and the series winner takes it all.</p>
             <p data-term="blind-card"><strong class="text-amber-400">Blind Card:</strong> See <em>Face-Down Cards</em>.</p>
             <p data-term="bonus-draw"><strong class="text-amber-400">Bonus Draw:</strong> If the card you draw right after playing matches the rank you just played, you get offered a free follow-up play with it before the turn passes &mdash; a way to chain extra plays in one turn.</p>
             <p data-term="boss-gauntlet"><strong class="text-amber-400">Boss Gauntlet:</strong> A daily run against 3 Boss bots with 1 life, unlocked at Level 50 after beating Easy once and Hard three times. Beat all three to complete the run. Choose it on the Gauntlet page; you may enter one Gauntlet mode per day.</p>
@@ -7819,7 +7826,7 @@ video {
               const p = this.ctx.decodeAudioData(data, resolve, reject);
               if (p && p.then) p.then(resolve, reject);
             }))
-            .then(buffer => this.buffers.set(el, buffer))
+            .theis.buffers.set(el, buffer))
             .catch(() => {});
         });
         // iOS starts the context suspended until a tap; resume on every
@@ -9844,7 +9851,7 @@ video {
     ['houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
-     'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
+     'matchSummaryModal', 'errorRepor'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
      // v281: #gameTable is isolation:isolate (v270 table scenes), so anything
      // left inside it can never sit above a page, whatever its z-index.
      'playerPopup', 'challengeToast', 'signOutConfirm', 'dailyRewardModal', 'giftModal', 'giftOpenModal', 'installHelpModal', 'shConfirm'].forEach((id) => {
@@ -14650,7 +14657,7 @@ video {
       // before any early return below. A plain (non-burn) scripted Coach
       // reply briefly flips tutorialBotPaused false just long enough to play
       // its card, which lets this function schedule a real checkTurnAndAct
-      // timer; if the pause check ran before this clear, that timer would
+      // timer; if the pause check ran his clear, that timer would
       // survive every later re-pause and could fire mid-explanation with no
       // tutorial awareness at all (checkTurnAndAct doesn't check the pause
       // flag), letting the real bot AI hijack the Coach's turn out from
@@ -15427,11 +15434,7 @@ video {
       
       const sizeClass = isOpponent ? 'card-opponent-slot' : (isHand ? 'card-base' : 'card-table');
       
-      let borderGlow = 'border-[var(--card-border)] hover:border-amber-400';
-      if (isSelected) {
-        borderGlow = 'border-amber-400 card-selected';
-      } else if (isLegal) {
-        borderGlow = 'animate-legal-glow border-emerald-400';
+      let borderGlow = 'border-[var(--card-border)] hover:border-amberborderGlow = 'animate-legal-glow border-emerald-400';
       }
       const handClass = isHand ? 'hand-card hand-card-stacked' : `${shouldPopCard(card.id) ? 'animate-card-pop ' : ''}transition-all duration-150`;
       el.className = `relative ${sizeClass} rounded-xl bg-[var(--card-bg)] border-2 ${borderGlow} card-shadow p-1 flex flex-col justify-between cursor-pointer shrink-0 select-none overflow-hidden ${handClass}`;
@@ -16126,7 +16129,7 @@ video {
           </div>
         `;
       } else {
-        const faceDownSlots = buildFixedSlots(local.faceDown);
+        const faceDownSlot= buildFixedSlots(local.faceDown);
         const faceUpSlots = buildFixedSlots(local.faceUp);
         for (let i = 0; i < 3; i++) {
           const slot = document.createElement('div');
@@ -18267,7 +18270,7 @@ video {
 
     function canStartMultiplayerGame() {
       // Checking human count first (rather than total player count) means this
-      // always shows the accurate message — the old "need 2 players/bots"
+      // always shows the accurate message — the old "need 2 plas/bots"
       // wording was misleading, since 2 bots alone would still fail the real
       // requirement just below it anyway.
       const otherHumans = state.players.filter(p => !p.isBot && p.id !== state.localPlayerId).length;
@@ -19012,7 +19015,7 @@ video {
       ['easy', 'medium', 'hard', 'boss'].forEach((diff) => {
         merged[diff] = Math.max(Number(previous[diff]) || 0, Number(wins?.[diff]) || 0);
       });
-      try { localStorage.setItem(difficultyWinsCacheKey(uid), JSON.stringify(merged)); } catch (e) {}
+       { localStorage.setItem(difficultyWinsCacheKey(uid), JSON.stringify(merged)); } catch (e) {}
       return merged;
     }
     let difficultyLocksKnownFor = null; // uid whose unlocks are loaded
@@ -20334,7 +20337,7 @@ video {
         const parts = L.parts.filter(p => !p.parent).map(partSvg).join('');
         // roar: sound rings rolling out of the lion's mouth
         const roar = L.roar ? [1, 2, 3].map(i =>
-          `<g transform="translate(${L.roar[0]} ${L.roar[1]})"><path class="av-px-ring av-px-ring-${i}" d="M-38 -32A50 50 0 0 0 -38 32" fill="none" stroke="#93c5fd" stroke-width="6" stroke-linecap="round" opacity="0"/></g>`).join('') : '';
+          `<g transform="translate(${L.roar[0]} ${L.roar[1]})"><path class="av-px-ring av-px-ring-${i}" d="M-38 -32A50 50 0 0 0 -38 32" fill="none" stroke="#93c5fd" stroke-width="6" stroke-ound" opacity="0"/></g>`).join('') : '';
         const sheen = L.sheen ? `<g mask="url(#av-px-sheen-${key})"><g transform="rotate(18 500 500)"><rect class="av-px-sweep av-px-${key}-sweep" x="-420" y="-300" width="260" height="1600" fill="url(#av-px-band)"/></g></g>` : '';
         const rising = (L.embers || []).map(([x, y], i) =>
           `<g transform="translate(${x} ${y})"><circle class="av-px-rise" style="animation-delay:${(-i * 0.6).toFixed(1)}s" r="15" fill="url(#av-px-ember)" opacity="0"/></g>`).join('');
@@ -21134,11 +21137,7 @@ video {
         bfxAnimate(el, [0, .2, .4, .6, .8, 1].map(t => ({
           transform: `translate(${Math.cos(a) * v * t * 1.2}px, ${Math.sin(a) * v * t * 1.2 + g * t * t}px) rotate(${r0 + r1 * t}deg) scale(${t === 0 ? .4 : 1})`,
           opacity: t < .75 ? 1 : 1 - (t - .75) * 4
-        })), { duration: bfxRand(dur[0], dur[1]), delay: bfxRand(delay[0], delay[1]), easing: 'linear' });
-      }
-    }
-    // Things that float upwards with a gentle sway.
-    function sfxRise(host, x, y, k, count, make, opt = {}) {
+        })), { duration: bfxRand(dur[0], dur[1]), delay: bfxRand(delay[0], delay[1]), easing: 'linear' })nction sfxRise(host, x, y, k, count, make, opt = {}) {
       const { rise = [120, 220], sway = 18, dur = [1400, 1900], spreadX = 50, delay = [0, 400] } = opt;
       for (let i = 0; i < count; i++) {
         const [html, w, h] = make(i);
@@ -22318,7 +22317,7 @@ video {
       if (!M) return { defs: '', art: '' };
       const key = id.replace('avatar-lvl-', 'lx-');
       let defs = '', art = '';
-      (M.flicker || []).forEach(([x, y, r], i) => { art += `<circle class="av-lx-flicker" style="animation-delay:${(i * 0.37).toFixed(2)}s" cx="${x}" cy="${y}" r="${r}" fill="url(#${M.flickerTone})"/>`; });
+      (M.flicker || []).forEach(([x, y, r], i) => { art += `<circle class="av-lx-flicker" style="animation-delay:${(i * 0.37).toFixed(2)}s" cx="${x}" cy="${y}" r="${r}" frTone})"/>`; });
       (M.eyes || []).forEach(([x, y]) => { art += `<circle class="av-lx-eye" cx="${x}" cy="${y}" r="${M.eyeR}" fill="url(#${M.eyeTone})"/>`; });
       if (M.sweep) {
         defs += `<clipPath id="${key}-sweep">${M.sweep.clip}</clipPath>`;
@@ -22788,7 +22787,7 @@ video {
         const slot = document.querySelector('#playerPopupBody .pp-report-slot');
         if (slot) slot.innerHTML = slot.innerHTML ? '' : playerReportFormHtml(uid);
         positionPlayerPopup(playerPopupAnchor);
-      } else if (btn.dataset.ppAction === 'report-reason') {
+ if (btn.dataset.ppAction === 'report-reason') {
         btn.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('is-on', b === btn));
         const send = document.querySelector('#playerPopupBody .pp-report-send');
         if (send) send.disabled = false;
@@ -23349,7 +23348,7 @@ video {
     // overwritten by the older answer (the "frame reverts" bug).
     const cosmeticEquipStamp = {};
     let cosmeticCollectionUid = null;
-    function stampEquip(types) { const now = Date.now(); [].concat(types).forEach(t => { cosmeticEquipStamp[t] = now; }); }
+    function stampEquip(types) { const now = Date.now();forEach(t => { cosmeticEquipStamp[t] = now; }); }
     function loadCosmeticCollection(user = currentUser) {
       const startedAt = Date.now();
       if (!user) {
@@ -23932,8 +23931,7 @@ video {
       });
       // Finishing order
       const top = py + 34;
-      g.textAlign = 'left'; g.font = font(900, 26); g.fillStyle = '#94a3b8'; g.fillText('FINISHING ORDER', 110, top);
-      d.order.slice(0, 4).forEach((p, i) => {
+      g.textAlign = 'left'; g.font = font(900, 26); g.fillStyle = '#94a3b8'; g.fillText('FINISHING ORDER', 110, top0, 4).forEach((p, i) => {
         const y = top + 22 + i * 64;
         g.fillStyle = p.me ? 'rgba(245,158,11,.22)' : 'rgba(30,41,59,.75)'; rr(96, y, W - 192, 54, 16); g.fill();
         if (p.me) { g.strokeStyle = '#f59e0b'; g.lineWidth = 3; rr(96, y, W - 192, 54, 16); g.stroke(); }
@@ -24515,7 +24513,7 @@ video {
         if (equipItem && equipCosmetic(equipType, equipItem.id, { preview: false, sync: true })) {
           newCosmeticIds.delete(equipItem.id);
           persistNewCosmetics();
-          const shopStatus = document.getElementById('cosmeticShopStatus');
+          const shopStatus = document.getElementById('cosmeticSho);
           shopStatus.textContent = `${equipItem.name} equipped.`;
           shopStatus.className = 'text-[9px] text-center text-emerald-400 leading-snug mt-2';
           notifyBanner(`✓ ${equipItem.name} equipped.`);
@@ -25079,7 +25077,7 @@ video {
         ...collectAccountSettings(),
         updatedAt: firebase.database.ServerValue.TIMESTAMP
       }).then(() => {
-        try { if (readSettingsUnsaved() === marker) localStorage.removeItem(SETTINGS_UNSAVED_KEY); } catch (e) {}
+        try { if (readSettUnsaved() === marker) localStorage.removeItem(SETTINGS_UNSAVED_KEY); } catch (e) {}
       }).catch((error) => console.warn('Account settings save failed', error));
     }
     function loadAccountSettings(user = currentUser) {
@@ -26112,6 +26110,7 @@ video {
     // Exported to the catalog as `series` (functions/economy.js actions.series).
     const SERIES_RULES = {
       level: 20,                 // owner: series unlock at level 20
+      levels: { 3: 20, 5: 35, 7: 45 },
       bestOf: { 3: 30, 5: 50, 7: 70 },  // entry per player
       perDay: 5,                 // series one player can start in a UK day
       forfeitTurns: 5,           // a stand-in bot plays this many turns, then the absent player forfeits
@@ -26162,17 +26161,18 @@ video {
       if (modal && modal.dataset.mode === 'invite' && (!s || s.status !== 'pending' || s.guest !== me)) modal.classList.add('hidden');
     }
     // Why the host can't start a series right now ('' = they can).
-    function seriesBlockReason() {
+    function seriesBlockReason(bestOf = 3) {
+      const requiredLevel = SERIES_RULES.levels[bestOf] || SERIES_RULES.level;
       if (!currentUser || !xpShown()) return 'Sign in with levels enabled to play a series.';
       if (state.ruleMode === 'house') return 'Series use Standard rules. Select Best of Series first.';
       const myLevel = playerXp ? xpLevelFor(playerXp.total) : 0;
-      if (myLevel < SERIES_RULES.level) return `Reach level ${SERIES_RULES.level} to play a series (you're level ${myLevel || 1}).`;
+      if (myLevel < requiredLevel) return `Reach level ${requiredLevel} to play a series (you're level ${myLevel || 1}).`;
       const humans = state.players.filter(p => !p.isBot);
       if (state.players.length !== 2 || humans.length !== 2) return 'A series needs exactly two players and no bots.';
       const other = humans.find(p => p.id !== state.localPlayerId);
       if (!other || !other.uid) return `${escapeHtml(other?.name || 'The other player')} needs to sign in first.`;
       const theirs = Number(other.cosmetics?.level) || 0;
-      if (theirs && theirs < SERIES_RULES.level) return `${escapeHtml(other.name)} needs to reach level ${SERIES_RULES.level} first.`;
+      if (theirs && theirs < requiredLevel) return `${escapeHtml(other.name)} needs to reach level ${requiredLevel} first.`;
       if (state.phase === 'SWAP' || state.phase === 'PLAY') return 'Wait for this game to finish first.';
       return '';
     }
@@ -26202,7 +26202,13 @@ video {
       if (!s) {
         const why = seriesBlockReason();
         const locked = !playerXp || xpLevelFor(playerXp.total) < SERIES_RULES.level;
-        const choice = (n) => `<button type="button" class="series-choice" data-series-best="${n}" aria-pressed="false"${why || seriesBusy ? ' disabled' : ''}>Best of ${n}<small>${SERIES_RULES.bestOf[n]} ${gem} entry</small></button>`;
+        const choice = (n) => {
+          const requirement = SERIES_RULES.levels[n];
+          const other = state.players.find(p => !p.isBot && p.id !== state.localPlayerId);
+          const levelLocked = lvl < requirement || (Number(other?.cosmetics?.level) > 0 && Number(other.cosmetics.level) < requirement);
+          const reason = seriesBlockReason(n);
+          return `<button type="button" class="series-choice${levelLocked ? ' series-level-locked' : ''}" data-series-best="${n}" aria-pressed="false" title="${escapeHtml(reason || `Both players level ${requirement}+`)}"${reason || seriesBusy ? ' disabled' : ''}>Best of ${n}<small>${SERIES_RULES.bestOf[n]} ${gem} entry</small>${levelLocked ? `<span class="series-level-label">${icon('lock')}Level ${requirement}</span>` : ''}</button>`;
+        };
         panel.innerHTML = `${head}
           <div class="series-choices">
             <button type="button" class="series-choice" aria-pressed="true" disabled>Single<small>No entry</small></button>
@@ -26247,7 +26253,7 @@ video {
     }
     async function createSeries(bestOf) {
       if (!state.isHost || state.ruleMode === 'house' || !SERIES_RULES.bestOf[bestOf]) { notifyBanner('Select Best of Series first.'); return; }
-      const blocked = seriesBlockReason();
+      const blocked = seriesBlockReason(bestOf);
       if (blocked) { notifyBanner(blocked); return; }
       const fee = SERIES_RULES.bestOf[bestOf];
       const other = state.players.find(p => !p.isBot && p.id !== state.localPlayerId);
@@ -26865,7 +26871,7 @@ video {
       const weeklyBase = WEEKLY_CHALLENGE_RULES[WEEKLY_CHALLENGE_RULES.length - 1].picks; // 5 a week from 2026-W41
       (XP_RULES.extraWeekly || []).forEach((L, i) => add(L, { kind: 'unlock', icon: 'check', tone: '#22d3ee', name: `${ordinalNumber(weeklyBase + i + 1)} weekly challenge`, tip: 'One more weekly challenge every week.' }));
       add(XP_RULES.weeklyRerollLevel, { kind: 'unlock', icon: 'refresh', tone: '#34d399', name: 'Weekly Reroll', tip: 'Swap one weekly challenge for a different one, once a week.' });
-      add(SERIES_RULES.level, { kind: 'unlock', icon: 'swords', tone: '#f472b6', name: 'Best Of Series', tip: 'Play a Best of 3, 5 or 7 against a friend for Diamonds.' });
+      Object.entries(SERIES_RULES.levels).forEach(([n, level]) => add(level, { kind: 'unlock', icon: 'swords', tone: '#f472b6', name: `Best of ${n}`, tip: `Play a Best of ${n} against a friend (both players level ${level}+).` }));
       Object.entries(GAUNTLET.modes || {}).forEach(([key, m]) => { if (m.level > 0) add(m.level, { kind: 'unlock', icon: key === 'boss' ? 'crown' : 'shield', tone: key === 'boss' ? '#c084fc' : '#f87171', name: `${m.name} Gauntlet`, tip: `${m.name} Gauntlet opens at level ${m.level}${m.needs ? ' once you have beaten the easier Gauntlets' : ''}.` }); });
       LEVEL_BADGE_TIERS.forEach(([L, , label]) => add(L, { kind: 'badge', level: L, name: `${label} badge` }));
       return at;
@@ -26952,7 +26958,7 @@ video {
       const climbFrom = Number.isFinite(from) && from >= 1 && from < level ? from : level;
       scroll.innerHTML = LADDER_HOW() + `<div class="ll-line"><i></i></div>` + levelLadderRowsHtml(total, level, rewards, climbFrom)
         + '<p class="ll-help">Tap a reward you own to equip it. Tap or hold any other to preview it.</p>';
-      return { scroll, level, from: climbFrom };
+      return { scroll, level, from: climbrom };
     }
     // The ladder element that holds a level: its own row, "You are here", or the folded line around it.
     function ladderElementForLevel(L) {
@@ -28255,7 +28261,7 @@ video {
     }
 
     function processChallengeToastQueue() {
-      if (challengeToastActive || challengeToastDismissing || !challengeToastQueue.length) return;
+      if (challengeToastActive || challengeToaissing || !challengeToastQueue.length) return;
       const next = challengeToastQueue.shift();
       challengeToastActive = true;
       displayChallengeToast(next.name, next.reward);
@@ -29649,7 +29655,7 @@ video {
             ${onlineHtml}
           </div>
         </div>
-        ${actions.length ? `<div class="friend-actions" style="grid-template-columns:repeat(${actions.length},minmax(0,1fr))">${actions.join('')}</div>` : ''}
+        ${actions.length ? `<div class="friend-actions" style="grid-template-cns:repeat(${actions.length},minmax(0,1fr))">${actions.join('')}</div>` : ''}
       </div>`;
     }
     function showFriendsEmpty(msg) {
@@ -30204,7 +30210,7 @@ video {
       return html.replace(/^\s*<div /, `<div data-mail-idx="${i}" role="link" tabindex="0" aria-label="Open: ${escapeAttr(inboxMailLabel(item))}" `);
     }
     function inboxMailLabel(item) {
-      return String(item.name || item.fromName || item.board || item.type || 'mail');
+      return String(item.name || item.fromNard || item.type || 'mail');
     }
     function openMailTarget(card) {
       const item = inboxRenderedItems[Number(card.dataset.mailIdx)];
@@ -30866,7 +30872,7 @@ video {
       if (!shopItem) {
         const earned = [...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(item => item.id === id);
         const status = document.getElementById('personalisationStatus');
-        if (status && earned) status.textContent = `${earned.name}: ${earned.requirement}.`;
+        if (status && earned) status.textContent = `${earned.name}: ${earquirement}.`;
         return false;
       }
       document.getElementById('themesModal').classList.add('hidden');
@@ -31534,7 +31540,7 @@ video {
     // Continue/Back/Skip buttons specifically, since they sit in the exact
     // same screen position on every step — a stray touch (adjusting grip on
     // the phone, a swipe that drifts) can "activate" whichever one is
-    // sitting there, which looks indistinguishable from the tutorial
+    // sitting there, hich looks indistinguishable from the tutorial
     // silently advancing on its own.
     function bindTapOnly(el, handler) {
       if (!el) return;
@@ -32220,7 +32226,7 @@ video {
     // just a normal entry now (a fresh one is added when needed).
     if (hasBackGuard()) history.replaceState(null, '');
     let backGuardSyncTimer = null;
-    const scheduleBackGuardSync = () => { clearTimeout(backGuardSyncTimer); backGuardSyncTimer = setTimeout(syncBackGuard, 80); };
+    const scheduleBackGuardSync = () => { clearTimeout(backGuarckGuardSyncTimer = setTimeout(syncBackGuard, 80); };
     const backGuardObserver = new MutationObserver(scheduleBackGuardSync);
     [...Object.keys(BACK_LAYERS), 'hamburgerDrawer', 'lobbyScreen', 'leaveGameBtn', 'tutorialSkipBtn', 'rankedSearching', 'multiLobbyRoom'].forEach((id) => {
       const el = document.getElementById(id);
@@ -34379,7 +34385,7 @@ video {
       // Overall count across every registry — the card roster only counts
       // entries that actually have a built module, so it never claims
       // credit for a "Soon" tile the player couldn't possibly have done.
-      const allIds = [
+     const allIds = [
         ...TUTORIAL_HUB_MODULES,
         ...TUTORIAL_HUB_ADVANCED_MODULES,
         ...builtCards
@@ -35647,8 +35653,8 @@ video {
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
-  <script src="js/house-rules-presets.js?v=334"></script>
-  <script src="js/friends-lobby.js?v=334"></script>
+  <script src="js/house-rules-presets.js?v=335"></script>
+  <script src="js/friends-lobby.js?v=335"></script>
 </body>
 </html>
 

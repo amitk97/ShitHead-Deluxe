@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v335: [['swords', 'Best of 5 unlocks at Level 35 and Best of 7 at Level 45 for both players.', WN_KEY], ['friends4', 'Larger Tutorial icon and text, a colourful icon box, and compact Play Friends series settings.']],
       v334: [['friends4', 'Play Friends has the Home-style carousel with Go buttons, compact settings pages, and three custom ruleset slots with in-app naming and account sync.', WN_KEY]],
       v333: [['friends4', 'Play Friends now starts with Host or Join. Choose from five mode cards before hosting, with Standard selected and compact seats below the room code.']],
       v331: [['friends4', 'Play Friends: visual seats, mode carousel and host settings.', WN_KEY], ['swords', 'Best of Series now includes Best of 7.', WN_KEY]],
@@ -552,11 +553,7 @@
         ['🔗', 'Links to the game now show a proper preview picture in WhatsApp, iMessage, Discord and everywhere else you share them.']
       ],
       v161: [
-        ['🖼️', 'A new profile picture now shows straight away on the Challenges and Gauntlet leaderboards.']
-      ],
-      v160: [
-        ['🏅', 'Leaderboard has new tabs: Challenges (most challenges completed) and Gauntlet (most Gauntlet bots beaten).', WN_KEY],
-        ['🥇', 'Reach the top 10, #3, #2 or #1 on any leaderboard and a congratulations message lands in your Inbox.', WN_KEY]
+        ['🖼️', 'A new profile picture now shows straight away on the Challenges and Gauntatulations message lands in your Inbox.', WN_KEY]
       ],
       v159: [
         ['⬇', 'Profile → Your Data → Download My Data saves a copy of everything stored about your account.'],

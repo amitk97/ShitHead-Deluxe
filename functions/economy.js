@@ -1300,8 +1300,9 @@ actions.series = async ({ uid, auth, data }) => {
     if (seriesActive(s)) fail('failed-precondition', 'A series is already set up in this room.');
     const other = humans.find(p => p.uid !== uid);
     const [myLevel, theirLevel] = await Promise.all([seriesPlayerLevel(uid), seriesPlayerLevel(other.uid)]);
-    if (myLevel < num(SERIES.level)) fail('failed-precondition', `Series unlock at level ${num(SERIES.level)}.`);
-    if (theirLevel < num(SERIES.level)) fail('failed-precondition', `${clip(other.name, 20)} needs to reach level ${num(SERIES.level)} first.`);
+    const requiredLevel = Math.max(num(SERIES.level), num(SERIES.levels?.[bestOf], { 3: 20, 5: 35, 7: 45 }[bestOf]));
+    if (myLevel < requiredLevel) fail('failed-precondition', `Best of ${bestOf} unlocks at level ${requiredLevel}.`);
+    if (theirLevel < requiredLevel) fail('failed-precondition', `${clip(other.name, 20)} needs to reach level ${requiredLevel} first.`);
     const id = `s${now.toString(36)}${nodeCrypto.randomInt(1e9).toString(36)}`;
     const draft = {
       id, room: code, bestOf, need: Math.ceil(bestOf / 2), fee, pot: fee * 4, host: uid, guest: other.uid,
@@ -1335,7 +1336,9 @@ actions.series = async ({ uid, auth, data }) => {
   if (op === 'accept') {
     if (uid !== s.guest || s.status !== 'pending') fail('failed-precondition', 'Nothing to accept.');
     if (!auth?.token?.email_verified) fail('failed-precondition', 'Verify your email address first.');
-    if ((await seriesPlayerLevel(uid)) < num(SERIES.level)) fail('failed-precondition', `Series unlock at level ${num(SERIES.level)}.`);
+    const requiredLevel = Math.max(num(SERIES.level), num(SERIES.levels?.[s.bestOf], { 3: 20, 5: 35, 7: 45 }[s.bestOf]));
+    const levels = await Promise.all([seriesPlayerLevel(uid), seriesPlayerLevel(other)]);
+    if (levels.some(level => level < requiredLevel)) fail('failed-precondition', `Both players must reach level ${requiredLevel} for Best of ${s.bestOf}.`);
     await userTx(uid, (user) => (seriesActive(user.series) && user.series.room !== code ? { error: 'Finish your other series first.' } : { noop: true }));
     await seriesMoney(uid, `${s.id}_entry`, -num(s.fee), { ...s, status: 'live' });
     try {

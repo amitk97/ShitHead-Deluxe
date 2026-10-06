@@ -12,6 +12,22 @@ const actions=require('../functions/economy')._test.actions;
 const call=(uid,op,matchId='game-one')=>actions.series({uid,auth:{token:{email_verified:true}},data:{op,roomCode:'123456',matchId}});
 function fixture(){put('series/123456',{id:'series-one',room:'123456',host:'alice',guest:'bob',status:'live',bestOf:3,need:2,played:1,wins:{alice:1,bob:0},games:{'game-one':'alice'},updatedAt:Date.now(),lastGameAt:Date.now()-90000});put('rooms/123456',{phase:'FINISHED',matchId:'game-one',players:[{uid:'alice',isHost:true,finishRank:1},{uid:'bob',isHost:false,finishRank:2}]});}
 (async()=>{
+ const xp=require('../functions/xp');put('config/features/xp',true);xp.resetCache();
+ const create=(bestOf)=>actions.series({uid:'alice',auth:{token:{email_verified:true}},data:{op:'create',roomCode:'123456',bestOf}});
+ function levelFixture(level,otherLevel=level){
+  put('series/123456',null);
+  put('rooms/123456',{phase:'LOBBY',ruleMode:'standard',players:[{uid:'alice',name:'Alice',isHost:true},{uid:'bob',name:'Bob'}]});
+  for(const [uid,L]of [['alice',level],['bob',otherLevel]])put('users/'+uid,{diamonds:1000,xp:{total:xp.xpForLevel(L)}});
+ }
+ for(const [bestOf,required]of [[3,20],[5,35],[7,45]]){
+  levelFixture(required-1);await assert.rejects(create(bestOf),new RegExp('level '+required));
+  levelFixture(required,required-1);await assert.rejects(create(bestOf),new RegExp('level '+required));
+  levelFixture(required);await create(bestOf);assert.equal(get('series/123456/status'),'pending');
+  put('users/bob/xp',{total:xp.xpForLevel(required-1)});await assert.rejects(call('bob','accept'),new RegExp('level '+required));
+  assert.equal(get('users/bob/diamonds'),1000);
+  put('users/bob/xp',{total:xp.xpForLevel(required)});await call('bob','accept');assert.equal(get('series/123456/status'),'live');
+ }
+ console.log('PASS server series level boundaries for host, guest, create and accept');
  fixture();await assert.rejects(call('alice','startNext'),/Both players must press Ready/);
  await call('alice','readyNext');assert.deepEqual(get('series/123456/nextRound/ready'),{alice:true});
  await assert.rejects(call('alice','startNext'),/Both players must press Ready/);

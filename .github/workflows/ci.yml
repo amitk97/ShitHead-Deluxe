@@ -47,6 +47,9 @@ jobs:
       - name: Dormant real-money purchase safeguards
         run: node functions/diamond-purchases.test.js
 
+      - name: Series levels and readiness
+        run: node tools/series-ready-test.js
+
       - name: House Rules unit tests
         run: node tools/house-rules-test.js
 

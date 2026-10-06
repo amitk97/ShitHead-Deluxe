@@ -118,7 +118,19 @@ await page.evaluate(()=>{
  state.players.push({id:'guest',uid:'guest_u',name:'Pooja',isBot:false,cosmetics:{level:25}});testRooms['rooms/123456'].players=state.players;
  renderSeriesPanel();
 });
-assert.equal(await page.locator('[data-series-best="7"]').isDisabled(),false);
+for (const level of [20, 34, 35, 44, 45]) {
+ await page.evaluate(level=>{playerXp={total:xpForLevel(level)};state.players[1].cosmetics.level=level;renderSeriesPanel();},level);
+ assert.equal(await page.locator('[data-series-best="3"]').isDisabled(),false);
+ assert.equal(await page.locator('[data-series-best="5"]').isDisabled(),level<35);
+ assert.equal(await page.locator('[data-series-best="7"]').isDisabled(),level<45);
+ if(level<35)assert((await page.locator('[data-series-best="5"]').innerText()).includes('Level 35'));
+ if(level<45)assert((await page.locator('[data-series-best="7"]').innerText()).includes('Level 45'));
+}
+await page.evaluate(()=>{state.players[1].cosmetics.level=34;renderSeriesPanel();});
+assert(await page.locator('[data-series-best="5"]').isDisabled());
+assert(await page.locator('[data-series-best="7"]').isDisabled());
+await page.evaluate(()=>{playerXp={total:xpForLevel(25)};state.players[1].cosmetics.level=25;renderSeriesPanel();});
+console.log('PASS series level boundaries and opponent requirements');
 await page.setViewportSize({width:320,height:568});
 assert(await page.locator('.pf-config-card').evaluate(el=>el.getBoundingClientRect().bottom<=innerHeight&&el.scrollHeight<=el.clientHeight+1));
 await page.locator('#friendsConfigBack').click();
