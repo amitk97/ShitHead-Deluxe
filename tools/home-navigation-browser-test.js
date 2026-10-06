@@ -3,7 +3,7 @@ const {chromium}=require('playwright');
 const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.resolve(__dirname, '..');
 const server=http.createServer((req,res)=>{let p=path.join(root,new URL(req.url,'http://localhost').pathname);if(p===root+'/')p+='index.html';fs.readFile(p,(err,data)=>{if(err){res.statusCode=404;res.end();return;}res.setHeader('Content-Type',({'.js':'application/javascript','.css':'text/css','.html':'text/html','.svg':'image/svg+xml','.mp4':'video/mp4'})[path.extname(p)]||'application/octet-stream');res.end(data);});});
-(async()=>{await new Promise(r=>server.listen(4175,r));const browser=await chromium.launch({headless:true, ...(process.env.SH_CHROMIUM_EXECUTABLE ? {executablePath:process.env.SH_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-dev-shm-usage','--no-zygote','--single-process']} : {})});try{
+(async()=>{await new Promise(r=>server.listen(4175,r));const browser=await chromium.launch({headless:true, ...(process.env.SH_BROWSER_CHANNEL ? {channel:process.env.SH_BROWSER_CHANNEL} : {}), ...(process.env.SH_CHROMIUM_EXECUTABLE ? {executablePath:process.env.SH_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-dev-shm-usage','--no-zygote','--single-process']} : {})});try{
 const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const page=await context.newPage();page.on('pageerror',e=>console.log('PAGE ERROR',e.message));
 await page.goto('http://localhost:4175/',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>typeof resetHomeUI==='function');await page.waitForTimeout(1800);
 await page.evaluate(()=>{devTestSuiteRunning=true;window.shBootReveal?.();resetHomeUI();});
@@ -90,8 +90,9 @@ await page.setViewportSize({width:390,height:844});await page.waitForTimeout(100
 
 if (fs.existsSync(path.join(root, 'media/tutorial-reference.mp4'))) {
   await page.locator('#homeTutorialVideo').evaluate(video => new Promise((resolve, reject) => {
-    video.addEventListener('loadedmetadata', () => video.duration > 0 ? resolve() : reject(new Error('Video has no duration')), {once:true});
-    video.addEventListener('error', () => reject(new Error('Reference video cannot be decoded')), {once:true});
+    const timer = setTimeout(() => reject(new Error('Reference video metadata did not load within 15 seconds')), 15000);
+    video.addEventListener('loadedmetadata', () => { clearTimeout(timer); video.duration > 0 ? resolve() : reject(new Error('Video has no duration')); }, {once:true});
+    video.addEventListener('error', () => { clearTimeout(timer); reject(new Error('Reference video cannot be decoded')); }, {once:true});
     video.load();
   }));
   await page.locator('#homeTutorialVideo').evaluate(async video => { video.muted = true; await video.play(); });

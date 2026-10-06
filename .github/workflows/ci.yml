@@ -63,9 +63,11 @@ jobs:
         run: |
           npm init -y
           npm install --no-save --ignore-scripts playwright@1.55.0
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium chrome
 
       - name: Home navigation and reference video
+        env:
+          SH_BROWSER_CHANNEL: chrome
         run: node tools/home-navigation-browser-test.js --require-video
 
       - name: Play Friends lobby regression checks
