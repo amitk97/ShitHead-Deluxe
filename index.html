@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-06-v333 (ShitHead-Deluxe-253) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-06-v334 (ShitHead-Deluxe-253) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -14,7 +14,7 @@
                 tools/export-catalog.js) -->
 <html lang="en" class="dark">
 <head>
-  <link rel="stylesheet" href="css/friends-lobby.css?v=333">
+  <link rel="stylesheet" href="css/friends-lobby.css?v=334">
   <meta charset="UTF-8" />
   <script>
     // The game's home is shithead-deluxe.web.app (owner, v310; the old
@@ -5934,7 +5934,6 @@ video {
             <button id="friendsJoinOpen" class="pf-secondary">Join a room</button>
           </div>
           <div id="friendsJoinView" class="hidden pf-join-view">
-            <button type="button" id="friendsJoinBack" class="pf-back" aria-label="Back to Play Friends">←</button>
             <h3>Join a friend's table</h3>
             <label for="joinCodeInput">Room code</label>
             <div class="pf-entry-actions">
@@ -5943,19 +5942,16 @@ video {
             </div>
           </div>
           <section id="friendsHub" class="hidden" aria-label="Your friends table">
-            <button type="button" id="friendsSetupBack" class="pf-back" aria-label="Back to Play Friends">←</button>
             <div id="friendsSeats" class="pf-seats" aria-label="Four player seats"></div>
             <div class="pf-section-title"><span>Choose your mode</span><span id="friendsHostHint">You host. You choose.</span></div>
-            <div id="friendsModeCarousel" class="pf-carousel" aria-label="Play Friends modes">
-<button type="button" class="pf-mode" data-friends-mode="soon-left" aria-pressed="false"><span class="pf-mode-number">1</span><svg class="ic"><use href="#ic-sparkle"/></svg><strong>Coming Soon</strong><small>A new way to play</small></button>
-<button type="button" class="pf-mode" data-friends-mode="house" aria-pressed="false"><span class="pf-mode-number">2</span><svg class="ic"><use href="#ic-cards"/></svg><strong>House Rules</strong><small>Your table. Your rules.</small></button>
-<button type="button" class="pf-mode" data-friends-mode="standard" aria-pressed="true"><span class="pf-mode-number">3</span><svg class="ic"><use href="#ic-cards"/></svg><strong>Standard</strong><small>Classic rules</small></button>
-<button type="button" class="pf-mode" data-friends-mode="series" aria-pressed="false"><span class="pf-mode-number">4</span><svg class="ic"><use href="#ic-swords"/></svg><strong>Best of Series</strong><small>Best of 3 · 5 · 7</small><span id="friendsSeriesLock" class="pf-lock"><svg class="ic"><use href="#ic-lock"/></svg><span>Level 20</span></span></button>
-<button type="button" class="pf-mode" data-friends-mode="soon-right" aria-pressed="false"><span class="pf-mode-number">5</span><svg class="ic"><use href="#ic-sparkle"/></svg><strong>Coming Soon</strong><small>A new way to play</small></button>
-</div>
-<div id="friendsCarouselControls" class="pf-carousel-controls"><button type="button" data-friends-step="first" aria-label="First mode">«</button><button type="button" data-friends-step="prev" aria-label="Previous mode">‹</button><button type="button" data-friends-step="next" aria-label="Next mode">›</button><button type="button" data-friends-step="last" aria-label="Last mode">»</button></div>
-<button type="button" id="friendsConfirmMode" class="pf-primary">HOST STANDARD ROOM</button>
-<div id="friendsRoomSettings" class="pf-ready-row hidden"><button type="button" class="pf-secondary" data-friends-config="series">Best of Series</button><button type="button" class="pf-secondary" data-friends-config="house">House Rules settings</button><button type="button" class="pf-secondary" data-friends-config="standard">Standard settings</button></div>
+<div id="friendsModeCarousel" class="mc-track" aria-label="Play Friends modes">
+<div role="button" tabindex="0" class="mc-card" data-friends-mode="soon-left" style="--mc-tone:#64748b" aria-pressed="false"><span class="mc-num">1</span><svg class="mc-ic ic"><use href="#ic-sparkle"/></svg><strong class="mc-name">Coming Soon</strong><small class="mc-sub">A new way to play</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
+<div role="button" tabindex="0" class="mc-card" data-friends-mode="house" style="--mc-tone:#a855f7" aria-pressed="false"><span class="mc-num">2</span><svg class="mc-ic ic"><use href="#ic-cards"/></svg><strong class="mc-name">House Rules</strong><small class="mc-sub">Your table. Your rules.</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
+<div role="button" tabindex="0" class="mc-card" data-friends-mode="standard" style="--mc-tone:#10b981" aria-pressed="false"><span class="mc-num">3</span><svg class="mc-ic ic"><use href="#ic-cards"/></svg><strong class="mc-name">Standard</strong><small class="mc-sub">Classic rules</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
+<div role="button" tabindex="0" class="mc-card" data-friends-mode="series" style="--mc-tone:#f59e0b" aria-pressed="false"><span class="mc-num">4</span><svg class="mc-ic ic"><use href="#ic-swords"/></svg><strong class="mc-name">Best of Series</strong><small class="mc-sub">Best of 3 · 5 · 7</small><button type="button" class="mc-go" data-friends-go>Go →</button><span id="friendsSeriesLock" class="pf-lock"><svg class="ic"><use href="#ic-lock"/></svg><span>Level 20</span></span></div>
+<div role="button" tabindex="0" class="mc-card" data-friends-mode="soon-right" style="--mc-tone:#64748b" aria-pressed="false"><span class="mc-num">5</span><svg class="mc-ic ic"><use href="#ic-sparkle"/></svg><strong class="mc-name">Coming Soon</strong><small class="mc-sub">A new way to play</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
+</div><div id="friendsCarouselControls" class="mc-controls"><button type="button" class="mc-arrow" data-friends-step="first" aria-label="First mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 6l-6 6 6 6M19 6l-6 6 6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="prev" aria-label="Previous mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="next" aria-label="Next mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="last" aria-label="Last mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6l6 6-6 6M11 6l6 6-6 6"/></svg></button></div><button type="button" id="friendsConfirmMode" class="hidden" tabindex="-1">HOST STANDARD ROOM</button>
+<div id="friendsRoomSettings" class="pf-ready-row hidden"><button type="button" id="friendsSettingsTrigger" class="pf-secondary" data-friends-config="house"><svg class="ic" viewBox="0 0 32 32"><use href="#ui-settings"/></svg><span>Custom Rules</span></button></div>
             <p id="friendsModeSummary" class="pf-summary" aria-live="polite"></p>
             <div id="friendsReadyRow" class="pf-ready-row hidden"><button type="button" id="friendsReviewRules" class="pf-secondary">Review rules</button><button type="button" id="friendsReady" class="pf-primary">Ready</button></div>
           </section>
@@ -5986,7 +5982,7 @@ video {
             <div id="seriesPanel" class="hidden series-panel"></div>
 
             <div class="flex justify-between items-center text-xs">
-              <span class="text-slate-400 font-bold">Connected Players / Bots:</span>
+              <span class="text-slate-400 font-bold">Players / Bots:</span>
               <span id="playerCounter" class="font-black text-emerald-400 text-sm">1 / 4</span>
             </div>
             <div id="connectedPlayersList" class="hidden"></div>
@@ -9713,8 +9709,9 @@ video {
 
   <div id="friendsConfigModal" class="hidden pf-modal" role="dialog" aria-modal="true" aria-labelledby="friendsConfigTitle">
     <div class="pf-config-card">
-      <div class="pf-config-heading"><button type="button" id="friendsConfigBack" class="pf-back" aria-label="Back to Play Friends">←</button><h2 id="friendsConfigTitle">House Rules</h2></div>
+      <div class="pf-config-heading"><button type="button" id="friendsConfigBack" class="pf-back" aria-label="Back to Play Friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2 id="friendsConfigTitle">House Rules</h2></div>
       <p id="friendsConfigHint" class="pf-summary">Changes are shared with everyone at the table.</p>
+      <div id="friendsConfigTabs" class="pf-tabs" aria-label="Settings sections"><button type="button" data-config-tab="table">Table</button><button type="button" data-config-tab="rules">Card Powers</button></div>
       <div id="friendsCommonSettings">
         <div id="hostBotControls"><label for="friendsBotCount">Bot filler seats</label><select id="friendsBotCount"></select><label for="friendsBotDifficulty">Bot difficulty</label><select id="friendsBotDifficulty"></select><button id="addBotBtn" class="hidden" tabindex="-1">Add bot</button><button id="removeBotBtn" class="hidden" tabindex="-1">Remove bot</button></div>
         <div id="hostTimerControls"><h3>Game speed</h3><div id="turnTimerBtnRow" class="pf-speed"></div></div>
@@ -9844,7 +9841,7 @@ video {
     // browsers' compositing) made their position:fixed boxes start at the
     // table's top instead of the screen's, pushing the top and X of a tall
     // page (e.g. Profile on iPhone) under the header.
-    ['friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
+    ['houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
      'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
@@ -17474,23 +17471,8 @@ video {
         return `<option value="${p}" ${p===current?'selected':''} ${invalid||capped?'disabled':''}>${label(p)}${capped?' — 2/2 used':''}</option>`;
       }).join('');
     }
-    let houseVariantsCloudLoadedFor='';
-    function loadHouseVariantsFromCloud() {
-      if (!currentUser || houseVariantsCloudLoadedFor===currentUser.uid) return;
-      houseVariantsCloudLoadedFor=currentUser.uid;
-      db.ref(`users/${currentUser.uid}/settings/houseRulesVariants`).once('value').then(s=>{
-        const v=s.val(); if(Array.isArray(v)){try{localStorage.setItem('shithead_house_rules_'+currentUser.uid,JSON.stringify(v.slice(0,3)));}catch(e){} renderHouseRulesPanel();}
-      }).catch(()=>{});
-    }
-    function saveCurrentHouseVariant() {
-      if (!currentUser) { notifyBanner('Sign in to save up to 3 House Rules variants.'); return; }
-      const name=(prompt('Name this House Rules variant:', state.houseRules?.name==='Custom'?'':state.houseRules?.name)||'').trim();
-      if(!name)return;
-      const rules={...JSON.parse(JSON.stringify(state.houseRules)),name};
-      const res=ShHouseRules.saveVariant(currentUser.uid,rules); if(!res.ok){notifyBanner(res.error);return;}
-      db.ref(`users/${currentUser.uid}/settings/houseRulesVariants`).set(res.variants).catch(()=>{});
-      state.houseRules=rules; db.ref(`rooms/${state.roomCode}/houseRules`).set(rules); renderHouseRulesPanel(); notifyBanner('House Rules saved.');
-    }
+    function loadHouseVariantsFromCloud() { window.ShHousePresets?.load(); }
+    function saveCurrentHouseVariant() { window.ShHousePresets?.open(); }
     function renderHouseRulesPanel() {
       const el=document.getElementById('houseRulesPanel'); if(!el||!window.ShHouseRules)return;
       loadHouseVariantsFromCloud();
@@ -17508,8 +17490,9 @@ video {
         </div>
         <div id="houseInfoText" class="hidden mt-2 p-2 rounded bg-slate-900 text-[10px] leading-relaxed text-slate-300 border border-slate-700">The host assigns powers to card ranks. Every player sees the rules before Ready. Bots use the same rules and adapt by difficulty. House Rules never affect Ranked, Challenges or Diamond earnings.</div>
         ${house?`<div class="mt-2 space-y-2">
-          <div class="flex gap-2"><select id="housePreset" ${host?'':'disabled'} class="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[10px] text-white"><option value="">Custom</option><option value="classic">ShitHead Deluxe</option>${saved.map((v,i)=>`<option value="saved:${i}">${escapeHtml(v.name)}</option>`).join('')}</select>${host&&currentUser?'<button id="houseSaveBtn" class="px-2 py-1 rounded bg-amber-700 text-[10px] font-black">SAVE</button>':''}</div>
-          <div class="grid grid-cols-2 gap-x-2 gap-y-1">${ShHouseRules.RANKS.map(r=>`<label class="flex items-center justify-between gap-1 text-[10px] font-black text-slate-300"><span>${r}</span><select data-house-rank="${r}" ${host?'':'disabled'} class="w-28 bg-slate-900 border border-slate-700 rounded px-1 py-1 text-[9px] text-white">${houseOptionHtml(r,rules.cards?.[r]||'')}</select></label>`).join('')}
+          <div class="house-presets" role="group" aria-label="Rulesets"><button type="button" data-house-preset="classic" ${host?'':'disabled'}>ShitHead Deluxe</button>${Array.from({length:3},(_,i)=>`<button type="button" data-house-preset="${i}" ${host?'':'disabled'} title="${escapeAttr(saved[i]?.name||'Custom Rule '+(i+1))}">${escapeHtml(saved[i]?.name||'Custom Rule '+(i+1))}</button>`).join('')}</div>
+          ${host?'<button type="button" id="houseSaveBtn" class="pf-save">Name & save ruleset</button>':''}
+          <div class="house-powers grid grid-cols-2 gap-x-2 gap-y-1">${ShHouseRules.RANKS.map(r=>`<label class="flex items-center justify-between gap-1 text-[10px] font-black text-slate-300"><span>${r}</span><select data-house-rank="${r}" ${host?'':'disabled'} class="w-28 bg-slate-900 border border-slate-700 rounded px-1 py-1 text-[9px] text-white">${houseOptionHtml(r,rules.cards?.[r]||'')}</select></label>`).join('')}
           <label class="flex items-center justify-between gap-1 text-[10px] font-black text-slate-300"><span>Joker</span><select data-house-rank="JOKER" ${host?'':'disabled'} class="w-28 bg-slate-900 border border-slate-700 rounded px-1 py-1 text-[9px] text-white">${houseOptionHtml('JOKER',rules.joker||'',true)}</select></label>
           <label class="flex items-center justify-between gap-1 text-[10px] font-black text-slate-300"><span>4 of a Kind</span><select data-house-rank="FOUR" ${host?'':'disabled'} class="w-28 bg-slate-900 border border-slate-700 rounded px-1 py-1 text-[9px] text-white"><option value="">Please Select</option><option value="burns" ${rules.fourKind==='burns'?'selected':''}>Burns</option><option value="none" ${rules.fourKind==='none'?'selected':''}>No Power</option></select></label></div>
           <div class="text-[9px] font-bold ${validation.valid?'text-emerald-400':'text-rose-400'}">${validation.valid?'✓ Rules valid':escapeHtml(validation.errors[0]||'Rules incomplete')}${validation.warnings.length?'<br><span class="text-amber-400">⚠ '+escapeHtml(validation.warnings.join(' '))+'</span>':''}</div>
@@ -17518,7 +17501,8 @@ video {
       el.querySelector('#houseInfoBtn')?.addEventListener('click',()=>el.querySelector('#houseInfoText')?.classList.toggle('hidden'));
       el.querySelector('#houseModeSelect')?.addEventListener('change',e=>publishHouseRules(e.target.value,e.target.value==='house'?ShHouseRules.CLASSIC:null));
       el.querySelectorAll('[data-house-rank]').forEach(s=>s.addEventListener('change',e=>setHouseRule(e.target.dataset.houseRank,e.target.value)));
-      el.querySelector('#housePreset')?.addEventListener('change',e=>{if(!host)return;const v=e.target.value;if(v==='classic')publishHouseRules('house',ShHouseRules.CLASSIC);else if(v.startsWith('saved:'))publishHouseRules('house',saved[Number(v.split(':')[1])]);});
+      window.ShHousePresets?.bind(el, host);
+      window.ShFriendsLobby?.layoutRules();
       el.querySelector('#houseSaveBtn')?.addEventListener('click',saveCurrentHouseVariant);
       el.querySelector('#houseReadyBtn')?.addEventListener('click',houseRulesReadyToggle);
     }
@@ -18272,7 +18256,7 @@ video {
       list.innerHTML = '';
       counter.textContent = `${state.players.length} / 4`;
       const label = counter.previousElementSibling;
-      if (label) label.innerHTML = state.ruleMode === 'house' ? 'Connected Players / Bots: <span class="ml-1 px-1.5 py-0.5 rounded bg-amber-900/60 border border-amber-600 text-amber-300 text-[8px]">HOUSE RULES</span>' : 'Connected Players / Bots:';
+      if (label) label.innerHTML = state.ruleMode === 'house' ? 'Players / Bots: <span class="ml-1 px-1.5 py-0.5 rounded bg-amber-900/60 border border-amber-600 text-amber-300 text-[8px]">HOUSE RULES</span>' : 'Players / Bots:';
       
       window.ShFriendsLobby?.render();
       watchSeriesRoom();
@@ -31940,7 +31924,7 @@ video {
     // player is typing into a room-code field. M and I are deliberately
     // NOT gated by this (see below) — they need to work precisely when
     // something IS open, to close it.
-    const BLOCKING_OVERLAY_IDS = ['friendsConfigModal','authModal', 'challengesModal', 'deleteAccountModal', 'friendsModal', 'inboxModal', 'leaderboardModal', 'matchStatsModal', 'needHumanModal', 'pileInspectModal', 'profileModal', 'rulesModal', 'settingsModal', 'shopModal', 'statsModal', 'supportModal', 'themesModal', 'usernameModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal'];
+    const BLOCKING_OVERLAY_IDS = ['houseNameModal','friendsConfigModal','authModal', 'challengesModal', 'deleteAccountModal', 'friendsModal', 'inboxModal', 'leaderboardModal', 'matchStatsModal', 'needHumanModal', 'pileInspectModal', 'profileModal', 'rulesModal', 'settingsModal', 'shopModal', 'statsModal', 'supportModal', 'themesModal', 'usernameModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal'];
     // Every page and pop-up springs in as it opens, whatever opened it.
     (function watchOverlayEntrances() {
       const ids = [...BLOCKING_OVERLAY_IDS, 'tutorialHubScreen', 'matchSummaryModal', 'difficultyUnlockPopup'];
@@ -32132,6 +32116,7 @@ video {
     // It works through one "guard" history entry that exists whenever there
     // is something to go back from.
     const BACK_LAYERS = {
+      houseNameModal: () => window.ShHousePresets?.close(),
       friendsConfigModal: () => window.ShFriendsLobby?.closeConfig(),
       appClosingScreen: 'returnFromClosingBtn',
       shConfirm: 'shConfirmNo',
@@ -35662,7 +35647,8 @@ video {
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
-  <script src="js/friends-lobby.js?v=333"></script>
+  <script src="js/house-rules-presets.js?v=334"></script>
+  <script src="js/friends-lobby.js?v=334"></script>
 </body>
 </html>
 

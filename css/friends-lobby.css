@@ -26,3 +26,75 @@
 @keyframes pf-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(max-width:420px){.pf-seats{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}.pf-seat{min-height:106px;padding:8px 3px}.pf-seat strong{font-size:10px}.pf-seat .xp-badge{font-size:9px;padding:2px 4px}.pf-seat small{font-size:8px}.pf-carousel>.pf-mode{flex-basis:min(68%,220px);min-width:0}}
 @media(prefers-reduced-motion:reduce){#friendsHub{animation:none}.pf-carousel{scroll-behavior:auto}}body.reduce-motion #friendsHub{animation:none}
+
+/* v334: shared Home carousel cards/physics, compact friends-only bounds. */
+#friendsModeCarousel{position:relative;height:210px;perspective:900px;overflow:hidden;cursor:grab;padding-bottom:22px;box-sizing:content-box;touch-action:pan-y;user-select:none;-webkit-user-select:none;mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+#friendsModeCarousel .mc-card .mc-ic{flex:none}
+#friendsCarouselControls{margin:2px 0 8px}
+#friendsCarouselControls [data-friends-step=prev]{margin-right:22px}
+#friendsConfirmMode{display:none!important}
+#friendsSettingsTrigger{display:flex;align-items:center;justify-content:center;gap:8px}
+#friendsSettingsTrigger .ic{width:18px;height:18px}
+.pf-back{width:40px;height:40px;border-color:#334155;color:#e2e8f0;cursor:pointer}
+.pf-back svg{width:20px;height:20px}
+.pf-back:hover{background:#1e293b;border-color:#fbbf24}
+.pf-tabs,.house-presets,.pf-pages{display:grid;gap:6px;margin:8px 0}
+.pf-tabs{grid-template-columns:1fr 1fr}.house-presets{grid-template-columns:repeat(4,minmax(0,1fr))}.pf-pages{grid-template-columns:1fr 1fr 1.5fr}
+:is(.pf-tabs,.house-presets,.pf-pages) button{min-width:0;min-height:38px;border:1px solid #334155;border-radius:9px;background:#172033;color:#cbd5e1;font-size:11px;font-weight:700;padding:6px;overflow-wrap:anywhere}
+:is(.pf-tabs,.house-presets,.pf-pages) button[aria-pressed=true]{border-color:#fbbf24;color:#fde68a;background:#382a14}
+.pf-save{display:block;margin:6px 0 10px auto;color:#fde68a;font-size:11px;min-height:32px;padding:4px 8px;border:1px solid #806a35;border-radius:8px}
+.pf-config-card{width:min(100%,600px);padding:14px;overflow:visible}
+.pf-config-heading{margin-bottom:6px}.pf-config-heading h2{font-size:18px}
+.pf-config-card #hostBotControls{margin:10px 0}.pf-config-card #hostTimerControls{margin:10px 0}
+.pf-config-card #houseRulesPanel .grid{gap:8px}
+.pf-config-card [hidden],.pf-tabs[hidden],.house-powers>label[hidden]{display:none!important}
+#houseNameModal{z-index:185}.pf-name-card{width:min(100%,420px);padding:18px;border:1px solid #806a35;border-radius:18px;background:#0b1428;box-shadow:0 24px 80px #0008}
+.pf-name-card label{display:block;margin:12px 0 5px;font-size:12px;font-weight:700;color:#cbd5e1}
+.pf-name-card :is(input,select){width:100%;min-height:40px;border:1px solid #475569;border-radius:8px;background:#172033;color:#fff;padding:8px;font-size:14px}
+#houseNameError{font-size:12px;color:#fbbf24;margin-top:8px}
+#lobbyScreen[data-mode-page=friends]{padding:8px 12px}
+#lobbyScreen[data-mode-page=friends]>.bg-slate-900{margin-top:8px;margin-bottom:auto;padding:14px 16px;zoom:1}
+#lobbyScreen[data-mode-page=friends] #modePageHead{padding-bottom:8px;gap:10px}
+#lobbyScreen[data-mode-page=friends] #homeNameBlock{margin:6px 0}
+#lobbyScreen[data-mode-page=friends] .pf-seats{margin:8px 0}
+#lobbyScreen[data-mode-page=friends] .pf-seat{min-height:108px;padding:8px 4px;gap:4px}
+#lobbyScreen[data-mode-page=friends] .pf-section-title{margin:8px 0 2px}
+#lobbyScreen[data-mode-page=friends] .pf-summary{margin:4px 0}
+@media(min-width:700px){#friendsModeCarousel{height:220px}}
+@media(max-height:720px){
+ #lobbyScreen[data-mode-page=friends]>.bg-slate-900{margin-top:0;padding:10px 14px}
+ #lobbyScreen[data-mode-page=friends] #modePageSub{display:none}
+ #lobbyScreen[data-mode-page=friends] .pf-seat{min-height:88px;gap:2px}
+ #lobbyScreen[data-mode-page=friends] .pf-seat .avatar-tile{width:36px!important;height:36px!important}
+ #lobbyScreen[data-mode-page=friends] .pf-empty-avatar{width:36px;height:36px}
+ #lobbyScreen[data-mode-page=friends] .pf-primary,#lobbyScreen[data-mode-page=friends] .pf-secondary{padding:9px}
+ .pf-modal{padding:8px}.pf-config-card{padding:10px}.pf-config-card .pf-summary{margin:4px 0;font-size:10px}
+ .pf-config-card #houseRulesPanel label{gap:2px}.pf-config-card #houseRulesPanel .grid{gap:5px}
+ .pf-config-card #houseRulesPanel select{min-height:32px;padding:4px}.pf-config-heading h2{font-size:16px}
+ .pf-tabs,.house-presets,.pf-pages{margin:5px 0;gap:4px}.pf-save{margin:4px 0 5px auto}
+}
+@media(prefers-reduced-motion:reduce){#friendsModeCarousel .mc-card{transition:none}}
+.pf-config-card{position:relative}
+#friendsConfigTitle{padding-right:24px}
+#friendsConfigModal #houseRulesPanel>.flex>div>span,#friendsConfigModal #houseRulesPanel>.flex>div>div{display:none}
+#friendsConfigModal #houseInfoBtn{position:absolute;right:14px;top:24px;margin:0}
+.house-presets button{font-size:10px;padding:5px 3px}
+#lobbyScreen[data-mode-page=friends]:has(.pf-in-room) #homeNameBlock,#multiOptions.pf-in-room>.mode-intro-line{display:none}
+@media(max-height:720px){#friendsModeCarousel{height:198px;padding-bottom:0}#lobbyScreen[data-mode-page=friends] #modePageTitle{font-size:18px}}
+#lobbyScreen[data-mode-page=friends]>.bg-slate-900>.text-center{display:none}
+#multiOptions .room-actions{display:grid;grid-template-columns:repeat(3,auto);gap:4px;margin-top:4px}
+#multiOptions .room-action{font-size:9px;padding:0 6px;gap:3px;letter-spacing:0}
+#multiLobbyRoom>.flex.justify-between{font-size:10px;gap:4px}
+#multiLobbyRoom #playerCounter{white-space:nowrap}
+#multiLobbyRoom #leaveRoomBtn{flex:0 0 86px}
+#lobbyScreen[data-mode-page=friends] #modePageHead{gap:8px}
+#multiLobbyRoom>.flex.justify-between>span:first-child>*{font-size:9px;white-space:nowrap}
+@media(max-height:720px){
+ #lobbyScreen[data-mode-page=friends] #modePageTitle{font-size:16px}
+ #lobbyScreen[data-mode-page=friends] #modePageIcon{width:36px;height:36px}
+ #multiOptions.pf-in-room{margin-top:2px;padding-top:0}
+ #multiOptions.pf-in-room #friendsHub{margin-top:2px}
+ #lobbyScreen[data-mode-page=friends] .pf-seat small{line-height:1.2}
+}
+.house-presets button{height:44px;line-height:14px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#friendsConfigModal #houseInfoText{position:absolute;inset:66px 12px auto;z-index:3;margin:0;padding:14px;box-shadow:0 12px 24px #0008}

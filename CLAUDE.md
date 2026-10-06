@@ -1,3 +1,11 @@
+## v334 — Play Friends polish and account ruleset slots
+
+The Friends host carousel uses Home's mc-card styling, geometry and gesture timings (30px step, 450ms hold, 520ms repeat), without altering Home. One header Back handles landing/setup/join; configuration and naming use the same chevron tile. The room shows one mode-specific settings trigger (Custom Rules with cog for House Rules), replacing the old mode-switch strip.
+
+Table and Card Powers tabs, three rank pages and scoped spacing keep the tested 320×568, 390×664/844, 768×900 and 1440×900 views within the viewport. Identity is shown by the seats once a room exists. Series controls use the same settings dialog (accessible to both players), keeping the room itself compact. `js/house-rules-presets.js` manages Classic plus three account slots: cloud reads guard account changes, slot transactions preserve other slots, renaming replaces the selected slot, and failed saves remain open with an error. Existing `users/{uid}/settings/houseRulesVariants` records and the local cache key are retained. Slot saves no longer silently claim success or write room rules outside the existing room transaction.
+
+Validation: `tools/friends-lobby-browser-test.js` covers Go, drag, mode locks, bots/readiness, guest restrictions, slots/rename/cloud restoration/account isolation/failure feedback, and full content bounds. Home selectors in its regression test are scoped to #modeCarousel because Friends now shares the card classes.
+
 ## v333 — two-step Play Friends hosting
 
 Play Friends opens with Host New Room and Join a Room. Host opens five numbered carousel cards (Coming Soon, House Rules, Standard, Best of Series, Coming Soon); Standard defaults, number and arrow keys browse, and confirmation reserves the room. Series remains gated at level 20. The room code and invite controls sit above four compact seats in a single horizontal row; host settings remain available in the lobby. Browser regression expectations now cover landing/setup visibility, keyboard navigation and horizontal roster geometry.

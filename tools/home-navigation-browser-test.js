@@ -7,20 +7,20 @@ const server=http.createServer((req,res)=>{let p=path.join(root,new URL(req.url,
 const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const page=await context.newPage();page.on('pageerror',e=>console.log('PAGE ERROR',e.message));
 await page.goto('http://localhost:4175/',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>typeof resetHomeUI==='function');await page.waitForTimeout(1800);
 await page.evaluate(()=>{devTestSuiteRunning=true;window.shBootReveal?.();resetHomeUI();});
-const focus=()=>page.locator('.mc-focus').getAttribute('data-mc');
+const focus=()=>page.locator('#modeCarousel .mc-focus').getAttribute('data-mc');
 const cdp=await context.newCDPSession(page);
 const touch=async(type,x,y)=>cdp.send('Input.dispatchTouchEvent',{type,touchPoints:type==='touchEnd'||type==='touchCancel'?[]:[{x,y,radiusX:2,radiusY:2,id:1}]});
 const reset=async()=>{await page.evaluate(()=>{resetHomeUI();document.querySelector('[data-mc-jump="first"]').click();});await page.waitForTimeout(600);};
-await reset();let b=await page.locator('.mc-focus').boundingBox();let x=b.x+b.width/2,y=b.y+b.height/2;
+await reset();let b=await page.locator('#modeCarousel .mc-focus').boundingBox();let x=b.x+b.width/2,y=b.y+b.height/2;
 await touch('touchStart',x,y);for(let i=1;i<=6;i++)await touch('touchMove',x-i*10,y);await touch('touchEnd');assert.equal(await focus(),'2');assert.equal(await page.evaluate(()=>document.body.classList.contains('mode-page')),false);console.log('PASS real native touch single step, no navigation');
-await page.waitForTimeout(600);b=await page.locator('.mc-focus').boundingBox();x=b.x+b.width/2;y=b.y+b.height/2;await touch('touchStart',x,y);await touch('touchMove',x-65,y);await page.waitForFunction(()=>Number(document.querySelector('.mc-focus').dataset.mc)>=4,null,{timeout:4000});await touch('touchEnd');let at=await focus();await page.waitForTimeout(700);assert.equal(await focus(),at);console.log('PASS real touch hold + stop');
+await page.waitForTimeout(600);b=await page.locator('#modeCarousel .mc-focus').boundingBox();x=b.x+b.width/2;y=b.y+b.height/2;await touch('touchStart',x,y);await touch('touchMove',x-65,y);await page.waitForFunction(()=>Number(document.querySelector('#modeCarousel .mc-focus').dataset.mc)>=4,null,{timeout:4000});await touch('touchEnd');let at=await focus();await page.waitForTimeout(700);assert.equal(await focus(),at);console.log('PASS real touch hold + stop');
 await reset();await page.evaluate(()=>document.querySelector('[data-mc="4"]').click());await page.waitForTimeout(600);await page.locator('[data-mc="4"] [data-mc-go]').tap();assert.equal(await page.locator('#lobbyScreen').getAttribute('data-mode-page'),'cpu');console.log('PASS single tap Go');
 await page.evaluate(()=>{setModePage('more');document.getElementById('settingsModal').classList.remove('hidden');pageTrail.settingsModal='profileModal';document.getElementById('levelLadderModal').classList.remove('hidden');});await page.waitForTimeout(100);await page.locator('#navHomeLogoBtn').tap();await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>[...MENU_PAGE_IDS,...BLOCKING_OVERLAY_IDS].every(id=>document.getElementById(id)?.classList.contains('hidden')) && Object.keys(pageTrail).length===0 && !document.body.classList.contains('mode-page')),true);console.log('PASS logo clears panels/trail + root');
 await page.locator('#leaveGameBtn').tap();await page.locator('#shConfirmYes').tap();assert(await page.locator('#appClosingScreen').isVisible());await page.locator('#returnFromClosingBtn').tap();assert(!await page.locator('#appClosingScreen').isVisible());console.log('PASS exit final screen + return');
 const sizes=await page.evaluate(()=>{currentUser=null;refreshXpDisplays();const guest=document.getElementById('homeNameLevel').getBoundingClientRect();const old=currentUser,oldXp=playerXp,oldOn=xpFeatureOn;xpFeatureOn=true;currentUser={uid:'test'};playerXp={total:0};refreshXpDisplays();const signed=document.getElementById('homeNameLevel').getBoundingClientRect();currentUser=old;playerXp=oldXp;xpFeatureOn=oldOn;refreshXpDisplays();return {guest:{w:guest.width,h:guest.height,y:guest.y},signed:{w:signed.width,h:signed.height,y:signed.y}}});assert.deepEqual(sizes.guest,sizes.signed);console.log('PASS guest/signed badge identical geometry',sizes);
 
 await reset();await page.evaluate(()=>document.querySelector('[data-mc="4"]').click());await page.waitForTimeout(600);const card=page.locator('[data-mc="4"] .mc-name');await card.tap();await card.tap();await page.waitForTimeout(850);assert.equal(await page.locator('#lobbyScreen').getAttribute('data-mode-page'),'cpu');console.log('PASS double tap card opens');
-await page.evaluate(()=>resetHomeUI());await page.setViewportSize({width:1440,height:1000});await reset();b=await page.locator('.mc-focus').boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2-70,b.y+b.height/2,{steps:5});await page.mouse.up();assert.equal(await focus(),'2');console.log('PASS desktop drag retained');
+await page.evaluate(()=>resetHomeUI());await page.setViewportSize({width:1440,height:1000});await reset();b=await page.locator('#modeCarousel .mc-focus').boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2-70,b.y+b.height/2,{steps:5});await page.mouse.up();assert.equal(await focus(),'2');console.log('PASS desktop drag retained');
 for(const width of [320,390,768,1440]) {
   await page.setViewportSize({width,height:900});await page.evaluate(()=>resetHomeUI());await page.waitForTimeout(100);
   const layout=await page.evaluate(()=>{
@@ -43,7 +43,7 @@ for (const mode of ['cpu','friends','ranked','gauntlet','more']) {
   await page.evaluate(() => { hideInfoPop(); window.dispatchEvent(new Event('resize')); });
   await page.locator('#modePageBack').click();
   await page.waitForTimeout(550);
-  const geometry = await page.evaluate(() => [...document.querySelectorAll('.mc-card:not(.mc-gone)')].map(c=>({x:parseFloat(c.style.getPropertyValue('--mc-x')),w:c.getBoundingClientRect().width})));
+  const geometry = await page.evaluate(() => [...document.querySelectorAll('#modeCarousel .mc-card:not(.mc-gone)')].map(c=>({x:parseFloat(c.style.getPropertyValue('--mc-x')),w:c.getBoundingClientRect().width})));
   assert(geometry.length >= 3 && geometry.every(c=>c.w>0));
   assert(new Set(geometry.map(c=>c.x)).size === geometry.length, 'Distinct restored card positions');
 }

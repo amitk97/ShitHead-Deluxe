@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v334: [['friends4', 'Play Friends has the Home-style carousel with Go buttons, compact settings pages, and three custom ruleset slots with in-app naming and account sync.', WN_KEY]],
       v333: [['friends4', 'Play Friends now starts with Host or Join. Choose from five mode cards before hosting, with Standard selected and compact seats below the room code.']],
       v331: [['friends4', 'Play Friends: visual seats, mode carousel and host settings.', WN_KEY], ['swords', 'Best of Series now includes Best of 7.', WN_KEY]],
       v330: [[ '🃏', 'The mode cards no longer get stuck if you let go of the mouse outside the window mid-drag.' ]],
