@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v331: [['friends4', 'Play Friends: visual seats, mode carousel and host settings.', WN_KEY], ['swords', 'Best of Series now includes Best of 7.', WN_KEY]],
       v330: [[ '🃏', 'The mode cards no longer get stuck if you let go of the mouse outside the window mid-drag.' ]],
       v329: [[ '🃏', 'More room on Home, centred carousel arrows, fullscreen tutorial video, mode help and clearer Shortcut controls. Active Gauntlets show Continue, and cards stay visible when returning Home.' ]],
       v328: [[ '🃏', 'Swipe on mobile, tap Go to open a mode, and double-tap a card to enter. The logo clears open panels, guest badges match signed-in levels, and the home tutorial has a compact video layout.', WN_KEY ]],

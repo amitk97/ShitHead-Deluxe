@@ -10381,18 +10381,21 @@ async function runDevTestSuite() {
   });
 
   await test('The multiplayer turn timer defaults to Balanced (15s) and is host-configurable', () => {
-    freshState({ isMultiplayer: true, isHost: true, roomCode: '444444', drawPile: [] });
+    freshState({ phase: 'LOBBY', isMultiplayer: true, isHost: true, roomCode: '444444', drawPile: [] });
     assertEqual(state.turnTimerMs, 15000, 'Default turn timer should be Balanced (15s), matching the game\'s existing behaviour for anyone who never touches the setting');
     state.players = [makePlayer({ id: 'p1' }), makePlayer({ id: 'p2' })];
     const originalUpdate = db.ref;
     let syncedMs = null;
-    db.ref = function (path) { return { update: (obj) => { if ('turnTimerMs' in obj) syncedMs = obj.turnTimerMs; } }; };
+    db.ref = function (path) { return { update: (obj) => { if ('turnTimerMs' in obj) syncedMs = obj.turnTimerMs; return Promise.resolve(); } }; };
     const casualMs = TURN_TIMER_PRESETS.find(p => p.id === 'casual').ms;
     setMultiplayerTurnTimer(casualMs);
     db.ref = originalUpdate;
     assertEqual(state.turnTimerMs, casualMs, 'Choosing Casual must update the live setting immediately');
     assertEqual(syncedMs, casualMs, 'The choice must be synced to Firebase so every other client picks it up');
 
+    state.phase = 'PLAY';
+    setMultiplayerTurnTimer(10000);
+    assertEqual(state.turnTimerMs, casualMs, 'Timer changes are rejected once play starts');
     state.direction = 1; state.currentTurnIndex = 0;
     advanceTurn(1);
     const remaining = state.turnDeadline - serverNow();

@@ -1288,10 +1288,11 @@ actions.series = async ({ uid, auth, data }) => {
   if (op === 'create') {
     const bestOf = num(data.bestOf);
     const fee = num(SERIES.bestOf?.[bestOf]);
-    if (!fee) fail('invalid-argument', 'Choose Best of 3 or Best of 5.');
+    if (!fee) fail('invalid-argument', 'Choose Best of 3, 5 or 7.');
     if (!(await xp.enabled())) fail('failed-precondition', 'Series need levels, which are switched off right now.');
     if (!auth?.token?.email_verified) fail('failed-precondition', 'Verify your email address first.');
     if (!room || room.isRanked) fail('failed-precondition', 'Series are only for Play Friends rooms.');
+    if (room.ruleMode === 'house') fail('failed-precondition', 'Series use Standard rules. Switch modes first.');
     const humans = seats.filter(p => !p.isBot && p.uid);
     if (seats.length !== 2 || humans.length !== 2) fail('failed-precondition', 'A series needs exactly two signed-in players and no bots.');
     if (!mine || !mine.isHost) fail('failed-precondition', 'Only the host can start a series.');

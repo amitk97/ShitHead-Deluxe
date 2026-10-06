@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-05-v330 (ShitHead-Deluxe-252) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-06-v331 (ShitHead-Deluxe-253) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -14,6 +14,7 @@
                 tools/export-catalog.js) -->
 <html lang="en" class="dark">
 <head>
+  <link rel="stylesheet" href="css/friends-lobby.css?v=331">
   <meta charset="UTF-8" />
   <script>
     // The game's home is shithead-deluxe.web.app (owner, v310; the old
@@ -627,7 +628,7 @@
     #modePageBack:hover { background: #1e293b; border-color: #fbbf24; }
     #modePageBack:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
     #modePageBack svg { width: 20px; height: 20px; }
-    #lobbyScreen:has(#multiLobbyRoom:not(.hidden)) #modePageBack { visibility: hidden; }
+    /* Room sub-pages keep the same visible Back control. */
     #modePageIcon { width: 44px; height: 44px; flex: none; border-radius: 13px; display: flex; align-items: center; justify-content: center;
       color: var(--mp-tone, #f59e0b); background: color-mix(in srgb, var(--mp-tone, #f59e0b) 14%, #0b1428); }
     #modePageIcon .mc-ic { width: 28px; height: 28px; }
@@ -5928,19 +5929,31 @@ video {
         <!-- Multiplayer Setup -->
         <div id="multiOptions" class="hidden space-y-2 pt-1">
           <p class="mode-intro-line">Your own table with friends. <button type="button" class="mode-intro-link" data-mode-intro="online">How Play Friends works</button></p>
-          <div class="flex gap-2">
-            <button id="hostRoomBtn" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 font-black tracking-wider rounded-xl text-slate-950 transition text-xs">HOST NEW ROOM</button>
+          <div id="friendsEntryActions" class="pf-entry-actions">
+            <button id="hostRoomBtn" class="pf-primary">HOST NEW ROOM</button>
+            <button id="friendsJoinOpen" class="pf-secondary">Join a room</button>
           </div>
-          <div class="relative flex py-1 items-center">
-            <div class="flex-grow border-t border-slate-800"></div>
-            <span class="flex-shrink mx-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Or Join with Code</span>
-            <div class="flex-grow border-t border-slate-800"></div>
+          <div id="friendsJoinView" class="hidden pf-join-view">
+            <button type="button" id="friendsJoinBack" class="pf-back" aria-label="Back to Play Friends">←</button>
+            <h3>Join a friend's table</h3>
+            <label for="joinCodeInput">Room code</label>
+            <div class="pf-entry-actions">
+              <input type="text" id="joinCodeInput" placeholder="6-DIGIT CODE" maxlength="6" inputmode="numeric" pattern="[0-9]*" />
+              <button id="joinRoomBtn" class="pf-primary">JOIN</button>
+            </div>
           </div>
-          <div class="flex gap-2">
-            <input type="text" id="joinCodeInput" placeholder="6-DIGIT CODE" maxlength="6" inputmode="numeric" pattern="[0-9]*" class="flex-1 bg-slate-950 border-2 border-slate-800 rounded-xl px-3 py-1.5 text-xs font-mono font-bold tracking-widest focus:border-amber-400 outline-none text-white text-center uppercase" />
-            <button id="joinRoomBtn" class="px-5 py-1.5 bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 font-black rounded-xl text-slate-200 transition text-xs">JOIN</button>
-          </div>
-          
+          <section id="friendsHub" aria-label="Your friends table">
+            <div id="friendsSeats" class="pf-seats" aria-label="Four player seats"></div>
+            <div class="pf-section-title"><span>Choose your mode</span><span id="friendsHostHint">You host. You choose.</span></div>
+            <div id="friendsModeCarousel" class="pf-carousel" aria-label="Play Friends modes">
+              <button type="button" class="pf-mode pf-teaser" data-friends-mode="soon" aria-disabled="true"><svg class="ic"><use href="#ic-sparkle"/></svg><strong>Coming Soon</strong><small>A new way to play</small></button>
+              <div class="pf-mode-wrap"><button type="button" class="pf-mode" data-friends-mode="house" aria-pressed="true"><svg class="ic"><use href="#ic-cards"/></svg><strong>House Rules</strong><small>Your table. Your rules.</small></button><button type="button" class="pf-cog" data-friends-config="house" aria-label="Configure House Rules"><svg class="ic"><use href="#ui-settings"/></svg></button></div>
+              <button type="button" class="pf-mode" data-friends-mode="series" aria-pressed="false"><svg class="ic"><use href="#ic-swords"/></svg><strong>Best of Series</strong><small>Best of 3 · 5 · 7</small><span id="friendsSeriesLock" class="pf-lock"><svg class="ic"><use href="#ic-lock"/></svg><span>Level 20</span></span></button>
+            </div>
+            <div class="pf-standard"><button type="button" data-friends-mode="standard" aria-pressed="false">Standard <small>Classic rules</small></button><button type="button" class="pf-cog" data-friends-config="standard" aria-label="Configure Standard mode"><svg class="ic"><use href="#ui-settings"/></svg></button></div>
+            <p id="friendsModeSummary" class="pf-summary" aria-live="polite"></p>
+            <div id="friendsReadyRow" class="pf-ready-row hidden"><button type="button" id="friendsReviewRules" class="pf-secondary">Review rules</button><button type="button" id="friendsReady" class="pf-primary">Ready</button></div>
+          </section>
           <div id="multiLobbyRoom" class="hidden space-y-2 pt-2 border-t border-slate-800">
             <div class="p-2 bg-slate-950 rounded-xl border border-amber-500/50 flex flex-col items-center justify-center shadow-inner">
               <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest">Room Code:</span>
@@ -5962,24 +5975,7 @@ video {
               </div>
             </div>
 
-            <!-- Host Bot Management Controls -->
-            <div id="hostBotControls" class="hidden flex items-center justify-between bg-slate-950 px-3 py-1 rounded-lg border border-slate-800">
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">AI Bots in Match:</span>
-              <div class="flex gap-1.5">
-                <button id="removeBotBtn" class="px-2.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-amber-400 font-black text-xs rounded border border-slate-700">- Bot</button>
-                <button id="addBotBtn" class="px-2.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-black text-xs rounded border border-slate-700">+ Bot (Med)</button>
-              </div>
-            </div>
-
-            <!-- Host Turn Timer Controls: how long a human has before a bot
-                 plays a random move for them. Host-only, set before the
-                 match starts. -->
-            <div id="hostTimerControls" class="hidden flex flex-col gap-1 bg-slate-950 px-3 py-1 rounded-lg border border-slate-800">
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Turn Timer:</span>
-              <div id="turnTimerBtnRow" class="grid grid-cols-3 gap-1.5"></div>
-            </div>
-            <div id="houseRulesPanel" class="bg-slate-950 px-3 py-2 rounded-lg border border-slate-800"></div>
-
+            <!-- Configuration controls live in the host modal. -->
             <!-- Best of series (§ Best of series): the host picks a length,
                  the other player accepts; drawn by renderSeriesPanel. -->
             <div id="seriesPanel" class="hidden series-panel"></div>
@@ -5988,7 +5984,7 @@ video {
               <span class="text-slate-400 font-bold">Connected Players / Bots:</span>
               <span id="playerCounter" class="font-black text-emerald-400 text-sm">1 / 4</span>
             </div>
-            <div id="connectedPlayersList" class="space-y-1 max-h-28 overflow-y-auto custom-scrollbar pr-1"></div>
+            <div id="connectedPlayersList" class="hidden"></div>
             
             <div class="flex gap-2">
               <button id="leaveRoomBtn" class="flex-1 py-2 bg-rose-950 hover:bg-rose-900 border border-rose-700/80 font-black tracking-wider rounded-xl text-rose-300 transition text-xs uppercase">Leave Room</button>
@@ -7642,9 +7638,9 @@ video {
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
             <p>A <strong>Best Of Series</strong> is a run of Play Friends games between two players, played for Diamonds.</p>
             <p><strong class="text-amber-300">Who can play:</strong> exactly two signed-in players, both <strong>Lvl 20</strong> or above, with no bots at the table.</p>
-            <p><strong class="text-amber-300">Starting one:</strong> in the room, the host picks <strong>Best of 3</strong> or <strong>Best of 5</strong>; the other player accepts or declines.</p>
-            <p><strong class="text-amber-300">Entry and prize:</strong> each player pays <strong>💎 30</strong> (Best of 3) or <strong>💎 50</strong> (Best of 5). The game matches the pot, so the series winner takes <strong>💎 120</strong> or <strong>💎 200</strong>.</p>
-            <p><strong class="text-amber-300">Playing:</strong> first to 2 wins (Best of 3) or 3 wins (Best of 5). Both players press Ready before the next game starts, and the score sits in the top-left corner. A draw doesn&rsquo;t count for either player. If a series runs very long, the player ahead wins it; if it&rsquo;s level, both get their entry back.</p>
+            <p><strong class="text-amber-300">Starting one:</strong> in the room, the host picks <strong>Best of 3, 5 or 7</strong>; the other player accepts or declines.</p>
+            <p><strong class="text-amber-300">Entry and prize:</strong> each player pays <strong>💎 30</strong> (Best of 3), <strong>💎 50</strong> (Best of 5) or <strong>💎 70</strong> (Best of 7). The game matches the pot, so the series winner takes <strong>💎 120</strong>, <strong>💎 200</strong> or <strong>💎 280</strong>.</p>
+            <p><strong class="text-amber-300">Playing:</strong> first to 2 wins (Best of 3), 3 wins (Best of 5) or 4 wins (Best of 7). Both players press Ready before the next game starts, and the score sits in the top-left corner. A draw doesn&rsquo;t count for either player. If a series runs very long, the player ahead wins it; if it&rsquo;s level, both get their entry back.</p>
             <p><strong class="text-amber-300">Calling it off:</strong> before the first game, either player can call it off and both entries go back.</p>
             <p><strong class="text-amber-300">Leaving:</strong> after the first game, leaving hands the series to the other player.</p>
             <p><strong class="text-amber-300">If your app closes:</strong> a Medium bot plays your seat, using the full turn time for each move. Come back within 5 of its turns and you carry on; after that the series goes to the other player.</p>
@@ -7670,7 +7666,7 @@ video {
           </button>
           <div class="accordion-content hidden p-4 space-y-2.5 border-t border-slate-800 text-[11.5px] leading-relaxed text-slate-300">
             <p data-term="base-card"><strong class="text-amber-400">Base Card:</strong> The card at the very bottom of the Pile &mdash; the first one played since the last Burn. Normally irrelevant, but a 5 drops the target down to it, so the next player must beat the Base Card instead of the top one.</p>
-            <p data-term="best-of-series"><strong class="text-amber-400">Best Of Series:</strong> Play Friends only: two players at Lvl 20 or above play a Best of 3 or Best of 5. Each pays an entry, the game matches the pot, and the series winner takes it all.</p>
+            <p data-term="best-of-series"><strong class="text-amber-400">Best Of Series:</strong> Play Friends only: two players at Lvl 20 or above play a Best of 3, 5 or 7. Each pays an entry, the game matches the pot, and the series winner takes it all.</p>
             <p data-term="blind-card"><strong class="text-amber-400">Blind Card:</strong> See <em>Face-Down Cards</em>.</p>
             <p data-term="bonus-draw"><strong class="text-amber-400">Bonus Draw:</strong> If the card you draw right after playing matches the rank you just played, you get offered a free follow-up play with it before the turn passes &mdash; a way to chain extra plays in one turn.</p>
             <p data-term="boss-gauntlet"><strong class="text-amber-400">Boss Gauntlet:</strong> A daily run against 3 Boss bots with 1 life, unlocked at Level 50 after beating Easy once and Hard three times. Beat all three to complete the run. Choose it on the Gauntlet page; you may enter one Gauntlet mode per day.</p>
@@ -9710,6 +9706,17 @@ video {
     }
   </script>
 
+  <div id="friendsConfigModal" class="hidden pf-modal" role="dialog" aria-modal="true" aria-labelledby="friendsConfigTitle">
+    <div class="pf-config-card">
+      <div class="pf-config-heading"><button type="button" id="friendsConfigBack" class="pf-back" aria-label="Back to Play Friends">←</button><h2 id="friendsConfigTitle">House Rules</h2></div>
+      <p id="friendsConfigHint" class="pf-summary">Changes are shared with everyone at the table.</p>
+      <div id="friendsCommonSettings">
+        <div id="hostBotControls"><label for="friendsBotCount">Bot filler seats</label><select id="friendsBotCount"></select><label for="friendsBotDifficulty">Bot difficulty</label><select id="friendsBotDifficulty"></select><button id="addBotBtn" class="hidden" tabindex="-1">Add bot</button><button id="removeBotBtn" class="hidden" tabindex="-1">Remove bot</button></div>
+        <div id="hostTimerControls"><h3>Game speed</h3><div id="turnTimerBtnRow" class="pf-speed"></div></div>
+      </div>
+      <div id="houseRulesPanel"></div>
+    </div>
+  </div>
   <!-- GAMEPLAY ENGINE -->
   <script src="js/card-reference-data.js"></script>
   <script src="js/card-reference-ui.js"></script>
@@ -9832,7 +9839,7 @@ video {
     // browsers' compositing) made their position:fixed boxes start at the
     // table's top instead of the screen's, pushing the top and X of a tall
     // page (e.g. Profile on iPhone) under the header.
-    ['matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
+    ['friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
      'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
@@ -13470,6 +13477,7 @@ video {
       document.getElementById('playActionControls')?.classList.add('hidden');
 
       document.getElementById('multiLobbyRoom')?.classList.remove('hidden');
+      window.ShFriendsLobby?.showHub();
       document.getElementById('hostRoomBtn')?.classList.add('hidden');
       document.getElementById('joinRoomBtn')?.classList.add('hidden');
       const joinInput = document.getElementById('joinCodeInput');
@@ -17151,8 +17159,9 @@ video {
       state.isMultiplayer = true;
       state.isHost = true;
       state.localPlayerId = 'p_host';
-      state.ruleMode = 'standard';
-      state.houseRules = null;
+      state.ruleMode = window.ShFriendsLobby?.draftMode() === 'standard' ? 'standard' : 'house';
+      state.friendsMode = state.ruleMode;
+      state.houseRules = state.ruleMode === 'house' ? JSON.parse(JSON.stringify(ShHouseRules.CLASSIC)) : null;
 
       const hostPlayer = {
         id: 'p_host',
@@ -17177,8 +17186,9 @@ video {
         hostId: 'p_host',
         players: [hostPlayer],
         turnTimerMs: state.turnTimerMs,
-        ruleMode: 'standard',
-        houseRules: null,
+        ruleMode: state.ruleMode,
+        friendsMode: state.friendsMode,
+        houseRules: state.houseRules,
         clientVersion: getGameVersionLabel()
       })).then(({ code }) => {
         state.roomCode = code;
@@ -17410,16 +17420,32 @@ video {
     function resetHouseRulesReady() {
       state.players = (state.players || []).map(p => ({ ...p, houseRulesReady: !!p.isBot }));
     }
-    function publishHouseRules(nextMode, rules) {
-      if (!state.isHost || !state.roomCode) return;
+    async function publishHouseRules(nextMode, rules, friendsMode) {
+      if (!state.isHost || !state.roomCode || state.phase !== 'LOBBY' || seriesIsActive(seriesState)) return false;
       const mode = nextMode === 'house' ? 'house' : 'standard';
-      const nextRules = mode === 'house' ? JSON.parse(JSON.stringify(rules || ShHouseRules.fresh())) : null;
-      state.ruleMode = mode; state.houseRules = nextRules; resetHouseRulesReady();
-      db.ref(`rooms/${state.roomCode}`).update({ ruleMode: mode, houseRules: nextRules, players: state.players, houseRulesChangedAt: firebase.database.ServerValue.TIMESTAMP });
-      renderHouseRulesPanel(); updateLobbyPlayerList();
+      const nextRules = mode === 'house' ? JSON.parse(JSON.stringify(rules || ShHouseRules.CLASSIC)) : null;
+      const code = state.roomCode, hostId = state.localPlayerId;
+      try {
+        const result = await db.ref(`rooms/${code}`).transaction(room => {
+          if (!room || room.phase !== 'LOBBY' || room.hostId !== hostId) return;
+          const players = roomPlayerList(room.players);
+          if (mode === 'standard' && players.filter(p => p.isBot).length > 2) return;
+          if (friendsMode === 'series' && players.some(p => p.isBot)) return;
+          return {...room, ruleMode: mode, friendsMode: friendsMode || mode, houseRules: nextRules,
+            players: players.map(p => ({...p, houseRulesReady: !!p.isBot})), houseRulesChangedAt: firebase.database.ServerValue.TIMESTAMP};
+        });
+        if (!result.committed) { notifyBanner('Remove extra bots or wait for the current game to finish before changing modes.'); return false; }
+        if (state.roomCode === code) {
+          const room = result.snapshot.val();
+          state.ruleMode = mode; state.friendsMode = room.friendsMode; state.houseRules = nextRules;
+          state.players = roomPlayerList(room.players);
+          renderHouseRulesPanel(); updateLobbyPlayerList();
+        }
+        return true;
+      } catch (e) { notifyBanner('Could not save the rules. Please try again.'); return false; }
     }
     function setHouseRule(rank, value) {
-      if (!state.isHost || !isHouseRulesMatch()) return;
+      if (!state.isHost || !isHouseRulesMatch() || state.phase !== 'LOBBY' || seriesIsActive(seriesState)) return;
       const next=JSON.parse(JSON.stringify(state.houseRules));
       if(rank==='JOKER') next.joker=value; else if(rank==='FOUR') next.fourKind=value; else next.cards[rank]=value;
       const v=ShHouseRules.validate(next);
@@ -17428,7 +17454,7 @@ video {
       publishHouseRules('house', next);
     }
     function houseRulesReadyToggle() {
-      if (state.ruleMode !== 'house' || !state.roomCode) return;
+      if (state.ruleMode !== 'house' || !state.roomCode || state.phase !== 'LOBBY') return;
       const v=ShHouseRules.validate(state.houseRules || {});
       if (!v.valid) { notifyBanner(v.errors[0]); return; }
       updatePlayersAtomic(state.roomCode, list => list.map(p => p.id===state.localPlayerId ? {...p,houseRulesReady:!p.houseRulesReady} : p));
@@ -17463,7 +17489,7 @@ video {
     function renderHouseRulesPanel() {
       const el=document.getElementById('houseRulesPanel'); if(!el||!window.ShHouseRules)return;
       loadHouseVariantsFromCloud();
-      const house=state.ruleMode==='house', host=!!state.isHost;
+      const house=state.ruleMode==='house', host=!!state.isHost && state.phase==='LOBBY' && !seriesIsActive(seriesState);
       const rules=state.houseRules||ShHouseRules.fresh(), validation=house?ShHouseRules.validate(rules):{valid:true,errors:[],warnings:[]};
       const saved=currentUser?ShHouseRules.loadVariants(currentUser.uid):[];
       const humanReady=(state.players||[]).filter(p=>!p.isBot).filter(p=>p.houseRulesReady).length;
@@ -17485,7 +17511,7 @@ video {
           <button id="houseReadyBtn" ${validation.valid?'':'disabled'} class="w-full py-1.5 rounded border ${(state.players.find(p=>p.id===state.localPlayerId)?.houseRulesReady)?'bg-emerald-700 border-emerald-500':'bg-slate-800 border-slate-600'} text-[10px] font-black disabled:opacity-40">${(state.players.find(p=>p.id===state.localPlayerId)?.houseRulesReady)?'✓ READY':'READY FOR HOUSE RULES'} · ${humanReady}/${humans}</button>
         </div>`:''}`;
       el.querySelector('#houseInfoBtn')?.addEventListener('click',()=>el.querySelector('#houseInfoText')?.classList.toggle('hidden'));
-      el.querySelector('#houseModeSelect')?.addEventListener('change',e=>publishHouseRules(e.target.value,e.target.value==='house'?ShHouseRules.fresh():null));
+      el.querySelector('#houseModeSelect')?.addEventListener('change',e=>publishHouseRules(e.target.value,e.target.value==='house'?ShHouseRules.CLASSIC:null));
       el.querySelectorAll('[data-house-rank]').forEach(s=>s.addEventListener('change',e=>setHouseRule(e.target.dataset.houseRank,e.target.value)));
       el.querySelector('#housePreset')?.addEventListener('change',e=>{if(!host)return;const v=e.target.value;if(v==='classic')publishHouseRules('house',ShHouseRules.CLASSIC);else if(v.startsWith('saved:'))publishHouseRules('house',saved[Number(v.split(':')[1])]);});
       el.querySelector('#houseSaveBtn')?.addEventListener('click',saveCurrentHouseVariant);
@@ -17513,10 +17539,10 @@ video {
     }
 
     function setMultiplayerTurnTimer(ms) {
-      if (!state.isHost || !state.roomCode) return;
+      if (!state.isHost || !state.roomCode || state.phase !== 'LOBBY' || seriesIsActive(seriesState) || !TURN_TIMER_PRESETS.some(p => p.ms === ms)) return;
       state.turnTimerMs = ms;
       renderTurnTimerButtons();
-      db.ref(`rooms/${state.roomCode}`).update({ turnTimerMs: ms });
+      db.ref(`rooms/${state.roomCode}`).update({ turnTimerMs: ms }).catch(() => notifyBanner('Could not save game speed. Please try again.'));
     }
 
     // Rooms are never deleted by the game itself when players just close the
@@ -18135,6 +18161,8 @@ video {
           state.turnTimerMs = data.turnTimerMs;
         }
         state.ruleMode = data.ruleMode === 'house' ? 'house' : 'standard';
+        state.friendsMode = data.friendsMode || state.ruleMode;
+        state.lobbyBotDifficulty = data.lobbyBotDifficulty || state.lobbyBotDifficulty || 'medium';
         state.houseRules = state.ruleMode === 'house' ? (data.houseRules || state.houseRules) : null;
 
         if (isStaleSnapshot) {
@@ -18241,27 +18269,11 @@ video {
       const label = counter.previousElementSibling;
       if (label) label.innerHTML = state.ruleMode === 'house' ? 'Connected Players / Bots: <span class="ml-1 px-1.5 py-0.5 rounded bg-amber-900/60 border border-amber-600 text-amber-300 text-[8px]">HOUSE RULES</span>' : 'Connected Players / Bots:';
       
-      state.players.forEach(p => {
-        const div = document.createElement('div');
-        div.className = "px-3 py-1.5 bg-slate-950 rounded-lg text-xs font-black text-slate-300 flex items-center justify-between border border-slate-800";
-        
-        let kickBtn = '';
-        if (state.isHost && !state.isRanked && !p.isHost && p.id !== state.localPlayerId) {
-          kickBtn = `<button onclick="kickPlayer('${p.id}')" style="margin-right:8px" class="px-2 py-0.5 bg-rose-900/60 hover:bg-rose-800 text-rose-300 text-[10px] rounded font-bold border border-rose-700">Kick</button>`;
-        }
-
-        div.innerHTML = `
-          <span>${escapeHtml(p.name)} ${p.isHost ? '(Host)' : ''}</span>
-          <div class="flex items-center">
-            ${kickBtn}
-            <span class="${p.isBot ? 'text-amber-400' : 'text-emerald-400'}">${p.isBot ? 'AI Bot' : 'Connected'}</span>
-          </div>
-        `;
-        list.appendChild(div);
-      });
+      window.ShFriendsLobby?.render();
       watchSeriesRoom();
       renderSeriesPanel();
       renderHouseRulesPanel();
+      renderTurnTimerButtons();
     }
 
     function canStartMultiplayerGame() {
@@ -18742,7 +18754,7 @@ video {
           ['link', 'Host a room and share the code or invite link, or join a friend\'s room with their code.'],
           ['friends4', 'Up to 4 players. Empty seats can be filled with bots.'],
           ['bot', 'If someone\'s app closes, a bot keeps their seat until they\'re back.'],
-          ['gem', 'At Lvl 20 you can play a Best Of Series (3 or 5 games) for Diamonds.']
+          ['gem', 'At Lvl 20 you can play a Best Of Series (3, 5 or 7 games) for Diamonds.']
         ]
       }
     };
@@ -19600,6 +19612,7 @@ video {
       else page.classList.add('hidden');
     }, true);
     function closeOtherMenuPages(exceptId = null) {
+      window.ShFriendsLobby?.closeConfig();
       EXCLUSIVE_PAGE_IDS.forEach((id) => {
         if (id !== exceptId) document.getElementById(id)?.classList.add('hidden');
       });
@@ -26110,13 +26123,13 @@ video {
     // Exported to the catalog as `series` (functions/economy.js actions.series).
     const SERIES_RULES = {
       level: 20,                 // owner: series unlock at level 20
-      bestOf: { 3: 30, 5: 50 },  // entry per player
+      bestOf: { 3: 30, 5: 50, 7: 70 },  // entry per player
       perDay: 5,                 // series one player can start in a UK day
       forfeitTurns: 5,           // a stand-in bot plays this many turns, then the absent player forfeits
       minGameMs: 60000           // games reported closer together than this don't count
     };
     // Lobby side (v232): series/{room} is watched while you're in a Play
-    // Friends room (seriesState). The host picks Single / Best of 3 / Best of 5
+    // Friends room (seriesState). The host picks Single / Best of 3 / 5 / 7
     // in #seriesPanel (locked below level SERIES_RULES.level); the other
     // player gets #seriesModal to accept (pays their entry) or decline (calls
     // it off, the host's entry goes back). Games, the score pill and the
@@ -26161,6 +26174,8 @@ video {
     }
     // Why the host can't start a series right now ('' = they can).
     function seriesBlockReason() {
+      if (!currentUser || !xpShown()) return 'Sign in with levels enabled to play a series.';
+      if (state.ruleMode === 'house') return 'Series use Standard rules. Select Best of Series first.';
       const myLevel = playerXp ? xpLevelFor(playerXp.total) : 0;
       if (myLevel < SERIES_RULES.level) return `Reach level ${SERIES_RULES.level} to play a series (you're level ${myLevel || 1}).`;
       const humans = state.players.filter(p => !p.isBot);
@@ -26180,11 +26195,12 @@ video {
     function renderSeriesPanel() {
       const panel = document.getElementById('seriesPanel');
       if (!panel) return;
+      window.ShFriendsLobby?.render();
       const code = seriesRoomCode();
       const me = currentUser && currentUser.uid;
       const s = seriesIsActive(seriesState) ? seriesState : null;
       const open = SERIES_LOBBY_OPEN || (typeof isGameOwner === 'function' && isGameOwner()) || !!s;
-      if (!code || !me || !xpShown() || !open || (!s && !state.isHost)) { panel.classList.add('hidden'); panel.innerHTML = ''; return; }
+      if (!code || !me || !xpShown() || !open || (!s && (!state.isHost || (state.friendsMode && state.friendsMode !== 'series')))) { panel.classList.add('hidden'); panel.innerHTML = ''; return; }
       panel.classList.remove('hidden');
       // Folded below level 20 (the player can open it to look); the choice
       // lasts until they leave the Play Friends page (seriesPanelOpen reset).
@@ -26201,9 +26217,9 @@ video {
         panel.innerHTML = `${head}
           <div class="series-choices">
             <button type="button" class="series-choice" aria-pressed="true" disabled>Single<small>No entry</small></button>
-            ${choice(3)}${choice(5)}
+            ${choice(3)}${choice(5)}${choice(7)}
           </div>
-          <p class="series-note${locked ? ' series-lock' : ''}">${why ? `${locked ? icon('lock') : ''}${why}` : `Each player pays the entry. The server matches the pot, so the winner takes 4x (Best of 3: ${seriesPot(3)}, Best of 5: ${seriesPot(5)}).`}</p>`;
+          <p class="series-note${locked ? ' series-lock' : ''}">${why ? `${locked ? icon('lock') : ''}${why}` : `Each player pays the entry. The server matches the pot, so the winner takes 4x (Best of 3: ${seriesPot(3)}, Best of 5: ${seriesPot(5)}, Best of 7: ${seriesPot(7)}).`}</p>`;
         return;
       }
       const other = escapeHtml(seriesOtherName(s));
@@ -26241,6 +26257,9 @@ video {
       }
     }
     async function createSeries(bestOf) {
+      if (!state.isHost || state.ruleMode === 'house' || !SERIES_RULES.bestOf[bestOf]) { notifyBanner('Select Best of Series first.'); return; }
+      const blocked = seriesBlockReason();
+      if (blocked) { notifyBanner(blocked); return; }
       const fee = SERIES_RULES.bestOf[bestOf];
       const other = state.players.find(p => !p.isBot && p.id !== state.localPlayerId);
       const name = other ? other.name : 'your opponent';
@@ -26857,7 +26876,7 @@ video {
       const weeklyBase = WEEKLY_CHALLENGE_RULES[WEEKLY_CHALLENGE_RULES.length - 1].picks; // 5 a week from 2026-W41
       (XP_RULES.extraWeekly || []).forEach((L, i) => add(L, { kind: 'unlock', icon: 'check', tone: '#22d3ee', name: `${ordinalNumber(weeklyBase + i + 1)} weekly challenge`, tip: 'One more weekly challenge every week.' }));
       add(XP_RULES.weeklyRerollLevel, { kind: 'unlock', icon: 'refresh', tone: '#34d399', name: 'Weekly Reroll', tip: 'Swap one weekly challenge for a different one, once a week.' });
-      add(SERIES_RULES.level, { kind: 'unlock', icon: 'swords', tone: '#f472b6', name: 'Best Of Series', tip: 'Play a Best of 3 or 5 against a friend for Diamonds.' });
+      add(SERIES_RULES.level, { kind: 'unlock', icon: 'swords', tone: '#f472b6', name: 'Best Of Series', tip: 'Play a Best of 3, 5 or 7 against a friend for Diamonds.' });
       Object.entries(GAUNTLET.modes || {}).forEach(([key, m]) => { if (m.level > 0) add(m.level, { kind: 'unlock', icon: key === 'boss' ? 'crown' : 'shield', tone: key === 'boss' ? '#c084fc' : '#f87171', name: `${m.name} Gauntlet`, tip: `${m.name} Gauntlet opens at level ${m.level}${m.needs ? ' once you have beaten the easier Gauntlets' : ''}.` }); });
       LEVEL_BADGE_TIERS.forEach(([L, , label]) => add(L, { kind: 'badge', level: L, name: `${label} badge` }));
       return at;
@@ -31916,7 +31935,7 @@ video {
     // player is typing into a room-code field. M and I are deliberately
     // NOT gated by this (see below) — they need to work precisely when
     // something IS open, to close it.
-    const BLOCKING_OVERLAY_IDS = ['authModal', 'challengesModal', 'deleteAccountModal', 'friendsModal', 'inboxModal', 'leaderboardModal', 'matchStatsModal', 'needHumanModal', 'pileInspectModal', 'profileModal', 'rulesModal', 'settingsModal', 'shopModal', 'statsModal', 'supportModal', 'themesModal', 'usernameModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal'];
+    const BLOCKING_OVERLAY_IDS = ['friendsConfigModal','authModal', 'challengesModal', 'deleteAccountModal', 'friendsModal', 'inboxModal', 'leaderboardModal', 'matchStatsModal', 'needHumanModal', 'pileInspectModal', 'profileModal', 'rulesModal', 'settingsModal', 'shopModal', 'statsModal', 'supportModal', 'themesModal', 'usernameModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal'];
     // Every page and pop-up springs in as it opens, whatever opened it.
     (function watchOverlayEntrances() {
       const ids = [...BLOCKING_OVERLAY_IDS, 'tutorialHubScreen', 'matchSummaryModal', 'difficultyUnlockPopup'];
@@ -32108,6 +32127,7 @@ video {
     // It works through one "guard" history entry that exists whenever there
     // is something to go back from.
     const BACK_LAYERS = {
+      friendsConfigModal: () => window.ShFriendsLobby?.closeConfig(),
       appClosingScreen: 'returnFromClosingBtn',
       shConfirm: 'shConfirmNo',
       deleteAccountModal: () => clickFirstShown(['deleteStep2CancelBtn', 'deleteStep1CancelBtn']),
@@ -32454,6 +32474,7 @@ video {
       ['resize', 'popstate', 'pagehide'].forEach((ev) => window.addEventListener(ev, finishExpand));
       document.addEventListener('visibilitychange', () => { if (document.hidden) finishExpand(); });
       document.getElementById('modePageBack').addEventListener('click', () => {
+        if (window.ShFriendsLobby?.backToHub()) return;
         finishExpand();
         window.resetModeCarousel(); crossfade();
         requestAnimationFrame(() => cards[focus].focus({ preventScroll: true }));
@@ -35633,7 +35654,9 @@ video {
       refreshGauntletLobbyBtn();
     });
   </script>
+
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
+  <script src="js/friends-lobby.js?v=331"></script>
 </body>
 </html>

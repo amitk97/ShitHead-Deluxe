@@ -62,5 +62,8 @@ jobs:
       - name: Home navigation and reference video
         run: node tools/home-navigation-browser-test.js --require-video
 
+      - name: Play Friends lobby regression checks
+        run: node tools/friends-lobby-browser-test.js
+
       - name: Existing browser gameplay regression suite
         run: node tools/run-browser-tests.js

@@ -1,5 +1,11 @@
 # ShitHead Deluxe
 
+## v331 — Play Friends lobby
+
+Four avatar seats replace the roster, with animated empty seats and a separate join-code view. The scoped `css/friends-lobby.css` and `js/friends-lobby.js` provide the mode carousel and host configuration modal. House Rules defaults to CLASSIC and allows three bot fillers; Standard keeps its two-bot limit. Guests can review rules and mark Ready. Mode and bot changes recheck room capacity transactionally; active series disable configuration. Best of 7 costs 70 Diamonds per player in both client and server catalogue. Header navigation closes configuration, and Back remains visible on room pages.
+
+Validation: `node tools/friends-lobby-browser-test.js` covers host/guest controls, rules, bots, series locks, navigation, reduced motion and 320/390/768/1440px layouts with in-memory Firebase writes. CI runs it alongside existing checks.
+
 ## v329 — home refinements
 
 Home and mode panels sit higher with more vertical padding. Carousel arrows span the tutorial grid and are centred over the tutorial/video row. The video has an explicit fullscreen toggle (native, iOS video, viewport fallback). Each mode header uses the shared mode tooltip. Shortcut slots use Pin, then separate Info/Swap buttons while the selected modes remain coming soon. Gauntlet carousel/page labels reuse the owner/day/lives/round checks from the existing run cache. Hidden carousel paint calls preserve geometry; return routes reset input and repaint, with a ResizeObserver restoring spacing when visible.
