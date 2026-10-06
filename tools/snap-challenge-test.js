@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const E=require('../functions/ranked-game');
-const html=fs.readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
+const html=require('./read-client-source')(require('node:path').join(__dirname,'../index.html'));
 const start=html.indexOf('    function notifyRankedBurnChallenges('),end=html.indexOf('    function applyRankedView(',start);
 const events=[];const ctx={notifyChallengeEvent:(p,ids)=>events.push(...ids)};vm.createContext(ctx);vm.runInContext(html.slice(start,end),ctx);
 const card=(rank,id)=>({rank,id,suit:'♠',isJoker:false});

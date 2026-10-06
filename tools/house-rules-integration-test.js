@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('fs'),path=require('path'),assert=require('assert');
-const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
+const html=require('./read-client-source')(path.join(__dirname,'../index.html'));
 const playMatrixUi=fs.readFileSync(path.join(__dirname,'../js/play-matrix-ui.js'),'utf8');
 const playMatrixRules=fs.readFileSync(path.join(__dirname,'../js/play-matrix-rules.js'),'utf8');
 const cardReferenceUi=fs.readFileSync(path.join(__dirname,'../js/card-reference-ui.js'),'utf8');

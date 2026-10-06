@@ -3192,7 +3192,15 @@ async function runDevTestSuite() {
       for (let L = 10; L <= XP_MAX_LEVEL; L += 10) assertTrue(!!modal.querySelector(`[data-ladder-level="${L}"]`), `Milestone ${L} has its own row`);
       assertEqual([ladderMilestoneDiamonds(XP_MAX_LEVEL), ladderMilestoneDiamonds(90), ladderMilestoneDiamonds(42)], [999, 100, 20], 'Level 99 pays 999 Diamonds, every 10th 100, others 20 (v285)');
       assertTrue(modal.querySelector(`[data-ladder-level="${XP_MAX_LEVEL}"]`).textContent.includes('999'), 'The max level row shows 999');
-      assertTrue(!!modal.querySelector(`[data-ladder-level="${SERIES_RULES.level}"]`) && modal.textContent.includes('Best Of Series'), 'Unlocks (series, speeds, Gauntlets, look slots) are listed');
+      assertEqual(SERIES_RULES.levels, { 3: 20, 5: 35, 7: 45 }, 'Series unlock requirements stay at Levels 20, 35 and 45');
+      for (const [bestOf, level] of [[3, 20], [5, 35], [7, 45]]) {
+        const row = modal.querySelector(`[data-ladder-level="${level}"]`);
+        assertTrue(!!row, `Level ${level} appears on the ladder`);
+        const label = [...row.querySelectorAll('.ll-pname')].find(el => el.textContent === `Best of ${bestOf}`);
+        assertTrue(!!label, `Best of ${bestOf} is shown at Level ${level}`);
+        const expectedStatus = level <= 35 ? 'got' : 'locked';
+        assertTrue(row.classList.contains(expectedStatus), `Best of ${bestOf} is ${expectedStatus} for a Level 35 player`);
+      }
       assertTrue(modal.querySelector('[data-ladder-level="30"]').classList.contains('got') && modal.querySelector('[data-ladder-level="40"]').classList.contains('locked'), 'Levels behind you are unlocked, ahead locked');
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       const scroll = document.getElementById('levelLadderScroll'), here = modal.querySelector('[data-ladder-here]');
@@ -3659,21 +3667,33 @@ async function runDevTestSuite() {
       const card = createCardElement({ id: 'sweets-test-top', rank: '10', suit: '♠' });
       card.dataset.cardId = 'sweets-test-top';
       wrap.appendChild(card);
+      const inlineVisibilityBefore = card.style.getPropertyValue('visibility');
       bfxSweets(layer, 100, 100, 1);
       const sheet = layer.querySelector('.pfx-layer');
       assertTrue(!!sheet && getComputedStyle(card).visibility === 'hidden', 'It draws over the screen and the real Pile card hides');
       assertEqual(sheet.querySelectorAll('.pfx-face').length, 2, 'The card tears into two halves');
       assertEqual([...sheet.querySelectorAll('.custom-card-back.' + burnBackClass().split(' ')[0])].length, 2, "Each half shows the burner's back when it turns");
-      const sweets = [...sheet.children].filter(el => el.querySelector('svg') && el.getAnimations().length === 1 && el.offsetWidth > 15);
-      assertTrue(sweets.length >= 26, `At least 26 separate sweets (${sweets.length})`);
+      // Decorative rings and burst flashes also contain SVG and animate,
+      // but only sweets follow the sampled flight path with a Y-axis tumble.
+      const sweets = [...sheet.children].filter(el => el.querySelector('svg') && !el.querySelector('.pfx-face') && el.getAnimations().some(animation =>
+        animation.effect.getKeyframes().some(frame => /rotateY\(/.test(frame.transform || ''))));
+      assertEqual(sweets.length, 26, 'All 26 separate sweets are present');
+      assertTrue(sweets.every(el => el.getAnimations().length === 1), 'Each sweet has its own animation');
       const paths = new Set(sweets.map(el => JSON.stringify(el.getAnimations()[0].effect.getKeyframes().map(f => f.transform))));
       assertEqual(paths.size, sweets.length, 'Every sweet moves on its own path');
       assertTrue([...sheet.querySelectorAll('[style*="preserve-3d"]')].every(el => getComputedStyle(el).willChange === 'transform' && el.getAnimations().every(a => !a.effect.getKeyframes().some(f => 'opacity' in f))), 'The 3D halves are never flattened (no opacity on them)');
       const ends = [...sheet.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
       assertTrue(Math.max(...ends) <= 2100, `It ends within 2.1s (${Math.round(Math.max(...ends))}ms)`);
-      sheet.getAnimations({ subtree: true }).forEach(a => a.finish());
-      await new Promise(r => setTimeout(r, 30));
-      assertTrue(!layer.querySelector('.pfx-layer') && getComputedStyle(card).visibility !== 'hidden', 'Nothing is left behind and the Pile shows again');
+      // Await the animation timeline rather than a wall-clock delay: a
+      // busy browser may advance animations more slowly than setTimeout.
+      const finished = sheet.getAnimations({ subtree: true }).map(a => a.finished.catch(() => {}));
+      await Promise.race([
+        Promise.all(finished).then(() => new Promise(r => requestAnimationFrame(r))),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Sweets cleanup did not finish')), 15000))
+      ]);
+      assertTrue(!sheet.isConnected && !layer.querySelector('.pfx-layer'), 'The sweets effect leaves no layer behind');
+      assertEqual(card.style.getPropertyValue('visibility'), inlineVisibilityBefore, 'Cleanup restores the original inline Pile visibility');
+      assertEqual(card.style.getPropertyPriority('visibility'), '', "Cleanup removes the effect's forced visibility override");
     } finally { wrap.innerHTML = keep; layer.querySelectorAll('.pfx-layer').forEach(n => n.remove()); }
   });
 
@@ -5219,13 +5239,20 @@ async function runDevTestSuite() {
     const sophia = makePlayer({ id: 'p4', name: 'Sophia' });
     state.players = [you, freja, lukas, sophia];
     state.localPlayerId = 'p1';
-    render(); // builds each opponent's own #opp-{id} div
+    render(); // builds each opponent seat; card-hold.js supplies its dedicated hand anchor
 
     assertTrue(getPlayerAnimationTarget('p1') === document.getElementById('localHand'), "The local player's target must be their own hand");
     ['p2', 'p3', 'p4'].forEach(id => {
       const target = getPlayerAnimationTarget(id);
       assertTrue(!!target, `Player ${id} must resolve to a real element`);
-      assertEqual(target.id, `opp-${id}`, `Player ${id}'s animation target must be their OWN div (opp-${id}), not the shared opponents row — this is the exact bug where Sophia's pickup visually flew to Lukas`);
+      const seat = document.getElementById(`opp-${id}`);
+      assertTrue(!!seat && seat.contains(target), `Player ${id}'s flight target belongs to their own seat`);
+      assertTrue(target === getOpponentHandAnchor(id), `Player ${id}'s flight targets their stable hand anchor`);
+      assertTrue(target.classList.contains('opp-hand-anchor'), 'Flights use the hand position instead of the whole opponents row');
+      seat.classList.add('opp-hand-open');
+      assertTrue(getPlayerAnimationTarget(id) === target, 'Opening the hand fan preserves its flight destination');
+      seat.classList.remove('opp-hand-open');
+      assertTrue(getPlayerAnimationTarget(id) === target, 'Closing the hand fan preserves its flight destination');
     });
     // And each of those three must genuinely be different elements —
     // the old bug had all three resolve to the same shared container.
@@ -6978,8 +7005,10 @@ async function runDevTestSuite() {
     }
   });
 
-  await test('Server economy: Shop, bundles, gifts and the name token all go through the server', () => {
-    const src = document.documentElement.innerHTML;
+  await test('Server economy: Shop, bundles, gifts and the name token all go through the server', async () => {
+    const scripts = [...document.querySelectorAll('script[src]')].filter(el => new URL(el.src).origin === location.origin);
+    const loaded = await Promise.all(scripts.map(async el => { const response = await fetch(el.src); if (!response.ok) throw new Error('Cannot read script: ' + el.src); return response.text(); }));
+    const src = document.documentElement.innerHTML + '\n' + loaded.join('\n');
     ['buyItem', 'buyBundle', 'buyNameToken', 'sendGift', 'claimGift', 'rankedResult', 'matchWin', 'matchFinished', 'streak', 'claim', 'sync', 'init']
       .forEach(action => assertTrue(src.includes(`callEconomy('${action}'`), `The game calls the server for ${action}`));
     ['calculateCosmeticPurchase', 'awardMatchDiamonds', 'recordDifficultyWin', 'recordSeasonalWin'].forEach(name =>
@@ -8750,21 +8779,23 @@ async function runDevTestSuite() {
       state.phase = 'PLAY';
       state.localPlayerId = 'p0';
       const ranks = ['10','J','Q','K','A','2','3','4','5','6','7','8','9'];
-      state.players = [{ id: 'p0', name: 'Me', hand: Array.from({ length: 30 }, (_, i) => ({ rank: ranks[i % 13], suit: ['♠','♥','♦','♣'][i % 4], id: 'bp' + i })), faceUp: [], faceDown: [] },
+      for (const handSize of [30, 33]) {
+      state.players = [{ id: 'p0', name: 'Me', hand: Array.from({ length: handSize }, (_, i) => ({ rank: ranks[i % 13], suit: ['♠','♥','♦','♣'][i % 4], id: 'bp' + i })), faceUp: [], faceDown: [] },
         { id: 'p1', name: 'Bot', isBot: true, hand: [], faceUp: [], faceDown: [] }];
       render();
       await new Promise(r => setTimeout(r, 300));
-      let covered = 0, checked = 0;
+      let covered = 0, checked = 0; const overlaps = [];
       [...document.getElementById('localHand').children].forEach(row => {
         const cs = [...row.children];
         cs.slice(0, -1).forEach((c, i) => {
           const edge = Math.max(c.querySelector('.card-corner-rank').getBoundingClientRect().right, c.querySelector('.card-corner-suit').getBoundingClientRect().right);
           checked++;
-          if (edge > cs[i + 1].getBoundingClientRect().left + 0.5) covered++;
+          if (edge > cs[i + 1].getBoundingClientRect().left + 0.5) { covered++; overlaps.push({rank:c.querySelector(".card-corner-rank").textContent,edge,next:cs[i+1].getBoundingClientRect().left,font:getComputedStyle(c.querySelector(".card-corner-rank")).fontSize,strip:getComputedStyle(document.getElementById("localHand")).getPropertyValue("--hand-strip")}); }
         });
       });
       assertTrue(checked > 10, 'cards were measured', checked);
-      assertEqual(covered, 0, 'no index is covered');
+      assertEqual(covered, 0, `${handSize}-card hand keeps every rank and suit visible: `+JSON.stringify(overlaps));
+      }
     } finally {
       Object.assign(state, saved);
       selectDeckTheme(before);
@@ -9119,8 +9150,10 @@ async function runDevTestSuite() {
     assertEqual(resolveAvatarId('avatar-phoenix'), DEFAULT_AVATAR_ID, 'an old equipped Phoenix shows the default picture');
     assertTrue(!!AVATAR_ART['avatar-turtley']?.photo, 'Turtley is a premium photo picture');
   });
-  await test('Devices: the table scales up on tablets/PCs only, and a sideways phone is asked to turn upright', () => {
-    const css = [...document.querySelectorAll('style')].map(el => el.textContent).join('\n');
+  await test('Devices: the table scales up on tablets/PCs only, and a sideways phone is asked to turn upright', async () => {
+    const sheets = [...document.querySelectorAll('link[rel=stylesheet]')].filter(el => new URL(el.href).origin === location.origin);
+    const loaded = await Promise.all(sheets.map(async el => { const response = await fetch(el.href); if (!response.ok) throw new Error('Cannot read stylesheet: ' + el.href); return response.text(); }));
+    const css = [...document.querySelectorAll('style')].map(el => el.textContent).concat(loaded).join('\n');
     assertTrue(/@media \(min-width: 700px\) and \(min-height: 700px\)[\s\S]{0,80}--tbl-k: 1\.3/.test(css), 'tablets raise the table scale');
     assertTrue(/@media \(min-width: 1100px\) and \(min-height: 800px\)[\s\S]{0,80}--tbl-k: 1\.45/.test(css), 'PCs raise it further');
     const k = tableScale();

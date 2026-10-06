@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
-const root=path.join(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const root=path.join(__dirname,'..'),html=require('./read-client-source')(path.join(root,'index.html'));
 function between(a,b){const start=html.indexOf(a),end=html.indexOf(b,start);assert(start>=0&&end>start);return html.slice(start,end);}
 const ctx={COSMETIC_SHOP_ITEMS:[],BUILT_IN_COSMETICS:[],EARNED_AVATARS:[],EARNED_FRAMES:[],LEVEL_REWARDS:[],equippedCosmetics:{tableTheme:'table-neon'}};
 vm.createContext(ctx);

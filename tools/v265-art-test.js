@@ -1,7 +1,7 @@
 'use strict';
 // Exercises production art registration, shared rendering and ownership paths.
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
-const root=path.join(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const root=path.join(__dirname,'..'),html=require('./read-client-source')(path.join(root,'index.html'));
 function between(a,b){const i=html.indexOf(a);assert(i>=0,a);const j=html.indexOf(b,i);assert(j>i,b);return html.slice(i,j);}
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'docs/approved-art/v265/manifest.json'))),styles=[],current=JSON.parse(fs.readFileSync(path.join(root,'docs/approved-art/v267/manifest.json')));
 const originalPumpkin={photo:true,art:'unchanged-pumpkin'},ctx={AVATAR_ART:{'avatar-halloween':originalPumpkin},document:{createElement:()=>({}),head:{appendChild:x=>styles.push(x)}},resolveAvatarId:id=>id,state:{deckTheme:'theme-emerald'},equippedCosmetics:{cardBack:'default'},SEASONAL_BACK_IDS:new Set(['valentine','summer','halloween','diwali','christmas','newyear','easter','lunar','ramadan'].map(x=>'back-'+x)),COSMETIC_SHOP_ITEMS:[],EARNED_AVATARS:[],EARNED_FRAMES:[],LEVEL_REWARDS:[],DEFAULT_EQUIPPED_COSMETICS:{cardBack:'default'},COSMETIC_CATEGORY_TYPES:{'Card Backs':'cardBack'},COSMETIC_RUNTIME_IDS:{cardBack:new Set(Object.keys(manifest.backs))},cosmeticPurchaseState:{}};

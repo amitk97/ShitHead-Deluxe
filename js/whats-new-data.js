@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v336: [['friends4', 'Restored Home mode navigation and button interactions while retaining the updated Tutorial box, Play Friends layout and series level locks.', WN_KEY]],
       v335: [['swords', 'Best of 5 unlocks at Level 35 and Best of 7 at Level 45 for both players.', WN_KEY], ['friends4', 'Larger Tutorial icon and text, a colourful icon box, and compact Play Friends series settings.']],
       v334: [['friends4', 'Play Friends has the Home-style carousel with Go buttons, compact settings pages, and three custom ruleset slots with in-app naming and account sync.', WN_KEY]],
       v333: [['friends4', 'Play Friends now starts with Host or Join. Choose from five mode cards before hosting, with Standard selected and compact seats below the room code.']],

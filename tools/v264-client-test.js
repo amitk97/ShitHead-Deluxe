@@ -1,7 +1,7 @@
 // Execute the real client functions with isolated DOM/animation adapters.
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const html=fs.readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
+const html=require('./read-client-source')(require('node:path').join(__dirname,'../index.html'));
 function between(a,b){return html.slice(html.indexOf(a),html.indexOf(b,html.indexOf(a)));}
 let animations=[],sounds=[];
 const ctx={console,Math,Number,setTimeout:()=>0,OWNER_VICTORY_MS:2000,OWNER_VICTORY_SPEED:2.1,

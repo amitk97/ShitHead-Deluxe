@@ -4,12 +4,34 @@
 // every deploy reaches players straight away; the cached copy is only used
 // when offline. Game files (sounds, art, fonts, the Firebase and confetti
 // scripts) are served from the cache and refreshed in the background.
-const CACHE = 'shithead-shell-v5';
+const CACHE = 'shithead-shell-v6';
 const ASSET_CACHE = 'shithead-assets-v1';
 const DATA_CACHE = 'shithead-data-v1'; // small saved data (event calendar), kept across updates
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192-v302.png', '/icons/icon-512-v302.png'];
 // Everything a Vs Bots game needs with no signal, fetched when the app installs.
 const OFFLINE_ASSETS = [
+  // Application code and styles, including their deployment version keys.
+  '/game.css?v=67830c795315',
+  '/tailwind.css?v=a6876526974d',
+  '/sound.js?v=79610d853777',
+  '/burn-effects.js?v=13093a728abe',
+  '/card-animations.js?v=0fe6bd1289f1',
+  '/js/card-reference-data.js',
+  '/js/card-reference-ui.js',
+  '/js/card-reference-panel.js',
+  '/js/play-matrix-data.js',
+  '/js/play-matrix-rules.js',
+  '/js/play-matrix-ui.js',
+  '/js/play-matrix-panel.js',
+  '/js/card-hold.js',
+  '/js/whats-new-data.js',
+  '/js/avatar-tones.js',
+  '/cosmetics-data.js?v=924c8ed0b06b',
+  '/tutorial-data.js?v=cf577eec4ae6',
+  '/tutorial.js?v=9f026d55aa51',
+  '/app.js?v=23311a7c80a6',
+  '/js/house-rules.js',
+  '/js/house-rules-bots.js',
   '/js/house-rules-presets.js?v=335',
   '/js/friends-lobby.js?v=335',
   '/css/friends-lobby.css?v=335',
@@ -128,7 +150,10 @@ const OFFLINE_ASSETS = [
 // to the database or sign-in is ever cached.
 function isCachedAsset(url) {
   if (url.origin === self.location.origin) {
-    return /^\/(art|audio|icons)\//.test(url.pathname) || url.pathname === '/manifest.webmanifest';
+    return /^\/(art|audio|icons|js|css)\//.test(url.pathname)
+      || /^\/(?:app|sound|tutorial|tutorial-data|cosmetics-data|burn-effects|card-animations)\.js$/.test(url.pathname)
+      || /^\/(?:game|tailwind)\.css$/.test(url.pathname)
+      || url.pathname === '/manifest.webmanifest';
   }
   return (url.hostname === 'www.gstatic.com' && url.pathname.startsWith('/firebasejs/'))
     || (url.hostname === 'cdn.jsdelivr.net' && url.pathname.startsWith('/npm/canvas-confetti'))
