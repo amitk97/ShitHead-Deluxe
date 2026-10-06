@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-06-v331 (ShitHead-Deluxe-253) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-06-v333 (ShitHead-Deluxe-253) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP
@@ -14,7 +14,7 @@
                 tools/export-catalog.js) -->
 <html lang="en" class="dark">
 <head>
-  <link rel="stylesheet" href="css/friends-lobby.css?v=331">
+  <link rel="stylesheet" href="css/friends-lobby.css?v=333">
   <meta charset="UTF-8" />
   <script>
     // The game's home is shithead-deluxe.web.app (owner, v310; the old
@@ -584,12 +584,12 @@
     .mc-pin-list button:hover, .mc-pin-list button[aria-pressed="true"] { border-color: #fbbf24; }
     .mc-pin-list svg { width: 18px; height: 18px; flex: none; color: #94a3b8; }
     body.reduce-motion .mc-card { transition: none; }
-    #homeTutorialRow { display:grid; grid-template-columns:minmax(0, 170px) minmax(0, 144px); grid-template-rows:auto auto; justify-content:center; align-items:stretch; gap:8px 10px; margin:4px 16px 0; }
+    #homeTutorialRow { display:grid; grid-template-columns:minmax(0, 180px) minmax(0, 160px); grid-template-rows:auto auto; justify-content:center; align-items:stretch; gap:8px 10px; margin:4px 16px 0; }
     #homeTutorialRow .mc-controls { grid-column:1 / -1; grid-row:1; margin:0 0 8px; justify-content:center; }
-    #homeTutorialRow #startTutorialBtn { grid-column:1; grid-row:2; width:100%; min-width:0; margin:0; padding:8px 6px; letter-spacing:.02em; font-size:11px; line-height:1.3; gap:5px; min-height:48px; }
+    #homeTutorialRow #startTutorialBtn { grid-column:1; grid-row:2; width:100%; min-width:0; margin:0; padding:8px 6px; letter-spacing:.02em; font-size:11px; line-height:1.3; gap:5px; min-height:56px; }
     #startTutorialLabel { max-width:132px; white-space:normal; }
     #homeTutorialRow #startTutorialBtn svg { flex:none; width:18px !important; height:18px !important; }
-    #homeTutorialVideo { display:block; width:100%; height:100%; min-height:88px; max-height:120px; min-width:0; object-fit:contain; background:#020617; border:1px solid #66522c; border-radius:12px; box-shadow:0 6px 16px rgba(0,0,0,.25); }
+    #homeTutorialVideo { display:block; width:100%; height:100%; min-height:100px; max-height:132px; min-width:0; object-fit:contain; background:#020617; border:1px solid #66522c; border-radius:12px; box-shadow:0 6px 16px rgba(0,0,0,.25); }
     #homeTutorialPlayer { grid-column:2; grid-row:2; position:relative; min-width:0; }
     #homeVideoExpand { position:absolute; top:5px; right:5px; width:32px; height:32px; border:1px solid #64748b; border-radius:8px; background:#0b1428e8; color:#fff; display:grid; place-items:center; }
     #homeVideoExpand svg { width:19px; height:19px; }
@@ -5942,15 +5942,20 @@ video {
               <button id="joinRoomBtn" class="pf-primary">JOIN</button>
             </div>
           </div>
-          <section id="friendsHub" aria-label="Your friends table">
+          <section id="friendsHub" class="hidden" aria-label="Your friends table">
+            <button type="button" id="friendsSetupBack" class="pf-back" aria-label="Back to Play Friends">←</button>
             <div id="friendsSeats" class="pf-seats" aria-label="Four player seats"></div>
             <div class="pf-section-title"><span>Choose your mode</span><span id="friendsHostHint">You host. You choose.</span></div>
             <div id="friendsModeCarousel" class="pf-carousel" aria-label="Play Friends modes">
-              <button type="button" class="pf-mode pf-teaser" data-friends-mode="soon" aria-disabled="true"><svg class="ic"><use href="#ic-sparkle"/></svg><strong>Coming Soon</strong><small>A new way to play</small></button>
-              <div class="pf-mode-wrap"><button type="button" class="pf-mode" data-friends-mode="house" aria-pressed="true"><svg class="ic"><use href="#ic-cards"/></svg><strong>House Rules</strong><small>Your table. Your rules.</small></button><button type="button" class="pf-cog" data-friends-config="house" aria-label="Configure House Rules"><svg class="ic"><use href="#ui-settings"/></svg></button></div>
-              <button type="button" class="pf-mode" data-friends-mode="series" aria-pressed="false"><svg class="ic"><use href="#ic-swords"/></svg><strong>Best of Series</strong><small>Best of 3 · 5 · 7</small><span id="friendsSeriesLock" class="pf-lock"><svg class="ic"><use href="#ic-lock"/></svg><span>Level 20</span></span></button>
-            </div>
-            <div class="pf-standard"><button type="button" data-friends-mode="standard" aria-pressed="false">Standard <small>Classic rules</small></button><button type="button" class="pf-cog" data-friends-config="standard" aria-label="Configure Standard mode"><svg class="ic"><use href="#ui-settings"/></svg></button></div>
+<button type="button" class="pf-mode" data-friends-mode="soon-left" aria-pressed="false"><span class="pf-mode-number">1</span><svg class="ic"><use href="#ic-sparkle"/></svg><strong>Coming Soon</strong><small>A new way to play</small></button>
+<button type="button" class="pf-mode" data-friends-mode="house" aria-pressed="false"><span class="pf-mode-number">2</span><svg class="ic"><use href="#ic-cards"/></svg><strong>House Rules</strong><small>Your table. Your rules.</small></button>
+<button type="button" class="pf-mode" data-friends-mode="standard" aria-pressed="true"><span class="pf-mode-number">3</span><svg class="ic"><use href="#ic-cards"/></svg><strong>Standard</strong><small>Classic rules</small></button>
+<button type="button" class="pf-mode" data-friends-mode="series" aria-pressed="false"><span class="pf-mode-number">4</span><svg class="ic"><use href="#ic-swords"/></svg><strong>Best of Series</strong><small>Best of 3 · 5 · 7</small><span id="friendsSeriesLock" class="pf-lock"><svg class="ic"><use href="#ic-lock"/></svg><span>Level 20</span></span></button>
+<button type="button" class="pf-mode" data-friends-mode="soon-right" aria-pressed="false"><span class="pf-mode-number">5</span><svg class="ic"><use href="#ic-sparkle"/></svg><strong>Coming Soon</strong><small>A new way to play</small></button>
+</div>
+<div id="friendsCarouselControls" class="pf-carousel-controls"><button type="button" data-friends-step="first" aria-label="First mode">«</button><button type="button" data-friends-step="prev" aria-label="Previous mode">‹</button><button type="button" data-friends-step="next" aria-label="Next mode">›</button><button type="button" data-friends-step="last" aria-label="Last mode">»</button></div>
+<button type="button" id="friendsConfirmMode" class="pf-primary">HOST STANDARD ROOM</button>
+<div id="friendsRoomSettings" class="pf-ready-row hidden"><button type="button" class="pf-secondary" data-friends-config="series">Best of Series</button><button type="button" class="pf-secondary" data-friends-config="house">House Rules settings</button><button type="button" class="pf-secondary" data-friends-config="standard">Standard settings</button></div>
             <p id="friendsModeSummary" class="pf-summary" aria-live="polite"></p>
             <div id="friendsReadyRow" class="pf-ready-row hidden"><button type="button" id="friendsReviewRules" class="pf-secondary">Review rules</button><button type="button" id="friendsReady" class="pf-primary">Ready</button></div>
           </section>
@@ -17159,8 +17164,8 @@ video {
       state.isMultiplayer = true;
       state.isHost = true;
       state.localPlayerId = 'p_host';
-      state.ruleMode = window.ShFriendsLobby?.draftMode() === 'standard' ? 'standard' : 'house';
-      state.friendsMode = state.ruleMode;
+      state.friendsMode = window.ShFriendsLobby?.draftMode() || 'standard';
+      state.ruleMode = state.friendsMode === 'house' ? 'house' : 'standard';
       state.houseRules = state.ruleMode === 'house' ? JSON.parse(JSON.stringify(ShHouseRules.CLASSIC)) : null;
 
       const hostPlayer = {
@@ -31845,7 +31850,7 @@ video {
 
     document.getElementById('hostRoomBtn').addEventListener('click', () => {
       if (!requireValidName()) return;
-      initHostRoom();
+      window.ShFriendsLobby?.showSetup();
     });
     document.getElementById('joinRoomBtn').addEventListener('click', () => {
       if (!requireValidName()) return;
@@ -35657,6 +35662,7 @@ video {
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
-  <script src="js/friends-lobby.js?v=331"></script>
+  <script src="js/friends-lobby.js?v=333"></script>
 </body>
 </html>
+

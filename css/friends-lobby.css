@@ -9,3 +9,20 @@
 @media(prefers-reduced-motion:reduce){.pf-seat-empty{animation:none}.pf-mode{transition:none}}body.reduce-motion .pf-seat-empty{animation:none}
 
 #friendsHub [hidden]{display:none!important}
+
+
+/* v332: landing → mode selection → room. Four seats stay on one row. */
+#friendsHub.hidden,#friendsHub [hidden]{display:none!important}
+.pf-seats{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0}
+.pf-seat{min-height:112px;padding:10px 4px 7px;gap:4px;border-radius:12px}
+.pf-seat .avatar-tile,.pf-empty-avatar{width:38px!important;height:38px!important}
+.pf-seat small{font-size:9px;line-height:1.25}.pf-seat strong{font-size:11px}
+.pf-carousel{padding-inline:calc((100% - min(68%,220px))/2);scroll-padding-inline:calc((100% - min(68%,220px))/2)}
+.pf-carousel>.pf-mode{flex:0 0 min(68%,220px);min-width:0;min-height:155px}
+.pf-mode-number{position:absolute;left:12px;top:9px;font-size:12px;font-weight:800;color:#94a3b8}
+.pf-carousel-controls{display:flex;justify-content:center;gap:8px;margin:8px 0 12px}
+.pf-carousel-controls button{width:42px;height:42px;border:1px solid #475569;border-radius:12px;background:#172033;font-size:24px;color:#e2e8f0}
+#friendsConfirmMode{width:100%}#friendsHub{animation:pf-enter .2s ease-out}
+@keyframes pf-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(max-width:420px){.pf-seats{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}.pf-seat{min-height:106px;padding:8px 3px}.pf-seat strong{font-size:10px}.pf-seat .xp-badge{font-size:9px;padding:2px 4px}.pf-seat small{font-size:8px}.pf-carousel>.pf-mode{flex-basis:min(68%,220px);min-width:0}}
+@media(prefers-reduced-motion:reduce){#friendsHub{animation:none}.pf-carousel{scroll-behavior:auto}}body.reduce-motion #friendsHub{animation:none}

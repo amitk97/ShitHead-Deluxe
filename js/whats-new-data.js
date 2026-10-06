@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v333: [['friends4', 'Play Friends now starts with Host or Join. Choose from five mode cards before hosting, with Standard selected and compact seats below the room code.']],
       v331: [['friends4', 'Play Friends: visual seats, mode carousel and host settings.', WN_KEY], ['swords', 'Best of Series now includes Best of 7.', WN_KEY]],
       v330: [[ '🃏', 'The mode cards no longer get stuck if you let go of the mouse outside the window mid-drag.' ]],
       v329: [[ '🃏', 'More room on Home, centred carousel arrows, fullscreen tutorial video, mode help and clearer Shortcut controls. Active Gauntlets show Continue, and cards stay visible when returning Home.' ]],
@@ -679,3 +680,4 @@
     };
   window.ShWhatsNewData = { WN_KEY, WHATS_NEW };
 })();
+

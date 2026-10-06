@@ -28,12 +28,20 @@ await page.evaluate(()=>{
  document.getElementById('singleOptions').classList.add('hidden');document.getElementById('multiOptions').classList.remove('hidden');setModePage('friends');
  document.getElementById('playerNameInput').value='AmitK';ShFriendsLobby.render();
 });
-assert.equal(await page.locator('.pf-seat').count(),4);
-assert.equal(await page.locator('.pf-seat-empty').count(),3);
-assert.equal(await page.locator('[data-friends-mode="house"]').getAttribute('aria-pressed'),'true');
+assert(!await page.locator('#friendsHub').isVisible());
+assert(await page.locator('#hostRoomBtn').isVisible());
 await page.locator('#friendsJoinOpen').click();assert(await page.locator('#joinCodeInput').isVisible());
-await page.locator('#friendsJoinBack').click();assert(!await page.locator('#joinCodeInput').isVisible());
-console.log('PASS default House Rules, own seat, three empty seats, separate join view');
+await page.locator('#friendsJoinBack').click();
+await page.locator('#hostRoomBtn').click();
+assert.equal(await page.locator('[data-friends-mode]').count(),5);
+assert(!await page.locator('#friendsSeats').isVisible());
+assert.equal(await page.locator('[data-friends-mode="standard"]').getAttribute('aria-pressed'),'true');
+await page.keyboard.press('1');assert(await page.locator('#friendsConfirmMode').isDisabled());
+await page.keyboard.press('ArrowRight');assert.equal(await page.locator('[data-friends-mode="house"]').getAttribute('aria-pressed'),'true');
+await page.keyboard.press('4');assert(await page.locator('#friendsConfirmMode').isDisabled());
+await page.keyboard.press('3');assert(!await page.locator('#friendsConfirmMode').isDisabled());
+await page.locator('#friendsSetupBack').click();assert(!await page.locator('#friendsHub').isVisible());
+console.log('PASS landing, separate join, five ordered modes, Standard default and keyboard selection');
 await page.evaluate(()=>{
  // No production mutations: isolate every Firebase reference in an in-memory store.
  window.testRooms={}; window.testWrites=[];
@@ -68,15 +76,15 @@ assert.equal(await page.evaluate(()=>testRooms['rooms/123456'].players[0].houseR
 await page.locator('#turnTimerBtnRow button').first().click();
 assert.equal(await page.evaluate(()=>testRooms['rooms/123456'].turnTimerMs),10000);
 await page.locator('#friendsConfigBack').click();
-await page.locator('[data-friends-mode="standard"]').click();
+await page.locator('[data-friends-config="standard"]').click();
 assert.equal(await page.evaluate(()=>state.ruleMode),'house');
 console.log('PASS classic defaults, 3 bot slots, difficulty, shared rules/speed, reject standard with 3 bots');
 await page.locator('[data-friends-config="house"]').click();await page.locator('#friendsBotCount').selectOption('0');await page.waitForFunction(()=>state.players.length===1);await page.locator('#friendsConfigBack').click();
 await page.locator('[data-friends-config="standard"]').click();
 assert(await page.locator('#friendsConfigModal').isVisible());assert(!await page.locator('#houseRulesPanel').isVisible());assert.equal(await page.locator('#friendsBotCount option').count(),3);
 await page.locator('#friendsConfigBack').click();
-await page.evaluate(()=>{playerXp={total:0};ShFriendsLobby.render();});await page.locator('[data-friends-mode="series"]').click();assert.equal(await page.evaluate(()=>state.friendsMode),'standard');assert(await page.locator('#friendsSeriesLock').isVisible());
-await page.evaluate(()=>{playerXp={total:xpForLevel(25)};ShFriendsLobby.render();});await page.locator('[data-friends-mode="series"]').click();await page.waitForFunction(()=>state.friendsMode==='series');
+await page.evaluate(()=>{playerXp={total:0};ShFriendsLobby.render();});await page.locator('[data-friends-config="series"]').click();assert.equal(await page.evaluate(()=>state.friendsMode),'standard');assert.equal(await page.evaluate(()=>state.friendsMode),'standard');
+await page.evaluate(()=>{playerXp={total:xpForLevel(25)};ShFriendsLobby.render();});await page.locator('[data-friends-config="series"]').click();await page.waitForFunction(()=>state.friendsMode==='series');
 assert.deepEqual(await page.locator('[data-series-best]').evaluateAll(els=>els.map(e=>e.dataset.seriesBest)),['3','5','7']);
 assert.equal(await page.evaluate(()=>SERIES_RULES.bestOf[7]),70);
 await page.evaluate(()=>{
@@ -85,7 +93,7 @@ await page.evaluate(()=>{
 });
 assert.equal(await page.locator('[data-series-best="7"]').isDisabled(),false);
 console.log('PASS Standard settings, series level lock and 3/5/7 options');
-await page.locator('[data-friends-mode="house"]').click();await page.waitForFunction(()=>state.ruleMode==='house');
+await page.locator('[data-friends-config="house"]').click();await page.locator('#friendsConfigBack').click();await page.waitForFunction(()=>state.ruleMode==='house');
 await page.evaluate(()=>{state.isHost=false;state.localPlayerId='guest';currentUser={uid:'guest_u'};ShFriendsLobby.render();renderHouseRulesPanel();});
 assert(!await page.locator('[data-friends-config="house"]').isVisible());
 assert(await page.locator('[data-friends-mode="standard"]').isDisabled());
@@ -102,7 +110,7 @@ for(const width of [320,390,768,1440]){
  assert(await page.evaluate(()=>{const r=document.querySelector('.pf-config-card').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight+1;}));
  assert(await page.evaluate(()=>[...document.querySelectorAll('#friendsConfigModal select')].every(el=>!el.getClientRects().length||el.getBoundingClientRect().right<=innerWidth)));
  await page.locator('#friendsConfigBack').click();
- assert(await page.evaluate(()=>{const r=document.getElementById('friendsSeats').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;}));
+ assert(await page.evaluate(()=>{const r=document.getElementById('friendsSeats').getBoundingClientRect(), seats=[...document.querySelectorAll('.pf-seat')].map(e=>e.getBoundingClientRect());return r.left>=0&&r.right<=innerWidth&&seats.every(s=>Math.abs(s.top-seats[0].top)<1)&&document.getElementById('prominentRoomCode').getBoundingClientRect().bottom<=r.top;}));
  await page.screenshot({path:`/tmp/friends-hub-${width}.png`});
 }
 await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.locator('.pf-seat-empty').first().evaluate(el=>getComputedStyle(el).animationName),'none');
@@ -115,3 +123,4 @@ assert.deepEqual(errors,[]);
 console.log('PASS 320/390/768/1440 layouts, reduced motion, Back to root and server catalogue');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});
+
