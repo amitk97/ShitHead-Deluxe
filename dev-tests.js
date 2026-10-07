@@ -3705,6 +3705,8 @@ async function runDevTestSuite() {
       const card = createCardElement({ id: 'lava-test-top', rank: '10', suit: '♠' });
       card.dataset.cardId = 'lava-test-top';
       wrap.appendChild(card);
+      const inlineVisibilityBefore = card.style.getPropertyValue('visibility');
+      const inlinePriorityBefore = card.style.getPropertyPriority('visibility');
       bfxLavaMelt(layer, 100, 100, 1);
       const sheet = layer.querySelector('.pfx-layer');
       assertTrue(!!sheet && getComputedStyle(card).visibility === 'hidden', 'It draws over the screen and the real Pile card hides');
@@ -3720,9 +3722,14 @@ async function runDevTestSuite() {
       assertEqual(new Set(rocks.map(el => JSON.stringify(el.getAnimations()[0].effect.getKeyframes().map(f => f.transform)))).size, rocks.length, 'Every rock moves on its own');
       const ends = [...sheet.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
       assertTrue(Math.max(...ends) <= 2100, `It ends within 2.1s (${Math.round(Math.max(...ends))}ms)`);
-      sheet.getAnimations({ subtree: true }).forEach(a => a.finish());
-      await new Promise(r => setTimeout(r, 30));
-      assertTrue(!layer.querySelector('.pfx-layer') && getComputedStyle(card).visibility !== 'hidden', 'Nothing is left behind and the Pile shows again');
+      const animations = sheet.getAnimations({ subtree: true });
+      const finished = Promise.all(animations.map(a => a.finished.catch(() => {})));
+      animations.forEach(a => a.finish());
+      await Promise.race([finished, new Promise((_, reject) => setTimeout(() => reject(new Error('Lava cleanup did not finish')), 15000))]);
+      await new Promise(requestAnimationFrame);
+      assertTrue(!layer.querySelector('.pfx-layer'), 'The effect layer is removed');
+      assertEqual(card.style.getPropertyValue('visibility'), inlineVisibilityBefore, 'Cleanup restores the original inline Pile visibility');
+      assertEqual(card.style.getPropertyPriority('visibility'), inlinePriorityBefore, 'Cleanup restores the original visibility priority');
     } finally { wrap.innerHTML = keep; layer.querySelectorAll('.pfx-layer').forEach(n => n.remove()); }
   });
 
