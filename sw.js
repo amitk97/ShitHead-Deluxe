@@ -4,7 +4,7 @@
 // every deploy reaches players straight away; the cached copy is only used
 // when offline. Game files (sounds, art, fonts, the Firebase and confetti
 // scripts) are served from the cache and refreshed in the background.
-const CACHE = 'shithead-shell-v9';
+const CACHE = 'shithead-shell-v10';
 const ASSET_CACHE = 'shithead-assets-v1';
 const DATA_CACHE = 'shithead-data-v1'; // small saved data (event calendar), kept across updates
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192-v302.png', '/icons/icon-512-v302.png'];
@@ -32,7 +32,8 @@ const OFFLINE_ASSETS = [
   '/level-ladder.js?v=f629d34f1b74',
   '/home-navigation.js?v=d5db5d5896e6',
   '/shop.js?v=113d0c2d0157',
-  '/app.js?v=55c9c788c732',
+  '/multiplayer-lobby.js?v=563279447523',
+  '/app.js?v=21c1f0a96dda',
   '/js/house-rules.js',
   '/js/house-rules-bots.js',
   '/js/house-rules-presets.js?v=335',
@@ -154,7 +155,7 @@ const OFFLINE_ASSETS = [
 function isCachedAsset(url) {
   if (url.origin === self.location.origin) {
     return /^\/(art|audio|icons|js|css)\//.test(url.pathname)
-      || /^\/(?:app|home-navigation|shop|level-ladder|sound|tutorial|tutorial-data|cosmetics-data|burn-effects|card-animations)\.js$/.test(url.pathname)
+      || /^\/(?:app|multiplayer-lobby|home-navigation|shop|level-ladder|sound|tutorial|tutorial-data|cosmetics-data|burn-effects|card-animations)\.js$/.test(url.pathname)
       || /^\/(?:game|tailwind)\.css$/.test(url.pathname)
       || url.pathname === '/manifest.webmanifest';
   }
