@@ -31,9 +31,10 @@ const OFFLINE_ASSETS = [
   '/tutorial.js?v=9f026d55aa51',
   '/level-ladder.js?v=f629d34f1b74',
   '/home-navigation.js?v=d5db5d5896e6',
-  '/shop.js?v=113d0c2d0157',
+  '/shop.js?v=1ac6c06e3853',
   '/multiplayer-lobby.js?v=563279447523',
-  '/app.js?v=21c1f0a96dda',
+  '/private-cosmetics.js?v=02b0b4227104',
+  '/app.js?v=ebb0be878f0e',
   '/js/house-rules.js',
   '/js/house-rules-bots.js',
   '/js/house-rules-presets.js?v=335',
@@ -155,7 +156,7 @@ const OFFLINE_ASSETS = [
 function isCachedAsset(url) {
   if (url.origin === self.location.origin) {
     return /^\/(art|audio|icons|js|css)\//.test(url.pathname)
-      || /^\/(?:app|multiplayer-lobby|home-navigation|shop|level-ladder|sound|tutorial|tutorial-data|cosmetics-data|burn-effects|card-animations)\.js$/.test(url.pathname)
+      || /^\/(?:app|private-cosmetics|multiplayer-lobby|home-navigation|shop|level-ladder|sound|tutorial|tutorial-data|cosmetics-data|burn-effects|card-animations)\.js$/.test(url.pathname)
       || /^\/(?:game|tailwind)\.css$/.test(url.pathname)
       || url.pathname === '/manifest.webmanifest';
   }

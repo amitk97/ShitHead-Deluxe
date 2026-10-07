@@ -40,7 +40,7 @@ jobs:
           node --check functions/index.js
           node --check dev-tests.js
           node --check sw.js
-          for source in app.js multiplayer-lobby.js home-navigation.js shop.js level-ladder.js sound.js tutorial.js tutorial-data.js cosmetics-data.js burn-effects.js card-animations.js; do node --check "$source"; done
+          for source in app.js private-cosmetics.js multiplayer-lobby.js home-navigation.js shop.js level-ladder.js sound.js tutorial.js tutorial-data.js cosmetics-data.js burn-effects.js card-animations.js; do node --check "$source"; done
           node tools/modular-assets-test.js
 
       - name: Install Firebase Functions dependencies
@@ -49,6 +49,11 @@ jobs:
 
       - name: Dormant real-money purchase safeguards
         run: node functions/diamond-purchases.test.js
+
+      - name: Private delivery safeguards
+        run: |
+          node functions/private-delivery.test.js
+          node functions/private-claim.test.js
 
       - name: Series levels and readiness
         run: node tools/series-ready-test.js
@@ -72,6 +77,9 @@ jobs:
 
       - name: Play Friends lobby regression checks
         run: node tools/friends-lobby-browser-test.js
+
+      - name: Private cosmetics regression checks
+        run: node tools/private-cosmetics-browser-test.js
 
       - name: Existing browser gameplay regression suite
         run: node tools/run-browser-tests.js

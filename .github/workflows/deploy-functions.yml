@@ -39,10 +39,30 @@ jobs:
       - name: Enable the Cloud Billing API
         run: gcloud services enable cloudbilling.googleapis.com --project shithead-pro
 
+      - name: Prepare protected assets
+        env:
+          DEPLOY_CREDENTIAL: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
+        run: |
+          node tools/prepare-protected-assets.js
+
       - name: Install function dependencies
         working-directory: functions
         run: npm install --no-audit --no-fund
 
+      - name: Verify private account bindings
+        env:
+          DEPLOY_CREDENTIAL: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
+        run: node tools/verify-private-delivery.js
+
       - name: Deploy functions
         run: |
-          npx --yes firebase-tools@13 deploy --only functions --project shithead-pro --non-interactive --force
+          npx --yes firebase-tools@13 deploy --only functions,database --project shithead-pro --non-interactive --force
+
+      - name: Verify scheduled private delivery
+        run: |
+          gcloud scheduler jobs describe firebase-schedule-privateDeliveries-europe-west1 --project shithead-pro --location europe-west1 --format='value(state,schedule,timeZone)'
+          delivery_state=$(gcloud scheduler jobs describe firebase-schedule-privateDeliveries-europe-west1 --project shithead-pro --location europe-west1 --format='value(state)')
+          test "$delivery_state" = ENABLED
+          node -e "const p=require('./functions/private-delivery'); if(Date.now()>=p.RELEASE_AT)process.exit(1); console.log('Delivery is scheduled for',new Date(p.RELEASE_AT).toISOString());"
+          status=$(curl --silent --output /dev/null --write-out '%{http_code}' https://europe-west1-shithead-pro.cloudfunctions.net/privateAvatarArt)
+          test "$status" = 404

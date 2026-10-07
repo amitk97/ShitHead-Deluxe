@@ -253,3 +253,12 @@ exports.auditRankedRoom = functionsV1.region(REGION).database.instance(INSTANCE)
 
 // Clients request precise deadline ticks; this also resumes unattended games.
 exports.rankedTimeouts = onSchedule({schedule: 'every 1 minutes',region: REGION}, () => require('./ranked').sweep());
+
+// One-time private deliveries: no catalogue announcements or seasonal notifications.
+exports.privateDeliveries = onSchedule({schedule:'every 1 minutes',timeZone:'America/Barbados',region:REGION,maxInstances:1,retryCount:5,minBackoffSeconds:10,maxBackoffSeconds:60}, () => require('./private-delivery').deliver(admin.database()));
+exports.privateAvatarArt = require('firebase-functions/v2/https').onRequest({region:REGION,cors:true,invoker:'public',maxInstances:3}, (req,res) => {
+  res.set('Cache-Control','no-store');
+  if (Date.now() < require('./private-delivery').RELEASE_AT) return res.status(404).end();
+  if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(405).end();
+  return res.sendFile(require('node:path').join(__dirname,'private-assets','keepsake.png'));
+});

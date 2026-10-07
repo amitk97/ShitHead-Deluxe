@@ -10244,9 +10244,10 @@
       document.head.appendChild(style);
       document.body.classList.add('flag-font-fallback');
     })();
+    AVATAR_ART[PRIVATE_AVATAR_ID] = { animated:true };
     const DEFAULT_AVATAR_ID = 'avatar-crown-bronze';
     function resolveAvatarId(id) {
-      return AVATAR_ART[id] ? id : DEFAULT_AVATAR_ID;
+      return AVATAR_ART[id] && (id !== PRIVATE_AVATAR_ID || privateAvatarItem(id)) ? id : DEFAULT_AVATAR_ID;
     }
     // Every size keeps the animated layers, including Shop, Custom and
     // compact player pictures. Visibility and Reduce Motion control playback.
@@ -10308,6 +10309,7 @@
       document.body.appendChild(holder);
     })();
     function avatarSvg(id, size = 64) {
+      if (id === PRIVATE_AVATAR_ID && privateAvatarItem(id)) return privateAvatarSvg();
       const art = AVATAR_ART[resolveAvatarId(id)];
       if (art.photo) {
         const inset = art.edgeToEdge ? 0 : 2, extent = art.edgeToEdge ? 64 : 60;
@@ -11976,6 +11978,7 @@
     }
     const FREE_AVATAR_IDS = ['avatar-crown-bronze', 'avatar-suit-spades', 'avatar-suit-hearts', 'avatar-suit-diamonds', 'avatar-suit-clubs'];
     function getAvatarItem(id) {
+      if (privateAvatarItem(id)) return privateAvatarItem(id);
       return [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS, ...LEVEL_REWARDS].find(item => item.id === id && item.category === 'Avatars') || null;
     }
     const COSMETIC_CATEGORY_TYPES = Object.freeze({
@@ -12048,8 +12051,9 @@
     }
 
     function isSupportedCosmetic(type, id) {
+      if (id === PRIVATE_AVATAR_ID) return type === 'avatar' && !!privateGiftItem(id);
       if (id === 'default') return Object.prototype.hasOwnProperty.call(DEFAULT_EQUIPPED_COSMETICS, type);
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
+      const item = privateGiftItem(id) || [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
       return !!item && COSMETIC_CATEGORY_TYPES[item.category] === type && !!COSMETIC_RUNTIME_IDS[type]?.has(id);
     }
 
@@ -12364,6 +12368,7 @@
       return true;
     }
     function equipCosmetic(type, id, options = {}) {
+      if (id === PRIVATE_AVATAR_ID && (!privateGiftItem(id) || !cosmeticPurchaseState[id])) return false;
       const { preview = true, sync = true } = options;
       if (type === 'deck') return equipDeck(id);
       if (!isSupportedCosmetic(type, id)) return false;
@@ -12374,7 +12379,7 @@
       stampEquip(type);
       applyEquippedCosmetics();
       renderPersonalisationCosmetics();
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
+      const item = privateGiftItem(id) || [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
       const effectsDisabled = (type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect') && !bigEffectsOn;
       const status = document.getElementById('personalisationStatus');
       if (status) status.textContent = `${item ? item.name : 'Default'} equipped.${effectsDisabled ? ' Effects are currently disabled in Settings.' : ''}`;
@@ -12511,7 +12516,7 @@
       const shopAvatars = sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Avatars' && !item.season));
       const freeAvatars = sortByValue(BUILT_IN_COSMETICS.filter(item => item.category === 'Avatars'));
       const seasonalAvatars = [...sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Avatars' && item.season)), ...SEASONAL_EARNED_AVATARS].filter(isCosmeticListed);
-      grid.innerHTML = customGroupedHtml('avatar', [...freeAvatars, ...shopAvatars,
+      grid.innerHTML = ownedPrivateAvatars().map(avatarOptionHtml).join('') + customGroupedHtml('avatar', [...freeAvatars, ...shopAvatars,
         ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral),
         ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral),
         ...LEVEL_REWARDS.filter(item => item.category === 'Avatars'), ...seasonalAvatars], avatarOptionHtml);
@@ -12711,7 +12716,7 @@
     }
     function cosmeticDisplayName(type, id) {
       if (id === 'default') return 'Default';
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
+      const item = privateGiftItem(id) || [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
       return item ? item.name : 'This item';
     }
     document.getElementById('themesModal').addEventListener('click', (event) => {
@@ -13169,7 +13174,7 @@
         const gift = snap.val();
         if (!gift) throw new Error('This gift has already been opened.');
         return callEconomy('claimGift', { giftId }).then((res) => {
-          const item = COSMETIC_SHOP_ITEMS.find(i => i.id === res.itemId);
+          const item = giftCosmeticItem(res.itemId);
           challengeEconomy.diamonds = Number(res.diamonds) || 0;
           updateDiamondHeader();
           if (!item) return true;
@@ -13188,7 +13193,7 @@
       const type = COSMETIC_CATEGORY_TYPES[item.category];
       giftOpenItemId = asDiamonds ? null : item.id;
       document.getElementById('giftOpenTitle').textContent = asDiamonds ? 'Gift turned into Diamonds' : 'You got a gift';
-      document.getElementById('giftOpenFrom').textContent = `From ${gift.fromName || 'a friend'}`;
+      document.getElementById('giftOpenFrom').textContent = `${item.privateGift ? 'Gifted by' : 'From'} ${gift.fromName || 'a friend'}`;
       document.getElementById('giftOpenItem').innerHTML = `<span class="shrink-0" style="${type === 'tableTheme' ? 'width:110px' : ''}">${type === 'tableTheme' ? miniTablePreviewHtml(item.id) : shopCosmeticThumbnail(item, type)}</span><span class="min-w-0" style="text-align:left"><span class="gift-item-name block">${escapeHtml(item.name)}</span><span class="gift-item-sub block">${asDiamonds ? `You already had it, so you got 💎 ${Number(gift.cost) || item.cost}` : escapeHtml(item.category.replace(/s$/, ''))}</span></span>`;
       document.getElementById('giftOpenEquip').classList.toggle('hidden', asDiamonds);
       document.getElementById('giftOpenModal').classList.remove('hidden');
@@ -13211,7 +13216,7 @@
     });
     document.getElementById('giftOpenClose').addEventListener('click', () => document.getElementById('giftOpenModal').classList.add('hidden'));
     document.getElementById('giftOpenEquip').addEventListener('click', () => {
-      const item = COSMETIC_SHOP_ITEMS.find(i => i.id === giftOpenItemId);
+      const item = giftCosmeticItem(giftOpenItemId);
       if (item) equipCosmetic(COSMETIC_CATEGORY_TYPES[item.category], item.id, { preview: false });
       document.getElementById('giftOpenModal').classList.add('hidden');
       if (item) notifyBanner(`✓ ${item.name} equipped.`);
@@ -18151,14 +18156,14 @@
     }
     function inboxItemHtml(item) {
       if (item.type === 'giftIn') {
-        const giftItem = COSMETIC_SHOP_ITEMS.find(i => i.id === item.itemId);
+        const giftItem = giftCosmeticItem(item.itemId);
         if (!giftItem) return '';
         const type = COSMETIC_CATEGORY_TYPES[giftItem.category];
         return `<div class="inbox-gift border rounded-xl px-2.5 py-2">
           <div class="flex items-center gap-2"><span class="shrink-0 flex items-center justify-center" style="min-width:42px">${type === 'tableTheme' ? '<span style="font-size:26px">🎁</span>' : shopCosmeticThumbnail(giftItem, type)}</span><div class="min-w-0">
-          <p class="inbox-gift-accent text-[9px] font-black uppercase tracking-wide mb-1">Gift from ${escapeHtml(item.fromName || 'a friend')}</p>
+          <p class="inbox-gift-accent text-[9px] font-black uppercase tracking-wide mb-1">${giftItem.privateGift ? 'Gifted by' : 'Gift from'} ${escapeHtml(item.fromName || 'a friend')}</p>
           <p class="text-xs font-bold text-white">${escapeHtml(giftItem.name)}</p>
-          <p class="inbox-gift-accent text-[10px] mt-1">${escapeHtml(giftItem.category.replace(/s$/, ''))} · worth 💎 ${Number(item.cost) || giftItem.cost}</p>
+          <p class="inbox-gift-accent text-[10px] mt-1">${giftItem.privateGift ? 'A gift just for you' : escapeHtml(giftItem.category.replace(/s$/, '')) + ' · worth 💎 ' + (Number(item.cost) || giftItem.cost)}</p>
           </div></div>
           <button type="button" data-claim-gift="${escapeAttr(item.id)}" class="inbox-gift-claim-btn mt-2 w-full text-[9px] font-black py-1.5 rounded-lg">🎁 OPEN GIFT</button>
         </div>`;
@@ -18878,7 +18883,7 @@
         const item = data[id] || {};
         const who = String(item.fromName || item.name || 'A friend').slice(0, 12);
         if (kind === 'gift') {
-          const shopItem = COSMETIC_SHOP_ITEMS.find(i => i.id === item.itemId);
+          const shopItem = giftCosmeticItem(item.itemId);
           showAppNotification(`🎁 ${who} sent you a gift`, shopItem ? `${shopItem.name} is waiting in your Inbox.` : 'Open your Inbox to see it.', `gift-${id}`);
         } else if (kind === 'invite') {
           showAppNotification(`🃏 ${who} invited you to a game`, 'Tap to join before the invite runs out.', `invite-${id}`);

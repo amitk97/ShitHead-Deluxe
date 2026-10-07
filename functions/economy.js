@@ -1164,7 +1164,9 @@ actions.claimGift = async ({ uid, data }) => {
   const giftRef = db().ref(`gifts/${uid}/${giftId}`);
   const gift = (await giftRef.once('value')).val();
   if (!gift) fail('not-found', 'This gift has already been opened.');
-  const item = CAT.items[gift.itemId];
+  const privateDelivery = require('./private-delivery');
+  if (gift.itemId === privateDelivery.ITEM_ID && !privateDelivery.canClaim(uid, gift)) fail('permission-denied', 'This gift is not available.');
+  const item = gift.itemId === privateDelivery.ITEM_ID ? privateDelivery.ITEM : CAT.items[gift.itemId];
   if (!item) fail('failed-precondition', 'This gift is no longer available.');
   const legacy = await legacyOwned(uid);
   const now = Date.now();

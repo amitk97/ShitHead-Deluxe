@@ -165,7 +165,7 @@
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
-              (newData.val() === 'avatar-ace-spades' || newData.val() === 'avatar-queen-hearts' ||
+              ((newData.val() === 'avatar-private-keepsake' && now >= 1792188000000 && ($uid === '11d84kCgSde82Xlu8k5U65OB9662' || $uid === 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1')) || newData.val() === 'avatar-ace-spades' || newData.val() === 'avatar-queen-hearts' ||
               newData.val() === 'avatar-joker' || newData.val() === 'avatar-burn-flame' ||
               newData.val() === 'avatar-ghost' || newData.val() === 'avatar-frozen' ||
               newData.val() === 'avatar-burning-ten' || newData.val() === 'avatar-fanned-hand' ||
@@ -428,7 +428,7 @@
               .child('losses').val())",
         "avatar": {
           ".validate": "!newData.exists() || (newData.isString() &&
-            newData.val().matches(/^(default|avatar-[a-z-]{3,30})$/))"
+            newData.val().matches(/^(default|avatar-[a-z-]{3,30})$/)) && (newData.val() !== 'avatar-private-keepsake' || (now >= 1792188000000 && (root.child('usernames').child($name).val() === '11d84kCgSde82Xlu8k5U65OB9662' || root.child('usernames').child($name).val() === 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1') && root.child('users').child(root.child('usernames').child($name).val()).child('ownedCosmetics').child('avatar-private-keepsake').exists()))"
         },
         "level": {
           ".validate": "newData.isNumber() && newData.val() ===
@@ -496,7 +496,7 @@
         },
         "avatar": {
           ".validate": "!newData.exists() || (newData.isString() &&
-            newData.val().matches(/^(default|avatar-[a-z-]{3,30})$/))"
+            newData.val().matches(/^(default|avatar-[a-z-]{3,30})$/)) && (newData.val() !== 'avatar-private-keepsake' || (now >= 1792188000000 && ($uid === '11d84kCgSde82Xlu8k5U65OB9662' || $uid === 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1') && root.child('users').child($uid).child('ownedCosmetics').child('avatar-private-keepsake').exists()))"
         },
         "stats": {
           ".validate": "newData.hasChildren(['games'])",
