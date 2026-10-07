@@ -12538,7 +12538,6 @@
       const earned = [...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].filter(item => item.category === category);
       const free = BUILT_IN_COSMETICS.filter(item => item.category === category);
       return [
-        ...(type === 'tableTheme' ? ownedPrivateTables() : []),
         ...sortByValue([...free, ...shop.filter(item => !item.season)]),
         ...earned.filter(item => !item.season),
         ...bySeason([...shop, ...earned].filter(item => item.season))
@@ -12551,7 +12550,7 @@
       let owned = 0, total = 0;
       area.innerHTML = COSMETIC_TABS.map(tab => {
         const type = COSMETIC_CATEGORY_TYPES[tab.category];
-        const items = customAllItems(type);
+        const items = [...(type === 'tableTheme' ? ownedPrivateTables() : []), ...customAllItems(type)];
         const have = items.filter(isCosmeticOwned).length;
         owned += have; total += items.length;
         const open = !customAllCollapsed.has(type);
