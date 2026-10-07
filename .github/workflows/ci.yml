@@ -54,6 +54,7 @@ jobs:
         run: |
           node functions/private-delivery.test.js
           node functions/private-claim.test.js
+          node functions/private-table.test.js
 
       - name: Series levels and readiness
         run: node tools/series-ready-test.js
@@ -79,7 +80,9 @@ jobs:
         run: node tools/friends-lobby-browser-test.js
 
       - name: Private cosmetics regression checks
-        run: node tools/private-cosmetics-browser-test.js
+        run: |
+          node tools/private-cosmetics-browser-test.js
+          node tools/private-table-browser-test.js
 
       - name: Existing browser gameplay regression suite
         run: node tools/run-browser-tests.js

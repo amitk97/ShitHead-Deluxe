@@ -215,6 +215,8 @@ function scene(id,W,H){
  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${F(W)} ${F(H)}" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMid meet" data-full-scene="${id}" aria-hidden="true">${defs}${pieces.join('')}</svg>`;
 }
 function draw(host,id){
+ if(id==='table-private-keepsake' && typeof drawPrivateTable==='function'){drawPrivateTable(host);return;}
+ host?.querySelector(':scope > .private-table-scene')?.remove();
  if(!host || !themes[id?.replace('table-','')]){host?.querySelector(':scope > .responsive-scene')?.remove();return;}
  const W=host.clientWidth,H=host.clientHeight;if(W<=0||H<=0)return;
  let layer=host.querySelector(':scope > .responsive-scene');if(!layer){layer=document.createElement('div');layer.className='responsive-scene';host.prepend(layer);}

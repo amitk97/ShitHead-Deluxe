@@ -365,6 +365,12 @@ function challengeForKey(id, user, now) {
 
 // ---- Actions ------------------------------------------------------------------------------
 const actions = {};
+actions.privateTableAccess = async ({uid}) => {
+  const table = require('./private-table');
+  if (!table.allowed(uid)) fail('permission-denied', 'This item is not available.');
+  await table.grant(admin.database(), uid);
+  return {itemId:table.ITEM_ID};
+};
 
 // When the account was really created (Firebase Auth), for referrals: the game
 // can write to users/{uid} before init runs, so "no profile yet" alone can't

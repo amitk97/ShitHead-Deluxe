@@ -262,3 +262,5 @@ exports.privateAvatarArt = require('firebase-functions/v2/https').onRequest({reg
   if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(405).end();
   return res.sendFile(require('node:path').join(__dirname,'private-assets','keepsake.png'));
 });
+
+exports.privateTableArt = require('firebase-functions/v2/https').onRequest({region:REGION,cors:true,invoker:'public',maxInstances:3}, require('./private-table').artHandler(admin));
