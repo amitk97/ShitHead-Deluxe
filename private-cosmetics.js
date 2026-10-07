@@ -71,6 +71,7 @@ async function loadPrivateTableArt(variant) {
   try { return await task; } finally { if(privateTableRequests.get(variant)===task)privateTableRequests.delete(variant); }
 }
 function drawPrivateTable(host) {
+  host.querySelector(':scope > .responsive-scene:not(.private-table-scene)')?.remove();
   if (!ownedPrivateTables().length) {host.querySelector(':scope > .private-table-scene')?.remove();return;}
   const W=host.clientWidth,H=host.clientHeight;if(!W||!H)return;
   const variant=privateTableVariant(W,H);
