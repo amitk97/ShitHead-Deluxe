@@ -38,7 +38,7 @@ const OFFLINE_ASSETS = [
   '/js/house-rules-bots.js',
   '/js/house-rules-presets.js?v=335',
   '/js/friends-lobby.js?v=335',
-  '/css/friends-lobby.css?v=335',
+  '/css/friends-lobby.css?v=245eed70ee85',
   '/icons/splash-handoff-v309.webp',
   '/art/fonts/cinzel-latin-v26.woff2',
   '/art/burns/level-v294/effects.js?v=295',

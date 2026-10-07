@@ -28,6 +28,23 @@ await page.evaluate(()=>{
  document.getElementById('singleOptions').classList.add('hidden');document.getElementById('multiOptions').classList.remove('hidden');setModePage('friends');
  document.getElementById('playerNameInput').value='AmitK';ShFriendsLobby.render();
 });
+// Every mode uses the same physical gap below the global header, even when zoomed.
+for(const [width,height] of [[320,568],[390,664],[390,844],[768,900],[1440,900]]){
+ await page.setViewportSize({width,height});
+ const gaps={};
+ for(const mode of ['ranked','friends']){
+  await page.evaluate(mode=>{
+   document.getElementById('multiOptions').classList.toggle('hidden',mode!=='friends');
+   document.getElementById('rankedOptions').classList.toggle('hidden',mode!=='ranked');
+   setModePage(mode);fitHomePanel();
+  },mode);
+  await page.waitForTimeout(100);
+  gaps[mode]=await page.locator('#lobbyScreen > .bg-slate-900').evaluate(el=>el.getBoundingClientRect().top);
+ }
+ assert(Math.abs(gaps.friends-gaps.ranked)<1,JSON.stringify({width,height,gaps}));
+}
+await page.setViewportSize({width:390,height:844});
+console.log('PASS Play Friends and Ranked top alignment on short/mobile/tablet/desktop screens');
 assert(!await page.locator('#friendsHub').isVisible());
 assert(await page.locator('#hostRoomBtn').isVisible());
 await page.locator('#friendsJoinOpen').click();assert(await page.locator('#joinCodeInput').isVisible());
