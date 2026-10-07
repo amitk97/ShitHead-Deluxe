@@ -3739,6 +3739,7 @@ async function runDevTestSuite() {
       layer.querySelectorAll('.pfx-layer').forEach(n => n.remove());
       wrap.innerHTML = '';
       ['cf-under', 'cf-test-top'].forEach(cid => { const c = createCardElement({ id: cid, rank: '10', suit: '♠' }); c.dataset.cardId = cid; wrap.appendChild(c); });
+      const originalVisibility = [...wrap.children].map(card => ({ card, value: card.style.getPropertyValue('visibility'), priority: card.style.getPropertyPriority('visibility') }));
       bfxColouredFlame(layer, 100, 100, 1);
       const sheet = layer.querySelector('.pfx-layer');
       assertTrue(!!sheet && [...wrap.children].every(c => getComputedStyle(c).visibility === 'hidden'), 'Every Pile card hides: only the copy of the top card is shown');
@@ -3752,9 +3753,16 @@ async function runDevTestSuite() {
       assertTrue([...sheet.querySelectorAll('[style*="preserve-3d"]')].every(el => el.getAnimations().every(a => !a.effect.getKeyframes().some(f => 'opacity' in f || 'filter' in f))), 'No 3D box is flattened (no opacity or filter on them)');
       const ends = [...sheet.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
       assertTrue(Math.max(...ends) <= 2100, `It ends within 2.1s (${Math.round(Math.max(...ends))}ms)`);
-      sheet.getAnimations({ subtree: true }).forEach(a => a.finish());
-      await new Promise(r => setTimeout(r, 30));
-      assertTrue(!layer.querySelector('.pfx-layer') && [...wrap.children].every(c => getComputedStyle(c).visibility !== 'hidden'), 'Nothing is left behind and the Pile shows again');
+      const animations = sheet.getAnimations({ subtree: true });
+      const finished = Promise.all(animations.map(a => a.finished.catch(() => {})));
+      animations.forEach(a => a.finish());
+      await Promise.race([finished, new Promise((_, reject) => setTimeout(() => reject(new Error('Coloured Flame cleanup did not finish')), 15000))]);
+      await new Promise(requestAnimationFrame);
+      assertTrue(!layer.querySelector('.pfx-layer'), 'The effect layer is removed');
+      originalVisibility.forEach(({ card, value, priority }) => {
+        assertEqual(card.style.getPropertyValue('visibility'), value, 'Cleanup restores each Pile card\'s original inline visibility');
+        assertEqual(card.style.getPropertyPriority('visibility'), priority, 'Cleanup restores each Pile card\'s original visibility priority');
+      });
     } finally { wrap.innerHTML = keep; layer.querySelectorAll('.pfx-layer').forEach(n => n.remove()); }
   });
 

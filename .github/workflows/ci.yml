@@ -40,7 +40,7 @@ jobs:
           node --check functions/index.js
           node --check dev-tests.js
           node --check sw.js
-          for source in app.js level-ladder.js sound.js tutorial.js tutorial-data.js cosmetics-data.js burn-effects.js card-animations.js; do node --check "$source"; done
+          for source in app.js shop.js level-ladder.js sound.js tutorial.js tutorial-data.js cosmetics-data.js burn-effects.js card-animations.js; do node --check "$source"; done
           node tools/modular-assets-test.js
 
       - name: Install Firebase Functions dependencies
