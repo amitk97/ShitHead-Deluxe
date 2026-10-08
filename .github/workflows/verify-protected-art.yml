@@ -1,0 +1,26 @@
+name: Verify protected artwork
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/verify-protected-art.js'
+      - '.github/workflows/verify-protected-art.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install verification dependencies
+        working-directory: functions
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Verify live owner artwork
+        env:
+          DEPLOY_CREDENTIAL: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
+        run: node tools/verify-protected-art.js
