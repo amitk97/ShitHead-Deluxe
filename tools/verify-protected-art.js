@@ -9,8 +9,8 @@ const {SENDER_UID}=require('../functions/private-delivery');
  assert(!user.disabled,'Owner account is disabled');
  const apiKey=fs.readFileSync(path.join(__dirname,'../app.js'),'utf8').match(/apiKey:\s*"([^"]+)"/)[1];
  const customToken=await admin.auth().createCustomToken(SENDER_UID);
- const signin=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:customToken,returnSecureToken:true})});
- assert(signin.ok,'Owner verification sign-in failed: '+signin.status);
+ const signin=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json',Referer:'https://shithead-deluxe.web.app/'},body:JSON.stringify({token:customToken,returnSecureToken:true})});
+ if(!signin.ok){const failure=await signin.json();throw Error('Owner verification sign-in failed: '+signin.status+' '+(failure.error?.message||''));}
  const {idToken}=await signin.json();assert(idToken,'Owner verification token unavailable');
  for(const variant of ['portrait','tall','square','wide']){
   const response=await fetch('https://europe-west1-shithead-pro.cloudfunctions.net/privateTableArt?variant='+variant,{headers:{Authorization:'Bearer '+idToken,Origin:'https://shithead-deluxe.web.app'},cache:'no-store'});
