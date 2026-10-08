@@ -19,7 +19,7 @@ jobs:
           node-version: 22
       - name: Install verification dependencies
         working-directory: functions
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm install --ignore-scripts --no-audit --no-fund && npm install --no-save sharp --no-audit --no-fund
       - name: Verify live owner artwork
         env:
           DEPLOY_CREDENTIAL: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}

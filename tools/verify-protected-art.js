@@ -1,6 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const admin=require('../functions/node_modules/firebase-admin');
+const sharp=require('../functions/node_modules/sharp');
 const {SENDER_UID}=require('../functions/private-delivery');
 (async()=>{
  const credential=JSON.parse(process.env.DEPLOY_CREDENTIAL);
@@ -19,6 +20,7 @@ const {SENDER_UID}=require('../functions/private-delivery');
   assert.equal(response.status,200,'Protected table '+variant+' unavailable to owner');
   assert(response.headers.get('content-type').startsWith('image/'),'Artwork response is not an image');
   const envelope=JSON.parse(fs.readFileSync(path.join(__dirname,'../functions/private-assets/table-'+variant+'.enc.json'),'utf8'));
+  const metadata=await sharp(body).metadata();console.log('Decoded '+variant+': '+metadata.width+'x'+metadata.height+' '+metadata.format);assert(metadata.width>0 && metadata.height>0);
   assert.equal(crypto.createHash('sha256').update(body).digest('hex'),envelope.sha256,'Deployed artwork does not match protected source');
   assert.equal(response.headers.get('access-control-allow-origin'),'https://shithead-deluxe.web.app','Artwork CORS response mismatch');
  }
