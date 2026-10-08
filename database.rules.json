@@ -126,7 +126,7 @@
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
-              (newData.val() === 'burn-coloured' || newData.val() === 'burn-ice' ||
+              ((newData.val() === 'burn-private-keepsake' && ($uid === '11d84kCgSde82Xlu8k5U65OB9662' || ($uid === 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && now >= 1792188000000 && newData.parent().parent().child('claimedGifts').child('private_embers_20261016').exists()))) || newData.val() === 'burn-coloured' || newData.val() === 'burn-ice' ||
               newData.val() === 'burn-electric' || newData.val() === 'burn-paint' ||
               newData.val() === 'burn-sweets' || newData.val() === 'burn-smoke' ||
               newData.val().matches(/^burn-(blackhole|origami|pixel|lava)$/) ||
@@ -225,6 +225,7 @@
           }
         },
         "ownedCosmetics": {
+          "burn-private-keepsake": {".validate": "($uid === '11d84kCgSde82Xlu8k5U65OB9662' || ($uid === 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && now >= 1792188000000 && newData.parent().parent().child('claimedGifts').child('private_embers_20261016').exists())) && newData.hasChildren(['purchasedAt'])"},
           "table-private-keepsake": {".validate": "($uid === '11d84kCgSde82Xlu8k5U65OB9662' || ($uid === 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && now >= 1792188000000 && newData.parent().parent().child('claimedGifts').child('private_sunset_20261016').exists())) && newData.hasChildren(['purchasedAt'])"},
           "$itemId": {
             ".validate": "newData.hasChildren(['purchasedAt'])"

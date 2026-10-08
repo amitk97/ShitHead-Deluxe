@@ -7,6 +7,7 @@ function privateAvatarItem(id) {
   return id === PRIVATE_AVATAR_ID && (typeof serverNow === 'function' ? serverNow() : Date.now()) >= PRIVATE_RELEASE_AT ? PRIVATE_AVATAR_ITEM : null;
 }
 function privateGiftItem(id) {
+  if (id === PRIVATE_BURN_ID) return privateBurnItem(id);
   if (id === PRIVATE_TABLE_ID) return privateTableItem(id);
   return PRIVATE_ACCOUNT_IDS.has(currentUser?.uid) ? privateAvatarItem(id) : null;
 }
@@ -101,3 +102,80 @@ function drawPrivateTable(host) {
     host?.querySelector(':scope > .private-table-scene')?.remove();original(host,id);
   };
 })();
+
+const PRIVATE_BURN_ID='burn-private-keepsake';
+const PRIVATE_BURN_ITEM=Object.freeze({id:PRIVATE_BURN_ID,name:'Ember & Tide',category:'Burn Effects',cost:0,privateGift:true,tones:['#6e1535','#e9b46c','#ffe7bd']});
+let privateBurnUid=null,privateBurnSession=0,privateBurnConfig=null,privateBurnRequest=null;
+const privateBurnRuns=new Map(),privateBurnPending=new WeakMap();
+function privateBurnItem(id){
+ const uid=currentUser?.uid;
+ return id===PRIVATE_BURN_ID && (uid===PRIVATE_TABLE_OWNER || (uid==='pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && serverNow()>=PRIVATE_RELEASE_AT)) ? PRIVATE_BURN_ITEM : null;
+}
+function ownedPrivateBurns(){
+ return currentUser?.uid===cosmeticCollectionUid && privateBurnItem(PRIVATE_BURN_ID) && cosmeticPurchaseState[PRIVATE_BURN_ID] ? [PRIVATE_BURN_ITEM] : [];
+}
+function clearPrivateBurnInHost(host){
+ privateBurnPending.delete(host);
+ for(const [root,stop] of privateBurnRuns)if(root.parentNode===host)stop();
+}
+function clearPrivateBurnForOtherAccounts(){
+ const uid=currentUser?.uid || null;
+ if(privateBurnUid!==uid || !ownedPrivateBurns().length){
+  privateBurnUid=uid;++privateBurnSession;privateBurnConfig=null;privateBurnRequest=null;
+  for(const stop of privateBurnRuns.values())stop();
+ }
+ if(ownedPrivateBurns().length)loadPrivateBurnArt().catch(()=>{});
+}
+async function loadPrivateBurnArt(){
+ if(privateBurnUid!==currentUser?.uid)clearPrivateBurnForOtherAccounts();
+ if(!ownedPrivateBurns().length)return null;
+ if(privateBurnConfig)return privateBurnConfig;
+ if(privateBurnRequest)return privateBurnRequest;
+ const user=currentUser,session=privateBurnSession;
+ const task=(async()=>{
+  const token=await user.getIdToken();
+  const response=await fetch('https://europe-west1-shithead-pro.cloudfunctions.net/privateBurnArt',{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+  if(!response.ok)throw Error('Effect unavailable');
+  const config=await response.json();
+  if(session!==privateBurnSession || currentUser?.uid!==user.uid || !ownedPrivateBurns().length)return null;
+  if(typeof config.css!=='string' || typeof config.html!=='string')throw Error('Invalid effect');
+  privateBurnConfig=config;return config;
+ })();
+ privateBurnRequest=task;
+ try{return await task;}finally{if(privateBurnRequest===task)privateBurnRequest=null;}
+}
+async function playPrivateBurn(host,x,y,scale=1){
+ if(!host || !ownedPrivateBurns().length || document.hidden)return false;
+ if(privateBurnUid!==currentUser?.uid)clearPrivateBurnForOtherAccounts();
+ clearPrivateBurnInHost(host);
+ const ticket={},uid=currentUser.uid,session=privateBurnSession;
+ privateBurnPending.set(host,ticket);
+ let config;
+ try{config=await loadPrivateBurnArt();}catch(_){return false;}
+ if(!config || privateBurnPending.get(host)!==ticket || currentUser?.uid!==uid || session!==privateBurnSession || !host.isConnected || document.hidden || !ownedPrivateBurns().length)return false;
+ privateBurnPending.delete(host);
+ const root=document.createElement('div'),style=document.createElement('style');
+ root.className='private-burn';root.setAttribute('aria-hidden','true');
+ if(document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches)root.classList.add('pb-calm');
+ root.style.cssText=`left:${x}px;top:${y}px;transform:scale(${Math.min(1,window.innerWidth/330)*Math.max(.3,Math.min(2,Number(scale)||1))});pointer-events:none;z-index:20;`;
+ style.textContent=config.css;root.innerHTML=config.html;root.prepend(style);
+ const timers=[];let stopped=false;
+ const stop=()=>{
+  if(stopped)return;stopped=true;
+  timers.forEach(clearTimeout);root.removeEventListener('animationend',ended);root.removeEventListener('animationcancel',cancelled);
+  document.removeEventListener('visibilitychange',hidden);root.remove();privateBurnRuns.delete(root);
+ };
+ const ended=e=>{if(e.target===root && e.animationName==='pb-life')stop();};
+ const cancelled=e=>{if(e.target===root)stop();};
+ const hidden=()=>{if(document.hidden)stop();};
+ root.addEventListener('animationend',ended);root.addEventListener('animationcancel',cancelled);document.addEventListener('visibilitychange',hidden);
+ privateBurnRuns.set(root,stop);host.append(root);
+ const sound=(delay,play)=>timers.push(setTimeout(()=>{
+  if(stopped || !root.isConnected || currentUser?.uid!==uid || !ownedPrivateBurns().length)return;
+  const kit=audio._burnKit();if(kit)play(kit);
+ },delay));
+ sound(800,kit=>[880,1108.73,1318.51].forEach((f,i)=>kit.tone({at:i*.065,dur:.65,f0:f,level:.075,attack:.008})));
+ sound(2500,kit=>kit.noise({dur:.58,type:'lowpass',f0:650,f1:220,q:.3,level:.13,attack:.18}));
+ timers.push(setTimeout(stop,3500));
+ return true;
+}

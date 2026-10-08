@@ -1017,6 +1017,7 @@
     }
     function playBurnFx(id, host, x, y, scale = 1) {
       if (!host) return false;
+      if (id === PRIVATE_BURN_ID) { playPrivateBurn(host,x,y,scale); return true; }
       // Painted-art 3D burns (art/burns/level-3d/burns3d.js); their old effects stay as the fallback.
       if (window.ShLevel3D && ShLevel3D.has(id) && levelBurn3d(id, host, x, y, scale, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return true;
       ({ default: bfxDefaultBurn, 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
@@ -1034,6 +1035,7 @@
       bfxAnimate(el, [{ opacity: 0 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 700, easing: 'ease-out' });
     }
     function playBurnEffect(effect, x, y) {
+      if(effect===PRIVATE_BURN_ID)return playBurnFx(effect,document.getElementById('burnFxLayer'),x,y,1);
       if (ShLevelBurns.index(effect) >= 0) return playBurnFx(effect, document.getElementById('burnFxLayer'), x, y, .72);
       if (typeof reduceMotion !== 'undefined' && reduceMotion) return playCalmBurn(x, y);
       if (effect === 'burn-ice') return triggerBurnEmberExplosion(x, y, ['#e0f2fe','#7dd3fc','#38bdf8','#ffffff'], 70);
@@ -1051,7 +1053,9 @@
 
     // The Burn cosmetic a player has equipped (their own from equippedCosmetics).
     function burnEffectIdFor(player) {
+      if(player && player.id!==state?.localPlayerId && player.cosmetics?.burnEffect===PRIVATE_BURN_ID)return 'default';
       const ownEffect = (typeof equippedCosmetics !== 'undefined' && equippedCosmetics.burnEffect) || 'default';
+      if (player?.id === state?.localPlayerId && ownEffect === PRIVATE_BURN_ID && ownedPrivateBurns().length) return ownEffect;
       if (player && player.id !== state?.localPlayerId && !othersEffectsOn) return 'default';
       return player?.cosmetics?.burnEffect || (player?.id === state?.localPlayerId ? ownEffect : 'default') || 'default';
     }

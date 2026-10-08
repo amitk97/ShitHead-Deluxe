@@ -33,7 +33,7 @@ async function start({uid,data}){
   if(members.some(at=>!at||now-at>120000||at>now+60000))fail('failed-precondition','Waiting for both players to join. Please retry.');
   const records=await Promise.all(seats.map(p=>db().ref(`users/${p.uid}`).once('value').then(s=>s.val()||{})));
   const xpOn=await require('./xp').enabled();
-  const verifiedSeats=seats.map((p,i)=>({id:p.id,uid:p.uid,name:records[i].username||p.name,rating:records[i].rating||500,cosmetics:{...(records[i].equippedCosmetics||{}),...(xpOn&&records[i].xp?{level:require('./xp').levelFor(records[i].xp.total)}:{})}}));
+  const verifiedSeats=seats.map((p,i)=>({id:p.id,uid:p.uid,name:records[i].username||p.name,rating:records[i].rating||500,cosmetics:{...require('./private-delivery').publicCosmetics(records[i].equippedCosmetics||{}),...(xpOn&&records[i].xp?{level:require('./xp').levelFor(records[i].xp.total)}:{})}}));
   if(new Set(verifiedSeats.map(p=>p.id)).size!==2||verifiedSeats.some(p=>!['p_host','p_room1'].includes(p.id)))fail('failed-precondition','Invalid Ranked seats.');
   let rejected=false;
   const tx=await ref.transaction(cur=>{

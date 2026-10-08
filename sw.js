@@ -13,8 +13,8 @@ const OFFLINE_ASSETS = [
   // Application code and styles, including their deployment version keys.
   '/game.css?v=67830c795315',
   '/tailwind.css?v=a6876526974d',
-  '/sound.js?v=79610d853777',
-  '/burn-effects.js?v=13093a728abe',
+  '/sound.js?v=d5d1fddc0e77',
+  '/burn-effects.js?v=62985b8df168',
   '/card-animations.js?v=0fe6bd1289f1',
   '/js/card-reference-data.js',
   '/js/card-reference-ui.js',
@@ -31,10 +31,10 @@ const OFFLINE_ASSETS = [
   '/tutorial.js?v=9f026d55aa51',
   '/level-ladder.js?v=f629d34f1b74',
   '/home-navigation.js?v=d5db5d5896e6',
-  '/shop.js?v=1ac6c06e3853',
+  '/shop.js?v=95d2e4232785',
   '/multiplayer-lobby.js?v=563279447523',
-  '/private-cosmetics.js?v=7ae22c68ac97',
-  '/app.js?v=b31cde57ccc7',
+  '/private-cosmetics.js?v=2728338fa07f',
+  '/app.js?v=3f36389daf47',
   '/js/house-rules.js',
   '/js/house-rules-bots.js',
   '/js/house-rules-presets.js?v=335',
@@ -186,7 +186,7 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (url.pathname === '/privateTableArt') return; // Never cache authenticated artwork.
+  if ((url.pathname === '/privateTableArt' || url.pathname === '/privateBurnArt')) return; // Never cache authenticated artwork.
   // Firebase's own pages (Google sign-in handler) are never touched.
   if (url.origin === self.location.origin && url.pathname.startsWith('/__/')) return;
   if (request.mode === 'navigate') {

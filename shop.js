@@ -13,6 +13,7 @@
     }
 
     function burnPreviewIcon(id) {
+      if(id===PRIVATE_BURN_ID)return '✦';
       if (window.ShLevel3D && ShLevel3D.icon(id)) return ShLevel3D.icon(id); // its tile, even for one played without it (Origami)
       if (ShLevelBurns.index(id) >= 0) return ShLevelBurns.icon(id);
       return { 'burn-ice': '❄️', 'burn-electric': '⚡', 'burn-sweets': '🍬', 'burn-paint': '🎨', 'burn-smoke': '💨',
@@ -542,6 +543,7 @@ document.addEventListener('keydown', (e) => {
 
     function playShopBurnPreview(id, stage, scale = .62) {
       if (!stage) return false;
+      if(id===PRIVATE_BURN_ID){clearPrivateBurnInHost(stage);const r=stage.getBoundingClientRect();playPrivateBurn(stage,r.width/2,r.height*.7,scale);return true;}
       ShLevelBurns.clear(stage);
       if (window.ShLevel3D) ShLevel3D.clear(stage);
       audio.playBurnSound(id);

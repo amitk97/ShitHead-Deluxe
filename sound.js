@@ -308,6 +308,7 @@
         if (src) { try { src.stop(); } catch (e) {} this.clipSources.delete(name); }
       }
       playBurnSound(effectId = 'default') {
+        if(effectId==='burn-private-keepsake')return; // Private sequence schedules its own sounds.
         const kit = this._burnKit();
         if (!kit) return;
         const recipe = BURN_SOUNDS[effectId] || BURN_SOUNDS.default;

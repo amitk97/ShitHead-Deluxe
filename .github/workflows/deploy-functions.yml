@@ -69,3 +69,6 @@ jobs:
 
           table_status=$(curl --silent --output /dev/null --write-out '%{http_code}' https://europe-west1-shithead-pro.cloudfunctions.net/privateTableArt)
           test "$table_status" = 404
+
+          burn_status=$(curl --silent --output /dev/null --write-out '%{http_code}' https://europe-west1-shithead-pro.cloudfunctions.net/privateBurnArt)
+          test "$burn_status" = 404

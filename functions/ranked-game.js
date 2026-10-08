@@ -73,7 +73,7 @@ function burn(g,p,now,snap) {
   bump(p,'burnt',g.discardPile.length);bump(p,'challengeBurns');if(snap)bump(p,'snapBurns');
   g.burntCards.push(...g.discardPile);g.discardPile=[];g.activeConstraint=null;g.baseOverrideCard=null;g.pendingFollowUp=null;
   g.playedHistory.push({type:'burn',playerName:p.name});refill(g,p);
-  g.event={type:'burn',playerId:p.id,effectId:p.cosmetics.burnEffect||'default'};
+  g.event={type:'burn',playerId:p.id,effectId:require('./private-delivery').publicCosmetics(p.cosmetics).burnEffect||'default'};
   if(!endIfEmpty(g,p,now))turn(g,g.players.indexOf(p),now);
 }
 function joker(g,p,now,targetId=null) {
@@ -234,7 +234,7 @@ function view(value,uid=null) {
     currentTurnIndex:g.currentTurnIndex,direction:g.direction,turnTimerMs:g.turnTimerMs,turnDeadline:g.turnDeadline,
     activeConstraint:g.activeConstraint,baseOverrideCard:g.baseOverrideCard,discardPile:clone(g.discardPile),playedHistory:clone(g.playedHistory.slice(-25)),
     drawPile:hidden(g.drawPile.length,'stock'),players:g.players.map(p=>({id:p.id,uid:p.uid||null,name:p.name,isHost:p.isHost,isBot:p.isBot,isRankedSubstitute:!!p.isRankedSubstitute,
-      substituteMoveCount:p.substituteMoveCount,cosmetics:clone(p.cosmetics),rating:p.rating,isReady:p.isReady,hasFinished:p.hasFinished,finishRank:p.finishRank,conceded:!!p.conceded,drew:!!p.drew,
+      substituteMoveCount:p.substituteMoveCount,cosmetics:require('./private-delivery').publicCosmetics(p.cosmetics),rating:p.rating,isReady:p.isReady,hasFinished:p.hasFinished,finishRank:p.finishRank,conceded:!!p.conceded,drew:!!p.drew,
       gameStats:clone(p.gameStats),lobbyStats:clone(p.lobbyStats),lastPlayRank:p.lastPlayRank||null,
       hand:uid&&uid===p.uid?clone(p.hand):hidden(p.hand.length,p.id+'-hand'),faceUp:clone(p.faceUp),faceDown:p.faceDown.map(c=>({id:c.id,slotIndex:c.slotIndex,rank:'4',suit:'♠',hidden:true}))}))};
   if(g.pendingFollowUp)out.pendingFollowUp=uid&&uid===g.players.find(p=>p.id===g.pendingFollowUp.playerId)?.uid?clone(g.pendingFollowUp):{playerId:g.pendingFollowUp.playerId};

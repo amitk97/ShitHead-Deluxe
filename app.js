@@ -2338,12 +2338,12 @@
       if (state.isMultiplayer && state.roomCode) {
         const burnEffectId = burnEffectIdFor(player);
         db.ref(`rooms/${state.roomCode}/lastCosmeticEffect`).set({
-          type: 'burn', playerId: player.id, by: state.localPlayerId, effectId: burnEffectId, at: Date.now()
+          type: 'burn', playerId: player.id, by: state.localPlayerId, effectId: burnEffectId === PRIVATE_BURN_ID ? 'default' : burnEffectId, at: Date.now()
         }).catch(error => console.warn('Burn effect broadcast skipped', error));
       }
 
       const wrapper = document.getElementById('discardCardsWrapper');
-      if (bigEffectsOn) wrapper.classList.add('animate-burn-flame');
+      if (bigEffectsOn && burnEffectIdFor(player) !== PRIVATE_BURN_ID) wrapper.classList.add('animate-burn-flame');
 
       const finishBurn = () => {
         // Re-fetch the live player object by id rather than trusting the
@@ -4063,7 +4063,7 @@
     // Show Others' Effects (Display): off shows everyone else's burn, Joker
     // and victory effects in the default style (the play is still shown).
     let othersEffectsOn = readPref('shithead_others_effects', true);
-    const othersEffect = (id) => (othersEffectsOn ? id : 'default') || 'default';
+    const othersEffect = (id) => (othersEffectsOn && id !== PRIVATE_BURN_ID ? id : 'default') || 'default';
     let hapticsOn = readPref('shithead_haptics', true);
     // Your-turn chime and the new-invite/request/gift chime (both default on).
     let turnAlertOn = readPref('shithead_turn_alert', true);
@@ -7172,7 +7172,7 @@
       if (event && event.version > rankedEventVersion) {
         rankedEventVersion = event.version;
         const actor = state.players.find(p => p.id === event.playerId);
-        if (event.type === 'burn') { const r=document.getElementById('discardPileContainer')?.getBoundingClientRect(); if (r) triggerEquippedBurnEffect(r.left+r.width/2, r.top+r.height/2, actor); audio.playBurnSound(event.effectId); }
+        if (event.type === 'burn') { const r=document.getElementById('discardPileContainer')?.getBoundingClientRect(); if (r) triggerEquippedBurnEffect(r.left+r.width/2, r.top+r.height/2, actor); audio.playBurnSound(burnEffectIdFor(actor)); }
         else if (event.type === 'joker') {
           const effectFor = (id, effect) => id === state.localPlayerId ? effect : othersEffect(effect);
           playJokerEffect(effectFor(event.playerId, event.effectId));
@@ -12024,7 +12024,7 @@
       return {
         cardBack: equippedCosmetics.cardBack || 'default',
         frame: equippedCosmetics.frame || 'default',
-        burnEffect: equippedCosmetics.burnEffect || 'default',
+        burnEffect: equippedCosmetics.burnEffect === PRIVATE_BURN_ID ? 'default' : equippedCosmetics.burnEffect || 'default',
         victoryEffect: equippedCosmetics.victoryEffect || 'default',
         jokerEffect: equippedCosmetics.jokerEffect || 'default',
         avatar: equippedCosmetics.avatar || 'default',
@@ -12051,6 +12051,7 @@
     }
 
     function isSupportedCosmetic(type, id) {
+      if (id === PRIVATE_BURN_ID) return type === 'burnEffect' && !!ownedPrivateBurns().length;
       if (id === PRIVATE_TABLE_ID) return type === 'tableTheme' && !!ownedPrivateTables().length;
       if (id === PRIVATE_AVATAR_ID) return type === 'avatar' && !!privateGiftItem(id);
       if (id === 'default') return Object.prototype.hasOwnProperty.call(DEFAULT_EQUIPPED_COSMETICS, type);
@@ -12066,6 +12067,7 @@
 
     function applyEquippedCosmetics() {
       clearPrivateTableForOtherAccounts();
+      clearPrivateBurnForOtherAccounts();
       Object.keys(DEFAULT_EQUIPPED_COSMETICS).forEach(type => {
         if (!isSupportedCosmetic(type, equippedCosmetics[type])) equippedCosmetics[type] = 'default';
       });
@@ -12125,7 +12127,7 @@
       const loadout = {};
       SHOWCASE_TYPES.forEach(type => {
         const id = equippedCosmetics[type];
-        loadout[type] = id && id !== PRIVATE_TABLE_ID && isSupportedCosmetic(type, id) ? id : 'default';
+        loadout[type] = id && id !== PRIVATE_TABLE_ID && id !== PRIVATE_BURN_ID && isSupportedCosmetic(type, id) ? id : 'default';
       });
       return loadout;
     }
@@ -12550,7 +12552,7 @@
       let owned = 0, total = 0;
       area.innerHTML = COSMETIC_TABS.map(tab => {
         const type = COSMETIC_CATEGORY_TYPES[tab.category];
-        const items = [...(type === 'tableTheme' ? ownedPrivateTables() : []), ...customAllItems(type)];
+        const items = [...(type === 'tableTheme' ? ownedPrivateTables() : type === 'burnEffect' ? ownedPrivateBurns() : []), ...customAllItems(type)];
         const have = items.filter(isCosmeticOwned).length;
         owned += have; total += items.length;
         const open = !customAllCollapsed.has(type);
@@ -12643,7 +12645,7 @@
       frames.innerHTML = customGroupedHtml('frame', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames')), ...EARNED_FRAMES, ...LEVEL_REWARDS.filter(i => i.category === 'Frames')], i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame));
       emotes.innerHTML = customGroupedHtml('emotes', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs')])], i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes));
       tables.innerHTML = ownedPrivateTables().map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('') + customGroupedHtml('tableTheme', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Table Themes'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes')]), ...LEVEL_REWARDS.filter(i => i.category === 'Table Themes')], i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme));
-      burns.innerHTML = customGroupedHtml('burnEffect', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Burn Effects')), ...LEVEL_REWARDS.filter(i => i.category === 'Burn Effects')], i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect));
+      burns.innerHTML = ownedPrivateBurns().map(i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect)).join('') + customGroupedHtml('burnEffect', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Burn Effects')), ...LEVEL_REWARDS.filter(i => i.category === 'Burn Effects')], i => personalisationOptionHtml(i, 'burnEffect', equippedCosmetics.burnEffect));
       victories.innerHTML = customGroupedHtml('victoryEffect', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Victory Effects'))], i => personalisationOptionHtml(i, 'victoryEffect', equippedCosmetics.victoryEffect));
       jokers.innerHTML = customGroupedHtml('jokerEffect', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Joker Effects'))], i => personalisationOptionHtml(i, 'jokerEffect', equippedCosmetics.jokerEffect));
       const status = document.getElementById('personalisationStatus');
