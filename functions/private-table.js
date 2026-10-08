@@ -1,10 +1,10 @@
 'use strict';
-const SENDER_UID = require('./private-delivery').SENDER_UID;
+const {SENDER_UID,RECIPIENT_UID,RELEASE_AT,TABLE_GIFT_ID} = require('./private-delivery');
 const ITEM_ID = 'table-private-keepsake';
-const allowed = uid => uid === SENDER_UID;
+const allowed = (uid,now=Date.now()) => uid === SENDER_UID || (uid === RECIPIENT_UID && now >= RELEASE_AT);
 const VARIANTS = new Set(['portrait','tall','square','wide']);
 async function grant(database, uid) {
-  if (!allowed(uid)) throw new Error('Not available');
+  if (uid !== SENDER_UID) throw new Error('Not available');
   await database.ref(`users/${uid}/ownedCosmetics/${ITEM_ID}`).transaction(value => value || {purchasedAt:Date.now(),cost:0,privateGift:true});
 }
 function artHandler(admin) {
@@ -21,6 +21,10 @@ function artHandler(admin) {
       if (!VARIANTS.has(variant)) return res.status(404).end();
       const owned = await admin.database().ref(`users/${user.uid}/ownedCosmetics/${ITEM_ID}`).once('value');
       if (!owned.exists()) return res.status(404).end();
+      if (user.uid === RECIPIENT_UID) {
+        const claim = await admin.database().ref(`users/${user.uid}/claimedGifts/${TABLE_GIFT_ID}`).once('value');
+        if (!claim.exists()) return res.status(404).end();
+      }
       res.type('webp');
       return res.sendFile(require('node:path').join(__dirname,'private-assets',`table-${variant}.webp`));
     } catch (_) { return res.status(404).end(); }

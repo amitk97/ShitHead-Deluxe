@@ -29,6 +29,7 @@ await page.waitForFunction(()=>!!window.ShFriendsLobby);
 await page.evaluate(()=>{
  devTestSuiteRunning=true;resetHomeUI();window.shBootReveal();
  currentUser={uid:PRIVATE_TABLE_OWNER,getIdToken:async()=> 'test-token'};
+ cosmeticCollectionUid=PRIVATE_TABLE_OWNER;
  cosmeticPurchaseState={[PRIVATE_TABLE_ID]:{purchasedAt:Date.now(),privateGift:true}};
  db={ref:()=>({set:async()=>{}})};
  renderPersonalisationCosmetics();renderCollection();renderCosmeticShop();
@@ -49,11 +50,32 @@ for(const [width,height,variant] of [[360,800,'tall'],[390,844,'tall'],[430,932,
  await page.waitForFunction(v=>document.querySelector('#privateTestHost .private-table-scene')?.dataset.variant===v && !!document.querySelector('#privateTestHost img'),variant);
  const r=await page.locator('#privateTestHost img').boundingBox();assert.equal(r.width,width);assert.equal(r.height,height);
 }
-await page.evaluate(()=>{currentUser={uid:'pAB2xxrFWMhUv6AYtJMP1nSxA5l1'};applyEquippedCosmetics();renderPersonalisationCosmetics();});
+await page.evaluate(()=>{serverTimeOffsetMs=PRIVATE_RELEASE_AT-Date.now()-1000;currentUser={uid:'pAB2xxrFWMhUv6AYtJMP1nSxA5l1',getIdToken:async()=> 'pooja-token'};applyEquippedCosmetics();renderPersonalisationCosmetics();});
 assert.equal(await page.locator('.private-table-scene').count(),0);
 assert.equal(await page.locator('[data-equip-id="table-private-keepsake"]').count(),0);
 assert.equal(await page.evaluate(()=>equipCosmetic('tableTheme',PRIVATE_TABLE_ID,{sync:false,preview:false})),false);
 assert.equal(await page.evaluate(()=>equippedCosmetics.tableTheme),'default');
+const claimed=await page.evaluate(async()=>{
+ serverTimeOffsetMs=PRIVATE_RELEASE_AT-Date.now()+1000;
+ cosmeticCollectionUid=currentUser.uid;cosmeticPurchaseState={};renderPersonalisationCosmetics();
+ const gift={itemId:PRIVATE_TABLE_ID,fromUid:PRIVATE_TABLE_OWNER,fromName:'Amitk',privateGift:true,sentAt:PRIVATE_RELEASE_AT,cost:0};
+ const mail=inboxItemHtml({...gift,type:'giftIn',id:'private_sunset_20261016'});
+ const preclaim=equipCosmetic('tableTheme',PRIVATE_TABLE_ID,{preview:false,sync:false});
+ db={ref:()=>({once:async()=>({val:()=>gift}),set:async()=>{}})};
+ callEconomy=async()=>({itemId:PRIVATE_TABLE_ID,asDiamonds:false,diamonds:250});
+ const result=await claimGift('private_sunset_20261016');
+ const from=document.getElementById('giftOpenFrom').textContent;
+ renderCollection();renderCosmeticShop();
+ const visible=document.querySelectorAll('#personalisationTableThemes [data-equip-id="table-private-keepsake"]').length;
+ const hidden=document.querySelectorAll('[data-shop-row="table-private-keepsake"],[data-coll-id="table-private-keepsake"]').length;
+ const equipped=equipCosmetic('tableTheme',PRIVATE_TABLE_ID,{preview:false,sync:false});
+ return {result,from,mail,preclaim,visible,hidden,equipped};
+});
+assert(claimed.result);assert.equal(claimed.from,'Gifted by Amitk');assert(claimed.mail.includes('Our Sunset'));assert(claimed.mail.includes('Gifted by Amitk'));
+assert.equal(claimed.preclaim,false);assert.equal(claimed.visible,1);assert.equal(claimed.hidden,0);assert(claimed.equipped);
+await page.evaluate(()=>{currentUser={uid:'outsider'};applyEquippedCosmetics();renderPersonalisationCosmetics();});
+assert.equal(await page.locator('[data-equip-id="table-private-keepsake"]').count(),0);
+assert.equal(await page.evaluate(()=>equipCosmetic('tableTheme',PRIVATE_TABLE_ID,{sync:false,preview:false})),false);
 await page.evaluate(()=>{currentUser=null;applyEquippedCosmetics();});
 assert.equal(await page.evaluate(()=>privateTableUrls.size),0);
 assert.equal(errors.length,0,errors.join('\n'));

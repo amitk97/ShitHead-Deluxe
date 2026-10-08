@@ -32,19 +32,23 @@ const PRIVATE_TABLE_ID = 'table-private-keepsake';
 const PRIVATE_TABLE_OWNER = '11d84kCgSde82Xlu8k5U65OB9662';
 const PRIVATE_TABLE_ITEM = Object.freeze({id:PRIVATE_TABLE_ID,name:'Our Sunset',category:'Table Themes',cost:0,privateGift:true});
 const privateTableUrls = new Map(), privateTableRequests = new Map();
-let privateTableSession = 0;
+let privateTableSession = 0, privateTableAssetUid = null;
 function privateTableItem(id) {
-  return id === PRIVATE_TABLE_ID && currentUser?.uid === PRIVATE_TABLE_OWNER ? PRIVATE_TABLE_ITEM : null;
+  const uid=currentUser?.uid;
+  const available=uid===PRIVATE_TABLE_OWNER || (uid==='pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && (typeof serverNow==='function'?serverNow():Date.now())>=PRIVATE_RELEASE_AT);
+  return id === PRIVATE_TABLE_ID && available ? PRIVATE_TABLE_ITEM : null;
 }
 function ownedPrivateTables() {
-  return privateTableItem(PRIVATE_TABLE_ID) && cosmeticPurchaseState[PRIVATE_TABLE_ID] ? [PRIVATE_TABLE_ITEM] : [];
+  return currentUser?.uid === cosmeticCollectionUid && privateTableItem(PRIVATE_TABLE_ID) && cosmeticPurchaseState[PRIVATE_TABLE_ID] ? [PRIVATE_TABLE_ITEM] : [];
 }
 async function ensurePrivateTableOwnership(user) {
   if (user?.uid !== PRIVATE_TABLE_OWNER) return;
   await callEconomy('privateTableAccess');
 }
 function clearPrivateTableForOtherAccounts() {
-  if (currentUser?.uid === PRIVATE_TABLE_OWNER) return;
+  const uid=currentUser?.uid || null;
+  if (privateTableAssetUid===uid && ownedPrivateTables().length) return;
+  privateTableAssetUid=uid;
   ++privateTableSession;
   for (const url of privateTableUrls.values()) URL.revokeObjectURL(url);
   privateTableUrls.clear(); privateTableRequests.clear();
@@ -55,6 +59,7 @@ function privateTableVariant(width,height) {
   return ratio < .52 ? 'tall' : ratio < .65 ? 'portrait' : ratio < 1.1 ? 'square' : 'wide';
 }
 async function loadPrivateTableArt(variant) {
+  if(privateTableAssetUid!==currentUser?.uid)clearPrivateTableForOtherAccounts();
   if (!ownedPrivateTables().length) return null;
   if (privateTableUrls.has(variant)) return privateTableUrls.get(variant);
   if (privateTableRequests.has(variant)) return privateTableRequests.get(variant);

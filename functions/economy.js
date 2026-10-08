@@ -367,7 +367,7 @@ function challengeForKey(id, user, now) {
 const actions = {};
 actions.privateTableAccess = async ({uid}) => {
   const table = require('./private-table');
-  if (!table.allowed(uid)) fail('permission-denied', 'This item is not available.');
+  if (uid !== table.SENDER_UID) fail('permission-denied', 'This item is not available.');
   await table.grant(admin.database(), uid);
   return {itemId:table.ITEM_ID};
 };
@@ -1171,8 +1171,9 @@ actions.claimGift = async ({ uid, data }) => {
   const gift = (await giftRef.once('value')).val();
   if (!gift) fail('not-found', 'This gift has already been opened.');
   const privateDelivery = require('./private-delivery');
-  if (gift.itemId === privateDelivery.ITEM_ID && !privateDelivery.canClaim(uid, gift)) fail('permission-denied', 'This gift is not available.');
-  const item = gift.itemId === privateDelivery.ITEM_ID ? privateDelivery.ITEM : CAT.items[gift.itemId];
+  const privateItem = privateDelivery.itemFor(gift.itemId);
+  if (privateItem && !privateDelivery.canClaim(uid, gift)) fail('permission-denied', 'This gift is not available.');
+  const item = privateItem || CAT.items[gift.itemId];
   if (!item) fail('failed-precondition', 'This gift is no longer available.');
   const legacy = await legacyOwned(uid);
   const now = Date.now();

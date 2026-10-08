@@ -14,6 +14,12 @@ const database={ref:(path='')=>({transaction:async fn=>{const next=fn(structured
  const results=await Promise.all([p.deliver(database,p.RELEASE_AT),p.deliver(database,p.RELEASE_AT)]);
  assert.equal(results.filter(x=>x.status==='delivered').length,1);
  const gift=get(`gifts/${p.RECIPIENT_UID}/${p.GIFT_ID}`);
+ const tableGift=get(`gifts/${p.RECIPIENT_UID}/${p.TABLE_GIFT_ID}`);
+ assert.equal(tableGift.itemId,p.TABLE_ITEM_ID);assert.equal(tableGift.fromName,'Amitk');assert.equal(tableGift.sentAt,gift.sentAt);
+ assert.equal(get(`users/${p.RECIPIENT_UID}/ownedCosmetics/${p.TABLE_ITEM_ID}`),null);
+ assert(p.canClaim(p.RECIPIENT_UID,tableGift,p.RELEASE_AT));
+ assert(!p.canClaim(p.RECIPIENT_UID,tableGift,p.RELEASE_AT-1));
+ for(const uid of [p.SENDER_UID,'outsider'])assert(!p.canClaim(uid,tableGift,p.RELEASE_AT));
  assert.equal(gift.fromName,'Amitk');assert.equal(gift.sentAt,p.RELEASE_AT);
  assert(get(`users/${p.SENDER_UID}/ownedCosmetics/${p.ITEM_ID}`));
  assert.equal(get(`users/${p.RECIPIENT_UID}/ownedCosmetics/${p.ITEM_ID}`),null);
@@ -22,8 +28,10 @@ const database={ref:(path='')=>({transaction:async fn=>{const next=fn(structured
  assert(!p.canClaim(p.RECIPIENT_UID,gift,p.RELEASE_AT-1));
  assert(!p.canClaim(p.RECIPIENT_UID,{...gift,fromUid:'someone-else'},p.RELEASE_AT));
  put(`gifts/${p.RECIPIENT_UID}/${p.GIFT_ID}`,null);
+ put(`gifts/${p.RECIPIENT_UID}/${p.TABLE_GIFT_ID}`,null);
  await p.deliver(database,p.RELEASE_AT+300000);
  assert.equal(get(`gifts/${p.RECIPIENT_UID}/${p.GIFT_ID}`),null,'Retries must not recreate an opened gift');
+ assert.equal(get(`gifts/${p.RECIPIENT_UID}/${p.TABLE_GIFT_ID}`),null,'Opened table gifts must not be recreated');
  assert(!Object.keys(data.users).some(uid=>!p.allowed(uid)));
  console.log('PASS private release timezone, no early delivery, failure recovery, concurrent retries, recipient restrictions and no redelivery after opening.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

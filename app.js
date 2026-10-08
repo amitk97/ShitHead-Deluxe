@@ -12051,7 +12051,7 @@
     }
 
     function isSupportedCosmetic(type, id) {
-      if (id === PRIVATE_TABLE_ID) return type === 'tableTheme' && !!privateTableItem(id);
+      if (id === PRIVATE_TABLE_ID) return type === 'tableTheme' && !!ownedPrivateTables().length;
       if (id === PRIVATE_AVATAR_ID) return type === 'avatar' && !!privateGiftItem(id);
       if (id === 'default') return Object.prototype.hasOwnProperty.call(DEFAULT_EQUIPPED_COSMETICS, type);
       const item = privateGiftItem(id) || [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);

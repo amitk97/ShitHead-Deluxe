@@ -6,9 +6,13 @@ const RECIPIENT_UID = 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1';
 const ITEM_ID = 'avatar-private-keepsake';
 const GIFT_ID = 'private_keepsake_20261016';
 const ITEM = Object.freeze({id:ITEM_ID,name:'Forever',category:'Avatars',cost:0,privateGift:true,animated:true});
+const TABLE_ITEM_ID = 'table-private-keepsake';
+const TABLE_GIFT_ID = 'private_sunset_20261016';
+const TABLE_ITEM = Object.freeze({id:TABLE_ITEM_ID,name:'Our Sunset',category:'Table Themes',cost:0,privateGift:true});
+const itemFor = id => id === ITEM_ID ? ITEM : id === TABLE_ITEM_ID ? TABLE_ITEM : null;
 const allowed = uid => uid === SENDER_UID || uid === RECIPIENT_UID;
 function canClaim(uid, gift, now = Date.now()) {
-  return now >= RELEASE_AT && uid === RECIPIENT_UID && gift?.itemId === ITEM_ID && gift?.fromUid === SENDER_UID && gift?.privateGift === true;
+  return now >= RELEASE_AT && uid === RECIPIENT_UID && !!itemFor(gift?.itemId) && gift?.fromUid === SENDER_UID && gift?.privateGift === true;
 }
 async function deliver(database, now = Date.now()) {
   if (now < RELEASE_AT) return {status:'waiting',releaseAt:RELEASE_AT};
@@ -25,6 +29,7 @@ async function deliver(database, now = Date.now()) {
   const updates = {
     [`users/${SENDER_UID}/ownedCosmetics/${ITEM_ID}`]:{cost:0,purchasedAt:now,privateGift:true},
     [`gifts/${RECIPIENT_UID}/${GIFT_ID}`]:gift,
+    [`gifts/${RECIPIENT_UID}/${TABLE_GIFT_ID}`]:{...gift,itemId:TABLE_ITEM_ID},
     [`privateDeliveries/${GIFT_ID}`]:{status:'delivered',releaseAt:RELEASE_AT,deliveredAt:now}
   };
   try { await database.ref().update(updates); }
@@ -34,4 +39,4 @@ async function deliver(database, now = Date.now()) {
   }
   return {status:'delivered'};
 }
-module.exports = {RELEASE_AT,SENDER_UID,RECIPIENT_UID,ITEM_ID,GIFT_ID,ITEM,allowed,canClaim,deliver};
+module.exports = {RELEASE_AT,SENDER_UID,RECIPIENT_UID,ITEM_ID,GIFT_ID,ITEM,TABLE_ITEM_ID,TABLE_GIFT_ID,TABLE_ITEM,itemFor,allowed,canClaim,deliver};
