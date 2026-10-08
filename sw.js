@@ -33,7 +33,7 @@ const OFFLINE_ASSETS = [
   '/home-navigation.js?v=d5db5d5896e6',
   '/shop.js?v=95d2e4232785',
   '/multiplayer-lobby.js?v=563279447523',
-  '/private-cosmetics.js?v=6f7c4e2d3cec',
+  '/private-cosmetics.js?v=3170d008ff95',
   '/app.js?v=62549d1ebf6b',
   '/js/house-rules.js',
   '/js/house-rules-bots.js',
@@ -306,4 +306,5 @@ async function checkSeasonStarts(now = new Date()) {
 self.addEventListener('periodicsync', (event) => {
   if (event.tag === 'season-check') event.waitUntil(checkSeasonStarts());
 });
+
 

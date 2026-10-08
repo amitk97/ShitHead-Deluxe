@@ -163,7 +163,13 @@ function privateBurnPile(host,x,y,scale,calm,card){
  face.style.cssText=`position:absolute;left:${cx-W/2}px;top:${cy-H/2}px;width:${W}px;height:${H}px;margin:0;visibility:visible!important;transition:none!important;animation:none!important;pointer-events:none;opacity:1;transform:${base};`;
  const root=document.createElement('div');root.className='private-burn-pile';root.setAttribute('aria-hidden','true');
  root.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:19;';
- const style=document.createElement('style');style.textContent='.private-burn-pile *{pointer-events:none!important}';root.append(style,face);
+ // render() replaces the pile nodes during tutorial notes, settings changes
+ // and room updates. Keep the same burned card identities hidden across
+ // those redraws; a genuinely new card must remain visible immediately.
+ const burnedSelectors=originals.map(el=>'#discardCardsWrapper > [data-card-id="'+CSS.escape(el.dataset.cardId)+'"]');
+ const style=document.createElement('style');
+ style.textContent='.private-burn-pile *{pointer-events:none!important}'+(burnedSelectors.length?burnedSelectors.join(',')+'{visibility:hidden!important;transition:none!important}':'');
+ root.append(style,face);
  const hidden=[...originals,...(onTable?document.querySelectorAll('#pileZone .empty-zone-pill'):host.querySelectorAll('.shop-burn-core'))];
  const previous=hidden.map(el=>({el,visibility:el.style.getPropertyValue('visibility'),vp:el.style.getPropertyPriority('visibility'),transition:el.style.getPropertyValue('transition'),tp:el.style.getPropertyPriority('transition')}));
  hidden.forEach(el=>{el.style.setProperty('transition','none','important');el.style.setProperty('visibility','hidden','important');});
@@ -231,3 +237,4 @@ async function playPrivateBurn(host,x,y,scale=1,card=null){
  timers.push(setTimeout(stop,3500));
  return true;
 }
+

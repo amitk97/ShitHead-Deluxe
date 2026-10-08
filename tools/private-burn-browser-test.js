@@ -55,6 +55,15 @@ for(const rank of ['10','7']){
   return {text:face?.textContent,hidden:[...wrap.children].every(el=>getComputedStyle(el).visibility==='hidden'),ids:face?.querySelectorAll('[id],[data-card-id]').length,rootId:face?.getAttribute('data-card-id')};
  },rank);
  assert(initial.text.includes(rank));assert(initial.hidden);assert.equal(initial.ids,0);assert.equal(initial.rootId,null);
+ // Tutorial notes and room snapshots redraw the same logical pile while
+ // the burn is running. Replacement nodes must not reveal the old cards.
+ await page.evaluate(rank=>{
+  const wrap=document.getElementById('discardCardsWrapper');
+  wrap.replaceChildren(createCardElement({id:'old-bottom',rank:'4',suit:'♣'}),createCardElement({id:'old-top',rank,suit:'♦'}));
+  const face=document.querySelector('.private-burn-card'),a=face.getAnimations()[0];a.pause();a.currentTime=800;
+ },rank);
+ assert(await page.locator('#discardCardsWrapper').evaluate(wrap=>[...wrap.children].every(el=>getComputedStyle(el).visibility==='hidden')));
+ assert(await page.locator('.private-burn-card').evaluate(el=>Number(getComputedStyle(el).opacity)===0));
  // The game clears the real pile before the independent visual finishes.
  await page.evaluate(()=>{
   const wrap=document.getElementById('discardCardsWrapper');wrap.replaceChildren(createCardElement({id:'new-turn-card',rank:'K',suit:'♠'}));
@@ -158,3 +167,4 @@ assert.deepEqual(errors,[]);
 console.log('PASS private burn: owner availability, private mailbox claim, no catalog/network leak, timed audio, reduced motion, real 10/four-of-a-kind card dissolve, Ranked face, new-pile safety, animationend/cancel cleanup, account-switch and signout.');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
