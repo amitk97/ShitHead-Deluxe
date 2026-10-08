@@ -7,6 +7,7 @@ const root=path.resolve(__dirname,'..');
 const browser=await chromium.launch({headless:true,...(process.env.SH_CHROMIUM_EXECUTABLE?{executablePath:process.env.SH_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--no-zygote','--single-process']}: {})});
 try{
 const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];
+let failArtworkRequests=1,artworkRetries=0;
 page.on('pageerror',e=>errors.push(e.message));
 await page.route('**/*',route=>{
  const u=new URL(route.request().url());
@@ -15,7 +16,11 @@ await page.route('**/*',route=>{
   const mime={'.js':'application/javascript','.css':'text/css','.html':'text/html','.svg':'image/svg+xml','.woff2':'font/woff2'};
   return fs.existsSync(file)?route.fulfill({body:fs.readFileSync(file),contentType:mime[path.extname(file)]}):route.fulfill({status:404,body:''});
  }
- if(u.pathname==='/privateTableArt')return route.fulfill({body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lN8AAAAASUVORK5CYII=','base64'),contentType:'image/png'});
+ if(u.pathname==='/privateTableArt'){
+  artworkRetries++;
+  if(u.searchParams.get('variant')==='wide' && failArtworkRequests-->0)return route.fulfill({status:503,body:''});
+  return route.fulfill({body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lN8AAAAASUVORK5CYII=','base64'),contentType:'image/png'});
+ }
  if(u.pathname==='/privateAvatarArt')return process.env.SH_PRIVATE_PREVIEW?route.fulfill({body:fs.readFileSync(process.env.SH_PRIVATE_PREVIEW),contentType:'image/png'}):route.fulfill({status:404,body:''});
  const sdk=u.pathname.match(/firebasejs\/[\d.]+\/(firebase-[a-z-]+\.js)$/);
  if(sdk && process.env.SH_VIDEO_DEPS)return route.fulfill({body:fs.readFileSync(path.join(process.env.SH_VIDEO_DEPS,'node_modules/firebase',sdk[1])),contentType:'application/javascript'});
@@ -24,11 +29,13 @@ await page.route('**/*',route=>{
 });
 await page.goto('https://game.local/',{waitUntil:'domcontentloaded'});
 await page.waitForFunction(()=>!!window.ShFriendsLobby);
+await page.waitForFunction(()=>authStateResolved);
 
 
 await page.evaluate(()=>{
  devTestSuiteRunning=true;resetHomeUI();window.shBootReveal();
- currentUser={uid:PRIVATE_TABLE_OWNER,getIdToken:async()=> 'test-token'};
+ window.tableTokenRefreshes=[];
+ currentUser={uid:PRIVATE_TABLE_OWNER,getIdToken:async force=>{tableTokenRefreshes.push(force);return 'test-token';}};
  cosmeticCollectionUid=PRIVATE_TABLE_OWNER;
  cosmeticPurchaseState={[PRIVATE_TABLE_ID]:{purchasedAt:Date.now(),privateGift:true}};
  db={ref:()=>({set:async()=>{}})};
@@ -39,6 +46,17 @@ assert.equal(await page.locator('[data-shop-row="table-private-keepsake"],[data-
 assert(await page.evaluate(()=>equipCosmetic('tableTheme',PRIVATE_TABLE_ID,{preview:false,sync:false})));
 assert.equal(await page.evaluate(()=>getShowcaseLoadout().tableTheme),'default');
 assert.equal(await page.evaluate(()=>getPublicCosmeticLoadout().tableTheme),undefined);
+// Exercise the exact large preview from the owner's screenshot. A failed
+// first request must recover and paint a decoded image without reopening it.
+await page.evaluate(()=>openBigPreview(PRIVATE_TABLE_ID));
+await page.waitForFunction(()=>{
+ const image=document.querySelector('#bigPreview .private-table-scene img');
+ return image?.complete && image.naturalWidth>0;
+});
+assert(artworkRetries>=2);
+assert(await page.evaluate(()=>tableTokenRefreshes.includes(true)));
+assert.equal(await page.locator('#bigPreview .private-table-status').count(),0);
+await page.evaluate(()=>closeBigPreview());
 for(const [width,height,variant] of [[360,800,'tall'],[390,844,'tall'],[430,932,'tall'],[390,664,'portrait'],[768,1024,'square'],[720,720,'square'],[1440,900,'wide'],[1920,1080,'wide'],[2560,1080,'wide']]){
  await page.setViewportSize({width,height});
  await page.evaluate(({width,height})=>{
@@ -47,7 +65,7 @@ for(const [width,height,variant] of [[360,800,'tall'],[390,844,'tall'],[430,932,
   host.style.cssText=`position:fixed;inset:0;width:${width}px;height:${height}px;isolation:isolate;`;
   drawPrivateTable(host);
  },{width,height});
- await page.waitForFunction(v=>document.querySelector('#privateTestHost .private-table-scene')?.dataset.variant===v && !!document.querySelector('#privateTestHost img'),variant);
+ await page.waitForFunction(v=>document.querySelector('#privateTestHost .private-table-scene')?.dataset.variant===v && document.querySelector('#privateTestHost img')?.naturalWidth>0,variant);
  const r=await page.locator('#privateTestHost img').boundingBox();assert.equal(r.width,width);assert.equal(r.height,height);
 }
 await page.evaluate(()=>{serverTimeOffsetMs=PRIVATE_RELEASE_AT-Date.now()-1000;currentUser={uid:'pAB2xxrFWMhUv6AYtJMP1nSxA5l1',getIdToken:async()=> 'pooja-token'};applyEquippedCosmetics();renderPersonalisationCosmetics();});
@@ -82,3 +100,4 @@ assert.equal(errors.length,0,errors.join('\n'));
 console.log('PASS table account isolation, no public catalogue/showcase/room leaks, responsive portrait/square/wide layouts, sign-out cleanup.');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
+

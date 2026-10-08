@@ -66,17 +66,31 @@ async function loadPrivateTableArt(variant) {
   if (privateTableRequests.has(variant)) return privateTableRequests.get(variant);
   const user=currentUser, session=privateTableSession;
   const task=(async()=>{
-    const token=await user.getIdToken();
-    const response=await fetch('https://europe-west1-shithead-pro.cloudfunctions.net/privateTableArt?variant='+variant,{headers:{Authorization:'Bearer '+token},cache:'no-store'});
-    if (!response.ok) throw new Error('Artwork unavailable');
-    const blob=await response.blob();
-    if (currentUser?.uid!==user.uid || session!==privateTableSession) return null;
-    const url=URL.createObjectURL(blob); privateTableUrls.set(variant,url); return url;
+    for(let attempt=0;attempt<3;attempt++){
+      if(currentUser?.uid!==user.uid || session!==privateTableSession || !ownedPrivateTables().length)return null;
+      try{
+        // A transient request failure must not leave an equipped table blank.
+        // Refresh the token on retries while keeping the artwork authenticated.
+        const token=await user.getIdToken(attempt>0);
+        const response=await fetch('https://europe-west1-shithead-pro.cloudfunctions.net/privateTableArt?variant='+variant,{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+        if(!response.ok)throw new Error('Artwork unavailable');
+        const blob=await response.blob();
+        if(currentUser?.uid!==user.uid || session!==privateTableSession || !ownedPrivateTables().length)return null;
+        const url=URL.createObjectURL(blob),image=new Image();image.src=url;
+        try{await image.decode();}catch(error){URL.revokeObjectURL(url);throw error;}
+        if(currentUser?.uid!==user.uid || session!==privateTableSession || !ownedPrivateTables().length){URL.revokeObjectURL(url);return null;}
+        privateTableUrls.set(variant,url);return url;
+      }catch(error){
+        if(attempt===2)throw error;
+        await new Promise(resolve=>setTimeout(resolve,attempt===0?250:750));
+      }
+    }
   })();
   privateTableRequests.set(variant,task);
   try { return await task; } finally { if(privateTableRequests.get(variant)===task)privateTableRequests.delete(variant); }
 }
 function drawPrivateTable(host) {
+  if(privateTableAssetUid!==currentUser?.uid)clearPrivateTableForOtherAccounts();
   host.querySelector(':scope > .responsive-scene:not(.private-table-scene)')?.remove();
   if (!ownedPrivateTables().length) {host.querySelector(':scope > .private-table-scene')?.remove();return;}
   const W=host.clientWidth,H=host.clientHeight;if(!W||!H)return;
@@ -84,16 +98,27 @@ function drawPrivateTable(host) {
   let layer=host.querySelector(':scope > .private-table-scene');
   if(!layer){layer=document.createElement('div');layer.className='responsive-scene private-table-scene';layer.style.cssText='position:absolute;inset:0;overflow:hidden;pointer-events:none;background:#644c65';host.prepend(layer);}
   layer.dataset.variant=variant;
+  if(layer.dataset.url===privateTableUrls.get(variant) && layer.querySelector('img'))return;
+  if(layer.dataset.loadingVariant===variant || layer.dataset.failedVariant===variant)return;
+  layer.dataset.loadingVariant=variant;
+  const status=document.createElement('span');status.className='private-table-status';status.textContent='Loading artwork…';
+  status.style.cssText='position:absolute;inset:0;display:grid;place-items:center;padding:12px;color:#ffe4b5;font-size:11px;text-align:center;';
+  if(!layer.querySelector('img'))layer.replaceChildren(status);
   loadPrivateTableArt(variant).then(url=>{
     if(!url || !layer.isConnected || layer.dataset.variant!==variant || !ownedPrivateTables().length)return;
     if(layer.dataset.url===url)return;
+    delete layer.dataset.failedVariant;
     layer.dataset.url=url;
     const image=document.createElement('img');image.src=url;image.alt='';
     // Crop only the extended margins at ordinary screen ratios. Extreme
     // aspect ratios use contain to preserve the couple and full heart.
     image.style.cssText='width:100%;height:100%;display:block;object-position:center;object-fit:'+(W/H>=.35 && W/H<=21/9?'cover':'contain');
     layer.replaceChildren(image);
-  }).catch(()=>{});
+  }).catch(()=>{
+    if(!layer.isConnected || layer.dataset.variant!==variant || !ownedPrivateTables().length)return;
+    layer.dataset.failedVariant=variant;
+    status.textContent='Artwork could not load. Reopen to retry.';
+  }).finally(()=>{if(layer.dataset.loadingVariant===variant)delete layer.dataset.loadingVariant;});
 }
 (function(){
   const original=ShTableScenes.draw;
