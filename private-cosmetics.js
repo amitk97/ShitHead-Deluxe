@@ -144,24 +144,76 @@ async function loadPrivateBurnArt(){
  privateBurnRequest=task;
  try{return await task;}finally{if(privateBurnRequest===task)privateBurnRequest=null;}
 }
-async function playPrivateBurn(host,x,y,scale=1){
+// Snapshot the real top card before the game's 600ms pile clear. Only the
+// snapshot dissolves; restoring old nodes never changes newly played cards.
+function privateBurnPile(host,x,y,scale,calm,card){
+ const onTable=host.id==='burnFxLayer';
+ const originals=onTable?[...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')]:[];
+ const top=originals.filter(el=>el.offsetWidth).pop();
+ if(onTable && !top && !card)return ()=>{};
+ const hr=host.getBoundingClientRect(),r=top?.getBoundingClientRect();
+ const size=Math.max(48,Math.min(100,(host.clientHeight||160)*.5))*scale;
+ const W=top?.offsetWidth || (onTable?document.getElementById('discardPileContainer')?.offsetWidth:size) || size;
+ const H=top?.offsetHeight || W;
+ const cx=r?r.left+r.width/2-hr.left:x,cy=r?r.top+r.height/2-hr.top:y;
+ const src=top || createCardElement({id:'private-burn-copy',rank:card?.rank || '10',suit:card?.suit || '♠'});
+ const face=src.cloneNode(true),base=top?getComputedStyle(top).transform:'none';
+ for(const el of [face,...face.querySelectorAll('[id],[data-card-id]')]){el.removeAttribute('id');el.removeAttribute('data-card-id');}
+ face.classList.add('private-burn-card');
+ face.style.cssText=`position:absolute;left:${cx-W/2}px;top:${cy-H/2}px;width:${W}px;height:${H}px;margin:0;visibility:visible!important;transition:none!important;animation:none!important;pointer-events:none;opacity:1;transform:${base};`;
+ const root=document.createElement('div');root.className='private-burn-pile';root.setAttribute('aria-hidden','true');
+ root.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:19;';
+ const style=document.createElement('style');style.textContent='.private-burn-pile *{pointer-events:none!important}';root.append(style,face);
+ const hidden=[...originals,...(onTable?document.querySelectorAll('#pileZone .empty-zone-pill'):host.querySelectorAll('.shop-burn-core'))];
+ const previous=hidden.map(el=>({el,visibility:el.style.getPropertyValue('visibility'),vp:el.style.getPropertyPriority('visibility'),transition:el.style.getPropertyValue('transition'),tp:el.style.getPropertyPriority('transition')}));
+ hidden.forEach(el=>{el.style.setProperty('transition','none','important');el.style.setProperty('visibility','hidden','important');});
+ host.append(root);
+ const animations=[];let stopped=false;
+ const stop=()=>{
+  if(stopped)return;stopped=true;clearTimeout(safety);animations.forEach(a=>a.cancel());root.remove();privateBurnRuns.delete(root);
+  document.removeEventListener('visibilitychange',hiddenPage);
+  for(const old of previous){for(const [prop,value,priority] of [['visibility',old.visibility,old.vp],['transition',old.transition,old.tp]])if(value)old.el.style.setProperty(prop,value,priority);else old.el.style.removeProperty(prop);}
+ };
+ const hiddenPage=()=>{if(document.hidden)stop();};
+ document.addEventListener('visibilitychange',hiddenPage);privateBurnRuns.set(root,stop);
+ const safety=setTimeout(stop,3500);
+ if(typeof face.animate==='function'){
+  const transform=base==='none'?'':base;
+  const frames=calm?[{opacity:1},{opacity:0}]:[
+   {opacity:1,filter:'brightness(1) blur(0px)',clipPath:'inset(0% 0% 0% 0%)',transform:base},
+   {offset:.25,opacity:1,filter:'brightness(1.35) drop-shadow(0 0 9px #eebb76) blur(0px)',clipPath:'inset(0% 0% 0% 0%)',transform:base},
+   {offset:.6,opacity:.7,filter:'brightness(1.55) drop-shadow(0 0 13px #dfa0b6) blur(2px)',clipPath:'inset(0% 0% 38% 0%)',transform:transform+' translateY(-7px) scale(.98)'},
+   {opacity:0,filter:'brightness(1.7) blur(9px)',clipPath:'inset(0% 0% 100% 0%)',transform:transform+' translateY(-22px) scale(.92)'}];
+  const a=face.animate(frames,{duration:calm?420:800,easing:'ease-in-out',fill:'forwards'});a.onfinish=()=>face.remove();animations.push(a);
+  if(!calm)for(let i=0;i<12;i++){
+   const mote=document.createElement('i'),dx=(i%6-2.5)*W/7,dy=-H*(.45+(i%4)*.12);
+   mote.style.cssText=`position:absolute;left:${cx+dx}px;top:${cy+H*.2}px;width:4px;height:4px;border-radius:50%;background:${i%2?'#eebb76':'#d985a0'};box-shadow:0 0 8px 2px #eebb76;opacity:0;`;
+   root.append(mote);
+   const a=mote.animate([{opacity:0,transform:'translate(0,0)'},{offset:.25,opacity:.8},{opacity:0,transform:`translate(${-dx*.7}px,${dy}px) scale(.2)`}],{duration:540,delay:200+i*22,easing:'ease-out',fill:'both'});a.onfinish=()=>mote.remove();animations.push(a);
+  }
+ }else{face.style.transition='opacity 420ms ease';requestAnimationFrame(()=>{face.style.opacity='0';});}
+ return stop;
+}
+async function playPrivateBurn(host,x,y,scale=1,card=null){
  if(!host || !ownedPrivateBurns().length || document.hidden)return false;
  if(privateBurnUid!==currentUser?.uid)clearPrivateBurnForOtherAccounts();
  clearPrivateBurnInHost(host);
+ const calm=document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const stopPile=privateBurnPile(host,x,y,scale,calm,card);
  const ticket={},uid=currentUser.uid,session=privateBurnSession;
  privateBurnPending.set(host,ticket);
  let config;
  try{config=await loadPrivateBurnArt();}catch(_){return false;}
- if(!config || privateBurnPending.get(host)!==ticket || currentUser?.uid!==uid || session!==privateBurnSession || !host.isConnected || document.hidden || !ownedPrivateBurns().length)return false;
+ if(!config || privateBurnPending.get(host)!==ticket || currentUser?.uid!==uid || session!==privateBurnSession || !host.isConnected || document.hidden || !ownedPrivateBurns().length){stopPile();return false;}
  privateBurnPending.delete(host);
  const root=document.createElement('div'),style=document.createElement('style');
  root.className='private-burn';root.setAttribute('aria-hidden','true');
- if(document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches)root.classList.add('pb-calm');
+ if(calm)root.classList.add('pb-calm');
  root.style.cssText=`left:${x}px;top:${y}px;transform:scale(${Math.min(1,window.innerWidth/330)*Math.max(.3,Math.min(2,Number(scale)||1))});pointer-events:none;z-index:20;`;
  style.textContent=config.css;root.innerHTML=config.html;root.prepend(style);
  const timers=[];let stopped=false;
  const stop=()=>{
-  if(stopped)return;stopped=true;
+  if(stopped)return;stopped=true;stopPile();
   timers.forEach(clearTimeout);root.removeEventListener('animationend',ended);root.removeEventListener('animationcancel',cancelled);
   document.removeEventListener('visibilitychange',hidden);root.remove();privateBurnRuns.delete(root);
  };

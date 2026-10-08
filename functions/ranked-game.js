@@ -70,10 +70,11 @@ function collect(g,p,cards=g.discardPile) {
   p.hand.push(...cards);g.discardPile=[];g.activeConstraint=null;g.baseOverrideCard=null;
 }
 function burn(g,p,now,snap) {
+  const top=g.discardPile.at(-1),topCard=top?{rank:top.rank,suit:top.suit}:null;
   bump(p,'burnt',g.discardPile.length);bump(p,'challengeBurns');if(snap)bump(p,'snapBurns');
   g.burntCards.push(...g.discardPile);g.discardPile=[];g.activeConstraint=null;g.baseOverrideCard=null;g.pendingFollowUp=null;
   g.playedHistory.push({type:'burn',playerName:p.name});refill(g,p);
-  g.event={type:'burn',playerId:p.id,effectId:require('./private-delivery').publicCosmetics(p.cosmetics).burnEffect||'default'};
+  g.event={type:'burn',playerId:p.id,topCard,effectId:require('./private-delivery').publicCosmetics(p.cosmetics).burnEffect||'default'};
   if(!endIfEmpty(g,p,now))turn(g,g.players.indexOf(p),now);
 }
 function joker(g,p,now,targetId=null) {

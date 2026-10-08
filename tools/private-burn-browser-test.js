@@ -41,6 +41,47 @@ assert.equal(await page.evaluate(()=>getShowcaseLoadout().burnEffect),'default')
 assert.equal(await page.evaluate(()=>getPublicCosmeticLoadout().burnEffect),'default');
 assert.equal(await page.evaluate(()=>burnEffectIdFor({id:state.localPlayerId,cosmetics:{burnEffect:'default'}})),'burn-private-keepsake');
 assert.equal(await page.evaluate(()=>burnEffectIdFor({id:'remote',cosmetics:{burnEffect:PRIVATE_BURN_ID}})),'default');
+await page.evaluate(async()=>{await loadPrivateBurnArt();});
+for(const rank of ['10','7']){
+ const initial=await page.evaluate(async rank=>{
+  const wrap=document.getElementById('discardCardsWrapper');wrap.replaceChildren();
+  wrap.append(createCardElement({id:'old-bottom',rank:'4',suit:'♣'}),createCardElement({id:'old-top',rank,suit:'♦'}));
+  const layer=document.getElementById('burnFxLayer'),r=document.getElementById('discardPileContainer').getBoundingClientRect();
+  triggerEquippedBurnEffect(r.left+r.width/2,r.top+r.height/2,{id:state.localPlayerId,cosmetics:{burnEffect:'default'}});
+  await Promise.resolve();
+  const face=layer.querySelector('.private-burn-card');
+  return {text:face?.textContent,hidden:[...wrap.children].every(el=>getComputedStyle(el).visibility==='hidden'),ids:face?.querySelectorAll('[id],[data-card-id]').length,rootId:face?.getAttribute('data-card-id')};
+ },rank);
+ assert(initial.text.includes(rank));assert(initial.hidden);assert.equal(initial.ids,0);assert.equal(initial.rootId,null);
+ // The game clears the real pile before the independent visual finishes.
+ await page.evaluate(()=>{
+  const wrap=document.getElementById('discardCardsWrapper');wrap.replaceChildren(createCardElement({id:'new-turn-card',rank:'K',suit:'♠'}));
+  const face=document.querySelector('.private-burn-card'),a=face.getAnimations()[0];a.pause();a.currentTime=600;
+ });
+ assert.equal(await page.locator('#discardCardsWrapper > [data-card-id]').count(),1);
+ assert.notEqual(await page.locator('#discardCardsWrapper > [data-card-id]').evaluate(el=>getComputedStyle(el).visibility),'hidden');
+ assert(await page.locator('.private-burn-card').evaluate(el=>Number(getComputedStyle(el).opacity)<1));
+ await page.evaluate(()=>{clearPrivateBurnInHost(document.getElementById('burnFxLayer'));});
+ assert.equal(await page.locator('.private-burn-card,.private-burn-pile').count(),0);
+ assert.equal(await page.evaluate(()=>privateBurnRuns.size),0);
+}
+const rankedCard=await page.evaluate(async()=>{
+ document.getElementById('discardCardsWrapper').replaceChildren();
+ const host=document.getElementById('burnFxLayer');await playPrivateBurn(host,180,400,1,{rank:'Q',suit:'♥'});
+ const face=host.querySelector('.private-burn-card'),text=face.textContent;
+ clearPrivateBurnInHost(host);return text;
+});
+assert(rankedCard.includes('Q') && rankedCard.includes('♥'));
+const restore=await page.evaluate(async()=>{
+ const wrap=document.getElementById('discardCardsWrapper'),card=createCardElement({id:'restore-card',rank:'10',suit:'♠'});
+ card.style.setProperty('transition','opacity 1s','important');wrap.replaceChildren(card);
+ document.body.classList.add('reduce-motion');
+ const host=document.getElementById('burnFxLayer');await playPrivateBurn(host,180,400);
+ const duration=host.querySelector('.private-burn-card').getAnimations()[0].effect.getTiming().duration;
+ clearPrivateBurnInHost(host);document.body.classList.remove('reduce-motion');wrap.replaceChildren();
+ return {duration,visibility:card.style.visibility,transition:card.style.transition,priority:card.style.getPropertyPriority('transition')};
+});
+assert.deepEqual(restore,{duration:420,visibility:'',transition:'opacity 1s',priority:'important'});
 await page.evaluate(async()=>{
  await loadPrivateBurnArt();
  window.privateSoundEvents=[];
@@ -107,6 +148,6 @@ assert.equal(await page.locator('.private-burn').count(),0);
 assert.equal(await page.evaluate(()=>privateBurnRuns.size),0);
 assert.equal(await page.evaluate(()=>privateBurnConfig),null);
 assert.deepEqual(errors,[]);
-console.log('PASS private burn: owner availability, private mailbox claim, no catalog/network leak, timed audio, reduced motion, animationend/cancel cleanup, account-switch and signout.');
+console.log('PASS private burn: owner availability, private mailbox claim, no catalog/network leak, timed audio, reduced motion, real 10/four-of-a-kind card dissolve, Ranked face, new-pile safety, animationend/cancel cleanup, account-switch and signout.');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

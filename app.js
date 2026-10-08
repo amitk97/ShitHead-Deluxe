@@ -7172,7 +7172,7 @@
       if (event && event.version > rankedEventVersion) {
         rankedEventVersion = event.version;
         const actor = state.players.find(p => p.id === event.playerId);
-        if (event.type === 'burn') { const r=document.getElementById('discardPileContainer')?.getBoundingClientRect(); if (r) triggerEquippedBurnEffect(r.left+r.width/2, r.top+r.height/2, actor); audio.playBurnSound(burnEffectIdFor(actor)); }
+        if (event.type === 'burn') { const r=document.getElementById('discardPileContainer')?.getBoundingClientRect(); if (r) triggerEquippedBurnEffect(r.left+r.width/2, r.top+r.height/2, actor, event.topCard); audio.playBurnSound(burnEffectIdFor(actor)); }
         else if (event.type === 'joker') {
           const effectFor = (id, effect) => id === state.localPlayerId ? effect : othersEffect(effect);
           playJokerEffect(effectFor(event.playerId, event.effectId));

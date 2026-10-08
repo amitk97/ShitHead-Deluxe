@@ -1015,9 +1015,9 @@
       const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
       return levelBurn3d('burn-lvl-shitstorm', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-shitstorm', host, x, y, k, calm);
     }
-    function playBurnFx(id, host, x, y, scale = 1) {
+    function playBurnFx(id, host, x, y, scale = 1, card = null) {
       if (!host) return false;
-      if (id === PRIVATE_BURN_ID) { playPrivateBurn(host,x,y,scale); return true; }
+      if (id === PRIVATE_BURN_ID) { playPrivateBurn(host,x,y,scale,card); return true; }
       // Painted-art 3D burns (art/burns/level-3d/burns3d.js); their old effects stay as the fallback.
       if (window.ShLevel3D && ShLevel3D.has(id) && levelBurn3d(id, host, x, y, scale, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return true;
       ({ default: bfxDefaultBurn, 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
@@ -1034,8 +1034,8 @@
       const el = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(253,186,116,.75),rgba(249,115,22,.25) 45%,transparent 70%)"></div>', x, y, 120, 120);
       bfxAnimate(el, [{ opacity: 0 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 700, easing: 'ease-out' });
     }
-    function playBurnEffect(effect, x, y) {
-      if(effect===PRIVATE_BURN_ID)return playBurnFx(effect,document.getElementById('burnFxLayer'),x,y,1);
+    function playBurnEffect(effect, x, y, card = null) {
+      if(effect===PRIVATE_BURN_ID)return playBurnFx(effect,document.getElementById('burnFxLayer'),x,y,1,card);
       if (ShLevelBurns.index(effect) >= 0) return playBurnFx(effect, document.getElementById('burnFxLayer'), x, y, .72);
       if (typeof reduceMotion !== 'undefined' && reduceMotion) return playCalmBurn(x, y);
       if (effect === 'burn-ice') return triggerBurnEmberExplosion(x, y, ['#e0f2fe','#7dd3fc','#38bdf8','#ffffff'], 70);
@@ -1060,10 +1060,10 @@
       return player?.cosmetics?.burnEffect || (player?.id === state?.localPlayerId ? ownEffect : 'default') || 'default';
     }
     let burnFxPlayer = null; // whose burn is playing, for effects that show their card back
-    function triggerEquippedBurnEffect(x, y, player = null) {
+    function triggerEquippedBurnEffect(x, y, player = null, card = null) {
       burnFxPlayer = player;
       try {
-        playBurnEffect(burnEffectIdFor(player), x, y);
+        playBurnEffect(burnEffectIdFor(player), x, y, card);
       } catch (error) {
         console.warn('Burn cosmetic skipped safely:', error);
       }
