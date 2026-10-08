@@ -25,6 +25,8 @@ await page.route('**/*',route=>{
 });
 await page.goto('https://game.local/',{waitUntil:'domcontentloaded'});
 await page.waitForFunction(()=>!!window.ShFriendsLobby);
+// Let Firebase finish its initial signed-out callback before injecting test accounts.
+await page.waitForFunction(()=>authStateResolved);
 
 
 await page.evaluate(()=>{
