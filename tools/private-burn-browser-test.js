@@ -41,7 +41,7 @@ assert.equal(await page.evaluate(()=>getShowcaseLoadout().burnEffect),'default')
 assert.equal(await page.evaluate(()=>getPublicCosmeticLoadout().burnEffect),'default');
 assert.equal(await page.evaluate(()=>burnEffectIdFor({id:state.localPlayerId,cosmetics:{burnEffect:'default'}})),'burn-private-keepsake');
 assert.equal(await page.evaluate(()=>burnEffectIdFor({id:'remote',cosmetics:{burnEffect:PRIVATE_BURN_ID}})),'default');
-await page.evaluate(async()=>{await loadPrivateBurnArt();});
+await page.evaluate(async()=>{await loadPrivateBurnArt();document.body.classList.remove('lobby-open');});
 for(const rank of ['10','7']){
  const initial=await page.evaluate(async rank=>{
   const wrap=document.getElementById('discardCardsWrapper');wrap.replaceChildren();
@@ -82,6 +82,7 @@ const restore=await page.evaluate(async()=>{
  return {duration,visibility:card.style.visibility,transition:card.style.transition,priority:card.style.getPropertyPriority('transition')};
 });
 assert.deepEqual(restore,{duration:420,visibility:'',transition:'opacity 1s',priority:'important'});
+await page.evaluate(()=>{document.body.classList.add('lobby-open');});
 await page.evaluate(async()=>{
  await loadPrivateBurnArt();
  window.privateSoundEvents=[];
