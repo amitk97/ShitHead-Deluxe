@@ -61,6 +61,9 @@ for(const rank of ['10','7']){
   const face=document.querySelector('.private-burn-card'),a=face.getAnimations()[0];a.pause();a.currentTime=600;
  });
  assert.equal(await page.locator('#discardCardsWrapper > [data-card-id]').count(),1);
+ // Card entrance/transition-all takes 150–200ms; it must become visible
+ // while the previous burn is still running, not only after its cleanup.
+ await page.waitForFunction(()=>getComputedStyle(document.querySelector('#discardCardsWrapper > [data-card-id]')).visibility==='visible',null,{timeout:500});
  const nextCard=await page.locator('#discardCardsWrapper > [data-card-id]').evaluate(el=>{const parents=[];for(let p=el;p;p=p.parentElement)parents.push({id:p.id,visibility:getComputedStyle(p).visibility,inline:p.style.visibility});return {visibility:getComputedStyle(el).visibility,parents,body:document.body.className};});
  assert.notEqual(nextCard.visibility,'hidden',JSON.stringify(nextCard));
  assert(await page.locator('.private-burn-card').evaluate(el=>Number(getComputedStyle(el).opacity)<1));
