@@ -43,7 +43,7 @@ assert.equal(await page.evaluate(()=>getShowcaseLoadout().burnEffect),'default')
 assert.equal(await page.evaluate(()=>getPublicCosmeticLoadout().burnEffect),'default');
 assert.equal(await page.evaluate(()=>burnEffectIdFor({id:state.localPlayerId,cosmetics:{burnEffect:'default'}})),'burn-private-keepsake');
 assert.equal(await page.evaluate(()=>burnEffectIdFor({id:'remote',cosmetics:{burnEffect:PRIVATE_BURN_ID}})),'default');
-await page.evaluate(async()=>{await loadPrivateBurnArt();document.body.classList.remove('lobby-open');});
+await page.evaluate(async()=>{await loadPrivateBurnArt();document.getElementById('lobbyScreen').classList.add('hidden');syncLobbyOpen();});
 for(const rank of ['10','7']){
  const initial=await page.evaluate(async rank=>{
   const wrap=document.getElementById('discardCardsWrapper');wrap.replaceChildren();
@@ -61,7 +61,8 @@ for(const rank of ['10','7']){
   const face=document.querySelector('.private-burn-card'),a=face.getAnimations()[0];a.pause();a.currentTime=600;
  });
  assert.equal(await page.locator('#discardCardsWrapper > [data-card-id]').count(),1);
- assert.notEqual(await page.locator('#discardCardsWrapper > [data-card-id]').evaluate(el=>getComputedStyle(el).visibility),'hidden');
+ const nextCard=await page.locator('#discardCardsWrapper > [data-card-id]').evaluate(el=>{const parents=[];for(let p=el;p;p=p.parentElement)parents.push({id:p.id,visibility:getComputedStyle(p).visibility,inline:p.style.visibility});return {visibility:getComputedStyle(el).visibility,parents,body:document.body.className};});
+ assert.notEqual(nextCard.visibility,'hidden',JSON.stringify(nextCard));
  assert(await page.locator('.private-burn-card').evaluate(el=>Number(getComputedStyle(el).opacity)<1));
  await page.evaluate(()=>{clearPrivateBurnInHost(document.getElementById('burnFxLayer'));});
  assert.equal(await page.locator('.private-burn-card,.private-burn-pile').count(),0);
@@ -84,7 +85,7 @@ const restore=await page.evaluate(async()=>{
  return {duration,visibility:card.style.visibility,transition:card.style.transition,priority:card.style.getPropertyPriority('transition')};
 });
 assert.deepEqual(restore,{duration:420,visibility:'',transition:'opacity 1s',priority:'important'});
-await page.evaluate(()=>{document.body.classList.add('lobby-open');});
+await page.evaluate(()=>{document.getElementById('lobbyScreen').classList.remove('hidden');syncLobbyOpen();});
 await page.evaluate(async()=>{
  await loadPrivateBurnArt();
  window.privateSoundEvents=[];
