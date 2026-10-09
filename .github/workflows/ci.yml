@@ -56,6 +56,7 @@ jobs:
           node functions/private-claim.test.js
           node functions/private-table.test.js
           node functions/private-burn.test.js
+          node functions/private-back.test.js
 
       - name: Series levels and readiness
         run: node tools/series-ready-test.js
@@ -85,6 +86,7 @@ jobs:
           node tools/private-cosmetics-browser-test.js
           node tools/private-table-browser-test.js
           node tools/private-burn-browser-test.js
+          node tools/private-back-browser-test.js
 
       - name: Existing browser gameplay regression suite
         run: node tools/run-browser-tests.js

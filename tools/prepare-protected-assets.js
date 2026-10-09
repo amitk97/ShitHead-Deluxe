@@ -1,7 +1,7 @@
 'use strict';
 // Only CI has the deployment private key. Never print it or the unwrapped asset key.
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-for (const [source,target] of [['keepsake.enc.json','keepsake.png'],['burn.enc.json','burn.json'],...['portrait','wide','tall','square'].map(v=>['table-'+v+'.enc.json','table-'+v+'.webp'])]) {
+for (const [source,target] of [['keepsake.enc.json','keepsake.png'],['burn.enc.json','burn.json'],['back.enc.json','back.webp'],...['portrait','wide','tall','square'].map(v=>['table-'+v+'.enc.json','table-'+v+'.webp'])]) {
 const envelope=JSON.parse(fs.readFileSync(path.join(__dirname,'../functions/private-assets',source),'utf8'));
 const credential=JSON.parse(process.env.DEPLOY_CREDENTIAL);
 const key=crypto.privateDecrypt({key:credential.private_key,oaepHash:'sha256',padding:crypto.constants.RSA_PKCS1_OAEP_PADDING},Buffer.from(envelope.wrappedKey,'base64'));

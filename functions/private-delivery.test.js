@@ -18,6 +18,11 @@ const database={ref:(path='')=>({transaction:async fn=>{const next=fn(structured
  assert.equal(results.filter(x=>x.status==='delivered').length,1);
  const gift=get(`gifts/${p.RECIPIENT_UID}/${p.GIFT_ID}`);
  const tableGift=get(`gifts/${p.RECIPIENT_UID}/${p.TABLE_GIFT_ID}`);
+ const backGift=get(`gifts/${p.RECIPIENT_UID}/${p.BACK_GIFT_ID}`);
+ assert.equal(backGift.itemId,p.BACK_ITEM_ID);assert.equal(backGift.fromName,'Amitk');assert.equal(backGift.sentAt,p.RELEASE_AT);
+ assert(p.canClaim(p.RECIPIENT_UID,backGift,p.RELEASE_AT));
+ assert(!p.canClaim(p.RECIPIENT_UID,backGift,p.RELEASE_AT-1));
+ assert.equal(get(`users/${p.RECIPIENT_UID}/ownedCosmetics/${p.BACK_ITEM_ID}`),null);
  const burnGift=get(`gifts/${p.RECIPIENT_UID}/${p.BURN_GIFT_ID}`);
  assert.equal(burnGift.itemId,p.BURN_ITEM_ID);assert.equal(burnGift.fromName,'Amitk');assert.equal(burnGift.sentAt,gift.sentAt);
  assert.equal(get(`users/${p.RECIPIENT_UID}/ownedCosmetics/${p.BURN_ITEM_ID}`),null);
@@ -38,11 +43,14 @@ const database={ref:(path='')=>({transaction:async fn=>{const next=fn(structured
  assert(!p.canClaim(p.RECIPIENT_UID,{...gift,fromUid:'someone-else'},p.RELEASE_AT));
  put(`gifts/${p.RECIPIENT_UID}/${p.GIFT_ID}`,null);
  put(`gifts/${p.RECIPIENT_UID}/${p.TABLE_GIFT_ID}`,null);
+ put(`gifts/${p.RECIPIENT_UID}/${p.BACK_GIFT_ID}`,null);
  put(`gifts/${p.RECIPIENT_UID}/${p.BURN_GIFT_ID}`,null);
  await p.deliver(database,p.RELEASE_AT+300000);
  assert.equal(get(`gifts/${p.RECIPIENT_UID}/${p.GIFT_ID}`),null,'Retries must not recreate an opened gift');
  assert.equal(get(`gifts/${p.RECIPIENT_UID}/${p.TABLE_GIFT_ID}`),null,'Opened table gifts must not be recreated');
  assert.equal(get(`gifts/${p.RECIPIENT_UID}/${p.BURN_GIFT_ID}`),null,'Opened burn gifts must not be recreated');
+ assert.equal(get(`gifts/${p.RECIPIENT_UID}/${p.BACK_GIFT_ID}`),null,'Opened card back must not be redelivered');
+ assert.equal(p.publicCosmetics({cardBack:p.BACK_ITEM_ID}).cardBack,'default');
  assert(!Object.keys(data.users).some(uid=>!p.allowed(uid)));
  console.log('PASS private release timezone, no early delivery, failure recovery, concurrent retries, recipient restrictions and no redelivery after opening.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

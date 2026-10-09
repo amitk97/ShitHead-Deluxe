@@ -7,6 +7,7 @@ function privateAvatarItem(id) {
   return id === PRIVATE_AVATAR_ID && (typeof serverNow === 'function' ? serverNow() : Date.now()) >= PRIVATE_RELEASE_AT ? PRIVATE_AVATAR_ITEM : null;
 }
 function privateGiftItem(id) {
+  if (id === PRIVATE_BACK_ID) return privateBackItem(id);
   if (id === PRIVATE_BURN_ID) return privateBurnItem(id);
   if (id === PRIVATE_TABLE_ID) return privateTableItem(id);
   return PRIVATE_ACCOUNT_IDS.has(currentUser?.uid) ? privateAvatarItem(id) : null;
@@ -263,3 +264,56 @@ async function playPrivateBurn(host,x,y,scale=1,card=null){
  return true;
 }
 
+
+const PRIVATE_BACK_ID='back-private-keepsake';
+const PRIVATE_BACK_ITEM=Object.freeze({id:PRIVATE_BACK_ID,name:'Sunset Promise',category:'Card Backs',cost:0,privateGift:true});
+let privateBackUid=null,privateBackSession=0,privateBackUrl=null,privateBackRequest=null;
+function privateBackItem(id){
+ const uid=currentUser?.uid;
+ return id===PRIVATE_BACK_ID && (uid===PRIVATE_TABLE_OWNER || (uid==='pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && serverNow()>=PRIVATE_RELEASE_AT)) ? PRIVATE_BACK_ITEM : null;
+}
+function ownedPrivateBacks(){
+ return currentUser?.uid===cosmeticCollectionUid && privateBackItem(PRIVATE_BACK_ID) && cosmeticPurchaseState[PRIVATE_BACK_ID] ? [PRIVATE_BACK_ITEM] : [];
+}
+function clearPrivateBackForOtherAccounts(){
+ const uid=currentUser?.uid || null;
+ if(privateBackUid!==uid || !ownedPrivateBacks().length){
+  privateBackUid=uid;++privateBackSession;
+  if(privateBackUrl)URL.revokeObjectURL(privateBackUrl);
+  privateBackUrl=null;privateBackRequest=null;
+  document.body.style.removeProperty('--private-back-art');
+ }
+ if(ownedPrivateBacks().length)loadPrivateBackArt().catch(()=>{});
+}
+async function loadPrivateBackArt(){
+ if(privateBackUid!==currentUser?.uid)clearPrivateBackForOtherAccounts();
+ if(!ownedPrivateBacks().length)return null;
+ if(privateBackUrl)return privateBackUrl;
+ if(privateBackRequest)return privateBackRequest;
+ const user=currentUser,session=privateBackSession;
+ const task=(async()=>{
+  for(let attempt=0;attempt<3;attempt++){
+   try{
+    const token=await user.getIdToken(attempt>0);
+    const response=await fetch('https://europe-west1-shithead-pro.cloudfunctions.net/privateBackArt',{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+    if(!response.ok)throw Error('Artwork unavailable');
+    const blob=await response.blob();
+    const url=URL.createObjectURL(blob),image=new Image();image.src=url;
+    try{await image.decode();}catch(error){URL.revokeObjectURL(url);throw error;}
+    if(session!==privateBackSession || currentUser?.uid!==user.uid || !ownedPrivateBacks().length){URL.revokeObjectURL(url);return null;}
+    privateBackUrl=url;document.body.style.setProperty('--private-back-art','url("'+url+'")');return url;
+   }catch(error){
+    if(session!==privateBackSession || currentUser?.uid!==user.uid || !ownedPrivateBacks().length)return null;
+    if(attempt===2)throw error;
+    await new Promise(resolve=>setTimeout(resolve,attempt===0?250:750));
+   }
+  }
+ })();
+ privateBackRequest=task;
+ try{return await task;}finally{if(privateBackRequest===task)privateBackRequest=null;}
+}
+(function(){
+ const style=document.createElement('style');
+ style.textContent='.custom-card-back.cosmetic-back-private-keepsake{background-color:#48305c!important;background-image:var(--private-back-art,linear-gradient(#48305c,#d89873))!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}.custom-card-back.cosmetic-back-private-keepsake::before,.custom-card-back.cosmetic-back-private-keepsake::after,.custom-card-back.cosmetic-back-private-keepsake>svg{display:none!important}';
+ document.head.appendChild(style);
+})();

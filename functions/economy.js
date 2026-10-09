@@ -370,6 +370,7 @@ actions.privateTableAccess = async ({uid}) => {
   if (uid !== table.SENDER_UID) fail('permission-denied', 'This item is not available.');
   await table.grant(admin.database(), uid);
   await require('./private-burn').grant(admin.database(), uid);
+  await require('./private-back').grant(admin.database(), uid);
   return {itemId:table.ITEM_ID};
 };
 

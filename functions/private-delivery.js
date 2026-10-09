@@ -11,10 +11,13 @@ const TABLE_GIFT_ID = 'private_sunset_20261016';
 const TABLE_ITEM = Object.freeze({id:TABLE_ITEM_ID,name:'Our Sunset',category:'Table Themes',cost:0,privateGift:true});
 const BURN_ITEM_ID='burn-private-keepsake', BURN_GIFT_ID='private_embers_20261016';
 const BURN_ITEM=Object.freeze({id:BURN_ITEM_ID,name:'Ember & Tide',category:'Burn Effects',cost:0,privateGift:true,tones:['#6e1535','#e9b46c','#ffe7bd']});
-const itemFor = id => id === BURN_ITEM_ID ? BURN_ITEM : id === ITEM_ID ? ITEM : id === TABLE_ITEM_ID ? TABLE_ITEM : null;
+const BACK_ITEM_ID='back-private-keepsake', BACK_GIFT_ID='private_promise_20261016';
+const BACK_ITEM=Object.freeze({id:BACK_ITEM_ID,name:'Sunset Promise',category:'Card Backs',cost:0,privateGift:true});
+const itemFor = id => id === BACK_ITEM_ID ? BACK_ITEM : id === BURN_ITEM_ID ? BURN_ITEM : id === ITEM_ID ? ITEM : id === TABLE_ITEM_ID ? TABLE_ITEM : null;
 const allowed = uid => uid === SENDER_UID || uid === RECIPIENT_UID;
 function publicCosmetics(value){
  const result={...value};
+ if(result.cardBack===BACK_ITEM_ID)result.cardBack='default';
  if(result.burnEffect===BURN_ITEM_ID)result.burnEffect='default';
  if(result.tableTheme===TABLE_ITEM_ID)delete result.tableTheme;
  return result;
@@ -38,6 +41,7 @@ async function deliver(database, now = Date.now()) {
     [`users/${SENDER_UID}/ownedCosmetics/${ITEM_ID}`]:{cost:0,purchasedAt:now,privateGift:true},
     [`gifts/${RECIPIENT_UID}/${GIFT_ID}`]:gift,
     [`gifts/${RECIPIENT_UID}/${TABLE_GIFT_ID}`]:{...gift,itemId:TABLE_ITEM_ID},
+    [`gifts/${RECIPIENT_UID}/${BACK_GIFT_ID}`]:{...gift,itemId:BACK_ITEM_ID},
     [`gifts/${RECIPIENT_UID}/${BURN_GIFT_ID}`]:{...gift,itemId:BURN_ITEM_ID},
     [`privateDeliveries/${GIFT_ID}`]:{status:'delivered',releaseAt:RELEASE_AT,deliveredAt:now}
   };
@@ -48,4 +52,4 @@ async function deliver(database, now = Date.now()) {
   }
   return {status:'delivered'};
 }
-module.exports = {RELEASE_AT,SENDER_UID,RECIPIENT_UID,ITEM_ID,GIFT_ID,ITEM,TABLE_ITEM_ID,TABLE_GIFT_ID,TABLE_ITEM,BURN_ITEM_ID,BURN_GIFT_ID,BURN_ITEM,itemFor,allowed,publicCosmetics,canClaim,deliver};
+module.exports = {RELEASE_AT,SENDER_UID,RECIPIENT_UID,ITEM_ID,GIFT_ID,ITEM,TABLE_ITEM_ID,TABLE_GIFT_ID,TABLE_ITEM,BURN_ITEM_ID,BURN_GIFT_ID,BURN_ITEM,BACK_ITEM_ID,BACK_GIFT_ID,BACK_ITEM,itemFor,allowed,publicCosmetics,canClaim,deliver};

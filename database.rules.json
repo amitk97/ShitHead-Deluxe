@@ -64,7 +64,8 @@
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
-              (newData.val() === 'back-midnight' || newData.val() === 'back-emerald' ||
+              ((newData.val() === 'back-private-keepsake' && ($uid === '11d84kCgSde82Xlu8k5U65OB9662' || ($uid === 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && now >= 1792188000000 && root.child('users').child($uid).child('claimedGifts').child('private_promise_20261016').exists()))) ||
+              newData.val() === 'back-midnight' || newData.val() === 'back-emerald' ||
               newData.val() === 'back-neon' || newData.val() === 'back-crimson' ||
               newData.val() === 'back-nebula' || newData.val() === 'back-inferno' ||
               newData.val().matches(/^back-(arcade|space|tartan|artdeco|dragon|stained)$/) ||

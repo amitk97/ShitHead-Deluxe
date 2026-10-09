@@ -2,3 +2,5 @@ functions/node_modules/
 node_modules/
 *-debug.log
 functions/.env.local
+
+functions/private-assets/back.webp

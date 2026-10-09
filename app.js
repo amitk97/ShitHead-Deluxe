@@ -5300,6 +5300,7 @@
     }
 
     function getThemeDeckBackClass(backId = equippedCosmetics.cardBack) {
+      if(backId===PRIVATE_BACK_ID && ownedPrivateBacks().length)return 'cosmetic-back-private-keepsake';
       const cosmeticBackClasses = {
         'back-midnight': 'cosmetic-back-midnight',
         'back-emerald': 'cosmetic-back-emerald',
@@ -12022,7 +12023,7 @@
 
     function getPublicCosmeticLoadout() {
       return {
-        cardBack: equippedCosmetics.cardBack || 'default',
+        cardBack: equippedCosmetics.cardBack === PRIVATE_BACK_ID ? 'default' : equippedCosmetics.cardBack || 'default',
         frame: equippedCosmetics.frame || 'default',
         burnEffect: equippedCosmetics.burnEffect === PRIVATE_BURN_ID ? 'default' : equippedCosmetics.burnEffect || 'default',
         victoryEffect: equippedCosmetics.victoryEffect || 'default',
@@ -12051,6 +12052,7 @@
     }
 
     function isSupportedCosmetic(type, id) {
+      if (id === PRIVATE_BACK_ID) return type === 'cardBack' && !!ownedPrivateBacks().length;
       if (id === PRIVATE_BURN_ID) return type === 'burnEffect' && !!ownedPrivateBurns().length;
       if (id === PRIVATE_TABLE_ID) return type === 'tableTheme' && !!ownedPrivateTables().length;
       if (id === PRIVATE_AVATAR_ID) return type === 'avatar' && !!privateGiftItem(id);
@@ -12068,6 +12070,7 @@
     function applyEquippedCosmetics() {
       clearPrivateTableForOtherAccounts();
       clearPrivateBurnForOtherAccounts();
+      clearPrivateBackForOtherAccounts();
       Object.keys(DEFAULT_EQUIPPED_COSMETICS).forEach(type => {
         if (!isSupportedCosmetic(type, equippedCosmetics[type])) equippedCosmetics[type] = 'default';
       });
@@ -12127,7 +12130,7 @@
       const loadout = {};
       SHOWCASE_TYPES.forEach(type => {
         const id = equippedCosmetics[type];
-        loadout[type] = id && id !== PRIVATE_TABLE_ID && id !== PRIVATE_BURN_ID && isSupportedCosmetic(type, id) ? id : 'default';
+        loadout[type] = id && id !== PRIVATE_TABLE_ID && id !== PRIVATE_BURN_ID && id !== PRIVATE_BACK_ID && isSupportedCosmetic(type, id) ? id : 'default';
       });
       return loadout;
     }
@@ -12552,7 +12555,7 @@
       let owned = 0, total = 0;
       area.innerHTML = COSMETIC_TABS.map(tab => {
         const type = COSMETIC_CATEGORY_TYPES[tab.category];
-        const items = [...(type === 'tableTheme' ? ownedPrivateTables() : type === 'burnEffect' ? ownedPrivateBurns() : []), ...customAllItems(type)];
+        const items = [...(type === 'tableTheme' ? ownedPrivateTables() : type === 'burnEffect' ? ownedPrivateBurns() : type === 'cardBack' ? ownedPrivateBacks() : []), ...customAllItems(type)];
         const have = items.filter(isCosmeticOwned).length;
         owned += have; total += items.length;
         const open = !customAllCollapsed.has(type);
@@ -12641,7 +12644,7 @@
       const victories = document.getElementById('personalisationVictoryEffects');
       const jokers = document.getElementById('personalisationJokerEffects');
       if (!backs || !frames || !emotes || !tables || !burns || !victories || !jokers) return;
-      backs.innerHTML = customGroupedHtml('cardBack', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Card Backs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs')]), ...LEVEL_REWARDS.filter(i => i.category === 'Card Backs')], i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack));
+      backs.innerHTML = ownedPrivateBacks().map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('') + customGroupedHtml('cardBack', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Card Backs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs')]), ...LEVEL_REWARDS.filter(i => i.category === 'Card Backs')], i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack));
       frames.innerHTML = customGroupedHtml('frame', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames')), ...EARNED_FRAMES, ...LEVEL_REWARDS.filter(i => i.category === 'Frames')], i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame));
       emotes.innerHTML = customGroupedHtml('emotes', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs')])], i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes));
       tables.innerHTML = ownedPrivateTables().map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('') + customGroupedHtml('tableTheme', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Table Themes'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes')]), ...LEVEL_REWARDS.filter(i => i.category === 'Table Themes')], i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme));
@@ -13187,6 +13190,7 @@
             cosmeticPurchaseState[item.id] = { purchasedAt: Date.now(), cost: 0 };
             newCosmeticIds.add(item.id);
             persistNewCosmetics();
+            if(item.id===PRIVATE_BACK_ID)clearPrivateBackForOtherAccounts();
             renderPersonalisationCosmetics();
           }
           showGiftOpened(item, gift, res.asDiamonds);

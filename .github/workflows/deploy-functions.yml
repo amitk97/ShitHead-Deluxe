@@ -72,3 +72,14 @@ jobs:
 
           burn_status=$(curl --silent --output /dev/null --write-out '%{http_code}' https://europe-west1-shithead-pro.cloudfunctions.net/privateBurnArt)
           test "$burn_status" = 404
+
+          back_status=$(curl --silent --output /dev/null --write-out '%{http_code}' https://europe-west1-shithead-pro.cloudfunctions.net/privateBackArt)
+          test "$back_status" = 404
+
+      - name: Verify live owner card and table artwork
+        env:
+          SH_VERIFY_PRIVATE_BACK: '1'
+          DEPLOY_CREDENTIAL: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
+        run: |
+          npm install --prefix functions --no-save sharp --no-audit --no-fund
+          node tools/verify-protected-art.js

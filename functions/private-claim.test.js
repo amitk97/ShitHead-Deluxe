@@ -14,10 +14,11 @@ const actions=require('./economy')._test.actions;
   Date.now=()=>p.RELEASE_AT-1;
   await actions.privateTableAccess({uid:p.SENDER_UID});
   assert(get(`users/${p.SENDER_UID}/ownedCosmetics/${p.BURN_ITEM_ID}`));
+  assert(get(`users/${p.SENDER_UID}/ownedCosmetics/${p.BACK_ITEM_ID}`));
   await assert.rejects(actions.privateTableAccess({uid:'outsider'}));
   await assert.rejects(actions.privateTableAccess({uid:p.RECIPIENT_UID}));
   put('users/'+p.RECIPIENT_UID,{diamonds:250});
-  for(const [itemId,giftId] of [[p.ITEM_ID,p.GIFT_ID],[p.TABLE_ITEM_ID,p.TABLE_GIFT_ID],[p.BURN_ITEM_ID,p.BURN_GIFT_ID]]) {
+  for(const [itemId,giftId] of [[p.ITEM_ID,p.GIFT_ID],[p.TABLE_ITEM_ID,p.TABLE_GIFT_ID],[p.BURN_ITEM_ID,p.BURN_GIFT_ID],[p.BACK_ITEM_ID,p.BACK_GIFT_ID]]) {
    const gift={itemId,fromUid:p.SENDER_UID,fromName:'Amitk',privateGift:true,sentAt:p.RELEASE_AT,cost:0};
    put(`gifts/${p.RECIPIENT_UID}/${giftId}`,gift);
    Date.now=()=>p.RELEASE_AT-1;

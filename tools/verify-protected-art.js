@@ -24,5 +24,14 @@ const {SENDER_UID}=require('../functions/private-delivery');
   assert.equal(crypto.createHash('sha256').update(body).digest('hex'),envelope.sha256,'Deployed artwork does not match protected source');
   assert.equal(response.headers.get('access-control-allow-origin'),'https://shithead-deluxe.web.app','Artwork CORS response mismatch');
  }
- console.log('PASS: live owner artwork responses match all four protected originals.');
+ if(process.env.SH_VERIFY_PRIVATE_BACK==='1'){
+ const back=await fetch('https://europe-west1-shithead-pro.cloudfunctions.net/privateBackArt',{headers:{Authorization:'Bearer '+idToken,Origin:'https://shithead-deluxe.web.app'},cache:'no-store'});
+ assert.equal(back.status,200,'Owner card back unavailable');
+ const body=Buffer.from(await back.arrayBuffer()),metadata=await sharp(body).metadata();
+ const envelope=JSON.parse(fs.readFileSync(path.join(__dirname,'../functions/private-assets/back.enc.json'),'utf8'));
+ assert.equal(crypto.createHash('sha256').update(body).digest('hex'),envelope.sha256);
+ assert(metadata.height>metadata.width,'Card back must be portrait');
+ assert.equal(back.headers.get('access-control-allow-origin'),'https://shithead-deluxe.web.app');
+ }
+ console.log('PASS: live owner protected artwork verified.');
 })().catch(e=>{console.error(e.message);process.exitCode=1;}).finally(()=>admin.apps.forEach(app=>app.delete()));

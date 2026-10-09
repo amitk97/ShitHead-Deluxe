@@ -265,4 +265,6 @@ exports.privateAvatarArt = require('firebase-functions/v2/https').onRequest({reg
 
 exports.privateTableArt = require('firebase-functions/v2/https').onRequest({region:REGION,cors:true,invoker:'public',maxInstances:3}, require('./private-table').artHandler(admin));
 
+exports.privateBackArt = require('firebase-functions/v2/https').onRequest({region:REGION,cors:true,invoker:'public',maxInstances:3}, require('./private-back').artHandler(admin));
+
 exports.privateBurnArt = require('firebase-functions/v2/https').onRequest({region:REGION,cors:true,invoker:'public',maxInstances:3}, require('./private-burn').artHandler(admin));
