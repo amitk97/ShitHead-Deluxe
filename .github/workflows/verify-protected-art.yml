@@ -24,3 +24,9 @@ jobs:
         env:
           DEPLOY_CREDENTIAL: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
         run: node tools/verify-protected-art.js
+
+      - name: Export deployment encryption public key
+        env:
+          DEPLOY_CREDENTIAL: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHITHEAD_PRO }}
+        run: |
+          node -e "const c=require('node:crypto'),v=JSON.parse(process.env.DEPLOY_CREDENTIAL);console.log('ASSET_PUBLIC_KEY='+c.createPublicKey(v.private_key).export({type:'spki',format:'der'}).toString('base64'));"
