@@ -12,7 +12,7 @@ A plain-English guide to running the game without a developer.
 
 | Part | What it is | Where it lives | How it goes live |
 |---|---|---|---|
-| **The game** | Everything players see | `index.html` (plus `art/`, `audio/`, `icons/`) | **Automatically**, about 2 minutes after a change reaches `main` |
+| **The game** | Everything players see | `index.html` plus the script files next to it (`app.js`, `shop.js`, `home-navigation.js`, `tutorial.js`…, `js/`, `css/`), `art/`, `audio/`, `icons/` | **Automatically**, about 2 minutes after a change reaches `main` |
 | **The server code** | Pays Diamonds, runs the Shop, scores Ranked, sends notifications, checks for cheating | the `functions/` folder | **Automatically**, via the "Deploy notification functions" GitHub workflow, whenever `functions/` changes |
 | **The database rules** | Decide who can read or change what (the anti-cheat wall) | `database.rules.json` | **By hand**: you paste them into the Firebase console (see section 3) |
 
@@ -50,7 +50,7 @@ Open the **Actions** tab. After each change you should see:
 A **red** run means that part did **not** go live. Open it, read the last error lines, then try **Re-run jobs** once. If it's still red, see section 6.
 
 ### Which version is live?
-Every release has a number such as **v212**. It's in the first line of `index.html`, in the "What's New" pop-up, and on each session in the Health tab.
+Every release has a number such as **v212**. It's in the first line of `index.html` (the BUILD comment), in the "What's New" pop-up, and on each session in the Health tab.
 
 Players with an old copy open get an **"Update available — Update Now"** prompt within about 15 minutes.
 
@@ -74,18 +74,19 @@ If the console says "Line N invalid", the paste got cut or mangled. Copy from `d
 
 For wording, prices or names, you can edit directly on GitHub:
 
-1. Open the file (usually `index.html`), then click the ✏️ pencil icon.
+1. Open the file (usually `app.js`, or `index.html` for page text), then click the ✏️ pencil icon.
 2. Use your browser's find (Ctrl/Cmd+F) to locate the text.
 3. Change it, then **Commit changes → Commit directly to the `main` branch**.
 4. About 2 minutes later it's live. Check GitHub → Actions is green.
 
 Things to know:
 - **Prices, Shop items, rewards and challenges** are also copied into `functions/catalog.json`, which the server reads.
-  - Changing them in `index.html` alone makes the Shop disagree with the server, and purchases fail.
+  - Changing them in the game alone makes the Shop disagree with the server, and purchases fail.
   - These changes need the export tool (`node tools/export-catalog.js`), so leave them to a developer or AI.
-- **Bot names:** `BOT_NAMES` in `index.html`. Plain letters only.
-- **What's New text:** `WHATS_NEW` in `index.html`.
+- **Bot names:** `BOT_NAMES` in `app.js`. Plain letters only.
+- **What's New text:** `WHATS_NEW` in `js/whats-new-data.js`.
 - Don't edit `index1.html`, `index2.html` and so on. They're old copies and are not used.
+- **After editing a script file** (`app.js`, `shop.js`, …) run `node tools/stamp-assets.js` so phones fetch the new version (it updates the `?v=` codes in `index.html` and `sw.js`). Editing on GitHub's website can't do this, so leave script changes to a developer or AI.
 
 ---
 
@@ -147,14 +148,14 @@ The support inbox is **support.shitheaddeluxe@gmail.com**. The "Contact Support"
 - Each game: the usual rating change (beating a stronger player gives more), plus **10 bonus points for every win**.
 - Win streak bonus, once when the streak reaches: 2 wins **+5**, 3 **+10**, 5 **+15**, 10 **+20** (and +20 again at 20, 30…). Losing streaks cost nothing extra.
 - If a game gets stuck with the same cards going round (the same position six times, or 150 turns without a burn, a card drawn or a table card played), it ends in a **draw**: nobody wins, nobody is the ShitHead, and in Ranked the rating change is small and streaks are kept.
-- The numbers are `RANKED_BONUS` in `index.html`; changing them needs the catalog export (leave that to a developer or AI).
+- The numbers are `RANKED_BONUS` in `app.js`; changing them needs the catalog export (leave that to a developer or AI).
 
 ### XP & levels (your on/off switch)
 - **Menu → XP & Levels: Off/On** (only you see it). Tap it and confirm; every player's game follows within about 10 seconds. Turning it off hides the level screens and stops XP, but nobody loses what they've earned.
 - When it's on, each player's past games, wins, Ranked games, Gauntlet bots and daily/weekly challenges are turned into XP once (at their next sign-in or game), and the levels they pass pay their Diamonds with one Inbox mail.
 - XP per game: finish 25, first game of the day +50, win +75, Ranked game +25, Ranked win +150, Gauntlet bots 40/80/120/200, daily challenge 50, weekly 100. Levels 1–99 (doubled in v225: level 5 = 954 XP, level 10 = 2,172, level 50 = 20,948, level 99 = 1,400,000). A level already paid never pays again. 20 💎 a level, 100 💎 every 10th level. No daily limit.
 - **Leaderboard → Levels** (shown while XP is on): All-time ranks everyone by total XP; This week ranks the XP earned since Monday (UK time) and starts empty every Monday. No prizes yet.
-- The numbers are `XP_RULES` in `index.html`; changing them needs the catalog export (leave that to a developer or AI).
+- The numbers are `XP_RULES` in `app.js`; changing them needs the catalog export (leave that to a developer or AI).
 
 ## 9. Your test account
 

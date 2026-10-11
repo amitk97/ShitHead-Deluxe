@@ -1,0 +1,28 @@
+/* First sign-in tour (v337). One dim layer, a ring round what is being explained, a caption card. */
+#welcomeTour { position: fixed; inset: 0; z-index: 335; }
+#welcomeTour.hidden { display: none; }
+#welcomeTour .wt-ring { position: fixed; border-radius: 14px; border: 2px solid #fbbf24; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(2, 6, 23, .72), 0 0 18px rgba(251, 191, 36, .5);
+  transition: left .35s var(--ease-soft, ease), top .35s var(--ease-soft, ease), width .35s var(--ease-soft, ease), height .35s var(--ease-soft, ease), opacity .2s; }
+#welcomeTour.wt-plain .wt-ring { opacity: 0; box-shadow: 0 0 0 9999px rgba(2, 6, 23, .72); }
+#welcomeTour .wt-card { position: fixed; width: min(340px, calc(100vw - 24px)); box-sizing: border-box; padding: 14px 16px 12px;
+  background: #0f172a; border: 1px solid #fbbf24; border-radius: 16px; color: #e2e8f0; box-shadow: 0 18px 40px rgba(0, 0, 0, .55);
+  transition: left .35s var(--ease-soft, ease), top .35s var(--ease-soft, ease); }
+#welcomeTour .wt-count { font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #fbbf24; }
+#welcomeTour .wt-title { margin: 3px 0 4px; font-size: 17px; font-weight: 900; color: #fff; line-height: 1.2; }
+#welcomeTour .wt-text { margin: 0; font-size: 13px; line-height: 1.45; color: #cbd5e1; }
+#welcomeTour .wt-modes { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 5px; }
+#welcomeTour .wt-modes button { width: 100%; display: flex; gap: 8px; align-items: baseline; text-align: left; padding: 6px 9px; border-radius: 10px;
+  background: #172239; border: 1px solid #334155; color: #e2e8f0; font: inherit; font-size: 12px; cursor: pointer; }
+#welcomeTour .wt-modes button b { color: #fff; white-space: nowrap; }
+#welcomeTour .wt-modes button:hover, #welcomeTour .wt-modes button:focus-visible { border-color: #fbbf24; outline: none; }
+#welcomeTour .wt-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+#welcomeTour .wt-dots { display: flex; gap: 5px; flex: 1; }
+#welcomeTour .wt-dots i { width: 6px; height: 6px; border-radius: 50%; background: #334155; }
+#welcomeTour .wt-dots i.on { background: #fbbf24; }
+#welcomeTour button.wt-btn { min-height: 34px; padding: 6px 14px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer;
+  border: 1px solid #475569; background: transparent; color: #cbd5e1; }
+#welcomeTour button.wt-btn.wt-primary { background: #fbbf24; border-color: #fbbf24; color: #1c1403; }
+#welcomeTour button.wt-btn:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+#welcomeTour .wt-skip { position: absolute; top: 8px; right: 12px; background: none; border: 0; color: #94a3b8; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: underline dotted; padding: 4px; }
+body.reduce-motion #welcomeTour .wt-ring, body.reduce-motion #welcomeTour .wt-card { transition: none; }

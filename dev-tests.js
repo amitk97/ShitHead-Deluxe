@@ -1214,7 +1214,7 @@ async function runDevTestSuite() {
     assertTrue(!!share && !!share.querySelector('svg'), 'The summary has a share icon');
     assertTrue(!share.closest('.ms-actions'), 'It sits in the corner, not in the button row');
   });
-  await test('Offline: Play Friends and Ranked explain that Vs Bots works offline, and stay closed', () => {
+  await test('Offline: Play Friends and Ranked explain that Play Computer works offline, and stay closed', () => {
     const desc = Object.getOwnPropertyDescriptor(Navigator.prototype, 'onLine');
     Object.defineProperty(navigator, 'onLine', { get: () => false, configurable: true });
     const banners = [], originalBanner = notifyBanner;
@@ -1225,7 +1225,7 @@ async function runDevTestSuite() {
       document.getElementById('modeMultiBtn').click();
       document.getElementById('modeRankedBtn').click();
       assertEqual(banners.length, 2, 'Both taps explain');
-      assertTrue(banners.every(b => b.includes('offline') && b.includes('Vs Bots')), 'The message points to Vs Bots');
+      assertTrue(banners.every(b => b.includes('offline') && b.includes('Play Computer')), 'The message points to Play Computer');
       assertTrue(document.getElementById('multiOptions').classList.contains('hidden') && document.getElementById('rankedOptions').classList.contains('hidden'), 'Neither opens');
     } finally {
       notifyBanner = originalBanner;
@@ -5655,7 +5655,7 @@ async function runDevTestSuite() {
     let row = friendRowHtml('u1', { username: 'Jamie', online: true, seen: serverNow(), playing: { mode: 'online', room: '424242', at: 1 } }, 'friend');
     assertTrue(row.includes('In a match · Play Friends') && row.includes('friend-watch-btn') && row.includes('data-room="424242"'), 'An online match offers WATCH');
     row = friendRowHtml('u1', { username: 'Jamie', online: true, seen: serverNow(), playing: { mode: 'bots', at: 1 } }, 'friend');
-    assertTrue(row.includes('In a match · Vs Bots') && !row.includes('friend-watch-btn') && row.includes('friend-invite-btn'), 'A bot game shows the status but nothing to watch');
+    assertTrue(row.includes('In a match · Play Computer') && !row.includes('friend-watch-btn') && row.includes('friend-invite-btn'), 'A bot game shows the status but nothing to watch');
     row = friendRowHtml('u1', { username: 'Jamie', online: false, playing: { mode: 'ranked', room: '424242', at: 1 } }, 'friend');
     assertTrue(!row.includes('In a match'), 'A stale status on an offline friend is ignored');
 
@@ -6328,7 +6328,7 @@ async function runDevTestSuite() {
   // ---- STAGE 1: hamburger menu restructure + responsive presentation ----
   await test('REGRESSION: the hamburger menu has all 9 items in the agreed order, with no duplicates', () => {
     // Error Reports is owner-only (hidden for everyone else).
-    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuLadderBtn', 'menuShopBtn', 'menuGuideBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuErrorReportsBtn', 'menuChangelogBtn', 'menuXpSwitchBtn', 'menuInstallBtn', 'menuSignOutBtn'];
+    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuLadderBtn', 'menuShopBtn', 'menuGuideBtn', 'menuTourBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuErrorReportsBtn', 'menuChangelogBtn', 'menuXpSwitchBtn', 'menuInstallBtn', 'menuSignOutBtn'];
     const nav = document.querySelector('#hamburgerDrawer nav');
     const actualOrder = Array.from(nav.querySelectorAll('button')).map(b => b.id);
     assertEqual(actualOrder, expectedOrder, 'Menu items must appear in exactly the agreed order: Profile, Stats, Personalisation, Friends, Leaderboard, Challenges, Level Ladder, Shop, Guide & Strategy, Settings, Support, Sign Out (signed in only)');

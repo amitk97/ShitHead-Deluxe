@@ -305,9 +305,9 @@
       box-shadow: 0 8px 18px rgba(0,0,0,.32), 0 18px 30px rgba(0,0,0,.22);
       background: #0b1428; border: 1.5px solid #1e293b; color: #e2e8f0; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 6px; padding: 10px 8px; cursor: pointer;
-      transform: translateX(calc(var(--mc-x, 0px) + var(--mc-dx, 0px))) translateZ(var(--mc-z, 0px)) rotateY(var(--mc-r, 0deg)) scale(var(--mc-s, 1));
+      transform: translateX(calc(var(--mc-x, 0px) + var(--mc-dx, 0px) + var(--mc-lx, 0px))) translateZ(var(--mc-z, 0px)) rotateY(var(--mc-r, 0deg)) scale(var(--mc-s, 1));
       opacity: var(--mc-o, 1); z-index: var(--mc-zi, 1); will-change: transform;
-      transition: transform .5s var(--ease-spring), opacity .35s var(--ease-soft), border-color .2s, background-color .2s, box-shadow .25s; }
+      transition: transform .5s var(--ease-spring), scale .45s var(--ease-spring), opacity .35s var(--ease-soft), border-color .2s, background-color .2s, box-shadow .25s; }
     .mc-card.mc-focus:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-tone) 22%, transparent), 0 16px 30px rgba(0,0,0,.5); }
     /* v324: cards are solid (nothing shows through); the middle one wears its
        colour, side cards are dimmed by an opaque-ish shade over them. */
@@ -319,6 +319,15 @@
     .mc-track.mc-dragging .mc-card { transition: none; }
     .mc-card, .mc-card * { -webkit-user-drag: none; }
     .mc-card.mc-gone { pointer-events: none; }
+    /* Reorder (long press): the picked-up card pops up with a springy bounce, follows the finger and drops back in. */
+    .mc-card.mc-lifted { scale: 1.14; z-index: 60 !important; cursor: grabbing; transition: transform 0s, scale .45s var(--ease-spring), opacity .2s;
+      box-shadow: 0 0 0 2px var(--mc-tone), 0 24px 40px rgba(0,0,0,.6); }
+    .mc-track.mc-reordering .mc-card:not(.mc-lifted) { transition: transform .32s var(--ease-spring), scale .2s, opacity .2s; }
+    .mc-reset-order { display: block; margin: 2px auto 0; background: none; border: 0; color: #94a3b8; font: inherit; font-size: 11px; font-weight: 700;
+      text-decoration: underline dotted; cursor: pointer; padding: 4px 8px; }
+    .mc-reset-order.hidden { display: none; }
+    .mc-reset-order:hover, .mc-reset-order:focus-visible { color: #fbbf24; }
+    body.reduce-motion .mc-card.mc-lifted { transition: none; }
     /* Controls (v323): « first, ‹ previous, › next, » last. */
     .mc-controls { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 2px; }
     .mc-controls .mc-arrow[data-mc-step="-1"] { margin-right: 22px; }

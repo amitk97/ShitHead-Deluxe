@@ -26,7 +26,7 @@
     // Home mode ⓘ (v256, owner): what each mode is, in the shared info bubble
     // (tap to toggle, hover on PC); the tap never switches mode.
     const MODE_TIPS = {
-      bots: '<p><b>Vs Bots</b></p><p>Play against 1 to 3 computer players at the difficulty you pick. Wins unlock harder bots. Choose the speed and difficulty before starting.</p>',
+      bots: '<p><b>Play Computer</b></p><p>Play against 1 to 3 computer players at the difficulty you pick. Wins unlock harder bots. Choose the speed and difficulty before starting.</p>',
       online: '<p><b>Play Friends</b></p><p>Host a private table and share the code or link, or join a friend\'s table. Up to 4 players; empty seats can be bots.</p>',
       gauntlet: '<p><b>Gauntlet</b></p><p>Beat successive bots with limited lives. Easy and Hard have 5 rounds; Boss has 3. Continue an unfinished run on the same UK day. Signed-in players can earn rewards.</p>',
       more: '<p><b>More Modes</b></p><p>Preview upcoming modes. Pin one to a Shortcut card, then use Swap to change your choice. These modes are not playable yet.</p>',
@@ -143,6 +143,21 @@
       const track = box?.querySelector('.mc-track');
       if (!track) return;
       const cards = [...track.querySelectorAll('.mc-card')];
+      // § Reorder (long press): the order the player chose is kept on the device.
+      const ORDER_KEY = 'shithead_home_order';
+      const defaultOrder = cards.map((c) => c.dataset.mcMode);
+      const resetBtn = document.createElement('button');
+      resetBtn.type = 'button'; resetBtn.className = 'mc-reset-order hidden'; resetBtn.textContent = 'Reset card order';
+      box.appendChild(resetBtn);
+      const renumber = () => cards.forEach((c, i) => { const n = c.querySelector('.mc-num'); if (n) n.textContent = String(i + 1); });
+      const syncOrderDom = () => { cards.forEach((c) => track.appendChild(c)); renumber(); resetBtn.classList.toggle('hidden', cards.every((c, i) => c.dataset.mcMode === defaultOrder[i])); };
+      const applyOrder = (list) => {
+        if (!Array.isArray(list) || list.length !== cards.length || !defaultOrder.every((m) => list.includes(m))) return false;
+        cards.sort((a, b) => list.indexOf(a.dataset.mcMode) - list.indexOf(b.dataset.mcMode));
+        return true;
+      };
+      try { applyOrder(JSON.parse(localStorage.getItem(ORDER_KEY))); } catch (e) {}
+      const saveOrder = () => { try { localStorage.setItem(ORDER_KEY, JSON.stringify(cards.map((c) => c.dataset.mcMode))); } catch (e) {} };
       const arrows = [...box.querySelectorAll('.mc-arrow')];
       const atStart = arrows.filter((b) => b.dataset.mcStep === '-1' || b.dataset.mcJump === 'first');
       const atEnd = arrows.filter((b) => b.dataset.mcStep === '1' || b.dataset.mcJump === 'last');
@@ -154,18 +169,19 @@
       let chosen = PANEL[saved] ? saved : 'cpu';
       let focus = indexOf(chosen);
       const shownPanel = () => Object.keys(SWITCH).find((id) => !document.getElementById(id)?.classList.contains('hidden')) || 'singleOptions';
+      let lifted = null; // the card being reordered: {card, idx0, idx, x0, focus0, X0}
+      const slotX = (d) => { const a = Math.abs(d); return Math.sign(d) * (a === 0 ? 0 : a === 1 ? 1 : 1 + (a - 1) * .7) * cards[0].offsetWidth * .86; };
       function paint() {
         const width = cards[0].offsetWidth;
         if (!width) return; // Hidden mode pages must never overwrite the last visible geometry.
-        const step = width * .86;
         cards.forEach((c, i) => {
           const d = i - focus, a = Math.abs(d);
-          c.style.setProperty('--mc-x', (Math.sign(d) * (a === 0 ? 0 : a === 1 ? step : step * (1 + (a - 1) * .7))).toFixed(1) + 'px');
+          c.style.setProperty('--mc-x', slotX(d).toFixed(1) + 'px');
           c.style.setProperty('--mc-z', (-a * 70) + 'px');
-          c.style.setProperty('--mc-r', (-Math.sign(d) * Math.min(a, 2) * 18) + 'deg');
+          c.style.setProperty('--mc-r', (c === lifted?.card ? 0 : -Math.sign(d) * Math.min(a, 2) * 18) + 'deg');
           c.style.setProperty('--mc-s', (1 - Math.min(a, 3) * .13).toFixed(2));
           c.style.setProperty('--mc-o', a > 2 ? '0' : '1');
-          c.style.setProperty('--mc-dim', a === 0 ? '0' : a === 1 ? '.38' : '.62');
+          c.style.setProperty('--mc-dim', a === 0 || c === lifted?.card ? '0' : a === 1 ? '.38' : '.62');
           c.style.setProperty('--mc-zi', String(10 - a));
           c.classList.toggle('mc-focus', a === 0);
           c.classList.toggle('mc-gone', a > 2);
@@ -236,7 +252,7 @@
         const pins = readPins();
         cards.filter((c) => /^pin/.test(c.dataset.mcMode)).forEach((c) => {
           const m = PIN_MODES[pins[c.dataset.mcMode]];
-          const num = '<span class="mc-num" aria-hidden="true">' + c.dataset.mc + '</span>';
+          const num = '<span class="mc-num" aria-hidden="true">' + (cards.indexOf(c) + 1) + '</span>';
           c.innerHTML = num + (m ? pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Coming soon</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-preview>Info</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>' : emptyPinHtml.replace(/data-mc-go(?:="")?>Go →/, 'data-mc-swap>Pin +'));
           c.classList.toggle('mc-pinned', !!m);
         });
@@ -258,6 +274,7 @@
         hideInfoPop(); paintPins(); Haptics.vibrate([15]);
       });
       paintPins();
+      syncOrderDom();
       // More Modes page rows wear the same icons as the pins (same order).
       document.querySelectorAll('#moreModesPage .mp-row').forEach((row, i) => {
         const m = Object.values(PIN_MODES)[i];
@@ -338,6 +355,22 @@
           lastTap = null; turnTo(i); open(card, { immediate: direct });
         } else { lastTap = { card, at: now }; turnTo(i); }
       });
+      // Alt + ← / → moves the focused card one place (the keyboard way to reorder).
+      track.addEventListener('keydown', (e) => {
+        const card = e.target.closest?.('.mc-card');
+        if (!card || !e.altKey || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+        e.preventDefault();
+        if (!placeCard(card, cards.indexOf(card) + (e.key === 'ArrowLeft' ? -1 : 1))) return;
+        focus = cards.indexOf(card);
+        syncOrderDom(); saveOrder(); paint(); paintPins(); card.focus({ preventScroll: true });
+        Haptics.vibrate([10]); audio.playCarouselSnap();
+      });
+      resetBtn.addEventListener('click', () => {
+        applyOrder(defaultOrder);
+        try { localStorage.removeItem(ORDER_KEY); } catch (e) {}
+        focus = indexOf(chosen); syncOrderDom(); paint(); paintPins(); Haptics.vibrate([15]);
+      });
+      track.addEventListener('contextmenu', (e) => e.preventDefault());
       track.addEventListener('keydown', (e) => {
         const card = e.target.closest('.mc-card');
         if (!card || e.target.closest('button') || !['Enter', ' '].includes(e.key)) return;
@@ -360,13 +393,58 @@
       window.addEventListener('blur', stopHold);
       // v327: explicit desktop mouse tracking; touch/pen use pointer events.
       // One step per gesture, unless held beyond the threshold for 450ms.
-      let down = null, dragHold = null, ignoreMouseUntil = 0;
+      let down = null, dragHold = null, ignoreMouseUntil = 0, pressTimer = null;
+      const REORDER_HOLD_MS = 450;
       const dragStep = () => cards[0].getBoundingClientRect().width * .86;
       const stopDragHold = () => { clearTimeout(dragHold); dragHold = null; };
       const resetPull = () => {
         track.classList.remove('mc-dragging');
         track.style.removeProperty('--mc-dx');
       };
+      function placeCard(card, to) {
+        const from = cards.indexOf(card);
+        to = Math.max(0, Math.min(cards.length - 1, to));
+        if (from === to) return false;
+        cards.splice(from, 1); cards.splice(to, 0, card);
+        return true;
+      }
+      function liftCard(card) {
+        pressTimer = null;
+        if (!down || down.live || lifted) return;
+        const idx = cards.indexOf(card);
+        const d = down; down = null; stopDragHold();
+        resetPull();
+        focus = idx; paint(); // the card is brought to the middle first
+        lifted = { card, idx0: idx, idx, x0: d.x, focus0: idx, pointerId: d.pointerId };
+        swiped = true; lastTap = null;
+        card.classList.add('mc-lifted'); track.classList.add('mc-reordering');
+        hideInfoPop(); Haptics.vibrate([25]); audio.playCarouselSnap();
+        paint();
+      }
+      function moveLifted(e) {
+        const L = lifted, step = slotX(1);
+        // Screen pixels to card pixels (the home panel is zoomed on big screens).
+        const dx = (e.clientX - L.x0) / ((track.getBoundingClientRect().width / track.offsetWidth) || 1);
+        const idx = Math.max(0, Math.min(cards.length - 1, L.idx0 + Math.round(dx / step)));
+        if (idx !== L.idx) {
+          placeCard(L.card, idx); L.idx = idx;
+          // The row follows the card so it never leaves the five shown slots.
+          if (idx - focus > 1) focus = idx - 1; else if (idx - focus < -1) focus = idx + 1;
+          Haptics.vibrate([10]); audio.playCarouselSnap();
+          paint();
+        }
+        // Follow the finger exactly: its offset from the slot it is in.
+        L.card.style.setProperty('--mc-lx', (slotX(L.idx0 - L.focus0) + dx - slotX(L.idx - focus)).toFixed(1) + 'px');
+      }
+      function dropLifted() {
+        const L = lifted; if (!L) return;
+        lifted = null;
+        L.card.classList.remove('mc-lifted'); track.classList.remove('mc-reordering');
+        L.card.style.removeProperty('--mc-lx');
+        focus = cards.indexOf(L.card);
+        syncOrderDom(); saveOrder(); paint(); paintPins();
+        Haptics.vibrate([15]);
+      }
       const startDrag = (e) => {
         if (e.button || (e.type === 'mousedown' && performance.now() < ignoreMouseUntil)) return;
         // A new press replaces one whose release was never seen (let go outside the window).
@@ -374,6 +452,10 @@
         if (e.type === 'mousedown') e.preventDefault();
         down = { x: e.clientX, y: e.clientY, dx: 0, live: false, dir: 0, repeated: false, pointerId: e.pointerId };
         swiped = false;
+        // Press and hold a card without moving to pick it up and reorder.
+        const card = e.target?.closest?.('.mc-card');
+        clearTimeout(pressTimer);
+        if (card && !e.target.closest('button') && !card.classList.contains('mc-gone')) pressTimer = setTimeout(() => liftCard(card), REORDER_HOLD_MS);
       };
       const repeatDrag = () => {
         if (!down || !down.dir) return;
@@ -382,6 +464,8 @@
         if (turnTo(focus + down.dir)) dragHold = setTimeout(repeatDrag, 520);
       };
       const moveDrag = (e) => {
+        if (lifted) { if (e.pointerId == null || e.pointerId === lifted.pointerId) { e.preventDefault(); moveLifted(e); } return; }
+        if (down && pressTimer && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) { clearTimeout(pressTimer); pressTimer = null; }
         if (!down || (e.pointerId != null && e.pointerId !== down.pointerId)) return;
         const dx = e.clientX - down.x, dy = e.clientY - down.y;
         if (!down.live) {
@@ -405,6 +489,8 @@
         }
       };
       const endDrag = (e) => {
+        clearTimeout(pressTimer); pressTimer = null;
+        if (lifted) { dropLifted(); down = null; return; }
         if (!down || (e.pointerId != null && e.pointerId !== down.pointerId)) return;
         const d = down; down = null;
         stopDragHold(); resetPull();
@@ -425,7 +511,7 @@
       ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => track.addEventListener(ev, (e) => {
         if (e.pointerType === 'pen') endDrag(e);
       }));
-      const touchEvent = (e, t) => ({ type: e.type, button: 0, clientX: t.clientX, clientY: t.clientY,
+      const touchEvent = (e, t) => ({ type: e.type, button: 0, clientX: t.clientX, clientY: t.clientY, target: e.target,
         preventDefault: () => { if (e.cancelable) e.preventDefault(); } });
       let touchId = null;
       track.addEventListener('touchstart', (e) => {
@@ -450,6 +536,8 @@
       };
       window.addEventListener('touchend', endTouch, { passive: false });
       window.addEventListener('touchcancel', endTouch, { passive: false });
+      // For the welcome tour: turn to a mode's card (and say whether it exists).
+      window.ShHomeCarousel = { turnToMode: (m) => { const i = cards.findIndex((c) => c.dataset.mcMode === m); if (i < 0) return false; turnTo(i); return true; } };
       window.resetModeCarousel = () => {
         finishExpand(); endDrag({ type: 'cancel' }); stopHold(); touchId = null; lastTap = null; swiped = false;
         modePanelObservers.forEach(observer => observer.takeRecords());

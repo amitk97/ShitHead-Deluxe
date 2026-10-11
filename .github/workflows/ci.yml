@@ -35,6 +35,7 @@ jobs:
           set -euo pipefail
           node --check js/house-rules.js
           node --check js/house-rules-bots.js
+          node --check js/welcome-tour.js
           node --check functions/diamond-purchases.js
           node --check functions/economy.js
           node --check functions/index.js
@@ -77,6 +78,9 @@ jobs:
         env:
           SH_BROWSER_CHANNEL: chrome
         run: node tools/home-navigation-browser-test.js --require-video
+
+      - name: Welcome tour and carousel reorder
+        run: node tools/welcome-tour-browser-test.js
 
       - name: Play Friends lobby regression checks
         run: node tools/friends-lobby-browser-test.js

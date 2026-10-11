@@ -72,7 +72,7 @@
       const at = new Map();
       const add = (L, piece) => { if (L > 1 && L <= XP_MAX_LEVEL) { if (!at.has(L)) at.set(L, []); at.get(L).push(piece); } };
       LEVEL_REWARDS.slice().sort((a, b) => a.level - b.level).forEach(item => add(item.level, { kind: 'item', item }));
-      SPEED_UNLOCK_LEVELS.forEach((L, i) => { if (L > 0) add(L, { kind: 'unlock', icon: 'bolt', tone: '#38bdf8', name: `${LADDER_SPEEDS[i] || ''} game speed`, tip: `Play Vs Bots at ${LADDER_SPEEDS[i]} speed (signed in).` }); });
+      SPEED_UNLOCK_LEVELS.forEach((L, i) => { if (L > 0) add(L, { kind: 'unlock', icon: 'bolt', tone: '#38bdf8', name: `${LADDER_SPEEDS[i] || ''} game speed`, tip: `Play Computer at ${LADDER_SPEEDS[i]} speed (signed in).` }); });
       LOADOUT_SLOT_LEVELS.forEach((L, i) => { if (L > 0) add(L, { kind: 'unlock', icon: 'save', tone: '#a78bfa', name: `Saved look ${i + 1}`, tip: `A ${i === 1 ? 'second' : i === 2 ? 'third' : 'new'} saved look in Custom.` }); });
       add(XP_RULES.giftLevel, { kind: 'unlock', icon: 'gift', tone: '#f9a8d4', name: 'Gifting', tip: 'Send Shop items to your friends as gifts.' });
       (XP_RULES.extraDaily || []).forEach((L, i) => add(L, { kind: 'unlock', icon: 'check', tone: '#34d399', name: `${ordinalNumber(3 + i + 1)} daily challenge`, tip: 'One more daily challenge every day.' }));
@@ -153,7 +153,7 @@
     }
     const LADDER_HOW = () => `<details class="ll-how"><summary>How to earn XP</summary><div class="ll-xp">
       <span>Finish a game</span><span>${XP_RULES.finish}</span><span>First game of the day</span><span>+${XP_RULES.firstGameOfDay}</span>
-      <span>Win (Vs Bots / Play Friends)</span><span>${XP_RULES.win}</span><span>Ranked game / Ranked win</span><span>${XP_RULES.ranked} / ${XP_RULES.rankedWin}</span>
+      <span>Win (Play Computer / Play Friends)</span><span>${XP_RULES.win}</span><span>Ranked game / Ranked win</span><span>${XP_RULES.ranked} / ${XP_RULES.rankedWin}</span>
       <span>Gauntlet bot beaten</span><span>${Math.min(...Object.values(XP_RULES.gauntletBot))}–${Math.max(...Object.values(XP_RULES.gauntletBot))}</span>
       <span>Daily / weekly challenge</span><span>${XP_RULES.daily} / ${XP_RULES.weekly}</span></div></details>`;
     function renderLevelLadder(from) {

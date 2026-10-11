@@ -8406,6 +8406,15 @@
       try { localStorage.setItem(MODE_INTRO_KEY, JSON.stringify(modeIntroSeen)); } catch (e) {}
       if (typeof scheduleSettingsCloudSave === 'function') scheduleSettingsCloudSave();
     }
+    // First sign-in tour (js/welcome-tour.js): seen once per account; the device remembers it too.
+    const WELCOME_TOUR_KEY = 'shithead_welcome_tour';
+    let welcomeTourSeen = (() => { try { return localStorage.getItem(WELCOME_TOUR_KEY) === '1'; } catch (e) { return false; } })();
+    function markWelcomeTourSeen() {
+      if (welcomeTourSeen) return;
+      welcomeTourSeen = true;
+      try { localStorage.setItem(WELCOME_TOUR_KEY, '1'); } catch (e) {}
+      if (typeof scheduleSettingsCloudSave === 'function') scheduleSettingsCloudSave();
+    }
     const MODE_INTROS = {
       ranked: {
         icon: 'ranked', title: 'Ranked', lead: 'One-on-one against a real player, for your rating.', guide: 'ranked',
@@ -8573,8 +8582,8 @@
     // No signal: Online Room and Ranked need the internet; Vs Bots and the
     // Tutorial work offline (sw.js keeps every file they need).
     const isOffline = () => !firebaseAvailable || (typeof navigator !== 'undefined' && navigator.onLine === false);
-    const OFFLINE_MODE_MSG = "📴 You're offline. Vs Bots and the Tutorial work without a signal; Play Friends and Ranked come back when you reconnect.";
-    window.addEventListener('offline', () => notifyBanner('📴 No signal. You can keep playing Vs Bots offline.'));
+    const OFFLINE_MODE_MSG = "📴 You're offline. Play Computer and the Tutorial work without a signal; Play Friends and Ranked come back when you reconnect.";
+    window.addEventListener('offline', () => notifyBanner('📴 No signal. You can keep playing Play Computer offline.'));
     window.addEventListener('online', () => notifyBanner('📶 Back online.'));
     document.getElementById('modeMultiBtn').addEventListener('click', () => {
       if (isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
@@ -9561,7 +9570,7 @@
       return `
         <div class="flex items-center justify-center bg-slate-900/60 border border-amber-500/40 rounded-xl py-3 mb-2">${renderRatingBadge(rating)}</div>
         <div class="space-y-1">${rows.map(([label, value]) => statRowHtml(label, value)).join('')}</div>
-        <p class="text-[8px] text-slate-600 text-center pt-2">Casual, Vs Bots, and Tutorial games are never counted here.</p>`;
+        <p class="text-[8px] text-slate-600 text-center pt-2">Casual, Play Computer and Tutorial games are never counted here.</p>`;
     }
     let statsTab = (() => { try { return localStorage.getItem('shithead_stats_tab') === 'ranked' ? 'ranked' : 'history'; } catch (e) { return 'history'; } })();
     function renderStatsPanel() {
@@ -13236,6 +13245,7 @@
 
     document.getElementById('menuLeaderboardBtn').addEventListener('click', () => { closeHamburgerMenu(); openLeaderboardPanel(); });
     document.getElementById('menuSettingsBtn').addEventListener('click', () => { closeHamburgerMenu(); openSettings(); });
+    document.getElementById('menuTourBtn')?.addEventListener('click', () => window.ShWelcomeTour?.replay());
     document.getElementById('menuGuideBtn').addEventListener('click', () => { closeHamburgerMenu(); document.getElementById('rulesModal').classList.remove('hidden'); });
     document.getElementById('drawerSettingsShortcutBtn').addEventListener('click', () => { closeHamburgerMenu(); openSettings(); });
     document.getElementById('drawerGuideShortcutBtn').addEventListener('click', () => { closeHamburgerMenu(); document.getElementById('rulesModal').classList.remove('hidden'); });
@@ -13605,6 +13615,7 @@
         handSortByPower: !!handSortByPower,
         whatsNewOn: !!whatsNewOn,
         modeIntroSeen: { ranked: !!modeIntroSeen.ranked, online: !!modeIntroSeen.online },
+        welcomeTourSeen: !!welcomeTourSeen,
         emotesMuted: !!emotesMuted,
         botCount: readBotPrefs().count,
         botDifficulty: readBotPrefs().difficulty
@@ -13618,6 +13629,10 @@
         const speed = Number(settings.speedIndex);
         if (Number.isInteger(speed) && speed >= 0 && speed < SPEED_PRESETS.length) updateSpeedByIndex(speed);
         if (deckItemForTheme(settings.deckTheme)) selectDeckTheme(settings.deckTheme);
+        if (settings.welcomeTourSeen === true && !welcomeTourSeen) {
+          welcomeTourSeen = true;
+          try { localStorage.setItem(WELCOME_TOUR_KEY, '1'); } catch (e) {}
+        }
         if (settings.modeIntroSeen && typeof settings.modeIntroSeen === 'object') {
           ['ranked', 'online'].forEach((m) => { if (settings.modeIntroSeen[m]) modeIntroSeen = { ...modeIntroSeen, [m]: true }; });
           try { localStorage.setItem(MODE_INTRO_KEY, JSON.stringify(modeIntroSeen)); } catch (e) {}
@@ -13851,7 +13866,7 @@
       setTimeout(() => { if (currentUser && !devTestSuiteRunning) pruneOldRooms(); }, 15000);
       setTimeout(() => { if (currentUser && !devTestSuiteRunning) { registerPushToken(); shareSeasonCalendarWithWorker(); } }, 4000);
       // Preferences live under the account and do not depend on profile creation.
-      loadAccountSettings(user);
+      loadAccountSettings(user).then(() => window.ShWelcomeTour?.maybeStart());
     }
 
     // ---- Account deletion (7-day recovery window) and Download my data ----
@@ -16163,7 +16178,7 @@
     function showHelperTip(key, anchor, opts = {}) {
       const text = HELPER_TIPS[key];
       if (!text || !helperTipsOn || helperTipNow || helperTipSeen(key)) return false;
-      if (!opts.force && (tutorialActive || devTestSuiteRunning || state.spectating)) return false;
+      if (!opts.force && (tutorialActive || devTestSuiteRunning || state.spectating || window.ShWelcomeTour?.active())) return false;
       const el = typeof anchor === 'string' ? document.querySelector(anchor) : anchor;
       if (!helperTipVisible(el)) return false;
       markHelperTipSeen(key);
@@ -16676,7 +16691,7 @@
       ['Face-Up cards?', 'face-up-cards'], ['Transparent', 'transparent-card'],
       ['picking up the pile|picked up|pick up|pickups?', 'pick-up'],
       ['burn(?:s|t|ed)?(?: the pile)?', 'burn'], ['Jokers?', 'joker'], ['Ranked', 'ranked'],
-      ['rating', 'rating'], ['Vs Bots|bots?', 'vs-bots'], ['Recruit', 'recruit'],
+      ['rating', 'rating'], ['Play Computer|Vs Bots|bots?', 'play-computer'], ['Recruit', 'recruit'],
       ['in a row|streak', 'win-streak'], ['Draw a game', 'draw'], ['skip', 'skip'],
       ['Play Friends', 'play-friends'], ['same rank', 'rank'], ['last card', 'last-card'],
       ['seasonal', 'seasonal-event'], ['daily challenges?', 'daily-challenges'], ['weekly challenges?', 'weekly-challenges'],
@@ -18598,7 +18613,7 @@
       (status ? ref.set({ ...status, at: firebase.database.ServerValue.TIMESTAMP }) : ref.remove()).catch(() => { lastPlayingKey = null; });
     }
     setInterval(syncPlayingStatus, 5000);
-    const PLAYING_LABELS = { bots: 'Vs Bots', online: 'Play Friends', ranked: 'Ranked' };
+    const PLAYING_LABELS = { bots: 'Play Computer', online: 'Play Friends', ranked: 'Ranked' };
     function friendPlaying(profile) {
       const p = profile && profile.playing;
       if (!p || !PLAYING_LABELS[p.mode]) return null;
@@ -20349,6 +20364,7 @@
     // It works through one "guard" history entry that exists whenever there
     // is something to go back from.
     const BACK_LAYERS = {
+      welcomeTour: () => window.ShWelcomeTour?.skip(),
       houseNameModal: () => window.ShHousePresets?.close(),
       friendsConfigModal: () => window.ShFriendsLobby?.closeConfig(),
       appClosingScreen: 'returnFromClosingBtn',

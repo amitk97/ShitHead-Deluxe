@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-06-v336 (ShitHead-Deluxe-253) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-11-v337 (ShitHead-Deluxe-254) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
-     FILE MAP
+     FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
        <head>   domain redirect · meta tags (link previews, app)
        <body>   loading screen (first paint) · precompiled Tailwind <style> · game <style> (themes,
                 motion, pages) · Firebase scripts · header · menu drawer · home/lobby · game table ·
@@ -15,6 +15,7 @@
 <html lang="en" class="dark">
 <head>
   <link rel="stylesheet" href="css/friends-lobby.css?v=245eed70ee85">
+  <link rel="stylesheet" href="css/welcome-tour.css?v=9d478452ecd0">
   <meta charset="UTF-8" />
   <script>
     // The game's home is shithead-deluxe.web.app (owner, v310; the old
@@ -225,7 +226,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=67830c795315">
+  <link rel="stylesheet" href="game.css?v=d4b821ce720e">
 
   
   <!-- Firebase SDKs -->
@@ -497,6 +498,7 @@
       <button id="menuShopBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg></span><span>Shop</span></button>
       <div class="border-t border-slate-800" style="margin: 4px 0;"></div>
       <button id="menuGuideBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></span><span>Guide &amp; Strategy</span></button>
+      <button id="menuTourBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></span><span>Take The Tour</span></button>
       <button id="menuSettingsBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg></span><span>Settings</span></button>
       <button id="menuSupportBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-support"/></svg></span><span>Support</span></button>
       <button id="menuErrorReportsBtn" class="hamburger-menu-item hidden"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#2a1016" stroke="#7f1d1d"/><path d="M16 8.5l8.5 15h-17z" fill="none" stroke="#fb7185" stroke-width="2" stroke-linejoin="round"/><path d="M16 14v4.5" stroke="#fb7185" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="21" r="1.2" fill="#fb7185"/></svg></span><span>Error Reports</span></button>
@@ -574,9 +576,9 @@
           <!-- Each mode button is three fixed rows: icon, name, subtitle. -->
           <button id="modeSingleBtn" class="mode-btn rounded-xl font-bold bg-amber-600 hover:bg-amber-500 text-slate-950 border-2 border-amber-500 transition">
             <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-bot"/></svg>
-            <span class="mode-name">Vs Bots</span>
+            <span class="mode-name">Play Computer</span>
             <span class="mode-sub">1-3 AI players</span>
-            <span class="mode-tip" data-mode-tip="bots" role="button" tabindex="0" aria-label="What is Vs Bots?">i</span>
+            <span class="mode-tip" data-mode-tip="bots" role="button" tabindex="0" aria-label="What is Play Computer?">i</span>
           </button>
           <button id="modeMultiBtn" class="mode-btn rounded-xl font-bold bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition">
             <svg class="ic mode-ic" aria-hidden="true"><use href="#ic-friends4"/></svg>
@@ -2293,6 +2295,25 @@
           </div>
         </div>
 
+        <!-- Section 3a: Game Modes -->
+        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="modes">
+          <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
+            <span>Game Modes</span>
+            <span class="chevron transform transition-transform duration-200">&#9660;</span>
+          </button>
+          <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
+            <p><strong>Choosing a mode.</strong> The home screen shows the modes as a row of cards. Swipe or drag, use the &lsaquo; &rsaquo; arrows (hold to keep going) or the &laquo; &raquo; buttons, or press 1&ndash;7 or &larr; &rarr; on a keyboard. Tap a side card to bring it to the middle, then tap the middle card (or its <strong class="text-amber-300">Go</strong> button) to open it. Back or the logo returns to the cards.</p>
+            <p><strong>Make it yours.</strong> Press and hold a card until it pops up, then drag it to a new place. Your order is kept on this device; <em>Reset card order</em> appears under the cards once you have changed it. On a keyboard, Alt + &larr; / &rarr; moves the selected card.</p>
+            <p><strong class="text-amber-300">Play Computer</strong> &mdash; one to three bots at Easy, Medium, Hard or Boss. Win to unlock harder bots. Works offline.</p>
+            <p><strong class="text-amber-300">Gauntlet</strong> &mdash; five bots in a row with a few lives, once a day, in three modes. See <em>The Gauntlet</em> below.</p>
+            <p><strong class="text-amber-300">Play Friends</strong> &mdash; your own table with friends, with custom rules and optional bot fillers. See <em>Play Friends</em> below.</p>
+            <p><strong class="text-amber-300">Ranked</strong> &mdash; one-on-one against a real player for your rating and tier. See <em>Ranked</em> below.</p>
+            <p><strong class="text-amber-300">Best Of Series</strong> &mdash; a Best of 3, 5 or 7 between two friends for Diamonds, opened from Play Friends. See <em>Best Of Series</em> below.</p>
+            <p><strong class="text-amber-300">More Modes</strong> &mdash; the modes still to come are listed there. Use the two <strong>Shortcut</strong> cards to pin the one you are waiting for.</p>
+            <p><strong>New here?</strong> Menu &rarr; <em>Take The Tour</em> shows the header, the modes and the Tutorial again.</p>
+          </div>
+        </div>
+
         <!-- Section 3b: The Gauntlet -->
         <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="gauntlet">
           <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
@@ -2300,7 +2321,7 @@
             <span class="chevron transform transition-transform duration-200">&#9660;</span>
           </button>
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
-            <p>The <strong>Gauntlet</strong> is a Vs Bots challenge: <strong>one-on-one games in a row</strong>, each against a tough bot. Start it from the <strong class="text-amber-300">GAUNTLET</strong> button on the home screen, under the bot count, and pick a mode.</p>
+            <p>The <strong>Gauntlet</strong> is a Play Computer challenge: <strong>one-on-one games in a row</strong>, each against a tough bot. Open the <strong class="text-amber-300">Gauntlet</strong> card on the home screen, pick a mode and press Open The Gauntlet.</p>
             <div class="guide-table" role="table" aria-label="Gauntlet modes">
               <div class="gt-row gt-head" role="row"><span role="columnheader"></span><span role="columnheader">Easy</span><span role="columnheader">Hard</span><span role="columnheader">Boss</span></div>
               <div class="gt-row" role="row"><b role="rowheader">Bots</b><span>Easy, Easy, Medium, Hard, Boss</span><span>Medium, Hard, Hard, Hard, Boss</span><span>Boss, Boss, Boss</span></div>
@@ -2315,7 +2336,7 @@
             <p><strong class="text-amber-300">Leaving:</strong> a game you start and don't finish counts as a loss, so leaving a game you're losing still costs a life. Closing the app is fine: the Gauntlet remembers exactly where you were, mid-game or between games.</p>
             <p><strong class="text-amber-300">Rewards:</strong> each mode's first clear gives its Diamonds, avatar and card frame, which only its champions can have. After that, every day you beat it pays its daily Diamonds. Every bot you beat also gives XP: 40 Easy, 80 Medium, 120 Hard, 200 Boss.</p>
             <p><strong class="text-amber-300">Offline:</strong> you can play the Easy Gauntlet with no signal or signed out, just without Diamonds or rewards. Hard and Boss need you to be signed in.</p>
-            <p><strong class="text-amber-300">Good to know:</strong> Gauntlet wins don't count toward unlocking bot difficulties or normal Vs Bots Diamonds. Every bot you beat, in any mode, counts on the <strong>Gauntlet leaderboard</strong>, even in runs you don't finish.</p>
+            <p><strong class="text-amber-300">Good to know:</strong> Gauntlet wins don't count toward unlocking bot difficulties or normal Play Computer Diamonds. Every bot you beat, in any mode, counts on the <strong>Gauntlet leaderboard</strong>, even in runs you don't finish.</p>
             <p><strong class="text-amber-300">Challenges:</strong> <em>Gauntlet Champion</em>, <em>Hard Gauntlet Champion</em> and <em>Boss Gauntlet Champion</em> (first clears) are in the Bots tab; the daily Gauntlet win is in the Daily tab.</p>
           </div>
         </div>
@@ -2327,7 +2348,7 @@
             <span class="chevron transform transition-transform duration-200">&#9660;</span>
           </button>
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
-            <p><strong>Ranked</strong> is one-on-one online against a real player, for your rating. Sign in, open <strong class="text-amber-300">Ranked</strong> on the home screen and press <strong>Find Game</strong>: you&rsquo;re matched with the next player looking.</p>
+            <p><strong>Ranked</strong> is one-on-one online against a real player, for your rating. Sign in, open the <strong class="text-amber-300">Ranked</strong> card on the home screen and press <strong>Find Game</strong>: you&rsquo;re matched with the next player looking.</p>
             <p><strong class="text-amber-300">Rating:</strong> everyone starts at 500. Win and it goes up, lose and it goes down. Beating a higher-rated player earns more than beating a lower one, and losing to a lower-rated player costs more. A draw moves both ratings toward each other, with no bonus.</p>
             <p><strong class="text-amber-300">Win bonus:</strong> every win adds <strong>+10</strong> on top.</p>
             <p><strong class="text-amber-300">Win streak bonus:</strong> wins in a row add a one-off extra: <strong>+5</strong> at 2 wins, <strong>+10</strong> at 3, <strong>+15</strong> at 5, and <strong>+20</strong> at 10 and every 10 after. A losing streak costs nothing extra.</p>
@@ -2345,7 +2366,7 @@
             <span class="chevron transform transition-transform duration-200">&#9660;</span>
           </button>
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
-            <p><strong>Play Friends</strong> is your own table with the people you choose. Open <strong class="text-amber-300">Play Friends</strong> on the home screen.</p>
+            <p><strong>Play Friends</strong> is your own table with the people you choose. Open the <strong class="text-amber-300">Play Friends</strong> card on the home screen.</p>
             <p><strong class="text-amber-300">Hosting:</strong> press <strong>Host New Room</strong> and share the 6-digit code or the invite link. The host adds bots, sets the turn timer and starts the game.</p>
             <p><strong class="text-amber-300">Joining:</strong> type a friend&rsquo;s code, tap their invite link, or accept an invite in your Inbox. You don&rsquo;t need an account to join a friend&rsquo;s room.</p>
             <p><strong class="text-amber-300">Players:</strong> up to 4 at a table. Empty seats can be filled with bots.</p>
@@ -2411,7 +2432,7 @@
             <p data-term="face-down-cards"><strong class="text-amber-400">Face-Down Cards:</strong> Three cards dealt beneath your Face-Up Cards that nobody ever sees. Only playable once your Hand, the Deck <em>and</em> your Face-Up Cards are all gone. You flip one blind &mdash; if it isn't legal, you pick up the Pile.</p>
             <p data-term="face-up-cards"><strong class="text-amber-400">Face-Up Cards:</strong> Three cards on the table in front of you, visible to everyone. Only playable once your Hand and the Deck are both empty. Because you play them last, the Swap Phase is your chance to stock them with strong cards.</p>
             <p data-term="four-of-a-kind"><strong class="text-amber-400">Four Of A Kind:</strong> All four cards of one rank on top of the Pile burn it, whether they were played together or across several turns. See <em>Burn</em> and <em>Snap Burn</em>.</p>
-            <p data-term="gauntlet"><strong class="text-amber-400">Gauntlet:</strong> Vs Bots games in a row against tough bots, with a few lives: Easy (5 bots, 3 lives), Hard (5 bots, 2 lives, Lvl 30) or Boss (3 Boss bots, 1 life, Lvl 50). One a day. See <em>The Gauntlet</em> above.</p>
+            <p data-term="gauntlet"><strong class="text-amber-400">Gauntlet:</strong> Play Computer games in a row against tough bots, with a few lives: Easy (5 bots, 3 lives), Hard (5 bots, 2 lives, Lvl 30) or Boss (3 Boss bots, 1 life, Lvl 50). One a day. See <em>The Gauntlet</em> above.</p>
             <p data-term="hand"><strong class="text-amber-400">Hand:</strong> The cards only you can see, held off the table. You play from here first, and top back up to three from the Deck after each turn while the Deck lasts.</p>
             <p data-term="hard-gauntlet"><strong class="text-amber-400">Hard Gauntlet:</strong> A daily run against 5 tough bots with 2 lives, unlocked at Level 30 after beating Easy once. Losing costs a life and you retry that bot. Choose it on the Gauntlet page; you may enter one Gauntlet mode per day.</p>
             <p data-term="house-rules"><strong class="text-amber-400">House Rules:</strong> A casual Play Friends mode where the host customises card powers. It is unranked, gives no Challenge progress and awards no Diamonds. Bots follow the same custom rules.</p>
@@ -2425,6 +2446,7 @@
             <p data-term="no-power"><strong class="text-amber-400">No Power:</strong> In House Rules, the rank behaves as a normal card with no special effect. Unlike Please Select, it is a valid completed choice.</p>
             <p data-term="pick-up"><strong class="text-amber-400">Pick Up:</strong> Taking the entire Pile into your Hand because you had no legal move. The setback of the game. If your Hand was already empty, you must also take one Face-Up Card (or several of the same rank) along with it.</p>
             <p data-term="pile"><strong class="text-amber-400">Pile:</strong> The face-up stack in the middle that everyone plays onto. Your card must match or beat the top card of the Pile &mdash; if you can't, you take the whole Pile into your Hand.</p>
+            <p data-term="play-computer"><strong class="text-amber-400">Play Computer:</strong> Games against computer players at Easy, Medium, Hard or Boss. Win games to unlock the next difficulty. Works offline too.</p>
             <p data-term="play-friends"><strong class="text-amber-400">Play Friends:</strong> Online rooms with friends: share the room code or an invite link, add bots to fill empty seats, and play a Best Of Series once you're both Lvl 20.</p>
             <p data-term="play-matrix"><strong class="text-amber-400">Play Matrix:</strong> The &#9638; button on the table: a grid showing which card can go on which.</p>
             <p data-term="please-select"><strong class="text-amber-400">Please Select:</strong> An unfinished House Rules setting. A match cannot start while any rank, Joker or four-of-a-kind rule still says Please Select.</p>
@@ -2445,7 +2467,6 @@
             <p data-term="table-cards"><strong class="text-amber-400">Table Cards:</strong> Collective term for your Face-Up and Face-Down Cards &mdash; everything in front of you rather than in your Hand.</p>
             <p data-term="tier"><strong class="text-amber-400">Tier:</strong> Your Ranked rank from your rating: Novice, Bronze (500+), Silver (1000+), Gold (1500+), Platinum (1800+) and Master (2000+).</p>
             <p data-term="transparent-card"><strong class="text-amber-400">Transparent Card:</strong> The 3. It sets no target of its own, so the next player must beat whatever card sits underneath it. Playable on anything except a 6.</p>
-            <p data-term="vs-bots"><strong class="text-amber-400">Vs Bots:</strong> Games against computer players at Easy, Medium, Hard or Boss. Win games to unlock the next difficulty. Works offline too.</p>
             <p data-term="weekly-challenges"><strong class="text-amber-400">Weekly Challenges:</strong> Five goals every UK week (Monday to Sunday) on the Challenges page, each paying Diamonds and XP.</p>
             <p data-term="win-streak"><strong class="text-amber-400">Win Streak:</strong> Wins in a row. In Ranked a streak adds bonus rating on top of the win: +5 at 2 wins, +10 at 3, +15 at 5 and +20 at 10 and every 10 after.</p>
           </div>
@@ -2466,6 +2487,7 @@
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">S</span> : Toggle "Select All Of A Rank" ON/OFF</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">F11 or F</span> : Toggle Fullscreen</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">M</span> : Toggle the menu open/closed</div>
+              <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">1&ndash;7 / &larr; &rarr;</span> : On the home screen, pick a mode card (Alt + &larr; / &rarr; moves the selected card)</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">I</span> : Toggle the Inbox open/closed</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-amber-400 font-bold">Esc</span> : Close every menu and page, back to the home screen (or the table during a game)</div>
               <div class="col-span-2 border-t border-slate-800 pt-1.5"><span class="text-emerald-400 font-bold">1, 2, 3 (Face-Up Phase)</span> : Select the 1st, 2nd, or 3rd Face-Up Card, then press ENTER to play it</div>
@@ -2521,18 +2543,20 @@
   <script src="js/avatar-tones.js"></script>
   <script src="cosmetics-data.js?v=924c8ed0b06b"></script>
   <script src="tutorial-data.js?v=cf577eec4ae6"></script>
-  <script src="tutorial.js?v=9f026d55aa51"></script>
-  <script src="level-ladder.js?v=f629d34f1b74"></script>
+  <script src="tutorial.js?v=8e9bc17bd42a"></script>
+  <script src="level-ladder.js?v=cdcc7c34077e"></script>
   <script src="shop.js?v=343ace972099"></script>
-  <script src="home-navigation.js?v=d5db5d5896e6"></script>
+  <script src="home-navigation.js?v=d22717172477"></script>
   <script src="multiplayer-lobby.js?v=563279447523"></script>
   <script src="private-cosmetics.js?v=4f732484384c"></script>
-  <script src="app.js?v=f1f3ed565797"></script>
+  <script src="app.js?v=c92dc070995d"></script>
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
   <script src="js/house-rules-presets.js?v=335"></script>
   <script src="js/friends-lobby.js?v=335"></script>
+  <div id="welcomeTour" class="hidden" role="presentation"></div>
+  <script src="js/welcome-tour.js?v=1ec181602f01"></script>
 </body>
 </html>
 
