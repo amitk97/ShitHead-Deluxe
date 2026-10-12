@@ -8438,6 +8438,25 @@ async function runDevTestSuite() {
     state.discardPile = [makeCard('9')]; render();
     assertEqual(tag.textContent, 'Reverse', 'Other cards keep their power name');
   });
+  await test('A 3 on the Pile: the card it covers is tucked under the 3s with its corner showing (v338)', () => {
+    freshState({ discardPile: [makeCard('Q', '♦'), makeCard('3', '♣')] });
+    state.players = [makePlayer({ id: 'p1', hand: [makeCard('K')] }), makePlayer({ id: 'p2', isBot: true })];
+    state.localPlayerId = 'p1';
+    const shown = () => [...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')];
+    render();
+    let els = shown();
+    assertEqual(els.map(e => e.dataset.rank), ['Q', '3'], 'A Queen under one 3');
+    assertTrue(els[0].classList.contains('pile-peek') && /translate\(-/.test(els[0].style.transform), 'The Queen is shifted up and left');
+    state.discardPile = [makeCard('2'), makeCard('4'), makeCard('8'), makeCard('3', '♥'), makeCard('3', '♣'), makeCard('3', '♠')]; render();
+    assertEqual(shown().map(e => e.dataset.rank), ['8', '3', '3'], 'However many 3s, the 8 they cover shows, with at most two 3s');
+    state.discardPile = [makeCard('9'), makeCard('5'), makeCard('3')]; state.baseOverrideCard = makeCard('9'); render();
+    assertEqual(shown()[0].dataset.rank, '9', 'A 3 on a 5 shows the base card it carries through');
+    state.baseOverrideCard = null;
+    state.discardPile = [makeCard('3', '♥'), makeCard('3', '♣')]; render();
+    assertTrue(shown().every(e => !e.classList.contains('pile-peek')), 'Only 3s: nothing to tuck under');
+    state.discardPile = [makeCard('9'), makeCard('K')]; render();
+    assertTrue(shown().every(e => !e.classList.contains('pile-peek')), 'A normal top card has no peek');
+  });
   await test('Big hands pick the row count that gives the biggest cards that still fit the width', () => {
     const hand = Array.from({ length: 29 }, (_, i) => ({ id: `h${i}`, rank: ['4','5','6','7','8','9','J','Q','K','A'][i % 10], suit: '♠' }));
     const rows = bestHandRows(hand, 140);

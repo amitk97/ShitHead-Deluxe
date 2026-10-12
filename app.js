@@ -6247,12 +6247,30 @@
         emptyPlaceholder.classList.remove('hidden');
       } else {
         emptyPlaceholder.classList.add('hidden');
-        const start = Math.max(0, state.discardPile.length - 3);
-        state.discardPile.slice(start).forEach((card, idx) => {
+        const pile = state.discardPile;
+        // A transparent 3 on top: however many 3s there are, the card that
+        // really has to be beaten is drawn tucked under them, shifted up and
+        // left so its rank and suit corner shows (v338).
+        const under = pile.length > 1 && isTransparentCard(pile[pile.length - 1]) ? (state.baseOverrideCard || getEffectiveTopCard(pile)) : null;
+        const peek = under && !isTransparentCard(under) ? under : null;
+        let shown;
+        if (peek) {
+          const threes = pile.slice(-2).filter((c) => c.id !== peek.id);
+          shown = [peek, ...threes];
+        } else {
+          shown = pile.slice(Math.max(0, pile.length - 3));
+        }
+        shown.forEach((card, idx) => {
           const cardEl = createCardElement(card, false, false, false, false, false);
           cardEl.draggable = false;
           cardEl.style.position = 'absolute';
-          cardEl.style.transform = `rotate(${(idx - 1) * 6}deg) translateY(${idx * -2}px)`;
+          if (peek && idx === 0) {
+            cardEl.classList.add('pile-peek');
+            cardEl.style.transform = 'translate(-26%, -14%) rotate(-9deg)';
+          } else {
+            const n = idx - 1;
+            cardEl.style.transform = `rotate(${n * (peek ? 4 : 6)}deg) translateY(${idx * -2}px)`;
+          }
           discardWrapper.appendChild(cardEl);
         });
       }

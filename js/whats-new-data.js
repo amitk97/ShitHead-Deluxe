@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v338: [['eye', 'A 3 on the Pile now shows the card it covers, tucked underneath with its corner visible, however many 3s are on top.', WN_KEY]],
       v337: [['sparkle', 'New players get a short tour of the header, the game modes and the Tutorial. Replay it any time from Menu → Take The Tour.', WN_KEY], ['swords', 'Press and hold a mode card on Home to pick it up and move it. Your order is kept on this device.', WN_KEY], ['bot', 'Vs Bots is now called Play Computer everywhere, and the Guide has a Game Modes section.']],
       v336: [['friends4', 'Restored Home mode navigation and button interactions while retaining the updated Tutorial box, Play Friends layout and series level locks.', WN_KEY]],
       v335: [['swords', 'Best of 5 unlocks at Level 35 and Best of 7 at Level 45 for both players.', WN_KEY], ['friends4', 'Larger Tutorial icon and text, a colourful icon box, and compact Play Friends series settings.']],

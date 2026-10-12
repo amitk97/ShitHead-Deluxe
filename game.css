@@ -2816,3 +2816,5 @@
     .gauntlet-frame-card i { font-style:normal; font-size:13px; margin-top:2px; }
     .gauntlet-frame-fan .gauntlet-frame-card:nth-child(1) { transform:rotate(-8deg) translateY(4px); }
     .gauntlet-frame-fan .gauntlet-frame-card:nth-child(3) { transform:rotate(8deg) translateY(4px); }
+    /* v338: the card a transparent 3 sits on, tucked under the 3s. */
+    #discardCardsWrapper .pile-peek { box-shadow: 0 0 0 1px rgba(251, 191, 36, .55), 0 3px 8px rgba(0,0,0,.5); }
