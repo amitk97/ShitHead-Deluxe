@@ -1,6 +1,10 @@
+## v340 — Protect Best Cards is OFF by default
+
+- Owner's call after v339: the default is OFF (`protectBestCards` reads `localStorage shithead_protect_best === '1'`; row shows OFF until toggled). Everything else below is unchanged. A player whose account already saved `protectBestCards: true` keeps it.
+
 ## v339 — Protect Best Cards
 
-- Gameplay setting `protectBestCards` (row `#setProtectBestRow`, localStorage `shithead_protect_best`, **default ON**, synced in `users/{uid}/settings` via `collectAccountSettings` / the `boolPrefs` list). With Select All Of A Rank on, tapping, un-staging by drag, or pressing the rank key for a 2, 3, 10 or Ace (`PROTECTED_BEST_RANKS`; Jokers are always single) selects just that card; every other rank still selects the whole rank. `bestCardIsProtected(rank)` / `selectsWholeRank(card)` are the two checks; lessons (`tutorialActive`) ignore the setting so they teach the plain toggle. Dev test "Protect Best Cards…". Row order stays alphabetical (Hand Sort, Protect Best Cards, Select All Of A Rank).
+- Gameplay setting `protectBestCards` (row `#setProtectBestRow`, localStorage `shithead_protect_best`, default was ON in v339 (OFF since v340), synced in `users/{uid}/settings` via `collectAccountSettings` / the `boolPrefs` list). With Select All Of A Rank on, tapping, un-staging by drag, or pressing the rank key for a 2, 3, 10 or Ace (`PROTECTED_BEST_RANKS`; Jokers are always single) selects just that card; every other rank still selects the whole rank. `bestCardIsProtected(rank)` / `selectsWholeRank(card)` are the two checks; lessons (`tutorialActive`) ignore the setting so they teach the plain toggle. Dev test "Protect Best Cards…". Row order stays alphabetical (Hand Sort, Protect Best Cards, Select All Of A Rank).
 
 ## v338 — the card under a 3
 

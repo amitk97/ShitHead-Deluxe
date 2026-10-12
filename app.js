@@ -3831,12 +3831,12 @@
     // time — which matters tactically, so it can be flipped mid-game.
     // Declared up here with the other game state: it's referenced by the
     // toggle's UI sync, which runs during initial setup.
-    // Protect Best Cards (v339, owner, Gameplay setting, ON by default): Select All Of A
+    // Protect Best Cards (v339, owner, Gameplay setting, OFF by default since v340): Select All Of A
     // Rank never grabs a pile of 2s, 3s, 10s or Aces (the cards worth saving): a tap on
     // one of them selects just that card. Jokers are always single anyway.
     const PROTECTED_BEST_RANKS = ['2', '3', '10', 'A'];
     let protectBestCards = (() => {
-      try { return localStorage.getItem('shithead_protect_best') !== '0'; } catch (e) { return true; }
+      try { return localStorage.getItem('shithead_protect_best') === '1'; } catch (e) { return false; }
     })();
     const bestCardIsProtected = (rank) => protectBestCards && !tutorialActive && PROTECTED_BEST_RANKS.includes(rank); // lessons teach the plain toggle
     const selectsWholeRank = (card) => selectAllOfRank && !card.isJoker && !bestCardIsProtected(card.rank);

@@ -18,7 +18,7 @@ const S = process.env.SH_VIDEO_DEPS || ROOT, file = path.join(ROOT, 'index.html'
       const font=u.pathname.match(/^\/test-font-(.+)\.woff2$/);if(font&&fonts[font[1]])return route.fulfill({body:fs.readFileSync(fonts[font[1]].file),contentType:'font/woff2'});
       if (u.pathname === '/index.html' || u.pathname === '/') return route.fulfill({ body: html, contentType: 'text/html' });
       const local = path.join(path.dirname(file), decodeURIComponent(u.pathname));
-      const types = { '.svg': 'image/svg+xml', '.mp3': 'audio/mpeg', '.js': 'text/javascript' };
+      const types = { '.svg': 'image/svg+xml', '.mp3': 'audio/mpeg', '.js': 'text/javascript', '.css': 'text/css', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json', '.woff2': 'font/woff2' };
       if (fs.existsSync(local)) return route.fulfill({ body: fs.readFileSync(local), contentType: types[path.extname(local)] || 'application/octet-stream' });
       return route.fulfill({ status: 404, body: 'not found' });
     }
@@ -38,7 +38,7 @@ const S = process.env.SH_VIDEO_DEPS || ROOT, file = path.join(ROOT, 'index.html'
   await page.fill('#playerNameInput', 'Amit');
   await page.waitForTimeout(400);
   await snap('home'); // the mode carousel (v317+)
-  await page.locator('.mc-card[data-mc-mode="cpu"]').click(); // open Play Computer's page
+  await page.locator('.mc-card[data-mc-mode="cpu"] .mc-go').click(); // Go opens Play Computer's page (a plain tap only focuses the card since v328)
   await page.waitForTimeout(1400);
   await page.evaluate(() => { document.querySelector('.bot-count-btn[data-bots="2"]').click(); });
   await page.click('#startSingleBtn');

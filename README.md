@@ -1,4 +1,4 @@
-<!-- README-VERSION: v321 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
+<!-- README-VERSION: v340 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
 # 💩 ShitHead Deluxe
 
 **The classic card game ShitHead, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
@@ -58,15 +58,17 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 
 - **A home screen built around the modes**: swipe a 3D carousel of cards (or use the arrows, the mouse wheel or keys 1-7): Play Computer, the Gauntlet, Ranked, Play Friends and More Modes. Tap the middle card and it flips over and spreads across the screen into that mode's page; the game remembers the last mode you opened. More Modes previews what's coming (2 vs 2, Puzzles, Randomiser, Multiple Decks and No Mercy).
 - **One header everywhere**: Exit on the far left (it asks first, in the game's own style), your Diamonds, then Shop, Custom, Profile, Inbox, Guide, Settings and the menu. In a game the extras fold into the menu and the ShitHead logo takes you home.
+- **A short tour for new players**: the first time a new account signs in, a six-step tour shows the header, the game modes and the Tutorial button (skip it any time, replay it from Menu → Take The Tour). Press and hold a mode card to pick it up and put the cards in your own order.
 - **Opens fast**: a loading screen paints at once, your level and Diamonds show straight away, and the installed Android app flows from its icon into the game.
 - **XP & levels 1–99**: every game, win, Ranked game, Gauntlet bot and challenge earns XP (a win 75, a Ranked win 150, the first game of the day +50). Levels follow a RuneScape-style curve (level 92 is half-way to 99) and pay Diamonds: 20 a level, 100 on every 10th. A thin XP bar along the bottom of the header shows your progress (hover or tap it for the numbers), and your level shows on the table, on every leaderboard, on your Profile and in your friends list. Games you played before levels existed counted too. Levels unlock earn-only avatars, card backs and burn effects, faster game speeds, extra saved looks, Best of series and the harder Gauntlets.
 - **Level Ladder**: tap your level anywhere to open a timeline of every level and what it unlocks, scrolled to "You are here". A level up climbs the ladder to show what you just won (equip it in one tap), your friends sit at their own levels (tap +N to see everyone on a crowded level), and a gold dot on your level means there's something new you haven't looked at yet.
-- **Best of 3 / Best of 5 series** between two friends (both level 20+): each pays an entry (30 or 50 Diamonds), the server matches the pot and the winner takes 4x. The next game starts by itself, the score sits on the table, and if someone drops out a bot plays their seat until they're back (or, after 5 of its turns, the series goes to the player still there).
+- **Best of 3 / 5 / 7 series** between two friends (both players need level 20 / 35 / 45): each pays an entry (30, 50 or 70 Diamonds), the server matches the pot and the winner takes 4x. The next game starts by itself, the score sits on the table, and if someone drops out a bot plays their seat until they're back (or, after 5 of its turns, the series goes to the player still there).
 
 - **Play Computer** with four difficulties (Easy → Boss) that unlock as you win, playable offline. Close the app mid-game and it picks up exactly where you left off.
 - **The Gauntlet**: Easy, Hard and Boss runs. Easy: beat 5 bots in a row (Easy, Easy, Medium, Hard, Boss) with 3 lives. Hard (2 lives) and Boss (1 life) unlock with levels. The first clear of each wins an exclusive animated avatar and frame, then Diamonds every day you beat it again.
-- **Play Friends**: private rooms for up to 4 players, with House Rules for custom card powers. Share an invite link, react with emotes, and a Medium bot keeps your seat if your signal drops: reopen the game and you go straight back in. After 5 bot turns you're out of that game, and the rest play on. Friends can watch your match live.
+- **Play Friends**: host or join with a room code, pick a mode from a card carousel, and sit four avatar seats round a compact lobby. House Rules (Classic plus three named slots saved to your account) give custom card powers. Share an invite link, react with emotes, and a Medium bot keeps your seat if your signal drops: reopen the game and you go straight back in. After 5 bot turns you're out of that game, and the rest play on. Friends can watch your match live.
 - **Ranked** 1v1 matchmaking with an Elo rating and tiers from Novice to Master, plus 10 points for a win and bonuses at win-streak milestones. The server shuffles and holds hidden cards, validates every move before accepting it and scores its own final record. Opponent hands, blind values and stock order stay out of browser data.
+- **Easier to read, easier to play**: a 3 on the Pile now shows the card it covers tucked underneath, however many 3s are stacked. Select All Of A Rank has a Protect Best Cards option (Settings → Gameplay) so one tap picks a single 2, 3, 10 or Ace instead of wasting them.
 - **Stalemate draws**: a game where the same cards keep going round without progress ends in a draw, shown in Ranked stats and Match History.
 - **Tutorial**: a one-minute Quick Start (including press-and-hold card info) plus in-depth lessons for every card, and a searchable Guide (rules, card powers, the Gauntlet, key terms).
 - **Challenges and Diamonds**: 3 daily and 5 weekly challenges (18 weekly ones in rotation, from Blind Luck and Triple Trouble to Streaker, Pile Diver and Daily Grinder), the Daily Gauntlet, a login streak and milestones. During every seasonal event a Seasonal tab adds four big event-long challenges and a Season Complete bonus. Tap your completed count to see every challenge you've finished.
@@ -82,7 +84,7 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 
 ## Tech
 
-- The whole game is one file, [`index.html`](index.html), with plain JavaScript and no build step.
+- The game is plain JavaScript with no build step: [`index.html`](index.html) holds the markup, and the code lives in script files beside it (`app.js`, `shop.js`, `home-navigation.js`, `tutorial.js`, `js/`…). See [`CLAUDE.md`](CLAUDE.md) for the layout.
 - It's hosted on **Firebase Hosting**, and every push to `main` deploys automatically.
 - **Firebase Realtime Database** handles online rooms, profiles and friends.
 - **Firebase Auth** handles sign-in (Google or email).

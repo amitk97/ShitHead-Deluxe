@@ -1720,7 +1720,7 @@ async function runDevTestSuite() {
       assertEqual(tap(hand.find(c => c.rank === 'K')), 3, 'A King still selects all three');
       protectBestCards = false;
       ['2', '3', '10', 'A'].forEach(r => assertEqual(tap(hand.find(c => c.rank === r)), 3, `${r}: all three with the setting off`));
-      assertEqual(readPref('shithead_protect_best', true), true, 'On by default (nothing stored)');
+      assertEqual(readPref('shithead_protect_best', false), false, 'Off by default (nothing stored)');
       assertTrue(collectAccountSettings().protectBestCards === false, 'The setting is synced with the account');
       assertTrue(!!document.querySelector('#settingsTab-gameplay #setProtectBestRow'), 'The row is in Gameplay');
     } finally { [selectAllOfRank, protectBestCards] = was; }
