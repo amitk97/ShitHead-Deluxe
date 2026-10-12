@@ -3831,6 +3831,15 @@
     // time — which matters tactically, so it can be flipped mid-game.
     // Declared up here with the other game state: it's referenced by the
     // toggle's UI sync, which runs during initial setup.
+    // Protect Best Cards (v339, owner, Gameplay setting, ON by default): Select All Of A
+    // Rank never grabs a pile of 2s, 3s, 10s or Aces (the cards worth saving): a tap on
+    // one of them selects just that card. Jokers are always single anyway.
+    const PROTECTED_BEST_RANKS = ['2', '3', '10', 'A'];
+    let protectBestCards = (() => {
+      try { return localStorage.getItem('shithead_protect_best') !== '0'; } catch (e) { return true; }
+    })();
+    const bestCardIsProtected = (rank) => protectBestCards && !tutorialActive && PROTECTED_BEST_RANKS.includes(rank); // lessons teach the plain toggle
+    const selectsWholeRank = (card) => selectAllOfRank && !card.isJoker && !bestCardIsProtected(card.rank);
     let selectAllOfRank = (() => {
       try { return localStorage.getItem('shithead_select_all_rank') === '1'; } catch (e) { return false; }
     })();
@@ -6883,7 +6892,7 @@
       // With the toggle ON, one tap grabs every card of that rank — saving a
       // lot of tapping on mobile. Jokers are always excluded: they can only
       // ever be played one at a time.
-      if (selectAllOfRank && !card.isJoker) {
+      if (selectsWholeRank(card)) {
         const sameRank = pool.filter(c => c.rank === card.rank);
         const allSelected = sameRank.every(c => state.selectedPlayCardIds.includes(c.id));
         state.selectedPlayCardIds = allSelected ? [] : sameRank.map(c => c.id);
@@ -8396,7 +8405,7 @@
           // mind, so un-stage it. With the rank toggle ON the whole rank goes
           // together, otherwise it would leave a partial selection the toggle
           // is specifically meant to prevent.
-          if (selectAllOfRank && !card.isJoker) {
+          if (selectsWholeRank(card)) {
             const pool = getAllSelectablePool(local);
             const sameRankIds = pool.filter(c => c.rank === card.rank).map(c => c.id);
             state.selectedPlayCardIds = state.selectedPlayCardIds.filter(id => !sameRankIds.includes(id));
@@ -9203,6 +9212,7 @@
     function refreshSettingsUI() {
       paintToggle(document.getElementById('setIconsState'), showCardIcons);
       paintToggle(document.getElementById('setRankState'), selectAllOfRank);
+      paintToggle(document.getElementById('setProtectBestState'), protectBestCards);
       paintToggle(document.getElementById('setEmotesState'), !emotesMuted);
       paintToggle(document.getElementById('setFullscreenState'), !!document.fullscreenElement);
       paintToggle(document.getElementById('setContrastState'), highContrast);
@@ -13617,6 +13627,7 @@
         speedIndex: Number.isInteger(speedWantedIndex) ? speedWantedIndex : Number.isInteger(state?.speedIndex) ? state.speedIndex : DEFAULT_SPEED_INDEX,
         deckTheme: state?.deckTheme || 'theme-obsidian',
         selectAllOfRank: !!selectAllOfRank,
+        protectBestCards: !!protectBestCards,
         masterVolume: Math.max(0, Math.min(100, Number(masterVolume) || 0)),
         showCardIcons: !!showCardIcons,
         highContrast: !!highContrast,
@@ -13678,6 +13689,7 @@
           ['notifySoundOn','shithead_notify_sound',v => { notifySoundOn=v; }],
           ['dealAnimationOn','shithead_deal_animation',v => { dealAnimationOn=v; }],
           ['handSortByPower','shithead_hand_sort_power',v => { handSortByPower=v; }],
+          ['protectBestCards','shithead_protect_best',v => { protectBestCards=v; }],
           ['whatsNewOn','shithead_whats_new',v => { whatsNewOn=v; }],
           ['emotesMuted','shithead_emotes_muted',v => { emotesMuted=v; }]
         ];
@@ -19597,6 +19609,12 @@
       state.selectedPlayCardIds = [];
       updateMultiSelectToggleUI(); refreshSettingsUI(); render(); scheduleSettingsCloudSave();
     });
+    document.getElementById('setProtectBestRow').addEventListener('click', () => {
+      protectBestCards = !protectBestCards; writePref('shithead_protect_best', protectBestCards);
+      state.selectedPlayCardIds = [];
+      refreshSettingsUI(); scheduleSettingsCloudSave();
+      if (state.phase && state.phase !== 'LOBBY') render();
+    });
     document.getElementById('setFullscreenRow').addEventListener('click', () => {
       toggleFullscreen();
       setTimeout(refreshSettingsUI, 120);
@@ -20806,7 +20824,7 @@
         if (matching.length > 0 && isPlayLegal(matching[0], state.discardPile, state.activeConstraint)) {
           // Default is a single card — the toggle is what opts into grabbing
           // the whole rank, matching how tapping behaves.
-          const takeAll = selectAllOfRank && !selectOnlyOne;
+          const takeAll = selectAllOfRank && !selectOnlyOne && !bestCardIsProtected(targetRank);
           state.selectedPlayCardIds = takeAll ? matching.map(c => c.id) : [matching[0].id];
           render();
         }

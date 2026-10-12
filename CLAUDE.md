@@ -1,3 +1,7 @@
+## v339 — Protect Best Cards
+
+- Gameplay setting `protectBestCards` (row `#setProtectBestRow`, localStorage `shithead_protect_best`, **default ON**, synced in `users/{uid}/settings` via `collectAccountSettings` / the `boolPrefs` list). With Select All Of A Rank on, tapping, un-staging by drag, or pressing the rank key for a 2, 3, 10 or Ace (`PROTECTED_BEST_RANKS`; Jokers are always single) selects just that card; every other rank still selects the whole rank. `bestCardIsProtected(rank)` / `selectsWholeRank(card)` are the two checks; lessons (`tutorialActive`) ignore the setting so they teach the plain toggle. Dev test "Protect Best Cards…". Row order stays alphabetical (Hand Sort, Protect Best Cards, Select All Of A Rank).
+
 ## v338 — the card under a 3
 
 - When the top Pile card is a transparent 3, the render of `#discardCardsWrapper` (`app.js`, "2. Discard, Deck & Base HUD") draws the card that really has to be beaten (`state.baseOverrideCard || getEffectiveTopCard(pile)`) at the back as `.pile-peek` (shifted `translate(-26%, -14%) rotate(-9deg)`, gold hairline) so its rank/suit corner shows, then at most two 3s on top. Cards under the covered card are not drawn. Not shown when only 3s are on the Pile. Layout never moves (cards are absolute in the fixed-size pile). House rules use `isTransparentCard`, so a house "transparent" card works the same. Dev test "A 3 on the Pile: the card it covers is tucked under the 3s…".

@@ -1705,6 +1705,26 @@ async function runDevTestSuite() {
   });
 
   // ---- REGRESSION: rank toggle must never leave a partial selection ----
+  await test('Protect Best Cards: Select All Of A Rank picks one 2, 3, 10 or Ace but still every other rank (v339)', () => {
+    const was = [selectAllOfRank, protectBestCards];
+    try {
+      freshState({ discardPile: [makeCard('4')], drawPile: [] });
+      const mk = (r) => [makeCard(r, '♠'), makeCard(r, '♥'), makeCard(r, '♦')];
+      const hand = [...mk('2'), ...mk('3'), ...mk('10'), ...mk('A'), ...mk('K')];
+      state.players = [makePlayer({ id: 'p1', hand }), makePlayer({ id: 'p2', isBot: true })];
+      state.localPlayerId = 'p1'; state.currentTurnIndex = 0;
+      selectAllOfRank = true; protectBestCards = true;
+      const pool = getAllSelectablePool(state.players[0]);
+      const tap = (c) => { state.selectedPlayCardIds = []; toggleCardSelection(c.id, pool); return state.selectedPlayCardIds.length; };
+      ['2', '3', '10', 'A'].forEach(r => assertEqual(tap(hand.find(c => c.rank === r)), 1, `${r}: just the one tapped`));
+      assertEqual(tap(hand.find(c => c.rank === 'K')), 3, 'A King still selects all three');
+      protectBestCards = false;
+      ['2', '3', '10', 'A'].forEach(r => assertEqual(tap(hand.find(c => c.rank === r)), 3, `${r}: all three with the setting off`));
+      assertEqual(readPref('shithead_protect_best', true), true, 'On by default (nothing stored)');
+      assertTrue(collectAccountSettings().protectBestCards === false, 'The setting is synced with the account');
+      assertTrue(!!document.querySelector('#settingsTab-gameplay #setProtectBestRow'), 'The row is in Gameplay');
+    } finally { [selectAllOfRank, protectBestCards] = was; }
+  });
   await test('REGRESSION: un-staging with the rank toggle ON clears the whole rank', () => {
     freshState({ discardPile: [makeCard('4')], drawPile: [] });
     const kings = [makeCard('K','♠'), makeCard('K','♥'), makeCard('K','♦')];
