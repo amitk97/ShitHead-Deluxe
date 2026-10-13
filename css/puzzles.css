@@ -1,0 +1,44 @@
+/* Weekly Puzzles (v341) */
+.mp-open { flex: none; padding: 6px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: #1a1204; background: #fbbf24; }
+.mp-open:hover { background: #fcd34d; }
+.pz-card-box { position: relative; width: 100%; max-width: 420px; max-height: 100%; overflow-y: auto; box-sizing: border-box; padding: 18px 16px 14px;
+  background: #0b1428; border: 1px solid rgba(251,191,36,.35); border-radius: 18px; color: #e2e8f0; box-shadow: 0 20px 60px rgba(0,0,0,.55); }
+.pz-kicker { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #fbbf24; }
+.pz-title { margin: 2px 0 0; font-size: 20px; font-weight: 900; color: #f8fafc; }
+.pz-tier { font-size: 11px; color: #94a3b8; margin-top: 2px; letter-spacing: .04em; }
+.pz-goal { margin: 10px 0; font-size: 12px; line-height: 1.5; color: #94a3b8; }
+.pz-table { border-radius: 14px; padding: 12px; background: radial-gradient(120% 140% at 50% 0%, #14532d, #052e16); border: 1px solid rgba(255,255,255,.08); text-align: center; }
+.pz-pile { display: flex; justify-content: center; align-items: center; min-height: 74px; padding-left: 26px; }
+.pz-pile .pz-card { margin-left: -26px; }
+.pz-empty { font-size: 12px; color: #86efac; opacity: .8; }
+.pz-rule { margin-top: 8px; font-size: 12px; font-weight: 700; color: #fde68a; }
+.pz-status { min-height: 34px; margin: 10px 0 4px; font-size: 12px; line-height: 1.4; color: #cbd5e1; }
+.pz-status[data-tone="good"] { color: #86efac; }
+.pz-status[data-tone="bad"] { color: #fca5a5; }
+.pz-hand { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 6px 0 10px; }
+.pz-card { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 46px; height: 64px; box-sizing: border-box;
+  border-radius: 8px; background: #f8fafc; color: #0f172a; border: 1px solid #94a3b8; box-shadow: 0 2px 6px rgba(0,0,0,.35); line-height: 1;
+  transition: transform .18s var(--ease-snappy, ease), box-shadow .18s, border-color .18s; user-select: none; }
+.pz-card b { font-size: 18px; font-weight: 900; }
+.pz-card i { font-style: normal; font-size: 18px; margin-top: 2px; }
+.pz-red { color: #b91c1c; }
+#pzHand .pz-card { cursor: pointer; }
+#pzHand .pz-card:hover { transform: translateY(-3px); }
+#pzHand .pz-card:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+.pz-sel { transform: translateY(-9px) !important; border-color: #fbbf24; box-shadow: 0 0 0 2px #fbbf24, 0 6px 12px rgba(0,0,0,.45); }
+.pz-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pz-btn { padding: 7px 11px; border-radius: 10px; font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+  color: #cbd5e1; border: 1px solid #475569; background: transparent; }
+.pz-btn:hover:not(:disabled) { background: rgba(148,163,184,.14); }
+.pz-btn:disabled { opacity: .4; }
+.pz-primary { color: #1a1204; background: #fbbf24; border-color: #fbbf24; }
+.pz-primary:hover:not(:disabled) { background: #fcd34d; }
+.pz-quiet { border-color: transparent; color: #94a3b8; }
+.pz-plays { margin-left: auto; font-size: 11px; color: #94a3b8; }
+.pz-pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
+.pz-note { font-size: 11px; color: #94a3b8; margin-right: 4px; }
+.pz-chip { min-width: 34px; padding: 5px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; color: #cbd5e1; border: 1px solid #475569; }
+.pz-chip.on { color: #1a1204; background: #fbbf24; border-color: #fbbf24; }
+body.reduce-motion .pz-card { transition: none; }
+@media (max-width: 380px) { .pz-card { width: 40px; height: 56px; } .pz-card b, .pz-card i { font-size: 15px; } }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-12-v340 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-13-v341 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -15,6 +15,7 @@
 <html lang="en" class="dark">
 <head>
   <link rel="stylesheet" href="css/friends-lobby.css?v=245eed70ee85">
+  <link rel="stylesheet" href="css/puzzles.css?v=1">
   <link rel="stylesheet" href="css/welcome-tour.css?v=9d478452ecd0">
   <meta charset="UTF-8" />
   <script>
@@ -781,7 +782,7 @@
             <p class="mp-lead">New ways to play are on the way.</p>
             <ul class="mp-list">
               <li class="mp-row"><span class="mp-row-text"><b>2 vs 2</b><span>Team up with a partner. Your team wins when you are both out.</span></span><span class="mp-soon">Soon</span></li>
-              <li class="mp-row"><span class="mp-row-text"><b>Puzzles</b><span>A set table and one way to win. A new puzzle every week.</span></span><span class="mp-soon">Soon</span></li>
+              <li class="mp-row"><span class="mp-row-text"><b>Puzzles</b><span>A set table and one way to win. A new puzzle every week.</span></span><button type="button" class="mp-open" data-open-puzzles>Play</button></li>
               <li class="mp-row"><span class="mp-row-text"><b>Randomiser</b><span>Card powers are shuffled every match and shown before the deal.</span></span><span class="mp-soon">Soon</span></li>
               <li class="mp-row"><span class="mp-row-text"><b>Multiple Decks</b><span>More decks shuffled together for bigger tables.</span></span><span class="mp-soon">Soon</span></li>
               <li class="mp-row"><span class="mp-row-text"><b>No Mercy</b><span>Queens see hidden cards, no Jokers on a 4, and a King makes the next player take the bottom card.</span></span><span class="mp-soon">Soon</span></li>
@@ -2132,6 +2133,31 @@
       <div id="modeIntroBody"></div>
     </div>
   </div>
+  <div id="puzzlesModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="pzTitle">
+    <div class="pz-card-box">
+      <button type="button" id="pzClose" class="gauntlet-close" aria-label="Close">✕</button>
+      <div class="pz-kicker">Weekly Puzzle</div>
+      <h2 id="pzTitle" class="pz-title"></h2>
+      <div id="pzTier" class="pz-tier"></div>
+      <p class="pz-goal">Play every card in your Hand in a single turn. Only a burn (a 10 or four of a kind) and a skip (an 8) give you another go.</p>
+      <div class="pz-table">
+        <div id="pzPile" class="pz-pile" aria-label="Pile"></div>
+        <div id="pzRule" class="pz-rule"></div>
+      </div>
+      <div id="pzStatus" class="pz-status" role="status" aria-live="polite"></div>
+      <div id="pzHand" class="pz-hand" aria-label="Your Hand"></div>
+      <div class="pz-actions">
+        <button type="button" id="pzPlay" class="pz-btn pz-primary">Play</button>
+        <button type="button" id="pzAll" class="pz-btn">All Of Rank</button>
+        <button type="button" id="pzUndo" class="pz-btn">Undo</button>
+        <button type="button" id="pzRestart" class="pz-btn">Restart</button>
+        <button type="button" id="pzHint" class="pz-btn">Hint</button>
+        <button type="button" id="pzGiveUp" class="pz-btn pz-quiet">Give Up</button>
+        <span id="pzPlays" class="pz-plays"></span>
+      </div>
+      <div id="pzPick" class="pz-pick"></div>
+    </div>
+  </div>
   <div id="rejoinModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-emerald-600/50 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
       <div class="text-4xl">🔄</div>
@@ -2554,13 +2580,15 @@
   <script src="home-navigation.js?v=d22717172477"></script>
   <script src="multiplayer-lobby.js?v=563279447523"></script>
   <script src="private-cosmetics.js?v=4f732484384c"></script>
-  <script src="app.js?v=1c312ea86ede"></script>
+  <script src="app.js?v=7a97da3129c9"></script>
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
   <script src="js/house-rules-presets.js?v=335"></script>
   <script src="js/friends-lobby.js?v=335"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
+  <script src="js/puzzle-engine.js?v=341"></script>
+  <script src="js/puzzles.js?v=342"></script>
   <script src="js/welcome-tour.js?v=1ec181602f01"></script>
 </body>
 </html>

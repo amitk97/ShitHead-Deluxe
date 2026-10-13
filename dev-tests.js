@@ -1725,6 +1725,36 @@ async function runDevTestSuite() {
       assertTrue(!!document.querySelector('#settingsTab-gameplay #setProtectBestRow'), 'The row is in Gameplay');
     } finally { [selectAllOfRank, protectBestCards] = was; }
   });
+  await test('Weekly Puzzles: the puzzle engine agrees with the real isPlayLegal, and AmitK has every puzzle (v341)', () => {
+    const E = window.ShPuzzleEngine, ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    let seed = 7; const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+    const pick = (a) => a[Math.floor(rnd() * a.length)];
+    const wasBase = state.baseOverrideCard;
+    try {
+      freshState({ drawPile: [] });
+      let checked = 0;
+      for (let i = 0; i < 1500; i++) {
+        const pile = Array.from({ length: Math.floor(rnd() * 6) }, () => pick(ranks));
+        const constraint = pick([null, null, 'EVEN', 'ODD', 'LOW7']);
+        const base = pile.length && rnd() < 0.3 ? pick(ranks) : null;
+        state.discardPile = pile.map(r => makeCard(r)); state.activeConstraint = constraint;
+        state.baseOverrideCard = base ? makeCard(base) : null;
+        ranks.forEach(r => {
+          assertEqual(E.legal(r, { hand: [], pile, constraint, base }), isPlayLegal(makeCard(r), state.discardPile, state.activeConstraint),
+            `${r} on [${pile}] ${constraint || '-'} base ${base || '-'}`);
+          checked++;
+        });
+      }
+      assertTrue(checked > 10000, 'many positions compared');
+    } finally { state.baseOverrideCard = wasBase; }
+    const was = currentUser;
+    try {
+      currentUser = { email: 'amirk2197@googlemail.com' };
+      assertEqual(ShPuzzles.availablePuzzles().length, 5, 'AmitK (test account) always has every weekly puzzle');
+      currentUser = { email: 'someone@example.com' };
+      assertEqual(ShPuzzles.availablePuzzles().length, 1, 'Everyone else only gets this week\'s');
+    } finally { currentUser = was; }
+  });
   await test('REGRESSION: un-staging with the rank toggle ON clears the whole rank', () => {
     freshState({ discardPile: [makeCard('4')], drawPile: [] });
     const kings = [makeCard('K','♠'), makeCard('K','♥'), makeCard('K','♦')];

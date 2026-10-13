@@ -1,3 +1,9 @@
+## v341 — Weekly Puzzles (prototype)
+
+- **Puzzles** (More Modes → Puzzles → Play, `#puzzlesModal`, `js/puzzles.js`, `css/puzzles.css`): a set Hand and Pile, goal "play the whole Hand in ONE turn" on a two-player table with no Deck and no Jokers. Only a burn (a 10, four of a kind), an 8, a 5 on a base 8 and a 3 over an 8 give another go. Five hand-picked puzzles (tiers 1–5, `PUZZLES`); the puzzle of the week rotates by UK week key (`puzzleIndexForWeek`); other players only see this week's. Tools: Select, Play, All Of Rank, Undo, Restart, Hint (idea first, then the move), Give Up. Solved ticks live in localStorage `shithead_puzzles_solved` (device only). **No XP or Diamonds yet**: paying for puzzles needs the server to re-check the submitted moves against the solution.
+- **AmitK test account: always has ALL the weekly puzzles** (`hasAllPuzzles`, same check as `isAmitkTestingAccount`; the chips 1–5 pick a puzzle). Owner's rule, like the Shop exception: it's a test account, not a gameplay unlock elsewhere.
+- **Solver** `js/puzzle-engine.js` (browser + node): `legal`, `play`, `moves`, `solve` (all winning lines). It copies `isPlayLegal` / `executePlayCards`; a dev test compares `legal` with the real `isPlayLegal` on 19,500 random positions (the "go again" rules are checked by hand in `tools/puzzles-test.js`). New puzzles: `node tools/puzzle-search.js` finds positions with one or two winning lines, curate by hand, add to `PUZZLES`; `node tools/puzzles-test.js` insists on 1–2 solutions per puzzle. Browser test: `node tools/puzzles-browser-test.js` (320/390/1440).
+
 ## v340 — Protect Best Cards is OFF by default
 
 - Owner's call after v339: the default is OFF (`protectBestCards` reads `localStorage shithead_protect_best === '1'`; row shows OFF until toggled). Everything else below is unchanged. A player whose account already saved `protectBestCards: true` keeps it.
@@ -198,6 +204,7 @@ Web game on Firebase Hosting + Realtime Database (project `shithead-pro`). Since
 
 - Username `AmitK` / email `amirk2197@googlemail.com` (`isAmitkTestingAccount`).
 - Gets a one-time, real 999,999 Diamond balance, granted by the server (economy `init`, checked by the signed-in account's **verified email**, marker `amitKShopTestGrantV4Done`). Spending reduces it; it is never refilled. The server also lets this email buy every event's seasonal items any time.
+- Also (v341, owner): AmitK always has **every weekly puzzle** open (`ShPuzzles.hasAllPuzzles`). Test account only.
 - The exception is **Shop spending only**. Do not unlock gameplay (bot difficulties, ranked, etc.) for this account.
 
 ## Server economy (anti-cheat)

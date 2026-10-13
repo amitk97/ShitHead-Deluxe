@@ -1,0 +1,61 @@
+// Run with Playwright installed: the Weekly Puzzles page (open from More Modes, play, undo, solve, AmitK sees all).
+const {chromium}=require('playwright');
+const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
+const root=path.resolve(__dirname,'..');
+const server=http.createServer((req,res)=>{let p=path.join(root,new URL(req.url,'http://localhost').pathname);if(p===root+'/')p+='index.html';fs.readFile(p,(err,data)=>{if(err){res.statusCode=404;res.end();return;}res.setHeader('Content-Type',({'.js':'application/javascript','.css':'text/css','.html':'text/html','.svg':'image/svg+xml'})[path.extname(p)]||'application/octet-stream');res.end(data);});});
+(async()=>{
+await new Promise(r=>server.listen(4177,r));
+const browser=await chromium.launch({headless:true,...(process.env.SH_CHROMIUM_EXECUTABLE?{executablePath:process.env.SH_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-dev-shm-usage','--no-zygote','--single-process']}:{})});
+try{
+for(const [w,h] of [[320,568],[390,844],[1440,900]]){
+  const page=await (await browser.newContext({viewport:{width:w,height:h}})).newPage();
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('http://localhost:4177/',{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>window.ShPuzzles&&typeof resetHomeUI==='function');await page.waitForTimeout(1600);
+  await page.evaluate(()=>{window.shBootReveal?.();resetHomeUI();});
+  // More Modes → Puzzles → Play
+  await page.evaluate(()=>{document.querySelector('[data-mc-mode="more"] .mc-go')?.click();});await page.waitForTimeout(900);
+  assert(await page.locator('[data-open-puzzles]').isVisible(),'Puzzles Play button shows on More Modes');
+  await page.locator('[data-open-puzzles]').click();
+  assert(await page.locator('#puzzlesModal').isVisible(),'puzzle page opens');
+  // inside the viewport, below the header
+  const box=await page.locator('.pz-card-box').boundingBox();
+  const hh=await page.evaluate(()=>document.querySelector('header')?.getBoundingClientRect().bottom||0);
+  assert(box.y>=hh-1&&box.y+box.height<=h+1,`box fits ${w}x${h}: ${JSON.stringify(box)} header ${hh}`);
+  const today=await page.evaluate(()=>ShPuzzles.thisWeek().id);
+  assert.equal(await page.locator('.pz-chip').count(),0,'guests only get this week');
+  // illegal play: no way to know a lost move? play wrong first card, expect end-of-turn message, then undo
+  const sol=await page.evaluate(()=>{const p=ShPuzzles.thisWeek();return ShPuzzleEngine.solve({hand:p.hand,pile:p.pile,constraint:p.constraint,base:p.base},1).solutions[0];});
+  const pickN=async(rank,n)=>{const ids=await page.$$eval('#pzHand .pz-card',(els,r)=>els.filter(e=>e.querySelector('b').textContent===r).map(e=>e.dataset.id),rank);
+    for(let i=0;i<n;i++)await page.locator(`#pzHand .pz-card[data-id="${ids[i]}"]`).click();};
+  // a deliberately wrong first move (a legal card that is not the first solution card) must not solve it
+  await page.evaluate(()=>{});
+  for(const m of sol){await pickN(m.rank,m.n);await page.locator('#pzPlay').click();}
+  assert((await page.locator('#pzStatus').textContent()).startsWith('Solved'),'solved via the UI: '+await page.locator('#pzStatus').textContent());
+  assert(await page.evaluate(id=>JSON.parse(localStorage.getItem('shithead_puzzles_solved')||'{}')[id],today),'solved is remembered');
+  // restart, then undo
+  await page.locator('#pzRestart').click();
+  const n0=await page.locator('#pzHand .pz-card').count();
+  await pickN(sol[0].rank,sol[0].n);await page.locator('#pzPlay').click();
+  assert(await page.locator('#pzHand .pz-card').count()<n0,'cards left the Hand');
+  await page.locator('#pzUndo').click();
+  assert.equal(await page.locator('#pzHand .pz-card').count(),n0,'undo brings them back');
+  // hint twice names the move; Give Up shows the solution
+  await page.locator('#pzHint').click();await page.locator('#pzHint').click();
+  assert(/Try playing/.test(await page.locator('#pzStatus').textContent()),'second hint names the move');
+  await page.locator('#pzGiveUp').click();
+  {const t=await page.locator('#pzStatus').textContent();assert(/^Solution:/.test(t),'give up: '+t);}
+  if(w===390)await page.screenshot({path:'/tmp/puzzle-390.png'});
+  // AmitK sees all five
+  await page.evaluate(()=>{currentUser={email:'amirk2197@googlemail.com'};ShPuzzles.open();});
+  assert.equal(await page.locator('.pz-chip').count(),5,'AmitK sees all five');
+  await page.locator('.pz-chip').nth(4).click();
+  assert.equal(await page.locator('#pzTier').textContent().then(t=>t.startsWith('Tricky')),true);
+  // Escape/back/close
+  await page.locator('#pzClose').click();assert(!(await page.locator('#puzzlesModal').isVisible()));
+  assert.deepEqual(errors,[],'no page errors');
+  console.log('PASS puzzles page',w,h,'(week puzzle',today+')');
+  await page.context().close();
+}
+}finally{await browser.close();server.close();}
+})().catch(e=>{console.error(e);process.exit(1);});

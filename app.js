@@ -109,7 +109,7 @@
     // browsers' compositing) made their position:fixed boxes start at the
     // table's top instead of the screen's, pushing the top and X of a tall
     // page (e.g. Profile on iPhone) under the header.
-    ['houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
+    ['puzzlesModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
      'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
@@ -20409,7 +20409,7 @@
       giftOpenModal: 'giftOpenClose', giftModal: 'giftModalClose', installHelpModal: 'installHelpClose',
       dailyRewardModal: () => closeDailyReward(), playerPopup: 'playerPopupClose', matchSummaryModal: 'matchSummaryClose',
       authModal: 'authCloseBtn', usernameModal: null, difficultyUnlockPopup: 'difficultyUnlockPopupBtn',
-      matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
+      matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), puzzlesModal: () => window.ShPuzzles?.close(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', levelLadderModal: 'levelLadderCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn', changelogModal: 'changelogCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',

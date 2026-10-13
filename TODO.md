@@ -33,7 +33,7 @@ Owner's backlog. Don't build an item until the owner asks for it.
 They are listed on the More Modes page (v320); each becomes its own carousel card and page when it goes live.
 
 - [ ] **2 vs 2**: teams of two, partners sit opposite each other, and a team wins when both partners are out.
-- [ ] **Puzzles**: set positions to solve, like Chess.com puzzles ("win in 2 turns"). The owner wants a weekly puzzle, not a daily one.
+- [~] **Puzzles**: v341 prototype shipped (5 weekly "out in one turn" puzzles, solver, AmitK sees all). Still to do: more puzzles/goal types (burn, make the Rival pick up), XP/Diamond rewards with server-side move checking, Guide section.
 - [ ] **Randomiser Mode**: card powers are shuffled each match and shown up front.
 - [ ] **Multiple Decks**: 2+ decks for bigger tables and longer games.
 - [ ] **No Mercy**: harsher rules.
