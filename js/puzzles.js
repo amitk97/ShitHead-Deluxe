@@ -124,6 +124,7 @@
     const pileEl = $('#pzPile'); pileEl.replaceChildren();
     if (st.pile.length) st.pile.slice(-5).forEach(c => pileEl.append(cardEl(c, 'card-table'))); else pileEl.innerHTML = '<span class="pz-empty">Empty Pile</span>';
     paintTable(); paintYou();
+    requestAnimationFrame(fit);
     $('#pzRule').textContent = ruleLine();
     const handEl = $('#pzHand'); handEl.replaceChildren();
     if (st.hand.length) st.hand.forEach(c => { const el = cardEl(c, 'card-base', picked.has(c.id) ? 'pz-sel' : ''); el.tabIndex = 0; el.setAttribute('role', 'button'); handEl.append(el); });
@@ -138,6 +139,14 @@
       ? `<span class="pz-note">Test account: every weekly puzzle is open.</span>` + list.map((p, i) => `<button type="button" class="pz-chip ${p.id === puzzle.id ? 'on' : ''}" data-pz="${p.id}" title="${p.title}">${i + 1}${solved[p.id] ? ' ✓' : ''}</button>`).join('')
       : (solved[puzzle.id] ? '<span class="pz-note">Solved. A new puzzle arrives next week.</span>' : '<span class="pz-note">This week’s puzzle. A new one arrives every week.</span>');
   }
+  // Everything fits the screen with no scrolling: shrink the cards (CSS --pzw) until the box stops overflowing.
+  function fit() {
+    const box = document.querySelector('#puzzlesModal .pz-card-box'); if (!box || !modal || modal.classList.contains('hidden')) return;
+    const shrink = (min) => { for (let w = 64; w >= min; w -= 2) { box.style.setProperty('--pzw', w + 'px'); if (box.scrollHeight <= box.clientHeight + 1) return true; } return false; };
+    box.classList.remove('pz-tight');
+    if (!shrink(44)) { box.classList.add('pz-tight'); shrink(26); } // short screens: drop the extra lines too
+  }
+  window.addEventListener('resize', fit);
   function toggle(id) {
     if (over) return;
     const c = st.hand.find(x => x.id === id); if (!c) return;
@@ -219,7 +228,7 @@
     modal = document.getElementById('puzzlesModal'); if (!modal) return;
     const list = availablePuzzles();
     load(list.find(p => p.id === id) || current || thisWeek()); current = puzzle;
-    modal.classList.remove('hidden');
+    modal.classList.remove('hidden'); fit();
   }
   function close() { modal && modal.classList.add('hidden'); }
 

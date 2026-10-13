@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v350: [['sparkle', 'The puzzle page now fits on one screen with no scrolling, and Select All Of A Rank is a single icon button.']],
       v349: [['sparkle', 'Puzzles now look like the real game table and use your equipped table, deck, card frame, avatar, Burn and Victory effects. A game mode can only be pinned to one shortcut.']],
       v348: [['sparkle', 'Every game mode now has its own colour, and a pinned shortcut shows its mode\'s colour. The Puzzles icon is a proper puzzle piece.']],
       v347: [['gem', 'Weekly puzzles now pay 50 Diamonds and 50 XP. Select All Of A Rank works from the start of a puzzle.', WN_KEY]],

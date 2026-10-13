@@ -1,3 +1,7 @@
+## v350 (owner) — puzzles fit one screen
+
+- `fit()` in `js/puzzles.js` shrinks the cards (CSS `--pzw` on `.pz-card-box`, 64px down to 26px) until the box has no overflow, on every draw, open and resize; the box is `overflow:hidden`, so scrolling is never needed. `#pzAll` is the round icon button (`#ui-select-rank` + the green/red dot; the words are its `aria-label`/`title`).
+
 ## v349 (owner) — one pin per mode, puzzles use the game's look
 
 - A mode can sit in only ONE shortcut slot: `openPinPicker` disables the mode pinned in the other slot, the click handler refuses it, and `readPins` drops a duplicate already in storage.

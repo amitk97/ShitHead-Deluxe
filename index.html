@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-13-v349 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-13-v350 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -15,7 +15,7 @@
 <html lang="en" class="dark">
 <head>
   <link rel="stylesheet" href="css/friends-lobby.css?v=245eed70ee85">
-  <link rel="stylesheet" href="css/puzzles.css?v=4">
+  <link rel="stylesheet" href="css/puzzles.css?v=9">
   <link rel="stylesheet" href="css/welcome-tour.css?v=9d478452ecd0">
   <meta charset="UTF-8" />
   <script>
@@ -2152,7 +2152,7 @@
       <div id="pzHand" class="pz-hand" aria-label="Your Hand"></div>
       <div class="pz-actions">
         <button type="button" id="pzPlay" class="pz-btn pz-primary">Play</button>
-        <button type="button" id="pzAll" class="pz-btn pz-toggle" aria-pressed="false"><i class="pz-dot" aria-hidden="true"></i>Select All Of A Rank</button>
+        <button type="button" id="pzAll" class="pz-btn pz-toggle" aria-pressed="false" aria-label="Select All Of A Rank" title="Select All Of A Rank"><svg class="rank-toggle-svg" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-select-rank"/></svg><i class="pz-dot" aria-hidden="true"></i></button>
         <button type="button" id="pzUndo" class="pz-btn">Undo</button>
         <button type="button" id="pzRestart" class="pz-btn">Restart</button>
         <button type="button" id="pzHint" class="pz-btn">Hint</button>
@@ -2614,7 +2614,7 @@
   <script src="js/friends-lobby.js?v=335"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=346"></script>
-  <script src="js/puzzles.js?v=349"></script>
+  <script src="js/puzzles.js?v=350"></script>
   <script src="js/welcome-tour.js?v=1ec181602f01"></script>
 </body>
 </html>
