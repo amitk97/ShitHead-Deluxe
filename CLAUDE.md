@@ -1,3 +1,7 @@
+## v351 — Rival visibly acts in puzzles
+
+- `st.rival` (cards {id, rank, suit}) is part of the puzzle state (undo snapshots it). When a pickup puzzle's turn ends: a legal Rival card is played onto the Pile and the page says so, with Restart turning into a gold **Try Again** (`tryAgain()`; Undo/Restart reset it); when none is legal the Rival picks the Pile up (their row grows) and the puzzle is solved. Every failed end (Rival plays on, Hand empty too early, `maxPlays` hit) also shows Try Again.
+
 ## v350 (owner) — puzzles fit one screen
 
 - `fit()` in `js/puzzles.js` shrinks the cards (CSS `--pzw` on `.pz-card-box`, 64px down to 26px) until the box has no overflow, on every draw, open and resize; the box is `overflow:hidden`, so scrolling is never needed. `#pzAll` is the round icon button (`#ui-select-rank` + the green/red dot; the words are its `aria-label`/`title`).

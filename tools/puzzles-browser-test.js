@@ -31,7 +31,7 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]].filter(s=>!process.env.PZ_W|
   // a deliberately wrong first move (a legal card that is not the first solution card) must not solve it
   await page.evaluate(()=>{});
   for(const m of sol){await pickN(m.rank,m.n);await page.locator('#pzPlay').click();}
-  assert((await page.locator('#pzStatus').textContent()).startsWith('Solved'),'solved via the UI: '+await page.locator('#pzStatus').textContent());
+  assert((await page.locator('#pzStatus').textContent()).includes('Solved'),'solved via the UI: '+await page.locator('#pzStatus').textContent());
   assert.match(await page.locator('#pzStatus').textContent(),/Sign in to earn 50 Diamonds/,'guests are told how to earn');
   assert.match(await page.locator('#pzReward').textContent(),/50 Diamonds/);
   assert(await page.evaluate(id=>JSON.parse(localStorage.getItem('shithead_puzzles_solved')||'{}')[id],today),'solved is remembered');
@@ -79,7 +79,7 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]].filter(s=>!process.env.PZ_W|
     assert.equal(s.rival,s.goal==='pickup','rival hand only for pickup puzzles');
     for(const m of s.sol){await pickN(m.rank,m.n);await page.locator('#pzPlay').click();}
     const t=await page.locator('#pzStatus').textContent();
-    assert(t.startsWith('Solved'),'puzzle '+(i+1)+' ('+s.goal+'): '+t);
+    assert(t.includes('Solved'),'puzzle '+(i+1)+' ('+s.goal+'): '+t);
   }
   // a pinned Puzzles shortcut opens the page, and a solved week shows on it
   await page.locator('#pzClose').click();

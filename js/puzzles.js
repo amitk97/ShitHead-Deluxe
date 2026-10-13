@@ -79,8 +79,8 @@
 
   function load(p) {
     puzzle = p; const d = dealCards(p);
-    st = { hand: d.hand, pile: d.pile, constraint: p.constraint, base: p.base };
-    undo = []; moveLog = []; gaveUp = false; picked = new Set(); over = null; plays = 0; say('Tap cards to pick them, then press Play.', '');
+    st = { hand: d.hand, pile: d.pile, constraint: p.constraint, base: p.base, rival: p.goal.type === 'pickup' ? p.goal.rival.map((r, i) => ({ id: 'r' + i, rank: r, suit: SUITS[i % 4] })) : [] };
+    undo = []; moveLog = []; { const b = $('#pzRestart'); b.classList.remove('pz-primary'); b.textContent = 'Restart'; } gaveUp = false; picked = new Set(); over = null; plays = 0; say('Tap cards to pick them, then press Play.', '');
     draw();
   }
   let plays = 0;
@@ -120,7 +120,7 @@
     $('#pzGoal').textContent = goalText(puzzle);
     $('#pzReward').textContent = `Solve it for ${REWARD_DIAMONDS} Diamonds${typeof XP_RULES !== 'undefined' && XP_RULES.puzzle ? ` and ${XP_RULES.puzzle} XP` : ''}, once a week. Give Up means no reward.`;
     const rv = $('#pzRival'); rv.hidden = puzzle.goal.type !== 'pickup';
-    if (!rv.hidden) { rv.replaceChildren(); const l = document.createElement('span'); l.className = 'pz-rival-label'; l.textContent = "Rival's Hand"; rv.append(l, ...puzzle.goal.rival.map((r, i) => cardEl({ id: 'r' + i, rank: r, suit: SUITS[i % 4] }, 'card-opponent-slot'))); }
+    if (!rv.hidden) { rv.replaceChildren(); const l = document.createElement('span'); l.className = 'pz-rival-label'; l.textContent = "Rival's Hand"; rv.append(l, ...st.rival.map(c => cardEl(c, 'card-opponent-slot'))); }
     const pileEl = $('#pzPile'); pileEl.replaceChildren();
     if (st.pile.length) st.pile.slice(-5).forEach(c => pileEl.append(cardEl(c, 'card-table'))); else pileEl.innerHTML = '<span class="pz-empty">Empty Pile</span>';
     paintTable(); paintYou();
@@ -177,22 +177,24 @@
     undo.push(JSON.stringify(st)); moveLog.push({ rank, n: cards.length }); plays++;
     const r = E.play(pos, rank, cards.length);
     if (r.burn) burnFx();
-    if (r.burn) { st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: [], constraint: null, base: null }; }
-    else st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: st.pile.concat(cards), constraint: r.pos.constraint, base: r.pos.base };
+    const rival = st.rival;
+    if (r.burn) { st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: [], constraint: null, base: null, rival }; }
+    else st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: st.pile.concat(cards), constraint: r.pos.constraint, base: r.pos.base, rival };
     picked = new Set();
-    const g = puzzle.goal, win = () => { over = 'won'; markSolved(puzzle.id); winFx(); const base = `Solved in ${plays} play${plays === 1 ? '' : 's'}.`; say(base, 'good'); draw(); claimReward(base); };
+    const g = puzzle.goal, win = (pre = '') => { over = 'won'; markSolved(puzzle.id); winFx(); const base = `${pre}Solved in ${plays} play${plays === 1 ? '' : 's'}.`; say(base, 'good'); draw(); claimReward(base); };
     if (g.type === 'out' && !st.hand.length) return win();
     if (g.type === 'burn' && r.burn) return win();
     if (g.type === 'pickup') {
-      if (!st.hand.length) { over = 'ended'; say('Your Hand is empty before the Rival is stuck. Undo or Restart.', 'bad'); draw(); return; }
+      if (!st.hand.length) { over = 'ended'; say('Your Hand is empty before the Rival is stuck. Press Try Again.', 'bad'); draw(); tryAgain(); return; }
       if (!r.again) {
-        const free = g.rival.find(c => E.legal(c, r.pos));
-        if (!free) return win();
-        over = 'ended'; say(`The Rival plays a ${free} and your turn is over. Undo or Restart.`, 'bad'); draw(); return;
+        const free = st.rival.find(c => E.legal(c.rank, r.pos));
+        if (!free) { st.pile.forEach(c => st.rival.push(c)); st.pile = []; return win('The Rival cannot play and picks up the Pile. '); }
+        over = 'ended'; st.rival = st.rival.filter(c => c !== free); st.pile = st.pile.concat(free);
+        say(`The Rival plays a ${free.rank} and your turn is over. Press Try Again.`, 'bad'); draw(); tryAgain(); return;
       }
     }
-    if (!r.again) { over = 'ended'; say('Your turn ends here and the Rival plays on. Undo or Restart.', 'bad'); draw(); return; }
-    if (g.maxPlays && plays >= g.maxPlays) { over = 'ended'; say(`That was play ${plays}, and the goal is not met. Undo or Restart.`, 'bad'); draw(); return; }
+    if (!r.again) { over = 'ended'; say('Your turn ends here and the Rival plays on, so the puzzle is not solved. Press Try Again.', 'bad'); draw(); tryAgain(); return; }
+    if (g.maxPlays && plays >= g.maxPlays) { over = 'ended'; say(`That was play ${plays}, and the goal is not met. Press Try Again.`, 'bad'); draw(); tryAgain(); return; }
     if (!E.canStillWin(r.pos, g, plays)) say('You get another go, but you can no longer reach the goal. Undo or Restart.', 'bad');
     else say(r.burn ? 'The Pile burns. Go again.' : rank === '8' ? '8 skips the Rival. Go again.' : `${rank} skips the Rival too. Go again.`, 'good');
     draw();
@@ -210,7 +212,9 @@
       else if (res.already && puzzle && puzzle.id === id && over === 'won') say(`${base} Already rewarded this week.`, 'good');
     }).catch((e) => { console.warn('Puzzle reward refused', e && e.message); });
   }
-  function doUndo() { if (!undo.length) return; st = JSON.parse(undo.pop()); moveLog.pop(); plays = Math.max(0, plays - 1); picked = new Set(); over = null; say('Undone.', ''); draw(); }
+  // A failed attempt says so and offers Restart; Undo still steps back one play.
+  function tryAgain() { const b = $('#pzRestart'); b.classList.add('pz-primary'); b.textContent = 'Try Again'; }
+  function doUndo() { if (!undo.length) return; st = JSON.parse(undo.pop()); moveLog.pop(); plays = Math.max(0, plays - 1); picked = new Set(); over = null; { const b = $('#pzRestart'); b.classList.remove('pz-primary'); b.textContent = 'Restart'; } say('Undone.', ''); draw(); }
   function doHint() {
     const s = E.solve(posOf(st), 1, goalOf(), plays).solutions[0];
     if (!s) { say('No way to the goal from here. Undo or Restart.', 'bad'); return; }

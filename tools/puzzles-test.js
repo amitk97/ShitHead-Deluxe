@@ -1,6 +1,6 @@
 // node tools/puzzles-test.js: every weekly puzzle has one or two winning lines, the week picks rotate, AmitK sees all.
 const assert = require('assert');
-global.window = global; global.document = { addEventListener() {}, getElementById() { return null; }, querySelectorAll() { return []; } };
+global.window = global; global.addEventListener = () => {}; global.requestAnimationFrame = () => {}; global.document = { addEventListener() {}, getElementById() { return null; }, querySelectorAll() { return []; } };
 global.localStorage = { getItem() { return null; }, setItem() {} };
 window.ShPuzzleEngine = require('../js/puzzle-engine.js');
 global.currentUser = { email: 'amirk2197@googlemail.com' };

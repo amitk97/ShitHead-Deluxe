@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v351: [['sparkle', 'Puzzles: when your turn ends without solving it, the Rival now plays a card you can see, and a Try Again button appears. When the Rival is stuck, they pick up the Pile.']],
       v350: [['sparkle', 'The puzzle page now fits on one screen with no scrolling, and Select All Of A Rank is a single icon button.']],
       v349: [['sparkle', 'Puzzles now look like the real game table and use your equipped table, deck, card frame, avatar, Burn and Victory effects. A game mode can only be pinned to one shortcut.']],
       v348: [['sparkle', 'Every game mode now has its own colour, and a pinned shortcut shows its mode\'s colour. The Puzzles icon is a proper puzzle piece.']],
