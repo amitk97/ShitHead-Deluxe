@@ -232,6 +232,7 @@
           paint();
           if (immediate) setModePage(m); else enterModePage(card, m);
         } else if (m === 'more') { if (immediate) setModePage('more'); else enterModePage(card, 'more'); }
+        else if (readPins()[m] === 'puzzles' && window.ShPuzzles) { window.ShPuzzles.open(); }
         else openPinPicker(card);
       }
       // § Shortcut pins (v323): slots 1 and 7 hold one of the coming modes
@@ -253,6 +254,8 @@
         cards.filter((c) => /^pin/.test(c.dataset.mcMode)).forEach((c) => {
           const m = PIN_MODES[pins[c.dataset.mcMode]];
           const num = '<span class="mc-num" aria-hidden="true">' + (cards.indexOf(c) + 1) + '</span>';
+          const live = pins[c.dataset.mcMode] === 'puzzles' && window.ShPuzzles;
+          if (live) { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">' + (window.ShPuzzles.solvedThisWeek() ? 'Solved this week' : 'Weekly puzzle') + '</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
           c.innerHTML = num + (m ? pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Coming soon</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-preview>Info</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>' : emptyPinHtml.replace(/data-mc-go(?:="")?>Go →/, 'data-mc-swap>Pin +'));
           c.classList.toggle('mc-pinned', !!m);
         });
@@ -537,7 +540,7 @@
       window.addEventListener('touchend', endTouch, { passive: false });
       window.addEventListener('touchcancel', endTouch, { passive: false });
       // For the welcome tour: turn to a mode's card (and say whether it exists).
-      window.ShHomeCarousel = { turnToMode: (m) => { const i = cards.findIndex((c) => c.dataset.mcMode === m); if (i < 0) return false; turnTo(i); return true; } };
+      window.ShHomeCarousel = { repaintPins: () => paintPins(), turnToMode: (m) => { const i = cards.findIndex((c) => c.dataset.mcMode === m); if (i < 0) return false; turnTo(i); return true; } };
       window.resetModeCarousel = () => {
         finishExpand(); endDrag({ type: 'cancel' }); stopHold(); touchId = null; lastTap = null; swiped = false;
         modePanelObservers.forEach(observer => observer.takeRecords());

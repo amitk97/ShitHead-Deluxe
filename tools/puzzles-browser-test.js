@@ -59,6 +59,12 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]]){
     const t=await page.locator('#pzStatus').textContent();
     assert(t.startsWith('Solved'),'puzzle '+(i+1)+' ('+s.goal+'): '+t);
   }
+  // a pinned Puzzles shortcut opens the page, and a solved week shows on it
+  await page.locator('#pzClose').click();
+  await page.evaluate(()=>{localStorage.setItem('shithead_home_pins',JSON.stringify({pin1:'puzzles'}));ShHomeCarousel.repaintPins();});
+  assert.match(await page.locator('[data-mc-mode="pin1"] .mc-sub').textContent(),/Weekly puzzle|Solved this week/);
+  await page.evaluate(()=>document.querySelector('[data-mc-mode="pin1"] [data-mc-go]').click());
+  assert(await page.locator('#puzzlesModal').isVisible(),'pinned Puzzles card opens the page');
   // Escape/back/close
   await page.locator('#pzClose').click();assert(!(await page.locator('#puzzlesModal').isVisible()));
   assert.deepEqual(errors,[],'no page errors');

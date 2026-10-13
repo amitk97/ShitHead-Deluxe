@@ -46,7 +46,13 @@
   const availablePuzzles = () => (hasAllPuzzles() ? PUZZLES : [thisWeek()]);
 
   const solvedSet = () => { try { return JSON.parse(localStorage.getItem(SOLVED_KEY) || '{}'); } catch { return {}; } };
-  function markSolved(id) { try { const s = solvedSet(); s[id] = 1; localStorage.setItem(SOLVED_KEY, JSON.stringify(s)); } catch {} }
+  const solvedThisWeek = () => !!solvedSet()[thisWeek().id];
+  // The More Modes row and a pinned Puzzles shortcut say when this week's puzzle is done.
+  function refreshBadges() {
+    document.querySelectorAll('[data-open-puzzles]').forEach(b => { b.textContent = solvedThisWeek() ? 'Solved ✓' : 'Play'; });
+    window.ShHomeCarousel?.repaintPins?.();
+  }
+  function markSolved(id) { try { const s = solvedSet(); s[id] = 1; localStorage.setItem(SOLVED_KEY, JSON.stringify(s)); } catch {} refreshBadges(); }
 
   // Cards get suits in turn so no rank shows the same suit twice.
   function dealCards(p) {
@@ -182,5 +188,6 @@
     if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggle(card.dataset.id); }
   });
 
-  window.ShPuzzles = { PUZZLES, GOAL_NAMES, goalText, puzzleIndexForWeek, thisWeek, availablePuzzles, hasAllPuzzles, open, close, dealCards };
+  window.ShPuzzles = { solvedThisWeek, PUZZLES, GOAL_NAMES, goalText, puzzleIndexForWeek, thisWeek, availablePuzzles, hasAllPuzzles, open, close, dealCards };
+  refreshBadges();
 })();
