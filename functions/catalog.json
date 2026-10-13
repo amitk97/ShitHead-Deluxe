@@ -1736,7 +1736,7 @@
   },
   "daily": 50,
   "weekly": 100,
-  "puzzle": 25,
+  "puzzle": 50,
   "seasonalBoost": 1.5,
   "levelUpDiamonds": 20,
   "milestoneEvery": 10,
@@ -1941,7 +1941,7 @@
  },
  "puzzles": {
   "reward": {
-   "diamonds": 5
+   "diamonds": 50
   },
   "list": [
    {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-13-v346 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-13-v347 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -15,7 +15,7 @@
 <html lang="en" class="dark">
 <head>
   <link rel="stylesheet" href="css/friends-lobby.css?v=245eed70ee85">
-  <link rel="stylesheet" href="css/puzzles.css?v=2">
+  <link rel="stylesheet" href="css/puzzles.css?v=3">
   <link rel="stylesheet" href="css/welcome-tour.css?v=9d478452ecd0">
   <meta charset="UTF-8" />
   <script>
@@ -2133,10 +2133,12 @@
       <div id="modeIntroBody"></div>
     </div>
   </div>
-  <div id="puzzlesModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="pzTitle">
-    <div class="pz-card-box">
-      <button type="button" id="pzClose" class="gauntlet-close" aria-label="Close">✕</button>
-      <div class="pz-kicker">Weekly Puzzle</div>
+  <div id="puzzlesModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="pzPageTitle">
+    <div class="pz-card-box w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4">
+      <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
+        <span id="pzPageTitle" class="text-[11px] font-black uppercase tracking-widest text-amber-400">Puzzles</span>
+        <button type="button" id="pzClose" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
+      </div>
       <h2 id="pzTitle" class="pz-title"></h2>
       <div id="pzTier" class="pz-tier"></div>
       <p id="pzGoal" class="pz-goal"></p>
@@ -2150,14 +2152,14 @@
       <div id="pzHand" class="pz-hand" aria-label="Your Hand"></div>
       <div class="pz-actions">
         <button type="button" id="pzPlay" class="pz-btn pz-primary">Play</button>
-        <button type="button" id="pzAll" class="pz-btn">All Of Rank</button>
+        <button type="button" id="pzAll" class="pz-btn pz-toggle" aria-pressed="false"><i class="pz-dot" aria-hidden="true"></i>Select All Of A Rank</button>
         <button type="button" id="pzUndo" class="pz-btn">Undo</button>
         <button type="button" id="pzRestart" class="pz-btn">Restart</button>
         <button type="button" id="pzHint" class="pz-btn">Hint</button>
-        <button type="button" id="pzGiveUp" class="pz-btn pz-quiet">Give Up</button>
+        <button type="button" id="pzGiveUp" class="pz-btn pz-danger">Give Up</button>
         <span id="pzPlays" class="pz-plays"></span>
-        <button type="button" id="pzHow" class="pz-btn pz-quiet">How puzzles work</button>
       </div>
+      <button type="button" id="pzHow" class="pz-how">How puzzles work</button>
       <div id="pzPick" class="pz-pick"></div>
     </div>
   </div>
@@ -2423,7 +2425,7 @@
             <p><strong class="text-amber-300">Burn the Pile</strong> &mdash; burn the Pile with a 10 or four of a kind, within the number of plays shown.</p>
             <p><strong class="text-amber-300">Rival picks up</strong> &mdash; end your turn so none of the Rival&rsquo;s shown cards can be played. They take the Pile.</p>
             <p><strong>Plays.</strong> Several cards of one rank count as one play. When a puzzle says &ldquo;at most 4 plays&rdquo;, playing a pair or triple together is often the way.</p>
-            <p><strong>Tools.</strong> Tap cards to pick them (<em>All Of Rank</em> picks the rest of that rank), then <em>Play</em>. <em>Undo</em> takes a play back and <em>Restart</em> deals it again. <em>Hint</em> gives the idea first, then names the next move. <em>Give Up</em> shows the answer. Solving a puzzle while signed in pays 5 Diamonds and 25 XP, once per puzzle each week; Give Up means no reward.</p>
+            <p><strong>Tools.</strong> Tap cards to pick them (turn on <em>Select All Of A Rank</em> and one tap picks the whole rank), then <em>Play</em>. <em>Undo</em> takes a play back and <em>Restart</em> deals it again. <em>Hint</em> gives the idea first, then names the next move. <em>Give Up</em> shows the answer. Solving a puzzle while signed in pays 50 Diamonds and 50 XP, once per puzzle each week; Give Up means no reward.</p>
           </div>
         </div>
         <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="series">
@@ -2604,7 +2606,7 @@
   <script src="home-navigation.js?v=fc99c36028d3"></script>
   <script src="multiplayer-lobby.js?v=563279447523"></script>
   <script src="private-cosmetics.js?v=4f732484384c"></script>
-  <script src="app.js?v=88e49a6d7120"></script>
+  <script src="app.js?v=c6b8f889b8ae"></script>
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
@@ -2612,7 +2614,7 @@
   <script src="js/friends-lobby.js?v=335"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=346"></script>
-  <script src="js/puzzles.js?v=346"></script>
+  <script src="js/puzzles.js?v=348"></script>
   <script src="js/welcome-tour.js?v=1ec181602f01"></script>
 </body>
 </html>

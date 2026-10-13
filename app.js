@@ -124,7 +124,7 @@
     const PAGE_TITLE_ICONS = {
       profileModal: 'ui-profile', statsModal: 'ui-stats', friendsModal: 'ui-friends', leaderboardModal: 'ui-leaderboard',
       challengesModal: 'ui-challenges', levelLadderModal: 'ui-ladder', rulesModal: 'ui-guide', settingsModal: 'ui-settings',
-      supportModal: 'ui-support', inboxModal: 'ui-mail'
+      supportModal: 'ui-support', inboxModal: 'ui-mail', puzzlesModal: 'ui-challenges'
     };
     Object.entries(PAGE_TITLE_ICONS).forEach(([id, icon]) => {
       const page = document.getElementById(id);
@@ -9246,7 +9246,7 @@
     const MENU_PAGE_IDS = [
       'profileModal', 'statsModal', 'themesModal', 'friendsModal',
       'leaderboardModal', 'challengesModal', 'shopModal', 'rulesModal',
-      'settingsModal', 'supportModal', 'tutorialHubScreen', 'errorReportsModal', 'collectionModal', 'changelogModal', 'levelLadderModal'
+      'settingsModal', 'supportModal', 'tutorialHubScreen', 'errorReportsModal', 'collectionModal', 'changelogModal', 'levelLadderModal', 'puzzlesModal'
     ];
     // Every scrolling panel gets the floating Jump to top/bottom button,
     // including in-game ones that aren't hamburger menu pages.
@@ -14724,7 +14724,7 @@
       gauntletBot: { easy: 40, medium: 80, hard: 120, boss: 200 }, // each Gauntlet bot beaten
       daily: 50,           // each daily challenge
       weekly: 100,         // each weekly challenge (owner, v226)
-      puzzle: 25,          // a solved weekly puzzle (v346)
+      puzzle: 50,          // a solved weekly puzzle (v346; 50 since v347, owner)
       seasonalBoost: 1.5,  // all earned XP while a seasonal event is live (owner, v345)
       levelUpDiamonds: 20, // every level up…
       milestoneEvery: 10,  // …except every 10th level, which pays instead

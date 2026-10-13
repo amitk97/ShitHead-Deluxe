@@ -33,7 +33,7 @@
   const GOAL_NAMES = { out: 'Out in one turn', burn: 'Burn the Pile', pickup: 'Rival picks up' };
   const TIER_NAMES = ['', 'Warm-up', 'Easy', 'Medium', 'Hard', 'Tricky'];
   // Paid once per puzzle per UK week, checked by the server (economy `puzzle`). Diamonds here, XP in XP_RULES.puzzle.
-  const REWARD_DIAMONDS = 5;
+  const REWARD_DIAMONDS = 50;
   const SOLVED_KEY = 'shithead_puzzles_solved';
 
   // The puzzle of the week: week keys like "2026-W42" count on one after another.
@@ -71,6 +71,8 @@
   }
   const goalOf = () => puzzle.goal;
   let modal, puzzle, st, undo, picked, over, current = null, moveLog = [], gaveUp = false;
+  // Select All Of A Rank works as in the game: a toggle (starts as your setting), always available.
+  let allMode = typeof selectAllOfRank !== 'undefined' ? !!selectAllOfRank : false;
   const $ = (s) => modal.querySelector(s);
   const ranksOf = (cs) => cs.map(c => c.rank);
   const posOf = (s) => ({ hand: ranksOf(s.hand), pile: ranksOf(s.pile), constraint: s.constraint, base: s.base });
@@ -96,7 +98,7 @@
     $('#pzTitle').textContent = puzzle.title;
     $('#pzTier').textContent = `${GOAL_NAMES[puzzle.goal.type]} · ${TIER_NAMES[puzzle.tier]} ${'★'.repeat(puzzle.tier)}${'☆'.repeat(5 - puzzle.tier)}`;
     $('#pzGoal').textContent = goalText(puzzle);
-    $('#pzReward').textContent = `Solve it for ${REWARD_DIAMONDS} Diamonds${typeof XP_RULES !== 'undefined' && XP_RULES.puzzle ? ` and ${XP_RULES.puzzle} XP` : ''}, once per puzzle each week. Give Up means no reward.`;
+    $('#pzReward').textContent = `Solve it for ${REWARD_DIAMONDS} Diamonds${typeof XP_RULES !== 'undefined' && XP_RULES.puzzle ? ` and ${XP_RULES.puzzle} XP` : ''}, once a week. Give Up means no reward.`;
     const rv = $('#pzRival'); rv.hidden = puzzle.goal.type !== 'pickup';
     if (!rv.hidden) rv.innerHTML = '<span class="pz-rival-label">Rival\'s Hand</span>' + puzzle.goal.rival.map((r, i) => cardHtml({ id: 'r' + i, rank: r, suit: SUITS[i % 4] }, 'pz-small')).join('');
     $('#pzPile').innerHTML = st.pile.length ? st.pile.slice(-5).map((c, i) => cardHtml(c, `pz-pile-${i}`)).join('') : '<span class="pz-empty">Empty Pile</span>';
@@ -104,7 +106,7 @@
     $('#pzHand').innerHTML = st.hand.map(c => cardHtml(c, picked.has(c.id) ? 'pz-sel' : '')).join('') || '<span class="pz-empty">Hand empty</span>';
     $('#pzHand').querySelectorAll('.pz-card').forEach(el => { el.tabIndex = 0; el.setAttribute('role', 'button'); });
     const off = !!over;
-    $('#pzPlay').disabled = off || !picked.size; $('#pzAll').disabled = off || !picked.size;
+    $('#pzPlay').disabled = off || !picked.size; $('#pzAll').setAttribute('aria-pressed', String(allMode));
     $('#pzUndo').disabled = !undo.length; $('#pzHint').disabled = off === 'won';
     const cap = puzzle.goal.maxPlays;
     $('#pzPlays').textContent = cap ? `${plays} / ${cap} plays` : plays ? `${plays} play${plays === 1 ? '' : 's'}` : '';
@@ -116,13 +118,11 @@
   function toggle(id) {
     if (over) return;
     const c = st.hand.find(x => x.id === id); if (!c) return;
-    if (picked.has(id)) picked.delete(id);
-    else { if ([...picked].some(pid => st.hand.find(x => x.id === pid).rank !== c.rank)) picked.clear(); picked.add(id); }
+    const same = allMode ? st.hand.filter(x => x.rank === c.rank) : [c];
+    const wasOn = picked.has(id);
+    if (!wasOn && [...picked].some(pid => st.hand.find(x => x.id === pid).rank !== c.rank)) picked.clear();
+    same.forEach(x => (wasOn ? picked.delete(x.id) : picked.add(x.id)));
     draw();
-  }
-  function selectAll() {
-    const first = st.hand.find(c => picked.has(c.id)); if (!first) return;
-    st.hand.forEach(c => { if (c.rank === first.rank) picked.add(c.id); }); draw();
   }
   function doPlay() {
     const cards = st.hand.filter(c => picked.has(c.id)); if (!cards.length || over) return;
@@ -192,7 +192,7 @@
     const card = e.target.closest('#pzHand .pz-card'); if (card) { toggle(card.dataset.id); return; }
     const chip = e.target.closest('[data-pz]'); if (chip) { open(chip.dataset.pz); return; }
     if (e.target.closest('#pzPlay')) doPlay();
-    else if (e.target.closest('#pzAll')) selectAll();
+    else if (e.target.closest('#pzAll')) { allMode = !allMode; draw(); }
     else if (e.target.closest('#pzUndo')) doUndo();
     else if (e.target.closest('#pzRestart')) { load(puzzle); }
     else if (e.target.closest('#pzHint')) doHint();
@@ -209,5 +209,6 @@
   const catalog = () => ({ reward: { diamonds: REWARD_DIAMONDS },
     list: PUZZLES.map(p => ({ id: p.id, name: p.title, hand: p.hand, pile: p.pile, constraint: p.constraint || null, base: p.base || null, goal: p.goal })) });
   window.ShPuzzles = { catalog, REWARD_DIAMONDS, solvedThisWeek, PUZZLES, GOAL_NAMES, goalText, puzzleIndexForWeek, thisWeek, availablePuzzles, hasAllPuzzles, open, close, dealCards };
+  modal = document.getElementById('puzzlesModal');
   refreshBadges();
 })();

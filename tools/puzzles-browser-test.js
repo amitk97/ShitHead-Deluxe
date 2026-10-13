@@ -32,19 +32,29 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]]){
   await page.evaluate(()=>{});
   for(const m of sol){await pickN(m.rank,m.n);await page.locator('#pzPlay').click();}
   assert((await page.locator('#pzStatus').textContent()).startsWith('Solved'),'solved via the UI: '+await page.locator('#pzStatus').textContent());
-  assert.match(await page.locator('#pzStatus').textContent(),/Sign in to earn 5 Diamonds/,'guests are told how to earn');
-  assert.match(await page.locator('#pzReward').textContent(),/5 Diamonds/);
+  assert.match(await page.locator('#pzStatus').textContent(),/Sign in to earn 50 Diamonds/,'guests are told how to earn');
+  assert.match(await page.locator('#pzReward').textContent(),/50 Diamonds/);
   assert(await page.evaluate(id=>JSON.parse(localStorage.getItem('shithead_puzzles_solved')||'{}')[id],today),'solved is remembered');
   // signed in: the moves go to the server and the prize shows (server stubbed)
   if(w===390){
-    await page.evaluate(()=>{window.__sent=[];currentUser={email:'x@y.z',uid:'u'};window.callEconomy=async(a,d)=>{window.__sent.push([a,d]);return {awarded:{id:'puzzle_t',name:'Weekly Puzzle',reward:5},diamonds:15,xp:null};};});
+    await page.evaluate(()=>{window.__sent=[];currentUser={email:'x@y.z',uid:'u'};window.callEconomy=async(a,d)=>{window.__sent.push([a,d]);return {awarded:{id:'puzzle_t',name:'Weekly Puzzle',reward:50},diamonds:60,xp:null};};});
     await page.locator('#pzRestart').click();
     for(const m of sol){await pickN(m.rank,m.n);await page.locator('#pzPlay').click();}
-    await page.waitForFunction(()=>/\+5 Diamonds/.test(document.querySelector('#pzStatus').textContent));
+    await page.waitForFunction(()=>/\+50 Diamonds/.test(document.querySelector('#pzStatus').textContent));
     const sent=await page.evaluate(()=>window.__sent);
     assert.equal(sent.length,1);assert.equal(sent[0][0],'puzzle');assert.deepEqual(sent[0][1].moves,sol);
     await page.evaluate(()=>{currentUser=null;});
   }
+  // Select All Of A Rank is a toggle that is never greyed out: on, one tap picks the whole rank
+  assert.equal(await page.locator('#pzAll').isDisabled(),false,'available from the start');
+  await page.locator('#pzRestart').click();
+  const wantPressed=(await page.locator('#pzAll').getAttribute('aria-pressed'))==='true';
+  if(wantPressed) await page.locator('#pzAll').click();
+  await page.locator('#pzAll').click();assert.equal(await page.locator('#pzAll').getAttribute('aria-pressed'),'true');
+  const rk=await page.evaluate(()=>{const h=ShPuzzles.dealCards(ShPuzzles.PUZZLES.find(p=>document.querySelector('.pz-chip.on')?document.querySelector('.pz-chip.on').dataset.pz===p.id:ShPuzzles.thisWeek().id===p.id)).hand;const c={};h.forEach(x=>c[x.rank]=(c[x.rank]||0)+1);return Object.entries(c).sort((a,b)=>b[1]-a[1])[0];});
+  await page.locator('#pzHand .pz-card',{hasText:rk[0]}).first().click();
+  assert.equal(await page.locator('#pzHand .pz-sel').count(),rk[1],'whole rank picked with one tap');
+  await page.locator('#pzAll').click();
   // restart, then undo
   await page.locator('#pzRestart').click();
   const n0=await page.locator('#pzHand .pz-card').count();
