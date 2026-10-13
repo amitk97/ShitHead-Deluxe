@@ -84,7 +84,7 @@
     draw();
   }
   let plays = 0;
-  function say(text, tone) { const el = $('#pzStatus'); el.textContent = text; el.dataset.tone = tone || ''; }
+  function say(text, tone) { const el = $('#pzStatus'); el.textContent = text; el.dataset.tone = tone || ''; const d = $('#pzDoneMsg'); if (d && over === 'won') d.textContent = text; }
 
   // Cards are the game's own (createCardElement): the equipped deck, frame and card icons apply by themselves.
   function cardEl(c, size, extra = '') {
@@ -129,6 +129,8 @@
     const handEl = $('#pzHand'); handEl.replaceChildren();
     if (st.hand.length) st.hand.forEach(c => { const el = cardEl(c, 'card-base', picked.has(c.id) ? 'pz-sel' : ''); el.tabIndex = 0; el.setAttribute('role', 'button'); handEl.append(el); });
     else handEl.innerHTML = '<span class="pz-empty">Hand empty</span>';
+    const box = $('.pz-card-box'), won = over === 'won';
+    box.classList.toggle('pz-won', won); $('#pzDone').hidden = !won; if (won) $('#pzDoneMsg').textContent = $('#pzStatus').textContent;
     const off = !!over;
     $('#pzPlay').disabled = off || !picked.size; $('#pzAll').setAttribute('aria-pressed', String(allMode));
     $('#pzUndo').disabled = !undo.length; $('#pzHint').disabled = off === 'won';
@@ -242,7 +244,9 @@
     if (e.target === modal || e.target.closest('#pzClose')) { close(); return; }
     const card = e.target.closest('#pzHand .pz-card'); if (card) { toggle(card.dataset.id); return; }
     const chip = e.target.closest('[data-pz]'); if (chip) { open(chip.dataset.pz); return; }
-    if (e.target.closest('#pzPlay')) doPlay();
+    if (e.target.closest('#pzDoneClose')) close();
+    else if (e.target.closest('#pzAgain')) load(puzzle);
+    else if (e.target.closest('#pzPlay')) doPlay();
     else if (e.target.closest('#pzAll')) { allMode = !allMode; draw(); }
     else if (e.target.closest('#pzUndo')) doUndo();
     else if (e.target.closest('#pzRestart')) { load(puzzle); }

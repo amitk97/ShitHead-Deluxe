@@ -1,3 +1,7 @@
+## v352 — solved state
+
+- Winning a puzzle sets `.pz-won` on `.pz-card-box`: the Hand, goal, status and tool row hide and `#pzDone` (green check, "Puzzle solved", `#pzDoneMsg` mirrors the status line incl. the reward text, Done / Play again) shows; the table dims. `say()` keeps the message current when the server reward arrives later.
+
 ## v351 — Rival visibly acts in puzzles
 
 - `st.rival` (cards {id, rank, suit}) is part of the puzzle state (undo snapshots it). When a pickup puzzle's turn ends: a legal Rival card is played onto the Pile and the page says so, with Restart turning into a gold **Try Again** (`tryAgain()`; Undo/Restart reset it); when none is legal the Rival picks the Pile up (their row grows) and the puzzle is solved. Every failed end (Rival plays on, Hand empty too early, `maxPlays` hit) also shows Try Again.

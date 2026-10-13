@@ -75,3 +75,16 @@ body.reduce-motion .pz-card { transition: none; }
 .pz-tight .pz-table { padding: 6px 8px; }
 @media (max-height: 640px) { #puzzlesModal { padding: 6px !important; } .pz-tight .pz-btn { padding: 5px 9px; } .pz-tight #pzAll { width: 30px; height: 30px; } .pz-tight .pz-hand { padding: 4px 0; } }
 .pz-card-box .pz-card { transition: transform .18s var(--ease-snappy, ease), box-shadow .18s, border-color .18s !important; } /* never animate width/height: fit() measures them */
+
+/* Solved state (v352): a clear finish instead of a frozen board */
+.pz-done { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; margin: 8px 0; padding: 14px 12px; border-radius: 14px;
+  background: rgba(16,185,129,.12); border: 1px solid #10b981; color: #d1fae5; }
+.pz-done[hidden] { display: none; }
+.pz-done svg { width: 44px; height: 44px; color: #34d399; }
+.pz-done b { font-size: 18px; color: #ecfdf5; }
+.pz-done span { font-size: 12px; line-height: 1.4; }
+.pz-done-btns { display: flex; gap: 8px; margin-top: 4px; }
+.pz-won .pz-table { opacity: .55; filter: saturate(.7); }
+.pz-won #pzHand, .pz-won #pzYou, .pz-won .pz-actions, .pz-won #pzStatus, .pz-won .pz-goal, .pz-won .pz-reward { display: none; }
+body:not(.reduce-motion) .pz-done svg { animation: pz-pop .5s var(--ease-bouncy, ease) both; }
+@keyframes pz-pop { from { transform: scale(.3); opacity: 0; } to { transform: none; opacity: 1; } }

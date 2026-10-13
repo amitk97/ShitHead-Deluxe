@@ -38,7 +38,7 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]].filter(s=>!process.env.PZ_W|
   // signed in: the moves go to the server and the prize shows (server stubbed)
   if(w===390){
     await page.evaluate(()=>{window.__sent=[];currentUser={email:'x@y.z',uid:'u'};window.callEconomy=async(a,d)=>{window.__sent.push([a,d]);return {awarded:{id:'puzzle_t',name:'Weekly Puzzle',reward:50},diamonds:60,xp:null};};});
-    await page.locator('#pzRestart').click();
+    await page.locator('#pzAgain').click();
     for(const m of sol){await pickN(m.rank,m.n);await page.locator('#pzPlay').click();}
     await page.waitForFunction(()=>/\+50 Diamonds/.test(document.querySelector('#pzStatus').textContent));
     const sent=await page.evaluate(()=>window.__sent);
@@ -47,7 +47,7 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]].filter(s=>!process.env.PZ_W|
   }
   // Select All Of A Rank is a toggle that is never greyed out: on, one tap picks the whole rank
   assert.equal(await page.locator('#pzAll').isDisabled(),false,'available from the start');
-  await page.locator('#pzRestart').click();
+  await page.locator('#pzAgain').click();
   const wantPressed=(await page.locator('#pzAll').getAttribute('aria-pressed'))==='true';
   if(wantPressed) await page.locator('#pzAll').click();
   await page.locator('#pzAll').click();assert.equal(await page.locator('#pzAll').getAttribute('aria-pressed'),'true');

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-13-v351 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-13-v352 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -15,7 +15,7 @@
 <html lang="en" class="dark">
 <head>
   <link rel="stylesheet" href="css/friends-lobby.css?v=245eed70ee85">
-  <link rel="stylesheet" href="css/puzzles.css?v=9">
+  <link rel="stylesheet" href="css/puzzles.css?v=10">
   <link rel="stylesheet" href="css/welcome-tour.css?v=9d478452ecd0">
   <meta charset="UTF-8" />
   <script>
@@ -2139,6 +2139,11 @@
       <div class="pz-kicker">Weekly Puzzle</div>
       <h2 id="pzTitle" class="pz-title"></h2>
       <div id="pzTier" class="pz-tier"></div>
+      <div id="pzDone" class="pz-done" hidden role="status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+        <b>Puzzle solved</b><span id="pzDoneMsg"></span>
+        <div class="pz-done-btns"><button type="button" id="pzDoneClose" class="pz-btn pz-primary">Done</button><button type="button" id="pzAgain" class="pz-btn">Play again</button></div>
+      </div>
       <p id="pzGoal" class="pz-goal"></p>
       <p id="pzReward" class="pz-reward"></p>
       <div class="pz-table">
@@ -2614,7 +2619,7 @@
   <script src="js/friends-lobby.js?v=335"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=346"></script>
-  <script src="js/puzzles.js?v=351"></script>
+  <script src="js/puzzles.js?v=352"></script>
   <script src="js/welcome-tour.js?v=1ec181602f01"></script>
 </body>
 </html>
