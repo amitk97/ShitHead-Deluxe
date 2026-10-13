@@ -27,6 +27,8 @@ const LEVELS = RULES.levels || [0, 0]; // LEVELS[L] = total XP for level L
 const MAX_LEVEL = LEVELS.length - 1;
 const num = (v, f = 0) => { const n = Number(v); return v !== null && v !== undefined && v !== '' && Number.isFinite(n) ? n : f; };
 
+// The seasonal event live on the UK day of `now` (null off-season or with no boost configured).
+const boostEvent = (now) => (num(RULES.seasonalBoost, 1) > 1 ? require('./seasons').eventLiveOn(ukDateKey(new Date(now))) : null);
 const xpForLevel = (level) => LEVELS[Math.max(1, Math.min(MAX_LEVEL, level))] || 0;
 function levelFor(total) {
   let level = 1;
@@ -195,9 +197,12 @@ function backfill(user, now, addDiamonds) {
 // list of [reason, amount]. Returns { gained, total, level, levelUps } or
 // null when nothing was added. `addDiamonds` pays level-up rewards.
 function award(user, parts, now, addDiamonds) {
-  const wanted = parts.reduce((s, [, n]) => s + Math.max(0, num(n)), 0);
-  if (!wanted) return null;
-  return addXp(user, wanted, now, addDiamonds);
+  const base = parts.reduce((s, [, n]) => s + Math.max(0, num(n)), 0);
+  if (!base) return null;
+  // Seasonal events pay more XP (catalog xp.seasonalBoost, v345): every award while an event is live.
+  const ev = boostEvent(now), factor = ev ? num(RULES.seasonalBoost, 1) : 1;
+  const res = addXp(user, factor > 1 ? Math.round(base * factor) : base, now, addDiamonds);
+  return factor > 1 ? { ...res, boost: { factor, event: ev.id, name: ev.name } } : res;
 }
 
 // Gauntlet XP for beating the bot of round `round` (0-based).
@@ -241,4 +246,4 @@ async function migrateAll() {
   return fixed;
 }
 
-module.exports = { RULES, enabled, award, grantLevelRewards, mailFriendsOnLevel, friendMailLevel, backfill, pastXp, gauntletBotXp, levelFor, xpForLevel, relevel, migrateAll, resetCache, ukWeekKey, weekXp };
+module.exports = { RULES, enabled, award, boostEvent, grantLevelRewards, mailFriendsOnLevel, friendMailLevel, backfill, pastXp, gauntletBotXp, levelFor, xpForLevel, relevel, migrateAll, resetCache, ukWeekKey, weekXp };

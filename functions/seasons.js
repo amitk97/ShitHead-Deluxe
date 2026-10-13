@@ -94,4 +94,19 @@ function eventsStartingOn({ y, m, d }) {
   return out;
 }
 
-module.exports = { SEASONAL_EVENTS, seasonalWindowsForYear, eventsStartingOn };
+// The event live on the given UK calendar day ('YYYY-MM-DD'), or null. A window runs from its
+// start day to its end day, both included (the game's activeSeasonalEvents, in whole days).
+function eventLiveOn(ukDay) {
+  const [y, m, d] = String(ukDay).split('-').map(Number);
+  const n = y * 10000 + m * 100 + d, key = (t) => t.getFullYear() * 10000 + (t.getMonth() + 1) * 100 + t.getDate();
+  for (const event of SEASONAL_EVENTS) {
+    for (const year of [y - 1, y]) {
+      for (const [start, end] of seasonalWindowsForYear(event.id, year)) {
+        if (n >= key(start) && n <= key(end)) return event;
+      }
+    }
+  }
+  return null;
+}
+
+module.exports = { SEASONAL_EVENTS, seasonalWindowsForYear, eventsStartingOn, eventLiveOn };

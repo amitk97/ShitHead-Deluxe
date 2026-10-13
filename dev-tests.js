@@ -1757,6 +1757,23 @@ async function runDevTestSuite() {
       assertEqual(ShPuzzles.availablePuzzles().length, 1, 'Everyone else only gets this week\'s');
     } finally { currentUser = was; }
   });
+  await test('Key Terms cover the new home navigation (Header, Menu, Mode Card, Shortcut Card) and no old "Play vs Bots" wording (v344)', () => {
+    const guide = document.getElementById('rulesModal');
+    ['header', 'menu', 'mode-card', 'shortcut-card', 'puzzle'].forEach(k => assertTrue(!!guide.querySelector(`[data-term="${k}"]`), `Key Term ${k}`));
+    assertTrue(!/vs bots/i.test(document.getElementById('needHumanModal')?.textContent || ''), 'Play Computer, not Play vs Bots');
+  });
+  await test('Seasonal XP boost: shown only while an event is live and XP is on (v345)', () => {
+    const was = [seasonalNowOverride, xpFeatureOn];
+    try {
+      xpFeatureOn = true;
+      seasonalNowOverride = '2026-10-20T12:00';
+      const b = xpBoostNow();
+      assertTrue(b && b.factor === 1.5 && /Halloween/.test(b.name), 'Halloween pays 1.5x');
+      assertTrue(/1\.5× XP during Halloween/.test(xpTipHtml(500).replace(/<[^>]+>/g, '')), 'The header XP tip says so');
+      seasonalNowOverride = '2026-10-13T12:00';
+      assertTrue(xpBoostNow() === null && xpBoostNote() === '', 'Nothing off-season');
+    } finally { [seasonalNowOverride, xpFeatureOn] = was; }
+  });
   await test('REGRESSION: un-staging with the rank toggle ON clears the whole rank', () => {
     freshState({ discardPile: [makeCard('4')], drawPile: [] });
     const kings = [makeCard('K','♠'), makeCard('K','♥'), makeCard('K','♦')];

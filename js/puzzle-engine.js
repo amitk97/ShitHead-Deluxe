@@ -96,6 +96,26 @@
   // Can the player still win after these plays? Used for the hint and for "this can't work now".
   function canStillWin(pos, goal, used) { return solve(pos, 1, goal, used).solutions.length > 0; }
 
-  const api = { VAL, ORDER, legal, play, moves, solve, canStillWin, rivalStuck, effTop, constraintOf };
+  // Replays a player's moves against a puzzle: true only if every play is legal, every play but the
+  // last gives another go, the play cap holds, and the last play meets the goal. Used by the server
+  // before it pays for a puzzle, so the number of cards in a move is checked against the real Hand.
+  function verify(start, goal, moves) {
+    if (!Array.isArray(moves) || !moves.length || moves.length > 40) return false;
+    let pos = start;
+    if (goal.maxPlays && moves.length > goal.maxPlays) return false;
+    for (let i = 0; i < moves.length; i++) {
+      const m = moves[i], n = Number(m && m.n), rank = m && m.rank;
+      if (!ORDER.includes(rank) || !Number.isInteger(n) || n < 1 || n > (counts(pos.hand)[rank] || 0) || !legal(rank, pos)) return false;
+      const r = play(pos, rank, n), last = i === moves.length - 1;
+      if (!last) { if (!r.again || !r.pos.hand.length) return false; pos = r.pos; continue; }
+      if (goal.type === 'out') return !r.pos.hand.length;
+      if (goal.type === 'burn') return !!r.burn;
+      if (goal.type === 'pickup') return !r.again && r.pos.hand.length > 0 && rivalStuck(r.pos, goal.rival || []);
+      return false;
+    }
+    return false;
+  }
+
+  const api = { VAL, ORDER, legal, play, moves, solve, verify, canStillWin, rivalStuck, effTop, constraintOf };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ShPuzzleEngine = api;
 })(typeof window !== 'undefined' ? window : globalThis);

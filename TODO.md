@@ -45,6 +45,6 @@ They are listed on the More Modes page (v320); each becomes its own carousel car
 ## Other ideas already noted
 
 - Shop wishlist (a heart on each Shop item, plus a Wishlist filter).
-- 1.5x XP during seasonal events. A Season Pass (maybe a second tab on the Level Ladder).
+- ~~1.5x XP during seasonal events~~ (v345). A Season Pass (maybe a second tab on the Level Ladder).
 - Watch a friend's Vs Bots / Gauntlet game.
 - See `CLAUDE.md` → "Owner's later list" for the full list.

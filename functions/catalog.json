@@ -1736,6 +1736,8 @@
   },
   "daily": 50,
   "weekly": 100,
+  "puzzle": 25,
+  "seasonalBoost": 1.5,
   "levelUpDiamonds": 20,
   "milestoneEvery": 10,
   "milestoneDiamonds": 100,
@@ -1935,6 +1937,215 @@
    1147490,
    1267384,
    1400000
+  ]
+ },
+ "puzzles": {
+  "reward": {
+   "diamonds": 5
+  },
+  "list": [
+   {
+    "id": "p1",
+    "name": "Burn And Go Again",
+    "hand": [
+     "5",
+     "8",
+     "5",
+     "5",
+     "5"
+    ],
+    "pile": [
+     "8",
+     "J"
+    ],
+    "constraint": "ODD",
+    "base": null,
+    "goal": {
+     "type": "out"
+    }
+   },
+   {
+    "id": "p2",
+    "name": "The Hidden Skip",
+    "hand": [
+     "5",
+     "10",
+     "9",
+     "5",
+     "5"
+    ],
+    "pile": [
+     "8",
+     "J"
+    ],
+    "constraint": "ODD",
+    "base": null,
+    "goal": {
+     "type": "out"
+    }
+   },
+   {
+    "id": "p3",
+    "name": "See Through The 8",
+    "hand": [
+     "8",
+     "10",
+     "4",
+     "3",
+     "4"
+    ],
+    "pile": [],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out"
+    }
+   },
+   {
+    "id": "p4",
+    "name": "Two Plays, One Burn",
+    "hand": [
+     "Q",
+     "Q",
+     "8",
+     "5",
+     "5",
+     "10",
+     "3"
+    ],
+    "pile": [
+     "2",
+     "2",
+     "Q",
+     "Q"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out"
+    }
+   },
+   {
+    "id": "p5",
+    "name": "Five Ways To Go Again",
+    "hand": [
+     "4",
+     "8",
+     "3",
+     "5",
+     "4",
+     "10",
+     "4"
+    ],
+    "pile": [
+     "7",
+     "4"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out"
+    }
+   },
+   {
+    "id": "p6",
+    "name": "Burn It Down",
+    "hand": [
+     "10",
+     "8",
+     "5",
+     "3",
+     "3",
+     "K",
+     "9"
+    ],
+    "pile": [
+     "8",
+     "J"
+    ],
+    "constraint": "ODD",
+    "base": null,
+    "goal": {
+     "type": "burn",
+     "maxPlays": 2
+    }
+   },
+   {
+    "id": "p7",
+    "name": "Lock The Rival Out",
+    "hand": [
+     "6",
+     "5",
+     "6",
+     "6",
+     "8",
+     "3",
+     "7"
+    ],
+    "pile": [
+     "6"
+    ],
+    "constraint": "EVEN",
+    "base": null,
+    "goal": {
+     "type": "pickup",
+     "rival": [
+      "J",
+      "J",
+      "10"
+     ]
+    }
+   },
+   {
+    "id": "p8",
+    "name": "Odd Man Out",
+    "hand": [
+     "A",
+     "5",
+     "J",
+     "4",
+     "7",
+     "2",
+     "9"
+    ],
+    "pile": [
+     "8",
+     "J",
+     "J",
+     "J"
+    ],
+    "constraint": "ODD",
+    "base": null,
+    "goal": {
+     "type": "pickup",
+     "rival": [
+      "10",
+      "Q",
+      "Q",
+      "2"
+     ]
+    }
+   },
+   {
+    "id": "p9",
+    "name": "Four Plays To Freedom",
+    "hand": [
+     "10",
+     "8",
+     "8",
+     "3",
+     "5",
+     "8",
+     "10"
+    ],
+    "pile": [],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "maxPlays": 4
+    }
+   }
   ]
  },
  "series": {

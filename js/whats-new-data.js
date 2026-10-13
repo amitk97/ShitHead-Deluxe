@@ -3,6 +3,9 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v346: [['gem', 'Weekly puzzles now pay 5 Diamonds and 25 XP the first time you solve each one. Signed-in players only, and not after Give Up.', WN_KEY]],
+      v345: [['sparkle', 'Seasonal events now pay 1.5× XP on everything you earn: games, wins, Ranked, the Gauntlet and challenges. A gold note shows while it is on.', WN_KEY]],
+      v344: [['guide', 'The Guide, Key Terms and Quick Start now match the new home screen and header: new Header, Menu, Mode Card and Shortcut Card entries.']],
       v343: [['puzzle', 'A pinned Puzzles shortcut now opens the weekly puzzle, and Puzzles shows Solved once you finish the week\'s puzzle.']],
       v342: [['puzzle', 'Puzzles now have three goals: go out in one turn, burn the Pile in a set number of plays, or leave the Rival with nothing to play. Nine puzzles, and a Puzzles section in the Guide.', WN_KEY]],
       v341: [['puzzle', 'Weekly Puzzles are here. Open More Modes → Puzzles: one hand, one turn, one way to win. A new puzzle arrives every week.', WN_KEY]],

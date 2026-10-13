@@ -32,6 +32,8 @@
   PUZZLES.forEach(p => { p.goal = p.goal || { type: 'out' }; p.base = p.base || null; });
   const GOAL_NAMES = { out: 'Out in one turn', burn: 'Burn the Pile', pickup: 'Rival picks up' };
   const TIER_NAMES = ['', 'Warm-up', 'Easy', 'Medium', 'Hard', 'Tricky'];
+  // Paid once per puzzle per UK week, checked by the server (economy `puzzle`). Diamonds here, XP in XP_RULES.puzzle.
+  const REWARD_DIAMONDS = 5;
   const SOLVED_KEY = 'shithead_puzzles_solved';
 
   // The puzzle of the week: week keys like "2026-W42" count on one after another.
@@ -68,7 +70,7 @@
     return 'Play every card in your Hand in a single turn. Only a burn (a 10 or four of a kind) and an 8 give you another go.' + cap;
   }
   const goalOf = () => puzzle.goal;
-  let modal, puzzle, st, undo, picked, over, current = null;
+  let modal, puzzle, st, undo, picked, over, current = null, moveLog = [], gaveUp = false;
   const $ = (s) => modal.querySelector(s);
   const ranksOf = (cs) => cs.map(c => c.rank);
   const posOf = (s) => ({ hand: ranksOf(s.hand), pile: ranksOf(s.pile), constraint: s.constraint, base: s.base });
@@ -76,7 +78,7 @@
   function load(p) {
     puzzle = p; const d = dealCards(p);
     st = { hand: d.hand, pile: d.pile, constraint: p.constraint, base: p.base };
-    undo = []; picked = new Set(); over = null; plays = 0; say('Tap cards to pick them, then press Play.', '');
+    undo = []; moveLog = []; gaveUp = false; picked = new Set(); over = null; plays = 0; say('Tap cards to pick them, then press Play.', '');
     draw();
   }
   let plays = 0;
@@ -94,6 +96,7 @@
     $('#pzTitle').textContent = puzzle.title;
     $('#pzTier').textContent = `${GOAL_NAMES[puzzle.goal.type]} · ${TIER_NAMES[puzzle.tier]} ${'★'.repeat(puzzle.tier)}${'☆'.repeat(5 - puzzle.tier)}`;
     $('#pzGoal').textContent = goalText(puzzle);
+    $('#pzReward').textContent = `Solve it for ${REWARD_DIAMONDS} Diamonds${typeof XP_RULES !== 'undefined' && XP_RULES.puzzle ? ` and ${XP_RULES.puzzle} XP` : ''}, once per puzzle each week. Give Up means no reward.`;
     const rv = $('#pzRival'); rv.hidden = puzzle.goal.type !== 'pickup';
     if (!rv.hidden) rv.innerHTML = '<span class="pz-rival-label">Rival\'s Hand</span>' + puzzle.goal.rival.map((r, i) => cardHtml({ id: 'r' + i, rank: r, suit: SUITS[i % 4] }, 'pz-small')).join('');
     $('#pzPile').innerHTML = st.pile.length ? st.pile.slice(-5).map((c, i) => cardHtml(c, `pz-pile-${i}`)).join('') : '<span class="pz-empty">Empty Pile</span>';
@@ -125,12 +128,12 @@
     const cards = st.hand.filter(c => picked.has(c.id)); if (!cards.length || over) return;
     const rank = cards[0].rank, pos = posOf(st);
     if (!E.legal(rank, pos)) { say(`A ${rank} can't go on that. ${ruleLine()}`, 'bad'); return; }
-    undo.push(JSON.stringify(st)); plays++;
+    undo.push(JSON.stringify(st)); moveLog.push({ rank, n: cards.length }); plays++;
     const r = E.play(pos, rank, cards.length);
     if (r.burn) { st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: [], constraint: null, base: null }; }
     else st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: st.pile.concat(cards), constraint: r.pos.constraint, base: r.pos.base };
     picked = new Set();
-    const g = puzzle.goal, win = () => { over = 'won'; markSolved(puzzle.id); say(`Solved in ${plays} play${plays === 1 ? '' : 's'}.`, 'good'); draw(); };
+    const g = puzzle.goal, win = () => { over = 'won'; markSolved(puzzle.id); const base = `Solved in ${plays} play${plays === 1 ? '' : 's'}.`; say(base, 'good'); draw(); claimReward(base); };
     if (g.type === 'out' && !st.hand.length) return win();
     if (g.type === 'burn' && r.burn) return win();
     if (g.type === 'pickup') {
@@ -147,7 +150,20 @@
     else say(r.burn ? 'The Pile burns. Go again.' : rank === '8' ? '8 skips the Rival. Go again.' : `${rank} skips the Rival too. Go again.`, 'good');
     draw();
   }
-  function doUndo() { if (!undo.length) return; st = JSON.parse(undo.pop()); plays = Math.max(0, plays - 1); picked = new Set(); over = null; say('Undone.', ''); draw(); }
+  // Signed in and not given up: the server replays the moves and pays once per puzzle per week.
+  function claimReward(base) {
+    const xpAmt = (typeof XP_RULES !== 'undefined' && XP_RULES.puzzle) || 0, prize = `${REWARD_DIAMONDS} Diamonds${xpAmt ? ` and ${xpAmt} XP` : ''}`;
+    if (typeof currentUser === 'undefined' || !currentUser) { say(`${base} Sign in to earn ${prize} for each weekly puzzle.`, 'good'); return; }
+    if (gaveUp) return;
+    const id = puzzle.id, moves = moveLog.slice();
+    if (typeof callEconomy !== 'function') return;
+    callEconomy('puzzle', { id, moves }).then((res) => {
+      if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
+      if (res.awarded) { applyServerClaims([res.awarded]); noteXpResult(res.xp); if (puzzle && puzzle.id === id && over === 'won') say(`${base} +${res.awarded.reward} Diamonds${res.xp && res.xp.gained ? `, +${res.xp.gained} XP` : ''}.`, 'good'); }
+      else if (res.already && puzzle && puzzle.id === id && over === 'won') say(`${base} Already rewarded this week.`, 'good');
+    }).catch((e) => { console.warn('Puzzle reward refused', e && e.message); });
+  }
+  function doUndo() { if (!undo.length) return; st = JSON.parse(undo.pop()); moveLog.pop(); plays = Math.max(0, plays - 1); picked = new Set(); over = null; say('Undone.', ''); draw(); }
   function doHint() {
     const s = E.solve(posOf(st), 1, goalOf(), plays).solutions[0];
     if (!s) { say('No way to the goal from here. Undo or Restart.', 'bad'); return; }
@@ -157,6 +173,7 @@
   }
   function giveUp() {
     const s = E.solve({ hand: puzzle.hand, pile: puzzle.pile, constraint: puzzle.constraint, base: puzzle.base }, 1, puzzle.goal).solutions[0];
+    gaveUp = true;
     say('Solution: ' + s.map(m => `${m.n} × ${m.rank}`).join(', then ') + '.', '');
   }
 
@@ -188,6 +205,9 @@
     if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggle(card.dataset.id); }
   });
 
-  window.ShPuzzles = { solvedThisWeek, PUZZLES, GOAL_NAMES, goalText, puzzleIndexForWeek, thisWeek, availablePuzzles, hasAllPuzzles, open, close, dealCards };
+  // What the server needs (catalog export): the puzzles in rotation order and the reward.
+  const catalog = () => ({ reward: { diamonds: REWARD_DIAMONDS },
+    list: PUZZLES.map(p => ({ id: p.id, name: p.title, hand: p.hand, pile: p.pile, constraint: p.constraint || null, base: p.base || null, goal: p.goal })) });
+  window.ShPuzzles = { catalog, REWARD_DIAMONDS, solvedThisWeek, PUZZLES, GOAL_NAMES, goalText, puzzleIndexForWeek, thisWeek, availablePuzzles, hasAllPuzzles, open, close, dealCards };
   refreshBadges();
 })();

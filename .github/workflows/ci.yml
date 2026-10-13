@@ -84,7 +84,7 @@ jobs:
       - name: Welcome tour and carousel reorder
         run: node tools/welcome-tour-browser-test.js
       - name: Weekly puzzles
-        run: node tools/puzzles-test.js && node tools/puzzles-browser-test.js
+        run: node tools/puzzles-test.js && node tools/xp-boost-test.js && node tools/puzzle-action-test.js && node tools/puzzles-browser-test.js
 
       - name: Play Friends lobby regression checks
         run: node tools/friends-lobby-browser-test.js

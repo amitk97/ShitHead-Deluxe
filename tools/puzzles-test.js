@@ -1,6 +1,6 @@
 // node tools/puzzles-test.js: every weekly puzzle has one or two winning lines, the week picks rotate, AmitK sees all.
 const assert = require('assert');
-global.window = global; global.document = { addEventListener() {}, getElementById() { return null; } };
+global.window = global; global.document = { addEventListener() {}, getElementById() { return null; }, querySelectorAll() { return []; } };
 global.localStorage = { getItem() { return null; }, setItem() {} };
 window.ShPuzzleEngine = require('../js/puzzle-engine.js');
 global.currentUser = { email: 'amirk2197@googlemail.com' };
@@ -45,4 +45,21 @@ assert.strictEqual(E.solve({ hand: ['5', '10'], pile: ['8', 'J'], constraint: 'O
 assert.strictEqual(E.solve({ hand: ['5', '10'], pile: ['8', 'J'], constraint: 'ODD', base: null }, 5, { type: 'burn', maxPlays: 2 }).solutions.length, 1);
 assert.ok(E.rivalStuck({ hand: [], pile: ['7'], constraint: 'LOW7', base: null }, ['J', '10', 'A']), 'LOW7 stops J, 10 and A');
 assert.ok(!E.rivalStuck({ hand: [], pile: ['7'], constraint: 'LOW7', base: null }, ['4']));
+// verify(): the server's replay of a player's moves
+const ok = (p, moves) => E.verify({ hand: p.hand, pile: p.pile, constraint: p.constraint || null, base: p.base || null }, p.goal, moves);
+for (const p of P.PUZZLES) {
+  const sol = E.solve({ hand: p.hand, pile: p.pile, constraint: p.constraint, base: p.base }, 5, p.goal).solutions;
+  sol.forEach(s => assert.ok(ok(p, s), p.id + ' its own solution verifies'));
+  assert.ok(!ok(p, []), 'no moves');
+  assert.ok(!ok(p, [{ rank: 'A', n: 9 }]), 'more cards than held');
+  assert.ok(!ok(p, [...sol[0], sol[0][0]]), p.id + ' extra move after the goal');
+  if (sol[0].length > 1) assert.ok(!ok(p, sol[0].slice(0, -1)), p.id + ' stopping early is not a win');
+  assert.ok(!ok(p, sol[0].map(m => ({ ...m, n: m.n + 0.5 }))), 'fractional counts');
+}
+// a catalog entry exists for each puzzle and the server's copy of the engine is the same file
+const fs = require('fs'), path = require('path');
+assert.strictEqual(fs.readFileSync(path.join(__dirname, '../functions/puzzle-engine.js'), 'utf8'), fs.readFileSync(path.join(__dirname, '../js/puzzle-engine.js'), 'utf8'), 'functions/puzzle-engine.js must equal js/puzzle-engine.js (cp it)');
+const cat = require('../functions/catalog.json').puzzles;
+assert.deepStrictEqual(cat, JSON.parse(JSON.stringify(P.catalog())), 'catalog.puzzles matches the game (node tools/export-catalog.js)');
+assert.ok(cat.reward.diamonds > 0 && require('../functions/catalog.json').xp.puzzle > 0, 'rewards are set');
 console.log('PASS puzzles', tierNodes.join(','));

@@ -1423,7 +1423,7 @@
       if (completed) {
         if (tutorialCurrentModuleId === QUICK_START_MODULE.id && !tutorialLaunchedFromHub) {
           markTutorialModuleComplete(tutorialCurrentModuleId);
-          notifyBanner("You're ready. Choose Play Computer and tap Start Game.");
+          notifyBanner("You're ready. Open the Play Computer card on the home screen and tap Start Game.");
         } else if (tutorialCurrentModuleId) {
           markTutorialModuleComplete(tutorialCurrentModuleId);
           notifyBanner('Lesson complete.');

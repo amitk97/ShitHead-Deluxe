@@ -14724,6 +14724,8 @@
       gauntletBot: { easy: 40, medium: 80, hard: 120, boss: 200 }, // each Gauntlet bot beaten
       daily: 50,           // each daily challenge
       weekly: 100,         // each weekly challenge (owner, v226)
+      puzzle: 25,          // a solved weekly puzzle (v346)
+      seasonalBoost: 1.5,  // all earned XP while a seasonal event is live (owner, v345)
       levelUpDiamonds: 20, // every level up…
       milestoneEvery: 10,  // …except every 10th level, which pays instead
       milestoneDiamonds: 100,
@@ -15281,6 +15283,17 @@
       return `<div class="xp-card">${xpLevelBadge(p.level, 'xp-badge-lg')}<div class="xp-card-main"><span class="xp-bar"><i style="width:${p.pct}%"></i></span><span class="xp-card-sub">${next}</span></div></div>`;
     }
     // Every server reply that added XP comes through here.
+    // Seasonal events pay XP_RULES.seasonalBoost times the XP (the server does the sum; this only says so).
+    function xpBoostNow() {
+      const f = Number(XP_RULES.seasonalBoost) || 1;
+      if (f <= 1 || !xpShown()) return null;
+      const w = activeSeasonalEvents()[0];
+      return w ? { factor: f, name: w.event.name } : null;
+    }
+    function xpBoostNote() {
+      const b = xpBoostNow();
+      return b ? `<div class="xp-boost">${icon('sparkle')}<span>${b.factor}× XP during ${escapeHtml(b.name)}</span></div>` : '';
+    }
     function noteXpResult(x) {
       if (!x || typeof x !== 'object') return;
       const before = playerXp?.level || 1;
@@ -15330,9 +15343,9 @@
     let headerXpShown = null; // { level, pct } last drawn
     function xpTipHtml(total) {
       const p = xpProgress(total);
-      return p.max
+      return xpBoostNote() + (p.max
         ? `<b>Level ${p.level}</b> · top level<small>${p.total.toLocaleString('en-GB')} XP in total</small>`
-        : `<b>Level ${p.level}</b> · ${(p.need - p.into).toLocaleString('en-GB')} XP to level ${p.level + 1}<small>${p.into.toLocaleString('en-GB')} / ${p.need.toLocaleString('en-GB')} XP · ${p.total.toLocaleString('en-GB')} in total</small>`;
+        : `<b>Level ${p.level}</b> · ${(p.need - p.into).toLocaleString('en-GB')} XP to level ${p.level + 1}<small>${p.into.toLocaleString('en-GB')} / ${p.need.toLocaleString('en-GB')} XP · ${p.total.toLocaleString('en-GB')} in total</small>`);
     }
     function refreshHeaderXpBar() {
       const bar = document.getElementById('headerXpBar');
@@ -15445,7 +15458,7 @@
       const climbFrom = matchXpLog.levelUps.length ? Math.min(...matchXpLog.levelUps.map(u => u.level)) - 1 : 0;
       const ups = matchXpLog.levelUps.map(u => `<button type="button" class="ms-levelup" data-levelup="${u.level}" data-open-ladder data-ladder-from="${climbFrom}"><small>Level Up</small>Level ${u.level}${u.reward ? ` <span>+💎 ${u.reward}</span>` : ''}<small class="ms-levelup-see">See your rewards ›</small></button>`).join('');
       return `<div class="ms-section"><div class="ms-label">XP</div>
-        <div class="ms-progress">${xpLevelBadge(p.level)}<span class="ms-bar" style="--bar:var(--xp-fill)"><i data-bar="xp" style="width:${p.pct}%"></i></span><b class="ms-xp-gain">${gained > 0 ? `+${gained} XP` : '+0 XP'}</b></div>${ups}<button type="button" class="xp-ladder-link ms-ladder-link" data-open-ladder${climbFrom ? ` data-ladder-from="${climbFrom}"` : ''}>Level Ladder ›</button></div>`;
+        <div class="ms-progress">${xpLevelBadge(p.level)}<span class="ms-bar" style="--bar:var(--xp-fill)"><i data-bar="xp" style="width:${p.pct}%"></i></span><b class="ms-xp-gain">${gained > 0 ? `+${gained} XP` : '+0 XP'}</b></div>${xpBoostNote()}${ups}<button type="button" class="xp-ladder-link ms-ladder-link" data-open-ladder${climbFrom ? ` data-ladder-from="${climbFrom}"` : ''}>Level Ladder ›</button></div>`;
     }
 
 
@@ -15512,6 +15525,7 @@
         referral: JSON.parse(JSON.stringify(REFERRAL)),
         rankedBonus: JSON.parse(JSON.stringify(RANKED_BONUS)),
         xp: JSON.parse(JSON.stringify(XP_RULES)),
+        puzzles: window.ShPuzzles ? JSON.parse(JSON.stringify(window.ShPuzzles.catalog())) : undefined,
         series: JSON.parse(JSON.stringify(SERIES_RULES)),
         rankTiers: [['Master', 2000], ['Platinum', 1800], ['Gold', 1500], ['Silver', 1000], ['Bronze', 500], ['Novice', 0]].map(([name, min]) => {
           if (getRankTier(min).name !== name) throw new Error(`Rank tier table out of date at ${name}`);
@@ -15597,6 +15611,7 @@
       if (typeof defOrId === 'string') {
         if (/^daily_/.test(id)) return getDailyChallengeDef(id.split('_').slice(2).join('_'))?.desc || '';
         if (/^weekly_/.test(id)) return getWeeklyChallengeDef(id.split('_').slice(2).join('_'), id.split('_')[1])?.desc || '';
+        if (/^puzzle_/.test(id)) { const pz = window.ShPuzzles?.PUZZLES.find(p => p.id === id.split('_').slice(2).join('_')); return pz ? window.ShPuzzles.goalText(pz) : 'Solve the weekly puzzle.'; }
         if (/^season_/.test(id)) {
           const cid = id.split('_').slice(2).join('_');
           return (cid === SEASONAL_CHALLENGE_BONUS.id ? SEASONAL_CHALLENGE_BONUS : SEASONAL_CHALLENGES.find(c => c.id === cid))?.desc || '';
@@ -16667,6 +16682,7 @@
         const def = tail === SEASONAL_CHALLENGE_BONUS.id ? SEASONAL_CHALLENGE_BONUS : SEASONAL_CHALLENGES.find(c => c.id === tail);
         return { name: def?.name || 'Seasonal challenge', group: ev ? `${ev.name} ${inst.split('-')[1] || ''}`.trim() : 'Seasonal' };
       }
+      if (/^puzzle_/.test(key)) { const pz = window.ShPuzzles?.PUZZLES.find(p => p.id === key.split('_').slice(2).join('_')); return { name: `Weekly Puzzle: ${pz ? pz.title : 'solved'}`, group: 'Puzzles' }; }
       if (/^gauntlet_\d{4}-\d{2}-\d{2}$/.test(key)) return { name: GAUNTLET_CHALLENGES.daily.name, group: 'Gauntlet' };
       const gFirst = GAUNTLET.modeOrder.map(gauntletFirstChallenge).find(c => c.id === key);
       if (gFirst) return { name: gFirst.name, group: 'Gauntlet' };

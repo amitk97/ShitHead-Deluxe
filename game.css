@@ -2818,3 +2818,7 @@
     .gauntlet-frame-fan .gauntlet-frame-card:nth-child(3) { transform:rotate(8deg) translateY(4px); }
     /* v338: the card a transparent 3 sits on, tucked under the 3s. */
     #discardCardsWrapper .pile-peek { box-shadow: 0 0 0 1px rgba(251, 191, 36, .55), 0 3px 8px rgba(0,0,0,.5); }
+
+/* v345: seasonal XP boost note (header XP tip, match summary, Level Ladder) */
+.xp-boost { display:flex; align-items:center; gap:6px; margin:4px 0; font-size:11px; font-weight:800; color:#fcd34d; }
+.xp-boost .ic { width:14px; height:14px; }

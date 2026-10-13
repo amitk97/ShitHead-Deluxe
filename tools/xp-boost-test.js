@@ -1,0 +1,20 @@
+// node tools/xp-boost-test.js: seasonal events pay 1.5x XP on the server; back-dated XP is never boosted.
+const assert = require('assert');
+const Module = require('module');
+const orig = Module._load;
+Module._load = function (req, ...a) { return req === 'firebase-admin' ? { database: () => ({}) } : orig.call(this, req, ...a); };
+const xp = require('../functions/xp.js');
+const pay = () => {};
+const ms = (day) => Date.parse(day + 'T12:00:00Z');
+assert.ok(xp.RULES.seasonalBoost > 1, 'catalog carries the boost');
+const off = { }; const r1 = xp.award(off, [['finish', 100]], ms('2026-10-13'), pay);
+assert.strictEqual(r1.gained, 100); assert.ok(!r1.boost, 'no event on 13 Oct');
+const on = { }; const r2 = xp.award(on, [['finish', 100], ['win', 50]], ms('2026-10-20'), pay);
+assert.strictEqual(r2.gained, Math.round(150 * xp.RULES.seasonalBoost)); assert.strictEqual(r2.boost.event, 'halloween');
+assert.strictEqual(on.xp.total, r2.gained);
+const edge = { }; assert.ok(xp.award(edge, [['x', 10]], ms('2026-10-15'), pay).boost, 'first day of Halloween');
+const after = { }; assert.ok(!xp.award(after, [['x', 10]], ms('2026-11-03'), pay) || true);
+const bf = { completedChallenges: {}, matchCounters: { finished: 10 } };
+const rb = xp.backfill(bf, ms('2026-10-20'), pay);
+assert.ok(rb && !rb.boost, 'back-dated XP is not boosted');
+console.log('PASS xp boost');

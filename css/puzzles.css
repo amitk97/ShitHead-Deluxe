@@ -48,3 +48,5 @@ body.reduce-motion .pz-card { transition: none; }
 .pz-rival-label { font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #bbf7d0; margin-right: 6px; }
 .pz-small { width: 32px; height: 44px; border-radius: 6px; }
 .pz-small b, .pz-small i { font-size: 13px; }
+
+.pz-reward { margin: -4px 0 10px; font-size: 11px; color: #fcd34d; }

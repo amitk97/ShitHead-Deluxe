@@ -201,7 +201,7 @@
         target: ['#localTableSlots', '#centerArena'],
         require: { blind: true },
         noCoachReply: true,
-        coachNote: `That's a win! You're empty — Hand, Table, everything. That's the whole game, start to finish. ${window.innerWidth < 768 ? 'Tap' : 'Click'} the \u2261 menu: the ? shortcut opens Guide & Strategy and the \u2699\uFE0F shortcut opens Settings. You can also tap the i button during a game to see every card's power.`,
+        coachNote: `That's a win! You're empty — Hand, Table, everything. That's the whole game, start to finish. ${window.innerWidth < 768 ? 'Tap' : 'Click'} the \u2261 Menu for Guide & Strategy, Shop, Custom and Challenges, and the gear for Settings. On the home screen the header shows Guide, Settings, Shop and Custom directly. You can also tap the i button during a game to see every card's power.`,
         noteTarget: ['#hamburgerBtn', '#cardRefBtn']
       }
     ];

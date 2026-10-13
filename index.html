@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-13-v343 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-13-v346 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -227,7 +227,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=d644960b7c31">
+  <link rel="stylesheet" href="game.css?v=aff768f4f773">
 
   
   <!-- Firebase SDKs -->
@@ -2140,6 +2140,7 @@
       <h2 id="pzTitle" class="pz-title"></h2>
       <div id="pzTier" class="pz-tier"></div>
       <p id="pzGoal" class="pz-goal"></p>
+      <p id="pzReward" class="pz-reward"></p>
       <div class="pz-table">
         <div id="pzRival" class="pz-rival" hidden></div>
         <div id="pzPile" class="pz-pile" aria-label="Pile"></div>
@@ -2191,7 +2192,7 @@
       <div class="text-4xl">🙋</div>
       <h2 class="text-base font-black text-amber-400 uppercase tracking-wide">Invite Someone First</h2>
       <p class="text-slate-300 text-xs leading-relaxed">
-        An online room needs at least one other human player before you can start — playing solo against only bots here can break the match. Share your room code, or switch to Play vs Bots instead.
+        An online room needs at least one other human player before you can start — playing solo against only bots here can break the match. Share your room code, or switch to Play Computer instead.
       </p>
       <div class="bg-slate-950 rounded-xl border border-slate-800 py-2">
         <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Room Code</span>
@@ -2199,7 +2200,7 @@
       </div>
       <div class="flex flex-col gap-2 pt-1">
         <button id="needHumanCopyBtn" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">📋 Copy Room Code</button>
-        <button id="needHumanBotsBtn" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 font-black text-xs uppercase tracking-wider rounded-xl text-slate-200 transition">Play vs Bots Instead</button>
+        <button id="needHumanBotsBtn" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 font-black text-xs uppercase tracking-wider rounded-xl text-slate-200 transition">Play Computer Instead</button>
         <button id="needHumanCloseBtn" class="w-full py-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-300 uppercase tracking-wider transition">Stay and Wait</button>
       </div>
     </div>
@@ -2422,7 +2423,7 @@
             <p><strong class="text-amber-300">Burn the Pile</strong> &mdash; burn the Pile with a 10 or four of a kind, within the number of plays shown.</p>
             <p><strong class="text-amber-300">Rival picks up</strong> &mdash; end your turn so none of the Rival&rsquo;s shown cards can be played. They take the Pile.</p>
             <p><strong>Plays.</strong> Several cards of one rank count as one play. When a puzzle says &ldquo;at most 4 plays&rdquo;, playing a pair or triple together is often the way.</p>
-            <p><strong>Tools.</strong> Tap cards to pick them (<em>All Of Rank</em> picks the rest of that rank), then <em>Play</em>. <em>Undo</em> takes a play back and <em>Restart</em> deals it again. <em>Hint</em> gives the idea first, then names the next move. <em>Give Up</em> shows the answer. Puzzles do not pay Diamonds or XP yet.</p>
+            <p><strong>Tools.</strong> Tap cards to pick them (<em>All Of Rank</em> picks the rest of that rank), then <em>Play</em>. <em>Undo</em> takes a play back and <em>Restart</em> deals it again. <em>Hint</em> gives the idea first, then names the next move. <em>Give Up</em> shows the answer. Solving a puzzle while signed in pays 5 Diamonds and 25 XP, once per puzzle each week; Give Up means no reward.</p>
           </div>
         </div>
         <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="series">
@@ -2471,7 +2472,7 @@
             <p data-term="card-powers"><strong class="text-amber-400">Card Powers:</strong> The &#9432; button on the table: what every card does. Press and hold any card on the table for the same information.</p>
             <p data-term="challenges"><strong class="text-amber-400">Challenges:</strong> Goals that pay Diamonds: Getting Started, daily and weekly picks, Bots, Ranked and Friends milestones. Menu &rarr; Challenges shows every one and what it asks for.</p>
             <p data-term="constraint"><strong class="text-amber-400">Constraint:</strong> A restriction the previous card placed on your turn. A 6 forces an EVEN card, a Jack forces an ODD card, and a 7 forces a card of rank 7 or lower. The banner shows the active constraint.</p>
-            <p data-term="custom"><strong class="text-amber-400">Custom:</strong> Menu &rarr; Custom: equip the avatars, tables, card backs, frames, decks, effects and emotes you own. Press and hold any item there (or in the Shop) for a big preview.</p>
+            <p data-term="custom"><strong class="text-amber-400">Custom:</strong> Header or Menu &rarr; Custom: equip the avatars, tables, card backs, frames, decks, effects and emotes you own. Press and hold any item there (or in the Shop) for a big preview.</p>
             <p data-term="daily-challenges"><strong class="text-amber-400">Daily Challenges:</strong> Three new goals every UK day (Challenges &rarr; Daily tab), each paying Diamonds and XP.</p>
             <p data-term="deck"><strong class="text-amber-400">Deck:</strong> The face-down stack you draw from. After each turn you top your Hand back up to three cards while the Deck lasts. Once it's empty, no more topping up &mdash; and your Table Cards become reachable.</p>
             <p data-term="diamonds"><strong class="text-amber-400">Diamonds:</strong> The game&rsquo;s currency (💎). Earned from wins, challenges, the daily login streak and the Gauntlet; spent in the Shop on cosmetics or gifts for friends.</p>
@@ -2484,14 +2485,17 @@
             <p data-term="gauntlet"><strong class="text-amber-400">Gauntlet:</strong> Play Computer games in a row against tough bots, with a few lives: Easy (5 bots, 3 lives), Hard (5 bots, 2 lives, Lvl 30) or Boss (3 Boss bots, 1 life, Lvl 50). One a day. See <em>The Gauntlet</em> above.</p>
             <p data-term="hand"><strong class="text-amber-400">Hand:</strong> The cards only you can see, held off the table. You play from here first, and top back up to three from the Deck after each turn while the Deck lasts.</p>
             <p data-term="hard-gauntlet"><strong class="text-amber-400">Hard Gauntlet:</strong> A daily run against 5 tough bots with 2 lives, unlocked at Level 30 after beating Easy once. Losing costs a life and you retry that bot. Choose it on the Gauntlet page; you may enter one Gauntlet mode per day.</p>
+            <p data-term="header"><strong class="text-amber-400">Header:</strong> The bar along the top. On the home screen it shows Exit, Shop, your Diamonds, Custom, Profile, Inbox, Guide, Settings and Menu. Away from home, Shop, Custom and Guide fold into the Menu. Exit asks before it closes the app or leaves a match.</p>
             <p data-term="house-rules"><strong class="text-amber-400">House Rules:</strong> A casual Play Friends mode where the host customises card powers. It is unranked, gives no Challenge progress and awards no Diamonds. Bots follow the same custom rules.</p>
             <p data-term="joker"><strong class="text-amber-400">Joker:</strong> The strongest card. Play it on anything, then choose an opponent to pick up the Pile. See <em>Duel</em>.</p>
             <p data-term="joker-effect"><strong class="text-amber-400">Joker Effect:</strong> A cosmetic animation that plays over the table whenever you play a Joker, bought in the Shop&rsquo;s Joker tab. Everyone at the table sees it, online too.</p>
             <p data-term="last-card"><strong class="text-amber-400">Last Card:</strong> A player down to one card in total gets a pulsing <strong>&#9757;&#65039; LAST CARD</strong> badge and a warning, so nobody sneaks out unnoticed.</p>
             <p data-term="leaderboard"><strong class="text-amber-400">Leaderboard:</strong> Menu &rarr; Leaderboard: three tabs, <em>Ranked</em> (rating), <em>Challenges</em> (challenges completed) and <em>Gauntlet</em> (bots beaten). Reach the top 10, #3, #2 or #1 and a congratulations message lands in your Inbox.</p>
-            <p data-term="level"><strong class="text-amber-400">Level:</strong> You earn XP for finishing games, winning, Ranked, the Gauntlet and challenges. Levels run from 1 to 99; every level up pays Diamonds, and some levels unlock free items (see <em>Level Rewards</em>).</p>
+            <p data-term="level"><strong class="text-amber-400">Level:</strong> You earn XP for finishing games, winning, Ranked, the Gauntlet and challenges. Levels run from 1 to 99; every level up pays Diamonds, and some levels unlock free items (see <em>Level Rewards</em>). While a seasonal event is on, all the XP you earn is 1.5&times;.</p>
             <p data-term="level-rewards"><strong class="text-amber-400">Level Rewards:</strong> Free things you unlock by levelling up: 2x game speed at Lvl 5 and 4x at Lvl 10 (signed in), a second saved look at Lvl 10 and a third at Lvl 20, and earn-only avatars (Rookie Rogue 10, Card Shark 25, Burn King 50, Chaos Jester 75, The ShitHead 99) and card backs (First Burn 10, Shark&rsquo;s Mark 30, Inferno 50, Chaos Crown 70, Master of the Pile 99). Your level badge also changes colour at 20, 40, 60, 80 and 99.</p>
             <p data-term="lives"><strong class="text-amber-400">Lives:</strong> Your hearts in the Gauntlet. You start with 3; losing a game costs one and you replay the same bot.</p>
+            <p data-term="menu"><strong class="text-amber-400">Menu:</strong> The &equiv; button at the right of the Header. It holds Challenges, Friends, Leaderboard, Level Ladder, Stats and Support, and gives you Shop, Custom and Guide whenever the Header has folded them away.</p>
+            <p data-term="mode-card"><strong class="text-amber-400">Mode Card:</strong> One card in the row on the home screen: Gauntlet, Play Computer, Ranked, Play Friends and More Modes. Swipe or use the arrows, then tap Go (or the middle card) to open it. Press and hold a card to move it.</p>
             <p data-term="no-power"><strong class="text-amber-400">No Power:</strong> In House Rules, the rank behaves as a normal card with no special effect. Unlike Please Select, it is a valid completed choice.</p>
             <p data-term="pick-up"><strong class="text-amber-400">Pick Up:</strong> Taking the entire Pile into your Hand because you had no legal move. The setback of the game. If your Hand was already empty, you must also take one Face-Up Card (or several of the same rank) along with it.</p>
             <p data-term="pile"><strong class="text-amber-400">Pile:</strong> The face-up stack in the middle that everyone plays onto. Your card must match or beat the top card of the Pile &mdash; if you can't, you take the whole Pile into your Hand.</p>
@@ -2510,6 +2514,7 @@
             <p data-term="seasonal-event"><strong class="text-amber-400">Seasonal Event:</strong> Halloween, Christmas, Diwali and more: while an event is on, its themed items are sold in the Shop&rsquo;s Seasonal tab, and winning 3 games earns that event&rsquo;s avatar.</p>
             <p data-term="select-all-of-a-rank"><strong class="text-amber-400">Select All Of A Rank:</strong> With it on (the round button left of your hand count, or S on a keyboard), tapping a card selects every card of that rank in your Hand. Protect Best Cards (Settings → Gameplay, off by default) keeps it to one card for 2s, 3s, 10s and Aces, so you don't waste them.</p>
             <p data-term="shithead"><strong class="text-amber-400">ShitHead:</strong> The loser &mdash; the last player still holding cards once everyone else has emptied their Hand, Face-Up and Face-Down cards.</p>
+            <p data-term="shortcut-card"><strong class="text-amber-400">Shortcut Card:</strong> The two outer Mode Cards. Pin Puzzles or a mode that is still coming to one of them, and Swap changes it. Puzzles opens straight from its pin.</p>
             <p data-term="skip"><strong class="text-amber-400">Skip:</strong> The 8. The next player misses their turn.</p>
             <p data-term="snap-burn"><strong class="text-amber-400">Snap Burn:</strong> Completing four of a kind <em>out of turn</em>. If the top of the Pile already shows some of a rank and you hold the rest, a Snap Burn button appears and you can burn the Pile immediately, even when it isn't your turn.</p>
             <p data-term="stand-in"><strong class="text-amber-400">Stand-In:</strong> If a player's app closes during an online game, a Medium bot plays their seat until they're back. After 5 of its turns the absent player is out of that game.</p>
@@ -2592,22 +2597,22 @@
   <script src="js/whats-new-data.js"></script>
   <script src="js/avatar-tones.js"></script>
   <script src="cosmetics-data.js?v=924c8ed0b06b"></script>
-  <script src="tutorial-data.js?v=cf577eec4ae6"></script>
-  <script src="tutorial.js?v=8e9bc17bd42a"></script>
-  <script src="level-ladder.js?v=cdcc7c34077e"></script>
+  <script src="tutorial-data.js?v=86b1cdade927"></script>
+  <script src="tutorial.js?v=7e126b798668"></script>
+  <script src="level-ladder.js?v=4ad4cb937515"></script>
   <script src="shop.js?v=343ace972099"></script>
   <script src="home-navigation.js?v=fc99c36028d3"></script>
   <script src="multiplayer-lobby.js?v=563279447523"></script>
   <script src="private-cosmetics.js?v=4f732484384c"></script>
-  <script src="app.js?v=7a97da3129c9"></script>
+  <script src="app.js?v=88e49a6d7120"></script>
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
   <script src="js/house-rules-presets.js?v=335"></script>
   <script src="js/friends-lobby.js?v=335"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
-  <script src="js/puzzle-engine.js?v=343"></script>
-  <script src="js/puzzles.js?v=345"></script>
+  <script src="js/puzzle-engine.js?v=346"></script>
+  <script src="js/puzzles.js?v=346"></script>
   <script src="js/welcome-tour.js?v=1ec181602f01"></script>
 </body>
 </html>

@@ -155,7 +155,8 @@
       <span>Finish a game</span><span>${XP_RULES.finish}</span><span>First game of the day</span><span>+${XP_RULES.firstGameOfDay}</span>
       <span>Win (Play Computer / Play Friends)</span><span>${XP_RULES.win}</span><span>Ranked game / Ranked win</span><span>${XP_RULES.ranked} / ${XP_RULES.rankedWin}</span>
       <span>Gauntlet bot beaten</span><span>${Math.min(...Object.values(XP_RULES.gauntletBot))}–${Math.max(...Object.values(XP_RULES.gauntletBot))}</span>
-      <span>Daily / weekly challenge</span><span>${XP_RULES.daily} / ${XP_RULES.weekly}</span></div></details>`;
+      <span>Daily / weekly challenge</span><span>${XP_RULES.daily} / ${XP_RULES.weekly}</span>
+      <span>While a seasonal event is on</span><span>${XP_RULES.seasonalBoost}×</span></div></details>${xpBoostNote()}`;
     function renderLevelLadder(from) {
       const signedIn = !!currentUser && !!playerXp;
       const total = signedIn ? playerXp.total : 0;

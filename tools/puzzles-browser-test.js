@@ -32,7 +32,19 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]]){
   await page.evaluate(()=>{});
   for(const m of sol){await pickN(m.rank,m.n);await page.locator('#pzPlay').click();}
   assert((await page.locator('#pzStatus').textContent()).startsWith('Solved'),'solved via the UI: '+await page.locator('#pzStatus').textContent());
+  assert.match(await page.locator('#pzStatus').textContent(),/Sign in to earn 5 Diamonds/,'guests are told how to earn');
+  assert.match(await page.locator('#pzReward').textContent(),/5 Diamonds/);
   assert(await page.evaluate(id=>JSON.parse(localStorage.getItem('shithead_puzzles_solved')||'{}')[id],today),'solved is remembered');
+  // signed in: the moves go to the server and the prize shows (server stubbed)
+  if(w===390){
+    await page.evaluate(()=>{window.__sent=[];currentUser={email:'x@y.z',uid:'u'};window.callEconomy=async(a,d)=>{window.__sent.push([a,d]);return {awarded:{id:'puzzle_t',name:'Weekly Puzzle',reward:5},diamonds:15,xp:null};};});
+    await page.locator('#pzRestart').click();
+    for(const m of sol){await pickN(m.rank,m.n);await page.locator('#pzPlay').click();}
+    await page.waitForFunction(()=>/\+5 Diamonds/.test(document.querySelector('#pzStatus').textContent));
+    const sent=await page.evaluate(()=>window.__sent);
+    assert.equal(sent.length,1);assert.equal(sent[0][0],'puzzle');assert.deepEqual(sent[0][1].moves,sol);
+    await page.evaluate(()=>{currentUser=null;});
+  }
   // restart, then undo
   await page.locator('#pzRestart').click();
   const n0=await page.locator('#pzHand .pz-card').count();

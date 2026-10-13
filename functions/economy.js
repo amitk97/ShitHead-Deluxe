@@ -12,6 +12,7 @@
 //   sync          pay any milestone challenge / earn-only picture already met
 //   streak        daily login reward (one per UK calendar day)
 //   claim         one challenge by completion key (daily_…, weekly_…, season_…, id)
+//   puzzle        a solved weekly puzzle: the moves are replayed here (catalog puzzles), once per puzzle per UK week
 //   weeklyReroll  swap one weekly challenge for another, once a UK week (level-locked)
 //   matchWin      a Vs Bots or casual online win (caps: see MATCH_LIMITS)
 //   matchFinished a finished match (ShitHead Virgin / Beginner)
@@ -54,6 +55,7 @@ const RANKED_PAIR_PER_DAY = 5; // processedMatchRewards / processedRankedMatches
 
 const db = () => admin.database();
 const boards = require('./boards');
+const puzzles = require('./puzzle-engine'); // copy of js/puzzle-engine.js (a test keeps them identical)
 const xp = require('./xp'); // XP & levels: off until config/features/xp is true
 // An action's XP: `past` is the account's one-time XP for play from before
 // levels (xp.backfill, taken at the start of the mutator, before this
@@ -470,6 +472,36 @@ actions.streak = async ({ uid }) => {
 
 // One weekly challenge swapped for another, once a UK week, from level
 // xp.weeklyRerollLevel (owner, v289). Not for one already completed.
+// Weekly Puzzles (v346). The game exports the puzzles into catalog.puzzles; the week's puzzle is the
+// list entry at (years since 2026 x 53 + week number) mod length, as in js/puzzles.js. The moves
+// the phone sends are replayed against the catalog's own Hand and Pile, so only a real solution
+// pays: puzzle_<week>_<id> is recorded like any challenge (once), 5 Diamonds + XP_RULES.puzzle XP.
+// The AmitK test account may solve any puzzle for its reward; everyone else only this week's.
+const PUZZLES = CAT.puzzles || { list: [], reward: { diamonds: 0 } };
+function puzzleOfWeek(weekKey) {
+  const m = /^(\d{4})-W(\d{2})$/.exec(weekKey || '');
+  if (!m || !PUZZLES.list.length) return null;
+  return PUZZLES.list[((Number(m[1]) - 2026) * 53 + Number(m[2])) % PUZZLES.list.length];
+}
+actions.puzzle = async ({ uid, auth, data }) => {
+  const id = clip(data.id, 20);
+  const puzzle = PUZZLES.list.find(p => p.id === id);
+  if (!puzzle) fail('invalid-argument', 'Unknown puzzle.');
+  const now = new Date(), week = ukWeekKey(now), key = `puzzle_${week}_${id}`;
+  if (!isAmitK(auth) && (puzzleOfWeek(week) || {}).id !== id) fail('failed-precondition', 'That is not this week\'s puzzle.');
+  const start = { hand: puzzle.hand, pile: puzzle.pile, constraint: puzzle.constraint || null, base: puzzle.base || null };
+  if (!puzzles.verify(start, puzzle.goal, data.moves)) fail('failed-precondition', 'Those moves do not solve the puzzle.');
+  const xpOn = await xp.enabled();
+  const res = await userTx(uid, (user) => {
+    if (user.completedChallenges?.[key]) return { noop: true, already: true };
+    const past = xpOn ? xp.backfill(user, now.getTime(), addDiamonds) : null;
+    recordClaim(user, key, `Weekly Puzzle: ${puzzle.name}`, num(PUZZLES.reward.diamonds), now.getTime());
+    const xpRes = xpOn ? xpResult(user, [['puzzle', num(xp.RULES.puzzle)]], now.getTime(), past) : null;
+    return { user, awarded: { id: key, name: `Weekly Puzzle: ${puzzle.name}`, reward: num(PUZZLES.reward.diamonds) }, xp: xpRes };
+  });
+  return { awarded: res.awarded || null, already: !!res.already, diamonds: num(res.user.diamonds), xp: res.xp || null };
+};
+
 actions.weeklyReroll = async ({ uid, data }) => {
   const from = clip(data.id, 40);
   if (!/^[a-z0-9-]+$/.test(from)) fail('invalid-argument', 'Unknown challenge.');
@@ -1472,4 +1504,4 @@ exports.economy = onCall({ region: 'europe-west1', cors: true, maxInstances: 20 
 });
 
 // For the unit tests.
-exports._test = { actions, pickDailyIds, pickWeeklyIds, userWeeklyIds, userDailyIds, ukDateKey, ukWeekKey, shiftDateKey, activeSeasonWindows, pairwiseEloDeltas, rankedStreakBonus, RANKED_BONUS, tierName, challengeForKey, milestoneEligible, unlockedDifficulties };
+exports._test = { actions, puzzleOfWeek, pickDailyIds, pickWeeklyIds, userWeeklyIds, userDailyIds, ukDateKey, ukWeekKey, shiftDateKey, activeSeasonWindows, pairwiseEloDeltas, rankedStreakBonus, RANKED_BONUS, tierName, challengeForKey, milestoneEligible, unlockedDifficulties };
