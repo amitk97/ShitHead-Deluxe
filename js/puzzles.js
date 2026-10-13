@@ -28,30 +28,39 @@
     { id: 'p9', tier: 5, title: 'Four Plays To Freedom', hand: ['10', '8', '8', '3', '5', '8', '10'], pile: [], constraint: null,
       goal: { type: 'out', maxPlays: 4 },
       hint: 'Play several of a rank together. Three 8s skip the Rival once, but still count as one play.' },
-    { id: 'p10', tier: 2, title: 'Odd One Down', hand: ['4', '10', '4', 'K', '5', '4'], pile: ['8', '8', 'J'], constraint: 'ODD',
-      goal: { type: 'burn', maxPlays: 3 },
-      hint: 'A 5 is odd, so it can go on the Jack, and it drops to the bottom of the Pile. What does a 5 on a base 8 do?' },
+    { id: 'p10', tier: 2, title: 'Four Sixes', hand: ['6', '8', '6', '6', 'Q'], pile: ['7', '6'], constraint: 'EVEN',
+      goal: { type: 'out', maxPlays: 3 },
+      hint: 'Three of your 6s on the Pile\'s 6 make four of a kind. After a burn, the Pile is empty and anything goes.' },
     { id: 'p11', tier: 2, title: 'Nothing Beats An Ace', hand: ['6', 'A', '2', '4', '10', '7', '6'], pile: ['A', 'A', 'A'], constraint: null,
       goal: { type: 'pickup', rival: ['Q', 'K', '6'] },
       hint: 'Clear the Pile first, then end your turn on the one card the Rival\'s Hand cannot beat.' },
     { id: 'p12', tier: 3, title: 'Three Threes', hand: ['3', '3', 'J', '3', '10', '10'], pile: ['A', 'A', '2', '8'], constraint: null,
       goal: { type: 'out', maxPlays: 3 },
       hint: 'A 3 takes on the card under it, and over an 8 it skips the Rival. Three 3s together are still one play.' },
-    { id: 'p13', tier: 3, title: 'Seven Or Lower', hand: ['3', '10', '7', '8', '3', '8', '3'], pile: ['3', '4', 'J', 'K'], constraint: null,
-      goal: { type: 'pickup', rival: ['J', 'A', '10', 'J'] },
-      hint: 'Burn the Pile, then play the card that limits the Rival to a 7 or lower.' },
-    { id: 'p14', tier: 3, title: 'Two Tens Together', hand: ['10', '8', 'J', '8', '10', '8'], pile: ['J', 'J', 'K'], constraint: null,
-      goal: { type: 'out', maxPlays: 3 },
-      hint: 'Both 10s can go in one play, and a burn gives you another go. Three 8s skip the Rival once.' },
+    { id: 'p13', tier: 3, title: 'Fives Fall To The Bottom', hand: ['7', '10', '5', '8', '5'], pile: ['8', 'Q', '2', '4'], constraint: null,
+      goal: { type: 'out' },
+      hint: 'A 5 drops to the bottom card of the Pile, and the bottom card here is an 8.' },
+    { id: 'p14', tier: 3, title: 'Seven Or Lower', hand: ['3', '5', '10', '9', '9'], pile: ['8', '2', '7'], constraint: 'LOW7',
+      goal: { type: 'out' },
+      hint: 'The Pile says 7 or lower, so a 10 cannot go yet. Only a 5 or a 3 helps: look at the bottom of the Pile.' },
     { id: 'p15', tier: 3, title: 'Skip Then Four Kings', hand: ['8', 'K', 'K', '9', 'K', 'K'], pile: ['5', '3', '2', '6', '6'], constraint: 'EVEN',
       goal: { type: 'burn', maxPlays: 3 },
       hint: 'An 8 can go on an even card and skips the Rival. Then look at what four of a kind does.' },
-    { id: 'p16', tier: 4, title: 'Two Burns, Five Plays', hand: ['10', '10', '3', '4', '3', '8', '4'], pile: ['2', '9', 'K', 'A'], constraint: null,
-      goal: { type: 'out', maxPlays: 5 },
-      hint: 'Each 10 is a burn and a free go. Fit the 8, the 3s and the 4s around them, and keep the 4s for last.' },
-    { id: 'p17', tier: 4, title: 'The Queens Are Waiting', hand: ['Q', 'Q', '8', '5', '5', '10', '3'], pile: ['2', '2', 'Q', 'Q'], constraint: null,
-      goal: { type: 'out', maxPlays: 5 },
-      hint: 'The Pile already holds two Queens. Add yours, then use the 8, the 3 and the 10 to keep the turn until the 5s.' }
+    { id: 'p16', tier: 3, title: 'Eight Then Jack', hand: ['7', '8', '9', 'J', '7', '7', '5'], pile: ['6'], constraint: 'EVEN',
+      goal: { type: 'pickup', maxPlays: 3, rival: ['8', 'Q', '4', '4'] },
+      hint: 'The Rival holds only even cards. An 8 skips them, then finish on a card that only odd cards can follow.' },
+    { id: 'p17', tier: 4, title: 'Four Eights', hand: ['7', '8', '5', '4', '4', '9', '3'], pile: ['8', '8', '8'], constraint: null,
+      goal: { type: 'pickup', maxPlays: 3, rival: ['A', 'A', 'Q'] },
+      hint: 'Your 8 makes four of a kind with the three on the Pile. Then play the card that limits the Rival to a 7 or lower.' },
+    { id: 'p18', tier: 4, title: 'Aces Wild', hand: ['10', '8', 'A', '7', '10', '8'], pile: ['8', 'A', 'A', 'A'], constraint: null,
+      goal: { type: 'out', maxPlays: 4 },
+      hint: 'One Ace makes four of a kind with the Aces on the Pile. Then each pair goes together as a single play.' },
+    { id: 'p19', tier: 4, title: 'Four Sevens', hand: ['7', '7', '8', '10', '7', '7', '3'], pile: ['9', 'A', '3'], constraint: null,
+      goal: { type: 'out' },
+      hint: 'Clear the Pile with the 10, then four 7s together burn it again. Keep the 8 and the 3 for the end.' },
+    { id: 'p20', tier: 5, title: 'Three Queens', hand: ['8', 'Q', 'Q', 'Q', '10', '8', '6'], pile: ['9', '2', 'Q'], constraint: null,
+      goal: { type: 'out', maxPlays: 4 },
+      hint: 'Three Queens on the Pile\'s Queen make four of a kind. Two 8s together skip the Rival once.' }
   ];
   PUZZLES.forEach(p => { p.goal = p.goal || { type: 'out' }; p.base = p.base || null; });
   const GOAL_NAMES = { out: 'Out in one turn', burn: 'Burn the Pile', pickup: 'Rival picks up' };
@@ -105,7 +114,7 @@
     puzzle = p; const d = dealCards(p);
     st = { hand: d.hand, pile: d.pile, constraint: p.constraint, base: p.base, rival: p.goal.type === 'pickup' ? p.goal.rival.map((r, i) => ({ id: 'r' + i, rank: r, suit: SUITS[i % 4] })) : [] };
     undo = []; moveLog = []; { const b = $('#pzRestart'); b.classList.remove('pz-primary'); b.textContent = 'Restart'; } gaveUp = false; picked = new Set(); over = null; plays = 0; say('Tap cards to pick them, then press Play.', '');
-    draw();
+    draw(); fit(true);
   }
   let plays = 0;
   function say(text, tone) { const el = $('#pzStatus'); el.textContent = text; el.dataset.tone = tone || ''; const d = $('#pzDoneMsg'); if (d && over === 'won') d.textContent = text; }
@@ -116,6 +125,9 @@
     el.classList.remove('card-opponent-slot'); el.classList.add(size, 'pz-card'); if (extra) el.classList.add(extra);
     el.dataset.id = c.id; if (!el.dataset.rank) el.dataset.rank = c.rank;
     if (!el.firstChild) el.textContent = c.rank + c.suit; // node tests have no game renderer
+    // Puzzles show the suit in the middle of every card, never the power icons (they are noise here).
+    const ic = el.querySelector && el.querySelector('.card-centre-icon');
+    if (ic) { const g = document.createElement('span'); g.className = 'card-centre-suit font-black'; g.textContent = c.suit; ic.replaceWith(g); }
     return el;
   }
   const equippedTableId = () => (typeof homeBackdropTableId === 'function' ? homeBackdropTableId() : 'default');
@@ -136,7 +148,8 @@
     if (!top) return 'The Pile is empty: anything goes.';
     const c = st.constraint || (st.base ? E.constraintOf(st.base) : null);
     const need = c === 'EVEN' ? 'an even card' : c === 'ODD' ? 'an odd card' : c === 'LOW7' ? 'a 7 or lower' : `${top} or higher`;
-    return st.base ? `Dropped to the base ${st.base}. Next card: ${need}.` : `Next card: ${need}.`;
+    const covered = !st.base && st.pile.length && st.pile[st.pile.length - 1].rank === '3' && top !== '3';
+    return st.base ? `Dropped to the base ${st.base}. Next card: ${need}.` : `${covered ? `The 3 shows the ${top} under it. ` : ''}Next card: ${need}.`;
   }
   function draw() {
     $('#pzTitle').textContent = puzzle.title;
@@ -146,7 +159,7 @@
     const rv = $('#pzRival'); rv.hidden = puzzle.goal.type !== 'pickup';
     if (!rv.hidden) { rv.replaceChildren(); const l = document.createElement('span'); l.className = 'pz-rival-label'; l.textContent = "Rival's Hand"; rv.append(l, ...st.rival.map(c => cardEl(c, 'card-opponent-slot'))); }
     const pileEl = $('#pzPile'); pileEl.replaceChildren();
-    if (st.pile.length) st.pile.slice(-5).forEach(c => pileEl.append(cardEl(c, 'card-table'))); else pileEl.innerHTML = '<span class="pz-empty">Empty Pile</span>';
+    if (st.pile.length) (st.pile.length > 6 ? [st.pile[0]].concat(st.pile.slice(-4)) : st.pile).forEach(c => pileEl.append(cardEl(c, 'card-table'))); else pileEl.innerHTML = '<span class="pz-empty">Empty Pile</span>';
     paintTable(); paintYou();
     requestAnimationFrame(fit);
     $('#pzRule').textContent = ruleLine();
@@ -166,13 +179,19 @@
       : (solved[puzzle.id] ? '<span class="pz-note">Solved. A new puzzle arrives next week.</span>' : '<span class="pz-note">This week’s puzzle. A new one arrives every week.</span>');
   }
   // Everything fits the screen with no scrolling: shrink the cards (CSS --pzw) until the box stops overflowing.
-  function fit() {
+  // The card size is chosen once per puzzle (full = true: open, load, resize) and then only ever shrinks, so the page
+  // never changes size while you play. The Hand keeps the height it had at the start for the same reason.
+  let fitW = 64, fitTight = false;
+  function fit(full) {
     const box = document.querySelector('#puzzlesModal .pz-card-box'); if (!box || !modal || modal.classList.contains('hidden')) return;
-    const shrink = (min) => { for (let w = 64; w >= min; w -= 2) { box.style.setProperty('--pzw', w + 'px'); if (box.scrollHeight <= box.clientHeight + 1) return true; } return false; };
-    box.classList.remove('pz-tight');
-    if (!shrink(44)) { box.classList.add('pz-tight'); shrink(26); } // short screens: drop the extra lines too
+    const hand = $('#pzHand');
+    if (full === true) { fitW = 64; fitTight = false; hand.style.minHeight = ''; }
+    const apply = () => { box.classList.toggle('pz-tight', fitTight); box.style.setProperty('--pzw', fitW + 'px'); return box.scrollHeight <= box.clientHeight + 1; };
+    const shrink = (min) => { for (; fitW >= min; fitW -= 2) if (apply()) return true; fitW = min; apply(); return false; };
+    if (!apply()) { if (!shrink(44)) { fitTight = true; shrink(26); } } // short screens: drop the extra lines too
+    if (full === true) hand.style.minHeight = hand.offsetHeight + 'px';
   }
-  window.addEventListener('resize', fit);
+  window.addEventListener('resize', () => fit(true));
   function toggle(id) {
     if (over) return;
     const c = st.hand.find(x => x.id === id); if (!c) return;
@@ -258,7 +277,7 @@
     modal = document.getElementById('puzzlesModal'); if (!modal) return;
     const list = availablePuzzles();
     load(list.find(p => p.id === id) || current || thisWeek()); current = puzzle;
-    modal.classList.remove('hidden'); fit();
+    modal.classList.remove('hidden'); fit(true);
   }
   function close() { modal && modal.classList.add('hidden'); }
 

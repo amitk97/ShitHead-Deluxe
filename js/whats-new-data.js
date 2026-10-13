@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v354: [['puzzle', 'Puzzles: the Pile is now a real stack, cards show their suit instead of power icons, the page no longer changes size as you play, and repetitive puzzles are replaced by 11 new ones.']],
       v353: [['puzzle', 'Eight new weekly puzzles, 17 in all, with new tricks: a 5 on the Jack, a 7 that locks the Rival out, two burns in one turn and more.', WN_KEY]],
       v352: [['sparkle', 'Solving a weekly puzzle now shows a clear Puzzle solved panel with your reward, plus Done and Play again buttons.']],
       v351: [['sparkle', 'Puzzles: when your turn ends without solving it, the Rival now plays a card you can see, and a Try Again button appears. When the Rival is stuck, they pick up the Pile.']],

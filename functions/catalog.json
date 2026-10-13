@@ -2148,24 +2148,22 @@
    },
    {
     "id": "p10",
-    "name": "Odd One Down",
+    "name": "Four Sixes",
     "hand": [
-     "4",
-     "10",
-     "4",
-     "K",
-     "5",
-     "4"
+     "6",
+     "8",
+     "6",
+     "6",
+     "Q"
     ],
     "pile": [
-     "8",
-     "8",
-     "J"
+     "7",
+     "6"
     ],
-    "constraint": "ODD",
+    "constraint": "EVEN",
     "base": null,
     "goal": {
-     "type": "burn",
+     "type": "out",
      "maxPlays": 3
     }
    },
@@ -2223,55 +2221,45 @@
    },
    {
     "id": "p13",
-    "name": "Seven Or Lower",
+    "name": "Fives Fall To The Bottom",
     "hand": [
-     "3",
-     "10",
      "7",
+     "10",
+     "5",
      "8",
-     "3",
-     "8",
-     "3"
+     "5"
     ],
     "pile": [
-     "3",
-     "4",
-     "J",
-     "K"
+     "8",
+     "Q",
+     "2",
+     "4"
     ],
     "constraint": null,
     "base": null,
     "goal": {
-     "type": "pickup",
-     "rival": [
-      "J",
-      "A",
-      "10",
-      "J"
-     ]
+     "type": "out"
     }
    },
    {
     "id": "p14",
-    "name": "Two Tens Together",
+    "name": "Seven Or Lower",
     "hand": [
+     "3",
+     "5",
      "10",
-     "8",
-     "J",
-     "8",
-     "10",
-     "8"
+     "9",
+     "9"
     ],
     "pile": [
-     "J",
-     "J",
-     "K"
+     "8",
+     "2",
+     "7"
     ],
-    "constraint": null,
+    "constraint": "LOW7",
     "base": null,
     "goal": {
-     "type": "out",
-     "maxPlays": 3
+     "type": "out"
     }
    },
    {
@@ -2301,52 +2289,130 @@
    },
    {
     "id": "p16",
-    "name": "Two Burns, Five Plays",
+    "name": "Eight Then Jack",
     "hand": [
-     "10",
-     "10",
-     "3",
-     "4",
-     "3",
+     "7",
      "8",
-     "4"
+     "9",
+     "J",
+     "7",
+     "7",
+     "5"
     ],
     "pile": [
-     "2",
+     "6"
+    ],
+    "constraint": "EVEN",
+    "base": null,
+    "goal": {
+     "type": "pickup",
+     "maxPlays": 3,
+     "rival": [
+      "8",
+      "Q",
+      "4",
+      "4"
+     ]
+    }
+   },
+   {
+    "id": "p17",
+    "name": "Four Eights",
+    "hand": [
+     "7",
+     "8",
+     "5",
+     "4",
+     "4",
      "9",
-     "K",
+     "3"
+    ],
+    "pile": [
+     "8",
+     "8",
+     "8"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "pickup",
+     "maxPlays": 3,
+     "rival": [
+      "A",
+      "A",
+      "Q"
+     ]
+    }
+   },
+   {
+    "id": "p18",
+    "name": "Aces Wild",
+    "hand": [
+     "10",
+     "8",
+     "A",
+     "7",
+     "10",
+     "8"
+    ],
+    "pile": [
+     "8",
+     "A",
+     "A",
      "A"
     ],
     "constraint": null,
     "base": null,
     "goal": {
      "type": "out",
-     "maxPlays": 5
+     "maxPlays": 4
     }
    },
    {
-    "id": "p17",
-    "name": "The Queens Are Waiting",
+    "id": "p19",
+    "name": "Four Sevens",
     "hand": [
-     "Q",
-     "Q",
+     "7",
+     "7",
      "8",
-     "5",
-     "5",
      "10",
+     "7",
+     "7",
      "3"
     ],
     "pile": [
-     "2",
-     "2",
+     "9",
+     "A",
+     "3"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out"
+    }
+   },
+   {
+    "id": "p20",
+    "name": "Three Queens",
+    "hand": [
+     "8",
      "Q",
+     "Q",
+     "Q",
+     "10",
+     "8",
+     "6"
+    ],
+    "pile": [
+     "9",
+     "2",
      "Q"
     ],
     "constraint": null,
     "base": null,
     "goal": {
      "type": "out",
-     "maxPlays": 5
+     "maxPlays": 4
     }
    }
   ]
