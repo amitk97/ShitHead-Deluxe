@@ -1,3 +1,7 @@
+## v353 — 17 puzzles
+
+- `PUZZLES` now has p1–p17 (p10–p17 found with `node tools/puzzle-search.js out|burn|pickup [maxPlays]`, curated for variety, each with exactly ONE winning line). The weekly rotation is mod 17, so "this week's" puzzle changed. A new puzzle needs: `node tools/puzzles-test.js` (1–2 solutions, unique id/position, title + hint, card counts ≤4 per rank incl. the Rival's, the goal-type list in the test), `NODE_PATH=$(npm root -g) SH_CHROMIUM_EXECUTABLE=… node tools/export-catalog.js` (the server only pays for puzzles in `catalog.puzzles`), `node tools/puzzle-action-test.js`, and `PZ_W=390 node tools/puzzles-browser-test.js` (solves each one through the UI). No rules change.
+
 ## v352 — solved state
 
 - Winning a puzzle sets `.pz-won` on `.pz-card-box`: the Hand, goal, status and tool row hide and `#pzDone` (green check, "Puzzle solved", `#pzDoneMsg` mirrors the status line incl. the reward text, Done / Play again) shows; the table dims. `say()` keeps the message current when the server reward arrives later.

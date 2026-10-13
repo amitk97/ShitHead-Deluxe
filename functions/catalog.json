@@ -2145,6 +2145,209 @@
      "type": "out",
      "maxPlays": 4
     }
+   },
+   {
+    "id": "p10",
+    "name": "Odd One Down",
+    "hand": [
+     "4",
+     "10",
+     "4",
+     "K",
+     "5",
+     "4"
+    ],
+    "pile": [
+     "8",
+     "8",
+     "J"
+    ],
+    "constraint": "ODD",
+    "base": null,
+    "goal": {
+     "type": "burn",
+     "maxPlays": 3
+    }
+   },
+   {
+    "id": "p11",
+    "name": "Nothing Beats An Ace",
+    "hand": [
+     "6",
+     "A",
+     "2",
+     "4",
+     "10",
+     "7",
+     "6"
+    ],
+    "pile": [
+     "A",
+     "A",
+     "A"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "pickup",
+     "rival": [
+      "Q",
+      "K",
+      "6"
+     ]
+    }
+   },
+   {
+    "id": "p12",
+    "name": "Three Threes",
+    "hand": [
+     "3",
+     "3",
+     "J",
+     "3",
+     "10",
+     "10"
+    ],
+    "pile": [
+     "A",
+     "A",
+     "2",
+     "8"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "maxPlays": 3
+    }
+   },
+   {
+    "id": "p13",
+    "name": "Seven Or Lower",
+    "hand": [
+     "3",
+     "10",
+     "7",
+     "8",
+     "3",
+     "8",
+     "3"
+    ],
+    "pile": [
+     "3",
+     "4",
+     "J",
+     "K"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "pickup",
+     "rival": [
+      "J",
+      "A",
+      "10",
+      "J"
+     ]
+    }
+   },
+   {
+    "id": "p14",
+    "name": "Two Tens Together",
+    "hand": [
+     "10",
+     "8",
+     "J",
+     "8",
+     "10",
+     "8"
+    ],
+    "pile": [
+     "J",
+     "J",
+     "K"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "maxPlays": 3
+    }
+   },
+   {
+    "id": "p15",
+    "name": "Skip Then Four Kings",
+    "hand": [
+     "8",
+     "K",
+     "K",
+     "9",
+     "K",
+     "K"
+    ],
+    "pile": [
+     "5",
+     "3",
+     "2",
+     "6",
+     "6"
+    ],
+    "constraint": "EVEN",
+    "base": null,
+    "goal": {
+     "type": "burn",
+     "maxPlays": 3
+    }
+   },
+   {
+    "id": "p16",
+    "name": "Two Burns, Five Plays",
+    "hand": [
+     "10",
+     "10",
+     "3",
+     "4",
+     "3",
+     "8",
+     "4"
+    ],
+    "pile": [
+     "2",
+     "9",
+     "K",
+     "A"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "maxPlays": 5
+    }
+   },
+   {
+    "id": "p17",
+    "name": "The Queens Are Waiting",
+    "hand": [
+     "Q",
+     "Q",
+     "8",
+     "5",
+     "5",
+     "10",
+     "3"
+    ],
+    "pile": [
+     "2",
+     "2",
+     "Q",
+     "Q"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "maxPlays": 5
+    }
    }
   ]
  },

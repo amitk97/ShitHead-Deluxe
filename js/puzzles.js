@@ -27,7 +27,31 @@
       hint: 'A Jack stops a 10 and a 2 as well as every even card. Get the turn back before you play it.' },
     { id: 'p9', tier: 5, title: 'Four Plays To Freedom', hand: ['10', '8', '8', '3', '5', '8', '10'], pile: [], constraint: null,
       goal: { type: 'out', maxPlays: 4 },
-      hint: 'Play several of a rank together. Three 8s skip the Rival once, but still count as one play.' }
+      hint: 'Play several of a rank together. Three 8s skip the Rival once, but still count as one play.' },
+    { id: 'p10', tier: 2, title: 'Odd One Down', hand: ['4', '10', '4', 'K', '5', '4'], pile: ['8', '8', 'J'], constraint: 'ODD',
+      goal: { type: 'burn', maxPlays: 3 },
+      hint: 'A 5 is odd, so it can go on the Jack, and it drops to the bottom of the Pile. What does a 5 on a base 8 do?' },
+    { id: 'p11', tier: 2, title: 'Nothing Beats An Ace', hand: ['6', 'A', '2', '4', '10', '7', '6'], pile: ['A', 'A', 'A'], constraint: null,
+      goal: { type: 'pickup', rival: ['Q', 'K', '6'] },
+      hint: 'Clear the Pile first, then end your turn on the one card the Rival\'s Hand cannot beat.' },
+    { id: 'p12', tier: 3, title: 'Three Threes', hand: ['3', '3', 'J', '3', '10', '10'], pile: ['A', 'A', '2', '8'], constraint: null,
+      goal: { type: 'out', maxPlays: 3 },
+      hint: 'A 3 takes on the card under it, and over an 8 it skips the Rival. Three 3s together are still one play.' },
+    { id: 'p13', tier: 3, title: 'Seven Or Lower', hand: ['3', '10', '7', '8', '3', '8', '3'], pile: ['3', '4', 'J', 'K'], constraint: null,
+      goal: { type: 'pickup', rival: ['J', 'A', '10', 'J'] },
+      hint: 'Burn the Pile, then play the card that limits the Rival to a 7 or lower.' },
+    { id: 'p14', tier: 3, title: 'Two Tens Together', hand: ['10', '8', 'J', '8', '10', '8'], pile: ['J', 'J', 'K'], constraint: null,
+      goal: { type: 'out', maxPlays: 3 },
+      hint: 'Both 10s can go in one play, and a burn gives you another go. Three 8s skip the Rival once.' },
+    { id: 'p15', tier: 3, title: 'Skip Then Four Kings', hand: ['8', 'K', 'K', '9', 'K', 'K'], pile: ['5', '3', '2', '6', '6'], constraint: 'EVEN',
+      goal: { type: 'burn', maxPlays: 3 },
+      hint: 'An 8 can go on an even card and skips the Rival. Then look at what four of a kind does.' },
+    { id: 'p16', tier: 4, title: 'Two Burns, Five Plays', hand: ['10', '10', '3', '4', '3', '8', '4'], pile: ['2', '9', 'K', 'A'], constraint: null,
+      goal: { type: 'out', maxPlays: 5 },
+      hint: 'Each 10 is a burn and a free go. Fit the 8, the 3s and the 4s around them, and keep the 4s for last.' },
+    { id: 'p17', tier: 4, title: 'The Queens Are Waiting', hand: ['Q', 'Q', '8', '5', '5', '10', '3'], pile: ['2', '2', 'Q', 'Q'], constraint: null,
+      goal: { type: 'out', maxPlays: 5 },
+      hint: 'The Pile already holds two Queens. Add yours, then use the 8, the 3 and the 10 to keep the turn until the 5s.' }
   ];
   PUZZLES.forEach(p => { p.goal = p.goal || { type: 'out' }; p.base = p.base || null; });
   const GOAL_NAMES = { out: 'Out in one turn', burn: 'Burn the Pile', pickup: 'Rival picks up' };

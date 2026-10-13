@@ -43,7 +43,7 @@ const OFFLINE_ASSETS = [
   '/css/puzzles.css?v=10',
   '/css/welcome-tour.css?v=9d478452ecd0',
   '/js/puzzle-engine.js?v=346',
-  '/js/puzzles.js?v=352',
+  '/js/puzzles.js?v=353',
   '/js/welcome-tour.js?v=1ec181602f01',
   '/icons/splash-handoff-v309.webp',
   '/art/fonts/cinzel-latin-v26.woff2',

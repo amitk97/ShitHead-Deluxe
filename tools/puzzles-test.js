@@ -21,7 +21,10 @@ for (const p of P.PUZZLES) {
 }
 // harder tiers search more (not strictly, but the last is harder than the first)
 assert.ok(tierNodes[4] > tierNodes[0], 'tier 5 is harder than tier 1');
-assert.deepStrictEqual(P.PUZZLES.map(p => p.goal.type), ['out', 'out', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out'], 'goal types');
+assert.deepStrictEqual(P.PUZZLES.map(p => p.goal.type), ['out', 'out', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'burn', 'pickup', 'out', 'pickup', 'out', 'burn', 'out', 'out'], 'goal types');
+assert.strictEqual(new Set(P.PUZZLES.map(p => p.id)).size, P.PUZZLES.length, 'unique ids');
+assert.strictEqual(new Set(P.PUZZLES.map(p => JSON.stringify([p.hand, p.pile, p.goal]))).size, P.PUZZLES.length, 'no duplicate positions');
+assert.ok(P.PUZZLES.every(p => p.hint && p.title && p.hint.length > 30), 'every puzzle has a title and a hint');
 assert.ok(P.PUZZLES.every(p => p.tier >= 1 && p.tier <= 5 && P.goalText(p).length > 20));
 assert.ok(P.PUZZLES.filter(p => p.goal.type === 'pickup').every(p => p.goal.rival.length >= 3), 'rival hands shown');
 assert.ok(P.PUZZLES.filter(p => p.goal.maxPlays).length >= 2, 'some puzzles cap the plays');
