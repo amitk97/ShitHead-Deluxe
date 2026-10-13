@@ -1,3 +1,8 @@
+## v349 (owner) — one pin per mode, puzzles use the game's look
+
+- A mode can sit in only ONE shortcut slot: `openPinPicker` disables the mode pinned in the other slot, the click handler refuses it, and `readPins` drops a duplicate already in storage.
+- The Puzzles page (still a floating card, not a menu page) now draws the game's own cards (`createCardElement` via `cardEl` in `js/puzzles.js`, sizes `card-base` / `card-table` / `card-opponent-slot`, class `pz-card` kept for selectors), the equipped table (`homeBackdropCss` + `ShTableScenes.draw` on `.pz-table`), the equipped avatar by the Hand label, and the equipped Burn (on a burn, `#burnFxLayer` raised to z 120 meanwhile) and Victory effects with their sounds. Deck theme and frame apply through the body classes/attributes.
+
 ## v348 (owner) — puzzle prize 50 + 50, Select All Of A Rank, mode colours
 
 - Prize **50 Diamonds + 50 XP** (`ShPuzzles.REWARD_DIAMONDS`, `XP_RULES.puzzle`; catalog re-exported). `#pzAll` is the game's **Select All Of A Rank** toggle (starts as the player's setting, never disabled, green/red dot, `aria-pressed`): on, one tap picks every card of that rank. The Puzzles page keeps its own floating-card format (`.pz-card-box`, kicker + title); the owner asked to undo a short-lived restyle to the standard menu-page format (v347), so do NOT turn it into a menu page.

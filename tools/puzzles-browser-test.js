@@ -7,7 +7,7 @@ const server=http.createServer((req,res)=>{let p=path.join(root,new URL(req.url,
 await new Promise(r=>server.listen(4177,r));
 const browser=await chromium.launch({headless:true,...(process.env.SH_CHROMIUM_EXECUTABLE?{executablePath:process.env.SH_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-dev-shm-usage','--no-zygote','--single-process']}:{})});
 try{
-for(const [w,h] of [[320,568],[390,844],[1440,900]]){
+for(const [w,h] of [[320,568],[390,844],[1440,900]].filter(s=>!process.env.PZ_W||+process.env.PZ_W===s[0])){
   const page=await (await browser.newContext({viewport:{width:w,height:h}})).newPage();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://localhost:4177/',{waitUntil:'domcontentloaded'});
@@ -26,7 +26,7 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]]){
   assert.equal(await page.locator('.pz-chip').count(),0,'guests only get this week');
   // illegal play: no way to know a lost move? play wrong first card, expect end-of-turn message, then undo
   const sol=await page.evaluate(()=>{const p=ShPuzzles.thisWeek();return ShPuzzleEngine.solve({hand:p.hand,pile:p.pile,constraint:p.constraint,base:p.base},1,p.goal).solutions[0];});
-  const pickN=async(rank,n)=>{const ids=await page.$$eval('#pzHand .pz-card',(els,r)=>els.filter(e=>e.querySelector('b').textContent===r).map(e=>e.dataset.id),rank);
+  const pickN=async(rank,n)=>{const ids=await page.$$eval('#pzHand .pz-card',(els,r)=>els.filter(e=>e.dataset.rank===r).map(e=>e.dataset.id),rank);
     for(let i=0;i<n;i++)await page.locator(`#pzHand .pz-card[data-id="${ids[i]}"]`).click();};
   // a deliberately wrong first move (a legal card that is not the first solution card) must not solve it
   await page.evaluate(()=>{});

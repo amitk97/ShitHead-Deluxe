@@ -249,7 +249,11 @@
       const NO_PIN_TONE = '#64748b'; // an empty shortcut slot
       const pinSvg = (d) => '<svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
       const emptyPinHtml = cards.find((c) => c.dataset.mcMode === 'pin1').innerHTML.replace(/<span class="mc-num"[^>]*>\d<\/span>/, '');
-      const readPins = () => { try { return JSON.parse(localStorage.getItem(PIN_KEY)) || {}; } catch (e) { return {}; } };
+      const readPins = () => {
+        let p; try { p = JSON.parse(localStorage.getItem(PIN_KEY)) || {}; } catch (e) { p = {}; }
+        if (p.pin1 && p.pin1 === p.pin2) delete p.pin2; // one mode, one shortcut
+        return p;
+      };
       function paintPins() {
         const pins = readPins();
         cards.filter((c) => /^pin/.test(c.dataset.mcMode)).forEach((c) => {
@@ -263,9 +267,11 @@
         });
       }
       function openPinPicker(card) {
-        const cur = readPins()[card.dataset.mcMode];
-        const rows = Object.entries(PIN_MODES).map(([id, [name, d]]) =>
-          '<button type="button" data-mc-pin="' + id + '" aria-pressed="' + (id === cur) + '">' + pinSvg(d) + name + '</button>').join('');
+        const pins = readPins(), cur = pins[card.dataset.mcMode];
+        const other = pins[card.dataset.mcMode === 'pin1' ? 'pin2' : 'pin1'];
+        const rows = Object.entries(PIN_MODES).map(([id, [name, d]]) => id === other
+          ? '<button type="button" disabled aria-disabled="true">' + pinSvg(d) + name + ' (pinned in the other shortcut)</button>'
+          : '<button type="button" data-mc-pin="' + id + '" aria-pressed="' + (id === cur) + '">' + pinSvg(d) + name + '</button>').join('');
         showInfoPop(card, '<b>' + (cur ? PIN_MODES[cur][0] + ' is coming soon' : 'Pin a mode here') + '</b><br>' +
           (cur ? 'It opens from here when it launches. Pin another:' : 'It opens from here when it launches.') +
           '<div class="mc-pin-list" data-mc-slot="' + card.dataset.mcMode + '">' + rows + (cur ? '<button type="button" data-mc-pin="">Clear this shortcut</button>' : '') + '</div>', { toggle: true });
@@ -274,7 +280,8 @@
         const b = e.target.closest('#infoPop [data-mc-pin]');
         if (!b) return;
         const pins = readPins(), slot = b.closest('[data-mc-slot]').dataset.mcSlot;
-        if (b.dataset.mcPin) pins[slot] = b.dataset.mcPin; else delete pins[slot];
+        const other = slot === 'pin1' ? 'pin2' : 'pin1';
+        if (b.dataset.mcPin) { if (pins[other] === b.dataset.mcPin) return; pins[slot] = b.dataset.mcPin; } else delete pins[slot];
         try { localStorage.setItem(PIN_KEY, JSON.stringify(pins)); } catch (err) {}
         hideInfoPop(); paintPins(); Haptics.vibrate([15]);
       });

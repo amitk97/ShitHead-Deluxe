@@ -1790,6 +1790,22 @@ async function runDevTestSuite() {
       assertEqual(tone('pin1'), '#64748b', 'an empty slot stays neutral');
     } finally { if (was === null) localStorage.removeItem('shithead_home_pins'); else localStorage.setItem('shithead_home_pins', was); ShHomeCarousel.repaintPins(); }
   });
+  await test('A mode is pinned to only one shortcut, and puzzles use the game\'s cards (v349)', () => {
+    const was = localStorage.getItem('shithead_home_pins');
+    try {
+      localStorage.setItem('shithead_home_pins', JSON.stringify({ pin1: 'puzzles', pin2: 'puzzles' })); ShHomeCarousel.repaintPins();
+      assertEqual(document.querySelectorAll('#modeCarousel .mc-pinned').length, 1, 'a duplicate pin shows once');
+      localStorage.setItem('shithead_home_pins', JSON.stringify({ pin1: 'puzzles' })); ShHomeCarousel.repaintPins();
+      document.querySelector('#modeCarousel [data-mc-mode="pin2"]').click();
+      document.querySelector('#modeCarousel [data-mc-mode="pin2"] [data-mc-swap]')?.click();
+      const row = [...document.querySelectorAll('#infoPop .mc-pin-list button')].find(b => /Puzzles/.test(b.textContent));
+      assertTrue(!row || row.disabled, 'Puzzles cannot be picked for the second slot');
+      hideInfoPop();
+      ShPuzzles.open(); const c = document.querySelector('#pzHand .pz-card');
+      assertTrue(c && c.classList.contains('card-base') && c.dataset.cardId, 'the Hand uses the game\'s card');
+      ShPuzzles.close();
+    } finally { if (was === null) localStorage.removeItem('shithead_home_pins'); else localStorage.setItem('shithead_home_pins', was); ShHomeCarousel.repaintPins(); }
+  });
   await test('REGRESSION: un-staging with the rank toggle ON clears the whole rank', () => {
     freshState({ discardPile: [makeCard('4')], drawPile: [] });
     const kings = [makeCard('K','♠'), makeCard('K','♥'), makeCard('K','♦')];

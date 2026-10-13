@@ -364,6 +364,7 @@
     .mc-pin-list button { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; border: 1px solid #334155;
       background: #0b1428; color: #e2e8f0; font: inherit; font-size: 12px; font-weight: 700; text-align: left; cursor: pointer; }
     .mc-pin-list button:hover, .mc-pin-list button[aria-pressed="true"] { border-color: #fbbf24; }
+    .mc-pin-list button:disabled { opacity: .45; cursor: not-allowed; border-color: #334155; }
     .mc-pin-list svg { width: 18px; height: 18px; flex: none; color: #94a3b8; }
     body.reduce-motion .mc-card { transition: none; }
     #homeTutorialRow { display:grid; grid-template-columns:minmax(0, 180px) minmax(0, 160px); grid-template-rows:auto auto; justify-content:center; align-items:stretch; gap:8px 10px; margin:4px 16px 0; }

@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v349: [['sparkle', 'Puzzles now look like the real game table and use your equipped table, deck, card frame, avatar, Burn and Victory effects. A game mode can only be pinned to one shortcut.']],
       v348: [['sparkle', 'Every game mode now has its own colour, and a pinned shortcut shows its mode\'s colour. The Puzzles icon is a proper puzzle piece.']],
       v347: [['gem', 'Weekly puzzles now pay 50 Diamonds and 50 XP. Select All Of A Rank works from the start of a puzzle.', WN_KEY]],
       v346: [['gem', 'Weekly puzzles now pay 5 Diamonds and 50 XP the first time you solve each one. Signed-in players only, and not after Give Up.', WN_KEY]],

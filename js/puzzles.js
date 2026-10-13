@@ -86,7 +86,27 @@
   let plays = 0;
   function say(text, tone) { const el = $('#pzStatus'); el.textContent = text; el.dataset.tone = tone || ''; }
 
-  const cardHtml = (c, extra = '') => `<span class="pz-card ${c.suit === '♥' || c.suit === '♦' ? 'pz-red' : ''} ${extra}" data-id="${c.id}"><b>${c.rank}</b><i>${c.suit}</i></span>`;
+  // Cards are the game's own (createCardElement): the equipped deck, frame and card icons apply by themselves.
+  function cardEl(c, size, extra = '') {
+    const el = typeof createCardElement === 'function' ? createCardElement(c, false, picked.has(c.id), false, true) : document.createElement('div');
+    el.classList.remove('card-opponent-slot'); el.classList.add(size, 'pz-card'); if (extra) el.classList.add(extra);
+    el.dataset.id = c.id; if (!el.dataset.rank) el.dataset.rank = c.rank;
+    if (!el.firstChild) el.textContent = c.rank + c.suit; // node tests have no game renderer
+    return el;
+  }
+  const equippedTableId = () => (typeof homeBackdropTableId === 'function' ? homeBackdropTableId() : 'default');
+  // The equipped table, drawn the way the home screen draws it.
+  function paintTable() {
+    const t = document.querySelector('#puzzlesModal .pz-table'); if (!t || typeof homeBackdropCss !== 'function') return;
+    const id = equippedTableId(), look = homeBackdropCss(id);
+    if (t.dataset.table !== id) { t.dataset.table = id; t.style.background = look.bg; t.style.backgroundSize = look.size || 'auto'; }
+    if (typeof ShTableScenes !== 'undefined') ShTableScenes.draw(t, id);
+  }
+  function paintYou() {
+    const el = $('#pzYou'); if (!el) return;
+    const id = typeof equippedCosmetics !== 'undefined' ? equippedCosmetics.avatar : 'default';
+    el.innerHTML = (typeof avatarHtml === 'function' ? avatarHtml(id || 'default', 28) : '') + '<span>Hand</span>';
+  }
   function ruleLine() {
     const top = st.base || E.effTop(ranksOf(st.pile));
     if (!top) return 'The Pile is empty: anything goes.';
@@ -100,11 +120,14 @@
     $('#pzGoal').textContent = goalText(puzzle);
     $('#pzReward').textContent = `Solve it for ${REWARD_DIAMONDS} Diamonds${typeof XP_RULES !== 'undefined' && XP_RULES.puzzle ? ` and ${XP_RULES.puzzle} XP` : ''}, once a week. Give Up means no reward.`;
     const rv = $('#pzRival'); rv.hidden = puzzle.goal.type !== 'pickup';
-    if (!rv.hidden) rv.innerHTML = '<span class="pz-rival-label">Rival\'s Hand</span>' + puzzle.goal.rival.map((r, i) => cardHtml({ id: 'r' + i, rank: r, suit: SUITS[i % 4] }, 'pz-small')).join('');
-    $('#pzPile').innerHTML = st.pile.length ? st.pile.slice(-5).map((c, i) => cardHtml(c, `pz-pile-${i}`)).join('') : '<span class="pz-empty">Empty Pile</span>';
+    if (!rv.hidden) { rv.replaceChildren(); const l = document.createElement('span'); l.className = 'pz-rival-label'; l.textContent = "Rival's Hand"; rv.append(l, ...puzzle.goal.rival.map((r, i) => cardEl({ id: 'r' + i, rank: r, suit: SUITS[i % 4] }, 'card-opponent-slot'))); }
+    const pileEl = $('#pzPile'); pileEl.replaceChildren();
+    if (st.pile.length) st.pile.slice(-5).forEach(c => pileEl.append(cardEl(c, 'card-table'))); else pileEl.innerHTML = '<span class="pz-empty">Empty Pile</span>';
+    paintTable(); paintYou();
     $('#pzRule').textContent = ruleLine();
-    $('#pzHand').innerHTML = st.hand.map(c => cardHtml(c, picked.has(c.id) ? 'pz-sel' : '')).join('') || '<span class="pz-empty">Hand empty</span>';
-    $('#pzHand').querySelectorAll('.pz-card').forEach(el => { el.tabIndex = 0; el.setAttribute('role', 'button'); });
+    const handEl = $('#pzHand'); handEl.replaceChildren();
+    if (st.hand.length) st.hand.forEach(c => { const el = cardEl(c, 'card-base', picked.has(c.id) ? 'pz-sel' : ''); el.tabIndex = 0; el.setAttribute('role', 'button'); handEl.append(el); });
+    else handEl.innerHTML = '<span class="pz-empty">Hand empty</span>';
     const off = !!over;
     $('#pzPlay').disabled = off || !picked.size; $('#pzAll').setAttribute('aria-pressed', String(allMode));
     $('#pzUndo').disabled = !undo.length; $('#pzHint').disabled = off === 'won';
@@ -124,16 +147,31 @@
     same.forEach(x => (wasOn ? picked.delete(x.id) : picked.add(x.id)));
     draw();
   }
+  // The player's equipped Burn and Victory effects, with their own sounds. Calm or off when the settings say so.
+  function burnFx() {
+    try {
+      if (typeof triggerEquippedBurnEffect !== 'function') return;
+      const r = $('#pzPile').getBoundingClientRect(), layer = document.getElementById('burnFxLayer');
+      if (layer) { layer.style.zIndex = '120'; setTimeout(() => { layer.style.zIndex = ''; }, 2400); } // above the puzzle page
+      const me = { id: state && state.localPlayerId };
+      audio.burn(burnEffectIdFor(me));
+      triggerEquippedBurnEffect(r.left + r.width / 2, r.top + r.height / 2, me, $('#pzPile .pz-card:last-child'));
+    } catch (e) { console.warn('Puzzle burn effect skipped', e); }
+  }
+  function winFx() {
+    try { if (typeof triggerEquippedVictoryEffect === 'function') triggerEquippedVictoryEffect({ id: state && state.localPlayerId, finishRank: 1 }); } catch (e) { console.warn('Puzzle victory effect skipped', e); }
+  }
   function doPlay() {
     const cards = st.hand.filter(c => picked.has(c.id)); if (!cards.length || over) return;
     const rank = cards[0].rank, pos = posOf(st);
     if (!E.legal(rank, pos)) { say(`A ${rank} can't go on that. ${ruleLine()}`, 'bad'); return; }
     undo.push(JSON.stringify(st)); moveLog.push({ rank, n: cards.length }); plays++;
     const r = E.play(pos, rank, cards.length);
+    if (r.burn) burnFx();
     if (r.burn) { st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: [], constraint: null, base: null }; }
     else st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: st.pile.concat(cards), constraint: r.pos.constraint, base: r.pos.base };
     picked = new Set();
-    const g = puzzle.goal, win = () => { over = 'won'; markSolved(puzzle.id); const base = `Solved in ${plays} play${plays === 1 ? '' : 's'}.`; say(base, 'good'); draw(); claimReward(base); };
+    const g = puzzle.goal, win = () => { over = 'won'; markSolved(puzzle.id); winFx(); const base = `Solved in ${plays} play${plays === 1 ? '' : 's'}.`; say(base, 'good'); draw(); claimReward(base); };
     if (g.type === 'out' && !st.hand.length) return win();
     if (g.type === 'burn' && r.burn) return win();
     if (g.type === 'pickup') {
