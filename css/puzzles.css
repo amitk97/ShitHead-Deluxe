@@ -2,7 +2,8 @@
 .mp-open { flex: none; padding: 6px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
   color: #1a1204; background: #fbbf24; }
 .mp-open:hover { background: #fcd34d; }
-.pz-card-box { max-height: 100%; overflow-y: auto; box-sizing: border-box; color: #e2e8f0; }
+.pz-card-box { position: relative; width: 100%; max-width: 420px; max-height: 100%; overflow-y: auto; box-sizing: border-box; padding: 18px 16px 14px;
+  background: #0b1428; border: 1px solid rgba(251,191,36,.35); border-radius: 18px; color: #e2e8f0; box-shadow: 0 20px 60px rgba(0,0,0,.55); }
 .pz-kicker { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #fbbf24; }
 .pz-title { margin: 2px 0 0; font-size: 20px; font-weight: 900; color: #f8fafc; }
 .pz-tier { font-size: 11px; color: #94a3b8; margin-top: 2px; letter-spacing: .04em; }
@@ -50,12 +51,8 @@ body.reduce-motion .pz-card { transition: none; }
 
 .pz-reward { margin: -4px 0 10px; font-size: 11px; color: #fcd34d; }
 
-/* v347: same look as the game's other pages and buttons (gold primary, slate outline, red destructive) */
+/* Select All Of A Rank toggle (v347) */
 .pz-toggle { display: inline-flex; align-items: center; gap: 6px; }
 .pz-dot { width: 8px; height: 8px; border-radius: 50%; background: #f87171; box-shadow: 0 0 0 1px rgba(0,0,0,.4); }
 .pz-toggle[aria-pressed="true"] .pz-dot { background: #4ade80; }
 .pz-toggle[aria-pressed="true"] { border-color: #4ade80; color: #bbf7d0; }
-.pz-danger { color: #fda4af; border-color: rgba(244,63,94,.5); }
-.pz-danger:hover:not(:disabled) { background: rgba(244,63,94,.14); }
-.pz-how { display: block; margin: 10px auto 0; font-size: 11px; color: #94a3b8; text-decoration: underline; text-decoration-style: dotted; }
-.pz-how:hover { color: #e2e8f0; }

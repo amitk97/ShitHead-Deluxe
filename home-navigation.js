@@ -240,13 +240,14 @@
       // pinned card only says it's coming soon until that mode launches.
       const PIN_KEY = 'shithead_home_pins';
       const PIN_MODES = {
-        twos: ['2 vs 2', 'M7 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM17 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM3 14a4 4 0 0 1 8 0M13 14a4 4 0 0 1 8 0M7 21v-3M17 21v-3'],
-        puzzles: ['Puzzles', 'M10 4a2 2 0 1 1 4 0v2h4v4h-2a2 2 0 1 0 0 4h2v4h-4v-2a2 2 0 1 0-4 0v2H6v-4h2a2 2 0 1 0 0-4H6V6h4z'],
-        random: ['Randomiser', 'M4 7h3l10 10h3M4 17h3l3-3M14 10l3-3h3M18 4l3 3-3 3M18 14l3 3-3 3'],
-        decks: ['Multiple Decks', 'M7 4h10a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM3 7v12a2 2 0 0 0 2 2h9'],
-        mercy: ['No Mercy', 'M12 3c4.4 0 8 3.1 8 7 0 2.4-1.3 4.4-3 5.6V19a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-3.4C5.3 14.4 4 12.4 4 10c0-3.9 3.6-7 8-7zM9 11h.01M15 11h.01']
+        twos: ['2 vs 2', 'M7 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM17 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM3 14a4 4 0 0 1 8 0M13 14a4 4 0 0 1 8 0M7 21v-3M17 21v-3', '#3b82f6'],
+        puzzles: ['Puzzles', 'M4 7a1 1 0 0 1 1-1h3.5a2.5 2.5 0 1 1 5 0H17a1 1 0 0 1 1 1v3.5a2.5 2.5 0 1 1 0 5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z', '#84cc16'],
+        random: ['Randomiser', 'M4 7h3l10 10h3M4 17h3l3-3M14 10l3-3h3M18 4l3 3-3 3M18 14l3 3-3 3', '#ec4899'],
+        decks: ['Multiple Decks', 'M7 4h10a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM3 7v12a2 2 0 0 0 2 2h9', '#6366f1'],
+        mercy: ['No Mercy', 'M12 3c4.4 0 8 3.1 8 7 0 2.4-1.3 4.4-3 5.6V19a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-3.4C5.3 14.4 4 12.4 4 10c0-3.9 3.6-7 8-7zM9 11h.01M15 11h.01', '#ef4444']
       };
-      const pinSvg = (d) => '<svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+      const NO_PIN_TONE = '#64748b'; // an empty shortcut slot
+      const pinSvg = (d) => '<svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
       const emptyPinHtml = cards.find((c) => c.dataset.mcMode === 'pin1').innerHTML.replace(/<span class="mc-num"[^>]*>\d<\/span>/, '');
       const readPins = () => { try { return JSON.parse(localStorage.getItem(PIN_KEY)) || {}; } catch (e) { return {}; } };
       function paintPins() {
@@ -254,6 +255,7 @@
         cards.filter((c) => /^pin/.test(c.dataset.mcMode)).forEach((c) => {
           const m = PIN_MODES[pins[c.dataset.mcMode]];
           const num = '<span class="mc-num" aria-hidden="true">' + (cards.indexOf(c) + 1) + '</span>';
+          c.style.setProperty('--mc-tone', m ? m[2] : NO_PIN_TONE);
           const live = pins[c.dataset.mcMode] === 'puzzles' && window.ShPuzzles;
           if (live) { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">' + (window.ShPuzzles.solvedThisWeek() ? 'Solved this week' : 'Weekly puzzle') + '</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
           c.innerHTML = num + (m ? pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Coming soon</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-preview>Info</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>' : emptyPinHtml.replace(/data-mc-go(?:="")?>Go →/, 'data-mc-swap>Pin +'));
@@ -281,7 +283,7 @@
       // More Modes page rows wear the same icons as the pins (same order).
       document.querySelectorAll('#moreModesPage .mp-row').forEach((row, i) => {
         const m = Object.values(PIN_MODES)[i];
-        if (m && !row.querySelector('.mc-ic')) row.insertAdjacentHTML('afterbegin', pinSvg(m[1]).replace('mc-ic', 'mc-ic mp-row-ic'));
+        if (m && !row.querySelector('.mc-ic')) { row.style.setProperty('--mc-tone', m[2]); row.insertAdjacentHTML('afterbegin', pinSvg(m[1]).replace('mc-ic', 'mc-ic mp-row-ic')); }
       });
       // § Card expand (v321): the middle card flips (edge-on at the half-way
       // point), grows to fill the screen as the page's background, the page
@@ -540,7 +542,7 @@
       window.addEventListener('touchend', endTouch, { passive: false });
       window.addEventListener('touchcancel', endTouch, { passive: false });
       // For the welcome tour: turn to a mode's card (and say whether it exists).
-      window.ShHomeCarousel = { repaintPins: () => paintPins(), turnToMode: (m) => { const i = cards.findIndex((c) => c.dataset.mcMode === m); if (i < 0) return false; turnTo(i); return true; } };
+      window.ShHomeCarousel = { pinTones: () => Object.fromEntries(Object.entries(PIN_MODES).map(([k, v]) => [k, v[2]])), repaintPins: () => paintPins(), turnToMode: (m) => { const i = cards.findIndex((c) => c.dataset.mcMode === m); if (i < 0) return false; turnTo(i); return true; } };
       window.resetModeCarousel = () => {
         finishExpand(); endDrag({ type: 'cancel' }); stopHold(); touchId = null; lastTap = null; swiped = false;
         modePanelObservers.forEach(observer => observer.takeRecords());

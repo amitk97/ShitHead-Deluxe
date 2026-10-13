@@ -1,6 +1,7 @@
-## v347 (owner) — puzzle prize 50 + 50, Select All Of A Rank, page format
+## v348 (owner) — puzzle prize 50 + 50, Select All Of A Rank, mode colours
 
-- Prize raised to **50 Diamonds + 50 XP** (`ShPuzzles.REWARD_DIAMONDS`, `XP_RULES.puzzle`; catalog re-exported). `#pzAll` is the game's **Select All Of A Rank** toggle (starts as the player's setting, never disabled, green/red dot, `aria-pressed`): on, one tap picks every card of that rank. The Puzzles page is now a normal menu page: `#puzzlesModal` z 95, standard `border-2 border-amber-500` panel with the amber page title ("Puzzles", menu icon via `PAGE_TITLE_ICONS`), × top right, in `MENU_PAGE_IDS` (one page at a time, page trail, jump buttons), gold Play, slate-outline tools, red Give Up.
+- Prize **50 Diamonds + 50 XP** (`ShPuzzles.REWARD_DIAMONDS`, `XP_RULES.puzzle`; catalog re-exported). `#pzAll` is the game's **Select All Of A Rank** toggle (starts as the player's setting, never disabled, green/red dot, `aria-pressed`): on, one tap picks every card of that rank. The Puzzles page keeps its own floating-card format (`.pz-card-box`, kicker + title); the owner asked to undo a short-lived restyle to the standard menu-page format (v347), so do NOT turn it into a menu page.
+- **Every mode has its own colour (owner, v348):** `PIN_MODES[id] = [name, iconPath, tone]` in `home-navigation.js` is the registry for the coming/pinned modes (2 vs 2 blue, Puzzles lime, Randomiser pink, Multiple Decks indigo, No Mercy red; the live cards keep theirs: More Modes purple, Gauntlet orange, Play Computer cyan, Ranked gold, Play Friends emerald). **A new mode needs a unique tone** (a dev test compares every card and every `PIN_MODES` tone). A pinned shortcut card takes its mode's tone (`--mc-tone`; empty slots stay slate), and the More Modes rows and their icons use the same tone. The Puzzles icon is a single puzzle-piece path in the shared 24-grid, 1.75 line style.
 
 ## v346 — puzzle rewards (server-checked)
 

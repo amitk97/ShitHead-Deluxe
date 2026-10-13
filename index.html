@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-13-v347 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-13-v348 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -227,7 +227,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=aff768f4f773">
+  <link rel="stylesheet" href="game.css?v=f351ab3efd61">
 
   
   <!-- Firebase SDKs -->
@@ -2133,12 +2133,10 @@
       <div id="modeIntroBody"></div>
     </div>
   </div>
-  <div id="puzzlesModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="pzPageTitle">
-    <div class="pz-card-box w-full max-w-sm bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl p-4">
-      <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
-        <span id="pzPageTitle" class="text-[11px] font-black uppercase tracking-widest text-amber-400">Puzzles</span>
-        <button type="button" id="pzClose" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
-      </div>
+  <div id="puzzlesModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="pzTitle">
+    <div class="pz-card-box">
+      <button type="button" id="pzClose" class="gauntlet-close" aria-label="Close">✕</button>
+      <div class="pz-kicker">Weekly Puzzle</div>
       <h2 id="pzTitle" class="pz-title"></h2>
       <div id="pzTier" class="pz-tier"></div>
       <p id="pzGoal" class="pz-goal"></p>
@@ -2156,10 +2154,10 @@
         <button type="button" id="pzUndo" class="pz-btn">Undo</button>
         <button type="button" id="pzRestart" class="pz-btn">Restart</button>
         <button type="button" id="pzHint" class="pz-btn">Hint</button>
-        <button type="button" id="pzGiveUp" class="pz-btn pz-danger">Give Up</button>
+        <button type="button" id="pzGiveUp" class="pz-btn pz-quiet">Give Up</button>
         <span id="pzPlays" class="pz-plays"></span>
+        <button type="button" id="pzHow" class="pz-btn pz-quiet">How puzzles work</button>
       </div>
-      <button type="button" id="pzHow" class="pz-how">How puzzles work</button>
       <div id="pzPick" class="pz-pick"></div>
     </div>
   </div>
@@ -2603,10 +2601,10 @@
   <script src="tutorial.js?v=7e126b798668"></script>
   <script src="level-ladder.js?v=4ad4cb937515"></script>
   <script src="shop.js?v=343ace972099"></script>
-  <script src="home-navigation.js?v=fc99c36028d3"></script>
+  <script src="home-navigation.js?v=6756530b02af"></script>
   <script src="multiplayer-lobby.js?v=563279447523"></script>
   <script src="private-cosmetics.js?v=4f732484384c"></script>
-  <script src="app.js?v=c6b8f889b8ae"></script>
+  <script src="app.js?v=5c38f7c6ee57"></script>
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>

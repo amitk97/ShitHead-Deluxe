@@ -1774,6 +1774,22 @@ async function runDevTestSuite() {
       assertTrue(xpBoostNow() === null && xpBoostNote() === '', 'Nothing off-season');
     } finally { [seasonalNowOverride, xpFeatureOn] = was; }
   });
+  await test('Every game mode, including the coming and pinned ones, has its own colour (v348)', () => {
+    const live = [...document.querySelectorAll('#modeCarousel .mc-card[data-mc-mode]')].filter(c => !/^pin/.test(c.dataset.mcMode)).map(c => c.style.getPropertyValue('--mc-tone').trim().toLowerCase());
+    const coming = Object.values(ShHomeCarousel.pinTones()).map(t => t.toLowerCase());
+    assertTrue(live.length === 5 && coming.length >= 5, 'five live cards and the coming modes');
+    [...live, ...coming].forEach(t => assertTrue(/^#[0-9a-f]{6}$/.test(t), `a real colour: ${t}`));
+    assertEqual(new Set([...live, ...coming]).size, live.length + coming.length, 'no two modes share a colour');
+    const was = localStorage.getItem('shithead_home_pins');
+    try {
+      localStorage.setItem('shithead_home_pins', JSON.stringify({ pin1: 'puzzles', pin2: 'mercy' })); ShHomeCarousel.repaintPins();
+      const tone = (m) => document.querySelector(`#modeCarousel [data-mc-mode="${m}"]`).style.getPropertyValue('--mc-tone').trim().toLowerCase();
+      assertEqual(tone('pin1'), ShHomeCarousel.pinTones().puzzles.toLowerCase(), 'a pinned Puzzles card shows its colour');
+      assertEqual(tone('pin2'), ShHomeCarousel.pinTones().mercy.toLowerCase(), 'a pinned No Mercy card shows its colour');
+      localStorage.removeItem('shithead_home_pins'); ShHomeCarousel.repaintPins();
+      assertEqual(tone('pin1'), '#64748b', 'an empty slot stays neutral');
+    } finally { if (was === null) localStorage.removeItem('shithead_home_pins'); else localStorage.setItem('shithead_home_pins', was); ShHomeCarousel.repaintPins(); }
+  });
   await test('REGRESSION: un-staging with the rank toggle ON clears the whole rank', () => {
     freshState({ discardPile: [makeCard('4')], drawPile: [] });
     const kings = [makeCard('K','♠'), makeCard('K','♥'), makeCard('K','♦')];

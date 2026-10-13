@@ -124,7 +124,7 @@
     const PAGE_TITLE_ICONS = {
       profileModal: 'ui-profile', statsModal: 'ui-stats', friendsModal: 'ui-friends', leaderboardModal: 'ui-leaderboard',
       challengesModal: 'ui-challenges', levelLadderModal: 'ui-ladder', rulesModal: 'ui-guide', settingsModal: 'ui-settings',
-      supportModal: 'ui-support', inboxModal: 'ui-mail', puzzlesModal: 'ui-challenges'
+      supportModal: 'ui-support', inboxModal: 'ui-mail'
     };
     Object.entries(PAGE_TITLE_ICONS).forEach(([id, icon]) => {
       const page = document.getElementById(id);
@@ -9246,7 +9246,7 @@
     const MENU_PAGE_IDS = [
       'profileModal', 'statsModal', 'themesModal', 'friendsModal',
       'leaderboardModal', 'challengesModal', 'shopModal', 'rulesModal',
-      'settingsModal', 'supportModal', 'tutorialHubScreen', 'errorReportsModal', 'collectionModal', 'changelogModal', 'levelLadderModal', 'puzzlesModal'
+      'settingsModal', 'supportModal', 'tutorialHubScreen', 'errorReportsModal', 'collectionModal', 'changelogModal', 'levelLadderModal'
     ];
     // Every scrolling panel gets the floating Jump to top/bottom button,
     // including in-game ones that aren't hamburger menu pages.
