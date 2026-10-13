@@ -1750,7 +1750,9 @@ async function runDevTestSuite() {
     const was = currentUser;
     try {
       currentUser = { email: 'amirk2197@googlemail.com' };
-      assertEqual(ShPuzzles.availablePuzzles().length, 5, 'AmitK (test account) always has every weekly puzzle');
+      assertEqual(ShPuzzles.availablePuzzles().length, ShPuzzles.PUZZLES.length, 'AmitK (test account) always has every weekly puzzle');
+      assertTrue(ShPuzzles.PUZZLES.length >= 9 && new Set(ShPuzzles.PUZZLES.map(p => p.goal.type)).size === 3, 'Three goal types');
+      assertTrue(!!document.querySelector('#rulesModal [data-guide-section="puzzles"] .accordion-content'), 'The Guide has a Puzzles section');
       currentUser = { email: 'someone@example.com' };
       assertEqual(ShPuzzles.availablePuzzles().length, 1, 'Everyone else only gets this week\'s');
     } finally { currentUser = was; }

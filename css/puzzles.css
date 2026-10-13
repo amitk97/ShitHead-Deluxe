@@ -42,3 +42,9 @@
 .pz-chip.on { color: #1a1204; background: #fbbf24; border-color: #fbbf24; }
 body.reduce-motion .pz-card { transition: none; }
 @media (max-width: 380px) { .pz-card { width: 40px; height: 56px; } .pz-card b, .pz-card i { font-size: 15px; } }
+
+.pz-rival { display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 10px; }
+.pz-rival[hidden] { display: none; }
+.pz-rival-label { font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #bbf7d0; margin-right: 6px; }
+.pz-small { width: 32px; height: 44px; border-radius: 6px; }
+.pz-small b, .pz-small i { font-size: 13px; }

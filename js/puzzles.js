@@ -15,8 +15,22 @@
     { id: 'p4', tier: 4, title: 'Two Plays, One Burn', hand: ['Q', 'Q', '8', '5', '5', '10', '3'], pile: ['2', '2', 'Q', 'Q'], constraint: null, base: null,
       hint: 'The Pile already holds two Queens. Look for the burn that comes before the skips.' },
     { id: 'p5', tier: 5, title: 'Five Ways To Go Again', hand: ['4', '8', '3', '5', '4', '10', '4'], pile: ['7', '4'], constraint: null, base: null,
-      hint: 'Start by clearing the Pile. Then every card you play must keep the turn until the last one.' }
+      hint: 'Start by clearing the Pile. Then every card you play must keep the turn until the last one.' },
+    { id: 'p6', tier: 2, title: 'Burn It Down', hand: ['10', '8', '5', '3', '3', 'K', '9'], pile: ['8', 'J'], constraint: 'ODD',
+      goal: { type: 'burn', maxPlays: 2 },
+      hint: 'A 10 can\'t go on a Jack. Find a card that drops the target somewhere a 10 can land.' },
+    { id: 'p7', tier: 3, title: 'Lock The Rival Out', hand: ['6', '5', '6', '6', '8', '3', '7'], pile: ['6'], constraint: 'EVEN',
+      goal: { type: 'pickup', rival: ['J', 'J', '10'] },
+      hint: 'Burn first, then finish with a card that sets a limit the Rival\'s cards cannot meet.' },
+    { id: 'p8', tier: 3, title: 'Odd Man Out', hand: ['A', '5', 'J', '4', '7', '2', '9'], pile: ['8', 'J', 'J', 'J'], constraint: 'ODD',
+      goal: { type: 'pickup', rival: ['10', 'Q', 'Q', '2'] },
+      hint: 'A Jack stops a 10 and a 2 as well as every even card. Get the turn back before you play it.' },
+    { id: 'p9', tier: 5, title: 'Four Plays To Freedom', hand: ['10', '8', '8', '3', '5', '8', '10'], pile: [], constraint: null,
+      goal: { type: 'out', maxPlays: 4 },
+      hint: 'Play several of a rank together. Three 8s skip the Rival once, but still count as one play.' }
   ];
+  PUZZLES.forEach(p => { p.goal = p.goal || { type: 'out' }; p.base = p.base || null; });
+  const GOAL_NAMES = { out: 'Out in one turn', burn: 'Burn the Pile', pickup: 'Rival picks up' };
   const TIER_NAMES = ['', 'Warm-up', 'Easy', 'Medium', 'Hard', 'Tricky'];
   const SOLVED_KEY = 'shithead_puzzles_solved';
 
@@ -41,6 +55,13 @@
     return { hand: p.hand.map(make), pile: p.pile.map(make) };
   }
 
+  function goalText(p) {
+    const g = p.goal, cap = g.maxPlays ? ` Use at most ${g.maxPlays} plays.` : '';
+    if (g.type === 'burn') return 'Burn the Pile in a single turn. A 10 or four of a kind burns it.' + cap;
+    if (g.type === 'pickup') return 'End your turn so the Rival has no card to play from the Hand shown. They must pick up the Pile.' + cap;
+    return 'Play every card in your Hand in a single turn. Only a burn (a 10 or four of a kind) and an 8 give you another go.' + cap;
+  }
+  const goalOf = () => puzzle.goal;
   let modal, puzzle, st, undo, picked, over, current = null;
   const $ = (s) => modal.querySelector(s);
   const ranksOf = (cs) => cs.map(c => c.rank);
@@ -49,7 +70,7 @@
   function load(p) {
     puzzle = p; const d = dealCards(p);
     st = { hand: d.hand, pile: d.pile, constraint: p.constraint, base: p.base };
-    undo = []; picked = new Set(); over = null; plays = 0; say('Play your whole Hand in one turn.', '');
+    undo = []; picked = new Set(); over = null; plays = 0; say('Tap cards to pick them, then press Play.', '');
     draw();
   }
   let plays = 0;
@@ -65,7 +86,10 @@
   }
   function draw() {
     $('#pzTitle').textContent = puzzle.title;
-    $('#pzTier').textContent = `${TIER_NAMES[puzzle.tier]} · ${'★'.repeat(puzzle.tier)}${'☆'.repeat(5 - puzzle.tier)}`;
+    $('#pzTier').textContent = `${GOAL_NAMES[puzzle.goal.type]} · ${TIER_NAMES[puzzle.tier]} ${'★'.repeat(puzzle.tier)}${'☆'.repeat(5 - puzzle.tier)}`;
+    $('#pzGoal').textContent = goalText(puzzle);
+    const rv = $('#pzRival'); rv.hidden = puzzle.goal.type !== 'pickup';
+    if (!rv.hidden) rv.innerHTML = '<span class="pz-rival-label">Rival\'s Hand</span>' + puzzle.goal.rival.map((r, i) => cardHtml({ id: 'r' + i, rank: r, suit: SUITS[i % 4] }, 'pz-small')).join('');
     $('#pzPile').innerHTML = st.pile.length ? st.pile.slice(-5).map((c, i) => cardHtml(c, `pz-pile-${i}`)).join('') : '<span class="pz-empty">Empty Pile</span>';
     $('#pzRule').textContent = ruleLine();
     $('#pzHand').innerHTML = st.hand.map(c => cardHtml(c, picked.has(c.id) ? 'pz-sel' : '')).join('') || '<span class="pz-empty">Hand empty</span>';
@@ -73,10 +97,11 @@
     const off = !!over;
     $('#pzPlay').disabled = off || !picked.size; $('#pzAll').disabled = off || !picked.size;
     $('#pzUndo').disabled = !undo.length; $('#pzHint').disabled = off === 'won';
-    $('#pzPlays').textContent = plays ? `${plays} play${plays === 1 ? '' : 's'}` : '';
+    const cap = puzzle.goal.maxPlays;
+    $('#pzPlays').textContent = cap ? `${plays} / ${cap} plays` : plays ? `${plays} play${plays === 1 ? '' : 's'}` : '';
     const list = availablePuzzles(), solved = solvedSet();
     $('#pzPick').innerHTML = list.length > 1
-      ? `<span class="pz-note">Test account: every weekly puzzle is open.</span>` + list.map(p => `<button type="button" class="pz-chip ${p.id === puzzle.id ? 'on' : ''}" data-pz="${p.id}">${p.tier}${solved[p.id] ? ' ✓' : ''}</button>`).join('')
+      ? `<span class="pz-note">Test account: every weekly puzzle is open.</span>` + list.map((p, i) => `<button type="button" class="pz-chip ${p.id === puzzle.id ? 'on' : ''}" data-pz="${p.id}" title="${p.title}">${i + 1}${solved[p.id] ? ' ✓' : ''}</button>`).join('')
       : (solved[puzzle.id] ? '<span class="pz-note">Solved. A new puzzle arrives next week.</span>' : '<span class="pz-note">This week’s puzzle. A new one arrives every week.</span>');
   }
   function toggle(id) {
@@ -99,22 +124,33 @@
     if (r.burn) { st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: [], constraint: null, base: null }; }
     else st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: st.pile.concat(cards), constraint: r.pos.constraint, base: r.pos.base };
     picked = new Set();
-    if (!st.hand.length) { over = 'won'; markSolved(puzzle.id); say(`Solved in ${plays} play${plays === 1 ? '' : 's'}.`, 'good'); draw(); return; }
+    const g = puzzle.goal, win = () => { over = 'won'; markSolved(puzzle.id); say(`Solved in ${plays} play${plays === 1 ? '' : 's'}.`, 'good'); draw(); };
+    if (g.type === 'out' && !st.hand.length) return win();
+    if (g.type === 'burn' && r.burn) return win();
+    if (g.type === 'pickup') {
+      if (!st.hand.length) { over = 'ended'; say('Your Hand is empty before the Rival is stuck. Undo or Restart.', 'bad'); draw(); return; }
+      if (!r.again) {
+        const free = g.rival.find(c => E.legal(c, r.pos));
+        if (!free) return win();
+        over = 'ended'; say(`The Rival plays a ${free} and your turn is over. Undo or Restart.`, 'bad'); draw(); return;
+      }
+    }
     if (!r.again) { over = 'ended'; say('Your turn ends here and the Rival plays on. Undo or Restart.', 'bad'); draw(); return; }
-    if (!E.canStillWin(r.pos)) say('You get another go, but you can no longer finish. Undo or Restart.', 'bad');
+    if (g.maxPlays && plays >= g.maxPlays) { over = 'ended'; say(`That was play ${plays}, and the goal is not met. Undo or Restart.`, 'bad'); draw(); return; }
+    if (!E.canStillWin(r.pos, g, plays)) say('You get another go, but you can no longer reach the goal. Undo or Restart.', 'bad');
     else say(r.burn ? 'The Pile burns. Go again.' : rank === '8' ? '8 skips the Rival. Go again.' : `${rank} skips the Rival too. Go again.`, 'good');
     draw();
   }
   function doUndo() { if (!undo.length) return; st = JSON.parse(undo.pop()); plays = Math.max(0, plays - 1); picked = new Set(); over = null; say('Undone.', ''); draw(); }
   function doHint() {
-    const s = E.solve(posOf(st), 1).solutions[0];
-    if (!s) { say('No way to finish from here. Undo or Restart.', 'bad'); return; }
+    const s = E.solve(posOf(st), 1, goalOf(), plays).solutions[0];
+    if (!s) { say('No way to the goal from here. Undo or Restart.', 'bad'); return; }
     say(`Hint: ${puzzle.hint}`, ''); // the first hint explains the idea; a second tap names the move
     if ($('#pzHint').dataset.n === puzzle.id + plays) say(`Try playing ${s[0].n} × ${s[0].rank} next.`, '');
     $('#pzHint').dataset.n = puzzle.id + plays;
   }
   function giveUp() {
-    const s = E.solve({ hand: puzzle.hand, pile: puzzle.pile, constraint: puzzle.constraint, base: puzzle.base }, 1).solutions[0];
+    const s = E.solve({ hand: puzzle.hand, pile: puzzle.pile, constraint: puzzle.constraint, base: puzzle.base }, 1, puzzle.goal).solutions[0];
     say('Solution: ' + s.map(m => `${m.n} × ${m.rank}`).join(', then ') + '.', '');
   }
 
@@ -138,6 +174,7 @@
     else if (e.target.closest('#pzRestart')) { load(puzzle); }
     else if (e.target.closest('#pzHint')) doHint();
     else if (e.target.closest('#pzGiveUp')) giveUp();
+    else if (e.target.closest('#pzHow')) { close(); if (typeof openGuideSection === 'function') openGuideSection('puzzles'); }
   });
   document.addEventListener('keydown', (e) => {
     if (!modal || modal.classList.contains('hidden')) return;
@@ -145,5 +182,5 @@
     if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggle(card.dataset.id); }
   });
 
-  window.ShPuzzles = { PUZZLES, puzzleIndexForWeek, thisWeek, availablePuzzles, hasAllPuzzles, open, close, dealCards };
+  window.ShPuzzles = { PUZZLES, GOAL_NAMES, goalText, puzzleIndexForWeek, thisWeek, availablePuzzles, hasAllPuzzles, open, close, dealCards };
 })();

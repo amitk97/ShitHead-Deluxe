@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v342: [['puzzle', 'Puzzles now have three goals: go out in one turn, burn the Pile in a set number of plays, or leave the Rival with nothing to play. Nine puzzles, and a Puzzles section in the Guide.', WN_KEY]],
       v341: [['puzzle', 'Weekly Puzzles are here. Open More Modes → Puzzles: one hand, one turn, one way to win. A new puzzle arrives every week.', WN_KEY]],
       v340: [['shield', 'Protect Best Cards is now off by default. Turn it on in Settings → Gameplay if you want Select All Of A Rank to pick just one 2, 3, 10 or Ace.']],
       v339: [['shield', 'New setting, Protect Best Cards (on by default): Select All Of A Rank now picks just one 2, 3, 10 or Ace, so you never waste them by accident.', WN_KEY]],

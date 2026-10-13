@@ -25,7 +25,7 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]]){
   const today=await page.evaluate(()=>ShPuzzles.thisWeek().id);
   assert.equal(await page.locator('.pz-chip').count(),0,'guests only get this week');
   // illegal play: no way to know a lost move? play wrong first card, expect end-of-turn message, then undo
-  const sol=await page.evaluate(()=>{const p=ShPuzzles.thisWeek();return ShPuzzleEngine.solve({hand:p.hand,pile:p.pile,constraint:p.constraint,base:p.base},1).solutions[0];});
+  const sol=await page.evaluate(()=>{const p=ShPuzzles.thisWeek();return ShPuzzleEngine.solve({hand:p.hand,pile:p.pile,constraint:p.constraint,base:p.base},1,p.goal).solutions[0];});
   const pickN=async(rank,n)=>{const ids=await page.$$eval('#pzHand .pz-card',(els,r)=>els.filter(e=>e.querySelector('b').textContent===r).map(e=>e.dataset.id),rank);
     for(let i=0;i<n;i++)await page.locator(`#pzHand .pz-card[data-id="${ids[i]}"]`).click();};
   // a deliberately wrong first move (a legal card that is not the first solution card) must not solve it
@@ -48,9 +48,17 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]]){
   if(w===390)await page.screenshot({path:'/tmp/puzzle-390.png'});
   // AmitK sees all five
   await page.evaluate(()=>{currentUser={email:'amirk2197@googlemail.com'};ShPuzzles.open();});
-  assert.equal(await page.locator('.pz-chip').count(),5,'AmitK sees all five');
-  await page.locator('.pz-chip').nth(4).click();
-  assert.equal(await page.locator('#pzTier').textContent().then(t=>t.startsWith('Tricky')),true);
+  const total=await page.evaluate(()=>ShPuzzles.PUZZLES.length);
+  assert.equal(await page.locator('.pz-chip').count(),total,'AmitK sees every puzzle');
+  // every puzzle is solvable through the page, whatever its goal
+  for(let i=0;i<total;i++){
+    await page.locator('.pz-chip').nth(i).click();
+    const s=await page.evaluate(()=>{const id=document.querySelector('.pz-chip.on').dataset.pz;const p=ShPuzzles.PUZZLES.find(x=>x.id===id);return {goal:p.goal.type,rival:!document.querySelector('#pzRival').hidden,sol:ShPuzzleEngine.solve({hand:p.hand,pile:p.pile,constraint:p.constraint,base:p.base},1,p.goal).solutions[0]};});
+    assert.equal(s.rival,s.goal==='pickup','rival hand only for pickup puzzles');
+    for(const m of s.sol){await pickN(m.rank,m.n);await page.locator('#pzPlay').click();}
+    const t=await page.locator('#pzStatus').textContent();
+    assert(t.startsWith('Solved'),'puzzle '+(i+1)+' ('+s.goal+'): '+t);
+  }
   // Escape/back/close
   await page.locator('#pzClose').click();assert(!(await page.locator('#puzzlesModal').isVisible()));
   assert.deepEqual(errors,[],'no page errors');

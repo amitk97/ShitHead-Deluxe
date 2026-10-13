@@ -1,5 +1,5 @@
-// Puzzle rules + solver (v341). One player, two-player table, no Deck, no Jokers: a puzzle is a
-// Hand and a Pile, and the goal is to play the whole Hand in ONE turn. Only plays that give you
+// Puzzle rules + solver (v341, goals v342). One player, two-player table, no Deck, no Jokers: a puzzle
+// is a Hand and a Pile and one turn to reach a goal (see Goals below); the first goal is to play the whole Hand. Only plays that give you
 // another go keep the turn: a 10 or a four of a kind (burn), an 8 (skips the Rival), a 5 played on
 // a base 8 and a 3 over an 8. Everything else ends the turn, so it loses. The rules here are a
 // copy of isPlayLegal / executePlayCards in app.js (a dev test compares them on random positions).
@@ -60,29 +60,42 @@
     return out;
   }
 
+  // Goals (every puzzle is ONE turn on a two-player table, no Deck, no Jokers):
+  //   { type: 'out' }                     play every card in your Hand
+  //   { type: 'burn' }                    burn the Pile (a 10 or four of a kind)
+  //   { type: 'pickup', rival: [rank…] }  end your turn so the Rival, whose Hand is shown, has no legal card
+  // Any goal may carry maxPlays: the most plays (a play = one or more cards of a rank) you may use.
+  const rivalStuck = (pos, rival) => !rival.some(r => legal(r, pos));
+
   // All winning sequences (each a list of {rank, n}), at most `cap`; also the nodes searched.
-  function solve(start, cap = 50) {
-    const memo = new Map(); let nodes = 0;
-    function go(pos) {
-      if (!pos.hand.length) return [[]];
-      const k = key(pos); if (memo.has(k)) return memo.get(k);
+  // `used` = plays already made (for maxPlays), so the hint can solve from the middle of an attempt.
+  function solve(start, cap = 50, goal = { type: 'out' }, used0 = 0) {
+    const memo = new Map(); let nodes = 0; const max = goal.maxPlays || Infinity;
+    function go(pos, used) {
+      if (goal.type === 'out' && !pos.hand.length) return [[]];
+      const k = key(pos) + '#' + (max < Infinity ? used : 0); if (memo.has(k)) return memo.get(k);
       nodes++;
       const res = [];
       for (const m of moves(pos)) {
+        if (used + 1 > max) break;
         const r = play(pos, m.rank, m.n);
-        if (!r.again && r.pos.hand.length) continue;
-        const rest = r.pos.hand.length ? go(r.pos) : [[]];
+        let rest = null;
+        if (goal.type === 'burn' && r.burn) rest = [[]];
+        else if (goal.type === 'pickup' && !r.again && r.pos.hand.length && rivalStuck(r.pos, goal.rival)) rest = [[]];
+        else if (r.again && r.pos.hand.length) rest = go(r.pos, used + 1);
+        else if (goal.type === 'out' && !r.pos.hand.length) rest = [[]];
+        if (!rest) continue;
         for (const s of rest) { res.push([m, ...s]); if (res.length >= cap) break; }
         if (res.length >= cap) break;
       }
       memo.set(k, res); return res;
     }
-    return { solutions: go(start), nodes };
+    return { solutions: go(start, used0), nodes };
   }
 
   // Can the player still win after these plays? Used for the hint and for "this can't work now".
-  function canStillWin(pos) { return solve(pos, 1).solutions.length > 0; }
+  function canStillWin(pos, goal, used) { return solve(pos, 1, goal, used).solutions.length > 0; }
 
-  const api = { VAL, ORDER, legal, play, moves, solve, canStillWin, effTop, constraintOf };
+  const api = { VAL, ORDER, legal, play, moves, solve, canStillWin, rivalStuck, effTop, constraintOf };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ShPuzzleEngine = api;
 })(typeof window !== 'undefined' ? window : globalThis);
