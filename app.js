@@ -1287,7 +1287,7 @@
     // something mid-animation can't change cards already on screen.
     function snapshotCardStyle(player = null) {
       const isLocal = !player || (player.id === state?.localPlayerId && !player.isBot);
-      const backId = isLocal ? equippedCosmetics.cardBack : player?.cosmetics?.cardBack;
+      const backId = isLocal ? equippedCosmetics.cardBack : (eventBotItem(player, 'cardBack') || player?.cosmetics?.cardBack);
       const frameId = isLocal ? equippedCosmetics.frame : player?.cosmetics?.frame;
       return {
         backClass: isLocal ? getThemeDeckBackClass() : getCosmeticBackClass(backId || 'default'),
@@ -3496,7 +3496,7 @@
         // newly equipped victory animation.
         const effect = player?.id === state.localPlayerId
           ? (equippedCosmetics.victoryEffect || 'default')
-          : othersEffect(player?.cosmetics?.victoryEffect);
+          : othersEffect(eventBotItem(player, 'victoryEffect') || player?.cosmetics?.victoryEffect);
         if (reduceMotion) return;
         playVictoryEffect(isWinner ? effect : 'default', snapshotCardStyle(player));
       } catch (error) {
@@ -6109,7 +6109,7 @@
               // card and look like an extra power icon.
               const showBackEmblem = !upCard;
               slotContent += `
-                <div data-slot="${i}" class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg custom-card-back ${getCosmeticBackClass(p.cosmetics?.cardBack || 'default')} flex items-center justify-center select-none shadow" style="${showBackEmblem ? getOpponentCosmeticFrameStyle(p.cosmetics?.frame) : ''}">
+                <div data-slot="${i}" class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg custom-card-back ${getCosmeticBackClass(eventBotItem(p, 'cardBack') || p.cosmetics?.cardBack || 'default')} flex items-center justify-center select-none shadow" style="${showBackEmblem ? getOpponentCosmeticFrameStyle(p.cosmetics?.frame) : ''}">
                   ${showBackEmblem ? getEmblemSvg() : ''}
                 </div>
               `;
@@ -10369,13 +10369,28 @@
     function getPlayerAvatarId(player) {
       if (!player) return DEFAULT_AVATAR_ID;
       if (player.id === state?.localPlayerId && !player.isBot) return resolveAvatarId(equippedCosmetics?.avatar);
-      if (player.isBot) return resolveAvatarId(player.avatar);
+      if (player.isBot) return resolveAvatarId(eventBotItem(player, 'avatar') || player.avatar);
       return resolveAvatarId(player.cosmetics?.avatar);
     }
     // Bots wear a random FREE picture, never the same as another bot at the
     // table. pickBotAvatar is used when a bot is created; ensureBotAvatars is
     // a deterministic safety net at render time (same result on every client,
     // since it only depends on seat order and ids) for bots from older saves.
+    // Event promotion (v365): while an event is live, bots wear and use its
+    // items. Read live, never stored, so it reverts by itself when the event
+    // ends. Tutorial bots keep the plain look; extra bots keep free avatars.
+    function eventBotItem(player, type) {
+      if (!player?.isBot || String(player.id).startsWith('tut_')) return null;
+      const live = activeSeasonalEvents().map(w => w.event);
+      if (!live.length) return null;
+      if (type === 'avatar') {
+        const ids = live.flatMap(ev => [seasonalItemId('avatar', ev.id), `avatar-${ev.id}-earned`]);
+        const at = (state?.players || []).filter(p => p.isBot && !String(p.id).startsWith('tut_')).findIndex(p => p.id === player.id);
+        return ids[at] || null;
+      }
+      const seed = Array.from(String(player.id)).reduce((h, ch) => (Math.imul(h, 31) + ch.charCodeAt(0)) >>> 0, 0);
+      return seasonalItemId(type, live[seed % live.length].id);
+    }
     function pickBotAvatar(players = []) {
       const taken = new Set(players.filter(p => p && p.isBot).map(p => p.avatar));
       const options = FREE_AVATAR_IDS.filter(id => !taken.has(id));
@@ -11757,7 +11772,7 @@
     }
     function jokerEffectIdFor(player) {
       const own = (typeof equippedCosmetics !== 'undefined' && equippedCosmetics.jokerEffect) || 'default';
-      const id = player?.id === state?.localPlayerId ? own : othersEffect(player?.cosmetics?.jokerEffect);
+      const id = player?.id === state?.localPlayerId ? own : othersEffect(eventBotItem(player, 'jokerEffect') || player?.cosmetics?.jokerEffect);
       return JOKER_FX[id] ? id : 'default';
     }
 

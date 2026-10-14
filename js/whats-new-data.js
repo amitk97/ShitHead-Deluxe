@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v365: [['sparkle', 'During events the computer players wear and use that event\'s avatar, card back, burn, Joker and victory effects. They go back to the plain look when the event ends.', WN_KEY]],
       v364: [['puzzle', 'The weekly puzzle is now a shuffled order, so you will not get the same kind of puzzle week after week.', WN_KEY]],
       v363: [['puzzle', 'Face-Up and Face-Down puzzles now use exactly three cards, as in a real game.']],
       v362: [['puzzle', 'Trap puzzles can no longer be solved by just clearing your Hand, and hints now follow where you are in the puzzle.']],

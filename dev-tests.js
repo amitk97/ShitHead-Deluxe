@@ -3211,6 +3211,29 @@ async function runDevTestSuite() {
     ensureBotAvatars(legacy);
     assertEqual(new Set(legacy.map(p => p.avatar)).size, 3, 'Old saves with missing or duplicate bot pictures are repaired');
   });
+  await test('v365: bots use the live event\'s items and revert when it ends', () => {
+    const was = [seasonalNowOverride, state.players, othersEffectsOn];
+    try {
+      freshState({ phase: 'PLAY' });
+      const bots = [1, 2, 3].map(i => makePlayer({ id: `p_bot_${i}`, isBot: true, avatar: FREE_AVATAR_IDS[i] }));
+      state.players = [makePlayer({ id: 'p1' }), ...bots];
+      othersEffectsOn = true;
+      seasonalNowOverride = '2026-10-20T12:00';
+      assertEqual(burnEffectIdFor(bots[0]), 'burn-halloween', 'bot burn is the event burn');
+      assertEqual(jokerEffectIdFor(bots[0]), 'joker-halloween', 'bot Joker is the event Joker');
+      assertEqual(eventBotItem(bots[0], 'cardBack'), 'back-halloween', 'bot card back');
+      assertEqual(eventBotItem(bots[0], 'victoryEffect'), 'victory-halloween', 'bot victory');
+      const pics = bots.map(b => getPlayerAvatarId(b));
+      assertEqual(new Set(pics).size, 3, 'bot pictures stay different');
+      assertTrue(pics[0] === 'avatar-halloween' && pics[1] === 'avatar-halloween-earned', 'event pictures first');
+      assertEqual(eventBotItem(makePlayer({ id: 'tut_bot', isBot: true }), 'burnEffect'), null, 'tutorial bots stay plain');
+      othersEffectsOn = false;
+      assertEqual(burnEffectIdFor(bots[0]), 'default', "Show Others' Effects off");
+      othersEffectsOn = true;
+      seasonalNowOverride = '2026-09-01T12:00';
+      assertTrue(burnEffectIdFor(bots[0]) === 'default' && getPlayerAvatarId(bots[0]) === bots[0].avatar && !eventBotItem(bots[0], 'cardBack'), 'back to the free look after the event');
+    } finally { [seasonalNowOverride, state.players, othersEffectsOn] = was; }
+  });
   await test('REGRESSION: opponent seats show picture + name on top and statuses below the cards', () => {
     freshState({ phase: 'SWAP' });
     state.players = [makePlayer({ id: 'p1', hand: [makeCard('4')] }),

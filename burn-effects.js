@@ -1057,7 +1057,7 @@
       const ownEffect = (typeof equippedCosmetics !== 'undefined' && equippedCosmetics.burnEffect) || 'default';
       if (player?.id === state?.localPlayerId && ownEffect === PRIVATE_BURN_ID && ownedPrivateBurns().length) return ownEffect;
       if (player && player.id !== state?.localPlayerId && !othersEffectsOn) return 'default';
-      return player?.cosmetics?.burnEffect || (player?.id === state?.localPlayerId ? ownEffect : 'default') || 'default';
+      return eventBotItem(player, 'burnEffect') || player?.cosmetics?.burnEffect || (player?.id === state?.localPlayerId ? ownEffect : 'default') || 'default';
     }
     let burnFxPlayer = null; // whose burn is playing, for effects that show their card back
     function triggerEquippedBurnEffect(x, y, player = null, card = null) {
