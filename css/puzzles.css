@@ -100,3 +100,8 @@ body:not(.reduce-motion) .pz-done svg { animation: pz-pop .5s var(--ease-bouncy,
 .pz-status { min-height: 2.9em; }
 #pzRestart { min-width: 5.4em; }
 .pz-rule { min-height: 2.7em; }
+/* v355: corner index only (rank, suit under it), bigger so the card reads at a glance */
+.pz-card-box .card-base .card-corner-rank, .pz-card-box .card-table .card-corner-rank { font-size: calc(var(--pzw) * .36); }
+.pz-card-box .card-base .card-corner-suit, .pz-card-box .card-table .card-corner-suit { font-size: calc(var(--pzw) * .3); }
+.pz-card-box .card-opponent-slot .card-corner-rank { font-size: calc(var(--pzw) * .3); }
+.pz-card-box .card-opponent-slot .card-corner-suit { font-size: calc(var(--pzw) * .24); }

@@ -125,9 +125,9 @@
     el.classList.remove('card-opponent-slot'); el.classList.add(size, 'pz-card'); if (extra) el.classList.add(extra);
     el.dataset.id = c.id; if (!el.dataset.rank) el.dataset.rank = c.rank;
     if (!el.firstChild) el.textContent = c.rank + c.suit; // node tests have no game renderer
-    // Puzzles show the suit in the middle of every card, never the power icons (they are noise here).
-    const ic = el.querySelector && el.querySelector('.card-centre-icon');
-    if (ic) { const g = document.createElement('span'); g.className = 'card-centre-suit font-black'; g.textContent = c.suit; ic.replaceWith(g); }
+    // Puzzle cards show only the rank with its suit under it in the corner: no power icon, no big suit in the middle.
+    const ic = el.querySelector && el.querySelector('.card-centre-icon, .card-centre-suit');
+    if (ic) (ic.parentElement && ic.parentElement !== el ? ic.parentElement : ic).remove();
     return el;
   }
   const equippedTableId = () => (typeof homeBackdropTableId === 'function' ? homeBackdropTableId() : 'default');
