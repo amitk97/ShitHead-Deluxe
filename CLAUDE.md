@@ -1,3 +1,7 @@
+## v363 — table zones hold three cards
+
+- A Face-Up or Face-Down puzzle (`zone`) always has exactly THREE cards (the real game's limit; `puzzles-test.js` enforces it); p21–p24 were rebuilt as 3-card positions (pair of 5s, four Aces, EVEN, LOW7). A Hand puzzle has 4–8 cards. Catalog re-exported.
+
 ## v362 — trap puzzles can't be cleared; position-aware hints
 
 - A trap puzzle (p37–p39, p45–p46) must not be solvable by going out (owner: emptying the Hand is obviously the better play): `puzzles-test.js` asserts `solve(out, rival, turns)` finds nothing for every trap puzzle; p37, p39, p45, p46 were replaced with positions from `puzzle-search-zones.js trap|trap3`, which now skips out-able positions (hints say "You cannot empty your Hand…"). Hints: `doHint` explains the idea only before the first play (and a second tap names the move); after any play every hint is solved from the CURRENT position (`posOf(st)`: hand, pile, Rival, turn) and reads "Next, play N × X. It keeps your turn / ends your turn, so the Rival answers / burns the Pile / finishes the puzzle." Catalog re-exported.

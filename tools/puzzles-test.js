@@ -10,7 +10,7 @@ require('../js/puzzles.js');
 const E = window.ShPuzzleEngine, P = window.ShPuzzles;
 const tierNodes = [];
 for (const p of P.PUZZLES) {
-  assert.ok(p.hand.length >= (p.zone === 'faceDown' ? 3 : 4) && p.hand.length <= 8, p.id + ' hand size');
+  assert.ok(p.zone ? p.hand.length === 3 : (p.hand.length >= 4 && p.hand.length <= 8), p.id + ' hand size: a table zone holds exactly three cards, a Hand 4 to 8');
   assert.ok(!p.zone || ['faceUp', 'faceDown'].includes(p.zone), p.id + ' zone');
   assert.ok(p.zone !== 'faceDown' || (p.hand.length === 3 && p.goal.single), p.id + ' face-down: three cards, one per play');
   assert.ok(p.goal.type !== 'joker' || (p.hand.filter(r => r === 'JOKER').length === 1 && p.goal.min > p.pile.length), p.id + ' one Joker, a pickup above the Pile');

@@ -2419,15 +2419,13 @@
     "id": "p21",
     "name": "Clear Your Face-Up Cards",
     "hand": [
-     "8",
      "5",
-     "10",
-     "Q"
+     "5",
+     "8"
     ],
     "pile": [
      "8",
-     "A",
-     "3",
+     "K",
      "2"
     ],
     "constraint": null,
@@ -2440,16 +2438,14 @@
     "id": "p22",
     "name": "Face-Up Four Of A Kind",
     "hand": [
-     "8",
-     "9",
-     "10",
-     "2"
+     "4",
+     "A",
+     "10"
     ],
     "pile": [
-     "K",
-     "2",
-     "2",
-     "2"
+     "A",
+     "A",
+     "A"
     ],
     "constraint": null,
     "base": null,
@@ -2461,16 +2457,12 @@
     "id": "p23",
     "name": "Even Face-Up Cards",
     "hand": [
-     "7",
-     "10",
      "8",
-     "8"
+     "7",
+     "10"
     ],
     "pile": [
-     "2",
-     "4",
-     "J",
-     "7",
+     "3",
      "6"
     ],
     "constraint": "EVEN",
@@ -2481,21 +2473,20 @@
    },
    {
     "id": "p24",
-    "name": "Five, Three, Eight",
+    "name": "Seven Or Lower, Face-Up",
     "hand": [
+     "10",
      "5",
-     "3",
-     "8",
-     "5"
+     "3"
     ],
     "pile": [
      "8",
      "J",
      "7",
-     "6",
+     "7",
      "2"
     ],
-    "constraint": null,
+    "constraint": "LOW7",
     "base": null,
     "goal": {
      "type": "out"

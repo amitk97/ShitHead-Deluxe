@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v363: [['puzzle', 'Face-Up and Face-Down puzzles now use exactly three cards, as in a real game.']],
       v362: [['puzzle', 'Trap puzzles can no longer be solved by just clearing your Hand, and hints now follow where you are in the puzzle.']],
       v361: [['puzzle', 'Fixed the multi-turn puzzles saying they could not be solved after a good first move.']],
       v360: [['puzzle', 'Fixed the newer weekly puzzles that could not be completed on some phones.']],
