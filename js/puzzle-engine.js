@@ -178,6 +178,34 @@
     return false;
   }
 
-  const api = { VAL, ORDER, legal, play, moves, solve, verify, canStillWin, rivalStuck, rivalTurn, afterTurn, effTop, constraintOf };
+  // The puzzle of the week (v364): the weeks count on one after another (53 a year from 2026), and each run of
+  // list.length weeks plays every puzzle exactly once in a shuffled order. The shuffle is seeded by the run number, so it
+  // is random-looking but the same for everyone (client and server share this code), and no two weeks in a row use the
+  // same kind of puzzle (also across the join between two runs).
+  const weekNumber = (weekKey) => { const m = /^(\d{4})-W(\d{2})$/.exec(weekKey || ''); return m ? (Number(m[1]) - 2026) * 53 + Number(m[2]) : null; };
+  const puzzleKind = (p) => { const g = p.goal || {}; return g.last ? 'last' : g.type === 'out' && g.turns > 1 ? 'turns' : p.zone || g.type; };
+  function seededRandom(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const orderCache = new Map();
+  function weekOrder(list, cycle) {
+    const key = list.map(p => p.id).join(',') + '#' + cycle;
+    if (orderCache.has(key)) return orderCache.get(key);
+    const rnd = seededRandom(cycle * 7919 + 20261), pool = list.map((_, i) => i);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    let prev = cycle > 0 ? puzzleKind(list[weekOrder(list, cycle - 1).slice(-1)[0]]) : null;
+    const out = [];
+    while (pool.length) {
+      let k = pool.findIndex(i => puzzleKind(list[i]) !== prev); if (k < 0) k = 0;
+      const i = pool.splice(k, 1)[0]; out.push(i); prev = puzzleKind(list[i]);
+    }
+    orderCache.set(key, out); return out;
+  }
+  function weekIndex(weekKey, list) {
+    const n = weekNumber(weekKey);
+    if (n === null || !list.length) return 0;
+    const m = Math.max(0, n);
+    return weekOrder(list, Math.floor(m / list.length))[m % list.length];
+  }
+
+  const api = { weekNumber, puzzleKind, weekOrder, weekIndex, VAL, ORDER, legal, play, moves, solve, verify, canStillWin, rivalStuck, rivalTurn, afterTurn, effTop, constraintOf };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ShPuzzleEngine = api;
 })(typeof window !== 'undefined' ? window : globalThis);

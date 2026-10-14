@@ -1,4 +1,4 @@
-<!-- README-VERSION: v340 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
+<!-- README-VERSION: v364 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
 # 💩 ShitHead Deluxe
 
 **The classic card game ShitHead, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
@@ -8,10 +8,11 @@
 Free, no download needed. It runs in any modern browser on phones, foldables, tablets and computers, installs like an app (Add to Home Screen / Install App), and Play Computer even works offline.
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="23%" alt="Home screen" />
-  <img src="docs/screenshots/swap.png" width="23%" alt="Swap Phase" />
-  <img src="docs/screenshots/table.png" width="23%" alt="A game in progress" />
-  <img src="docs/screenshots/guide-swap.png" width="23%" alt="Guide and Strategy" />
+  <img src="docs/screenshots/home.png" width="19%" alt="Home screen" />
+  <img src="docs/screenshots/swap.png" width="19%" alt="Swap Phase" />
+  <img src="docs/screenshots/table.png" width="19%" alt="A game in progress" />
+  <img src="docs/screenshots/puzzle.png" width="19%" alt="The weekly puzzle" />
+  <img src="docs/screenshots/guide-swap.png" width="19%" alt="Guide and Strategy" />
 </p>
 
 ---
@@ -56,7 +57,7 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 
 ## Features
 
-- **A home screen built around the modes**: swipe a 3D carousel of cards (or use the arrows, the mouse wheel or keys 1-7): Play Computer, the Gauntlet, Ranked, Play Friends and More Modes. Tap the middle card and it flips over and spreads across the screen into that mode's page; the game remembers the last mode you opened. More Modes previews what's coming (2 vs 2, Puzzles, Randomiser, Multiple Decks and No Mercy).
+- **A home screen built around the modes**: swipe a 3D carousel of cards (or use the arrows, the mouse wheel or keys 1-7): Play Computer, the Gauntlet, Ranked, Play Friends and More Modes. Tap the middle card and it flips over and spreads across the screen into that mode's page; the game remembers the last mode you opened. More Modes holds the weekly Puzzles and previews what's coming (2 vs 2, Randomiser, Multiple Decks and No Mercy). Each of the two outer Shortcut cards can pin one mode (never the same one twice).
 - **One header everywhere**: Exit on the far left (it asks first, in the game's own style), your Diamonds, then Shop, Custom, Profile, Inbox, Guide, Settings and the menu. In a game the extras fold into the menu and the ShitHead logo takes you home.
 - **A short tour for new players**: the first time a new account signs in, a six-step tour shows the header, the game modes and the Tutorial button (skip it any time, replay it from Menu → Take The Tour). Press and hold a mode card to pick it up and put the cards in your own order.
 - **Opens fast**: a loading screen paints at once, your level and Diamonds show straight away, and the installed Android app flows from its icon into the game.
@@ -64,6 +65,7 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 - **Level Ladder**: tap your level anywhere to open a timeline of every level and what it unlocks, scrolled to "You are here". A level up climbs the ladder to show what you just won (equip it in one tap), your friends sit at their own levels (tap +N to see everyone on a crowded level), and a gold dot on your level means there's something new you haven't looked at yet.
 - **Best of 3 / 5 / 7 series** between two friends (both players need level 20 / 35 / 45): each pays an entry (30, 50 or 70 Diamonds), the server matches the pot and the winner takes 4x. The next game starts by itself, the score sits on the table, and if someone drops out a bot plays their seat until they're back (or, after 5 of its turns, the series goes to the player still there).
 
+- **Weekly Puzzles** (More Modes → Puzzles, or pin it to a shortcut): a set table and one way to win, drawn with your own cards, table, deck and effects. 46 puzzles in eight kinds: play your whole Hand in one turn, burn the Pile, leave the Rival nothing to play, clear your three Face-Up cards, flip your three Face-Down cards (they stay face down: you remember them), play your Joker to hand the Rival a big Pile, finish on a chosen card, and longer two- and three-turn puzzles where the Rival answers between your turns. One puzzle a week for everyone (a shuffled order that never repeats a kind two weeks running, and plays every puzzle before any returns); solve it signed in for 50 Diamonds and 50 XP, checked by the server. Undo, Restart, a Hint that follows where you are in the puzzle, and Give Up.
 - **Play Computer** with four difficulties (Easy → Boss) that unlock as you win, playable offline. Close the app mid-game and it picks up exactly where you left off.
 - **The Gauntlet**: Easy, Hard and Boss runs. Easy: beat 5 bots in a row (Easy, Easy, Medium, Hard, Boss) with 3 lives. Hard (2 lives) and Boss (1 life) unlock with levels. The first clear of each wins an exclusive animated avatar and frame, then Diamonds every day you beat it again.
 - **Play Friends**: host or join with a room code, pick a mode from a card carousel, and sit four avatar seats round a compact lobby. House Rules (Classic plus three named slots saved to your account) give custom card powers. Share an invite link, react with emotes, and a Medium bot keeps your seat if your signal drops: reopen the game and you go straight back in. After 5 bot turns you're out of that game, and the rest play on. Friends can watch your match live.
@@ -91,4 +93,5 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 - **Cloud Functions** ([`functions/`](functions)) handle the economy: Diamonds, XP, purchases, gifts, referrals and rewards are saved on the server. Ranked uses server-held cards and validated moves. Casual rooms and some solo/Gauntlet/challenge reports still need stronger verification; see the [security audit](docs/SECURITY-AUDIT-2026-09-30.md). Functions also maintain leaderboards and send push notifications.
 - A service worker makes the game installable and lets Play Computer games run offline.
 - Painted burns are drawn with WebGL ([`art/burns/level-3d/burns3d.js`](art/burns/level-3d/burns3d.js)) from layers cut out of the artwork by [`tools/make-burn-layers.py`](tools/make-burn-layers.py).
-- A developer test suite runs in the browser: open `index.html?dev-tests=1`.
+- The puzzle rules and solver ([`js/puzzle-engine.js`](js/puzzle-engine.js), copied to `functions/` for the server's check) are shared by the page, the tests and the search tools ([`tools/puzzle-search.js`](tools/puzzle-search.js), [`tools/puzzle-search-zones.js`](tools/puzzle-search-zones.js)).
+- A developer test suite runs in the browser: open `index.html?dev-tests=1`. Node tests live in `tools/*-test.js`.

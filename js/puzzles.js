@@ -153,12 +153,8 @@
   const REWARD_DIAMONDS = 50;
   const SOLVED_KEY = 'shithead_puzzles_solved';
 
-  // The puzzle of the week: week keys like "2026-W42" count on one after another.
-  function puzzleIndexForWeek(weekKey) {
-    const m = /^(\d{4})-W(\d{2})$/.exec(weekKey || '');
-    if (!m) return 0;
-    return ((Number(m[1]) - 2026) * 53 + Number(m[2])) % PUZZLES.length;
-  }
+  // The puzzle of the week: a seeded shuffle of all puzzles, the same for everyone (E.weekIndex, shared with the server).
+  const puzzleIndexForWeek = (weekKey) => E.weekIndex(weekKey, PUZZLES);
   const thisWeek = () => PUZZLES[puzzleIndexForWeek(typeof getUkWeekKey === 'function' ? getUkWeekKey() : '')];
   // AmitK (shop.js isAmitkTestingAccount) is a test account: every weekly puzzle is always open.
   const hasAllPuzzles = () => { try { return !!currentUser && isAmitkTestingAccount({}); } catch { return false; } };
@@ -439,7 +435,7 @@
 
   // What the server needs (catalog export): the puzzles in rotation order and the reward.
   const catalog = () => ({ reward: { diamonds: REWARD_DIAMONDS },
-    list: PUZZLES.map(p => ({ id: p.id, name: p.title, hand: p.hand, pile: p.pile, constraint: p.constraint || null, base: p.base || null, goal: p.goal })) });
+    list: PUZZLES.map(p => ({ id: p.id, name: p.title, zone: p.zone || null, hand: p.hand, pile: p.pile, constraint: p.constraint || null, base: p.base || null, goal: p.goal })) });
   window.ShPuzzles = { catalog, REWARD_DIAMONDS, solvedThisWeek, PUZZLES, GOAL_NAMES, goalText, puzzleIndexForWeek, thisWeek, availablePuzzles, hasAllPuzzles, open, close, dealCards };
   modal = document.getElementById('puzzlesModal');
   refreshBadges();

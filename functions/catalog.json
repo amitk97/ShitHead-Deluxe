@@ -1947,6 +1947,7 @@
    {
     "id": "p1",
     "name": "Burn And Go Again",
+    "zone": null,
     "hand": [
      "5",
      "8",
@@ -1967,6 +1968,7 @@
    {
     "id": "p2",
     "name": "The Hidden Skip",
+    "zone": null,
     "hand": [
      "5",
      "10",
@@ -1987,6 +1989,7 @@
    {
     "id": "p3",
     "name": "See Through The 8",
+    "zone": null,
     "hand": [
      "8",
      "10",
@@ -2004,6 +2007,7 @@
    {
     "id": "p4",
     "name": "Two Plays, One Burn",
+    "zone": null,
     "hand": [
      "Q",
      "Q",
@@ -2028,6 +2032,7 @@
    {
     "id": "p5",
     "name": "Five Ways To Go Again",
+    "zone": null,
     "hand": [
      "4",
      "8",
@@ -2050,6 +2055,7 @@
    {
     "id": "p6",
     "name": "Burn It Down",
+    "zone": null,
     "hand": [
      "10",
      "8",
@@ -2073,6 +2079,7 @@
    {
     "id": "p7",
     "name": "Lock The Rival Out",
+    "zone": null,
     "hand": [
      "6",
      "5",
@@ -2099,6 +2106,7 @@
    {
     "id": "p8",
     "name": "Odd Man Out",
+    "zone": null,
     "hand": [
      "A",
      "5",
@@ -2129,6 +2137,7 @@
    {
     "id": "p9",
     "name": "Four Plays To Freedom",
+    "zone": null,
     "hand": [
      "10",
      "8",
@@ -2149,6 +2158,7 @@
    {
     "id": "p10",
     "name": "Four Sixes",
+    "zone": null,
     "hand": [
      "6",
      "8",
@@ -2170,6 +2180,7 @@
    {
     "id": "p11",
     "name": "Nothing Beats An Ace",
+    "zone": null,
     "hand": [
      "6",
      "A",
@@ -2198,6 +2209,7 @@
    {
     "id": "p12",
     "name": "Three Threes",
+    "zone": null,
     "hand": [
      "3",
      "3",
@@ -2222,6 +2234,7 @@
    {
     "id": "p13",
     "name": "Fives Fall To The Bottom",
+    "zone": null,
     "hand": [
      "7",
      "10",
@@ -2244,6 +2257,7 @@
    {
     "id": "p14",
     "name": "Seven Or Lower",
+    "zone": null,
     "hand": [
      "3",
      "5",
@@ -2265,6 +2279,7 @@
    {
     "id": "p15",
     "name": "Skip Then Four Kings",
+    "zone": null,
     "hand": [
      "8",
      "K",
@@ -2290,6 +2305,7 @@
    {
     "id": "p16",
     "name": "Eight Then Jack",
+    "zone": null,
     "hand": [
      "7",
      "8",
@@ -2318,6 +2334,7 @@
    {
     "id": "p17",
     "name": "Four Eights",
+    "zone": null,
     "hand": [
      "7",
      "8",
@@ -2347,6 +2364,7 @@
    {
     "id": "p18",
     "name": "Aces Wild",
+    "zone": null,
     "hand": [
      "10",
      "8",
@@ -2371,6 +2389,7 @@
    {
     "id": "p19",
     "name": "Four Sevens",
+    "zone": null,
     "hand": [
      "7",
      "7",
@@ -2394,6 +2413,7 @@
    {
     "id": "p20",
     "name": "Three Queens",
+    "zone": null,
     "hand": [
      "8",
      "Q",
@@ -2418,6 +2438,7 @@
    {
     "id": "p21",
     "name": "Clear Your Face-Up Cards",
+    "zone": "faceUp",
     "hand": [
      "5",
      "5",
@@ -2437,6 +2458,7 @@
    {
     "id": "p22",
     "name": "Face-Up Four Of A Kind",
+    "zone": "faceUp",
     "hand": [
      "4",
      "A",
@@ -2456,6 +2478,7 @@
    {
     "id": "p23",
     "name": "Even Face-Up Cards",
+    "zone": "faceUp",
     "hand": [
      "8",
      "7",
@@ -2474,6 +2497,7 @@
    {
     "id": "p24",
     "name": "Seven Or Lower, Face-Up",
+    "zone": "faceUp",
     "hand": [
      "10",
      "5",
@@ -2495,6 +2519,7 @@
    {
     "id": "p25",
     "name": "Flip Them Right",
+    "zone": "faceDown",
     "hand": [
      "3",
      "5",
@@ -2515,6 +2540,7 @@
    {
     "id": "p26",
     "name": "Even Flips",
+    "zone": "faceDown",
     "hand": [
      "10",
      "8",
@@ -2534,6 +2560,7 @@
    {
     "id": "p27",
     "name": "Face-Down Burn",
+    "zone": "faceDown",
     "hand": [
      "3",
      "9",
@@ -2555,6 +2582,7 @@
    {
     "id": "p28",
     "name": "Bottom Eight Flips",
+    "zone": "faceDown",
     "hand": [
      "5",
      "3",
@@ -2576,6 +2604,7 @@
    {
     "id": "p29",
     "name": "Jokers Pick Up Six",
+    "zone": null,
     "hand": [
      "5",
      "10",
@@ -2600,6 +2629,7 @@
    {
     "id": "p30",
     "name": "Joker Hands Over Six",
+    "zone": null,
     "hand": [
      "3",
      "10",
@@ -2624,6 +2654,7 @@
    {
     "id": "p31",
     "name": "Biggest Joker Pickup",
+    "zone": null,
     "hand": [
      "J",
      "5",
@@ -2648,6 +2679,7 @@
    {
     "id": "p32",
     "name": "Odd Pile, Big Joker",
+    "zone": null,
     "hand": [
      "10",
      "5",
@@ -2672,6 +2704,7 @@
    {
     "id": "p33",
     "name": "End On A Four",
+    "zone": null,
     "hand": [
      "4",
      "5",
@@ -2693,6 +2726,7 @@
    {
     "id": "p34",
     "name": "Aces Burn, Five Last",
+    "zone": null,
     "hand": [
      "3",
      "10",
@@ -2715,6 +2749,7 @@
    {
     "id": "p35",
     "name": "Fives Then A Six",
+    "zone": null,
     "hand": [
      "8",
      "5",
@@ -2739,6 +2774,7 @@
    {
     "id": "p36",
     "name": "Two Sevens To Finish",
+    "zone": null,
     "hand": [
      "3",
      "5",
@@ -2762,6 +2798,7 @@
    {
     "id": "p37",
     "name": "Three Over The Ace",
+    "zone": null,
     "hand": [
      "J",
      "2",
@@ -2789,6 +2826,7 @@
    {
     "id": "p38",
     "name": "Five Back To The Ace",
+    "zone": null,
     "hand": [
      "8",
      "8",
@@ -2814,6 +2852,7 @@
    {
     "id": "p39",
     "name": "Even Ace, Odd Rival",
+    "zone": null,
     "hand": [
      "A",
      "3",
@@ -2841,6 +2880,7 @@
    {
     "id": "p40",
     "name": "Hold Back The Fives",
+    "zone": null,
     "hand": [
      "A",
      "7",
@@ -2873,6 +2913,7 @@
    {
     "id": "p41",
     "name": "Four, Then Fives",
+    "zone": null,
     "hand": [
      "5",
      "8",
@@ -2904,6 +2945,7 @@
    {
     "id": "p42",
     "name": "Sevens Open It Up",
+    "zone": null,
     "hand": [
      "5",
      "8",
@@ -2934,6 +2976,7 @@
    {
     "id": "p43",
     "name": "Three Turns To Finish",
+    "zone": null,
     "hand": [
      "7",
      "K",
@@ -2966,6 +3009,7 @@
    {
     "id": "p44",
     "name": "Ace And Four First",
+    "zone": null,
     "hand": [
      "A",
      "5",
@@ -2999,6 +3043,7 @@
    {
     "id": "p45",
     "name": "Three Turn Trap",
+    "zone": null,
     "hand": [
      "7",
      "4",
@@ -3030,6 +3075,7 @@
    {
     "id": "p46",
     "name": "Use Up Their Cards",
+    "zone": null,
     "hand": [
      "9",
      "8",

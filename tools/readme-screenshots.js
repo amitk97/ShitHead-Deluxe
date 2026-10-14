@@ -87,6 +87,9 @@ const S = process.env.SH_VIDEO_DEPS || ROOT, file = path.join(ROOT, 'index.html'
   });
   await page.waitForTimeout(900);
   await snap('guide-swap');
+  await page.evaluate(() => { document.getElementById('rulesModal').classList.add('hidden'); ShPuzzles.open(); });
+  await page.waitForTimeout(1200);
+  await snap('puzzle'); // this week's puzzle (v341+)
   log.push('ok');
   console.log(log.join('\n')); console.log('errors', errors.slice(0, 5));
   await browser.close();

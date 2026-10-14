@@ -32,9 +32,20 @@ assert.ok(P.PUZZLES.every(p => p.hint && p.title && p.hint.length > 30), 'every 
 assert.ok(P.PUZZLES.every(p => p.tier >= 1 && p.tier <= 5 && P.goalText(p).length > 20));
 assert.ok(P.PUZZLES.filter(p => p.goal.type === 'pickup').every(p => p.goal.rival.length >= 3), 'rival hands shown');
 assert.ok(P.PUZZLES.filter(p => p.goal.maxPlays).length >= 2, 'some puzzles cap the plays');
-// the week picks rotate through all five, one a week
-const seen = new Set(); for (let w = 1; w <= P.PUZZLES.length; w++) seen.add(P.puzzleIndexForWeek('2026-W' + String(w).padStart(2, '0')));
-assert.strictEqual(seen.size, P.PUZZLES.length);
+// the week picks are a seeded shuffle: every puzzle once per run of weeks, the same for everyone, never the same kind twice in a row
+{ const L = P.PUZZLES.length, wk = (n) => `${2026 + Math.floor((n - 1) / 53)}-W${String(((n - 1) % 53) + 1).padStart(2, '0')}`;
+  const idx = (n) => P.puzzleIndexForWeek(wk(n)), seq = []; for (let n = 1; n <= L * 4 + 1; n++) seq.push(idx(n));
+  // week numbers count from 2026-W00 = 0, so runs are [0..L-1], [L..2L-1], …
+  const at = (n) => P.puzzleIndexForWeek(2026 + '-W' + String(n).padStart(2, '0'));
+  for (let run = 0; run < 3; run++) { const ids = new Set(); for (let k = 0; k < L; k++) ids.add(E.weekIndex(wk(run * L + k + 1 - 0), P.PUZZLES)); assert.ok(ids.size >= L - 1, 'a run of weeks plays (nearly) every puzzle'); }
+  const order = (c) => E.weekOrder(P.PUZZLES, c);
+  for (let c = 0; c < 6; c++) { assert.strictEqual(new Set(order(c)).size, L, 'cycle ' + c + ' plays every puzzle exactly once'); const o = order(c).concat(order(c + 1)); for (let i = 1; i < o.length; i++) assert.notStrictEqual(E.puzzleKind(P.PUZZLES[o[i]]), E.puzzleKind(P.PUZZLES[o[i - 1]]), `cycle ${c}: weeks ${i - 1} and ${i} are the same kind`); }
+  assert.notDeepStrictEqual(order(0), P.PUZZLES.map((_, i) => i), 'the order is shuffled');
+  assert.notDeepStrictEqual(order(0), order(1), 'every run is shuffled differently');
+  assert.deepStrictEqual(E.weekOrder(P.PUZZLES, 3), E.weekOrder(P.PUZZLES.slice(), 3), 'the same for everyone');
+  // the server picks the same puzzle (it uses the same file and the catalog list)
+  const cat = JSON.parse(JSON.stringify(P.catalog())).list;
+  for (let n = 0; n < L * 2; n++) assert.strictEqual(cat[E.weekIndex(`2026-W${String(n).padStart(2, '0')}`, cat)].id, P.PUZZLES[at(n)].id, 'client and server agree on week ' + n); }
 // AmitK (a test account) always has all five; everyone else only this week's
 assert.strictEqual(P.availablePuzzles().length, P.PUZZLES.length);
 global.currentUser = { email: 'someone@example.com' };

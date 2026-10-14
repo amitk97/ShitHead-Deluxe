@@ -479,9 +479,8 @@ actions.streak = async ({ uid }) => {
 // The AmitK test account may solve any puzzle for its reward; everyone else only this week's.
 const PUZZLES = CAT.puzzles || { list: [], reward: { diamonds: 0 } };
 function puzzleOfWeek(weekKey) {
-  const m = /^(\d{4})-W(\d{2})$/.exec(weekKey || '');
-  if (!m || !PUZZLES.list.length) return null;
-  return PUZZLES.list[((Number(m[1]) - 2026) * 53 + Number(m[2])) % PUZZLES.list.length];
+  if (puzzles.weekNumber(weekKey) === null || !PUZZLES.list.length) return null;
+  return PUZZLES.list[puzzles.weekIndex(weekKey, PUZZLES.list)]; // seeded shuffle shared with js/puzzles.js (puzzle-engine.js)
 }
 actions.puzzle = async ({ uid, auth, data }) => {
   const id = clip(data.id, 20);

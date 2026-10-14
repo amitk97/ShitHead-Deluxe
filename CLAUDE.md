@@ -1,3 +1,8 @@
+## v364 — shuffled weekly puzzles, README refresh
+
+- The puzzle of the week is a seeded shuffle, the same for everyone: `E.weekIndex(weekKey, list)` in `js/puzzle-engine.js` (shared by `js/puzzles.js` and the server's `puzzleOfWeek` through `functions/puzzle-engine.js`). Week numbers count on from 2026-W00 (53 a year); each run of `list.length` weeks plays every puzzle once in an order seeded by the run number (`weekOrder`), and no two neighbouring weeks (also across two runs) share a `puzzleKind` (last / turns / faceUp / faceDown / goal type). Adding a puzzle re-shuffles all runs (the order depends on the list), so add puzzles in batches. The catalog now carries each puzzle's `zone` (the server needs it for the kind). `puzzles-test.js` checks every run (each puzzle once, no neighbouring kinds, shuffled, client = server).
+- README refreshed at v364 (stamp v364, Weekly Puzzles bullet + screenshot `docs/screenshots/puzzle.png` from `tools/readme-screenshots.js`, which needs `SH_VIDEO_DEPS` with firebase@10.12.0, canvas-confetti@1.6.0 and @fontsource-variable/{outfit,cinzel,plus-jakarta-sans}); next refresh due v380.
+
 ## v363 — table zones hold three cards
 
 - A Face-Up or Face-Down puzzle (`zone`) always has exactly THREE cards (the real game's limit; `puzzles-test.js` enforces it); p21–p24 were rebuilt as 3-card positions (pair of 5s, four Aces, EVEN, LOW7). A Hand puzzle has 4–8 cards. Catalog re-exported.
@@ -777,7 +782,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 ## README
 
 - `README.md` (GitHub front page) shows screenshots from `docs/screenshots/` (home, swap, table, card-powers, play-matrix, guide-swap), taken from the real game at 390×844 @2x by `tools/readme-screenshots.js`. Both are ignored by Hosting.
-- **Refresh the README every 20 versions, starting at v180 (v180, v200, v220…)** without being asked: bring the text up to date with every feature added since (Features, How to play, Tech), retake all the screenshots with `tools/readme-screenshots.js`, and set the `README-VERSION` stamp on its first line to the new version. A dev test fails once the BUILD reaches the next due version with an older stamp.
+- **Refresh the README every 20 versions, starting at v180 (v180, v200, v220…, next v380, v400…)** without being asked, as part of that release (owner, v364: "always do the README every 20 versions"): bring the text up to date with every feature added since (Features, How to play, Tech), retake all the screenshots with `tools/readme-screenshots.js`, and set the `README-VERSION` stamp on its first line to the new version. A dev test fails once the BUILD reaches the next due version with an older stamp.
 
 ## Owner's later list (don't build until asked), in suggested order
 

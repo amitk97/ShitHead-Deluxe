@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v364: [['puzzle', 'The weekly puzzle is now a shuffled order, so you will not get the same kind of puzzle week after week.', WN_KEY]],
       v363: [['puzzle', 'Face-Up and Face-Down puzzles now use exactly three cards, as in a real game.']],
       v362: [['puzzle', 'Trap puzzles can no longer be solved by just clearing your Hand, and hints now follow where you are in the puzzle.']],
       v361: [['puzzle', 'Fixed the multi-turn puzzles saying they could not be solved after a good first move.']],
