@@ -2844,6 +2844,222 @@
       "7"
      ]
     }
+   },
+   {
+    "id": "p40",
+    "name": "Hold Back The Fives",
+    "hand": [
+     "A",
+     "7",
+     "8",
+     "3",
+     "10",
+     "5",
+     "5",
+     "5"
+    ],
+    "pile": [
+     "8",
+     "8",
+     "3"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "turns": 2,
+     "rival": [
+      "7",
+      "K",
+      "9",
+      "3",
+      "2"
+     ]
+    }
+   },
+   {
+    "id": "p41",
+    "name": "Four, Then Fives",
+    "hand": [
+     "5",
+     "8",
+     "5",
+     "9",
+     "3",
+     "4",
+     "9"
+    ],
+    "pile": [
+     "8",
+     "Q",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "turns": 2,
+     "rival": [
+      "2",
+      "4",
+      "J",
+      "7",
+      "J"
+     ]
+    }
+   },
+   {
+    "id": "p42",
+    "name": "Sevens Open It Up",
+    "hand": [
+     "5",
+     "8",
+     "3",
+     "10",
+     "7",
+     "3",
+     "7",
+     "5"
+    ],
+    "pile": [
+     "A",
+     "3",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "turns": 2,
+     "rival": [
+      "A",
+      "K",
+      "K"
+     ]
+    }
+   },
+   {
+    "id": "p43",
+    "name": "Three Turns To Finish",
+    "hand": [
+     "7",
+     "K",
+     "6",
+     "5",
+     "3",
+     "8",
+     "5"
+    ],
+    "pile": [
+     "8",
+     "2",
+     "4",
+     "6",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "turns": 3,
+     "rival": [
+      "2",
+      "9",
+      "4",
+      "5"
+     ]
+    }
+   },
+   {
+    "id": "p44",
+    "name": "Ace And Four First",
+    "hand": [
+     "A",
+     "5",
+     "5",
+     "4",
+     "2",
+     "8",
+     "2",
+     "3"
+    ],
+    "pile": [
+     "8",
+     "9",
+     "2",
+     "K"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "turns": 3,
+     "rival": [
+      "3",
+      "2",
+      "Q",
+      "4",
+      "4"
+     ]
+    }
+   },
+   {
+    "id": "p45",
+    "name": "Three Turn Trap",
+    "hand": [
+     "J",
+     "3",
+     "5",
+     "7",
+     "8",
+     "10"
+    ],
+    "pile": [
+     "8",
+     "K",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "trap",
+     "turns": 3,
+     "rival": [
+      "7",
+      "6",
+      "3",
+      "2"
+     ]
+    }
+   },
+   {
+    "id": "p46",
+    "name": "Use Up Their Cards",
+    "hand": [
+     "8",
+     "10",
+     "3",
+     "8",
+     "4",
+     "J"
+    ],
+    "pile": [
+     "K",
+     "2",
+     "4"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "trap",
+     "turns": 3,
+     "rival": [
+      "K",
+      "2",
+      "6",
+      "5"
+     ]
+    }
    }
   ]
  },

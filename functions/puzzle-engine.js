@@ -69,6 +69,8 @@
 //   { type: 'joker', min: N }           play your JOKER when the Pile holds at least N cards: the Rival picks them all up
 //   { type: 'trap', rival: [rank…] }    two turns: end your first turn so the Rival has to play (they always play ALL their copies of
 //                                       their weakest legal rank), then end your second so they cannot play and pick up
+//   { type: 'out', rival: [rank…], turns: N }  play every card within N turns: when a turn ends the Rival answers as above (or picks the
+//                                       Pile up if stuck) and you carry on; a trap goal may also carry turns (default 2)
 //   { type: 'out', last: '4' }          as 'out', and the very last card you play must be a 4 (or whatever `last` names)
 // Any goal may also carry single: true (one card per play, like a Face-Down flip). A Joker is always one card.
   // Any goal may carry maxPlays: the most plays (a play = one or more cards of a rank) you may use.
@@ -92,6 +94,22 @@
     return { stuck: false, out: false, plays, rival: p.hand, pos: { hand: pos.hand, pile: p.pile, constraint: p.constraint, base: p.base } };
   }
 
+  // What happens when one of your turns ends (a play that did not give another go, Hand not empty).
+  // Returns { win: true }, { pos, rv } for the next turn, or null when the attempt is lost.
+  function afterTurn(pos, rv, turn, goal) {
+    const T = goal.turns || (goal.type === 'trap' ? 2 : 1);
+    if (goal.type === 'trap') {
+      if (turn >= T) return rivalStuck(pos, rv) ? { win: true } : null;
+      const rt = rivalTurn(pos, rv);
+      return rt.plays.length && !rt.stuck && !rt.out ? { pos: rt.pos, rv: rt.rival } : null;
+    }
+    if (goal.type !== 'out' || turn >= T) return null;
+    const rt = rivalTurn(pos, rv);
+    if (rt.out) return null;
+    if (rt.stuck) return { pos: { hand: pos.hand, pile: [], constraint: null, base: null }, rv: rt.rival.concat(rt.pos.pile) };
+    return { pos: rt.pos, rv: rt.rival };
+  }
+
   // All winning sequences (each a list of {rank, n}), at most `cap`; also the nodes searched.
   // `used` = plays already made (for maxPlays), so the hint can solve from the middle of an attempt.
   function solve(start, cap = 50, goal = { type: 'out' }, used0 = 0) {
@@ -107,23 +125,21 @@
         let rest = null;
         if (goal.type === 'trap') {
           if (r.again) { if (r.pos.hand.length) rest = go(r.pos, used + 1, rv, turn); }
-          else if (r.pos.hand.length) {
-            if (turn === 2) { if (rivalStuck(r.pos, rv)) rest = [[]]; }
-            else { const rt = rivalTurn(r.pos, rv); if (rt.plays.length && !rt.stuck && !rt.out) rest = go(rt.pos, used + 1, rt.rival, 2); }
-          }
+          else if (r.pos.hand.length) { const a = afterTurn(r.pos, rv, turn, goal); if (a) rest = a.win ? [[]] : go(a.pos, used + 1, a.rv, turn + 1); }
         }
         else if (goal.type === 'joker') { if (r.joker) { if (r.pickup >= goal.min) rest = [[]]; } else if (r.again && r.pos.hand.length) rest = go(r.pos, used + 1); }
         else if (goal.type === 'burn' && r.burn) rest = [[]];
         else if (goal.type === 'pickup' && !r.again && r.pos.hand.length && rivalStuck(r.pos, goal.rival)) rest = [[]];
         else if (r.again && r.pos.hand.length) rest = go(r.pos, used + 1);
         else if (goal.type === 'out' && !r.pos.hand.length) { if (!goal.last || m.rank === goal.last) rest = [[]]; }
+        else if (goal.type === 'out' && rv && !r.again) { const a = afterTurn(r.pos, rv, turn, goal); if (a) rest = go(a.pos, used + 1, a.rv, turn + 1); }
         if (!rest) continue;
         for (const s of rest) { res.push([m, ...s]); if (res.length >= cap) break; }
         if (res.length >= cap) break;
       }
       memo.set(k, res); return res;
     }
-    const rv0 = goal.type === 'trap' ? (start.rival || goal.rival) : null;
+    const rv0 = goal.rival && (goal.type === 'trap' || goal.type === 'out') ? (start.rival || goal.rival) : null;
     return { solutions: go(start, used0, rv0, start.turn || 1), nodes };
   }
 
@@ -135,7 +151,7 @@
   // before it pays for a puzzle, so the number of cards in a move is checked against the real Hand.
   function verify(start, goal, moves) {
     if (!Array.isArray(moves) || !moves.length || moves.length > 40) return false;
-    let pos = start, rv = goal.type === 'trap' ? (goal.rival || []) : null, turn = 1;
+    let pos = start, rv = goal.rival && (goal.type === 'trap' || goal.type === 'out') ? goal.rival : null, turn = 1;
     if (goal.maxPlays && moves.length > goal.maxPlays) return false;
     for (let i = 0; i < moves.length; i++) {
       const m = moves[i], n = Number(m && m.n), rank = m && m.rank;
@@ -145,13 +161,14 @@
       if (goal.type === 'trap') {
         if (r.again) { if (last || !r.pos.hand.length) return false; pos = r.pos; continue; }
         if (!r.pos.hand.length) return false;
-        if (turn === 2) return last && rivalStuck(r.pos, rv);
+        const a = afterTurn(r.pos, rv, turn, goal);
+        if (!a) return false;
+        if (a.win) return last;
         if (last) return false;
-        const rt = rivalTurn(r.pos, rv);
-        if (!rt.plays.length || rt.stuck || rt.out) return false;
-        pos = rt.pos; rv = rt.rival; turn = 2; continue;
+        pos = a.pos; rv = a.rv; turn++; continue;
       }
       if (goal.type === 'joker') { if (r.joker) return last && r.pickup >= goal.min; if (last) return false; }
+      if (!last && rv && goal.type === 'out' && !r.again && r.pos.hand.length) { const a = afterTurn(r.pos, rv, turn, goal); if (!a) return false; pos = a.pos; rv = a.rv; turn++; continue; }
       if (!last) { if (!r.again || !r.pos.hand.length) return false; pos = r.pos; continue; }
       if (goal.type === 'out') return !r.pos.hand.length && (!goal.last || rank === goal.last);
       if (goal.type === 'burn') return !!r.burn;
@@ -161,6 +178,6 @@
     return false;
   }
 
-  const api = { VAL, ORDER, legal, play, moves, solve, verify, canStillWin, rivalStuck, rivalTurn, effTop, constraintOf };
+  const api = { VAL, ORDER, legal, play, moves, solve, verify, canStillWin, rivalStuck, rivalTurn, afterTurn, effTop, constraintOf };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ShPuzzleEngine = api;
 })(typeof window !== 'undefined' ? window : globalThis);

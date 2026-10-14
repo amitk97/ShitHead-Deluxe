@@ -1,5 +1,5 @@
 // Candidate puzzles for the Face-Up, Face-Down and Joker kinds (v356).
-//   node tools/puzzle-search-zones.js faceup|facedown|joker|end4|trap   → prints the hardest, writes <scratch>/zones-<mode>.json
+//   node tools/puzzle-search-zones.js faceup|facedown|joker|end4|trap|long2|long3|trap3   → prints the hardest, writes <scratch>/zones-<mode>.json
 // end4: 'out' where the last card played is a 4; trap: the Rival plays an Ace (TRAP_RANK, default A), then your 3 leaves them stuck.
 // faceup: 3-4 cards, any plays; facedown: exactly 3 cards, one per play; joker: a JOKER + 4-6 cards, goal = the biggest pickup.
 const E = require('../js/puzzle-engine.js');
@@ -27,7 +27,7 @@ for (let seed = 1; seed <= 400000; seed++) {
     const c = R.filter(x => x !== '10' && E.legal(x, pos)), x = c[Math.floor(r() * c.length)], q = E.play(pos, x, 1);
     if (q.burn) break; pool.splice(pool.indexOf(x), 1); pos = q.pos;
   }
-  const size = mode === 'facedown' ? 3 : mode === 'faceup' ? 3 + Math.floor(r() * 2) : mode === 'trap' ? 3 + Math.floor(r() * 3) : 4 + Math.floor(r() * 3);
+  const size = /^long/.test(mode) ? 6 + Math.floor(r() * 3) : mode === 'facedown' ? 3 : mode === 'faceup' ? 3 + Math.floor(r() * 2) : mode === 'trap' ? 3 + Math.floor(r() * 3) : 4 + Math.floor(r() * 3);
   for (let i = 0; i < size; i++) pos.hand.push(pick());
   let goal = mode === 'facedown' ? { type: 'out', single: true } : { type: 'out' };
   if (mode === 'joker') {
@@ -36,8 +36,16 @@ for (let seed = 1; seed <= 400000; seed++) {
     goal = { type: 'joker', min: b };
   }
   if (mode === 'end4') goal = { type: 'out', last: '4' };
+  if (/^long/.test(mode)) { goal = { type: 'out', turns: Number(mode.slice(4)), rival: [] }; for (let i = 0; i < 3 + Math.floor(r() * 3); i++) goal.rival.push(pick()); }
+  if (mode === 'trap3') { goal = { type: 'trap', turns: 3, rival: [] }; for (let i = 0; i < 3 + Math.floor(r() * 3); i++) goal.rival.push(pick()); }
   if (mode === 'trap') { goal = { type: 'trap', rival: [] }; for (let i = 0; i < 3 + Math.floor(r() * 3); i++) goal.rival.push(pick()); if (!goal.rival.includes(process.env.TRAP_RANK || 'A')) continue; }
   const { solutions, nodes } = E.solve(pos, 5, goal);
+  if ((/^long/.test(mode) || mode === 'trap3') && solutions.length) {
+    if (/^long/.test(mode) && E.solve(pos, 1, { type: 'out' }).solutions.length) continue; // must really need more than one turn
+    // the Rival must really play in between, and the whole line must be needed (no shorter win)
+    if (mode === 'trap3' && E.solve(pos, 1, { type: 'trap', rival: goal.rival }).solutions.length) continue;
+    if (/^long/.test(mode) && E.solve(pos, 1, { ...goal, turns: goal.turns - 1 }).solutions.length) continue;
+  }
   if (mode === 'trap' && solutions.length) {
     const sol = solutions[0]; let ok = sol.length >= 2 && sol[sol.length - 1].rank === '3';
     if (ok) { // replay to see what the Rival plays after the first turn

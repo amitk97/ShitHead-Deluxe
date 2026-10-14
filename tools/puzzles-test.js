@@ -24,7 +24,7 @@ for (const p of P.PUZZLES) {
 }
 // harder tiers search more (not strictly, but the last is harder than the first)
 assert.ok(tierNodes[4] > tierNodes[0], 'tier 5 is harder than tier 1');
-assert.deepStrictEqual(P.PUZZLES.map(p => p.goal.type), ['out', 'out', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'pickup', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'joker', 'joker', 'joker', 'joker', 'out', 'out', 'out', 'out', 'trap', 'trap', 'trap'], 'goal types');
+assert.deepStrictEqual(P.PUZZLES.map(p => p.goal.type), ['out', 'out', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'pickup', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'joker', 'joker', 'joker', 'joker', 'out', 'out', 'out', 'out', 'trap', 'trap', 'trap', 'out', 'out', 'out', 'out', 'out', 'trap', 'trap'], 'goal types');
 assert.strictEqual(new Set(P.PUZZLES.map(p => p.id)).size, P.PUZZLES.length, 'unique ids');
 assert.strictEqual(new Set(P.PUZZLES.map(p => JSON.stringify([p.hand, p.pile, p.goal]))).size, P.PUZZLES.length, 'no duplicate positions');
 assert.ok(P.PUZZLES.every(p => p.hint && p.title && p.hint.length > 30), 'every puzzle has a title and a hint');
@@ -66,6 +66,11 @@ assert.ok(E.verify(tp, trap, [{ rank: 'K', n: 1 }, { rank: '3', n: 1 }]), 'K end
 assert.ok(!E.verify(tp, trap, [{ rank: 'K', n: 1 }]), 'one turn is not enough');
 assert.ok(!E.verify(tp, trap, [{ rank: '7', n: 1 }, { rank: '9', n: 1 }]), 'a Rival with a legal answer is not trapped');
 assert.deepStrictEqual(E.rivalTurn({ hand: [], pile: ['K'], constraint: null, base: null }, ['A', 'Q', '9']).plays, [{ rank: 'A', n: 1, burn: false }], 'the Rival plays their weakest legal rank');
+// several turns: the Rival answers between them (or picks the Pile up when stuck) and the line must still empty the Hand
+const lg = { type: 'out', turns: 2, rival: ['A', '9', '5'] }, lp = { hand: ['K', '4', '6', '9'], pile: ['5'], constraint: null, base: null };
+assert.ok(E.solve(lp, 5, { type: 'out' }).solutions.length === 0, 'cannot be done in one turn');
+assert.ok(P.PUZZLES.filter(p => p.goal.turns > 1).length >= 5, 'several multi-turn puzzles');
+assert.ok(P.PUZZLES.filter(p => p.goal.turns > 1).every(p => E.solve({ hand: p.hand, pile: p.pile, constraint: p.constraint, base: p.base }, 1, { type: p.goal.type, rival: p.goal.rival, turns: p.goal.turns - 1 }).solutions.length === 0), 'every multi-turn puzzle needs all its turns');
 // verify(): the server's replay of a player's moves
 const ok = (p, moves) => E.verify({ hand: p.hand, pile: p.pile, constraint: p.constraint || null, base: p.base || null }, p.goal, moves);
 for (const p of P.PUZZLES) {
