@@ -130,7 +130,7 @@
         else if (goal.type === 'joker') { if (r.joker) { if (r.pickup >= goal.min) rest = [[]]; } else if (r.again && r.pos.hand.length) rest = go(r.pos, used + 1); }
         else if (goal.type === 'burn' && r.burn) rest = [[]];
         else if (goal.type === 'pickup' && !r.again && r.pos.hand.length && rivalStuck(r.pos, goal.rival)) rest = [[]];
-        else if (r.again && r.pos.hand.length) rest = go(r.pos, used + 1);
+        else if (r.again && r.pos.hand.length) rest = go(r.pos, used + 1, rv, turn);
         else if (goal.type === 'out' && !r.pos.hand.length) { if (!goal.last || m.rank === goal.last) rest = [[]]; }
         else if (goal.type === 'out' && rv && !r.again) { const a = afterTurn(r.pos, rv, turn, goal); if (a) rest = go(a.pos, used + 1, a.rv, turn + 1); }
         if (!rest) continue;

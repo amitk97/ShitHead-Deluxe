@@ -14,8 +14,9 @@ for (const p of P.PUZZLES) {
   assert.ok(!p.zone || ['faceUp', 'faceDown'].includes(p.zone), p.id + ' zone');
   assert.ok(p.zone !== 'faceDown' || (p.hand.length === 3 && p.goal.single), p.id + ' face-down: three cards, one per play');
   assert.ok(p.goal.type !== 'joker' || (p.hand.filter(r => r === 'JOKER').length === 1 && p.goal.min > p.pile.length), p.id + ' one Joker, a pickup above the Pile');
-  const { solutions, nodes } = E.solve({ hand: p.hand, pile: p.pile, constraint: p.constraint, base: p.base }, 5, p.goal);
-  assert.ok(solutions.length >= 1 && solutions.length <= 2, `${p.id} has ${solutions.length} solutions`);
+  const multi = p.goal.turns > 1, { solutions, nodes } = E.solve({ hand: p.hand, pile: p.pile, constraint: p.constraint, base: p.base }, 40, p.goal);
+  // several turns leave several orders of the same plays (each turn's go-again cards can swap), so they get a wider band
+  assert.ok(solutions.length >= 1 && solutions.length <= (multi ? 12 : 2), `${p.id} has ${solutions.length} solutions`);
   assert.ok(p.hand.length + p.pile.length > 0 && ['2','3','4','5','6','7','8','9','10','J','Q','K','A'].every(r => p.hand.concat(p.pile, p.goal.rival || []).filter(x => x === r).length <= 4), p.id + ' no more than four of a rank');
   // dealt cards never repeat rank+suit
   const d = P.dealCards(p), ids = d.hand.concat(d.pile).map(c => c.rank + c.suit);
@@ -71,6 +72,12 @@ const lg = { type: 'out', turns: 2, rival: ['A', '9', '5'] }, lp = { hand: ['K',
 assert.ok(E.solve(lp, 5, { type: 'out' }).solutions.length === 0, 'cannot be done in one turn');
 assert.ok(P.PUZZLES.filter(p => p.goal.turns > 1).length >= 5, 'several multi-turn puzzles');
 assert.ok(P.PUZZLES.filter(p => p.goal.turns > 1).every(p => E.solve({ hand: p.hand, pile: p.pile, constraint: p.constraint, base: p.base }, 1, { type: p.goal.type, rival: p.goal.rival, turns: p.goal.turns - 1 }).solutions.length === 0), 'every multi-turn puzzle needs all its turns');
+// regression (owner's video, p43): a go-again play before the turn-ending one must not lose the Rival/turn state
+{ const p43 = P.PUZZLES.find(p => p.id === 'p43'), start = { hand: p43.hand, pile: p43.pile, constraint: null, base: null };
+  const line = [['5', 2], ['8', 1], ['3', 1], ['K', 1], ['7', 1], ['6', 1]].map(([rank, n]) => ({ rank, n }));
+  assert.ok(E.verify(start, p43.goal, line), 'p43: 5s, 8, 3, K, then 7, then 6 wins');
+  const after = E.play(start, '5', 2);
+  assert.ok(E.canStillWin(Object.assign({}, after.pos, { rival: p43.goal.rival, turn: 1 }), p43.goal, 1), 'p43: still winnable after the two 5s'); }
 // verify(): the server's replay of a player's moves
 const ok = (p, moves) => E.verify({ hand: p.hand, pile: p.pile, constraint: p.constraint || null, base: p.base || null }, p.goal, moves);
 for (const p of P.PUZZLES) {

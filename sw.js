@@ -42,7 +42,7 @@ const OFFLINE_ASSETS = [
   '/css/friends-lobby.css?v=245eed70ee85',
   '/css/puzzles.css?v=584fef898369',
   '/css/welcome-tour.css?v=9d478452ecd0',
-  '/js/puzzle-engine.js?v=c4b1ee0b685e',
+  '/js/puzzle-engine.js?v=fd05dddab722',
   '/js/puzzles.js?v=b6e73d56a9de',
   '/js/welcome-tour.js?v=1ec181602f01',
   '/icons/splash-handoff-v309.webp',

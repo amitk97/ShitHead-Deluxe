@@ -1,3 +1,7 @@
+## v361 — solver lost the Rival after a go-again play
+
+- Owner's video (p43): after a legal first play the page said the goal could no longer be reached. `solve()`'s generic go-again recursion (`else if (r.again && r.pos.hand.length)`) dropped `rv` and `turn`, so in multi-turn `out` puzzles every line with a go-again card BEFORE a turn-ending card was invisible (hints, the "no way" message, the 1–2 solutions check and the "needs every turn" check were all wrong; `verify` and the server were right). Fixed; p40–p44 truly have 2–10 solutions (several orders of the same go-again plays), so `puzzles-test.js` allows up to 12 for `turns > 1`. Regression: p43's line from the video. Any new recursion in `solve` must pass `rv, turn` along.
+
 ## v360 — stale puzzle engine fix
 
 - The owner's phone showed "No way to the goal from here" on the new puzzles: `js/puzzle-engine.js` was still loaded as `?v=346` (a manual number nobody bumped), so a cached old engine ran the new `puzzles.js` (no Joker, rival turns, `single`). `puzzle-engine.js`, `puzzles.js` and `puzzles.css` now carry the usual sha256 stamp (`node tools/stamp-assets.js` updates index.html and sw.js, the engine is in `OFFLINE_ASSETS`); `tools/puzzles-test.js` fails on a non-hash version. v359 also pushed an EMPTY `sw.js` (a Python `open(f,'w').write(open(f).read())` truncates before reading): restored here. Never read and write the same file in one expression.
