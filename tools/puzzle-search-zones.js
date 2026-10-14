@@ -1,5 +1,5 @@
 // Candidate puzzles for the Face-Up, Face-Down and Joker kinds (v356).
-//   node tools/puzzle-search-zones.js faceup|facedown|joker|end4|trap|long2|long3|trap3   → prints the hardest, writes <scratch>/zones-<mode>.json
+//   node tools/puzzle-search-zones.js faceup|facedown|joker|end4|end5|end6|end7|end<rank>|trap|long2|long3|trap3   → prints the hardest, writes <scratch>/zones-<mode>.json
 // end4: 'out' where the last card played is a 4; trap: the Rival plays an Ace (TRAP_RANK, default A), then your 3 leaves them stuck.
 // faceup: 3-4 cards, any plays; facedown: exactly 3 cards, one per play; joker: a JOKER + 4-6 cards, goal = the biggest pickup.
 const E = require('../js/puzzle-engine.js');
@@ -35,7 +35,7 @@ for (let seed = 1; seed <= 400000; seed++) {
     const quick = pos.pile.length; if (b < quick + 3) continue;
     goal = { type: 'joker', min: b };
   }
-  if (mode === 'end4') goal = { type: 'out', last: '4' };
+  if (/^end/.test(mode)) goal = { type: 'out', last: mode.slice(3) };
   if (/^long/.test(mode)) { goal = { type: 'out', turns: Number(mode.slice(4)), rival: [] }; for (let i = 0; i < 3 + Math.floor(r() * 3); i++) goal.rival.push(pick()); }
   if (mode === 'trap3') { goal = { type: 'trap', turns: 3, rival: [] }; for (let i = 0; i < 3 + Math.floor(r() * 3); i++) goal.rival.push(pick()); }
   if (mode === 'trap') { goal = { type: 'trap', rival: [] }; for (let i = 0; i < 3 + Math.floor(r() * 3); i++) goal.rival.push(pick()); if (!goal.rival.includes(process.env.TRAP_RANK || 'A')) continue; }

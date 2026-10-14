@@ -2701,38 +2701,15 @@
    },
    {
     "id": "p34",
-    "name": "Four Fives, Then A Four",
+    "name": "Aces Burn, Five Last",
     "hand": [
+     "3",
      "10",
      "8",
-     "5",
-     "5",
-     "4",
-     "8"
-    ],
-    "pile": [
-     "5",
+     "A",
      "5"
     ],
-    "constraint": null,
-    "base": "5",
-    "goal": {
-     "type": "out",
-     "last": "4"
-    }
-   },
-   {
-    "id": "p35",
-    "name": "Aces Burn, Four Last",
-    "hand": [
-     "8",
-     "10",
-     "3",
-     "A",
-     "4"
-    ],
     "pile": [
-     "Q",
      "A",
      "A",
      "A"
@@ -2741,30 +2718,54 @@
     "base": null,
     "goal": {
      "type": "out",
-     "last": "4"
+     "last": "5"
+    }
+   },
+   {
+    "id": "p35",
+    "name": "Fives Then A Six",
+    "hand": [
+     "8",
+     "5",
+     "5",
+     "10",
+     "6"
+    ],
+    "pile": [
+     "8",
+     "Q",
+     "A",
+     "2",
+     "3"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "last": "6"
     }
    },
    {
     "id": "p36",
-    "name": "Two Fours To Finish",
+    "name": "Two Sevens To Finish",
     "hand": [
+     "3",
+     "5",
      "10",
-     "4",
-     "4",
-     "8",
-     "3"
+     "7",
+     "7",
+     "8"
     ],
     "pile": [
      "8",
-     "3",
-     "J",
-     "5"
+     "2",
+     "J"
     ],
-    "constraint": null,
-    "base": "8",
+    "constraint": "ODD",
+    "base": null,
     "goal": {
      "type": "out",
-     "last": "4"
+     "last": "7"
     }
    },
    {

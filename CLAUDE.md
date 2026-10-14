@@ -1,3 +1,7 @@
+## v359 — End-on puzzles vary the card
+
+- Only p33 ends on a 4 (owner: one 4 is enough); p34 ends on a 5, p35 on a 6, p36 on a 7 (`goal.last`). `kindName` reads "End on a <rank>". `tools/puzzle-search-zones.js end<rank>` finds positions for any rank. Catalog re-exported (server deploy as before). No rules change.
+
 ## v358 — multi-turn puzzles (46 puzzles)
 
 - Any `out` goal can carry `rival: [...]` and `turns: N` (2 or 3), and a `trap` goal takes `turns` (default 2): when one of your turns ends (a play that gives no other go, Hand not empty) `E.afterTurn(pos, rv, turn, goal)` decides what happens: the Rival answers with `E.rivalTurn` (their weakest legal rank, all copies, again after a go-again play); a trap needs them to PLAY on every turn but the last and be stuck at the end; an `out` goal lets a stuck Rival pick the Pile up (their Hand grows, the Pile is empty) and loses if they empty their Hand or the turns run out. `solve` and `verify` share `afterTurn`; the move list stays flat across turns. The page shows "Turn n of N · plays" in `#pzPlays`; `st.turn` is part of the undo snapshot. p40–p44 `out` over 2–3 turns, p45–p46 three-turn traps; every multi-turn puzzle is checked to be unsolvable with one turn fewer. `tools/puzzle-search-zones.js long2|long3|trap3` finds more. Engine copy + catalog updated: needs the "Deploy notification functions" workflow. Rotation mod 46. No rules change.
