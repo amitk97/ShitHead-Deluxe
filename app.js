@@ -11530,7 +11530,7 @@
         if (!host.isConnected) return;
         sfxFlash(host, g.cx, g.cy, k, 'rgba(254,243,199,.95)', 300, 500);
         [[0, 0], [-.3, -.25], [.3, -.22], [-.22, .22], [.25, .25]].forEach(([fx, fy], i) => setTimeout(() => host.isConnected &&
-          jfxBurst(host, g.cx + fx * g.W, g.cy + fy * g.H * .8, ['#fde68a', '#fbbf24', '#f472b6', '#22d3ee', '#ffffff'], 22, 90 * k, 700), i * 60));
+          jfxBurst(host, g.cx + fx * g.W, g.cy + fy * g.H * .8, ['#fde68a', '#fbbf24', '#f472b6', '#22d3ee', '#ffffff'], 22, 90 * k, 620), i * 60));
       }, 520);
       jfxHero(host, g, JFX_CARD, 104, 148, { delay: 560, enter: 'pop' });
       jfxWord(host, g, 'JOKER!', { color: '#fde68a', delay: 640 });
@@ -11566,7 +11566,7 @@
       flap.style.transformOrigin = '50% 0%';
       bfxAnimate(flap, [{ transform: 'rotateX(0)', opacity: 0 }, { transform: 'rotateX(0)', opacity: 1, offset: .1 }, { transform: 'rotateX(0)', offset: .18 }, { transform: 'rotateX(180deg)', offset: .3 },
         { transform: 'rotateX(180deg)', opacity: 1, offset: .82 }, { transform: 'rotateX(180deg)', opacity: 0 }], { duration: JOKER_FX_MS - 60 });
-      setTimeout(() => host.isConnected && sfxThrow(host, g.cx, envY - 60 * k, k, 16, () => [sfxSvg(20, 20, '<circle cx="10" cy="10" r="9" fill="#fbbf24" stroke="#92400e" stroke-width="2"/><rect x="7" y="7" width="6" height="6" fill="#92400e"/>'), 16, 16], { speed: [120, 200], gravity: 380, dur: [700, 820], delay: [0, 110] }), 520);
+      setTimeout(() => host.isConnected && sfxThrow(host, g.cx, envY - 60 * k, k, 16, () => [sfxSvg(20, 20, '<circle cx="10" cy="10" r="9" fill="#fbbf24" stroke="#92400e" stroke-width="2"/><rect x="7" y="7" width="6" height="6" fill="#92400e"/>'), 16, 16], { speed: [120, 200], gravity: 380, dur: [620, 720], delay: [0, 90] }), 520);
       jfxWord(host, g, 'LUCKY!', { y: g.cy - 150 * k, color: '#fbbf24', delay: 560, tilt: 4 });
     }
     // Valentine's, Cupid Joker: a heart jester flies in and fires an arrow.
