@@ -76,7 +76,7 @@
       hint: 'Both 5s drop to the bottom 8. After that the 3 and the 8 both keep the turn, so order the last two with care.' },
     { id: 'p25', tier: 2, zone: 'faceDown', title: 'Flip Them Right', hand: ['3', '5', '10'], pile: ['8', 'K', '2'], constraint: null,
       goal: { type: 'out', single: true },
-      hint: 'You have peeked at your Face-Down cards and flip them one at a time. Only the first two flips must keep your turn alive.' },
+      hint: 'You remember your Face-Down cards, but you flip them one at a time. Only the first two flips must keep your turn alive.' },
     { id: 'p26', tier: 2, zone: 'faceDown', title: 'Even Flips', hand: ['10', '8', '7'], pile: ['3', '6'], constraint: 'EVEN',
       goal: { type: 'out', single: true },
       hint: 'The Pile wants an even card. Flip the card that fits and skips the Rival, and leave the 7 for last.' },
@@ -97,13 +97,35 @@
       hint: 'Make the Rival pick up seven cards: the Pile must reach seven before the Joker. Two 5s drop to the bottom 8, then the 8 and the 3 each skip.' },
     { id: 'p32', tier: 4, title: 'Odd Pile, Big Joker', hand: ['10', '5', '5', '8', '6', '8', 'JOKER'], pile: ['8', '2', 'J'], constraint: 'ODD',
       goal: { type: 'joker', min: 7 },
-      hint: 'The Pile wants an odd card, so a 5 comes first. Look at the card at the bottom of the Pile, then add both 8s before the Joker.' }
+      hint: 'The Pile wants an odd card, so a 5 comes first. Look at the card at the bottom of the Pile, then add both 8s before the Joker.' },
+    // v357: end on a 4, and a Rival who has to play before your second turn traps them.
+    { id: 'p33', tier: 3, title: 'End On A Four', hand: ['4', '5', '10', '8'], pile: ['8', '3', '2'], constraint: null,
+      goal: { type: 'out', last: '4' },
+      hint: 'A 4 only goes on a 2, 3, 4, 6 or 7, or on an empty Pile. Save it for the end, and clear the Pile before you play it.' },
+    { id: 'p34', tier: 4, title: 'Four Fives, Then A Four', hand: ['10', '8', '5', '5', '4', '8'], pile: ['5', '5'], constraint: null, base: '5',
+      goal: { type: 'out', last: '4' },
+      hint: 'The Pile holds two 5s. Both of yours together make four of a kind, which burns it. Then keep every card going until the 4 is all that is left.' },
+    { id: 'p35', tier: 4, title: 'Aces Burn, Four Last', hand: ['8', '10', '3', 'A', '4'], pile: ['Q', 'A', 'A', 'A'], constraint: null,
+      goal: { type: 'out', last: '4' },
+      hint: 'Three Aces are on the Pile already. One Ace of yours makes four of a kind, and then the 4 can wait for the end.' },
+    { id: 'p36', tier: 5, title: 'Two Fours To Finish', hand: ['10', '4', '4', '8', '3'], pile: ['8', '3', 'J', '5'], constraint: null, base: '8',
+      goal: { type: 'out', last: '4' },
+      hint: 'The Pile is dropped to a base 8. Both 4s go together as the final play, so everything else must keep your turn first.' },
+    { id: 'p37', tier: 2, title: 'Three Over The Ace', hand: ['3', '10', '3', '8', '8'], pile: ['J', 'J', 'K', 'A'], constraint: null,
+      goal: { type: 'trap', rival: ['K', 'Q', '4', 'A'] },
+      hint: 'End this turn so the Rival has to play. The Rival always plays their weakest card that fits. Then a 3 shows the Ace under it and leaves them stuck.' },
+    { id: 'p38', tier: 3, title: 'Five Back To The Ace', hand: ['8', '8', '5', '4', '3'], pile: ['A', '2'], constraint: null,
+      goal: { type: 'trap', rival: ['K', 'A', '4'] },
+      hint: 'A 5 drops the target to the bottom card of the Pile. That makes the Ace the only card the Rival can play. Your 3 then covers it.' },
+    { id: 'p39', tier: 4, title: 'Even Ace, Odd Rival', hand: ['3', '10', 'Q', 'Q', '6'], pile: ['8', '3'], constraint: null,
+      goal: { type: 'trap', rival: ['K', 'A', '7'] },
+      hint: 'A 6 limits the Rival to even cards, and the Ace is the only one they hold. Clear the Pile first so the 6 can go anywhere.' }
   ];
   PUZZLES.forEach(p => { p.goal = p.goal || { type: 'out' }; p.base = p.base || null; });
-  const GOAL_NAMES = { out: 'Out in one turn', burn: 'Burn the Pile', pickup: 'Rival picks up', joker: 'Joker pickup' };
+  const GOAL_NAMES = { out: 'Out in one turn', burn: 'Burn the Pile', pickup: 'Rival picks up', joker: 'Joker pickup', trap: 'Trap the Rival' };
   const ZONE_NAMES = { hand: 'Hand', faceUp: 'Face-Up cards', faceDown: 'Face-Down cards' };
   const zoneOf = (p) => p.zone || 'hand';
-  const kindName = (p) => (zoneOf(p) === 'faceUp' ? 'Face-Up cards' : zoneOf(p) === 'faceDown' ? 'Face-Down cards' : GOAL_NAMES[p.goal.type]);
+  const kindName = (p) => (p.goal.last ? `End on a ${p.goal.last}` : zoneOf(p) === 'faceUp' ? 'Face-Up cards' : zoneOf(p) === 'faceDown' ? 'Face-Down cards' : GOAL_NAMES[p.goal.type]);
   const TIER_NAMES = ['', 'Warm-up', 'Easy', 'Medium', 'Hard', 'Tricky'];
   // Paid once per puzzle per UK week, checked by the server (economy `puzzle`). Diamonds here, XP in XP_RULES.puzzle.
   const REWARD_DIAMONDS = 50;
@@ -139,25 +161,28 @@
   function goalText(p) {
     const g = p.goal, cap = g.maxPlays ? ` Use at most ${g.maxPlays} plays.` : '';
     if (g.type === 'joker') return `Play your Joker so the Rival picks up ${g.min} cards or more, the most there can be. Only plays that give you another go can come first, and a 10 or four of a kind would burn the Pile.` + cap;
+    if (g.type === 'trap') return 'Two turns. End your first turn so the Rival has to play a card, then end your second so they cannot play and must pick up. The Rival always plays their weakest card that fits.' + cap;
+    if (g.last) return `Play every card in your Hand in a single turn, and make the very last card you play a ${g.last}. Only a burn (a 10 or four of a kind) and an 8 give you another go.` + cap;
     const zone = zoneOf(p), only = g.single ? ' Each play is a single card.' : '';
     if (zone === 'faceUp') return 'Your Hand and the Deck are empty, so you play from your Face-Up cards. Play all of them in a single turn. Only a burn and an 8 give you another go.' + only + cap;
-    if (zone === 'faceDown') return 'Your Face-Down cards are shown for this puzzle. Flip all of them in a single turn, one card at a time. Only a burn and an 8 give you another go.' + only + cap;
+    if (zone === 'faceDown') return `Your Face-Down cards stay face down, but you remember them: left to right, ${p.hand.map(rankName).join(', ')}. Flip all of them in a single turn, one card at a time. Only a burn and an 8 give you another go.` + cap;
     if (g.type === 'burn') return 'Burn the Pile in a single turn. A 10 or four of a kind burns it.' + cap;
     if (g.type === 'pickup') return 'End your turn so the Rival has no card to play from the Hand shown. They must pick up the Pile.' + cap;
     return 'Play every card in your Hand in a single turn. Only a burn (a 10 or four of a kind) and an 8 give you another go.' + cap;
   }
   const goalOf = () => puzzle.goal;
+  const aRank = (r) => (/^[A8]$/.test(r) ? 'an ' : 'a ') + r;
   const rankName = (r) => (r === 'JOKER' ? 'Joker' : r);
   let modal, puzzle, st, undo, picked, over, current = null, moveLog = [], gaveUp = false;
   // Select All Of A Rank works as in the game: a toggle (starts as your setting), always available.
   let allMode = typeof selectAllOfRank !== 'undefined' ? !!selectAllOfRank : false;
   const $ = (s) => modal.querySelector(s);
   const ranksOf = (cs) => cs.map(c => c.rank);
-  const posOf = (s) => ({ hand: ranksOf(s.hand), pile: ranksOf(s.pile), constraint: s.constraint, base: s.base });
+  const posOf = (s) => ({ hand: ranksOf(s.hand), pile: ranksOf(s.pile), constraint: s.constraint, base: s.base, rival: ranksOf(s.rival), turn: s.turn });
 
   function load(p) {
     puzzle = p; const d = dealCards(p);
-    st = { hand: d.hand, pile: d.pile, constraint: p.constraint, base: p.base, rival: p.goal.type === 'pickup' ? p.goal.rival.map((r, i) => ({ id: 'r' + i, rank: r, suit: SUITS[i % 4] })) : [] };
+    st = { hand: d.hand, pile: d.pile, constraint: p.constraint, base: p.base, turn: 1, rival: p.goal.type === 'pickup' || p.goal.type === 'trap' ? p.goal.rival.map((r, i) => ({ id: 'r' + i, rank: r, suit: SUITS[i % 4] })) : [] };
     undo = []; moveLog = []; { const b = $('#pzRestart'); b.classList.remove('pz-primary'); b.textContent = 'Restart'; } gaveUp = false; picked = new Set(); over = null; plays = 0; say('Tap cards to pick them, then press Play.', '');
     draw(); fit(true);
   }
@@ -165,11 +190,11 @@
   function say(text, tone) { const el = $('#pzStatus'); el.textContent = text; el.dataset.tone = tone || ''; const d = $('#pzDoneMsg'); if (d && over === 'won') d.textContent = text; }
 
   // Cards are the game's own (createCardElement): the equipped deck, frame and card icons apply by themselves.
-  function cardEl(c, size, extra = '') {
-    const el = typeof createCardElement === 'function' ? createCardElement(c, false, picked.has(c.id), false, true) : document.createElement('div');
+  function cardEl(c, size, extra = '', faceDown) {
+    const el = typeof createCardElement === 'function' ? createCardElement(faceDown ? { ...c, hidden: true } : c, false, picked.has(c.id), false, true) : document.createElement('div');
     el.classList.remove('card-opponent-slot'); el.classList.add(size, 'pz-card'); if (extra) el.classList.add(extra);
     el.dataset.id = c.id; if (!el.dataset.rank) el.dataset.rank = c.rank;
-    if (!el.firstChild) el.textContent = c.rank + c.suit; // node tests have no game renderer
+    if (!el.firstChild) el.textContent = faceDown ? '' : c.rank + c.suit; // node tests have no game renderer
     // Puzzle cards show only the rank with its suit under it in the corner: no power icon, no big suit in the middle.
     const ic = el.querySelector && el.querySelector('.card-centre-icon, .card-centre-suit');
     if (ic && !c.isJoker) (ic.parentElement && ic.parentElement !== el ? ic.parentElement : ic).remove();
@@ -201,7 +226,7 @@
     $('#pzTier').textContent = `${kindName(puzzle)} · ${TIER_NAMES[puzzle.tier]} ${'★'.repeat(puzzle.tier)}${'☆'.repeat(5 - puzzle.tier)}`;
     $('#pzGoal').textContent = goalText(puzzle);
     $('#pzReward').textContent = `Solve it for ${REWARD_DIAMONDS} Diamonds${typeof XP_RULES !== 'undefined' && XP_RULES.puzzle ? ` and ${XP_RULES.puzzle} XP` : ''}, once a week. Give Up means no reward.`;
-    const rv = $('#pzRival'); rv.hidden = puzzle.goal.type !== 'pickup' && puzzle.goal.type !== 'joker';
+    const rv = $('#pzRival'); rv.hidden = !['pickup', 'joker', 'trap'].includes(puzzle.goal.type);
     if (!rv.hidden) { rv.replaceChildren(); const l = document.createElement('span'); l.className = 'pz-rival-label'; l.textContent = puzzle.goal.type === 'joker' && !st.rival.length ? "Rival's Hand: empty" : "Rival's Hand"; rv.append(l, ...st.rival.map(c => cardEl(c, 'card-opponent-slot'))); }
     const pileEl = $('#pzPile'); pileEl.replaceChildren();
     if (st.pile.length) (st.pile.length > 6 ? [st.pile[0]].concat(st.pile.slice(-4)) : st.pile).forEach(c => pileEl.append(cardEl(c, 'card-table'))); else pileEl.innerHTML = '<span class="pz-empty">Empty Pile</span>';
@@ -209,7 +234,7 @@
     requestAnimationFrame(fit);
     $('#pzRule').textContent = ruleLine();
     const handEl = $('#pzHand'); handEl.replaceChildren();
-    if (st.hand.length) st.hand.forEach(c => { const el = cardEl(c, 'card-base', picked.has(c.id) ? 'pz-sel' : ''); el.tabIndex = 0; el.setAttribute('role', 'button'); handEl.append(el); });
+    if (st.hand.length) st.hand.forEach(c => { const el = cardEl(c, 'card-base', picked.has(c.id) ? 'pz-sel' : '', zoneOf(puzzle) === 'faceDown'); el.tabIndex = 0; el.setAttribute('role', 'button'); handEl.append(el); });
     else handEl.innerHTML = `<span class="pz-empty">${ZONE_NAMES[zoneOf(puzzle)]} cleared</span>`;
     const box = $('.pz-card-box'), won = over === 'won';
     box.classList.toggle('pz-won', won); $('#pzDone').hidden = !won; if (won) $('#pzDoneMsg').textContent = $('#pzStatus').textContent;
@@ -269,15 +294,39 @@
     if (r.burn) burnFx();
     const rival = st.rival;
     const taken = st.pile;
-    if (r.burn || r.joker) { st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: [], constraint: null, base: null, rival: r.joker ? rival.concat(taken) : rival }; }
-    else st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: st.pile.concat(cards), constraint: r.pos.constraint, base: r.pos.base, rival };
+    if (r.burn || r.joker) { st = { ...st, hand: st.hand.filter(c => !picked.has(c.id)), pile: [], constraint: null, base: null, rival: r.joker ? rival.concat(taken) : rival }; }
+    else st = { ...st, hand: st.hand.filter(c => !picked.has(c.id)), pile: st.pile.concat(cards), constraint: r.pos.constraint, base: r.pos.base, rival };
     picked = new Set();
     const g = puzzle.goal, win = (pre = '') => { over = 'won'; markSolved(puzzle.id); winFx(); const base = `${pre}Solved in ${plays} play${plays === 1 ? '' : 's'}.`; say(base, 'good'); draw(); claimReward(base); };
     if (g.type === 'joker' && r.joker) {
       if (r.pickup >= g.min) return win(`The Rival picks up ${r.pickup} cards. `);
       over = 'ended'; say(`The Rival picks up only ${r.pickup} cards and you need ${g.min}. Press Try Again.`, 'bad'); draw(); tryAgain(); return;
     }
-    if (g.type === 'out' && !st.hand.length) return win();
+    if (g.type === 'out' && !st.hand.length) {
+      if (g.last && rank !== g.last) { over = 'ended'; say(`Your Hand is empty, but the last card was ${aRank(rank)} and it had to be ${aRank(g.last)}. Press Try Again.`, 'bad'); draw(); tryAgain(); return; }
+      return win();
+    }
+    if (g.type === 'trap') {
+      if (!st.hand.length) { over = 'ended'; say('Your Hand is empty before the Rival is trapped. Press Try Again.', 'bad'); draw(); tryAgain(); return; }
+      if (!r.again) {
+        if (st.turn === 2) {
+          const free = st.rival.find(c => E.legal(c.rank, r.pos));
+          if (!free) { st.pile.forEach(c => st.rival.push(c)); st.pile = []; return win('The Rival cannot play and picks up the Pile. '); }
+          over = 'ended'; say(`The Rival plays ${aRank(free.rank)} and the puzzle is not solved. Press Try Again.`, 'bad'); draw(); tryAgain(); return;
+        }
+        const rt = E.rivalTurn(r.pos, ranksOf(st.rival));
+        if (!rt.plays.length || rt.out) { over = 'ended'; say(rt.out ? 'The Rival plays out their Hand. Press Try Again.' : 'The Rival has nothing to play and picks up at once, but this puzzle needs them to play first. Press Try Again.', 'bad'); draw(); tryAgain(); return; }
+        let said = [];
+        rt.plays.forEach(pl => {
+          const cs = st.rival.filter(c => c.rank === pl.rank).slice(0, pl.n);
+          st.rival = st.rival.filter(c => !cs.includes(c)); st.pile = pl.burn ? [] : st.pile.concat(cs);
+          said.push((pl.n > 1 ? `${pl.n} × ${pl.rank}` : aRank(pl.rank)));
+        });
+        st.constraint = rt.pos.constraint; st.base = rt.pos.base; st.turn = 2;
+        const ok = E.canStillWin(posOf(st), g, plays);
+        say(`The Rival plays ${said.join(', then ')}. Your turn again.${ok ? '' : ' You can no longer trap them. Undo or Restart.'}`, ok ? 'good' : 'bad'); draw(); return;
+      }
+    }
     if (g.type === 'burn' && r.burn) return win();
     if (g.type === 'pickup') {
       if (!st.hand.length) { over = 'ended'; say('Your Hand is empty before the Rival is stuck. Press Try Again.', 'bad'); draw(); tryAgain(); return; }
@@ -285,12 +334,12 @@
         const free = st.rival.find(c => E.legal(c.rank, r.pos));
         if (!free) { st.pile.forEach(c => st.rival.push(c)); st.pile = []; return win('The Rival cannot play and picks up the Pile. '); }
         over = 'ended'; st.rival = st.rival.filter(c => c !== free); st.pile = st.pile.concat(free);
-        say(`The Rival plays a ${free.rank} and your turn is over. Press Try Again.`, 'bad'); draw(); tryAgain(); return;
+        say(`The Rival plays ${aRank(free.rank)} and your turn is over. Press Try Again.`, 'bad'); draw(); tryAgain(); return;
       }
     }
     if (!r.again) { over = 'ended'; say('Your turn ends here and the Rival plays on, so the puzzle is not solved. Press Try Again.', 'bad'); draw(); tryAgain(); return; }
     if (g.maxPlays && plays >= g.maxPlays) { over = 'ended'; say(`That was play ${plays}, and the goal is not met. Press Try Again.`, 'bad'); draw(); tryAgain(); return; }
-    if (!E.canStillWin(r.pos, g, plays)) say('You get another go, but you can no longer reach the goal. Undo or Restart.', 'bad');
+    if (!E.canStillWin(Object.assign({}, r.pos, { rival: ranksOf(st.rival), turn: st.turn }), g, plays)) say('You get another go, but you can no longer reach the goal. Undo or Restart.', 'bad');
     else say(r.burn ? 'The Pile burns. Go again.' : rank === '8' ? '8 skips the Rival. Go again.' : `${rank} skips the Rival too. Go again.`, 'good');
     draw();
   }

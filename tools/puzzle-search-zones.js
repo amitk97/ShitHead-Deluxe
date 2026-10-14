@@ -1,5 +1,6 @@
 // Candidate puzzles for the Face-Up, Face-Down and Joker kinds (v356).
-//   node tools/puzzle-search-zones.js faceup|facedown|joker   → prints the hardest, writes <scratch>/zones-<mode>.json
+//   node tools/puzzle-search-zones.js faceup|facedown|joker|end4|trap   → prints the hardest, writes <scratch>/zones-<mode>.json
+// end4: 'out' where the last card played is a 4; trap: the Rival plays an Ace (TRAP_RANK, default A), then your 3 leaves them stuck.
 // faceup: 3-4 cards, any plays; facedown: exactly 3 cards, one per play; joker: a JOKER + 4-6 cards, goal = the biggest pickup.
 const E = require('../js/puzzle-engine.js');
 const mode = process.argv[2] || 'faceup';
@@ -26,7 +27,7 @@ for (let seed = 1; seed <= 400000; seed++) {
     const c = R.filter(x => x !== '10' && E.legal(x, pos)), x = c[Math.floor(r() * c.length)], q = E.play(pos, x, 1);
     if (q.burn) break; pool.splice(pool.indexOf(x), 1); pos = q.pos;
   }
-  const size = mode === 'facedown' ? 3 : mode === 'faceup' ? 3 + Math.floor(r() * 2) : 4 + Math.floor(r() * 3);
+  const size = mode === 'facedown' ? 3 : mode === 'faceup' ? 3 + Math.floor(r() * 2) : mode === 'trap' ? 3 + Math.floor(r() * 3) : 4 + Math.floor(r() * 3);
   for (let i = 0; i < size; i++) pos.hand.push(pick());
   let goal = mode === 'facedown' ? { type: 'out', single: true } : { type: 'out' };
   if (mode === 'joker') {
@@ -34,7 +35,17 @@ for (let seed = 1; seed <= 400000; seed++) {
     const quick = pos.pile.length; if (b < quick + 3) continue;
     goal = { type: 'joker', min: b };
   }
+  if (mode === 'end4') goal = { type: 'out', last: '4' };
+  if (mode === 'trap') { goal = { type: 'trap', rival: [] }; for (let i = 0; i < 3 + Math.floor(r() * 3); i++) goal.rival.push(pick()); if (!goal.rival.includes(process.env.TRAP_RANK || 'A')) continue; }
   const { solutions, nodes } = E.solve(pos, 5, goal);
+  if (mode === 'trap' && solutions.length) {
+    const sol = solutions[0]; let ok = sol.length >= 2 && sol[sol.length - 1].rank === '3';
+    if (ok) { // replay to see what the Rival plays after the first turn
+      let q = pos, i = 0; while (i < sol.length) { const m = sol[i++]; const x = E.play(q, m.rank, m.n); q = x.pos; if (!x.again) break; }
+      const rt = E.rivalTurn(q, goal.rival); ok = rt.plays.length === 1 && rt.plays[0].rank === (process.env.TRAP_RANK || 'A');
+    }
+    if (!ok) continue;
+  }
   if (solutions.length >= 1 && solutions.length <= 2) found.push({ seed, pos, goal, sol: solutions, nodes, len: solutions[0].length });
 }
 console.log(found.length);

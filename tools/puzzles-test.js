@@ -24,7 +24,7 @@ for (const p of P.PUZZLES) {
 }
 // harder tiers search more (not strictly, but the last is harder than the first)
 assert.ok(tierNodes[4] > tierNodes[0], 'tier 5 is harder than tier 1');
-assert.deepStrictEqual(P.PUZZLES.map(p => p.goal.type), ['out', 'out', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'pickup', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'joker', 'joker', 'joker', 'joker'], 'goal types');
+assert.deepStrictEqual(P.PUZZLES.map(p => p.goal.type), ['out', 'out', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'pickup', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'joker', 'joker', 'joker', 'joker', 'out', 'out', 'out', 'out', 'trap', 'trap', 'trap'], 'goal types');
 assert.strictEqual(new Set(P.PUZZLES.map(p => p.id)).size, P.PUZZLES.length, 'unique ids');
 assert.strictEqual(new Set(P.PUZZLES.map(p => JSON.stringify([p.hand, p.pile, p.goal]))).size, P.PUZZLES.length, 'no duplicate positions');
 assert.ok(P.PUZZLES.every(p => p.hint && p.title && p.hint.length > 30), 'every puzzle has a title and a hint');
@@ -58,6 +58,14 @@ assert.strictEqual(E.play({ hand: ['JOKER'], pile: ['K', 'K'], constraint: null,
 assert.ok(E.legal('JOKER', { hand: [], pile: ['7'], constraint: 'LOW7', base: null }), 'Joker goes on anything');
 assert.ok(J(['8', '8', '3'], ['7'], { type: 'out', single: true }) >= 1 && J(['8', '8', '3'], ['7'], { type: 'out' }) > J(['8', '8', '3'], ['7'], { type: 'out', single: true }), 'single plays leave out the pairs');
 assert.ok(!E.verify({ hand: ['8', '8', '3'], pile: ['7'], constraint: null, base: null }, { type: 'out', single: true }, [{ rank: '8', n: 2 }, { rank: '3', n: 1 }]), 'a single-card goal refuses two cards');
+// End-on-a-4 and the two-turn trap
+assert.strictEqual(E.solve({ hand: ['10', '4'], pile: ['9'], constraint: null, base: null }, 5, { type: 'out', last: '4' }).solutions.length, 1);
+assert.strictEqual(E.solve({ hand: ['4', '10'], pile: ['9'], constraint: null, base: null }, 5, { type: 'out', last: '10' }).solutions.length, 0, 'the 4 cannot end it on a 10 goal here');
+const trap = { type: 'trap', rival: ['A', 'Q', '9', '5'] }, tp = { hand: ['K', '3', '7', '9'], pile: ['5'], constraint: null, base: null };
+assert.ok(E.verify(tp, trap, [{ rank: 'K', n: 1 }, { rank: '3', n: 1 }]), 'K ends turn one, the Rival must play their Ace, the 3 traps them');
+assert.ok(!E.verify(tp, trap, [{ rank: 'K', n: 1 }]), 'one turn is not enough');
+assert.ok(!E.verify(tp, trap, [{ rank: '7', n: 1 }, { rank: '9', n: 1 }]), 'a Rival with a legal answer is not trapped');
+assert.deepStrictEqual(E.rivalTurn({ hand: [], pile: ['K'], constraint: null, base: null }, ['A', 'Q', '9']).plays, [{ rank: 'A', n: 1, burn: false }], 'the Rival plays their weakest legal rank');
 // verify(): the server's replay of a player's moves
 const ok = (p, moves) => E.verify({ hand: p.hand, pile: p.pile, constraint: p.constraint || null, base: p.base || null }, p.goal, moves);
 for (const p of P.PUZZLES) {

@@ -76,7 +76,7 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]].filter(s=>!process.env.PZ_W|
   for(let i=0;i<total;i++){
     await page.locator('.pz-chip').nth(i).click();
     const s=await page.evaluate(()=>{const id=document.querySelector('.pz-chip.on').dataset.pz;const p=ShPuzzles.PUZZLES.find(x=>x.id===id);return {goal:p.goal.type,rival:!document.querySelector('#pzRival').hidden,sol:ShPuzzleEngine.solve({hand:p.hand,pile:p.pile,constraint:p.constraint,base:p.base},1,p.goal).solutions[0]};});
-    assert.equal(s.rival,s.goal==='pickup'||s.goal==='joker','rival row only for pickup and Joker puzzles');
+    assert.equal(s.rival,s.goal==='pickup'||s.goal==='joker'||s.goal==='trap','rival row only for pickup, Joker and trap puzzles');
     for(const m of s.sol){await pickN(m.rank,m.n);await page.locator('#pzPlay').click();}
     const t=await page.locator('#pzStatus').textContent();
     assert(t.includes('Solved'),'puzzle '+(i+1)+' ('+s.goal+'): '+t);

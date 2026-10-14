@@ -2677,6 +2677,173 @@
      "type": "joker",
      "min": 7
     }
+   },
+   {
+    "id": "p33",
+    "name": "End On A Four",
+    "hand": [
+     "4",
+     "5",
+     "10",
+     "8"
+    ],
+    "pile": [
+     "8",
+     "3",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "last": "4"
+    }
+   },
+   {
+    "id": "p34",
+    "name": "Four Fives, Then A Four",
+    "hand": [
+     "10",
+     "8",
+     "5",
+     "5",
+     "4",
+     "8"
+    ],
+    "pile": [
+     "5",
+     "5"
+    ],
+    "constraint": null,
+    "base": "5",
+    "goal": {
+     "type": "out",
+     "last": "4"
+    }
+   },
+   {
+    "id": "p35",
+    "name": "Aces Burn, Four Last",
+    "hand": [
+     "8",
+     "10",
+     "3",
+     "A",
+     "4"
+    ],
+    "pile": [
+     "Q",
+     "A",
+     "A",
+     "A"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "last": "4"
+    }
+   },
+   {
+    "id": "p36",
+    "name": "Two Fours To Finish",
+    "hand": [
+     "10",
+     "4",
+     "4",
+     "8",
+     "3"
+    ],
+    "pile": [
+     "8",
+     "3",
+     "J",
+     "5"
+    ],
+    "constraint": null,
+    "base": "8",
+    "goal": {
+     "type": "out",
+     "last": "4"
+    }
+   },
+   {
+    "id": "p37",
+    "name": "Three Over The Ace",
+    "hand": [
+     "3",
+     "10",
+     "3",
+     "8",
+     "8"
+    ],
+    "pile": [
+     "J",
+     "J",
+     "K",
+     "A"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "trap",
+     "rival": [
+      "K",
+      "Q",
+      "4",
+      "A"
+     ]
+    }
+   },
+   {
+    "id": "p38",
+    "name": "Five Back To The Ace",
+    "hand": [
+     "8",
+     "8",
+     "5",
+     "4",
+     "3"
+    ],
+    "pile": [
+     "A",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "trap",
+     "rival": [
+      "K",
+      "A",
+      "4"
+     ]
+    }
+   },
+   {
+    "id": "p39",
+    "name": "Even Ace, Odd Rival",
+    "hand": [
+     "3",
+     "10",
+     "Q",
+     "Q",
+     "6"
+    ],
+    "pile": [
+     "8",
+     "3"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "trap",
+     "rival": [
+      "K",
+      "A",
+      "7"
+     ]
+    }
    }
   ]
  },
