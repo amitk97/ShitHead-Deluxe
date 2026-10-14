@@ -84,6 +84,11 @@ for (const p of P.PUZZLES) {
 }
 // a catalog entry exists for each puzzle and the server's copy of the engine is the same file
 const fs = require('fs'), path = require('path');
+const page = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8'), sw = fs.readFileSync(path.join(__dirname, '../sw.js'), 'utf8');
+for (const f of ['js/puzzle-engine.js', 'js/puzzles.js', 'css/puzzles.css']) {
+  assert.ok(new RegExp(f.replace('.', '\\.') + '\\?v=[0-9a-f]{12}"').test(page), f + ' is hash-stamped in index.html (node tools/stamp-assets.js)');
+  assert.ok(sw.length > 5000 && sw.includes(f + '?v='), f + ' is listed in sw.js');
+}
 assert.strictEqual(fs.readFileSync(path.join(__dirname, '../functions/puzzle-engine.js'), 'utf8'), fs.readFileSync(path.join(__dirname, '../js/puzzle-engine.js'), 'utf8'), 'functions/puzzle-engine.js must equal js/puzzle-engine.js (cp it)');
 const cat = require('../functions/catalog.json').puzzles;
 assert.deepStrictEqual(cat, JSON.parse(JSON.stringify(P.catalog())), 'catalog.puzzles matches the game (node tools/export-catalog.js)');

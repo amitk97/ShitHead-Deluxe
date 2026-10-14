@@ -1,3 +1,7 @@
+## v360 — stale puzzle engine fix
+
+- The owner's phone showed "No way to the goal from here" on the new puzzles: `js/puzzle-engine.js` was still loaded as `?v=346` (a manual number nobody bumped), so a cached old engine ran the new `puzzles.js` (no Joker, rival turns, `single`). `puzzle-engine.js`, `puzzles.js` and `puzzles.css` now carry the usual sha256 stamp (`node tools/stamp-assets.js` updates index.html and sw.js, the engine is in `OFFLINE_ASSETS`); `tools/puzzles-test.js` fails on a non-hash version. v359 also pushed an EMPTY `sw.js` (a Python `open(f,'w').write(open(f).read())` truncates before reading): restored here. Never read and write the same file in one expression.
+
 ## v359 — End-on puzzles vary the card
 
 - Only p33 ends on a 4 (owner: one 4 is enough); p34 ends on a 5, p35 on a 6, p36 on a 7 (`goal.last`). `kindName` reads "End on a <rank>". `tools/puzzle-search-zones.js end<rank>` finds positions for any rank. Catalog re-exported (server deploy as before). No rules change.

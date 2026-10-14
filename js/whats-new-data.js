@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v360: [['puzzle', 'Fixed the newer weekly puzzles that could not be completed on some phones.']],
       v359: [['puzzle', 'The End On A Card puzzles now finish on a 5, a 6 or a 7 as well as a 4.']],
       v358: [['puzzle', '7 longer weekly puzzles over two or three turns: the Rival plays a card or two between your turns, and you do not have to play your whole Hand at once.', WN_KEY]],
       v357: [['puzzle', '7 more weekly puzzles: end on a 4, and trap the Rival over two turns. Face-Down puzzle cards now stay face down.', WN_KEY]],
