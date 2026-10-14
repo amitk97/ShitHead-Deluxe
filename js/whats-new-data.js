@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v362: [['puzzle', 'Trap puzzles can no longer be solved by just clearing your Hand, and hints now follow where you are in the puzzle.']],
       v361: [['puzzle', 'Fixed the multi-turn puzzles saying they could not be solved after a good first move.']],
       v360: [['puzzle', 'Fixed the newer weekly puzzles that could not be completed on some phones.']],
       v359: [['puzzle', 'The End On A Card puzzles now finish on a 5, a 6 or a 7 as well as a 4.']],

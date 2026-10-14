@@ -46,6 +46,7 @@ for (let seed = 1; seed <= 400000; seed++) {
     if (mode === 'trap3' && E.solve(pos, 1, { type: 'trap', rival: goal.rival }).solutions.length) continue;
     if (/^long/.test(mode) && E.solve(pos, 1, { ...goal, turns: goal.turns - 1 }).solutions.length) continue;
   }
+  if ((mode === 'trap' || mode === 'trap3') && solutions.length && E.solve(pos, 1, { type: 'out', rival: goal.rival, turns: goal.turns || 2 }).solutions.length) continue; // going out would beat the trap
   if (mode === 'trap' && solutions.length) {
     const sol = solutions[0]; let ok = sol.length >= 2 && sol[sol.length - 1].rank === '3';
     if (ok) { // replay to see what the Rival plays after the first turn

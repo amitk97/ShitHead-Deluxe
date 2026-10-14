@@ -1,3 +1,7 @@
+## v362 — trap puzzles can't be cleared; position-aware hints
+
+- A trap puzzle (p37–p39, p45–p46) must not be solvable by going out (owner: emptying the Hand is obviously the better play): `puzzles-test.js` asserts `solve(out, rival, turns)` finds nothing for every trap puzzle; p37, p39, p45, p46 were replaced with positions from `puzzle-search-zones.js trap|trap3`, which now skips out-able positions (hints say "You cannot empty your Hand…"). Hints: `doHint` explains the idea only before the first play (and a second tap names the move); after any play every hint is solved from the CURRENT position (`posOf(st)`: hand, pile, Rival, turn) and reads "Next, play N × X. It keeps your turn / ends your turn, so the Rival answers / burns the Pile / finishes the puzzle." Catalog re-exported.
+
 ## v361 — solver lost the Rival after a go-again play
 
 - Owner's video (p43): after a legal first play the page said the goal could no longer be reached. `solve()`'s generic go-again recursion (`else if (r.again && r.pos.hand.length)`) dropped `rv` and `turn`, so in multi-turn `out` puzzles every line with a go-again card BEFORE a turn-ending card was invisible (hints, the "no way" message, the 1–2 solutions check and the "needs every turn" check were all wrong; `verify` and the server were right). Fixed; p40–p44 truly have 2–10 solutions (several orders of the same go-again plays), so `puzzles-test.js` allows up to 12 for `turns > 1`. Regression: p43's line from the video. Any new recursion in `solve` must pass `rv, turn` along.

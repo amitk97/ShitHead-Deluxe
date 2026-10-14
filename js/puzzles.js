@@ -111,15 +111,15 @@
     { id: 'p36', tier: 4, title: 'Two Sevens To Finish', hand: ['3', '5', '10', '7', '7', '8'], pile: ['8', '2', 'J'], constraint: 'ODD',
       goal: { type: 'out', last: '7' },
       hint: 'The Pile wants an odd card, and a 5 is odd and drops to the bottom 8. Then the 8, the 3 and the 10 keep your turn, and both 7s finish it together.' },
-    { id: 'p37', tier: 2, title: 'Three Over The Ace', hand: ['3', '10', '3', '8', '8'], pile: ['J', 'J', 'K', 'A'], constraint: null,
-      goal: { type: 'trap', rival: ['K', 'Q', '4', 'A'] },
-      hint: 'End this turn so the Rival has to play. The Rival always plays their weakest card that fits. Then a 3 shows the Ace under it and leaves them stuck.' },
+    { id: 'p37', tier: 2, title: 'Three Over The Ace', hand: ['J', '2', '8', '3', 'Q'], pile: ['5', '8'], constraint: null,
+      goal: { type: 'trap', rival: ['J', '6', 'A', '5', '9'] },
+      hint: 'You cannot empty your Hand here, so trap the Rival instead. End your first turn with the Queen (an 8 first is fine): their only card that beats it is the Ace. Then your 3 shows that Ace under it and leaves them stuck.' },
     { id: 'p38', tier: 3, title: 'Five Back To The Ace', hand: ['8', '8', '5', '4', '3'], pile: ['A', '2'], constraint: null,
       goal: { type: 'trap', rival: ['K', 'A', '4'] },
       hint: 'A 5 drops the target to the bottom card of the Pile. That makes the Ace the only card the Rival can play. Your 3 then covers it.' },
-    { id: 'p39', tier: 4, title: 'Even Ace, Odd Rival', hand: ['3', '10', 'Q', 'Q', '6'], pile: ['8', '3'], constraint: null,
-      goal: { type: 'trap', rival: ['K', 'A', '7'] },
-      hint: 'A 6 limits the Rival to even cards, and the Ace is the only one they hold. Clear the Pile first so the 6 can go anywhere.' },
+    { id: 'p39', tier: 3, title: 'Even Ace, Odd Rival', hand: ['A', '3', '9', 'Q', '8'], pile: ['8', '3', '8'], constraint: null,
+      goal: { type: 'trap', rival: ['A', '5', 'K', 'K'] },
+      hint: 'You cannot empty your Hand here, so trap the Rival instead. Play your Ace (an 8 first is fine): the Rival\'s Ace is the only card that beats it. Then your 3 covers their Ace and leaves them stuck.' },
     // v358: several turns. When a turn ends the Rival answers (their weakest card that fits, or they pick the Pile up) and you play on.
     { id: 'p40', tier: 4, title: 'Hold Back The Fives', hand: ['A', '7', '8', '3', '10', '5', '5', '5'], pile: ['8', '8', '3'], constraint: null,
       goal: { type: 'out', turns: 2, rival: ['7', 'K', '9', '3', '2'] },
@@ -136,12 +136,12 @@
     { id: 'p44', tier: 5, title: 'Ace And Four First', hand: ['A', '5', '5', '4', '2', '8', '2', '3'], pile: ['8', '9', '2', 'K'], constraint: null,
       goal: { type: 'out', turns: 3, rival: ['3', '2', 'Q', '4', '4'] },
       hint: 'The Ace and the 4 each end a turn. In the last turn two 5s drop to the bottom 8, and the 8 and the 3 skip before your pair of 2s.' },
-    { id: 'p45', tier: 4, title: 'Three Turn Trap', hand: ['J', '3', '5', '7', '8', '10'], pile: ['8', 'K', '2'], constraint: null,
-      goal: { type: 'trap', turns: 3, rival: ['7', '6', '3', '2'] },
-      hint: 'The 8 and the 10 keep your first turn going and the Jack ends it, so the Rival can only answer with an odd card. Keep the 5 and the 3 for the later turns.' },
-    { id: 'p46', tier: 5, title: 'Use Up Their Cards', hand: ['8', '10', '3', '8', '4', 'J'], pile: ['K', '2', '4'], constraint: null,
-      goal: { type: 'trap', turns: 3, rival: ['K', '2', '6', '5'] },
-      hint: 'The 4 and the 3 each end a turn, so the Rival has to play cards from their Hand. The last turn is a 10, an 8 and a Jack.' }
+    { id: 'p45', tier: 4, title: 'Three Turn Trap', hand: ['7', '4', 'J', 'A', '10', '8'], pile: ['5', 'Q', 'A', '2'], constraint: null,
+      goal: { type: 'trap', turns: 3, rival: ['7', 'A', '10', '5', '4'] },
+      hint: 'You cannot clear your Hand in time, so trap the Rival. Your 4, and the run of 10, 8 and Jack, are your first two turns in either order. Keep the 7 for the last turn: it is the card that leaves them stuck.' },
+    { id: 'p46', tier: 5, title: 'Use Up Their Cards', hand: ['9', '8', '10', '2', '7', 'A'], pile: ['4', '3', '5'], constraint: null, base: '4',
+      goal: { type: 'trap', turns: 3, rival: ['A', '6', 'Q', '5'] },
+      hint: 'You cannot clear your Hand in time, so trap the Rival. Your 9 and your 2 each end a turn, with the 10 and the 8 keeping your turn going. Keep the Ace for the last turn: it is the card that leaves them stuck.' }
   ];
   PUZZLES.forEach(p => { p.goal = p.goal || { type: 'out' }; p.base = p.base || null; });
   const GOAL_NAMES = { out: 'Out in one turn', burn: 'Burn the Pile', pickup: 'Rival picks up', joker: 'Joker pickup', trap: 'Trap the Rival' };
@@ -389,12 +389,17 @@
   // A failed attempt says so and offers Restart; Undo still steps back one play.
   function tryAgain() { const b = $('#pzRestart'); b.classList.add('pz-primary'); b.textContent = 'Try Again'; }
   function doUndo() { if (!undo.length) return; st = JSON.parse(undo.pop()); moveLog.pop(); plays = Math.max(0, plays - 1); picked = new Set(); over = null; { const b = $('#pzRestart'); b.classList.remove('pz-primary'); b.textContent = 'Restart'; } say('Undone.', ''); draw(); }
+  // The first hint (before any play) explains the idea, a second tap names the move. Once you have played, every hint is about
+  // where you are now: the next move from this exact position, and what it does.
   function doHint() {
-    const s = E.solve(posOf(st), 1, goalOf(), plays).solutions[0];
+    const pos = posOf(st), s = E.solve(pos, 1, goalOf(), plays).solutions[0];
     if (!s) { say('No way to the goal from here. Undo or Restart.', 'bad'); return; }
-    say(`Hint: ${puzzle.hint}`, ''); // the first hint explains the idea; a second tap names the move
-    if ($('#pzHint').dataset.n === puzzle.id + plays) say(`Try playing ${s[0].n} × ${rankName(s[0].rank)} next.`, '');
-    $('#pzHint').dataset.n = puzzle.id + plays;
+    const key = puzzle.id + ':' + plays;
+    if (!plays && $('#pzHint').dataset.n !== key) { say(`Hint: ${puzzle.hint}`, ''); $('#pzHint').dataset.n = key; return; }
+    const m = s[0], r = E.play(pos, m.rank, m.n), g = puzzle.goal;
+    const effect = r.joker ? 'It hands the Pile to the Rival.' : s.length === 1 ? 'It finishes the puzzle.' : r.burn ? 'It burns the Pile and you go again.' : r.again ? 'It keeps your turn.' : 'It ends your turn, so the Rival answers.';
+    say(`Next, play ${m.n} × ${rankName(m.rank)}. ${effect}`, '');
+    $('#pzHint').dataset.n = key;
   }
   function giveUp() {
     const s = E.solve({ hand: puzzle.hand, pile: puzzle.pile, constraint: puzzle.constraint, base: puzzle.base }, 1, puzzle.goal).solutions[0];

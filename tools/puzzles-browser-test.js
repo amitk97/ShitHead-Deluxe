@@ -64,7 +64,14 @@ for(const [w,h] of [[320,568],[390,844],[1440,900]].filter(s=>!process.env.PZ_W|
   assert.equal(await page.locator('#pzHand .pz-card').count(),n0,'undo brings them back');
   // hint twice names the move; Give Up shows the solution
   await page.locator('#pzHint').click();await page.locator('#pzHint').click();
-  assert(/Try playing/.test(await page.locator('#pzStatus').textContent()),'second hint names the move');
+  assert(/Next, play/.test(await page.locator('#pzStatus').textContent()),'second hint names the move');
+  // after a play the very first hint is about the position now: it names the NEXT move, never the one already made
+  if(sol.length>1){await pickN(sol[0].rank,sol[0].n);await page.locator('#pzPlay').click();
+    const hinted=async()=>{await page.locator('#pzHint').click();return page.locator('#pzStatus').textContent();};
+    const t=await hinted();const want=`Next, play ${sol[1].n} × ${sol[1].rank==='JOKER'?'Joker':sol[1].rank}.`;
+    assert(t.includes('Next, play'),'hint mid-puzzle names a move: '+t);
+    const after=await page.evaluate(()=>{const p=ShPuzzles.PUZZLES.find(x=>x.id===document.querySelector('.pz-chip.on')?.dataset.pz)||ShPuzzles.thisWeek();return p.id;});
+    await page.locator('#pzUndo').click();}
   await page.locator('#pzGiveUp').click();
   {const t=await page.locator('#pzStatus').textContent();assert(/^Solution:/.test(t),'give up: '+t);}
   if(w===390)await page.screenshot({path:'/tmp/puzzle-390.png'});

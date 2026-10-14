@@ -78,6 +78,8 @@ assert.ok(P.PUZZLES.filter(p => p.goal.turns > 1).every(p => E.solve({ hand: p.h
   assert.ok(E.verify(start, p43.goal, line), 'p43: 5s, 8, 3, K, then 7, then 6 wins');
   const after = E.play(start, '5', 2);
   assert.ok(E.canStillWin(Object.assign({}, after.pos, { rival: p43.goal.rival, turn: 1 }), p43.goal, 1), 'p43: still winnable after the two 5s'); }
+// a trap puzzle must not be beaten by simply going out: emptying the Hand is the better play, so it has to be impossible
+for (const p of P.PUZZLES.filter(p => p.goal.type === 'trap')) assert.strictEqual(E.solve({ hand: p.hand, pile: p.pile, constraint: p.constraint, base: p.base }, 1, { type: 'out', rival: p.goal.rival, turns: p.goal.turns || 2 }).solutions.length, 0, p.id + ' can be cleared without trapping the Rival');
 // verify(): the server's replay of a player's moves
 const ok = (p, moves) => E.verify({ hand: p.hand, pile: p.pile, constraint: p.constraint || null, base: p.base || null }, p.goal, moves);
 for (const p of P.PUZZLES) {
