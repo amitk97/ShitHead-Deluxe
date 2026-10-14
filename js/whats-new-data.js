@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v356: [['puzzle', '12 new weekly puzzles: clear your Face-Up cards, flip your Face-Down cards one at a time, or play your Joker to make the Rival pick up a big Pile.', WN_KEY]],
       v355: [['puzzle', 'Puzzle cards now show just the rank with its suit underneath, with no icon in the middle.']],
       v354: [['puzzle', 'Puzzles: the Pile is now a real stack, cards show their suit instead of power icons, the page no longer changes size as you play, and repetitive puzzles are replaced by 11 new ones.']],
       v353: [['puzzle', 'Eight new weekly puzzles, 17 in all, with new tricks: a 5 on the Jack, a 7 that locks the Rival out, two burns in one turn and more.', WN_KEY]],

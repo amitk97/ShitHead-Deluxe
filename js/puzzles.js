@@ -60,10 +60,50 @@
       hint: 'Clear the Pile with the 10, then four 7s together burn it again. Keep the 8 and the 3 for the end.' },
     { id: 'p20', tier: 5, title: 'Three Queens', hand: ['8', 'Q', 'Q', 'Q', '10', '8', '6'], pile: ['9', '2', 'Q'], constraint: null,
       goal: { type: 'out', maxPlays: 4 },
-      hint: 'Three Queens on the Pile\'s Queen make four of a kind. Two 8s together skip the Rival once.' }
+      hint: 'Three Queens on the Pile\'s Queen make four of a kind. Two 8s together skip the Rival once.' },
+    // v356: play from the Face-Up cards, flip Face-Down cards one at a time, or hand the Rival a big Pile with a Joker.
+    { id: 'p21', tier: 2, zone: 'faceUp', title: 'Clear Your Face-Up Cards', hand: ['8', '5', '10', 'Q'], pile: ['8', 'A', '3', '2'], constraint: null,
+      goal: { type: 'out' },
+      hint: 'Your Hand and the Deck are empty, so you play from your Face-Up cards. A 5 drops to the bottom card of the Pile, and the bottom card is an 8.' },
+    { id: 'p22', tier: 3, zone: 'faceUp', title: 'Face-Up Four Of A Kind', hand: ['8', '9', '10', '2'], pile: ['K', '2', '2', '2'], constraint: null,
+      goal: { type: 'out' },
+      hint: 'Three 2s are already on the Pile. Your own 2 makes four of a kind, and a burn gives you another go.' },
+    { id: 'p23', tier: 3, zone: 'faceUp', title: 'Even Face-Up Cards', hand: ['7', '10', '8', '8'], pile: ['2', '4', 'J', '7', '6'], constraint: 'EVEN',
+      goal: { type: 'out' },
+      hint: 'The Pile wants an even card. Two 8s together skip the Rival once, and a 10 clears the way for the 7.' },
+    { id: 'p24', tier: 4, zone: 'faceUp', title: 'Five, Three, Eight', hand: ['5', '3', '8', '5'], pile: ['8', 'J', '7', '6', '2'], constraint: null,
+      goal: { type: 'out' },
+      hint: 'Both 5s drop to the bottom 8. After that the 3 and the 8 both keep the turn, so order the last two with care.' },
+    { id: 'p25', tier: 2, zone: 'faceDown', title: 'Flip Them Right', hand: ['3', '5', '10'], pile: ['8', 'K', '2'], constraint: null,
+      goal: { type: 'out', single: true },
+      hint: 'You have peeked at your Face-Down cards and flip them one at a time. Only the first two flips must keep your turn alive.' },
+    { id: 'p26', tier: 2, zone: 'faceDown', title: 'Even Flips', hand: ['10', '8', '7'], pile: ['3', '6'], constraint: 'EVEN',
+      goal: { type: 'out', single: true },
+      hint: 'The Pile wants an even card. Flip the card that fits and skips the Rival, and leave the 7 for last.' },
+    { id: 'p27', tier: 3, zone: 'faceDown', title: 'Face-Down Burn', hand: ['3', '9', '8'], pile: ['8', '2', '8', '8'], constraint: null,
+      goal: { type: 'out', single: true },
+      hint: 'The Pile ends in three 8s. Your 8 makes four of a kind, and the 3 over an 8 keeps your turn too.' },
+    { id: 'p28', tier: 3, zone: 'faceDown', title: 'Bottom Eight Flips', hand: ['5', '3', '8'], pile: ['8', 'Q', '2', '3'], constraint: null,
+      goal: { type: 'out', single: true },
+      hint: 'A 5 drops to the bottom card, which is an 8, and a 3 shows the card under it. Work out which flip comes first.' },
+    { id: 'p29', tier: 2, title: 'Jokers Pick Up Six', hand: ['5', '10', 'J', '10', '5', '5', 'JOKER'], pile: ['8', '8', '2'], constraint: null,
+      goal: { type: 'joker', min: 6 },
+      hint: 'Grow the Pile before the Joker, without a 10, which would burn it. Three 5s drop to the bottom 8 together and skip the Rival.' },
+    { id: 'p30', tier: 3, title: 'Joker Hands Over Six', hand: ['3', '10', '3', '8', '10', '10', 'JOKER'], pile: ['7', '3', '6'], constraint: 'EVEN',
+      goal: { type: 'joker', min: 6 },
+      hint: 'Every card you add before the Joker must keep your turn, and a 10 would burn the Pile. An 8 fits an even card, and a 3 over an 8 skips too.' },
+    { id: 'p31', tier: 4, title: 'Biggest Joker Pickup', hand: ['J', '5', '5', '10', '3', '8', 'JOKER'], pile: ['8', 'K', '2'], constraint: null,
+      goal: { type: 'joker', min: 7 },
+      hint: 'Make the Rival pick up seven cards: the Pile must reach seven before the Joker. Two 5s drop to the bottom 8, then the 8 and the 3 each skip.' },
+    { id: 'p32', tier: 4, title: 'Odd Pile, Big Joker', hand: ['10', '5', '5', '8', '6', '8', 'JOKER'], pile: ['8', '2', 'J'], constraint: 'ODD',
+      goal: { type: 'joker', min: 7 },
+      hint: 'The Pile wants an odd card, so a 5 comes first. Look at the card at the bottom of the Pile, then add both 8s before the Joker.' }
   ];
   PUZZLES.forEach(p => { p.goal = p.goal || { type: 'out' }; p.base = p.base || null; });
-  const GOAL_NAMES = { out: 'Out in one turn', burn: 'Burn the Pile', pickup: 'Rival picks up' };
+  const GOAL_NAMES = { out: 'Out in one turn', burn: 'Burn the Pile', pickup: 'Rival picks up', joker: 'Joker pickup' };
+  const ZONE_NAMES = { hand: 'Hand', faceUp: 'Face-Up cards', faceDown: 'Face-Down cards' };
+  const zoneOf = (p) => p.zone || 'hand';
+  const kindName = (p) => (zoneOf(p) === 'faceUp' ? 'Face-Up cards' : zoneOf(p) === 'faceDown' ? 'Face-Down cards' : GOAL_NAMES[p.goal.type]);
   const TIER_NAMES = ['', 'Warm-up', 'Easy', 'Medium', 'Hard', 'Tricky'];
   // Paid once per puzzle per UK week, checked by the server (economy `puzzle`). Diamonds here, XP in XP_RULES.puzzle.
   const REWARD_DIAMONDS = 50;
@@ -92,17 +132,22 @@
   // Cards get suits in turn so no rank shows the same suit twice.
   function dealCards(p) {
     const used = {}; let n = 0;
-    const make = (rank) => { const k = used[rank] || 0; used[rank] = k + 1; return { id: `${p.id}_${n++}`, rank, suit: SUITS[k % 4] }; };
+    const make = (rank) => { const k = used[rank] || 0; used[rank] = k + 1; return rank === 'JOKER' ? { id: `${p.id}_${n++}`, rank, suit: 'JOKER', isJoker: true } : { id: `${p.id}_${n++}`, rank, suit: SUITS[k % 4] }; };
     return { hand: p.hand.map(make), pile: p.pile.map(make) };
   }
 
   function goalText(p) {
     const g = p.goal, cap = g.maxPlays ? ` Use at most ${g.maxPlays} plays.` : '';
+    if (g.type === 'joker') return `Play your Joker so the Rival picks up ${g.min} cards or more, the most there can be. Only plays that give you another go can come first, and a 10 or four of a kind would burn the Pile.` + cap;
+    const zone = zoneOf(p), only = g.single ? ' Each play is a single card.' : '';
+    if (zone === 'faceUp') return 'Your Hand and the Deck are empty, so you play from your Face-Up cards. Play all of them in a single turn. Only a burn and an 8 give you another go.' + only + cap;
+    if (zone === 'faceDown') return 'Your Face-Down cards are shown for this puzzle. Flip all of them in a single turn, one card at a time. Only a burn and an 8 give you another go.' + only + cap;
     if (g.type === 'burn') return 'Burn the Pile in a single turn. A 10 or four of a kind burns it.' + cap;
     if (g.type === 'pickup') return 'End your turn so the Rival has no card to play from the Hand shown. They must pick up the Pile.' + cap;
     return 'Play every card in your Hand in a single turn. Only a burn (a 10 or four of a kind) and an 8 give you another go.' + cap;
   }
   const goalOf = () => puzzle.goal;
+  const rankName = (r) => (r === 'JOKER' ? 'Joker' : r);
   let modal, puzzle, st, undo, picked, over, current = null, moveLog = [], gaveUp = false;
   // Select All Of A Rank works as in the game: a toggle (starts as your setting), always available.
   let allMode = typeof selectAllOfRank !== 'undefined' ? !!selectAllOfRank : false;
@@ -127,7 +172,7 @@
     if (!el.firstChild) el.textContent = c.rank + c.suit; // node tests have no game renderer
     // Puzzle cards show only the rank with its suit under it in the corner: no power icon, no big suit in the middle.
     const ic = el.querySelector && el.querySelector('.card-centre-icon, .card-centre-suit');
-    if (ic) (ic.parentElement && ic.parentElement !== el ? ic.parentElement : ic).remove();
+    if (ic && !c.isJoker) (ic.parentElement && ic.parentElement !== el ? ic.parentElement : ic).remove();
     return el;
   }
   const equippedTableId = () => (typeof homeBackdropTableId === 'function' ? homeBackdropTableId() : 'default');
@@ -141,7 +186,7 @@
   function paintYou() {
     const el = $('#pzYou'); if (!el) return;
     const id = typeof equippedCosmetics !== 'undefined' ? equippedCosmetics.avatar : 'default';
-    el.innerHTML = (typeof avatarHtml === 'function' ? avatarHtml(id || 'default', 28) : '') + '<span>Hand</span>';
+    el.innerHTML = (typeof avatarHtml === 'function' ? avatarHtml(id || 'default', 28) : '') + '<span>' + ZONE_NAMES[puzzle && zoneOf(puzzle)] + '</span>';
   }
   function ruleLine() {
     const top = st.base || E.effTop(ranksOf(st.pile));
@@ -153,11 +198,11 @@
   }
   function draw() {
     $('#pzTitle').textContent = puzzle.title;
-    $('#pzTier').textContent = `${GOAL_NAMES[puzzle.goal.type]} · ${TIER_NAMES[puzzle.tier]} ${'★'.repeat(puzzle.tier)}${'☆'.repeat(5 - puzzle.tier)}`;
+    $('#pzTier').textContent = `${kindName(puzzle)} · ${TIER_NAMES[puzzle.tier]} ${'★'.repeat(puzzle.tier)}${'☆'.repeat(5 - puzzle.tier)}`;
     $('#pzGoal').textContent = goalText(puzzle);
     $('#pzReward').textContent = `Solve it for ${REWARD_DIAMONDS} Diamonds${typeof XP_RULES !== 'undefined' && XP_RULES.puzzle ? ` and ${XP_RULES.puzzle} XP` : ''}, once a week. Give Up means no reward.`;
-    const rv = $('#pzRival'); rv.hidden = puzzle.goal.type !== 'pickup';
-    if (!rv.hidden) { rv.replaceChildren(); const l = document.createElement('span'); l.className = 'pz-rival-label'; l.textContent = "Rival's Hand"; rv.append(l, ...st.rival.map(c => cardEl(c, 'card-opponent-slot'))); }
+    const rv = $('#pzRival'); rv.hidden = puzzle.goal.type !== 'pickup' && puzzle.goal.type !== 'joker';
+    if (!rv.hidden) { rv.replaceChildren(); const l = document.createElement('span'); l.className = 'pz-rival-label'; l.textContent = puzzle.goal.type === 'joker' && !st.rival.length ? "Rival's Hand: empty" : "Rival's Hand"; rv.append(l, ...st.rival.map(c => cardEl(c, 'card-opponent-slot'))); }
     const pileEl = $('#pzPile'); pileEl.replaceChildren();
     if (st.pile.length) (st.pile.length > 6 ? [st.pile[0]].concat(st.pile.slice(-4)) : st.pile).forEach(c => pileEl.append(cardEl(c, 'card-table'))); else pileEl.innerHTML = '<span class="pz-empty">Empty Pile</span>';
     paintTable(); paintYou();
@@ -165,7 +210,7 @@
     $('#pzRule').textContent = ruleLine();
     const handEl = $('#pzHand'); handEl.replaceChildren();
     if (st.hand.length) st.hand.forEach(c => { const el = cardEl(c, 'card-base', picked.has(c.id) ? 'pz-sel' : ''); el.tabIndex = 0; el.setAttribute('role', 'button'); handEl.append(el); });
-    else handEl.innerHTML = '<span class="pz-empty">Hand empty</span>';
+    else handEl.innerHTML = `<span class="pz-empty">${ZONE_NAMES[zoneOf(puzzle)]} cleared</span>`;
     const box = $('.pz-card-box'), won = over === 'won';
     box.classList.toggle('pz-won', won); $('#pzDone').hidden = !won; if (won) $('#pzDoneMsg').textContent = $('#pzStatus').textContent;
     const off = !!over;
@@ -195,7 +240,7 @@
   function toggle(id) {
     if (over) return;
     const c = st.hand.find(x => x.id === id); if (!c) return;
-    const same = allMode ? st.hand.filter(x => x.rank === c.rank) : [c];
+    const same = allMode && !puzzle.goal.single && !c.isJoker ? st.hand.filter(x => x.rank === c.rank) : [c];
     const wasOn = picked.has(id);
     if (!wasOn && [...picked].some(pid => st.hand.find(x => x.id === pid).rank !== c.rank)) picked.clear();
     same.forEach(x => (wasOn ? picked.delete(x.id) : picked.add(x.id)));
@@ -223,10 +268,15 @@
     const r = E.play(pos, rank, cards.length);
     if (r.burn) burnFx();
     const rival = st.rival;
-    if (r.burn) { st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: [], constraint: null, base: null, rival }; }
+    const taken = st.pile;
+    if (r.burn || r.joker) { st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: [], constraint: null, base: null, rival: r.joker ? rival.concat(taken) : rival }; }
     else st = { hand: st.hand.filter(c => !picked.has(c.id)), pile: st.pile.concat(cards), constraint: r.pos.constraint, base: r.pos.base, rival };
     picked = new Set();
     const g = puzzle.goal, win = (pre = '') => { over = 'won'; markSolved(puzzle.id); winFx(); const base = `${pre}Solved in ${plays} play${plays === 1 ? '' : 's'}.`; say(base, 'good'); draw(); claimReward(base); };
+    if (g.type === 'joker' && r.joker) {
+      if (r.pickup >= g.min) return win(`The Rival picks up ${r.pickup} cards. `);
+      over = 'ended'; say(`The Rival picks up only ${r.pickup} cards and you need ${g.min}. Press Try Again.`, 'bad'); draw(); tryAgain(); return;
+    }
     if (g.type === 'out' && !st.hand.length) return win();
     if (g.type === 'burn' && r.burn) return win();
     if (g.type === 'pickup') {
@@ -264,13 +314,13 @@
     const s = E.solve(posOf(st), 1, goalOf(), plays).solutions[0];
     if (!s) { say('No way to the goal from here. Undo or Restart.', 'bad'); return; }
     say(`Hint: ${puzzle.hint}`, ''); // the first hint explains the idea; a second tap names the move
-    if ($('#pzHint').dataset.n === puzzle.id + plays) say(`Try playing ${s[0].n} × ${s[0].rank} next.`, '');
+    if ($('#pzHint').dataset.n === puzzle.id + plays) say(`Try playing ${s[0].n} × ${rankName(s[0].rank)} next.`, '');
     $('#pzHint').dataset.n = puzzle.id + plays;
   }
   function giveUp() {
     const s = E.solve({ hand: puzzle.hand, pile: puzzle.pile, constraint: puzzle.constraint, base: puzzle.base }, 1, puzzle.goal).solutions[0];
     gaveUp = true;
-    say('Solution: ' + s.map(m => `${m.n} × ${m.rank}`).join(', then ') + '.', '');
+    say('Solution: ' + s.map(m => `${m.n} × ${rankName(m.rank)}`).join(', then ') + '.', '');
   }
 
   function open(id) {

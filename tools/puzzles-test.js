@@ -10,7 +10,10 @@ require('../js/puzzles.js');
 const E = window.ShPuzzleEngine, P = window.ShPuzzles;
 const tierNodes = [];
 for (const p of P.PUZZLES) {
-  assert.ok(p.hand.length >= 5 && p.hand.length <= 8, p.id + ' hand size');
+  assert.ok(p.hand.length >= (p.zone === 'faceDown' ? 3 : 4) && p.hand.length <= 8, p.id + ' hand size');
+  assert.ok(!p.zone || ['faceUp', 'faceDown'].includes(p.zone), p.id + ' zone');
+  assert.ok(p.zone !== 'faceDown' || (p.hand.length === 3 && p.goal.single), p.id + ' face-down: three cards, one per play');
+  assert.ok(p.goal.type !== 'joker' || (p.hand.filter(r => r === 'JOKER').length === 1 && p.goal.min > p.pile.length), p.id + ' one Joker, a pickup above the Pile');
   const { solutions, nodes } = E.solve({ hand: p.hand, pile: p.pile, constraint: p.constraint, base: p.base }, 5, p.goal);
   assert.ok(solutions.length >= 1 && solutions.length <= 2, `${p.id} has ${solutions.length} solutions`);
   assert.ok(p.hand.length + p.pile.length > 0 && ['2','3','4','5','6','7','8','9','10','J','Q','K','A'].every(r => p.hand.concat(p.pile, p.goal.rival || []).filter(x => x === r).length <= 4), p.id + ' no more than four of a rank');
@@ -21,7 +24,7 @@ for (const p of P.PUZZLES) {
 }
 // harder tiers search more (not strictly, but the last is harder than the first)
 assert.ok(tierNodes[4] > tierNodes[0], 'tier 5 is harder than tier 1');
-assert.deepStrictEqual(P.PUZZLES.map(p => p.goal.type), ['out', 'out', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'pickup', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'out'], 'goal types');
+assert.deepStrictEqual(P.PUZZLES.map(p => p.goal.type), ['out', 'out', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'pickup', 'out', 'out', 'out', 'burn', 'pickup', 'pickup', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'out', 'joker', 'joker', 'joker', 'joker'], 'goal types');
 assert.strictEqual(new Set(P.PUZZLES.map(p => p.id)).size, P.PUZZLES.length, 'unique ids');
 assert.strictEqual(new Set(P.PUZZLES.map(p => JSON.stringify([p.hand, p.pile, p.goal]))).size, P.PUZZLES.length, 'no duplicate positions');
 assert.ok(P.PUZZLES.every(p => p.hint && p.title && p.hint.length > 30), 'every puzzle has a title and a hint');
@@ -48,6 +51,13 @@ assert.strictEqual(E.solve({ hand: ['5', '10'], pile: ['8', 'J'], constraint: 'O
 assert.strictEqual(E.solve({ hand: ['5', '10'], pile: ['8', 'J'], constraint: 'ODD', base: null }, 5, { type: 'burn', maxPlays: 2 }).solutions.length, 1);
 assert.ok(E.rivalStuck({ hand: [], pile: ['7'], constraint: 'LOW7', base: null }, ['J', '10', 'A']), 'LOW7 stops J, 10 and A');
 assert.ok(!E.rivalStuck({ hand: [], pile: ['7'], constraint: 'LOW7', base: null }, ['4']));
+// Joker + single-card rules: the Joker leaves the Pile to the Rival, one card per flip
+const J = (hand, pile, goal, c = null) => E.solve({ hand, pile, constraint: c, base: null }, 5, goal).solutions.length;
+assert.ok(J(['8', '8', 'JOKER'], ['7'], { type: 'joker', min: 3 }) >= 1 && J(['8', '8', 'JOKER'], ['7'], { type: 'joker', min: 4 }) === 0, 'Joker pickup counts the Pile only');
+assert.strictEqual(E.play({ hand: ['JOKER'], pile: ['K', 'K'], constraint: null, base: null }, 'JOKER', 1).pickup, 2);
+assert.ok(E.legal('JOKER', { hand: [], pile: ['7'], constraint: 'LOW7', base: null }), 'Joker goes on anything');
+assert.ok(J(['8', '8', '3'], ['7'], { type: 'out', single: true }) >= 1 && J(['8', '8', '3'], ['7'], { type: 'out' }) > J(['8', '8', '3'], ['7'], { type: 'out', single: true }), 'single plays leave out the pairs');
+assert.ok(!E.verify({ hand: ['8', '8', '3'], pile: ['7'], constraint: null, base: null }, { type: 'out', single: true }, [{ rank: '8', n: 2 }, { rank: '3', n: 1 }]), 'a single-card goal refuses two cards');
 // verify(): the server's replay of a player's moves
 const ok = (p, moves) => E.verify({ hand: p.hand, pile: p.pile, constraint: p.constraint || null, base: p.base || null }, p.goal, moves);
 for (const p of P.PUZZLES) {

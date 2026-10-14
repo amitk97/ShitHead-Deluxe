@@ -2414,6 +2414,269 @@
      "type": "out",
      "maxPlays": 4
     }
+   },
+   {
+    "id": "p21",
+    "name": "Clear Your Face-Up Cards",
+    "hand": [
+     "8",
+     "5",
+     "10",
+     "Q"
+    ],
+    "pile": [
+     "8",
+     "A",
+     "3",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out"
+    }
+   },
+   {
+    "id": "p22",
+    "name": "Face-Up Four Of A Kind",
+    "hand": [
+     "8",
+     "9",
+     "10",
+     "2"
+    ],
+    "pile": [
+     "K",
+     "2",
+     "2",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out"
+    }
+   },
+   {
+    "id": "p23",
+    "name": "Even Face-Up Cards",
+    "hand": [
+     "7",
+     "10",
+     "8",
+     "8"
+    ],
+    "pile": [
+     "2",
+     "4",
+     "J",
+     "7",
+     "6"
+    ],
+    "constraint": "EVEN",
+    "base": null,
+    "goal": {
+     "type": "out"
+    }
+   },
+   {
+    "id": "p24",
+    "name": "Five, Three, Eight",
+    "hand": [
+     "5",
+     "3",
+     "8",
+     "5"
+    ],
+    "pile": [
+     "8",
+     "J",
+     "7",
+     "6",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out"
+    }
+   },
+   {
+    "id": "p25",
+    "name": "Flip Them Right",
+    "hand": [
+     "3",
+     "5",
+     "10"
+    ],
+    "pile": [
+     "8",
+     "K",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "single": true
+    }
+   },
+   {
+    "id": "p26",
+    "name": "Even Flips",
+    "hand": [
+     "10",
+     "8",
+     "7"
+    ],
+    "pile": [
+     "3",
+     "6"
+    ],
+    "constraint": "EVEN",
+    "base": null,
+    "goal": {
+     "type": "out",
+     "single": true
+    }
+   },
+   {
+    "id": "p27",
+    "name": "Face-Down Burn",
+    "hand": [
+     "3",
+     "9",
+     "8"
+    ],
+    "pile": [
+     "8",
+     "2",
+     "8",
+     "8"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "single": true
+    }
+   },
+   {
+    "id": "p28",
+    "name": "Bottom Eight Flips",
+    "hand": [
+     "5",
+     "3",
+     "8"
+    ],
+    "pile": [
+     "8",
+     "Q",
+     "2",
+     "3"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "single": true
+    }
+   },
+   {
+    "id": "p29",
+    "name": "Jokers Pick Up Six",
+    "hand": [
+     "5",
+     "10",
+     "J",
+     "10",
+     "5",
+     "5",
+     "JOKER"
+    ],
+    "pile": [
+     "8",
+     "8",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "joker",
+     "min": 6
+    }
+   },
+   {
+    "id": "p30",
+    "name": "Joker Hands Over Six",
+    "hand": [
+     "3",
+     "10",
+     "3",
+     "8",
+     "10",
+     "10",
+     "JOKER"
+    ],
+    "pile": [
+     "7",
+     "3",
+     "6"
+    ],
+    "constraint": "EVEN",
+    "base": null,
+    "goal": {
+     "type": "joker",
+     "min": 6
+    }
+   },
+   {
+    "id": "p31",
+    "name": "Biggest Joker Pickup",
+    "hand": [
+     "J",
+     "5",
+     "5",
+     "10",
+     "3",
+     "8",
+     "JOKER"
+    ],
+    "pile": [
+     "8",
+     "K",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "joker",
+     "min": 7
+    }
+   },
+   {
+    "id": "p32",
+    "name": "Odd Pile, Big Joker",
+    "hand": [
+     "10",
+     "5",
+     "5",
+     "8",
+     "6",
+     "8",
+     "JOKER"
+    ],
+    "pile": [
+     "8",
+     "2",
+     "J"
+    ],
+    "constraint": "ODD",
+    "base": null,
+    "goal": {
+     "type": "joker",
+     "min": 7
+    }
    }
   ]
  },
