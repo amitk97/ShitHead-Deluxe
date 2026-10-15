@@ -511,7 +511,6 @@
           }
         },
         "wishlist": {
-          ".validate": "newData.numChildren() <= 30",
           "$itemId": {
             ".validate": "$itemId.matches(/^[a-z0-9-]{3,40}$/) && newData.val() === true"
           }
