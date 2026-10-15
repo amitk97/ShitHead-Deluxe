@@ -16495,6 +16495,10 @@
       if (tab) {
         tab.classList.toggle('hidden', !win);
         if (win) tab.textContent = 'Seasonal';
+        // During an event Seasonal is the first tab, in front of Daily; otherwise it waits at the end.
+        const bar = tab.parentNode;
+        if (win && bar.firstElementChild !== tab) bar.insertBefore(tab, bar.firstElementChild);
+        else if (!win && bar.lastElementChild !== tab) bar.appendChild(tab);
       }
       if (!win) {
         // The event ended while the tab was open: back to Daily.

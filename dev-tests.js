@@ -8772,9 +8772,11 @@ async function runDevTestSuite() {
       renderSeasonalChallenges();
       const tab = document.querySelector('[data-challenge-tab="seasonal"]');
       assertTrue(!tab.classList.contains('hidden') && tab.textContent.includes('Seasonal'), 'Shown during Halloween');
+      assertEqual(document.querySelector('[data-challenge-tab]').dataset.challengeTab, 'seasonal', 'Seasonal is the first tab during an event');
       const list = document.getElementById('challengesSeasonalList').textContent;
       assertTrue(list.includes('3/50') && list.includes('Season Complete'), 'Rows show progress and the bonus', list);
     } finally { seasonalNowOverride = savedNow; challengeEconomy = savedEco; renderSeasonalChallenges(); }
+    assertEqual([...document.querySelectorAll('[data-challenge-tab]')].map(b => b.dataset.challengeTab), ['daily','weekly','ranked','bots','seasonal'], 'Back to the end once the event is over');
   });
   await test('Free tables: Oak Wood and Classic Felt are unlocked for everyone, with real photo-like art', async () => {
     const saved = cosmeticPurchaseState, savedEq = { ...equippedCosmetics };

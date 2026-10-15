@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v368: [['target', 'During an event, the Seasonal challenges are now the first tab.']],
       v367: [['sparkle', 'A pop-up now tells you when an event starts: what is in the Shop and what you can earn.', WN_KEY]],
       v366: [['puzzle', 'Six new weekly puzzles, so there is a different one for each of the 52 weeks of the year.', WN_KEY]],
       v365: [['sparkle', 'During events the computer players wear and use that event\'s avatar, card back, burn, Joker and victory effects. They go back to the plain look when the event ends.', WN_KEY]],

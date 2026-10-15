@@ -1,3 +1,7 @@
+## v368 — Seasonal tab first
+
+- `renderSeasonalChallenges` moves `[data-challenge-tab="seasonal"]` to the front of `#challengeTabs` while an event is live and back to the end when it is over (the tab opens on whichever panel was last shown; only the order changed). Dev test "Seasonal challenges…" checks both.
+
 ## v367 — event pop-up
 
 - `§ Event popup` in `app.js` (next to `maybeShowWhatsNew`): when a seasonal event is live and this device hasn't seen that instance (`w.key`, e.g. `halloween-2026`; localStorage `shithead_event_popup_seen`, last 20), `#eventPopupModal` shows "<Event> is live", days left, every Shop item with its price (`EVENT_POPUP_ROWS` + emotes, from `ev.names` / `SEASONAL_PRICES`), and the earn list (the earn-only avatar after `SEASONAL_EARN_WINS` wins, the event challenges' total, the seasonal XP boost). Open Shop sets `shopTab = SEASONAL_TAB` and opens the Shop; Later closes. Waits for a calm home screen (no match, lesson, tour, What's New or other pop-up). It is a blocking overlay (`BLOCKING_OVERLAY_IDS`, `BACK_LAYERS`). A new event needs nothing extra. The dev suite pins its date outside events; the test sets its own. Dev test "v367: a live event shows a pop-up…".
