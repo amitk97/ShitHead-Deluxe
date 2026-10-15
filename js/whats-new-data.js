@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v376: [['sparkle', 'Finish all four challenges of an event to earn its Champion frame: a gold-and-event-colour frame for your cards, one for every event.', WN_KEY]],
       v375: [['sparkle', 'Gift an item straight from a friend\'s wishlist, and get a mail when something on your wishlist is in the Shop for an event.', WN_KEY]],
       v374: [['sparkle', 'Shop wishlist: tap the heart on any item to save it. Your wishlist shows on your Profile, and other players can see it on your player card.', WN_KEY]],
       v373: [['sparkle', 'Ranked wins, finished matches and Jokers now count towards the daily, weekly and event challenges.', WN_KEY]],

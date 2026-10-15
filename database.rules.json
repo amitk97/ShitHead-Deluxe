@@ -87,6 +87,8 @@
               newData.val().matches(/^frame-gauntlet-(hard|boss)$/) ||
               newData.val().matches(/^frame-(split-crimson|split-royal|split-noir)$/) ||
               newData.val().matches(/^frame-(dashed-gold|neon-tube|spectrum)$/) ||
+              newData.val().matches(/^frame-(lunar|valentine|ramadan|easter|summer)-champion$/) ||
+              newData.val().matches(/^frame-(halloween|diwali|christmas|newyear)-champion$/) ||
               (newData.val().matches(/^frame-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^frame-(halloween|diwali|christmas|newyear)$/)))))"
           },

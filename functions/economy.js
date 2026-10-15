@@ -237,6 +237,20 @@ function pruneMap(map, keep = PROCESSED_KEEP) {
   return Object.fromEntries(entries.sort((a, b) => at(b[1]) - at(a[1])).slice(0, keep));
 }
 
+// Finishing all four challenges of an event earns its Champion frame (v376).
+function grantChampionFrame(user, key, now) {
+  const m = /^season_([a-z]+)-\d{4}_all$/.exec(key);
+  const ev = m && CAT.seasonalEvents.find(e => e.id === m[1]);
+  if (!ev) return null;
+  const id = `frame-${ev.id}-champion`;
+  user.ownedCosmetics = user.ownedCosmetics || {};
+  if (user.ownedCosmetics[id]) return null;
+  user.ownedCosmetics[id] = { cost: 0, purchasedAt: now };
+  user.activityInbox = user.activityInbox || {};
+  const name = `${ev.name} Champion`;
+  user.activityInbox[`unlock_${id}`] = { type: 'shop', unlocked: true, name, cost: 0, requirement: 'Finish all four event challenges', sentAt: now };
+  return { id, name };
+}
 // ---- Challenges ---------------------------------------------------------------------
 function recordClaim(user, id, name, reward, now) {
   user.completedChallenges = user.completedChallenges || {};
@@ -244,6 +258,7 @@ function recordClaim(user, id, name, reward, now) {
   user.challengeInbox = user.challengeInbox || {};
   user.challengeInbox[id] = { name: clip(name || id, 80), reward, completedAt: now };
   addDiamonds(user, reward);
+  grantChampionFrame(user, id, now);
   return { id, name, reward };
 }
 const sumValues = (obj) => Object.values(obj || {}).reduce((s, n) => s + num(n), 0);
@@ -290,6 +305,7 @@ function grantEarnedAvatars(user, legacy, now) {
   const rs = user.rankedStats || {};
   const peak = Math.max(num(user.rating), num(rs.highestRating));
   const newly = [];
+  Object.keys(user.completedChallenges || {}).forEach(k => { const f = grantChampionFrame(user, k, now); if (f) newly.push(f); });
   Object.entries(CAT.earned).forEach(([id, rule]) => {
     if (owns(user, legacy, id)) return;
     const met = rule.type === 'peakRating' ? peak >= rule.min

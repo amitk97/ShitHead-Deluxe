@@ -8883,6 +8883,17 @@ async function runDevTestSuite() {
       assertTrue(card.includes('On your wishlist') && card.includes(seasonItem.name) && card.includes('data-season-shop'), 'Wishlist mail card');
     } finally { seasonalNowOverride = savedNow; wishlistIds = savedSet; cosmeticPurchaseState = savedOwned; }
   });
+  await test('v376: every event has an earn-only Champion frame', () => {
+    SEASONAL_EVENTS.forEach(ev => {
+      const id = `frame-${ev.id}-champion`;
+      const item = EARNED_FRAMES.find(f => f.id === id);
+      assertTrue(!!item && item.earned && item.cost === 0, id + ' is an earn-only frame');
+      assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.id === id), id + ' is not sold');
+      assertTrue(COSMETIC_RUNTIME_IDS.frame.has(id), id + ' can be equipped');
+      assertTrue(getCosmeticFrameStyle(id).includes('box-shadow') && getOpponentCosmeticFrameStyle(id).includes('box-shadow'), id + ' has a style');
+      assertEqual(customGroupOf(item), 'seasonal', id + ' sits in the Seasonal group');
+    });
+  });
   await test('Free tables: Oak Wood and Classic Felt are unlocked for everyone, with real photo-like art', async () => {
     const saved = cosmeticPurchaseState, savedEq = { ...equippedCosmetics };
     try {

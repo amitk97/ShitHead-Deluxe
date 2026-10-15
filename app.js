@@ -9992,7 +9992,7 @@
         const done = SEASONAL_CHALLENGES.filter(c => (challengeEconomy.completedChallenges || {})[seasonalCompletionKey(w.key, c.id)]).length;
         const earn = [];
         if (wins < SEASONAL_EARN_WINS && !seasonalOwned(`avatar-${ev.id}-earned`)) earn.push(`<li>${SEASONAL_EARN_WINS - wins} more win${SEASONAL_EARN_WINS - wins === 1 ? '' : 's'} for the <b>${escapeHtml(ev.names.earned)}</b> avatar</li>`);
-        if (done < SEASONAL_CHALLENGES.length) earn.push(`<li>${SEASONAL_CHALLENGES.length - done} event challenge${SEASONAL_CHALLENGES.length - done === 1 ? '' : 's'} still to finish</li>`);
+        if (done < SEASONAL_CHALLENGES.length) earn.push(`<li>${SEASONAL_CHALLENGES.length - done} event challenge${SEASONAL_CHALLENGES.length - done === 1 ? '' : 's'} still to finish for the ${escapeHtml(ev.name)} Champion frame</li>`);
         if (!rows && !emotes && !earn.length) return null;
         return `${rows || emotes ? `<p class="event-popup-sub">Leaving the Shop soon</p><ul class="event-popup-list">${rows}${emotes}</ul>` : ''}
           ${earn.length ? `<p class="event-popup-sub">Still to earn</p><ul class="event-popup-earn">${earn.join('')}</ul>` : ''}`;
@@ -10002,7 +10002,8 @@
       return `<p class="event-popup-sub">In the Shop, until the event ends</p><ul class="event-popup-list">${rows}${emotes}</ul>
         <p class="event-popup-sub">Earn</p><ul class="event-popup-earn">
           <li>Win ${SEASONAL_EARN_WINS} games to earn the <b>${escapeHtml(ev.names.earned)}</b> avatar</li>
-          <li>Four event challenges plus a bonus: ${challengeTotal} 💎 in all</li>${boost}</ul>`;
+          <li>Four event challenges plus a bonus: ${challengeTotal} 💎 in all</li>
+          <li>Finish all four for the <b>${escapeHtml(ev.name)} Champion</b> frame</li>${boost}</ul>`;
     }
     function showEventPopup(w, opts = {}) {
       const ev = w.event;
@@ -10969,7 +10970,18 @@
       style.textContent = css;
       document.head.appendChild(style);
     })();
-    const SEASONAL_FRAME_STYLES = Object.fromEntries(SEASONAL_EVENTS.map(ev => [`frame-${ev.id}`, ev.frame]));
+    // Champion frames (v376): earn-only, one per event, for finishing all four event challenges.
+    SEASONAL_EVENTS.forEach(ev => {
+      EARNED_FRAMES.push({ id: `frame-${ev.id}-champion`, category: 'Frames', name: `${ev.name} Champion`, earned: true, champion: ev.id, cost: 0, requirement: `Finish all four ${ev.name} challenges`, tones: [ev.tones[0], ev.tones[1], '#fde68a'] });
+    });
+    const SEASONAL_FRAME_STYLES = Object.fromEntries(SEASONAL_EVENTS.flatMap(ev => [[`frame-${ev.id}`, ev.frame],
+      [`frame-${ev.id}-champion`, [`inset 0 0 0 1px #fde68a,inset 0 0 0 3px ${ev.tones[1]},0 0 10px ${ev.tones[1]}`, `0 0 0 1px #fde68a,0 0 5px ${ev.tones[1]}`]]]));
+    (function installChampionFrameStyles() {
+      const style = document.createElement('style');
+      style.id = 'championFrameStyles';
+      style.textContent = SEASONAL_EVENTS.map(ev => `body[data-equipped-frame="frame-${ev.id}-champion"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card) { box-shadow:${SEASONAL_FRAME_STYLES[`frame-${ev.id}-champion`][0]} !important; }`).join('\n');
+      document.head.appendChild(style);
+    })();
     // ============================================================
     // SEASONAL EFFECTS — burns (on the pile) and victories (full screen),
     // drawn with the same bfxAdd/bfxAnimate helpers as the shape effects.
@@ -12161,7 +12173,7 @@
     });
     const COSMETIC_RUNTIME_IDS = Object.freeze({
       cardBack: new Set(['back-cobalt-linen','back-sage-linen','back-plum-linen','back-midnight','back-emerald','back-neon','back-crimson','back-nebula','back-inferno','back-arcade','back-space','back-tartan','back-artdeco','back-dragon','back-stained', ...LEVEL_BACK_IDS, ...seasonalIdsOf('cardBack')]),
-      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet','frame-gauntlet-hard','frame-gauntlet-boss','frame-split-crimson','frame-split-royal','frame-split-noir','frame-dashed-gold','frame-neon-tube','frame-spectrum', ...seasonalIdsOf('frame')]),
+      frame: new Set(['frame-silver','frame-gold','frame-diamond','frame-obsidian-throne','frame-emerald-sovereign','frame-darkness','frame-gauntlet','frame-gauntlet-hard','frame-gauntlet-boss','frame-split-crimson','frame-split-royal','frame-split-noir','frame-dashed-gold','frame-neon-tube','frame-spectrum', ...seasonalIdsOf('frame'), ...SEASONAL_EVENTS.map(e => `frame-${e.id}-champion`)]),
       deck: new Set(['deck-obsidian','deck-emerald','deck-cyber','deck-crimson','deck-bigprint','deck-casino','deck-arcade','deck-fourcolour','deck-lavender','deck-paper','deck-blueprint','deck-chalk','deck-frost','deck-neonnight','deck-royalgold']),
       emotes: new Set(['emotes-classic','emotes-savage','emotes-victory','emotes-chaos','emotes-royal','emotes-animals','emotes-sports','emotes-flags-europe','emotes-flags-north-america','emotes-flags-south-america','emotes-flags-asia','emotes-flags-africa','emotes-flags-oceania', ...seasonalIdsOf('emotes')]),
       tableTheme: new Set(['table-wood','table-felt','table-casino','table-winter','table-midnight','table-candyfloss','table-royal','table-desert','table-jungle','table-devilish','table-angelic','table-neon','table-aurora','table-space', ...seasonalIdsOf('tableTheme')]),
@@ -12747,7 +12759,7 @@
     const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
     function customGroupOf(item) {
       if (!item || item.builtIn) return 'free';
-      if (item.season) return 'seasonal';
+      if (item.season || item.champion) return 'seasonal';
       if (LEVEL_REWARDS.includes(item)) return 'level';
       if (item.gauntlet || EARNED_FRAMES.includes(item)) return 'gauntlet';
       if (item.referral) return 'friends';
