@@ -211,6 +211,18 @@ async function refreshProfile(uid) {
 // boards are already gone, see onUserChanged).
 const boardPaths = (uid) => boardKeys().map(board => `boards/${board}/${uid}`);
 
+// Same numbers as the client's seasonRecapMail (app.js): wins, challenges done, their Diamonds.
+function eventRecapMail(w, wins, completed, now = Date.now()) {
+  const CAT = require('./catalog.json');
+  const done = CAT.seasonalChallenges.filter(c => completed[`season_${w.key}_${c.id}`]);
+  const bonus = !!completed[`season_${w.key}_${CAT.seasonalChallengeBonus.id}`];
+  wins = Number(wins) || 0;
+  if (!wins && !done.length) return null;
+  const diamonds = done.reduce((s, c) => s + c.reward, 0) + (bonus ? CAT.seasonalChallengeBonus.reward : 0);
+  const earned = wins >= 3; // SEASONAL_EARN_WINS
+  return { type: 'season', event: w.id, recap: { wins, done: done.length, total: CAT.seasonalChallenges.length, diamonds, earned }, sentAt: now };
+}
+
 // Daily (index.js payEventPrizes): once an event has ended, pay the top places of its board.
 // A per-player marker (eventPrizes/<key>/paid/<uid>, server-only root path) is taken BEFORE paying, so a
 // retry never pays twice; the event is done once every winner has been handled. Boards of events
@@ -223,7 +235,7 @@ async function payEventPrizes(now = Date.now()) {
     if (addDays(w.end, EVENT_PAY_DAYS) < today) continue;
     const doneRef = db().ref(`eventPrizes/${w.key}/done`);
     if ((await doneRef.once('value')).val()) continue;
-    const snap = await db().ref(`boards/event_${w.key}`).orderByChild('count').limitToLast(50).once('value');
+    const snap = await db().ref(`boards/event_${w.key}`).orderByChild('count').once('value');
     const rows = [];
     snap.forEach(c => { rows.push({ uid: c.key, count: Number(c.child('count').val()) || 0 }); });
     rows.sort((a, b) => b.count - a.count);
@@ -239,9 +251,18 @@ async function payEventPrizes(now = Date.now()) {
       await db().ref(`users/${r.uid}/activityInbox/event_${w.key}`).set({ type: 'eventPrize', event: w.id, key: w.key, rank: r.rank, wins: r.count, reward, sentAt: now });
       paid.push({ key: w.key, uid: r.uid, rank: r.rank, reward });
     }
+    // Recap mail (server version of the client's v371 one, so players who open the game later still get it):
+    // everyone on the event board who has no -recap mark yet. The mark matches the client's, so it never sends a second.
+    for (const r of rows) {
+      const markRef = db().ref(`users/${r.uid}/seasonMailSent/${w.key}-recap`);
+      if ((await markRef.once('value')).val() || (await db().ref(`users/${r.uid}/deletion`).once('value')).exists()) continue;
+      const completed = (await db().ref(`users/${r.uid}/completedChallenges`).once('value')).val() || {};
+      const mail = eventRecapMail(w, r.count, completed, now);
+      await db().ref().update({ [`users/${r.uid}/seasonMailSent/${w.key}-recap`]: true, ...(mail ? { [`users/${r.uid}/activityInbox/season_${w.key}-recap`]: mail } : {}) });
+    }
     await doneRef.set(now);
   }
   return paid;
 }
 
-module.exports = { payEventPrizes, eventPrizeFor, eventBoardKeys, EVENT_PRIZES, EVENT_MIN_WINS, syncLevel, BOARDS, TIERS, onUserChanged, placeOn, boardPaths, refreshProfile, weekBoard, weeklyCounts };
+module.exports = { eventRecapMail, payEventPrizes, eventPrizeFor, eventBoardKeys, EVENT_PRIZES, EVENT_MIN_WINS, syncLevel, BOARDS, TIERS, onUserChanged, placeOn, boardPaths, refreshProfile, weekBoard, weeklyCounts };

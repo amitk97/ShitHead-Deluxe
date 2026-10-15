@@ -1,3 +1,7 @@
+## v378 — server-sent event recap mail
+
+- `payEventPrizes` (`functions/boards.js`, the daily 04:00 UK job from v377) also sends the recap: after the prizes, for everyone on the event's board (`boards/event_<key>`, i.e. at least one event win) with no `users/{uid}/seasonMailSent/<key>-recap` mark, `eventRecapMail(w, wins, completed)` (same numbers as the client's `seasonRecapMail`: wins, challenges done, their Diamonds, earned avatar; `SEASONAL_EARN_WINS` is 3 there) is written to `activityInbox/season_<key>-recap` together with the same mark, so the client's v371 mail (at sign-in, ≤14 days) never sends a second one. The mail waits in the Inbox, so a player who opens the game weeks later still gets it. Players with only challenge progress and no win are left to the client path. Test: `node tools/event-board-test.js`. **Functions change**; no rules change.
+
 ## v377 — event pop-up Preview, event leaderboard
 
 - **Preview:** every row of the event pop-up (and the emotes) has a `.event-popup-preview[data-event-preview=<item id>]` button; one listener on `#eventPopupBody` calls `openBigPreview(id)` (z 105 over the pop-up's 95).
