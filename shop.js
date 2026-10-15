@@ -301,7 +301,7 @@ document.addEventListener('keydown', (e) => {
         return `<div data-shop-row="${item.id}" class="rounded-xl border ${owned ? 'border-emerald-700' : 'border-slate-800'} bg-slate-900/60 overflow-hidden">
           <div class="flex items-center gap-2 p-2">
             ${type === 'tableTheme' ? '' : `<span class="shop-row-thumb">${shopCosmeticThumbnail(item, type)}</span>`}
-            <span class="min-w-0 flex-1"><span class="flex items-center gap-1"><span class="block text-[10px] font-black text-white truncate">${item.name}</span>${isNew ? '<span class="shrink-0 rounded-full bg-fuchsia-600 px-1.5 py-0.5 text-[7px] font-black text-white">NEW</span>' : ''}</span><span class="block text-[8px] text-slate-500">${getCosmeticDescription(type)}</span>${!owned && buyable && !affordable ? `<span class="block text-[8px] font-bold text-rose-400">Need 💎${shortfall} more</span>` : ''}</span>
+            <span class="min-w-0 flex-1"><span class="flex items-center gap-1"><span class="block text-[10px] font-black text-white truncate">${item.name}</span><button type="button" class="wish-heart ${isWished(item.id) ? 'is-on' : ''}" data-wish-item="${item.id}" aria-pressed="${isWished(item.id)}" aria-label="${isWished(item.id) ? 'Remove from' : 'Add to'} wishlist"><svg class="ic" aria-hidden="true"><use href="#ic-heart"/></svg></button>${isNew ? '<span class="shrink-0 rounded-full bg-fuchsia-600 px-1.5 py-0.5 text-[7px] font-black text-white">NEW</span>' : ''}</span><span class="block text-[8px] text-slate-500">${getCosmeticDescription(type)}</span>${!owned && buyable && !affordable ? `<span class="block text-[8px] font-bold text-rose-400">Need 💎${shortfall} more</span>` : ''}</span>
             <span class="shrink-0 flex flex-col gap-1">
               <button type="button" data-preview-cosmetic-id="${item.id}" aria-expanded="false" class="cosmetic-preview-btn min-w-[66px] px-2 py-1 rounded-lg border border-cyan-600 text-[8px] font-black text-cyan-300 hover:bg-cyan-500 hover:text-slate-950 transition">PREVIEW</button>
               ${owned
@@ -478,6 +478,7 @@ document.addEventListener('keydown', (e) => {
       if (shopFilter === 'owned') return owned;
       if (shopFilter === 'unowned') return !owned;
       if (shopFilter === 'equipped') return owned && equippedIdOf(type) === item.id;
+      if (shopFilter === 'wishlist') return isWished(item.id);
       return true;
     }
 

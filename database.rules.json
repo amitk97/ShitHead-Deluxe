@@ -508,6 +508,12 @@
               newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000"
           }
         },
+        "wishlist": {
+          ".validate": "newData.numChildren() <= 30",
+          "$itemId": {
+            ".validate": "$itemId.matches(/^[a-z0-9-]{3,40}$/) && newData.val() === true"
+          }
+        },
         "showcase": {
           "$type": {
             ".validate": "($type.matches(/^(tableTheme|cardBack|frame|deck)$/) ||

@@ -1,3 +1,7 @@
+## v374 — Shop wishlist
+
+- `§ Wishlist` in `app.js` (after `syncShowcase`): `wishlistIds` (Set, localStorage `shithead_wishlist`, max `WISHLIST_MAX` 30) is mirrored to `publicProfiles/{uid}/wishlist` = `{itemId: true}` (rules: owner-writable, ≤30 children, id `^[a-z0-9-]{3,40}$`, value `true`; **rules changed, paste them**). `toggleWishlist(id)` (any `[data-wish-item]` heart, via one document click handler), `loadWishlist` at sign-in (merges the account's list with the device's), `wishlistHtml(ids, {mine})` draws the rows: Profile → Wishlist (`#profileWishlist`, tap a row = open that item in the Shop via `openLockedCosmetic`, heart removes) and, read-only, on the player card (`profile.wishlist` from `publicProfiles`). The Shop row has a heart by the name (`.wish-heart`, `#ic-heart`) and a WISHLIST filter chip (`shopFilter 'wishlist'`). Seasonal items can be wished too. Dev test "v374: Shop wishlist…".
+
 ## v373 — Ranked counts for challenges
 
 - Ranked is server-held, so `checkPlayerFinished` never runs for the local player there: finishes, wins and Jokers never reached the daily / weekly / Seasonal challenges (only burns did, via `notifyRankedBurnChallenges`). That function now also sends `play-joker` (delta of `gameStats.jokersPlayed`) and, when the local seat becomes `hasFinished` with `finishRank` below the player count (the auto-finished loser is not a finish), `finish-any-match`, plus `finish-first` / `win-any-match` / `win-ranked-match` for 1st place. Dev test "v373: a Ranked finish, win and Joker count…". Older Ranked games are not back-filled.

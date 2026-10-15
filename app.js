@@ -12314,6 +12314,62 @@
         .then(() => db.ref(`publicProfiles/${currentUser.uid}/showcase/deck`).set(equippedIdOf('deck')))
         .catch(() => {});
     }
+    // § Wishlist (v374): a heart on each Shop item. The list lives in publicProfiles/{uid}/wishlist
+    // ({itemId: true}, owner-writable, anyone signed in reads it) and in localStorage for guests
+    // and offline; the Profile page lists it and other players see it on the player card.
+    const WISHLIST_KEY = 'shithead_wishlist', WISHLIST_MAX = 30;
+    let wishlistIds = (() => { try { return new Set(JSON.parse(localStorage.getItem(WISHLIST_KEY) || '[]')); } catch (e) { return new Set(); } })();
+    const isWished = id => wishlistIds.has(id);
+    function wishlistItems(ids = wishlistIds) {
+      return [...ids].map(id => COSMETIC_SHOP_ITEMS.find(i => i.id === id)).filter(Boolean);
+    }
+    function saveWishlist() {
+      try { localStorage.setItem(WISHLIST_KEY, JSON.stringify([...wishlistIds])); } catch (e) {}
+      if (!currentUser || typeof db === 'undefined') return;
+      const map = {}; wishlistIds.forEach(id => { map[id] = true; });
+      db.ref(`publicProfiles/${currentUser.uid}/wishlist`).set(wishlistIds.size ? map : null).catch(() => {});
+    }
+    function toggleWishlist(id) {
+      if (wishlistIds.has(id)) wishlistIds.delete(id);
+      else if (wishlistIds.size >= WISHLIST_MAX) { notifyBanner(`Your wishlist is full (${WISHLIST_MAX}).`); return; }
+      else wishlistIds.add(id);
+      saveWishlist();
+      renderProfileWishlist();
+      if (typeof renderCosmeticShop === 'function' && !document.getElementById('shopModal')?.classList.contains('hidden')) renderCosmeticShop();
+    }
+    // At sign-in the account's list wins and is merged with what this device kept as a guest.
+    function loadWishlist(user = currentUser) {
+      if (!user || typeof db === 'undefined') return;
+      db.ref(`publicProfiles/${user.uid}/wishlist`).once('value').then(snap => {
+        if (!currentUser || currentUser.uid !== user.uid) return;
+        Object.keys(snap.val() || {}).forEach(id => { if (wishlistIds.size < WISHLIST_MAX) wishlistIds.add(id); });
+        saveWishlist(); renderProfileWishlist();
+      }).catch(() => {});
+    }
+    function wishlistRowHtml(item, opts = {}) {
+      const type = COSMETIC_CATEGORY_TYPES[item.category];
+      const owned = !!cosmeticPurchaseState[item.id];
+      const thumb = type === 'tableTheme' ? '' : `<span class="wish-thumb">${shopCosmeticThumbnail(item, type)}</span>`;
+      const body = `${thumb}<span class="wish-text"><b>${escapeHtml(item.name)}</b><small>${escapeHtml(item.category.replace(/s$/, ''))} · ${opts.mine && owned ? 'Owned' : `💎 ${item.cost}`}</small></span>`;
+      return opts.mine
+        ? `<div class="wish-row"><button type="button" class="wish-open" data-wish-open="${escapeAttr(item.id)}">${body}</button><button type="button" class="wish-heart is-on" data-wish-item="${escapeAttr(item.id)}" aria-pressed="true" aria-label="Remove ${escapeAttr(item.name)} from wishlist"><svg class="ic" aria-hidden="true"><use href="#ic-heart"/></svg></button></div>`
+        : `<div class="wish-row">${body}</div>`;
+    }
+    function wishlistHtml(ids, opts = {}) {
+      const items = wishlistItems(new Set(Object.keys(ids || {})));
+      if (!items.length) return opts.mine ? '<p class="wish-empty">Tap the heart on a Shop item to save it here. Other players can see your wishlist.</p>' : '';
+      return items.map(i => wishlistRowHtml(i, opts)).join('');
+    }
+    function renderProfileWishlist() {
+      const slot = document.getElementById('profileWishlist');
+      if (slot) slot.innerHTML = wishlistHtml(Object.fromEntries([...wishlistIds].map(id => [id, true])), { mine: true });
+    }
+    document.addEventListener('click', (e) => {
+      const heart = e.target.closest?.('[data-wish-item]');
+      if (heart) { e.preventDefault(); e.stopPropagation(); toggleWishlist(heart.dataset.wishItem); return; }
+      const open = e.target.closest?.('[data-wish-open]');
+      if (open) { document.getElementById('profileModal')?.classList.add('hidden'); openLockedCosmetic(open.dataset.wishOpen); }
+    });
     function cosmeticDisplayName(type, id) {
       if (!id || id === 'default') return 'Default';
       const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id && COSMETIC_CATEGORY_TYPES[entry.category] === type);
@@ -12374,6 +12430,7 @@
           <div class="min-w-0"><div id="playerPopupName" class="pp-name">${escapeHtml(player.name)}${hasProfile && xpShown() && profile.level > 0 ? ` ${xpLevelBadge(profile.level)}` : ''}</div>${badge}${online}</div></div>
         ${hasProfile ? playerPopupStatsHtml(profile.stats || {}, profile) : '<div class="pp-note">This player isn\'t signed in, so they don\'t have a rank or stats yet.</div>'}
         ${showcaseHtml(profile.showcase || player.cosmetics, { link: true })}
+        ${profile.wishlist && Object.keys(profile.wishlist).length ? `<div class="pp-showcase"><div class="pp-section">Wishlist</div><div class="wish-list">${wishlistHtml(profile.wishlist)}</div></div>` : ''}
         ${actions}`;
     }
     function renderPlayerPopupBot(player) {
@@ -14046,7 +14103,7 @@
     // Everything a signed-in session starts (see onAuthStateChanged).
     function startSignedInSession(user) {
       ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); if (!IS_DEV_TEST_PAGE) attemptMatchReconnect();
-      initChallengeEconomy().then(() => { claimDailyLoginReward(); sendSeasonalMail(); loadSeasonWins(); }); loadCosmeticCollection(user);
+      initChallengeEconomy().then(() => { claimDailyLoginReward(); sendSeasonalMail(); loadSeasonWins(); }); loadCosmeticCollection(user); loadWishlist(user);
       setTimeout(() => { if (currentUser && !devTestSuiteRunning) pruneOldRooms(); }, 15000);
       setTimeout(() => { if (currentUser && !devTestSuiteRunning) { registerPushToken(); shareSeasonCalendarWithWorker(); } }, 4000);
       // Preferences live under the account and do not depend on profile creation.
@@ -14149,6 +14206,7 @@
       refreshProfilePanel();
       refreshOwnAvatarDisplays();
       renderProfileShowcase();
+      renderProfileWishlist();
       refreshCollectionButton();
       refreshProfileStreak();
       renderProfileReferral(true);

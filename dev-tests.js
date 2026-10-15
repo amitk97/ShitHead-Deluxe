@@ -8850,6 +8850,24 @@ async function runDevTestSuite() {
       assertEqual(got.length, 0, 'the last player (ShitHead) does not count as a finish');
     } finally { notifyChallengeEvent = saved; state.players = savedPlayers; }
   });
+  await test('v374: Shop wishlist heart, Profile list, player card list, Wishlist filter', () => {
+    const savedSet = wishlistIds, savedUser = currentUser, savedOwned = cosmeticPurchaseState;
+    try {
+      wishlistIds = new Set(); currentUser = null; cosmeticPurchaseState = {};
+      const item = COSMETIC_SHOP_ITEMS.find(i => !i.season);
+      assertTrue(shopItemRowHtml(item, 0).includes(`data-wish-item="${item.id}"`), 'Shop row has a heart');
+      toggleWishlist(item.id);
+      assertTrue(isWished(item.id), 'Heart adds');
+      assertTrue(wishlistHtml({ [item.id]: true }, { mine: true }).includes('data-wish-item'), 'Profile row has a remove heart');
+      assertTrue(wishlistHtml({ [item.id]: true }).includes(item.name) && !wishlistHtml({ [item.id]: true }).includes('data-wish-item'), 'Other players see it read-only');
+      shopFilter = 'wishlist';
+      assertTrue(shopItemMatchesFilter(item, 0) && !shopItemMatchesFilter(COSMETIC_SHOP_ITEMS.find(i => i.id !== item.id), 0), 'Filter shows only wished items');
+      shopFilter = 'all';
+      toggleWishlist(item.id);
+      assertTrue(!isWished(item.id), 'Heart removes');
+      assertTrue(document.querySelector('[data-shop-filter="wishlist"]') && document.getElementById('profileWishlist'), 'Markup exists');
+    } finally { wishlistIds = savedSet; currentUser = savedUser; cosmeticPurchaseState = savedOwned; shopFilter = 'all'; saveWishlist(); }
+  });
   await test('Free tables: Oak Wood and Classic Felt are unlocked for everyone, with real photo-like art', async () => {
     const saved = cosmeticPurchaseState, savedEq = { ...equippedCosmetics };
     try {

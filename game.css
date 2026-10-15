@@ -2844,3 +2844,19 @@
     #homeEventChip small { font-size:11px; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     #homeEventChip .hec-go { font-size:20px; color:var(--ev-accent,#fbbf24); }
     #lobbyScreen.mode-page-open #homeEventChip { display:none !important; }
+
+/* § Wishlist (v374) */
+.wish-heart { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; flex:none; border-radius:999px; border:1px solid #334155; background:transparent; color:#64748b; padding:0; transition:color .15s, background .15s, border-color .15s, transform .2s var(--ease-bouncy, ease); }
+.wish-heart .ic { width:13px; height:13px; }
+.wish-heart:hover { color:#fb7185; border-color:#fb7185; }
+.wish-heart.is-on { color:#fb7185; border-color:#fb7185; background:rgba(251,113,133,.14); }
+.wish-heart.is-on .ic path { fill:currentColor; }
+.wish-heart:active { transform:scale(1.15); }
+.wish-list { display:grid; gap:5px; }
+.wish-row { display:flex; align-items:center; gap:6px; padding:5px 6px; border:1px solid #1e293b; border-radius:10px; background:rgba(15,23,42,.6); }
+.wish-open { display:flex; align-items:center; gap:8px; flex:1; min-width:0; text-align:left; background:none; border:0; padding:0; color:inherit; }
+.wish-row > .wish-thumb, .wish-open > .wish-thumb { flex:none; }
+.wish-text { display:flex; flex-direction:column; min-width:0; }
+.wish-text b { font-size:11px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.wish-text small { font-size:9px; color:#94a3b8; }
+.wish-empty { font-size:10px; color:#94a3b8; margin:0; }
