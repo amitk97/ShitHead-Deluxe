@@ -13,6 +13,8 @@ async function runDevTestSuite() {
   devTestSuiteRunning = true;
   const originalSaveGameState = saveGameState;
   saveGameState = function () {};
+  // Count/order tests assume no event is live; a real event (e.g. Halloween from 15 Oct) adds seasonal items. Tests that need an event set their own date.
+  seasonalNowOverride = '2026-09-01T12:00';
   burnInstantResolveForTests = true;
   // The economy lives on the server (functions/economy.js). Tests never reach
   // it: by default a call fails at once (as with no signal); tests that need
