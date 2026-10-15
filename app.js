@@ -9951,9 +9951,26 @@
     // pop-up lists what it sells and what can be earned. One per event instance.
     const EVENT_POPUP_SEEN_KEY = 'shithead_event_popup_seen';
     const EVENT_POPUP_ROWS = [['tableTheme', 'Table'], ['cardBack', 'Card Back'], ['frame', 'Frame'], ['avatar', 'Avatar'], ['burnEffect', 'Burn'], ['victoryEffect', 'Victory'], ['jokerEffect', 'Joker']];
-    function eventPopupHtml(ev) {
-      const rows = EVENT_POPUP_ROWS.map(([type, label]) => `<li><span>${label}</span><b>${escapeHtml(ev.names[type])}</b><em>${SEASONAL_PRICES[type]} 💎</em></li>`).join('');
-      const emotes = `<li><span>Emotes</span><b data-keep-emoji>${ev.emotes.join(' ')}</b><em>${SEASONAL_PRICES.emotes} 💎</em></li>`;
+    const EVENT_ENDING_DAYS = 3;
+    const seasonalOwned = (id) => !!(typeof cosmeticPurchaseState === 'object' && cosmeticPurchaseState && cosmeticPurchaseState[id]);
+    // opts.ending (the last EVENT_ENDING_DAYS days): only what the player does not own yet, and what is left to earn.
+    // Returns null when there is nothing left to say.
+    function eventPopupHtml(w, opts = {}) {
+      const ev = w.event;
+      const types = EVENT_POPUP_ROWS.filter(([type]) => !opts.ending || !seasonalOwned(seasonalItemId(type, ev.id)));
+      const rows = types.map(([type, label]) => `<li><span>${label}</span><b>${escapeHtml(ev.names[type])}</b><em>${SEASONAL_PRICES[type]} 💎</em></li>`).join('');
+      const emotesOwned = opts.ending && seasonalOwned(seasonalItemId('emotes', ev.id));
+      const emotes = emotesOwned ? '' : `<li><span>Emotes</span><b data-keep-emoji>${ev.emotes.join(' ')}</b><em>${SEASONAL_PRICES.emotes} 💎</em></li>`;
+      if (opts.ending) {
+        const wins = Math.min(SEASONAL_EARN_WINS, Number(seasonalWinState[w.key]) || 0);
+        const done = SEASONAL_CHALLENGES.filter(c => (challengeEconomy.completedChallenges || {})[seasonalCompletionKey(w.key, c.id)]).length;
+        const earn = [];
+        if (wins < SEASONAL_EARN_WINS && !seasonalOwned(`avatar-${ev.id}-earned`)) earn.push(`<li>${SEASONAL_EARN_WINS - wins} more win${SEASONAL_EARN_WINS - wins === 1 ? '' : 's'} for the <b>${escapeHtml(ev.names.earned)}</b> avatar</li>`);
+        if (done < SEASONAL_CHALLENGES.length) earn.push(`<li>${SEASONAL_CHALLENGES.length - done} event challenge${SEASONAL_CHALLENGES.length - done === 1 ? '' : 's'} still to finish</li>`);
+        if (!rows && !emotes && !earn.length) return null;
+        return `${rows || emotes ? `<p class="event-popup-sub">Leaving the Shop soon</p><ul class="event-popup-list">${rows}${emotes}</ul>` : ''}
+          ${earn.length ? `<p class="event-popup-sub">Still to earn</p><ul class="event-popup-earn">${earn.join('')}</ul>` : ''}`;
+      }
       const challengeTotal = SEASONAL_CHALLENGES.reduce((s, c) => s + c.reward, 0) + SEASONAL_CHALLENGE_BONUS.reward;
       const boost = XP_RULES.seasonalBoost > 1 ? `<li>${XP_RULES.seasonalBoost}× XP on everything you play</li>` : '';
       return `<p class="event-popup-sub">In the Shop, until the event ends</p><ul class="event-popup-list">${rows}${emotes}</ul>
@@ -9961,16 +9978,21 @@
           <li>Win ${SEASONAL_EARN_WINS} games to earn the <b>${escapeHtml(ev.names.earned)}</b> avatar</li>
           <li>Four event challenges plus a bonus: ${challengeTotal} 💎 in all</li>${boost}</ul>`;
     }
-    function showEventPopup(w) {
+    function showEventPopup(w, opts = {}) {
       const ev = w.event;
-      document.getElementById('eventPopupEmoji').textContent = ev.emoji;
-      document.getElementById('eventPopupTitle').textContent = `${ev.name} is live`;
+      const html = eventPopupHtml(w, opts);
+      const mark = (k) => { try { const seen = JSON.parse(localStorage.getItem(EVENT_POPUP_SEEN_KEY) || '[]'); localStorage.setItem(EVENT_POPUP_SEEN_KEY, JSON.stringify([...seen, k].slice(-20))); } catch (e) {} };
+      if (html === null) { mark(`${w.key}:ending`); return false; }
       const left = seasonDaysBetween(seasonalNow(), w.endsAt);
-      document.getElementById('eventPopupWhen').textContent = left <= 1 ? 'Last day' : `Leaves in ${left} days`;
-      document.getElementById('eventPopupBody').innerHTML = eventPopupHtml(ev);
+      const leftText = left <= 1 ? 'Last day' : `Leaves in ${left} days`;
+      document.getElementById('eventPopupEmoji').textContent = ev.emoji;
+      document.getElementById('eventPopupTitle').textContent = opts.ending ? `${ev.name} is ending` : `${ev.name} is live`;
+      document.getElementById('eventPopupWhen').textContent = opts.ending ? `${leftText} · last chance` : leftText;
+      document.getElementById('eventPopupBody').innerHTML = html;
       document.getElementById('eventPopupCard').style.setProperty('--ev-accent', ev.tones[1]);
       document.getElementById('eventPopupModal').classList.remove('hidden');
-      try { const seen = JSON.parse(localStorage.getItem(EVENT_POPUP_SEEN_KEY) || '[]'); localStorage.setItem(EVENT_POPUP_SEEN_KEY, JSON.stringify([...seen, w.key].slice(-20))); } catch (e) {}
+      mark(opts.ending ? `${w.key}:ending` : w.key);
+      return true;
     }
     document.getElementById('eventPopupLaterBtn').addEventListener('click', () => document.getElementById('eventPopupModal').classList.add('hidden'));
     document.getElementById('eventPopupShopBtn').addEventListener('click', () => {
@@ -9985,10 +10007,13 @@
       const busy = () => state.isMultiplayer || tutorialActive || (state.phase && state.phase !== 'LOBBY')
         || [...BLOCKING_OVERLAY_IDS, 'rejoinModal', 'matchSummaryModal', 'dailyRewardModal', 'whatsNewModal', 'welcomeTour'].some(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
       const tryShow = (attempt) => {
-        const w = activeSeasonalEvents().find(x => !seen.includes(x.key));
+        const live = activeSeasonalEvents();
+        const fresh = live.find(x => !seen.includes(x.key));
+        const ending = !fresh && live.find(x => seasonDaysBetween(seasonalNow(), x.endsAt) <= EVENT_ENDING_DAYS && !seen.includes(`${x.key}:ending`));
+        const w = fresh || ending;
         if (!w) return;
         if (busy()) { if (attempt < 120) setTimeout(() => tryShow(attempt + 1), 5000); return; }
-        showEventPopup(w);
+        showEventPopup(w, { ending: !fresh });
       };
       setTimeout(() => tryShow(0), 4500);
     }

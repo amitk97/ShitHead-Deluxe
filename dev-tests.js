@@ -3264,6 +3264,26 @@ async function runDevTestSuite() {
       assertTrue(text.includes('Halloween') && text.includes('days left') && text.includes('2/3 wins') && text.includes('0/4 challenges'), 'days left and progress', text);
     } finally { [seasonalNowOverride, currentUser, seasonalWinState] = was; refreshHomeEventChip(); }
   });
+  await test('v370: the last days of an event show an ending pop-up with only what is not owned yet', () => {
+    const was = [seasonalNowOverride, cosmeticPurchaseState, seasonalWinState];
+    try {
+      seasonalNowOverride = '2026-11-01T12:00';
+      const w = activeSeasonalEvents()[0];
+      cosmeticPurchaseState = { 'burn-halloween': { cost: 1000 } };
+      seasonalWinState = { 'halloween-2026': 1 };
+      assertTrue(showEventPopup(w, { ending: true }), 'opens');
+      const text = document.getElementById('eventPopupModal').textContent;
+      assertTrue(text.includes('Halloween is ending') && text.includes('last chance'), 'ending title', text);
+      assertTrue(!text.includes(w.event.names.burnEffect) && text.includes(w.event.names.victoryEffect), 'owned items are left out', text);
+      assertTrue(text.includes('2 more wins'), 'wins left', text);
+      assertTrue(JSON.parse(localStorage.getItem(EVENT_POPUP_SEEN_KEY)).includes('halloween-2026:ending'), 'marked seen');
+      document.getElementById('eventPopupLaterBtn').click();
+      cosmeticPurchaseState = Object.fromEntries([...EVENT_POPUP_ROWS.map(([ty]) => seasonalItemId(ty, 'halloween')), 'emotes-halloween', 'avatar-halloween-earned'].map(id => [id, { cost: 1 }]));
+      seasonalWinState = { 'halloween-2026': 3 };
+      challengeEconomy = { ...challengeEconomy, completedChallenges: Object.fromEntries([...SEASONAL_CHALLENGES.map(c => c.id)].map(id => [seasonalCompletionKey('halloween-2026', id), true])) };
+      assertEqual(showEventPopup(w, { ending: true }), false, 'nothing left: no pop-up');
+    } finally { [seasonalNowOverride, cosmeticPurchaseState, seasonalWinState] = was; document.getElementById('eventPopupModal').classList.add('hidden'); }
+  });
   await test('REGRESSION: opponent seats show picture + name on top and statuses below the cards', () => {
     freshState({ phase: 'SWAP' });
     state.players = [makePlayer({ id: 'p1', hand: [makeCard('4')] }),

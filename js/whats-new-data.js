@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v370: [['sparkle', 'In the last 3 days of an event, a reminder shows the items you do not own yet and what is left to earn.', WN_KEY]],
       v369: [['sparkle', 'While an event is on, the home screen shows how many days are left and how far you are, with a tap to open the event Shop.', WN_KEY]],
       v368: [['target', 'During an event, the Seasonal challenges are now the first tab.']],
       v367: [['sparkle', 'A pop-up now tells you when an event starts: what is in the Shop and what you can earn.', WN_KEY]],

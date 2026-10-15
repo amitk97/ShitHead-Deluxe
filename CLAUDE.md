@@ -1,3 +1,7 @@
+## v370 — event ending reminder
+
+- `showEventPopup(w, { ending: true })` (same `#eventPopupModal`): during the last `EVENT_ENDING_DAYS` (3) days of a live event, once per instance (`<key>:ending` in `shithead_event_popup_seen`, after the "is live" pop-up), `maybeShowEventPopup` shows "<Event> is ending" with only the items not owned (`cosmeticPurchaseState`) and what is left to earn (wins for the earn-only avatar, challenges unfinished). Nothing left = no pop-up (marked seen). `eventPopupHtml(w, opts)` returns null in that case. Dev test "v370: the last days of an event…".
+
 ## v369 — home event chip
 
 - `#homeEventChip` (above `#modeCarousel`, hidden on mode pages and when no event is live) shows "<Event> · N days left" and, signed in, the earn-only avatar's wins (`seasonalWinState[w.key]` of `SEASONAL_EARN_WINS`) plus event challenges done; a tap opens the Shop on the Seasonal tab. `refreshHomeEventChip` runs 1.5s after start (it reads consts declared later in app.js) and every 20s. Dev test "v369: the home screen shows an event chip…".
