@@ -3101,6 +3101,155 @@
       "5"
      ]
     }
+   },
+   {
+    "id": "p47",
+    "name": "Two Threes Make Four",
+    "zone": null,
+    "hand": [
+     "8",
+     "8",
+     "3",
+     "3",
+     "8"
+    ],
+    "pile": [
+     "K",
+     "2",
+     "3",
+     "3"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "burn"
+    }
+   },
+   {
+    "id": "p48",
+    "name": "Under The Ace",
+    "zone": null,
+    "hand": [
+     "10",
+     "3",
+     "8",
+     "8",
+     "8",
+     "10",
+     "4"
+    ],
+    "pile": [
+     "7",
+     "7",
+     "4",
+     "6",
+     "A"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "pickup",
+     "rival": [
+      "J",
+      "Q",
+      "K"
+     ]
+    }
+   },
+   {
+    "id": "p49",
+    "name": "Four Kings Face-Up",
+    "zone": "faceUp",
+    "hand": [
+     "10",
+     "6",
+     "K"
+    ],
+    "pile": [
+     "9",
+     "9",
+     "K",
+     "K",
+     "K"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out"
+    }
+   },
+   {
+    "id": "p50",
+    "name": "Jokers Pick Up Six, Again",
+    "zone": null,
+    "hand": [
+     "3",
+     "4",
+     "3",
+     "10",
+     "8",
+     "10",
+     "JOKER"
+    ],
+    "pile": [
+     "5",
+     "3",
+     "5"
+    ],
+    "constraint": null,
+    "base": "5",
+    "goal": {
+     "type": "joker",
+     "min": 6
+    }
+   },
+   {
+    "id": "p51",
+    "name": "End On A Nine",
+    "zone": null,
+    "hand": [
+     "9",
+     "5",
+     "10",
+     "5",
+     "5"
+    ],
+    "pile": [
+     "8",
+     "K",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "last": "9"
+    }
+   },
+   {
+    "id": "p52",
+    "name": "End On A Queen",
+    "zone": null,
+    "hand": [
+     "10",
+     "5",
+     "10",
+     "Q",
+     "5"
+    ],
+    "pile": [
+     "8",
+     "3",
+     "A",
+     "A",
+     "2"
+    ],
+    "constraint": null,
+    "base": null,
+    "goal": {
+     "type": "out",
+     "last": "Q"
+    }
    }
   ]
  },

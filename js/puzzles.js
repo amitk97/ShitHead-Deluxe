@@ -141,7 +141,26 @@
       hint: 'You cannot clear your Hand in time, so trap the Rival. Your 4, and the run of 10, 8 and Jack, are your first two turns in either order. Keep the 7 for the last turn: it is the card that leaves them stuck.' },
     { id: 'p46', tier: 5, title: 'Use Up Their Cards', hand: ['9', '8', '10', '2', '7', 'A'], pile: ['4', '3', '5'], constraint: null, base: '4',
       goal: { type: 'trap', turns: 3, rival: ['A', '6', 'Q', '5'] },
-      hint: 'You cannot clear your Hand in time, so trap the Rival. Your 9 and your 2 each end a turn, with the 10 and the 8 keeping your turn going. Keep the Ace for the last turn: it is the card that leaves them stuck.' }
+      hint: 'You cannot clear your Hand in time, so trap the Rival. Your 9 and your 2 each end a turn, with the 10 and the 8 keeping your turn going. Keep the Ace for the last turn: it is the card that leaves them stuck.' },
+    // v366: six more, so there is one for every week of the year (52).
+    { id: 'p47', tier: 2, title: 'Two Threes Make Four', hand: ['8', '8', '3', '3', '8'], pile: ['K', '2', '3', '3'], constraint: null,
+      goal: { type: 'burn' },
+      hint: 'The Pile already ends in two 3s. Play your two 3s together and four of a kind burns it.' },
+    { id: 'p48', tier: 3, title: 'Under The Ace', hand: ['10', '3', '8', '8', '8', '10', '4'], pile: ['7', '7', '4', '6', 'A'], constraint: null,
+      goal: { type: 'pickup', rival: ['J', 'Q', 'K'] },
+      hint: 'A 3 is see-through: the Rival still has to beat the Ace, and a Jack, Queen and King cannot. Play it and end your turn.' },
+    { id: 'p49', tier: 2, zone: 'faceUp', title: 'Four Kings Face-Up', hand: ['10', '6', 'K'], pile: ['9', '9', 'K', 'K', 'K'], constraint: null,
+      goal: { type: 'out' },
+      hint: 'Three Kings are already on the Pile. Your King makes four and burns it, then the 10 burns again before the 6.' },
+    { id: 'p50', tier: 4, title: 'Jokers Pick Up Six, Again', hand: ['3', '4', '3', '10', '8', '10', 'JOKER'], pile: ['5', '3', '5'], constraint: null, base: '5',
+      goal: { type: 'joker', min: 6 },
+      hint: 'Your 8 skips the Rival, and your 3s go on without changing what has to be beaten. Add them to the Pile, keep both 10s out of it, then play the Joker.' },
+    { id: 'p51', tier: 3, title: 'End On A Nine', hand: ['9', '5', '10', '5', '5'], pile: ['8', 'K', '2'], constraint: null,
+      goal: { type: 'out', last: '9' },
+      hint: 'Three 5s go together, then the 10 burns the Pile. The 9 has to be your very last card.' },
+    { id: 'p52', tier: 4, title: 'End On A Queen', hand: ['10', '5', '10', 'Q', '5'], pile: ['8', '3', 'A', 'A', '2'], constraint: null,
+      goal: { type: 'out', last: 'Q' },
+      hint: 'Play your two 5s together, then each 10 burns the Pile. The Queen must come last.' }
   ];
   PUZZLES.forEach(p => { p.goal = p.goal || { type: 'out' }; p.base = p.base || null; });
   const GOAL_NAMES = { out: 'Out in one turn', burn: 'Burn the Pile', pickup: 'Rival picks up', joker: 'Joker pickup', trap: 'Trap the Rival' };
