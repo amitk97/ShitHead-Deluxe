@@ -1,3 +1,7 @@
+## v373 — Ranked counts for challenges
+
+- Ranked is server-held, so `checkPlayerFinished` never runs for the local player there: finishes, wins and Jokers never reached the daily / weekly / Seasonal challenges (only burns did, via `notifyRankedBurnChallenges`). That function now also sends `play-joker` (delta of `gameStats.jokersPlayed`) and, when the local seat becomes `hasFinished` with `finishRank` below the player count (the auto-finished loser is not a finish), `finish-any-match`, plus `finish-first` / `win-any-match` / `win-ranked-match` for 1st place. Dev test "v373: a Ranked finish, win and Joker count…". Older Ranked games are not back-filled.
+
 ## v372 — event bot names
 
 - `EVENT_BOT_NAMES` (app.js, next to `BOT_NAMES`): 5 plain-letter names (≤10) per event id (Halloween Casper/Boo/Pumpkin/Dracula/Mummy, Christmas Santa/MrsClaus/Rudolph/Grinch/Frosty, Valentine Cupid…, Summer June/July/August…). `botNamePool(skip)` returns the live events' names (shuffled) followed by the usual `BOT_NAMES`, minus `skip`; used by Play Computer (`rawPicked`), the multiplayer lobby's + Bot and `friends-lobby.js`. Names are stored when the bot is created, so a game under way keeps them and new games revert after the event. Dev test "v372: bots take the live event's names…".

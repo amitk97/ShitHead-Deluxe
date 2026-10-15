@@ -7186,6 +7186,12 @@
       const events = [];
       for (let i = 0; i < delta('snapBurns'); i++) events.push('snap-burn-once');
       for (let i = 0; i < delta('challengeBurns'); i++) events.push('burn-once');
+      for (let i = 0; i < delta('jokersPlayed'); i++) events.push('play-joker');
+      // The server decides who finishes, so Ranked finish / win events are sent here (checkPlayerFinished never runs for Ranked).
+      if (player.hasFinished && !previous.hasFinished && !player.conceded && player.finishRank < state.players.length) {
+        events.push('finish-any-match');
+        if (player.finishRank === 1 && !player.drew) events.push('finish-first', 'win-any-match', 'win-ranked-match');
+      }
       if (events.length) notifyChallengeEvent(player, events);
     }
 

@@ -8835,6 +8835,21 @@ async function runDevTestSuite() {
     } finally { seasonalNowOverride = savedNow; challengeEconomy = savedEco; renderSeasonalChallenges(); }
     assertEqual([...document.querySelectorAll('[data-challenge-tab]')].map(b => b.dataset.challengeTab), ['daily','weekly','ranked','bots','seasonal'], 'Back to the end once the event is over');
   });
+  await test('v373: a Ranked finish, win and Joker count for the challenges (Seasonal too)', () => {
+    const saved = notifyChallengeEvent, savedPlayers = state.players;
+    const got = [];
+    try {
+      notifyChallengeEvent = (p, ev) => got.push(...ev);
+      state.players = [{ id: 'a' }, { id: 'b' }];
+      const before = { id: 'a', hasFinished: false, gameStats: { jokersPlayed: 1 } };
+      notifyRankedBurnChallenges(before, { id: 'a', hasFinished: true, finishRank: 1, gameStats: { jokersPlayed: 3 } });
+      assertEqual(got.filter(e => e === 'play-joker').length, 2, 'two Jokers');
+      ['finish-any-match', 'win-any-match', 'win-ranked-match'].forEach(e => assertTrue(got.includes(e), e));
+      got.length = 0;
+      notifyRankedBurnChallenges(before, { id: 'a', hasFinished: true, finishRank: 2, gameStats: { jokersPlayed: 1 } });
+      assertEqual(got.length, 0, 'the last player (ShitHead) does not count as a finish');
+    } finally { notifyChallengeEvent = saved; state.players = savedPlayers; }
+  });
   await test('Free tables: Oak Wood and Classic Felt are unlocked for everyone, with real photo-like art', async () => {
     const saved = cosmeticPurchaseState, savedEq = { ...equippedCosmetics };
     try {

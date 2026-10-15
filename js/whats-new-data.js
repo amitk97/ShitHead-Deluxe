@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v373: [['sparkle', 'Ranked wins, finished matches and Jokers now count towards the daily, weekly and event challenges.', WN_KEY]],
       v372: [['sparkle', 'During an event the computer players take its names: Casper and Dracula at Halloween, Santa and Rudolph at Christmas, and more.', WN_KEY]],
       v371: [['sparkle', 'When an event ends, a recap mail shows your wins, challenges finished and Diamonds earned.', WN_KEY]],
       v370: [['sparkle', 'In the last 3 days of an event, a reminder shows the items you do not own yet and what is left to earn.', WN_KEY]],
