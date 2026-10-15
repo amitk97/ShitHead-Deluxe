@@ -3252,6 +3252,38 @@ async function runDevTestSuite() {
       assertTrue(modal.classList.contains('hidden'), 'Later closes it');
     } finally { seasonalNowOverride = was; }
   });
+  await test('v377: the event pop-up has a Preview button on every item and the event has its own leaderboard tab', () => {
+    const was = [seasonalNowOverride, currentUser];
+    try {
+      seasonalNowOverride = '2026-10-20T12:00';
+      const w = activeSeasonalEvents()[0];
+      showEventPopup(w);
+      const btns = [...document.querySelectorAll('#eventPopupBody [data-event-preview]')];
+      assertEqual(btns.length, EVENT_POPUP_ROWS.length + 1, 'one Preview per item plus the emotes');
+      const burn = btns.find(b => b.dataset.eventPreview === seasonalItemId('burnEffect', w.event.id));
+      burn.click();
+      const box = document.getElementById('bigPreview');
+      assertTrue(!box.classList.contains('hidden') && box.textContent.includes(w.event.names.burnEffect), 'the big preview opens on the item');
+      closeBigPreview();
+      document.getElementById('eventPopupLaterBtn').click();
+      // The leaderboard tab: shown during the event and for 14 days after, then gone.
+      assertTrue(leaderboardTabShown('event') && leaderboardPath('event') === `boards/event_${w.key}`, 'tab and path while live');
+      assertTrue(leaderboardNote('event').includes('Halloween') && leaderboardNote('event').includes('Diamonds'), 'note names the prize');
+      seasonalNowOverride = '2026-09-05T12:00';
+      assertTrue(eventBoardWindow() && !eventBoardWindow().live && eventBoardWindow().event.id === 'summer', 'a recently ended event is still shown');
+      seasonalNowOverride = '2026-09-25T12:00';
+      assertTrue(!eventBoardWindow() && !leaderboardTabShown('event'), 'gone 14 days after it ended');
+      assertEqual(eventPrizeFor(1, 30), 1000); assertEqual(eventPrizeFor(1, 4), 0); assertEqual(eventPrizeFor(11, 99), 0); assertEqual(eventPrizeFor(10, 5), 200);
+      currentUser = { uid: 'me' };
+      const rows = leaderboardRowsFrom('event', { me: { name: 'Mia', count: 12 }, b: { name: 'Bo', count: 3 } });
+      assertEqual(rows[0].rank, 1, 'best first');
+      const html = leaderboardRowHtml(rows[0], 1, 'event');
+      assertTrue(html.includes('12 event wins') && html.includes('prize 1000'), 'row shows wins and prize', html);
+      assertTrue(!leaderboardRowHtml(rows[1], 2, 'event').includes('prize'), 'under the minimum wins: no prize');
+      const mail = inboxItemHtml({ id: 'event_halloween-2026', type: 'eventPrize', event: 'halloween', rank: 2, wins: 20, reward: 600 });
+      assertTrue(mail.includes('Halloween leaderboard') && mail.includes('#2') && mail.includes('600'), 'prize mail');
+    } finally { [seasonalNowOverride, currentUser] = was; }
+  });
   await test('v369: the home screen shows an event chip with days left and progress only while an event is live', () => {
     const was = [seasonalNowOverride, currentUser, seasonalWinState];
     const chip = document.getElementById('homeEventChip');
@@ -6666,7 +6698,7 @@ async function runDevTestSuite() {
     db = { ref: (path) => liveRef(path, boards[path] || { bo: { username: 'Bo', rating: 900 } }) };
     currentUser = { uid: 'u1' };
     const tabs = [...document.querySelectorAll('#leaderboardModal [data-lb-tab]')].map(b => b.dataset.lbTab);
-    assertEqual(tabs, ['ranked', 'challenges', 'gauntlet', 'levels'], 'Tabs: Ranked, Challenges, Gauntlet, Levels (Levels only while XP is on)');
+    assertEqual(tabs, ['ranked', 'challenges', 'gauntlet', 'levels', 'event'], 'Tabs: Ranked, Challenges, Gauntlet, Levels (only while XP is on), Event (only around an event)');
     openLeaderboardPanel('challenges');
     await new Promise((r) => setTimeout(r, 0));
     assertTrue(reads.some(([p, f]) => p === 'boards/challenges' && f === 'count'), 'The Challenges board is read by count', reads);

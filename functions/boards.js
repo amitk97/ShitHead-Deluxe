@@ -3,6 +3,8 @@
 //   boards/gauntlet/{uid}   = { name, avatar, count, at }  Gauntlet bots beaten
 //   boards/levels/{uid}     = { name, avatar, count, level, at }  total XP
 //   boards/xpweek_<week>/{uid} = { name, avatar, count, level, at }  XP this UK week
+//   boards/event_<event-year>/{uid} = { name, avatar, count, level, at }  wins in that seasonal event
+//     (users/{uid}/seasonWins/<event-year>); payEventPrizes pays the top places once it has ended
 // (server-only, publicly readable). The Ranked board is the existing
 // leaderboard/{name} (rating). Whenever a player's count or rating changes
 // (economy's userTx calls onUserChanged) their entry is rewritten and their
@@ -28,7 +30,29 @@ const xpMod = () => require('./xp');
 const weekBoard = (now = Date.now()) => `xpweek_${xpMod().ukWeekKey(new Date(now))}`;
 const WEEK_MS = 7 * 86400000;
 const liveWeekBoards = (now = Date.now()) => [now, now - WEEK_MS].flatMap(at => ['xpweek', 'challengesweek', 'gauntletweek'].map(prefix => `${prefix}_${xpMod().ukWeekKey(new Date(at))}`));
-const boardKeys = (now = Date.now()) => [...Object.keys(BOARDS), ...liveWeekBoards(now)];
+// § Event leaderboard (v377). Event boards exist while an event is live and EVENT_KEEP_DAYS after it.
+// EVENT_PRIZES / EVENT_MIN_WINS are mirrored in app.js (keep both in step).
+const EVENT_PRIZES = [{ max: 1, reward: 1000 }, { max: 2, reward: 600 }, { max: 3, reward: 400 }, { max: 10, reward: 200 }];
+const EVENT_MIN_WINS = 5;
+const EVENT_PAY_DAYS = 14;
+const EVENT_KEEP_DAYS = 30;
+const eventPrizeFor = (rank, wins) => wins >= EVENT_MIN_WINS ? (EVENT_PRIZES.find(t => rank <= t.max) || {}).reward || 0 : 0;
+const ukDate = (now = Date.now()) => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: 'numeric', day: 'numeric' })
+    .formatToParts(new Date(now)).map(x => [x.type, x.value]));
+  return new Date(Number(p.year), Number(p.month) - 1, Number(p.day));
+};
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+function eventWindows(today) {
+  const seasons = require('./seasons');
+  return seasons.SEASONAL_EVENTS.flatMap(ev => [today.getFullYear() - 1, today.getFullYear()].flatMap(y => seasons.seasonalWindowsForYear(ev.id, y)
+    .map(([start, end]) => ({ id: ev.id, name: ev.name, key: `${ev.id}-${start.getFullYear()}`, start, end }))));
+}
+const eventBoardKeys = (now = Date.now()) => {
+  const today = ukDate(now);
+  return eventWindows(today).filter(w => w.start <= today && addDays(w.end, EVENT_KEEP_DAYS) >= today).map(w => `event_${w.key}`);
+};
+const boardKeys = (now = Date.now()) => [...Object.keys(BOARDS), ...liveWeekBoards(now), ...eventBoardKeys(now)];
 const counts = (u) => ({
   challenges: BOARDS.challenges(u),
   gauntlet: BOARDS.gauntlet(u),
@@ -125,6 +149,18 @@ async function onUserChanged(uid, before, after, { force = false } = {}) {
     for (const age of [2, 3]) for (const kind of ['challenges', 'gauntlet']) old[`boards/${kind}week_${xpMod().ukWeekKey(new Date(Date.now() - age * WEEK_MS))}`] = null;
     tasks.push(db().ref().update(old));
   }
+  // Event wins (Event tab): one board per event instance, only while it exists.
+  const liveEventBoards = new Set(eventBoardKeys());
+  for (const key of Object.keys((after && after.seasonWins) || {})) {
+    const wins = Number(after.seasonWins[key]) || 0;
+    if (!name || wins <= 0 || !liveEventBoards.has(`event_${key}`)) continue;
+    if (!force && wins === (Number(before && before.seasonWins && before.seasonWins[key]) || 0)) continue;
+    tasks.push((async () => {
+      const avatar = (await db().ref(`publicProfiles/${uid}/avatar`).once('value')).val();
+      const level = Number(after.xp && after.xp.level) || 0;
+      await db().ref(`boards/event_${key}/${uid}`).set({ name, count: wins, at: Date.now(), ...(typeof avatar === 'string' ? { avatar } : {}), ...(level > 0 ? { level } : {}) });
+    })());
+  }
   // A new level (XP & levels) reaches every place other players see it.
   const levelBefore = Number(before && before.xp && before.xp.level) || 0;
   const levelAfter = Number(after.xp && after.xp.level) || 0;
@@ -175,4 +211,37 @@ async function refreshProfile(uid) {
 // boards are already gone, see onUserChanged).
 const boardPaths = (uid) => boardKeys().map(board => `boards/${board}/${uid}`);
 
-module.exports = { syncLevel, BOARDS, TIERS, onUserChanged, placeOn, boardPaths, refreshProfile, weekBoard, weeklyCounts };
+// Daily (index.js payEventPrizes): once an event has ended, pay the top places of its board.
+// A per-player marker (eventPrizes/<key>/paid/<uid>, server-only root path) is taken BEFORE paying, so a
+// retry never pays twice; the event is done once every winner has been handled. Boards of events
+// ended more than EVENT_KEEP_DAYS ago are removed.
+async function payEventPrizes(now = Date.now()) {
+  const today = ukDate(now), paid = [];
+  for (const w of eventWindows(today)) {
+    if (addDays(w.end, 1) > today) continue; // still live (or not started)
+    if (addDays(w.end, EVENT_KEEP_DAYS) < today) { await db().ref(`boards/event_${w.key}`).remove(); continue; }
+    if (addDays(w.end, EVENT_PAY_DAYS) < today) continue;
+    const doneRef = db().ref(`eventPrizes/${w.key}/done`);
+    if ((await doneRef.once('value')).val()) continue;
+    const snap = await db().ref(`boards/event_${w.key}`).orderByChild('count').limitToLast(50).once('value');
+    const rows = [];
+    snap.forEach(c => { rows.push({ uid: c.key, count: Number(c.child('count').val()) || 0 }); });
+    rows.sort((a, b) => b.count - a.count);
+    rows.forEach((r, i) => { r.rank = i && rows[i - 1].count === r.count ? rows[i - 1].rank : i + 1; });
+    for (const r of rows) {
+      const reward = eventPrizeFor(r.rank, r.count);
+      if (!reward) continue;
+      const mark = await db().ref(`eventPrizes/${w.key}/paid/${r.uid}`).transaction(cur => (cur ? undefined : now), undefined, false);
+      if (!mark.committed) continue;
+      if ((await db().ref(`users/${r.uid}/deletion`).once('value')).exists()) continue;
+      const pay = await db().ref(`users/${r.uid}/diamonds`).transaction(cur => (cur === null ? null : Math.min(999999, (Number(cur) || 0) + reward)), undefined, false);
+      if (!pay.committed || pay.snapshot.val() === null) continue;
+      await db().ref(`users/${r.uid}/activityInbox/event_${w.key}`).set({ type: 'eventPrize', event: w.id, key: w.key, rank: r.rank, wins: r.count, reward, sentAt: now });
+      paid.push({ key: w.key, uid: r.uid, rank: r.rank, reward });
+    }
+    await doneRef.set(now);
+  }
+  return paid;
+}
+
+module.exports = { payEventPrizes, eventPrizeFor, eventBoardKeys, EVENT_PRIZES, EVENT_MIN_WINS, syncLevel, BOARDS, TIERS, onUserChanged, placeOn, boardPaths, refreshProfile, weekBoard, weeklyCounts };

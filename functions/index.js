@@ -152,6 +152,12 @@ exports.purgeDeletedAccounts = onSchedule({ schedule: 'every day 03:30', timeZon
   if (purged.length) logger.info(`Purged ${purged.length} deleted account(s)`);
 });
 
+// Event leaderboard prizes (functions/boards.js payEventPrizes): the day after an event ends, once.
+exports.payEventPrizes = onSchedule({ schedule: 'every day 04:00', timeZone: 'Europe/London', region: REGION }, async () => {
+  const paid = await require('./boards').payEventPrizes();
+  if (paid.length) logger.info(`Paid ${paid.length} event prize(s)`);
+});
+
 // Ranked audit: every write to a Ranked room is checked against what an
 // honest client could have done (ranked-audit.js), with the account that
 // made it. A v1 trigger because only v1 database triggers say who wrote.

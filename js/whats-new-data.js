@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v377: [['sparkle', 'Event leaderboard: win games during an event to climb it. When the event ends the top 10 with 5+ wins win Diamonds (up to 1000). The event pop-up also has a Preview button on every item.', WN_KEY]],
       v376: [['sparkle', 'Finish all four challenges of an event to earn its Champion frame: a gold-and-event-colour frame for your cards, one for every event.', WN_KEY]],
       v375: [['sparkle', 'Gift an item straight from a friend\'s wishlist, and get a mail when something on your wishlist is in the Shop for an event.', WN_KEY]],
       v374: [['sparkle', 'Shop wishlist: tap the heart on any item to save it. Your wishlist shows on your Profile, and other players can see it on your player card.', WN_KEY]],

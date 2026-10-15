@@ -9984,9 +9984,10 @@
     function eventPopupHtml(w, opts = {}) {
       const ev = w.event;
       const types = EVENT_POPUP_ROWS.filter(([type]) => !opts.ending || !seasonalOwned(seasonalItemId(type, ev.id)));
-      const rows = types.map(([type, label]) => `<li><span>${label}</span><b>${escapeHtml(ev.names[type])}</b><em>${SEASONAL_PRICES[type]} 💎</em></li>`).join('');
+      const previewBtn = (id) => `<button type="button" class="event-popup-preview" data-event-preview="${escapeAttr(id)}">Preview</button>`;
+      const rows = types.map(([type, label]) => `<li><span>${label}</span><b>${escapeHtml(ev.names[type])}</b><em>${SEASONAL_PRICES[type]} 💎</em>${previewBtn(seasonalItemId(type, ev.id))}</li>`).join('');
       const emotesOwned = opts.ending && seasonalOwned(seasonalItemId('emotes', ev.id));
-      const emotes = emotesOwned ? '' : `<li><span>Emotes</span><b data-keep-emoji>${ev.emotes.join(' ')}</b><em>${SEASONAL_PRICES.emotes} 💎</em></li>`;
+      const emotes = emotesOwned ? '' : `<li><span>Emotes</span><b data-keep-emoji>${ev.emotes.join(' ')}</b><em>${SEASONAL_PRICES.emotes} 💎</em>${previewBtn(seasonalItemId('emotes', ev.id))}</li>`;
       if (opts.ending) {
         const wins = Math.min(SEASONAL_EARN_WINS, Number(seasonalWinState[w.key]) || 0);
         const done = SEASONAL_CHALLENGES.filter(c => (challengeEconomy.completedChallenges || {})[seasonalCompletionKey(w.key, c.id)]).length;
@@ -10003,7 +10004,8 @@
         <p class="event-popup-sub">Earn</p><ul class="event-popup-earn">
           <li>Win ${SEASONAL_EARN_WINS} games to earn the <b>${escapeHtml(ev.names.earned)}</b> avatar</li>
           <li>Four event challenges plus a bonus: ${challengeTotal} 💎 in all</li>
-          <li>Finish all four for the <b>${escapeHtml(ev.name)} Champion</b> frame</li>${boost}</ul>`;
+          <li>Finish all four for the <b>${escapeHtml(ev.name)} Champion</b> frame</li>
+          <li>Top ${EVENT_PRIZES[EVENT_PRIZES.length - 1].max} on the event leaderboard (${EVENT_BOARD_MIN_WINS}+ wins) win up to ${EVENT_PRIZES[0].reward} 💎</li>${boost}</ul>`;
     }
     function showEventPopup(w, opts = {}) {
       const ev = w.event;
@@ -10022,6 +10024,11 @@
       return true;
     }
     document.getElementById('eventPopupLaterBtn').addEventListener('click', () => document.getElementById('eventPopupModal').classList.add('hidden'));
+    // Preview (v377): the big preview opens over the pop-up (z 105 vs 95), which stays underneath.
+    document.getElementById('eventPopupBody').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-event-preview]');
+      if (b) openBigPreview(b.dataset.eventPreview);
+    });
     document.getElementById('eventPopupShopBtn').addEventListener('click', () => {
       document.getElementById('eventPopupModal').classList.add('hidden');
       shopTab = SEASONAL_TAB; shopTabPicked = true;
@@ -18452,7 +18459,7 @@
       if (e.target.id === 'inboxModal') document.getElementById('inboxModal').classList.add('hidden');
     });
     // Mail kinds stored under users/{uid}/activityInbox.
-    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level', 'friendLevel', 'series'];
+    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level', 'friendLevel', 'series', 'eventPrize'];
     // Congratulations from the server (functions/boards.js) the first time a
     // player reaches the top 10, #3, #2 or #1 on a leaderboard.
     const BOARD_NAMES = { ranked: 'Ranked', challenges: 'Challenges', gauntlet: 'Gauntlet', levels: 'Levels' };
@@ -18591,6 +18598,16 @@
           <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${heading}</p>
           <p class="text-xs font-bold text-white">${line}</p>
           <p class="inbox-activity-accent text-[10px] mt-1">${money}</p>
+          <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
+        </div>`;
+      }
+      if (item.type === 'eventPrize') {
+        // § Event leaderboard: the server pays the prize when the event ends (functions/boards.js payEventPrizes).
+        const ev = SEASONAL_EVENTS.find(e => e.id === item.event);
+        return `<div class="inbox-activity--level border rounded-xl px-2.5 py-2">
+          <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${escapeHtml(ev ? ev.name : 'Event')} leaderboard</p>
+          <p class="text-xs font-bold text-white">You finished #${Math.round(Number(item.rank) || 0)} with ${Math.round(Number(item.wins) || 0)} wins</p>
+          <p class="inbox-activity-accent text-[10px] mt-1">💎 ${Math.round(Number(item.reward) || 0)} added to your Diamonds</p>
           <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
         </div>`;
       }
@@ -18770,6 +18787,7 @@
         }
         case 'shop': return itemFromId() ? () => openCustomTileFromMail(itemFromId()) : null;
         case 'rank': return () => openLeaderboardPanel('ranked');
+        case 'eventPrize': return () => openLeaderboardPanel('event');
         case 'board': return () => openLeaderboardPanel(item.board);
         case 'level': return () => openLevelLadder(item.level > 1 && !item.backfill ? { from: Number(item.level) - 1 } : {});
         case 'referral': return () => openProfileSection(document.getElementById('profileReferralSection'));
@@ -19612,25 +19630,48 @@
       // § XP & levels: only shown while XP is on. All-time = total XP
       // (boards/levels); This week = XP since Monday, UK time
       // (boards/xpweek_<week>, a fresh board each week).
-      levels: { path: 'boards/levels', note: 'Total XP · your level beside your name', empty: 'Nobody has earned XP yet.' }
+      levels: { path: 'boards/levels', note: 'Total XP · your level beside your name', empty: 'Nobody has earned XP yet.' },
+      event: { path: 'boards/event', note: 'Event wins', empty: 'No event wins yet.' }
     };
+    // § Event leaderboard (v377): wins during the live event (users/{uid}/seasonWins/<key>, kept by the server in
+    // boards/event_<key>). The server pays EVENT_PRIZES when the event ends (functions/boards.js payEventPrizes:
+    // keep both lists in step). The tab shows while an event is live and for EVENT_BOARD_AFTER_DAYS after it.
+    const EVENT_PRIZES = [{ max: 1, reward: 1000 }, { max: 2, reward: 600 }, { max: 3, reward: 400 }, { max: 10, reward: 200 }];
+    const EVENT_BOARD_MIN_WINS = 5;
+    const EVENT_BOARD_AFTER_DAYS = 14;
+    const eventPrizeFor = (rank, wins) => wins >= EVENT_BOARD_MIN_WINS ? (EVENT_PRIZES.find(t => rank <= t.max) || {}).reward || 0 : 0;
+    function eventBoardWindow(now = seasonalNow()) {
+      const live = activeSeasonalEvents(now)[0];
+      if (live) return { ...live, live: true };
+      const recent = seasonalWindowsAround(now).filter(w => w.endsAt <= now && now - w.endsAt < EVENT_BOARD_AFTER_DAYS * 864e5).sort((a, b) => b.endsAt - a.endsAt)[0];
+      return recent ? { ...recent, live: false } : null;
+    }
     let lbLevelsPeriod = (() => { try { return localStorage.getItem('shithead_lb_levels_period') === 'week' ? 'week' : 'all'; } catch (e) { return 'all'; } })();
     const lbActivityPeriods = (() => { try { return JSON.parse(localStorage.getItem('shithead_lb_activity_periods') || '{}'); } catch (e) { return {}; } })();
     const leaderboardPeriod = (tab) => tab === 'levels' ? lbLevelsPeriod : lbActivityPeriods[tab] === 'week' ? 'week' : 'all';
-    const leaderboardTabShown = (tab) => tab !== 'levels' || xpShown();
+    const leaderboardTabShown = (tab) => tab === 'event' ? !!eventBoardWindow() : tab !== 'levels' || xpShown();
     function leaderboardPath(tab) {
+      if (tab === 'event') { const w = eventBoardWindow(); return w ? `boards/event_${w.key}` : 'boards/event'; }
       if (leaderboardPeriod(tab) === 'week') return `boards/${tab === 'levels' ? 'xpweek' : tab + 'week'}_${getUkWeekKey()}`;
       return LEADERBOARD_TABS[tab].path;
     }
     function leaderboardNote(tab) {
+      if (tab === 'event') {
+        const w = eventBoardWindow();
+        if (!w) return LEADERBOARD_TABS.event.note;
+        const top = EVENT_PRIZES[EVENT_PRIZES.length - 1].max;
+        return `${w.event.name} wins · ${w.live ? `top ${top} with ${EVENT_BOARD_MIN_WINS}+ wins win Diamonds when the event ends` : 'final results · prizes are paid out'}`;
+      }
       if (leaderboardPeriod(tab) === 'week') return `${tab === 'levels' ? 'XP earned' : tab === 'challenges' ? 'Challenges completed' : 'Gauntlet bots beaten'} this week · resets every Monday (UK time)`;
       return LEADERBOARD_TABS[tab].note;
     }
     function refreshLeaderboardTabs() {
       document.querySelector('[data-lb-tab="levels"]')?.classList.toggle('hidden', !xpShown());
+      const evTab = document.querySelector('[data-lb-tab="event"]'), evw = eventBoardWindow();
+      if (evTab) { evTab.classList.toggle('hidden', !evw); if (evw) evTab.textContent = evw.event.name; }
       const sw = document.getElementById('lbLevelsSwitch');
       if (sw) {
-        sw.classList.toggle('hidden', leaderboardTab === 'ranked');
+        sw.classList.toggle('hidden', leaderboardTab === 'ranked' || leaderboardTab === 'event');
         sw.querySelectorAll('[data-lb-period]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lbPeriod === leaderboardPeriod(leaderboardTab))));
       }
     }
@@ -19797,6 +19838,10 @@
           const xpText = `${n.toLocaleString('en-GB')} XP`;
           sub = week ? 'XP this week' : ''; // the level is already the badge by the name (owner, v250)
           pill = `<span class="lb-count-pill lb-xp-pill">${week ? '+' : ''}${xpText}</span>`;
+        } else if (tab === 'event') {
+          const prize = eventPrizeFor(rank, n);
+          sub = `${n} event win${n === 1 ? '' : 's'}${prize ? ` · prize ${prize} 💎` : ''}`;
+          pill = `<span class="lb-count-pill">${n}</span>`;
         } else {
           sub = tab === 'challenges' ? `${n} challenge${n === 1 ? '' : 's'} completed` : `${n} Gauntlet bot${n === 1 ? '' : 's'} beaten`;
           pill = `<span class="lb-count-pill">${tab === 'challenges' ? '🏅' : '⚔️'} ${n}</span>`;
