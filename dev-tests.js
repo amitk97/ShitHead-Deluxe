@@ -3236,6 +3236,22 @@ async function runDevTestSuite() {
       assertTrue(burnEffectIdFor(bots[0]) === 'default' && getPlayerAvatarId(bots[0]) === bots[0].avatar && !eventBotItem(bots[0], 'cardBack'), 'back to the free look after the event');
     } finally { [seasonalNowOverride, state.players, othersEffectsOn] = was; }
   });
+  await test('v367: a live event shows a pop-up with its Shop items and what can be earned', () => {
+    const was = seasonalNowOverride;
+    try {
+      seasonalNowOverride = '2026-10-20T12:00';
+      const w = activeSeasonalEvents()[0];
+      assertEqual(w.event.id, 'halloween', 'Halloween is live');
+      showEventPopup(w);
+      const modal = document.getElementById('eventPopupModal');
+      assertTrue(!modal.classList.contains('hidden'), 'pop-up is open');
+      const text = modal.textContent;
+      assertTrue(text.includes('Halloween is live') && text.includes(w.event.names.burnEffect) && text.includes(String(SEASONAL_PRICES.jokerEffect)) && text.includes(w.event.names.earned), 'lists items, prices and the earn-only avatar');
+      assertTrue(JSON.parse(localStorage.getItem(EVENT_POPUP_SEEN_KEY)).includes(w.key), 'marked seen for this event');
+      document.getElementById('eventPopupLaterBtn').click();
+      assertTrue(modal.classList.contains('hidden'), 'Later closes it');
+    } finally { seasonalNowOverride = was; }
+  });
   await test('REGRESSION: opponent seats show picture + name on top and statuses below the cards', () => {
     freshState({ phase: 'SWAP' });
     state.players = [makePlayer({ id: 'p1', hand: [makeCard('4')] }),

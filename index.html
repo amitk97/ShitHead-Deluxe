@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-15-v366 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-15-v367 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -227,7 +227,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=485828c40bc7">
+  <link rel="stylesheet" href="game.css?v=9e676788291e">
 
   
   <!-- Firebase SDKs -->
@@ -2098,6 +2098,20 @@
       <button id="whatsNewCloseBtn" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Got It</button>
     </div>
   </div>
+  <div id="eventPopupModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[95] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="eventPopupTitle">
+    <div id="eventPopupCard" class="bg-slate-900 border border-amber-500/60 rounded-2xl max-w-sm w-full shadow-2xl" style="padding:20px; display:flex; flex-direction:column; gap:12px; max-height:calc(100dvh - var(--header-h, 3rem) - 24px); overflow-y:auto;">
+      <div class="text-center">
+        <div id="eventPopupEmoji" class="text-3xl" aria-hidden="true"></div>
+        <h2 id="eventPopupTitle" class="text-base font-black uppercase tracking-wide" style="color:var(--ev-accent,#fbbf24)"></h2>
+        <p id="eventPopupWhen" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"></p>
+      </div>
+      <div id="eventPopupBody" class="event-popup-body"></div>
+      <div style="display:flex; gap:8px;">
+        <button id="eventPopupLaterBtn" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 font-black text-xs uppercase tracking-wider rounded-xl transition">Later</button>
+        <button id="eventPopupShopBtn" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition">Open Shop</button>
+      </div>
+    </div>
+  </div>
   <div id="keepAccountModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur z-[95] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="keepAccountTitle">
     <div class="bg-slate-900 border border-rose-500/60 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-3">
       <div class="text-4xl" aria-hidden="true">🗑️</div>
@@ -2617,7 +2631,7 @@
   <script src="home-navigation.js?v=79e36503dc2c"></script>
   <script src="multiplayer-lobby.js?v=563279447523"></script>
   <script src="private-cosmetics.js?v=4f732484384c"></script>
-  <script src="app.js?v=3deb3cb6ef89"></script>
+  <script src="app.js?v=41932825ced0"></script>
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>

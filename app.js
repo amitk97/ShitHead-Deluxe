@@ -112,7 +112,7 @@
     ['puzzlesModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
-     'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
+     'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'eventPopupModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
      // v281: #gameTable is isolation:isolate (v270 table scenes), so anything
      // left inside it can never sit above a page, whatever its z-index.
      'playerPopup', 'challengeToast', 'signOutConfirm', 'dailyRewardModal', 'giftModal', 'giftOpenModal', 'installHelpModal', 'shConfirm'].forEach((id) => {
@@ -9947,6 +9947,52 @@
       setTimeout(() => tryShow(0), 2500);
     }
     maybeShowWhatsNew();
+    // § Event popup (v367): the first time a live event is seen on a device, a
+    // pop-up lists what it sells and what can be earned. One per event instance.
+    const EVENT_POPUP_SEEN_KEY = 'shithead_event_popup_seen';
+    const EVENT_POPUP_ROWS = [['tableTheme', 'Table'], ['cardBack', 'Card Back'], ['frame', 'Frame'], ['avatar', 'Avatar'], ['burnEffect', 'Burn'], ['victoryEffect', 'Victory'], ['jokerEffect', 'Joker']];
+    function eventPopupHtml(ev) {
+      const rows = EVENT_POPUP_ROWS.map(([type, label]) => `<li><span>${label}</span><b>${escapeHtml(ev.names[type])}</b><em>${SEASONAL_PRICES[type]} 💎</em></li>`).join('');
+      const emotes = `<li><span>Emotes</span><b data-keep-emoji>${ev.emotes.join(' ')}</b><em>${SEASONAL_PRICES.emotes} 💎</em></li>`;
+      const challengeTotal = SEASONAL_CHALLENGES.reduce((s, c) => s + c.reward, 0) + SEASONAL_CHALLENGE_BONUS.reward;
+      const boost = XP_RULES.seasonalBoost > 1 ? `<li>${XP_RULES.seasonalBoost}× XP on everything you play</li>` : '';
+      return `<p class="event-popup-sub">In the Shop, until the event ends</p><ul class="event-popup-list">${rows}${emotes}</ul>
+        <p class="event-popup-sub">Earn</p><ul class="event-popup-earn">
+          <li>Win ${SEASONAL_EARN_WINS} games to earn the <b>${escapeHtml(ev.names.earned)}</b> avatar</li>
+          <li>Four event challenges plus a bonus: ${challengeTotal} 💎 in all</li>${boost}</ul>`;
+    }
+    function showEventPopup(w) {
+      const ev = w.event;
+      document.getElementById('eventPopupEmoji').textContent = ev.emoji;
+      document.getElementById('eventPopupTitle').textContent = `${ev.name} is live`;
+      const left = seasonDaysBetween(seasonalNow(), w.endsAt);
+      document.getElementById('eventPopupWhen').textContent = left <= 1 ? 'Last day' : `Leaves in ${left} days`;
+      document.getElementById('eventPopupBody').innerHTML = eventPopupHtml(ev);
+      document.getElementById('eventPopupCard').style.setProperty('--ev-accent', ev.tones[1]);
+      document.getElementById('eventPopupModal').classList.remove('hidden');
+      try { const seen = JSON.parse(localStorage.getItem(EVENT_POPUP_SEEN_KEY) || '[]'); localStorage.setItem(EVENT_POPUP_SEEN_KEY, JSON.stringify([...seen, w.key].slice(-20))); } catch (e) {}
+    }
+    document.getElementById('eventPopupLaterBtn').addEventListener('click', () => document.getElementById('eventPopupModal').classList.add('hidden'));
+    document.getElementById('eventPopupShopBtn').addEventListener('click', () => {
+      document.getElementById('eventPopupModal').classList.add('hidden');
+      shopTab = SEASONAL_TAB; shopTabPicked = true;
+      openShopPanel();
+    });
+    function maybeShowEventPopup() {
+      if (IS_DEV_TEST_PAGE) return;
+      let seen = [];
+      try { seen = JSON.parse(localStorage.getItem(EVENT_POPUP_SEEN_KEY) || '[]'); } catch (e) {}
+      const busy = () => state.isMultiplayer || tutorialActive || (state.phase && state.phase !== 'LOBBY')
+        || [...BLOCKING_OVERLAY_IDS, 'rejoinModal', 'matchSummaryModal', 'dailyRewardModal', 'whatsNewModal', 'welcomeTour'].some(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
+      const tryShow = (attempt) => {
+        const w = activeSeasonalEvents().find(x => !seen.includes(x.key));
+        if (!w) return;
+        if (busy()) { if (attempt < 120) setTimeout(() => tryShow(attempt + 1), 5000); return; }
+        showEventPopup(w);
+      };
+      setTimeout(() => tryShow(0), 4500);
+    }
+    maybeShowEventPopup();
     attachPullToRefresh(document.getElementById('friendsListArea'), () => switchFriendsTab(currentFriendsTab));
     document.getElementById('headerInboxBtn').addEventListener('click', () => openInboxPanel());
     document.getElementById('menuChallengesBtn').addEventListener('click', () => {
@@ -20444,7 +20490,7 @@
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', levelLadderModal: 'levelLadderCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn', changelogModal: 'changelogCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
-      seriesModal: 'seriesLaterBtn', needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', referralWelcomeModal: 'referralWelcomeCloseBtn', keepAccountModal: null, whatsNewModal: 'whatsNewCloseBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
+      seriesModal: 'seriesLaterBtn', needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', referralWelcomeModal: 'referralWelcomeCloseBtn', keepAccountModal: null, whatsNewModal: 'whatsNewCloseBtn', eventPopupModal: 'eventPopupLaterBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',
       victoryOverlay: 'closeVictoryBtn', floatingJokerBar: null, bigPreview: () => closeBigPreview(),
       followUpToastBanner: () => resolveFollowUpPlay(false)
     };

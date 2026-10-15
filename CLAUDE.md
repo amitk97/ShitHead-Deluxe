@@ -1,3 +1,7 @@
+## v367 — event pop-up
+
+- `§ Event popup` in `app.js` (next to `maybeShowWhatsNew`): when a seasonal event is live and this device hasn't seen that instance (`w.key`, e.g. `halloween-2026`; localStorage `shithead_event_popup_seen`, last 20), `#eventPopupModal` shows "<Event> is live", days left, every Shop item with its price (`EVENT_POPUP_ROWS` + emotes, from `ev.names` / `SEASONAL_PRICES`), and the earn list (the earn-only avatar after `SEASONAL_EARN_WINS` wins, the event challenges' total, the seasonal XP boost). Open Shop sets `shopTab = SEASONAL_TAB` and opens the Shop; Later closes. Waits for a calm home screen (no match, lesson, tour, What's New or other pop-up). It is a blocking overlay (`BLOCKING_OVERLAY_IDS`, `BACK_LAYERS`). A new event needs nothing extra. The dev suite pins its date outside events; the test sets its own. Dev test "v367: a live event shows a pop-up…".
+
 ## v366 — 52 puzzles
 
 - `PUZZLES` p47–p52 added (four 3s burn, a 3 under the Ace, Face-Up four Kings, a second Joker-picks-up-six with a base 5, End on a 9 and End on a Queen), found with `tools/puzzle-search-zones.js` (`faceup` filtered to exactly 3 cards, `joker`, `end9`, `endQ`) and `tools/puzzle-search.js burn|pickup` (skip candidates with a Joker). 52 = one for each week; the shuffle still runs per `list.length` weeks. Adding puzzles re-shuffles every run, so the weekly puzzle changed again. `puzzles-test.js` goal-type list, catalog re-exported (server deploy needed). Dedupe by `[hand, pile, goal]`: the first Joker pick duplicated p32.
