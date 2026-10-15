@@ -6832,6 +6832,22 @@ async function runDevTestSuite() {
       delete screen.width; delete screen.height; delete navigator.maxTouchPoints;
     }
   });
+  await test('v372: bots take the live event\'s names, and the usual ones outside events', () => {
+    const saved = seasonalNowOverride;
+    try {
+      assertEqual(Object.keys(EVENT_BOT_NAMES).sort().join(), SEASONAL_EVENTS.map(e => e.id).sort().join(), 'every event has names');
+      Object.values(EVENT_BOT_NAMES).flat().forEach(n => assertTrue(/^[A-Za-z]{3,10}$/.test(n), n + ' plain, <= 10'));
+      assertEqual(new Set(Object.values(EVENT_BOT_NAMES).flat()).size, 45, 'all unique');
+      seasonalNowOverride = '2026-09-01T12:00';
+      assertTrue(botNamePool().slice(0, 5).every(n => BOT_NAMES.includes(n)), 'no event: usual names');
+      seasonalNowOverride = '2026-10-28T12:00';
+      assertEqual(botNamePool().slice(0, 5).sort().join(), EVENT_BOT_NAMES.halloween.slice().sort().join(), 'Halloween names first');
+      assertTrue(!botNamePool(['Casper']).slice(0, 5).includes('Casper'), 'skips taken names');
+      assertEqual(botNamePool().length, 5 + BOT_NAMES.length, 'usual names follow');
+      freshState(); startSinglePlayerGame(3);
+      assertTrue(state.players.filter(p => p.isBot).every(p => EVENT_BOT_NAMES.halloween.includes(p.name.replace(/ \(Bot\)$/, ''))), 'game bots are Halloween names');
+    } finally { seasonalNowOverride = saved; }
+  });
   await test('Bot names: plain letters only, no repeats, removed names gone, never the player\'s own name', () => {
     assertTrue(BOT_NAMES.every(n => /^[A-Za-z]+$/.test(n)), 'Only plain letters (no accents or special characters)');
     assertEqual(new Set(BOT_NAMES).size, BOT_NAMES.length, 'No repeats');

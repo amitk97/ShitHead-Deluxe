@@ -137,7 +137,7 @@
         const bots=players.filter(p=>p.isBot).slice(0,n).map(p=>({...p,difficulty}));
         while(bots.length<n) {
           const names=new Set([...humans,...bots].map(p=>p.name.replace(/ \(Bot\)$/,'')));
-          const name=BOT_NAMES.find(n=>!names.has(n))||`Bot ${bots.length+1}`;
+          const name=botNamePool([...names])[0]||`Bot ${bots.length+1}`;
           bots.push({id:'p_bot_'+Math.random().toString(36).slice(2,9),name:name+' (Bot)',isBot:true,isHost:false,difficulty,houseRulesReady:true,avatar:pickBotAvatar([...humans,...bots]),cosmetics:{cardBack:pickBotCardBack()},hand:[],faceUp:[],faceDown:[],isReady:false,hasFinished:false});
         }
         return {...room,players:[...humans,...bots],lobbyBotDifficulty:difficulty};

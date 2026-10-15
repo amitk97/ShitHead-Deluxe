@@ -1,3 +1,7 @@
+## v372 — event bot names
+
+- `EVENT_BOT_NAMES` (app.js, next to `BOT_NAMES`): 5 plain-letter names (≤10) per event id (Halloween Casper/Boo/Pumpkin/Dracula/Mummy, Christmas Santa/MrsClaus/Rudolph/Grinch/Frosty, Valentine Cupid…, Summer June/July/August…). `botNamePool(skip)` returns the live events' names (shuffled) followed by the usual `BOT_NAMES`, minus `skip`; used by Play Computer (`rawPicked`), the multiplayer lobby's + Bot and `friends-lobby.js`. Names are stored when the bot is created, so a game under way keeps them and new games revert after the event. Dev test "v372: bots take the live event's names…".
+
 ## v371 — event recap mail
 
 - `sendSeasonalMail` (at sign-in) also sends, for each event instance that ended in the last 14 days and has no `seasonMailSent/<key>-recap` mark, one `activityInbox/season_<key>-recap` mail (`{type:'season', event, recap:{wins, done, total, diamonds, earned}}`) built by the pure `seasonRecapMail(w, wins, completed)` (wins from `users/{uid}/seasonWins/<key>`, challenges from `completedChallenges`); nothing is sent to a player who took part in nothing (the mark is still written). Client-written, so it only reaches players who open the game within 14 days; a server version would need a Functions change. `inboxItemHtml` draws `item.recap` as "<Event> is over". Dev test "v371: an event recap mail…".

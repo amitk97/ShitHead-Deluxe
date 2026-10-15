@@ -317,8 +317,8 @@
         return;
       }
       const existingNames = state.players.map(p => p.name);
-      const availableBots = BOT_NAMES.filter(n => !existingNames.includes(n));
-      const botName = availableBots[Math.floor(Math.random() * availableBots.length)] || `Bot ${state.players.length + 1}`;
+      const availableBots = botNamePool(existingNames);
+      const botName = availableBots[0] || `Bot ${state.players.length + 1}`;
 
       const newBot = {
         id: `p_bot_${Math.random().toString(36).substring(2, 7)}`,

@@ -594,6 +594,26 @@
       "Ruby", "Serena", "Sophia", "Tariq", "Vanessa", "Vikram", "Wyatt"
     ];
 
+    // During a live event bots take the event's names (plain letters, <= 10).
+    const EVENT_BOT_NAMES = {
+      halloween: ['Casper', 'Boo', 'Pumpkin', 'Dracula', 'Mummy'],
+      christmas: ['Santa', 'MrsClaus', 'Rudolph', 'Grinch', 'Frosty'],
+      valentine: ['Cupid', 'Romeo', 'Juliet', 'Cherub', 'Amore'],
+      summer: ['June', 'July', 'August', 'Sunny', 'Coco'],
+      easter: ['Bunny', 'Peeps', 'Chick', 'Basket', 'Hoppy'],
+      lunar: ['Dragon', 'Lantern', 'Fortune', 'Lucky', 'Mandarin'],
+      ramadan: ['Hilal', 'Noor', 'Fanous', 'Iftar', 'Salam'],
+      diwali: ['Diya', 'Rangoli', 'Lakshmi', 'Deepak', 'Sparkle'],
+      newyear: ['Midnight', 'Fizz', 'Toast', 'Confetti', 'Auld']
+    };
+    // Event names first (random order), then the usual names; `skip` = names to leave out.
+    function botNamePool(skip = []) {
+      const out = new Set(skip.map(n => String(n).toLowerCase()));
+      const ok = n => !out.has(n.toLowerCase());
+      const ev = activeSeasonalEvents().flatMap(w => EVENT_BOT_NAMES[w.event.id] || []);
+      return [...shuffle(ev.filter(ok)), ...shuffle(BOT_NAMES.filter(ok))];
+    }
+
     const SUITS = ['♠', '♥', '♦', '♣'];
     const RANKS = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'];
     const EVENS = ['2', '4', '6', '8', '10', 'Q', 'A', 'JOKER'];
@@ -1465,7 +1485,7 @@
       } else if (reuseBotNames && reuseBotNames.length === botCount) {
         rawPicked = reuseBotNames.slice();
       } else {
-        rawPicked = shuffle(BOT_NAMES.filter(n => n.toLowerCase() !== String(pName || '').trim().toLowerCase())).slice(0, botCount);
+        rawPicked = botNamePool([String(pName || '').trim()]).slice(0, botCount);
         rawPicked.sort((a, b) => a.localeCompare(b));
       }
 
