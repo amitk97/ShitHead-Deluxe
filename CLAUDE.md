@@ -1,3 +1,8 @@
+## v380 — event login bonus, README refresh
+
+- **Event login bonus:** economy `streak` (the once-a-UK-day login claim) also pays `CAT.eventLoginBonus` (30, `EVENT_LOGIN_BONUS` in app.js, exported to the catalog) on every UK day an event is live (`seasons.eventLiveOn(today)`, both end days included); the reply is `claimed: {count, reward, bonus: {event, name, amount}}` and the Diamonds are added with the day's reward, so it can't repeat. Client: `showDailyReward(count, reward, bonus)` draws `#dailyRewardEvent` ("+💎 30 Halloween login bonus") in the daily pop-up (a second toast during a match) and "Come back tomorrow for 💎 N + 30 event bonus" while an event is live; the event pop-up's Earn list mentions it. No streak change, no rules change. **Functions change** (needs the "Deploy notification functions" workflow; until then the old server pays no bonus and the client shows none). Tests: `node tools/event-login-test.js` (in-memory database, pinned dates), dev test "v380: the event login bonus…".
+- README refreshed at v380 (stamp v380, events / wishlist / 52 puzzles / scrolling leaderboard tabs text, all seven screenshots retaken with `tools/readme-screenshots.js`; this sandbox has no `@fontsource-variable` fonts, so the shots use the fallback fonts and the Halloween chip shows); next refresh due v400.
+
 ## v379 — scrolling leaderboard tabs
 
 - The leaderboard's tab row (`.stats-tabs.hscroll.lb-tabs` inside an `.hscroll-wrap` with ‹ › buttons, like the Shop/Custom/Settings tabs) scrolls sideways (`initHorizontalScroller`: drag, wheel, arrows, keeps the selected tab in view). Five tabs (Ranked, Challenges, Gauntlet, Levels, and the event's name) no longer fit a phone. Other `.stats-tabs` (Stats) are unchanged.

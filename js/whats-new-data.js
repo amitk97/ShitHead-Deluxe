@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v380: [['sparkle', 'Event login bonus: on every day a seasonal event is live, your daily login reward comes with 30 extra Diamonds.', WN_KEY]],
       v379: [['sparkle', 'The leaderboard tabs scroll sideways, so the Event tab is never cut off.']],
       v378: [['sparkle', 'Event recaps now arrive from the server, so you get yours even if you open the game weeks after the event.']],
       v377: [['sparkle', 'Event leaderboard: win games during an event to climb it. When the event ends the top 10 with 5+ wins win Diamonds (up to 1000). The event pop-up also has a Preview button on every item.', WN_KEY]],

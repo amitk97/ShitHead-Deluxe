@@ -10005,6 +10005,7 @@
           <li>Win ${SEASONAL_EARN_WINS} games to earn the <b>${escapeHtml(ev.names.earned)}</b> avatar</li>
           <li>Four event challenges plus a bonus: ${challengeTotal} 💎 in all</li>
           <li>Finish all four for the <b>${escapeHtml(ev.name)} Champion</b> frame</li>
+          <li>Log in every day of the event for +${EVENT_LOGIN_BONUS} 💎 on top of your daily reward</li>
           <li>Top ${EVENT_PRIZES[EVENT_PRIZES.length - 1].max} on the event leaderboard (${EVENT_BOARD_MIN_WINS}+ wins) win up to ${EVENT_PRIZES[0].reward} 💎</li>${boost}</ul>`;
     }
     function showEventPopup(w, opts = {}) {
@@ -10758,6 +10759,8 @@
     // ============================================================
     const SEASONAL_PRICES = { cardBack: 300, frame: 300, avatar: 500, emotes: 500, burnEffect: 1000, tableTheme: 1500, victoryEffect: 1500, jokerEffect: 3000 };
     const SEASONAL_BUNDLE_RATE = 0.75;
+    // Event login bonus (v380): Diamonds added to the daily login reward on every day an event is live (server: economy `streak`).
+    const EVENT_LOGIN_BONUS = 30;
     const SEASONAL_EARN_WINS = 3;
     const SEASONAL_EVENTS = [
       { id: 'lunar', name: 'Lunar New Year', title: 'Year of Fortune', emoji: '🧧', when: 'From 3 days before Lunar New Year to the Lantern Festival', tones: ['#450a0a', '#dc2626', '#fbbf24'],
@@ -15766,6 +15769,7 @@
         earned,
         seasonalEvents: SEASONAL_EVENTS.map(ev => ({ id: ev.id, name: ev.name })),
         seasonalBundleRate: SEASONAL_BUNDLE_RATE,
+        eventLoginBonus: EVENT_LOGIN_BONUS,
         nameChangeTokenCost: NAME_CHANGE_TOKEN_COST,
         dailyStreakRewards: DAILY_STREAK_REWARDS,
         matchWinRewards: { bots: 10, ranked: 20 },
@@ -16283,7 +16287,7 @@
         updateDiamondHeader();
         renderChallengesModalIfOpen();
         if (!res.claimed) return null;
-        showDailyReward(res.claimed.count, res.claimed.reward);
+        showDailyReward(res.claimed.count, res.claimed.reward, res.claimed.bonus);
         return res.claimed;
       }).catch((e) => { console.warn('claimDailyLoginReward failed', e.message); return null; })
         .finally(() => { dailyClaimInFlight = null; });
@@ -16297,13 +16301,17 @@
         return `<span class="daily-day ${cls} ${day === 7 ? 'is-big' : ''}">DAY ${day}<i>${day < dayInWeek ? '✓' : day === 7 ? '🎁' : '💎'}</i><b>${reward}</b></span>`;
       }).join('');
     }
-    function showDailyReward(count, reward) {
+    function showDailyReward(count, reward, bonus) {
       const inMatch = state && (state.phase === 'PLAY' || state.phase === 'SWAP');
-      if (inMatch) { enqueueChallengeToast(`Day ${count} login streak`, reward, 0); return; }
+      const bonusAmount = bonus ? Number(bonus.amount) || 0 : 0;
+      if (inMatch) { enqueueChallengeToast(`Day ${count} login streak`, reward, 0); if (bonusAmount) enqueueChallengeToast(`${bonus.name} login bonus`, bonusAmount, 0); return; }
+      const bonusEl = document.getElementById('dailyRewardEvent');
+      if (bonusEl) { bonusEl.classList.toggle('hidden', !bonusAmount); bonusEl.textContent = bonusAmount ? `+💎 ${bonusAmount} ${bonus.name} login bonus` : ''; }
       document.getElementById('dailyRewardTitle').textContent = count === 1 ? 'Daily reward' : `${count}-day streak`;
       document.getElementById('dailyRewardAmount').textContent = `+💎 ${reward}`;
       document.getElementById('dailyRewardTrack').innerHTML = dailyTrackHtml(count);
-      document.getElementById('dailyRewardNext').textContent = `Come back tomorrow for 💎 ${dailyStreakReward(count + 1)}`;
+      const nextBonus = activeSeasonalEvents().length ? EVENT_LOGIN_BONUS : 0;
+      document.getElementById('dailyRewardNext').textContent = `Come back tomorrow for 💎 ${dailyStreakReward(count + 1)}${nextBonus ? ` + ${nextBonus} event bonus` : ''}`;
       document.getElementById('dailyRewardModal').classList.remove('hidden');
       document.getElementById('dailyRewardCollectBtn').focus({ preventScroll: true });
     }

@@ -480,8 +480,12 @@ actions.streak = async ({ uid }) => {
     const rewards = CAT.dailyStreakRewards;
     const reward = rewards[(Math.max(1, count) - 1) % rewards.length];
     user.loginStreak = { count, lastDate: today, best: Math.max(num(prev.best), count) };
-    addDiamonds(user, reward);
-    return { user, claimed: { count, reward } };
+    // Event login bonus (v380): the day's claim also pays a flat bonus while a seasonal event is live
+    // (UK day, both end days included). It rides the once-a-day streak claim, so it can't repeat.
+    const ev = num(CAT.eventLoginBonus) > 0 ? require('./seasons').eventLiveOn(today) : null;
+    const bonus = ev ? { event: ev.id, name: ev.name, amount: num(CAT.eventLoginBonus) } : null;
+    addDiamonds(user, reward + (bonus ? bonus.amount : 0));
+    return { user, claimed: { count, reward, ...(bonus ? { bonus } : {}) } };
   });
   return { claimed: res.claimed || null, streak: res.user.loginStreak || null, diamonds: num(res.user.diamonds) };
 };

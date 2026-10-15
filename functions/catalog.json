@@ -952,6 +952,7 @@
   }
  ],
  "seasonalBundleRate": 0.75,
+ "eventLoginBonus": 30,
  "nameChangeTokenCost": 100,
  "dailyStreakRewards": [
   10,

@@ -3252,6 +3252,24 @@ async function runDevTestSuite() {
       assertTrue(modal.classList.contains('hidden'), 'Later closes it');
     } finally { seasonalNowOverride = was; }
   });
+  await test('v380: the event login bonus shows in the daily reward pop-up and is exported to the server catalog', () => {
+    const was = [seasonalNowOverride, state.phase];
+    try {
+      state.phase = 'LOBBY';
+      seasonalNowOverride = '2026-10-20T12:00';
+      showDailyReward(2, 15, { event: 'halloween', name: 'Halloween', amount: EVENT_LOGIN_BONUS });
+      const bonus = document.getElementById('dailyRewardEvent');
+      assertTrue(!bonus.classList.contains('hidden') && bonus.textContent.includes(String(EVENT_LOGIN_BONUS)) && bonus.textContent.includes('Halloween'), 'bonus line', bonus.textContent);
+      assertTrue(document.getElementById('dailyRewardNext').textContent.includes('event bonus'), 'tomorrow mentions the bonus while an event is live');
+      showDailyReward(3, 15);
+      assertTrue(bonus.classList.contains('hidden'), 'no bonus line without a bonus');
+      seasonalNowOverride = '2026-09-25T12:00';
+      showDailyReward(4, 15);
+      assertTrue(!document.getElementById('dailyRewardNext').textContent.includes('event bonus'), 'no event, no mention');
+      closeDailyReward();
+      assertEqual(serverEconomyCatalog().eventLoginBonus, EVENT_LOGIN_BONUS, 'catalog carries it');
+    } finally { [seasonalNowOverride, state.phase] = was; }
+  });
   await test('v377: the event pop-up has a Preview button on every item and the event has its own leaderboard tab', () => {
     const was = [seasonalNowOverride, currentUser];
     try {
