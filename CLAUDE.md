@@ -1,3 +1,7 @@
+## v371 — event recap mail
+
+- `sendSeasonalMail` (at sign-in) also sends, for each event instance that ended in the last 14 days and has no `seasonMailSent/<key>-recap` mark, one `activityInbox/season_<key>-recap` mail (`{type:'season', event, recap:{wins, done, total, diamonds, earned}}`) built by the pure `seasonRecapMail(w, wins, completed)` (wins from `users/{uid}/seasonWins/<key>`, challenges from `completedChallenges`); nothing is sent to a player who took part in nothing (the mark is still written). Client-written, so it only reaches players who open the game within 14 days; a server version would need a Functions change. `inboxItemHtml` draws `item.recap` as "<Event> is over". Dev test "v371: an event recap mail…".
+
 ## v370 — event ending reminder
 
 - `showEventPopup(w, { ending: true })` (same `#eventPopupModal`): during the last `EVENT_ENDING_DAYS` (3) days of a live event, once per instance (`<key>:ending` in `shithead_event_popup_seen`, after the "is live" pop-up), `maybeShowEventPopup` shows "<Event> is ending" with only the items not owned (`cosmeticPurchaseState`) and what is left to earn (wins for the earn-only avatar, challenges unfinished). Nothing left = no pop-up (marked seen). `eventPopupHtml(w, opts)` returns null in that case. Dev test "v370: the last days of an event…".

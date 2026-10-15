@@ -12942,12 +12942,23 @@
     // One "event is here" mail per event per year, and one on its last day.
     // users/{uid}/seasonMailSent remembers what was sent so reading (and
     // deleting) a mail never brings it back.
+    // Recap (v371): once an event has ended, a player who took part gets one mail with their numbers.
+    // Pure: wins = their win count for that instance, completed = completedChallenges.
+    function seasonRecapMail(w, wins, completed = {}) {
+      const done = SEASONAL_CHALLENGES.filter(c => completed[seasonalCompletionKey(w.key, c.id)]);
+      const bonus = !!completed[seasonalCompletionKey(w.key, SEASONAL_CHALLENGE_BONUS.id)];
+      wins = Number(wins) || 0;
+      if (!wins && !done.length) return null;
+      const diamonds = done.reduce((s, c) => s + c.reward, 0) + (bonus ? SEASONAL_CHALLENGE_BONUS.reward : 0);
+      return { type: 'season', event: w.event.id, recap: { wins, done: done.length, total: SEASONAL_CHALLENGES.length, diamonds, earned: wins >= SEASONAL_EARN_WINS }, sentAt: Date.now() };
+    }
     function sendSeasonalMail() {
       if (!currentUser || typeof db === 'undefined' || !firebaseAvailable) return Promise.resolve();
       const active = activeSeasonalEvents();
-      if (!active.length) return Promise.resolve();
       const uid = currentUser.uid, now = seasonalNow();
-      return db.ref(`users/${uid}/seasonMailSent`).once('value').then(snap => {
+      const ended = seasonalWindowsAround(now).filter(w => w.endsAt <= now && now - w.endsAt < 14 * 864e5);
+      if (!active.length && !ended.length) return Promise.resolve();
+      return db.ref(`users/${uid}/seasonMailSent`).once('value').then(async snap => {
         const sent = snap.val() || {};
         const updates = {};
         active.forEach(w => {
@@ -12957,6 +12968,14 @@
           updates[`seasonMailSent/${key}`] = true;
           updates[`activityInbox/season_${key}`] = { type: 'season', event: w.event.id, lastDay, until: seasonShortDate(w.end), sentAt: Date.now() };
         });
+        for (const w of ended) {
+          const rk = `${w.key}-recap`;
+          if (sent[rk]) continue;
+          const wins = (await db.ref(`users/${uid}/seasonWins/${w.key}`).once('value')).val();
+          const mail = seasonRecapMail(w, wins, challengeEconomy.completedChallenges);
+          updates[`seasonMailSent/${rk}`] = true;
+          if (mail) updates[`activityInbox/season_${rk}`] = mail;
+        }
         return Object.keys(updates).length ? db.ref(`users/${uid}`).update(updates) : null;
       }).catch((e) => console.warn('sendSeasonalMail failed', e));
     }
@@ -18366,6 +18385,18 @@
       if (item.type === 'season') {
         const ev = SEASONAL_EVENT_BY_ID[item.event];
         if (!ev) return '';
+        if (item.recap) {
+          const r = item.recap;
+          const line = `${r.wins} win${r.wins === 1 ? '' : 's'} · ${r.done}/${r.total} challenges${r.diamonds ? ` · ${r.diamonds} 💎 earned` : ''}`;
+          return `<div class="inbox-season border rounded-xl px-2.5 py-2" style="--season-dark:${ev.tones[0]};--season-accent:${ev.tones[1]};--season-light:${ev.tones[2]}">
+          <div class="flex items-center gap-2"><span class="inbox-season-emoji" aria-hidden="true">${ev.emoji}</span><div class="min-w-0">
+          <p class="inbox-season-accent text-[9px] font-black uppercase tracking-wide mb-1">Event recap</p>
+          <p class="text-xs font-bold text-white">${escapeHtml(`${ev.name} is over`)}</p>
+          <p class="inbox-season-accent text-[10px] mt-1">${escapeHtml(line)}${r.earned ? `<br>You earned the ${escapeHtml(ev.names.earned)} avatar.` : ''}<br>See you next year.</p>
+          </div></div>
+          <div class="flex gap-1.5 mt-2"><button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-season-accent flex-1 text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button></div>
+        </div>`;
+        }
         return `<div class="inbox-season border rounded-xl px-2.5 py-2" style="--season-dark:${ev.tones[0]};--season-accent:${ev.tones[1]};--season-light:${ev.tones[2]}">
           <div class="flex items-center gap-2"><span class="inbox-season-emoji" aria-hidden="true">${ev.emoji}</span><div class="min-w-0">
           <p class="inbox-season-accent text-[9px] font-black uppercase tracking-wide mb-1">${item.lastDay ? 'Last day' : 'Seasonal event'}</p>

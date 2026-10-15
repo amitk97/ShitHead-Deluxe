@@ -3284,6 +3284,15 @@ async function runDevTestSuite() {
       assertEqual(showEventPopup(w, { ending: true }), false, 'nothing left: no pop-up');
     } finally { [seasonalNowOverride, cosmeticPurchaseState, seasonalWinState] = was; document.getElementById('eventPopupModal').classList.add('hidden'); }
   });
+  await test('v371: an event recap mail sums wins, challenges and Diamonds, and is skipped for players who did not take part', () => {
+    const w = { key: 'halloween-2026', event: SEASONAL_EVENT_BY_ID.halloween };
+    assertEqual(seasonRecapMail(w, 0, {}), null, 'no mail without taking part');
+    const done = { [seasonalCompletionKey(w.key, SEASONAL_CHALLENGES[0].id)]: true, [seasonalCompletionKey(w.key, SEASONAL_CHALLENGES[1].id)]: true };
+    const m = seasonRecapMail(w, 3, done);
+    assertEqual([m.recap.wins, m.recap.done, m.recap.total, m.recap.earned, m.recap.diamonds], [3, 2, 4, true, SEASONAL_CHALLENGES[0].reward + SEASONAL_CHALLENGES[1].reward], 'numbers');
+    const html = inboxItemHtml({ ...m, id: 'season_halloween-2026-recap' });
+    assertTrue(html.includes('Halloween is over') && html.includes('3 wins') && html.includes('2/4 challenges') && html.includes(SEASONAL_EVENT_BY_ID.halloween.names.earned), 'the Inbox shows the recap', html);
+  });
   await test('REGRESSION: opponent seats show picture + name on top and statuses below the cards', () => {
     freshState({ phase: 'SWAP' });
     state.players = [makePlayer({ id: 'p1', hand: [makeCard('4')] }),
