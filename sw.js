@@ -11,7 +11,7 @@ const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192-v302.png', '/icons
 // Everything a Vs Bots game needs with no signal, fetched when the app installs.
 const OFFLINE_ASSETS = [
   // Application code and styles, including their deployment version keys.
-  '/game.css?v=7b4ae781558c',
+  '/game.css?v=7b8ced66a9a1',
   '/tailwind.css?v=a6876526974d',
   '/sound.js?v=d5d1fddc0e77',
   '/burn-effects.js?v=e8b88c041666',

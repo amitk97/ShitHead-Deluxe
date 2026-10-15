@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v379: [['sparkle', 'The leaderboard tabs scroll sideways, so the Event tab is never cut off.']],
       v378: [['sparkle', 'Event recaps now arrive from the server, so you get yours even if you open the game weeks after the event.']],
       v377: [['sparkle', 'Event leaderboard: win games during an event to climb it. When the event ends the top 10 with 5+ wins win Diamonds (up to 1000). The event pop-up also has a Preview button on every item.', WN_KEY]],
       v376: [['sparkle', 'Finish all four challenges of an event to earn its Champion frame: a gold-and-event-colour frame for your cards, one for every event.', WN_KEY]],
