@@ -2860,3 +2860,5 @@
 .wish-text b { font-size:11px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .wish-text small { font-size:9px; color:#94a3b8; }
 .wish-empty { font-size:10px; color:#94a3b8; margin:0; }
+.wish-gift { flex:none; border:1px solid #f59e0b; color:#fbbf24; background:transparent; border-radius:8px; padding:3px 7px; font-size:9px; font-weight:900; }
+.wish-gift:hover { background:#f59e0b; color:#0f172a; }

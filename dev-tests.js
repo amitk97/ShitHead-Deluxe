@@ -8868,6 +8868,21 @@ async function runDevTestSuite() {
       assertTrue(document.querySelector('[data-shop-filter="wishlist"]') && document.getElementById('profileWishlist'), 'Markup exists');
     } finally { wishlistIds = savedSet; currentUser = savedUser; cosmeticPurchaseState = savedOwned; shopFilter = 'all'; saveWishlist(); }
   });
+  await test('v375: gift from a friend\'s wishlist, and the wishlist mail', () => {
+    const savedNow = seasonalNowOverride, savedSet = wishlistIds, savedOwned = cosmeticPurchaseState;
+    try {
+      seasonalNowOverride = '2026-10-20T12:00:00';
+      const item = COSMETIC_SHOP_ITEMS.find(i => !i.season);
+      const html = wishlistHtml({ [item.id]: true }, { giftUid: 'friend1', giftName: 'Pal' });
+      assertTrue(html.includes('data-wish-gift') === !giftLockReason(), 'Gift button follows the gift level lock');
+      assertTrue(!wishlistHtml({ [item.id]: true }).includes('data-wish-gift'), 'No gift button for strangers');
+      // The mail card names the wished event items.
+      const ev = activeSeasonalEvents()[0].event;
+      const seasonItem = COSMETIC_SHOP_ITEMS.find(i => i.season === ev.id);
+      const card = inboxItemHtml({ id: 'season_x-wish', type: 'season', event: ev.id, wish: [seasonItem.id], until: '31 Oct' });
+      assertTrue(card.includes('On your wishlist') && card.includes(seasonItem.name) && card.includes('data-season-shop'), 'Wishlist mail card');
+    } finally { seasonalNowOverride = savedNow; wishlistIds = savedSet; cosmeticPurchaseState = savedOwned; }
+  });
   await test('Free tables: Oak Wood and Classic Felt are unlocked for everyone, with real photo-like art', async () => {
     const saved = cosmeticPurchaseState, savedEq = { ...equippedCosmetics };
     try {

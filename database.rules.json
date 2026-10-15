@@ -221,8 +221,8 @@
           ".write": "auth != null && auth.uid === $uid",
           "$key": {
             ".validate": "newData.isBoolean() &&
-              ($key.matches(/^(lunar|valentine|ramadan|easter|summer)-[0-9]{4}(-last)?$/) ||
-              $key.matches(/^(halloween|diwali|christmas|newyear)-[0-9]{4}(-last)?$/))"
+              ($key.matches(/^(lunar|valentine|ramadan|easter|summer)-[0-9]{4}(-last|-recap|-wish)?$/) ||
+              $key.matches(/^(halloween|diwali|christmas|newyear)-[0-9]{4}(-last|-recap|-wish)?$/))"
           }
         },
         "ownedCosmetics": {

@@ -12351,9 +12351,11 @@
       const owned = !!cosmeticPurchaseState[item.id];
       const thumb = type === 'tableTheme' ? '' : `<span class="wish-thumb">${shopCosmeticThumbnail(item, type)}</span>`;
       const body = `${thumb}<span class="wish-text"><b>${escapeHtml(item.name)}</b><small>${escapeHtml(item.category.replace(/s$/, ''))} · ${opts.mine && owned ? 'Owned' : `💎 ${item.cost}`}</small></span>`;
+      const gift = opts.giftUid && giftableItem(item.id) && !(typeof giftLockReason === 'function' && giftLockReason())
+        ? `<button type="button" class="wish-gift" data-wish-gift="${escapeAttr(item.id)}" data-wish-to="${escapeAttr(opts.giftUid)}" data-wish-name="${escapeAttr(opts.giftName || '')}">GIFT 💎 ${item.cost}</button>` : '';
       return opts.mine
         ? `<div class="wish-row"><button type="button" class="wish-open" data-wish-open="${escapeAttr(item.id)}">${body}</button><button type="button" class="wish-heart is-on" data-wish-item="${escapeAttr(item.id)}" aria-pressed="true" aria-label="Remove ${escapeAttr(item.name)} from wishlist"><svg class="ic" aria-hidden="true"><use href="#ic-heart"/></svg></button></div>`
-        : `<div class="wish-row">${body}</div>`;
+        : `<div class="wish-row">${body}${gift}</div>`;
     }
     function wishlistHtml(ids, opts = {}) {
       const items = wishlistItems(new Set(Object.keys(ids || {})));
@@ -12370,6 +12372,23 @@
       const open = e.target.closest?.('[data-wish-open]');
       if (open) { document.getElementById('profileModal')?.classList.add('hidden'); openLockedCosmetic(open.dataset.wishOpen); }
     });
+    // One mail per event instance when a wished item is on sale (type 'season' with `wish`).
+    function sendWishlistMail() {
+      if (!currentUser || typeof db === 'undefined' || !firebaseAvailable || !wishlistIds.size) return Promise.resolve();
+      const uid = currentUser.uid;
+      const todo = activeSeasonalEvents().map(w => ({ w, ids: wishlistItems().filter(i => i.season === w.event.id && !cosmeticPurchaseState[i.id]).map(i => i.id) })).filter(x => x.ids.length);
+      if (!todo.length) return Promise.resolve();
+      return db.ref(`users/${uid}/seasonMailSent`).once('value').then(snap => {
+        const sent = snap.val() || {}, updates = {};
+        todo.forEach(({ w, ids }) => {
+          const key = `${w.key}-wish`;
+          if (sent[key]) return;
+          updates[`seasonMailSent/${key}`] = true;
+          updates[`activityInbox/season_${key}`] = { type: 'season', event: w.event.id, wish: ids.slice(0, 10), until: seasonShortDate(w.end), sentAt: Date.now() };
+        });
+        return Object.keys(updates).length ? db.ref(`users/${uid}`).update(updates) : null;
+      }).catch(e => console.warn('sendWishlistMail failed', e));
+    }
     function cosmeticDisplayName(type, id) {
       if (!id || id === 'default') return 'Default';
       const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id && COSMETIC_CATEGORY_TYPES[entry.category] === type);
@@ -12430,7 +12449,7 @@
           <div class="min-w-0"><div id="playerPopupName" class="pp-name">${escapeHtml(player.name)}${hasProfile && xpShown() && profile.level > 0 ? ` ${xpLevelBadge(profile.level)}` : ''}</div>${badge}${online}</div></div>
         ${hasProfile ? playerPopupStatsHtml(profile.stats || {}, profile) : '<div class="pp-note">This player isn\'t signed in, so they don\'t have a rank or stats yet.</div>'}
         ${showcaseHtml(profile.showcase || player.cosmetics, { link: true })}
-        ${profile.wishlist && Object.keys(profile.wishlist).length ? `<div class="pp-showcase"><div class="pp-section">Wishlist</div><div class="wish-list">${wishlistHtml(profile.wishlist)}</div></div>` : ''}
+        ${profile.wishlist && Object.keys(profile.wishlist).length ? `<div class="pp-showcase"><div class="pp-section">Wishlist</div><div class="wish-list">${wishlistHtml(profile.wishlist, friendState === 'friends' ? { giftUid: player.uid, giftName: player.name } : {})}</div></div>` : ''}
         ${actions}`;
     }
     function renderPlayerPopupBot(player) {
@@ -12493,6 +12512,13 @@
     document.getElementById('playerPopupClose').addEventListener('click', closePlayerPopup);
     document.getElementById('playerPopup').addEventListener('click', (event) => {
       if (event.target.id === 'playerPopup') { closePlayerPopup(); return; }
+      const wishGift = event.target.closest('[data-wish-gift]');
+      if (wishGift) {
+        closePlayerPopup();
+        giftTarget = { uid: wishGift.dataset.wishTo, name: wishGift.dataset.wishName || 'your friend' };
+        openGiftModal(wishGift.dataset.wishGift);
+        return;
+      }
       const item = event.target.closest('[data-showcase-type]');
       if (item) {
         closePlayerPopup();
@@ -14104,6 +14130,7 @@
     function startSignedInSession(user) {
       ensureUsername(); syncPublicProfile(); setupPresence(); startInboxBadgeListener(user); if (!IS_DEV_TEST_PAGE) attemptMatchReconnect();
       initChallengeEconomy().then(() => { claimDailyLoginReward(); sendSeasonalMail(); loadSeasonWins(); }); loadCosmeticCollection(user); loadWishlist(user);
+      setTimeout(() => { if (currentUser && !devTestSuiteRunning) sendWishlistMail(); }, 7000);
       setTimeout(() => { if (currentUser && !devTestSuiteRunning) pruneOldRooms(); }, 15000);
       setTimeout(() => { if (currentUser && !devTestSuiteRunning) { registerPushToken(); shareSeasonCalendarWithWorker(); } }, 4000);
       // Preferences live under the account and do not depend on profile creation.
@@ -18469,6 +18496,21 @@
       if (item.type === 'season') {
         const ev = SEASONAL_EVENT_BY_ID[item.event];
         if (!ev) return '';
+        if (item.wish) {
+          const names = item.wish.map(id => COSMETIC_SHOP_ITEMS.find(i => i.id === id)?.name).filter(Boolean);
+          if (!names.length) return '';
+          return `<div class="inbox-season border rounded-xl px-2.5 py-2" style="--season-dark:${ev.tones[0]};--season-accent:${ev.tones[1]};--season-light:${ev.tones[2]}">
+          <div class="flex items-center gap-2"><span class="inbox-season-emoji" aria-hidden="true">${ev.emoji}</span><div class="min-w-0">
+          <p class="inbox-season-accent text-[9px] font-black uppercase tracking-wide mb-1">On your wishlist</p>
+          <p class="text-xs font-bold text-white">${escapeHtml(`${names.length === 1 ? names[0] : `${names.length} items you wished for`} ${names.length === 1 ? 'is' : 'are'} in the Shop`)}</p>
+          <p class="inbox-season-accent text-[10px] mt-1">${escapeHtml(names.slice(0, 4).join(', '))}${names.length > 4 ? '…' : ''} — until ${escapeHtml(item.until || 'the event ends')}.</p>
+          </div></div>
+          <div class="flex gap-1.5 mt-2">
+            <button type="button" data-season-shop="1" class="inbox-season-shop-btn flex-1 text-[9px] font-black py-1 rounded-lg">OPEN SHOP</button>
+            <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-season-accent flex-1 text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
+          </div>
+        </div>`;
+        }
         if (item.recap) {
           const r = item.recap;
           const line = `${r.wins} win${r.wins === 1 ? '' : 's'} · ${r.done}/${r.total} challenges${r.diamonds ? ` · ${r.diamonds} 💎 earned` : ''}`;
