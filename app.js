@@ -9993,6 +9993,29 @@
       setTimeout(() => tryShow(0), 4500);
     }
     maybeShowEventPopup();
+    // Home event chip (v369): while an event is live, a chip above the mode cards shows the days left and
+    // your progress (earn-only avatar wins, event challenges done); a tap opens the event Shop.
+    function refreshHomeEventChip() {
+      const chip = document.getElementById('homeEventChip');
+      if (!chip) return;
+      const w = activeSeasonalEvents()[0];
+      chip.classList.toggle('hidden', !w);
+      if (!w) return;
+      const ev = w.event, left = seasonDaysBetween(seasonalNow(), w.endsAt);
+      chip.style.setProperty('--ev-accent', ev.tones[1]);
+      document.getElementById('homeEventEmoji').textContent = ev.emoji;
+      document.getElementById('homeEventTitle').textContent = `${ev.name} · ${left <= 1 ? 'last day' : `${left} days left`}`;
+      let sub = 'Event items in the Shop';
+      if (currentUser) {
+        const wins = Math.min(SEASONAL_EARN_WINS, Number(seasonalWinState[w.key]) || 0);
+        const done = SEASONAL_CHALLENGES.filter(c => (challengeEconomy.completedChallenges || {})[seasonalCompletionKey(w.key, c.id)]).length;
+        sub = wins >= SEASONAL_EARN_WINS ? `${ev.names.earned} earned · ${done}/${SEASONAL_CHALLENGES.length} challenges` : `${ev.names.earned}: ${wins}/${SEASONAL_EARN_WINS} wins · ${done}/${SEASONAL_CHALLENGES.length} challenges`;
+      }
+      document.getElementById('homeEventSub').textContent = sub;
+    }
+    document.getElementById('homeEventChip').addEventListener('click', () => { shopTab = SEASONAL_TAB; shopTabPicked = true; openShopPanel(); });
+    setTimeout(refreshHomeEventChip, 1500); // after the whole script has run (it reads consts declared further down)
+    setInterval(refreshHomeEventChip, 20000);
     attachPullToRefresh(document.getElementById('friendsListArea'), () => switchFriendsTab(currentFriendsTab));
     document.getElementById('headerInboxBtn').addEventListener('click', () => openInboxPanel());
     document.getElementById('menuChallengesBtn').addEventListener('click', () => {

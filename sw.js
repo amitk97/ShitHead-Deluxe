@@ -11,7 +11,7 @@ const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192-v302.png', '/icons
 // Everything a Vs Bots game needs with no signal, fetched when the app installs.
 const OFFLINE_ASSETS = [
   // Application code and styles, including their deployment version keys.
-  '/game.css?v=9e676788291e',
+  '/game.css?v=d6b6847f527d',
   '/tailwind.css?v=a6876526974d',
   '/sound.js?v=d5d1fddc0e77',
   '/burn-effects.js?v=e8b88c041666',
@@ -34,7 +34,7 @@ const OFFLINE_ASSETS = [
   '/shop.js?v=343ace972099',
   '/multiplayer-lobby.js?v=563279447523',
   '/private-cosmetics.js?v=4f732484384c',
-  '/app.js?v=e2a321c27956',
+  '/app.js?v=bc940af2532d',
   '/js/house-rules.js',
   '/js/house-rules-bots.js',
   '/js/house-rules-presets.js?v=335',

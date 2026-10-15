@@ -3252,6 +3252,18 @@ async function runDevTestSuite() {
       assertTrue(modal.classList.contains('hidden'), 'Later closes it');
     } finally { seasonalNowOverride = was; }
   });
+  await test('v369: the home screen shows an event chip with days left and progress only while an event is live', () => {
+    const was = [seasonalNowOverride, currentUser, seasonalWinState];
+    const chip = document.getElementById('homeEventChip');
+    try {
+      seasonalNowOverride = '2026-09-01T12:00'; refreshHomeEventChip();
+      assertTrue(chip.classList.contains('hidden'), 'hidden with no event');
+      seasonalNowOverride = '2026-10-20T12:00'; currentUser = { uid: 'u1' }; seasonalWinState = { 'halloween-2026': 2 }; refreshHomeEventChip();
+      assertTrue(!chip.classList.contains('hidden'), 'shown during Halloween');
+      const text = chip.textContent;
+      assertTrue(text.includes('Halloween') && text.includes('days left') && text.includes('2/3 wins') && text.includes('0/4 challenges'), 'days left and progress', text);
+    } finally { [seasonalNowOverride, currentUser, seasonalWinState] = was; refreshHomeEventChip(); }
+  });
   await test('REGRESSION: opponent seats show picture + name on top and statuses below the cards', () => {
     freshState({ phase: 'SWAP' });
     state.players = [makePlayer({ id: 'p1', hand: [makeCard('4')] }),

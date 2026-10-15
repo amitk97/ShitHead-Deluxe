@@ -1,3 +1,7 @@
+## v369 — home event chip
+
+- `#homeEventChip` (above `#modeCarousel`, hidden on mode pages and when no event is live) shows "<Event> · N days left" and, signed in, the earn-only avatar's wins (`seasonalWinState[w.key]` of `SEASONAL_EARN_WINS`) plus event challenges done; a tap opens the Shop on the Seasonal tab. `refreshHomeEventChip` runs 1.5s after start (it reads consts declared later in app.js) and every 20s. Dev test "v369: the home screen shows an event chip…".
+
 ## v368 — Seasonal tab first
 
 - `renderSeasonalChallenges` moves `[data-challenge-tab="seasonal"]` to the front of `#challengeTabs` while an event is live and back to the end when it is over (the tab opens on whichever panel was last shown; only the order changed). Dev test "Seasonal challenges…" checks both.

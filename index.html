@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-15-v368 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-15-v369 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -227,7 +227,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=9e676788291e">
+  <link rel="stylesheet" href="game.css?v=d6b6847f527d">
 
   
   <!-- Firebase SDKs -->
@@ -549,6 +549,11 @@
         <!-- § Mode carousel (v317, owner): the seven home options, numbered
              1-7. The old mode buttons below stay (hidden) as the switches
              the cards press. -->
+        <button type="button" id="homeEventChip" class="hidden" aria-label="Open the event Shop">
+          <span class="hec-emoji" id="homeEventEmoji" aria-hidden="true"></span>
+          <span class="hec-text"><b id="homeEventTitle"></b><small id="homeEventSub"></small></span>
+          <span class="hec-go" aria-hidden="true">&rsaquo;</span>
+        </button>
         <div id="modeCarousel" role="group" aria-label="Game modes">
           <div class="mc-track">
             <div role="button" tabindex="0" class="mc-card mc-empty" data-mc="1" data-mc-mode="pin1" style="--mc-tone:#64748b" aria-pressed="false"><span class="mc-num" aria-hidden="true">1</span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" stroke-dasharray="3 3"/><path d="M12 9v6M9 12h6"/></svg><span class="mc-name">Shortcut</span><span class="mc-sub">Pin a mode</span><button type="button" class="mc-go" data-mc-go>Go →</button></div>
@@ -2631,7 +2636,7 @@
   <script src="home-navigation.js?v=79e36503dc2c"></script>
   <script src="multiplayer-lobby.js?v=563279447523"></script>
   <script src="private-cosmetics.js?v=4f732484384c"></script>
-  <script src="app.js?v=e2a321c27956"></script>
+  <script src="app.js?v=bc940af2532d"></script>
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
