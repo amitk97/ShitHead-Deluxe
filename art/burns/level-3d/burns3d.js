@@ -581,6 +581,20 @@ void main(){
       const P = [[0, 0], [1, 0], [1, 1], [0, 1]], L = [radial === true ? 1 : radial || 0, swirl];
       quad(arr, P.map(([u, v]) => proj((u - PU) * AW * s * sx + sh * (PV - v) * AH * s + dx, (PV - v) * AH * s + dy, z)), P, [L, L, L, L], [...glow, alpha], [7, slot, reveal, flow]);
     };
+    // The same painted layer as a depth mesh: each point gets a z from `relief(u, v)`, then the whole
+    // figure turns (yaw about its upright axis, pitch forward) and goes through the perspective, so
+    // the head, body and arms really sit at different depths.
+    const layerMesh = (arr, slot, z, s, dy, reveal, flow, glow, alpha, relief, yaw, pitch, N = 16) => {
+      const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch), L = [0, 0];
+      const pt = (i, j) => {
+        const u = i / N, v = j / N; let x = (u - PU) * AW * s, y = (PV - v) * AH * s, zz = relief(u, v) * K;
+        const x1 = x * cy + zz * sy, z1 = -x * sy + zz * cy, y1 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
+        return [...proj(x1, y1 + dy, z + z2), u, v];
+      };
+      const g = []; for (let j = 0; j <= N; j++) { g.push([]); for (let i = 0; i <= N; i++) g[j].push(pt(i, j)); }
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) for (const q of [g[j][i], g[j][i + 1], g[j + 1][i + 1], g[j][i], g[j + 1][i + 1], g[j + 1][i]])
+        arr.push(q[0], q[1], q[3], q[4], 0, 0, glow[0], glow[1], glow[2], alpha, 7, slot, reveal, flow);
+    };
     const artAt = (u, v, s, dy, z) => [(u - PU) * AW * s, (PV - v) * AH * s + dy, z];
     const vol = (arr, x0, x1, y0, y1, z, inten, seed) => {
       const P = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => proj(x, y, z));
@@ -820,7 +834,14 @@ void main(){
       const gs = 1 + .12 * lunge, gdy = -.7 * (1 - ease((t - .08) / .6)) - .2 * lunge + .7 * smooth(1.25, 1.95, t);
       if (R.art) {
         layer(out.art, 1, -.5, 1, 0, smooth(0, .4, t) * (1 - smooth(1.45, 1.95, t)), 1.4, [.55, .9, 1]);
-        layer(out.art, 0, -.7, gs, gdy, smooth(.12, .62, t) * (1 - smooth(1.3, 1.85, t)), 1, [.55, .9, 1]);
+        // The wraith as a depth mesh: head, the two reaching arms and the body stand out of the painting,
+        // it turns to face the Pile, the arms thrust at the camera on the strike, and it leans in.
+        const g2 = (u, v, cu, cv, su, sv) => Math.exp(-(((u - cu) / su) ** 2 + ((v - cv) / sv) ** 2));
+        const reach = 1 + 1.5 * lunge;
+        const relief = (u, v) => .22 * g2(u, v, .6, .45, .22, .32) + .5 * g2(u, v, .72, .2, .13, .14) * (1 + .5 * lunge)
+          + .62 * reach * g2(u, v, .28, .42, .17, .15) + .55 * reach * g2(u, v, .88, .56, .1, .2) - .25 * (1 - g2(u, v, .55, .45, .6, .55));
+        const turn = (1 - ease((t - .1) / .5)) * -.55 + .22 * Math.sin(t * 2.4) * smooth(.6, 1.2, t) + .3 * smooth(1.25, 1.9, t);
+        layerMesh(out.art, 0, -.7, gs, gdy, smooth(.12, .62, t) * (1 - smooth(1.3, 1.85, t)), 1, [.55, .9, 1], 1, relief, turn, .1 * lunge + .04 * Math.sin(t * 3));
       }
       const env = smooth(0, .3, t) * (1 - smooth(1.3, 1.9, t));
       vol(out.back, -2.1 * K, 2.1 * K, -.6, 2.1 * K, -.3, .85 * env, .3);
@@ -1023,7 +1044,7 @@ void main(){
     cleanup.host = host; active.add(cleanup);
     let timer = setTimeout(cleanup, 3000);
     const frame = () => {
-      const t = Math.min(dur, (performance.now() - start) / 1000);
+      const t = Math.min(dur, window.__burnT != null ? window.__burnT : (performance.now() - start) / 1000);
       clearTimeout(timer); timer = setTimeout(cleanup, 3000); // ends it if frames stop
       S.advance(t);
       if (calm) canvas.style.opacity = String(1 - smooth(.55, .8, t));
