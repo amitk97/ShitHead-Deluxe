@@ -11,8 +11,8 @@ the scripts in `tools/video/`. Social apps prefer MP4: open a file in CapCut
 | `shithead-uni.webm` | 25s | "Remember this one?" The rules everyone knows, played fast | `uni.js` |
 | `shithead-promo.webm` | 32s | Promo: plays, burn, blind flip, Joker, last card, win | `promo.js` |
 | `shithead-tiktok1-jokered.mp4` | 15s | TikTok 1 (1080×1920, card sounds + voiceover, no burn/Joker sounds): your 10 burns a 22-card Pile with Ghost Flames ("Burnt!"), then Jake's Pumpkin Joker hands you 17 cards; end card "Think you can beat the dev? Prove it" | `tiktok1-voice.py` → `tiktok1.js` |
-| `shithead-tiktok2-gauntlet.mp4` | 23s | TikTok 2 (1080×1920, game sounds + voiceover): Gauntlet welcome pop-up (5 bots, 3 lives), Round 1 won, a life lost, the Boss round burnt with Ghost Flames, champion pop-up, end card "Your turn. Clear the Gauntlet" | `tt23-voice.py` → `tiktok2.js` |
-| `shithead-tiktok3-halloween.mp4` | 20s | TikTok 3 (1080×1920, game sounds + voiceover): the Halloween event pop-up scrolled through, Ghost Flames, the Pumpkin Joker, what the event pays, end card "Halloween ends 2 November" (event window 15 Oct – 2 Nov) | `tt23-voice.py` → `tiktok3.js` |
+| `shithead-tiktok2-gauntlet.mp4` | 23s | TikTok 2 (1080×1920, game sounds + voiceover): Gauntlet welcome pop-up (5 bots, 3 lives), Round 1 won, a life lost, the Boss round burnt with the v382 Ghost Flames wraith, champion pop-up, end card "Your turn. Clear the Gauntlet" | `tt23-voice.py` → `tiktok2.js` |
+| `shithead-tiktok3-halloween.mp4` | 20s | TikTok 3 (1080×1920, game sounds + voiceover): the Halloween event pop-up scrolled through, the v382 Ghost Flames wraith, the Pumpkin Joker, what the event pays, end card "Halloween ends 2 November" (event window 15 Oct – 2 Nov) | `tt23-voice.py` → `tiktok3.js` |
 | `shithead-how-to-play.webm` / `.mp4` | 112s | How to play with a voiceover (British male, excited), every move cued to the narration | `narrate.py` → `howto-voice.js` → `mux-voice.py` |
 
 Suggested captions:
