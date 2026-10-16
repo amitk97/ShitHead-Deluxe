@@ -1,3 +1,7 @@
+## v387 — Ghost Flames rips the card apart
+
+- Ghost branch of `burns3d.js`: the wraith (slot 0) forms first and leaves last (`reveal`), the denser fire bank (slot 1) joins later and goes first (`revealBank`), so its bright sides never show before or outlast the ghost. The pile cards are torn, not thrown: `S.ripAt(c)` (.72s + .05 per card), `S.zig(v)` (the zigzag cut), `S.ripHalf(c, side, u, v, t)` (each half swings open about the bottom centre like a V, turns and lifts), drawn as two meshes per card in the card loop (`side` -1 / 1, real `u` as texture coordinate), a violet glow along the torn edge, `ripCard` in the sim (sparks and shards along the tear, then the usual burn from `S.front`); the painted arms spread apart with `pull` in `poseAt`'s `wave`. Burner's back shows on the turned halves. Sound unchanged. Frames checked with `window.__burnT`.
+
 ## v386 — Ghost Flames appears as one whole figure
 
 - Owner's recording showed the effect appearing in separate horizontal sections (fire bank chunks first, the bottom last). The art shader has a whole-apparition mode: mesh layers pass `loc.x = -1` and `m = smoothstep(0, .5, reveal * 1.5 + (noise - .5) * (1 - reveal) * .8 - .25)`, so every part fades in and out together (no sweep). Only the shared mesh path uses it; the other burns keep their sweeps.
