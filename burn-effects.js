@@ -288,68 +288,109 @@
       anim(flash, [{ opacity: 0, transform: 'scale(.2)' }, { opacity: 0, transform: 'scale(.2)', offset: p0 }, { opacity: .9, transform: 'scale(.8)', offset: p0 + .015 }, { opacity: 0, transform: 'scale(1.7)', offset: p0 + .1 }, { opacity: 0, transform: 'scale(1.7)' }]);
       const ring = add(`position:absolute;left:${px(cx - H * 1.2)}px;top:${px(cy + H * .25)}px;width:${px(H * 2.4)}px;height:${px(H * .7)}px;z-index:1;border-radius:50%;border:${px(Math.max(2, H * .03))}px solid rgba(196,181,253,.9);box-shadow:0 0 ${px(H * .12)}px rgba(139,92,246,.8)`);
       anim(ring, TIMES.map(o => { const T = o * D, u = clamp((T - .95) / .6); return { offset: o, opacity: u > 0 ? (1 - u) * .9 : 0, transform: `scale(${(.25 + 1.1 * u).toFixed(3)})` }; }));
-      // ---- The wraith. Every tongue is its own element: it flies in from round the Pile (a0-a1), takes its
-      // slot in the figure (units of H from the hem, up is negative) and then rides the master motion.
+      // ---- The wraith, in real 3D. Figure space: units of H, the hem at the origin, up is -y, +z toward the
+      // viewer. It turns to face the camera as it forms, then leans in at the swoop; every point goes through
+      // yaw, lean and perspective (`proj`), each tongue is drawn from its projected base and tip (so it
+      // foreshortens, and near ones are bigger and brighter) and all of them are depth-sorted every frame
+      // (an animated z-index). The robe is a cone of tongues round a ring, so the turn shows real parallax.
+      const FP = 3.2, swoop = T => ease(clamp((T - GF_SWOOP) / (GF_LAND - GF_SWOOP))), rise = T => ease(clamp((T - GF_RISE) / .4));
+      const yawOf = T => -.95 * (1 - ease(clamp(T / .95))) + .18 * Math.sin((T - GF_RISE) * 6) * clamp((T - GF_RISE) / .3);
+      const leanOf = T => .45 * swoop(T) * (1 - rise(T)) + .05 * Math.sin(T * 3);
+      const proj = (T, p) => {
+        const m = M(T), yw = yawOf(T), ln = leanOf(T), cyw = Math.cos(yw), syw = Math.sin(yw), cl = Math.cos(ln), sl = Math.sin(ln);
+        const x1 = p[0] * cyw + p[2] * syw, z1 = -p[0] * syw + p[2] * cyw;
+        const y2 = p[1] * cl + z1 * sl, z2 = -p[1] * sl + z1 * cl, k = FP / (FP - z2);
+        return { x: m.x + x1 * k * H * m.sc, y: m.y + y2 * k * H * m.sc, k, z: z2, sc: m.sc };
+      };
+      const zi = z => String(300 + Math.round((z + 2) * 60));
       const w0 = H * .2, h0 = H * .5;
       const flame = (n) => `<svg viewBox="0 0 40 100" width="100%" height="100%" style="overflow:visible"><path d="M20 100C6 96 2 78 8 62C12 50 10 38 16 22C18 30 20 34 22 30C26 20 24 10 20 0C32 14 38 34 36 52C35 64 38 74 34 86C31 96 26 100 20 100Z" fill="url(#gf${id}-${n})"/><path d="M20 98C13 95 12 84 15 75C17 69 17 62 20 54C22 62 25 66 25 74C27 82 27 94 20 98Z" fill="#f5f3ff" opacity=".4"/></svg>`;
       let n = 0;
-      const tongue = ({ slot, z, a0, a1 }) => {
-        const el = add(`position:absolute;left:0;top:0;width:${px(w0)}px;height:${px(h0)}px;z-index:${z};mix-blend-mode:screen;transform-origin:50% 100%`, flame(n++ % GF_PAL.length));
+      // slot(T) -> [x, y, z, dx, dy, dz, length, width] (the direction need not be unit length)
+      const tongue = ({ slot, a0, a1 }) => {
+        const el = add(`position:absolute;left:0;top:0;width:${px(w0)}px;height:${px(h0)}px;z-index:300;mix-blend-mode:screen;transform-origin:50% 100%`, flame(n++ % GF_PAL.length));
         const ang = rand(0, PI2), rr = H * rand(1.3, 2.5), sx0 = cx + Math.cos(ang) * rr, sy0 = cy + Math.sin(ang) * rr * .8, r0 = rand(-180, 180);
         const f1 = rand(9, 15), f2 = rand(5, 8), ph = rand(0, 6.3), sw = rand(5, 12);
         anim(el, TIMES.map(o => {
-          const T = o * D, m = M(T), [fx, fy, fr, len, wid] = slot(T), ar = ease(clamp((T - a0) / (a1 - a0))), grow = lerp(.5, 1, ar) * m.sc;
-          const wx = lerp(sx0, m.x + fx * H * m.sc, ar), wy = lerp(sy0, m.y + fy * H * m.sc, ar);
-          return { offset: o, opacity: clamp((T - a0) / .12) * fadeAll(T),
-            transform: `translate(${px(wx - w0 / 2)}px,${px(wy - h0)}px) rotate(${dg(lerp(r0, fr, ar))}deg) skewX(${dg(Math.sin(T * f2 + ph) * sw * ar)}deg) scale(${(wid / .2 * grow * (1 + .12 * Math.sin(T * f1 + ph))).toFixed(3)},${(len / .5 * grow * (1 + .25 * Math.sin(T * f1 * 1.3 + ph * 2) + .1 * Math.sin(T * f2 * 2.1))).toFixed(3)})` };
+          const T = o * D, [x, y, z, dx, dy, dz, len, wid] = slot(T), b = proj(T, [x, y, z]), dl = Math.hypot(dx, dy, dz) || 1;
+          const t = proj(T, [x + dx / dl * len, y + dy / dl * len, z + dz / dl * len]), sdx = t.x - b.x, sdy = t.y - b.y;
+          const ar = ease(clamp((T - a0) / (a1 - a0))), grow = lerp(.5, 1, ar), depth = clamp((b.z + .7) / 1.4);
+          return { offset: o, zIndex: zi(b.z), opacity: clamp((T - a0) / .12) * fadeAll(T) * lerp(.5, 1, depth),
+            transform: `translate(${px(lerp(sx0, b.x, ar) - w0 / 2)}px,${px(lerp(sy0, b.y, ar) - h0)}px) rotate(${dg(lerp(r0, Math.atan2(sdx, -sdy) * 180 / Math.PI, ar))}deg) skewX(${dg(Math.sin(T * f2 + ph) * sw * ar)}deg) scale(${(wid * H * b.sc * b.k / w0 * grow * (1 + .12 * Math.sin(T * f1 + ph))).toFixed(3)},${(Math.hypot(sdx, sdy) / h0 * grow * (1 + .25 * Math.sin(T * f1 * 1.3 + ph * 2) + .1 * Math.sin(T * f2 * 2.1))).toFixed(3)})` };
         }));
       };
-      // The skirt: eleven tongues fanned up from the hem, leaning in to the hood.
-      for (let i = 0; i < 11; i++) { const u = i / 10 - .5, au = Math.abs(u), a0 = .12 + au * .3 + rand(0, .08), len = 1.15 - au * .9 + rand(-.06, .06), wid = .27 - au * .12;
-        tongue({ slot: () => [u * .9, 0, -u * 38, len, wid], z: 5, a0, a1: a0 + rand(.32, .42) }); }
-      // The crown of the hood and its two side flames.
-      for (let i = 0; i < 6; i++) { const u = i / 5 - .5, a0 = .3 + rand(0, .15), len = rand(.4, .6);
-        tongue({ slot: () => [u * .5, -1.62, u * 60, len, .13], z: 5, a0, a1: a0 + .35 }); }
-      [-1, 1].forEach(s => { const a0 = .36 + rand(0, .1); tongue({ slot: () => [s * .3, -1.4, s * 75, .3, .12], z: 5, a0, a1: a0 + .32 }); });
-      // The tail: long wisps that trail under the hem.
-      for (let i = 0; i < 6; i++) { const u = i / 5 - .5, a0 = .1 + rand(0, .15), len = rand(.8, 1.2), ph = rand(0, 6.3);
-        tongue({ slot: T => [u * .6, .02, 180 + u * 30 + Math.sin(T * 5 + ph) * 10, len, .22], z: 1, a0, a1: a0 + .45 }); }
-      // The arms: from each shoulder a curve of flame, spread at first, thrust down onto the card at GF_LAND; claws at the end.
-      const bez = (p0, c, p1, u) => [(1 - u) ** 2 * p0[0] + 2 * (1 - u) * u * c[0] + u * u * p1[0], (1 - u) ** 2 * p0[1] + 2 * (1 - u) * u * c[1] + u * u * p1[1]];
-      const arm = (s, T) => { const r = reach(T); return { s0: [s * .3, -1.1], c: [s * lerp(.8, .75, r), lerp(-1.3, -.5, r)], hand: [s * lerp(1.05, .2, r), lerp(-.8, .25, r)] }; };
-      const aim = (a, b) => Math.atan2(b[0] - a[0], -(b[1] - a[1])) * 180 / Math.PI;
+      // The robe: two rings of tongues leaning in to the neck (a cone), the outer ring wider and taller.
+      for (let i = 0; i < 18; i++) {
+        const th = i / 18 * PI2 + rand(-.1, .1), r = rand(.32, .44), bx = r * Math.cos(th), bz = r * Math.sin(th), a = [rand(-.06, .06), -1.1 + rand(-.1, .1), rand(-.06, .06)];
+        const dx = a[0] - bx, dy = a[1], dz = a[2] - bz, len = Math.hypot(dx, dy, dz) * rand(.9, 1.05), a0 = .1 + rand(0, .3), ph = rand(0, 6.3);
+        tongue({ slot: T => [bx + .03 * Math.sin(T * 4 + ph), 0, bz + .03 * Math.cos(T * 4 + ph), dx, dy, dz, len, .27], a0, a1: a0 + rand(.35, .45) });
+      }
+      for (let i = 0; i < 10; i++) {
+        const th = i / 10 * PI2 + rand(-.2, .2), r = rand(.12, .2), bx = r * Math.cos(th), bz = r * Math.sin(th), dx = -bx * .6, dy = -1.25, dz = -bz * .6, a0 = .2 + rand(0, .3);
+        tongue({ slot: () => [bx, -.02, bz, dx, dy, dz, rand(.95, 1.15), .2], a0, a1: a0 + .4 });
+      }
+      // The crown of the hood: eight flames round the top of the head, flaring outward.
+      for (let i = 0; i < 8; i++) {
+        const th = i / 8 * PI2, len = rand(.38, .55), a0 = .3 + rand(0, .15);
+        tongue({ slot: () => [.2 * Math.cos(th), -1.62, .2 * Math.sin(th), Math.cos(th) * .6, -1, Math.sin(th) * .6, len, .13], a0, a1: a0 + .35 });
+      }
+      // The tail: wisps trailing down and back from under the hem.
+      for (let i = 0; i < 6; i++) {
+        const th = i / 6 * PI2, len = rand(.8, 1.2), ph = rand(0, 6.3), a0 = .1 + rand(0, .15);
+        tongue({ slot: T => [.14 * Math.cos(th), .02, .14 * Math.sin(th), Math.cos(th) * .7 + Math.sin(T * 5 + ph) * .3, 1, -.5 + Math.sin(th) * .4, len, .22], a0, a1: a0 + .45 });
+      }
+      // The arms: from each shoulder a curve of flame in 3D, spread at first, then thrust down AND toward the
+      // viewer onto the card at GF_LAND, so the claws come at the camera.
+      const bez = (p0, c, p1, u) => p0.map((_, i) => (1 - u) ** 2 * p0[i] + 2 * (1 - u) * u * c[i] + u * u * p1[i]);
+      const arm = (s, T) => { const r = reach(T); return { s0: [s * .3, -1.1, 0], c: [s * lerp(.85, .7, r), lerp(-1.35, -.4, r), lerp(.05, .3, r)], hand: [lerp(s * 1.0, s * .2, r), lerp(-.85, .25, r), lerp(.15, .75, r)] }; };
       [-1, 1].forEach(s => {
-        for (let i = 0; i < 6; i++) { const a0 = .4 + i * .03 + rand(0, .06);
-          tongue({ slot: T => { const { s0, c, hand } = arm(s, T), u = (i + .5) / 6, p = bez(s0, c, hand, u); return [p[0], p[1], aim(p, bez(s0, c, hand, Math.min(1, u + .05))), lerp(.36, .26, u), lerp(.2, .13, u)]; }, z: 7, a0, a1: a0 + .3 }); }
-        [-42, -14, 14, 42].forEach(off => { const a0 = .56 + rand(0, .1);
-          tongue({ slot: T => { const { s0, c, hand } = arm(s, T); return [hand[0], hand[1], aim(bez(s0, c, hand, .94), hand) + off * .8, .26, .055]; }, z: 7, a0, a1: a0 + .22 }); });
+        for (let i = 0; i < 6; i++) {
+          const a0 = .4 + i * .03 + rand(0, .06), u = (i + .5) / 6;
+          tongue({ slot: T => { const { s0, c, hand } = arm(s, T), p = bez(s0, c, hand, u), q = bez(s0, c, hand, Math.min(1, u + .05)); return [p[0], p[1], p[2], q[0] - p[0], q[1] - p[1], q[2] - p[2], lerp(.36, .26, u), lerp(.2, .13, u)]; }, a0, a1: a0 + .3 });
+        }
+        [-42, -14, 14, 42].forEach(off => {
+          const a0 = .56 + rand(0, .1), fr = off * .8 * Math.PI / 180;
+          tongue({ slot: T => { const { s0, c, hand } = arm(s, T), q = bez(s0, c, hand, .94), tx = hand[0] - q[0], ty = hand[1] - q[1], tz = hand[2] - q[2];
+            return [hand[0], hand[1], hand[2], tx * Math.cos(fr) - ty * Math.sin(fr), tx * Math.sin(fr) + ty * Math.cos(fr), tz + off * .004, .26, .055]; }, a0, a1: a0 + .22 });
+        });
       });
-      // The hood: a dark face with two hollow glowing eyes and a mouth that opens in the wail.
-      const hw = H * .62, hh = H * .76;
-      const head = add(`position:absolute;left:0;top:0;width:${px(hw)}px;height:${px(hh)}px;z-index:6;transform-origin:50% 50%`,
-        `<div style="position:absolute;inset:0;border-radius:50% 50% 44% 44% / 58% 58% 42% 42%;background:radial-gradient(ellipse at 50% 42%,#05030f 0,#0d0724 52%,#3b1d8f 80%,rgba(139,92,246,.35) 100%);box-shadow:0 0 ${px(H * .16)}px rgba(167,139,250,.75),inset 0 0 ${px(H * .1)}px rgba(34,211,238,.35)"></div>`);
-      const eyes = [30, 70].map(l => { const e = document.createElement('div'); e.style.cssText = `position:absolute;left:${l}%;top:42%;width:${px(H * .13)}px;height:${px(H * .09)}px;margin:${px(-H * .045)}px 0 0 ${px(-H * .065)}px;border-radius:50%;background:radial-gradient(closest-side,#fff,#a5f3fc 55%,rgba(34,211,238,0));box-shadow:0 0 ${px(H * .1)}px ${px(H * .03)}px rgba(165,243,252,.9);opacity:0`; head.appendChild(e); return e; });
+      // The hood: a lit sphere with a dark face, two hollow glowing eyes in sockets and a mouth that opens in
+      // the wail. The face slides across the sphere as it turns (parallax), so it reads as a round head.
+      const hw = H * .62, hh = H * .76, yawFace = T => -Math.sin(yawOf(T)) * hw * .24;
+      const head = add(`position:absolute;left:0;top:0;width:${px(hw)}px;height:${px(hh)}px;z-index:360;transform-origin:50% 50%`,
+        `<div style="position:absolute;inset:0;border-radius:50% 50% 44% 44% / 58% 58% 42% 42%;background:radial-gradient(ellipse at 38% 30%,#4c3aa8 0,#1d1060 30%,#0a0526 62%,#05030f 100%);box-shadow:0 0 ${px(H * .16)}px rgba(167,139,250,.75),inset ${px(-H * .04)}px ${px(-H * .03)}px ${px(H * .06)}px rgba(34,211,238,.6),inset ${px(H * .03)}px ${px(H * .02)}px ${px(H * .05)}px rgba(167,139,250,.45)"></div>`);
+      const faceLayer = document.createElement('div');
+      faceLayer.style.cssText = 'position:absolute;inset:0';
+      head.appendChild(faceLayer);
+      const hole = document.createElement('div');
+      hole.style.cssText = `position:absolute;left:22%;top:20%;width:56%;height:62%;border-radius:50% 50% 46% 46% / 54% 54% 46% 46%;background:radial-gradient(ellipse at 50% 45%,#000 0,#02010a 60%,rgba(2,1,10,0) 100%)`;
+      faceLayer.appendChild(hole);
+      const eyes = [30, 70].map(l => { const e = document.createElement('div'); e.style.cssText = `position:absolute;left:${l}%;top:42%;width:${px(H * .13)}px;height:${px(H * .09)}px;margin:${px(-H * .045)}px 0 0 ${px(-H * .065)}px;border-radius:50%;background:radial-gradient(closest-side,#fff,#a5f3fc 55%,rgba(34,211,238,0));box-shadow:0 0 ${px(H * .1)}px ${px(H * .03)}px rgba(165,243,252,.9);opacity:0`; faceLayer.appendChild(e); return e; });
       const mouth = document.createElement('div');
       mouth.style.cssText = `position:absolute;left:50%;top:70%;width:${px(H * .14)}px;height:${px(H * .22)}px;margin:${px(-H * .02)}px 0 0 ${px(-H * .07)}px;border-radius:50%;background:radial-gradient(closest-side,#000 55%,#7c3aed 85%,rgba(139,92,246,0));transform-origin:50% 0;opacity:0`;
-      head.appendChild(mouth);
-      anim(head, TIMES.map(o => { const T = o * D, m = M(T), ar = ease(clamp((T - .35) / .35));
-        return { offset: o, opacity: clamp((T - .35) / .15) * fadeAll(T), transform: `translate(${px(m.x - hw / 2)}px,${px(m.y - 1.4 * H * m.sc - hh / 2)}px) rotate(${dg(Math.sin(T * 4) * 3 + 8 * reach(T))}deg) scale(${(m.sc * ar).toFixed(3)})` }; }));
+      faceLayer.appendChild(mouth);
+      anim(head, TIMES.map(o => { const T = o * D, b = proj(T, [0, -1.4, 0]), ar = ease(clamp((T - .35) / .35));
+        return { offset: o, zIndex: zi(b.z + .2), opacity: clamp((T - .35) / .15) * fadeAll(T), transform: `translate(${px(b.x - hw / 2)}px,${px(b.y - hh / 2)}px) rotate(${dg(Math.sin(T * 4) * 3 + 8 * reach(T))}deg) scale(${(b.sc * b.k * ar).toFixed(3)})` }; }));
+      anim(faceLayer, TIMES.map(o => { const T = o * D; return { offset: o, transform: `translateX(${px(yawFace(T))}px) scaleX(${Math.cos(yawOf(T) * .8).toFixed(3)})` }; }));
       eyes.forEach((e, i) => anim(e, TIMES.map(o => { const T = o * D, on = clamp((T - .68) / .06), flare = 1 + .8 * Math.max(0, 1 - Math.abs(T - .74) / .08);
         return { offset: o, opacity: on * (.85 + .15 * Math.sin(T * 21 + i * 2)), transform: `scale(${(flare * (1 + .25 * wail(T))).toFixed(3)},${(flare * (1 - .5 * Math.max(0, Math.sin(T * 9 + i)) ** 14)).toFixed(3)})` }; })));
       anim(mouth, TIMES.map(o => { const T = o * D, w = wail(T); return { offset: o, opacity: w > .02 ? 1 : 0, transform: `scale(${(.3 + .8 * w).toFixed(3)},${(.15 + .95 * w).toFixed(3)})` }; }));
+      // A soft shadow on the table under the figure: it tightens as the wraith swoops in and fades as it rises.
+      const shadow = add(`position:absolute;left:${px(cx - H * .95)}px;top:${px(cy + H * .35)}px;width:${px(H * 1.9)}px;height:${px(H * .5)}px;z-index:1;border-radius:50%;background:radial-gradient(closest-side,rgba(6,3,20,.7),rgba(6,3,20,.25) 60%,transparent)`);
+      anim(shadow, TIMES.map(o => { const T = o * D; return { offset: o, opacity: clamp(T / .4) * (1 - clamp((T - GF_RISE) / .5)), transform: `scale(${(1.05 - .35 * swoop(T) * (1 - rise(T)) - .4 * rise(T)).toFixed(3)})` }; }));
       // A soft aura behind the whole figure, so the tongues sit in one glow.
-      const aura = add(`position:absolute;left:0;top:0;width:${px(H * 1.3)}px;height:${px(H * 2.5)}px;z-index:4;border-radius:50%;background:radial-gradient(closest-side,rgba(139,92,246,.55),rgba(34,211,238,.2) 55%,transparent 80%)`);
-      anim(aura, TIMES.map(o => { const T = o * D, m = M(T); return { offset: o, opacity: clamp((T - .15) / .5) * fadeAll(T) * (.7 + .3 * Math.sin(T * 13)), transform: `translate(${px(m.x - H * .65)}px,${px(m.y - .85 * H * m.sc - H * 1.25)}px) scale(${m.sc.toFixed(3)})` }; }));
+      const aura = add(`position:absolute;left:0;top:0;width:${px(H * 1.3)}px;height:${px(H * 2.5)}px;z-index:200;border-radius:50%;background:radial-gradient(closest-side,rgba(139,92,246,.55),rgba(34,211,238,.2) 55%,transparent 80%)`);
+      anim(aura, TIMES.map(o => { const T = o * D, b = proj(T, [0, -.85, 0]); return { offset: o, opacity: clamp((T - .15) / .5) * fadeAll(T) * (.7 + .3 * Math.sin(T * 13)), transform: `translate(${px(b.x - H * .65)}px,${px(b.y - H * 1.25)}px) scale(${b.sc.toFixed(3)})` }; }));
       // ---- Soul motes rushing into the figure as it forms, then spectral sparks and haze as it rises.
       for (let i = 0; i < 22; i++) {
         const t0 = rand(.04, .55), u1 = t0 + rand(.3, .42), ang = rand(0, PI2), rr = H * rand(1.4, 2.6), sx0 = cx + Math.cos(ang) * rr, sy0 = cy + Math.sin(ang) * rr * .8, bend = rand(-.6, .6) * H, s = H * rand(.03, .06), col = ['#e9d5ff', '#99f6e4', '#c7d2fe', '#fff'][i % 4];
-        const el = add(`position:absolute;left:${px(-s / 2)}px;top:${px(-s / 2)}px;width:${px(s)}px;height:${px(s)}px;z-index:8;border-radius:50%;background:#fff;box-shadow:0 0 ${px(s * 3)}px ${px(s)}px ${col}`);
+        const el = add(`position:absolute;left:${px(-s / 2)}px;top:${px(-s / 2)}px;width:${px(s)}px;height:${px(s)}px;z-index:900;border-radius:50%;background:#fff;box-shadow:0 0 ${px(s * 3)}px ${px(s)}px ${col}`);
         anim(el, TIMES.map(o => { const T = o * D, u = ease(clamp((T - t0) / (u1 - t0))), m = M(T), tx = m.x, ty = m.y - .8 * H * m.sc;
           return { offset: o, opacity: T < t0 ? 0 : (1 - clamp((u - .8) / .2)), transform: `translate(${px(lerp(sx0, tx, u) + Math.sin(u * Math.PI) * bend)}px,${px(lerp(sy0, ty, u))}px) scale(${(1 - .6 * u).toFixed(3)})` }; }));
       }
       for (let i = 0; i < 36; i++) {
         const t0 = rand(GF_TEAR - .05, 1.7), life = rand(.35, .5), s = H * rand(.02, .045), rise = H * rand(1.1, 2.6), sw = rand(-.5, .5) * H, col = ['#e9d5ff', '#99f6e4', '#c7d2fe', '#a5f3fc'][i % 4];
-        const el = add(`position:absolute;left:${px(cx + rand(-.7, .7) * W - s / 2)}px;top:${px(cy + rand(-.4, .5) * H)}px;width:${px(s)}px;height:${px(s)}px;z-index:8;border-radius:50%;background:#fff;box-shadow:0 0 ${px(s * 2.5)}px ${px(s * .8)}px ${col}`);
+        const el = add(`position:absolute;left:${px(cx + rand(-.7, .7) * W - s / 2)}px;top:${px(cy + rand(-.4, .5) * H)}px;width:${px(s)}px;height:${px(s)}px;z-index:900;border-radius:50%;background:#fff;box-shadow:0 0 ${px(s * 2.5)}px ${px(s * .8)}px ${col}`);
         anim(el, [{ offset: 0, opacity: 0, transform: 'translate(0,0)' }, { offset: t0 / D, opacity: 0, transform: 'translate(0,0)' }, { offset: t0 / D + .01, opacity: 1, transform: 'translate(0,0)' },
           { offset: (t0 + life * .5) / D, opacity: 1, transform: `translate(${px(sw * .5)}px,${px(-rise * .5)}px)` }, { offset: Math.min(1, (t0 + life) / D), opacity: 0, transform: `translate(${px(sw)}px,${px(-rise)}px) scale(.3)` }, { offset: 1, opacity: 0, transform: 'scale(.3)' }]);
       }

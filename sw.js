@@ -14,7 +14,7 @@ const OFFLINE_ASSETS = [
   '/game.css?v=7b8ced66a9a1',
   '/tailwind.css?v=a6876526974d',
   '/sound.js?v=d5d1fddc0e77',
-  '/burn-effects.js?v=51777fd0c0d0',
+  '/burn-effects.js?v=2b16cc9d6069',
   '/card-animations.js?v=0fe6bd1289f1',
   '/js/card-reference-data.js',
   '/js/card-reference-ui.js',

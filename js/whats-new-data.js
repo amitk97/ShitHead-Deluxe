@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v383: [['ghost', 'The Ghost Flames wraith is now properly 3D: it turns to face you, leans into the swoop and reaches out with clawed arms.']],
       v382: [['ghost', 'Ghost Flames is reborn as one flame wraith: flames rush together into a hooded ghost that swoops down and tears the card apart.', WN_KEY]],
       v381: [['eye', 'Watch a friend\'s Play Computer or Gauntlet game from your Friends list. You see the table, never their hand. Settings → Friends Can Watch turns it off.', WN_KEY]],
       v380: [['sparkle', 'Event login bonus: on every day a seasonal event is live, your daily login reward comes with 30 extra Diamonds.', WN_KEY]],
