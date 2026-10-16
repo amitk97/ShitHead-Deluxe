@@ -28,7 +28,7 @@
     // Painted-art burns: the owner's approved tile cut into two layers (tools/make-burn-layers.py),
     // brought to life in WebGL. layout: art width in card heights, height/width, where the Pile sits.
     // Ghost Flames (seasonal Halloween): a ghost layer and a fire layer; every pile card burns.
-    'burn-halloween': { dur: 2.0, box: [6.4, 5.8, .55, .78] /* previews */, tile: 'art/burns/ghost-flames/tile.webp', art: 'art/burns/ghost-flames/layers.webp?v=1', cards: 'all', layout: [5.6, 288 / 395, .58, .74] },
+    'burn-halloween': { iconOnly: true /* v382: procedural in burn-effects.js (bfxGhostFlames); tile + sound only */, dur: 2.0, box: [6.4, 5.8, .55, .78] /* previews */, tile: 'art/burns/ghost-flames/tile.webp', art: 'art/burns/ghost-flames/layers.webp?v=1', cards: 'all', layout: [5.6, 288 / 395, .58, .74] },
     // Smoke Burst (Lvl 20): the cloud and its front puffs; only the top card shows (the rest hide).
     'burn-lvl-smoke-burst': { dur: 2.0, box: [6, 6.2, .5, .52], tile: 'art/burns/smoke-burst/tile.webp', art: 'art/burns/smoke-burst/layers.webp?v=1', layout: [4.8, 404 / 439, .5, .52] },
     // Royal Incineration (Lvl 80): the crown (whole, its own layer) and the golden fire burst under it.
@@ -1233,20 +1233,21 @@ void main(){
       [.68, .75, .83, .91, .99, 1.07, 1.16, 1.24].forEach((at, n) => k.noise({ at, dur: .028, type: 'bandpass', f0: 2300 + n * 140, q: 3, level: .12 }));
       k.noise({ at: 1.2, dur: .55, type: 'highpass', f0: 3600, f1: 1800, level: .05, attack: .1 });
     },
-    // Ghost Flames: cold rush as the fire rises (0–0.4), a two-voice moan as the wraith
-    // gathers, a glassy chime as its eyes flare (0.55), the strike (0.62: thump + tear),
-    // crackling cards (0.65–1.1), the floor rings, then a hiss as it drifts apart.
+    // Ghost Flames (v382), on bfxGhostFlames' clock: the flames rush in (0-.8), the eyes ignite (.7), the
+    // wraith wails (.92-1.34) and swoops (.8-1.14), the claws tear the card (1.1), it rises (1.32-2.0).
     'burn-halloween': k => {
-      k.noise({ dur: .45, type: 'bandpass', f0: 220, f1: 1300, q: .8, level: .2, attack: .3 });
-      k.tone({ at: .18, dur: .8, type: 'triangle', f0: 294, f1: 220, level: .1, attack: .2, vibrato: 12 });
-      k.tone({ at: .22, dur: .75, type: 'triangle', f0: 220, f1: 165, level: .07, attack: .2, vibrato: 9 });
-      [1568, 2093].forEach((f0, n) => k.tone({ at: .54 + n * .02, dur: .5, f0, f1: f0 * .98, level: .06, attack: .01 }));
-      k.tone({ at: .62, dur: .32, f0: 96, f1: 40, level: .3 });
-      k.noise({ at: .62, dur: .14, type: 'highpass', f0: 1800, f1: 4200, level: .3 });
-      [.66, .72, .77, .83, .88, .95, 1.02, 1.1].forEach((at, n) => k.noise({ at, dur: .03, type: 'bandpass', f0: 2400 + n * 150, q: 3, level: .16 }));
-      k.noise({ at: .74, dur: .35, type: 'lowpass', f0: 700, f1: 140, level: .14 });
-      k.noise({ at: 1.2, dur: .75, type: 'highpass', f0: 3200, f1: 1400, level: .06, attack: .12 });
-    }
+      k.noise({ dur: .8, type: 'bandpass', f0: 300, f1: 2600, q: .9, level: .13, attack: .5 });
+      k.tone({ at: .2, dur: 1.0, type: 'triangle', f0: 220, f1: 330, level: .09, attack: .45, vibrato: 11 });
+      k.tone({ at: .24, dur: .96, type: 'triangle', f0: 233, f1: 349, level: .07, attack: .45, vibrato: 8 });
+      [1568, 2093].forEach((f0, n) => k.tone({ at: .7 + n * .03, dur: .45, f0, f1: f0 * .98, level: .06, attack: .01 }));
+      k.tone({ at: .92, dur: .55, type: 'triangle', f0: 880, f1: 330, level: .12, attack: .08, vibrato: 14 });
+      k.noise({ at: .8, dur: .34, type: 'lowpass', f0: 2400, f1: 300, level: .22, attack: .1 });
+      k.tone({ at: 1.1, dur: .32, f0: 96, f1: 40, level: .3 });
+      k.noise({ at: 1.1, dur: .14, type: 'highpass', f0: 1800, f1: 4200, level: .3 });
+      [1.12, 1.15, 1.18, 1.21, 1.24].forEach((at, n) => k.noise({ at, dur: .03, type: 'bandpass', f0: 2600 + n * 200, q: 3, level: .15 }));
+      k.noise({ at: 1.3, dur: .65, type: 'highpass', f0: 3200, f1: 1400, level: .07, attack: .1 });
+      [1.38, 1.5, 1.62, 1.75].forEach((at, n) => k.tone({ at, dur: .3, f0: 2400 + n * 300, f1: 2200 + n * 300, level: .04, attack: .01 }));
+    },
   };
   const sound = (id, k) => SOUNDS[id] && SOUNDS[id](k);
   window.ShLevel3D = { has, play, still, clear, icon, sound, effects: EFFECTS };

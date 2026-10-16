@@ -215,6 +215,150 @@
       }
       end(lastCard);
     }
+    // Ghost Flames (v382, owner: one flame wraith, not 2-3 separate things; built like Confectionery,
+    // every piece its own vector element on one clock): about 40 SVG flame tongues (violet, teal and
+    // indigo with a white core, mix-blend screen), each with its own flicker, sway and life, rush in from
+    // round the Pile and assemble into ONE hooded wraith (a skirt of tongues, a crown round a dark hood
+    // with hollow glowing eyes and a mouth, two arms of flame ending in claws, a trailing tail), led by
+    // soul motes. The REAL top card shivers and turns spectral (a cold tint, a halo) as the wraith forms,
+    // the wraith wails and swoops down (GF_SWOOP-GF_LAND), the claws land and TEAR the card down a zigzag
+    // (GF_TEAR): the two halves float apart turning over to show the burner's own back, a glowing tear
+    // line flashes, then the halves dissolve and the wraith rises off the top of the screen, trailing
+    // wisps and spectral sparks. One colour family; only the eyes are white-hot. Gone by 2.0s.
+    // Sound: ShLevel3D.sound('burn-halloween') on the same times.
+    const GF_MS = 2000, GF_SWOOP = .8, GF_LAND = 1.14, GF_TEAR = 1.1, GF_RISE = 1.32;
+    const GF_PAL = [['#2e1065', '#8b5cf6', '#ddd6fe'], ['#134e4a', '#2dd4bf', '#ccfbf1'], ['#312e81', '#6366f1', '#c7d2fe'], ['#4c1d95', '#a78bfa', '#f5f3ff']];
+    function bfxGhostFlames(host, x, y, k) {
+      const { layer, W, H, cx, cy, radius, backCls, anim, end, face } = procBurnStage(host, x, y, GF_MS);
+      const D = GF_MS / 1000, N = 80, rand = (a, b) => a + Math.random() * (b - a), id = ++pfxSeq;
+      const TIMES = Array.from({ length: N + 1 }, (_, i) => i / N), clamp = v => Math.max(0, Math.min(1, v));
+      const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2, lerp = (a, b, t) => a + (b - a) * t;
+      const px = v => v.toFixed(1), dg = v => v.toFixed(2), PI2 = Math.PI * 2;
+      const add = (css, html = '') => { const el = document.createElement('div'); el.className = 'bfx'; el.style.cssText = css; el.innerHTML = html; layer.appendChild(el); return el; };
+      // The four flame gradients, drawn once.
+      add('position:absolute;left:0;top:0;width:0;height:0', `<svg width="0" height="0" style="position:absolute"><defs>${GF_PAL.map((p, i) => `<linearGradient id="gf${id}-${i}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${p[0]}" stop-opacity=".2"/><stop offset=".22" stop-color="${p[1]}" stop-opacity="1"/><stop offset=".62" stop-color="${p[2]}" stop-opacity=".6"/><stop offset="1" stop-color="${p[1]}" stop-opacity="0"/></linearGradient>`).join('')}</defs></svg>`);
+      // ---- The wraith's master motion: hovers over the Pile, swoops onto the card, rises off the top.
+      const hoverY = cy - H * .45, fadeAll = T => 1 - clamp((T - 1.74) / .24);
+      const M = T => {
+        const s = ease(clamp((T - GF_SWOOP) / (GF_LAND - GF_SWOOP))), r = ease(clamp((T - GF_RISE) / (D - GF_RISE)));
+        return { x: cx + Math.sin(T * 3.1) * H * .08 * (1 - s) + r * H * .3, y: hoverY + Math.sin(T * 6) * H * .025 * (1 - s) + s * H * .62 - r * H * 3.6,
+          sc: (.3 + .8 * ease(clamp(T / .8))) * (1 + .1 * s) * (1 - .12 * r) };
+      };
+      const reach = T => ease(clamp((T - (GF_SWOOP - .1)) / (GF_LAND - GF_SWOOP + .1))) * (1 - .65 * ease(clamp((T - GF_RISE) / .3)));
+      const wail = T => Math.sin(Math.PI * clamp((T - .92) / .42));
+      // ---- Glow behind it all, and a cold halo round the card.
+      const glow = add(`position:absolute;left:${px(cx - H * 1.6)}px;top:${px(cy - H * 1.9)}px;width:${px(H * 3.2)}px;height:${px(H * 3.2)}px;border-radius:50%;z-index:0;background:radial-gradient(closest-side,rgba(139,92,246,.5),rgba(34,211,238,.18) 50%,transparent 75%)`);
+      anim(glow, TIMES.map(o => { const T = o * D, on = clamp(T / .5) * fadeAll(T); return { offset: o, opacity: on * (.75 + .25 * Math.sin(T * 15)), transform: `translateY(${px(M(T).y - hoverY)}px) scale(${(.5 + .6 * on).toFixed(3)})` }; }));
+      // ---- The REAL card: the two halves of a zigzag tear; they shiver and turn spectral, then float apart at GF_TEAR.
+      const teeth = 7, zig = Array.from({ length: teeth + 1 }, (_, i) => [W / 2 + (i % 2 ? 1 : -1) * W * .08, H * i / teeth]);
+      const halves = [[[0, 0], ...zig, [0, H]], [...zig, [W, H], [W, 0]]];
+      const pct = (pts, mirror) => `polygon(${pts.map(([u, v]) => `${((mirror ? W - u : u) / W * 100).toFixed(2)}% ${(v / H * 100).toFixed(2)}%`).join(',')})`;
+      const halo = add(`position:absolute;left:${px(cx - W)}px;top:${px(cy - H * .8)}px;width:${px(W * 2)}px;height:${px(H * 1.6)}px;border-radius:50%;z-index:2;background:radial-gradient(closest-side,rgba(167,139,250,.55),rgba(34,211,238,.2) 55%,transparent)`);
+      anim(halo, TIMES.map(o => { const T = o * D; return { offset: o, opacity: clamp(T / .5) * (1 - clamp((T - GF_TEAR) / .25)) * (.8 + .2 * Math.sin(T * 19)), transform: `translateY(${px(-H * .08 * ease(clamp(T / .5)))}px)` }; }));
+      let last;
+      halves.forEach((poly, side) => {
+        const dir = side ? 1 : -1, spinY = dir * rand(190, 215), drift = rand(.95, 1.25), up = rand(.8, 1.1);
+        const box = add(`position:absolute;left:${px(cx - W / 2)}px;top:${px(cy - H / 2)}px;width:${W}px;height:${H}px;z-index:3;will-change:transform;transform-style:preserve-3d;transform-origin:50% 50%`);
+        const front = document.createElement('div'), back = document.createElement('div'), tint = document.createElement('div');
+        front.style.cssText = `position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;clip-path:${pct(poly)}`;
+        tint.style.cssText = 'position:absolute;inset:0;background:linear-gradient(160deg,rgba(139,92,246,.5),rgba(34,211,238,.32));mix-blend-mode:screen;opacity:0';
+        front.append(face(), tint);
+        back.style.cssText = `position:absolute;inset:0;transform:rotateY(180deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;clip-path:${pct(poly, true)}`;
+        back.innerHTML = `<div class="custom-card-back ${backCls}" style="position:absolute;left:0;top:0;width:${W}px;height:${H}px;border-radius:${radius};margin:0"></div><div style="position:absolute;inset:0;background:linear-gradient(160deg,rgba(139,92,246,.4),rgba(34,211,238,.25))"></div>`;
+        box.append(front, back);
+        const st = T => { // the half's state: shivering and lifting, then floating apart
+          if (T < GF_TEAR) { const u = clamp(T / GF_TEAR); return { x: Math.sin(T * 23 + side * 2) * H * .012 * u, y: -H * .08 * ease(clamp(T / .5)) - H * .012 * Math.sin(T * 9), r: Math.sin(T * 17 + side) * 1.3 * u, ry: 0 }; }
+          const t = T - GF_TEAR;
+          return { x: dir * H * drift * (1 - Math.exp(-3.2 * t)), y: -H * .08 - H * up * t - H * .25 * t * t, r: dir * 70 * t, ry: spinY * Math.min(1, t / .9) };
+        };
+        anim(box, TIMES.map(o => { const T = o * D, s = st(T); return { offset: o, transform: `translate(${px(s.x)}px,${px(s.y)}px) rotate(${dg(s.r)}deg) rotateY(${dg(s.ry)}deg)` }; }));
+        // Face swap, tint and fade live on the leaves: opacity on the 3D box would flatten it (no back).
+        const backShows = T => { const a = ((st(T).ry % 360) + 360) % 360; return a > 90 && a < 270; };
+        const fade = T => 1 - clamp((T - 1.45) / .4);
+        anim(front, TIMES.map(o => { const T = o * D; return { offset: o, opacity: backShows(T) ? 0 : fade(T) }; }));
+        anim(tint, TIMES.map(o => ({ offset: o, opacity: clamp(o * D / .75) })));
+        last = anim(back, TIMES.map(o => { const T = o * D; return { offset: o, opacity: backShows(T) ? fade(T) : 0 }; }));
+      });
+      // The tear: a glowing zigzag down the card, a flash, and a chill ring.
+      const tear = add(`position:absolute;left:${px(cx - W / 2)}px;top:${px(cy - H / 2)}px;width:${W}px;height:${H}px;z-index:4`,
+        `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible"><polyline points="${zig.map(p => p.join(',')).join(' ')}" fill="none" stroke="#a78bfa" stroke-width="${px(W * .12)}" stroke-opacity=".6" stroke-linejoin="round"/><polyline points="${zig.map(p => p.join(',')).join(' ')}" fill="none" stroke="#fff" stroke-width="${px(W * .035)}" stroke-linejoin="round"/></svg>`);
+      anim(tear, TIMES.map(o => { const T = o * D; return { offset: o, opacity: T < GF_TEAR ? 0 : 1 - clamp((T - GF_TEAR) / .3), transform: `translateY(${px(-H * .08)}px) scaleY(${(1 + .35 * clamp((T - GF_TEAR) / .25)).toFixed(3)})` }; }));
+      const flash = add(`position:absolute;left:${px(cx - H)}px;top:${px(cy - H)}px;width:${H * 2}px;height:${H * 2}px;border-radius:50%;z-index:4;background:radial-gradient(closest-side,#fff,rgba(221,214,254,.8) 35%,rgba(139,92,246,.3) 60%,transparent)`);
+      const p0 = GF_TEAR / D;
+      anim(flash, [{ opacity: 0, transform: 'scale(.2)' }, { opacity: 0, transform: 'scale(.2)', offset: p0 }, { opacity: .9, transform: 'scale(.8)', offset: p0 + .015 }, { opacity: 0, transform: 'scale(1.7)', offset: p0 + .1 }, { opacity: 0, transform: 'scale(1.7)' }]);
+      const ring = add(`position:absolute;left:${px(cx - H * 1.2)}px;top:${px(cy + H * .25)}px;width:${px(H * 2.4)}px;height:${px(H * .7)}px;z-index:1;border-radius:50%;border:${px(Math.max(2, H * .03))}px solid rgba(196,181,253,.9);box-shadow:0 0 ${px(H * .12)}px rgba(139,92,246,.8)`);
+      anim(ring, TIMES.map(o => { const T = o * D, u = clamp((T - .95) / .6); return { offset: o, opacity: u > 0 ? (1 - u) * .9 : 0, transform: `scale(${(.25 + 1.1 * u).toFixed(3)})` }; }));
+      // ---- The wraith. Every tongue is its own element: it flies in from round the Pile (a0-a1), takes its
+      // slot in the figure (units of H from the hem, up is negative) and then rides the master motion.
+      const w0 = H * .2, h0 = H * .5;
+      const flame = (n) => `<svg viewBox="0 0 40 100" width="100%" height="100%" style="overflow:visible"><path d="M20 100C6 96 2 78 8 62C12 50 10 38 16 22C18 30 20 34 22 30C26 20 24 10 20 0C32 14 38 34 36 52C35 64 38 74 34 86C31 96 26 100 20 100Z" fill="url(#gf${id}-${n})"/><path d="M20 98C13 95 12 84 15 75C17 69 17 62 20 54C22 62 25 66 25 74C27 82 27 94 20 98Z" fill="#f5f3ff" opacity=".4"/></svg>`;
+      let n = 0;
+      const tongue = ({ slot, z, a0, a1 }) => {
+        const el = add(`position:absolute;left:0;top:0;width:${px(w0)}px;height:${px(h0)}px;z-index:${z};mix-blend-mode:screen;transform-origin:50% 100%`, flame(n++ % GF_PAL.length));
+        const ang = rand(0, PI2), rr = H * rand(1.3, 2.5), sx0 = cx + Math.cos(ang) * rr, sy0 = cy + Math.sin(ang) * rr * .8, r0 = rand(-180, 180);
+        const f1 = rand(9, 15), f2 = rand(5, 8), ph = rand(0, 6.3), sw = rand(5, 12);
+        anim(el, TIMES.map(o => {
+          const T = o * D, m = M(T), [fx, fy, fr, len, wid] = slot(T), ar = ease(clamp((T - a0) / (a1 - a0))), grow = lerp(.5, 1, ar) * m.sc;
+          const wx = lerp(sx0, m.x + fx * H * m.sc, ar), wy = lerp(sy0, m.y + fy * H * m.sc, ar);
+          return { offset: o, opacity: clamp((T - a0) / .12) * fadeAll(T),
+            transform: `translate(${px(wx - w0 / 2)}px,${px(wy - h0)}px) rotate(${dg(lerp(r0, fr, ar))}deg) skewX(${dg(Math.sin(T * f2 + ph) * sw * ar)}deg) scale(${(wid / .2 * grow * (1 + .12 * Math.sin(T * f1 + ph))).toFixed(3)},${(len / .5 * grow * (1 + .25 * Math.sin(T * f1 * 1.3 + ph * 2) + .1 * Math.sin(T * f2 * 2.1))).toFixed(3)})` };
+        }));
+      };
+      // The skirt: eleven tongues fanned up from the hem, leaning in to the hood.
+      for (let i = 0; i < 11; i++) { const u = i / 10 - .5, au = Math.abs(u), a0 = .12 + au * .3 + rand(0, .08), len = 1.15 - au * .9 + rand(-.06, .06), wid = .27 - au * .12;
+        tongue({ slot: () => [u * .9, 0, -u * 38, len, wid], z: 5, a0, a1: a0 + rand(.32, .42) }); }
+      // The crown of the hood and its two side flames.
+      for (let i = 0; i < 6; i++) { const u = i / 5 - .5, a0 = .3 + rand(0, .15), len = rand(.4, .6);
+        tongue({ slot: () => [u * .5, -1.62, u * 60, len, .13], z: 5, a0, a1: a0 + .35 }); }
+      [-1, 1].forEach(s => { const a0 = .36 + rand(0, .1); tongue({ slot: () => [s * .3, -1.4, s * 75, .3, .12], z: 5, a0, a1: a0 + .32 }); });
+      // The tail: long wisps that trail under the hem.
+      for (let i = 0; i < 6; i++) { const u = i / 5 - .5, a0 = .1 + rand(0, .15), len = rand(.8, 1.2), ph = rand(0, 6.3);
+        tongue({ slot: T => [u * .6, .02, 180 + u * 30 + Math.sin(T * 5 + ph) * 10, len, .22], z: 1, a0, a1: a0 + .45 }); }
+      // The arms: from each shoulder a curve of flame, spread at first, thrust down onto the card at GF_LAND; claws at the end.
+      const bez = (p0, c, p1, u) => [(1 - u) ** 2 * p0[0] + 2 * (1 - u) * u * c[0] + u * u * p1[0], (1 - u) ** 2 * p0[1] + 2 * (1 - u) * u * c[1] + u * u * p1[1]];
+      const arm = (s, T) => { const r = reach(T); return { s0: [s * .3, -1.1], c: [s * lerp(.8, .75, r), lerp(-1.3, -.5, r)], hand: [s * lerp(1.05, .2, r), lerp(-.8, .25, r)] }; };
+      const aim = (a, b) => Math.atan2(b[0] - a[0], -(b[1] - a[1])) * 180 / Math.PI;
+      [-1, 1].forEach(s => {
+        for (let i = 0; i < 6; i++) { const a0 = .4 + i * .03 + rand(0, .06);
+          tongue({ slot: T => { const { s0, c, hand } = arm(s, T), u = (i + .5) / 6, p = bez(s0, c, hand, u); return [p[0], p[1], aim(p, bez(s0, c, hand, Math.min(1, u + .05))), lerp(.36, .26, u), lerp(.2, .13, u)]; }, z: 7, a0, a1: a0 + .3 }); }
+        [-42, -14, 14, 42].forEach(off => { const a0 = .56 + rand(0, .1);
+          tongue({ slot: T => { const { s0, c, hand } = arm(s, T); return [hand[0], hand[1], aim(bez(s0, c, hand, .94), hand) + off * .8, .26, .055]; }, z: 7, a0, a1: a0 + .22 }); });
+      });
+      // The hood: a dark face with two hollow glowing eyes and a mouth that opens in the wail.
+      const hw = H * .62, hh = H * .76;
+      const head = add(`position:absolute;left:0;top:0;width:${px(hw)}px;height:${px(hh)}px;z-index:6;transform-origin:50% 50%`,
+        `<div style="position:absolute;inset:0;border-radius:50% 50% 44% 44% / 58% 58% 42% 42%;background:radial-gradient(ellipse at 50% 42%,#05030f 0,#0d0724 52%,#3b1d8f 80%,rgba(139,92,246,.35) 100%);box-shadow:0 0 ${px(H * .16)}px rgba(167,139,250,.75),inset 0 0 ${px(H * .1)}px rgba(34,211,238,.35)"></div>`);
+      const eyes = [30, 70].map(l => { const e = document.createElement('div'); e.style.cssText = `position:absolute;left:${l}%;top:42%;width:${px(H * .13)}px;height:${px(H * .09)}px;margin:${px(-H * .045)}px 0 0 ${px(-H * .065)}px;border-radius:50%;background:radial-gradient(closest-side,#fff,#a5f3fc 55%,rgba(34,211,238,0));box-shadow:0 0 ${px(H * .1)}px ${px(H * .03)}px rgba(165,243,252,.9);opacity:0`; head.appendChild(e); return e; });
+      const mouth = document.createElement('div');
+      mouth.style.cssText = `position:absolute;left:50%;top:70%;width:${px(H * .14)}px;height:${px(H * .22)}px;margin:${px(-H * .02)}px 0 0 ${px(-H * .07)}px;border-radius:50%;background:radial-gradient(closest-side,#000 55%,#7c3aed 85%,rgba(139,92,246,0));transform-origin:50% 0;opacity:0`;
+      head.appendChild(mouth);
+      anim(head, TIMES.map(o => { const T = o * D, m = M(T), ar = ease(clamp((T - .35) / .35));
+        return { offset: o, opacity: clamp((T - .35) / .15) * fadeAll(T), transform: `translate(${px(m.x - hw / 2)}px,${px(m.y - 1.4 * H * m.sc - hh / 2)}px) rotate(${dg(Math.sin(T * 4) * 3 + 8 * reach(T))}deg) scale(${(m.sc * ar).toFixed(3)})` }; }));
+      eyes.forEach((e, i) => anim(e, TIMES.map(o => { const T = o * D, on = clamp((T - .68) / .06), flare = 1 + .8 * Math.max(0, 1 - Math.abs(T - .74) / .08);
+        return { offset: o, opacity: on * (.85 + .15 * Math.sin(T * 21 + i * 2)), transform: `scale(${(flare * (1 + .25 * wail(T))).toFixed(3)},${(flare * (1 - .5 * Math.max(0, Math.sin(T * 9 + i)) ** 14)).toFixed(3)})` }; })));
+      anim(mouth, TIMES.map(o => { const T = o * D, w = wail(T); return { offset: o, opacity: w > .02 ? 1 : 0, transform: `scale(${(.3 + .8 * w).toFixed(3)},${(.15 + .95 * w).toFixed(3)})` }; }));
+      // A soft aura behind the whole figure, so the tongues sit in one glow.
+      const aura = add(`position:absolute;left:0;top:0;width:${px(H * 1.3)}px;height:${px(H * 2.5)}px;z-index:4;border-radius:50%;background:radial-gradient(closest-side,rgba(139,92,246,.55),rgba(34,211,238,.2) 55%,transparent 80%)`);
+      anim(aura, TIMES.map(o => { const T = o * D, m = M(T); return { offset: o, opacity: clamp((T - .15) / .5) * fadeAll(T) * (.7 + .3 * Math.sin(T * 13)), transform: `translate(${px(m.x - H * .65)}px,${px(m.y - .85 * H * m.sc - H * 1.25)}px) scale(${m.sc.toFixed(3)})` }; }));
+      // ---- Soul motes rushing into the figure as it forms, then spectral sparks and haze as it rises.
+      for (let i = 0; i < 22; i++) {
+        const t0 = rand(.04, .55), u1 = t0 + rand(.3, .42), ang = rand(0, PI2), rr = H * rand(1.4, 2.6), sx0 = cx + Math.cos(ang) * rr, sy0 = cy + Math.sin(ang) * rr * .8, bend = rand(-.6, .6) * H, s = H * rand(.03, .06), col = ['#e9d5ff', '#99f6e4', '#c7d2fe', '#fff'][i % 4];
+        const el = add(`position:absolute;left:${px(-s / 2)}px;top:${px(-s / 2)}px;width:${px(s)}px;height:${px(s)}px;z-index:8;border-radius:50%;background:#fff;box-shadow:0 0 ${px(s * 3)}px ${px(s)}px ${col}`);
+        anim(el, TIMES.map(o => { const T = o * D, u = ease(clamp((T - t0) / (u1 - t0))), m = M(T), tx = m.x, ty = m.y - .8 * H * m.sc;
+          return { offset: o, opacity: T < t0 ? 0 : (1 - clamp((u - .8) / .2)), transform: `translate(${px(lerp(sx0, tx, u) + Math.sin(u * Math.PI) * bend)}px,${px(lerp(sy0, ty, u))}px) scale(${(1 - .6 * u).toFixed(3)})` }; }));
+      }
+      for (let i = 0; i < 36; i++) {
+        const t0 = rand(GF_TEAR - .05, 1.7), life = rand(.35, .5), s = H * rand(.02, .045), rise = H * rand(1.1, 2.6), sw = rand(-.5, .5) * H, col = ['#e9d5ff', '#99f6e4', '#c7d2fe', '#a5f3fc'][i % 4];
+        const el = add(`position:absolute;left:${px(cx + rand(-.7, .7) * W - s / 2)}px;top:${px(cy + rand(-.4, .5) * H)}px;width:${px(s)}px;height:${px(s)}px;z-index:8;border-radius:50%;background:#fff;box-shadow:0 0 ${px(s * 2.5)}px ${px(s * .8)}px ${col}`);
+        anim(el, [{ offset: 0, opacity: 0, transform: 'translate(0,0)' }, { offset: t0 / D, opacity: 0, transform: 'translate(0,0)' }, { offset: t0 / D + .01, opacity: 1, transform: 'translate(0,0)' },
+          { offset: (t0 + life * .5) / D, opacity: 1, transform: `translate(${px(sw * .5)}px,${px(-rise * .5)}px)` }, { offset: Math.min(1, (t0 + life) / D), opacity: 0, transform: `translate(${px(sw)}px,${px(-rise)}px) scale(.3)` }, { offset: 1, opacity: 0, transform: 'scale(.3)' }]);
+      }
+      for (let i = 0; i < 6; i++) {
+        const t0 = rand(GF_TEAR - .1, 1.35), s = H * rand(.6, .9), el = add(`position:absolute;left:${px(cx + rand(-.5, .5) * W - s / 2)}px;top:${px(cy - H * .3 - s / 2)}px;width:${px(s)}px;height:${px(s)}px;z-index:1;border-radius:50%;background:radial-gradient(closest-side,${['rgba(139,92,246,.3)', 'rgba(45,212,191,.22)', 'rgba(99,102,241,.26)'][i % 3]},transparent)`);
+        anim(el, [{ offset: 0, opacity: 0, transform: 'scale(.5)' }, { offset: t0 / D, opacity: 0, transform: 'scale(.5)' }, { offset: (t0 + .2) / D, opacity: 1, transform: `translate(${px(rand(-.2, .2) * H)}px,${px(-H * .5)}px) scale(1)` }, { offset: Math.min(1, (t0 + .6) / D), opacity: 0, transform: `translate(${px(rand(-.4, .4) * H)}px,${px(-H * 1.5)}px) scale(1.8)` }, { offset: 1, opacity: 0, transform: 'scale(1.8)' }]);
+      }
+      end(last);
+    }
     function bfxBlobPath(r, bumps) {
       const pts = [];
       for (let i = 0; i < bumps; i++) {
@@ -1020,7 +1164,7 @@
       if (id === PRIVATE_BURN_ID) { playPrivateBurn(host,x,y,scale,card); return true; }
       // Painted-art 3D burns (art/burns/level-3d/burns3d.js); their old effects stay as the fallback.
       if (window.ShLevel3D && ShLevel3D.has(id) && levelBurn3d(id, host, x, y, scale, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return true;
-      ({ default: bfxDefaultBurn, 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
+      ({ default: bfxDefaultBurn, 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-halloween': bfxGhostFlames, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
         'burn-blackhole': bfxBlackHole, 'burn-origami': bfxOrigami, 'burn-pixel': bfxPixelBlast, 'burn-lava': bfxLavaMelt,
         'burn-lvl-spark-snap': bfxSparkSnap, 'burn-lvl-smoke-burst': bfxSmokeBurst, 'burn-lvl-inferno-sweep': bfxInfernoSweep,
         'burn-lvl-hellfire-spiral': bfxHellfireSpiral, 'burn-lvl-royal-incineration': bfxRoyalIncineration, 'burn-lvl-shitstorm': bfxShitStorm }[id] || (typeof SEASONAL_BURN_FX !== 'undefined' && SEASONAL_BURN_FX[id]) || (() => {}))(host, x, y, scale);

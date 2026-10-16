@@ -1918,6 +1918,34 @@ async function runDevTestSuite() {
       try { if (savedSeen === null) localStorage.removeItem('shithead_tips_seen'); else localStorage.setItem('shithead_tips_seen', savedSeen); } catch (e) {}
     }
   });
+  await test('v382: Ghost Flames assembles one wraith from separate flame tongues and tears the real card, showing the burner\'s back', async () => {
+    const layer = document.getElementById('burnFxLayer'), wrap = document.getElementById('discardCardsWrapper'), keep = wrap.innerHTML;
+    try {
+      layer.querySelectorAll('.pfx-layer').forEach(n => n.remove());
+      wrap.innerHTML = '';
+      ['gf-under', 'gf-test-top'].forEach(cid => { const c = createCardElement({ id: cid, rank: '10', suit: '♠' }); c.dataset.cardId = cid; wrap.appendChild(c); });
+      assertTrue(window.ShLevel3D && !ShLevel3D.has('burn-halloween') && /procBurnStage/.test(String(bfxGhostFlames)), 'Ghost Flames is procedural (v382), not the painted scene');
+      assertTrue(burnPreviewIcon('burn-halloween').includes('art/burns/ghost-flames/tile.webp'), 'The painted tile is still its icon');
+      assertTrue(SHAPE_BURN_EFFECTS.has('burn-halloween') && ShLevel3D.effects['burn-halloween'].dur <= 2.1, 'It goes through playBurnFx and ends within 2.1s');
+      playBurnFx('burn-halloween', layer, 100, 100, 1);
+      const sheet = layer.querySelector('.pfx-layer');
+      assertTrue(!!sheet && [...wrap.children].every(c => getComputedStyle(c).visibility === 'hidden'), 'Every Pile card hides: only the copy of the top card is shown');
+      const tongues = [...sheet.children].filter(el => el.style.mixBlendMode === 'screen' && el.querySelector('svg path'));
+      assertTrue(tongues.length >= 40, `The wraith is many separate flame tongues (${tongues.length})`);
+      assertEqual(new Set(tongues.map(el => JSON.stringify(el.getAnimations()[0].effect.getKeyframes().map(f => f.transform)))).size, tongues.length, 'Every tongue moves on its own');
+      assertEqual(sheet.querySelectorAll('.custom-card-back.' + burnBackClass().split(' ')[0]).length, 2, 'The torn halves show the burner\'s own back');
+      assertTrue([...sheet.querySelectorAll('[style*="preserve-3d"]')].every(el => el.getAnimations().every(a => !a.effect.getKeyframes().some(f => 'opacity' in f || 'filter' in f))), 'No 3D box is flattened (no opacity or filter on them)');
+      const ends = [...sheet.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
+      assertTrue(Math.max(...ends) <= 2100, `It ends within 2.1s (${Math.round(Math.max(...ends))}ms)`);
+      const animations = sheet.getAnimations({ subtree: true });
+      const finished = Promise.all(animations.map(a => a.finished.catch(() => {})));
+      animations.forEach(a => a.finish());
+      await Promise.race([finished, new Promise((_, reject) => setTimeout(() => reject(new Error('Ghost Flames cleanup did not finish')), 15000))]);
+      await new Promise(requestAnimationFrame);
+      assertTrue(!layer.querySelector('.pfx-layer'), 'The effect layer is removed');
+      assertTrue([...wrap.children].every(c => c.style.getPropertyValue('visibility') === ''), 'The Pile cards show again');
+    } finally { wrap.innerHTML = keep; layer.querySelectorAll('.pfx-layer').forEach(n => n.remove()); }
+  });
   await test('v304: the six reworked burns are painted 3D scenes with their tile as the icon and their own sound', () => {
     const tiles = { default: 'default', 'burn-coloured': 'coloured-flame', 'burn-electric': 'electric-blast', 'burn-sweets': 'confectionery', 'burn-lava': 'lava-melt', 'burn-origami': 'origami-fold' };
     for (const [id, dir] of Object.entries(tiles)) {
