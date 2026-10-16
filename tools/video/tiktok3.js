@@ -49,11 +49,11 @@ const SLOW = 10;
   // 0.0 Hook.
   say('tt3-hook', 0.1); await cap('Halloween just took over<br>my card game 🎃'); await shot('hook');
   // 2.1 The event pop-up, scrolled through.
-  await at(2.1); await cap('');
-  await ev(() => showEventPopup(activeSeasonalEvents()[0]));
-  say('tt3-shop', 2.2); await shot('popup');
+  await at(1.8); await cap('');
+  await at(2.3); await ev(() => showEventPopup(activeSeasonalEvents()[0]));
+  say('tt3-shop', 2.4); await shot('popup');
   const steps = 14;
-  for (let i = 1; i <= steps; i++) { await at(2.7 + (i / steps) * 2.1); await ev((f) => { const c = document.getElementById('eventPopupCard'); c.scrollTop = (c.scrollHeight - c.clientHeight) * f; }, i / steps); }
+  for (let i = 1; i <= steps; i++) { await at(2.9 + (i / steps) * 2.0); await ev((f) => { const c = document.getElementById('eventPopupCard'); c.scrollTop = (c.scrollHeight - c.clientHeight) * f; }, i / steps); }
   await shot('popup-end');
   await at(5.0);
   await ev(() => document.getElementById('eventPopupModal').classList.add('hidden'));
