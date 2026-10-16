@@ -28,7 +28,7 @@
     // Painted-art burns: the owner's approved tile cut into two layers (tools/make-burn-layers.py),
     // brought to life in WebGL. layout: art width in card heights, height/width, where the Pile sits.
     // Ghost Flames (seasonal Halloween): a ghost layer and a fire layer; every pile card burns.
-    'burn-halloween': { iconOnly: true /* v382: procedural in burn-effects.js (bfxGhostFlames); tile + sound only */, dur: 2.0, box: [6.4, 5.8, .55, .78] /* previews */, tile: 'art/burns/ghost-flames/tile.webp', art: 'art/burns/ghost-flames/layers.webp?v=1', cards: 'all', layout: [5.6, 288 / 395, .58, .74] },
+    'burn-halloween': { dur: 2.0, box: [6.4, 5.8, .55, .78] /* previews */, tile: 'art/burns/ghost-flames/tile.webp', art: 'art/burns/ghost-flames/layers.webp?v=1', cards: 'all', layout: [5.6, 288 / 395, .58, .74] },
     // Smoke Burst (Lvl 20): the cloud and its front puffs; only the top card shows (the rest hide).
     'burn-lvl-smoke-burst': { dur: 2.0, box: [6, 6.2, .5, .52], tile: 'art/burns/smoke-burst/tile.webp', art: 'art/burns/smoke-burst/layers.webp?v=1', layout: [4.8, 404 / 439, .5, .52] },
     // Royal Incineration (Lvl 80): the crown (whole, its own layer) and the golden fire burst under it.
@@ -131,6 +131,7 @@ void main(){
   if(v_loc.x>1.5)m*=1.-smoothstep(fld-.1,fld+.02,(v_loc.x-2.)*1.18); // ...and burns out behind it
   float detail=.78+.5*fbm(v_uv*vec2(13.,17.)+vec2(t*.3,-t*1.5));
   vec3 col=c.rgb*detail+v_col.rgb*m*(1.-m)*3.*c.a;
+  float lt=(v_k.x-7.)*10.;if(v_k.x<7.01)lt=1.;col*=lt; // a lit depth mesh: per-vertex light
   col+=gl*vec3(1.,.84,.5)*pow(max(0.,sin((uv.x*1.7-t*2.8)*6.2832+uv.y*3.)),10.)*.6*c.a; // highlights sweeping round: it spins
   float o=c.a*m; // v_col.a above 1 makes a layer fully opaque (solid magma)
   gl_FragColor=vec4(col*o*min(v_col.a,1.),o*min(1.,.8*v_col.a));
@@ -581,6 +582,31 @@ void main(){
       const P = [[0, 0], [1, 0], [1, 1], [0, 1]], L = [radial === true ? 1 : radial || 0, swirl];
       quad(arr, P.map(([u, v]) => proj((u - PU) * AW * s * sx + sh * (PV - v) * AH * s + dx, (PV - v) * AH * s + dy, z)), P, [L, L, L, L], [...glow, alpha], [7, slot, reveal, flow]);
     };
+    // The same painted layer as a depth mesh: each point gets a z from `relief(u, v)` (and a flowing
+    // `wave`), then the whole figure turns (yaw about its upright axis, pitch forward) and goes through
+    // the perspective, so the head, body and arms really sit at different depths. Every vertex is lit
+    // from the relief's slope (key light + rim), so the painting reads as a solid, shaded figure.
+    const LDIR = (() => { const l = Math.hypot(-.45, .55, .7); return [-.45 / l, .55 / l, .7 / l]; })();
+    const meshPt = (u, v, o) => {
+      let x = (u - PU) * AW * o.s, y = (PV - v) * AH * o.s, zz = o.relief(u, v) * K;
+      if (o.wave) { const w = o.wave(u, v); x += w[0] * K; y += w[1] * K; }
+      const cy = Math.cos(o.yaw), sy = Math.sin(o.yaw), cp = Math.cos(o.pitch), sp = Math.sin(o.pitch);
+      const x1 = x * cy + zz * sy, z1 = -x * sy + zz * cy;
+      return [x1, y * cp - z1 * sp + o.dy, o.z + (o.zc || 0) + y * sp + z1 * cp];
+    };
+    const layerMesh = (arr, slot, o) => {
+      const N = o.N || 28, e = .012, cy = Math.cos(o.yaw), sy = Math.sin(o.yaw), cp = Math.cos(o.pitch), sp = Math.sin(o.pitch), g = [];
+      for (let j = 0; j <= N; j++) { g.push([]); for (let i = 0; i <= N; i++) {
+        const u = i / N, v = j / N, [wx, wy, wz] = meshPt(u, v, o), [px, py] = proj(wx, wy, wz);
+        const dzdx = (o.relief(u + e, v) - o.relief(u - e, v)) * K / (2 * e * AW * o.s), dzdy = -(o.relief(u, v + e) - o.relief(u, v - e)) * K / (2 * e * AH * o.s);
+        const nl = Math.hypot(dzdx, dzdy, 1), nx = -dzdx / nl, ny = -dzdy / nl, nz = 1 / nl;
+        const n1x = nx * cy + nz * sy, n1z = -nx * sy + nz * cy, n2y = ny * cp - n1z * sp, n2z = ny * sp + n1z * cp;
+        const lit = Math.max(0, n1x * LDIR[0] + n2y * LDIR[1] + n2z * LDIR[2]), rim = Math.pow(1 - Math.min(1, Math.abs(n2z)), 2);
+        g[j].push([px, py, u, v, clamp(.72 + .65 * lit + .5 * rim, .5, 1.8)]);
+      } }
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) for (const q of [g[j][i], g[j][i + 1], g[j + 1][i + 1], g[j][i], g[j + 1][i + 1], g[j + 1][i]])
+        arr.push(q[0], q[1], q[2], q[3], 0, 0, o.glow[0], o.glow[1], o.glow[2], o.alpha, 7 + .1 * q[4], slot, o.reveal, o.flow);
+    };
     const artAt = (u, v, s, dy, z) => [(u - PU) * AW * s, (PV - v) * AH * s + dy, z];
     const vol = (arr, x0, x1, y0, y1, z, inten, seed) => {
       const P = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => proj(x, y, z));
@@ -814,21 +840,39 @@ void main(){
       glowAt(out.back, [0, FLOOR + .1, 0], 1.4 * K, [1, .55, .15, .5 * smooth(T, T + .2, t) * out1 * (.8 + .2 * Math.sin(t * 21))]);
       for (const [d, col] of [[0, [1, .9, .6]], [.1, [1, .6, .2]]]) { const rt = (t - T - d) / .6; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 1.9 * ease(rt), (1 - rt) * .85, col); }
     } else if (S.ghost && !S.calm) {
-      // The owner's art in two depth layers: the fire bank, and the wraith above it,
-      // which rises, lunges at the Pile on the strike and drifts apart.
+      // The owner's art as ONE solid figure in depth: the fire bank and the wraith are two meshes that share
+      // one pose (the same yaw, lean, lunge and float), one reveal and one fade, lit by the same light. The
+      // head, body and arms stand out of the painting; it turns to face the Pile, the arms thrust at the
+      // camera on the strike and the whole figure leans in, then rises and dissolves together.
+      const g2 = (u, v, cu, cv, su, sv) => Math.exp(-(((u - cu) / su) ** 2 + ((v - cv) / sv) ** 2));
+      const bumpAt = (tt, a, b, c) => smooth(a, b, tt) * (1 - smooth(b, c, tt));
       const lunge = bump(.46, .62, 1.0);
-      const gs = 1 + .12 * lunge, gdy = -.7 * (1 - ease((t - .08) / .6)) - .2 * lunge + .7 * smooth(1.25, 1.95, t);
+      // The whole figure's pose at any time tt (the trail below reuses it a moment earlier).
+      const poseAt = tt => {
+        const lg = bumpAt(tt, .46, .62, 1.0), reach = 1 + 1.7 * lg;
+        const relief = (u, v) => .26 * g2(u, v, .6, .45, .22, .32) + .55 * g2(u, v, .72, .2, .13, .14) * (1 + .5 * lg)
+          + .62 * reach * g2(u, v, .28, .42, .17, .15) + .55 * reach * g2(u, v, .88, .56, .1, .2) + .18 * g2(u, v, .45, .2, .2, .18) - .25 * (1 - g2(u, v, .55, .45, .6, .55));
+        const wave = (u, v) => { const a = smooth(.3, 1, v) * .055; return [a * Math.sin(tt * 2.6 + v * 9 + u * 4), a * .5 * Math.sin(tt * 3.1 + u * 7 - v * 3)]; };
+        return { s: 1 + .08 * lg, dy: -.7 * (1 - ease((tt - .08) / .6)) - .2 * lg + .7 * smooth(1.25, 1.95, tt) + .03 * K * Math.sin(tt * 2.3), relief, wave,
+          yaw: (1 - ease((tt - .1) / .5)) * -.6 + .24 * Math.sin(tt * 2.4) * smooth(.6, 1.2, tt) + .3 * smooth(1.25, 1.9, tt),
+          pitch: .15 * lg + .04 * Math.sin(tt * 3), zc: .26 * lg, glow: [.55, .9, 1], alpha: 1 };
+      };
+      const reveal = smooth(.06, .62, t) * (1 - smooth(1.3, 1.9, t)), pose = { ...poseAt(t), reveal }, relief = pose.relief, gs = pose.s, gdy = pose.dy;
       if (R.art) {
-        layer(out.art, 1, -.5, 1, 0, smooth(0, .4, t) * (1 - smooth(1.45, 1.95, t)), 1.4, [.55, .9, 1]);
-        layer(out.art, 0, -.7, gs, gdy, smooth(.12, .62, t) * (1 - smooth(1.3, 1.85, t)), 1, [.55, .9, 1]);
+        // The fire bank and the wraith: one pose, one reveal, one fade, one light.
+        layerMesh(out.art, 1, { ...pose, z: -.5, alpha: .9, relief: (u, v) => .2 + .26 * g2(u, v, .5, .8, .45, .25) + .08 * Math.sin(u * 7 + t * 2) * v, flow: 1.4, yaw: pose.yaw * .8, pitch: pose.pitch * .8 });
+        // A faint trail: the same figure a moment earlier, so its motion leaves a ghostly afterimage that flows.
+        const tp = poseAt(Math.max(0, t - .1));
+        layerMesh(out.art, 0, { ...tp, z: -.72, alpha: .3, reveal, flow: 1.6, N: 20 });
+        layerMesh(out.art, 0, { ...pose, z: -.7, flow: 1 });
       }
       const env = smooth(0, .3, t) * (1 - smooth(1.3, 1.9, t));
       vol(out.back, -2.1 * K, 2.1 * K, -.6, 2.1 * K, -.3, .85 * env, .3);
       // Eyes flare as it locks on, flash on the strike, then smoulder.
       const eye = smooth(.4, .55, t) * (1 - smooth(1.2, 1.6, t)) + 1.2 * bump(.5, .58, .8);
       [[.665, .21], [.735, .21]].forEach(([u, v]) => {
-        const p = [(u - PU) * AW * gs, (PV - v) * AH * gs + gdy, -.7];
-        glowAt(out.back, p, .32, [.5, .92, 1, eye * .9]);
+        const p = meshPt(u, v, { ...pose, z: -.7, relief });
+        glowAt(out.back, p, .24, [.5, .92, 1, eye * .8]);
         const [px, py, s] = proj(...p), w = .55 * F * s * (.6 + .4 * eye), h = .03 * F * s;
         quad(out.back, [[px - w, py - h], [px + w, py - h], [px + w, py + h], [px - w, py + h]], Z4, [[-1, 0], [1, 0], [1, 0], [-1, 0]], [.75, .97, 1, eye * .8], [2, 0, 0, 0]);
       });
@@ -1023,7 +1067,7 @@ void main(){
     cleanup.host = host; active.add(cleanup);
     let timer = setTimeout(cleanup, 3000);
     const frame = () => {
-      const t = Math.min(dur, (performance.now() - start) / 1000);
+      const t = Math.min(dur, window.__burnT != null ? window.__burnT : (performance.now() - start) / 1000);
       clearTimeout(timer); timer = setTimeout(cleanup, 3000); // ends it if frames stop
       S.advance(t);
       if (calm) canvas.style.opacity = String(1 - smooth(.55, .8, t));
@@ -1233,21 +1277,20 @@ void main(){
       [.68, .75, .83, .91, .99, 1.07, 1.16, 1.24].forEach((at, n) => k.noise({ at, dur: .028, type: 'bandpass', f0: 2300 + n * 140, q: 3, level: .12 }));
       k.noise({ at: 1.2, dur: .55, type: 'highpass', f0: 3600, f1: 1800, level: .05, attack: .1 });
     },
-    // Ghost Flames (v382), on bfxGhostFlames' clock: the flames rush in (0-.8), the eyes ignite (.7), the
-    // wraith wails (.92-1.34) and swoops (.8-1.14), the claws tear the card (1.1), it rises (1.32-2.0).
+    // Ghost Flames: cold rush as the fire rises (0–0.4), a two-voice moan as the wraith
+    // gathers, a glassy chime as its eyes flare (0.55), the strike (0.62: thump + tear),
+    // crackling cards (0.65–1.1), the floor rings, then a hiss as it drifts apart.
     'burn-halloween': k => {
-      k.noise({ dur: .8, type: 'bandpass', f0: 300, f1: 2600, q: .9, level: .13, attack: .5 });
-      k.tone({ at: .2, dur: 1.0, type: 'triangle', f0: 220, f1: 330, level: .09, attack: .45, vibrato: 11 });
-      k.tone({ at: .24, dur: .96, type: 'triangle', f0: 233, f1: 349, level: .07, attack: .45, vibrato: 8 });
-      [1568, 2093].forEach((f0, n) => k.tone({ at: .7 + n * .03, dur: .45, f0, f1: f0 * .98, level: .06, attack: .01 }));
-      k.tone({ at: .92, dur: .55, type: 'triangle', f0: 880, f1: 330, level: .12, attack: .08, vibrato: 14 });
-      k.noise({ at: .8, dur: .34, type: 'lowpass', f0: 2400, f1: 300, level: .22, attack: .1 });
-      k.tone({ at: 1.1, dur: .32, f0: 96, f1: 40, level: .3 });
-      k.noise({ at: 1.1, dur: .14, type: 'highpass', f0: 1800, f1: 4200, level: .3 });
-      [1.12, 1.15, 1.18, 1.21, 1.24].forEach((at, n) => k.noise({ at, dur: .03, type: 'bandpass', f0: 2600 + n * 200, q: 3, level: .15 }));
-      k.noise({ at: 1.3, dur: .65, type: 'highpass', f0: 3200, f1: 1400, level: .07, attack: .1 });
-      [1.38, 1.5, 1.62, 1.75].forEach((at, n) => k.tone({ at, dur: .3, f0: 2400 + n * 300, f1: 2200 + n * 300, level: .04, attack: .01 }));
-    },
+      k.noise({ dur: .45, type: 'bandpass', f0: 220, f1: 1300, q: .8, level: .2, attack: .3 });
+      k.tone({ at: .18, dur: .8, type: 'triangle', f0: 294, f1: 220, level: .1, attack: .2, vibrato: 12 });
+      k.tone({ at: .22, dur: .75, type: 'triangle', f0: 220, f1: 165, level: .07, attack: .2, vibrato: 9 });
+      [1568, 2093].forEach((f0, n) => k.tone({ at: .54 + n * .02, dur: .5, f0, f1: f0 * .98, level: .06, attack: .01 }));
+      k.tone({ at: .62, dur: .32, f0: 96, f1: 40, level: .3 });
+      k.noise({ at: .62, dur: .14, type: 'highpass', f0: 1800, f1: 4200, level: .3 });
+      [.66, .72, .77, .83, .88, .95, 1.02, 1.1].forEach((at, n) => k.noise({ at, dur: .03, type: 'bandpass', f0: 2400 + n * 150, q: 3, level: .16 }));
+      k.noise({ at: .74, dur: .35, type: 'lowpass', f0: 700, f1: 140, level: .14 });
+      k.noise({ at: 1.2, dur: .75, type: 'highpass', f0: 3200, f1: 1400, level: .06, attack: .12 });
+    }
   };
   const sound = (id, k) => SOUNDS[id] && SOUNDS[id](k);
   window.ShLevel3D = { has, play, still, clear, icon, sound, effects: EFFECTS };
