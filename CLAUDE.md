@@ -1,6 +1,12 @@
+## v385 — Ghost Flames in 3D (owner-approved from paused frames)
+
+- `burn-halloween` is the owner's painted ghost (`ShLevel3D`, `layers.webp`) drawn as lit depth meshes (`layerMesh` / `meshPt` in `burns3d.js`, ghost branch of `drawFrame`): the fire bank (slot 1) and the wraith (slot 0) share ONE pose (`poseAt(t)`: yaw, lean, lunge, float, flowing `wave`), one reveal and one fade, so no part works on its own; `relief(u, v)` gives head, body and arms their depth; every vertex is lit from the relief slope (key light + rim) through `k = 7 + .1 * light` in the art shader; eyes sit on the mesh via `meshPt`; a faint trail is the same pose 0.1s earlier. Sound and timings are unchanged. `window.__burnT` (burns3d `play`) pins the effect clock for frame checks: `scratchpad` style `gl-frames.js` sets it, waits, screenshots.
+- **Owner's rule (v384): show paused frames of ANY effect change before it goes live** (pause-and-screenshot, send the strip plus one full-size frame, wait for the go).
+- Two procedural attempts (v382 DOM flame tongues, v383 tongue wraith, and a WebGL one-mesh wraith kept in git history `00f1e10`) were rejected: the owner wants the painted ghost's look.
+
 ## v384 — Ghost Flames back to the original
 
-- v382/v383 (procedural flame wraith) were reverted at the owner's request: it did not look like the original ghost. `burn-halloween` is the painted-art WebGL `ghost` kind again (`ShLevel3D`, layers.webp). The owner wants that same ghostly figure, but in 3D; not built yet.
+- v382/v383 (procedural flame wraith) were reverted at the owner's request. Superseded by v385.
 
 ## v381 — watch a friend's Play Computer / Gauntlet game
 
