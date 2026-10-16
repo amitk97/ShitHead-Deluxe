@@ -1,11 +1,6 @@
-## v383 — Ghost Flames wraith in 3D
+## v384 — Ghost Flames back to the original
 
-- `bfxGhostFlames` keeps the v382 timeline but the wraith lives in a 3D figure space (units of H, hem origin, up = −y, +z toward the viewer). `proj(T, p)` applies yaw, lean and perspective (`FP` 3.2); each tongue slot is `[x,y,z,dx,dy,dz,len,wid]`, its projected base/tip give the screen rotation, length and width. Tongues, head, arms and shadow get an animated `zIndex` (`zi(z)`) so nearer parts draw over farther ones; the robe is a cone of tongue rings, the arms reach toward the camera with claws, the hood is a lit sphere whose face slides across it (`faceLayer`, parallax). Motes/sparks are z 900. No catalog, rules, sound or server change.
-
-## v382 — Ghost Flames rebuilt as one flame wraith
-
-- `bfxGhostFlames` (`burn-effects.js`, after `bfxColouredFlame`; `playBurnFx` maps `burn-halloween` to it, `sbfxHalloween` calls it): procedural like Confectionery, built from `procBurnStage`. ~45 SVG flame tongues (violet / teal / indigo gradients drawn once as `#gf<id>-<n>`, `mix-blend-mode: screen`), each its own element with its own flicker, sway and arrival time, fly in from round the Pile (`a0`–`a1`) and take a slot in one hooded wraith (skirt, crown, tail, two arms of flame with claws, a dark hood with two hollow eyes and a mouth that opens in the wail). Master motion `M(T)`: hover, swoop onto the card (`GF_SWOOP`–`GF_LAND`), rise off the top (`GF_RISE`). The REAL top card shivers and turns spectral, then the claws tear it down a zigzag at `GF_TEAR` (1.1s): two halves in preserve-3d boxes float apart and turn over to show the burner's own back (fade/face swap on the leaf layers, never on the 3D box). Soul motes rush in as it forms; spectral sparks and haze as it rises; gone by 2.0s. Only the eyes are white-hot; colours stay violet/teal.
-- `ShLevel3D` keeps `burn-halloween` as `iconOnly` (the painted tile is still the Shop/Custom icon; its `ghost` kind and `layers.webp` are no longer played) and its `burn-halloween` sound recipe was rewritten on the new times (rush 0–.8, eyes .7, wail .92, swoop .8, tear 1.1, rise 1.3–2.0). No catalog, rules or server change. Dev test "v382: Ghost Flames assembles one wraith…". Check frames with the pause-and-screenshot method (`scratchpad/gf-frames.js` style: pause every `.pfx-layer` animation at a `currentTime`).
+- v382/v383 (procedural flame wraith) were reverted at the owner's request: it did not look like the original ghost. `burn-halloween` is the painted-art WebGL `ghost` kind again (`ShLevel3D`, layers.webp). The owner wants that same ghostly figure, but in 3D; not built yet.
 
 ## v381 — watch a friend's Play Computer / Gauntlet game
 

@@ -11088,8 +11088,13 @@
       const drop = c => sfxSvg(20, 28, `<path d="M10 1C14 9 18 14 18 19a8 8 0 0 1-16 0c0-5 4-10 8-18Z" fill="${c}"/><ellipse cx="7" cy="18" rx="2" ry="4" fill="#fff" opacity=".6"/>`);
       sfxThrow(host, x, y, k, 30, i => [drop(['#38bdf8', '#7dd3fc', '#0ea5e9', '#e0f2fe'][i % 4]), bfxRand(8, 16), bfxRand(11, 22)], { speed: [120, 230], gravity: 330, spin: 30, spread: .7 });
     }
-    // Ghost Flames (v382): a procedural flame wraith built like Confectionery, in burn-effects.js (bfxGhostFlames).
-    function sbfxHalloween(host, x, y, k) { bfxGhostFlames(host, x, y, k); }
+    // Ghost Flames: the owner's approved art brought to life in WebGL (art/burns/level-3d/burns3d.js):
+    // the wraith rises from spectral fire and strikes, and the real pile cards are torn away burning.
+    function sbfxHalloween(host, x, y, k) {
+      const cardEls = host.id === 'burnFxLayer' ? [...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')] : [];
+      if (window.ShLevel3D && ShLevel3D.play('burn-halloween', host, x, y, k, false, { cardEls, backClass: burnBackClass() })) return;
+      sfxFlash(host, x, y, k, '#a78bfa', 160, 800);
+    }
     function sbfxDiwali(host, x, y, k) {
       const colours = ['#ec4899', '#f97316', '#facc15', '#22c55e', '#a855f7', '#06b6d4', '#ef4444'];
       for (let i = 0; i < 22; i++) {
