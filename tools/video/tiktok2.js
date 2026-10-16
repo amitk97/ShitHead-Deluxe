@@ -41,7 +41,7 @@ const SLOW = 10;
   // 0.0 Hook: the welcome pop-up, 5 bots and 3 lives.
   say('tt2-hook', 0.1);
   await ev(() => showGauntlet({ kind: 'welcome', status: { run: null, doneToday: false, firstDone: false, local: false } }));
-  await cap('<b>5 bots</b> · <b>3 lives</b><br>1 shot a day ⚔️', '9%'); await shot('hook');
+  await cap('<b>5 bots</b> · <b>3 lives</b><br>1 shot a day ⚔️', '7%'); await shot('hook');
   await at(3.2); await cap(''); await ev(() => closeGauntlet());
   const t1 = 3.3;
   say('tt2-easy', t1); await cap('Round 1 · <b>Easy</b> 🙂'); await shot('round1');

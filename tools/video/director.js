@@ -121,7 +121,7 @@ async function openGame(outVideo, opts = {}) {
     if (u.hostname === 'game.local') {
       let p = decodeURIComponent(u.pathname); if (p === '/') p = '/index.html';
       const local = path.join(gameRoot, p);
-      const types = { '.svg': 'image/svg+xml', '.mp3': 'audio/mpeg', '.js': 'text/javascript', '.html': 'text/html', '.png': 'image/png' };
+      const types = { '.svg': 'image/svg+xml', '.mp3': 'audio/mpeg', '.js': 'text/javascript', '.html': 'text/html', '.png': 'image/png', '.css': 'text/css', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.json': 'application/json', '.mp4': 'video/mp4' };
       if (fs.existsSync(local)) return route.fulfill({ body: fs.readFileSync(local), contentType: types[path.extname(local)] || 'application/octet-stream' });
       return route.fulfill({ status: 404, body: 'not found' });
     }
