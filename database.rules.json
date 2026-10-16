@@ -495,8 +495,12 @@
           "room": {
             ".validate": "newData.isString() && newData.val().matches(/^[0-9]{6}$/)"
           },
+          "watch": {
+            ".validate": "newData.val() === true"
+          },
           "$other": {
-            ".validate": "$other === 'mode' || $other === 'at' || $other === 'room'"
+            ".validate": "$other === 'mode' || $other === 'at' || $other === 'room' ||
+              $other === 'watch'"
           }
         },
         "avatar": {
@@ -525,6 +529,15 @@
         "$other": {
           ".validate": false
         }
+      }
+    },
+    "liveGames": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid ||
+          root.child('friends').child($uid).child(auth.uid).exists())",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "!newData.exists() || (newData.hasChildren(['at', 'players']) &&
+          newData.child('at').isNumber())"
       }
     },
     "friends": {

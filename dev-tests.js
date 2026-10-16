@@ -3252,6 +3252,39 @@ async function runDevTestSuite() {
       assertTrue(modal.classList.contains('hidden'), 'Later closes it');
     } finally { seasonalNowOverride = was; }
   });
+  await test('v381: a Play Computer game can be watched, with every hand and Face-Down card hidden', () => {
+    const wasOn = liveWatchOn, saved = { players: state.players, phase: state.phase, localPlayerId: state.localPlayerId, spectating: state.spectating, isMultiplayer: state.isMultiplayer, isRanked: state.isRanked, drawPile: state.drawPile, discardPile: state.discardPile, gauntlet: state.gauntlet };
+    try {
+      const card = (id, rank) => ({ id, rank, suit: '♠' });
+      state.players = [
+        { id: 'p_user', name: 'You', isBot: false, hand: [card('a', 'K'), card('b', '7')], faceUp: [card('c', '9')], faceDown: [card('d', 'A')], hasFinished: false },
+        { id: 'p_bot_1', name: 'Boo', isBot: true, hand: [card('e', 'Q')], faceUp: [card('f', '5')], faceDown: [card('g', '2')], hasFinished: false }
+      ];
+      state.phase = 'PLAY'; state.localPlayerId = 'p_user'; state.spectating = null; state.isMultiplayer = false; state.isRanked = false;
+      state.drawPile = [card('h', '3'), card('i', '4')]; state.discardPile = [card('j', '8')];
+      state.gauntlet = { mode: 'hard', round: 2, lives: 1, runId: 'x' };
+      liveWatchOn = true;
+      assertTrue(currentPlayingStatus().watch === true, 'A bot game is marked watchable');
+      const snap = liveGameSnapshot();
+      const json = JSON.stringify(snap);
+      ['"id":"a"', '"id":"b"', '"id":"d"', '"id":"e"', '"id":"g"', '"id":"h"', '"id":"i"'].forEach(x => assertTrue(!json.includes(x), `Hidden card ${x} is not in the snapshot`));
+      assertEqual(snap.players[0].hand.length, 2, 'The hand count is kept');
+      assertTrue(snap.players[0].hand.every(c => c.hidden), 'Hand cards are hidden backs');
+      assertEqual(snap.players[1].faceUp[0].rank, '5', 'Face-Up cards are shown');
+      assertEqual(snap.drawCount, 2, 'The Deck is a count');
+      assertEqual(snap.discardPile[0].rank, '8', 'The Pile is shown');
+      assertEqual(snap.gauntlet.mode, 'hard', 'The Gauntlet run is included');
+      liveWatchOn = false;
+      assertTrue(!currentPlayingStatus().watch, 'Friends Can Watch off: not watchable');
+      assertTrue(friendPlaying({ playing: { mode: 'bots', watch: true } }).live, 'A friend\'s bot game shows Watch');
+      assertTrue(!friendPlaying({ playing: { mode: 'bots' } }).live, 'Without the flag it does not');
+      assertEqual(typeof collectAccountSettings().liveWatchOn, 'boolean', 'The switch syncs with the account');
+    } finally {
+      liveWatchOn = wasOn;
+      Object.assign(state, saved);
+    }
+  });
+
   await test('v380: the event login bonus shows in the daily reward pop-up and is exported to the server catalog', () => {
     const was = [seasonalNowOverride, state.phase];
     try {

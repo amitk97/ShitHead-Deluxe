@@ -745,6 +745,7 @@
     // it was about to restore.
     let savedGameChecked = false;
     function saveGameState() {
+      scheduleLiveGame(); // friends watching this Play Computer / Gauntlet game
       if (!savedGameChecked) return;
       try {
         // The tutorial is a scripted lesson, not a real match — persisting it
@@ -4096,6 +4097,7 @@
     let hapticsOn = readPref('shithead_haptics', true);
     // Your-turn chime and the new-invite/request/gift chime (both default on).
     let turnAlertOn = readPref('shithead_turn_alert', true);
+    let liveWatchOn = readPref('shithead_live_watch', true); // friends may watch my Play Computer / Gauntlet games
     let whatsNewOn = readPref('shithead_whats_new', true); // What's New pop-up after an update
     let notifySoundOn = readPref('shithead_notify_sound', true);
     let lastRenderWasMyTurn = false;
@@ -9255,6 +9257,7 @@
       paintToggle(document.getElementById('setDealAnimState'), dealAnimationOn);
       paintToggle(document.getElementById('setHandSortState'), handSortByPower);
       paintToggle(document.getElementById('setWhatsNewState'), whatsNewOn);
+      paintToggle(document.getElementById('setLiveWatchState'), liveWatchOn);
       const handSortDesc = document.getElementById('setHandSortDesc');
       if (handSortDesc) handSortDesc.textContent = handSortByPower
         ? 'By power: 4 to A, then 10, 2, 3, Joker'
@@ -13902,6 +13905,7 @@
         dealAnimationOn: !!dealAnimationOn,
         handSortByPower: !!handSortByPower,
         whatsNewOn: !!whatsNewOn,
+        liveWatchOn: !!liveWatchOn,
         modeIntroSeen: { ranked: !!modeIntroSeen.ranked, online: !!modeIntroSeen.online },
         welcomeTourSeen: !!welcomeTourSeen,
         emotesMuted: !!emotesMuted,
@@ -13950,6 +13954,7 @@
           ['handSortByPower','shithead_hand_sort_power',v => { handSortByPower=v; }],
           ['protectBestCards','shithead_protect_best',v => { protectBestCards=v; }],
           ['whatsNewOn','shithead_whats_new',v => { whatsNewOn=v; }],
+          ['liveWatchOn','shithead_live_watch',v => { liveWatchOn=v; }],
           ['emotesMuted','shithead_emotes_muted',v => { emotesMuted=v; }]
         ];
         boolPrefs.forEach(([key, storageKey, assign]) => {
@@ -18191,9 +18196,9 @@
       const presenceClass = isOnline ? 'online' : 'offline';
       const playing = isOnline ? friendPlaying(profile) : null;
       const onlineHtml = type === 'friend'
-        ? (playing && playing.room
+        ? (playing && (playing.room || playing.live)
           // Tap the status to watch (owner, v250), same as WATCH.
-          ? `<button type="button" data-uid="${safeUid}" data-name="${escapeAttr(rawName)}" data-room="${escapeAttr(playing.room)}" class="friend-status playing friend-watch-btn friend-status-watch" aria-label="Watch ${escapeAttr(rawName)}'s match">🎮 In a match · ${playing.label} · <u>Watch</u></button>`
+          ? `<button type="button" data-uid="${safeUid}" data-name="${escapeAttr(rawName)}" data-room="${escapeAttr(playing.room || '')}" data-live="${playing.live ? 1 : ''}" class="friend-status playing friend-watch-btn friend-status-watch" aria-label="Watch ${escapeAttr(rawName)}'s match">🎮 In a match · ${playing.label} · <u>Watch</u></button>`
           : `<span class="friend-status ${playing ? 'playing' : presenceClass}">${playing ? `🎮 In a match · ${playing.label}` : isOnline ? 'Online' : 'Offline'}</span>`) : '';
       // Friend requests use a synthetic profile ({username, from the
       // request itself) with no rating — publicProfiles was never fetched
@@ -18209,8 +18214,8 @@
       if (type === 'friend') {
         actions = [
           btn('friend-gift-btn friend-action--gift', '🎁 GIFT', `data-name="${escapeAttr(rawName)}" aria-label="Send ${escapeAttr(rawName)} a gift"`),
-          playing && playing.room
-            ? btn('friend-watch-btn friend-action--watch', '👀 WATCH', `data-name="${escapeAttr(rawName)}" data-room="${escapeAttr(playing.room)}" aria-label="Watch ${escapeAttr(rawName)}'s match"`)
+          playing && (playing.room || playing.live)
+            ? btn('friend-watch-btn friend-action--watch', '👀 WATCH', `data-name="${escapeAttr(rawName)}" data-room="${escapeAttr(playing.room || '')}" data-live="${playing.live ? 1 : ''}" aria-label="Watch ${escapeAttr(rawName)}'s match"`)
             : btn('friend-invite-btn friend-action--go', inviteableRoomCode() ? 'INVITE HERE' : 'INVITE', `data-name="${escapeAttr(rawName)}" aria-label="Invite ${escapeAttr(rawName)} to play"`),
           btn('friend-unfriend-btn friend-action--danger', 'UNFRIEND'),
           btn('friend-ignore-btn friend-action--warn', 'IGNORE')
@@ -18371,7 +18376,10 @@
       const uid = btn.dataset.uid;
       if (btn.classList.contains('friend-gift-btn')) startGiftForFriend(uid, btn.dataset.name);
       else if (btn.classList.contains('friend-invite-btn')) sendGameInvite(uid, btn.dataset.name);
-      else if (btn.classList.contains('friend-watch-btn')) startSpectating(btn.dataset.room, uid, btn.dataset.name);
+      else if (btn.classList.contains('friend-watch-btn')) {
+        if (btn.dataset.live) startSpectatingLive(uid, btn.dataset.name);
+        else startSpectating(btn.dataset.room, uid, btn.dataset.name);
+      }
       else if (btn.classList.contains('friend-unfriend-btn')) unfriend(uid);
       else if (btn.classList.contains('friend-unignore-btn')) unignore(uid);
       else if (btn.classList.contains('friend-accept-btn')) acceptFriendRequest(uid);
@@ -18955,12 +18963,65 @@
         && !!state.localPlayerId && state.players.some(p => p.id === state.localPlayerId);
       if (!inMatch) return null;
       const mode = state.isRanked ? 'ranked' : state.isMultiplayer ? 'online' : 'bots';
-      return mode === 'bots' || !state.roomCode ? { mode } : { mode, room: String(state.roomCode) };
+      if (mode === 'bots') return liveWatchOn ? { mode, watch: true } : { mode };
+      return !state.roomCode ? { mode } : { mode, room: String(state.roomCode) };
+    }
+    // Play Computer / Gauntlet games live only on the player's phone, so a
+    // spectator-safe copy is published to liveGames/{uid} (friends read it,
+    // rules check friends/{uid}/{viewer}): every seat's name, picture and
+    // look, Face-Up cards, the Pile, the Deck COUNT, turn and direction,
+    // never a hand or a Face-Down card (those are sent as hidden backs).
+    // Written at most every 350ms and only when it changed; removed when the
+    // game ends, on disconnect, or with the Friends Can Watch switch.
+    var liveGameTimer = null, liveGameLastJson = '', liveGameOn = false;
+    function liveGameSnapshot() {
+      const hide = (list, tag) => (list || []).map((c, i) => ({ id: `x-${tag}-${i}`, rank: '4', suit: '♠', hidden: true }));
+      const g = state.gauntlet;
+      return JSON.parse(JSON.stringify({
+        phase: state.phase,
+        matchId: state.matchId || null,
+        players: state.players.map((p) => ({
+          id: p.id, name: p.name, isBot: !!p.isBot, difficulty: p.difficulty || null,
+          avatar: p.avatar || null,
+          cosmetics: p.id === state.localPlayerId ? getPublicCosmeticLoadout() : (p.cosmetics || null),
+          hasFinished: !!p.hasFinished, finishRank: p.finishRank || null, drew: !!p.drew,
+          hand: hide(p.hand, `${p.id}h`), faceUp: p.faceUp || [], faceDown: hide(p.faceDown, `${p.id}d`)
+        })),
+        drawCount: (state.drawPile || []).length,
+        discardPile: state.discardPile || [],
+        playedHistory: (state.playedHistory || []).slice(-12),
+        currentTurnIndex: state.currentTurnIndex || 0,
+        direction: state.direction || 1,
+        activeConstraint: state.activeConstraint || null,
+        baseOverrideCard: state.baseOverrideCard || null,
+        gauntlet: g && !g.ended ? { mode: gauntletModeOf(g), round: g.round, lives: g.lives } : null
+      }));
+    }
+    function scheduleLiveGame() {
+      if (liveGameTimer) return;
+      liveGameTimer = setTimeout(pushLiveGame, 350);
+    }
+    function pushLiveGame() {
+      liveGameTimer = null;
+      if (!currentUser || typeof db === 'undefined' || !firebaseAvailable || devTestSuiteRunning) return;
+      const status = currentPlayingStatus();
+      const ref = db.ref(`liveGames/${currentUser.uid}`);
+      if (!status || !status.watch) {
+        if (liveGameOn) { liveGameOn = false; liveGameLastJson = ''; ref.remove().catch(() => {}); }
+        return;
+      }
+      const body = liveGameSnapshot();
+      const json = JSON.stringify(body);
+      if (json === liveGameLastJson) return;
+      liveGameLastJson = json;
+      if (!liveGameOn) { liveGameOn = true; ref.onDisconnect().remove(); }
+      ref.set({ ...body, at: firebase.database.ServerValue.TIMESTAMP }).catch(() => { liveGameLastJson = ''; });
     }
     function syncPlayingStatus() {
       if (!currentUser || typeof db === 'undefined' || !firebaseAvailable || devTestSuiteRunning) return;
+      scheduleLiveGame();
       const status = currentPlayingStatus();
-      const key = status ? `${status.mode}|${status.room || ''}` : 'none';
+      const key = status ? `${status.mode}|${status.room || ''}|${status.watch ? 1 : 0}` : 'none';
       if (key === lastPlayingKey) return;
       lastPlayingKey = key;
       const ref = db.ref(`publicProfiles/${currentUser.uid}/playing`);
@@ -18971,7 +19032,7 @@
     function friendPlaying(profile) {
       const p = profile && profile.playing;
       if (!p || !PLAYING_LABELS[p.mode]) return null;
-      return { mode: p.mode, label: PLAYING_LABELS[p.mode], room: /^[0-9]{6}$/.test(String(p.room || '')) ? String(p.room) : null };
+      return { mode: p.mode, label: PLAYING_LABELS[p.mode], room: /^[0-9]{6}$/.test(String(p.room || '')) ? String(p.room) : null, live: p.mode === 'bots' && p.watch === true };
     }
     let spectateRef = null;
     const SPECTATOR_ID = '__spectator__';
@@ -19014,17 +19075,58 @@
         });
       }).catch(() => notifyBanner("Couldn't open that match."));
     }
+    // Watch a friend's Play Computer / Gauntlet game from liveGames/{uid}
+    // (see liveGameSnapshot). Same read-only view as startSpectating.
+    function startSpectatingLive(friendUid, friendName) {
+      if (state.spectating) stopSpectating();
+      if ((state.phase === 'SWAP' || state.phase === 'PLAY') || state.roomCode) {
+        notifyBanner('Finish or leave your own game first.');
+        return;
+      }
+      if (isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
+      const ref = db.ref(`liveGames/${friendUid}`);
+      return ref.once('value').then((snap) => {
+        const data = snap.val();
+        if (!data || !data.players) { notifyBanner(`${friendName || 'Your friend'} isn't in a match any more.`); return; }
+        document.getElementById('friendsModal')?.classList.add('hidden');
+        state.spectating = { code: 'live', uid: friendUid, name: friendName || 'Friend', seatId: 'p_user', ranked: false, live: true, gauntlet: data.gauntlet || null };
+        state.localPlayerId = SPECTATOR_ID;
+        state.isMultiplayer = true;
+        state.isRanked = false;
+        state.isHost = false;
+        state.roomCode = null;
+        document.body.classList.add('spectating');
+        applySpectatedRoom(data);
+        dismissLobbyAndStart();
+        showSpectateBar();
+        spectateRef = ref;
+        ref.on('value', (s) => {
+          if (!state.spectating) return;
+          const d = s.val();
+          if (!d || !d.players) {
+            notifyBanner(`${state.spectating.name}'s match has ended.`);
+            setTimeout(stopSpectating, 2500);
+            return;
+          }
+          state.spectating.gauntlet = d.gauntlet || null;
+          applySpectatedRoom(d);
+          showSpectateBar();
+        });
+      }).catch(() => notifyBanner("Couldn't open that match."));
+    }
     function applySpectatedRoom(data) {
       const seatId = state.spectating.seatId;
+      const live = !!state.spectating.live;
       state.players = roomPlayerList(data.players).map((p) => {
         const q = { ...p, hand: p.hand || [], faceUp: p.faceUp || [], faceDown: p.faceDown || [] };
+        if (live && p.id === seatId) q.name = state.spectating.name;
         // Ranked hands stay private: the spectator only gets the count.
         if (p.id === seatId && state.spectating.ranked) q.hand = q.hand.map((c, i) => ({ id: `hidden-${i}`, rank: '4', suit: '♠', hidden: true }));
         return q;
       });
       state.phase = data.phase || state.phase;
       state.matchId = data.matchId || state.matchId;
-      state.drawPile = data.drawPile || [];
+      state.drawPile = data.drawPile || Array.from({ length: data.drawCount || 0 }, (_, i) => ({ id: `x-d-${i}`, rank: '4', suit: '♠', hidden: true }));
       state.discardPile = data.discardPile || [];
       state.playedHistory = normalizePlayedHistory(data.playedHistory);
       state.currentTurnIndex = data.currentTurnIndex || 0;
@@ -19047,7 +19149,9 @@
         document.body.appendChild(bar);
         bar.querySelector('#spectateLeaveBtn').addEventListener('click', stopSpectating);
       }
-      bar.querySelector('#spectateBarText').textContent = `👀 Watching ${state.spectating.name}${state.spectating.ranked ? ' · Ranked, hand hidden' : ''}`;
+      const sp = state.spectating, g = sp.gauntlet;
+      const gTxt = g ? ` · Gauntlet ${GAUNTLET.modes[g.mode]?.name || ''} ${(g.round || 0) + 1}/${gauntletRounds(g.mode).length}, ${g.lives} ${g.lives === 1 ? 'life' : 'lives'}` : '';
+      bar.querySelector('#spectateBarText').textContent = `👀 Watching ${sp.name}${sp.ranked ? ' · Ranked, hand hidden' : sp.live ? ' · hand hidden' : ''}${gTxt}`;
       bar.classList.remove('hidden');
     }
     function stopSpectating() {
@@ -20132,6 +20236,11 @@
     document.getElementById('setDealAnimRow').addEventListener('click', () => {
       dealAnimationOn = !dealAnimationOn; writePref('shithead_deal_animation', dealAnimationOn);
       refreshSettingsUI(); scheduleSettingsCloudSave();
+    });
+    document.getElementById('setLiveWatchRow').addEventListener('click', () => {
+      liveWatchOn = !liveWatchOn; writePref('shithead_live_watch', liveWatchOn);
+      refreshSettingsUI(); scheduleSettingsCloudSave();
+      syncPlayingStatus(); scheduleLiveGame();
     });
     document.getElementById('setWhatsNewRow').addEventListener('click', () => {
       whatsNewOn = !whatsNewOn; writePref('shithead_whats_new', whatsNewOn);
