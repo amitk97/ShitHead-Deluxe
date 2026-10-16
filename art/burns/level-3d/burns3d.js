@@ -128,6 +128,10 @@ void main(){
   if(v_loc.x>1.5)fld=fbm(v_uv*5.+vec2(0.,t*.5))*.3+v_uv.x*.75+abs(v_uv.y-.55)*.12; // sweep: left to right
   else if(v_loc.x>.5)fld=fbm(v_uv*5.+vec2(0.,t*.5))*.55+length(v_uv-.5)*.9; // radial: the centre first
   float m=smoothstep(fld-.1,fld+.02,v_k.z*1.18);
+  if(v_loc.x<-.5){ // a whole apparition: every part fades in and out together, only wisped by slow noise, never swept in from one side
+   float w=fbm(v_uv*4.+vec2(0.,t*.5));
+   m=smoothstep(0.,.5,v_k.z*1.5+(w-.5)*(1.-v_k.z)*.8-.25);
+  }
   if(v_loc.x>1.5)m*=1.-smoothstep(fld-.1,fld+.02,(v_loc.x-2.)*1.18); // ...and burns out behind it
   float detail=.78+.5*fbm(v_uv*vec2(13.,17.)+vec2(t*.3,-t*1.5));
   vec3 col=c.rgb*detail+v_col.rgb*m*(1.-m)*3.*c.a;
@@ -605,7 +609,7 @@ void main(){
         g[j].push([px, py, u, v, clamp(.72 + .65 * lit + .5 * rim, .5, 1.8)]);
       } }
       for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) for (const q of [g[j][i], g[j][i + 1], g[j + 1][i + 1], g[j][i], g[j + 1][i + 1], g[j + 1][i]])
-        arr.push(q[0], q[1], q[2], q[3], 0, 0, o.glow[0], o.glow[1], o.glow[2], o.alpha, 7 + .1 * q[4], slot, o.reveal, o.flow);
+        arr.push(q[0], q[1], q[2], q[3], -1, 0, o.glow[0], o.glow[1], o.glow[2], o.alpha, 7 + .1 * q[4], slot, o.reveal, o.flow);
     };
     const artAt = (u, v, s, dy, z) => [(u - PU) * AW * s, (PV - v) * AH * s + dy, z];
     const vol = (arr, x0, x1, y0, y1, z, inten, seed) => {
