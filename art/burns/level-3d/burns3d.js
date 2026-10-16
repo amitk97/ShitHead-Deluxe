@@ -231,7 +231,7 @@ void main(){
     const hw = S.ar / 2;
     S.waveX = t => t < .26 ? -1.5 + (t / .26) * (1.5 - hw) : t < .9 ? -hw + (t - .26) / .64 * (hw * 2 + .15) : hw + .15 + (t - .9) / .3 * 1.6;
     S.front = (c, t) => S.calm ? -.25 + clamp(t / .7) * 1.45
-      : ghost ? -.25 + clamp((t - T - .03 - c.i * .06) / .75) * 1.45
+      : ghost ? -.25 + clamp((t - S.ripAt(c) - .3) / .7) * 1.45
       : smoke ? -.25 + clamp((t - .78) / .7) * 1.45 : royal ? -.25 + clamp((t - .9) / .62) * 1.45 : spiral ? -.25 + clamp((t - .85) / .62) * 1.45 : snap ? -.25 + clamp((t - .62) / .62) * 1.45 : blaze ? -.25 + clamp((t - .72) / .72) * 1.45 : spectral ? -.25 + clamp((t - .8) / .68) * 1.45 : bolt ? -.25 + clamp((t - .62) / .66) * 1.45 : candy ? -.25 + clamp((t - .8) / .66) * 1.45 : lava ? -.25 + clamp((t - .95) / .7) * 1.45 : paper ? -.25 + clamp((t - .9) / .6) * 1.45 : -.25 + clamp((t - .24) / .66) * 1.45;
     S.pose = (c, t) => {
       if (S.calm) return { rx: 0, ry: 0, rz: c.rot0, tx: c.ox, ty: c.oy, tz: 0, heat: clamp(t / .3) };
@@ -298,10 +298,9 @@ void main(){
         return { rx: -.16 * e + Math.sin(t * 6) * .04 * e, ry: .28 * Math.sin(t * 2.7) * e, rz: c.rot0 + .07 * Math.sin(t * 2.1) * e, tx: c.ox, ty: c.oy + .05 * e, tz: .38 * e, heat: 1 };
       }
       if (ghost) {
-        // Trembles as the wraith gathers, then is ripped away and tumbles out.
-        const tr = smooth(.1, .5, t), u = Math.max(0, t - T - c.i * .05);
-        if (t < T + c.i * .05) return { rx: -.05 * tr, ry: 0, rz: c.rot0 + Math.sin(t * 38 + c.i * 2) * .025 * tr, tx: c.ox, ty: c.oy + .04 * tr, tz: .08 * tr, heat: .6 * tr };
-        return { rx: -.05 - 2.4 * u, ry: c.side * 3.2 * u, rz: c.rot0 + c.side * 1.6 * u, tx: c.ox + c.side * 1.3 * u, ty: c.oy + .04 + 2 * u - 1.6 * u * u, tz: .08 + 1.1 * u, heat: 1 };
+        // The card shivers as the wraith closes its claws on it; the rip itself (S.ripHalf) pulls it in two.
+        const tr = smooth(.1, .5, t), r0 = S.ripAt(c), pre = smooth(r0 - .3, r0, t), sh = Math.sin(t * 52 + c.i * 2) * (.02 * tr + .035 * pre);
+        return { rx: -.05 * tr, ry: 0, rz: c.rot0 + sh, tx: c.ox, ty: c.oy + .04 * tr + .06 * pre, tz: .08 * tr + .1 * pre, heat: t < r0 ? .6 * tr : 1 };
       }
       const e = ease((t - .2) / .55), w = Math.sin(t * 13) * .02 * e;
       return { rx: -.22 * e + w, ry: .3 * e, rz: c.rot0 - .18 * ease((t - .25) / .6), tx: .12 * e, ty: .16 * e, tz: .7 * e, heat: smooth(.12, .3, t) };
@@ -333,6 +332,18 @@ void main(){
       co = Math.cos(pose.ry); si = Math.sin(pose.ry); [x, z] = [x * co + z * si, -x * si + z * co];
       return [x + pose.tx, y + pose.ty, z + pose.tz];
     };
+    // Ghost rip: the card is torn down a zigzag (S.zig) into two halves that the claws pull apart: each swings
+    // open about the bottom centre like a V, turns and lifts away (showing the burner's back), then burns.
+    S.ripAt = c => .72 + c.i * .05;
+    S.zig = v => { const w = Math.abs(((v * 6) % 2 + 2) % 2 - 1) * 2 - 1; return .5 + .05 * w; };
+    S.ripHalf = (c, side, u, v, t) => {
+      const pose = S.pose(c, t), front = S.front(c, t), q = S.cardPoint(c, u, v, pose, front), pv = S.cardPoint(c, .5, 1, pose, front);
+      const p = ease((t - S.ripAt(c)) / .5), a = side * .95 * p, by = side * 1.15 * p;
+      let x = q[0] - pv[0], y = q[1] - pv[1], z = q[2] - pv[2];
+      let co = Math.cos(a), si = Math.sin(a); [x, y] = [x * co - y * si, x * si + y * co];
+      co = Math.cos(by); si = Math.sin(by); [x, z] = [x * co + z * si, -x * si + z * co];
+      return [x + pv[0] + side * .62 * p, y + pv[1] + .16 * p, z + pv[2] + .3 * p];
+    };
     const emit = (key, rate, dt, fn) => { S.acc[key] = (S.acc[key] || 0) + rate * dt; while (S.acc[key] >= 1) { S.acc[key] -= 1; fn(); } };
     const toWorld = ([x, y, z]) => [x, y * CP + z * SP, -y * SP + z * CP];
     // A burning card feeds its own small flames, embers, smoke and shards.
@@ -346,6 +357,25 @@ void main(){
         emit('shard' + c.i, Math.max(0, front - c.last) * 46 / dt, dt, () => {
           const v = R(.04, .96), u = clamp((front - .16 * (1 - v)) / .82 + R(-.02, .04));
           S.shards.push({ c: c.i, p: toWorld(S.cardPoint(c, u, v, pose, front)), uv: [u, v], v: [R(.45, 1.3) * (ghost ? Math.sign(c.side) : 1), R(.3, 1.15), R(-.4, .6)], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-11, 11), R(-11, 11), R(-9, 9)], s: R(.035, .07), age: 0, life: R(.55, .9), seed: rand() });
+        });
+      }
+      c.last = front;
+    };
+    // The torn halves throw sparks and shards along the tear, then burn like any card.
+    const ripCard = (c, t, dt) => {
+      const r0 = S.ripAt(c), front = S.front(c, t), zg = S.zig, at = (side, u, v) => toWorld(S.ripHalf(c, side, side < 0 ? Math.min(u, zg(v)) : Math.max(u, zg(v)), v, t));
+      if (t > r0 - .04 && t < r0 + .6) emit('tear' + c.i, 170, dt, () => {
+        const side = rand() < .5 ? -1 : 1, v = R(0, 1), p = at(side, zg(v), v);
+        S.embers.push({ pal: 1, p, v: [side * R(.2, 1.3), R(.3, 1.4), R(-.2, .6)], age: 0, life: R(.35, .7), size: R(1.6, 3.4), seed: rand() * 6.28 });
+        if (rand() < .35) S.shards.push({ c: c.i, p, uv: [clamp(zg(v) + side * R(0, .05)), v], v: [side * R(.6, 1.6), R(.3, 1.2), R(-.3, .7)], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-11, 11), R(-11, 11), R(-9, 9)], s: R(.03, .06), age: 0, life: R(.5, .9), seed: rand() });
+      });
+      if (front > -.05 && front < 1.1) {
+        const pt = (side, v) => at(side, clamp((front - .16 * (1 - v)) / .82 + .02), v);
+        emit('cflame' + c.i, 34, dt, () => { const side = rand() < .5 ? -1 : 1, [x, y, z] = pt(side, R(.05, .95)); S.flames.push({ x, y: y - .05, z: z + .02, w: R(.1, .16), h: R(.14, .28), age: 0, life: R(.3, .45), seed: rand(), lean: R(.05, .2) }); });
+        emit('cember' + c.i, 70, dt, () => { const side = rand() < .5 ? -1 : 1; S.embers.push({ p: pt(side, R(0, 1)), v: [R(.2, 1.1), R(.4, 1.4), R(-.2, .6)], age: 0, life: R(.45, .85), size: R(1.6, 3.6), seed: rand() * 6.28 }); });
+        emit('shard' + c.i, Math.max(0, front - c.last) * 46 / dt, dt, () => {
+          const side = rand() < .5 ? -1 : 1, v = R(.04, .96), u = clamp((front - .16 * (1 - v)) / .82 + R(-.02, .04));
+          S.shards.push({ c: c.i, p: pt(side, v), uv: [side < 0 ? Math.min(u, zg(v)) : Math.max(u, zg(v)), v], v: [R(.45, 1.3) * side, R(.3, 1.15), R(-.4, .6)], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-11, 11), R(-11, 11), R(-9, 9)], s: R(.035, .07), age: 0, life: R(.55, .9), seed: rand() });
         });
       }
       c.last = front;
@@ -488,7 +518,7 @@ void main(){
           if (t < 1.5) emit('wisp', 70, dt, () => S.embers.push({ pal: 1, p: [R(-1.4, 1.4), FLOOR + R(0, .5), R(-.4, .7)], v: [R(-.3, .3), R(.5, 1.3), R(-.1, .2)], age: 0, life: R(.6, 1.1), size: R(1.6, 3.4), seed: rand() * 6.28 }));
           if (t < 1.3) emit('haze', 9, dt, () => S.smoke.push({ col: [.42, .3, .75], p: [R(-1.3, 1.3), FLOOR + R(.1, .5), R(-.4, .3)], v: [R(-.1, .1), R(.3, .55), 0], age: 0, life: R(.8, 1.2), size: R(.35, .55), seed: rand() }));
           if (t > T && t < T + .03) for (let i = 0; i < 26; i++) { const a = R(0, 6.28); S.embers.push({ pal: 1, p: [0, .1, .3], v: [Math.cos(a) * R(1, 2.4), Math.abs(Math.sin(a)) * R(.8, 2.2), R(-.4, .8)], age: 0, life: R(.5, .9), size: R(2, 4), seed: rand() * 6.28 }); }
-          S.cards.forEach(c => burnCard(c, t, dt));
+          S.cards.forEach(c => ripCard(c, t, dt));
         } else {
           const X = S.waveX(t);
           if (t < 1.15) emit('flame', 44, dt, () => {
@@ -856,7 +886,8 @@ void main(){
         const lg = bumpAt(tt, .46, .62, 1.0), reach = 1 + 1.7 * lg;
         const relief = (u, v) => .26 * g2(u, v, .6, .45, .22, .32) + .55 * g2(u, v, .72, .2, .13, .14) * (1 + .5 * lg)
           + .62 * reach * g2(u, v, .28, .42, .17, .15) + .55 * reach * g2(u, v, .88, .56, .1, .2) + .18 * g2(u, v, .45, .2, .2, .18) - .25 * (1 - g2(u, v, .55, .45, .6, .55));
-        const wave = (u, v) => { const a = smooth(.3, 1, v) * .055; return [a * Math.sin(tt * 2.6 + v * 9 + u * 4), a * .5 * Math.sin(tt * 3.1 + u * 7 - v * 3)]; };
+        const pull = ease((tt - .72) / .5) * (1 - smooth(1.1, 1.5, tt));
+        const wave = (u, v) => { const a = smooth(.3, 1, v) * .055, ex = pull * .5 * (g2(u, v, .3, .45, .22, .22) * -1 + g2(u, v, .88, .55, .14, .24)); return [a * Math.sin(tt * 2.6 + v * 9 + u * 4) + ex, a * .5 * Math.sin(tt * 3.1 + u * 7 - v * 3)]; };
         return { s: 1 + .08 * lg, dy: -.7 * (1 - ease((tt - .08) / .6)) - .2 * lg + .7 * smooth(1.25, 1.95, tt) + .03 * K * Math.sin(tt * 2.3), relief, wave,
           yaw: (1 - ease((tt - .1) / .5)) * -.6 + .24 * Math.sin(tt * 2.4) * smooth(.6, 1.2, tt) + .3 * smooth(1.25, 1.9, tt),
           pitch: .15 * lg + .04 * Math.sin(tt * 3), zc: .26 * lg, glow: [.55, .9, 1], alpha: 1 };
@@ -922,24 +953,35 @@ void main(){
     for (const c of S.cards) {
       const pose = S.pose(c, t), front = S.front(c, t);
       if (front >= 1.2) continue;
-      const P = [], N = [];
-      for (let j = 0; j <= GY; j++) for (let i = 0; i <= GX; i++) P.push(S.cardPoint(c, i / GX, j / GY, pose, front));
-      for (let j = 0; j <= GY; j++) for (let i = 0; i <= GX; i++) {
-        const a = P[j * (GX + 1) + Math.min(GX, i + 1)], b = P[j * (GX + 1) + Math.max(0, i - 1)], cc = P[Math.min(GY, j + 1) * (GX + 1) + i], d = P[Math.max(0, j - 1) * (GX + 1) + i];
-        const ux = [a[0] - b[0], a[1] - b[1], a[2] - b[2]], vy = [d[0] - cc[0], d[1] - cc[1], d[2] - cc[2]];
-        let n = [ux[1] * vy[2] - ux[2] * vy[1], ux[2] * vy[0] - ux[0] * vy[2], ux[0] * vy[1] - ux[1] * vy[0]];
-        const l = Math.hypot(...n) || 1; n = n.map(q => q / l); if (n[2] < 0) n = n.map(q => -q);
-        const p = P[j * (GX + 1) + i], lit = .62 + .5 * Math.max(0, n[0] * L[0] + n[1] * L[1] + n[2] * L[2]), tint = S.light(p, pose, t);
-        N.push(tint.map(q => q * lit));
-      }
-      const pp = P.map(p => proj(...p));
-      for (let j = 0; j < GY; j++) for (let i = 0; i < GX; i++) {
-        const id = [j * (GX + 1) + i, j * (GX + 1) + i + 1, (j + 1) * (GX + 1) + i + 1, (j + 1) * (GX + 1) + i];
-        // A quad turned away from the viewer shows the burning player's card back.
-        const [a, b, , d] = id.map(v => pp[v]), slot = (b[0] - a[0]) * (d[1] - a[1]) - (b[1] - a[1]) * (d[0] - a[0]) < 0 ? S.n : c.i;
-        for (const q of [0, 1, 2, 0, 2, 3]) {
-          const v = id[q], p = pp[v], col = N[v];
-          out.mid.push(p[0], p[1], (v % (GX + 1)) / GX, Math.floor(v / (GX + 1)) / GY, 0, 0, col[0], col[1], col[2], 1, 0, slot, S.slots, front);
+      // A ghost tears each card down a zigzag into two halves (side -1 / 1); every other burn draws one whole card.
+      for (const side of S.ghost ? [-1, 1] : [0]) {
+        const P = [], N = [], U = [];
+        for (let j = 0; j <= GY; j++) for (let i = 0; i <= GX; i++) {
+          const v = j / GY, z = S.zig(v), u = side < 0 ? z * i / GX : side > 0 ? z + (1 - z) * i / GX : i / GX;
+          U.push(u); P.push(side ? S.ripHalf(c, side, u, v, t) : S.cardPoint(c, u, v, pose, front));
+        }
+        for (let j = 0; j <= GY; j++) for (let i = 0; i <= GX; i++) {
+          const a = P[j * (GX + 1) + Math.min(GX, i + 1)], b = P[j * (GX + 1) + Math.max(0, i - 1)], cc = P[Math.min(GY, j + 1) * (GX + 1) + i], d = P[Math.max(0, j - 1) * (GX + 1) + i];
+          const ux = [a[0] - b[0], a[1] - b[1], a[2] - b[2]], vy = [d[0] - cc[0], d[1] - cc[1], d[2] - cc[2]];
+          let n = [ux[1] * vy[2] - ux[2] * vy[1], ux[2] * vy[0] - ux[0] * vy[2], ux[0] * vy[1] - ux[1] * vy[0]];
+          const l = Math.hypot(...n) || 1; n = n.map(q => q / l); if (n[2] < 0) n = n.map(q => -q);
+          const p = P[j * (GX + 1) + i], lit = .62 + .5 * Math.max(0, n[0] * L[0] + n[1] * L[1] + n[2] * L[2]), tint = S.light(p, pose, t);
+          N.push(tint.map(q => q * lit));
+        }
+        const pp = P.map(p => proj(...p));
+        for (let j = 0; j < GY; j++) for (let i = 0; i < GX; i++) {
+          const id = [j * (GX + 1) + i, j * (GX + 1) + i + 1, (j + 1) * (GX + 1) + i + 1, (j + 1) * (GX + 1) + i];
+          // A quad turned away from the viewer shows the burning player's card back.
+          const [a, b, , d] = id.map(v => pp[v]), slot = (b[0] - a[0]) * (d[1] - a[1]) - (b[1] - a[1]) * (d[0] - a[0]) < 0 ? S.n : c.i;
+          for (const q of [0, 1, 2, 0, 2, 3]) {
+            const v = id[q], p = pp[v], col = N[v];
+            out.mid.push(p[0], p[1], U[v], Math.floor(v / (GX + 1)) / GY, 0, 0, col[0], col[1], col[2], 1, 0, slot, S.slots, front);
+          }
+        }
+        // The torn edge glows white-violet as the claws pull the halves apart.
+        if (side) {
+          const ge = bump(S.ripAt(c) - .05, S.ripAt(c) + .12, S.ripAt(c) + .6);
+          if (ge > 0.01) for (let j = 0; j <= GY; j += 2) glowAt(out.front, P[j * (GX + 1) + (side < 0 ? GX : 0)], .075, [.7, .6, 1, ge * .32]);
         }
       }
     }
