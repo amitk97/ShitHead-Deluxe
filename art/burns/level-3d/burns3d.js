@@ -861,10 +861,12 @@ void main(){
           yaw: (1 - ease((tt - .1) / .5)) * -.6 + .24 * Math.sin(tt * 2.4) * smooth(.6, 1.2, tt) + .3 * smooth(1.25, 1.9, tt),
           pitch: .15 * lg + .04 * Math.sin(tt * 3), zc: .26 * lg, glow: [.55, .9, 1], alpha: 1 };
       };
-      const reveal = smooth(.06, .62, t) * (1 - smooth(1.3, 1.9, t)), pose = { ...poseAt(t), reveal }, relief = pose.relief, gs = pose.s, gdy = pose.dy;
+      // The wraith forms first and leaves last, as the one figure; the denser fire bank under it joins later and goes first,
+      // so its bright sides never show up before (or outlast) the ghost.
+      const reveal = smooth(0, .5, t) * (1 - smooth(1.35, 1.95, t)), revealBank = smooth(.3, .75, t) * (1 - smooth(1.05, 1.6, t)), pose = { ...poseAt(t), reveal }, relief = pose.relief, gs = pose.s, gdy = pose.dy;
       if (R.art) {
         // The fire bank and the wraith: one pose, one reveal, one fade, one light.
-        layerMesh(out.art, 1, { ...pose, z: -.5, alpha: .9, relief: (u, v) => .2 + .26 * g2(u, v, .5, .8, .45, .25) + .08 * Math.sin(u * 7 + t * 2) * v, flow: 1.4, yaw: pose.yaw * .8, pitch: pose.pitch * .8 });
+        layerMesh(out.art, 1, { ...pose, reveal: revealBank, z: -.5, alpha: .6, relief: (u, v) => .2 + .26 * g2(u, v, .5, .8, .45, .25) + .08 * Math.sin(u * 7 + t * 2) * v, flow: 1.4, yaw: pose.yaw * .8, pitch: pose.pitch * .8 });
         // A faint trail: the same figure a moment earlier, so its motion leaves a ghostly afterimage that flows.
         const tp = poseAt(Math.max(0, t - .1));
         layerMesh(out.art, 0, { ...tp, z: -.72, alpha: .3, reveal, flow: 1.6, N: 20 });
