@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v386: [['ghost', 'Ghost Flames now appears and fades as one whole ghostly figure.']],
       v385: [['ghost', 'Ghost Flames is now fully 3D: the ghost and its fire move as one lit figure that turns to face you, reaches out with its claws and trails flowing flame.', WN_KEY]],
       v384: [['ghost', 'Ghost Flames is back to the original painted ghost while the 3D version is reworked.']],
       v381: [['eye', 'Watch a friend\'s Play Computer or Gauntlet game from your Friends list. You see the table, never their hand. Settings → Friends Can Watch turns it off.', WN_KEY]],

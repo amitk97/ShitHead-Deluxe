@@ -1,3 +1,7 @@
+## v386 — Ghost Flames appears as one whole figure
+
+- Owner's recording showed the effect appearing in separate horizontal sections (fire bank chunks first, the bottom last). The art shader has a whole-apparition mode: mesh layers pass `loc.x = -1` and `m = smoothstep(0, .5, reveal * 1.5 + (noise - .5) * (1 - reveal) * .8 - .25)`, so every part fades in and out together (no sweep). Only the shared mesh path uses it; the other burns keep their sweeps.
+
 ## v385 — Ghost Flames in 3D (owner-approved from paused frames)
 
 - `burn-halloween` is the owner's painted ghost (`ShLevel3D`, `layers.webp`) drawn as lit depth meshes (`layerMesh` / `meshPt` in `burns3d.js`, ghost branch of `drawFrame`): the fire bank (slot 1) and the wraith (slot 0) share ONE pose (`poseAt(t)`: yaw, lean, lunge, float, flowing `wave`), one reveal and one fade, so no part works on its own; `relief(u, v)` gives head, body and arms their depth; every vertex is lit from the relief slope (key light + rim) through `k = 7 + .1 * light` in the art shader; eyes sit on the mesh via `meshPt`; a faint trail is the same pose 0.1s earlier. Sound and timings are unchanged. `window.__burnT` (burns3d `play`) pins the effect clock for frame checks: `scratchpad` style `gl-frames.js` sets it, waits, screenshots.
