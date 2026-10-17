@@ -21,15 +21,16 @@
     $('friendsRoomSettings').classList.toggle('hidden', !room || (!host && mode!=='series'));
     $('friendsHostHint').parentElement.hidden = room;
     $('friendsConfirmMode').disabled = busy || mode.startsWith('soon') || (mode === 'series' && !seriesUnlocked());
-    $('friendsConfirmMode').textContent = busy ? 'CREATING ROOM…' : mode.startsWith('soon') ? 'COMING SOON' : mode === 'series' && !seriesUnlocked() ? 'UNLOCKS AT LEVEL 20' : `HOST ${mode === 'house' ? 'HOUSE RULES' : mode === 'series' ? 'BEST OF SERIES' : 'STANDARD'} ROOM`;
+    $('friendsConfirmMode').textContent = busy ? 'CREATING ROOM…' : mode.startsWith('soon') ? 'COMING SOON' : mode === 'series' && !seriesUnlocked() ? 'UNLOCKS AT LEVEL 20' : `HOST ${mode === 'house' ? 'HOUSE RULES' : mode === 'series' ? 'BEST OF SERIES' : mode === 'twos' ? '2 VS 2' : 'STANDARD'} ROOM`;
     const preview = {id: state.localPlayerId, name: $('playerNameInput').value.trim() || currentUser?.displayName || 'You', cosmetics: getPublicCosmeticLoadout()};
-    const players = room ? [...state.players].sort((a,b) => Number(b.isHost) - Number(a.isHost)) : [preview];
+    const teamOf = room && mode === 'twos' ? twosAssign(state.players) : null;
+    const players = room ? [...state.players].sort((a,b) => teamOf ? teamOf[a.id] - teamOf[b.id] || Number(b.isHost) - Number(a.isHost) : Number(b.isHost) - Number(a.isHost)) : [preview];
     const html = Array.from({length:4}, (_,i) => {
       const p = players[i];
       if (!p) return `<div class="pf-seat pf-seat-empty"><span class="pf-empty-avatar" aria-hidden="true">+</span><strong>Seat ${i+1}</strong><small>Waiting for a friend<br>or a bot</small></div>`;
       const own = p.id === state.localPlayerId;
       const level = own && playerXp ? xpLevelFor(playerXp.total) : Number(p.cosmetics?.level) || 1;
-      return `<div class="pf-seat${p.isBot?' pf-seat-bot':''}">${avatarHtml(getPlayerAvatarId(p),56)}<strong title="${escapeAttr(p.name)}">${escapeHtml(p.name)}</strong>${p.isBot?`<small>${escapeHtml(p.difficulty || 'medium')} bot</small>`:xpLevelBadge(level)}<small>${p.isHost || !room?'Host':own?'You':'Friend'}${room && mode==='house' ? (p.houseRulesReady?' · Ready':' · Not ready'):''}</small>${host&&!p.isHost&&!own?`<button type="button" class="pf-remove" data-seat-remove="${escapeAttr(p.id)}" aria-label="Remove ${escapeAttr(p.name)}">×</button>`:''}</div>`;
+      return `<div class="pf-seat${p.isBot?' pf-seat-bot':''}">${avatarHtml(getPlayerAvatarId(p),56)}<strong title="${escapeAttr(p.name)}">${escapeHtml(p.name)}</strong>${p.isBot?`<small>${escapeHtml(p.difficulty || 'medium')} bot</small>`:xpLevelBadge(level)}${teamOf ? `<button type="button" class="pf-team pf-team-${teamOf[p.id]}" ${host ? `data-team-swap="${escapeAttr(p.id)}" aria-label="Swap ${escapeAttr(p.name)} to the other team"` : 'disabled'}>Team ${teamOf[p.id] ? 'B' : 'A'}</button>` : ''}<small>${p.isHost || !room?'Host':own?'You':'Friend'}${room && mode==='house' ? (p.houseRulesReady?' · Ready':' · Not ready'):''}</small>${host&&!p.isHost&&!own?`<button type="button" class="pf-remove" data-seat-remove="${escapeAttr(p.id)}" aria-label="Remove ${escapeAttr(p.name)}">×</button>`:''}</div>`;
     }).join('');
     if ($('friendsSeats').innerHTML !== html) $('friendsSeats').innerHTML = html;
     $('friendsEntryActions').classList.toggle('hidden', room || setup || !$('friendsJoinView').classList.contains('hidden'));
@@ -42,13 +43,13 @@
     document.querySelectorAll('[data-friends-config]').forEach(el => {el.hidden = room && !host && mode!=='series'; el.disabled = busy || (room && mode!=='series' && !editable());});
     paintCarousel();
     const trigger=$('friendsSettingsTrigger');
-    trigger.dataset.friendsConfig=mode==='house'?'house':mode==='series'?'series':'standard';
+    trigger.dataset.friendsConfig=mode==='house'?'house':mode==='series'?'series':mode==='twos'?'twos':'standard';
     trigger.querySelector('span').textContent=mode==='house'?'Custom Rules':mode==='series'?'Series Settings':'Table Settings';
     trigger.hidden=false;
     $('friendsSeriesLock').classList.toggle('hidden', seriesUnlocked());
     $('friendsSeriesLock').querySelector('span').textContent = `Level ${SERIES_RULES.level}`;
     $('friendsModeSummary').hidden = true;
-    $('friendsModeSummary').textContent = mode==='house' ? 'House Rules · Unranked · No Challenges or Diamonds' : mode==='series' ? 'Standard rules · Two signed-in players · Level 20+' : 'Standard rules · Invite a friend to start';
+    $('friendsModeSummary').textContent = mode==='house' ? 'House Rules · Unranked · No Challenges or Diamonds' : mode==='series' ? 'Standard rules · Two signed-in players · Level 20+' : mode==='twos' ? 'Standard rules · Partners sit opposite · Four players or bots' : 'Standard rules · Invite a friend to start';
     $('friendsReadyRow').classList.toggle('hidden', !room || mode!=='house');
     const me=state.players.find(p=>p.id===state.localPlayerId);
     $('friendsReady').textContent = me?.houseRulesReady ? 'Ready ✓' : 'Ready';
@@ -69,7 +70,7 @@
       $('friendsBotCount').disabled = $('friendsBotDifficulty').disabled = !editable() || busy;
     }
   }
-  const modes = ['soon-left', 'house', 'standard', 'series', 'soon-right'];
+  const modes = ['soon-left', 'house', 'standard', 'series', 'twos'];
   // Keep the existing room-code and invite controls above the compact seats.
   const roomCodeCard = $('prominentRoomCode').parentElement;
   $('friendsHub').insertBefore(roomCodeCard, $('friendsSeats'));
@@ -146,6 +147,24 @@
         state.players=roomPlayerList(res.snapshot.val().players);state.lobbyBotDifficulty=difficulty;updateLobbyPlayerList();
       }
     } catch(e) {notifyBanner('Could not save bot settings. Please try again.');}
+    finally {busy=false;render();}
+  }
+  // 2 vs 2: move one player to the other team; when that team is full its first player comes across.
+  async function swapTeam(id) {
+    busy=true;render();
+    const code=state.roomCode;
+    try {
+      const res=await db.ref(`rooms/${code}`).transaction(room=>{
+        if(!room || room.phase!=='LOBBY' || room.hostId!==state.localPlayerId || room.friendsMode!=='twos') return;
+        const players=roomPlayerList(room.players), teamOf=twosAssign(players), me=players.find(p=>p.id===id);
+        if(!me) return;
+        const from=teamOf[id], other=players.find(p=>p.id!==id && teamOf[p.id]===1-from && players.filter(q=>teamOf[q.id]===1-from).length>=2);
+        const count=players.filter(p=>teamOf[p.id]===1-from).length;
+        if(count>=2 && !other) return;
+        return {...room,players:players.map(p=>({...p,team:p.id===id?1-from:(count>=2 && p.id===other.id)?from:teamOf[p.id]}))};
+      });
+      if(res.committed && state.roomCode===code){state.players=roomPlayerList(res.snapshot.val().players);updateLobbyPlayerList();}
+    } catch(e) {notifyBanner('Could not change the team. Please try again.');}
     finally {busy=false;render();}
   }
   function layoutRules() {
@@ -229,7 +248,10 @@
     if(e.shiftKey&&document.activeElement===items[0]){e.preventDefault();items.at(-1)?.focus();}
     else if(!e.shiftKey&&document.activeElement===items.at(-1)){e.preventDefault();items[0]?.focus();}
   });
-  $('friendsSeats').addEventListener('click',e=>{const btn=e.target.closest('[data-seat-remove]');if(btn && editable())kickPlayer(btn.dataset.seatRemove);});
+  $('friendsSeats').addEventListener('click',e=>{
+    const btn=e.target.closest('[data-seat-remove]');if(btn && editable())kickPlayer(btn.dataset.seatRemove);
+    const sw=e.target.closest('[data-team-swap]');if(sw && editable() && !busy)swapTeam(sw.dataset.teamSwap);
+  });
   $('friendsReady').addEventListener('click',houseRulesReadyToggle);
   $('friendsReviewRules').addEventListener('click',()=>openConfig('house',true));
   $('friendsBotCount').addEventListener('change',e=>setBots(e.target.value,$('friendsBotDifficulty').value));

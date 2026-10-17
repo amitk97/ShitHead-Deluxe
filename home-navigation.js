@@ -233,6 +233,7 @@
           if (immediate) setModePage(m); else enterModePage(card, m);
         } else if (m === 'more') { if (immediate) setModePage('more'); else enterModePage(card, 'more'); }
         else if (readPins()[m] === 'puzzles' && window.ShPuzzles) { window.ShPuzzles.open(); }
+        else if (readPins()[m] === 'twos') { document.querySelector('[data-open-twos]')?.click(); }
         else openPinPicker(card);
       }
       // § Shortcut pins (v323): slots 1 and 7 hold one of the coming modes
@@ -262,6 +263,7 @@
           c.style.setProperty('--mc-tone', m ? m[2] : NO_PIN_TONE);
           const live = pins[c.dataset.mcMode] === 'puzzles' && window.ShPuzzles;
           if (live) { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">' + (window.ShPuzzles.solvedThisWeek() ? 'Solved this week' : 'Weekly puzzle') + '</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
+          if (pins[c.dataset.mcMode] === 'twos') { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Team up with a partner</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
           c.innerHTML = num + (m ? pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Coming soon</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-preview>Info</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>' : emptyPinHtml.replace(/data-mc-go(?:="")?>Go →/, 'data-mc-swap>Pin +'));
           c.classList.toggle('mc-pinned', !!m);
         });

@@ -1511,6 +1511,7 @@
         });
       });
 
+      if (opts.twos && state.players.length === 4) state.players.forEach((p, i) => { p.team = i % 2; }); // § 2 vs 2: you and seat 3 are partners
       // Every player gets a brand-new "this game" scoreboard. The human's
       // "this lobby" totals carry across repeated Quick Plays in the same
       // browser session (bots don't get the same continuity since the bot
@@ -2675,7 +2676,7 @@
         }
       }
 
-      const targets = state.players.filter(p => !p.hasFinished && p.id !== initiator.id && ((p.hand?.length || 0) + (p.faceUp?.length || 0) + (p.faceDown?.length || 0) > 0));
+      const targets = state.players.filter(p => !p.hasFinished && p.id !== initiator.id && !sameTeam(p, initiator) && ((p.hand?.length || 0) + (p.faceUp?.length || 0) + (p.faceDown?.length || 0) > 0));
       playJokerEffectFor(initiator);
 
       if (initiator.isBot) {
@@ -3016,7 +3017,52 @@
     // the one check that can't be stale in a way that still lets this
     // through.
     function isMatchDecided() {
-      return state.players.filter(p => !p.hasFinished).length <= 1;
+      return state.players.filter(p => !p.hasFinished).length <= 1 || twosWinner() !== null;
+    }
+
+    // § 2 vs 2 (v388): seats 0/2 are team 0, seats 1/3 team 1, so partners sit
+    // opposite and turns alternate between the teams. `player.team` is the only
+    // marker (it travels with the players list); a team wins when both its
+    // players are out, and both winners share finishRank 1 (losers 3).
+    function isTwos() { return state.players.length === 4 && state.players.every(p => p.team === 0 || p.team === 1); }
+    function sameTeam(a, b) { return isTwos() && a.team === b.team; }
+    // Lobby: who is on which team. Keeps explicit picks while each team has at
+    // most two, then fills the rest so the teams stay two and two.
+    function twosAssign(list) {
+      const out = {}, count = [0, 0];
+      list.forEach(p => { if ((p.team === 0 || p.team === 1) && count[p.team] < 2) { out[p.id] = p.team; count[p.team]++; } });
+      list.forEach(p => { if (!(p.id in out)) { const t = count[0] < 2 && count[0] <= count[1] ? 0 : count[1] < 2 ? 1 : 0; out[p.id] = t; count[t]++; } });
+      return out;
+    }
+    function twosWinner() {
+      if (!isTwos() || state.players.some(p => p.drew)) return null;
+      if (state.phase === 'FINISHED') { const w = state.players.find(p => p.finishRank === 1); return w ? w.team : null; }
+      for (const t of [0, 1]) if (state.players.some(p => p.team === t && p.conceded)) return 1 - t; // a team that lost a player forfeits
+      for (const t of [0, 1]) if (state.players.filter(p => p.team === t).every(p => p.hasFinished)) return t;
+      return null;
+    }
+    function finishTwos(win) {
+      state.players.forEach(p => { p.hasFinished = true; if (!p.conceded) p.finishRank = p.team === win ? 1 : 3; });
+      notifyBanner(`${state.players.filter(p => p.team === win).map(p => p.name.replace(' (Bot)', '')).join(' and ')} win.`);
+      state.phase = 'FINISHED';
+      endFastForwardIfActive();
+      saveGameState();
+      if (state.isMultiplayer) syncFirebaseGameState();
+      showMatchEndUI();
+    }
+    // Once per match on every phone (the partner may be the one who finished last).
+    function twosMatchEnded() {
+      if (!isTwos() || state.twosReportedFor === state.matchId) return;
+      state.twosReportedFor = state.matchId;
+      const me = state.players.find(p => p.id === state.localPlayerId), win = twosWinner();
+      if (!me || win === null || me.team !== win || state.isRanked || (!state.isMultiplayer && state.gauntlet) || tutorialActive) return;
+      me.lobbyStats = me.lobbyStats || freshStatsScope();
+      me.lobbyStats.wins = (me.lobbyStats.wins || 0) + 1;
+      reportMatchWin();
+      const winEvents = ['finish-first', 'win-any-match'];
+      if (me.gameStats && me.gameStats.pickedUp > 0) winEvents.push('comeback-win');
+      if (!state.isMultiplayer) winEvents.push('beat-a-bot');
+      notifyChallengeEvent(me, winEvents);
     }
 
     function checkPlayerFinished(player) {
@@ -3036,7 +3082,7 @@
           notifyChallengeEvent(player, finishEvents);
         }
 
-        if (finishedCount === 1) {
+        if (finishedCount === 1 && !isTwos()) {
           player.lobbyStats = player.lobbyStats || freshStatsScope();
           player.lobbyStats.wins = (player.lobbyStats.wins || 0) + 1;
           // The local human's win is reported to the server (economy
@@ -3074,6 +3120,9 @@
 
         if (matchEndingNow) {
           // No interim popup — the end-of-match screen is about to take over.
+        } else if (isTwos()) {
+          // 2 vs 2: finishing is not winning, so no rank pop-up; the partner plays on.
+          notifyBanner(`${player.name.replace(' (Bot)', '')} is out. Their partner plays on.`);
         } else if (state.isMultiplayer || player.id === state.localPlayerId) {
           showVictoryOverlay(player, finishedCount);
         } else {
@@ -3551,7 +3600,6 @@
       if (!finishers.length) return '';
 
       const deltas = isRanked ? pairwiseEloDeltas(players) : null;
-
       return finishers.map(p => {
         const isYou = p.id === localPlayerId;
         let ratingHtml = '';
@@ -3606,6 +3654,7 @@
         state.rankedRatingApplied = true;
         applyRankedRatingUpdate();
       }
+      try { twosMatchEnded(); } catch (e) { console.warn('2 vs 2 result skipped', e); }
       try { recordMatchHistory(); } catch (e) { console.warn('Match history skipped', e); }
       try { saveFinalMatchStats(); } catch (e) { console.warn('Final stats not saved', e); }
       // Never let a "Continue Watching" popup from an earlier finisher this
@@ -4883,6 +4932,8 @@
       // Tutorial only: hold the Coach until the lesson says go, so the player
       // can read the explanation before a card lands. Inert in normal play.
       if (tutorialActive && tutorialBotPaused) return;
+      const twosWin = twosWinner();
+      if (twosWin !== null) { finishTwos(twosWin); return; }
       const activePlayers = state.players.filter(p => !p.hasFinished);
       if (activePlayers.length > 1) {
         noteStalemateTurn();
@@ -6090,13 +6141,19 @@
       ensureBotAvatars(state.players);
       ensureBotCardBacks(state.players);
       const oppAvatarSize = Math.round(18 * oppScale);
-      state.players.filter(p => p.id !== viewId).forEach(p => {
+      // 2 vs 2: seat order from the viewer, so the partner is the middle seat.
+      const twosView = isTwos() ? state.players.find(p => p.id === viewId) : null;
+      const oppList = twosView
+        ? [1, 2, 3].map(k => state.players[(state.players.indexOf(twosView) + k) % 4])
+        : state.players.filter(p => p.id !== viewId);
+      oppList.forEach(p => {
         const isTurn = currentTurnPlayer && currentTurnPlayer.id === p.id && !p.hasFinished;
         const onLastCard = isOnLastCard(p);
+        const isPartner = !!twosView && p.team === twosView.team;
         const oppDiv = document.createElement('div');
         oppDiv.id = `opp-${p.id}`;
         oppDiv.className = `opp-seat flex flex-col items-center gap-1 p-1 rounded-2xl border transition-all ${
-          isTurn ? 'border-amber-400 bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-turn-pulse scale-105' : 'border-slate-800 bg-slate-900/60'
+          isTurn ? 'border-amber-400 bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-turn-pulse scale-105' : isPartner ? 'border-sky-500/70 bg-sky-950/30' : 'border-slate-800 bg-slate-900/60'
         } ${p.hasFinished ? 'opacity-40 grayscale scale-95' : ''} ${onLastCard ? 'opp-last-card' : ''}`;
         
         let tableSlotsHtml = '';
@@ -6202,6 +6259,7 @@
             ${tableSlotsHtml}
           </div>
           <div class="opp-status-row">
+            ${isPartner ? '<span class="shrink-0 text-[7px] md:text-[8px] font-black px-1 h-[15px] flex items-center justify-center rounded-full border bg-sky-950/70 text-sky-300 border-sky-600">PARTNER</span>' : ''}
             ${botBadgeHtml}
             ${statusBadgeHtml}
             ${onLastCard ? '<span class="last-card-chip" data-tip="Only one card left">☝️ LAST CARD</span>' : ''}
@@ -6361,7 +6419,7 @@
           <div class="finished-box-wrap">
           <div class="w-full max-w-sm ${lost ? 'h-20 border-amber-600' : 'h-16 border-amber-500'} shrink-0 bg-slate-950/80 rounded-2xl border-2 flex flex-col items-center justify-center p-2 shadow-2xl">
             <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest">MATCH FINISHED</span>
-            <span class="text-base font-black text-amber-400 tracking-wider">${local.drew ? 'DRAW' : `FINISHED #${placing}`}</span>
+            <span class="text-base font-black text-amber-400 tracking-wider">${local.drew ? 'DRAW' : isTwos() ? (state.phase === 'FINISHED' ? (twosWinner() === local.team ? 'YOUR TEAM WON' : 'YOUR TEAM LOST') : 'OUT · PARTNER PLAYS ON') : `FINISHED #${placing}`}</span>
             ${lost ? '<span class="text-2xl leading-none mt-0.5">\u{1F4A9}</span>' : ''}
           </div>
           ${offerLeave ? '<button type="button" id="finishedLeaveBtn" class="finished-leave-btn" onclick="leaveFinishedMatch()">LEAVE</button>' : ''}
@@ -8059,9 +8117,16 @@
       const seatedByServer = serverDeal && Array.isArray(serverDeal.order) && Array.isArray(serverDeal.deck)
         && serverDeal.order.length === state.players.length && serverDeal.order.every(uid => state.players.some(p => p.uid === uid));
       state.matchId = seatedByServer ? serverDeal.matchId : (opts.matchId || generateMatchId());
+      // § 2 vs 2: partners sit opposite (seats 0/2 against 1/3); the teams are the lobby's picks.
+      const twosMatch = !seatedByServer && state.friendsMode === 'twos' && state.players.length === 4;
+      if (twosMatch) {
+        const teamOf = twosAssign(state.players), side = [0, 1].map(t => shuffle(state.players.filter(p => teamOf[p.id] === t).map(p => ({ ...p, team: t }))));
+        const flip = Math.random() < .5 ? 1 : 0;
+        state.players = [side[flip][0], side[1 - flip][0], side[flip][1], side[1 - flip][1]];
+      }
       state.players = seatedByServer
         ? serverDeal.order.map(uid => state.players.find(p => p.uid === uid))
-        : shuffle([...state.players]);
+        : twosMatch ? state.players : shuffle([...state.players]);
 
       let deck = seatedByServer ? serverDeal.deck.map(deckCardById) : generateDeck();
       if (!seatedByServer && state.ruleMode === 'house' && state.houseRules?.joker === 'off') deck = deck.filter(c => !c.isJoker);
@@ -8094,6 +8159,7 @@
         };
       });
 
+      if (!twosMatch) dealtPlayers.forEach(p => { delete p.team; }); // a leftover lobby team must not turn a normal match into 2 vs 2
       state.players = dealtPlayers;
       state.phase = 'SWAP';
       state.direction = 1;
@@ -8955,6 +9021,10 @@
       };
     }
 
+    document.querySelectorAll('[data-open-twos]').forEach((b) => {
+      b.onclick = () => runShuffleIntro(() => startSinglePlayerGame(3, null, { twos: true }));
+    });
+
     document.getElementById('finishSwapBtn').addEventListener('click', finishLocalSwap);
     document.getElementById('confirmSacrificeBtn').addEventListener('click', confirmFaceUpSacrifice);
     // Single source of truth for "is it genuinely this device's player's
@@ -9072,6 +9142,7 @@
       // not rolling a fresh cast every time — captured now, before anything
       // below rebuilds state.players for the next match.
       const priorBotNames = (!state.isMultiplayer) ? state.players.filter(p => p.isBot).map(p => p.name) : null;
+      const priorTwos = !state.isMultiplayer && isTwos();
       if (state.isMultiplayer && state.isHost) broadcastShuffleStart();
       runShuffleIntro(() => {
         if (state.isMultiplayer) {
@@ -9089,7 +9160,7 @@
             startMultiplayerGame(opts);
           }
         } else {
-          startSinglePlayerGame(state.selectedBotCount || 3, priorBotNames);
+          startSinglePlayerGame(priorTwos ? 3 : (state.selectedBotCount || 3), priorBotNames, priorTwos ? { twos: true } : {});
         }
       });
     }
@@ -13141,15 +13212,19 @@
       if (!me.hasFinished && typeof isShitHead === 'function' && isShitHead(me)) return { emoji: '💩', title: "You're the ShitHead", edge: '#b45309', glow: 'rgba(180,83,9,.25)' };
       const rank = me.finishRank || n;
       if (me.drew) return { emoji: '🤝', title: 'Draw', edge: '#64748b', glow: 'rgba(100,116,139,.25)' };
+      if (isTwos()) return twosWinner() === me.team
+        ? { emoji: '🏆', title: 'Your team won', edge: '#f59e0b', glow: 'rgba(245,158,11,.28)' }
+        : { emoji: '🎖️', title: 'Your team lost', edge: '#94a3b8', glow: 'rgba(148,163,184,.22)' };
       if (rank === 1) return { emoji: '🏆', title: 'You won', edge: '#f59e0b', glow: 'rgba(245,158,11,.28)' };
       return { emoji: rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🎖️', title: `${rank}${rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th'} place`, edge: '#94a3b8', glow: 'rgba(148,163,184,.22)' };
     }
     function matchModeLabel() {
       const bots = state.players.filter(p => p.isBot).length;
       if (state.isRanked) return 'Ranked match';
-      if (state.isMultiplayer) return `Online · ${state.players.length} players`;
+      if (state.isMultiplayer) return isTwos() ? '2 vs 2 · Online' : `Online · ${state.players.length} players`;
       if (state.gauntlet) { const gm = gauntletModeOf(state.gauntlet), gr = Math.min(state.gauntlet.round, gauntletRounds(gm).length - 1); return `${gm === 'easy' ? 'Gauntlet' : `${gauntletMode(gm).name} Gauntlet`} · Round ${gr + 1} · ${gauntletRoundLabel(gr, gm)}`; }
       const diff = String(state.difficulty || 'medium');
+      if (isTwos()) return `2 vs 2 · ${bots} bot${bots === 1 ? '' : 's'} · ${diff.charAt(0).toUpperCase() + diff.slice(1)}`;
       return `Vs ${bots} bot${bots === 1 ? '' : 's'} · ${diff.charAt(0).toUpperCase() + diff.slice(1)}`;
     }
     function matchSummaryHtml() {

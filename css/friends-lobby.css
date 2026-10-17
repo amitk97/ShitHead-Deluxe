@@ -108,3 +108,4 @@
 /* Match the shared mode-page top gap, including its tablet/desktop zoom. */
 @media(min-width:700px) and (min-height:760px){#lobbyScreen[data-mode-page=friends]{--pf-panel-spacing-scale:1.25}}
 @media(min-width:1100px) and (min-height:900px){#lobbyScreen[data-mode-page=friends]{--pf-panel-spacing-scale:1.4}}
+.pf-team{font-size:10px;font-weight:800;letter-spacing:.04em;padding:2px 9px;border-radius:999px;border:1px solid}.pf-team-0{color:#7dd3fc;background:#0c2a40;border-color:#0369a1}.pf-team-1{color:#fda4af;background:#3b1220;border-color:#be123c}.pf-team:not(:disabled){cursor:pointer}

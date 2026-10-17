@@ -497,6 +497,7 @@
       // wording was misleading, since 2 bots alone would still fail the real
       // requirement just below it anyway.
       const otherHumans = state.players.filter(p => !p.isBot && p.id !== state.localPlayerId).length;
+      if (state.friendsMode === 'twos' && state.players.length !== 4) { notifyBanner('2 vs 2 needs four players. Invite friends or add bots.'); return false; }
       if (state.ruleMode === 'house') {
         const v = window.ShHouseRules ? ShHouseRules.validate(state.houseRules || {}) : {valid:false,errors:['House Rules are still loading.']};
         if (!v.valid) { notifyBanner(v.errors[0]); return false; }

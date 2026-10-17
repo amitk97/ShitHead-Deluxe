@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v388: [['people', '2 vs 2 is here: team up with a partner who sits opposite you. Play it with bots from More Modes, or host it in Play Friends and add friends or bots.', WN_KEY]],
       v387: [['ghost', 'Ghost Flames now forms as one figure and rips the card in two with its claws.', WN_KEY]],
       v386: [['ghost', 'Ghost Flames now appears and fades as one whole ghostly figure.']],
       v385: [['ghost', 'Ghost Flames is now fully 3D: the ghost and its fire move as one lit figure that turns to face you, reaches out with its claws and trails flowing flame.', WN_KEY]],

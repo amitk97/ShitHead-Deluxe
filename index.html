@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-16-v387 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-17-v388 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -14,7 +14,7 @@
                 tools/export-catalog.js) -->
 <html lang="en" class="dark">
 <head>
-  <link rel="stylesheet" href="css/friends-lobby.css?v=245eed70ee85">
+  <link rel="stylesheet" href="css/friends-lobby.css?v=d41876d5ca00">
   <link rel="stylesheet" href="css/puzzles.css?v=584fef898369">
   <link rel="stylesheet" href="css/welcome-tour.css?v=9d478452ecd0">
   <meta charset="UTF-8" />
@@ -682,7 +682,7 @@
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="house" style="--mc-tone:#a855f7" aria-pressed="false"><span class="mc-num">2</span><svg class="mc-ic ic"><use href="#ic-cards"/></svg><strong class="mc-name">House Rules</strong><small class="mc-sub">Your table. Your rules.</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="standard" style="--mc-tone:#10b981" aria-pressed="false"><span class="mc-num">3</span><svg class="mc-ic ic"><use href="#ic-cards"/></svg><strong class="mc-name">Standard</strong><small class="mc-sub">Classic rules</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="series" style="--mc-tone:#f59e0b" aria-pressed="false"><span class="mc-num">4</span><svg class="mc-ic ic"><use href="#ic-swords"/></svg><strong class="mc-name">Best of Series</strong><small class="mc-sub">Best of 3 · 5 · 7</small><button type="button" class="mc-go" data-friends-go>Go →</button><span id="friendsSeriesLock" class="pf-lock"><svg class="ic"><use href="#ic-lock"/></svg><span>Level 20</span></span></div>
-<div role="button" tabindex="0" class="mc-card" data-friends-mode="soon-right" style="--mc-tone:#64748b" aria-pressed="false"><span class="mc-num">5</span><svg class="mc-ic ic"><use href="#ic-sparkle"/></svg><strong class="mc-name">Coming Soon</strong><small class="mc-sub">A new way to play</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
+<div role="button" tabindex="0" class="mc-card" data-friends-mode="twos" style="--mc-tone:#3b82f6" aria-pressed="false"><span class="mc-num">5</span><svg class="mc-ic ic"><use href="#ic-cards"/></svg><strong class="mc-name">2 vs 2</strong><small class="mc-sub">Team up with a partner</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
 </div><div id="friendsCarouselControls" class="mc-controls"><button type="button" class="mc-arrow" data-friends-step="first" aria-label="First mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 6l-6 6 6 6M19 6l-6 6 6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="prev" aria-label="Previous mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="next" aria-label="Next mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="last" aria-label="Last mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6l6 6-6 6M11 6l6 6-6 6"/></svg></button></div><button type="button" id="friendsConfirmMode" class="hidden" tabindex="-1">HOST STANDARD ROOM</button>
 <div id="friendsRoomSettings" class="pf-ready-row hidden"><button type="button" id="friendsSettingsTrigger" class="pf-secondary" data-friends-config="house"><svg class="ic" viewBox="0 0 32 32"><use href="#ui-settings"/></svg><span>Custom Rules</span></button></div>
             <p id="friendsModeSummary" class="pf-summary" aria-live="polite"></p>
@@ -787,7 +787,7 @@
           <div class="mp-box">
             <p class="mp-lead">New ways to play are on the way.</p>
             <ul class="mp-list">
-              <li class="mp-row"><span class="mp-row-text"><b>2 vs 2</b><span>Team up with a partner. Your team wins when you are both out.</span></span><span class="mp-soon">Soon</span></li>
+              <li class="mp-row"><span class="mp-row-text"><b>2 vs 2</b><span>Team up with a partner who sits opposite. Your team wins when you are both out. Plays at your Play Computer difficulty; host a 2 vs 2 room in Play Friends to bring friends.</span></span><button type="button" class="mp-open" data-open-twos>Play</button></li>
               <li class="mp-row"><span class="mp-row-text"><b>Puzzles</b><span>A set table and one way to win. A new puzzle every week.</span></span><button type="button" class="mp-open" data-open-puzzles>Play</button></li>
               <li class="mp-row"><span class="mp-row-text"><b>Randomiser</b><span>Card powers are shuffled every match and shown before the deal.</span></span><span class="mp-soon">Soon</span></li>
               <li class="mp-row"><span class="mp-row-text"><b>Multiple Decks</b><span>More decks shuffled together for bigger tables.</span></span><span class="mp-soon">Soon</span></li>
@@ -2383,6 +2383,7 @@
             <p><strong class="text-amber-300">Play Friends</strong> &mdash; your own table with friends, with custom rules and optional bot fillers. See <em>Play Friends</em> below.</p>
             <p><strong class="text-amber-300">Ranked</strong> &mdash; one-on-one against a real player for your rating and tier. See <em>Ranked</em> below.</p>
             <p><strong class="text-amber-300">Best Of Series</strong> &mdash; a Best of 3, 5 or 7 between two friends for Diamonds, opened from Play Friends. See <em>Best Of Series</em> below.</p>
+            <p><strong class="text-amber-300">2 vs 2</strong> &mdash; two teams of two, partners opposite each other. Your team wins when you are both out. Play it with bots from <em>More Modes</em>, or host it in <em>Play Friends</em> and add friends or bots. A Joker cannot be played on your partner.</p>
             <p><strong class="text-amber-300">More Modes</strong> &mdash; the modes still to come are listed there. Use the two <strong>Shortcut</strong> cards to pin the one you are waiting for.</p>
             <p><strong>New here?</strong> Menu &rarr; <em>Take The Tour</em> shows the header, the modes and the Tutorial again.</p>
           </div>
@@ -2508,6 +2509,7 @@
             <span class="chevron transform transition-transform duration-200">&#9660;</span>
           </button>
           <div class="accordion-content hidden p-4 space-y-2.5 border-t border-slate-800 text-[11.5px] leading-relaxed text-slate-300">
+            <p data-term="2-vs-2"><strong class="text-amber-400">2 vs 2:</strong> A team mode for four players. Partners sit opposite each other, so turns alternate between the teams. A team wins as soon as both its players have no cards left. A Joker can only be played on an opponent.</p>
             <p data-term="base-card"><strong class="text-amber-400">Base Card:</strong> The card at the very bottom of the Pile &mdash; the first one played since the last Burn. Normally irrelevant, but a 5 drops the target down to it, so the next player must beat the Base Card instead of the top one.</p>
             <p data-term="best-of-series"><strong class="text-amber-400">Best Of Series:</strong> Play Friends only: two players play Best of 3 at Lvl 20, Best of 5 at Lvl 35, or Best of 7 at Lvl 45. Both players must meet the level requirement. Each pays an entry, the game matches the pot, and the series winner takes it all.</p>
             <p data-term="blind-card"><strong class="text-amber-400">Blind Card:</strong> See <em>Face-Down Cards</em>.</p>
@@ -2647,15 +2649,15 @@
   <script src="tutorial.js?v=7e126b798668"></script>
   <script src="level-ladder.js?v=4ad4cb937515"></script>
   <script src="shop.js?v=85466f22262c"></script>
-  <script src="home-navigation.js?v=79e36503dc2c"></script>
-  <script src="multiplayer-lobby.js?v=c5089e78e445"></script>
+  <script src="home-navigation.js?v=026c5351b134"></script>
+  <script src="multiplayer-lobby.js?v=b284dcca25e7"></script>
   <script src="private-cosmetics.js?v=4f732484384c"></script>
-  <script src="app.js?v=d8ae1510b9df"></script>
+  <script src="app.js?v=495ba53e8af3"></script>
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
   <script src="js/house-rules-presets.js?v=335"></script>
-  <script src="js/friends-lobby.js?v=335"></script>
+  <script src="js/friends-lobby.js?v=388"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>
   <script src="js/puzzles.js?v=87cb627bec7c"></script>

@@ -6931,6 +6931,65 @@ async function runDevTestSuite() {
       assertTrue(state.players.filter(p => p.isBot).every(p => EVENT_BOT_NAMES.halloween.includes(p.name.replace(/ \(Bot\)$/, ''))), 'game bots are Halloween names');
     } finally { seasonalNowOverride = saved; }
   });
+  await test('v388: 2 vs 2 seats partners opposite, a team wins when both are out, a Joker never targets the partner', () => {
+    try {
+      freshState(); startSinglePlayerGame(3, null, { twos: true });
+      assertTrue(isTwos(), 'the table is a 2 vs 2');
+      assertEqual(state.players.map(p => p.team), [0, 1, 0, 1], 'partners sit opposite');
+      render();
+      const seats = [...document.getElementById('opponentsContainer').children];
+      assertEqual(seats.map(e => e.id), state.players.slice(1).map(p => 'opp-' + p.id), 'opponents are drawn clockwise from you');
+      assertTrue(seats[1].textContent.includes('PARTNER') && !seats[0].textContent.includes('PARTNER') && !seats[2].textContent.includes('PARTNER'), 'the middle seat is the partner');
+      const [a, b, c, d] = state.players;
+      state.phase = 'PLAY';
+      // The partner picker: only the two opponents.
+      a.hand = [{ id: 'jk1', rank: 'JOKER', suit: '', isJoker: true }]; a.faceUp = []; a.faceDown = [];
+      state.discardPile = [{ id: 'x5', rank: '5', suit: '\u2660' }, { id: 'jk1', rank: 'JOKER', suit: '', isJoker: true }];
+      handleJokerPlayNow(a, a.hand[0]);
+      const names = [...document.querySelectorAll('#jokerInlineTargets button')].map(x => x.textContent);
+      document.getElementById('floatingJokerBar').classList.add('hidden'); pendingJokerChoice = null;
+      assertEqual(names.sort(), [b.name, d.name].sort(), 'a Joker can only be played on an opponent');
+      // One player out is not a win, a whole team out is.
+      [a, b, c, d].forEach(p => { p.hand = [{ id: 'h' + p.id, rank: '9', suit: '\u2665' }]; p.faceUp = []; p.faceDown = []; });
+      state.discardPile = []; a.hand = []; checkPlayerFinished(a);
+      assertEqual(twosWinner(), null, 'one partner out');
+      b.hand = []; checkPlayerFinished(b);
+      assertEqual(twosWinner(), null, 'one player out of each team');
+      c.hand = []; checkPlayerFinished(c);
+      assertEqual(twosWinner(), 0, 'both partners out: their team wins');
+      assertTrue(isMatchDecided(), 'the match is decided with two players still holding cards');
+      finishTwos(0);
+      assertEqual(state.players.map(p => p.finishRank), [1, 3, 1, 3], 'winners share 1st, the others 3rd');
+      assertEqual(state.phase, 'FINISHED', 'the match ends');
+      assertEqual(matchPlacingInfo(a).title, 'Your team won', 'summary: winner');
+      assertEqual(matchPlacingInfo(b).title, 'Your team lost', 'summary: loser');
+      // A normal table is never read as teams.
+      freshState(); startSinglePlayerGame(3);
+      assertTrue(!isTwos() && twosWinner() === null, 'normal tables have no teams');
+      // Lobby: teams stay two and two.
+      const teams = twosAssign([{ id: 'a', team: 0 }, { id: 'b', team: 0 }, { id: 'c', team: 0 }, { id: 'd' }]);
+      assertEqual(Object.values(teams).filter(t => t === 0).length, 2, 'team A holds two');
+      assertEqual(Object.values(teams).filter(t => t === 1).length, 2, 'team B holds two');
+    } finally { hideMatchEndUI(); freshState(); }
+  });
+  await test('v388: a 2 vs 2 room shows Team A and Team B chips, and needs four players to start', () => {
+    const keep = { code: state.roomCode, multi: state.isMultiplayer, ranked: state.isRanked, mode: state.friendsMode, host: state.isHost, id: state.localPlayerId, players: state.players, phase: state.phase };
+    try {
+      freshState();
+      Object.assign(state, { roomCode: '123456', isMultiplayer: true, isRanked: false, friendsMode: 'twos', ruleMode: 'standard', isHost: true, localPlayerId: 'p_host', phase: 'LOBBY' });
+      state.players = [{ id: 'p_host', name: 'Hosty', isHost: true }, { id: 'p2', name: 'Friend' }, { id: 'p_bot_1', name: 'Casper (Bot)', isBot: true }];
+      ShFriendsLobby.render();
+      const chips = [...document.querySelectorAll('#friendsSeats .pf-team')].map(b => b.textContent);
+      assertEqual(chips.sort(), ['Team A', 'Team A', 'Team B'], 'three players: two on A, one on B');
+      assertTrue(!canStartMultiplayerGame(), 'three players cannot start a 2 vs 2');
+      state.players.push({ id: 'p_bot_2', name: 'Boo (Bot)', isBot: true });
+      assertTrue(canStartMultiplayerGame(), 'four players can start');
+    } finally {
+      document.getElementById('needHumanModal')?.classList.add('hidden');
+      Object.assign(state, { roomCode: keep.code, isMultiplayer: keep.multi, isRanked: keep.ranked, friendsMode: keep.mode, isHost: keep.host, localPlayerId: keep.id, players: keep.players, phase: keep.phase });
+      freshState();
+    }
+  });
   await test('Bot names: plain letters only, no repeats, removed names gone, never the player\'s own name', () => {
     assertTrue(BOT_NAMES.every(n => /^[A-Za-z]+$/.test(n)), 'Only plain letters (no accents or special characters)');
     assertEqual(new Set(BOT_NAMES).size, BOT_NAMES.length, 'No repeats');
