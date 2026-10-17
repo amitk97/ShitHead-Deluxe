@@ -241,7 +241,7 @@
       // pinned card only says it's coming soon until that mode launches.
       const PIN_KEY = 'shithead_home_pins';
       const PIN_MODES = {
-        twos: ['2 vs 2', 'M7 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM17 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM3 14a4 4 0 0 1 8 0M13 14a4 4 0 0 1 8 0M7 21v-3M17 21v-3', '#3b82f6'],
+        twos: ['2 vs 2', 'M9.8 10.2a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0zM2.5 21v-.6a4.5 4.5 0 0 1 9 0v.6M19.8 10.2a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0zM12.5 21v-.6a4.5 4.5 0 0 1 9 0v.6M12 2l.95 1.95 2.15.3-1.55 1.5.35 2.15L12 6.9l-1.9 1 .35-2.15-1.55-1.5 2.15-.3z', '#3b82f6'],
         puzzles: ['Puzzles', 'M4 7a1 1 0 0 1 1-1h3.5a2.5 2.5 0 1 1 5 0H17a1 1 0 0 1 1 1v3.5a2.5 2.5 0 1 1 0 5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z', '#84cc16'],
         random: ['Randomiser', 'M4 7h3l10 10h3M4 17h3l3-3M14 10l3-3h3M18 4l3 3-3 3M18 14l3 3-3 3', '#ec4899'],
         decks: ['Multiple Decks', 'M7 4h10a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM3 7v12a2 2 0 0 0 2 2h9', '#6366f1'],
@@ -274,8 +274,9 @@
         const rows = Object.entries(PIN_MODES).map(([id, [name, d]]) => id === other
           ? '<button type="button" disabled aria-disabled="true">' + pinSvg(d) + name + ' (pinned in the other shortcut)</button>'
           : '<button type="button" data-mc-pin="' + id + '" aria-pressed="' + (id === cur) + '">' + pinSvg(d) + name + '</button>').join('');
-        showInfoPop(card, '<b>' + (cur ? PIN_MODES[cur][0] + ' is coming soon' : 'Pin a mode here') + '</b><br>' +
-          (cur ? 'It opens from here when it launches. Pin another:' : 'It opens from here when it launches.') +
+        const live = cur === 'twos' || (cur === 'puzzles' && window.ShPuzzles);
+        showInfoPop(card, '<b>' + (cur ? PIN_MODES[cur][0] + (live ? ' is pinned here' : ' is coming soon') : 'Pin a mode here') + '</b><br>' +
+          (cur ? (live ? 'It opens from this card. Pin another:' : 'It opens from here when it launches. Pin another:') : 'It opens from here when it launches, or now for the modes already live.') +
           '<div class="mc-pin-list" data-mc-slot="' + card.dataset.mcMode + '">' + rows + (cur ? '<button type="button" data-mc-pin="">Clear this shortcut</button>' : '') + '</div>', { toggle: true });
       }
       document.addEventListener('click', (e) => {
