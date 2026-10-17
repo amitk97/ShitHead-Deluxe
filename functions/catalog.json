@@ -849,6 +849,12 @@
    "type": "recruits",
    "min": 5
   },
+  "avatar-twos": {
+   "name": "Dream Team",
+   "requirement": "Win 10 games of 2 vs 2",
+   "type": "twosWins",
+   "min": 10
+  },
   "avatar-lunar-earned": {
    "name": "Golden Dragon",
    "requirement": "Win 3 games during Lunar New Year",
@@ -1255,6 +1261,107 @@
      "target": 1
     }
    ]
+  },
+  {
+   "from": "2026-W44",
+   "picks": 5,
+   "pool": [
+    {
+     "id": "burn-once",
+     "name": "Bonfire Week",
+     "target": 10
+    },
+    {
+     "id": "play-joker",
+     "name": "Joker Week",
+     "target": 5
+    },
+    {
+     "id": "win-any-match",
+     "name": "Winning Habit",
+     "target": 5
+    },
+    {
+     "id": "beat-a-bot",
+     "name": "Bot Hunter",
+     "target": 5
+    },
+    {
+     "id": "finish-any-match",
+     "name": "Card Marathon",
+     "target": 10
+    },
+    {
+     "id": "win-ranked-match",
+     "name": "Ranked Week",
+     "target": 5
+    },
+    {
+     "id": "snap-burn-once",
+     "name": "Snap Happy",
+     "target": 5
+    },
+    {
+     "id": "four-of-a-kind-burn",
+     "name": "Four Play",
+     "target": 5
+    },
+    {
+     "id": "play-facedown",
+     "name": "Blind Luck",
+     "target": 10
+    },
+    {
+     "id": "comeback-season",
+     "name": "Comeback Season",
+     "target": 5
+    },
+    {
+     "id": "rank-triple",
+     "name": "Triple Trouble",
+     "target": 10
+    },
+    {
+     "id": "twos-played",
+     "name": "Reset Week",
+     "target": 10
+    },
+    {
+     "id": "threes-played",
+     "name": "See-Through",
+     "target": 10
+    },
+    {
+     "id": "gauntlet-runner",
+     "name": "Gauntlet Runner",
+     "target": 10
+    },
+    {
+     "id": "friends-match",
+     "name": "Social Week",
+     "target": 5
+    },
+    {
+     "id": "daily-grinder",
+     "name": "Daily Grinder",
+     "target": 10
+    },
+    {
+     "id": "win-streak",
+     "name": "Streaker",
+     "target": 3
+    },
+    {
+     "id": "pile-diver",
+     "name": "Pile Diver",
+     "target": 1
+    },
+    {
+     "id": "win-twos",
+     "name": "Team Player",
+     "target": 5
+    }
+   ]
   }
  ],
  "seasonalChallenges": [
@@ -1590,6 +1697,14 @@
     "name": "Recruiter",
     "target": 5,
     "reward": 250
+   }
+  ],
+  "twosWins": [
+   {
+    "id": "better-together",
+    "name": "Better Together",
+    "target": 10,
+    "reward": 150
    }
   ],
   "draws": [

@@ -147,7 +147,8 @@
       { id: 'avatar-gauntlet', category: 'Avatars', name: 'Gauntlet Champion', earned: true, gauntlet: true, requirement: 'Beat the Gauntlet', isEarned: () => false },
       { id: 'avatar-gauntlet-hard', category: 'Avatars', name: 'Gauntlet Conqueror', earned: true, gauntlet: true, requirement: 'Beat the Hard Gauntlet', isEarned: () => false },
       { id: 'avatar-gauntlet-boss', category: 'Avatars', name: 'Gauntlet Overlord', earned: true, gauntlet: true, requirement: 'Beat the Boss Gauntlet', isEarned: () => false },
-      { id: 'avatar-recruiter', category: 'Avatars', name: 'Recruiter', earned: true, referral: true, requirement: 'Recruit 5 players', isEarned: () => false }
+      { id: 'avatar-recruiter', category: 'Avatars', name: 'Recruiter', earned: true, referral: true, requirement: 'Recruit 5 players', isEarned: () => false },
+      { id: 'avatar-twos', category: 'Avatars', name: 'Dream Team', earned: true, animated: true, twos: true, requirement: 'Win 10 games of 2 vs 2', isEarned: () => false }
     ];
     // Earn-only frames: never sold or gifted, shown locked in Custom until
     // the server grants them (Gauntlet Gold: beat the Gauntlet once).

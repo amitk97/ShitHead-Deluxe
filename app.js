@@ -3059,7 +3059,7 @@
       me.lobbyStats = me.lobbyStats || freshStatsScope();
       me.lobbyStats.wins = (me.lobbyStats.wins || 0) + 1;
       reportMatchWin();
-      const winEvents = ['finish-first', 'win-any-match'];
+      const winEvents = ['finish-first', 'win-any-match', 'win-twos'];
       if (me.gameStats && me.gameStats.pickedUp > 0) winEvents.push('comeback-win');
       if (!state.isMultiplayer) winEvents.push('beat-a-bot');
       notifyChallengeEvent(me, winEvents);
@@ -8902,6 +8902,7 @@
       const payload = { mode, matchId: state.matchId || (state.matchId = generateMatchId()) };
       if (mode === 'bots') payload.difficulty = state.difficulty;
       else payload.roomCode = state.roomCode;
+      if (mode === 'bots' && isTwos()) payload.twos = true; // § 2 vs 2: no difficulty unlock credit
       const attempt = (tries) => callEconomy('matchWin', payload).catch((error) => {
         if (mode === 'online' && tries > 0) return new Promise(r => setTimeout(r, 2500)).then(() => attempt(tries - 1));
         throw error;
@@ -8911,7 +8912,8 @@
         if (res.already) return res;
         if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
         if (res.diamondsAwarded > 0) enqueueChallengeToast('Match won', res.diamondsAwarded, -1);
-        if (mode === 'bots' && res.difficultyWins) {
+        if (Number.isFinite(Number(res.twosWins))) { challengeEconomy.twosWins = Number(res.twosWins); renderChallengesModalIfOpen(); }
+        if (mode === 'bots' && res.difficultyWins && !(payload.twos)) {
           const wins = cacheDifficultyWins(currentUser.uid, res.difficultyWins);
           challengeEconomy.difficultyWins = { ...(challengeEconomy.difficultyWins || {}), ...res.difficultyWins };
           unlockedDifficulties = computeUnlockedDifficulties(wins);
@@ -10420,6 +10422,22 @@
         </g>
         <circle cx="50" cy="15" r="7.6" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.45)" stroke-width="1.1"/>
         <path d="M50 10.6v8.8M45.6 15h8.8" stroke="#14532d" stroke-width="2.8" stroke-linecap="round"/>
+        <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
+      // Dream Team (earn-only, v389): two partners shoulder to shoulder in the
+      // team colours, a gold star over them and a 2v2 badge. They bob in turn.
+      'avatar-twos':         { tone: 'navy', animated: true, art: `
+        <circle cx="32" cy="30" r="23" fill="url(#av-m-glow)" opacity=".22"/>
+        <g class="av-bob" stroke="rgba(0,0,0,.4)" stroke-width="1.1">
+          <circle cx="21" cy="26" r="7.6" fill="url(#av-m-frost)"/>
+          <path d="M7 54c0-9.5 6.2-15.5 14-15.5s14 6 14 15.5Z" fill="url(#av-m-frost)"/>
+        </g>
+        <g class="av-bob" style="animation-delay:-.9s" stroke="rgba(0,0,0,.4)" stroke-width="1.1">
+          <circle cx="43" cy="26" r="7.6" fill="url(#av-m-crimson)"/>
+          <path d="M29 54c0-9.5 6.2-15.5 14-15.5s14 6 14 15.5Z" fill="url(#av-m-crimson)"/>
+        </g>
+        <g class="av-twinkle"><path d="M32 6.5 34.4 12l6 .6-4.5 4 1.4 5.9L32 19.5l-5.3 3 1.4-5.9-4.5-4 6-.6Z" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.4)" stroke-width="1"/></g>
+        <rect x="21" y="43" width="22" height="11" rx="3.5" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.45)" stroke-width="1.1"/>
+        <text x="32" y="51.6" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="8.6" fill="#1e1b4b" letter-spacing="-.3">2v2</text>
         <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
       'avatar-centurion':    { tone: 'red', art: `
         <text x="32" y="38" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="21" fill="#ef4444" stroke="#7f1d1d" stroke-width=".8" letter-spacing="-1">100</text>
@@ -12838,7 +12856,7 @@
     // count. Folded groups are remembered per tab (localStorage
     // shithead_custom_groups_collapsed, keys "<type>:<group>").
     const CUSTOM_GROUPS = [['free', 'Free'], ['shop', 'Shop'], ['ranked', 'Earn in Ranked'], ['gauntlet', 'Earn in the Gauntlet'],
-      ['friends', 'Earn by inviting friends'], ['level', 'Earn by levelling up'], ['seasonal', 'Seasonal']];
+      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['level', 'Earn by levelling up'], ['seasonal', 'Seasonal']];
     const CUSTOM_GROUPS_KEY = 'shithead_custom_groups_collapsed';
     const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
     function customGroupOf(item) {
@@ -12847,6 +12865,7 @@
       if (LEVEL_REWARDS.includes(item)) return 'level';
       if (item.gauntlet || EARNED_FRAMES.includes(item)) return 'gauntlet';
       if (item.referral) return 'friends';
+      if (item.twos) return 'twos';
       if (item.earned || EARNED_AVATARS.includes(item)) return 'ranked';
       return 'shop';
     }
@@ -12875,8 +12894,8 @@
       const freeAvatars = sortByValue(BUILT_IN_COSMETICS.filter(item => item.category === 'Avatars'));
       const seasonalAvatars = [...sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Avatars' && item.season)), ...SEASONAL_EARNED_AVATARS].filter(isCosmeticListed);
       grid.innerHTML = ownedPrivateAvatars().map(avatarOptionHtml).join('') + customGroupedHtml('avatar', [...freeAvatars, ...shopAvatars,
-        ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral),
-        ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral),
+        ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral && !item.twos),
+        ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral), ...EARNED_AVATARS.filter(item => item.twos),
         ...LEVEL_REWARDS.filter(item => item.category === 'Avatars'), ...seasonalAvatars], avatarOptionHtml);
     }
 
@@ -14894,10 +14913,15 @@
       { id:'win-streak', name:'Streaker', desc:'Win 3 matches in a row, any mode.', target:3 },
       { id:'pile-diver', name:'Pile Diver', desc:'Pick up a pile of 15 or more cards and still win that match.', target:1 }
     ];
+    // V3 (v389): the same pool plus Team Player (2 vs 2 wins).
+    const WEEKLY_CHALLENGE_POOL_V3 = [...WEEKLY_CHALLENGE_POOL_V2,
+      { id:'win-twos', name:'Team Player', desc:'Win 5 matches of 2 vs 2.', target:5 }
+    ];
     // Oldest first; `from` = the first UK week the rule applies to.
     const WEEKLY_CHALLENGE_RULES = [
       { from: '', picks: 3, pool: WEEKLY_CHALLENGE_POOL_V1 },
-      { from: '2026-W41', picks: 5, pool: WEEKLY_CHALLENGE_POOL_V2 }
+      { from: '2026-W41', picks: 5, pool: WEEKLY_CHALLENGE_POOL_V2 },
+      { from: '2026-W44', picks: 5, pool: WEEKLY_CHALLENGE_POOL_V3 }
     ];
     // Week keys are zero-padded ("2026-W41"), so they compare as text.
     function weeklyRulesFor(weekKey) {
@@ -14987,6 +15011,11 @@
       // games (REFERRAL.gamesNeeded); counted by the server (referralStats).
       recruits: [
         { id: 'recruit-five', name: 'Recruiter', target: 5, reward: 250 }
+      ],
+      // 2 vs 2 wins, counted by the server (matchCounters.twosWins); also
+      // unlocks the Dream Team avatar.
+      twosWins: [
+        { id: 'better-together', name: 'Better Together', target: 10, reward: 150 }
       ],
       // Hidden: shown as "???" until earned. A stalemate draw in any mode,
       // counted by the server (matchCounters.draws + rankedStats.draws).
@@ -15834,7 +15863,8 @@
       'avatar-gauntlet': { type: 'gauntlet' }, // granted by the gauntlet action itself
       'avatar-gauntlet-hard': { type: 'gauntlet' },
       'avatar-gauntlet-boss': { type: 'gauntlet' },
-      'avatar-recruiter': { type: 'recruits', min: 5 }
+      'avatar-recruiter': { type: 'recruits', min: 5 },
+      'avatar-twos': { type: 'twosWins', min: 10 }
     };
     function serverEconomyCatalog() {
       const earned = {};
@@ -15980,6 +16010,7 @@
         case 'endingCards': return `Win a Ranked match with ${rankName(def.rank)} as your last card.`;
         case 'rankTiers': return `Reach a ${def.minRating} Ranked rating.`;
         case 'botMatches': return `Beat ${def.difficulty === 'boss' ? 'Boss' : def.difficulty} bots ${def.target} times.`;
+        case 'twosWins': return `Win ${def.target} games of 2 vs 2 with your team.`;
         case 'recruits': return `Recruit ${def.target} players: friends who join with your invite link and play ${REFERRAL.gamesNeeded} games.`;
         default: return '';
       }
@@ -16215,7 +16246,8 @@
             losses: profile.losses || 0,
             rankedStats: profile.rankedStats || {},
             challengeStats: profile.challengeStats || {},
-            difficultyWins: profile.difficultyWins || {}
+            difficultyWins: profile.difficultyWins || {},
+            twosWins: Number(profile.matchCounters && profile.matchCounters.twosWins) || 0
           };
           challengeEconomyLoadedForUid = currentUser.uid;
           playerXp = profile.xp && Number.isFinite(Number(profile.xp.total)) ? { total: Number(profile.xp.total), level: Number(profile.xp.level) || xpLevelFor(profile.xp.total), week: profile.xp.week || null, weekXp: Number(profile.xp.weekXp) || 0 } : null;
@@ -17039,7 +17071,7 @@
       if (/^referral_/.test(key)) return { name: 'Invite bonus', group: 'Friends' };
       const gs = GETTING_STARTED_CHALLENGES.find(c => c.id === key);
       if (gs) return { name: gs.name, group: 'Getting Started' };
-      const groupNames = { rankedBurns: 'Ranked', rankedStreaks: 'Ranked', rankedJokerDeflects: 'Ranked', rankedSnapBurns: 'Ranked', rankedGamesPlayed: 'Ranked', endingCards: 'Ranked', rankTiers: 'Ranked', botMatches: 'Bots', recruits: 'Friends', draws: 'Hidden' };
+      const groupNames = { rankedBurns: 'Ranked', rankedStreaks: 'Ranked', rankedJokerDeflects: 'Ranked', rankedSnapBurns: 'Ranked', rankedGamesPlayed: 'Ranked', endingCards: 'Ranked', rankTiers: 'Ranked', botMatches: 'Bots', recruits: 'Friends', twosWins: 'Team', draws: 'Hidden' };
       for (const [g, defs] of Object.entries(CHALLENGE_DEFS)) {
         const def = defs.find(c => c.id === key);
         if (def) return { name: def.name, group: groupNames[g] || 'Milestones' };
@@ -17363,6 +17395,11 @@
       // Recruiter: friends who joined with your invite and played their games.
       setListHtml('challengesRecruitList', CHALLENGE_DEFS.recruits.map((c) => {
         const have = Math.min((referralStatusCache && referralStatusCache.recruited) || 0, c.target);
+        return renderChallengeRowHTML(c.name, `${have}/${c.target} — ${challengeDescription(c)}`, c.reward, !!done[c.id], challengeDescription(c));
+      }).join(''));
+      // 2 vs 2: wins with your team (the server counts them).
+      setListHtml('challengesTwosList', CHALLENGE_DEFS.twosWins.map((c) => {
+        const have = Math.min(challengeEconomy.twosWins || 0, c.target);
         return renderChallengeRowHTML(c.name, `${have}/${c.target} — ${challengeDescription(c)}`, c.reward, !!done[c.id], challengeDescription(c));
       }).join(''));
       // Hidden challenges: a mystery row until earned, then the real one.

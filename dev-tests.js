@@ -6990,6 +6990,31 @@ async function runDevTestSuite() {
       freshState();
     }
   });
+  await test('v388: 2 vs 2 rewards: Dream Team avatar, Better Together, weekly Team Player from W44, win report says twos', async () => {
+    const item = EARNED_AVATARS.find(i => i.id === 'avatar-twos');
+    assertTrue(item && item.twos && item.requirement.includes('10'), 'Dream Team is an earn-only avatar for 10 wins');
+    assertEqual(EARNED_AVATAR_RULES['avatar-twos'], { type: 'twosWins', min: 10 }, 'the server rule');
+    assertEqual(customGroupOf(item), 'twos', 'its own Custom group');
+    assertTrue(avatarHtml('avatar-twos', 64).includes('2v2'), 'the avatar draws');
+    assertEqual(CHALLENGE_DEFS.twosWins[0].target, 10, 'Better Together at 10');
+    assertTrue(weeklyRulesFor('2026-W43').pool.every(c => c.id !== 'win-twos'), 'W43 is unchanged');
+    assertTrue(weeklyRulesFor('2026-W44').pool.some(c => c.id === 'win-twos'), 'Team Player from W44');
+    assertTrue(challengeDescription(CHALLENGE_DEFS.twosWins[0]).includes('2 vs 2'), 'the row says what it asks');
+    assertEqual(challengeNameForKey('better-together').group, 'Team', 'it is named in Completed');
+    // The win report carries twos.
+    const calls = [], was = callEconomy;
+    try {
+      callEconomy = (action, payload) => { calls.push({ action, payload }); return Promise.resolve({ diamonds: 0 }); };
+      const prev = [currentUser, state.ruleMode];
+      currentUser = { uid: 'u_test' };
+      freshState(); startSinglePlayerGame(3, null, { twos: true }); state.ruleMode = 'standard';
+      reportMatchWin(); await new Promise(r => setTimeout(r, 30));
+      assertTrue(calls.length && calls[0].action === 'matchWin' && calls[0].payload.twos === true, 'a 2 vs 2 win says so');
+      freshState(); startSinglePlayerGame(3); calls.length = 0; reportMatchWin(); await new Promise(r => setTimeout(r, 30));
+      assertTrue(calls.length && calls[0].payload.twos === undefined, 'a normal win does not');
+      currentUser = prev[0];
+    } finally { callEconomy = was; freshState(); }
+  });
   await test('Bot names: plain letters only, no repeats, removed names gone, never the player\'s own name', () => {
     assertTrue(BOT_NAMES.every(n => /^[A-Za-z]+$/.test(n)), 'Only plain letters (no accents or special characters)');
     assertEqual(new Set(BOT_NAMES).size, BOT_NAMES.length, 'No repeats');

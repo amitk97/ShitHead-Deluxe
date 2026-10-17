@@ -278,6 +278,8 @@ function milestoneEligible(user) {
   if (games > 0) d.rankTiers.forEach(c => { if (num(user.rating, 500) >= c.minRating) out.push({ ...c, target: c.minRating }); });
   d.botMatches.forEach(c => { if (num(dw[c.difficulty]) >= c.target) out.push(c); });
   add(d.recruits || [], num(user.referralStats?.recruits));
+  // 2 vs 2 wins (matchCounters.twosWins, counted by matchWin).
+  add(d.twosWins || [], num(user.matchCounters?.twosWins));
   // Hidden: Draw a Game (a stalemate draw in any mode).
   add(d.draws || [], num(user.matchCounters?.draws) + num(rs.draws));
   return out;
@@ -313,6 +315,7 @@ function grantEarnedAvatars(user, legacy, now) {
       : rule.type === 'lossStreak' ? num(rs.bestLossStreak) >= rule.min
       : rule.type === 'seasonWins' ? seasonalWinsFor(user.seasonWins, rule.season) >= rule.min
       : rule.type === 'recruits' ? num(user.referralStats?.recruits) >= rule.min
+      : rule.type === 'twosWins' ? num(user.matchCounters?.twosWins) >= rule.min
       : false;
     if (!met) return;
     user.ownedCosmetics = user.ownedCosmetics || {};
@@ -569,6 +572,8 @@ actions.matchWin = async ({ uid, data }) => {
   const matchId = clip(data.matchId, 80);
   if (!KEY_RE.test(matchId)) fail('invalid-argument', 'Bad match id.');
   const difficulty = mode === 'bots' ? (DIFFICULTIES.includes(data.difficulty) ? data.difficulty : fail('invalid-argument', 'Unknown difficulty.')) : null;
+  // 2 vs 2 (v389): the phone says so for bot games; online the room decides.
+  let twos = mode === 'bots' && data.twos === true;
   if (mode === 'online') {
     const code = clip(data.roomCode, 6);
     if (!/^\d{6}$/.test(code)) fail('invalid-argument', 'Bad room.');
@@ -576,6 +581,7 @@ actions.matchWin = async ({ uid, data }) => {
     const seats = Object.values(room?.players || {});
     const me = seats.find(p => p && p.uid === uid);
     if (!room || room.isRanked || room.matchId !== matchId || !me || me.finishRank !== 1 || me.drew || seats.length < 2) fail('failed-precondition', 'That win could not be checked.');
+    twos = room.friendsMode === 'twos' && seats.length === 4 && seats.every(p => p && (p.team === 0 || p.team === 1));
   }
   const legacy = await legacyOwned(uid);
   const now = Date.now();
@@ -594,11 +600,16 @@ actions.matchWin = async ({ uid, data }) => {
       const open = unlockedDifficulties(user.difficultyWins);
       if (!open[difficulty]) return { error: 'That difficulty is still locked.' };
       amount = num(CAT.matchWinRewards.bots);
-      user.difficultyWins = user.difficultyWins || {};
-      user.difficultyWins[difficulty] = num(user.difficultyWins[difficulty]) + 1;
-      const rule = CAT.difficultyUnlocks.find(r => r.requireDiff === difficulty && r.requireWins === user.difficultyWins[difficulty]);
-      if (rule) unlocked = rule.diff;
+      // A 2 vs 2 win pays the same Diamonds but never counts towards unlocking
+      // a harder bot (a strong partner could carry the player).
+      if (!twos) {
+        user.difficultyWins = user.difficultyWins || {};
+        user.difficultyWins[difficulty] = num(user.difficultyWins[difficulty]) + 1;
+        const rule = CAT.difficultyUnlocks.find(r => r.requireDiff === difficulty && r.requireWins === user.difficultyWins[difficulty]);
+        if (rule) unlocked = rule.diff;
+      }
     }
+    if (twos) counters.twosWins = Math.min(100000, num(counters.twosWins) + 1);
     addDiamonds(user, amount);
     counters.winsToday = num(counters.winsToday) + 1;
     counters.lastWinAt = now;
@@ -615,7 +626,8 @@ actions.matchWin = async ({ uid, data }) => {
     xp: res.xp || null,
     already: !!res.already, capped: res.capped || null, diamondsAwarded: num(res.amount), diamonds: num(res.user.diamonds),
     difficultyWins: res.user.difficultyWins || {}, unlockedDifficulty: res.unlocked || null,
-    seasonWins: res.user.seasonWins || {}, claimed: res.claimed || [], newAvatars: res.newAvatars || []
+    seasonWins: res.user.seasonWins || {}, claimed: res.claimed || [], newAvatars: res.newAvatars || [],
+    twosWins: num(res.user.matchCounters?.twosWins)
   };
 };
 
