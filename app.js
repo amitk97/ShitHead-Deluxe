@@ -1027,7 +1027,7 @@
       }
 
       const nextOpponent = getNextPlayer();
-      if (nextOpponent && ((nextOpponent.hand && nextOpponent.hand.length <= 3) || (nextOpponent.faceUp && nextOpponent.faceUp.length > 0))) {
+      if (nextOpponent && !sameTeam(nextOpponent, bot) && ((nextOpponent.hand && nextOpponent.hand.length <= 3) || (nextOpponent.faceUp && nextOpponent.faceUp.length > 0))) {
         if (['7', '6', 'J'].includes(candidateRank)) score += 55;
       }
 
@@ -1057,11 +1057,36 @@
     const BOT_ACCURACY = { easy: 0.25, medium: 0.55, hard: 0.85, boss: 0.97 };
 
     // § Bot AI
+    // § 2 vs 2 bots (v389): N eights skip N players, and in a team game one of
+    // them can be the partner (two 8s skip the next opponent AND the partner,
+    // so the turn goes to the other opponent). Hard and Boss bots pick how
+    // many to play by who would move next: themselves (an extra turn) or the
+    // partner beat an opponent, and fewer cards win a tie.
+    function twosSkipPlayCount(bot, have) {
+      if (!isTwos() || have < 2) return have;
+      const n = state.players.length, me = state.players.indexOf(bot);
+      const others = state.players.filter(p => !p.hasFinished && p !== bot).length;
+      const mover = (k) => {
+        let i = me;
+        for (let s = 0; s < Math.min(k, others) + 1; s++) {
+          do { i = (i + state.direction + n) % n; } while (state.players[i].hasFinished);
+        }
+        return state.players[i];
+      };
+      let best = 1, bestScore = -1;
+      for (let k = 1; k <= have; k++) {
+        const m = mover(k), score = m === bot ? 3 : m.team === bot.team ? 2 : 0;
+        if (score > bestScore) { bestScore = score; best = k; }
+      }
+      return best;
+    }
     function selectBestBotMove(bot, validMoves, difficulty) {
       const uniqueRanks = [...new Set(validMoves.map(c => c.rank))];
       const pool = (bot.hand && bot.hand.length > 0) ? bot.hand : bot.faceUp;
       const pick = (rank) => {
-        const chosen = pool.filter(c => c.rank === rank);
+        let chosen = pool.filter(c => c.rank === rank);
+        const skips = rank === '8' || (rank === '5' && state.discardPile[0] && state.discardPile[0].rank === '8');
+        if (skips && ['hard', 'boss'].includes(difficulty)) chosen = chosen.slice(0, twosSkipPlayCount(bot, chosen.length));
         // Jokers can only ever be played one at a time — each triggers its own
         // independent duel, so grouping them would strand the second one.
         return chosen[0] && chosen[0].isJoker ? [chosen[0]] : chosen;
@@ -2059,6 +2084,7 @@
         render();
 
         if (player.isBot) {
+          if (state.botActionTimer) clearTimeout(state.botActionTimer); // the save above may have started a turn timer
           state.botActionTimer = setTimeout(() => resolveFollowUpPlay(true), Math.max(state.turnDelay * 0.5, 250));
         } else if (player.id === state.localPlayerId) {
           notifyBanner(`Bonus: you drew another ${bonusCard.rank}.`);
@@ -3683,7 +3709,9 @@
       // winner's equipped effect here as the reliable match-end path on every
       // client, including guests receiving the result from Firebase.
       if (!matchWinnerEffectShown) {
-        const winner = state.players.find(p => p.finishRank === 1 && !p.drew);
+        // 2 vs 2: both partners share 1st, so show the effect of the one on this phone when it is us.
+        const winners = state.players.filter(p => p.finishRank === 1 && !p.drew);
+        const winner = winners.find(p => p.id === state.localPlayerId) || winners[0];
         if (winner) triggerEquippedVictoryEffect(winner);
       }
 
@@ -4932,6 +4960,17 @@
       // Tutorial only: hold the Coach until the lesson says go, so the player
       // can read the explanation before a card lands. Inert in normal play.
       if (tutorialActive && tutorialBotPaused) return;
+      // A Bonus Draw is open (v389): only its own resolve may move. Online, the
+      // room echo of the bot's save re-enters here, and scheduling a normal bot
+      // turn instead made the bot pick a card executePlayCards then refused
+      // (only the bonus card may play), freezing the table.
+      if (state.pendingFollowUp) {
+        const bonusPlayer = state.players.find(p => p.id === state.pendingFollowUp.playerId);
+        if (bonusPlayer && bonusPlayer.isBot && (!state.isMultiplayer || hasMatchAuthority())) {
+          state.botActionTimer = setTimeout(() => resolveFollowUpPlay(true), Math.max(state.turnDelay * 0.5, 250));
+        }
+        return;
+      }
       const twosWin = twosWinner();
       if (twosWin !== null) { finishTwos(twosWin); return; }
       const activePlayers = state.players.filter(p => !p.hasFinished);
@@ -5034,6 +5073,7 @@
       // act while a tutorial step has scripted control of the board, even
       // if some stale timer manages to reach it anyway.
       if (tutorialActive && tutorialBotPaused) return;
+      if (state.pendingFollowUp) return; // a Bonus Draw is open: resolveFollowUpPlay moves the table on
       const current = state.players[state.currentTurnIndex];
       if (!current || current.hasFinished) {
         advanceTurn(1);

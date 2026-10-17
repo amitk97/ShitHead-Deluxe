@@ -2875,3 +2875,6 @@
 .wish-empty { font-size:10px; color:#94a3b8; margin:0; }
 .wish-gift { flex:none; border:1px solid #f59e0b; color:#fbbf24; background:transparent; border-radius:8px; padding:3px 7px; font-size:9px; font-weight:900; }
 .wish-gift:hover { background:#f59e0b; color:#0f172a; }
+/* v389: every opponent seat has the same dark backing (the turn and partner tints sit on top), so names and cards read on any table background. */
+.opp-seat { background-color: rgba(10,16,32,.74) !important; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.opp-seat.animate-turn-pulse { background-image: linear-gradient(rgba(245,158,11,.12), rgba(245,158,11,.12)); }

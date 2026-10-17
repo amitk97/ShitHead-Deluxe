@@ -7042,6 +7042,47 @@ async function runDevTestSuite() {
       assertTrue(modal.classList.contains('hidden'), 'the chooser closes');
     } finally { runShuffleIntro = was.shuffle; state.difficulty = was.diff; window.ShHomeCarousel = was.car; firebaseAvailable = was.fb; modal.classList.add('hidden'); freshState(); }
   });
+  await test('v389: Hard and Boss bots in 2 vs 2 do not skip their own partner with two 8s', () => {
+    try {
+      freshState(); startSinglePlayerGame(3, null, { twos: true });
+      const bot = state.players[1], eights = (n) => Array.from({ length: n }, (_, i) => ({ id: 'z' + i, rank: '8', suit: '\u2660' }));
+      state.phase = 'PLAY'; state.discardPile = []; state.currentTurnIndex = 1;
+      bot.difficulty = 'boss';
+      assertEqual(twosSkipPlayCount(bot, 1), 1, 'one 8 skips only the next opponent');
+      assertEqual(twosSkipPlayCount(bot, 2), 1, 'two 8s would skip the partner too: play one');
+      assertEqual(twosSkipPlayCount(bot, 3), 3, 'three 8s skip everyone: an extra turn');
+      bot.hand = eights(2);
+      let played = selectBestBotMove(bot, bot.hand, 'boss');
+      assertEqual(played.length, 1, 'a Boss bot plays a single 8');
+      played = selectBestBotMove(bot, bot.hand, 'easy');
+      assertEqual(played.length, 2, 'an Easy bot still plays both');
+      freshState(); startSinglePlayerGame(3);
+      assertEqual(twosSkipPlayCount(state.players[1], 2), 2, 'normal games are untouched');
+    } finally { freshState(); }
+  });
+  await test('v389: a bot Bonus Draw is resolved even when the room echo re-enters triggerNextTurn (online freeze)', async () => {
+    const savedTurnDelay = state.turnDelay;
+    try {
+      freshState(); startSinglePlayerGame(3, null, { twos: true });
+      state.phase = 'PLAY'; state.turnDelay = 20; state.discardPile = []; state.currentTurnIndex = 1;
+      const bot = state.players[1];
+      bot.difficulty = 'boss'; // would rather play its three 4s, which the open Bonus Draw refuses
+      bot.hand = [{ id: 'bn1', rank: '8', suit: '\u2660' }, { id: 'bn2', rank: '4', suit: '\u2660' }, { id: 'bn3', rank: '4', suit: '\u2665' }, { id: 'bn4', rank: '4', suit: '\u2666' }];
+      state.drawPile = [{ id: 'bq1', rank: '4', suit: '\u2666' }, { id: 'bq2', rank: '4', suit: '\u2663' }];
+      state.pendingFollowUp = { playerId: bot.id, cardId: 'bn1', resumeIndex: 2, chainedRankCount: 0 };
+      triggerNextTurn(); triggerNextTurn(); // the echo can arrive more than once
+      const playedLog = []; const origPlay = executePlayCards;
+      executePlayCards = function (pid, cards) { playedLog.push(pid + ':' + cards.map(c => c.id).join(',')); return origPlay.apply(this, arguments); };
+      try { for (let i = 0; i < 100 && state.pendingFollowUp; i++) await new Promise(r => setTimeout(r, 10)); } finally { executePlayCards = origPlay; }
+      assertTrue(!state.pendingFollowUp, 'the bonus was resolved');
+      assertEqual(playedLog[0], bot.id + ':bn1', 'the bonus 8 was the first play, not another card');
+    } finally {
+      state.phase = 'LOBBY'; // stops any bot turn still queued
+      if (state.botActionTimer) clearTimeout(state.botActionTimer);
+      await new Promise(r => setTimeout(r, 80));
+      state.turnDelay = savedTurnDelay; freshState();
+    }
+  });
   await test('Bot names: plain letters only, no repeats, removed names gone, never the player\'s own name', () => {
     assertTrue(BOT_NAMES.every(n => /^[A-Za-z]+$/.test(n)), 'Only plain letters (no accents or special characters)');
     assertEqual(new Set(BOT_NAMES).size, BOT_NAMES.length, 'No repeats');
