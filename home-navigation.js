@@ -552,7 +552,7 @@
       window.addEventListener('touchend', endTouch, { passive: false });
       window.addEventListener('touchcancel', endTouch, { passive: false });
       // For the welcome tour: turn to a mode's card (and say whether it exists).
-      window.ShHomeCarousel = { pinTones: () => Object.fromEntries(Object.entries(PIN_MODES).map(([k, v]) => [k, v[2]])), repaintPins: () => paintPins(), turnToMode: (m) => { const i = cards.findIndex((c) => c.dataset.mcMode === m); if (i < 0) return false; turnTo(i); return true; } };
+      window.ShHomeCarousel = { openMode: (m) => { const c = cards.find((x) => x.dataset.mcMode === m); if (c) open(c, { immediate: true }); }, pinTones: () => Object.fromEntries(Object.entries(PIN_MODES).map(([k, v]) => [k, v[2]])), repaintPins: () => paintPins(), turnToMode: (m) => { const i = cards.findIndex((c) => c.dataset.mcMode === m); if (i < 0) return false; turnTo(i); return true; } };
       window.resetModeCarousel = () => {
         finishExpand(); endDrag({ type: 'cancel' }); stopHold(); touchId = null; lastTap = null; swiped = false;
         modePanelObservers.forEach(observer => observer.takeRecords());

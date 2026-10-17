@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v389: [['people', 'Tapping 2 vs 2 now lets you pick the bots\' difficulty, or host a 2 vs 2 room with friends.']],
       v388: [['people', '2 vs 2 is here: team up with a partner who sits opposite you, with bots from More Modes or friends in Play Friends. Win 10 games to unlock the Dream Team avatar.', WN_KEY]],
       v387: [['ghost', 'Ghost Flames now forms as one figure and rips the card in two with its claws.', WN_KEY]],
       v386: [['ghost', 'Ghost Flames now appears and fades as one whole ghostly figure.']],

@@ -183,7 +183,14 @@
     }
     document.querySelectorAll('[data-config-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.configTab===configTab)));
   }
-  window.ShFriendsLobby={render,showHub,showSetup,closeConfig,backToHub,layoutRules,draftMode:()=>draft};
+  // 2 vs 2 chooser → straight to the host screen with the 2 vs 2 card selected.
+  function openTwos() {
+    if (inRoom() || busy) return;
+    setup = true; cursor = modes.indexOf('twos'); draft = 'twos';
+    window.ShHousePresets?.resetSelection();
+    $('friendsJoinView').classList.add('hidden'); render();
+  }
+  window.ShFriendsLobby={openTwos,render,showHub,showSetup,closeConfig,backToHub,layoutRules,draftMode:()=>draft};
   document.querySelectorAll('[data-friends-config]').forEach(el=>el.addEventListener('click',()=>openConfig(el.dataset.friendsConfig)));
   document.querySelectorAll('[data-config-tab]').forEach(el=>el.addEventListener('click',()=>{configTab=el.dataset.configTab;render();layoutRules();}));
   const track=$('friendsModeCarousel'), cards=[...track.querySelectorAll('.mc-card')];

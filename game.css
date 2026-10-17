@@ -2789,6 +2789,15 @@
     .gauntlet-items figure { margin:0; display:flex; flex-direction:column; align-items:center; gap:.25rem; font-size:.6rem; font-weight:800; color:#fde68a; }
     .gauntlet-note { margin-top:.55rem; font-size:.62rem; color:#94a3b8; }
     .gauntlet-actions { display:flex; flex-direction:column; gap:.45rem; margin-top:1rem; }
+    .twos-card .twos-label { margin-top:.9rem; font-size:.62rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:#94a3b8; }
+    .twos-diffs { display:grid; grid-template-columns:repeat(4,1fr); gap:.3rem; margin:.4rem 0 0; }
+    .twos-diffs .diff-btn { padding:.45rem 0; font-size:.62rem; border-radius:.55rem; border-width:2px; }
+    .twos-note { margin:.45rem 0 .8rem; font-size:.62rem; line-height:1.4; color:#94a3b8; }
+    .twos-or { display:flex; align-items:center; gap:.6rem; margin:.7rem 0 .6rem; font-size:.6rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#64748b; }
+    .twos-or::before, .twos-or::after { content:''; flex:1; height:1px; background:#1e293b; }
+    .twos-friends { width:100%; padding:.65rem; border-radius:.8rem; font-weight:800; font-size:.74rem; letter-spacing:.06em; color:#e2e8f0; border:1.5px solid #475569; background:#111c33; }
+    .twos-friends:hover { border-color:#10b981; color:#fff; }
+    .twos-friends:active { transform:scale(.97); }
     .gauntlet-go { width:100%; padding:.7rem; border-radius:.8rem; font-weight:900; font-size:.8rem; letter-spacing:.12em; color:#1c1917;
       background:linear-gradient(180deg,#fcd34d,#f59e0b); box-shadow:0 4px 14px rgba(245,158,11,.35); transition:transform .12s var(--ease-snappy); }
     .gauntlet-go:active { transform:scale(.96); }

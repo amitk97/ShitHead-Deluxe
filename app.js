@@ -109,7 +109,7 @@
     // browsers' compositing) made their position:fixed boxes start at the
     // table's top instead of the screen's, pushing the top and X of a tall
     // page (e.g. Profile on iPhone) under the header.
-    ['puzzlesModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
+    ['puzzlesModal', 'twosModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
      'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'eventPopupModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
@@ -9023,8 +9023,24 @@
       };
     }
 
-    document.querySelectorAll('[data-open-twos]').forEach((b) => {
-      b.onclick = () => runShuffleIntro(() => startSinglePlayerGame(3, null, { twos: true }));
+    // § 2 vs 2 chooser (v389): 3 bots at a chosen difficulty, or Play Friends on its 2 vs 2 host screen.
+    function openTwosChoice() {
+      document.querySelectorAll('#twosModal .diff-btn').forEach(styleDifficultyBtn);
+      document.getElementById('twosModal').classList.remove('hidden');
+    }
+    function closeTwosChoice() { document.getElementById('twosModal')?.classList.add('hidden'); }
+    document.querySelectorAll('[data-open-twos]').forEach((b) => { b.onclick = openTwosChoice; });
+    document.getElementById('twosCloseBtn').addEventListener('click', closeTwosChoice);
+    document.getElementById('twosModal').addEventListener('click', (e) => { if (e.target.id === 'twosModal') closeTwosChoice(); });
+    document.getElementById('twosBotsBtn').addEventListener('click', () => {
+      closeTwosChoice();
+      runShuffleIntro(() => startSinglePlayerGame(3, null, { twos: true }));
+    });
+    document.getElementById('twosFriendsBtn').addEventListener('click', () => {
+      closeTwosChoice();
+      if (typeof isOffline === 'function' && isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
+      window.ShHomeCarousel?.openMode('friends');
+      window.ShFriendsLobby?.openTwos();
     });
 
     document.getElementById('finishSwapBtn').addEventListener('click', finishLocalSwap);
@@ -20981,7 +20997,7 @@
       giftOpenModal: 'giftOpenClose', giftModal: 'giftModalClose', installHelpModal: 'installHelpClose',
       dailyRewardModal: () => closeDailyReward(), playerPopup: 'playerPopupClose', matchSummaryModal: 'matchSummaryClose',
       authModal: 'authCloseBtn', usernameModal: null, difficultyUnlockPopup: 'difficultyUnlockPopupBtn',
-      matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), puzzlesModal: () => window.ShPuzzles?.close(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
+      matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), twosModal: () => closeTwosChoice(), puzzlesModal: () => window.ShPuzzles?.close(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', levelLadderModal: 'levelLadderCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn', changelogModal: 'changelogCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',

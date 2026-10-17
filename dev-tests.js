@@ -7015,6 +7015,33 @@ async function runDevTestSuite() {
       currentUser = prev[0];
     } finally { callEconomy = was; freshState(); }
   });
+  await test('v389: the 2 vs 2 chooser offers 3 bots at a difficulty, or Play Friends on its 2 vs 2 host screen', () => {
+    const modal = document.getElementById('twosModal');
+    const was = { shuffle: runShuffleIntro, diff: state.difficulty, car: window.ShHomeCarousel, fb: firebaseAvailable };
+    try {
+      document.querySelector('[data-open-twos]').click();
+      assertTrue(!modal.classList.contains('hidden'), 'tapping 2 vs 2 opens the chooser');
+      assertEqual([...modal.querySelectorAll('.diff-btn')].map(b => b.dataset.diff), ['easy', 'medium', 'hard', 'boss'], 'all four difficulties');
+      const easy = modal.querySelector('[data-diff="easy"]'); easy.click();
+      assertEqual(state.difficulty, 'easy', 'a chip sets the difficulty');
+      runShuffleIntro = (fn) => fn();
+      document.getElementById('twosBotsBtn').click();
+      assertTrue(modal.classList.contains('hidden'), 'the chooser closes');
+      assertTrue(isTwos() && state.players.filter(p => p.isBot).length === 3, 'a 2 vs 2 game with 3 bots starts');
+      assertEqual(state.difficulty, 'easy', 'at the chosen difficulty');
+      // Friends: opens the Play Friends page on its 2 vs 2 card.
+      const calls = [];
+      window.ShHomeCarousel = { ...(was.car || {}), openMode: (m) => calls.push('open:' + m) };
+      const lobby = window.ShFriendsLobby, openTwos = lobby.openTwos;
+      lobby.openTwos = () => calls.push('twos');
+      firebaseAvailable = true;
+      document.querySelector('[data-open-twos]').click();
+      document.getElementById('twosFriendsBtn').click();
+      lobby.openTwos = openTwos;
+      assertEqual(calls, ['open:friends', 'twos'], 'Play with friends opens the 2 vs 2 host screen');
+      assertTrue(modal.classList.contains('hidden'), 'the chooser closes');
+    } finally { runShuffleIntro = was.shuffle; state.difficulty = was.diff; window.ShHomeCarousel = was.car; firebaseAvailable = was.fb; modal.classList.add('hidden'); freshState(); }
+  });
   await test('Bot names: plain letters only, no repeats, removed names gone, never the player\'s own name', () => {
     assertTrue(BOT_NAMES.every(n => /^[A-Za-z]+$/.test(n)), 'Only plain letters (no accents or special characters)');
     assertEqual(new Set(BOT_NAMES).size, BOT_NAMES.length, 'No repeats');

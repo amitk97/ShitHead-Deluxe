@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-17-v388 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-17-v389 (ShitHead-Deluxe-257) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -227,7 +227,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=7b8ced66a9a1">
+  <link rel="stylesheet" href="game.css?v=741693b0c9d7">
 
   
   <!-- Firebase SDKs -->
@@ -2167,6 +2167,24 @@
       <div id="modeIntroBody"></div>
     </div>
   </div>
+  <div id="twosModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="twosTitle">
+    <div class="gauntlet-card twos-card">
+      <button type="button" id="twosCloseBtn" class="gauntlet-close" aria-label="Close">✕</button>
+      <h2 id="twosTitle" class="gauntlet-title">2 vs 2</h2>
+      <p class="gauntlet-text">Team up with a partner who sits opposite you. Your team wins when you are both out.</p>
+      <div class="twos-label">Play with 3 bots</div>
+      <div class="twos-diffs" role="group" aria-label="Bot difficulty">
+        <button type="button" data-diff="easy" class="diff-btn">EASY</button>
+        <button type="button" data-diff="medium" class="diff-btn">MED</button>
+        <button type="button" data-diff="hard" class="diff-btn">HARD</button>
+        <button type="button" data-diff="boss" class="diff-btn">BOSS</button>
+      </div>
+      <p class="twos-note">One bot is your partner and two are your opponents, all at this difficulty.</p>
+      <button type="button" id="twosBotsBtn" class="gauntlet-go">PLAY WITH 3 BOTS</button>
+      <div class="twos-or"><span>or</span></div>
+      <button type="button" id="twosFriendsBtn" class="twos-friends">Play with friends</button>
+    </div>
+  </div>
   <div id="puzzlesModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="pzTitle">
     <div class="pz-card-box">
       <button type="button" id="pzClose" class="gauntlet-close" aria-label="Close">✕</button>
@@ -2650,15 +2668,15 @@
   <script src="tutorial.js?v=7e126b798668"></script>
   <script src="level-ladder.js?v=4ad4cb937515"></script>
   <script src="shop.js?v=85466f22262c"></script>
-  <script src="home-navigation.js?v=13a0359d2a06"></script>
+  <script src="home-navigation.js?v=98ca34d9be4b"></script>
   <script src="multiplayer-lobby.js?v=b284dcca25e7"></script>
   <script src="private-cosmetics.js?v=4f732484384c"></script>
-  <script src="app.js?v=4ad8edbb7c0c"></script>
+  <script src="app.js?v=afb209cb1bbb"></script>
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
   <script src="js/house-rules-presets.js?v=335"></script>
-  <script src="js/friends-lobby.js?v=388"></script>
+  <script src="js/friends-lobby.js?v=389"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>
   <script src="js/puzzles.js?v=87cb627bec7c"></script>
