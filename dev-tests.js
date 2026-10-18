@@ -1880,7 +1880,7 @@ async function runDevTestSuite() {
     const savedSeen = localStorage.getItem('shithead_tips_seen'), savedOn = helperTipsOn;
     try {
       localStorage.removeItem('shithead_tips_seen'); helperTipsOn = true; hideHelperTip();
-      assertEqual(Object.keys(HELPER_TIPS).length, 26, 'Twenty-six tips (v292 added seven, v293 ten)');
+      assertEqual(Object.keys(HELPER_TIPS).length, 29, 'Twenty-nine tips (v292 added seven, v293 ten, v391 three for 2 vs 2)');
       const v293 = { 'forced-pickup': 'Picked up. Lower cards are easier to get rid of next turn.', 'ten-burn': 'A 10 burns the Pile, and you go again.',
         'four-burn': 'Four of the same rank in a row burns the Pile too.', 'three-played': 'A 3 is transparent: the next player must beat the card under it.',
         'last-card': 'One card left: try to make them pick up.', 'swap-phase': "Swap your best cards onto the table now. You'll need them later.",
@@ -7015,6 +7015,20 @@ async function runDevTestSuite() {
       currentUser = prev[0];
     } finally { callEconomy = was; freshState(); }
   });
+  await test('v391: a 2 vs 2 table shows the partner tip once', () => {
+    assertTrue(['twos-team', 'twos-out', 'twos-eight'].every(k => HELPER_TIPS[k]), 'the three 2 vs 2 tips exist');
+    const was = localStorage.getItem('shithead_tips_seen');
+    try {
+      localStorage.removeItem('shithead_tips_seen'); hideHelperTip();
+      const seat = document.createElement('div'); seat.id = 'tipSeat'; seat.dataset.partner = '1';
+      seat.style.cssText = 'position:fixed;top:200px;left:100px;width:60px;height:40px'; document.body.appendChild(seat);
+      assertTrue(showHelperTip('twos-team', '#tipSeat', { force: true }), 'the tip shows beside the partner');
+      hideHelperTip();
+      assertTrue(!showHelperTip('twos-team', '#tipSeat', { force: true }), 'and only once');
+      seat.remove();
+    } finally { hideHelperTip(); if (was === null) localStorage.removeItem('shithead_tips_seen'); else localStorage.setItem('shithead_tips_seen', was); }
+  });
+
   await test('v389: the 2 vs 2 chooser offers 3 bots at a difficulty, or Play Friends on its 2 vs 2 host screen', () => {
     const modal = document.getElementById('twosModal');
     const was = { shuffle: runShuffleIntro, diff: state.difficulty, car: window.ShHomeCarousel, fb: firebaseAvailable };

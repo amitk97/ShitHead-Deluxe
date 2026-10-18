@@ -6195,6 +6195,7 @@
         oppDiv.className = `opp-seat flex flex-col items-center gap-1 p-1 rounded-2xl border transition-all ${
           isTurn ? 'border-amber-400 bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-turn-pulse scale-105' : isPartner ? 'border-sky-500/70 bg-sky-950/30' : 'border-slate-800 bg-slate-900/60'
         } ${p.hasFinished ? 'opacity-40 grayscale scale-95' : ''} ${onLastCard ? 'opp-last-card' : ''}`;
+        if (isPartner) oppDiv.dataset.partner = '1';
         
         let tableSlotsHtml = '';
 
@@ -16627,7 +16628,10 @@
       'gauntlet-lives': 'Lose a game and you lose a life. You replay the same bot.',
       'inbox-mail': "Tap a mail to jump straight to what it's about.",
       'level-up': "New level: see what's next on the Level Ladder.",
-      'ranked-loss-run': 'Losses never cost extra. Win streaks earn bonus rating.'
+      'ranked-loss-run': 'Losses never cost extra. Win streaks earn bonus rating.',
+      'twos-team': 'Your partner sits opposite. Your team wins when you are both out.',
+      'twos-out': 'You are out. Your partner plays on, and your team wins when they finish too.',
+      'twos-eight': 'An 8 skips the next player. Two 8s also skip your partner.'
     };
     const HELPER_TIPS_SEEN_KEY = 'shithead_tips_seen';
     const HELPER_TIP_MS = 8000;
@@ -16704,6 +16708,7 @@
       if (state.phase === 'SWAP') { showHelperTip('swap-phase', '#localTableSlots'); return; }
       if (state.phase !== 'PLAY') return;
       const local = state.players.find(p => p.id === state.localPlayerId);
+      if (local && local.hasFinished && isTwos() && twosWinner() === null && showHelperTip('twos-out', '#opponentsContainer [data-partner]')) return;
       if (!local || local.hasFinished) return;
       if (state.gauntlet && showHelperTip('gauntlet-lives', '#gauntletHud')) return;
       const top = (state.discardPile || []).slice(-1)[0];
@@ -16712,8 +16717,10 @@
       if (state.pendingFollowUp && state.pendingFollowUp.playerId === local.id && showHelperTip('bonus-draw', '#followUpToastBanner')) return;
       if (state.isRanked && showHelperTip('ranked-rating', '#opponentsContainer')) return;
       if ((local.hand || []).some(c => c.isJoker || c.rank === 'JOKER') && showHelperTip('joker', '#localHand [data-rank="JOKER"]')) return;
+      if (isTwos() && showHelperTip('twos-team', '#opponentsContainer [data-partner]')) return;
       if (!myTurn) return;
       if (showHelperTip('hold-card', '#localHand [data-card-id]')) return;
+      if (isTwos() && (local.hand || []).some(c => c.rank === '8') && showHelperTip('twos-eight', '#localHand [data-rank="8"]')) return;
       if (!(local.hand || []).length && (local.faceUp || []).length && showHelperTip('hand-empty', '#localTableSlots')) return;
       let games = 0;
       try { games = readLocalMatchHistory().length; } catch (e) {}

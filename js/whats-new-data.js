@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v391: [['people', 'New tips in 2 vs 2: who your partner is, what happens when you are out, and that two 8s also skip your partner.']],
       v390: [['people', 'Fixed a table freeze when a bot drew a Bonus Draw card in an online game. In 2 vs 2, Hard and Boss bots no longer skip their own partner with two 8s, and opponent seats have a darker backing so names are easy to read on any table.']],
       v389: [['people', 'Tapping 2 vs 2 now lets you pick the bots\' difficulty, or host a 2 vs 2 room with friends.']],
       v388: [['people', '2 vs 2 is here: team up with a partner who sits opposite you, with bots from More Modes or friends in Play Friends. Win 10 games to unlock the Dream Team avatar.', WN_KEY]],

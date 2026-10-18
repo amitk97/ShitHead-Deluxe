@@ -1,3 +1,7 @@
+## v391 — 2 vs 2 tips
+
+- Helper tips `twos-team` (first 2 vs 2 turn, at the partner seat `[data-partner]`), `twos-out` (you are out, partner plays on) and `twos-eight` (a hand 8 in 2 vs 2: two 8s also skip the partner), shown from `helperTipsOnTable`. No rules, Functions or catalog change. Dev test "v391: a 2 vs 2 table shows the partner tip once".
+
 ## v388 — 2 vs 2
 
 - Teams of two, partners opposite: `player.team` (0/1) is the only marker; `isTwos()` = four players who all carry a team (`§ 2 vs 2` in app.js, after `isMatchDecided`). Seats 0/2 are team 0, 1/3 team 1, so turns alternate between the teams. A team wins when BOTH its players are out (`twosWinner()`, also: a team with a conceded player forfeits); `triggerNextTurn` checks it first and `finishTwos` ends the match with the winners at `finishRank` 1 (shared) and the others at 3 (no ShitHead). `isMatchDecided` also returns true then. Finishing early shows "X is out" (no rank pop-up); the win/Diamonds/challenge report moves to `twosMatchEnded()` (called from `showMatchEndUI` on every phone, once per `matchId`), because the partner may be the one who finishes last. A Joker's targets exclude the partner (`sameTeam`). Opponent seats are drawn clockwise from the viewer so the partner is the middle seat, with a PARTNER chip and blue border; the finished box, summary placing ("Your team won/lost") and mode label are team-aware.
