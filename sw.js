@@ -34,7 +34,7 @@ const OFFLINE_ASSETS = [
   '/shop.js?v=85466f22262c',
   '/multiplayer-lobby.js?v=b284dcca25e7',
   '/private-cosmetics.js?v=4f732484384c',
-  '/app.js?v=8a460897334c',
+  '/app.js?v=463aa0025e5d',
   '/js/house-rules.js',
   '/js/house-rules-bots.js',
   '/js/house-rules-presets.js?v=335',

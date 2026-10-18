@@ -1,3 +1,8 @@
+## v392 — Double-Tap To Play, faster Ranked swaps
+
+- **Double-Tap To Play** (Settings → Gameplay, first row, `doubleTapPlay`, localStorage `shithead_double_tap_play`, synced, OFF by default): `doubleTapPlayHit(cardId)` runs at the top of the hand and Face-Up `onclick` in PLAY on your turn. A second tap within `DOUBLE_TAP_PLAY_MS` (350) on the SAME card the first tap left staged clicks `#playSelectedBtn` (so every normal check still runs); a different card, a slow tap or an unstaged card is an ordinary tap. With the setting on the native `dblclick` "select just this card" is skipped. Not in lessons.
+- **Swap phase:** Bot and casual swaps were already instant (~20ms measured). Ranked waited for a server round trip per swap with no feedback: `executeSwap` now swaps locally and renders at once, then `rankedRequest('swap')`; `rankedSwapsPending` makes `applyRankedView` only record the version while swaps are in flight, and when the last one answers (or fails) the newest view (`rankedLastView`) is applied, so the server stays the truth. Dragging a Face-Up card onto another Face-Up slot is ignored in Ranked (the order is the server's). Dev tests "v392: …". No rules, Functions or catalog change.
+
 ## v391 — 2 vs 2 tips
 
 - Helper tips `twos-team` (first 2 vs 2 turn, at the partner seat `[data-partner]`), `twos-out` (you are out, partner plays on) and `twos-eight` (a hand 8 in 2 vs 2: two 8s also skip the partner), shown from `helperTipsOnTable`. No rules, Functions or catalog change. Dev test "v391: a 2 vs 2 table shows the partner tip once".

@@ -3936,6 +3936,23 @@
     let protectBestCards = (() => {
       try { return localStorage.getItem('shithead_protect_best') === '1'; } catch (e) { return false; }
     })();
+    // Double-Tap To Play (v392, owner, Gameplay setting, OFF by default): the second tap on the SAME
+    // staged card within DOUBLE_TAP_PLAY_MS plays the selection (the Play Selected button's path).
+    let doubleTapPlay = (() => {
+      try { return localStorage.getItem('shithead_double_tap_play') === '1'; } catch (e) { return false; }
+    })();
+    const DOUBLE_TAP_PLAY_MS = 350;
+    let lastCardTap = { id: null, at: 0 };
+    // True when this tap is the second quick tap on a card that the first tap left staged.
+    function doubleTapPlayHit(cardId) {
+      const now = performance.now(), prev = lastCardTap;
+      lastCardTap = { id: cardId, at: now };
+      if (!doubleTapPlay || tutorialActive || prev.id !== cardId || now - prev.at > DOUBLE_TAP_PLAY_MS) return false;
+      if (!state.selectedPlayCardIds.includes(cardId)) return false;
+      lastCardTap = { id: null, at: 0 };
+      document.getElementById('playSelectedBtn')?.click();
+      return true;
+    }
     const bestCardIsProtected = (rank) => protectBestCards && !tutorialActive && PROTECTED_BEST_RANKS.includes(rank); // lessons teach the plain toggle
     const selectsWholeRank = (card) => selectAllOfRank && !card.isJoker && !bestCardIsProtected(card.rank);
     let selectAllOfRank = (() => {
@@ -6565,9 +6582,10 @@
             } else if (state.phase === 'PLAY' && isMyTurn) {
               upCard.onclick = () => {
                 if (wasCardJustDragged(faceUpCardAtSlot.id)) return;
+                if (doubleTapPlayHit(faceUpCardAtSlot.id)) return;
                 toggleCardSelection(faceUpCardAtSlot.id, getAllSelectablePool(local));
               };
-              upCard.ondblclick = () => handleSingleCardSelection(faceUpCardAtSlot.id, getAllSelectablePool(local));
+              upCard.ondblclick = () => { if (!doubleTapPlay) handleSingleCardSelection(faceUpCardAtSlot.id, getAllSelectablePool(local)); };
             } else if (state.phase === 'PLAY') {
               upCard.onclick = () => faceUpSnapEligible ? executeLocalSnapBurn() : showCardLockReason(getCardLockReason(faceUpCardAtSlot, 'faceUp', local));
             }
@@ -6664,6 +6682,7 @@
             if (state.phase === 'SWAP') {
               handleSwapHandClick(card.id);
             } else if (state.phase === 'PLAY' && isMyTurn) {
+              if (doubleTapPlayHit(card.id)) return;
               toggleCardSelection(card.id, getAllSelectablePool(local));
             } else if (state.phase === 'PLAY') {
               if (handSnapEligible) executeLocalSnapBurn();
@@ -6671,7 +6690,7 @@
             }
           };
           cardEl.ondblclick = () => {
-            if (state.phase === 'PLAY' && isMyTurn) {
+            if (state.phase === 'PLAY' && isMyTurn && !doubleTapPlay) {
               handleSingleCardSelection(card.id, getAllSelectablePool(local));
             }
           };
@@ -6957,7 +6976,6 @@
     }
 
     function executeSwap(handCardId, faceUpCardId) {
-      if (isServerRanked()) { rankedRequest('swap', {handId:handCardId, faceUpId:faceUpCardId}); return; }
       const local = state.players.find(p => p.id === state.localPlayerId);
       const hIdx = (local.hand || []).findIndex(c => c.id === handCardId);
       const fIdx = (local.faceUp || []).findIndex(c => c.id === faceUpCardId);
@@ -6968,6 +6986,18 @@
         state.selectedSwapHandCardId = null;
         state.selectedSwapFaceUpSlot = null;
         audio.playCardPlace();
+        if (isServerRanked()) {
+          // Ranked: show the swap now, tell the server after; its answer (or a refusal) puts the table right.
+          rankedSwapsPending++;
+          render();
+          rankedRequest('swap', { handId: handCardId, faceUpId: faceUpCardId }).then((res) => {
+            rankedSwapsPending--;
+            if (rankedSwapsPending > 0) return;
+            const view = (res && res.view) || rankedLastView;
+            if (view && isServerRanked()) { state.stateVersion = (view.stateVersion || 1) - 1; applyRankedView(view); }
+          });
+          return;
+        }
         saveGameState();
         render();
         tutorialOnSwap();
@@ -7240,6 +7270,8 @@
     let rejectedSaves = 0;
     // § Server-owned Ranked: public room counts + this account's private view.
     let rankedViewRef = null, rankedViewCode = null, rankedMoveBusy = false, rankedTickAt = 0;
+    // Ranked swaps show at once (executeSwap); server views are held back until the last one answers.
+    let rankedSwapsPending = 0, rankedLastView = null;
     let rankedEventVersion = 0, rankedRequestPromise = Promise.resolve();
     function isServerRanked() { return state.isMultiplayer && state.isRanked && !state.spectating && !tutorialActive; }
     function rankedRequest(op, fields = {}, quiet = false) {
@@ -7299,6 +7331,8 @@
     function applyRankedView(data) {
       if (!isServerRanked() || data.authority !== 1 || !data.players?.some(p => p.uid === currentUser?.uid)) return;
       if (state.serverAuthority && data.matchId === state.matchId && data.stateVersion <= state.stateVersion) return;
+      rankedLastView = data;
+      if (rankedSwapsPending > 0 && state.phase === 'SWAP' && data.matchId === state.matchId) { state.stateVersion = data.stateVersion; return; }
       const fresh = data.matchId !== state.matchId || !state.serverAuthority;
       const oldPhase = state.phase, oldTurn = state.currentTurnIndex;
       const previousLocal = fresh ? null : state.players.find(p => p.id === state.localPlayerId);
@@ -8504,6 +8538,7 @@
             // (or the locked sequence itself, mid-way through) can be
             // scrambled by a drag that has nothing to do with either.
             if (tutorialActive) { notifyBanner("Hold on for the next step."); return; }
+            if (isServerRanked()) return; // Ranked keeps the Face-Up order the server dealt
             const fromIdx = local.faceUp.findIndex(c => c.id === card.id);
             if (fromIdx !== -1) {
               const temp = local.faceUp[fromIdx];
@@ -9371,6 +9406,7 @@
       paintToggle(document.getElementById('setIconsState'), showCardIcons);
       paintToggle(document.getElementById('setRankState'), selectAllOfRank);
       paintToggle(document.getElementById('setProtectBestState'), protectBestCards);
+      paintToggle(document.getElementById('setDoubleTapState'), doubleTapPlay);
       paintToggle(document.getElementById('setEmotesState'), !emotesMuted);
       paintToggle(document.getElementById('setFullscreenState'), !!document.fullscreenElement);
       paintToggle(document.getElementById('setContrastState'), highContrast);
@@ -14041,6 +14077,7 @@
         deckTheme: state?.deckTheme || 'theme-obsidian',
         selectAllOfRank: !!selectAllOfRank,
         protectBestCards: !!protectBestCards,
+        doubleTapPlay: !!doubleTapPlay,
         masterVolume: Math.max(0, Math.min(100, Number(masterVolume) || 0)),
         showCardIcons: !!showCardIcons,
         highContrast: !!highContrast,
@@ -14104,6 +14141,7 @@
           ['dealAnimationOn','shithead_deal_animation',v => { dealAnimationOn=v; }],
           ['handSortByPower','shithead_hand_sort_power',v => { handSortByPower=v; }],
           ['protectBestCards','shithead_protect_best',v => { protectBestCards=v; }],
+          ['doubleTapPlay','shithead_double_tap_play',v => { doubleTapPlay=v; }],
           ['whatsNewOn','shithead_whats_new',v => { whatsNewOn=v; }],
           ['liveWatchOn','shithead_live_watch',v => { liveWatchOn=v; }],
           ['emotesMuted','shithead_emotes_muted',v => { emotesMuted=v; }]
@@ -20238,6 +20276,10 @@
       selectAllOfRank = newValue;
       state.selectedPlayCardIds = [];
       updateMultiSelectToggleUI(); refreshSettingsUI(); render(); scheduleSettingsCloudSave();
+    });
+    document.getElementById('setDoubleTapRow').addEventListener('click', () => {
+      doubleTapPlay = !doubleTapPlay; writePref('shithead_double_tap_play', doubleTapPlay);
+      refreshSettingsUI(); scheduleSettingsCloudSave();
     });
     document.getElementById('setProtectBestRow').addEventListener('click', () => {
       protectBestCards = !protectBestCards; writePref('shithead_protect_best', protectBestCards);

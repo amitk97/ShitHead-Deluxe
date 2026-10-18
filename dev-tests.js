@@ -1727,6 +1727,46 @@ async function runDevTestSuite() {
       assertTrue(!!document.querySelector('#settingsTab-gameplay #setProtectBestRow'), 'The row is in Gameplay');
     } finally { [selectAllOfRank, protectBestCards] = was; }
   });
+  await test('v392: Double-Tap To Play plays only when the same staged card is tapped twice, and is off by default', () => {
+    const was = [doubleTapPlay, executePlayCards, selectAllOfRank];
+    try {
+      freshState({ phase: 'PLAY', discardPile: [makeCard('4')], drawPile: [] });
+      const a = makeCard('9', '♠'), b = makeCard('K', '♠');
+      state.players = [makePlayer({ id: 'p1', hand: [a, b] }), makePlayer({ id: 'p2', isBot: true, hand: [makeCard('5')] })];
+      state.localPlayerId = 'p1'; state.currentTurnIndex = 0; selectAllOfRank = false;
+      const played = []; executePlayCards = (id, cards) => played.push(cards.map(c => c.id));
+      const tap = (c) => document.querySelector(`#localHand [data-card-id="${c.id}"]`).click();
+      assertEqual(readPref('shithead_double_tap_play', false), false, 'off by default');
+      assertTrue(!!document.querySelector('#settingsTab-gameplay #setDoubleTapRow'), 'the row is in Gameplay');
+      doubleTapPlay = false; render(); tap(a); tap(a);
+      assertEqual(played.length, 0, 'off: two taps never play');
+      state.selectedPlayCardIds = []; doubleTapPlay = true; lastCardTap = { id: null, at: 0 }; render();
+      tap(a); assertEqual(played.length, 0, 'one tap only stages');
+      render(); tap(b); render(); tap(a);
+      assertEqual(played.length, 0, 'taps on two different cards never play');
+      state.selectedPlayCardIds = []; lastCardTap = { id: null, at: 0 }; render();
+      tap(a); render(); tap(a);
+      assertEqual(JSON.stringify(played), JSON.stringify([[a.id]]), 'the same card twice plays that card');
+      assertTrue(collectAccountSettings().doubleTapPlay === true, 'the setting is synced');
+    } finally { [doubleTapPlay, executePlayCards, selectAllOfRank] = was; lastCardTap = { id: null, at: 0 }; }
+  });
+  await test('v392: a Ranked swap shows at once and the server views wait until the last one answers', async () => {
+    const was = [isServerRanked, rankedRequest, applyRankedView];
+    try {
+      freshState({ phase: 'SWAP', discardPile: [], drawPile: [] });
+      const h1 = makeCard('4'), h2 = makeCard('5'), f1 = makeCard('K'), f2 = makeCard('A'), f3 = makeCard('Q');
+      state.players = [makePlayer({ id: 'p1', hand: [h1, h2], faceUp: [f1, f2, f3] }), makePlayer({ id: 'p2', isBot: true })];
+      state.localPlayerId = 'p1';
+      const calls = []; let answer;
+      isServerRanked = () => true;
+      rankedRequest = (op, f) => { calls.push([op, f.handId, f.faceUpId]); return new Promise(r => { answer = r; }); };
+      executeSwap(h1.id, f1.id);
+      assertEqual(state.players[0].faceUp[0].id, h1.id, 'the Face-Up slot shows the swap before the server answers');
+      assertEqual(calls.length, 1, 'one request was sent');
+      answer({ view: null });
+      await new Promise(r => setTimeout(r, 0));
+    } finally { [isServerRanked, rankedRequest, applyRankedView] = was; rankedSwapsPending = 0; }
+  });
   await test('Weekly Puzzles: the puzzle engine agrees with the real isPlayLegal, and AmitK has every puzzle (v341)', () => {
     const E = window.ShPuzzleEngine, ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
     let seed = 7; const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
