@@ -48,3 +48,9 @@ They are listed on the More Modes page (v320); each becomes its own carousel car
 - ~~1.5x XP during seasonal events~~ (v345). A Season Pass (maybe a second tab on the Level Ladder).
 - Watch a friend's Vs Bots / Gauntlet game.
 - See `CLAUDE.md` → "Owner's later list" for the full list.
+
+## Season Pass (owner, 20 October 2026; plan only, don't build until asked)
+
+- [ ] Detailed plan: `docs/plans/season-pass.md` (2-month seasons, 50 tiers, free + Premium tracks, first season 1 Nov 2026). Open decisions are in section 14 of the plan.
+- [ ] Legal and payments prerequisites before Premium goes on sale: legal drafts (kept locally), Monzo Business account and sole trader registration, ICO registration, Google Play developer account and closed test, and the game fixes listed in the legal pack (deletion gaps, age tick and terms links at sign-up, separate sales record).
+- [ ] Future game modes and No Mercy rules are listed above under the earlier TODO entries.
