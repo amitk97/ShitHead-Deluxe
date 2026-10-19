@@ -5454,7 +5454,7 @@
         'back-dragon': 'cosmetic-back-dragon',
         'back-stained': 'cosmetic-back-stained'
       };
-      if (/^back-lvl-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
+      if (/^back-(lvl|ss[0-9]{4})-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
       if (cosmeticBackClasses[backId]) return cosmeticBackClasses[backId];
       if (typeof SEASONAL_BACK_IDS !== 'undefined' && SEASONAL_BACK_IDS.has(backId)) return getCosmeticBackClass(backId);
       if (['back-cobalt-linen','back-sage-linen','back-plum-linen'].includes(backId)) return `cosmetic-${backId}`;
@@ -10800,6 +10800,8 @@
       'table-aurora': { art: 'aurora', base: '#0b1a2e', rim: 'inset 0 0 0 3px #34d399,inset 0 0 0 4px rgba(224,242,254,.3),inset 0 0 50px rgba(0,0,0,.55)', label: 'rgba(110,231,183,.9)' },
       'table-space': { art: 'space', base: '#05060f', rim: 'inset 0 0 0 3px #6366f1,inset 0 0 0 4px rgba(251,191,36,.35),inset 0 0 52px rgba(0,0,0,.65)', label: 'rgba(199,210,254,.9)' }
     };
+    // § Season Pass (PREVIEW)
+    ILLUSTRATED_TABLES['table-ss2611-egypt'] = { art: 'ss2611-egypt', base: '#2a1330', rim: 'inset 0 0 0 3px #e8bd6a,inset 0 0 50px rgba(20,8,30,.55)', label: 'rgba(251,222,150,.9)' };
     // Seasonal event pictures (shop + earn-only). Same tile, tones and
     // shared metal gradients as every other picture.
     const AV_STROKE = 'stroke="rgba(0,0,0,.35)" stroke-width="1.2"';
@@ -12377,6 +12379,11 @@
       jokerEffect: new Set(['joker-grin','joker-jackbox','joker-puppet','joker-magic','joker-glitch','joker-storm','joker-hypnotist','joker-vampire','joker-redcard','joker-portal', ...seasonalIdsOf('jokerEffect')]),
       avatar: new Set(Object.keys(AVATAR_ART))
     });
+    // § Season Pass (PREVIEW): the season's earned items join the existing renderers and equip lists.
+    SEASON_PASS_ITEMS.forEach((it) => {
+      const type = COSMETIC_CATEGORY_TYPES[it.category];
+      if (type === 'cardBack' || type === 'tableTheme') COSMETIC_RUNTIME_IDS[type].add(it.id);
+    });
     let nameChangeTokenState = null;
     let cosmeticPurchaseState = {};
     let lastPurchasedCosmeticId = null;
@@ -12949,12 +12956,13 @@
     // count. Folded groups are remembered per tab (localStorage
     // shithead_custom_groups_collapsed, keys "<type>:<group>").
     const CUSTOM_GROUPS = [['free', 'Free'], ['shop', 'Shop'], ['ranked', 'Earn in Ranked'], ['gauntlet', 'Earn in the Gauntlet'],
-      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['level', 'Earn by levelling up'], ['seasonal', 'Seasonal']];
+      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
     const CUSTOM_GROUPS_KEY = 'shithead_custom_groups_collapsed';
     const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
     function customGroupOf(item) {
       if (!item || item.builtIn) return 'free';
       if (item.season || item.champion) return 'seasonal';
+      if (item.pass) return 'pass';
       if (LEVEL_REWARDS.includes(item)) return 'level';
       if (item.gauntlet || EARNED_FRAMES.includes(item)) return 'gauntlet';
       if (item.referral) return 'friends';
@@ -15201,7 +15209,7 @@
       extraWeekly: [45, 65], // each adds one more weekly challenge (owner, v290)
       maxXp: 100000000,
       // Free cosmetics unlocked by level (LEVEL_REWARDS; granted by the server).
-      rewards: LEVEL_REWARDS.map(r => ({ id: r.id, name: r.name, level: r.level })),
+      rewards: LEVEL_REWARDS.filter(r => !r.pass).map(r => ({ id: r.id, name: r.name, level: r.level })),
       // Bump when `levels` changes: the server re-levels every account from
       // its total XP (never paying a level's Diamonds twice).
       tableVersion: 2,

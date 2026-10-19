@@ -227,7 +227,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=d3abed0b064c">
+  <link rel="stylesheet" href="game.css?v=e2d80629f880">
 
   
   <!-- Firebase SDKs -->
@@ -249,7 +249,7 @@
 /* Opaque card faces and contrasting pill labels remain above the scene. */
 #gameTable .seat-name,#gameTable .table-label { text-shadow:0 1px 3px #020617; }
 </style>
-<script src="art/tables/full-scenes-v270/scenes.js?v=83212b6c4ff3"></script>
+<script src="art/tables/full-scenes-v270/scenes.js?v=7eda97c32d58"></script>
   <div id="rotateHint" role="alert" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></svg><span class="rh-turn">Turn your phone upright to play.</span><span class="rh-open">Open your phone to play. This screen is too small for the table.</span></div>
   <!-- Shared two-tone navigation icon pack. A navy rounded tile, bold pale
        linework and one bright accent keep every icon coherent in dark mode. -->
@@ -554,6 +554,11 @@
         <button type="button" id="homeEventChip" class="hidden" aria-label="Open the event Shop">
           <span class="hec-emoji" id="homeEventEmoji" aria-hidden="true"></span>
           <span class="hec-text"><b id="homeEventTitle"></b><small id="homeEventSub"></small></span>
+          <span class="hec-go" aria-hidden="true">&rsaquo;</span>
+        </button>
+        <button type="button" id="homeSeasonChip" class="hidden" aria-label="Open the Season Pass">
+          <span class="hsc-tier" aria-hidden="true"><b id="homeSeasonTier">0</b><small>Tier</small></span>
+          <span class="hec-text"><b id="homeSeasonTitle"></b><small id="homeSeasonSub"></small></span>
           <span class="hec-go" aria-hidden="true">&rsaquo;</span>
         </button>
         <div id="modeCarousel" role="group" aria-label="Game modes">
@@ -1706,6 +1711,7 @@
     <div class="ll-panel w-full max-w-md bg-slate-950 border-2 border-amber-500 rounded-2xl shadow-2xl">
       <div class="ll-top">
         <div class="ll-title"><span><svg class="ic" aria-hidden="true"><use href="#ic-star"/></svg>Level Ladder</span><button id="levelLadderCloseBtn" type="button" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button></div>
+        <div class="ll-tabs" role="tablist" aria-label="Level Ladder pages"><button type="button" role="tab" class="ll-tab on" data-ll-tab="levels" aria-selected="true">Levels</button><button type="button" role="tab" class="ll-tab" data-ll-tab="season" aria-selected="false">Season Pass<i class="ll-tab-dot" id="seasonTabDot" hidden></i></button></div>
         <div id="levelLadderHero"></div>
       </div>
       <div id="levelLadderScroll" class="ll-scroll"></div>
@@ -2669,15 +2675,15 @@
   <script src="js/card-hold.js"></script>
   <script src="js/whats-new-data.js"></script>
   <script src="js/avatar-tones.js"></script>
-  <script src="cosmetics-data.js?v=76ecba455dc1"></script>
+  <script src="cosmetics-data.js?v=1ffaf5672eef"></script>
   <script src="tutorial-data.js?v=86b1cdade927"></script>
   <script src="tutorial.js?v=7e126b798668"></script>
-  <script src="level-ladder.js?v=4ad4cb937515"></script>
-  <script src="shop.js?v=85466f22262c"></script>
+  <script src="level-ladder.js?v=637b83705510"></script>
+  <script src="shop.js?v=b35b8315bdee"></script>
   <script src="home-navigation.js?v=98ca34d9be4b"></script>
   <script src="multiplayer-lobby.js?v=b284dcca25e7"></script>
   <script src="private-cosmetics.js?v=4f732484384c"></script>
-  <script src="app.js?v=463aa0025e5d"></script>
+  <script src="app.js?v=6160750c2bf3"></script>
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>

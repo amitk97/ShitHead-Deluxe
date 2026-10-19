@@ -4,8 +4,9 @@
 (function(){
 'use strict';
 const themes={
+ 'ss2611-egypt':['#150c30','#8a3a24','#ffd58a'],
  candyfloss:['#633754','#b66f8c','#f8c5e0'],desert:['#9a6136','#e3ad66','#fff1bd'],jungle:['#021912','#124f39','#74c9a0'],devilish:['#0a0004','#480708','#ee6044'],angelic:['#244361','#6386a2','#ffedbf'],neon:['#090b25','#362345','#fc62b5'],aurora:['#061323','#103849','#67efb4'],space:['#070a1e','#232547','#beadff'],lunar:['#300813','#721522','#e6b665'],valentine:['#220619','#67182f','#f18ca9'],ramadan:['#060f2c','#173854','#e7d59e'],easter:['#254841','#6c9d79','#f9dbb8'],summer:['#13424f','#278c9a','#f6da98'],halloween:['#100d26','#372137','#f4b668'],diwali:['#241135','#713657','#f4c766'],christmas:['#160d12','#593027','#efce80'],newyear:['#080e26','#1e2748','#f7df9e'],casino:['#061c19','#16553f','#d4ae59'],winter:['#122c44','#4c7591','#d4efff'],midnight:['#050918','#172642','#d7def1'],royal:['#1d0d31','#492653','#e5bf62'],wood:['#382010','#79532e','#c09a62'],felt:['#071c17','#184735','#87b69a']};
-const names={candyfloss:'Candyfloss',desert:'Desert',jungle:'Jungle',devilish:'Devilish',angelic:'Angelic',neon:'Neon City',aurora:'Northern Lights',space:'Deep Space',lunar:'Lantern Festival',valentine:'Candlelit Dinner',ramadan:'Crescent Night',easter:'Spring Meadow',summer:'Beach Day',halloween:'Haunted Graveyard',diwali:'Rangoli',christmas:'Fireside',newyear:'Midnight Skyline',casino:'Casino',winter:'Winter',midnight:'Midnight',royal:'Royal',wood:'Oak Wood',felt:'Classic Felt'};
+const names={'ss2611-egypt':'Sands of Giza',candyfloss:'Candyfloss',desert:'Desert',jungle:'Jungle',devilish:'Devilish',angelic:'Angelic',neon:'Neon City',aurora:'Northern Lights',space:'Deep Space',lunar:'Lantern Festival',valentine:'Candlelit Dinner',ramadan:'Crescent Night',easter:'Spring Meadow',summer:'Beach Day',halloween:'Haunted Graveyard',diwali:'Rangoli',christmas:'Fireside',newyear:'Midnight Skyline',casino:'Casino',winter:'Winter',midnight:'Midnight',royal:'Royal',wood:'Oak Wood',felt:'Classic Felt'};
 let serial=0;
 const F=n=>Number(n.toFixed(2));
 function scene(id,W,H){
@@ -96,6 +97,35 @@ function scene(id,W,H){
   const lines=`M${-spacing} 0L${spacing} ${spacing*2}M0 0L${spacing} ${spacing}M0 ${-spacing}L${spacing*2} ${spacing}`+(royal?`M0 ${spacing}L${spacing} 0M${-spacing} ${spacing}L${spacing} ${-spacing}M0 ${spacing*2}L${spacing*2} 0`:'');
   pieces.length=0;
   pieces.push(`<defs><linearGradient id="${uid}classic-sky" x2="0" y2="1"><stop stop-color="${royal?'#1e0b3d':'#071a17'}"/><stop offset="${royal?.50:.48}" stop-color="${royal?'#3b0764':'#064e3b'}"/><stop offset="1" stop-color="${royal?'#1e0b3d':'#031713'}"/></linearGradient><radialGradient id="${uid}classic-light" cx=".5" cy=".45" r="${royal?.55:.48}"><stop stop-color="${royal?'#a78bfa':'#10b981'}" stop-opacity="${royal?.28:.30}"/><stop offset="1" stop-color="${royal?'#a78bfa':'#10b981'}" stop-opacity="0"/></radialGradient><pattern id="${uid}classic-lines" width="${spacing}" height="${spacing}" patternUnits="userSpaceOnUse"><path d="${lines}" fill="none" stroke="#fbbf24" stroke-width="${stroke}" opacity="${opacity}"/></pattern></defs>`,rect(0,0,W,H,url('classic-sky')),rect(0,0,W,H,url('classic-lines')),rect(0,0,W,H,url('classic-light')));
+ }
+
+ // Season Pass 2026-11 (Ancient Egypt): sunset over the pyramids.
+ function egyptSun(){return circle(50,50,48,url('lamp'))+circle(50,50,30,'#ffe3a0',.95)+circle(50,50,22,'#fff3c8',.9);}
+ function pyramids(){
+  const g=uid+'pyr';
+  const face=(pts,l,d)=>`<path d="${pts}" fill="url(#${g}${l})"/>`;
+  const defs=`<defs><linearGradient id="${g}L" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f1b66a"/><stop offset="1" stop-color="#a5502c"/></linearGradient><linearGradient id="${g}R" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7a3326"/><stop offset="1" stop-color="#3a1522"/></linearGradient></defs>`;
+  const one=(ax,ay,bl,br,by)=>{const m=(bl+br)/2+(ax-(bl+br)/2)*0;return `<path d="M${ax} ${ay}L${bl} ${by}L${ax+3} ${by}Z" fill="url(#${g}L)"/><path d="M${ax} ${ay}L${ax+3} ${by}L${br} ${by}Z" fill="url(#${g}R)"/><path d="M${ax} ${ay}L${bl} ${by}" stroke="#ffe0a0" stroke-width=".8" opacity=".7"/>`;};
+  return defs+one(66,2,24,100,50)+one(18,24,0,42,50)+one(88,30,70,100,50).replace('M88 30','M88 30');
+ }
+ function obelisk(){
+  // 100 wide by 520 tall (the feature scale is uniform).
+  return `<path d="M14 490L30 90H70L86 490Z" fill="#6d3a2e" stroke="#e1a85d" stroke-width="2.5"/>`
+   +`<path d="M14 490L30 90H48V490Z" fill="#b8683f" opacity=".6"/>`
+   +`<path d="M30 90L50 8L70 90Z" fill="url(#${uid}metal)" stroke="#fde7a6" stroke-width="2"/>`
+   +[0,1,2,3,4,5,6,7,8].map(i=>`<path d="M40 ${130+i*40}h20M44 ${140+i*40}h12M47 ${150+i*40}h6" stroke="#f4cc84" stroke-width="3" opacity=".72" stroke-linecap="round"/>`).join('')
+   +`<rect x="2" y="488" width="96" height="30" rx="3" fill="#4a2420" stroke="#e1a85d" stroke-width="2"/>`;
+ }
+ function glyphRow(y,flip){
+  const step=u*.085,sz=u*.028,col='#e8bd6a';
+  for(let x=pad+step*.5,i=0;x<W-pad;x+=step,i++){
+   const g=i%4,yy=y;let d='';
+   if(g===0)d=`<circle cx="${F(x)}" cy="${F(yy-sz*.5)}" r="${F(sz*.32)}" fill="none" stroke="${col}" stroke-width="${F(u*.0022)}"/><path d="M${F(x)} ${F(yy-sz*.2)}V${F(yy+sz)}M${F(x-sz*.4)} ${F(yy+sz*.3)}H${F(x+sz*.4)}" stroke="${col}" stroke-width="${F(u*.0026)}" stroke-linecap="round"/>`;
+   else if(g===1)d=`<path d="M${F(x-sz*.7)} ${F(yy)}Q${F(x)} ${F(yy-sz*.6)} ${F(x+sz*.7)} ${F(yy)}Q${F(x)} ${F(yy+sz*.5)} ${F(x-sz*.7)} ${F(yy)}Z" fill="none" stroke="${col}" stroke-width="${F(u*.002)}"/><circle cx="${F(x)}" cy="${F(yy)}" r="${F(sz*.17)}" fill="${col}"/>`;
+   else if(g===2)d=[-.4,0,.4].map(k=>`<path d="M${F(x-sz*.6)} ${F(yy+sz*k)}l${F(sz*.3)} ${F(-sz*.25)} ${F(sz*.3)} ${F(sz*.25)} ${F(sz*.3)} ${F(-sz*.25)} ${F(sz*.3)} ${F(sz*.25)}" fill="none" stroke="${col}" stroke-width="${F(u*.002)}"/>`).join('');
+   else d=`<circle cx="${F(x)}" cy="${F(yy)}" r="${F(sz*.5)}" fill="none" stroke="${col}" stroke-width="${F(u*.0022)}"/><circle cx="${F(x)}" cy="${F(yy)}" r="${F(sz*.16)}" fill="${col}"/>`;
+   pieces.push(`<g opacity=".55">${d}</g>`);
+  }
  }
  switch(key){
  case 'desert':
@@ -194,6 +224,22 @@ function scene(id,W,H){
   place('fireplace',fire,.52,.94,.58,1,.44);break; // v274 (owner): no row of wreaths along the top
  case 'newyear':
   skyline(.88,'#10192d');skyline(.98,'#080f20');place('left-firework',firework('#e6c477'),0,.18,.40,1,.30);place('right-firework',firework('#cb9fc6'),1,.36,.34,1,.25);stars(90,'#efd8a4');break;
+ case 'ss2611-egypt': {
+  // Dusk over Giza: low sun behind three pyramids, layered dunes, an obelisk and palms.
+  const sky=uid+'egsky';
+  pieces.push(`<defs><linearGradient id="${sky}" x2="0" y2="1"><stop stop-color="#0f0a2a"/><stop offset=".26" stop-color="#3b1a52"/><stop offset=".40" stop-color="#b34a38"/><stop offset=".50" stop-color="#f2a04a"/><stop offset=".62" stop-color="#7a3a30"/><stop offset="1" stop-color="#1c0e1c"/></linearGradient></defs>`,rect(0,0,W,H,`url(#${sky})`));
+  stars(70,'#fbe9b4');glow(W*.70,H*.44,u*.62);
+  place('sun',egyptSun(),.74,.30,.30,1,.22);
+  place('pyramids',pyramids(),.5,.345,.98,.5,.55);
+  terrain(.52,'#8c4a2c',.025,1);terrain(.60,'#a2552f',.05,2);terrain(.70,'#74371f',.06,4);terrain(.84,'#4a2118',.05,1);terrain(.95,'#2a1212',.03,3);
+  {const ow=u*.105,oh=ow*5.2,ph=u*.40,pr=u*.30;
+   feature('left-obelisk',obelisk(),pad,H*.745-oh,ow,oh,.10);
+   feature('right-palm',tree(true),W-pad-ph,H*.80-ph,ph,ph,.26);
+   feature('left-palm',tree(true),pad+ow*1.6,H*.925-pr,pr,pr,.17);}
+  pieces.push(`<rect x="0" y="0" width="${W}" height="${F(u*.075)}" fill="#12092a" opacity=".55"/><path d="M0 ${F(u*.075)}H${W}" stroke="#e8bd6a" stroke-width="${F(u*.003)}" opacity=".7"/>`);
+  pieces.push(`<rect x="0" y="${F(H-u*.075)}" width="${W}" height="${F(u*.075)}" fill="#12092a" opacity=".55"/><path d="M0 ${F(H-u*.075)}H${W}" stroke="#e8bd6a" stroke-width="${F(u*.003)}" opacity=".7"/>`);
+  glyphRow(u*.037);glyphRow(H-u*.037);break;
+ }
  case 'casino':
   classicPattern(false);break;
  case 'winter':

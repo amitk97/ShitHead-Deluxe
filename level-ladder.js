@@ -87,7 +87,7 @@
     function ladderPieceHtml(piece) {
       if (piece.kind === 'item') {
         const it = piece.item, type = COSMETIC_CATEGORY_TYPES[it.category];
-        const art = type === 'avatar' ? avatarHtml(it.id, 44) : cosmeticPreview(it, type);
+        const art = type === 'avatar' ? avatarHtml(it.id, 44) : shopCosmeticThumbnail(it, type);
         return `<button type="button" class="ll-piece" data-ladder-id="${it.id}" data-equip-type="${type}"><span class="ll-piece-art">${art}</span><span class="ll-pname">${escapeHtml(it.name)}</span><span class="ll-pkind">${LADDER_KIND[it.category] || ''}</span><span class="ll-equip">${equippedCosmetics[type] === it.id ? 'Equipped' : 'Equip'}</span></button>`;
       }
       if (piece.kind === 'badge') return `<button type="button" class="ll-piece" data-ladder-tip="${escapeHtml(`Your level badge turns ${piece.name.replace(' badge', '').toLowerCase()} at level ${piece.level}.`)}"><span class="ll-piece-art">${xpLevelBadge(piece.level, 'xp-badge-lg')}</span><span class="ll-pname">${escapeHtml(piece.name)}</span><span class="ll-pkind">Badge</span></button>`;
@@ -157,7 +157,109 @@
       <span>Gauntlet bot beaten</span><span>${Math.min(...Object.values(XP_RULES.gauntletBot))}–${Math.max(...Object.values(XP_RULES.gauntletBot))}</span>
       <span>Daily / weekly challenge</span><span>${XP_RULES.daily} / ${XP_RULES.weekly}</span>
       <span>While a seasonal event is on</span><span>${XP_RULES.seasonalBoost}×</span></div></details>${xpBoostNote()}`;
+
+    // § Season Pass (PREVIEW, not live): tiers come from Season XP; demo with ?season-demo=<tier, e.g. 14.4>.
+    const SEASON_KEY = '2026-11';
+    const seasonDemo = (() => { const v = new URLSearchParams(location.search).get('season-demo'); return v == null || v === '' || !Number.isFinite(Number(v)) ? null : Math.max(0, Math.min(SEASON_PASS.tiers, Number(v))); })();
+    let ladderTab = 'levels';
+    function seasonTierStart(t) { let n = 0; for (let i = 1; i <= t; i++) n += SEASON_PASS.tierCost(i); return n; }
+    function seasonPassState() {
+      const s = SEASON_PASS.seasons[SEASON_KEY], T = SEASON_PASS.tiers;
+      const day = (typeof localDateKey === 'function' ? localDateKey() : new Date().toISOString().slice(0, 10));
+      const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+      const started = seasonDemo != null || day >= s.start, live = started && day <= s.end;
+      const xp = seasonDemo != null ? Math.round(seasonTierStart(Math.floor(seasonDemo)) + (seasonDemo % 1) * SEASON_PASS.tierCost(Math.floor(seasonDemo) + 1)) : 0;
+      let tier = 0; while (tier < T && xp >= seasonTierStart(tier + 1)) tier++;
+      const cost = tier < T ? SEASON_PASS.tierCost(tier + 1) : 0, into = xp - seasonTierStart(tier);
+      const left = seasonDemo != null ? 38 : Math.max(0, daysBetween(day, s.end) + 1);
+      return { s, T, started, live, xp, tier, cost, into, left, startsIn: Math.max(0, daysBetween(day, s.start)) };
+    }
+    const seasonItem = (id) => SEASON_PASS_ITEMS.find(i => i.id === id);
+    // Reached rewards count as owned in the preview (the real thing grants them on the server).
+    function seasonDemoOwn() {
+      if (seasonDemo == null) return;
+      const st = seasonPassState();
+      SEASON_PASS_ITEMS.forEach(it => { if (it.tier <= st.tier) cosmeticPurchaseState[it.id] = true; });
+    }
+    if (seasonDemo != null) setInterval(seasonDemoOwn, 400);
+    function seasonHeroHtml(st) {
+      const fmt = (n) => Math.round(n).toLocaleString('en-GB');
+      const pct = st.tier >= st.T ? 100 : Math.round(st.into / st.cost * 100);
+      const dates = `${st.s.start.slice(8)} Nov – ${st.s.end.slice(8)} Dec 2026`;
+      return `<div class="sp-hero" style="--sp-accent:${st.s.accent};background-image:url('${st.s.banner}')"><div><small>Season ${st.s.number}</small><span class="sp-name">${escapeHtml(st.s.name)}</span><span class="sp-dates">${dates} · ${st.left} days left</span></div><div class="sp-tier" aria-label="Tier ${st.tier}"><b>${st.tier}</b><small>Tier</small></div></div>
+        <span class="sp-bar" style="--sp-accent:${st.s.accent}"><i style="width:${pct}%"></i></span>
+        <div class="ll-barline"><span>${fmt(st.xp)} Season XP</span><span>${st.tier >= st.T ? 'Season complete' : `${fmt(st.cost - st.into)} XP to tier ${st.tier + 1}`}</span></div>
+        <p class="sp-note">Every XP you earn playing also fills the Season Pass. Rewards arrive the moment you reach a tier.</p>`;
+    }
+    function seasonRowsHtml(st) {
+      const fmt = (n) => Math.round(n).toLocaleString('en-GB');
+      let html = '';
+      const here = `<div class="ll-here" data-ladder-here><span class="ll-node">${st.tier}</span><div class="ll-here-card"><div class="ll-here-top">You are here</div><div class="ll-here-sub"><span>Tier ${st.tier} of ${st.T}</span></div></div></div>`;
+      if (st.tier === 0) html += here;
+      for (let t = 1; t <= st.T; t++) {
+        const got = t <= st.tier, id = st.s.items[t], gem = SEASON_PASS.diamonds(t);
+        if (id) {
+          const it = seasonItem(id);
+          html += `<div class="ll-row big ${got ? 'got' : 'locked'}${t === st.T ? ' final' : ''}" data-season-tier="${t}"><span class="ll-node">${got ? icon('check') : t}</span><div class="ll-card"><div class="ll-head"><span class="ll-pkind" style="font-weight:900">Tier ${t}</span>${got ? `<span class="ll-done">${icon('check')} Unlocked</span>` : `<span class="ll-away">${fmt(seasonTierStart(t) - st.xp)} XP away</span>`}${ladderGem(gem)}</div><div class="ll-pieces">${ladderPieceHtml({ kind: 'item', item: it })}</div></div></div>`;
+        } else {
+          html += `<div class="ll-gap ${got ? 'got' : ''}" data-season-tier="${t}"><span class="ll-tick"></span><span>Tier ${t} · ${ladderGem(gem)}</span></div>`;
+        }
+        if (t === st.tier && t > 0) html += here;
+      }
+      return html;
+    }
+    function renderSeasonPass() {
+      const st = seasonPassState();
+      const hero = document.getElementById('levelLadderHero'), scroll = document.getElementById('levelLadderScroll');
+      if (!st.started) {
+        hero.innerHTML = '';
+        scroll.innerHTML = `<div class="sp-soon"><b>Season ${st.s.number}: ${escapeHtml(st.s.name)}</b><span>Starts on 1 November. Play as normal and every XP you earn fills the pass: 50 tiers, Diamonds on every tier and three exclusive items.</span></div>`;
+        return { scroll, level: 0, from: 0 };
+      }
+      hero.innerHTML = seasonHeroHtml(st);
+      scroll.innerHTML = `<div class="ll-line"><i></i></div>` + seasonRowsHtml(st) + '<p class="ll-help">Tap an item to preview it. Rewards are added to your account as soon as you reach the tier.</p>';
+      return { scroll, level: st.tier, from: st.tier };
+    }
+    function setLadderTab(tab) {
+      ladderTab = tab;
+      const modal = document.getElementById('levelLadderModal');
+      modal.dataset.llTab = tab;
+      modal.querySelectorAll('.ll-tab').forEach(b => { const on = b.dataset.llTab === tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+      const view = renderLevelLadder();
+      requestAnimationFrame(() => { scrollLadderTo(document.querySelector('#levelLadderScroll [data-ladder-here]')); placeLadderLine(tab === 'season' ? false : true); });
+      return view;
+    }
+    function seasonTierToast(tier) {
+      const st = seasonPassState(), id = st.s.items[tier], gem = SEASON_PASS.diamonds(tier), it = id && seasonItem(id);
+      let el = document.getElementById('seasonToast');
+      if (!el) { el = document.createElement('div'); el.id = 'seasonToast'; document.body.appendChild(el); }
+      el.style.setProperty('--sp-accent', st.s.accent);
+      el.innerHTML = `<span class="sp-tier"><b>${tier}</b><small>Tier</small></span><span class="spt-text"><b>Season Pass · Tier ${tier}</b><small>+${gem} Diamonds${it ? ` and ${escapeHtml(it.name)}` : ''}</small></span>`;
+      el.classList.add('show');
+      clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 4200);
+    }
+    window.seasonTierToast = seasonTierToast;
+    function refreshHomeSeasonChip() {
+      const chip = document.getElementById('homeSeasonChip');
+      if (!chip) return;
+      const st = seasonPassState();
+      const show = st.started || st.startsIn <= 14;
+      chip.classList.toggle('hidden', !show);
+      if (!show) return;
+      chip.style.setProperty('--sp-accent', st.s.accent);
+      document.getElementById('homeSeasonTier').textContent = st.started ? st.tier : '·';
+      document.getElementById('homeSeasonTitle').textContent = `Season ${st.s.number} · ${st.s.name}`;
+      document.getElementById('homeSeasonSub').textContent = st.started ? `Tier ${st.tier} of ${st.T} · ${st.left} days left` : `Starts in ${st.startsIn} day${st.startsIn === 1 ? '' : 's'}`;
+    }
+    document.getElementById('homeSeasonChip')?.addEventListener('click', () => openLevelLadder({ tab: 'season' }));
+    setTimeout(refreshHomeSeasonChip, 1500);
+    setInterval(refreshHomeSeasonChip, 20000);
+    document.getElementById('levelLadderModal')?.querySelector('.ll-tabs')?.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-ll-tab]');
+      if (b) setLadderTab(b.dataset.llTab);
+    });
     function renderLevelLadder(from) {
+      if (ladderTab === 'season') return renderSeasonPass();
       const signedIn = !!currentUser && !!playerXp;
       const total = signedIn ? playerXp.total : 0;
       const level = signedIn ? xpLevelFor(total) : 1;
@@ -201,7 +303,10 @@
     // opts.from: the level before a level up (match summary, level mail): the
     // line climbs from there and the rewards just unlocked glow (v278).
     function openLevelLadder(opts = {}) {
-      if (!xpShown()) { notifyBanner('Levels are switched off at the moment.'); return false; }
+      if (!xpShown() && seasonDemo == null) { notifyBanner('Levels are switched off at the moment.'); return false; }
+      ladderTab = opts.tab === 'season' ? 'season' : 'levels';
+      document.getElementById('levelLadderModal').dataset.llTab = ladderTab;
+      document.querySelectorAll('#levelLadderModal .ll-tab').forEach(b => { const on = b.dataset.llTab === ladderTab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
       document.getElementById('hamburgerDrawer')?.classList.contains('open') && closeHamburgerMenu();
       ladderExtras = { weekXp: null, rank: null };
       // Unseen rewards (the "New" dot, v279) glow and climb like a level up.
@@ -221,7 +326,7 @@
       });
       loadLadderExtras();
       loadLadderFriends();
-      setTimeout(() => showHelperTip('ladder-tap', '#levelLadderScroll [data-ladder-id]'), 700); // § Helper tips
+      setTimeout(() => ladderTab !== 'season' && showHelperTip('ladder-tap', '#levelLadderScroll [data-ladder-id]'), 700); // § Helper tips
       return true;
     }
     // Tap a level (its circle or a folded line): the total XP it needs (v278).

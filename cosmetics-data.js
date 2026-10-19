@@ -187,3 +187,29 @@
     ].map(r => ({ ...r, earned: true, cost: 0, requirement: `Reach Lvl ${r.level}`, tones: ['#07070c', r.tone, '#f8fafc'],
       ...(r.category === 'Avatars' || r.category === 'Card Backs' ? { file: `art/${r.category === 'Avatars' ? 'avatars' : 'backs'}/${r.id.replace(/^(avatar|back)-/, '')}.webp?v=${LEVEL_ART_V}` } : {}) }));
     const LEVEL_BACK_IDS = LEVEL_REWARDS.filter(r => r.category === 'Card Backs').map(r => r.id);
+
+    // § Season Pass (PREVIEW, not live: owner approval pending). Free track only for now (no Premium).
+    // A season is two calendar months (UK days), keyed by its start month. Season XP is the XP the player
+    // already earns; a tier's rewards are granted the moment the tier is reached (no claiming).
+    // The free-track items are earn-only cosmetics: they live in LEVEL_REWARDS (level 0, `pass` = season key) so
+    // Custom, Collection, previews and equipping treat them like the other earned items.
+    const SEASON_PASS = {
+      tiers: 50,
+      // Season XP per tier: quick first rewards, dearer at the end (20,000 in all).
+      tierCost: (t) => t <= 10 ? 250 : t <= 40 ? 400 : 550,
+      // Diamonds on every tier; milestones every 5th, bigger ones on the item tiers.
+      diamonds: (t) => t === 50 ? 150 : (t === 10 || t === 30) ? 50 : t % 5 === 0 ? 60 : 15,
+      seasons: {
+        '2026-11': {
+          number: 1, name: 'Ancient Egypt', start: '2026-11-01', end: '2026-12-31', accent: '#f5c542',
+          banner: 'art/season-pass/ss2611/banner.svg',
+          items: { 10: 'back-ss2611-scarab', 30: 'avatar-ss2611-pharaoh', 50: 'table-ss2611-egypt' }
+        }
+      }
+    };
+    const SEASON_PASS_ITEMS = [
+      { id: 'back-ss2611-scarab', category: 'Card Backs', name: 'Scarab of Ra', tier: 10, tone: '#f5c542', file: 'art/season-pass/ss2611/back-scarab.svg' },
+      { id: 'avatar-ss2611-pharaoh', category: 'Avatars', name: 'Golden Pharaoh', tier: 30, tone: '#f5c542', file: 'art/season-pass/ss2611/avatar-pharaoh.svg' },
+      { id: 'table-ss2611-egypt', category: 'Table Themes', name: 'Sands of Giza', tier: 50, tone: '#f59e0b' }
+    ].map(r => ({ ...r, pass: '2026-11', level: 0, earned: true, cost: 0, requirement: `Season Pass tier ${r.tier}`, tones: ['#150c30', r.tone, '#ffd58a'] }));
+    LEVEL_REWARDS.push(...SEASON_PASS_ITEMS);
