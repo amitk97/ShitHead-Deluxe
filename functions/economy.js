@@ -451,6 +451,7 @@ actions.sync = async ({ uid }) => {
     const newAvatars = grantEarnedAvatars(user, legacy, now);
     // Level rewards for accounts already past their level (xp.grantLevelRewards).
     const levelRewards = xpOn ? xp.grantLevelRewards(user, now) : [];
+    if (xpOn) require('./season-pass').grantReached(user, now);
     // A first Gauntlet clear from before it was a challenge: record it (already paid).
     let backfilled = false;
     // Gauntlet bots beaten from before they were counted: 5 per clear + this run's.

@@ -158,17 +158,33 @@
       <span>Daily / weekly challenge</span><span>${XP_RULES.daily} / ${XP_RULES.weekly}</span>
       <span>While a seasonal event is on</span><span>${XP_RULES.seasonalBoost}×</span></div></details>${xpBoostNote()}`;
 
-    // § Season Pass (PREVIEW, not live): tiers come from Season XP; demo with ?season-demo=<tier, e.g. 14.4>.
+    // § Season Pass (free track): tiers come from Season XP, which the server adds with every XP award
+    // (functions/season-pass.js) and returns in the reply (x.seasonPass). Dev preview: ?season-demo=<tier, e.g. 14.4>.
     const SEASON_KEY = '2026-11';
     const seasonDemo = (() => { const v = new URLSearchParams(location.search).get('season-demo'); return v == null || v === '' || !Number.isFinite(Number(v)) ? null : Math.max(0, Math.min(SEASON_PASS.tiers, Number(v))); })();
     let ladderTab = 'levels';
+    var seasonProgress = null; // { key, xp } of the signed-in account
+    function seasonSetProfile(profile) {
+      const sp = profile && profile.seasonPass && profile.seasonPass[SEASON_KEY];
+      seasonProgress = sp ? { key: SEASON_KEY, xp: Number(sp.xp) || 0 } : null;
+      refreshHomeSeasonChip();
+    }
+    // The server's reply to an XP award: { key, xp, tier, gained, tiers: [{ tier, diamonds, item? }] }.
+    function seasonNoteResult(r) {
+      if (!r || r.key !== SEASON_KEY) return;
+      seasonProgress = { key: r.key, xp: Number(r.xp) || 0 };
+      refreshHomeSeasonChip();
+      const top = (r.tiers || []).slice(-1)[0];
+      if (top) { seasonTierToast(top.tier, r.tiers); document.getElementById('seasonTabDot').hidden = false; }
+      if (!document.getElementById('levelLadderModal').classList.contains('hidden') && ladderTab === 'season') renderLevelLadder();
+    }
     function seasonTierStart(t) { let n = 0; for (let i = 1; i <= t; i++) n += SEASON_PASS.tierCost(i); return n; }
     function seasonPassState() {
       const s = SEASON_PASS.seasons[SEASON_KEY], T = SEASON_PASS.tiers;
       const day = (typeof localDateKey === 'function' ? localDateKey() : new Date().toISOString().slice(0, 10));
       const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
       const started = seasonDemo != null || day >= s.start, live = started && day <= s.end;
-      const xp = seasonDemo != null ? Math.round(seasonTierStart(Math.floor(seasonDemo)) + (seasonDemo % 1) * SEASON_PASS.tierCost(Math.floor(seasonDemo) + 1)) : 0;
+      const xp = seasonDemo != null ? Math.round(seasonTierStart(Math.floor(seasonDemo)) + (seasonDemo % 1) * SEASON_PASS.tierCost(Math.floor(seasonDemo) + 1)) : (seasonProgress ? seasonProgress.xp : 0);
       let tier = 0; while (tier < T && xp >= seasonTierStart(tier + 1)) tier++;
       const cost = tier < T ? SEASON_PASS.tierCost(tier + 1) : 0, into = xp - seasonTierStart(tier);
       const left = seasonDemo != null ? 38 : Math.max(0, daysBetween(day, s.end) + 1);
@@ -229,12 +245,15 @@
       requestAnimationFrame(() => { scrollLadderTo(document.querySelector('#levelLadderScroll [data-ladder-here]')); placeLadderLine(tab === 'season' ? false : true); });
       return view;
     }
-    function seasonTierToast(tier) {
-      const st = seasonPassState(), id = st.s.items[tier], gem = SEASON_PASS.diamonds(tier), it = id && seasonItem(id);
+    function seasonTierToast(tier, tiers) {
+      const st = seasonPassState(), id = st.s.items[tier], it = id && seasonItem(id);
+      // Several tiers at once (a long match): one toast with all the Diamonds.
+      const list = tiers && tiers.length ? tiers : [{ tier, diamonds: SEASON_PASS.diamonds(tier) }];
+      const gem = list.reduce((n, t) => n + (Number(t.diamonds) || 0), 0), items = list.map(t => t.item && t.item.name).filter(Boolean);
       let el = document.getElementById('seasonToast');
       if (!el) { el = document.createElement('div'); el.id = 'seasonToast'; document.body.appendChild(el); }
       el.style.setProperty('--sp-accent', st.s.accent);
-      el.innerHTML = `<span class="sp-tier"><b>${tier}</b><small>Tier</small></span><span class="spt-text"><b>Season Pass · Tier ${tier}</b><small>+${gem} Diamonds${it ? ` and ${escapeHtml(it.name)}` : ''}</small></span>`;
+      el.innerHTML = `<span class="sp-tier"><b>${tier}</b><small>Tier</small></span><span class="spt-text"><b>Season Pass · Tier ${tier}${list.length > 1 ? ` (+${list.length} tiers)` : ''}</b><small>+${gem} Diamonds${items.length ? ` and ${escapeHtml(items.join(', '))}` : ''}</small></span>`;
       el.classList.add('show');
       clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 4200);
     }
@@ -303,7 +322,7 @@
     // opts.from: the level before a level up (match summary, level mail): the
     // line climbs from there and the rewards just unlocked glow (v278).
     function openLevelLadder(opts = {}) {
-      if (!xpShown() && seasonDemo == null) { notifyBanner('Levels are switched off at the moment.'); return false; }
+      if (!xpShown() && seasonDemo == null && opts.tab !== 'season') { notifyBanner('Levels are switched off at the moment.'); return false; }
       ladderTab = opts.tab === 'season' ? 'season' : 'levels';
       document.getElementById('levelLadderModal').dataset.llTab = ladderTab;
       document.querySelectorAll('#levelLadderModal .ll-tab').forEach(b => { const on = b.dataset.llTab === ladderTab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });

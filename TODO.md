@@ -49,7 +49,11 @@ They are listed on the More Modes page (v320); each becomes its own carousel car
 - Watch a friend's Vs Bots / Gauntlet game.
 - See `CLAUDE.md` → "Owner's later list" for the full list.
 
-## Season Pass (owner, 20 October 2026; plan only, don't build until asked)
+## Season Pass (built v393: free track, Season 1 Ancient Egypt, from 1 Nov 2026)
+
+- [x] Free 50-tier pass, auto-granted tiers, Egypt art (card back, avatar, table), Level Ladder tab, home chip (v393).
+- [ ] Season 2 (1 Jan 2027): art, `SEASON_PASS.seasons` entry, rules regex, make `SEASON_KEY` date-driven. Theme ideas are in the plan.
+- [ ] Premium track and tier skips stay on hold until there is a business bank account.
 
 - [ ] Detailed plan: `docs/plans/season-pass.md` (2-month seasons, 50 tiers, free + Premium tracks, first season 1 Nov 2026). Open decisions are in section 14 of the plan.
 - [ ] Legal and payments prerequisites before Premium goes on sale: legal drafts (kept locally), Monzo Business account and sole trader registration, ICO registration, Google Play developer account and closed test, and the game fixes listed in the legal pack (deletion gaps, age tick and terms links at sign-up, separate sales record).

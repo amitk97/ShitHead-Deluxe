@@ -10800,7 +10800,7 @@
       'table-aurora': { art: 'aurora', base: '#0b1a2e', rim: 'inset 0 0 0 3px #34d399,inset 0 0 0 4px rgba(224,242,254,.3),inset 0 0 50px rgba(0,0,0,.55)', label: 'rgba(110,231,183,.9)' },
       'table-space': { art: 'space', base: '#05060f', rim: 'inset 0 0 0 3px #6366f1,inset 0 0 0 4px rgba(251,191,36,.35),inset 0 0 52px rgba(0,0,0,.65)', label: 'rgba(199,210,254,.9)' }
     };
-    // § Season Pass (PREVIEW)
+    // § Season Pass
     ILLUSTRATED_TABLES['table-ss2611-egypt'] = { art: 'ss2611-egypt', base: '#2a1330', rim: 'inset 0 0 0 3px #e8bd6a,inset 0 0 50px rgba(20,8,30,.55)', label: 'rgba(251,222,150,.9)' };
     // Seasonal event pictures (shop + earn-only). Same tile, tones and
     // shared metal gradients as every other picture.
@@ -12379,7 +12379,7 @@
       jokerEffect: new Set(['joker-grin','joker-jackbox','joker-puppet','joker-magic','joker-glitch','joker-storm','joker-hypnotist','joker-vampire','joker-redcard','joker-portal', ...seasonalIdsOf('jokerEffect')]),
       avatar: new Set(Object.keys(AVATAR_ART))
     });
-    // § Season Pass (PREVIEW): the season's earned items join the existing renderers and equip lists.
+    // § Season Pass: the season's earned items join the existing renderers and equip lists.
     SEASON_PASS_ITEMS.forEach((it) => {
       const type = COSMETIC_CATEGORY_TYPES[it.category];
       if (type === 'cardBack' || type === 'tableTheme') COSMETIC_RUNTIME_IDS[type].add(it.id);
@@ -15782,6 +15782,7 @@
         if (u.reward > 0) enqueueChallengeToast(`Level ${u.level}`, Number(u.reward), -1);
       });
       applyLevelRewards(x.rewards);
+      seasonNoteResult(x.seasonPass); // § Season Pass
       if ((x.levelUps || []).length) setTimeout(() => showHelperTip('level-up', '#headerXpBar'), 2500); // § Helper tips
       if (!xpFeatureOn) setXpFeature(true); // the server only adds XP while the switch is on
       refreshXpDisplays();
@@ -16000,6 +16001,7 @@
         referral: JSON.parse(JSON.stringify(REFERRAL)),
         rankedBonus: JSON.parse(JSON.stringify(RANKED_BONUS)),
         xp: JSON.parse(JSON.stringify(XP_RULES)),
+        seasonPass: { tiers: SEASON_PASS.tiers, costs: Array.from({ length: SEASON_PASS.tiers + 1 }, (_, t) => t ? SEASON_PASS.tierCost(t) : 0), diamonds: Array.from({ length: SEASON_PASS.tiers + 1 }, (_, t) => t ? SEASON_PASS.diamonds(t) : 0), seasons: JSON.parse(JSON.stringify(SEASON_PASS.seasons)), items: SEASON_PASS_ITEMS.map(i => ({ id: i.id, name: i.name, tier: i.tier })) },
         puzzles: window.ShPuzzles ? JSON.parse(JSON.stringify(window.ShPuzzles.catalog())) : undefined,
         series: JSON.parse(JSON.stringify(SERIES_RULES)),
         rankTiers: [['Master', 2000], ['Platinum', 1800], ['Gold', 1500], ['Silver', 1000], ['Bronze', 500], ['Novice', 0]].map(([name, min]) => {
@@ -16318,6 +16320,7 @@
         challengeEconomyLoadedForUid = null;
         challengeEconomyLoadError = null;
         playerXp = null;
+        seasonProgress = null;
         refreshXpDisplays();
         updateDiamondHeader();
         renderChallengesModalIfOpen();
@@ -16353,6 +16356,7 @@
             twosWins: Number(profile.matchCounters && profile.matchCounters.twosWins) || 0
           };
           challengeEconomyLoadedForUid = currentUser.uid;
+          seasonSetProfile(profile);
           playerXp = profile.xp && Number.isFinite(Number(profile.xp.total)) ? { total: Number(profile.xp.total), level: Number(profile.xp.level) || xpLevelFor(profile.xp.total), week: profile.xp.week || null, weekXp: Number(profile.xp.weekXp) || 0 } : null;
           refreshXpDisplays();
           updateDiamondHeader();

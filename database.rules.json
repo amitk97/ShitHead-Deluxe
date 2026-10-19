@@ -70,6 +70,7 @@
               newData.val() === 'back-nebula' || newData.val() === 'back-inferno' ||
               newData.val().matches(/^back-(arcade|space|tartan|artdeco|dragon|stained)$/) ||
               newData.val() === 'back-rising-star' ||
+              newData.val().matches(/^back-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||
               newData.val().matches(/^back-lvl-(first-burn|sharks-mark|inferno|chaos-crown)$/) ||
               newData.val() === 'back-lvl-master-pile' ||
               (newData.val().matches(/^back-(lunar|valentine|ramadan|easter|summer)$/) ||
@@ -120,6 +121,7 @@
               newData.val() === 'table-royal' || newData.val() === 'table-desert' ||
               newData.val() === 'table-jungle' || newData.val() === 'table-devilish' ||
               newData.val() === 'table-angelic' ||
+              newData.val().matches(/^table-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||
               newData.val().matches(/^table-(neon|aurora|space|summit)$/) ||
               (newData.val().matches(/^table-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^table-(halloween|diwali|christmas|newyear)$/)))))"
@@ -178,6 +180,7 @@
               newData.val() === 'avatar-shithead' || newData.val() === 'avatar-gauntlet' ||
               newData.val().matches(/^avatar-gauntlet-(hard|boss)$/) ||
               newData.val() === 'avatar-recruiter' || newData.val() === 'avatar-twos' ||
+              newData.val().matches(/^avatar-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||
               newData.val().matches(/^avatar-(royal-flush|phoenix|cosmic-ace)$/) ||
               newData.val().matches(/^avatar-(sapphire-sovereign|crimson-inferno|turtley)$/) ||
               newData.val() === 'avatar-scarlet-guardian' ||
@@ -301,6 +304,9 @@
         },
         "weeklyReroll": {
           ".validate": "newData.hasChildren(['week', 'from', 'to'])"
+        },
+        "seasonPass": {
+          ".validate": "newData.hasChildren()"
         },
         "lastRankedOpponent": {
           ".validate": "newData.hasChildren(['uid', 'at'])"

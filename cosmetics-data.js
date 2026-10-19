@@ -208,8 +208,8 @@
       }
     };
     const SEASON_PASS_ITEMS = [
-      { id: 'back-ss2611-scarab', category: 'Card Backs', name: 'Scarab of Ra', tier: 10, tone: '#f5c542', file: 'art/season-pass/ss2611/back-scarab.svg' },
-      { id: 'avatar-ss2611-pharaoh', category: 'Avatars', name: 'Golden Pharaoh', tier: 30, tone: '#f5c542', file: 'art/season-pass/ss2611/avatar-pharaoh.svg' },
+      { id: 'back-ss2611-scarab', category: 'Card Backs', name: 'Scarab of Ra', tier: 10, tone: '#f5c542', file: 'art/backs/ss2611-scarab.svg' },
+      { id: 'avatar-ss2611-pharaoh', category: 'Avatars', name: 'Golden Pharaoh', tier: 30, tone: '#f5c542', file: 'art/avatars/ss2611-pharaoh.svg' },
       { id: 'table-ss2611-egypt', category: 'Table Themes', name: 'Sands of Giza', tier: 50, tone: '#f59e0b' }
     ].map(r => ({ ...r, pass: '2026-11', level: 0, earned: true, cost: 0, requirement: `Season Pass tier ${r.tier}`, tones: ['#150c30', r.tone, '#ffd58a'] }));
     LEVEL_REWARDS.push(...SEASON_PASS_ITEMS);

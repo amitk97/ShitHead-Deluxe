@@ -1727,6 +1727,22 @@ async function runDevTestSuite() {
       assertTrue(!!document.querySelector('#settingsTab-gameplay #setProtectBestRow'), 'The row is in Gameplay');
     } finally { [selectAllOfRank, protectBestCards] = was; }
   });
+  await test('v393: Season Pass tiers come from the server\'s Season XP and toast on a tier', () => {
+    const saved = seasonProgress;
+    try {
+      seasonProgress = { key: '2026-11', xp: 2600 };
+      assertEqual(SEASON_PASS.tierCost(1) + 0, 250, 'tier 1 costs 250');
+      const st = seasonPassState();
+      assertEqual(st.tier, 10, '2,600 Season XP is tier 10');
+      assertEqual(st.into, 100, '100 XP into tier 11');
+      seasonNoteResult({ key: '2026-11', xp: 3000, tier: 11, gained: 400, tiers: [{ tier: 11, diamonds: 15 }] });
+      assertEqual(seasonPassState().tier, 11, 'the reply moves the tier');
+      assertTrue(document.getElementById('seasonToast').classList.contains('show'), 'a tier shows the toast');
+      assertTrue(/\+15 Diamonds/.test(document.getElementById('seasonToast').textContent), 'with its Diamonds');
+      assertEqual(SEASON_PASS_ITEMS.length, 3, 'three items');
+      assertTrue(LEVEL_REWARDS.filter(r => r.pass).every(r => !serverEconomyCatalog().xp.rewards.map(r => r.id).includes(r.id)), 'pass items are not level rewards in the catalog');
+    } finally { seasonProgress = saved; document.getElementById('seasonToast')?.classList.remove('show'); }
+  });
   await test('v392: Double-Tap To Play plays only when the same staged card is tapped twice, and is off by default', () => {
     const was = [doubleTapPlay, executePlayCards, selectAllOfRank];
     try {
@@ -3434,7 +3450,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 36, 'All 36 avatars appear in Custom (incl. the 5 level rewards and 3 Gauntlet crests)');
+    assertEqual(options.length, 37, 'All 37 avatars appear in Custom (incl. the 5 level rewards, 3 Gauntlet crests and the Season Pass one)');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -3493,7 +3509,7 @@ async function runDevTestSuite() {
         assertTrue(!modal.classList.contains('hidden'), `Tapping #${id} opens the Level Ladder`);
       }
       const ids = [...modal.querySelectorAll('[data-ladder-id]')].map(el => el.dataset.ladderId);
-      assertEqual(LEVEL_REWARDS.filter(r => !ids.includes(r.id)).map(r => r.id), [], 'Every level reward is on the ladder');
+      assertEqual(LEVEL_REWARDS.filter(r => !r.pass && !ids.includes(r.id)).map(r => r.id), [], 'Every level reward is on the ladder');
       assertTrue(!!modal.querySelector(`[data-ladder-level="${XP_MAX_LEVEL}"].final`), 'The last card is the max level, from the level table');
       for (let L = 10; L <= XP_MAX_LEVEL; L += 10) assertTrue(!!modal.querySelector(`[data-ladder-level="${L}"]`), `Milestone ${L} has its own row`);
       assertEqual([ladderMilestoneDiamonds(XP_MAX_LEVEL), ladderMilestoneDiamonds(90), ladderMilestoneDiamonds(42)], [999, 100, 20], 'Level 99 pays 999 Diamonds, every 10th 100, others 20 (v285)');
@@ -4182,8 +4198,8 @@ async function runDevTestSuite() {
     smoke.forEach(a => a.cancel());
     stage.querySelectorAll('.bfx').forEach(n => n.remove());
     renderPersonalisationAvatars();
-    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-16);
-    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
+    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-17);
+    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Golden Pharaoh'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
   });
 
   await test('Accessibility settings exist and apply', () => {
@@ -6172,18 +6188,18 @@ async function runDevTestSuite() {
     }
   });
   await test('Level rewards (v251): the owner\'s earn-only avatars and card backs, granted by the server', () => {
-    assertEqual(LEVEL_REWARDS.map(r => [r.id, r.level]), [
+    assertEqual(LEVEL_REWARDS.filter(r => !r.pass).map(r => [r.id, r.level]), [
       ['avatar-lvl-rookie-rogue', 10], ['avatar-lvl-card-shark', 25], ['avatar-lvl-burn-king', 50], ['avatar-lvl-chaos-jester', 75], ['avatar-lvl-the-shithead', 99],
       ['back-lvl-first-burn', 10], ['back-lvl-sharks-mark', 30], ['back-lvl-inferno', 50], ['back-lvl-chaos-crown', 70], ['back-lvl-master-pile', 99],
       ['burn-lvl-spark-snap', 5], ['burn-lvl-smoke-burst', 20], ['burn-lvl-inferno-sweep', 40], ['burn-lvl-hellfire-spiral', 60], ['burn-lvl-royal-incineration', 80], ['burn-lvl-shitstorm', 99]], 'The sixteen rewards');
-    assertEqual(XP_RULES.rewards.map(r => r.id), LEVEL_REWARDS.map(r => r.id), 'Exported to the server catalog');
+    assertEqual(XP_RULES.rewards.map(r => r.id), LEVEL_REWARDS.filter(r => !r.pass).map(r => r.id), 'Exported to the server catalog');
     assertTrue(!['back-rising-star', 'frame-ascendant', 'table-summit'].some(id => bigPreviewItem(id)), 'The v248 set is gone');
     LEVEL_REWARDS.forEach((r) => {
       const type = COSMETIC_CATEGORY_TYPES[r.category];
       assertTrue(isSupportedCosmetic(type, r.id), `${r.id} can be equipped`);
       assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.id === r.id), `${r.id} is never sold`);
       assertTrue(customAllItems(type).some(i => i.id === r.id), `${r.id} is listed in Custom → All`);
-      if (r.category !== 'Burn Effects') assertTrue(/\.webp\?v=\d+$/.test(r.file), `${r.id} uses its HD art file`);
+      if (r.category !== 'Burn Effects' && !r.pass) assertTrue(/\.webp\?v=\d+$/.test(r.file), `${r.id} uses its HD art file`);
     });
     assertEqual(getCosmeticBackClass('back-lvl-inferno'), 'cosmetic-back-lvl-inferno lvl-back', 'Card backs get their art class');
     assertTrue(/lvl-rookie-rogue\.webp/.test(avatarHtml('avatar-lvl-rookie-rogue', 40)), 'Avatars draw their art');
@@ -9768,7 +9784,7 @@ async function runDevTestSuite() {
       assertTrue(!/data:image\//i.test(a.art), `${id} picture embeds no bitmap data URI`);
       // the premium photo pictures are the only raster ones: sized files, never stretched past them
       // (the owner's approved art lives in art/avatars/approved-v26x/ and the crown atlas is a sized PNG, v263–v267)
-      if (a.photo) assertTrue([...a.art.matchAll(/href="([^"]+)"/g)].every(m => /^art\/avatars\/[A-Za-z0-9\/-]+\.(webp|png)(\?v=\d+)?$/.test(m[1])), `${id} only uses its own art/avatars files`);
+      if (a.photo) assertTrue([...a.art.matchAll(/href="([^"]+)"/g)].every(m => /^art\/avatars\/[A-Za-z0-9\/-]+\.(webp|png|svg)(\?v=\d+)?$/.test(m[1])), `${id} only uses its own art/avatars files`);
       else assertTrue(!/<image/i.test(a.art), `${id} picture is pure vector`);
     });
     const css = [...document.querySelectorAll('style')].map(el => el.textContent).join('\n');

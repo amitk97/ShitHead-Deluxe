@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Season Pass 2026-11 (Ancient Egypt): card back "Scarab of Ra". Writes
-art/season-pass/ss2611/back-scarab.svg (250x350, drawn to fill the whole card)."""
+art/backs/ss2611-scarab.svg (250x350, drawn to fill the whole card)."""
 import math, sys
 W, H = 250, 350
 out = []
@@ -151,5 +151,5 @@ A('</g>')
 A(f'<rect width="{W}" height="{H}" rx="16" fill="url(#vig)"/>')
 A(f'<rect width="{W}" height="{H}" rx="16" fill="url(#shine)" opacity=".5" transform="skewX(-14) translate(40 0)"/>')
 A('</svg>')
-open(sys.argv[1] if len(sys.argv) > 1 else "../../art/season-pass/ss2611/back-scarab.svg", "w").write("".join(out))
+open(sys.argv[1] if len(sys.argv) > 1 else "../../art/backs/ss2611-scarab.svg", "w").write("".join(out))
 print("ok")

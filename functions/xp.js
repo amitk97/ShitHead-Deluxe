@@ -202,6 +202,9 @@ function award(user, parts, now, addDiamonds) {
   // Seasonal events pay more XP (catalog xp.seasonalBoost, v345): every award while an event is live.
   const ev = boostEvent(now), factor = ev ? num(RULES.seasonalBoost, 1) : 1;
   const res = addXp(user, factor > 1 ? Math.round(base * factor) : base, now, addDiamonds);
+  // Season Pass (free track): the unboosted XP also fills the pass.
+  const season = require('./season-pass').add(user, base, now, addDiamonds);
+  if (season) res.seasonPass = season;
   return factor > 1 ? { ...res, boost: { factor, event: ev.id, name: ev.name } } : res;
 }
 

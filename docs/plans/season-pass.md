@@ -1,3 +1,5 @@
+> **Decisions after review (owner, 20 Oct 2026), built in v393:** free track only for Season 1, Premium and tier skips on hold (no way to accept money yet); theme Ancient Egypt; no extra frames (tier 30 is an avatar); rewards are granted the moment a tier is reached (there is no claim step or claim window); Season XP is the normal XP with no event boost; no optional weekly bonus. Where the text below says otherwise, this note wins.
+
 # Season Pass: detailed plan
 
 Status: **PLAN ONLY. Nothing has been built.** Written 20 October 2026.

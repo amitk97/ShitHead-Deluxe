@@ -137,5 +137,5 @@ for (x, y, s) in [(60, 70, 1.3), (345, 92, 1.0), (92, 335, .9), (322, 300, 1.2)]
 A('<path d="M70 136C78 66 132 26 200 26C240 26 280 40 305 70L200 130Z" fill="url(#gloss)" opacity=".5"/>')
 A('<rect width="400" height="400" fill="url(#vig)"/>')
 A('</svg>')
-open(sys.argv[1] if len(sys.argv) > 1 else "../../art/season-pass/ss2611/avatar-pharaoh.svg", "w").write("".join(o))
+open(sys.argv[1] if len(sys.argv) > 1 else "../../art/avatars/ss2611-pharaoh.svg", "w").write("".join(o))
 print("ok")
