@@ -199,8 +199,6 @@
       tierCost: (t) => t <= 10 ? 250 : t <= 40 ? 400 : 550,
       // Diamonds on every tier; milestones every 5th, bigger ones on the item tiers.
       diamonds: (t) => t === 50 ? 150 : (t === 10 || t === 30) ? 50 : t % 5 === 0 ? 60 : 15,
-      // Every season's tier 50 also gives this Shop item; an account that already owns it gets the Diamonds instead.
-      finale: { tier: 50, id: 'burn-origami', ownedDiamonds: 209 },
       seasons: {
         '2026-11': {
           number: 1, name: 'Ancient Egypt', start: '2026-11-01', end: '2026-12-31', accent: '#f5c542',
@@ -215,7 +213,7 @@
         '2027-03': {
           number: 3, name: 'Feudal Japan', start: '2027-03-01', end: '2027-04-30', accent: '#ff8fb1',
           banner: 'art/season-pass/ss2703/banner.webp',
-          items: { 10: 'back-ss2703-sakura', 30: 'avatar-ss2703-kitsune', 50: 'table-ss2703-shrine' }
+          items: { 10: 'back-ss2703-sakura', 20: 'burn-origami', 30: 'avatar-ss2703-kitsune', 50: 'table-ss2703-shrine' }
         },
         '2027-05': {
           number: 4, name: 'Deep Ocean', start: '2027-05-01', end: '2027-06-30', accent: '#35d0c9',

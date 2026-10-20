@@ -196,7 +196,7 @@
       const left = seasonDemo != null ? 38 : Math.max(0, daysBetween(day, s.end) + 1);
       return { s, T, started, live, xp, tier, cost, into, left, startsIn: Math.max(0, daysBetween(day, s.start)) };
     }
-    const seasonItem = (id) => SEASON_PASS_ITEMS.find(i => i.id === id);
+    const seasonItem = (id) => SEASON_PASS_ITEMS.find(i => i.id === id) || COSMETIC_SHOP_ITEMS.find(i => i.id === id);
     // Reached rewards count as owned in the preview (the real thing grants them on the server).
     function seasonDemoOwn() {
       if (seasonDemo == null) return;
@@ -221,10 +221,8 @@
       for (let t = 1; t <= st.T; t++) {
         const got = t <= st.tier, id = st.s.items[t], gem = SEASON_PASS.diamonds(t);
         if (id) {
-          const it = seasonItem(id), F = SEASON_PASS.finale;
-          const fin = F && t === F.tier ? COSMETIC_SHOP_ITEMS.find(i => i.id === F.id) : null;
-          html += `<div class="ll-row big ${got ? 'got' : 'locked'}${t === st.T ? ' final' : ''}" data-season-tier="${t}"><span class="ll-node">${got ? icon('check') : t}</span><div class="ll-card"><div class="ll-head"><span class="ll-pkind" style="font-weight:900">Tier ${t}</span>${got ? `<span class="ll-done">${icon('check')} Unlocked</span>` : `<span class="ll-away">${fmt(seasonTierStart(t) - st.xp)} XP away</span>`}${ladderGem(gem)}</div><div class="ll-pieces">${ladderPieceHtml({ kind: 'item', item: it })}${fin ? ladderPieceHtml({ kind: 'item', item: fin }) : ''}</div>${fin ? `<p class="ll-help" style="margin:.4rem 0 0">${escapeHtml(fin.name)} is yours at this tier. If you already own it, you get ${SEASON_PASS.finale.ownedDiamonds} Diamonds instead.</p>` : ''}</div></div>`;
-        } else {
+          const it = seasonItem(id);
+          html += `<div class="ll-row big ${got ? 'got' : 'locked'}${t === st.T ? ' final' : ''}" data-season-tier="${t}"><span class="ll-node">${got ? icon('check') : t}</span><div class="ll-card"><div class="ll-head"><span class="ll-pkind" style="font-weight:900">Tier ${t}</span>${got ? `<span class="ll-done">${icon('check')} Unlocked</span>` : `<span class="ll-away">${fmt(seasonTierStart(t) - st.xp)} XP away</span>`}${ladderGem(gem)}</div><div class="ll-pieces">${ladderPieceHtml({ kind: 'item', item: it })}</div></div></div>`;
           html += `<div class="ll-gap ${got ? 'got' : ''}" data-season-tier="${t}"><span class="ll-tick"></span><span>Tier ${t} · ${ladderGem(gem)}</span></div>`;
         }
         if (t === st.tier && t > 0) html += here;
@@ -257,7 +255,7 @@
       // Several tiers at once (a long match): one toast with all the Diamonds.
       const list = tiers && tiers.length ? tiers : [{ tier, diamonds: SEASON_PASS.diamonds(tier) }];
       const gem = list.reduce((n, t) => n + (Number(t.diamonds) || 0), 0), items = [];
-      list.forEach(t => { if (t.item) items.push(t.item.name); if (t.finale && !t.finale.owned) items.push(t.finale.name); });
+      list.forEach(t => { if (t.item) items.push(t.item.name); });
       let el = document.getElementById('seasonToast');
       if (!el) { el = document.createElement('div'); el.id = 'seasonToast'; document.body.appendChild(el); }
       el.style.setProperty('--sp-accent', st.s.accent);

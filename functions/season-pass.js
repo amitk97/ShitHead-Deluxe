@@ -34,27 +34,9 @@ function add(user, amount, now, addDiamonds) {
     const itemId = SP.seasons[key].items[t];
     const item = itemId && (SP.items || []).find((i) => i.id === itemId);
     if (item) grantItem(user, key, t, item, now);
-    const fin = t === num(SP.finale && SP.finale.tier) ? grantFinale(user, key, s, now, addDiamonds) : null;
-    tiers.push({ tier: t, diamonds: diamonds + (fin ? fin.diamonds : 0), ...(item ? { item: { id: item.id, name: item.name } } : {}), ...(fin ? { finale: fin } : {}) });
+    tiers.push({ tier: t, diamonds, ...(item ? { item: { id: item.id, name: item.name } } : {}) });
   }
   return { key, xp: s.xp, tier: s.tier, gained: gain, tiers };
-}
-
-// The finale item every season's last tier adds (catalog seasonPass.finale): granted like any pass item, or, when the
-// account already owns it, paid as Diamonds instead. Once per season (s.finale), so a sign-in repair never repeats it.
-function grantFinale(user, key, s, now, addDiamonds) {
-  const F = SP.finale;
-  if (!F || !F.id || s.finale) return null;
-  s.finale = true;
-  user.activityInbox = user.activityInbox || {};
-  if (user.ownedCosmetics && user.ownedCosmetics[F.id]) {
-    const diamonds = num(F.ownedDiamonds);
-    if (diamonds) addDiamonds(user, diamonds);
-    user.activityInbox[`seasonpass_${key}_finale`] = { type: 'seasonPass', key, when: 'finale', name: String(F.name || F.id).slice(0, 80), diamonds, sentAt: now };
-    return { id: F.id, name: F.name, owned: true, diamonds };
-  }
-  grantItem(user, key, num(F.tier), { id: F.id, name: F.name || F.id }, now);
-  return { id: F.id, name: F.name, owned: false, diamonds: 0 };
 }
 
 function grantItem(user, key, tier, item, now) {
@@ -66,7 +48,7 @@ function grantItem(user, key, tier, item, now) {
 }
 
 // Sign-in repair: items of tiers already reached but missing (a failed write).
-function grantReached(user, now, addDiamonds) {
+function grantReached(user, now) {
   const out = [];
   Object.entries(user.seasonPass || {}).forEach(([key, s]) => {
     const season = SP.seasons[key];
@@ -75,10 +57,6 @@ function grantReached(user, now, addDiamonds) {
       const item = (SP.items || []).find((i) => i.id === id);
       if (item && num(s.tier) >= num(t) && !(user.ownedCosmetics && user.ownedCosmetics[id])) { grantItem(user, key, num(t), item, now); out.push(id); }
     });
-    if (SP.finale && num(s.tier) >= num(SP.finale.tier) && !s.finale && typeof addDiamonds === 'function') {
-      const fin = grantFinale(user, key, s, now, addDiamonds);
-      if (fin && !fin.owned) out.push(fin.id);
-    }
   });
   return out;
 }

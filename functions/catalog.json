@@ -2057,12 +2057,6 @@
  },
  "seasonPass": {
   "tiers": 50,
-  "finale": {
-   "tier": 50,
-   "id": "burn-origami",
-   "ownedDiamonds": 209,
-   "name": "Origami Fold"
-  },
   "costs": [
    0,
    250,
@@ -2205,6 +2199,7 @@
     "banner": "art/season-pass/ss2703/banner.webp",
     "items": {
      "10": "back-ss2703-sakura",
+     "20": "burn-origami",
      "30": "avatar-ss2703-kitsune",
      "50": "table-ss2703-shrine"
     }
@@ -2258,6 +2253,11 @@
     "id": "back-ss2703-sakura",
     "name": "Sakura Crest",
     "tier": 10
+   },
+   {
+    "id": "burn-origami",
+    "name": "Origami Fold",
+    "tier": 20
    },
    {
     "id": "avatar-ss2703-kitsune",
