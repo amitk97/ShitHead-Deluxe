@@ -5,8 +5,9 @@
 'use strict';
 const themes={
  'ss2611-egypt':['#150c30','#8a3a24','#ffd58a'],
+ 'ss2701-glacier':['#0b1d3c','#3f78a6','#e4f6ff'],
  candyfloss:['#633754','#b66f8c','#f8c5e0'],desert:['#9a6136','#e3ad66','#fff1bd'],jungle:['#021912','#124f39','#74c9a0'],devilish:['#0a0004','#480708','#ee6044'],angelic:['#244361','#6386a2','#ffedbf'],neon:['#090b25','#362345','#fc62b5'],aurora:['#061323','#103849','#67efb4'],space:['#070a1e','#232547','#beadff'],lunar:['#300813','#721522','#e6b665'],valentine:['#220619','#67182f','#f18ca9'],ramadan:['#060f2c','#173854','#e7d59e'],easter:['#254841','#6c9d79','#f9dbb8'],summer:['#13424f','#278c9a','#f6da98'],halloween:['#100d26','#372137','#f4b668'],diwali:['#241135','#713657','#f4c766'],christmas:['#160d12','#593027','#efce80'],newyear:['#080e26','#1e2748','#f7df9e'],casino:['#061c19','#16553f','#d4ae59'],winter:['#122c44','#4c7591','#d4efff'],midnight:['#050918','#172642','#d7def1'],royal:['#1d0d31','#492653','#e5bf62'],wood:['#382010','#79532e','#c09a62'],felt:['#071c17','#184735','#87b69a']};
-const names={'ss2611-egypt':'Sands of Giza',candyfloss:'Candyfloss',desert:'Desert',jungle:'Jungle',devilish:'Devilish',angelic:'Angelic',neon:'Neon City',aurora:'Northern Lights',space:'Deep Space',lunar:'Lantern Festival',valentine:'Candlelit Dinner',ramadan:'Crescent Night',easter:'Spring Meadow',summer:'Beach Day',halloween:'Haunted Graveyard',diwali:'Rangoli',christmas:'Fireside',newyear:'Midnight Skyline',casino:'Casino',winter:'Winter',midnight:'Midnight',royal:'Royal',wood:'Oak Wood',felt:'Classic Felt'};
+const names={'ss2611-egypt':'Sands of Giza','ss2701-glacier':'Glacier Steppe',candyfloss:'Candyfloss',desert:'Desert',jungle:'Jungle',devilish:'Devilish',angelic:'Angelic',neon:'Neon City',aurora:'Northern Lights',space:'Deep Space',lunar:'Lantern Festival',valentine:'Candlelit Dinner',ramadan:'Crescent Night',easter:'Spring Meadow',summer:'Beach Day',halloween:'Haunted Graveyard',diwali:'Rangoli',christmas:'Fireside',newyear:'Midnight Skyline',casino:'Casino',winter:'Winter',midnight:'Midnight',royal:'Royal',wood:'Oak Wood',felt:'Classic Felt'};
 let serial=0;
 const F=n=>Number(n.toFixed(2));
 function scene(id,W,H){
@@ -127,6 +128,35 @@ function scene(id,W,H){
    pieces.push(`<g opacity=".55">${d}</g>`);
   }
  }
+
+ // Season Pass 2027-01 (Ice Age): a frozen steppe under a low winter sun.
+ const MAMMOTH_D='M22 30C22 14 34 5 44 8C48 9 52 12 56 11C66 4 82 10 90 26C94 34 94 44 90 52L90 66L82 66L80 56L76 56L74 61L70 57L66 62L62 58L58 62L54 57L52 66L44 66L42 55C38 53 34 50 32 46C28 48 22 52 20 58C19 62 14 64 12 60C14 58 15 56 16 54C18 46 20 40 22 30Z';
+ const HAND_D='M0 22C-9 20 -12 8 -11 -4L-9 -4C-9 2 -8 6 -6 8L-8 -22C-8 -25 -4 -25 -4 -22L-3 -6L-2 -28C-2 -31 2 -31 2 -28L2 -6L4 -26C4 -29 8 -29 8 -26L7 -4L11 -20C12 -23 16 -22 15 -19L10 6C12 4 14 0 17 -2C19 -3 20 0 18 2C14 10 12 16 8 20C6 22 3 22 0 22Z';
+ const mamm=(x,y,sc,flip,fill,op=1)=>`<g transform="translate(${F(x+(flip?100*sc:0))} ${F(y)}) scale(${flip?-sc:sc} ${sc})" opacity="${op}"><path d="M58 52L59 66L67 66L67 52ZM70 52L71 66L78 66L77 52Z" fill="${fill}" opacity=".55"/><path d="${MAMMOTH_D}" fill="${fill}"/><path d="M27 39C15 44 4 46 4 33" fill="none" stroke="#e9efe6" stroke-width="2.4" stroke-linecap="round" opacity=".85"/></g>`;
+ function iceSun(){return circle(50,50,48,url('lamp'))+circle(50,50,26,'#fff7e2',.95)+circle(50,50,19,'#ffffff',.9);}
+ function herd(){
+  const dark='#1c3550';
+  return mamm(2,34,.34,false,dark,.95)+mamm(36,20,.5,false,dark)+mamm(70,36,.3,true,dark,.9)+mamm(54,50,.2,false,dark,.7)+mamm(14,52,.18,true,dark,.7);
+ }
+ function glacierWall(){
+  const g=uid+'gl';
+  const defs=`<defs><linearGradient id="${g}A" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4fdff"/><stop offset=".45" stop-color="#9ed7f0"/><stop offset="1" stop-color="#3b82b8"/></linearGradient><linearGradient id="${g}B" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7cc0e4"/><stop offset="1" stop-color="#1c4f86"/></linearGradient></defs>`;
+  return defs+`<path d="M0 100L0 38L9 24L18 40L28 8L40 34L49 20L60 52L72 44L84 62L100 58L100 100Z" fill="url(#${g}B)"/>`
+   +`<path d="M0 100L0 38L9 24L18 40L28 8L40 34L49 20L60 52L50 100Z" fill="url(#${g}A)" opacity=".8"/>`
+   +`<path d="M28 8L40 34L34 100L22 100Z" fill="#fff" opacity=".22"/><path d="M9 24L18 40L12 100L4 100Z" fill="#fff" opacity=".2"/>`
+   +`<path d="M49 20L60 52L56 100M28 8L34 100M18 40L22 100M72 44L70 100" stroke="#0d3a68" stroke-width=".9" opacity=".5" fill="none"/>`
+   +[8,22,35,47,60,74,88].map((x,i)=>`<path d="M${x} ${46+(i%3)*8}L${x+2.4} ${60+(i%4)*7}L${x+4.8} ${46+(i%3)*8}Z" fill="#eaf9ff" opacity=".7"/>`).join('')
+   +`<path d="M0 38L9 24L18 40L28 8L40 34L49 20L60 52L72 44L84 62L100 58" fill="none" stroke="#eaf9ff" stroke-width="1.2" stroke-linejoin="round"/>`
+   +`<ellipse cx="50" cy="99" rx="64" ry="10" fill="#d9eef7"/><ellipse cx="46" cy="96" rx="46" ry="5" fill="#fff" opacity=".55"/>`;
+ }
+ function handBand(y){
+  const step=u*.085,sc=u*.0018;
+  for(let x=pad+step*.5,i=0;x<W-pad;x+=step,i++){
+   const col=i%2?'#e7dfcf':'#d9772c';
+   if(i%4===3)pieces.push(`<g fill="${col}" opacity=".7"><circle cx="${F(x-u*.012)}" cy="${F(y)}" r="${F(u*.004)}"/><circle cx="${F(x)}" cy="${F(y)}" r="${F(u*.004)}"/><circle cx="${F(x+u*.012)}" cy="${F(y)}" r="${F(u*.004)}"/></g>`);
+   else pieces.push(`<g transform="translate(${F(x)} ${F(y)}) scale(${F(sc)})" opacity=".72"><path d="${HAND_D}" fill="${col}"/></g>`);
+  }
+ }
  switch(key){
  case 'desert':
   glow(W*.75,H*.21,u*.45);place('sun',orb(),.84,.17,.34,1,.24);
@@ -239,6 +269,26 @@ function scene(id,W,H){
   pieces.push(`<rect x="0" y="0" width="${W}" height="${F(u*.075)}" fill="#12092a" opacity=".55"/><path d="M0 ${F(u*.075)}H${W}" stroke="#e8bd6a" stroke-width="${F(u*.003)}" opacity=".7"/>`);
   pieces.push(`<rect x="0" y="${F(H-u*.075)}" width="${W}" height="${F(u*.075)}" fill="#12092a" opacity=".55"/><path d="M0 ${F(H-u*.075)}H${W}" stroke="#e8bd6a" stroke-width="${F(u*.003)}" opacity=".7"/>`);
   glyphRow(u*.037);glyphRow(H-u*.037);break;
+ }
+ case 'ss2701-glacier': {
+  // Ice Age: low pale sun over a frozen steppe, glacier walls and a mammoth herd on the horizon.
+  const sky=uid+'icsky';
+  pieces.push(`<defs><linearGradient id="${sky}" x2="0" y2="1"><stop stop-color="#08183a"/><stop offset=".24" stop-color="#1f4f82"/><stop offset=".40" stop-color="#8fcbe6"/><stop offset=".49" stop-color="#f4dcc4"/><stop offset=".56" stop-color="#cfe8f4"/><stop offset="1" stop-color="#27506f"/></linearGradient></defs>`,rect(0,0,W,H,`url(#${sky})`));
+  stars(60,'#eaf8ff');glow(W*.30,H*.43,u*.55);
+  place('sun',iceSun(),.22,.30,.30,1,.22);
+  {let d=`M0 ${F(H*.53)}`;const n=14;for(let i=0;i<=n;i++){d+=` L${F(W*i/n)} ${F(H*(.53-(i%3===1?.07:i%3===2?.035:.012)-(i%5)*.006))}`;}
+   pieces.push(path(d+` L${W} ${F(H*.60)} L0 ${F(H*.60)}Z`,'#79a9c8','#e4f6ff',u*.002,.5));}
+  terrain(.56,'#d9eef7',.02,1);
+  place('herd',herd(),.66,.505,.40,.60,.22);
+  terrain(.62,'#b9dbec',.04,2);terrain(.74,'#8cb8d3',.05,4);terrain(.88,'#5a8bb0',.05,1);terrain(.96,'#2f5b7c',.03,3);
+  {const lw=u*.46,rw=u*.30;
+   feature('left-glacier',glacierWall(),pad,H*.80-lw*1.02,lw,lw*1.02,.14);
+   feature('right-glacier',glacierWall(),W-pad-rw,H*.62-rw*.62,rw,rw,.1);}
+  for(let i=0;i<14;i++){const x=(i*.618%1)*W,y=H*.66+(i*.414%1)*H*.28;pieces.push(path(`M${F(x)} ${F(y)}l${F(u*.05)} ${F(u*.012)}l${F(-u*.02)} ${F(u*.03)}l${F(u*.06)} ${F(u*.02)}`,'none','#e4f6ff',u*.0018,.45));}
+  stars(70,'#ffffff','petal');
+  pieces.push(`<rect x="0" y="0" width="${W}" height="${F(u*.075)}" fill="#0a1a33" opacity=".6"/><path d="M0 ${F(u*.075)}H${W}" stroke="#a9e0f4" stroke-width="${F(u*.003)}" opacity=".75"/>`);
+  pieces.push(`<rect x="0" y="${F(H-u*.075)}" width="${W}" height="${F(u*.075)}" fill="#0a1a33" opacity=".6"/><path d="M0 ${F(H-u*.075)}H${W}" stroke="#a9e0f4" stroke-width="${F(u*.003)}" opacity=".75"/>`);
+  handBand(u*.037);handBand(H-u*.037);break;
  }
  case 'casino':
   classicPattern(false);break;
