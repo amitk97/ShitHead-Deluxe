@@ -6,9 +6,16 @@
   const f = (n) => Math.round(n * 10) / 10;
   const spade = (x, y, s, c) => `<path transform="translate(${x} ${y}) scale(${s})" d="M0-10C6-3 10 1 10 5C10 9 6 10 3 8C4 12 5 14 7 15H-7C-5 14-4 12-3 8C-6 10-10 9-10 5C-10 1-6-3 0-10Z" fill="${c}"/>`;
   // A playing card (centre x,y, rotation, scale). `tint` recolours it (frozen, marble...), `burn` chars the lower edge.
-  const card = (x, y, r, s, o = {}) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${s})"><rect x="-13" y="-18" width="26" height="36" rx="3" fill="${o.body || '#f6efe1'}" stroke="${o.edge || 'rgba(0,0,0,.45)'}" stroke-width=".9"/>${spade(0, 1.5, .95, o.pip || '#1b1b26')}${spade(-8.2, -12.2, .3, o.pip || '#1b1b26')}<rect x="-13" y="-18" width="26" height="36" rx="3" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".5"/>${o.extra || ''}</g>`;
+  const rnd = (seed) => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  // A playing card (centre x,y, rotation, scale): paper gradient, bevel, both corner indices, soft shadow. `tint` recolours it, `extra` draws over it.
+  const card = (x, y, r, s, o = {}) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${s})"><rect x="-12" y="-16" width="26" height="36" rx="3.4" fill="#000" opacity=".5" filter="url(#__ID__k)"/><g filter="url(#__ID__s)"><rect x="-13" y="-18" width="26" height="36" rx="3.2" fill="${o.body ? o.body : 'url(#__ID__p)'}" stroke="${o.edge || '#3a2f22'}" stroke-width=".9"/><rect x="-11.6" y="-16.6" width="23.2" height="33.2" rx="2.4" fill="none" stroke="rgba(255,255,255,.7)" stroke-width=".4"/>${spade(0, 1.5, .95, o.pip || '#1b1b26')}${spade(-8.2, -12.2, .3, o.pip || '#1b1b26')}${spade(8.2, 12.2, .3, o.pip || '#1b1b26')}<path d="M-13 -18H13V-6C4 -9-6-9-13-3Z" fill="#fff" opacity=".16"/>${o.extra || ''}</g></g>`;
+  // Glow: the same shapes blurred and added over the scene.
+  const glow = (svg, id, b = 'k') => `<g filter="url(#${id}${b})" style="mix-blend-mode:screen">${svg}</g>`;
+  const rays = (n, cx, cy, r1, r2, w, col, o = 1, rot = 0) => Array.from({ length: n }, (_, k) => { const a = rot + k / n * Math.PI * 2, L = k % 2 ? r2 * .72 : r2, c = Math.cos(a), sn = Math.sin(a), px = -sn * w, py = c * w; return `<path d="M${f(cx + c * r1 + px)} ${f(cy + sn * r1 + py)}L${f(cx + c * L)} ${f(cy + sn * L)}L${f(cx + c * r1 - px)} ${f(cy + sn * r1 - py)}Z" fill="${col}" opacity="${o}"/>`; }).join('');
+  // Embers: n seeded particles inside a box, sizes falling off, colours cycled.
+  const embers = (seed, n, x0, y0, x1, y1, cols, rmax = 1.6) => { const r = rnd(seed); return Array.from({ length: n }, (_, k) => { const x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0), q = r() * r(); return `<circle cx="${f(x)}" cy="${f(y)}" r="${f(.35 + q * rmax)}" fill="${cols[k % cols.length]}" opacity="${f(.45 + r() * .55)}"/>`; }).join(''); };
   const dots = (arr, col, r = 1) => arr.map(([x, y, s = 1]) => `<circle cx="${x}" cy="${y}" r="${f(r * s)}" fill="${col}"/>`).join('');
-  const wrap = (body, defs, bg) => { const id = 'bi' + (++seq); return `<svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="display:block;border-radius:inherit"><defs>${defs(id)}</defs><rect width="100" height="100" fill="url(#${id}b)"/>${body(id)}</svg>`.replace(/__BG__/g, bg || ''); };
+  const wrap = (body, defs, bg) => { const id = 'bi' + (++seq); return `<svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="display:block;border-radius:inherit"><defs>${defs(id)}<linearGradient id="${id}p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#e2d4b8"/></linearGradient><filter id="${id}k" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6"/></filter><filter id="${id}K" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter><filter id="${id}s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.2" flood-color="#000" flood-opacity=".55"/></filter><radialGradient id="${id}v" cx="50%" cy="50%" r="72%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".62"/></radialGradient></defs><rect width="100" height="100" fill="url(#${id}b)"/>${body(id)}<rect width="100" height="100" fill="url(#${id}v)"/><rect x=".5" y=".5" width="99" height="99" rx="12" fill="none" stroke="rgba(255,255,255,.14)"/></svg>`.replace(/__ID__/g, id); };
   const radial = (id, name, stops, cx = 50, cy = 50, r = 60) => `<radialGradient id="${id}${name}" gradientUnits="userSpaceOnUse" cx="${cx}" cy="${cy}" r="${r}">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join('')}</radialGradient>`;
   const linear = (id, name, stops, x1 = 0, y1 = 0, x2 = 0, y2 = 1) => `<linearGradient id="${id}${name}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient>`;
 
@@ -146,60 +153,100 @@
       <path d="M26 92L34 86M70 94L64 88M82 66L90 62" stroke="#ffe27a" stroke-width="2" stroke-linecap="round"/>`;
     },
       (i) => radial(i, 'b', [[0, '#14306e'], [.6, '#0a1233'], [1, '#04060f']], 50, 50, 80) + radial(i, 'g', [[0, 'rgba(110,180,255,.5)'], [1, 'rgba(110,180,255,0)']], 50, 52, 44)),
-    'burn-lvl-spark-snap': () => wrap((i) => `
-      <circle cx="50" cy="50" r="40" fill="url(#${i}g)"/>
-      ${Array.from({ length: 14 }, (_, k) => { const a = k / 14 * Math.PI * 2, r1 = 22, r2 = k % 2 ? 36 : 46; return `<path d="M${f(50 + Math.cos(a) * r1)} ${f(50 + Math.sin(a) * r1)}L${f(50 + Math.cos(a) * r2)} ${f(50 + Math.sin(a) * r2)}" stroke="${k % 2 ? '#ffd45a' : '#fff6c8'}" stroke-width="${k % 2 ? 1.6 : 2.4}" stroke-linecap="round"/>`; }).join('')}
-      ${card(50, 50, 14, 1.15, { body: '#f3e7d2', extra: '<path d="M-13 12L-6 8L0 14L7 7L13 11V18H-13Z" fill="#2a1208"/><path d="M-13 12L-6 8L0 14L7 7L13 11" fill="none" stroke="#ffb02e" stroke-width="1.2"/>' })}
-      <path d="M50 38L53 47L62 50L53 53L50 62L47 53L38 50L47 47Z" fill="#fff" opacity=".9"/>
-      ${dots([[16, 18, 1.3], [86, 16, 1], [90, 80, 1.2], [12, 84, 1], [30, 92, .8], [74, 8, .8]], '#ffc94d', 1.6)}`,
-      (i) => radial(i, 'b', [[0, '#4a1c06'], [.6, '#1e0b05'], [1, '#080303']], 50, 50, 75) + radial(i, 'g', [[0, 'rgba(255,200,80,.6)'], [1, 'rgba(255,200,80,0)']], 50, 50, 40)),
-    'burn-lvl-smoke-burst': () => wrap((i) => `
-      ${[[26, 62, 17], [74, 60, 18], [50, 78, 16], [20, 38, 13], [80, 34, 14], [50, 22, 14]].map(([x, y, r], k) => `<circle cx="${x}" cy="${y}" r="${r}" fill="url(#${i}s)"/><circle cx="${x - r * .3}" cy="${y - r * .35}" r="${f(r * .55)}" fill="#fff" opacity="${k % 2 ? .1 : .16}"/>`).join('')}
-      ${card(50, 50, -9, 1.2, { body: '#f3e7d2' })}
-      ${[[34, 48, 13], [66, 52, 12], [50, 34, 11], [46, 68, 12]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="url(#${i}s)" opacity=".95"/>`).join('')}
-      <path d="M14 56L30 52M72 66L90 72M42 14L46 26M60 88L58 78" stroke="#ff7a2e" stroke-width="2.2" stroke-linecap="round"/>
-      ${dots([[12, 22, 1], [90, 20, 1.2], [8, 84, 1], [92, 86, 1.1]], '#ff9a4a', 1.5)}`,
-      (i) => radial(i, 'b', [[0, '#3a2a28'], [1, '#0e0909']], 50, 50, 70) + radial(i, 's', [[0, '#e9e4e0'], [.7, '#9a928e'], [1, '#5a504e']], 40, 36, 24)),
-    'burn-lvl-inferno-sweep': () => wrap((i) => `
-      <path d="M-4 70C20 30 60 20 104 30L104 46C64 40 30 56 6 92Z" fill="url(#${i}f)"/>
-      <path d="M-4 84C26 50 66 44 104 54L104 64C66 60 34 74 12 100Z" fill="url(#${i}f)" opacity=".7"/>
-      <path d="M0 62C26 28 64 22 100 28" fill="none" stroke="#fff4c4" stroke-width="2" stroke-linecap="round"/>
-      ${card(58, 54, 10, 1.25, { body: '#f3e7d2', extra: '<path d="M-13 6L-5 1L2 8L8 0L13 5V18H-13Z" fill="#2a0e04"/><path d="M-13 6L-5 1L2 8L8 0L13 5" fill="none" stroke="#ff8a1e" stroke-width="1.3"/>' })}
-      <path d="M22 28L30 40M40 14L44 26M80 78L92 74" stroke="#ffd45a" stroke-width="2.4" stroke-linecap="round"/>
-      ${dots([[14, 20, 1.2], [90, 18, 1], [88, 90, 1.2], [18, 90, 1], [70, 10, .8]], '#ffb347', 1.6)}`,
-      (i) => radial(i, 'b', [[0, '#4a1606'], [1, '#0a0403']], 50, 60, 80) + linear(i, 'f', [[0, '#fff3b0'], [.35, '#ffa826'], [.75, '#e2380c'], [1, '#6a1004']], 0, 0, 1, 1)),
-    'burn-lvl-hellfire-spiral': () => wrap((i) => `
-      ${[[40, 14], [34, 24], [28, 34], [22, 46], [16, 58], [10, 70]].map(([w, y], k) => `<ellipse cx="50" cy="${y + 8}" rx="${w}" ry="${f(w * .22)}" fill="none" stroke="${k % 2 ? '#ff7a1e' : '#ffc14a'}" stroke-width="${k < 2 ? 3 : 2.4}" opacity="${f(1 - k * .06)}"/>`).join('')}
-      <path d="M14 18C40 10 62 24 84 16L72 74C62 84 40 84 28 74Z" fill="url(#${i}f)" opacity=".5"/>
-      ${card(50, 52, -6, 1, { body: '#f3e7d2', extra: '<path d="M-13 10L-5 6L1 12L7 5L13 9V18H-13Z" fill="#240a04"/>' })}
-      <ellipse cx="50" cy="90" rx="34" ry="7" fill="#1a0a06"/><path d="M22 90L32 82L40 88L52 80L62 88L74 82L80 90Z" fill="#3a1a0e" stroke="#ff6a1f" stroke-width="1"/>
-      ${dots([[22, 30, 1.3], [78, 26, 1.2], [14, 60, 1], [88, 56, 1.1], [60, 8, .9], [40, 70, 1]], '#ffb347', 1.5)}`,
-      (i) => radial(i, 'b', [[0, '#4a1204'], [.7, '#1a0804'], [1, '#070303']], 50, 50, 75) + linear(i, 'f', [[0, '#ffcf5a'], [1, '#c22a08']])),
-    'burn-lvl-royal-incineration': () => wrap((i) => `
-      ${Array.from({ length: 11 }, (_, k) => { const a = (-80 + k * 16) * Math.PI / 180; return `<path d="M50 40L${f(50 + Math.cos(a) * 56)} ${f(40 + Math.sin(a) * 56)}" stroke="#ffd45a" stroke-width="3" opacity=".22"/>`; }).join('')}
-      <path d="M14 96C22 74 30 60 50 56C70 60 78 74 86 96Z" fill="url(#${i}f)" opacity=".85"/>
-      ${card(50, 62, 4, 1.05, { body: '#f3e7d2' })}
-      <path d="M26 34L34 12L42 26L50 8L58 26L66 12L74 34Z" fill="url(#${i}c)" stroke="#fff2b0" stroke-width="1"/>
-      <rect x="26" y="34" width="48" height="6" rx="2" fill="#c8901e" stroke="#fff2b0" stroke-width=".8"/>
-      <circle cx="50" cy="22" r="2.6" fill="#ff3b5c"/><circle cx="36" cy="30" r="1.8" fill="#4aa8ff"/><circle cx="64" cy="30" r="1.8" fill="#4aa8ff"/>
-      ${dots([[14, 40, 1.2], [88, 36, 1.1], [10, 70, 1], [92, 74, 1.2], [50, 98, .8]], '#ffd45a', 1.5)}`,
-      (i) => radial(i, 'b', [[0, '#4a2a06'], [.7, '#1a0e04'], [1, '#080402']], 50, 50, 75) + linear(i, 'f', [[0, '#fff0a0'], [.5, '#ff9a20'], [1, '#a82008']]) + linear(i, 'c', [[0, '#fff2b0'], [.5, '#f2b52a'], [1, '#a8700e']])),
-    'burn-lvl-shitstorm': () => wrap((i) => `
-      ${[[38, 12], [32, 24], [26, 36], [20, 48], [14, 60]].map(([w, y], k) => `<ellipse cx="50" cy="${y + 10}" rx="${w}" ry="${f(w * .24)}" fill="none" stroke="${k % 2 ? '#c58a3e' : '#f2c25a'}" stroke-width="2.6" opacity="${f(.95 - k * .08)}"/>`).join('')}
-      <path d="M50 14C66 18 72 28 66 36C74 40 76 52 66 58C72 64 70 76 54 80C40 84 28 76 32 66C22 60 24 48 34 44C28 36 34 22 50 14Z" fill="url(#${i}p)" stroke="#2a1608" stroke-width="1.2"/>
-      <ellipse cx="42" cy="46" rx="4" ry="5" fill="#fff"/><ellipse cx="58" cy="46" rx="4" ry="5" fill="#fff"/><circle cx="43" cy="47" r="2" fill="#1a0e06"/><circle cx="59" cy="47" r="2" fill="#1a0e06"/>
-      <path d="M40 60Q50 68 60 60" fill="none" stroke="#1a0e06" stroke-width="2" stroke-linecap="round"/>
-      ${card(20, 78, -22, .6, { body: '#f3e7d2' })}${card(82, 24, 20, .55, { body: '#f3e7d2' })}
-      ${dots([[12, 24, 1.2], [90, 56, 1.2], [78, 88, 1], [20, 52, 1], [66, 8, .8]], '#ffd45a', 1.5)}`,
-      (i) => radial(i, 'b', [[0, '#3a2410'], [.7, '#160e08'], [1, '#070403']], 50, 50, 75) + radial(i, 'p', [[0, '#c98a4a'], [.7, '#7a4a22'], [1, '#4a2a12']], 44, 36, 40)),
     'default': () => wrap((i) => `
-      <ellipse cx="50" cy="90" rx="44" ry="8" fill="url(#${i}h)"/>
-      <path d="M12 90C10 70 22 62 20 46C30 56 32 44 28 30C42 40 44 54 40 62C48 50 50 36 46 20C60 34 62 50 58 62C66 54 70 44 68 34C80 46 84 60 76 72C84 68 86 62 86 62C92 76 90 84 88 90Z" fill="url(#${i}f)"/>
-      <path d="M30 90C28 78 36 74 36 66C42 72 44 66 42 58C50 64 52 74 48 80C54 74 58 70 56 62C66 68 68 80 64 90Z" fill="#ffe27a" opacity=".9"/>
-      ${card(50, 46, -6, 1.2, { body: '#f3e7d2', extra: '<path d="M-13 8L-5 3L1 10L7 2L13 7V18H-13Z" fill="#240a04"/><path d="M-13 8L-5 3L1 10L7 2L13 7" fill="none" stroke="#ff8a1e" stroke-width="1.3"/>' })}
-      <path d="M22 24L28 34M76 22L72 34M10 54L20 56M92 48L82 52" stroke="#ffd45a" stroke-width="2" stroke-linecap="round"/>
-      ${dots([[16, 14, 1.2], [84, 10, 1], [94, 30, 1], [6, 32, 1.1], [60, 8, .8], [38, 6, .9]], '#ffb347', 1.6)}`,
-      (i) => radial(i, 'b', [[0, '#4a1606'], [.65, '#1c0a05'], [1, '#080303']], 50, 80, 85) + radial(i, 'h', [[0, 'rgba(255,170,60,.65)'], [1, 'rgba(255,170,60,0)']], 50, 90, 46) + linear(i, 'f', [[0, '#fff2a8'], [.35, '#ffb028'], [.75, '#e2410a'], [1, '#7a1405']])),
+      ${glow('<ellipse cx="50" cy="88" rx="46" ry="14" fill="#ff8a1e" opacity=".8"/>', i, 'K')}
+      <path d="M4 96C2 72 14 64 12 44C22 54 26 40 20 24C34 34 38 50 32 60C40 46 42 28 36 10C54 24 58 44 52 58C60 46 62 34 58 22C72 34 76 50 70 62C78 54 80 46 78 38C92 52 96 70 90 96Z" fill="url(#${i}f)"/>
+      <path d="M20 96C16 82 26 76 26 66C32 72 36 64 34 54C44 62 46 74 42 82C50 74 54 66 52 58C62 68 66 80 62 96Z" fill="url(#${i}m)"/>
+      <path d="M34 96C34 86 42 82 42 74C48 80 50 74 48 68C56 76 58 86 54 96Z" fill="#fff6c8"/>
+      ${glow('<path d="M28 60C34 40 46 30 50 8C56 30 70 40 74 62C60 56 42 56 28 60Z" fill="#ffb347" opacity=".75"/>', i)}
+      ${card(50, 48, -6, 1.28, { extra: '<path d="M-13 6L-6 1L0 9L6 0L13 5V18H-13Z" fill="#1c0904"/><path d="M-13 6L-6 1L0 9L6 0L13 5" fill="none" stroke="#ff9a2e" stroke-width="1.5"/><path d="M-13 6L-6 1L0 9L6 0L13 5" fill="none" stroke="#fff3b0" stroke-width=".5"/>' })}
+      ${Array.from({ length: 9 }, (_, k) => `<path d="M${14 + k * 9} 94C${12 + k * 9} 70 ${20 + k * 9} 60 ${16 + k * 9} 42" fill="none" stroke="#ffd45a" stroke-width=".6" opacity=".35"/>`).join('')}
+      ${embers(7, 46, 4, 4, 96, 70, ['#ffd45a', '#ff9a2e', '#fff1b0', '#ff6a1f'], 1.7)}
+      ${glow(embers(8, 14, 8, 6, 92, 60, ['#ffb347', '#ffe27a'], 2.2), i)}`,
+      (i) => radial(i, 'b', [[0, '#5a1c06'], [.55, '#220b05'], [1, '#060202']], 50, 86, 95) + linear(i, 'f', [[0, '#fff2a8'], [.3, '#ffb028'], [.7, '#e2410a'], [1, '#7a1405']]) + linear(i, 'm', [[0, '#ffe27a'], [.6, '#ff9a1e'], [1, '#d4400a']])),
+    'burn-lvl-spark-snap': () => wrap((i) => `
+      ${glow('<circle cx="50" cy="50" r="34" fill="url(#' + i + 'g)"/>', i, 'K')}
+      ${rays(16, 50, 50, 14, 52, .9, 'url(#' + i + 'r)', .9, .1)}
+      ${glow(rays(16, 50, 50, 14, 52, 1.6, '#ffc94d', .6, .1), i)}
+      <ellipse cx="50" cy="88" rx="44" ry="9" fill="none" stroke="#ffb347" stroke-width="1.6" opacity=".7"/><ellipse cx="50" cy="88" rx="30" ry="6" fill="none" stroke="#fff1b0" stroke-width="1.2" opacity=".6"/><ellipse cx="50" cy="88" rx="16" ry="3" fill="#ffd45a" opacity=".5"/>
+      ${card(54, 50, 16, 1.3)}
+      ${glow('<circle cx="50" cy="50" r="13" fill="#fff"/>', i)}
+      <circle cx="50" cy="50" r="6" fill="#fff"/>
+      <path d="M50 30L53 46L70 50L53 54L50 70L47 54L30 50L47 46Z" fill="#fff"/>
+      ${embers(21, 60, 4, 4, 96, 96, ['#ffd45a', '#fff6c8', '#ff9a2e'], 1.5)}
+      ${glow(embers(22, 12, 6, 6, 94, 94, ['#ffe27a'], 2.4), i)}`,
+      (i) => radial(i, 'b', [[0, '#3a1608'], [.5, '#170a06'], [1, '#050202']], 50, 50, 80) + radial(i, 'g', [[0, 'rgba(255,214,110,.95)'], [.6, 'rgba(255,150,40,.35)'], [1, 'rgba(255,120,20,0)']], 50, 50, 34) + linear(i, 'r', [[0, '#ffffff'], [1, '#ff9a2e']], 0, 0, 1, 1)),
+    'burn-lvl-smoke-burst': () => wrap((i) => {
+      const r = rnd(5), puff = (x, y, rad, a) => `<circle cx="${x}" cy="${y}" r="${rad}" fill="url(#${i}s)" opacity="${a}"/><circle cx="${f(x - rad * .28)}" cy="${f(y - rad * .32)}" r="${f(rad * .6)}" fill="#fff" opacity=".12"/><circle cx="${f(x + rad * .3)}" cy="${f(y + rad * .35)}" r="${f(rad * .55)}" fill="#000" opacity=".18"/>`;
+      const back = [[24, 64, 20], [76, 62, 21], [50, 80, 19], [16, 36, 15], [84, 34, 16], [50, 18, 16], [30, 20, 11], [72, 12, 10]];
+      const front = [[18, 56, 13], [82, 56, 13], [50, 90, 12], [24, 30, 10], [78, 28, 10]];
+      return `
+      ${glow('<circle cx="50" cy="50" r="26" fill="#ff6a1f" opacity=".6"/>', i, 'K')}
+      ${back.map(([x, y, rad]) => puff(x, y, rad, .92)).join('')}
+      ${card(50, 50, -9, 1.3, { extra: '<path d="M-13 10L-5 5L2 12L8 4L13 9V18H-13Z" fill="#1c1210" opacity=".85"/>' })}
+      ${front.map(([x, y, rad]) => puff(x, y, rad, .96)).join('')}
+      ${Array.from({ length: 12 }, () => `<path d="M${f(10 + r() * 80)} ${f(10 + r() * 80)}l${f(r() * 6 - 3)} ${f(r() * 6 - 3)}" stroke="#ff9a4a" stroke-width="1.4" stroke-linecap="round" opacity=".8"/>`).join('')}
+      ${embers(6, 30, 4, 4, 96, 96, ['#ff9a4a', '#ffd45a', '#ff6a1f'], 1.4)}`;
+    },
+      (i) => radial(i, 'b', [[0, '#3a2a26'], [1, '#0b0707']], 50, 50, 75) + radial(i, 's', [[0, '#f1ece8'], [.55, '#a8a09b'], [1, '#4f4642']], 40, 34, 26)),
+    'burn-lvl-inferno-sweep': () => wrap((i) => `
+      ${glow('<path d="M-6 74C20 28 62 16 108 30L108 50C64 42 30 58 6 98Z" fill="#ff7a1e" opacity=".8"/>', i, 'K')}
+      <path d="M-6 76C20 30 62 18 108 32L108 52C64 44 30 60 6 100Z" fill="url(#${i}f)"/>
+      <path d="M-6 92C26 56 66 48 108 58L108 70C66 66 34 80 14 106Z" fill="url(#${i}f)" opacity=".75"/>
+      <path d="M-6 58C26 22 64 14 108 20L108 28C66 24 34 36 2 70Z" fill="url(#${i}f)" opacity=".6"/>
+      ${Array.from({ length: 7 }, (_, k) => `<path d="M${-4 + k * 6} ${82 - k * 8}C${24 + k * 8} ${40 - k * 3} ${60} ${28 + k * 2} 104 ${36 + k * 2}" fill="none" stroke="#fff1b0" stroke-width="${f(1.4 - k * .14)}" stroke-linecap="round" opacity="${f(.9 - k * .1)}"/>`).join('')}
+      ${card(60, 54, 12, 1.32, { extra: '<path d="M-13 4L-5 -1L2 7L8 -2L13 3V18H-13Z" fill="#1c0904"/><path d="M-13 4L-5 -1L2 7L8 -2L13 3" fill="none" stroke="#ff9a2e" stroke-width="1.4"/>' })}
+      ${glow('<path d="M52 44L66 38L72 52Z" fill="#ffd45a" opacity=".8"/>', i)}
+      <path d="M52 30L60 44M70 22L74 38M86 60L100 54M34 40L46 50" stroke="#fff4c4" stroke-width="2.2" stroke-linecap="round"/>
+      ${embers(31, 50, 4, 4, 96, 96, ['#ffd45a', '#ff9a2e', '#fff1b0'], 1.6)}
+      ${glow(embers(32, 10, 6, 6, 94, 90, ['#ffe27a'], 2.4), i)}`,
+      (i) => radial(i, 'b', [[0, '#4a1606'], [.6, '#1a0805'], [1, '#050202']], 60, 55, 85) + linear(i, 'f', [[0, '#fff6c0'], [.3, '#ffb028'], [.7, '#e2380c'], [1, '#6a1004']], 0, 0, 1, 1)),
+    'burn-lvl-hellfire-spiral': () => wrap((i) => {
+      const rings = [[40, 12], [37, 22], [34, 32], [30, 42], [26, 52], [21, 62], [16, 72], [11, 82]];
+      return `
+      ${glow('<path d="M12 12C40 4 64 20 88 10L66 86C56 94 38 94 28 86Z" fill="#ff6a1f" opacity=".55"/>', i, 'K')}
+      <path d="M10 14C40 6 62 22 90 12L70 88C58 96 38 96 26 88Z" fill="url(#${i}f)" opacity=".55"/>
+      ${rings.map(([w, y], k) => `<ellipse cx="50" cy="${y}" rx="${w}" ry="${f(w * .24)}" fill="none" stroke="${k % 2 ? '#ff7a1e' : '#ffd45a'}" stroke-width="${f(3.2 - k * .2)}" opacity="${f(1 - k * .05)}" transform="rotate(${k % 2 ? -4 : 5} 50 ${y})"/><ellipse cx="50" cy="${y}" rx="${f(w * .84)}" ry="${f(w * .2)}" fill="none" stroke="#fff1b0" stroke-width=".7" opacity=".55" transform="rotate(${k % 2 ? -4 : 5} 50 ${y})"/>`).join('')}
+      ${card(50, 54, -8, 1.05, { extra: '<path d="M-13 8L-5 3L1 10L7 2L13 7V18H-13Z" fill="#1c0904"/><path d="M-13 8L-5 3L1 10L7 2L13 7" fill="none" stroke="#ff9a2e" stroke-width="1.3"/>' })}
+      ${[[14, 40, 28], [84, 30, 52], [20, 70, 14], [86, 66, 40]].map(([x, y, a]) => `<g transform="translate(${x} ${y}) rotate(${a})"><rect x="-4" y="-5.5" width="8" height="11" rx="1.2" fill="#f1e2c6"/><path d="M-4 1L0 -1L4 2V5.5H-4Z" fill="#1c0904"/></g>`).join('')}
+      <ellipse cx="50" cy="94" rx="38" ry="6" fill="#120806"/><path d="M16 94L28 84L38 91L52 82L64 91L76 84L88 94Z" fill="#2c140a" stroke="#ff6a1f" stroke-width="1.1"/><path d="M28 84L38 91M52 82L64 91" stroke="#ffd45a" stroke-width=".8"/>
+      ${embers(41, 54, 4, 4, 96, 90, ['#ffd45a', '#ff9a2e', '#ff6a1f'], 1.6)}
+      ${glow(embers(42, 10, 8, 8, 92, 80, ['#ffe27a'], 2.4), i)}`;
+    },
+      (i) => radial(i, 'b', [[0, '#4a1204'], [.65, '#190804'], [1, '#050202']], 50, 50, 78) + linear(i, 'f', [[0, '#ffcf5a'], [.5, '#e8561a'], [1, '#6a1004']])),
+    'burn-lvl-royal-incineration': () => wrap((i) => `
+      ${glow('<circle cx="50" cy="34" r="30" fill="#ffd45a" opacity=".7"/>', i, 'K')}
+      ${rays(13, 50, 34, 8, 72, 1.8, '#ffd45a', .26, -.3)}
+      ${rays(13, 50, 34, 8, 72, .5, '#fff2b0', .55, -.3)}
+      <path d="M0 100C8 78 26 60 50 56C74 60 92 78 100 100Z" fill="url(#${i}f)"/>
+      <path d="M16 100C22 82 34 70 50 66C66 70 78 82 84 100Z" fill="#ffd45a" opacity=".85"/>
+      ${card(50, 64, 3, 1.1, { extra: '<path d="M-13 9L-5 4L1 11L7 3L13 8V18H-13Z" fill="#1c0904"/><path d="M-13 9L-5 4L1 11L7 3L13 8" fill="none" stroke="#ff9a2e" stroke-width="1.3"/>' })}
+      ${glow('<path d="M24 36L30 8L40 24L50 4L60 24L70 8L76 36Z" fill="#ffd45a"/>', i)}
+      <path d="M24 36L30 8L40 24L50 4L60 24L70 8L76 36Z" fill="url(#${i}c)" stroke="#fff2b0" stroke-width="1.1" stroke-linejoin="round"/>
+      <path d="M30 8L34 36M40 24L42 36M50 4L50 36M60 24L58 36M70 8L66 36" stroke="#8a5a0e" stroke-width=".7" opacity=".6"/>
+      <rect x="24" y="36" width="52" height="8" rx="2.4" fill="url(#${i}c)" stroke="#fff2b0" stroke-width="1"/>
+      <rect x="24" y="36" width="52" height="3" rx="1.5" fill="#fff" opacity=".35"/>
+      <path d="M50 4m-2.6 0a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0 -5.2 0" fill="#ff3b5c" stroke="#fff" stroke-width=".6"/><circle cx="30" cy="8" r="2" fill="#4aa8ff"/><circle cx="70" cy="8" r="2" fill="#4aa8ff"/>
+      ${[[32, 40, '#ff3b5c'], [42, 40, '#4aa8ff'], [50, 40, '#3dffb0'], [58, 40, '#4aa8ff'], [68, 40, '#ff3b5c']].map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="1.7" fill="${c}" stroke="#fff" stroke-width=".4"/>`).join('')}
+      ${embers(51, 54, 4, 20, 96, 98, ['#ffd45a', '#fff2b0', '#ff9a2e'], 1.6)}
+      ${glow(embers(52, 10, 8, 20, 92, 90, ['#fff2b0'], 2.4), i)}`,
+      (i) => radial(i, 'b', [[0, '#5a3408'], [.6, '#1c1006'], [1, '#060302']], 50, 40, 85) + linear(i, 'f', [[0, '#fff0a0'], [.45, '#ff9a20'], [1, '#a82008']]) + linear(i, 'c', [[0, '#fff6c0'], [.45, '#f2b52a'], [1, '#9a620c']])),
+    'burn-lvl-shitstorm': () => wrap((i) => {
+      const rings = [[42, 10], [39, 20], [35, 30], [31, 40], [27, 50], [22, 60], [17, 70], [12, 80]];
+      return `
+      ${glow('<ellipse cx="50" cy="48" rx="34" ry="42" fill="#d8962a" opacity=".5"/>', i, 'K')}
+      ${rings.map(([w, y], k) => `<ellipse cx="50" cy="${y}" rx="${w}" ry="${f(w * .22)}" fill="none" stroke="${k % 2 ? '#a8742e' : '#f2c25a'}" stroke-width="${f(3 - k * .18)}" opacity="${f(.95 - k * .05)}" transform="rotate(${k % 2 ? 6 : -5} 50 ${y})"/>`).join('')}
+      <path d="M50 8C64 8 72 18 67 27C77 29 80 41 71 47C81 52 80 66 66 70C70 80 58 88 46 86C30 86 22 76 28 68C16 64 16 50 27 46C20 38 26 26 37 24C34 14 42 8 50 8Z" fill="url(#${i}p)" stroke="#2a1608" stroke-width="1.4"/>
+      <path d="M36 22C44 14 58 14 64 22" fill="none" stroke="#e9b878" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+      <path d="M30 52C26 62 36 72 50 74" fill="none" stroke="#2a1608" stroke-width="3" opacity=".25"/>
+      <path d="M32 36Q40 30 46 36" stroke="#2a1608" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M54 36Q60 30 68 36" stroke="#2a1608" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <ellipse cx="40" cy="44" rx="6.4" ry="7.4" fill="#fff"/><ellipse cx="60" cy="44" rx="6.4" ry="7.4" fill="#fff"/><circle cx="42" cy="45" r="3.3" fill="#1a0e06"/><circle cx="58" cy="45" r="3.3" fill="#1a0e06"/><circle cx="43" cy="43.6" r="1.1" fill="#fff"/><circle cx="59" cy="43.6" r="1.1" fill="#fff"/>
+      <path d="M36 58Q50 74 64 58Q50 64 36 58Z" fill="#2a0e08" stroke="#2a1608" stroke-width="1.2" stroke-linejoin="round"/><path d="M40 60L42 64L44 60M46 62L48 66L50 62M52 62L54 66L56 60" fill="#fff" stroke="none"/>
+      ${card(16, 78, -24, .72)}${card(86, 22, 22, .66)}${card(88, 76, 16, .56)}
+      ${embers(61, 54, 4, 4, 96, 96, ['#ffd45a', '#c98a4a', '#fff1b0'], 1.5)}
+      ${glow(embers(62, 10, 8, 8, 92, 90, ['#ffe27a'], 2.4), i)}`;
+    },
+      (i) => radial(i, 'b', [[0, '#3d2610'], [.65, '#150d07'], [1, '#050302']], 50, 50, 78) + radial(i, 'p', [[0, '#d99a58'], [.55, '#8a5426'], [1, '#4a2a12']], 42, 30, 46)),
     'burn-ss2709-hex': () => wrap((i) => `
       <circle cx="50" cy="50" r="40" fill="none" stroke="#b36bff" stroke-width="2.4"/><circle cx="50" cy="50" r="40" fill="none" stroke="#7a2cff" stroke-width="7" opacity=".3"/><circle cx="50" cy="50" r="34" fill="none" stroke="#b36bff" stroke-width="1" stroke-dasharray="2 2.6"/>
       <circle cx="50" cy="50" r="25" fill="none" stroke="#3dffb0" stroke-width="1.6"/>
