@@ -86,7 +86,7 @@ void main(){
   float lick=fbm(vec2(p.x*1.7+v_k.y*5.,p.y*2.6-t*3.));
   float inten=body*smoothstep(.12,.62,lick+(1.-p.y)*.55-.22);
   float heat=inten*(.9-p.y*.55)*(1.-d*.35);
-  vec3 c=fire(heat)*inten*v_k.w*.62;
+  vec3 c=fire(heat)*v_col.rgb*inten*v_k.w*.62;
   gl_FragColor=vec4(c,max(c.r,max(c.g,c.b))*.8);
  } else if(k<2.5){
   float d=length(v_loc);float core=exp(-d*d*4.5);
@@ -496,7 +496,9 @@ void main(){
           // rolls off its edges; on the ignition a ring of sparks bursts out across the floor.
           const orbit = (o, fast) => ({ r: o ? R(.25, .55) : R(.9, 1.4), a: R(0, 6.28), w: (fast ? 1.3 : 1) * (storm ? 1.5 : 1) * R(5, 8), y: FLOOR + R(0, .2), vy: R(.9, 1.7), pull: o ? 0 : R(1.2, 2) });
           if (t > T - .1 && t < 1.55) emit('helix', storm ? 95 : 70, dt, () => S.embers.push({ pal: storm ? 2 : 0, orb: orbit(rand() < .5, true), p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.5, .9), size: R(1.6, 3.6), seed: rand() * 6.28 }));
-          if (t > T - .04 && t < 1.5) emit('tornado', storm ? 150 : 170, dt, () => S.flames.push({ orb: { r: R(.3, .55), a: R(0, 6.28), w: (storm ? 1.2 : 1) * R(4.5, 7), y: FLOOR + R(-.02, .12), vy: R(1, 1.8) }, x: 0, y: FLOOR, z: 0, w: R(.2, .36), h: R(.42, .8), age: 0, life: R(.45, .8), seed: rand(), lean: 0 }));
+          if (t > T - .04 && t < 1.5) emit('tornado', storm ? 120 : 170, dt, () => S.flames.push({ orb: { r: storm ? R(.55, .95) : R(.3, .55), a: R(0, 6.28), w: (storm ? 1.2 : 1) * R(4.5, 7), y: FLOOR + R(-.02, .12), vy: storm ? R(1.2, 2.2) : R(1, 1.8) }, x: 0, y: FLOOR, z: 0, w: storm ? R(.3, .52) : R(.2, .36), h: storm ? R(.7, 1.2) : R(.42, .8), age: 0, life: R(.5, .85), seed: rand(), lean: 0, tint: storm ? [.95, .62, .28] : null }));
+          // The ShitStorm is a storm of the stuff itself: dark and golden dust clouds whirl round the card with the flames.
+          if (storm && t > T - .04 && t < 1.5) emit('dust', 70, dt, () => S.smoke.push({ orb: { r: R(.5, .95), a: R(0, 6.28), w: R(3.5, 5.5), y: FLOOR + R(0, .25), vy: R(.9, 1.7) }, col: rand() < .5 ? [.58, .38, .17] : [.26, .15, .07], p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.7, 1.1), size: R(.4, .7), seed: rand(), a: .55 }));
           if (t > T && t < 1.35) emit('debris', 11, dt, () => S.shards.push({ c: n - 1, orb: orbit(false), p: [0, 0, 0], uv: [R(.1, .9), R(.1, .9)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: R(.03, .055), age: 0, life: R(.7, 1), seed: rand(), char: .3 }));
           if (t > T && t < 1.45) emit('smoke', 10, dt, () => { const sd = rand() < .5 ? -1 : 1; S.smoke.push({ col: storm ? [.2, .13, .07] : [.12, .07, .07], p: [sd * R(1, 1.7), R(-.2, 1.6), R(-.5, .1)], v: [sd * R(.1, .3), R(.2, .5), 0], age: 0, life: R(.8, 1.2), size: R(.4, .7), seed: rand() }); });
           if (t > T && t < T + .03) for (let i = 0; i < 30; i++) { const a = R(0, 6.28), sp = R(1.2, 2.6); S.embers.push({ pal: storm ? 2 : 0, p: [0, FLOOR + .05, .2], v: [Math.cos(a) * sp, R(.2, .9), Math.sin(a) * sp * .6], age: 0, life: R(.4, .8), size: R(2, 4.4), seed: rand() * 6.28 }); }
@@ -552,7 +554,11 @@ void main(){
         e.age += dt; e.v[0] += Math.sin(t * 9 + e.seed) * .9 * dt; e.v[1] -= (e.fall ? 3.2 : .25) * dt;
         e.v.forEach((_, i) => { e.v[i] *= 1 - .9 * dt; e.p[i] += e.v[i] * dt; });
       }
-      for (const m of S.smoke) { m.age += dt; m.p[0] += m.v[0] * dt; m.p[1] += m.v[1] * dt; }
+      for (const m of S.smoke) {
+        m.age += dt;
+        if (m.orb) { const b = m.orb; b.a += b.w * dt; b.y += b.vy * dt; b.r *= 1 + .2 * dt; m.p = [Math.cos(b.a) * b.r * (1 + .6 * (b.y - FLOOR)), b.y, Math.sin(b.a) * b.r * .6]; }
+        else { m.p[0] += m.v[0] * dt; m.p[1] += m.v[1] * dt; }
+      }
       for (const s of S.shards) {
         if (s.orb) continue;
         s.age += dt; if (!s.still) s.v[1] += (s.age < .35 ? .3 : -1.1) * dt;
@@ -948,7 +954,7 @@ void main(){
       }
     }
     for (const m of S.smoke) {
-      const a = m.age / m.life, alpha = .24 * smooth(0, .2, a) * (1 - smooth(.5, 1, a));
+      const a = m.age / m.life, alpha = (m.a || .24) * smooth(0, .2, a) * (1 - smooth(.5, 1, a));
       billboard(out.mid, m.p, m.size * (1 + a * 1.3), [...(m.col || [.11, .09, .08]), alpha], [3, m.seed, 0, 0]);
     }
     // The card meshes, lit from the front-top and by the effect around them.
@@ -1010,7 +1016,7 @@ void main(){
       const b = projW([f.x, f.y, f.z]), tp = projW([f.x + f.lean * h, f.y + h, f.z]), hw = f.w * F * b[2] * .5;
       const dx = tp[0] - b[0], dy = tp[1] - b[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l * hw, ny = dx / l * hw;
       const arr = (f.y * SP + f.z * CP) > cardZ ? out.front : out.back;
-      quad(arr, [[b[0] - nx, b[1] - ny], [b[0] + nx, b[1] + ny], [tp[0] + nx * .8, tp[1] + ny * .8], [tp[0] - nx * .8, tp[1] - ny * .8]], Z4, UP, [1, 1, 1, 1], [1, f.seed, a, env * 1.15]);
+      quad(arr, [[b[0] - nx, b[1] - ny], [b[0] + nx, b[1] + ny], [tp[0] + nx * .8, tp[1] + ny * .8], [tp[0] - nx * .8, tp[1] - ny * .8]], Z4, UP, [...(f.tint || [1, 1, 1]), 1], [1, f.seed, a, env * 1.15]);
     }
     for (const e of S.embers) {
       const a = e.age / e.life, head = projW(e.p), tail = projW([e.p[0] - e.v[0] * .07, e.p[1] - e.v[1] * .07, e.p[2] - e.v[2] * .07]);
@@ -1081,7 +1087,7 @@ void main(){
     // The painted scene fits the screen width and the room above the Pile (under the header), so its
     // top is never cut off; the cards stay their real size.
     const hw = host.clientWidth || 390, hh = host.clientHeight || 844, [LW, LR, , LV] = fx.layout || [];
-    const LU = (fx.layout || [])[2], artK = fx.art ? Math.min(1, hw * .98 / (LW * H * 2 * Math.max(LU, 1 - LU)), Math.max(0, y - 52) / (LW * LR * LV * H)) : 1;
+    const LU = (fx.layout || [])[2], artK = fx.art ? Math.min(1, hw * .98 / (LW * H * 2 * Math.max(LU, 1 - LU)), Math.max(0, y - 52) / (LW * LR * LV * H)) * (/shitstorm|hellfire/.test(id) ? .86 : 1) : 1; // the storms grow on the strike, so they get margin under the header
     // A painted scene gets the whole layer, so its smoke is never cut by a canvas edge.
     const [bw, bh, bx, by] = fx.box, x0 = fx.art ? 0 : Math.max(0, x - H * bw * bx), y0 = fx.art ? 0 : Math.max(0, y - H * bh * by);
     const ox = Math.round(x0), oy = Math.round(y0), cw = Math.round(fx.art ? hw : Math.min(hw, x + H * bw * (1 - bx)) - ox), ch = Math.round(fx.art ? hh : Math.min(hh, y + H * bh * (1 - by)) - oy);
