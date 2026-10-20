@@ -407,6 +407,68 @@
         k.scatter(9, 0.76, 1.45, (at) => { const f = 90 + Math.random() * 90; k.tone({ at, dur: 0.1, f0: f, f1: f * 2.2, level: 0.13 }); });
         k.noise({ at: 1.35, dur: 0.55, type: 'highpass', f0: 4000, f1: 1500, level: 0.08, attack: 0.05 });
       },
+      // Season burns (art/burns/season/season-burns.js, 1.8s): each follows its visual beats.
+      // Sandstorm Vortex: wind sweeping in (0-.55), a whirling funnel (.55-1.4), a soft dust cloud (1.4-1.8).
+      'burn-ss2611-sandstorm': (k) => {
+        k.noise({ dur: 0.6, type: 'bandpass', f0: 350, f1: 1300, q: 0.8, level: 0.28, attack: 0.3 });
+        k.tone({ at: 0.45, dur: 1.0, type: 'sawtooth', f0: 60, f1: 95, level: 0.07, attack: 0.3 });
+        k.noise({ at: 0.55, dur: 0.9, type: 'bandpass', f0: 1100, f1: 1800, q: 1.4, level: 0.22, attack: 0.15 });
+        k.scatter(26, 0.55, 1.4, (at) => k.noise({ at, dur: 0.05, type: 'highpass', f0: 5200, level: 0.07 }));
+        k.noise({ at: 1.4, dur: 0.4, type: 'lowpass', f0: 1400, f1: 300, level: 0.12, attack: 0.05 });
+      },
+      // Glacial Shatter: a freezing creak and ice ticks (0-.6), a heavy shatter + tinkling shards (.6), frosty drift.
+      'burn-ss2701-glacier': (k) => {
+        k.scatter(14, 0.02, 0.58, (at) => k.noise({ at, dur: 0.03, type: 'bandpass', f0: 4200 + Math.random() * 2000, q: 3, level: 0.16 }));
+        k.tone({ at: 0.05, dur: 0.55, type: 'sine', f0: 1500, f1: 2600, level: 0.04, attack: 0.3 });
+        k.noise({ at: 0.6, dur: 0.35, type: 'highpass', f0: 2800, f1: 1200, level: 0.5, attack: 0.005 });
+        k.tone({ at: 0.6, dur: 0.3, type: 'triangle', f0: 130, f1: 55, level: 0.3 });
+        k.scatter(18, 0.65, 1.55, (at) => { const f = 1800 + Math.random() * 3600; k.tone({ at, dur: 0.12, type: 'sine', f0: f, f1: f * 0.97, level: 0.06 }); });
+        k.noise({ at: 0.8, dur: 0.9, type: 'highpass', f0: 6000, level: 0.05, attack: 0.1 });
+      },
+      // Shuriken Barrage: five whooshes and thunks (0-.5), a metal slash ring (.5), petals swirling on soft chimes.
+      'burn-ss2703-shuriken': (k) => {
+        [0, 0.055, 0.11, 0.165, 0.22].forEach((at, i) => {
+          k.noise({ at, dur: 0.2, type: 'bandpass', f0: 3000 - i * 150, f1: 900, q: 1.5, level: 0.3 });
+          k.noise({ at: at + 0.4, dur: 0.04, type: 'lowpass', f0: 1800, level: 0.3 });
+          k.tone({ at: at + 0.4, dur: 0.12, type: 'triangle', f0: 190, f1: 80, level: 0.18 });
+        });
+        k.noise({ at: 0.5, dur: 0.3, type: 'highpass', f0: 4500, f1: 1600, level: 0.45, attack: 0.005 });
+        k.tone({ at: 0.5, dur: 0.6, type: 'sine', f0: 2700, f1: 2500, level: 0.12, attack: 0.002 });
+        k.tone({ at: 0.5, dur: 0.5, type: 'sine', f0: 3900, f1: 3700, level: 0.06 });
+        k.noise({ at: 1.1, dur: 0.7, type: 'bandpass', f0: 1800, f1: 900, q: 0.6, level: 0.08, attack: 0.15 });
+        [784, 988, 1175, 1318, 1568].forEach((f, i) => k.tone({ at: 1.12 + i * 0.1, dur: 0.35, type: 'sine', f0: f, level: 0.05, attack: 0.01 }));
+      },
+      // Abyssal Whirlpool: a deep swirling pull (0-1.1), the snap-shut gulp (1.1), a burst of popping bubbles.
+      'burn-ss2705-whirlpool': (k) => {
+        k.noise({ dur: 1.1, type: 'lowpass', f0: 300, f1: 1000, q: 1.2, level: 0.3, attack: 0.25 });
+        k.tone({ at: 0.05, dur: 1.05, type: 'sine', f0: 150, f1: 48, level: 0.22, attack: 0.2 });
+        k.tone({ at: 0.2, dur: 0.9, type: 'triangle', f0: 400, f1: 120, level: 0.06 });
+        k.noise({ at: 1.1, dur: 0.18, type: 'lowpass', f0: 500, f1: 120, level: 0.4, attack: 0.003 });
+        k.tone({ at: 1.1, dur: 0.2, type: 'sine', f0: 220, f1: 55, level: 0.3 });
+        k.scatter(34, 1.12, 1.75, (at) => { const f = 380 + Math.random() * 800; k.tone({ at, dur: 0.08, type: 'sine', f0: f, f1: f * 2.2, level: 0.08 }); });
+      },
+      // Zeus's Bolt: an ominous rumble (0-.65), the thunder crack at .65, stone bursting, crackling arcs, drifting dust.
+      'burn-ss2707-zeus': (k) => {
+        k.noise({ dur: 0.7, type: 'lowpass', f0: 160, f1: 120, level: 0.3, attack: 0.4 });
+        k.tone({ dur: 0.7, type: 'sawtooth', f0: 48, f1: 60, level: 0.08, attack: 0.4 });
+        k.noise({ at: 0.65, dur: 0.12, type: 'highpass', f0: 6000, level: 0.55, attack: 0.002 });
+        k.noise({ at: 0.66, dur: 0.9, type: 'lowpass', f0: 900, f1: 90, level: 0.5, attack: 0.005 });
+        k.tone({ at: 0.66, dur: 0.6, type: 'sine', f0: 90, f1: 38, level: 0.35 });
+        k.scatter(16, 0.7, 1.3, (at) => k.noise({ at, dur: 0.05, type: 'bandpass', f0: 700 + Math.random() * 1500, q: 2, level: 0.2 }));
+        k.scatter(22, 0.72, 1.5, (at) => k.noise({ at, dur: 0.03, type: 'highpass', f0: 6500, level: 0.1 }));
+        k.noise({ at: 1.3, dur: 0.5, type: 'lowpass', f0: 800, f1: 200, level: 0.08, attack: 0.1 });
+      },
+      // Arcane Hex: a rising violet drone and chimes (0-.65), the flash and void at .65, dissolving crackle, a collapse.
+      'burn-ss2709-hex': (k) => {
+        k.tone({ dur: 0.7, type: 'triangle', f0: 110, f1: 220, level: 0.16, attack: 0.3 });
+        k.tone({ dur: 0.7, type: 'sine', f0: 165, f1: 330, level: 0.08, attack: 0.3 });
+        [523, 659, 784, 1047].forEach((f, i) => k.tone({ at: 0.1 + i * 0.13, dur: 0.3, type: 'sine', f0: f, level: 0.05, attack: 0.005 }));
+        k.tone({ at: 0.65, dur: 0.35, type: 'sawtooth', f0: 200, f1: 1600, level: 0.1, attack: 0.02 });
+        k.noise({ at: 0.65, dur: 0.5, type: 'highpass', f0: 3000, f1: 800, level: 0.3, attack: 0.01 });
+        k.noise({ at: 0.7, dur: 0.8, type: 'lowpass', f0: 500, f1: 100, level: 0.28, attack: 0.1 });
+        k.scatter(30, 0.75, 1.4, (at) => k.noise({ at, dur: 0.025, type: 'highpass', f0: 5500, level: 0.1 }));
+        k.tone({ at: 1.4, dur: 0.4, type: 'sine', f0: 900, f1: 90, level: 0.14 });
+      },
       // Level burns v294: shared visual/audio timing in the layered renderer.
       'burn-lvl-spark-snap': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-spark-snap', k) : ShLevelBurns.sound('burn-lvl-spark-snap', k)),
       'burn-lvl-smoke-burst': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-smoke-burst', k) : ShLevelBurns.sound('burn-lvl-smoke-burst', k)),
