@@ -89,7 +89,7 @@ async function runDevTestSuite() {
           const svg=host.querySelector('svg'),box=svg.getBoundingClientRect();
           assertTrue(Math.abs(box.width-w)<1 && Math.abs(box.height-h)<1,key+': scene covers host');
           const main=[...svg.querySelectorAll('[data-scene-feature]')];
-          assertTrue(main.length>0 || ['wood','felt','casino','royal'].includes(key),key+': main features present');
+          assertTrue(main.length>0 || ['wood','felt','casino','royal','ss2701-glacier'].includes(key),key+': main features present');
           for(const el of main) {
             const r=el.getBoundingClientRect(),unit=Math.min(w,h),m=Math.max(.12,+el.dataset.minUnit);
             assertTrue(r.left>=box.left-.5 && r.right<=box.right+.5 && r.top>=box.top-.5 && r.bottom<=box.bottom+.5,key+' '+el.dataset.sceneFeature+': complete at '+w+'x'+h);
@@ -194,7 +194,7 @@ async function runDevTestSuite() {
         assertEqual(home.querySelector('svg').dataset.fullScene,id,id+': shared home scene');
         stage.dataset.tablePreview=id;ShTableScenes.draw(stage,id);
         assertEqual(stage.querySelector('svg').dataset.fullScene,id,id+': shared preview scene');
-        assertTrue(!stage.querySelector('svg').querySelector('[preserveAspectRatio*=slice]'),id+': no cropped scene');
+        assertTrue(id==='table-ss2701-glacier' || !stage.querySelector('svg').querySelector('[preserveAspectRatio*=slice]'),id+': no cropped scene (the painted Ice Age table fills the screen on purpose)');
       }
     } finally {stage.remove();equippedCosmetics.tableTheme=saved;refreshHomeBackdrop();document.body.classList.toggle('lobby-open',wasLobby);}
   });
@@ -1739,7 +1739,7 @@ async function runDevTestSuite() {
       assertEqual(seasonPassState().tier, 11, 'the reply moves the tier');
       assertTrue(document.getElementById('seasonToast').classList.contains('show'), 'a tier shows the toast');
       assertTrue(/\+15 Diamonds/.test(document.getElementById('seasonToast').textContent), 'with its Diamonds');
-      assertEqual(SEASON_PASS_ITEMS.length, 3, 'three items');
+      assertEqual(SEASON_PASS_ITEMS.filter(r => r.pass === '2026-11').length, 3, 'three items in a season');
       assertTrue(LEVEL_REWARDS.filter(r => r.pass).every(r => !serverEconomyCatalog().xp.rewards.map(r => r.id).includes(r.id)), 'pass items are not level rewards in the catalog');
     } finally { seasonProgress = saved; document.getElementById('seasonToast')?.classList.remove('show'); }
   });
@@ -3469,7 +3469,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 37, 'All 37 avatars appear in Custom (incl. the 5 level rewards, 3 Gauntlet crests and the Season Pass one)');
+    assertEqual(options.length, 38, 'All 38 avatars appear in Custom (incl. the 5 level rewards, 3 Gauntlet crests and the two Season Pass ones)');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -4217,8 +4217,8 @@ async function runDevTestSuite() {
     smoke.forEach(a => a.cancel());
     stage.querySelectorAll('.bfx').forEach(n => n.remove());
     renderPersonalisationAvatars();
-    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-17);
-    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Golden Pharaoh'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
+    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-18);
+    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Golden Pharaoh', 'Baby Mammoth'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
   });
 
   await test('Accessibility settings exist and apply', () => {
@@ -9791,7 +9791,7 @@ async function runDevTestSuite() {
     });
     Object.entries(ILLUSTRATED_TABLES).forEach(([id, t]) => {
       const bg = tableArtBackground(id);
-      assertTrue(tiled.has(t.art) ? bg.includes(`${TABLE_TILE_PX}px repeat`) : !/<image\b/.test(ShTableScenes.scene(id,1920,1080)), `${id} is never a stretched bitmap`);
+      assertTrue(tiled.has(t.art) ? bg.includes(`${TABLE_TILE_PX}px repeat`) : t.art === 'ss2701-glacier' ? /<image\b[^>]*ss2701\/table\.webp/.test(ShTableScenes.scene(id,1920,1080)) : !/<image\b/.test(ShTableScenes.scene(id,1920,1080)), `${id} is never a stretched bitmap`);
     });
     const svgs = [...Object.values(TABLE_ART), ...Object.values(SEASONAL_TABLE_ART), ...Object.values(SEASONAL_BACK_ART)].filter(u => /\.svg$/.test(u));
     assertTrue(svgs.length >= 30, 'every SVG art file is checked', svgs.length);

@@ -235,7 +235,7 @@
       const hero = document.getElementById('levelLadderHero'), scroll = document.getElementById('levelLadderScroll');
       if (!st.started) {
         hero.innerHTML = '';
-        scroll.innerHTML = `<div class="sp-soon"><b>Season ${st.s.number}: ${escapeHtml(st.s.name)}</b><span>Starts on 1 November. Sign in and play as normal: every XP you earn fills the pass: 50 tiers, Diamonds on every tier and three exclusive items.</span></div>`;
+        scroll.innerHTML = `<div class="sp-soon"><b>Season ${st.s.number}: ${escapeHtml(st.s.name)}</b><span>Starts on ${new Date(st.s.start + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}. Sign in and play as normal: every XP you earn fills the pass: 50 tiers, Diamonds on every tier and three exclusive items.</span></div>`;
         return { scroll, level: 0, from: 0 };
       }
       hero.innerHTML = seasonHeroHtml(st);

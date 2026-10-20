@@ -148,6 +148,7 @@ for sx in (-1, 1):
 A('</g>')
 A('<g transform="translate(125 64)"><path d="M-46 0H46" stroke="url(#gold)" stroke-width="1.6"/><g transform="rotate(45)"><rect x="-5" y="-5" width="10" height="10" rx="1.2" fill="url(#turq)" stroke="url(#gold)" stroke-width="1.6"/></g></g>')
 A('</g>')
+A('''<g><rect x="76" y="296" width="98" height="19" rx="4" fill="#150c30" stroke="url(#gold)" stroke-width="1.6"/><text x="125" y="310" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="11.5" letter-spacing="1.6" fill="url(#gold)">SEASON 1</text></g>''')
 A(f'<rect width="{W}" height="{H}" rx="16" fill="url(#vig)"/>')
 A(f'<rect width="{W}" height="{H}" rx="16" fill="url(#shine)" opacity=".5" transform="skewX(-14) translate(40 0)"/>')
 A('</svg>')

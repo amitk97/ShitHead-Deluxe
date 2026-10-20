@@ -8,7 +8,7 @@ const sp = require('../functions/season-pass.js');
 const ms = (d) => Date.parse(d + 'T12:00:00Z');
 let paid = 0; const pay = (u, n) => { paid += n; u.diamonds = (u.diamonds || 0) + n; };
 assert.strictEqual(sp.tierStart(10), 2500); assert.strictEqual(sp.tierStart(50), 20000);
-assert.strictEqual(sp.seasonOn('2026-10-31'), null); assert.strictEqual(sp.seasonOn('2026-11-01'), '2026-11'); assert.strictEqual(sp.seasonOn('2026-12-31'), '2026-11'); assert.strictEqual(sp.seasonOn('2027-01-01'), null);
+assert.strictEqual(sp.seasonOn('2026-10-31'), null); assert.strictEqual(sp.seasonOn('2026-11-01'), '2026-11'); assert.strictEqual(sp.seasonOn('2026-12-31'), '2026-11'); assert.strictEqual(sp.seasonOn('2027-01-01'), '2027-01'); assert.strictEqual(sp.seasonOn('2027-02-28'), '2027-01'); assert.strictEqual(sp.seasonOn('2027-03-01'), null);
 // off-season: nothing
 const off = {}; assert.ok(!xp.award(off, [['finish', 500]], ms('2026-10-31'), pay).seasonPass); assert.ok(!off.seasonPass);
 // in season: 2,500 XP = tier 10, 10 x 15 + the 5th (60 instead of 15) and 10th (50) bonuses
@@ -34,3 +34,9 @@ assert.deepStrictEqual(sp.mailsDue('2026-10-31'), [{ key: '2026-11', when: 'star
 assert.deepStrictEqual(sp.mailsDue('2026-12-30'), [{ key: '2026-11', when: 'end' }]);
 assert.deepStrictEqual(sp.mailsDue('2026-11-15'), []); assert.deepStrictEqual(sp.mailsDue('2026-10-30'), []);
 console.log('PASS season pass');
+// Season 2 (Ice Age): its own tier track and items, same rules
+const s2 = {}; const r2 = xp.award(s2, [['win', 2500]], ms('2027-01-05'), pay);
+assert.strictEqual(r2.seasonPass.key, '2027-01'); assert.strictEqual(r2.seasonPass.tier, 10);
+assert.ok(s2.ownedCosmetics['back-ss2701-mammoth'], 'Season 2 tier 10 card back'); assert.ok(!s2.ownedCosmetics['back-ss2611-scarab']);
+assert.deepStrictEqual(sp.mailsDue('2026-12-31'), [{ key: '2027-01', when: 'start' }]);
+console.log('season 2 ok');

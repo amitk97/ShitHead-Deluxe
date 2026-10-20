@@ -1,3 +1,7 @@
+## v395 — Season 2: Ice Age
+
+- `SEASON_PASS.seasons['2027-01']` (1 Jan to 28 Feb 2027, accent `#7fd4ff`, banner `art/season-pass/ss2701/banner.webp`) + three `SEASON_PASS_ITEMS` (each has its own `pass` key now): tier 10 card back Frost Mammoth `back-ss2701-mammoth` (`art/backs/ss2701-mammoth.webp`, 750x1050), tier 30 avatar Baby Mammoth `avatar-ss2701-mammoth` (`art/avatars/ss2701-mammoth.webp`, 512 square, ring disc on navy), tier 50 table Frozen Path `table-ss2701-glacier` (scene case in `scenes.js` = one `<image>` of `art/season-pass/ss2701/table.webp`, `xMidYMax slice`, 1347x941: low resolution, regenerate larger when the owner has it). All from the owner's AI-painted sheets, cropped by script (see the session; originals not kept). **Owner's rule: every card back carries its season ("SEASON 2" painted on; the Egypt back got a "SEASON 1" plate, `tools/season-art/make-egypt-back.py`).** Catalog re-exported; rules need nothing new (the `ss<YYMM>` regexes). **Functions change** (catalog `seasonPass`): deploy before 31 Dec 2026. Egypt artwork is to be replaced with owner-supplied art (pending). Test: `node tools/season-pass-test.js`.
+
 ## v394 — Season Pass polish
 
 - Guide → Season Pass (`data-guide-section="season-pass"`) and Key Term `season-pass`; the Level Ladder's How To Earn XP says the same XP fills the pass; `seasonKey()` in `level-ladder.js` replaces the hard-coded key (live season, else the next one, else the latest; `live` also gates the home chip and "Season over"). Dev test "v394: …". No rules, Functions or catalog change.

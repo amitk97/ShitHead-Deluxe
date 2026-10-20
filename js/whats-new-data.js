@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v395: [['snow', 'Season Pass: Season 2, Ice Age, is ready for January. Earn the Frost Mammoth card back, Baby Mammoth avatar and Frozen Path table. Every Season card back now says which season it is from.']],
       v394: [['book', 'Guide and Key Terms now explain the Season Pass, and How To Earn XP on the Level Ladder mentions it.']],
       v393: [['star', 'Season Pass: Season 1, Ancient Egypt, runs 1 November to 31 December. Every XP you earn also fills a free 50-tier pass with Diamonds on every tier and three exclusive items: a card back, an avatar and a table. Open it from the home screen or the Level Ladder.', WN_KEY]],
       v392: [['sparkle', 'New setting: Double-Tap To Play (Settings, Gameplay, off by default) plays a card when you tap the same card twice. Swapping cards in a Ranked game now shows at once instead of waiting for the server.', WN_KEY]],

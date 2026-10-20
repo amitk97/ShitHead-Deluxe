@@ -10802,6 +10802,7 @@
     };
     // § Season Pass
     ILLUSTRATED_TABLES['table-ss2611-egypt'] = { art: 'ss2611-egypt', base: '#2a1330', rim: 'inset 0 0 0 3px #e8bd6a,inset 0 0 50px rgba(20,8,30,.55)', label: 'rgba(251,222,150,.9)' };
+    ILLUSTRATED_TABLES['table-ss2701-glacier'] = { art: 'ss2701-glacier', base: '#0a1f3d', rim: 'inset 0 0 0 3px #9fdcf5,inset 0 0 50px rgba(5,20,45,.55)', label: 'rgba(200,236,252,.9)' };
     // Seasonal event pictures (shop + earn-only). Same tile, tones and
     // shared metal gradients as every other picture.
     const AV_STROKE = 'stroke="rgba(0,0,0,.35)" stroke-width="1.2"';

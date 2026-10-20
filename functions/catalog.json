@@ -2176,6 +2176,19 @@
      "30": "avatar-ss2611-pharaoh",
      "50": "table-ss2611-egypt"
     }
+   },
+   "2027-01": {
+    "number": 2,
+    "name": "Ice Age",
+    "start": "2027-01-01",
+    "end": "2027-02-28",
+    "accent": "#7fd4ff",
+    "banner": "art/season-pass/ss2701/banner.webp",
+    "items": {
+     "10": "back-ss2701-mammoth",
+     "30": "avatar-ss2701-mammoth",
+     "50": "table-ss2701-glacier"
+    }
    }
   },
   "items": [
@@ -2192,6 +2205,21 @@
    {
     "id": "table-ss2611-egypt",
     "name": "Sands of Giza",
+    "tier": 50
+   },
+   {
+    "id": "back-ss2701-mammoth",
+    "name": "Frost Mammoth",
+    "tier": 10
+   },
+   {
+    "id": "avatar-ss2701-mammoth",
+    "name": "Baby Mammoth",
+    "tier": 30
+   },
+   {
+    "id": "table-ss2701-glacier",
+    "name": "Frozen Path",
     "tier": 50
    }
   ]
