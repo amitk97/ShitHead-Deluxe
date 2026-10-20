@@ -2919,3 +2919,6 @@
 #seasonToast .sp-tier { width:46px; height:46px; } #seasonToast .sp-tier b { font-size:18px; margin-top:5px; }
 #seasonToast .spt-text { display:flex; flex-direction:column; color:#fff7dc; } #seasonToast .spt-text b { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--sp-accent,#f5c542); } #seasonToast .spt-text small { font-size:12px; }
 .ll-piece-art:has(.mini-table) { display:block; position:relative; width:104px; height:64px; margin-bottom:6px; }
+/* Season Pass: a row holding a table (104px wide) plus another piece lays its pieces out side by side */
+.ll-pieces:has(.mini-table) { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:flex-start; }
+.ll-pieces:has(.mini-table) .ll-piece { flex:0 0 auto; width:104px; }

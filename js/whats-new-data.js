@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v398: [['snow', 'Season Pass: Season 3 (Feudal Japan, March and April) and Season 4 (Deep Ocean, May and June) are ready, each with a card back, avatar and table. Tier 50 of every season now also gives the Origami Fold burn, or 209 Diamonds if you already own it.', WN_KEY]],
       v397: [['image', 'The Sphinx Cub and Baby Mammoth avatars now show their whole ring.']],
       v396: [['sparkle', 'Season 1, Ancient Egypt, has new artwork: a Scarab of Ra card back, the Sphinx Cub avatar and a moonlit temple table.']],
       v395: [['snow', 'Season Pass: Season 2, Ice Age, is ready for January. Earn the Frost Mammoth card back, Baby Mammoth avatar and Frozen Path table. Every Season card back now says which season it is from.']],

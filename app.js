@@ -10803,6 +10803,8 @@
     // § Season Pass
     ILLUSTRATED_TABLES['table-ss2611-egypt'] = { art: 'ss2611-egypt', base: '#2a1330', rim: 'inset 0 0 0 3px #e8bd6a,inset 0 0 50px rgba(20,8,30,.55)', label: 'rgba(251,222,150,.9)' };
     ILLUSTRATED_TABLES['table-ss2701-glacier'] = { art: 'ss2701-glacier', base: '#0a1f3d', rim: 'inset 0 0 0 3px #9fdcf5,inset 0 0 50px rgba(5,20,45,.55)', label: 'rgba(200,236,252,.9)' };
+    ILLUSTRATED_TABLES['table-ss2703-shrine'] = { art: 'ss2703-shrine', base: '#1a1033', rim: 'inset 0 0 0 3px #ff9bb8,inset 0 0 50px rgba(20,8,40,.55)', label: 'rgba(255,214,226,.9)' };
+    ILLUSTRATED_TABLES['table-ss2705-reef'] = { art: 'ss2705-reef', base: '#06253a', rim: 'inset 0 0 0 3px #4fe0d6,inset 0 0 50px rgba(2,20,36,.55)', label: 'rgba(200,250,246,.9)' };
     // Seasonal event pictures (shop + earn-only). Same tile, tones and
     // shared metal gradients as every other picture.
     const AV_STROKE = 'stroke="rgba(0,0,0,.35)" stroke-width="1.2"';
@@ -16002,7 +16004,7 @@
         referral: JSON.parse(JSON.stringify(REFERRAL)),
         rankedBonus: JSON.parse(JSON.stringify(RANKED_BONUS)),
         xp: JSON.parse(JSON.stringify(XP_RULES)),
-        seasonPass: { tiers: SEASON_PASS.tiers, costs: Array.from({ length: SEASON_PASS.tiers + 1 }, (_, t) => t ? SEASON_PASS.tierCost(t) : 0), diamonds: Array.from({ length: SEASON_PASS.tiers + 1 }, (_, t) => t ? SEASON_PASS.diamonds(t) : 0), seasons: JSON.parse(JSON.stringify(SEASON_PASS.seasons)), items: SEASON_PASS_ITEMS.map(i => ({ id: i.id, name: i.name, tier: i.tier })) },
+        seasonPass: { tiers: SEASON_PASS.tiers, finale: { ...SEASON_PASS.finale, name: (COSMETIC_SHOP_ITEMS.find(i => i.id === SEASON_PASS.finale.id) || {}).name }, costs: Array.from({ length: SEASON_PASS.tiers + 1 }, (_, t) => t ? SEASON_PASS.tierCost(t) : 0), diamonds: Array.from({ length: SEASON_PASS.tiers + 1 }, (_, t) => t ? SEASON_PASS.diamonds(t) : 0), seasons: JSON.parse(JSON.stringify(SEASON_PASS.seasons)), items: SEASON_PASS_ITEMS.map(i => ({ id: i.id, name: i.name, tier: i.tier })) },
         puzzles: window.ShPuzzles ? JSON.parse(JSON.stringify(window.ShPuzzles.catalog())) : undefined,
         series: JSON.parse(JSON.stringify(SERIES_RULES)),
         rankTiers: [['Master', 2000], ['Platinum', 1800], ['Gold', 1500], ['Silver', 1000], ['Bronze', 500], ['Novice', 0]].map(([name, min]) => {
@@ -18848,10 +18850,12 @@
         const sp = SEASON_PASS.seasons[item.key];
         if (!sp) return '';
         const day = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' });
-        const head = item.when === 'end' ? `Season ${sp.number} ends tomorrow` : `Season ${sp.number} starts tomorrow`;
-        const body = item.when === 'end'
-          ? `${sp.name} finishes at the end of ${day(sp.end)}. Play before then to climb more tiers: Diamonds on every tier, plus an exclusive card back, avatar and table. Tiers you have reached are yours to keep. Sign in to earn Season XP.`
-          : `${sp.name} runs from ${day(sp.start)} to ${day(sp.end)}. Every XP you earn while signed in also fills a free 50-tier Season Pass, with Diamonds on every tier and three exclusive items.`;
+        const head = item.when === 'finale' ? `Season ${sp.number} finale reward` : item.when === 'end' ? `Season ${sp.number} ends tomorrow` : `Season ${sp.number} starts tomorrow`;
+        const body = item.when === 'finale'
+          ? `You reached tier 50, and you already own ${item.name || 'the finale burn'}, so you received ${item.diamonds || 0} Diamonds instead.`
+          : item.when === 'end'
+          ? `${sp.name} finishes at the end of ${day(sp.end)}. Play before then to climb more tiers: Diamonds on every tier, plus an exclusive card back, avatar and table, and the Origami Fold burn at tier 50. Tiers you have reached are yours to keep. Sign in to earn Season XP.`
+          : `${sp.name} runs from ${day(sp.start)} to ${day(sp.end)}. Every XP you earn while signed in also fills a free 50-tier Season Pass, with Diamonds on every tier and exclusive items, including the Origami Fold burn at tier 50.`;
         return `<div class="inbox-activity--level border rounded-xl px-2.5 py-2">
           <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">Season Pass</p>
           <p class="text-xs font-bold text-white">${escapeHtml(head)}</p>

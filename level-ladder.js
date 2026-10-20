@@ -221,8 +221,9 @@
       for (let t = 1; t <= st.T; t++) {
         const got = t <= st.tier, id = st.s.items[t], gem = SEASON_PASS.diamonds(t);
         if (id) {
-          const it = seasonItem(id);
-          html += `<div class="ll-row big ${got ? 'got' : 'locked'}${t === st.T ? ' final' : ''}" data-season-tier="${t}"><span class="ll-node">${got ? icon('check') : t}</span><div class="ll-card"><div class="ll-head"><span class="ll-pkind" style="font-weight:900">Tier ${t}</span>${got ? `<span class="ll-done">${icon('check')} Unlocked</span>` : `<span class="ll-away">${fmt(seasonTierStart(t) - st.xp)} XP away</span>`}${ladderGem(gem)}</div><div class="ll-pieces">${ladderPieceHtml({ kind: 'item', item: it })}</div></div></div>`;
+          const it = seasonItem(id), F = SEASON_PASS.finale;
+          const fin = F && t === F.tier ? COSMETIC_SHOP_ITEMS.find(i => i.id === F.id) : null;
+          html += `<div class="ll-row big ${got ? 'got' : 'locked'}${t === st.T ? ' final' : ''}" data-season-tier="${t}"><span class="ll-node">${got ? icon('check') : t}</span><div class="ll-card"><div class="ll-head"><span class="ll-pkind" style="font-weight:900">Tier ${t}</span>${got ? `<span class="ll-done">${icon('check')} Unlocked</span>` : `<span class="ll-away">${fmt(seasonTierStart(t) - st.xp)} XP away</span>`}${ladderGem(gem)}</div><div class="ll-pieces">${ladderPieceHtml({ kind: 'item', item: it })}${fin ? ladderPieceHtml({ kind: 'item', item: fin }) : ''}</div>${fin ? `<p class="ll-help" style="margin:.4rem 0 0">${escapeHtml(fin.name)} is yours at this tier. If you already own it, you get ${SEASON_PASS.finale.ownedDiamonds} Diamonds instead.</p>` : ''}</div></div>`;
         } else {
           html += `<div class="ll-gap ${got ? 'got' : ''}" data-season-tier="${t}"><span class="ll-tick"></span><span>Tier ${t} · ${ladderGem(gem)}</span></div>`;
         }
@@ -235,7 +236,7 @@
       const hero = document.getElementById('levelLadderHero'), scroll = document.getElementById('levelLadderScroll');
       if (!st.started) {
         hero.innerHTML = '';
-        scroll.innerHTML = `<div class="sp-soon"><b>Season ${st.s.number}: ${escapeHtml(st.s.name)}</b><span>Starts on ${new Date(st.s.start + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}. Sign in and play as normal: every XP you earn fills the pass: 50 tiers, Diamonds on every tier and three exclusive items.</span></div>`;
+        scroll.innerHTML = `<div class="sp-soon"><b>Season ${st.s.number}: ${escapeHtml(st.s.name)}</b><span>Starts on ${new Date(st.s.start + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}. Sign in and play as normal: every XP you earn fills the pass: 50 tiers, Diamonds on every tier and exclusive items.</span></div>`;
         return { scroll, level: 0, from: 0 };
       }
       hero.innerHTML = seasonHeroHtml(st);
@@ -255,7 +256,8 @@
       const st = seasonPassState(), id = st.s.items[tier], it = id && seasonItem(id);
       // Several tiers at once (a long match): one toast with all the Diamonds.
       const list = tiers && tiers.length ? tiers : [{ tier, diamonds: SEASON_PASS.diamonds(tier) }];
-      const gem = list.reduce((n, t) => n + (Number(t.diamonds) || 0), 0), items = list.map(t => t.item && t.item.name).filter(Boolean);
+      const gem = list.reduce((n, t) => n + (Number(t.diamonds) || 0), 0), items = [];
+      list.forEach(t => { if (t.item) items.push(t.item.name); if (t.finale && !t.finale.owned) items.push(t.finale.name); });
       let el = document.getElementById('seasonToast');
       if (!el) { el = document.createElement('div'); el.id = 'seasonToast'; document.body.appendChild(el); }
       el.style.setProperty('--sp-accent', st.s.accent);

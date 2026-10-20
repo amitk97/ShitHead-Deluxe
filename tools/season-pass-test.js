@@ -8,7 +8,7 @@ const sp = require('../functions/season-pass.js');
 const ms = (d) => Date.parse(d + 'T12:00:00Z');
 let paid = 0; const pay = (u, n) => { paid += n; u.diamonds = (u.diamonds || 0) + n; };
 assert.strictEqual(sp.tierStart(10), 2500); assert.strictEqual(sp.tierStart(50), 20000);
-assert.strictEqual(sp.seasonOn('2026-10-31'), null); assert.strictEqual(sp.seasonOn('2026-11-01'), '2026-11'); assert.strictEqual(sp.seasonOn('2026-12-31'), '2026-11'); assert.strictEqual(sp.seasonOn('2027-01-01'), '2027-01'); assert.strictEqual(sp.seasonOn('2027-02-28'), '2027-01'); assert.strictEqual(sp.seasonOn('2027-03-01'), null);
+assert.strictEqual(sp.seasonOn('2026-10-31'), null); assert.strictEqual(sp.seasonOn('2026-11-01'), '2026-11'); assert.strictEqual(sp.seasonOn('2026-12-31'), '2026-11'); assert.strictEqual(sp.seasonOn('2027-01-01'), '2027-01'); assert.strictEqual(sp.seasonOn('2027-02-28'), '2027-01'); assert.strictEqual(sp.seasonOn('2027-03-01'), '2027-03'); assert.strictEqual(sp.seasonOn('2027-04-30'), '2027-03'); assert.strictEqual(sp.seasonOn('2027-05-01'), '2027-05'); assert.strictEqual(sp.seasonOn('2027-06-30'), '2027-05'); assert.strictEqual(sp.seasonOn('2027-07-01'), null);
 // off-season: nothing
 const off = {}; assert.ok(!xp.award(off, [['finish', 500]], ms('2026-10-31'), pay).seasonPass); assert.ok(!off.seasonPass);
 // in season: 2,500 XP = tier 10, 10 x 15 + the 5th (60 instead of 15) and 10th (50) bonuses
@@ -40,3 +40,13 @@ assert.strictEqual(r2.seasonPass.key, '2027-01'); assert.strictEqual(r2.seasonPa
 assert.ok(s2.ownedCosmetics['back-ss2701-mammoth'], 'Season 2 tier 10 card back'); assert.ok(!s2.ownedCosmetics['back-ss2611-scarab']);
 assert.deepStrictEqual(sp.mailsDue('2026-12-31'), [{ key: '2027-01', when: 'start' }]);
 console.log('season 2 ok');
+// Tier 50 also gives the Origami Fold burn, or 209 Diamonds when it is already owned (once per season)
+const f1 = {}; paid = 0; const rf = xp.award(f1, [['x', 30000]], ms('2026-12-31'), pay);
+assert.ok(f1.ownedCosmetics['burn-origami'], 'finale burn granted'); assert.ok(rf.seasonPass.tiers.find(t => t.tier === 50).finale && !rf.seasonPass.tiers.find(t => t.tier === 50).finale.owned);
+const f2 = { ownedCosmetics: { 'burn-origami': { cost: 2500 } } }; paid = 0; const rf2 = xp.award(f2, [['x', 30000]], ms('2026-12-31'), pay);
+const t50 = rf2.seasonPass.tiers.find(t => t.tier === 50); assert.ok(t50.finale.owned && t50.finale.diamonds === 209 && t50.diamonds === 150 + 209, 'owner gets 209 Diamonds instead');
+assert.ok(f2.activityInbox['seasonpass_2026-11_finale'] && f2.activityInbox['seasonpass_2026-11_finale'].diamonds === 209);
+assert.strictEqual(f2.ownedCosmetics['burn-origami'].cost, 2500, 'an owned item is left as it was');
+const before = f2.diamonds; sp.grantReached(f2, ms('2027-01-02'), pay); assert.strictEqual(f2.diamonds, before, 'the finale is never paid twice');
+const f3 = { seasonPass: { '2026-11': { xp: 20000, tier: 50 } } }; sp.grantReached(f3, ms('2027-01-02'), pay); assert.ok(f3.ownedCosmetics['burn-origami'], 'a missed finale is repaired at sign-in');
+console.log('finale ok');

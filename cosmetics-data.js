@@ -199,6 +199,8 @@
       tierCost: (t) => t <= 10 ? 250 : t <= 40 ? 400 : 550,
       // Diamonds on every tier; milestones every 5th, bigger ones on the item tiers.
       diamonds: (t) => t === 50 ? 150 : (t === 10 || t === 30) ? 50 : t % 5 === 0 ? 60 : 15,
+      // Every season's tier 50 also gives this Shop item; an account that already owns it gets the Diamonds instead.
+      finale: { tier: 50, id: 'burn-origami', ownedDiamonds: 209 },
       seasons: {
         '2026-11': {
           number: 1, name: 'Ancient Egypt', start: '2026-11-01', end: '2026-12-31', accent: '#f5c542',
@@ -209,6 +211,16 @@
           number: 2, name: 'Ice Age', start: '2027-01-01', end: '2027-02-28', accent: '#7fd4ff',
           banner: 'art/season-pass/ss2701/banner.webp',
           items: { 10: 'back-ss2701-mammoth', 30: 'avatar-ss2701-mammoth', 50: 'table-ss2701-glacier' }
+        },
+        '2027-03': {
+          number: 3, name: 'Feudal Japan', start: '2027-03-01', end: '2027-04-30', accent: '#ff8fb1',
+          banner: 'art/season-pass/ss2703/banner.webp',
+          items: { 10: 'back-ss2703-sakura', 30: 'avatar-ss2703-kitsune', 50: 'table-ss2703-shrine' }
+        },
+        '2027-05': {
+          number: 4, name: 'Deep Ocean', start: '2027-05-01', end: '2027-06-30', accent: '#35d0c9',
+          banner: 'art/season-pass/ss2705/banner.webp',
+          items: { 10: 'back-ss2705-deep', 30: 'avatar-ss2705-octopus', 50: 'table-ss2705-reef' }
         }
       }
     };
@@ -218,6 +230,12 @@
       { id: 'table-ss2611-egypt', category: 'Table Themes', name: 'Sands of Giza', tier: 50, tone: '#f59e0b' },
       { id: 'back-ss2701-mammoth', category: 'Card Backs', name: 'Frost Mammoth', tier: 10, tone: '#7fd4ff', file: 'art/backs/ss2701-mammoth.webp', pass: '2027-01' },
       { id: 'avatar-ss2701-mammoth', category: 'Avatars', name: 'Baby Mammoth', tier: 30, tone: '#7fd4ff', file: 'art/avatars/ss2701-mammoth.webp', pass: '2027-01' },
-      { id: 'table-ss2701-glacier', category: 'Table Themes', name: 'Frozen Path', tier: 50, tone: '#7fd4ff', pass: '2027-01' }
-    ].map(r => ({ pass: '2026-11', ...r, level: 0, earned: true, cost: 0, requirement: `Season Pass tier ${r.tier}`, tones: r.pass === '2027-01' ? ['#0a1f3d', r.tone, '#e8f7ff'] : ['#150c30', r.tone, '#ffd58a'] }));
+      { id: 'table-ss2701-glacier', category: 'Table Themes', name: 'Frozen Path', tier: 50, tone: '#7fd4ff', pass: '2027-01' },
+      { id: 'back-ss2703-sakura', category: 'Card Backs', name: 'Sakura Crest', tier: 10, tone: '#ff8fb1', file: 'art/backs/ss2703-sakura.webp', pass: '2027-03' },
+      { id: 'avatar-ss2703-kitsune', category: 'Avatars', name: 'Kitsune Cub', tier: 30, tone: '#ff8fb1', file: 'art/avatars/ss2703-kitsune.webp', pass: '2027-03' },
+      { id: 'table-ss2703-shrine', category: 'Table Themes', name: 'Moonlit Shrine', tier: 50, tone: '#ff8fb1', pass: '2027-03' },
+      { id: 'back-ss2705-deep', category: 'Card Backs', name: 'Deep Treasure', tier: 10, tone: '#35d0c9', file: 'art/backs/ss2705-deep.webp', pass: '2027-05' },
+      { id: 'avatar-ss2705-octopus', category: 'Avatars', name: 'Pearl Octopus', tier: 30, tone: '#35d0c9', file: 'art/avatars/ss2705-octopus.webp', pass: '2027-05' },
+      { id: 'table-ss2705-reef', category: 'Table Themes', name: 'Coral Reef', tier: 50, tone: '#35d0c9', pass: '2027-05' }
+    ].map(r => ({ pass: '2026-11', ...r, level: 0, earned: true, cost: 0, requirement: `Season Pass tier ${r.tier}`, tones: ({ '2027-01': ['#0a1f3d', r.tone, '#e8f7ff'], '2027-03': ['#1a1033', r.tone, '#ffe3ec'], '2027-05': ['#06253a', r.tone, '#d9fffb'] })[r.pass] || ['#150c30', r.tone, '#ffd58a'] }));
     LEVEL_REWARDS.push(...SEASON_PASS_ITEMS);
