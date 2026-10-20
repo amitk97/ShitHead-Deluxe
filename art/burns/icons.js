@@ -122,6 +122,30 @@
       <path d="M8 44L18 38L14 50L26 46M92 40L84 48L94 52" stroke="#ffe27a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
       ${dots([[14, 14, 1], [86, 12, 1.2], [90, 90, 1], [10, 92, .9]], '#ffd966', 1.6)}`,
       (i) => radial(i, 'b', [[0, '#4a3a2e'], [.6, '#1f1a22'], [1, '#09070e']], 50, 40, 85) + radial(i, 'g', [[0, '#fff3b0'], [1, 'rgba(255,200,60,0)']], 50, 60, 26) + linear(i, 'z', [[0, '#ffffff'], [1, '#ffcb3d']])),
+    'burn-coloured': () => wrap((i) => {
+      const tongue = (x, h, w, a, g) => `<path transform="translate(${x} 88) rotate(${a})" d="M0 0C${-w} ${-h * .3} ${-w * .6} ${-h * .65} ${-w * .1} ${-h}C${w * .2} ${-h * .6} ${w * 1.1} ${-h * .5} ${w} ${-h * .2}C${w * .9} ${-h * .08} ${w * .4} 0 0 0Z" fill="url(#${i}${g})"/>`;
+      return `
+      <ellipse cx="50" cy="90" rx="46" ry="9" fill="url(#${i}h)"/>
+      ${tongue(14, 52, 9, -12, 'a')}${tongue(86, 56, 9, 12, 'c')}${tongue(30, 70, 11, -6, 'p')}${tongue(70, 66, 11, 6, 'a')}
+      ${card(50, 46, 4, 1.35, { body: '#2b1747', pip: '#e9c8ff', edge: '#c084fc', extra: '<path d="M-13 8L-6 3L0 10L6 2L13 7V18H-13Z" fill="#12061f"/><path d="M-13 8L-6 3L0 10L6 2L13 7" fill="none" stroke="#ff7ad9" stroke-width="1.4"/>' })}
+      ${tongue(42, 44, 8, -3, 'c')}${tongue(58, 40, 8, 3, 'p')}${tongue(50, 30, 6, 0, 'w')}
+      ${dots([[20, 22, 1.2], [80, 18, 1], [10, 50, .9], [92, 46, 1.1], [60, 8, .8], [36, 10, 1]], '#7df0ff', 1.6)}`;
+    },
+      (i) => radial(i, 'b', [[0, '#3b1070'], [.6, '#16082e'], [1, '#07030f']], 50, 80, 90) + radial(i, 'h', [[0, 'rgba(255,122,217,.55)'], [1, 'rgba(255,122,217,0)']], 50, 90, 46)
+        + linear(i, 'a', [[0, '#ffffff'], [.25, '#7df0ff'], [.7, '#6d4bff'], [1, '#3a1a9a']]) + linear(i, 'p', [[0, '#fff'], [.25, '#ff9ae6'], [.7, '#c13bd6'], [1, '#5a1a8a']]) + linear(i, 'c', [[0, '#fff'], [.3, '#8ff7ff'], [.75, '#22b8e6'], [1, '#1a4f9a']]) + linear(i, 'w', [[0, '#fff'], [1, '#ffd6f6']])),
+    'burn-electric': () => wrap((i) => {
+      const bolt = (pts, w, c) => `<path d="${pts}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+      const main = 'M58 2L44 30L56 32L38 58L50 60L34 96';
+      return `
+      <circle cx="50" cy="52" r="44" fill="url(#${i}g)"/>
+      ${bolt('M2 30L22 36L18 50L38 52', 1.6, '#6fb8ff')}${bolt('M98 24L78 34L84 46L62 54', 1.6, '#6fb8ff')}${bolt('M96 78L76 70L72 84L56 74', 1.4, '#6fb8ff')}${bolt('M4 80L22 72L28 84L42 74', 1.4, '#6fb8ff')}
+      ${card(50, 54, -7, 1.3, { body: '#1d2a4a', pip: '#bfe0ff', edge: '#5aa9ff', extra: '<path d="M-13 -4L-5 -9L-1 -2L8 -10L13 -4" fill="none" stroke="#fff" stroke-width=".9" opacity=".8"/>' })}
+      ${bolt(main, 7, 'rgba(90,170,255,.45)')}${bolt(main, 3.6, '#7cc2ff')}${bolt(main, 1.5, '#ffffff')}
+      <path d="M44 30L30 24M56 32L70 28M38 58L24 60" stroke="#bfe0ff" stroke-width="1.2" stroke-linecap="round"/>
+      ${dots([[14, 16, 1.2], [88, 12, 1], [90, 90, 1.1], [10, 92, 1], [74, 52, .8], [24, 44, .8]], '#e8f4ff', 1.5)}
+      <path d="M26 92L34 86M70 94L64 88M82 66L90 62" stroke="#ffe27a" stroke-width="2" stroke-linecap="round"/>`;
+    },
+      (i) => radial(i, 'b', [[0, '#14306e'], [.6, '#0a1233'], [1, '#04060f']], 50, 50, 80) + radial(i, 'g', [[0, 'rgba(110,180,255,.5)'], [1, 'rgba(110,180,255,0)']], 50, 52, 44)),
     'burn-ss2709-hex': () => wrap((i) => `
       <circle cx="50" cy="50" r="40" fill="none" stroke="#b36bff" stroke-width="2.4"/><circle cx="50" cy="50" r="40" fill="none" stroke="#7a2cff" stroke-width="7" opacity=".3"/><circle cx="50" cy="50" r="34" fill="none" stroke="#b36bff" stroke-width="1" stroke-dasharray="2 2.6"/>
       <circle cx="50" cy="50" r="25" fill="none" stroke="#3dffb0" stroke-width="1.6"/>
