@@ -242,7 +242,7 @@ def shitstorm():
     mask = cv2.dilate(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (13, 13)))
     # The face, exactly as painted, on its own solid layer (the body swirls under it, the face never warps).
     face = np.zeros((H, W), np.uint8)
-    cv2.fillPoly(face, [poly([(200, 138), (240, 126), (300, 133), (347, 148), (348, 190), (332, 232), (300, 257), (250, 264), (208, 247), (196, 200)])], 255)
+    cv2.fillPoly(face, [poly([(170, 159), (175, 132), (194, 113), (220, 102), (237, 83), (244, 62), (232, 47), (244, 40), (263, 44), (282, 57), (295, 78), (297, 96), (316, 110), (326, 132), (347, 148), (360, 177), (355, 214), (332, 243), (300, 264), (250, 271), (208, 254), (190, 222), (181, 186)])], 255)
     f = patch_match(src.astype(np.float32) / 255, mask | cv2.dilate(face, np.ones((25, 25), np.uint8)), cards)  # never clone the face
     face = cv2.GaussianBlur(face.astype(np.float32) / 255, (15, 15), 0)
     noise = lambda n, seed: cv2.resize(np.random.default_rng(seed).random((n, n)).astype(np.float32), (W, H), interpolation=cv2.INTER_CUBIC)
