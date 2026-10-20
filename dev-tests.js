@@ -1743,6 +1743,18 @@ async function runDevTestSuite() {
       assertTrue(LEVEL_REWARDS.filter(r => r.pass).every(r => !serverEconomyCatalog().xp.rewards.map(r => r.id).includes(r.id)), 'pass items are not level rewards in the catalog');
     } finally { seasonProgress = saved; document.getElementById('seasonToast')?.classList.remove('show'); }
   });
+  await test('v394: the shown season is the live one, then the next, then the latest; the Guide explains it', () => {
+    const real = SEASON_PASS.seasons;
+    try {
+      SEASON_PASS.seasons = { '2026-11': { ...real['2026-11'], start: '2000-01-01', end: '2000-02-28' }, '2099-01': { ...real['2026-11'], start: '2099-01-01', end: '2099-02-28' } };
+      assertEqual(seasonKey(), '2099-01', 'the next season when none is live');
+      SEASON_PASS.seasons = { '2026-11': { ...real['2026-11'], start: '2000-01-01', end: '2000-02-28' } };
+      assertEqual(seasonKey(), '2026-11', 'the latest when only past ones exist');
+      SEASON_PASS.seasons = { '2026-11': { ...real['2026-11'], start: '2000-01-01', end: '2099-02-28' } };
+      assertEqual(seasonKey(), '2026-11', 'the live one');
+    } finally { SEASON_PASS.seasons = real; }
+    assertTrue(!!document.querySelector('[data-guide-section="season-pass"]') && !!document.querySelector('[data-term="season-pass"]'), 'Guide section and Key Term');
+  });
   await test('v393: the Season Pass mail says the season starts / ends tomorrow and opens the pass', () => {
     const start = inboxItemHtml({ id: 'seasonpass_2026-11_start', type: 'seasonPass', key: '2026-11', when: 'start' });
     const end = inboxItemHtml({ id: 'seasonpass_2026-11_end', type: 'seasonPass', key: '2026-11', when: 'end' });

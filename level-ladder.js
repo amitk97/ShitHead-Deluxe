@@ -156,22 +156,28 @@
       <span>Win (Play Computer / Play Friends)</span><span>${XP_RULES.win}</span><span>Ranked game / Ranked win</span><span>${XP_RULES.ranked} / ${XP_RULES.rankedWin}</span>
       <span>Gauntlet bot beaten</span><span>${Math.min(...Object.values(XP_RULES.gauntletBot))}–${Math.max(...Object.values(XP_RULES.gauntletBot))}</span>
       <span>Daily / weekly challenge</span><span>${XP_RULES.daily} / ${XP_RULES.weekly}</span>
-      <span>While a seasonal event is on</span><span>${XP_RULES.seasonalBoost}×</span></div></details>${xpBoostNote()}`;
+      <span>While a seasonal event is on</span><span>${XP_RULES.seasonalBoost}×</span>
+      <span>Season Pass (signed in)</span><span>same XP fills it</span></div></details>${xpBoostNote()}`;
 
     // § Season Pass (free track): tiers come from Season XP, which the server adds with every XP award
     // (functions/season-pass.js) and returns in the reply (x.seasonPass). Dev preview: ?season-demo=<tier, e.g. 14.4>.
-    const SEASON_KEY = '2026-11';
+    // The season shown: the live one, else the next one starting, else the latest that ended.
+    function seasonKey() {
+      const day = typeof localDateKey === 'function' ? localDateKey() : new Date().toISOString().slice(0, 10);
+      const keys = Object.keys(SEASON_PASS.seasons).sort(), S = SEASON_PASS.seasons;
+      return keys.find(k => day >= S[k].start && day <= S[k].end) || keys.find(k => S[k].start > day) || keys[keys.length - 1];
+    }
     const seasonDemo = (() => { const v = new URLSearchParams(location.search).get('season-demo'); return v == null || v === '' || !Number.isFinite(Number(v)) ? null : Math.max(0, Math.min(SEASON_PASS.tiers, Number(v))); })();
     let ladderTab = 'levels';
     var seasonProgress = null; // { key, xp } of the signed-in account
     function seasonSetProfile(profile) {
-      const sp = profile && profile.seasonPass && profile.seasonPass[SEASON_KEY];
-      seasonProgress = sp ? { key: SEASON_KEY, xp: Number(sp.xp) || 0 } : null;
+      const sp = profile && profile.seasonPass && profile.seasonPass[seasonKey()];
+      seasonProgress = sp ? { key: seasonKey(), xp: Number(sp.xp) || 0 } : null;
       refreshHomeSeasonChip();
     }
     // The server's reply to an XP award: { key, xp, tier, gained, tiers: [{ tier, diamonds, item? }] }.
     function seasonNoteResult(r) {
-      if (!r || r.key !== SEASON_KEY) return;
+      if (!r || r.key !== seasonKey()) return;
       seasonProgress = { key: r.key, xp: Number(r.xp) || 0 };
       refreshHomeSeasonChip();
       const top = (r.tiers || []).slice(-1)[0];
@@ -180,10 +186,10 @@
     }
     function seasonTierStart(t) { let n = 0; for (let i = 1; i <= t; i++) n += SEASON_PASS.tierCost(i); return n; }
     function seasonPassState() {
-      const s = SEASON_PASS.seasons[SEASON_KEY], T = SEASON_PASS.tiers;
+      const s = SEASON_PASS.seasons[seasonKey()], T = SEASON_PASS.tiers;
       const day = (typeof localDateKey === 'function' ? localDateKey() : new Date().toISOString().slice(0, 10));
       const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
-      const started = seasonDemo != null || day >= s.start, live = started && day <= s.end;
+      const started = seasonDemo != null || day >= s.start, live = seasonDemo != null || (started && day <= s.end);
       const xp = seasonDemo != null ? Math.round(seasonTierStart(Math.floor(seasonDemo)) + (seasonDemo % 1) * SEASON_PASS.tierCost(Math.floor(seasonDemo) + 1)) : (seasonProgress ? seasonProgress.xp : 0);
       let tier = 0; while (tier < T && xp >= seasonTierStart(tier + 1)) tier++;
       const cost = tier < T ? SEASON_PASS.tierCost(tier + 1) : 0, into = xp - seasonTierStart(tier);
@@ -202,7 +208,7 @@
       const fmt = (n) => Math.round(n).toLocaleString('en-GB');
       const pct = st.tier >= st.T ? 100 : Math.round(st.into / st.cost * 100);
       const dates = `${st.s.start.slice(8)} Nov – ${st.s.end.slice(8)} Dec 2026`;
-      return `<div class="sp-hero" style="--sp-accent:${st.s.accent};background-image:url('${st.s.banner}')"><div><small>Season ${st.s.number}</small><span class="sp-name">${escapeHtml(st.s.name)}</span><span class="sp-dates">${dates} · ${st.left} days left</span></div><div class="sp-tier" aria-label="Tier ${st.tier}"><b>${st.tier}</b><small>Tier</small></div></div>
+      return `<div class="sp-hero" style="--sp-accent:${st.s.accent};background-image:url('${st.s.banner}')"><div><small>Season ${st.s.number}</small><span class="sp-name">${escapeHtml(st.s.name)}</span><span class="sp-dates">${dates} · ${st.live ? `${st.left} days left` : 'Season over'}</span></div><div class="sp-tier" aria-label="Tier ${st.tier}"><b>${st.tier}</b><small>Tier</small></div></div>
         <span class="sp-bar" style="--sp-accent:${st.s.accent}"><i style="width:${pct}%"></i></span>
         <div class="ll-barline"><span>${fmt(st.xp)} Season XP</span><span>${st.tier >= st.T ? 'Season complete' : `${fmt(st.cost - st.into)} XP to tier ${st.tier + 1}`}</span></div>
         <p class="sp-note">${currentUser ? 'Every XP you earn playing also fills the Season Pass. Rewards arrive the moment you reach a tier.' : 'Sign in to earn Season XP: only signed-in players fill the pass.'}</p>`;
@@ -262,7 +268,7 @@
       const chip = document.getElementById('homeSeasonChip');
       if (!chip) return;
       const st = seasonPassState();
-      const show = st.started || st.startsIn <= 14;
+      const show = st.live || (!st.started && st.startsIn <= 14);
       chip.classList.toggle('hidden', !show);
       if (!show) return;
       chip.style.setProperty('--sp-accent', st.s.accent);

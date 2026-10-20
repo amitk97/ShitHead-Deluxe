@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v394: [['book', 'Guide and Key Terms now explain the Season Pass, and How To Earn XP on the Level Ladder mentions it.']],
       v393: [['star', 'Season Pass: Season 1, Ancient Egypt, runs 1 November to 31 December. Every XP you earn also fills a free 50-tier pass with Diamonds on every tier and three exclusive items: a card back, an avatar and a table. Open it from the home screen or the Level Ladder.', WN_KEY]],
       v392: [['sparkle', 'New setting: Double-Tap To Play (Settings, Gameplay, off by default) plays a card when you tap the same card twice. Swapping cards in a Ranked game now shows at once instead of waiting for the server.', WN_KEY]],
       v391: [['people', 'New tips in 2 vs 2: who your partner is, what happens when you are out, and that two 8s also skip your partner.']],
