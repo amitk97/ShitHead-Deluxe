@@ -165,7 +165,11 @@ void main(){
   gl_FragColor=vec4(c*v_col.rgb*a,a);
  } else if(k>10.5&&k<11.5){
   // Exactly one rigid painted face: no flow, swirl, gloss sweep or noisy reveal.
-  vec4 c=texture2D(u_tex2,v_uv);float a=c.a*v_col.a;
+  // The irises move: the picture is looked up shifted inside a soft disc round each painted iris (v_k.yz = the shift in painted pixels), so the eyes look about while the face stays rigid.
+  vec2 uv=v_uv,pxu=vec2(1./2048.,1./1024.);
+  vec2 dl=(uv-vec2((1024.+451.)/2048.,268./1024.))/pxu,dr=(uv-vec2((1024.+580.)/2048.,272./1024.))/pxu;
+  uv-=((1.-smoothstep(17.,27.,length(dl)))+(1.-smoothstep(17.,27.,length(dr))))*v_k.yz*pxu;
+  vec4 c=texture2D(u_tex2,uv);float a=c.a*v_col.a;
   gl_FragColor=vec4(c.rgb*v_col.rgb*a,a);
  } else if(k>12.5){
   // A wet lump of the stuff: a lit blob (v_loc = place on its ellipse, v_uv = the light's direction in that frame, v_k.z > .5 = ragged edge).
@@ -923,7 +927,15 @@ void main(){
         const rot = (x, y) => [cxh + x * c - y * sn, cyh + x * sn + y * c];
         const hw = fw * sx / 2, hh2 = fh * st / 2, P = [rot(-hw, hh2), rot(hw, hh2), rot(hw, -hh2), rot(-hw, -hh2)].map(q => proj(q[0], q[1], .6 * K));
         const faceOn = smooth(.3, .58, t) * (1 - smooth(1.55, 1.9, t));
-        quad(out.artFront, P, [[.5693, .0156], [.9312, .0156], [.9312, .4814], [.5693, .4814]], Z4, [1, 1, 1, faceOn], [11, 0, 0, 0]);
+        // Where it looks: at the card as it is lifted, darting about as the card is torn and the matter flies, a hard stare at us on the grin, then down at the collapsing pile.
+        const hsh = (n, k) => { const x = Math.sin(n * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
+        const dart = (n, k) => hsh(n, k) * 2 - 1, n = Math.floor(t / .16), f = smooth(0, .05, t - n * .16);
+        const w1 = smooth(.55, .7, t) * (1 - smooth(1.15, 1.3, t)), w2 = bump(1.2, 1.32, 1.5), w3 = smooth(1.45, 1.7, t);
+        let gx = .25 * Math.sin(t * 9) * (1 - smooth(.3, .66, t)), gy = .9 - .6 * smooth(.3, .66, t);
+        gx += w1 * ((dart(n - 1, 1) + (dart(n, 1) - dart(n - 1, 1)) * f) - gx); gy += w1 * ((dart(n - 1, 2) + (dart(n, 2) - dart(n - 1, 2)) * f) - gy);
+        gx += w2 * (.15 - gx); gy += w2 * (-.1 - gy); gx += w3 * (-gx); gy += w3 * (.9 - gy);
+        gx += .08 * Math.sin(t * 13); gy += .06 * Math.sin(t * 11 + 1);
+        quad(out.artFront, P, [[.5693, .0156], [.9312, .0156], [.9312, .4814], [.5693, .4814]], Z4, [1, 1, 1, faceOn], [11, (gx < 0 ? gx * 8 : gx * 5), (gy < 0 ? gy * 4 : gy * 5), 0]);
       }
       const charge = smooth(0, .3, t) * (1 - smooth(.85, 1.8, t));
       glowAt(out.back, [0, FLOOR + .05, 0], .85 * K, [1, .55, .16, .36 * charge]);
