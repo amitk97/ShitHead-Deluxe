@@ -215,44 +215,30 @@ def hellfire_spiral():
     save_atlas([(col, bright * funnel), (col, bright * front)], 'art/burns/hellfire-spiral/layers.webp')
 
 def shitstorm():
-    full = Image.open('docs/avatar-art/src/burn-shitstorm.webp').convert('RGB')
-    full.crop((16, 12, 462, 466)).resize((384, 391), Image.LANCZOS).save('art/burns/shitstorm/tile.webp', quality=90)
-    X0, Y0 = 22, 18
-    src = np.asarray(full)[Y0:460, X0:456]  # inside the gold frame
+    """The owner's "Mischievous Card-Burning Poop Tornado" (v2, 1254 square): the whole painting keyed off its dark
+    ground (everything enclosed by the picture stays solid, only the glow fades), in two slots: the whole tornado
+    (the body swirls in the shader, torn cards and all) and the head on its own layer, exactly as painted."""
+    full = Image.open('docs/avatar-art/src/burn-shitstorm-v2.webp').convert('RGB').resize((1024, 1024), Image.LANCZOS)
+    full.resize((384, 384), Image.LANCZOS).save('art/burns/shitstorm/tile-v2.webp', quality=90)
+    src = np.asarray(full)
+    f = src.astype(np.float32) / 255
     H, W, _ = src.shape
     yy, xx = np.mgrid[0:H, 0:W] / [[[H]], [[W]]]
-    poly = lambda pts: np.array([(x - X0, y - Y0) for x, y in pts], np.int32)
-    # The painted cards in the storm (hand-traced, source pixels), filled by the best nearby patch.
-    cards = [poly(c) for c in [[(66, 38), (96, 22), (118, 55), (92, 76)],
-             [(113, 85), (165, 74), (177, 130), (125, 142)],
-             [(37, 151), (61, 147), (66, 177), (42, 181)],
-             [(300, 40), (345, 24), (367, 96), (320, 107)],
-             [(348, 113), (432, 123), (427, 217), (358, 207)],
-             [(74, 169), (113, 171), (119, 211), (79, 212)],
-             [(39, 219), (69, 219), (70, 251), (41, 251)],
-             [(68, 262), (110, 243), (147, 300), (126, 347), (79, 311)],
-             [(30, 305), (60, 286), (127, 317), (111, 347), (38, 332)],
-             [(214, 314), (241, 313), (242, 344), (215, 345)],
-             [(365, 265), (427, 248), (434, 262), (390, 297)],
-             [(358, 330), (411, 308), (420, 330), (381, 377), (360, 366)],
-             [(62, 410), (150, 378), (163, 395), (104, 428), (64, 425)],
-             [(149, 419), (206, 417), (206, 443), (150, 443)]]]
-    mask = np.zeros((H, W), np.uint8)
-    for c in cards: cv2.fillPoly(mask, [c], 255)
-    mask = cv2.dilate(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (13, 13)))
-    # The face, exactly as painted, on its own solid layer (the body swirls under it, the face never warps).
-    face = np.zeros((H, W), np.uint8)
-    cv2.fillPoly(face, [poly([(200, 138), (240, 126), (300, 133), (347, 148), (348, 190), (332, 232), (300, 257), (250, 264), (208, 247), (196, 200)])], 255)
-    f = patch_match(src.astype(np.float32) / 255, mask | cv2.dilate(face, np.ones((25, 25), np.uint8)), cards)  # never clone the face
-    face = cv2.GaussianBlur(face.astype(np.float32) / 255, (15, 15), 0)
-    noise = lambda n, seed: cv2.resize(np.random.default_rng(seed).random((n, n)).astype(np.float32), (W, H), interpolation=cv2.INTER_CUBIC)
-    lump = .6 * noise(5, 31) + .4 * noise(11, 32)
-    half = .5 - .12 * yy + .14 * (lump - .5)
-    top = .03 + .14 * ((xx - .5) / .5) ** 2 + .07 * lump
-    storm = (1 - ss(.6, 1.05, np.abs(xx - .5) / half)) * ss(top, top + .15, yy) * (1 - ss(.9, 1, yy))
-    bright = ss(.06, .3, f.max(2))
-    col = np.clip(f / np.maximum(bright[..., None], .3), 0, 1)
-    save_atlas([(col, bright * storm), (src.astype(np.float32) / 255, face)], 'art/burns/shitstorm/layers.webp')
+    mx = f.max(2)
+    body = cv2.morphologyEx((mx > .24).astype(np.uint8), cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11)))
+    ground = (1 - body).astype(np.uint8)
+    n, lab = cv2.connectedComponents(ground)
+    border = set(lab[0].tolist() + lab[-1].tolist() + lab[:, 0].tolist() + lab[:, -1].tolist()) - {0}
+    outside = np.isin(lab, list(border)).astype(np.float32)
+    dist = cv2.distanceTransform(((1 - outside) * 255).astype(np.uint8), cv2.DIST_L2, 5)
+    near = 1 - ss(5, 18, dist)   # only the dark fringe by the edge fades; pupils and shadows inside stay solid
+    solid = cv2.GaussianBlur(cv2.erode(1 - outside, np.ones((3, 3), np.uint8)), (5, 5), 0) * (1 - near * .75 * (1 - ss(.05, .2, mx)))
+    glow = ss(.07, .42, mx)
+    alpha = np.maximum(solid, glow)
+    alpha *= ss(0, .04, xx) * ss(0, .04, 1 - xx) * ss(0, .03, yy) * (1 - ss(.9, .985, yy))   # the pile of painted cards fades: the real card burns there
+    col = np.clip(f / np.maximum(alpha[..., None], .35), 0, 1)
+    head = ss(.5, .44, yy) * ss(.1, .22, xx) * ss(.1, .22, 1 - xx)          # head, rim and drips, solid
+    save_atlas([(col, alpha), (f, head * solid)], 'art/burns/shitstorm/layers-v2.webp', scale=1)
 
 def painted_burst(name, box, cards, centre, front_from, tile_box, seed, mirror=False, clear=False, strip=None, block=36, whole=False, reach=1):
     """A burst around one point (`centre`, u v of the crop): the painted cards (hand-traced,

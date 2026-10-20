@@ -36,7 +36,7 @@
     // Hellfire Spiral (Lvl 60): the magma tornado (cards painted out) and the rubble at its base in front.
     'burn-lvl-hellfire-spiral': { dur: 2.0, box: [5, 5.6, .5, .8], tile: 'art/burns/hellfire-spiral/tile.webp', art: 'art/burns/hellfire-spiral/layers.webp?v=2', layout: [4.6, 444 / 434, .5, .8] },
     // The ShitStorm (Lvl 99): the spinning storm (cards painted out) and the face, exactly as painted, on its own layer.
-    'burn-lvl-shitstorm': { dur: 2.0, box: [5, 5.6, .5, .82], tile: 'art/burns/shitstorm/tile.webp', art: 'art/burns/shitstorm/layers.webp?v=1', layout: [4.6, 442 / 434, .5, .82] }
+    'burn-lvl-shitstorm': { dur: 2.0, box: [5, 5.6, .5, .92], tile: 'art/burns/shitstorm/tile-v2.webp', art: 'art/burns/shitstorm/layers-v2.webp', layout: [4.6, 1, .5, .93] }
   };
   const artImages = {};
   const artFor = id => { const src = EFFECTS[id].art; if (!src) return null; if (!artImages[src]) { artImages[src] = new Image(); artImages[src].src = src; } return artImages[src]; };
@@ -496,9 +496,9 @@ void main(){
           // rolls off its edges; on the ignition a ring of sparks bursts out across the floor.
           const orbit = (o, fast) => ({ r: o ? R(.25, .55) : R(.9, 1.4), a: R(0, 6.28), w: (fast ? 1.3 : 1) * (storm ? 1.5 : 1) * R(5, 8), y: FLOOR + R(0, .2), vy: R(.9, 1.7), pull: o ? 0 : R(1.2, 2) });
           if (t > T - .1 && t < 1.55) emit('helix', storm ? 95 : 70, dt, () => S.embers.push({ pal: storm ? 2 : 0, orb: orbit(rand() < .5, true), p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.5, .9), size: R(1.6, 3.6), seed: rand() * 6.28 }));
-          if (t > T - .04 && t < 1.5) emit('tornado', storm ? 120 : 170, dt, () => S.flames.push({ orb: { r: storm ? R(.55, .95) : R(.3, .55), a: R(0, 6.28), w: (storm ? 1.2 : 1) * R(4.5, 7), y: FLOOR + R(-.02, .12), vy: storm ? R(1.2, 2.2) : R(1, 1.8) }, x: 0, y: FLOOR, z: 0, w: storm ? R(.3, .52) : R(.2, .36), h: storm ? R(.7, 1.2) : R(.42, .8), age: 0, life: R(.5, .85), seed: rand(), lean: 0, tint: storm ? [.95, .62, .28] : null }));
+          if (t > T - .04 && t < 1.5) emit('tornado', storm ? 0 : 170, dt, () => S.flames.push({ orb: { r: storm ? R(.55, .95) : R(.3, .55), a: R(0, 6.28), w: (storm ? 1.2 : 1) * R(4.5, 7), y: FLOOR + R(-.02, .12), vy: storm ? R(1.2, 2.2) : R(1, 1.8) }, x: 0, y: FLOOR, z: 0, w: storm ? R(.3, .52) : R(.2, .36), h: storm ? R(.7, 1.2) : R(.42, .8), age: 0, life: R(.5, .85), seed: rand(), lean: 0, tint: storm ? [.95, .62, .28] : null }));
           // The ShitStorm is a storm of the stuff itself: dark and golden dust clouds whirl round the card with the flames.
-          if (storm && t > T - .04 && t < 1.5) emit('dust', 70, dt, () => S.smoke.push({ orb: { r: R(.5, .95), a: R(0, 6.28), w: R(3.5, 5.5), y: FLOOR + R(0, .25), vy: R(.9, 1.7) }, col: rand() < .5 ? [.58, .38, .17] : [.26, .15, .07], p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.7, 1.1), size: R(.4, .7), seed: rand(), a: .55 }));
+          if (storm && t > T - .04 && t < 1.5) emit('dust', 0, dt, () => S.smoke.push({ orb: { r: R(.5, .95), a: R(0, 6.28), w: R(3.5, 5.5), y: FLOOR + R(0, .25), vy: R(.9, 1.7) }, col: rand() < .5 ? [.58, .38, .17] : [.26, .15, .07], p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.7, 1.1), size: R(.4, .7), seed: rand(), a: .55 }));
           if (t > T && t < 1.35) emit('debris', 11, dt, () => S.shards.push({ c: n - 1, orb: orbit(false), p: [0, 0, 0], uv: [R(.1, .9), R(.1, .9)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: R(.03, .055), age: 0, life: R(.7, 1), seed: rand(), char: .3 }));
           if (t > T && t < 1.45) emit('smoke', 10, dt, () => { const sd = rand() < .5 ? -1 : 1; S.smoke.push({ col: storm ? [.2, .13, .07] : [.12, .07, .07], p: [sd * R(1, 1.7), R(-.2, 1.6), R(-.5, .1)], v: [sd * R(.1, .3), R(.2, .5), 0], age: 0, life: R(.8, 1.2), size: R(.4, .7), seed: rand() }); });
           if (t > T && t < T + .03) for (let i = 0; i < 30; i++) { const a = R(0, 6.28), sp = R(1.2, 2.6); S.embers.push({ pal: storm ? 2 : 0, p: [0, FLOOR + .05, .2], v: [Math.cos(a) * sp, R(.2, .9), Math.sin(a) * sp * .6], age: 0, life: R(.4, .8), size: R(2, 4.4), seed: rand() * 6.28 }); }
@@ -831,9 +831,9 @@ void main(){
         // The ShitStorm: the whole storm whirls (highlights sweep round it, its coils travel, it
         // pulses and leans as it spins); the painted face rides on it unwarped and grins on the strike.
         const sh = .07 * Math.sin(t * 9) * reveal, sx = 1 + .04 * Math.sin(t * 18), grin = 1 + .06 * bump(T + .1, T + .2, T + .5);
-        layer(out.art, 0, -.3, rise, 0, reveal * .4, 1.2, [1, .75, .3], false, 1.25, 11.6, sx, sh);
+        layer(out.art, 0, -.3, rise, 0, reveal, .5, [1, .75, .3], false, 1.25, 11.6, sx, sh);
         // The face moves with the storm (lifted, leaning with it) but is never skewed or stretched.
-        const fv = .4, fs = rise * grin, fdy = (PV - fv) * AH * (rise - fs);
+        const fv = .26, fs = rise * grin, fdy = (PV - fv) * AH * (rise - fs);
         layer(out.artFront, 1, -.3, fs, fdy, smooth(T + .05, T + .35, t) * out1, 0, [1, .8, .4], false, 1.25, 0, 1, 0, sh * (PV - fv) * AH * rise);
       } else if (R.art) {
         layer(out.art, 0, -.3, rise, 0, reveal * .4, 1.5, [1, .45, .12], false, 1.25, 1);
