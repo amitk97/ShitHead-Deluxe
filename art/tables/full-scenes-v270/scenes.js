@@ -270,24 +270,21 @@ function scene(id,W,H){
   glyphRow(u*.037);glyphRow(H-u*.037);break;
  }
  case 'ss2701-glacier': {
-  // Ice Age: low pale sun over a frozen steppe, glacier walls and a mammoth herd on the horizon.
-  const sky=uid+'icsky';
-  pieces.push(`<defs><linearGradient id="${sky}" x2="0" y2="1"><stop stop-color="#08183a"/><stop offset=".24" stop-color="#1f4f82"/><stop offset=".40" stop-color="#8fcbe6"/><stop offset=".49" stop-color="#f4dcc4"/><stop offset=".56" stop-color="#cfe8f4"/><stop offset="1" stop-color="#27506f"/></linearGradient></defs>`,rect(0,0,W,H,`url(#${sky})`));
-  stars(60,'#eaf8ff');glow(W*.30,H*.43,u*.55);
-  place('sun',iceSun(),.22,.30,.30,1,.22);
-  {let d=`M0 ${F(H*.53)}`;const n=14;for(let i=0;i<=n;i++){d+=` L${F(W*i/n)} ${F(H*(.53-(i%3===1?.07:i%3===2?.035:.012)-(i%5)*.006))}`;}
-   pieces.push(path(d+` L${W} ${F(H*.60)} L0 ${F(H*.60)}Z`,'#79a9c8','#e4f6ff',u*.002,.5));}
-  terrain(.56,'#d9eef7',.02,1);
-  place('herd',herd(),.66,.505,.40,.60,.22);
-  terrain(.62,'#b9dbec',.04,2);terrain(.74,'#8cb8d3',.05,4);terrain(.88,'#5a8bb0',.05,1);terrain(.96,'#2f5b7c',.03,3);
-  {const lw=u*.46,rw=u*.30;
-   feature('left-glacier',glacierWall(),pad,H*.80-lw*1.02,lw,lw*1.02,.14);
-   feature('right-glacier',glacierWall(),W-pad-rw,H*.62-rw*.62,rw,rw,.1);}
-  for(let i=0;i<14;i++){const x=(i*.618%1)*W,y=H*.66+(i*.414%1)*H*.28;pieces.push(path(`M${F(x)} ${F(y)}l${F(u*.05)} ${F(u*.012)}l${F(-u*.02)} ${F(u*.03)}l${F(u*.06)} ${F(u*.02)}`,'none','#e4f6ff',u*.0018,.45));}
-  stars(70,'#ffffff','petal');
-  pieces.push(`<rect x="0" y="0" width="${W}" height="${F(u*.075)}" fill="#0a1a33" opacity=".6"/><path d="M0 ${F(u*.075)}H${W}" stroke="#a9e0f4" stroke-width="${F(u*.003)}" opacity=".75"/>`);
-  pieces.push(`<rect x="0" y="${F(H-u*.075)}" width="${W}" height="${F(u*.075)}" fill="#0a1a33" opacity=".6"/><path d="M0 ${F(H-u*.075)}H${W}" stroke="#a9e0f4" stroke-width="${F(u*.003)}" opacity=".75"/>`);
-  handBand(u*.037);handBand(H-u*.037);break;
+  // Ice Age (cartoon): icy dusk sky, outlined glaciers and snow drifts, snowy pines, a trail of baby mammoth footprints.
+  const sky=uid+'icsky',OL='#1f3a5c';
+  pieces.push(`<defs><linearGradient id="${sky}" x2="0" y2="1"><stop stop-color="#17386b"/><stop offset=".38" stop-color="#4d8fc7"/><stop offset=".62" stop-color="#bfe3f5"/><stop offset="1" stop-color="#eaf7ff"/></linearGradient></defs>`,rect(0,0,W,H,`url(#${sky})`));
+  glow(W*.5,H*.34,u*.7);
+  const peaks=(base,col,hs,seed)=>{let d=`M0 ${F(H*base)}`;const n=Math.max(5,Math.round(W/(u*.34)));for(let i=0;i<=n;i++){const x=W*i/n,up=(i%2?hs:hs*.5)*(1+((i*seed)%3)*.18);d+=` L${F(x)} ${F(H*base-u*up)}`;}return path(d+` L${W} ${H} L0 ${H}Z`,col,OL,u*.004,1);};
+  pieces.push(peaks(.50,'#a9d2ec',.26,1),peaks(.58,'#86bde0',.2,2));
+  const drift=(y,col,amp,seed)=>{const step=u*.9,n=Math.ceil(W/step)+1;let d=`M0 ${F(H*y)}`;for(let i=0;i<n;i++){const x=i*step,yy=H*y+Math.sin(i*1.9+seed)*u*amp;d+=` Q${F(x+step*.5)} ${F(yy-u*amp*1.4)} ${F(x+step)} ${F(yy)}`;}pieces.push(path(d+` L${W+u} ${H} L0 ${H}Z`,col,OL,u*.004,1));};
+  drift(.66,'#dff1fb',.05,1);drift(.80,'#f2faff',.06,3);drift(.94,'#ffffff',.04,5);
+  const pine2=()=>{let t=rect(45,78,10,22,'#5a4a46');for(let i=0;i<4;i++){const y=4+i*18,w=22+i*7;t+=path(`M50 ${y}L${50-w} ${y+34}H${50+w}Z`,'#3f7f95',OL,2.2)+path(`M50 ${y}L${50-w*.62} ${y+22}Q50 ${y+30} ${50+w*.62} ${y+22}Z`,'#ffffff',OL,1.6);}return t;};
+  place('left-pine',pine2(),0,.64,.30,1,.22);place('right-pine',pine2(),1,.80,.34,1,.26);
+  const paw=(x,y,s,r)=>`<g transform="translate(${F(x)} ${F(y)}) rotate(${r}) scale(${F(s)})" fill="#cfe6f3" stroke="${OL}" stroke-width="1.4" opacity=".92"><ellipse cx="0" cy="3" rx="9" ry="7.5"/><ellipse cx="-9" cy="-7" rx="3" ry="2.6"/><ellipse cx="-3" cy="-11" rx="3" ry="2.6"/><ellipse cx="3.5" cy="-11" rx="3" ry="2.6"/><ellipse cx="9.5" cy="-7" rx="3" ry="2.6"/></g>`;
+  for(let i=0;i<8;i++){const t=i/7,x=W*(.14+.72*t)+(i%2?u*.012:-u*.012),y=H*(.90-.17*Math.sin(t*Math.PI*1.1)),sc=u*(.0024+t*.0009);pieces.push(paw(x,y,sc,(i%2?10:-10)+t*20));}
+  for(let i=0;i<5;i++){const x=W*(.1+.2*i),y=H*(.1+((i*.37)%1)*.14);pieces.push(`<g transform="translate(${F(x)} ${F(y)}) scale(${F(u*.0009)})" opacity=".7">${snowflake().replace(/#d6f1ff/g,'#ffffff')}</g>`);}
+  stars(110,'#ffffff');
+  break;
  }
  case 'casino':
   classicPattern(false);break;
