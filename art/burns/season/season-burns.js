@@ -312,26 +312,30 @@
   function shurikenBarrage(S) {
     const back = S.mkCanvas(), front = S.mkCanvas(), { cx, cy, H, W, vw, vh } = S, R = rng(44);
     const face = topFace(S);
-    const pieces = fragments(S, face, 3, 4, 91);
+    const pieces = fragments(S, face, 4, 5, 91);
     pieces.forEach(p => { p.el.style.opacity = 0; });
-    const SL = 500, ang = -0.62; // the diagonal slash
+    // five stars: each flies in, drives into the card and tears through it; the pieces nearest it are ripped off along its path
+    const stars = [];
+    for (let i = 0; i < 5; i++) {
+      const a = -2.5 + i * 1.25 + (R() - .5) * .3, from = [(i % 2 ? vw + 80 : -80), cy - H * (1.2 + R() * 1.4)], to = [cx + Math.cos(a) * W * .3, cy + Math.sin(a) * H * .26], dx = to[0] - from[0], dy = to[1] - from[1], d = Math.hypot(dx, dy);
+      stars.push({ t0: i * 55, from, to, dir: [dx / d, dy / d], rot0: R() * TAU, spin: (i % 2 ? -1 : 1) * (11 + R() * 5) });
+    }
+    const IMP = (s) => s.t0 + 430, SL = IMP(stars[0]);
     pieces.forEach(p => {
-      const side = (p.mx * Math.sin(ang) - p.my * Math.cos(ang)) > 0 ? 1 : -1, nx = Math.cos(ang + Math.PI / 2) * side, ny = Math.sin(ang + Math.PI / 2) * side;
-      const q1 = p.R(), q2 = p.R(), q3 = p.R(), q4 = p.R();
+      let bi = 0, bd = 1e9; stars.forEach((s, i) => { const d = Math.hypot(p.mx - (s.to[0] - cx), p.my - (s.to[1] - cy)); if (d < bd) { bd = d; bi = i; } });
+      const st = stars[bi], T = IMP(st) + bd * .35 + p.R() * 40, q1 = p.R(), q2 = p.R(), q3 = p.R(), q4 = p.R(), sp = W * (2.2 + q1 * 1.6);
       S.track(p.el, (t) => {
-        const jolt = eOut(lin(SL, SL + 150, t)), go = eIn(lin(1100, 1700, t));
-        const X = nx * jolt * W * .22 + (q1 - .5) * jolt * W * .12 + (q1 - .5) * go * W * .8, Y = ny * jolt * W * .22 + (q2 - .5) * jolt * W * .1 - go * H * .6;
-        return { transform: `translate3d(${px(X)}px,${px(Y)}px,${px(jolt * 24)}px) rotate3d(${px(q3)},${px(q4)},1,${px(jolt * (q1 - .5) * 38 + go * (q2 - .5) * 220)}deg) scale(${px(1 - go * .55)})`, opacity: t < SL ? 0 : 1 - sm(1100, 1550, t), filter: `brightness(${px(1 + (1 - lin(SL, SL + 200, t)) * 1.8 * (t >= SL ? 1 : 0))})` };
+        const s = Math.max(0, t - T) / 1000, k = (1 - Math.exp(-3.2 * s)) / 3.2, go = eIn(lin(1150, 1700, t)), r = t < T ? 0 : 1;
+        const X = st.dir[0] * sp * k + (q2 - .5) * W * .9 * k + (q3 - .5) * go * W * .6, Y = st.dir[1] * sp * k + (q4 - .5) * H * .5 * k + 120 * s * s * (H / 100) - go * H * .35;
+        const rot = r * (q1 < .5 ? -1 : 1) * (200 + q2 * 520) * Math.min(1, s * 1.6) * (1 + s);
+        return { transform: `translate3d(${px(X)}px,${px(Y)}px,${px(r * (40 + q3 * 80) * Math.min(1, s * 5))}px) rotate3d(${px(q3 - .3)},${px(q4 - .3)},${px(.4 + q1)},${px(rot)}deg) scale(${px(1 - go * .5)})`, opacity: t < IMP(stars[0]) ? 0 : 1 - sm(1250, 1600, t), filter: `brightness(${px(1.5 + (t >= T ? Math.max(0, 1 - s * 4) * 1.4 : 0))}) contrast(1.1)` };
       });
     });
     intactUntil(S, face, SL);
     const flash = document.createElement('div');
     flash.style.cssText = `position:absolute;inset:0;background:radial-gradient(circle at ${px(cx)}px ${px(cy)}px,rgba(255,255,255,.5),rgba(255,200,215,.14) 38%,transparent 62%);opacity:0;mix-blend-mode:screen`;
     S.layer.appendChild(flash); S.track(flash, (t) => ({ opacity: t < SL ? 0 : Math.max(0, 1 - lin(SL, SL + 260, t)) * 1 }));
-    // five stars with their landing points around the pile
-    const stars = [];
-    for (let i = 0; i < 5; i++) { const a = -2.5 + i * 1.25 + (R() - .5) * .3; stars.push({ t0: i * 55, from: [(i % 2 ? vw + 80 : -80), cy - H * (1.2 + R() * 1.4)], to: [cx + Math.cos(a) * W * .42, cy + Math.sin(a) * H * .32], rot0: R() * TAU, spin: (i % 2 ? -1 : 1) * (11 + R() * 5) }); }
-    const SLASHES = [{ a: -.62, bend: .16, t0: SL - 30 }, { a: .5, bend: -.14, t0: SL + 50 }, { a: -.12, bend: .2, t0: SL + 120 }], SPARKS = [];
+    const SLASHES = [0, 2, 4].map((i, k) => ({ a: Math.atan2(stars[i].dir[1], stars[i].dir[0]), bend: [.14, -.12, .18][k], t0: IMP(stars[i]) - 20 })), SPARKS = [];
     for (let i = 0; i < 80; i++) SPARKS.push({ c: i % 3, u: .12 + R() * .76, d: R() * TAU, v: H * (.35 + R() * 1.1), life: 260 + R() * 330, hot: R() < .4 });
     const petals = [], mist = [];
     for (let i = 0; i < 200; i++) petals.push({ a: R() * TAU, r: R(), sp: 4 + R() * 3, sz: .09 + R() * .1, flip: R() * TAU, fs: 6 + R() * 8, c: R() < .5 ? 0 : 1, rise: .4 + R(), delay: R() * 140, rot: R() * TAU });
@@ -346,7 +350,10 @@
           const out = 1 - lin(1000, 1250, t);
           const pos = (pp) => [lerp(s.from[0], s.to[0], pp), lerp(s.from[1], s.to[1], pp)], size = (pp) => H * .8 * lerp(3, .5, pp);
           for (let g = 6; g >= 0; g--) { const pp = Math.max(0, p - g * .035), [gx, gy] = pos(pp); put(front, shuriken(), gx, gy, size(pp), (g ? .17 * (1 - g / 7) : 1) * out, s.rot0 + s.spin * pp * 3, 1); }
-          if (p >= 1) { const [gx, gy] = pos(1); put(front, shuriken(), gx, gy, size(1), out, s.rot0 + s.spin * 3, 1); }
+          if (p >= 1) {
+            const dr = (u) => eOut(lin(IMP(s), IMP(s) + 240, u)), D = W * .85;
+            for (let g = 5; g >= 0; g--) { const dd = dr(t - g * 14); put(front, shuriken(), s.to[0] + s.dir[0] * D * dd, s.to[1] + s.dir[1] * D * dd, size(1), (g ? .2 * (1 - g / 6) : 1) * out, s.rot0 + s.spin * (3 + (t - IMP(s)) / 90), 1); }
+          }
           const hit = lin(s.t0 + 400, s.t0 + 700, t); if (hit > 0 && hit < 1) { front.globalCompositeOperation = 'lighter'; put(front, glint([255, 255, 255]), pos(1)[0], pos(1)[1], H * .8 * (1 - hit), 1 - hit, 0); front.globalCompositeOperation = 'source-over'; }
         });
         front.globalCompositeOperation = 'lighter';
