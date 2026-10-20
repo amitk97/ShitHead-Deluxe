@@ -52,3 +52,4 @@ console.log('origami ok');
 { const keys = { '2026-11': ['2026-11-02', 'burn-ss2611-sandstorm'], '2027-01': ['2027-01-02', 'burn-ss2701-glacier'], '2027-03': ['2027-03-02', 'burn-ss2703-shuriken'], '2027-05': ['2027-05-02', 'burn-ss2705-whirlpool'], '2027-07': ['2027-07-02', 'burn-ss2707-zeus'], '2027-09': ['2027-09-02', 'burn-ss2709-hex'] };
   Object.values(keys).forEach(([day, id]) => { const u = {}; const r = xp.award(u, [['x', 15000]], ms(day), pay); assert.ok(u.ownedCosmetics[id], id); assert.strictEqual(r.seasonPass.tiers.find(t => t.tier === 40).item.id, id); });
   const none = {}; xp.award(none, [['x', 15000]], ms('2026-11-02'), pay); assert.ok(!none.ownedCosmetics['burn-ss2701-glacier']); console.log('burns ok'); }
+{ const a = {}; assert.ok(sp.grantAll(a, ms('2026-10-20')).length >= 24, 'grantAll reports what it granted'); assert.strictEqual(sp.grantAll(a, ms('2026-10-20')).length, 0, 'and nothing the second time'); console.log('grantAll sync ok'); }

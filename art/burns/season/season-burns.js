@@ -326,11 +326,13 @@
     });
     intactUntil(S, face, SL);
     const flash = document.createElement('div');
-    flash.style.cssText = `position:absolute;inset:0;background:radial-gradient(circle at ${px(cx)}px ${px(cy)}px,rgba(255,255,255,.7),rgba(190,20,50,.25) 35%,transparent 65%);opacity:0;mix-blend-mode:screen`;
+    flash.style.cssText = `position:absolute;inset:0;background:radial-gradient(circle at ${px(cx)}px ${px(cy)}px,rgba(255,255,255,.5),rgba(255,200,215,.14) 38%,transparent 62%);opacity:0;mix-blend-mode:screen`;
     S.layer.appendChild(flash); S.track(flash, (t) => ({ opacity: t < SL ? 0 : Math.max(0, 1 - lin(SL, SL + 260, t)) * 1 }));
     // five stars with their landing points around the pile
     const stars = [];
     for (let i = 0; i < 5; i++) { const a = -2.5 + i * 1.25 + (R() - .5) * .3; stars.push({ t0: i * 55, from: [(i % 2 ? vw + 80 : -80), cy - H * (1.2 + R() * 1.4)], to: [cx + Math.cos(a) * W * .42, cy + Math.sin(a) * H * .32], rot0: R() * TAU, spin: (i % 2 ? -1 : 1) * (11 + R() * 5) }); }
+    const SLASHES = [{ a: -.62, bend: .16, t0: SL - 30 }, { a: .5, bend: -.14, t0: SL + 50 }, { a: -.12, bend: .2, t0: SL + 120 }], SPARKS = [];
+    for (let i = 0; i < 80; i++) SPARKS.push({ c: i % 3, u: .12 + R() * .76, d: R() * TAU, v: H * (.35 + R() * 1.1), life: 260 + R() * 330, hot: R() < .4 });
     const petals = [], mist = [];
     for (let i = 0; i < 200; i++) petals.push({ a: R() * TAU, r: R(), sp: 4 + R() * 3, sz: .09 + R() * .1, flip: R() * TAU, fs: 6 + R() * 8, c: R() < .5 ? 0 : 1, rise: .4 + R(), delay: R() * 140, rot: R() * TAU });
     for (let i = 0; i < 12; i++) mist.push({ a: R() * TAU, r: R(), seed: i % 3 + 1 });
@@ -348,13 +350,33 @@
           const hit = lin(s.t0 + 400, s.t0 + 700, t); if (hit > 0 && hit < 1) { front.globalCompositeOperation = 'lighter'; put(front, glint([255, 255, 255]), pos(1)[0], pos(1)[1], H * .8 * (1 - hit), 1 - hit, 0); front.globalCompositeOperation = 'source-over'; }
         });
         front.globalCompositeOperation = 'lighter';
-        // the slash: white core, crimson glow, crossing the card on the diagonal
-        const sp = lin(SL - 40, SL + 90, t), sf = 1 - lin(SL + 80, SL + 520, t);
-        if (sp > 0 && sf > 0) {
-          const len = Math.hypot(W, H) * 1.5, ux = Math.cos(ang), uy = Math.sin(ang), x0 = cx - ux * len * .5, y0 = cy - uy * len * .5, x1 = lerp(x0, cx + ux * len * .5, eOut(sp)), y1 = lerp(y0, cy + uy * len * .5, eOut(sp));
-          [[W * .22, 'rgba(190,20,50,.55)'], [W * .1, 'rgba(255,70,90,.8)'], [W * .035, 'rgba(255,255,255,1)']].forEach(([lw, col]) => { front.globalAlpha = sf; front.strokeStyle = col; front.lineCap = 'round'; front.lineWidth = lw * (.6 + sf * .5); front.beginPath(); front.moveTo(x0, y0); front.lineTo(x1, y1); front.stroke(); });
-          put(front, glow([255, 70, 90]), cx, cy, H * 2.4, .9 * sf);
-        }
+        // three katana cuts: tapered curved blades of light sweep across the card, crimson only at the edge
+        const len = Math.hypot(W, H) * 1.45, Wd = W * .05;
+        SLASHES.forEach(c => {
+          const head = eOut(lin(c.t0, c.t0 + 120, t)), tail = eIn(lin(c.t0 + 70, c.t0 + 360, t));
+          if (head <= 0 || tail >= 1) return;
+          const ux = Math.cos(c.a), uy = Math.sin(c.a), nx = -uy, ny = ux, bx = nx * c.bend * len, by = ny * c.bend * len;
+          const pt = (u) => { const k = 1 - u; return [cx + ux * len * (u - .5) * 2 * .5 + bx * 4 * u * k, cy + uy * len * (u - .5) * 2 * .5 + by * 4 * u * k]; };
+          const u0 = Math.min(tail, head), u1 = head, N = 22, top = [], bot = [];
+          for (let i = 0; i <= N; i++) {
+            const u = lerp(u0, u1, i / N), q = pt(u), q2 = pt(Math.min(1, u + .01)), dx = q2[0] - q[0], dy = q2[1] - q[1], d = Math.hypot(dx, dy) || 1;
+            const w = Math.sin(Math.PI * i / N) ** .8 * Wd * (1 - .5 * tail), ox = -dy / d * w, oy = dx / d * w;
+            top.push([q[0] + ox, q[1] + oy]); bot.push([q[0] - ox, q[1] - oy]);
+          }
+          const fill = (grow, col, al) => { front.globalAlpha = al; front.fillStyle = col; front.beginPath(); top.forEach((p, i) => { const m = pt(lerp(u0, u1, i / N)); i ? front.lineTo(m[0] + (p[0] - m[0]) * grow, m[1] + (p[1] - m[1]) * grow) : front.moveTo(m[0] + (p[0] - m[0]) * grow, m[1] + (p[1] - m[1]) * grow); }); for (let i = N; i >= 0; i--) { const m = pt(lerp(u0, u1, i / N)), p = bot[i]; front.lineTo(m[0] + (p[0] - m[0]) * grow, m[1] + (p[1] - m[1]) * grow); } front.closePath(); front.fill(); };
+          fill(2.4, 'rgba(210,30,60,1)', .32); fill(1.5, 'rgba(255,120,140,1)', .5); fill(.8, '#fff', 1);
+        });
+        // metal sparks thrown off the cuts
+        SPARKS.forEach(k => {
+          const c = SLASHES[k.c], s = t - (c.t0 + 120 * k.u); if (s < 0 || s > k.life) return;
+          const ux = Math.cos(c.a), uy = Math.sin(c.a), nx = -uy, ny = ux, bx = nx * c.bend * len, by = ny * c.bend * len, u = k.u, kk = 1 - u;
+          const X0 = cx + ux * len * (u - .5) + bx * 4 * u * kk, Y0 = cy + uy * len * (u - .5) + by * 4 * u * kk, p = s / 1000, e = 1 - Math.exp(-4 * p);
+          const X = X0 + Math.cos(k.d) * k.v * e, Y = Y0 + Math.sin(k.d) * k.v * e + .5 * H * 2.2 * p * p, e2 = 1 - Math.exp(-4 * Math.max(0, p - .018));
+          const X2 = X0 + Math.cos(k.d) * k.v * e2, Y2 = Y0 + Math.sin(k.d) * k.v * e2 + .5 * H * 2.2 * Math.max(0, p - .018) ** 2, a = 1 - s / k.life;
+          front.globalAlpha = a; front.strokeStyle = k.hot ? '#fff' : 'rgba(255,170,90,1)'; front.lineWidth = Math.max(1, H * .012); front.lineCap = 'round'; front.beginPath(); front.moveTo(X2, Y2); front.lineTo(X, Y); front.stroke();
+        });
+        const hit = lin(SL - 30, SL + 40, t) * (1 - lin(SL + 40, SL + 260, t));
+        if (hit > 0) put(front, glow([255, 235, 240]), cx, cy, H * 1.5, .6 * hit);
         // sakura cloud
         const s0 = 1000;
         if (t > s0) {

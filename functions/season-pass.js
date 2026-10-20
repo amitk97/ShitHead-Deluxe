@@ -63,10 +63,12 @@ function grantReached(user, now) {
 
 // Test account only: every pass item of every season, regardless of tier.
 function grantAll(user, now) {
+  const out = [];
   Object.entries(SP.seasons || {}).forEach(([key, s]) => Object.entries(s.items).forEach(([t, id]) => {
     const item = (SP.items || []).find((i) => i.id === id);
-    if (item) grantItem(user, key, num(t), item, now);
+    if (item && !(user.ownedCosmetics && user.ownedCosmetics[item.id])) { grantItem(user, key, num(t), item, now); out.push(item.id); }
   }));
+  return out;
 }
 
 module.exports = { add, grantAll, grantReached, tierFor, tierStart, seasonOn };

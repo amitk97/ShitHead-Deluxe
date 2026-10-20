@@ -451,9 +451,8 @@ actions.sync = async ({ uid, auth }) => {
     const newAvatars = grantEarnedAvatars(user, legacy, now);
     // Level rewards for accounts already past their level (xp.grantLevelRewards).
     const levelRewards = xpOn ? xp.grantLevelRewards(user, now) : [];
-    if (xpOn) require('./season-pass').grantReached(user, now);
-    // Test account: every Season Pass reward already owned (any season, any tier).
-    if (isAmitK(auth)) require('./season-pass').grantAll(user, now);
+    // Season Pass items missed by a failed write, and (test account) every item of every season: a change here must be saved, so it counts below.
+    const passItems = [...(xpOn ? require('./season-pass').grantReached(user, now) : []), ...(isAmitK(auth) ? require('./season-pass').grantAll(user, now) : [])];
     // A first Gauntlet clear from before it was a challenge: record it (already paid).
     let backfilled = false;
     // Gauntlet bots beaten from before they were counted: 5 per clear + this run's.
@@ -467,7 +466,7 @@ actions.sync = async ({ uid, auth }) => {
       backfilled = true;
     }
     const xpOut = levelRewards.length ? { ...(xpRes || { gained: 0, total: num(user.xp?.total), level: num(user.xp?.level, 1), levelUps: [] }), rewards: levelRewards } : xpRes;
-    return claimed.length || newAvatars.length || backfilled || past || releveled || levelRewards.length ? { user, claimed, newAvatars, xp: xpOut } : { noop: true, claimed: [], newAvatars: [] };
+    return claimed.length || newAvatars.length || passItems.length || backfilled || past || releveled || levelRewards.length ? { user, claimed, newAvatars, xp: xpOut } : { noop: true, claimed: [], newAvatars: [] };
   });
   // After a level-table change, fix every account's level once (xp.migrateAll).
   if (xpOn) { try { await xp.migrateAll(); } catch (e) { logger.warn('xp migrate failed', { error: String(e) }); } }
