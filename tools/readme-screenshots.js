@@ -35,6 +35,8 @@ const S = process.env.SH_VIDEO_DEPS || ROOT, file = path.join(ROOT, 'index.html'
   await page.evaluate(() => { localStorage.setItem('shithead_whats_new', '0'); localStorage.setItem('shithead_seen_version', 'x'); localStorage.setItem('shithead_tutorial_progress', JSON.stringify({ quick_start: true })); localStorage.setItem('shithead_player_name', 'Amit'); localStorage.setItem('shithead_helper_tips', '0'); });
   await page.goto('https://game.local/index.html');
   await page.waitForTimeout(2500);
+  // Seasonal announcements can arrive after navigation; keep reference captures unobscured.
+  await page.addStyleTag({content: '#eventPopupModal,#seasonMailModal{display:none!important}'});
   await page.fill('#playerNameInput', 'Amit');
   await page.waitForTimeout(400);
   await snap('home'); // the mode carousel (v317+)

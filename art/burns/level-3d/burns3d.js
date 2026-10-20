@@ -35,7 +35,7 @@
     'burn-lvl-royal-incineration': { dur: 2.0, box: [5, 5.4, .5, .66], tile: 'art/burns/royal-incineration/tile.webp', art: 'art/burns/royal-incineration/layers.webp?v=1', layout: [4.2, 436 / 432, .49, .68] },
     // Hellfire Spiral (Lvl 60): the magma tornado (cards painted out) and the rubble at its base in front.
     'burn-lvl-hellfire-spiral': { dur: 2.0, box: [5, 5.6, .5, .8], tile: 'art/burns/hellfire-spiral/tile.webp', art: 'art/burns/hellfire-spiral/layers.webp?v=2', layout: [4.6, 444 / 434, .5, .8] },
-    // The ShitStorm (Lvl 99): the spinning storm (cards painted out) and the face, exactly as painted, on its own layer.
+    // The ShitStorm (Lvl 99): the owner's painted poo tornado (slot 0, the body swirls in the shader) and its whole head (slot 1, rigid).
     'burn-lvl-shitstorm': { dur: 2.0, box: [5, 5.6, .5, .92], tile: 'art/burns/shitstorm/tile-v2.webp', art: 'art/burns/shitstorm/layers-v2.webp', layout: [4.6, 1, .5, .93] }
   };
   const artImages = {};
@@ -149,6 +149,31 @@ void main(){
   vec3 c=mix(vec3(.32,.12,.78),vec3(.3,.86,1.),smoothstep(.35,.8,f));
   c=mix(c,vec3(.94,.92,1.),smoothstep(.8,1.,f))*f*v_k.w;
   gl_FragColor=vec4(c,max(c.r,max(c.g,c.b))*.7);
+ } else if(k>9.5&&k<10.5){
+  // Rounded chocolate/gold coil material. Geometry turns; the texture never slides.
+  float q=v_loc.y;float roundness=sqrt(max(0.,1.-q*q));
+  float grain=fbm(vec2(v_uv.x*65.,q*3.));
+  vec3 c=mix(vec3(.10,.035,.012),vec3(.48,.22,.065),roundness);
+  c*=.82+.3*grain;
+  // Only the lower, faceless coils supply material detail; never draw the old diorama.
+  vec4 paint=texture2D(u_tex2,vec2(.035+v_uv.x*.41,.70+q*.055));
+  c=mix(c,paint.rgb*(.35+.65*roundness),paint.a*.58);
+  float rim=exp(-pow((q+.62)/.12,2.));
+  c+=vec3(1.,.57,.13)*rim*(.45+.55*grain);
+  c+=vec3(.9,.58,.25)*pow(max(0.,roundness*.8-q*.4),14.)*.45;
+  float a=(1.-smoothstep(.94,1.,abs(q)))*v_col.a;
+  gl_FragColor=vec4(c*v_col.rgb*a,a);
+ } else if(k>10.5&&k<11.5){
+  // Exactly one rigid painted face: no flow, swirl, gloss sweep or noisy reveal.
+  vec4 c=texture2D(u_tex2,v_uv);float a=c.a*v_col.a;
+  gl_FragColor=vec4(c.rgb*v_col.rgb*a,a);
+ } else if(k>11.5){
+  float x=v_loc.x;float volume=sqrt(max(0.,1.-x*x));
+  float grain=fbm(v_uv*vec2(8.,19.));
+  vec3 c=mix(vec3(.075,.024,.009),vec3(.31,.115,.026),volume);
+  c*=.8+.4*grain;c+=vec3(.18,.08,.018)*pow(max(0.,volume*.85-x*.3),10.);
+  float a=v_col.a*(1.-smoothstep(.96,1.,abs(x)));
+  gl_FragColor=vec4(c*a,a);
  } else {
   // A painted sprite (atlas coords in v_uv), its rectangle faded to soft edges.
   vec4 c=texture2D(u_tex2,v_uv);vec2 q=abs(v_loc);
@@ -231,6 +256,7 @@ void main(){
     const hw = S.ar / 2;
     S.waveX = t => t < .26 ? -1.5 + (t / .26) * (1.5 - hw) : t < .9 ? -hw + (t - .26) / .64 * (hw * 2 + .15) : hw + .15 + (t - .9) / .3 * 1.6;
     S.front = (c, t) => S.calm ? -.25 + clamp(t / .7) * 1.45
+      : storm ? -.25 + clamp((t - .62) / .58) * 1.45
       : ghost ? -.25 + clamp((t - S.ripAt(c) - .3) / .7) * 1.45
       : smoke ? -.25 + clamp((t - .78) / .7) * 1.45 : royal ? -.25 + clamp((t - .9) / .62) * 1.45 : spiral ? -.25 + clamp((t - .85) / .62) * 1.45 : snap ? -.25 + clamp((t - .62) / .62) * 1.45 : blaze ? -.25 + clamp((t - .72) / .72) * 1.45 : spectral ? -.25 + clamp((t - .8) / .68) * 1.45 : bolt ? -.25 + clamp((t - .62) / .66) * 1.45 : candy ? -.25 + clamp((t - .8) / .66) * 1.45 : lava ? -.25 + clamp((t - .95) / .7) * 1.45 : paper ? -.25 + clamp((t - .9) / .6) * 1.45 : -.25 + clamp((t - .24) / .66) * 1.45;
     S.pose = (c, t) => {
@@ -285,6 +311,12 @@ void main(){
         if (t < T) return { rx: 0, ry: 0, rz: c.rot0 + Math.sin(t * 60) * .02 * tr, tx: c.ox, ty: c.oy, tz: .03 * tr, heat: .5 * tr };
         return { rx: -.18 * e + w, ry: .22 * Math.sin(t * 2.6) * e, rz: c.rot0 + .06 * Math.sin(t * 3.1) * e, tx: c.ox, ty: c.oy + .12 * e, tz: .38 * e, heat: 1 };
       }
+      if (storm) {
+        const pull = smooth(.3, 1.05, t), a = (t - .3) * 5;
+        return { rx: -.25 * pull, ry: 2.1 * pull, rz: c.rot0 + .32 * pull,
+          tx: c.ox * (1 - pull) + .18 * Math.sin(a) * pull,
+          ty: c.oy + .85 * pull * S.artK, tz: .22 * pull, heat: smooth(.1, .45, t), scale: 1 - .65 * pull };
+      }
       if (spiral) {
         // Shudders as the vortex wakes, then is lifted and spun by it (its back turns to us).
         const tr = smooth(0, T, t), e = ease((t - T) / .5), u = Math.max(0, t - T);
@@ -325,7 +357,7 @@ void main(){
     // Card local (u,v) -> view space, with the edge ahead of the fire curling.
     S.cardPoint = (c, u, v, pose, front) => {
       const fu = (front - .16 * (1 - v)) / .82, d = u - fu;
-      let x = (u - .5) * c.ar, y = .5 - v;
+      let x = (u - .5) * c.ar * (pose.scale ?? 1), y = (.5 - v) * (pose.scale ?? 1);
       let z = S.calm ? 0 : pose.heat * (.42 * Math.exp(-Math.max(0, d) * 5) + .07 * Math.sin(Math.PI * v));
       let co = Math.cos(pose.rz), si = Math.sin(pose.rz); [x, y] = [x * co - y * si, x * si + y * co];
       co = Math.cos(pose.rx); si = Math.sin(pose.rx); [y, z] = [y * co - z * si, y * si + z * co];
@@ -495,12 +527,12 @@ void main(){
           // (orbits: in front of the card on the near side, behind it on the far side); dark smoke
           // rolls off its edges; on the ignition a ring of sparks bursts out across the floor.
           const orbit = (o, fast) => ({ r: o ? R(.25, .55) : R(.9, 1.4), a: R(0, 6.28), w: (fast ? 1.3 : 1) * (storm ? 1.5 : 1) * R(5, 8), y: FLOOR + R(0, .2), vy: R(.9, 1.7), pull: o ? 0 : R(1.2, 2) });
-          if (t > T - .1 && t < 1.55) emit('helix', storm ? 95 : 70, dt, () => S.embers.push({ pal: storm ? 2 : 0, orb: orbit(rand() < .5, true), p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.5, .9), size: R(1.6, 3.6), seed: rand() * 6.28 }));
-          if (t > T - .04 && t < 1.5) emit('tornado', storm ? 0 : 170, dt, () => S.flames.push({ orb: { r: storm ? R(.55, .95) : R(.3, .55), a: R(0, 6.28), w: (storm ? 1.2 : 1) * R(4.5, 7), y: FLOOR + R(-.02, .12), vy: storm ? R(1.2, 2.2) : R(1, 1.8) }, x: 0, y: FLOOR, z: 0, w: storm ? R(.3, .52) : R(.2, .36), h: storm ? R(.7, 1.2) : R(.42, .8), age: 0, life: R(.5, .85), seed: rand(), lean: 0, tint: storm ? [.95, .62, .28] : null }));
+          if (t > T - .1 && t < 1.55) emit('helix', storm ? 32 : 70, dt, () => S.embers.push({ pal: storm ? 2 : 0, orb: orbit(rand() < .5, true), p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.5, .9), size: R(1.6, 3.6), seed: rand() * 6.28 }));
+          if (!storm && t > T - .04 && t < 1.5) emit('tornado', storm ? 120 : 170, dt, () => S.flames.push({ orb: { r: storm ? R(.55, .95) : R(.3, .55), a: R(0, 6.28), w: (storm ? 1.2 : 1) * R(4.5, 7), y: FLOOR + R(-.02, .12), vy: storm ? R(1.2, 2.2) : R(1, 1.8) }, x: 0, y: FLOOR, z: 0, w: storm ? R(.3, .52) : R(.2, .36), h: storm ? R(.7, 1.2) : R(.42, .8), age: 0, life: R(.5, .85), seed: rand(), lean: 0, tint: storm ? [.95, .62, .28] : null }));
           // The ShitStorm is a storm of the stuff itself: dark and golden dust clouds whirl round the card with the flames.
-          if (storm && t > T - .04 && t < 1.5) emit('dust', 0, dt, () => S.smoke.push({ orb: { r: R(.5, .95), a: R(0, 6.28), w: R(3.5, 5.5), y: FLOOR + R(0, .25), vy: R(.9, 1.7) }, col: rand() < .5 ? [.58, .38, .17] : [.26, .15, .07], p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.7, 1.1), size: R(.4, .7), seed: rand(), a: .55 }));
-          if (t > T && t < 1.35) emit('debris', 11, dt, () => S.shards.push({ c: n - 1, orb: orbit(false), p: [0, 0, 0], uv: [R(.1, .9), R(.1, .9)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: R(.03, .055), age: 0, life: R(.7, 1), seed: rand(), char: .3 }));
-          if (t > T && t < 1.45) emit('smoke', 10, dt, () => { const sd = rand() < .5 ? -1 : 1; S.smoke.push({ col: storm ? [.2, .13, .07] : [.12, .07, .07], p: [sd * R(1, 1.7), R(-.2, 1.6), R(-.5, .1)], v: [sd * R(.1, .3), R(.2, .5), 0], age: 0, life: R(.8, 1.2), size: R(.4, .7), seed: rand() }); });
+          if (storm && t > T - .04 && t < 1.38) emit('dust', 18, dt, () => S.smoke.push({ orb: { r: R(.5, .95), a: R(0, 6.28), w: R(3.5, 5.5), y: FLOOR + R(0, .25), vy: R(.9, 1.7) }, col: rand() < .5 ? [.58, .38, .17] : [.26, .15, .07], p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.7, 1.1), size: R(.28, .45), seed: rand(), a: .30 }));
+          if (t > T && t < (storm ? 1.15 : 1.35)) emit('debris', storm ? 7 : 11, dt, () => S.shards.push({ c: n - 1, orb: orbit(false), p: [0, 0, 0], uv: [R(.1, .9), R(.1, .9)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: R(.03, .055), age: 0, life: R(.7, 1), seed: rand(), char: .3 }));
+          if (t > T && t < (storm ? 1.2 : 1.45)) emit('smoke', storm ? 4 : 10, dt, () => { const sd = rand() < .5 ? -1 : 1; S.smoke.push({ col: storm ? [.2, .13, .07] : [.12, .07, .07], p: [sd * R(1, 1.7), R(-.2, 1.6), R(-.5, .1)], v: [sd * R(.1, .3), R(.2, .5), 0], age: 0, life: R(.8, 1.2), size: R(.4, .7), seed: rand() }); });
           if (t > T && t < T + .03) for (let i = 0; i < 30; i++) { const a = R(0, 6.28), sp = R(1.2, 2.6); S.embers.push({ pal: storm ? 2 : 0, p: [0, FLOOR + .05, .2], v: [Math.cos(a) * sp, R(.2, .9), Math.sin(a) * sp * .6], age: 0, life: R(.4, .8), size: R(2, 4.4), seed: rand() * 6.28 }); }
           S.cards.forEach(c => burnCard(c, t, dt));
         } else if (royal) {
@@ -820,6 +852,23 @@ void main(){
           [1, .82, .4, beam * (.6 + .3 * Math.sin(t * 11 + i * 2.3))], [2, 0, 0, 0]);
       }
       for (const [d, col] of [[0, [1, .95, .7]], [.08, [1, .7, .25]]]) { const rt = (t - T - d) / .5; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 2 * ease(rt), (1 - rt) * .9, col); }
+    } else if (S.storm && !S.calm) {
+      // The owner's painted poo tornado: the body (cone, torn cards, goo) swirls in the shader while the
+      // complete head rides on top, rigid. It grows out of the pile, grins on the strike and collapses
+      // into the pile at 1.38-1.86s (the card is consumed at its foot between .62 and 1.2).
+      const T = S.T, alive = smooth(.06, .3, t) * (1 - smooth(1.5, 1.96, t));
+      const collapse = smooth(1.38, 1.86, t), s0 = (.5 + .5 * ease((t - .18) / .5)) * (1 - .55 * collapse);
+      const sh = .06 * Math.sin(t * 9) * alive, sx = 1 + .03 * Math.sin(t * 18), grin = 1 + .05 * bump(T + .05, T + .15, T + .45);
+      if (R.art) {
+        layer(out.art, 0, -.3, s0, 0, alive, .5, [1, .75, .3], false, 1.25, 11.6, sx, sh);
+        const fv = .26, fs = s0 * grin, fdy = (PV - fv) * AH * (s0 - fs);
+        layer(out.artFront, 1, -.3, fs, fdy, smooth(.18, .5, t) * (1 - smooth(1.4, 1.8, t)), 0, [1, .8, .4], false, 1.25, 0, 1, 0, sh * (PV - fv) * AH * s0);
+      }
+      const charge = smooth(0, .3, t) * (1 - smooth(.85, 1.8, t));
+      glowAt(out.back, [0, FLOOR * K + .05, 0], .85 * K, [1, .55, .16, .36 * charge]);
+      const rt = (t - .3) / .5;
+      if (rt > 0 && rt < 1) ring(FLOOR, (.2 + 1.3 * ease(rt)) * K, (1 - rt) * .45, [1, .68, .22]);
+      glowAt(out.back, [0, FLOOR * K + .12, 0], .55 * K, [1, .46, .08, .22 * bump(1.38, 1.65, 1.98)]);
     } else if (S.kind === 'spiral' && !S.calm) {
       // The magma vortex rears up out of the card (bottom first) and keeps turning: its painted
       // bands travel round it, a hot core glows up its axis, the rubble at its base sits in front
@@ -827,15 +876,7 @@ void main(){
       const T = S.T, out1 = 1 - smooth(1.45, 1.95, t), rise = .55 + .45 * ease((t - T + .05) / .55);
       const reveal = smooth(T - .08, T + .45, t) * out1, flick = .85 + .15 * Math.sin(t * 19);
       glowAt(out.back, [0, 0, 0], .9, [1, .4, .1, .7 * smooth(0, T, t) * (1 - smooth(T, T + .3, t))]);
-      if (R.art && S.storm) {
-        // The ShitStorm: the whole storm whirls (highlights sweep round it, its coils travel, it
-        // pulses and leans as it spins); the painted face rides on it unwarped and grins on the strike.
-        const sh = .07 * Math.sin(t * 9) * reveal, sx = 1 + .04 * Math.sin(t * 18), grin = 1 + .06 * bump(T + .1, T + .2, T + .5);
-        layer(out.art, 0, -.3, rise, 0, reveal, .5, [1, .75, .3], false, 1.25, 11.6, sx, sh);
-        // The face moves with the storm (lifted, leaning with it) but is never skewed or stretched.
-        const fv = .26, fs = rise * grin, fdy = (PV - fv) * AH * (rise - fs);
-        layer(out.artFront, 1, -.3, fs, fdy, smooth(T + .05, T + .35, t) * out1, 0, [1, .8, .4], false, 1.25, 0, 1, 0, sh * (PV - fv) * AH * rise);
-      } else if (R.art) {
+      if (R.art) {
         layer(out.art, 0, -.3, rise, 0, reveal * .4, 1.5, [1, .45, .12], false, 1.25, 1);
         layer(out.artFront, 1, .6, 1, 0, smooth(T, T + .3, t) * out1, .6, [1, .45, .12], false, 1.25, .4);
       }
@@ -1087,7 +1128,7 @@ void main(){
     // The painted scene fits the screen width and the room above the Pile (under the header), so its
     // top is never cut off; the cards stay their real size.
     const hw = host.clientWidth || 390, hh = host.clientHeight || 844, [LW, LR, , LV] = fx.layout || [];
-    const LU = (fx.layout || [])[2], artK = fx.art ? Math.min(1, hw * .98 / (LW * H * 2 * Math.max(LU, 1 - LU)), Math.max(0, y - 52) / (LW * LR * LV * H)) * (/shitstorm|hellfire/.test(id) ? .86 : 1) : 1; // the storms grow on the strike, so they get margin under the header
+    const LU = (fx.layout || [])[2], artK = fx.art ? Math.min(1, hw * .98 / (LW * H * 2 * Math.max(LU, 1 - LU)), Math.max(0, y - 52) / (LW * LR * LV * H)) * (id === 'burn-lvl-shitstorm' ? .84 : /hellfire/.test(id) ? .86 : 1) : 1; // the storms grow on the strike, so they get margin under the header
     // A painted scene gets the whole layer, so its smoke is never cut by a canvas edge.
     const [bw, bh, bx, by] = fx.box, x0 = fx.art ? 0 : Math.max(0, x - H * bw * bx), y0 = fx.art ? 0 : Math.max(0, y - H * bh * by);
     const ox = Math.round(x0), oy = Math.round(y0), cw = Math.round(fx.art ? hw : Math.min(hw, x + H * bw * (1 - bx)) - ox), ch = Math.round(fx.art ? hh : Math.min(hh, y + H * bh * (1 - by)) - oy);
@@ -1306,19 +1347,18 @@ void main(){
       [.88, .95, 1.02, 1.09, 1.17, 1.25, 1.33, 1.41].forEach((at, n) => k.noise({ at, dur: .028, type: 'bandpass', f0: 2100 + n * 150, q: 3, level: .14 }));
       k.noise({ at: 1.45, dur: .5, type: 'bandpass', f0: 900, f1: 300, q: .7, level: .07, attack: .1 });
     },
-    // The ShitStorm: wind winding up (0–0.3), a wet thump as it bursts up at 0.3, a fast spinning
-    // whoosh every 0.18s while it whirls, cheeky squelches (0.55, 0.9, 1.2), golden sparkle chimes,
-    // crackles as the card burns away (0.88–1.45) and the wind dying off.
+    // ShitStorm: suction at .0, coils rise at .18, impact .30, face .35–.58,
+    // card consumed .62–1.20, collapse 1.38–1.86 and ember tail to 1.98.
     'burn-lvl-shitstorm': k => {
-      k.noise({ dur: .34, type: 'bandpass', f0: 250, f1: 1100, q: .9, level: .12, attack: .28 });
-      k.tone({ dur: 1.4, f0: 44, f1: 58, level: .12, attack: .2, vibrato: 6 });
-      k.tone({ at: .3, dur: .4, f0: 95, f1: 42, level: .32 });
-      k.noise({ at: .3, dur: .3, type: 'lowpass', f0: 900, f1: 160, level: .3, attack: .004 });
-      [.4, .58, .76, .94, 1.12, 1.3, 1.48].forEach((at, n) => k.noise({ at, dur: .15, type: 'bandpass', f0: 600 + n * 50, f1: 1900 + n * 60, q: 1.6, level: .12 - n * .01, attack: .07 }));
-      [.55, .9, 1.2].forEach((at, n) => k.tone({ at, dur: .12, type: 'triangle', f0: 190 - n * 15, f1: 90, level: .09, attack: .01, vibrato: 30 }));
-      [.46, .63, .81, 1.0, 1.25].forEach((at, n) => k.tone({ at, dur: .22, f0: 2637 + n * 220, f1: 2600 + n * 220, level: .035, attack: .004 }));
-      [.88, .95, 1.02, 1.09, 1.17, 1.25, 1.33, 1.41].forEach((at, n) => k.noise({ at, dur: .028, type: 'bandpass', f0: 2100 + n * 150, q: 3, level: .13 }));
-      k.noise({ at: 1.45, dur: .5, type: 'bandpass', f0: 800, f1: 260, q: .7, level: .07, attack: .1 });
+      k.noise({ dur: .3, type: 'bandpass', f0: 180, f1: 1000, q: .8, level: .10, attack: .24 });
+      k.tone({ at: .18, dur: 1.18, type: 'triangle', f0: 52, f1: 78, level: .07, attack: .18, vibrato: 4 });
+      k.tone({ at: .3, dur: .28, f0: 100, f1: 42, level: .23 });
+      k.noise({ at: .3, dur: .22, type: 'lowpass', f0: 800, f1: 180, level: .18, attack: .008 });
+      [.36,.63,.9,1.17].forEach((at,n) => k.noise({ at, dur: .23, type: 'bandpass', f0: 450+n*90, f1: 1300+n*90, q: 1.1, level: .085-n*.01, attack: .08 }));
+      [.48,.64].forEach((at,n) => k.tone({ at, dur: .15, type: 'triangle', f0: 180+n*45, f1: 95, level: .055, attack: .015, vibrato: 22 }));
+      [.64,.73,.82,.91,1.0,1.1,1.18].forEach((at,n) => k.noise({ at, dur: .024, type: 'bandpass', f0: 2200+n*120, q: 2, level: .075 }));
+      k.noise({ at: 1.38, dur: .48, type: 'bandpass', f0: 950, f1: 160, q: .8, level: .10, attack: .04 });
+      [1.57,1.72,1.84].forEach((at,n) => k.tone({ at, dur: .13, f0: 1900+n*330, f1: 1700+n*330, level: .022-n*.004, attack: .006 }));
     },
     // Spark Snap: a fizzing, rising crackle as the charge builds (0–0.26), the SNAP at 0.26 (a
     // sharp electric crack, a bright zap and a deep thump), sizzling sparks raining out, crackles as
