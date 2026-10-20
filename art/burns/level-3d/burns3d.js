@@ -311,7 +311,7 @@ void main(){
       if (paper) { const g = smooth(.02, .4, t) * (1 - smooth(1.4, 1.85, t)) + .7 * smooth(T - .02, T, t) * (1 - smooth(T, T + .3, t)); return [1 + .6 * g, 1 + .45 * g, 1 + .25 * g]; }
       if (lava) { const g = (smooth(.02, .3, t) * (1 - smooth(1.5, 1.9, t)) + .8 * smooth(T - .02, T, t) * (1 - smooth(T, T + .3, t))) * (.85 + .15 * Math.sin(t * 9)); return [1 + 1.05 * g, 1 + .4 * g, 1 + .02 * g]; }
       if (candy) { const g = smooth(.02, .3, t) * (1 - smooth(1.4, 1.85, t)) + .7 * smooth(T - .02, T, t) * (1 - smooth(T, T + .25, t)); return [1 + .7 * g, 1 + .45 * g, 1 + .55 * g]; }
-      if (bolt) { const z = S.zap ? S.zap(t) : 0, g = smooth(.02, T, t) * (1 - smooth(1.3, 1.8, t)) * (.7 + .3 * Math.sin(t * 61)) + 1.6 * z; return [1 + .55 * g, 1 + .8 * g, 1 + 1.1 * g]; }
+      if (bolt) { const z = S.zap ? S.zap(t) : 0, g = smooth(.02, T, t) * (1 - smooth(1.3, 1.8, t)) * (.7 + .3 * Math.sin(t * 61)) + 1.1 * z; return [1 + .4 * g, 1 + .6 * g, 1 + .8 * g]; }
       if (spectral) { const g = smooth(.02, .35, t) * (1 - smooth(1.4, 1.85, t)) + .9 * smooth(T - .02, T, t) * (1 - smooth(T, T + .3, t)); return [1 + .55 * g, 1 + .3 * g, 1 + .95 * g]; }
       if (blaze) { const g = (smooth(.02, .3, t) * (1 - smooth(1.4, 1.85, t)) + .8 * smooth(T - .02, T, t) * (1 - smooth(T, T + .3, t))) * (.86 + .14 * Math.sin(t * 23)); return [1 + 1 * g, 1 + .45 * g, 1 + .08 * g]; }
       if (smoke) { const g = smooth(.05, .3, t) * (1 - smooth(1.4, 1.9, t)); return [1 + .8 * g, 1 + .3 * g, 1 + .1 * g]; }
@@ -723,7 +723,7 @@ void main(){
       // Arcs crackle round the card as it charges; the strike: bolts slam down from above onto the card,
       // a white-blue flash, the painted burst exploding out; then arcs keep lashing out from the card to
       // the edges of the scene, the burst crackling with them; blue floor rings; it fades.
-      const T = S.T, out1 = 1 - smooth(1.3, 1.85, t), grow = .35 + .7 * ease((t - T + .02) / .3) + .04 * Math.max(0, t - T);
+      const T = S.T, out1 = 1 - smooth(1.1, 1.7, t), grow = .3 + .42 * ease((t - T + .02) / .3) + .03 * Math.max(0, t - T);
       const zap = tt => BOLT_TIMES.reduce((m, b, i) => Math.max(m, (i ? .55 : 1) * Math.exp(-Math.max(0, tt - b) * 14) * (tt >= b ? 1 : 0)), 0);
       S.zap = zap;
       const z = zap(t), [ox, oy, os] = proj(0, 0, .2), u = F * os, flick = Math.floor(t * 24);
@@ -733,8 +733,8 @@ void main(){
         lightning(out.front, [ox + Math.cos(a) * r0, oy + Math.sin(a) * r0], [ox + Math.cos(a + .8) * r1, oy + Math.sin(a + .8) * r1], flick * 13 + i, u * .008, .55 * smooth(0, T, t), 0);
       }
       if (R.art) {
-        layer(out.art, 0, -.3, grow, 0, smooth(T - .02, T + .2, t) * out1, 1.2, [.5, .75, 1], true, 1.2 + .5 * z);
-        layer(out.artFront, 1, .6, 1, 0, smooth(T, T + .2, t) * out1, .6, [.5, .7, 1], false, 1.15);
+        layer(out.art, 0, -.3, grow, 0, smooth(T - .02, T + .2, t) * out1 * .9, 1.2, [.5, .75, 1], true, .95 + .35 * z);
+        layer(out.artFront, 1, .6, 1, 0, smooth(T, T + .2, t) * out1 * .8, .6, [.5, .7, 1], false, 1);
       }
       BOLT_TIMES.forEach((b, i) => {
         const age = t - b; if (age < 0 || age > .16) return;
@@ -743,7 +743,7 @@ void main(){
         else for (let k = 0; k < 2; k++) { const a = i * 2.4 + k * 3.3; lightning(out.front, [ox, oy], [ox + Math.cos(a) * u * 2.4 * K, oy + Math.sin(a) * u * 1.6 * K], sd + k * 31, u * .011, al * .9, 2); }
       });
       if (z > 0) glowAt(out.back, [0, .05, 0], 1.2 + .9 * z, [.75, .88, 1, Math.min(1, z * 1.1)]);
-      glowAt(out.back, [0, 0, -.2], 1.3 * K, [.35, .6, 1, .45 * smooth(T, T + .1, t) * out1 * (.7 + .3 * Math.sin(t * 47))]);
+      glowAt(out.back, [0, 0, -.2], 1.3 * K, [.35, .6, 1, .26 * smooth(T, T + .1, t) * out1 * (.7 + .3 * Math.sin(t * 47))]);
       for (const [d, col] of [[0, [.85, .95, 1]], [.08, [.35, .6, 1]]]) { const rt = (t - T - d) / .5; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 2 * ease(rt), (1 - rt) * .9, col); }
     } else if (S.kind === 'smoke' && !S.calm) {
       // Heat builds under the card, then the blast: a flash, a floor ring and the painted cloud

@@ -201,17 +201,17 @@
           return { offset: o, opacity: life > 0 ? Math.min(1, life * 1.3) : 0,
             transform: `translateY(${by.toFixed(1)}px) skewX(${(Math.sin(T * f2 + ph) * sw).toFixed(2)}deg) scale(${(life * (1 + .12 * Math.sin(T * f1 + ph))).toFixed(3)},${(life * (1 + .3 * Math.sin(T * f1 * 1.3 + ph * 2) + .15 * Math.sin(T * f2 * 2.1))).toFixed(3)})` }; }));
       };
-      for (let i = 0; i < 9; i++) spawn({ fx: cx + (i / 8 - .5) * W * 1.05 + rand(-4, 4), w: H * rand(.18, .26), h: H * rand(.26, .4), z: i % 2 ? 4 : 2, t0: CF_START - .1 + rand(0, .12), t1: CF_END - .25 + rand(0, .1), ride: true });
-      for (let i = 0; i < 14; i++) { const depth = rand(-1, 1); spawn({ fx: cx + rand(-1, 1) * W * 1.15, base: cy + H * (.5 + .12 * depth), w: H * rand(.24, .38) * (1 + .25 * depth), h: H * rand(.45, .85) * (1 + .2 * depth), z: depth > .3 ? 4 : 1, t0: rand(0, .22), t1: rand(1.4, 1.65), ride: false }); }
+      for (let i = 0; i < 15; i++) spawn({ fx: cx + (i / 14 - .5) * W * 1.1 + rand(-4, 4), w: H * rand(.2, .3), h: H * rand(.36, .6), z: i % 2 ? 4 : 2, t0: CF_START - .1 + rand(0, .12), t1: CF_END - .25 + rand(0, .1), ride: true });
+      for (let i = 0; i < 26; i++) { const depth = rand(-1, 1); spawn({ fx: cx + rand(-1, 1) * W * 1.25, base: cy + H * (.5 + .12 * depth), w: H * rand(.3, .5) * (1 + .25 * depth), h: H * rand(.8, 1.5) * (1 + .2 * depth), z: depth > .3 ? 4 : 1, t0: rand(0, .22), t1: rand(1.4, 1.65), ride: false }); }
       // ---- Spectral sparks and coloured haze rising.
-      for (let i = 0; i < 40; i++) {
-        const t0 = rand(.1, 1.55), life = rand(.35, .45), s = H * rand(.02, .045), rise = H * rand(1.1, 2.6), sw = rand(-.5, .5) * H, col = ['#e9d5ff', '#f9a8d4', '#a5f3fc', '#c7d2fe'][i % 4];
+      for (let i = 0; i < 90; i++) {
+        const t0 = rand(.1, 1.4), life = rand(.35, .5), s = H * rand(.02, .045), rise = H * rand(1.1, 2.6), sw = rand(-.5, .5) * H, col = ['#e9d5ff', '#f9a8d4', '#a5f3fc', '#c7d2fe'][i % 4];
         const el = add(`position:absolute;left:${cx + rand(-.8, .8) * W - s / 2}px;top:${cy + rand(-.1, .5) * H}px;width:${s}px;height:${s}px;z-index:4;border-radius:50%;background:#fff;box-shadow:0 0 ${s * 2.5}px ${s * .8}px ${col}`);
         anim(el, [{ offset: 0, opacity: 0, transform: 'translate(0,0)' }, { offset: t0 / D, opacity: 0, transform: 'translate(0,0)' }, { offset: t0 / D + .01, opacity: 1, transform: 'translate(0,0)' },
           { offset: (t0 + life * .5) / D, opacity: 1, transform: `translate(${sw * .5}px,${-rise * .5}px)` }, { offset: (t0 + life) / D, opacity: 0, transform: `translate(${sw}px,${-rise}px) scale(.3)` }, { offset: 1, opacity: 0, transform: 'scale(.3)' }]);
       }
-      for (let i = 0; i < 6; i++) {
-        const t0 = rand(.3, 1.3), s = H * rand(.6, .9), el = add(`position:absolute;left:${cx + rand(-.5, .5) * W - s / 2}px;top:${cy - H * .6 - s / 2}px;width:${s}px;height:${s}px;z-index:1;border-radius:50%;background:radial-gradient(closest-side,${['rgba(168,85,247,.28)', 'rgba(236,72,153,.22)', 'rgba(34,211,238,.2)'][i % 3]},transparent)`);
+      for (let i = 0; i < 9; i++) {
+        const t0 = rand(.3, 1.3), s = H * rand(.8, 1.3), el = add(`position:absolute;left:${cx + rand(-.5, .5) * W - s / 2}px;top:${cy - H * .6 - s / 2}px;width:${s}px;height:${s}px;z-index:1;border-radius:50%;background:radial-gradient(closest-side,${['rgba(168,85,247,.28)', 'rgba(236,72,153,.22)', 'rgba(34,211,238,.2)'][i % 3]},transparent)`);
         anim(el, [{ offset: 0, opacity: 0, transform: 'scale(.5)' }, { offset: t0 / D, opacity: 0, transform: 'scale(.5)' }, { offset: (t0 + .2) / D, opacity: 1, transform: `translate(${rand(-.2, .2) * H}px,${-H * .4}px) scale(1)` }, { offset: Math.min(1, (t0 + .65) / D), opacity: 0, transform: `translate(${rand(-.4, .4) * H}px,${-H * 1.3}px) scale(1.8)` }, { offset: 1, opacity: 0, transform: 'scale(1.8)' }]);
       }
       end(lastCard);
