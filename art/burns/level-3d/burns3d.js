@@ -496,7 +496,7 @@ void main(){
           // rolls off its edges; on the ignition a ring of sparks bursts out across the floor.
           const orbit = (o, fast) => ({ r: o ? R(.25, .55) : R(.9, 1.4), a: R(0, 6.28), w: (fast ? 1.3 : 1) * (storm ? 1.5 : 1) * R(5, 8), y: FLOOR + R(0, .2), vy: R(.9, 1.7), pull: o ? 0 : R(1.2, 2) });
           if (t > T - .1 && t < 1.55) emit('helix', storm ? 95 : 70, dt, () => S.embers.push({ pal: storm ? 2 : 0, orb: orbit(rand() < .5, true), p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.5, .9), size: R(1.6, 3.6), seed: rand() * 6.28 }));
-          if (t > T - .04 && t < 1.5) emit('tornado', storm ? 150 : 170, dt, () => S.flames.push({ orb: { r: R(.1, .38), a: R(0, 6.28), w: (storm ? 1.2 : 1) * R(5.5, 8.5), y: FLOOR + R(-.02, .12), vy: R(1.1, 2.1) }, x: 0, y: FLOOR, z: 0, w: R(.16, .3), h: R(.34, .68), age: 0, life: R(.45, .8), seed: rand(), lean: 0 }));
+          if (t > T - .04 && t < 1.5) emit('tornado', storm ? 150 : 170, dt, () => S.flames.push({ orb: { r: R(.3, .55), a: R(0, 6.28), w: (storm ? 1.2 : 1) * R(4.5, 7), y: FLOOR + R(-.02, .12), vy: R(1, 1.8) }, x: 0, y: FLOOR, z: 0, w: R(.2, .36), h: R(.42, .8), age: 0, life: R(.45, .8), seed: rand(), lean: 0 }));
           if (t > T && t < 1.35) emit('debris', 11, dt, () => S.shards.push({ c: n - 1, orb: orbit(false), p: [0, 0, 0], uv: [R(.1, .9), R(.1, .9)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: R(.03, .055), age: 0, life: R(.7, 1), seed: rand(), char: .3 }));
           if (t > T && t < 1.45) emit('smoke', 10, dt, () => { const sd = rand() < .5 ? -1 : 1; S.smoke.push({ col: storm ? [.2, .13, .07] : [.12, .07, .07], p: [sd * R(1, 1.7), R(-.2, 1.6), R(-.5, .1)], v: [sd * R(.1, .3), R(.2, .5), 0], age: 0, life: R(.8, 1.2), size: R(.4, .7), seed: rand() }); });
           if (t > T && t < T + .03) for (let i = 0; i < 30; i++) { const a = R(0, 6.28), sp = R(1.2, 2.6); S.embers.push({ pal: storm ? 2 : 0, p: [0, FLOOR + .05, .2], v: [Math.cos(a) * sp, R(.2, .9), Math.sin(a) * sp * .6], age: 0, life: R(.4, .8), size: R(2, 4.4), seed: rand() * 6.28 }); }
@@ -546,7 +546,7 @@ void main(){
       };
       for (const o of [...S.embers, ...S.shards]) if (o.orb) orbitStep(o);
       // Tornado flames ride their own orbit: they turn about the axis, climb and widen into a funnel, and lean along their travel.
-      for (const f of S.flames) if (f.orb) { const b = f.orb; b.a += b.w * dt; b.y += b.vy * dt; b.r *= 1 + .35 * dt; f.x = Math.cos(b.a) * b.r * (1 + .5 * (b.y - FLOOR)); f.y = b.y; f.z = Math.sin(b.a) * b.r * .6; f.lean = -Math.sin(b.a) * .16 + .03; }
+      for (const f of S.flames) if (f.orb) { const b = f.orb; b.a += b.w * dt; b.y += b.vy * dt; b.r *= 1 + .2 * dt; f.x = Math.cos(b.a) * b.r * (1 + .6 * (b.y - FLOOR)); f.y = b.y; f.z = Math.sin(b.a) * b.r * .6; f.lean = -Math.sin(b.a) * .16 + .03; }
       for (const e of S.embers) {
         if (e.orb) continue;
         e.age += dt; e.v[0] += Math.sin(t * 9 + e.seed) * .9 * dt; e.v[1] -= (e.fall ? 3.2 : .25) * dt;
