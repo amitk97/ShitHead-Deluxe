@@ -192,6 +192,14 @@
       ${card(20, 78, -22, .6, { body: '#f3e7d2' })}${card(82, 24, 20, .55, { body: '#f3e7d2' })}
       ${dots([[12, 24, 1.2], [90, 56, 1.2], [78, 88, 1], [20, 52, 1], [66, 8, .8]], '#ffd45a', 1.5)}`,
       (i) => radial(i, 'b', [[0, '#3a2410'], [.7, '#160e08'], [1, '#070403']], 50, 50, 75) + radial(i, 'p', [[0, '#c98a4a'], [.7, '#7a4a22'], [1, '#4a2a12']], 44, 36, 40)),
+    'default': () => wrap((i) => `
+      <ellipse cx="50" cy="90" rx="44" ry="8" fill="url(#${i}h)"/>
+      <path d="M12 90C10 70 22 62 20 46C30 56 32 44 28 30C42 40 44 54 40 62C48 50 50 36 46 20C60 34 62 50 58 62C66 54 70 44 68 34C80 46 84 60 76 72C84 68 86 62 86 62C92 76 90 84 88 90Z" fill="url(#${i}f)"/>
+      <path d="M30 90C28 78 36 74 36 66C42 72 44 66 42 58C50 64 52 74 48 80C54 74 58 70 56 62C66 68 68 80 64 90Z" fill="#ffe27a" opacity=".9"/>
+      ${card(50, 46, -6, 1.2, { body: '#f3e7d2', extra: '<path d="M-13 8L-5 3L1 10L7 2L13 7V18H-13Z" fill="#240a04"/><path d="M-13 8L-5 3L1 10L7 2L13 7" fill="none" stroke="#ff8a1e" stroke-width="1.3"/>' })}
+      <path d="M22 24L28 34M76 22L72 34M10 54L20 56M92 48L82 52" stroke="#ffd45a" stroke-width="2" stroke-linecap="round"/>
+      ${dots([[16, 14, 1.2], [84, 10, 1], [94, 30, 1], [6, 32, 1.1], [60, 8, .8], [38, 6, .9]], '#ffb347', 1.6)}`,
+      (i) => radial(i, 'b', [[0, '#4a1606'], [.65, '#1c0a05'], [1, '#080303']], 50, 80, 85) + radial(i, 'h', [[0, 'rgba(255,170,60,.65)'], [1, 'rgba(255,170,60,0)']], 50, 90, 46) + linear(i, 'f', [[0, '#fff2a8'], [.35, '#ffb028'], [.75, '#e2410a'], [1, '#7a1405']])),
     'burn-ss2709-hex': () => wrap((i) => `
       <circle cx="50" cy="50" r="40" fill="none" stroke="#b36bff" stroke-width="2.4"/><circle cx="50" cy="50" r="40" fill="none" stroke="#7a2cff" stroke-width="7" opacity=".3"/><circle cx="50" cy="50" r="34" fill="none" stroke="#b36bff" stroke-width="1" stroke-dasharray="2 2.6"/>
       <circle cx="50" cy="50" r="25" fill="none" stroke="#3dffb0" stroke-width="1.6"/>

@@ -2023,7 +2023,7 @@ async function runDevTestSuite() {
       assertTrue(SHAPE_BURN_EFFECTS.has(id), `${id} goes through playBurnFx`);
       assertTrue(ShLevel3D.effects[id].dur <= 2.1, `${id} ends within 2.1s`);
     }
-    assertTrue(cosmeticPreview(null, 'burnEffect').includes('art/burns/default/tile.webp'), 'the Default tile shows its painted tile');
+    assertTrue(cosmeticPreview(null, 'burnEffect').includes('<svg'), 'the Default tile shows its drawn icon');
     const srcs = Object.keys(tiles).map(id => String(BURN_SOUNDS[id]));
     assertEqual(new Set(srcs).size, srcs.length, 'each has its own sound recipe');
   });
