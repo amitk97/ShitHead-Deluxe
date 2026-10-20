@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v397: [['image', 'The Sphinx Cub and Baby Mammoth avatars now show their whole ring.']],
       v396: [['sparkle', 'Season 1, Ancient Egypt, has new artwork: a Scarab of Ra card back, the Sphinx Cub avatar and a moonlit temple table.']],
       v395: [['snow', 'Season Pass: Season 2, Ice Age, is ready for January. Earn the Frost Mammoth card back, Baby Mammoth avatar and Frozen Path table. Every Season card back now says which season it is from.']],
       v394: [['book', 'Guide and Key Terms now explain the Season Pass, and How To Earn XP on the Level Ladder mentions it.']],
