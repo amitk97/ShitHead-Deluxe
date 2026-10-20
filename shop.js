@@ -14,11 +14,12 @@
 
     function burnPreviewIcon(id) {
       if(id===PRIVATE_BURN_ID)return '✦';
+      if (window.ShBurnIcons && ShBurnIcons.has(id)) return ShBurnIcons.html(id);
       if (window.ShLevel3D && ShLevel3D.icon(id)) return ShLevel3D.icon(id); // its tile, even for one played without it (Origami)
       if (ShLevelBurns.index(id) >= 0) return ShLevelBurns.icon(id);
       return { 'burn-ice': '❄️', 'burn-electric': '⚡', 'burn-sweets': '🍬', 'burn-paint': '🎨', 'burn-smoke': '💨',
         'burn-blackhole': '🕳️', 'burn-origami': '🦢', 'burn-pixel': '👾', 'burn-lava': '🌋',
-        'burn-lvl-spark-snap': '✨', 'burn-lvl-smoke-burst': '💨', 'burn-lvl-inferno-sweep': '🔥', 'burn-lvl-hellfire-spiral': '🌪️', 'burn-lvl-royal-incineration': '👑', 'burn-lvl-shitstorm': '💩', 'burn-ss2611-sandstorm': '🌪️', 'burn-ss2701-glacier': '🧊', 'burn-ss2703-shuriken': '🌸', 'burn-ss2705-whirlpool': '🌀', 'burn-ss2707-zeus': '⚡', 'burn-ss2709-hex': '🔮' }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('burn-', '')]?.burnIcon || '🔥';
+        'burn-lvl-spark-snap': '✨', 'burn-lvl-smoke-burst': '💨', 'burn-lvl-inferno-sweep': '🔥', 'burn-lvl-hellfire-spiral': '🌪️', 'burn-lvl-royal-incineration': '👑', 'burn-lvl-shitstorm': '💩'  }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('burn-', '')]?.burnIcon || '🔥';
     }
 
     // Burn and Joker previews open in Custom right under the tapped tile (a
