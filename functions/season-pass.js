@@ -62,3 +62,40 @@ function grantReached(user, now) {
 }
 
 module.exports = { add, grantReached, tierFor, tierStart, seasonOn };
+
+// ---- Mailbox notice the day before a season starts and ends ----------------
+const shiftDay = (key, n) => { const [y, m, d] = key.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+// [{key, when: 'start'|'end'}] to mail on UK date `day` (the season begins / ends the next day).
+function mailsDue(day) {
+  const tomorrow = shiftDay(day, 1), out = [];
+  Object.entries(SP.seasons || {}).forEach(([key, s]) => {
+    if (s.start === tomorrow) out.push({ key, when: 'start' });
+    if (s.end === tomorrow) out.push({ key, when: 'end' });
+  });
+  return out;
+}
+// Mails every account once (server-only marker seasonPassMail/<key>/<when> is taken first, so a re-run sends nothing).
+async function sendSeasonMails(day = ukDateKey(new Date())) {
+  const admin = require('firebase-admin'), root = admin.database();
+  let sent = 0;
+  for (const { key, when } of mailsDue(day)) {
+    const marker = await root.ref(`seasonPassMail/${key}/${when}`).transaction((cur) => (cur === null ? Date.now() : undefined));
+    if (!marker.committed) continue;
+    const now = Date.now(), id = `seasonpass_${key}_${when}`;
+    let token;
+    do {
+      const page = await admin.auth().listUsers(1000, token);
+      const uids = page.users.filter(u => !u.disabled).map(u => u.uid);
+      const pending = (await Promise.all(uids.map((uid) => root.ref(`users/${uid}/deletion`).once('value')))).map(s => s.exists());
+      const updates = {};
+      uids.forEach((uid, i) => { if (!pending[i]) updates[`users/${uid}/activityInbox/${id}`] = { type: 'seasonPass', key, when, sentAt: now }; });
+      if (Object.keys(updates).length) await root.ref().update(updates);
+      sent += Object.keys(updates).length;
+      token = page.pageToken;
+    } while (token);
+  }
+  return sent;
+}
+
+module.exports.mailsDue = mailsDue;
+module.exports.sendSeasonMails = sendSeasonMails;

@@ -1743,6 +1743,13 @@ async function runDevTestSuite() {
       assertTrue(LEVEL_REWARDS.filter(r => r.pass).every(r => !serverEconomyCatalog().xp.rewards.map(r => r.id).includes(r.id)), 'pass items are not level rewards in the catalog');
     } finally { seasonProgress = saved; document.getElementById('seasonToast')?.classList.remove('show'); }
   });
+  await test('v393: the Season Pass mail says the season starts / ends tomorrow and opens the pass', () => {
+    const start = inboxItemHtml({ id: 'seasonpass_2026-11_start', type: 'seasonPass', key: '2026-11', when: 'start' });
+    const end = inboxItemHtml({ id: 'seasonpass_2026-11_end', type: 'seasonPass', key: '2026-11', when: 'end' });
+    assertTrue(/Season 1 starts tomorrow/.test(start) && /1 November/.test(start) && /signed in/.test(start), 'start mail');
+    assertTrue(/Season 1 ends tomorrow/.test(end) && /31 December/.test(end), 'end mail');
+    assertTrue(ACTIVITY_MAIL_TYPES.includes('seasonPass'), 'listed as an activity mail');
+  });
   await test('v392: Double-Tap To Play plays only when the same staged card is tapped twice, and is off by default', () => {
     const was = [doubleTapPlay, executePlayCards, selectAllOfRank];
     try {

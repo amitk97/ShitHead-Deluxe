@@ -152,6 +152,12 @@ exports.purgeDeletedAccounts = onSchedule({ schedule: 'every day 03:30', timeZon
   if (purged.length) logger.info(`Purged ${purged.length} deleted account(s)`);
 });
 
+// Season Pass: a mailbox notice for every account the day before a season starts and ends (functions/season-pass.js).
+exports.seasonPassMail = onSchedule({ schedule: 'every day 08:00', timeZone: 'Europe/London', region: REGION }, async () => {
+  const sent = await require('./season-pass').sendSeasonMails();
+  if (sent) logger.info(`Season Pass mail sent to ${sent} account(s)`);
+});
+
 // Event leaderboard prizes (functions/boards.js payEventPrizes): the day after an event ends, once.
 exports.payEventPrizes = onSchedule({ schedule: 'every day 04:00', timeZone: 'Europe/London', region: REGION }, async () => {
   const paid = await require('./boards').payEventPrizes();

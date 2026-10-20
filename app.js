@@ -18700,7 +18700,7 @@
       if (e.target.id === 'inboxModal') document.getElementById('inboxModal').classList.add('hidden');
     });
     // Mail kinds stored under users/{uid}/activityInbox.
-    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level', 'friendLevel', 'series', 'eventPrize'];
+    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level', 'friendLevel', 'series', 'eventPrize', 'seasonPass'];
     // Congratulations from the server (functions/boards.js) the first time a
     // player reaches the top 10, #3, #2 or #1 on a leaderboard.
     const BOARD_NAMES = { ranked: 'Ranked', challenges: 'Challenges', gauntlet: 'Gauntlet', levels: 'Levels' };
@@ -18839,6 +18839,22 @@
           <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${heading}</p>
           <p class="text-xs font-bold text-white">${line}</p>
           <p class="inbox-activity-accent text-[10px] mt-1">${money}</p>
+          <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
+        </div>`;
+      }
+      if (item.type === 'seasonPass') {
+        // § Season Pass: the server mails everyone the day before a season starts and ends (functions/season-pass.js).
+        const sp = SEASON_PASS.seasons[item.key];
+        if (!sp) return '';
+        const day = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+        const head = item.when === 'end' ? `Season ${sp.number} ends tomorrow` : `Season ${sp.number} starts tomorrow`;
+        const body = item.when === 'end'
+          ? `${sp.name} finishes at the end of ${day(sp.end)}. Play before then to climb more tiers: Diamonds on every tier, plus an exclusive card back, avatar and table. Tiers you have reached are yours to keep. Sign in to earn Season XP.`
+          : `${sp.name} runs from ${day(sp.start)} to ${day(sp.end)}. Every XP you earn while signed in also fills a free 50-tier Season Pass, with Diamonds on every tier and three exclusive items.`;
+        return `<div class="inbox-activity--level border rounded-xl px-2.5 py-2">
+          <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">Season Pass</p>
+          <p class="text-xs font-bold text-white">${escapeHtml(head)}</p>
+          <p class="inbox-activity-accent text-[10px] mt-1">${escapeHtml(body)}</p>
           <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
         </div>`;
       }
@@ -19029,6 +19045,7 @@
         case 'shop': return itemFromId() ? () => openCustomTileFromMail(itemFromId()) : null;
         case 'rank': return () => openLeaderboardPanel('ranked');
         case 'eventPrize': return () => openLeaderboardPanel('event');
+        case 'seasonPass': return () => openLevelLadder({ tab: 'season' });
         case 'board': return () => openLeaderboardPanel(item.board);
         case 'level': return () => openLevelLadder(item.level > 1 && !item.backfill ? { from: Number(item.level) - 1 } : {});
         case 'referral': return () => openProfileSection(document.getElementById('profileReferralSection'));

@@ -205,7 +205,7 @@
       return `<div class="sp-hero" style="--sp-accent:${st.s.accent};background-image:url('${st.s.banner}')"><div><small>Season ${st.s.number}</small><span class="sp-name">${escapeHtml(st.s.name)}</span><span class="sp-dates">${dates} · ${st.left} days left</span></div><div class="sp-tier" aria-label="Tier ${st.tier}"><b>${st.tier}</b><small>Tier</small></div></div>
         <span class="sp-bar" style="--sp-accent:${st.s.accent}"><i style="width:${pct}%"></i></span>
         <div class="ll-barline"><span>${fmt(st.xp)} Season XP</span><span>${st.tier >= st.T ? 'Season complete' : `${fmt(st.cost - st.into)} XP to tier ${st.tier + 1}`}</span></div>
-        <p class="sp-note">Every XP you earn playing also fills the Season Pass. Rewards arrive the moment you reach a tier.</p>`;
+        <p class="sp-note">${currentUser ? 'Every XP you earn playing also fills the Season Pass. Rewards arrive the moment you reach a tier.' : 'Sign in to earn Season XP: only signed-in players fill the pass.'}</p>`;
     }
     function seasonRowsHtml(st) {
       const fmt = (n) => Math.round(n).toLocaleString('en-GB');
@@ -229,7 +229,7 @@
       const hero = document.getElementById('levelLadderHero'), scroll = document.getElementById('levelLadderScroll');
       if (!st.started) {
         hero.innerHTML = '';
-        scroll.innerHTML = `<div class="sp-soon"><b>Season ${st.s.number}: ${escapeHtml(st.s.name)}</b><span>Starts on 1 November. Play as normal and every XP you earn fills the pass: 50 tiers, Diamonds on every tier and three exclusive items.</span></div>`;
+        scroll.innerHTML = `<div class="sp-soon"><b>Season ${st.s.number}: ${escapeHtml(st.s.name)}</b><span>Starts on 1 November. Sign in and play as normal: every XP you earn fills the pass: 50 tiers, Diamonds on every tier and three exclusive items.</span></div>`;
         return { scroll, level: 0, from: 0 };
       }
       hero.innerHTML = seasonHeroHtml(st);

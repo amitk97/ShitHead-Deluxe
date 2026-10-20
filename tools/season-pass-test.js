@@ -30,4 +30,7 @@ assert.strictEqual(xp.award(big, [['x', 100]], ms('2026-12-31'), pay).seasonPass
 // repair
 const miss = { seasonPass: { '2026-11': { xp: 9000, tier: 30 } } };
 assert.deepStrictEqual(sp.grantReached(miss, ms('2026-12-01')).sort(), ['avatar-ss2611-pharaoh', 'back-ss2611-scarab']);
+assert.deepStrictEqual(sp.mailsDue('2026-10-31'), [{ key: '2026-11', when: 'start' }]);
+assert.deepStrictEqual(sp.mailsDue('2026-12-30'), [{ key: '2026-11', when: 'end' }]);
+assert.deepStrictEqual(sp.mailsDue('2026-11-15'), []); assert.deepStrictEqual(sp.mailsDue('2026-10-30'), []);
 console.log('PASS season pass');
