@@ -140,14 +140,13 @@ function scene(id,W,H){
  }
  function glacierWall(){
   const g=uid+'gl';
-  const defs=`<defs><linearGradient id="${g}A" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4fdff"/><stop offset=".45" stop-color="#9ed7f0"/><stop offset="1" stop-color="#3b82b8"/></linearGradient><linearGradient id="${g}B" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7cc0e4"/><stop offset="1" stop-color="#1c4f86"/></linearGradient></defs>`;
-  return defs+`<path d="M0 100L0 38L9 24L18 40L28 8L40 34L49 20L60 52L72 44L84 62L100 58L100 100Z" fill="url(#${g}B)"/>`
+  const defs=`<defs><linearGradient id="${g}A" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4fdff"/><stop offset=".45" stop-color="#9ed7f0"/><stop offset="1" stop-color="#3b82b8"/></linearGradient><linearGradient id="${g}B" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7cc0e4"/><stop offset="1" stop-color="#1c4f86"/></linearGradient><linearGradient id="${g}G" x2="0" y2="1"><stop offset=".6" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="${g}M" maskUnits="userSpaceOnUse" x="-5" y="0" width="110" height="102"><rect x="-5" y="0" width="110" height="102" fill="url(#${g}G)"/></mask></defs>`;
+  return defs+`<g mask="url(#${g}M)"><path d="M0 100L0 38L9 24L18 40L28 8L40 34L49 20L60 52L72 44L84 62L100 58L100 100Z" fill="url(#${g}B)"/>`
    +`<path d="M0 100L0 38L9 24L18 40L28 8L40 34L49 20L60 52L50 100Z" fill="url(#${g}A)" opacity=".8"/>`
    +`<path d="M28 8L40 34L34 100L22 100Z" fill="#fff" opacity=".22"/><path d="M9 24L18 40L12 100L4 100Z" fill="#fff" opacity=".2"/>`
    +`<path d="M49 20L60 52L56 100M28 8L34 100M18 40L22 100M72 44L70 100" stroke="#0d3a68" stroke-width=".9" opacity=".5" fill="none"/>`
    +[8,22,35,47,60,74,88].map((x,i)=>`<path d="M${x} ${46+(i%3)*8}L${x+2.4} ${60+(i%4)*7}L${x+4.8} ${46+(i%3)*8}Z" fill="#eaf9ff" opacity=".7"/>`).join('')
-   +`<path d="M0 38L9 24L18 40L28 8L40 34L49 20L60 52L72 44L84 62L100 58" fill="none" stroke="#eaf9ff" stroke-width="1.2" stroke-linejoin="round"/>`
-   +`<linearGradient id="${g}F" x2="0" y2="1"><stop offset=".55" stop-color="#d9eef7" stop-opacity="0"/><stop offset="1" stop-color="#d9eef7" stop-opacity=".95"/></linearGradient><path d="M0 100L0 38L9 24L18 40L28 8L40 34L49 20L60 52L72 44L84 62L100 58L100 100Z" fill="url(#${g}F)"/>`;
+   +`<path d="M0 38L9 24L18 40L28 8L40 34L49 20L60 52L72 44L84 62L100 58" fill="none" stroke="#eaf9ff" stroke-width="1.2" stroke-linejoin="round"/></g>`;
  }
  function handBand(y){
   const step=u*.085,sc=u*.0018;
