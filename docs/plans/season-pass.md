@@ -1,3 +1,5 @@
+> **Season 2 (owner, 20 Oct 2026): Ice Age, the era (not the film), 1 Jan to 28 Feb 2027. Idea only, nothing built: tier 10 cave-painting card back, tier 30 woolly mammoth avatar, tier 50 glacier steppe table.**
+>
 > **Decisions after review (owner, 20 Oct 2026), built in v393:** free track only for Season 1, Premium and tier skips on hold (no way to accept money yet); theme Ancient Egypt; no extra frames (tier 30 is an avatar); rewards are granted the moment a tier is reached (there is no claim step or claim window); Season XP is the normal XP with no event boost; no optional weekly bonus. Where the text below says otherwise, this note wins.
 
 # Season Pass: detailed plan
@@ -23,7 +25,7 @@ Everything else here is a recommendation. Section 14 lists the open decisions.
 | Key | Dates | Days | Theme (draft) |
 |---|---|---|---|
 | 2026-11 | 1 Nov to 31 Dec 2026 | 61 | Midnight Magic |
-| 2027-01 | 1 Jan to 28 Feb 2027 | 59 | Shogun Dynasty |
+| 2027-01 | 1 Jan to 28 Feb 2027 | 59 | **Ice Age** (the era; owner's pick, 20 Oct 2026; replaces Shogun Dynasty, which clashes with Lunar New Year) |
 | 2027-03 | 1 Mar to 30 Apr | 61 | Wild West Showdown |
 | 2027-05 | 1 May to 30 Jun | 61 | Deep Sea Abyss |
 | 2027-07 | 1 Jul to 31 Aug | 62 | Steampunk Skies |

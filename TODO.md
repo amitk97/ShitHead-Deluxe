@@ -52,7 +52,7 @@ They are listed on the More Modes page (v320); each becomes its own carousel car
 ## Season Pass (built v393: free track, Season 1 Ancient Egypt, from 1 Nov 2026)
 
 - [x] Free 50-tier pass, auto-granted tiers, Egypt art (card back, avatar, table), Level Ladder tab, home chip (v393).
-- [ ] Season 2 (1 Jan 2027): art, `SEASON_PASS.seasons` entry, rules regex, make `SEASON_KEY` date-driven. Theme ideas are in the plan.
+- [ ] Season 2 (1 Jan to 28 Feb 2027): theme chosen = **Ice Age** (the era). Still to do: draft the three items for approval (cave-painting card back, woolly mammoth avatar, glacier steppe table), then `SEASON_PASS.seasons` entry, `ss2701` art files, rules regex check, catalog export, Functions deploy before 31 Dec. The season key is already date-driven.
 - [ ] Premium track and tier skips stay on hold until there is a business bank account.
 
 - [ ] Detailed plan: `docs/plans/season-pass.md` (2-month seasons, 50 tiers, free + Premium tracks, first season 1 Nov 2026). Open decisions are in section 14 of the plan.
