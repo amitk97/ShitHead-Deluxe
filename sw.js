@@ -52,7 +52,7 @@ const OFFLINE_ASSETS = [
   '/art/burns/level-v294/concepts.webp',
   '/art/burns/level-3d/burns3d.js?v=314',
   '/art/burns/season/season-burns.js?v=403',
-  '/art/burns/icons.js?v=2',
+  '/art/burns/icons.js?v=3',
   '/art/burns/coloured-flame/layers.webp?v=1',
   '/art/burns/coloured-flame/tile.webp',
   '/art/burns/electric-blast/layers.webp?v=1',
