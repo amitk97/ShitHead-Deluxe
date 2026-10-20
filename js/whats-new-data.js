@@ -3,7 +3,8 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
-      v399: [['snow', 'Season Pass: the Origami Fold burn is now a Season 3 (Feudal Japan) reward at tier 20, and no longer a tier 50 reward in every season.', WN_KEY]],
+      v399: [['snow', 'Season Pass: the Origami Fold burn is now a Season 3 (Feudal Japan) reward at tier 20, and no longer a tier 50 reward in every season.', WN_KEY],
+        ['snow', 'Season Pass: every season now gives a burn at tier 40: Sandstorm Vortex, Glacial Shatter, Shuriken Barrage, Abyssal Whirlpool, Zeus\'s Bolt and Arcane Hex. Seasons 5 (Ancient Greece) and 6 (Dark Magic) are ready.', WN_KEY]],
       v398: [['snow', 'Season Pass: Season 3 (Feudal Japan, March and April) and Season 4 (Deep Ocean, May and June) are ready, each with a card back, avatar and table. Tier 50 of every season now also gives the Origami Fold burn, or 209 Diamonds if you already own it.', WN_KEY]],
       v397: [['image', 'The Sphinx Cub and Baby Mammoth avatars now show their whole ring.']],
       v396: [['sparkle', 'Season 1, Ancient Egypt, has new artwork: a Scarab of Ra card back, the Sphinx Cub avatar and a moonlit temple table.']],

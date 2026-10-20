@@ -2174,6 +2174,7 @@
     "items": {
      "10": "back-ss2611-scarab",
      "30": "avatar-ss2611-pharaoh",
+     "40": "burn-ss2611-sandstorm",
      "50": "table-ss2611-egypt"
     }
    },
@@ -2187,6 +2188,7 @@
     "items": {
      "10": "back-ss2701-mammoth",
      "30": "avatar-ss2701-mammoth",
+     "40": "burn-ss2701-glacier",
      "50": "table-ss2701-glacier"
     }
    },
@@ -2201,6 +2203,7 @@
      "10": "back-ss2703-sakura",
      "20": "burn-origami",
      "30": "avatar-ss2703-kitsune",
+     "40": "burn-ss2703-shuriken",
      "50": "table-ss2703-shrine"
     }
    },
@@ -2214,7 +2217,36 @@
     "items": {
      "10": "back-ss2705-deep",
      "30": "avatar-ss2705-octopus",
+     "40": "burn-ss2705-whirlpool",
      "50": "table-ss2705-reef"
+    }
+   },
+   "2027-07": {
+    "number": 5,
+    "name": "Ancient Greece",
+    "start": "2027-07-01",
+    "end": "2027-08-31",
+    "accent": "#f0c060",
+    "banner": "art/season-pass/ss2707/banner.webp",
+    "items": {
+     "10": "back-ss2707-pegasus",
+     "30": "avatar-ss2707-pegasus",
+     "40": "burn-ss2707-zeus",
+     "50": "table-ss2707-olympus"
+    }
+   },
+   "2027-09": {
+    "number": 6,
+    "name": "Dark Magic",
+    "start": "2027-09-01",
+    "end": "2027-10-31",
+    "accent": "#b36bff",
+    "banner": "art/season-pass/ss2709/banner.webp",
+    "items": {
+     "10": "back-ss2709-cauldron",
+     "30": "avatar-ss2709-witch",
+     "40": "burn-ss2709-hex",
+     "50": "table-ss2709-tower"
     }
    }
   },
@@ -2230,6 +2262,11 @@
     "tier": 30
    },
    {
+    "id": "burn-ss2611-sandstorm",
+    "name": "Sandstorm Vortex",
+    "tier": 40
+   },
+   {
     "id": "table-ss2611-egypt",
     "name": "Sands of Giza",
     "tier": 50
@@ -2243,6 +2280,11 @@
     "id": "avatar-ss2701-mammoth",
     "name": "Baby Mammoth",
     "tier": 30
+   },
+   {
+    "id": "burn-ss2701-glacier",
+    "name": "Glacial Shatter",
+    "tier": 40
    },
    {
     "id": "table-ss2701-glacier",
@@ -2265,6 +2307,11 @@
     "tier": 30
    },
    {
+    "id": "burn-ss2703-shuriken",
+    "name": "Shuriken Barrage",
+    "tier": 40
+   },
+   {
     "id": "table-ss2703-shrine",
     "name": "Moonlit Shrine",
     "tier": 50
@@ -2280,8 +2327,53 @@
     "tier": 30
    },
    {
+    "id": "burn-ss2705-whirlpool",
+    "name": "Abyssal Whirlpool",
+    "tier": 40
+   },
+   {
     "id": "table-ss2705-reef",
     "name": "Coral Reef",
+    "tier": 50
+   },
+   {
+    "id": "back-ss2707-pegasus",
+    "name": "Marble Pegasus",
+    "tier": 10
+   },
+   {
+    "id": "avatar-ss2707-pegasus",
+    "name": "Baby Pegasus",
+    "tier": 30
+   },
+   {
+    "id": "burn-ss2707-zeus",
+    "name": "Zeus's Bolt",
+    "tier": 40
+   },
+   {
+    "id": "table-ss2707-olympus",
+    "name": "Olympus Terrace",
+    "tier": 50
+   },
+   {
+    "id": "back-ss2709-cauldron",
+    "name": "Witch's Cauldron",
+    "tier": 10
+   },
+   {
+    "id": "avatar-ss2709-witch",
+    "name": "Little Witch",
+    "tier": 30
+   },
+   {
+    "id": "burn-ss2709-hex",
+    "name": "Arcane Hex",
+    "tier": 40
+   },
+   {
+    "id": "table-ss2709-tower",
+    "name": "Alchemy Cellar",
     "tier": 50
    }
   ]

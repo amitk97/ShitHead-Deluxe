@@ -10805,6 +10805,8 @@
     ILLUSTRATED_TABLES['table-ss2701-glacier'] = { art: 'ss2701-glacier', base: '#0a1f3d', rim: 'inset 0 0 0 3px #9fdcf5,inset 0 0 50px rgba(5,20,45,.55)', label: 'rgba(200,236,252,.9)' };
     ILLUSTRATED_TABLES['table-ss2703-shrine'] = { art: 'ss2703-shrine', base: '#1a1033', rim: 'inset 0 0 0 3px #ff9bb8,inset 0 0 50px rgba(20,8,40,.55)', label: 'rgba(255,214,226,.9)' };
     ILLUSTRATED_TABLES['table-ss2705-reef'] = { art: 'ss2705-reef', base: '#06253a', rim: 'inset 0 0 0 3px #4fe0d6,inset 0 0 50px rgba(2,20,36,.55)', label: 'rgba(200,250,246,.9)' };
+    ILLUSTRATED_TABLES['table-ss2707-olympus'] = { art: 'ss2707-olympus', base: '#4a3a22', rim: 'inset 0 0 0 3px #f0c060,inset 0 0 50px rgba(40,26,8,.5)', label: 'rgba(255,238,190,.92)' };
+    ILLUSTRATED_TABLES['table-ss2709-tower'] = { art: 'ss2709-tower', base: '#150a2e', rim: 'inset 0 0 0 3px #b36bff,inset 0 0 50px rgba(10,4,28,.55)', label: 'rgba(226,205,255,.9)' };
     // Seasonal event pictures (shop + earn-only). Same tile, tones and
     // shared metal gradients as every other picture.
     const AV_STROKE = 'stroke="rgba(0,0,0,.35)" stroke-width="1.2"';
@@ -12385,7 +12387,7 @@
     // § Season Pass: the season's earned items join the existing renderers and equip lists.
     SEASON_PASS_ITEMS.forEach((it) => {
       const type = COSMETIC_CATEGORY_TYPES[it.category];
-      if (type === 'cardBack' || type === 'tableTheme') COSMETIC_RUNTIME_IDS[type].add(it.id);
+      if (type === 'cardBack' || type === 'tableTheme' || type === 'burnEffect') COSMETIC_RUNTIME_IDS[type].add(it.id);
     });
     let nameChangeTokenState = null;
     let cosmeticPurchaseState = {};
@@ -18852,8 +18854,8 @@
         const day = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' });
         const head = item.when === 'end' ? `Season ${sp.number} ends tomorrow` : `Season ${sp.number} starts tomorrow`;
         const body = item.when === 'end'
-          ? `${sp.name} finishes at the end of ${day(sp.end)}. Play before then to climb more tiers: Diamonds on every tier, plus an exclusive card back, avatar and table. Tiers you have reached are yours to keep. Sign in to earn Season XP.`
-          : `${sp.name} runs from ${day(sp.start)} to ${day(sp.end)}. Every XP you earn while signed in also fills a free 50-tier Season Pass, with Diamonds on every tier and exclusive items.`;
+          ? `${sp.name} finishes at the end of ${day(sp.end)}. Play before then to climb more tiers: Diamonds on every tier, plus an exclusive card back, avatar, burn and table. Tiers you have reached are yours to keep. Sign in to earn Season XP.`
+          : `${sp.name} runs from ${day(sp.start)} to ${day(sp.end)}. Every XP you earn while signed in also fills a free 50-tier Season Pass, with Diamonds on every tier and exclusive items, including a burn at tier 40.`;
         return `<div class="inbox-activity--level border rounded-xl px-2.5 py-2">
           <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">Season Pass</p>
           <p class="text-xs font-bold text-white">${escapeHtml(head)}</p>

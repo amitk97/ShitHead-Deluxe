@@ -72,7 +72,8 @@
     // scale: 1 in game, smaller inside the Shop/Custom preview stage.
     // ============================================================
     const LEVEL_BURN_IDS = ['burn-lvl-spark-snap', 'burn-lvl-smoke-burst', 'burn-lvl-inferno-sweep', 'burn-lvl-hellfire-spiral', 'burn-lvl-royal-incineration', 'burn-lvl-shitstorm'];
-    const SHAPE_BURN_EFFECTS = new Set(['default', 'burn-electric', 'burn-coloured', 'burn-sweets', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', ...LEVEL_BURN_IDS]);
+    const SEASON_BURN_IDS = ['burn-ss2611-sandstorm', 'burn-ss2701-glacier', 'burn-ss2703-shuriken', 'burn-ss2705-whirlpool', 'burn-ss2707-zeus', 'burn-ss2709-hex'];
+    const SHAPE_BURN_EFFECTS = new Set([...SEASON_BURN_IDS, 'default', 'burn-electric', 'burn-coloured', 'burn-sweets', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', ...LEVEL_BURN_IDS]);
     let bfxGradientSeq = 0;
     const bfxRand = (min, max) => min + Math.random() * (max - min);
     function bfxAdd(host, html, x, y, w, h) {
@@ -1018,6 +1019,8 @@
     function playBurnFx(id, host, x, y, scale = 1, card = null) {
       if (!host) return false;
       if (id === PRIVATE_BURN_ID) { playPrivateBurn(host,x,y,scale,card); return true; }
+      // Season Pass burns (art/burns/season/season-burns.js): canvas particles + real card clones, 1.8s.
+      if (window.ShSeasonBurns && ShSeasonBurns.has(id) && ShSeasonBurns.play(id, host, x, y, scale)) return true;
       // Painted-art 3D burns (art/burns/level-3d/burns3d.js); their old effects stay as the fallback.
       if (window.ShLevel3D && ShLevel3D.has(id) && levelBurn3d(id, host, x, y, scale, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return true;
       ({ default: bfxDefaultBurn, 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,

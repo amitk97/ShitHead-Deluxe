@@ -207,7 +207,7 @@
     function seasonHeroHtml(st) {
       const fmt = (n) => Math.round(n).toLocaleString('en-GB');
       const pct = st.tier >= st.T ? 100 : Math.round(st.into / st.cost * 100);
-      const dates = `${st.s.start.slice(8)} Nov – ${st.s.end.slice(8)} Dec 2026`;
+      const dd = (iso, y) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(y ? { year: 'numeric' } : {}), timeZone: 'UTC' }), dates = `${dd(st.s.start)} – ${dd(st.s.end, true)}`;
       return `<div class="sp-hero" style="--sp-accent:${st.s.accent};background-image:url('${st.s.banner}')"><div><small>Season ${st.s.number}</small><span class="sp-name">${escapeHtml(st.s.name)}</span><span class="sp-dates">${dates} · ${st.live ? `${st.left} days left` : 'Season over'}</span></div><div class="sp-tier" aria-label="Tier ${st.tier}"><b>${st.tier}</b><small>Tier</small></div></div>
         <span class="sp-bar" style="--sp-accent:${st.s.accent}"><i style="width:${pct}%"></i></span>
         <div class="ll-barline"><span>${fmt(st.xp)} Season XP</span><span>${st.tier >= st.T ? 'Season complete' : `${fmt(st.cost - st.into)} XP to tier ${st.tier + 1}`}</span></div>

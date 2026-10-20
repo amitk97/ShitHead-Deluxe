@@ -8,7 +8,7 @@ const sp = require('../functions/season-pass.js');
 const ms = (d) => Date.parse(d + 'T12:00:00Z');
 let paid = 0; const pay = (u, n) => { paid += n; u.diamonds = (u.diamonds || 0) + n; };
 assert.strictEqual(sp.tierStart(10), 2500); assert.strictEqual(sp.tierStart(50), 20000);
-assert.strictEqual(sp.seasonOn('2026-10-31'), null); assert.strictEqual(sp.seasonOn('2026-11-01'), '2026-11'); assert.strictEqual(sp.seasonOn('2026-12-31'), '2026-11'); assert.strictEqual(sp.seasonOn('2027-01-01'), '2027-01'); assert.strictEqual(sp.seasonOn('2027-02-28'), '2027-01'); assert.strictEqual(sp.seasonOn('2027-03-01'), '2027-03'); assert.strictEqual(sp.seasonOn('2027-04-30'), '2027-03'); assert.strictEqual(sp.seasonOn('2027-05-01'), '2027-05'); assert.strictEqual(sp.seasonOn('2027-06-30'), '2027-05'); assert.strictEqual(sp.seasonOn('2027-07-01'), null);
+assert.strictEqual(sp.seasonOn('2026-10-31'), null); assert.strictEqual(sp.seasonOn('2026-11-01'), '2026-11'); assert.strictEqual(sp.seasonOn('2026-12-31'), '2026-11'); assert.strictEqual(sp.seasonOn('2027-01-01'), '2027-01'); assert.strictEqual(sp.seasonOn('2027-02-28'), '2027-01'); assert.strictEqual(sp.seasonOn('2027-03-01'), '2027-03'); assert.strictEqual(sp.seasonOn('2027-04-30'), '2027-03'); assert.strictEqual(sp.seasonOn('2027-05-01'), '2027-05'); assert.strictEqual(sp.seasonOn('2027-06-30'), '2027-05'); assert.strictEqual(sp.seasonOn('2027-07-01'), '2027-07'); assert.strictEqual(sp.seasonOn('2027-08-31'), '2027-07'); assert.strictEqual(sp.seasonOn('2027-09-01'), '2027-09'); assert.strictEqual(sp.seasonOn('2027-10-31'), '2027-09'); assert.strictEqual(sp.seasonOn('2027-11-01'), null);
 // off-season: nothing
 const off = {}; assert.ok(!xp.award(off, [['finish', 500]], ms('2026-10-31'), pay).seasonPass); assert.ok(!off.seasonPass);
 // in season: 2,500 XP = tier 10, 10 x 15 + the 5th (60 instead of 15) and 10th (50) bonuses
@@ -48,3 +48,7 @@ const f3 = { seasonPass: { '2027-03': { xp: 7000, tier: 20 } } }; sp.grantReache
 console.log('origami ok');
 // AmitK test account: every season's pass items at once
 { const a = {}; sp.grantAll(a, ms('2026-10-20')); ['back-ss2611-scarab', 'avatar-ss2705-octopus', 'table-ss2703-shrine', 'burn-origami'].forEach(id => assert.ok(a.ownedCosmetics[id], id)); console.log('grantAll ok'); }
+// Tier 40 of every season gives that season's burn
+{ const keys = { '2026-11': ['2026-11-02', 'burn-ss2611-sandstorm'], '2027-01': ['2027-01-02', 'burn-ss2701-glacier'], '2027-03': ['2027-03-02', 'burn-ss2703-shuriken'], '2027-05': ['2027-05-02', 'burn-ss2705-whirlpool'], '2027-07': ['2027-07-02', 'burn-ss2707-zeus'], '2027-09': ['2027-09-02', 'burn-ss2709-hex'] };
+  Object.values(keys).forEach(([day, id]) => { const u = {}; const r = xp.award(u, [['x', 15000]], ms(day), pay); assert.ok(u.ownedCosmetics[id], id); assert.strictEqual(r.seasonPass.tiers.find(t => t.tier === 40).item.id, id); });
+  const none = {}; xp.award(none, [['x', 15000]], ms('2026-11-02'), pay); assert.ok(!none.ownedCosmetics['burn-ss2701-glacier']); console.log('burns ok'); }

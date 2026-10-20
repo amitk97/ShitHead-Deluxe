@@ -203,22 +203,32 @@
         '2026-11': {
           number: 1, name: 'Ancient Egypt', start: '2026-11-01', end: '2026-12-31', accent: '#f5c542',
           banner: 'art/season-pass/ss2611/banner.webp',
-          items: { 10: 'back-ss2611-scarab', 30: 'avatar-ss2611-pharaoh', 50: 'table-ss2611-egypt' }
+          items: { 10: 'back-ss2611-scarab', 30: 'avatar-ss2611-pharaoh', 40: 'burn-ss2611-sandstorm', 50: 'table-ss2611-egypt' }
         },
         '2027-01': {
           number: 2, name: 'Ice Age', start: '2027-01-01', end: '2027-02-28', accent: '#7fd4ff',
           banner: 'art/season-pass/ss2701/banner.webp',
-          items: { 10: 'back-ss2701-mammoth', 30: 'avatar-ss2701-mammoth', 50: 'table-ss2701-glacier' }
+          items: { 10: 'back-ss2701-mammoth', 30: 'avatar-ss2701-mammoth', 40: 'burn-ss2701-glacier', 50: 'table-ss2701-glacier' }
         },
         '2027-03': {
           number: 3, name: 'Feudal Japan', start: '2027-03-01', end: '2027-04-30', accent: '#ff8fb1',
           banner: 'art/season-pass/ss2703/banner.webp',
-          items: { 10: 'back-ss2703-sakura', 20: 'burn-origami', 30: 'avatar-ss2703-kitsune', 50: 'table-ss2703-shrine' }
+          items: { 10: 'back-ss2703-sakura', 20: 'burn-origami', 30: 'avatar-ss2703-kitsune', 40: 'burn-ss2703-shuriken', 50: 'table-ss2703-shrine' }
         },
         '2027-05': {
           number: 4, name: 'Deep Ocean', start: '2027-05-01', end: '2027-06-30', accent: '#35d0c9',
           banner: 'art/season-pass/ss2705/banner.webp',
-          items: { 10: 'back-ss2705-deep', 30: 'avatar-ss2705-octopus', 50: 'table-ss2705-reef' }
+          items: { 10: 'back-ss2705-deep', 30: 'avatar-ss2705-octopus', 40: 'burn-ss2705-whirlpool', 50: 'table-ss2705-reef' }
+        },
+        '2027-07': {
+          number: 5, name: 'Ancient Greece', start: '2027-07-01', end: '2027-08-31', accent: '#f0c060',
+          banner: 'art/season-pass/ss2707/banner.webp',
+          items: { 10: 'back-ss2707-pegasus', 30: 'avatar-ss2707-pegasus', 40: 'burn-ss2707-zeus', 50: 'table-ss2707-olympus' }
+        },
+        '2027-09': {
+          number: 6, name: 'Dark Magic', start: '2027-09-01', end: '2027-10-31', accent: '#b36bff',
+          banner: 'art/season-pass/ss2709/banner.webp',
+          items: { 10: 'back-ss2709-cauldron', 30: 'avatar-ss2709-witch', 40: 'burn-ss2709-hex', 50: 'table-ss2709-tower' }
         }
       }
     };
@@ -234,6 +244,18 @@
       { id: 'table-ss2703-shrine', category: 'Table Themes', name: 'Moonlit Shrine', tier: 50, tone: '#ff8fb1', pass: '2027-03' },
       { id: 'back-ss2705-deep', category: 'Card Backs', name: 'Deep Treasure', tier: 10, tone: '#35d0c9', file: 'art/backs/ss2705-deep.webp', pass: '2027-05' },
       { id: 'avatar-ss2705-octopus', category: 'Avatars', name: 'Pearl Octopus', tier: 30, tone: '#35d0c9', file: 'art/avatars/ss2705-octopus.webp', pass: '2027-05' },
-      { id: 'table-ss2705-reef', category: 'Table Themes', name: 'Coral Reef', tier: 50, tone: '#35d0c9', pass: '2027-05' }
-    ].map(r => ({ pass: '2026-11', ...r, level: 0, earned: true, cost: 0, requirement: `Season Pass tier ${r.tier}`, tones: ({ '2027-01': ['#0a1f3d', r.tone, '#e8f7ff'], '2027-03': ['#1a1033', r.tone, '#ffe3ec'], '2027-05': ['#06253a', r.tone, '#d9fffb'] })[r.pass] || ['#150c30', r.tone, '#ffd58a'] }));
+      { id: 'table-ss2705-reef', category: 'Table Themes', name: 'Coral Reef', tier: 50, tone: '#35d0c9', pass: '2027-05' },
+      { id: 'back-ss2707-pegasus', category: 'Card Backs', name: 'Marble Pegasus', tier: 10, tone: '#f0c060', file: 'art/backs/ss2707-pegasus.webp', pass: '2027-07' },
+      { id: 'avatar-ss2707-pegasus', category: 'Avatars', name: 'Baby Pegasus', tier: 30, tone: '#f0c060', file: 'art/avatars/ss2707-pegasus.webp', pass: '2027-07' },
+      { id: 'table-ss2707-olympus', category: 'Table Themes', name: 'Olympus Terrace', tier: 50, tone: '#f0c060', pass: '2027-07' },
+      { id: 'back-ss2709-cauldron', category: 'Card Backs', name: 'Witch\'s Cauldron', tier: 10, tone: '#b36bff', file: 'art/backs/ss2709-cauldron.webp', pass: '2027-09' },
+      { id: 'avatar-ss2709-witch', category: 'Avatars', name: 'Little Witch', tier: 30, tone: '#b36bff', file: 'art/avatars/ss2709-witch.webp', pass: '2027-09' },
+      { id: 'table-ss2709-tower', category: 'Table Themes', name: 'Alchemy Cellar', tier: 50, tone: '#b36bff', pass: '2027-09' },
+      { id: 'burn-ss2611-sandstorm', category: 'Burn Effects', name: 'Sandstorm Vortex', tier: 40, tone: '#f5c542', pass: '2026-11' },
+      { id: 'burn-ss2701-glacier', category: 'Burn Effects', name: 'Glacial Shatter', tier: 40, tone: '#7fd4ff', pass: '2027-01' },
+      { id: 'burn-ss2703-shuriken', category: 'Burn Effects', name: 'Shuriken Barrage', tier: 40, tone: '#ff8fb1', pass: '2027-03' },
+      { id: 'burn-ss2705-whirlpool', category: 'Burn Effects', name: 'Abyssal Whirlpool', tier: 40, tone: '#35d0c9', pass: '2027-05' },
+      { id: 'burn-ss2707-zeus', category: 'Burn Effects', name: "Zeus's Bolt", tier: 40, tone: '#f0c060', pass: '2027-07' },
+      { id: 'burn-ss2709-hex', category: 'Burn Effects', name: 'Arcane Hex', tier: 40, tone: '#b36bff', pass: '2027-09' }
+    ].map(r => ({ pass: '2026-11', ...r, level: 0, earned: true, cost: 0, requirement: `Season Pass tier ${r.tier}`, tones: ({ '2027-01': ['#0a1f3d', r.tone, '#e8f7ff'], '2027-03': ['#1a1033', r.tone, '#ffe3ec'], '2027-05': ['#06253a', r.tone, '#d9fffb'], '2027-07': ['#4a3a22', r.tone, '#fff2cf'], '2027-09': ['#150a2e', r.tone, '#e6d2ff'] })[r.pass] || ['#150c30', r.tone, '#ffd58a'] }));
     LEVEL_REWARDS.push(...SEASON_PASS_ITEMS);

@@ -1291,8 +1291,25 @@ async function runDevTestSuite() {
     }
     assertEqual(calls, [['launch', 'quick_start', false], ['hub']], 'First tap: Quick Start; after that: the hub');
   });
+  await test('Season burns (v399): one per season at tier 40, own sound and icon, 1.8s, canvas + card clones, everything cleaned up', async () => {
+    const ids = ShSeasonBurns.IDS;
+    assertEqual(ids.length, 6, 'six season burns');
+    Object.values(SEASON_PASS.seasons).forEach(s => assertTrue(ids.includes(s.items[40]), `${s.name} gives its burn at tier 40`));
+    const stage = testBurnStage();
+    ids.forEach((id) => {
+      assertTrue(isSupportedCosmetic('burnEffect', id), `${id} can be equipped`);
+      assertTrue(typeof BURN_SOUNDS[id] === 'function' && !Object.keys(BURN_SOUNDS).some(o => o !== id && BURN_SOUNDS[o] === BURN_SOUNDS[id]), `${id} has its own sound`);
+      assertTrue(burnPreviewIcon(id) !== '🔥', `${id} has its own preview icon`);
+      playBurnFx(id, stage, 120, 80, 1);
+    });
+    await new Promise(r => setTimeout(r, 700));
+    assertEqual(stage.querySelectorAll('.pfx-layer').length, 6, 'all six are running');
+    assertTrue([...stage.querySelectorAll('.pfx-layer')].every(l => l.querySelector('canvas.ssb-c')), 'each has its canvas');
+    await new Promise(r => setTimeout(r, ShSeasonBurns.MS + 500));
+    assertEqual(stage.querySelectorAll('.pfx-layer, canvas.ssb-c, .ssb-piece').length, 0, 'every node is removed when the 1.8s are over');
+  });
   await test('Level burns (v253): six earn-only burns, animated, each with its own sound, over within 2.1s', () => {
-    const ids = LEVEL_REWARDS.filter(r => r.category === 'Burn Effects').map(r => r.id);
+    const ids = LEVEL_REWARDS.filter(r => r.category === 'Burn Effects' && !r.pass).map(r => r.id);
     assertEqual(ids, LEVEL_BURN_IDS, 'The six level burns');
     const stage = testBurnStage();
     ids.forEach((id) => {
@@ -1739,7 +1756,7 @@ async function runDevTestSuite() {
       assertEqual(seasonPassState().tier, 11, 'the reply moves the tier');
       assertTrue(document.getElementById('seasonToast').classList.contains('show'), 'a tier shows the toast');
       assertTrue(/\+15 Diamonds/.test(document.getElementById('seasonToast').textContent), 'with its Diamonds');
-      assertEqual(SEASON_PASS_ITEMS.filter(r => r.pass === '2026-11').length, 3, 'three items in a season');
+      assertEqual(SEASON_PASS_ITEMS.filter(r => r.pass === '2026-11').length, 4, 'four items in a season (card back, avatar, burn, table)');
       assertTrue(LEVEL_REWARDS.filter(r => r.pass).every(r => !serverEconomyCatalog().xp.rewards.map(r => r.id).includes(r.id)), 'pass items are not level rewards in the catalog');
     } finally { seasonProgress = saved; document.getElementById('seasonToast')?.classList.remove('show'); }
   });
@@ -3469,7 +3486,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 40, 'All 40 avatars appear in Custom (incl. the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
+    assertEqual(options.length, 42, 'All 42 avatars appear in Custom (incl. the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -4119,7 +4136,7 @@ async function runDevTestSuite() {
     shopTab = savedTab; shopFilter = savedFilter; renderCosmeticShop();
     renderPersonalisationCosmetics();
     const burnNames = [...document.querySelectorAll('#personalisationBurnEffects .avatar-option-name')].map(n => n.textContent).slice(1);
-    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show', 'Black Hole', 'Lava Melt', 'Origami Fold', 'Pixel Blast', 'Spark Snap', 'Smoke Burst', 'Inferno Sweep', 'Hellfire Spiral', 'Royal Incineration', 'The ShitStorm'], 'Custom burn tiles in value order, then the level burns by level');
+    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show', 'Black Hole', 'Lava Melt', 'Origami Fold', 'Pixel Blast', 'Spark Snap', 'Smoke Burst', 'Inferno Sweep', 'Hellfire Spiral', 'Royal Incineration', 'The ShitStorm', 'Sandstorm Vortex', 'Glacial Shatter', 'Shuriken Barrage', 'Abyssal Whirlpool', "Zeus's Bolt", 'Arcane Hex'], 'Custom burn tiles in value order, then the level burns by level');
   });
   await test('REGRESSION: Card Shower and the deal freeze the relevant player\'s card style at the start', () => {
     const saved = { ...equippedCosmetics };
@@ -4217,8 +4234,8 @@ async function runDevTestSuite() {
     smoke.forEach(a => a.cancel());
     stage.querySelectorAll('.bfx').forEach(n => n.remove());
     renderPersonalisationAvatars();
-    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-20);
-    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Sphinx Cub', 'Baby Mammoth', 'Kitsune Cub', 'Pearl Octopus'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
+    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-22);
+    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Sphinx Cub', 'Baby Mammoth', 'Kitsune Cub', 'Pearl Octopus', 'Baby Pegasus', 'Little Witch'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
   });
 
   await test('Accessibility settings exist and apply', () => {

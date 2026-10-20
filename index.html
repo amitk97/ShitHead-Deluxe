@@ -249,7 +249,7 @@
 /* Opaque card faces and contrasting pill labels remain above the scene. */
 #gameTable .seat-name,#gameTable .table-label { text-shadow:0 1px 3px #020617; }
 </style>
-<script src="art/tables/full-scenes-v270/scenes.js?v=51d32afc1138"></script>
+<script src="art/tables/full-scenes-v270/scenes.js?v=794c861e7aee"></script>
   <div id="rotateHint" role="alert" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></svg><span class="rh-turn">Turn your phone upright to play.</span><span class="rh-open">Open your phone to play. This screen is too small for the table.</span></div>
   <!-- Shared two-tone navigation icon pack. A navy rounded tile, bold pale
        linework and one bright accent keep every icon coherent in dark mode. -->
@@ -2510,9 +2510,9 @@
             <span class="chevron transform transition-transform duration-200">&#9660;</span>
           </button>
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
-            <p><strong>What it is.</strong> A free pass with 50 tiers that runs for two calendar months. Season 1, Ancient Egypt, runs from 1 November to 31 December; the next seasons follow every two months (Ice Age, Feudal Japan, Deep Ocean). Open it from the home screen chip or from the Level Ladder&rsquo;s Season Pass tab.</p>
+            <p><strong>What it is.</strong> A free pass with 50 tiers that runs for two calendar months. Season 1, Ancient Egypt, runs from 1 November to 31 December; the next seasons follow every two months (Ice Age, Feudal Japan, Deep Ocean, Ancient Greece, Dark Magic). Open it from the home screen chip or from the Level Ladder&rsquo;s Season Pass tab.</p>
             <p><strong>How you climb.</strong> Every XP you earn while signed in also fills the pass: finishing games, wins, Ranked, the Gauntlet, challenges and puzzles. Guests earn nothing. Seasonal events do not boost it. It takes 20,000 Season XP to reach tier 50.</p>
-            <p><strong>Rewards.</strong> There is no claiming. The moment you reach a tier you get its Diamonds (15 a tier, more on every 5th), plus an exclusive item at tiers 10, 30 and 50: a card back, an avatar and a table. Season 3 (Feudal Japan) also gives the Origami Fold burn at tier 20. Equip them in Custom under <em>Earn in the Season Pass</em>.</p>
+            <p><strong>Rewards.</strong> There is no claiming. The moment you reach a tier you get its Diamonds (15 a tier, more on every 5th), plus an exclusive item at tiers 10, 30 and 50: a card back, an avatar and a table. Tier 40 of every season gives that season&rsquo;s burn, and Season 3 (Feudal Japan) also gives the Origami Fold burn at tier 20. Equip them in Custom under <em>Earn in the Season Pass</em>.</p>
             <p><strong>Ending.</strong> Tiers you reached are yours to keep. XP earned after the season ends goes to the next one, and every player gets a mailbox message the day before a season starts and ends.</p>
           </div>
         </div>
@@ -2602,7 +2602,7 @@
             <p data-term="rating"><strong class="text-amber-400">Rating:</strong> Your Ranked score (everyone starts at 500). It decides your Tier and your place on the Ranked leaderboard.</p>
             <p data-term="recruit"><strong class="text-amber-400">Recruit:</strong> Share your invite link (Profile or Friends). When a new player joins with it and plays 3 games, you both get Diamonds. Recruit 5 for the Recruiter avatar.</p>
             <p data-term="reset"><strong class="text-amber-400">Reset:</strong> The 2. It can be played on almost anything (except a Jack) and clears the target, so the next player may follow it with any card at all.</p>
-            <p data-term="season-pass"><strong class="text-amber-400">Season Pass:</strong> A free 50-tier pass that every XP you earn (signed in) fills, over two calendar months. Each tier pays Diamonds the moment you reach it, with an exclusive card back, avatar and table at tiers 10, 30 and 50. Season 3 also gives the Origami Fold burn at tier 20.</p>
+            <p data-term="season-pass"><strong class="text-amber-400">Season Pass:</strong> A free 50-tier pass that every XP you earn (signed in) fills, over two calendar months. Each tier pays Diamonds the moment you reach it, with an exclusive card back, avatar, burn and table at tiers 10, 30, 40 and 50. Season 3 also gives the Origami Fold burn at tier 20.</p>
             <p data-term="seasonal-event"><strong class="text-amber-400">Seasonal Event:</strong> Halloween, Christmas, Diwali and more: while an event is on, its themed items are sold in the Shop&rsquo;s Seasonal tab, and winning 3 games earns that event&rsquo;s avatar.</p>
             <p data-term="select-all-of-a-rank"><strong class="text-amber-400">Select All Of A Rank:</strong> With it on (the round button left of your hand count, or S on a keyboard), tapping a card selects every card of that rank in your Hand. Protect Best Cards (Settings → Gameplay, off by default) keeps it to one card for 2s, 3s, 10s and Aces, so you don't waste them.</p>
             <p data-term="shithead"><strong class="text-amber-400">ShitHead:</strong> The loser &mdash; the last player still holding cards once everyone else has emptied their Hand, Face-Up and Face-Down cards.</p>
@@ -2656,11 +2656,12 @@
 
   <script src="art/burns/level-v294/effects.js?v=295"></script>
   <script src="art/burns/level-3d/burns3d.js?v=313"></script>
+  <script src="art/burns/season/season-burns.js?v=399"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
-  <script src="sound.js?v=d5d1fddc0e77"></script>
+  <script src="sound.js?v=dfc2cc632484"></script>
 
   <!-- BURN EMBER PARTICLE ENGINE -->
-  <script src="burn-effects.js?v=e8b88c041666"></script>
+  <script src="burn-effects.js?v=e8d27b7f869c"></script>
 
   <!-- KINETIC PROJECTILE ENGINE -->
   <script src="card-animations.js?v=0fe6bd1289f1"></script>
@@ -2688,15 +2689,15 @@
   <script src="js/card-hold.js"></script>
   <script src="js/whats-new-data.js"></script>
   <script src="js/avatar-tones.js"></script>
-  <script src="cosmetics-data.js?v=0fa9f72f805b"></script>
+  <script src="cosmetics-data.js?v=4451a6c0aa2c"></script>
   <script src="tutorial-data.js?v=86b1cdade927"></script>
   <script src="tutorial.js?v=7e126b798668"></script>
-  <script src="level-ladder.js?v=193b4e6f59f6"></script>
-  <script src="shop.js?v=b35b8315bdee"></script>
+  <script src="level-ladder.js?v=4d5bf0aaa94d"></script>
+  <script src="shop.js?v=8a2d376b14c6"></script>
   <script src="home-navigation.js?v=98ca34d9be4b"></script>
   <script src="multiplayer-lobby.js?v=b284dcca25e7"></script>
   <script src="private-cosmetics.js?v=4f732484384c"></script>
-  <script src="app.js?v=4b699b485239"></script>
+  <script src="app.js?v=5f57b492db0b"></script>
 
   <script src="js/house-rules.js"></script>
   <script src="js/house-rules-bots.js"></script>
