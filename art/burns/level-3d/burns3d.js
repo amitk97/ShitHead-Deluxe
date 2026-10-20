@@ -167,12 +167,22 @@ void main(){
   // Exactly one rigid painted face: no flow, swirl, gloss sweep or noisy reveal.
   vec4 c=texture2D(u_tex2,v_uv);float a=c.a*v_col.a;
   gl_FragColor=vec4(c.rgb*v_col.rgb*a,a);
+ } else if(k>12.5){
+  // A wet lump of the stuff: a lit blob (v_loc = place on its ellipse, v_uv = the light's direction in that frame, v_k.z > .5 = ragged edge).
+  vec2 p=v_loc;float d=length(p)+(fbm(p*2.2+v_k.y*9.)-.5)*.34*step(.5,v_k.z);
+  if(d>1.)discard;
+  float z=sqrt(max(0.,1.-d*d));vec3 n=normalize(vec3(p,z+.15));vec3 L=normalize(vec3(v_uv,.7));
+  float df=max(0.,dot(n,L));
+  vec3 c=mix(vec3(.12,.045,.014),vec3(.5,.24,.075),df);
+  c+=vec3(1.,.9,.7)*pow(max(0.,dot(reflect(-L,n),vec3(0.,0.,1.))),24.)*.9+vec3(1.,.55,.14)*pow(1.-z,3.)*.55*(.4+.6*(1.-df));
+  float a=(1.-smoothstep(.9,1.,d))*v_col.a;
+  gl_FragColor=vec4(c*a,a);
  } else if(k>11.5){
   float x=v_loc.x;float volume=sqrt(max(0.,1.-x*x));
   float grain=fbm(v_uv*vec2(8.,19.));
   vec3 c=mix(vec3(.075,.024,.009),vec3(.31,.115,.026),volume);
-  c*=.8+.4*grain;c+=vec3(.18,.08,.018)*pow(max(0.,volume*.85-x*.3),10.);
-  float a=v_col.a*(1.-smoothstep(.96,1.,abs(x)));
+  c*=(.8+.4*grain)*.55;c+=vec3(.18,.08,.018)*pow(max(0.,volume*.85-x*.3),10.)*.5;
+  float a=v_col.a*(1.-smoothstep(.96,1.,abs(x)))*(1.-smoothstep(.88,1.,v_uv.y));
   gl_FragColor=vec4(c*a,a);
  } else {
   // A painted sprite (atlas coords in v_uv), its rectangle faded to soft edges.
@@ -260,7 +270,7 @@ void main(){
       return { t, K, g, H: 2.2 * K * g, R0: 1.22 * K * g, lean: .12 * K * Math.sin(t * 3.6 + .4) * rise * (1 - collapse), rise, collapse };
     };
     S.fpt = (par, u, a) => {
-      const r = (.12 + .88 * Math.pow(u, .75)) * par.R0, ax = par.lean * u * u + .05 * par.K * par.g * Math.sin(u * 6 - par.t * 8) * u;
+      const r = (.3 + .7 * Math.pow(u, .75)) * par.R0, ax = par.lean * u * u + .05 * par.K * par.g * Math.sin(u * 6 - par.t * 8) * u;
       return [ax + Math.cos(a) * r, FLOOR + .04 + u * par.H, Math.sin(a) * r * .7];
     };
     S.waveX = t => t < .26 ? -1.5 + (t / .26) * (1.5 - hw) : t < .9 ? -hw + (t - .26) / .64 * (hw * 2 + .15) : hw + .15 + (t - .9) / .3 * 1.6;
@@ -321,10 +331,10 @@ void main(){
         return { rx: -.18 * e + w, ry: .22 * Math.sin(t * 2.6) * e, rz: c.rot0 + .06 * Math.sin(t * 3.1) * e, tx: c.ox, ty: c.oy + .12 * e, tz: .38 * e, heat: 1 };
       }
       if (storm) {
-        const pull = smooth(.3, 1.05, t), a = (t - .3) * 5;
-        return { rx: -.25 * pull, ry: 2.1 * pull, rz: c.rot0 + .32 * pull,
-          tx: c.ox * (1 - pull) + .18 * Math.sin(a) * pull,
-          ty: c.oy + .85 * pull * S.artK, tz: .22 * pull, heat: smooth(.1, .45, t), scale: 1 - .65 * pull };
+        // Caught inside the funnel: lifted onto its axis, spinning with the coils (near coils cross in front of it, far ones and the core sit behind).
+        const par = S.fun(t), e = smooth(.3, .66, t), hy = FLOOR + .04 + .42 * par.H;
+        return { rx: -.25 * e + .16 * Math.sin(t * 7) * e, ry: e * 2.2 * Math.sin(t * 7.5), rz: c.rot0 * (1 - e) + .3 * Math.sin(t * 5) * e,
+          tx: c.ox * (1 - e) + par.lean * .18 * e, ty: c.oy + e * (hy - c.oy), tz: .05 * e, heat: smooth(.1, .45, t), scale: 1 - .3 * smooth(.3, 1, t) };
       }
       if (spiral) {
         // Shudders as the vortex wakes, then is lifted and spun by it (its back turns to us).
@@ -543,10 +553,16 @@ void main(){
           if (!storm && t > T && t < 1.35) emit('debris', 11, dt, () => S.shards.push({ c: n - 1, orb: orbit(false), p: [0, 0, 0], uv: [R(.1, .9), R(.1, .9)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: R(.03, .055), age: 0, life: R(.7, 1), seed: rand(), char: .3 }));
           // The ShitStorm's torn cards ride the funnel's helix up (some whole-card sized), tumbling; goo is flung off its flanks.
           if (storm && t > .34 && t < 1.3) emit('frag', 52, dt, () => S.shards.push({ c: n - 1, hx: { u: R(0, .12), du: R(.55, .85), a: R(0, 6.28), w: -R(5.5, 8.5), off: R(1.04, 1.4) }, p: [0, 0, 0], uv: [R(.08, .92), R(.08, .92)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: rand() < .22 ? R(.15, .21) : R(.06, .11), age: 0, life: R(.8, 1.1), seed: rand(), char: .15 }));
-          if (storm && t > .45 && t < 1.45) emit('goo', 26, dt, () => {
-            const par = S.fun(t), u = R(.25, .85), a = R(0, 6.28), p = S.fpt(par, u, a), sp = R(.8, 1.7);
-            S.smoke.push({ goo: true, g: 3.4, p, v: [Math.cos(a) * sp - Math.sin(a) * 1.6, R(.1, .9), Math.sin(a) * sp * .7], col: [.34, .17, .055], age: 0, life: R(.6, 1), size: R(.045, .09), seed: rand() });
-          });
+          if (storm && t > .3 && t < 1.5 && S.smoke.filter(m => m.goo).length < 64) {
+            const fling = (par, u, a, st, so, size, life, g, chunk) => {
+              const p = S.fpt(par, u, a);
+              S.smoke.push({ goo: true, chunk, g, p, v: [Math.sin(a) * st + Math.cos(a) * so, R(.2, 1.2), -Math.cos(a) * .7 * st + Math.sin(a) * .7 * so + R(0, .6)], age: 0, life, size, seed: rand() });
+            };
+            emit('goo', 22, dt, () => fling(S.fun(t), R(.25, .85), R(0, 6.28), R(1, 2), R(.6, 1.6), R(.02, .045), R(.6, 1), 3.4, false));
+            emit('chunk', 14, dt, () => fling(S.fun(t), R(.2, .9), R(0, 6.28), R(1.2, 2.4), R(.8, 1.8), R(.07, .16), R(1, 1.5), 2.8, true));
+          }
+          // The head sheds too: drips fall from its lower edge.
+          if (storm && t > .5 && t < 1.4) emit('drip', 8, dt, () => { const par = S.fun(t); S.smoke.push({ goo: true, g: 3.4, p: [par.lean + R(-1, 1) * par.K * par.g, FLOOR + .04 + par.H, R(-.2, .4)], v: [R(-.2, .2), -R(.1, .4), 0], age: 0, life: R(.7, 1), size: R(.02, .04), seed: rand() }); });
           if (t > T && t < (storm ? 1.2 : 1.45)) emit('smoke', storm ? 4 : 10, dt, () => { const sd = rand() < .5 ? -1 : 1; S.smoke.push({ col: storm ? [.2, .13, .07] : [.12, .07, .07], p: [sd * R(1, 1.7), R(-.2, 1.6), R(-.5, .1)], v: [sd * R(.1, .3), R(.2, .5), 0], age: 0, life: R(.8, 1.2), size: R(.4, .7), seed: rand() }); });
           if (t > T && t < T + .03) for (let i = 0; i < 30; i++) { const a = R(0, 6.28), sp = R(1.2, 2.6); S.embers.push({ pal: storm ? 2 : 0, p: [0, FLOOR + .05, .2], v: [Math.cos(a) * sp, R(.2, .9), Math.sin(a) * sp * .6], age: 0, life: R(.4, .8), size: R(2, 4.4), seed: rand() * 6.28 }); }
           S.cards.forEach(c => burnCard(c, t, dt));
@@ -604,7 +620,7 @@ void main(){
       for (const m of S.smoke) {
         m.age += dt;
         if (m.orb) { const b = m.orb; b.a += b.w * dt; b.y += b.vy * dt; b.r *= 1 + .2 * dt; m.p = [Math.cos(b.a) * b.r * (1 + .6 * (b.y - FLOOR)), b.y, Math.sin(b.a) * b.r * .6]; }
-        else if (m.goo) { m.p[0] += m.v[0] * dt; m.p[1] += m.v[1] * dt; m.p[2] += m.v[2] * dt; m.v[1] -= m.g * dt; if (m.p[1] < FLOOR + .03) { m.p[1] = FLOOR + .03; m.v = [0, 0, 0]; } }
+        else if (m.goo) { m.p[0] += m.v[0] * dt; m.p[1] += m.v[1] * dt; m.p[2] += m.v[2] * dt; m.v[1] -= m.g * dt; if (m.p[1] < FLOOR + .03) { m.p[1] = FLOOR + .03; m.v = [0, 0, 0]; if (m.splat == null) { m.splat = t; m.life = m.age + .5; } } }
         else { m.p[0] += m.v[0] * dt; m.p[1] += m.v[1] * dt; }
       }
       for (const s of S.shards) {
@@ -884,7 +900,7 @@ void main(){
       const far = [], near = [];
       for (let b = 0; b < NB; b++) {
         const ph = b * TAU / NB, spin = t * (6 + .45 * b) * (1 - .5 * collapse);
-        const pt = (u, e) => { const a = ph + u * turns * TAU - spin, q = S.fpt(par, u, a), th = hh * (.75 + .5 * u) * smooth(0, .03, u) * (1 - smooth(.97, 1, u)); return [q[0], q[1] + e * th, q[2], a]; };
+        const pt = (u, e) => { const a = ph + u * turns * TAU - spin, q = S.fpt(par, u, a), th = hh * (.75 + .5 * u) * smooth(0, .03, u) * (1 - smooth(.97, 1, u)) * (1 - .62 * smooth(0, .3 * par.R0 + 1e-6, q[2])); return [q[0], q[1] + e * th, q[2], a]; };
         for (let i = 0; i < SEG; i++) {
           const u0 = i / SEG, u1 = (i + 1) / SEG, P = [pt(u0, -1), pt(u1, -1), pt(u1, 1), pt(u0, 1)], am = (P[0][3] + P[1][3]) / 2;
           const z = (P[0][2] + P[1][2]) / 2, lit = Math.max(0, -.45 * Math.cos(am) + .125 + .74 * Math.sin(am) * .7), light = (.42 + .95 * lit) * (.8 + .35 * (u0 + u1) / 2);
@@ -896,7 +912,7 @@ void main(){
       put(out.art, far);
       // The core fills the gaps between the coils and hides the far arcs.
       for (let i = 0; i < 28; i++) {
-        const u = i / 28, v = (i + 1) / 28, cp = (q, side) => { const w = S.fpt(par, q, 0), rr = (.12 + .88 * Math.pow(q, .75)) * par.R0; return [w[0] - rr + side * rr * .85, w[1], .02]; };
+        const u = i / 28, v = (i + 1) / 28, cp = (q, side) => { const w = S.fpt(par, q, 0), rr = (.3 + .7 * Math.pow(q, .75)) * par.R0; return [w[0] - rr + side * rr * .6, w[1], .02]; };
         quad(out.art, [cp(u, -1), cp(u, 1), cp(v, 1), cp(v, -1)].map(q => proj(...q)), [[0, u], [1, u], [1, v], [0, v]], [[-1, u], [1, u], [1, v], [-1, v]], [1, 1, 1, alive], [12, 0, 0, 0]);
       }
       put(out.artFront, near);
@@ -1041,11 +1057,14 @@ void main(){
     }
     for (const m of S.smoke) {
       if (m.goo) {
-        // A glossy droplet: a teardrop of the coil material stretched along its flight, with a bright highlight.
-        const a = m.age / m.life, h = projW(m.p), tl = projW([m.p[0] - m.v[0] * .06, m.p[1] - m.v[1] * .06, m.p[2] - m.v[2] * .06]), r = m.size * F * h[2], dx = h[0] - tl[0], dy = h[1] - tl[1], l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, ex = Math.max(l, r * 1.2);
-        const al = 1 - smooth(.7, 1, a), arr = m.p[2] > 0 ? out.artFront : out.art;
-        quad(arr, [[h[0] + uy * r, h[1] - ux * r], [h[0] - uy * r, h[1] + ux * r], [h[0] - ux * ex - uy * r * .3, h[1] - uy * ex + ux * r * .3], [h[0] - ux * ex + uy * r * .3, h[1] - uy * ex - ux * r * .3]], [[0, 0], [1, 0], [1, 1], [0, 1]], [[-1, 0], [1, 0], [1, 1], [-1, 1]], [1, 1, 1, al], [12, 0, 0, 0]);
-        glowAt(out.front, [m.p[0] - .01, m.p[1] + .012, m.p[2]], m.size * .5, [1, .85, .55, .5 * al]);
+        // A wet lump or droplet: a lit ellipsoid stretched along its flight (flattened into a splat on the floor), drawn in front of or behind the funnel by depth.
+        const flat = m.splat != null, h = projW(m.p), tl = projW([m.p[0] - m.v[0] * .06, m.p[1] - m.v[1] * .06, m.p[2] - m.v[2] * .06]), r = m.size * F * h[2];
+        const dx = h[0] - tl[0], dy = h[1] - tl[1], l = Math.hypot(dx, dy) || 1, al = flat ? 1 - smooth(.4, 1, (t - m.splat) / .5) : 1 - smooth(.8, 1, m.age / m.life);
+        let ux = dx / l, uy = dy / l, ex = r * (m.chunk ? 1 + Math.min(.6, l / (r * 4)) : 1 + Math.min(1.4, l / (r * 1.6))), rw = r;
+        if (flat) { ux = 1; uy = 0; ex = r * 2.4; rw = r * .55; }
+        const px = uy, py = -ux, lx = -.55 * px - .65 * py, ly = -.55 * ux - .65 * uy, c = [h[0], h[1]];
+        quad(m.p[2] > 0 && !flat ? out.artFront : out.art, [[c[0] - px * rw - ux * ex, c[1] - py * rw - uy * ex], [c[0] + px * rw - ux * ex, c[1] + py * rw - uy * ex], [c[0] + px * rw + ux * ex, c[1] + py * rw + uy * ex], [c[0] - px * rw + ux * ex, c[1] - py * rw + uy * ex]],
+          [[lx, ly], [lx, ly], [lx, ly], [lx, ly]], LOC, [1, 1, 1, al], [13, m.seed, m.chunk ? 1 : 0, 0]);
         continue;
       }
       const a = m.age / m.life, alpha = (m.a || .24) * smooth(0, .2, a) * (1 - smooth(.5, 1, a));
@@ -1181,7 +1200,9 @@ void main(){
     // The painted scene fits the screen width and the room above the Pile (under the header), so its
     // top is never cut off; the cards stay their real size.
     const hw = host.clientWidth || 390, hh = host.clientHeight || 844, [LW, LR, , LV] = fx.layout || [];
-    const LU = (fx.layout || [])[2], artK = fx.art ? Math.min(1, hw * .98 / (LW * H * 2 * Math.max(LU, 1 - LU)), Math.max(0, y - 52) / (LW * LR * LV * H)) * (id === 'burn-lvl-shitstorm' ? .84 : /hellfire/.test(id) ? .86 : 1) : 1; // the storms grow on the strike, so they get margin under the header
+    // The ShitStorm is built from geometry, not a picture, so it is sized by its own extent: the funnel and head are ~1.7 card heights each side and 3.5 high, whatever the stage (a small preview gets a big funnel).
+    const stormK = id === 'burn-lvl-shitstorm' ? Math.min(1.15, hw * .98 / (2 * 1.7 * H), Math.max(0, y - (hh < 420 ? 10 : 52)) / (3.5 * H)) * .92 : 0;
+    const LU = (fx.layout || [])[2], artK = stormK || fx.art ? stormK || Math.min(1, hw * .98 / (LW * H * 2 * Math.max(LU, 1 - LU)), Math.max(0, y - 52) / (LW * LR * LV * H)) * (/hellfire/.test(id) ? .86 : 1) : 1; // the storms grow on the strike, so they get margin under the header
     // A painted scene gets the whole layer, so its smoke is never cut by a canvas edge.
     const [bw, bh, bx, by] = fx.box, x0 = fx.art ? 0 : Math.max(0, x - H * bw * bx), y0 = fx.art ? 0 : Math.max(0, y - H * bh * by);
     const ox = Math.round(x0), oy = Math.round(y0), cw = Math.round(fx.art ? hw : Math.min(hw, x + H * bw * (1 - bx)) - ox), ch = Math.round(fx.art ? hh : Math.min(hh, y + H * bh * (1 - by)) - oy);
@@ -1412,6 +1433,8 @@ void main(){
       [.64,.73,.82,.91,1.0,1.1,1.18].forEach((at,n) => k.noise({ at, dur: .024, type: 'bandpass', f0: 2200+n*120, q: 2, level: .075 }));
       k.noise({ at: 1.38, dur: .48, type: 'bandpass', f0: 950, f1: 160, q: .8, level: .10, attack: .04 });
       [1.57,1.72,1.84].forEach((at,n) => k.tone({ at, dur: .13, f0: 1900+n*330, f1: 1700+n*330, level: .022-n*.004, attack: .006 }));
+      // wet splats as the lumps land
+      [.98,1.12,1.22,1.33,1.46,1.58].forEach((at,n) => { k.noise({ at, dur: .09, type: 'lowpass', f0: 900, f1: 220, level: .05, attack: .004 }); k.tone({ at, dur: .1, f0: 210-n*14, f1: 80, level: .045, attack: .004 }); });
     },
     // Spark Snap: a fizzing, rising crackle as the charge builds (0–0.26), the SNAP at 0.26 (a
     // sharp electric crack, a bright zap and a deep thump), sizzling sparks raining out, crackles as
