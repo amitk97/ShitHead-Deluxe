@@ -156,10 +156,10 @@ void main(){
   vec3 c=mix(vec3(.10,.035,.012),vec3(.48,.22,.065),roundness);
   c*=.82+.3*grain;
   // Only the lower, faceless coils supply material detail; never draw the old diorama.
-  vec4 paint=texture2D(u_tex2,vec2(.035+v_uv.x*.41,.70+q*.055));
-  c=mix(c,paint.rgb*(.35+.65*roundness),paint.a*.58);
+  float pw=abs(fract(v_uv.x*4.)*2.-1.);vec4 paint=texture2D(u_tex2,vec2((.42+pw*.18)*.5,.50+q*.09));
+  c=mix(c,paint.rgb*(.4+.7*roundness),paint.a*.72);
   float rim=exp(-pow((q+.62)/.12,2.));
-  c+=vec3(1.,.57,.13)*rim*(.45+.55*grain);
+  c+=vec3(1.,.57,.13)*rim*(.2+.25*grain);
   c+=vec3(.9,.58,.25)*pow(max(0.,roundness*.8-q*.4),14.)*.45;
   float a=(1.-smoothstep(.94,1.,abs(q)))*v_col.a;
   gl_FragColor=vec4(c*v_col.rgb*a,a);
@@ -254,6 +254,15 @@ void main(){
       cards: cards.map((c, i) => ({ i, ar: c.W / c.H, rot0: -c.rot * Math.PI / 180, ox: (c.dx || 0) / top.H, oy: -(c.dy || 0) / top.H, last: -.3,
         side: n === 1 ? .55 : i === n - 1 ? .45 : (i % 2 ? 1 : -1) * (.9 + .2 * i) })) };
     const hw = S.ar / 2;
+    // ShitStorm funnel (world units): S.fun(t) = size and sway, S.fpt(par, u, a) = a point on the funnel's surface at height u, angle a.
+    S.fun = t => {
+      const K = S.artK, rise = ease((t - .18) / .46), collapse = smooth(1.38, 1.86, t), g = (.25 + .75 * rise) * (1 - .8 * collapse);
+      return { t, K, g, H: 2.2 * K * g, R0: 1.22 * K * g, lean: .12 * K * Math.sin(t * 3.6 + .4) * rise * (1 - collapse), rise, collapse };
+    };
+    S.fpt = (par, u, a) => {
+      const r = (.12 + .88 * Math.pow(u, .75)) * par.R0, ax = par.lean * u * u + .05 * par.K * par.g * Math.sin(u * 6 - par.t * 8) * u;
+      return [ax + Math.cos(a) * r, FLOOR + .04 + u * par.H, Math.sin(a) * r * .7];
+    };
     S.waveX = t => t < .26 ? -1.5 + (t / .26) * (1.5 - hw) : t < .9 ? -hw + (t - .26) / .64 * (hw * 2 + .15) : hw + .15 + (t - .9) / .3 * 1.6;
     S.front = (c, t) => S.calm ? -.25 + clamp(t / .7) * 1.45
       : storm ? -.25 + clamp((t - .62) / .58) * 1.45
@@ -531,7 +540,13 @@ void main(){
           if (!storm && t > T - .04 && t < 1.5) emit('tornado', storm ? 120 : 170, dt, () => S.flames.push({ orb: { r: storm ? R(.55, .95) : R(.3, .55), a: R(0, 6.28), w: (storm ? 1.2 : 1) * R(4.5, 7), y: FLOOR + R(-.02, .12), vy: storm ? R(1.2, 2.2) : R(1, 1.8) }, x: 0, y: FLOOR, z: 0, w: storm ? R(.3, .52) : R(.2, .36), h: storm ? R(.7, 1.2) : R(.42, .8), age: 0, life: R(.5, .85), seed: rand(), lean: 0, tint: storm ? [.95, .62, .28] : null }));
           // The ShitStorm is a storm of the stuff itself: dark and golden dust clouds whirl round the card with the flames.
           if (storm && t > T - .04 && t < 1.38) emit('dust', 18, dt, () => S.smoke.push({ orb: { r: R(.5, .95), a: R(0, 6.28), w: R(3.5, 5.5), y: FLOOR + R(0, .25), vy: R(.9, 1.7) }, col: rand() < .5 ? [.58, .38, .17] : [.26, .15, .07], p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.7, 1.1), size: R(.28, .45), seed: rand(), a: .30 }));
-          if (t > T && t < (storm ? 1.15 : 1.35)) emit('debris', storm ? 7 : 11, dt, () => S.shards.push({ c: n - 1, orb: orbit(false), p: [0, 0, 0], uv: [R(.1, .9), R(.1, .9)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: R(.03, .055), age: 0, life: R(.7, 1), seed: rand(), char: .3 }));
+          if (!storm && t > T && t < 1.35) emit('debris', 11, dt, () => S.shards.push({ c: n - 1, orb: orbit(false), p: [0, 0, 0], uv: [R(.1, .9), R(.1, .9)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: R(.03, .055), age: 0, life: R(.7, 1), seed: rand(), char: .3 }));
+          // The ShitStorm's torn cards ride the funnel's helix up (some whole-card sized), tumbling; goo is flung off its flanks.
+          if (storm && t > .34 && t < 1.3) emit('frag', 52, dt, () => S.shards.push({ c: n - 1, hx: { u: R(0, .12), du: R(.55, .85), a: R(0, 6.28), w: -R(5.5, 8.5), off: R(1.04, 1.4) }, p: [0, 0, 0], uv: [R(.08, .92), R(.08, .92)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: rand() < .22 ? R(.15, .21) : R(.06, .11), age: 0, life: R(.8, 1.1), seed: rand(), char: .15 }));
+          if (storm && t > .45 && t < 1.45) emit('goo', 26, dt, () => {
+            const par = S.fun(t), u = R(.25, .85), a = R(0, 6.28), p = S.fpt(par, u, a), sp = R(.8, 1.7);
+            S.smoke.push({ goo: true, g: 3.4, p, v: [Math.cos(a) * sp - Math.sin(a) * 1.6, R(.1, .9), Math.sin(a) * sp * .7], col: [.34, .17, .055], age: 0, life: R(.6, 1), size: R(.045, .09), seed: rand() });
+          });
           if (t > T && t < (storm ? 1.2 : 1.45)) emit('smoke', storm ? 4 : 10, dt, () => { const sd = rand() < .5 ? -1 : 1; S.smoke.push({ col: storm ? [.2, .13, .07] : [.12, .07, .07], p: [sd * R(1, 1.7), R(-.2, 1.6), R(-.5, .1)], v: [sd * R(.1, .3), R(.2, .5), 0], age: 0, life: R(.8, 1.2), size: R(.4, .7), seed: rand() }); });
           if (t > T && t < T + .03) for (let i = 0; i < 30; i++) { const a = R(0, 6.28), sp = R(1.2, 2.6); S.embers.push({ pal: storm ? 2 : 0, p: [0, FLOOR + .05, .2], v: [Math.cos(a) * sp, R(.2, .9), Math.sin(a) * sp * .6], age: 0, life: R(.4, .8), size: R(2, 4.4), seed: rand() * 6.28 }); }
           S.cards.forEach(c => burnCard(c, t, dt));
@@ -589,9 +604,16 @@ void main(){
       for (const m of S.smoke) {
         m.age += dt;
         if (m.orb) { const b = m.orb; b.a += b.w * dt; b.y += b.vy * dt; b.r *= 1 + .2 * dt; m.p = [Math.cos(b.a) * b.r * (1 + .6 * (b.y - FLOOR)), b.y, Math.sin(b.a) * b.r * .6]; }
+        else if (m.goo) { m.p[0] += m.v[0] * dt; m.p[1] += m.v[1] * dt; m.p[2] += m.v[2] * dt; m.v[1] -= m.g * dt; if (m.p[1] < FLOOR + .03) { m.p[1] = FLOOR + .03; m.v = [0, 0, 0]; } }
         else { m.p[0] += m.v[0] * dt; m.p[1] += m.v[1] * dt; }
       }
       for (const s of S.shards) {
+        if (s.hx) {
+          const h = s.hx, par = S.fun(t); s.age += dt; h.u += h.du * dt; h.a += h.w * dt;
+          const q = S.fpt(par, Math.min(h.u, .88), h.a), r = h.off; s.p = [par.lean * h.u * h.u + (q[0] - par.lean * h.u * h.u) * r, q[1], q[2] * r];
+          for (let i = 0; i < 3; i++) s.a[i] += s.w[i] * dt;
+          continue;
+        }
         if (s.orb) continue;
         s.age += dt; if (!s.still) s.v[1] += (s.age < .35 ? .3 : -1.1) * dt;
         for (let i = 0; i < 3; i++) { if (!s.still) s.v[i] *= 1 - .8 * dt; s.p[i] += s.v[i] * dt; s.a[i] += s.w[i] * dt; }
@@ -853,22 +875,45 @@ void main(){
       }
       for (const [d, col] of [[0, [1, .95, .7]], [.08, [1, .7, .25]]]) { const rt = (t - T - d) / .5; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 2 * ease(rt), (1 - rt) * .9, col); }
     } else if (S.storm && !S.calm) {
-      // The owner's painted poo tornado: the body (cone, torn cards, goo) swirls in the shader while the
-      // complete head rides on top, rigid. It grows out of the pile, grins on the strike and collapses
-      // into the pile at 1.38-1.86s (the card is consumed at its foot between .62 and 1.2).
-      const T = S.T, alive = smooth(.06, .3, t) * (1 - smooth(1.5, 1.96, t));
-      const collapse = smooth(1.38, 1.86, t), s0 = (.5 + .5 * ease((t - .18) / .5)) * (1 - .55 * collapse);
-      const sh = .06 * Math.sin(t * 9) * alive, sx = 1 + .03 * Math.sin(t * 18), grin = 1 + .05 * bump(T + .05, T + .15, T + .45);
+      // A real 3D funnel. Five glossy coil ribbons wind round a dark core (far arcs behind the card, near arcs in
+      // front, lit from the upper left); torn card fragments climb the helix and goo is flung off it (see the sim);
+      // the painted head rides on top, rigid, following the sway a beat late and squashing on the strike.
+      const par = S.fun(t), { H, rise, collapse, K, g } = par, T = S.T;
+      const alive = smooth(.06, .24, t) * (1 - smooth(1.62, 1.96, t));
+      const NB = 4, SEG = 110, turns = 1.7, hh = H / turns / NB * .9, TAU = Math.PI * 2;
+      const far = [], near = [];
+      for (let b = 0; b < NB; b++) {
+        const ph = b * TAU / NB, spin = t * (6 + .45 * b) * (1 - .5 * collapse);
+        const pt = (u, e) => { const a = ph + u * turns * TAU - spin, q = S.fpt(par, u, a), th = hh * (.75 + .5 * u) * smooth(0, .03, u) * (1 - smooth(.97, 1, u)); return [q[0], q[1] + e * th, q[2], a]; };
+        for (let i = 0; i < SEG; i++) {
+          const u0 = i / SEG, u1 = (i + 1) / SEG, P = [pt(u0, -1), pt(u1, -1), pt(u1, 1), pt(u0, 1)], am = (P[0][3] + P[1][3]) / 2;
+          const z = (P[0][2] + P[1][2]) / 2, lit = Math.max(0, -.45 * Math.cos(am) + .125 + .74 * Math.sin(am) * .7), light = (.42 + .95 * lit) * (.8 + .35 * (u0 + u1) / 2);
+          const piece = { z, P: P.map(q => proj(q[0], q[1], q[2])), uv: [[u0 + b * .173, 0], [u1 + b * .173, 0], [u1 + b * .173, 1], [u0 + b * .173, 1]], loc: [[u0, -1], [u1, -1], [u1, 1], [u0, 1]], col: [light, light * .98, light * .94, alive] };
+          (z > .02 ? near : far).push(piece);
+        }
+      }
+      const put = (arr, list) => list.sort((a, b) => a.z - b.z).forEach(c => quad(arr, c.P, c.uv, c.loc, c.col, [10, 0, 0, 0]));
+      put(out.art, far);
+      // The core fills the gaps between the coils and hides the far arcs.
+      for (let i = 0; i < 28; i++) {
+        const u = i / 28, v = (i + 1) / 28, cp = (q, side) => { const w = S.fpt(par, q, 0), rr = (.12 + .88 * Math.pow(q, .75)) * par.R0; return [w[0] - rr + side * rr * .85, w[1], .02]; };
+        quad(out.art, [cp(u, -1), cp(u, 1), cp(v, 1), cp(v, -1)].map(q => proj(...q)), [[0, u], [1, u], [1, v], [0, v]], [[-1, u], [1, u], [1, v], [-1, v]], [1, 1, 1, alive], [12, 0, 0, 0]);
+      }
+      put(out.artFront, near);
       if (R.art) {
-        layer(out.art, 0, -.3, s0, 0, alive, .5, [1, .75, .3], false, 1.25, 11.6, sx, sh);
-        const fv = .26, fs = s0 * grin, fdy = (PV - fv) * AH * (s0 - fs);
-        layer(out.artFront, 1, -.3, fs, fdy, smooth(.18, .5, t) * (1 - smooth(1.4, 1.8, t)), 0, [1, .8, .4], false, 1.25, 0, 1, 0, sh * (PV - fv) * AH * s0);
+        const hl = S.fun(t - .09), hx = hl.lean + .04 * K * Math.sin(t * 5.3) * rise, top = FLOOR + .04 + H;
+        const fw = 2.8 * K * g, fh = fw * 477 / 741, st = 1 + .08 * bump(T, T + .08, T + .26) - .05 * bump(T + .26, T + .34, T + .55), sx = 1 / Math.sqrt(st), roll = .35 * (hl.lean / (.12 * K + 1e-6)) * .12 + .03 * Math.sin(t * 3.6 - .2);
+        const by = top - .05 * fh, cxh = hx, cyh = by + fh * st / 2, c = Math.cos(roll), sn = Math.sin(roll);
+        const rot = (x, y) => [cxh + x * c - y * sn, cyh + x * sn + y * c];
+        const hw = fw * sx / 2, hh2 = fh * st / 2, P = [rot(-hw, hh2), rot(hw, hh2), rot(hw, -hh2), rot(-hw, -hh2)].map(q => proj(q[0], q[1], .6 * K));
+        const faceOn = smooth(.3, .58, t) * (1 - smooth(1.55, 1.9, t));
+        quad(out.artFront, P, [[.5693, .0156], [.9312, .0156], [.9312, .4814], [.5693, .4814]], Z4, [1, 1, 1, faceOn], [11, 0, 0, 0]);
       }
       const charge = smooth(0, .3, t) * (1 - smooth(.85, 1.8, t));
-      glowAt(out.back, [0, FLOOR * K + .05, 0], .85 * K, [1, .55, .16, .36 * charge]);
+      glowAt(out.back, [0, FLOOR + .05, 0], .85 * K, [1, .55, .16, .36 * charge]);
       const rt = (t - .3) / .5;
       if (rt > 0 && rt < 1) ring(FLOOR, (.2 + 1.3 * ease(rt)) * K, (1 - rt) * .45, [1, .68, .22]);
-      glowAt(out.back, [0, FLOOR * K + .12, 0], .55 * K, [1, .46, .08, .22 * bump(1.38, 1.65, 1.98)]);
+      glowAt(out.back, [0, FLOOR + .12, 0], .55 * K, [1, .46, .08, .22 * bump(1.38, 1.65, 1.98)]);
     } else if (S.kind === 'spiral' && !S.calm) {
       // The magma vortex rears up out of the card (bottom first) and keeps turning: its painted
       // bands travel round it, a hot core glows up its axis, the rubble at its base sits in front
@@ -995,6 +1040,14 @@ void main(){
       }
     }
     for (const m of S.smoke) {
+      if (m.goo) {
+        // A glossy droplet: a teardrop of the coil material stretched along its flight, with a bright highlight.
+        const a = m.age / m.life, h = projW(m.p), tl = projW([m.p[0] - m.v[0] * .06, m.p[1] - m.v[1] * .06, m.p[2] - m.v[2] * .06]), r = m.size * F * h[2], dx = h[0] - tl[0], dy = h[1] - tl[1], l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, ex = Math.max(l, r * 1.2);
+        const al = 1 - smooth(.7, 1, a), arr = m.p[2] > 0 ? out.artFront : out.art;
+        quad(arr, [[h[0] + uy * r, h[1] - ux * r], [h[0] - uy * r, h[1] + ux * r], [h[0] - ux * ex - uy * r * .3, h[1] - uy * ex + ux * r * .3], [h[0] - ux * ex + uy * r * .3, h[1] - uy * ex - ux * r * .3]], [[0, 0], [1, 0], [1, 1], [0, 1]], [[-1, 0], [1, 0], [1, 1], [-1, 1]], [1, 1, 1, al], [12, 0, 0, 0]);
+        glowAt(out.front, [m.p[0] - .01, m.p[1] + .012, m.p[2]], m.size * .5, [1, .85, .55, .5 * al]);
+        continue;
+      }
       const a = m.age / m.life, alpha = (m.a || .24) * smooth(0, .2, a) * (1 - smooth(.5, 1, a));
       billboard(out.mid, m.p, m.size * (1 + a * 1.3), [...(m.col || [.11, .09, .08]), alpha], [3, m.seed, 0, 0]);
     }
@@ -1049,7 +1102,7 @@ void main(){
       // A shard flipped over shows the card back.
       const ci = (P[1][0] - P[0][0]) * (P[3][1] - P[0][1]) - (P[1][1] - P[0][1]) * (P[3][0] - P[0][0]) > 0 ? S.n : s.c || 0;
       const uv = LOC.map(([lx, ly]) => [(ci + clamp(s.uv[0] + lx * tu)) / S.slots, clamp(s.uv[1] - ly * tv)]);
-      quad(out.mid, P, uv, LOC, [1, 1, 1, s.paper ? Math.min(alpha, smooth(0, .08, s.age)) : alpha], [4, s.seed, 0, s.paper ? -1 : heat]);
+      quad(S.storm ? (s.p[2] > 0 ? out.artFront : out.art) : out.mid, P, uv, LOC, [1, 1, 1, s.paper ? Math.min(alpha, smooth(0, .08, s.age)) : alpha], [4, s.seed, 0, s.paper ? -1 : heat]);
     }
     // Flames and embers in front of the cards add over them; those behind sit under them.
     for (const f of S.flames) {
