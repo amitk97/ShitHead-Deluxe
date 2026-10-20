@@ -81,7 +81,7 @@
   const px = (n) => Math.round(n * 100) / 100;
   // Marble: veins from feTurbulence, as a data-URL overlay (made once).
   const MARBLE = (() => {
-    const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='280'><filter id='m' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.012 .035' numOctaves='5' seed='7'/><feColorMatrix values='0 0 0 0 .33  0 0 0 0 .31  0 0 0 0 .29  3.4 0 0 0 -1.15'/></filter><rect width='100%' height='100%' filter='url(#m)'/></svg>";
+    const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='280'><filter id='m' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.012 .035' numOctaves='5' seed='7'/><feColorMatrix values='0 0 0 0 .28  0 0 0 0 .26  0 0 0 0 .24  4.6 0 0 0 -1.5'/></filter><rect width='100%' height='100%' filter='url(#m)'/></svg>";
     return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
   })();
 
@@ -227,7 +227,7 @@
       });
     });
     // grains: arrive from the screen edges (0-550), orbit a funnel (550-1400), rise into a golden cloud (1400-1800)
-    const N = 900, g = [];
+    const N = 1500, g = [];
     for (let i = 0; i < N; i++) {
       const side = i % 2 ? 1 : -1, hh = R(), hy = cy + (R() - .5) * H * 3.2;
       g.push({ side, sy: hy, dly: R() * 140, th0: R() * TAU, wv: 5 + R() * 6, hgt: R(), rad: .4 + R() * .75, sz: .014 + R() * .03, col: SAND[i % 4], cl: R() < .22, drift: (R() - .5) * W * 1.6, lift: .7 + R() * 1.3, hh, curl: (R() - .5) * 2 });
@@ -252,12 +252,12 @@
           } else {
             const spin = (tt - 520) / 1000, up = sm(550, 1250, t), dis = lin(1400, 1800, t);
             const th = q.th0 + q.wv * spin * (1 + up * .6), h = (q.hgt * up) + dis * q.lift * .5;
-            const funnel = (.28 + .72 * q.hgt) * q.rad * H * (1.05 - dis * 0 );
+            const funnel = (.12 + .88 * q.hgt * q.hgt) * q.rad * H * .9;
             const rx = funnel * (1 + dis * .9), ry = rx * .34;
-            X = cx + Math.cos(th) * rx + q.drift * dis * .4; Y = cy - h * H * 2.2 + Math.sin(th) * ry - (up < 1 ? 0 : 0);
+            X = cx + Math.cos(th) * rx + q.drift * dis * .4; Y = cy - h * H * 2.6 + Math.sin(th) * ry - (up < 1 ? 0 : 0);
             // grains swept in from phase 1 settle into the funnel
             const settle = sm(520, 760, t); if (settle < 1) { const x1 = cx + Math.cos(q.th0) * W * .9, y1 = cy + Math.sin(q.th0) * H * .25; X = lerp(x1, X, settle); Y = lerp(y1, Y, settle); }
-            a = (1 - dis) * (.55 + .45 * (Math.sin(th) > 0 ? 1 : .55));
+            a = (1 - dis) * (.6 + .4 * (Math.sin(th) > 0 ? 1 : .5)) * (.55 + .45 * q.hgt);
           }
           put(front, glow(q.col), X, Y, size * (q.cl ? 3.2 : 1.7), a * (q.cl ? .32 : .95));
         }
@@ -265,7 +265,7 @@
         const core = sm(500, 900, t) * (1 - sm(1450, 1800, t));
         front.globalCompositeOperation = 'lighter'; put(front, glow([255, 190, 90]), cx, cy - H * .6 * sm(500, 1300, t), H * 2.6 * (.6 + .5 * sm(1350, 1800, t)), .16 * core + .5 * sm(1400, 1600, t) * (1 - sm(1600, 1800, t)));
         const cloud = sm(1380, 1560, t) * (1 - sm(1560, 1800, t));
-        front.globalCompositeOperation = 'source-over'; for (let c = 0; c < 6; c++) put(front, puff([232, 188, 100], c % 3 + 1), cx + (c - 2.5) * W * .35, cy - H * (.9 + c * .08 + .55 * lin(1400, 1800, t)), H * 1.6, .6 * cloud, c);
+        front.globalCompositeOperation = 'source-over'; for (let c = 0; c < 6; c++) put(front, puff([232, 188, 100], c % 3 + 1), cx + (c - 2.5) * W * .35, cy - H * (.9 + c * .08 + .55 * lin(1400, 1800, t)), H * 1.6, .38 * cloud, c);
       }
     };
   }
@@ -294,11 +294,11 @@
       draw(t) {
         ck.set(lin(80, 560, t));
         // frost haze gathering over the card
-        put(back, glow([150, 210, 255]), cx, cy, H * 1.9, .35 * sm(0, 520, t) * (1 - sm(600, 900, t)));
+        put(back, glow([150, 210, 255]), cx, cy, H * 1.5, .28 * sm(0, 520, t) * (1 - sm(600, 900, t)));
         if (t > 590) {
           const s = (t - 600) / 1000, fade = 1 - sm(1300, 1800, t);
           back.globalCompositeOperation = 'source-over';
-          puffs.forEach(p => { const k = (1 - Math.exp(-1.8 * s)) / 1.8; put(back, puff([205, 232, 255], p.seed), cx + Math.cos(p.a) * p.sp * k, cy + Math.sin(p.a) * p.sp * k * .85 - s * H * .25, p.sz * (.5 + 1.1 * eOut(s * 1.4)), .22 * fade * (1 - lin(.2, 1.2, s) * .35), p.rot * s); });
+          puffs.forEach(p => { const k = (1 - Math.exp(-1.8 * s)) / 1.8; put(back, puff([205, 232, 255], p.seed), cx + Math.cos(p.a) * p.sp * k, cy + Math.sin(p.a) * p.sp * k * .85 - s * H * .25, p.sz * (.45 + .8 * eOut(s * 1.4)), .13 * fade * (1 - lin(.2, 1.2, s) * .4), p.rot * s); });
           front.globalCompositeOperation = 'lighter';
           sparks.forEach(q => { const k = (1 - Math.exp(-2.2 * s)) / 2.2, X = cx + Math.cos(q.a) * q.sp * k, Y = cy + Math.sin(q.a) * q.sp * k + .5 * q.g * s * s - s * H * .1; const tw = .55 + .45 * Math.sin(t / 55 + q.tw); put(front, glint(q.c), X, Y, q.sz * H * 1.4 * (.7 + .5 * tw), fade * tw, t / 700 + q.tw); });
           // the impact flash
@@ -413,7 +413,7 @@
       });
     });
     const bub = [], micro = [];
-    for (let i = 0; i < 78; i++) { const a = R() * TAU, r = Math.sqrt(R()) * W * .85; bub.push({ x: Math.cos(a) * r, y: Math.sin(a) * r * .5, sz: .04 + R() * .1, rise: H * (1.1 + R() * 1.6), life: 420 + R() * 520, t0: 1100 + R() * 220, ph: R() * TAU, wb: W * (.06 + R() * .14) }); }
+    for (let i = 0; i < 78; i++) { const a = R() * TAU, r = Math.sqrt(R()) * W * 1.5; bub.push({ x: Math.cos(a) * r, y: Math.sin(a) * r * .45, sz: .04 + R() * .1, rise: H * (.7 + R() * 1.1), life: 420 + R() * 520, t0: 1100 + R() * 220, ph: R() * TAU, wb: W * (.06 + R() * .14) }); }
     for (let i = 0; i < 130; i++) micro.push({ x: (R() - .5) * W * 3, y: (R() - .5) * H * 1.4, sz: .012 + R() * .022, rise: H * (.4 + R()), t0: 1250 + R() * 350, ph: R() * TAU });
     const TEAL = [30, 210, 200], NAVY = [8, 28, 70], DEEP = [4, 12, 34];
     return {
@@ -473,7 +473,7 @@
     const back = S.mkCanvas(), front = S.mkCanvas(), { cx, cy, H, W, vw, vh } = S, R = rng(66);
     const face = topFace(S);
     face.style.filter = 'invert(.9) grayscale(.85) sepia(.4) contrast(1.08) brightness(.97)';           // marble relief: rank + suit stay readable
-    const vein = document.createElement('div'); vein.style.cssText = `position:absolute;inset:0;border-radius:${S.st.radius};background:${MARBLE} center/cover,linear-gradient(120deg,rgba(255,250,235,.35),rgba(120,116,108,.3));mix-blend-mode:multiply;opacity:.7`;
+    const vein = document.createElement('div'); vein.style.cssText = `position:absolute;inset:0;border-radius:${S.st.radius};background:${MARBLE} center/cover,linear-gradient(120deg,rgba(255,250,235,.35),rgba(120,116,108,.3));mix-blend-mode:multiply;opacity:.95`;
     face.appendChild(vein);
     const edge = document.createElement('div'); edge.style.cssText = `position:absolute;inset:0;border-radius:${S.st.radius};box-shadow:inset 0 0 ${px(W * .14)}px rgba(40,36,30,.7),inset 2px 2px 3px rgba(255,255,255,.55)`; face.appendChild(edge);
     const ck = cracks(S, face, 'rgba(255,214,90,.98)', 'rgba(255,190,40,1)', 71);
@@ -483,7 +483,7 @@
     flyPieces(S, pieces, SH, { speed: H * 3.0, grav: H * 6.4, drag: 1.0, up: .5, fadeFrom: 1560, fadeTo: 1790 });
     S.track(face, (t) => { const r = sm(0, 650, t) * (1 - lin(SH - 20, SH, t)); return { opacity: t < SH ? 1 : 0, transform: `translate(${px(Math.sin(t / 17) * W * .02 * r)}px,${px(Math.cos(t / 13) * W * .016 * r)}px) rotate(${px(Math.sin(t / 29) * 1.4 * r)}deg)` }; });
     const flash = document.createElement('div'); flash.style.cssText = 'position:absolute;inset:0;background:radial-gradient(circle at 50% 8%,#fff,rgba(255,236,160,.85) 40%,rgba(255,220,120,.35));opacity:0';
-    S.layer.appendChild(flash); S.track(flash, (t) => ({ opacity: t < 660 ? 0 : t < 700 ? .75 : Math.max(0, .6 * (1 - lin(700, 1000, t))) }));
+    S.layer.appendChild(flash); S.track(flash, (t) => ({ opacity: t < 660 ? 0 : t < 700 ? .5 : Math.max(0, .42 * (1 - lin(700, 920, t))) }));
     const smoke = [], dust = [], arcs = [];
     for (let i = 0; i < 18; i++) smoke.push({ x: (R() - .5) * W * 1.1, y: (R() - .5) * H * .5, sz: H * (.8 + R() * .9), v: H * (.5 + R() * .9), seed: i % 3 + 1, dl: R() * 200, dx: (R() - .5) * W });
     for (let i = 0; i < 110; i++) dust.push({ a: R() * TAU, sp: H * (.5 + R() * 2), sz: .012 + R() * .03, g: H * (1 + R() * 1.4) });
@@ -585,7 +585,7 @@
           back.restore();
         }
         // rune circle on the card (spawns, pulses, flashes, then collapses inward)
-        const a = t < 1800 ? Math.min(1, form * 1.4) : 0, pulse = .5 + .5 * Math.sin(t / 70);
+        const a = Math.min(1, form * 1.4) * (1 - lin(1640, 1780, t)), pulse = .5 + .5 * Math.sin(t / 70);
         if (RR > 1) { runeCircle(front, cx, cy, RR, t / 900, a, pulse); if (flashN > 0 && t >= 650) put(front, glow([220, 190, 255]), cx, cy, H * 3.2 * (.6 + .4 * flashN), flashN); }
         front.globalCompositeOperation = 'lighter';
         // venting sparks and smoke while the card corrupts
