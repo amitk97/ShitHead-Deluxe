@@ -2170,7 +2170,7 @@
     "start": "2026-11-01",
     "end": "2026-12-31",
     "accent": "#f5c542",
-    "banner": "art/season-pass/ss2611/banner.svg",
+    "banner": "art/season-pass/ss2611/banner.webp",
     "items": {
      "10": "back-ss2611-scarab",
      "30": "avatar-ss2611-pharaoh",
@@ -2199,7 +2199,7 @@
    },
    {
     "id": "avatar-ss2611-pharaoh",
-    "name": "Golden Pharaoh",
+    "name": "Sphinx Cub",
     "tier": 30
    },
    {

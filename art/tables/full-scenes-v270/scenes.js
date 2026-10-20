@@ -253,22 +253,9 @@ function scene(id,W,H){
   place('fireplace',fire,.52,.94,.58,1,.44);break; // v274 (owner): no row of wreaths along the top
  case 'newyear':
   skyline(.88,'#10192d');skyline(.98,'#080f20');place('left-firework',firework('#e6c477'),0,.18,.40,1,.30);place('right-firework',firework('#cb9fc6'),1,.36,.34,1,.25);stars(90,'#efd8a4');break;
- case 'ss2611-egypt': {
-  // Dusk over Giza: low sun behind three pyramids, layered dunes, an obelisk and palms.
-  const sky=uid+'egsky';
-  pieces.push(`<defs><linearGradient id="${sky}" x2="0" y2="1"><stop stop-color="#0f0a2a"/><stop offset=".26" stop-color="#3b1a52"/><stop offset=".40" stop-color="#b34a38"/><stop offset=".50" stop-color="#f2a04a"/><stop offset=".62" stop-color="#7a3a30"/><stop offset="1" stop-color="#1c0e1c"/></linearGradient></defs>`,rect(0,0,W,H,`url(#${sky})`));
-  stars(70,'#fbe9b4');glow(W*.70,H*.44,u*.62);
-  place('sun',egyptSun(),.74,.30,.30,1,.22);
-  place('pyramids',pyramids(),.5,.345,.98,.5,.55);
-  terrain(.52,'#8c4a2c',.025,1);terrain(.60,'#a2552f',.05,2);terrain(.70,'#74371f',.06,4);terrain(.84,'#4a2118',.05,1);terrain(.95,'#2a1212',.03,3);
-  {const ow=u*.105,oh=ow*5.2,ph=u*.40,pr=u*.30;
-   feature('left-obelisk',obelisk(),pad,H*.745-oh,ow,oh,.10);
-   feature('right-palm',tree(true),W-pad-ph,H*.80-ph,ph,ph,.26);
-   feature('left-palm',tree(true),pad+ow*1.6,H*.925-pr,pr,pr,.17);}
-  pieces.push(`<rect x="0" y="0" width="${W}" height="${F(u*.075)}" fill="#12092a" opacity=".55"/><path d="M0 ${F(u*.075)}H${W}" stroke="#e8bd6a" stroke-width="${F(u*.003)}" opacity=".7"/>`);
-  pieces.push(`<rect x="0" y="${F(H-u*.075)}" width="${W}" height="${F(u*.075)}" fill="#12092a" opacity=".55"/><path d="M0 ${F(H-u*.075)}H${W}" stroke="#e8bd6a" stroke-width="${F(u*.003)}" opacity=".7"/>`);
-  glyphRow(u*.037);glyphRow(H-u*.037);break;
- }
+ case 'ss2611-egypt':
+  // Ancient Egypt: one painted scene (owner's art), filled to the screen from the bottom centre so the temple floor sits behind the cards.
+  pieces.push(`<image href="art/season-pass/ss2611/table.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;
  case 'ss2701-glacier':
   // Ice Age: one painted scene (owner's art), filled to the screen from the bottom centre so the frozen floor sits behind the cards.
   pieces.push(`<image href="art/season-pass/ss2701/table.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;

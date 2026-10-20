@@ -202,7 +202,7 @@
       seasons: {
         '2026-11': {
           number: 1, name: 'Ancient Egypt', start: '2026-11-01', end: '2026-12-31', accent: '#f5c542',
-          banner: 'art/season-pass/ss2611/banner.svg',
+          banner: 'art/season-pass/ss2611/banner.webp',
           items: { 10: 'back-ss2611-scarab', 30: 'avatar-ss2611-pharaoh', 50: 'table-ss2611-egypt' }
         },
         '2027-01': {
@@ -213,8 +213,8 @@
       }
     };
     const SEASON_PASS_ITEMS = [
-      { id: 'back-ss2611-scarab', category: 'Card Backs', name: 'Scarab of Ra', tier: 10, tone: '#f5c542', file: 'art/backs/ss2611-scarab.svg' },
-      { id: 'avatar-ss2611-pharaoh', category: 'Avatars', name: 'Golden Pharaoh', tier: 30, tone: '#f5c542', file: 'art/avatars/ss2611-pharaoh.svg' },
+      { id: 'back-ss2611-scarab', category: 'Card Backs', name: 'Scarab of Ra', tier: 10, tone: '#f5c542', file: 'art/backs/ss2611-scarab.webp' },
+      { id: 'avatar-ss2611-pharaoh', category: 'Avatars', name: 'Sphinx Cub', tier: 30, tone: '#f5c542', file: 'art/avatars/ss2611-pharaoh.webp' },
       { id: 'table-ss2611-egypt', category: 'Table Themes', name: 'Sands of Giza', tier: 50, tone: '#f59e0b' },
       { id: 'back-ss2701-mammoth', category: 'Card Backs', name: 'Frost Mammoth', tier: 10, tone: '#7fd4ff', file: 'art/backs/ss2701-mammoth.webp', pass: '2027-01' },
       { id: 'avatar-ss2701-mammoth', category: 'Avatars', name: 'Baby Mammoth', tier: 30, tone: '#7fd4ff', file: 'art/avatars/ss2701-mammoth.webp', pass: '2027-01' },
