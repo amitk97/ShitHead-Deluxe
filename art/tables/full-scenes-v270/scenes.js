@@ -147,7 +147,7 @@ function scene(id,W,H){
    +`<path d="M49 20L60 52L56 100M28 8L34 100M18 40L22 100M72 44L70 100" stroke="#0d3a68" stroke-width=".9" opacity=".5" fill="none"/>`
    +[8,22,35,47,60,74,88].map((x,i)=>`<path d="M${x} ${46+(i%3)*8}L${x+2.4} ${60+(i%4)*7}L${x+4.8} ${46+(i%3)*8}Z" fill="#eaf9ff" opacity=".7"/>`).join('')
    +`<path d="M0 38L9 24L18 40L28 8L40 34L49 20L60 52L72 44L84 62L100 58" fill="none" stroke="#eaf9ff" stroke-width="1.2" stroke-linejoin="round"/>`
-   +`<ellipse cx="50" cy="99" rx="64" ry="10" fill="#d9eef7"/><ellipse cx="46" cy="96" rx="46" ry="5" fill="#fff" opacity=".55"/>`;
+   +`<linearGradient id="${g}F" x2="0" y2="1"><stop offset=".55" stop-color="#d9eef7" stop-opacity="0"/><stop offset="1" stop-color="#d9eef7" stop-opacity=".95"/></linearGradient><path d="M0 100L0 38L9 24L18 40L28 8L40 34L49 20L60 52L72 44L84 62L100 58L100 100Z" fill="url(#${g}F)"/>`;
  }
  function handBand(y){
   const step=u*.085,sc=u*.0018;
