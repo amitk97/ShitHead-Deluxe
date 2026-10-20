@@ -61,7 +61,15 @@ function grantReached(user, now) {
   return out;
 }
 
-module.exports = { add, grantReached, tierFor, tierStart, seasonOn };
+// Test account only: every pass item of every season, regardless of tier.
+function grantAll(user, now) {
+  Object.entries(SP.seasons || {}).forEach(([key, s]) => Object.entries(s.items).forEach(([t, id]) => {
+    const item = (SP.items || []).find((i) => i.id === id);
+    if (item) grantItem(user, key, num(t), item, now);
+  }));
+}
+
+module.exports = { add, grantAll, grantReached, tierFor, tierStart, seasonOn };
 
 // ---- Mailbox notice the day before a season starts and ends ----------------
 const shiftDay = (key, n) => { const [y, m, d] = key.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };

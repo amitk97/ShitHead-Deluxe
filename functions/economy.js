@@ -437,7 +437,7 @@ actions.init = async ({ uid, auth }) => {
   return { diamonds: num(u.diamonds), rating: num(u.rating, 500), wins: num(u.wins), losses: num(u.losses), testGrant: !!res.testGrant };
 };
 
-actions.sync = async ({ uid }) => {
+actions.sync = async ({ uid, auth }) => {
   const legacy = await legacyOwned(uid);
   const now = Date.now();
   const xpOn = await xp.enabled();
@@ -452,6 +452,8 @@ actions.sync = async ({ uid }) => {
     // Level rewards for accounts already past their level (xp.grantLevelRewards).
     const levelRewards = xpOn ? xp.grantLevelRewards(user, now) : [];
     if (xpOn) require('./season-pass').grantReached(user, now);
+    // Test account: every Season Pass reward already owned (any season, any tier).
+    if (isAmitK(auth)) require('./season-pass').grantAll(user, now);
     // A first Gauntlet clear from before it was a challenge: record it (already paid).
     let backfilled = false;
     // Gauntlet bots beaten from before they were counted: 5 per clear + this run's.

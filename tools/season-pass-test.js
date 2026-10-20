@@ -46,3 +46,5 @@ const f2 = {}; const rO = xp.award(f2, [['x', 7000]], ms('2027-03-10'), pay); as
 assert.ok(rO.seasonPass.tiers.find(t => t.tier === 20).item.id === 'burn-origami');
 const f3 = { seasonPass: { '2027-03': { xp: 7000, tier: 20 } } }; sp.grantReached(f3, ms('2027-03-11')); assert.ok(f3.ownedCosmetics['burn-origami'], 'a missed Origami is repaired at sign-in');
 console.log('origami ok');
+// AmitK test account: every season's pass items at once
+{ const a = {}; sp.grantAll(a, ms('2026-10-20')); ['back-ss2611-scarab', 'avatar-ss2705-octopus', 'table-ss2703-shrine', 'burn-origami'].forEach(id => assert.ok(a.ownedCosmetics[id], id)); console.log('grantAll ok'); }
