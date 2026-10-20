@@ -54,54 +54,49 @@ P('M388 590C392 640 400 690 420 716L500 716C506 690 496 640 470 590Z', 'url(#fur
 for x in (292, 328, 432, 472): A(f'<path d="M{x-14} 716Q{x} 690 {x+14} 716Z" fill="#e8f4fb" stroke="{OUT}" stroke-width="6"/>')
 A('<path d="M335 650Q350 668 362 650M455 640Q470 658 484 640" fill="none" stroke="#6a5163" stroke-width="6"/>')
 # ears
-P('M205 258C150 250 110 305 120 370C128 420 175 440 215 410Z', 'url(#fur)')
-A('<path d="M200 292C168 292 150 330 156 366C160 392 182 402 205 386Z" fill="#7d6272" opacity=".9"/>')
-P('M570 262C640 236 700 290 692 360C686 420 640 445 586 410Z', 'url(#fur)')
-A('<path d="M582 296C634 282 664 320 658 358C654 388 626 402 592 380Z" fill="#7d6272" opacity=".9"/>')
-# head
-P('M188 340C180 250 262 232 392 238C520 232 596 258 588 352C592 432 520 492 398 492C268 492 192 430 188 340Z', 'url(#fur)', 10)
-# chilly cheeks (blue-ish tint) and fur flicks at the sides
-A('<ellipse cx="238" cy="430" rx="34" ry="22" fill="#6aa0d8" opacity=".25"/><ellipse cx="548" cy="428" rx="34" ry="22" fill="#6aa0d8" opacity=".25"/>')
-A(f'<path d="M190 420l30 12l-14 18l26 12M586 420l-30 12l14 18l-26 12" fill="none" stroke="{OUT}" stroke-width="7"/>')
-# bangs (scalloped) with frost
-A(f'<path d="M200 250C206 170 300 140 400 160C500 140 586 176 590 250C572 262 538 246 516 270C490 258 462 244 438 268C414 252 388 250 366 268C340 246 312 258 286 270C262 250 222 262 185 232Z" fill="url(#bang)" stroke="{OUT}" stroke-width="10"/>')
-A(f'<path d="M340 160C356 120 384 116 400 160C416 112 448 118 462 156" fill="url(#bang)" stroke="{OUT}" stroke-width="9"/>')
-for (x, y, w, h) in [(250, 200, 60, 18), (340, 176, 70, 16), (450, 184, 60, 18), (528, 214, 40, 14)]:
-    A(f'<path d="M{x} {y}q{w*.5} {-h} {w} 0" fill="none" stroke="#fff" stroke-width="9" opacity=".9"/>')
-# locks line under bangs
-A(f'<path d="M296 262C294 238 310 226 326 238M398 262C396 238 412 226 428 238M498 262C496 238 512 226 528 238" fill="none" stroke="{OUT}" stroke-width="6" opacity=".55"/>')
-# snow cap sprinkles on the bangs
-for _ in range(34):
-    x, y = rnd.uniform(220, 570), rnd.uniform(130, 240)
-    A(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{rnd.uniform(2.4,5.4):.1f}" fill="#fff"/>')
+P('M215 270C150 255 108 312 118 380C126 432 178 452 222 418Z', 'url(#fur)')
+A('<path d="M206 300C172 298 152 336 158 372C162 398 186 408 210 392Z" fill="#7d6272" opacity=".9"/>')
+P('M565 270C636 250 696 300 690 372C684 432 636 454 580 418Z', 'url(#fur)')
+A('<path d="M576 304C628 290 660 326 656 364C652 394 626 408 592 386Z" fill="#7d6272" opacity=".9"/>')
+# head (slightly turned, wide cheeks)
+P('M186 350C180 262 262 236 392 240C520 236 600 262 592 352C596 432 520 496 398 496C268 496 190 432 186 350Z', 'url(#fur)', 10)
+A('<ellipse cx="236" cy="436" rx="36" ry="22" fill="#6aa0d8" opacity=".28"/><ellipse cx="552" cy="434" rx="36" ry="22" fill="#6aa0d8" opacity=".28"/>')
+A(f'<path d="M188 424l30 12l-14 18l26 12M590 424l-30 12l14 18l-26 12" fill="none" stroke="{OUT}" stroke-width="7"/>')
+# near tusk (the far one is hidden behind the trunk)
+P('M450 486C488 496 528 478 548 428C556 484 508 526 452 524Z', '#fbf4e0', 8)
+A('<path d="M466 500C500 504 530 490 546 452" fill="none" stroke="#d9c8a0" stroke-width="5" opacity=".7"/>')
+A(f'<path d="M538 500l6 30l8 -32Z" fill="url(#ice)" stroke="#6aaed8" stroke-width="3"/>')
+# trunk: from between the eyes, hangs down, sweeps left and curls up
+TR = 'M394 404C402 486 388 566 300 568C236 570 196 526 208 474'
+A(f'<path d="{TR}" fill="none" stroke="{OUT}" stroke-width="80"/>')
+A(f'<path d="{TR}" fill="none" stroke="url(#fur)" stroke-width="62"/>')
+A(f'<circle cx="208" cy="468" r="31" fill="#a98873" stroke="{OUT}" stroke-width="8"/>')
+A(f'<ellipse cx="206" cy="458" rx="14" ry="8" fill="#6a5163" transform="rotate(-20 206 458)"/>')
+for (x, y, r) in [(384, 448, 12), (388, 480, 12), (378, 512, 12), (350, 545, 12), (300, 556, 10)]:
+    A(f'<path d="M{x-24} {y}Q{x} {y+14} {x+24} {y-2}" fill="none" stroke="#6a5163" stroke-width="5" opacity=".6" transform="rotate({ -8 if x<340 else 0} {x} {y})"/>')
+A('<path d="M372 410C376 470 366 520 330 548" fill="none" stroke="#d6c4cf" stroke-width="6" opacity=".35"/>')
 # eyes
-for ex, ey, rx in ((272, 372, 36), (474, 366, 38)):
+for ex, ey, rx in ((296, 372, 36), (486, 368, 38)):
     A(f'<ellipse cx="{ex}" cy="{ey}" rx="{rx+10}" ry="{rx+16}" fill="#f4fbff" stroke="{OUT}" stroke-width="8"/>')
     A(f'<ellipse cx="{ex+2}" cy="{ey+4}" rx="{rx}" ry="{rx+8}" fill="url(#eye)"/>')
     A(f'<circle cx="{ex-10}" cy="{ey-14}" r="11" fill="#fff"/><circle cx="{ex+14}" cy="{ey+18}" r="5.5" fill="#fff" opacity=".9"/>')
-A(f'<path d="M250 308Q272 296 296 308M452 304Q474 292 498 304" fill="none" stroke="{OUT}" stroke-width="6"/>')
-# frosty lashes of ice on brows
-for x in (254, 270, 286, 456, 472, 488):
-    A(f'<path d="M{x} 300l3 -13l3 13Z" fill="#e8f7ff" stroke="#8cc6e8" stroke-width="1.5"/>')
-# trunk (curling up on the left)
-P('M338 402C410 384 468 420 448 470C426 514 300 548 214 548C150 548 102 508 100 444C98 408 112 392 142 394C168 400 152 432 166 456C188 488 268 484 330 448C366 428 400 424 420 438Z', 'url(#fur)', 10)
-A('<path d="M336 408C388 396 430 420 438 446" fill="none" stroke="#5f4a55" stroke-width="5" opacity=".6"/>')
-for i in range(6):
-    A(f'<path d="M{190+i*30} {520-i*5}Q{196+i*30} {500-i*5} {206+i*30} {486-i*3}" fill="none" stroke="#6a5163" stroke-width="5" opacity=".55"/>')
-A(f'<ellipse cx="124" cy="406" rx="20" ry="10" fill="#7d6272" stroke="{OUT}" stroke-width="6" transform="rotate(-24 124 406)"/>')
-# tusk with an icicle
-P('M426 470C446 450 470 450 468 474C464 498 440 506 424 500Z', '#fbf4e0', 8)
-A('<path d="M441 464l-3 30l9 -4z" fill="#d9c8a0" opacity=".6"/>')
-A(f'<path d="M436 506l8 44l8 -46Z" fill="url(#ice)" stroke="#6aaed8" stroke-width="3"/>')
-# nose frost + breath cloud from the trunk tip
-for (x, y, r) in [(80, 380, 22), (52, 352, 26), (84, 330, 20), (46, 316, 14)]:
+A(f'<path d="M270 306Q294 294 320 306M462 302Q486 290 512 302" fill="none" stroke="{OUT}" stroke-width="6"/>')
+for x in (278, 294, 310, 468, 484, 500):
+    A(f'<path d="M{x} 298l3 -13l3 13Z" fill="#e8f7ff" stroke="#8cc6e8" stroke-width="1.5"/>')
+# fluffy fringe: a cap on the forehead with scalloped lower edge and a tuft
+A(f'<path d="M206 300C200 240 290 226 392 232C500 226 584 244 580 304C560 330 538 308 520 326C500 306 478 306 460 326C440 304 418 304 398 326C378 304 356 304 336 326C316 304 292 308 272 326C252 308 228 330 206 300Z" fill="url(#bang)" stroke="{OUT}" stroke-width="9"/>')
+A(f'<path d="M352 236C362 196 392 196 398 236C406 194 438 198 444 238" fill="url(#bang)" stroke="{OUT}" stroke-width="8"/>')
+for (x, y, w) in [(244, 268, 50), (330, 252, 56), (430, 256, 52), (512, 276, 40)]:
+    A(f'<path d="M{x} {y}q{w*.5} -14 {w} 0" fill="none" stroke="#fff" stroke-width="8" opacity=".9"/>')
+for _ in range(26):
+    x, y = rnd.uniform(230, 560), rnd.uniform(212, 312)
+    A(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{rnd.uniform(2.4,5):.1f}" fill="#fff"/>')
+# frosty breath from the trunk tip
+for (x, y, r) in [(160, 430, 20), (132, 402, 24), (166, 380, 18), (128, 356, 13)]:
     A(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#fff" opacity=".78" stroke="#bcdcf0" stroke-width="3"/>')
-A('<path d="M104 380Q92 384 80 380" fill="none" stroke="#bcdcf0" stroke-width="3"/>')
 # snow on head ears and back, frost crust
 A('<path d="M214 262C170 252 130 292 126 330C150 304 186 292 214 292Z" fill="#fff" opacity=".85"/>')
 A('<path d="M572 266C632 244 690 290 690 330C660 300 620 288 572 296Z" fill="#fff" opacity=".85"/>')
-A('<path d="M520 456C560 452 600 470 618 500C590 484 554 480 520 484Z" fill="#fff" opacity=".7"/>')
-A('<path d="M352 440C400 432 470 436 500 450C470 452 400 456 352 462Z" fill="#fff" opacity=".6"/>')
 A('</g>')
 # falling snow in front + frost corners + icicles
 for _ in range(46):
