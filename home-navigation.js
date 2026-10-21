@@ -615,11 +615,13 @@
       if (!panel || lobby.classList.contains('hidden')) return;
       panel.style.zoom = '';
       const base = parseFloat(getComputedStyle(panel).zoom) || 1;
-      if (base <= 1) return;
+      // Mode pages may scroll; the bare home screen (carousel, chips, tutorial) never should.
+      const bare = !lobby.classList.contains('mode-page-open');
+      if (base <= 1 && !bare) return;
       const cs = getComputedStyle(lobby);
-      const room = lobby.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const room = lobby.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - parseFloat(getComputedStyle(panel).marginTop) * base;
       const natural = panel.getBoundingClientRect().height / base;
-      const fit = Math.max(1, Math.min(base, room / natural));
+      const fit = Math.max(bare ? .7 : 1, Math.min(base, room / natural));
       if (fit < base) panel.style.zoom = String(Math.floor(fit * 100) / 100);
     }
     function pickHomeTipRank() {
