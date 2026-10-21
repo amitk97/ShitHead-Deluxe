@@ -61,7 +61,7 @@ for (const patch of [{day:'2000-01-01'},{owner:'another-user'},{lives:0},{round:
 await page.evaluate(()=>{gauntletStore.set(GAUNTLET_LAST_KEY,null);refreshGauntletLobbyBtn();document.querySelector('[data-mc-jump="first"]').click();});
 await page.waitForTimeout(550);
 await page.locator('[data-mc-mode="pin1"] [data-mc-swap]').click();
-await page.locator('[data-mc-pin="twos"]').click();
+await page.locator('[data-mc-pin="random"]').click(); // a mode that is still coming soon (2 vs 2 and Puzzles are live, so their cards have Play, not Info)
 assert.equal(await page.locator('[data-mc-mode="pin1"] [data-mc-swap]').innerText(),'Swap');
 await page.locator('[data-mc-mode="pin1"] [data-mc-preview]').click();
 assert((await page.locator('#infoPop').innerText()).includes('Coming soon'));
