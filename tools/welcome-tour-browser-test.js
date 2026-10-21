@@ -12,6 +12,8 @@ const page=await context.newPage();
 const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.log('pageerror',e.message);});
 await page.goto('http://localhost:4176/',{waitUntil:'domcontentloaded'});
 await page.waitForFunction(()=>typeof resetHomeUI==='function'&&window.ShWelcomeTour&&window.ShHomeCarousel);
+// The event and Season Pass chips show on the home screen on certain dates and push the Tutorial button off a 320x568 screen, which would skip that tour step: test the plain home screen.
+await page.addInitScript(()=>{document.addEventListener('DOMContentLoaded',()=>{const st=document.createElement('style');st.textContent='#homeEventChip,#homeSeasonChip{display:none!important}';document.head.appendChild(st);});});await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>typeof resetHomeUI==='function'&&window.ShWelcomeTour&&window.ShHomeCarousel);
 await page.waitForTimeout(1800);
 await page.evaluate(()=>{window.shBootReveal?.();resetHomeUI();});
 const order=()=>page.evaluate(()=>[...document.querySelectorAll('#modeCarousel .mc-card')].map(c=>c.dataset.mcMode));

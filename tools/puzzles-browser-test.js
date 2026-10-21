@@ -9,6 +9,7 @@ const browser=await chromium.launch({headless:true,...(process.env.SH_CHROMIUM_E
 try{
 for(const [w,h] of [[320,568],[390,844],[1440,900]].filter(s=>!process.env.PZ_W||+process.env.PZ_W===s[0])){
   const page=await (await browser.newContext({viewport:{width:w,height:h}})).newPage();
+await page.addInitScript(()=>{document.addEventListener('DOMContentLoaded',()=>{const st=document.createElement('style');st.textContent='#eventPopupModal,#homeEventChip,#homeSeasonChip{display:none!important}';document.head.appendChild(st);});}); // events and the Season Pass change the home screen by date: test the plain one
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://localhost:4177/',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.ShPuzzles&&typeof resetHomeUI==='function');await page.waitForTimeout(1600);

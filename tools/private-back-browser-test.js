@@ -7,6 +7,7 @@ const root=path.resolve(__dirname,'..');
 const browser=await chromium.launch({headless:true,...(process.env.SH_CHROMIUM_EXECUTABLE?{executablePath:process.env.SH_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--no-zygote','--single-process']}: {})});
 try{
 const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];
+await page.addInitScript(()=>{document.addEventListener('DOMContentLoaded',()=>{const st=document.createElement('style');st.textContent='#eventPopupModal,#homeEventChip,#homeSeasonChip{display:none!important}';document.head.appendChild(st);});}); // events and the Season Pass change the home screen by date: test the plain one
 let failArtworkRequests=1,artworkRetries=0;
 page.on('pageerror',e=>errors.push(e.message));
 await page.route('**/*',route=>{
