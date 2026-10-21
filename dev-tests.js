@@ -1295,7 +1295,10 @@ async function runDevTestSuite() {
     const ids = ShSeasonBurns.IDS;
     assertEqual(ids.length, 6, 'six season burns');
     Object.values(SEASON_PASS.seasons).forEach(s => assertTrue(ids.includes(s.items[40]), `${s.name} gives its burn at tier 40`));
-    const stage = testBurnStage();
+    // Its own stage: the shared one can still be cleared by a timer left over from an earlier test.
+    const stage = document.createElement('div');
+    stage.style.cssText = 'position:fixed;left:-9999px;top:0;width:300px;height:160px';
+    document.body.appendChild(stage);
     ids.forEach((id) => {
       assertTrue(isSupportedCosmetic('burnEffect', id), `${id} can be equipped`);
       assertTrue(typeof BURN_SOUNDS[id] === 'function' && !Object.keys(BURN_SOUNDS).some(o => o !== id && BURN_SOUNDS[o] === BURN_SOUNDS[id]), `${id} has its own sound`);
@@ -1307,6 +1310,7 @@ async function runDevTestSuite() {
     assertTrue([...stage.querySelectorAll('.pfx-layer')].every(l => l.querySelector('canvas.ssb-c')), 'each has its canvas');
     await new Promise(r => setTimeout(r, ShSeasonBurns.MS + 500));
     assertEqual(stage.querySelectorAll('.pfx-layer, canvas.ssb-c, .ssb-piece').length, 0, 'every node is removed when the 1.8s are over');
+    stage.remove();
   });
   await test('Level burns (v253): six earn-only burns, animated, each with its own sound, over within 2.1s', () => {
     const ids = LEVEL_REWARDS.filter(r => r.category === 'Burn Effects' && !r.pass).map(r => r.id);
