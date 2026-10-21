@@ -2892,6 +2892,17 @@
 #homeSeasonChip .hec-text small { font-size:11px; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #homeSeasonChip .hec-go { font-size:20px; color:var(--sp-accent,#f5c542); }
 #lobbyScreen.mode-page-open #homeSeasonChip { display:none !important; }
+/* Short phones: the event and Season Pass chips are extras and the mode cards plus the Tutorial button come first. Up to 700px tall the chips step aside (they stay in the Shop and the Level Ladder); up to 800px they shrink to one line each, so the Tutorial button is never pushed off the screen on the days they show. */
+@media (max-height: 700px) { #homeEventChip, #homeSeasonChip { display:none !important; } }
+@media (min-height: 701px) and (max-height: 800px) {
+  #homeEventChip { margin:6px 0 4px; padding:4px 10px; gap:8px; }
+  #homeSeasonChip { margin:0 0 4px; padding:3px 10px; gap:8px; }
+  #homeEventChip .hec-text small, #homeSeasonChip .hec-text small { display:none; }
+  #homeEventChip .hec-emoji { font-size:18px; }
+  #homeSeasonChip .hsc-tier { width:28px; height:28px; }
+  #homeSeasonChip .hsc-tier b { font-size:12px; }
+  #homeSeasonChip .hsc-tier small { display:none; }
+}
 .ll-tabs { display:flex; gap:6px; margin:-2px 0 10px; }
 .ll-tab { position:relative; flex:1; padding:7px 8px; border-radius:10px; border:1px solid #334155; background:rgba(15,23,42,.7); color:#94a3b8; font-size:10.5px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; }
 .ll-tab.on { color:#1c1304; background:linear-gradient(180deg,#fde68a,#f59e0b); border-color:#fde68a; }
