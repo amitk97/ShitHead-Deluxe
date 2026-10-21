@@ -15,7 +15,7 @@
   // Embers: n seeded particles inside a box, sizes falling off, colours cycled.
   const embers = (seed, n, x0, y0, x1, y1, cols, rmax = 1.6) => { const r = rnd(seed); return Array.from({ length: n }, (_, k) => { const x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0), q = r() * r(); return `<circle cx="${f(x)}" cy="${f(y)}" r="${f(.35 + q * rmax)}" fill="${cols[k % cols.length]}" opacity="${f(.45 + r() * .55)}"/>`; }).join(''); };
   const dots = (arr, col, r = 1) => arr.map(([x, y, s = 1]) => `<circle cx="${x}" cy="${y}" r="${f(r * s)}" fill="${col}"/>`).join('');
-  const wrap = (body, defs, bg) => { const id = 'bi' + (++seq); return `<svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="display:block;border-radius:inherit"><defs>${defs(id)}<linearGradient id="${id}p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#e2d4b8"/></linearGradient><filter id="${id}k" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6"/></filter><filter id="${id}K" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter><filter id="${id}s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.2" flood-color="#000" flood-opacity=".55"/></filter><radialGradient id="${id}v" cx="50%" cy="50%" r="72%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".62"/></radialGradient></defs><rect width="100" height="100" fill="url(#${id}b)"/>${body(id)}<rect width="100" height="100" fill="url(#${id}v)"/><rect x=".5" y=".5" width="99" height="99" rx="12" fill="none" stroke="rgba(255,255,255,.14)"/></svg>`.replace(/__ID__/g, id); };
+  const wrap = (body, defs, bg) => { const id = 'bi' + (++seq), d = defs(id), own = (n) => d.includes('id="' + id + n + '"'); return `<svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="display:block;border-radius:inherit"><defs>${d}${own('p') ? '' : `<linearGradient id="${id}p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#e2d4b8"/></linearGradient>`}<filter id="${id}k" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6"/></filter><filter id="${id}K" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter><filter id="${id}s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.2" flood-color="#000" flood-opacity=".55"/></filter>${own('v') ? '' : `<radialGradient id="${id}v" cx="50%" cy="50%" r="72%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".62"/></radialGradient>`}</defs><rect width="100" height="100" fill="url(#${id}b)"/>${body(id)}<rect width="100" height="100" fill="url(#${id}v)"/><rect x=".5" y=".5" width="99" height="99" rx="12" fill="none" stroke="rgba(255,255,255,.14)"/></svg>`.replace(/__ID__/g, id); };
   const radial = (id, name, stops, cx = 50, cy = 50, r = 60) => `<radialGradient id="${id}${name}" gradientUnits="userSpaceOnUse" cx="${cx}" cy="${cy}" r="${r}">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join('')}</radialGradient>`;
   const linear = (id, name, stops, x1 = 0, y1 = 0, x2 = 0, y2 = 1) => `<linearGradient id="${id}${name}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient>`;
 
@@ -51,12 +51,12 @@
       ${dots([[70, 12, 1], [90, 66, .8], [16, 84, 1], [34, 14, .7]], '#ffd98a', 1.5)}`,
       (i) => radial(i, 'b', [[0, '#6b3d1c'], [.55, '#2a160b'], [1, '#0c0705']], 50, 55, 80)),
     'burn-ice': () => wrap((i) => `
-      <path d="M50 10L58 36L84 30L66 50L90 64L62 66L58 92L46 68L16 80L34 54L10 36L40 38Z" fill="url(#${i}s)" opacity=".95"/>
+      <path d="M50 10L58 36L84 30L66 50L90 64L62 66L58 92L46 68L16 80L34 54L10 36L40 38Z" fill="url(#${i}Zs)" opacity=".95"/>
       <path d="M50 10L58 36L50 50L40 38Z" fill="#e8fbff"/><path d="M84 30L66 50L58 36Z" fill="#9ee0f7"/><path d="M90 64L62 66L66 50Z" fill="#7cc8e6"/><path d="M58 92L46 68L62 66Z" fill="#bff0ff"/><path d="M16 80L34 54L46 68Z" fill="#8fd3ee"/><path d="M10 36L40 38L34 54Z" fill="#c9f2ff"/>
       ${card(50, 50, 10, 1.05, { body: '#bfe9fb', pip: '#12384f', edge: '#e9fbff' })}
       <path d="M44 38L50 50L42 58M50 50L60 56" stroke="#fff" stroke-width="1.3" fill="none" opacity=".9"/>
       ${[[22, 22], [80, 18], [88, 52], [18, 66], [72, 84], [36, 88]].map(([x, y]) => `<path d="M${x} ${y - 4}L${x + 1.2} ${y - 1.2}L${x + 4} ${y}L${x + 1.2} ${y + 1.2}L${x} ${y + 4}L${x - 1.2} ${y + 1.2}L${x - 4} ${y}L${x - 1.2} ${y - 1.2}Z" fill="#fff"/>`).join('')}`,
-      (i) => radial(i, 'b', [[0, '#1e6fa3'], [.6, '#0b2f55'], [1, '#04101f']], 50, 50, 75) + linear(i, 's', [[0, '#e8fbff'], [1, '#56b6df']])),
+      (i) => radial(i, 'b', [[0, '#1e6fa3'], [.6, '#0b2f55'], [1, '#04101f']], 50, 50, 75) + linear(i, 'Zs', [[0, '#e8fbff'], [1, '#56b6df']])),
     'burn-paint': () => wrap((i) => `
       ${card(50, 50, -6, 1.45, { body: '#f6efe1' })}
       <path d="M22 18C30 10 42 12 42 22C50 22 54 32 46 38C54 46 46 54 38 50C34 58 22 56 24 46C14 44 14 30 22 18Z" fill="#ef4444" opacity=".95"/>
@@ -177,7 +177,7 @@
       ${glow(embers(22, 12, 6, 6, 94, 94, ['#ffe27a'], 2.4), i)}`,
       (i) => radial(i, 'b', [[0, '#3a1608'], [.5, '#170a06'], [1, '#050202']], 50, 50, 80) + radial(i, 'g', [[0, 'rgba(255,214,110,.95)'], [.6, 'rgba(255,150,40,.35)'], [1, 'rgba(255,120,20,0)']], 50, 50, 34) + linear(i, 'r', [[0, '#ffffff'], [1, '#ff9a2e']], 0, 0, 1, 1)),
     'burn-lvl-smoke-burst': () => wrap((i) => {
-      const r = rnd(5), puff = (x, y, rad, a) => `<circle cx="${x}" cy="${y}" r="${rad}" fill="url(#${i}s)" opacity="${a}"/><circle cx="${f(x - rad * .28)}" cy="${f(y - rad * .32)}" r="${f(rad * .6)}" fill="#fff" opacity=".12"/><circle cx="${f(x + rad * .3)}" cy="${f(y + rad * .35)}" r="${f(rad * .55)}" fill="#000" opacity=".18"/>`;
+      const r = rnd(5), puff = (x, y, rad, a) => `<circle cx="${x}" cy="${y}" r="${rad}" fill="url(#${i}Zs)" opacity="${a}"/><circle cx="${f(x - rad * .28)}" cy="${f(y - rad * .32)}" r="${f(rad * .6)}" fill="#fff" opacity=".12"/><circle cx="${f(x + rad * .3)}" cy="${f(y + rad * .35)}" r="${f(rad * .55)}" fill="#000" opacity=".18"/>`;
       const back = [[24, 64, 20], [76, 62, 21], [50, 80, 19], [16, 36, 15], [84, 34, 16], [50, 18, 16], [30, 20, 11], [72, 12, 10]];
       const front = [[18, 56, 13], [82, 56, 13], [50, 90, 12], [24, 30, 10], [78, 28, 10]];
       return `
@@ -188,7 +188,7 @@
       ${Array.from({ length: 12 }, () => `<path d="M${f(10 + r() * 80)} ${f(10 + r() * 80)}l${f(r() * 6 - 3)} ${f(r() * 6 - 3)}" stroke="#ff9a4a" stroke-width="1.4" stroke-linecap="round" opacity=".8"/>`).join('')}
       ${embers(6, 30, 4, 4, 96, 96, ['#ff9a4a', '#ffd45a', '#ff6a1f'], 1.4)}`;
     },
-      (i) => radial(i, 'b', [[0, '#3a2a26'], [1, '#0b0707']], 50, 50, 75) + radial(i, 's', [[0, '#f1ece8'], [.55, '#a8a09b'], [1, '#4f4642']], 40, 34, 26)),
+      (i) => radial(i, 'b', [[0, '#3a2a26'], [1, '#0b0707']], 50, 50, 75) + radial(i, 'Zs', [[0, '#f1ece8'], [.55, '#a8a09b'], [1, '#4f4642']], 40, 34, 26)),
     'burn-lvl-inferno-sweep': () => wrap((i) => `
       ${glow('<path d="M-6 74C20 28 62 16 108 30L108 50C64 42 30 58 6 98Z" fill="#ff7a1e" opacity=".8"/>', i, 'K')}
       <path d="M-6 76C20 30 62 18 108 32L108 52C64 44 30 60 6 100Z" fill="url(#${i}f)"/>
