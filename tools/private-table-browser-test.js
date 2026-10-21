@@ -66,7 +66,7 @@ for(const [width,height,variant] of [[360,800,'tall'],[390,844,'tall'],[430,932,
   host.style.cssText=`position:fixed;inset:0;width:${width}px;height:${height}px;isolation:isolate;`;
   drawPrivateTable(host);
  },{width,height});
- await page.waitForFunction(v=>document.querySelector('#privateTestHost .private-table-scene')?.dataset.variant===v && document.querySelector('#privateTestHost img')?.naturalWidth>0,variant);
+ await page.waitForFunction(v=>document.querySelector('#privateTestHost .private-table-scene')?.dataset.variant===v && !document.querySelector('#privateTestHost .private-table-scene').dataset.loadingVariant && document.querySelector('#privateTestHost img')?.naturalWidth>0,variant);
  const r=await page.locator('#privateTestHost img').boundingBox();assert.equal(r.width,width);assert.equal(r.height,height);
 }
 await page.evaluate(()=>{serverTimeOffsetMs=PRIVATE_RELEASE_AT-Date.now()-1000;currentUser={uid:'pAB2xxrFWMhUv6AYtJMP1nSxA5l1',getIdToken:async()=> 'pooja-token'};applyEquippedCosmetics();renderPersonalisationCosmetics();});
