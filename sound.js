@@ -768,11 +768,17 @@
       // Pumpkin Joker: a spooky wobble as the pumpkin shakes, a whoosh as
       // the ghost bursts out, and the ghost's own voice: "Boooo!"
       'joker-halloween': (k) => {
+        // A low creak and candle whoosh as the pumpkin rocks, a flare as the ghost is let out (.55s), a rising wail, bat squeaks, and the owner's crowd boo timed to the BOO word.
         k.tone({ dur: 0.5, type: 'triangle', f0: 330, f1: 220, level: 0.12, vibrato: 14, attack: 0.08 });
+        k.tone({ at: 0.16, dur: 0.22, type: 'sawtooth', f0: 90, f1: 140, level: 0.06, vibrato: 20 });
         k.noise({ at: 0.46, dur: 0.3, type: 'bandpass', f0: 400, f1: 1800, q: 1.2, level: 0.2, attack: 0.06 });
+        k.noise({ at: 0.68, dur: 0.12, type: 'bandpass', f0: 300, f1: 2400, q: 1.5, level: 0.3, attack: 0.02 });
+        k.tone({ at: 0.58, dur: 0.6, type: 'sine', f0: 420, f1: 900, level: 0.07, vibrato: 30, attack: 0.15 });
+        k.scatter(6, 0.66, 1.15, (at) => k.tone({ at, dur: 0.05, f0: 3400 + Math.random() * 1600, f1: 4400 + Math.random() * 1200, level: 0.05 }));
         // v287: the owner's crowd boo, loudest as the BOO word lands (~0.72s), silent by the end (1.5s).
         if (!k.clip('boo', 0.5, 0.6)) k.tone({ at: 0.55, dur: 0.55, f0: 140, f1: 260, level: 0.3, vibrato: 10, attack: 0.05 });
       },
+
       // Santa Joker: sleigh bells and three deep HO notes.
       'joker-christmas': (k) => {
         // A globe pops in, sleigh bells jingle with the shake, the glass shatters at .74s, a warm chord, then three "ho"s.

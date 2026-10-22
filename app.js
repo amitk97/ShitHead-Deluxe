@@ -11914,6 +11914,16 @@
       const bg = ofxLayer(host, 'pumpkin-bg', P.bg, S, ox, oy);
       bfxAnimate(bg, ofxEase([{ transform: 'scale(.85) rotate(-10deg)', opacity: 0 }, { transform: 'scale(1) rotate(-2deg)', opacity: 1, offset: .22 },
         { transform: 'scale(1.02) rotate(3deg)', opacity: 1, offset: .82 }, { transform: 'scale(1.06) rotate(5deg)', opacity: 0 }]), { duration: T, easing: 'linear' });
+      // Candle light inside the pumpkin: it flickers while he shakes, then flares when the ghost is let out.
+      const [gx, gy] = ofxPt(S, ox, oy, [518, 600]), N = 48, GT = T / 1000;
+      const glow = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(251,146,60,.85),rgba(234,88,12,.35) 45%,transparent 70%)"></div>', gx, gy, S * .8, S * .8);
+      bfxAnimate(glow, Array.from({ length: N + 1 }, (_, n) => { const t = n / N, on = Math.min(1, Math.max(0, (t - .1) / .12)) * (t > .84 ? Math.max(0, 1 - (t - .84) / .1) : 1), fl = .7 + .3 * Math.sin(t * GT * 60) * Math.sin(t * GT * 23 + 1), flare = t > .34 && t < .56 ? 1 + 1.1 * Math.sin(Math.PI * (t - .34) / .22) : 1;
+        return { offset: t, opacity: Math.min(1, on * fl * (flare > 1 ? 1 : .8)), transform: `scale(${(.9 + .12 * fl) * flare})` }; }), { duration: T, easing: 'linear' });
+      // Mist rolling along the ground.
+      for (let m = 0; m < 6; m++) {
+        const mist = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(196,181,253,.5),transparent 70%)"></div>', g.cx + (m - 2.5) * S * .17, oy + S * .86, S * .34, S * .16);
+        bfxAnimate(mist, [{ transform: 'translateX(0)', opacity: 0 }, { opacity: .9, offset: .35 }, { transform: `translateX(${(m % 2 ? 1 : -1) * S * .12}px)`, opacity: 0 }], { duration: 1000, delay: 120 + m * 60 });
+      }
       const pumpkin = ofxLayer(host, 'pumpkin-pumpkin', P.pumpkin, S, ox, oy);
       pumpkin.style.transformOrigin = '50% 90%';
       bfxAnimate(pumpkin, ofxEase([{ transform: 'scale(.2) rotate(-12deg)', opacity: 0 }, { transform: 'scale(1.12,1.06) rotate(3deg)', opacity: 1, offset: .16 }, { transform: 'scale(1) rotate(0deg)', opacity: 1, offset: .23 },
@@ -11923,10 +11933,13 @@
       // The ghost flies out of the pumpkin's top to its place, then floats.
       const ghost = ofxLayer(host, 'pumpkin-ghost', P.ghost, S, ox, oy);
       const dx = (518 - (P.ghost[0] + P.ghost[2] / 2)) * S / 1000, dy = (430 - (P.ghost[1] + P.ghost[3] / 2)) * S / 1000;
-      bfxAnimate(ghost, ofxEase([{ transform: `translate(${dx}px,${dy}px) scale(.2)`, opacity: 0 }, { transform: `translate(${dx}px,${dy}px) scale(.2)`, opacity: 0, offset: .36 },
+      const ghostFrames = () => ofxEase([{ transform: `translate(${dx}px,${dy}px) scale(.2)`, opacity: 0 }, { transform: `translate(${dx}px,${dy}px) scale(.2)`, opacity: 0, offset: .36 },
         { transform: `translate(${dx * .6}px,${dy * .6}px) scale(.5) rotate(-12deg)`, opacity: 1, offset: .4 }, { transform: 'translate(0,0) scale(1.14) rotate(-5deg)', opacity: 1, offset: .5 },
         { transform: 'translate(0,-4px) scale(1) rotate(3deg)', opacity: 1, offset: .58 }, { transform: 'translate(0,4px) rotate(-3deg)', opacity: 1, offset: .7 },
-        { transform: 'translate(0,-3px) rotate(2deg)', opacity: 1, offset: .84 }, { transform: 'translate(14px,-26px) rotate(6deg)', opacity: 0 }]), { duration: T, easing: 'linear' });
+        { transform: 'translate(0,-3px) rotate(2deg)', opacity: 1, offset: .84 }, { transform: 'translate(14px,-26px) rotate(6deg)', opacity: 0 }]);
+      bfxAnimate(ghost, ghostFrames(), { duration: T, easing: 'linear' });
+      // Two fading echoes of the ghost trail behind it.
+      [[70, .38], [150, .2]].forEach(([d, o]) => { const gb = P.ghost, e = bfxAdd(host, `<div style="width:100%;height:100%;background:url(${ownerFxSrc('pumpkin-ghost')}) center/100% 100% no-repeat"></div>`, ox + (gb[0] + gb[2] / 2) * S / 1000, oy + (gb[1] + gb[3] / 2) * S / 1000, gb[2] * S / 1000, gb[3] * S / 1000); e.style.filter = 'blur(2px) hue-rotate(40deg)'; e.style.mixBlendMode = 'screen'; bfxAnimate(e, ghostFrames().map((kf) => Object.assign({}, kf, { opacity: kf.opacity ? (kf.opacity * o) : 0 })), { duration: T - d, delay: d, easing: 'linear' }); });
       const boo = ofxLayer(host, 'pumpkin-boo', P.boo, S, ox, oy);
       bfxAnimate(boo, ofxEase([{ transform: 'scale(.3) rotate(-14deg)', opacity: 0 }, { transform: 'scale(.3) rotate(-14deg)', opacity: 0, offset: .42 },
         { transform: 'scale(1.35) rotate(-4deg)', opacity: 1, offset: .5 }, { transform: 'scale(.94) rotate(1deg)', opacity: 1, offset: .56 }, { transform: 'scale(1.04) rotate(0deg)', opacity: 1, offset: .62 },
@@ -11938,6 +11951,17 @@
         const el = bfxAdd(host, bfxStar4(i % 2 ? '#d9f99d' : '#c084fc'), sx, sy, s, s);
         bfxAnimate(el, [{ transform: 'translate(0,0) scale(0)', opacity: 0 }, { transform: `translate(${Math.cos(a) * d * .6}px,${Math.sin(a) * d * .6}px) scale(1.2) rotate(45deg)`, opacity: 1, offset: .4 },
           { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) scale(0) rotate(90deg)`, opacity: 0 }], { duration: 600, delay: 560 + bfxRand(0, 120), easing: 'ease-out' });
+      }
+      // The boo: a green flash, a shock ring and a little shake of the whole scene.
+      sfxFlash(host, sx, sy, 1, 'rgba(217,249,157,.8)', S * .9, 520, T * .48);
+      const ring = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;border:4px solid #d9f99d;box-shadow:0 0 18px #a3e635"></div>', sx, sy, S * .3, S * .3);
+      bfxAnimate(ring, [{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(3.2)', opacity: 0 }], { duration: 620, delay: T * .48, easing: 'cubic-bezier(.1,.7,.3,1)' });
+      if (typeof host.animate === 'function') host.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-5px,3px)', offset: .15 }, { transform: 'translate(5px,-3px)', offset: .3 }, { transform: 'translate(-4px,-2px)', offset: .45 }, { transform: 'translate(3px,2px)', offset: .6 }, { transform: 'translate(0,0)' }], { duration: 320, delay: T * .48 });
+      // Bats cross the sky as he shouts.
+      for (let b = 0; b < 7; b++) {
+        const dir = b % 2 ? 1 : -1, w = bfxRand(46, 70) * g.k, y0 = oy + S * bfxRand(.04, .3), bat = bfxAdd(host, JFX_BAT, g.cx - dir * (g.W * .6), y0, w, w / 2);
+        bfxAnimate(bat, [0, .125, .25, .375, .5, .625, .75, .875, 1].map((t, n) => ({ offset: t, opacity: t === 0 || t === 1 ? 0 : 1,
+          transform: `translate(${dir * g.W * 1.2 * t}px,${Math.sin(t * 9 + b) * 18 * g.k}px) scaleY(${n % 2 ? .45 : 1}) scaleX(${-dir})` })), { duration: bfxRand(520, 620), delay: T * .42 + bfxRand(0, 160), easing: 'linear' });
       }
     }
     // Christmas, Santa Joker: Santa in a jester hat: HO HO HO! in the snow.

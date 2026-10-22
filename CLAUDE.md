@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v418 — Pumpkin Joker improved (pushed straight to main)
+
+- `jfxHalloween` keeps the owner's four painted layers (the owner-effects test counts exactly four `.bfx img`, so extras must NOT use `<img>`/`ofxLayer`) and adds: a flickering candle glow behind the pumpkin that flares as the ghost is released, two fading ghost echoes (`background:url(ownerFxSrc('pumpkin-ghost'))` divs with `screen` blend), a green flash + shock ring + small host shake on the BOO (.48 of the clock), seven bats crossing, and ground mist. Sound adds a creak, candle whoosh, ghost wail sweep and bat squeaks around the owner's boo clip (unchanged timing). Ends inside 1.5s.
+
 ## v417 — Vampire bite made visible (pushed straight to main)
 
 - v416's bite was hidden behind his own face. Now the face sits ABOVE the card (face 120x150 at cy-125k, card 124x177 at cy+42k, so the whole card shows), he lunges 60k so the open mouth reaches the card's top edge at 730ms, the punctures and blood are drawn over his face at the card's top edge, the cape and moon moved up with him, "BITE!" is below the card. Layout rule for bite-style effects: the target must not sit under the biter.

@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v418: [['sparkle', 'The Pumpkin Joker effect has more life: candle light that flickers and flares inside the pumpkin, ghost echoes trailing behind the ghost, a green flash and shock ring on the BOO, bats crossing the sky and mist along the ground.', WN_KEY]],
       v417: [['sparkle', 'The Vampire now bites where you can see it: the whole Joker card sits under him and he sinks his fangs into its top edge.']],
       v416: [['sparkle', 'The Vampire Joker effect now bites: he pulls back, lunges with his mouth wide, sinks his fangs into the Joker card and blood runs from the punctures.', WN_KEY]],
       v415: [['gear', 'Fixed the Vampire Joker effect running a little past its 1.5 second window.']],
