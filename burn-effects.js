@@ -1037,6 +1037,136 @@
       end(lastAnim);
     }
 
+
+    // ---- Valentine, Summer, Christmas, Lunar New Year, Ramadan (v410), rebuilt on procBurnStage like Diwali / Easter /
+    // New Year: the real card is part of the story and is consumed, one 2s clock, low effects. Sounds in BURN_SOUNDS.
+    function pfxBase(host, x, y, glow) {
+      const st = procBurnStage(host, x, y, PFX_MS), kit = pfxKit(st), { H, cx, cy } = st;
+      const g = kit.add(`left:${cx - H * 1.2}px;top:${cy - H * 1.2}px;width:${H * 2.4}px;height:${H * 2.4}px;border-radius:50%;z-index:0;background:radial-gradient(closest-side,${glow[0]},${glow[1]} 55%,transparent)`);
+      st.lastAnim = st.anim(g, kit.fr(t => ({ opacity: kit.sm(0, .6, t) * (1 - kit.sm(1.4, 1.95, t)) })));
+      return { st, kit };
+    }
+    // The real card, tinting and shaking harder until t0, then gone (the shards take over).
+    function pfxCard(st, kit, t0, o) {
+      const { W, H, cx, cy, radius, anim, face } = st, { sm, fr, add } = kit, shake = o.shake || .012;
+      const box = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;border-radius:${radius}`);
+      box.appendChild(face());
+      if (o.tint) { const ov = document.createElement('div'); ov.style.cssText = `position:absolute;inset:0;border-radius:${radius};background:${o.tint}`; box.appendChild(ov); anim(ov, fr(t => ({ opacity: sm(0, t0, t) }))); }
+      anim(box, fr(t => { const g = sm(.2, t0, t); return { opacity: t < t0 ? 1 : 0, transform: `translate(${(Math.sin(t * 80) * H * shake * g).toFixed(2)}px,${(Math.cos(t * 67) * H * shake * .8 * g).toFixed(2)}px) scale(${(1 + .06 * g).toFixed(3)})`, filter: `brightness(${(1 + .3 * g).toFixed(2)}) drop-shadow(0 0 ${(H * .08 * g).toFixed(1)}px ${o.glow || '#fff'})` }; }));
+      return box;
+    }
+    const PFX_HEART = '<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M12 21C5 15 2 11 2 7.5A5 5 0 0 1 12 6a5 5 0 0 1 10 1.5C22 11 19 15 12 21Z" fill="CLR" stroke="rgba(255,255,255,.55)" stroke-width="1"/><ellipse cx="8" cy="8" rx="2.2" ry="1.4" fill="#fff" opacity=".6" transform="rotate(-30 8 8)"/></svg>';
+    const pfxHeart = c => PFX_HEART.replace('CLR', c);
+    const pfxDrop = c => `border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,${c} 55%);box-shadow:0 0 6px ${c}88`;
+
+    // Valentine: hearts drift up round the card, a cupid's arrow flies in and strikes it at .42s, the card throbs pink
+    // and bursts at .5s into shards, a big heart pulse, hearts and rose petals.
+    function bfxValentine(host, x, y, k) {
+      const { st, kit } = pfxBase(host, x, y, ['rgba(244,114,182,.55)', 'rgba(225,29,72,.18)']), { W, H, cx, cy, anim, end } = st, { rand, out, sm, fr, add, clamp } = kit, HIT = .42, BURST = .5;
+      pfxCard(st, kit, BURST, { tint: 'linear-gradient(160deg,rgba(251,113,133,.5),rgba(190,18,60,.35))', glow: '#fb7185' });
+      for (let i = 0; i < 7; i++) {
+        const a = i / 7 * Math.PI * 2, s = H * rand(.14, .22), el = add(`left:${cx + Math.cos(a) * W * .75 - s / 2}px;top:${cy + Math.sin(a) * H * .55 - s / 2}px;width:${s}px;height:${s}px;z-index:5`, pfxHeart(['#fb7185', '#f43f5e', '#fda4af'][i % 3])), t0 = .02 + i * .045, ph = rand(0, 6);
+        anim(el, fr(t => ({ opacity: clamp((t - t0) / .08) * (1 - sm(HIT, BURST + .05, t)), transform: `translate(${(Math.sin(t * 9 + ph) * H * .04).toFixed(1)}px,${(-H * .22 * sm(t0, HIT, t)).toFixed(1)}px) scale(${(.4 + .6 * out(clamp((t - t0) / .15)) + .08 * Math.sin(t * 20 + ph)).toFixed(3)})` })));
+      }
+      const L = H * 1.15, arrow = add(`left:${cx - L}px;top:${cy - H * .045}px;width:${L}px;height:${H * .09}px;z-index:6;transform-origin:100% 50%`);
+      arrow.innerHTML = '<svg viewBox="0 0 120 12" preserveAspectRatio="none" width="100%" height="100%"><path d="M0 6H108" stroke="#92400e" stroke-width="2.4" stroke-linecap="round"/><path d="M106 0 120 6 106 12Z" fill="#fbbf24" stroke="#92400e" stroke-width=".8"/><path d="M2 6 12 0H22L14 6 22 12H12Z" fill="#fb7185"/></svg>';
+      anim(arrow, fr(t => { const p = out(clamp(t / HIT)), v = t > HIT ? Math.sin((t - HIT) * 90) * H * .012 * (1 - clamp((t - HIT) / .12)) : 0; return { opacity: sm(.0, .03, t) * (1 - sm(BURST + .05, BURST + .3, t)), transform: `translate(${(-(1 - p) * W * 2.6 + v).toFixed(1)}px,${(-(1 - p) * H * .18).toFixed(1)}px) rotate(${(-6 * (1 - p)).toFixed(2)}deg)` }; }));
+      const big = add(`left:${cx - H * .5}px;top:${cy - H * .5}px;width:${H}px;height:${H}px;z-index:2;filter:drop-shadow(0 0 ${H * .1}px rgba(244,63,94,.9))`, pfxHeart('#f43f5e'));
+      anim(big, fr(t => { const p = clamp((t - BURST) / .5); return { opacity: p > 0 && p < 1 ? (1 - sm(.35, 1, p)) * .95 : 0, transform: `scale(${(.3 + 1.2 * out(p)).toFixed(3)})` }; }));
+      pfxShatter(st, kit, { t0: BURST, ip: [W * .5, H * .5], cols: 4, rows: 6, speed: .85, edge: '#fecdd3', tint: i => `linear-gradient(135deg,${i % 2 ? 'rgba(251,113,133,.6)' : 'rgba(255,228,230,.5)'},rgba(190,18,60,.35))` });
+      pfxBurst(st, kit, { x: cx, y: cy, t0: BURST, n: 18, len: H * .12, dist: H * .8, life: .6, cols: ['#fb7185', '#fda4af', '#fff', '#f43f5e'], w: 2.6 });
+      for (let i = 0; i < 16; i++) { const a = -Math.PI / 2 + rand(-1.2, 1.2), sp = H * rand(.9, 1.7); pfxFly(st, kit, { x: cx, y: cy, w: H * rand(.1, .17), t0: BURST + rand(0, .1), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: H * 2.6, spin: rand(-4, 4), floor: H * .62, bounce: .25, fade0: 1.45 + rand(0, .35), html: pfxHeart(['#fb7185', '#f43f5e', '#fda4af', '#e11d48'][i % 4]) }); }
+      for (let i = 0; i < 14; i++) pfxFly(st, kit, { x: cx + rand(-.5, .5) * W, y: cy - H * rand(.1, .5), w: H * .09, h: H * .13, t0: BURST + .08 + rand(0, .35), vx: rand(-.4, .4) * H, vy: -H * rand(.1, .5), g: H * .9, spin: rand(-4, 4), flutter: rand(6, 11), floor: H * .62, bounce: .04, fade0: 1.55 + rand(0, .3), css: 'border-radius:60% 40% 60% 40%;background:radial-gradient(circle at 40% 30%,#fb7185,#9f1239)' });
+      end(st.lastAnim);
+    }
+
+    // Summer: a rotating sun heats the card (it bleaches and shimmers), at .62s it pops in a splash: aqua shards, water
+    // droplets, ripples on the floor and a beach ball bouncing out.
+    const SUM_POP = .62;
+    function bfxSummer(host, x, y, k) {
+      const { st, kit } = pfxBase(host, x, y, ['rgba(253,224,71,.5)', 'rgba(56,189,248,.18)']), { W, H, cx, cy, anim, end } = st, { rand, out, sm, fr, add, clamp } = kit;
+      pfxCard(st, kit, SUM_POP, { tint: 'linear-gradient(160deg,rgba(253,224,71,.5),rgba(251,146,60,.35))', glow: '#fde047', shake: .008 });
+      const sun = add(`left:${cx - H * 1.2}px;top:${cy - H * 1.2}px;width:${H * 2.4}px;height:${H * 2.4}px;border-radius:50%;z-index:1;background:repeating-conic-gradient(from 0deg,rgba(253,224,71,.5) 0 5deg,transparent 5deg 30deg);-webkit-mask-image:radial-gradient(closest-side,transparent 18%,#000 30%,transparent 100%);mask-image:radial-gradient(closest-side,transparent 18%,#000 30%,transparent 100%)`);
+      anim(sun, fr(t => ({ opacity: sm(0, .35, t) * (1 - sm(SUM_POP, SUM_POP + .5, t)), transform: `rotate(${(t * 60).toFixed(1)}deg) scale(${(.8 + .4 * sm(0, SUM_POP, t)).toFixed(3)})` })));
+      [0, 1].forEach(i => { const r = add(`left:${cx - H * .9}px;top:${cy + H * .35}px;width:${H * 1.8}px;height:${H * .5}px;border-radius:50%;z-index:1;border:${Math.max(2, H * .03)}px solid rgba(125,211,252,.85);box-shadow:0 0 ${H * .08}px rgba(56,189,248,.7)`);
+        anim(r, fr(t => { const p = clamp((t - SUM_POP - i * .15) / .7); return { opacity: p > 0 && p < 1 ? (1 - p) * .9 : 0, transform: `scale(${(.2 + 1.1 * out(p)).toFixed(3)})` }; })); });
+      pfxShatter(st, kit, { t0: SUM_POP, ip: [W * .5, H * .5], cols: 4, rows: 6, speed: .85, edge: '#bae6fd', tint: i => `linear-gradient(135deg,${i % 2 ? 'rgba(56,189,248,.55)' : 'rgba(224,242,254,.5)'},rgba(14,165,233,.35))` });
+      pfxBurst(st, kit, { x: cx, y: cy, t0: SUM_POP, n: 14, len: H * .12, dist: H * .7, life: .55, cols: ['#fde047', '#7dd3fc', '#fff', '#fb923c'], w: 2.6 });
+      for (let i = 0; i < 30; i++) { const a = -Math.PI / 2 + rand(-1.3, 1.3), sp = H * rand(.8, 1.8), c = ['#38bdf8', '#7dd3fc', '#bae6fd'][i % 3]; pfxFly(st, kit, { x: cx, y: cy, w: H * rand(.04, .09), t0: SUM_POP + rand(0, .1), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: H * 3, floor: H * .66, bounce: .12, fade0: 1.3 + rand(0, .4), css: pfxDrop(c) }); }
+      const ball = '<svg viewBox="0 0 40 40" width="100%" height="100%"><defs><clipPath id="pbb"><circle cx="20" cy="20" r="18"/></clipPath></defs><g clip-path="url(#pbb)"><rect width="40" height="40" fill="#fff"/><path d="M20 20 20 0 36 6Z" fill="#ef4444"/><path d="M20 20 40 20 36 34Z" fill="#facc15"/><path d="M20 20 20 40 4 34Z" fill="#3b82f6"/><path d="M20 20 0 20 4 6Z" fill="#22c55e"/><path d="M20 20 36 6 40 20Z" fill="#fff"/></g><circle cx="20" cy="20" r="18" fill="none" stroke="rgba(0,0,0,.2)" stroke-width="1.2"/><ellipse cx="13" cy="11" rx="5" ry="3" fill="#fff" opacity=".6" transform="rotate(-35 13 11)"/></svg>';
+      pfxFly(st, kit, { x: cx, y: cy, w: H * .32, t0: SUM_POP + .02, vx: H * .55, vy: -H * 1.45, g: H * 3.4, spin: 6, floor: H * .5, bounce: .6, fade0: 1.65, html: ball });
+      end(st.lastAnim);
+    }
+
+    // Christmas: red and gold ribbons wrap the card (.05-.45s) and a bow pops on, it rattles, then bursts at .62s into
+    // red and green shards with ribbon streamers, baubles, a star glint and falling snow.
+    const XM_OPEN = .62;
+    function bfxChristmas(host, x, y, k) {
+      const { st, kit } = pfxBase(host, x, y, ['rgba(250,204,21,.4)', 'rgba(22,163,74,.22)']), { W, H, cx, cy, anim, end, radius } = st, { rand, out, sm, fr, add, clamp } = kit;
+      pfxCard(st, kit, XM_OPEN, { tint: 'linear-gradient(160deg,rgba(22,163,74,.55),rgba(21,128,61,.4))', glow: '#facc15', shake: .014 });
+      const band = (css, from, to, grow) => { const el = add(`${css};z-index:4;background:linear-gradient(90deg,#b91c1c,#ef4444 40%,#b91c1c);box-shadow:inset 0 0 0 1px rgba(253,224,71,.6)`); anim(el, fr(t => ({ opacity: t < XM_OPEN ? 1 : 0, transform: grow(clamp((t - from) / (to - from))) }))); return el; };
+      band(`left:${cx - W * .1}px;top:${cy - H / 2}px;width:${W * .2}px;height:${H}px;transform-origin:50% 0`, .05, .3, p => `scaleY(${out(p).toFixed(3)})`);
+      const hb = band(`left:${cx - W / 2}px;top:${cy - H * .08}px;width:${W}px;height:${H * .16}px;transform-origin:0 50%`, .2, .45, p => `scaleX(${out(p).toFixed(3)})`);
+      hb.style.background = 'linear-gradient(180deg,#b91c1c,#ef4444 40%,#b91c1c)';
+      const bow = add(`left:${cx - H * .22}px;top:${cy - H * .2}px;width:${H * .44}px;height:${H * .34}px;z-index:6`, '<svg viewBox="0 0 44 34" width="100%" height="100%"><path d="M22 20C12 4 2 6 4 14s14 6 18 6ZM22 20c10-16 20-14 18-6s-14 6-18 6Z" fill="#dc2626" stroke="#fde047" stroke-width="1.4"/><path d="M22 20 14 33M22 20 30 33" stroke="#dc2626" stroke-width="4" stroke-linecap="round"/><circle cx="22" cy="20" r="4.2" fill="#fde047" stroke="#ca8a04"/></svg>');
+      anim(bow, fr(t => { const p = out(clamp((t - .4) / .12)); return { opacity: t > .4 && t < XM_OPEN ? 1 : 0, transform: `scale(${(p * (1 + .12 * Math.sin(clamp((t - .4) / .22) * Math.PI))).toFixed(3)}) rotate(${(Math.sin(t * 60) * 3 * sm(.45, XM_OPEN, t)).toFixed(2)}deg)` }; }));
+      pfxShatter(st, kit, { t0: XM_OPEN, ip: [W * .5, H * .5], cols: 4, rows: 6, speed: .85, edge: '#fde68a', tint: i => i % 2 ? 'linear-gradient(135deg,rgba(239,68,68,.65),rgba(153,27,27,.4))' : 'linear-gradient(135deg,rgba(34,197,94,.6),rgba(21,128,61,.4))' });
+      pfxBurst(st, kit, { x: cx, y: cy, t0: XM_OPEN, n: 16, len: H * .13, dist: H * .8, life: .6, cols: ['#fde047', '#fff', '#ef4444', '#4ade80'], w: 2.6 });
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + (i - 2) * .42, L = H * rand(.7, 1), el = add(`left:${cx}px;top:${cy}px;width:${L}px;height:${H * .3}px;z-index:5;transform-origin:0 50%`);
+        el.innerHTML = `<svg viewBox="0 0 100 30" preserveAspectRatio="none" width="100%" height="100%" style="overflow:visible"><path d="M0 15c10-14 20 14 30 0s20 14 30 0 20 14 30 0 7 4 10 0" pathLength="1" stroke-dasharray="1" fill="none" stroke="${['#ef4444', '#fde047', '#22c55e', '#fff', '#ef4444'][i]}" stroke-width="3.2" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+        anim(el.querySelector('path'), fr(t => ({ strokeDashoffset: 1 - out(sm(XM_OPEN + .02, XM_OPEN + .5, t)) })));
+        anim(el, fr(t => ({ opacity: t > XM_OPEN ? 1 - sm(1.3, 1.7, t) : 0, transform: `rotate(${a.toFixed(3)}rad) translateY(${(H * .9 * Math.pow(sm(XM_OPEN + .5, 1.7, t), 2)).toFixed(1)}px)` })));
+      }
+      for (let i = 0; i < 6; i++) { const c = ['#dc2626', '#fbbf24', '#2563eb', '#16a34a'][i % 4], dir = i % 2 ? 1 : -1; pfxFly(st, kit, { x: cx, y: cy - H * .05, w: H * .15, h: H * .19, t0: XM_OPEN + .03 + i * .03, vx: dir * H * rand(.4, 1.2), vy: -H * rand(1.1, 1.5), g: H * 3.4, spin: dir * rand(2, 6), floor: H * rand(.5, .72), bounce: .4, fade0: 1.6 + rand(0, .25), html: `<svg viewBox="0 0 24 30" width="100%" height="100%"><rect x="9" y="1" width="6" height="4" rx="1" fill="#fbbf24"/><circle cx="12" cy="18" r="10.5" fill="${c}"/><path d="M3 18Q12 22 21 18" stroke="rgba(255,255,255,.55)" stroke-width="1.6" fill="none"/><ellipse cx="8" cy="13" rx="3" ry="2" fill="#fff" opacity=".6" transform="rotate(-30 8 13)"/></svg>` }); }
+      for (let i = 0; i < 24; i++) pfxFly(st, kit, { x: cx + rand(-.9, .9) * W, y: cy - H * rand(.2, .6), w: H * rand(.07, .12), t0: XM_OPEN + rand(0, .6), vx: rand(-.25, .25) * H, vy: rand(-.05, .15) * H, g: H * .55, spin: rand(-2, 2), flutter: rand(5, 9), floor: H * .66, bounce: .02, fade0: 1.6 + rand(0, .3), html: '<svg viewBox="0 0 20 20" width="100%" height="100%"><path d="M10 0V20M0 10H20M3 3 17 17M17 3 3 17" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>' });
+      end(st.lastAnim);
+    }
+
+    // Lunar New Year: a string of eight firecrackers hangs across the card and pops one by one (.12-.61s, each with a
+    // flash and paper bits), the card throbs red and bursts at .74s into red and gold shards, gold coins and sparks.
+    const LUN_BOOM = .74, LUN_POPS = Array.from({ length: 8 }, (_, i) => .12 + i * .07);
+    function bfxLunar(host, x, y, k) {
+      const { st, kit } = pfxBase(host, x, y, ['rgba(239,68,68,.5)', 'rgba(250,204,21,.2)']), { W, H, cx, cy, anim, end } = st, { rand, out, sm, fr, add, clamp } = kit;
+      pfxCard(st, kit, LUN_BOOM, { tint: 'linear-gradient(160deg,rgba(220,38,38,.55),rgba(153,27,27,.4))', glow: '#ef4444', shake: .012 });
+      const x0 = cx - W * .62, y0 = cy - H * .62, x1 = cx + W * .62, y1 = cy + H * .62;
+      const cord = add(`left:0;top:0;width:100%;height:100%;z-index:4`, `<svg width="100%" height="100%" style="position:absolute;inset:0;overflow:visible"><path d="M${x0} ${y0 - H * .1}L${x1} ${y1 + H * .1}" stroke="#fbbf24" stroke-width="${Math.max(1.5, H * .015)}"/></svg>`);
+      anim(cord, fr(t => ({ opacity: sm(0, .06, t) * (1 - sm(LUN_POPS[7], LUN_POPS[7] + .06, t)) })));
+      LUN_POPS.forEach((pt, i) => {
+        const u = i / 7, px = x0 + (x1 - x0) * u, py = y0 + (y1 - y0) * u, w = H * .09, h = H * .2, s0 = .03 + i * .012;
+        const el = add(`left:${px - w / 2}px;top:${py - h * .1}px;width:${w}px;height:${h}px;z-index:5;transform-origin:50% 0`, '<svg viewBox="0 0 12 26" width="100%" height="100%"><rect x="1" y="3" width="10" height="21" rx="2" fill="#dc2626"/><rect x="1" y="9" width="10" height="3" fill="#fbbf24"/><rect x="1" y="17" width="10" height="3" fill="#fbbf24"/><path d="M6 3V0" stroke="#fbbf24" stroke-width="1.2"/></svg>');
+        anim(el, fr(t => ({ opacity: clamp((t - s0) / .05) * (t < pt ? 1 : 0), transform: `rotate(${(Math.sin(t * 40 + i) * 4 + (t > pt - .05 ? Math.sin(t * 200) * 6 : 0)).toFixed(1)}deg) scale(${(.4 + .6 * out(clamp((t - s0) / .08))).toFixed(3)})` })));
+        const fl = add(`left:${px - H * .2}px;top:${py - H * .2}px;width:${H * .4}px;height:${H * .4}px;border-radius:50%;z-index:6;background:radial-gradient(circle,#fff,rgba(253,224,71,.85) 35%,rgba(239,68,68,.4) 60%,transparent 72%)`);
+        anim(fl, fr(t => { const p = clamp((t - pt) / .16); return { opacity: p > 0 && p < 1 ? 1 - p : 0, transform: `scale(${(.3 + 1.1 * out(p)).toFixed(3)})` }; }));
+        for (let j = 0; j < 6; j++) { const a = rand(0, Math.PI * 2), sp = H * rand(.5, 1.1); pfxFly(st, kit, { x: px, y: py, w: H * .035, h: H * .05, t0: pt, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - H * .3, g: H * 2.4, spin: rand(-9, 9), floor: H * .66 - (py - cy), bounce: .1, fade0: 1.2 + rand(0, .5), css: `background:${j % 3 ? '#dc2626' : '#fbbf24'}` }); }
+      });
+      pfxShatter(st, kit, { t0: LUN_BOOM, ip: [W * .5, H * .5], cols: 4, rows: 6, speed: .9, edge: '#fde047', tint: i => i % 2 ? 'linear-gradient(135deg,rgba(220,38,38,.65),rgba(127,29,29,.4))' : 'linear-gradient(135deg,rgba(250,204,21,.6),rgba(217,119,6,.4))' });
+      pfxBurst(st, kit, { x: cx, y: cy, t0: LUN_BOOM, n: 20, len: H * .14, dist: H * .85, life: .6, cols: ['#fbbf24', '#ef4444', '#fff', '#fde047'], w: 2.8 });
+      for (let i = 0; i < 9; i++) { const dir = i % 2 ? 1 : -1; pfxFly(st, kit, { x: cx, y: cy, w: H * .14, t0: LUN_BOOM + .02 + i * .02, vx: dir * H * rand(.3, 1.2), vy: -H * rand(.9, 1.4), g: H * 3.4, spin: dir * rand(3, 8), flutter: rand(10, 16), floor: H * rand(.5, .7), bounce: .42, fade0: 1.65 + rand(0, .25), html: '<svg viewBox="0 0 24 24" width="100%" height="100%"><circle cx="12" cy="12" r="11" fill="#fbbf24" stroke="#b45309" stroke-width="1.4"/><rect x="8.5" y="8.5" width="7" height="7" fill="#92400e" opacity=".85"/><ellipse cx="8" cy="7" rx="3" ry="1.6" fill="#fff" opacity=".6" transform="rotate(-30 8 7)"/></svg>' }); }
+      end(st.lastAnim);
+    }
+
+    // Ramadan: three lanterns glow and sway beside the card, it turns gold and at .6s dissolves into shards and rising
+    // stardust while a crescent moon and star bloom behind it with soft rays.
+    const RAM_BURST = .6;
+    function bfxRamadan(host, x, y, k) {
+      const { st, kit } = pfxBase(host, x, y, ['rgba(250,204,21,.45)', 'rgba(67,56,202,.28)']), { W, H, cx, cy, anim, end } = st, { rand, out, sm, fr, add, clamp } = kit;
+      pfxCard(st, kit, RAM_BURST, { tint: 'linear-gradient(160deg,rgba(250,204,21,.5),rgba(180,83,9,.35))', glow: '#fde68a', shake: .006 });
+      const lantern = '<svg viewBox="0 0 40 70" width="100%" height="100%" style="overflow:visible"><path d="M20 0V10" stroke="#ca8a04" stroke-width="2"/><path d="M12 14h16l4 6H8Z" fill="#d4a017"/><path d="M8 20c-3 12-2 24 4 34h16c6-10 7-22 4-34Z" fill="#fbbf24" opacity=".92"/><path d="M8 20c-3 12-2 24 4 34h16c6-10 7-22 4-34Z" fill="none" stroke="#b45309" stroke-width="1.6"/><path d="M20 20V54M14 20c-2 12-1 24 1 34M26 20c2 12 1 24-1 34" stroke="#b45309" stroke-width="1" fill="none"/><path d="M12 54h16l-2 6H14Z" fill="#d4a017"/><ellipse cx="20" cy="36" rx="5" ry="9" fill="#fff7d6" opacity=".7"/></svg>';
+      [[-.95, -.62, .2], [.95, -.62, .24], [0, -.8, .28]].forEach(([dx, dy, d], i) => {
+        const w = H * .22, el = add(`left:${cx + dx * W - w / 2}px;top:${cy + dy * H}px;width:${w}px;height:${w * 1.75}px;z-index:5;transform-origin:50% 0;filter:drop-shadow(0 0 ${H * .1}px rgba(251,191,36,.85))`, lantern), s0 = .04 + i * .05;
+        anim(el, fr(t => ({ opacity: clamp((t - s0) / .1) * (1 - sm(1.35, 1.7, t)), transform: `rotate(${(Math.sin(t * 6 + i * 2) * 7 * (1 + sm(RAM_BURST, 1, t))).toFixed(2)}deg) translateY(${(-H * .25 * (1 - out(clamp((t - s0) / .25)))).toFixed(1)}px) scale(${(.6 + .4 * out(clamp((t - s0) / .2))).toFixed(3)})` })));
+      });
+      const moon = add(`left:${cx - H * .55}px;top:${cy - H * .55}px;width:${H * 1.1}px;height:${H * 1.1}px;z-index:2;filter:drop-shadow(0 0 ${H * .12}px rgba(253,224,71,.9))`, '<svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="prm" cx=".35" cy=".35"><stop offset="0" stop-color="#fffbeb"/><stop offset="1" stop-color="#f59e0b"/></radialGradient></defs><path d="M62 10A42 42 0 1 0 62 90 34 34 0 1 1 62 10Z" fill="url(#prm)"/><path d="M78 30 81.4 41 92 43 82 50 85 61 78 53 69 61 72 50 64 43 74 41Z" fill="#fde68a" stroke="#fff7d6" stroke-width=".8"/></svg>');
+      anim(moon, fr(t => { const p = out(clamp((t - RAM_BURST) / .45)); return { opacity: p * (1 - sm(1.5, 1.9, t)), transform: `scale(${(.3 + .7 * p).toFixed(3)}) rotate(${(-12 + 12 * p).toFixed(2)}deg)` }; }));
+      const rays = add(`left:${cx - H * 1.1}px;top:${cy - H * 1.1}px;width:${H * 2.2}px;height:${H * 2.2}px;border-radius:50%;z-index:1;background:repeating-conic-gradient(from 0deg,rgba(253,230,138,.3) 0 4deg,transparent 4deg 20deg);-webkit-mask-image:radial-gradient(closest-side,transparent 25%,#000 40%,transparent 100%);mask-image:radial-gradient(closest-side,transparent 25%,#000 40%,transparent 100%)`);
+      anim(rays, fr(t => { const p = clamp((t - RAM_BURST) / .4); return { opacity: p * (1 - sm(1.4, 1.9, t)) * .9, transform: `rotate(${(t * 14).toFixed(1)}deg)` }; }));
+      pfxShatter(st, kit, { t0: RAM_BURST, ip: [W * .5, H * .5], cols: 4, rows: 6, speed: .8, edge: '#fde68a', tint: () => 'linear-gradient(135deg,rgba(253,224,71,.6),rgba(180,83,9,.4))' });
+      pfxBurst(st, kit, { x: cx, y: cy, t0: RAM_BURST, n: 16, len: H * .12, dist: H * .75, life: .6, cols: ['#fde68a', '#fff', '#fbbf24', '#c7d2fe'], w: 2.4 });
+      for (let i = 0; i < 30; i++) pfxFly(st, kit, { x: cx + rand(-.6, .6) * W, y: cy + rand(-.3, .4) * H, w: H * rand(.05, .1), t0: RAM_BURST + rand(0, .5), vx: rand(-.2, .2) * H, vy: -H * rand(.25, .6), g: H * .5, spin: rand(-2, 2), fade0: 1.5 + rand(0, .4), html: pfxStar(i % 2 ? '#fde68a' : '#fff') });
+      end(st.lastAnim);
+    }
+
     function bfxOrigami(host, x, y, k) {
       const st = procBurnStage(host, x, y, ORI_MS), { layer, cx, cy, radius, backCls, anim, end, vw, onTable } = st;
       // v311 (owner): the card leaves the Pile, grows and moves to the middle of the screen first. The swan
@@ -1629,6 +1759,7 @@
       if (window.ShLevel3D && ShLevel3D.has(id) && levelBurn3d(id, host, x, y, scale, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return true;
       ({ default: bfxDefault, 'burn-electric': bfxElectric, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-ice': bfxIce, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
         'burn-blackhole': bfxBlackHole, 'burn-origami': bfxOrigami, 'burn-pixel': bfxPixelBlast, 'burn-lava': bfxLavaMelt,
+        'burn-valentine': bfxValentine, 'burn-summer': bfxSummer, 'burn-christmas': bfxChristmas, 'burn-lunar': bfxLunar, 'burn-ramadan': bfxRamadan,
         'burn-diwali': bfxDiwali, 'burn-easter': bfxEaster, 'burn-newyear': bfxNewYear,
         'burn-lvl-spark-snap': bfxSparkSnap, 'burn-lvl-smoke-burst': bfxSmokeBurst, 'burn-lvl-inferno-sweep': bfxInferno,
         'burn-lvl-hellfire-spiral': bfxHellfireSpiral, 'burn-lvl-royal-incineration': bfxRoyalIncineration, 'burn-lvl-shitstorm': bfxShitStorm }[id] || (typeof SEASONAL_BURN_FX !== 'undefined' && SEASONAL_BURN_FX[id]) || (() => {}))(host, x, y, scale);

@@ -543,16 +543,28 @@
       'burn-lvl-royal-incineration': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-royal-incineration', k) : ShLevelBurns.sound('burn-lvl-royal-incineration', k)),
       'burn-lvl-shitstorm': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-shitstorm', k) : ShLevelBurns.sound('burn-lvl-shitstorm', k)),
       // Seasonal burns
-      'burn-valentine': (k) => { fireWhoosh(k, 0.5); [784, 988, 1175].forEach((f, i) => k.tone({ at: 0.08 + i * 0.1, dur: 0.5, type: 'triangle', f0: f, level: 0.12 })); },
-      // Cannonball: a deep plunk into the water and a big splash (flash +
-      // first ripple), a second wash with the second ripple (0.22s), then
-      // the thrown droplets pattering back down over the next second.
+      // Valentine (v410): heartbeat thumps (.10-.38s), an arrow whoosh into the strike at .42, the burst at .50 with a
+      // harp run and soft petal rustle.
+      'burn-valentine': (k) => {
+        [0.1, 0.2, 0.3, 0.4].forEach((at, i) => k.tone({ at, dur: 0.12, f0: 85 - (i % 2) * 15, f1: 40, level: i % 2 ? 0.3 : 0.45 }));
+        k.noise({ at: 0.18, dur: 0.24, type: 'highpass', f0: 1200, f1: 6000, level: 0.2, attack: 0.18 });
+        k.tone({ at: 0.42, dur: 0.12, type: 'triangle', f0: 260, f1: 70, level: 0.5 });
+        k.noise({ at: 0.42, dur: 0.06, type: 'bandpass', f0: 1800, q: 2, level: 0.35 });
+        k.noise({ at: 0.5, dur: 0.25, type: 'highpass', f0: 3000, f1: 7000, level: 0.35 });
+        k.tone({ at: 0.5, dur: 0.2, f0: 300, f1: 90, level: 0.35 });
+        [1319, 1568, 1976, 2349, 2637].forEach((f, i) => k.tone({ at: 0.55 + i * 0.07, dur: 0.5, f0: f, level: 0.07 }));
+        k.noise({ at: 0.6, dur: 0.9, type: 'bandpass', f0: 4000, q: 0.5, level: 0.04, attack: 0.2 });
+      },
+      // Summer (v410): a rising sizzle as the sun heats the card (to .62s), the pop and splash at .62, droplets pattering
+      // down, three ball bounces and a wave wash.
       'burn-summer': (k) => {
-        k.tone({ dur: 0.2, f0: 320, f1: 65, level: 0.38 });
-        k.tone({ at: 0.02, dur: 0.09, f0: 420, f1: 950, level: 0.1 });
-        k.noise({ dur: 0.5, type: 'bandpass', f0: 2600, f1: 700, q: 0.8, level: 0.42, attack: 0.005 });
-        k.noise({ at: 0.22, dur: 0.38, f0: 1800, f1: 400, level: 0.25, attack: 0.02 });
-        k.scatter(14, 0.35, 1.05, (at) => k.tone({ at, dur: 0.05, f0: 900 + Math.random() * 1300, f1: 1600 + Math.random() * 1600, level: 0.07 }));
+        k.noise({ at: 0.05, dur: 0.57, type: 'highpass', f0: 2500, f1: 7000, level: 0.09, attack: 0.4 });
+        k.scatter(14, 0.2, 0.62, (at) => k.noise({ at, dur: 0.012, type: 'highpass', f0: 5000, level: 0.12 }));
+        k.tone({ at: 0.62, dur: 0.14, f0: 280, f1: 90, level: 0.45, attack: 0.004 });
+        k.noise({ at: 0.62, dur: 0.4, type: 'bandpass', f0: 1400, f1: 500, q: 0.8, level: 0.5 });
+        k.scatter(16, 0.66, 1.3, (at) => k.tone({ at, dur: 0.05, f0: 1800 + Math.random() * 1200, f1: 900 + Math.random() * 500, level: 0.08 }));
+        [0.86, 1.1, 1.3].forEach((at, i) => k.tone({ at, dur: 0.1, f0: 190 - i * 25, f1: 80, level: 0.28 - i * 0.05 }));
+        k.noise({ at: 0.7, dur: 0.9, type: 'lowpass', f0: 900, f1: 300, level: 0.12, attack: 0.3 });
       },
       'burn-halloween': k => window.ShLevel3D && ShLevel3D.sound('burn-halloween', k),
       // Diwali (v409): twelve clay diyas light one after another (.04-.43s, a flame swell under them), a rocket
@@ -573,12 +585,17 @@
         });
         [1319, 1568, 1976].forEach((f, i) => k.tone({ at: 1.1 + i * 0.09, dur: 0.5, f0: f, level: 0.05 }));
       },
+      // Christmas (v410): ribbon zips as the bands wrap (.05-.30 and .20-.45s), a bow ping at .45, a rattle, the burst
+      // at .62 with a bell chord and a shimmer of sleigh bells.
       'burn-christmas': (k) => {
-        fireWhoosh(k, 0.5);
-        [0.05, 0.17, 0.29, 0.41, 0.53].forEach((at) => [2637, 3136, 3951].forEach((f) => k.tone({ at: at + Math.random() * 0.02, dur: 0.18, type: 'triangle', f0: f, level: 0.05 })));
+        [[0.05, 0.3], [0.2, 0.45]].forEach(([a, b]) => k.noise({ at: a, dur: b - a, type: 'bandpass', f0: 1200, f1: 4200, q: 1.5, level: 0.14, attack: 0.1 }));
+        k.tone({ at: 0.45, dur: 0.45, f0: 1760, level: 0.12 });
+        k.scatter(10, 0.46, 0.62, (at) => k.noise({ at, dur: 0.015, type: 'bandpass', f0: 3000, q: 3, level: 0.12 }));
+        k.noise({ at: 0.62, dur: 0.3, type: 'highpass', f0: 2500, f1: 7000, level: 0.4 });
+        k.tone({ at: 0.62, dur: 0.25, f0: 220, f1: 70, level: 0.4 });
+        [2093, 2637, 3136].forEach((f) => k.tone({ at: 0.64, dur: 0.7, type: 'triangle', f0: f, level: 0.07 }));
+        k.scatter(22, 0.7, 1.45, (at) => k.tone({ at, dur: 0.12, type: 'triangle', f0: 2800 + Math.random() * 1400, level: 0.05 }));
       },
-      // New Year (v409): three clock ticks (3-2-1 at .05 / .23 / .41, rising), a riser into midnight at .62 (cork
-      // pop, champagne fizz, a boom and crackle), confetti rustle and a chime run up to ~1.2s.
       'burn-newyear': (k) => {
         [0.05, 0.23, 0.41].forEach((at, i) => { k.tone({ at, dur: 0.07, type: 'square', f0: 900 + i * 220, f1: 700 + i * 220, level: 0.2 }); k.noise({ at, dur: 0.02, type: 'highpass', f0: 3500, level: 0.18 }); });
         k.noise({ at: 0.45, dur: 0.17, type: 'highpass', f0: 1500, f1: 7000, level: 0.15, attack: 0.15 });
@@ -603,21 +620,26 @@
         [1047, 1319, 1568, 1976, 2349].forEach((f, i) => k.tone({ at: 0.75 + i * 0.12, dur: 0.4, f0: f, level: 0.06 }));
         k.noise({ at: 0.65, dur: 0.6, type: 'highpass', f0: 5000, level: 0.04, attack: 0.15 });
       },
-      'burn-lunar': (k) => k.scatter(12, 0, 0.9, (at) => {
-        k.noise({ at, dur: 0.035, type: 'bandpass', f0: 1800, q: 1.5, level: 0.55 });
-        k.tone({ at, dur: 0.05, f0: 300, f1: 90, level: 0.25 });
-      }),
-      'burn-ramadan': (k) => { fireWhoosh(k, 0.35); [523.25, 1046.5, 1568].forEach((f, i) => k.tone({ dur: 1.4, f0: f, level: 0.14 / (i + 1), attack: 0.01 })); }
-    };
-
-    // Joker effect sounds, keyed by Joker effect id and timed to each
-    // animation's beats (JOKER_FX_MS = 1.5s): same loudness as the burns.
-    const jokerChime = ({ tone }, notes, at = 0, gap = 0.07, level = 0.12, type = 'triangle', dur = 0.35) =>
-      notes.forEach((f, i) => tone({ at: at + i * gap, dur, type, f0: f, level }));
-    const JOKER_SOUNDS = {
-      // Default: a card flip whoosh and a rising sparkle.
-      default: (k) => { k.noise({ dur: 0.25, type: 'bandpass', f0: 900, f1: 3200, q: 1.2, level: 0.3 }); k.tone({ dur: 0.2, f0: 140, f1: 60, level: 0.35 }); jokerChime(k, [784, 988, 1319, 1568], 0.14); },
-      // Jester's Grin: three mocking "ha" blips as the HA!s pop, bells on the hat.
+      // Lunar New Year (v410): eight firecracker pops at .12 + .07n (crack, bit of tone), a big boom and gong at .74 and
+      // gold coins clinking down to ~1.5s.
+      'burn-lunar': (k) => {
+        for (let i = 0; i < 8; i++) { const at = 0.12 + i * 0.07; k.noise({ at, dur: 0.035, type: 'highpass', f0: 3000, level: 0.45 }); k.tone({ at, dur: 0.05, type: 'square', f0: 800, f1: 200, level: 0.12 }); }
+        k.tone({ at: 0.74, dur: 0.5, f0: 120, f1: 36, level: 0.55, attack: 0.01 });
+        k.noise({ at: 0.74, dur: 0.35, type: 'lowpass', f0: 2500, f1: 200, level: 0.5 });
+        k.tone({ at: 0.75, dur: 1.0, f0: 330, f1: 310, level: 0.1, attack: 0.01 });
+        k.noise({ at: 0.77, dur: 0.6, type: 'highpass', f0: 4500, level: 0.18 });
+        k.scatter(10, 0.85, 1.5, (at) => k.tone({ at, dur: 0.14, f0: 3000 + Math.random() * 1600, level: 0.06 }));
+      },
+      // Ramadan (v410): a soft pad swell with two lantern chimes (.10 / .20s), a gentle boom at .60 as the card dissolves,
+      // a rising crescent chime run and drifting stardust shimmer.
+      'burn-ramadan': (k) => {
+        k.tone({ dur: 0.7, f0: 220, f1: 230, level: 0.06, attack: 0.35 });
+        [1175, 1397].forEach((f, i) => k.tone({ at: 0.1 + i * 0.1, dur: 0.5, f0: f, level: 0.08 }));
+        k.tone({ at: 0.6, dur: 0.4, f0: 130, f1: 80, level: 0.28, attack: 0.02 });
+        k.noise({ at: 0.6, dur: 0.3, type: 'bandpass', f0: 2500, f1: 800, q: 0.7, level: 0.25 });
+        [880, 1109, 1319, 1760].forEach((f, i) => k.tone({ at: 0.66 + i * 0.1, dur: 0.6, type: 'triangle', f0: f, level: 0.09 }));
+        k.scatter(18, 0.65, 1.5, (at) => k.tone({ at, dur: 0.15, f0: 2000 + Math.random() * 2200, level: 0.04 }));
+      },
       'joker-grin': (k) => {
         [0.3, 0.52, 0.74].forEach((at, i) => { k.tone({ at, dur: 0.11, type: 'square', f0: 620 - i * 60, f1: 420 - i * 60, level: 0.13 }); k.tone({ at: at + 0.09, dur: 0.1, type: 'square', f0: 560 - i * 60, f1: 380 - i * 60, level: 0.1 }); });
         k.scatter(6, 0.05, 0.3, (at) => k.tone({ at, dur: 0.18, type: 'triangle', f0: 2637 + Math.random() * 600, level: 0.06 }));
