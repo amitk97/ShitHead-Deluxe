@@ -3499,6 +3499,28 @@
         { transform: 'scale(1.02)', opacity: 1, offset: .82 },
         { transform: 'scale(.96) translateY(-16px)', opacity: 0 }
       ], 'ease-in-out'), { duration: total, easing: 'linear' });
+      // v420: the roar hits harder. The head and the whole screen shake as it peaks (same beats as the
+      // clip: it builds to ~960 on this clock and dies away by ~1500), a gold flash leaves the mouth, the
+      // eyes glow, and embers rise off the mane afterwards. Nothing here changes the painted layers.
+      const k = S / 520, SH0 = 480, SH1 = 1500;
+      const shake = (t, amp) => { const u = t < SH0 ? 0 : Math.min(1, (t - SH0) / 140) * Math.pow(Math.max(0, 1 - (t - SH0) / (SH1 - SH0)), 1.4);
+        return { x: (Math.sin(t * .071) * 5 + Math.sin(t * .19) * 3) * u * amp, y: (Math.sin(t * .083 + 1) * 4 + Math.sin(t * .23) * 2) * u * amp, r: Math.sin(t * .067 + 2) * 1.3 * u * amp }; };
+      const frames = (amp, unit) => Array.from({ length: 41 }, (_, i) => { const t = i / 40 * total, v = shake(t, amp);
+        return { offset: i / 40, transform: `translate(${v.x.toFixed(2)}${unit},${v.y.toFixed(2)}${unit}) rotate(${(v.r).toFixed(2)}deg)` }; });
+      bfxAnimate(head, frames(k, 'px'), { duration: total, easing: 'linear' });
+      if (typeof layer.animate === 'function') layer.animate(frames(1.4, 'px'), { duration: total / OWNER_VICTORY_SPEED, easing: 'linear' });
+      sfxFlash(layer, mx, my, k, 'rgba(254,240,138,.7)', S * .55, 600, roarAt);
+      for (let i = 0; i < 22; i++) {
+        const x0 = cx + bfxRand(-.42, .42) * S, y0 = cy + bfxRand(-.1, .38) * S, s = bfxRand(4, 9), up = bfxRand(.25, .55) * H, dx = bfxRand(-40, 40);
+        const em = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff7d6,#fbbf24 55%,transparent 72%)"></div>', x0, y0, s, s);
+        bfxAnimate(em, [{ transform: 'translate(0,0) scale(.4)', opacity: 0 }, { transform: `translate(${dx * .4}px,${-up * .3}px) scale(1)`, opacity: 1, offset: .2 }, { transform: `translate(${dx}px,${-up}px) scale(.3)`, opacity: 0 }],
+          { duration: bfxRand(1700, 2300), delay: roarAt + bfxRand(350, 1100), easing: 'ease-out' });
+      }
+      [[431, 393], [586, 393]].forEach((p) => {
+        const [x, y] = ofxPt(S, ox, oy, p);
+        const eg = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(254,240,138,.9),rgba(251,191,36,.35) 45%,transparent 70%);mix-blend-mode:screen"></div>', x, y, S * .22, S * .22);
+        bfxAnimate(eg, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.2)', opacity: 1, offset: .25 }, { transform: 'scale(.9)', opacity: .7, offset: .6 }, { transform: 'scale(1.4)', opacity: 0 }], { duration: 1100, delay: roarAt + 40, easing: 'ease-out' });
+      });
       // His eyes flash as he roars.
       [[431, 393], [586, 393]].forEach((p, i) => {
         const [x, y] = ofxPt(S, ox, oy, p);

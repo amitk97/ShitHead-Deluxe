@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v420: [['sparkle', 'Card Shower is now a fountain of your own cards, wearing your equipped card back and frame, and Origami Flock finishes sooner. Lion\'s Roar now shakes the screen, flashes from his mouth and sends embers rising.']],
       v419: [['sparkle', 'The Fortune Joker effect now starts with a cracked, curved fortune cookie: it shakes, splits open, and the gold Joker plate spins out of it.']],
       v418: [['sparkle', 'The Pumpkin Joker effect has more life: candle light that flickers and flares inside the pumpkin, ghost echoes trailing behind the ghost, a green flash and shock ring on the BOO, bats crossing the sky and mist along the ground.', WN_KEY]],
       v417: [['sparkle', 'The Vampire now bites where you can see it: the whole Joker card sits under him and he sinks his fangs into its top edge.']],
