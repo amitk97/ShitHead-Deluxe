@@ -664,9 +664,14 @@
       },
       // Jack-in-the-Box: crank clicks, the lid clacks open, a big spring boing.
       'joker-jackbox': (k) => {
-        k.scatter(5, 0, 0.18, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 2400, q: 6, level: 0.35 }));
-        k.noise({ at: 0.22, dur: 0.05, type: 'bandpass', f0: 900, q: 2, level: 0.4 });
-        k.tone({ at: 0.24, dur: 0.6, f0: 160, f1: 520, level: 0.3, vibrato: 60 });
+        // Crank clicks with a tinkling music-box tune while it winds, the lid clacks off at .4s, a big springy boing and a confetti pop.
+        k.scatter(9, 0, 0.36, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 2400, q: 6, level: 0.3 }));
+        [784, 880, 784, 659, 523, 659, 784].forEach((f, i) => k.tone({ at: 0.04 + i * 0.05, dur: 0.12, type: 'triangle', f0: f * 2, level: 0.06 }));
+        k.noise({ at: 0.4, dur: 0.05, type: 'bandpass', f0: 900, q: 2, level: 0.45 });
+        k.tone({ at: 0.4, dur: 0.7, f0: 140, f1: 560, level: 0.3, vibrato: 70 });
+        k.tone({ at: 0.46, dur: 0.6, type: 'sine', f0: 280, f1: 840, level: 0.1, vibrato: 50 });
+        k.scatter(8, 0.42, 0.9, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 4500, level: 0.12 }));
+        k.tone({ at: 0.5, dur: 0.3, type: 'triangle', f0: 1568, level: 0.08 });
       },
       // Puppet Master: wooden clacks as it swings and a plucked string.
       'joker-puppet': (k) => {
@@ -793,16 +798,25 @@
       },
       // Fortune Joker: a gong as the envelope opens and clinking coins.
       'joker-lunar': (k) => {
-        k.tone({ at: 0.28, dur: 1.1, f0: 110, f1: 104, level: 0.3, attack: 0.01 });
-        k.tone({ at: 0.28, dur: 0.9, f0: 247, f1: 240, level: 0.12 });
-        k.scatter(10, 0.52, 1.15, (at) => k.tone({ at, dur: 0.12, type: 'triangle', f0: 3000 + Math.random() * 1500, level: 0.07 }));
+        // Metal pings as the gold plate spins and slows, a clink and gong on landing at .73s, firecracker pops and falling coins.
+        [0.1, 0.25, 0.4, 0.55, 0.68].forEach((at, i) => k.tone({ at, dur: 0.18, type: 'sine', f0: 1568 - i * 90, level: 0.1 - i * 0.012 }));
+        k.noise({ dur: 0.7, type: 'bandpass', f0: 600, f1: 1800, q: 1.2, level: 0.12, attack: 0.3 });
+        k.tone({ at: 0.73, dur: 0.9, type: 'sine', f0: 196, f1: 180, level: 0.25 });
+        k.tone({ at: 0.73, dur: 0.5, type: 'triangle', f0: 392, level: 0.12 });
+        k.noise({ at: 0.73, dur: 0.06, type: 'highpass', f0: 3000, level: 0.35 });
+        [0.78, 0.86].forEach((at) => k.scatter(7, at, at + 0.22, (a) => k.noise({ at: a, dur: 0.015, type: 'highpass', f0: 4800, level: 0.17 })));
+        k.scatter(14, 0.75, 1.4, (at) => k.tone({ at, dur: 0.1, type: 'sine', f0: 2600 + Math.random() * 1400, level: 0.05 }));
       },
       // Cupid Joker: a harp flourish, the arrow's twang, a kiss.
       'joker-valentine': (k) => {
-        jokerChime(k, [523, 659, 784, 1047, 1319], 0.02, 0.05, 0.08);
-        k.tone({ at: 0.6, dur: 0.18, type: 'triangle', f0: 220, f1: 180, level: 0.2 });
-        k.noise({ at: 0.6, dur: 0.2, type: 'highpass', f0: 2000, f1: 5000, level: 0.12 });
-        k.tone({ at: 0.66, dur: 0.1, f0: 1400, f1: 2400, level: 0.12 });
+        // Heartbeat thumps (lub-dub, lub-dub), the arrow whooshing in and thunking home at .44s, the heart splits with a harp run, then a kiss.
+        [0.12, 0.2, 0.28, 0.36].forEach((at, i) => k.tone({ at, dur: 0.1, f0: i % 2 ? 75 : 95, f1: 45, level: 0.42 }));
+        k.noise({ at: 0.18, dur: 0.26, type: 'bandpass', f0: 500, f1: 3200, q: 1.2, level: 0.25, attack: 0.15 });
+        k.tone({ at: 0.44, dur: 0.1, f0: 220, f1: 90, level: 0.4 });
+        k.noise({ at: 0.44, dur: 0.04, type: 'bandpass', f0: 1400, q: 3, level: 0.4 });
+        [1047, 1319, 1568, 1976, 2349, 2637].forEach((f, i) => k.tone({ at: 0.5 + i * 0.05, dur: 0.45, type: 'sine', f0: f, level: 0.09 }));
+        k.noise({ at: 0.74, dur: 0.05, type: 'bandpass', f0: 1800, f1: 900, q: 4, level: 0.3 });
+        k.tone({ at: 0.75, dur: 0.1, type: 'sine', f0: 1200, f1: 500, level: 0.2 });
       },
       // Egg Joker: three wobble knocks, a crack and a happy pop.
       'joker-easter': (k) => {
@@ -822,7 +836,14 @@
         k.scatter(10, 0.3, 1.0, (at) => k.noise({ at, dur: 0.05, type: 'highpass', f0: 4500, level: 0.07 }));
       },
       // Lantern Joker: calm, soft bells as the lantern glows.
-      'joker-ramadan': (k) => [523.25, 783.99, 1046.5].forEach((f, i) => k.tone({ at: 0.3 + i * 0.14, dur: 1.0, f0: f, level: 0.12 / (i + 1), attack: 0.02 }))
+      'joker-ramadan': (k) => {
+        // A calm pad that swells, soft bells as each lantern lowers (.1, .22), a chime run as the star turns, a gentle bell for the Joker and shimmer.
+        k.tone({ dur: 1.4, type: 'triangle', f0: 196, f1: 220, level: 0.07, attack: 0.5 });
+        k.tone({ dur: 1.4, type: 'sine', f0: 294, level: 0.05, attack: 0.5 });
+        [0.1, 0.24, 0.38].forEach((at, i) => k.tone({ at, dur: 0.5, type: 'sine', f0: [880, 1175, 1397][i], level: 0.08 }));
+        [523.25, 783.99, 1046.5].forEach((f, i) => k.tone({ at: 0.38 + i * 0.14, dur: 1.0, f0: f, level: 0.12 / (i + 1), attack: 0.02 }));
+        k.scatter(10, 0.1, 1.2, (at) => k.tone({ at, dur: 0.2, type: 'sine', f0: 2800 + Math.random() * 1800, level: 0.035 }));
+      },
     };
 
     const audio = new SoundFX();
