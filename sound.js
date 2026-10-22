@@ -542,7 +542,6 @@
       'burn-lvl-hellfire-spiral': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-hellfire-spiral', k) : ShLevelBurns.sound('burn-lvl-hellfire-spiral', k)),
       'burn-lvl-royal-incineration': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-royal-incineration', k) : ShLevelBurns.sound('burn-lvl-royal-incineration', k)),
       'burn-lvl-shitstorm': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-shitstorm', k) : ShLevelBurns.sound('burn-lvl-shitstorm', k)),
-      // Seasonal burns
       // Valentine (v410): heartbeat thumps (.10-.38s), an arrow whoosh into the strike at .42, the burst at .50 with a
       // harp run and soft petal rustle.
       'burn-valentine': (k) => {
@@ -596,6 +595,8 @@
         [2093, 2637, 3136].forEach((f) => k.tone({ at: 0.64, dur: 0.7, type: 'triangle', f0: f, level: 0.07 }));
         k.scatter(22, 0.7, 1.45, (at) => k.tone({ at, dur: 0.12, type: 'triangle', f0: 2800 + Math.random() * 1400, level: 0.05 }));
       },
+      // New Year (v409): three clock ticks (3-2-1 at .05 / .23 / .41, rising), a riser into midnight at .62 (cork
+      // pop, champagne fizz, a boom and crackle), confetti rustle and a chime run up to ~1.2s.
       'burn-newyear': (k) => {
         [0.05, 0.23, 0.41].forEach((at, i) => { k.tone({ at, dur: 0.07, type: 'square', f0: 900 + i * 220, f1: 700 + i * 220, level: 0.2 }); k.noise({ at, dur: 0.02, type: 'highpass', f0: 3500, level: 0.18 }); });
         k.noise({ at: 0.45, dur: 0.17, type: 'highpass', f0: 1500, f1: 7000, level: 0.15, attack: 0.15 });
@@ -640,6 +641,16 @@
         [880, 1109, 1319, 1760].forEach((f, i) => k.tone({ at: 0.66 + i * 0.1, dur: 0.6, type: 'triangle', f0: f, level: 0.09 }));
         k.scatter(18, 0.65, 1.5, (at) => k.tone({ at, dur: 0.15, f0: 2000 + Math.random() * 2200, level: 0.04 }));
       },
+    };
+
+    // Joker effect sounds, keyed by Joker effect id and timed to each
+    // animation's beats (JOKER_FX_MS = 1.5s): same loudness as the burns.
+    const jokerChime = ({ tone }, notes, at = 0, gap = 0.07, level = 0.12, type = 'triangle', dur = 0.35) =>
+      notes.forEach((f, i) => tone({ at: at + i * gap, dur, type, f0: f, level }));
+    const JOKER_SOUNDS = {
+      // Default: a card flip whoosh and a rising sparkle.
+      default: (k) => { k.noise({ dur: 0.25, type: 'bandpass', f0: 900, f1: 3200, q: 1.2, level: 0.3 }); k.tone({ dur: 0.2, f0: 140, f1: 60, level: 0.35 }); jokerChime(k, [784, 988, 1319, 1568], 0.14); },
+      // Jester's Grin: three mocking "ha" blips as the HA!s pop, bells on the hat.
       'joker-grin': (k) => {
         [0.3, 0.52, 0.74].forEach((at, i) => { k.tone({ at, dur: 0.11, type: 'square', f0: 620 - i * 60, f1: 420 - i * 60, level: 0.13 }); k.tone({ at: at + 0.09, dur: 0.1, type: 'square', f0: 560 - i * 60, f1: 380 - i * 60, level: 0.1 }); });
         k.scatter(6, 0.05, 0.3, (at) => k.tone({ at, dur: 0.18, type: 'triangle', f0: 2637 + Math.random() * 600, level: 0.06 }));

@@ -13,7 +13,7 @@ const OFFLINE_ASSETS = [
   // Application code and styles, including their deployment version keys.
   '/game.css?v=0604afed619e',
   '/tailwind.css?v=a6876526974d',
-  '/sound.js?v=0b1bd213c924',
+  '/sound.js?v=21f2c3cee4a5',
   '/burn-effects.js?v=5630e3cba769',
   '/card-animations.js?v=0fe6bd1289f1',
   '/js/card-reference-data.js?v=e8e93ad152f4',
