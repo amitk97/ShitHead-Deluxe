@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v416: [['sparkle', 'The Vampire Joker effect now bites: he pulls back, lunges with his mouth wide, sinks his fangs into the Joker card and blood runs from the punctures.', WN_KEY]],
       v415: [['gear', 'Fixed the Vampire Joker effect running a little past its 1.5 second window.']],
       v414: [['sparkle', 'The Jack-in-the-Box, Lunar New Year, Valentine, Ramadan and Vampire Joker effects are rebuilt: a springing jester with a wound crank, a spinning gold fortune plate, an arrow that splits a beating heart, a moonlit lantern scene, and a cape that sweeps open.', WN_KEY]],
       v413: [['sparkle', 'The Magic, Christmas and Diwali Joker effects are rebuilt: a magician\'s hat with a wand, poof and fan of cards, a snow globe that shakes and shatters, and a rangoli ringed by twelve lighting lamps.', WN_KEY]],

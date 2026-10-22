@@ -12262,23 +12262,34 @@
     const JFX_BAT = sfxSvg(60, 30, `<path d="${JFX_BAT_WING}" fill="#1c1917" stroke="#f87171" stroke-width=".8"/><path d="${JFX_BAT_WING}" fill="#1c1917" stroke="#f87171" stroke-width=".8" transform="translate(60 0) scale(-1 1)"/>
       <ellipse cx="30" cy="16" rx="4.5" ry="6.5" fill="#1c1917"/><path d="M26.5 11l1-4 2 3 2-3 1 4Z" fill="#1c1917"/><circle cx="28.5" cy="14" r="1" fill="#ef4444"/><circle cx="31.5" cy="14" r="1" fill="#ef4444"/>`);
     function jfxVampire(host, g) {
-      const k = g.k, D = JOKER_FX_MS - 40, N = 40, cy = g.cy - 6 * k;
+      const k = g.k, D = JOKER_FX_MS - 40, N = 48, cy = g.cy - 6 * k, BITE = 730, B = BITE / D, cardY = cy + 130 * k;
       jfxScrim(host, 'rgba(127,29,29,.5)');
       // A pale moon, then the cape: two halves meet in the middle and sweep open to reveal him.
-      sfxPop(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 40% 38%,#f8fafc,#cbd5e1 55%,rgba(148,163,184,.25) 72%,transparent 76%)"></div>', g.cx, cy - 10 * k, 240 * k, 240 * k, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: .7, transform: 'scale(1)', offset: .3 }, { opacity: .5, offset: .82 }, { opacity: 0 }], D);
-      sfxFlash(host, g.cx, cy - 10 * k, k, 'rgba(248,250,252,.55)', 420, D - 100, 100);
-      const face = sfxSvg(120, 150, `<path d="M8 150 22 100 46 122 60 150ZM112 150 98 100 74 122 60 150Z" fill="#7f1d1d" stroke="#1c1917" stroke-width="3" stroke-linejoin="round"/>
+      sfxPop(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 40% 38%,#f8fafc,#cbd5e1 55%,rgba(148,163,184,.25) 72%,transparent 76%)"></div>', g.cx, cy - 40 * k, 240 * k, 240 * k, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: .7, transform: 'scale(1)', offset: .3 }, { opacity: .5, offset: .82 }, { opacity: 0 }], D);
+      sfxFlash(host, g.cx, cy - 40 * k, k, 'rgba(248,250,252,.55)', 420, D - 100, 100);
+      const faceSvg = (open) => sfxSvg(120, 150, `<path d="M8 150 22 100 46 122 60 150ZM112 150 98 100 74 122 60 150Z" fill="#7f1d1d" stroke="#1c1917" stroke-width="3" stroke-linejoin="round"/>
         <path d="M40 150 60 124 80 150Z" fill="#f8fafc"/>
         <ellipse cx="60" cy="76" rx="36" ry="44" fill="#e2e8f0" stroke="#1c1917" stroke-width="3"/>
         <path d="M22 70C16 26 104 26 98 70 90 50 76 46 60 64 44 46 30 50 22 70Z" fill="#111827"/>
         <path d="M36 70l16 5M84 70l-16 5" stroke="#1c1917" stroke-width="3.5" stroke-linecap="round"/>
         <ellipse cx="47" cy="82" rx="6.5" ry="4.5" fill="#dc2626"/><ellipse cx="73" cy="82" rx="6.5" ry="4.5" fill="#dc2626"/><circle cx="48" cy="81" r="1.5" fill="#fff"/><circle cx="74" cy="81" r="1.5" fill="#fff"/>
         <path d="M58 88l2 8 2-8" stroke="#94a3b8" stroke-width="2" fill="none"/>
-        <path d="M42 102Q60 116 78 102Q60 108 42 102Z" fill="#450a0a" stroke="#1c1917" stroke-width="2.5" stroke-linejoin="round"/>
-        <path d="M49 104l3 9 3-7ZM65 106l3 7 3-9Z" fill="#fff"/>`);
-      jfxHero(host, g, face, 150, 188, { y: cy, enter: 'fade', delay: 260 });
-      sfxFlash(host, g.cx - 14 * k, cy - 2 * k, k, 'rgba(239,68,68,.9)', 60, 380, 520);
-      sfxFlash(host, g.cx + 14 * k, cy - 2 * k, k, 'rgba(239,68,68,.9)', 60, 380, 520);
+        ${open ? '<ellipse cx="60" cy="108" rx="18" ry="15" fill="#450a0a" stroke="#1c1917" stroke-width="2.5"/><path d="M46 96l4 21 5-19ZM65 98l5 19 4-21Z" fill="#fff" stroke="#cbd5e1" stroke-width=".7"/>'
+          : '<path d="M42 102Q60 116 78 102Q60 108 42 102Z" fill="#450a0a" stroke="#1c1917" stroke-width="2.5" stroke-linejoin="round"/><path d="M49 104l3 9 3-7ZM65 106l3 7 3-9Z" fill="#fff"/>'}`);
+      // The Joker card he will bite, shown low on the stage.
+      const card = bfxAdd(host, JFX_CARD, g.cx, cardY, 100 * k, 143 * k);
+      bfxAnimate(card, Array.from({ length: N + 1 }, (_, i) => { const t = i / N, sh = t > B && t < B + .1 ? (i % 2 ? 1 : -1) * 6 * k * (1 - (t - B) / .1) : 0, o = t < .16 ? 0 : t < .24 ? (t - .16) / .08 : t > .86 ? Math.max(0, 1 - (t - .86) / .1) : 1;
+        return { offset: t, transform: `translate(${sh.toFixed(1)}px,${(t < .24 ? (1 - Math.max(0, (t - .16) / .08)) * 30 * k : 0).toFixed(1)}px)`, opacity: o }; }), { duration: D, easing: 'linear' });
+      // He pulls back, lunges onto the card with his mouth wide, bites (the head shakes), then draws away.
+      const vy = (t) => t < .3 ? 0 : t < B - .08 ? -16 * k * Math.sin(Math.PI / 2 * (t - .3) / (B - .38)) : t < B ? -16 * k + (57 * k) * Math.pow((t - (B - .08)) / .08, 2) : t < B + .16 ? 41 * k : t < B + .3 ? 41 * k * (1 - (t - B - .16) / .14) : 0;
+      const vs = (t) => t < B - .08 ? 1 : t < B ? 1 + .15 * ((t - (B - .08)) / .08) : t < B + .16 ? 1.15 : t < B + .3 ? 1.15 - .15 * ((t - B - .16) / .14) : 1;
+      const vis = (t) => Math.min(1, Math.max(0, (t - .17) / .08)) * (t > .86 ? Math.max(0, 1 - (t - .86) / .1) : 1);
+      const faceEl = (open) => {
+        const el = bfxAdd(host, faceSvg(open), g.cx, cy - 20 * k, 150 * k, 188 * k);
+        bfxAnimate(el, Array.from({ length: N + 1 }, (_, i) => { const t = i / N, sh = t > B && t < B + .14 ? (i % 2 ? 1 : -1) * 5 * k * (1 - (t - B) / .14) : 0, on = open ? (t >= B - .1 && t < B) : !(t >= B - .1 && t < B);
+          return { offset: t, transform: `translate(${sh.toFixed(1)}px,${vy(t).toFixed(1)}px) scale(${vs(t).toFixed(3)})`, opacity: on ? vis(t) : 0 }; }), { duration: D, easing: 'linear' });
+      };
+      faceEl(false); faceEl(true);
       const half = (sg) => {
         const el = bfxAdd(host, sfxSvg(100, 130, `<path d="M${sg > 0 ? 0 : 100} 4Q50 -8 ${sg > 0 ? 100 : 0} 10V130Q${sg > 0 ? 75 : 25} 106 50 130 ${sg > 0 ? 25 : 75} 106 ${sg > 0 ? 0 : 100} 130Z" fill="#991b1b" stroke="#111827" stroke-width="5" stroke-linejoin="round"/><path d="M${sg > 0 ? 28 : 72} 12V112M${sg > 0 ? 54 : 46} 8V118" stroke="#450a0a" stroke-width="3" opacity=".7"/><path d="M${sg > 0 ? 100 : 0} 10V130" stroke="#111827" stroke-width="12"/>`), g.cx + sg * 82 * k, cy - 6 * k, 165 * k, 215 * k);
         el.style.transformOrigin = sg > 0 ? '100% 50%' : '0% 50%';
@@ -12286,9 +12297,21 @@
           return { offset: t, transform: `scaleX(${(t < .02 ? t / .02 : 1) * (1 - ee * .86)}) skewY(${(-sg * ee * 10).toFixed(2)}deg)`, opacity: Math.min(1, t / .03) * o }; }), { duration: D, easing: 'linear' });
       };
       half(-1); half(1);
+      // The bite itself: a red flash, two fang punctures on the card with blood running from them.
+      sfxFlash(host, g.cx, cardY - 50 * k, k, 'rgba(239,68,68,.85)', 260, 460, BITE);
+      [-1, 1].forEach((sg) => {
+        const x = g.cx + sg * 13 * k, y = cardY - 52 * k;
+        const dot = bfxAdd(host, sfxDot('#7f1d1d', false), x, y, 7 * k, 7 * k);
+        bfxAnimate(dot, [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1)', offset: .06 }, { opacity: 1, offset: .85 }, { opacity: 0 }], { duration: D - BITE - 40, delay: BITE });
+        const drip = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:40% 40% 50% 50%;background:linear-gradient(#ef4444,#991b1b)"></div>', x, y + 3 * k, 4 * k, 12 * k);
+        drip.style.transformOrigin = '50% 0%';
+        bfxAnimate(drip, [{ transform: 'scaleY(.2)', opacity: 0 }, { transform: 'scaleY(1)', opacity: 1, offset: .15 }, { transform: `translateY(${60 * k}px) scaleY(1.6)`, opacity: 1, offset: .7 }, { transform: `translateY(${90 * k}px) scaleY(1)`, opacity: 0 }], { duration: 600, delay: BITE + 60 + (sg > 0 ? 90 : 0), easing: 'ease-in' });
+      });
+      sfxFlash(host, g.cx - 14 * k, cy - 22 * k, k, 'rgba(239,68,68,.9)', 60, 380, 300);
+      sfxFlash(host, g.cx + 14 * k, cy - 22 * k, k, 'rgba(239,68,68,.9)', 60, 380, 300);
       // Fog along the ground.
       for (let i = 0; i < 8; i++) {
-        const el = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(226,232,240,.45),transparent 70%)"></div>', g.cx + (i - 3.5) * 52 * k, cy + 105 * k, 120 * k, 56 * k);
+        const el = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(226,232,240,.45),transparent 70%)"></div>', g.cx + (i - 3.5) * 52 * k, cy + 125 * k, 120 * k, 56 * k);
         bfxAnimate(el, [{ transform: 'translateX(0)', opacity: 0 }, { opacity: 1, offset: .3 }, { transform: `translateX(${(i % 2 ? 40 : -40) * k}px)`, opacity: 0 }], { duration: 1000, delay: 200 + i * 30 });
       }
       for (let i = 0; i < 11; i++) {
@@ -12296,9 +12319,9 @@
         const bat = bfxAdd(host, JFX_BAT, g.cx, cy - 10 * k, w, w / 2);
         bfxAnimate(bat, [0, .125, .25, .375, .5, .625, .75, .875, 1].map((t, n) => ({
           transform: `translate(${Math.cos(a) * d * t}px,${Math.sin(a) * d * t - 30 * k * t}px) scale(${.3 + t * .9},${(n % 2 ? .45 : 1) * (.3 + t * .9)})`, opacity: t === 0 ? 0 : t > .85 ? 0 : 1
-        })), { duration: bfxRand(760, 880), delay: 440 + bfxRand(0, 120), easing: 'linear' });
+        })), { duration: bfxRand(560, 680), delay: BITE + bfxRand(0, 120), easing: 'linear' });
       }
-      jfxWord(host, g, 'MWAHAHA!', { color: '#ef4444', delay: 560, size: 40, y: g.cy + 138 * k });
+      jfxWord(host, g, 'BITE!', { color: '#ef4444', delay: BITE + 40, size: 46, y: g.cy - 150 * k });
     }
     // Red Card: the whistle blows and the referee holds up a red card with
     // the Joker on it. Flashbulbs pop in the crowd.

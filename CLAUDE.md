@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v416 — Vampire Joker bites (pushed straight to main)
+
+- `jfxVampire` now has a bite: the Joker card waits low (`cardY` cy+130k, drawn under him), he pulls back (.3-.5), lunges 57k with the OPEN-mouth face crossfaded in (`faceSvg(true)`), bites at 730ms (`BITE`; closed face with fangs, head shakes, red flash), two fang puncture dots and dripping blood are drawn over his face, bats burst from the bite, "BITE!" at the top. New `JOKER_SOUNDS['joker-vampire']` (lunge hiss, crunch + wet snap + thud at .73, drips, squeaks, low laugh). Everything ends inside 1.5s.
+
 ## Release checks for effect changes (22 Oct, after v414 shipped with a failing test)
 
 - Before ANY push, read the WHOLE output of the dev-test groups `Joker`, `Owner effects`, `sound`, `premium` (and `burn` for burns), not the last line: a `tail -1` once hid "No animation runs past the 1.5s window" and v414 went out failing (fixed in v415). Only "v305: Origami Fold…" and "Seasonal mail…" are known failures (both fail on `main`). Joker effects must also end inside `JOKER_FX_MS` (1.5s): count delay + duration of every particle.

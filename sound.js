@@ -733,10 +733,18 @@
       // Vampire: the cape's swoop, a dark organ chord as he appears, bat
       // squeaks and a low "mwahaha".
       'joker-vampire': (k) => {
-        k.noise({ dur: 0.4, type: 'bandpass', f0: 250, f1: 1400, q: 0.9, level: 0.6, attack: 0.12 });
+        // The cape's swoop, a dark organ chord as he appears, a hiss as he draws back, a rushing lunge, the BITE at .73s (crunch, wet snap, low thud), blood drips, bat squeaks and a low laugh.
+        k.noise({ dur: 0.4, type: 'bandpass', f0: 250, f1: 1400, q: 0.9, level: 0.5, attack: 0.12 });
         [147, 175, 220].forEach((f) => k.tone({ at: 0.3, dur: 0.95, type: 'triangle', f0: f, level: 0.07, attack: 0.05 }));
-        k.scatter(10, 0.45, 1.3, (at) => k.tone({ at, dur: 0.05, f0: 3200 + Math.random() * 1800, f1: 4200 + Math.random() * 1500, level: 0.05 }));
-        [0.58, 0.74, 0.9, 1.06].forEach((at, i) => k.tone({ at, dur: 0.12, type: 'sawtooth', f0: 210 - i * 14, f1: 170 - i * 14, level: 0.26, vibrato: 12 }));
+        k.noise({ at: 0.45, dur: 0.15, type: 'highpass', f0: 3500, level: 0.14 });
+        k.noise({ at: 0.55, dur: 0.18, type: 'bandpass', f0: 400, f1: 2600, q: 1, level: 0.35, attack: 0.1 });
+        k.noise({ at: 0.73, dur: 0.05, type: 'bandpass', f0: 2400, q: 2, level: 0.5 });
+        k.tone({ at: 0.73, dur: 0.14, f0: 190, f1: 55, level: 0.5 });
+        k.tone({ at: 0.74, dur: 0.07, type: 'square', f0: 900, f1: 300, level: 0.12 });
+        k.scatter(4, 0.75, 0.85, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 3500, level: 0.15 }));
+        [0.9, 1.0].forEach((at, i) => k.tone({ at, dur: 0.1, type: 'sine', f0: 1000 - i * 200, f1: 500, level: 0.07 }));
+        k.scatter(8, 0.76, 1.3, (at) => k.tone({ at, dur: 0.05, f0: 3200 + Math.random() * 1800, f1: 4200 + Math.random() * 1500, level: 0.05 }));
+        [1.02, 1.17, 1.32].forEach((at, i) => k.tone({ at, dur: 0.12, type: 'sawtooth', f0: 200 - i * 16, f1: 160 - i * 16, level: 0.2, vibrato: 12 }));
       },
       // Red Card: two short whistle blasts and a long one as the card goes
       // up, then the crowd and camera clicks.
