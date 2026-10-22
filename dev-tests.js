@@ -1872,6 +1872,17 @@ async function runDevTestSuite() {
       assertTrue(xpBoostNow() === null && xpBoostNote() === '', 'Nothing off-season');
     } finally { [seasonalNowOverride, xpFeatureOn] = was; }
   });
+  await test('v405: the Test Lab card is only in the carousel for the AmitK account', () => {
+    const has = () => !!document.querySelector('#modeCarousel .mc-track [data-mc-mode="lab"]'), was = currentUser;
+    try {
+      assertTrue(!has(), 'A normal player has no Test Lab card');
+      currentUser = { email: 'amirk2197@googlemail.com', metadata: {} }; updateHamburgerAccountLabel();
+      assertTrue(has() && document.querySelectorAll('#modeCarousel .mc-track .mc-card').length === 8, 'AmitK gets an eighth card');
+      assertTrue(ShHomeCarousel.turnToMode('lab') && !!window.ShTestLab && ShTestLab.allowed(), 'It turns to and the lab opens for AmitK');
+      currentUser = { email: 'someone@example.com', metadata: {} }; updateHamburgerAccountLabel();
+      assertTrue(!has() && !ShTestLab.allowed(), 'Anyone else loses it and cannot open the lab');
+    } finally { currentUser = was; updateHamburgerAccountLabel(); }
+  });
   await test('Every game mode, including the coming and pinned ones, has its own colour (v348)', () => {
     const live = [...document.querySelectorAll('#modeCarousel .mc-card[data-mc-mode]')].filter(c => !/^pin/.test(c.dataset.mcMode)).map(c => c.style.getPropertyValue('--mc-tone').trim().toLowerCase());
     const coming = Object.values(ShHomeCarousel.pinTones()).map(t => t.toLowerCase());

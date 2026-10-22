@@ -14680,6 +14680,7 @@
       document.getElementById('menuChangelogBtn')?.classList.toggle('hidden', !isGameOwner());
       document.getElementById('menuXpSwitchBtn')?.classList.toggle('hidden', !isGameOwner());
       document.getElementById('menuUnlockAllBtn')?.classList.toggle('hidden', !currentUser || !isAmitkTestingAccount({}));
+      window.ShHomeCarousel?.setLab?.(!!currentUser && isAmitkTestingAccount({})); // the Test Lab card (v405)
       drawerAvatar?.classList.toggle('hidden', !currentUser);
       const homeAvatar = document.getElementById('homeNameAvatar');
       if (homeAvatar) {

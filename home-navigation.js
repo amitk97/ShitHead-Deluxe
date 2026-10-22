@@ -152,8 +152,11 @@
       const renumber = () => cards.forEach((c, i) => { const n = c.querySelector('.mc-num'); if (n) n.textContent = String(i + 1); });
       const syncOrderDom = () => { cards.forEach((c) => track.appendChild(c)); renumber(); resetBtn.classList.toggle('hidden', cards.every((c, i) => c.dataset.mcMode === defaultOrder[i])); };
       const applyOrder = (list) => {
-        if (!Array.isArray(list) || list.length !== cards.length || !defaultOrder.every((m) => list.includes(m))) return false;
-        cards.sort((a, b) => list.indexOf(a.dataset.mcMode) - list.indexOf(b.dataset.mcMode));
+        if (!Array.isArray(list)) return false;
+        const l = list.filter((m) => defaultOrder.includes(m)); // a mode that came or went (the Test Lab) never spoils the saved order
+        defaultOrder.forEach((m) => { if (!l.includes(m)) l.push(m); });
+        if (l.length !== cards.length) return false;
+        cards.sort((a, b) => l.indexOf(a.dataset.mcMode) - l.indexOf(b.dataset.mcMode));
         return true;
       };
       try { applyOrder(JSON.parse(localStorage.getItem(ORDER_KEY))); } catch (e) {}
@@ -232,6 +235,7 @@
           paint();
           if (immediate) setModePage(m); else enterModePage(card, m);
         } else if (m === 'more') { if (immediate) setModePage('more'); else enterModePage(card, 'more'); }
+        else if (m === 'lab') { window.ShTestLab?.open(); }
         else if (readPins()[m] === 'puzzles' && window.ShPuzzles) { window.ShPuzzles.open(); }
         else if (readPins()[m] === 'twos') { document.querySelector('[data-open-twos]')?.click(); }
         else openPinPicker(card);
@@ -552,7 +556,26 @@
       window.addEventListener('touchend', endTouch, { passive: false });
       window.addEventListener('touchcancel', endTouch, { passive: false });
       // For the welcome tour: turn to a mode's card (and say whether it exists).
-      window.ShHomeCarousel = { openMode: (m) => { const c = cards.find((x) => x.dataset.mcMode === m); if (c) open(c, { immediate: true }); }, pinTones: () => Object.fromEntries(Object.entries(PIN_MODES).map(([k, v]) => [k, v[2]])), repaintPins: () => paintPins(), turnToMode: (m) => { const i = cards.findIndex((c) => c.dataset.mcMode === m); if (i < 0) return false; turnTo(i); return true; } };
+      // § Test Lab card (v405): only the AmitK account has it (app.js calls setLab from the account label).
+      let labCard = null;
+      function setLab(on) {
+        if (on === !!labCard) return;
+        if (on) {
+          labCard = document.createElement('div');
+          labCard.className = 'mc-card'; labCard.setAttribute('role', 'button'); labCard.tabIndex = -1; labCard.setAttribute('aria-pressed', 'false');
+          labCard.dataset.mcMode = 'lab'; labCard.style.setProperty('--mc-tone', '#e879f9');
+          labCard.innerHTML = '<span class="mc-num" aria-hidden="true"></span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3M7.5 15h9"/></svg><span class="mc-name">Test Lab</span><span class="mc-sub">Effects sandbox</span><button type="button" class="mc-go" data-mc-go>Go →</button>';
+          labCard.dataset.mc = String(cards.length + 1);
+          cards.push(labCard); defaultOrder.push('lab');
+          try { applyOrder(JSON.parse(localStorage.getItem(ORDER_KEY))); } catch (e) {}
+          syncOrderDom();
+        } else {
+          cards.splice(cards.indexOf(labCard), 1); defaultOrder.splice(defaultOrder.indexOf('lab'), 1);
+          labCard.remove(); labCard = null; focus = Math.min(focus, cards.length - 1); syncOrderDom();
+        }
+        paint();
+      }
+      window.ShHomeCarousel = { setLab, openMode: (m) => { const c = cards.find((x) => x.dataset.mcMode === m); if (c) open(c, { immediate: true }); }, pinTones: () => Object.fromEntries(Object.entries(PIN_MODES).map(([k, v]) => [k, v[2]])), repaintPins: () => paintPins(), turnToMode: (m) => { const i = cards.findIndex((c) => c.dataset.mcMode === m); if (i < 0) return false; turnTo(i); return true; } };
       window.resetModeCarousel = () => {
         finishExpand(); endDrag({ type: 'cancel' }); stopHold(); touchId = null; lastTap = null; swiped = false;
         modePanelObservers.forEach(observer => observer.takeRecords());
@@ -577,7 +600,7 @@
         if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName || '') || e.target?.isContentEditable) return;
         if (typeof tutorialActive !== 'undefined' && tutorialActive) return;
         if (typeof topBackLayer === 'function' && topBackLayer()) return;
-        if (/^[1-7]$/.test(e.key)) { turnTo(Number(e.key) - 1); e.preventDefault(); }
+        if (/^[1-8]$/.test(e.key)) { turnTo(Number(e.key) - 1); e.preventDefault(); }
         else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight')
           && (box.contains(e.target) || e.target === document.body || !e.target)) {
           if (turnTo(focus + (e.key === 'ArrowLeft' ? -1 : 1)) && box.contains(e.target)) cards[focus].focus({ preventScroll: true });
