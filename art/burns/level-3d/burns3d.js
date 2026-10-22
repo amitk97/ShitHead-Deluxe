@@ -273,9 +273,9 @@ void main(){
       const K = S.artK, rise = ease((t - .18) / .46), collapse = smooth(1.38, 1.86, t), g = (.25 + .75 * rise) * (1 - .8 * collapse);
       return { t, K, g, H: 2.2 * K * g, R0: 1.22 * K * g, lean: K * (.12 * Math.sin(t * 3.6 + .4) + .1 * smooth(.4, .7, t) * Math.sin(t * 11)) * rise * (1 - collapse), rise, collapse };
     };
-    // The whole tornado spins like the Tasmanian Devil: one speed curve drives the coils and the head (rad/s, winds up .36-.66s, down 1.28-1.55s).
+    // The whole tornado spins like the Tasmanian Devil: one speed curve drives the coils and the head (rad/s, winds up .8-.98s after the face has had its cheeky grin, down 1.32-1.58s).
     // It is scaled so the head has made a whole number of turns by 1.6s and faces us again for the grin and the stare.
-    const spinW = t => 44 * smooth(.36, .66, t) * (1 - smooth(1.28, 1.55, t));
+    const spinW = t => 52 * smooth(.8, .98, t) * (1 - smooth(1.32, 1.58, t));
     const spinI = t => { let a = 0; for (let x = 0; x < t; x += .02) a += spinW(x + .01) * Math.min(.02, t - x); return a; };
     let spinK = 1; { const e = spinI(1.6); spinK = Math.max(1, Math.round(e / (Math.PI * 2))) * Math.PI * 2 / e; }
     S.spin = t => ({ th: spinI(Math.min(t, 1.6)) * spinK, w: spinW(t) * spinK });
@@ -932,7 +932,7 @@ void main(){
       put(out.artFront, near);
       if (R.art) {
         const hl = S.fun(t - .09), hx = hl.lean + .04 * K * Math.sin(t * 5.3) * rise, top = FLOOR + .04 + H;
-        const fw = 2.8 * K * g, fh = fw * 477 / 741, st = 1 + .08 * bump(T, T + .08, T + .26) - .05 * bump(T + .26, T + .34, T + .55), sx = 1 / Math.sqrt(st), roll = .35 * (hl.lean / (.12 * K + 1e-6)) * .12 + .03 * Math.sin(t * 3.6 - .2);
+        const fw = 2.8 * K * g, fh = fw * 477 / 741, st = 1 + .08 * bump(T, T + .08, T + .26) - .05 * bump(T + .26, T + .34, T + .55) + .06 * bump(.46, .56, .8) * Math.abs(Math.sin((t - .46) * 13)), sx = 1 / Math.sqrt(st), roll = .35 * (hl.lean / (.12 * K + 1e-6)) * .12 + .03 * Math.sin(t * 3.6 - .2) + .1 * bump(.46, .54, .82) * Math.sin((t - .46) * 24);
         const by = top - .05 * fh, cxh = hx, cyh = by + fh * st / 2, c = Math.cos(roll), sn = Math.sin(roll);
         const rot = (x, y) => [cxh + x * c - y * sn, cyh + x * sn + y * c];
         const hw = fw * sx / 2, hh2 = fh * st / 2, STRIPS = 32, U0 = .5693, U1 = .9312, V0 = .0156, V1 = .4814, dep = .5;
@@ -940,9 +940,11 @@ void main(){
         // Where it looks: at the card as it is lifted, darting about as the card is torn and the matter flies, a hard stare at us on the grin, then down at the collapsing pile.
         const hsh = (n, k) => { const x = Math.sin(n * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
         const dart = (n, k) => hsh(n, k) * 2 - 1, n = Math.floor(t / .16), f = smooth(0, .05, t - n * .16);
-        const w1 = smooth(.55, .7, t) * (1 - smooth(1.15, 1.3, t)), w2 = bump(1.2, 1.32, 1.5), w3 = smooth(1.45, 1.7, t);
+        const w1 = smooth(.9, 1.0, t) * (1 - smooth(1.15, 1.3, t)), wc = bump(.4, .5, .82), w2 = bump(1.2, 1.32, 1.5), w3 = smooth(1.45, 1.7, t);
         let gx = .25 * Math.sin(t * 9) * (1 - smooth(.3, .66, t)), gy = .9 - .6 * smooth(.3, .66, t);
         gx += w1 * ((dart(n - 1, 1) + (dart(n, 1) - dart(n - 1, 1)) * f) - gx); gy += w1 * ((dart(n - 1, 2) + (dart(n, 2) - dart(n - 1, 2)) * f) - gy);
+        // The cheeky grin: it looks straight at us, then flicks its eyes sideways with a wiggle of the head, before the spin takes it.
+        gx += wc * (.7 * smooth(.62, .67, t) * (1 - smooth(.74, .79, t)) - gx); gy += wc * (-.12 - gy);
         gx += w2 * (.15 - gx); gy += w2 * (-.1 - gy); gx += w3 * (-gx); gy += w3 * (.9 - gy);
         gx += .08 * Math.sin(t * 13); gy += .06 * Math.sin(t * 11 + 1);
         
@@ -1485,9 +1487,12 @@ void main(){
       k.noise({ at: 1.38, dur: .48, type: 'bandpass', f0: 950, f1: 160, q: .8, level: .10, attack: .04 });
       [1.57,1.72,1.84].forEach((at,n) => k.tone({ at, dur: .13, f0: 1900+n*330, f1: 1700+n*330, level: .022-n*.004, attack: .006 }));
       // the whirl: a wind that climbs with the spin (.36-1.0s) and falls away as it winds down (1.2-1.6s), and a soft sweep each time the face comes round (the 6 turns land at .66 .81 .96 1.11 1.26 1.54s)
-      k.noise({ at: .36, dur: .8, type: 'bandpass', f0: 260, f1: 1150, q: 1.1, level: .075, attack: .3 });
-      k.noise({ at: 1.18, dur: .45, type: 'bandpass', f0: 1100, f1: 240, q: 1.0, level: .05, attack: .05 });
-      [.661,.812,.962,1.113,1.264,1.54].forEach((at,n) => k.noise({ at: at - .04, dur: .09, type: 'lowpass', f0: 1400 - n * 110, f1: 300, level: .045, attack: .03 }));
+      k.noise({ at: .8, dur: .5, type: 'bandpass', f0: 260, f1: 1150, q: 1.1, level: .075, attack: .16 });
+      k.noise({ at: 1.3, dur: .35, type: 'bandpass', f0: 1100, f1: 240, q: 1.0, level: .05, attack: .04 });
+      [1.002,1.114,1.226,1.338,1.58].forEach((at,n) => k.noise({ at: at - .04, dur: .09, type: 'lowpass', f0: 1400 - n * 130, f1: 300, level: .045, attack: .03 }));
+      // the cheeky grin before the spin (.4-.8): a sly little heh-heh as it looks at us, a quick slide as the eyes flick sideways
+      [.5,.6].forEach((at,n) => k.tone({ at, dur: .08, type: 'triangle', f0: 330 + n * 40, f1: 470 + n * 50, level: .04, attack: .01, vibrato: 16 }));
+      k.tone({ at: .66, dur: .12, type: 'sine', f0: 620, f1: 300, level: .03, attack: .01 });
       // wet splats as the lumps land
       [.98,1.12,1.22,1.33,1.46,1.58].forEach((at,n) => { k.noise({ at, dur: .09, type: 'lowpass', f0: 900, f1: 220, level: .05, attack: .004 }); k.tone({ at, dur: .1, f0: 210-n*14, f1: 80, level: .045, attack: .004 }); });
     },
