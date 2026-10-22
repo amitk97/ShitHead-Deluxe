@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const sources = [...html.matchAll(/<(?:script|link)\b[^>]*\b(?:src|href)="([^"]+)"[^>]*>/g)]
@@ -22,6 +23,10 @@ const offline = vm.runInContext('OFFLINE_ASSETS', context);
 for (const src of sources) {
   assert(fs.existsSync(path.join(root, src.split('?')[0])), 'missing ' + src);
   assert(offline.includes('/' + src), 'not precached: ' + src);
+  // Every script/style URL carries its content hash, so an edited file always gets a new URL (v406: a hand-numbered
+  // burns3d.js ?v= was not bumped and phones kept the old engine). Fix with: node tools/stamp-assets.js
+  const want = crypto.createHash('sha256').update(fs.readFileSync(path.join(root, src.split('?')[0]))).digest('hex').slice(0, 12);
+  assert.equal(src.split('?v=')[1], want, 'stale or hand-numbered ?v= (run node tools/stamp-assets.js): ' + src);
   assert(vm.runInContext('isCachedAsset(new URL(' + JSON.stringify('/' + src) + ', self.location.origin))', context), 'no offline handler: ' + src);
 }
 for (const url of ['/__/auth/handler', '/functions/economy', '/users/alice', 'https://database.test/users.json']) {
