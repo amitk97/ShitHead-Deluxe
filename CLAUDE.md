@@ -6,6 +6,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v404 — Ice Shatter, Paint Splats, Smoke Show rebuilt (owner approved the frames)
+
+- `burn-effects.js` (`bfxIce`, `bfxPaint`, `bfxSmoke`, shared `pfxKit`): DOM/SVG burns on the real top card via `procBurnStage`, one 2s clock, keyframes sampled every 1/100s. Ice Shatter is now a shape burn (it was the generic ember burst): frost ferns, crystals, cracks at .62s, ~70 shards at .86s. Paint Splats: `PAINT_HITS` (11 impact times, the sound uses the same), `pntBlob` splats, drips, the card slides off at ~1.45s. Smoke Show: lumpy three-lobe lit puffs, wisps, embers, soot. New `BURN_SOUNDS` recipes for all three. Frames: `burn-frames.js` method (pause `.pfx-layer` animations). Dev test for the Custom burn preview now accepts `.bfx`.
+
 ## v403 — ShitStorm spirals are fat wet poo rolls joined to the head (owner approved the frames)
 
 - `S.storm` coils (shader k 10) are 3 thick rolls (turns 1.5, `hh` .64 of the pitch), textured from the head's own painting (atlas patch u .6815-.8035, v .1055-.1907, mirrored along the roll) with a wet specular streak; light is `.74 + .36 * lit` so the colour matches the head. They run to `UMAX` 1.07 (under the head, which draws over them), the funnel top is wider (R0 1.42), and their top follows the head's sway (`lagX`). While the head spins it is pointed (`rings` taper) and a tapering spiral curl (`crownNear` and far pieces) comes out of the tip, fading with `shadeAmt * faceOn`. `burns3d.js` `?v=324`. Frames: copy `tools/shitstorm-browser-test.js` with a new time list.

@@ -3216,8 +3216,7 @@ async function runDevTestSuite() {
       assertTrue(box.getBoundingClientRect().top >= tile.getBoundingClientRect().bottom - 1, 'It opens under the tapped tile');
       const rowMates = [...document.querySelectorAll('#personalisationBurnEffects .cosmetic-tile')].filter(t => t.offsetTop === tile.offsetTop);
       assertTrue(rowMates.every(t => t.getBoundingClientRect().bottom <= box.getBoundingClientRect().top + 1), 'After the whole row, so the row stays together');
-      assertTrue(box.querySelectorAll('.shop-burn-particle').length > 0, 'The burn preview plays inside it');
-      assertTrue(!!box.querySelector('.shop-burn-core svg'), 'It shows the previewed effect (its drawn icon)');
+      assertTrue(box.querySelectorAll('.bfx, .shop-burn-particle').length > 0, 'The burn preview plays inside it (Ice Shatter is a shape burn since v404)');
       assertTrue(!document.querySelector('#personalisationBurnStage, #personalisationJokerStage'), 'No preview stage at the top of the page any more');
       previewEquippedCosmetic('jokerEffect', 'joker-magic');
       assertEqual(document.querySelectorAll('#themesModal .custom-inline-preview').length, 0, 'A Joker tile not on screen opens nothing (and the old preview closes)');

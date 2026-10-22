@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v404: [['fire', 'Ice Shatter, Paint Splats and Smoke Show are rebuilt: frost and a glassy shatter, wet paint splats that run down the card, and billowing lit smoke.', WN_KEY]],
       v403: [['fire', 'The ShitStorm now has thick, wet poo spirals that run up into its head, and the head gets a pointed spiral tip while it spins.', WN_KEY]],
       v402: [['fire', 'The Hellfire Spiral is now a 3D flaming tornado of fire ribbons with smoke, and the ShitStorm coils turn together with its head.', WN_KEY]],
       v401: [['fire', 'The home screen shrinks to fit short phones, and the ShitStorm card is easier to read.']],
