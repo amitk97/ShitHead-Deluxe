@@ -459,6 +459,226 @@
       }
       end(lastAnim);
     }
+    // ---- v406 procedural burns, batch 2: Electric Blast, Inferno Sweep, Default Burn, Smoke Burst ----
+    // Same kit as v404 (`pfxKit`, one 2s clock, sampled keyframes) on the real top card; the painted-layer
+    // versions are retired (their ids are `iconOnly` in ShLevel3D: tile + nothing else). Sounds: BURN_SOUNDS.
+    const FIRE_PAL = ['#7f1d1d', '#f97316', '#fde68a'];
+    const pfxFlame = (pal, uid) => `<svg viewBox="0 0 40 100" width="100%" height="100%" style="overflow:visible"><defs><linearGradient id="pf${uid}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${pal[0]}" stop-opacity=".25"/><stop offset=".25" stop-color="${pal[1]}" stop-opacity=".95"/><stop offset=".7" stop-color="${pal[2]}" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><path d="M20 100C6 96 2 78 8 62C12 50 10 38 16 22C18 30 20 34 22 30C26 20 24 10 20 0C32 14 38 34 36 52C35 64 38 74 34 86C31 96 26 100 20 100Z" fill="url(#pf${uid})"/><path d="M20 98C13 95 12 84 15 75C17 69 17 62 20 54C22 62 25 66 25 74C27 82 27 94 20 98Z" fill="#fffbeb" opacity=".85"/></svg>`;
+    // One flame tongue: o = {x, y (number or t => number), w, h, t0, t1, z, pal}; sways, flickers, lives t0..t1.
+    function pfxFlameEl(st, kit, o) {
+      const { add, fr, clamp, rand } = kit, el = add(`left:${o.x - o.w / 2}px;top:${-o.h}px;width:${o.w}px;height:${o.h}px;z-index:${o.z || 4};mix-blend-mode:screen;transform-origin:50% 100%`, pfxFlame(o.pal || FIRE_PAL, ++pfxSeq));
+      const f1 = rand(9, 15), f2 = rand(5, 8), ph = rand(0, 6.3), sw = rand(6, 14);
+      return st.anim(el, fr(t => {
+        const life = clamp((t - o.t0) / .15) * (1 - clamp((t - o.t1) / .3)), by = typeof o.y === 'function' ? o.y(t) : o.y;
+        return { opacity: life > 0 ? Math.min(1, life * 1.3) : 0, transform: `translateY(${by.toFixed(1)}px) skewX(${(Math.sin(t * f2 + ph) * sw).toFixed(2)}deg) scale(${(life * (1 + .12 * Math.sin(t * f1 + ph))).toFixed(3)},${(life * (1 + .3 * Math.sin(t * f1 * 1.3 + ph * 2))).toFixed(3)})` };
+      }));
+    }
+    // The card breaking into jittered-grid shards at t0 (no 3D turn: the back never shows). o: {t0, ip, cols, rows, speed, edge, tint(i)}.
+    function pfxShatter(st, kit, o) {
+      const { W, H, cx, cy, face } = st, { rand, sm, fr, add, D } = kit, dt = D / PFX_N, cols = o.cols || 5, rows = o.rows || 7, ip = o.ip, pts = [];
+      for (let r = 0; r <= rows; r++) { pts.push([]); for (let c = 0; c <= cols; c++) pts[r].push([c / cols * W + (c && c < cols ? rand(-.32, .32) * W / cols : 0), r / rows * H + (r && r < rows ? rand(-.32, .32) * H / rows : 0)]); }
+      const tris = [];
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const a = pts[r][c], b = pts[r][c + 1], d = pts[r + 1][c], e = pts[r + 1][c + 1];
+        tris.push(...(Math.random() < .5 ? [[a, b, e], [a, e, d]] : [[a, b, d], [b, e, d]]));
+      }
+      tris.forEach((tri, i) => {
+        const c = [(tri[0][0] + tri[1][0] + tri[2][0]) / 3, (tri[0][1] + tri[1][1] + tri[2][1]) / 3], dx = c[0] - ip[0], dy = c[1] - ip[1], dl = Math.hypot(dx, dy) || 1;
+        const sp = H * rand(.7, 2.3) * (o.speed || 1) * (1.15 - Math.min(1, dl / H) * .6);
+        let vx = dx / dl * sp + rand(-.2, .2) * H, vy = dy / dl * sp - H * rand(.1, .9), px = 0, py = 0, spin = rand(-8, 8), rz = 0, onFloor = false;
+        const floor = cy + H * rand(.5, .85) - (cy - H / 2 + c[1]), wx = rand(2.5, 6), wy = rand(2.5, 6), ph = rand(0, 6.3), fade0 = 1.5 + rand(0, .25);
+        const el = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;transform-origin:${c[0].toFixed(1)}px ${c[1].toFixed(1)}px`);
+        const clip = document.createElement('div');
+        clip.style.cssText = `position:absolute;inset:0;clip-path:polygon(${tri.map(p => `${p[0].toFixed(1)}px ${p[1].toFixed(1)}px`).join(',')})`;
+        const tint = document.createElement('div');
+        tint.style.cssText = `position:absolute;inset:0;background:${o.tint(i)}`;
+        clip.append(face(), tint);
+        el.appendChild(clip);
+        if (o.edge) { const e = document.createElement('div'); e.style.cssText = 'position:absolute;inset:0'; e.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="position:absolute;inset:0"><polygon points="${tri.map(p => p.join(',')).join(' ')}" fill="none" stroke="${o.edge}" stroke-opacity=".9" stroke-width="${Math.max(.8, H * .009)}" stroke-linejoin="round"/></svg>`; el.appendChild(e); }
+        st.anim(el, fr(t => {
+          if (t < o.t0) return { opacity: 0, transform: 'none' };
+          if (t - dt >= o.t0 - 1e-6) { vy += H * 3.4 * dt; px += vx * dt; py += vy * dt; rz += spin * dt; if (py > floor) { py = floor; vy = -Math.abs(vy) * .32; vx *= .72; spin *= .6; onFloor = true; } }
+          const tau = t - o.t0, damp = onFloor ? Math.max(0, 1 - tau / .9) : 1, f = sm(fade0, fade0 + .4, t);
+          return { opacity: 1 - f, transform: `translate(${px.toFixed(2)}px,${py.toFixed(2)}px) rotateZ(${(rz * 57.3).toFixed(1)}deg) rotateX(${(60 * Math.sin(wx * tau + ph) * damp).toFixed(1)}deg) rotateY(${(60 * Math.sin(wy * tau + ph) * damp).toFixed(1)}deg) scale(${(1 - .35 * f).toFixed(3)})` };
+        }));
+      });
+    }
+    const PFX_LOBES = [[.5, .5, .8], [.3, .6, .6], [.7, .58, .62], [.5, .3, .55], [.28, .4, .5]];
+    const pfxPuff = (tone) => { const [l, m, d] = SMOKE_TONES[tone]; return PFX_LOBES.map(([u, v, f]) => `<div style="position:absolute;left:${(u - f / 2) * 100}%;top:${(v - f / 2) * 100}%;width:${f * 100}%;height:${f * 100}%;border-radius:50%;background:radial-gradient(circle at 36% 30%,${l} 0,${m} 45%,${d} 78%,rgba(0,0,0,0) 82%)"></div>`).join(''); };
+
+    // Electric Blast: three forked bolts strike the real card from above (.12, .30, .50s; each bolt re-jags every
+    // 32ms through five drawn variants), the sky flashes, the card shows as an x-ray negative and shakes; the third
+    // strike overloads it into charred, blue-edged shards; arcs lash along the floor, sparks fly, scorch and smoke.
+    const EL_HITS = [.12, .3, .5], EL_BREAK = .52;
+    const boltPts = (x0, y0, x1, y1, seg, jit) => { const p = [[x0, y0]]; for (let i = 1; i < seg; i++) { const u = i / seg; p.push([x0 + (x1 - x0) * u + bfxRand(-jit, jit) * (1 - u * .5), y0 + (y1 - y0) * u + bfxRand(-jit, jit) * .25]); } p.push([x1, y1]); return p; };
+    const ptsStr = (p) => p.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ');
+    function bfxElectric(host, x, y, k) {
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face, vw } = st;
+      const kit = pfxKit(st), { rand, sm, fr, add, clamp, out } = kit, vh = host.clientHeight || innerHeight, px = H / 100;
+      const flash = add(`left:0;top:0;width:${vw}px;height:${vh}px;z-index:7;mix-blend-mode:screen;background:radial-gradient(circle at ${cx}px ${cy}px,rgba(224,242,254,.9),rgba(56,189,248,.35) 40%,rgba(0,0,0,0) 85%)`);
+      const lastAnim = anim(flash, fr(t => { let o = 0; EL_HITS.forEach((h, i) => { const u = t - h; if (u >= 0 && u < .2) o = Math.max(o, (1 - u / .2) * (i === 2 ? .95 : .55)); }); return { opacity: o }; }));
+      const strokes = (pts, w, col, op) => `<polyline points="${ptsStr(pts)}" fill="none" stroke="${col}" stroke-opacity="${op}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"/>`;
+      const bolt = (pts, fork) => strokes(pts, 10 * px, '#38bdf8', .35) + strokes(pts, 4 * px, '#bae6fd', .8) + strokes(pts, 1.8 * px, '#fff', 1) + fork.map(f => strokes(f, 4 * px, '#38bdf8', .35) + strokes(f, 1.4 * px, '#e0f2fe', .95)).join('');
+      const svgBox = (inner) => `<svg width="${vw}" height="${vh}" viewBox="0 0 ${vw} ${vh}" style="position:absolute;left:0;top:0;overflow:visible">${inner}</svg>`;
+      EL_HITS.forEach((h) => {
+        const x0 = cx + rand(-1, 1) * W * 1.6, y0 = Math.min(cy - H * 3, -20);
+        for (let v = 0; v < 5; v++) {
+          const pts = boltPts(x0, y0, cx + rand(-.2, .2) * W, cy - H * .1, 11, H * .45), fk = [4, 7].map(i => [pts[i], [pts[i][0] + rand(-1, 1) * H * .6, pts[i][1] + H * rand(.3, .6)]]);
+          const el = add(`left:0;top:0;width:${vw}px;height:${vh}px;z-index:6`, svgBox(bolt(pts, fk)));
+          anim(el, fr(t => { const u = t - h; return { opacity: u >= 0 && u < .16 && Math.floor(u / .032) % 5 === v ? 1 : 0 }; }));
+        }
+      });
+      // the card: a negative (x-ray) while struck, shaking, then gone at EL_BREAK
+      const box = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;border-radius:${radius}`);
+      const ov = document.createElement('div');
+      ov.style.cssText = `position:absolute;inset:0;border-radius:${radius};background:rgba(125,211,252,.35)`;
+      box.append(face(), ov);
+      const struck = t => EL_HITS.some(h => t >= h && t < h + .14 && Math.floor((t - h) / .03) % 2 === 0);
+      anim(box, fr(t => { const on = struck(t), j = sm(.1, EL_BREAK, t); return { opacity: t < EL_BREAK ? 1 : 0, filter: on ? 'invert(.92) hue-rotate(180deg) brightness(1.5)' : `brightness(${(1 + .2 * j).toFixed(2)})`,
+        transform: `translate(${(Math.sin(t * 130) * H * .018 * j).toFixed(2)}px,${(Math.cos(t * 97) * H * .012 * j).toFixed(2)}px)`, boxShadow: `0 0 ${(H * .25 * j).toFixed(1)}px ${(H * .06 * j).toFixed(1)}px rgba(56,189,248,${(.8 * j).toFixed(2)})` }; }));
+      anim(ov, fr(t => ({ opacity: struck(t) ? 0 : .6 * sm(.1, EL_BREAK, t) * (.6 + .4 * Math.sin(t * 160)) })));
+      pfxShatter(st, kit, { t0: EL_BREAK, ip: [W / 2, H * .4], cols: 5, rows: 7, speed: 1.25, edge: '#7dd3fc', tint: () => `linear-gradient(${Math.round(rand(0, 360))}deg,rgba(15,23,42,.65),rgba(56,189,248,.3))` });
+      // ground arcs lashing out from the burst
+      for (let i = 0; i < 7; i++) {
+        const dir = i % 2 ? 1 : -1, len = H * rand(.9, 2.1), a = rand(-.35, .5), ex = cx + dir * Math.cos(a) * len, ey = cy + H * .35 + Math.sin(a) * len * .5;
+        const vars = [0, 1, 2].map(() => { const pts = boltPts(cx, cy + H * .3, ex, ey, 9, H * .16); return add(`left:0;top:0;width:${vw}px;height:${vh}px;z-index:5`, svgBox(strokes(pts, 6 * px, '#38bdf8', .35) + strokes(pts, 2.2 * px, '#e0f2fe', 1))); });
+        const s0 = EL_BREAK - .02 + i * .02;
+        vars.forEach((el, v) => anim(el, fr(t => ({ opacity: t > s0 && t < s0 + .55 && Math.floor((t - s0) / .04) % 3 === v && Math.sin(t * 90 + i * 7) > -.4 ? 1 : 0 }))));
+      }
+      // sparks, floor ring, scorch and smoke
+      for (let i = 0; i < 46; i++) {
+        const a = rand(0, 6.3), v = H * rand(.8, 3), s = H * rand(.012, .03); let qx = 0, qy = 0, vx = Math.cos(a) * v, vy = Math.sin(a) * v - H * .5;
+        const el = add(`left:${cx - s / 2}px;top:${cy - s / 2}px;width:${s}px;height:${s}px;z-index:6;border-radius:50%;background:#fefce8;box-shadow:0 0 ${s * 2.5}px ${s}px #38bdf8`);
+        anim(el, fr(t => { if (t < EL_BREAK) return { opacity: 0, transform: 'none' }; vy += H * 3.2 * kit.D / PFX_N; qx += vx * kit.D / PFX_N; qy += vy * kit.D / PFX_N; return { opacity: 1 - sm(EL_BREAK + .3, EL_BREAK + .9, t), transform: `translate(${qx.toFixed(1)}px,${qy.toFixed(1)}px)` }; }));
+      }
+      const ring = add(`left:${cx - H * .8}px;top:${cy + H * .5 - H * .2}px;width:${H * 1.6}px;height:${H * .4}px;z-index:2;border-radius:50%;border:${Math.max(1.5, px * 1.5)}px solid rgba(186,230,253,.9);box-sizing:border-box`);
+      anim(ring, fr(t => ({ opacity: t < EL_BREAK ? 0 : .9 * (1 - sm(EL_BREAK, EL_BREAK + .5, t)), transform: `scale(${(.2 + 2.2 * out(sm(EL_BREAK, EL_BREAK + .5, t))).toFixed(3)})` })));
+      const scorch = add(`left:${cx - W * .8}px;top:${cy + H * .35}px;width:${W * 1.6}px;height:${H * .32}px;z-index:1;border-radius:50%;background:radial-gradient(closest-side,rgba(10,10,20,.8),transparent)`);
+      anim(scorch, fr(t => ({ opacity: t < EL_BREAK ? 0 : .9 * sm(EL_BREAK, EL_BREAK + .15, t) * (1 - sm(1.5, 1.95, t)) })));
+      for (let i = 0; i < 6; i++) {
+        const s = H * rand(.4, .7), sx = cx + rand(-.5, .5) * W, t0 = EL_BREAK + rand(0, .3), el = add(`left:${sx - s / 2}px;top:${cy - s / 2}px;width:${s}px;height:${s}px;z-index:4`, pfxPuff('dark'));
+        anim(el, fr(t => { const u = clamp((t - t0) / 1.2); return { opacity: t < t0 ? 0 : .5 * sm(0, .15, u) * (1 - sm(.5, 1, u)), transform: `translate(${(rand(-1, 1) * 0 + (i % 2 ? 1 : -1) * H * .25 * u).toFixed(1)}px,${(-H * 1.1 * u).toFixed(1)}px) scale(${(.3 + 1.1 * Math.sqrt(u)).toFixed(3)})` }; }));
+      }
+      end(lastAnim);
+    }
+
+    // Inferno Sweep: a thick whip of fire cracks in from off screen on a curve (its head runs 0.06-0.46s, the tail
+    // eats up behind it, flames and embers left along it), lands on the real card at 0.46 with a flash and shock
+    // ring; the card then burns away round a glowing, ragged rim under tall flames, embers and dark smoke.
+    // Sound: BURN_SOUNDS['burn-lvl-inferno-sweep'] (whip crack at .46).
+    const INF_HIT = .46;
+    function bfxInferno(host, x, y, k) {
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face, vw } = st;
+      const kit = pfxKit(st), { rand, sm, fr, add, clamp, out } = kit, vh = host.clientHeight || innerHeight, px = H / 100;
+      const sx = Math.min(cx - W * 2.4, -30), sy = cy - H * 1.1, qx = cx - W * .5, qy = cy - H * 1.6, bz = u => [(1 - u) * (1 - u) * sx + 2 * u * (1 - u) * qx + u * u * cx, (1 - u) * (1 - u) * sy + 2 * u * (1 - u) * qy + u * u * cy];
+      const lash = add(`left:0;top:0;width:${vw}px;height:${vh}px;z-index:6`,
+        `<svg width="${vw}" height="${vh}" viewBox="0 0 ${vw} ${vh}" style="position:absolute;left:0;top:0;overflow:visible">${[[22, '#ea580c', .5], [12, '#fb923c', .95], [5, '#fff7ed', 1]].map(([w, c, o]) => `<path d="M${sx} ${sy}Q${qx} ${qy} ${cx} ${cy}" pathLength="1" stroke-dasharray=".38 1.4" stroke="${c}" stroke-opacity="${o}" stroke-width="${w * px * .8}" stroke-linecap="round" fill="none"/>`).join('')}</svg>`);
+      anim(lash, fr(() => ({ opacity: 1 })));
+      const lastAnim = anim(lash.querySelector('path:nth-child(1)'), fr(t => ({ strokeDashoffset: .38 - sm(.06, INF_HIT, t) * 1.38, opacity: 1 - sm(INF_HIT + .15, INF_HIT + .3, t) })));
+      [2, 3].forEach(n => anim(lash.querySelector(`path:nth-child(${n})`), fr(t => ({ strokeDashoffset: .38 - sm(.06, INF_HIT, t) * 1.38, opacity: 1 - sm(INF_HIT + .15, INF_HIT + .3, t) }))));
+      for (let i = 0; i < 16; i++) { const u = .12 + i * .055, [fx, fy] = bz(u); pfxFlameEl(st, kit, { x: fx, y: fy, w: H * rand(.18, .3), h: H * rand(.35, .6), t0: .06 + u * .4, t1: .06 + u * .4 + .25, z: 5 }); }
+      for (let i = 0; i < 34; i++) {
+        const u = rand(.1, 1), [ex, ey] = bz(u), t0 = .06 + u * .4, life = rand(.4, .8), s = H * rand(.014, .032), vx = rand(-.5, .5) * H, up = H * rand(.3, 1.2);
+        const el = add(`left:${ex}px;top:${ey}px;width:${s}px;height:${s}px;z-index:5;border-radius:50%;background:#fff3d6;box-shadow:0 0 ${s * 2.5}px ${s * .8}px #fb923c`);
+        anim(el, fr(t => { const w = clamp((t - t0) / life); return { opacity: t < t0 || w >= 1 ? 0 : 1 - w * w, transform: `translate(${(vx * w).toFixed(1)}px,${(-up * w + H * .4 * w * w).toFixed(1)}px)` }; }));
+      }
+      const flash = add(`left:${cx - H * 1.1}px;top:${cy - H * 1.1}px;width:${H * 2.2}px;height:${H * 2.2}px;border-radius:50%;z-index:7;mix-blend-mode:screen;background:radial-gradient(closest-side,#fff,rgba(251,146,60,.8) 40%,transparent)`);
+      anim(flash, fr(t => ({ opacity: t < INF_HIT ? 0 : 1 - sm(INF_HIT, INF_HIT + .3, t), transform: `scale(${(.3 + 1.2 * out(sm(INF_HIT, INF_HIT + .3, t))).toFixed(3)})` })));
+      const ring = add(`left:${cx - H * .6}px;top:${cy - H * .6}px;width:${H * 1.2}px;height:${H * 1.2}px;border-radius:50%;z-index:6;border:${Math.max(2, px * 2)}px solid rgba(253,186,116,.95);box-sizing:border-box`);
+      anim(ring, fr(t => ({ opacity: t < INF_HIT ? 0 : .95 * (1 - sm(INF_HIT, INF_HIT + .5, t)), transform: `scale(${(.2 + 2.4 * out(sm(INF_HIT, INF_HIT + .5, t))).toFixed(3)})` })));
+      // the card: warm, then burning away round a ragged glowing rim
+      const jag = Array.from({ length: 16 }, () => rand(.75, 1.2)), m = t => sm(INF_HIT + .1, 1.55, t);
+      const poly = (t, grow) => `polygon(${jag.map((j, i) => { const a = i / jag.length * Math.PI * 2, r = Math.max(0, (1 - m(t)) * 75 * j * (1 + grow) + (m(t) > 0 ? 0 : 100)); return `${(50 + Math.cos(a) * r * (W > H ? 1 : .72)).toFixed(1)}% ${(50 + Math.sin(a) * r).toFixed(1)}%`; }).join(',')})`;
+      const rim = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:2;background:radial-gradient(circle,#fff7ed,#fb923c 55%,#7c2d12)`);
+      anim(rim, fr(t => ({ opacity: t < INF_HIT ? 0 : Math.min(1, m(t) * 5) * (1 - sm(1.5, 1.7, t)), clipPath: poly(t, .1) })));
+      const box = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3`);
+      const char = document.createElement('div');
+      char.style.cssText = `position:absolute;inset:0;background:radial-gradient(circle,rgba(20,10,6,.2),rgba(20,10,6,.9))`;
+      box.append(face(), char);
+      anim(box, fr(t => ({ clipPath: poly(t, 0), transform: `translate(${(Math.sin(t * 60) * H * .012 * sm(INF_HIT, INF_HIT + .2, t) * (1 - m(t))).toFixed(2)}px,${(-H * .06 * m(t)).toFixed(2)}px) scale(${(1 - .08 * m(t)).toFixed(3)})`, filter: `brightness(${(1 + .6 * Math.exp(-(t - INF_HIT) * 9) * (t > INF_HIT ? 1 : 0)).toFixed(2)})` })));
+      anim(char, fr(t => ({ opacity: sm(INF_HIT, 1.2, t) })));
+      for (let i = 0; i < 20; i++) { const a = rand(0, 6.3), rr = rand(.2, .6), t0 = INF_HIT + rand(0, .45); pfxFlameEl(st, kit, { x: cx + Math.cos(a) * W * rr, y: cy + Math.sin(a) * H * rr * .6 + H * .25, w: H * rand(.24, .42), h: H * rand(.55, 1.1), t0, t1: rand(1.35, 1.75), z: i % 2 ? 4 : 2 }); }
+      for (let i = 0; i < 40; i++) {
+        const t0 = INF_HIT + rand(0, .9), life = rand(.5, 1), s = H * rand(.014, .03), ex = cx + rand(-.5, .5) * W, ey = cy + rand(-.4, .4) * H, up = H * rand(.6, 1.8), sw = rand(-.5, .5) * H;
+        const el = add(`left:${ex}px;top:${ey}px;width:${s}px;height:${s}px;z-index:5;border-radius:50%;background:#fff3d6;box-shadow:0 0 ${s * 2.5}px ${s * .8}px #f97316`);
+        anim(el, fr(t => { const w = clamp((t - t0) / life); return { opacity: t < t0 || w >= 1 ? 0 : 1 - w * w, transform: `translate(${(sw * w).toFixed(1)}px,${(-up * w).toFixed(1)}px)` }; }));
+      }
+      for (let i = 0; i < 7; i++) {
+        const s = H * rand(.5, .9), t0 = INF_HIT + .3 + rand(0, .5), ex = cx + rand(-.4, .4) * W, el = add(`left:${ex - s / 2}px;top:${cy - H * .3 - s / 2}px;width:${s}px;height:${s}px;z-index:3`, pfxPuff('dark'));
+        anim(el, fr(t => { const u = clamp((t - t0) / 1.1); return { opacity: t < t0 ? 0 : .55 * sm(0, .15, u) * (1 - sm(.5, 1, u)), transform: `translate(${((i % 2 ? 1 : -1) * H * .2 * u).toFixed(1)}px,${(-H * 1.3 * u).toFixed(1)}px) scale(${(.3 + 1.2 * Math.sqrt(u)).toFixed(3)})` }; }));
+      }
+      end(lastAnim);
+    }
+
+    // Default Burn: the everyday burn. Coals glow and the real card catches at the bottom (0.15s); a ragged glowing
+    // edge climbs to the top by 1.45s with flames riding it and a bed of flames below, embers, soot and a little
+    // smoke. Sound: BURN_SOUNDS.default.
+    const DEF_START = .15, DEF_END = 1.45;
+    function bfxDefault(host, x, y, k) {
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face } = st;
+      const kit = pfxKit(st), { rand, sm, fr, add, clamp, ease } = kit;
+      const glow = add(`left:${cx - H * 1.2}px;top:${cy - H * 1.1}px;width:${H * 2.4}px;height:${H * 2.2}px;border-radius:50%;z-index:0;background:radial-gradient(closest-side,rgba(251,146,60,.55),rgba(239,68,68,.2) 55%,transparent)`);
+      const lastAnim = anim(glow, fr(t => ({ opacity: sm(0, .3, t) * (1 - sm(1.4, 1.9, t)) * (.8 + .2 * Math.sin(t * 19)) })));
+      const cut = t => H * (1 - Math.pow(sm(DEF_START, DEF_END, t), 1.3) * 1.04), edgeY = t => cy - H / 2 + cut(t);
+      const box = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;border-radius:${radius};overflow:hidden`);
+      const main = document.createElement('div'), band = document.createElement('div');
+      main.style.cssText = 'position:absolute;inset:0';
+      main.appendChild(face());
+      band.style.cssText = `position:absolute;left:-5%;width:110%;height:${H * .2}px;top:0;background:linear-gradient(to bottom,rgba(20,8,4,0),rgba(20,8,4,.7) 35%,#7c2d12 52%,#fb923c 66%,#fff7ed 78%,rgba(251,146,60,.4) 90%,transparent)`;
+      box.append(main, band);
+      const jag = Array.from({ length: 9 }, () => rand(0, 6.3)), wob = (j, t) => H * (.03 * Math.sin(j * 2.3 + t * 16 + jag[j]) + .018 * Math.sin(j * 4.9 - t * 11));
+      anim(main, fr(t => { const c = cut(t) - H * .06; return { clipPath: `polygon(-10% -10%,110% -10%,${jag.map((_, j) => `${(110 - j * 15).toFixed(1)}% ${(Math.max(c, -H * .2) + wob(j, t)).toFixed(1)}px`).join(',')})`, filter: `drop-shadow(0 0 ${(3 + 8 * sm(0, .3, t)).toFixed(1)}px rgba(251,146,60,.5))` }; }));
+      anim(band, fr(t => ({ opacity: t < DEF_START - .05 ? 0 : 1 - sm(DEF_END - .05, DEF_END + .1, t), transform: `translateY(${(cut(t) - H * .17).toFixed(1)}px)` })));
+      anim(box, fr(t => { const m = sm(DEF_START, DEF_END, t); return { transform: `translateY(${(-H * .05 * ease(sm(0, .4, t)) - H * .04 * m).toFixed(1)}px) rotate(${(Math.sin(t * 8) * 1.5 * m).toFixed(2)}deg) scale(${(1 - .06 * m).toFixed(3)})`, opacity: 1 - sm(DEF_END, DEF_END + .1, t) }; }));
+      for (let i = 0; i < 12; i++) pfxFlameEl(st, kit, { x: cx + (i / 11 - .5) * W * .95 + rand(-4, 4), y: t => edgeY(t) + H * .03, w: H * rand(.14, .22), h: H * rand(.3, .5), t0: DEF_START - .05 + rand(0, .15), t1: DEF_END - .25 + rand(0, .1), z: i % 2 ? 4 : 2 });
+      for (let i = 0; i < 16; i++) { const d = rand(-1, 1); pfxFlameEl(st, kit, { x: cx + rand(-1, 1) * W * .7, y: cy + H * (.5 + .1 * d), w: H * rand(.2, .32) * (1 + .2 * d), h: H * rand(.45, .85) * (1 + .2 * d), t0: rand(0, .25), t1: rand(1.35, 1.7), z: d > .3 ? 4 : 1 }); }
+      for (let i = 0; i < 46; i++) {
+        const t0 = rand(.1, 1.4), life = rand(.4, .9), s = H * rand(.014, .032), ex = cx + rand(-.5, .5) * W, ey = cy + rand(-.2, .5) * H, up = H * rand(.8, 2), sw = rand(-.5, .5) * H;
+        const el = add(`left:${ex}px;top:${ey}px;width:${s}px;height:${s}px;z-index:5;border-radius:50%;background:#fff3d6;box-shadow:0 0 ${s * 2.5}px ${s * .8}px #f97316`);
+        anim(el, fr(t => { const w = clamp((t - t0) / life); return { opacity: t < t0 || w >= 1 ? 0 : 1 - w * w, transform: `translate(${(sw * w).toFixed(1)}px,${(-up * w).toFixed(1)}px)` }; }));
+      }
+      for (let i = 0; i < 20; i++) {
+        const t0 = .5 + rand(0, .9), s = H * rand(.016, .04), ex = cx + rand(-.5, .5) * W, ey = cy + rand(-.3, .3) * H, up = H * rand(.5, 1.4), sw = rand(-.7, .7) * H, spin = rand(-300, 300);
+        const el = add(`left:${ex}px;top:${ey}px;width:${s}px;height:${s * .55}px;z-index:5;background:#1c1917;clip-path:polygon(0 30%,60% 0,100% 55%,40% 100%)`);
+        anim(el, fr(t => { const w = clamp((t - t0) / 1.1); return { opacity: t < t0 ? 0 : (1 - sm(.5, 1, w)) * .9, transform: `translate(${(sw * w).toFixed(1)}px,${(-up * w + H * .15 * w * w).toFixed(1)}px) rotate(${(spin * w).toFixed(0)}deg)` }; }));
+      }
+      for (let i = 0; i < 5; i++) {
+        const s = H * rand(.5, .8), t0 = .6 + rand(0, .5), ex = cx + rand(-.4, .4) * W, el = add(`left:${ex - s / 2}px;top:${cy - H * .5 - s / 2}px;width:${s}px;height:${s}px;z-index:3`, pfxPuff('dark'));
+        anim(el, fr(t => { const u = clamp((t - t0) / 1.1); return { opacity: t < t0 ? 0 : .45 * sm(0, .15, u) * (1 - sm(.5, 1, u)), transform: `translate(${((i % 2 ? 1 : -1) * H * .15 * u).toFixed(1)}px,${(-H * 1.1 * u).toFixed(1)}px) scale(${(.3 + 1.1 * Math.sqrt(u)).toFixed(3)})` }; }));
+      }
+      end(lastAnim);
+    }
+
+    // Smoke Burst: the card swells and shakes (0-.36s), pops in a white flash and a shock ring, and a ball of
+    // lit, lumpy smoke bursts outward from it in every direction (drag slows it, buoyancy lifts it) while a few
+    // charred shards tumble out; it thins and clears by 2s. Sound: BURN_SOUNDS['burn-lvl-smoke-burst'] (pop at .36).
+    const SB_POP = .36;
+    function bfxSmokeBurst(host, x, y, k) {
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face } = st;
+      const kit = pfxKit(st), { rand, sm, fr, add, clamp, out, D } = kit, dt = D / PFX_N, px = H / 100;
+      const box = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;border-radius:${radius}`);
+      box.appendChild(face());
+      const lastAnim = anim(box, fr(t => { const j = sm(0, SB_POP, t); return { opacity: t < SB_POP ? 1 : 0, filter: `brightness(${(1 + .8 * j * j).toFixed(2)})`, transform: `translate(${(Math.sin(t * 120) * H * .02 * j).toFixed(2)}px,${(Math.cos(t * 83) * H * .015 * j).toFixed(2)}px) scale(${(1 + .3 * j * j).toFixed(3)})` }; }));
+      pfxShatter(st, kit, { t0: SB_POP, ip: [W / 2, H / 2], cols: 4, rows: 5, speed: 1.1, tint: () => 'linear-gradient(160deg,rgba(28,25,23,.7),rgba(63,63,70,.45))' });
+      const flash = add(`left:${cx - H}px;top:${cy - H}px;width:${H * 2}px;height:${H * 2}px;border-radius:50%;z-index:7;mix-blend-mode:screen;background:radial-gradient(closest-side,#fff,rgba(226,232,240,.7) 45%,transparent)`);
+      anim(flash, fr(t => ({ opacity: t < SB_POP ? 0 : 1 - sm(SB_POP, SB_POP + .25, t), transform: `scale(${(.3 + 1.3 * out(sm(SB_POP, SB_POP + .25, t))).toFixed(3)})` })));
+      const ring = add(`left:${cx - H * .5}px;top:${cy - H * .5}px;width:${H}px;height:${H}px;border-radius:50%;z-index:6;border:${Math.max(2, px * 2)}px solid rgba(226,232,240,.9);box-sizing:border-box`);
+      anim(ring, fr(t => ({ opacity: t < SB_POP ? 0 : .9 * (1 - sm(SB_POP, SB_POP + .5, t)), transform: `scale(${(.2 + 3 * out(sm(SB_POP, SB_POP + .5, t))).toFixed(3)})` })));
+      const core = add(`left:${cx - H * .6}px;top:${cy - H * .6}px;width:${H * 1.2}px;height:${H * 1.2}px;z-index:2`, pfxPuff('dark'));
+      anim(core, fr(t => { const u = clamp((t - SB_POP) / 1.2); return { opacity: t < SB_POP ? 0 : .8 * (1 - sm(.4, 1, u)), transform: `translateY(${(-H * .3 * u).toFixed(1)}px) scale(${(.3 + 1.7 * Math.sqrt(u)).toFixed(3)})` }; }));
+      for (let i = 0; i < 38; i++) {
+        const a = (i / 38) * Math.PI * 2 + rand(-.2, .2), v = H * rand(1, 2.4), kd = rand(2.2, 3.6), s = H * rand(.4, .75), tone = i % 3 === 0 ? 'dark' : 'light', t0 = SB_POP + rand(0, .1), life = rand(1.2, 1.5), zi = i % 2 ? 4 : 2;
+        const el = add(`left:${cx - s / 2}px;top:${cy - s / 2}px;width:${s}px;height:${s}px;z-index:${zi}`, pfxPuff(tone));
+        anim(el, fr(t => { const tau = t - t0, u = clamp(tau / life); if (tau < 0 || u >= 1) return { opacity: 0, transform: 'scale(.2)' };
+          const d = (1 - Math.exp(-kd * tau)) / kd; return { opacity: .92 * sm(0, .08, u) * (1 - sm(.5, 1, u)), transform: `translate(${(Math.cos(a) * v * d).toFixed(1)}px,${(Math.sin(a) * v * d * .8 - H * .55 * tau * tau).toFixed(1)}px) scale(${(.3 + 1.3 * Math.sqrt(u)).toFixed(3)})` }; }));
+      }
+      for (let i = 0; i < 24; i++) {
+        const a = rand(0, 6.3), v = H * rand(1, 2.8), s = H * rand(.012, .03); let qx = 0, qy = 0, vx = Math.cos(a) * v, vy = Math.sin(a) * v - H * .4;
+        const el = add(`left:${cx - s / 2}px;top:${cy - s / 2}px;width:${s}px;height:${s}px;z-index:5;border-radius:50%;background:#fff;box-shadow:0 0 ${s * 2}px #cbd5e1`);
+        anim(el, fr(t => { if (t < SB_POP) return { opacity: 0, transform: 'none' }; vy += H * 3 * dt; qx += vx * dt; qy += vy * dt; return { opacity: 1 - sm(SB_POP + .3, SB_POP + .8, t), transform: `translate(${qx.toFixed(1)}px,${qy.toFixed(1)}px)` }; }));
+      }
+      end(lastAnim);
+    }
     // ---- Premium burns: Black Hole, Origami Fold, Pixel Blast, Lava Melt ----
     // Each is over within ~2s and removes every piece it drew: nothing stays
     // on the table (Lava Melt's pool cools and sinks away completely).
@@ -1157,10 +1377,6 @@
       const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
       return levelBurn3d('burn-lvl-spark-snap', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-spark-snap', host, x, y, k, calm);
     }
-    function bfxSmokeBurst(host, x, y, k) {
-      const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
-      return levelBurn3d('burn-lvl-smoke-burst', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-smoke-burst', host, x, y, k, calm);
-    }
     // Any card part that turns over in a 3D burn shows the burning player's own card back.
     function burnBackClass() {
       const p = burnFxPlayer, own = !p || p.id === state?.localPlayerId;
@@ -1175,13 +1391,6 @@
       return ShLevel3D.play(id, host, x, y, k, calm, { cardEls, cardH: pile && pile.offsetHeight, backClass: burnBackClass() });
     }
     // Default Burn without WebGL (the 3D one plays from playBurnFx): the old ember burst.
-    function bfxDefaultBurn(host, x, y, k) {
-      if (host.id === 'burnFxLayer') triggerBurnEmberExplosion(x, y); else sfxFlash(host, x, y, k, '#f97316', 140, 700);
-    }
-    function bfxInfernoSweep(host, x, y, k) {
-      const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
-      return levelBurn3d('burn-lvl-inferno-sweep', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-inferno-sweep', host, x, y, k, calm);
-    }
     function bfxHellfireSpiral(host, x, y, k) {
       const calm = reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
       return levelBurn3d('burn-lvl-hellfire-spiral', host, x, y, k, calm) || ShLevelBurns.play('burn-lvl-hellfire-spiral', host, x, y, k, calm);
@@ -1201,9 +1410,9 @@
       if (window.ShSeasonBurns && ShSeasonBurns.has(id) && ShSeasonBurns.play(id, host, x, y, scale)) return true;
       // Painted-art 3D burns (art/burns/level-3d/burns3d.js); their old effects stay as the fallback.
       if (window.ShLevel3D && ShLevel3D.has(id) && levelBurn3d(id, host, x, y, scale, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return true;
-      ({ default: bfxDefaultBurn, 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-ice': bfxIce, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
+      ({ default: bfxDefault, 'burn-electric': bfxElectric, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-ice': bfxIce, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
         'burn-blackhole': bfxBlackHole, 'burn-origami': bfxOrigami, 'burn-pixel': bfxPixelBlast, 'burn-lava': bfxLavaMelt,
-        'burn-lvl-spark-snap': bfxSparkSnap, 'burn-lvl-smoke-burst': bfxSmokeBurst, 'burn-lvl-inferno-sweep': bfxInfernoSweep,
+        'burn-lvl-spark-snap': bfxSparkSnap, 'burn-lvl-smoke-burst': bfxSmokeBurst, 'burn-lvl-inferno-sweep': bfxInferno,
         'burn-lvl-hellfire-spiral': bfxHellfireSpiral, 'burn-lvl-royal-incineration': bfxRoyalIncineration, 'burn-lvl-shitstorm': bfxShitStorm }[id] || (typeof SEASONAL_BURN_FX !== 'undefined' && SEASONAL_BURN_FX[id]) || (() => {}))(host, x, y, scale);
       return true;
     }

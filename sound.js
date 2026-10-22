@@ -339,7 +339,16 @@
       tone({ at: at + 0.01, dur: 0.05, type: 'triangle', f0: f * 3, level: level * 0.3 });
     });
     const BURN_SOUNDS = {
-      default: (k) => (window.ShLevel3D ? ShLevel3D.sound('default', k) : fireWhoosh(k)),
+      // Default Burn (v406): ember crackle as the coals glow, the ignition whoosh at .15, a roar that builds while the
+      // edge climbs (to ~1.45s) with crackles, then a hiss as it dies.
+      default: (k) => {
+        k.scatter(12, 0, 0.3, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 3500, q: 2, level: 0.18 }));
+        k.noise({ at: 0.15, dur: 0.5, f0: 350, f1: 2600, q: 0.8, level: 0.42, attack: 0.08 });
+        k.tone({ at: 0.15, dur: 0.3, f0: 95, f1: 40, level: 0.5, attack: 0.01 });
+        k.noise({ at: 0.25, dur: 1.2, type: 'bandpass', f0: 800, f1: 450, q: 0.7, level: 0.26, attack: 0.4 });
+        k.scatter(26, 0.3, 1.5, (at) => k.noise({ at, dur: 0.025, type: 'highpass', f0: 3500, level: 0.2 }));
+        k.noise({ at: 1.4, dur: 0.5, type: 'bandpass', f0: 1800, f1: 700, q: 0.5, level: 0.07, attack: 0.1 });
+      },
       // Coloured Flame: the fire, plus a rising shimmer of colour.
       'burn-coloured': (k) => { if (window.ShLevel3D) return ShLevel3D.sound('burn-coloured', k); fireWhoosh(k, 0.8); [660, 880, 1108, 1320, 1760].forEach((f, i) => k.tone({ at: 0.1 + i * 0.06, dur: 0.35, type: 'triangle', f0: f, level: 0.1 })); },
       // Ice Shatter (v404): frost creeping in (airy shimmer + crystal ticks, 0-.62s), the crack at .62 and a
@@ -357,12 +366,20 @@
         k.scatter(14, 0.9, 1.5, (at) => k.noise({ at, dur: 0.012, type: 'highpass', f0: 6000, level: 0.12 }));
         k.noise({ at: 0.9, dur: 1.0, type: 'bandpass', f0: 6000, q: 0.6, level: 0.05, attack: 0.2 });
       },
-      // Electric Blast: a falling zap, mains buzz and sparks.
+      // Electric Blast (v406): mains hum, three strikes at .12 / .30 / .50s (zap + crack each), the overload at .52
+      // (a broad crack, shatter and low thunder), crackling floor arcs to ~1s and sparks pinging down.
       'burn-electric': (k) => {
-        if (window.ShLevel3D) return ShLevel3D.sound('burn-electric', k);
-        k.tone({ dur: 0.35, type: 'sawtooth', f0: 1400, f1: 70, level: 0.32 });
-        k.tone({ dur: 0.45, type: 'square', f0: 60, f1: 55, level: 0.14 });
-        k.scatter(14, 0, 0.5, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 4000, q: 4, level: 0.5 }));
+        k.tone({ dur: 0.5, type: 'square', f0: 60, f1: 58, level: 0.07 });
+        [[0.12, 0.35], [0.3, 0.4], [0.5, 0.55]].forEach(([at, v]) => {
+          k.tone({ at, dur: 0.22, type: 'sawtooth', f0: 1800, f1: 90, level: v * 0.8 });
+          k.noise({ at, dur: 0.07, type: 'highpass', f0: 3000, level: v });
+          k.noise({ at: at + 0.02, dur: 0.12, type: 'bandpass', f0: 1400, f1: 400, q: 1.2, level: v * 0.6 });
+        });
+        k.noise({ at: 0.52, dur: 0.3, type: 'highpass', f0: 2500, f1: 6000, level: 0.45 });
+        k.tone({ at: 0.52, dur: 0.9, f0: 70, f1: 32, level: 0.5, attack: 0.02 });
+        k.noise({ at: 0.55, dur: 0.9, type: 'bandpass', f0: 180, f1: 90, q: 0.6, level: 0.35, attack: 0.1 });
+        k.scatter(22, 0.52, 1.0, (at) => k.noise({ at, dur: 0.018, type: 'bandpass', f0: 4200, q: 4, level: 0.35 }));
+        k.scatter(14, 0.6, 1.5, (at) => k.tone({ at, dur: 0.2, f0: 2400 + Math.random() * 2400, level: 0.06 }));
       },
       // Paint Splats (v404): a short whoosh as each bucket flies in and a wet slap as it lands, on the effect's
       // eleven impact times (PAINT_HITS: .12 + .068 each), droplet flecks, drips plinking down, then the
@@ -494,8 +511,28 @@
       },
       // Level burns v294: shared visual/audio timing in the layered renderer.
       'burn-lvl-spark-snap': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-spark-snap', k) : ShLevelBurns.sound('burn-lvl-spark-snap', k)),
-      'burn-lvl-smoke-burst': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-smoke-burst', k) : ShLevelBurns.sound('burn-lvl-smoke-burst', k)),
-      'burn-lvl-inferno-sweep': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-inferno-sweep', k) : ShLevelBurns.sound('burn-lvl-inferno-sweep', k)),
+      // Smoke Burst (v406): the card swells (a rising strain to the pop at .36s), the pop, a deep whoomph as the
+      // smoke ball bursts out and billows to ~1.5s, a soft hiss tail.
+      'burn-lvl-smoke-burst': (k) => {
+        k.tone({ dur: 0.36, type: 'triangle', f0: 110, f1: 320, level: 0.2, attack: 0.1 });
+        k.noise({ dur: 0.36, type: 'bandpass', f0: 500, f1: 1800, q: 1, level: 0.15, attack: 0.2 });
+        k.noise({ at: 0.36, dur: 0.14, type: 'bandpass', f0: 900, q: 0.6, level: 0.55 });
+        k.tone({ at: 0.36, dur: 0.3, f0: 170, f1: 38, level: 0.5 });
+        k.noise({ at: 0.4, dur: 1.2, type: 'bandpass', f0: 500, f1: 140, q: 0.7, level: 0.4, attack: 0.05 });
+        k.scatter(8, 0.4, 0.9, (at) => k.noise({ at, dur: 0.03, type: 'highpass', f0: 4500, level: 0.1 }));
+        k.noise({ at: 1.1, dur: 0.8, type: 'bandpass', f0: 1800, f1: 900, q: 0.5, level: 0.07, attack: 0.2 });
+      },
+      // Inferno Sweep (v406): the whip of fire rushes in (a rising whoosh .06-.46s), the crack at .46, then the
+      // fire roars while the card burns away (to ~1.6s) with crackles and a low rumble.
+      'burn-lvl-inferno-sweep': (k) => {
+        k.noise({ at: 0.06, dur: 0.42, type: 'bandpass', f0: 600, f1: 3500, q: 0.9, level: 0.35, attack: 0.3 });
+        k.noise({ at: 0.46, dur: 0.06, type: 'highpass', f0: 3000, level: 0.6 });
+        k.tone({ at: 0.46, dur: 0.14, type: 'square', f0: 420, f1: 80, level: 0.4 });
+        k.tone({ at: 0.46, dur: 0.5, f0: 90, f1: 40, level: 0.45 });
+        k.noise({ at: 0.5, dur: 1.1, type: 'bandpass', f0: 900, f1: 420, q: 0.7, level: 0.3, attack: 0.1 });
+        k.scatter(28, 0.5, 1.6, (at) => k.noise({ at, dur: 0.025, type: 'highpass', f0: 3500, level: 0.2 }));
+        k.noise({ at: 1.5, dur: 0.45, type: 'bandpass', f0: 1800, f1: 800, q: 0.5, level: 0.07, attack: 0.1 });
+      },
       'burn-lvl-hellfire-spiral': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-hellfire-spiral', k) : ShLevelBurns.sound('burn-lvl-hellfire-spiral', k)),
       'burn-lvl-royal-incineration': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-royal-incineration', k) : ShLevelBurns.sound('burn-lvl-royal-incineration', k)),
       'burn-lvl-shitstorm': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-shitstorm', k) : ShLevelBurns.sound('burn-lvl-shitstorm', k)),

@@ -16,13 +16,13 @@
       sprites: [[.118, .017, .371, .314], [.641, .014, .799, .217], [.032, .251, .157, .396], [.064, .517, .205, .693], [.044, .734, .209, .937], [.823, .527, .924, .647],
         [.783, .674, .863, .785], [.787, .135, .884, .266], [.516, .019, .592, .126], [.335, .705, .486, .891], [.892, .005, .962, .072], [.386, .041, .442, .114]] },
     // Electric Blast (Shop): the owner's lightning burst; strikes and arcs drawn live, rock shards fly.
-    'burn-electric': { dur: 1.9, box: [5, 5.4, .5, .5], tile: 'art/burns/electric-blast/tile.webp', art: 'art/burns/electric-blast/layers.webp?v=1', layout: [4.4, 414 / 498, .526, .5] },
+    'burn-electric': { iconOnly: true /* v406: procedural in burn-effects.js; tile + sound only */, dur: 1.9, box: [5, 5.4, .5, .5], tile: 'art/burns/electric-blast/tile.webp', art: 'art/burns/electric-blast/layers.webp?v=1', layout: [4.4, 414 / 498, .526, .5] },
     // Coloured Flame (Shop): the owner's spectral flames swirling round the card.
     'burn-coloured': { iconOnly: true /* v308: procedural in index.html (bfxColouredFlame); tile + sound only */, dur: 1.9, box: [5, 5.4, .5, .55], tile: 'art/burns/coloured-flame/tile.webp', art: 'art/burns/coloured-flame/layers.webp?v=1', layout: [4.4, 402 / 498, .47, .55] },
     // Default Burn (everyone's burn until they equip one): the owner's fire bursting up out of the coals.
-    'default': { dur: 1.9, box: [5, 5.4, .5, .6], tile: 'art/burns/default/tile.webp', art: 'art/burns/default/layers.webp?v=1', layout: [4.4, 402 / 498, .45, .6] },
+    'default': { iconOnly: true /* v406: procedural in burn-effects.js; tile + sound only */, dur: 1.9, box: [5, 5.4, .5, .6], tile: 'art/burns/default/tile.webp', art: 'art/burns/default/layers.webp?v=1', layout: [4.4, 402 / 498, .45, .6] },
     // Inferno Sweep (Lvl 40): the owner's swirl of fire, swept across by a whip of flame; the rubble in front.
-    'burn-lvl-inferno-sweep': { dur: 2.0, box: [5, 5, .5, .6], tile: 'art/burns/inferno-sweep/tile.webp', art: 'art/burns/inferno-sweep/layers.webp?v=1', layout: [5, 413 / 437, .5, .55] },
+    'burn-lvl-inferno-sweep': { iconOnly: true /* v406: procedural in burn-effects.js; tile + sound only */, dur: 2.0, box: [5, 5, .5, .6], tile: 'art/burns/inferno-sweep/tile.webp', art: 'art/burns/inferno-sweep/layers.webp?v=1', layout: [5, 413 / 437, .5, .55] },
     // Spark Snap (Lvl 5): the owner's spark explosion, snapping out from the card; the rubble in front.
     'burn-lvl-spark-snap': { dur: 1.9, box: [5, 5.4, .5, .55], tile: 'art/burns/spark-snap/tile.webp', art: 'art/burns/spark-snap/layers.webp?v=1', layout: [4.4, 412 / 434, .615, .525] },
     // Painted-art burns: the owner's approved tile cut into two layers (tools/make-burn-layers.py),
@@ -30,7 +30,7 @@
     // Ghost Flames (seasonal Halloween): a ghost layer and a fire layer; every pile card burns.
     'burn-halloween': { dur: 2.0, box: [6.4, 5.8, .55, .78] /* previews */, tile: 'art/burns/ghost-flames/tile.webp', art: 'art/burns/ghost-flames/layers.webp?v=1', cards: 'all', layout: [5.6, 288 / 395, .58, .74] },
     // Smoke Burst (Lvl 20): the cloud and its front puffs; only the top card shows (the rest hide).
-    'burn-lvl-smoke-burst': { dur: 2.0, box: [6, 6.2, .5, .52], tile: 'art/burns/smoke-burst/tile.webp', art: 'art/burns/smoke-burst/layers.webp?v=1', layout: [4.8, 404 / 439, .5, .52] },
+    'burn-lvl-smoke-burst': { iconOnly: true /* v406: procedural in burn-effects.js; tile + sound only */, dur: 2.0, box: [6, 6.2, .5, .52], tile: 'art/burns/smoke-burst/tile.webp', art: 'art/burns/smoke-burst/layers.webp?v=1', layout: [4.8, 404 / 439, .5, .52] },
     // Royal Incineration (Lvl 80): the crown (whole, its own layer) and the golden fire burst under it.
     'burn-lvl-royal-incineration': { dur: 2.0, box: [5, 5.4, .5, .66], tile: 'art/burns/royal-incineration/tile.webp', art: 'art/burns/royal-incineration/layers.webp?v=1', layout: [4.2, 436 / 432, .49, .68] },
     // Hellfire Spiral (Lvl 60): the magma tornado (cards painted out) and the rubble at its base in front.

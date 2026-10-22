@@ -2032,6 +2032,8 @@ async function runDevTestSuite() {
       else if (id === 'burn-sweets') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /procBurnStage/.test(String(bfxSweets)), 'Stupendous Confectionery is procedural (v306), not the painted scene');
       else if (id === 'burn-lava') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /procBurnStage/.test(String(bfxLavaMelt)), 'Lava Melt is procedural (v307), not the painted scene');
       else if (id === 'burn-coloured') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /procBurnStage/.test(String(bfxColouredFlame)), 'Coloured Flame is procedural (v308), not the painted scene');
+      else if (id === 'default') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /procBurnStage/.test(String(bfxDefault)), 'Default Burn is procedural (v406), not the painted scene');
+      else if (id === 'burn-electric') assertTrue(window.ShLevel3D && !ShLevel3D.has(id) && /procBurnStage/.test(String(bfxElectric)), 'Electric Blast is procedural (v406), not the painted scene');
       else assertTrue(window.ShLevel3D && ShLevel3D.has(id), `${id} plays in 3D`);
       if (ShBurnIcons.has(id)) assertTrue(burnPreviewIcon(id).startsWith('<svg'), `${id} shows its drawn icon`);
       else assertTrue(burnPreviewIcon(id).includes(`art/burns/${dir}/tile.webp`), `${id} shows its painted tile as the icon`);
