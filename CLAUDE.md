@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v417 — Vampire bite made visible (pushed straight to main)
+
+- v416's bite was hidden behind his own face. Now the face sits ABOVE the card (face 120x150 at cy-125k, card 124x177 at cy+42k, so the whole card shows), he lunges 60k so the open mouth reaches the card's top edge at 730ms, the punctures and blood are drawn over his face at the card's top edge, the cape and moon moved up with him, "BITE!" is below the card. Layout rule for bite-style effects: the target must not sit under the biter.
+
 ## v416 — Vampire Joker bites (pushed straight to main)
 
 - `jfxVampire` now has a bite: the Joker card waits low (`cardY` cy+130k, drawn under him), he pulls back (.3-.5), lunges 57k with the OPEN-mouth face crossfaded in (`faceSvg(true)`), bites at 730ms (`BITE`; closed face with fangs, head shakes, red flash), two fang puncture dots and dripping blood are drawn over his face, bats burst from the bite, "BITE!" at the top. New `JOKER_SOUNDS['joker-vampire']` (lunge hiss, crunch + wet snap + thud at .73, drips, squeaks, low laugh). Everything ends inside 1.5s.
