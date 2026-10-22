@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v408: [['fire', 'Confectionery, Glacial Shatter, Sandstorm, Abyssal Whirlpool and the Ramadan burn are polished: glassy ice shards, sweets that fly sideways, and effects that stay clear of the opponent seat.', WN_KEY]],
       v407: [['fire', 'Black Hole and Pixel Blast are rebuilt (a spiralling collapse, a chunky pixel blast) and the Origami swan now flies clear of the screen.', WN_KEY]],
       v406: [['fire', 'Electric Blast, Inferno Sweep, Default Burn and Smoke Burst are rebuilt: forked lightning that shatters the card, a whip of fire, a climbing flame edge and a bursting smoke ball.', WN_KEY]],
       v405: [['gear', 'Test Lab: a card in the game modes for the AmitK account with a ready dummy table to try any Burn, Joker or Victory effect.']],

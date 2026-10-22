@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v408 — Sweets, Glacial Shatter, Sandstorm, Whirlpool, Ramadan polished (owner approved the frames)
+
+- Sweets: thick shaded lolly stick, sweets and sprinkles launch in low sideways arcs. Glacial Shatter: ice spikes while freezing, icy-tinted card pieces, ~38 tumbling glassy shards, lighter fog. Season burns can return `topFade: [a, b]` from their builder (`scene` masks the canvases transparent above `cy - a*H`, opaque below `cy - b*H`) to keep tall effects off the opponent seat: Sandstorm (shorter funnel, lift) and Whirlpool (lower bubbles) use it. Ramadan lanterns/stars rise ~45-95px, not 140-230. Timings unchanged, so sounds are unchanged.
+
 ## v407 — Black Hole, Pixel Blast rebuilt, Origami retimed (owner approved the frames)
 
 - `bfxBlackHole` (spinning disk, photon ring, card strips and mini cards spiral in, collapse at 1.2s) and `bfxPixelBlast` (stepped pixelation via SVG filters `pfxPixelFilters`, scan bar, blast at .52s, stepped chunks) are procedural `procBurnStage` burns, so they pause for frames. New `burn-blackhole` / `burn-pixel` recipes in `sound.js` on the same beats. Origami's swan hover/take-off offsets retimed so it leaves the screen.
