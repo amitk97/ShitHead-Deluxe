@@ -156,7 +156,7 @@ void main(){
   float pw=abs(fract(v_uv.x*4.2)*2.-1.);
   vec2 tuv=vec2(.6815+pw*.122,.1055+(.5-.5*q)*.085);
   vec3 c=texture2D(u_tex2,tuv).rgb;
-  c*=(.34+.72*rd)*.9;
+  c*=.55+.5*rd;
   float grain=fbm(vec2(v_uv.x*40.,q*3.));
   c*=.9+.2*grain;
   float rim=exp(-pow((q+.7)/.14,2.));
@@ -937,7 +937,7 @@ void main(){
         for (let i = 0; i < SEG; i++) {
           const u0 = i / SEG * UMAX, u1 = (i + 1) / SEG * UMAX, P = [pt(u0, -1), pt(u1, -1), pt(u1, 1), pt(u0, 1)], am = (P[0][3] + P[1][3]) / 2;
           const z = (P[0][2] + P[1][2]) / 2, lit = Math.max(0, -.45 * Math.cos(am) + .125 + .74 * Math.sin(am) * .7), light = (.42 + .95 * lit) * (.8 + .35 * (u0 + u1) / 2);
-          const piece = { z, P: P.map(q => proj(q[0], q[1], q[2])), uv: [[u0 + b * .173, 0], [u1 + b * .173, 0], [u1 + b * .173, 1], [u0 + b * .173, 1]], loc: [[u0, -1], [u1, -1], [u1, 1], [u0, 1]], k: [14, b * 7.3, 1.1 - .3 * (u0 + u1) / 2, 0], col: hell ? [1, 1, 1, alive * (.75 + .25 * lit)] : [light, light * .98, light * .94, alive] };
+          const piece = { z, P: P.map(q => proj(q[0], q[1], q[2])), uv: [[u0 + b * .173, 0], [u1 + b * .173, 0], [u1 + b * .173, 1], [u0 + b * .173, 1]], loc: [[u0, -1], [u1, -1], [u1, 1], [u0, 1]], k: [14, b * 7.3, 1.1 - .3 * (u0 + u1) / 2, 0], col: hell ? [1, 1, 1, alive * (.75 + .25 * lit)] : [.74 + .36 * lit * (.85 + .3 * (u0 + u1) / 2), (.74 + .36 * lit) * .99, (.74 + .36 * lit) * .97, alive] };
           (z > .02 ? near : far).push(piece);
         }
       }
@@ -950,6 +950,7 @@ void main(){
         quad(out.art, [cp(u, -1), cp(u, 1), cp(v, 1), cp(v, -1)].map(q => proj(...q)), [[0, u], [1, u], [1, v], [0, v]], [[-1, u], [1, u], [1, v], [-1, v]], [1, 1, 1, alive], [12, 0, 0, 0]);
       }
       put(out.artFront, near);
+      const crownNear = [];
       if (R.art && !hell) {
         const hl = S.fun(t - .09), hx = hl.lean + .04 * K * Math.sin(t * 5.3) * rise, top = FLOOR + .04 + H;
         const fw = 2.8 * K * g, fh = fw * 477 / 741, st = 1 + .08 * bump(T, T + .08, T + .26) - .05 * bump(T + .26, T + .34, T + .55) + .06 * bump(.46, .56, .8) * Math.abs(Math.sin((t - .46) * 13)), sx = 1 / Math.sqrt(st), roll = .35 * (hl.lean / (.12 * K + 1e-6)) * .12 + .03 * Math.sin(t * 3.6 - .2) + .1 * bump(.46, .54, .82) * Math.sin((t - .46) * 24);
@@ -972,9 +973,23 @@ void main(){
         // The head is a body of revolution (radius and centre per row measured from the painting, so at rest it is the flat painted face exactly): the face is turned about its axis by the spin, a darker mirror of it on the far side, and at speed a few fainter copies a moment behind smear it.
         const ghosts = Math.abs(sp.w) > 3 ? 5 : 1, shadeAmt = smooth(0, 4, Math.abs(sp.w)), NS = 28, NR = 16;
         const prof = (k) => { const q = k * HEAD_PROF.length / NR, a0 = Math.max(0, Math.min(HEAD_PROF.length - 1, Math.floor(q - .5))), b0 = Math.min(HEAD_PROF.length - 1, a0 + 1), m = Math.max(0, Math.min(1, q - .5 - a0)); return [HEAD_PROF[a0][0] + (HEAD_PROF[b0][0] - HEAD_PROF[a0][0]) * m, HEAD_PROF[a0][1] + (HEAD_PROF[b0][1] - HEAD_PROF[a0][1]) * m]; };
-        const rings = []; for (let k = 0; k <= NR; k++) { const [c0, r0] = prof(k); rings.push([c0, r0 * (k === NR ? .45 : k === NR - 1 ? .82 : 1)]); } // the underside rounds off while it turns
+        const rings = []; for (let k = 0; k <= NR; k++) { const [c0, r0] = prof(k); { const tp = Math.pow(Math.min(1, (k + .15) / 5), .85); rings.push([c0 * tp, r0 * tp * (k === NR ? .45 : k === NR - 1 ? .82 : 1)]); } } // the underside rounds off while it turns
         // At rest (before the spin and once it has wound down) the painted face is drawn flat, exactly as approved, curl and all.
         const atRest = Math.abs(sp.w) < 1.2 && Math.abs(Math.sin(sp.th / 2)) < .03;
+        // While it spins the head is a squat bun, so the spiral carries on up out of it, tapering to a point like the emoji; it fades out as the painted curl takes over again.
+        const crown = shadeAmt * faceOn;
+        if (crown > .02) {
+          const CT = 2.4, CS = 56, yb = cyh + hh2 * .35, yt = cyh + hh2 * 1.75, rb = hw * .46, tb = fh * .17, far = [];
+          for (let i = 0; i < CS; i++) {
+            const w0 = i / CS, w1 = (i + 1) / CS;
+            const pc = (w, e) => { const a = w * CT * Math.PI * 2 - sp.th + .6, r = rb * Math.pow(1 - w, 1.15), th = tb * Math.pow(1 - w, .95) * smooth(0, .05, w); return [hx + Math.cos(a) * r, yb + (yt - yb) * Math.pow(w, .75) + e * th, .6 * K + Math.sin(a) * r * .8, a]; };
+            const P = [pc(w0, -1), pc(w1, -1), pc(w1, 1), pc(w0, 1)], am = (P[0][3] + P[1][3]) / 2, z = (P[0][2] + P[1][2]) / 2 - .6 * K;
+            const lit = Math.max(0, -.45 * Math.cos(am) + .125 + .74 * Math.sin(am) * .7), l = .74 + .36 * lit;
+            const piece = { P: P.map(q => proj(q[0], q[1], q[2])), uv: [[w0 * 2, 0], [w1 * 2, 0], [w1 * 2, 1], [w0 * 2, 1]], loc: [[w0, -1], [w1, -1], [w1, 1], [w0, 1]], col: [l, l * .99, l * .97, crown] };
+            (z > 0 ? crownNear : far).push(piece);
+          }
+          far.forEach(c => quad(out.artFront, c.P, c.uv, c.loc, c.col, [10, 0, 0, 0]));
+        }
         if (atRest) {
           const P = [rot(-hw, hh2), rot(hw, hh2), rot(hw, -hh2), rot(-hw, -hh2)].map(q => proj(q[0], q[1], .6 * K));
           quad(out.artFront, P, [[U0, V0], [U1, V0], [U1, V1], [U0, V1]], Z4, [1, 1, 1, faceOn], [11, gz[0], gz[1], 0]);
@@ -998,6 +1013,7 @@ void main(){
           });
         }
       }
+      crownNear.forEach(c => quad(out.artFront, c.P, c.uv, c.loc, c.col, [10, 0, 0, 0]));
       const charge = smooth(0, .3, t) * (1 - smooth(.85, 1.8, t));
       glowAt(out.back, [0, FLOOR + .05, 0], .85 * K, [1, .55, .16, .36 * charge]);
       const rt = (t - .3) / .5;
