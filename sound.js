@@ -813,8 +813,14 @@
       // Fortune Joker: a gong as the envelope opens and clinking coins.
       'joker-lunar': (k) => {
         // Metal pings as the gold plate spins and slows, a clink and gong on landing at .73s, firecracker pops and falling coins.
-        [0.1, 0.25, 0.4, 0.55, 0.68].forEach((at, i) => k.tone({ at, dur: 0.18, type: 'sine', f0: 1568 - i * 90, level: 0.1 - i * 0.012 }));
-        k.noise({ dur: 0.7, type: 'bandpass', f0: 600, f1: 1800, q: 1.2, level: 0.12, attack: 0.3 });
+        // The fortune cookie pops in, rattles, and cracks open at .22s as the plate rises out of it.
+        k.tone({ at: 0, dur: 0.08, type: 'sine', f0: 300, f1: 520, level: 0.2 });
+        k.scatter(4, 0.14, 0.21, (at) => k.noise({ at, dur: 0.012, type: 'bandpass', f0: 2200, q: 3, level: 0.16 }));
+        k.noise({ at: 0.22, dur: 0.05, type: 'highpass', f0: 3500, level: 0.4 });
+        k.tone({ at: 0.22, dur: 0.04, type: 'square', f0: 900, f1: 300, level: 0.12 });
+        k.scatter(5, 0.24, 0.5, (at) => k.noise({ at, dur: 0.012, type: 'highpass', f0: 4200, level: 0.1 }));
+        [0.26, 0.36, 0.46, 0.56, 0.68].forEach((at, i) => k.tone({ at, dur: 0.18, type: 'sine', f0: 1568 - i * 90, level: 0.1 - i * 0.012 }));
+        k.noise({ at: 0.2, dur: 0.55, type: 'bandpass', f0: 600, f1: 1800, q: 1.2, level: 0.12, attack: 0.25 });
         k.tone({ at: 0.73, dur: 0.9, type: 'sine', f0: 196, f1: 180, level: 0.25 });
         k.tone({ at: 0.73, dur: 0.5, type: 'triangle', f0: 392, level: 0.12 });
         k.noise({ at: 0.73, dur: 0.06, type: 'highpass', f0: 3000, level: 0.35 });

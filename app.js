@@ -12100,15 +12100,37 @@
       // A gold plate with 福 on one side and the Joker on the other spins up, slowing as it lands on the Joker.
       const front = `<div style="position:absolute;inset:0">${sfxSvg(70, 100, '<defs><linearGradient id="jfxGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset=".5" stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs><rect x="2" y="2" width="66" height="96" rx="9" fill="url(#jfxGold)" stroke="#7c2d12" stroke-width="3"/><rect x="8" y="8" width="54" height="84" rx="6" fill="none" stroke="#b91c1c" stroke-width="2.5"/><circle cx="35" cy="50" r="22" fill="#b91c1c"/><text x="35" y="60" text-anchor="middle" font-size="27" font-weight="900" fill="#fde68a" font-family="serif">福</text>')}</div>`;
       const plate = bfxAdd(host, `${front}<div style="position:absolute;inset:0">${JFX_CARD}</div>`, g.cx, g.cy - 10 * k, W, H), f1 = plate.children[0], f2 = plate.children[1];
-      const sm = (t) => Math.min(1, Math.max(0, (t - .06) / (LAND - .06)));
+      const S0 = .15, sm = (t) => Math.min(1, Math.max(0, (t - S0) / (LAND - S0)));
       const th = (t) => 3 * Math.PI * (1 - Math.pow(1 - sm(t), 3));
       const kf = (fn) => Array.from({ length: N + 1 }, (_, i) => Object.assign({ offset: i / N }, fn(i / N)));
-      const vis = (t) => t > .86 ? Math.max(0, 1 - (t - .86) / .1) : Math.min(1, t / .05);
+      const vis = (t) => t > .86 ? Math.max(0, 1 - (t - .86) / .1) : Math.min(1, Math.max(0, (t - .12) / .03));
+      const em = (t) => { const e = Math.min(1, Math.max(0, (t - .12) / .16)); return e * e * (3 - 2 * e); };
       bfxAnimate(f1, kf((t) => ({ transform: `scaleX(${Math.max(.001, Math.cos(th(t))).toFixed(3)})`, opacity: Math.cos(th(t)) > 0 ? vis(t) : 0 })), { duration: D, easing: 'linear' });
       bfxAnimate(f2, kf((t) => ({ transform: `scaleX(${Math.max(.001, -Math.cos(th(t))).toFixed(3)})`, opacity: Math.cos(th(t)) < 0 ? vis(t) : 0 })), { duration: D, easing: 'linear' });
       // The whole plate hops up while it spins, then lands with a squash.
       bfxAnimate(plate, kf((t) => { const u = sm(t), hop = -90 * k * Math.sin(Math.PI * Math.min(1, u * 1.05)), land = t > LAND && t < LAND + .08 ? (1 - Math.abs(t - LAND - .04) / .04) * .08 : 0;
-        return { transform: `translateY(${hop.toFixed(1)}px) scale(${(1 + (t < .06 ? t / .06 - 1 : 0) * .6).toFixed(3)},${(1 - land).toFixed(3)})` }; }), { duration: D, easing: 'linear' });
+        const e = em(t), sc = .4 + .6 * e;
+        return { transform: `translateY(${(hop + 74 * k * (1 - e)).toFixed(1)}px) scale(${sc.toFixed(3)},${(sc * (1 - land)).toFixed(3)})` }; }), { duration: D, easing: 'linear' });
+      // A cracked, curved fortune cookie: it shakes, splits along a zigzag crack and the plate spins out of it.
+      const CY = g.cy + 66 * k, CW = 200 * k, CH = 120 * k, T0 = .15 * D;
+      const cookie = '<defs><linearGradient id="jfxCk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcd791"/><stop offset=".55" stop-color="#e0a24c"/><stop offset="1" stop-color="#a8651f"/></linearGradient></defs><path d="M8 76C4 34 54 6 104 10 150 8 198 38 192 78 178 104 132 108 100 86 68 108 22 104 8 76Z" fill="url(#jfxCk)" stroke="#6b3a0c" stroke-width="3" stroke-linejoin="round"/><path d="M100 86C94 58 98 32 104 10" stroke="#a8651f" stroke-width="3" fill="none"/><path d="M24 50C40 28 70 18 98 20" stroke="#fff3c4" stroke-width="5" stroke-linecap="round" fill="none" opacity=".6"/><path d="M118 24C150 22 178 40 184 62" stroke="#fff3c4" stroke-width="4" stroke-linecap="round" fill="none" opacity=".4"/><g fill="#7c4a12" opacity=".5"><circle cx="40" cy="78" r="2"/><circle cx="62" cy="88" r="2"/><circle cx="150" cy="84" r="2"/><circle cx="170" cy="66" r="2"/><circle cx="128" cy="40" r="2"/></g>';
+      const L = 'polygon(0 0,50% 0,46% 20%,54% 38%,45% 58%,54% 76%,50% 100%,0 100%)', R = 'polygon(50% 0,100% 0,100% 100%,50% 100%,54% 76%,45% 58%,54% 38%,46% 20%)';
+      [[L, -1, '25% 90%'], [R, 1, '75% 90%']].forEach(([clip, sg, org]) => {
+        const h = bfxAdd(host, sfxSvg(200, 120, cookie), g.cx, CY, CW, CH);
+        h.style.clipPath = clip; h.style.transformOrigin = org;
+        bfxAnimate(h, [{ offset: 0, transform: 'scale(.3)', opacity: 0 }, { offset: .06, transform: 'scale(1.08)', opacity: 1 }, { offset: .09, transform: 'scale(1) rotate(0)' }, { offset: .105, transform: 'rotate(-3deg)' }, { offset: .12, transform: 'rotate(3deg)' }, { offset: .135, transform: 'rotate(-2deg)' },
+          { offset: .15, transform: 'rotate(0) translate(0,0)', opacity: 1 }, { offset: .26, transform: `rotate(${sg * 22}deg) translate(${sg * 24 * k}px,0)`, opacity: 1 }, { offset: .4, transform: `rotate(${sg * 40}deg) translate(${sg * 48 * k}px,${46 * k}px)`, opacity: 1 },
+          { offset: .55, transform: `rotate(${sg * 62}deg) translate(${sg * 70 * k}px,${130 * k}px)`, opacity: 0 }, { offset: 1, opacity: 0 }], { duration: D, easing: 'linear' });
+      });
+      const crack = bfxAdd(host, sfxSvg(200, 120, '<path d="M104 8L98 26 108 46 96 66 108 86 100 96" stroke="#3b1d05" stroke-width="3.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>'), g.cx, CY, CW, CH);
+      bfxAnimate(crack, [{ offset: 0, opacity: 0 }, { offset: .08, opacity: 0 }, { offset: .1, opacity: 1 }, { offset: .15, opacity: 1 }, { offset: .17, opacity: 0 }, { offset: 1, opacity: 0 }], { duration: D, easing: 'linear' });
+      sfxFlash(host, g.cx, CY - 10 * k, k, 'rgba(255,236,170,.9)', 200, 380, T0);
+      for (let i = 0; i < 14; i++) {
+        const a = -Math.PI / 2 + bfxRand(-1.2, 1.2), d = bfxRand(50, 120) * k, el = bfxAdd(host, sfxDot(i % 3 ? '#d99a43' : '#f5c26b', false), g.cx + bfxRand(-6, 6) * k, CY - 10 * k, 6 * k, 6 * k);
+        bfxAnimate(el, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: 1, offset: .35 }, { transform: `translate(${Math.cos(a) * d * 1.2}px,${Math.sin(a) * d + 90 * k}px)`, opacity: 0 }], { duration: 640, delay: T0 + bfxRand(0, 60), easing: 'cubic-bezier(.1,.8,.3,1)' });
+      }
+      const slip = bfxAdd(host, '<div style="width:100%;height:100%;background:#fff7e0;border:1px solid #b45309;display:flex;align-items:center;justify-content:center"><div style="width:70%;height:2px;background:#b91c1c"></div></div>', g.cx, CY - 10 * k, 44 * k, 13 * k);
+      bfxAnimate(slip, [{ transform: 'translate(0,0) rotate(0)', opacity: 0 }, { transform: `translate(${-60 * k}px,${-50 * k}px) rotate(-30deg)`, opacity: 1, offset: .3 }, { transform: `translate(${-110 * k}px,${40 * k}px) rotate(25deg)`, opacity: 1, offset: .65 }, { transform: `translate(${-140 * k}px,${120 * k}px) rotate(-20deg)`, opacity: 0 }], { duration: 760, delay: T0 + 20, easing: 'ease-out' });
       // Landing: flash, two fireworks, a rain of gold coins.
       const T = LAND * D;
       sfxFlash(host, g.cx, g.cy - 10 * k, k, 'rgba(253,224,71,.9)', 330, 520, T);
