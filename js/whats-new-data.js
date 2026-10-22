@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v403: [['fire', 'The ShitStorm now has thick, wet poo spirals that run up into its head, and the head gets a pointed spiral tip while it spins.', WN_KEY]],
       v402: [['fire', 'The Hellfire Spiral is now a 3D flaming tornado of fire ribbons with smoke, and the ShitStorm coils turn together with its head.', WN_KEY]],
       v401: [['fire', 'The home screen shrinks to fit short phones, and the ShitStorm card is easier to read.']],
       v400: [['fire', 'The ShitStorm now has a complete curled head, shaded swirling coils and a tighter card-consuming finish.']],
