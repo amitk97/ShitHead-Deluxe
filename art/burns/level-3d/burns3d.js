@@ -271,8 +271,14 @@ void main(){
     // ShitStorm funnel (world units): S.fun(t) = size and sway, S.fpt(par, u, a) = a point on the funnel's surface at height u, angle a.
     S.fun = t => {
       const K = S.artK, rise = ease((t - .18) / .46), collapse = smooth(1.38, 1.86, t), g = (.25 + .75 * rise) * (1 - .8 * collapse);
-      return { t, K, g, H: 2.2 * K * g, R0: 1.22 * K * g, lean: .12 * K * Math.sin(t * 3.6 + .4) * rise * (1 - collapse), rise, collapse };
+      return { t, K, g, H: 2.2 * K * g, R0: 1.22 * K * g, lean: K * (.12 * Math.sin(t * 3.6 + .4) + .1 * smooth(.4, .7, t) * Math.sin(t * 11)) * rise * (1 - collapse), rise, collapse };
     };
+    // The whole tornado spins like the Tasmanian Devil: one speed curve drives the coils and the head (rad/s, winds up .36-.66s, down 1.28-1.55s).
+    // It is scaled so the head has made a whole number of turns by 1.6s and faces us again for the grin and the stare.
+    const spinW = t => 31 * smooth(.36, .66, t) * (1 - smooth(1.28, 1.55, t));
+    const spinI = t => { let a = 0; for (let x = 0; x < t; x += .02) a += spinW(x + .01) * Math.min(.02, t - x); return a; };
+    let spinK = 1; { const e = spinI(1.6); spinK = Math.max(1, Math.round(e / (Math.PI * 2))) * Math.PI * 2 / e; }
+    S.spin = t => ({ th: spinI(Math.min(t, 1.6)) * spinK, w: spinW(t) * spinK });
     S.fpt = (par, u, a) => {
       const r = (.3 + .7 * Math.pow(u, .75)) * par.R0, ax = par.lean * u * u + .05 * par.K * par.g * Math.sin(u * 6 - par.t * 8) * u;
       return [ax + Math.cos(a) * r, FLOOR + .04 + u * par.H, Math.sin(a) * r * .7];
@@ -687,6 +693,8 @@ void main(){
     const proj = (x, y, z) => { const k = D / Math.max(.5, D - z); return [cx + F * x * k, cy - F * y * k, k]; };
     const projW = ([x, y, z]) => proj(x, y * CP - z * SP, y * SP + z * CP);
     const quad = (arr, P, uv, loc, col, k) => { for (const i of [0, 1, 2, 0, 2, 3]) arr.push(P[i][0], P[i][1], uv[i][0], uv[i][1], loc[i][0], loc[i][1], col[0], col[1], col[2], col[3], k[0], k[1], k[2], k[3]); };
+    // Half-width (fraction of the face box's half-width) and centre offset of the painted head per row band, top to bottom, measured from the atlas.
+    const HEAD_PROF = [[.102, .086], [.031, .204], [-.049, .299], [-.146, .488], [-.139, .557], [-.054, .784], [-.066, .799], [-.013, .844], [.011, .906], [.015, .902], [.004, .912], [-.013, .911], [0, .925], [.012, .894], [-.004, .92], [-.031, .894], [-.031, .894], [-.065, .841]];
     const LOC = [[-1, -1], [1, -1], [1, 1], [-1, 1]], Z4 = [[0, 0], [0, 0], [0, 0], [0, 0]], UP = [[-1, 0], [1, 0], [1, 1], [-1, 1]];
     const billboard = (arr, w, r, col, k) => { const [x, y, s] = projW(w), q = r * F * s; quad(arr, [[x - q, y - q], [x + q, y - q], [x + q, y + q], [x - q, y + q]], Z4, LOC, col, k); };
     const glowAt = (arr, [x, y, z], r, col) => { const [px, py, s] = proj(x, y, z), q = r * F * s; quad(arr, [[px - q, py - q], [px + q, py - q], [px + q, py + q], [px - q, py + q]], Z4, LOC, col, [6, 0, 0, 0]); };
@@ -898,14 +906,14 @@ void main(){
       // A real 3D funnel. Five glossy coil ribbons wind round a dark core (far arcs behind the card, near arcs in
       // front, lit from the upper left); torn card fragments climb the helix and goo is flung off it (see the sim);
       // the painted head rides on top, rigid, following the sway a beat late and squashing on the strike.
-      const par = S.fun(t), { H, rise, collapse, K, g } = par, T = S.T;
+      const par = S.fun(t), { H, rise, collapse, K, g } = par, T = S.T, sp = S.spin(t);
       const alive = smooth(.06, .24, t) * (1 - smooth(1.62, 1.96, t));
       const NB = 4, SEG = 110, turns = 1.7, hh = H / turns / NB * .9, TAU = Math.PI * 2;
       // Where a lump tore away the coils are thinner for a moment.
       const bite = u => { let d = 0; for (const b of S.bites) { const k = (t - b.t) / .45; if (k > 0 && k < 1) d += Math.exp(-Math.pow((u - b.u) / .06, 2)) * (1 - k) * Math.min(1, k * 8); } return 1 - .5 * Math.min(1, d); };
       const far = [], near = [];
       for (let b = 0; b < NB; b++) {
-        const ph = b * TAU / NB, spin = t * (6 + .45 * b) * (1 - .5 * collapse);
+        const ph = b * TAU / NB, spin = t * (6 + .45 * b) * (1 - .5 * collapse) + .55 * sp.th;
         const pt = (u, e) => { const a = ph + u * turns * TAU - spin, q = S.fpt(par, u, a), th = hh * (.75 + .5 * u) * smooth(0, .03, u) * (1 - smooth(.97, 1, u)) * (1 - .8 * smooth(0, .3 * par.R0 + 1e-6, q[2])) * bite(u); return [q[0], q[1] + e * th, q[2], a]; };
         for (let i = 0; i < SEG; i++) {
           const u0 = i / SEG, u1 = (i + 1) / SEG, P = [pt(u0, -1), pt(u1, -1), pt(u1, 1), pt(u0, 1)], am = (P[0][3] + P[1][3]) / 2;
@@ -927,7 +935,7 @@ void main(){
         const fw = 2.8 * K * g, fh = fw * 477 / 741, st = 1 + .08 * bump(T, T + .08, T + .26) - .05 * bump(T + .26, T + .34, T + .55), sx = 1 / Math.sqrt(st), roll = .35 * (hl.lean / (.12 * K + 1e-6)) * .12 + .03 * Math.sin(t * 3.6 - .2);
         const by = top - .05 * fh, cxh = hx, cyh = by + fh * st / 2, c = Math.cos(roll), sn = Math.sin(roll);
         const rot = (x, y) => [cxh + x * c - y * sn, cyh + x * sn + y * c];
-        const hw = fw * sx / 2, hh2 = fh * st / 2, P = [rot(-hw, hh2), rot(hw, hh2), rot(hw, -hh2), rot(-hw, -hh2)].map(q => proj(q[0], q[1], .6 * K));
+        const hw = fw * sx / 2, hh2 = fh * st / 2, STRIPS = 32, U0 = .5693, U1 = .9312, V0 = .0156, V1 = .4814, dep = .5;
         const faceOn = smooth(.3, .58, t) * (1 - smooth(1.55, 1.9, t));
         // Where it looks: at the card as it is lifted, darting about as the card is torn and the matter flies, a hard stare at us on the grin, then down at the collapsing pile.
         const hsh = (n, k) => { const x = Math.sin(n * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -937,7 +945,36 @@ void main(){
         gx += w1 * ((dart(n - 1, 1) + (dart(n, 1) - dart(n - 1, 1)) * f) - gx); gy += w1 * ((dart(n - 1, 2) + (dart(n, 2) - dart(n - 1, 2)) * f) - gy);
         gx += w2 * (.15 - gx); gy += w2 * (-.1 - gy); gx += w3 * (-gx); gy += w3 * (.9 - gy);
         gx += .08 * Math.sin(t * 13); gy += .06 * Math.sin(t * 11 + 1);
-        quad(out.artFront, P, [[.5693, .0156], [.9312, .0156], [.9312, .4814], [.5693, .4814]], Z4, [1, 1, 1, faceOn], [11, (gx < 0 ? gx * 8 : gx * 5), (gy < 0 ? gy * 4 : gy * 5), 0]);
+        
+        const gz = [(gx < 0 ? gx * 8 : gx * 5), (gy < 0 ? gy * 4 : gy * 5)];
+        // The head is a body of revolution (radius and centre per row measured from the painting, so at rest it is the flat painted face exactly): the face is turned about its axis by the spin, a darker mirror of it on the far side, and at speed a few fainter copies a moment behind smear it.
+        const ghosts = Math.abs(sp.w) > 3 ? 5 : 1, shadeAmt = smooth(0, 4, Math.abs(sp.w)), NS = 24, NR = 12;
+        const prof = (k) => { const q = k * HEAD_PROF.length / NR, a0 = Math.max(0, Math.min(HEAD_PROF.length - 1, Math.floor(q - .5))), b0 = Math.min(HEAD_PROF.length - 1, a0 + 1), m = Math.max(0, Math.min(1, q - .5 - a0)); return [HEAD_PROF[a0][0] + (HEAD_PROF[b0][0] - HEAD_PROF[a0][0]) * m, HEAD_PROF[a0][1] + (HEAD_PROF[b0][1] - HEAD_PROF[a0][1]) * m]; };
+        const rings = []; for (let k = 0; k <= NR; k++) { const [c0, r0] = prof(k); rings.push([c0, r0 * (k === NR ? .45 : k === NR - 1 ? .82 : 1)]); } // the underside rounds off while it turns
+        // At rest (before the spin and once it has wound down) the painted face is drawn flat, exactly as approved, curl and all.
+        const atRest = Math.abs(sp.w) < 1.2 && Math.abs(Math.sin(sp.th / 2)) < .03;
+        if (atRest) {
+          const P = [rot(-hw, hh2), rot(hw, hh2), rot(hw, -hh2), rot(-hw, -hh2)].map(q => proj(q[0], q[1], .6 * K));
+          quad(out.artFront, P, [[U0, V0], [U1, V0], [U1, V1], [U0, V1]], Z4, [1, 1, 1, faceOn], [11, gz[0], gz[1], 0]);
+        } else for (let gi = ghosts - 1; gi >= 0; gi--) {
+          const th = sp.th - gi * sp.w * .012, al = faceOn * (gi === 0 ? (ghosts > 1 ? .62 : 1) : .46 * Math.pow(.78, gi - 1));
+          const strips = [];
+          for (let n = 0; n < NS; n++) {
+            const f0 = -Math.PI + n * 2 * Math.PI / NS, f1 = f0 + 2 * Math.PI / NS;
+            strips.push({ f0, f1, z: Math.cos((f0 + f1) / 2 + th) });
+          }
+          strips.sort((p1, q1) => p1.z - q1.z).forEach(sg => {
+            const shade = sg.z < 0 ? .5 : .78 + .22 * sg.z, col = 1 - shadeAmt * (1 - shade);
+            const vert = (f, k) => {
+              const [c0, r0] = rings[k], x = hw * (c0 + r0 * Math.sin(f + th)), y = hh2 - 2 * hh2 * k / NR, q = rot(x, y);
+              return { P: proj(q[0], q[1], .6 * K + hw * dep * r0 * Math.cos(f + th)), uv: [U0 + (.5 + (c0 + r0 * Math.sin(f)) / 2) * (U1 - U0), V0 + (V1 - V0) * k / NR] };
+            };
+            for (let k = 0; k < NR; k++) {
+              const A = vert(sg.f0, k), B = vert(sg.f1, k), C = vert(sg.f1, k + 1), D2 = vert(sg.f0, k + 1);
+              quad(out.artFront, [A.P, B.P, C.P, D2.P], [A.uv, B.uv, C.uv, D2.uv], Z4, [col, col, col, al], [11, gz[0], gz[1], 0]);
+            }
+          });
+        }
       }
       const charge = smooth(0, .3, t) * (1 - smooth(.85, 1.8, t));
       glowAt(out.back, [0, FLOOR + .05, 0], .85 * K, [1, .55, .16, .36 * charge]);
