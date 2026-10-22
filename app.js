@@ -2386,7 +2386,7 @@
       if (state.isMultiplayer && state.roomCode) {
         const burnEffectId = burnEffectIdFor(player);
         db.ref(`rooms/${state.roomCode}/lastCosmeticEffect`).set({
-          type: 'burn', playerId: player.id, by: state.localPlayerId, effectId: burnEffectId === PRIVATE_BURN_ID ? 'default' : burnEffectId, at: Date.now()
+          type: 'burn', playerId: player.id, by: state.localPlayerId, effectId: burnEffectId, at: Date.now()
         }).catch(error => console.warn('Burn effect broadcast skipped', error));
       }
 
@@ -4187,7 +4187,7 @@
     // Show Others' Effects (Display): off shows everyone else's burn, Joker
     // and victory effects in the default style (the play is still shown).
     let othersEffectsOn = readPref('shithead_others_effects', true);
-    const othersEffect = (id) => (othersEffectsOn && id !== PRIVATE_BURN_ID ? id : 'default') || 'default';
+    const othersEffect = (id) => (othersEffectsOn ? id : 'default') || 'default'; // a private burn is only drawn for AmitK's and Pooja's seats (privateBurnViewer)
     let hapticsOn = readPref('shithead_haptics', true);
     // Your-turn chime and the new-invite/request/gift chime (both default on).
     let turnAlertOn = readPref('shithead_turn_alert', true);
@@ -6772,6 +6772,7 @@
       positionDirectionBadge();
       try { helperTipsOnTable(); } catch (e) { if (!(e instanceof ReferenceError)) throw e; } // § Helper tips
       // The owner-art effects anyone at the table might play: fetch their layers early.
+      ensurePrivateViews(state.players);
       if (state.phase && state.phase !== 'SETUP') preloadOwnerFx([equippedCosmetics.victoryEffect, equippedCosmetics.jokerEffect, ...(state.players || []).flatMap(p => [p?.cosmetics?.victoryEffect, p?.cosmetics?.jokerEffect])]);
       renderGauntletHud();
       renderSeriesHud();
@@ -7913,7 +7914,7 @@
           const remoteBurn = !isCatchUp && data.lastCosmeticEffect.type === 'burn'
             && data.lastCosmeticEffect.playerId !== state.localPlayerId
             && data.lastCosmeticEffect.by !== state.localPlayerId;
-          if (remoteBurn) audio.playBurnSound(othersEffect(data.lastCosmeticEffect.effectId));
+          if (remoteBurn && data.lastCosmeticEffect.effectId !== PRIVATE_BURN_ID) audio.playBurnSound(othersEffect(data.lastCosmeticEffect.effectId));
           if (remoteBurn && bigEffectsOn) {
             setTimeout(() => {
               try {
@@ -12414,9 +12415,9 @@
 
     function getPublicCosmeticLoadout() {
       return {
-        cardBack: equippedCosmetics.cardBack === PRIVATE_BACK_ID ? 'default' : equippedCosmetics.cardBack || 'default',
+        cardBack: equippedCosmetics.cardBack || 'default', // AmitK's and Pooja's private items are shown to opponents too (v401)
         frame: equippedCosmetics.frame || 'default',
-        burnEffect: equippedCosmetics.burnEffect === PRIVATE_BURN_ID ? 'default' : equippedCosmetics.burnEffect || 'default',
+        burnEffect: equippedCosmetics.burnEffect || 'default',
         victoryEffect: equippedCosmetics.victoryEffect || 'default',
         jokerEffect: equippedCosmetics.jokerEffect || 'default',
         avatar: equippedCosmetics.avatar || 'default',
@@ -12521,7 +12522,7 @@
       const loadout = {};
       SHOWCASE_TYPES.forEach(type => {
         const id = equippedCosmetics[type];
-        loadout[type] = id && id !== PRIVATE_TABLE_ID && id !== PRIVATE_BURN_ID && id !== PRIVATE_BACK_ID && isSupportedCosmetic(type, id) ? id : 'default';
+        loadout[type] = id && isSupportedCosmetic(type, id) ? id : 'default'; // private items too: other players see what AmitK and Pooja wear
       });
       return loadout;
     }
@@ -12620,9 +12621,14 @@
     // Linked showcases: every item is a button that opens
     // Custom on its tab, scrolled to that item (openShowcaseItemInCustom).
     function showcaseHtml(showcase, opts = {}) {
+      return withPrivateViewOwner(opts.owner, () => showcaseHtmlInner(showcase, opts));
+    }
+    function showcaseHtmlInner(showcase, opts = {}) {
       if (!showcase) return '';
       const pick = type => {
         const id = showcase[type];
+        // AmitK's and Pooja's private items show on their card to everyone (the owner's wish); nobody else can show or own them.
+        if (id && PRIVATE_ITEM_IDS.has(id) && privateViewing()) return { 'back-private-keepsake': 'cardBack', 'burn-private-keepsake': 'burnEffect', 'table-private-keepsake': 'tableTheme' }[id] === type ? id : 'default';
         return id && isSupportedCosmetic(type, id) ? id : 'default';
       };
       const table = pick('tableTheme'), back = pick('cardBack'), frame = pick('frame');
@@ -12667,7 +12673,7 @@
       return `<div class="pp-head">${avatarHtml(getPlayerAvatarId(player), 64)}
           <div class="min-w-0"><div id="playerPopupName" class="pp-name">${escapeHtml(player.name)}${hasProfile && xpShown() && profile.level > 0 ? ` ${xpLevelBadge(profile.level)}` : ''}</div>${badge}${online}</div></div>
         ${hasProfile ? playerPopupStatsHtml(profile.stats || {}, profile) : '<div class="pp-note">This player isn\'t signed in, so they don\'t have a rank or stats yet.</div>'}
-        ${showcaseHtml(profile.showcase || player.cosmetics, { link: true })}
+        ${showcaseHtml(profile.showcase || player.cosmetics, { link: true, owner: player.uid })}
         ${profile.wishlist && Object.keys(profile.wishlist).length ? `<div class="pp-showcase"><div class="pp-section">Wishlist</div><div class="wish-list">${wishlistHtml(profile.wishlist, friendState === 'friends' ? { giftUid: player.uid, giftName: player.name } : {})}</div></div>` : ''}
         ${actions}`;
     }
@@ -12925,7 +12931,7 @@
       const owned = id === 'default' || !!item?.builtIn || !!cosmeticPurchaseState[id];
       const active = id === activeId;
       // Tile layout, shared with the profile-picture tiles.
-      const status = active ? (type === 'cardBack' ? '✓ EQUIPPED · Tap to preview' : '✓ EQUIPPED') : owned ? 'Tap to equip' : customLockedStatus(item);
+      const status = active ? (type === 'cardBack' ? '✓ EQUIPPED · Tap to preview' : '✓ EQUIPPED') : owned ? (cosmeticPurchaseState[id]?.testUnlock ? 'Test unlock · tap to equip' : 'Tap to equip') : customLockedStatus(item);
       return `<button type="button" data-equip-type="${type}" data-equip-id="${id}" ${owned ? '' : 'data-locked aria-disabled="true"'} aria-pressed="${active}" class="cosmetic-option-card cosmetic-tile avatar-option">
         <span class="avatar-option-art">${cosmeticPreview(item, type)}${owned ? '' : '<span class="avatar-option-lock" aria-hidden="true">🔒</span>'}${item?.season ? `<span class="season-badge" title="${SEASONAL_EVENT_BY_ID[item.season].name}">${SEASONAL_EVENT_BY_ID[item.season].emoji}</span>` : ''}</span>
         <span class="avatar-option-name">${name}</span>
@@ -12947,7 +12953,7 @@
       const equippedId = resolveAvatarId(equippedCosmetics.avatar);
       const owned = !!item.builtIn || !!cosmeticPurchaseState[item.id];
       const active = owned && equippedId === item.id;
-      const status = active ? '✓ EQUIPPED' : owned ? 'Tap to equip' : customLockedStatus(item);
+      const status = active ? '✓ EQUIPPED' : owned ? (cosmeticPurchaseState[item.id]?.testUnlock ? 'Test unlock · tap to equip' : 'Tap to equip') : customLockedStatus(item);
       return `<button type="button" class="avatar-option" data-equip-type="avatar" data-equip-id="${item.id}" ${owned ? '' : 'data-locked aria-disabled="true"'} aria-pressed="${active}">
         <span class="avatar-option-art">${avatarHtml(item.id, 52, owned ? '' : (item.earned ? 'avatar-locked' : ''))}${owned ? '' : '<span class="avatar-option-lock" aria-hidden="true">🔒</span>'}${item.season ? `<span class="season-badge" title="${SEASONAL_EVENT_BY_ID[item.season].name}">${SEASONAL_EVENT_BY_ID[item.season].emoji}</span>` : ''}</span>
         <span class="avatar-option-name">${item.name}</span>
@@ -13136,7 +13142,7 @@
     // equipped after that read began keeps the new pick instead of being
     // overwritten by the older answer (the "frame reverts" bug).
     const cosmeticEquipStamp = {};
-    let cosmeticCollectionUid = null;
+    let cosmeticCollectionUid = null, testUnlockOn = false, testUnlockBusy = false; // the AmitK unlock switch, see § AmitK test switch
     function stampEquip(types) { const now = Date.now(); [].concat(types).forEach(t => { cosmeticEquipStamp[t] = now; }); }
     function loadCosmeticCollection(user = currentUser) {
       const startedAt = Date.now();
@@ -13154,10 +13160,16 @@
       return ensurePrivateTableOwnership(user).then(() => Promise.all([
         db.ref(`shopPurchases/${user.uid}/cosmetics`).once('value'),
         db.ref(`users/${user.uid}/equippedCosmetics`).once('value'),
-        db.ref(`users/${user.uid}/ownedCosmetics`).once('value')
-      ])).then(([purchaseSnap, equippedSnap, ownedSnap]) => {
+        db.ref(`users/${user.uid}/ownedCosmetics`).once('value'),
+        db.ref(`users/${user.uid}/testOwned`).once('value').catch(() => null)
+      ])).then(([purchaseSnap, equippedSnap, ownedSnap, testSnap]) => {
         if (currentUser?.uid !== user.uid) return;
-        const fresh = { ...(purchaseSnap.val() || {}), ...(ownedSnap.val() || {}) };
+        // The AmitK test switch (economy testUnlock): its items count as owned, tagged, and vanish again when it is turned off.
+        const testItems = Object.fromEntries(Object.keys(testSnap?.val() || {}).map(id => [id, { cost: 0, purchasedAt: 0, testUnlock: true }]));
+        testUnlockOn = Object.keys(testItems).length > 0;
+        refreshUnlockAllLabel();
+        const fresh = { ...testItems, ...(purchaseSnap.val() || {}), ...(ownedSnap.val() || {}) };
+        if (cosmeticCollectionUid === user.uid) cosmeticPurchaseState = Object.fromEntries(Object.entries(cosmeticPurchaseState).filter(([, v]) => !v?.testUnlock));
         // Items are never taken away in play, so keep anything bought on
         // this device while the read was in flight.
         cosmeticPurchaseState = cosmeticCollectionUid === user.uid ? { ...cosmeticPurchaseState, ...fresh } : fresh;
@@ -14017,6 +14029,40 @@
         .then(() => { notifyBanner(`XP & Levels are ${turnOn ? 'on' : 'off'} for everyone.`); if (turnOn) setTimeout(syncServerEconomy, 11000); })
         .catch(() => notifyBanner('Couldn\'t change the XP switch. Check the rules are published.'));
     });
+    // § AmitK test switch: every cosmetic counts as owned while on (server `testUnlock`; the server keeps a note of what was
+    // owned and worn before and puts the earlier look back when it is turned off).
+    function refreshUnlockAllLabel() {
+      const label = document.getElementById('menuUnlockAllLabel');
+      if (label) label.textContent = `Unlock All Cosmetics: ${testUnlockOn ? 'On' : 'Off'}`;
+    }
+    document.getElementById('menuUnlockAllBtn')?.addEventListener('click', async () => {
+      if (!isAmitkTestingAccount({}) || testUnlockBusy) return;
+      const turnOn = !testUnlockOn;
+      const yes = await shConfirm({
+        title: turnOn ? 'Unlock all cosmetics?' : 'Lock them again?',
+        text: turnOn ? 'Every locked item becomes usable, in live games too. A note is kept of what you own now.' : 'Items you do not really own are locked again, and anything you were wearing from them goes back to your earlier look.',
+        yes: turnOn ? 'Unlock' : 'Lock', no: 'Cancel'
+      });
+      if (!yes) return;
+      closeHamburgerMenu();
+      testUnlockBusy = true;
+      try {
+        const res = await callEconomy('testUnlock', { on: turnOn });
+        testUnlockOn = !!res?.on;
+        equippedCosmetics = { ...equippedCosmetics, ...(res?.equipped || {}) };
+        refreshUnlockAllLabel();
+        await loadCosmeticCollection();
+        if (!turnOn) {
+          const deck = deckItemForTheme(state.deckTheme);
+          if (deck && !deck.builtIn && !cosmeticPurchaseState[deck.id]) equipDeck('deck-obsidian');
+        }
+        syncPublicProfile(); syncShowcase();
+        if (typeof renderCosmeticShop === 'function') renderCosmeticShop();
+        notifyBanner(turnOn ? 'All cosmetics unlocked for testing.' : 'Cosmetics locked again.');
+      } catch (e) {
+        notifyBanner('Couldn\'t change the unlock switch. Please try again.');
+      } finally { testUnlockBusy = false; }
+    });
     document.getElementById('changelogCloseBtn').addEventListener('click', () => document.getElementById('changelogModal').classList.add('hidden'));
     document.getElementById('errorReportsRefreshBtn').addEventListener('click', loadErrorReports);
     document.getElementById('errorReportsClearBtn').addEventListener('click', () => {
@@ -14633,6 +14679,7 @@
       document.getElementById('menuErrorReportsBtn')?.classList.toggle('hidden', !isGameOwner());
       document.getElementById('menuChangelogBtn')?.classList.toggle('hidden', !isGameOwner());
       document.getElementById('menuXpSwitchBtn')?.classList.toggle('hidden', !isGameOwner());
+      document.getElementById('menuUnlockAllBtn')?.classList.toggle('hidden', !currentUser || !isAmitkTestingAccount({}));
       drawerAvatar?.classList.toggle('hidden', !currentUser);
       const homeAvatar = document.getElementById('homeNameAvatar');
       if (homeAvatar) {
@@ -15985,6 +16032,8 @@
       return {
         items: Object.fromEntries(COSMETIC_SHOP_ITEMS.map(item => [item.id, { name: item.name, cost: item.cost, ...(item.season ? { season: item.season } : {}) }])),
         builtIn: BUILT_IN_COSMETICS.map(item => item.id),
+        // Every item Custom can show (Shop, seasonal, earn-only, level, Season Pass, Gauntlet...), for the AmitK test switch (economy testUnlock).
+        allCosmeticIds: [...new Set(COSMETIC_TABS.flatMap(tab => customAllItems(COSMETIC_CATEGORY_TYPES[tab.category])).filter(item => !item.builtIn).map(item => item.id))],
         earned,
         seasonalEvents: SEASONAL_EVENTS.map(ev => ({ id: ev.id, name: ev.name })),
         seasonalBundleRate: SEASONAL_BUNDLE_RATE,

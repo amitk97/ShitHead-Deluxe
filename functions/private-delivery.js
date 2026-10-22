@@ -52,4 +52,11 @@ async function deliver(database, now = Date.now()) {
   }
   return {status:'delivered'};
 }
-module.exports = {RELEASE_AT,SENDER_UID,RECIPIENT_UID,ITEM_ID,GIFT_ID,ITEM,TABLE_ITEM_ID,TABLE_GIFT_ID,TABLE_ITEM,BURN_ITEM_ID,BURN_GIFT_ID,BURN_ITEM,BACK_ITEM_ID,BACK_GIFT_ID,BACK_ITEM,itemFor,allowed,publicCosmetics,canClaim,deliver};
+// Opponents may see what AmitK or Pooja are wearing (owner's wish, v401): any signed-in player is served an item's art
+// only while one of those two accounts has it equipped (`?of=<uid>`). It is never sold, gifted or owned by anyone else.
+async function wornBy(database, ofUid, slot, itemId, now = Date.now()) {
+  if (!(ofUid === SENDER_UID || (ofUid === RECIPIENT_UID && now >= RELEASE_AT))) return false;
+  const worn = await database.ref(`users/${ofUid}/equippedCosmetics/${slot}`).once('value');
+  return worn.val() === itemId;
+}
+module.exports = {wornBy,RELEASE_AT,SENDER_UID,RECIPIENT_UID,ITEM_ID,GIFT_ID,ITEM,TABLE_ITEM_ID,TABLE_GIFT_ID,TABLE_ITEM,BURN_ITEM_ID,BURN_GIFT_ID,BURN_ITEM,BACK_ITEM_ID,BACK_GIFT_ID,BACK_ITEM,itemFor,allowed,publicCosmetics,canClaim,deliver};

@@ -1,5 +1,5 @@
 'use strict';
-const {SENDER_UID,RECIPIENT_UID,RELEASE_AT,BACK_GIFT_ID} = require('./private-delivery');
+const {SENDER_UID,RECIPIENT_UID,RELEASE_AT,BACK_GIFT_ID,wornBy} = require('./private-delivery');
 const ITEM_ID = 'back-private-keepsake';
 const allowed = (uid,now=Date.now()) => uid === SENDER_UID || (uid === RECIPIENT_UID && now >= RELEASE_AT);
 async function grant(database, uid) {
@@ -15,6 +15,12 @@ function artHandler(admin) {
       const match = String(req.headers.authorization || '').match(/^Bearer (.+)$/);
       if (!match) return res.status(404).end();
       const user = await admin.auth().verifyIdToken(match[1], true);
+      const of = String(req.query?.of || '');
+      if (of && of !== user.uid) {
+        if (!(await wornBy(admin.database(), of, 'cardBack', ITEM_ID))) return res.status(404).end();
+        res.type('webp');
+        return res.sendFile(require('node:path').join(__dirname,'private-assets','back.webp'));
+      }
       if (!allowed(user.uid)) return res.status(404).end();
       const owned = await admin.database().ref(`users/${user.uid}/ownedCosmetics/${ITEM_ID}`).once('value');
       if (!owned.exists()) return res.status(404).end();

@@ -1194,6 +1194,42 @@ actions.buyNameToken = async ({ uid }) => {
   return { diamonds: num(res.user.diamonds), token: { purchasedAt, cost } };
 };
 
+// AmitK test switch (owner): while on, every cosmetic Custom can show counts as owned (server-only
+// `testOwned`, so real ownership is never touched and a purchase or reward made meanwhile stays
+// real). `testUnlock` keeps a note of what the account owned and wore before; turning it off clears
+// `testOwned` and puts back the earlier look for any slot wearing an item that is no longer owned.
+const EQUIP_FREE = new Set(['default']);
+actions.testUnlock = async ({ uid, auth, data }) => {
+  if (!isAmitK(auth)) fail('permission-denied', 'This switch is not available.');
+  const on = !!data?.on;
+  const legacy = await legacyOwned(uid);
+  const res = await userTx(uid, (user) => {
+    const tu = user.testUnlock || {};
+    const owned = (id) => !!(user.ownedCosmetics?.[id] || legacy[id] || (CAT.builtIn || []).includes(id) || EQUIP_FREE.has(id));
+    if (on) {
+      if (tu.on) return { noop: true };
+      user.testUnlock = { on: true, at: Date.now(), ownedBefore: Object.keys(user.ownedCosmetics || {}), equippedBefore: { ...(user.equippedCosmetics || {}) } };
+      user.testOwned = Object.fromEntries((CAT.allCosmeticIds || []).filter(id => !owned(id)).map(id => [id, true]));
+      return { user, granted: Object.keys(user.testOwned).length };
+    }
+    if (!tu.on && !user.testOwned) return { noop: true };
+    const gone = Object.keys(user.testOwned || {}).filter(id => !owned(id));
+    const eq = user.equippedCosmetics || {};
+    const restored = {};
+    for (const [type, id] of Object.entries(eq)) {
+      if (!gone.includes(id)) continue;
+      const before = tu.equippedBefore?.[type];
+      eq[type] = before && !gone.includes(before) && owned(before) ? before : 'default';
+      restored[type] = eq[type];
+    }
+    if (user.equippedCosmetics) user.equippedCosmetics = eq;
+    delete user.testOwned;
+    user.testUnlock = { on: false, at: Date.now(), ownedBefore: tu.ownedBefore || [], equippedBefore: tu.equippedBefore || {} };
+    return { user, relocked: gone.length, restored };
+  });
+  return { on, testOwned: Object.keys(res.user.testOwned || {}), granted: res.granted || 0, relocked: res.relocked || 0, restored: res.restored || {}, equipped: res.user.equippedCosmetics || {} };
+};
+
 actions.sendGift = async ({ uid, auth, data }) => {
   const id = clip(data.itemId, 60);
   const friendUid = clip(data.friendUid, 128);

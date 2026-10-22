@@ -576,7 +576,7 @@ document.addEventListener('keydown', (e) => {
     }
 
     function getCosmeticBackClass(id) {
-      if(id===PRIVATE_BACK_ID && ownedPrivateBacks().length)return 'cosmetic-back-private-keepsake';
+      if(id===PRIVATE_BACK_ID)return 'cosmetic-back-private-keepsake'; // an opponent's too (ensurePrivateViews loads the art)
       if (['back-cobalt-linen','back-sage-linen','back-plum-linen'].includes(id)) return `cosmetic-${id}`;
       if (SEASONAL_BACK_IDS.has(id)) return `cosmetic-${id} season-back`;
       if (/^back-(lvl|ss[0-9]{4})-/.test(id || '')) return `cosmetic-${id} lvl-back`;

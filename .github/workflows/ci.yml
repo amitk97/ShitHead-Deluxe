@@ -64,6 +64,9 @@ jobs:
       - name: Series levels and readiness
         run: node tools/series-ready-test.js
 
+      - name: AmitK test unlock switch
+        run: node tools/test-unlock-test.js
+
       - name: House Rules unit tests
         run: node tools/house-rules-test.js
 
@@ -95,6 +98,7 @@ jobs:
           node tools/private-table-browser-test.js
           node tools/private-burn-browser-test.js
           node tools/private-back-browser-test.js
+          node tools/private-view-browser-test.js
 
       - name: Existing browser gameplay regression suite
         run: node tools/run-browser-tests.js

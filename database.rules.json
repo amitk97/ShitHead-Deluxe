@@ -62,6 +62,7 @@
           "cardBack": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
+              newData.parent().parent().child('testOwned').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
               ((newData.val() === 'back-private-keepsake' && ($uid === '11d84kCgSde82Xlu8k5U65OB9662' || ($uid === 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && now >= 1792188000000 && root.child('users').child($uid).child('claimedGifts').child('private_promise_20261016').exists()))) ||
@@ -79,6 +80,7 @@
           "frame": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
+              newData.parent().parent().child('testOwned').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val() === 'frame-silver' || newData.val() === 'frame-gold' ||
@@ -97,6 +99,7 @@
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               newData.val() === 'emotes-classic' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
+              newData.parent().parent().child('testOwned').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val() === 'emotes-classic' || newData.val() === 'emotes-savage' ||
@@ -114,6 +117,7 @@
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               newData.val() === 'table-wood' || newData.val() === 'table-felt' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
+              newData.parent().parent().child('testOwned').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
               ((newData.val() === 'table-private-keepsake' && ($uid === '11d84kCgSde82Xlu8k5U65OB9662' || ($uid === 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && now >= 1792188000000 && newData.parent().parent().child('claimedGifts').child('private_sunset_20261016').exists()))) || newData.val() === 'table-casino' || newData.val() === 'table-winter' ||
@@ -129,6 +133,7 @@
           "burnEffect": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
+              newData.parent().parent().child('testOwned').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
               ((newData.val() === 'burn-private-keepsake' && ($uid === '11d84kCgSde82Xlu8k5U65OB9662' || ($uid === 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && now >= 1792188000000 && newData.parent().parent().child('claimedGifts').child('private_embers_20261016').exists()))) || newData.val() === 'burn-coloured' || newData.val() === 'burn-ice' ||
@@ -144,6 +149,7 @@
           "victoryEffect": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
+              newData.parent().parent().child('testOwned').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val() === 'victory-confetti' || newData.val() === 'victory-cards' ||
@@ -156,6 +162,7 @@
           "jokerEffect": {
             ".validate": "newData.isString() && (newData.val() === 'default' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
+              newData.parent().parent().child('testOwned').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val().matches(/^joker-(grin|jackbox|puppet|magic|glitch|storm)$/) ||
@@ -169,6 +176,7 @@
               newData.val() === 'avatar-suit-hearts' || newData.val() === 'avatar-suit-diamonds' ||
               newData.val() === 'avatar-suit-clubs' ||
               ((newData.parent().parent().child('ownedCosmetics').child(newData.val()).exists() ||
+              newData.parent().parent().child('testOwned').child(newData.val()).exists() ||
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
               ((newData.val() === 'avatar-private-keepsake' && now >= 1792188000000 && ($uid === '11d84kCgSde82Xlu8k5U65OB9662' || $uid === 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1')) || newData.val() === 'avatar-ace-spades' || newData.val() === 'avatar-queen-hearts' ||
@@ -308,6 +316,12 @@
         },
         "seasonPass": {
           ".validate": "newData.hasChildren()"
+        },
+        "testOwned": {
+          ".validate": "newData.hasChildren()"
+        },
+        "testUnlock": {
+          ".validate": "newData.hasChildren(['on', 'at'])"
         },
         "lastRankedOpponent": {
           ".validate": "newData.hasChildren(['uid', 'at'])"

@@ -40,8 +40,8 @@ await page.evaluate(()=>{
 assert.equal(await page.locator('#personalisationBurnEffects [data-equip-id="burn-private-keepsake"]').count(),1);
 assert.equal(await page.locator('[data-shop-row="burn-private-keepsake"],[data-coll-id="burn-private-keepsake"]').count(),0);
 assert(await page.evaluate(()=>equipCosmetic('burnEffect',PRIVATE_BURN_ID,{preview:false,sync:false})));
-assert.equal(await page.evaluate(()=>getShowcaseLoadout().burnEffect),'default');
-assert.equal(await page.evaluate(()=>getPublicCosmeticLoadout().burnEffect),'default');
+assert.equal(await page.evaluate(()=>getShowcaseLoadout().burnEffect),'burn-private-keepsake');
+assert.equal(await page.evaluate(()=>getPublicCosmeticLoadout().burnEffect),'burn-private-keepsake');
 assert.equal(await page.evaluate(()=>burnEffectIdFor({id:state.localPlayerId,cosmetics:{burnEffect:'default'}})),'burn-private-keepsake');
 assert.equal(await page.evaluate(()=>burnEffectIdFor({id:'remote',cosmetics:{burnEffect:PRIVATE_BURN_ID}})),'default');
 await page.evaluate(async()=>{await loadPrivateBurnArt();document.getElementById('lobbyScreen').classList.add('hidden');syncLobbyOpen();});

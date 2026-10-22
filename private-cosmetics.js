@@ -1,5 +1,11 @@
 // Private gifts are deliberately separate from shop and collection catalogues.
 const PRIVATE_AVATAR_ID = 'avatar-private-keepsake';
+// Opponents see what AmitK and Pooja wear (v401): while a player card is being drawn for one of them, the item getters
+// below answer for display (name, icon, preview). Owning, equipping, buying and gifting are still theirs alone.
+let privateViewOwner = null;
+const privateViewing = () => !!privateViewOwner && PRIVATE_ACCOUNT_IDS.has(privateViewOwner);
+const PRIVATE_ITEM_IDS = new Set(['avatar-private-keepsake','back-private-keepsake','burn-private-keepsake','table-private-keepsake']);
+function withPrivateViewOwner(uid, fn) { const was = privateViewOwner; privateViewOwner = uid || null; try { return fn(); } finally { privateViewOwner = was; } }
 const PRIVATE_RELEASE_AT = Date.parse('2026-10-16T22:00:00Z');
 const PRIVATE_ACCOUNT_IDS = new Set(['11d84kCgSde82Xlu8k5U65OB9662','pAB2xxrFWMhUv6AYtJMP1nSxA5l1']);
 const PRIVATE_AVATAR_ITEM = Object.freeze({id:PRIVATE_AVATAR_ID,name:'Forever',category:'Avatars',cost:0,privateGift:true,animated:true});
@@ -10,7 +16,7 @@ function privateGiftItem(id) {
   if (id === PRIVATE_BACK_ID) return privateBackItem(id);
   if (id === PRIVATE_BURN_ID) return privateBurnItem(id);
   if (id === PRIVATE_TABLE_ID) return privateTableItem(id);
-  return PRIVATE_ACCOUNT_IDS.has(currentUser?.uid) ? privateAvatarItem(id) : null;
+  return privateViewing() || PRIVATE_ACCOUNT_IDS.has(currentUser?.uid) ? privateAvatarItem(id) : null;
 }
 function ownedPrivateAvatars() {
   const item = privateGiftItem(PRIVATE_AVATAR_ID);
@@ -37,7 +43,7 @@ const privateTableUrls = new Map(), privateTableRequests = new Map();
 let privateTableSession = 0, privateTableAssetUid = null;
 function privateTableItem(id) {
   const uid=currentUser?.uid;
-  const available=uid===PRIVATE_TABLE_OWNER || (uid==='pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && (typeof serverNow==='function'?serverNow():Date.now())>=PRIVATE_RELEASE_AT);
+  const available=privateViewing() || uid===PRIVATE_TABLE_OWNER || (uid==='pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && (typeof serverNow==='function'?serverNow():Date.now())>=PRIVATE_RELEASE_AT);
   return id === PRIVATE_TABLE_ID && available ? PRIVATE_TABLE_ITEM : null;
 }
 function ownedPrivateTables() {
@@ -135,7 +141,7 @@ let privateBurnUid=null,privateBurnSession=0,privateBurnConfig=null,privateBurnR
 const privateBurnRuns=new Map(),privateBurnPending=new WeakMap();
 function privateBurnItem(id){
  const uid=currentUser?.uid;
- return id===PRIVATE_BURN_ID && (uid===PRIVATE_TABLE_OWNER || (uid==='pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && serverNow()>=PRIVATE_RELEASE_AT)) ? PRIVATE_BURN_ITEM : null;
+ return id===PRIVATE_BURN_ID && (privateViewing() || uid===PRIVATE_TABLE_OWNER || (uid==='pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && serverNow()>=PRIVATE_RELEASE_AT)) ? PRIVATE_BURN_ITEM : null;
 }
 function ownedPrivateBurns(){
  return currentUser?.uid===cosmeticCollectionUid && privateBurnItem(PRIVATE_BURN_ID) && cosmeticPurchaseState[PRIVATE_BURN_ID] ? [PRIVATE_BURN_ITEM] : [];
@@ -226,17 +232,39 @@ function privateBurnPile(host,x,y,scale,calm,card){
  }else{face.style.transition='opacity 420ms ease';requestAnimationFrame(()=>{face.style.opacity='0';});}
  return stop;
 }
+// An opponent's burn (AmitK or Pooja wearing it): the same effect, its config served for `?of=<uid>`.
+let privateBurnViewConfig=null,privateBurnViewRequest=null;
+async function loadPrivateBurnArtView(uid){
+ if(privateBurnViewConfig)return privateBurnViewConfig;
+ if(privateBurnViewRequest)return privateBurnViewRequest;
+ const user=currentUser;
+ const task=(async()=>{
+  const token=await user.getIdToken();
+  const response=await fetch('https://europe-west1-shithead-pro.cloudfunctions.net/privateBurnArt?of='+encodeURIComponent(uid),{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+  if(!response.ok)throw Error('Effect unavailable');
+  const config=await response.json();
+  if(typeof config.css!=='string' || typeof config.html!=='string')throw Error('Invalid effect');
+  privateBurnViewConfig=config;return config;
+ })();
+ privateBurnViewRequest=task;
+ try{return await task;}finally{if(privateBurnViewRequest===task)privateBurnViewRequest=null;}
+}
+function privateBurnViewer(){
+ const p=typeof burnFxPlayer!=='undefined'?burnFxPlayer:null;
+ return !ownedPrivateBurns().length && p && p.id!==state?.localPlayerId && PRIVATE_ACCOUNT_IDS.has(p.uid) ? p.uid : null;
+}
 async function playPrivateBurn(host,x,y,scale=1,card=null){
- if(!host || !ownedPrivateBurns().length || document.hidden)return false;
- if(privateBurnUid!==currentUser?.uid)clearPrivateBurnForOtherAccounts();
+ const viewer=privateBurnViewer();
+ if(!host || (!viewer && !ownedPrivateBurns().length) || !currentUser || document.hidden)return false;
+ if(!viewer && privateBurnUid!==currentUser?.uid)clearPrivateBurnForOtherAccounts();
  clearPrivateBurnInHost(host);
  const calm=document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  const stopPile=privateBurnPile(host,x,y,scale,calm,card);
  const ticket={},uid=currentUser.uid,session=privateBurnSession;
  privateBurnPending.set(host,ticket);
  let config;
- try{config=await loadPrivateBurnArt();}catch(_){return false;}
- if(!config || privateBurnPending.get(host)!==ticket || currentUser?.uid!==uid || session!==privateBurnSession || !host.isConnected || document.hidden || !ownedPrivateBurns().length){stopPile();return false;}
+ try{config=viewer?await loadPrivateBurnArtView(viewer):await loadPrivateBurnArt();}catch(_){stopPile();return false;}
+ if(!config || privateBurnPending.get(host)!==ticket || currentUser?.uid!==uid || (!viewer && session!==privateBurnSession) || !host.isConnected || document.hidden || (!viewer && !ownedPrivateBurns().length)){stopPile();return false;}
  privateBurnPending.delete(host);
  const root=document.createElement('div'),style=document.createElement('style');
  root.className='private-burn';root.setAttribute('aria-hidden','true');
@@ -255,7 +283,7 @@ async function playPrivateBurn(host,x,y,scale=1,card=null){
  root.addEventListener('animationend',ended);root.addEventListener('animationcancel',cancelled);document.addEventListener('visibilitychange',hidden);
  privateBurnRuns.set(root,stop);host.append(root);
  const sound=(delay,play)=>timers.push(setTimeout(()=>{
-  if(stopped || !root.isConnected || currentUser?.uid!==uid || !ownedPrivateBurns().length)return;
+  if(stopped || !root.isConnected || currentUser?.uid!==uid || (!viewer && !ownedPrivateBurns().length))return;
   const kit=audio._burnKit();if(kit)play(kit);
  },delay));
  sound(800,kit=>[880,1108.73,1318.51].forEach((f,i)=>kit.tone({at:i*.065,dur:.65,f0:f,level:.075,attack:.008})));
@@ -270,7 +298,7 @@ const PRIVATE_BACK_ITEM=Object.freeze({id:PRIVATE_BACK_ID,name:'Sunset Promise',
 let privateBackUid=null,privateBackSession=0,privateBackUrl=null,privateBackRequest=null;
 function privateBackItem(id){
  const uid=currentUser?.uid;
- return id===PRIVATE_BACK_ID && (uid===PRIVATE_TABLE_OWNER || (uid==='pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && serverNow()>=PRIVATE_RELEASE_AT)) ? PRIVATE_BACK_ITEM : null;
+ return id===PRIVATE_BACK_ID && (privateViewing() || uid===PRIVATE_TABLE_OWNER || (uid==='pAB2xxrFWMhUv6AYtJMP1nSxA5l1' && serverNow()>=PRIVATE_RELEASE_AT)) ? PRIVATE_BACK_ITEM : null;
 }
 function ownedPrivateBacks(){
  return currentUser?.uid===cosmeticCollectionUid && privateBackItem(PRIVATE_BACK_ID) && cosmeticPurchaseState[PRIVATE_BACK_ID] ? [PRIVATE_BACK_ITEM] : [];
@@ -312,8 +340,23 @@ async function loadPrivateBackArt(){
  privateBackRequest=task;
  try{return await task;}finally{if(privateBackRequest===task)privateBackRequest=null;}
 }
+// What an opponent wears: the card back art for AmitK or Pooja (served only while they have it equipped).
+let privateBackViewUrl=null,privateBackViewRequest=null;
+function ensurePrivateViews(players){
+ if(!currentUser)return;
+ const seat=(players||[]).find(p=>p && p.id!==state?.localPlayerId && PRIVATE_ACCOUNT_IDS.has(p.uid) && p.cosmetics?.cardBack===PRIVATE_BACK_ID);
+ if(!seat || privateBackViewUrl || privateBackViewRequest || ownedPrivateBacks().length)return;
+ const user=currentUser;
+ privateBackViewRequest=(async()=>{
+  const token=await user.getIdToken();
+  const response=await fetch('https://europe-west1-shithead-pro.cloudfunctions.net/privateBackArt?of='+encodeURIComponent(seat.uid),{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+  if(!response.ok)throw Error('Artwork unavailable');
+  const url=URL.createObjectURL(await response.blob());
+  privateBackViewUrl=url;document.body.style.setProperty('--private-back-art-view','url("'+url+'")');
+ })().catch(()=>{}).finally(()=>{privateBackViewRequest=null;});
+}
 (function(){
  const style=document.createElement('style');
- style.textContent='.custom-card-back.cosmetic-back-private-keepsake{background-color:#48305c!important;background-image:var(--private-back-art,linear-gradient(#48305c,#d89873))!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}.custom-card-back.cosmetic-back-private-keepsake::before,.custom-card-back.cosmetic-back-private-keepsake::after,.custom-card-back.cosmetic-back-private-keepsake>svg{display:none!important}';
+ style.textContent='.custom-card-back.cosmetic-back-private-keepsake{background-color:#48305c!important;background-image:var(--private-back-art,var(--private-back-art-view,linear-gradient(#48305c,#d89873)))!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}.custom-card-back.cosmetic-back-private-keepsake::before,.custom-card-back.cosmetic-back-private-keepsake::after,.custom-card-back.cosmetic-back-private-keepsake>svg{display:none!important}';
  document.head.appendChild(style);
 })();

@@ -6691,7 +6691,7 @@ async function runDevTestSuite() {
   // ---- STAGE 1: hamburger menu restructure + responsive presentation ----
   await test('REGRESSION: the hamburger menu has all 9 items in the agreed order, with no duplicates', () => {
     // Error Reports is owner-only (hidden for everyone else).
-    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuLadderBtn', 'menuShopBtn', 'menuGuideBtn', 'menuTourBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuErrorReportsBtn', 'menuChangelogBtn', 'menuXpSwitchBtn', 'menuInstallBtn', 'menuSignOutBtn'];
+    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuLadderBtn', 'menuShopBtn', 'menuGuideBtn', 'menuTourBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuErrorReportsBtn', 'menuChangelogBtn', 'menuXpSwitchBtn', 'menuUnlockAllBtn', 'menuInstallBtn', 'menuSignOutBtn'];
     const nav = document.querySelector('#hamburgerDrawer nav');
     const actualOrder = Array.from(nav.querySelectorAll('button')).map(b => b.id);
     assertEqual(actualOrder, expectedOrder, 'Menu items must appear in exactly the agreed order: Profile, Stats, Personalisation, Friends, Leaderboard, Challenges, Level Ladder, Shop, Guide & Strategy, Settings, Support, Sign Out (signed in only)');

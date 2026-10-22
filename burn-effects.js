@@ -1056,7 +1056,7 @@
 
     // The Burn cosmetic a player has equipped (their own from equippedCosmetics).
     function burnEffectIdFor(player) {
-      if(player && player.id!==state?.localPlayerId && player.cosmetics?.burnEffect===PRIVATE_BURN_ID)return 'default';
+      if(player && player.id!==state?.localPlayerId && player.cosmetics?.burnEffect===PRIVATE_BURN_ID)return othersEffectsOn && PRIVATE_ACCOUNT_IDS.has(player.uid) ? PRIVATE_BURN_ID : 'default';
       const ownEffect = (typeof equippedCosmetics !== 'undefined' && equippedCosmetics.burnEffect) || 'default';
       if (player?.id === state?.localPlayerId && ownEffect === PRIVATE_BURN_ID && ownedPrivateBurns().length) return ownEffect;
       if (player && player.id !== state?.localPlayerId && !othersEffectsOn) return 'default';

@@ -45,7 +45,7 @@ await page.evaluate(()=>{
 assert(await page.locator('#personalisationTableThemes [data-equip-id="table-private-keepsake"]').count());
 assert.equal(await page.locator('[data-shop-row="table-private-keepsake"],[data-coll-id="table-private-keepsake"]').count(),0);
 assert(await page.evaluate(()=>equipCosmetic('tableTheme',PRIVATE_TABLE_ID,{preview:false,sync:false})));
-assert.equal(await page.evaluate(()=>getShowcaseLoadout().tableTheme),'default');
+assert.equal(await page.evaluate(()=>getShowcaseLoadout().tableTheme),'table-private-keepsake');
 assert.equal(await page.evaluate(()=>getPublicCosmeticLoadout().tableTheme),undefined);
 // Exercise the exact large preview from the owner's screenshot. A failed
 // first request must recover and paint a decoded image without reopening it.
