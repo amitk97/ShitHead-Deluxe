@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v410 — Valentine, Summer, Christmas, Lunar New Year, Ramadan burns rebuilt (owner approved the frames)
+
+- `bfxValentine` (arrow hits .42, burst .5), `bfxSummer` (sun pop .62, beach ball), `bfxChristmas` (ribbons wrap, open .62), `bfxLunar` (8 pops at .12+.07i, boom .74), `bfxRamadan` (lanterns, burst .6) in `burn-effects.js` on `procBurnStage`, with new helpers `pfxBase` (stage + kit + glow) and `pfxCard` (real card clone tinted/shaken until its moment). They are in the `bfx` map ahead of `SEASONAL_BURN_FX`; the old `sbfx` versions are unused. New `BURN_SOUNDS` recipes on the same beats. Halloween stays the painted 3D ghost. Never splice `BURN_SOUNDS` with a regex that runs to the next key: the last entry swallowed `JOKER_SOUNDS` once.
+
 ## v409 — Diwali, Easter, New Year burns rebuilt (owner approved the frames)
 
 - `bfxDiwali` (12 diyas, rocket, three firework bursts at .62/.80/.96s, golden shards, rangoli ring, marigold petals), `bfxEaster` (card to banded egg, knocks .44-.59s, crack, split at .62s, chick, mini eggs, blossoms) and `bfxNewYear` (clock ring, 3-2-1 at .05/.23/.41s, midnight .62s: cork, shards, spray, confetti, streamers, starbursts) in `burn-effects.js`, on `procBurnStage`; they are in the `bfx` map ahead of `SEASONAL_BURN_FX`, whose old `sbfxDiwali/Easter/NewYear` are now unused. New helpers `pfxFly` (ballistic body with bounce on the shared clock) and `pfxBurst` (radial streaks). New `BURN_SOUNDS` recipes on the same beats.

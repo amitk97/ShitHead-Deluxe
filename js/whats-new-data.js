@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v410: [['fire', 'The Valentine, Summer, Christmas, Lunar New Year and Ramadan burns are rebuilt: an arrow and heart burst, a sun pop with a beach ball, ribbons and a bow, a firecracker string, and lanterns with a crescent and star.', WN_KEY]],
       v409: [['fire', 'The Diwali, Easter and New Year burns are rebuilt: a diya-lit firework burst, an egg that cracks open to a chick, and a countdown to a champagne pop. The card now burns away in each.', WN_KEY]],
       v408: [['fire', 'Confectionery, Glacial Shatter, Sandstorm, Abyssal Whirlpool and the Ramadan burn are polished: glassy ice shards, sweets that fly sideways, and effects that stay clear of the opponent seat.', WN_KEY]],
       v407: [['fire', 'Black Hole and Pixel Blast are rebuilt (a spiralling collapse, a chunky pixel blast) and the Origami swan now flies clear of the screen.', WN_KEY]],
