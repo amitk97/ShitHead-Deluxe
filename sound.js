@@ -649,7 +649,14 @@
       notes.forEach((f, i) => tone({ at: at + i * gap, dur, type, f0: f, level }));
     const JOKER_SOUNDS = {
       // Default: a card flip whoosh and a rising sparkle.
-      default: (k) => { k.noise({ dur: 0.25, type: 'bandpass', f0: 900, f1: 3200, q: 1.2, level: 0.3 }); k.tone({ dur: 0.2, f0: 140, f1: 60, level: 0.35 }); jokerChime(k, [784, 988, 1319, 1568], 0.14); },
+      default: (k) => {
+        k.noise({ dur: 0.3, type: 'bandpass', f0: 700, f1: 3400, q: 1.1, level: 0.28, attack: 0.1 });
+        k.tone({ at: 0.3, dur: 0.22, f0: 150, f1: 55, level: 0.4 });
+        k.noise({ at: 0.3, dur: 0.05, type: 'bandpass', f0: 1600, q: 2, level: 0.3 });
+        jokerChime(k, [784, 988, 1319, 1568, 2093], 0.33, 0.06, 0.1);
+        k.tone({ at: 0.3, dur: 0.6, type: 'sine', f0: 1175, f1: 1760, level: 0.06, attack: 0.02 });
+        k.scatter(10, 0.35, 0.95, (at) => k.tone({ at, dur: 0.1, type: 'triangle', f0: 2200 + Math.random() * 1400, level: 0.04 }));
+      },
       // Jester's Grin: three mocking "ha" blips as the HA!s pop, bells on the hat.
       'joker-grin': (k) => {
         [0.3, 0.52, 0.74].forEach((at, i) => { k.tone({ at, dur: 0.11, type: 'square', f0: 620 - i * 60, f1: 420 - i * 60, level: 0.13 }); k.tone({ at: at + 0.09, dur: 0.1, type: 'square', f0: 560 - i * 60, f1: 380 - i * 60, level: 0.1 }); });
@@ -674,16 +681,28 @@
       },
       // Glitch: digital blips at random pitches over a low buzz.
       'joker-glitch': (k) => {
-        k.tone({ dur: 1.2, type: 'sawtooth', f0: 55, f1: 50, level: 0.08, attack: 0.02 });
-        k.scatter(12, 0.02, 1.1, (at) => k.tone({ at, dur: 0.04, type: 'square', f0: 200 + Math.random() * 1800, level: 0.1 }));
-        k.scatter(5, 0.05, 1.0, (at) => k.noise({ at, dur: 0.06, type: 'highpass', f0: 3000, level: 0.2 }));
+        // Hard digital jumps on the same beats as the slices, a tape-stop dive, then a clean lock-in chime at ~.78s.
+        k.tone({ dur: 0.75, type: 'sawtooth', f0: 70, f1: 45, level: 0.1, attack: 0.02 });
+        [0.08, 0.14, 0.21, 0.29, 0.38, 0.51, 0.61, 0.7].forEach((at, i) => {
+          k.tone({ at, dur: 0.045, type: 'square', f0: 180 + ((i * 397) % 1600), level: 0.1 });
+          if (i % 2 === 0) k.noise({ at, dur: 0.07, type: 'highpass', f0: 3200, level: 0.22 });
+        });
+        k.tone({ at: 0.45, dur: 0.3, type: 'square', f0: 1600, f1: 90, level: 0.08 });
+        k.noise({ at: 0.15, dur: 0.1, type: 'bandpass', f0: 5000, q: 3, level: 0.18 });
+        k.tone({ at: 0.78, dur: 0.12, type: 'square', f0: 1568, level: 0.1 });
+        jokerChime(k, [988, 1319, 1976], 0.8, 0.07, 0.1, 'square', 0.25);
+        k.scatter(5, 0.95, 1.3, (at) => k.noise({ at, dur: 0.04, type: 'highpass', f0: 4000, level: 0.14 }));
       },
       // Card Storm: a rising gust of flapping cards and the snap into one.
       'joker-storm': (k) => {
-        k.noise({ dur: 0.62, type: 'bandpass', f0: 300, f1: 2800, q: 0.8, level: 0.35, attack: 0.3 });
-        k.scatter(14, 0.05, 0.6, (at) => k.noise({ at, dur: 0.015, type: 'highpass', f0: 4200, level: 0.18 }));
-        k.tone({ at: 0.64, dur: 0.22, f0: 180, f1: 60, level: 0.45 });
-        jokerChime(k, [880, 1319], 0.68, 0.06, 0.1);
+        // A gust that rises and tightens with fluttering cards, an implosion at .66s, a bright snap and the cards thrown back out.
+        k.noise({ dur: 0.68, type: 'bandpass', f0: 250, f1: 3200, q: 0.8, level: 0.34, attack: 0.35 });
+        k.tone({ dur: 0.66, type: 'triangle', f0: 110, f1: 720, level: 0.1, attack: 0.3, vibrato: 30 });
+        k.scatter(22, 0.04, 0.64, (at) => k.noise({ at, dur: 0.014, type: 'highpass', f0: 4200, level: 0.16 }));
+        k.tone({ at: 0.66, dur: 0.3, f0: 190, f1: 50, level: 0.5 });
+        k.noise({ at: 0.66, dur: 0.18, type: 'lowpass', f0: 3000, f1: 300, level: 0.35 });
+        jokerChime(k, [880, 1319, 1760], 0.7, 0.06, 0.11);
+        k.scatter(8, 0.7, 1.15, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 3800, level: 0.14 }));
       },
       // Hypnotist: a dreamy, wobbling drone, the watch ticking at each end
       // of its swing, and a low drop into "PICK IT UP".

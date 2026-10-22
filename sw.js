@@ -13,7 +13,7 @@ const OFFLINE_ASSETS = [
   // Application code and styles, including their deployment version keys.
   '/game.css?v=0604afed619e',
   '/tailwind.css?v=a6876526974d',
-  '/sound.js?v=21f2c3cee4a5',
+  '/sound.js?v=980844b6716e',
   '/burn-effects.js?v=5630e3cba769',
   '/card-animations.js?v=0fe6bd1289f1',
   '/js/card-reference-data.js?v=e8e93ad152f4',
@@ -34,7 +34,7 @@ const OFFLINE_ASSETS = [
   '/shop.js?v=8eaa61fe4d61',
   '/multiplayer-lobby.js?v=b284dcca25e7',
   '/private-cosmetics.js?v=e9f1b6622a99',
-  '/app.js?v=92bb1eca228c',
+  '/app.js?v=cb1348fb9298',
   '/js/house-rules.js?v=5d71fee2f41c',
   '/js/house-rules-bots.js?v=1e6c3304258d',
   '/js/house-rules-presets.js?v=80f7a658ecb1',
