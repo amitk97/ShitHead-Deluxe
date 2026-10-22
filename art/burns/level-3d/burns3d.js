@@ -275,7 +275,7 @@ void main(){
     };
     // The whole tornado spins like the Tasmanian Devil: one speed curve drives the coils and the head (rad/s, winds up .36-.66s, down 1.28-1.55s).
     // It is scaled so the head has made a whole number of turns by 1.6s and faces us again for the grin and the stare.
-    const spinW = t => 31 * smooth(.36, .66, t) * (1 - smooth(1.28, 1.55, t));
+    const spinW = t => 44 * smooth(.36, .66, t) * (1 - smooth(1.28, 1.55, t));
     const spinI = t => { let a = 0; for (let x = 0; x < t; x += .02) a += spinW(x + .01) * Math.min(.02, t - x); return a; };
     let spinK = 1; { const e = spinI(1.6); spinK = Math.max(1, Math.round(e / (Math.PI * 2))) * Math.PI * 2 / e; }
     S.spin = t => ({ th: spinI(Math.min(t, 1.6)) * spinK, w: spinW(t) * spinK });
@@ -948,7 +948,7 @@ void main(){
         
         const gz = [(gx < 0 ? gx * 8 : gx * 5), (gy < 0 ? gy * 4 : gy * 5)];
         // The head is a body of revolution (radius and centre per row measured from the painting, so at rest it is the flat painted face exactly): the face is turned about its axis by the spin, a darker mirror of it on the far side, and at speed a few fainter copies a moment behind smear it.
-        const ghosts = Math.abs(sp.w) > 3 ? 5 : 1, shadeAmt = smooth(0, 4, Math.abs(sp.w)), NS = 24, NR = 12;
+        const ghosts = Math.abs(sp.w) > 3 ? 5 : 1, shadeAmt = smooth(0, 4, Math.abs(sp.w)), NS = 28, NR = 16;
         const prof = (k) => { const q = k * HEAD_PROF.length / NR, a0 = Math.max(0, Math.min(HEAD_PROF.length - 1, Math.floor(q - .5))), b0 = Math.min(HEAD_PROF.length - 1, a0 + 1), m = Math.max(0, Math.min(1, q - .5 - a0)); return [HEAD_PROF[a0][0] + (HEAD_PROF[b0][0] - HEAD_PROF[a0][0]) * m, HEAD_PROF[a0][1] + (HEAD_PROF[b0][1] - HEAD_PROF[a0][1]) * m]; };
         const rings = []; for (let k = 0; k <= NR; k++) { const [c0, r0] = prof(k); rings.push([c0, r0 * (k === NR ? .45 : k === NR - 1 ? .82 : 1)]); } // the underside rounds off while it turns
         // At rest (before the spin and once it has wound down) the painted face is drawn flat, exactly as approved, curl and all.
@@ -1484,6 +1484,10 @@ void main(){
       [.64,.73,.82,.91,1.0,1.1,1.18].forEach((at,n) => k.noise({ at, dur: .024, type: 'bandpass', f0: 2200+n*120, q: 2, level: .075 }));
       k.noise({ at: 1.38, dur: .48, type: 'bandpass', f0: 950, f1: 160, q: .8, level: .10, attack: .04 });
       [1.57,1.72,1.84].forEach((at,n) => k.tone({ at, dur: .13, f0: 1900+n*330, f1: 1700+n*330, level: .022-n*.004, attack: .006 }));
+      // the whirl: a wind that climbs with the spin (.36-1.0s) and falls away as it winds down (1.2-1.6s), and a soft sweep each time the face comes round (the 6 turns land at .66 .81 .96 1.11 1.26 1.54s)
+      k.noise({ at: .36, dur: .8, type: 'bandpass', f0: 260, f1: 1150, q: 1.1, level: .075, attack: .3 });
+      k.noise({ at: 1.18, dur: .45, type: 'bandpass', f0: 1100, f1: 240, q: 1.0, level: .05, attack: .05 });
+      [.661,.812,.962,1.113,1.264,1.54].forEach((at,n) => k.noise({ at: at - .04, dur: .09, type: 'lowpass', f0: 1400 - n * 110, f1: 300, level: .045, attack: .03 }));
       // wet splats as the lumps land
       [.98,1.12,1.22,1.33,1.46,1.58].forEach((at,n) => { k.noise({ at, dur: .09, type: 'lowpass', f0: 900, f1: 220, level: .05, attack: .004 }); k.tone({ at, dur: .1, f0: 210-n*14, f1: 80, level: .045, attack: .004 }); });
     },
