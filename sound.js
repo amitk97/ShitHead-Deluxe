@@ -683,9 +683,14 @@
       },
       // Magic Trick: three wand taps, a puff of smoke, then the reveal chime.
       'joker-magic': (k) => {
-        [0.2, 0.32, 0.44].forEach((at) => k.tone({ at, dur: 0.05, type: 'triangle', f0: 3000, level: 0.12 }));
-        k.noise({ at: 0.6, dur: 0.35, type: 'lowpass', f0: 1200, f1: 200, level: 0.3, attack: 0.03 });
-        jokerChime(k, [1047, 1319, 1568, 2093], 0.68, 0.06, 0.1);
+        // Three wand taps with a spark each, a rising shimmer, the poof of smoke at .5s, a thrown fan of cards and the reveal chord.
+        [0.2, 0.31, 0.42].forEach((at) => { k.tone({ at, dur: 0.05, type: 'triangle', f0: 3000, level: 0.12 }); k.tone({ at, dur: 0.12, type: 'sine', f0: 2093, f1: 3136, level: 0.05 }); });
+        k.tone({ at: 0.3, dur: 0.2, type: 'sine', f0: 600, f1: 2400, level: 0.06, attack: 0.1 });
+        k.noise({ at: 0.5, dur: 0.4, type: 'lowpass', f0: 1800, f1: 200, level: 0.32, attack: 0.03 });
+        k.tone({ at: 0.5, dur: 0.15, f0: 220, f1: 70, level: 0.3 });
+        k.scatter(7, 0.54, 0.8, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 4000, level: 0.15 }));
+        jokerChime(k, [1047, 1319, 1568, 2093], 0.6, 0.06, 0.1);
+        k.scatter(8, 0.7, 1.2, (at) => k.tone({ at, dur: 0.12, type: 'triangle', f0: 2200 + Math.random() * 1600, level: 0.04 }));
       },
       // Glitch: digital blips at random pitches over a low buzz.
       'joker-glitch': (k) => {
@@ -757,8 +762,13 @@
       },
       // Santa Joker: sleigh bells and three deep HO notes.
       'joker-christmas': (k) => {
-        k.scatter(14, 0, 1.1, (at) => k.tone({ at, dur: 0.12, type: 'triangle', f0: 2637 + Math.random() * 900, level: 0.05 }));
-        [0.32, 0.5, 0.68].forEach((at) => k.tone({ at, dur: 0.16, f0: 150, f1: 120, level: 0.32 }));
+        // A globe pops in, sleigh bells jingle with the shake, the glass shatters at .74s, a warm chord, then three "ho"s.
+        k.tone({ dur: 0.18, type: 'sine', f0: 400, f1: 900, level: 0.08 });
+        k.scatter(18, 0.18, 0.62, (at) => { k.tone({ at, dur: 0.12, type: 'triangle', f0: 3000 + Math.random() * 1400, level: 0.06 }); k.noise({ at, dur: 0.03, type: 'highpass', f0: 5200, level: 0.08 }); });
+        k.noise({ at: 0.74, dur: 0.12, type: 'highpass', f0: 3000, level: 0.4 });
+        k.scatter(9, 0.76, 1.0, (at) => k.tone({ at, dur: 0.15, type: 'sine', f0: 2800 + Math.random() * 2400, f1: 1800, level: 0.07 }));
+        jokerChime(k, [523, 659, 784, 1047], 0.76, 0.08, 0.11);
+        [0.86, 1.04, 1.22].forEach((at) => k.tone({ at, dur: 0.15, type: 'triangle', f0: 165, f1: 120, level: 0.22 }));
       },
       // Midnight Joker: quick 3-2-1 ticks, a cork pop and firework crackle.
       'joker-newyear': (k) => {
@@ -773,8 +783,13 @@
       },
       // Diya Joker: a soft chime for each lamp as it lights.
       'joker-diwali': (k) => {
-        [523, 587, 659, 784, 880, 988, 1047, 1175, 1319, 1568].forEach((f, i) => k.tone({ at: 0.06 + i * 0.055, dur: 0.35, type: 'triangle', f0: f, level: 0.07 }));
-        k.noise({ at: 0.62, dur: 0.4, type: 'highpass', f0: 4000, level: 0.12, attack: 0.05 });
+        // A soft bell for each of twelve lamps as they light, a warm swell for the Joker, then the golden sparks crackling off.
+        const pent = [523, 587, 659, 784, 880, 1047];
+        for (let i = 0; i < 12; i++) k.tone({ at: 0.09 + i * 0.055, dur: 0.3, type: 'sine', f0: pent[i % 6] * (i > 5 ? 2 : 1), level: 0.08 });
+        k.tone({ at: 0.12, dur: 1.0, type: 'triangle', f0: 262, f1: 330, level: 0.07, attack: 0.3 });
+        k.noise({ at: 0.12, dur: 0.35, type: 'bandpass', f0: 500, f1: 2600, q: 1, level: 0.16, attack: 0.2 });
+        jokerChime(k, [784, 988, 1319, 1568], 0.52, 0.07, 0.1);
+        [0.62, 0.7, 0.78, 0.86].forEach((at) => { k.tone({ at, dur: 0.15, f0: 130, f1: 60, level: 0.25 }); k.scatter(6, at, at + 0.24, (a) => k.noise({ at: a, dur: 0.015, type: 'highpass', f0: 5000, level: 0.14 })); });
       },
       // Fortune Joker: a gong as the envelope opens and clinking coins.
       'joker-lunar': (k) => {

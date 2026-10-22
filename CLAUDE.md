@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v413 — Magic, Christmas, Diwali Joker effects rebuilt (pushed straight to main per the standing rule)
+
+- `jfxMagic` (spotlight, hat in two halves so the Joker card rises between them, wand taps with sparks at .2/.31/.42s, poof at .5s, fan of cards), `jfxChristmas` (snow globe: pop-in, shake with snow lifted inside a circular clip, shatter at .74s, shards, snow rush, "HO HO HO!") and `jfxDiwali` (rangoli, twelve diyas lighting in turn each with a glow, four spark bursts, marigold petals, "LIGHT UP!") in `app.js`, new `JOKER_SOUNDS` recipes. Gotcha: WAAPI keyframe offsets must never decrease; a bad list throws and the effect silently stays as a static element (the caught error only logs "Joker effect skipped safely"). Review list now done except Christmas/Grin similarity is gone; remaining minor: Lunar, Ramadan, Vampire cape opening, Jack-in-the-box, Valentine.
+
 ## Standing rule (owner, 22 Oct): Joker effect fixes go straight to main
 
 - When the owner asks for Joker effects to be fixed or rebuilt ("Skill Use do the next 3"), build them, check the paused frames, send the frames as a courtesy, and PUSH to `main` in the same turn (bump BUILD, What's New, CLAUDE.md note, stamp, tests). Do not wait for a "go". (Burns and Victory effects still wait for "go".)
