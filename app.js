@@ -11749,20 +11749,42 @@
     // Puppet Master: a jester puppet drops in on its strings and dances.
     function jfxPuppet(host, g) {
       jfxScrim(host, 'rgba(68,64,60,.5)');
-      const k = g.k;
-      const puppet = sfxSvg(140, 260, `<rect x="8" y="4" width="124" height="12" rx="5" fill="#92400e" stroke="#451a03" stroke-width="2.5"/><rect x="64" y="2" width="12" height="40" rx="4" fill="#78350f"/>
-        <path d="M14 16 44 176M70 42 70 96M126 16 96 176M40 16 34 128M100 16 106 128" stroke="#e7e5e4" stroke-width="1.4" opacity=".85"/>
-        ${jfxNest(40, 76, 60, 75, '0 0 120 150', jfxJesterBody())}
-        <path d="M52 150h36l12 58H40Z" fill="#7c3aed" stroke="#1e1b4b" stroke-width="2.5"/><path d="M70 150v58" stroke="#16a34a" stroke-width="8"/>
-        <path d="M52 156 34 128M88 156 106 128" stroke="#dc2626" stroke-width="8" stroke-linecap="round"/>
-        <path d="M58 208 44 176M82 208 96 176" stroke="#16a34a" stroke-width="9" stroke-linecap="round"/>
-        <path d="M48 208 40 240M92 208 100 240" stroke="#dc2626" stroke-width="9" stroke-linecap="round"/><circle cx="40" cy="242" r="6" fill="#fbbf24"/><circle cx="100" cy="242" r="6" fill="#fbbf24"/>`);
-      const el = bfxAdd(host, puppet, g.cx, g.cy - 10 * k, 140 * k, 260 * k);
-      el.style.transformOrigin = '50% 0%';
-      bfxAnimate(el, [{ transform: 'translateY(-110%) rotate(0)', opacity: 1 }, { transform: 'translateY(4%) rotate(0)', offset: .2 }, { transform: 'translateY(0) rotate(9deg)', offset: .34 },
-        { transform: 'translateY(-3%) rotate(-9deg)', offset: .48 }, { transform: 'translateY(0) rotate(7deg)', offset: .62 }, { transform: 'translateY(-2%) rotate(-5deg)', opacity: 1, offset: .8 },
-        { transform: 'translateY(-110%) rotate(0)', opacity: 1 }], { duration: JOKER_FX_MS - 40, easing: 'ease-in-out' });
-      jfxWord(host, g, 'DANCE!', { y: g.cy + 150 * k, color: '#f59e0b', delay: 420, tilt: -4 });
+      const k = g.k, D = JOKER_FX_MS - 40, Wc = 180 * k, Hc = 280 * k;
+      // Theatre: a spotlight, and red curtains that part, then close.
+      const spot = bfxAdd(host, '<div style="width:100%;height:100%;clip-path:polygon(42% 0,58% 0,100% 100%,0 100%);background:linear-gradient(rgba(254,243,199,.4),rgba(254,243,199,.05))"></div>', g.cx, g.cy, g.W * .8, g.H);
+      bfxAnimate(spot, [{ opacity: 0 }, { opacity: 1, offset: .2 }, { opacity: 1, offset: .85 }, { opacity: 0 }], { duration: D, easing: 'linear' });
+      const curtain = (left) => {
+        const el = bfxAdd(host, '<div style="width:100%;height:100%;background:repeating-linear-gradient(90deg,#7f1d1d 0 14px,#b91c1c 14px 26px,#991b1b 26px 38px);box-shadow:inset 0 -30px 40px rgba(0,0,0,.45)"></div>', left ? g.W * .25 : g.W * .75, g.H / 2, g.W * .5, g.H);
+        const out = left ? -g.W * .5 : g.W * .5, near = left ? -g.W * .3 : g.W * .3;
+        bfxAnimate(el, [{ transform: 'translateX(0)', opacity: 1 }, { transform: `translateX(${out}px)`, opacity: 1, offset: .2 }, { transform: `translateX(${out}px)`, opacity: 1, offset: .82 }, { transform: `translateX(${near}px)`, opacity: 1, offset: .95 }, { transform: `translateX(${near}px)`, opacity: 0 }], { duration: D, easing: 'ease-in-out' });
+      };
+      curtain(true); curtain(false);
+      // The puppet is five jointed parts, each hung on its own string running off the top of the screen.
+      const box = bfxAdd(host, '', g.cx, g.cy - 20 * k, Wc, Hc);
+      box.style.overflow = 'visible';
+      const string = (len = 800) => `<div style="position:absolute;left:50%;bottom:100%;width:1.5px;height:${len}px;margin-left:-.75px;background:rgba(231,229,228,.85)"></div>`;
+      const part = (svg, cx, cy, w, h, origin, fn, extra = '') => {
+        const el = bfxAdd(box, svg + extra, cx * k, cy * k, w * k, h * k);
+        el.style.transformOrigin = origin; el.style.overflow = 'visible';
+        const fr = [], N = 36;
+        for (let i = 0; i <= N; i++) {
+          const t = i / N, env = Math.max(0, Math.min(1, (t - .16) / .1)) * Math.max(0, Math.min(1, (.84 - t) / .1)), ph = t * D / 1000 * Math.PI * 2 * 2.4, v = fn(Math.sin(ph) * env, Math.cos(ph) * env, env);
+          fr.push({ offset: t, transform: `translate(${v[0] * k}px,${v[1] * k}px) rotate(${v[2]}deg)` });
+        }
+        bfxAnimate(el, fr, { duration: D, easing: 'linear' });
+      };
+      const torso = sfxSvg(70, 120, `${jfxNest(2, 0, 66, 82, '0 0 120 150', jfxJesterBody(true))}<path d="M14 82h42l8 38H6Z" fill="#7c3aed" stroke="#1e1b4b" stroke-width="2.5"/><path d="M35 82v38" stroke="#16a34a" stroke-width="7"/><circle cx="35" cy="100" r="3.5" fill="#fbbf24"/>`);
+      const arm = (c) => sfxSvg(12, 52, `<path d="M6 2V42" stroke="${c}" stroke-width="9" stroke-linecap="round"/><circle cx="6" cy="45" r="6" fill="#fbbf24" stroke="#92400e" stroke-width="2"/>`);
+      const leg = sfxSvg(16, 66, '<path d="M8 2V48" stroke="#16a34a" stroke-width="11" stroke-linecap="round"/><path d="M2 50h12l2 12H0Z" fill="#dc2626" stroke="#7f1d1d" stroke-width="2"/><circle cx="8" cy="64" r="3" fill="#fbbf24"/>');
+      [[90, 54], [60, 144], [120, 144], [78, 180], [102, 180]].forEach(([x, y]) => bfxAdd(box, '<div style="width:100%;height:100%;background:rgba(231,229,228,.8)"></div>', x * k, (y - 400) * k, 1.5, 800 * k));
+      part(leg, 78, 213, 16, 66, '50% 0%', (s, c) => [0, 0, 28 * s]);
+      part(leg, 102, 213, 16, 66, '50% 0%', (s, c) => [0, 0, -28 * s]);
+      part(arm('#dc2626'), 60, 170, 12, 52, '50% 4%', (s, c) => [0, 0, 56 * s - 8]);
+      part(arm('#dc2626'), 120, 170, 12, 52, '50% 4%', (s, c) => [0, 0, 56 * s + 8]);
+      part(torso, 90, 120, 70, 120, '50% 100%', (s, c, e) => [0, -5 * Math.abs(c) * e, 7 * s]);
+      // The whole puppet drops in on its strings and lifts away at the end.
+      bfxAnimate(box, [{ transform: 'translateY(-130%)' }, { transform: 'translateY(4%)', offset: .17 }, { transform: 'translateY(0)', offset: .24 }, { transform: 'translateY(0)', offset: .8 }, { transform: 'translateY(-130%)' }], { duration: D, easing: 'ease-in-out' });
+      jfxWord(host, g, 'DANCE!', { y: g.cy + 138 * k, color: '#f59e0b', delay: 420, tilt: -4 });
     }
     // Magic Trick: tap tap tap, a puff of smoke, and a Joker rises from the hat.
     function jfxMagic(host, g) {
@@ -11912,18 +11934,42 @@
     }
     // New Year, Midnight Joker: a quick 3-2-1, a pop, fireworks, JOKER!
     function jfxNewYear(host, g) {
-      jfxScrim(host, 'rgba(30,27,75,.6)');
-      const k = g.k, px = 110 * k;
-      ['3', '2', '1'].forEach((n, i) => sfxPop(host, `<div class="svfx-count" style="font-size:${px}px">${n}</div>`, g.cx, g.cy, px * 1.4, px * 1.3,
-        [{ transform: 'scale(1.9)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .35 }, { transform: 'scale(.9)', opacity: 1, offset: .75 }, { transform: 'scale(.6)', opacity: 0 }], 190, i * 170));
-      setTimeout(() => {
-        if (!host.isConnected) return;
-        sfxFlash(host, g.cx, g.cy, k, 'rgba(254,243,199,.95)', 300, 500);
-        [[0, 0], [-.3, -.25], [.3, -.22], [-.22, .22], [.25, .25]].forEach(([fx, fy], i) => setTimeout(() => host.isConnected &&
-          jfxBurst(host, g.cx + fx * g.W, g.cy + fy * g.H * .8, ['#fde68a', '#fbbf24', '#f472b6', '#22d3ee', '#ffffff'], 22, 90 * k, 620), i * 60));
-      }, 520);
-      jfxHero(host, g, JFX_CARD, 104, 148, { delay: 560, enter: 'pop' });
-      jfxWord(host, g, 'JOKER!', { color: '#fde68a', delay: 640 });
+      jfxScrim(host, 'rgba(30,27,75,.62)');
+      const k = g.k, px = 92 * k, POP = 520;
+      // A midnight clock: the minute hand ticks round in three jumps while 3-2-1 shows, then the clock bursts.
+      const ticks = Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6, r1 = i % 3 ? 78 : 72; return `<path d="M${100 + Math.sin(a) * r1} ${100 - Math.cos(a) * r1}L${100 + Math.sin(a) * 84} ${100 - Math.cos(a) * 84}" stroke="${i ? '#fde68a' : '#f472b6'}" stroke-width="${i % 3 ? 3 : 5}" stroke-linecap="round"/>`; }).join('');
+      const face = sfxSvg(200, 200, `<circle cx="100" cy="100" r="94" fill="rgba(15,23,42,.8)" stroke="#fbbf24" stroke-width="6"/>${ticks}<circle cx="100" cy="100" r="7" fill="#fbbf24"/>`);
+      const clockFrames = [{ offset: 0, transform: 'scale(.3)', opacity: 0 }, { offset: .08, transform: 'scale(1)', opacity: 1 }, { offset: .32, transform: 'scale(1)', opacity: 1 }, { offset: .4, transform: 'scale(1.9)', opacity: 0 }, { offset: 1, transform: 'scale(1.9)', opacity: 0 }];
+      bfxAnimate(bfxAdd(host, face, g.cx, g.cy, 200 * k, 200 * k), clockFrames, { duration: JOKER_FX_MS - 40, easing: 'ease-out' });
+      const hand = bfxAdd(host, sfxSvg(200, 200, '<path d="M100 100V30" stroke="#f8fafc" stroke-width="6" stroke-linecap="round"/>'), g.cx, g.cy, 200 * k, 200 * k);
+      bfxAnimate(hand, [{ offset: 0, transform: 'rotate(-48deg)', opacity: 0 }, { offset: .06, transform: 'rotate(-48deg)', opacity: 1, easing: 'steps(1,end)' }, { offset: .13, transform: 'rotate(-32deg)', easing: 'steps(1,end)' }, { offset: .2, transform: 'rotate(-16deg)', easing: 'steps(1,end)' },
+        { offset: .27, transform: 'rotate(0deg)', opacity: 1 }, { offset: .32, transform: 'rotate(0deg)', opacity: 1 }, { offset: .4, transform: 'rotate(0deg) scale(1.9)', opacity: 0 }, { offset: 1, opacity: 0 }], { duration: JOKER_FX_MS - 40, easing: 'linear' });
+      ['3', '2', '1'].forEach((n, i) => sfxPop(host, `<div class="svfx-count" style="font-size:${px}px">${n}</div>`, g.cx, g.cy + 6 * k, px * 1.4, px * 1.3,
+        [{ transform: 'scale(1.9)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .3 }, { transform: 'scale(.92)', opacity: 1, offset: .75 }, { transform: 'scale(.6)', opacity: 0 }], 190, 20 + i * 150));
+      // Midnight: flash, cork, a fizz of champagne, confetti, three firework bursts.
+      sfxFlash(host, g.cx, g.cy, k, 'rgba(254,243,199,.95)', 320, 520, POP);
+      const cork = bfxAdd(host, sfxSvg(20, 30, '<rect x="3" y="8" width="14" height="20" rx="3" fill="#b45309" stroke="#78350f" stroke-width="2"/><rect x="1" y="2" width="18" height="9" rx="3" fill="#fbbf24" stroke="#92400e" stroke-width="2"/>'), g.cx, g.cy + 10 * k, 20 * k, 30 * k);
+      bfxAnimate(cork, [{ transform: 'translate(0,0) rotate(0)', opacity: 0 }, { transform: `translate(${14 * k}px,${-90 * k}px) rotate(160deg)`, opacity: 1, offset: .25 }, { transform: `translate(${34 * k}px,${-180 * k}px) rotate(360deg)`, opacity: 1, offset: .55 },
+        { transform: `translate(${60 * k}px,${-120 * k}px) rotate(560deg)`, opacity: 0 }], { duration: 800, delay: POP, easing: 'cubic-bezier(.1,.8,.4,1)' });
+      for (let i = 0; i < 26; i++) {
+        const a = -Math.PI / 2 + bfxRand(-.55, .55), d = bfxRand(90, 200) * k, c = ['#fde68a', '#fbbf24', '#ffffff', '#fef3c7'][i % 4];
+        const el = bfxAdd(host, sfxDot(c), g.cx, g.cy + 8 * k, 6 * k, 6 * k);
+        bfxAnimate(el, [{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: 1, offset: .5 }, { transform: `translate(${Math.cos(a) * d * 1.25}px,${Math.sin(a) * d + 120 * k}px)`, opacity: 0 }], { duration: 760, delay: POP + bfxRand(0, 120), easing: 'cubic-bezier(.1,.8,.4,1)' });
+      }
+      for (let i = 0; i < 26; i++) {
+        const c = ['#f472b6', '#22d3ee', '#fbbf24', '#a855f7', '#ffffff'][i % 5], x0 = g.cx + bfxRand(-.55, .55) * g.W * .55, el = bfxAdd(host, `<div style="width:100%;height:100%;background:${c}"></div>`, x0, g.cy - 190 * k, 6 * k, 11 * k);
+        bfxAnimate(el, [{ transform: 'translate(0,0) rotate(0)', opacity: 0 }, { transform: `translate(${bfxRand(-20, 20) * k}px,${40 * k}px) rotate(120deg)`, opacity: 1, offset: .15 }, { transform: `translate(${bfxRand(-50, 50) * k}px,${330 * k}px) rotate(${bfxRand(300, 600)}deg)`, opacity: 0 }], { duration: 760, delay: POP + 40 + bfxRand(0, 160), easing: 'ease-in' });
+      }
+      [[-.3, -.28, 0], [.3, -.24, 90], [0, -.38, 180]].forEach(([fx, fy, d]) => {
+        const x = g.cx + fx * g.W, y = g.cy + fy * g.H * .8;
+        for (let j = 0; j < 20; j++) {
+          const a = (j / 20) * Math.PI * 2, r = bfxRand(.8, 1.05) * 82 * k, el = bfxAdd(host, sfxDot(['#fde68a', '#f472b6', '#22d3ee', '#ffffff'][j % 4]), x, y, 5 * k, 5 * k);
+          bfxAnimate(el, [{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * r}px,${Math.sin(a) * r}px)`, opacity: 1, offset: .55 }, { transform: `translate(${Math.cos(a) * r}px,${Math.sin(a) * r + 26 * k}px)`, opacity: 0 }], { duration: 640, delay: POP + 70 + d, easing: 'cubic-bezier(.1,.8,.3,1)' });
+        }
+        sfxFlash(host, x, y, k, 'rgba(255,255,255,.8)', 70, 300, POP + 70 + d);
+      });
+      jfxHero(host, g, JFX_CARD, 124, 177, { delay: POP + 30, enter: 'pop' });
+      jfxWord(host, g, 'MIDNIGHT!', { color: '#fde68a', y: g.cy + 128 * k, delay: POP + 130 });
     }
     // Diwali, Diya Joker: a ring of lamps lights one by one around the Joker.
     function jfxDiwali(host, g) {
@@ -12001,18 +12047,35 @@
     }
     // Summer, Beach Joker: a Joker in shades surfs across on a wave.
     function jfxSummer(host, g) {
-      jfxScrim(host, 'rgba(12,74,110,.45)');
-      const k = g.k, waveY = g.cy + 60 * k;
-      sfxFlash(host, g.W * .82, g.H * .2, k, 'rgba(253,224,71,.85)', 180, JOKER_FX_MS - 100);
-      const wave = sfxSvg(400, 120, '<path d="M0 60Q50 20 100 60T200 60T300 60T400 60V120H0Z" fill="#0ea5e9" opacity=".85"/><path d="M0 60Q50 20 100 60T200 60T300 60T400 60" stroke="#e0f2fe" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M0 84Q50 60 100 84T200 84T300 84T400 84V120H0Z" fill="#0369a1" opacity=".9"/>');
-      sfxPop(host, wave, g.cx, waveY + 40 * k, g.W * 1.6, 130 * k, [{ transform: `translateX(${-g.W * .5}px)`, opacity: 0 }, { transform: `translateX(${-g.W * .3}px)`, opacity: 1, offset: .15 }, { transform: `translateX(${g.W * .15}px)`, opacity: 1, offset: .8 }, { transform: `translateX(${g.W * .3}px)`, opacity: 0 }], JOKER_FX_MS - 40);
-      const surfer = sfxSvg(110, 150, `${jfxNest(20, 0, 70, 100, '0 0 70 100', JFX_CARD.replace(/^<svg[^>]*>|<\/svg>$/g, ''))}
-        <rect x="26" y="40" width="58" height="12" rx="5" fill="#111827"/><circle cx="41" cy="46" r="9" fill="#111827"/><circle cx="69" cy="46" r="9" fill="#111827"/><path d="M38 42h6M66 42h6" stroke="#38bdf8" stroke-width="2"/>
-        <ellipse cx="55" cy="118" rx="54" ry="10" fill="#f97316" stroke="#7c2d12" stroke-width="2.5"/><path d="M8 118h94" stroke="#fde047" stroke-width="3"/>`);
-      const el = bfxAdd(host, surfer, g.cx, waveY - 30 * k, 110 * k, 150 * k);
-      bfxAnimate(el, [{ transform: `translate(${-g.W * .75}px,10px) rotate(-8deg)`, opacity: 1 }, { transform: 'translate(0,-8px) rotate(6deg)', offset: .35 }, { transform: 'translate(10px,4px) rotate(-4deg)', offset: .5 },
-        { transform: 'translate(20px,-6px) rotate(5deg)', opacity: 1, offset: .75 }, { transform: `translate(${g.W * .75}px,0) rotate(-6deg)`, opacity: 1 }], { duration: JOKER_FX_MS - 40, easing: 'ease-in-out' });
-      jfxWord(host, g, "SURF'S UP!", { y: g.cy - 130 * k, color: '#38bdf8', delay: 360, size: 38, tilt: -5 });
+      jfxScrim(host, 'rgba(12,74,110,.5)');
+      const k = g.k, W = g.W, waveY = g.cy + 66 * k, D = JOKER_FX_MS - 40;
+      // A sun that rises and turns in the corner.
+      const rays = Array.from({ length: 12 }, (_, i) => `<path d="M60 8V22" stroke="#fde047" stroke-width="5" stroke-linecap="round" transform="rotate(${i * 30} 60 60)"/>`).join('');
+      bfxAnimate(bfxAdd(host, sfxSvg(120, 120, `<circle cx="60" cy="60" r="26" fill="#fde047"/><circle cx="60" cy="60" r="20" fill="#fef9c3" opacity=".6"/>${rays}`), W * .8, g.cy - 150 * k, 130 * k, 130 * k),
+        [{ transform: 'translateY(40px) rotate(0) scale(.5)', opacity: 0 }, { transform: 'translateY(0) rotate(40deg) scale(1)', opacity: 1, offset: .25 }, { transform: 'translateY(0) rotate(150deg) scale(1.05)', opacity: 1, offset: .85 }, { transform: 'rotate(200deg) scale(1)', opacity: 0 }], { duration: D, easing: 'linear' });
+      sfxFlash(host, W * .8, g.cy - 150 * k, k, 'rgba(253,224,71,.7)', 200, D - 100);
+      const waveSvg = (c1, c2) => sfxSvg(400, 120, `<path d="M0 60Q50 16 100 60T200 60T300 60T400 60V120H0Z" fill="${c1}"/><path d="M0 60Q50 16 100 60T200 60T300 60T400 60" stroke="${c2}" stroke-width="8" fill="none" stroke-linecap="round"/>`);
+      const wave = (c1, c2, y, dx, op) => bfxAnimate(bfxAdd(host, waveSvg(c1, c2), g.cx, y, W * 1.8, 140 * k),
+        [{ transform: `translateX(${-dx}px)`, opacity: 0 }, { transform: `translateX(${-dx * .8}px)`, opacity: op, offset: .12 }, { transform: `translateX(${dx * .8}px)`, opacity: op, offset: .88 }, { transform: `translateX(${dx}px)`, opacity: 0 }], { duration: D, easing: 'linear' });
+      wave('#0369a1', '#7dd3fc', waveY + 8 * k, W * .18, .9);
+      // The Joker surfs in on a board, flips off the lip of the wave and lands back on it.
+      const body = JFX_CARD.replace(/^<svg[^>]*>|<\/svg>$/g, '') + '<rect x="9" y="38" width="52" height="11" rx="5" fill="#111827"/><circle cx="23" cy="44" r="9" fill="#111827"/><circle cx="47" cy="44" r="9" fill="#111827"/><path d="M20 40h6M44 40h6" stroke="#38bdf8" stroke-width="2"/>';
+      const surfer = sfxSvg(120, 170, `${jfxNest(18, 0, 84, 120, '0 0 70 100', body)}<ellipse cx="60" cy="146" rx="58" ry="11" fill="#f97316" stroke="#7c2d12" stroke-width="3"/><path d="M8 146h104" stroke="#fde047" stroke-width="3.5"/>`);
+      const el = bfxAdd(host, surfer, g.cx, waveY - 36 * k, 120 * k, 170 * k);
+      bfxAnimate(el, [{ offset: 0, transform: `translate(${-W * .75}px,${20 * k}px) rotate(-10deg)` }, { offset: .22, transform: `translate(${-W * .1}px,0) rotate(8deg)` }, { offset: .34, transform: `translate(0,${-6 * k}px) rotate(-4deg)` },
+        { offset: .46, transform: `translate(0,${-70 * k}px) rotate(-90deg)` }, { offset: .56, transform: `translate(0,${-95 * k}px) rotate(-200deg)` }, { offset: .66, transform: `translate(0,${-50 * k}px) rotate(-330deg)` },
+        { offset: .74, transform: `translate(0,${4 * k}px) rotate(-360deg)` }, { offset: .84, transform: `translate(${W * .1}px,${-4 * k}px) rotate(-364deg)` }, { offset: 1, transform: `translate(${W * .75}px,0) rotate(-350deg)` }], { duration: D, easing: 'ease-in-out' });
+      wave('#0ea5e9', '#e0f2fe', waveY + 40 * k, W * .28, .95);
+      // Spray off the board, and a big splash on the landing.
+      for (let i = 0; i < 22; i++) {
+        const el = bfxAdd(host, sfxDot(i % 2 ? '#e0f2fe' : '#7dd3fc', false), g.cx + bfxRand(-.28, .22) * W, waveY + 4 * k, 6 * k, 6 * k), d = bfxRand(30, 90) * k;
+        bfxAnimate(el, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: `translate(${bfxRand(-d, d)}px,${-d}px)`, opacity: 1, offset: .4 }, { transform: `translate(${bfxRand(-d, d) * 1.4}px,${d * .4}px)`, opacity: 0 }], { duration: 480, delay: 300 + bfxRand(0, 650), easing: 'ease-out' });
+      }
+      for (let i = 0; i < 16; i++) {
+        const a = -Math.PI / 2 + bfxRand(-1, 1), d = bfxRand(60, 130) * k, el = bfxAdd(host, sfxDot('#e0f2fe', false), g.cx, waveY, 7 * k, 7 * k);
+        bfxAnimate(el, [{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: 1, offset: .5 }, { transform: `translate(${Math.cos(a) * d * 1.2}px,${Math.sin(a) * d + 50 * k}px)`, opacity: 0 }], { duration: 400, delay: 1080, easing: 'cubic-bezier(.1,.8,.3,1)' });
+      }
+      jfxWord(host, g, "SURF'S UP!", { y: g.cy - 140 * k, color: '#38bdf8', delay: 360, size: 38, tilt: -5 });
     }
     // Ramadan, Lantern Joker: kept calm: a lantern lowers on its chain under
     // a crescent moon and its glow reveals the Joker.

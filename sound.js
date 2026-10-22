@@ -670,8 +670,16 @@
       },
       // Puppet Master: wooden clacks as it swings and a plucked string.
       'joker-puppet': (k) => {
-        [0.28, 0.5, 0.72, 0.94].forEach((at) => { k.noise({ at, dur: 0.04, type: 'bandpass', f0: 1300, q: 5, level: 0.4 }); k.tone({ at, dur: 0.06, f0: 420, f1: 300, level: 0.12 }); });
-        k.tone({ at: 0.05, dur: 0.5, type: 'triangle', f0: 196, level: 0.14 });
+        // Curtains swish open, the puppet drops on its strings, wooden stomps and plucked notes on each beat, curtains swish shut.
+        k.noise({ dur: 0.3, type: 'bandpass', f0: 500, f1: 1800, q: 0.8, level: 0.25, attack: 0.1 });
+        k.tone({ at: 0.28, dur: 0.1, f0: 300, f1: 140, level: 0.3 });
+        [0.45, 0.66, 0.87, 1.08].forEach((at, i) => {
+          k.noise({ at, dur: 0.04, type: 'bandpass', f0: 1200, q: 5, level: 0.4 });
+          k.tone({ at, dur: 0.07, f0: 420, f1: 280, level: 0.14 });
+          k.tone({ at: at + 0.02, dur: 0.3, type: 'triangle', f0: [392, 494, 587, 494][i], level: 0.1 });
+        });
+        k.tone({ at: 0.05, dur: 0.5, type: 'triangle', f0: 196, level: 0.1 });
+        k.noise({ at: 1.18, dur: 0.28, type: 'bandpass', f0: 1800, f1: 400, q: 0.8, level: 0.22, attack: 0.05 });
       },
       // Magic Trick: three wand taps, a puff of smoke, then the reveal chime.
       'joker-magic': (k) => {
@@ -754,10 +762,14 @@
       },
       // Midnight Joker: quick 3-2-1 ticks, a cork pop and firework crackle.
       'joker-newyear': (k) => {
-        [0, 0.17, 0.34].forEach((at, i) => k.tone({ at, dur: 0.07, type: 'square', f0: 900 + i * 150, level: 0.12 }));
-        k.tone({ at: 0.52, dur: 0.08, f0: 900, f1: 220, level: 0.4 });
-        k.noise({ at: 0.52, dur: 0.3, type: 'highpass', f0: 2500, f1: 6000, level: 0.2 });
-        k.scatter(16, 0.6, 1.2, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 5000, level: 0.18 }));
+        // Clock ticks for 3-2-1, a bell at midnight, the cork pops, champagne fizz, three firework bursts and a bright chord.
+        [0.02, 0.17, 0.32].forEach((at, i) => k.tone({ at, dur: 0.07, type: 'square', f0: 1500 - i * 100, level: 0.1 }));
+        k.tone({ at: 0.5, dur: 0.6, type: 'sine', f0: 880, level: 0.14 });
+        k.tone({ at: 0.52, dur: 0.07, type: 'square', f0: 700, f1: 140, level: 0.4 });
+        k.noise({ at: 0.52, dur: 0.06, type: 'bandpass', f0: 1800, q: 2, level: 0.5 });
+        k.noise({ at: 0.56, dur: 0.6, type: 'highpass', f0: 5000, level: 0.14, attack: 0.02 });
+        [0.6, 0.69, 0.78].forEach((at) => { k.tone({ at, dur: 0.18, f0: 120, f1: 55, level: 0.3 }); k.scatter(7, at + 0.02, at + 0.28, (a) => k.noise({ at: a, dur: 0.015, type: 'highpass', f0: 4800, level: 0.16 })); });
+        jokerChime(k, [784, 988, 1319, 1568], 0.56, 0.07, 0.1);
       },
       // Diya Joker: a soft chime for each lamp as it lights.
       'joker-diwali': (k) => {
@@ -785,9 +797,14 @@
       },
       // Beach Joker: the wave washing across and a gull-ish whistle.
       'joker-summer': (k) => {
-        k.noise({ dur: 1.3, type: 'lowpass', f0: 500, f1: 1800, level: 0.3, attack: 0.4 });
-        k.tone({ at: 0.35, dur: 0.3, f0: 1800, f1: 2600, level: 0.06 });
-        k.tone({ at: 0.7, dur: 0.3, f0: 2400, f1: 1600, level: 0.06 });
+        // Waves washing the whole way through, a bright ukulele-ish strum as the board rides in, a flip whoosh, a big splash on the landing.
+        k.noise({ dur: 1.3, type: 'lowpass', f0: 900, f1: 500, level: 0.18, attack: 0.4 });
+        [523, 659, 784, 659].forEach((f, i) => k.tone({ at: 0.26 + i * 0.12, dur: 0.22, type: 'triangle', f0: f, level: 0.13 }));
+        k.noise({ at: 0.62, dur: 0.3, type: 'bandpass', f0: 600, f1: 2400, q: 1, level: 0.22, attack: 0.1 });
+        k.noise({ at: 1.07, dur: 0.3, type: 'bandpass', f0: 1500, f1: 600, q: 0.7, level: 0.4 });
+        k.tone({ at: 1.07, dur: 0.18, f0: 150, f1: 60, level: 0.35 });
+        k.scatter(8, 1.1, 1.4, (at) => k.tone({ at, dur: 0.06, type: 'sine', f0: 1800 + Math.random() * 1600, level: 0.05 }));
+        k.scatter(10, 0.3, 1.0, (at) => k.noise({ at, dur: 0.05, type: 'highpass', f0: 4500, level: 0.07 }));
       },
       // Lantern Joker: calm, soft bells as the lantern glows.
       'joker-ramadan': (k) => [523.25, 783.99, 1046.5].forEach((f, i) => k.tone({ at: 0.3 + i * 0.14, dur: 1.0, f0: f, level: 0.12 / (i + 1), attack: 0.02 }))
