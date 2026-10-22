@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v411 — Default, Glitch and Card Storm Joker effects rebuilt (owner approved the frames)
+
+- `jfxDefault` (rotating gold rays, rings, shine sweep, confetti, card 124x177), `jfxGlitch` (five clip-path slices of the Joker card jump on `steps(1, end)` keyframes, red/cyan outline ghosts, static bursts, lock-in flash at ~.78s) and `jfxStorm` (30 cards on three spiral lanes, wind swirl, implosion at .44 of 1.5s, shock ring, 10 cards thrown out) in `app.js`; new `JOKER_SOUNDS` recipes on the same beats. Gotcha: WAAPI `easing` in the options applies to the whole iteration, so a stepped glitch needs `easing: 'steps(1, end)'` inside each keyframe. Still to rebuild from the owner's review list: New Year, Summer, Puppet, Magic, Diwali, Christmas.
+
 ## v410 — Valentine, Summer, Christmas, Lunar New Year, Ramadan burns rebuilt (owner approved the frames)
 
 - `bfxValentine` (arrow hits .42, burst .5), `bfxSummer` (sun pop .62, beach ball), `bfxChristmas` (ribbons wrap, open .62), `bfxLunar` (8 pops at .12+.07i, boom .74), `bfxRamadan` (lanterns, burst .6) in `burn-effects.js` on `procBurnStage`, with new helpers `pfxBase` (stage + kit + glow) and `pfxCard` (real card clone tinted/shaken until its moment). They are in the `bfx` map ahead of `SEASONAL_BURN_FX`; the old `sbfx` versions are unused. New `BURN_SOUNDS` recipes on the same beats. Halloween stays the painted 3D ghost. Never splice `BURN_SOUNDS` with a regex that runs to the next key: the last entry swallowed `JOKER_SOUNDS` once.
