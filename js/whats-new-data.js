@@ -3,6 +3,8 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v402: [['fire', 'The Hellfire Spiral is now a 3D flaming tornado of fire ribbons with smoke, and the ShitStorm coils turn together with its head.', WN_KEY]],
+      v401: [['fire', 'The home screen shrinks to fit short phones, and the ShitStorm card is easier to read.']],
       v400: [['fire', 'The ShitStorm now has a complete curled head, shaded swirling coils and a tighter card-consuming finish.']],
       v399: [['snow', 'Season Pass: the Origami Fold burn is now a Season 3 (Feudal Japan) reward at tier 20, and no longer a tier 50 reward in every season.', WN_KEY],
         ['snow', 'Season Pass: every season now gives a burn at tier 40: Sandstorm Vortex, Glacial Shatter, Shuriken Barrage, Abyssal Whirlpool, Zeus\'s Bolt and Arcane Hex. Seasons 5 (Ancient Greece) and 6 (Dark Magic) are ready.', WN_KEY]],
