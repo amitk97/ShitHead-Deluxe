@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v409 — Diwali, Easter, New Year burns rebuilt (owner approved the frames)
+
+- `bfxDiwali` (12 diyas, rocket, three firework bursts at .62/.80/.96s, golden shards, rangoli ring, marigold petals), `bfxEaster` (card to banded egg, knocks .44-.59s, crack, split at .62s, chick, mini eggs, blossoms) and `bfxNewYear` (clock ring, 3-2-1 at .05/.23/.41s, midnight .62s: cork, shards, spray, confetti, streamers, starbursts) in `burn-effects.js`, on `procBurnStage`; they are in the `bfx` map ahead of `SEASONAL_BURN_FX`, whose old `sbfxDiwali/Easter/NewYear` are now unused. New helpers `pfxFly` (ballistic body with bounce on the shared clock) and `pfxBurst` (radial streaks). New `BURN_SOUNDS` recipes on the same beats.
+
 ## v408 — Sweets, Glacial Shatter, Sandstorm, Whirlpool, Ramadan polished (owner approved the frames)
 
 - Sweets: thick shaded lolly stick, sweets and sprinkles launch in low sideways arcs. Glacial Shatter: ice spikes while freezing, icy-tinted card pieces, ~38 tumbling glassy shards, lighter fog. Season burns can return `topFade: [a, b]` from their builder (`scene` masks the canvases transparent above `cy - a*H`, opaque below `cy - b*H`) to keep tall effects off the opponent seat: Sandstorm (shorter funnel, lift) and Whirlpool (lower bubbles) use it. Ramadan lanterns/stars rise ~45-95px, not 140-230. Timings unchanged, so sounds are unchanged.
