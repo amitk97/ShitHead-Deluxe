@@ -12289,7 +12289,7 @@
       // Fog along the ground.
       for (let i = 0; i < 8; i++) {
         const el = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(226,232,240,.45),transparent 70%)"></div>', g.cx + (i - 3.5) * 52 * k, cy + 105 * k, 120 * k, 56 * k);
-        bfxAnimate(el, [{ transform: 'translateX(0)', opacity: 0 }, { opacity: 1, offset: .3 }, { transform: `translateX(${(i % 2 ? 40 : -40) * k}px)`, opacity: 0 }], { duration: 1200, delay: 200 + i * 40 });
+        bfxAnimate(el, [{ transform: 'translateX(0)', opacity: 0 }, { opacity: 1, offset: .3 }, { transform: `translateX(${(i % 2 ? 40 : -40) * k}px)`, opacity: 0 }], { duration: 1000, delay: 200 + i * 30 });
       }
       for (let i = 0; i < 11; i++) {
         const a = (i / 11) * Math.PI * 2 + bfxRand(-.2, .2), d = bfxRand(150, 230) * k, w = bfxRand(50, 72) * k;
