@@ -651,7 +651,7 @@ void main(){
       }
       for (const s of S.shards) {
         if (s.hx) {
-          const h = s.hx, par = S.fun(t); s.age += dt; h.u += h.du * dt; h.a += h.w * dt;
+          const h = s.hx, par = S.fun(t); s.age += dt; h.u += h.du * dt; h.a += h.w * dt * Math.min(1, S.spin(t).w / 20);
           const q = S.fpt(par, Math.min(h.u, .88), h.a), r = h.off; s.p = [par.lean * h.u * h.u + (q[0] - par.lean * h.u * h.u) * r, q[1], q[2] * r];
           for (let i = 0; i < 3; i++) s.a[i] += s.w[i] * dt;
           continue;
@@ -929,7 +929,7 @@ void main(){
       const bite = u => { let d = 0; for (const b of S.bites) { const k = (t - b.t) / .45; if (k > 0 && k < 1) d += Math.exp(-Math.pow((u - b.u) / .06, 2)) * (1 - k) * Math.min(1, k * 8); } return 1 - .5 * Math.min(1, d); };
       const far = [], near = [];
       for (let b = 0; b < NB; b++) {
-        const ph = b * TAU / NB, spin = hell ? t * 9 * (1 - .45 * collapse) + .25 * Math.sin(t * 5 + b * 2.1) : t * (6 + .45 * b) * (1 - .5 * collapse) + .55 * sp.th;
+        const ph = b * TAU / NB, spin = hell ? t * 9 * (1 - .45 * collapse) + .25 * Math.sin(t * 5 + b * 2.1) : sp.th; // the coils turn with the head and only with it: same angle, same turns, so they are one body
         const pt = (u, e) => { const a = ph + u * turns * TAU - spin, q = S.fpt(par, u, a), wv = hell ? .13 * par.K * par.g * Math.sin(u * 15 - t * 7 + b * 1.7) * smooth(0, .2, u) : 0, th = hh * (.75 + .5 * u) * smooth(0, .03, u) * (1 - smooth(.97, 1, u)) * (1 - (hell ? .8 * (1 - smooth(.75, 1.25, t)) : .8) * smooth(0, .3 * par.R0 + 1e-6, q[2])) * bite(u); return [q[0] + Math.cos(a) * wv, q[1] + e * th, q[2] + Math.sin(a) * wv * .7, a]; };
         for (let i = 0; i < SEG; i++) {
           const u0 = i / SEG, u1 = (i + 1) / SEG, P = [pt(u0, -1), pt(u1, -1), pt(u1, 1), pt(u0, 1)], am = (P[0][3] + P[1][3]) / 2;
