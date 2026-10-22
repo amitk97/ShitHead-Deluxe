@@ -73,7 +73,7 @@
     // ============================================================
     const LEVEL_BURN_IDS = ['burn-lvl-spark-snap', 'burn-lvl-smoke-burst', 'burn-lvl-inferno-sweep', 'burn-lvl-hellfire-spiral', 'burn-lvl-royal-incineration', 'burn-lvl-shitstorm'];
     const SEASON_BURN_IDS = ['burn-ss2611-sandstorm', 'burn-ss2701-glacier', 'burn-ss2703-shuriken', 'burn-ss2705-whirlpool', 'burn-ss2707-zeus', 'burn-ss2709-hex'];
-    const SHAPE_BURN_EFFECTS = new Set([...SEASON_BURN_IDS, 'default', 'burn-electric', 'burn-coloured', 'burn-sweets', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', ...LEVEL_BURN_IDS]);
+    const SHAPE_BURN_EFFECTS = new Set([...SEASON_BURN_IDS, 'default', 'burn-electric', 'burn-coloured', 'burn-sweets', 'burn-ice', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', ...LEVEL_BURN_IDS]);
     let bfxGradientSeq = 0;
     const bfxRand = (min, max) => min + Math.random() * (max - min);
     function bfxAdd(host, html, x, y, w, h) {
@@ -228,58 +228,236 @@
         return `${p[0].toFixed(1)},${p[1].toFixed(1)} Q${((p[0] + n[0]) / 2 + (Math.random() - .5) * 6).toFixed(1)},${((p[1] + n[1]) / 2 + (Math.random() - .5) * 6).toFixed(1)}`;
       }).join(' ') + ` ${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}Z`;
     }
-    function bfxPaint(host, x, y, k) {
-      const colours = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6'];
-      for (let i = 0; i < 8; i++) {
-        const c = colours[i % colours.length];
-        const size = bfxRand(44, 82) * k;
-        const drops = Array.from({ length: 5 }, () => { const a = Math.random() * Math.PI * 2, d = bfxRand(36, 48); return `<circle cx="${50 + Math.cos(a) * d}" cy="${50 + Math.sin(a) * d}" r="${bfxRand(2.5, 6)}" fill="${c}"/>`; }).join('');
-        const svg = `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><path d="${bfxBlobPath(26, 12)}" fill="${c}"/>${drops}<rect x="${bfxRand(40, 55)}" y="60" width="5" height="${bfxRand(14, 26)}" rx="2.5" fill="${c}"/><ellipse cx="42" cy="40" rx="8" ry="4" fill="#fff" opacity=".35"/></svg>`;
-        const el = bfxAdd(host, svg, x + bfxRand(-70, 70) * k, y + bfxRand(-55, 45) * k, size, size);
-        const rot = bfxRand(0, 360);
-        bfxAnimate(el, [
-          { transform: `rotate(${rot}deg) scale(0)`, opacity: 1 },
-          { transform: `rotate(${rot}deg) scale(1.15)`, opacity: 1, offset: .12 },
-          { transform: `rotate(${rot}deg) scale(1)`, opacity: 1, offset: .2 },
-          { transform: `rotate(${rot}deg) scale(1) translateY(3px)`, opacity: 1, offset: .75 },
-          { transform: `rotate(${rot}deg) scale(1) translateY(6px)`, opacity: 0 }
-        ], { duration: 1600, delay: i * 90, easing: 'ease-out' });
-      }
+    // ---- v404 procedural burns: Ice Shatter, Paint Splats, Smoke Show (owner: the real top card, DOM/SVG) ----
+    // All three run on ONE 2s clock from `procBurnStage`, every animation a sampled keyframe list (PFX_N steps)
+    // so physics and easing are exact on a paused frame. Fragments never turn past 65deg, so no back shows.
+    const PFX_N = 100, PFX_MS = 2000;
+    function pfxKit(st) {
+      const clamp = v => Math.max(0, Math.min(1, v)), rand = (a, b) => a + Math.random() * (b - a), D = PFX_MS / 1000;
+      const T = Array.from({ length: PFX_N + 1 }, (_, i) => i / PFX_N);
+      return { clamp, rand, D, ease: t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2, out: t => 1 - Math.pow(1 - t, 3),
+        sm: (a, b, t) => clamp((t - a) / (b - a)), fr: fn => T.map(o => ({ offset: o, ...fn(o * D) })),
+        add: (css, html = '', parent = st.layer) => { const el = document.createElement('div'); el.className = 'bfx'; el.style.cssText = css; el.innerHTML = html; parent.appendChild(el); return el; } };
     }
-    function bfxSmoke(host, x, y, k) {
-      const puff = (size, fill, blur) => `<div style="width:100%;height:100%;border-radius:50%;filter:blur(${blur}px);background:${fill}"></div>`;
-      const light = 'radial-gradient(circle,rgba(226,232,240,.7),rgba(148,163,184,.35) 50%,transparent 70%)';
-      const dark = 'radial-gradient(circle,rgba(30,41,59,.85),rgba(15,23,42,.45) 50%,transparent 70%)';
-      const tints = ['radial-gradient(circle,rgba(167,139,250,.5),rgba(76,29,149,.2) 55%,transparent 72%)', 'radial-gradient(circle,rgba(45,212,191,.42),rgba(17,94,89,.18) 55%,transparent 72%)'];
-      // Whole effect finishes within 2 seconds (delay + duration <= 2000ms).
-      // 1) A dense ground ring that rolls outward from the pile.
+    const pfxStar = (c, n) => `<svg viewBox="0 0 20 20" width="100%" height="100%"><path d="M10 0 11.4 8.6 20 10 11.4 11.4 10 20 8.6 11.4 0 10 8.6 8.6Z" fill="${c}"/></svg>`;
+
+    // Ice Shatter: frost creeps in from the edges (fern lines, a cold sheen, crystals grow round the card),
+    // the card cracks from the strike point, jolts, then bursts into ~70 glassy shards that tumble, bounce off
+    // the table and melt away; glints, a shock ring, cold mist and snow dust. Sound: BURN_SOUNDS['burn-ice'].
+    const ICE_CRACK = .62, ICE_BREAK = .86;
+    function bfxIce(host, x, y, k) {
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face } = st;
+      const { clamp, rand, ease, out, D, sm, fr, add } = pfxKit(st), px = H / 100;
+      const ip = [W * rand(.4, .6), H * rand(.35, .55)], abs = (u, v) => [cx - W / 2 + u, cy - H / 2 + v];
+      const glow = add(`left:${cx - H * 1.3}px;top:${cy - H * 1.3}px;width:${H * 2.6}px;height:${H * 2.6}px;border-radius:50%;z-index:0;background:radial-gradient(closest-side,rgba(125,211,252,.55),rgba(56,189,248,.2) 50%,transparent)`);
+      const lastAnim = anim(glow, fr(t => ({ opacity: (.5 * sm(0, ICE_BREAK, t) + (t >= ICE_BREAK ? .5 * (1 - sm(ICE_BREAK, 1.4, t)) : 0)) * (1 - sm(1.3, 1.95, t)), transform: `scale(${(.7 + .4 * sm(0, ICE_BREAK, t) + .3 * sm(ICE_BREAK, 1.3, t)).toFixed(3)})` })));
+      // ---- The card, frosting over.
+      const box = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;border-radius:${radius};overflow:hidden`);
+      const tint = document.createElement('div'), sheen = document.createElement('div'), rim = document.createElement('div');
+      tint.style.cssText = `position:absolute;inset:0;background:linear-gradient(135deg,rgba(224,242,254,.6),rgba(125,211,252,.28) 50%,rgba(224,242,254,.55))`;
+      sheen.style.cssText = `position:absolute;inset:0;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.8) 50%,transparent 62%)`;
+      rim.style.cssText = `position:absolute;inset:0;border-radius:${radius}`;
+      const levels = [[], [], [], []], fern = (x0, y0, a, len, d) => {
+        const ex = x0 + Math.cos(a) * len, ey = y0 + Math.sin(a) * len;
+        levels[d].push(`M${x0.toFixed(1)} ${y0.toFixed(1)}L${ex.toFixed(1)} ${ey.toFixed(1)}`);
+        if (d < 3) [.34, .6, .86].forEach((f, i) => fern(x0 + (ex - x0) * f, y0 + (ey - y0) * f, a + (i % 2 ? 1 : -1) * rand(.7, 1.05), len * (.5 - .07 * i), d + 1));
+      };
+      [[0, 0, .78], [W, 0, 2.36], [0, H, -.78], [W, H, -2.36], [W / 2, 0, 1.57], [W / 2, H, -1.57]].forEach(([sx, sy, a]) => fern(sx, sy, a + rand(-.15, .15), H * .46, 0));
+      const lines = (pts, w, col, op) => `<path d="${pts}" pathLength="1" stroke-dasharray="1" stroke="${col}" stroke-opacity="${op}" stroke-width="${w}" stroke-linecap="round" fill="none"/>`;
+      const fernSvg = document.createElement('div');
+      fernSvg.style.cssText = 'position:absolute;inset:0';
+      fernSvg.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="position:absolute;inset:0">${levels.map((l, d) => lines(l.join(''), (2.4 - d * .5) * px * 1.2, '#7dd3fc', .35) + lines(l.join(''), (1.3 - d * .25) * px, '#fff', .95)).join('')}</svg>`;
+      const cracks = [], nC = 9;
+      for (let i = 0; i < nC; i++) {
+        const a = (i / nC) * Math.PI * 2 + rand(-.25, .25); let u = ip[0], v = ip[1], d = `M${u.toFixed(1)} ${v.toFixed(1)}`;
+        for (let s = 0; s < 7; s++) { const aj = a + rand(-.35, .35); u += Math.cos(aj) * H * .13; v += Math.sin(aj) * H * .13; d += `L${u.toFixed(1)} ${v.toFixed(1)}`; }
+        cracks.push(d);
+      }
+      const crackSvg = document.createElement('div');
+      crackSvg.style.cssText = 'position:absolute;inset:0';
+      crackSvg.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="position:absolute;inset:0">${cracks.map(d => lines(d, 3.4 * px, '#38bdf8', .4) + lines(d, 1.2 * px, '#fff', 1)).join('')}</svg>`;
+      box.append(face(), tint, sheen, rim, fernSvg, crackSvg);
+      const paths = [...fernSvg.querySelectorAll('path')], cpaths = [...crackSvg.querySelectorAll('path')];
+      paths.forEach((p, i) => { const d = Math.floor(i / 2), s0 = ICE_CRACK * .1 + d * .13; anim(p, fr(t => ({ strokeDashoffset: 1 - out(sm(s0, s0 + .3, t)) }))); });
+      cpaths.forEach((p, i) => { const s0 = ICE_CRACK + (i >> 1) * .008; anim(p, fr(t => ({ strokeDashoffset: 1 - out(sm(s0, s0 + .13, t)) }))); });
+      anim(tint, fr(t => ({ opacity: .75 * sm(.05, ICE_CRACK, t) })));
+      anim(sheen, fr(t => ({ opacity: t > .4 && t < .8 ? 1 : 0, transform: `translateX(${((sm(.42, .78, t) * 2 - 1) * 100).toFixed(1)}%)` })));
+      anim(rim, fr(t => { const m = sm(0, ICE_CRACK, t); return { boxShadow: `inset 0 0 ${(H * .12 * m).toFixed(1)}px ${(H * .05 * m).toFixed(1)}px rgba(240,249,255,.95), inset 0 0 ${(H * .3 * m).toFixed(1)}px ${(H * .04 * m).toFixed(1)}px rgba(186,230,253,.75)` }; }));
+      anim(box, fr(t => { const j = sm(ICE_CRACK, ICE_BREAK, t), sh = Math.sin(t * 90) * H * .014 * j; return { opacity: t < ICE_BREAK ? 1 : 0, transform: `translate(${sh.toFixed(2)}px,${(Math.sin(t * 71) * H * .01 * j).toFixed(2)}px) scale(${(1 + .05 * j * j).toFixed(3)})` }; }));
+      // ---- Ice crystals growing round the card, bursting at the break.
+      for (let i = 0; i < 14; i++) {
+        const side = i % 4, u = rand(.08, .92), L = H * rand(.13, .3), w = H * rand(.05, .09), jit = rand(-14, 14);
+        const [bx, by] = abs(side === 1 ? W : side === 3 ? 0 : u * W, side === 0 ? 0 : side === 2 ? H : u * H), rot = [0, 90, 180, 270][side] + jit;
+        const s0 = .04 + i * .022, el = add(`left:${bx - w / 2}px;top:${by - L}px;width:${w}px;height:${L}px;z-index:4;transform-origin:50% 100%;clip-path:polygon(50% 0,100% 100%,0 100%);background:linear-gradient(to top,rgba(125,211,252,.85),rgba(224,242,254,.85) 60%,#fff)`);
+        anim(el, fr(t => { const g = out(sm(s0, s0 + .42, t)), b = sm(ICE_BREAK, ICE_BREAK + .1, t); return { opacity: (1 - b) * Math.min(1, g * 3), transform: `rotate(${rot}deg) scale(${(1 + .25 * b).toFixed(3)},${(g * (1 + .3 * b)).toFixed(3)})` }; }));
+      }
+      // ---- The shards: a jittered grid, each cell split in two.
+      const cols = 5, rows = 7, pts = [];
+      for (let r = 0; r <= rows; r++) { pts.push([]); for (let c = 0; c <= cols; c++) pts[r].push([c / cols * W + (c && c < cols ? rand(-.32, .32) * W / cols : 0), r / rows * H + (r && r < rows ? rand(-.32, .32) * H / rows : 0)]); }
+      const tris = [];
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const a = pts[r][c], b = pts[r][c + 1], d = pts[r + 1][c], e = pts[r + 1][c + 1];
+        tris.push(...(Math.random() < .5 ? [[a, b, e], [a, e, d]] : [[a, b, d], [b, e, d]]));
+      }
+      const dt = D / PFX_N;
+      tris.forEach(tri => {
+        const c = [(tri[0][0] + tri[1][0] + tri[2][0]) / 3, (tri[0][1] + tri[1][1] + tri[2][1]) / 3], dx = c[0] - ip[0], dy = c[1] - ip[1], dl = Math.hypot(dx, dy) || 1;
+        const sp = H * rand(.7, 2.3) * (1.15 - Math.min(1, dl / H) * .6);
+        let vx = dx / dl * sp + rand(-.2, .2) * H, vy = dy / dl * sp - H * rand(.1, .9), pxx = 0, pyy = 0, spin = rand(-8, 8), rz = 0;
+        const floor = cy + H * rand(.5, .85) - (cy - H / 2 + c[1]), wx = rand(2.5, 6), wy = rand(2.5, 6), ph = rand(0, 6.3), fade0 = 1.5 + rand(0, .25);
+        const poly = tri.map(p => `${p[0].toFixed(1)}px ${p[1].toFixed(1)}px`).join(','), el = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;transform-origin:${c[0].toFixed(1)}px ${c[1].toFixed(1)}px`);
+        const clip = document.createElement('div');
+        clip.style.cssText = `position:absolute;inset:0;clip-path:polygon(${poly})`;
+        const ice = document.createElement('div');
+        ice.style.cssText = `position:absolute;inset:0;background:linear-gradient(${Math.round(rand(0, 360))}deg,rgba(224,242,254,.6),rgba(125,211,252,.2) 55%,rgba(255,255,255,.45))`;
+        clip.append(face(), ice);
+        const edge = document.createElement('div');
+        edge.style.cssText = 'position:absolute;inset:0';
+        edge.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="position:absolute;inset:0"><polygon points="${tri.map(p => p.join(',')).join(' ')}" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="${Math.max(.8, px * .9)}" stroke-linejoin="round"/></svg>`;
+        el.append(clip, edge);
+        let onFloor = false;
+        anim(el, fr(t => {
+          if (t < ICE_BREAK) return { opacity: 0, transform: 'none' };
+          if (t - dt >= ICE_BREAK - 1e-6 || t === ICE_BREAK) { vy += H * 3.4 * dt; pxx += vx * dt; pyy += vy * dt; rz += spin * dt; if (pyy > floor) { pyy = floor; vy = -Math.abs(vy) * .32; vx *= .72; spin *= .6; onFloor = true; } }
+          const tau = t - ICE_BREAK, damp = onFloor ? Math.max(0, 1 - tau / .9) : 1;
+          return { opacity: 1 - sm(fade0, fade0 + .4, t), transform: `translate(${pxx.toFixed(2)}px,${pyy.toFixed(2)}px) rotateZ(${(rz * 57.3).toFixed(1)}deg) rotateX(${(60 * Math.sin(wx * tau + ph) * damp).toFixed(1)}deg) rotateY(${(60 * Math.sin(wy * tau + ph) * damp).toFixed(1)}deg) scale(${(1 - .35 * sm(fade0, fade0 + .4, t)).toFixed(3)})` };
+        }));
+      });
+      // ---- Burst flash, shock ring, glints, mist and snow dust.
+      const [fx, fy] = abs(ip[0], ip[1]);
+      const flash = add(`left:${fx - H * .8}px;top:${fy - H * .8}px;width:${H * 1.6}px;height:${H * 1.6}px;border-radius:50%;z-index:5;background:radial-gradient(closest-side,#fff,rgba(186,230,253,.8) 40%,transparent)`);
+      anim(flash, fr(t => ({ opacity: t < ICE_BREAK ? 0 : 1 - sm(ICE_BREAK, ICE_BREAK + .28, t), transform: `scale(${(.2 + 1.5 * out(sm(ICE_BREAK, ICE_BREAK + .28, t))).toFixed(3)})` })));
+      const ring = add(`left:${fx - H * .5}px;top:${fy - H * .5}px;width:${H}px;height:${H}px;border-radius:50%;z-index:5;border:${Math.max(1.5, px * 1.6)}px solid rgba(224,242,254,.9);box-sizing:border-box`);
+      anim(ring, fr(t => ({ opacity: t < ICE_BREAK ? 0 : .9 * (1 - sm(ICE_BREAK, ICE_BREAK + .45, t)), transform: `scale(${(.2 + 2.4 * out(sm(ICE_BREAK, ICE_BREAK + .45, t))).toFixed(3)})` })));
       for (let i = 0; i < 16; i++) {
-        const size = bfxRand(50, 90) * k;
-        const dir = i % 2 ? 1 : -1;
-        const el = bfxAdd(host, puff(size, i % 3 ? light : dark, 5 * k), x, y + 8 * k, size, size * .7);
-        bfxAnimate(el, [
-          { transform: 'translate(0,0) scale(.3)', opacity: 0 },
-          { transform: `translate(${dir * bfxRand(20, 50) * k}px, ${-bfxRand(0, 10) * k}px) scale(1)`, opacity: .95, offset: .2 },
-          { transform: `translate(${dir * bfxRand(110, 190) * k}px, ${-bfxRand(10, 40) * k}px) scale(${bfxRand(1.8, 2.6)})`, opacity: 0 }
-        ], { duration: bfxRand(1500, 1800), delay: bfxRand(0, 200), easing: 'cubic-bezier(.2,.7,.3,1)' });
+        const gx = cx + rand(-.7, .7) * W * 1.2, gy = cy + rand(-.6, .7) * H, s = H * rand(.1, .2), t0 = ICE_BREAK + rand(.02, .75), spin = rand(-80, 80), el = add(`left:${gx - s / 2}px;top:${gy - s / 2}px;width:${s}px;height:${s}px;z-index:6`, pfxStar(i % 3 ? '#fff' : '#bae6fd'));
+        anim(el, fr(t => { const u = sm(t0, t0 + .4, t), g = Math.sin(u * Math.PI); return { opacity: g, transform: `rotate(${(spin * u).toFixed(1)}deg) scale(${(g * 1.1).toFixed(3)})` }; }));
       }
-      // 2) A tall swirling column with a few coloured wisps through it.
-      for (let i = 0; i < 34; i++) {
-        const size = bfxRand(46, 110) * k;
-        const fill = i % 9 === 4 ? tints[0] : i % 9 === 7 ? tints[1] : (i % 3 === 0 ? dark : light);
-        const el = bfxAdd(host, puff(size, fill, 6 * k), x + bfxRand(-26, 26) * k, y + bfxRand(-6, 6) * k, size, size);
-        const sway = bfxRand(-1, 1) > 0 ? 1 : -1;
-        const rise = bfxRand(150, 260) * k;
-        bfxAnimate(el, [
-          { transform: 'translate(0,0) rotate(0deg) scale(.35)', opacity: 0 },
-          { transform: `translate(${sway * 22 * k}px, ${-rise * .25}px) rotate(${sway * 60}deg) scale(1)`, opacity: .92, offset: .22 },
-          { transform: `translate(${-sway * 30 * k}px, ${-rise * .6}px) rotate(${sway * 140}deg) scale(1.6)`, opacity: .6, offset: .6 },
-          { transform: `translate(${sway * bfxRand(40, 90) * k}px, ${-rise}px) rotate(${sway * 220}deg) scale(${bfxRand(2, 2.8)})`, opacity: 0 }
-        ], { duration: bfxRand(1300, 1650), delay: bfxRand(0, 350), easing: 'ease-out' });
+      for (let i = 0; i < 9; i++) {
+        const s = H * rand(.7, 1.2), mx = cx + rand(-1, 1) * W * 1.1, t0 = ICE_BREAK + rand(0, .25), dir = i % 2 ? 1 : -1, el = add(`left:${mx - s / 2}px;top:${cy + H * .5 - s * .22}px;width:${s}px;height:${s * .45}px;z-index:2;border-radius:50%;background:radial-gradient(closest-side,rgba(224,242,254,.5),rgba(125,211,252,.18) 60%,transparent)`);
+        anim(el, fr(t => { const u = sm(t0, t0 + 1, t); return { opacity: Math.sin(Math.min(1, u) * Math.PI) * (t < t0 ? 0 : 1), transform: `translate(${(dir * H * (.2 + .9 * u)).toFixed(1)}px,${(-H * .1 * u).toFixed(1)}px) scale(${(.5 + 1.2 * u).toFixed(3)})` }; }));
       }
-      // 3) A brief dark flash at the base so it reads as a "puff" moment.
-      const core = bfxAdd(host, puff(90 * k, dark, 8 * k), x, y, 90 * k, 60 * k);
-      bfxAnimate(core, [{ transform: 'scale(.4)', opacity: .95 }, { transform: 'scale(1.8)', opacity: 0 }], { duration: 700, easing: 'ease-out' });
+      for (let i = 0; i < 36; i++) {
+        const s = H * rand(.012, .026), dx = cx + rand(-1, 1) * W * 1.3, dy = cy + rand(-1.1, .1) * H, t0 = ICE_BREAK + rand(0, .5), fall = H * rand(.6, 1.3), sw = rand(1, 4), el = add(`left:${dx}px;top:${dy}px;width:${s}px;height:${s}px;z-index:5;border-radius:50%;background:#e0f2fe;box-shadow:0 0 ${s * 2}px #7dd3fc`);
+        anim(el, fr(t => { const u = sm(t0, 1.95, t); return { opacity: t < t0 ? 0 : (1 - u) * (.6 + .4 * Math.sin(t * 24 + i)), transform: `translate(${(Math.sin(u * sw * 3 + i) * H * .12).toFixed(1)}px,${(fall * u).toFixed(1)}px)` }; }));
+      }
+      end(lastAnim);
+    }
+
+    // Paint Splats: eleven buckets of paint fly at the real top card from off screen (a stretched blob on its
+    // way in), land with a squash and a spring on its face, fling droplets and run in drips; the painted card
+    // then slides off the table. Each splat is a lit, wet-looking SVG blob (gradient, two highlights).
+    // Sound: BURN_SOUNDS['burn-paint'] on the same impact times (PAINT_HITS).
+    // A wet splat outline: a smooth lumpy blob plus tapered splash arms ending in round beads (viewBox 100).
+    function pntBlob(r) {
+      const n = 11, P = Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2, rr = r * bfxRand(.82, 1.14); return [50 + Math.cos(a) * rr, 50 + Math.sin(a) * rr]; });
+      let d = `M${((P[0][0] + P[n - 1][0]) / 2).toFixed(1)} ${((P[0][1] + P[n - 1][1]) / 2).toFixed(1)}`;
+      for (let i = 0; i < n; i++) { const p = P[i], q = P[(i + 1) % n]; d += `Q${p[0].toFixed(1)} ${p[1].toFixed(1)} ${((p[0] + q[0]) / 2).toFixed(1)} ${((p[1] + q[1]) / 2).toFixed(1)}`; }
+      let arms = '';
+      for (let i = 0; i < 5; i++) {
+        const a = bfxRand(0, 6.28), len = r * bfxRand(1.3, 1.55), w = bfxRand(2.5, 5), nx = -Math.sin(a), ny = Math.cos(a), bx = 50 + Math.cos(a) * r * .7, by = 50 + Math.sin(a) * r * .7, tx = 50 + Math.cos(a) * len, ty = 50 + Math.sin(a) * len;
+        arms += `M${(bx + nx * w).toFixed(1)} ${(by + ny * w).toFixed(1)}Q${((bx + tx) / 2 + nx * 1.2).toFixed(1)} ${((by + ty) / 2 + ny * 1.2).toFixed(1)} ${tx.toFixed(1)} ${ty.toFixed(1)}Q${((bx + tx) / 2 - nx * 1.2).toFixed(1)} ${((by + ty) / 2 - ny * 1.2).toFixed(1)} ${(bx - nx * w).toFixed(1)} ${(by - ny * w).toFixed(1)}Z`;
+        arms += `M${(tx + 3.2).toFixed(1)} ${ty.toFixed(1)}a3.2 3.2 0 1 0-6.4 0a3.2 3.2 0 1 0 6.4 0Z`;
+      }
+      return d + 'Z' + arms;
+    }
+    const PAINT_HITS = Array.from({ length: 11 }, (_, i) => +(.12 + i * .068).toFixed(3));
+    const PAINT_COLS = [['#fca5a5', '#ef4444', '#991b1b'], ['#fde68a', '#f59e0b', '#b45309'], ['#86efac', '#22c55e', '#166534'], ['#93c5fd', '#3b82f6', '#1e3a8a'],
+      ['#d8b4fe', '#a855f7', '#6b21a8'], ['#f9a8d4', '#ec4899', '#9d174d'], ['#5eead4', '#14b8a6', '#115e59']];
+    function bfxPaint(host, x, y, k) {
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face } = st;
+      const { clamp, rand, ease, out, D, sm, fr, add } = pfxKit(st), id = ++pfxSeq, dt = D / PFX_N, ox = cx - W / 2, oy = cy - H / 2;
+      const grp = add(`left:${ox}px;top:${oy}px;width:${W}px;height:${H}px;z-index:3;transform-origin:50% 0`);
+      grp.appendChild(face());
+      const pb = add(`inset:0;left:0;top:0;width:${W}px;height:${H}px;overflow:hidden;border-radius:${radius}`, '', grp);
+      const lastAnim = anim(grp, fr(t => { const u = sm(1.42, 1.95, t); return { opacity: 1 - sm(1.62, 1.95, t), transform: `translateY(${(H * 1.1 * u * u).toFixed(1)}px) scaleY(${(1 + .5 * u).toFixed(3)}) rotate(${(2 * u).toFixed(2)}deg)` }; }));
+      const cells = [];
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) cells.push([(c + rand(.2, .8)) / 3 * W, (r + rand(.2, .8)) / 4 * H]);
+      cells.sort(() => Math.random() - .5);
+      const cols = PAINT_COLS.slice().sort(() => Math.random() - .5);
+      PAINT_HITS.forEach((ti, i) => {
+        const last = i === PAINT_HITS.length - 1, [tx, ty] = last ? [W * .5, H * .5] : cells[i], pal = cols[i % cols.length], sz = H * (last ? .95 : rand(.55, .8)), rot = rand(0, 360);
+        const [lx, ly] = [ox + tx, oy + ty], ang = rand(0, Math.PI * 2), dist = H * rand(1.5, 2.2), sx0 = lx + Math.cos(ang) * dist, sy0 = ly + Math.sin(ang) * dist, fl = .11;
+        // the paint on its way in
+        const dir = Math.atan2(ly - sy0, lx - sx0) * 57.3, bs = H * .15;
+        const fly = add(`left:${-bs / 2}px;top:${-bs / 2}px;width:${bs}px;height:${bs}px;z-index:6;border-radius:50%;background:radial-gradient(circle at 35% 30%,${pal[0]},${pal[1]} 55%,${pal[2]})`);
+        anim(fly, fr(t => { const u = sm(ti - fl, ti, t), e = u * u; return { opacity: t > ti - fl && t < ti ? 1 : 0, transform: `translate(${(sx0 + (lx - sx0) * e).toFixed(1)}px,${(sy0 + (ly - sy0) * e).toFixed(1)}px) rotate(${dir.toFixed(1)}deg) scale(${(1.4 + 1.6 * u).toFixed(2)},${(1 - .35 * u).toFixed(2)})` }; }));
+        // the splat on the card
+        const g = `ps${id}-${i}`, drops = Array.from({ length: 7 }, () => { const a = rand(0, 6.3), d = rand(39, 48); return `<circle cx="${(50 + Math.cos(a) * d).toFixed(1)}" cy="${(50 + Math.sin(a) * d).toFixed(1)}" r="${rand(1.6, 4.4).toFixed(1)}" fill="${pal[1]}"/>`; }).join('');
+        const svg = `<svg width="100%" height="100%" viewBox="0 0 100 100"><defs><radialGradient id="${g}" cx=".38" cy=".34" r=".75"><stop offset="0" stop-color="${pal[0]}"/><stop offset=".45" stop-color="${pal[1]}"/><stop offset="1" stop-color="${pal[2]}"/></radialGradient></defs><path d="${pntBlob(30)}" fill="url(#${g})"/>${drops}<ellipse cx="40" cy="37" rx="9" ry="4" fill="#fff" opacity=".5" transform="rotate(-28 40 37)"/><ellipse cx="60" cy="58" rx="3.2" ry="1.6" fill="#fff" opacity=".35"/></svg>`;
+        const sp = add(`left:${tx - sz / 2}px;top:${ty - sz / 2}px;width:${sz}px;height:${sz}px`, svg, pb);
+        anim(sp, fr(t => { const tau = t - ti; if (tau < 0) return { opacity: 0, transform: 'scale(0)' }; const s = Math.min(1, tau / .08) * (1 + .2 * Math.exp(-tau * 12) * Math.sin(tau * 46)), q = Math.exp(-tau * 10); return { opacity: 1, transform: `rotate(${rot.toFixed(1)}deg) scale(${(s * (1 + .18 * q)).toFixed(3)},${(s * (1 - .14 * q)).toFixed(3)})` }; }));
+        // a drip, and flung droplets
+        if (ty < H * .75 && !last) {
+          const w = H * rand(.034, .055), dx = tx + rand(-.2, .2) * sz, dy = ty + sz * .16, L = Math.min(H - dy + w * 2, H * rand(.22, .5)), t0 = ti + .2 + rand(0, .22), dur = rand(.75, 1.05);
+          const stem = add(`left:${dx - w * .35}px;top:${dy}px;width:${w * .7}px;height:${L}px;border-radius:${w}px;transform-origin:50% 0;background:linear-gradient(90deg,${pal[0]},${pal[1]} 45%,${pal[2]})`, '', pb);
+          const bulb = add(`left:${dx - w * .62}px;top:${dy - w * .62}px;width:${w * 1.24}px;height:${w * 1.24}px;border-radius:50%;background:radial-gradient(circle at 35% 30%,${pal[0]},${pal[1]} 60%,${pal[2]})`, '', pb);
+          anim(stem, fr(t => { const u = ease(sm(t0, t0 + dur, t)); return { opacity: t < t0 ? 0 : 1, transform: `scaleY(${Math.max(.001, u).toFixed(3)})` }; }));
+          anim(bulb, fr(t => { const u = ease(sm(t0, t0 + dur, t)); return { opacity: t < t0 ? 0 : 1, transform: `translateY(${(L * u).toFixed(1)}px)` }; }));
+        }
+        for (let d = 0; d < 6; d++) {
+          const a = rand(0, 6.3), v = H * rand(.5, 1.7), s = H * rand(.012, .03); let qx = 0, qy = 0, vx = Math.cos(a) * v, vy = Math.sin(a) * v - H * .6;
+          const dr = add(`left:${lx - s / 2}px;top:${ly - s / 2}px;width:${s}px;height:${s}px;z-index:5;border-radius:50%;background:${pal[1]};box-shadow:inset ${-s * .2}px ${-s * .2}px ${s * .3}px ${pal[2]}`);
+          anim(dr, fr(t => { if (t < ti) return { opacity: 0, transform: 'none' }; vy += H * 3 * dt; qx += vx * dt; qy += vy * dt; return { opacity: 1 - sm(ti + .45, ti + .85, t), transform: `translate(${qx.toFixed(1)}px,${qy.toFixed(1)}px)` }; }));
+        }
+        if (i % 2 === 0) { // paint on the table round the card
+          const fs = H * rand(.12, .22), fx = cx + (i % 4 === 0 ? -1 : 1) * W * rand(.55, .95), fy = cy + H * rand(.3, .62), fe = add(`left:${fx - fs}px;top:${fy - fs * .35}px;width:${fs * 2}px;height:${fs * .7}px;z-index:1;border-radius:50%;background:radial-gradient(closest-side,${pal[1]},${pal[2]} 80%,transparent)`);
+          anim(fe, fr(t => ({ opacity: t < ti + .06 ? 0 : .85 * (1 - sm(1.5, 1.9, t)), transform: `scale(${(.3 + .7 * out(sm(ti, ti + .2, t))).toFixed(3)})` })));
+        }
+      });
+      end(lastAnim);
+    }
+
+    // Smoke Show: embers scorch the real card and it chars from the edges; a dark underlit ground roll and
+    // a column of lumpy lit billows (each puff is three overlapping lobes, light from the top left, so it
+    // reads as a cloud and not a smudge) rise and spread into a cloud at the top; thin wisps curl up through
+    // it, embers and soot flakes fly; the card crumples into the smoke at ~1s. Sound: BURN_SOUNDS['burn-smoke'].
+    const SMOKE_TONES = {
+      light: ['rgba(226,232,240,.9)', 'rgba(160,174,192,.8)', 'rgba(100,116,139,.35)'], dark: ['rgba(120,134,155,.9)', 'rgba(71,85,105,.85)', 'rgba(30,41,59,.35)'],
+      warm: ['rgba(254,226,196,.9)', 'rgba(150,128,128,.85)', 'rgba(60,45,45,.35)']
+    };
+    function bfxSmoke(host, x, y, k) {
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face } = st;
+      const { clamp, rand, ease, out, D, sm, fr, add } = pfxKit(st);
+      const glow = add(`left:${cx - H * 1.1}px;top:${cy - H * .9}px;width:${H * 2.2}px;height:${H * 1.8}px;border-radius:50%;z-index:0;background:radial-gradient(closest-side,rgba(251,146,60,.6),rgba(239,68,68,.22) 55%,transparent)`);
+      const lastAnim = anim(glow, fr(t => ({ opacity: .8 * sm(0, .25, t) * (1 - sm(.55, 1.2, t)) })));
+      const box = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;border-radius:${radius}`);
+      const scorch = document.createElement('div');
+      scorch.style.cssText = `position:absolute;inset:0;border-radius:${radius};background:linear-gradient(to top,rgba(24,14,10,.85),rgba(24,14,10,.3) 55%,rgba(24,14,10,.12))`;
+      box.append(face(), scorch);
+      anim(box, fr(t => ({ opacity: 1 - sm(.8, 1.22, t), transform: `translate(${(Math.sin(t * 41) * H * .008 * sm(.05, .6, t)).toFixed(2)}px,${(-H * .07 * ease(sm(.1, 1, t))).toFixed(2)}px) rotate(${(Math.sin(t * 9) * 2.5 * sm(.2, 1, t)).toFixed(2)}deg) scale(${(1 - .14 * sm(.3, 1.2, t)).toFixed(3)})` })));
+      anim(scorch, fr(t => { const m = sm(.04, .8, t), q = sm(.6, 1, t); return { opacity: Math.min(1, m * 1.5), boxShadow: `inset 0 0 ${(H * .2 * m).toFixed(1)}px ${(H * .06 * m).toFixed(1)}px rgba(12,8,6,.96), inset 0 0 ${(H * .06 * m).toFixed(1)}px ${(H * .012 * m).toFixed(1)}px rgba(251,146,60,${(.9 * (1 - q)).toFixed(2)})` }; }));
+      const LOBES = [[.5, .5, .8], [.3, .6, .6], [.7, .58, .62], [.5, .3, .55], [.28, .4, .5]];
+      const puff = (s, tone, asp) => {
+        const [l, m, d] = SMOKE_TONES[tone];
+        return LOBES.map(([u, v, f]) => `<div style="position:absolute;left:${(u - f / 2) * 100}%;top:${(v - f / 2) * 100}%;width:${f * 100}%;height:${f * 100}%;border-radius:50%;background:radial-gradient(circle at 36% 30%,${l} 0,${m} 45%,${d} 78%,rgba(0,0,0,0) 82%)"></div>`).join('');
+      };
+      const spawn = ({ x0, y0, s, t0, life, rise, drift, tone, a, asp = 1, grow = 1.4, z = 2 }) => {
+        const el = add(`left:${x0 - s / 2}px;top:${y0 - s / 2}px;width:${s}px;height:${s}px;z-index:${z}`, puff(s, tone, asp)), sw = rand(-1, 1) * W * .3, ph = rand(0, 6.3);
+        anim(el, fr(t => { const u = clamp((t - t0) / life); if (t < t0 || u >= 1) return { opacity: 0, transform: 'scale(.2)' };
+          const sc = .35 + grow * Math.sqrt(u); return { opacity: a * sm(0, .12, u) * (1 - sm(.5, 1, u)), transform: `translate(${(sw * Math.sin(u * 3 + ph) + drift * u * u * H).toFixed(1)}px,${(-rise * (1 - Math.pow(1 - u, 1.8))).toFixed(1)}px) scale(${(sc * asp).toFixed(3)},${sc.toFixed(3)})` }; }));
+      };
+      for (let i = 0; i < 14; i++) spawn({ x0: cx + rand(-.5, .5) * W, y0: cy + H * .5, s: H * rand(.5, .8), t0: .1 + rand(0, .55), life: rand(.9, 1.2), rise: H * rand(.04, .2), drift: (i % 2 ? 1 : -1) * rand(.5, 1.5), tone: i % 3 ? 'dark' : 'warm', a: .85, asp: 1.9, grow: 1.5, z: 1 });
+      for (let i = 0; i < 40; i++) { const t0 = .14 + rand(0, .9); spawn({ x0: cx + rand(-.45, .45) * W, y0: cy + rand(-.1, .45) * H, s: H * rand(.45, .8), t0, life: rand(.9, 1.15), rise: H * rand(1.1, 2.1), drift: rand(-.6, .6), tone: t0 < .4 && i % 3 === 0 ? 'warm' : i % 3 ? 'light' : 'dark', a: .92, z: i % 2 ? 4 : 2 }); }
+      for (let i = 0; i < 7; i++) spawn({ x0: cx + rand(-.6, .6) * W, y0: cy - H * rand(.6, 1), s: H * rand(.8, 1.2), t0: .75 + rand(0, .45), life: rand(.8, 1), rise: H * rand(.2, .5), drift: rand(-1.2, 1.2), tone: 'light', a: .7, asp: 1.3, grow: .9, z: 3 });
+      // thin wisps curling up through the cloud
+      for (let i = 0; i < 7; i++) {
+        const w = W * 1.3, h = H * 2.4, ox = cx + rand(-.45, .45) * W - w / 2, t0 = .2 + rand(0, .6), dur = rand(.9, 1.2), c1 = rand(.1, .9) * w, c2 = rand(.1, .9) * w, c3 = rand(.2, .8) * w;
+        const el = add(`left:${ox}px;top:${cy - h + H * .3}px;width:${w}px;height:${h}px;z-index:5`, `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible"><path d="M${w / 2} ${h}C${c1} ${h * .75} ${c2} ${h * .55} ${c3} ${h * .3}S${w / 2} ${h * .05} ${rand(.2, .8) * w} 0" pathLength="1" stroke-dasharray=".4 1" stroke="rgba(226,232,240,.65)" stroke-width="${Math.max(1.5, H * .028)}" stroke-linecap="round" fill="none"/></svg>`);
+        anim(el.querySelector('path'), fr(t => { const u = clamp((t - t0) / dur); return { strokeDashoffset: .4 - u * 1.4, opacity: t < t0 ? 0 : Math.sin(Math.min(1, u) * Math.PI) }; }));
+      }
+      // embers and soot flakes
+      for (let i = 0; i < 26; i++) {
+        const t0 = rand(.04, .85), life = rand(.5, 1.0), s = H * rand(.014, .03), sx = cx + rand(-.5, .5) * W, sy = cy + rand(-.5, .5) * H, up = H * rand(.5, 1.6), sw = rand(-.4, .4) * H, col = ['#fdba74', '#fb923c', '#ef4444'][i % 3];
+        const el = add(`left:${sx}px;top:${sy}px;width:${s}px;height:${s}px;z-index:5;border-radius:50%;background:#fff3d6;box-shadow:0 0 ${s * 2.5}px ${s * .8}px ${col}`);
+        anim(el, fr(t => { const u = clamp((t - t0) / life); return { opacity: t < t0 || u >= 1 ? 0 : 1 - u * u, transform: `translate(${(sw * u + Math.sin(u * 9 + i) * H * .04).toFixed(1)}px,${(-up * u).toFixed(1)}px) scale(${(1 - .6 * u).toFixed(3)})` }; }));
+      }
+      for (let i = 0; i < 30; i++) {
+        const t0 = .5 + rand(0, .6), s = H * rand(.018, .045), sx = cx + rand(-.5, .5) * W, sy = cy + rand(-.4, .4) * H, up = H * rand(.6, 1.6), sw = rand(-.7, .7) * H, spin = rand(-300, 300);
+        const el = add(`left:${sx}px;top:${sy}px;width:${s}px;height:${s * .55}px;z-index:5;background:#1c1917;clip-path:polygon(0 30%,60% 0,100% 55%,40% 100%)`);
+        anim(el, fr(t => { const u = clamp((t - t0) / 1.2); return { opacity: t < t0 ? 0 : (1 - sm(.55, 1, u)) * .9, transform: `translate(${(sw * u).toFixed(1)}px,${(-up * u + H * .15 * u * u).toFixed(1)}px) rotate(${(spin * u).toFixed(0)}deg)` }; }));
+      }
+      end(lastAnim);
     }
     // ---- Premium burns: Black Hole, Origami Fold, Pixel Blast, Lava Melt ----
     // Each is over within ~2s and removes every piece it drew: nothing stays
@@ -1023,7 +1201,7 @@
       if (window.ShSeasonBurns && ShSeasonBurns.has(id) && ShSeasonBurns.play(id, host, x, y, scale)) return true;
       // Painted-art 3D burns (art/burns/level-3d/burns3d.js); their old effects stay as the fallback.
       if (window.ShLevel3D && ShLevel3D.has(id) && levelBurn3d(id, host, x, y, scale, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return true;
-      ({ default: bfxDefaultBurn, 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
+      ({ default: bfxDefaultBurn, 'burn-electric': bfxLightning, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-ice': bfxIce, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
         'burn-blackhole': bfxBlackHole, 'burn-origami': bfxOrigami, 'burn-pixel': bfxPixelBlast, 'burn-lava': bfxLavaMelt,
         'burn-lvl-spark-snap': bfxSparkSnap, 'burn-lvl-smoke-burst': bfxSmokeBurst, 'burn-lvl-inferno-sweep': bfxInfernoSweep,
         'burn-lvl-hellfire-spiral': bfxHellfireSpiral, 'burn-lvl-royal-incineration': bfxRoyalIncineration, 'burn-lvl-shitstorm': bfxShitStorm }[id] || (typeof SEASONAL_BURN_FX !== 'undefined' && SEASONAL_BURN_FX[id]) || (() => {}))(host, x, y, scale);
@@ -1041,7 +1219,6 @@
       if(effect===PRIVATE_BURN_ID)return playBurnFx(effect,document.getElementById('burnFxLayer'),x,y,1,card);
       if (ShLevelBurns.index(effect) >= 0) return playBurnFx(effect, document.getElementById('burnFxLayer'), x, y, .72);
       if (typeof reduceMotion !== 'undefined' && reduceMotion) return playCalmBurn(x, y);
-      if (effect === 'burn-ice') return triggerBurnEmberExplosion(x, y, ['#e0f2fe','#7dd3fc','#38bdf8','#ffffff'], 70);
       if (SHAPE_BURN_EFFECTS.has(effect)) {
         playBurnFx(effect, document.getElementById('burnFxLayer'), x, y, 1);
         const table = document.getElementById('gameTable');

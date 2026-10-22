@@ -342,11 +342,20 @@
       default: (k) => (window.ShLevel3D ? ShLevel3D.sound('default', k) : fireWhoosh(k)),
       // Coloured Flame: the fire, plus a rising shimmer of colour.
       'burn-coloured': (k) => { if (window.ShLevel3D) return ShLevel3D.sound('burn-coloured', k); fireWhoosh(k, 0.8); [660, 880, 1108, 1320, 1760].forEach((f, i) => k.tone({ at: 0.1 + i * 0.06, dur: 0.35, type: 'triangle', f0: f, level: 0.1 })); },
-      // Ice Shatter: a sharp crack and falling glassy pings.
+      // Ice Shatter (v404): frost creeping in (airy shimmer + crystal ticks, 0-.62s), the crack at .62 and a
+      // second at .72, the shatter at .86 (glass burst, low thud, a cascade of glassy pings), cold mist to 1.9s.
       'burn-ice': (k) => {
-        k.tone({ dur: 0.09, type: 'square', f0: 220, f1: 60, level: 0.25 });
-        k.noise({ dur: 0.2, type: 'highpass', f0: 2500, f1: 6000, level: 0.4 });
-        k.scatter(9, 0.03, 0.45, (at) => k.tone({ at, dur: 0.3, f0: 2200 + Math.random() * 2600, level: 0.09 }));
+        k.noise({ dur: 0.6, type: 'highpass', f0: 3000, f1: 7000, level: 0.1, attack: 0.3 });
+        k.scatter(11, 0.04, 0.6, (at) => k.noise({ at, dur: 0.014, type: 'bandpass', f0: 5200, q: 4, level: 0.16 }));
+        [[0.62, 0.5], [0.72, 0.3]].forEach(([at, v]) => {
+          k.noise({ at, dur: 0.05, type: 'bandpass', f0: 1800, q: 3, level: v });
+          k.tone({ at, dur: 0.08, type: 'square', f0: 300, f1: 90, level: v * 0.5 });
+        });
+        k.noise({ at: 0.86, dur: 0.35, type: 'highpass', f0: 2500, f1: 7000, level: 0.5 });
+        k.tone({ at: 0.86, dur: 0.18, f0: 170, f1: 45, level: 0.4 });
+        k.scatter(22, 0.88, 1.6, (at) => k.tone({ at, dur: 0.25, f0: 2200 + Math.random() * 3000, level: 0.07 }));
+        k.scatter(14, 0.9, 1.5, (at) => k.noise({ at, dur: 0.012, type: 'highpass', f0: 6000, level: 0.12 }));
+        k.noise({ at: 0.9, dur: 1.0, type: 'bandpass', f0: 6000, q: 0.6, level: 0.05, attack: 0.2 });
       },
       // Electric Blast: a falling zap, mains buzz and sparks.
       'burn-electric': (k) => {
@@ -355,17 +364,31 @@
         k.tone({ dur: 0.45, type: 'square', f0: 60, f1: 55, level: 0.14 });
         k.scatter(14, 0, 0.5, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 4000, q: 4, level: 0.5 }));
       },
-      // Paint Splats: three wet splats.
-      'burn-paint': (k) => [0, 0.14, 0.3].forEach((at, i) => {
-        k.noise({ at, dur: 0.2, f0: 1200 - i * 200, f1: 180, level: 0.5 });
-        k.tone({ at, dur: 0.12, f0: 170 - i * 20, f1: 60, level: 0.35 });
-      }),
+      // Paint Splats (v404): a short whoosh as each bucket flies in and a wet slap as it lands, on the effect's
+      // eleven impact times (PAINT_HITS: .12 + .068 each), droplet flecks, drips plinking down, then the
+      // painted card sliding off at ~1.45s.
+      'burn-paint': (k) => {
+        for (let i = 0; i < 11; i++) {
+          const at = 0.12 + i * 0.068, big = i === 10;
+          k.noise({ at: at - 0.1, dur: 0.1, type: 'bandpass', f0: 900, f1: 2400, q: 1, level: 0.12, attack: 0.05 });
+          k.noise({ at, dur: big ? 0.3 : 0.18, type: 'bandpass', f0: (big ? 800 : 1300 - (i % 4) * 150), f1: 160, q: 0.9, level: big ? 0.5 : 0.34 });
+          k.tone({ at, dur: 0.11, f0: (big ? 120 : 190 - (i % 3) * 25), f1: 55, level: big ? 0.4 : 0.26 });
+          k.scatter(3, at + 0.02, at + 0.14, (t) => k.noise({ at: t, dur: 0.02, type: 'highpass', f0: 4200, level: 0.08 }));
+        }
+        k.scatter(7, 0.95, 1.6, (at) => k.tone({ at, dur: 0.09, f0: 760 + Math.random() * 200, f1: 420, level: 0.06 }));
+        k.noise({ at: 1.45, dur: 0.5, type: 'bandpass', f0: 600, f1: 150, q: 0.8, level: 0.3, attack: 0.12 });
+      },
       // Stupendous Confectionery: a scatter of candy pops and a sparkle.
       'burn-sweets': (k) => { if (window.ShLevel3D) return ShLevel3D.sound('burn-sweets', k); popBurst(k, [0, 0.09, 0.16, 0.27, 0.35, 0.47, 0.55], 1.1); k.tone({ at: 0.5, dur: 0.4, type: 'triangle', f0: 2093, level: 0.08 }); },
-      // Smoke Show: a slow, soft puff with a low rumble.
+      // Smoke Show (v404): ember crackle as the card scorches (0-.7s), the soft whoosh of the first puff at
+      // .14, a low billow rumble that rises with the column to ~1.5s, the card crumpling at ~1s, a hiss tail.
       'burn-smoke': (k) => {
-        k.noise({ dur: 1.2, type: 'bandpass', f0: 420, f1: 160, q: 0.7, level: 0.45, attack: 0.3 });
-        k.tone({ dur: 1.0, f0: 58, f1: 45, level: 0.25, attack: 0.2 });
+        k.scatter(14, 0, 0.75, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 3500, q: 2, level: 0.2 }));
+        k.noise({ at: 0.14, dur: 0.55, type: 'bandpass', f0: 500, f1: 200, q: 0.8, level: 0.45, attack: 0.06 });
+        k.tone({ at: 0.14, dur: 0.5, f0: 70, f1: 45, level: 0.32, attack: 0.05 });
+        k.noise({ at: 0.25, dur: 1.3, type: 'bandpass', f0: 240, f1: 120, q: 0.6, level: 0.3, attack: 0.5 });
+        k.noise({ at: 0.95, dur: 0.25, type: 'bandpass', f0: 1400, f1: 500, q: 1.1, level: 0.18, attack: 0.04 });
+        k.noise({ at: 1.0, dur: 0.9, type: 'bandpass', f0: 1800, f1: 900, q: 0.5, level: 0.07, attack: 0.25 });
       },
       // Black Hole: a deep pull that sinks as the cards spiral in (streaks
       // for each card), then the pop at 1.05s and twinkling starlight.
