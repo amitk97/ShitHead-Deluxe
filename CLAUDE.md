@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v407 — Black Hole, Pixel Blast rebuilt, Origami retimed (owner approved the frames)
+
+- `bfxBlackHole` (spinning disk, photon ring, card strips and mini cards spiral in, collapse at 1.2s) and `bfxPixelBlast` (stepped pixelation via SVG filters `pfxPixelFilters`, scan bar, blast at .52s, stepped chunks) are procedural `procBurnStage` burns, so they pause for frames. New `burn-blackhole` / `burn-pixel` recipes in `sound.js` on the same beats. Origami's swan hover/take-off offsets retimed so it leaves the screen.
+
 ## v406 — Electric Blast, Inferno Sweep, Default Burn, Smoke Burst rebuilt (owner approved the frames)
 
 - Procedural DOM burns (`bfxElectric`, `bfxInferno`, `bfxDefault`, `bfxSmokeBurst` in `burn-effects.js`, built on the v404 `pfxKit` plus `pfxShatter`, `pfxFlameEl`, `pfxPuff`); their ids are `iconOnly` in `ShLevel3D` (tile only), so `playBurnFx` uses the `bfx` map. Own `BURN_SOUNDS` recipes in `sound.js` on the same beats (Electric strikes .12/.30/.50, break .52; Inferno hit .46; Smoke Burst pop .36; Default edge climbs .15-1.45). Lava Melt was already procedural (v307) and is unchanged. Dev tests for Default/Electric now assert `procBurnStage`.
