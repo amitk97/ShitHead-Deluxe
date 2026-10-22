@@ -407,15 +407,19 @@
         k.noise({ at: 0.95, dur: 0.25, type: 'bandpass', f0: 1400, f1: 500, q: 1.1, level: 0.18, attack: 0.04 });
         k.noise({ at: 1.0, dur: 0.9, type: 'bandpass', f0: 1800, f1: 900, q: 0.5, level: 0.07, attack: 0.25 });
       },
-      // Black Hole: a deep pull that sinks as the cards spiral in (streaks
-      // for each card), then the pop at 1.05s and twinkling starlight.
+      // Black Hole (v407): the core opens at .12s with a deep falling drone, a swirl of rising pulls as the card's
+      // strips spiral in (a whoosh each), a hard sucking sweep up to the collapse at 1.2s, the pop and flash
+      // there, a sub thump, and twinkling starlight to ~1.9s.
       'burn-blackhole': (k) => {
-        k.tone({ dur: 1.05, f0: 90, f1: 32, level: 0.42, attack: 0.25, vibrato: 4 });
-        k.noise({ dur: 1.0, type: 'bandpass', f0: 2400, f1: 180, q: 1.4, level: 0.3, attack: 0.35 });
-        k.scatter(8, 0.15, 0.95, (at) => k.tone({ at, dur: 0.14, type: 'triangle', f0: 1400 + Math.random() * 600, f1: 300, level: 0.05 }));
-        k.tone({ at: 1.06, dur: 0.12, f0: 180, f1: 1800, level: 0.3 });
-        k.noise({ at: 1.06, dur: 0.25, type: 'highpass', f0: 3000, f1: 7000, level: 0.2 });
-        k.scatter(10, 1.1, 1.6, (at) => k.tone({ at, dur: 0.3, type: 'triangle', f0: 2000 + Math.random() * 2500, level: 0.06 }));
+        k.tone({ at: 0.12, dur: 1.1, f0: 110, f1: 30, level: 0.42, attack: 0.25, vibrato: 4 });
+        k.noise({ at: 0.15, dur: 1.0, type: 'bandpass', f0: 2400, f1: 180, q: 1.4, level: 0.28, attack: 0.35 });
+        [0.22, 0.3, 0.38, 0.46, 0.54, 0.62].forEach((at, i) => k.noise({ at, dur: 0.14, type: 'bandpass', f0: 900 + i * 220, f1: 300, q: 1.2, level: 0.12 }));
+        k.scatter(8, 0.25, 1.1, (at) => k.tone({ at, dur: 0.14, type: 'triangle', f0: 1400 + Math.random() * 600, f1: 300, level: 0.05 }));
+        k.tone({ at: 0.75, dur: 0.45, type: 'sine', f0: 180, f1: 1500, level: 0.16, attack: 0.1 });
+        k.tone({ at: 1.2, dur: 0.12, f0: 180, f1: 1800, level: 0.32 });
+        k.tone({ at: 1.2, dur: 0.5, f0: 70, f1: 28, level: 0.45 });
+        k.noise({ at: 1.2, dur: 0.3, type: 'highpass', f0: 3000, f1: 7000, level: 0.22 });
+        k.scatter(12, 1.25, 1.9, (at) => k.tone({ at, dur: 0.3, type: 'triangle', f0: 2000 + Math.random() * 2500, level: 0.06 }));
       },
       // Origami Fold: a crisp paper crease for each fold (card, triangle,
       // kite, swan), then wing beats fading as the swans fly off.
@@ -428,14 +432,16 @@
         [0.56, 0.69, 0.82, 0.95, 1.08, 1.21].forEach((at, i) => k.noise({ at, dur: 0.09, type: 'bandpass', f0: 700, f1: 480, q: 1.2, level: 0.55 * (1 - i * 0.13) }));
         k.tone({ at: 0.5, dur: 0.9, type: 'triangle', f0: 660, f1: 1320, level: 0.06, attack: 0.1 });
       },
-      // Pixel Blast: two 8-bit blips as the card pixelates, a crunchy
-      // chiptune boom at 0.2s and a falling arpeggio as the pixels scatter.
+      // Pixel Blast (v407): glitch crackle, a rising 8-bit blip at each pixelation step (.06 .14 .22 .30 .38 .46),
+      // the crunchy blast at .52 (noise burst + square drop), a falling chip arpeggio and pixels pinging down.
       'burn-pixel': (k) => {
-        k.tone({ dur: 0.07, type: 'square', f0: 880, level: 0.12 });
-        k.tone({ at: 0.09, dur: 0.07, type: 'square', f0: 660, level: 0.12 });
-        k.noise({ at: 0.2, dur: 0.55, type: 'lowpass', f0: 3000, f1: 150, q: 0.7, level: 0.5 });
-        k.tone({ at: 0.2, dur: 0.45, type: 'square', f0: 220, f1: 40, level: 0.18 });
-        [1047, 784, 659, 523, 392].forEach((f, i) => k.tone({ at: 0.32 + i * 0.08, dur: 0.07, type: 'square', f0: f, level: 0.08 }));
+        k.scatter(8, 0.04, 0.46, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 4000, q: 2, level: 0.14 }));
+        [0.06, 0.14, 0.22, 0.3, 0.38, 0.46].forEach((at, i) => k.tone({ at, dur: 0.07, type: 'square', f0: 330 * Math.pow(1.26, i), level: 0.12 }));
+        k.noise({ at: 0.52, dur: 0.55, type: 'lowpass', f0: 3000, f1: 150, q: 0.7, level: 0.5 });
+        k.tone({ at: 0.52, dur: 0.45, type: 'square', f0: 220, f1: 40, level: 0.2 });
+        k.noise({ at: 0.52, dur: 0.12, type: 'highpass', f0: 5000, level: 0.25 });
+        [1047, 784, 659, 523, 392].forEach((f, i) => k.tone({ at: 0.62 + i * 0.08, dur: 0.07, type: 'square', f0: f, level: 0.08 }));
+        k.scatter(14, 0.7, 1.7, (at) => k.tone({ at, dur: 0.05, type: 'square', f0: 500 + Math.random() * 900, level: 0.05 }));
       },
       // Lava Melt: a sizzle as the cards heat, a heavy slump into the pool,
       // blorping bubbles, then a hiss as it cools and sinks away.

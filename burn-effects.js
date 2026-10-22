@@ -696,33 +696,111 @@
       <path d="M6 50 52 44 46 70M76 10 80 58" stroke="rgba(71,85,105,.4)" stroke-width="1" fill="none"/>`);
     const bfxStar4 = (c) => bfxSvg(20, 20, `<path d="M10 0 12 8 20 10 12 12 10 20 8 12 0 10 8 8Z" fill="${c}"/>`);
 
-    // Black Hole: a dark core with a glowing ring opens on the pile, the
-    // cards orbit in and stretch as they fall, then it collapses (1.05s)
-    // into a pop of starlight.
+    // Black Hole (v407, procedural on the real card): a dark core opens on the Pile (0.12s) with a tilted, spinning
+    // accretion disk, a photon ring and a violet lens glow; the real card is cut into 12 strips that are
+    // spaghettified - each spirals in, stretching along its path, and is swallowed - while 10 little cards and star
+    // dust orbit in. At 1.2s it collapses to a point in a white-violet flash, a shock ring and a burst of starlight.
+    // Sound: BURN_SOUNDS['burn-blackhole'] (collapse at 1.2s).
+    const BH_OPEN = .12, BH_END = 1.2;
     function bfxBlackHole(host, x, y, k) {
-      const gid = `bfx-g-${++bfxGradientSeq}`;
-      const arms = [0, 90, 180, 270].map(r => `<path d="M50 50m-40 0a40 40 0 0 1 40-40" stroke="${r % 180 ? '#f59e0b' : '#a78bfa'}" stroke-width="3.5" stroke-linecap="round" fill="none" opacity=".75" transform="rotate(${r} 50 50)"/>`).join('');
-      const hole = bfxAdd(host, bfxSvg(100, 100, `<defs><radialGradient id="${gid}"><stop offset=".3" stop-color="#000"/><stop offset=".46" stop-color="#6d28d9"/><stop offset=".58" stop-color="#f59e0b" stop-opacity=".9"/><stop offset=".78" stop-color="#c026d3" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
-        <circle cx="50" cy="50" r="50" fill="url(#${gid})"/>${arms}<circle cx="50" cy="50" r="24" fill="#000"/>`), x, y, 160 * k, 160 * k);
-      bfxAnimate(hole, [{ transform: 'scale(0) rotate(0deg)', opacity: 0 }, { transform: 'scale(1) rotate(-160deg)', opacity: 1, offset: .18 },
-        { transform: 'scale(1.1) rotate(-560deg)', opacity: 1, offset: .8 }, { transform: 'scale(0) rotate(-760deg)', opacity: 1 }], { duration: 1100, easing: 'ease-in-out' });
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, anim, end, face, vw } = st;
+      const kit = pfxKit(st), { rand, sm, fr, add, clamp, out } = kit, vh = host.clientHeight || innerHeight, px = H / 100, R = H * .85;
+      const grow = t => out(sm(BH_OPEN, .55, t)) * (1 - sm(BH_END, BH_END + .12, t));
+      const dim = add(`left:0;top:0;width:${vw}px;height:${vh}px;z-index:1;background:radial-gradient(circle at ${cx}px ${cy}px,rgba(10,6,30,0) 20%,rgba(10,6,30,.65) 90%)`);
+      const lastAnim = anim(dim, fr(t => ({ opacity: sm(0, .4, t) * (1 - sm(1.35, 1.8, t)) })));
+      const glow = add(`left:${cx - R * 1.3}px;top:${cy - R * 1.3}px;width:${R * 2.6}px;height:${R * 2.6}px;border-radius:50%;z-index:2;background:radial-gradient(closest-side,rgba(124,58,237,.55),rgba(245,158,11,.22) 50%,transparent)`);
+      anim(glow, fr(t => ({ opacity: .85 * grow(t), transform: `scale(${(.5 + .6 * grow(t)).toFixed(3)})` })));
+      const disk = add(`left:${cx - R}px;top:${cy - R}px;width:${R * 2}px;height:${R * 2}px;z-index:3;border-radius:50%;background:conic-gradient(from 0deg,rgba(251,146,60,0),#f59e0b 12%,#fde68a 20%,#f59e0b 30%,rgba(168,85,247,0) 45%,#a78bfa 60%,#7c3aed 72%,rgba(251,146,60,0) 90%);-webkit-mask:radial-gradient(circle,transparent 30%,#000 35%,#000 62%,transparent 70%);mask:radial-gradient(circle,transparent 30%,#000 35%,#000 62%,transparent 70%)`);
+      anim(disk, fr(t => { const g = grow(t); return { opacity: Math.min(1, g * 1.4), transform: `scale(${g.toFixed(3)},${(g * .42).toFixed(3)}) rotate(${(t * 420).toFixed(1)}deg)` }; }));
+      const core = add(`left:${cx - R * .34}px;top:${cy - R * .34}px;width:${R * .68}px;height:${R * .68}px;z-index:6;border-radius:50%;background:#000;box-shadow:0 0 ${R * .2}px ${R * .05}px rgba(167,139,250,.8),inset 0 0 ${R * .1}px rgba(253,186,116,.5)`);
+      anim(core, fr(t => ({ opacity: grow(t) > 0 ? 1 : 0, transform: `scale(${grow(t).toFixed(3)})` })));
+      const ring = add(`left:${cx - R * .4}px;top:${cy - R * .4}px;width:${R * .8}px;height:${R * .8}px;z-index:7`, `<svg width="100%" height="100%" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="none" stroke="#ffedd5" stroke-opacity=".9" stroke-width="2"/></svg>`);
+      anim(ring, fr(t => ({ opacity: .8 * grow(t) * (.8 + .2 * Math.sin(t * 40)), transform: `scale(${grow(t).toFixed(3)})` })));
+      // the card, cut in strips that spiral in
+      const N = 12;
+      for (let i = 0; i < N; i++) {
+        const yi = (i + .5) / N * H - H / 2, r0 = Math.max(Math.abs(yi), H * .1), a0 = yi >= 0 ? Math.PI / 2 : -Math.PI / 2, dir = i % 2 ? 1 : -1;
+        const t0 = .22 + (i % 6) * .05 + (i < 6 ? 0 : .02), dur = BH_END - .06 - t0, y0 = (i / N * 100).toFixed(2), y1 = (100 - (i + 1) / N * 100).toFixed(2);
+        const el = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:4;clip-path:inset(${y0}% 0 ${y1}% 0);transform-origin:50% ${((i + .5) / N * 100).toFixed(2)}%`);
+        el.appendChild(face());
+        anim(el, fr(t => {
+          const u = clamp((t - t0) / dur);
+          if (t < t0) return { opacity: 1, transform: `translateY(${(Math.sin(t * 90 + i) * H * .006 * sm(.05, t0, t)).toFixed(2)}px)` };
+          const a = a0 + dir * u * Math.PI * 3, r = r0 * Math.pow(1 - u, 1.3), dx = r * Math.cos(a), dy = r * Math.sin(a) - yi;
+          return { opacity: 1 - sm(.9, 1, u), transform: `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) rotate(${(dir * (a - a0) * 57.3).toFixed(1)}deg) scale(${((1 + 1.8 * Math.pow(u, 1.5)) * (1 - sm(.85, 1, u))).toFixed(3)},${(1 - .85 * u).toFixed(3)})` };
+        }));
+      }
+      // little cards and star dust drawn in
       for (let i = 0; i < 10; i++) {
-        const a0 = (i / 10) * Math.PI * 2, r0 = bfxRand(80, 120) * k;
-        const card = bfxAdd(host, bfxMiniCard(i % 3 ? '#f8fafc' : '#fef3c7', i % 2 ? '#dc2626' : '#111827'), x, y, 26 * k, 36 * k);
-        bfxAnimate(card, [0, .15, .3, .45, .6, .75, .9, 1].map(t => {
-          const a = a0 - t * Math.PI * 2.4, r = r0 * Math.pow(1 - t, 1.3);
-          return { transform: `translate(${Math.cos(a) * r}px,${Math.sin(a) * r}px) rotate(${(a * 180) / Math.PI - 90}deg) scale(${1 - .9 * t},${1 + 1.6 * t})`, opacity: t === 0 ? 0 : t > .92 ? 0 : 1 };
-        }), { duration: 820, delay: 120 + i * 22, easing: 'linear' });
+        const r0 = R * rand(1.1, 1.7), a0 = rand(0, 6.3), t0 = .2 + rand(0, .45), dur = BH_END - .05 - t0, dir = i % 2 ? 1 : -1, w = H * .22;
+        const el = add(`left:${cx - w / 2}px;top:${cy - w * .7}px;width:${w}px;height:${w * 1.4}px;z-index:4`, bfxMiniCard(i % 3 ? '#f8fafc' : '#fef3c7', i % 2 ? '#dc2626' : '#111827'));
+        anim(el, fr(t => { const u = clamp((t - t0) / dur); if (t < t0 || u >= 1) return { opacity: 0, transform: 'scale(.2)' }; const a = a0 + dir * u * Math.PI * 2.6, r = r0 * Math.pow(1 - u, 1.4);
+          return { opacity: sm(0, .1, u), transform: `translate(${(Math.cos(a) * r).toFixed(1)}px,${(Math.sin(a) * r * .8).toFixed(1)}px) rotate(${((a * 57.3) - 90).toFixed(0)}deg) scale(${(1 - .9 * u).toFixed(2)},${(1 + 1.6 * u).toFixed(2)})` }; }));
       }
-      const flash = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff,rgba(196,181,253,.7) 30%,rgba(56,189,248,.25) 55%,transparent 70%)"></div>', x, y, 120 * k, 120 * k);
-      bfxAnimate(flash, [{ transform: 'scale(.1)', opacity: 0 }, { transform: 'scale(.1)', opacity: 1, offset: .01 }, { transform: 'scale(2)', opacity: 0 }], { duration: 480, delay: 1060, easing: 'ease-out' });
-      for (let i = 0; i < 18; i++) {
-        const a = (i / 18) * Math.PI * 2 + bfxRand(-.15, .15), d = bfxRand(60, 135) * k, s = bfxRand(9, 17) * k;
-        const star = bfxAdd(host, bfxStar4(['#ffffff', '#c4b5fd', '#fde68a', '#7dd3fc'][i % 4]), x, y, s, s);
-        bfxAnimate(star, [{ transform: 'translate(0,0) scale(0) rotate(0)', opacity: 0 }, { transform: 'translate(0,0) scale(.4)', opacity: 1, offset: .02 },
-          { transform: `translate(${Math.cos(a) * d * .75}px,${Math.sin(a) * d * .75}px) scale(1.1) rotate(90deg)`, opacity: 1, offset: .5 },
-          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) scale(0) rotate(180deg)`, opacity: 0 }], { duration: bfxRand(520, 720), delay: 1070 + bfxRand(0, 60), easing: 'ease-out' });
+      for (let i = 0; i < 44; i++) {
+        const r0 = H * rand(1.2, 2.4), a0 = rand(0, 6.3), t0 = rand(.05, .85), life = rand(.45, .7), s = H * rand(.012, .03), dir = i % 2 ? 1 : -1, col = ['#fff', '#c4b5fd', '#fde68a'][i % 3];
+        const el = add(`left:${cx - s / 2}px;top:${cy - s / 2}px;width:${s}px;height:${s}px;z-index:5;border-radius:50%;background:${col};box-shadow:0 0 ${s * 3}px ${col}`);
+        anim(el, fr(t => { const u = clamp((t - t0) / life); if (t < t0 || u >= 1) return { opacity: 0, transform: 'none' }; const a = a0 + dir * u * 2.2, r = r0 * Math.pow(1 - u, 1.6); return { opacity: Math.sin(u * Math.PI), transform: `translate(${(Math.cos(a) * r).toFixed(1)}px,${(Math.sin(a) * r * .85).toFixed(1)}px)` }; }));
       }
+      // the collapse: flash, shock ring, starlight
+      const flash = add(`left:${cx - H * 1.1}px;top:${cy - H * 1.1}px;width:${H * 2.2}px;height:${H * 2.2}px;border-radius:50%;z-index:8;mix-blend-mode:screen;background:radial-gradient(closest-side,#fff,rgba(196,181,253,.8) 40%,rgba(56,189,248,.25) 65%,transparent)`);
+      anim(flash, fr(t => ({ opacity: t < BH_END ? 0 : 1 - sm(BH_END, BH_END + .3, t), transform: `scale(${(.2 + 1.6 * out(sm(BH_END, BH_END + .3, t))).toFixed(3)})` })));
+      const shock = add(`left:${cx - H * .5}px;top:${cy - H * .5}px;width:${H}px;height:${H}px;border-radius:50%;z-index:7;border:${Math.max(2, px * 2)}px solid rgba(221,214,254,.9);box-sizing:border-box`);
+      anim(shock, fr(t => ({ opacity: t < BH_END ? 0 : .9 * (1 - sm(BH_END, BH_END + .55, t)), transform: `scale(${(.1 + 3.2 * out(sm(BH_END, BH_END + .55, t))).toFixed(3)})` })));
+      for (let i = 0; i < 30; i++) {
+        const a = rand(0, 6.3), v = H * rand(1.2, 3.2), s = H * rand(.05, .11), t0 = BH_END + rand(0, .1), col = ['#fff', '#c4b5fd', '#7dd3fc', '#fde68a'][i % 4], spin = rand(-120, 120);
+        const el = add(`left:${cx - s / 2}px;top:${cy - s / 2}px;width:${s}px;height:${s}px;z-index:8`, pfxStar(col));
+        anim(el, fr(t => { const tau = t - t0; if (tau < 0) return { opacity: 0, transform: 'scale(0)' }; const d = (1 - Math.exp(-3 * tau)) / 3, u = clamp(tau / .75); return { opacity: Math.sin(Math.min(1, u * 1.2 + .1) * Math.PI) * (u < 1 ? 1 : 0), transform: `translate(${(Math.cos(a) * v * d).toFixed(1)}px,${(Math.sin(a) * v * d).toFixed(1)}px) rotate(${(spin * tau).toFixed(0)}deg) scale(${(1 - .5 * u).toFixed(2)})` }; }));
+      }
+      end(lastAnim);
+    }
+
+    // Pixel Blast (v407, procedural on the real card): a CRT scan bar sweeps the card (0.08-0.46s) while it
+    // pixelates in six jerky steps (an SVG filter per block size, switched at each step) with an RGB glitch;
+    // at 0.52s it blasts into 63 blocky chunks of its own picture plus loose 8-bit squares that fly in 80ms
+    // steps, shrinking in quarters, under a stepped square shock ring and faint scanlines.
+    // Sound: BURN_SOUNDS['burn-pixel'] (a rising blip at each step, the blast at .52).
+    const PX_STEPS = [[.06, 2], [.14, 3], [.22, 4], [.3, 6], [.38, 8], [.46, 12]], PX_BLAST = .52;
+    function pfxPixelFilters() {
+      if (document.getElementById('pfxPixelDefs')) return;
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.id = 'pfxPixelDefs'; svg.setAttribute('width', '0'); svg.setAttribute('height', '0'); svg.style.cssText = 'position:absolute;width:0;height:0;pointer-events:none';
+      svg.innerHTML = '<defs>' + [2, 3, 4, 6, 8, 12].map(p => `<filter id="pxf${p}" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feFlood x="${p / 2 - .5}" y="${p / 2 - .5}" width="1" height="1" flood-color="#000"/><feComposite width="${p}" height="${p}"/><feTile result="t"/><feComposite in="SourceGraphic" in2="t" operator="in"/><feMorphology operator="dilate" radius="${p / 2}"/></filter>`).join('') + '</defs>';
+      document.body.appendChild(svg);
+    }
+    function bfxPixelBlast(host, x, y, k) {
+      pfxPixelFilters();
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face, vw } = st;
+      const kit = pfxKit(st), { rand, sm, fr, add, clamp } = kit, vh = host.clientHeight || innerHeight, px = H / 100, QS = 12.5, q = t => Math.floor(t * QS) / QS;
+      const level = t => { let p = 0; for (const [s, v] of PX_STEPS) if (t >= s) p = v; return p; };
+      const box = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;border-radius:${radius}`);
+      box.appendChild(face());
+      const lastAnim = anim(box, fr(t => { const p = level(t), g = t > .06 && t < PX_BLAST && Math.floor(t * 40) % 3 === 0; return { opacity: t < PX_BLAST ? 1 : 0, filter: `${p ? `url(#pxf${p})` : 'none'}${g ? ` drop-shadow(${(px * 2).toFixed(1)}px 0 rgba(255,0,60,.9)) drop-shadow(${(-px * 2).toFixed(1)}px 0 rgba(0,220,255,.9))` : ''}`, transform: `translate(${(Math.round(Math.sin(t * 70) * 2) * (p ? 1 : 0)).toFixed(0)}px,0) scale(${(1 + .04 * Math.sin(t * 25) * sm(.06, PX_BLAST, t)).toFixed(3)})` }; }));
+      const bar = add(`left:${cx - W * .7}px;top:${cy - H / 2}px;width:${W * 1.4}px;height:${H * .1}px;z-index:5;mix-blend-mode:screen;background:linear-gradient(to bottom,transparent,rgba(125,211,252,.9),#fff,rgba(125,211,252,.9),transparent)`);
+      anim(bar, fr(t => ({ opacity: t > .08 && t < .46 ? 1 : 0, transform: `translateY(${(H * .95 * sm(.08, .46, t)).toFixed(1)}px)` })));
+      const scan = add(`left:0;top:0;width:${vw}px;height:${vh}px;z-index:9;background:repeating-linear-gradient(0deg,rgba(0,0,0,.3) 0,rgba(0,0,0,.3) 2px,transparent 2px,transparent 4px)`);
+      anim(scan, fr(t => ({ opacity: (.35 * sm(.04, .2, t) * (1 - sm(1.5, 1.9, t))) * (.8 + .2 * Math.sin(t * 60)) })));
+      const flashC = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:6;mix-blend-mode:screen;background:#fff`);
+      anim(flashC, fr(t => ({ opacity: t >= PX_BLAST - .02 && t < PX_BLAST + .1 ? .8 * (1 - sm(PX_BLAST, PX_BLAST + .1, t)) : 0 })));
+      // the blast: the card's own picture as blocky chunks
+      const cols = 7, rows = 9;
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const mx = (c + .5) / cols * W - W / 2, my = (r + .5) / rows * H - H / 2, dl = Math.hypot(mx, my) || 1, sp = H * rand(.8, 2.6), vx = mx / dl * sp + rand(-.3, .3) * H, vy = my / dl * sp - H * rand(.2, 1), s0 = rand(0, 4), fl = rand(1.4, 1.8);
+        const el = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;filter:url(#pxf8);clip-path:inset(${(r / rows * 100).toFixed(2)}% ${(100 - (c + 1) / cols * 100).toFixed(2)}% ${(100 - (r + 1) / rows * 100).toFixed(2)}% ${(c / cols * 100).toFixed(2)}%);transform-origin:${((c + .5) / cols * 100).toFixed(1)}% ${((r + .5) / rows * 100).toFixed(1)}%`);
+        el.appendChild(face());
+        anim(el, fr(t => { if (t < PX_BLAST) return { opacity: 0, transform: 'none' }; const tau = q(t) - PX_BLAST, dy = Math.min(vy * tau + H * 1.7 * tau * tau, H * 1.1), sh = 1 - .25 * Math.floor(sm(fl, fl + .5, t) * 4);
+          return { opacity: sh > 0 ? 1 : 0, transform: `translate(${(vx * tau).toFixed(0)}px,${dy.toFixed(0)}px) rotate(${(Math.floor(tau * 5 + s0) % 4 * 90)}deg) scale(${sh})` }; }));
+      }
+      const PAL = ['#ffffff', '#ef4444', '#38bdf8', '#fde047', '#22c55e', '#a855f7'];
+      for (let i = 0; i < 46; i++) {
+        const a = rand(0, 6.3), v = H * rand(.8, 3), s = Math.max(2, Math.round(H * rand(.03, .07))), vx = Math.cos(a) * v, vy = Math.sin(a) * v - H * .6, fl = rand(1.2, 1.8), col = PAL[i % PAL.length];
+        const el = add(`left:${cx - s / 2}px;top:${cy - s / 2}px;width:${s}px;height:${s}px;z-index:5;background:${col};box-shadow:inset ${-Math.max(1, s * .2)}px ${-Math.max(1, s * .2)}px 0 rgba(0,0,0,.25)`);
+        anim(el, fr(t => { if (t < PX_BLAST) return { opacity: 0, transform: 'none' }; const tau = q(t) - PX_BLAST, sh = 1 - .25 * Math.floor(sm(fl, fl + .5, t) * 4);
+          return { opacity: sh > 0 ? 1 : 0, transform: `translate(${(vx * tau).toFixed(0)}px,${(vy * tau + H * 2.2 * tau * tau).toFixed(0)}px) scale(${sh})` }; }));
+      }
+      const sq = add(`left:${cx - H * .4}px;top:${cy - H * .4}px;width:${H * .8}px;height:${H * .8}px;z-index:6;border:${Math.max(3, px * 3)}px solid #fff;box-sizing:border-box`);
+      anim(sq, fr(t => { const u = clamp((t - PX_BLAST) / .5), s = Math.floor(u * 6) / 6; return { opacity: t < PX_BLAST ? 0 : u < 1 ? 1 - s : 0, transform: `scale(${(.3 + 2.2 * s).toFixed(2)})` }; }));
+      end(lastAnim);
     }
 
     // Origami Fold (v305, owner: procedural, no pictures): the REAL top Pile card (a clone of its own
@@ -921,9 +999,9 @@
       const flight = anim(fly, [
         { transform: 'translate3d(0,0,0) scale(1)', offset: 0 },
         { transform: 'translate3d(0,0,0) scale(1)', offset: .6, easing: 'ease-in-out' },
-        { transform: `translate3d(0,${-H * .1}px,0) rotate(-3deg)`, offset: .68, easing: 'ease-in-out' },
-        { transform: `translate3d(0,${H * .02}px,0) rotate(2deg)`, offset: .75, easing: 'ease-in-out' },
-        { transform: `translate3d(0,${-H * .06}px,0) rotate(-2deg)`, offset: .8, easing: 'cubic-bezier(.5,0,.75,.35)' },
+        { transform: `translate3d(0,${-H * .1}px,0) rotate(-3deg)`, offset: .7, easing: 'ease-in-out' },
+        { transform: `translate3d(0,${H * .02}px,0) rotate(2deg)`, offset: .8, easing: 'ease-in-out' },
+        { transform: `translate3d(0,${-H * .06}px,0) rotate(-2deg)`, offset: .88, easing: 'cubic-bezier(.5,0,.75,.35)' },
         { transform: `translate3d(${vw * .3}px,${-(vh * .52 + H * 2)}px,90px) rotate(-24deg) scale(.7)`, offset: 1 }
       ]);
       end(flight);
@@ -1101,36 +1179,6 @@
       end(last);
     }
 
-    // Pixel Blast: the top card turns into big square pixels, a stepped
-    // 8-bit blast goes off (0.2s) and the pixels scatter in jerky steps.
-    function bfxPixelBlast(host, x, y, k) {
-      const cols = 7, rows = 9, s = 10 * k;
-      const heart = new Set(['3,1', '3,2', '3,4', '3,5', '4,1', '4,2', '4,3', '4,4', '4,5', '5,2', '5,3', '5,4', '6,3']);
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const edge = r === 0 || c === 0 || r === rows - 1 || c === cols - 1;
-          const colour = edge ? '#1e293b' : heart.has(`${r},${c}`) ? '#ef4444' : '#f8fafc';
-          const px0 = (c - (cols - 1) / 2) * s, py0 = (r - (rows - 1) / 2) * s;
-          const el = bfxAdd(host, `<div style="width:100%;height:100%;background:${colour};box-shadow:inset -2px -2px 0 rgba(0,0,0,.25)"></div>`, x + px0, y + py0, s, s);
-          const len = Math.hypot(px0, py0) || 1, v = bfxRand(90, 170) * k;
-          const dx = (px0 / len) * v + bfxRand(-30, 30) * k, dy = (py0 / len) * v - bfxRand(40, 90) * k;
-          bfxAnimate(el, [
-            { transform: 'translate(0,0) scale(1)', opacity: 1, easing: 'steps(2, end)' }, { transform: 'translate(0,0) scale(1.1)', opacity: 1, offset: .16, easing: 'steps(3, end)' },
-            ...[.25, .5, .75, 1].map(t => ({ transform: `translate(${dx * t}px,${dy * t + 260 * k * t * t}px)`, opacity: t < 1 ? 1 : 0, offset: .16 + t * .84, easing: 'steps(3, end)' }))
-          ], { duration: bfxRand(1050, 1300), delay: 0, easing: 'linear' });
-        }
-      }
-      const blast = bfxAdd(host, bfxSvg(20, 20, `<path d="M8 0h4v4h4v4h4v4h-4v4h-4v4H8v-4H4v-4H0V8h4V4h4Z" fill="#f97316"/><path d="M8 4h4v4h4v4h-4v4H8v-4H4V8h4Z" fill="#fde047"/><rect x="8" y="8" width="4" height="4" fill="#fff"/>`), x, y, 130 * k, 130 * k);
-      blast.style.imageRendering = 'pixelated';
-      bfxAnimate(blast, [{ transform: 'scale(.1)', opacity: 0 }, { transform: 'scale(.1)', opacity: 1, offset: .01 }, { transform: 'scale(1.1)', opacity: 1, offset: .5 }, { transform: 'scale(1.5)', opacity: 0 }], { duration: 520, delay: 200, easing: 'steps(5, end)' });
-      const colours = ['#fde047', '#f97316', '#22d3ee', '#f472b6', '#a3e635'];
-      for (let i = 0; i < 16; i++) {
-        const a = (i / 16) * Math.PI * 2, d = bfxRand(70, 120) * k, sz = bfxRand(5, 8) * k;
-        const bit = bfxAdd(host, `<div style="width:100%;height:100%;background:${colours[i % colours.length]}"></div>`, x, y, sz, sz);
-        bfxAnimate(bit, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .02 },
-          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: 0 }], { duration: 640, delay: 220, easing: 'steps(5, end)' });
-      }
-    }
 
     // Lava Melt (v307, owner: procedural, the card melts into a live environment): a pool of lava wells
     // up under the Pile (one SVG, its flow and dark crust veins from an animated feTurbulence +
