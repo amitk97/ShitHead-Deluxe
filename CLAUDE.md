@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v419 — Fortune Joker spins out of a fortune cookie (owner approved the frames)
+
+- `jfxLunar` keeps the v414 plate (福 / Joker card, per-face scaleX flip, hop, landing at .5, lanterns, fireworks, coins, "LUCKY!") but the plate now starts hidden inside a curved fortune cookie (`CY` cy+66k): two clip-path halves with a zigzag crack (`L` / `R` polygons), pop-in, shake, crack line at .1-.17, split at `T0` = .15 of the clock, halves tip and fall away by .55, crumbs burst. The plate rises (`em`, scale .4 to 1, +74k offset) while the spin starts at `S0` = .15. No paper slip (the owner removed it: the Joker card is the fortune). `JOKER_SOUNDS['joker-lunar']` gained pop, rattle, crack and crumb sounds; the chimes moved to .26-.68. Ends inside 1.5s.
+
 ## v418 — Pumpkin Joker improved (pushed straight to main)
 
 - `jfxHalloween` keeps the owner's four painted layers (the owner-effects test counts exactly four `.bfx img`, so extras must NOT use `<img>`/`ofxLayer`) and adds: a flickering candle glow behind the pumpkin that flares as the ghost is released, two fading ghost echoes (`background:url(ownerFxSrc('pumpkin-ghost'))` divs with `screen` blend), a green flash + shock ring + small host shake on the BOO (.48 of the clock), seven bats crossing, and ground mist. Sound adds a creak, candle whoosh, ghost wail sweep and bat squeaks around the owner's boo clip (unchanged timing). Ends inside 1.5s.
