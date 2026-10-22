@@ -3347,6 +3347,36 @@
           { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + 30}px) scale(.4)`, opacity: 0 }], { duration: 1000, delay: launchAt + flight * .78, easing: 'ease-out' });
       }
     }
+    // Card Shower: a fountain of the winner's own cards. Backs wear the winner's
+    // equipped card back, faces wear their frame; every card flips as it
+    // arcs up and falls out of the screen. All of it is over by ~3.5s.
+    function vfxCardShower(layer, cs) {
+      const [W, H] = vfxSize(layer);
+      const cw = Math.max(40, Math.min(62, W * .15)), ch = cw * 1.4, cx = W / 2;
+      const glow = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(253,230,138,.7),rgba(251,191,36,.22) 45%,transparent 70%)"></div>', cx, H, W * 1.2, H * .5);
+      bfxAnimate(glow, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .2 }, { transform: 'scale(1.15)', opacity: 0 }], { duration: 900, easing: 'ease-out' });
+      for (let j = 0; j < 12; j++) {
+        const a = -Math.PI / 2 + bfxRand(-.9, .9), d = bfxRand(.12, .3) * H, star = bfxAdd(layer, bfxStar4(['#fde68a', '#ffffff', '#fbbf24'][j % 3]), cx, H - 10, 14, 14);
+        bfxAnimate(star, [{ transform: 'translate(0,0) scale(0)', opacity: 0 }, { transform: `translate(${Math.cos(a) * d * .6}px,${Math.sin(a) * d * .6}px) scale(1.1)`, opacity: 1, offset: .35 },
+          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + 24}px) scale(0)`, opacity: 0 }], { duration: bfxRand(650, 900), delay: bfxRand(0, 160), easing: 'ease-out' });
+      }
+      const ranks = ['A', 'K', 'Q', 'J', '10'], suits = [['♠', '#0f172a'], ['♥', '#dc2626'], ['♦', '#dc2626'], ['♣', '#0f172a']];
+      const N = 30, S = 22;
+      for (let i = 0; i < N; i++) {
+        const [suit, ink] = suits[i % 4], rank = ranks[i % ranks.length];
+        const face = `<div class="vcp-face" style="${cs.frameStyle}"><b style="color:${ink}">${rank}<br>${suit}</b></div>`;
+        const html = `<div class="victory-card-particle">${face}<div class="vcp-back">${snapshotCardBackHtml(cs, 'vcp-back-face')}</div></div>`;
+        const el = bfxAdd(layer, html, 0, 0, cw, ch), inner = el.firstElementChild;
+        el.style.willChange = 'transform';
+        const ta = bfxRand(1.0, 1.35), A = bfxRand(.45, .85) * H, g = 2 * A / (ta * ta), vy = g * ta;
+        const tEnd = ta + Math.sqrt(2 * (A + ch + 40) / g), T = tEnd * 1000;
+        const x0 = cx + bfxRand(-.1, .1) * W, drift = bfxRand(-.5, .5) * W, sway = bfxRand(8, 26) * (i % 2 ? 1 : -1), r0 = bfxRand(-40, 40), wz = bfxRand(-140, 140);
+        const flips = 2 + Math.floor(bfxRand(0, 4)), start = i % 2 ? 180 : 0, delay = bfxRand(0, 600) + (i < 6 ? 0 : 120);
+        const frames = Array.from({ length: S + 1 }, (_, k) => k / S);
+        bfxAnimate(el, frames.map(f => { const t = f * tEnd; return { offset: f, transform: `translate(${(x0 + drift * f + Math.sin(f * 6 + i) * sway).toFixed(1)}px,${(H + 20 - vy * t + .5 * g * t * t).toFixed(1)}px) rotate(${(r0 + wz * t).toFixed(1)}deg)` }; }), { duration: T, delay, easing: 'linear' });
+        bfxAnimate(inner, frames.map(f => ({ offset: f, transform: `perspective(420px) rotateY(${(start + f * flips * 180).toFixed(1)}deg)` })), { duration: T, delay, easing: 'linear' });
+      }
+    }
     // Origami Flock: a flock of paper swans in soft colours flaps across the
     // screen along wandering paths, with paper scraps drifting down.
     const VFX_PAPERS = [['#f8fafc', '#e2e8f0', '#cbd5e1'], ['#fce7f3', '#fbcfe8', '#f9a8d4'], ['#e0f2fe', '#bae6fd', '#7dd3fc'],
@@ -3356,18 +3386,18 @@
       for (let i = 0; i < 11; i++) {
         const [a, b, c] = VFX_PAPERS[i % VFX_PAPERS.length];
         const w = bfxRand(64, 112), h = w * .8, ltr = i % 2 === 0;
-        const y = bfxRand(.12, .78) * H, amp = bfxRand(30, 90), phase = bfxRand(0, Math.PI * 2), turns = bfxRand(1.2, 2.2);
+        const y = bfxRand(.12, .78) * H, amp = bfxRand(30, 90), phase = bfxRand(0, Math.PI * 2), turns = bfxRand(1, 1.8);
         const startX = ltr ? -w : W + w, endX = ltr ? W + w : -w;
         const swan = bfxAdd(layer, `<div style="width:100%;height:100%;${ltr ? '' : 'transform:scaleX(-1)'}">${bfxSwanSvg(a, b, c)}</div>`, 0, y, w, h);
         bfxAnimate(swan, [0, .125, .25, .375, .5, .625, .75, .875, 1].map(t => ({
           transform: `translate(${startX + (endX - startX) * t}px,${Math.sin(phase + t * Math.PI * 2 * turns) * amp}px) rotate(${Math.cos(phase + t * Math.PI * 2 * turns) * (ltr ? -12 : 12)}deg)`, opacity: 1
-        })), { duration: bfxRand(3200, 4300), delay: bfxRand(0, 1100) + (i < 3 ? 0 : 200), easing: 'linear' });
+        })), { duration: bfxRand(2500, 3100), delay: i < 4 ? bfxRand(0, 200) : bfxRand(200, 800), easing: 'linear' });
       }
       for (let i = 0; i < 26; i++) {
         const s = bfxRand(7, 12), [a] = VFX_PAPERS[i % VFX_PAPERS.length];
         const bit = bfxAdd(layer, bfxSvg(10, 10, `<path d="M0 0 10 3 3 10Z" fill="${a}" stroke="rgba(71,85,105,.35)" stroke-width=".6"/>`), bfxRand(0, W), -20, s, s);
         bfxAnimate(bit, [0, .33, .66, 1].map(t => ({ transform: `translate(${Math.sin(t * 6 + i) * 40}px,${t * (H + 40)}px) rotate(${t * bfxRand(300, 700)}deg)`, opacity: t < .9 ? 1 : 0 })),
-          { duration: bfxRand(3000, 4200), delay: bfxRand(0, 1600), easing: 'linear' });
+          { duration: bfxRand(2400, 3100), delay: bfxRand(0, 800), easing: 'linear' });
       }
     }
     // ---- § Owner effects (v257): the owner's own art, cut into layers ----
@@ -3524,18 +3554,18 @@
         bfxAnimate(bit, [{ transform: 'translate(0,0)', opacity: 0 }, { opacity: 1, offset: .15 }, { transform: `translate(${bfxRand(-20, 20)}px,${bfxRand(.25, .45) * H}px)`, opacity: 0 }], { duration: bfxRand(1400, 1900), delay: bfxRand(1400, 1900), easing: 'ease-in' });
       }
     }
-    function playShapeVictoryEffect(effect) {
+    function playShapeVictoryEffect(effect, cardStyle = null) {
       const layer = document.getElementById('victoryFxLayer');
       if (!layer) return false;
       const run = { 'victory-sparklers': vfxSparklers, 'victory-stars': vfxFiveStars, 'victory-karate': vfxKarate,
-        'victory-trophy': vfxTrophy, 'victory-rocket': vfxRocket, 'victory-origami': vfxOrigamiFlock, 'victory-lion': vfxLion, 'victory-fireworks': vfxFireworks }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
+        'victory-cards': vfxCardShower, 'victory-trophy': vfxTrophy, 'victory-rocket': vfxRocket, 'victory-origami': vfxOrigamiFlock, 'victory-lion': vfxLion, 'victory-fireworks': vfxFireworks }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
       if (!run) return false;
       const host = document.createElement('div');
       host.style.cssText = 'position:absolute;inset:0;pointer-events:none';
       layer.replaceChildren(host);
       preloadOwnerFx([effect]);
       const images = (OWNER_FX_FILES[effect] || []).map(name => ownerFxImages.get(name)).filter(Boolean);
-      const start = () => { if (!host.isConnected) return; run(host); setTimeout(() => host.remove(), ['victory-lion', 'victory-fireworks'].includes(effect) ? OWNER_VICTORY_MS : 4200); };
+      const start = () => { if (!host.isConnected) return; run(host, cardStyle || snapshotCardStyle()); setTimeout(() => host.remove(), ['victory-lion', 'victory-fireworks'].includes(effect) ? OWNER_VICTORY_MS : 4200); };
       const clip = effect === 'victory-lion' ? 'lion-roar' : effect === 'victory-fireworks' ? 'fireworks' : null;
       if (!devTestSuiteRunning && (images.some(img => !img.complete || !img.naturalWidth) || (clip && audio.enabled && !audio.clipBuffers?.has(clip)))) {
         Promise.all([...images.map(img => img.decode?.().catch(() => {})), clip && audio.enabled ? audio.loadEffectClip(clip) : null]).then(start);
@@ -3548,30 +3578,7 @@
       const old = document.getElementById('victoryFxLayer');
       old?.getAnimations({ subtree: true }).forEach(a => a.cancel());
       old?.replaceChildren();
-      if (playShapeVictoryEffect(effect)) return;
-      if (effect === 'victory-cards') {
-        // Cards wear the winner's card back and frame, frozen at the start.
-        const cs = cardStyle || snapshotCardStyle();
-        const ranks = ['A','K','Q','J','10'];
-        for (let i = 0; i < 26; i++) {
-          const card = document.createElement('span');
-          if (i % 2) {
-            card.className = 'victory-card-particle vcp-back';
-            card.innerHTML = snapshotCardBackHtml(cs, 'vcp-back-face');
-          } else {
-            card.className = 'victory-card-particle';
-            card.textContent = ranks[i % ranks.length];
-            if (cs.frameStyle) card.style.cssText = cs.frameStyle;
-          }
-          card.style.left = `${Math.random() * 96}%`;
-          card.style.setProperty('--drift', `${Math.round((Math.random() - .5) * 180)}px`);
-          card.style.setProperty('--spin', `${Math.round((Math.random() - .5) * 720)}deg`);
-          card.style.animationDelay = `${Math.random() * .65}s`;
-          document.body.appendChild(card);
-          setTimeout(() => card.remove(), 3100);
-        }
-        return;
-      }
+      if (playShapeVictoryEffect(effect, cardStyle)) return;
       if (typeof confetti !== 'function') return;
       if (effect === 'victory-confetti') {
         confetti({ particleCount:260, spread:150, startVelocity:48, origin:{y:.58}, colors:['#f59e0b','#ec4899','#22d3ee','#10b981','#ffffff'] });

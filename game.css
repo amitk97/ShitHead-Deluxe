@@ -1842,10 +1842,11 @@
 
     .cosmetic-option-card { min-height:76px; }
     .cosmetic-option-card[aria-pressed="true"] { border-color:#34d399; background:rgba(6,78,59,.24); }
-    .victory-card-particle { position:fixed; top:-48px; z-index:110; width:28px; height:40px; border-radius:5px; background:#fff; border:2px solid #ef4444; color:#111827; display:flex; align-items:center; justify-content:center; font-weight:900; pointer-events:none; animation:cosmetic-card-shower 2.2s ease-in forwards; }
-    .victory-card-particle.vcp-back { background:transparent; border:0; }
-    .vcp-back-face { position:absolute; inset:0; border-radius:5px; border:1px solid rgba(148,163,184,.7); }
-    @keyframes cosmetic-card-shower { to { transform:translate3d(var(--drift),110vh,0) rotate(var(--spin)); opacity:.15; } }
+    .victory-card-particle { position:absolute; inset:0; transform-style:preserve-3d; will-change:transform; pointer-events:none; }
+    .victory-card-particle .vcp-face, .victory-card-particle .vcp-back { position:absolute; inset:0; border-radius:6px; backface-visibility:hidden; -webkit-backface-visibility:hidden; box-shadow:0 3px 8px rgba(0,0,0,.45); }
+    .victory-card-particle .vcp-face { background:#f8fafc; border:1px solid #cbd5e1; display:flex; align-items:flex-start; justify-content:flex-start; padding:3px 4px; font-size:13px; line-height:1.05; text-align:center; }
+    .victory-card-particle .vcp-back { transform:rotateY(180deg); }
+    .vcp-back-face { position:absolute; inset:0; border-radius:6px; border:1px solid rgba(148,163,184,.7); }
 
     #localTableSlots .card-face-up { z-index:2; background-color:var(--card-bg) !important; isolation:isolate; }
     body.high-contrast #localTableSlots .card-face-up { background-color:#05070d !important; }
