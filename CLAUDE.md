@@ -8,13 +8,19 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## Release checks for effect changes (22 Oct, after v414 shipped with a failing test)
+
+- Before ANY push, read the WHOLE output of the dev-test groups `Joker`, `Owner effects`, `sound`, `premium` (and `burn` for burns), not the last line: a `tail -1` once hid "No animation runs past the 1.5s window" and v414 went out failing (fixed in v415). Only "v305: Origami Fold…" and "Seasonal mail…" are known failures (both fail on `main`). Joker effects must also end inside `JOKER_FX_MS` (1.5s): count delay + duration of every particle.
+- Never edit `sound.js` with a regex that runs to the next key (it deleted `JOKER_SOUNDS` once); splice with a bracket-depth walker and diff against `main` before committing.
+- WAAPI traps seen in Joker effects: offsets must never decrease (a bad list throws and the effect silently stays static), and stepped easing belongs inside each keyframe, not in the options.
+
 ## v414 — Jack-in-the-Box, Lunar, Valentine, Ramadan, Vampire Joker effects rebuilt (pushed straight to main)
 
 - `jfxJackbox` (crank, shaking box, damped-spring curve drives spring scaleY and the head, lid thrown at .4s, confetti), `jfxLunar` (gold plate flips 3 half-turns via per-face scaleX sampled from cos, lands on the Joker at .5, lanterns, fireworks, coin rain), `jfxValentine` (beating heart as two clip-path halves, arrow hits at .3, split at .34, Joker pops behind), `jfxRamadan` (skyline, moon and star, turning eight-point star, two lanterns lowering, "BLESSED") and `jfxVampire` (two cape halves meet then sweep open with scaleX, soft moon, fog; sound unchanged) in `app.js`; new `JOKER_SOUNDS` for the first four. All 20 Joker effects have now been through the owner's review list. Check every WAAPI offset list is non-decreasing.
 
 ## v413 — Magic, Christmas, Diwali Joker effects rebuilt (pushed straight to main per the standing rule)
 
-- `jfxMagic` (spotlight, hat in two halves so the Joker card rises between them, wand taps with sparks at .2/.31/.42s, poof at .5s, fan of cards), `jfxChristmas` (snow globe: pop-in, shake with snow lifted inside a circular clip, shatter at .74s, shards, snow rush, "HO HO HO!") and `jfxDiwali` (rangoli, twelve diyas lighting in turn each with a glow, four spark bursts, marigold petals, "LIGHT UP!") in `app.js`, new `JOKER_SOUNDS` recipes. Gotcha: WAAPI keyframe offsets must never decrease; a bad list throws and the effect silently stays as a static element (the caught error only logs "Joker effect skipped safely"). Review list now done except Christmas/Grin similarity is gone; remaining minor: Lunar, Ramadan, Vampire cape opening, Jack-in-the-box, Valentine.
+- `jfxMagic` (spotlight, hat in two halves so the Joker card rises between them, wand taps with sparks at .2/.31/.42s, poof at .5s, fan of cards), `jfxChristmas` (snow globe: pop-in, shake with snow lifted inside a circular clip, shatter at .74s, shards, snow rush, "HO HO HO!") and `jfxDiwali` (rangoli, twelve diyas lighting in turn each with a glow, four spark bursts, marigold petals, "LIGHT UP!") in `app.js`, new `JOKER_SOUNDS` recipes. Gotcha: WAAPI keyframe offsets must never decrease; a bad list throws and the effect silently stays as a static element (the caught error only logs "Joker effect skipped safely"). The review list was finished in v414.
 
 ## Standing rule (owner, 22 Oct): Joker effect fixes go straight to main
 
@@ -22,11 +28,11 @@
 
 ## v412 — New Year, Summer, Puppet Joker effects rebuilt
 
-- `jfxNewYear` (clock with ticking minute hand, 3-2-1, burst at .52s, cork, champagne, confetti, three firework bursts, "MIDNIGHT!"), `jfxSummer` (sun, two sliding waves, big card surfer flipping at .46-.74 and splashing at ~1.08s, spray) and `jfxPuppet` (curtains, spotlight, five jointed parts sampled from a sine dance, static vertical strings drawn behind them; strings that rotate with the limbs fan out and look wrong) in `app.js`, with new `JOKER_SOUNDS` recipes on the same beats. Still to rebuild from the review list: Magic, Diwali, Christmas.
+- `jfxNewYear` (clock with ticking minute hand, 3-2-1, burst at .52s, cork, champagne, confetti, three firework bursts, "MIDNIGHT!"), `jfxSummer` (sun, two sliding waves, big card surfer flipping at .46-.74 and splashing at ~1.08s, spray) and `jfxPuppet` (curtains, spotlight, five jointed parts sampled from a sine dance, static vertical strings drawn behind them; strings that rotate with the limbs fan out and look wrong) in `app.js`, with new `JOKER_SOUNDS` recipes on the same beats. Magic, Diwali and Christmas followed in v413.
 
 ## v411 — Default, Glitch and Card Storm Joker effects rebuilt (owner approved the frames)
 
-- `jfxDefault` (rotating gold rays, rings, shine sweep, confetti, card 124x177), `jfxGlitch` (five clip-path slices of the Joker card jump on `steps(1, end)` keyframes, red/cyan outline ghosts, static bursts, lock-in flash at ~.78s) and `jfxStorm` (30 cards on three spiral lanes, wind swirl, implosion at .44 of 1.5s, shock ring, 10 cards thrown out) in `app.js`; new `JOKER_SOUNDS` recipes on the same beats. Gotcha: WAAPI `easing` in the options applies to the whole iteration, so a stepped glitch needs `easing: 'steps(1, end)'` inside each keyframe. Still to rebuild from the owner's review list: New Year, Summer, Puppet, Magic, Diwali, Christmas.
+- `jfxDefault` (rotating gold rays, rings, shine sweep, confetti, card 124x177), `jfxGlitch` (five clip-path slices of the Joker card jump on `steps(1, end)` keyframes, red/cyan outline ghosts, static bursts, lock-in flash at ~.78s) and `jfxStorm` (30 cards on three spiral lanes, wind swirl, implosion at .44 of 1.5s, shock ring, 10 cards thrown out) in `app.js`; new `JOKER_SOUNDS` recipes on the same beats. Gotcha: WAAPI `easing` in the options applies to the whole iteration, so a stepped glitch needs `easing: 'steps(1, end)'` inside each keyframe. The rest of the review list followed in v412-v414.
 
 ## v410 — Valentine, Summer, Christmas, Lunar New Year, Ramadan burns rebuilt (owner approved the frames)
 
