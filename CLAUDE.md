@@ -8,6 +8,14 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## Standing rule (owner, 22 Oct): Joker effect fixes go straight to main
+
+- When the owner asks for Joker effects to be fixed or rebuilt ("Skill Use do the next 3"), build them, check the paused frames, send the frames as a courtesy, and PUSH to `main` in the same turn (bump BUILD, What's New, CLAUDE.md note, stamp, tests). Do not wait for a "go". (Burns and Victory effects still wait for "go".)
+
+## v412 — New Year, Summer, Puppet Joker effects rebuilt
+
+- `jfxNewYear` (clock with ticking minute hand, 3-2-1, burst at .52s, cork, champagne, confetti, three firework bursts, "MIDNIGHT!"), `jfxSummer` (sun, two sliding waves, big card surfer flipping at .46-.74 and splashing at ~1.08s, spray) and `jfxPuppet` (curtains, spotlight, five jointed parts sampled from a sine dance, static vertical strings drawn behind them; strings that rotate with the limbs fan out and look wrong) in `app.js`, with new `JOKER_SOUNDS` recipes on the same beats. Still to rebuild from the review list: Magic, Diwali, Christmas.
+
 ## v411 — Default, Glitch and Card Storm Joker effects rebuilt (owner approved the frames)
 
 - `jfxDefault` (rotating gold rays, rings, shine sweep, confetti, card 124x177), `jfxGlitch` (five clip-path slices of the Joker card jump on `steps(1, end)` keyframes, red/cyan outline ghosts, static bursts, lock-in flash at ~.78s) and `jfxStorm` (30 cards on three spiral lanes, wind swirl, implosion at .44 of 1.5s, shock ring, 10 cards thrown out) in `app.js`; new `JOKER_SOUNDS` recipes on the same beats. Gotcha: WAAPI `easing` in the options applies to the whole iteration, so a stepped glitch needs `easing: 'steps(1, end)'` inside each keyframe. Still to rebuild from the owner's review list: New Year, Summer, Puppet, Magic, Diwali, Christmas.

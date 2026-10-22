@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v412: [['sparkle', 'The New Year, Summer and Puppet Joker effects are rebuilt: a midnight clock and champagne pop, a Joker surfing and flipping off a wave, and a jointed puppet dancing on stage between curtains.', WN_KEY]],
       v411: [['sparkle', 'The default Joker effect, Glitch and Card Storm are rebuilt: a flipping card in a fan of gold light, a card torn into jumping slices, and 30 cards spiralling into one Joker.', WN_KEY]],
       v410: [['fire', 'The Valentine, Summer, Christmas, Lunar New Year and Ramadan burns are rebuilt: an arrow and heart burst, a sun pop with a beach ball, ribbons and a bow, a firecracker string, and lanterns with a crescent and star.', WN_KEY]],
       v409: [['fire', 'The Diwali, Easter and New Year burns are rebuilt: a diya-lit firework burst, an egg that cracks open to a chick, and a countdown to a champagne pop. The card now burns away in each.', WN_KEY]],
