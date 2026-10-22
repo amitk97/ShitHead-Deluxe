@@ -1,3 +1,7 @@
+## MASTER RULE (owner, 22 Oct): skills for every effect
+
+- Whenever an SVG, burn, Joker, Victory or any other animated effect is made or edited (art, motion and its sound), invoke these skills with the Skill tool FIRST and follow them: **`impeccable`, `svg-animations`, `userinterface-wiki`, `game-audio`** (the sound side; `userinterface-wiki` also carries the Web Audio synthesis and accessibility rules). The owner's phrase **"Skill Use"** at the start of a request means exactly this, for any task: load all four before doing the work, and say which were loaded. The game's own rules still win where they conflict (paused frames shown and "go" awaited before an effect goes live, a synced `BURN_SOUNDS`/`JOKER_SOUNDS` sound in the same change, the burner's card back, effects over in about 2s, Reduce Motion, audio stays in `sound.js`).
+
 ## Project skills added (22 Oct)
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
