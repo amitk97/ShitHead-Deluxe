@@ -868,6 +868,175 @@
         }
       };
     }
+    // ---- Seasonal burns rebuilt on procBurnStage (v409): Diwali, Easter, New Year. The real top card is part of
+    // each story and is consumed, everything rides ONE 2s clock (paused frames are exact), and effects stay low so
+    // they never cover the opponent's seat. Sounds: BURN_SOUNDS['burn-diwali' | 'burn-easter' | 'burn-newyear'].
+    // A body under gravity from t0 (optional bounce on a floor), keyframes sampled on the shared clock.
+    function pfxFly(st, kit, o) {
+      const { fr, sm, D } = kit, dt = D / PFX_N, w = o.w, h = o.h || o.w;
+      const el = kit.add(`left:${o.x - w / 2}px;top:${o.y - h / 2}px;width:${w}px;height:${h}px;z-index:${o.z || 5};${o.css || ''}`, o.html || '');
+      let px = 0, py = 0, vx = o.vx, vy = o.vy, rz = o.rot || 0;
+      st.anim(el, fr(t => {
+        if (t < o.t0) return { opacity: 0, transform: 'none' };
+        if (t - dt >= o.t0 - 1e-6) { vy += o.g * dt; px += vx * dt; py += vy * dt; rz += (o.spin || 0) * dt; if (o.floor != null && py > o.floor && vy > 0) { py = o.floor; vy = -vy * (o.bounce || .3); vx *= .7; } }
+        const f = sm(o.fade0, o.fade0 + .25, t), flip = o.flutter ? Math.cos((t - o.t0) * o.flutter) : 1;
+        return { opacity: (1 - f) * Math.min(1, (t - o.t0) * 20), transform: `translate(${px.toFixed(1)}px,${py.toFixed(1)}px) rotate(${(rz * 57.3).toFixed(1)}deg) scale(${((o.s || 1) * (1 - .3 * f)).toFixed(3)},${((o.s || 1) * (1 - .3 * f) * (o.flutter ? Math.max(.15, Math.abs(flip)) : 1)).toFixed(3)})` };
+      }));
+      return el;
+    }
+    // A radial burst of glowing streaks from (x, y) at t0: o = {n, len, dist, life, cols, w, z}.
+    function pfxBurst(st, kit, o) {
+      const { rand, out, sm, fr, add, clamp } = kit, w = o.w || 3;
+      const flash = add(`left:${o.x - o.dist * .45}px;top:${o.y - o.dist * .45}px;width:${o.dist * .9}px;height:${o.dist * .9}px;border-radius:50%;z-index:${o.z || 5};background:radial-gradient(closest-side,#fff,${o.cols[0]}99 40%,transparent)`);
+      st.anim(flash, fr(t => { const p = clamp((t - o.t0) / .22); return { opacity: p > 0 && p < 1 ? 1 - p : 0, transform: `scale(${(.2 + .9 * p).toFixed(3)})` }; }));
+      for (let i = 0; i < o.n; i++) {
+        const a = i / o.n * Math.PI * 2 + rand(-.12, .12), col = o.cols[i % o.cols.length], L = o.len * rand(.7, 1.3), D = o.dist * rand(.7, 1.1);
+        const el = add(`left:${o.x}px;top:${o.y}px;width:${L}px;height:${w}px;border-radius:9px;z-index:${o.z || 5};transform-origin:0 50%;background:linear-gradient(90deg,transparent,${col});box-shadow:0 0 ${w * 2}px ${col}`);
+        st.anim(el, fr(t => { const p = clamp((t - o.t0) / o.life); if (p <= 0 || p >= 1) return { opacity: 0, transform: `rotate(${a.toFixed(3)}rad)` }; return { opacity: 1 - sm(.5, 1, p), transform: `rotate(${a.toFixed(3)}rad) translateX(${(out(p) * D).toFixed(1)}px) scaleX(${(1 - .55 * p).toFixed(3)})` }; }));
+      }
+    }
+
+    // Diwali, the festival of lights: a ring of clay diyas lights up round the card, which glows gold, a rocket whistles
+    // up and the card bursts into golden shards inside three firework bursts, a rangoli ring spreads and marigold
+    // petals drift down. Booms at .62 / .80 / .96s.
+    const DIW_BOOMS = [.62, .8, .96];
+    function bfxDiwali(host, x, y, k) {
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face } = st;
+      const kit = pfxKit(st), { rand, out, sm, fr, add, clamp } = kit, PAL = ['#f97316', '#facc15', '#ec4899', '#22c55e', '#a855f7', '#fb7185'];
+      const glow = add(`left:${cx - H * 1.2}px;top:${cy - H * 1.2}px;width:${H * 2.4}px;height:${H * 2.4}px;border-radius:50%;z-index:0;background:radial-gradient(closest-side,rgba(251,146,60,.6),rgba(236,72,153,.18) 55%,transparent)`);
+      const lastAnim = anim(glow, fr(t => ({ opacity: .9 * sm(0, .5, t) * (1 - sm(1.35, 1.95, t)), transform: `scale(${(.7 + .5 * sm(0, .62, t) + .2 * sm(.62, 1.2, t)).toFixed(3)})` })));
+      const box = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;border-radius:${radius}`), warm = document.createElement('div');
+      warm.style.cssText = `position:absolute;inset:0;border-radius:${radius};background:linear-gradient(160deg,rgba(253,224,71,.5),rgba(249,115,22,.35))`;
+      box.append(face(), warm);
+      anim(warm, fr(t => ({ opacity: sm(.05, .6, t) })));
+      anim(box, fr(t => { const g = sm(0, DIW_BOOMS[0], t); return { opacity: t < DIW_BOOMS[0] ? 1 : 0, transform: `scale(${(1 + .09 * g).toFixed(3)})`, filter: `brightness(${(1 + .35 * g).toFixed(2)}) drop-shadow(0 0 ${(H * .1 * g).toFixed(1)}px rgba(251,191,36,.95))` }; }));
+      // The diyas: a clay bowl and a flickering flame, lit one after another round the card.
+      for (let i = 0; i < 12; i++) {
+        const a = Math.PI * .5 + i / 12 * Math.PI * 2, dx = Math.cos(a) * W * .78, dy = Math.sin(a) * H * .6, s = H * .17, s0 = .04 + i * .035, ph = rand(0, 6.3);
+        const wrap = add(`left:${cx + dx - s / 2}px;top:${cy + dy - s / 2}px;width:${s}px;height:${s}px;z-index:5`);
+        wrap.innerHTML = `<div style="position:absolute;left:12%;right:12%;bottom:6%;height:38%;border-radius:0 0 50% 50%/0 0 100% 100%;background:linear-gradient(#c2410c,#7c2d12);box-shadow:inset 0 2px 0 #fb923c"></div><div class="dyf" style="position:absolute;left:36%;width:28%;bottom:34%;height:62%;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;transform-origin:50% 100%;background:radial-gradient(circle at 50% 70%,#fff,#fde047 45%,#f97316 80%);box-shadow:0 0 ${s * .5}px ${s * .25}px rgba(251,191,36,.8)"></div>`;
+        anim(wrap, fr(t => ({ opacity: clamp((t - s0) / .06) * (1 - sm(.9, 1.15, t)), transform: `scale(${(.3 + .7 * out(clamp((t - s0) / .12))).toFixed(3)})` })));
+        anim(wrap.querySelector('.dyf'), fr(t => ({ transform: `scaleY(${(1 + .22 * Math.sin(t * 28 + ph) + .1 * Math.sin(t * 17 + ph)).toFixed(3)}) skewX(${(Math.sin(t * 13 + ph) * 7).toFixed(1)}deg)` })));
+      }
+      // A rocket rises into the first burst.
+      const rk = add(`left:${cx - 2}px;top:${cy}px;width:4px;height:${H * .22}px;border-radius:3px;z-index:5;background:linear-gradient(to top,transparent,#fde68a 60%,#fff)`);
+      anim(rk, fr(t => { const p = clamp((t - .4) / .22); return { opacity: p > 0 && p < 1 ? 1 : 0, transform: `translateY(${(-out(p) * H * .45).toFixed(1)}px)` }; }));
+      // Fireworks, rangoli, petals; the card bursts into golden shards at the first boom.
+      DIW_BOOMS.forEach((t0, i) => pfxBurst(st, kit, { x: cx + (i - 1) * W * .5 + rand(-.1, .1) * W, y: cy + (i === 1 ? -H * .32 : -H * .12) + rand(-.06, .06) * H, t0, n: i ? 20 : 26, len: H * .16, dist: H * (i ? .55 : .8), life: .7, cols: PAL.slice(i, i + 4).concat(['#fde68a']) }));
+      pfxShatter(st, kit, { t0: DIW_BOOMS[0], ip: [W * .5, H * .5], cols: 4, rows: 6, speed: .85, edge: '#fde68a', tint: () => 'linear-gradient(135deg,rgba(251,191,36,.6),rgba(249,115,22,.45))' });
+      const rg = add(`left:${cx - H * .8}px;top:${cy - H * .8}px;width:${H * 1.6}px;height:${H * 1.6}px;z-index:1`);
+      rg.innerHTML = `<svg viewBox="0 0 100 100" width="100%" height="100%"><circle cx="50" cy="50" r="46" fill="none" stroke="#facc15" stroke-width="2.4" stroke-dasharray="2 4.4" stroke-linecap="round"/><circle cx="50" cy="50" r="38" fill="none" stroke="#ec4899" stroke-width="1.6" stroke-dasharray="7 4"/><circle cx="50" cy="50" r="30" fill="none" stroke="#22c55e" stroke-width="1.4" stroke-dasharray="1 4" stroke-linecap="round"/></svg>`;
+      anim(rg, fr(t => { const p = clamp((t - DIW_BOOMS[0]) / .9); return { opacity: p > 0 && p < 1 ? (1 - sm(.6, 1, p)) * .9 : 0, transform: `scale(${(.3 + .8 * out(p)).toFixed(3)}) rotate(${(p * 70).toFixed(1)}deg)` }; }));
+      for (let i = 0; i < 28; i++) {
+        const sx = cx + rand(-.7, .7) * W, c = ['#f97316', '#fb923c', '#facc15'][i % 3];
+        pfxFly(st, kit, { x: sx, y: cy - H * rand(.1, .5), w: H * .07, h: H * .11, t0: .66 + rand(0, .45), vx: rand(-.3, .3) * H, vy: rand(-.25, .1) * H, g: H * .85, spin: rand(-4, 4), flutter: rand(6, 11), floor: H * .62, bounce: .05, fade0: 1.6 + rand(0, .25),
+          css: `border-radius:50% 50% 50% 50%/70% 70% 30% 30%;background:radial-gradient(circle at 40% 30%,#fff2,${c} 40%,${c})` });
+      }
+      end(lastAnim);
+    }
+
+    // Easter: the card swells into a pastel-banded egg, wobbles and cracks, the shell splits open (top half flies
+    // off) and a chick hops out among bouncing mini eggs and blossoms. Knocks .44-.59s, split .62s.
+    const EAS_SPLIT = .62, EAS_PASTELS = [['#f9a8d4', '#a5b4fc', '#fde68a'], ['#a7f3d0', '#f9a8d4', '#bae6fd'], ['#c4b5fd', '#fde68a', '#fbcfe8']];
+    function bfxEaster(host, x, y, k) {
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face } = st;
+      const kit = pfxKit(st), { rand, out, sm, fr, add, clamp } = kit, [pa, pb, pc] = EAS_PASTELS[Math.floor(Math.random() * EAS_PASTELS.length)];
+      const EGG = '50% 50% 50% 50% / 62% 62% 38% 38%', eW = W * .88, eH = H * .98, zz = [[0, 50], [12, 41], [25, 57], [37, 42], [50, 58], [62, 42], [75, 57], [88, 41], [100, 50]];
+      const glow = add(`left:${cx - H}px;top:${cy - H}px;width:${H * 2}px;height:${H * 2}px;border-radius:50%;z-index:0;background:radial-gradient(closest-side,rgba(253,230,138,.5),rgba(249,168,212,.2) 55%,transparent)`);
+      const lastAnim = anim(glow, fr(t => ({ opacity: sm(0, .6, t) * (1 - sm(1.4, 1.95, t)) })));
+      const poly = pts => `polygon(${pts.map(p => `${p[0]}% ${p[1]}%`).join(',')})`;
+      const topPts = [[0, 0], [100, 0], ...zz.slice().reverse()], botPts = [...zz, [100, 100], [0, 100]];
+      const stripes = `linear-gradient(to bottom,transparent 0 22%,${pa} 22% 31%,transparent 31% 44%,${pb} 44% 52%,transparent 52% 64%,${pc} 64% 74%,transparent 74%),radial-gradient(circle,#fff9 0 14%,transparent 15%) 0 0/22% 14%`;
+      const half = (pts, z) => {
+        const wrap = add(`left:${cx - eW / 2}px;top:${cy - eH / 2}px;width:${eW}px;height:${eH}px;z-index:${z};overflow:hidden;border-radius:${radius}`), inner = document.createElement('div');
+        inner.style.cssText = `position:absolute;inset:0;clip-path:${poly(pts)}`;
+        const f = face(); f.style.transformOrigin = '0 0'; f.style.transform = `scale(${eW / W},${eH / H})`;
+        const paint = document.createElement('div'); paint.style.cssText = `position:absolute;inset:0;background:${stripes};box-shadow:inset ${-eW * .08}px ${-eH * .06}px ${eW * .16}px rgba(0,0,0,.22),inset ${eW * .06}px ${eH * .05}px ${eW * .12}px rgba(255,255,255,.5)`;
+        inner.append(f, paint); wrap.appendChild(inner);
+        anim(paint, fr(t => ({ opacity: .96 * sm(.05, .4, t) })));
+        return wrap;
+      };
+      const top = half(topPts, 4), bot = half(botPts, 3);
+      const shape = t => EGG, wob = t => { const g = sm(.38, EAS_SPLIT, t) * (t < EAS_SPLIT ? 1 : 0); return Math.sin(t * 60) * 9 * g; };
+      [top, bot].forEach((el, i) => anim(el, fr(t => {
+        const sw = sm(0, .4, t), rot = wob(t), j = t < EAS_SPLIT ? 0 : sm(EAS_SPLIT, EAS_SPLIT + .5, t), br = `${(8 * (1 - sw)).toFixed(1)}px`;
+        const base = `scale(${(1 + .04 * sw).toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
+        if (i === 0) return { borderRadius: sw > .02 ? EGG : radius, opacity: 1 - sm(.8, 1.1, t), transform: t < EAS_SPLIT ? base : `translate(${(-eW * .5 * out(j)).toFixed(1)}px,${(-H * .62 * out(j) + H * 1.1 * j * j * .6).toFixed(1)}px) rotate(${(-70 * out(j)).toFixed(1)}deg)` };
+        return { borderRadius: sw > .02 ? EGG : radius, opacity: 1 - sm(1.45, 1.85, t), transform: t < EAS_SPLIT ? base : `translateY(${(H * .06 * out(sm(EAS_SPLIT, 1.5, t))).toFixed(1)}px) rotate(${(Math.sin((t - EAS_SPLIT) * 30) * 3 * (1 - clamp((t - EAS_SPLIT) / .4))).toFixed(2)}deg)` };
+      })));
+      // The crack: a zig-zag line that draws across the egg before it splits.
+      const ck = add(`left:${cx - eW / 2}px;top:${cy - eH / 2}px;width:${eW}px;height:${eH}px;z-index:5`);
+      ck.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%"><polyline points="${zz.map(p => p.join(',')).join(' ')}" pathLength="1" stroke-dasharray="1" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+      const cp = ck.querySelector('polyline');
+      anim(cp, fr(t => ({ strokeDashoffset: 1 - sm(.5, EAS_SPLIT, t) })));
+      anim(ck, fr(t => ({ opacity: t < EAS_SPLIT ? 1 : 0 })));
+      // The chick.
+      const chick = add(`left:${cx - H * .22}px;top:${cy - H * .3}px;width:${H * .44}px;height:${H * .44}px;z-index:5`);
+      chick.innerHTML = `<svg viewBox="0 0 40 40" width="100%" height="100%" style="overflow:visible"><ellipse cx="20" cy="37" rx="11" ry="2.4" fill="rgba(0,0,0,.22)"/><path d="M13 33v4M27 33v4" stroke="#f97316" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="21" r="14.5" fill="#fde047"/><circle cx="20" cy="22" r="11" fill="#fef08a" opacity=".7"/><path d="M9 24c-3 1-5 5-2 8 3-1 4-5 2-8ZM31 24c3 1 5 5 2 8-3-1-4-5-2-8Z" fill="#facc15"/><circle cx="15" cy="18" r="2.2" fill="#1c1917"/><circle cx="25" cy="18" r="2.2" fill="#1c1917"/><circle cx="15.7" cy="17.3" r=".7" fill="#fff"/><circle cx="25.7" cy="17.3" r=".7" fill="#fff"/><path d="M17.5 22h5L20 26.5Z" fill="#f97316"/><path d="M18 7c1 3 1 4 2 7M22 7c-1 3-1 4-2 7" stroke="#ca8a04" stroke-width="1.6" stroke-linecap="round" fill="none"/><ellipse cx="11.5" cy="22.5" rx="2.4" ry="1.6" fill="#fda4af" opacity=".7"/><ellipse cx="28.5" cy="22.5" rx="2.4" ry="1.6" fill="#fda4af" opacity=".7"/></svg>`;
+      anim(chick, fr(t => {
+        if (t < EAS_SPLIT) return { opacity: 0, transform: `translateY(${H * .2}px) scale(.3)` };
+        const u = t - EAS_SPLIT, rise = out(clamp(u / .22)), hop = h => Math.max(0, Math.sin(clamp((u - h) / .22) * Math.PI)) * H * .22;
+        return { opacity: 1 - sm(1.55, 1.9, t), transform: `translate(${(Math.sin(u * 6) * W * .05).toFixed(1)}px,${(H * .2 * (1 - rise) - H * .22 * rise - hop(.3) - hop(.7)).toFixed(1)}px) scale(${(.3 + .7 * rise).toFixed(3)},${((.3 + .7 * rise) * (1 - .1 * Math.max(0, Math.sin(u * 30)) * (u < .9 ? 1 : 0))).toFixed(3)})` };
+      }));
+      // Mini eggs bounce out of the shell, blossoms and sparkles drift.
+      const mini = (a, b) => `<svg viewBox="0 0 24 30" width="100%" height="100%"><path d="M12 1C18 1 22 11 22 18 22 25 17 29 12 29S2 25 2 18C2 11 6 1 12 1Z" fill="${a}"/><path d="M3 15Q12 20 21 15M3.5 21Q12 26 20.5 21" stroke="${b}" stroke-width="2.4" fill="none"/><ellipse cx="8" cy="9" rx="2" ry="3.4" fill="#fff" opacity=".6" transform="rotate(20 8 9)"/></svg>`;
+      for (let i = 0; i < 7; i++) {
+        const [c1, c2] = [[pa, pb], [pb, pc], [pc, pa]][i % 3], dir = i % 2 ? 1 : -1;
+        pfxFly(st, kit, { x: cx + rand(-.1, .1) * W, y: cy - H * .05, w: H * .17, h: H * .21, t0: EAS_SPLIT + .04 + i * .035, vx: dir * H * rand(.5, 1.3), vy: -H * rand(1.1, 1.55), g: H * 3.4, spin: dir * rand(2, 7), floor: H * rand(.5, .75), bounce: .38, fade0: 1.6 + rand(0, .25), html: mini(c1, c2) });
+      }
+      for (let i = 0; i < 12; i++) {
+        const c = [pa, pb, pc, '#fff'][i % 4];
+        pfxFly(st, kit, { x: cx + rand(-.4, .4) * W, y: cy - H * .1, w: H * .12, t0: EAS_SPLIT + .06 + rand(0, .3), vx: rand(-.7, .7) * H, vy: -H * rand(.6, 1.2), g: H * 1.6, spin: rand(-5, 5), flutter: rand(8, 13), floor: H * .6, bounce: .05, fade0: 1.55 + rand(0, .3),
+          html: `<svg viewBox="0 0 24 24" width="100%" height="100%">${[0, 72, 144, 216, 288].map(r => `<ellipse cx="12" cy="6.5" rx="4" ry="6" fill="${c}" transform="rotate(${r} 12 12)"/>`).join('')}<circle cx="12" cy="12" r="2.6" fill="#fde047"/></svg>` });
+      }
+      pfxBurst(st, kit, { x: cx, y: cy - H * .1, t0: EAS_SPLIT, n: 14, len: H * .1, dist: H * .55, life: .6, cols: ['#fde68a', pa, pb, '#fff'], w: 2.4 });
+      end(lastAnim);
+    }
+
+    // New Year: a gold clock ring fills round the card as 3-2-1 flash over it, at midnight the cork pops, the card
+    // bursts into gold shards, a champagne spray, confetti and streamers fly and starbursts crackle.
+    const NY_MID = .62, NY_TICKS = [.05, .23, .41];
+    function bfxNewYear(host, x, y, k) {
+      const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face } = st;
+      const kit = pfxKit(st), { rand, out, sm, fr, add, clamp } = kit, GOLD = ['#fde68a', '#facc15', '#fff7d6', '#f5d0fe', '#bae6fd'];
+      const glow = add(`left:${cx - H * 1.2}px;top:${cy - H * 1.2}px;width:${H * 2.4}px;height:${H * 2.4}px;border-radius:50%;z-index:0;background:radial-gradient(closest-side,rgba(250,204,21,.5),rgba(99,102,241,.2) 55%,transparent)`);
+      const lastAnim = anim(glow, fr(t => ({ opacity: sm(0, .6, t) * (1 - sm(1.4, 1.95, t)) })));
+      const box = add(`left:${cx - W / 2}px;top:${cy - H / 2}px;width:${W}px;height:${H}px;z-index:3;border-radius:${radius}`);
+      box.appendChild(face());
+      anim(box, fr(t => { const tk = NY_TICKS.reduce((m, a) => Math.max(m, Math.max(0, 1 - (t - a) / .09) * (t >= a ? 1 : 0)), 0); return { opacity: t < NY_MID ? 1 : 0, transform: `scale(${(1 + .05 * tk).toFixed(3)})`, filter: `brightness(${(1 + .25 * tk + .2 * sm(.3, NY_MID, t)).toFixed(2)})` }; }));
+      // The clock ring.
+      const R = Math.max(W, H) * .72, ring = add(`left:${cx - R}px;top:${cy - R}px;width:${R * 2}px;height:${R * 2}px;z-index:2`);
+      ring.innerHTML = `<svg viewBox="0 0 100 100" width="100%" height="100%"><circle cx="50" cy="50" r="47" fill="none" stroke="rgba(253,230,138,.22)" stroke-width="2"/><circle class="nyr" cx="50" cy="50" r="47" fill="none" stroke="#fde68a" stroke-width="2.6" stroke-linecap="round" pathLength="1" stroke-dasharray="1" transform="rotate(-90 50 50)" style="filter:drop-shadow(0 0 2px #facc15)"/>${Array.from({ length: 12 }, (_, i) => `<path d="M50 3V${i % 3 ? 7 : 11}" stroke="#fde68a" stroke-width="${i % 3 ? 1 : 1.8}" transform="rotate(${i * 30} 50 50)"/>`).join('')}</svg>`;
+      anim(ring.querySelector('.nyr'), fr(t => ({ strokeDashoffset: 1 - out(sm(0, NY_MID, t)) })));
+      anim(ring, fr(t => { const p = sm(NY_MID, NY_MID + .3, t); return { opacity: (1 - p) * sm(0, .06, t), transform: `scale(${(1 + .5 * p).toFixed(3)})` }; }));
+      // 3 - 2 - 1.
+      ['3', '2', '1'].forEach((d, i) => {
+        const el = add(`left:${cx - H * .5}px;top:${cy - H * .5}px;width:${H}px;height:${H}px;z-index:6;display:flex;align-items:center;justify-content:center;font:800 ${H * .62}px/1 system-ui,sans-serif;color:#fff7d6;text-shadow:0 0 ${H * .08}px #facc15,0 0 ${H * .2}px rgba(250,204,21,.7)`, d), a = NY_TICKS[i];
+        anim(el, fr(t => { const p = clamp((t - a) / .17); return { opacity: p > 0 && p < 1 ? 1 - sm(.6, 1, p) : 0, transform: `scale(${(1.6 - .6 * out(clamp(p * 3)) + .15 * p).toFixed(3)})` }; }));
+      });
+      // Midnight: the cork, the card bursts, spray, confetti, streamers and starbursts.
+      pfxFly(st, kit, { x: cx + W * .2, y: cy - H * .1, w: H * .1, h: H * .14, t0: NY_MID, vx: W * .5, vy: -H * 1.9, g: H * 3.4, spin: 9, floor: H * .55, bounce: .45, fade0: 1.6,
+        html: `<svg viewBox="0 0 20 26" width="100%" height="100%"><path d="M4 2h12l-2 20H6Z" fill="#b45309"/><path d="M4 2h12" stroke="#fde68a" stroke-width="2"/><path d="M7 8h6M7 13h6M7 18h6" stroke="#78350f" stroke-width="1"/></svg>` });
+      pfxShatter(st, kit, { t0: NY_MID, ip: [W * .5, H * .5], cols: 4, rows: 6, speed: .85, edge: '#fff7d6', tint: i => `linear-gradient(135deg,${i % 2 ? 'rgba(250,204,21,.6)' : 'rgba(255,247,214,.5)'},rgba(250,204,21,.3))` });
+      for (let i = 0; i < 34; i++) {
+        const a = -Math.PI / 2 + rand(-.75, .75), sp = H * rand(1.1, 2.1);
+        pfxFly(st, kit, { x: cx, y: cy, w: H * rand(.03, .06), t0: NY_MID + rand(0, .12), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .8, g: H * 3.2, floor: H * .62, bounce: .12, fade0: 1.35 + rand(0, .3), css: `border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,${GOLD[i % 3]});box-shadow:0 0 ${H * .03}px #facc15` });
+      }
+      for (let i = 0; i < 46; i++) {
+        const a = rand(0, Math.PI * 2), sp = H * rand(.6, 1.7), c = ['#facc15', '#f9a8d4', '#fff', '#93c5fd', '#fde68a', '#c4b5fd'][i % 6];
+        pfxFly(st, kit, { x: cx, y: cy, w: H * .05, h: H * .09, t0: NY_MID + .02 + rand(0, .1), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .7 - H * .5, g: H * 1.5, spin: rand(-8, 8), flutter: rand(9, 16), floor: H * .66, bounce: .04, fade0: 1.5 + rand(0, .35), css: `background:${c}` });
+      }
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + (i - 2) * .38, L = H * rand(.7, 1.0), el = add(`left:${cx}px;top:${cy}px;width:${L}px;height:${H * .3}px;z-index:5;transform-origin:0 50%`);
+        el.innerHTML = `<svg viewBox="0 0 100 30" preserveAspectRatio="none" width="100%" height="100%" style="overflow:visible"><path d="M0 15c10-14 20 14 30 0s20 14 30 0 20 14 30 0 7 4 10 0" pathLength="1" stroke-dasharray="1" fill="none" stroke="${['#f9a8d4', '#fde68a', '#93c5fd', '#fff', '#c4b5fd'][i]}" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+        const p = el.querySelector('path');
+        anim(p, fr(t => ({ strokeDashoffset: 1 - out(sm(NY_MID + .02, NY_MID + .5, t)) })));
+        anim(el, fr(t => ({ opacity: t > NY_MID ? 1 - sm(1.3, 1.7, t) : 0, transform: `rotate(${a.toFixed(3)}rad) translateY(${(H * 1.0 * sm(NY_MID + .5, 1.7, t) * sm(NY_MID + .5, 1.7, t)).toFixed(1)}px)` })));
+      }
+      [[NY_MID + .04, 0, -.18, 20], [NY_MID + .22, -.55, -.05, 14], [NY_MID + .36, .6, -.1, 14]].forEach(([t0, dx, dy, n]) => pfxBurst(st, kit, { x: cx + dx * W, y: cy + dy * H, t0, n, len: H * .13, dist: H * (n > 16 ? .7 : .5), life: .55, cols: GOLD, w: 2.6 }));
+      end(lastAnim);
+    }
+
     function bfxOrigami(host, x, y, k) {
       const st = procBurnStage(host, x, y, ORI_MS), { layer, cx, cy, radius, backCls, anim, end, vw, onTable } = st;
       // v311 (owner): the card leaves the Pile, grows and moves to the middle of the screen first. The swan
@@ -1460,6 +1629,7 @@
       if (window.ShLevel3D && ShLevel3D.has(id) && levelBurn3d(id, host, x, y, scale, reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return true;
       ({ default: bfxDefault, 'burn-electric': bfxElectric, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-ice': bfxIce, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
         'burn-blackhole': bfxBlackHole, 'burn-origami': bfxOrigami, 'burn-pixel': bfxPixelBlast, 'burn-lava': bfxLavaMelt,
+        'burn-diwali': bfxDiwali, 'burn-easter': bfxEaster, 'burn-newyear': bfxNewYear,
         'burn-lvl-spark-snap': bfxSparkSnap, 'burn-lvl-smoke-burst': bfxSmokeBurst, 'burn-lvl-inferno-sweep': bfxInferno,
         'burn-lvl-hellfire-spiral': bfxHellfireSpiral, 'burn-lvl-royal-incineration': bfxRoyalIncineration, 'burn-lvl-shitstorm': bfxShitStorm }[id] || (typeof SEASONAL_BURN_FX !== 'undefined' && SEASONAL_BURN_FX[id]) || (() => {}))(host, x, y, scale);
       return true;
