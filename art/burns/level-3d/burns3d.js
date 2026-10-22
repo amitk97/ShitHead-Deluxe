@@ -173,14 +173,17 @@ void main(){
   gl_FragColor=vec4(c.rgb*v_col.rgb*a,a);
  } else if(k>13.5){
   // A sheet of flame on a fire funnel (v_loc.y across the ribbon, v_uv.x along it, v_k.y seed, v_k.z heat bias: hotter at the base).
-  float q=v_loc.y,t=u_time*3.+v_k.y;
-  vec2 fp=vec2(v_uv.x*46.+v_k.y*3.7,q*2.2-t*1.6);
-  float n=fbm(fp+fbm(fp*.6+t*.3)*1.4);
-  float n2=fbm(vec2(v_uv.x*22.-t*1.1+n*1.7,q*3.+t*2.1));
-  float body=1.-smoothstep(.15,.95,abs(q)+(n-.5)*1.3);
-  float heat=clamp(body*(.25+1.25*n2)+.4*(1.-abs(q))*n,0.,1.)*v_k.z;
-  float a=smoothstep(.04,.3,heat)*v_col.a;
-  vec3 c=fire(min(1.,heat*.95))*1.1;
+  float q=v_loc.y,t=u_time*3.+v_k.y,u=v_uv.x;
+  // A ribbon of flame: a hot bright edge along the bottom, tongues of flame licking up from it (their tips ragged and moving), cooling to red and smoke at the top.
+  float tg=fbm(vec2(u*34.+v_k.y*5.3,t*1.1));
+  float tg2=fbm(vec2(u*83.-t*.8,v_k.y*2.+t*.6));
+  float tip=-.25+1.15*pow(tg,1.5)+.35*(tg2-.5);
+  float body=smoothstep(tip+.2,tip-.18,q)*smoothstep(-1.,-.55,q);
+  float lick=fbm(vec2(u*60.+v_k.y,q*2.4-t*2.2));
+  float h=clamp((1.-(q+1.)*.5)*.85-(q-tip)*.35+.3*lick,0.,1.)*v_k.z;
+  float heat=h*(.5+.6*lick);
+  float a=body*smoothstep(.05,.32,heat)*v_col.a;
+  vec3 c=fire(min(.82,heat*1.05))*1.1;
   gl_FragColor=vec4(c*a,a*.8);
  } else if(k>12.5&&k<13.5){
   // A wet lump of the stuff: a lit blob (v_loc = place on its ellipse, v_uv = the light's direction in that frame, v_k.z > .5 = ragged edge).
@@ -291,7 +294,7 @@ void main(){
     let spinK = 1; { const e = spinI(1.6); spinK = Math.max(1, Math.round(e / (Math.PI * 2))) * Math.PI * 2 / e; }
     S.spin = t => ({ th: spinI(Math.min(t, 1.6)) * spinK, w: spinW(t) * spinK });
     S.fpt = (par, u, a) => {
-      const r = (S.hell ? .22 + 1.05 * Math.pow(u, 1.15) : .3 + .7 * Math.pow(u, .75)) * par.R0, ax = par.lean * u * u + .05 * par.K * par.g * Math.sin(u * 6 - par.t * 8) * u;
+      const r = (S.hell ? .2 + 1.35 * Math.pow(u, 1.2) : .3 + .7 * Math.pow(u, .75)) * par.R0, ax = par.lean * u * u + .05 * par.K * par.g * Math.sin(u * 6 - par.t * 8) * u;
       return [ax + Math.cos(a) * r, FLOOR + .04 + u * par.H, Math.sin(a) * r * .7];
     };
     S.waveX = t => t < .26 ? -1.5 + (t / .26) * (1.5 - hw) : t < .9 ? -hw + (t - .26) / .64 * (hw * 2 + .15) : hw + .15 + (t - .9) / .3 * 1.6;
@@ -921,13 +924,13 @@ void main(){
       // the painted head rides on top, rigid, following the sway a beat late and squashing on the strike.
       const par = S.fun(t), { H, rise, collapse, K, g } = par, T = S.T, sp = S.spin(t);
       const alive = smooth(.06, .24, t) * (1 - smooth(1.62, 1.96, t));
-      const hell = S.hell, NB = hell ? 8 : 4, SEG = 110, turns = hell ? 2.1 : 1.7, hh = H / turns / NB * (hell ? 1.05 : .9), TAU = Math.PI * 2;
+      const hell = S.hell, NB = hell ? 6 : 4, SEG = 110, turns = hell ? 2.1 : 1.7, hh = H / turns / NB * (hell ? 1.1 : .9), TAU = Math.PI * 2;
       // Where a lump tore away the coils are thinner for a moment.
       const bite = u => { let d = 0; for (const b of S.bites) { const k = (t - b.t) / .45; if (k > 0 && k < 1) d += Math.exp(-Math.pow((u - b.u) / .06, 2)) * (1 - k) * Math.min(1, k * 8); } return 1 - .5 * Math.min(1, d); };
       const far = [], near = [];
       for (let b = 0; b < NB; b++) {
         const ph = b * TAU / NB, spin = hell ? t * 9 * (1 - .45 * collapse) + .25 * Math.sin(t * 5 + b * 2.1) : t * (6 + .45 * b) * (1 - .5 * collapse) + .55 * sp.th;
-        const pt = (u, e) => { const a = ph + u * turns * TAU - spin, q = S.fpt(par, u, a), th = hh * (.75 + .5 * u) * smooth(0, .03, u) * (1 - smooth(.97, 1, u)) * (1 - (hell ? .8 * (1 - smooth(.75, 1.25, t)) : .8) * smooth(0, .3 * par.R0 + 1e-6, q[2])) * bite(u); return [q[0], q[1] + e * th, q[2], a]; };
+        const pt = (u, e) => { const a = ph + u * turns * TAU - spin, q = S.fpt(par, u, a), wv = hell ? .13 * par.K * par.g * Math.sin(u * 15 - t * 7 + b * 1.7) * smooth(0, .2, u) : 0, th = hh * (.75 + .5 * u) * smooth(0, .03, u) * (1 - smooth(.97, 1, u)) * (1 - (hell ? .8 * (1 - smooth(.75, 1.25, t)) : .8) * smooth(0, .3 * par.R0 + 1e-6, q[2])) * bite(u); return [q[0] + Math.cos(a) * wv, q[1] + e * th, q[2] + Math.sin(a) * wv * .7, a]; };
         for (let i = 0; i < SEG; i++) {
           const u0 = i / SEG, u1 = (i + 1) / SEG, P = [pt(u0, -1), pt(u1, -1), pt(u1, 1), pt(u0, 1)], am = (P[0][3] + P[1][3]) / 2;
           const z = (P[0][2] + P[1][2]) / 2, lit = Math.max(0, -.45 * Math.cos(am) + .125 + .74 * Math.sin(am) * .7), light = (.42 + .95 * lit) * (.8 + .35 * (u0 + u1) / 2);
