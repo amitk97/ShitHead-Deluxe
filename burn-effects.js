@@ -1048,7 +1048,7 @@
       [60, 34, (c, l) => `<path d="M16 17 2 5v24Z" fill="${c}"/><path d="M44 17 58 5v24Z" fill="${c}"/><path d="M5 9 10 17 5 25M55 9 50 17 55 25" stroke="${l}" stroke-width="1.6" fill="none"/>
         <ellipse cx="30" cy="17" rx="15" ry="12" fill="${c}"/><path d="M19 9c4 6 4 10 0 16M26 6c4 7 4 15 0 22M33 6c4 7 4 15 0 22M40 9c4 6 4 10 0 16" stroke="${l}" stroke-width="2.4" fill="none"/>
         <path d="M17 22a15 12 0 0 0 26 0a15 9 0 0 1-26 0Z" fill="rgba(0,0,0,.18)"/><ellipse cx="24" cy="11" rx="5" ry="2.4" fill="#fff" opacity=".7"/>`],
-      [40, 66, (c, l) => `<rect x="18" y="34" width="4" height="31" rx="2" fill="#f8fafc"/><rect x="18" y="34" width="1.6" height="31" fill="#cbd5e1"/>
+      [40, 66, (c, l) => `<rect x="16.5" y="30" width="7" height="35" rx="3.5" fill="#f8fafc"/><rect x="16.5" y="30" width="2.6" height="35" rx="1.3" fill="#cbd5e1"/><rect x="21" y="32" width="1.4" height="31" rx=".7" fill="#fff"/>
         <circle cx="20" cy="20" r="18" fill="${c}"/><path d="M20 20c0-3 4-3 4 0 0 6-9 6-9 0 0-9 14-9 14 0 0 12-19 12-19 0 0-15 24-15 24 0" stroke="${l}" stroke-width="3.2" fill="none" stroke-linecap="round"/>
         <path d="M5 28a18 18 0 0 0 30 0a18 14 0 0 1-30 0Z" fill="rgba(0,0,0,.16)"/><ellipse cx="13" cy="11" rx="5" ry="3" fill="#fff" opacity=".6" transform="rotate(-30 13 11)"/>`],
       [40, 40, (c) => `<circle cx="20" cy="20" r="18" fill="#fff"/>${[0, 1, 2, 3, 4, 5].map(i => `<path d="M20 20 L${20 + 18 * Math.cos(i * 1.047)} ${20 + 18 * Math.sin(i * 1.047)} A18 18 0 0 1 ${20 + 18 * Math.cos(i * 1.047 + .52)} ${20 + 18 * Math.sin(i * 1.047 + .52)}Z" fill="${c}"/>`).join('')}
@@ -1143,7 +1143,7 @@
       for (let i = 0; i < 26; i++) {
         const [vbw, vbh, art] = SWEET_SHAPES[i % SWEET_SHAPES.length], [c, l] = SWEET_COLOURS[(i * 3 + (Math.random() * 7 | 0)) % SWEET_COLOURS.length];
         const depth = rand(-1, 1), size = H * rand(.3, .44) * (1 + .22 * depth), w = size * vbw / Math.max(vbw, vbh), h = size * vbh / Math.max(vbw, vbh);
-        const ang = -Math.PI / 2 + rand(-1.15, 1.15), sp = H * rand(4.5, 9.5), t0 = waves[i % waves.length] + rand(0, .03);
+        const ang = i % 2 ? -rand(.1, .62) : -Math.PI + rand(.1, .62), sp = H * rand(4.2, 8.6), t0 = waves[i % waves.length] + rand(0, .03);
         const path = fly({ x0: cx + rand(-.25, .25) * W, y0: cy + rand(-.25, .2) * H, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, t0, floor: cy + H * (.62 + .5 * depth), spin: rand(-720, 720) });
         const tumble = rand(-900, 900), fadeAt = rand(1.5, 1.8);
         const el = document.createElement('div');
@@ -1159,7 +1159,7 @@
       }
       // ---- Sprinkles: tiny sugar rods, quicker and lighter.
       for (let i = 0; i < 44; i++) {
-        const depth = rand(-1, 1), ang = -Math.PI / 2 + rand(-1.4, 1.4), sp = H * rand(5, 12), t0 = POP + rand(0, .08), fadeAt = rand(1.1, 1.6);
+        const depth = rand(-1, 1), ang = Math.random() < .5 ? -rand(.1, .7) : -Math.PI + rand(.1, .7), sp = H * rand(4, 9), t0 = POP + rand(0, .08), fadeAt = rand(1.1, 1.6);
         const path = fly({ x0: cx + rand(-.3, .3) * W, y0: cy + rand(-.3, .3) * H, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, t0, floor: cy + H * (.62 + .5 * depth), spin: rand(-1400, 1400), bounce: .3 });
         const el = document.createElement('div');
         el.className = 'bfx';

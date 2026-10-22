@@ -11346,9 +11346,9 @@
     }
     function sbfxRamadan(host, x, y, k) {
       sfxFlash(host, x, y, k, 'rgba(253,230,138,.8)', 140, 900);
-      sfxRise(host, x, y, k, 7, () => [sfxLantern(), 28, 42], { rise: [140, 230], sway: 16, dur: [1700, 2000], delay: [0, 350], spreadX: 60 });
+      sfxRise(host, x, y, k, 7, () => [sfxLantern(), 28, 42], { rise: [45, 95], sway: 16, dur: [1700, 2000], delay: [0, 350], spreadX: 90 });
       for (let i = 0; i < 12; i++) {
-        const el = bfxAdd(host, sfxStar(i % 2 ? '#fde68a' : '#fff'), x + bfxRand(-90, 90) * k, y + bfxRand(-140, 20) * k, 12 * k, 12 * k);
+        const el = bfxAdd(host, sfxStar(i % 2 ? '#fde68a' : '#fff'), x + bfxRand(-90, 90) * k, y + bfxRand(-75, 40) * k, 12 * k, 12 * k);
         bfxAnimate(el, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.2) rotate(45deg)', opacity: 1, offset: .4 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 800, delay: bfxRand(100, 1100) });
       }
     }
