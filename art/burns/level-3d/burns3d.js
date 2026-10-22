@@ -150,18 +150,21 @@ void main(){
   c=mix(c,vec3(.94,.92,1.),smoothstep(.8,1.,f))*f*v_k.w;
   gl_FragColor=vec4(c,max(c.r,max(c.g,c.b))*.7);
  } else if(k>9.5&&k<10.5){
-  // Rounded chocolate/gold coil material. Geometry turns; the texture never slides.
-  float q=v_loc.y;float roundness=sqrt(max(0.,1.-q*q));
-  float grain=fbm(vec2(v_uv.x*65.,q*3.));
-  vec3 c=mix(vec3(.10,.035,.012),vec3(.48,.22,.065),roundness);
-  c*=.82+.3*grain;
-  // Only the lower, faceless coils supply material detail; never draw the old diorama.
-  float pw=abs(fract(v_uv.x*4.)*2.-1.);vec4 paint=texture2D(u_tex2,vec2((.42+pw*.18)*.5,.50+q*.09));
-  c=mix(c,paint.rgb*(.4+.7*roundness),paint.a*.72);
-  float rim=exp(-pow((q+.62)/.12,2.));
-  c+=vec3(1.,.57,.13)*rim*(.2+.25*grain);
-  c+=vec3(.9,.58,.25)*pow(max(0.,roundness*.8-q*.4),14.)*.45;
-  float a=(1.-smoothstep(.94,1.,abs(q)))*v_col.a;
+  // A fat, wet roll of the stuff, textured from the head's own painting (its upper swirl, mirrored along the roll) and lit like it:
+  // v_loc.y runs across the roll (-1 bottom .. 1 top), v_uv.x along it, v_col.rgb is the light on this piece.
+  float q=v_loc.y;float rd=sqrt(max(0.,1.-q*q));
+  float pw=abs(fract(v_uv.x*4.2)*2.-1.);
+  vec2 tuv=vec2(.6815+pw*.122,.1055+(.5-.5*q)*.085);
+  vec3 c=texture2D(u_tex2,tuv).rgb;
+  c*=(.34+.72*rd)*.9;
+  float grain=fbm(vec2(v_uv.x*40.,q*3.));
+  c*=.9+.2*grain;
+  float rim=exp(-pow((q+.7)/.14,2.));
+  c+=vec3(.9,.5,.16)*rim*(.05+.1*grain);
+  float gl=pow(max(0.,rd*.85-q*.5-.05),10.);
+  c+=vec3(1.,.9,.72)*gl*(.35+.7*smoothstep(.45,.8,grain));
+  c+=vec3(.9,.75,.5)*pow(max(0.,rd*.8-q*.35),40.)*.4;
+  float a=(1.-smoothstep(.9,1.,abs(q)))*v_col.a;
   gl_FragColor=vec4(c*v_col.rgb*a,a);
  } else if(k>10.5&&k<11.5){
   // Exactly one rigid painted face: no flow, swirl, gloss sweep or noisy reveal.
@@ -285,7 +288,7 @@ void main(){
     // ShitStorm funnel (world units): S.fun(t) = size and sway, S.fpt(par, u, a) = a point on the funnel's surface at height u, angle a.
     S.fun = t => {
       const K = S.artK, rise = ease((t - .18) / .46), collapse = smooth(1.38, 1.86, t), g = (.25 + .75 * rise) * (1 - .8 * collapse);
-      return { t, K, g, H: (S.hell ? 3.3 : 2.2) * K * g, R0: (S.hell ? 1.05 : 1.22) * K * g, lean: K * (.12 * Math.sin(t * 3.6 + .4) + .1 * smooth(.4, .7, t) * Math.sin(t * 11)) * rise * (1 - collapse), rise, collapse };
+      return { t, K, g, H: (S.hell ? 3.3 : 2.2) * K * g, R0: (S.hell ? 1.05 : 1.42) * K * g, lean: K * (.12 * Math.sin(t * 3.6 + .4) + .1 * smooth(.4, .7, t) * Math.sin(t * 11)) * rise * (1 - collapse), rise, collapse };
     };
     // The whole tornado spins like the Tasmanian Devil: one speed curve drives the coils and the head (rad/s, winds up .8-.98s after the face has had its cheeky grin, down 1.32-1.58s).
     // It is scaled so the head has made a whole number of turns by 1.6s and faces us again for the grin and the stare.
@@ -924,15 +927,15 @@ void main(){
       // the painted head rides on top, rigid, following the sway a beat late and squashing on the strike.
       const par = S.fun(t), { H, rise, collapse, K, g } = par, T = S.T, sp = S.spin(t);
       const alive = smooth(.06, .24, t) * (1 - smooth(1.62, 1.96, t));
-      const hell = S.hell, NB = hell ? 6 : 4, SEG = 110, turns = hell ? 2.1 : 1.7, hh = H / turns / NB * (hell ? 1.1 : .9), TAU = Math.PI * 2;
+      const hell = S.hell, NB = hell ? 6 : 3, SEG = hell ? 110 : 150, turns = hell ? 2.1 : 1.5, hh = H / turns / NB * (hell ? 1.1 : .64), UMAX = hell ? 1 : 1.07, lagX = hell ? 0 : S.fun(t - .09).lean + .04 * K * Math.sin(t * 5.3) * rise - par.lean, TAU = Math.PI * 2;
       // Where a lump tore away the coils are thinner for a moment.
       const bite = u => { let d = 0; for (const b of S.bites) { const k = (t - b.t) / .45; if (k > 0 && k < 1) d += Math.exp(-Math.pow((u - b.u) / .06, 2)) * (1 - k) * Math.min(1, k * 8); } return 1 - .5 * Math.min(1, d); };
       const far = [], near = [];
       for (let b = 0; b < NB; b++) {
         const ph = b * TAU / NB, spin = hell ? t * 9 * (1 - .45 * collapse) + .25 * Math.sin(t * 5 + b * 2.1) : sp.th; // the coils turn with the head and only with it: same angle, same turns, so they are one body
-        const pt = (u, e) => { const a = ph + u * turns * TAU - spin, q = S.fpt(par, u, a), wv = hell ? .13 * par.K * par.g * Math.sin(u * 15 - t * 7 + b * 1.7) * smooth(0, .2, u) : 0, th = hh * (.75 + .5 * u) * smooth(0, .03, u) * (1 - smooth(.97, 1, u)) * (1 - (hell ? .8 * (1 - smooth(.75, 1.25, t)) : .8) * smooth(0, .3 * par.R0 + 1e-6, q[2])) * bite(u); return [q[0] + Math.cos(a) * wv, q[1] + e * th, q[2] + Math.sin(a) * wv * .7, a]; };
+        const pt = (u, e) => { const a = ph + u * turns * TAU - spin, q = S.fpt(par, u, a), wv = hell ? .13 * par.K * par.g * Math.sin(u * 15 - t * 7 + b * 1.7) * smooth(0, .2, u) : 0, th = hh * (.75 + .5 * Math.min(u, 1)) * smooth(0, .03, u) * (hell ? 1 - smooth(.97, 1, u) : 1) * (1 - (hell ? .8 * (1 - smooth(.75, 1.25, t)) : .7 * (1 - smooth(.8, 1.2, t))) * smooth(0, .3 * par.R0 + 1e-6, q[2])) * bite(u); return [q[0] + Math.cos(a) * wv + lagX * u * u * u, q[1] + e * th, q[2] + Math.sin(a) * wv * .7, a]; };
         for (let i = 0; i < SEG; i++) {
-          const u0 = i / SEG, u1 = (i + 1) / SEG, P = [pt(u0, -1), pt(u1, -1), pt(u1, 1), pt(u0, 1)], am = (P[0][3] + P[1][3]) / 2;
+          const u0 = i / SEG * UMAX, u1 = (i + 1) / SEG * UMAX, P = [pt(u0, -1), pt(u1, -1), pt(u1, 1), pt(u0, 1)], am = (P[0][3] + P[1][3]) / 2;
           const z = (P[0][2] + P[1][2]) / 2, lit = Math.max(0, -.45 * Math.cos(am) + .125 + .74 * Math.sin(am) * .7), light = (.42 + .95 * lit) * (.8 + .35 * (u0 + u1) / 2);
           const piece = { z, P: P.map(q => proj(q[0], q[1], q[2])), uv: [[u0 + b * .173, 0], [u1 + b * .173, 0], [u1 + b * .173, 1], [u0 + b * .173, 1]], loc: [[u0, -1], [u1, -1], [u1, 1], [u0, 1]], k: [14, b * 7.3, 1.1 - .3 * (u0 + u1) / 2, 0], col: hell ? [1, 1, 1, alive * (.75 + .25 * lit)] : [light, light * .98, light * .94, alive] };
           (z > .02 ? near : far).push(piece);
