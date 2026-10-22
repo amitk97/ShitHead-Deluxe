@@ -12129,8 +12129,6 @@
         const a = -Math.PI / 2 + bfxRand(-1.2, 1.2), d = bfxRand(50, 120) * k, el = bfxAdd(host, sfxDot(i % 3 ? '#d99a43' : '#f5c26b', false), g.cx + bfxRand(-6, 6) * k, CY - 10 * k, 6 * k, 6 * k);
         bfxAnimate(el, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: 1, offset: .35 }, { transform: `translate(${Math.cos(a) * d * 1.2}px,${Math.sin(a) * d + 90 * k}px)`, opacity: 0 }], { duration: 640, delay: T0 + bfxRand(0, 60), easing: 'cubic-bezier(.1,.8,.3,1)' });
       }
-      const slip = bfxAdd(host, '<div style="width:100%;height:100%;background:#fff7e0;border:1px solid #b45309;display:flex;align-items:center;justify-content:center"><div style="width:70%;height:2px;background:#b91c1c"></div></div>', g.cx, CY - 10 * k, 44 * k, 13 * k);
-      bfxAnimate(slip, [{ transform: 'translate(0,0) rotate(0)', opacity: 0 }, { transform: `translate(${-60 * k}px,${-50 * k}px) rotate(-30deg)`, opacity: 1, offset: .3 }, { transform: `translate(${-110 * k}px,${40 * k}px) rotate(25deg)`, opacity: 1, offset: .65 }, { transform: `translate(${-140 * k}px,${120 * k}px) rotate(-20deg)`, opacity: 0 }], { duration: 760, delay: T0 + 20, easing: 'ease-out' });
       // Landing: flash, two fireworks, a rain of gold coins.
       const T = LAND * D;
       sfxFlash(host, g.cx, g.cy - 10 * k, k, 'rgba(253,224,71,.9)', 330, 520, T);
