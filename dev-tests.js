@@ -3932,11 +3932,11 @@ async function runDevTestSuite() {
         assertTrue(r.ok, `${f} art file exists`);
       }
     }
-    [['victory-lion', 2], ['victory-fireworks', 5]].forEach(([id, n]) => {
+    [['victory-lion', 2], ['victory-fireworks', 0]].forEach(([id, n]) => {
       layer.innerHTML = '';
       playVictoryEffect(id);
       const imgs = [...layer.querySelectorAll('.bfx img')].map(i => i.getAttribute('src'));
-      assertEqual(imgs.length, n, `${id} draws its ${n} art layers`);
+      assertEqual(imgs.length, n, `${id} draws its ${n} art layers (Fireworks is vector sparks since v422)`);
       assertTrue(imgs.every(src => /^art\/effects\/[a-z0-9-]+\.(?:webp|svg)\?v=\d+$/.test(src)), `${id} layers come from art/effects`);
       const ends = [...layer.querySelectorAll('.bfx')].flatMap(el => el.getAnimations()).map(a => a.effect.getComputedTiming().endTime);
       assertTrue(ends.length > 20 && Math.max(...ends) <= OWNER_VICTORY_MS, `${id} is animated and ends within OWNER_VICTORY_MS (2s since v275)`, Math.max(...ends));
