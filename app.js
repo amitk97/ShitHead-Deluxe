@@ -3653,6 +3653,15 @@
     // flashing open, glittering and drifting down as it fades (audio:
     // fireworks, the same beats: FIREWORK_BURSTS in tools/make-effect-sounds.py).
     const FIREWORK_BURSTS = [['gold', 450], ['red', 750], ['blue', 950], ['purple', 1200], ['green', 1400]];
+    // Shells per burst: [stars, radius factor, drag, colour ('c' = the burst's own), kind]. Gold is a drooping
+    // willow with a ring inside it, red a peony, blue two rings, purple a palm, green a crackle.
+    const FW_SHELLS = {
+      gold: [[44, 1, 1, 'c', 'willow'], [26, .6, 1.1, '#fff3c4', 'plain'], [14, .3, 1.3, '#ffffff', 'plain']],
+      red: [[34, 1, 1, 'c', 'peony'], [18, .55, 1.1, '#fecaca', 'plain']],
+      blue: [[30, 1, 1, 'c', 'peony'], [20, .65, 1.1, '#bfdbfe', 'peony'], [10, .32, 1.2, '#ffffff', 'plain']],
+      purple: [[12, 1.15, .8, 'c', 'willow'], [28, .8, 1, 'c', 'peony'], [14, .4, 1.2, '#f5d0fe', 'plain']],
+      green: [[36, 1, 1, 'c', 'peony'], [18, .6, 1.1, '#a7f3d0', 'peony']]
+    };
     function vfxFireworks(layer) {
       layer.dataset.ownerFxSpeed = OWNER_VICTORY_SPEED;
       const [W, H] = vfxSize(layer);
@@ -3685,31 +3694,45 @@
         // The flash as it opens.
         const flash = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff,${c}88 35%,transparent 70%)"></div>`, bx, by, S * (big ? .7 : .38), S * (big ? .7 : .38));
         bfxAnimate(flash, [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .25 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 420, delay: at, easing: 'ease-out' });
-        // The owner's painted burst: opens bright, glitters, drifts down and fades.
-        const burst = ofxLayer(layer, `fireworks-${name}`, F[name], S, ox, oy);
-        burst.style.transformOrigin = `${((F.centres[name][0] - F[name][0]) / F[name][2] * 100).toFixed(1)}% ${((F.centres[name][1] - F[name][1]) / F[name][3] * 100).toFixed(1)}%`;
-        const life = total - at;
-        bfxAnimate(burst, ofxEase([{ transform: 'scale(.12)', opacity: 0 }, { transform: 'scale(.92)', opacity: 1, offset: .07 },
-          { transform: 'scale(1.02)', opacity: 1, offset: .18 }, { transform: 'scale(1.05) translateY(0)', opacity: 1, offset: .62 },
-          { transform: `scale(1.08) translateY(${S * .05}px)`, opacity: 0 }]), { duration: life, delay: at, easing: 'linear' });
-        // Streaks thrown from the centre, and glitter that falls out of the burst.
-        const r0 = (big ? .4 : .22) * S, n = big ? 28 : 16;
-        for (let j = 0; j < n; j++) {
-          const a = (j / n) * Math.PI * 2 + bfxRand(-.08, .08), len = bfxRand(.55, 1) * r0, deg = a * 180 / Math.PI;
-          const st = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:2px;background:linear-gradient(90deg,transparent,${j % 3 ? c : '#fff'});box-shadow:0 0 6px ${c}"></div>`, bx, by, 26 * k, 3 * k);
-          bfxAnimate(st, [{ transform: `rotate(${deg}deg) translateX(0)`, opacity: 0 }, { transform: `rotate(${deg}deg) translateX(${len * .6}px)`, opacity: 1, offset: .3 }, { transform: `rotate(${deg}deg) translateX(${len}px)`, opacity: 0 }], { duration: 650, delay: at + bfxRand(0, 40), easing: 'cubic-bezier(.1,.8,.3,1)' });
-        }
-        for (let j = 0; j < (big ? 18 : 9); j++) {
-          const a = bfxRand(0, Math.PI * 2), d = bfxRand(.3, 1) * r0, s = bfxRand(3, 6);
+        // v422: the burst itself is drawn as real vector sparks (the painted picture looked flat):
+        // every star flies out with drag and gravity on one sampled path, with a comet tail, a white
+        // head that cools to its colour, and a crackle of tiny pops where the shell fades.
+        const R = (big ? .55 : .4) * S, shells = FW_SHELLS[name];
+        shells.forEach(([count, rf, speedK, tint, kind], si) => {
+          for (let j = 0; j < count; j++) {
+            const a0 = (j / count) * Math.PI * 2 + (si % 2 ? Math.PI / count : 0) + bfxRand(-.04, .04);
+            const drag = 2.4 * speedK, v = R * rf * drag * 1.12 * bfxRand(.93, 1.07), life = (kind === 'willow' ? 2000 : 1600) * bfxRand(.92, 1.08), g = (kind === 'willow' ? .16 : .07) * S;
+            const frames = [], NS = 14;
+            for (let q = 0; q <= NS; q++) {
+              const f = q / NS, t = f * life / 1000, e = 1 - Math.exp(-drag * t), r = v / drag * e;
+              const sp = v * Math.exp(-drag * t), vx = Math.cos(a0) * sp, vy = Math.sin(a0) * sp + g * t;
+              const x = Math.cos(a0) * r, y = Math.sin(a0) * r + .5 * g * t * t, ang = Math.atan2(vy, vx) * 180 / Math.PI;
+              const len = Math.max(.15, Math.min(1, Math.hypot(vx, vy) / (v * .9))) * (kind === 'willow' ? 1.25 : 1);
+              frames.push({ transform: `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${ang.toFixed(0)}deg) scaleX(${len.toFixed(2)})`, opacity: f < .5 ? 1 : Math.max(0, 1 - (f - .5) / .5) ** 1.3, offset: f });
+            }
+            const col = (j % 5 === 0) ? '#ffffff' : tint === 'c' ? c : (tint === 'w' ? '#fff3c4' : tint);
+            const tail = Math.round((kind === 'willow' ? 30 : 22) * k);
+            const sp = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:0 3px 3px 0;background:linear-gradient(90deg,transparent,${col} 62%,#fff);box-shadow:0 0 7px ${col}"></div>`, bx - tail / 2, by, tail, 3 * k);
+            sp.style.transformOrigin = '100% 50%';
+            sp.style.mixBlendMode = 'screen';
+            bfxAnimate(sp, [{ ...frames[0], opacity: 0 }, ...frames.slice(1, -1), { ...frames[frames.length - 1], offset: 1, opacity: 0 }], { duration: life, delay: at, easing: 'linear' });
+            // A tiny pop where the star dies (crackle).
+            if (kind !== 'plain' && j % 3 === 0) {
+              const last = frames[Math.round(NS * .72)], m = /translate\(([-\d.]+)px,([-\d.]+)px\)/.exec(last.transform);
+              const pop = bfxAdd(layer, bfxStar4('#ffffff'), bx + parseFloat(m[1]), by + parseFloat(m[2]), 11 * k, 11 * k);
+              bfxAnimate(pop, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.1) rotate(45deg)', opacity: 1, offset: .4 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 380, delay: at + life * .72 + bfxRand(0, 160), easing: 'ease-out' });
+            }
+          }
+        });
+        // Shock ring, a bright core that cools, and a few falling embers.
+        const ring = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;border:2px solid ${c};box-shadow:0 0 16px ${c},inset 0 0 12px ${c}"></div>`, bx, by, R * .6, R * .6);
+        bfxAnimate(ring, [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(.6)', opacity: .9, offset: .15 }, { transform: 'scale(2.6)', opacity: 0 }], { duration: 650, delay: at, easing: 'cubic-bezier(.1,.7,.3,1)' });
+        const core = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff 10%,${c}aa 40%,transparent 70%);mix-blend-mode:screen"></div>`, bx, by, R * (big ? 1.1 : .7), R * (big ? 1.1 : .7));
+        bfxAnimate(core, [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .12 }, { transform: 'scale(.8)', opacity: .35, offset: .5 }, { transform: 'scale(.6)', opacity: 0 }], { duration: 1100, delay: at, easing: 'ease-out' });
+        for (let j = 0; j < (big ? 14 : 7); j++) {
+          const a = bfxRand(0, Math.PI * 2), d = bfxRand(.4, 1) * R, s = bfxRand(3, 5);
           const gl = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:${j % 3 ? c : '#fff'};box-shadow:0 0 6px ${c}"></div>`, bx + Math.cos(a) * d, by + Math.sin(a) * d, s, s);
-          bfxAnimate(gl, [{ transform: 'translate(0,0)', opacity: 0 }, { opacity: 1, offset: .2 }, { transform: `translate(${bfxRand(-14, 14)}px,${bfxRand(.12, .3) * H}px)`, opacity: 0 }], { duration: bfxRand(1000, 1400), delay: at + bfxRand(120, 800), easing: 'ease-in' });
-        }
-        // Twinkles round it.
-        const r = (big ? .36 : .16) * S;
-        for (let j = 0; j < (big ? 9 : 5); j++) {
-          const a = bfxRand(0, Math.PI * 2), d = bfxRand(.3, 1) * r, s = bfxRand(10, 20);
-          const tw = bfxAdd(layer, bfxStar4(j % 2 ? '#ffffff' : c), bx + Math.cos(a) * d, by + Math.sin(a) * d, s, s);
-          bfxAnimate(tw, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.2) rotate(45deg)', opacity: 1, offset: .4 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 500, delay: at + bfxRand(200, 1500) });
+          bfxAnimate(gl, [{ transform: 'translate(0,0)', opacity: 0 }, { opacity: 1, offset: .2 }, { transform: `translate(${bfxRand(-12, 12)}px,${bfxRand(.12, .3) * H}px)`, opacity: 0 }], { duration: bfxRand(1000, 1400), delay: at + bfxRand(200, 800), easing: 'ease-in' });
         }
       });
       // Glitter falling after the show.
