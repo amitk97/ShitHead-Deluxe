@@ -385,7 +385,7 @@ void main(){
     };
     // Card light: the passing fire (Inferno) or the wraith's cold glow (Ghost).
     S.light = (p, pose, t) => {
-      if (ghost) { const g = smooth(.1, .5, t) * (1 - smooth(1.4, 1.9, t)); return [1 + .2 * g, 1 + .3 * g, 1 + .75 * g]; }
+      if (ghost) { const g = smooth(.1, .5, t) * (1 - smooth(1.4, 1.9, t)); return [1 + .12 * g, 1 + .16 * g, 1 + .6 * g]; } // v424: smaller lunge, and artK budgets for it, so the ghost no longer runs off the top and sides
       if (paper) { const g = smooth(.02, .4, t) * (1 - smooth(1.4, 1.85, t)) + .7 * smooth(T - .02, T, t) * (1 - smooth(T, T + .3, t)); return [1 + .6 * g, 1 + .45 * g, 1 + .25 * g]; }
       if (lava) { const g = (smooth(.02, .3, t) * (1 - smooth(1.5, 1.9, t)) + .8 * smooth(T - .02, T, t) * (1 - smooth(T, T + .3, t))) * (.85 + .15 * Math.sin(t * 9)); return [1 + 1.05 * g, 1 + .4 * g, 1 + .02 * g]; }
       if (candy) { const g = smooth(.02, .3, t) * (1 - smooth(1.4, 1.85, t)) + .7 * smooth(T - .02, T, t) * (1 - smooth(T, T + .25, t)); return [1 + .7 * g, 1 + .45 * g, 1 + .55 * g]; }
@@ -1291,7 +1291,7 @@ void main(){
     const hw = host.clientWidth || 390, hh = host.clientHeight || 844, [LW, LR, , LV] = fx.layout || [];
     // The ShitStorm is built from geometry, not a picture, so it is sized by its own extent: the funnel and head are ~1.7 card heights each side and 3.5 high, whatever the stage (a small preview gets a big funnel).
     const stormK = id === 'burn-lvl-shitstorm' || id === 'burn-lvl-hellfire-spiral' ? Math.min(1.15, hw * .98 / (2 * 1.7 * H), Math.max(0, y - (hh < 420 ? 10 : 52)) / (3.5 * H)) * .92 : 0;
-    const LU = (fx.layout || [])[2], artK = stormK || fx.art ? stormK || Math.min(1, hw * .98 / (LW * H * 2 * Math.max(LU, 1 - LU)), Math.max(0, y - 52) / (LW * LR * LV * H)) * (/hellfire/.test(id) ? .86 : 1) : 1; // the storms grow on the strike, so they get margin under the header
+    const LU = (fx.layout || [])[2], artK = stormK || fx.art ? stormK || Math.min(1, hw * .98 / (LW * H * 2 * Math.max(LU, 1 - LU)), Math.max(0, y - 52) / (LW * LR * LV * H)) * (/hellfire/.test(id) ? .86 : id === 'burn-halloween' ? .82 : 1) : 1; // the storms grow on the strike, so they get margin under the header
     // A painted scene gets the whole layer, so its smoke is never cut by a canvas edge.
     const [bw, bh, bx, by] = fx.box, x0 = fx.art ? 0 : Math.max(0, x - H * bw * bx), y0 = fx.art ? 0 : Math.max(0, y - H * bh * by);
     const ox = Math.round(x0), oy = Math.round(y0), cw = Math.round(fx.art ? hw : Math.min(hw, x + H * bw * (1 - bx)) - ox), ch = Math.round(fx.art ? hh : Math.min(hh, y + H * bh * (1 - by)) - oy);
