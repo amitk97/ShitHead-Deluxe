@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v428: [['sparkle', 'The ShitStorm now spins as one: the grinning head turns like a top and the funnel under it whirls with its coils travelling round.', WN_KEY]],
       v427: [['sparkle', 'The ShitStorm funnel now spins round its axis under the grinning head, with its coils travelling round it.', WN_KEY]],
       v426: [['sparkle', 'The ShitStorm now really spins: the painted funnel turns on its axis, its coils travelling round it, instead of swaying with the light moving.', WN_KEY]],
       v425: [['sparkle', 'The ShitStorm is the painted tornado again, body and head in one style. Ghost Flames trails off into smoke instead of stopping at a box edge, and the Shuriken Barrage stars are back on screen from the first frame.', WN_KEY]],

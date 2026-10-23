@@ -5,7 +5,8 @@
    cards are invented. Without WebGL the caller falls back to ShLevelBurns. */
 (() => {
   'use strict';
-const STORM_PROF = [[.42, .5, .17], [.48, .51, .15], [.54, .52, .125], [.6, .52, .105], [.68, .52, .08], [.76, .51, .058], [.84, .5, .04], [.9, .5, .028]]; // the painted funnel's brown body per height v under the head: [v, centre u, half-width u], read from the painting (the head, drawn flat on top, covers the rows above .48)
+const STORM_PROF = [[.42, .5, .13], [.48, .51, .11], [.54, .52, .09], [.6, .52, .075], [.68, .52, .058], [.76, .51, .042], [.84, .5, .03], [.9, .5, .022]]; // the painted funnel's brown body per height v under the head: [v, centre u, half-width u], read from the painting (the head covers the rows above .48)
+const STORM_HEAD = [[.02, .525, .02], [.044, .534, .034], [.068, .51, .077], [.092, .477, .125], [.116, .462, .162], [.14, .462, .203], [.164, .47, .259], [.188, .477, .284], [.212, .495, .292], [.236, .506, .312], [.26, .497, .325], [.284, .489, .323], [.308, .493, .328], [.332, .501, .337], [.356, .512, .346], [.38, .508, .339], [.404, .487, .334], [.428, .48, .333], [.452, .488, .334], [.472, .5, .27], [.482, .5, .08]]; // the painted head (slot 1) per height v: [v, centre u, half-width u], from its alpha
   const EFFECTS = {
     // Origami Fold (Shop, premium): the owner's paper swan folds itself round the card, then flies off.
     'burn-origami': { iconOnly: true /* v305: folded procedurally from the real card in index.html; tile + sound only */, dur: 2.0, box: [5, 5.4, .5, .62], tile: 'art/burns/origami-fold/tile.webp', art: 'art/burns/origami-fold/layers.webp?v=1', layout: [4.4, 438 / 498, .486, .62] },
@@ -1037,32 +1038,30 @@ void main(){
         // the head turns with it (its face goes round and comes back), the near half is drawn in front of the card and the far half behind.
         // Rows follow the painted outline (STORM_PROF: centre and half-width in the painting's own units), so the outline stays put while the paint goes round.
         const sh = .05 * Math.sin(t * 9) * reveal, sx = 1 + .03 * Math.sin(t * 18), sp = S.bspin(t), shadeAmt = smooth(0, 6, Math.abs(sp.w));
-        const NR = 44, NS = 36, V0 = STORM_PROF[0][0], V1 = STORM_PROF[STORM_PROF.length - 1][0];
-        const prof = k => { const v = V0 + (V1 - V0) * k / NR; let i = 0; while (i < STORM_PROF.length - 2 && STORM_PROF[i + 1][0] < v) i++; const A = STORM_PROF[i], B = STORM_PROF[i + 1], m = clamp((v - A[0]) / (B[0] - A[0])); return [v, A[1] + (B[1] - A[1]) * m, A[2] + (B[2] - A[2]) * m]; };
-        const rows = []; for (let k = 0; k <= NR; k++) rows.push(prof(k));
-        // A dark wet core fills the funnel behind the painted skin (the painting has gaps and glows that would show the table and the card through it).
-        for (let k = 0; k < NR; k++) {
-          const A = rows[k], B = rows[k + 1], q0 = k / NR, q1 = (k + 1) / NR, ys = v => (PV - v) * AH * rise;
-          const px2 = (v, c, d) => proj((c + d - PU) * AW * rise * sx + sh * (PV - v) * AH * rise, ys(v), -.3);
-          quad(out.artFront, [px2(A[0], A[1], -A[2] * .9), px2(A[0], A[1], A[2] * .9), px2(B[0], B[1], B[2] * .9), px2(B[0], B[1], -B[2] * .9)], [[0, q0], [1, q0], [1, q1], [0, q1]], [[-1, q0], [1, q0], [1, q1], [-1, q1]], [.42, .3, .2, 0], [12, 0, 0, 0]);
-        }
-        const ghosts = Math.abs(sp.w) > 8 ? 3 : 1;
-        // The painted head rides on top, rigid (never warped), swaying with the funnel and grinning on the strike; its own slot is solid.
-        { const grin = 1 + .06 * bump(T + .1, T + .2, T + .5), fv = .26, fs = rise * grin, fdy = (PV - fv) * AH * (rise - fs);
-          layer(out.artFront, 1, -.3, fs, fdy, smooth(T + .05, T + .35, t) * out1, 0, [1, .8, .4], false, 1.25, 0, 1, 0, sh * (PV - fv) * AH * rise); }
-        for (let gi = ghosts - 1; gi >= 0; gi--) {
-          const th = sp.th - gi * sp.w * .011, al = 1 * (gi === 0 ? 1 : .34 * Math.pow(.6, gi - 1)) , strips = [];
-          for (let n = 0; n < NS; n++) { const f0 = -Math.PI + n * 2 * Math.PI / NS, f1 = f0 + 2 * Math.PI / NS; strips.push({ f0, f1, z: Math.cos((f0 + f1) / 2 + th) }); }
-          strips.filter(sg => sg.z >= 0).sort((p1, q1) => p1.z - q1.z).forEach(sg => {
-            const shade = sg.z < 0 ? .5 : 1 - shadeAmt * (1 - (.8 + .2 * sg.z)), arr = sg.z < 0 ? out.art : out.artFront;
-            const vert = (f, k) => { const [v, c, r] = rows[k], us = c + r * Math.sin(f + th), ut = c + r * Math.sin(f), zz = r * AW * .5 * Math.cos(f + th);
-              const [px, py] = proj((us - PU) * AW * rise * sx + sh * (PV - v) * AH * rise, (PV - v) * AH * rise, -.3 + zz * rise); return [px, py, ut, v]; };
-            for (let k = 0; k < NR; k++) {
-              const A = vert(sg.f0, k), B = vert(sg.f1, k), C = vert(sg.f1, k + 1), D = vert(sg.f0, k + 1);
-              for (const q of [A, B, C, A, C, D]) arr.push(q[0], q[1], q[2], q[3], 0, 0, 1, .75, .3, al, 7 + .1 * shade, 0, reveal, .3);
-            }
-          });
-        }
+        const NR = 40, NS = 36, ghosts = Math.abs(sp.w) > 8 ? 3 : 1;
+        const rowsOf = (T, n) => { const out = []; for (let k = 0; k <= n; k++) { const v = T[0][0] + (T[T.length - 1][0] - T[0][0]) * k / n; let i = 0; while (i < T.length - 2 && T[i + 1][0] < v) i++; const A = T[i], B = T[i + 1], m = clamp((v - A[0]) / (B[0] - A[0])); out.push([v, A[1] + (B[1] - A[1]) * m, A[2] + (B[2] - A[2]) * m]); } return out; };
+        // One painted slot wrapped on a body of revolution and turned: only the near half is drawn (the card sits behind it), a few faint ghosts at speed.
+        const rev = (slot, rows, alpha) => {
+          const n = rows.length - 1;
+          for (let gi = ghosts - 1; gi >= 0; gi--) {
+            const th = sp.th - gi * sp.w * .011, al = alpha * (gi === 0 ? 1 : .34 * Math.pow(.6, gi - 1)), strips = [];
+            for (let q = 0; q < NS; q++) { const f0 = -Math.PI + q * 2 * Math.PI / NS, f1 = f0 + 2 * Math.PI / NS; strips.push({ f0, f1, z: Math.cos((f0 + f1) / 2 + th) }); }
+            strips.filter(sg => sg.z >= 0).sort((p1, q1) => p1.z - q1.z).forEach(sg => {
+              const shade = 1 - shadeAmt * (1 - (.8 + .2 * sg.z));
+              const vert = (f, k) => { const [v, c, r] = rows[k], us = c + r * Math.sin(f + th), ut = c + r * Math.sin(f), zz = r * AW * .5 * Math.cos(f + th);
+                const [px, py] = proj((us - PU) * AW * rise * sx + sh * (PV - v) * AH * rise, (PV - v) * AH * rise, -.3 + zz * rise); return [px, py, ut, v]; };
+              for (let k = 0; k < n; k++) {
+                const A = vert(sg.f0, k), B = vert(sg.f1, k), C = vert(sg.f1, k + 1), D = vert(sg.f0, k + 1);
+                for (const q of [A, B, C, A, C, D]) out.artFront.push(q[0], q[1], q[2], q[3], 0, 0, 1, .75, .3, al, 7 + .1 * shade, slot, reveal, .3);
+              }
+            });
+          }
+        };
+        rev(0, rowsOf(STORM_PROF, NR), 1);                                        // the funnel
+        // The head spins about the same axis: the painted head (slot 1, solid) as one flat piece that turns edge-on and comes round mirrored, like a top, with ghosts at speed.
+        { const grin = 1 + .06 * bump(T + .1, T + .2, T + .5), fv = .26, fs = rise * grin, fdy = (PV - fv) * AH * (rise - fs), hv = smooth(T + .05, T + .35, t) * out1;
+          for (let gi = ghosts - 1; gi >= 0; gi--) { const th = sp.th - gi * sp.w * .011, al = (gi === 0 ? 1.25 : .3 * Math.pow(.6, gi - 1)) * hv;
+            layer(out.artFront, 1, -.3 + .05 * Math.sin(th), fs, fdy, 1, 0, [1, .8, .4], false, al, 0, Math.cos(th) * (1 + .03 * Math.sin(t * 18)), sh * (PV - fv) * AH * rise, 0); } }
       } else if (R.art) {
         layer(out.art, 0, -.3, rise, 0, reveal * .4, 1.5, [1, .45, .12], false, 1.25, 1);
         layer(out.artFront, 1, .6, 1, 0, smooth(T, T + .3, t) * out1, .6, [1, .45, .12], false, 1.25, .4);
