@@ -6,7 +6,7 @@
 (() => {
   'use strict';
 const STORM_PROF = [[.42, .5, .13], [.48, .51, .11], [.54, .52, .09], [.6, .52, .075], [.68, .52, .058], [.76, .51, .042], [.84, .5, .03], [.9, .5, .022]]; // the painted funnel's brown body per height v under the head: [v, centre u, half-width u], read from the painting (the head covers the rows above .48)
-const STORM_HEAD = [[.02, .525, .02], [.044, .534, .034], [.068, .51, .077], [.092, .477, .125], [.116, .462, .162], [.14, .462, .203], [.164, .47, .259], [.188, .477, .284], [.212, .495, .292], [.236, .506, .312], [.26, .497, .325], [.284, .489, .323], [.308, .493, .328], [.332, .501, .337], [.356, .512, .346], [.38, .508, .339], [.404, .487, .334], [.428, .48, .333], [.452, .488, .334], [.472, .5, .27], [.482, .5, .08]]; // the painted head (slot 1) per height v: [v, centre u, half-width u], from its alpha
+const STORM_HEAD = [[.02, .525, .02], [.044, .534, .034], [.068, .51, .077], [.092, .477, .125], [.116, .462, .162], [.14, .462, .203], [.164, .47, .259], [.188, .477, .284], [.212, .495, .292], [.236, .506, .312], [.26, .497, .325], [.284, .489, .323], [.308, .493, .328], [.332, .501, .337], [.356, .512, .346], [.38, .508, .339], [.404, .487, .33], [.428, .49, .24], [.446, .5, .15], [.462, .5, .1]]; // the painted head (slot 1) per height v: [v, centre u, half-width u], from its alpha
   const EFFECTS = {
     // Origami Fold (Shop, premium): the owner's paper swan folds itself round the card, then flies off.
     'burn-origami': { iconOnly: true /* v305: folded procedurally from the real card in index.html; tile + sound only */, dur: 2.0, box: [5, 5.4, .5, .62], tile: 'art/burns/origami-fold/tile.webp', art: 'art/burns/origami-fold/layers.webp?v=1', layout: [4.4, 438 / 498, .486, .62] },
@@ -1041,27 +1041,26 @@ void main(){
         const NR = 40, NS = 36, ghosts = Math.abs(sp.w) > 8 ? 3 : 1;
         const rowsOf = (T, n) => { const out = []; for (let k = 0; k <= n; k++) { const v = T[0][0] + (T[T.length - 1][0] - T[0][0]) * k / n; let i = 0; while (i < T.length - 2 && T[i + 1][0] < v) i++; const A = T[i], B = T[i + 1], m = clamp((v - A[0]) / (B[0] - A[0])); out.push([v, A[1] + (B[1] - A[1]) * m, A[2] + (B[2] - A[2]) * m]); } return out; };
         // One painted slot wrapped on a body of revolution and turned: only the near half is drawn (the card sits behind it), a few faint ghosts at speed.
-        const rev = (slot, rows, alpha) => {
+        const rev = (slot, rows, alpha, zk = .5, tk = 1) => {
           const n = rows.length - 1;
           for (let gi = ghosts - 1; gi >= 0; gi--) {
             const th = sp.th - gi * sp.w * .011, al = alpha * (gi === 0 ? 1 : .34 * Math.pow(.6, gi - 1)), strips = [];
             for (let q = 0; q < NS; q++) { const f0 = -Math.PI + q * 2 * Math.PI / NS, f1 = f0 + 2 * Math.PI / NS; strips.push({ f0, f1, z: Math.cos((f0 + f1) / 2 + th) }); }
             strips.filter(sg => sg.z >= 0).sort((p1, q1) => p1.z - q1.z).forEach(sg => {
-              const shade = 1 - shadeAmt * (1 - (.8 + .2 * sg.z));
-              const vert = (f, k) => { const [v, c, r] = rows[k], us = c + r * Math.sin(f + th), ut = c + r * Math.sin(f), zz = r * AW * .5 * Math.cos(f + th);
-                const [px, py] = proj((us - PU) * AW * rise * sx + sh * (PV - v) * AH * rise, (PV - v) * AH * rise, -.3 + zz * rise); return [px, py, ut, v]; };
+              const vert = (f, k) => { const [v, c, r] = rows[k], a = f + th, us = c + r * Math.sin(a), ut = c + tk * r * Math.sin(f), zz = r * AW * zk * Math.cos(a);
+                // light from the upper left and front, a warm rim where the surface turns away: the lit side travels round with the spin
+                const lit = clamp(.58 + .5 * (-.5 * Math.sin(a) + .8 * Math.cos(a)) + .3 * Math.pow(1 - Math.cos(a), 3), .35, 1.25), shade = 1 - shadeAmt * (1 - lit);
+                const [px, py] = proj((us - PU) * AW * rise * sx + sh * (PV - v) * AH * rise, (PV - v) * AH * rise, -.3 + zz * rise); return [px, py, ut, v, shade]; };
               for (let k = 0; k < n; k++) {
                 const A = vert(sg.f0, k), B = vert(sg.f1, k), C = vert(sg.f1, k + 1), D = vert(sg.f0, k + 1);
-                for (const q of [A, B, C, A, C, D]) out.artFront.push(q[0], q[1], q[2], q[3], 0, 0, 1, .75, .3, al, 7 + .1 * shade, slot, reveal, .3);
+                for (const q of [A, B, C, A, C, D]) out.artFront.push(q[0], q[1], q[2], q[3], 0, 0, 1, .75, .3, al, 7 + .1 * q[4], slot, reveal, .3);
               }
             });
           }
         };
         rev(0, rowsOf(STORM_PROF, NR), 1);                                        // the funnel
         // The head spins about the same axis: the painted head (slot 1, solid) as one flat piece that turns edge-on and comes round mirrored, like a top, with ghosts at speed.
-        { const grin = 1 + .06 * bump(T + .1, T + .2, T + .5), fv = .26, fs = rise * grin, fdy = (PV - fv) * AH * (rise - fs), hv = smooth(T + .05, T + .35, t) * out1;
-          for (let gi = ghosts - 1; gi >= 0; gi--) { const th = sp.th - gi * sp.w * .011, al = (gi === 0 ? 1.25 : .3 * Math.pow(.6, gi - 1)) * hv;
-            layer(out.artFront, 1, -.3 + .05 * Math.sin(th), fs, fdy, 1, 0, [1, .8, .4], false, al, 0, Math.cos(th) * (1 + .03 * Math.sin(t * 18)), sh * (PV - fv) * AH * rise, 0); } }
+        rev(1, rowsOf(STORM_HEAD, NR), 1.25 * smooth(T + .05, T + .35, t) * out1, .42, .8);   // the head, a lit body of revolution turning on the same axis
       } else if (R.art) {
         layer(out.art, 0, -.3, rise, 0, reveal * .4, 1.5, [1, .45, .12], false, 1.25, 1);
         layer(out.artFront, 1, .6, 1, 0, smooth(T, T + .3, t) * out1, .6, [1, .45, .12], false, 1.25, .4);

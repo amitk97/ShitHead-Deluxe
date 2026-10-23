@@ -444,8 +444,17 @@ def shitstorm_skin():
     s[..., :3] = cv2.cvtColor(np.clip(out, 0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
     s[..., 3] = np.maximum(s[..., 3], (soft[..., 0] * 255).astype(np.uint8))
     im[:, :W] = s
+    # head (slot 1): the head is wrapped on a body of revolution drawn opaque, so every pixel under a soft or empty edge takes the colour of the nearest solid brown
+    h = im[:, W:].copy(); hb = h[..., :3].astype(np.float32)
+    keep = (h[..., 3] > 235).astype(np.float32)
+    for sig in (6, 20, 60):
+        num = cv2.GaussianBlur(hb * keep[..., None], (0, 0), sig); den = cv2.GaussianBlur(keep, (0, 0), sig)[..., None]
+        fillc = num / np.maximum(den, 1e-4); need = (keep < .5)[..., None] & (den > 1e-3)
+        hb = np.where(need, fillc, hb); keep = np.where(need[..., 0], 1., keep)
+    h[..., :3] = np.clip(hb, 0, 255).astype(np.uint8)
+    im[:, W:] = h
     Image.fromarray(im, 'RGBA').save(p, quality=92)
-    print(p, 'funnel skin cleaned')
+    print(p, 'funnel skin cleaned, head colours bled')
 
 {'default': default_burn, 'coloured-flame': coloured_flame, 'electric-blast': electric_blast, 'confectionery': confectionery, 'lava-melt': lava_melt, 'origami-fold': origami_fold, 'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral, 'shitstorm': shitstorm, 'spark-snap': spark_snap, 'inferno-sweep': inferno_sweep, 'shitstorm-skin': shitstorm_skin}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
 
