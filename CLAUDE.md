@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v431 — ShitStorm seen from above (draft until the owner says go)
+
+- Owner: still read as paper. `rev(..., tl)` (default .3) lowers the near side of every ring by `tl * r * AW * cos(a)`, so cross-sections are ellipses (camera slightly above): the head shows its round top, the funnel its ring bands. v430 (head scale, funnel width) was pushed live ("Go, then keep pushing").
+
 ## v430 — ShitStorm head in proportion (draft until the owner says go)
 
 - Owner: the head looked too big for the body. `rev(slot, rows, alpha, zk, tk, ws, hs, an)` gained `ws` (screen width scale, texture unchanged) and `hs` (head scale about the neck row `an` .46, vertical too): funnel `ws` 1.45, head `hs` .68. Tune these two numbers for proportion.

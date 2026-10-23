@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v431: [['sparkle', 'The ShitStorm is seen slightly from above, so the head and funnel read as true round 3D shapes as they turn.']],
       v430: [['sparkle', 'The ShitStorm head is smaller and the funnel wider, so the character is in proportion.']],
       v429: [['sparkle', 'The ShitStorm is now a solid, lit 3D character: the head is a real turning volume with light travelling round it, and the funnel whirls beneath it.', WN_KEY]],
       v428: [['sparkle', 'The ShitStorm now spins as one: the grinning head turns like a top and the funnel under it whirls with its coils travelling round.', WN_KEY]],
