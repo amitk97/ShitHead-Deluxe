@@ -1041,16 +1041,16 @@ void main(){
         const NR = 40, NS = 36, ghosts = Math.abs(sp.w) > 8 ? 3 : 1;
         const rowsOf = (T, n) => { const out = []; for (let k = 0; k <= n; k++) { const v = T[0][0] + (T[T.length - 1][0] - T[0][0]) * k / n; let i = 0; while (i < T.length - 2 && T[i + 1][0] < v) i++; const A = T[i], B = T[i + 1], m = clamp((v - A[0]) / (B[0] - A[0])); out.push([v, A[1] + (B[1] - A[1]) * m, A[2] + (B[2] - A[2]) * m]); } return out; };
         // One painted slot wrapped on a body of revolution and turned: only the near half is drawn (the card sits behind it), a few faint ghosts at speed.
-        const rev = (slot, rows, alpha, zk = .5, tk = 1) => {
+        const rev = (slot, rows, alpha, zk = .5, tk = 1, ws = 1, hs = 1, an = .46) => {
           const n = rows.length - 1;
           for (let gi = ghosts - 1; gi >= 0; gi--) {
             const th = sp.th - gi * sp.w * .011, al = alpha * (gi === 0 ? 1 : .34 * Math.pow(.6, gi - 1)), strips = [];
             for (let q = 0; q < NS; q++) { const f0 = -Math.PI + q * 2 * Math.PI / NS, f1 = f0 + 2 * Math.PI / NS; strips.push({ f0, f1, z: Math.cos((f0 + f1) / 2 + th) }); }
             strips.filter(sg => sg.z >= 0).sort((p1, q1) => p1.z - q1.z).forEach(sg => {
-              const vert = (f, k) => { const [v, c, r] = rows[k], a = f + th, us = c + r * Math.sin(a), ut = c + tk * r * Math.sin(f), zz = r * AW * zk * Math.cos(a);
+              const vert = (f, k) => { const [v, c, r0] = rows[k], r = r0 * ws * hs, vs = an - (an - v) * hs, a = f + th, us = c + r * Math.sin(a), ut = c + tk * r0 * Math.sin(f), zz = r * AW * zk * Math.cos(a);
                 // light from the upper left and front, a warm rim where the surface turns away: the lit side travels round with the spin
                 const lit = clamp(.58 + .5 * (-.5 * Math.sin(a) + .8 * Math.cos(a)) + .3 * Math.pow(1 - Math.cos(a), 3), .35, 1.25), shade = 1 - shadeAmt * (1 - lit);
-                const [px, py] = proj((us - PU) * AW * rise * sx + sh * (PV - v) * AH * rise, (PV - v) * AH * rise, -.3 + zz * rise); return [px, py, ut, v, shade]; };
+                const [px, py] = proj((us - PU) * AW * rise * sx + sh * (PV - vs) * AH * rise, (PV - vs) * AH * rise, -.3 + zz * rise); return [px, py, ut, v, shade]; };
               for (let k = 0; k < n; k++) {
                 const A = vert(sg.f0, k), B = vert(sg.f1, k), C = vert(sg.f1, k + 1), D = vert(sg.f0, k + 1);
                 for (const q of [A, B, C, A, C, D]) out.artFront.push(q[0], q[1], q[2], q[3], 0, 0, 1, .75, .3, al, 7 + .1 * q[4], slot, reveal, .3);
@@ -1058,9 +1058,9 @@ void main(){
             });
           }
         };
-        rev(0, rowsOf(STORM_PROF, NR), 1);                                        // the funnel
+        rev(0, rowsOf(STORM_PROF, NR), 1, .5, 1, 1.45);                                        // the funnel
         // The head spins about the same axis: the painted head (slot 1, solid) as one flat piece that turns edge-on and comes round mirrored, like a top, with ghosts at speed.
-        rev(1, rowsOf(STORM_HEAD, NR), 1.25 * smooth(T + .05, T + .35, t) * out1, .42, .8);   // the head, a lit body of revolution turning on the same axis
+        rev(1, rowsOf(STORM_HEAD, NR), 1.25 * smooth(T + .05, T + .35, t) * out1, .42, .8, 1, .68);   // the head, a lit body of revolution turning on the same axis
       } else if (R.art) {
         layer(out.art, 0, -.3, rise, 0, reveal * .4, 1.5, [1, .45, .12], false, 1.25, 1);
         layer(out.artFront, 1, .6, 1, 0, smooth(T, T + .3, t) * out1, .6, [1, .45, .12], false, 1.25, .4);

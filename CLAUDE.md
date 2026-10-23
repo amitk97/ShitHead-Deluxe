@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v430 — ShitStorm head in proportion (draft until the owner says go)
+
+- Owner: the head looked too big for the body. `rev(slot, rows, alpha, zk, tk, ws, hs, an)` gained `ws` (screen width scale, texture unchanged) and `hs` (head scale about the neck row `an` .46, vertical too): funnel `ws` 1.45, head `hs` .68. Tune these two numbers for proportion.
+
 ## v429 — ShitStorm head is a lit solid of revolution (draft until the owner says go)
 
 - Owner: v428 read as a flat paper spinning. The head is now `rev(1, rowsOf(STORM_HEAD, NR), 1.25*..., .42, .8)` in the storm branch of `burns3d.js`: a body of revolution with real depth (`zk` .42 of the half-width), texture inset to .8 of the radius (`tk`, so the painting's pale glow fringe is never sampled), and per-vertex light (key from the upper left and front, warm rim) that travels round with the spin; `rev` lights the funnel the same way. `STORM_HEAD` ends at v .462 (tapers into the funnel). `python3 tools/make-burn-layers.py shitstorm-skin` also bleeds solid brown into every soft/empty pixel of slot 1. Weakness left: a pale tan lens still shows on the head's turning side (the painting's lower glow), the head's back is the mirrored front.
