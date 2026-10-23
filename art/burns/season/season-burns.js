@@ -90,7 +90,7 @@
     const { layer, cx, cy, W, H } = st;
     const hr = host.getBoundingClientRect();
     const vw = Math.round(host.clientWidth || hr.width || innerWidth), vh = Math.round(host.clientHeight || hr.height || innerHeight);
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(1.5, window.devicePixelRatio || 1); // v424: 1.5 is plenty for glows and sparks and a third cheaper than 2
     const canvases = [];
     const mkCanvas = () => {
       const c = document.createElement('canvas'); c.className = 'ssb-c'; c.width = Math.round(vw * dpr); c.height = Math.round(vh * dpr);
@@ -129,151 +129,6 @@
   }
 
   // The top n visible Pile cards as clones, positioned where they lie (one preview card when not on the table).
-  function pileClones(S, n) {
-    const { st, layer } = S, hr = S.host.getBoundingClientRect();
-    const els = st.onTable ? [...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')].filter(e => e.offsetWidth).slice(-n) : [];
-    const out = [];
-    if (!els.length) { const f = st.face(); f.style.left = px(S.cx - S.W / 2) + 'px'; f.style.top = px(S.cy - S.H / 2) + 'px'; layer.appendChild(f); return [f]; }
-    els.forEach(el => {
-      const r = el.getBoundingClientRect(), f = cloneCard(el), cs = getComputedStyle(el);
-      f.style.cssText = `position:absolute;left:${px(r.left + r.width / 2 - hr.left - el.offsetWidth / 2)}px;top:${px(r.top + r.height / 2 - hr.top - el.offsetHeight / 2)}px;width:${el.offsetWidth}px;height:${el.offsetHeight}px;margin:0;animation:none;transition:none;opacity:1;visibility:visible;transform:${cs.transform === 'none' ? '' : cs.transform}`;
-      layer.appendChild(f); out.push(f);
-    });
-    return out;
-  }
-  function topFace(S) { const f = S.st.face(); f.style.left = px(S.cx - S.W / 2) + 'px'; f.style.top = px(S.cy - S.H / 2) + 'px'; S.layer.appendChild(f); return f; }
-
-  // Cracks drawn over the card (stroke-dashoffset reveal on the shared clock).
-  function cracks(S, wrap, color, glowCol, seed) {
-    const R = rng(seed), { W, H } = S, ns = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;overflow:visible`;
-    const paths = [];
-    const arm = (x0, y0, ang, len, depth) => {
-      let x = x0, y = y0, d = `M${px(x)} ${px(y)}`;
-      const n = 5 + Math.floor(R() * 3);
-      for (let i = 0; i < n; i++) {
-        ang += (R() - .5) * .9; x += Math.cos(ang) * len / n; y += Math.sin(ang) * len / n; d += `L${px(x)} ${px(y)}`;
-        if (depth < 2 && R() < .38) arm(x, y, ang + (R() < .5 ? -1 : 1) * (.6 + R() * .6), len * .45, depth + 1);
-      }
-      paths.push(d);
-    };
-    const ox = W * (.35 + R() * .3), oy = H * (.35 + R() * .3);
-    for (let i = 0; i < 7; i++) arm(ox, oy, i / 7 * TAU + R() * .5, Math.max(W, H) * (.5 + R() * .35), 0);
-    const els = paths.map((d, i) => {
-      const g = document.createElementNS(ns, 'path'); g.setAttribute('d', d); g.setAttribute('pathLength', '1'); g.setAttribute('fill', 'none');
-      g.setAttribute('stroke', color); g.setAttribute('stroke-width', px(Math.max(1, W * .02))); g.setAttribute('stroke-linecap', 'round'); g.setAttribute('stroke-linejoin', 'round');
-      g.style.filter = `drop-shadow(0 0 ${px(W * .05)}px ${glowCol})`; g.style.strokeDasharray = '1'; g.style.strokeDashoffset = '1'; svg.appendChild(g); return g;
-    });
-    wrap.appendChild(svg);
-    return { svg, els, set(p) { els.forEach((e, i) => { e.style.strokeDashoffset = String(1 - clamp(p * 1.35 - i * .06, 0, 1)); }); } };
-  }
-
-  // Jittered-grid fragments that tile the card exactly (8-sided, so every edge is jagged). Returns piece elements.
-  function fragments(S, source, cols, rows, seed) {
-    const R = rng(seed), { W, H } = S, cw = W / cols, ch = H / rows;
-    const V = [];
-    for (let j = 0; j <= rows; j++) { V[j] = []; for (let i = 0; i <= cols; i++) {
-      const edgeX = i === 0 || i === cols, edgeY = j === 0 || j === rows;
-      V[j][i] = [i * cw + (edgeX ? 0 : (R() - .5) * cw * .7), j * ch + (edgeY ? 0 : (R() - .5) * ch * .7)];
-    } }
-    const HM = [], VM = [];
-    for (let j = 0; j <= rows; j++) { HM[j] = []; for (let i = 0; i < cols; i++) { const a = V[j][i], b = V[j][i + 1], o = (j === 0 || j === rows) ? 0 : (R() - .5) * ch * .3; HM[j][i] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + o]; } }
-    for (let j = 0; j < rows; j++) { VM[j] = []; for (let i = 0; i <= cols; i++) { const a = V[j][i], b = V[j + 1][i], o = (i === 0 || i === cols) ? 0 : (R() - .5) * cw * .3; VM[j][i] = [(a[0] + b[0]) / 2 + o, (a[1] + b[1]) / 2]; } }
-    const out = [];
-    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
-      const poly = [V[j][i], HM[j][i], V[j][i + 1], VM[j][i + 1], V[j + 1][i + 1], HM[j + 1][i], V[j + 1][i], VM[j][i]];
-      const mx = poly.reduce((s, p) => s + p[0], 0) / 8, my = poly.reduce((s, p) => s + p[1], 0) / 8;
-      const el = source.cloneNode(true);
-      el.style.left = px(S.cx - W / 2) + 'px'; el.style.top = px(S.cy - H / 2) + 'px'; el.style.clipPath = `polygon(${poly.map(p => `${px(p[0])}px ${px(p[1])}px`).join(',')})`;
-      el.style.transformOrigin = `${px(mx)}px ${px(my)}px`; el.classList.add('ssb-piece');
-      // A directional facet shade (lit from the top-left), so each shard reads as its own plane.
-      const sh = document.createElement('i'); const a = R() * 360;
-      sh.style.cssText = `position:absolute;inset:0;pointer-events:none;background:linear-gradient(${px(a)}deg,rgba(255,255,255,${px(.12 + R() * .3)}),rgba(0,0,0,${px(.1 + R() * .32)}))`;
-      el.appendChild(sh);
-      S.layer.appendChild(el);
-      out.push({ el, mx: mx - W / 2, my: my - H / 2, R: rng(seed * 31 + out.length * 7 + 3) });
-    }
-    return out;
-  }
-  // Physical pieces: ballistic with drag, tumble in 3D, shaded by their facing.
-  function flyPieces(S, pieces, t0, o) {
-    const { W, H } = S;
-    pieces.forEach(p => {
-      const base = p.el.style.filter || '', R = p.R, dirx = p.mx / (W * .5) + (R() - .5) * .8, diry = p.my / (H * .5) + (R() - .5) * .8 - (o.up || 0);
-      const sp = o.speed * (.6 + R() * .8), vx = dirx * sp, vy = diry * sp, vz = (R() - .2) * o.speed * .7;
-      const ax = R() - .5, ay = R() - .5, az = R() - .5, spin = (R() < .5 ? -1 : 1) * (240 + R() * 620), drag = o.drag || 1.2;
-      p.fn = (t) => {
-        const s = Math.max(0, (t - t0) / 1000), k = (1 - Math.exp(-drag * s)) / drag;
-        const X = p.mx * 0 + vx * k + (o.jolt ? (p.mx > 0 ? 1 : -1) * o.jolt * Math.min(1, s * 6) : 0), Y = vy * k + .5 * o.grav * s * s, Z = vz * k;
-        const ang = spin * s * (s < .6 ? 1 : .8), vis = t < t0 ? 1 : 1 - sm(o.fadeFrom, o.fadeTo, t);
-        const ca = Math.cos(ang * Math.PI / 180), br = t < t0 ? 1 : .62 + .5 * Math.max(0, ca);
-        return { transform: `translate3d(${px(X)}px,${px(Y)}px,${px(Z)}px) rotate3d(${px(ax)},${px(ay)},${px(az)},${px(ang)}deg)`, opacity: t < t0 ? 0 : vis, filter: `${base} brightness(${px(br)})` };
-      };
-      S.track(p.el, p.fn);
-    });
-  }
-  // The intact card: visible until t0, then gone (the fragments take over).
-  function intactUntil(S, el, t0) { S.track(el, (t) => ({ opacity: t < t0 ? 1 : 0 })); }
-
-  // ====================== SEASON 1: Sandstorm Vortex ======================
-  function sandstorm(S) {
-    const back = S.mkCanvas(), front = S.mkCanvas(), { cx, cy, H, W, vw } = S;
-    const SAND = [[196, 140, 52], [214, 160, 66], [168, 116, 40], [226, 182, 96]], R = rng(11);
-    const cards = pileClones(S, 5);
-    cards.forEach((el, i) => {
-      const n = cards.length, order = i / Math.max(1, n - 1);
-      S.track(el, (t) => {
-        const e = eIn(lin(550 + (1 - order) * 40, 1350, t)), a = e;
-        const lift = -H * 1.0 * e, drift = Math.sin(t / 90 + i) * W * .06 * e;
-        return { transform: `translate3d(${px(drift)}px,${px(lift)}px,${px(60 * e)}px) rotateZ(${px(1080 * e)}deg) scale(${px(Math.max(0.0001, 1 - e))})`, opacity: 1 - Math.max(0, a - .55) / .45, filter: `blur(${px(e * 2.5)}px) sepia(${px(e * .6)})` };
-      });
-    });
-    // grains: arrive from the screen edges (0-550), orbit a funnel (550-1400), rise into a golden cloud (1400-1800)
-    const N = 1500, g = [];
-    for (let i = 0; i < N; i++) {
-      const side = i % 2 ? 1 : -1, hh = R(), hy = cy + (R() - .5) * H * 3.2;
-      g.push({ side, sy: hy, dly: R() * 140, th0: R() * TAU, wv: 5 + R() * 6, hgt: R(), rad: .4 + R() * .75, sz: .014 + R() * .03, col: SAND[i % 4], cl: R() < .22, drift: (R() - .5) * W * 1.6, lift: .7 + R() * 1.3, hh, curl: (R() - .5) * 2 });
-    }
-    return {
-      topFade: [1.9, .8],
-      draw(t) {
-        // dusty mist sweeping in
-        const mist = lin(0, 450, t) * (1 - lin(1300, 1800, t));
-        back.globalCompositeOperation = 'source-over';
-        for (let s = 0; s < 8; s++) { const side = s % 2 ? 1 : -1, p = eOut(lin(0, 520 + s * 15, t)), x0 = side < 0 ? -W : vw + W;
-          put(back, puff([214, 168, 96], s % 3 + 1), lerp(x0, cx + side * -W * .2, p), cy + Math.sin(s * 2.1) * H * .6, H * (1.5 + (s % 3) * .35), (.34 - .18 * p) * mist * (s < 6 ? 1 : .8), t / 900 + s); }
-        front.globalCompositeOperation = 'source-over';
-        for (let i = 0; i < N; i++) {
-          const q = g[i], tt = t - q.dly; if (tt < 0) continue;
-          let X, Y, a = 1, size = q.sz * H * 1.55;
-          if (t < 600) {                                  // phase 1: streak in from the edges, converging
-            const p = eOut(lin(0, 520, tt)), x0 = q.side < 0 ? -20 : vw + 20, wob = Math.sin(tt / 70 + q.th0) * H * .12 * (1 - p);
-            X = lerp(x0, cx + Math.cos(q.th0) * W * .9, p); Y = lerp(q.sy, cy + Math.sin(q.th0) * H * .25, p) + wob;
-            const pp = eOut(lin(0, 520, tt - 22)), px2 = lerp(x0, cx + Math.cos(q.th0) * W * .9, pp);
-            front.globalAlpha = .22; front.strokeStyle = rgba(q.col, .6); front.lineWidth = size * .7; front.beginPath(); front.moveTo(px2, lerp(q.sy, cy, pp)); front.lineTo(X, Y); front.stroke();
-            a = Math.min(1, tt / 120);
-          } else {
-            const spin = (tt - 520) / 1000, up = sm(550, 1250, t), dis = lin(1400, 1800, t);
-            const th = q.th0 + q.wv * spin * (1 + up * .6), h = (q.hgt * up) + dis * q.lift * .5;
-            const funnel = (.12 + .88 * q.hgt * q.hgt) * q.rad * H * .9;
-            const rx = funnel * (1 + dis * .9), ry = rx * .34;
-            X = cx + Math.cos(th) * rx + q.drift * dis * .4; Y = cy - h * H * 1.45 + Math.sin(th) * ry - (up < 1 ? 0 : 0);
-            // grains swept in from phase 1 settle into the funnel
-            const settle = sm(520, 760, t); if (settle < 1) { const x1 = cx + Math.cos(q.th0) * W * .9, y1 = cy + Math.sin(q.th0) * H * .25; X = lerp(x1, X, settle); Y = lerp(y1, Y, settle); }
-            a = (1 - dis) * (.6 + .4 * (Math.sin(th) > 0 ? 1 : .5)) * (.55 + .45 * q.hgt);
-          }
-          put(front, glow(q.col), X, Y, size * (q.cl ? 3.2 : 1.7), a * (q.cl ? .32 : .95));
-        }
-        // glowing golden core / dust cloud
-        const core = sm(500, 900, t) * (1 - sm(1450, 1800, t));
-        front.globalCompositeOperation = 'lighter'; put(front, glow([255, 190, 90]), cx, cy - H * .35 * sm(500, 1300, t), H * 2.2 * (.6 + .5 * sm(1350, 1800, t)), .16 * core + .5 * sm(1400, 1600, t) * (1 - sm(1600, 1800, t)));
-        const cloud = sm(1380, 1560, t) * (1 - sm(1560, 1800, t));
-        front.globalCompositeOperation = 'source-over'; for (let c = 0; c < 6; c++) put(front, puff([232, 188, 100], c % 3 + 1), cx + (c - 2.5) * W * .35, cy - H * (.4 + c * .04 + .3 * lin(1400, 1800, t)), H * 1.4, .38 * cloud, c);
-      }
-    };
-  }
-
-  // ====================== SEASON 2: Glacial Shatter ======================
   function pileClones(S, n) {
     const { st, layer } = S, hr = S.host.getBoundingClientRect();
     const els = st.onTable ? [...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')].filter(e => e.offsetWidth).slice(-n) : [];
@@ -474,7 +329,7 @@
   function shurikenBarrage(S) {
     const back = S.mkCanvas(), front = S.mkCanvas(), { cx, cy, H, W, vw, vh } = S, R = rng(44);
     const face = topFace(S);
-    const pieces = fragments(S, face, 4, 5, 91);
+    const pieces = fragments(S, face, 4, 3, 91); // 12 pieces (was 20): each is a 3D layer
     pieces.forEach(p => { p.el.style.opacity = 0; });
     // five stars: each flies in, drives into the card and tears through it; the pieces nearest it are ripped off along its path
     const stars = [];
@@ -494,14 +349,12 @@
       });
     });
     intactUntil(S, face, SL);
-    const flash = document.createElement('div');
-    flash.style.cssText = `position:absolute;inset:0;background:radial-gradient(circle at ${px(cx)}px ${px(cy)}px,rgba(255,255,255,.5),rgba(255,200,215,.14) 38%,transparent 62%);opacity:0;mix-blend-mode:screen`;
-    S.layer.appendChild(flash); S.track(flash, (t) => ({ opacity: t < SL ? 0 : Math.max(0, 1 - lin(SL, SL + 260, t)) * 1 }));
+    // (the impact flash is drawn on the canvas below: a full-screen blended layer was the costly part)
     const SLASHES = [0, 2, 4].map((i, k) => ({ a: Math.atan2(stars[i].dir[1], stars[i].dir[0]), bend: [.14, -.12, .18][k], t0: IMP(stars[i]) - 20 })), SPARKS = [];
     for (let i = 0; i < 80; i++) SPARKS.push({ c: i % 3, u: .12 + R() * .76, d: R() * TAU, v: H * (.35 + R() * 1.1), life: 260 + R() * 330, hot: R() < .4 });
     const petals = [], mist = [];
-    for (let i = 0; i < 200; i++) petals.push({ a: R() * TAU, r: R(), sp: 4 + R() * 3, sz: .09 + R() * .1, flip: R() * TAU, fs: 6 + R() * 8, c: R() < .5 ? 0 : 1, rise: .4 + R(), delay: R() * 140, rot: R() * TAU });
-    for (let i = 0; i < 12; i++) mist.push({ a: R() * TAU, r: R(), seed: i % 3 + 1 });
+    for (let i = 0; i < 120; i++) petals.push({ a: R() * TAU, r: R(), sp: 4 + R() * 3, sz: .09 + R() * .1, flip: R() * TAU, fs: 6 + R() * 8, c: R() < .5 ? 0 : 1, rise: .4 + R(), delay: R() * 140, rot: R() * TAU });
+    for (let i = 0; i < 8; i++) mist.push({ a: R() * TAU, r: R(), seed: i % 3 + 1 });
     const PC = [[[255, 183, 206], [255, 140, 177]], [[255, 214, 226], [244, 114, 160]]];
     return {
       draw(t) {
@@ -511,10 +364,10 @@
           if (t < s.t0) return;
           const out = 1 - lin(1000, 1250, t);
           const pos = (pp) => [lerp(s.from[0], s.to[0], pp), lerp(s.from[1], s.to[1], pp)], size = (pp) => H * .8 * lerp(3, .5, pp);
-          for (let g = 6; g >= 0; g--) { const pp = Math.max(0, p - g * .035), [gx, gy] = pos(pp); put(front, shuriken(), gx, gy, size(pp), (g ? .17 * (1 - g / 7) : 1) * out, s.rot0 + s.spin * pp * 3, 1); }
+          for (let g = 3; g >= 0; g--) { const pp = Math.max(0, p - g * .06), [gx, gy] = pos(pp); put(front, shuriken(), gx, gy, size(pp), (g ? .2 * (1 - g / 4) : 1) * out, s.rot0 + s.spin * pp * 3, 1); }
           if (p >= 1) {
             const dr = (u) => eOut(lin(IMP(s), IMP(s) + 240, u)), D = W * .85;
-            for (let g = 5; g >= 0; g--) { const dd = dr(t - g * 14); put(front, shuriken(), s.to[0] + s.dir[0] * D * dd, s.to[1] + s.dir[1] * D * dd, size(1), (g ? .2 * (1 - g / 6) : 1) * out, s.rot0 + s.spin * (3 + (t - IMP(s)) / 90), 1); }
+            for (let g = 2; g >= 0; g--) { const dd = dr(t - g * 24); put(front, shuriken(), s.to[0] + s.dir[0] * D * dd, s.to[1] + s.dir[1] * D * dd, size(1), (g ? .24 * (1 - g / 3) : 1) * out, s.rot0 + s.spin * (3 + (t - IMP(s)) / 90), 1); }
           }
           const hit = lin(s.t0 + 400, s.t0 + 700, t); if (hit > 0 && hit < 1) { front.globalCompositeOperation = 'lighter'; put(front, glint([255, 255, 255]), pos(1)[0], pos(1)[1], H * .8 * (1 - hit), 1 - hit, 0); front.globalCompositeOperation = 'source-over'; }
         });
@@ -546,6 +399,7 @@
         });
         const hit = lin(SL - 30, SL + 40, t) * (1 - lin(SL + 40, SL + 260, t));
         if (hit > 0) put(front, glow([255, 235, 240]), cx, cy, H * 1.5, .6 * hit);
+        const fl = t < SL ? 0 : Math.max(0, 1 - lin(SL, SL + 260, t)); if (fl > 0) put(front, glow([255, 215, 228]), cx, cy, Math.max(W, H) * 5, .55 * fl);
         // sakura cloud
         const s0 = 1000;
         if (t > s0) {
@@ -783,5 +637,8 @@
   // ---------- public API ----------
   const BUILDERS = { 'burn-ss2611-sandstorm': sandstorm, 'burn-ss2701-glacier': glacier, 'burn-ss2703-shuriken': shurikenBarrage, 'burn-ss2705-whirlpool': whirlpool, 'burn-ss2707-zeus': zeus, 'burn-ss2709-hex': hex };
   function play(id, host, x, y, k) { const b = BUILDERS[id]; if (!b || !host || typeof procBurnStage !== 'function') return false; return scene(id, host, x, y, k || 1, b); }
+  // Build the sprites a burn needs before its first play (the first play used to hitch while they were painted).
+  function warm() { try { shuriken(); glint([255, 255, 255]); glow([255, 235, 240]); glow([255, 215, 228]); [1, 2, 3].forEach(i => puff([255, 190, 214], i)); [[255, 183, 206], [255, 140, 177]].forEach(c => petal(...[c, c])); [[[255, 183, 206], [255, 140, 177]], [[255, 214, 226], [244, 114, 160]]].forEach(c => petal(...c)); } catch (e) {} }
+  if (window.requestIdleCallback) requestIdleCallback(warm, { timeout: 8000 }); else setTimeout(warm, 4000);
   window.ShSeasonBurns = { IDS, NAMES, MS, has: (id) => !!BUILDERS[id], play };
 })();
