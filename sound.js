@@ -525,7 +525,20 @@
         k.tone({ at: 1.4, dur: 0.4, type: 'sine', f0: 900, f1: 90, level: 0.14 });
       },
       // Level burns v294: shared visual/audio timing in the layered renderer.
-      'burn-lvl-spark-snap': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-spark-snap', k) : ShLevelBurns.sound('burn-lvl-spark-snap', k)),
+      // Spark Snap (v424): sparks sucked in with a rising whine and a crackle (0-.42s), the SNAP at .42 (a sharp crack,
+      // a thump and a glassy ring), light beams shimmering out, shards and sparks pinging down to ~1.5s.
+      'burn-lvl-spark-snap': (k) => {
+        k.tone({ at: 0, dur: 0.42, type: 'sawtooth', f0: 220, f1: 1800, level: 0.1, attack: 0.3 });
+        k.noise({ at: 0, dur: 0.42, type: 'bandpass', f0: 800, f1: 5000, q: 1.2, level: 0.14, attack: 0.3 });
+        k.scatter(26, 0.02, 0.4, (at) => k.noise({ at, dur: 0.012, type: 'highpass', f0: 5500, level: 0.16 }));
+        k.noise({ at: 0.42, dur: 0.09, type: 'highpass', f0: 2800, level: 0.5 });
+        k.tone({ at: 0.42, dur: 0.18, f0: 200, f1: 55, level: 0.45, attack: 0.005 });
+        k.tone({ at: 0.42, dur: 0.6, type: 'triangle', f0: 1568, f1: 1480, level: 0.12 });
+        k.tone({ at: 0.44, dur: 0.5, type: 'sine', f0: 2349, level: 0.07 });
+        k.noise({ at: 0.45, dur: 0.5, type: 'bandpass', f0: 4200, f1: 900, q: 0.9, level: 0.22 });
+        k.scatter(18, 0.5, 1.5, (at) => k.tone({ at, dur: 0.12, type: 'sine', f0: 1800 + Math.random() * 2200, level: 0.06 }));
+        k.scatter(10, 0.5, 1.3, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 3000 + Math.random() * 2000, q: 3, level: 0.12 }));
+      },
       // Smoke Burst (v406): the card swells (a rising strain to the pop at .36s), the pop, a deep whoomph as the
       // smoke ball bursts out and billows to ~1.5s, a soft hiss tail.
       'burn-lvl-smoke-burst': (k) => {
@@ -549,7 +562,23 @@
         k.noise({ at: 1.5, dur: 0.45, type: 'bandpass', f0: 1800, f1: 800, q: 0.5, level: 0.07, attack: 0.1 });
       },
       'burn-lvl-hellfire-spiral': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-hellfire-spiral', k) : ShLevelBurns.sound('burn-lvl-hellfire-spiral', k)),
-      'burn-lvl-royal-incineration': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-royal-incineration', k) : ShLevelBurns.sound('burn-lvl-royal-incineration', k)),
+      // Royal Incineration (v424): a rising brass-like swell as the crown descends (.05-.6s), a metallic clang and thump
+      // as it lands (.6), jewel chimes (.70, .82, .94, 1.06, 1.16), the golden fire igniting with a roar and chord at
+      // .78, gold dust pinging and fire crackling to ~1.6s.
+      'burn-lvl-royal-incineration': (k) => {
+        [196, 247, 294].forEach((f, i) => k.tone({ at: 0.05, dur: 0.6, type: 'sawtooth', f0: f, f1: f * 1.5, level: 0.06, attack: 0.4 }));
+        k.noise({ at: 0.05, dur: 0.55, type: 'bandpass', f0: 600, f1: 3500, q: 1, level: 0.1, attack: 0.4 });
+        [523, 1319, 2093, 3136].forEach((f, i) => k.tone({ at: 0.6, dur: 0.9 - i * 0.15, type: 'sine', f0: f, level: 0.16 / (i + 1) + 0.03 }));
+        k.noise({ at: 0.6, dur: 0.06, type: 'bandpass', f0: 2500, q: 2, level: 0.4 });
+        k.tone({ at: 0.6, dur: 0.2, f0: 150, f1: 48, level: 0.42, attack: 0.005 });
+        [0.70, 0.82, 0.94, 1.06, 1.16].forEach((at, i) => k.tone({ at, dur: 0.4, type: 'triangle', f0: [1319, 1568, 1976, 2349, 2637][i], level: 0.08 }));
+        k.noise({ at: 0.78, dur: 0.9, type: 'lowpass', f0: 900, f1: 260, level: 0.3, attack: 0.04 });
+        k.noise({ at: 0.78, dur: 0.35, type: 'bandpass', f0: 3000, f1: 700, q: 0.9, level: 0.24 });
+        k.tone({ at: 0.78, dur: 0.22, f0: 130, f1: 45, level: 0.4 });
+        [392, 494, 587, 784].forEach((f, i) => k.tone({ at: 0.8 + i * 0.03, dur: 0.9, type: 'triangle', f0: f, level: 0.09 }));
+        k.scatter(20, 0.85, 1.7, (at) => k.tone({ at, dur: 0.14, type: 'sine', f0: 2000 + Math.random() * 2400, level: 0.05 }));
+        k.scatter(26, 0.85, 1.6, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 1500 + Math.random() * 2500, q: 2, level: 0.1 }));
+      },
       'burn-lvl-shitstorm': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-shitstorm', k) : ShLevelBurns.sound('burn-lvl-shitstorm', k)),
       // Valentine (v410): heartbeat thumps (.10-.38s), an arrow whoosh into the strike at .42, the burst at .50 with a
       // harp run and soft petal rustle.

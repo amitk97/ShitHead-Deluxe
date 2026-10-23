@@ -24,7 +24,7 @@
     // Inferno Sweep (Lvl 40): the owner's swirl of fire, swept across by a whip of flame; the rubble in front.
     'burn-lvl-inferno-sweep': { iconOnly: true /* v406: procedural in burn-effects.js; tile + sound only */, dur: 2.0, box: [5, 5, .5, .6], tile: 'art/burns/inferno-sweep/tile.webp', art: 'art/burns/inferno-sweep/layers.webp?v=1', layout: [5, 413 / 437, .5, .55] },
     // Spark Snap (Lvl 5): the owner's spark explosion, snapping out from the card; the rubble in front.
-    'burn-lvl-spark-snap': { dur: 1.9, box: [5, 5.4, .5, .55], tile: 'art/burns/spark-snap/tile.webp', art: 'art/burns/spark-snap/layers.webp?v=1', layout: [4.4, 412 / 434, .615, .525] },
+    'burn-lvl-spark-snap': { iconOnly: true /* v424: procedural in burn-effects.js; tile + sound only */, dur: 1.9, box: [5, 5.4, .5, .55], tile: 'art/burns/spark-snap/tile.webp', art: 'art/burns/spark-snap/layers.webp?v=1', layout: [4.4, 412 / 434, .615, .525] },
     // Painted-art burns: the owner's approved tile cut into two layers (tools/make-burn-layers.py),
     // brought to life in WebGL. layout: art width in card heights, height/width, where the Pile sits.
     // Ghost Flames (seasonal Halloween): a ghost layer and a fire layer; every pile card burns.
@@ -32,7 +32,7 @@
     // Smoke Burst (Lvl 20): the cloud and its front puffs; only the top card shows (the rest hide).
     'burn-lvl-smoke-burst': { iconOnly: true /* v406: procedural in burn-effects.js; tile + sound only */, dur: 2.0, box: [6, 6.2, .5, .52], tile: 'art/burns/smoke-burst/tile.webp', art: 'art/burns/smoke-burst/layers.webp?v=1', layout: [4.8, 404 / 439, .5, .52] },
     // Royal Incineration (Lvl 80): the crown (whole, its own layer) and the golden fire burst under it.
-    'burn-lvl-royal-incineration': { dur: 2.0, box: [5, 5.4, .5, .66], tile: 'art/burns/royal-incineration/tile.webp', art: 'art/burns/royal-incineration/layers.webp?v=1', layout: [4.2, 436 / 432, .49, .68] },
+    'burn-lvl-royal-incineration': { iconOnly: true /* v424: procedural in burn-effects.js; tile + sound only */, dur: 2.0, box: [5, 5.4, .5, .66], tile: 'art/burns/royal-incineration/tile.webp', art: 'art/burns/royal-incineration/layers.webp?v=1', layout: [4.2, 436 / 432, .49, .68] },
     // Hellfire Spiral (Lvl 60): the magma tornado (cards painted out) and the rubble at its base in front.
     'burn-lvl-hellfire-spiral': { dur: 2.0, box: [5, 5.6, .5, .8], tile: 'art/burns/hellfire-spiral/tile.webp', art: 'art/burns/hellfire-spiral/layers.webp?v=2', layout: [4.6, 444 / 434, .5, .8] },
     // The ShitStorm (Lvl 99): the owner's painted poo tornado (slot 0, the body swirls in the shader) and its whole head (slot 1, rigid).
