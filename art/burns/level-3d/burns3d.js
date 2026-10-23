@@ -5,6 +5,7 @@
    cards are invented. Without WebGL the caller falls back to ShLevelBurns. */
 (() => {
   'use strict';
+const STORM_PROF = [[.3, .5, .3], [.38, .5, .285], [.44, .5, .235], [.5, .5, .185], [.56, .5, .145], [.62, .5, .115], [.7, .5, .085], [.78, .5, .06], [.86, .5, .04], [.9, .5, .025]]; // the painted funnel's brown body per height v under the head: [v, centre u, half-width u], read from the painting (the head hides the top rows)
   const EFFECTS = {
     // Origami Fold (Shop, premium): the owner's paper swan folds itself round the card, then flies off.
     'burn-origami': { iconOnly: true /* v305: folded procedurally from the real card in index.html; tile + sound only */, dur: 2.0, box: [5, 5.4, .5, .62], tile: 'art/burns/origami-fold/tile.webp', art: 'art/burns/origami-fold/layers.webp?v=1', layout: [4.4, 438 / 498, .486, .62] },
@@ -296,6 +297,11 @@ void main(){
     const spinI = t => { let a = 0; for (let x = 0; x < t; x += .02) a += spinW(x + .01) * Math.min(.02, t - x); return a; };
     let spinK = 1; { const e = spinI(1.6); spinK = Math.max(1, Math.round(e / (Math.PI * 2))) * Math.PI * 2 / e; }
     S.spin = t => ({ th: spinI(Math.min(t, 1.6)) * spinK, w: spinW(t) * spinK });
+    // The ShitStorm's body turns for most of the burn: it winds up from .25s, runs fast, winds down by 1.75s and has made whole turns by then.
+    const bW = t => 31 * smooth(.25, .95, t) * (1 - smooth(1.3, 1.78, t));
+    const bI = t => { let a = 0; for (let x = 0; x < t; x += .02) a += bW(x + .01) * Math.min(.02, t - x); return a; };
+    let bK = 1; { const e = bI(1.8); bK = Math.max(1, Math.round(e / (Math.PI * 2))) * Math.PI * 2 / e; }
+    S.bspin = t => ({ th: bI(Math.min(t, 1.8)) * bK, w: bW(t) * bK });
     S.fpt = (par, u, a) => {
       const r = (S.hell ? .2 + 1.35 * Math.pow(u, 1.2) : .3 + .7 * Math.pow(u, .75)) * par.R0, ax = par.lean * u * u + .05 * par.K * par.g * Math.sin(u * 6 - par.t * 8) * u;
       return [ax + Math.cos(a) * r, FLOOR + .04 + u * par.H, Math.sin(a) * r * .7];
@@ -1000,7 +1006,7 @@ void main(){
             const f0 = -Math.PI + n * 2 * Math.PI / NS, f1 = f0 + 2 * Math.PI / NS;
             strips.push({ f0, f1, z: Math.cos((f0 + f1) / 2 + th) });
           }
-          strips.sort((p1, q1) => p1.z - q1.z).forEach(sg => {
+          strips.filter(sg => sg.z >= 0).sort((p1, q1) => p1.z - q1.z).forEach(sg => {
             const shade = sg.z < 0 ? .5 : .78 + .22 * sg.z, col = 1 - shadeAmt * (1 - shade);
             const vert = (f, k) => {
               const [c0, r0] = rings[k], x = hw * (c0 + r0 * Math.sin(f + th)), y = hh2 - 2 * hh2 * k / NR, q = rot(x, y);
@@ -1027,12 +1033,36 @@ void main(){
       const reveal = smooth(T - .08, T + .45, t) * out1, flick = .85 + .15 * Math.sin(t * 19);
       glowAt(out.back, [0, 0, 0], .9, [1, .4, .1, .7 * smooth(0, T, t) * (1 - smooth(T, T + .3, t))]);
       if (R.art && S.storm) {
-        // The ShitStorm is the owner's painting, whole: the tornado body whirls (highlights sweep round it, its coils travel,
-        // it pulses and leans as it spins) and the painted head rides on it unwarped, so body and head are one style.
-        const sh = .07 * Math.sin(t * 9) * reveal, sx = 1 + .04 * Math.sin(t * 18), grin = 1 + .06 * bump(T + .1, T + .2, T + .5);
-        layer(out.art, 0, -.3, rise, 0, reveal, .5, [1, .75, .3], false, 1.25, 11.6, sx, sh);
-        const fv = .26, fs = rise * grin, fdy = (PV - fv) * AH * (rise - fs);
-        layer(out.artFront, 1, -.3, fs, fdy, smooth(T + .05, T + .35, t) * out1, 0, [1, .8, .4], false, 1.25, 0, 1, 0, sh * (PV - fv) * AH * rise);
+        // The ShitStorm is the owner's painting, whole, wrapped on a real body of revolution that TURNS: the painted coils travel round it,
+        // the head turns with it (its face goes round and comes back), the near half is drawn in front of the card and the far half behind.
+        // Rows follow the painted outline (STORM_PROF: centre and half-width in the painting's own units), so the outline stays put while the paint goes round.
+        const sh = .05 * Math.sin(t * 9) * reveal, sx = 1 + .03 * Math.sin(t * 18), sp = S.bspin(t), shadeAmt = smooth(0, 6, Math.abs(sp.w));
+        const NR = 44, NS = 36, V0 = STORM_PROF[0][0], V1 = STORM_PROF[STORM_PROF.length - 1][0];
+        const prof = k => { const v = V0 + (V1 - V0) * k / NR; let i = 0; while (i < STORM_PROF.length - 2 && STORM_PROF[i + 1][0] < v) i++; const A = STORM_PROF[i], B = STORM_PROF[i + 1], m = clamp((v - A[0]) / (B[0] - A[0])); return [v, A[1] + (B[1] - A[1]) * m, A[2] + (B[2] - A[2]) * m]; };
+        const rows = []; for (let k = 0; k <= NR; k++) rows.push(prof(k));
+        // A dark wet core fills the funnel behind the painted skin (the painting has gaps and glows that would show the table and the card through it).
+        for (let k = 0; k < NR; k++) {
+          const A = rows[k], B = rows[k + 1], q0 = k / NR, q1 = (k + 1) / NR, ys = v => (PV - v) * AH * rise;
+          const px2 = (v, c, d) => proj((c + d - PU) * AW * rise * sx + sh * (PV - v) * AH * rise, ys(v), -.3);
+          quad(out.artFront, [px2(A[0], A[1], -A[2] * .9), px2(A[0], A[1], A[2] * .9), px2(B[0], B[1], B[2] * .9), px2(B[0], B[1], -B[2] * .9)], [[0, q0], [1, q0], [1, q1], [0, q1]], [[-1, q0], [1, q0], [1, q1], [-1, q1]], [.42, .3, .2, 0], [12, 0, 0, 0]);
+        }
+        const ghosts = Math.abs(sp.w) > 8 ? 3 : 1;
+        // The painted head rides on top, rigid (never warped), swaying with the funnel and grinning on the strike; its own slot is solid.
+        { const grin = 1 + .06 * bump(T + .1, T + .2, T + .5), fv = .26, fs = rise * grin, fdy = (PV - fv) * AH * (rise - fs);
+          layer(out.artFront, 1, -.3, fs, fdy, smooth(T + .05, T + .35, t) * out1, 0, [1, .8, .4], false, 1.25, 0, 1, 0, sh * (PV - fv) * AH * rise); }
+        for (let gi = ghosts - 1; gi >= 0; gi--) {
+          const th = sp.th - gi * sp.w * .011, al = 1 * (gi === 0 ? 1 : .34 * Math.pow(.6, gi - 1)) , strips = [];
+          for (let n = 0; n < NS; n++) { const f0 = -Math.PI + n * 2 * Math.PI / NS, f1 = f0 + 2 * Math.PI / NS; strips.push({ f0, f1, z: Math.cos((f0 + f1) / 2 + th) }); }
+          strips.filter(sg => sg.z >= 0).sort((p1, q1) => p1.z - q1.z).forEach(sg => {
+            const shade = sg.z < 0 ? .5 : 1 - shadeAmt * (1 - (.8 + .2 * sg.z)), arr = sg.z < 0 ? out.art : out.artFront;
+            const vert = (f, k) => { const [v, c, r] = rows[k], us = c + r * Math.sin(f + th), ut = c + r * Math.sin(f), zz = r * AW * .5 * Math.cos(f + th);
+              const [px, py] = proj((us - PU) * AW * rise * sx + sh * (PV - v) * AH * rise, (PV - v) * AH * rise, -.3 + zz * rise); return [px, py, ut, v]; };
+            for (let k = 0; k < NR; k++) {
+              const A = vert(sg.f0, k), B = vert(sg.f1, k), C = vert(sg.f1, k + 1), D = vert(sg.f0, k + 1);
+              for (const q of [A, B, C, A, C, D]) arr.push(q[0], q[1], q[2], q[3], 0, 0, 1, .75, .3, al, 7 + .1 * shade, 0, reveal, .3);
+            }
+          });
+        }
       } else if (R.art) {
         layer(out.art, 0, -.3, rise, 0, reveal * .4, 1.5, [1, .45, .12], false, 1.25, 1);
         layer(out.artFront, 1, .6, 1, 0, smooth(T, T + .3, t) * out1, .6, [1, .45, .12], false, 1.25, .4);

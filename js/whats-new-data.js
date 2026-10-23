@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v426: [['sparkle', 'The ShitStorm now really spins: the painted funnel turns on its axis, its coils travelling round it, instead of swaying with the light moving.', WN_KEY]],
       v425: [['sparkle', 'The ShitStorm is the painted tornado again, body and head in one style. Ghost Flames trails off into smoke instead of stopping at a box edge, and the Shuriken Barrage stars are back on screen from the first frame.', WN_KEY]],
       v424: [['sparkle', 'Spark Snap and Royal Incineration are rebuilt: sparks are sucked into your card and it snaps into gold-edged shards, and a jewelled crown lands on rays of light before golden fire consumes the card. Ghost Flames no longer runs off the edges and Shuriken Barrage runs lighter.', WN_KEY]],
       v423: [['sparkle', 'Nine more victory effects are redrawn with their own sounds: Love Wins (Valentine), Beach Party (Summer), Bat Swarm (Halloween), Festival of Lights (Diwali), Santa\'s Sleigh (Christmas), Midnight (New Year), Egg Hunt (Easter), Dragon Dance (Lunar New Year) and Crescent Night (Ramadan). Confetti Burst is now a party of cannons and the default effects can be previewed.', WN_KEY]],
