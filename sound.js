@@ -321,6 +321,15 @@
         const recipe = JOKER_SOUNDS[effectId] || JOKER_SOUNDS.default;
         try { recipe(kit); } catch (e) {}
       }
+      // Victory effects (§ Victory effects): one recipe per effect, same kit; an effect without one is silent
+      // here (Lion's Roar and Fireworks play their recorded clips instead).
+      playVictorySound(effectId) {
+        const recipe = VICTORY_SOUNDS[effectId];
+        if (!recipe) return;
+        const kit = this._burnKit();
+        if (!kit) return;
+        try { recipe(kit); } catch (e) {}
+      }
       /* The pile burns (10, four of a kind, Joker counter): the burner's sound + a buzz. */
       burn(effectId = 'default') { Haptics.vibrate([30, 50, 40]); this.playBurnSound(effectId); }
       turnNotify() { Haptics.vibrate(20); }
@@ -647,6 +656,49 @@
     // animation's beats (JOKER_FX_MS = 1.5s): same loudness as the burns.
     const jokerChime = ({ tone }, notes, at = 0, gap = 0.07, level = 0.12, type = 'triangle', dur = 0.35) =>
       notes.forEach((f, i) => tone({ at: at + i * gap, dur, type, f0: f, level }));
+    // Victory sound recipes, on the same beats as their effects in app.js (vfxSparklers, vfxFiveStars, vfxKarate).
+    const VICTORY_SOUNDS = {
+      // Sparkler Salute: hiss and crackle as the two sparklers write their loops (0-2.2s), a rising shimmer,
+      // the burst when they meet at 2.2s and glitter falling to ~3.4s.
+      'victory-sparklers': (k) => {
+        k.noise({ dur: 2.3, type: 'highpass', f0: 5200, q: 0.7, level: 0.05, attack: 0.15 });
+        k.noise({ dur: 2.2, type: 'bandpass', f0: 700, f1: 3400, q: 1, level: 0.07, attack: 0.7 });
+        k.scatter(80, 0.05, 2.2, (at) => k.noise({ at, dur: 0.012, type: 'highpass', f0: 5800, level: 0.13 }));
+        k.tone({ at: 0.1, dur: 2.1, type: 'sine', f0: 600, f1: 2000, level: 0.03, attack: 0.9 });
+        k.noise({ at: 2.2, dur: 0.3, type: 'bandpass', f0: 2600, f1: 500, q: 0.8, level: 0.32 });
+        k.tone({ at: 2.2, dur: 0.5, type: 'triangle', f0: 523, f1: 1046, level: 0.13 });
+        [1319, 1568, 1976, 2637].forEach((f, i) => k.tone({ at: 2.28 + i * 0.07, dur: 0.4, type: 'sine', f0: f, level: 0.08 }));
+        k.scatter(26, 2.3, 3.4, (at) => k.tone({ at, dur: 0.09, type: 'sine', f0: 2400 + Math.random() * 1800, level: 0.045 }));
+      },
+      // 5-Star Finish: a pentatonic chime as each star lights (.45, .75, 1.05, 1.35, 1.65s), then a flash,
+      // a rising sparkle run and falling glitter as the sunburst opens.
+      'victory-stars': (k) => {
+        [784, 880, 988, 1175, 1319].forEach((f, i) => {
+          const at = 0.45 + i * 0.3;
+          k.tone({ at, dur: 0.38, type: 'triangle', f0: f, level: 0.12 });
+          k.tone({ at, dur: 0.22, type: 'sine', f0: f * 2, level: 0.05 });
+          k.noise({ at, dur: 0.04, type: 'highpass', f0: 6000, level: 0.12 });
+        });
+        k.noise({ at: 1.65, dur: 0.5, type: 'bandpass', f0: 500, f1: 4200, q: 0.9, level: 0.22, attack: 0.15 });
+        [1568, 1976, 2349, 3136].forEach((f, i) => k.tone({ at: 1.7 + i * 0.06, dur: 0.5, type: 'sine', f0: f, level: 0.08 }));
+        k.tone({ at: 1.65, dur: 0.9, type: 'triangle', f0: 392, level: 0.1 });
+        k.scatter(22, 1.8, 3.0, (at) => k.tone({ at, dur: 0.08, type: 'sine', f0: 2600 + Math.random() * 1600, level: 0.04 }));
+      },
+      // Karate Chop: the hand lifts (0-.75s), a shout and a whoosh as it drops at .78s, then three CRACKs as
+      // the boards snap (.94, 1.01, 1.08s) with splinters and a last dull thud.
+      'victory-karate': (k) => {
+        k.noise({ at: 0.15, dur: 0.6, type: 'bandpass', f0: 300, f1: 1100, q: 1.2, level: 0.1, attack: 0.5 });
+        k.tone({ at: 0.74, dur: 0.28, type: 'sawtooth', f0: 430, f1: 210, level: 0.1, attack: 0.02, vibrato: 14 });
+        k.noise({ at: 0.78, dur: 0.22, type: 'bandpass', f0: 3000, f1: 350, q: 1.4, level: 0.3 });
+        [0.94, 1.01, 1.08].forEach((at, i) => {
+          k.noise({ at, dur: 0.07, type: 'highpass', f0: 3200, level: 0.42 });
+          k.tone({ at, dur: 0.06, type: 'square', f0: 950 - i * 120, f1: 240, level: 0.16 });
+          k.tone({ at, dur: 0.16, type: 'sine', f0: 130 - i * 15, f1: 48, level: 0.36 });
+          k.scatter(6, at + 0.03, at + 0.4, (t) => k.noise({ at: t, dur: 0.02, type: 'bandpass', f0: 1800 + Math.random() * 1500, q: 3, level: 0.1 }));
+        });
+        k.noise({ at: 1.1, dur: 0.5, type: 'lowpass', f0: 600, f1: 200, level: 0.12, attack: 0.05 });
+      }
+    };
     const JOKER_SOUNDS = {
       // Default: a card flip whoosh and a rising sparkle.
       default: (k) => {

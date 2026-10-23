@@ -3173,97 +3173,162 @@
     // Drawn on #victoryFxLayer above everything, with the same helpers as
     // the shape burn effects.
     // ============================================================
+    // v421: the three classic victories share one drawing style with the premium ones: everything is Web
+    // Animations sampled on one clock (so a paused frame is exact), a dark vignette focuses the screen, and
+    // each has its own sound (VICTORY_SOUNDS, same beats). All three end inside 3.6s.
+    // Sparkler Salute: two sparklers fly up from the bottom corners writing loops of light that meet above
+    // the table in a golden burst and a fall of glitter.
     function vfxSparklers(layer) {
-      const W = layer.clientWidth || window.innerWidth, H = layer.clientHeight || window.innerHeight;
-      const stickLen = Math.min(230, H * .32);
-      const sides = [{ x: Math.max(44, W * .12), dir: 1 }, { x: W - Math.max(44, W * .12), dir: -1 }];
-      const duration = 3400, start = performance.now();
-      sides.forEach(({ x, dir }) => {
-        const stick = bfxAdd(layer, `<svg width="24" height="${stickLen + 20}" viewBox="0 0 24 ${stickLen + 20}"><rect x="10" y="10" width="4" height="${stickLen}" rx="2" fill="#94a3b8"/><rect x="9" y="10" width="6" height="${stickLen * .55}" rx="3" fill="#475569"/><rect x="8" y="${stickLen}" width="8" height="18" rx="3" fill="#78350f"/></svg>`, x, H * .56, 24, stickLen + 20);
-        stick.style.transform = `rotate(${dir * 24}deg)`;
-        bfxAnimate(stick, [{ opacity: 0 }, { opacity: 1, offset: .06 }, { opacity: 1, offset: .9 }, { opacity: 0 }], { duration: duration + 300 });
+      const [W, H] = vfxSize(layer), D = 3600, SWEEP = 2200, N = 60, k = Math.min(1, W / 390);
+      const cx = W / 2, topY = H * .3, R = W * .15;
+      ofxVignette(layer, W, H, 'rgba(12,10,24,.72)', D);
+      const colours = ['#fde68a', '#fbbf24', '#ffffff', '#fb923c'];
+      const lerp = (a, b, t) => a + (b - a) * t;
+      const sweepPts = (mirror) => Array.from({ length: N + 1 }, (_, i) => {
+        const t = i / N, e = t * t * (3 - 2 * t), a = t * Math.PI * 2 * 1.5, amp = Math.sin(Math.PI * t) * R;
+        let x = lerp(26 * k, cx - 4 * k, e) + Math.cos(a) * amp - amp * 0 , y = lerp(H + 10, topY, e) + Math.sin(a) * amp * .8;
+        if (mirror) x = W - x;
+        return [x, y];
       });
-      const tick = setInterval(() => {
-        const t = (performance.now() - start) / duration;
-        if (t >= 1 || !layer.isConnected) { clearInterval(tick); return; }
-        sides.forEach(({ x, dir }) => {
-          // The burning tip slides down the coated half of the stick.
-          const along = -stickLen / 2 + 10 + t * stickLen * .5;
-          const ang = (dir * 24 * Math.PI) / 180;
-          const tipX = x - Math.sin(ang) * along, tipY = H * .56 + Math.cos(ang) * along;
-          const glow = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff,#fde68a 35%,rgba(251,191,36,.35) 60%,transparent 72%)"></div>', tipX, tipY, 26, 26);
-          bfxAnimate(glow, [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(1.6)' }], { duration: 160 });
-          for (let i = 0; i < 7; i++) {
-            const a = Math.random() * Math.PI * 2, d = bfxRand(28, 95), len = bfxRand(10, 26);
-            const c = Math.random() < .7 ? '#fde68a' : '#ffffff';
-            const spark = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:2px;background:linear-gradient(90deg,transparent,${c});box-shadow:0 0 5px #fbbf24"></div>`, tipX, tipY, len, 2);
-            const deg = (a * 180) / Math.PI;
-            bfxAnimate(spark, [{ transform: `rotate(${deg}deg) translateX(0)`, opacity: 1 }, { transform: `rotate(${deg}deg) translateX(${d}px)`, opacity: 0 }], { duration: bfxRand(260, 420), easing: 'ease-out' });
-          }
-        });
-      }, 45);
-    }
-    const VFX_STAR = 'M50 6 62 37 96 38 69 59 79 92 50 73 21 92 31 59 4 38 38 37Z';
-    function vfxFiveStars(layer) {
-      const W = layer.clientWidth || window.innerWidth, H = layer.clientHeight || window.innerHeight;
-      const size = Math.min(66, (W - 40) / 5.6), gap = size * .18;
-      const total = size * 5 + gap * 4, y = H * .38;
-      const gradId = `vfx-star-${++bfxGradientSeq}`;
-      for (let i = 0; i < 5; i++) {
-        const x = (W - total) / 2 + size / 2 + i * (size + gap);
-        const star = bfxAdd(layer, `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><defs><linearGradient id="${gradId}-${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4b8"/><stop offset=".5" stop-color="#fbbf24"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs>
-          <path d="${VFX_STAR}" fill="rgba(15,23,42,.55)" stroke="#fcd34d" stroke-width="4" stroke-linejoin="round"/>
-          <path class="vfx-star-fill" d="${VFX_STAR}" fill="url(#${gradId}-${i})" stroke="#fff7d6" stroke-width="3" stroke-linejoin="round" opacity="0"/></svg>`, x, y, size, size);
-        bfxAnimate(star, [{ opacity: 0, transform: 'translateY(14px) scale(.7)' }, { opacity: 1, transform: 'translateY(0) scale(1)', offset: .1 }, { opacity: 1, transform: 'scale(1)', offset: .88 }, { opacity: 0, transform: 'scale(.9)' }], { duration: 4200, easing: 'ease-out' });
-        const fill = star.querySelector('.vfx-star-fill');
-        const fillDelay = 450 + i * 380;
-        if (typeof fill.animate === 'function') fill.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: fillDelay, fill: 'forwards' });
-        setTimeout(() => {
-          if (!star.isConnected) return;
-          if (typeof star.animate === 'function') star.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)' }, { transform: 'scale(1)' }], { duration: 320, easing: 'ease-out' });
-          for (let j = 0; j < 10; j++) {
-            const a = (j / 10) * Math.PI * 2, d = size * bfxRand(.6, .9);
-            const dot = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:#fde68a;box-shadow:0 0 6px #fbbf24"></div>', x, y, 5, 5);
-            bfxAnimate(dot, [{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`, opacity: 0 }], { duration: 480, easing: 'ease-out' });
-          }
-        }, fillDelay);
+      [false, true].forEach((mirror) => {
+        const pts = sweepPts(mirror), cum = [0];
+        for (let i = 1; i <= N; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+        const len = cum[N], frac = (i) => (i / N) * SWEEP / D;
+        // The light trail, drawn as the sparkler moves.
+        const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join('');
+        const trail = bfxAdd(layer, `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="overflow:visible"><path d="${d}" fill="none" stroke="#fbbf24" stroke-opacity=".35" stroke-width="${9 * k}" stroke-linecap="round" stroke-linejoin="round" style="filter:blur(3px)"/><path class="vfx-trail" d="${d}" fill="none" stroke="#fff3c4" stroke-width="${2.6 * k}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${len}" stroke-dashoffset="${len}"/></svg>`, W / 2, H / 2, W, H);
+        bfxAnimate(trail, [{ opacity: 1 }, { opacity: 1, offset: .62 }, { opacity: 0 }], { duration: D, easing: 'linear' });
+        const line = trail.querySelector('.vfx-trail');
+        if (typeof line.animate === 'function') line.animate(Array.from({ length: N + 1 }, (_, i) => ({ offset: frac(i), strokeDashoffset: len - cum[i] })).concat([{ offset: 1, strokeDashoffset: 0 }]), { duration: D, fill: 'both', easing: 'linear' });
+        // The sparkler itself: a wire, a grip and a burning tip, turned along its path.
+        const sh = 150 * k, sw = 22 * k;
+        const stick = bfxAdd(layer, `<svg width="${sw}" height="${sh * 2}" viewBox="0 0 22 300"><rect x="9.5" y="150" width="3" height="140" rx="1.5" fill="#94a3b8"/><rect x="8" y="150" width="6" height="64" rx="3" fill="#57534e"/><rect x="7" y="262" width="8" height="26" rx="3" fill="#dc2626"/><circle cx="11" cy="150" r="9" fill="#fff7d6"/></svg>`, pts[0][0], pts[0][1], sw, sh * 2);
+        const rot = (i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(N, i + 1)]; return Math.atan2(b[0] - a[0], -(b[1] - a[1])) * 180 / Math.PI; };
+        bfxAnimate(stick, Array.from({ length: N + 1 }, (_, i) => ({ offset: frac(i), transform: `translate(${(pts[i][0] - pts[0][0]).toFixed(1)}px,${(pts[i][1] - pts[0][1]).toFixed(1)}px) rotate(${rot(i).toFixed(1)}deg)`, opacity: 1 }))
+          .concat([{ offset: (SWEEP + 220) / D, transform: `translate(${(pts[N][0] - pts[0][0]).toFixed(1)}px,${(pts[N][1] - pts[0][1]).toFixed(1)}px) rotate(${rot(N).toFixed(1)}deg)`, opacity: 0 }, { offset: 1, transform: `translate(${(pts[N][0] - pts[0][0]).toFixed(1)}px,${(pts[N][1] - pts[0][1]).toFixed(1)}px) rotate(${rot(N).toFixed(1)}deg)`, opacity: 0 }]), { duration: D, easing: 'linear' });
+        // Glow on the tip, then sparks thrown off all the way along.
+        const tip = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff,#fde68a 35%,rgba(251,191,36,.35) 60%,transparent 72%)"></div>', pts[0][0], pts[0][1], 40 * k, 40 * k);
+        bfxAnimate(tip, Array.from({ length: N + 1 }, (_, i) => ({ offset: frac(i), transform: `translate(${(pts[i][0] - pts[0][0]).toFixed(1)}px,${(pts[i][1] - pts[0][1]).toFixed(1)}px) scale(${(1 + .25 * Math.sin(i * 1.7)).toFixed(2)})`, opacity: 1 }))
+          .concat([{ offset: (SWEEP + 150) / D, transform: `translate(${(pts[N][0] - pts[0][0]).toFixed(1)}px,${(pts[N][1] - pts[0][1]).toFixed(1)}px) scale(.4)`, opacity: 0 }, { offset: 1, transform: `translate(${(pts[N][0] - pts[0][0]).toFixed(1)}px,${(pts[N][1] - pts[0][1]).toFixed(1)}px) scale(.4)`, opacity: 0 }]), { duration: D, easing: 'linear' });
+        for (let i = 0; i <= N; i++) for (let j = 0; j < 3; j++) {
+          const a = bfxRand(0, Math.PI * 2), v = bfxRand(24, 80) * k, len2 = bfxRand(8, 20) * k, c = colours[(i + j) % 4], deg = a * 180 / Math.PI;
+          const sp = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:2px;background:linear-gradient(90deg,transparent,${c});box-shadow:0 0 4px #fbbf24"></div>`, pts[i][0], pts[i][1], len2, 2);
+          bfxAnimate(sp, [{ transform: `translate(0,0) rotate(${deg}deg)`, opacity: 0 }, { transform: `translate(${Math.cos(a) * v * .5}px,${Math.sin(a) * v * .5}px) rotate(${deg}deg)`, opacity: 1, offset: .2 }, { transform: `translate(${Math.cos(a) * v}px,${Math.sin(a) * v + 34 * k}px) rotate(${deg + 40}deg)`, opacity: 0 }], { duration: bfxRand(380, 620), delay: (i / N) * SWEEP + bfxRand(0, 40), easing: 'ease-out' });
+        }
+      });
+      // They meet: a flash, a starburst of streaks and a long fall of glitter.
+      sfxFlash(layer, cx, topY, k, 'rgba(255,240,170,.95)', 360 * k, 700, SWEEP);
+      const star = bfxAdd(layer, bfxStar4('#fff7d6'), cx, topY, 120 * k, 120 * k);
+      bfxAnimate(star, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(45deg)', opacity: 1, offset: .3 }, { transform: 'scale(.2) rotate(90deg)', opacity: 0 }], { duration: 700, delay: SWEEP, easing: 'ease-out' });
+      for (let i = 0; i < 36; i++) {
+        const a = (i / 36) * Math.PI * 2 + bfxRand(-.06, .06), v = bfxRand(.9, 1.5) * W * .28, c = colours[i % 4], deg = a * 180 / Math.PI;
+        const st = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:2px;background:linear-gradient(90deg,transparent,${c});box-shadow:0 0 6px #fbbf24"></div>`, cx, topY, 26 * k, 3 * k);
+        bfxAnimate(st, [{ transform: `rotate(${deg}deg) translateX(0)`, opacity: 0 }, { transform: `rotate(${deg}deg) translateX(${v * .6}px)`, opacity: 1, offset: .25 }, { transform: `rotate(${deg}deg) translateX(${v}px)`, opacity: 0 }], { duration: bfxRand(700, 950), delay: SWEEP + bfxRand(0, 60), easing: 'cubic-bezier(.1,.8,.3,1)' });
+      }
+      for (let i = 0; i < 46; i++) {
+        const gl = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:#fde68a;box-shadow:0 0 6px #fbbf24"></div>', cx + bfxRand(-.42, .42) * W, topY + bfxRand(-.12, .1) * H, bfxRand(3, 6) * k, bfxRand(3, 6) * k);
+        bfxAnimate(gl, [{ transform: 'translate(0,0) scale(.4)', opacity: 0 }, { opacity: 1, offset: .15 }, { transform: `translate(${bfxRand(-30, 30)}px,${bfxRand(.25, .55) * H}px) scale(1)`, opacity: 0 }], { duration: bfxRand(900, 1250), delay: SWEEP + bfxRand(60, 350), easing: 'ease-in' });
       }
     }
-    const VFX_HAND = `<svg width="100%" height="100%" viewBox="0 0 120 60">
-      <rect x="0" y="14" width="26" height="34" rx="6" fill="#f8fafc" stroke="#111827" stroke-width="2.5"/>
-      <path d="M4 20h18M4 42h18" stroke="#cbd5e1" stroke-width="2"/>
-      <path d="M24 22c6-5 14-7 24-8l52-4c10-1 16 4 16 11s-6 11-16 12l-50 5c-11 1-19-1-26-5Z" fill="#f5c9a0" stroke="#111827" stroke-width="2.5" stroke-linejoin="round"/>
-      <path d="M46 14c3-9 12-12 20-9 3 3 1 7-4 8" fill="#f5c9a0" stroke="#111827" stroke-width="2.5" stroke-linejoin="round"/>
-      <path d="M62 23l48-3M60 30l46-3" stroke="#b7865c" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+    // 5-Star Finish: five dark stars light up one after another with a pop, a glint and a chime; the fifth
+    // sets off a sunburst, every star pulses in a wave and gold confetti falls.
+    const VFX_STAR = 'M50 6 62 37 96 38 69 59 79 92 50 73 21 92 31 59 4 38 38 37Z';
+    function vfxFiveStars(layer) {
+      const [W, H] = vfxSize(layer), D = 3500, k = Math.min(1, W / 390);
+      const size = Math.min(66, (W - 40) / 5.6), gap = size * .18, total = size * 5 + gap * 4, y = H * .38, cx = W / 2;
+      const FILL = (i) => 450 + i * 300, LAST = FILL(4);
+      ofxVignette(layer, W, H, 'rgba(20,16,46,.7)', D);
+      const rays = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:repeating-conic-gradient(rgba(253,230,138,.34) 0 8deg,transparent 8deg 20deg);-webkit-mask-image:radial-gradient(circle,#000 22%,transparent 68%);mask-image:radial-gradient(circle,#000 22%,transparent 68%)"></div>', cx, y, size * 8, size * 8);
+      bfxAnimate(rays, [{ transform: 'scale(.4) rotate(0deg)', opacity: 0 }, { transform: 'scale(.5) rotate(0deg)', opacity: 0, offset: (LAST - 40) / D }, { transform: 'scale(1) rotate(35deg)', opacity: 1, offset: (LAST + 360) / D }, { transform: 'scale(1.1) rotate(80deg)', opacity: 0 }], { duration: D, easing: 'linear' });
+      const gradId = `vfx-star-${++bfxGradientSeq}`;
+      for (let i = 0; i < 5; i++) {
+        const x = (W - total) / 2 + size / 2 + i * (size + gap), f = FILL(i), appear = 200 + i * 70, wave = 1900 + i * 90;
+        const star = bfxAdd(layer, `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><defs><linearGradient id="${gradId}-${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4b8"/><stop offset=".5" stop-color="#fbbf24"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs>
+          <path d="${VFX_STAR}" fill="rgba(15,23,42,.6)" stroke="#fcd34d" stroke-width="4" stroke-linejoin="round"/>
+          <path class="vfx-star-fill" d="${VFX_STAR}" fill="url(#${gradId}-${i})" stroke="#fff7d6" stroke-width="3" stroke-linejoin="round" opacity="0"/></svg>`, x, y, size, size);
+        bfxAnimate(star, [{ opacity: 0, transform: 'translateY(-26px) scale(.6)', offset: 0 }, { opacity: 1, transform: 'translateY(0) scale(1)', offset: appear / D }, { transform: 'scale(1)', offset: f / D },
+          { transform: 'scale(1.4)', offset: (f + 120) / D }, { transform: 'scale(1)', offset: (f + 320) / D }, { transform: 'scale(1)', offset: wave / D }, { transform: 'scale(1.22)', offset: (wave + 140) / D }, { transform: 'scale(1)', offset: (wave + 320) / D },
+          { opacity: 1, transform: 'scale(1)', offset: 3050 / D }, { opacity: 0, transform: 'scale(.9)', offset: 1 }], { duration: D, easing: 'linear' });
+        const fill = star.querySelector('.vfx-star-fill');
+        if (typeof fill.animate === 'function') fill.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 140, delay: f, fill: 'both' });
+        const glint = bfxAdd(layer, bfxStar4('#ffffff'), x, y, size * .9, size * .9);
+        bfxAnimate(glint, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(45deg)', opacity: 1, offset: .35 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 480, delay: f });
+        for (let j = 0; j < 9; j++) {
+          const a = (j / 9) * Math.PI * 2, dist = size * bfxRand(.6, 1);
+          const dot = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:#fde68a;box-shadow:0 0 6px #fbbf24"></div>', x, y, 5, 5);
+          bfxAnimate(dot, [{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * dist}px,${Math.sin(a) * dist}px)`, opacity: 0 }], { duration: 480, delay: f, easing: 'ease-out' });
+        }
+      }
+      // The fifth star sets it off: a flash and a shower of little stars.
+      sfxFlash(layer, cx, y, k, 'rgba(255,240,170,.9)', 380 * k, 650, LAST);
+      for (let i = 0; i < 26; i++) {
+        const s = bfxRand(9, 18) * k, a = -Math.PI / 2 + bfxRand(-1.3, 1.3), v = bfxRand(.12, .3) * H;
+        const conf = bfxAdd(layer, bfxStar4(['#fde68a', '#ffffff', '#fbbf24', '#fb923c'][i % 4]), cx + bfxRand(-.3, .3) * total, y, s, s);
+        bfxAnimate(conf, [{ transform: 'translate(0,0) scale(0) rotate(0)', opacity: 0 }, { transform: `translate(${Math.cos(a) * v * .7}px,${Math.sin(a) * v * .7}px) scale(1) rotate(80deg)`, opacity: 1, offset: .3 }, { transform: `translate(${Math.cos(a) * v * 1.1}px,${Math.sin(a) * v + bfxRand(.25, .5) * H}px) scale(.6) rotate(240deg)`, opacity: 0 }], { duration: bfxRand(1100, 1450), delay: LAST + bfxRand(0, 160), easing: 'cubic-bezier(.2,.7,.4,1)' });
+      }
+    }
+    // Karate Chop: three wooden boards are stacked in front of a dark dojo glow. A white-sleeved
+    // knife-hand lifts, hesitates, then chops straight down through them: each board snaps in two at the
+    // moment the hand reaches it (CRACK at 940 / 1010 / 1080ms), halves and splinters fly, the screen jolts.
+    const VFX_HAND = `<svg width="100%" height="100%" viewBox="0 0 100 210">
+      <path d="M22 0h56l6 98H16Z" fill="#f8fafc" stroke="#111827" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M32 4 30 92M50 4V94M68 4l2 88" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round"/>
+      <rect x="14" y="88" width="72" height="14" rx="3" fill="#1f2937" stroke="#111827" stroke-width="2.5"/>
+      <path d="M26 102h48l3 52c1 24-2 44-9 52H36c-7-8-10-28-9-52Z" fill="#f5c9a0" stroke="#111827" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M26 124c-12 4-15 18-6 28 3 3 7 2 7-2" fill="#f5c9a0" stroke="#111827" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M44 130v70M56 130v70" stroke="#b7865c" stroke-width="2" stroke-linecap="round"/><path d="M34 112c2 14 2 30 2 46" stroke="#fff" stroke-width="3" opacity=".35" stroke-linecap="round"/></svg>`;
     function vfxKarate(layer) {
-      const W = layer.clientWidth || window.innerWidth, H = layer.clientHeight || window.innerHeight;
-      const words = ['CHOP!', 'HI-YAH!', 'CHOP!', 'KA-POW!'];
-      const spots = [[.3, .3], [.7, .45], [.35, .62], [.66, .24]];
-      spots.forEach(([fx, fy], i) => {
-        const delay = i * 520;
-        const x = W * fx, y = H * fy;
-        const hw = Math.min(200, W * .5), hh = hw / 2;
-        const hand = bfxAdd(layer, VFX_HAND, x + hw * .15, y - hh * .6, hw, hh);
-        hand.style.transformOrigin = '15% 50%';
-        bfxAnimate(hand, [
-          { transform: 'translate(60px,-90px) rotate(-55deg)', opacity: 0 },
-          { transform: 'translate(30px,-50px) rotate(-40deg)', opacity: 1, offset: .25 },
-          { transform: 'translate(0,0) rotate(18deg)', opacity: 1, offset: .45 },
-          { transform: 'translate(-2px,4px) rotate(14deg)', opacity: 1, offset: .75 },
-          { transform: 'translate(-2px,4px) rotate(14deg)', opacity: 0 }
-        ], { duration: 820, delay, easing: 'ease-in' });
-        setTimeout(() => {
-          if (!layer.isConnected) return;
-          const burst = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 100 100"><path d="M50 2 58 30 86 14 72 40 98 50 72 60 86 86 58 70 50 98 42 70 14 86 28 60 2 50 28 40 14 14 42 30Z" fill="#f97316" stroke="#111827" stroke-width="3" stroke-linejoin="round"/><path d="M50 18 55 36 72 28 64 44 82 50 64 56 72 72 55 64 50 82 45 64 28 72 36 56 18 50 36 44 28 28 45 36Z" fill="#fde047"/></svg>`, x, y + 6, 140, 140);
-          bfxAnimate(burst, [{ transform: 'scale(.2) rotate(-20deg)', opacity: 1 }, { transform: 'scale(1.1) rotate(0)', opacity: 1, offset: .25 }, { transform: 'scale(1) rotate(4deg)', opacity: 1, offset: .75 }, { transform: 'scale(1.15)', opacity: 0 }], { duration: 900 });
-          const text = bfxAdd(layer, `<div class="vfx-chop-text" style="font-size:${Math.min(38, W * .095)}px;display:flex;align-items:center;justify-content:center;width:100%;height:100%">${words[i]}</div>`, x, y - 52, 200, 50);
-          bfxAnimate(text, [{ transform: 'scale(.3) rotate(-8deg)', opacity: 0 }, { transform: 'scale(1.2) rotate(-6deg)', opacity: 1, offset: .2 }, { transform: 'scale(1) rotate(-6deg)', opacity: 1, offset: .75 }, { transform: 'scale(1.1) rotate(-6deg) translateY(-12px)', opacity: 0 }], { duration: 1000 });
-          const cracks = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 100 100"><path d="M50 50 30 38 22 20M50 50 74 40 90 44M50 50 58 74 52 92M50 50 26 64 10 70M50 50 70 66 84 82" stroke="#e2e8f0" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`, x, y + 8, 150, 150);
-          bfxAnimate(cracks, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: .9, transform: 'scale(1)', offset: .15 }, { opacity: 0, transform: 'scale(1.05)' }], { duration: 900 });
-          const table = document.getElementById('gameTable');
-          if (table) { table.classList.add('animate-screen-shake'); setTimeout(() => table.classList.remove('animate-screen-shake'), 300); }
-        }, delay + 370);
-      });
+      const [W, H] = vfxSize(layer), D = 2900, k = Math.min(1, W / 390);
+      const bw = Math.min(W * .78, 330), bh = bw * .17, step = bh * 1.2, cx = W / 2, cy0 = H * .5;
+      const SNAP = [940, 1010, 1080], boardY = (j) => cy0 + (j - 1) * step;
+      ofxVignette(layer, W, H, 'rgba(24,10,6,.74)', D);
+      // The hand: enters from above, lifts, hesitates, chops through all three boards, holds, leaves.
+      const hw = bw * .3, hh = hw * 2.1, readyBottom = boardY(0) - bh / 2 - bw * .34;
+      const tops = [0, 1, 2].map((j) => boardY(j) - bh / 2), lastBottom = boardY(2) + bh / 2 + 10;
+      const way = [[0, readyBottom - bw * .35], [420, readyBottom], [640, readyBottom - bw * .12], [780, readyBottom - bw * .12], [SNAP[0], tops[0]], [SNAP[1], tops[1]], [SNAP[2], tops[2]], [1150, lastBottom], [1500, lastBottom - 6], [2000, lastBottom - bw * .7], [D, lastBottom - bw * 1.5]];
+      const ease = (t) => t * t * (3 - 2 * t);
+      const yAt = (t) => { for (let i = 1; i < way.length; i++) if (t <= way[i][0]) { const [t0, y0] = way[i - 1], [t1, y1] = way[i]; const u = (t - t0) / (t1 - t0); const e = (t1 <= 780 || t0 >= 1500) ? ease(u) : (t0 >= 780 && t1 <= SNAP[2] ? u * u * .35 + u * .65 : u); return y0 + (y1 - y0) * e; } return way[way.length - 1][1]; };
+      const hand = bfxAdd(layer, VFX_HAND, cx, 0, hw, hh);
+      const hf = Array.from({ length: 73 }, (_, i) => { const t = i / 72 * D, b = yAt(t), tilt = t < 640 ? -4 + 4 * ease(t / 640) : t < 780 ? 0 : 0;
+        return { offset: i / 72, transform: `translate(0,${(b - hh / 2).toFixed(1)}px) rotate(${tilt.toFixed(1)}deg)`, opacity: t < 120 ? t / 120 : t > 2300 ? Math.max(0, 1 - (t - 2300) / 500) : 1 }; });
+      bfxAnimate(hand, hf, { duration: D, easing: 'linear' });
+      // Speed streaks behind the hand during the chop.
+      for (let s = 0; s < 3; s++) {
+        const streak = bfxAdd(layer, '<div style="width:100%;height:100%;background:linear-gradient(180deg,transparent,rgba(255,255,255,.85))"></div>', cx + (s - 1) * hw * .3, tops[0] - bw * .3, 4 * k, bw * .5);
+        bfxAnimate(streak, [{ opacity: 0, transform: 'translateY(0)' }, { opacity: .9, transform: `translateY(${bw * .15}px)`, offset: .45 }, { opacity: 0, transform: `translateY(${boardY(2) - tops[0] + bw * .5}px)` }], { duration: 300, delay: 780 + s * 12, easing: 'ease-in' });
+      }
+      // The boards, each in two halves with a jagged break that fall away at their snap.
+      const plank = (id) => `<svg width="100%" height="100%" viewBox="0 0 200 34" preserveAspectRatio="none"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9b872"/><stop offset=".55" stop-color="#c98f4a"/><stop offset="1" stop-color="#8a5a26"/></linearGradient></defs><rect x="1" y="1" width="198" height="32" rx="3" fill="url(#${id})" stroke="#4a2c0f" stroke-width="2"/><path d="M6 10c40-4 70 4 110 0s60-3 78 0M8 18c50 4 80-3 120 1s50 2 64-1M6 26c36-3 76 3 116 0s54-2 72 0" stroke="#7a4a1f" stroke-width="1.2" fill="none" opacity=".55"/><ellipse cx="46" cy="17" rx="7" ry="4" fill="none" stroke="#7a4a1f" stroke-width="1.2" opacity=".6"/></svg>`;
+      const wid = `vfx-plank-${++bfxGradientSeq}`;
+      const zig = (ph) => `polygon(0 0,${50 + ph}% 0,${46 - ph}% 28%,${55 + ph}% 52%,${45 - ph}% 76%,${52 + ph}% 100%,0 100%)`;
+      const zigR = (ph) => `polygon(${50 + ph}% 0,100% 0,100% 100%,${52 + ph}% 100%,${45 - ph}% 76%,${55 + ph}% 52%,${46 - ph}% 28%)`;
+      for (let j = 0; j < 3; j++) {
+        const snap = SNAP[j], DD = snap + 1150, ph = (j - 1) * 2;
+        [-1, 1].forEach((sg) => {
+          const half = bfxAdd(layer, plank(`${wid}-${j}${sg}`), cx, boardY(j), bw, bh);
+          half.style.clipPath = sg < 0 ? zig(ph) : zigR(ph); half.style.willChange = 'transform';
+          half.style.filter = 'drop-shadow(0 6px 8px rgba(0,0,0,.5))';
+          const vx = sg * bfxRand(.25, .5) * bw, vy0 = -bfxRand(.05, .14) * bw, g = bw * 2.6, wr = sg * bfxRand(160, 320);
+          const frames = [{ offset: 0, transform: 'translate(0,0) rotate(0deg)', opacity: 0 }, { offset: 180 / DD, transform: 'translate(0,0) rotate(0deg)', opacity: 1 }, { offset: snap / DD, transform: 'translate(0,0) rotate(0deg)', opacity: 1 }];
+          for (let q = 1; q <= 14; q++) { const tau = q / 14 * 1.1; frames.push({ offset: (snap + tau * 1000) / DD, transform: `translate(${(vx * tau).toFixed(1)}px,${(vy0 * tau * 3 + .5 * g * tau * tau).toFixed(1)}px) rotate(${(wr * tau).toFixed(1)}deg)`, opacity: 1 }); }
+          frames.push({ ...frames[frames.length - 1], offset: 1, opacity: 0 });
+          bfxAnimate(half, frames, { duration: DD, easing: 'linear' });
+        });
+        // Splinters, a flash, a dust ring and a jolt at the break.
+        const bx = cx, by = boardY(j);
+        sfxFlash(layer, bx, by, k, 'rgba(255,255,255,.9)', bw * .55, 260, snap);
+        const ring = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;border:3px solid rgba(255,236,200,.85);box-shadow:0 0 14px rgba(255,220,160,.6)"></div>', bx, by, bw * .22, bw * .22);
+        bfxAnimate(ring, [{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(3.2)', opacity: 0 }], { duration: 520, delay: snap, easing: 'cubic-bezier(.2,.7,.3,1)' });
+        for (let i = 0; i < 9; i++) {
+          const a = -Math.PI / 2 + bfxRand(-1.5, 1.5), v = bfxRand(.25, .6) * bw, sw = bfxRand(10, 22) * k;
+          const sp = bfxAdd(layer, '<div style="width:100%;height:100%;background:linear-gradient(90deg,#e9b872,#8a5a26);border-radius:1px"></div>', bx + bfxRand(-.2, .2) * bw, by, sw, 3 * k);
+          bfxAnimate(sp, [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * v * .7}px,${Math.sin(a) * v * .7}px) rotate(${bfxRand(-200, 200)}deg)`, opacity: 1, offset: .4 }, { transform: `translate(${Math.cos(a) * v}px,${Math.sin(a) * v + bw * .5}px) rotate(${bfxRand(-400, 400)}deg)`, opacity: 0 }], { duration: bfxRand(650, 900), delay: snap, easing: 'ease-out' });
+        }
+        if (typeof layer.animate === 'function') layer.animate(Array.from({ length: 9 }, (_, q) => ({ offset: q / 8, transform: `translate(${(q % 2 ? 1 : -1) * (8 - q) * .9 * k}px,${(q % 2 ? -1 : 1) * (8 - q) * .6 * k}px)` })), { duration: 260, delay: snap, easing: 'linear' });
+      }
+      // The shout, stamped below the boards.
+      const word = bfxAdd(layer, `<div class="vfx-chop-text" style="font-size:${Math.min(46, W * .12)}px;display:flex;align-items:center;justify-content:center;width:100%;height:100%">HI-YAH!</div>`, cx, boardY(2) + bw * .42, bw, 60 * k);
+      bfxAnimate(word, [{ transform: 'scale(.3) rotate(-8deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(-6deg)', opacity: 1, offset: .12 }, { transform: 'scale(1) rotate(-6deg)', opacity: 1, offset: .7 }, { transform: 'scale(1.1) rotate(-6deg) translateY(-12px)', opacity: 0 }], { duration: 1500, delay: SNAP[0], easing: 'ease-out' });
     }
     // ---- Premium victories: Trophy Lift, Rocket Launch, Origami Flock, Lion's Roar ----
     const vfxSize = (layer) => [layer.clientWidth || window.innerWidth, layer.clientHeight || window.innerHeight];
@@ -3587,7 +3652,7 @@
       layer.replaceChildren(host);
       preloadOwnerFx([effect]);
       const images = (OWNER_FX_FILES[effect] || []).map(name => ownerFxImages.get(name)).filter(Boolean);
-      const start = () => { if (!host.isConnected) return; run(host, cardStyle || snapshotCardStyle()); setTimeout(() => host.remove(), ['victory-lion', 'victory-fireworks'].includes(effect) ? OWNER_VICTORY_MS : 4200); };
+      const start = () => { if (!host.isConnected) return; run(host, cardStyle || snapshotCardStyle()); if (!['victory-lion', 'victory-fireworks'].includes(effect)) audio.playVictorySound(effect); setTimeout(() => host.remove(), ['victory-lion', 'victory-fireworks'].includes(effect) ? OWNER_VICTORY_MS : 4200); };
       const clip = effect === 'victory-lion' ? 'lion-roar' : effect === 'victory-fireworks' ? 'fireworks' : null;
       if (!devTestSuiteRunning && (images.some(img => !img.complete || !img.naturalWidth) || (clip && audio.enabled && !audio.clipBuffers?.has(clip)))) {
         Promise.all([...images.map(img => img.decode?.().catch(() => {})), clip && audio.enabled ? audio.loadEffectClip(clip) : null]).then(start);
