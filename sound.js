@@ -697,6 +697,33 @@
           k.scatter(6, at + 0.03, at + 0.4, (t) => k.noise({ at: t, dur: 0.02, type: 'bandpass', f0: 1800 + Math.random() * 1500, q: 3, level: 0.1 }));
         });
         k.noise({ at: 1.1, dur: 0.5, type: 'lowpass', f0: 600, f1: 200, level: 0.12, attack: 0.05 });
+      },
+      // Trophy Lift: a rising swell as the cup is raised (0-1s), a bright flash and fanfare at 1s, shimmer
+      // on the glints, then a confetti rustle.
+      'victory-trophy': (k) => {
+        k.noise({ at: 0.1, dur: 0.9, type: 'bandpass', f0: 400, f1: 2600, q: 1, level: 0.1, attack: 0.8 });
+        k.tone({ at: 0.1, dur: 0.9, type: 'sine', f0: 220, f1: 660, level: 0.07, attack: 0.7 });
+        k.tone({ at: 1.0, dur: 0.18, f0: 160, f1: 50, level: 0.34 });
+        k.noise({ at: 1.0, dur: 0.4, type: 'bandpass', f0: 3200, f1: 700, q: 0.9, level: 0.26 });
+        [523, 659, 784, 1046].forEach((f, i) => {
+          k.tone({ at: 1.02 + i * 0.09, dur: 0.55, type: 'triangle', f0: f, level: 0.12 });
+          k.tone({ at: 1.02 + i * 0.09, dur: 0.3, type: 'sine', f0: f * 2, level: 0.05 });
+        });
+        k.tone({ at: 1.4, dur: 0.9, type: 'triangle', f0: 1046, level: 0.09 });
+        k.scatter(7, 1.2, 2.2, (at) => k.tone({ at, dur: 0.14, type: 'sine', f0: 2800 + Math.random() * 1500, level: 0.05 }));
+        k.scatter(40, 1.0, 3.2, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 4800, level: 0.07 }));
+      },
+      // Rocket Launch: three countdown beeps, ignition at 1.15s, a long roaring climb to ~2.9s, a fading rumble
+      // and a starburst pop as it leaves the top of the screen.
+      'victory-rocket': (k) => {
+        [0.1, 0.5, 0.9].forEach((at) => k.tone({ at, dur: 0.12, type: 'square', f0: 880, level: 0.08 }));
+        k.noise({ at: 1.15, dur: 0.12, type: 'bandpass', f0: 900, q: 1, level: 0.4 });
+        k.noise({ at: 1.15, dur: 2.0, type: 'lowpass', f0: 500, f1: 1500, level: 0.28, attack: 0.25 });
+        k.noise({ at: 1.2, dur: 1.9, type: 'bandpass', f0: 1200, f1: 3200, q: 0.7, level: 0.14, attack: 0.4 });
+        k.tone({ at: 1.15, dur: 1.9, type: 'sawtooth', f0: 70, f1: 150, level: 0.14, attack: 0.2, vibrato: 30 });
+        k.scatter(14, 1.2, 2.6, (at) => k.noise({ at, dur: 0.05, type: 'bandpass', f0: 600 + Math.random() * 600, q: 2, level: 0.1 }));
+        k.noise({ at: 2.9, dur: 0.3, type: 'bandpass', f0: 3000, f1: 600, q: 0.9, level: 0.2 });
+        [1319, 1760, 2349].forEach((f, i) => k.tone({ at: 2.9 + i * 0.06, dur: 0.4, type: 'sine', f0: f, level: 0.07 }));
       }
     };
     const JOKER_SOUNDS = {

@@ -3342,74 +3342,128 @@
           { duration: bfxRand(2400, 3400), delay: bfxRand(0, spanMs), easing: 'linear' });
       }
     }
-    // Trophy Lift: a gold trophy rises into a sunburst under ticker tape.
+    // Trophy Lift: a golden cup rises on a spotlight, is lifted at 1.0s with a shockwave, a flash, glints and a
+    // sunburst while confetti cannons fire from both corners; a WINNER ribbon pops in under it.
+    // Rocket Launch: 3-2-1, the rocket rumbles on its pad, lifts off on a column of fire and smoke, leaves a
+    // trail of stars and bursts out of the top of the screen. Both end inside 3.6s, with their own sounds.
     function vfxTrophy(layer) {
-      const [W, H] = vfxSize(layer);
-      const size = Math.min(210, W * .52), cx = W / 2, cy = H * .42;
-      const rays = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:repeating-conic-gradient(rgba(253,230,138,.38) 0 9deg,transparent 9deg 20deg);-webkit-mask-image:radial-gradient(circle,#000 25%,transparent 70%);mask-image:radial-gradient(circle,#000 25%,transparent 70%)"></div>', cx, cy, size * 2.6, size * 2.6);
-      bfxAnimate(rays, [{ transform: 'scale(.4) rotate(0deg)', opacity: 0 }, { transform: 'scale(1) rotate(40deg)', opacity: 1, offset: .25 }, { transform: 'scale(1.05) rotate(130deg)', opacity: 1, offset: .8 }, { transform: 'scale(1.1) rotate(160deg)', opacity: 0 }], { duration: 4000, delay: 300, easing: 'linear' });
+      const [W, H] = vfxSize(layer), D = 3600, k = Math.min(1, W / 390), LIFT = 1000;
+      const size = Math.min(250, W * .62), cx = W / 2, cy = H * .4, th = size * 1.25;
+      ofxVignette(layer, W, H, 'rgba(38,22,4,.76)', D);
+      const eb = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+      // Warm pool of light behind the cup, then the turning sunburst when it is lifted.
+      const pool = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(253,224,71,.55),rgba(217,119,6,.2) 45%,transparent 70%)"></div>', cx, cy, size * 3, size * 3);
+      bfxAnimate(pool, [{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(.7)', opacity: .5, offset: LIFT / D }, { transform: 'scale(1)', opacity: 1, offset: (LIFT + 300) / D }, { transform: 'scale(1.05)', opacity: .9, offset: .88 }, { transform: 'scale(1.1)', opacity: 0 }], { duration: D, easing: 'linear' });
+      const rays = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:repeating-conic-gradient(rgba(253,230,138,.36) 0 8deg,transparent 8deg 20deg);-webkit-mask-image:radial-gradient(circle,#000 22%,transparent 70%);mask-image:radial-gradient(circle,#000 22%,transparent 70%)"></div>', cx, cy, size * 3.4, size * 3.4);
+      bfxAnimate(rays, [{ transform: 'scale(.4) rotate(0deg)', opacity: 0 }, { transform: 'scale(.5) rotate(0deg)', opacity: 0, offset: (LIFT - 60) / D }, { transform: 'scale(1) rotate(40deg)', opacity: 1, offset: (LIFT + 450) / D }, { transform: 'scale(1.06) rotate(120deg)', opacity: .9, offset: .85 }, { transform: 'scale(1.1) rotate(150deg)', opacity: 0 }], { duration: D, easing: 'linear' });
+      // The cup: bowl, rim, handles, stem, base and a marble plinth, with a highlight that sweeps across it.
       const gid = `vfx-t-${++bfxGradientSeq}`;
-      const trophy = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 120 150"><defs><linearGradient id="${gid}" x1="0" x2="1"><stop offset="0" stop-color="#b45309"/><stop offset=".35" stop-color="#fde68a"/><stop offset=".6" stop-color="#fbbf24"/><stop offset="1" stop-color="#92400e"/></linearGradient></defs>
-        <path d="M28 22C8 22 8 60 38 64M92 22C112 22 112 60 82 64" fill="none" stroke="url(#${gid})" stroke-width="7" stroke-linecap="round"/>
-        <path d="M24 12h72v22c0 30-16 44-36 46-20-2-36-16-36-46Z" fill="url(#${gid})" stroke="#78350f" stroke-width="2.5"/>
-        <rect x="52" y="80" width="16" height="22" fill="url(#${gid})" stroke="#78350f" stroke-width="2"/>
-        <path d="M36 102h48l6 16H30Z" fill="url(#${gid})" stroke="#78350f" stroke-width="2"/>
-        <rect x="24" y="118" width="72" height="24" rx="3" fill="#292524" stroke="#0c0a09" stroke-width="2"/><rect x="40" y="124" width="40" height="12" rx="2" fill="#fbbf24"/>
-        <path d="M60 24 65 36 78 37 68 45 71 58 60 51 49 58 52 45 42 37 55 36Z" fill="#fff7d6"/>
-        <path d="M32 18c2 16 6 28 12 36" stroke="#fff" stroke-width="3" opacity=".6" fill="none" stroke-linecap="round"/></svg>`, cx, cy, size * .8, size);
-      bfxAnimate(trophy, [{ transform: `translateY(${H * .7}px) scale(.8)`, opacity: 1 }, { transform: 'translateY(-18px) scale(1.04)', opacity: 1, offset: .22 },
-        { transform: 'translateY(0) scale(1)', opacity: 1, offset: .3 }, { transform: 'translateY(-26px) scale(1.06)', opacity: 1, offset: .45 },
-        { transform: 'translateY(-10px) scale(1)', opacity: 1, offset: .88 }, { transform: 'translateY(-30px) scale(.95)', opacity: 0 }], { duration: 4200, easing: 'ease-out' });
-      // Glints at the lift.
-      [[-.28, -.32, 1150], [.3, -.1, 1350], [-.05, -.45, 1550]].forEach(([fx, fy, delay]) => {
-        const glint = bfxAdd(layer, bfxStar4('#ffffff'), cx + fx * size, cy + fy * size - 26, 28, 28);
-        bfxAnimate(glint, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(45deg)', opacity: 1, offset: .4 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 520, delay });
+      const cup = `<svg width="100%" height="100%" viewBox="0 0 160 200"><defs>
+        <linearGradient id="${gid}a" x1="0" x2="1"><stop offset="0" stop-color="#7c3f06"/><stop offset=".22" stop-color="#e8a317"/><stop offset=".45" stop-color="#fff0a8"/><stop offset=".62" stop-color="#fbbf24"/><stop offset="1" stop-color="#8a4a08"/></linearGradient>
+        <linearGradient id="${gid}b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b3a42"/><stop offset="1" stop-color="#16151a"/></linearGradient>
+        <clipPath id="${gid}c"><path d="M34 14H126C126 70 110 100 94 108C88 112 88 118 88 128H72C72 118 72 112 66 108C50 100 34 70 34 14Z"/></clipPath></defs>
+        <path d="M42 34C6 30 4 88 54 100" fill="none" stroke="#6b3405" stroke-width="12" stroke-linecap="round"/><path d="M42 34C6 30 4 88 54 100" fill="none" stroke="url(#${gid}a)" stroke-width="8" stroke-linecap="round"/>
+        <path d="M118 34C154 30 156 88 106 100" fill="none" stroke="#6b3405" stroke-width="12" stroke-linecap="round"/><path d="M118 34C154 30 156 88 106 100" fill="none" stroke="url(#${gid}a)" stroke-width="8" stroke-linecap="round"/>
+        <path d="M34 14H126C126 70 110 100 94 108C88 112 88 118 88 128H72C72 118 72 112 66 108C50 100 34 70 34 14Z" fill="url(#${gid}a)" stroke="#6b3405" stroke-width="3" stroke-linejoin="round"/>
+        <ellipse cx="80" cy="14" rx="46" ry="8" fill="#fde68a" stroke="#6b3405" stroke-width="3"/><ellipse cx="80" cy="15" rx="40" ry="5.5" fill="#92400e"/>
+        <path d="M80 34l6 15 16 1-12 10 4 16-14-9-14 9 4-16-12-10 16-1Z" fill="#fff7d6" stroke="#b45309" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M46 24C47 52 56 76 70 92" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".6"/>
+        <rect x="70" y="126" width="20" height="26" fill="url(#${gid}a)" stroke="#6b3405" stroke-width="2.5"/><ellipse cx="80" cy="138" rx="15" ry="5" fill="url(#${gid}a)" stroke="#6b3405" stroke-width="2.5"/>
+        <path d="M50 152H110L118 170H42Z" fill="url(#${gid}a)" stroke="#6b3405" stroke-width="2.5" stroke-linejoin="round"/>
+        <rect x="32" y="170" width="96" height="28" rx="4" fill="url(#${gid}b)" stroke="#0c0a09" stroke-width="2.5"/><rect x="50" y="178" width="60" height="13" rx="2.5" fill="url(#${gid}a)" stroke="#6b3405" stroke-width="1.5"/>
+        <text x="80" y="189" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="11" fill="#5c2e04">WINNER</text>
+        <g clip-path="url(#${gid}c)"><rect class="vfx-shine" x="-60" y="0" width="30" height="130" fill="#fff" opacity=".55" transform="skewX(-18)"/></g></svg>`;
+      const trophy = bfxAdd(layer, cup, cx, cy, size * .8, th);
+      trophy.style.willChange = 'transform'; trophy.style.filter = 'drop-shadow(0 12px 18px rgba(0,0,0,.55))';
+      const NF = 80, tf = Array.from({ length: NF + 1 }, (_, i) => { const t = i / NF * D, u = Math.min(1, t / LIFT);
+        const y = t < LIFT ? H * .55 * (1 - eb(u)) : -Math.sin((t - LIFT) / 380) * 7 * Math.min(1, (t - LIFT) / 350);
+        const pulse = t >= LIFT && t < LIFT + 260 ? 1 + .07 * Math.sin((t - LIFT) / 260 * Math.PI) : 1;
+        const sc = (.75 + .25 * Math.min(1.12, eb(u))) * pulse, rot = t < LIFT ? (1 - u) * -6 : Math.sin((t - LIFT) / 520) * 1.6;
+        return { offset: i / NF, transform: `translateY(${y.toFixed(1)}px) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`, opacity: t < 160 ? t / 160 : t > D - 450 ? Math.max(0, (D - t) / 450) : 1 }; });
+      bfxAnimate(trophy, tf, { duration: D, easing: 'linear' });
+      const shine = trophy.querySelector('.vfx-shine');
+      if (typeof shine.animate === 'function') shine.animate([{ transform: 'skewX(-18deg) translateX(0)' }, { transform: 'skewX(-18deg) translateX(330px)' }], { duration: 700, delay: LIFT + 100, fill: 'both', easing: 'ease-in-out' });
+      // The lift: two shockwaves, a flash and glints.
+      sfxFlash(layer, cx, cy, k, 'rgba(255,240,170,.95)', size * 1.4, 700, LIFT);
+      [0, 140].forEach((d, i) => { const ring = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;border:${5 - i * 1.5}px solid #fde68a;box-shadow:0 0 18px rgba(251,191,36,.85)"></div>`, cx, cy + th * .1, size * .4, size * .4);
+        bfxAnimate(ring, [{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(4.2)', opacity: 0 }], { duration: 900, delay: LIFT + d, easing: 'cubic-bezier(.2,.7,.3,1)' }); });
+      [[-.34, -.28], [.36, -.14], [-.08, -.5], [.22, -.42], [-.4, .02], [.1, .06]].forEach(([fx, fy], i) => {
+        const g = bfxAdd(layer, bfxStar4('#ffffff'), cx + fx * size, cy + fy * size, 34 * k, 34 * k);
+        bfxAnimate(g, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(45deg)', opacity: 1, offset: .4 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 560, delay: LIFT + 120 + i * 130 });
       });
-      vfxTickerTape(layer, W, H, 70, 1800);
+      // The ribbon.
+      const rw = Math.min(W * .74, 300), rh = rw * .22;
+      const ribbon = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 300 66"><path d="M0 14H40L52 33 40 52H0L12 33Z" fill="#991b1b" stroke="#450a0a" stroke-width="2.5" stroke-linejoin="round"/><path d="M300 14H260L248 33 260 52H300L288 33Z" fill="#991b1b" stroke="#450a0a" stroke-width="2.5" stroke-linejoin="round"/><rect x="34" y="6" width="232" height="54" rx="6" fill="#dc2626" stroke="#450a0a" stroke-width="3"/><rect x="40" y="12" width="220" height="42" rx="4" fill="none" stroke="#fde68a" stroke-width="2"/><text x="150" y="43" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="28" fill="#fff7d6" stroke="#450a0a" stroke-width="1" letter-spacing="3">WINNER</text></svg>`, cx, cy + th * .62, rw, rh);
+      bfxAnimate(ribbon, [{ transform: 'scale(.2,.6) translateY(20px)', opacity: 0 }, { transform: 'scale(1.1,1) translateY(0)', opacity: 1, offset: .12 }, { transform: 'scale(1)', opacity: 1, offset: .22 }, { transform: 'scale(1)', opacity: 1, offset: .82 }, { transform: 'scale(.95)', opacity: 0 }], { duration: 2300, delay: LIFT + 250, easing: 'ease-out' });
+      // Confetti cannons in both bottom corners.
+      const colours = ['#fbbf24', '#f8fafc', '#ef4444', '#3b82f6', '#22c55e', '#ec4899', '#a855f7'];
+      for (let i = 0; i < 74; i++) {
+        const sg = i % 2 ? 1 : -1, x0 = sg < 0 ? W * .04 : W * .96, ta = bfxRand(.55, .85), A = bfxRand(.4, .85) * H, g = 2 * A / (ta * ta), vy = g * ta;
+        const T = (ta + Math.sqrt(2 * (A + 60) / g)) * 1000, drift = -sg * bfxRand(.1, .55) * W, strip = i % 3 !== 0, w = strip ? bfxRand(5, 8) * k : bfxRand(6, 10) * k, h = strip ? bfxRand(16, 26) * k : w;
+        const bit = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:${strip ? 1 : 50}%;background:${colours[i % colours.length]}"></div>`, 0, 0, w, h);
+        const fr = Array.from({ length: 16 }, (_, q) => { const f = q / 15, t = f * T / 1000; return { offset: f, transform: `translate(${(x0 + drift * f + Math.sin(f * 9 + i) * 14).toFixed(1)}px,${(H + 20 - vy * t + .5 * g * t * t).toFixed(1)}px) rotate(${(f * bfxRand(360, 900)).toFixed(0)}deg) rotateY(${(f * 540).toFixed(0)}deg)` }; });
+        bfxAnimate(bit, fr, { duration: T, delay: LIFT + bfxRand(0, 260), easing: 'linear' });
+      }
     }
-    // Rocket Launch: the rocket rumbles on the pad, blasts off and leaves a
-    // trail of stars that twinkle out.
+    // Rocket Launch.
     function vfxRocket(layer) {
-      const [W, H] = vfxSize(layer);
-      const rw = Math.min(70, W * .17), rh = rw * 2.2, x = W / 2, y0 = H - rh * .8;
-      const launchAt = 650, flight = 1500, climb = H + rh * 2;
+      const [W, H] = vfxSize(layer), D = 3600, k = Math.min(1, W / 390), LAUNCH = 1150, FLIGHT = 1750;
+      const cx = W / 2, rw = Math.min(78, W * .19), rh = rw * 2.5, padY = H * .86, y0 = padY - rh * .55, climb = H + rh * 2.4;
+      ofxVignette(layer, W, H, 'rgba(6,10,34,.78)', D);
+      // Countdown.
+      ['3', '2', '1'].forEach((n, i) => {
+        const d = bfxAdd(layer, `<div class="vfx-chop-text" style="font-size:${Math.min(120, W * .3)}px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-style:normal">${n}</div>`, cx, H * .3, 220 * k, 150 * k);
+        bfxAnimate(d, [{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: .2 }, { transform: 'scale(1)', opacity: 1, offset: .6 }, { transform: 'scale(.8)', opacity: 0 }], { duration: 300 * 1.3, delay: 100 + i * 320, easing: 'ease-out' });
+      });
+      // The pad.
+      const pad = bfxAdd(layer, '<svg width="100%" height="100%" viewBox="0 0 240 60"><ellipse cx="120" cy="40" rx="112" ry="16" fill="#0b1226" stroke="#334155" stroke-width="2"/><rect x="60" y="22" width="120" height="16" rx="3" fill="#1e293b" stroke="#475569" stroke-width="2"/><path d="M60 26h120M60 32h120" stroke="#fbbf24" stroke-width="2" stroke-dasharray="8 6"/><rect x="14" y="0" width="14" height="42" rx="2" fill="#334155" stroke="#0f172a" stroke-width="2"/><path d="M28 6h26M28 16h26M28 26h26" stroke="#64748b" stroke-width="3"/></svg>', cx, padY + 8, rw * 3.4, rw * 3.4 * .25);
+      bfxAnimate(pad, [{ opacity: 0 }, { opacity: 1, offset: .04 }, { opacity: 1, offset: .62 }, { opacity: 0 }], { duration: D, easing: 'linear' });
+      // The rocket: shaded body, red nose, glass porthole, fins and a flickering flame, all one piece.
+      const gid = `vfx-r-${++bfxGradientSeq}`;
       const rocket = bfxAdd(layer, `<div style="position:relative;width:100%;height:100%">
-        <div class="vfx-flame" style="position:absolute;left:25%;top:84%;width:50%;height:40%"><svg width="100%" height="100%" viewBox="0 0 40 50"><path d="M4 0h32C34 20 26 36 20 50 14 36 6 20 4 0Z" fill="#f97316"/><path d="M11 0h18C28 14 24 26 20 36 16 26 12 14 11 0Z" fill="#fde047"/><path d="M16 0h8C24 8 22 14 20 20 18 14 16 8 16 0Z" fill="#fff"/></svg></div>
-        <svg style="position:absolute;inset:0" width="100%" height="100%" viewBox="0 0 60 132"><path d="M30 2C46 18 50 44 48 90H12C10 44 14 18 30 2Z" fill="#f1f5f9" stroke="#334155" stroke-width="2.5"/>
-        <path d="M30 2C38 10 43 20 45 30H15C17 20 22 10 30 2Z" fill="#ef4444" stroke="#334155" stroke-width="2.5"/>
-        <circle cx="30" cy="52" r="9" fill="#38bdf8" stroke="#334155" stroke-width="3"/><circle cx="27" cy="49" r="3" fill="#e0f2fe"/>
-        <path d="M12 72 0 104 12 100ZM48 72 60 104 48 100Z" fill="#ef4444" stroke="#334155" stroke-width="2.5" stroke-linejoin="round"/>
-        <rect x="18" y="90" width="24" height="12" rx="3" fill="#64748b" stroke="#334155" stroke-width="2.5"/><path d="M30 64v24" stroke="#cbd5e1" stroke-width="2"/></svg></div>`, x, y0, rw, rh);
-      const pos = (p) => -climb * p * p;
-      bfxAnimate(rocket, [
-        { transform: 'translate(0,40px)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: .08 },
-        ...[.12, .16, .2, .24, .28].map((o, i) => ({ transform: `translate(${i % 2 ? 2 : -2}px,0)`, opacity: 1, offset: o })),
-        ...[0, .2, .4, .6, .8, 1].map(p => ({ transform: `translate(0,${pos(p)}px)`, opacity: 1, offset: (launchAt + p * flight) / (launchAt + flight) }))
-      ], { duration: launchAt + flight, easing: 'linear' });
-      // Smoke billows on the pad.
-      for (let i = 0; i < 18; i++) {
-        const s = bfxRand(40, 80), dir = i % 2 ? 1 : -1;
-        const puff = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;filter:blur(4px);background:radial-gradient(circle,rgba(241,245,249,.85),rgba(148,163,184,.4) 55%,transparent 70%)"></div>', x, y0 + rh * .5, s, s);
-        bfxAnimate(puff, [{ transform: 'translate(0,0) scale(.3)', opacity: 0 }, { transform: `translate(${dir * bfxRand(10, 40)}px,-6px) scale(1)`, opacity: .9, offset: .25 },
-          { transform: `translate(${dir * bfxRand(90, 170)}px,${-bfxRand(10, 50)}px) scale(${bfxRand(1.8, 2.6)})`, opacity: 0 }], { duration: bfxRand(1300, 1800), delay: bfxRand(150, 900), easing: 'ease-out' });
-      }
-      // The star trail, dropped along the flight path.
-      const colours = ['#fde68a', '#ffffff', '#7dd3fc', '#f0abfc'];
+        <div class="vfx-rflame" style="position:absolute;left:18%;top:86%;width:64%;height:46%;transform-origin:50% 0"><svg width="100%" height="100%" viewBox="0 0 40 60" preserveAspectRatio="none"><path d="M3 0h34C34 24 26 44 20 60 14 44 6 24 3 0Z" fill="#f97316"/><path d="M10 0h20C28 18 24 32 20 44 16 32 12 18 10 0Z" fill="#fde047"/><path d="M16 0h8C24 10 22 18 20 26 18 18 16 10 16 0Z" fill="#fff"/></svg></div>
+        <svg style="position:absolute;inset:0" width="100%" height="100%" viewBox="0 0 60 150"><defs><linearGradient id="${gid}a" x1="0" x2="1"><stop offset="0" stop-color="#94a3b8"/><stop offset=".35" stop-color="#ffffff"/><stop offset=".7" stop-color="#e2e8f0"/><stop offset="1" stop-color="#94a3b8"/></linearGradient><linearGradient id="${gid}b" x1="0" x2="1"><stop offset="0" stop-color="#7f1d1d"/><stop offset=".4" stop-color="#f87171"/><stop offset="1" stop-color="#991b1b"/></linearGradient></defs>
+        <path d="M13 96 0 124 0 140 14 128ZM47 96 60 124 60 140 46 128Z" fill="url(#${gid}b)" stroke="#334155" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M30 3C46 20 50 52 49 104H11C10 52 14 20 30 3Z" fill="url(#${gid}a)" stroke="#334155" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M30 3C39 12 44 24 46 36H14C16 24 21 12 30 3Z" fill="url(#${gid}b)" stroke="#334155" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M11 82H49M11 90H49" stroke="#ef4444" stroke-width="3"/><circle cx="30" cy="58" r="10" fill="#0ea5e9" stroke="#334155" stroke-width="3.5"/><circle cx="30" cy="58" r="6.5" fill="#38bdf8"/><path d="M25 54a6 6 0 0 1 7-3" stroke="#e0f2fe" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+        <path d="M24 104h12l2 10H22Z" fill="#475569" stroke="#334155" stroke-width="2"/><path d="M19 36 18 100M41 36l1 64" stroke="#fff" stroke-width="2" opacity=".35"/></svg></div>`, 0, 0, rw, rh);
+      rocket.style.willChange = 'transform';
+      const NF = 90, T = (t) => Math.max(0, Math.min(1, (t - LAUNCH) / FLIGHT)), posY = (t) => -climb * Math.pow(T(t), 2.1);
+      const rocketX = (t) => (t < LAUNCH ? Math.sin(t * .09) * (t / LAUNCH) * 3 * k : Math.sin(t * .02) * 4 * T(t) * k);
+      bfxAnimate(rocket, Array.from({ length: NF + 1 }, (_, i) => { const t = i / NF * D; return { offset: i / NF, transform: `translate(${(cx - rw / 2 + rocketX(t)).toFixed(1)}px,${(y0 - rh / 2 + posY(t) + (t < LAUNCH ? Math.sin(t * .13) * (t / LAUNCH) * 2 : 0)).toFixed(1)}px) rotate(${(t < LAUNCH ? 0 : Math.sin(t * .01) * 1.6 * T(t)).toFixed(2)}deg)`, opacity: t < 120 ? t / 120 : t > LAUNCH + FLIGHT + 100 ? 0 : 1 }; }), { duration: D, easing: 'linear' });
+      // Fix the box position: bfxAdd centred it at 0,0, so the translate above carries the whole position.
+      const flame = rocket.querySelector('.vfx-rflame');
+      if (typeof flame.animate === 'function') flame.animate(Array.from({ length: 91 }, (_, i) => { const t = i / 90 * D, on = t < LAUNCH - 100 ? .08 : t < LAUNCH ? .4 : 1, f = (1 + .18 * Math.sin(t * .6) + .1 * Math.sin(t * 1.3)) * on * (t > LAUNCH + FLIGHT ? 0 : 1);
+        return { offset: i / 90, transform: `scaleY(${f.toFixed(2)}) scaleX(${(.9 + .1 * Math.sin(t * .8)).toFixed(2)})`, opacity: t < LAUNCH - 100 ? .25 : 1 }; }), { duration: D, fill: 'both', easing: 'linear' });
+      // Rumble on the pad: smoke billowing sideways, a jolt on the screen, an orange glow.
+      if (typeof layer.animate === 'function') layer.animate(Array.from({ length: 41 }, (_, i) => { const t = i / 40 * (LAUNCH + 500), a = Math.min(1, t / LAUNCH) * (t < LAUNCH + 200 ? 1 : Math.max(0, 1 - (t - LAUNCH - 200) / 300)) * 3.2 * k;
+        return { offset: i / 40, transform: `translate(${(Math.sin(t * .31) * a).toFixed(2)}px,${(Math.cos(t * .27) * a).toFixed(2)}px)` }; }), { duration: LAUNCH + 500, delay: 100, easing: 'linear' });
+      sfxFlash(layer, cx, padY, k, 'rgba(251,146,60,.9)', rw * 5, 900, LAUNCH);
       for (let i = 0; i < 34; i++) {
-        const p = i / 34, at = launchAt + p * flight;
-        if (y0 + pos(p) + rh * .6 < -20) break;
-        const s = bfxRand(10, 20);
-        const star = bfxAdd(layer, bfxStar4(colours[i % colours.length]), x + bfxRand(-16, 16), y0 + pos(p) + rh * .62, s, s);
-        bfxAnimate(star, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.2) rotate(45deg)', opacity: 1, offset: .15 },
-          { transform: `translate(${bfxRand(-26, 26)}px,${bfxRand(10, 40)}px) scale(.8) rotate(120deg)`, opacity: .85, offset: .6 },
-          { transform: `translate(${bfxRand(-40, 40)}px,${bfxRand(40, 80)}px) scale(0) rotate(200deg)`, opacity: 0 }], { duration: bfxRand(1300, 1800), delay: at, easing: 'ease-out' });
+        const s = bfxRand(44, 96) * k, dir = i % 2 ? 1 : -1, d = (i < 12 ? bfxRand(150, LAUNCH) : bfxRand(LAUNCH, LAUNCH + 700));
+        const puff = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;filter:blur(5px);background:radial-gradient(circle,rgba(248,250,252,.9),rgba(148,163,184,.45) 55%,transparent 72%)"></div>', cx, padY, s, s);
+        bfxAnimate(puff, [{ transform: 'translate(0,0) scale(.3)', opacity: 0 }, { transform: `translate(${dir * bfxRand(14, 50) * k}px,-8px) scale(1)`, opacity: .9, offset: .25 }, { transform: `translate(${dir * bfxRand(110, 230) * k}px,${-bfxRand(10, 60) * k}px) scale(${bfxRand(1.8, 2.8)})`, opacity: 0 }], { duration: bfxRand(1100, 1700), delay: d, easing: 'ease-out' });
       }
-      // A starburst where it leaves the screen.
-      for (let j = 0; j < 14; j++) {
-        const a = (j / 14) * Math.PI * 2, d = bfxRand(50, 110);
-        const star = bfxAdd(layer, bfxStar4(colours[j % colours.length]), x, 40, 14, 14);
-        bfxAnimate(star, [{ transform: 'translate(0,0) scale(0)', opacity: 0 }, { transform: 'translate(0,0) scale(1)', opacity: 1, offset: .05 },
-          { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + 30}px) scale(.4)`, opacity: 0 }], { duration: 1000, delay: launchAt + flight * .78, easing: 'ease-out' });
+      // Exhaust smoke and a trail of stars dropped along the flight path.
+      const cols = ['#fde68a', '#ffffff', '#7dd3fc', '#f0abfc'];
+      for (let i = 0; i < 40; i++) {
+        const p = i / 40, at = LAUNCH + p * FLIGHT, yy = y0 + posY(at) + rh * .5;
+        if (yy < -30) break;
+        const s = bfxRand(34, 64) * k;
+        const sm = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;filter:blur(4px);background:radial-gradient(circle,rgba(255,237,213,.85),rgba(148,163,184,.4) 55%,transparent 72%)"></div>', cx + rocketX(at), yy, s, s);
+        bfxAnimate(sm, [{ transform: 'translate(0,0) scale(.3)', opacity: 0 }, { transform: 'translate(0,16px) scale(1)', opacity: .85, offset: .2 }, { transform: `translate(${bfxRand(-30, 30)}px,${bfxRand(60, 120)}px) scale(2.1)`, opacity: 0 }], { duration: bfxRand(800, 1100), delay: at, easing: 'ease-out' });
+        if (i % 2) {
+          const s2 = bfxRand(10, 20) * k, st = bfxAdd(layer, bfxStar4(cols[i % 4]), cx + rocketX(at) + bfxRand(-18, 18), yy + 10, s2, s2);
+          bfxAnimate(st, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.2) rotate(45deg)', opacity: 1, offset: .15 }, { transform: `translate(${bfxRand(-26, 26)}px,${bfxRand(10, 40)}px) scale(.8) rotate(120deg)`, opacity: .85, offset: .6 }, { transform: `translate(${bfxRand(-40, 40)}px,${bfxRand(40, 80)}px) scale(0) rotate(200deg)`, opacity: 0 }], { duration: bfxRand(1000, 1400), delay: at, easing: 'ease-out' });
+        }
+      }
+      // A starburst as it leaves the top of the screen.
+      const exitAt = LAUNCH + FLIGHT * .84;
+      sfxFlash(layer, cx, 30, k, 'rgba(255,240,170,.9)', 220 * k, 500, exitAt);
+      for (let j = 0; j < 18; j++) {
+        const a = (j / 18) * Math.PI * 2, d = bfxRand(60, 130) * k, st = bfxAdd(layer, bfxStar4(cols[j % 4]), cx, 34, 16 * k, 16 * k);
+        bfxAnimate(st, [{ transform: 'translate(0,0) scale(0)', opacity: 0 }, { transform: 'translate(0,0) scale(1)', opacity: 1, offset: .05 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + 34}px) scale(.4)`, opacity: 0 }], { duration: 1000, delay: exitAt, easing: 'ease-out' });
       }
     }
     // Card Shower: a fountain of the winner's own cards. Backs wear the winner's
@@ -3603,33 +3657,58 @@
       layer.dataset.ownerFxSpeed = OWNER_VICTORY_SPEED;
       const [W, H] = vfxSize(layer);
       const S = Math.min(W * .9, H * .6, 580), cx = W / 2, cy = H * .42, // v275: smaller, fits a phone
-             ox = cx - S / 2, oy = cy - S / 2;
+             ox = cx - S / 2, oy = cy - S / 2, k = Math.min(1, W / 390);
       const F = OWNER_FX_LAYOUT.fireworks, total = 4200;
       const tones = { gold: '#fde047', red: '#f87171', blue: '#60a5fa', purple: '#e879f9', green: '#34d399' };
       audio.playEffectClip('fireworks', 0, 0.5);
       ofxVignette(layer, W, H, 'rgba(8,6,30,.72)', total);
+      // v422: a night skyline that the bursts light up, with its windows twinkling.
+      const bld = []; let bx0 = 0, seed = 7;
+      const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+      while (bx0 < 400) { const w = 22 + rnd() * 30, h = 26 + rnd() * 62; let wins = ''; for (let wy = 10; wy < h - 6; wy += 11) for (let wx = 5; wx < w - 6; wx += 9) if (rnd() > .45) wins += `<rect class="vfx-win" x="${bx0 + wx}" y="${100 - h + wy}" width="4" height="5" fill="#fde68a" opacity="${(.35 + rnd() * .6).toFixed(2)}"/>`; bld.push(`<rect x="${bx0}" y="${100 - h}" width="${w}" height="${h}" fill="#0a0f24"/>${wins}`); bx0 += w + 2; }
+      const sky = bfxAdd(layer, `<svg width="100%" height="100%" viewBox="0 0 400 100" preserveAspectRatio="none">${bld.join('')}</svg>`, cx, H - 26 * k, W * 1.05, 92 * k);
+      bfxAnimate(sky, [{ opacity: 0 }, { opacity: 1, offset: .06 }, { opacity: 1, offset: .86 }, { opacity: 0 }], { duration: total, easing: 'linear' });
       FIREWORK_BURSTS.forEach(([name, at], i) => {
         const [bx, by] = ofxPt(S, ox, oy, F.centres[name]);
-        // The rocket's trail.
-        const rise = Math.min(420, at - 20);
-        const trail = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:3px;background:linear-gradient(to top,transparent,${tones[name]} 70%,#fff);box-shadow:0 0 10px ${tones[name]}"></div>`, bx, by, 5, 34);
-        bfxAnimate(trail, [{ transform: `translate(${(i % 2 ? -1 : 1) * 18}px,${H - by + 40}px)`, opacity: 0 }, { transform: `translate(${(i % 2 ? -1 : 1) * 12}px,${(H - by) * .7}px)`, opacity: 1, offset: .15 },
+        const c = tones[name], big = name === 'gold';
+        // The rocket: a bright head with a tail of sparks, and a glow on the sky when it opens.
+        const rise = Math.min(420, at - 20), sg = i % 2 ? -1 : 1, sx = sg * 18, sy = H - by + 40;
+        const trail = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:3px;background:linear-gradient(to top,transparent,${c} 70%,#fff);box-shadow:0 0 10px ${c}"></div>`, bx, by, 5, 34);
+        bfxAnimate(trail, [{ transform: `translate(${sx}px,${sy}px)`, opacity: 0 }, { transform: `translate(${sg * 12}px,${(H - by) * .7}px)`, opacity: 1, offset: .15 },
           { transform: 'translate(0,0)', opacity: 1, offset: .95 }, { transform: 'translate(0,0) scale(.3)', opacity: 0 }], { duration: rise, delay: at - rise, easing: 'cubic-bezier(.3,.6,.5,1)' });
+        for (let q = 0; q < 10; q++) {
+          const f = q / 10, dot = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:${q % 2 ? '#fff' : c};box-shadow:0 0 5px ${c}"></div>`, bx + sg * 12 * (1 - f) , by + (H - by) * .7 * (1 - f) * (1 - f) + 6, 4, 4);
+          bfxAnimate(dot, [{ transform: 'translate(0,0) scale(1)', opacity: 0 }, { opacity: 1, offset: .2 }, { transform: `translate(${bfxRand(-10, 10)}px,${bfxRand(20, 60)}px) scale(.2)`, opacity: 0 }], { duration: 420, delay: at - rise + f * rise, easing: 'ease-out' });
+        }
+        const glow = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,${c}66,${c}22 40%,transparent 70%);mix-blend-mode:screen"></div>`, bx, by, S * (big ? 1.5 : 1.0), S * (big ? 1.5 : 1.0));
+        bfxAnimate(glow, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .12 }, { transform: 'scale(1.15)', opacity: .5, offset: .5 }, { transform: 'scale(1.2)', opacity: 0 }], { duration: Math.min(1700, total - at), delay: at, easing: 'ease-out' });
         // The flash as it opens.
-        const flash = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff,${tones[name]}88 35%,transparent 70%)"></div>`, bx, by, S * (name === 'gold' ? .7 : .38), S * (name === 'gold' ? .7 : .38));
+        const flash = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff,${c}88 35%,transparent 70%)"></div>`, bx, by, S * (big ? .7 : .38), S * (big ? .7 : .38));
         bfxAnimate(flash, [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .25 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 420, delay: at, easing: 'ease-out' });
-        // The burst itself: opens bright, glitters, drifts down and fades.
+        // The owner's painted burst: opens bright, glitters, drifts down and fades.
         const burst = ofxLayer(layer, `fireworks-${name}`, F[name], S, ox, oy);
         burst.style.transformOrigin = `${((F.centres[name][0] - F[name][0]) / F[name][2] * 100).toFixed(1)}% ${((F.centres[name][1] - F[name][1]) / F[name][3] * 100).toFixed(1)}%`;
         const life = total - at;
         bfxAnimate(burst, ofxEase([{ transform: 'scale(.12)', opacity: 0 }, { transform: 'scale(.92)', opacity: 1, offset: .07 },
           { transform: 'scale(1.02)', opacity: 1, offset: .18 }, { transform: 'scale(1.05) translateY(0)', opacity: 1, offset: .62 },
           { transform: `scale(1.08) translateY(${S * .05}px)`, opacity: 0 }]), { duration: life, delay: at, easing: 'linear' });
+        // Streaks thrown from the centre, and glitter that falls out of the burst.
+        const r0 = (big ? .4 : .22) * S, n = big ? 28 : 16;
+        for (let j = 0; j < n; j++) {
+          const a = (j / n) * Math.PI * 2 + bfxRand(-.08, .08), len = bfxRand(.55, 1) * r0, deg = a * 180 / Math.PI;
+          const st = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:2px;background:linear-gradient(90deg,transparent,${j % 3 ? c : '#fff'});box-shadow:0 0 6px ${c}"></div>`, bx, by, 26 * k, 3 * k);
+          bfxAnimate(st, [{ transform: `rotate(${deg}deg) translateX(0)`, opacity: 0 }, { transform: `rotate(${deg}deg) translateX(${len * .6}px)`, opacity: 1, offset: .3 }, { transform: `rotate(${deg}deg) translateX(${len}px)`, opacity: 0 }], { duration: 650, delay: at + bfxRand(0, 40), easing: 'cubic-bezier(.1,.8,.3,1)' });
+        }
+        for (let j = 0; j < (big ? 18 : 9); j++) {
+          const a = bfxRand(0, Math.PI * 2), d = bfxRand(.3, 1) * r0, s = bfxRand(3, 6);
+          const gl = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:${j % 3 ? c : '#fff'};box-shadow:0 0 6px ${c}"></div>`, bx + Math.cos(a) * d, by + Math.sin(a) * d, s, s);
+          bfxAnimate(gl, [{ transform: 'translate(0,0)', opacity: 0 }, { opacity: 1, offset: .2 }, { transform: `translate(${bfxRand(-14, 14)}px,${bfxRand(.12, .3) * H}px)`, opacity: 0 }], { duration: bfxRand(1000, 1400), delay: at + bfxRand(120, 800), easing: 'ease-in' });
+        }
         // Twinkles round it.
-        const r = (name === 'gold' ? .36 : .16) * S;
-        for (let j = 0; j < (name === 'gold' ? 9 : 5); j++) {
+        const r = (big ? .36 : .16) * S;
+        for (let j = 0; j < (big ? 9 : 5); j++) {
           const a = bfxRand(0, Math.PI * 2), d = bfxRand(.3, 1) * r, s = bfxRand(10, 20);
-          const tw = bfxAdd(layer, bfxStar4(j % 2 ? '#ffffff' : tones[name]), bx + Math.cos(a) * d, by + Math.sin(a) * d, s, s);
+          const tw = bfxAdd(layer, bfxStar4(j % 2 ? '#ffffff' : c), bx + Math.cos(a) * d, by + Math.sin(a) * d, s, s);
           bfxAnimate(tw, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.2) rotate(45deg)', opacity: 1, offset: .4 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 500, delay: at + bfxRand(200, 1500) });
         }
       });
