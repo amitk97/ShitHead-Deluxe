@@ -724,6 +724,51 @@
         k.scatter(14, 1.2, 2.6, (at) => k.noise({ at, dur: 0.05, type: 'bandpass', f0: 600 + Math.random() * 600, q: 2, level: 0.1 }));
         k.noise({ at: 2.9, dur: 0.3, type: 'bandpass', f0: 3000, f1: 600, q: 0.9, level: 0.2 });
         [1319, 1760, 2349].forEach((f, i) => k.tone({ at: 2.9 + i * 0.06, dur: 0.4, type: 'sine', f0: f, level: 0.07 }));
+      },
+      // Cupid's Heart: whoosh + thunk as each arrow lands (.45, .75, 1.05s), two heartbeats (1.25, 1.42s), a harp
+      // run and sparkle as the heart bursts at 1.6s, then chimes as the hearts drift up.
+      'victory-valentine': (k) => {
+        [0.45, 0.75, 1.05].forEach((at, i) => {
+          k.noise({ at: at - 0.32, dur: 0.3, type: 'bandpass', f0: 500, f1: 3200, q: 1.2, level: 0.12, attack: 0.25 });
+          k.tone({ at, dur: 0.14, type: 'sine', f0: 190, f1: 70, level: 0.3 });
+          k.noise({ at, dur: 0.03, type: 'highpass', f0: 3500, level: 0.25 });
+          k.tone({ at: at + 0.02, dur: 0.4, type: 'triangle', f0: 1047 + i * 262, level: 0.08 });
+        });
+        [1.25, 1.42].forEach((at, i) => k.tone({ at, dur: 0.16, type: 'sine', f0: 90 - i * 12, f1: 45, level: 0.38 }));
+        k.noise({ at: 1.6, dur: 0.4, type: 'bandpass', f0: 3000, f1: 600, q: 0.9, level: 0.24 });
+        k.tone({ at: 1.6, dur: 0.2, type: 'sine', f0: 150, f1: 50, level: 0.32 });
+        [523, 659, 784, 988, 1175, 1319, 1568, 1976].forEach((f, i) => k.tone({ at: 1.62 + i * 0.045, dur: 0.6, type: 'triangle', f0: f, level: 0.1 }));
+        [392, 494, 587].forEach((f) => k.tone({ at: 1.65, dur: 1.0, type: 'sine', f0: f, level: 0.05, attack: 0.05 }));
+        k.scatter(14, 1.8, 3.2, (at) => k.tone({ at, dur: 0.22, type: 'sine', f0: 1568 + Math.random() * 1400, level: 0.045 }));
+      },
+      // Beach Party: a bright pop and ukulele jingle as the sun rises (0.7s), waves washing in, and a bouncy thump
+      // at every ball landing (same landings as SUMMER_BALLS in app.js).
+      'victory-summer': (k) => {
+        [0.1, 1.5, 2.7].forEach((at) => k.noise({ at, dur: 1.2, type: 'lowpass', f0: 300, f1: 1800, level: 0.11, attack: 0.55 }));
+        k.tone({ at: 0.55, dur: 0.3, type: 'sine', f0: 400, f1: 1200, level: 0.1, attack: 0.1 });
+        [523, 659, 784, 1047, 784, 659, 784, 1047].forEach((f, i) => { k.tone({ at: 0.7 + i * 0.13, dur: 0.22, type: 'triangle', f0: f, level: 0.11 }); k.noise({ at: 0.7 + i * 0.13, dur: 0.02, type: 'bandpass', f0: 2500, q: 3, level: 0.08 }); });
+        for (let i = 0; i < 6; i++) for (let m = 1; m < 4; m++) {
+          const at = (300 + i * 280 + 1900 * m / 4) / 1000;
+          k.tone({ at, dur: 0.13, type: 'sine', f0: 240 - i * 10, f1: 90, level: 0.14 });
+          k.noise({ at, dur: 0.08, type: 'bandpass', f0: 2800, f1: 900, q: 1, level: 0.06 });
+        }
+      },
+      // Bat Swarm: wind over the moon rising, two thunder cracks at .76 and 1.03s, a flutter of wings, ghostly wails
+      // (1.0, 1.4s), the pumpkin's pop at 1.1s and a low cackle after it.
+      'victory-halloween': (k) => {
+        k.noise({ at: 0, dur: 1.4, type: 'bandpass', f0: 250, f1: 900, q: 1.5, level: 0.1, attack: 0.9 });
+        k.tone({ at: 0.05, dur: 0.8, type: 'sine', f0: 110, f1: 220, level: 0.07, attack: 0.5, vibrato: 4 });
+        [0.76, 1.03].forEach((at, i) => {
+          k.noise({ at, dur: 0.1, type: 'highpass', f0: 2500, level: 0.38 });
+          k.noise({ at: at + 0.02, dur: 0.9 - i * 0.3, type: 'lowpass', f0: 500, f1: 80, level: 0.34 });
+          k.tone({ at, dur: 0.5, type: 'sine', f0: 80, f1: 38, level: 0.3 });
+        });
+        k.scatter(40, 0.5, 2.9, (at) => k.noise({ at, dur: 0.05, type: 'bandpass', f0: 1200 + Math.random() * 1500, q: 2, level: 0.05 }));
+        [1.0, 1.4].forEach((at, i) => k.tone({ at, dur: 0.8, type: 'sine', f0: 320 + i * 60, f1: 560, level: 0.07, attack: 0.15, vibrato: 7 }));
+        k.tone({ at: 1.1, dur: 0.16, type: 'sine', f0: 400, f1: 130, level: 0.3 });
+        k.noise({ at: 1.1, dur: 0.05, type: 'bandpass', f0: 1500, q: 2, level: 0.25 });
+        [0, 1, 2, 3, 4].forEach((i) => k.tone({ at: 1.3 + i * 0.12, dur: 0.1, type: 'square', f0: 420 - i * 30, f1: 300 - i * 30, level: 0.09 }));
+        k.tone({ at: 1.5, dur: 1.4, type: 'triangle', f0: 175, level: 0.05, attack: 0.3, vibrato: 3 });
       }
     };
     const JOKER_SOUNDS = {

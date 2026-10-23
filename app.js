@@ -3743,11 +3743,178 @@
         bfxAnimate(bit, [{ transform: 'translate(0,0)', opacity: 0 }, { opacity: 1, offset: .15 }, { transform: `translate(${bfxRand(-20, 20)}px,${bfxRand(.25, .45) * H}px)`, opacity: 0 }], { duration: bfxRand(1400, 1900), delay: bfxRand(1400, 1900), easing: 'ease-in' });
       }
     }
+    // v423: Valentine, Summer and Halloween victories redrawn on the same rules as the others: one WAAPI clock
+    // (no timers), sampled keyframes, a vignette, a hero, particles, a shout, ending inside ~3.8s, own sound.
+    const vfxSample = (n, fn) => Array.from({ length: n + 1 }, (_, i) => ({ ...fn(i / n), offset: i / n }));
+    const vfxShout = (layer, text, x, y, size, style, at, dur) => {
+      const el = bfxAdd(layer, `<div class="vfx-chop-text" style="font-size:${size}px;${style}">${text}</div>`, x, y, size * text.length * .8, size * 1.3);
+      el.style.display = 'flex'; el.style.alignItems = 'center'; el.style.justifyContent = 'center';
+      bfxAnimate(el, [{ transform: 'scale(0) rotate(-8deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(3deg)', opacity: 1, offset: .12 }, { transform: 'scale(1) rotate(-2deg)', opacity: 1, offset: .22 }, { transform: 'scale(1.03) rotate(-2deg)', opacity: 1, offset: .88 }, { transform: 'scale(.9) rotate(-2deg)', opacity: 0, offset: 1 }], { duration: dur, delay: at, easing: 'ease-out' });
+    };
+    // Cupid's Heart: three arrows thud into a glossy heart (.45, .75, 1.05s), it beats twice and bursts open at
+    // 1.6s with a fountain of hearts, rose petals fall and hearts drift up. "LOVE WINS" pops under it.
+    const VALENTINE_HITS = [450, 750, 1050], VALENTINE_BURST = 1600;
+    function vfxValentine(layer) {
+      const [W, H] = vfxSize(layer), D = 3700, k = Math.min(1, W / 390), cx = W / 2, cy = H * .4, HS = Math.min(W * .6, 250);
+      ofxVignette(layer, W, H, 'rgba(76,5,25,.82)', D);
+      const halo = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(251,113,133,.55),rgba(190,18,60,.2) 45%,transparent 70%);mix-blend-mode:screen"></div>', cx, cy, HS * 2.3, HS * 2.3);
+      bfxAnimate(halo, vfxSample(40, t => ({ transform: `scale(${(.3 + Math.min(1, t * 6) * .7 + Math.sin(t * 40) * .04 * (t > .4 ? 1 : 0)).toFixed(3)})`, opacity: Math.min(1, t * 8) * (t > .9 ? (1 - t) * 10 : 1) })), { duration: D, easing: 'linear' });
+      const gid = 'vh' + (bfxGradientSeq++);
+      const heart = bfxAdd(layer, `<svg viewBox="0 0 100 100" width="100%" height="100%" style="overflow:visible"><defs><radialGradient id="${gid}" cx="34%" cy="26%" r="85%"><stop offset="0" stop-color="#ffa3b8"/><stop offset=".42" stop-color="#e11d48"/><stop offset="1" stop-color="#7f1230"/></radialGradient></defs><path d="${SFX_HEART}" fill="url(#${gid})" stroke="#4c0519" stroke-width="1.6" stroke-linejoin="round"/><path d="M22 26C26 18 35 15 42 18" stroke="#fff" stroke-width="4.5" stroke-linecap="round" fill="none" opacity=".6"/><ellipse cx="30" cy="34" rx="3" ry="2" fill="#fff" opacity=".7"/></svg>`, cx, cy, HS, HS);
+      const kick = (ms, at, amp, len) => ms < at ? 0 : amp * Math.exp(-(ms - at) / len) * Math.cos((ms - at) / len * 2.6);
+      bfxAnimate(heart, vfxSample(90, t => {
+        const ms = t * D, grow = ms < 380 ? (() => { const u = ms / 380, c1 = 1.9; return 1 + (c1 + 1) * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2); })() : 1;
+        let s = grow + VALENTINE_HITS.reduce((a, h) => a + kick(ms, h, .1, 90), 0) + kick(ms, 1250, .14, 80) + kick(ms, 1420, .1, 80) + kick(ms, VALENTINE_BURST, .3, 140);
+        if (ms > 1700 && ms < 3300) s += .035 * Math.sin((ms - 1700) / 1600 * Math.PI * 4);
+        const out = ms > 3300 ? 1 - (ms - 3300) / 400 : 1;
+        return { transform: `scale(${Math.max(0, s * (ms > 3300 ? out : 1)).toFixed(3)}) rotate(${(Math.sin(ms / 140) * (ms > 400 && ms < 1200 ? 1.5 : 0)).toFixed(2)}deg)`, opacity: Math.max(0, out) };
+      }), { duration: D, easing: 'linear' });
+      // Arrows: fly in on a slight arc, stick in the heart with a wobble.
+      const ARROW = '<svg viewBox="0 0 130 26" width="100%" height="100%" style="overflow:visible"><defs><linearGradient id="va' + gid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#b45309"/><stop offset="1" stop-color="#78350f"/></linearGradient></defs><rect x="14" y="11" width="92" height="4" rx="2" fill="url(#va' + gid + ')"/><path d="M104 3 128 13 104 23 110 13Z" fill="#fbbf24" stroke="#78350f" stroke-width="1.5" stroke-linejoin="round"/><path d="M2 13 14 2 26 2 20 13 26 24 14 24Z" fill="#fb7185" stroke="#9f1239" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 13 26 8M12 13 26 18" stroke="#fff" stroke-width="1" opacity=".6"/></svg>';
+      const AL = Math.min(W * .34, 150);
+      VALENTINE_HITS.forEach((hit, i) => {
+        const side = i % 2 ? 1 : -1, tx = cx + side * -HS * .12 + (i - 1) * HS * .12, ty = cy + (i - 1) * HS * .16 - HS * .02;
+        const sx = cx + side * W * .75, sy = cy + (i - 1) * H * .22 - H * .18, flight = hit, ang0 = Math.atan2(ty - sy, tx - sx);
+        const el = bfxAdd(layer, ARROW, 0, 0, AL, AL * .2);
+        bfxAnimate(el, vfxSample(60, t => {
+          const ms = t * D;
+          if (ms < hit - flight) return { transform: `translate(${sx}px,${sy}px)`, opacity: 0 };
+          const p = Math.min(1, (ms - (hit - flight) + 0) / flight), e = 1 - Math.pow(1 - p, 2.2);
+          const hx = sx + (tx - sx) * e, hy = sy + (ty - sy) * e - Math.sin(e * Math.PI) * 40 * k * (1 - e * .2);
+          const wob = ms > hit ? Math.exp(-(ms - hit) / 180) * Math.sin((ms - hit) / 28) * 7 : 0;
+          const back = AL / 2 * (ms > hit ? 1 : 1);
+          const a = ang0 + wob * Math.PI / 180;
+          const out = ms > 3300 ? Math.max(0, 1 - (ms - 3300) / 400) : 1;
+          return { transform: `translate(${(hx - Math.cos(a) * back).toFixed(1)}px,${(hy - Math.sin(a) * back).toFixed(1)}px) rotate(${(a * 180 / Math.PI).toFixed(1)}deg)`, opacity: out };
+        }), { duration: D, easing: 'linear' });
+        const px = tx, py = ty;
+        const spark = bfxAdd(layer, bfxStar4('#fff1f2'), px, py, 46 * k, 46 * k);
+        bfxAnimate(spark, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(45deg)', opacity: 1, offset: .3 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 420, delay: hit, easing: 'ease-out' });
+        for (let j = 0; j < 5; j++) {
+          const a = bfxRand(0, Math.PI * 2), d = bfxRand(30, 70) * k, s = bfxRand(8, 14) * k;
+          const mh = bfxAdd(layer, sfxHeartSvg(['#fb7185', '#fda4af', '#f43f5e'][j % 3]), px, py, s, s);
+          bfxAnimate(mh, [{ transform: 'translate(0,0) scale(.3)', opacity: 0 }, { transform: `translate(${Math.cos(a) * d * .7}px,${Math.sin(a) * d * .7 - 8}px) scale(1)`, opacity: 1, offset: .35 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + 24}px) scale(.6)`, opacity: 0 }], { duration: 700, delay: hit, easing: 'ease-out' });
+        }
+      });
+      // The burst: a ring and a fountain of hearts on ballistic paths.
+      const ring = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;border:4px solid #fda4af;box-shadow:0 0 22px #fb7185,inset 0 0 18px #fb7185"></div>', cx, cy, HS * .8, HS * .8);
+      bfxAnimate(ring, [{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(.7)', opacity: 1, offset: .12 }, { transform: 'scale(3.2)', opacity: 0 }], { duration: 800, delay: VALENTINE_BURST, easing: 'cubic-bezier(.1,.7,.3,1)' });
+      const flash = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff,rgba(253,164,175,.7) 35%,transparent 70%)"></div>', cx, cy, HS * 1.5, HS * 1.5);
+      bfxAnimate(flash, [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .22 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 480, delay: VALENTINE_BURST, easing: 'ease-out' });
+      const HC = ['#fb7185', '#f43f5e', '#fda4af', '#e11d48', '#fecdd3'];
+      for (let i = 0; i < 46; i++) {
+        const a = -Math.PI / 2 + bfxRand(-1.45, 1.45), sp = bfxRand(.42, .95) * H, g = H * 1.05, size = bfxRand(14, 34) * k, life = bfxRand(1500, 2000), spin = bfxRand(-220, 220);
+        const el = bfxAdd(layer, sfxHeartSvg(HC[i % 5]), 0, 0, size, size);
+        bfxAnimate(el, vfxSample(18, t => { const s = t * life / 1000; return { transform: `translate(${(cx + Math.cos(a) * sp * s * .8).toFixed(1)}px,${(cy + Math.sin(a) * sp * s + .5 * g * s * s).toFixed(1)}px) rotate(${(spin * s).toFixed(0)}deg) scale(${(1 - t * .25).toFixed(2)})`, opacity: t < .08 ? t / .08 : t > .65 ? Math.max(0, 1 - (t - .65) / .35) : 1 }; }), { duration: life, delay: VALENTINE_BURST + bfxRand(0, 120), easing: 'linear' });
+      }
+      // Hearts drifting up and rose petals falling.
+      for (let i = 0; i < 18; i++) {
+        const x0 = bfxRand(.06, .94) * W, size = bfxRand(10, 26) * k, rise = bfxRand(.5, .9) * H, life = bfxRand(1300, 1500), ph = bfxRand(0, 6.28);
+        const el = bfxAdd(layer, sfxHeartSvg(HC[i % 5]), 0, 0, size, size);
+        bfxAnimate(el, vfxSample(16, t => ({ transform: `translate(${(x0 + Math.sin(t * 7 + ph) * 22 * k).toFixed(1)}px,${(H + 20 - rise * t).toFixed(1)}px) scale(${(.6 + t * .5).toFixed(2)})`, opacity: t < .12 ? t / .12 : t > .7 ? Math.max(0, 1 - (t - .7) / .3) : .95 })), { duration: life, delay: VALENTINE_BURST + 60 + i * 25 + bfxRand(0, 80), easing: 'linear' });
+      }
+      for (let i = 0; i < 18; i++) {
+        const x0 = bfxRand(0, 1) * W, size = bfxRand(10, 18) * k, life = bfxRand(1800, 2000), ph = bfxRand(0, 6.28), fall = H * 1.05, spin = bfxRand(-200, 200);
+        const el = bfxAdd(layer, '<svg viewBox="0 0 20 28" width="100%" height="100%"><path d="M10 1C17 6 19 16 10 27 1 16 3 6 10 1Z" fill="#be123c"/><path d="M10 1C14 8 14 18 10 27" stroke="#fb7185" stroke-width="1.2" fill="none" opacity=".7"/></svg>', 0, 0, size, size * 1.4);
+        bfxAnimate(el, vfxSample(18, t => ({ transform: `translate(${(x0 + Math.sin(t * 5 + ph) * 36 * k).toFixed(1)}px,${(-30 + fall * t).toFixed(1)}px) rotate(${(spin * t * 2).toFixed(0)}deg) scaleX(${Math.cos(t * 9 + ph).toFixed(2)})`, opacity: t < .06 ? t / .06 : t > .85 ? Math.max(0, 1 - (t - .85) / .15) : 1 })), { duration: life, delay: 700 + i * 50 + bfxRand(0, 100), easing: 'linear' });
+      }
+      vfxShout(layer, 'LOVE WINS', cx, cy + HS * .72, Math.min(46, W * .12), 'color:#fff;text-shadow:0 0 2px #4c0519,3px 3px 0 #be123c,5px 5px 0 #4c0519', 1700, 1700);
+    }
+
+    // Beach Party: a sun with sunglasses rises (0.7s pop), the surf rolls in, and six beach balls bounce across
+    // the sand with a squash at every landing and a splash of sea spray; a ukulele jingle plays under SUMMER WIN.
+    const SUMMER_BALLS = { n: 6, start: 300, gap: 280, dur: 1900, bounces: 4 }; // sound.js lists the same landings
+    function vfxSummer(layer) {
+      const [W, H] = vfxSize(layer), D = 3700, k = Math.min(1, W / 390), cx = W / 2, sunY = H * .3, SR = Math.min(W * .26, 120);
+      ofxVignette(layer, W, H, 'rgba(124,45,18,.55)', D);
+      const gid = 'su' + (bfxGradientSeq++);
+      const rays = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:repeating-conic-gradient(rgba(253,224,71,.42) 0 6deg,transparent 6deg 16deg);-webkit-mask-image:radial-gradient(circle,#000 22%,transparent 66%);mask-image:radial-gradient(circle,#000 22%,transparent 66%)"></div>', cx, sunY, SR * 5.4, SR * 5.4);
+      bfxAnimate(rays, vfxSample(30, t => ({ transform: `scale(${Math.min(1, t * 6).toFixed(2)}) rotate(${(t * 70).toFixed(1)}deg)`, opacity: Math.min(1, t * 6) * (t > .88 ? (1 - t) / .12 : 1) * .95 })), { duration: D, easing: 'linear' });
+      const sun = bfxAdd(layer, `<svg viewBox="0 0 100 100" width="100%" height="100%" style="overflow:visible"><defs><radialGradient id="${gid}" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff7b0"/><stop offset=".5" stop-color="#fbbf24"/><stop offset="1" stop-color="#f97316"/></radialGradient></defs><circle cx="50" cy="50" r="46" fill="url(#${gid})" stroke="#c2410c" stroke-width="2"/><path d="M14 40H86Q86 62 66 62Q54 62 50 52 46 62 34 62Q14 62 14 40Z" fill="#111827" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/><path d="M22 44 38 44M58 44 74 44" stroke="#60a5fa" stroke-width="3" opacity=".6" stroke-linecap="round"/><path d="M30 72Q50 88 70 72" stroke="#9a3412" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`, cx, sunY, SR * 2, SR * 2);
+      bfxAnimate(sun, vfxSample(60, t => { const ms = t * D, u = Math.min(1, ms / 700), s = u < 1 ? 1 + 2.4 * Math.pow(u - 1, 3) + 1.4 * Math.pow(u - 1, 2) : 1 + .04 * Math.sin((ms - 700) / 160); const y = (1 - Math.min(1, ms / 600)) * H * .35; return { transform: `translateY(${y.toFixed(1)}px) scale(${Math.max(0, s * (ms > 3350 ? Math.max(0, 1 - (ms - 3350) / 350) : 1)).toFixed(3)})`, opacity: ms > 3350 ? Math.max(0, 1 - (ms - 3350) / 350) : 1 }; }), { duration: D, easing: 'linear' });
+      // Surf: two wave bands sliding sideways along the bottom.
+      [['#38bdf8', .85, 120], ['#0ea5e9', .95, -160]].forEach(([c, o, drift], i) => {
+        const wave = bfxAdd(layer, `<svg viewBox="0 0 400 40" preserveAspectRatio="none" width="100%" height="100%"><path d="M0 20Q25 4 50 20T100 20T150 20T200 20T250 20T300 20T350 20T400 20V40H0Z" fill="${c}"/><path d="M0 20Q25 4 50 20T100 20T150 20T200 20T250 20T300 20T350 20T400 20" fill="none" stroke="#e0f2fe" stroke-width="2" opacity=".8"/></svg>`, cx, H - (22 + i * 16) * k, W * 1.5, 42 * k);
+        bfxAnimate(wave, vfxSample(40, t => ({ transform: `translate(${(drift * t).toFixed(1)}px,${(Math.sin(t * 18 + i) * 3).toFixed(1)}px)`, opacity: o * Math.min(1, t * 8) * (t > .9 ? (1 - t) * 10 : 1) })), { duration: D, easing: 'linear' });
+      });
+      const BALL = '<svg viewBox="0 0 40 40" width="100%" height="100%"><defs><clipPath id="bc"><circle cx="20" cy="20" r="19"/></clipPath></defs><g clip-path="url(#bc)"><circle cx="20" cy="20" r="19" fill="#f8fafc"/><path d="M20 1A19 19 0 0 1 39 20H20Z" fill="#ef4444"/><path d="M39 20A19 19 0 0 1 20 39V20Z" fill="#3b82f6"/><path d="M20 39A19 19 0 0 1 1 20H20Z" fill="#facc15"/><path d="M1 20A19 19 0 0 1 20 1V20Z" fill="#22c55e"/></g><circle cx="20" cy="20" r="19" fill="none" stroke="rgba(0,0,0,.3)"/><circle cx="20" cy="20" r="3.5" fill="#fff"/><ellipse cx="13" cy="10" rx="6" ry="3" fill="#fff" opacity=".55"/></svg>';
+      const B = SUMMER_BALLS;
+      for (let i = 0; i < B.n; i++) {
+        const left = i % 2 === 0, size = (46 + (i % 3) * 10) * Math.max(.8, k), floor = H * (.74 + (i % 3) * .035), delay = B.start + i * B.gap;
+        const x0 = left ? -size : W + size, x1 = left ? W + size : -size, amp0 = H * (.38 + (i % 2) * .08);
+        const el = bfxAdd(layer, BALL, 0, 0, size, size);
+        bfxAnimate(el, vfxSample(48, t => {
+          const bx = x0 + (x1 - x0) * t, ph = (t * B.bounces) % 1, n = Math.floor(t * B.bounces), amp = amp0 * Math.pow(.6, n);
+          const air = 4 * ph * (1 - ph), by = floor - size / 2 - amp * air, near = Math.max(0, 1 - Math.min(ph, 1 - ph) / .06);
+          return { transform: `translate(${bx.toFixed(1)}px,${(by + near * size * .1).toFixed(1)}px) rotate(${((left ? 1 : -1) * t * 900).toFixed(0)}deg) scale(${(1 + near * .14).toFixed(3)},${(1 - near * .16).toFixed(3)})`, opacity: 1 };
+        }), { duration: B.dur, delay, easing: 'linear' });
+        for (let m = 1; m < B.bounces; m++) {
+          const t = m / B.bounces, lx = x0 + (x1 - x0) * t;
+          if (lx < 10 || lx > W - 10) continue;
+          for (let j = 0; j < 6; j++) {
+            const a = -Math.PI / 2 + bfxRand(-1, 1), v = bfxRand(.12, .3) * H, s = bfxRand(4, 8) * k;
+            const d = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#7dd3fc 60%,#0ea5e9)"></div>`, 0, 0, s, s);
+            bfxAnimate(d, vfxSample(10, u => { const q = u * .55; return { transform: `translate(${(lx + Math.cos(a) * v * q).toFixed(1)}px,${(floor + Math.sin(a) * v * q + .5 * H * 1.2 * q * q).toFixed(1)}px)`, opacity: u < .1 ? 1 : Math.max(0, 1 - (u - .1) / .9) }; }), { duration: 550, delay: delay + B.dur * t, easing: 'linear' });
+          }
+        }
+      }
+      vfxShout(layer, 'SUMMER WIN', cx, sunY + SR * 1.45, Math.min(44, W * .115), 'color:#fff7ed;-webkit-text-stroke:1.5px #7c2d12;text-shadow:3px 3px 0 #ea580c,5px 5px 0 #7c2d12', 900, 2400);
+    }
+
+    // Bat Swarm: a full moon rises, lightning cracks twice (.9s), bats pour out of the moon across the sky,
+    // ghosts drift by and a jack-o'-lantern pops up grinning (1.1s) under SPOOKY WIN.
+    function vfxHalloween(layer) {
+      const [W, H] = vfxSize(layer), D = 3700, k = Math.min(1, W / 390), cx = W / 2, my = H * .27, MR = Math.min(W * .24, 105);
+      ofxVignette(layer, W, H, 'rgba(26,8,50,.88)', D);
+      for (let i = 0; i < 3; i++) {
+        const fog = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(ellipse,rgba(167,139,250,.38),transparent 68%);mix-blend-mode:screen"></div>', W * (.2 + i * .3), H * (.5 + i * .12), W * .9, H * .22);
+        bfxAnimate(fog, vfxSample(24, t => ({ transform: `translateX(${((i % 2 ? -1 : 1) * W * .25 * t).toFixed(1)}px)`, opacity: Math.min(1, t * 6) * (t > .85 ? (1 - t) / .15 : 1) * .8 })), { duration: D, easing: 'linear' });
+      }
+      const gid = 'mo' + (bfxGradientSeq++);
+      const glow = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(253,230,138,.65),rgba(124,58,237,.25) 45%,transparent 70%);mix-blend-mode:screen"></div>', cx, my, MR * 5, MR * 5);
+      bfxAnimate(glow, vfxSample(40, t => ({ transform: `scale(${(.3 + Math.min(1, t * 5) * .7 + .05 * Math.sin(t * 30)).toFixed(3)})`, opacity: Math.min(1, t * 6) * (t > .88 ? (1 - t) / .12 : 1) })), { duration: D, easing: 'linear' });
+      const moon = bfxAdd(layer, `<svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="${gid}" cx="38%" cy="34%" r="75%"><stop offset="0" stop-color="#fffbe0"/><stop offset=".6" stop-color="#fde68a"/><stop offset="1" stop-color="#d9a441"/></radialGradient></defs><circle cx="50" cy="50" r="47" fill="url(#${gid})"/><g fill="#c9953a" opacity=".5"><circle cx="34" cy="38" r="8"/><circle cx="62" cy="30" r="5"/><circle cx="66" cy="60" r="10"/><circle cx="40" cy="68" r="6"/><circle cx="52" cy="48" r="3"/></g></svg>`, cx, my, MR * 2, MR * 2);
+      bfxAnimate(moon, vfxSample(50, t => { const ms = t * D, u = Math.min(1, ms / 700), s = u < 1 ? 1 + 1.7 * Math.pow(u - 1, 3) + .7 * Math.pow(u - 1, 2) : 1; const o = ms > 3450 ? Math.max(0, 1 - (ms - 3450) / 350) : 1; return { transform: `translateY(${((1 - u) * H * .3).toFixed(1)}px) scale(${Math.max(0, s).toFixed(3)})`, opacity: o }; }), { duration: D, easing: 'linear' });
+      // Lightning: two white-violet flashes and a jagged bolt.
+      const fl = bfxAdd(layer, '<div style="width:100%;height:100%;background:rgba(237,233,254,.85)"></div>', W / 2, H / 2, W, H);
+      bfxAnimate(fl, [{ opacity: 0 }, { opacity: 0, offset: .2 }, { opacity: .9, offset: .215 }, { opacity: .1, offset: .24 }, { opacity: .75, offset: .27 }, { opacity: 0, offset: .34 }, { opacity: 0 }], { duration: D, easing: 'linear' });
+      const bolt = bfxAdd(layer, '<svg viewBox="0 0 60 200" width="100%" height="100%" style="overflow:visible"><path d="M34 0 18 70 32 74 10 140 28 144 20 200 50 110 34 106 52 60 38 56Z" fill="#fff" stroke="#c4b5fd" stroke-width="3" stroke-linejoin="round"/></svg>', cx + W * .22, H * .3, 60 * k * 1.6, 200 * k * 1.6);
+      bfxAnimate(bolt, [{ opacity: 0 }, { opacity: 0, offset: .2 }, { opacity: 1, offset: .21 }, { opacity: 0, offset: .24 }, { opacity: 1, offset: .26 }, { opacity: 0, offset: .31 }, { opacity: 0 }], { duration: D, easing: 'linear' });
+      // Bats pour out of the moon (the game's own bat art).
+      for (let i = 0; i < 26; i++) {
+        const size = bfxRand(60, 112) * Math.max(.8, k), flap = bfxRand(.2, .3);
+        const el = bfxAdd(layer, realBatHtml(flap.toFixed(3), (-bfxRand(0, flap)).toFixed(3)), cx, my, size, size * .6);
+        const a = Math.PI / 2 + bfxRand(-1.9, 1.9) + (i % 2 ? .3 : -.3), dist = Math.hypot(W, H) * bfxRand(.6, .85), wave = bfxRand(24, 64) * (Math.random() < .5 ? -1 : 1), life = bfxRand(1700, 2200);
+        let prevX = 0;
+        bfxAnimate(el, vfxSample(14, t => {
+          const along = dist * (t * t * .35 + t * .65), side = Math.sin(t * Math.PI * 2.2) * wave * t;
+          const x = Math.cos(a) * along - Math.sin(a) * side, y = Math.sin(a) * along + Math.cos(a) * side - H * .1 * Math.sin(t * Math.PI);
+          const tilt = Math.max(-28, Math.min(28, (x - prevX) * .5)); prevX = x;
+          return { transform: `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${tilt.toFixed(1)}deg) scale(${(.3 + t * 1.0).toFixed(2)})`, opacity: t < .06 ? t / .06 : t > .85 ? Math.max(0, (1 - t) / .15) : 1 };
+        }), { duration: life, delay: 500 + i * 28 + bfxRand(0, 150), easing: 'linear' });
+      }
+      // Ghosts drifting past.
+      const GHOST = '<svg viewBox="0 0 40 52" width="100%" height="100%" style="overflow:visible"><path d="M4 50V20C4 8 11 2 20 2s16 6 16 18v30l-5-5-5 5-6-5-6 5-5-5Z" fill="#f5f3ff" opacity=".92"/><ellipse cx="14" cy="21" rx="3.2" ry="4.5" fill="#1e1b4b"/><ellipse cx="26" cy="21" rx="3.2" ry="4.5" fill="#1e1b4b"/><ellipse cx="20" cy="33" rx="4" ry="5.5" fill="#1e1b4b"/></svg>';
+      [[.16, .56, 1], [.84, .5, -1], [.3, .74, -1], [.72, .8, 1]].forEach(([fx, fy, dir], i) => {
+        const size = (44 + i * 6) * Math.max(.8, k), at = 700 + i * 250, life = 2100;
+        const g = bfxAdd(layer, GHOST, 0, 0, size, size * 1.3);
+        g.style.mixBlendMode = 'screen'; g.style.filter = 'drop-shadow(0 0 10px rgba(196,181,253,.9))';
+        bfxAnimate(g, vfxSample(36, t => ({ transform: `translate(${(W * fx + dir * W * .18 * t + Math.sin(t * 9 + i) * 14 * k).toFixed(1)}px,${(H * fy - H * .12 * t + Math.sin(t * 11 + i * 2) * 10 * k).toFixed(1)}px) rotate(${(Math.sin(t * 8 + i) * 8).toFixed(1)}deg)`, opacity: Math.min(1, t * 6) * (t > .75 ? Math.max(0, (1 - t) / .25) : 1) * .85 })), { duration: life, delay: at, easing: 'linear' });
+      });
+      // The jack-o'-lantern pops up and grins by candlelight.
+      const PS = Math.min(W * .3, 130), py = H * .66;
+      const pg = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(251,146,60,.6),transparent 68%);mix-blend-mode:screen"></div>', cx, py, PS * 2.6, PS * 2.6);
+      bfxAnimate(pg, vfxSample(60, t => ({ transform: 'scale(1)', opacity: t < .28 ? 0 : Math.min(1, (t - .28) * 8) * (t > .88 ? (1 - t) / .12 : 1) * (.75 + Math.sin(t * 90) * .15 + Math.sin(t * 37) * .1) })), { duration: D, easing: 'linear' });
+      const pk = bfxAdd(layer, '<svg viewBox="0 0 100 90" width="100%" height="100%" style="overflow:visible"><path d="M48 12C46 6 50 2 56 1" stroke="#365314" stroke-width="6" stroke-linecap="round" fill="none"/><ellipse cx="50" cy="52" rx="46" ry="36" fill="#f97316" stroke="#9a3412" stroke-width="2"/><path d="M50 16C38 24 34 40 34 52S38 80 50 88M50 16C62 24 66 40 66 52S62 80 50 88M30 22C16 32 8 44 6 56M70 22C84 32 92 44 94 56" stroke="#c2410c" stroke-width="2.5" fill="none" opacity=".7"/><path d="M26 40 40 34 38 50Z" fill="#fde047"/><path d="M74 40 60 34 62 50Z" fill="#fde047"/><path d="M50 50 44 60H56Z" fill="#fde047"/><path d="M22 62Q50 92 78 62L70 60 64 68 56 62 50 70 44 62 36 68 30 60Z" fill="#fde047" stroke="#7c2d12" stroke-width="1"/></svg>', cx, py, PS, PS * .9);
+      bfxAnimate(pk, vfxSample(60, t => { const ms = t * D, u = Math.max(0, Math.min(1, (ms - 1100) / 450)), s = u < 1 ? 1 + 2.2 * Math.pow(u - 1, 3) + 1.2 * Math.pow(u - 1, 2) : 1 + .03 * Math.sin((ms - 1550) / 120); const o = ms > 3450 ? Math.max(0, 1 - (ms - 3450) / 350) : 1; return { transform: `translateY(${((1 - u) * 40).toFixed(1)}px) scale(${(u === 0 ? 0 : s * o).toFixed(3)},${(u === 0 ? 0 : s * o * (u < 1 ? 1 : 1 + .02 * Math.sin((ms - 1550) / 120))).toFixed(3)})`, opacity: u === 0 ? 0 : o }; }), { duration: D, easing: 'linear' });
+      vfxShout(layer, 'SPOOKY WIN', cx, py + PS * .85, Math.min(42, W * .11), 'color:#fff7ed;-webkit-text-stroke:1.5px #2e1065;text-shadow:3px 3px 0 #7c3aed,5px 5px 0 #2e1065', 1500, 2100);
+    }
     function playShapeVictoryEffect(effect, cardStyle = null) {
       const layer = document.getElementById('victoryFxLayer');
       if (!layer) return false;
       const run = { 'victory-sparklers': vfxSparklers, 'victory-stars': vfxFiveStars, 'victory-karate': vfxKarate,
-        'victory-cards': vfxCardShower, 'victory-trophy': vfxTrophy, 'victory-rocket': vfxRocket, 'victory-origami': vfxOrigamiFlock, 'victory-lion': vfxLion, 'victory-fireworks': vfxFireworks }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
+        'victory-cards': vfxCardShower, 'victory-trophy': vfxTrophy, 'victory-rocket': vfxRocket, 'victory-origami': vfxOrigamiFlock, 'victory-lion': vfxLion, 'victory-fireworks': vfxFireworks,
+        'victory-valentine': vfxValentine, 'victory-summer': vfxSummer, 'victory-halloween': vfxHalloween }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
       if (!run) return false;
       const host = document.createElement('div');
       host.style.cssText = 'position:absolute;inset:0;pointer-events:none';
