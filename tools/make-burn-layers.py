@@ -32,6 +32,36 @@ def cut(src, mask, alpha_lo, alpha_hi, slots, out, scale=2, patch=None):
     atlas.save(out, quality=92)
     print(out, atlas.size)
 
+GHOST_PAD = (101, 79, 79, 0)  # top, left, right, bottom px added round the 395x288 painting (burns3d.js EFFECTS['burn-halloween'].ext follows)
+
+def extend_art(src, pt, pl, pr, pb):
+    """Grow the painting past its own edges so the smoke and flames trail off into the dark instead of stopping at a picture edge:
+    the border pixels are smeared outward (continuous at the seam, so wisps keep rising/spreading), warped and broken up with soft noise
+    so they are not straight streaks, blurred along the smear, and faded to the ground."""
+    H, W, _ = src.shape
+    base = cv2.copyMakeBorder(src, pt, pb, pl, pr, cv2.BORDER_REPLICATE).astype(np.float32) / 255
+    H2, W2 = base.shape[:2]
+    yy, xx = np.mgrid[0:H2, 0:W2].astype(np.float32)
+    mx = xx + 10 * np.sin(yy / 15.0 + xx / 37.0); my = yy + 8 * np.sin(xx / 21.0 - yy / 33.0)
+    warped = cv2.remap(base, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    dxl = np.clip((pl - xx) / max(pl, 1), 0, 1); dxr = np.clip((xx - (W + pl - 1)) / max(pr, 1), 0, 1)
+    dyt = np.clip((pt - yy) / max(pt, 1), 0, 1); dyb = np.clip((yy - (H + pt - 1)) / max(pb, 1), 0, 1)
+    dx = np.maximum(dxl, dxr); dy = np.maximum(dyt, dyb)
+    d = np.clip(np.sqrt(dx ** 2 + dy ** 2), 0, 1)[..., None]
+    bv = cv2.GaussianBlur(warped, (0, 0), sigmaX=4, sigmaY=20); bh = cv2.GaussianBlur(warped, (0, 0), sigmaX=20, sigmaY=4)
+    mixv = (dy / np.maximum(dx + dy, 1e-4))[..., None]
+    sm = bv * mixv + bh * (1 - mixv)
+    sm2 = cv2.GaussianBlur(sm, (0, 0), 9)
+    rng = np.random.RandomState(7)
+    n = cv2.GaussianBlur(rng.rand(H2, W2).astype(np.float32), (0, 0), 14); n = (n - n.min()) / (n.max() - n.min() + 1e-6)
+    n = cv2.GaussianBlur(rng.rand(H2, W2).astype(np.float32), (0, 0), 6) * .4 / .15 * .0 + n  # soft clumps
+    wisp = (.35 + 1.3 * n)[..., None]
+    w = ss(0, .3, d)
+    ext = (warped * (1 - w) + (sm * .55 + sm2 * .45) * w) * (1 + (wisp - 1) * w)
+    ext = ext * np.power(1 - d, 1.6)
+    inside = (d <= 0).astype(np.float32)
+    return np.clip(base * inside + ext * (1 - inside), 0, 1)
+
 def ghost_flames():
     src = np.asarray(Image.open('docs/avatar-art/src/burn-ghost-flames.webp').convert('RGB'))
     Image.fromarray(src).resize((384, 282), Image.LANCZOS).save('art/burns/ghost-flames/tile.webp', quality=90)
@@ -46,10 +76,15 @@ def ghost_flames():
     cards = (((mn > .5) & (sat < .35)) | ((r > g * 1.2) & (r > b * 1.15) & (mx > .25))) & zone
     k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
     mask = cv2.dilate(cv2.morphologyEx(cards.astype(np.uint8) * 255, cv2.MORPH_CLOSE, k, iterations=2), k)
-    # Soft edges all round: in the game the smoke must fade out, never stop at a picture edge.
-    edge = lambda yy, xx: ss(0, .14, xx) * ss(0, .14, 1 - xx) * ss(0, .1, yy) * ss(0, .12, 1 - yy)
-    cut(src, mask, .07, .40, [lambda yy, xx, h: edge(yy, xx) * (1 - ss(.5, .82, yy)),            # the wraith
-                              lambda yy, xx, h: edge(yy, xx) * ss(.42, .72, yy) * (1 - h)],     # the fire bank
+    pt, pl, pr, pb = GHOST_PAD
+    src = (extend_art(src, pt, pl, pr, pb) * 255).astype(np.uint8)
+    mask = cv2.copyMakeBorder(mask, pt, pb, pl, pr, cv2.BORDER_CONSTANT, value=0)
+    H2, W2 = src.shape[:2]
+    yo = lambda yy: (yy * H2 - pt) / H  # padded fraction -> the painting's own fraction
+    # Soft edges all round, now at the edge of the grown picture (the extension has already faded to the dark ground).
+    edge = lambda yy, xx: ss(0, .05, xx) * ss(0, .05, 1 - xx) * ss(0, .04, yy) * ss(0, .06, 1 - yy)
+    cut(src, mask, .07, .40, [lambda yy, xx, h: edge(yy, xx) * (1 - ss(.5, .82, yo(yy))),            # the wraith
+                              lambda yy, xx, h: edge(yy, xx) * ss(.42, .72, yo(yy)) * (1 - h)],     # the fire bank
         'art/burns/ghost-flames/layers.webp')
 
 def smoke_burst():

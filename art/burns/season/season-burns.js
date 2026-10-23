@@ -109,6 +109,11 @@
       add(el) { layer.appendChild(el); return el; },
       box(el, w, h, ox, oy) { el.style.cssText += `;position:absolute;left:${px(ox)}px;top:${px(oy)}px;width:${px(w)}px;height:${px(h)}px;margin:0`; return el; } };
     const sc = build(S) || {};
+    // Start every clock together AFTER the build: on a phone the build (clones, clip-path pieces, sampled keyframes) can take
+    // several hundred ms, and the clock ran meanwhile, so the first frames (the stars flying in) were over before anything was drawn.
+    const anims = layer.getAnimations ? layer.getAnimations({ subtree: true }) : [];
+    anims.forEach(a => { a.pause(); a.currentTime = 0; });
+    requestAnimationFrame(() => requestAnimationFrame(() => anims.forEach(a => { if (a.playState === 'paused' && !+a.currentTime) a.play(); })));
     // keep tall effects off the opponent seat: transparent above cy - a*H, fully opaque below cy - b*H
     if (sc.topFade) canvases.forEach(({ c }) => { const m = `linear-gradient(to bottom,transparent ${px(cy - sc.topFade[0] * H)}px,#000 ${px(cy - sc.topFade[1] * H)}px)`; c.style.webkitMaskImage = c.style.maskImage = m; });
     let raf = 0, alive = true;

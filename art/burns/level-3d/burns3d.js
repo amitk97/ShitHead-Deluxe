@@ -28,7 +28,7 @@
     // Painted-art burns: the owner's approved tile cut into two layers (tools/make-burn-layers.py),
     // brought to life in WebGL. layout: art width in card heights, height/width, where the Pile sits.
     // Ghost Flames (seasonal Halloween): a ghost layer and a fire layer; every pile card burns.
-    'burn-halloween': { dur: 2.0, box: [6.4, 5.8, .55, .78] /* previews */, tile: 'art/burns/ghost-flames/tile.webp', art: 'art/burns/ghost-flames/layers.webp?v=1', cards: 'all', layout: [5.6, 288 / 395, .58, .74] },
+    'burn-halloween': { dur: 2.0, box: [6.4, 5.8, .55, .78] /* previews */, tile: 'art/burns/ghost-flames/tile.webp', art: 'art/burns/ghost-flames/layers.webp?v=2', cards: 'all', layout: [5.6, 288 / 395, .58, .74], ext: [-79 / 395, 1 + 79 / 395, -101 / 288, 1] /* the painting is grown past its edges (tools/make-burn-layers.py GHOST_PAD): uv range the mesh covers */ },
     // Smoke Burst (Lvl 20): the cloud and its front puffs; only the top card shows (the rest hide).
     'burn-lvl-smoke-burst': { iconOnly: true /* v406: procedural in burn-effects.js; tile + sound only */, dur: 2.0, box: [6, 6.2, .5, .52], tile: 'art/burns/smoke-burst/tile.webp', art: 'art/burns/smoke-burst/layers.webp?v=1', layout: [4.8, 404 / 439, .5, .52] },
     // Royal Incineration (Lvl 80): the crown (whole, its own layer) and the golden fire burst under it.
@@ -281,7 +281,7 @@ void main(){
     const top = cards[cards.length - 1], rand = rng(opts.seed || 1931), R = (a, b) => a + (b - a) * rand();
     const kind = { 'burn-halloween': 'ghost', 'burn-lvl-smoke-burst': 'smoke', 'burn-lvl-royal-incineration': 'royal', 'burn-lvl-hellfire-spiral': 'spiral', 'burn-lvl-shitstorm': 'spiral', 'burn-lvl-spark-snap': 'snap', 'default': 'blaze', 'burn-coloured': 'spectral', 'burn-electric': 'bolt', 'burn-sweets': 'candy', 'burn-lava': 'lava', 'burn-origami': 'paper' }[opts.id] || 'inferno', ghost = kind === 'ghost', smoke = kind === 'smoke', royal = kind === 'royal', spiral = kind === 'spiral', snap = kind === 'snap', blaze = kind === 'blaze', spectral = kind === 'spectral', bolt = kind === 'bolt', candy = kind === 'candy', lava = kind === 'lava', paper = kind === 'paper';
     const n = cards.length, T = smoke ? .2 : royal ? .42 : spiral ? .3 : snap ? .26 : blaze ? .16 : spectral ? .22 : bolt ? .24 : candy ? .18 : lava ? .22 : paper ? .3 : .62, storm = opts.id === 'burn-lvl-shitstorm', hell = opts.id === 'burn-lvl-hellfire-spiral';
-    const S = { t: 0, kind, storm, hell, funnel: storm || hell, ghost, T, slots: n + 1, layout: (EFFECTS[opts.id] || {}).layout, artK: opts.artK || 1, calm: !!opts.calm, flames: [], embers: [], smoke: [], bites: [], shards: [], acc: {}, n, ar: top.W / top.H,
+    const S = { t: 0, kind, storm, hell, funnel: storm || hell, ghost, T, slots: n + 1, layout: (EFFECTS[opts.id] || {}).layout, ext: (EFFECTS[opts.id] || {}).ext, artK: opts.artK || 1, calm: !!opts.calm, flames: [], embers: [], smoke: [], bites: [], shards: [], acc: {}, n, ar: top.W / top.H,
       cards: cards.map((c, i) => ({ i, ar: c.W / c.H, rot0: -c.rot * Math.PI / 180, ox: (c.dx || 0) / top.H, oy: -(c.dy || 0) / top.H, last: -.3,
         side: n === 1 ? .55 : i === n - 1 ? .45 : (i % 2 ? 1 : -1) * (.9 + .2 * i) })) };
     const hw = S.ar / 2;
@@ -581,7 +581,7 @@ void main(){
           if (hell && t > .45 && t < 1.7) emit('plume', 16, dt, () => S.smoke.push({ orb: { r: R(.35, .8), a: R(0, 6.28), w: R(3, 5), y: FLOOR + R(.2, .9), vy: R(1.1, 2.2) }, col: rand() < .5 ? [.1, .07, .06] : [.2, .1, .06], p: [0, 0, 0], v: [0, 0, 0], age: 0, life: R(.9, 1.4), size: R(.4, .75), seed: rand(), a: .5 }));
           if (!storm && t > T && t < 1.35) emit('debris', 11, dt, () => S.shards.push({ c: n - 1, orb: orbit(false), p: [0, 0, 0], uv: [R(.1, .9), R(.1, .9)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: R(.03, .055), age: 0, life: R(.7, 1), seed: rand(), char: .3 }));
           // The ShitStorm's torn cards ride the funnel's helix up (some whole-card sized), tumbling; goo is flung off its flanks.
-          if (storm && t > .34 && t < 1.3) emit('frag', 52, dt, () => S.shards.push({ c: n - 1, hx: { u: R(0, .12), du: R(.55, .85), a: R(0, 6.28), w: -R(5.5, 8.5), off: R(1.04, 1.4) }, p: [0, 0, 0], uv: [R(.08, .92), R(.08, .92)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: rand() < .22 ? R(.15, .21) : R(.06, .11), age: 0, life: R(.8, 1.1), seed: rand(), char: .15 }));
+          if (false && t > .34 && t < 1.3) emit('frag', 52, dt, () => S.shards.push({ c: n - 1, hx: { u: R(0, .12), du: R(.55, .85), a: R(0, 6.28), w: -R(5.5, 8.5), off: R(1.04, 1.4) }, p: [0, 0, 0], uv: [R(.08, .92), R(.08, .92)], v: [0, 0, 0], a: [R(0, 6), R(0, 6), R(0, 6)], w: [R(-9, 9), R(-9, 9), R(-7, 7)], s: rand() < .22 ? R(.15, .21) : R(.06, .11), age: 0, life: R(.8, 1.1), seed: rand(), char: .15 }));
           if (storm && t > .3 && t < 1.5 && S.smoke.filter(m => m.goo).length < 90) {
             const fling = (par, u, a, st, so, size, life, g, chunk) => {
               const p = S.fpt(par, u, a);
@@ -739,14 +739,14 @@ void main(){
       return [x1, y * cp - z1 * sp + o.dy, o.z + (o.zc || 0) + y * sp + z1 * cp];
     };
     const layerMesh = (arr, slot, o) => {
-      const N = o.N || 28, e = .012, cy = Math.cos(o.yaw), sy = Math.sin(o.yaw), cp = Math.cos(o.pitch), sp = Math.sin(o.pitch), g = [];
+      const X = S.ext || [0, 1, 0, 1], N = o.N || (S.ext ? 36 : 28), e = .012, cy = Math.cos(o.yaw), sy = Math.sin(o.yaw), cp = Math.cos(o.pitch), sp = Math.sin(o.pitch), g = [];
       for (let j = 0; j <= N; j++) { g.push([]); for (let i = 0; i <= N; i++) {
-        const u = i / N, v = j / N, [wx, wy, wz] = meshPt(u, v, o), [px, py] = proj(wx, wy, wz);
+        const u = X[0] + (X[1] - X[0]) * i / N, v = X[2] + (X[3] - X[2]) * j / N, [wx, wy, wz] = meshPt(u, v, o), [px, py] = proj(wx, wy, wz);
         const dzdx = (o.relief(u + e, v) - o.relief(u - e, v)) * K / (2 * e * AW * o.s), dzdy = -(o.relief(u, v + e) - o.relief(u, v - e)) * K / (2 * e * AH * o.s);
         const nl = Math.hypot(dzdx, dzdy, 1), nx = -dzdx / nl, ny = -dzdy / nl, nz = 1 / nl;
         const n1x = nx * cy + nz * sy, n1z = -nx * sy + nz * cy, n2y = ny * cp - n1z * sp, n2z = ny * sp + n1z * cp;
         const lit = Math.max(0, n1x * LDIR[0] + n2y * LDIR[1] + n2z * LDIR[2]), rim = Math.pow(1 - Math.min(1, Math.abs(n2z)), 2);
-        g[j].push([px, py, u, v, clamp(.72 + .65 * lit + .5 * rim, .5, 1.8)]);
+        g[j].push([px, py, i / N, j / N, clamp(.72 + .65 * lit + .5 * rim, .5, 1.8)]);
       } }
       for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) for (const q of [g[j][i], g[j][i + 1], g[j + 1][i + 1], g[j][i], g[j + 1][i + 1], g[j + 1][i]])
         arr.push(q[0], q[1], q[2], q[3], -1, 0, o.glow[0], o.glow[1], o.glow[2], o.alpha, 7 + .1 * q[4], slot, o.reveal, o.flow);
@@ -921,7 +921,7 @@ void main(){
           [1, .82, .4, beam * (.6 + .3 * Math.sin(t * 11 + i * 2.3))], [2, 0, 0, 0]);
       }
       for (const [d, col] of [[0, [1, .95, .7]], [.08, [1, .7, .25]]]) { const rt = (t - T - d) / .5; if (rt > 0 && rt < 1) ring(FLOOR, .2 + 2 * ease(rt), (1 - rt) * .9, col); }
-    } else if (S.funnel && !S.calm) {
+    } else if (S.hell && !S.calm) {
       // A real 3D funnel. Five glossy coil ribbons wind round a dark core (far arcs behind the card, near arcs in
       // front, lit from the upper left); torn card fragments climb the helix and goo is flung off it (see the sim);
       // the painted head rides on top, rigid, following the sway a beat late and squashing on the strike.
@@ -1026,7 +1026,14 @@ void main(){
       const T = S.T, out1 = 1 - smooth(1.45, 1.95, t), rise = .55 + .45 * ease((t - T + .05) / .55);
       const reveal = smooth(T - .08, T + .45, t) * out1, flick = .85 + .15 * Math.sin(t * 19);
       glowAt(out.back, [0, 0, 0], .9, [1, .4, .1, .7 * smooth(0, T, t) * (1 - smooth(T, T + .3, t))]);
-      if (R.art) {
+      if (R.art && S.storm) {
+        // The ShitStorm is the owner's painting, whole: the tornado body whirls (highlights sweep round it, its coils travel,
+        // it pulses and leans as it spins) and the painted head rides on it unwarped, so body and head are one style.
+        const sh = .07 * Math.sin(t * 9) * reveal, sx = 1 + .04 * Math.sin(t * 18), grin = 1 + .06 * bump(T + .1, T + .2, T + .5);
+        layer(out.art, 0, -.3, rise, 0, reveal, .5, [1, .75, .3], false, 1.25, 11.6, sx, sh);
+        const fv = .26, fs = rise * grin, fdy = (PV - fv) * AH * (rise - fs);
+        layer(out.artFront, 1, -.3, fs, fdy, smooth(T + .05, T + .35, t) * out1, 0, [1, .8, .4], false, 1.25, 0, 1, 0, sh * (PV - fv) * AH * rise);
+      } else if (R.art) {
         layer(out.art, 0, -.3, rise, 0, reveal * .4, 1.5, [1, .45, .12], false, 1.25, 1);
         layer(out.artFront, 1, .6, 1, 0, smooth(T, T + .3, t) * out1, .6, [1, .45, .12], false, 1.25, .4);
       }
@@ -1291,7 +1298,7 @@ void main(){
     const hw = host.clientWidth || 390, hh = host.clientHeight || 844, [LW, LR, , LV] = fx.layout || [];
     // The ShitStorm is built from geometry, not a picture, so it is sized by its own extent: the funnel and head are ~1.7 card heights each side and 3.5 high, whatever the stage (a small preview gets a big funnel).
     const stormK = id === 'burn-lvl-shitstorm' || id === 'burn-lvl-hellfire-spiral' ? Math.min(1.15, hw * .98 / (2 * 1.7 * H), Math.max(0, y - (hh < 420 ? 10 : 52)) / (3.5 * H)) * .92 : 0;
-    const LU = (fx.layout || [])[2], artK = stormK || fx.art ? stormK || Math.min(1, hw * .98 / (LW * H * 2 * Math.max(LU, 1 - LU)), Math.max(0, y - 52) / (LW * LR * LV * H)) * (/hellfire/.test(id) ? .86 : id === 'burn-halloween' ? .82 : 1) : 1; // the storms grow on the strike, so they get margin under the header
+    const LU = (fx.layout || [])[2], artK = stormK || fx.art ? stormK || Math.min(1, hw * .98 / (LW * H * 2 * Math.max(LU, 1 - LU)), Math.max(0, y - 52) / (LW * LR * LV * H)) * (/hellfire/.test(id) ? .86 : id === 'burn-halloween' ? .9 : 1) : 1; // the storms grow on the strike, so they get margin under the header
     // A painted scene gets the whole layer, so its smoke is never cut by a canvas edge.
     const [bw, bh, bx, by] = fx.box, x0 = fx.art ? 0 : Math.max(0, x - H * bw * bx), y0 = fx.art ? 0 : Math.max(0, y - H * bh * by);
     const ox = Math.round(x0), oy = Math.round(y0), cw = Math.round(fx.art ? hw : Math.min(hw, x + H * bw * (1 - bx)) - ox), ch = Math.round(fx.art ? hh : Math.min(hh, y + H * bh * (1 - by)) - oy);
