@@ -418,4 +418,34 @@ def origami_fold():
              [(226, 232), (258, 228), (288, 270), (290, 312), (230, 314), (222, 270)]],
              (.486, .62), .84, (6, 6, 508, 448), 111, reach=1.3)
 
-{'default': default_burn, 'coloured-flame': coloured_flame, 'electric-blast': electric_blast, 'confectionery': confectionery, 'lava-melt': lava_melt, 'origami-fold': origami_fold, 'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral, 'shitstorm': shitstorm, 'spark-snap': spark_snap, 'inferno-sweep': inferno_sweep}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
+# ShitStorm funnel skin (v427): the funnel of slot 0 is wrapped on a turning body of revolution (burns3d.js STORM_PROF), so the painted torn
+# cards (white paper, red hearts) inside it would turn into pale glassy bands. Paint them over with the wet brown round them and make the
+# funnel solid. Run AFTER `shitstorm`: python3 tools/make-burn-layers.py shitstorm-skin
+def shitstorm_skin():
+    p = 'art/burns/shitstorm/layers-v2.webp'
+    im = np.array(Image.open(p).convert('RGBA'))
+    H, W2, _ = im.shape; W = W2 // 2
+    s = im[:, :W].copy()
+    rgb = s[..., :3].astype(np.float32) / 255
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    mx, mn = rgb.max(2), rgb.min(2); sat = (mx - mn) / (mx + 1e-5)
+    cards = (((mn > .55) & (sat < .3)) | ((r > g * 1.7) & (r > b * 1.7) & (r > .55) & (sat > .55))) & (s[..., 3] > 40)
+    y0, y1 = int(.28 * H), int(.92 * H)
+    zone = np.zeros_like(cards); zone[y0:y1, int(.18 * W):int(.82 * W)] = True
+    m = (cards & zone).astype(np.uint8) * 255
+    m = cv2.dilate(cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8)), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
+    bgr = cv2.cvtColor(s[..., :3], cv2.COLOR_RGB2BGR)
+    # brown fill: blurred brown of the pixels that are not cards, so the fill matches the coils round it
+    keep = ((m == 0) & (s[..., 3] > 200)).astype(np.float32)
+    num = cv2.GaussianBlur(bgr.astype(np.float32) * keep[..., None], (0, 0), 14); den = cv2.GaussianBlur(keep, (0, 0), 14)[..., None]
+    fill = num / np.maximum(den, 1e-3)
+    soft = cv2.GaussianBlur(m.astype(np.float32) / 255, (0, 0), 2.5)[..., None]
+    out = bgr.astype(np.float32) * (1 - soft) + fill * soft
+    s[..., :3] = cv2.cvtColor(np.clip(out, 0, 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
+    s[..., 3] = np.maximum(s[..., 3], (soft[..., 0] * 255).astype(np.uint8))
+    im[:, :W] = s
+    Image.fromarray(im, 'RGBA').save(p, quality=92)
+    print(p, 'funnel skin cleaned')
+
+{'default': default_burn, 'coloured-flame': coloured_flame, 'electric-blast': electric_blast, 'confectionery': confectionery, 'lava-melt': lava_melt, 'origami-fold': origami_fold, 'ghost-flames': ghost_flames, 'smoke-burst': smoke_burst, 'royal-incineration': royal_incineration, 'hellfire-spiral': hellfire_spiral, 'shitstorm': shitstorm, 'spark-snap': spark_snap, 'inferno-sweep': inferno_sweep, 'shitstorm-skin': shitstorm_skin}[sys.argv[1] if len(sys.argv) > 1 else 'smoke-burst']()
+

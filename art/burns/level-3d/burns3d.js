@@ -5,7 +5,7 @@
    cards are invented. Without WebGL the caller falls back to ShLevelBurns. */
 (() => {
   'use strict';
-const STORM_PROF = [[.3, .5, .3], [.38, .5, .285], [.44, .5, .235], [.5, .5, .185], [.56, .5, .145], [.62, .5, .115], [.7, .5, .085], [.78, .5, .06], [.86, .5, .04], [.9, .5, .025]]; // the painted funnel's brown body per height v under the head: [v, centre u, half-width u], read from the painting (the head hides the top rows)
+const STORM_PROF = [[.42, .5, .17], [.48, .51, .15], [.54, .52, .125], [.6, .52, .105], [.68, .52, .08], [.76, .51, .058], [.84, .5, .04], [.9, .5, .028]]; // the painted funnel's brown body per height v under the head: [v, centre u, half-width u], read from the painting (the head, drawn flat on top, covers the rows above .48)
   const EFFECTS = {
     // Origami Fold (Shop, premium): the owner's paper swan folds itself round the card, then flies off.
     'burn-origami': { iconOnly: true /* v305: folded procedurally from the real card in index.html; tile + sound only */, dur: 2.0, box: [5, 5.4, .5, .62], tile: 'art/burns/origami-fold/tile.webp', art: 'art/burns/origami-fold/layers.webp?v=1', layout: [4.4, 438 / 498, .486, .62] },
