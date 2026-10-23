@@ -8,7 +8,7 @@
       // the open Custom panel aside (flashing the home screen) with nothing
       // visible to show for it.
       if (type === 'burnEffect' || type === 'jokerEffect') return playInlineEffectPreview(type, id);
-      if (!bigEffectsOn || id === 'default') return;
+      if (!bigEffectsOn) return;
       if (type === 'victoryEffect') return playVictoryEffect(id);
     }
 
@@ -50,10 +50,13 @@
     // above it). Tapping an equipped card back previews it; other taps equip
     // or use the existing Shop buttons. The click after a hold is swallowed.
     // Closes on ✕, a tap outside the item, Escape or Back (BACK_LAYERS).
+    // The default effects preview like any other (v423, owner).
+    const DEFAULT_PREVIEW_ITEMS = { burnEffect:{ name:'Default Burn', category:'Burn Effects' }, jokerEffect:{ name:'Default Joker', category:'Joker Effects' }, victoryEffect:{ name:'Default Victory', category:'Victory Effects' } };
     function bigPreviewItem(id, type = '') {
       if (privateGiftItem(id)) return privateGiftItem(id);
       // 'default' is shared by several categories; resolve it with the tile type.
       if (id === 'default' && type === 'cardBack') return { id, name:'Default Card Back', category:'Card Backs', builtIn:true };
+      if (id === 'default' && DEFAULT_PREVIEW_ITEMS[type]) return { id, ...DEFAULT_PREVIEW_ITEMS[type], builtIn:true };
       return [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(i => i.id === id) || null;
     }
     function bigPreviewStatus(item) {
@@ -134,7 +137,7 @@
       const box = document.getElementById('bigPreview');
       if (!box || box.classList.contains('hidden')) return;
       box.classList.add('hidden');
-      if (box.dataset.type === 'victoryEffect') { audio.stopEffectClip('lion-roar'); audio.stopEffectClip('fireworks'); const layer = document.getElementById('victoryFxLayer'); layer?.getAnimations({ subtree: true }).forEach(a => a.cancel()); layer?.replaceChildren(); }
+      if (box.dataset.type === 'victoryEffect') { if (typeof confetti === 'function' && confetti.reset) confetti.reset(); audio.stopEffectClip('lion-roar'); audio.stopEffectClip('fireworks'); const layer = document.getElementById('victoryFxLayer'); layer?.getAnimations({ subtree: true }).forEach(a => a.cancel()); layer?.replaceChildren(); }
       box.innerHTML = '';
       delete box.dataset.itemId;
     }

@@ -658,6 +658,21 @@
       notes.forEach((f, i) => tone({ at: at + i * gap, dur, type, f0: f, level }));
     // Victory sound recipes, on the same beats as their effects in app.js (vfxSparklers, vfxFiveStars, vfxKarate).
     const VICTORY_SOUNDS = {
+      // Confetti Burst: a cannon pop and whoosh per volley (0, .3, .6s), a shaker-like rustle for the shower from
+      // .9s and a bright finale pop with sparkle at 1.4s (same beats as CONFETTI_VOLLEYS / CONFETTI_FINALE).
+      'victory-confetti': (k) => {
+        [0, 0.3, 0.6].forEach((at, i) => {
+          k.tone({ at, dur: 0.12, type: 'sine', f0: 200 - i * 20, f1: 60, level: 0.34 });
+          k.noise({ at, dur: 0.07, type: 'bandpass', f0: 1800, q: 1, level: 0.3 });
+          k.noise({ at: at + 0.02, dur: 0.35, type: 'bandpass', f0: 3000, f1: 1200, q: 0.8, level: 0.1 });
+          [880, 1175, 1568].forEach((f, j) => k.tone({ at: at + 0.04 + j * 0.04, dur: 0.25, type: 'triangle', f0: f * (1 + i * .12), level: 0.07 }));
+        });
+        k.scatter(40, 0.9, 2.4, (at) => k.noise({ at, dur: 0.03, type: 'highpass', f0: 5000, level: 0.07 }));
+        k.tone({ at: 1.4, dur: 0.2, type: 'sine', f0: 170, f1: 55, level: 0.32 });
+        k.noise({ at: 1.4, dur: 0.3, type: 'bandpass', f0: 3200, f1: 700, q: 0.9, level: 0.22 });
+        [1047, 1319, 1568, 2093].forEach((f, i) => k.tone({ at: 1.42 + i * 0.05, dur: 0.5, type: 'triangle', f0: f, level: 0.09 }));
+        k.scatter(14, 1.5, 2.6, (at) => k.tone({ at, dur: 0.1, type: 'sine', f0: 2400 + Math.random() * 1800, level: 0.04 }));
+      },
       // Sparkler Salute: hiss and crackle as the two sparklers write their loops (0-2.2s), a rising shimmer,
       // the burst when they meet at 2.2s and glitter falling to ~3.4s.
       'victory-sparklers': (k) => {
@@ -769,6 +784,80 @@
         k.noise({ at: 1.1, dur: 0.05, type: 'bandpass', f0: 1500, q: 2, level: 0.25 });
         [0, 1, 2, 3, 4].forEach((i) => k.tone({ at: 1.3 + i * 0.12, dur: 0.1, type: 'square', f0: 420 - i * 30, f1: 300 - i * 30, level: 0.09 }));
         k.tone({ at: 1.5, dur: 1.4, type: 'triangle', f0: 175, level: 0.05, attack: 0.3, vibrato: 3 });
+      },
+      // Festival of Lights: a soft "whoomp" as each diya lights (.3s + .14s each), a sitar-like pluck run, then a
+      // whistle and boom for each firework (1.0, 1.35, 1.7, 2.1s) with bells and falling sparkle.
+      'victory-diwali': (k) => {
+        k.tone({ at: 0.05, dur: 0.7, type: 'sine', f0: 200, f1: 520, level: 0.08, attack: 0.5 });
+        for (let i = 0; i < 7; i++) {
+          k.noise({ at: 0.3 + i * 0.14, dur: 0.08, type: 'lowpass', f0: 900, f1: 300, level: 0.14 });
+          k.tone({ at: 0.3 + i * 0.14, dur: 0.3, type: 'triangle', f0: [392, 440, 523, 587, 659, 784, 880][i], level: 0.1 });
+        }
+        [1000, 1350, 1700, 2100].forEach((ms, i) => {
+          const at = ms / 1000;
+          k.tone({ at: at - 0.3, dur: 0.3, type: 'sine', f0: 500, f1: 1800, level: 0.06, attack: 0.1 });
+          k.tone({ at, dur: 0.2, type: 'sine', f0: 150, f1: 48, level: 0.34 });
+          k.noise({ at, dur: 0.35, type: 'bandpass', f0: 3000, f1: 700, q: 0.9, level: 0.22 });
+          [1047, 1319, 1568].forEach((f, j) => k.tone({ at: at + 0.04 + j * 0.05, dur: 0.5, type: 'triangle', f0: f * (1 + i * 0.06), level: 0.07 }));
+        });
+        k.scatter(22, 1.2, 3.0, (at) => k.tone({ at, dur: 0.16, type: 'sine', f0: 2200 + Math.random() * 1600, level: 0.04 }));
+        k.tone({ at: 1.5, dur: 1.2, type: 'triangle', f0: 523, level: 0.05, attack: 0.2 });
+      },
+      // Santa's Sleigh: sleigh bells jingling while it crosses (.2-2.7s), a chime run as the tree lights (1.2s),
+      // a soft thud as each present lands (1.3, 1.62, 1.94, 2.26, 2.58s) and three deep "ho"s (1.7, 1.95, 2.2s).
+      'victory-christmas': (k) => {
+        k.scatter(60, 0.2, 2.7, (at) => { k.tone({ at, dur: 0.12, type: 'triangle', f0: 3200 + Math.random() * 1400, level: 0.06 }); k.noise({ at, dur: 0.02, type: 'highpass', f0: 6500, level: 0.06 }); });
+        k.tone({ at: 0.2, dur: 1.6, type: 'sine', f0: 262, level: 0.04, attack: 0.5 });
+        [523, 659, 784, 1047, 1319].forEach((f, i) => k.tone({ at: 1.2 + i * 0.07, dur: 0.6, type: 'triangle', f0: f, level: 0.1 }));
+        [1.3, 1.62, 1.94, 2.26, 2.58].forEach((at, i) => { k.tone({ at, dur: 0.12, type: 'sine', f0: 170, f1: 70, level: 0.26 }); k.tone({ at: at + 0.03, dur: 0.2, type: 'triangle', f0: [659, 784, 880, 988, 1175][i], level: 0.07 }); });
+        [1.7, 1.95, 2.2].forEach((at, i) => { k.tone({ at, dur: 0.22, type: 'sawtooth', f0: 150 - i * 8, f1: 110 - i * 8, level: 0.11, attack: 0.02, vibrato: 7 }); });
+      },
+      // Midnight: tick-tock for 3-2-1 (.15, .6, 1.05s), a deep bell and cork pop at 1.5s with fizz, fireworks
+      // booms (1.5, 1.7, 1.95, 2.2, 2.45s) and a crowd cheer swelling under the confetti.
+      'victory-newyear': (k) => {
+        [150, 600, 1050].forEach((ms, i) => { const at = ms / 1000; k.tone({ at, dur: 0.05, type: 'square', f0: 1400, level: 0.12 }); k.tone({ at: at + 0.2, dur: 0.05, type: 'square', f0: 1000, level: 0.09 }); k.tone({ at, dur: 0.3, type: 'sine', f0: 440 + i * 110, level: 0.07 }); });
+        k.tone({ at: 1.5, dur: 1.6, type: 'sine', f0: 196, level: 0.2 });
+        k.tone({ at: 1.5, dur: 1.2, type: 'sine', f0: 392 * 1.5, level: 0.1 });
+        k.tone({ at: 1.5, dur: 0.9, type: 'sine', f0: 587, level: 0.06 });
+        k.tone({ at: 1.52, dur: 0.1, type: 'sine', f0: 700, f1: 120, level: 0.28 });
+        k.noise({ at: 1.52, dur: 0.05, type: 'bandpass', f0: 1800, q: 2, level: 0.3 });
+        k.noise({ at: 1.55, dur: 0.9, type: 'highpass', f0: 4500, level: 0.1, attack: 0.05 });
+        [1.5, 1.7, 1.9, 2.1, 2.3].forEach((at, i) => { k.tone({ at, dur: 0.2, type: 'sine', f0: 150, f1: 48, level: 0.3 }); k.noise({ at, dur: 0.35, type: 'bandpass', f0: 3000, f1: 700, q: 0.9, level: 0.2 }); [1047, 1319, 1760].forEach((f, j) => k.tone({ at: at + 0.04 + j * 0.05, dur: 0.45, type: 'triangle', f0: f * (1 + i * 0.05), level: 0.06 })); });
+        k.noise({ at: 1.7, dur: 1.8, type: 'bandpass', f0: 1200, f1: 2200, q: 0.6, level: 0.1, attack: 0.7 });
+      },
+      // Egg Hunt: a marimba note and thud as each egg lands (.45s + .16s each), small cracks and a high peep as
+      // each chick hatches (1.4s + .13s each), soft bunny hops (.7s + .42s each) and a bell for the shout (1.9s).
+      'victory-easter': (k) => {
+        [523, 587, 659, 784, 880, 988, 1175].forEach((f, i) => { const at = (450 + i * 160) / 1000; k.tone({ at, dur: 0.25, type: 'triangle', f0: f, level: 0.12 }); k.tone({ at, dur: 0.1, type: 'sine', f0: 190, f1: 80, level: 0.18 }); });
+        for (let m = 0; m < 5; m++) k.tone({ at: 0.7 + m * 0.42, dur: 0.12, type: 'sine', f0: 130, f1: 70, level: 0.12 });
+        for (let i = 0; i < 7; i++) {
+          const at = (1400 + i * 130) / 1000;
+          k.noise({ at, dur: 0.04, type: 'highpass', f0: 3500, level: 0.22 });
+          k.tone({ at: at + 0.07, dur: 0.1, type: 'sine', f0: 2200 + i * 80, f1: 3200 + i * 80, level: 0.07 });
+          k.tone({ at: at + 0.17, dur: 0.08, type: 'sine', f0: 2600 + i * 80, f1: 3400 + i * 80, level: 0.05 });
+        }
+        [1319, 1568, 2093].forEach((f, i) => k.tone({ at: 1.9 + i * 0.07, dur: 0.6, type: 'triangle', f0: f, level: 0.08 }));
+      },
+      // Dragon Dance: a gong at .3s, drums every .3s from .3 to 2.1s, a cymbal crash at 1.2s, firecracker crackle
+      // from 1.3 to 2.3s and fireworks booms (1.4, 1.9, 2.3s).
+      'victory-lunar': (k) => {
+        [196, 293, 415, 523].forEach((f, i) => k.tone({ at: 0.3, dur: 2.0 - i * 0.3, type: 'sine', f0: f, level: 0.13 / (i + 1) + 0.02 }));
+        k.noise({ at: 0.3, dur: 0.4, type: 'bandpass', f0: 900, q: 0.8, level: 0.14 });
+        for (let i = 0; i < 7; i++) { const at = 0.3 + i * 0.3; k.tone({ at, dur: 0.14, type: 'sine', f0: i % 2 ? 130 : 95, f1: 55, level: 0.34 }); k.noise({ at, dur: 0.04, type: 'bandpass', f0: 600, q: 2, level: 0.16 }); }
+        k.noise({ at: 1.2, dur: 1.0, type: 'highpass', f0: 5000, level: 0.14 });
+        k.scatter(46, 1.3, 2.3, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 1800 + Math.random() * 2400, q: 2, level: 0.22 }));
+        [1.4, 1.9, 2.3].forEach((at) => { k.tone({ at, dur: 0.2, type: 'sine', f0: 150, f1: 48, level: 0.3 }); k.noise({ at, dur: 0.35, type: 'bandpass', f0: 3000, f1: 700, q: 0.9, level: 0.2 }); });
+        k.tone({ at: 1.5, dur: 0.9, type: 'triangle', f0: 587, level: 0.06 });
+      },
+      // Crescent Night: a shimmer as the moon rises (0-.9s), oud-like plucks in a Hijaz run, a soft "ting" as each
+      // lantern lights (.9s + .2s each) and a warm bell for RAMADAN KAREEM (1.7s).
+      'victory-ramadan': (k) => {
+        k.tone({ at: 0, dur: 3.0, type: 'sine', f0: 147, level: 0.05, attack: 0.8 });
+        k.noise({ at: 0.1, dur: 0.8, type: 'bandpass', f0: 800, f1: 3500, q: 1.2, level: 0.08, attack: 0.6 });
+        [294, 311, 370, 392, 440, 466, 587, 622].forEach((f, i) => { const at = 0.3 + i * 0.17; k.tone({ at, dur: 0.3, type: 'triangle', f0: f, level: 0.1 }); k.noise({ at, dur: 0.015, type: 'bandpass', f0: 2200, q: 3, level: 0.07 }); });
+        for (let i = 0; i < 5; i++) k.tone({ at: 0.9 + i * 0.2, dur: 0.5, type: 'sine', f0: 1568 + i * 220, level: 0.07 });
+        [392, 587, 784].forEach((f) => k.tone({ at: 1.7, dur: 1.4, type: 'sine', f0: f, level: 0.07, attack: 0.03 }));
+        k.scatter(16, 1.2, 3.0, (at) => k.tone({ at, dur: 0.2, type: 'sine', f0: 2000 + Math.random() * 1500, level: 0.04 }));
       }
     };
     const JOKER_SOUNDS = {

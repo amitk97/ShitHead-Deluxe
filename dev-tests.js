@@ -3924,6 +3924,16 @@ async function runDevTestSuite() {
       'Trophy Lift': 2500, 'Rocket Launch': 2500, 'Origami Flock': 2500, "Lion's Roar": 2500 }, 'Victory effect prices');
   });
 
+  await test("v423: the default Burn, Joker and Victory effects open the big preview, and a victory preview draws above it", async () => {
+    ['burnEffect', 'jokerEffect', 'victoryEffect'].forEach(type => {
+      assertTrue(openBigPreview('default', type), `default ${type}: a big preview`);
+      assertTrue(!!document.querySelector('#bigPreview [data-bp-play]'), `default ${type}: Play Again`);
+      closeBigPreview();
+    });
+    assertTrue(Number(getComputedStyle(document.getElementById('victoryFxLayer')).zIndex) > Number(getComputedStyle(document.getElementById('bigPreview')).zIndex), 'victory effects sit above the big preview');
+    assertTrue(typeof vfxConfettiBurst === 'function' && /zIndex:\s*120/.test(vfxConfettiBurst.toString()), 'confetti is drawn above the preview (zIndex 120)');
+  });
+
   await test("Owner effects (v257): Lion's Roar, Fireworks, Pumpkin Joker, Jack-o'-Lantern and Cobweb use the owner's art, with their sounds", async () => {
     const layer = document.getElementById('victoryFxLayer');
     for (const [id, files] of Object.entries(OWNER_FX_FILES)) {

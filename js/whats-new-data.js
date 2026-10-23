@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v423: [['sparkle', 'Nine more victory effects are redrawn with their own sounds: Love Wins (Valentine), Beach Party (Summer), Bat Swarm (Halloween), Festival of Lights (Diwali), Santa\'s Sleigh (Christmas), Midnight (New Year), Egg Hunt (Easter), Dragon Dance (Lunar New Year) and Crescent Night (Ramadan). Confetti Burst is now a party of cannons and the default effects can be previewed.', WN_KEY]],
       v422: [['sparkle', 'Three more victory effects are redrawn with their own sounds: Trophy Lift rises in a burst of light with a WINNER ribbon, Rocket Launch counts down and blasts off through smoke, and Fireworks are now crisp sparks with comet tails that open as willows, peonies and rings.', WN_KEY]],
       v421: [['sparkle', 'Three victory effects are redrawn with their own sounds: Sparkler Salute writes loops of light that meet in a golden burst, 5-Star Finish lights each star with a chime and a sunburst, and Karate Chop now snaps three wooden boards in one chop.']],
       v420: [['sparkle', 'Card Shower is now a fountain of your own cards, wearing your equipped card back and frame, and Origami Flock finishes sooner. Lion\'s Roar now shakes the screen, flashes from his mouth and sends embers rising.']],

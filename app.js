@@ -3909,12 +3909,280 @@
       bfxAnimate(pk, vfxSample(60, t => { const ms = t * D, u = Math.max(0, Math.min(1, (ms - 1100) / 450)), s = u < 1 ? 1 + 2.2 * Math.pow(u - 1, 3) + 1.2 * Math.pow(u - 1, 2) : 1 + .03 * Math.sin((ms - 1550) / 120); const o = ms > 3450 ? Math.max(0, 1 - (ms - 3450) / 350) : 1; return { transform: `translateY(${((1 - u) * 40).toFixed(1)}px) scale(${(u === 0 ? 0 : s * o).toFixed(3)},${(u === 0 ? 0 : s * o * (u < 1 ? 1 : 1 + .02 * Math.sin((ms - 1550) / 120))).toFixed(3)})`, opacity: u === 0 ? 0 : o }; }), { duration: D, easing: 'linear' });
       vfxShout(layer, 'SPOOKY WIN', cx, py + PS * .85, Math.min(42, W * .11), 'color:#fff7ed;-webkit-text-stroke:1.5px #2e1065;text-shadow:3px 3px 0 #7c3aed,5px 5px 0 #2e1065', 1500, 2100);
     }
+    // Confetti Burst (v423): party cannons, not the default's single burst. Volleys of stars, circles, squares and
+    // thin streamers fire from both bottom corners (0, .3, .6s), a rainbow shower pours from the top (.9s) and a
+    // finale ring bursts at 1.4s; all through the confetti library at zIndex 120 so a preview never hides it.
+    const CONFETTI_VOLLEYS = [0, 300, 600], CONFETTI_FINALE = 1400;
+    let confettiTimers = [];
+    function vfxConfettiStop() { confettiTimers.forEach(clearTimeout); confettiTimers = []; if (typeof confetti === 'function' && confetti.reset) confetti.reset(); }
+    function vfxConfettiBurst() {
+      if (typeof confetti !== 'function') return;
+      const rainbow = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#06b6d4', '#6366f1', '#d946ef', '#ffffff'];
+      const base = { zIndex: 120, colors: rainbow, shapes: ['square', 'circle', 'star'], ticks: 220, scalar: 1.1 };
+      const at = (ms, fn) => confettiTimers.push(setTimeout(fn, ms));
+      CONFETTI_VOLLEYS.forEach((ms, i) => at(ms, () => {
+        confetti({ ...base, particleCount: 46, angle: 62 - i * 4, spread: 52, startVelocity: 62, origin: { x: 0, y: 1 }, gravity: .9 });
+        confetti({ ...base, particleCount: 46, angle: 118 + i * 4, spread: 52, startVelocity: 62, origin: { x: 1, y: 1 }, gravity: .9 });
+      }));
+      at(CONFETTI_VOLLEYS[2] + 120, () => confetti({ ...base, particleCount: 40, angle: 90, spread: 140, startVelocity: 38, origin: { x: .5, y: 1 }, shapes: ['square'], scalar: 1.9, gravity: .55, drift: 0, flat: true, ticks: 260 }));
+      for (let i = 0; i < 8; i++) at(900 + i * 90, () => confetti({ ...base, particleCount: 14, angle: 90, spread: 180, startVelocity: 8, gravity: .8, origin: { x: .08 + i * .12, y: -.05 }, ticks: 240 }));
+      at(CONFETTI_FINALE, () => {
+        confetti({ ...base, particleCount: 90, spread: 360, startVelocity: 34, origin: { x: .5, y: .42 }, gravity: .7, shapes: ['star'], scalar: 1.4, ticks: 200 });
+        confetti({ ...base, particleCount: 70, spread: 360, startVelocity: 20, origin: { x: .5, y: .42 }, gravity: .7, shapes: ['circle'], ticks: 200 });
+      });
+    }
+    // v423: Diwali, Christmas, New Year, Easter, Lunar New Year and Ramadan victories, on the same rules as the
+    // others (one WAAPI clock, sampled keyframes, vignette + hero + particles + shout, ends inside 3.7s, own sound).
+    // Shared pieces: vfxSparkBurst (comet-tail stars like Fireworks), vfxTwinkles, vfxFall.
+    function vfxSparkBurst(layer, x, y, R, at, cols, n, k) {
+      [[n, 1, 1], [Math.round(n * .55), .58, 1.15]].forEach(([cnt, rf, dk], si) => {
+        for (let j = 0; j < cnt; j++) {
+          const a0 = (j / cnt) * Math.PI * 2 + (si ? Math.PI / cnt : 0) + bfxRand(-.04, .04), drag = 2.4 * dk, v = R * rf * drag * 1.12 * bfxRand(.93, 1.07), life = bfxRand(1100, 1400), g = R * .22;
+          const frames = vfxSample(12, f => {
+            const t = f * life / 1000, r = v / drag * (1 - Math.exp(-drag * t)), sp = v * Math.exp(-drag * t), vx = Math.cos(a0) * sp, vy = Math.sin(a0) * sp + g * t;
+            return { transform: `translate(${(Math.cos(a0) * r).toFixed(1)}px,${(Math.sin(a0) * r + .5 * g * t * t).toFixed(1)}px) rotate(${(Math.atan2(vy, vx) * 180 / Math.PI).toFixed(0)}deg) scaleX(${Math.max(.15, Math.min(1, Math.hypot(vx, vy) / (v * .9))).toFixed(2)})`, opacity: f < .5 ? 1 : Math.max(0, 1 - (f - .5) / .5) };
+          });
+          frames[0].opacity = 0; frames[12].opacity = 0;
+          const col = j % 5 === 0 ? '#fff' : cols[j % cols.length], tail = Math.round(22 * k);
+          const sp = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:0 3px 3px 0;background:linear-gradient(90deg,transparent,${col} 62%,#fff);box-shadow:0 0 7px ${col}"></div>`, x - tail / 2, y, tail, 3 * k);
+          sp.style.transformOrigin = '100% 50%'; sp.style.mixBlendMode = 'screen';
+          bfxAnimate(sp, frames, { duration: life, delay: at, easing: 'linear' });
+        }
+      });
+      const c = cols[0];
+      const ring = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;border:2px solid ${c};box-shadow:0 0 14px ${c}"></div>`, x, y, R * .6, R * .6);
+      bfxAnimate(ring, [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(.6)', opacity: .9, offset: .15 }, { transform: 'scale(2.4)', opacity: 0 }], { duration: 600, delay: at, easing: 'cubic-bezier(.1,.7,.3,1)' });
+      const core = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff 10%,${c}aa 40%,transparent 70%);mix-blend-mode:screen"></div>`, x, y, R * .9, R * .9);
+      bfxAnimate(core, [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .12 }, { transform: 'scale(.7)', opacity: 0 }], { duration: 800, delay: at, easing: 'ease-out' });
+      // The rocket that carries it up.
+      const rise = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:3px;background:linear-gradient(to top,transparent,${c} 70%,#fff);box-shadow:0 0 8px ${c}"></div>`, x, y, 4 * k, 30 * k);
+      bfxAnimate(rise, [{ transform: `translate(0,${(innerHeight - y) * .8}px)`, opacity: 0 }, { transform: `translate(0,${(innerHeight - y) * .6}px)`, opacity: 1, offset: .15 }, { transform: 'translate(0,0)', opacity: 1, offset: .95 }, { transform: 'translate(0,0)', opacity: 0 }], { duration: 320, delay: Math.max(0, at - 320), easing: 'cubic-bezier(.3,.6,.5,1)' });
+    }
+    function vfxTwinkles(layer, n, [x0, y0, x1, y1], t0, t1, cols, k, size = [8, 16]) {
+      for (let i = 0; i < n; i++) {
+        const s = bfxRand(size[0], size[1]) * k, el = bfxAdd(layer, bfxStar4(cols[i % cols.length]), bfxRand(x0, x1), bfxRand(y0, y1), s, s);
+        bfxAnimate(el, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.2) rotate(45deg)', opacity: 1, offset: .4 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: bfxRand(500, 800), delay: bfxRand(t0, t1), easing: 'ease-out' });
+      }
+    }
+    // Things falling from the top with sway and spin (petals, snow, coins, confetti).
+    function vfxFall(layer, W, H, n, html, [sMin, sMax], t0, gap, [lMin, lMax], opts = {}) {
+      for (let i = 0; i < n; i++) {
+        const size = bfxRand(sMin, sMax), x0 = bfxRand(0, W), life = bfxRand(lMin, lMax), ph = bfxRand(0, 6.28), sway = (opts.sway || 30), spin = bfxRand(-240, 240), flip = opts.flip;
+        const el = bfxAdd(layer, html(i), 0, 0, size, size * (opts.aspect || 1));
+        bfxAnimate(el, vfxSample(16, t => ({ transform: `translate(${(x0 + Math.sin(t * 6 + ph) * sway).toFixed(1)}px,${(-30 + (H + 60) * t).toFixed(1)}px) rotate(${(spin * t * 2).toFixed(0)}deg)${flip ? ` scaleX(${Math.cos(t * 9 + ph).toFixed(2)})` : ''}`, opacity: t < .05 ? t / .05 : t > .85 ? Math.max(0, (1 - t) / .15) : 1 })), { duration: life, delay: t0 + i * gap + bfxRand(0, gap), easing: 'linear' });
+      }
+    }
+    const vfxGlowDot = (layer, x, y, size, c, frames, dur, delay) => { const g = bfxAdd(layer, `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,${c},transparent 68%);mix-blend-mode:screen"></div>`, x, y, size, size); bfxAnimate(g, frames, { duration: dur, delay, easing: 'linear' }); return g; };
+    const vfxFlicker = (t, seed = 0) => .78 + Math.sin(t * 91 + seed) * .12 + Math.sin(t * 37 + seed * 2) * .1;
+
+    // Festival of Lights: a rangoli blooms, seven diyas light in turn (.3s + .14s each), four fireworks open
+    // (1.0, 1.35, 1.7, 2.1s), marigold petals fall under HAPPY DIWALI.
+    const DIWALI_BURSTS = [1000, 1350, 1700, 2100];
+    function vfxDiwali(layer) {
+      const [W, H] = vfxSize(layer), D = 3700, k = Math.min(1, W / 390), cx = W / 2, cy = H * .38, RS = Math.min(W * .74, 300);
+      ofxVignette(layer, W, H, 'rgba(66,22,4,.84)', D);
+      vfxGlowDot(layer, cx, cy, RS * 1.5, 'rgba(251,146,60,.5)', vfxSample(30, t => ({ transform: `scale(${(Math.min(1, t * 7) * (1 + Math.sin(t * 30) * .04)).toFixed(3)})`, opacity: Math.min(1, t * 8) * (t > .9 ? (1 - t) * 10 : 1) })), D, 0);
+      let petals = '', dots = '';
+      for (let i = 0; i < 16; i++) petals += `<path d="M100 100 L${(100 + 92 * Math.cos(i * Math.PI / 8 - .12)).toFixed(1)} ${(100 + 92 * Math.sin(i * Math.PI / 8 - .12)).toFixed(1)} Q${(100 + 112 * Math.cos(i * Math.PI / 8)).toFixed(1)} ${(100 + 112 * Math.sin(i * Math.PI / 8)).toFixed(1)} ${(100 + 92 * Math.cos(i * Math.PI / 8 + .12)).toFixed(1)} ${(100 + 92 * Math.sin(i * Math.PI / 8 + .12)).toFixed(1)}Z" fill="${i % 2 ? '#ec4899' : '#f97316'}" stroke="#fff7d6" stroke-width="1" transform="rotate(${i * 22.5} 100 100) rotate(${-i * 22.5} 100 100)"/>`;
+      for (let i = 0; i < 24; i++) dots += `<circle cx="${(100 + 74 * Math.cos(i * Math.PI / 12)).toFixed(1)}" cy="${(100 + 74 * Math.sin(i * Math.PI / 12)).toFixed(1)}" r="3.2" fill="${i % 2 ? '#fde047' : '#fff'}"/>`;
+      const rang = bfxAdd(layer, `<svg viewBox="0 0 220 220" width="100%" height="100%" style="overflow:visible"><g transform="translate(10 10)">${petals}<circle cx="100" cy="100" r="76" fill="#7c2d12" stroke="#fde047" stroke-width="2"/>${dots}<g transform="translate(100 100)">${Array.from({ length: 8 }, (_, i) => `<path d="M0 0 L0 -58 Q11 -40 0 -24 Q-11 -40 0 -58Z" fill="${i % 2 ? '#22c55e' : '#fbbf24'}" stroke="#7c2d12" stroke-width="1.2" transform="rotate(${i * 45})"/>`).join('')}<circle r="16" fill="#dc2626" stroke="#fde047" stroke-width="2.5"/><circle r="6" fill="#fde047"/></g></g></svg>`, cx, cy, RS, RS);
+      bfxAnimate(rang, vfxSample(60, t => { const ms = t * D, u = Math.min(1, ms / 800), s = u < 1 ? 1 + 1.9 * Math.pow(u - 1, 3) + .9 * Math.pow(u - 1, 2) : 1, o = ms > 3350 ? Math.max(0, 1 - (ms - 3350) / 350) : 1; return { transform: `scale(${Math.max(0, s * o).toFixed(3)}) rotate(${(-120 * (1 - u) + t * 24).toFixed(1)}deg)`, opacity: o }; }), { duration: D, easing: 'linear' });
+      // Diyas along the bottom.
+      const n = 7, ly = H * .76, LAMP = '<svg viewBox="0 0 50 30" width="100%" height="100%"><path d="M3 10C5 24 15 29 25 29S45 24 47 10Z" fill="#c2410c" stroke="#7c2d12" stroke-width="1.5"/><path d="M3 10H47" stroke="#fdba74" stroke-width="3" stroke-linecap="round"/><path d="M10 18H40" stroke="#fbbf24" stroke-width="1.4" stroke-dasharray="2 3"/><ellipse cx="25" cy="10" rx="9" ry="2.6" fill="#7c2d12"/></svg>';
+      const FLAME = '<svg viewBox="0 0 20 32" width="100%" height="100%" style="overflow:visible"><path d="M10 1C16 10 17 15 17 20 17 25 14 29 10 29S3 25 3 20C3 15 4 10 10 1Z" fill="#f59e0b"/><path d="M10 11C13 15 14 18 14 21 14 24 12 26 10 26S6 24 6 21C6 18 7 15 10 11Z" fill="#fff7d6"/></svg>';
+      for (let i = 0; i < n; i++) {
+        const x = W * (i + 1) / (n + 1), lw = Math.min(58, W / (n + 1.2)), on = 300 + i * 140;
+        const lamp = bfxAdd(layer, LAMP, x, ly, lw, lw * .6);
+        bfxAnimate(lamp, vfxSample(8, t => ({ transform: `translateY(${((1 - Math.min(1, t * 12)) * 24).toFixed(1)}px)`, opacity: Math.min(1, t * 12) * (t > .9 ? (1 - t) * 10 : 1) })), { duration: D, easing: 'linear' });
+        const fl = bfxAdd(layer, FLAME, x, ly - lw * .42, lw * .34, lw * .56); fl.style.transformOrigin = '50% 90%';
+        bfxAnimate(fl, vfxSample(80, t => { const ms = t * D, u = ms < on ? 0 : Math.min(1, (ms - on) / 180), f = vfxFlicker(t, i); return { transform: `scale(${(u * (1.15 - .15 * u) * (.92 + .1 * f)).toFixed(3)},${(u * (1.1 - .1 * u) * (.88 + .24 * f)).toFixed(3)}) rotate(${(Math.sin(ms / 90 + i) * 3).toFixed(1)}deg)`, opacity: ms > 3350 ? Math.max(0, 1 - (ms - 3350) / 350) : u }; }), { duration: D, easing: 'linear' });
+        vfxGlowDot(layer, x, ly - lw * .3, lw * 2.6, 'rgba(251,191,36,.7)', vfxSample(80, t => { const ms = t * D, u = ms < on ? 0 : Math.min(1, (ms - on) / 220); return { transform: 'scale(1)', opacity: u * vfxFlicker(t, i * 3) * (ms > 3350 ? Math.max(0, 1 - (ms - 3350) / 350) : 1) }; }), D, 0);
+      }
+      const COLS = [['#fde047', '#f97316', '#fff'], ['#fb7185', '#f43f5e', '#fde68a'], ['#a78bfa', '#ec4899', '#fff'], ['#34d399', '#fde047', '#fff']];
+      [[.24, .2], [.76, .17], [.5, .27], [.3, .52]].forEach(([fx, fy], i) => vfxSparkBurst(layer, W * fx, H * fy, Math.min(W * .3, 130), DIWALI_BURSTS[i], COLS[i], 34, k));
+      vfxFall(layer, W, H, 18, i => `<svg viewBox="0 0 20 28" width="100%" height="100%"><path d="M10 1C17 6 19 16 10 27 1 16 3 6 10 1Z" fill="${i % 2 ? '#f59e0b' : '#ea580c'}"/><path d="M10 1C14 8 14 18 10 27" stroke="#fde68a" stroke-width="1.2" fill="none" opacity=".7"/></svg>`, [10 * k, 18 * k], 700, 55, [1800, 2000], { aspect: 1.4, flip: true, sway: 36 });
+      vfxShout(layer, 'HAPPY DIWALI', cx, H * .62, Math.min(40, W * .105), 'color:#fff7d6;-webkit-text-stroke:1.5px #7c2d12;text-shadow:3px 3px 0 #ea580c,5px 5px 0 #7c2d12', 1500, 2000);
+    }
+
+    // Santa's Sleigh: snow falls, a tree lights up (1.2s, star flash), Santa's sleigh and two reindeer cross
+    // the sky (.2-2.7s) trailing sparkles, dropping five presents that land at 1.3, 1.62, 1.94, 2.26, 2.58s.
+    const XMAS = { sleighStart: 200, sleighDur: 2500, drops: [700, 1020, 1340, 1660, 1980], fall: 600, tree: 1200 };
+    function vfxChristmas(layer) {
+      const [W, H] = vfxSize(layer), D = 3700, k = Math.min(1, W / 390), cx = W / 2, floor = H * .83;
+      ofxVignette(layer, W, H, 'rgba(6,22,48,.88)', D);
+      vfxFall(layer, W, H, 34, () => '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff 40%,rgba(255,255,255,.2) 70%,transparent)"></div>', [4 * k, 11 * k], 0, 45, [1700, 1900], { sway: 24 });
+      const gid = 'xt' + (bfxGradientSeq++), TS = Math.min(W * .4, 180);
+      let lights = '';
+      [[50, 40], [38, 70], [62, 74], [28, 108], [52, 112], [74, 108], [18, 146], [42, 150], [66, 148], [86, 144]].forEach(([lx, ly], i) => { lights += `<circle class="xl" cx="${lx}" cy="${ly}" r="3.6" fill="${['#ef4444', '#fde047', '#38bdf8', '#f472b6'][i % 4]}" opacity="0"><animate attributeName="opacity" values="0;1;.35;1" dur="${(0.8 + i * .07).toFixed(2)}s" begin="${(XMAS.tree / 1000 + i * .06).toFixed(2)}s" repeatCount="indefinite"/></circle>`; });
+      const tree = bfxAdd(layer, `<svg viewBox="0 0 100 170" width="100%" height="100%" style="overflow:visible"><defs><linearGradient id="${gid}" x1="0" x2="1"><stop offset="0" stop-color="#14532d"/><stop offset=".5" stop-color="#16a34a"/><stop offset="1" stop-color="#14532d"/></linearGradient></defs><rect x="43" y="150" width="14" height="20" fill="#78350f"/><path d="M50 20 82 74H66L92 118H72L98 158H2L28 118H8L34 74H18Z" fill="url(#${gid})" stroke="#052e16" stroke-width="2" stroke-linejoin="round"/>${lights}<path d="M50 4 54 14 65 15 57 22 59 33 50 27 41 33 43 22 35 15 46 14Z" fill="#fde047" stroke="#b45309" stroke-width="1.5" stroke-linejoin="round"/></svg>`, cx, floor - TS * .8, TS, TS * 1.7);
+      bfxAnimate(tree, vfxSample(40, t => { const ms = t * D, u = Math.min(1, ms / 700), s = u < 1 ? 1 + 1.7 * Math.pow(u - 1, 3) + .7 * Math.pow(u - 1, 2) : 1, o = ms > 3350 ? Math.max(0, 1 - (ms - 3350) / 350) : 1; return { transform: `scale(${Math.max(0, s * o).toFixed(3)})`, opacity: o }; }), { duration: D, easing: 'linear' });
+      const flash = bfxAdd(layer, bfxStar4('#fff7ae'), cx, floor - TS * 1.55, TS * .8, TS * .8);
+      bfxAnimate(flash, [{ transform: 'scale(0) rotate(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(45deg)', opacity: 1, offset: .4 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 700, delay: XMAS.tree, easing: 'ease-out' });
+      // Sleigh and reindeer.
+      const SW = Math.min(W * 1.0, 400), SH = SW * .3, path = f => [-SW * .6 + (W + SW * 1.2) * f, H * .2 + Math.sin(f * Math.PI) * -H * .06 + Math.sin(f * Math.PI * 2) * H * .02];
+      const SLEIGH = `<svg viewBox="0 0 300 90" width="100%" height="100%" style="overflow:visible"><g stroke="#3f1d0b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M6 70C14 86 70 86 84 62L90 40H28Z" fill="#dc2626"/><path d="M2 84H92" stroke="#fbbf24" stroke-width="5" fill="none"/><path d="M22 78V84M70 74V84" stroke="#fbbf24" stroke-width="3"/>
+        <ellipse cx="34" cy="40" rx="24" ry="14" fill="#7c2d12"/><circle cx="66" cy="32" r="10" fill="#fecaca"/><path d="M56 30c4 8 16 8 20 0l2 12H54Z" fill="#fff"/><path d="M56 26 66 6l14 18Z" fill="#dc2626"/><circle cx="66" cy="5" r="4" fill="#fff"/><rect x="48" y="42" width="30" height="22" rx="6" fill="#dc2626"/><rect x="48" y="52" width="30" height="5" fill="#111827"/>
+        <rect x="20" y="22" width="14" height="14" fill="#38bdf8"/><path d="M27 22v14M20 29h14" stroke="#fde047" stroke-width="2"/>
+        <path d="M92 62H122M150 62h30M206 62h26" stroke="#fde68a" fill="none"/>
+        ${[[120, 0], [206, 0]].map(([dx]) => `<g transform="translate(${dx} 0)"><path d="M0 52c8-12 24-10 32-2l10-10 4 4-8 10c4 6 4 12-2 16l-6 18h-4l4-16h-14l-6 16h-4l4-18c-6-4-12-6-14-12Z" fill="#a16207"/><path d="M40 38l2-12M44 40l8-10M40 38l-6-10" stroke="#78350f" stroke-width="2.4" fill="none"/><circle cx="46" cy="46" r="3.4" fill="#ef4444" stroke="#7f1d1d"/></g>`).join('')}</g></svg>`;
+      const sl = bfxAdd(layer, `<div style="width:100%;height:100%;filter:drop-shadow(0 0 8px rgba(253,230,138,.8))">${SLEIGH}</div>`, 0, 0, SW, SH);
+      bfxAnimate(sl, vfxSample(50, f => { const [x, y] = path(f); return { transform: `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${(-6 + 12 * f + Math.sin(f * 20) * 2).toFixed(1)}deg)`, opacity: 1 }; }), { duration: XMAS.sleighDur, delay: XMAS.sleighStart, easing: 'linear' });
+      for (let i = 0; i < 26; i++) {
+        const f = i / 26, [x, y] = path(Math.max(0, f - .04)), s = bfxRand(8, 16) * k, el = bfxAdd(layer, bfxStar4(i % 2 ? '#fde68a' : '#fff'), x - SW * .42, y + SH * .35 + bfxRand(-8, 12), s, s);
+        bfxAnimate(el, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.1) rotate(45deg)', opacity: 1, offset: .25 }, { transform: `translate(${bfxRand(-14, 4)}px,${bfxRand(20, 50)}px) scale(0)`, opacity: 0 }], { duration: 750, delay: XMAS.sleighStart + f * XMAS.sleighDur + 120, easing: 'ease-out' });
+      }
+      // Presents drop from the sleigh and bounce once.
+      const GIFT = (a, b) => `<svg viewBox="0 0 40 40" width="100%" height="100%"><rect x="3" y="14" width="34" height="24" rx="3" fill="${a}" stroke="#1f2937" stroke-width="1.5"/><rect x="17" y="14" width="6" height="24" fill="${b}"/><rect x="3" y="22" width="34" height="5" fill="${b}"/><path d="M20 14C12 2 4 8 14 14M20 14C28 2 36 8 26 14" fill="none" stroke="${b}" stroke-width="3" stroke-linecap="round"/></svg>`;
+      const GC = [['#ef4444', '#fde047'], ['#2563eb', '#f8fafc'], ['#16a34a', '#fca5a5'], ['#a855f7', '#fde047'], ['#f97316', '#38bdf8']];
+      XMAS.drops.forEach((td, i) => {
+        const f0 = Math.min(1, Math.max(0, (td - XMAS.sleighStart) / XMAS.sleighDur)), [sx, sy] = path(f0), size = (30 + (i % 3) * 6) * Math.max(.85, k), gx = Math.max(size, Math.min(W - size, sx + (i - 2) * 10)), fy = floor + (i % 2) * 10 - size / 2;
+        const g = bfxAdd(layer, GIFT(...GC[i]), 0, 0, size, size);
+        bfxAnimate(g, vfxSample(22, f => { const ms = f * (XMAS.fall + 900), o = (td + ms) > 3350 ? Math.max(0, 1 - (td + ms - 3350) / 350) : 1; const u = Math.min(1, ms / XMAS.fall), y = sy + SH * .3 + (fy - sy - SH * .3) * u * u; const bounce = ms > XMAS.fall ? Math.abs(Math.sin((ms - XMAS.fall) / 150 * Math.PI)) * 24 * Math.exp(-(ms - XMAS.fall) / 200) : 0; return { transform: `translate(${gx.toFixed(1)}px,${(y - bounce).toFixed(1)}px) rotate(${(u < 1 ? (i % 2 ? 1 : -1) * 260 * (1 - u) : 0).toFixed(0)}deg)`, opacity: f === 0 ? 0 : o }; }), { duration: XMAS.fall + 900, delay: td, easing: 'linear' });
+        const sp = bfxAdd(layer, bfxStar4('#fff7ae'), gx, fy, 30 * k, 30 * k);
+        bfxAnimate(sp, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.3) rotate(45deg)', opacity: 1, offset: .35 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }], { duration: 500, delay: td + XMAS.fall, easing: 'ease-out' });
+      });
+      vfxShout(layer, 'HO HO HO!', cx, H * .5, Math.min(52, W * .13), 'color:#fff;text-shadow:0 0 2px #450a0a,3px 3px 0 #dc2626,5px 5px 0 #450a0a', 1700, 1800);
+    }
+
+    // Midnight: a clock ticks 11:57 to 12 as 3-2-1 pops (.15, .6, 1.05s); at 1.5s the bell strikes, a cork
+    // flies, champagne sprays and five fireworks open (1.5-2.45s) over gold confetti and HAPPY NEW YEAR.
+    const NEWYEAR = { counts: [150, 600, 1050], midnight: 1500, bursts: [1500, 1700, 1900, 2100, 2300] };
+    function vfxNewYear(layer) {
+      const [W, H] = vfxSize(layer), D = 3700, k = Math.min(1, W / 390), cx = W / 2, cy = H * .27, CS = Math.min(W * .46, 190);
+      ofxVignette(layer, W, H, 'rgba(8,10,34,.88)', D);
+      let ticks = '';
+      for (let i = 0; i < 12; i++) ticks += `<line x1="50" y1="${i % 3 ? 8 : 5}" x2="50" y2="${i % 3 ? 12 : 14}" stroke="#fde68a" stroke-width="${i % 3 ? 1.2 : 2.2}" stroke-linecap="round" transform="rotate(${i * 30} 50 50)"/>`;
+      const clock = bfxAdd(layer, `<svg viewBox="0 0 100 100" width="100%" height="100%" style="overflow:visible"><circle cx="50" cy="50" r="47" fill="#0f172a" stroke="#fbbf24" stroke-width="3.5"/><circle cx="50" cy="50" r="42" fill="none" stroke="#fde68a" stroke-width=".8" opacity=".6"/>${ticks}<g class="vh"><path d="M50 50 50 24" stroke="#fff7d6" stroke-width="3.2" stroke-linecap="round"/></g><g class="vm"><path d="M50 50 50 14" stroke="#fde047" stroke-width="2.2" stroke-linecap="round"/></g><circle cx="50" cy="50" r="3.4" fill="#fbbf24"/></svg>`, cx, cy, CS, CS);
+      const minute = clock.querySelector('.vm'); minute.style.transformOrigin = '50px 50px'; minute.style.transformBox = 'view-box';
+      bfxAnimate(minute, vfxSample(60, t => { const ms = t * D; let a = -18; NEWYEAR.counts.forEach((c, i) => { if (ms >= c) a = -18 + 6 * (i + 1) + 5 * Math.exp(-(ms - c) / 120) * Math.cos((ms - c) / 120 * 4) * 0; }); const last = NEWYEAR.midnight; if (ms >= last) a = 0; return { transform: `rotate(${a.toFixed(1)}deg)` }; }), { duration: D, easing: 'linear' });
+      bfxAnimate(clock, vfxSample(60, t => { const ms = t * D, u = Math.min(1, ms / 350), s = u < 1 ? 1 + 1.7 * Math.pow(u - 1, 3) + .7 * Math.pow(u - 1, 2) : 1, hit = ms >= NEWYEAR.midnight ? .16 * Math.exp(-(ms - NEWYEAR.midnight) / 160) * Math.cos((ms - NEWYEAR.midnight) / 160 * 3) : 0, o = ms > 3350 ? Math.max(0, 1 - (ms - 3350) / 350) : 1; return { transform: `scale(${Math.max(0, (s + hit) * o).toFixed(3)}) rotate(${(ms >= NEWYEAR.midnight && ms < NEWYEAR.midnight + 400 ? Math.sin((ms - NEWYEAR.midnight) / 22) * 4 * Math.exp(-(ms - NEWYEAR.midnight) / 160) : 0).toFixed(2)}deg)`, opacity: o }; }), { duration: D, easing: 'linear' });
+      NEWYEAR.counts.forEach((c, i) => vfxShout(layer, String(3 - i), cx, H * .52, Math.min(150, W * .38), 'color:#fde68a;-webkit-text-stroke:2px #451a03;text-shadow:0 0 18px rgba(251,191,36,.8),4px 4px 0 #92400e', c, 440));
+      const flash = bfxAdd(layer, '<div style="width:100%;height:100%;background:radial-gradient(circle at 50% 40%,#fff,rgba(253,230,138,.6) 40%,transparent 75%)"></div>', W / 2, H / 2, W, H);
+      bfxAnimate(flash, [{ opacity: 0 }, { opacity: .95, offset: .1 }, { opacity: 0 }], { duration: 520, delay: NEWYEAR.midnight, easing: 'ease-out' });
+      const ring = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;border:4px solid #fde047;box-shadow:0 0 20px #fbbf24,inset 0 0 16px #fbbf24"></div>', cx, cy, CS, CS);
+      const ring2 = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;border:3px solid #fff7d6;box-shadow:0 0 16px #fde047"></div>', cx, cy, CS, CS);
+      [[ring, 0], [ring2, 200]].forEach(([r, d]) => bfxAnimate(r, [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(.9)', opacity: 1, offset: .12 }, { transform: 'scale(3)', opacity: 0 }], { duration: 800, delay: NEWYEAR.midnight + d, easing: 'cubic-bezier(.1,.7,.3,1)' }));
+      const COLS = [['#fde68a', '#fbbf24', '#fff'], ['#f472b6', '#fb7185', '#fff'], ['#22d3ee', '#818cf8', '#fff'], ['#fde047', '#fb923c', '#fff'], ['#a7f3d0', '#fde68a', '#fff']];
+      [[.2, .22], [.8, .2], [.5, .14], [.28, .62], [.74, .6]].forEach(([fx, fy], i) => vfxSparkBurst(layer, W * fx, H * fy, Math.min(W * .3, 125), NEWYEAR.bursts[i], COLS[i], 32, k));
+      // The cork and a spray of champagne.
+      const cork = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:40% 40% 30% 30%;background:linear-gradient(90deg,#a16207,#d4a017 50%,#92400e);border:1.5px solid #451a03"></div>', cx, H * .86, 14 * k, 20 * k);
+      bfxAnimate(cork, vfxSample(24, t => { const s = t * 1.3, y = H * .86 - H * .75 * s + .5 * H * 1.2 * s * s * 2; return { transform: `translate(${(Math.sin(s * 4) * 16 * k).toFixed(1)}px,${(y - H * .86).toFixed(1)}px) rotate(${(s * 700).toFixed(0)}deg)`, opacity: t < .85 ? 1 : (1 - t) / .15 }; }), { duration: 1300, delay: NEWYEAR.midnight, easing: 'linear' });
+      for (let i = 0; i < 26; i++) {
+        const a = -Math.PI / 2 + bfxRand(-.7, .7), v = bfxRand(.4, .9) * H, size = bfxRand(4, 8) * k, life = bfxRand(900, 1300);
+        const d = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#fde68a 60%,#f59e0b)"></div>', 0, 0, size, size);
+        bfxAnimate(d, vfxSample(12, t => { const s = t * life / 1000; return { transform: `translate(${(cx + Math.cos(a) * v * s * .6).toFixed(1)}px,${(H * .86 + Math.sin(a) * v * s + .5 * H * 1.6 * s * s).toFixed(1)}px)`, opacity: t < .08 ? 1 : Math.max(0, 1 - (t - .5) / .5) }; }), { duration: life, delay: NEWYEAR.midnight + 30, easing: 'linear' });
+      }
+      vfxFall(layer, W, H, 18, i => `<div style="width:100%;height:100%;background:${['#fde68a', '#fbbf24', '#fff', '#111827', '#f472b6'][i % 5]};border-radius:1px"></div>`, [7 * k, 12 * k], NEWYEAR.midnight, 35, [1400, 1600], { aspect: 1.6, flip: true, sway: 30 });
+      vfxShout(layer, 'HAPPY NEW YEAR', cx, H * .56, Math.min(36, W * .085), 'color:#fff7d6;-webkit-text-stroke:1.5px #451a03;text-shadow:3px 3px 0 #b45309,5px 5px 0 #451a03', 1650, 1900);
+    }
+
+    // Egg Hunt: seven painted eggs drop and bounce (landing at .45s + .16s each), crack open from 1.4s (+.13s each)
+    // and a chick peeps out of every one, a bunny hops across five times (.7s + .42s each) and petals fall.
+    const EASTER = { drop: 160, land: 450, crack: 1400, crackGap: 130, hops: 5, hopStart: 700, hopGap: 420 };
+    function vfxEaster(layer) {
+      const [W, H] = vfxSize(layer), D = 3600, k = Math.min(1, W / 390), cx = W / 2;
+      ofxVignette(layer, W, H, 'rgba(34,26,56,.8)', D);
+      const hills = bfxAdd(layer, '<svg viewBox="0 0 400 120" preserveAspectRatio="none" width="100%" height="100%"><path d="M0 60Q80 20 170 55T400 40V120H0Z" fill="#4ade80"/><path d="M0 85Q110 50 220 80T400 70V120H0Z" fill="#22c55e"/>' + Array.from({ length: 22 }, (_, i) => `<circle cx="${(i * 19 + 7) % 400}" cy="${70 + (i * 13) % 40}" r="2.6" fill="${['#fff', '#f9a8d4', '#fde047'][i % 3]}"/>`).join('') + '</svg>', cx, H - 50 * k, W * 1.05, 110 * k);
+      bfxAnimate(hills, vfxSample(10, t => ({ transform: `translateY(${((1 - Math.min(1, t * 14)) * 60).toFixed(1)}px)`, opacity: t > .92 ? (1 - t) / .08 : 1 })), { duration: D, easing: 'linear' });
+      const PAL = [['#f9a8d4', '#fff', '#a78bfa'], ['#93c5fd', '#fde047', '#fff'], ['#86efac', '#fff', '#f472b6'], ['#fde68a', '#f472b6', '#fff'], ['#c4b5fd', '#fff', '#38bdf8'], ['#fca5a5', '#fde047', '#fff'], ['#99f6e4', '#fff', '#fb923c']];
+      const egg = ([a, b, c], i) => `<svg viewBox="0 0 40 52" width="100%" height="100%" style="overflow:visible"><defs><clipPath id="ec${i}${bfxGradientSeq}"><path d="M20 2C9 2 3 22 3 33c0 11 8 17 17 17s17-6 17-17C37 22 31 2 20 2Z"/></clipPath></defs><g clip-path="url(#ec${i}${bfxGradientSeq})"><rect width="40" height="52" fill="${a}"/>${[0, 1].includes(i % 3) ? `<path d="M0 22 8 28 16 22 24 28 32 22 40 28V34L32 28 24 34 16 28 8 34 0 28Z" fill="${b}"/>` : `<rect y="20" width="40" height="7" fill="${b}"/>`}${Array.from({ length: 5 }, (_, j) => `<circle cx="${6 + j * 7}" cy="${i % 2 ? 40 : 12}" r="2.4" fill="${c}"/>`).join('')}<ellipse cx="13" cy="14" rx="5" ry="9" fill="#fff" opacity=".35" transform="rotate(-18 13 14)"/></g><path d="M20 2C9 2 3 22 3 33c0 11 8 17 17 17s17-6 17-17C37 22 31 2 20 2Z" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/></svg>`;
+      const CHICK = '<svg viewBox="0 0 40 40" width="100%" height="100%" style="overflow:visible"><circle cx="20" cy="23" r="15" fill="#fde047" stroke="#ca8a04" stroke-width="1.5"/><circle cx="14.5" cy="20" r="2.4" fill="#1c1917"/><circle cx="25.5" cy="20" r="2.4" fill="#1c1917"/><circle cx="15.2" cy="19.2" r=".8" fill="#fff"/><path d="M17 25h6l-3 4Z" fill="#f97316"/><path d="M17 8c0 4 1 6 3 9M22 8c-1 4-1 6-2 9" stroke="#ca8a04" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="9" cy="26" rx="3" ry="2" fill="#fb923c" opacity=".5"/><ellipse cx="31" cy="26" rx="3" ry="2" fill="#fb923c" opacity=".5"/></svg>';
+      const TOP = 'polygon(-5% -5%,105% -5%,105% 46%,80% 54%,60% 42%,40% 54%,20% 42%,-5% 50%)', BOT = 'polygon(-5% 50%,20% 42%,40% 54%,60% 42%,80% 54%,105% 46%,105% 105%,-5% 105%)';
+      for (let i = 0; i < 7; i++) {
+        const x = W * (i + .8) / 7.6, ew = Math.min(46, W / 8.2) * 1, eh = ew * 1.3, fy = H * (.6 + (i % 3) * .045), land = EASTER.land + i * EASTER.drop, crack = EASTER.crack + i * EASTER.crackGap;
+        const drop = ms => { const u = ms / land; if (u < 1) return -fy - 70 + (fy + 70) * u * u; const q = ms - land; return q < 360 ? -Math.abs(Math.sin(q / 180 * Math.PI)) * 46 * Math.exp(-q / 170) : 0; };
+        const chick = bfxAdd(layer, CHICK, x, fy - eh * .2, ew * .82, ew * .82); chick.style.transformOrigin = '50% 100%';
+        bfxAnimate(chick, vfxSample(60, t => { const ms = t * D, u = ms < crack + 60 ? 0 : Math.min(1, (ms - crack - 60) / 260), s = u < 1 ? 1 + 2.2 * Math.pow(u - 1, 3) + 1.2 * Math.pow(u - 1, 2) : 1, o = ms > 3250 ? Math.max(0, 1 - (ms - 3250) / 350) : 1; return { transform: `translateY(${(-u * eh * .5 + (u === 1 ? Math.abs(Math.sin((ms - crack) / 150)) * -5 : 0) + Math.min(0, 1) ).toFixed(1)}px) scale(${(u === 0 ? 0 : s * o).toFixed(3)})`, opacity: u === 0 ? 0 : o }; }), { duration: D, easing: 'linear' });
+        [[BOT, 0], [TOP, 1]].forEach(([clip, top]) => {
+          const half = bfxAdd(layer, `<div style="width:100%;height:100%;clip-path:${clip}">${egg(PAL[i], i)}</div>`, x, fy - eh / 2, ew, eh);
+          bfxAnimate(half, vfxSample(70, t => {
+            const ms = t * D, d = drop(Math.min(ms, land + 400)), shake = ms > crack - 260 && ms < crack ? Math.sin((ms - crack + 260) / 24) * (ms - crack + 260) / 260 * 7 : 0, c = ms > crack ? Math.min(1, (ms - crack) / 520) : 0;
+            const o = ms > 3250 ? Math.max(0, 1 - (ms - 3250) / 350) : 1;
+            const ty = (ms < land ? drop(ms) : d) + (top ? -c * eh * .55 - c * c * 30 : 0), tx = top ? c * ew * .5 : 0, rot = shake + (top ? c * 70 : 0);
+            return { transform: `translate(${tx.toFixed(1)}px,${(ms < land ? drop(ms) : ty).toFixed(1)}px) rotate(${rot.toFixed(1)}deg)`, opacity: top && c > .85 ? Math.max(0, 1 - (c - .85) / .15) * o : o };
+          }), { duration: D, easing: 'linear' });
+        });
+        vfxTwinkles(layer, 3, [x - ew, fy - eh, x + ew, fy], crack, crack + 300, ['#fff', '#fde047', '#f9a8d4'], k, [8, 14]);
+      }
+      // The bunny.
+      const BUNNY = '<svg viewBox="0 0 60 56" width="100%" height="100%" style="overflow:visible"><g stroke="#9ca3af" stroke-width="1.4" stroke-linejoin="round"><ellipse cx="22" cy="24" rx="5" ry="16" fill="#fff" transform="rotate(-10 22 24)"/><ellipse cx="34" cy="22" rx="5" ry="16" fill="#fff" transform="rotate(8 34 22)"/><ellipse cx="22" cy="24" rx="2.4" ry="11" fill="#fbcfe8" transform="rotate(-10 22 24)"/><ellipse cx="34" cy="22" rx="2.4" ry="11" fill="#fbcfe8" transform="rotate(8 34 22)"/><ellipse cx="30" cy="44" rx="22" ry="12" fill="#fff"/><circle cx="46" cy="38" r="12" fill="#fff"/><circle cx="8" cy="46" r="6" fill="#fff"/><ellipse cx="42" cy="53" rx="9" ry="3.6" fill="#fff"/></g><circle cx="50" cy="35" r="1.8" fill="#111827"/><circle cx="57" cy="40" r="2" fill="#f472b6"/></svg>';
+      const bw = Math.min(70, W * .17), by = H * .87, hopDur = EASTER.hops * EASTER.hopGap;
+      const bunny = bfxAdd(layer, BUNNY, 0, 0, bw, bw * .93);
+      bfxAnimate(bunny, vfxSample(60, t => { const x = -bw + (W + bw * 2) * t, ph = (t * EASTER.hops) % 1, air = 4 * ph * (1 - ph), near = Math.max(0, 1 - Math.min(ph, 1 - ph) / .12); return { transform: `translate(${x.toFixed(1)}px,${(by - air * 44 * k).toFixed(1)}px) rotate(${((ph - .5) * -16).toFixed(1)}deg) scale(${(1 + near * .08).toFixed(3)},${(1 - near * .1).toFixed(3)})`, opacity: 1 }; }), { duration: hopDur, delay: EASTER.hopStart, easing: 'linear' });
+      vfxFall(layer, W, H, 14, i => `<svg viewBox="0 0 24 24" width="100%" height="100%">${Array.from({ length: 5 }, (_, j) => `<ellipse cx="12" cy="6" rx="4" ry="6" fill="${['#f9a8d4', '#c4b5fd', '#fde68a', '#a7f3d0'][i % 4]}" transform="rotate(${j * 72} 12 12)"/>`).join('')}<circle cx="12" cy="12" r="3" fill="#fde047"/></svg>`, [14 * k, 22 * k], 1100, 50, [1500, 1700], { flip: true, sway: 34 });
+      vfxShout(layer, 'HAPPY EASTER', cx, H * .42, Math.min(42, W * .105), 'color:#fff;-webkit-text-stroke:1.5px #581c87;text-shadow:3px 3px 0 #db2777,5px 5px 0 #581c87', 1900, 1500);
+    }
+
+    // Dragon Dance: lanterns swing in, a gong (.3s) and drums start the dragon, which weaves across the screen
+    // (.3-3.0s) over gold coins, two firework bursts open (1.4, 1.9, 2.3s) and GONG XI FA CAI pops.
+    const LUNAR = { start: 300, dur: 2650, segs: 14, segGap: 55, bursts: [1400, 1900, 2300] };
+    function vfxLunar(layer) {
+      const [W, H] = vfxSize(layer), D = 3700, k = Math.min(1, W / 390), cx = W / 2;
+      ofxVignette(layer, W, H, 'rgba(76,5,10,.88)', D);
+      const LANT = '<svg viewBox="0 0 40 70" width="100%" height="100%" style="overflow:visible"><path d="M20 0V12" stroke="#fbbf24" stroke-width="2"/><rect x="12" y="10" width="16" height="5" rx="2" fill="#fbbf24"/><ellipse cx="20" cy="33" rx="17" ry="20" fill="#dc2626" stroke="#7f1d1d" stroke-width="2"/><path d="M20 13C8 20 8 46 20 53M20 13C32 20 32 46 20 53" stroke="#fbbf24" stroke-width="1.6" fill="none"/><rect x="12" y="51" width="16" height="5" rx="2" fill="#fbbf24"/><path d="M14 56V70M20 56V70M26 56V70" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></svg>';
+      for (let i = 0; i < 5; i++) {
+        const lw = Math.min(46, W * .11) * (i % 2 ? .85 : 1), x = W * (i + .5) / 5, lh = lw * 1.75;
+        vfxGlowDot(layer, x, lh * .8, lw * 3, 'rgba(251,191,36,.45)', vfxSample(30, t => ({ transform: `translate(${(Math.sin(t * 10 + i) * 8 * k).toFixed(1)}px,${((1 - Math.min(1, t * 10)) * -60).toFixed(1)}px)`, opacity: Math.min(1, t * 10) * vfxFlicker(t, i) * (t > .9 ? (1 - t) * 10 : 1) })), D, 0);
+        const l = bfxAdd(layer, LANT, x, lh * .5, lw, lh); l.style.transformOrigin = '50% 0%';
+        bfxAnimate(l, vfxSample(60, t => ({ transform: `translateY(${((1 - Math.min(1, t * 10)) * -90).toFixed(1)}px) rotate(${(Math.sin(t * 14 + i * 1.3) * 7 * Math.min(1, t * 6)).toFixed(2)}deg)`, opacity: t > .92 ? (1 - t) / .08 : 1 })), { duration: D, easing: 'linear' });
+      }
+      const pathF = f => [-90 + (W + 180) * f, H * .5 + Math.sin(f * Math.PI * 3.2) * H * .1 - f * H * .04];
+      const SEG = (i) => `<svg viewBox="0 0 40 40" width="100%" height="100%" style="overflow:visible"><path d="M12 6 20 -2 28 6" fill="#fbbf24" stroke="#92400e" stroke-width="1.2" stroke-linejoin="round"/><circle cx="20" cy="22" r="17" fill="${i % 2 ? '#dc2626' : '#b91c1c'}" stroke="#fbbf24" stroke-width="2.4"/><path d="M8 18c4-4 8-4 12 0 4-4 8-4 12 0M9 27c4-3 7-3 11 0 4-3 7-3 11 0" stroke="#fde68a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`;
+      const HEAD = '<svg viewBox="0 0 100 80" width="100%" height="100%" style="overflow:visible"><g stroke="#7f1d1d" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M10 44C10 22 28 10 52 10c18 0 32 8 40 20l-14 2 16 8c-6 12-18 18-34 18H34C20 58 10 54 10 44Z" fill="#dc2626"/><path d="M46 10 36-2 24 4M60 10 62-6 74 0" fill="none" stroke="#fbbf24" stroke-width="4"/><path d="M92 34c10 2 12 14 6 22M86 42c6 8 4 16-2 20" fill="none" stroke="#fde68a" stroke-width="2.4"/><path d="M12 40C0 36-4 22 2 12M16 50C2 52-6 44-6 34" fill="none" stroke="#fbbf24" stroke-width="2.6"/><path d="M26 44h40" stroke="#7f1d1d" stroke-width="2.4"/><path d="M30 44l4 8 4-8M50 44l4 8 4-8" fill="#fff" stroke="#7f1d1d" stroke-width="1.2"/></g><circle cx="60" cy="28" r="7.5" fill="#fff7d6" stroke="#7f1d1d" stroke-width="1.6"/><circle cx="62" cy="28" r="3.6" fill="#111"/><circle cx="12" cy="48" r="8" fill="#fde047" stroke="#b45309" stroke-width="1.5"/><path d="M10 44l4 8M14 44l-4 8" stroke="#b45309" stroke-width="1.2"/></svg>';
+      for (let i = LUNAR.segs; i >= 0; i--) {
+        const head = i === 0, size = head ? Math.min(140, W * .36) : Math.max(28, Math.min(62, W * .16) - i * 1.6), h = head ? size * .8 : size;
+        const el = bfxAdd(layer, head ? HEAD : SEG(i), 0, 0, size, h);
+        el.style.filter = 'drop-shadow(0 0 5px rgba(251,191,36,.5))';
+        bfxAnimate(el, vfxSample(52, f => { const [x, y] = pathF(f), [nx, ny] = pathF(Math.min(1, f + .01)); return { transform: `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${head ? (Math.atan2(ny - y, nx - x) * 180 / Math.PI).toFixed(1) : 0}deg)`, opacity: 1 }; }), { duration: LUNAR.dur, delay: LUNAR.start + i * LUNAR.segGap, easing: 'linear' });
+      }
+      for (let i = 0; i < 22; i++) {
+        const f = i / 22, [x, y] = pathF(Math.max(0, f - .06)), s = bfxRand(9, 16) * k;
+        const st = bfxAdd(layer, bfxStar4(i % 2 ? '#fde68a' : '#fff'), x + bfxRand(-18, 18), y + bfxRand(-26, 26), s, s);
+        bfxAnimate(st, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.1) rotate(45deg)', opacity: 1, offset: .3 }, { transform: `translateY(${bfxRand(16, 44)}px) scale(0)`, opacity: 0 }], { duration: 750, delay: LUNAR.start + f * LUNAR.dur + 80, easing: 'ease-out' });
+      }
+      const COIN = '<svg viewBox="0 0 24 24" width="100%" height="100%"><circle cx="12" cy="12" r="11" fill="#fbbf24" stroke="#92400e" stroke-width="1.5"/><circle cx="12" cy="12" r="8" fill="none" stroke="#fde68a" stroke-width="1"/><rect x="9" y="9" width="6" height="6" fill="#7f1d1d" stroke="#92400e" stroke-width="1"/></svg>';
+      vfxFall(layer, W, H, 18, () => COIN, [14 * k, 22 * k], 600, 60, [1400, 1600], { flip: true, sway: 20 });
+      [[.3, .24], [.72, .2], [.5, .14]].forEach(([fx, fy], i) => vfxSparkBurst(layer, W * fx, H * fy, Math.min(W * .3, 125), LUNAR.bursts[i], i % 2 ? ['#fde047', '#fb923c', '#fff'] : ['#f87171', '#fbbf24', '#fff'], 34, k));
+      vfxShout(layer, 'GONG XI FA CAI', cx, H * .78, Math.min(34, W * .085), 'color:#fde68a;-webkit-text-stroke:1.5px #450a0a;text-shadow:3px 3px 0 #b91c1c,5px 5px 0 #450a0a', 1500, 2000);
+    }
+
+    // Crescent Night: the moon and star rise (0-.9s) over a turning eight-point star, a mosque skyline fades up,
+    // five lanterns light one by one (.9s + .2s each) and sparks drift upward under RAMADAN KAREEM.
+    const RAMADAN = { moon: 900, lantern: 900, lanternGap: 200, text: 1700 };
+    function vfxRamadan(layer) {
+      const [W, H] = vfxSize(layer), D = 3700, k = Math.min(1, W / 390), cx = W / 2, my = H * .27, MS = Math.min(W * .4, 170);
+      ofxVignette(layer, W, H, 'rgba(6,14,44,.9)', D);
+      vfxTwinkles(layer, 26, [10, 10, W - 10, H * .6], 200, 2800, ['#fff', '#fde68a', '#bfdbfe'], k);
+      const star8 = bfxAdd(layer, '<svg viewBox="0 0 100 100" width="100%" height="100%"><g fill="none" stroke="#fbbf24" stroke-width="1.6" stroke-linejoin="round" opacity=".75"><rect x="18" y="18" width="64" height="64"/><rect x="18" y="18" width="64" height="64" transform="rotate(45 50 50)"/><circle cx="50" cy="50" r="30" stroke-width=".8"/></g></svg>', cx, my, MS * 2.3, MS * 2.3);
+      bfxAnimate(star8, vfxSample(40, t => ({ transform: `scale(${Math.min(1, t * 6).toFixed(2)}) rotate(${(t * 90).toFixed(1)}deg)`, opacity: Math.min(1, t * 6) * .8 * (t > .9 ? (1 - t) * 10 : 1) })), { duration: D, easing: 'linear' });
+      vfxGlowDot(layer, cx, my, MS * 3.2, 'rgba(253,230,138,.5)', vfxSample(40, t => ({ transform: `scale(${(Math.min(1, t * 5) * (1 + Math.sin(t * 28) * .05)).toFixed(3)})`, opacity: Math.min(1, t * 6) * (t > .9 ? (1 - t) * 10 : 1) })), D, 0);
+      const gid = 'rm' + (bfxGradientSeq++);
+      const moon = bfxAdd(layer, `<svg viewBox="0 0 100 100" width="100%" height="100%" style="overflow:visible"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffbe0"/><stop offset="1" stop-color="#e5b94a"/></linearGradient></defs><path d="M60 8A42 42 0 1 0 60 92 50 50 0 0 1 60 8Z" fill="url(#${gid})" stroke="#b45309" stroke-width="1.5"/><path d="m78 38 3 8 8.5.7-6.4 5.6 2 8.2L78 56l-7.1 4.5 2-8.2-6.4-5.6 8.5-.7Z" fill="#fde68a" stroke="#b45309" stroke-width="1.2"/></svg>`, cx, my, MS, MS);
+      bfxAnimate(moon, vfxSample(60, t => { const ms = t * D, u = Math.min(1, ms / RAMADAN.moon), s = u < 1 ? 1 + 1.7 * Math.pow(u - 1, 3) + .7 * Math.pow(u - 1, 2) : 1 + .02 * Math.sin((ms - RAMADAN.moon) / 220), o = ms > 3350 ? Math.max(0, 1 - (ms - 3350) / 350) : 1; return { transform: `translateY(${((1 - u) * H * .3).toFixed(1)}px) scale(${Math.max(0, s * o).toFixed(3)}) rotate(${(-12 * (1 - u)).toFixed(1)}deg)`, opacity: o }; }), { duration: D, easing: 'linear' });
+      const SKY = bfxAdd(layer, '<svg viewBox="0 0 400 110" preserveAspectRatio="none" width="100%" height="100%"><g fill="#0a1030"><path d="M0 110V80H30V60L36 50 42 60V80H70V70Q90 40 110 70V80H140V30L144 22 148 30V80H170V66Q200 22 230 66V80H256V30L260 22 264 30V80H290V70Q310 44 330 70V80H360V58L366 46 372 58V80H400V110Z"/></g><g fill="#fde68a">' + [[34, 66], [146, 52], [200, 70], [262, 52], [366, 66], [90, 76], [310, 76]].map(([x, y], i) => `<rect x="${x}" y="${y}" width="3.4" height="5" opacity="${i % 2 ? .9 : .6}"/>`).join('') + '</g></svg>', cx, H - 52 * k, W * 1.05, 104 * k);
+      bfxAnimate(SKY, vfxSample(10, t => ({ transform: `translateY(${((1 - Math.min(1, t * 12)) * 50).toFixed(1)}px)`, opacity: t > .92 ? (1 - t) / .08 : 1 })), { duration: D, easing: 'linear' });
+      const FAN = '<svg viewBox="0 0 40 80" width="100%" height="100%" style="overflow:visible"><path d="M20 0V10" stroke="#fbbf24" stroke-width="2"/><path d="M14 10H26L22 4H18Z" fill="#fbbf24"/><path d="M12 14H28L32 30 26 56H14L8 30Z" fill="rgba(251,191,36,.28)" stroke="#fbbf24" stroke-width="2" stroke-linejoin="round"/><path d="M20 14V56M12 14 14 56M28 14 26 56" stroke="#b45309" stroke-width="1.2"/><path d="M14 56H26L24 62H16Z" fill="#fbbf24"/><path d="M16 62V76M24 62V76" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/></svg>';
+      for (let i = 0; i < 5; i++) {
+        const x = W * (i + .8) / 5.6, ly = H * (.46 + (i % 2) * .08), lw = Math.min(40, W * .1), lh = lw * 2, on = RAMADAN.lantern + i * RAMADAN.lanternGap;
+        const l = bfxAdd(layer, FAN, x, ly, lw, lh); l.style.transformOrigin = '50% 0%';
+        bfxAnimate(l, vfxSample(60, t => { const ms = t * D, u = Math.min(1, Math.max(0, (ms - 300 - i * 80) / 420)); return { transform: `translateY(${((1 - u) * -H * .5).toFixed(1)}px) rotate(${(Math.sin(t * 13 + i) * 5 * u).toFixed(2)}deg)`, opacity: (ms > 3350 ? Math.max(0, 1 - (ms - 3350) / 350) : 1) * (u === 0 ? 0 : 1) }; }), { duration: D, easing: 'linear' });
+        vfxGlowDot(layer, x, ly + lh * .4, lw * 3.2, 'rgba(251,191,36,.7)', vfxSample(60, t => { const ms = t * D, u = Math.min(1, Math.max(0, (ms - 300 - i * 80) / 420)), on_ = ms < on ? 0 : Math.min(1, (ms - on) / 220); return { transform: `translateY(${((1 - u) * -H * .5).toFixed(1)}px)`, opacity: on_ * vfxFlicker(t, i * 5) * (ms > 3350 ? Math.max(0, 1 - (ms - 3350) / 350) : 1) }; }), D, 0);
+      }
+      for (let i = 0; i < 14; i++) {
+        const x0 = bfxRand(.05, .95) * W, s = bfxRand(4, 8) * k, rise = bfxRand(.3, .6) * H, life = bfxRand(1400, 1600);
+        const sp = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:#fde68a;box-shadow:0 0 8px #fbbf24"></div>', 0, 0, s, s);
+        bfxAnimate(sp, vfxSample(14, t => ({ transform: `translate(${(x0 + Math.sin(t * 8 + i) * 18 * k).toFixed(1)}px,${(H * .84 - rise * t).toFixed(1)}px)`, opacity: t < .15 ? t / .15 : Math.max(0, 1 - (t - .15) / .85) })), { duration: life, delay: 1100 + i * 70, easing: 'linear' });
+      }
+      vfxShout(layer, 'RAMADAN KAREEM', cx, H * .68, Math.min(36, W * .09), 'color:#fff7d6;-webkit-text-stroke:1.5px #1e3a8a;text-shadow:3px 3px 0 #b45309,5px 5px 0 #1e3a8a', RAMADAN.text, 1800);
+    }
     function playShapeVictoryEffect(effect, cardStyle = null) {
       const layer = document.getElementById('victoryFxLayer');
       if (!layer) return false;
       const run = { 'victory-sparklers': vfxSparklers, 'victory-stars': vfxFiveStars, 'victory-karate': vfxKarate,
         'victory-cards': vfxCardShower, 'victory-trophy': vfxTrophy, 'victory-rocket': vfxRocket, 'victory-origami': vfxOrigamiFlock, 'victory-lion': vfxLion, 'victory-fireworks': vfxFireworks,
-        'victory-valentine': vfxValentine, 'victory-summer': vfxSummer, 'victory-halloween': vfxHalloween }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
+        'victory-valentine': vfxValentine, 'victory-summer': vfxSummer, 'victory-halloween': vfxHalloween,
+        'victory-diwali': vfxDiwali, 'victory-christmas': vfxChristmas, 'victory-newyear': vfxNewYear, 'victory-easter': vfxEaster, 'victory-lunar': vfxLunar, 'victory-ramadan': vfxRamadan }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
       if (!run) return false;
       const host = document.createElement('div');
       host.style.cssText = 'position:absolute;inset:0;pointer-events:none';
@@ -3931,16 +4199,15 @@
 
     function playVictoryEffect(effect, cardStyle = null) {
       audio.stopEffectClip('lion-roar'); audio.stopEffectClip('fireworks');
+      vfxConfettiStop();
       const old = document.getElementById('victoryFxLayer');
       old?.getAnimations({ subtree: true }).forEach(a => a.cancel());
       old?.replaceChildren();
       if (playShapeVictoryEffect(effect, cardStyle)) return;
       if (typeof confetti !== 'function') return;
-      if (effect === 'victory-confetti') {
-        confetti({ particleCount:260, spread:150, startVelocity:48, origin:{y:.58}, colors:['#f59e0b','#ec4899','#22d3ee','#10b981','#ffffff'] });
-        return;
-      }
-      confetti({ particleCount:200, spread:120, origin:{y:.5}, colors:['#f59e0b','#10b981','#ffffff'] });
+      // zIndex 120: the library's canvas defaults to 100, which hid it behind the big preview (105).
+      if (effect === 'victory-confetti') { vfxConfettiBurst(); audio.playVictorySound('victory-confetti'); return; }
+      confetti({ particleCount:200, spread:120, origin:{y:.5}, colors:['#f59e0b','#10b981','#ffffff'], zIndex: 120 });
     }
 
     function triggerEquippedVictoryEffect(player) {
