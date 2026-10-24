@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v433 — failed blind flip beats Snap Burn
+
+- A blind flip that can't be played sits on the Pile until its pickup runs (`executePlayCards` isBlindFailure branch, ~0.3-0.7 turn delays), and if it matched a run (two 7s + the flipped 7) `getCurrentSnapOpportunity` offered a Snap Burn on it (found in a 2 vs 2 game, Marga's blind 7 on an 8). It now returns null while `state.blindRevealing` or when the last `playedHistory` entry is `blindFailed` (history is synced online; Ranked resolves the flip and pickup in one server call, so it never had the window). Dev test "A failed blind flip has priority…".
+
 ## v432 — simple effect tiles (owner said "Go with all of that")
 
 - `art/effects/icons.js` (`ShEffectIcons`, loaded after `art/burns/icons.js`): one flat bold glyph on a tinted tile for the 8 seasonal burns, all 20 Jokers and all 20 Victories (id `joker-default` / `victory-default` for the defaults). `effIcon(id, kind)` (shop.js) wraps it in `.eicon`; `burnPreviewIcon` tries it after `ShBurnIcons`, `jokerPreviewIcon` / `victoryPreviewIcon` use it before the emoji maps (emoji stay as fallback). The 24 detailed `ShBurnIcons` tiles are unchanged. Render a contact sheet by loading the page and calling the three preview functions over `allCosmeticIds`. Weak ones the owner may want redone: Glitch Joker, Lunar Joker cookie, Karate victory. The v432 ShitStorm back-of-head work from the earlier session was lost (never pushed; container recreated).

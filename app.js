@@ -6012,6 +6012,8 @@
     function getCurrentSnapOpportunity() {
       const local = state.players.find(p => p.id === state.localPlayerId);
       if (!local || local.hasFinished || state.phase !== 'PLAY' || state.burnResolving || !state.discardPile?.length || state.pendingFollowUp || state.pendingFaceUpSacrifice) return null;
+      // A failed blind flip sits on the Pile until its pickup runs; the miss has priority, so no snap burn on it.
+      if (state.blindRevealing || (state.playedHistory || []).slice(-1)[0]?.blindFailed) return null;
       const burnInfo = getSnapBurnNeeded(state.discardPile);
       if (!burnInfo) return null;
       const matches = getSnapMatchesForPlayer(local, burnInfo.topRank);
