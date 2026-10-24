@@ -633,16 +633,21 @@
         [2093, 2637, 3136].forEach((f) => k.tone({ at: 0.64, dur: 0.7, type: 'triangle', f0: f, level: 0.07 }));
         k.scatter(22, 0.7, 1.45, (at) => k.tone({ at, dur: 0.12, type: 'triangle', f0: 2800 + Math.random() * 1400, level: 0.05 }));
       },
-      // New Year (v409): three clock ticks (3-2-1 at .05 / .23 / .41, rising), a riser into midnight at .62 (cork
-      // pop, champagne fizz, a boom and crackle), confetti rustle and a chime run up to ~1.2s.
+      // New Year (v409, champagne bottle v435): three clock ticks (3-2-1 at .05 / .23 / .41, rising) while the
+      // shaken bottle rattles and fizzes, the cork pops at midnight (.62) with a boom, then the champagne gushes
+      // (a long foamy hiss with glugs and fizzing bubbles to ~1.5s), confetti rustle and a chime run.
       'burn-newyear': (k) => {
         [0.05, 0.23, 0.41].forEach((at, i) => { k.tone({ at, dur: 0.07, type: 'square', f0: 900 + i * 220, f1: 700 + i * 220, level: 0.2 }); k.noise({ at, dur: 0.02, type: 'highpass', f0: 3500, level: 0.18 }); });
+        k.scatter(18, 0.2, 0.61, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 2600 + Math.random() * 1400, q: 3, level: 0.1 }));
+        k.noise({ at: 0.3, dur: 0.32, type: 'highpass', f0: 4000, f1: 8000, level: 0.1, attack: 0.9 });
         k.noise({ at: 0.45, dur: 0.17, type: 'highpass', f0: 1500, f1: 7000, level: 0.15, attack: 0.15 });
         k.tone({ at: 0.62, dur: 0.1, f0: 320, f1: 1100, level: 0.5, attack: 0.004 });
         k.noise({ at: 0.62, dur: 0.12, type: 'bandpass', f0: 1800, q: 1.2, level: 0.5 });
         k.tone({ at: 0.66, dur: 0.4, f0: 110, f1: 38, level: 0.45, attack: 0.01 });
-        k.noise({ at: 0.66, dur: 0.9, type: 'highpass', f0: 6000, level: 0.12, attack: 0.05 });
-        k.scatter(16, 0.7, 1.5, (at) => k.tone({ at, dur: 0.04, f0: 1800 + Math.random() * 1800, f1: 2600 + Math.random() * 1500, level: 0.05 }));
+        k.noise({ at: 0.64, dur: 0.95, type: 'bandpass', f0: 4200, f1: 2600, q: 0.6, level: 0.3, attack: 0.04 });
+        k.noise({ at: 0.66, dur: 0.9, type: 'highpass', f0: 6000, level: 0.14, attack: 0.05 });
+        [0.84, 0.97, 1.08, 1.2].forEach((at, i) => k.tone({ at, dur: 0.09, f0: 260 + i * 40, f1: 130 + i * 20, level: 0.1 }));
+        k.scatter(34, 0.7, 1.5, (at) => k.tone({ at, dur: 0.04, f0: 1800 + Math.random() * 1800, f1: 2600 + Math.random() * 1500, level: 0.05 }));
         k.noise({ at: 0.7, dur: 0.9, type: 'bandpass', f0: 3000, q: 0.7, level: 0.08, attack: 0.2 });
         k.scatter(14, 0.78, 1.3, (at) => k.noise({ at, dur: 0.014, type: 'highpass', f0: 5000, level: 0.14 }));
         [1047, 1319, 1568, 2093].forEach((f, i) => k.tone({ at: 0.78 + i * 0.1, dur: 0.45, type: 'triangle', f0: f, level: 0.07 }));

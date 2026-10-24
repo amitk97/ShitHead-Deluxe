@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v435: [['sparkle', 'Champagne Pop now shows a real champagne bottle: it shakes with the countdown, the cork flies and champagne, foam and bubbles pour out.', WN_KEY]],
       v434: [['sparkle', 'While a failed blind flip waits for its pickup, nothing can be played onto it, Snap Burn included.']],
       v433: [['sparkle', 'A failed blind flip now has priority: no Snap Burn is offered on the card that was just flipped.']],
       v432: [['sparkle', 'Every Burn, Joker and Victory tile now has a simple picture that matches its effect.']],

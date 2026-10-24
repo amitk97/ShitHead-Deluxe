@@ -1014,20 +1014,56 @@
         const el = add(`left:${cx - H * .5}px;top:${cy - H * .5}px;width:${H}px;height:${H}px;z-index:6;display:flex;align-items:center;justify-content:center;font:800 ${H * .62}px/1 system-ui,sans-serif;color:#fff7d6;text-shadow:0 0 ${H * .08}px #facc15,0 0 ${H * .2}px rgba(250,204,21,.7)`, d), a = NY_TICKS[i];
         anim(el, fr(t => { const p = clamp((t - a) / .17); return { opacity: p > 0 && p < 1 ? 1 - sm(.6, 1, p) : 0, transform: `scale(${(1.6 - .6 * out(clamp(p * 3)) + .15 * p).toFixed(3)})` }; }));
       });
-      // Midnight: the cork, the card bursts, spray, confetti, streamers and starbursts.
-      pfxFly(st, kit, { x: cx + W * .2, y: cy - H * .1, w: H * .1, h: H * .14, t0: NY_MID, vx: W * .5, vy: -H * 1.9, g: H * 3.4, spin: 9, floor: H * .55, bounce: .45, fade0: 1.6,
+      // The champagne bottle (green glass, gold foil, wire cage, label) stands at the card's right, tipped toward it.
+      // It pops in, fizzes (bubbles rise inside), shakes harder with every tick, and at midnight the cork flies, foam
+      // pours down the neck and a stream of champagne and rising bubbles gushes out over the card.
+      const Hb = H * 1.45, Wb = Hb * .34, bx = cx + W * .78, by = cy + H * .78, TH = -24 * Math.PI / 180;
+      const mouthX = bx + Hb * Math.sin(TH), mouthY = by - Hb * Math.cos(TH);
+      const dir = Math.atan2(-Math.cos(TH), Math.sin(TH));
+      const bottle = add(`left:${bx - Wb / 2}px;top:${by - Hb}px;width:${Wb}px;height:${Hb}px;z-index:4;transform-origin:50% 100%`);
+      bottle.innerHTML = `<svg viewBox="0 0 40 120" width="100%" height="100%" style="position:absolute;inset:0;overflow:visible"><defs><linearGradient id="nyg" x1="0" x2="1"><stop offset="0" stop-color="#0a2a1c"/><stop offset=".35" stop-color="#2a9d62"/><stop offset=".6" stop-color="#14683f"/><stop offset="1" stop-color="#08210f"/></linearGradient><linearGradient id="nyf" x1="0" x2="1"><stop offset="0" stop-color="#b8860b"/><stop offset=".4" stop-color="#fde68a"/><stop offset="1" stop-color="#b8860b"/></linearGradient></defs><path d="M15 8H25V38C25 52 38 56 38 74V112Q38 118 32 118H8Q2 118 2 112V74C2 56 15 52 15 38Z" fill="url(#nyg)"/><path d="M14.6 24H25.4V40H14.6Z" fill="url(#nyf)"/><rect x="5" y="80" width="30" height="24" rx="2.5" fill="#f5e6b8"/><rect x="5" y="80" width="30" height="5" fill="#d4a017"/><rect x="5" y="99" width="30" height="5" fill="#d4a017"/><path d="M20 87l1.8 3.6 4 .6-2.9 2.8.7 4L20 96l-3.6 1.9.7-4-2.9-2.8 4-.6Z" fill="#9a6b00"/><path d="M8 66V110" stroke="#fff" stroke-opacity=".3" stroke-width="2.6" stroke-linecap="round"/><path d="M17 30V50" stroke="#fff" stroke-opacity=".35" stroke-width="1.6" stroke-linecap="round"/></svg><svg class="nycap" viewBox="0 0 40 120" width="100%" height="100%" style="position:absolute;inset:0;overflow:visible"><path d="M14 0H26L27 26H13Z" fill="url(#nyf)"/><path d="M14 0H26" stroke="#fff7d6" stroke-width="2"/><path d="M13 9L27 21M27 9L13 21M13 15H27" stroke="#6b7280" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+      const cap = bottle.querySelector('.nycap');
+      anim(cap, fr(t => ({ opacity: t < NY_MID ? 1 : 0 })));
+      for (let i = 0; i < 9; i++) { // bubbles rising inside the glass
+        const sz = Wb * rand(.07, .13), ph = rand(0, 1), spd = rand(.9, 1.7), lx = Wb * rand(.2, .75);
+        const b = document.createElement('div'); b.style.cssText = `position:absolute;left:${lx}px;top:${Hb * .98}px;width:${sz}px;height:${sz}px;border-radius:50%;background:rgba(255,255,255,.8)`;
+        bottle.appendChild(b);
+        anim(b, fr(t => { const u = (t * spd + ph) % 1; return { opacity: sm(.1, .25, t) * (t < NY_MID ? 1 : 0) * Math.min(1, u * 8) * (1 - u * .6), transform: `translateY(${(-u * Hb * .5).toFixed(1)}px)` }; }));
+      }
+      const foam = document.createElement('div'); // foam running down the neck
+      foam.style.cssText = `position:absolute;left:${Wb * .3}px;top:0;width:${Wb * .4}px;height:${Hb * .36}px;border-radius:0 0 ${Wb * .3}px ${Wb * .3}px;transform-origin:50% 0;background:linear-gradient(180deg,#fff,#fff7d6 60%,rgba(255,247,214,.5));box-shadow:0 0 ${H * .03}px rgba(255,255,255,.9)`;
+      bottle.appendChild(foam);
+      anim(foam, fr(t => ({ opacity: t < NY_MID ? 0 : 1 - sm(1.35, 1.8, t), transform: `scaleY(${(.15 + .85 * out(sm(NY_MID, NY_MID + .5, t))).toFixed(3)}) scaleX(${(1 + .35 * Math.sin(clamp((t - NY_MID) / .5) * Math.PI)).toFixed(3)})` })));
+      anim(bottle, fr(t => {
+        const pop = out(clamp(t / .15)), g = sm(.2, NY_MID, t), tk = NY_TICKS.reduce((m, a) => Math.max(m, t >= a ? Math.max(0, 1 - (t - a) / .1) : 0), 0), kick = t >= NY_MID ? Math.exp(-(t - NY_MID) * 9) : 0;
+        const sh = Math.sin(t * 95) * (.4 + 3.2 * g), sx = Math.sin(t * 83) * H * .012 * g;
+        return { opacity: sm(0, .06, t) * (1 - sm(1.55, 1.95, t)), transform: `translate(${(sx + H * .06 * kick).toFixed(1)}px,${(H * .05 * kick + H * .15 * (1 - pop)).toFixed(1)}px) rotate(${(-24 + sh - 5 * kick).toFixed(2)}deg) scale(${((.5 + .5 * pop) * (1 + .05 * tk)).toFixed(3)})` };
+      }));
+      // Midnight: the cork flies, the card bursts, champagne gushes, confetti, streamers and starbursts.
+      pfxFly(st, kit, { x: mouthX, y: mouthY, w: H * .1, h: H * .14, t0: NY_MID, vx: Math.cos(dir) * H * 2.0, vy: Math.sin(dir) * H * 2.0, g: H * 3.4, spin: 9, floor: H * .55, bounce: .45, fade0: 1.6, z: 7,
         html: `<svg viewBox="0 0 20 26" width="100%" height="100%"><path d="M4 2h12l-2 20H6Z" fill="#b45309"/><path d="M4 2h12" stroke="#fde68a" stroke-width="2"/><path d="M7 8h6M7 13h6M7 18h6" stroke="#78350f" stroke-width="1"/></svg>` });
       pfxShatter(st, kit, { t0: NY_MID, ip: [W * .5, H * .5], cols: 4, rows: 6, speed: .85, edge: '#fff7d6', tint: i => `linear-gradient(135deg,${i % 2 ? 'rgba(250,204,21,.6)' : 'rgba(255,247,214,.5)'},rgba(250,204,21,.3))` });
-      for (let i = 0; i < 34; i++) {
-        const a = -Math.PI / 2 + rand(-.75, .75), sp = H * rand(1.1, 2.1);
-        pfxFly(st, kit, { x: cx, y: cy, w: H * rand(.03, .06), t0: NY_MID + rand(0, .12), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .8, g: H * 3.2, floor: H * .62, bounce: .12, fade0: 1.35 + rand(0, .3), css: `border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,${GOLD[i % 3]});box-shadow:0 0 ${H * .03}px #facc15` });
+      for (let i = 0; i < 120; i++) { // the champagne stream: a thick arc of amber drops, strong at first and slowing as the bottle empties
+        const u = i / 120, a = dir + rand(-.06, .06) * (1 + 2 * u), sp = H * (2.6 - 1.1 * u) * rand(.97, 1.03), c = ['#fde68a', '#facc15', '#fff3b0', '#f5c542'][i % 4], w = H * rand(.045, .085);
+        pfxFly(st, kit, { x: mouthX, y: mouthY, w, h: w * 1.6, rot: a + Math.PI / 2, t0: NY_MID + u * .85, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: H * 3.3, floor: H * .9, bounce: .08, fade0: 1.45 + u * .35 + rand(0, .1), z: 6,
+          css: `border-radius:50% 50% 50% 50%/65% 65% 35% 35%;background:radial-gradient(circle at 35% 30%,#fff,${c} 50%,#d99a0b);box-shadow:0 0 ${H * .025}px rgba(250,204,21,.85)` });
       }
-      for (let i = 0; i < 46; i++) {
+      for (let i = 0; i < 14; i++) { // foam clots
+        const a = dir + rand(-.5, .5), sp = H * rand(.7, 1.5), w = H * rand(.09, .19);
+        pfxFly(st, kit, { x: mouthX, y: mouthY, w, t0: NY_MID + rand(0, .45), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: H * 1.5, floor: H * .7, bounce: .05, fade0: 1.0 + rand(0, .45), z: 6,
+          css: `border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,rgba(255,247,214,.85) 55%,rgba(255,247,214,0));box-shadow:0 0 ${H * .04}px rgba(255,255,255,.6)` });
+      }
+      for (let i = 0; i < 40; i++) { // bubbles float up and away
+        const a = dir + rand(-.7, .7), sp = H * rand(.3, 1.1), w = H * rand(.03, .1);
+        pfxFly(st, kit, { x: mouthX + rand(-.15, .15) * H, y: mouthY, w, t0: NY_MID + rand(0, .75), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: -H * .3, fade0: 1.25 + rand(0, .5), z: 8,
+          css: `border-radius:50%;border:${Math.max(1.5, w * .08)}px solid rgba(255,255,255,.85);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.65),rgba(186,230,253,.12) 60%,rgba(255,255,255,0))` });
+      }
+      for (let i = 0; i < 26; i++) {
         const a = rand(0, Math.PI * 2), sp = H * rand(.6, 1.7), c = ['#facc15', '#f9a8d4', '#fff', '#93c5fd', '#fde68a', '#c4b5fd'][i % 6];
         pfxFly(st, kit, { x: cx, y: cy, w: H * .05, h: H * .09, t0: NY_MID + .02 + rand(0, .1), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .7 - H * .5, g: H * 1.5, spin: rand(-8, 8), flutter: rand(9, 16), floor: H * .66, bounce: .04, fade0: 1.5 + rand(0, .35), css: `background:${c}` });
       }
-      for (let i = 0; i < 5; i++) {
-        const a = -Math.PI / 2 + (i - 2) * .38, L = H * rand(.7, 1.0), el = add(`left:${cx}px;top:${cy}px;width:${L}px;height:${H * .3}px;z-index:5;transform-origin:0 50%`);
+      for (let i = 0; i < 3; i++) {
+        const a = -Math.PI / 2 + (i - 1) * .55 + .35, L = H * rand(.7, 1.0), el = add(`left:${cx}px;top:${cy}px;width:${L}px;height:${H * .3}px;z-index:5;transform-origin:0 50%`);
         el.innerHTML = `<svg viewBox="0 0 100 30" preserveAspectRatio="none" width="100%" height="100%" style="overflow:visible"><path d="M0 15c10-14 20 14 30 0s20 14 30 0 20 14 30 0 7 4 10 0" pathLength="1" stroke-dasharray="1" fill="none" stroke="${['#f9a8d4', '#fde68a', '#93c5fd', '#fff', '#c4b5fd'][i]}" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
         const p = el.querySelector('path');
         anim(p, fr(t => ({ strokeDashoffset: 1 - out(sm(NY_MID + .02, NY_MID + .5, t)) })));
