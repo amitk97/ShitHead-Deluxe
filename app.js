@@ -1785,6 +1785,8 @@
         console.warn('executePlayCards ignored — a burn is still resolving.');
         return;
       }
+      // A failed blind flip is still waiting for its pickup: nobody (Snap Burn included) plays onto it meanwhile.
+      if (state.discardPile.length && state.playedHistory?.slice(-1)[0]?.blindFailed) return;
       // The rightful player's first real action consumes the Joker bonus.
       // Clear before resolving so this action can advance normally or set a
       // fresh lock if they play another Joker.

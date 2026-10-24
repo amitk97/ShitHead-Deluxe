@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v434: [['sparkle', 'While a failed blind flip waits for its pickup, nothing can be played onto it, Snap Burn included.']],
       v433: [['sparkle', 'A failed blind flip now has priority: no Snap Burn is offered on the card that was just flipped.']],
       v432: [['sparkle', 'Every Burn, Joker and Victory tile now has a simple picture that matches its effect.']],
       v431: [['sparkle', 'The ShitStorm is seen slightly from above, so the head and funnel read as true round 3D shapes as they turn.']],

@@ -426,6 +426,19 @@ async function runDevTestSuite() {
     state.playedHistory = [{ type: 'play', playerName: 'p2', rank: '7', suit: '♣', blindFailed: true }];
     assertEqual(getCurrentSnapOpportunity(), null, 'The failed flip is picked up first, so no snap is offered');
   });
+  await test('One failed blind 7 on an 8 while you hold three 7s: no Snap Burn, and a forced snap play is refused', () => {
+    freshState({ drawPile: [] });
+    const me = makePlayer({ id: 'p1', hand: [makeCard('7', '♠'), makeCard('7', '♥'), makeCard('7', '♦')] });
+    const marga = makePlayer({ id: 'p2', hand: [makeCard('4')], faceDown: [makeCard('7', '♣')] });
+    state.players = [me, marga];
+    state.localPlayerId = 'p1'; state.phase = 'PLAY'; state.currentTurnIndex = 1;
+    state.discardPile = [makeCard('8', '♣'), makeCard('7', '♣')];
+    state.playedHistory = [{ type: 'play', playerName: 'p2', rank: '7', suit: '♣', blindFailed: true }];
+    assertEqual(getCurrentSnapOpportunity(), null, 'No snap is offered on the failed flip');
+    executePlayCards('p1', me.hand.slice());
+    assertEqual(me.hand.length, 3, 'A snap played anyway is refused, the hand is untouched');
+    assertEqual(state.discardPile.length, 2, 'and the Pile is unchanged');
+  });
   await test('getSnapBurnNeeded correctly counts the current streak', () => {
     const info = getSnapBurnNeeded([makeCard('9'), makeCard('2'), makeCard('2'), makeCard('2')]);
     assertEqual(info.needed, 1, 'Three 2s in a row need exactly one more to complete the burn');

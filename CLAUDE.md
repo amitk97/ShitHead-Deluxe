@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v434 — blind fail guard also stops the play itself
+
+- v433 only hid the Snap Burn button. `executePlayCards` now also returns while the Pile is non-empty and the last `playedHistory` entry is `blindFailed` (the pickup writes a `pickup` entry, which lifts it), so a snap tapped, keyed or synced in that window is refused whatever count the Pile held (the owner's case: ONE failed 7 on an 8 while holding three 7s). Dev test "One failed blind 7 on an 8 while you hold three 7s…".
+
 ## v433 — failed blind flip beats Snap Burn
 
 - A blind flip that can't be played sits on the Pile until its pickup runs (`executePlayCards` isBlindFailure branch, ~0.3-0.7 turn delays), and if it matched a run (two 7s + the flipped 7) `getCurrentSnapOpportunity` offered a Snap Burn on it (found in a 2 vs 2 game, Marga's blind 7 on an 8). It now returns null while `state.blindRevealing` or when the last `playedHistory` entry is `blindFailed` (history is synced online; Ranked resolves the flip and pickup in one server call, so it never had the window). Dev test "A failed blind flip has priority…".
