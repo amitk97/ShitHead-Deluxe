@@ -13056,7 +13056,7 @@
       'joker-lunar': jfxLunar, 'joker-valentine': jfxValentine, 'joker-easter': jfxEaster, 'joker-summer': jfxSummer, 'joker-ramadan': jfxRamadan
     };
     function jokerPreviewIcon(id) {
-      return { 'joker-grin': '😜', 'joker-jackbox': '🎁', 'joker-puppet': '🎭', 'joker-magic': '🎩', 'joker-glitch': '📺', 'joker-storm': '🌪️',
+      return effIcon(id, 'joker') || { 'joker-grin': '😜', 'joker-jackbox': '🎁', 'joker-puppet': '🎭', 'joker-magic': '🎩', 'joker-glitch': '📺', 'joker-storm': '🌪️',
         'joker-hypnotist': '🌀', 'joker-vampire': '🧛', 'joker-redcard': '🟥', 'joker-portal': '🌌',
         'joker-halloween': '🎃', 'joker-christmas': '🎅', 'joker-newyear': '🥂', 'joker-diwali': '🪔', 'joker-lunar': '🧧',
         'joker-valentine': '💘', 'joker-easter': '🥚', 'joker-summer': '🏄', 'joker-ramadan': '🏮' }[id] || '🃏';
@@ -13571,7 +13571,7 @@
       return item ? item.name : 'Default';
     }
     function victoryPreviewIcon(id) {
-      return { 'victory-cards': '🃏', 'victory-fireworks': '🎆', 'victory-sparklers': '🎇', 'victory-stars': '⭐', 'victory-karate': '🥋',
+      return effIcon(id, 'victory') || { 'victory-cards': '🃏', 'victory-fireworks': '🎆', 'victory-sparklers': '🎇', 'victory-stars': '⭐', 'victory-karate': '🥋',
         'victory-trophy': '🏆', 'victory-rocket': '🚀', 'victory-origami': '🦢', 'victory-lion': '🦁' }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('victory-', '')]?.victoryIcon || '🏆';
     }
     // Linked showcases: every item is a button that opens
@@ -13872,7 +13872,7 @@
       if (type === 'emotes') return `<span class="effect-mini-tile is-emotes" data-keep-emoji>${(EMOTE_PACKS[item ? item.id : 'default'] || EMOTE_PACKS.default).slice(0, 4).map(e => `<span>${e}</span>`).join('')}</span>`;
       if (type === 'cardBack') return `<span class="cos-mini-card custom-card-back opponent-cosmetic-card ${item ? getCosmeticBackClass(item.id) : getThemeDeckBackClass('default')}">${getEmblemSvg()}</span>`;
       if (type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect') {
-        if (!item) return `<span class="effect-mini-tile">${type === 'burnEffect' ? burnPreviewIcon('default') : { victoryEffect:'🏆', jokerEffect:'🃏' }[type]}</span>`;
+        if (!item) return `<span class="effect-mini-tile">${type === 'burnEffect' ? burnPreviewIcon('default') : effIcon('default', type === 'victoryEffect' ? 'victory' : 'joker')}</span>`;
         const icon = type === 'burnEffect' ? burnPreviewIcon(item.id) : type === 'jokerEffect' ? jokerPreviewIcon(item.id) : victoryPreviewIcon(item.id);
         return `<span class="effect-mini-tile" style="background:linear-gradient(135deg,${item.tones[0]},${item.tones[1]});border-color:${item.tones[2]}">${icon}</span>`;
       }

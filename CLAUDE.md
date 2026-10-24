@@ -8,6 +8,10 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## v432 — simple effect tiles (owner said "Go with all of that")
+
+- `art/effects/icons.js` (`ShEffectIcons`, loaded after `art/burns/icons.js`): one flat bold glyph on a tinted tile for the 8 seasonal burns, all 20 Jokers and all 20 Victories (id `joker-default` / `victory-default` for the defaults). `effIcon(id, kind)` (shop.js) wraps it in `.eicon`; `burnPreviewIcon` tries it after `ShBurnIcons`, `jokerPreviewIcon` / `victoryPreviewIcon` use it before the emoji maps (emoji stay as fallback). The 24 detailed `ShBurnIcons` tiles are unchanged. Render a contact sheet by loading the page and calling the three preview functions over `allCosmeticIds`. Weak ones the owner may want redone: Glitch Joker, Lunar Joker cookie, Karate victory. The v432 ShitStorm back-of-head work from the earlier session was lost (never pushed; container recreated).
+
 ## v431 — ShitStorm seen from above (draft until the owner says go)
 
 - Owner: still read as paper. `rev(..., tl)` (default .3) lowers the near side of every ring by `tl * r * AW * cos(a)`, so cross-sections are ellipses (camera slightly above): the head shows its round top, the funnel its ring bands. v430 (head scale, funnel width) was pushed live ("Go, then keep pushing").

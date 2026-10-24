@@ -1876,7 +1876,9 @@
     .shop-row-table { padding:0 8px 8px; }
     .cosmetic-tile .avatar-option-art .mini-table { width:100%; }
     .cosmetic-tile .avatar-option-art:has(.mini-table) { align-self:stretch; }
-    .effect-mini-tile > svg { width:100%; height:100%; border-radius:inherit; }
+    .effect-mini-tile > svg, .effect-mini-tile > .eicon { width:100%; height:100%; border-radius:inherit; }
+    .eicon { display:inline-block; width:1.5em; height:1.5em; border-radius:.3em; overflow:hidden; vertical-align:middle; }
+    .eicon > svg { display:block; }
     .shop-burn-core:has(> svg) { width:72px; height:72px; overflow:hidden; }
     .lb294-piece svg { overflow:hidden !important; }
     .shop-burn-core { width:54px; height:72px; border-radius:10px; border:2px solid #64748b; background:#111827; display:flex; align-items:center; justify-content:center; font-size:28px; }

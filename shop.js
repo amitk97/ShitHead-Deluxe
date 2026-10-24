@@ -12,9 +12,15 @@
       if (type === 'victoryEffect') return playVictoryEffect(id);
     }
 
+    // Simple flat tile (art/effects/icons.js) for an effect id; null when it has none. 'default' needs its kind.
+    function effIcon(id, kind) {
+      if (id === 'default' && kind) id = kind + '-default';
+      return window.ShEffectIcons && ShEffectIcons.has(id) ? `<span class="eicon">${ShEffectIcons.html(id)}</span>` : null;
+    }
     function burnPreviewIcon(id) {
       if(id===PRIVATE_BURN_ID)return '✦';
       if (window.ShBurnIcons && ShBurnIcons.has(id)) return ShBurnIcons.html(id);
+      const eic = effIcon(id); if (eic) return eic;
       if (window.ShLevel3D && ShLevel3D.icon(id)) return ShLevel3D.icon(id); // its tile, even for one played without it (Origami)
       if (ShLevelBurns.index(id) >= 0) return ShLevelBurns.icon(id);
       return { 'burn-ice': '❄️', 'burn-electric': '⚡', 'burn-sweets': '🍬', 'burn-paint': '🎨', 'burn-smoke': '💨',
