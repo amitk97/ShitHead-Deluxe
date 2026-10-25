@@ -102,6 +102,7 @@ def cone(name, loc, r1, r2, h, m, v=32, rot=(0, 0, 0)):
 
 
 LK = [0.5]
+KFRAME = [0]
 
 
 def light(kind, loc, energy, color=(1, 1, 1), size=3):
@@ -137,8 +138,8 @@ def go(name):
 RED, BLUE, WHITE, GOLD, STONE, BLACK = hexc('c8102e'), hexc('012169'), hexc('f4f1ea'), hexc('d9a928'), hexc('c9b98f'), hexc('15151a')
 
 
-def bus(mode='all', angle=0.0):
-    reset((1000, 1100), 64, 1.0, 0.22)
+def bus(mode='all', angle=0.0, drive=None):
+    reset((1000, 1000) if drive is not None else (1000, 1100), 40 if drive is not None else 64, 1.0, 0.22)
     WHEEL = []
     red, cream, black = mat('red', hexc('a30a1f'), .32), mat('cream', hexc('efe6cf'), .35), mat('blk', hexc('16161b'), .5)
     glass = mat('glass', hexc('0e1622'), .06, 0)
@@ -208,6 +209,13 @@ def bus(mode='all', angle=0.0):
                 o.data.materials.clear(); o.data.materials.append(hold)
         for o in list(bpy.context.scene.objects):
             if o.type == 'MESH' and o.is_shadow_catcher: o.hide_render = True
+    if drive is not None:
+        # Drive-by sequence frame: the bus moves along +x through the card at the origin; the camera looks at the card from
+        # the front-left, so the near-side wheels and the front face both show and the wheels turn with the distance driven.
+        for o in bpy.context.scene.objects:
+            if o.type in ('MESH', 'FONT') and not o.is_shadow_catcher: o.location.x += drive
+        cam((10, -10, 2.6), (0, 0, 1.6), None, 45)
+        go('busd_%02d' % KFRAME[0]); return
     cam((11.2, -5.2, 2.1), (0, 0, 2.15), None, 50)
     go('bus_body' if mode == 'all' else 'bus_wheels_%02d' % round(angle / (math.pi / 32)))
 
@@ -361,9 +369,9 @@ def _tb_setup(res=(1400, 700)):
     return st, dark, gold, blue, black
 
 
-def towerbridge(part='full'):
+def towerbridge(part='full', angle=0.0, frame=0):
     st, dark, gold, blue, black = _tb_setup()
-    if part in ('full', 'base'):
+    if part in ('full', 'base', 'open'):
         ground(60, 0)
         for x in (-2.8, 2.8): _tower(x, st, dark, gold, black)
         rbox('walkway', (0, 0, 5.3), (4.4, 1.3, .3), blue, .05, 3)         # upper walkway
@@ -376,12 +384,26 @@ def towerbridge(part='full'):
             rbox('sidepier', (sgn * 7.2, 0, .55), (.6, 1.0, 1.1), st, .04, 3)
             ang = math.atan2(4.9 - 1.3, 3.9)
             cyl('chain', (sgn * 5.55, 0, 3.1), .04, math.hypot(3.9, 3.6), gold, (0, -sgn * (math.pi / 2 - ang), 0), 8, .005)
-    if part in ('full', 'leafL', 'leafR'):
-        for sgn in ((-1,) if part == 'leafL' else (1,) if part == 'leafR' else (-1, 1)):
-            rbox('leaf', (sgn * 1.15, 0, 1.15), (2.2, 1.2, .26), blue, .04, 3)
-            for k in range(5): rbox('rail', (sgn * (.2 + k * .5), .6, 1.4), (.04, .04, .3), gold, .005, 2)
+    base_objs = [o for o in bpy.context.scene.objects if o.type == 'MESH' and not o.is_shadow_catcher]
+    if part in ('full', 'open'):
+        # Bascule leaves: deck, side girders, rails and a counterweight beneath the hinge, all turning about the hinge at the tower.
+        for sgn in (-1, 1):
+            hx, hz, L, d = sgn * 2.05, 1.15, 2.1, -sgn
+            hinge = bpy.data.objects.new('hinge', None); bpy.context.scene.collection.objects.link(hinge); hinge.location = (hx, 0, hz)
+            parts = [rbox('deck', (hx + d * L / 2, 0, hz), (L, 1.3, .32), blue, .05, 4), rbox('cw', (hx - d * .35, 0, hz - .62), (.9, 1.1, 1.0), st, .05, 3)]
+            for y in (-.62, .62):
+                parts.append(rbox('girder', (hx + d * L / 2, y, hz + .3), (L, .08, .32), st, .02, 3))
+                for k in range(6): parts.append(rbox('post', (hx + d * (.15 + k * .38), y, hz + .5), (.05, .06, .3), gold, .005, 2))
+            for o in parts:
+                o.parent = hinge; o.matrix_parent_inverse = hinge.matrix_world.inverted()
+            hinge.rotation_euler = (0, sgn * math.radians(angle), 0)
+    if part == 'open':
+        hold = bpy.data.materials.new('hold'); hold.use_nodes = True
+        nt = hold.node_tree; nt.nodes.clear(); out = nt.nodes.new('ShaderNodeOutputMaterial'); h = nt.nodes.new('ShaderNodeHoldout'); nt.links.new(h.outputs[0], out.inputs[0])
+        for o in base_objs:
+            o.data.materials.clear(); o.data.materials.append(hold)
     light('AREA', (6, -10, 11), 1100, (1.0, .93, .82), 7); light('AREA', (-8, 6, 8), 400, (.7, .8, 1), 7)
-    cam((0, -24, 4.4), (0, 0, 3.7), 17); go('tb_' + part if part != 'full' else 'towerbridge')
+    cam((0, -24, 4.4), (0, 0, 3.7), 17); go(('tbo_%02d' % frame) if part == 'open' else ('tb_' + part if part != 'full' else 'towerbridge'))
 
 
 def londoneye():
@@ -404,7 +426,40 @@ def londoneye():
     cam((0, -26, 4.2), (0, 0, 4.2), 10.4); go('londoneye')
 
 
-MODELS = dict(bus=bus, bus_wheels=lambda: [bus('wheels', k * math.pi / 32) for k in range(8)], phonebox=phonebox, bigben=bigben, guard=guard, londoneye=londoneye,
-              towerbridge=towerbridge, tb_base=lambda: towerbridge('base'), tb_leafL=lambda: towerbridge('leafL'), tb_leafR=lambda: towerbridge('leafR'))
+def bus_drive():
+    for k in range(26):
+        t = .10 + k * .03
+        xf = -40 + 216 * max(0, t - .12) ** 2 if t < .55 else 60 * (t - .55)
+        KFRAME[0] = k
+        bus('all', xf / .55, xf - 4.3)
+
+
+def ship():
+    reset((900, 900), 48)
+    hull, deck, sail, red, wood = mat('hull', hexc('3a2515'), .6), mat('dk', hexc('8a6a43'), .6), mat('sail', hexc('f0e8d2'), .75), mat('red', hexc('b3162b'), .4), mat('wd', hexc('5a3d22'), .6)
+    ground(40, 0)
+    rbox('hull', (0, 0, .6), (5.2, 1.6, .95), hull, .28, 6)
+    cone('bow', (3.15, 0, .66), .8, .06, 1.5, hull, 4, (0, math.pi / 2, math.pi / 4)).scale = (.55, 1, 1)
+    rbox('stripe', (0, 0, .92), (5.25, 1.64, .1), red, .03, 3)
+    rbox('deck', (0, 0, 1.1), (5.0, 1.45, .08), deck, .02, 2)
+    rbox('castle', (-2.0, 0, 1.6), (1.3, 1.5, .9), hull, .12, 4); rbox('castle2', (-2.0, 0, 2.1), (1.4, 1.6, .12), wood, .03, 3)
+    cyl('bowsprit', (3.7, 0, 1.45), .05, 1.6, wood, (0, math.radians(75), 0), 10, .005)
+    for mx, mh in ((-1.2, 4.3), (.4, 5.2), (1.8, 3.8)):
+        cyl('mast', (mx, 0, 1.1 + mh / 2), .09, mh, wood, (0, 0, 0), 12, .01)
+        for j, (zf, w) in enumerate(((.35, 1.9), (.62, 1.55), (.84, 1.1))):
+            z = 1.1 + mh * zf
+            cyl('yard', (mx, 0, z + .5), .045, w + .3, wood, (math.pi / 2, 0, 0), 10, .005)
+            sph('sail', (mx + .1, 0, z), 1, sail, (.16, w / 2, .5))
+        rbox('flag', (mx, .25, 1.1 + mh + .1), (.06, .5, .26), red, .01, 2)
+    light('AREA', (7, -8, 9), 650, (1.0, .93, .82), 6); light('AREA', (-7, 5, 6), 260, (.7, .8, 1), 6)
+    cam((10, -8.5, 3.6), (0.3, 0, 2.7), None, 42); go('ship')
+
+
+def tb_open():
+    for k in range(14): towerbridge('open', 72.0 * k / 13, k)
+
+
+MODELS = dict(ship=ship, tb_open=tb_open, bus_drive=bus_drive, bus=bus, bus_wheels=lambda: [bus('wheels', k * math.pi / 32) for k in range(8)], phonebox=phonebox, bigben=bigben, guard=guard, londoneye=londoneye,
+              towerbridge=towerbridge, tb_base=lambda: towerbridge('base'))
 for n, f in MODELS.items():
     if not ONLY or n in ONLY: f()
