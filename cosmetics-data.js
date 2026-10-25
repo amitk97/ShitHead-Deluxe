@@ -109,7 +109,7 @@
       { id: 'avatar-turtley', category: 'Avatars', name: 'Turtley', cost: 5000, animated: true, tones: ['#03140c','#10b981','#fbbf24'] },
       // London Calling (v438): one UK-themed set, Blender renders (tools/london/).
       { id: 'avatar-ldn-guard', category: 'Avatars', name: 'Royal Guardsman', cost: 2500, ldn: true, tone: '#c8102e', file: 'art/avatars/ldn-guard.webp', tones: ['#012169','#c8102e','#f4f1ea'] },
-      { id: 'back-ldn-bigben', category: 'Card Backs', name: 'Big Ben Union', cost: 1000, ldn: true, tone: '#e8bd6a', file: 'art/backs/ldn-bigben.webp', tones: ['#012169','#c8102e','#e8bd6a'] },
+      { id: 'back-ldn-bigben', category: 'Card Backs', name: 'Union Jack', cost: 1000, ldn: true, tone: '#e8bd6a', file: 'art/backs/ldn-unionjack.webp', tones: ['#012169','#c8102e','#e8bd6a'] },
       { id: 'table-ldn-thames', category: 'Table Themes', name: 'Thames Nights', cost: 3000, ldn: true, tones: ['#050a24','#17255a','#e8bd6a'] },
       { id: 'deck-ldn-tube', category: 'Decks', name: 'Underground', cost: 1000, ldn: true, theme: 'theme-tube', tones: ['#0b1636','#e32219','#ffffff'] },
       { id: 'frame-ldn-unionjack', category: 'Frames', name: 'Union Jack', cost: 1000, ldn: true, tones: ['#012169','#c8102e','#ffffff'] },

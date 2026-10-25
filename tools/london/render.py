@@ -137,8 +137,9 @@ def go(name):
 RED, BLUE, WHITE, GOLD, STONE, BLACK = hexc('c8102e'), hexc('012169'), hexc('f4f1ea'), hexc('d9a928'), hexc('c9b98f'), hexc('15151a')
 
 
-def bus():
-    reset((1280, 800), 64, 1.0, 0.22)
+def bus(mode='all', angle=0.0):
+    reset((1000, 1100), 64, 1.0, 0.22)
+    WHEEL = []
     red, cream, black = mat('red', hexc('a30a1f'), .32), mat('cream', hexc('efe6cf'), .35), mat('blk', hexc('16161b'), .5)
     glass = mat('glass', hexc('0e1622'), .06, 0)
     chrome, tyre = mat('chrome', hexc('d6d9de'), .12, 1), mat('tyre', hexc('0d0d10'), .85)
@@ -182,23 +183,33 @@ def bus():
     cyl('pole', (-4.2, .25, 1.4), .035, 1.5, chrome, (0, 0, 0), 12, .005)
     rbox('rearwin', (-4.1, 0, 3.2), (.06, 1.9, .8), glass, .12)
     for y in (-.8, .8): sph('taillight', (-4.2, y, .95), .13, mat('tl', hexc('ff2a2a'), .2, 0, hexc('ff2020'), 3), (.5, 1, 1))
-    # wheels with arches
+    # wheels with arches: tyre with 8 tread blocks, hub and 8 bolts, all 8-fold symmetric so 8 frames over 45 degrees loop
     for x in (2.85, -2.35):
         for y in (-1, 1):
             cyl('arch', (x, y * 1.2, .66), .72, .1, black, (math.pi / 2, 0, 0), 40, .01)
-            cyl('tyre', (x, y * 1.12, .55), .55, .34, tyre, (math.pi / 2, 0, 0), 40, .08)
-            cyl('hub', (x, y * 1.3, .55), .3, .06, chrome, (math.pi / 2, 0, 0), 32, .01)
-            for k in range(6):
-                a = k * math.pi / 3
-                sph('bolt', (x + math.cos(a) * .2, y * 1.34, .55 + math.sin(a) * .2), .028, black)
+            WHEEL.append(cyl('tyre', (x, y * 1.12, .55), .55, .34, tyre, (math.pi / 2, 0, 0), 40, .08))
+            WHEEL.append(cyl('hub', (x, y * 1.3, .55), .3, .06, chrome, (math.pi / 2, 0, 0), 32, .01))
+            for k in range(8):
+                a = angle + k * math.pi / 4
+                WHEEL.append(sph('bolt', (x + math.sin(a) * .2, y * 1.34, .55 + math.cos(a) * .2), .03, black))
+                WHEEL.append(rbox('tread', (x + math.sin(a) * .55, y * 1.12, .55 + math.cos(a) * .55), (.1, .36, .1), black, .02, 2, (0, a, 0)))
     # roundel on the lower side
     for y in (-1.285, 1.285):
         t = bpy.ops.mesh.primitive_torus_add(major_radius=.2, minor_radius=.04, location=(1.9, y, 1.55), rotation=(math.pi / 2, 0, 0))
         bpy.context.object.data.materials.append(mat('rr', hexc('e32219'), .3))
         rbox('rbar', (1.9, y * 1.002, 1.55), (.5, .03, .09), mat('rb', hexc('1a3f9c'), .3), .02)
-    light('AREA', (6, -7, 9), 700, (1.0, .93, .82), 6)
+    light('AREA', (9, -9, 9), 700, (1.0, .93, .82), 6)
     light('AREA', (-7, 6, 6), 260, (.7, .8, 1.0), 6)
-    cam((9.0, -9.2, 4.2), (0.1, 0, 2.2), None, 40); go('bus')
+    if mode == 'wheels':
+        hold = bpy.data.materials.new('hold'); hold.use_nodes = True
+        nt = hold.node_tree; nt.nodes.clear(); out = nt.nodes.new('ShaderNodeOutputMaterial'); h = nt.nodes.new('ShaderNodeHoldout'); nt.links.new(h.outputs[0], out.inputs[0])
+        for o in bpy.context.scene.objects:
+            if o.type in ('MESH', 'CURVE', 'FONT') and o not in WHEEL:
+                o.data.materials.clear(); o.data.materials.append(hold)
+        for o in list(bpy.context.scene.objects):
+            if o.type == 'MESH' and o.is_shadow_catcher: o.hide_render = True
+    cam((11.2, -5.2, 2.1), (0, 0, 2.15), None, 50)
+    go('bus_body' if mode == 'all' else 'bus_wheels_%02d' % round(angle / (math.pi / 32)))
 
 
 def phonebox():
@@ -314,10 +325,18 @@ def guard():
         sph('tuft', (math.cos(a) * .7, math.sin(a) * .66 + .12, 2.55 + (k % 3) * .25), .15, fur)
     cyl('band', (0, .0, 2.16), .64, .09, black, (0, 0, 0), 32, .01)
     rbox('plume', (.55, .0, 3.25), (.1, .1, .6), red, .04, 3); sph('plumetip', (.55, .0, 3.6), .1, red)
-    # rifle across the chest
-    cyl('rifle', (.78, -.85, .1), .06, 3.2, black, (0, 0, 0), 16, .01)
-    cyl('bayo', (.78, -.85, 1.95), .03, .5, mat('st', hexc('c8ccd4'), .2, 1), (0, 0, 0), 12, .005)
-    sph('gloveR', (.78, -.85, .2), .2, wht); sph('gloveL', (-.45, -.9, .55), .2, wht)
+    # Arms: the left one hangs at his side; the right forearm comes forward to grip a rifle held at attention beside him.
+    def limb(p0, p1, r, m):
+        v = Vector(p1) - Vector(p0)
+        bpy.ops.mesh.primitive_cylinder_add(location=(Vector(p0) + Vector(p1)) / 2, radius=r, depth=v.length, vertices=24)
+        o = bpy.context.object; o.rotation_euler = v.to_track_quat('Z', 'Y').to_euler(); o.data.materials.append(m)
+        bpy.ops.object.shade_smooth(); return o
+    limb((-1.05, 0, .6), (-1.22, -.12, -.7), .26, red); sph('gloveL', (-1.24, -.14, -.85), .22, wht)
+    limb((1.05, 0, .6), (1.18, -.5, .05), .25, red); sph('elbowR', (1.18, -.5, .05), .25, red)
+    sph('gloveR', (1.2, -.62, -.12), .22, wht)
+    cyl('rifle', (1.2, -.62, .4), .06, 3.4, black, (0, 0, 0), 16, .01)
+    cyl('bayo', (1.2, -.62, 2.25), .03, .55, mat('st', hexc('c8ccd4'), .2, 1), (0, 0, 0), 12, .005)
+    rbox('rifleStock', (1.2, -.62, -.85), (.14, .1, .9), mat('wd', hexc('5a3a22'), .6), .03, 3)
     light('AREA', (4, -6, 6), 650, (1.0, .93, .82), 5); light('AREA', (-5, 3, 4), 260, (.7, .8, 1), 5)
     cam((0, -8.2, 1.9), (0, 0, 1.55), None, 62); go('guard')
 
@@ -357,7 +376,6 @@ def towerbridge(part='full'):
             rbox('sidepier', (sgn * 7.2, 0, .55), (.6, 1.0, 1.1), st, .04, 3)
             ang = math.atan2(4.9 - 1.3, 3.9)
             cyl('chain', (sgn * 5.55, 0, 3.1), .04, math.hypot(3.9, 3.6), gold, (0, -sgn * (math.pi / 2 - ang), 0), 8, .005)
-        rbox('pier', (0, 0, .5), (1.4, 1.4, 1.0), st, .05, 3)
     if part in ('full', 'leafL', 'leafR'):
         for sgn in ((-1,) if part == 'leafL' else (1,) if part == 'leafR' else (-1, 1)):
             rbox('leaf', (sgn * 1.15, 0, 1.15), (2.2, 1.2, .26), blue, .04, 3)
@@ -386,7 +404,7 @@ def londoneye():
     cam((0, -26, 4.2), (0, 0, 4.2), 10.4); go('londoneye')
 
 
-MODELS = dict(bus=bus, phonebox=phonebox, bigben=bigben, guard=guard, londoneye=londoneye,
+MODELS = dict(bus=bus, bus_wheels=lambda: [bus('wheels', k * math.pi / 32) for k in range(8)], phonebox=phonebox, bigben=bigben, guard=guard, londoneye=londoneye,
               towerbridge=towerbridge, tb_base=lambda: towerbridge('base'), tb_leafL=lambda: towerbridge('leafL'), tb_leafR=lambda: towerbridge('leafR'))
 for n, f in MODELS.items():
     if not ONLY or n in ONLY: f()

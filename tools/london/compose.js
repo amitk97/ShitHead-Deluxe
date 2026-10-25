@@ -22,7 +22,21 @@ const out = (rel, b) => { const f = path.join(ROOT, rel); fs.mkdirSync(path.dirn
       o.getContext('2d').drawImage(c, x0, y0, w, h, 0, 0, o.width, o.height); return o.toDataURL('image/webp', 0.88);
     }, [b64(name), max]));
   }
-  await sprite('bus', 'art/london/bus.webp', 900);
+  // Bus: the body (front 3/4, wheels included) and an 8-frame sheet of the four wheels turning (holdout-masked so the
+  // body still hides what it should), one shared crop so they stack exactly.
+  const bus = await pg.evaluate(async (srcs) => {
+    const load = (u) => new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = u; });
+    const ims = await Promise.all(srcs.map(load)), body = ims[0];
+    const c = document.createElement('canvas'); c.width = body.width; c.height = body.height; const x = c.getContext('2d'); x.drawImage(body, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0;
+    for (let y = 0; y < c.height; y++) for (let xx = 0; xx < c.width; xx++) if (d[(y * c.width + xx) * 4 + 3] > 40) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    const w = x1 - x0 + 1, h = y1 - y0 + 1, k = Math.min(1, 640 / w), W = Math.round(w * k), H = Math.round(h * k);
+    const o = document.createElement('canvas'); o.width = W; o.height = H; o.getContext('2d').drawImage(body, x0, y0, w, h, 0, 0, W, H);
+    const sheet = document.createElement('canvas'); sheet.width = W * 8; sheet.height = H; const sx = sheet.getContext('2d');
+    for (let i = 0; i < 8; i++) sx.drawImage(ims[1 + i], x0, y0, w, h, i * W, 0, W, H);
+    return { body: o.toDataURL('image/webp', .9), wheels: sheet.toDataURL('image/webp', .9), w: W, h: H };
+  }, [b64('bus_body'), ...Array.from({ length: 8 }, (_, i) => b64('bus_wheels_0' + i))]);
+  out('art/london/bus-body.webp', bus.body); out('art/london/bus-wheels.webp', bus.wheels); console.log('bus size', bus.w, bus.h);
   await sprite('phonebox', 'art/london/phonebox.webp', 760);
   await sprite('bigben', 'art/london/bigben.webp', 900);
   // Tower Bridge pieces share one crop box (the full bridge's), so they stack exactly
@@ -47,19 +61,18 @@ const out = (rel, b) => { const f = path.join(ROOT, rel); fs.mkdirSync(path.dirn
     const s = Math.min(G.width, G.height) * 0.98; x.drawImage(G, (G.width - s) / 2, (G.height - s) / 2 - 10, s, s, -8, 6, 528, 528);
     return c.toDataURL('image/webp', 0.9);
   }, [b64('guard'), ujUri(512, 512)]));
-  // card back 750x1050: Union Jack, vignette, gold border, Big Ben, wordmark
-  out('art/backs/ldn-bigben.webp', await pg.evaluate(async ([bb, uj]) => {
-    const load = (s) => new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = s; });
-    const [B, U] = await Promise.all([load(bb), load(uj)]);
+  // card back 750x1050: the Union Jack, cloth-like, with a soft vignette and a thin gold border. No picture, no writing.
+  out('art/backs/ldn-unionjack.webp', await pg.evaluate(async ([uj]) => {
+    const load = (u) => new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = u; });
+    const U = await load(uj);
     const W = 750, H = 1050, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
-    x.drawImage(U, -H * .9, 0, H * 2, H); x.fillStyle = 'rgba(2,8,30,.35)'; x.fillRect(0, 0, W, H);
-    const gr = x.createRadialGradient(W / 2, H * .5, 40, W / 2, H * .5, H * .62); gr.addColorStop(0, 'rgba(255,225,150,.55)'); gr.addColorStop(.5, 'rgba(255,200,110,.12)'); gr.addColorStop(1, 'rgba(0,0,10,.55)'); x.fillStyle = gr; x.fillRect(0, 0, W, H);
-    const k = (H * .72) / B.height; x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 30; x.shadowOffsetY = 12; x.drawImage(B, W / 2 - B.width * k / 2, H * .14, B.width * k, B.height * k); x.shadowBlur = 0; x.shadowOffsetY = 0;
-    x.strokeStyle = '#e8bd6a'; x.lineWidth = 10; x.strokeRect(26, 26, W - 52, H - 52); x.strokeStyle = 'rgba(232,189,106,.55)'; x.lineWidth = 3; x.strokeRect(46, 46, W - 92, H - 92);
-    x.fillStyle = '#f4e3b2'; x.textAlign = 'center'; x.font = '700 58px Georgia, serif'; x.fillText('LONDON', W / 2, H - 92);
-    x.font = '600 22px Georgia, serif'; x.fillStyle = 'rgba(244,227,178,.8)'; x.fillText('★  UNITED  KINGDOM  ★', W / 2, H - 58);
+    // portrait: the flag turned on its side so the whole cross and both diagonals fill the card
+    x.save(); x.translate(W / 2, H / 2); x.rotate(Math.PI / 2); x.drawImage(U, -H / 2, -W / 2 * 1.0, H, W); x.restore();
+    x.globalAlpha = .08; x.strokeStyle = '#000'; x.lineWidth = 1; for (let i = 0; i < H; i += 5) { x.beginPath(); x.moveTo(0, i); x.lineTo(W, i); x.stroke(); } for (let i = 0; i < W; i += 5) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, H); x.stroke(); } x.globalAlpha = 1;
+    const gr = x.createRadialGradient(W / 2, H / 2, H * .25, W / 2, H / 2, H * .72); gr.addColorStop(0, 'rgba(255,255,255,.08)'); gr.addColorStop(1, 'rgba(0,0,20,.45)'); x.fillStyle = gr; x.fillRect(0, 0, W, H);
+    x.strokeStyle = '#e8bd6a'; x.lineWidth = 8; x.strokeRect(24, 24, W - 48, H - 48);
     return c.toDataURL('image/webp', 0.9);
-  }, [b64('bigben'), ujUri(1800, 900)]));
+  }, [ujUri(1050, 750)]));
   // table: the Thames at night, 2160x1500. Calm paved floor in the bottom 16%.
   out('art/london/table-thames.webp', await pg.evaluate(async ([bb, tbs, eye]) => {
     const load = (s) => new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = s; });

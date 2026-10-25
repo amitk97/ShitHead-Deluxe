@@ -4191,6 +4191,18 @@
       vfxTwinkles(layer, 14, [0, 0, W, H * .3], 0, 1800, ['#ffffff', '#ffe9a8'], k);
       const water = bfxAdd(layer, '<div style="width:100%;height:100%;background:linear-gradient(180deg,rgba(10,26,68,0),rgba(11,34,85,.85) 30%,rgba(7,18,46,.95))"></div>', W / 2, cy + bh * .5 + H * .06, W, H * .16);
       bfxAnimate(water, [{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .86 }, { opacity: 0 }], { duration: D, easing: 'linear' });
+      // A tall ship sails up the river from far behind the bridge, through the open middle between the raised leaves, and out
+      // toward us. Two copies on one path: the first sits UNDER the bridge (so the towers and side spans hide it until it is in
+      // the gap), the second ABOVE it once it has passed the bridge plane (p .45, ~2.1s, well before the leaves close at 2.7s).
+      const SHIP = `<svg viewBox="0 0 120 90" width="100%" height="100%"><ellipse cx="60" cy="84" rx="58" ry="6" fill="rgba(180,210,255,.35)"/><path d="M4 66H116L100 82H20Z" fill="#3b2a1a"/><path d="M4 66H116" stroke="#c8102e" stroke-width="4"/><path d="M36 64V8M72 64V16" stroke="#2b1d10" stroke-width="3"/><path d="M38 10Q58 24 38 52Z" fill="#f4efe0"/><path d="M74 18Q92 30 74 54Z" fill="#f4efe0"/><path d="M34 34Q16 40 34 54Z" fill="#e8e0cc"/></svg>`;
+      const shipAt = ms => { const p = Math.max(0, Math.min(1, (ms - 1400) / 1500)), e = Math.pow(p, 1.6); return { p, y: cy + bh * .36 + bh * .42 * e, sc: .2 + .95 * e }; };
+      const mkShip = front => {
+        const el = bfxAdd(layer, SHIP, cx, cy, bw * .3, bw * .3 * .75);
+        bfxAnimate(el, vfxSample(40, t => { const { p, y, sc } = shipAt(t * D), on = p > 0 && p < 1 && (front ? p >= .45 : p < .45);
+          return { transform: `translate(${(Math.sin(p * 7) * bw * .008).toFixed(1)}px,${(y - cy).toFixed(1)}px) scale(${sc.toFixed(3)}) rotate(${(Math.sin(p * 9) * 1.5).toFixed(1)}deg)`, opacity: on ? 1 : 0 }; }), { duration: D, easing: 'linear' });
+        return el;
+      };
+      mkShip(false);
       const wrap = bfxAdd(layer, '', cx, cy, bw, bh);
       const piece = (n, extra = '') => { const d = document.createElement('div'); d.style.cssText = `position:absolute;inset:0;background:url(art/london/tb-${n}.webp) center/100% 100% no-repeat;${extra}`; wrap.appendChild(d); return d; };
       const L = piece('leafL', 'transform-origin:34.7% 83%'), R = piece('leafR', 'transform-origin:63.9% 83%'); piece('base');
@@ -4202,8 +4214,7 @@
       };
       const lf = vfxSample(48, t => ({ transform: `rotate(${(-ang(t * D)).toFixed(2)}deg)` })), rf = vfxSample(48, t => ({ transform: `rotate(${ang(t * D).toFixed(2)}deg)` }));
       bfxAnimate(L, lf, { duration: D, easing: 'linear' }); bfxAnimate(R, rf, { duration: D, easing: 'linear' });
-      const ship = bfxAdd(layer, `<svg viewBox="0 0 120 90" width="100%" height="100%"><path d="M4 66H116L100 82H20Z" fill="#3b2a1a"/><path d="M4 66H116" stroke="#c8102e" stroke-width="4"/><path d="M36 64V8M72 64V16" stroke="#2b1d10" stroke-width="3"/><path d="M38 10Q58 24 38 52Z" fill="#f4efe0"/><path d="M74 18Q92 30 74 54Z" fill="#f4efe0"/><path d="M34 34Q16 40 34 54Z" fill="#e8e0cc"/></svg>`, cx, cy + bh * .34, bw * .22, bw * .22 * .75);
-      bfxAnimate(ship, vfxSample(20, t => { const p = Math.max(0, Math.min(1, (t * D - 1400) / 1300)); return { transform: `translate(${((p - .5) * bw * 1.15).toFixed(1)}px,${(Math.sin(p * 12) * 2).toFixed(1)}px) rotate(${(Math.sin(p * 9) * 2).toFixed(1)}deg)`, opacity: p > 0 && p < 1 ? 1 : 0 }; }), { duration: D, easing: 'linear' });
+      mkShip(true);
       [[.24, .17, ['#ef4444', '#ffffff']], [.76, .19, ['#60a5fa', '#ffffff']], [.5, .1, ['#fbbf24', '#ffffff']]].forEach(([fx, fy, cols], i) => vfxSparkBurst(layer, W * fx, H * fy, Math.min(W * .3, 125), TB_BURSTS[i], cols, 30, k));
       vfxShout(layer, 'WELL DONE', cx, cy + bh * .78, Math.min(44, W * .115), 'color:#fff;text-shadow:0 0 2px #012169,3px 3px 0 #c8102e,5px 5px 0 #012169', 2000, 1600);
       vfxFall(layer, W, H, 18, i => `<div style="width:100%;height:100%;background:${['#c8102e', '#ffffff', '#1e40af'][i % 3]};border-radius:1px"></div>`, [6, 10], 2000, 40, [800, 850], { aspect: 1.7 });

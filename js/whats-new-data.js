@@ -3,7 +3,8 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
-      v438: [['sparkle', 'London Calling: a new UK set in the Shop. Royal Guardsman avatar, Big Ben Union card back, Thames Nights table, Underground deck, Union Jack frame, Routemaster Rush burn, Phone Box Prank Joker, Tower Bridge Salute victory and the London emote pack.', WN_KEY]],
+      v439: [['sparkle', 'London set fixes: the Routemaster now drives down the road straight at the card with spinning wheels, the ship sails through the open Tower Bridge, the Union Jack card back is just the flag, and the Guardsman holds his rifle properly.']],
+      v438: [['sparkle', 'London Calling: a new UK set in the Shop. Royal Guardsman avatar, Union Jack card back, Thames Nights table, Underground deck, Union Jack frame, Routemaster Rush burn, Phone Box Prank Joker, Tower Bridge Salute victory and the London emote pack.', WN_KEY]],
       v437: [['sparkle', 'Test Lab tabs are in a new order, and the Avatar tab now shows on the opponent seat.']],
       v436: [['sparkle', 'The Test Lab can now try on any card back, table, deck, frame, emote pack and avatar (test account only).']],
       v435: [['sparkle', 'Champagne Pop now shows a real champagne bottle: it shakes with the countdown, the cork flies and champagne, foam and bubbles pour out.', WN_KEY]],
