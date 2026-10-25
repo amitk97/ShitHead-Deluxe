@@ -1904,7 +1904,7 @@ async function runDevTestSuite() {
     items.forEach(i => { const t = COSMETIC_CATEGORY_TYPES[i.category]; assertTrue(t === 'deck' || isSupportedCosmetic(t, i.id), `${i.name} is equippable`); });
     assertTrue(!!AVATAR_ART['avatar-ldn-guard'] && /ldn-guard2\.webp/.test(AVATAR_ART['avatar-ldn-guard'].art), 'The Guardsman has its art');
     assertTrue(getCosmeticBackClass('back-ldn-bigben').includes('lvl-back'), 'The back wears the art-fills-the-card class');
-    assertTrue(/ldn-thames/.test(ILLUSTRATED_TABLES['table-ldn-thames'].art) && ShTableScenes.scene('table-ldn-thames', 1080, 1920).includes('table-thames2.webp'), 'The Thames table is its painted scene');
+    assertTrue(/ldn-thames/.test(ILLUSTRATED_TABLES['table-ldn-thames'].art) && ShTableScenes.scene('table-ldn-thames', 1080, 1920).includes('table-thames3.webp'), 'The Thames table is its painted scene');
     assertTrue(SHAPE_BURN_EFFECTS.has('burn-ldn-routemaster') && typeof BURN_SOUNDS['burn-ldn-routemaster'] === 'function', 'Burn: shape effect with a sound');
     assertTrue(typeof JOKER_FX['joker-ldn-phonebox'] === 'function' && typeof JOKER_SOUNDS['joker-ldn-phonebox'] === 'function', 'Joker: animation and sound');
     assertTrue(typeof VICTORY_SOUNDS['victory-ldn-towerbridge'] === 'function', 'Victory: sound');
@@ -9900,7 +9900,7 @@ async function runDevTestSuite() {
     });
     Object.entries(ILLUSTRATED_TABLES).forEach(([id, t]) => {
       const bg = tableArtBackground(id);
-      assertTrue(tiled.has(t.art) ? bg.includes(`${TABLE_TILE_PX}px repeat`) : /^ss\d{4}-/.test(t.art) ? /<image\b[^>]*ss\d{4}\/table\.webp/.test(ShTableScenes.scene(id,1920,1080)) : t.art === 'ldn-thames' ? /<image\b[^>]*london\/table-thames2\.webp/.test(ShTableScenes.scene(id,1920,1080)) : !/<image\b/.test(ShTableScenes.scene(id,1920,1080)), `${id} is never a stretched bitmap`);
+      assertTrue(tiled.has(t.art) ? bg.includes(`${TABLE_TILE_PX}px repeat`) : /^ss\d{4}-/.test(t.art) ? /<image\b[^>]*ss\d{4}\/table\.webp/.test(ShTableScenes.scene(id,1920,1080)) : t.art === 'ldn-thames' ? /<image\b[^>]*london\/table-thames3\.webp/.test(ShTableScenes.scene(id,1920,1080)) : !/<image\b/.test(ShTableScenes.scene(id,1920,1080)), `${id} is never a stretched bitmap`);
     });
     const svgs = [...Object.values(TABLE_ART), ...Object.values(SEASONAL_TABLE_ART), ...Object.values(SEASONAL_BACK_ART)].filter(u => /\.svg$/.test(u));
     assertTrue(svgs.length >= 30, 'every SVG art file is checked', svgs.length);

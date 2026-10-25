@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v441: [['sparkle', 'Tower Bridge now has proper lattice-girder leaves that lift for the ship, and the Glitch Joker, Fortune Joker and Karate tiles were redrawn.']],
       v440: [['sparkle', 'London effects reworked from your recording: the bus now drives head-on at the card from behind it and grows with perspective, and the ship sails smoothly through the open Tower Bridge with the stone block removed.']],
       v439: [['sparkle', 'London set fixes: the Routemaster now drives down the road straight at the card with spinning wheels, the ship sails through the open Tower Bridge, the Union Jack card back is just the flag, and the Guardsman holds his rifle properly.']],
       v438: [['sparkle', 'London Calling: a new UK set in the Shop. Royal Guardsman avatar, Union Jack card back, Thames Nights table, Underground deck, Union Jack frame, Routemaster Rush burn, Phone Box Prank Joker, Tower Bridge Salute victory and the London emote pack.', WN_KEY]],

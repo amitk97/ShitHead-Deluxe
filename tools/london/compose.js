@@ -37,7 +37,7 @@ const out = (rel, b) => { const f = path.join(ROOT, rel); fs.mkdirSync(path.dirn
     [['base', base], ['leafL', L], ['leafR', Rr], ['full', full]].forEach(([n, im]) => { const o = document.createElement('canvas'); o.width = Math.round(w * k); o.height = Math.round(h * k); o.getContext('2d').drawImage(im, x0, y0, w, h, 0, 0, o.width, o.height); res[n] = o.toDataURL('image/webp', 0.88); });
     return res;
   }, [b64('tb_base'), b64('tb_leafL'), b64('tb_leafR'), b64('towerbridge')]);
-  ['base', 'leafL', 'leafR', 'full'].forEach(n => out(`art/london/tb2-${n}.webp`, tb[n]));
+  ['base', 'leafL', 'leafR', 'full'].forEach(n => out(`art/london/tb3-${n}.webp`, tb[n]));
   // avatar: Guardsman bust on a dimmed Union Jack plate, 512 square
   out('art/avatars/ldn-guard2.webp', await pg.evaluate(async ([g, uj]) => {
     const load = (s) => new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = s; });
@@ -61,7 +61,7 @@ const out = (rel, b) => { const f = path.join(ROOT, rel); fs.mkdirSync(path.dirn
     return c.toDataURL('image/webp', 0.9);
   }, [ujUri(1050, 750)]));
   // table: the Thames at night, 2160x1500. Calm paved floor in the bottom 16%.
-  out('art/london/table-thames2.webp', await pg.evaluate(async ([bb, tbs, eye]) => {
+  out('art/london/table-thames3.webp', await pg.evaluate(async ([bb, tbs, eye]) => {
     const load = (s) => new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = s; });
     const [B, T, E] = await Promise.all([bb, tbs, eye].map(load));
     const trim = (im) => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); const d = x.getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0; for (let y = 0; y < c.height; y++) for (let xx = 0; xx < c.width; xx++) if (d[(y * c.width + xx) * 4 + 3] > 40 && y < c.height * .94) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; } const o = document.createElement('canvas'); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1; o.getContext('2d').drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height); return o; };

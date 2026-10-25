@@ -259,7 +259,7 @@ function scene(id,W,H){
  case 'newyear':
   skyline(.88,'#10192d');skyline(.98,'#080f20');place('left-firework',firework('#e6c477'),0,.18,.40,1,.30);place('right-firework',firework('#cb9fc6'),1,.36,.34,1,.25);stars(90,'#efd8a4');break;
  case 'ldn-thames':
-  pieces.push(`<image href="art/london/table-thames2.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;
+  pieces.push(`<image href="art/london/table-thames3.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;
  case 'ss2611-egypt':
   // Ancient Egypt: one painted scene (owner's art), filled to the screen from the bottom centre so the temple floor sits behind the cards.
   pieces.push(`<image href="art/season-pass/ss2611/table.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;

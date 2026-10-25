@@ -771,11 +771,11 @@
         k.tone({ at: 1.5, dur: 0.7, type: 'sawtooth', f0: 98, f1: 94, level: 0.22, attack: 0.05 }); k.tone({ at: 1.5, dur: 0.7, type: 'square', f0: 147, f1: 141, level: 0.08, attack: 0.05 });
         [1.6, 1.95, 2.3].forEach((at) => {
           k.tone({ at: at - 0.32, dur: 0.3, f0: 500, f1: 2200, level: 0.06, attack: 0.1 });
-          k.noise({ at, dur: 0.14, type: 'highpass', f0: 2500, level: 0.4 }); k.tone({ at, dur: 0.22, f0: 160, f1: 50, level: 0.4, attack: 0.004 });
+          k.noise({ at, dur: 0.14, type: 'highpass', f0: 2500, level: 0.22 }); k.tone({ at, dur: 0.22, f0: 160, f1: 50, level: 0.26, attack: 0.004 });
           k.scatter(14, at + 0.05, at + 0.6, (a) => k.noise({ at: a, dur: 0.015, type: 'highpass', f0: 5000 + Math.random() * 2000, level: 0.09 }));
         });
-        [[3.0, 164.8], [3.0, 329.6], [3.0, 494]].forEach(([at, f], i) => k.tone({ at, dur: 0.9, type: 'sine', f0: f, f1: f * .995, level: 0.2 / (i + 1), attack: 0.003 }));
-        k.tone({ at: 3.28, dur: 0.3, f0: 120, f1: 36, level: 0.5, attack: 0.004 }); k.noise({ at: 3.28, dur: 0.1, type: 'bandpass', f0: 700, q: 1, level: 0.3 });
+        [[3.0, 164.8], [3.0, 329.6], [3.0, 494]].forEach(([at, f], i) => k.tone({ at, dur: 0.9, type: 'sine', f0: f, f1: f * .995, level: 0.14 / (i + 1), attack: 0.003 }));
+        k.tone({ at: 3.28, dur: 0.3, f0: 120, f1: 36, level: 0.3, attack: 0.004 }); k.noise({ at: 3.28, dur: 0.1, type: 'bandpass', f0: 700, q: 1, level: 0.2 });
         [2.2, 2.45, 2.7].forEach((at, i) => k.tone({ at, dur: 0.3, type: 'triangle', f0: [659, 784, 880][i], level: 0.07 }));
       },
       'victory-trophy': (k) => {

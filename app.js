@@ -4179,7 +4179,7 @@
       vfxShout(layer, 'RAMADAN KAREEM', cx, H * .68, Math.min(36, W * .09), 'color:#fff7d6;-webkit-text-stroke:1.5px #1e3a8a;text-shadow:3px 3px 0 #b45309,5px 5px 0 #1e3a8a', RAMADAN.text, 1800);
     }
 
-    // London Calling victory (v438): Tower Bridge Salute. The bridge (Blender renders: art/london/tb2-*.webp, one shared
+    // London Calling victory (v438): Tower Bridge Salute. The bridge (Blender renders: art/london/tb3-*.webp, one shared
     // crop so the pieces stack exactly) rises out of the dark, the two bascule leaves lift about their hinges (.7s), a
     // tall ship sails through (1.5-2.6s) while red, white and blue fireworks go off over the towers (TB_BURSTS), the
     // leaves close with a thud at 3.3s, WELL DONE and Union confetti. Ends by 3.65s. Sound: VICTORY_SOUNDS['victory-ldn-towerbridge'].
@@ -4207,7 +4207,7 @@
       };
       mkShip(false);
       const wrap = bfxAdd(layer, '', cx, cy, bw, bh);
-      const piece = (n, extra = '') => { const d = document.createElement('div'); d.style.cssText = `position:absolute;inset:0;background:url(art/london/tb2-${n}.webp) center/100% 100% no-repeat;${extra}`; wrap.appendChild(d); return d; };
+      const piece = (n, extra = '') => { const d = document.createElement('div'); d.style.cssText = `position:absolute;inset:0;background:url(art/london/tb3-${n}.webp) center/100% 100% no-repeat;${extra}`; wrap.appendChild(d); return d; };
       const L = piece('leafL', 'transform-origin:34.7% 83%'), R = piece('leafR', 'transform-origin:63.9% 83%'); piece('base');
       bfxAnimate(wrap, [{ transform: `translateY(${50 * k}px) scale(.96)`, opacity: 0 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: 500 / D }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: .9 }, { transform: 'translateY(0) scale(1.02)', opacity: 0 }], { duration: D, easing: 'ease-out' });
       const ang = ms => {

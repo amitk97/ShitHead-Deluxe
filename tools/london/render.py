@@ -369,7 +369,7 @@ def _tb_setup(res=(1400, 700)):
 
 def towerbridge(part='full', angle=0.0, frame=0):
     st, dark, gold, blue, black = _tb_setup()
-    if part in ('full', 'base', 'open'):
+    if part in ('full', 'base', 'open', 'leafL', 'leafR'):
         ground(60, 0)
         for x in (-2.8, 2.8): _tower(x, st, dark, gold, black)
         rbox('walkway', (0, 0, 5.3), (4.4, 1.3, .3), blue, .05, 3)         # upper walkway
@@ -383,19 +383,24 @@ def towerbridge(part='full', angle=0.0, frame=0):
             ang = math.atan2(4.9 - 1.3, 3.9)
             cyl('chain', (sgn * 5.55, 0, 3.1), .04, math.hypot(3.9, 3.6), gold, (0, -sgn * (math.pi / 2 - ang), 0), 8, .005)
     base_objs = [o for o in bpy.context.scene.objects if o.type == 'MESH' and not o.is_shadow_catcher]
-    if part in ('full', 'open'):
+    if part in ('full', 'open', 'leafL', 'leafR'):
         # Bascule leaves: deck, side girders, rails and a counterweight beneath the hinge, all turning about the hinge at the tower.
-        for sgn in (-1, 1):
+        for sgn in ((-1, 1) if part in ('full', 'open') else ((-1,) if part == 'leafL' else (1,))):
             hx, hz, L, d = sgn * 2.05, 1.15, 2.1, -sgn
             hinge = bpy.data.objects.new('hinge', None); bpy.context.scene.collection.objects.link(hinge); hinge.location = (hx, 0, hz)
-            parts = [rbox('deck', (hx + d * L / 2, 0, hz), (L, 1.3, .32), blue, .05, 4), rbox('cw', (hx - d * .35, 0, hz - .62), (.9, 1.1, 1.0), st, .05, 3)]
-            for y in (-.62, .62):
-                parts.append(rbox('girder', (hx + d * L / 2, y, hz + .3), (L, .08, .32), st, .02, 3))
-                for k in range(6): parts.append(rbox('post', (hx + d * (.15 + k * .38), y, hz + .5), (.05, .06, .3), gold, .005, 2))
+            parts = [rbox('deck', (hx + d * L / 2, 0, hz), (L, 1.3, .46), blue, .06, 4), rbox('cw', (hx - d * .4, 0, hz - .75), (1.1, 1.15, 1.35), st, .06, 3),
+                     rbox('cwtop', (hx - d * .4, 0, hz - .02), (1.1, 1.2, .1), gold, .02, 2)]
+            for y in (-.64, .64):
+                parts.append(rbox('girder', (hx + d * L / 2, y, hz + .62), (L, .1, .14), st, .03, 3))          # top chord
+                parts.append(rbox('girderlow', (hx + d * L / 2, y, hz + .2), (L, .1, .12), st, .03, 3))       # bottom chord
+                for k in range(7):                                                                            # lattice: posts and diagonals
+                    parts.append(rbox('post', (hx + d * (.1 + k * .3), y, hz + .41), (.07, .09, .5), st, .015, 2))
+                    if k < 6: parts.append(rbox('diag', (hx + d * (.25 + k * .3), y, hz + .41), (.46, .06, .05), gold, .008, 2, (0, (1 if k % 2 else -1) * .85, 0)))
+                parts.append(rbox('rail', (hx + d * L / 2, y, hz + .74), (L, .05, .05), gold, .008, 2))
             for o in parts:
                 o.parent = hinge; o.matrix_parent_inverse = hinge.matrix_world.inverted()
             hinge.rotation_euler = (0, sgn * math.radians(angle), 0)
-    if part == 'open':
+    if part in ('open', 'leafL', 'leafR'):
         hold = bpy.data.materials.new('hold'); hold.use_nodes = True
         nt = hold.node_tree; nt.nodes.clear(); out = nt.nodes.new('ShaderNodeOutputMaterial'); h = nt.nodes.new('ShaderNodeHoldout'); nt.links.new(h.outputs[0], out.inputs[0])
         for o in base_objs:
@@ -464,6 +469,6 @@ def tb_open():
 
 
 MODELS = dict(bus_front=bus_front, ship=ship, tb_open=tb_open, bus_drive=bus_drive, bus=bus, bus_wheels=lambda: [bus('wheels', k * math.pi / 32) for k in range(8)], phonebox=phonebox, bigben=bigben, guard=guard, londoneye=londoneye,
-              towerbridge=towerbridge, tb_base=lambda: towerbridge('base'))
+              towerbridge=towerbridge, tb_base=lambda: towerbridge('base'), tb_leafL=lambda: towerbridge('leafL'), tb_leafR=lambda: towerbridge('leafR'))
 for n, f in MODELS.items():
     if not ONLY or n in ONLY: f()
