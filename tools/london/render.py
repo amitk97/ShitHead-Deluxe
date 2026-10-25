@@ -333,18 +333,14 @@ def guard():
         sph('tuft', (math.cos(a) * .7, math.sin(a) * .66 + .12, 2.55 + (k % 3) * .25), .15, fur)
     cyl('band', (0, .0, 2.16), .64, .09, black, (0, 0, 0), 32, .01)
     rbox('plume', (.55, .0, 3.25), (.1, .1, .6), red, .04, 3); sph('plumetip', (.55, .0, 3.6), .1, red)
-    # Arms: the left one hangs at his side; the right forearm comes forward to grip a rifle held at attention beside him.
     def limb(p0, p1, r, m):
         v = Vector(p1) - Vector(p0)
         bpy.ops.mesh.primitive_cylinder_add(location=(Vector(p0) + Vector(p1)) / 2, radius=r, depth=v.length, vertices=24)
         o = bpy.context.object; o.rotation_euler = v.to_track_quat('Z', 'Y').to_euler(); o.data.materials.append(m)
         bpy.ops.object.shade_smooth(); return o
-    limb((-1.05, 0, .6), (-1.22, -.12, -.7), .26, red); sph('gloveL', (-1.24, -.14, -.85), .22, wht)
-    limb((1.05, 0, .6), (1.18, -.5, .05), .25, red); sph('elbowR', (1.18, -.5, .05), .25, red)
-    sph('gloveR', (1.2, -.62, -.12), .22, wht)
-    cyl('rifle', (1.2, -.62, .4), .06, 3.4, black, (0, 0, 0), 16, .01)
-    cyl('bayo', (1.2, -.62, 2.25), .03, .55, mat('st', hexc('c8ccd4'), .2, 1), (0, 0, 0), 12, .005)
-    rbox('rifleStock', (1.2, -.62, -.85), (.14, .1, .9), mat('wd', hexc('5a3a22'), .6), .03, 3)
+    # At attention: both arms hang straight down at his sides, white gloves at the bottom of the bust. No rifle.
+    limb((-1.05, 0, .6), (-1.2, -.04, -.45), .26, red); sph('gloveL', (-1.22, -.05, -.66), .22, wht)
+    limb((1.05, 0, .6), (1.2, -.04, -.45), .26, red); sph('gloveR', (1.22, -.05, -.66), .22, wht)
     light('AREA', (4, -6, 6), 650, (1.0, .93, .82), 5); light('AREA', (-5, 3, 4), 260, (.7, .8, 1), 5)
     cam((0, -8.2, 1.9), (0, 0, 1.55), None, 62); go('guard')
 
