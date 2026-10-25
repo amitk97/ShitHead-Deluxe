@@ -73,7 +73,7 @@
     // ============================================================
     const LEVEL_BURN_IDS = ['burn-lvl-spark-snap', 'burn-lvl-smoke-burst', 'burn-lvl-inferno-sweep', 'burn-lvl-hellfire-spiral', 'burn-lvl-royal-incineration', 'burn-lvl-shitstorm'];
     const SEASON_BURN_IDS = ['burn-ss2611-sandstorm', 'burn-ss2701-glacier', 'burn-ss2703-shuriken', 'burn-ss2705-whirlpool', 'burn-ss2707-zeus', 'burn-ss2709-hex'];
-    const SHAPE_BURN_EFFECTS = new Set([...SEASON_BURN_IDS, 'default', 'burn-electric', 'burn-coloured', 'burn-sweets', 'burn-ice', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', ...LEVEL_BURN_IDS]);
+    const SHAPE_BURN_EFFECTS = new Set([...SEASON_BURN_IDS, 'default', 'burn-electric', 'burn-coloured', 'burn-sweets', 'burn-ice', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', 'burn-ldn-routemaster', ...LEVEL_BURN_IDS]);
     let bfxGradientSeq = 0;
     const bfxRand = (min, max) => min + Math.random() * (max - min);
     function bfxAdd(host, html, x, y, w, h) {
@@ -1902,10 +1902,42 @@
       ({ default: bfxDefault, 'burn-electric': bfxElectric, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-ice': bfxIce, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
         'burn-blackhole': bfxBlackHole, 'burn-origami': bfxOrigami, 'burn-pixel': bfxPixelBlast, 'burn-lava': bfxLavaMelt,
         'burn-valentine': bfxValentine, 'burn-summer': bfxSummer, 'burn-christmas': bfxChristmas, 'burn-lunar': bfxLunar, 'burn-ramadan': bfxRamadan,
-        'burn-diwali': bfxDiwali, 'burn-easter': bfxEaster, 'burn-newyear': bfxNewYear,
+        'burn-diwali': bfxDiwali, 'burn-easter': bfxEaster, 'burn-newyear': bfxNewYear, 'burn-ldn-routemaster': bfxRoutemaster,
         'burn-lvl-spark-snap': bfxSparkSnap, 'burn-lvl-smoke-burst': bfxSmokeBurst, 'burn-lvl-inferno-sweep': bfxInferno,
         'burn-lvl-hellfire-spiral': bfxHellfireSpiral, 'burn-lvl-royal-incineration': bfxRoyalIncineration, 'burn-lvl-shitstorm': bfxShitStorm }[id] || (typeof SEASONAL_BURN_FX !== 'undefined' && SEASONAL_BURN_FX[id]) || (() => {}))(host, x, y, scale);
       return true;
+    }
+
+
+    // London Calling burn (v438): a Routemaster (Blender render, art/london/bus.webp, faced left) charges through the
+    // Pile. Headlights and speed lines build, it hits the card at .55s (shards fly left with it, sparks, a squash on
+    // the bus), roars off the left edge, and dust, exhaust and falling glass settle. One 2s clock. Sound: BURN_SOUNDS['burn-ldn-routemaster'].
+    const RM_HIT = .55;
+    function bfxRoutemaster(host, x, y, k) {
+      const { st, kit } = pfxBase(host, x, y, ['rgba(220,38,38,.5)', 'rgba(30,58,138,.2)']), { W, H, cx, cy, anim, end, vw } = st, { rand, out, sm, fr, add, clamp } = kit;
+      pfxCard(st, kit, RM_HIT, { tint: 'linear-gradient(160deg,rgba(220,38,38,.35),rgba(30,58,138,.3))', shake: .01 });
+      const bw = Math.min(H * 3.7, vw * .92), bh = bw / 1.974, hitOff = bw * .42 + W * .3, off0 = vw * .5 + bw * .75;
+      const road = add(`left:0;top:${cy + H * .6}px;width:${vw}px;height:${Math.max(3, H * .05)}px;z-index:1;background:linear-gradient(90deg,transparent,rgba(30,41,59,.9) 15%,rgba(30,41,59,.9) 85%,transparent)`);
+      anim(road, fr(t => ({ opacity: sm(0, .12, t) * (1 - sm(1.1, 1.5, t)) })));
+      const bus = add(`left:${cx - bw / 2}px;top:${cy + H * .62 - bh * .94}px;width:${bw}px;height:${bh}px;z-index:4;transform-origin:50% 100%`,
+        `<div style="position:absolute;inset:0;background:url(art/london/bus.webp) center/contain no-repeat;transform:scaleX(-1);filter:drop-shadow(0 ${H * .06}px ${H * .05}px rgba(0,0,0,.5))"></div>`
+        + `<div style="position:absolute;left:-30%;top:56%;width:34%;height:26%;background:linear-gradient(270deg,rgba(255,243,196,.75),transparent);clip-path:polygon(100% 38%,0 0,0 100%,100% 62%);mix-blend-mode:screen"></div>`
+        + [0, 1, 2, 3, 4].map(i => `<div style="position:absolute;left:100%;top:${28 + i * 13}%;width:${14 + (i % 3) * 6}%;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55));opacity:.8"></div>`).join(''));
+      const offAt = t => {
+        if (t < .06) return off0;
+        if (t < RM_HIT) { const u = sm(.06, RM_HIT, t); return hitOff + (off0 - hitOff) * (1 - u * u); }
+        return hitOff - (2 * (off0 - hitOff) / (RM_HIT - .06)) * .88 * (t - RM_HIT);
+      };
+      anim(bus, fr(t => { const dx = offAt(t), pulse = Math.max(0, 1 - Math.abs(t - RM_HIT) / .06), bob = Math.sin(t * 70) * H * .006 * sm(.1, RM_HIT, t) * (1 - sm(.9, 1, t));
+        return { opacity: dx > -vw * .5 - bw && dx < off0 + 1 ? 1 : 0, transform: `translate(${dx.toFixed(1)}px,${bob.toFixed(2)}px) scale(${(1 + .05 * pulse).toFixed(3)},${(1 - .07 * pulse).toFixed(3)})` }; }));
+      pfxShatter(st, kit, { t0: RM_HIT, ip: [W * 1.05, H * .55], cols: 4, rows: 6, speed: 1.15, edge: '#fecaca', tint: i => `linear-gradient(135deg,${i % 2 ? 'rgba(220,38,38,.55)' : 'rgba(255,255,255,.45)'},rgba(30,58,138,.4))` });
+      pfxBurst(st, kit, { x: cx + W * .45, y: cy, t0: RM_HIT, n: 16, len: H * .12, dist: H * .75, life: .5, cols: ['#fde047', '#fff', '#ef4444', '#60a5fa'], w: 2.4 });
+      for (let i = 0; i < 9; i++) {
+        const px = cx + W * .5 - (i / 8) * (bw * .9 + W), py = cy + H * rand(.4, .62), s = H * rand(.22, .4), t0 = RM_HIT + .04 + i * .035;
+        const puff = add(`left:${px - s / 2}px;top:${py - s / 2}px;width:${s}px;height:${s}px;z-index:2;border-radius:50%;background:radial-gradient(closest-side,rgba(226,232,240,.6),rgba(148,163,184,.25) 60%,transparent)`);
+        anim(puff, fr(t => { const p = clamp((t - t0) / .8); return { opacity: p > 0 && p < 1 ? (1 - p) * .85 : 0, transform: `translate(${(rand(-1, 1) * 0).toFixed(1)}px,${(-H * .25 * p).toFixed(1)}px) scale(${(.35 + 1.1 * out(p)).toFixed(3)})` }; }));
+      }
+      end(st.lastAnim);
     }
 
     // Reduce motion: a single soft glow instead of flying particles and shakes.

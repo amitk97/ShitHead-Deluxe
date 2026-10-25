@@ -636,6 +636,19 @@
       // New Year (v409, champagne bottle v435): three clock ticks (3-2-1 at .05 / .23 / .41, rising) while the
       // shaken bottle rattles and fizzes, the cork pops at midnight (.62) with a boom, then the champagne gushes
       // (a long foamy hiss with glugs and fizzing bubbles to ~1.5s), confetti rustle and a chime run.
+      // London Calling (v438): Routemaster Rush. Horn beep-beep (.04/.20s), the engine revs up as it approaches, impact at .55
+      // (thump, crunch, glass), then it passes away (falling Doppler roar) while shards patter down.
+      'burn-ldn-routemaster': (k) => {
+        [0.04, 0.2].forEach((at) => { k.tone({ at, dur: 0.12, type: 'sawtooth', f0: 392, f1: 388, level: 0.2 }); k.tone({ at, dur: 0.12, type: 'square', f0: 494, f1: 490, level: 0.09 }); });
+        k.tone({ at: 0.06, dur: 0.5, type: 'sawtooth', f0: 60, f1: 190, level: 0.22, attack: 0.2 });
+        k.noise({ at: 0.06, dur: 0.5, type: 'bandpass', f0: 300, f1: 1500, q: 0.7, level: 0.2, attack: 0.4 });
+        k.tone({ at: 0.55, dur: 0.3, f0: 140, f1: 38, level: 0.55, attack: 0.004 });
+        k.noise({ at: 0.55, dur: 0.16, type: 'bandpass', f0: 1800, f1: 700, q: 1, level: 0.5 });
+        k.scatter(16, 0.55, 0.9, (at) => k.tone({ at, dur: 0.05, type: 'triangle', f0: 1800 + Math.random() * 2200, f1: 900, level: 0.06 }));
+        k.tone({ at: 0.56, dur: 0.65, type: 'sawtooth', f0: 200, f1: 60, level: 0.2 });
+        k.noise({ at: 0.56, dur: 0.7, type: 'bandpass', f0: 1600, f1: 250, q: 0.6, level: 0.2 });
+        k.scatter(18, 0.7, 1.5, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 4500, level: 0.07 }));
+      },
       'burn-newyear': (k) => {
         [0.05, 0.23, 0.41].forEach((at, i) => { k.tone({ at, dur: 0.07, type: 'square', f0: 900 + i * 220, f1: 700 + i * 220, level: 0.2 }); k.noise({ at, dur: 0.02, type: 'highpass', f0: 3500, level: 0.18 }); });
         k.scatter(18, 0.2, 0.61, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 2600 + Math.random() * 1400, q: 3, level: 0.1 }));
@@ -749,6 +762,22 @@
       },
       // Trophy Lift: a rising swell as the cup is raised (0-1s), a bright flash and fanfare at 1s, shimmer
       // on the glints, then a confetti rustle.
+      // London Calling (v438): Tower Bridge Salute. Gear ratchet as the leaves rise (.7-1.5s), a ship's horn at 1.5s,
+      // rocket whistles + crack at TB_BURSTS (1.6/1.95/2.3s, sound repeats the numbers), the leaves close with a thud
+      // at ~3.3s and Big Ben bongs at 3.0s over it.
+      'victory-ldn-towerbridge': (k) => {
+        for (let i = 0; i < 16; i++) k.noise({ at: 0.7 + i * 0.05, dur: 0.02, type: 'bandpass', f0: 1800, q: 4, level: 0.07 });
+        k.tone({ at: 0.7, dur: 0.8, type: 'sawtooth', f0: 70, f1: 90, level: 0.12, attack: 0.3 });
+        k.tone({ at: 1.5, dur: 0.7, type: 'sawtooth', f0: 98, f1: 94, level: 0.22, attack: 0.05 }); k.tone({ at: 1.5, dur: 0.7, type: 'square', f0: 147, f1: 141, level: 0.08, attack: 0.05 });
+        [1.6, 1.95, 2.3].forEach((at) => {
+          k.tone({ at: at - 0.32, dur: 0.3, f0: 500, f1: 2200, level: 0.06, attack: 0.1 });
+          k.noise({ at, dur: 0.14, type: 'highpass', f0: 2500, level: 0.4 }); k.tone({ at, dur: 0.22, f0: 160, f1: 50, level: 0.4, attack: 0.004 });
+          k.scatter(14, at + 0.05, at + 0.6, (a) => k.noise({ at: a, dur: 0.015, type: 'highpass', f0: 5000 + Math.random() * 2000, level: 0.09 }));
+        });
+        [[3.0, 164.8], [3.0, 329.6], [3.0, 494]].forEach(([at, f], i) => k.tone({ at, dur: 0.9, type: 'sine', f0: f, f1: f * .995, level: 0.2 / (i + 1), attack: 0.003 }));
+        k.tone({ at: 3.28, dur: 0.3, f0: 120, f1: 36, level: 0.5, attack: 0.004 }); k.noise({ at: 3.28, dur: 0.1, type: 'bandpass', f0: 700, q: 1, level: 0.3 });
+        [2.2, 2.45, 2.7].forEach((at, i) => k.tone({ at, dur: 0.3, type: 'triangle', f0: [659, 784, 880][i], level: 0.07 }));
+      },
       'victory-trophy': (k) => {
         k.noise({ at: 0.1, dur: 0.9, type: 'bandpass', f0: 400, f1: 2600, q: 1, level: 0.1, attack: 0.8 });
         k.tone({ at: 0.1, dur: 0.9, type: 'sine', f0: 220, f1: 660, level: 0.07, attack: 0.7 });
@@ -1058,6 +1087,16 @@
         [0.62, 0.7, 0.78, 0.86].forEach((at) => { k.tone({ at, dur: 0.15, f0: 130, f1: 60, level: 0.25 }); k.scatter(6, at, at + 0.24, (a) => k.noise({ at: a, dur: 0.015, type: 'highpass', f0: 5000, level: 0.14 })); });
       },
       // Fortune Joker: a gong as the envelope opens and clinking coins.
+      // London Calling (v438): Phone Box Prank. The box lands (.14s thud), the phone rings in six double-bursts (.2-.5s),
+      // a bell-like ding as the Joker pops out at .58s, a swoosh and confetti ticks, then a cheeky two-note laugh.
+      'joker-ldn-phonebox': (k) => {
+        k.tone({ at: 0.12, dur: 0.16, f0: 130, f1: 48, level: 0.4, attack: 0.004 }); k.noise({ at: 0.12, dur: 0.06, type: 'bandpass', f0: 900, q: 1, level: 0.2 });
+        for (let i = 0; i < 6; i++) { const at = 0.2 + i * 0.062; k.tone({ at, dur: 0.045, type: 'square', f0: 1400, f1: 1400, level: 0.1 }); k.tone({ at: at + 0.026, dur: 0.03, type: 'square', f0: 1750, f1: 1750, level: 0.08 }); }
+        k.tone({ at: 0.58, dur: 0.5, type: 'triangle', f0: 1568, f1: 1560, level: 0.16 }); k.tone({ at: 0.58, dur: 0.5, type: 'sine', f0: 2349, f1: 2340, level: 0.07 });
+        k.noise({ at: 0.58, dur: 0.22, type: 'bandpass', f0: 500, f1: 3500, q: 0.8, level: 0.18, attack: 0.08 });
+        k.scatter(14, 0.62, 1.3, (at) => k.noise({ at, dur: 0.012, type: 'highpass', f0: 5500, level: 0.1 }));
+        [0.8, 0.95].forEach((at, i) => k.tone({ at, dur: 0.13, type: 'sawtooth', f0: 330 - i * 70, f1: 300 - i * 80, level: 0.1 }));
+      },
       'joker-lunar': (k) => {
         // Metal pings as the gold plate spins and slows, a clink and gong on landing at .73s, firecracker pops and falling coins.
         // The fortune cookie pops in, rattles, and cracks open at .22s as the plate rises out of it.

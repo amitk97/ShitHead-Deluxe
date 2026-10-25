@@ -89,7 +89,7 @@ async function runDevTestSuite() {
           const svg=host.querySelector('svg'),box=svg.getBoundingClientRect();
           assertTrue(Math.abs(box.width-w)<1 && Math.abs(box.height-h)<1,key+': scene covers host');
           const main=[...svg.querySelectorAll('[data-scene-feature]')];
-          assertTrue(main.length>0 || ['wood','felt','casino','royal'].includes(key) || /^ss\d{4}-/.test(key),key+': main features present');
+          assertTrue(main.length>0 || ['wood','felt','casino','royal'].includes(key) || /^ss\d{4}-/.test(key) || key==='ldn-thames',key+': main features present');
           for(const el of main) {
             const r=el.getBoundingClientRect(),unit=Math.min(w,h),m=Math.max(.12,+el.dataset.minUnit);
             assertTrue(r.left>=box.left-.5 && r.right<=box.right+.5 && r.top>=box.top-.5 && r.bottom<=box.bottom+.5,key+' '+el.dataset.sceneFeature+': complete at '+w+'x'+h);
@@ -194,7 +194,7 @@ async function runDevTestSuite() {
         assertEqual(home.querySelector('svg').dataset.fullScene,id,id+': shared home scene');
         stage.dataset.tablePreview=id;ShTableScenes.draw(stage,id);
         assertEqual(stage.querySelector('svg').dataset.fullScene,id,id+': shared preview scene');
-        assertTrue(/^table-ss\d{4}-/.test(id) || !stage.querySelector('svg').querySelector('[preserveAspectRatio*=slice]'),id+': no cropped scene (the painted Ice Age table fills the screen on purpose)');
+        assertTrue(/^table-(ss\d{4}|ldn)-/.test(id) || !stage.querySelector('svg').querySelector('[preserveAspectRatio*=slice]'),id+': no cropped scene (the painted Ice Age table fills the screen on purpose)');
       }
     } finally {stage.remove();equippedCosmetics.tableTheme=saved;refreshHomeBackdrop();document.body.classList.toggle('lobby-open',wasLobby);}
   });
@@ -1479,7 +1479,7 @@ async function runDevTestSuite() {
   });
   // ---- Joker effects ----
   await test('Joker effects: 6 in the Shop at 2000 + 4 premium at 3500, one per seasonal event at 3000, each with its own animation and sound', () => {
-    const shop = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Joker Effects' && !i.season);
+    const shop = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Joker Effects' && !i.season && !i.ldn);
     const seasonal = COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Joker Effects' && i.season);
     const premium = ['joker-hypnotist', 'joker-vampire', 'joker-redcard', 'joker-portal'];
     assertEqual(shop.length, 10, 'Ten Shop Joker effects');
@@ -1895,6 +1895,21 @@ async function runDevTestSuite() {
       seasonalNowOverride = '2026-10-13T12:00';
       assertTrue(xpBoostNow() === null && xpBoostNote() === '', 'Nothing off-season');
     } finally { [seasonalNowOverride, xpFeatureOn] = was; }
+  });
+  await test('v438: London Calling: nine items, each equippable, each effect with its own animation, sound and tile', () => {
+    const items = COSMETIC_SHOP_ITEMS.filter(i => i.ldn);
+    assertEqual(items.length, 9, 'Nine London items');
+    const types = ['avatar', 'cardBack', 'tableTheme', 'deck', 'frame', 'burnEffect', 'jokerEffect', 'victoryEffect', 'emotes'];
+    assertEqual(items.map(i => COSMETIC_CATEGORY_TYPES[i.category]).sort(), [...types].sort(), 'One per type');
+    items.forEach(i => { const t = COSMETIC_CATEGORY_TYPES[i.category]; assertTrue(t === 'deck' || isSupportedCosmetic(t, i.id), `${i.name} is equippable`); });
+    assertTrue(!!AVATAR_ART['avatar-ldn-guard'] && /ldn-guard\.webp/.test(AVATAR_ART['avatar-ldn-guard'].art), 'The Guardsman has its art');
+    assertTrue(getCosmeticBackClass('back-ldn-bigben').includes('lvl-back'), 'The back wears the art-fills-the-card class');
+    assertTrue(/ldn-thames/.test(ILLUSTRATED_TABLES['table-ldn-thames'].art) && ShTableScenes.scene('table-ldn-thames', 1080, 1920).includes('table-thames.webp'), 'The Thames table is its painted scene');
+    assertTrue(SHAPE_BURN_EFFECTS.has('burn-ldn-routemaster') && typeof BURN_SOUNDS['burn-ldn-routemaster'] === 'function', 'Burn: shape effect with a sound');
+    assertTrue(typeof JOKER_FX['joker-ldn-phonebox'] === 'function' && typeof JOKER_SOUNDS['joker-ldn-phonebox'] === 'function', 'Joker: animation and sound');
+    assertTrue(typeof VICTORY_SOUNDS['victory-ldn-towerbridge'] === 'function', 'Victory: sound');
+    ['burn-ldn-routemaster', 'joker-ldn-phonebox', 'victory-ldn-towerbridge'].forEach(id => assertTrue(ShEffectIcons.has(id), `${id} has a tile`));
+    assertEqual(EMOTE_PACKS['emotes-ldn'].length, 6, 'Six London emotes');
   });
   await test('v436: the Test Lab tries looks on in memory only: nothing is saved to the account or the device', () => {
     freshState({ phase: 'PLAY' });
@@ -3335,7 +3350,7 @@ async function runDevTestSuite() {
   await test('REGRESSION: profile picture catalogue matches the owner spec', () => {
     const free = BUILT_IN_COSMETICS.filter(i => i.category === 'Avatars').map(i => i.name);
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
-    const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Avatars' && !i.season).map(i => [i.name, i.cost]));
+    const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Avatars' && !i.season && !i.ldn).map(i => [i.name, i.cost]));
     assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000, 'Turtley': 5000 }, 'Shop pictures and prices');
     assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team'], 'Earn-only pictures');
     [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Avatars')
@@ -3553,7 +3568,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 42, 'All 42 avatars appear in Custom (incl. the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
+    assertEqual(options.length, 43, 'All 43 avatars appear in Custom (incl. the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -3955,7 +3970,7 @@ async function runDevTestSuite() {
     assertTrue(document.getElementById('burnFxLayer').querySelectorAll('.bfx').length > 0 && particles.length === before, 'In games, shape effects use their own layer, not the ember canvas');
     document.getElementById('burnFxLayer').innerHTML = '';
     } finally { window.ShLevel3D = keep3d; }
-    const prices = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && !i.season).map(i => [i.name, i.cost]));
+    const prices = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Burn Effects' && !i.season && !i.ldn).map(i => [i.name, i.cost]));
     assertEqual(prices, { 'Coloured Flame': 250, 'Ice Shatter': 500, 'Electric Blast': 1000, 'Paint Splats': 750, 'Stupendous Confectionery': 1500, 'Smoke Show': 2000,
       'Black Hole': 2500, 'Origami Fold': 2500, 'Pixel Blast': 2500, 'Lava Melt': 2500 }, 'Burn effect prices');
   });
@@ -3969,7 +3984,7 @@ async function runDevTestSuite() {
     });
     assertEqual(layer.querySelectorAll('.bfx svg path').length > 0, true, 'Effects are drawn shapes');
     layer.innerHTML = '';
-    const prices = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Victory Effects' && !i.season).map(i => [i.name, i.cost]));
+    const prices = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Victory Effects' && !i.season && !i.ldn).map(i => [i.name, i.cost]));
     assertEqual(prices, { 'Confetti Burst': 250, 'Card Shower': 1500, 'Fireworks': 750, 'Sparkler Salute': 750, '5-Star Finish': 1000, 'Karate Chop': 2000,
       'Trophy Lift': 2500, 'Rocket Launch': 2500, 'Origami Flock': 2500, "Lion's Roar": 2500 }, 'Victory effect prices');
   });
@@ -4213,7 +4228,7 @@ async function runDevTestSuite() {
     shopTab = savedTab; shopFilter = savedFilter; renderCosmeticShop();
     renderPersonalisationCosmetics();
     const burnNames = [...document.querySelectorAll('#personalisationBurnEffects .avatar-option-name')].map(n => n.textContent).slice(1);
-    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show', 'Black Hole', 'Lava Melt', 'Origami Fold', 'Pixel Blast', 'Spark Snap', 'Smoke Burst', 'Inferno Sweep', 'Hellfire Spiral', 'Royal Incineration', 'The ShitStorm', 'Sandstorm Vortex', 'Glacial Shatter', 'Shuriken Barrage', 'Abyssal Whirlpool', "Zeus's Bolt", 'Arcane Hex'], 'Custom burn tiles in value order, then the level burns by level');
+    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show', 'Black Hole', 'Lava Melt', 'Origami Fold', 'Pixel Blast', 'Routemaster Rush', 'Spark Snap', 'Smoke Burst', 'Inferno Sweep', 'Hellfire Spiral', 'Royal Incineration', 'The ShitStorm', 'Sandstorm Vortex', 'Glacial Shatter', 'Shuriken Barrage', 'Abyssal Whirlpool', "Zeus's Bolt", 'Arcane Hex'], 'Custom burn tiles in value order, then the level burns by level');
   });
   await test('REGRESSION: Card Shower and the deal freeze the relevant player\'s card style at the start', () => {
     const saved = { ...equippedCosmetics };
@@ -9885,7 +9900,7 @@ async function runDevTestSuite() {
     });
     Object.entries(ILLUSTRATED_TABLES).forEach(([id, t]) => {
       const bg = tableArtBackground(id);
-      assertTrue(tiled.has(t.art) ? bg.includes(`${TABLE_TILE_PX}px repeat`) : /^ss\d{4}-/.test(t.art) ? /<image\b[^>]*ss\d{4}\/table\.webp/.test(ShTableScenes.scene(id,1920,1080)) : !/<image\b/.test(ShTableScenes.scene(id,1920,1080)), `${id} is never a stretched bitmap`);
+      assertTrue(tiled.has(t.art) ? bg.includes(`${TABLE_TILE_PX}px repeat`) : /^ss\d{4}-/.test(t.art) ? /<image\b[^>]*ss\d{4}\/table\.webp/.test(ShTableScenes.scene(id,1920,1080)) : t.art === 'ldn-thames' ? /<image\b[^>]*london\/table-thames\.webp/.test(ShTableScenes.scene(id,1920,1080)) : !/<image\b/.test(ShTableScenes.scene(id,1920,1080)), `${id} is never a stretched bitmap`);
     });
     const svgs = [...Object.values(TABLE_ART), ...Object.values(SEASONAL_TABLE_ART), ...Object.values(SEASONAL_BACK_ART)].filter(u => /\.svg$/.test(u));
     assertTrue(svgs.length >= 30, 'every SVG art file is checked', svgs.length);
@@ -10750,7 +10765,7 @@ async function runDevTestSuite() {
     ['Obsidian', 'Emerald', 'Cyber', 'Crimson', 'Classic Casino', 'Arcade', 'Four-Colour'].forEach((name) => {
       assertTrue(area.innerHTML.includes(name), `${name} must appear`);
     });
-    assertEqual(area.children.length, 15, 'Fifteen decks (5 free, 10 Shop), no placeholder cards');
+    assertEqual(area.children.length, 16, 'Sixteen decks (5 free, 11 Shop), no placeholder cards');
     assertTrue(!area.innerHTML.includes('Coming Soon'), 'The old Coming Soon placeholder is gone');
     document.getElementById('themesModal').classList.add('hidden');
   });
@@ -10851,7 +10866,7 @@ async function runDevTestSuite() {
       openThemesPanel();
       const area = document.getElementById('themesGridArea');
       const tiles = [...area.querySelectorAll('[data-equip-type="deck"]')];
-      assertEqual(tiles.length, 15, 'Five free decks and ten Shop decks');
+      assertEqual(tiles.length, 16, 'Five free decks and eleven Shop decks');
       ['deck-obsidian', 'deck-emerald', 'deck-cyber', 'deck-crimson', 'deck-bigprint'].forEach(id => assertTrue(!area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is free`));
       ['deck-casino', 'deck-arcade', 'deck-fourcolour'].forEach(id => assertTrue(area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is locked until bought`));
       assertTrue(area.querySelector('[data-equip-id="deck-fourcolour"]').textContent.includes('750'), 'Four-Colour shows its premium price');

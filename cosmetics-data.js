@@ -106,7 +106,17 @@
       { id: 'avatar-sapphire-sovereign', category: 'Avatars', name: 'Sapphire Sovereign', cost: 5000, animated: true, tones: ['#050b1f','#3b82f6','#fbbf24'] },
       { id: 'avatar-crimson-inferno', category: 'Avatars', name: 'Crimson Inferno', cost: 5000, animated: true, tones: ['#0a0612','#ef4444','#fbbf24'] },
       { id: 'avatar-scarlet-guardian', category: 'Avatars', name: 'Scarlet Guardian', cost: 5000, animated: true, tones: ['#080a18','#dc2626','#fde047'] },
-      { id: 'avatar-turtley', category: 'Avatars', name: 'Turtley', cost: 5000, animated: true, tones: ['#03140c','#10b981','#fbbf24'] }
+      { id: 'avatar-turtley', category: 'Avatars', name: 'Turtley', cost: 5000, animated: true, tones: ['#03140c','#10b981','#fbbf24'] },
+      // London Calling (v438): one UK-themed set, Blender renders (tools/london/).
+      { id: 'avatar-ldn-guard', category: 'Avatars', name: 'Royal Guardsman', cost: 2500, ldn: true, tone: '#c8102e', file: 'art/avatars/ldn-guard.webp', tones: ['#012169','#c8102e','#f4f1ea'] },
+      { id: 'back-ldn-bigben', category: 'Card Backs', name: 'Big Ben Union', cost: 1000, ldn: true, tone: '#e8bd6a', file: 'art/backs/ldn-bigben.webp', tones: ['#012169','#c8102e','#e8bd6a'] },
+      { id: 'table-ldn-thames', category: 'Table Themes', name: 'Thames Nights', cost: 3000, ldn: true, tones: ['#050a24','#17255a','#e8bd6a'] },
+      { id: 'deck-ldn-tube', category: 'Decks', name: 'Underground', cost: 1000, ldn: true, theme: 'theme-tube', tones: ['#0b1636','#e32219','#ffffff'] },
+      { id: 'frame-ldn-unionjack', category: 'Frames', name: 'Union Jack', cost: 1000, ldn: true, tones: ['#012169','#c8102e','#ffffff'] },
+      { id: 'burn-ldn-routemaster', category: 'Burn Effects', name: 'Routemaster Rush', cost: 2500, ldn: true, tones: ['#2a0a10','#c8102e','#ffd36b'] },
+      { id: 'joker-ldn-phonebox', category: 'Joker Effects', name: 'Phone Box Prank', cost: 3500, ldn: true, tones: ['#2a0a10','#c8102e','#fff0c8'] },
+      { id: 'victory-ldn-towerbridge', category: 'Victory Effects', name: 'Tower Bridge Salute', cost: 2500, ldn: true, tones: ['#050a24','#3b6fb8','#e8bd6a'] },
+      { id: 'emotes-ldn', category: 'Emote Packs', name: 'London Pack', cost: 500, ldn: true, tones: ['#012169','#c8102e','#f4f1ea'] }
     ];
     // Classic Reactions ships with the game. It remains selectable for old
     // saves, but is intentionally not a purchasable Shop item.

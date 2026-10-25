@@ -4178,13 +4178,43 @@
       }
       vfxShout(layer, 'RAMADAN KAREEM', cx, H * .68, Math.min(36, W * .09), 'color:#fff7d6;-webkit-text-stroke:1.5px #1e3a8a;text-shadow:3px 3px 0 #b45309,5px 5px 0 #1e3a8a', RAMADAN.text, 1800);
     }
+
+    // London Calling victory (v438): Tower Bridge Salute. The bridge (Blender renders: art/london/tb-*.webp, one shared
+    // crop so the pieces stack exactly) rises out of the dark, the two bascule leaves lift about their hinges (.7s), a
+    // tall ship sails through (1.5-2.6s) while red, white and blue fireworks go off over the towers (TB_BURSTS), the
+    // leaves close with a thud at 3.3s, WELL DONE and Union confetti. Ends by 3.65s. Sound: VICTORY_SOUNDS['victory-ldn-towerbridge'].
+    const TB_BURSTS = [1600, 1950, 2300];
+    function vfxTowerBridge(layer) {
+      const [W, H] = vfxSize(layer), D = 3600, k = Math.min(1, W / 390);
+      const bw = Math.min(W * .98, 600), bh = bw / 2.099, cx = W / 2, cy = H * .44;
+      ofxVignette(layer, W, H, 'rgba(8,16,48,.82)', D);
+      vfxTwinkles(layer, 14, [0, 0, W, H * .3], 0, 1800, ['#ffffff', '#ffe9a8'], k);
+      const water = bfxAdd(layer, '<div style="width:100%;height:100%;background:linear-gradient(180deg,rgba(10,26,68,0),rgba(11,34,85,.85) 30%,rgba(7,18,46,.95))"></div>', W / 2, cy + bh * .5 + H * .06, W, H * .16);
+      bfxAnimate(water, [{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .86 }, { opacity: 0 }], { duration: D, easing: 'linear' });
+      const wrap = bfxAdd(layer, '', cx, cy, bw, bh);
+      const piece = (n, extra = '') => { const d = document.createElement('div'); d.style.cssText = `position:absolute;inset:0;background:url(art/london/tb-${n}.webp) center/100% 100% no-repeat;${extra}`; wrap.appendChild(d); return d; };
+      const L = piece('leafL', 'transform-origin:34.7% 83%'), R = piece('leafR', 'transform-origin:63.9% 83%'); piece('base');
+      bfxAnimate(wrap, [{ transform: `translateY(${50 * k}px) scale(.96)`, opacity: 0 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: 500 / D }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: .9 }, { transform: 'translateY(0) scale(1.02)', opacity: 0 }], { duration: D, easing: 'ease-out' });
+      const ang = ms => {
+        const open = Math.max(0, Math.min(1, (ms - 700) / 800)), close = Math.max(0, Math.min(1, (ms - 2700) / 650));
+        const eo = 1 - Math.pow(1 - open, 3) + Math.sin(open * Math.PI) * .05, ec = Math.pow(close, 2.2) - (close > .85 ? Math.sin((close - .85) / .15 * Math.PI) * .03 : 0);
+        return 70 * Math.max(0, eo * (1 - ec));
+      };
+      const lf = vfxSample(48, t => ({ transform: `rotate(${(-ang(t * D)).toFixed(2)}deg)` })), rf = vfxSample(48, t => ({ transform: `rotate(${ang(t * D).toFixed(2)}deg)` }));
+      bfxAnimate(L, lf, { duration: D, easing: 'linear' }); bfxAnimate(R, rf, { duration: D, easing: 'linear' });
+      const ship = bfxAdd(layer, `<svg viewBox="0 0 120 90" width="100%" height="100%"><path d="M4 66H116L100 82H20Z" fill="#3b2a1a"/><path d="M4 66H116" stroke="#c8102e" stroke-width="4"/><path d="M36 64V8M72 64V16" stroke="#2b1d10" stroke-width="3"/><path d="M38 10Q58 24 38 52Z" fill="#f4efe0"/><path d="M74 18Q92 30 74 54Z" fill="#f4efe0"/><path d="M34 34Q16 40 34 54Z" fill="#e8e0cc"/></svg>`, cx, cy + bh * .34, bw * .22, bw * .22 * .75);
+      bfxAnimate(ship, vfxSample(20, t => { const p = Math.max(0, Math.min(1, (t * D - 1400) / 1300)); return { transform: `translate(${((p - .5) * bw * 1.15).toFixed(1)}px,${(Math.sin(p * 12) * 2).toFixed(1)}px) rotate(${(Math.sin(p * 9) * 2).toFixed(1)}deg)`, opacity: p > 0 && p < 1 ? 1 : 0 }; }), { duration: D, easing: 'linear' });
+      [[.24, .17, ['#ef4444', '#ffffff']], [.76, .19, ['#60a5fa', '#ffffff']], [.5, .1, ['#fbbf24', '#ffffff']]].forEach(([fx, fy, cols], i) => vfxSparkBurst(layer, W * fx, H * fy, Math.min(W * .3, 125), TB_BURSTS[i], cols, 30, k));
+      vfxShout(layer, 'WELL DONE', cx, cy + bh * .78, Math.min(44, W * .115), 'color:#fff;text-shadow:0 0 2px #012169,3px 3px 0 #c8102e,5px 5px 0 #012169', 2000, 1600);
+      vfxFall(layer, W, H, 18, i => `<div style="width:100%;height:100%;background:${['#c8102e', '#ffffff', '#1e40af'][i % 3]};border-radius:1px"></div>`, [6, 10], 2000, 40, [800, 850], { aspect: 1.7 });
+    }
     function playShapeVictoryEffect(effect, cardStyle = null) {
       const layer = document.getElementById('victoryFxLayer');
       if (!layer) return false;
       const run = { 'victory-sparklers': vfxSparklers, 'victory-stars': vfxFiveStars, 'victory-karate': vfxKarate,
         'victory-cards': vfxCardShower, 'victory-trophy': vfxTrophy, 'victory-rocket': vfxRocket, 'victory-origami': vfxOrigamiFlock, 'victory-lion': vfxLion, 'victory-fireworks': vfxFireworks,
         'victory-valentine': vfxValentine, 'victory-summer': vfxSummer, 'victory-halloween': vfxHalloween,
-        'victory-diwali': vfxDiwali, 'victory-christmas': vfxChristmas, 'victory-newyear': vfxNewYear, 'victory-easter': vfxEaster, 'victory-lunar': vfxLunar, 'victory-ramadan': vfxRamadan }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
+        'victory-diwali': vfxDiwali, 'victory-christmas': vfxChristmas, 'victory-newyear': vfxNewYear, 'victory-easter': vfxEaster, 'victory-lunar': vfxLunar, 'victory-ramadan': vfxRamadan, 'victory-ldn-towerbridge': vfxTowerBridge }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
       if (!run) return false;
       const host = document.createElement('div');
       host.style.cssText = 'position:absolute;inset:0;pointer-events:none';
@@ -5826,6 +5856,7 @@
       'emotes-chaos': ['🤯', '🃏', '🌪️', '⚡', '🫨', '💥'],
       'emotes-royal': ['👑', '🫅', '🏰', '⚜️', '💍', '🦚'],
       'emotes-animals': ['🐵', '🦁', '🐶', '🐷', '🐮', '🐸'],
+      'emotes-ldn': ['🫖', '☔', '🚌', '💂', '🎡', '🇬🇧'],
       'emotes-sports': ['⚽', '🎾', '🏸', '🎱', '🏎️', '🏏'],
       'emotes-flags-europe': ['🇷🇺', '🇩🇪', '🇬🇧', '🇫🇷', '🇮🇹', '🇪🇸'],
       'emotes-flags-north-america': ['🇺🇸', '🇲🇽', '🇨🇦', '🇬🇹', '🇭🇹', '🇩🇴'],
@@ -6088,7 +6119,7 @@
         'back-dragon': 'cosmetic-back-dragon',
         'back-stained': 'cosmetic-back-stained'
       };
-      if (/^back-(lvl|ss[0-9]{4})-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
+      if (/^back-(lvl|ldn|ss[0-9]{4})-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
       if (cosmeticBackClasses[backId]) return cosmeticBackClasses[backId];
       if (typeof SEASONAL_BACK_IDS !== 'undefined' && SEASONAL_BACK_IDS.has(backId)) return getCosmeticBackClass(backId);
       if (['back-cobalt-linen','back-sage-linen','back-plum-linen'].includes(backId)) return `cosmetic-${backId}`;
@@ -11435,6 +11466,7 @@
       'table-aurora': { art: 'aurora', base: '#0b1a2e', rim: 'inset 0 0 0 3px #34d399,inset 0 0 0 4px rgba(224,242,254,.3),inset 0 0 50px rgba(0,0,0,.55)', label: 'rgba(110,231,183,.9)' },
       'table-space': { art: 'space', base: '#05060f', rim: 'inset 0 0 0 3px #6366f1,inset 0 0 0 4px rgba(251,191,36,.35),inset 0 0 52px rgba(0,0,0,.65)', label: 'rgba(199,210,254,.9)' }
     };
+    ILLUSTRATED_TABLES['table-ldn-thames'] = { art: 'ldn-thames', base: '#07122e', rim: 'inset 0 0 0 3px #e8bd6a,inset 0 0 0 4px rgba(1,33,105,.7),inset 0 0 50px rgba(2,6,24,.6)', label: 'rgba(244,227,178,.92)' };
     // § Season Pass
     ILLUSTRATED_TABLES['table-ss2611-egypt'] = { art: 'ss2611-egypt', base: '#2a1330', rim: 'inset 0 0 0 3px #e8bd6a,inset 0 0 50px rgba(20,8,30,.55)', label: 'rgba(251,222,150,.9)' };
     ILLUSTRATED_TABLES['table-ss2701-glacier'] = { art: 'ss2701-glacier', base: '#0a1f3d', rim: 'inset 0 0 0 3px #9fdcf5,inset 0 0 50px rgba(5,20,45,.55)', label: 'rgba(200,236,252,.9)' };
@@ -12349,6 +12381,39 @@
       jfxSparkles(host, g, g.cx, g.cy, ['#fbbf24', '#f472b6', '#fff'], 10, 300);
       jfxWord(host, g, 'JOKER!', { color: '#f472b6', y: g.cy + 128 * k, delay: 330 });
     }
+
+    // London Calling Joker (v438): a red phone box (Blender render) drops in, RINGS (it shakes, ring arcs pulse) and the
+    // Joker card spins out of it at .4 of the clock with Union-colour confetti, then the box slides away. "PRANKED!".
+    function jfxPhoneBox(host, g) {
+      jfxScrim(host, 'rgba(127,29,29,.5)');
+      const k = g.k, bh = 250 * k, bw = bh * .679, BX = g.cx - 30 * k, BY = g.cy + 12 * k, T0 = 580;
+      const sh = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent)"></div>', BX, BY + bh / 2 - 6 * k, bw * 1.5, 24 * k);
+      bfxAnimate(sh, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1)', offset: .14 }, { opacity: 1, transform: 'scale(1)', offset: .74 }, { opacity: 0, transform: 'scale(1)' }], { duration: JOKER_FX_MS - 60, easing: 'linear' });
+      const box = bfxAdd(host, '<div style="width:100%;height:100%;background:url(art/london/phonebox.webp) center/contain no-repeat;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))"></div>', BX, BY, bw, bh);
+      bfxAnimate(box, [
+        { transform: `translateY(${-bh * .9}px) rotate(0deg) scale(1)`, opacity: 0 }, { transform: 'translateY(0) rotate(0deg) scale(1.05,.93)', opacity: 1, offset: .1 }, { transform: 'translateY(0) rotate(0deg) scale(1)', opacity: 1, offset: .14 },
+        { transform: 'translateY(0) rotate(-4deg) scale(1)', opacity: 1, offset: .18 }, { transform: 'translateY(0) rotate(4deg) scale(1)', opacity: 1, offset: .22 }, { transform: 'translateY(0) rotate(-5deg) scale(1)', opacity: 1, offset: .26 },
+        { transform: 'translateY(0) rotate(5deg) scale(1)', opacity: 1, offset: .3 }, { transform: 'translateY(0) rotate(-4deg) scale(1)', opacity: 1, offset: .34 }, { transform: 'translateY(0) rotate(3deg) scale(1)', opacity: 1, offset: .38 },
+        { transform: 'translateY(0) rotate(0deg) scale(1.07)', opacity: 1, offset: .42 }, { transform: 'translateY(0) rotate(0deg) scale(1)', opacity: 1, offset: .48 }, { transform: 'translateY(0) rotate(0deg) scale(1)', opacity: 1, offset: .76 },
+        { transform: `translateX(${-bw * .35}px) rotate(-3deg) scale(.94)`, opacity: 0 }], { duration: JOKER_FX_MS - 60, easing: 'linear' });
+      [0, 1, 2].forEach(i => {
+        const arc = bfxAdd(host, `<div style="width:100%;height:100%;border-radius:50%;border:${3 * k}px solid #fbbf24;border-left-color:transparent;border-bottom-color:transparent;box-shadow:0 0 8px rgba(251,191,36,.7);transform:rotate(-45deg)"></div>`, BX + bw * .48, BY - bh * .42, 30 * k, 30 * k);
+        bfxAnimate(arc, [{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(.8)', opacity: 1, offset: .3 }, { transform: 'scale(1.7)', opacity: 0 }], { duration: 340, delay: 240 + i * 110, easing: 'ease-out' });
+      });
+      jfxWord(host, g, 'RING RING!', { x: BX + bw * .55, y: BY - bh * .62, color: '#fbbf24', size: 26, delay: 200, end: 640, tilt: -10 });
+      sfxFlash(host, BX, BY - bh * .2, k, 'rgba(255,255,255,.85)', 200, 320, T0 - 20);
+      jfxHero(host, g, JFX_CARD, 124, 177, { x: BX + 10 * k, y: g.cy - 80 * k, delay: T0, enter: [
+        { transform: `translateY(${150 * k}px) scale(.3) rotate(-220deg)`, opacity: 0 }, { transform: 'translateY(-26px) scale(1.12) rotate(12deg)', opacity: 1, offset: .22 },
+        { transform: 'translateY(0) scale(1) rotate(0)', opacity: 1, offset: .34 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: .84 }, { transform: 'translateY(-14px) scale(.9)', opacity: 0 }] });
+      for (let i = 0; i < 18; i++) {
+        const a = -Math.PI / 2 + bfxRand(-1.3, 1.3), d = bfxRand(90, 170) * k, c = ['#c8102e', '#ffffff', '#1e40af'][i % 3];
+        const el = bfxAdd(host, `<div style="width:100%;height:100%;background:${c};border-radius:1px"></div>`, BX + 10 * k, g.cy - 60 * k, 6 * k, 11 * k);
+        bfxAnimate(el, [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) rotate(${bfxRand(180, 420)}deg)`, opacity: 1, offset: .5 },
+          { transform: `translate(${Math.cos(a) * d * 1.1}px,${Math.sin(a) * d + 60 * k}px) rotate(${bfxRand(400, 700)}deg)`, opacity: 0 }], { duration: 780, delay: T0 + 20 + bfxRand(0, 90), easing: 'cubic-bezier(.2,.7,.4,1)' });
+      }
+      jfxSparkles(host, g, BX + 10 * k, g.cy - 80 * k, ['#fbbf24', '#c8102e', '#fff'], 10, T0 + 60);
+      jfxWord(host, g, 'PRANKED!', { x: g.cx, y: g.cy + 150 * k, color: '#ef4444', size: 40, delay: 760 });
+    }
     // Jester's Grin: a giant jester face winks and cackles "HA!".
     function jfxGrin(host, g) {
       jfxScrim(host, 'rgba(88,28,135,.55)');
@@ -13057,7 +13122,7 @@
       'joker-magic': jfxMagic, 'joker-glitch': jfxGlitch, 'joker-storm': jfxStorm,
       'joker-hypnotist': jfxHypnotist, 'joker-vampire': jfxVampire, 'joker-redcard': jfxRedCard, 'joker-portal': jfxPortal,
       'joker-halloween': jfxHalloween, 'joker-christmas': jfxChristmas, 'joker-newyear': jfxNewYear, 'joker-diwali': jfxDiwali,
-      'joker-lunar': jfxLunar, 'joker-valentine': jfxValentine, 'joker-easter': jfxEaster, 'joker-summer': jfxSummer, 'joker-ramadan': jfxRamadan
+      'joker-lunar': jfxLunar, 'joker-ldn-phonebox': jfxPhoneBox, 'joker-valentine': jfxValentine, 'joker-easter': jfxEaster, 'joker-summer': jfxSummer, 'joker-ramadan': jfxRamadan
     };
     function jokerPreviewIcon(id) {
       return effIcon(id, 'joker') || { 'joker-grin': '😜', 'joker-jackbox': '🎁', 'joker-puppet': '🎭', 'joker-magic': '🎩', 'joker-glitch': '📺', 'joker-storm': '🌪️',
@@ -13178,7 +13243,7 @@
         <radialGradient id="lx-eye-fire"><stop offset="0" stop-color="#fff7ed" stop-opacity=".95"/><stop offset=".3" stop-color="#fb923c" stop-opacity=".8"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/></radialGradient>
         <radialGradient id="lx-flame"><stop offset="0" stop-color="#fde68a" stop-opacity=".55"/><stop offset=".45" stop-color="#f97316" stop-opacity=".3"/><stop offset="1" stop-color="#b91c1c" stop-opacity="0"/></radialGradient>
         <linearGradient id="lx-gleam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`;
-      LEVEL_REWARDS.filter(r => r.category === 'Avatars').forEach((r) => {
+      [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => r.ldn && r.file)].filter(r => r.category === 'Avatars').forEach((r) => {
         const motion = levelAvatarMotion(r.id);
         defs += motion.defs;
         AVATAR_ART[r.id] = {
@@ -13310,7 +13375,7 @@
 
     // Card backs: the art fills the back (the emblem and pattern layers hide).
     (function installLevelBackStyles() {
-      const css = LEVEL_REWARDS.filter(r => r.category === 'Card Backs').map(r =>
+      const css = [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => r.ldn && r.file)].filter(r => r.category === 'Card Backs').map(r =>
         `.cosmetic-${r.id} { background:url("${r.file}") center/cover no-repeat, #07070c !important; color:${r.tone}; }\n` +
         `.custom-card-back.cosmetic-${r.id} { border-color:${r.tone} !important; box-shadow:0 0 8px ${r.tone}66; }`).join('\n') +
         '\n.lvl-back::before, .lvl-back::after { display:none !important; }\n.lvl-back > svg { visibility:hidden; }';
@@ -13349,6 +13414,11 @@
     SEASON_PASS_ITEMS.forEach((it) => {
       const type = COSMETIC_CATEGORY_TYPES[it.category];
       if (type === 'cardBack' || type === 'tableTheme' || type === 'burnEffect') COSMETIC_RUNTIME_IDS[type].add(it.id);
+    });
+    // § London Calling: the set's ids join the equip lists of their types.
+    COSMETIC_SHOP_ITEMS.filter(i => i.ldn).forEach((it) => {
+      const type = COSMETIC_CATEGORY_TYPES[it.category];
+      if (COSMETIC_RUNTIME_IDS[type]) COSMETIC_RUNTIME_IDS[type].add(it.id);
     });
     let nameChangeTokenState = null;
     let cosmeticPurchaseState = {};

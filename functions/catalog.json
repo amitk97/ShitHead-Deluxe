@@ -412,6 +412,42 @@
    "name": "Turtley",
    "cost": 5000
   },
+  "avatar-ldn-guard": {
+   "name": "Royal Guardsman",
+   "cost": 2500
+  },
+  "back-ldn-bigben": {
+   "name": "Big Ben Union",
+   "cost": 1000
+  },
+  "table-ldn-thames": {
+   "name": "Thames Nights",
+   "cost": 3000
+  },
+  "deck-ldn-tube": {
+   "name": "Underground",
+   "cost": 1000
+  },
+  "frame-ldn-unionjack": {
+   "name": "Union Jack",
+   "cost": 1000
+  },
+  "burn-ldn-routemaster": {
+   "name": "Routemaster Rush",
+   "cost": 2500
+  },
+  "joker-ldn-phonebox": {
+   "name": "Phone Box Prank",
+   "cost": 3500
+  },
+  "victory-ldn-towerbridge": {
+   "name": "Tower Bridge Salute",
+   "cost": 2500
+  },
+  "emotes-ldn": {
+   "name": "London Pack",
+   "cost": 500
+  },
   "back-lunar": {
    "name": "Lucky Envelope",
    "cost": 300,
@@ -803,6 +839,7 @@
   "avatar-joker-card",
   "avatar-cosmic-ace",
   "avatar-royal-flush",
+  "avatar-ldn-guard",
   "avatar-crimson-inferno",
   "avatar-sapphire-sovereign",
   "avatar-scarlet-guardian",
@@ -859,6 +896,7 @@
   "table-space",
   "table-neon",
   "table-aurora",
+  "table-ldn-thames",
   "table-ss2611-egypt",
   "table-ss2701-glacier",
   "table-ss2703-shrine",
@@ -884,6 +922,7 @@
   "back-inferno",
   "back-nebula",
   "back-space",
+  "back-ldn-bigben",
   "back-dragon",
   "back-stained",
   "back-lvl-first-burn",
@@ -916,6 +955,7 @@
   "deck-neonnight",
   "deck-fourcolour",
   "deck-royalgold",
+  "deck-ldn-tube",
   "frame-silver",
   "frame-gold",
   "frame-diamond",
@@ -928,6 +968,7 @@
   "frame-dashed-gold",
   "frame-neon-tube",
   "frame-spectrum",
+  "frame-ldn-unionjack",
   "frame-gauntlet",
   "frame-gauntlet-hard",
   "frame-gauntlet-boss",
@@ -959,6 +1000,7 @@
   "burn-lava",
   "burn-origami",
   "burn-pixel",
+  "burn-ldn-routemaster",
   "burn-lvl-spark-snap",
   "burn-lvl-smoke-burst",
   "burn-lvl-inferno-sweep",
@@ -987,6 +1029,7 @@
   "joker-magic",
   "joker-puppet",
   "joker-hypnotist",
+  "joker-ldn-phonebox",
   "joker-portal",
   "joker-redcard",
   "joker-vampire",
@@ -1008,6 +1051,7 @@
   "victory-lion",
   "victory-origami",
   "victory-rocket",
+  "victory-ldn-towerbridge",
   "victory-trophy",
   "victory-lunar",
   "victory-valentine",
@@ -1023,6 +1067,7 @@
   "emotes-chaos",
   "emotes-royal",
   "emotes-animals",
+  "emotes-ldn",
   "emotes-sports",
   "emotes-flags-africa",
   "emotes-flags-asia",

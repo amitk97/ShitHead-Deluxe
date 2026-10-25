@@ -71,6 +71,7 @@
               newData.val() === 'back-nebula' || newData.val() === 'back-inferno' ||
               newData.val().matches(/^back-(arcade|space|tartan|artdeco|dragon|stained)$/) ||
               newData.val() === 'back-rising-star' ||
+              newData.val() === 'back-ldn-bigben' ||
               newData.val().matches(/^back-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||
               newData.val().matches(/^back-lvl-(first-burn|sharks-mark|inferno|chaos-crown)$/) ||
               newData.val() === 'back-lvl-master-pile' ||
@@ -89,6 +90,7 @@
               newData.val() === 'frame-gauntlet' || newData.val() === 'frame-ascendant' ||
               newData.val().matches(/^frame-gauntlet-(hard|boss)$/) ||
               newData.val().matches(/^frame-(split-crimson|split-royal|split-noir)$/) ||
+              newData.val() === 'frame-ldn-unionjack' ||
               newData.val().matches(/^frame-(dashed-gold|neon-tube|spectrum)$/) ||
               newData.val().matches(/^frame-(lunar|valentine|ramadan|easter|summer)-champion$/) ||
               newData.val().matches(/^frame-(halloween|diwali|christmas|newyear)-champion$/) ||
@@ -106,6 +108,7 @@
               newData.val() === 'emotes-victory' || newData.val() === 'emotes-chaos' ||
               newData.val() === 'emotes-royal' || newData.val() === 'emotes-animals' ||
               newData.val() === 'emotes-sports' || newData.val() === 'emotes-flags-europe' ||
+              newData.val() === 'emotes-ldn' ||
               newData.val() === 'emotes-flags-north-america' ||
               newData.val() === 'emotes-flags-south-america' ||
               newData.val() === 'emotes-flags-asia' || newData.val() === 'emotes-flags-africa' ||
@@ -125,6 +128,7 @@
               newData.val() === 'table-royal' || newData.val() === 'table-desert' ||
               newData.val() === 'table-jungle' || newData.val() === 'table-devilish' ||
               newData.val() === 'table-angelic' ||
+              newData.val() === 'table-ldn-thames' ||
               newData.val().matches(/^table-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||
               newData.val().matches(/^table-(neon|aurora|space|summit)$/) ||
               (newData.val().matches(/^table-(lunar|valentine|ramadan|easter|summer)$/) ||
@@ -140,6 +144,7 @@
               newData.val() === 'burn-electric' || newData.val() === 'burn-paint' ||
               newData.val() === 'burn-sweets' || newData.val() === 'burn-smoke' ||
               newData.val().matches(/^burn-(blackhole|origami|pixel|lava)$/) ||
+              newData.val() === 'burn-ldn-routemaster' ||
               newData.val().matches(/^burn-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||
               newData.val().matches(/^burn-lvl-(spark-snap|smoke-burst|inferno-sweep)$/) ||
               newData.val().matches(/^burn-lvl-(hellfire-spiral|royal-incineration|shitstorm)$/) ||
@@ -155,6 +160,7 @@
               (newData.val() === 'victory-confetti' || newData.val() === 'victory-cards' ||
               newData.val() === 'victory-fireworks' || newData.val() === 'victory-sparklers' ||
               newData.val() === 'victory-stars' || newData.val() === 'victory-karate' ||
+              newData.val() === 'victory-ldn-towerbridge' ||
               newData.val().matches(/^victory-(trophy|rocket|origami|lion)$/) ||
               (newData.val().matches(/^victory-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^victory-(halloween|diwali|christmas|newyear)$/)))))"
@@ -166,6 +172,7 @@
               root.child('shopPurchases').child($uid)
                 .child('cosmetics').child(newData.val()).exists()) &&
               (newData.val().matches(/^joker-(grin|jackbox|puppet|magic|glitch|storm)$/) ||
+              newData.val() === 'joker-ldn-phonebox' ||
               newData.val().matches(/^joker-(hypnotist|vampire|redcard|portal)$/) ||
               newData.val().matches(/^joker-(lunar|valentine|ramadan|easter|summer)$/) ||
               newData.val().matches(/^joker-(halloween|diwali|christmas|newyear)$/))))"
@@ -189,6 +196,7 @@
               newData.val() === 'avatar-shithead' || newData.val() === 'avatar-gauntlet' ||
               newData.val().matches(/^avatar-gauntlet-(hard|boss)$/) ||
               newData.val() === 'avatar-recruiter' || newData.val() === 'avatar-twos' ||
+              newData.val() === 'avatar-ldn-guard' ||
               newData.val().matches(/^avatar-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||
               newData.val().matches(/^avatar-(royal-flush|phoenix|cosmic-ace)$/) ||
               newData.val().matches(/^avatar-(sapphire-sovereign|crimson-inferno|turtley)$/) ||
