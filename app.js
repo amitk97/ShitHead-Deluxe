@@ -11366,7 +11366,7 @@
     function ensureBotAvatars(players = []) {
       const used = new Set();
       players.forEach(p => {
-        if (!p || !p.isBot) return;
+        if (!p || !p.isBot || (state?.labDummy && p.avatar)) return; // the Test Lab keeps the avatar it was given
         if (FREE_AVATAR_IDS.includes(p.avatar) && !used.has(p.avatar)) { used.add(p.avatar); return; }
         const seed = String(p.id || '').split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
         const pick = FREE_AVATAR_IDS.map((_, i) => FREE_AVATAR_IDS[(seed + i) % FREE_AVATAR_IDS.length]).find(id => !used.has(id)) || FREE_AVATAR_IDS[seed % FREE_AVATAR_IDS.length];

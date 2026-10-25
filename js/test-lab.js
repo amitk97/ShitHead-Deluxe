@@ -12,8 +12,8 @@
   const mk = (rank, suit) => ({ id: 'lab_' + rank + suit + '_' + Math.random().toString(36).slice(2, 7), rank, suit: rank === 'JOKER' ? 'JOKER' : suit, isJoker: rank === 'JOKER' });
   const me = () => state.players.find((p) => p.id === state.localPlayerId);
   const bots = () => state.players.filter((p) => p.id !== state.localPlayerId);
-  let tab = 'burn', counter = false, sheet = null, real = null, auto = null;
-  const TAB_LABELS = { burn: 'Burn', joker: 'Joker', victory: 'Victory', cardBack: 'Back', tableTheme: 'Table', deck: 'Deck', frame: 'Frame', emotes: 'Emote', avatar: 'Avatar', table: 'Setup' };
+  let tab = 'avatar', counter = false, sheet = null, real = null, auto = null;
+  const TAB_LABELS = { avatar: 'Avatar', deck: 'Deck', tableTheme: 'Table', cardBack: 'Card Back', frame: 'Frames', burn: 'Burn', joker: 'Joker', victory: 'Victory', emotes: 'Emotes', table: 'Setup' };
   const LOOK = ['cardBack', 'tableTheme', 'deck', 'frame', 'emotes', 'avatar'];
   const curId = {};
 
@@ -75,6 +75,7 @@
       if (type === 'avatar') bot.avatar = id;
     }
     applyEquippedCosmetics();
+    render();
   }
   function restoreReal() {
     stopAuto();
