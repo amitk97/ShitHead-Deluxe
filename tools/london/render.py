@@ -138,7 +138,7 @@ def go(name):
 RED, BLUE, WHITE, GOLD, STONE, BLACK = hexc('c8102e'), hexc('012169'), hexc('f4f1ea'), hexc('d9a928'), hexc('c9b98f'), hexc('15151a')
 
 
-def bus(mode='all', angle=0.0, drive=None):
+def bus(mode='all', angle=0.0, drive=None, view=None):
     reset((1000, 1000) if drive is not None else (1000, 1100), 40 if drive is not None else 64, 1.0, 0.22)
     WHEEL = []
     red, cream, black = mat('red', hexc('a30a1f'), .32), mat('cream', hexc('efe6cf'), .35), mat('blk', hexc('16161b'), .5)
@@ -216,6 +216,8 @@ def bus(mode='all', angle=0.0, drive=None):
             if o.type in ('MESH', 'FONT') and not o.is_shadow_catcher: o.location.x += drive
         cam((10, -10, 2.6), (0, 0, 1.6), None, 45)
         go('busd_%02d' % KFRAME[0]); return
+    if view == 'front':
+        cam((17, 0, 2.4), (0, 0, 2.2), None, 85); go('bus_front'); return
     cam((11.2, -5.2, 2.1), (0, 0, 2.15), None, 50)
     go('bus_body' if mode == 'all' else 'bus_wheels_%02d' % round(angle / (math.pi / 32)))
 
@@ -422,6 +424,11 @@ def londoneye():
     cam((0, -26, 4.2), (0, 0, 4.2), 10.4); go('londoneye')
 
 
+def bus_front():
+    # Head-on front of the Routemaster for the burn: lens 85mm from 12m (little perspective), camera at lamp height.
+    bus('all', 0.0, None, 'front')
+
+
 def bus_drive():
     for k in range(26):
         t = .10 + k * .03
@@ -434,10 +441,11 @@ def ship():
     reset((900, 900), 48)
     hull, deck, sail, red, wood = mat('hull', hexc('3a2515'), .6), mat('dk', hexc('8a6a43'), .6), mat('sail', hexc('f0e8d2'), .75), mat('red', hexc('b3162b'), .4), mat('wd', hexc('5a3d22'), .6)
     ground(40, 0)
-    rbox('hull', (0, 0, .6), (5.2, 1.6, .95), hull, .28, 6)
-    cone('bow', (3.15, 0, .66), .8, .06, 1.5, hull, 4, (0, math.pi / 2, math.pi / 4)).scale = (.55, 1, 1)
-    rbox('stripe', (0, 0, .92), (5.25, 1.64, .1), red, .03, 3)
-    rbox('deck', (0, 0, 1.1), (5.0, 1.45, .08), deck, .02, 2)
+    rbox('hull', (0, 0, .62), (5.2, 2.1, 1.1), hull, .3, 6)
+    rbox('bowstem', (2.9, 0, .72), (1.4, 1.1, 1.0), hull, .35, 6)
+    sph('figurehead', (4.0, 0, 1.0), .16, mat('fg', GOLD, .3, 1))
+    rbox('stripe', (0, 0, .98), (5.25, 2.14, .1), red, .03, 3)
+    rbox('deck', (0, 0, 1.2), (5.0, 1.9, .08), deck, .02, 2)
     rbox('castle', (-2.0, 0, 1.6), (1.3, 1.5, .9), hull, .12, 4); rbox('castle2', (-2.0, 0, 2.1), (1.4, 1.6, .12), wood, .03, 3)
     cyl('bowsprit', (3.7, 0, 1.45), .05, 1.6, wood, (0, math.radians(75), 0), 10, .005)
     for mx, mh in ((-1.2, 4.3), (.4, 5.2), (1.8, 3.8)):
@@ -447,15 +455,15 @@ def ship():
             cyl('yard', (mx, 0, z + .5), .045, w + .3, wood, (math.pi / 2, 0, 0), 10, .005)
             sph('sail', (mx + .1, 0, z), 1, sail, (.16, w / 2, .5))
         rbox('flag', (mx, .25, 1.1 + mh + .1), (.06, .5, .26), red, .01, 2)
-    light('AREA', (7, -8, 9), 650, (1.0, .93, .82), 6); light('AREA', (-7, 5, 6), 260, (.7, .8, 1), 6)
-    cam((10, -8.5, 3.6), (0.3, 0, 2.7), None, 42); go('ship')
+    light('AREA', (9, -6, 9), 650, (1.0, .93, .82), 6); light('AREA', (6, 6, 5), 300, (.7, .8, 1), 6)
+    cam((15, 0, 4.6), (0, 0, 2.5), None, 50); go('ship')
 
 
 def tb_open():
     for k in range(14): towerbridge('open', 72.0 * k / 13, k)
 
 
-MODELS = dict(ship=ship, tb_open=tb_open, bus_drive=bus_drive, bus=bus, bus_wheels=lambda: [bus('wheels', k * math.pi / 32) for k in range(8)], phonebox=phonebox, bigben=bigben, guard=guard, londoneye=londoneye,
+MODELS = dict(bus_front=bus_front, ship=ship, tb_open=tb_open, bus_drive=bus_drive, bus=bus, bus_wheels=lambda: [bus('wheels', k * math.pi / 32) for k in range(8)], phonebox=phonebox, bigben=bigben, guard=guard, londoneye=londoneye,
               towerbridge=towerbridge, tb_base=lambda: towerbridge('base'))
 for n, f in MODELS.items():
     if not ONLY or n in ONLY: f()

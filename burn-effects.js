@@ -1909,42 +1909,36 @@
     }
 
 
-    // London Calling burn (v438, rebuilt v439): a Routemaster (Blender renders: art/london/bus-body.webp, front 3/4, and an
-    // 8-frame sheet of the wheels turning, bus-wheels.webp) drives down a perspective road from behind the card straight
-    // at the camera. It grows with distance, accelerates (the road dashes rush past, the wheels spin faster) and bursts
-    // through the card at .55s: shards fly out in front of it, sparks and a shock ring, then it roars on past the screen
-    // bottom while dust and exhaust settle. One 2s clock. Sound: BURN_SOUNDS['burn-ldn-routemaster'].
+    // London Calling burn (v438, rebuilt v440 from the owner's video): the head-on FRONT of a Routemaster (Blender render,
+    // art/london/bus-front2.webp) drives straight down a road from far behind the card toward the camera. The camera is
+    // fixed, so perspective does the work: the bus scales with 1/distance (starting hidden behind the card, accelerating),
+    // its ground line slides down the road, and it bursts through the card at .55s (shards fly out in front of it, sparks,
+    // a shock ring), fills the screen and is gone by ~.85s while dust settles. The road and its centre dashes are static.
+    // One 2s clock. Sound: BURN_SOUNDS['burn-ldn-routemaster'].
     const RM_HIT = .55;
     function bfxRoutemaster(host, x, y, k) {
       const { st, kit } = pfxBase(host, x, y, ['rgba(220,38,38,.45)', 'rgba(30,58,138,.2)']), { W, H, cx, cy, anim, end, vw } = st, { rand, out, sm, fr, add, clamp } = kit;
       pfxCard(st, kit, RM_HIT, { tint: 'linear-gradient(160deg,rgba(220,38,38,.3),rgba(30,58,138,.3))', shake: .008 });
-      const vh = host.clientHeight || innerHeight, hy = cy - H * .55, span = vh - hy, BW = H * 2.3, BH = BW / .91, GY1 = cy + H * .6;
-      // u = how far down the road the bus is (0 far away, 1 at the card, 2.2 past the camera): accelerating, then steady.
-      const uAt = t => { const v = clamp((t - .08) / (RM_HIT - .08)); return t < RM_HIT ? Math.pow(v, 1.5) : 1 + (1.5 / (RM_HIT - .08)) * (t - RM_HIT); };
-      const road = add(`left:0;top:${hy}px;width:${vw}px;height:${span}px;z-index:1;clip-path:polygon(${cx - H * .04}px 0,${cx + H * .04}px 0,${cx + vw * 1.1}px 100%,${cx - vw * 1.1}px 100%);background:linear-gradient(180deg,rgba(15,23,42,0),rgba(15,23,42,.8) 18%,rgba(30,41,59,.95))`);
+      const vh = host.clientHeight || innerHeight, hy = cy - H * .5, Y8 = cy + H * .62, span = vh * 1.2 - hy, BW = H * 2.8, BH = BW / .812;   // the sprite also holds its shadow: the bus is the left 68%, wheels at 90.7% of its height
+      const gy = d => hy + (Y8 - hy) * 8 / d;                                  // ground line of something d away (d 8 = at the card)
+      const dAt = t => t < .06 ? 24 : t < RM_HIT ? 24 - 16 * Math.pow((t - .06) / (RM_HIT - .06), 1.6) : 8 - (16 * 1.6 / (RM_HIT - .06)) * .55 * (t - RM_HIT);
+      const road = add(`left:0;top:${hy}px;width:${vw}px;height:${span}px;z-index:1;clip-path:polygon(${cx - H * .05}px 0,${cx + H * .05}px 0,${cx + vw * 1.2}px 100%,${cx - vw * 1.2}px 100%);background:linear-gradient(180deg,rgba(15,23,42,0),rgba(15,23,42,.8) 14%,rgba(30,41,59,.95))`);
       anim(road, fr(t => ({ opacity: sm(0, .1, t) * (1 - sm(1.0, 1.4, t)) })));
-      for (let i = 0; i < 7; i++) {   // centre-line dashes rushing toward the camera, faster as the bus accelerates
-        const dash = add(`left:${cx - 3}px;top:0;width:6px;height:26px;z-index:1;background:linear-gradient(180deg,rgba(254,240,138,.9),rgba(250,204,21,.9));border-radius:2px`);
-        anim(dash, fr(t => { const q = ((i / 7 + 1.4 * Math.min(uAt(t), 2.4)) % 1), e = Math.pow(q, 1.9), sc = .12 + 3.2 * e; return { opacity: sm(0, .1, t) * (1 - sm(1.0, 1.3, t)) * (q > .04 ? 1 : 0), transform: `translateY(${(hy + span * e).toFixed(1)}px) scale(${(sc * .8).toFixed(3)},${sc.toFixed(3)})` }; }));
-      }
-      for (let i = 0; i < 14; i++) {  // speed streaks fanning out from the vanishing point
-        const a = (i / 14) * Math.PI * 2 + rand(-.1, .1), len = H * rand(.7, 1.6), ln = add(`left:${cx}px;top:${hy}px;width:${len}px;height:2px;z-index:1;transform-origin:0 50%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55))`);
-        anim(ln, fr(t => ({ opacity: sm(.2, RM_HIT, t) * (1 - sm(RM_HIT, .95, t)) * .8, transform: `rotate(${(a * 180 / Math.PI).toFixed(1)}deg) translateX(${(H * .25 + H * 1.1 * sm(.2, RM_HIT + .1, t)).toFixed(1)}px)` })));
-      }
-      const bus = add(`left:${cx - BW * .6}px;top:${GY1 - BH * .9}px;width:${BW}px;height:${BH}px;z-index:2;transform-origin:60% 90%`,
-        `<div style="position:absolute;inset:0;background:url(art/london/bus-body.webp) center/100% 100% no-repeat;filter:drop-shadow(0 ${H * .05}px ${H * .04}px rgba(0,0,0,.45))"></div>`
-        + `<div class="rm-wheels" style="position:absolute;inset:0;background:url(art/london/bus-wheels.webp) 0 0/800% 100% no-repeat"></div>`
-        + [26, 71].map(l => `<div style="position:absolute;left:${l - 14}%;top:46%;width:28%;height:20%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,244,200,.9),rgba(255,244,200,0));mix-blend-mode:screen"></div>`).join(''));
-      anim(bus, fr(t => { const u = uAt(t), p = Math.pow(u, 1.6), sc = (.45 + 1.85 * p) / 2.3, dy = (cy + H * (-.5 + 1.1 * p)) - GY1, bump = Math.max(0, 1 - Math.abs(t - RM_HIT) / .05);
-        return { opacity: t < .06 ? sm(0, .06, t) : u < 2.15 ? 1 : 0, transform: `translateY(${dy.toFixed(1)}px) scale(${sc.toFixed(3)}) translateX(${(Math.sin(t * 90) * H * .004 * (1 + bump * 3)).toFixed(2)}px)` }; }));
-      anim(bus.querySelector('.rm-wheels'), fr(t => ({ backgroundPosition: `${(Math.floor(22 * uAt(t)) % 8) * 100 / 7}% 0` })));
-      pfxShatter(st, kit, { t0: RM_HIT, ip: [W * .5, H * .55], cols: 4, rows: 6, speed: 1.2, edge: '#fecaca', tint: i => `linear-gradient(135deg,${i % 2 ? 'rgba(220,38,38,.55)' : 'rgba(255,255,255,.45)'},rgba(30,58,138,.4))` });
+      [34, 24, 17, 12, 9, 6.5, 5].forEach(d => {   // static centre-line dashes: the bus simply drives over them
+        const g = gy(d), sc = 8 / d, dash = add(`left:${cx - 3}px;top:${g - 13 * sc}px;width:6px;height:26px;z-index:1;transform-origin:50% 50%;transform:scale(${(sc * .8).toFixed(3)},${sc.toFixed(3)});background:linear-gradient(180deg,rgba(254,240,138,.9),rgba(250,204,21,.9));border-radius:2px`);
+        anim(dash, fr(t => ({ opacity: sm(0, .1, t) * (1 - sm(1.0, 1.3, t)) })));
+      });
+      const bus = add(`left:${cx - BW * .339}px;top:${Y8 - BH * .907}px;width:${BW}px;height:${BH}px;z-index:2;transform-origin:33.9% 90.7%`,
+        `<div style="position:absolute;inset:0;background:url(art/london/bus-front2.webp) center/100% 100% no-repeat"></div>`);
+      anim(bus, fr(t => { const d = Math.max(2.6, dAt(t)), sc = 8 / d, bump = Math.max(0, 1 - Math.abs(t - RM_HIT) / .05);
+        return { opacity: t < .04 ? 0 : 1 - sm(.74, .86, t), transform: `translate(${(Math.sin(t * 95) * H * .003 * (1 + 3 * bump) * sc).toFixed(2)}px,${(gy(d) - Y8).toFixed(1)}px) scale(${sc.toFixed(3)})` }; }));
+      pfxShatter(st, kit, { t0: RM_HIT, ip: [W * .5, H * .55], cols: 4, rows: 6, speed: 1.25, edge: '#fecaca', tint: i => `linear-gradient(135deg,${i % 2 ? 'rgba(220,38,38,.55)' : 'rgba(255,255,255,.45)'},rgba(30,58,138,.4))` });
       pfxBurst(st, kit, { x: cx, y: cy, t0: RM_HIT, n: 18, len: H * .12, dist: H * .8, life: .5, cols: ['#fde047', '#fff', '#ef4444', '#60a5fa'], w: 2.4 });
       const ring = add(`left:${cx - H * .5}px;top:${cy - H * .5}px;width:${H}px;height:${H}px;z-index:4;border-radius:50%;border:${Math.max(2, H * .03)}px solid rgba(255,255,255,.85);box-shadow:0 0 ${H * .12}px rgba(251,191,36,.8)`);
       anim(ring, fr(t => { const p = clamp((t - RM_HIT) / .45); return { opacity: p > 0 && p < 1 ? (1 - p) * .9 : 0, transform: `scale(${(.2 + 1.6 * out(p)).toFixed(3)})` }; }));
-      for (let i = 0; i < 9; i++) {   // dust kicked up where it crosses the card, drifting back
-        const px = cx + rand(-.9, .9) * H, py = GY1 + rand(-.05, .12) * H, s = H * rand(.3, .55), t0 = RM_HIT + .02 + i * .03;
-        const puff = add(`left:${px - s / 2}px;top:${py - s / 2}px;width:${s}px;height:${s}px;z-index:2;border-radius:50%;background:radial-gradient(closest-side,rgba(226,232,240,.55),rgba(148,163,184,.22) 60%,transparent)`);
+      for (let i = 0; i < 9; i++) {   // dust thrown out along the road as it blasts through
+        const px = cx + rand(-.9, .9) * H, py = Y8 + rand(-.05, .1) * H, s = H * rand(.3, .55), t0 = RM_HIT + .02 + i * .03;
+        const puff = add(`left:${px - s / 2}px;top:${py - s / 2}px;width:${s}px;height:${s}px;z-index:3;border-radius:50%;background:radial-gradient(closest-side,rgba(226,232,240,.55),rgba(148,163,184,.22) 60%,transparent)`);
         anim(puff, fr(t => { const p = clamp((t - t0) / .85); return { opacity: p > 0 && p < 1 ? (1 - p) * .8 : 0, transform: `translateY(${(-H * .2 * p).toFixed(1)}px) scale(${(.35 + 1.1 * out(p)).toFixed(3)})` }; }));
       }
       end(st.lastAnim);

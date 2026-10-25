@@ -11,35 +11,22 @@ const out = (rel, b) => { const f = path.join(ROOT, rel); fs.mkdirSync(path.dirn
   const pg = await br.newPage();
   await pg.setContent('<body></body>');
   // trimmed sprite: crop to the alpha box, scale to a max side
-  async function sprite(name, rel, max) {
-    out(rel, await pg.evaluate(async ([src, max]) => {
+  async function sprite(name, rel, max, thr = 12) {
+    out(rel, await pg.evaluate(async ([src, max, thr]) => {
       const i = await new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = src; });
       const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const x = c.getContext('2d'); x.drawImage(i, 0, 0);
       const d = x.getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0;
-      for (let y = 0; y < c.height; y++) for (let xx = 0; xx < c.width; xx++) if (d[(y * c.width + xx) * 4 + 3] > 12) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      for (let y = 0; y < c.height; y++) for (let xx = 0; xx < c.width; xx++) if (d[(y * c.width + xx) * 4 + 3] > thr) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
       const w = x1 - x0 + 1, h = y1 - y0 + 1, k = Math.min(1, max / Math.max(w, h));
       const o = document.createElement('canvas'); o.width = Math.round(w * k); o.height = Math.round(h * k);
       o.getContext('2d').drawImage(c, x0, y0, w, h, 0, 0, o.width, o.height); return o.toDataURL('image/webp', 0.88);
-    }, [b64(name), max]));
+    }, [b64(name), max, thr]));
   }
-  // Bus: the body (front 3/4, wheels included) and an 8-frame sheet of the four wheels turning (holdout-masked so the
-  // body still hides what it should), one shared crop so they stack exactly.
-  const bus = await pg.evaluate(async (srcs) => {
-    const load = (u) => new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = u; });
-    const ims = await Promise.all(srcs.map(load)), body = ims[0];
-    const c = document.createElement('canvas'); c.width = body.width; c.height = body.height; const x = c.getContext('2d'); x.drawImage(body, 0, 0);
-    const d = x.getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0;
-    for (let y = 0; y < c.height; y++) for (let xx = 0; xx < c.width; xx++) if (d[(y * c.width + xx) * 4 + 3] > 40) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-    const w = x1 - x0 + 1, h = y1 - y0 + 1, k = Math.min(1, 640 / w), W = Math.round(w * k), H = Math.round(h * k);
-    const o = document.createElement('canvas'); o.width = W; o.height = H; o.getContext('2d').drawImage(body, x0, y0, w, h, 0, 0, W, H);
-    const sheet = document.createElement('canvas'); sheet.width = W * 8; sheet.height = H; const sx = sheet.getContext('2d');
-    for (let i = 0; i < 8; i++) sx.drawImage(ims[1 + i], x0, y0, w, h, i * W, 0, W, H);
-    return { body: o.toDataURL('image/webp', .9), wheels: sheet.toDataURL('image/webp', .9), w: W, h: H };
-  }, [b64('bus_body'), ...Array.from({ length: 8 }, (_, i) => b64('bus_wheels_0' + i))]);
-  out('art/london/bus-body.webp', bus.body); out('art/london/bus-wheels.webp', bus.wheels); console.log('bus size', bus.w, bus.h);
+  // Burn: the head-on front of the bus (scaled in the DOM as it drives at the camera), and the bow-on ship for the victory.
+  await sprite('bus_front', 'art/london/bus-front2.webp', 760, 70);
+  await sprite('ship', 'art/london/ship2.webp', 560, 70);
   await sprite('phonebox', 'art/london/phonebox.webp', 760);
-  await sprite('bigben', 'art/london/bigben.webp', 900);
-  // Tower Bridge pieces share one crop box (the full bridge's), so they stack exactly
+    // Tower Bridge pieces share one crop box (the full bridge's), so they stack exactly
   const tb = await pg.evaluate(async (srcs) => {
     const load = (s) => new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = s; });
     const [base, L, Rr, full] = await Promise.all(srcs.map(load));
@@ -50,9 +37,9 @@ const out = (rel, b) => { const f = path.join(ROOT, rel); fs.mkdirSync(path.dirn
     [['base', base], ['leafL', L], ['leafR', Rr], ['full', full]].forEach(([n, im]) => { const o = document.createElement('canvas'); o.width = Math.round(w * k); o.height = Math.round(h * k); o.getContext('2d').drawImage(im, x0, y0, w, h, 0, 0, o.width, o.height); res[n] = o.toDataURL('image/webp', 0.88); });
     return res;
   }, [b64('tb_base'), b64('tb_leafL'), b64('tb_leafR'), b64('towerbridge')]);
-  ['base', 'leafL', 'leafR', 'full'].forEach(n => out(`art/london/tb-${n}.webp`, tb[n]));
+  ['base', 'leafL', 'leafR', 'full'].forEach(n => out(`art/london/tb2-${n}.webp`, tb[n]));
   // avatar: Guardsman bust on a dimmed Union Jack plate, 512 square
-  out('art/avatars/ldn-guard.webp', await pg.evaluate(async ([g, uj]) => {
+  out('art/avatars/ldn-guard2.webp', await pg.evaluate(async ([g, uj]) => {
     const load = (s) => new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = s; });
     const [G, U] = await Promise.all([load(g), load(uj)]);
     const c = document.createElement('canvas'); c.width = c.height = 512; const x = c.getContext('2d');
@@ -74,7 +61,7 @@ const out = (rel, b) => { const f = path.join(ROOT, rel); fs.mkdirSync(path.dirn
     return c.toDataURL('image/webp', 0.9);
   }, [ujUri(1050, 750)]));
   // table: the Thames at night, 2160x1500. Calm paved floor in the bottom 16%.
-  out('art/london/table-thames.webp', await pg.evaluate(async ([bb, tbs, eye]) => {
+  out('art/london/table-thames2.webp', await pg.evaluate(async ([bb, tbs, eye]) => {
     const load = (s) => new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = s; });
     const [B, T, E] = await Promise.all([bb, tbs, eye].map(load));
     const trim = (im) => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); const d = x.getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0; for (let y = 0; y < c.height; y++) for (let xx = 0; xx < c.width; xx++) if (d[(y * c.width + xx) * 4 + 3] > 40 && y < c.height * .94) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; } const o = document.createElement('canvas'); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1; o.getContext('2d').drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height); return o; };

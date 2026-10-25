@@ -4179,7 +4179,7 @@
       vfxShout(layer, 'RAMADAN KAREEM', cx, H * .68, Math.min(36, W * .09), 'color:#fff7d6;-webkit-text-stroke:1.5px #1e3a8a;text-shadow:3px 3px 0 #b45309,5px 5px 0 #1e3a8a', RAMADAN.text, 1800);
     }
 
-    // London Calling victory (v438): Tower Bridge Salute. The bridge (Blender renders: art/london/tb-*.webp, one shared
+    // London Calling victory (v438): Tower Bridge Salute. The bridge (Blender renders: art/london/tb2-*.webp, one shared
     // crop so the pieces stack exactly) rises out of the dark, the two bascule leaves lift about their hinges (.7s), a
     // tall ship sails through (1.5-2.6s) while red, white and blue fireworks go off over the towers (TB_BURSTS), the
     // leaves close with a thud at 3.3s, WELL DONE and Union confetti. Ends by 3.65s. Sound: VICTORY_SOUNDS['victory-ldn-towerbridge'].
@@ -4191,20 +4191,23 @@
       vfxTwinkles(layer, 14, [0, 0, W, H * .3], 0, 1800, ['#ffffff', '#ffe9a8'], k);
       const water = bfxAdd(layer, '<div style="width:100%;height:100%;background:linear-gradient(180deg,rgba(10,26,68,0),rgba(11,34,85,.85) 30%,rgba(7,18,46,.95))"></div>', W / 2, cy + bh * .5 + H * .06, W, H * .16);
       bfxAnimate(water, [{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .86 }, { opacity: 0 }], { duration: D, easing: 'linear' });
-      // A tall ship sails up the river from far behind the bridge, through the open middle between the raised leaves, and out
-      // toward us. Two copies on one path: the first sits UNDER the bridge (so the towers and side spans hide it until it is in
-      // the gap), the second ABOVE it once it has passed the bridge plane (p .45, ~2.1s, well before the leaves close at 2.7s).
-      const SHIP = `<svg viewBox="0 0 120 90" width="100%" height="100%"><ellipse cx="60" cy="84" rx="58" ry="6" fill="rgba(180,210,255,.35)"/><path d="M4 66H116L100 82H20Z" fill="#3b2a1a"/><path d="M4 66H116" stroke="#c8102e" stroke-width="4"/><path d="M36 64V8M72 64V16" stroke="#2b1d10" stroke-width="3"/><path d="M38 10Q58 24 38 52Z" fill="#f4efe0"/><path d="M74 18Q92 30 74 54Z" fill="#f4efe0"/><path d="M34 34Q16 40 34 54Z" fill="#e8e0cc"/></svg>`;
-      const shipAt = ms => { const p = Math.max(0, Math.min(1, (ms - 1400) / 1500)), e = Math.pow(p, 1.6); return { p, y: cy + bh * .36 + bh * .42 * e, sc: .2 + .95 * e }; };
+      // A tall ship (Blender render, bow-on: art/london/ship2.webp) sails straight up the river toward us at constant speed:
+      // perspective only (scale 8/d, waterline sliding down the river as d shrinks), a gentle roll and bob. Two copies on one
+      // path: one UNDER the bridge (the towers hide it, the open gap shows it) and one ABOVE it once it passes the bridge
+      // plane (d 8, ~2.26s, before the leaves close at 2.7s). The middle pier is gone from the bridge art, so the gap is clear.
+      const SW = bw * .13, SH = SW / .418, YH = cy + bh * .22, Y8 = cy + bh * .46;
+      const shipD = ms => 14 - 7 * (ms - 1400) / 1000;
       const mkShip = front => {
-        const el = bfxAdd(layer, SHIP, cx, cy, bw * .3, bw * .3 * .75);
-        bfxAnimate(el, vfxSample(40, t => { const { p, y, sc } = shipAt(t * D), on = p > 0 && p < 1 && (front ? p >= .45 : p < .45);
-          return { transform: `translate(${(Math.sin(p * 7) * bw * .008).toFixed(1)}px,${(y - cy).toFixed(1)}px) scale(${sc.toFixed(3)}) rotate(${(Math.sin(p * 9) * 1.5).toFixed(1)}deg)`, opacity: on ? 1 : 0 }; }), { duration: D, easing: 'linear' });
+        const el = bfxAdd(layer, `<div style="position:absolute;left:-40%;right:-40%;bottom:-3%;height:16%;border-radius:50%;background:radial-gradient(closest-side,rgba(200,225,255,.4),transparent)"></div><div style="position:absolute;inset:0;background:url(art/london/ship2.webp) center/100% 100% no-repeat"></div>`, cx + SW * (.5 - .382), Y8 - SH * .936 + SH / 2, SW, SH);
+        el.style.transformOrigin = '38.2% 93.6%';
+        bfxAnimate(el, vfxSample(60, t => { const ms = t * D, d = Math.max(4.5, shipD(ms)), sc = 8 / d, on = ms >= 1400 && ms <= 2950 && (front ? d <= 8 : d > 8);
+          const roll = Math.sin(ms * .0055) * 1.4, bob = Math.sin(ms * .009) * 1.2 * sc, fade = Math.min(1, (ms - 1400) / 150, (2950 - ms) / 150);
+          return { transform: `translateY(${(YH + (Y8 - YH) * 8 / d - Y8 + bob).toFixed(1)}px) rotate(${roll.toFixed(2)}deg) scale(${sc.toFixed(3)})`, opacity: on ? Math.max(0, fade) : 0 }; }), { duration: D, easing: 'linear' });
         return el;
       };
       mkShip(false);
       const wrap = bfxAdd(layer, '', cx, cy, bw, bh);
-      const piece = (n, extra = '') => { const d = document.createElement('div'); d.style.cssText = `position:absolute;inset:0;background:url(art/london/tb-${n}.webp) center/100% 100% no-repeat;${extra}`; wrap.appendChild(d); return d; };
+      const piece = (n, extra = '') => { const d = document.createElement('div'); d.style.cssText = `position:absolute;inset:0;background:url(art/london/tb2-${n}.webp) center/100% 100% no-repeat;${extra}`; wrap.appendChild(d); return d; };
       const L = piece('leafL', 'transform-origin:34.7% 83%'), R = piece('leafR', 'transform-origin:63.9% 83%'); piece('base');
       bfxAnimate(wrap, [{ transform: `translateY(${50 * k}px) scale(.96)`, opacity: 0 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: 500 / D }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: .9 }, { transform: 'translateY(0) scale(1.02)', opacity: 0 }], { duration: D, easing: 'ease-out' });
       const ang = ms => {
