@@ -9709,7 +9709,7 @@
       setBodyDeckTheme(themeClass);
       applyAccessibilityPrefs(); // className was just fully replaced above, which wipes high-contrast/reduce-motion -- reapply them
       state.deckTheme = themeClass;
-      try { localStorage.setItem('shithead_deck_theme', themeClass); } catch (e) {}
+      if (!state.labDummy) { try { localStorage.setItem('shithead_deck_theme', themeClass); } catch (e) {} }
       if (typeof syncShowcase === 'function' && typeof currentUser !== 'undefined' && currentUser) syncShowcase();
       scheduleSettingsCloudSave();
       saveGameState();
@@ -11329,7 +11329,7 @@
     // items. Read live, never stored, so it reverts by itself when the event
     // ends. Tutorial bots keep the plain look; extra bots keep free avatars.
     function eventBotItem(player, type) {
-      if (!player?.isBot || String(player.id).startsWith('tut_')) return null;
+      if (!player?.isBot || String(player.id).startsWith('tut_') || state?.labDummy) return null; // the Test Lab shows the look it was given
       const live = activeSeasonalEvents().map(w => w.event);
       if (!live.length) return null;
       if (type === 'avatar') {
@@ -13437,7 +13437,7 @@
       document.body.dataset.equippedAvatar = equippedCosmetics.avatar || 'default';
       if (typeof refreshHomeBackdrop === 'function' && document.body.classList.contains('lobby-open')) refreshHomeBackdrop();
       refreshOwnAvatarDisplays();
-      try { localStorage.setItem('shithead_equipped_cosmetics', JSON.stringify(equippedCosmetics)); } catch (e) {}
+      if (!state?.labDummy) { try { localStorage.setItem('shithead_equipped_cosmetics', JSON.stringify(equippedCosmetics)); } catch (e) {} } // the Test Lab tries looks on without saving them
       publishLocalCosmeticsToRoom();
       if (typeof emoteFanOpen !== 'undefined' && emoteFanOpen) {
         toggleEmoteFan(true);
@@ -17726,7 +17726,7 @@
     function showHelperTip(key, anchor, opts = {}) {
       const text = HELPER_TIPS[key];
       if (!text || !helperTipsOn || helperTipNow || helperTipSeen(key)) return false;
-      if (!opts.force && (tutorialActive || devTestSuiteRunning || state.spectating || window.ShWelcomeTour?.active())) return false;
+      if (!opts.force && (tutorialActive || devTestSuiteRunning || state.spectating || state.labDummy || window.ShWelcomeTour?.active())) return false;
       const el = typeof anchor === 'string' ? document.querySelector(anchor) : anchor;
       if (!helperTipVisible(el)) return false;
       markHelperTipSeen(key);

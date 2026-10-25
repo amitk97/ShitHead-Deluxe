@@ -1896,6 +1896,32 @@ async function runDevTestSuite() {
       assertTrue(xpBoostNow() === null && xpBoostNote() === '', 'Nothing off-season');
     } finally { [seasonalNowOverride, xpFeatureOn] = was; }
   });
+  await test('v436: the Test Lab tries looks on in memory only: nothing is saved to the account or the device', () => {
+    freshState({ phase: 'PLAY' });
+    state.players = [makePlayer({ id: 'p1', hand: [makeCard('5')] }), makePlayer({ id: 'p2', isBot: true, hand: [makeCard('6')] })];
+    state.localPlayerId = 'p1'; state.labDummy = true;
+    const keys = ['shithead_equipped_cosmetics', 'shithead_deck_theme'], before = keys.map(k => localStorage.getItem(k));
+    const realDb = db, realEquipped = { ...equippedCosmetics }, realDeck = state.deckTheme;
+    db = { ref() { throw new Error('the Test Lab must not touch the database'); } };
+    try {
+      ShTestLab.snapshotReal();
+      const pick = (type) => customAllItems(type).find((it) => it.id !== 'default' && it.id !== equippedCosmetics[type]);
+      ['cardBack', 'tableTheme', 'frame', 'emotes', 'avatar'].forEach((type) => {
+        const it = pick(type);
+        assertTrue(!!it, `${type}: an item to try`);
+        ShTestLab.applyLook(type, it.id);
+        assertEqual(equippedCosmetics[type], it.id, `${type}: the look is applied`);
+      });
+      assertEqual(state.players[1].cosmetics.cardBack, equippedCosmetics.cardBack, 'The bot wears the card back too');
+      const deck = deckItems().find((d) => d.theme !== state.deckTheme);
+      ShTestLab.applyLook('deck', deck.id);
+      assertEqual(state.deckTheme, deck.theme, 'The deck is applied');
+      assertEqual(keys.map(k => localStorage.getItem(k)), before, 'Nothing was written to the device');
+      ShTestLab.restoreReal();
+      assertEqual({ ...equippedCosmetics }, realEquipped, 'Your real look is put back');
+      assertEqual(state.deckTheme, realDeck, 'and your real deck');
+    } finally { db = realDb; Object.assign(equippedCosmetics, realEquipped); if (state.deckTheme !== realDeck) selectDeckTheme(realDeck); }
+  });
   await test('v405: the Test Lab card is only in the carousel for the AmitK account', () => {
     const has = () => !!document.querySelector('#modeCarousel .mc-track [data-mc-mode="lab"]'), was = currentUser;
     try {
