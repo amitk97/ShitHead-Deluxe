@@ -224,31 +224,6 @@ def sealink():
     cam((0, -34, 3.9), (0, 0, 3.9), 20); go('sealink')
 
 
-def train_front():
-    reset((900, 1000), 64, 0.5, 0.14)
-    white, yel, blue, blk, red = mat('w', hexc('f1eee4'), .5), mat('y', hexc('e9a700'), .45), mat('b', hexc('1d4f9c'), .4), mat('k', hexc('0c1018'), .1, .3), mat('r', hexc('c0181f'), .45)
-    steel, lamp, amber = mat('s', hexc('9aa0a8'), .35, .8), mat('lp', hexc('fff3c0'), .2, 0, hexc('fff0b0'), 3), mat('am', hexc('ffb400'), .3, 0, hexc('ff9d00'), 2.6)
-    ground(30)
-    rbox('body', (0, .2, 2.55), (3.5, 3.4, 4.3), white, .38, 6)                    # cab body, big soft corners
-    rbox('roofcap', (0, .2, 4.75), (3.1, 3.2, .35), white, .2, 5)
-    rbox('face', (0, -1.45, 1.75), (3.45, .16, 2.9), yel, .18, 5)                  # yellow front panel
-    rbox('windscr', (0, -1.58, 3.55), (3.0, .08, 1.35), blk, .16, 5)               # black windscreen
-    rbox('pillar', (0, -1.6, 3.55), (.12, .05, 1.35), yel, .01, 2)
-    rbox('hood', (0, -1.56, 4.35), (3.05, .12, .2), yel, .05, 3)
-    rbox('board', (0, -1.56, 4.72), (1.7, .08, .34), amber, .08, 3)                # destination board
-    rbox('stripe', (0, -1.56, 2.78), (3.45, .06, .14), red, .02, 2)
-    rbox('stripe2', (0, -1.56, 2.55), (3.45, .06, .1), blue, .02, 2)
-    for x in (-1.15, 1.15): sph('lamp', (x, -1.6, 1.85), .26, lamp, (1, .5, 1))    # headlights
-    sph('lampc', (0, -1.6, 2.2), .15, lamp, (1, .5, 1))
-    for x in (-1.15, 1.15): sph('mark', (x, -1.58, 1.1), .09, mat('mk', hexc('d8201f'), .3, 0, hexc('ff2a2a'), 3))
-    rbox('plate', (0, -1.56, 1.3), (.9, .06, .4), blk, .06, 3)
-    rbox('skirt', (0, -1.62, .78), (3.3, .5, .4), steel, .08, 3)
-    for x in (-1.0, 1.0): cyl('buf', (x, -1.9, .72), .24, .3, steel, (math.pi / 2, 0, 0), 24, .02); cyl('bufh', (x, -2.08, .72), .32, .05, steel, (math.pi / 2, 0, 0), 24, .01)
-    for x in (-1.68, 1.68): cyl('grab', (x, -1.5, 2.3), .05, 2.2, yel, (0, 0, 0), 12, .01)
-    light('AREA', (3, -8, 9), 1000, (1.0, .93, .82), 6); light('AREA', (-6, -3, 6), 360, (.8, .88, 1), 6); light('AREA', (0, -8, 1.5), 200, (1, 1, 1), 6)
-    cam((0, -17, 2.7), (0, 0, 2.7), None, 85); go('train_front')
-
-
 def tiffin(part='all'):
     reset((800, 1000), 64, 0.6, 0.3, True)
     steel = mat('st', hexc('b9bfc7'), .3, .8); dark = mat('dk', hexc('7a8089'), .4, .8); blk = mat('k', hexc('1a1a1f'), .6)
@@ -329,7 +304,7 @@ def marigold(name='marigold', c1='ff9a00', c2='e45c00', c3='ffd23a'):
     cam((0, 0, 12), (0, 0, 0), 6.0); go(name)
 
 
-MODELS = dict(gateway=gateway, sealink=sealink, train_front=train_front, tiffin_all=lambda: tiffin('all'), tiffin_low=lambda: tiffin('low'), tiffin_top=lambda: tiffin('top'),
+MODELS = dict(gateway=gateway, sealink=sealink, tiffin_all=lambda: tiffin('all'), tiffin_low=lambda: tiffin('low'), tiffin_top=lambda: tiffin('top'),
               dabba=dabba, marigold=marigold, marigold_y=lambda: marigold('marigold_y', 'ffc400', 'f29a00', 'fff0a0'))
 for n, f in MODELS.items():
     if not ONLY or n in ONLY: f()

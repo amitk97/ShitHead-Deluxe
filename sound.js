@@ -638,19 +638,22 @@
       // (a long foamy hiss with glugs and fizzing bubbles to ~1.5s), confetti rustle and a chime run.
       // London Calling (v438): Routemaster Rush. Horn beep-beep (.04/.20s), the engine revs up as it approaches, impact at .55
       // (thump, crunch, glass), then it passes away (falling Doppler roar) while shards patter down.
-      // Local Train Thunder (v442): two-tone electric horn blasts, rail clacks that speed up with the train, a rising rumble,
-      // impact at .55, a rushing pass-away and a patter of shards. Same beats as bfxLocalTrain (TR_HIT .55).
-      'burn-mum-train': (k) => {
-        [0.03, 0.22].forEach((at) => { k.tone({ at, dur: 0.17, type: 'sawtooth', f0: 415, f1: 412, level: 0.16 }); k.tone({ at, dur: 0.17, type: 'sawtooth', f0: 523, f1: 520, level: 0.12 }); });
-        [0.05, 0.16, 0.26, 0.35, 0.43, 0.5].forEach((at) => { k.tone({ at, dur: 0.04, type: 'square', f0: 200, f1: 120, level: 0.12 }); k.noise({ at, dur: 0.03, type: 'bandpass', f0: 2400, q: 2, level: 0.12 }); });
-        k.tone({ at: 0.06, dur: 0.5, type: 'sawtooth', f0: 45, f1: 130, level: 0.2, attack: 0.25 });
-        k.noise({ at: 0.06, dur: 0.5, type: 'lowpass', f0: 250, f1: 1400, q: 0.7, level: 0.22, attack: 0.4 });
-        k.tone({ at: 0.55, dur: 0.3, f0: 130, f1: 36, level: 0.42, attack: 0.004 });
-        k.noise({ at: 0.55, dur: 0.16, type: 'bandpass', f0: 1900, f1: 700, q: 1, level: 0.4 });
-        k.scatter(16, 0.55, 0.9, (at) => k.tone({ at, dur: 0.05, type: 'triangle', f0: 1800 + Math.random() * 2200, f1: 900, level: 0.05 }));
-        k.tone({ at: 0.56, dur: 0.7, type: 'sawtooth', f0: 180, f1: 55, level: 0.16 });
-        k.noise({ at: 0.56, dur: 0.75, type: 'bandpass', f0: 1500, f1: 220, q: 0.6, level: 0.16 });
-        k.scatter(16, 0.7, 1.5, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 4500, level: 0.06 }));
+      // Monsoon Deluge (v442): a low thunder swell and rain hiss build, lightning cracks at .45 with shards pattering, thunder rolls,
+      // a wave rushes across (.6-1.3), spray and gurgles, then ripple drips. Same beats as bfxMonsoon (MS_HIT .45).
+      'burn-mum-monsoon': (k) => {
+        k.noise({ at: 0.0, dur: 1.7, type: 'bandpass', f0: 5200, f1: 4200, q: 0.5, level: 0.14, attack: 0.25 });
+        k.scatter(26, 0.05, 1.4, (at) => k.tone({ at, dur: 0.03, type: 'sine', f0: 2200 + Math.random() * 2400, f1: 1500, level: 0.035 }));
+        k.tone({ at: 0.08, dur: 0.4, type: 'sawtooth', f0: 55, f1: 38, level: 0.16, attack: 0.25 });
+        k.noise({ at: 0.4, dur: 0.05, type: 'bandpass', f0: 2600, q: 0.8, level: 0.4 });
+        k.tone({ at: 0.45, dur: 0.22, f0: 220, f1: 40, level: 0.4, attack: 0.002 });
+        k.noise({ at: 0.45, dur: 0.12, type: 'bandpass', f0: 1800, f1: 700, q: 1, level: 0.4 });
+        k.scatter(16, 0.47, 0.85, (at) => k.tone({ at, dur: 0.05, type: 'triangle', f0: 1700 + Math.random() * 2300, f1: 900, level: 0.05 }));
+        k.noise({ at: 0.5, dur: 1.0, type: 'lowpass', f0: 500, f1: 90, level: 0.26, attack: 0.08 });
+        k.tone({ at: 0.55, dur: 0.9, type: 'sawtooth', f0: 70, f1: 34, level: 0.16, attack: 0.1 });
+        k.noise({ at: 0.6, dur: 0.75, type: 'bandpass', f0: 250, f1: 1500, q: 0.6, level: 0.3, attack: 0.35 });
+        k.noise({ at: 0.9, dur: 0.5, type: 'bandpass', f0: 1400, f1: 200, q: 0.6, level: 0.18, attack: 0.05 });
+        k.scatter(20, 0.62, 1.2, (at) => k.noise({ at, dur: 0.04, type: 'bandpass', f0: 1800 + Math.random() * 2200, q: 2, level: 0.07 }));
+        [1.1, 1.26, 1.42].forEach((at, i) => k.tone({ at, dur: 0.14, type: 'sine', f0: 700 - i * 90, f1: 380 - i * 40, level: 0.1, attack: 0.004 }));
       },
       'burn-ldn-routemaster': (k) => {
         [0.04, 0.2].forEach((at) => { k.tone({ at, dur: 0.12, type: 'sawtooth', f0: 392, f1: 388, level: 0.2 }); k.tone({ at, dur: 0.12, type: 'square', f0: 494, f1: 490, level: 0.09 }); });

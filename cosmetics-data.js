@@ -123,7 +123,7 @@
       { id: 'table-mum-marine', category: 'Table Themes', name: 'Marine Drive Nights', cost: 3000, mum: true, tones: ['#120a32','#c2476a','#f2b200'] },
       { id: 'deck-mum-chai', category: 'Decks', name: 'Masala Chai', cost: 1000, mum: true, theme: 'theme-chai', tones: ['#f3e3c3','#a8431f','#3a2314'] },
       { id: 'frame-mum-kaalipeeli', category: 'Frames', name: 'Kaali Peeli', cost: 1000, mum: true, tones: ['#15110f','#f2b200','#15110f'] },
-      { id: 'burn-mum-train', category: 'Burn Effects', name: 'Local Train Thunder', cost: 2500, mum: true, tones: ['#1a1408','#f2b200','#1d4f9c'] },
+      { id: 'burn-mum-monsoon', category: 'Burn Effects', name: 'Monsoon Deluge', cost: 2500, mum: true, tones: ['#06101f','#0ea5e9','#7dd3fc'] },
       { id: 'joker-mum-tiffin', category: 'Joker Effects', name: 'Tiffin Surprise', cost: 3500, mum: true, tones: ['#4a0d2a','#ff9a00','#c6ccd4'] },
       { id: 'victory-mum-gateway', category: 'Victory Effects', name: 'Gateway Gala', cost: 2500, mum: true, tones: ['#120a32','#d3a656','#ff9a00'] },
       { id: 'emotes-mum', category: 'Emote Packs', name: 'Mumbai Pack', cost: 500, mum: true, tones: ['#6a1038','#f2b200','#ff9a00'] }

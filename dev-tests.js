@@ -1920,10 +1920,10 @@ async function runDevTestSuite() {
     assertTrue(!!AVATAR_ART['avatar-mum-dabba'] && /mum-dabba\.webp/.test(AVATAR_ART['avatar-mum-dabba'].art), 'The Dabbawala has his art');
     assertTrue(getCosmeticBackClass('back-mum-marigold').includes('lvl-back'), 'The back wears the art-fills-the-card class');
     assertTrue(ShTableScenes.scene('table-mum-marine', 1080, 1920).includes('table-marine.webp'), 'The Marine Drive table is its painted scene');
-    assertTrue(SHAPE_BURN_EFFECTS.has('burn-mum-train') && typeof BURN_SOUNDS['burn-mum-train'] === 'function', 'Burn: shape effect with a sound');
+    assertTrue(SHAPE_BURN_EFFECTS.has('burn-mum-monsoon') && typeof BURN_SOUNDS['burn-mum-monsoon'] === 'function', 'Burn: shape effect with a sound');
     assertTrue(typeof JOKER_FX['joker-mum-tiffin'] === 'function' && typeof JOKER_SOUNDS['joker-mum-tiffin'] === 'function', 'Joker: animation and sound');
     assertTrue(typeof VICTORY_SOUNDS['victory-mum-gateway'] === 'function', 'Victory: sound');
-    ['burn-mum-train', 'joker-mum-tiffin', 'victory-mum-gateway'].forEach(id => assertTrue(ShEffectIcons.has(id), `${id} has a tile`));
+    ['burn-mum-monsoon', 'joker-mum-tiffin', 'victory-mum-gateway'].forEach(id => assertTrue(ShEffectIcons.has(id), `${id} has a tile`));
     assertEqual(EMOTE_PACKS['emotes-mum'].length, 6, 'Six Mumbai emotes');
   });
   await test('v436: the Test Lab tries looks on in memory only: nothing is saved to the account or the device', () => {
@@ -4243,7 +4243,7 @@ async function runDevTestSuite() {
     shopTab = savedTab; shopFilter = savedFilter; renderCosmeticShop();
     renderPersonalisationCosmetics();
     const burnNames = [...document.querySelectorAll('#personalisationBurnEffects .avatar-option-name')].map(n => n.textContent).slice(1);
-    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show', 'Black Hole', 'Lava Melt', 'Local Train Thunder', 'Origami Fold', 'Pixel Blast', 'Routemaster Rush', 'Spark Snap', 'Smoke Burst', 'Inferno Sweep', 'Hellfire Spiral', 'Royal Incineration', 'The ShitStorm', 'Sandstorm Vortex', 'Glacial Shatter', 'Shuriken Barrage', 'Abyssal Whirlpool', "Zeus's Bolt", 'Arcane Hex'], 'Custom burn tiles in value order, then the level burns by level');
+    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show', 'Black Hole', 'Lava Melt', 'Monsoon Deluge', 'Origami Fold', 'Pixel Blast', 'Routemaster Rush', 'Spark Snap', 'Smoke Burst', 'Inferno Sweep', 'Hellfire Spiral', 'Royal Incineration', 'The ShitStorm', 'Sandstorm Vortex', 'Glacial Shatter', 'Shuriken Barrage', 'Abyssal Whirlpool', "Zeus's Bolt", 'Arcane Hex'], 'Custom burn tiles in value order, then the level burns by level');
   });
   await test('REGRESSION: Card Shower and the deal freeze the relevant player\'s card style at the start', () => {
     const saved = { ...equippedCosmetics };

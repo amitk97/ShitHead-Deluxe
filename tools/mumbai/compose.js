@@ -21,7 +21,6 @@ const out = (rel, b) => { const f = path.join(ROOT, rel); fs.mkdirSync(path.dirn
     }, [b64(name), max, thr]));
   }
   await sprite('gateway', 'art/mumbai/gateway.webp', 1100);
-  await sprite('train_front', 'art/mumbai/train-front.webp', 760, 70);
   // tiffin pieces share one crop (the whole stack's), so lower tiers and the top tier stack exactly
   const tf = await pg.evaluate(async (srcs) => {
     const load = (s) => new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = s; });

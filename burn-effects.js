@@ -73,7 +73,7 @@
     // ============================================================
     const LEVEL_BURN_IDS = ['burn-lvl-spark-snap', 'burn-lvl-smoke-burst', 'burn-lvl-inferno-sweep', 'burn-lvl-hellfire-spiral', 'burn-lvl-royal-incineration', 'burn-lvl-shitstorm'];
     const SEASON_BURN_IDS = ['burn-ss2611-sandstorm', 'burn-ss2701-glacier', 'burn-ss2703-shuriken', 'burn-ss2705-whirlpool', 'burn-ss2707-zeus', 'burn-ss2709-hex'];
-    const SHAPE_BURN_EFFECTS = new Set([...SEASON_BURN_IDS, 'default', 'burn-electric', 'burn-coloured', 'burn-sweets', 'burn-ice', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', 'burn-ldn-routemaster', 'burn-mum-train', ...LEVEL_BURN_IDS]);
+    const SHAPE_BURN_EFFECTS = new Set([...SEASON_BURN_IDS, 'default', 'burn-electric', 'burn-coloured', 'burn-sweets', 'burn-ice', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', 'burn-ldn-routemaster', 'burn-mum-monsoon', ...LEVEL_BURN_IDS]);
     let bfxGradientSeq = 0;
     const bfxRand = (min, max) => min + Math.random() * (max - min);
     function bfxAdd(host, html, x, y, w, h) {
@@ -1902,7 +1902,7 @@
       ({ default: bfxDefault, 'burn-electric': bfxElectric, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-ice': bfxIce, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
         'burn-blackhole': bfxBlackHole, 'burn-origami': bfxOrigami, 'burn-pixel': bfxPixelBlast, 'burn-lava': bfxLavaMelt,
         'burn-valentine': bfxValentine, 'burn-summer': bfxSummer, 'burn-christmas': bfxChristmas, 'burn-lunar': bfxLunar, 'burn-ramadan': bfxRamadan,
-        'burn-diwali': bfxDiwali, 'burn-easter': bfxEaster, 'burn-newyear': bfxNewYear, 'burn-ldn-routemaster': bfxRoutemaster, 'burn-mum-train': bfxLocalTrain,
+        'burn-diwali': bfxDiwali, 'burn-easter': bfxEaster, 'burn-newyear': bfxNewYear, 'burn-ldn-routemaster': bfxRoutemaster, 'burn-mum-monsoon': bfxMonsoon,
         'burn-lvl-spark-snap': bfxSparkSnap, 'burn-lvl-smoke-burst': bfxSmokeBurst, 'burn-lvl-inferno-sweep': bfxInferno,
         'burn-lvl-hellfire-spiral': bfxHellfireSpiral, 'burn-lvl-royal-incineration': bfxRoyalIncineration, 'burn-lvl-shitstorm': bfxShitStorm }[id] || (typeof SEASONAL_BURN_FX !== 'undefined' && SEASONAL_BURN_FX[id]) || (() => {}))(host, x, y, scale);
       return true;
@@ -1945,40 +1945,54 @@
     }
 
 
-    // Mumbai Masala burn (v442): Local Train Thunder. The head-on front of a Mumbai local (Blender render
-    // art/mumbai/train-front.webp) thunders up the rails and hits the card at TR_HIT, same perspective method as the bus:
-    // fixed camera, scale 8/d, ground line gy(d) slides down static rails and sleepers. Sound: BURN_SOUNDS['burn-mum-train'].
-    const TR_HIT = .55;
-    function bfxLocalTrain(host, x, y, k) {
-      const { st, kit } = pfxBase(host, x, y, ['rgba(250,204,21,.4)', 'rgba(29,79,156,.25)']), { W, H, cx, cy, anim, end, vw } = st, { rand, out, sm, fr, add, clamp } = kit;
-      pfxCard(st, kit, TR_HIT, { tint: 'linear-gradient(160deg,rgba(250,204,21,.3),rgba(29,79,156,.3))', shake: .008 });
-      const vh = host.clientHeight || innerHeight, hy = cy - H * .5, Y8 = cy + H * .62, BW = H * 2.3, BH = BW / .698, gauge = BW * .27;   // sprite: centre 49.9% across, wheels at 92.3% down
-      const gy = d => hy + (Y8 - hy) * 8 / d;
-      const dAt = t => t < .06 ? 24 : t < TR_HIT ? 24 - 16 * Math.pow((t - .06) / (TR_HIT - .06), 1.6) : 8 - (16 * 1.6 / (TR_HIT - .06)) * .55 * (t - TR_HIT);
-      const span = vh * 1.2 - hy, rl = (sg) => `${cx},0 ${cx + sg * gauge * span / (Y8 - hy) - sg * 4},${span} ${cx + sg * gauge * span / (Y8 - hy) + sg * 4},${span}`;
-      const rails = add(`left:0;top:${hy}px;width:${vw}px;height:${span}px;z-index:1`,
-        `<svg width="${vw}" height="${span}" style="position:absolute;inset:0"><defs><linearGradient id="trg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#94a3b8" stop-opacity="0"/><stop offset=".3" stop-color="#cbd5e1" stop-opacity=".8"/><stop offset="1" stop-color="#e2e8f0"/></linearGradient></defs>`
-        + [-1, 1].map(sg => `<polygon points="${rl(sg)}" fill="url(#trg)"/>`).join('') + '</svg>');
-      anim(rails, fr(t => ({ opacity: sm(0, .1, t) * (1 - sm(1.0, 1.4, t)) })));
-      [34, 24, 17, 12, 9, 6.5, 5].forEach(d => {   // static sleepers
-        const g = gy(d), sc = 8 / d, sl = add(`left:${cx - gauge * 1.0}px;top:${g - 5 * sc}px;width:${gauge * 2}px;height:10px;z-index:1;transform-origin:50% 50%;transform:scale(${sc.toFixed(3)});background:linear-gradient(180deg,#78350f,#451a03);border-radius:2px;opacity:0`);
-        anim(sl, fr(t => ({ opacity: sm(0, .1, t) * (1 - sm(1.0, 1.3, t)) * .9, transform: `scale(${sc.toFixed(3)})` })));
-      });
-      const train = add(`left:${cx - BW * .499}px;top:${Y8 - BH * .923}px;width:${BW}px;height:${BH}px;z-index:2;transform-origin:49.9% 92.3%`,
-        `<div style="position:absolute;inset:0;background:url(art/mumbai/train-front.webp) center/100% 100% no-repeat"></div>`);
-      anim(train, fr(t => { const d = Math.max(2.6, dAt(t)), sc = 8 / d, bump = Math.max(0, 1 - Math.abs(t - TR_HIT) / .05);
-        return { opacity: t < .04 ? 0 : 1 - sm(.74, .86, t), transform: `translate(${(Math.sin(t * 120) * H * .004 * (1 + 3 * bump) * sc).toFixed(2)}px,${(gy(d) - Y8).toFixed(1)}px) scale(${sc.toFixed(3)})` }; }));
-      const glow = add(`left:${cx - H * .9}px;top:${cy - H * .6}px;width:${H * 1.8}px;height:${H * 1.5}px;z-index:2;border-radius:50%;background:radial-gradient(closest-side,rgba(255,243,176,.85),rgba(250,204,21,.3) 55%,transparent)`);
-      anim(glow, fr(t => ({ opacity: .85 * sm(.2, TR_HIT, t) * (1 - sm(TR_HIT + .02, TR_HIT + .3, t)), transform: `scale(${(.4 + .9 * sm(.2, TR_HIT, t)).toFixed(3)})` })));
-      pfxShatter(st, kit, { t0: TR_HIT, ip: [W * .5, H * .55], cols: 4, rows: 6, speed: 1.25, edge: '#fde68a', tint: i => `linear-gradient(135deg,${i % 2 ? 'rgba(250,204,21,.55)' : 'rgba(255,255,255,.45)'},rgba(29,79,156,.4))` });
-      pfxBurst(st, kit, { x: cx, y: cy, t0: TR_HIT, n: 20, len: H * .12, dist: H * .8, life: .5, cols: ['#fde047', '#fff', '#fb923c', '#60a5fa'], w: 2.4 });
-      const ring = add(`left:${cx - H * .5}px;top:${cy - H * .5}px;width:${H}px;height:${H}px;z-index:4;border-radius:50%;border:${Math.max(2, H * .03)}px solid rgba(255,255,255,.85);box-shadow:0 0 ${H * .12}px rgba(250,204,21,.8)`);
-      anim(ring, fr(t => { const p = clamp((t - TR_HIT) / .45); return { opacity: p > 0 && p < 1 ? (1 - p) * .9 : 0, transform: `scale(${(.2 + 1.6 * out(p)).toFixed(3)})` }; }));
-      for (let i = 0; i < 9; i++) {   // dust and sparks thrown up along the rails
-        const px = cx + rand(-.9, .9) * H, py = Y8 + rand(-.05, .1) * H, s = H * rand(.3, .55), t0 = TR_HIT + .02 + i * .03;
-        const puff = add(`left:${px - s / 2}px;top:${py - s / 2}px;width:${s}px;height:${s}px;z-index:3;border-radius:50%;background:radial-gradient(closest-side,rgba(226,232,240,.55),rgba(148,163,184,.22) 60%,transparent)`);
-        anim(puff, fr(t => { const p = clamp((t - t0) / .85); return { opacity: p > 0 && p < 1 ? (1 - p) * .8 : 0, transform: `translateY(${(-H * .2 * p).toFixed(1)}px) scale(${(.35 + 1.1 * out(p)).toFixed(3)})` }; }));
+    // Mumbai Masala burn (v442): Monsoon Deluge. A storm rolls in (dark sky, drifting clouds, slanting rain), lightning
+    // strikes the card at MS_HIT and shatters it, then a monsoon wave sweeps right to left across the table carrying the
+    // pieces off in spray; ripples and mist settle. All DOM/SVG on one clock. Sound: BURN_SOUNDS['burn-mum-monsoon'].
+    const MS_HIT = .45;
+    function bfxMonsoon(host, x, y, k) {
+      const { st, kit } = pfxBase(host, x, y, ['rgba(56,189,248,.3)', 'rgba(15,23,42,.35)']), { W, H, cx, cy, anim, end, vw } = st, { rand, out, sm, fr, add, clamp } = kit;
+      pfxCard(st, kit, MS_HIT, { tint: 'linear-gradient(160deg,rgba(15,23,42,.5),rgba(56,189,248,.25))', shake: .01 });
+      const vh = host.clientHeight || innerHeight, gy = cy + H * .42;
+      const sky = add(`left:0;top:0;width:${vw}px;height:${vh}px;z-index:0;background:linear-gradient(180deg,rgba(6,10,28,.85),rgba(15,30,60,.5) 55%,rgba(8,20,40,.12))`);
+      anim(sky, fr(t => ({ opacity: sm(0, .22, t) * (1 - sm(1.55, 1.95, t)) })));
+      for (let i = 0; i < 6; i++) {   // clouds drifting across the top
+        const cw = vw * rand(.5, .8), ch = H * rand(.35, .55), cl = add(`left:${rand(-.2, .7) * vw}px;top:${rand(-.12, .12) * vh}px;width:${cw}px;height:${ch}px;z-index:0;border-radius:50%;filter:blur(${H * .06}px);background:radial-gradient(closest-side,rgba(30,41,70,.95),rgba(15,23,42,.6) 60%,transparent)`), dx = rand(-.12, .12) * vw;
+        anim(cl, fr(t => ({ opacity: sm(0, .25, t) * (1 - sm(1.5, 1.95, t)), transform: `translateX(${(dx * t).toFixed(1)}px)` })));
       }
+      for (let i = 0; i < 44; i++) {   // slanting rain
+        const x0 = rand(-.1, 1.1) * vw, len = rand(.06, .11) * H, spd = rand(1.7, 2.5), off = rand(0, 1);
+        const r = add(`left:${x0}px;top:0;width:${Math.max(1.5, H * .006)}px;height:${len}px;z-index:4;background:linear-gradient(180deg,transparent,rgba(186,230,253,.85))`);
+        anim(r, fr(t => { const p = (t * spd + off) % 1; return { opacity: .8 * sm(.04, .2, t) * (1 - sm(1.35, 1.9, t)), transform: `translate(${(-p * vh * .25).toFixed(1)}px,${(p * vh * 1.1 - len).toFixed(1)}px) rotate(14deg)` }; }));
+      }
+      // the lightning bolt strikes the card at MS_HIT
+      let bx = cx + rand(-.4, .4) * H, by = 0, pts = `${bx.toFixed(1)},0`;
+      while (by < cy - H * .1) { by += H * rand(.08, .14); bx += (cx - bx) * .25 + rand(-.07, .07) * H; pts += ` ${bx.toFixed(1)},${by.toFixed(1)}`; }
+      pts += ` ${cx.toFixed(1)},${cy.toFixed(1)}`;
+      const bolt = add(`left:0;top:0;width:${vw}px;height:${vh}px;z-index:6`, `<svg width="${vw}" height="${vh}" style="position:absolute;inset:0;overflow:visible"><polyline points="${pts}" fill="none" stroke="#7dd3fc" stroke-width="${H * .035}" stroke-linejoin="round" opacity=".6"/><polyline points="${pts}" fill="none" stroke="#fff" stroke-width="${H * .012}" stroke-linejoin="round"/></svg>`);
+      anim(bolt, fr(t => ({ opacity: t < MS_HIT - .03 || t > MS_HIT + .14 ? 0 : (Math.floor(t * 60) % 2 ? 1 : .55) })));
+      const flash = add(`left:0;top:0;width:${vw}px;height:${vh}px;z-index:7;background:#e0f2fe`);
+      anim(flash, fr(t => ({ opacity: t < MS_HIT - .02 ? 0 : .85 * Math.max(0, 1 - (t - MS_HIT + .02) / .1) + (t > .62 && t < .68 ? .25 * (1 - (t - .62) / .06) : 0) })));
+      pfxShatter(st, kit, { t0: MS_HIT, ip: [W * .5, H * .5], cols: 4, rows: 6, speed: 1.1, edge: '#bae6fd', tint: i => `linear-gradient(135deg,${i % 2 ? 'rgba(186,230,253,.6)' : 'rgba(255,255,255,.45)'},rgba(15,23,42,.45))` });
+      pfxBurst(st, kit, { x: cx, y: cy, t0: MS_HIT, n: 16, len: H * .1, dist: H * .7, life: .45, cols: ['#e0f2fe', '#fff', '#7dd3fc'], w: 2.2 });
+      // the monsoon wave: a wide water body with a rolling crest, sweeping right to left over the table
+      const WW = vw * 2.8, WH = H * 1.6;
+      let top = '';
+      for (let i = 0; i <= 50; i++) { const u = i / 50, yy = 120 + 36 * Math.sin(u * 14) - (u < .3 ? (.3 - u) * 330 : 0); top += `${i ? 'L' : 'M'}${(u * 1000).toFixed(0)} ${yy.toFixed(1)}`; }
+      const foam = Array.from({ length: 34 }, (_, i) => { const u = i / 33, yy = 120 + 36 * Math.sin(u * 14) - (u < .3 ? (.3 - u) * 330 : 0); return `<circle cx="${(u * 1000).toFixed(0)}" cy="${(yy + rand(-5, 8)).toFixed(1)}" r="${rand(5, 13).toFixed(1)}" fill="#f0f9ff" opacity=".9"/>`; }).join('');
+      const wave = add(`left:${vw}px;top:${gy - H * .4}px;width:${WW}px;height:${vh - (gy - H * .4) + 40}px;z-index:5`,
+        `<svg viewBox="0 0 1000 300" preserveAspectRatio="none" width="100%" height="100%"><defs><linearGradient id="mswg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset=".35" stop-color="#0ea5e9"/><stop offset="1" stop-color="#075985"/></linearGradient></defs><path d="${top}L1000 300L0 300Z" fill="url(#mswg)"/><path d="${top}" fill="none" stroke="#f0f9ff" stroke-width="9" stroke-linejoin="round" opacity=".8"/>${foam}</svg>`);
+      anim(wave, fr(t => { const p = clamp((t - .58) / .72), e = p * p * (3 - 2 * p); return { opacity: p > 0 && p < 1 ? 1 : 0, transform: `translateX(${(-e * (vw + WW * 1.05)).toFixed(1)}px)` }; }));
+      for (let i = 0; i < 28; i++) {   // spray thrown off the front of the wave
+        const t0 = .6 + i * .02, s = H * rand(.025, .06), yy = gy - H * rand(.1, .45), d = rand(.15, .5) * H;
+        const dr = add(`left:${vw * rand(.2, .95)}px;top:${yy}px;width:${s}px;height:${s}px;z-index:6;border-radius:50%;background:rgba(224,242,254,.9)`);
+        anim(dr, fr(t => { const p = clamp((t - t0) / .55); return { opacity: p > 0 && p < 1 ? 1 - p : 0, transform: `translate(${(-d * .5 * p).toFixed(1)}px,${(-d * (p - p * p * 2.2)).toFixed(1)}px)` }; }));
+      }
+      for (let i = 0; i < 3; i++) {   // ripples in the puddle once the wave has gone
+        const t0 = 1.1 + i * .16, rp = add(`left:${cx - H * .5}px;top:${gy - H * .12}px;width:${H}px;height:${H * .24}px;z-index:2;border-radius:50%;border:${Math.max(1.5, H * .01)}px solid rgba(186,230,253,.8)`);
+        anim(rp, fr(t => { const p = clamp((t - t0) / .6); return { opacity: p > 0 && p < 1 ? (1 - p) * .8 : 0, transform: `scale(${(.3 + 1.2 * out(p)).toFixed(3)})` }; }));
+      }
+      const mist = add(`left:0;top:${gy - H * .3}px;width:${vw}px;height:${H * .6}px;z-index:3;background:linear-gradient(180deg,transparent,rgba(186,230,253,.28),transparent)`);
+      anim(mist, fr(t => ({ opacity: sm(1.1, 1.4, t) * (1 - sm(1.55, 1.95, t)) })));
       end(st.lastAnim);
     }
 

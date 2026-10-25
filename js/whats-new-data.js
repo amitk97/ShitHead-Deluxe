@@ -3,7 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
-      v442: [['sparkle', 'Mumbai Masala: nine new Shop items rendered in 3D: the Dabbawala avatar, Marigold Garland card back, Marine Drive Nights table, Masala Chai deck, Kaali Peeli frame, a Mumbai emote pack, and three effects with their own sounds: Local Train Thunder, Tiffin Surprise and Gateway Gala.', WN_KEY]],
+      v442: [['sparkle', 'Mumbai Masala: nine new Shop items rendered in 3D: the Dabbawala avatar, Marigold Garland card back, Marine Drive Nights table, Masala Chai deck, Kaali Peeli frame, a Mumbai emote pack, and three effects with their own sounds: Monsoon Deluge, Tiffin Surprise and Gateway Gala.', WN_KEY]],
       v441: [['sparkle', 'Tower Bridge now has proper lattice-girder leaves that lift for the ship, and the Glitch Joker, Fortune Joker and Karate tiles were redrawn.']],
       v440: [['sparkle', 'London effects reworked from your recording: the bus now drives head-on at the card from behind it and grows with perspective, and the ship sails smoothly through the open Tower Bridge with the stone block removed.']],
       v439: [['sparkle', 'London set fixes: the Routemaster now drives down the road straight at the card with spinning wheels, the ship sails through the open Tower Bridge, the Union Jack card back is just the flag, and the Guardsman holds his rifle properly.']],

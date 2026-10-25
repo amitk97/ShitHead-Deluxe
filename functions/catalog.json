@@ -468,8 +468,8 @@
    "name": "Kaali Peeli",
    "cost": 1000
   },
-  "burn-mum-train": {
-   "name": "Local Train Thunder",
+  "burn-mum-monsoon": {
+   "name": "Monsoon Deluge",
    "cost": 2500
   },
   "joker-mum-tiffin": {
@@ -1039,7 +1039,7 @@
   "burn-smoke",
   "burn-blackhole",
   "burn-lava",
-  "burn-mum-train",
+  "burn-mum-monsoon",
   "burn-origami",
   "burn-pixel",
   "burn-ldn-routemaster",
