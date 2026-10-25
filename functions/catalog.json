@@ -448,6 +448,42 @@
    "name": "London Pack",
    "cost": 500
   },
+  "avatar-mum-dabba": {
+   "name": "Dabbawala",
+   "cost": 2500
+  },
+  "back-mum-marigold": {
+   "name": "Marigold Garland",
+   "cost": 1000
+  },
+  "table-mum-marine": {
+   "name": "Marine Drive Nights",
+   "cost": 3000
+  },
+  "deck-mum-chai": {
+   "name": "Masala Chai",
+   "cost": 1000
+  },
+  "frame-mum-kaalipeeli": {
+   "name": "Kaali Peeli",
+   "cost": 1000
+  },
+  "burn-mum-train": {
+   "name": "Local Train Thunder",
+   "cost": 2500
+  },
+  "joker-mum-tiffin": {
+   "name": "Tiffin Surprise",
+   "cost": 3500
+  },
+  "victory-mum-gateway": {
+   "name": "Gateway Gala",
+   "cost": 2500
+  },
+  "emotes-mum": {
+   "name": "Mumbai Pack",
+   "cost": 500
+  },
   "back-lunar": {
    "name": "Lucky Envelope",
    "cost": 300,
@@ -838,6 +874,7 @@
   "avatar-fanned-hand",
   "avatar-joker-card",
   "avatar-cosmic-ace",
+  "avatar-mum-dabba",
   "avatar-royal-flush",
   "avatar-ldn-guard",
   "avatar-crimson-inferno",
@@ -894,6 +931,7 @@
   "table-angelic",
   "table-devilish",
   "table-space",
+  "table-mum-marine",
   "table-neon",
   "table-aurora",
   "table-ldn-thames",
@@ -923,6 +961,7 @@
   "back-nebula",
   "back-space",
   "back-dragon",
+  "back-mum-marigold",
   "back-stained",
   "back-ldn-bigben",
   "back-lvl-first-burn",
@@ -954,6 +993,7 @@
   "deck-frost",
   "deck-neonnight",
   "deck-fourcolour",
+  "deck-mum-chai",
   "deck-royalgold",
   "deck-ldn-tube",
   "frame-silver",
@@ -967,6 +1007,7 @@
   "frame-split-royal",
   "frame-dashed-gold",
   "frame-neon-tube",
+  "frame-mum-kaalipeeli",
   "frame-spectrum",
   "frame-ldn-unionjack",
   "frame-gauntlet",
@@ -998,6 +1039,7 @@
   "burn-smoke",
   "burn-blackhole",
   "burn-lava",
+  "burn-mum-train",
   "burn-origami",
   "burn-pixel",
   "burn-ldn-routemaster",
@@ -1032,6 +1074,7 @@
   "joker-ldn-phonebox",
   "joker-portal",
   "joker-redcard",
+  "joker-mum-tiffin",
   "joker-vampire",
   "joker-lunar",
   "joker-valentine",
@@ -1048,6 +1091,7 @@
   "victory-stars",
   "victory-cards",
   "victory-karate",
+  "victory-mum-gateway",
   "victory-lion",
   "victory-origami",
   "victory-rocket",
@@ -1068,6 +1112,7 @@
   "emotes-royal",
   "emotes-animals",
   "emotes-ldn",
+  "emotes-mum",
   "emotes-sports",
   "emotes-flags-africa",
   "emotes-flags-asia",

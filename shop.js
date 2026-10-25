@@ -588,7 +588,7 @@ document.addEventListener('keydown', (e) => {
       if(id===PRIVATE_BACK_ID)return 'cosmetic-back-private-keepsake'; // an opponent's too (ensurePrivateViews loads the art)
       if (['back-cobalt-linen','back-sage-linen','back-plum-linen'].includes(id)) return `cosmetic-${id}`;
       if (SEASONAL_BACK_IDS.has(id)) return `cosmetic-${id} season-back`;
-      if (/^back-(lvl|ldn|ss[0-9]{4})-/.test(id || '')) return `cosmetic-${id} lvl-back`;
+      if (/^back-(lvl|ldn|mum|ss[0-9]{4})-/.test(id || '')) return `cosmetic-${id} lvl-back`;
       return { 'back-midnight':'cosmetic-back-midnight','back-emerald':'cosmetic-back-emerald','back-neon':'cosmetic-back-neon','back-crimson':'cosmetic-back-crimson','back-nebula':'cosmetic-back-nebula','back-inferno':'cosmetic-back-inferno',
         'back-arcade':'cosmetic-back-arcade','back-space':'cosmetic-back-space','back-tartan':'cosmetic-back-tartan','back-artdeco':'cosmetic-back-artdeco','back-dragon':'cosmetic-back-dragon','back-stained':'cosmetic-back-stained' }[id] || 'cosmetic-back-default';
     }
@@ -607,6 +607,7 @@ document.addEventListener('keydown', (e) => {
         'frame-split-crimson': 'box-shadow:inset 2.5px 2.5px 0 #e11d48,inset -2.5px -2.5px 0 #f8fafc,0 0 8px rgba(225,29,72,.45)!important',
         'frame-split-royal': 'box-shadow:inset 2.5px 2.5px 0 #2563eb,inset -2.5px -2.5px 0 #fbbf24,0 0 8px rgba(37,99,235,.45)!important',
         'frame-ldn-unionjack': 'box-shadow:inset 0 0 0 1.5px #c8102e,inset 0 0 0 3px #fff,inset 0 0 0 4.5px #012169,0 0 8px rgba(1,33,105,.55)!important',
+        'frame-mum-kaalipeeli': 'box-shadow:inset 0 0 0 1.5px #15110f,inset 0 0 0 3px #f2b200,inset 0 0 0 4.5px #15110f,0 0 8px rgba(242,178,0,.5)!important',
         'frame-split-noir': 'box-shadow:inset 2.5px 2.5px 0 #000,inset 3.5px 3.5px 0 #52525b,inset -2.5px -2.5px 0 #ec4899,0 0 8px rgba(236,72,153,.45)!important',
         'frame-dashed-gold': 'outline:2px dashed #fbbf24;outline-offset:-5px;box-shadow:0 0 7px rgba(251,191,36,.45)!important',
         'frame-neon-tube': 'outline:2px solid #f472b6;outline-offset:-4px;box-shadow:0 0 10px rgba(244,114,182,.75),inset 0 0 9px rgba(244,114,182,.45)!important;animation:fx-neon-flicker 4.5s infinite',
@@ -635,6 +636,7 @@ document.addEventListener('keydown', (e) => {
         'frame-split-crimson': 'box-shadow:-1.5px -1.5px 0 0 #e11d48,1.5px 1.5px 0 0 #f8fafc!important',
         'frame-split-royal': 'box-shadow:-1.5px -1.5px 0 0 #2563eb,1.5px 1.5px 0 0 #fbbf24!important',
         'frame-ldn-unionjack': 'box-shadow:0 0 0 1px #c8102e,0 0 0 2px #fff,0 0 0 3px #012169!important',
+        'frame-mum-kaalipeeli': 'box-shadow:0 0 0 1px #15110f,0 0 0 2px #f2b200,0 0 0 3px #15110f!important',
         'frame-split-noir': 'box-shadow:-1.5px -1.5px 0 0 #000,1.5px 1.5px 0 0 #ec4899!important',
         'frame-dashed-gold': 'outline:1px dashed #fbbf24;outline-offset:-2px;box-shadow:0 0 4px rgba(251,191,36,.45)!important',
         'frame-neon-tube': 'outline:1px solid #f472b6;outline-offset:-2px;box-shadow:0 0 5px rgba(244,114,182,.6)!important',

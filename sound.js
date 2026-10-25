@@ -638,6 +638,20 @@
       // (a long foamy hiss with glugs and fizzing bubbles to ~1.5s), confetti rustle and a chime run.
       // London Calling (v438): Routemaster Rush. Horn beep-beep (.04/.20s), the engine revs up as it approaches, impact at .55
       // (thump, crunch, glass), then it passes away (falling Doppler roar) while shards patter down.
+      // Local Train Thunder (v442): two-tone electric horn blasts, rail clacks that speed up with the train, a rising rumble,
+      // impact at .55, a rushing pass-away and a patter of shards. Same beats as bfxLocalTrain (TR_HIT .55).
+      'burn-mum-train': (k) => {
+        [0.03, 0.22].forEach((at) => { k.tone({ at, dur: 0.17, type: 'sawtooth', f0: 415, f1: 412, level: 0.16 }); k.tone({ at, dur: 0.17, type: 'sawtooth', f0: 523, f1: 520, level: 0.12 }); });
+        [0.05, 0.16, 0.26, 0.35, 0.43, 0.5].forEach((at) => { k.tone({ at, dur: 0.04, type: 'square', f0: 200, f1: 120, level: 0.12 }); k.noise({ at, dur: 0.03, type: 'bandpass', f0: 2400, q: 2, level: 0.12 }); });
+        k.tone({ at: 0.06, dur: 0.5, type: 'sawtooth', f0: 45, f1: 130, level: 0.2, attack: 0.25 });
+        k.noise({ at: 0.06, dur: 0.5, type: 'lowpass', f0: 250, f1: 1400, q: 0.7, level: 0.22, attack: 0.4 });
+        k.tone({ at: 0.55, dur: 0.3, f0: 130, f1: 36, level: 0.42, attack: 0.004 });
+        k.noise({ at: 0.55, dur: 0.16, type: 'bandpass', f0: 1900, f1: 700, q: 1, level: 0.4 });
+        k.scatter(16, 0.55, 0.9, (at) => k.tone({ at, dur: 0.05, type: 'triangle', f0: 1800 + Math.random() * 2200, f1: 900, level: 0.05 }));
+        k.tone({ at: 0.56, dur: 0.7, type: 'sawtooth', f0: 180, f1: 55, level: 0.16 });
+        k.noise({ at: 0.56, dur: 0.75, type: 'bandpass', f0: 1500, f1: 220, q: 0.6, level: 0.16 });
+        k.scatter(16, 0.7, 1.5, (at) => k.noise({ at, dur: 0.02, type: 'highpass', f0: 4500, level: 0.06 }));
+      },
       'burn-ldn-routemaster': (k) => {
         [0.04, 0.2].forEach((at) => { k.tone({ at, dur: 0.12, type: 'sawtooth', f0: 392, f1: 388, level: 0.2 }); k.tone({ at, dur: 0.12, type: 'square', f0: 494, f1: 490, level: 0.09 }); });
         k.tone({ at: 0.06, dur: 0.5, type: 'sawtooth', f0: 60, f1: 190, level: 0.22, attack: 0.2 });
@@ -765,6 +779,23 @@
       // London Calling (v438): Tower Bridge Salute. Gear ratchet as the leaves rise (.7-1.5s), a ship's horn at 1.5s,
       // rocket whistles + crack at TB_BURSTS (1.6/1.95/2.3s, sound repeats the numbers), the leaves close with a thud
       // at ~3.3s and Big Ben bongs at 3.0s over it.
+      // Gateway Gala (v442): the Gateway rises (rumble), lamps light along the arches, dhol beats drive the fireworks
+      // (bursts 1.6 / 1.95 / 2.3s, as MUM_BURSTS in app.js), petals fall, a bright chime at WELL DONE (2.0s) and a last thud (3.3s).
+      'victory-mum-gateway': (k) => {
+        k.tone({ at: 0.1, dur: 0.7, type: 'sawtooth', f0: 50, f1: 85, level: 0.1, attack: 0.4 }); k.noise({ at: 0.1, dur: 0.7, type: 'lowpass', f0: 200, f1: 900, level: 0.1, attack: 0.5 });
+        for (let i = 0; i < 12; i++) k.tone({ at: 0.7 + i * 0.07, dur: 0.12, type: 'sine', f0: 1500 + i * 130, f1: 1500 + i * 130, level: 0.05 });
+        const dhol = (at, hard) => { k.tone({ at, dur: 0.22, f0: 120, f1: 55, level: hard ? 0.34 : 0.22, attack: 0.003 }); k.noise({ at, dur: 0.05, type: 'bandpass', f0: 1100, q: 1, level: hard ? 0.18 : 0.1 }); };
+        [0.9, 1.2, 1.35, 1.6, 1.95, 2.3, 2.6, 2.75, 3.0].forEach((at, i) => dhol(at, i % 3 === 0));
+        [1.05, 1.5, 1.8, 2.15, 2.45, 2.9].forEach((at) => { k.tone({ at, dur: 0.08, f0: 330, f1: 220, level: 0.12, attack: 0.002 }); k.noise({ at, dur: 0.03, type: 'highpass', f0: 3000, level: 0.1 }); });
+        [1.6, 1.95, 2.3].forEach((at) => {
+          k.tone({ at: at - 0.3, dur: 0.28, f0: 500, f1: 2200, level: 0.05, attack: 0.1 });
+          k.noise({ at, dur: 0.14, type: 'highpass', f0: 2500, level: 0.22 }); k.tone({ at, dur: 0.2, f0: 160, f1: 50, level: 0.24, attack: 0.004 });
+          k.scatter(14, at + 0.05, at + 0.6, (a) => k.noise({ at: a, dur: 0.015, type: 'highpass', f0: 5000 + Math.random() * 2000, level: 0.07 }));
+        });
+        [[2.0, 523], [2.0, 659], [2.0, 784], [2.0, 1046]].forEach(([at, f], i) => k.tone({ at, dur: 0.8, type: 'triangle', f0: f, level: 0.12 / (1 + i * .3), attack: 0.004 }));
+        k.scatter(22, 2.1, 3.2, (at) => k.tone({ at, dur: 0.06, type: 'sine', f0: 2400 + Math.random() * 1600, level: 0.03 }));
+        k.tone({ at: 3.3, dur: 0.3, f0: 110, f1: 38, level: 0.3, attack: 0.004 }); k.noise({ at: 3.3, dur: 0.1, type: 'bandpass', f0: 700, q: 1, level: 0.18 });
+      },
       'victory-ldn-towerbridge': (k) => {
         for (let i = 0; i < 16; i++) k.noise({ at: 0.7 + i * 0.05, dur: 0.02, type: 'bandpass', f0: 1800, q: 4, level: 0.07 });
         k.tone({ at: 0.7, dur: 0.8, type: 'sawtooth', f0: 70, f1: 90, level: 0.12, attack: 0.3 });
@@ -1089,6 +1120,21 @@
       // Fortune Joker: a gong as the envelope opens and clinking coins.
       // London Calling (v438): Phone Box Prank. The box lands (.14s thud), the phone rings in six double-bursts (.2-.5s),
       // a bell-like ding as the Joker pops out at .58s, a swoosh and confetti ticks, then a cheeky two-note laugh.
+      // Tiffin Surprise (v442): the steel stack lands with a thud (.14), rattles as it shakes (.2-.5), the clasp pings open (.52),
+      // the top tier lifts with a puff of steam and the Joker pops out (.62).
+      'joker-mum-tiffin': (k0) => {
+        const g = (o) => ({ ...o, level: o.level * 1.7 }), k = { tone: (o) => k0.tone(g(o)), noise: (o) => k0.noise(g(o)), scatter: k0.scatter };   // levels measured offline (peak ~.45, rms ~.027)
+        k.tone({ at: 0.13, dur: 0.22, f0: 150, f1: 48, level: 0.26, attack: 0.004 }); k.noise({ at: 0.13, dur: 0.08, type: 'bandpass', f0: 900, q: 1, level: 0.25 });
+        k.tone({ at: 0.15, dur: 0.5, type: 'sine', f0: 1180, f1: 1170, level: 0.07 }); k.tone({ at: 0.15, dur: 0.35, type: 'sine', f0: 1760, f1: 1750, level: 0.05 });
+        for (let i = 0; i < 9; i++) { const at = 0.22 + i * 0.035; k.tone({ at, dur: 0.03, type: 'square', f0: 900 + (i % 3) * 260, f1: 600, level: 0.08 }); k.noise({ at, dur: 0.02, type: 'bandpass', f0: 4200, q: 1.5, level: 0.1 }); }
+        k.tone({ at: 0.52, dur: 0.1, type: 'triangle', f0: 2400, f1: 3200, level: 0.13, attack: 0.002 }); k.tone({ at: 0.52, dur: 0.5, type: 'sine', f0: 2100, f1: 2090, level: 0.08, attack: 0.002 });
+        k.noise({ at: 0.55, dur: 0.5, type: 'bandpass', f0: 3500, f1: 7500, q: 0.8, level: 0.12, attack: 0.05 });
+        k.noise({ at: 0.58, dur: 0.18, type: 'bandpass', f0: 600, f1: 2200, q: 0.8, level: 0.14 });
+        k.tone({ at: 0.62, dur: 0.22, f0: 300, f1: 900, level: 0.12, attack: 0.01 });
+        [784, 988, 1175, 1568].forEach((f, i) => k.tone({ at: 0.66 + i * 0.07, dur: 0.4, type: 'triangle', f0: f, level: 0.07 }));
+        k.scatter(14, 0.7, 1.2, (at) => k.tone({ at, dur: 0.05, f0: 2600 + Math.random() * 1800, f1: 3200, level: 0.04 }));
+        k.tone({ at: 0.76, dur: 0.12, type: 'square', f0: 340, f1: 520, level: 0.09 });
+      },
       'joker-ldn-phonebox': (k) => {
         k.tone({ at: 0.12, dur: 0.16, f0: 130, f1: 48, level: 0.4, attack: 0.004 }); k.noise({ at: 0.12, dur: 0.06, type: 'bandpass', f0: 900, q: 1, level: 0.2 });
         for (let i = 0; i < 6; i++) { const at = 0.2 + i * 0.062; k.tone({ at, dur: 0.045, type: 'square', f0: 1400, f1: 1400, level: 0.1 }); k.tone({ at: at + 0.026, dur: 0.03, type: 'square', f0: 1750, f1: 1750, level: 0.08 }); }

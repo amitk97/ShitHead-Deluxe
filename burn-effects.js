@@ -73,7 +73,7 @@
     // ============================================================
     const LEVEL_BURN_IDS = ['burn-lvl-spark-snap', 'burn-lvl-smoke-burst', 'burn-lvl-inferno-sweep', 'burn-lvl-hellfire-spiral', 'burn-lvl-royal-incineration', 'burn-lvl-shitstorm'];
     const SEASON_BURN_IDS = ['burn-ss2611-sandstorm', 'burn-ss2701-glacier', 'burn-ss2703-shuriken', 'burn-ss2705-whirlpool', 'burn-ss2707-zeus', 'burn-ss2709-hex'];
-    const SHAPE_BURN_EFFECTS = new Set([...SEASON_BURN_IDS, 'default', 'burn-electric', 'burn-coloured', 'burn-sweets', 'burn-ice', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', 'burn-ldn-routemaster', ...LEVEL_BURN_IDS]);
+    const SHAPE_BURN_EFFECTS = new Set([...SEASON_BURN_IDS, 'default', 'burn-electric', 'burn-coloured', 'burn-sweets', 'burn-ice', 'burn-paint', 'burn-smoke', 'burn-blackhole', 'burn-origami', 'burn-pixel', 'burn-lava', 'burn-ldn-routemaster', 'burn-mum-train', ...LEVEL_BURN_IDS]);
     let bfxGradientSeq = 0;
     const bfxRand = (min, max) => min + Math.random() * (max - min);
     function bfxAdd(host, html, x, y, w, h) {
@@ -1902,7 +1902,7 @@
       ({ default: bfxDefault, 'burn-electric': bfxElectric, 'burn-coloured': bfxColouredFlame, 'burn-sweets': bfxSweets, 'burn-ice': bfxIce, 'burn-paint': bfxPaint, 'burn-smoke': bfxSmoke,
         'burn-blackhole': bfxBlackHole, 'burn-origami': bfxOrigami, 'burn-pixel': bfxPixelBlast, 'burn-lava': bfxLavaMelt,
         'burn-valentine': bfxValentine, 'burn-summer': bfxSummer, 'burn-christmas': bfxChristmas, 'burn-lunar': bfxLunar, 'burn-ramadan': bfxRamadan,
-        'burn-diwali': bfxDiwali, 'burn-easter': bfxEaster, 'burn-newyear': bfxNewYear, 'burn-ldn-routemaster': bfxRoutemaster,
+        'burn-diwali': bfxDiwali, 'burn-easter': bfxEaster, 'burn-newyear': bfxNewYear, 'burn-ldn-routemaster': bfxRoutemaster, 'burn-mum-train': bfxLocalTrain,
         'burn-lvl-spark-snap': bfxSparkSnap, 'burn-lvl-smoke-burst': bfxSmokeBurst, 'burn-lvl-inferno-sweep': bfxInferno,
         'burn-lvl-hellfire-spiral': bfxHellfireSpiral, 'burn-lvl-royal-incineration': bfxRoyalIncineration, 'burn-lvl-shitstorm': bfxShitStorm }[id] || (typeof SEASONAL_BURN_FX !== 'undefined' && SEASONAL_BURN_FX[id]) || (() => {}))(host, x, y, scale);
       return true;
@@ -1938,6 +1938,44 @@
       anim(ring, fr(t => { const p = clamp((t - RM_HIT) / .45); return { opacity: p > 0 && p < 1 ? (1 - p) * .9 : 0, transform: `scale(${(.2 + 1.6 * out(p)).toFixed(3)})` }; }));
       for (let i = 0; i < 9; i++) {   // dust thrown out along the road as it blasts through
         const px = cx + rand(-.9, .9) * H, py = Y8 + rand(-.05, .1) * H, s = H * rand(.3, .55), t0 = RM_HIT + .02 + i * .03;
+        const puff = add(`left:${px - s / 2}px;top:${py - s / 2}px;width:${s}px;height:${s}px;z-index:3;border-radius:50%;background:radial-gradient(closest-side,rgba(226,232,240,.55),rgba(148,163,184,.22) 60%,transparent)`);
+        anim(puff, fr(t => { const p = clamp((t - t0) / .85); return { opacity: p > 0 && p < 1 ? (1 - p) * .8 : 0, transform: `translateY(${(-H * .2 * p).toFixed(1)}px) scale(${(.35 + 1.1 * out(p)).toFixed(3)})` }; }));
+      }
+      end(st.lastAnim);
+    }
+
+
+    // Mumbai Masala burn (v442): Local Train Thunder. The head-on front of a Mumbai local (Blender render
+    // art/mumbai/train-front.webp) thunders up the rails and hits the card at TR_HIT, same perspective method as the bus:
+    // fixed camera, scale 8/d, ground line gy(d) slides down static rails and sleepers. Sound: BURN_SOUNDS['burn-mum-train'].
+    const TR_HIT = .55;
+    function bfxLocalTrain(host, x, y, k) {
+      const { st, kit } = pfxBase(host, x, y, ['rgba(250,204,21,.4)', 'rgba(29,79,156,.25)']), { W, H, cx, cy, anim, end, vw } = st, { rand, out, sm, fr, add, clamp } = kit;
+      pfxCard(st, kit, TR_HIT, { tint: 'linear-gradient(160deg,rgba(250,204,21,.3),rgba(29,79,156,.3))', shake: .008 });
+      const vh = host.clientHeight || innerHeight, hy = cy - H * .5, Y8 = cy + H * .62, BW = H * 2.3, BH = BW / .698, gauge = BW * .27;   // sprite: centre 49.9% across, wheels at 92.3% down
+      const gy = d => hy + (Y8 - hy) * 8 / d;
+      const dAt = t => t < .06 ? 24 : t < TR_HIT ? 24 - 16 * Math.pow((t - .06) / (TR_HIT - .06), 1.6) : 8 - (16 * 1.6 / (TR_HIT - .06)) * .55 * (t - TR_HIT);
+      const span = vh * 1.2 - hy, rl = (sg) => `${cx},0 ${cx + sg * gauge * span / (Y8 - hy) - sg * 4},${span} ${cx + sg * gauge * span / (Y8 - hy) + sg * 4},${span}`;
+      const rails = add(`left:0;top:${hy}px;width:${vw}px;height:${span}px;z-index:1`,
+        `<svg width="${vw}" height="${span}" style="position:absolute;inset:0"><defs><linearGradient id="trg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#94a3b8" stop-opacity="0"/><stop offset=".3" stop-color="#cbd5e1" stop-opacity=".8"/><stop offset="1" stop-color="#e2e8f0"/></linearGradient></defs>`
+        + [-1, 1].map(sg => `<polygon points="${rl(sg)}" fill="url(#trg)"/>`).join('') + '</svg>');
+      anim(rails, fr(t => ({ opacity: sm(0, .1, t) * (1 - sm(1.0, 1.4, t)) })));
+      [34, 24, 17, 12, 9, 6.5, 5].forEach(d => {   // static sleepers
+        const g = gy(d), sc = 8 / d, sl = add(`left:${cx - gauge * 1.0}px;top:${g - 5 * sc}px;width:${gauge * 2}px;height:10px;z-index:1;transform-origin:50% 50%;transform:scale(${sc.toFixed(3)});background:linear-gradient(180deg,#78350f,#451a03);border-radius:2px;opacity:0`);
+        anim(sl, fr(t => ({ opacity: sm(0, .1, t) * (1 - sm(1.0, 1.3, t)) * .9, transform: `scale(${sc.toFixed(3)})` })));
+      });
+      const train = add(`left:${cx - BW * .499}px;top:${Y8 - BH * .923}px;width:${BW}px;height:${BH}px;z-index:2;transform-origin:49.9% 92.3%`,
+        `<div style="position:absolute;inset:0;background:url(art/mumbai/train-front.webp) center/100% 100% no-repeat"></div>`);
+      anim(train, fr(t => { const d = Math.max(2.6, dAt(t)), sc = 8 / d, bump = Math.max(0, 1 - Math.abs(t - TR_HIT) / .05);
+        return { opacity: t < .04 ? 0 : 1 - sm(.74, .86, t), transform: `translate(${(Math.sin(t * 120) * H * .004 * (1 + 3 * bump) * sc).toFixed(2)}px,${(gy(d) - Y8).toFixed(1)}px) scale(${sc.toFixed(3)})` }; }));
+      const glow = add(`left:${cx - H * .9}px;top:${cy - H * .6}px;width:${H * 1.8}px;height:${H * 1.5}px;z-index:2;border-radius:50%;background:radial-gradient(closest-side,rgba(255,243,176,.85),rgba(250,204,21,.3) 55%,transparent)`);
+      anim(glow, fr(t => ({ opacity: .85 * sm(.2, TR_HIT, t) * (1 - sm(TR_HIT + .02, TR_HIT + .3, t)), transform: `scale(${(.4 + .9 * sm(.2, TR_HIT, t)).toFixed(3)})` })));
+      pfxShatter(st, kit, { t0: TR_HIT, ip: [W * .5, H * .55], cols: 4, rows: 6, speed: 1.25, edge: '#fde68a', tint: i => `linear-gradient(135deg,${i % 2 ? 'rgba(250,204,21,.55)' : 'rgba(255,255,255,.45)'},rgba(29,79,156,.4))` });
+      pfxBurst(st, kit, { x: cx, y: cy, t0: TR_HIT, n: 20, len: H * .12, dist: H * .8, life: .5, cols: ['#fde047', '#fff', '#fb923c', '#60a5fa'], w: 2.4 });
+      const ring = add(`left:${cx - H * .5}px;top:${cy - H * .5}px;width:${H}px;height:${H}px;z-index:4;border-radius:50%;border:${Math.max(2, H * .03)}px solid rgba(255,255,255,.85);box-shadow:0 0 ${H * .12}px rgba(250,204,21,.8)`);
+      anim(ring, fr(t => { const p = clamp((t - TR_HIT) / .45); return { opacity: p > 0 && p < 1 ? (1 - p) * .9 : 0, transform: `scale(${(.2 + 1.6 * out(p)).toFixed(3)})` }; }));
+      for (let i = 0; i < 9; i++) {   // dust and sparks thrown up along the rails
+        const px = cx + rand(-.9, .9) * H, py = Y8 + rand(-.05, .1) * H, s = H * rand(.3, .55), t0 = TR_HIT + .02 + i * .03;
         const puff = add(`left:${px - s / 2}px;top:${py - s / 2}px;width:${s}px;height:${s}px;z-index:3;border-radius:50%;background:radial-gradient(closest-side,rgba(226,232,240,.55),rgba(148,163,184,.22) 60%,transparent)`);
         anim(puff, fr(t => { const p = clamp((t - t0) / .85); return { opacity: p > 0 && p < 1 ? (1 - p) * .8 : 0, transform: `translateY(${(-H * .2 * p).toFixed(1)}px) scale(${(.35 + 1.1 * out(p)).toFixed(3)})` }; }));
       }

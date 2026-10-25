@@ -4222,13 +4222,39 @@
       vfxShout(layer, 'WELL DONE', cx, cy + bh * .78, Math.min(44, W * .115), 'color:#fff;text-shadow:0 0 2px #012169,3px 3px 0 #c8102e,5px 5px 0 #012169', 2000, 1600);
       vfxFall(layer, W, H, 18, i => `<div style="width:100%;height:100%;background:${['#c8102e', '#ffffff', '#1e40af'][i % 3]};border-radius:1px"></div>`, [6, 10], 2000, 40, [800, 850], { aspect: 1.7 });
     }
+    // Mumbai Masala victory (v442): Gateway Gala. The Gateway of India (Blender render art/mumbai/gateway.webp) rises out of the
+    // dark, its lamps light one by one, dhol beats make it pulse as fireworks burst over it (MUM_BURSTS), marigold petals
+    // fall and WELL DONE lands at 2s. Ends by 3.65s. Sound: VICTORY_SOUNDS['victory-mum-gateway'] (same beats).
+    const MUM_BURSTS = [1600, 1950, 2300], MUM_BEATS = [900, 1200, 1350, 1600, 1950, 2300, 2600, 2750, 3000];
+    function vfxGateway(layer) {
+      const [W, H] = vfxSize(layer), D = 3600, k = Math.min(1, W / 390);
+      const gw = Math.min(W * .98, 620), gh = gw / 1.465, cx = W / 2, cy = H * .46;
+      ofxVignette(layer, W, H, 'rgba(22,8,46,.84)', D);
+      vfxTwinkles(layer, 14, [0, 0, W, H * .3], 0, 1800, ['#ffffff', '#ffe2a8'], k);
+      const sea = bfxAdd(layer, '<div style="width:100%;height:100%;background:linear-gradient(180deg,rgba(60,20,70,0),rgba(40,16,80,.85) 30%,rgba(14,8,40,.95))"></div>', W / 2, cy + gh * .5 + H * .06, W, H * .16);
+      bfxAnimate(sea, [{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .86 }, { opacity: 0 }], { duration: D, easing: 'linear' });
+      const wrap = bfxAdd(layer, `<div style="position:absolute;inset:0;background:url(art/mumbai/gateway.webp) center/100% 100% no-repeat;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))"></div>`, cx, cy, gw, gh);
+      wrap.style.transformOrigin = '50% 100%';
+      bfxAnimate(wrap, vfxSample(60, t => { const ms = t * D, rise = Math.min(1, ms / 600), eo = 1 - Math.pow(1 - rise, 3), beat = MUM_BEATS.reduce((m, b) => Math.max(m, ms >= b ? Math.exp(-(ms - b) / 90) : 0), 0);
+        const fade = ms > 3250 ? Math.max(0, 1 - (ms - 3250) / 350) : 1;
+        return { transform: `translateY(${((1 - eo) * 50 * k).toFixed(1)}px) scale(${((.96 + .04 * eo) * (1 + .018 * beat)).toFixed(4)})`, opacity: Math.min(1, ms / 350) * fade }; }), { duration: D, easing: 'linear' });
+      // lamps along the cornice and the arch light up one by one, then twinkle
+      const lamps = [[-.46, .3], [-.3, .3], [-.14, .3], [0, .3], [.14, .3], [.3, .3], [.46, .3], [-.44, .46], [.44, .46], [-.1, .24], [.1, .24]];
+      lamps.forEach(([fx, fy], i) => {
+        const el = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#fff6c8 20%,#ffb300 55%,rgba(255,150,0,0) 72%)"></div>', cx + fx * gw, cy - gh * .5 + fy * gh * 1.0, 14 * k, 14 * k);
+        bfxAnimate(el, [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1.5)', offset: .08 }, { opacity: .85, transform: 'scale(1)', offset: .16 }, { opacity: 1, transform: 'scale(1.25)', offset: .22 }, { opacity: .85, transform: 'scale(1)', offset: .3 }, { opacity: .9, transform: 'scale(1.1)', offset: .8 }, { opacity: 0, transform: 'scale(1)' }], { duration: D - 700 - i * 60, delay: 600 + i * 60, easing: 'linear' });
+      });
+      [[.24, .17, ['#ff9a00', '#ffffff']], [.76, .19, ['#e91e8c', '#ffffff']], [.5, .1, ['#ffc400', '#ffffff']]].forEach(([fx, fy, cols], i) => vfxSparkBurst(layer, W * fx, H * fy, Math.min(W * .3, 125), MUM_BURSTS[i], cols, 30, k));
+      vfxShout(layer, 'WELL DONE', cx, cy + gh * .72, Math.min(44, W * .115), 'color:#fff;text-shadow:0 0 2px #6a1038,3px 3px 0 #ff9a00,5px 5px 0 #6a1038', 2000, 1600);
+      vfxFall(layer, W, H, 20, i => `<div style="width:100%;height:100%;background:${['#ff9a00', '#ffc400', '#f2b200', '#e65100'][i % 4]};border-radius:60% 40% 60% 40%"></div>`, [8, 13], 2000, 40, [800, 850], { aspect: 1.5 });
+    }
     function playShapeVictoryEffect(effect, cardStyle = null) {
       const layer = document.getElementById('victoryFxLayer');
       if (!layer) return false;
       const run = { 'victory-sparklers': vfxSparklers, 'victory-stars': vfxFiveStars, 'victory-karate': vfxKarate,
         'victory-cards': vfxCardShower, 'victory-trophy': vfxTrophy, 'victory-rocket': vfxRocket, 'victory-origami': vfxOrigamiFlock, 'victory-lion': vfxLion, 'victory-fireworks': vfxFireworks,
         'victory-valentine': vfxValentine, 'victory-summer': vfxSummer, 'victory-halloween': vfxHalloween,
-        'victory-diwali': vfxDiwali, 'victory-christmas': vfxChristmas, 'victory-newyear': vfxNewYear, 'victory-easter': vfxEaster, 'victory-lunar': vfxLunar, 'victory-ramadan': vfxRamadan, 'victory-ldn-towerbridge': vfxTowerBridge }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
+        'victory-diwali': vfxDiwali, 'victory-christmas': vfxChristmas, 'victory-newyear': vfxNewYear, 'victory-easter': vfxEaster, 'victory-lunar': vfxLunar, 'victory-ramadan': vfxRamadan, 'victory-ldn-towerbridge': vfxTowerBridge, 'victory-mum-gateway': vfxGateway }[effect] || (typeof SEASONAL_VICTORY_FX !== 'undefined' && SEASONAL_VICTORY_FX[effect]);
       if (!run) return false;
       const host = document.createElement('div');
       host.style.cssText = 'position:absolute;inset:0;pointer-events:none';
@@ -5871,6 +5897,7 @@
       'emotes-royal': ['👑', '🫅', '🏰', '⚜️', '💍', '🦚'],
       'emotes-animals': ['🐵', '🦁', '🐶', '🐷', '🐮', '🐸'],
       'emotes-ldn': ['🫖', '☔', '🚌', '💂', '🎡', '🇬🇧'],
+      'emotes-mum': ['🍵', '🌧️', '🚆', '🚕', '🎬', '🏏'],
       'emotes-sports': ['⚽', '🎾', '🏸', '🎱', '🏎️', '🏏'],
       'emotes-flags-europe': ['🇷🇺', '🇩🇪', '🇬🇧', '🇫🇷', '🇮🇹', '🇪🇸'],
       'emotes-flags-north-america': ['🇺🇸', '🇲🇽', '🇨🇦', '🇬🇹', '🇭🇹', '🇩🇴'],
@@ -6133,7 +6160,7 @@
         'back-dragon': 'cosmetic-back-dragon',
         'back-stained': 'cosmetic-back-stained'
       };
-      if (/^back-(lvl|ldn|ss[0-9]{4})-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
+      if (/^back-(lvl|ldn|mum|ss[0-9]{4})-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
       if (cosmeticBackClasses[backId]) return cosmeticBackClasses[backId];
       if (typeof SEASONAL_BACK_IDS !== 'undefined' && SEASONAL_BACK_IDS.has(backId)) return getCosmeticBackClass(backId);
       if (['back-cobalt-linen','back-sage-linen','back-plum-linen'].includes(backId)) return `cosmetic-${backId}`;
@@ -11480,6 +11507,7 @@
       'table-aurora': { art: 'aurora', base: '#0b1a2e', rim: 'inset 0 0 0 3px #34d399,inset 0 0 0 4px rgba(224,242,254,.3),inset 0 0 50px rgba(0,0,0,.55)', label: 'rgba(110,231,183,.9)' },
       'table-space': { art: 'space', base: '#05060f', rim: 'inset 0 0 0 3px #6366f1,inset 0 0 0 4px rgba(251,191,36,.35),inset 0 0 52px rgba(0,0,0,.65)', label: 'rgba(199,210,254,.9)' }
     };
+    ILLUSTRATED_TABLES['table-mum-marine'] = { art: 'mum-marine', base: '#140a30', rim: 'inset 0 0 0 3px #f2b200,inset 0 0 0 4px rgba(106,16,56,.7),inset 0 0 50px rgba(18,10,50,.6)', label: 'rgba(255,230,170,.92)' };
     ILLUSTRATED_TABLES['table-ldn-thames'] = { art: 'ldn-thames', base: '#07122e', rim: 'inset 0 0 0 3px #e8bd6a,inset 0 0 0 4px rgba(1,33,105,.7),inset 0 0 50px rgba(2,6,24,.6)', label: 'rgba(244,227,178,.92)' };
     // § Season Pass
     ILLUSTRATED_TABLES['table-ss2611-egypt'] = { art: 'ss2611-egypt', base: '#2a1330', rim: 'inset 0 0 0 3px #e8bd6a,inset 0 0 50px rgba(20,8,30,.55)', label: 'rgba(251,222,150,.9)' };
@@ -12428,6 +12456,43 @@
       jfxSparkles(host, g, BX + 10 * k, g.cy - 80 * k, ['#fbbf24', '#c8102e', '#fff'], 10, T0 + 60);
       jfxWord(host, g, 'PRANKED!', { x: g.cx, y: g.cy + 150 * k, color: '#ef4444', size: 40, delay: 760 });
     }
+    // Mumbai Masala Joker (v442): Tiffin Surprise. A steel dabba (Blender render: art/mumbai/tiffin-low.webp + tiffin-top.webp,
+    // one shared crop) drops in, shakes, the top tier with its carry handle pops off at .58 with steam and the Joker card
+    // spins out of it at T0 with marigold petals. "SERVED!". Sound: JOKER_SOUNDS['joker-mum-tiffin'].
+    function jfxTiffin(host, g) {
+      jfxScrim(host, 'rgba(90,15,46,.55)');
+      const k = g.k, th = 260 * k, tw = th * .663, BX = g.cx - 26 * k, BY = g.cy + 14 * k, T0 = 620, D = JOKER_FX_MS - 60;
+      const sh = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent)"></div>', BX, BY + th / 2 - 6 * k, tw * 1.5, 24 * k);
+      bfxAnimate(sh, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1)', offset: .14 }, { opacity: 1, transform: 'scale(1)', offset: .74 }, { opacity: 0, transform: 'scale(1)' }], { duration: D, easing: 'linear' });
+      const box = bfxAdd(host, '', BX, BY, tw, th);
+      const piece = (n, extra = '') => { const d = document.createElement('div'); d.style.cssText = `position:absolute;inset:0;background:url(art/mumbai/tiffin-${n}.webp) center/100% 100% no-repeat;filter:drop-shadow(0 6px 8px rgba(0,0,0,.4));${extra}`; box.appendChild(d); return d; };
+      piece('low'); const top = piece('top');
+      bfxAnimate(box, [
+        { transform: `translateY(${-th * .9}px) rotate(0deg) scale(1)`, opacity: 0 }, { transform: 'translateY(0) rotate(0deg) scale(1.06,.92)', opacity: 1, offset: .1 }, { transform: 'translateY(0) rotate(0deg) scale(1)', opacity: 1, offset: .14 },
+        { transform: 'translateY(0) rotate(-3deg) scale(1)', opacity: 1, offset: .18 }, { transform: 'translateY(0) rotate(3deg) scale(1)', opacity: 1, offset: .22 }, { transform: 'translateY(0) rotate(-4deg) scale(1)', opacity: 1, offset: .26 },
+        { transform: 'translateY(0) rotate(4deg) scale(1)', opacity: 1, offset: .3 }, { transform: 'translateY(0) rotate(-3deg) scale(1)', opacity: 1, offset: .34 }, { transform: 'translateY(0) rotate(2deg) scale(1)', opacity: 1, offset: .38 },
+        { transform: 'translateY(0) rotate(0deg) scale(1.05,.97)', opacity: 1, offset: .42 }, { transform: 'translateY(0) rotate(0deg) scale(1)', opacity: 1, offset: .46 }, { transform: 'translateY(0) rotate(0deg) scale(1)', opacity: 1, offset: .76 },
+        { transform: `translateX(${tw * .35}px) rotate(3deg) scale(.94)`, opacity: 0 }], { duration: D, easing: 'linear' });
+      bfxAnimate(top, [{ transform: 'translate(0,0) rotate(0)', offset: 0 }, { transform: 'translate(0,0) rotate(0)', offset: .34 }, { transform: `translate(0,${-4 * k}px) rotate(0)`, offset: .39 },
+        { transform: `translate(${-tw * .45}px,${-th * .52}px) rotate(-24deg)`, offset: .52 }, { transform: `translate(${-tw * .62}px,${th * .02}px) rotate(-70deg)`, offset: .66, opacity: 1 }, { transform: `translate(${-tw * .7}px,${th * .2}px) rotate(-100deg)`, offset: .74, opacity: 0 },
+        { transform: `translate(${-tw * .7}px,${th * .2}px) rotate(-100deg)`, offset: 1, opacity: 0 }], { duration: D, easing: 'linear', fill: 'both' });
+      sfxFlash(host, BX, BY - th * .3, k, 'rgba(255,230,160,.9)', 190, 320, T0 - 30);
+      for (let i = 0; i < 6; i++) {   // steam
+        const el = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.7),transparent)"></div>', BX + bfxRand(-.25, .25) * tw, BY - th * .1, 46 * k, 46 * k);
+        bfxAnimate(el, [{ transform: 'translateY(0) scale(.4)', opacity: 0 }, { transform: `translateY(${-th * .35}px) scale(1)`, opacity: .8, offset: .35 }, { transform: `translateY(${-th * .75}px) scale(1.6)`, opacity: 0 }], { duration: 620, delay: T0 - 80 + i * 40, easing: 'ease-out' });
+      }
+      jfxHero(host, g, JFX_CARD, 124, 177, { x: BX, y: g.cy - 70 * k, delay: T0, enter: [
+        { transform: `translateY(${150 * k}px) scale(.3) rotate(-220deg)`, opacity: 0 }, { transform: 'translateY(-26px) scale(1.12) rotate(12deg)', opacity: 1, offset: .22 },
+        { transform: 'translateY(0) scale(1) rotate(0)', opacity: 1, offset: .34 }, { transform: 'translateY(0) scale(1)', opacity: 1, offset: .84 }, { transform: 'translateY(-14px) scale(.9)', opacity: 0 }] });
+      for (let i = 0; i < 20; i++) {   // marigold petals
+        const a = -Math.PI / 2 + bfxRand(-1.4, 1.4), d = bfxRand(90, 175) * k, c = ['#ff9a00', '#ffc400', '#f2b200', '#e65100'][i % 4];
+        const el = bfxAdd(host, `<div style="width:100%;height:100%;background:${c};border-radius:60% 40% 60% 40%"></div>`, BX, g.cy - 50 * k, 9 * k, 14 * k);
+        bfxAnimate(el, [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) rotate(${bfxRand(180, 420)}deg)`, opacity: 1, offset: .5 },
+          { transform: `translate(${Math.cos(a) * d * 1.1}px,${Math.sin(a) * d + 60 * k}px) rotate(${bfxRand(400, 700)}deg)`, opacity: 0 }], { duration: 780, delay: T0 + 20 + bfxRand(0, 90), easing: 'cubic-bezier(.2,.7,.4,1)' });
+      }
+      jfxSparkles(host, g, BX, g.cy - 70 * k, ['#ffc400', '#ff9a00', '#fff'], 10, T0 + 60);
+      jfxWord(host, g, 'SERVED!', { x: g.cx, y: g.cy + 150 * k, color: '#ffc400', size: 40, delay: 760 });
+    }
     // Jester's Grin: a giant jester face winks and cackles "HA!".
     function jfxGrin(host, g) {
       jfxScrim(host, 'rgba(88,28,135,.55)');
@@ -13136,7 +13201,7 @@
       'joker-magic': jfxMagic, 'joker-glitch': jfxGlitch, 'joker-storm': jfxStorm,
       'joker-hypnotist': jfxHypnotist, 'joker-vampire': jfxVampire, 'joker-redcard': jfxRedCard, 'joker-portal': jfxPortal,
       'joker-halloween': jfxHalloween, 'joker-christmas': jfxChristmas, 'joker-newyear': jfxNewYear, 'joker-diwali': jfxDiwali,
-      'joker-lunar': jfxLunar, 'joker-ldn-phonebox': jfxPhoneBox, 'joker-valentine': jfxValentine, 'joker-easter': jfxEaster, 'joker-summer': jfxSummer, 'joker-ramadan': jfxRamadan
+      'joker-lunar': jfxLunar, 'joker-ldn-phonebox': jfxPhoneBox, 'joker-mum-tiffin': jfxTiffin, 'joker-valentine': jfxValentine, 'joker-easter': jfxEaster, 'joker-summer': jfxSummer, 'joker-ramadan': jfxRamadan
     };
     function jokerPreviewIcon(id) {
       return effIcon(id, 'joker') || { 'joker-grin': '😜', 'joker-jackbox': '🎁', 'joker-puppet': '🎭', 'joker-magic': '🎩', 'joker-glitch': '📺', 'joker-storm': '🌪️',
@@ -13257,7 +13322,7 @@
         <radialGradient id="lx-eye-fire"><stop offset="0" stop-color="#fff7ed" stop-opacity=".95"/><stop offset=".3" stop-color="#fb923c" stop-opacity=".8"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/></radialGradient>
         <radialGradient id="lx-flame"><stop offset="0" stop-color="#fde68a" stop-opacity=".55"/><stop offset=".45" stop-color="#f97316" stop-opacity=".3"/><stop offset="1" stop-color="#b91c1c" stop-opacity="0"/></radialGradient>
         <linearGradient id="lx-gleam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`;
-      [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => r.ldn && r.file)].filter(r => r.category === 'Avatars').forEach((r) => {
+      [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => (r.ldn || r.mum) && r.file)].filter(r => r.category === 'Avatars').forEach((r) => {
         const motion = levelAvatarMotion(r.id);
         defs += motion.defs;
         AVATAR_ART[r.id] = {
@@ -13389,7 +13454,7 @@
 
     // Card backs: the art fills the back (the emblem and pattern layers hide).
     (function installLevelBackStyles() {
-      const css = [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => r.ldn && r.file)].filter(r => r.category === 'Card Backs').map(r =>
+      const css = [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => (r.ldn || r.mum) && r.file)].filter(r => r.category === 'Card Backs').map(r =>
         `.cosmetic-${r.id} { background:url("${r.file}") center/cover no-repeat, #07070c !important; color:${r.tone}; }\n` +
         `.custom-card-back.cosmetic-${r.id} { border-color:${r.tone} !important; box-shadow:0 0 8px ${r.tone}66; }`).join('\n') +
         '\n.lvl-back::before, .lvl-back::after { display:none !important; }\n.lvl-back > svg { visibility:hidden; }';
@@ -13430,7 +13495,7 @@
       if (type === 'cardBack' || type === 'tableTheme' || type === 'burnEffect') COSMETIC_RUNTIME_IDS[type].add(it.id);
     });
     // § London Calling: the set's ids join the equip lists of their types.
-    COSMETIC_SHOP_ITEMS.filter(i => i.ldn).forEach((it) => {
+    COSMETIC_SHOP_ITEMS.filter(i => i.ldn || i.mum).forEach((it) => {
       const type = COSMETIC_CATEGORY_TYPES[it.category];
       if (COSMETIC_RUNTIME_IDS[type]) COSMETIC_RUNTIME_IDS[type].add(it.id);
     });

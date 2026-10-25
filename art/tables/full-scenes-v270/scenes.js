@@ -5,6 +5,7 @@
 'use strict';
 const themes={
  'ldn-thames':['#050a24','#17255a','#e8bd6a'],
+ 'mum-marine':['#120a32','#c2476a','#f2b200'],
  'ss2611-egypt':['#150c30','#8a3a24','#ffd58a'],
  'ss2701-glacier':['#0b1d3c','#3f78a6','#e4f6ff'],
  'ss2703-shrine':['#1a1033','#6a3f86','#ffd6e2'],
@@ -12,7 +13,7 @@ const themes={
  'ss2707-olympus':['#4a3a22','#d9a85c','#fff2cf'],
  'ss2709-tower':['#150a2e','#5a3a8a','#e6d2ff'],
  candyfloss:['#633754','#b66f8c','#f8c5e0'],desert:['#9a6136','#e3ad66','#fff1bd'],jungle:['#021912','#124f39','#74c9a0'],devilish:['#0a0004','#480708','#ee6044'],angelic:['#244361','#6386a2','#ffedbf'],neon:['#090b25','#362345','#fc62b5'],aurora:['#061323','#103849','#67efb4'],space:['#070a1e','#232547','#beadff'],lunar:['#300813','#721522','#e6b665'],valentine:['#220619','#67182f','#f18ca9'],ramadan:['#060f2c','#173854','#e7d59e'],easter:['#254841','#6c9d79','#f9dbb8'],summer:['#13424f','#278c9a','#f6da98'],halloween:['#100d26','#372137','#f4b668'],diwali:['#241135','#713657','#f4c766'],christmas:['#160d12','#593027','#efce80'],newyear:['#080e26','#1e2748','#f7df9e'],casino:['#061c19','#16553f','#d4ae59'],winter:['#122c44','#4c7591','#d4efff'],midnight:['#050918','#172642','#d7def1'],royal:['#1d0d31','#492653','#e5bf62'],wood:['#382010','#79532e','#c09a62'],felt:['#071c17','#184735','#87b69a']};
-const names={'ldn-thames':'Thames Nights','ss2611-egypt':'Sands of Giza','ss2701-glacier':'Frozen Path','ss2703-shrine':'Moonlit Shrine','ss2705-reef':'Coral Reef','ss2707-olympus':'Olympus Terrace','ss2709-tower':'Alchemy Cellar',candyfloss:'Candyfloss',desert:'Desert',jungle:'Jungle',devilish:'Devilish',angelic:'Angelic',neon:'Neon City',aurora:'Northern Lights',space:'Deep Space',lunar:'Lantern Festival',valentine:'Candlelit Dinner',ramadan:'Crescent Night',easter:'Spring Meadow',summer:'Beach Day',halloween:'Haunted Graveyard',diwali:'Rangoli',christmas:'Fireside',newyear:'Midnight Skyline',casino:'Casino',winter:'Winter',midnight:'Midnight',royal:'Royal',wood:'Oak Wood',felt:'Classic Felt'};
+const names={'ldn-thames':'Thames Nights','mum-marine':'Marine Drive Nights','ss2611-egypt':'Sands of Giza','ss2701-glacier':'Frozen Path','ss2703-shrine':'Moonlit Shrine','ss2705-reef':'Coral Reef','ss2707-olympus':'Olympus Terrace','ss2709-tower':'Alchemy Cellar',candyfloss:'Candyfloss',desert:'Desert',jungle:'Jungle',devilish:'Devilish',angelic:'Angelic',neon:'Neon City',aurora:'Northern Lights',space:'Deep Space',lunar:'Lantern Festival',valentine:'Candlelit Dinner',ramadan:'Crescent Night',easter:'Spring Meadow',summer:'Beach Day',halloween:'Haunted Graveyard',diwali:'Rangoli',christmas:'Fireside',newyear:'Midnight Skyline',casino:'Casino',winter:'Winter',midnight:'Midnight',royal:'Royal',wood:'Oak Wood',felt:'Classic Felt'};
 let serial=0;
 const F=n=>Number(n.toFixed(2));
 function scene(id,W,H){
@@ -260,6 +261,8 @@ function scene(id,W,H){
   skyline(.88,'#10192d');skyline(.98,'#080f20');place('left-firework',firework('#e6c477'),0,.18,.40,1,.30);place('right-firework',firework('#cb9fc6'),1,.36,.34,1,.25);stars(90,'#efd8a4');break;
  case 'ldn-thames':
   pieces.push(`<image href="art/london/table-thames3.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;
+ case 'mum-marine':
+  pieces.push(`<image href="art/mumbai/table-marine.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;
  case 'ss2611-egypt':
   // Ancient Egypt: one painted scene (owner's art), filled to the screen from the bottom centre so the temple floor sits behind the cards.
   pieces.push(`<image href="art/season-pass/ss2611/table.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;
