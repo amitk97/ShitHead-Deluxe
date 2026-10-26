@@ -784,6 +784,7 @@
           localPlayerId: state.localPlayerId,
           selectedBotCount: state.selectedBotCount,
           multiDeck: !!state.multiDeck,
+          noMercy: !!state.noMercy, peeks: state.peeks || null,
           selectedPlayCardIds: state.selectedPlayCardIds || [],
           pendingFollowUp: state.pendingFollowUp || null,
           pendingFaceUpSacrifice: state.pendingFaceUpSacrifice || null,
@@ -922,7 +923,10 @@
     function isPlayLegal(card, discardPile, activeConstraint) {
       const houseLegal = houseIsPlayLegal(card, discardPile, activeConstraint);
       if (houseLegal !== null) return houseLegal;
-      if (card.isJoker) return true;
+      if (card.isJoker) {
+        if (isNoMercy()) { const t = state.baseOverrideCard || getEffectiveTopCard(discardPile); return !(t && t.rank === '4'); }
+        return true;
+      }
       let topCard = getEffectiveTopCard(discardPile);
 
       // A "5" forces the target down to the pile's base (bottom) card — the very
@@ -1483,6 +1487,7 @@
       state.isMultiplayer = false;
       state.isRanked = false;
       state.multiDeck = !!opts.multiDeck;
+      state.noMercy = !!opts.noMercy; state.peeks = {}; state.lastPeek = null; // § No Mercy
       handGroupOverride = null; railActiveId = null; railPeekId = null;
       state.gauntlet = opts.gauntlet ? { ...opts.gauntlet } : null; // § Gauntlet
       state.rankedRatingApplied = false;
@@ -2029,6 +2034,15 @@
         } else {
           advanceTurn(1);
         }
+      } else if (cardRank === 'K' && isNoMercy()) {
+        const king = noMercyKing(player, cardsToPlay.length, state.discardPile.length - cardsToPlay.length);
+        notifyBanner(king.taken.length ? `King played: ${king.target.name} takes ${king.taken.length === 1 ? 'the bottom card' : king.taken.length + ' bottom cards'} of the Pile.` : 'King played.');
+        advanceTurn(1);
+      } else if (cardRank === 'Q' && isNoMercy()) {
+        const target = getNextPlayer();
+        const seen = noMercyPeek(player, target, cardsToPlay.length);
+        notifyBanner(seen.length ? `Queen played: ${player.name} looked at ${seen.length === 1 ? '1 card' : seen.length + ' cards'} in ${target.name}'s hand.` : 'Queen played.');
+        advanceTurn(1);
       } else if (cardRank === '3') {
         // Transparent — this card doesn't establish a new target of its
         // own. Whatever was already required (a base-override from a 5, or a
@@ -3090,6 +3104,42 @@
       if (state.isRanked || tutorialActive) return false;
       // Online the room's mode is the truth (every phone reads it); solo games carry the flag.
       return state.isMultiplayer ? state.friendsMode === 'decks' : !!state.multiDeck;
+    }
+    // § No Mercy: Queens X-ray the next player, Kings take the bottom card, no Joker on a 4.
+    function isNoMercy() {
+      if (state.isRanked || tutorialActive) return false;
+      return state.isMultiplayer ? state.friendsMode === 'noMercy' : !!state.noMercy;
+    }
+    // Hand cards of `target` that `viewer` has already seen through a Queen (only ones still in the hand).
+    function noMercyKnownCards(viewerId, targetId) {
+      const t = state.players.find(p => p.id === targetId);
+      const ids = (state.peeks && state.peeks[viewerId] && state.peeks[viewerId][targetId]) || [];
+      return t ? (t.hand || []).filter(c => ids.includes(c.id)) : [];
+    }
+    // One random hand card that the viewer has not yet seen, per Queen played; no hand cards = nothing happens.
+    function noMercyPeek(viewer, target, count) {
+      if (!viewer || !target) return [];
+      state.peeks = state.peeks || {};
+      const book = state.peeks[viewer.id] = state.peeks[viewer.id] || {};
+      const seen = book[target.id] = (book[target.id] || []).filter(id => (target.hand || []).some(c => c.id === id));
+      const fresh = [];
+      for (let i = 0; i < count; i++) {
+        const pool = (target.hand || []).filter(c => !seen.includes(c.id));
+        if (!pool.length) break;
+        const c = pool[Math.floor(Math.random() * pool.length)];
+        seen.push(c.id); fresh.push(c);
+      }
+      state.lastPeek = fresh.length ? { by: viewer.id, target: target.id, cardIds: fresh.map(c => c.id), at: Date.now() } : null;
+      return fresh;
+    }
+    // Each King makes the next player take one card from the bottom of the Pile (never the cards just played).
+    function noMercyKing(player, count, underCount) {
+      const target = getNextPlayer();
+      const take = Math.min(count, underCount);
+      if (!target || take <= 0) return { target, taken: [] };
+      const taken = state.discardPile.splice(0, take);
+      target.hand = [...(target.hand || []), ...taken];
+      return { target, taken };
     }
     // Lobby: who is on which team. Keeps explicit picks while each team has at
     // most two, then fills the rest so the teams stay two and two.
@@ -9044,7 +9094,7 @@
     // Server Ranked starts with only this account's filtered view.
     let rankedDealPending = false;
     function startMultiplayerGame(opts) {
-      state.multiDeck = false;
+      state.multiDeck = false; state.noMercy = false; state.peeks = {}; state.lastPeek = null;
       if (!canStartMultiplayerGame()) return;
       opts = (opts && typeof opts === 'object') ? opts : {};
       if (seriesLiveHere() && (Number(seriesState.played) > 0 || seriesState.skippedGames?.[state.matchId])) {
@@ -10158,6 +10208,7 @@
       const priorBotNames = (!state.isMultiplayer) ? state.players.filter(p => p.isBot).map(p => p.name) : null;
       const priorTwos = !state.isMultiplayer && isTwos();
       const priorMulti = !state.isMultiplayer && isMultiDeck();
+      const priorNoMercy = !state.isMultiplayer && isNoMercy();
       if (state.isMultiplayer && state.isHost) broadcastShuffleStart();
       runShuffleIntro(() => {
         if (state.isMultiplayer) {
@@ -10175,7 +10226,7 @@
             startMultiplayerGame(opts);
           }
         } else {
-          startSinglePlayerGame(priorTwos ? 3 : (state.selectedBotCount || 3), priorBotNames, priorTwos ? { twos: true } : priorMulti ? { multiDeck: true } : {});
+          startSinglePlayerGame(priorTwos ? 3 : (state.selectedBotCount || 3), priorBotNames, priorTwos ? { twos: true } : priorMulti ? { multiDeck: true } : priorNoMercy ? { noMercy: true } : {});
         }
       });
     }

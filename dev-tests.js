@@ -7219,6 +7219,67 @@ async function runDevTestSuite() {
       assertTrue(isMultiDeck(), 'the room plays as Multiple Decks');
     } finally { freshState(); }
   });
+  await test('v448: No Mercy: no Joker on a 4, Kings take the bottom card, Queens peek a fresh hand card each, a four-King pile burns', () => {
+    try {
+      const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
+      const setup = () => {
+        freshState(); startSinglePlayerGame(1, null, { noMercy: true });
+        state.phase = 'PLAY'; state.currentTurnIndex = 0; state.drawPile = []; state.discardPile = [];
+        const [a, b] = state.players;
+        a.faceUp = [c('af', '9')]; b.faceUp = [c('bf', '9')]; a.faceDown = []; b.faceDown = [];
+        return [a, b];
+      };
+      let [a, b] = setup();
+      assertTrue(isNoMercy(), 'No Mercy table');
+      const joker = { id: 'jk', rank: 'JOKER', suit: 'JOKER', isJoker: true };
+      assertTrue(!isPlayLegal(joker, [c('p4', '4')], null), 'no Joker on a 4');
+      assertTrue(isPlayLegal(joker, [c('p5', '5')], null), 'a Joker still goes on anything else');
+      freshState(); startSinglePlayerGame(1);
+      assertTrue(!isNoMercy() && isPlayLegal(joker, [c('p4', '4')], null), 'a normal game allows a Joker on a 4');
+      // King: next player takes the bottom card.
+      [a, b] = setup(); a.hand = [c('k1', 'K'), c('x1', '5')]; b.hand = [c('b1', '6')]; state.discardPile = [c('bot', '7'), c('mid', '9')];
+      executePlayCards(a.id, [a.hand[0]]);
+      assertEqual(b.hand.map(x => x.id).join(), 'b1,bot', 'the next player took the bottom card');
+      assertEqual(state.discardPile.map(x => x.id).join(), 'mid,k1', 'the bottom card left the Pile and the King sits on top');
+      // Two Kings on a one-card Pile: only one card to take.
+      [a, b] = setup(); a.hand = [c('k1', 'K'), c('k2', 'K', '\u2660'), c('x1', '5')]; b.hand = [c('b1', '6')]; state.discardPile = [c('bot', '7')];
+      executePlayCards(a.id, [a.hand[0], a.hand[1]]);
+      assertEqual(b.hand.length, 2, 'only one card was under the Kings');
+      assertEqual(state.discardPile.length, 2, 'both Kings stay on the Pile');
+      // Two Kings on a three-card Pile: two cards.
+      [a, b] = setup(); a.hand = [c('k1', 'K'), c('k2', 'K', '\u2660'), c('x1', '5')]; b.hand = [c('b1', '6')]; state.discardPile = [c('d1', '7'), c('d2', '8'), c('d3', '9')];
+      executePlayCards(a.id, [a.hand[0], a.hand[1]]);
+      assertEqual(b.hand.map(x => x.id).join(), 'b1,d1,d2', 'one bottom card per King');
+      // Kings on an empty Pile: nothing happens.
+      [a, b] = setup(); a.hand = [c('k1', 'K'), c('x1', '5')]; b.hand = [c('b1', '6')];
+      executePlayCards(a.id, [a.hand[0]]);
+      assertEqual(b.hand.length, 1, 'nothing to take from an empty Pile');
+      // A normal game: a King does nothing special.
+      freshState(); startSinglePlayerGame(1); state.phase = 'PLAY'; state.currentTurnIndex = 0; state.drawPile = [];
+      const [na, nb] = state.players; na.hand = [c('k1', 'K'), c('x1', '5')]; nb.hand = [c('b1', '6')]; nb.faceUp = [c('bf', '9')]; na.faceUp = [c('af', '9')]; na.faceDown = []; nb.faceDown = []; state.discardPile = [c('bot', '7'), c('mid', '9')];
+      executePlayCards(na.id, [na.hand[0]]);
+      assertEqual(nb.hand.length, 1, 'no pick-up outside No Mercy');
+      // Four Kings burn instead of taking a card.
+      [a, b] = setup(); a.hand = [c('k4', 'K', '\u2663'), c('x1', '5')]; b.hand = [c('b1', '6')];
+      state.discardPile = [c('k1', 'K'), c('k2', 'K', '\u2660'), c('k3', 'K', '\u2666')];
+      executePlayCards(a.id, [a.hand[0]]);
+      assertEqual(b.hand.length, 1, 'a burn takes nothing from the bottom');
+      // Queen peeks one fresh hand card each, never the same one twice.
+      [a, b] = setup(); a.hand = [c('q1', 'Q'), c('q2', 'Q', '\u2660'), c('q3', 'Q', '\u2666'), c('x1', '5')]; b.hand = [c('b1', '6'), c('b2', '7'), c('b3', '8')]; state.discardPile = [c('p1', '4')];
+      executePlayCards(a.id, [a.hand[0]]);
+      assertEqual(noMercyKnownCards(a.id, b.id).length, 1, 'one Queen, one card seen');
+      state.currentTurnIndex = 0; a.hand.push(c('q9', 'Q', '\u2663'));
+      executePlayCards(a.id, [a.hand.find(x => x.id === 'q2'), a.hand.find(x => x.id === 'q3')]);
+      assertEqual(new Set(noMercyKnownCards(a.id, b.id).map(x => x.id)).size, 3, 'three Queens in all showed three different cards');
+      // Face-down cards are never peeked, and an empty hand means nothing happens.
+      [a, b] = setup(); a.hand = [c('q1', 'Q'), c('x1', '5')]; b.hand = []; b.faceDown = [c('bd', '6')]; state.discardPile = [c('p1', '4')];
+      const turnBefore = state.currentTurnIndex;
+      executePlayCards(a.id, [a.hand[0]]);
+      assertEqual(noMercyKnownCards(a.id, b.id).length, 0, 'nothing to see with no hand cards');
+      assertTrue(!state.lastPeek, 'no peek recorded');
+      assertTrue(state.currentTurnIndex !== turnBefore, 'the turn moved on to the next player, not past them');
+    } finally { freshState(); }
+  });
   await test('v446: Multiple Decks has its challenges, an earn-only animated Double Deck avatar, and reports decks wins without unlock credit', () => {
     assertEqual(['decksWins', 'decksSnaps', 'decksTop3'].map(k => CHALLENGE_DEFS[k].length).join(), '2,1,1', 'four challenges');
     assertEqual(CHALLENGE_DEFS.decksSnaps[0].target, 10, 'snap burn 10 times');
