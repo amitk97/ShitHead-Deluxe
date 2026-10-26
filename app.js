@@ -641,19 +641,24 @@
     // the Jokers) before shuffling, so an id always means the same card.
     function deckCardById(id) {
       const n = Number(String(id).replace(/^c_/, ''));
-      if (n > SUITS.length * RANKS.length) return { id, suit: 'JOKER', rank: 'JOKER', isJoker: true };
-      return { id, suit: SUITS[Math.floor((n - 1) / RANKS.length)], rank: RANKS[(n - 1) % RANKS.length], isJoker: false };
+      // A deck is 54 ids (52 cards then 2 Jokers); Multiple Decks numbers a second deck on from c_55.
+      const k = ((n - 1) % 54) + 1;
+      if (k > SUITS.length * RANKS.length) return { id, suit: 'JOKER', rank: 'JOKER', isJoker: true };
+      return { id, suit: SUITS[Math.floor((k - 1) / RANKS.length)], rank: RANKS[(k - 1) % RANKS.length], isJoker: false };
     }
-    function generateDeck() {
+    // copies = 2 for Multiple Decks (108 cards, 4 Jokers); ids run c_1..c_108.
+    function generateDeck(copies = 1) {
       let deck = [];
       let id = 1;
-      for (const s of SUITS) {
-        for (const r of RANKS) {
-          deck.push({ id: `c_${id++}`, suit: s, rank: r, isJoker: false });
+      for (let k = 0; k < copies; k++) {
+        for (const s of SUITS) {
+          for (const r of RANKS) {
+            deck.push({ id: `c_${id++}`, suit: s, rank: r, isJoker: false });
+          }
         }
+        deck.push({ id: `c_${id++}`, suit: 'JOKER', rank: 'JOKER', isJoker: true });
+        deck.push({ id: `c_${id++}`, suit: 'JOKER', rank: 'JOKER', isJoker: true });
       }
-      deck.push({ id: `c_${id++}`, suit: 'JOKER', rank: 'JOKER', isJoker: true });
-      deck.push({ id: `c_${id++}`, suit: 'JOKER', rank: 'JOKER', isJoker: true });
       return shuffle(deck);
     }
 
@@ -778,6 +783,7 @@
           stalemate: state.stalemate || null,
           localPlayerId: state.localPlayerId,
           selectedBotCount: state.selectedBotCount,
+          multiDeck: !!state.multiDeck,
           selectedPlayCardIds: state.selectedPlayCardIds || [],
           pendingFollowUp: state.pendingFollowUp || null,
           pendingFaceUpSacrifice: state.pendingFaceUpSacrifice || null,
@@ -1460,6 +1466,8 @@
     }
 
     function startSinglePlayerGame(botCount, reuseBotNames, opts = {}) {
+      // § Multiple Decks: 2 decks, 4 Jokers, 4 to 8 players (you plus 3 to 7 bots).
+      if (opts.multiDeck) { botCount = Math.max(3, Math.min(7, botCount | 0)); reuseBotNames = reuseBotNames && reuseBotNames.length === botCount ? reuseBotNames : null; }
       if (state.botActionTimer) clearTimeout(state.botActionTimer);
       localStorage.removeItem('shithead_game_state');
       // A new match starting is the one moment that must never coexist with
@@ -1474,6 +1482,7 @@
       
       state.isMultiplayer = false;
       state.isRanked = false;
+      state.multiDeck = !!opts.multiDeck;
       state.gauntlet = opts.gauntlet ? { ...opts.gauntlet } : null; // § Gauntlet
       state.rankedRatingApplied = false;
       state.rankedAutoStarted = false;
@@ -1494,7 +1503,7 @@
 
       const prevHumanLobbyStats = (state.players.find(p => p.id === 'p_user') || {}).lobbyStats;
 
-      const deck = generateDeck();
+      const deck = generateDeck(opts.multiDeck ? 2 : 1);
       
       // Quick Play hands the previous match's exact bot names through
       // (reuseBotNames) so the table feels continuous rather than swapping
@@ -2862,65 +2871,76 @@
       // The defender can counter from hand normally, or from their face-up
       // cards — but only if the usual hierarchy allows it (hand AND deck
       // empty). A face-up Joker is not reachable while they still hold cards.
-      let counterJoker = null;
-      const handJokerIndex = (target.hand || []).findIndex(c => c.isJoker);
-      if (handJokerIndex !== -1) {
-        counterJoker = target.hand.splice(handJokerIndex, 1)[0];
-        // Played from the hand like any other card: draw back up to 3 now,
-        // not at the defender's next turn.
-        refillHand(target);
-      } else if (canAccessFaceUp(target)) {
-        const upJokerIndex = (target.faceUp || []).findIndex(c => c.isJoker);
-        if (upJokerIndex !== -1) {
-          counterJoker = target.faceUp.splice(upJokerIndex, 1)[0];
+      // Multiple Decks: the counter can be countered again, up to four Jokers
+      // in all (A, B, A, B); whoever throws the last one wins the duel.
+      const takeJoker = (p) => {
+        const hi = (p.hand || []).findIndex(c => c.isJoker);
+        if (hi !== -1) {
+          const j = p.hand.splice(hi, 1)[0];
+          // Played from the hand like any other card: draw back up to 3 now.
+          refillHand(p);
+          return j;
         }
+        if (canAccessFaceUp(p)) {
+          const ui = (p.faceUp || []).findIndex(c => c.isJoker);
+          if (ui !== -1) return p.faceUp.splice(ui, 1)[0];
+        }
+        return null;
+      };
+      const maxChain = isMultiDeck() ? 4 : 2;
+      let chain = 1;
+      let thrower = target;
+      while (chain < maxChain) {
+        const j = takeJoker(thrower);
+        if (!j) break;
+        playJokerEffectFor(thrower, { counter: true });
+        bumpStat(thrower, 'played', 1);
+        bumpStat(thrower, 'jokersPlayed', 1);
+        bumpStat(thrower, 'jokerDeflects', 1);
+        notifyChallengeEvent(thrower, ['deflect-joker-once']);
+        recordHistory(thrower.name, [j]);
+        audio.burn(burnEffectIdFor(thrower));
+        chain++;
+        thrower = thrower === target ? initiator : target;
       }
-
-      if (counterJoker) {
-        playJokerEffectFor(target, { counter: true });
-        // A counter-Joker never passes through executePlayCards (it's
-        // spliced straight out of the defender's hand/face-up above), so
-        // without this it never reaches the one bumpStat(..., 'jokersPlayed', ...)
-        // call site — the defender's own Joker play would silently go
-        // uncounted in both Played and Jokers Played.
-        bumpStat(target, 'played', 1);
-        bumpStat(target, 'jokersPlayed', 1);
-        bumpStat(target, 'jokerDeflects', 1);
-        notifyChallengeEvent(target, ['deflect-joker-once']);
-        recordHistory(target.name, [counterJoker]);
-        audio.burn(burnEffectIdFor(target));
-        const initiatorOut = finishOnEmptyJokerPile(initiator);
+      // `chain` Jokers have been thrown; the last thrower won the duel (an odd
+      // chain is the initiator's, an even one the defender's).
+      const initiatorWins = chain % 2 === 1;
+      const winner = initiatorWins ? initiator : target;
+      const loser = initiatorWins ? target : initiator;
+      if (!initiatorWins) {
+        const initiatorOut = finishOnEmptyJokerPile(loser);
         notifyBanner(initiatorOut
-          ? `${target.name} countered the Joker, but ${initiator.name} has nothing to pick up and is out.`
-          : `${target.name} countered the Joker. ${initiator.name} picks up and ${target.name} plays next.`);
+          ? `${winner.name} countered the Joker, but ${loser.name} has nothing to pick up and is out.`
+          : `${winner.name} countered the Joker. ${loser.name} picks up and ${winner.name} plays next.`);
         // A counter-Joker can be the defender's last card: they finish
         // (unless the Joker player just went out first and that settled it).
-        if (!isMatchDecided()) checkPlayerFinished(target);
-        // The defender won the duel, so THEY take the next turn. executePickup
+        if (!isMatchDecided()) checkPlayerFinished(winner);
+        // The last thrower won the duel, so THEY take the next turn. executePickup
         // is told not to advance the turn itself — otherwise its own
-        // advanceTurn(1) would step straight past the defender and hand the
+        // advanceTurn(1) would step straight past the winner and hand the
         // turn to whoever sits after them instead.
-        giveJokerWinnerNextTurn(target);
-        jokerCounterPickup(initiator);
+        giveJokerWinnerNextTurn(winner);
+        jokerCounterPickup(loser);
       } else {
-        notifyBanner(`Joker: ${target.name} picks up the pile and ${initiator.name} plays again.`);
+        notifyBanner(`Joker: ${loser.name} picks up the pile and ${winner.name} plays again.`);
         const pickupCount = state.discardPile.length;
-        if (pickupCount > 0) recordPickupHistory(target.name);
+        if (pickupCount > 0) recordPickupHistory(loser.name);
         audio.pickupSequence(pickupCount);
-        bumpStat(target, 'pickedUp', pickupCount);
-        if (target.gameStats && pickupCount > (target.gameStats.biggestPickup || 0)) target.gameStats.biggestPickup = pickupCount;
-        if (target.lobbyStats && pickupCount > (target.lobbyStats.biggestPickup || 0)) target.lobbyStats.biggestPickup = pickupCount;
-        target.hand = target.hand || [];
-        target.hand.push(...state.discardPile);
-        unfinishPlayerIfNeeded(target);
+        bumpStat(loser, 'pickedUp', pickupCount);
+        if (loser.gameStats && pickupCount > (loser.gameStats.biggestPickup || 0)) loser.gameStats.biggestPickup = pickupCount;
+        if (loser.lobbyStats && pickupCount > (loser.lobbyStats.biggestPickup || 0)) loser.lobbyStats.biggestPickup = pickupCount;
+        loser.hand = loser.hand || [];
+        loser.hand.push(...state.discardPile);
+        unfinishPlayerIfNeeded(loser);
         state.discardPile = [];
         state.activeConstraint = null;
         state.baseOverrideCard = null;
 
-        refillHand(initiator);
-        checkPlayerFinished(initiator);
+        refillHand(winner);
+        checkPlayerFinished(winner);
 
-        giveJokerWinnerNextTurn(initiator);
+        giveJokerWinnerNextTurn(winner);
         
         saveGameState();
         if (state.isMultiplayer) syncFirebaseGameState();
@@ -3054,6 +3074,8 @@
     // players are out, and both winners share finishRank 1 (losers 3).
     function isTwos() { return state.players.length === 4 && state.players.every(p => p.team === 0 || p.team === 1); }
     function sameTeam(a, b) { return isTwos() && a.team === b.team; }
+    // § Multiple Decks: 2 decks and 4 Jokers; never Ranked or a lesson. A snap plays every matching card, and Jokers can chain four deep.
+    function isMultiDeck() { return !!state.multiDeck && !state.isRanked && !tutorialActive; }
     // Lobby: who is on which team. Keeps explicit picks while each team has at
     // most two, then fills the rest so the teams stay two and two.
     function twosAssign(list) {
@@ -5877,7 +5899,7 @@
         if (!['hard', 'boss'].includes(bot.difficulty || state.difficulty)) continue;
         const matches = getSnapMatchesForPlayer(bot, burnInfo.topRank);
         if (matches.length >= burnInfo.needed) {
-          return { bot, cards: matches.slice(0, burnInfo.needed) };
+          return { bot, cards: isMultiDeck() ? matches : matches.slice(0, burnInfo.needed) };
         }
       }
       return null;
@@ -6091,7 +6113,7 @@
       const burnInfo = getSnapBurnNeeded(state.discardPile);
       if (!burnInfo) return null;
       const matches = getSnapMatchesForPlayer(local, burnInfo.topRank);
-      return matches.length >= burnInfo.needed ? { local, burnInfo, cards: matches.slice(0, burnInfo.needed) } : null;
+      return matches.length >= burnInfo.needed ? { local, burnInfo, cards: isMultiDeck() ? matches : matches.slice(0, burnInfo.needed) } : null;
     }
 
     function executeLocalSnapBurn() {
@@ -6122,7 +6144,7 @@
         const emote = document.getElementById('emoteToggleBtn')?.getBoundingClientRect();
         const hitsEmote = emote && emote.width && sr.right > emote.left && sr.left < emote.right && sr.bottom > emote.top && sr.top < emote.bottom;
         if (sr.right > window.innerWidth - 4 || hitsEmote) snapBtn.classList.add('snap-over-base');
-        snapToast.querySelector('span:nth-child(2)').textContent = `SNAP BURN NOW • ${opportunity.burnInfo.needed}× ${opportunity.burnInfo.topRank}`;
+        snapToast.querySelector('span:nth-child(2)').textContent = `SNAP BURN NOW • ${isMultiDeck() ? opportunity.cards.length : opportunity.burnInfo.needed}× ${opportunity.burnInfo.topRank}`;
         snapBtn.classList.toggle('tutorial-glow', tutorialActive && !!TUTORIAL_STEPS[tutorialStep]?.require?.requireSnap);
         snapToast.classList.toggle('tutorial-glow', tutorialActive && !!TUTORIAL_STEPS[tutorialStep]?.require?.requireSnap);
         // The tutorial lifts the player's area to z-index 80 (the banner's own
@@ -8865,6 +8887,7 @@
     // Server Ranked starts with only this account's filtered view.
     let rankedDealPending = false;
     function startMultiplayerGame(opts) {
+      state.multiDeck = false;
       if (!canStartMultiplayerGame()) return;
       opts = (opts && typeof opts === 'object') ? opts : {};
       if (seriesLiveHere() && (Number(seriesState.played) > 0 || seriesState.skippedGames?.[state.matchId])) {
@@ -9944,6 +9967,7 @@
       // below rebuilds state.players for the next match.
       const priorBotNames = (!state.isMultiplayer) ? state.players.filter(p => p.isBot).map(p => p.name) : null;
       const priorTwos = !state.isMultiplayer && isTwos();
+      const priorMulti = !state.isMultiplayer && isMultiDeck();
       if (state.isMultiplayer && state.isHost) broadcastShuffleStart();
       runShuffleIntro(() => {
         if (state.isMultiplayer) {
@@ -9961,7 +9985,7 @@
             startMultiplayerGame(opts);
           }
         } else {
-          startSinglePlayerGame(priorTwos ? 3 : (state.selectedBotCount || 3), priorBotNames, priorTwos ? { twos: true } : {});
+          startSinglePlayerGame(priorTwos ? 3 : (state.selectedBotCount || 3), priorBotNames, priorTwos ? { twos: true } : priorMulti ? { multiDeck: true } : {});
         }
       });
     }

@@ -449,6 +449,7 @@
 
     let tutorialPrevSelectAll = null;
     function startTutorial(moduleSteps, playerCount = 2) {
+      state.multiDeck = false;
       TUTORIAL_STEPS = moduleSteps || TUTORIAL_STEPS_FULL_LEGACY;
       tutorialActive = true;
       document.body.classList.add('tutorial-on');

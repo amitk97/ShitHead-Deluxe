@@ -7130,6 +7130,31 @@ async function runDevTestSuite() {
       assertTrue(state.players.filter(p => p.isBot).every(p => EVENT_BOT_NAMES.halloween.includes(p.name.replace(/ \(Bot\)$/, ''))), 'game bots are Halloween names');
     } finally { seasonalNowOverride = saved; }
   });
+  await test('v443: Multiple Decks deals 108 cards with four Jokers, snaps every matching card, and a Joker chains four deep', () => {
+    try {
+      freshState(); startSinglePlayerGame(3, null, { multiDeck: true });
+      assertTrue(isMultiDeck(), 'multi-deck table');
+      const all = [...state.drawPile, ...state.players.flatMap(p => [...p.hand, ...p.faceUp, ...p.faceDown]), ...state.discardPile];
+      assertEqual(all.length, 108, '108 cards');
+      assertEqual(new Set(all.map(c => c.id)).size, 108, 'unique ids');
+      assertEqual(all.filter(c => c.isJoker).length, 4, 'four Jokers');
+      assertEqual(all.filter(c => c.rank === 'K' && c.suit === '\u2660').length, 2, 'two of each card');
+      freshState(); startSinglePlayerGame(2);
+      assertTrue(!isMultiDeck(), 'a normal game is single deck');
+      // Joker chain: A, B, A, B, then A picks up.
+      freshState(); startSinglePlayerGame(3, null, { multiDeck: true });
+      const [a, b] = state.players; state.phase = 'PLAY'; state.drawPile = [];
+      const jk = n => ({ id: 'jk' + n, rank: 'JOKER', suit: 'JOKER', isJoker: true });
+      const nine = id => ({ id, rank: '9', suit: '\u2665' });
+      a.hand = [jk(3), nine('a9')]; b.hand = [jk(2), jk(4), nine('b9')]; a.faceUp = [nine('a8')]; b.faceUp = [nine('b8')];
+      state.discardPile = [nine('p1'), nine('p2'), jk(1)];
+      resolveJokerDuelInstant(a, b, jk(1));
+      assertEqual(a.hand.length, 1 + 2, 'A threw a second Joker, lost to the fourth, and picked up the two pile cards');
+      assertTrue(![...a.hand, ...b.hand].some(c => c.isJoker), 'every Joker is gone');
+      assertEqual(state.discardPile.length, 0, 'pile picked up');
+      assertEqual(state.players[state.currentTurnIndex].id, b.id, 'B won the duel and plays next');
+    } finally { freshState(); }
+  });
   await test('v388: 2 vs 2 seats partners opposite, a team wins when both are out, a Joker never targets the partner', () => {
     try {
       freshState(); startSinglePlayerGame(3, null, { twos: true });
