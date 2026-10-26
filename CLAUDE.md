@@ -14,7 +14,7 @@
 
 ## v447 — Multiple Decks, Step 5: Guide and Key Term (draft on the session branch)
 
-- Guide section `data-guide-section="decks"` (before Puzzles) and Key Term `multiple-decks` (between Mode Card and No Power). Stalemate thresholds re-checked with the bot fuzz (see the result in the reply). Not pushed to main until the owner says so; rules changed in v446 (`avatar-decks`) still need pasting then.
+- Guide section `data-guide-section="decks"` (before Puzzles) and Key Term `multiple-decks` (between Mode Card and No Power). Stalemate thresholds re-checked with an all-bot fuzz (scratchpad `mdfuzz2.js`, 4/6/8 players, 5 games): every game ended by itself, no draws, at most 1 repeat and 11 turns without progress, so `STALEMATE_REPEATS` 6 / `STALEMATE_TURNS` 150 stay unchanged. Not pushed to main until the owner says so; rules changed in v446 (`avatar-decks`) still need pasting then.
 
 ## v446 — Multiple Decks, Step 4: rewards (draft on the session branch)
 
