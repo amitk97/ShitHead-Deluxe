@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v447: [['book', 'The Guide now explains Multiple Decks, with a new Key Term.']],
       v446: [['sparkle', 'Multiple Decks rewards: win 10 games to earn the animated Double Deck avatar, plus four new challenges (win a game, win 10, Snap Burn 10 times, finish top three at a big table).', WN_KEY]],
       v445: [['sparkle', 'Multiple Decks is here to try: two decks, four Jokers and 4 to 8 players. Play it from More Modes against bots, or host it in Play Friends with up to 8 seats.', WN_KEY]],
       v444: [['sparkle', 'Multiple Decks groundwork: a side rail for big tables and a hand grouped by rank. Not playable yet.']],

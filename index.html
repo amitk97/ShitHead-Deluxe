@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-26-v446 (ShitHead-Deluxe-261) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-26-v447 (ShitHead-Deluxe-262) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -2506,6 +2506,23 @@
           </div>
         </div>
 
+        <!-- Multiple Decks (v447) -->
+        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="decks">
+          <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
+            <span>Multiple Decks</span>
+            <span class="chevron transform transition-transform duration-200">&#9660;</span>
+          </button>
+          <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
+            <p><strong>What it is.</strong> Two decks shuffled together (108 cards, 4 Jokers) for 4 to 8 players. Open it from <em>More Modes</em> &rarr; <em>Multiple Decks</em>, or host it in <em>Play Friends</em>. Empty seats under four are filled with Medium bots.</p>
+            <p><strong>Burn.</strong> A run of four or more of a rank already burns the Pile. With two decks a run can reach eight.</p>
+            <p><strong>Snap Burn.</strong> You play <em>every</em> matching card you hold, not just enough for four. Jokers never burn or snap.</p>
+            <p><strong>Joker chain.</strong> A Joker can be answered by a Joker, up to four in a row, taking turns. Whoever throws the last one plays next; the other player picks up the Pile.</p>
+            <p><strong>Big tables.</strong> With five or more players the opponents become a slim list: three table cards on the left, hand count on the right. One full seat shows whoever is playing; tap a row to look at another player.</p>
+            <p><strong>Big hands.</strong> From 16 cards, cards of one rank stack with a &times;N badge. Tap a stack to pick one, use &minus; / + / All to choose how many, or switch back to rows with the Group / Rows chip.</p>
+            <p><strong>Rewards.</strong> A win counts as a normal win (no bot-difficulty credit). Challenges: win games, Snap Burn ten times, finish in the top three. Ten wins earns the animated Double Deck avatar.</p>
+          </div>
+        </div>
+
         <!-- Puzzles (v343) -->
         <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="puzzles">
           <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
@@ -2611,6 +2628,7 @@
             <p data-term="lives"><strong class="text-amber-400">Lives:</strong> Your hearts in the Gauntlet. You start with 3; losing a game costs one and you replay the same bot.</p>
             <p data-term="menu"><strong class="text-amber-400">Menu:</strong> The &equiv; button at the right of the Header. It holds Challenges, Friends, Leaderboard, Level Ladder, Stats and Support, and gives you Shop, Custom and Guide whenever the Header has folded them away.</p>
             <p data-term="mode-card"><strong class="text-amber-400">Mode Card:</strong> One card in the row on the home screen: Gauntlet, Play Computer, Ranked, Play Friends and More Modes. Swipe or use the arrows, then tap Go (or the middle card) to open it. Press and hold a card to move it.</p>
+            <p data-term="multiple-decks"><strong class="text-amber-400">Multiple Decks:</strong> A mode with two decks shuffled together (108 cards, 4 Jokers) for 4 to 8 players. Snap Burns play every matching card and a Joker chain can run to four.</p>
             <p data-term="no-power"><strong class="text-amber-400">No Power:</strong> In House Rules, the rank behaves as a normal card with no special effect. Unlike Please Select, it is a valid completed choice.</p>
             <p data-term="pick-up"><strong class="text-amber-400">Pick Up:</strong> Taking the entire Pile into your Hand because you had no legal move. The setback of the game. If your Hand was already empty, you must also take one Face-Up Card (or several of the same rank) along with it.</p>
             <p data-term="pile"><strong class="text-amber-400">Pile:</strong> The face-up stack in the middle that everyone plays onto. Your card must match or beat the top card of the Pile &mdash; if you can't, you take the whole Pile into your Hand.</p>
@@ -2713,7 +2731,7 @@
   <script src="js/play-matrix-ui.js?v=fd8f6034a133"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=5636a4a229a4"></script>
-  <script src="js/whats-new-data.js?v=6921a3c1f07e"></script>
+  <script src="js/whats-new-data.js?v=50a402f6455c"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=a7479455192a"></script>
   <script src="tutorial-data.js?v=86b1cdade927"></script>
