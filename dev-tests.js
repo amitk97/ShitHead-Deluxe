@@ -3367,7 +3367,7 @@ async function runDevTestSuite() {
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
     const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Avatars' && !i.season && !i.ldn && !i.mum).map(i => [i.name, i.cost]));
     assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000, 'Turtley': 5000 }, 'Shop pictures and prices');
-    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team'], 'Earn-only pictures');
+    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck'], 'Earn-only pictures');
     [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Avatars')
       .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
   });
@@ -3583,7 +3583,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 44, 'All 44 avatars appear in Custom (incl. the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
+    assertEqual(options.length, 45, 'All 45 avatars appear in Custom (incl. the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -4341,8 +4341,8 @@ async function runDevTestSuite() {
     smoke.forEach(a => a.cancel());
     stage.querySelectorAll('.bfx').forEach(n => n.remove());
     renderPersonalisationAvatars();
-    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-22);
-    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Sphinx Cub', 'Baby Mammoth', 'Kitsune Cub', 'Pearl Octopus', 'Baby Pegasus', 'Little Witch'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
+    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-23);
+    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Sphinx Cub', 'Baby Mammoth', 'Kitsune Cub', 'Pearl Octopus', 'Baby Pegasus', 'Little Witch'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
   });
 
   await test('Accessibility settings exist and apply', () => {
@@ -7218,6 +7218,17 @@ async function runDevTestSuite() {
       assertEqual(all.length, 108, 'two decks dealt');
       assertTrue(isMultiDeck(), 'the room plays as Multiple Decks');
     } finally { freshState(); }
+  });
+  await test('v446: Multiple Decks has its challenges, an earn-only animated Double Deck avatar, and reports decks wins without unlock credit', () => {
+    assertEqual(['decksWins', 'decksSnaps', 'decksTop3'].map(k => CHALLENGE_DEFS[k].length).join(), '2,1,1', 'four challenges');
+    assertEqual(CHALLENGE_DEFS.decksSnaps[0].target, 10, 'snap burn 10 times');
+    assertEqual(EARNED_AVATAR_RULES['avatar-decks'].type, 'decksWins', 'the avatar rule');
+    const item = EARNED_AVATARS.find(i => i.id === 'avatar-decks');
+    assertTrue(item && item.animated && item.decks, 'earn-only and animated');
+    assertTrue(/av-bob/.test(AVATAR_ART['avatar-decks'].art) && AVATAR_ART['avatar-decks'].animated, 'its art moves');
+    assertTrue(avatarHtml('avatar-decks', 40).length > 100, 'it draws');
+    assertEqual(customGroupOf(item), 'decks', 'its own Custom group');
+    assertTrue(challengeDescription(CHALLENGE_DEFS.decksTop3[0]).includes('6 or more'), 'top-three text');
   });
   await test('v388: 2 vs 2 seats partners opposite, a team wins when both are out, a Joker never targets the partner', () => {
     try {

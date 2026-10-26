@@ -203,6 +203,7 @@
               newData.val() === 'avatar-shithead' || newData.val() === 'avatar-gauntlet' ||
               newData.val().matches(/^avatar-gauntlet-(hard|boss)$/) ||
               newData.val() === 'avatar-recruiter' || newData.val() === 'avatar-twos' ||
+              newData.val() === 'avatar-decks' ||
               newData.val() === 'avatar-ldn-guard' ||
               newData.val() === 'avatar-mum-dabba' ||
               newData.val().matches(/^avatar-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||

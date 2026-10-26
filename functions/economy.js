@@ -280,6 +280,10 @@ function milestoneEligible(user) {
   add(d.recruits || [], num(user.referralStats?.recruits));
   // 2 vs 2 wins (matchCounters.twosWins, counted by matchWin).
   add(d.twosWins || [], num(user.matchCounters?.twosWins));
+  // Multiple Decks: wins, Snap Burns and top-three finishes at big tables (matchCounters).
+  add(d.decksWins || [], num(user.matchCounters?.decksWins));
+  add(d.decksSnaps || [], num(user.matchCounters?.decksSnaps));
+  add(d.decksTop3 || [], num(user.matchCounters?.decksTop3));
   // Hidden: Draw a Game (a stalemate draw in any mode).
   add(d.draws || [], num(user.matchCounters?.draws) + num(rs.draws));
   return out;
@@ -316,6 +320,7 @@ function grantEarnedAvatars(user, legacy, now) {
       : rule.type === 'seasonWins' ? seasonalWinsFor(user.seasonWins, rule.season) >= rule.min
       : rule.type === 'recruits' ? num(user.referralStats?.recruits) >= rule.min
       : rule.type === 'twosWins' ? num(user.matchCounters?.twosWins) >= rule.min
+      : rule.type === 'decksWins' ? num(user.matchCounters?.decksWins) >= rule.min
       : false;
     if (!met) return;
     user.ownedCosmetics = user.ownedCosmetics || {};
@@ -576,6 +581,7 @@ actions.matchWin = async ({ uid, data }) => {
   const difficulty = mode === 'bots' ? (DIFFICULTIES.includes(data.difficulty) ? data.difficulty : fail('invalid-argument', 'Unknown difficulty.')) : null;
   // 2 vs 2 (v389): the phone says so for bot games; online the room decides.
   let twos = mode === 'bots' && data.twos === true;
+  let decks = mode === 'bots' && data.decks === true;
   if (mode === 'online') {
     const code = clip(data.roomCode, 6);
     if (!/^\d{6}$/.test(code)) fail('invalid-argument', 'Bad room.');
@@ -584,6 +590,7 @@ actions.matchWin = async ({ uid, data }) => {
     const me = seats.find(p => p && p.uid === uid);
     if (!room || room.isRanked || room.matchId !== matchId || !me || me.finishRank !== 1 || me.drew || seats.length < 2) fail('failed-precondition', 'That win could not be checked.');
     twos = room.friendsMode === 'twos' && seats.length === 4 && seats.every(p => p && (p.team === 0 || p.team === 1));
+    decks = room.friendsMode === 'decks' && seats.length >= 4;
   }
   const legacy = await legacyOwned(uid);
   const now = Date.now();
@@ -604,7 +611,8 @@ actions.matchWin = async ({ uid, data }) => {
       amount = num(CAT.matchWinRewards.bots);
       // A 2 vs 2 win pays the same Diamonds but never counts towards unlocking
       // a harder bot (a strong partner could carry the player).
-      if (!twos) {
+      // A Multiple Decks win never counts either (a big table is a different game).
+      if (!twos && !decks) {
         user.difficultyWins = user.difficultyWins || {};
         user.difficultyWins[difficulty] = num(user.difficultyWins[difficulty]) + 1;
         const rule = CAT.difficultyUnlocks.find(r => r.requireDiff === difficulty && r.requireWins === user.difficultyWins[difficulty]);
@@ -612,6 +620,7 @@ actions.matchWin = async ({ uid, data }) => {
       }
     }
     if (twos) counters.twosWins = Math.min(100000, num(counters.twosWins) + 1);
+    if (decks) counters.decksWins = Math.min(100000, num(counters.decksWins) + 1);
     addDiamonds(user, amount);
     counters.winsToday = num(counters.winsToday) + 1;
     counters.lastWinAt = now;
@@ -629,7 +638,8 @@ actions.matchWin = async ({ uid, data }) => {
     already: !!res.already, capped: res.capped || null, diamondsAwarded: num(res.amount), diamonds: num(res.user.diamonds),
     difficultyWins: res.user.difficultyWins || {}, unlockedDifficulty: res.unlocked || null,
     seasonWins: res.user.seasonWins || {}, claimed: res.claimed || [], newAvatars: res.newAvatars || [],
-    twosWins: num(res.user.matchCounters?.twosWins)
+    twosWins: num(res.user.matchCounters?.twosWins),
+    decksWins: num(res.user.matchCounters?.decksWins)
   };
 };
 
@@ -641,6 +651,20 @@ actions.matchFinished = async ({ uid, data }) => {
   // must show this account's seat as drawn; Vs Bots is the phone's word,
   // like its wins.
   let drew = data.drew === true;
+  // Multiple Decks extras: Snap Burns this game and a top-three finish at a 6+ table.
+  let decksSnaps = 0, decksTop3 = false;
+  if (data.decks && typeof data.decks === 'object') {
+    decksSnaps = Math.max(0, Math.min(30, Math.trunc(num(data.decks.snaps))));
+    decksTop3 = data.decks.top3 === true;
+    if (data.roomCode !== undefined) {
+      const dcode = clip(data.roomCode, 6);
+      const droom = /^\d{6}$/.test(dcode) ? (await db().ref(`rooms/${dcode}`).once('value')).val() : null;
+      const seats = Object.values(droom?.players || {});
+      const dme = seats.find(p => p && p.uid === uid);
+      if (!droom || droom.friendsMode !== 'decks') { decksSnaps = 0; decksTop3 = false; }
+      else decksTop3 = decksTop3 && !!dme && num(dme.finishRank) >= 1 && num(dme.finishRank) <= 3 && seats.length >= 6;
+    }
+  }
   if (drew && data.roomCode !== undefined) {
     const code = clip(data.roomCode, 6);
     const room = /^\d{6}$/.test(code) ? (await db().ref(`rooms/${code}`).once('value')).val() : null;
@@ -662,6 +686,8 @@ actions.matchFinished = async ({ uid, data }) => {
     const firstToday = counters.finishedDay !== ukDateKey(new Date(now));
     counters.finishedDay = ukDateKey(new Date(now));
     counters.finished = num(counters.finished) + 1;
+    if (decksSnaps) counters.decksSnaps = Math.min(100000, num(counters.decksSnaps) + decksSnaps);
+    if (decksTop3) counters.decksTop3 = Math.min(100000, num(counters.decksTop3) + 1);
     counters.lastFinishedAt = now;
     counters.recentFinished = pruneMap({ ...recent, [matchId]: { at: now } }, 20);
     const referral = referralGameCounted(user, now);

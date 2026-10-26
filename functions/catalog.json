@@ -892,6 +892,7 @@
   "avatar-gauntlet-boss",
   "avatar-recruiter",
   "avatar-twos",
+  "avatar-decks",
   "avatar-lvl-rookie-rogue",
   "avatar-lvl-card-shark",
   "avatar-lvl-burn-king",
@@ -1192,6 +1193,12 @@
    "name": "Dream Team",
    "requirement": "Win 10 games of 2 vs 2",
    "type": "twosWins",
+   "min": 10
+  },
+  "avatar-decks": {
+   "name": "Double Deck",
+   "requirement": "Win 10 games of Multiple Decks",
+   "type": "decksWins",
    "min": 10
   },
   "avatar-lunar-earned": {
@@ -2043,6 +2050,36 @@
     "id": "better-together",
     "name": "Better Together",
     "target": 10,
+    "reward": 150
+   }
+  ],
+  "decksWins": [
+   {
+    "id": "double-or-nothing",
+    "name": "Double Or Nothing",
+    "target": 1,
+    "reward": 100
+   },
+   {
+    "id": "deck-master",
+    "name": "Deck Master",
+    "target": 10,
+    "reward": 300
+   }
+  ],
+  "decksSnaps": [
+   {
+    "id": "quick-hands",
+    "name": "Quick Hands",
+    "target": 10,
+    "reward": 200
+   }
+  ],
+  "decksTop3": [
+   {
+    "id": "crowd-pleaser",
+    "name": "Crowd Pleaser",
+    "target": 1,
     "reward": 150
    }
   ],

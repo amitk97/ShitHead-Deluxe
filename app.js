@@ -9868,6 +9868,7 @@
       if (mode === 'bots') payload.difficulty = state.difficulty;
       else payload.roomCode = state.roomCode;
       if (mode === 'bots' && isTwos()) payload.twos = true; // § 2 vs 2: no difficulty unlock credit
+      if (mode === 'bots' && isMultiDeck()) payload.decks = true; // Multiple Decks: the same
       const attempt = (tries) => callEconomy('matchWin', payload).catch((error) => {
         if (mode === 'online' && tries > 0) return new Promise(r => setTimeout(r, 2500)).then(() => attempt(tries - 1));
         throw error;
@@ -9878,7 +9879,8 @@
         if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
         if (res.diamondsAwarded > 0) enqueueChallengeToast('Match won', res.diamondsAwarded, -1);
         if (Number.isFinite(Number(res.twosWins))) { challengeEconomy.twosWins = Number(res.twosWins); renderChallengesModalIfOpen(); }
-        if (mode === 'bots' && res.difficultyWins && !(payload.twos)) {
+        if (Number.isFinite(Number(res.decksWins))) { challengeEconomy.decksWins = Number(res.decksWins); renderChallengesModalIfOpen(); }
+        if (mode === 'bots' && res.difficultyWins && !(payload.twos) && !(payload.decks)) {
           const wins = cacheDifficultyWins(currentUser.uid, res.difficultyWins);
           challengeEconomy.difficultyWins = { ...(challengeEconomy.difficultyWins || {}), ...res.difficultyWins };
           unlockedDifficulties = computeUnlockedDifficulties(wins);
@@ -11450,6 +11452,24 @@
         <g class="av-twinkle"><path d="M32 6.5 34.4 12l6 .6-4.5 4 1.4 5.9L32 19.5l-5.3 3 1.4-5.9-4.5-4 6-.6Z" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.4)" stroke-width="1"/></g>
         <rect x="21" y="43" width="22" height="11" rx="3.5" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.45)" stroke-width="1.1"/>
         <text x="32" y="51.6" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="8.6" fill="#1e1b4b" letter-spacing="-.3">2v2</text>
+        <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
+      // Double Deck (earn-only): two decks fanned side by side, a gold Joker star
+      // between them. The decks sway in turn and the star twinkles.
+      'avatar-decks':        { tone: 'navy', animated: true, art: `
+        <circle cx="32" cy="32" r="23" fill="url(#av-m-glow)" opacity=".22"/>
+        <g class="av-bob" stroke="rgba(0,0,0,.45)" stroke-width="1.1">
+          <rect x="11" y="17" width="23" height="33" rx="3.4" fill="#94a3b8" transform="rotate(-9 22 34)"/>
+          <rect x="12.5" y="15" width="23" height="33" rx="3.4" fill="url(#av-m-frost)" transform="rotate(-9 24 32)"/>
+          <path d="M24 26.5c-2.8-3.6-7-1.6-5.6 2 1 2.6 5.6 5.6 5.6 5.6s4.6-3 5.6-5.6c1.4-3.6-2.8-5.6-5.6-2Z" fill="#dc2626" transform="rotate(-9 24 32)"/>
+        </g>
+        <g class="av-bob" style="animation-delay:-.9s" stroke="rgba(0,0,0,.45)" stroke-width="1.1">
+          <rect x="30" y="17" width="23" height="33" rx="3.4" fill="#7f1d1d" transform="rotate(9 42 34)"/>
+          <rect x="28.5" y="15" width="23" height="33" rx="3.4" fill="url(#av-m-crimson)" transform="rotate(9 40 32)"/>
+          <path d="M40 24l2.1 4.4 4.8.6-3.5 3.3.9 4.7-4.3-2.3-4.3 2.3.9-4.7-3.5-3.3 4.8-.6Z" fill="url(#av-m-gold)" transform="rotate(9 40 32)"/>
+        </g>
+        <g class="av-twinkle"><path d="M32 6.5 34.4 12l6 .6-4.5 4 1.4 5.9L32 19.5l-5.3 3 1.4-5.9-4.5-4 6-.6Z" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.4)" stroke-width="1"/></g>
+        <rect x="21" y="43" width="22" height="11" rx="3.5" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.45)" stroke-width="1.1"/>
+        <text x="32" y="51.6" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="8.6" fill="#1e1b4b" letter-spacing="-.3">x2</text>
         <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
       'avatar-centurion':    { tone: 'red', art: `
         <text x="32" y="38" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="21" fill="#ef4444" stroke="#7f1d1d" stroke-width=".8" letter-spacing="-1">100</text>
@@ -14292,7 +14312,7 @@
     // count. Folded groups are remembered per tab (localStorage
     // shithead_custom_groups_collapsed, keys "<type>:<group>").
     const CUSTOM_GROUPS = [['free', 'Free'], ['shop', 'Shop'], ['ranked', 'Earn in Ranked'], ['gauntlet', 'Earn in the Gauntlet'],
-      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
+      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
     const CUSTOM_GROUPS_KEY = 'shithead_custom_groups_collapsed';
     const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
     function customGroupOf(item) {
@@ -14303,6 +14323,7 @@
       if (item.gauntlet || EARNED_FRAMES.includes(item)) return 'gauntlet';
       if (item.referral) return 'friends';
       if (item.twos) return 'twos';
+      if (item.decks) return 'decks';
       if (item.earned || EARNED_AVATARS.includes(item)) return 'ranked';
       return 'shop';
     }
@@ -14331,8 +14352,8 @@
       const freeAvatars = sortByValue(BUILT_IN_COSMETICS.filter(item => item.category === 'Avatars'));
       const seasonalAvatars = [...sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Avatars' && item.season)), ...SEASONAL_EARNED_AVATARS].filter(isCosmeticListed);
       grid.innerHTML = ownedPrivateAvatars().map(avatarOptionHtml).join('') + customGroupedHtml('avatar', [...freeAvatars, ...shopAvatars,
-        ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral && !item.twos),
-        ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral), ...EARNED_AVATARS.filter(item => item.twos),
+        ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral && !item.twos && !item.decks),
+        ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral), ...EARNED_AVATARS.filter(item => item.twos), ...EARNED_AVATARS.filter(item => item.decks),
         ...LEVEL_REWARDS.filter(item => item.category === 'Avatars'), ...seasonalAvatars], avatarOptionHtml);
     }
 
@@ -16498,6 +16519,18 @@
       twosWins: [
         { id: 'better-together', name: 'Better Together', target: 10, reward: 150 }
       ],
+      // Multiple Decks (matchCounters.decksWins / decksSnaps / decksTop3, counted by
+      // the server); ten wins also unlock the Double Deck avatar.
+      decksWins: [
+        { id: 'double-or-nothing', name: 'Double Or Nothing', target: 1, reward: 100 },
+        { id: 'deck-master', name: 'Deck Master', target: 10, reward: 300 }
+      ],
+      decksSnaps: [
+        { id: 'quick-hands', name: 'Quick Hands', target: 10, reward: 200 }
+      ],
+      decksTop3: [
+        { id: 'crowd-pleaser', name: 'Crowd Pleaser', target: 1, reward: 150 }
+      ],
       // Hidden: shown as "???" until earned. A stalemate draw in any mode,
       // counted by the server (matchCounters.draws + rankedStats.draws).
       draws: [
@@ -17346,7 +17379,8 @@
       'avatar-gauntlet-hard': { type: 'gauntlet' },
       'avatar-gauntlet-boss': { type: 'gauntlet' },
       'avatar-recruiter': { type: 'recruits', min: 5 },
-      'avatar-twos': { type: 'twosWins', min: 10 }
+      'avatar-twos': { type: 'twosWins', min: 10 },
+      'avatar-decks': { type: 'decksWins', min: 10 }
     };
     function serverEconomyCatalog() {
       const earned = {};
@@ -17496,6 +17530,9 @@
         case 'rankTiers': return `Reach a ${def.minRating} Ranked rating.`;
         case 'botMatches': return `Beat ${def.difficulty === 'boss' ? 'Boss' : def.difficulty} bots ${def.target} times.`;
         case 'twosWins': return `Win ${def.target} games of 2 vs 2 with your team.`;
+        case 'decksWins': return def.target === 1 ? 'Win a game of Multiple Decks.' : `Win ${def.target} games of Multiple Decks.`;
+        case 'decksSnaps': return `Snap Burn ${plural(def.target, 'time', 'times')} in Multiple Decks.`;
+        case 'decksTop3': return 'Finish in the top three of a Multiple Decks game with 6 or more players.';
         case 'recruits': return `Recruit ${def.target} players: friends who join with your invite link and play ${REFERRAL.gamesNeeded} games.`;
         default: return '';
       }
@@ -17733,7 +17770,10 @@
             rankedStats: profile.rankedStats || {},
             challengeStats: profile.challengeStats || {},
             difficultyWins: profile.difficultyWins || {},
-            twosWins: Number(profile.matchCounters && profile.matchCounters.twosWins) || 0
+            twosWins: Number(profile.matchCounters && profile.matchCounters.twosWins) || 0,
+            decksWins: Number(profile.matchCounters && profile.matchCounters.decksWins) || 0,
+            decksSnaps: Number(profile.matchCounters && profile.matchCounters.decksSnaps) || 0,
+            decksTop3: Number(profile.matchCounters && profile.matchCounters.decksTop3) || 0
           };
           challengeEconomyLoadedForUid = currentUser.uid;
           seasonSetProfile(profile);
@@ -18348,6 +18388,11 @@
       // online the server checks the room says so.
       const me = state.players.find(p => p.id === state.localPlayerId);
       const extra = me?.drew ? { drew: true, ...(state.isMultiplayer && state.roomCode ? { roomCode: state.roomCode } : {}) } : {};
+      if (isMultiDeck() && me) {
+        // Snap Burns this game, and a top-three finish at a table of six or more.
+        extra.decks = { snaps: Number(me.gameStats?.snapBurns) || 0, top3: state.players.length >= 6 && me.hasFinished && me.finishRank >= 1 && me.finishRank <= 3 };
+        if (state.isMultiplayer && state.roomCode) extra.roomCode = state.roomCode;
+      }
       return callEconomy('matchFinished', { matchId, ...extra }).then((res) => {
         if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
         applyServerClaims(res.claimed);
@@ -18564,7 +18609,7 @@
       if (/^referral_/.test(key)) return { name: 'Invite bonus', group: 'Friends' };
       const gs = GETTING_STARTED_CHALLENGES.find(c => c.id === key);
       if (gs) return { name: gs.name, group: 'Getting Started' };
-      const groupNames = { rankedBurns: 'Ranked', rankedStreaks: 'Ranked', rankedJokerDeflects: 'Ranked', rankedSnapBurns: 'Ranked', rankedGamesPlayed: 'Ranked', endingCards: 'Ranked', rankTiers: 'Ranked', botMatches: 'Bots', recruits: 'Friends', twosWins: 'Team', draws: 'Hidden' };
+      const groupNames = { rankedBurns: 'Ranked', rankedStreaks: 'Ranked', rankedJokerDeflects: 'Ranked', rankedSnapBurns: 'Ranked', rankedGamesPlayed: 'Ranked', endingCards: 'Ranked', rankTiers: 'Ranked', botMatches: 'Bots', recruits: 'Friends', twosWins: 'Team', decksWins: 'Decks', decksSnaps: 'Decks', decksTop3: 'Decks', draws: 'Hidden' };
       for (const [g, defs] of Object.entries(CHALLENGE_DEFS)) {
         const def = defs.find(c => c.id === key);
         if (def) return { name: def.name, group: groupNames[g] || 'Milestones' };
@@ -18895,6 +18940,11 @@
         const have = Math.min(challengeEconomy.twosWins || 0, c.target);
         return renderChallengeRowHTML(c.name, `${have}/${c.target} — ${challengeDescription(c)}`, c.reward, !!done[c.id], challengeDescription(c));
       }).join(''));
+      // Multiple Decks: wins, Snap Burns and top-three finishes (the server counts them).
+      setListHtml('challengesDecksList', [['decksWins', 'decksWins'], ['decksSnaps', 'decksSnaps'], ['decksTop3', 'decksTop3']].flatMap(([g, k]) => CHALLENGE_DEFS[g].map((c) => {
+        const have = Math.min(challengeEconomy[k] || 0, c.target);
+        return renderChallengeRowHTML(c.name, `${have}/${c.target} — ${challengeDescription(c)}`, c.reward, !!done[c.id], challengeDescription(c));
+      })).join(''));
       // Hidden challenges: a mystery row until earned, then the real one.
       setListHtml('challengesHiddenList', CHALLENGE_DEFS.draws.map((c) => (done[c.id]
         ? renderChallengeRowHTML(c.name, challengeDescription(c), c.reward, true, challengeDescription(c))
