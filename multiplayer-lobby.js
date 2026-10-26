@@ -233,14 +233,14 @@
         }
 
         const realPlayerCount = existingPlayers.filter(p => !p.isBot).length;
-        if (realPlayerCount >= 4) {
-          alert("Room is already full with 4 human players.");
+        if (realPlayerCount >= lobbyCap()) {
+          alert(`Room is already full with ${lobbyCap()} human players.`);
           pNameInput.disabled = false;
           if (joinBtnEl) joinBtnEl.disabled = false;
           return;
         }
 
-        if (existingPlayers.length >= 4) {
+        if (existingPlayers.length >= lobbyCap()) {
           const botIdx = existingPlayers.findIndex(p => p.isBot);
           if (botIdx !== -1) {
             existingPlayers.splice(botIdx, 1);
@@ -275,9 +275,9 @@
         // may have landed in the meantime.
         updatePlayersAtomic(code, (currentList) => {
           const realCount = currentList.filter(p => !p.isBot).length;
-          if (realCount >= 4) return currentList; // genuinely full now — don't add
+          if (realCount >= lobbyCap()) return currentList; // genuinely full now — don't add
           let list = currentList;
-          if (list.length >= 4) {
+          if (list.length >= lobbyCap()) {
             const botIdx = list.findIndex(p => p.isBot);
             if (botIdx !== -1) list = list.filter((_, i) => i !== botIdx);
           }
@@ -307,13 +307,13 @@
       // tell "the room is full" apart from "this would leave no seat for a
       // second human", so it gave a misleading message in the latter case.
       const botCount = state.players.filter(p => p.isBot).length;
-      const botLimit = state.ruleMode === 'house' ? 3 : 2;
+      const botLimit = state.friendsMode === 'decks' ? lobbyCap() - 1 : state.ruleMode === 'house' ? 3 : 2;
       if (botCount >= botLimit) {
         alert(state.ruleMode === 'house' ? "You can add up to 3 bots in House Rules." : "You can add up to 2 bots. An online room needs at least 2 human players.");
         return;
       }
-      if (state.players.length >= 4) {
-        alert("This room is full — 4 players maximum.");
+      if (state.players.length >= lobbyCap()) {
+        alert(`This room is full — ${lobbyCap()} players maximum.`);
         return;
       }
       const existingNames = state.players.map(p => p.name);
@@ -341,8 +341,8 @@
       // whatever the list actually is right as it commits.
       updatePlayersAtomic(state.roomCode, (currentList) => {
         const currentBotCount = currentList.filter(p => p.isBot).length;
-        const limit = state.ruleMode === 'house' ? 3 : 2;
-        if (currentBotCount >= limit || currentList.length >= 4) return currentList;
+        const limit = state.friendsMode === 'decks' ? lobbyCap() - 1 : state.ruleMode === 'house' ? 3 : 2;
+        if (currentBotCount >= limit || currentList.length >= lobbyCap()) return currentList;
         return [...currentList, { ...newBot, avatar: pickBotAvatar(currentList) }];
       });
     }
@@ -491,6 +491,8 @@
       renderTurnTimerButtons();
     }
 
+    // Seats in a room: 8 for Multiple Decks, 4 for everything else.
+    function lobbyCap() { return state.friendsMode === 'decks' ? 8 : 4; }
     function canStartMultiplayerGame() {
       // Checking human count first (rather than total player count) means this
       // always shows the accurate message — the old "need 2 players/bots"

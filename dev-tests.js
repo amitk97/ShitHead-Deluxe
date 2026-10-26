@@ -7182,6 +7182,43 @@ async function runDevTestSuite() {
       assertEqual(document.querySelectorAll('#localHand .hand-stack').length, 0, 'a small hand stays in rows');
     } finally { freshState(); }
   });
+  await test('v445: Multiple Decks chooser starts 4-8 player games; a Friends room seats 8 and fills bots to four at the start', () => {
+    try {
+      document.querySelector('[data-open-decks]').click();
+      assertTrue(!document.getElementById('decksModal').classList.contains('hidden'), 'the chooser opens');
+      document.querySelector('#decksCounts [data-n="8"]').click();
+      assertEqual(document.getElementById('decksNote').textContent, 'You and 7 bots at this difficulty.', 'the note follows the count');
+      document.querySelector('#decksCounts [data-n="4"]').click();
+      document.getElementById('decksCloseBtn').click();
+      assertTrue(document.getElementById('decksModal').classList.contains('hidden'), 'the chooser closes');
+      freshState(); startSinglePlayerGame(7, null, { multiDeck: true });
+      assertEqual(state.players.length, 8, 'eight seats');
+      // Online: the room's mode decides.
+      freshState(); state.isMultiplayer = true; state.friendsMode = 'decks';
+      assertTrue(isMultiDeck(), 'a decks room is multi-deck');
+      assertEqual(lobbyCap(), 8, 'eight seats in a decks room');
+      state.friendsMode = 'standard'; assertTrue(!isMultiDeck() && lobbyCap() === 4, 'standard rooms are unchanged');
+      const four = fillBotsToFour([{ id: 'a', name: 'Amit', isBot: false }, { id: 'b', name: 'Bea', isBot: false }], 'medium');
+      assertEqual(four.length, 4, 'two humans get two bots');
+      assertEqual(four.filter(p => p.isBot && p.difficulty === 'medium').length, 2, 'Medium bots');
+      assertEqual(fillBotsToFour(new Array(6).fill(0).map((_, i) => ({ id: 'h' + i, name: 'H' + i })), 'medium').length, 6, 'a bigger table gets no bots');
+    } finally { freshState(); }
+  });
+  await test('v445: starting a Multiple Decks room with two people adds two Medium bots and deals two decks', () => {
+    try {
+      freshState({ isMultiplayer: true, isHost: true, roomCode: '555556', drawPile: [], friendsMode: 'decks' });
+      state.players = [makePlayer({ id: 'p1' }), makePlayer({ id: 'p2' })];
+      state.localPlayerId = 'p1';
+      const originalSync = syncFirebaseGameState;
+      syncFirebaseGameState = function () {};
+      try { startMultiplayerGame(); } finally { syncFirebaseGameState = originalSync; }
+      assertEqual(state.players.length, 4, 'filled to four');
+      assertEqual(state.players.filter(p => p.isBot && p.difficulty === 'medium').length, 2, 'two Medium bots');
+      const all = [...state.drawPile, ...state.players.flatMap(p => [...p.hand, ...p.faceUp, ...p.faceDown])];
+      assertEqual(all.length, 108, 'two decks dealt');
+      assertTrue(isMultiDeck(), 'the room plays as Multiple Decks');
+    } finally { freshState(); }
+  });
   await test('v388: 2 vs 2 seats partners opposite, a team wins when both are out, a Joker never targets the partner', () => {
     try {
       freshState(); startSinglePlayerGame(3, null, { twos: true });

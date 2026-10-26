@@ -109,7 +109,7 @@
     // browsers' compositing) made their position:fixed boxes start at the
     // table's top instead of the screen's, pushing the top and X of a tall
     // page (e.g. Profile on iPhone) under the header.
-    ['puzzlesModal', 'twosModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
+    ['puzzlesModal', 'twosModal', 'decksModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
      'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'eventPopupModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
@@ -3076,7 +3076,21 @@
     function isTwos() { return state.players.length === 4 && state.players.every(p => p.team === 0 || p.team === 1); }
     function sameTeam(a, b) { return isTwos() && a.team === b.team; }
     // § Multiple Decks: 2 decks and 4 Jokers; never Ranked or a lesson. A snap plays every matching card, and Jokers can chain four deep.
-    function isMultiDeck() { return !!state.multiDeck && !state.isRanked && !tutorialActive; }
+    // Multiple Decks needs at least four at the table: empty seats get bots when the match starts.
+    function fillBotsToFour(players, difficulty) {
+      while (players.length < 4) {
+        const humans = players.filter(p => !p.isBot);
+        const name = (botNamePool(players.map(p => p.name.replace(/ \(Bot\)$/, '')))[0] || `Bot ${players.length}`) + ' (Bot)';
+        players.push({ id: 'p_bot_' + Math.random().toString(36).slice(2, 9), name, isBot: true, isHost: false, difficulty, houseRulesReady: true,
+          avatar: pickBotAvatar(players), cosmetics: { cardBack: pickBotCardBack() }, hand: [], faceUp: [], faceDown: [], isReady: false, hasFinished: false });
+      }
+      return players;
+    }
+    function isMultiDeck() {
+      if (state.isRanked || tutorialActive) return false;
+      // Online the room's mode is the truth (every phone reads it); solo games carry the flag.
+      return state.isMultiplayer ? state.friendsMode === 'decks' : !!state.multiDeck;
+    }
     // Lobby: who is on which team. Keeps explicit picks while each team has at
     // most two, then fills the rest so the teams stay two and two.
     function twosAssign(list) {
@@ -9072,11 +9086,13 @@
         const flip = Math.random() < .5 ? 1 : 0;
         state.players = [side[flip][0], side[1 - flip][0], side[flip][1], side[1 - flip][1]];
       }
+      if (!seatedByServer && state.friendsMode === 'decks') fillBotsToFour(state.players, state.lobbyBotDifficulty || 'medium');
       state.players = seatedByServer
         ? serverDeal.order.map(uid => state.players.find(p => p.uid === uid))
         : twosMatch ? state.players : shuffle([...state.players]);
 
-      let deck = seatedByServer ? serverDeal.deck.map(deckCardById) : generateDeck();
+      const decksMatch = !seatedByServer && state.friendsMode === 'decks';
+      let deck = seatedByServer ? serverDeal.deck.map(deckCardById) : generateDeck(decksMatch ? 2 : 1);
       if (!seatedByServer && state.ruleMode === 'house' && state.houseRules?.joker === 'off') deck = deck.filter(c => !c.isJoker);
       const dealtPlayers = state.players.map(p => {
         // Carried forward on purpose — this is what makes "Lobby Totals"
@@ -9990,6 +10006,35 @@
       if (typeof isOffline === 'function' && isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
       window.ShHomeCarousel?.openMode('friends');
       window.ShFriendsLobby?.openTwos();
+    });
+
+    // § Multiple Decks chooser: 4-8 players, bots at a chosen difficulty (Medium by default), or Play Friends.
+    let decksPlayers = 4;
+    function paintDecksCounts() {
+      document.querySelectorAll('#decksCounts [data-n]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.n) === decksPlayers)));
+      document.getElementById('decksNote').textContent = `You and ${decksPlayers - 1} bots at this difficulty.`;
+    }
+    function openDecksChoice() {
+      document.querySelectorAll('#decksModal .diff-btn').forEach(styleDifficultyBtn);
+      paintDecksCounts();
+      document.getElementById('decksModal').classList.remove('hidden');
+    }
+    function closeDecksChoice() { document.getElementById('decksModal')?.classList.add('hidden'); }
+    document.querySelectorAll('[data-open-decks]').forEach((b) => { b.onclick = openDecksChoice; });
+    document.getElementById('decksCloseBtn').addEventListener('click', closeDecksChoice);
+    document.getElementById('decksModal').addEventListener('click', (e) => {
+      if (e.target.id === 'decksModal') closeDecksChoice();
+      const c = e.target.closest('#decksCounts [data-n]'); if (c) { decksPlayers = Number(c.dataset.n); paintDecksCounts(); }
+    });
+    document.getElementById('decksBotsBtn').addEventListener('click', () => {
+      closeDecksChoice();
+      runShuffleIntro(() => startSinglePlayerGame(decksPlayers - 1, null, { multiDeck: true }));
+    });
+    document.getElementById('decksFriendsBtn').addEventListener('click', () => {
+      closeDecksChoice();
+      if (typeof isOffline === 'function' && isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
+      window.ShHomeCarousel?.openMode('friends');
+      window.ShFriendsLobby?.openDecks();
     });
 
     document.getElementById('finishSwapBtn').addEventListener('click', finishLocalSwap);
@@ -22450,7 +22495,7 @@
       giftOpenModal: 'giftOpenClose', giftModal: 'giftModalClose', installHelpModal: 'installHelpClose',
       dailyRewardModal: () => closeDailyReward(), playerPopup: 'playerPopupClose', matchSummaryModal: 'matchSummaryClose',
       authModal: 'authCloseBtn', usernameModal: null, difficultyUnlockPopup: 'difficultyUnlockPopupBtn',
-      matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), twosModal: () => closeTwosChoice(), puzzlesModal: () => window.ShPuzzles?.close(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
+      matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), twosModal: () => closeTwosChoice(), decksModal: () => closeDecksChoice(), puzzlesModal: () => window.ShPuzzles?.close(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', levelLadderModal: 'levelLadderCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn', changelogModal: 'changelogCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',

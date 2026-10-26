@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v445: [['sparkle', 'Multiple Decks is here to try: two decks, four Jokers and 4 to 8 players. Play it from More Modes against bots, or host it in Play Friends with up to 8 seats.', WN_KEY]],
       v444: [['sparkle', 'Multiple Decks groundwork: a side rail for big tables and a hand grouped by rank. Not playable yet.']],
       v443: [['sparkle', 'Groundwork for a Multiple Decks mode: two decks, four Jokers and longer Joker counter chains. Not playable yet.']],
       v442: [['sparkle', 'Mumbai Masala: nine new Shop items rendered in 3D: the Dabbawala avatar, Marigold Garland card back, Marine Drive Nights table, Masala Chai deck, Kaali Peeli frame, a Mumbai emote pack, and three effects with their own sounds: Monsoon Deluge, Tiffin Surprise and Gateway Gala.', WN_KEY]],

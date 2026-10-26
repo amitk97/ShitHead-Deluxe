@@ -54,7 +54,7 @@ await page.locator('#hostRoomBtn').click();
 assert.equal(await page.locator('[data-friends-mode]').count(),5);
 assert(!await page.locator('#friendsSeats').isVisible());
 assert.equal(await page.locator('[data-friends-mode="standard"]').getAttribute('aria-pressed'),'true');
-await page.keyboard.press('1');assert(await page.locator('#friendsConfirmMode').isDisabled());
+await page.keyboard.press('1');assert.equal(await page.locator('[data-friends-mode="decks"]').getAttribute('aria-pressed'),'true');assert.match(await page.locator('#friendsConfirmMode').textContent(),/MULTIPLE DECKS/);
 await page.keyboard.press('ArrowRight');assert.equal(await page.locator('[data-friends-mode="house"]').getAttribute('aria-pressed'),'true');
 await page.keyboard.press('4');assert(await page.locator('#friendsConfirmMode').isDisabled());
 await page.keyboard.press('3');assert(!await page.locator('#friendsConfirmMode').isDisabled());

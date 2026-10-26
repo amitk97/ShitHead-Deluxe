@@ -21,11 +21,11 @@
     $('friendsRoomSettings').classList.toggle('hidden', !room || (!host && mode!=='series'));
     $('friendsHostHint').parentElement.hidden = room;
     $('friendsConfirmMode').disabled = busy || mode.startsWith('soon') || (mode === 'series' && !seriesUnlocked());
-    $('friendsConfirmMode').textContent = busy ? 'CREATING ROOM…' : mode.startsWith('soon') ? 'COMING SOON' : mode === 'series' && !seriesUnlocked() ? 'UNLOCKS AT LEVEL 20' : `HOST ${mode === 'house' ? 'HOUSE RULES' : mode === 'series' ? 'BEST OF SERIES' : mode === 'twos' ? '2 VS 2' : 'STANDARD'} ROOM`;
+    $('friendsConfirmMode').textContent = busy ? 'CREATING ROOM…' : mode.startsWith('soon') ? 'COMING SOON' : mode === 'series' && !seriesUnlocked() ? 'UNLOCKS AT LEVEL 20' : `HOST ${mode === 'house' ? 'HOUSE RULES' : mode === 'series' ? 'BEST OF SERIES' : mode === 'twos' ? '2 VS 2' : mode === 'decks' ? 'MULTIPLE DECKS' : 'STANDARD'} ROOM`;
     const preview = {id: state.localPlayerId, name: $('playerNameInput').value.trim() || currentUser?.displayName || 'You', cosmetics: getPublicCosmeticLoadout()};
     const teamOf = room && mode === 'twos' ? twosAssign(state.players) : null;
     const players = room ? [...state.players].sort((a,b) => teamOf ? teamOf[a.id] - teamOf[b.id] || Number(b.isHost) - Number(a.isHost) : Number(b.isHost) - Number(a.isHost)) : [preview];
-    const html = Array.from({length:4}, (_,i) => {
+    const html = Array.from({length: mode==='decks' ? 8 : 4}, (_,i) => {
       const p = players[i];
       if (!p) return `<div class="pf-seat pf-seat-empty"><span class="pf-empty-avatar" aria-hidden="true">+</span><strong>Seat ${i+1}</strong><small>Waiting for a friend<br>or a bot</small></div>`;
       const own = p.id === state.localPlayerId;
@@ -43,13 +43,13 @@
     document.querySelectorAll('[data-friends-config]').forEach(el => {el.hidden = room && !host && mode!=='series'; el.disabled = busy || (room && mode!=='series' && !editable());});
     paintCarousel();
     const trigger=$('friendsSettingsTrigger');
-    trigger.dataset.friendsConfig=mode==='house'?'house':mode==='series'?'series':mode==='twos'?'twos':'standard';
+    trigger.dataset.friendsConfig=mode==='house'?'house':mode==='series'?'series':mode==='twos'?'twos':mode==='decks'?'decks':'standard';
     trigger.querySelector('span').textContent=mode==='house'?'Custom Rules':mode==='series'?'Series Settings':'Table Settings';
     trigger.hidden=false;
     $('friendsSeriesLock').classList.toggle('hidden', seriesUnlocked());
     $('friendsSeriesLock').querySelector('span').textContent = `Level ${SERIES_RULES.level}`;
     $('friendsModeSummary').hidden = true;
-    $('friendsModeSummary').textContent = mode==='house' ? 'House Rules · Unranked · No Challenges or Diamonds' : mode==='series' ? 'Standard rules · Two signed-in players · Level 20+' : mode==='twos' ? 'Standard rules · Partners sit opposite · Four players or bots' : 'Standard rules · Invite a friend to start';
+    $('friendsModeSummary').textContent = mode==='house' ? 'House Rules · Unranked · No Challenges or Diamonds' : mode==='series' ? 'Standard rules · Two signed-in players · Level 20+' : mode==='twos' ? 'Standard rules · Partners sit opposite · Four players or bots' : mode==='decks' ? 'Two decks · Four Jokers · 4 to 8 players, bots fill to four' : 'Standard rules · Invite a friend to start';
     $('friendsReadyRow').classList.toggle('hidden', !room || mode!=='house');
     const me=state.players.find(p=>p.id===state.localPlayerId);
     $('friendsReady').textContent = me?.houseRulesReady ? 'Ready ✓' : 'Ready';
@@ -63,14 +63,14 @@
       $('houseRulesPanel').classList.toggle('hidden',!house || (host && configTab!=='rules'));
       $('friendsCommonSettings').classList.toggle('hidden',!host || series || (house && configTab!=='table'));
       const humans=state.players.filter(p=>!p.isBot).length, bots=state.players.filter(p=>p.isBot).length;
-      const max=Math.min(house?3:2,4-humans);
+      const max=mode==='decks'?Math.min(7,8-humans):Math.min(house?3:2,4-humans);
       $('friendsBotCount').innerHTML = Array.from({length:max+1},(_,n)=>`<option value="${n}" ${n===bots?'selected':''}>${n} ${n===1?'bot':'bots'}</option>`).join('');
       $('friendsBotDifficulty').innerHTML = Object.keys(DIFF_LABELS).map(d=>`<option value="${d}" ${d===(state.lobbyBotDifficulty||state.difficulty)?'selected':''} ${!unlockedDifficulties[d]?'disabled':''}>${d[0].toUpperCase()+d.slice(1)}${!unlockedDifficulties[d]?' (locked)':''}</option>`).join('');
       $('friendsSeriesSettings').classList.toggle('hidden',!series);
       $('friendsBotCount').disabled = $('friendsBotDifficulty').disabled = !editable() || busy;
     }
   }
-  const modes = ['soon-left', 'house', 'standard', 'series', 'twos'];
+  const modes = ['decks', 'house', 'standard', 'series', 'twos'];
   // Keep the existing room-code and invite controls above the compact seats.
   const roomCodeCard = $('prominentRoomCode').parentElement;
   $('friendsHub').insertBefore(roomCodeCard, $('friendsSeats'));
@@ -111,6 +111,7 @@
     if(mode==='series' && !seriesUnlocked()) {notifyBanner('Best of Series unlocks at level 20.');return false;}
     if(!editable() || busy) return false;
     if(mode===selected()) return true;
+    if(mode!=='decks' && state.players.length>4) {notifyBanner('Only Multiple Decks seats more than four players.');return false;}
     if(mode==='series' && state.players.some(p=>p.isBot)) {notifyBanner('Remove the bots in settings before choosing a series.');return false;}
     return publishHouseRules(mode==='house'?'house':'standard',mode==='house'?(state.houseRules||ShHouseRules.CLASSIC):null,mode);
   }
@@ -133,7 +134,7 @@
       const res=await db.ref(`rooms/${code}`).transaction(room=>{
         if(!room || room.phase!=='LOBBY' || room.hostId!==state.localPlayerId || room.friendsMode==='series') return;
         const players=roomPlayerList(room.players), humans=players.filter(p=>!p.isBot);
-        const max=Math.min(room.ruleMode==='house'?3:2,4-humans.length);
+        const max=room.friendsMode==='decks'?Math.min(7,8-humans.length):Math.min(room.ruleMode==='house'?3:2,4-humans.length);
         const n=Math.max(0,Math.min(max,Math.trunc(Number(count)||0)));
         const bots=players.filter(p=>p.isBot).slice(0,n).map(p=>({...p,difficulty}));
         while(bots.length<n) {
@@ -190,7 +191,13 @@
     window.ShHousePresets?.resetSelection();
     $('friendsJoinView').classList.add('hidden'); render();
   }
-  window.ShFriendsLobby={openTwos,render,showHub,showSetup,closeConfig,backToHub,layoutRules,draftMode:()=>draft};
+  function openDecks() {
+    if (inRoom() || busy) return;
+    setup = true; cursor = modes.indexOf('decks'); draft = 'decks';
+    window.ShHousePresets?.resetSelection();
+    $('friendsJoinView').classList.add('hidden'); render();
+  }
+  window.ShFriendsLobby={openTwos,openDecks,render,showHub,showSetup,closeConfig,backToHub,layoutRules,draftMode:()=>draft};
   document.querySelectorAll('[data-friends-config]').forEach(el=>el.addEventListener('click',()=>openConfig(el.dataset.friendsConfig)));
   document.querySelectorAll('[data-config-tab]').forEach(el=>el.addEventListener('click',()=>{configTab=el.dataset.configTab;render();layoutRules();}));
   const track=$('friendsModeCarousel'), cards=[...track.querySelectorAll('.mc-card')];

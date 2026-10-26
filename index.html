@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-26-v444 (ShitHead-Deluxe-259) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-26-v445 (ShitHead-Deluxe-260) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -227,7 +227,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=f2d8da9e82c4">
+  <link rel="stylesheet" href="game.css?v=e8ce102f29cf">
 
   
   <!-- Firebase SDKs -->
@@ -685,7 +685,7 @@
             <div id="friendsSeats" class="pf-seats" aria-label="Four player seats"></div>
             <div class="pf-section-title"><span>Choose your mode</span><span id="friendsHostHint">You host. You choose.</span></div>
 <div id="friendsModeCarousel" class="mc-track" aria-label="Play Friends modes">
-<div role="button" tabindex="0" class="mc-card" data-friends-mode="soon-left" style="--mc-tone:#64748b" aria-pressed="false"><span class="mc-num">1</span><svg class="mc-ic ic"><use href="#ic-sparkle"/></svg><strong class="mc-name">Coming Soon</strong><small class="mc-sub">A new way to play</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
+<div role="button" tabindex="0" class="mc-card" data-friends-mode="decks" style="--mc-tone:#6366f1" aria-pressed="false"><span class="mc-num">1</span><svg class="mc-ic ic"><use href="#ic-cards"/></svg><strong class="mc-name">Multiple Decks</strong><small class="mc-sub">Two decks · up to 8 players</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="house" style="--mc-tone:#a855f7" aria-pressed="false"><span class="mc-num">2</span><svg class="mc-ic ic"><use href="#ic-cards"/></svg><strong class="mc-name">House Rules</strong><small class="mc-sub">Your table. Your rules.</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="standard" style="--mc-tone:#10b981" aria-pressed="false"><span class="mc-num">3</span><svg class="mc-ic ic"><use href="#ic-cards"/></svg><strong class="mc-name">Standard</strong><small class="mc-sub">Classic rules</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="series" style="--mc-tone:#f59e0b" aria-pressed="false"><span class="mc-num">4</span><svg class="mc-ic ic"><use href="#ic-swords"/></svg><strong class="mc-name">Best of Series</strong><small class="mc-sub">Best of 3 · 5 · 7</small><button type="button" class="mc-go" data-friends-go>Go →</button><span id="friendsSeriesLock" class="pf-lock"><svg class="ic"><use href="#ic-lock"/></svg><span>Level 20</span></span></div>
@@ -797,7 +797,7 @@
               <li class="mp-row"><span class="mp-row-text"><b>2 vs 2</b><span>Team up with a partner who sits opposite. Your team wins when you are both out. Plays at your Play Computer difficulty, or host it in Play Friends.</span></span><button type="button" class="mp-open" data-open-twos>Play</button></li>
               <li class="mp-row"><span class="mp-row-text"><b>Puzzles</b><span>A set table and one way to win. A new puzzle every week.</span></span><button type="button" class="mp-open" data-open-puzzles>Play</button></li>
               <li class="mp-row"><span class="mp-row-text"><b>Randomiser</b><span>Card powers are shuffled every match and shown before the deal.</span></span><span class="mp-soon">Soon</span></li>
-              <li class="mp-row"><span class="mp-row-text"><b>Multiple Decks</b><span>More decks shuffled together for bigger tables.</span></span><span class="mp-soon">Soon</span></li>
+              <li class="mp-row"><span class="mp-row-text"><b>Multiple Decks</b><span>Two decks and four Jokers for 4 to 8 players. Four of a rank burn the Pile, and a Snap Burn plays every matching card.</span></span><button type="button" class="mp-open" data-open-decks>Play</button></li>
               <li class="mp-row"><span class="mp-row-text"><b>No Mercy</b><span>Queens see hidden cards, no Jokers on a 4, and a King makes the next player take the bottom card.</span></span><span class="mp-soon">Soon</span></li>
             </ul>
           </div>
@@ -2198,6 +2198,28 @@
       <button type="button" id="twosFriendsBtn" class="twos-friends">Play with friends</button>
     </div>
   </div>
+  <div id="decksModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="decksTitle">
+    <div class="gauntlet-card twos-card">
+      <button type="button" id="decksCloseBtn" class="gauntlet-close" aria-label="Close">✕</button>
+      <h2 id="decksTitle" class="gauntlet-title">Multiple Decks</h2>
+      <p class="gauntlet-text">Two decks and four Jokers. Four of a rank burn the Pile, and a Snap Burn plays every matching card.</p>
+      <div class="twos-label">Players at the table</div>
+      <div id="decksCounts" class="decks-counts" role="group" aria-label="Number of players">
+        <button type="button" data-n="4" class="decks-count">4</button><button type="button" data-n="5" class="decks-count">5</button><button type="button" data-n="6" class="decks-count">6</button><button type="button" data-n="7" class="decks-count">7</button><button type="button" data-n="8" class="decks-count">8</button>
+      </div>
+      <div class="twos-label">Bot difficulty</div>
+      <div class="twos-diffs" role="group" aria-label="Bot difficulty">
+        <button type="button" data-diff="easy" class="diff-btn">EASY</button>
+        <button type="button" data-diff="medium" class="diff-btn">MED</button>
+        <button type="button" data-diff="hard" class="diff-btn">HARD</button>
+        <button type="button" data-diff="boss" class="diff-btn">BOSS</button>
+      </div>
+      <p id="decksNote" class="twos-note"></p>
+      <button type="button" id="decksBotsBtn" class="gauntlet-go">PLAY</button>
+      <div class="twos-or"><span>or</span></div>
+      <button type="button" id="decksFriendsBtn" class="twos-friends">Play with friends</button>
+    </div>
+  </div>
   <div id="puzzlesModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="pzTitle">
     <div class="pz-card-box">
       <button type="button" id="pzClose" class="gauntlet-close" aria-label="Close">✕</button>
@@ -2690,22 +2712,22 @@
   <script src="js/play-matrix-ui.js?v=fd8f6034a133"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=5636a4a229a4"></script>
-  <script src="js/whats-new-data.js?v=bfe9a1c7ceca"></script>
+  <script src="js/whats-new-data.js?v=f325656cc85b"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=17a523ae1399"></script>
   <script src="tutorial-data.js?v=86b1cdade927"></script>
   <script src="tutorial.js?v=e74d342b9d28"></script>
   <script src="level-ladder.js?v=4d5bf0aaa94d"></script>
   <script src="shop.js?v=c94f79a35731"></script>
-  <script src="home-navigation.js?v=debdb0a87cad"></script>
-  <script src="multiplayer-lobby.js?v=b284dcca25e7"></script>
+  <script src="home-navigation.js?v=7786a2c99d67"></script>
+  <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=e3dcff769366"></script>
+  <script src="app.js?v=ebc5ee5869f6"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>
   <script src="js/house-rules-presets.js?v=80f7a658ecb1"></script>
-  <script src="js/friends-lobby.js?v=ea308f23f623"></script>
+  <script src="js/friends-lobby.js?v=e2bfd172899d"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>
   <script src="js/puzzles.js?v=87cb627bec7c"></script>
