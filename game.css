@@ -2946,3 +2946,30 @@
     .theme-tube { --card-bg: #0d1a3d; --card-border: #e32219; --text-light: #f4f7ff; --text-red: #ff5a4d; }
     .theme-tube :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back), .deck-mini-card.theme-tube { background-image: linear-gradient(180deg, rgba(255,255,255,.07) 0 6%, transparent 6% 94%, rgba(227,34,25,.35) 94%), radial-gradient(ellipse at 50% 120%, rgba(1,33,105,.9), transparent 70%); }
     .theme-tube :is(.card-base,.card-table,.card-opponent-slot) .card-corner-rank, .deck-mini-card.theme-tube .dm-rank { font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif; font-weight: 800; }
+
+/* § Multiple Decks: opponent rail (5+ players) and grouped hand */
+#opponentsContainer.opp-rail-on { justify-content: space-between; align-items: flex-start; }
+.opp-rail { display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-width: 0; max-width: 58%; }
+.rail-row { display: flex; align-items: center; gap: 5px; height: 22px; padding: 0 6px 0 4px; border-radius: 8px; cursor: pointer;
+  background: rgba(10,16,32,.74); border: 1px solid rgba(51,65,85,.9); transition: border-color .2s var(--ease-snappy), background .2s var(--ease-snappy); }
+.rail-row:hover, .rail-row:focus-visible { border-color: rgba(148,163,184,.9); outline: none; }
+.rail-row.rail-featured { border-color: rgba(125,211,252,.8); }
+.rail-row.rail-turn { border-color: #fbbf24; background: rgba(120,80,10,.35); }
+.rail-row.rail-out { opacity: .45; }
+.rail-cards { display: flex; gap: 2px; flex: none; }
+.rail-card { width: 15px; height: 18px; border-radius: 3px; font-size: 9px; font-weight: 900; line-height: 18px; text-align: center;
+  background: var(--card-bg, #f8fafc); border: 1px solid var(--card-border, #94a3b8); }
+.rail-card-down { background: #1e293b; border-color: #475569; }
+.rail-card-none { background: transparent; border: 1px dashed rgba(100,116,139,.5); }
+.rail-who { display: flex; align-items: center; gap: 3px; min-width: 0; flex: 1 1 0; }
+.rail-name { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-count { flex: none; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px; font-size: 9px; font-weight: 900; line-height: 16px; text-align: center;
+  background: #1e293b; color: #e2e8f0; border: 1px solid #334155; }
+.hand-stack { overflow: visible; }
+.hand-stack-badge { position: absolute; right: -4px; bottom: -4px; z-index: 5; min-width: 22px; padding: 1px 5px; border-radius: 999px; font-size: 10px; font-weight: 900;
+  text-align: center; background: #0f172a; color: #fbbf24; border: 1px solid #fbbf24; pointer-events: none; }
+.hand-group-bar { align-self: flex-end; flex: none; height: 24px; margin: -2px 2px 3px 0; z-index: 600; display: flex; align-items: center; gap: 4px; }
+.hand-group-bar button { height: 24px !important; min-height: 0 !important; width: auto !important; min-width: 28px; padding: 0 8px !important; line-height: 1; border-radius: 12px; font-size: 11px; font-weight: 900; color: #e2e8f0;
+  background: rgba(15,23,42,.9); border: 1px solid #475569; }
+.hand-group-bar .hgb-label { font-size: 11px; font-weight: 900; color: #fbbf24; padding-right: 2px; }
+body.reduce-motion .rail-row { transition: none; }

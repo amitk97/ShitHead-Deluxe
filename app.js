@@ -1483,6 +1483,7 @@
       state.isMultiplayer = false;
       state.isRanked = false;
       state.multiDeck = !!opts.multiDeck;
+      handGroupOverride = null; railActiveId = null; railPeekId = null;
       state.gauntlet = opts.gauntlet ? { ...opts.gauntlet } : null; // § Gauntlet
       state.rankedRatingApplied = false;
       state.rankedAutoStarted = false;
@@ -6914,11 +6915,16 @@
       // The base card size is already tuned for the worst case of 3 opponents
       // needing to fit side by side — with fewer, there's genuinely spare
       // width being wasted, so this scales cards up accordingly.
-      const oppScale = opponentCount <= 1 ? 1.55 : opponentCount === 2 ? 1.22 : 1;
+      // Multiple Decks with 5+ players: thin rows in a left rail, one full seat
+      // (whoever is playing, or just played) at the top right.
+      const railMode = isMultiDeck() && opponentCount >= 4;
+      oppContainer.classList.toggle('opp-rail-on', railMode);
+      const oppScale = railMode ? 1 : opponentCount <= 1 ? 1.55 : opponentCount === 2 ? 1.22 : 1;
       oppContainer.style.setProperty('--opp-scale', oppScale);
       // Wide enough for the picture plus a 12-character name at every count.
       const viewportW = window.innerWidth || 390;
-      const seatW = opponentCount <= 1 ? Math.min(240, viewportW - 40)
+      const seatW = railMode ? Math.min(150, viewportW * 0.4)
+        : opponentCount <= 1 ? Math.min(240, viewportW - 40)
         : opponentCount === 2 ? Math.min(190, (viewportW - 36) / 2)
         : Math.min(150, (viewportW - 30) / 3 - 6);
       oppContainer.style.setProperty('--opp-seat-w', `${Math.floor(seatW)}px`);
@@ -6931,7 +6937,15 @@
       const oppList = twosView
         ? [1, 2, 3].map(k => state.players[(state.players.indexOf(twosView) + k) % 4])
         : state.players.filter(p => p.id !== viewId);
-      oppList.forEach(p => {
+      const railOpponents = oppList;
+      let railFeatured = null;
+      if (railMode) {
+        if (currentTurnPlayer && currentTurnPlayer.id !== viewId && !currentTurnPlayer.hasFinished && currentTurnPlayer.id !== railActiveId) {
+          railActiveId = currentTurnPlayer.id; railPeekId = null;
+        }
+        railFeatured = railOpponents.find(p => p.id === (railPeekId || railActiveId)) || railOpponents[0];
+      }
+      (railMode ? [railFeatured] : oppList).forEach(p => {
         const isTurn = currentTurnPlayer && currentTurnPlayer.id === p.id && !p.hasFinished;
         const onLastCard = isOnLastCard(p);
         const isPartner = !!twosView && p.team === twosView.team;
@@ -7055,6 +7069,7 @@
         `;
         oppContainer.appendChild(oppDiv);
       });
+      if (railMode) oppContainer.insertBefore(buildOppRail(railOpponents, railFeatured, currentTurnPlayer), oppContainer.firstChild);
       fitOpponentSeats(oppContainer, oppScale);
       announceLastCards();
 
@@ -7333,7 +7348,12 @@
 
       // Try 1, 2 and 3 rows and keep whichever gives the biggest cards that
       // still fit the width: a tall phone suits more rows, a short one fewer.
-      const handRows = bestHandRows(local.hand, getAvailableHandHeightPx());
+      // Multiple Decks with a big hand: one stack per rank (H2), 7 to a row.
+      const handGroups = handIsGrouped(local) ? groupHandByRank(local.hand) : null;
+      const handBarPx = isMultiDeck() && state.phase === 'PLAY' && local.hand.length >= 8 ? 27 : 0;
+      const handRows = handGroups
+        ? chunkEvenly(handGroups.map(g => g[0]), 7)
+        : bestHandRows(local.hand, getAvailableHandHeightPx() - handBarPx);
       const rowCount = handRows.length;
 
       // Sizing is based on the LARGEST row (capped at 12 by computeHandRows),
@@ -7344,7 +7364,7 @@
       // regardless of aspect ratio or zoom, rather than hoping a fixed
       // percentage shrink happens to be enough.
       const maxRowSize = Math.max(...handRows.map(r => r.length), 1);
-      const availableHandHeight = getAvailableHandHeightPx();
+      const availableHandHeight = getAvailableHandHeightPx() - handBarPx;
       const cardMetrics = computeHandCardMetrics(maxRowSize, rowCount, availableHandHeight);
 
       // A single row keeps today's compact footprint; more rows are allowed
@@ -7377,7 +7397,9 @@
 
         rowCards.forEach((card, iInRow) => {
           const isSwapSelected = state.selectedSwapHandCardId === card.id;
-          const isStagedForPlay = state.phase === 'PLAY' && state.selectedPlayCardIds.includes(card.id);
+          const stack = handGroups ? handGroups.find(g => g[0].id === card.id) : null;
+          const stackStaged = stack ? stack.filter(c => state.selectedPlayCardIds.includes(c.id)).length : 0;
+          const isStagedForPlay = state.phase === 'PLAY' && (stack ? stackStaged > 0 : state.selectedPlayCardIds.includes(card.id));
           const isLegal = isMyTurn && isPlayLegal(card, state.discardPile, state.activeConstraint);
 
           const cardEl = createCardElement(card, true, isSwapSelected, isLegal, false, true);
@@ -7417,7 +7439,28 @@
               else showCardLockReason(getCardLockReason(card, 'hand', local));
             }
           };
+          if (stack) {
+            cardEl.classList.add('hand-stack');
+            cardEl.dataset.stackCount = String(stack.length);
+            if (stack.length > 1) {
+              const badge = document.createElement('span');
+              badge.className = 'hand-stack-badge';
+              badge.textContent = stackStaged ? `${stackStaged}/${stack.length}` : `\u00d7${stack.length}`;
+              cardEl.appendChild(badge);
+              cardEl.style.setProperty('--stack-n', String(Math.min(3, stack.length) - 1));
+            }
+            cardEl.onclick = () => {
+              if (wasCardJustDragged(card.id)) return;
+              if (handTapRedirected(card.id)) return;
+              if (state.phase === 'PLAY' && isMyTurn) handStackTap(stack);
+              else if (state.phase === 'PLAY') {
+                if (handSnapEligible) executeLocalSnapBurn();
+                else showCardLockReason(getCardLockReason(card, 'hand', local));
+              }
+            };
+          }
           cardEl.ondblclick = () => {
+            if (stack) return;
             if (state.phase === 'PLAY' && isMyTurn && !doubleTapPlay) {
               handleSingleCardSelection(card.id, getAllSelectablePool(local));
             }
@@ -7427,6 +7470,10 @@
 
         handContainer.appendChild(rowEl);
       });
+      if (handBarPx) {
+        handContainer.insertBefore(handGroupBar(local, handGroups, isMyTurn), handContainer.firstChild);
+        handContainer.style.maxHeight = `${availableHandHeight + handPadPx + handBarPx}px`;
+      }
 
       // Cards staged to play sit visually on top of the pile until confirmed
       // (Play Selected / Enter) or dragged back off to change your mind.
@@ -7540,6 +7587,102 @@
     // past the bottom of the table, pull the rows closer (down to 55% of the
     // card behind showing) and then shrink the cards until it fits.
     const stagedLiftShown = new Set(); // staged cards that already sprang up onto the pile
+
+    // § Multiple Decks rail (C): who the top-right seat shows, and the rail rows.
+    let railActiveId = null; // the opponent whose turn it was last
+    let railPeekId = null;   // a row the player tapped, until the turn moves on
+    function buildOppRail(list, featured, turnPlayer) {
+      const rail = document.createElement('div');
+      rail.className = 'opp-rail';
+      list.forEach(p => {
+        const up = buildFixedSlots(p.faceUp), down = buildFixedSlots(p.faceDown);
+        let cards = '';
+        for (let i = 0; i < 3; i++) {
+          const c = up[i];
+          if (c) cards += `<span class="rail-card ${getSuitStyle(c.suit)}" data-card-id="${c.id}">${c.isJoker ? 'J' : c.rank}</span>`;
+          else if (down[i]) cards += '<span class="rail-card rail-card-down"></span>';
+          else cards += '<span class="rail-card rail-card-none"></span>';
+        }
+        const on = turnPlayer && turnPlayer.id === p.id && !p.hasFinished;
+        const row = document.createElement('div');
+        row.className = `rail-row${on ? ' rail-turn' : ''}${p.id === featured.id ? ' rail-featured' : ''}${p.hasFinished ? ' rail-out' : ''}`;
+        row.dataset.railPeek = p.id;
+        row.setAttribute('role', 'button'); row.tabIndex = 0;
+        row.setAttribute('aria-label', `${p.name}, ${p.hasFinished ? 'finished' : (p.hand?.length || 0) + ' cards in hand'}`);
+        row.innerHTML = `<span class="rail-cards">${cards}</span>
+          <span class="rail-who">${avatarHtml(getPlayerAvatarId(p), 16, '')}<span class="rail-name">${escapeHtml(p.name)}</span></span>
+          <span class="rail-count">${p.hasFinished ? '#' + p.finishRank : (p.hand?.length || 0)}</span>`;
+        rail.appendChild(row);
+      });
+      return rail;
+    }
+    function railPeek(id) {
+      railPeekId = (id === railActiveId) ? null : id;
+      render();
+    }
+
+    // § Multiple Decks hand (H2): grouped by rank from 16 cards, or by choice.
+    let handGroupOverride = null; // null = automatic, true/false = the player's choice
+    const HAND_GROUP_AT = 16;
+    function handIsGrouped(local) {
+      if (!isMultiDeck() || state.phase !== 'PLAY' || !local || local.hasFinished) return false;
+      const n = (local.hand || []).length;
+      if (n < 2) return false;
+      return handGroupOverride === null ? n >= HAND_GROUP_AT : handGroupOverride;
+    }
+    function groupHandByRank(hand) {
+      const by = new Map();
+      hand.forEach(c => { const k = c.isJoker ? 'JOKER' : c.rank; if (!by.has(k)) by.set(k, []); by.get(k).push(c); });
+      // Jokers never stack: each one is played on its own.
+      const out = [];
+      by.forEach((g, k) => { if (k === 'JOKER') g.forEach(c => out.push([c])); else out.push(g); });
+      return out;
+    }
+    function chunkEvenly(list, max) {
+      const rows = Math.ceil(list.length / max) || 1;
+      const size = Math.ceil(list.length / rows);
+      const out = [];
+      for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size));
+      return out;
+    }
+    // Stage the first n cards of a stack (the Jokers' own rule: one at a time).
+    function stackSelect(stack, n) {
+      const local = state.players.find(p => p.id === state.localPlayerId);
+      if (!local || !isLocalPlayersTurnNow()) { state.selectedPlayCardIds = []; render(); return; }
+      if (!isPlayLegal(stack[0], state.discardPile, state.activeConstraint)) { notifyBanner("That card can't be played here."); return; }
+      const count = Math.max(0, Math.min(stack[0].isJoker ? 1 : stack.length, n));
+      state.selectedPlayCardIds = stack.slice(0, count).map(c => c.id);
+      render();
+    }
+    function handStackTap(stack) {
+      const staged = stack.filter(c => state.selectedPlayCardIds.includes(c.id)).length;
+      if (staged) { stackSelect(stack, 0); return; }
+      stackSelect(stack, selectsWholeRank(stack[0]) ? stack.length : 1);
+    }
+    function handGroupBar(local, groups, isMyTurn) {
+      const bar = document.createElement('div');
+      bar.className = 'hand-group-bar';
+      const stack = groups && groups.find(g => g.some(c => state.selectedPlayCardIds.includes(c.id)));
+      if (stack && stack.length > 1 && isMyTurn) {
+        const n = stack.filter(c => state.selectedPlayCardIds.includes(c.id)).length;
+        bar.innerHTML = `<span class="hgb-label">${stack[0].rank} \u00d7 ${n} of ${stack.length}</span>
+          <button type="button" data-hgb="minus" aria-label="One fewer">\u2212</button>
+          <button type="button" data-hgb="plus" aria-label="One more">+</button>
+          <button type="button" data-hgb="all">All</button>`;
+        bar.onclick = (e) => {
+          const b = e.target.closest('[data-hgb]'); if (!b) return;
+          const k = b.dataset.hgb;
+          stackSelect(stack, k === 'minus' ? n - 1 : k === 'plus' ? n + 1 : stack.length);
+        };
+      }
+      const t = document.createElement('button');
+      t.type = 'button'; t.className = 'hgb-toggle';
+      t.textContent = groups ? 'Rows' : 'Group';
+      t.setAttribute('aria-label', groups ? 'Show the hand as overlapped rows' : 'Group the hand by rank');
+      t.onclick = () => { handGroupOverride = !groups; state.selectedPlayCardIds = []; render(); };
+      bar.appendChild(t);
+      return bar;
+    }
 
     // Makes the hand fill the room it has: shrinks it if the player's area
     // runs past the table bottom, and grows it (bigger cards, same layout)
@@ -13951,10 +14094,14 @@
       if (event.key === 'Escape' && !document.getElementById('playerPopup').classList.contains('hidden')) closePlayerPopup();
     });
     document.getElementById('opponentsContainer').addEventListener('click', (event) => {
+      const rr = event.target.closest('[data-rail-peek]');
+      if (rr) { railPeek(rr.dataset.railPeek); return; }
       const head = event.target.closest('[data-player-popup]');
       if (head) openPlayerPopup(head.dataset.playerPopup, head.closest('.opp-seat') || head);
     });
     document.getElementById('opponentsContainer').addEventListener('keydown', (event) => {
+      const rr = event.target.closest('[data-rail-peek]');
+      if (rr && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); railPeek(rr.dataset.railPeek); return; }
       const head = event.target.closest('[data-player-popup]');
       if (head && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openPlayerPopup(head.dataset.playerPopup, head.closest('.opp-seat') || head); }
     });

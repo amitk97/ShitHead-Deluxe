@@ -7155,6 +7155,33 @@ async function runDevTestSuite() {
       assertEqual(state.players[state.currentTurnIndex].id, b.id, 'B won the duel and plays next');
     } finally { freshState(); }
   });
+  await test('v444: Multiple Decks shows a rail of rows plus one full seat for 5+ players, and groups a 16+ card hand by rank', () => {
+    try {
+      freshState(); startSinglePlayerGame(7, null, { multiDeck: true });
+      state.phase = 'PLAY'; state.currentTurnIndex = 2; render();
+      const box = document.getElementById('opponentsContainer');
+      assertEqual(box.querySelectorAll('.rail-row').length, 7, 'one rail row per opponent');
+      assertEqual(box.querySelectorAll('.opp-seat').length, 1, 'one full seat');
+      assertEqual(box.querySelector('.opp-seat').id, 'opp-' + state.players[2].id, 'the seat follows whose turn it is');
+      assertTrue(box.querySelector('.rail-row.rail-turn') && box.querySelector('.rail-row').firstElementChild.classList.contains('rail-cards'), 'face-up cards sit left of the name');
+      assertEqual(box.querySelector('.rail-row:last-child .rail-count').textContent.trim(), String(state.players[7].hand.length), 'hand count sits right');
+      state.currentTurnIndex = 0; render();
+      assertEqual(box.querySelector('.opp-seat').id, 'opp-' + state.players[2].id, 'on your turn it keeps the opponent who just played');
+      railPeek(state.players[5].id);
+      assertEqual(box.querySelector('.opp-seat').id, 'opp-' + state.players[5].id, 'tapping a row shows that opponent');
+      freshState(); startSinglePlayerGame(2, null, { multiDeck: true }); render();
+      assertEqual(document.querySelectorAll('#opponentsContainer .rail-row').length, 0, 'four players keep the normal layout');
+      // Grouped hand.
+      freshState(); startSinglePlayerGame(3, null, { multiDeck: true });
+      const me = state.players[0]; state.phase = 'PLAY'; state.currentTurnIndex = 0; state.discardPile = [];
+      me.hand = state.drawPile.splice(0, 16); render();
+      assertTrue(document.querySelectorAll('#localHand .hand-stack').length > 0, 'a 16-card hand is grouped');
+      const g = groupHandByRank(me.hand).find(x => x.length > 1 && !x[0].isJoker);
+      if (g) { stackSelect(g, 2); assertEqual(state.selectedPlayCardIds.length, 2, 'the stack selects as many as asked'); stackSelect(g, 99); assertEqual(state.selectedPlayCardIds.length, g.length, 'All selects the whole stack'); }
+      me.hand = me.hand.slice(0, 5); state.selectedPlayCardIds = []; render();
+      assertEqual(document.querySelectorAll('#localHand .hand-stack').length, 0, 'a small hand stays in rows');
+    } finally { freshState(); }
+  });
   await test('v388: 2 vs 2 seats partners opposite, a team wins when both are out, a Joker never targets the partner', () => {
     try {
       freshState(); startSinglePlayerGame(3, null, { twos: true });
