@@ -2865,8 +2865,14 @@
     #lobbyScreen.mode-page-open #homeEventChip { display:none !important; }
 
 /* § Wishlist (v374) */
-.wish-heart { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; flex:none; border-radius:999px; border:1px solid #334155; background:transparent; color:#64748b; padding:0; transition:color .15s, background .15s, border-color .15s, transform .2s var(--ease-bouncy, ease); }
-.wish-heart .ic { width:13px; height:13px; }
+.wish-heart { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; flex:none; border-radius:999px; border:1px solid #64748b; background:transparent; color:#cbd5e1; padding:0; transition:color .15s, background .15s, border-color .15s, transform .2s var(--ease-bouncy, ease); }
+.wish-heart .ic { width:16px; height:16px; }
+.wish-heart:focus-visible { outline:2px solid #fb7185; outline-offset:3px; }
+.wishlist-status { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:8px 0; color:#cbd5e1; font-size:12px; line-height:1.5; }
+.wishlist-status.hidden { display:none; }
+.wishlist-status button { border:1px solid #fb7185; border-radius:8px; color:#fda4af; padding:6px 10px; min-height:32px; background:transparent; }
+.wishlist-status button:focus-visible { outline:2px solid #fb7185; outline-offset:2px; }
+.wishlist-empty { padding:18px 4px; font-size:12px; line-height:1.5; color:#cbd5e1; }
 .wish-heart:hover { color:#fb7185; border-color:#fb7185; }
 .wish-heart.is-on { color:#fb7185; border-color:#fb7185; background:rgba(251,113,133,.14); }
 .wish-heart.is-on .ic path { fill:currentColor; }

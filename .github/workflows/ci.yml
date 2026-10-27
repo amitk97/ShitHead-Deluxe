@@ -45,6 +45,7 @@ jobs:
           node --check sw.js
           for source in app.js private-cosmetics.js multiplayer-lobby.js home-navigation.js shop.js level-ladder.js sound.js tutorial.js tutorial-data.js cosmetics-data.js burn-effects.js card-animations.js; do node --check "$source"; done
           node tools/modular-assets-test.js
+          node tools/wishlist-store-test.js
 
       - name: Install Firebase Functions dependencies
         working-directory: functions
@@ -91,6 +92,9 @@ jobs:
 
       - name: Play Friends lobby regression checks
         run: node tools/friends-lobby-browser-test.js
+
+      - name: Shop wishlist account sync and responsive UI
+        run: node tools/wishlist-browser-test.js
 
       - name: Private cosmetics regression checks
         run: |
