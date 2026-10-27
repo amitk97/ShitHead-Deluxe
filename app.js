@@ -14105,34 +14105,48 @@
     // ({itemId: true}, owner-writable, anyone signed in reads it) and in localStorage for guests
     // and offline; the Profile page lists it and other players see it on the player card.
     const WISHLIST_KEY = 'shithead_wishlist', WISHLIST_MAX = 30;
-    let wishlistIds = (() => { try { return new Set(JSON.parse(localStorage.getItem(WISHLIST_KEY) || '[]')); } catch (e) { return new Set(); } })();
+    let wishlistIds = new Set();
+    const wishlistStoreOptions = {
+      key: WISHLIST_KEY, max: WISHLIST_MAX,
+      storage: (() => { try { return localStorage; } catch (_) { return null; } })(),
+      validId: id => COSMETIC_SHOP_ITEMS.some(item => item.id === id),
+      onChange: ids => {
+        const changed = ids.size !== wishlistIds.size || [...ids].some(id => !wishlistIds.has(id));
+        wishlistIds = ids;
+        if (changed) refreshWishlistViews(); else renderWishlistSyncStatus();
+      }
+    };
+    let wishlistStore = ShWishlist.create(wishlistStoreOptions);
+    wishlistIds = wishlistStore.ids;
     const isWished = id => wishlistIds.has(id);
     function wishlistItems(ids = wishlistIds) {
       return [...ids].map(id => COSMETIC_SHOP_ITEMS.find(i => i.id === id)).filter(Boolean);
     }
     function saveWishlist() {
-      try { localStorage.setItem(WISHLIST_KEY, JSON.stringify([...wishlistIds])); } catch (e) {}
-      if (!currentUser || typeof db === 'undefined') return;
-      const map = {}; wishlistIds.forEach(id => { map[id] = true; });
-      db.ref(`publicProfiles/${currentUser.uid}/wishlist`).set(wishlistIds.size ? map : null).catch(() => {});
+      wishlistStore.persist();
     }
     function toggleWishlist(id) {
-      if (wishlistIds.has(id)) wishlistIds.delete(id);
-      else if (wishlistIds.size >= WISHLIST_MAX) { notifyBanner(`Your wishlist is full (${WISHLIST_MAX}).`); return; }
-      else wishlistIds.add(id);
-      saveWishlist();
+      wishlistStore.setAccount(currentUser?.uid || null);
+      if (wishlistStore.toggle(id) === 'full') notifyBanner(`Your wishlist is full (${WISHLIST_MAX}).`);
+    }
+    function refreshWishlistViews() {
+      const focused = document.activeElement?.dataset?.wishItem;
       renderProfileWishlist();
-      if (typeof renderCosmeticShop === 'function' && !document.getElementById('shopModal')?.classList.contains('hidden')) renderCosmeticShop();
+      if (typeof renderCosmeticShop === 'function' && !document.getElementById('shopModal')?.classList.contains('hidden')) {
+        renderCosmeticShop();
+        if (focused) (document.querySelector(`#shopModal [data-wish-item="${CSS.escape(focused)}"]`) || document.querySelector('[data-shop-filter="wishlist"]'))?.focus({ preventScroll: true });
+      }
     }
-    // At sign-in the account's list wins and is merged with what this device kept as a guest.
+    // Account caches are isolated. Cloud snapshots replace stale cached rows;
+    // only explicit pending edits are overlaid and retried per item.
     function loadWishlist(user = currentUser) {
-      if (!user || typeof db === 'undefined') return;
-      db.ref(`publicProfiles/${user.uid}/wishlist`).once('value').then(snap => {
-        if (!currentUser || currentUser.uid !== user.uid) return;
-        Object.keys(snap.val() || {}).forEach(id => { if (wishlistIds.size < WISHLIST_MAX) wishlistIds.add(id); });
-        saveWishlist(); renderProfileWishlist();
-      }).catch(() => {});
+      if ((currentUser?.uid || null) !== (user?.uid || null)) return Promise.resolve(false);
+      wishlistStore.setAccount(user?.uid || null);
+      if (!user || typeof db === 'undefined') return Promise.resolve(true);
+      return wishlistStore.connect(user.uid, db.ref(`publicProfiles/${user.uid}/wishlist`));
     }
+    window.addEventListener('online', () => wishlistStore.retry());
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) void wishlistStore.retry(); });
     function wishlistRowHtml(item, opts = {}) {
       const type = COSMETIC_CATEGORY_TYPES[item.category];
       const owned = !!cosmeticPurchaseState[item.id];
@@ -14154,6 +14168,7 @@
       if (slot) slot.innerHTML = wishlistHtml(Object.fromEntries([...wishlistIds].map(id => [id, true])), { mine: true });
     }
     document.addEventListener('click', (e) => {
+      if (e.target.closest?.('[data-wish-retry]')) { e.preventDefault(); void wishlistStore.retry(); return; }
       const heart = e.target.closest?.('[data-wish-item]');
       if (heart) { e.preventDefault(); e.stopPropagation(); toggleWishlist(heart.dataset.wishItem); return; }
       const open = e.target.closest?.('[data-wish-open]');
@@ -16387,6 +16402,7 @@
         }
         const wasSignedIn = !!currentUser;
         currentUser = user;
+        wishlistStore.setAccount(user?.uid || null); // clear the previous account before painting its replacement
         if (wasSignedIn && !user) resetAfterSignOut();
         const fromSnapshot = user ? applyHomeSnapshot(user) : (clearHomeSnapshot(), false); // § Home snapshot
         clearTimeout(settingsCloudSaveTimer);

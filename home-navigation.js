@@ -247,14 +247,14 @@
       // pinned card only says it's coming soon until that mode launches.
       const PIN_KEY = 'shithead_home_pins';
       const PIN_MODES = {
-        twos: ['2 vs 2', 'M9.8 10.2a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0zM2.5 21v-.6a4.5 4.5 0 0 1 9 0v.6M19.8 10.2a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0zM12.5 21v-.6a4.5 4.5 0 0 1 9 0v.6M12 2l.95 1.95 2.15.3-1.55 1.5.35 2.15L12 6.9l-1.9 1 .35-2.15-1.55-1.5 2.15-.3z', '#3b82f6'],
-        puzzles: ['Puzzles', 'M4 7a1 1 0 0 1 1-1h3.5a2.5 2.5 0 1 1 5 0H17a1 1 0 0 1 1 1v3.5a2.5 2.5 0 1 1 0 5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z', '#84cc16'],
-        random: ['Randomiser', 'M4 7h3l10 10h3M4 17h3l3-3M14 10l3-3h3M18 4l3 3-3 3M18 14l3 3-3 3', '#ec4899'],
-        decks: ['Multiple Decks', 'M7 4h10a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM3 7v12a2 2 0 0 0 2 2h9', '#6366f1'],
-        mercy: ['No Mercy', 'M12 3c4.4 0 8 3.1 8 7 0 2.4-1.3 4.4-3 5.6V19a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-3.4C5.3 14.4 4 12.4 4 10c0-3.9 3.6-7 8-7zM9 11h.01M15 11h.01', '#ef4444']
+        twos: ['2 vs 2', 'M5 6a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M3.8 12v-.7a3 3 0 0 1 6 0v.7M15.4 6a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M14.2 12v-.7a3 3 0 0 1 6 0v.7M5 15a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M3.8 21v-.7a3 3 0 0 1 6 0v.7M15.4 15a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M14.2 21v-.7a3 3 0 0 1 6 0v.7M12 4v17', '#3b82f6', 1.2],
+        puzzles: ['Puzzles', 'M3.0 3.0H10.0V5.0C10.663 5.0 11.2 5.537 11.2 6.2C11.2 6.863 10.663 7.4 10.0 7.4V10.0H7.4C7.4 9.337 6.863 8.8 6.2 8.8C5.537 8.8 5.0 9.337 5.0 10.0H3.0V3.0ZM20.0 3.0V10.0H18.0C18.0 10.663 17.463 11.2 16.8 11.2C16.137 11.2 15.6 10.663 15.6 10.0H13.0V7.4C13.663 7.4 14.2 6.863 14.2 6.2C14.2 5.537 13.663 5.0 13.0 5.0V3.0H20.0ZM20.0 20.0H13.0V18.0C12.337 18.0 11.8 17.463 11.8 16.8C11.8 16.137 12.337 15.6 13.0 15.6V13.0H15.6C15.6 13.663 16.137 14.2 16.8 14.2C17.463 14.2 18.0 13.663 18.0 13.0H20.0V20.0ZM3.0 20.0V13.0H5.0C5.0 12.337 5.537 11.8 6.2 11.8C6.863 11.8 7.4 12.337 7.4 13.0H10.0V15.6C9.337 15.6 8.8 16.137 8.8 16.8C8.8 17.463 9.337 18.0 10.0 18.0V20.0H3.0Z', '#84cc16', 1.05],
+        random: ['Randomiser', 'M2.75 6.45H5.525C9.225 6.45 14.775 17.55 18.475 17.55H21.25M17.55 13.85 21.25 17.55 17.55 21.25M2.75 17.55H5.525C7.375 17.55 9.225 14.775 10.15 12.925M13.85 9.225C15.7 7.375 16.625 6.45 18.475 6.45H21.25M17.55 2.75 21.25 6.45 17.55 10.15', '#ec4899'],
+        decks: ['Multiple Decks', 'M4.5119 5.8333H10.6786L8.9167 12.881H2.75L4.5119 5.8333ZM2.75 15.5238H8.9167L10.6786 13.7619M2.75 18.1667H8.9167L10.6786 16.4048M15.0833 5.8333H21.25L19.4881 12.881H13.3214L15.0833 5.8333ZM13.3214 15.5238H19.4881L21.25 13.7619M13.3214 18.1667H19.4881L21.25 16.4048', '#6366f1'],
+        mercy: ['No Mercy', 'M6 9a6 6 0 0 1 12 0c0 2-1 3.2-2.5 4V16h-7v-3C7 12.2 6 11 6 9zM8 7.5l3 1-1.2 1H8.5zM16 7.5l-3 1 1.2 1h1.3zM12 10.5l-.7 1.2h1.4zM10.5 14v2M13.5 14v2M6 18l12 3M6 21l12-3', '#ef4444', 1.2]
       };
       const NO_PIN_TONE = '#64748b'; // an empty shortcut slot
-      const pinSvg = (d) => '<svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+      const pinSvg = (d, stroke = 1.5) => '<svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + stroke + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
       const emptyPinHtml = cards.find((c) => c.dataset.mcMode === 'pin1').innerHTML.replace(/<span class="mc-num"[^>]*>\d<\/span>/, '');
       const readPins = () => {
         let p; try { p = JSON.parse(localStorage.getItem(PIN_KEY)) || {}; } catch (e) { p = {}; }
@@ -268,11 +268,11 @@
           const num = '<span class="mc-num" aria-hidden="true">' + (cards.indexOf(c) + 1) + '</span>';
           c.style.setProperty('--mc-tone', m ? m[2] : NO_PIN_TONE);
           const live = pins[c.dataset.mcMode] === 'puzzles' && window.ShPuzzles;
-          if (live) { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">' + (window.ShPuzzles.solvedThisWeek() ? 'Solved this week' : 'Weekly puzzle') + '</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
-          if (pins[c.dataset.mcMode] === 'twos') { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Team up with a partner</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
-          if (pins[c.dataset.mcMode] === 'decks') { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Two decks, up to 8 players</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
-          if (pins[c.dataset.mcMode] === 'mercy') { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Queens see, Kings take</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
-          c.innerHTML = num + (m ? pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Coming soon</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-preview>Info</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>' : emptyPinHtml.replace(/data-mc-go(?:="")?>Go →/, 'data-mc-swap>Pin +'));
+          if (live) { c.innerHTML = num + pinSvg(m[1], m[3]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">' + (window.ShPuzzles.solvedThisWeek() ? 'Solved this week' : 'Weekly puzzle') + '</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
+          if (pins[c.dataset.mcMode] === 'twos') { c.innerHTML = num + pinSvg(m[1], m[3]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Team up with a partner</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
+          if (pins[c.dataset.mcMode] === 'decks') { c.innerHTML = num + pinSvg(m[1], m[3]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Two decks, up to 8 players</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
+          if (pins[c.dataset.mcMode] === 'mercy') { c.innerHTML = num + pinSvg(m[1], m[3]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Queens see, Kings take</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
+          c.innerHTML = num + (m ? pinSvg(m[1], m[3]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Coming soon</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-preview>Info</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>' : emptyPinHtml.replace(/data-mc-go(?:="")?>Go →/, 'data-mc-swap>Pin +'));
           c.classList.toggle('mc-pinned', !!m);
         });
       }
@@ -301,7 +301,7 @@
       // More Modes page rows wear the same icons as the pins (same order).
       document.querySelectorAll('#moreModesPage .mp-row').forEach((row, i) => {
         const m = Object.values(PIN_MODES)[i];
-        if (m && !row.querySelector('.mc-ic')) { row.style.setProperty('--mc-tone', m[2]); row.insertAdjacentHTML('afterbegin', pinSvg(m[1]).replace('mc-ic', 'mc-ic mp-row-ic')); }
+        if (m && !row.querySelector('.mc-ic')) { row.style.setProperty('--mc-tone', m[2]); row.insertAdjacentHTML('afterbegin', pinSvg(m[1], m[3]).replace('mc-ic', 'mc-ic mp-row-ic')); }
       });
       // § Card expand (v321): the middle card flips (edge-on at the half-way
       // point), grows to fill the screen as the page's background, the page
@@ -568,7 +568,7 @@
           labCard = document.createElement('div');
           labCard.className = 'mc-card'; labCard.setAttribute('role', 'button'); labCard.tabIndex = -1; labCard.setAttribute('aria-pressed', 'false');
           labCard.dataset.mcMode = 'lab'; labCard.style.setProperty('--mc-tone', '#e879f9');
-          labCard.innerHTML = '<span class="mc-num" aria-hidden="true"></span><svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3M7.5 15h9"/></svg><span class="mc-name">Test Lab</span><span class="mc-sub">Effects sandbox</span><button type="button" class="mc-go" data-mc-go>Go →</button>';
+          labCard.innerHTML = '<span class="mc-num" aria-hidden="true"></span><svg class="mc-ic ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mode-lab"/></svg><span class="mc-name">Test Lab</span><span class="mc-sub">Effects sandbox</span><button type="button" class="mc-go" data-mc-go>Go →</button>';
           labCard.dataset.mc = String(cards.length + 1);
           cards.push(labCard); defaultOrder.push('lab');
           try { applyOrder(JSON.parse(localStorage.getItem(ORDER_KEY))); } catch (e) {}
@@ -766,4 +766,7 @@
       setTimeout(soon, 800);
       soon();
     }
+
+
+
 

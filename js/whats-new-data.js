@@ -3,7 +3,11 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
-      v463: [['info', 'Fixed the Shop: the Union Jack and Kaali Peeli frame previews no longer draw a big frame over the whole page.']],
+      v467: [['info', 'Fixed the Shop: the Union Jack and Kaali Peeli frame previews no longer draw a big frame over the whole page.']],
+      v466: [['heart', 'Wishlist improvements: separate lists for each account, offline save retry, and saved seasonal items visible outside their event.']],
+      v465: [['info', 'Clearer, lighter icons for Puzzles, No Mercy, 2 vs 2 and Best of Series, with more space around their shapes.']],
+      v464: [['info', 'Mode icons now use a coordinated outline set, including the armored Gauntlet, team pairs, House Rules and Best of Series.']],
+      v463: [['info', 'No Mercy now has its own skull icon in Play Friends and pinned shortcuts.']],
       v462: [['info', 'The end-of-match page now names the mode: No Mercy, Multiple Decks or House Rules, as well as 2 vs 2, Gauntlet and Ranked.']],
       v461: [['lock', 'No Mercy now unlocks at Lvl 25 (it shows on the Level Ladder).', WN_KEY]],
       v460: [['spade', 'No Mercy now teaches itself: short tips appear the first two games a 4, Queen, King, Ace or Joker turns up in your hand. Bots also play the King and Ace on purpose.', WN_KEY]],
@@ -805,5 +809,8 @@
     };
   window.ShWhatsNewData = { WN_KEY, WHATS_NEW };
 })();
+
+
+
 
 
