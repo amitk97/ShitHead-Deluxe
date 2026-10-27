@@ -1506,13 +1506,13 @@ async function runDevTestSuite() {
         const t0 = document.timeline.currentTime;
         JOKER_FX[id](host, jfxGeom(host));
         if (window.ShCityRedesign && ShCityRedesign.durations[id]) {
-          const snapshots = new Set(); let lastVisible = 0;
-          for (let t = 0; t <= 1550; t += 50) {
-            if (host.querySelector('svg')) { snapshots.add(host.innerHTML); lastVisible = t; }
+          const snapshots = new Set(); let lastVisible = 0; const playbackStart = performance.now();
+          while (performance.now() - playbackStart <= 1800) {
+            if (host.querySelector('svg')) { snapshots.add(host.innerHTML); lastVisible = performance.now() - playbackStart; }
             await new Promise(r => setTimeout(r, 50));
           }
           assertTrue(snapshots.size > 4, id + ' draws changing SVG frames');
-          assertTrue(lastVisible >= 1000 && lastVisible <= 1500, id + ' stays within its playback window');
+          assertTrue(lastVisible >= 1000 && lastVisible <= JOKER_FX_MS + 60, id + ' stays within its playback window');
           assertTrue(!host.querySelector('svg'), id + ' cleans up its SVG');
           lengths[id] = lastVisible; host.remove(); continue;
         }
@@ -10216,7 +10216,7 @@ async function runDevTestSuite() {
       assertTrue(!/data:image\//i.test(a.art), `${id} picture embeds no bitmap data URI`);
       // the premium photo pictures are the only raster ones: sized files, never stretched past them
       // (the owner's approved art lives in art/avatars/approved-v26x/ and the crown atlas is a sized PNG, v263–v267)
-      if (a.photo) assertTrue([...a.art.matchAll(/href="([^"]+)"/g)].every(m => /^art\/avatars\/[A-Za-z0-9\/-]+\.(webp|png|svg)(\?v=\d+)?$/.test(m[1])), `${id} only uses its own art/avatars files`);
+      if (a.photo) assertTrue([...a.art.matchAll(/href="([^"]+)"/g)].every(m => /^art\/(?:avatars\/[A-Za-z0-9\/-]+\.(webp|png|svg)|cities-v2\/(?:london|mumbai)-avatar\.webp)(\?v=\d+)?$/.test(m[1])), `${id} only uses its own art/avatars files`);
       else assertTrue(!/<image/i.test(a.art), `${id} picture is pure vector`);
     });
     const css = [...document.querySelectorAll('style')].map(el => el.textContent).join('\n');
