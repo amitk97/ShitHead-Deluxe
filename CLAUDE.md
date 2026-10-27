@@ -14,7 +14,7 @@
 
 ## v458 — No Mercy Ace (owner's rule)
 
-- `noMercyAce(player, underCount)` (app.js, after `noMercyKing`): playing Ace(s) in No Mercy makes EVERY opponent, in turn order (no finished players, never a partner in 2 vs 2), take exactly ONE card from the bottom of the Pile, however many Aces were played, never the Aces just played (`underCount`). An Ace at the bottom cannot be taken and stops the pick-up; an empty Pile under the Ace means nothing happens; a short Pile feeds only the first opponents. A King can be taken by an Ace and an Ace by a King (`noMercyKing` still stops only at a King). No extra go; four Aces burn first. Card Powers label "Everyone Takes" and hold text (`NO_MERCY_LABEL/TEXT` in `js/card-reference-ui.js`), Guide No Mercy section, dev test "v458". Bots do not use it specially yet. Client only.
+- `noMercyAce(player, underCount)` (app.js, after `noMercyKing`): playing Ace(s) in No Mercy makes EVERY opponent, in turn order (no finished players, never a partner in 2 vs 2), take exactly ONE card from the bottom of the Pile, however many Aces were played, never the Aces just played (`underCount`). An Ace at the bottom cannot be taken and stops the pick-up; an empty Pile under the Ace means nothing happens; a short Pile feeds only the first opponents. A King can be taken by an Ace and an Ace by a King (`noMercyKing` still stops only at a King). No extra go; four Aces burn first. Card Powers label "Everyone Takes" and hold text (`NO_MERCY_LABEL/TEXT` in `js/card-reference-ui.js`), Guide No Mercy section, dev test "v458". v459: bots (Medium, Hard, Boss) add +50 per opponent the Ace would hit in `evaluateMoveUtility` (none when the bottom card is an Ace or the Pile is empty). Client only.
 
 ## v455 — bots break loops (owner's idea)
 

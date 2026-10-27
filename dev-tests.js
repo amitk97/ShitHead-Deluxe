@@ -7287,6 +7287,20 @@ async function runDevTestSuite() {
       assertTrue(/Everyone Takes/.test(cardReferenceLabel('A')) === !!state.noMercy, 'card rules show the Ace');
     } finally { freshState(); }
   });
+  await test('v459: No Mercy bots like an Ace that hits opponents and not one that does nothing', () => {
+    try {
+      const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
+      freshState(); startSinglePlayerGame(2); state.noMercy = true;
+      state.phase = 'PLAY'; state.currentTurnIndex = 0;
+      const bot = state.players[0];
+      const hit = evaluateMoveUtility(bot, 'A', [c('a', 'A')], [c('p1', '8'), c('p2', '9')], null, 'hard', true);
+      const blocked = evaluateMoveUtility(bot, 'A', [c('a', 'A')], [c('p1', 'A'), c('p2', '9')], null, 'hard', true);
+      const empty = evaluateMoveUtility(bot, 'A', [c('a', 'A')], [], null, 'hard', true);
+      assertTrue(hit - blocked >= 100 && blocked === empty, 'Ace hit ' + hit + ' blocked ' + blocked + ' empty ' + empty);
+      state.noMercy = false;
+      assertTrue(evaluateMoveUtility(bot, 'A', [c('a', 'A')], [c('p1', '8'), c('p2', '9')], null, 'hard', true) === blocked, 'normal games are unchanged');
+    } finally { freshState(); }
+  });
   await test('v455: a bot that is stuck in a loop tries a card it would not normally play', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
