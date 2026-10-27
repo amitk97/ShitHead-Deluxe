@@ -1125,7 +1125,9 @@
 
       // Loop breaker: once the same position has come round twice, the bot stops trusting its usual choice and
       // tries another legal one (even a card it normally keeps), more often the longer the loop goes on.
-      const loops = state.stalemate && (state.stalemate.repeats || 0) >= 2 ? state.stalemate.repeats : 0;
+      // A long run with no progress counts as a loop too (Aces and Kings keep handing cards back, so positions never repeat exactly).
+      const sm = state.stalemate || {};
+      const loops = Math.max((sm.repeats || 0) >= 2 ? sm.repeats : 0, (sm.turns || 0) >= 50 ? 2 + Math.floor((sm.turns - 50) / 25) : 0);
       if (loops && Math.random() < Math.min(0.9, 0.3 + 0.2 * loops)) {
         const other = uniqueRanks.filter(r => r !== bestRank);
         return pick(other[Math.floor(Math.random() * other.length)]);
