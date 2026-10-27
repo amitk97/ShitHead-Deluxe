@@ -3148,7 +3148,10 @@
     // Each King makes the next player take one card from the bottom of the Pile (never the cards just played).
     function noMercyKing(player, count, underCount) {
       const target = getNextPlayer();
-      const take = Math.min(count, underCount);
+      let take = Math.min(count, underCount);
+      // A King at the bottom of the Pile cannot be picked up by a King: it blocks the pick-up (stops Kings passing round in circles).
+      let k = 0; while (k < take && state.discardPile[k].rank !== 'K') k++;
+      take = k;
       if (!target || take <= 0) return { target, taken: [] };
       const taken = state.discardPile.splice(0, take);
       target.hand = [...(target.hand || []), ...taken];

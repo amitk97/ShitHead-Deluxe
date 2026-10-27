@@ -7345,6 +7345,14 @@ async function runDevTestSuite() {
       [a, b] = setup(); a.hand = [c('k1', 'K'), c('k2', 'K', '\u2660'), c('x1', '5')]; b.hand = [c('b1', '6')]; state.discardPile = [c('d1', '7'), c('d2', '8'), c('d3', '9')];
       executePlayCards(a.id, [a.hand[0], a.hand[1]]);
       assertEqual(b.hand.map(x => x.id).join(), 'b1,d1,d2', 'one bottom card per King');
+      // A King at the bottom blocks the pick-up (no King circles).
+      [a, b] = setup(); a.hand = [c('k1', 'K'), c('x1', '5')]; b.hand = [c('b1', '6')]; state.discardPile = [c('kb', 'K', '\u2660'), c('mid', '9')];
+      executePlayCards(a.id, [a.hand[0]]);
+      assertEqual(b.hand.length, 1, 'a King on the bottom cannot be taken');
+      assertEqual(state.discardPile.length, 3, 'the Pile keeps its bottom King');
+      [a, b] = setup(); a.hand = [c('k1', 'K'), c('k2', 'K', '\u2660'), c('x1', '5')]; b.hand = [c('b1', '6')]; state.discardPile = [c('d1', '7'), c('kb', 'K', '\u2663'), c('d3', '9')];
+      executePlayCards(a.id, [a.hand[0], a.hand[1]]);
+      assertEqual(b.hand.map(x => x.id).join(), 'b1,d1', 'the pick-up stops at the King');
       // Kings on an empty Pile: nothing happens.
       [a, b] = setup(); a.hand = [c('k1', 'K'), c('x1', '5')]; b.hand = [c('b1', '6')];
       executePlayCards(a.id, [a.hand[0]]);
