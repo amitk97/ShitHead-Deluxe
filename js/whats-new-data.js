@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v468: [['spade', 'No Mercy: a card you X-ray with a Queen now shows its face in that player\'s hand fan, which opens by itself.']],
       v467: [['info', 'Fixed the Shop: the Union Jack and Kaali Peeli frame previews no longer draw a big frame over the whole page.']],
       v466: [['heart', 'Wishlist improvements: separate lists for each account, offline save retry, and saved seasonal items visible outside their event.']],
       v465: [['info', 'Clearer, lighter icons for Puzzles, No Mercy, 2 vs 2 and Best of Series, with more space around their shapes.']],

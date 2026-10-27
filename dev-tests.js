@@ -7378,6 +7378,22 @@ async function runDevTestSuite() {
       closeNoMercyChoice();
     } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeNoMercyChoice(); }
   });
+  await test('v468: an X-rayed card shows its face in the opponent hand fan', () => {
+    try {
+      const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
+      freshState(); startSinglePlayerGame(1, null, { noMercy: true });
+      state.phase = 'PLAY'; state.currentTurnIndex = 0; state.drawPile = []; state.discardPile = [];
+      const [a, b] = state.players;
+      a.faceUp = []; b.faceUp = []; a.faceDown = []; b.faceDown = [];
+      a.hand = [c('q1', 'Q'), c('x1', '5')]; b.hand = [c('b1', '6'), c('b2', '7')];
+      executePlayCards(a.id, [a.hand[0]]);
+      render();
+      window.showOpponentHand(b.id);
+      const fan = document.querySelectorAll(`#opp-${b.id} .opp-hand-fan-card`);
+      assertEqual(fan.length, 2, 'two cards in the fan');
+      assertEqual(document.querySelectorAll(`#opp-${b.id} .opp-hand-fan-known`).length, 1, 'only the seen card shows its face');
+    } finally { freshState(); }
+  });
   await test('v462: the end page names No Mercy and Multiple Decks games', () => {
     try {
       freshState(); startSinglePlayerGame(2); state.noMercy = true; state.difficulty = 'hard';

@@ -3235,6 +3235,7 @@
       const target = state.players.find(p => p.id === pk.target);
       const mine = pk.by === viewSeatId();
       const calm = motionOff();
+      if (mine && typeof window.showOpponentHand === 'function') setTimeout(() => window.showOpponentHand(pk.target), 400);
       const layer = document.createElement('div');
       layer.className = 'nm-peek';
       layer.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`;

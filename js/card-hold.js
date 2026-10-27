@@ -145,6 +145,8 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
     .opp-seat.opp-hand-restoring .opp-hand-fan { transition:none !important; }
     .opp-hand-fan-card { position:absolute; left:50%; bottom:0; width:var(--opp-fan-card-w,30px); height:var(--opp-fan-card-h,43px); border-radius:6px; overflow:hidden; transform-origin:50% 115%; transform:translateX(-50%) translateX(var(--fan-x,0px)) translateY(var(--fan-y,0px)) rotate(var(--fan-rotate,0deg)); z-index:var(--fan-z,1); box-shadow:0 3px 8px rgba(0,0,0,.55),0 0 0 1px rgba(148,163,184,.38),0 0 7px rgba(56,189,248,.22); }
     .opp-hand-fan-art { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; margin:0 !important; border-radius:inherit !important; transform:none !important; transform-origin:50% 50% !important; overflow:hidden; }
+    .opp-hand-fan-known { box-shadow:0 3px 8px rgba(0,0,0,.55),0 0 0 2px #22d3ee,0 0 10px rgba(34,211,238,.55) !important; }
+    .opp-hand-fan-face { display:flex; align-items:center; justify-content:center; background:#06223a; font-weight:900; font-size:12px; line-height:1; }
     .opp-hand-fan-art svg { width:70%; height:70%; max-width:70%; max-height:70%; }
     .opp-hand-fan::after { content:""; position:absolute; left:14%; right:14%; bottom:-3px; height:10px; border-radius:50%; background:radial-gradient(ellipse,rgba(0,0,0,.34),transparent 72%); filter:blur(3px); z-index:-1; }
     .opp-seat.opp-hand-open .opp-hand-count { border-color:#a855f7 !important; color:#f5d0fe !important; box-shadow:0 0 0 1px rgba(168,85,247,.35),0 0 9px rgba(168,85,247,.32); }
@@ -222,6 +224,17 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
     return shell;
   }
 
+  // No Mercy: a hand card the viewer saw with a Queen shows its face in the fan.
+  function buildCardFace(card) {
+    const shell = document.createElement('div');
+    shell.className = 'opp-hand-fan-card opp-hand-fan-known';
+    const face = document.createElement('div');
+    face.className = `opp-hand-fan-art opp-hand-fan-face ${typeof getSuitStyle === 'function' && !card.isJoker ? getSuitStyle(card.suit) : ''}`;
+    face.textContent = card.isJoker ? 'JKR' : `${card.rank}${card.suit}`;
+    shell.appendChild(face);
+    return shell;
+  }
+
   function renderFan(seat) {
     const player = playerForSeat(seat);
     const anchor = ensureAnchor(seat);
@@ -243,8 +256,11 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
     const spread = step * Math.max(0, count - 1);
     const maxRotation = count <= 3 ? 9 : count <= 7 ? 13 : count <= 12 ? 11 : 9;
 
+    const known = (typeof isNoMercy === 'function' && isNoMercy() && typeof noMercyKnownCards === 'function' && typeof viewSeatId === 'function')
+      ? noMercyKnownCards(viewSeatId(), player.id) : [];
     for (let i = 0; i < count; i++) {
-      const card = buildCardBack(player);
+      const seen = known.find(c => c.id === player.hand[i]?.id);
+      const card = seen ? buildCardFace(seen) : buildCardBack(player);
       const normal = count === 1 ? 0 : (i / (count - 1)) * 2 - 1;
       const x = i * step - spread / 2;
       const y = Math.pow(Math.abs(normal), 1.55) * 7;
@@ -327,6 +343,14 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
       openSeat(seat, true);
     }
   });
+
+  // No Mercy Queen: open the X-rayed player's fan so the seen card shows.
+  window.showOpponentHand = function (playerId) {
+    const seat = document.getElementById(`opp-${playerId}`);
+    if (!seat) return;
+    pinnedPlayerId = String(playerId);
+    openSeat(seat, true);
+  };
 
   container.addEventListener('keydown', event => {
     const control = event.target.closest('[data-opponent-hand-toggle]');
