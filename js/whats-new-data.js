@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v457: [['book', 'The card rules pop-up now explains the No Mercy Queen (X-ray), King (takes the bottom card) and Joker (not on a 4). Crimson Verdict card back shows its art again.']],
       v456: [['sparkle', 'London Calling and Mumbai Masala have refreshed portraits, cards, tables, frames and emotes, with reworked city effects and matching sound.']],
       v455: [['sparkle', 'Bots that get stuck going round in circles now try a different move to break out of it.']],
       v454: [['sparkle', 'No Mercy: a King at the bottom of the Pile can no longer be taken by a King, which stops Kings passing round in circles.']],

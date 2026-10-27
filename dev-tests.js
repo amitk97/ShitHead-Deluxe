@@ -7236,6 +7236,18 @@ async function runDevTestSuite() {
     assertTrue(weeklyRulesFor('2026-W45').pool.some(c => c.id === 'win-twos'), 'older challenges stay in the pool');
   });
 
+  await test('v457: the card rules popup explains the No Mercy Queen, King and Joker', () => {
+    const was = state.noMercy, mp = state.isMultiplayer;
+    try {
+      state.isMultiplayer = false;
+      state.noMercy = false;
+      assertTrue(cardReferenceLabel('Q') === 'High' && !/No Mercy/.test(cardReferenceText('K')), 'normal games keep the normal text');
+      state.noMercy = true;
+      assertTrue(/X-Ray/.test(cardReferenceLabel('Q')) && /X-rays/.test(cardReferenceText('Q')), 'Queen');
+      assertTrue(/bottom/.test(cardReferenceText('K')) && /Bottom/.test(cardReferenceLabel('K')), 'King');
+      assertTrue(/4/.test(cardReferenceText('JOKER')) && /Joker/.test(cardReferenceText('4')), 'Joker and 4');
+    } finally { state.noMercy = was; state.isMultiplayer = mp; }
+  });
   await test('v455: a bot that is stuck in a loop tries a card it would not normally play', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
