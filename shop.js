@@ -591,7 +591,7 @@ document.addEventListener('keydown', (e) => {
       if(id===PRIVATE_BACK_ID)return 'cosmetic-back-private-keepsake'; // an opponent's too (ensurePrivateViews loads the art)
       if (['back-cobalt-linen','back-sage-linen','back-plum-linen'].includes(id)) return `cosmetic-${id}`;
       if (SEASONAL_BACK_IDS.has(id)) return `cosmetic-${id} season-back`;
-      if (/^back-(lvl|ldn|mum|ss[0-9]{4})-/.test(id || '')) return `cosmetic-${id} lvl-back`;
+      if (/^back-(lvl|ldn|mum|nm|ss[0-9]{4})-/.test(id || '')) return `cosmetic-${id} lvl-back`;
       return { 'back-midnight':'cosmetic-back-midnight','back-emerald':'cosmetic-back-emerald','back-neon':'cosmetic-back-neon','back-crimson':'cosmetic-back-crimson','back-nebula':'cosmetic-back-nebula','back-inferno':'cosmetic-back-inferno',
         'back-arcade':'cosmetic-back-arcade','back-space':'cosmetic-back-space','back-tartan':'cosmetic-back-tartan','back-artdeco':'cosmetic-back-artdeco','back-dragon':'cosmetic-back-dragon','back-stained':'cosmetic-back-stained' }[id] || 'cosmetic-back-default';
     }
