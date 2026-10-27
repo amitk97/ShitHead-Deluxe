@@ -10,11 +10,12 @@ const DATA_CACHE = 'shithead-data-v1'; // small saved data (event calendar), kep
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192-v302.png', '/icons/icon-512-v302.png'];
 // Everything a Vs Bots game needs with no signal, fetched when the app installs.
 const OFFLINE_ASSETS = [
+  '/art/cities-v2/city-effects.js?v=fca156650c79',
   // Application code and styles, including their deployment version keys.
-  '/game.css?v=5a144a4471bb',
+  '/game.css?v=9545e4c8fcd2',
   '/tailwind.css?v=a6876526974d',
-  '/sound.js?v=585d27c964c8',
-  '/burn-effects.js?v=77be82bc0a8e',
+  '/sound.js?v=8dac7c575ab2',
+  '/burn-effects.js?v=4a5efe7c5054',
   '/card-animations.js?v=0fe6bd1289f1',
   '/js/card-reference-data.js?v=e8e93ad152f4',
   '/js/card-reference-ui.js?v=68090289dca6',
@@ -24,17 +25,17 @@ const OFFLINE_ASSETS = [
   '/js/play-matrix-ui.js?v=fd8f6034a133',
   '/js/play-matrix-panel.js?v=c3626e811e5c',
   '/js/card-hold.js?v=5636a4a229a4',
-  '/js/whats-new-data.js?v=80fc5818ef7d',
+  '/js/whats-new-data.js?v=3e431cb39435',
   '/js/avatar-tones.js?v=a1fc8ff23117',
-  '/cosmetics-data.js?v=b9d335af3f77',
+  '/cosmetics-data.js?v=46ac1e69fef3',
   '/tutorial-data.js?v=86b1cdade927',
   '/tutorial.js?v=0049a251f6ef',
   '/level-ladder.js?v=4d5bf0aaa94d',
   '/home-navigation.js?v=9940f81a51ea',
-  '/shop.js?v=c94f79a35731',
+  '/shop.js?v=22382e3d55d1',
   '/multiplayer-lobby.js?v=3e73efeeb3e1',
   '/private-cosmetics.js?v=e9f1b6622a99',
-  '/app.js?v=7c6a5278e2a4',
+  '/app.js?v=059a62ade951',
   '/js/house-rules.js?v=5d71fee2f41c',
   '/js/house-rules-bots.js?v=1e6c3304258d',
   '/js/house-rules-presets.js?v=80f7a658ecb1',
@@ -81,7 +82,7 @@ const OFFLINE_ASSETS = [
   '/art/burns/inferno-sweep/tile.webp',
   '/art/burns/spark-snap/layers.webp?v=1',
   '/art/burns/spark-snap/tile.webp',
-  '/art/tables/full-scenes-v270/scenes.js?v=ae84d72192fc',
+  '/art/tables/full-scenes-v270/scenes.js?v=f13044c23fa4',
   '/art/avatars/approved-v267/royal-card-10.webp',
   '/art/avatars/approved-v267/royal-card-J.webp',
   '/art/avatars/approved-v267/royal-card-Q.webp',
@@ -315,5 +316,6 @@ async function checkSeasonStarts(now = new Date()) {
 self.addEventListener('periodicsync', (event) => {
   if (event.tag === 'season-check') event.waitUntil(checkSeasonStarts());
 });
+
 
 

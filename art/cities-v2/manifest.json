@@ -1,0 +1,88 @@
+{
+  "version": 2,
+  "baseline": "be0016201b59c18141a76173621a1e1547843b3b",
+  "sets": [
+    {
+      "city": "london",
+      "avatar": {
+        "id": "avatar-ldn-guard",
+        "file": "london-avatar.webp"
+      },
+      "back": {
+        "id": "back-ldn-bigben",
+        "file": "london-back-v2.svg"
+      },
+      "table": {
+        "id": "table-ldn-thames",
+        "wide": "london-scene-wide.webp",
+        "portrait": "london-scene-portrait.webp"
+      },
+      "deck": {
+        "id": "deck-ldn-tube",
+        "theme": "theme-tube",
+        "files": 54
+      },
+      "frame": {
+        "id": "frame-ldn-unionjack",
+        "file": "london-frame-v2.svg"
+      },
+      "effects": [
+        "burn-ldn-routemaster",
+        "joker-ldn-phonebox",
+        "victory-ldn-towerbridge"
+      ],
+      "emotes": {
+        "id": "emotes-ldn",
+        "files": [
+          "emotes/london-tea.svg",
+          "emotes/london-rain.svg",
+          "emotes/london-bus.svg",
+          "emotes/london-guard.svg",
+          "emotes/london-wheel.svg",
+          "emotes/london-flag.svg"
+        ]
+      }
+    },
+    {
+      "city": "mumbai",
+      "avatar": {
+        "id": "avatar-mum-dabba",
+        "file": "mumbai-avatar.webp"
+      },
+      "back": {
+        "id": "back-mum-marigold",
+        "file": "mumbai-back-v2.svg"
+      },
+      "table": {
+        "id": "table-mum-marine",
+        "wide": "mumbai-scene-wide.webp",
+        "portrait": "mumbai-scene-portrait.webp"
+      },
+      "deck": {
+        "id": "deck-mum-chai",
+        "theme": "theme-chai",
+        "files": 54
+      },
+      "frame": {
+        "id": "frame-mum-kaalipeeli",
+        "file": "mumbai-frame-v2.svg"
+      },
+      "effects": [
+        "burn-mum-monsoon",
+        "joker-mum-tiffin",
+        "victory-mum-gateway"
+      ],
+      "emotes": {
+        "id": "emotes-mum",
+        "files": [
+          "emotes/mumbai-chai.svg",
+          "emotes/mumbai-monsoon.svg",
+          "emotes/mumbai-train.svg",
+          "emotes/mumbai-taxi.svg",
+          "emotes/mumbai-cinema.svg",
+          "emotes/mumbai-cricket.svg"
+        ]
+      }
+    }
+  ]
+}

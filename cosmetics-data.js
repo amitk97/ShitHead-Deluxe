@@ -108,8 +108,8 @@
       { id: 'avatar-scarlet-guardian', category: 'Avatars', name: 'Scarlet Guardian', cost: 5000, animated: true, tones: ['#080a18','#dc2626','#fde047'] },
       { id: 'avatar-turtley', category: 'Avatars', name: 'Turtley', cost: 5000, animated: true, tones: ['#03140c','#10b981','#fbbf24'] },
       // London Calling (v438): one UK-themed set, Blender renders (tools/london/).
-      { id: 'avatar-ldn-guard', category: 'Avatars', name: 'Royal Guardsman', cost: 2500, ldn: true, tone: '#c8102e', file: 'art/avatars/ldn-guard2.webp', tones: ['#012169','#c8102e','#f4f1ea'] },
-      { id: 'back-ldn-bigben', category: 'Card Backs', name: 'Union Jack', cost: 1000, ldn: true, tone: '#e8bd6a', file: 'art/backs/ldn-unionjack.webp', tones: ['#012169','#c8102e','#e8bd6a'] },
+      { id: 'avatar-ldn-guard', category: 'Avatars', name: 'Royal Guardsman', cost: 2500, ldn: true, tone: '#c8102e', file: 'art/cities-v2/london-avatar.webp', tones: ['#012169','#c8102e','#f4f1ea'] },
+      { id: 'back-ldn-bigben', category: 'Card Backs', name: 'Union Jack', cost: 1000, ldn: true, tone: '#e8bd6a', file: 'art/cities-v2/london-back-v2.svg', tones: ['#012169','#c8102e','#e8bd6a'] },
       { id: 'table-ldn-thames', category: 'Table Themes', name: 'Thames Nights', cost: 3000, ldn: true, tones: ['#050a24','#17255a','#e8bd6a'] },
       { id: 'deck-ldn-tube', category: 'Decks', name: 'Underground', cost: 1000, ldn: true, theme: 'theme-tube', tones: ['#0b1636','#e32219','#ffffff'] },
       { id: 'frame-ldn-unionjack', category: 'Frames', name: 'Union Jack', cost: 1000, ldn: true, tones: ['#012169','#c8102e','#ffffff'] },
@@ -118,8 +118,8 @@
       { id: 'victory-ldn-towerbridge', category: 'Victory Effects', name: 'Tower Bridge Salute', cost: 2500, ldn: true, tones: ['#050a24','#3b6fb8','#e8bd6a'] },
       { id: 'emotes-ldn', category: 'Emote Packs', name: 'London Pack', cost: 500, ldn: true, tones: ['#012169','#c8102e','#f4f1ea'] },
       // Mumbai Masala (v442): a nine-item set rendered in Blender (tools/mumbai).
-      { id: 'avatar-mum-dabba', category: 'Avatars', name: 'Dabbawala', cost: 2500, mum: true, tone: '#f2b200', file: 'art/avatars/mum-dabba.webp', tones: ['#d63a6e','#f2b200','#f4f1ea'] },
-      { id: 'back-mum-marigold', category: 'Card Backs', name: 'Marigold Garland', cost: 1000, mum: true, tone: '#e8bd6a', file: 'art/backs/mum-marigold.webp', tones: ['#6a1038','#ff9a00','#e8bd6a'] },
+      { id: 'avatar-mum-dabba', category: 'Avatars', name: 'Dabbawala', cost: 2500, mum: true, tone: '#f2b200', file: 'art/cities-v2/mumbai-avatar.webp', tones: ['#d63a6e','#f2b200','#f4f1ea'] },
+      { id: 'back-mum-marigold', category: 'Card Backs', name: 'Marigold Garland', cost: 1000, mum: true, tone: '#e8bd6a', file: 'art/cities-v2/mumbai-back-v2.svg', tones: ['#6a1038','#ff9a00','#e8bd6a'] },
       { id: 'table-mum-marine', category: 'Table Themes', name: 'Marine Drive Nights', cost: 3000, mum: true, tones: ['#120a32','#c2476a','#f2b200'] },
       { id: 'deck-mum-chai', category: 'Decks', name: 'Masala Chai', cost: 1000, mum: true, theme: 'theme-chai', tones: ['#f3e3c3','#a8431f','#3a2314'] },
       { id: 'frame-mum-kaalipeeli', category: 'Frames', name: 'Kaali Peeli', cost: 1000, mum: true, tones: ['#15110f','#f2b200','#15110f'] },
@@ -287,3 +287,4 @@
       { id: 'burn-ss2709-hex', category: 'Burn Effects', name: 'Arcane Hex', tier: 40, tone: '#b36bff', pass: '2027-09' }
     ].map(r => ({ pass: '2026-11', ...r, level: 0, earned: true, cost: 0, requirement: `Season Pass tier ${r.tier}`, tones: ({ '2027-01': ['#0a1f3d', r.tone, '#e8f7ff'], '2027-03': ['#1a1033', r.tone, '#ffe3ec'], '2027-05': ['#06253a', r.tone, '#d9fffb'], '2027-07': ['#4a3a22', r.tone, '#fff2cf'], '2027-09': ['#150a2e', r.tone, '#e6d2ff'] })[r.pass] || ['#150c30', r.tone, '#ffd58a'] }));
     LEVEL_REWARDS.push(...SEASON_PASS_ITEMS);
+

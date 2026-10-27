@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v455: [['sparkle', 'London Calling and Mumbai Masala have refreshed portraits, cards, tables, frames and emotes, with reworked city effects and matching sound.']],
       v454: [['sparkle', 'No Mercy: a King at the bottom of the Pile can no longer be taken by a King, which stops Kings passing round in circles.']],
       v453: [['sparkle', 'A weekly No Mercy challenge joins the pool from next week: win 5 matches of No Mercy.', WN_KEY]],
       v452: [['sparkle', 'No Mercy: Hard and Boss bots now use the cards a Queen showed them. New Guide section and Key Term.']],
@@ -796,4 +797,5 @@
     };
   window.ShWhatsNewData = { WN_KEY, WHATS_NEW };
 })();
+
 
