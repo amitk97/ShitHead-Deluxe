@@ -73,6 +73,7 @@
               newData.val() === 'back-rising-star' ||
               newData.val() === 'back-ldn-bigben' ||
               newData.val() === 'back-mum-marigold' ||
+              newData.val() === 'back-nm-verdict' ||
               newData.val().matches(/^back-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||
               newData.val().matches(/^back-lvl-(first-burn|sharks-mark|inferno|chaos-crown)$/) ||
               newData.val() === 'back-lvl-master-pile' ||
@@ -204,6 +205,7 @@
               newData.val().matches(/^avatar-gauntlet-(hard|boss)$/) ||
               newData.val() === 'avatar-recruiter' || newData.val() === 'avatar-twos' ||
               newData.val() === 'avatar-decks' ||
+              newData.val().matches(/^avatar-nm-(seer|enforcer)$/) ||
               newData.val() === 'avatar-ldn-guard' ||
               newData.val() === 'avatar-mum-dabba' ||
               newData.val().matches(/^avatar-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||

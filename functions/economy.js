@@ -284,6 +284,10 @@ function milestoneEligible(user) {
   add(d.decksWins || [], num(user.matchCounters?.decksWins));
   add(d.decksSnaps || [], num(user.matchCounters?.decksSnaps));
   add(d.decksTop3 || [], num(user.matchCounters?.decksTop3));
+  // No Mercy: wins, Queens played and cards taken with Kings (matchCounters).
+  add(d.noMercyWins || [], num(user.matchCounters?.noMercyWins));
+  add(d.noMercyQueens || [], num(user.matchCounters?.nmQueens));
+  add(d.noMercyKings || [], num(user.matchCounters?.nmKings));
   // Hidden: Draw a Game (a stalemate draw in any mode).
   add(d.draws || [], num(user.matchCounters?.draws) + num(rs.draws));
   return out;
@@ -321,6 +325,8 @@ function grantEarnedAvatars(user, legacy, now) {
       : rule.type === 'recruits' ? num(user.referralStats?.recruits) >= rule.min
       : rule.type === 'twosWins' ? num(user.matchCounters?.twosWins) >= rule.min
       : rule.type === 'decksWins' ? num(user.matchCounters?.decksWins) >= rule.min
+      : rule.type === 'nmQueens' ? num(user.matchCounters?.nmQueens) >= rule.min
+      : rule.type === 'nmKings' ? num(user.matchCounters?.nmKings) >= rule.min
       : false;
     if (!met) return;
     user.ownedCosmetics = user.ownedCosmetics || {};
@@ -582,6 +588,7 @@ actions.matchWin = async ({ uid, data }) => {
   // 2 vs 2 (v389): the phone says so for bot games; online the room decides.
   let twos = mode === 'bots' && data.twos === true;
   let decks = mode === 'bots' && data.decks === true;
+  let noMercy = mode === 'bots' && data.noMercy === true;
   if (mode === 'online') {
     const code = clip(data.roomCode, 6);
     if (!/^\d{6}$/.test(code)) fail('invalid-argument', 'Bad room.');
@@ -591,6 +598,7 @@ actions.matchWin = async ({ uid, data }) => {
     if (!room || room.isRanked || room.matchId !== matchId || !me || me.finishRank !== 1 || me.drew || seats.length < 2) fail('failed-precondition', 'That win could not be checked.');
     twos = room.friendsMode === 'twos' && seats.length === 4 && seats.every(p => p && (p.team === 0 || p.team === 1));
     decks = room.friendsMode === 'decks' && seats.length >= 4;
+    noMercy = room.friendsMode === 'noMercy';
   }
   const legacy = await legacyOwned(uid);
   const now = Date.now();
@@ -612,7 +620,7 @@ actions.matchWin = async ({ uid, data }) => {
       // A 2 vs 2 win pays the same Diamonds but never counts towards unlocking
       // a harder bot (a strong partner could carry the player).
       // A Multiple Decks win never counts either (a big table is a different game).
-      if (!twos && !decks) {
+      if (!twos && !decks && !noMercy) {
         user.difficultyWins = user.difficultyWins || {};
         user.difficultyWins[difficulty] = num(user.difficultyWins[difficulty]) + 1;
         const rule = CAT.difficultyUnlocks.find(r => r.requireDiff === difficulty && r.requireWins === user.difficultyWins[difficulty]);
@@ -621,6 +629,7 @@ actions.matchWin = async ({ uid, data }) => {
     }
     if (twos) counters.twosWins = Math.min(100000, num(counters.twosWins) + 1);
     if (decks) counters.decksWins = Math.min(100000, num(counters.decksWins) + 1);
+    if (noMercy) counters.noMercyWins = Math.min(100000, num(counters.noMercyWins) + 1);
     addDiamonds(user, amount);
     counters.winsToday = num(counters.winsToday) + 1;
     counters.lastWinAt = now;
@@ -639,7 +648,8 @@ actions.matchWin = async ({ uid, data }) => {
     difficultyWins: res.user.difficultyWins || {}, unlockedDifficulty: res.unlocked || null,
     seasonWins: res.user.seasonWins || {}, claimed: res.claimed || [], newAvatars: res.newAvatars || [],
     twosWins: num(res.user.matchCounters?.twosWins),
-    decksWins: num(res.user.matchCounters?.decksWins)
+    decksWins: num(res.user.matchCounters?.decksWins),
+    noMercyWins: num(res.user.matchCounters?.noMercyWins)
   };
 };
 
@@ -665,12 +675,24 @@ actions.matchFinished = async ({ uid, data }) => {
       else decksTop3 = decksTop3 && !!dme && num(dme.finishRank) >= 1 && num(dme.finishRank) <= 3 && seats.length >= 6;
     }
   }
+  // No Mercy extras: Queens played and cards taken with Kings this game (a game cannot hold more than 40 of either).
+  let nmQueens = 0, nmKings = 0;
+  if (data.noMercy && typeof data.noMercy === 'object') {
+    nmQueens = Math.max(0, Math.min(40, Math.trunc(num(data.noMercy.queens))));
+    nmKings = Math.max(0, Math.min(40, Math.trunc(num(data.noMercy.kings))));
+    if (data.roomCode !== undefined) {
+      const ncode = clip(data.roomCode, 6);
+      const nroom = /^\d{6}$/.test(ncode) ? (await db().ref(`rooms/${ncode}`).once('value')).val() : null;
+      if (!nroom || nroom.friendsMode !== 'noMercy') { nmQueens = 0; nmKings = 0; }
+    }
+  }
   if (drew && data.roomCode !== undefined) {
     const code = clip(data.roomCode, 6);
     const room = /^\d{6}$/.test(code) ? (await db().ref(`rooms/${code}`).once('value')).val() : null;
     drew = !!Object.values(room?.players || {}).find(p => p && p.uid === uid && p.drew);
   }
   const xpOn = await xp.enabled();
+  const legacy = (nmQueens || nmKings) ? await legacyOwned(uid) : null;
   const res = await userTx(uid, (user) => {
     const counters = user.matchCounters = user.matchCounters || {};
     const recent = counters.recentFinished || {};
@@ -688,15 +710,18 @@ actions.matchFinished = async ({ uid, data }) => {
     counters.finished = num(counters.finished) + 1;
     if (decksSnaps) counters.decksSnaps = Math.min(100000, num(counters.decksSnaps) + decksSnaps);
     if (decksTop3) counters.decksTop3 = Math.min(100000, num(counters.decksTop3) + 1);
+    if (nmQueens) counters.nmQueens = Math.min(100000, num(counters.nmQueens) + nmQueens);
+    if (nmKings) counters.nmKings = Math.min(100000, num(counters.nmKings) + nmKings);
     counters.lastFinishedAt = now;
     counters.recentFinished = pruneMap({ ...recent, [matchId]: { at: now } }, 20);
     const referral = referralGameCounted(user, now);
     const claimed = grantMilestones(user, now);
+    const newAvatars = legacy ? grantEarnedAvatars(user, legacy, now) : [];
     const xpRes = xpOn ? xpResult(user, [['finish', xp.RULES.finish], ['firstGameOfDay', firstToday ? xp.RULES.firstGameOfDay : 0]], now, past) : null;
-    return { user, claimed, referral, xp: xpRes };
+    return { user, claimed, referral, newAvatars, xp: xpRes };
   });
   if (res.referral) await referralReportToInviter(uid, res.user, res.referral, now);
-  return { claimed: res.claimed || [], diamonds: num(res.user.diamonds), referral: res.referral ? { games: res.referral.games, paid: !!res.referral.paid } : null, xp: res.xp || null };
+  return { claimed: res.claimed || [], newAvatars: res.newAvatars || [], diamonds: num(res.user.diamonds), referral: res.referral ? { games: res.referral.games, paid: !!res.referral.paid } : null, xp: res.xp || null };
 };
 
 // Scores a finished Ranked room for every seat at once (idempotent: the

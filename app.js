@@ -2036,11 +2036,13 @@
         }
       } else if (cardRank === 'K' && isNoMercy()) {
         const king = noMercyKing(player, cardsToPlay.length, state.discardPile.length - cardsToPlay.length);
+        bumpStat(player, 'nmKings', king.taken.length);
         notifyBanner(king.taken.length ? `King played: ${king.target.name} takes ${king.taken.length === 1 ? 'the bottom card' : king.taken.length + ' bottom cards'} of the Pile.` : 'King played.');
         advanceTurn(1);
       } else if (cardRank === 'Q' && isNoMercy()) {
         const target = getNextPlayer();
         const seen = noMercyPeek(player, target, cardsToPlay.length);
+        bumpStat(player, 'nmQueens', cardsToPlay.length);
         if (seen.length) noMercyPeekFx(state.lastPeek);
         notifyBanner(seen.length ? `Queen played: ${player.name} looked at ${seen.length === 1 ? '1 card' : seen.length + ' cards'} in ${target.name}'s hand.` : 'Queen played.');
         advanceTurn(1);
@@ -6279,7 +6281,7 @@
         'back-dragon': 'cosmetic-back-dragon',
         'back-stained': 'cosmetic-back-stained'
       };
-      if (/^back-(lvl|ldn|mum|ss[0-9]{4})-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
+      if (/^back-(lvl|ldn|mum|nm|ss[0-9]{4})-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
       if (cosmeticBackClasses[backId]) return cosmeticBackClasses[backId];
       if (typeof SEASONAL_BACK_IDS !== 'undefined' && SEASONAL_BACK_IDS.has(backId)) return getCosmeticBackClass(backId);
       if (['back-cobalt-linen','back-sage-linen','back-plum-linen'].includes(backId)) return `cosmetic-${backId}`;
@@ -7094,7 +7096,7 @@
               const skewClass = hasDown ? 'transform rotate-[3deg] translate-x-0.5 -translate-y-1 shadow-md' : '';
               const flipClass = shouldPopCard(upCard.id) ? 'mi-flip-in' : '';
               slotContent += `
-                <div data-card-id="${upCard.id}" class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] p-0.5 flex flex-col justify-between select-none ${skewClass} ${flipClass}" style="${getOpponentCosmeticFrameStyle(p.cosmetics?.frame)}">
+                <div data-card-id="${upCard.id}" data-rank="${upCard.rank}" class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] p-0.5 flex flex-col justify-between select-none ${skewClass} ${flipClass}" style="${getOpponentCosmeticFrameStyle(p.cosmetics?.frame)}">
                   <div class="flex flex-col opp-corner-text font-black leading-none ${sCol}">
                     <span>${upCard.isJoker ? 'JKR' : upCard.rank}</span>${upCard.isJoker ? '' : `<span>${upCard.suit}</span>`}
                   </div>
@@ -9958,6 +9960,7 @@
       else payload.roomCode = state.roomCode;
       if (mode === 'bots' && isTwos()) payload.twos = true; // § 2 vs 2: no difficulty unlock credit
       if (mode === 'bots' && isMultiDeck()) payload.decks = true; // Multiple Decks: the same
+      if (mode === 'bots' && isNoMercy()) payload.noMercy = true; // No Mercy: no difficulty credit either
       const attempt = (tries) => callEconomy('matchWin', payload).catch((error) => {
         if (mode === 'online' && tries > 0) return new Promise(r => setTimeout(r, 2500)).then(() => attempt(tries - 1));
         throw error;
@@ -9969,7 +9972,8 @@
         if (res.diamondsAwarded > 0) enqueueChallengeToast('Match won', res.diamondsAwarded, -1);
         if (Number.isFinite(Number(res.twosWins))) { challengeEconomy.twosWins = Number(res.twosWins); renderChallengesModalIfOpen(); }
         if (Number.isFinite(Number(res.decksWins))) { challengeEconomy.decksWins = Number(res.decksWins); renderChallengesModalIfOpen(); }
-        if (mode === 'bots' && res.difficultyWins && !(payload.twos) && !(payload.decks)) {
+        if (Number.isFinite(Number(res.noMercyWins))) { challengeEconomy.noMercyWins = Number(res.noMercyWins); renderChallengesModalIfOpen(); }
+        if (mode === 'bots' && res.difficultyWins && !(payload.twos) && !(payload.decks) && !(payload.noMercy)) {
           const wins = cacheDifficultyWins(currentUser.uid, res.difficultyWins);
           challengeEconomy.difficultyWins = { ...(challengeEconomy.difficultyWins || {}), ...res.difficultyWins };
           unlockedDifficulties = computeUnlockedDifficulties(wins);
@@ -13673,7 +13677,7 @@
         <radialGradient id="lx-eye-fire"><stop offset="0" stop-color="#fff7ed" stop-opacity=".95"/><stop offset=".3" stop-color="#fb923c" stop-opacity=".8"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/></radialGradient>
         <radialGradient id="lx-flame"><stop offset="0" stop-color="#fde68a" stop-opacity=".55"/><stop offset=".45" stop-color="#f97316" stop-opacity=".3"/><stop offset="1" stop-color="#b91c1c" stop-opacity="0"/></radialGradient>
         <linearGradient id="lx-gleam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`;
-      [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => (r.ldn || r.mum) && r.file)].filter(r => r.category === 'Avatars').forEach((r) => {
+      [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => (r.ldn || r.mum || r.nm) && r.file), ...EARNED_AVATARS.filter(r => r.file)].filter(r => r.category === 'Avatars').forEach((r) => {
         const motion = levelAvatarMotion(r.id);
         defs += motion.defs;
         AVATAR_ART[r.id] = {
@@ -13805,7 +13809,7 @@
 
     // Card backs: the art fills the back (the emblem and pattern layers hide).
     (function installLevelBackStyles() {
-      const css = [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => (r.ldn || r.mum) && r.file)].filter(r => r.category === 'Card Backs').map(r =>
+      const css = [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => (r.ldn || r.mum || r.nm) && r.file)].filter(r => r.category === 'Card Backs').map(r =>
         `.cosmetic-${r.id} { background:url("${r.file}") center/cover no-repeat, #07070c !important; color:${r.tone}; }\n` +
         `.custom-card-back.cosmetic-${r.id} { border-color:${r.tone} !important; box-shadow:0 0 8px ${r.tone}66; }`).join('\n') +
         '\n.lvl-back::before, .lvl-back::after { display:none !important; }\n.lvl-back > svg { visibility:hidden; }';
@@ -13846,7 +13850,7 @@
       if (type === 'cardBack' || type === 'tableTheme' || type === 'burnEffect') COSMETIC_RUNTIME_IDS[type].add(it.id);
     });
     // § London Calling: the set's ids join the equip lists of their types.
-    COSMETIC_SHOP_ITEMS.filter(i => i.ldn || i.mum).forEach((it) => {
+    COSMETIC_SHOP_ITEMS.filter(i => i.ldn || i.mum || i.nm).forEach((it) => {
       const type = COSMETIC_CATEGORY_TYPES[it.category];
       if (COSMETIC_RUNTIME_IDS[type]) COSMETIC_RUNTIME_IDS[type].add(it.id);
     });
@@ -14431,7 +14435,7 @@
     // count. Folded groups are remembered per tab (localStorage
     // shithead_custom_groups_collapsed, keys "<type>:<group>").
     const CUSTOM_GROUPS = [['free', 'Free'], ['shop', 'Shop'], ['ranked', 'Earn in Ranked'], ['gauntlet', 'Earn in the Gauntlet'],
-      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
+      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['nomercy', 'Earn in No Mercy'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
     const CUSTOM_GROUPS_KEY = 'shithead_custom_groups_collapsed';
     const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
     function customGroupOf(item) {
@@ -14443,6 +14447,7 @@
       if (item.referral) return 'friends';
       if (item.twos) return 'twos';
       if (item.decks) return 'decks';
+      if (item.nm && item.earned) return 'nomercy';
       if (item.earned || EARNED_AVATARS.includes(item)) return 'ranked';
       return 'shop';
     }
@@ -14471,8 +14476,8 @@
       const freeAvatars = sortByValue(BUILT_IN_COSMETICS.filter(item => item.category === 'Avatars'));
       const seasonalAvatars = [...sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Avatars' && item.season)), ...SEASONAL_EARNED_AVATARS].filter(isCosmeticListed);
       grid.innerHTML = ownedPrivateAvatars().map(avatarOptionHtml).join('') + customGroupedHtml('avatar', [...freeAvatars, ...shopAvatars,
-        ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral && !item.twos && !item.decks),
-        ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral), ...EARNED_AVATARS.filter(item => item.twos), ...EARNED_AVATARS.filter(item => item.decks),
+        ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral && !item.twos && !item.decks && !item.nm),
+        ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral), ...EARNED_AVATARS.filter(item => item.twos), ...EARNED_AVATARS.filter(item => item.decks), ...EARNED_AVATARS.filter(item => item.nm),
         ...LEVEL_REWARDS.filter(item => item.category === 'Avatars'), ...seasonalAvatars], avatarOptionHtml);
     }
 
@@ -16650,6 +16655,18 @@
       decksTop3: [
         { id: 'crowd-pleaser', name: 'Crowd Pleaser', target: 1, reward: 150 }
       ],
+      // No Mercy (matchCounters.noMercyWins / nmQueens / nmKings, counted by the server);
+      // 50 Queens unlock The Seer avatar and 50 King pick-ups unlock The Enforcer.
+      noMercyWins: [
+        { id: 'first-blood', name: 'First Blood', target: 1, reward: 100 },
+        { id: 'no-mercy-veteran', name: 'No Mercy Veteran', target: 10, reward: 300 }
+      ],
+      noMercyQueens: [
+        { id: 'sixth-sense', name: 'Sixth Sense', target: 50, reward: 200 }
+      ],
+      noMercyKings: [
+        { id: 'cold-blooded', name: 'Cold Blooded', target: 50, reward: 200 }
+      ],
       // Hidden: shown as "???" until earned. A stalemate draw in any mode,
       // counted by the server (matchCounters.draws + rankedStats.draws).
       draws: [
@@ -17499,7 +17516,9 @@
       'avatar-gauntlet-boss': { type: 'gauntlet' },
       'avatar-recruiter': { type: 'recruits', min: 5 },
       'avatar-twos': { type: 'twosWins', min: 10 },
-      'avatar-decks': { type: 'decksWins', min: 10 }
+      'avatar-decks': { type: 'decksWins', min: 10 },
+      'avatar-nm-seer': { type: 'nmQueens', min: 50 },
+      'avatar-nm-enforcer': { type: 'nmKings', min: 50 }
     };
     function serverEconomyCatalog() {
       const earned = {};
@@ -17652,6 +17671,9 @@
         case 'decksWins': return def.target === 1 ? 'Win a game of Multiple Decks.' : `Win ${def.target} games of Multiple Decks.`;
         case 'decksSnaps': return `Snap Burn ${plural(def.target, 'time', 'times')} in Multiple Decks.`;
         case 'decksTop3': return 'Finish in the top three of a Multiple Decks game with 6 or more players.';
+        case 'noMercyWins': return def.target === 1 ? 'Win a game of No Mercy.' : `Win ${def.target} games of No Mercy.`;
+        case 'noMercyQueens': return `Play ${def.target} Queens in No Mercy to X-ray a hidden card.`;
+        case 'noMercyKings': return `Make other players take ${def.target} cards from the bottom of the Pile with Kings in No Mercy.`;
         case 'recruits': return `Recruit ${def.target} players: friends who join with your invite link and play ${REFERRAL.gamesNeeded} games.`;
         default: return '';
       }
@@ -17892,7 +17914,10 @@
             twosWins: Number(profile.matchCounters && profile.matchCounters.twosWins) || 0,
             decksWins: Number(profile.matchCounters && profile.matchCounters.decksWins) || 0,
             decksSnaps: Number(profile.matchCounters && profile.matchCounters.decksSnaps) || 0,
-            decksTop3: Number(profile.matchCounters && profile.matchCounters.decksTop3) || 0
+            decksTop3: Number(profile.matchCounters && profile.matchCounters.decksTop3) || 0,
+            noMercyWins: Number(profile.matchCounters && profile.matchCounters.noMercyWins) || 0,
+            noMercyQueens: Number(profile.matchCounters && profile.matchCounters.nmQueens) || 0,
+            noMercyKings: Number(profile.matchCounters && profile.matchCounters.nmKings) || 0
           };
           challengeEconomyLoadedForUid = currentUser.uid;
           seasonSetProfile(profile);
@@ -18512,9 +18537,15 @@
         extra.decks = { snaps: Number(me.gameStats?.snapBurns) || 0, top3: state.players.length >= 6 && me.hasFinished && me.finishRank >= 1 && me.finishRank <= 3 };
         if (state.isMultiplayer && state.roomCode) extra.roomCode = state.roomCode;
       }
+      if (isNoMercy() && me) {
+        // Queens played and cards taken with Kings this game (the server counts them towards The Seer / The Enforcer).
+        extra.noMercy = { queens: Number(me.gameStats?.nmQueens) || 0, kings: Number(me.gameStats?.nmKings) || 0 };
+        if (state.isMultiplayer && state.roomCode) extra.roomCode = state.roomCode;
+      }
       return callEconomy('matchFinished', { matchId, ...extra }).then((res) => {
         if (Number.isFinite(Number(res.diamonds))) challengeEconomy.diamonds = Number(res.diamonds);
         applyServerClaims(res.claimed);
+        applyNewAvatars(res.newAvatars);
         noteXpResult(res.xp);
         noteReferralProgress(res.referral);
         if (res.referral) updateDiamondHeader();
@@ -19061,6 +19092,10 @@
       }).join(''));
       // Multiple Decks: wins, Snap Burns and top-three finishes (the server counts them).
       setListHtml('challengesDecksList', [['decksWins', 'decksWins'], ['decksSnaps', 'decksSnaps'], ['decksTop3', 'decksTop3']].flatMap(([g, k]) => CHALLENGE_DEFS[g].map((c) => {
+        const have = Math.min(challengeEconomy[k] || 0, c.target);
+        return renderChallengeRowHTML(c.name, `${have}/${c.target} — ${challengeDescription(c)}`, c.reward, !!done[c.id], challengeDescription(c));
+      })).join(''));
+      setListHtml('challengesNoMercyList', [['noMercyWins', 'noMercyWins'], ['noMercyQueens', 'noMercyQueens'], ['noMercyKings', 'noMercyKings']].flatMap(([g, k]) => CHALLENGE_DEFS[g].map((c) => {
         const have = Math.min(challengeEconomy[k] || 0, c.target);
         return renderChallengeRowHTML(c.name, `${have}/${c.target} — ${challengeDescription(c)}`, c.reward, !!done[c.id], challengeDescription(c));
       })).join(''));

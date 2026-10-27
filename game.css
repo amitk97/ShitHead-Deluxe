@@ -2986,3 +2986,17 @@ body.reduce-motion .rail-row { transition: none; }
 .nm-known { flex:none; font-size:8px; font-weight:900; padding:0 .3rem; height:15px; display:inline-flex; align-items:center; border-radius:999px; background:#06223a; border:1px solid #22d3ee; }
 
 .decks-counts.nm-counts { grid-template-columns:repeat(3,1fr); }
+.ch-tone-rose { color:#fb7185; }
+
+/* § No Mercy deck: Crimson Verdict (parchment faces; the owner's portraits on Q, K and Joker) */
+.theme-nmverdict { --card-bg: #efe3cc; --card-border: #7a5a2a; --text-light: #1a1410; --text-red: #b3141f; }
+.theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back), .deck-mini-card.theme-nmverdict { background-image: radial-gradient(ellipse at 50% 40%, rgba(255,255,255,.35), transparent 70%), linear-gradient(180deg, #f3e8d2, #dcc9a6); box-shadow: inset 0 0 0 1px rgba(122,90,42,.55), inset 0 0 10px rgba(90,60,20,.25); }
+.theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot) .card-corner-rank, .deck-mini-card.theme-nmverdict .dm-rank { font-family: 'Cinzel', Georgia, serif; }
+.theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot):is([data-rank="Q"],[data-rank="K"],[data-rank="JOKER"]):not(.custom-card-back)::before { content: ''; position: absolute; inset: 12% 5% 3% 5%; z-index: 0; background: center bottom / auto 100% no-repeat var(--nm-art); -webkit-mask-image: radial-gradient(ellipse 62% 66% at 50% 56%, #000 55%, transparent 100%); mask-image: radial-gradient(ellipse 62% 66% at 50% 56%, #000 55%, transparent 100%); pointer-events: none; }
+.theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot)[data-rank="Q"] { --nm-art: url("art/nomercy/q.webp"); }
+.theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot)[data-rank="K"] { --nm-art: url("art/nomercy/k.webp"); }
+.theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot)[data-rank="JOKER"] { --nm-art: url("art/nomercy/joker.webp"); }
+.theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot):is([data-rank="Q"],[data-rank="K"],[data-rank="JOKER"]):not(.custom-card-back) > * { position: relative; z-index: 1; }
+.theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot):is([data-rank="Q"],[data-rank="K"],[data-rank="JOKER"]):not(.custom-card-back) > :nth-child(2) { visibility: hidden; }
+.theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot):is([data-rank="Q"],[data-rank="K"]) .card-corner-rank, .theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot):is([data-rank="Q"],[data-rank="K"]) .card-corner-suit { text-shadow: 0 0 3px #f3e8d2, 0 0 3px #f3e8d2; }
+.theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot)[data-rank="JOKER"] .card-corner-rank { color: #8a1420 !important; text-shadow: 0 0 3px #f3e8d2; }

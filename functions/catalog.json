@@ -484,6 +484,14 @@
    "name": "Mumbai Pack",
    "cost": 500
   },
+  "back-nm-verdict": {
+   "name": "Crimson Verdict",
+   "cost": 1000
+  },
+  "deck-nm-verdict": {
+   "name": "Crimson Verdict",
+   "cost": 1000
+  },
   "back-lunar": {
    "name": "Lucky Envelope",
    "cost": 300,
@@ -893,6 +901,8 @@
   "avatar-recruiter",
   "avatar-twos",
   "avatar-decks",
+  "avatar-nm-seer",
+  "avatar-nm-enforcer",
   "avatar-lvl-rookie-rogue",
   "avatar-lvl-card-shark",
   "avatar-lvl-burn-king",
@@ -961,6 +971,7 @@
   "back-inferno",
   "back-nebula",
   "back-space",
+  "back-nm-verdict",
   "back-dragon",
   "back-mum-marigold",
   "back-stained",
@@ -994,6 +1005,7 @@
   "deck-frost",
   "deck-neonnight",
   "deck-fourcolour",
+  "deck-nm-verdict",
   "deck-mum-chai",
   "deck-royalgold",
   "deck-ldn-tube",
@@ -1200,6 +1212,18 @@
    "requirement": "Win 10 games of Multiple Decks",
    "type": "decksWins",
    "min": 10
+  },
+  "avatar-nm-seer": {
+   "name": "The Seer",
+   "requirement": "Play 50 Queens in No Mercy",
+   "type": "nmQueens",
+   "min": 50
+  },
+  "avatar-nm-enforcer": {
+   "name": "The Enforcer",
+   "requirement": "Make other players take 50 cards with Kings in No Mercy",
+   "type": "nmKings",
+   "min": 50
   },
   "avatar-lunar-earned": {
    "name": "Golden Dragon",
@@ -2081,6 +2105,36 @@
     "name": "Crowd Pleaser",
     "target": 1,
     "reward": 150
+   }
+  ],
+  "noMercyWins": [
+   {
+    "id": "first-blood",
+    "name": "First Blood",
+    "target": 1,
+    "reward": 100
+   },
+   {
+    "id": "no-mercy-veteran",
+    "name": "No Mercy Veteran",
+    "target": 10,
+    "reward": 300
+   }
+  ],
+  "noMercyQueens": [
+   {
+    "id": "sixth-sense",
+    "name": "Sixth Sense",
+    "target": 50,
+    "reward": 200
+   }
+  ],
+  "noMercyKings": [
+   {
+    "id": "cold-blooded",
+    "name": "Cold Blooded",
+    "target": 50,
+    "reward": 200
    }
   ],
   "draws": [

@@ -3367,7 +3367,7 @@ async function runDevTestSuite() {
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
     const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Avatars' && !i.season && !i.ldn && !i.mum).map(i => [i.name, i.cost]));
     assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000, 'Turtley': 5000 }, 'Shop pictures and prices');
-    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck'], 'Earn-only pictures');
+    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'The Seer', 'The Enforcer'], 'Earn-only pictures');
     [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Avatars')
       .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
   });
@@ -3583,7 +3583,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 45, 'All 45 avatars appear in Custom (incl. the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
+    assertEqual(options.length, 47, 'All 47 avatars appear in Custom (incl. The Seer and The Enforcer, the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -7219,6 +7219,28 @@ async function runDevTestSuite() {
       assertTrue(isMultiDeck(), 'the room plays as Multiple Decks');
     } finally { freshState(); }
   });
+  await test('v451: No Mercy rewards: challenges, The Seer and The Enforcer avatars, Crimson Verdict back and deck, counters', () => {
+    try {
+      const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
+      assertEqual(CHALLENGE_DEFS.noMercyQueens[0].target, 50, 'Sixth Sense asks for 50 Queens');
+      assertEqual(EARNED_AVATAR_RULES['avatar-nm-seer'].type, 'nmQueens', 'The Seer follows Queens');
+      assertTrue(!!AVATAR_ART['avatar-nm-seer'] && !!AVATAR_ART['avatar-nm-enforcer'], 'both avatars have art');
+      assertTrue(customAllItems('avatar').some(i => i.id === 'avatar-nm-seer'), 'The Seer is listed in Custom');
+      assertTrue(customAllItems('cardBack').some(i => i.id === 'back-nm-verdict') && deckItems().some(i => i.id === 'deck-nm-verdict'), 'the back and deck are listed');
+      assertTrue(/cosmetic-back-nm-verdict/.test(getThemeDeckBackClass('back-nm-verdict')), 'the back has a class');
+      freshState(); startSinglePlayerGame(1, null, { noMercy: true });
+      state.phase = 'PLAY'; state.currentTurnIndex = 0; state.drawPile = []; state.discardPile = [c('bot', '7'), c('mid', '9')];
+      const [a, b] = state.players;
+      a.faceUp = [c('af', '9')]; b.faceUp = [c('bf', '9')]; a.faceDown = []; b.faceDown = [];
+      a.hand = [c('k1', 'K'), c('q1', 'Q', '\u2660'), c('x1', '5')]; b.hand = [c('b1', '6'), c('b2', '3')];
+      executePlayCards(a.id, [a.hand[0]]);
+      assertEqual(a.gameStats.nmKings, 1, 'a King that made a player pick up is counted');
+      state.currentTurnIndex = 0;
+      executePlayCards(a.id, [a.hand.find(x => x.id === 'q1')]);
+      assertEqual(a.gameStats.nmQueens, 1, 'a Queen is counted');
+    } finally { freshState(); }
+  });
+
   await test('v450: No Mercy has a chooser, a Friends card, a pin, and its room mode drives the rules', () => {
     try {
       document.querySelector('[data-open-nomercy]').click();
@@ -11086,7 +11108,7 @@ async function runDevTestSuite() {
       openThemesPanel();
       const area = document.getElementById('themesGridArea');
       const tiles = [...area.querySelectorAll('[data-equip-type="deck"]')];
-      assertEqual(tiles.length, 17, 'Five free decks and twelve Shop decks');
+      assertEqual(tiles.length, 18, 'Five free decks and thirteen Shop decks');
       ['deck-obsidian', 'deck-emerald', 'deck-cyber', 'deck-crimson', 'deck-bigprint'].forEach(id => assertTrue(!area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is free`));
       ['deck-casino', 'deck-arcade', 'deck-fourcolour'].forEach(id => assertTrue(area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is locked until bought`));
       assertTrue(area.querySelector('[data-equip-id="deck-fourcolour"]').textContent.includes('750'), 'Four-Colour shows its premium price');
