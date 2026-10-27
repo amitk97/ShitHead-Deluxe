@@ -290,14 +290,14 @@ document.addEventListener('keydown', (e) => {
     function renderShopTabs(balance) {
       const bar = document.getElementById('shopTabBar');
       if (!bar) return;
-      const seasonalCount = COSMETIC_SHOP_ITEMS.filter(item => item.season && isSeasonalItemBuyable(item) && shopItemMatchesFilter(item, balance)).length;
+      const seasonalCount = COSMETIC_SHOP_ITEMS.filter(item => item.season && (shopFilter === 'wishlist' || isSeasonalItemBuyable(item)) && shopItemMatchesFilter(item, balance)).length;
       const live = activeSeasonalEvents();
       const seasonalTab = `<button type="button" role="tab" class="cosmetic-tab season-tab ${live.length ? 'is-live' : ''}" data-shop-tab="${SEASONAL_TAB}" aria-selected="${shopTab === SEASONAL_TAB}">${live.length ? live.map(w => w.event.emoji).join('') : '🎉'} Seasonal <small>${seasonalCount || (live.length ? 0 : 'soon')}</small></button>`;
       const seasonalFirst = seasonalTabLeads();
-      const allCount = COSMETIC_SHOP_ITEMS.filter(item => !item.season && shopItemMatchesFilter(item, balance)).length;
+      const allCount = COSMETIC_SHOP_ITEMS.filter(item => (shopFilter === 'wishlist' || !item.season) && shopItemMatchesFilter(item, balance)).length;
       const allTab = `<button type="button" role="tab" class="cosmetic-tab" data-shop-tab="${SHOP_ALL_TAB}" aria-selected="${shopTab === SHOP_ALL_TAB}">All <small>${allCount}</small></button>`;
       bar.innerHTML = allTab + (seasonalFirst ? seasonalTab : '') + COSMETIC_TABS.map(tab => {
-        const count = COSMETIC_SHOP_ITEMS.filter(item => !item.season && item.category === tab.category && shopItemMatchesFilter(item, balance)).length;
+        const count = COSMETIC_SHOP_ITEMS.filter(item => (shopFilter === 'wishlist' || !item.season) && item.category === tab.category && shopItemMatchesFilter(item, balance)).length;
         return `<button type="button" role="tab" class="cosmetic-tab" data-shop-tab="${tab.category}" aria-selected="${shopTab === tab.category}">${tab.label} <small>${count}</small></button>`;
       }).join('') + (seasonalFirst ? '' : seasonalTab);
     }
@@ -313,7 +313,7 @@ document.addEventListener('keydown', (e) => {
         return `<div data-shop-row="${item.id}" class="rounded-xl border ${owned ? 'border-emerald-700' : 'border-slate-800'} bg-slate-900/60 overflow-hidden">
           <div class="flex items-center gap-2 p-2">
             ${type === 'tableTheme' ? '' : `<span class="shop-row-thumb">${shopCosmeticThumbnail(item, type)}</span>`}
-            <span class="min-w-0 flex-1"><span class="flex items-center gap-1"><span class="block text-[10px] font-black text-white truncate">${item.name}</span><button type="button" class="wish-heart ${isWished(item.id) ? 'is-on' : ''}" data-wish-item="${item.id}" aria-pressed="${isWished(item.id)}" aria-label="${isWished(item.id) ? 'Remove from' : 'Add to'} wishlist"><svg class="ic" aria-hidden="true"><use href="#ic-heart"/></svg></button>${isNew ? '<span class="shrink-0 rounded-full bg-fuchsia-600 px-1.5 py-0.5 text-[7px] font-black text-white">NEW</span>' : ''}</span><span class="block text-[8px] text-slate-500">${getCosmeticDescription(type)}</span>${!owned && buyable && !affordable ? `<span class="block text-[8px] font-bold text-rose-400">Need 💎${shortfall} more</span>` : ''}</span>
+            <span class="min-w-0 flex-1"><span class="flex items-center gap-1"><span class="block text-[10px] font-black text-white truncate">${item.name}</span><button type="button" class="wish-heart ${isWished(item.id) ? 'is-on' : ''}" data-wish-item="${item.id}" aria-pressed="${isWished(item.id)}" aria-label="${isWished(item.id) ? 'Remove' : 'Add'} ${escapeAttr(item.name)} ${isWished(item.id) ? 'from' : 'to'} wishlist"><svg class="ic" aria-hidden="true"><use href="#ic-heart"/></svg></button>${isNew ? '<span class="shrink-0 rounded-full bg-fuchsia-600 px-1.5 py-0.5 text-[7px] font-black text-white">NEW</span>' : ''}</span><span class="block text-[8px] text-slate-500">${getCosmeticDescription(type)}</span>${!owned && buyable && !affordable ? `<span class="block text-[8px] font-bold text-rose-400">Need 💎${shortfall} more</span>` : ''}</span>
             <span class="shrink-0 flex flex-col gap-1">
               <button type="button" data-preview-cosmetic-id="${item.id}" aria-expanded="false" class="cosmetic-preview-btn min-w-[66px] px-2 py-1 rounded-lg border border-cyan-600 text-[8px] font-black text-cyan-300 hover:bg-cyan-500 hover:text-slate-950 transition">PREVIEW</button>
               ${owned
@@ -448,15 +448,34 @@ document.addEventListener('keydown', (e) => {
     }
 
     // § Shop and Custom pages
+    function renderWishlistSyncStatus() {
+      const el = document.getElementById('shopWishlistStatus');
+      if (!el) return;
+      const status = wishlistStore.status;
+      el.classList.toggle('hidden', shopFilter !== 'wishlist' && status !== 'error');
+      const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      const text = !currentUser ? 'Saved on this device. Sign in to sync your wishlist.'
+        : offline ? 'Saved on this device. Account sync will resume when you are online.'
+        : status === 'error' ? 'Saved on this device. Account sync failed.'
+        : status === 'loading' ? 'Loading your account wishlist…'
+        : status === 'synced' ? 'Saved to your account. Your wishlist is visible on your profile.'
+        : 'Saving your wishlist to your account…';
+      el.innerHTML = `<span>${text}</span>${status === 'error' && currentUser ? '<button type="button" data-wish-retry>Retry sync</button>' : ''}`;
+    }
     function renderCosmeticShop() {
       const list = document.getElementById('cosmeticShopList');
       if (!list) return;
       const balance = challengeEconomy.diamonds || 0;
       renderShopTabs(balance);
       const isAll = shopTab === SHOP_ALL_TAB;
-      document.getElementById('shopNameTokenCard')?.classList.toggle('hidden', !isAll);
+      document.getElementById('shopNameTokenCard')?.classList.toggle('hidden', !isAll || shopFilter === 'wishlist');
       const groups = shopTab === SEASONAL_TAB ? [] : isAll ? COSMETIC_TABS.map(tab => tab.category) : [shopTab];
-      if (shopTab === SEASONAL_TAB) renderSeasonalShop(list, balance);
+      if (shopFilter === 'wishlist') {
+        const saved = sortByValue(wishlistItems().filter(item => isAll || (shopTab === SEASONAL_TAB ? !!item.season : item.category === shopTab)));
+        list.innerHTML = saved.map(item => shopItemRowHtml(item, balance)).join('');
+        if (!saved.length) list.innerHTML = `<p class="wishlist-empty">${wishlistStore.status === 'loading' ? 'Loading saved items…' : wishlistIds.size ? 'No saved items in this section. Choose All to see your wishlist.' : 'No saved items yet. Tap a heart on a Shop item to start your wishlist.'}</p>`;
+      }
+      else if (shopTab === SEASONAL_TAB) renderSeasonalShop(list, balance);
       else list.innerHTML = groups.map(category => {
         const categoryItems = sortByValue(COSMETIC_SHOP_ITEMS.filter(item => !item.season && item.category === category && shopItemMatchesFilter(item, balance)));
         if (!categoryItems.length) return '';
@@ -479,8 +498,11 @@ document.addEventListener('keydown', (e) => {
       }
       document.querySelectorAll('[data-shop-filter]').forEach(button => {
         const active = button.dataset.shopFilter === shopFilter;
+        button.setAttribute('aria-pressed', String(active));
+        if (button.dataset.shopFilter === 'wishlist') button.textContent = `WISHLIST (${wishlistIds.size})`;
         button.className = `shop-filter-btn shrink-0 rounded-full border px-2 py-1 text-[8px] font-black ${active ? 'border-emerald-500 text-emerald-300 bg-emerald-950/40' : 'border-slate-700 text-slate-400'}`;
       });
+      renderWishlistSyncStatus();
     }
 
     function shopItemMatchesFilter(item, balance) {

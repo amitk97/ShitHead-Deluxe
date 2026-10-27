@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v466: [['heart', 'Wishlist improvements: separate lists for each account, offline save retry, and saved seasonal items visible outside their event.']],
       v465: [['info', 'Clearer, lighter icons for Puzzles, No Mercy, 2 vs 2 and Best of Series, with more space around their shapes.']],
       v464: [['info', 'Mode icons now use a coordinated outline set, including the armored Gauntlet, team pairs, House Rules and Best of Series.']],
       v463: [['info', 'No Mercy now has its own skull icon in Play Friends and pinned shortcuts.']],

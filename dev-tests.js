@@ -9741,7 +9741,9 @@ async function runDevTestSuite() {
   });
   await test('v374: Shop wishlist heart, Profile list, player card list, Wishlist filter', () => {
     const savedSet = wishlistIds, savedUser = currentUser, savedOwned = cosmeticPurchaseState;
+    const savedStore = wishlistStore;
     try {
+      wishlistStore = ShWishlist.create({ ...wishlistStoreOptions, storage: null });
       wishlistIds = new Set(); currentUser = null; cosmeticPurchaseState = {};
       const item = COSMETIC_SHOP_ITEMS.find(i => !i.season);
       assertTrue(shopItemRowHtml(item, 0).includes(`data-wish-item="${item.id}"`), 'Shop row has a heart');
@@ -9755,7 +9757,7 @@ async function runDevTestSuite() {
       toggleWishlist(item.id);
       assertTrue(!isWished(item.id), 'Heart removes');
       assertTrue(document.querySelector('[data-shop-filter="wishlist"]') && document.getElementById('profileWishlist'), 'Markup exists');
-    } finally { wishlistIds = savedSet; currentUser = savedUser; cosmeticPurchaseState = savedOwned; shopFilter = 'all'; saveWishlist(); }
+    } finally { wishlistStore.stop(); wishlistStore = savedStore; wishlistIds = savedSet; currentUser = savedUser; cosmeticPurchaseState = savedOwned; shopFilter = 'all'; }
   });
   await test('v375: gift from a friend\'s wishlist, and the wishlist mail', () => {
     const savedNow = seasonalNowOverride, savedSet = wishlistIds, savedOwned = cosmeticPurchaseState;
