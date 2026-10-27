@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v461: [['lock', 'No Mercy now unlocks at Lvl 25 (it shows on the Level Ladder).', WN_KEY]],
       v460: [['spade', 'No Mercy now teaches itself: short tips appear the first two games a 4, Queen, King, Ace or Joker turns up in your hand. Bots also play the King and Ace on purpose.', WN_KEY]],
       v459: [['spade', 'Bots now play the No Mercy Ace when it will make opponents pick up a card.']],
       v458: [['spade', 'No Mercy has a new Ace rule: every opponent takes one card from the bottom of the Pile. It stops at an Ace, and a King can be taken by an Ace.', WN_KEY]],

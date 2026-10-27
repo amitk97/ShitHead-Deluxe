@@ -10230,6 +10230,10 @@
     function openNoMercyChoice() {
       document.querySelectorAll('#noMercyModal .diff-btn').forEach(styleDifficultyBtn);
       paintNoMercyCounts();
+      const lock = noMercyLockReason();
+      const note = document.getElementById('noMercyNote');
+      if (note && lock) note.textContent = lock;
+      ['noMercyBotsBtn', 'noMercyFriendsBtn'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !!lock; });
       document.getElementById('noMercyModal').classList.remove('hidden');
     }
     function closeNoMercyChoice() { document.getElementById('noMercyModal')?.classList.add('hidden'); }
@@ -10240,10 +10244,12 @@
       const c = e.target.closest('#noMercyCounts [data-n]'); if (c) { noMercyPlayers = Number(c.dataset.n); paintNoMercyCounts(); }
     });
     document.getElementById('noMercyBotsBtn').addEventListener('click', () => {
+      if (!noMercyUnlocked()) return;
       closeNoMercyChoice();
       runShuffleIntro(() => startSinglePlayerGame(noMercyPlayers - 1, null, { noMercy: true }));
     });
     document.getElementById('noMercyFriendsBtn').addEventListener('click', () => {
+      if (!noMercyUnlocked()) return;
       closeNoMercyChoice();
       if (typeof isOffline === 'function' && isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
       window.ShHomeCarousel?.openMode('friends');
@@ -15200,6 +15206,15 @@
     }
     // Gifting unlocks at XP_RULES.giftLevel (owner, v289; the server checks
     // too). With XP switched off there is no lock, like the speed locks.
+    // No Mercy unlocks at Lvl 25 (owner, v461). No lock while XP is off.
+    const NO_MERCY_LEVEL = 25;
+    function noMercyUnlocked() {
+      if (typeof xpShown === 'function' && !xpShown()) return true;
+      return !!currentUser && !!playerXp && xpLevelFor(playerXp.total) >= NO_MERCY_LEVEL;
+    }
+    function noMercyLockReason() {
+      return noMercyUnlocked() ? '' : `No Mercy unlocks at Lvl ${NO_MERCY_LEVEL}${currentUser ? '. Finish a few more games to get there.' : '. Sign in and play to level up.'}`;
+    }
     function giftLockReason() {
       if (typeof xpShown === 'function' && !xpShown()) return '';
       return speedLevelNow() >= XP_RULES.giftLevel ? '' : `Gifting unlocks at Lvl ${XP_RULES.giftLevel}. Finish a few games to get there.`;

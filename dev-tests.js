@@ -7321,6 +7321,26 @@ async function runDevTestSuite() {
       assertTrue(hit - blocked === 50, 'King hit ' + hit + ' blocked ' + blocked);
     } finally { if (keep === null) localStorage.removeItem('shithead_tip_counts'); else localStorage.setItem('shithead_tip_counts', keep); helperTipGame = { id: null, keys: new Set() }; freshState(); }
   });
+  await test('v461: No Mercy is locked below Lvl 25 (unless XP is off) in the chooser, Friends and the Ladder', () => {
+    const on = xpFeatureOn, pxp = playerXp, cu = currentUser;
+    try {
+      xpFeatureOn = false;
+      assertTrue(noMercyUnlocked() && noMercyLockReason() === '', 'XP off: no lock');
+      xpFeatureOn = true; currentUser = { uid: 'u' };
+      playerXp = { total: xpForLevel(24), level: 24 };
+      assertTrue(!noMercyUnlocked() && /Lvl 25/.test(noMercyLockReason()), 'Lvl 24 is locked');
+      openNoMercyChoice();
+      assertTrue(document.getElementById('noMercyBotsBtn').disabled && document.getElementById('noMercyFriendsBtn').disabled, 'chooser buttons are disabled');
+      assertTrue(/Lvl 25/.test(document.getElementById('noMercyNote').textContent), 'the chooser says why');
+      closeNoMercyChoice();
+      assertTrue(ladderRewards().get(NO_MERCY_LEVEL).some(p => p.name === 'No Mercy'), 'the Ladder lists it at Lvl 25');
+      playerXp = { total: xpForLevel(25), level: 25 };
+      assertTrue(noMercyUnlocked(), 'Lvl 25 is open');
+      openNoMercyChoice();
+      assertTrue(!document.getElementById('noMercyBotsBtn').disabled, 'chooser buttons work at Lvl 25');
+      closeNoMercyChoice();
+    } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeNoMercyChoice(); }
+  });
   await test('v455: a bot that is stuck in a loop tries a card it would not normally play', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });

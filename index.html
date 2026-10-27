@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-27-v460 (ShitHead-Deluxe-275) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-27-v461 (ShitHead-Deluxe-276) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -799,7 +799,7 @@
               <li class="mp-row"><span class="mp-row-text"><b>Puzzles</b><span>A set table and one way to win. A new puzzle every week.</span></span><button type="button" class="mp-open" data-open-puzzles>Play</button></li>
               <li class="mp-row"><span class="mp-row-text"><b>Randomiser</b><span>Card powers are shuffled every match and shown before the deal.</span></span><span class="mp-soon">Soon</span></li>
               <li class="mp-row"><span class="mp-row-text"><b>Multiple Decks</b><span>Two decks and four Jokers for 4 to 8 players. Four of a rank burn the Pile, and a Snap Burn plays every matching card.</span></span><button type="button" class="mp-open" data-open-decks>Play</button></li>
-              <li class="mp-row"><span class="mp-row-text"><b>No Mercy</b><span>Queens see hidden cards, no Jokers on a 4, and a King makes the next player take the bottom card.</span></span><button type="button" class="mp-open" data-open-nomercy>Play</button></li>
+              <li class="mp-row"><span class="mp-row-text"><b>No Mercy</b><span>Queens see hidden cards, no Jokers on a 4, Kings and Aces make others take cards. Unlocks at Lvl 25.</span></span><button type="button" class="mp-open" data-open-nomercy>Play</button></li>
             </ul>
           </div>
         </div>
@@ -2227,7 +2227,7 @@
     <div class="gauntlet-card twos-card">
       <button type="button" id="noMercyCloseBtn" class="gauntlet-close" aria-label="Close">✕</button>
       <h2 id="noMercyTitle" class="gauntlet-title">No Mercy</h2>
-      <p class="gauntlet-text">Queens see a hidden card, no Joker goes on a 4, and a King makes the next player take the bottom card of the Pile.</p>
+      <p class="gauntlet-text">Queens see a hidden card, no Joker goes on a 4, a King makes the next player take the bottom card of the Pile and an Ace makes every opponent take one. Unlocks at Lvl 25.</p>
       <div class="twos-label">Players at the table</div>
       <div id="noMercyCounts" class="decks-counts nm-counts" role="group" aria-label="Number of players">
         <button type="button" data-n="2" class="decks-count">2</button><button type="button" data-n="3" class="decks-count">3</button><button type="button" data-n="4" class="decks-count">4</button>
@@ -2554,7 +2554,7 @@
             <span class="chevron transform transition-transform duration-200">&#9660;</span>
           </button>
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
-            <p><strong>What it is.</strong> A normal game with four extra rules, for 2 to 4 players. Open it from <em>More Modes</em> &rarr; <em>No Mercy</em>, or host it in <em>Play Friends</em>. It is never Ranked.</p>
+            <p><strong>What it is.</strong> A normal game with four extra rules, for 2 to 4 players. Open it from <em>More Modes</em> &rarr; <em>No Mercy</em>, or host it in <em>Play Friends</em>. It unlocks at level 25 and is never Ranked.</p>
             <p><strong>Queen: X-ray.</strong> Each Queen you play shows you one random card in the next player's hand that you have not seen yet. Three Queens show three different cards. Face-Down cards can never be seen. A small tag at their seat reminds you of the card until it leaves their hand. If they have no hand cards, nothing happens.</p>
             <p><strong>King: bottom card.</strong> Each King makes the next player take one card from the bottom of the Pile into their hand, never one of the Kings you just played. A King on an empty Pile does nothing, and you get no extra go. Four Kings burn the Pile as usual, with no pick-up. A King at the bottom of the Pile can never be taken, and it stops the pick-up.</p>
             <p><strong>Ace: every opponent takes one.</strong> Each opponent, in turn order, takes ONE card from the bottom of the Pile, however many Aces you play, never one of the Aces you just played. An Ace at the bottom can never be taken and stops the pick-up, so with only your Ace on an empty Pile nobody takes anything. A King can be taken by an Ace, and an Ace by a King. You get no extra go, and four Aces burn the Pile as usual.</p>
@@ -2771,22 +2771,22 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=5636a4a229a4"></script>
-  <script src="js/whats-new-data.js?v=2490a4e2584f"></script>
+  <script src="js/whats-new-data.js?v=949c9fe01c34"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=46ac1e69fef3"></script>
   <script src="tutorial-data.js?v=86b1cdade927"></script>
   <script src="tutorial.js?v=0049a251f6ef"></script>
-  <script src="level-ladder.js?v=4d5bf0aaa94d"></script>
+  <script src="level-ladder.js?v=2236068565c3"></script>
   <script src="shop.js?v=5ae6877dd45b"></script>
   <script src="home-navigation.js?v=9940f81a51ea"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=a8495ce45683"></script>
+  <script src="app.js?v=79c3c4970b71"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>
   <script src="js/house-rules-presets.js?v=80f7a658ecb1"></script>
-  <script src="js/friends-lobby.js?v=36c6c10e6091"></script>
+  <script src="js/friends-lobby.js?v=d6461177af51"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>
   <script src="js/puzzles.js?v=87cb627bec7c"></script>
