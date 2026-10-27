@@ -14441,7 +14441,6 @@
     }
 
     function deckMiniCardHtml(item, big = false) {
-      const cityPreview=cityDraftDeckSample(item,big); if(cityPreview) return cityPreview;
       const suits = ['♠', '♥', '♦', '♣'].map(s => `<span class="${getSuitStyle(s)}">${s}</span>`).join('');
       return `<span class="deck-mini-card ${item?.theme || 'theme-obsidian'} ${big ? 'is-big' : ''}"><span class="dm-rank">A</span><span class="dm-suits">${suits}</span></span>`;
     }
