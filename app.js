@@ -14938,11 +14938,12 @@
     function matchModeLabel() {
       const bots = state.players.filter(p => p.isBot).length;
       if (state.isRanked) return 'Ranked match';
-      if (state.isMultiplayer) return isTwos() ? '2 vs 2 · Online' : `Online · ${state.players.length} players`;
+      const special = isNoMercy() ? 'No Mercy' : isMultiDeck() ? 'Multiple Decks' : (state.isMultiplayer && isHouseRulesMatch()) ? 'House Rules' : '';
+      if (state.isMultiplayer) return isTwos() ? '2 vs 2 · Online' : special ? `${special} · Online · ${state.players.length} players` : `Online · ${state.players.length} players`;
       if (state.gauntlet) { const gm = gauntletModeOf(state.gauntlet), gr = Math.min(state.gauntlet.round, gauntletRounds(gm).length - 1); return `${gm === 'easy' ? 'Gauntlet' : `${gauntletMode(gm).name} Gauntlet`} · Round ${gr + 1} · ${gauntletRoundLabel(gr, gm)}`; }
       const diff = String(state.difficulty || 'medium');
       if (isTwos()) return `2 vs 2 · ${bots} bot${bots === 1 ? '' : 's'} · ${diff.charAt(0).toUpperCase() + diff.slice(1)}`;
-      return `Vs ${bots} bot${bots === 1 ? '' : 's'} · ${diff.charAt(0).toUpperCase() + diff.slice(1)}`;
+      return `${special ? special + ' · ' : 'Vs '}${bots} bot${bots === 1 ? '' : 's'} · ${diff.charAt(0).toUpperCase() + diff.slice(1)}`;
     }
     function matchSummaryHtml() {
       const me = state.players.find(p => p.id === state.localPlayerId);

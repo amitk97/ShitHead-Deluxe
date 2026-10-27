@@ -7341,6 +7341,16 @@ async function runDevTestSuite() {
       closeNoMercyChoice();
     } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeNoMercyChoice(); }
   });
+  await test('v462: the end page names No Mercy and Multiple Decks games', () => {
+    try {
+      freshState(); startSinglePlayerGame(2); state.noMercy = true; state.difficulty = 'hard';
+      assertTrue(matchModeLabel() === 'No Mercy · 2 bots · Hard', matchModeLabel());
+      freshState(); startSinglePlayerGame(3, null, { multiDeck: true }); state.difficulty = 'hard';
+      assertTrue(/^Multiple Decks · 3 bots/.test(matchModeLabel()), matchModeLabel());
+      freshState(); startSinglePlayerGame(2); state.difficulty = 'hard';
+      assertTrue(matchModeLabel() === 'Vs 2 bots · Hard', matchModeLabel());
+    } finally { freshState(); }
+  });
   await test('v455: a bot that is stuck in a loop tries a card it would not normally play', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
