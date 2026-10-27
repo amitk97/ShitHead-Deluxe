@@ -3261,6 +3261,7 @@
             if (player.gameStats && player.gameStats.pickedUp > 0) winEvents.push('comeback-win');
             if (state.isRanked) winEvents.push('win-ranked-match');
             if (!state.isMultiplayer) winEvents.push('beat-a-bot'); // every opponent in Vs Bots is a bot by definition
+            if (isNoMercy() && !player.drew) winEvents.push('win-nomercy');
             notifyChallengeEvent(player, winEvents);
           }
         }
@@ -16553,11 +16554,15 @@
     const WEEKLY_CHALLENGE_POOL_V3 = [...WEEKLY_CHALLENGE_POOL_V2,
       { id:'win-twos', name:'Team Player', desc:'Win 5 matches of 2 vs 2.', target:5 }
     ];
+    const WEEKLY_CHALLENGE_POOL_V4 = [...WEEKLY_CHALLENGE_POOL_V3,
+      { id:'win-nomercy', name:'No Mercy', desc:'Win 5 matches of No Mercy.', target:5 }
+    ];
     // Oldest first; `from` = the first UK week the rule applies to.
     const WEEKLY_CHALLENGE_RULES = [
       { from: '', picks: 3, pool: WEEKLY_CHALLENGE_POOL_V1 },
       { from: '2026-W41', picks: 5, pool: WEEKLY_CHALLENGE_POOL_V2 },
-      { from: '2026-W44', picks: 5, pool: WEEKLY_CHALLENGE_POOL_V3 }
+      { from: '2026-W44', picks: 5, pool: WEEKLY_CHALLENGE_POOL_V3 },
+      { from: '2026-W45', picks: 5, pool: WEEKLY_CHALLENGE_POOL_V4 }
     ];
     // Week keys are zero-padded ("2026-W41"), so they compare as text.
     function weeklyRulesFor(weekKey) {

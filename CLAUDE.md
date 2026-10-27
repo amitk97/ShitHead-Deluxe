@@ -12,6 +12,10 @@
 
 - `js/test-lab.js` tabs Back / Table / Deck / Frame / Emote / Avatar (the old dummy-position tab is now "Setup"): tap an item (any in `customAllItems(type)`, decks from `deckItems()`) and `applyLook` sets it IN MEMORY: `equippedCosmetics[type] = id` + `applyEquippedCosmetics()` (the bot's seat gets the back, frame and avatar too), decks through `selectDeckTheme`. Never saved: while `state.labDummy` is set `applyEquippedCosmetics` and `selectDeckTheme` skip their localStorage writes, `eventBotItem` and `showHelperTip` stand down, and `open()` turns `syncShowcase`, `syncPublicProfile` and `scheduleSettingsCloudSave` into no-ops (like the win/history reports). `snapshotReal()` at open and `restoreReal()` on Exit / "My real look" put the account's own look back. Extras: next / previous / Auto-step (1.8s) and an emote strip that floats each emote of the chosen pack from your seat. Trap found: the file's `const CSS` string shadows `window.CSS`, so use `window.CSS.escape`. Client only; no rules, Functions or catalog change. Dev test "v436: the Test Lab tries looks on in memory only…". Frames: scratchpad `lab-shot.js` (fakes `currentUser` and `isAmitkTestingAccount` then clicks the tabs).
 
+## v453 — weekly No Mercy challenge (owner: "5 no mercy wins")
+
+- `WEEKLY_CHALLENGE_POOL_V4` = V3 + `win-nomercy` ("No Mercy", win 5 matches of No Mercy), rule `{ from: '2026-W45', picks: 5 }` (W44 was under way, so it never changes). `checkPlayerFinished` sends the `win-nomercy` event with a first-place finish when `isNoMercy()` (online too: the room's mode). Catalog re-exported (Functions deploy needed for the server's weekly picks). Dev test "v453". Only the weekly pool changed: no rules change.
+
 ## v452 — No Mercy, Step 5: bots, Guide, fuzz (live on main; No Mercy is complete except the weekly challenge)
 
 - `evaluateMoveUtility` (Hard and Boss only, No Mercy): `noMercyKnownCards(bot, next)` cards that cannot answer a play add +25 (+45 when every hand card is known), known cards that can answer take 12 off; Easy and Medium ignore peeks. Guide section `data-guide-section="nomercy"`, Key Term `no-mercy` (also in `KEY_TERM_LINKS`). Dev test "v452".

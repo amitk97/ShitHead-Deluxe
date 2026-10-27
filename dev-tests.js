@@ -7219,6 +7219,12 @@ async function runDevTestSuite() {
       assertTrue(isMultiDeck(), 'the room plays as Multiple Decks');
     } finally { freshState(); }
   });
+  await test('v453: a weekly No Mercy challenge starts in W45 and a No Mercy win sends its event', () => {
+    assertTrue(weeklyRulesFor('2026-W44').pool.every(c => c.id !== 'win-nomercy'), 'W44 is unchanged');
+    assertTrue(weeklyRulesFor('2026-W45').pool.some(c => c.id === 'win-nomercy' && c.target === 5), 'No Mercy from W45');
+    assertTrue(weeklyRulesFor('2026-W45').pool.some(c => c.id === 'win-twos'), 'older challenges stay in the pool');
+  });
+
   await test('v452: Hard bots use the Queen X-ray; Easy and Medium ignore it; the Guide and Key Terms cover No Mercy', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
@@ -11060,7 +11066,7 @@ async function runDevTestSuite() {
     assertEqual(weeklyRulesFor('2026-W40').picks, 3, 'Rule lookup: before');
     assertEqual(weeklyRulesFor('2027-W01').picks, 5, 'Rule lookup: next year');
     const cat = serverEconomyCatalog();
-    assertEqual(cat.weeklyRules.map(r => [r.from, r.picks, r.pool.length]), [['', 3, 8], ['2026-W41', 5, 18], ['2026-W44', 5, 19]], 'The server gets all three rules');
+    assertEqual(cat.weeklyRules.map(r => [r.from, r.picks, r.pool.length]), [['', 3, 8], ['2026-W41', 5, 18], ['2026-W44', 5, 19], ['2026-W45', 5, 20]], 'The server gets all four rules');
   });
   await test('Weekly challenges (v240): each new challenge counts the right thing', async () => {
     const realState = challengeEconomy.weeklyChallengeState, realDaily = challengeEconomy.dailyChallengeState, realDone = challengeEconomy.completedChallenges;
