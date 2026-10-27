@@ -1057,10 +1057,10 @@
 
       // No Mercy King (Medium, Hard and Boss): the next player takes a bottom card, so play it when it will hit
       // (the bottom card is not a King and the Pile has cards under it).
-      if (candidateRank === 'K' && isNoMercy() && difficulty !== 'easy' && pileSize > 0 && discardPile[0].rank !== 'K') score += 50;
+      if (((state.stalemate && state.stalemate.turns) || 0) < 40 && candidateRank === 'K' && isNoMercy() && difficulty !== 'easy' && pileSize > 0 && discardPile[0].rank !== 'K') score += 50;
       // No Mercy Ace (Medium, Hard and Boss): every opponent takes one bottom card, so play it when it will hit
       // someone (the bottom card is not an Ace and the Pile has cards to give), and more so the more opponents it hits.
-      if (candidateRank === 'A' && isNoMercy() && difficulty !== 'easy' && pileSize > 0 && discardPile[0].rank !== 'A') {
+      if (((state.stalemate && state.stalemate.turns) || 0) < 40 && candidateRank === 'A' && isNoMercy() && difficulty !== 'easy' && pileSize > 0 && discardPile[0].rank !== 'A') {
         const opps = state.players.filter(p => !p.hasFinished && p.id !== bot.id && !sameTeam(p, bot)).length;
         score += 50 * Math.min(opps, pileSize);
       }
