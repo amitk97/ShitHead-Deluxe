@@ -7248,6 +7248,15 @@ async function runDevTestSuite() {
       assertTrue(/4/.test(cardReferenceText('JOKER')) && /Joker/.test(cardReferenceText('4')), 'Joker and 4');
     } finally { state.noMercy = was; state.isMultiplayer = mp; }
   });
+  await test('v457: the Play Matrix shows the Joker as not playable on a 4 in No Mercy', () => {
+    const was = state.noMercy, mp = state.isMultiplayer, open = matrixRefOpen;
+    const cell = () => { renderMatrixReference(); const rows = [...document.querySelectorAll('#matrixRefTable tbody tr')]; const jr = rows[rows.length - 1]; return jr.children[1 + PLAY_MATRIX_RANKS.indexOf('4')].textContent; };
+    try {
+      state.isMultiplayer = false; matrixRefOpen = true;
+      state.noMercy = false; assertTrue(cell() === '✓', 'normal: Joker on a 4 is fine');
+      state.noMercy = true; assertTrue(cell() === '✗', 'No Mercy: Joker on a 4 is refused');
+    } finally { state.noMercy = was; state.isMultiplayer = mp; matrixRefOpen = open; }
+  });
   await test('v455: a bot that is stuck in a loop tries a card it would not normally play', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });

@@ -11,9 +11,11 @@ function renderMatrixReference() {
   });
   html += '</tr></thead><tbody>';
   PLAY_MATRIX_RANKS.forEach((row) => {
-    const rowData = isHouseRulesMatch()
+    let rowData = isHouseRulesMatch()
       ? PLAY_MATRIX_RANKS.map((col) => houseMatrixLegal(row, col) ? 1 : 0)
       : PLAY_MATRIX[row];
+    // No Mercy: a Joker cannot be played on a 4.
+    if (rowData && row === 'JOKER' && isNoMercy() && !isHouseRulesMatch()) rowData = rowData.map((v, i) => PLAY_MATRIX_RANKS[i] === '4' ? 0 : v);
     if (!rowData) return; // Defensive: validatePlayMatrix() already
     // guarantees this can't happen, but a render function should never
     // throw on bad data — it should just skip the broken row.
