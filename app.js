@@ -109,7 +109,7 @@
     // browsers' compositing) made their position:fixed boxes start at the
     // table's top instead of the screen's, pushing the top and X of a tall
     // page (e.g. Profile on iPhone) under the header.
-    ['puzzlesModal', 'twosModal', 'decksModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
+    ['puzzlesModal', 'twosModal', 'decksModal', 'noMercyModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
      'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'eventPopupModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
@@ -8370,6 +8370,8 @@
         activeConstraint: state.activeConstraint || null,
         baseOverrideCard: state.baseOverrideCard || null,
         stalemate: state.stalemate || null,
+        peeks: state.peeks || null,
+        lastPeek: state.lastPeek || null,
         turnDeadline: state.turnDeadline || null,
         turnTimerMs: state.turnTimerMs || 15000,
         ruleMode: state.ruleMode || 'standard',
@@ -9083,6 +9085,10 @@
           state.activeConstraint = data.activeConstraint || null;
           state.baseOverrideCard = data.baseOverrideCard || null;
           state.stalemate = data.stalemate || null;
+          state.peeks = data.peeks || {};
+          const newPeek = data.lastPeek || null;
+          if (newPeek && newPeek.at !== (state.lastPeek && state.lastPeek.at) && Date.now() - newPeek.at < 8000 && isNoMercy()) { state.lastPeek = newPeek; noMercyPeekFx(newPeek); }
+          else state.lastPeek = newPeek;
           state.turnDeadline = data.turnDeadline || null;
 
           // Reveals the game table if this client is only now catching up to
@@ -10120,6 +10126,35 @@
       if (typeof isOffline === 'function' && isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
       window.ShHomeCarousel?.openMode('friends');
       window.ShFriendsLobby?.openDecks();
+    });
+
+    // § No Mercy chooser: 2-4 players (you plus bots at a chosen difficulty), or Play Friends.
+    let noMercyPlayers = 2;
+    function paintNoMercyCounts() {
+      document.querySelectorAll('#noMercyCounts [data-n]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.n) === noMercyPlayers)));
+      document.getElementById('noMercyNote').textContent = `You and ${noMercyPlayers - 1} ${noMercyPlayers === 2 ? 'bot' : 'bots'} at this difficulty.`;
+    }
+    function openNoMercyChoice() {
+      document.querySelectorAll('#noMercyModal .diff-btn').forEach(styleDifficultyBtn);
+      paintNoMercyCounts();
+      document.getElementById('noMercyModal').classList.remove('hidden');
+    }
+    function closeNoMercyChoice() { document.getElementById('noMercyModal')?.classList.add('hidden'); }
+    document.querySelectorAll('[data-open-nomercy]').forEach((b) => { b.onclick = openNoMercyChoice; });
+    document.getElementById('noMercyCloseBtn').addEventListener('click', closeNoMercyChoice);
+    document.getElementById('noMercyModal').addEventListener('click', (e) => {
+      if (e.target.id === 'noMercyModal') closeNoMercyChoice();
+      const c = e.target.closest('#noMercyCounts [data-n]'); if (c) { noMercyPlayers = Number(c.dataset.n); paintNoMercyCounts(); }
+    });
+    document.getElementById('noMercyBotsBtn').addEventListener('click', () => {
+      closeNoMercyChoice();
+      runShuffleIntro(() => startSinglePlayerGame(noMercyPlayers - 1, null, { noMercy: true }));
+    });
+    document.getElementById('noMercyFriendsBtn').addEventListener('click', () => {
+      closeNoMercyChoice();
+      if (typeof isOffline === 'function' && isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
+      window.ShHomeCarousel?.openMode('friends');
+      window.ShFriendsLobby?.openNoMercy();
     });
 
     document.getElementById('finishSwapBtn').addEventListener('click', finishLocalSwap);
@@ -22629,7 +22664,7 @@
       giftOpenModal: 'giftOpenClose', giftModal: 'giftModalClose', installHelpModal: 'installHelpClose',
       dailyRewardModal: () => closeDailyReward(), playerPopup: 'playerPopupClose', matchSummaryModal: 'matchSummaryClose',
       authModal: 'authCloseBtn', usernameModal: null, difficultyUnlockPopup: 'difficultyUnlockPopupBtn',
-      matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), twosModal: () => closeTwosChoice(), decksModal: () => closeDecksChoice(), puzzlesModal: () => window.ShPuzzles?.close(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
+      matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), noMercyModal: () => closeNoMercyChoice(), twosModal: () => closeTwosChoice(), decksModal: () => closeDecksChoice(), puzzlesModal: () => window.ShPuzzles?.close(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', levelLadderModal: 'levelLadderCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn', changelogModal: 'changelogCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',

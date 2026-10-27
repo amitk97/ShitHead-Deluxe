@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v450: [['sparkle', 'No Mercy is here: a new mode where Queens see a hidden card, no Joker goes on a 4 and Kings make the next player take the bottom card. Find it in More Modes or Play Friends.', WN_KEY]],
       v449: [['sparkle', 'Queen X-ray scan and memory tags for the new rules-twist mode (not playable yet).']],
       v448: [['sparkle', 'Groundwork for a new rules-twist mode (not playable yet).']],
       v447: [['book', 'The Guide now explains Multiple Decks, with a new Key Term.']],

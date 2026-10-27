@@ -239,6 +239,7 @@
         else if (readPins()[m] === 'puzzles' && window.ShPuzzles) { window.ShPuzzles.open(); }
         else if (readPins()[m] === 'twos') { document.querySelector('[data-open-twos]')?.click(); }
         else if (readPins()[m] === 'decks') { document.querySelector('[data-open-decks]')?.click(); }
+        else if (readPins()[m] === 'mercy') { document.querySelector('[data-open-nomercy]')?.click(); }
         else openPinPicker(card);
       }
       // § Shortcut pins (v323): slots 1 and 7 hold one of the coming modes
@@ -270,6 +271,7 @@
           if (live) { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">' + (window.ShPuzzles.solvedThisWeek() ? 'Solved this week' : 'Weekly puzzle') + '</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
           if (pins[c.dataset.mcMode] === 'twos') { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Team up with a partner</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
           if (pins[c.dataset.mcMode] === 'decks') { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Two decks, up to 8 players</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
+          if (pins[c.dataset.mcMode] === 'mercy') { c.innerHTML = num + pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Queens see, Kings take</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-go>Play</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>'; c.classList.add('mc-pinned'); return; }
           c.innerHTML = num + (m ? pinSvg(m[1]) + '<span class="mc-name">' + m[0] + '</span><span class="mc-sub">Coming soon</span><div class="mc-actions"><button type="button" class="mc-go" data-mc-preview>Info</button><button type="button" class="mc-go mc-swap" data-mc-swap>Swap</button></div>' : emptyPinHtml.replace(/data-mc-go(?:="")?>Go →/, 'data-mc-swap>Pin +'));
           c.classList.toggle('mc-pinned', !!m);
         });
@@ -280,7 +282,7 @@
         const rows = Object.entries(PIN_MODES).map(([id, [name, d]]) => id === other
           ? '<button type="button" disabled aria-disabled="true">' + pinSvg(d) + name + ' (pinned in the other shortcut)</button>'
           : '<button type="button" data-mc-pin="' + id + '" aria-pressed="' + (id === cur) + '">' + pinSvg(d) + name + '</button>').join('');
-        const live = cur === 'twos' || cur === 'decks' || (cur === 'puzzles' && window.ShPuzzles);
+        const live = cur === 'twos' || cur === 'decks' || cur === 'mercy' || (cur === 'puzzles' && window.ShPuzzles);
         showInfoPop(card, '<b>' + (cur ? PIN_MODES[cur][0] + (live ? ' is pinned here' : ' is coming soon') : 'Pin a mode here') + '</b><br>' +
           (cur ? (live ? 'It opens from this card. Pin another:' : 'It opens from here when it launches. Pin another:') : 'It opens from here when it launches, or now for the modes already live.') +
           '<div class="mc-pin-list" data-mc-slot="' + card.dataset.mcMode + '">' + rows + (cur ? '<button type="button" data-mc-pin="">Clear this shortcut</button>' : '') + '</div>', { toggle: true });

@@ -12,6 +12,11 @@
 
 - `js/test-lab.js` tabs Back / Table / Deck / Frame / Emote / Avatar (the old dummy-position tab is now "Setup"): tap an item (any in `customAllItems(type)`, decks from `deckItems()`) and `applyLook` sets it IN MEMORY: `equippedCosmetics[type] = id` + `applyEquippedCosmetics()` (the bot's seat gets the back, frame and avatar too), decks through `selectDeckTheme`. Never saved: while `state.labDummy` is set `applyEquippedCosmetics` and `selectDeckTheme` skip their localStorage writes, `eventBotItem` and `showHelperTip` stand down, and `open()` turns `syncShowcase`, `syncPublicProfile` and `scheduleSettingsCloudSave` into no-ops (like the win/history reports). `snapshotReal()` at open and `restoreReal()` on Exit / "My real look" put the account's own look back. Extras: next / previous / Auto-step (1.8s) and an emote strip that floats each emote of the chosen pack from your seat. Trap found: the file's `const CSS` string shadows `window.CSS`, so use `window.CSS.escape`. Client only; no rules, Functions or catalog change. Dev test "v436: the Test Lab tries looks on in memory only…". Frames: scratchpad `lab-shot.js` (fakes `currentUser` and `isAmitkTestingAccount` then clicks the tabs).
 
+## v450 — No Mercy, Step 3: entry points (live on main; steps 4-5 follow on "continue")
+
+- Play Computer: More Modes → No Mercy → Play opens `#noMercyModal` (`openNoMercyChoice`: 2-4 players `#noMercyCounts`, difficulty chips, PLAY = `startSinglePlayerGame(n - 1, null, { noMercy: true })`, or Play with friends → `ShFriendsLobby.openNoMercy()`). Pinnable (`PIN_MODES.mercy`, `[data-open-nomercy]` clicked from the pinned card). Play Friends: carousel card 6 `data-friends-mode="noMercy"` (red); `modes` in friends-lobby.js has six entries (keys 1-6), lobby stays four seats and normal bot limits. The room's `friendsMode: 'noMercy'` is the truth online (`isNoMercy()`).
+- Online sync: `peeks` and `lastPeek` are in `syncFirebaseGameState` and read in the room listener; a `lastPeek` with a new `at` (under 8s old) plays `noMercyPeekFx` on the other phones (the sender already has it). v449 (Queen X-ray visuals, `noMercyPeekFx`, `.nm-peek`, `.nm-known` memory tag, `audio.playPeekScan`) went to main on the owner's "go". Dev tests "v449", "v450". Not done: rewards (step 4), bot use of peeks, fuzz, Guide / Key Term (step 5).
+
 ## v448 — No Mercy, Step 1: engine and rules (on main; no menu entry yet, steps 2-5 follow on "continue")
 
 - Owner's design (26 Oct): a rules-twist mode on a normal single deck. `startSinglePlayerGame(n, null, { noMercy: true })` sets `state.noMercy` (saved with the game; reset in `startMultiplayerGame` and `startTutorial`); `isNoMercy()` is true for solo games with the flag and online when the room's `friendsMode === 'noMercy'` (Friends card comes in Step 3); never Ranked/tutorial. Quick Play keeps it (`priorNoMercy`).
@@ -20,7 +25,7 @@
 
 ## v447 — Multiple Decks, Step 5: Guide and Key Term (live on main)
 
-- Guide section `data-guide-section="decks"` (before Puzzles) and Key Term `multiple-decks` (between Mode Card and No Power). Stalemate thresholds re-checked with an all-bot fuzz (scratchpad `mdfuzz2.js`, 4/6/8 players, 5 games): every game ended by itself, no draws, at most 1 repeat and 11 turns without progress, so `STALEMATE_REPEATS` 6 / `STALEMATE_TURNS` 150 stay unchanged. Not pushed to main until the owner says so; rules changed in v446 (`avatar-decks`) still need pasting then.
+- Guide section `data-guide-section="decks"` (before Puzzles) and Key Term `multiple-decks` (between Mode Card and No Power). Stalemate thresholds re-checked with an all-bot fuzz (scratchpad `mdfuzz2.js`, 4/6/8 players, 5 games): every game ended by itself, no draws, at most 1 repeat and 11 turns without progress, so `STALEMATE_REPEATS` 6 / `STALEMATE_TURNS` 150 stay unchanged. Live on main; the v446 rules change was pasted by the owner.
 
 ## v446 — Multiple Decks, Step 4: rewards (live on main)
 

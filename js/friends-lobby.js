@@ -21,7 +21,7 @@
     $('friendsRoomSettings').classList.toggle('hidden', !room || (!host && mode!=='series'));
     $('friendsHostHint').parentElement.hidden = room;
     $('friendsConfirmMode').disabled = busy || mode.startsWith('soon') || (mode === 'series' && !seriesUnlocked());
-    $('friendsConfirmMode').textContent = busy ? 'CREATING ROOM…' : mode.startsWith('soon') ? 'COMING SOON' : mode === 'series' && !seriesUnlocked() ? 'UNLOCKS AT LEVEL 20' : `HOST ${mode === 'house' ? 'HOUSE RULES' : mode === 'series' ? 'BEST OF SERIES' : mode === 'twos' ? '2 VS 2' : mode === 'decks' ? 'MULTIPLE DECKS' : 'STANDARD'} ROOM`;
+    $('friendsConfirmMode').textContent = busy ? 'CREATING ROOM…' : mode.startsWith('soon') ? 'COMING SOON' : mode === 'series' && !seriesUnlocked() ? 'UNLOCKS AT LEVEL 20' : `HOST ${mode === 'house' ? 'HOUSE RULES' : mode === 'series' ? 'BEST OF SERIES' : mode === 'twos' ? '2 VS 2' : mode === 'decks' ? 'MULTIPLE DECKS' : mode === 'noMercy' ? 'NO MERCY' : 'STANDARD'} ROOM`;
     const preview = {id: state.localPlayerId, name: $('playerNameInput').value.trim() || currentUser?.displayName || 'You', cosmetics: getPublicCosmeticLoadout()};
     const teamOf = room && mode === 'twos' ? twosAssign(state.players) : null;
     const players = room ? [...state.players].sort((a,b) => teamOf ? teamOf[a.id] - teamOf[b.id] || Number(b.isHost) - Number(a.isHost) : Number(b.isHost) - Number(a.isHost)) : [preview];
@@ -43,13 +43,13 @@
     document.querySelectorAll('[data-friends-config]').forEach(el => {el.hidden = room && !host && mode!=='series'; el.disabled = busy || (room && mode!=='series' && !editable());});
     paintCarousel();
     const trigger=$('friendsSettingsTrigger');
-    trigger.dataset.friendsConfig=mode==='house'?'house':mode==='series'?'series':mode==='twos'?'twos':mode==='decks'?'decks':'standard';
+    trigger.dataset.friendsConfig=mode==='house'?'house':mode==='series'?'series':mode==='twos'?'twos':mode==='decks'?'decks':mode==='noMercy'?'noMercy':'standard';
     trigger.querySelector('span').textContent=mode==='house'?'Custom Rules':mode==='series'?'Series Settings':'Table Settings';
     trigger.hidden=false;
     $('friendsSeriesLock').classList.toggle('hidden', seriesUnlocked());
     $('friendsSeriesLock').querySelector('span').textContent = `Level ${SERIES_RULES.level}`;
     $('friendsModeSummary').hidden = true;
-    $('friendsModeSummary').textContent = mode==='house' ? 'House Rules · Unranked · No Challenges or Diamonds' : mode==='series' ? 'Standard rules · Two signed-in players · Level 20+' : mode==='twos' ? 'Standard rules · Partners sit opposite · Four players or bots' : mode==='decks' ? 'Two decks · Four Jokers · 4 to 8 players, bots fill to four' : 'Standard rules · Invite a friend to start';
+    $('friendsModeSummary').textContent = mode==='house' ? 'House Rules · Unranked · No Challenges or Diamonds' : mode==='series' ? 'Standard rules · Two signed-in players · Level 20+' : mode==='twos' ? 'Standard rules · Partners sit opposite · Four players or bots' : mode==='decks' ? 'Two decks · Four Jokers · 4 to 8 players, bots fill to four' : mode==='noMercy' ? 'Queens see a hidden card · No Joker on a 4 · Kings take the bottom card' : 'Standard rules · Invite a friend to start';
     $('friendsReadyRow').classList.toggle('hidden', !room || mode!=='house');
     const me=state.players.find(p=>p.id===state.localPlayerId);
     $('friendsReady').textContent = me?.houseRulesReady ? 'Ready ✓' : 'Ready';
@@ -70,7 +70,7 @@
       $('friendsBotCount').disabled = $('friendsBotDifficulty').disabled = !editable() || busy;
     }
   }
-  const modes = ['decks', 'house', 'standard', 'series', 'twos'];
+  const modes = ['decks', 'house', 'standard', 'series', 'twos', 'noMercy'];
   // Keep the existing room-code and invite controls above the compact seats.
   const roomCodeCard = $('prominentRoomCode').parentElement;
   $('friendsHub').insertBefore(roomCodeCard, $('friendsSeats'));
@@ -197,7 +197,13 @@
     window.ShHousePresets?.resetSelection();
     $('friendsJoinView').classList.add('hidden'); render();
   }
-  window.ShFriendsLobby={openTwos,openDecks,render,showHub,showSetup,closeConfig,backToHub,layoutRules,draftMode:()=>draft};
+  function openNoMercy() {
+    if (inRoom() || busy) return;
+    setup = true; cursor = modes.indexOf('noMercy'); draft = 'noMercy';
+    window.ShHousePresets?.resetSelection();
+    $('friendsJoinView').classList.add('hidden'); render();
+  }
+  window.ShFriendsLobby={openTwos,openDecks,openNoMercy,render,showHub,showSetup,closeConfig,backToHub,layoutRules,draftMode:()=>draft};
   document.querySelectorAll('[data-friends-config]').forEach(el=>el.addEventListener('click',()=>openConfig(el.dataset.friendsConfig)));
   document.querySelectorAll('[data-config-tab]').forEach(el=>el.addEventListener('click',()=>{configTab=el.dataset.configTab;render();layoutRules();}));
   const track=$('friendsModeCarousel'), cards=[...track.querySelectorAll('.mc-card')];
@@ -220,10 +226,10 @@
       go.disabled=busy || a!==0 || modes[i].startsWith('soon') || (modes[i]==='series'&&!seriesUnlocked());
       go.tabIndex=go.disabled?-1:0;go.hidden=a!==0 || modes[i].startsWith('soon');
     });
-    document.querySelectorAll('[data-friends-step]').forEach(b=>b.disabled=(['first','prev'].includes(b.dataset.friendsStep)?cursor===0:cursor===4));
+    document.querySelectorAll('[data-friends-step]').forEach(b=>b.disabled=(['first','prev'].includes(b.dataset.friendsStep)?cursor===0:cursor===modes.length-1));
   }
-  const turnTo=i=>{const n=Math.max(0,Math.min(4,i));if(n===cursor || busy)return false;selectMode(modes[n]);Haptics.vibrate([15]);audio.playCarouselSnap();return true;};
-  const move=dir=>turnTo(dir==='first'?0:dir==='last'?4:cursor+(dir==='prev'?-1:1));
+  const turnTo=i=>{const n=Math.max(0,Math.min(modes.length-1,i));if(n===cursor || busy)return false;selectMode(modes[n]);Haptics.vibrate([15]);audio.playCarouselSnap();return true;};
+  const move=dir=>turnTo(dir==='first'?0:dir==='last'?modes.length-1:cursor+(dir==='prev'?-1:1));
   let swiped=false,lastTap=null;
   track.addEventListener('click',e=>{
     const card=e.target.closest('[data-friends-mode]');if(!card)return;
@@ -250,7 +256,7 @@
   });
   document.addEventListener('keydown', e => {
     if(!setup || inRoom() || busy || !$('multiOptions').getClientRects().length || modalOpen() || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input,select,textarea,[contenteditable=true]') || document.querySelector('.pf-modal:not(.hidden), #hamburgerDrawer.open')) return;
-    if(/^[1-5]$/.test(e.key)) {e.preventDefault();e.stopImmediatePropagation();selectMode(modes[Number(e.key)-1]);}
+    if(/^[1-6]$/.test(e.key)) {e.preventDefault();e.stopImmediatePropagation();selectMode(modes[Number(e.key)-1]);}
     else if(e.key==='ArrowLeft' || e.key==='ArrowRight') {e.preventDefault();e.stopImmediatePropagation();move(e.key==='ArrowLeft'?'prev':'next');}
   });
   $('friendsJoinOpen').addEventListener('click',()=>{setup=false;$('friendsEntryActions').classList.add('hidden');$('friendsHub').classList.add('hidden');$('friendsJoinView').classList.remove('hidden');$('joinCodeInput').focus();});

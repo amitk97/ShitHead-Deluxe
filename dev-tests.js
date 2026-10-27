@@ -7219,6 +7219,24 @@ async function runDevTestSuite() {
       assertTrue(isMultiDeck(), 'the room plays as Multiple Decks');
     } finally { freshState(); }
   });
+  await test('v450: No Mercy has a chooser, a Friends card, a pin, and its room mode drives the rules', () => {
+    try {
+      document.querySelector('[data-open-nomercy]').click();
+      assertTrue(!document.getElementById('noMercyModal').classList.contains('hidden'), 'the chooser opens');
+      document.querySelector('#noMercyCounts [data-n="4"]').click();
+      assertEqual(document.getElementById('noMercyNote').textContent, 'You and 3 bots at this difficulty.', 'the note follows the count');
+      document.querySelector('#noMercyCounts [data-n="2"]').click();
+      document.getElementById('noMercyCloseBtn').click();
+      assertTrue(document.getElementById('noMercyModal').classList.contains('hidden'), 'the chooser closes');
+      assertTrue(!!document.querySelector('#friendsModeCarousel [data-friends-mode="noMercy"]'), 'a Friends carousel card');
+      assertTrue(typeof ShFriendsLobby.openNoMercy === 'function', 'the lobby can open on No Mercy');
+      freshState(); state.isMultiplayer = true; state.friendsMode = 'noMercy';
+      assertTrue(isNoMercy() && lobbyCap() === 4, 'a No Mercy room, four seats');
+      state.friendsMode = 'standard'; assertTrue(!isNoMercy(), 'other rooms are unchanged');
+      assertTrue(!!ShHomeCarousel.pinTones().mercy, 'No Mercy can be pinned');
+    } finally { freshState(); }
+  });
+
   await test('v449: a Queen X-ray shows the card only to its player, leaves a memory tag, and cleans up', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
