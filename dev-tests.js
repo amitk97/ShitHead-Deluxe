@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 208596)
-Total output lines: 11814
-
 // ShitHead Deluxe developer test suite.
 // Loaded by index.html only when the page is opened with ?dev-tests=1, so
 // normal players never download it. It runs against the live game's own
@@ -5878,7 +5875,453 @@ async function runDevTestSuite() {
     assertEqual(removeCalls, 0, 'kickPlayerMidMatch must bail out before ever calling removePlayerFromMatch in a Ranked match');
   });
 
-  // ---- REGRESSION: reconnecting to a Ranked match afte…8596 tokens truncated…unlocks at Lvl 5/.test(banners.pop() || ''), 'and says which level');
+  // ---- REGRESSION: reconnecting to a Ranked match after a refresh ----
+  await test('reclaimSubstitutedSeat restores a bot-substituted seat to human control', () => {
+    const substitute = makePlayer({
+      id: 'p_bot_x7f2q', name: 'Amit (Bot)', uid: 'uid_amit', isBot: true,
+      isRankedSubstitute: true, substituteMoveCount: 3,
+      hand: [makeCard('K')], faceUp: [makeCard('4')]
+    });
+    const reclaimed = reclaimSubstitutedSeat(substitute);
+    assertEqual(reclaimed.isBot, false, 'The reclaimed seat must no longer be bot-controlled');
+    assertEqual(reclaimed.name, 'Amit', 'The " (Bot)" suffix must be stripped back off');
+    assertEqual(reclaimed.isRankedSubstitute, false, 'The concession-cap flag must be cleared — this is a human again');
+    assertEqual(reclaimed.substituteMoveCount, 0, "The bot's move counter must reset, not carry over");
+    assertEqual(reclaimed.id, 'p_bot_x7f2q', 'The id must NOT change — everything else in the room already keys off it');
+    assertEqual(reclaimed.uid, 'uid_amit', "The account's uid must survive the reclaim untouched");
+    assertEqual(reclaimed.hand.map(c => c.rank), ['K'], 'Cards the substitute was holding must carry over exactly as-is');
+  });
+  await test('reclaimSubstitutedSeat leaves a name with no "(Bot)" suffix alone', () => {
+    const substitute = makePlayer({ id: 'p1', name: 'Priya', isBot: true });
+    assertEqual(reclaimSubstitutedSeat(substitute).name, 'Priya', 'A plain name with no suffix must pass through unchanged');
+  });
+  await test('Online blind flips are broadcast to the room with the result and timing', () => {
+    freshState({ isMultiplayer: true, roomCode: '101010', localPlayerId: 'p_me', discardPile: [{ id: 'k1', rank: 'K', suit: 'H' }], activeConstraint: null });
+    const originalDb = db;
+    let path = null, payload = null;
+    db = { ref: (p) => ({ set: (v) => { path = p; payload = v; return Promise.resolve(); } }) };
+    try { broadcastBlindReveal('p_me', { id: 'c3', rank: '3', suit: 'S' }); } finally { db = originalDb; }
+    assertEqual(path, 'rooms/101010/lastBlindReveal', 'Written to the room');
+    assertEqual(payload.playerId, 'p_me', 'Names whose flip it is');
+    assertEqual(payload.by, 'p_me', 'Names the client that made it');
+    assertTrue(payload.good === true, 'A 3 is playable on a King: green');
+    assertEqual(payload.ms, BLIND_REVEAL_MS.self, 'Carries the reveal length');
+    assertTrue(typeof payload.key === 'string' && payload.key.length > 3, 'Has a unique key');
+  });
+  await test('A broadcast reveal is never replayed by the client that made it, or when it arrives too late', () => {
+    freshState({ isMultiplayer: true, roomCode: '101010', localPlayerId: 'p_host' });
+    const card = { id: 'c3', rank: '3', suit: 'S' };
+    assertTrue(!showRemoteBlindReveal({ key: 'a', by: 'p_host', playerId: 'p_bot_1', card, good: true, ms: 800, at: serverNow() }), 'The host made this bot flip itself');
+    assertTrue(!showRemoteBlindReveal({ key: 'b', by: 'p_x', playerId: 'p_host', card, good: true, ms: 800, at: serverNow() }), 'Never my own flip');
+    assertTrue(!showRemoteBlindReveal({ key: 'c', by: 'p_x', playerId: 'p_x', card, good: true, ms: 800, at: serverNow() - 5000 }), 'Too late: the result is already on the table');
+  });
+  await test('The Shop opens on the last tab picked, unless a seasonal event has started since', () => {
+    const saved = localStorage.getItem('shithead_shop_tab');
+    try {
+      localStorage.removeItem('shithead_shop_tab');
+      assertEqual(restoredShopTab(false), SHOP_ALL_TAB, 'Nothing saved: All');
+      assertEqual(restoredShopTab(true), SEASONAL_TAB, 'Nothing saved, event on: Seasonal');
+      localStorage.setItem('shithead_shop_tab', JSON.stringify({ tab: 'Card Backs', seasonLead: false }));
+      assertEqual(restoredShopTab(false), 'Card Backs', 'Remembers the tab');
+      assertEqual(restoredShopTab(true), SEASONAL_TAB, 'An event that started since takes the lead');
+      localStorage.setItem('shithead_shop_tab', JSON.stringify({ tab: 'Card Backs', seasonLead: true }));
+      assertEqual(restoredShopTab(true), 'Card Backs', 'Picked during the event: stays');
+      localStorage.setItem('shithead_shop_tab', JSON.stringify({ tab: 'Not A Tab', seasonLead: false }));
+      assertEqual(restoredShopTab(false), SHOP_ALL_TAB, 'A tab that no longer exists is ignored');
+      localStorage.setItem('shithead_shop_tab', JSON.stringify({ tab: SHOP_ALL_TAB, seasonLead: false }));
+      assertEqual(restoredShopTab(false), SHOP_ALL_TAB, 'All is remembered too');
+    } finally {
+      if (saved === null) localStorage.removeItem('shithead_shop_tab'); else localStorage.setItem('shithead_shop_tab', saved);
+    }
+  });
+  await test("What's New shows the notes for a version and is keyed by vNNN", () => {
+    Object.keys(WHATS_NEW).forEach(k => assertTrue(/^v\d+$/.test(k), `Key ${k} must look like v114`));
+    const modal = document.getElementById('whatsNewModal');
+    try {
+      assertTrue(showWhatsNew('v114'), 'v114 has notes');
+      assertTrue(!modal.classList.contains('hidden'), 'The pop-up opens');
+      assertEqual(document.querySelectorAll('#whatsNewList li').length, WHATS_NEW.v114.length, 'One row per note');
+      assertTrue(!showWhatsNew('v1'), 'A version with no notes shows nothing');
+    } finally { modal.classList.add('hidden'); }
+  });
+  await test("The owner's Changelog page lists every version and change, key ones tagged; only the owner sees it in the menu", () => {
+    Object.entries(WHATS_NEW).forEach(([v, rows]) => rows.forEach(r => assertTrue(r.length === 2 || r[2] === WN_KEY, `${v}: a note's third element can only be WN_KEY`)));
+    const html = changelogHtml();
+    const box = document.createElement('div'); box.innerHTML = html;
+    assertEqual(box.querySelectorAll('.cl-version').length, Object.keys(WHATS_NEW).length, 'One heading per version');
+    assertEqual(box.querySelectorAll('li').length, Object.values(WHATS_NEW).flat().length, 'Every change is listed');
+    assertEqual(box.querySelectorAll('.cl-key').length, Object.values(WHATS_NEW).flat().filter(isKeyNote).length, 'Key changes are tagged');
+    assertTrue(EXCLUSIVE_PAGE_IDS.includes('changelogModal') && !!BACK_LAYERS.changelogModal, 'A normal menu page (one at a time, Back closes it)');
+    const savedUser = currentUser;
+    try {
+      currentUser = null; updateHamburgerAccountLabel();
+      assertTrue(document.getElementById('menuChangelogBtn').classList.contains('hidden'), 'Hidden from everyone but the owner');
+    } finally { currentUser = savedUser; updateHamburgerAccountLabel(); }
+    openChangelog();
+    assertTrue(!document.getElementById('changelogModal').classList.contains('hidden'), 'It opens');
+    document.getElementById('changelogCloseBtn').click();
+  });
+  await test('The README is refreshed every 20 versions from v180 (text + screenshots)', async () => {
+    let text = null;
+    try { const r = await fetch('README.md', { cache: 'no-store' }); if (r.ok) text = await r.text(); } catch (e) {}
+    if (text === null) return; // the live site doesn't serve the README
+    const m = text.match(/README-VERSION:\s*v(\d+)/);
+    assertTrue(!!m, 'README.md starts with a README-VERSION stamp');
+    const stamped = Number(m[1]), current = Number(GAME_BUILD.version.slice(1));
+    const nextDue = stamped < 180 ? 180 : 180 + (Math.floor((stamped - 180) / 20) + 1) * 20;
+    assertTrue(current < nextDue, `README refresh due: v${current} has reached v${nextDue}. Update the README text, retake the screenshots (node tools/readme-screenshots.js) and set README-VERSION to v${current}`);
+  });
+  await test("Every release has What's New notes; skipped updates are shown together; Settings can turn them off", () => {
+    assertTrue(Array.isArray(WHATS_NEW[GAME_BUILD.version]) && WHATS_NEW[GAME_BUILD.version].length > 0,
+      `WHATS_NEW['${GAME_BUILD.version}'] must describe this build (every release gets an entry)`);
+    const cur = Number(GAME_BUILD.version.slice(1));
+    const skipped = whatsNewNotesSince(`v${cur - 6}`);
+    const expected = [0, 1, 2, 3, 4, 5].flatMap(d => (WHATS_NEW[`v${cur - d}`] || []).filter(r => r[2] === WN_KEY)).slice(0, WHATS_NEW_MAX_ROWS);
+    assertEqual(skipped, expected, 'A player six updates behind sees every key note from all six, newest first');
+    assertTrue(skipped.length > 0 && skipped.every(r => r[2] === WN_KEY), 'Only key notes, never the small fixes');
+    assertTrue(!whatsNewNotesSince('v212', 'v213').length, 'A version with only small fixes shows nothing');
+    const row = document.getElementById('setWhatsNewRow');
+    assertTrue(!!row && !!row.closest('#settingsTab-sound'), "The What's New switch lives in Sound & Alerts");
+    const was = whatsNewOn;
+    try {
+      row.click();
+      assertEqual(whatsNewOn, !was, 'Tapping it toggles the setting');
+      assertEqual(typeof collectAccountSettings().whatsNewOn, 'boolean', 'It syncs with the account settings');
+    } finally { if (whatsNewOn !== was) row.click(); }
+  });
+  await test('Online saves only land on top of the version this phone saw; a losing save reloads the table', () => {
+    freshState({ phase: 'PLAY' });
+    state.isMultiplayer = true; state.roomCode = '424242'; state.stateVersion = 5;
+    let server = { phase: 'PLAY', stateVersion: 5, presence: { p1: { status: 'connected' } } };
+    const reapplied = [];
+    const realHandler = activeRoomHandler;
+    activeRoomHandler = (snap) => reapplied.push(snap.val().stateVersion);
+    db = { ref: () => ({ transaction: (fn, done) => {
+      const next = fn(server);
+      if (next === undefined) done(null, false, { val: () => server });
+      else { server = next; done(null, true, { val: () => next }); }
+      return Promise.resolve();
+    } }) };
+    try {
+      syncFirebaseGameState();
+      assertEqual(server.stateVersion, 6, 'On top of the version it saw: saved');
+      assertTrue(!!server.presence, 'The rest of the room (presence etc.) is kept');
+      server = { ...server, stateVersion: 9 }; // another phone saved meanwhile
+      syncFirebaseGameState();
+      assertEqual(server.stateVersion, 9, "An out-of-date save doesn't overwrite the other phone's move");
+      assertEqual(reapplied, [9], 'It reloads the real table instead');
+      assertEqual(state.stateVersion, 9, 'And carries on from the real version');
+    } finally { activeRoomHandler = realHandler; }
+  });
+  await test("The match driver is elected: the first player whose app is open, not always the host", () => {
+    freshState({ phase: 'PLAY' });
+    state.isMultiplayer = true; state.isHost = false;
+    state.players = [makePlayer({ id: 'p_host', name: 'Host' }), makePlayer({ id: 'p_bot', isBot: true }), makePlayer({ id: 'p_me', name: 'Me' })];
+    state.localPlayerId = 'p_me';
+    const saved = roomPresence;
+    try {
+      roomPresence = { p_host: { status: 'connected' } };
+      assertEqual(matchAuthorityId(), 'p_host', 'The host drives while their app is open');
+      assertTrue(!hasMatchAuthority(), 'So this phone does not');
+      roomPresence = { p_host: { status: 'away' } };
+      assertEqual(matchAuthorityId(), 'p_me', 'Host in the background: the next open app takes over (bots skipped)');
+      assertTrue(hasMatchAuthority(), 'This phone now drives the match');
+      roomPresence = { p_host: { status: 'disconnected' } };
+      assertTrue(hasMatchAuthority(), 'Same when the host has lost connection');
+      state.isMultiplayer = false;
+      assertTrue(hasMatchAuthority(), 'Offline games always drive themselves');
+    } finally { roomPresence = saved; }
+  });
+  await test('Health: session records sum up into the owner view', () => {
+    const h = summariseHealth({ '2026-09-24': {
+      s1: { device: 'iphone', app: true, loadMs: 1000, frames: { n: 1000, slow: 100, ms: 20000 }, counts: { botsStarted: 3, botsFinished: 2, rejectedSave: 1 } },
+      s2: { device: 'desktop', app: false, loadMs: 3000, frames: { n: 1000, slow: 0, ms: 16000 }, counts: { botsStarted: 1, botsLeft: 1, onlineStarted: 1, errors: 2 } }
+    } });
+    assertEqual([h.sessions, h.installed, h.loadMedian], [2, 50, 3000], 'Sessions, installed share, median load');
+    assertEqual([h.fps, h.slowPct, h.jankySessions], [56, 5, 1], 'Frame rate across all frames, slow share, janky sessions');
+    assertEqual(h.modes.find(m => m.mode === 'bots'), { mode: 'bots', started: 4, finished: 2, left: 1, abandoned: 1 }, 'Started = finished + left + abandoned');
+    assertEqual([h.rejectedSaves, h.errors], [1, 2], 'Problems counted');
+  });
+  await test('Ranked starts from a private server view and stays in the lobby when the server fails', async () => {
+    const saved = {ref:rankedViewRef,code:rankedViewCode,event:rankedEventVersion};
+    freshState({phase:'LOBBY',isMultiplayer:true,isRanked:true,isHost:true,roomCode:'515151'});
+    currentUser = {uid:'alice'};
+    state.players = [makePlayer({id:'p_host',uid:'alice'}),makePlayer({id:'p_room1',uid:'bob'})];state.localPlayerId='p_host';
+    db = {ref:()=>({key:'alice',on:()=>{},off:()=>{}})};
+    const hidden = i=>({id:`hidden-${i}`,rank:'4',suit:'♠',hidden:true});
+    const view={authority:1,isRanked:true,matchId:'opaque-match',phase:'SWAP',stateVersion:1,currentTurnIndex:0,direction:1,turnTimerMs:15000,turnDeadline:Date.now()+60000,
+      players:[{...makePlayer({id:'p_room1',uid:'bob',isReady:false}),hand:[hidden(0),hidden(1),hidden(2)],faceUp:[makeCard('8')],faceDown:[hidden(3)]},
+        {...makePlayer({id:'p_host',uid:'alice',isReady:false}),hand:[makeCard('7','♠','opaque-own')],faceUp:[makeCard('6')],faceDown:[hidden(4)]}],drawPile:[hidden(5)],discardPile:[]};
+    try {
+      const calls=fakeEconomy({rankedStart:()=>({view})});startMultiplayerGame();await new Promise(r=>setTimeout(r,20));
+      assertEqual(calls.map(c=>c[0]),['rankedStart'],'No full deck request');
+      assertEqual(state.phase,'SWAP','The private view starts swap');assertEqual(state.players.map(p=>p.uid),['bob','alice'],'Server owns seat order');
+      assertTrue(state.players[0].hand.every(c=>c.hidden),'Opponent hand masked');assertTrue(state.players.every(p=>p.faceDown.every(c=>c.hidden)),'All blind values masked');
+      assertEqual(state.players[1].hand[0].id,'opaque-own','Own hand comes from authenticated view');assertTrue(state.drawPile.every(c=>c.hidden),'Stock masked');
+      state.phase='LOBBY';state.serverAuthority=0;fakeEconomy({});startMultiplayerGame();await new Promise(r=>setTimeout(r,20));
+      assertEqual(state.phase,'LOBBY','A failed server request never deals locally');
+    } finally {rankedViewRef=saved.ref;rankedViewCode=saved.code;rankedEventVersion=saved.event;hideMatchEndUI();}
+  });
+  await test("The server's copy of the play rules (functions/rules.js) matches isPlayLegal everywhere", async () => {
+    let src = null;
+    try { const r = await fetch('functions/rules.js', { cache: 'no-store' }); if (r.ok) src = await r.text(); } catch (e) {}
+    if (src === null) return; // the live site doesn't serve functions/
+    const mod = { exports: {} };
+    new Function('module', 'exports', src)(mod, mod.exports);
+    const server = mod.exports;
+    assertEqual(server.RANKS, RANKS, 'Same ranks'); assertEqual(server.SUITS, SUITS, 'Same suits');
+    const deck = generateDeck();
+    deck.forEach(c => { const k = server.canonicalCard(c.id) || {}; assertEqual([k.rank, k.suit, k.isJoker], [c.rank, c.suit, c.isJoker], `Card ${c.id} means the same card`); });
+    const card = (rank) => ({ id: 'x', rank, suit: '♠', isJoker: rank === 'JOKER' });
+    const ranks = [...RANKS, 'JOKER'];
+    const piles = [[], ...ranks.map(r => [card(r)]), ...ranks.map(r => [card(r), card('3')]), [card('3'), card('3')]];
+    const saved = state.baseOverrideCard;
+    const diffs = [];
+    try {
+      [null, 'EVEN', 'ODD', 'LOW7'].forEach(con => [null, card('8'), card('K'), card('6')].forEach(base => piles.forEach(pile => ranks.forEach(r => {
+        state.baseOverrideCard = base;
+        const mine = isPlayLegal(card(r), pile, con);
+        const theirs = server.isPlayLegal(card(r), pile, con, base);
+        if (mine !== theirs) diffs.push(`${r} on [${pile.map(c => c.rank)}] ${con || ''} base ${base ? base.rank : '-'}`);
+      }))));
+    } finally { state.baseOverrideCard = saved; }
+    assertEqual(diffs.slice(0, 5), [], 'Change functions/rules.js together with isPlayLegal');
+  });
+  await test('Owner view: the Ranked audit lists flagged matches, serious ones first', () => {
+    const rows = groupRankedAudit({
+      '111111': { m_a: { counts: { hard: 0, soft: 1 }, meta: { at: 5, players: { p1: { name: 'Al', uid: 'a' } } }, findings: { f: { kind: 'out-of-turn', hard: false, by: 'a', seat: 'p1', at: 5 } } } },
+      '222222': { m_b: { counts: { hard: 2, soft: 0 }, meta: { at: 1, players: { p1: { name: 'Cy', uid: 'c' }, p2: { name: 'Di', uid: 'd' } } },
+        findings: { f1: { kind: 'finished-with-cards', hard: true, by: 'c', seat: 'p1', at: 2 }, f2: { kind: 'vanished', hard: true, by: 'c', at: 1 } } } }
+    });
+    assertEqual(rows.map(r => [r.room, r.hard]), [['222222', 2], ['111111', 0]], 'Serious findings first');
+    assertEqual(rows[0].findings.map(f => [f.label, f.byName]), [['A card disappeared', 'Cy'], ['Finished while holding cards', 'Cy']], 'Findings are explained, oldest first, with who wrote them');
+  });
+  await test('Report a player from their player card; the owner sees reports grouped by player', async () => {
+    freshState({ phase: 'PLAY' });
+    state.isMultiplayer = true; state.isRanked = true; state.roomCode = '424242'; state.matchId = 'm9';
+    state.players = [makePlayer({ id: 'p1', name: 'Me' }), makePlayer({ id: 'p2', name: 'Cheater', uid: 'bad' })];
+    state.localPlayerId = 'p1';
+    currentUser = { uid: 'me' };
+    const writes = [];
+    db = { ref: (path) => ({
+      once: () => Promise.resolve({ val: () => (path.startsWith('publicProfiles') ? { username: 'Cheater', rating: 700 } : null) }),
+      set: (v) => { writes.push([path, v]); return Promise.resolve(); }
+    }) };
+    openPlayerPopup('p2', null);
+    await new Promise(r => setTimeout(r, 0));
+    const body = document.getElementById('playerPopupBody');
+    try {
+      body.querySelector('[data-pp-action="report"]').click();
+      const send = body.querySelector('.pp-report-send');
+      assertTrue(!!send && send.disabled, 'The form opens with SEND disabled until a reason is picked');
+      body.querySelector('[data-reason="cheating"]').click();
+      assertTrue(!send.disabled, 'Picking a reason enables SEND');
+      body.querySelector('.pp-report textarea').value = 'Played two cards at once';
+      send.click();
+      await new Promise(r => setTimeout(r, 0));
+      const [path, report] = writes.find(([p]) => p.startsWith('playerReports/')) || [];
+      assertEqual(path, 'playerReports/bad/me', 'One report per reporter per player');
+      assertEqual([report.reason, report.note, report.mode, report.room, report.matchId], ['cheating', 'Played two cards at once', 'ranked', '424242', 'm9'], 'The report carries the reason, note and match');
+      assertTrue(/Thanks, report sent/.test(body.textContent), 'The player sees it was sent');
+    } finally { closePlayerPopup(); }
+    const groups = groupPlayerReports({ bad: { a: { reason: 'cheating', at: 2, reportedName: 'Cheater' }, b: { reason: 'cheating', at: 3, reportedName: 'Cheater' } }, meh: { a: { reason: 'name', at: 1, reportedName: 'Meh' } } });
+    assertEqual(groups.map(g => [g.name, g.count, g.reasons.cheating || g.reasons.name]), [['Cheater', 2, 2], ['Meh', 1, 1]], 'Most-reported player first, with reason counts');
+  });
+  await test('Friends show when they are in a match; WATCH opens it read-only from their seat', async () => {
+    let row = friendRowHtml('u1', { username: 'Jamie', online: true, seen: serverNow(), playing: { mode: 'online', room: '424242', at: 1 } }, 'friend');
+    assertTrue(row.includes('In a match · Play Friends') && row.includes('friend-watch-btn') && row.includes('data-room="424242"'), 'An online match offers WATCH');
+    row = friendRowHtml('u1', { username: 'Jamie', online: true, seen: serverNow(), playing: { mode: 'bots', at: 1 } }, 'friend');
+    assertTrue(row.includes('In a match · Play Computer') && !row.includes('friend-watch-btn') && row.includes('friend-invite-btn'), 'A bot game shows the status but nothing to watch');
+    row = friendRowHtml('u1', { username: 'Jamie', online: false, playing: { mode: 'ranked', room: '424242', at: 1 } }, 'friend');
+    assertTrue(!row.includes('In a match'), 'A stale status on an offline friend is ignored');
+
+    freshState({ phase: 'LOBBY' });
+    state.roomCode = null; state.players = []; state.localPlayerId = 'me';
+    const card = (id, rank) => ({ id, rank, suit: '♥' });
+    const room = { phase: 'PLAY', isRanked: true, matchId: 'm1', currentTurnIndex: 0, direction: 1, drawPile: [], discardPile: [card('d1', '5')],
+      players: [ { id: 'p_host', uid: 'friend', name: 'Jamie', hand: [card('h1', 'A'), card('h2', 'K')], faceUp: [card('f1', '9')], faceDown: [card('x1', '3')] },
+                 { id: 'p_room1', uid: 'other', name: 'Rival', hand: [card('h3', '7')], faceUp: [], faceDown: [card('x2', '2')] } ] };
+    const writes = [];
+    let listener = null;
+    db = { ref: (path) => ({
+      once: () => Promise.resolve({ val: () => room }),
+      on: (ev, cb) => { listener = cb; }, off: () => { listener = null; },
+      set: (v) => { writes.push(path); return Promise.resolve(); }, update: (v) => { writes.push(path); return Promise.resolve(); },
+      remove: () => { writes.push(path); return Promise.resolve(); },
+      transaction: () => { writes.push(path); return Promise.resolve({}); },
+      onDisconnect: () => ({ set: () => {}, remove: () => {} })
+    }) };
+    const realReload = reloadCleanly; let reloaded = false;
+    reloadCleanly = () => { reloaded = true; };
+    try {
+      await startSpectating('424242', 'friend', 'Jamie');
+      assertTrue(!!state.spectating && state.spectating.seatId === 'p_host', 'Watching the friend\'s seat');
+      assertTrue(state.localPlayerId !== 'p_host' && !state.players.some(p => p.id === state.localPlayerId), 'The spectator holds no seat');
+      assertEqual(hasMatchAuthority(), false, 'A spectator never has match authority, even in Ranked');
+      const seat = state.players.find(p => p.id === 'p_host');
+      assertTrue(seat.hand.length === 2 && seat.hand.every(c => c.hidden && c.rank !== 'A' && c.rank !== 'K'), 'A Ranked hand reaches the spectator as a count only');
+      const shown = [...document.querySelectorAll('#localHand [data-card-id]')];
+      assertTrue(shown.length === 2 && shown.every(el => el.classList.contains('custom-card-back') && !/[AK]/.test(el.textContent)), 'The hand is drawn as card backs');
+      assertTrue(/Watching Jamie/.test(document.getElementById('spectateBar')?.textContent || ''), 'The Watching bar shows');
+      syncFirebaseGameState(); updatePlayersAtomic('424242', l => l); saveFinalMatchStats(); await leaveMultiplayerRoom();
+      assertEqual(writes.filter(w => w.startsWith('rooms/')), [], 'Nothing is ever written to the room');
+      room.currentTurnIndex = 1; listener({ val: () => room });
+      assertEqual(state.currentTurnIndex, 1, 'Live updates follow the room');
+      document.getElementById('leaveGameBtn').click();
+      assertTrue(reloaded && !state.spectating && !document.getElementById('spectateBar'), 'Exit leaves spectating and resets the page');
+    } finally {
+      reloadCleanly = realReload;
+      if (state.spectating) { state.spectating = null; }
+      document.body.classList.remove('spectating');
+      document.getElementById('spectateBar')?.remove();
+    }
+  });
+  await test('Friends list: online friends first; inviting from a casual lobby uses that room', () => {
+    freshState({ isMultiplayer: true, isRanked: false, roomCode: '424242', phase: 'LOBBY' });
+    assertEqual(inviteableRoomCode(), '424242', 'Lobby of a casual room');
+    const row = friendRowHtml('u1', { username: 'Jamie', online: true, seen: serverNow() }, 'friend');
+    assertTrue(row.includes('INVITE HERE'), 'The button says it invites into this room');
+    assertTrue(row.includes('friend-status online'), 'Shows Online');
+    state.isRanked = true;
+    assertEqual(inviteableRoomCode(), null, 'Never a Ranked room');
+    freshState({ isMultiplayer: true, isRanked: false, roomCode: '424242', phase: 'PLAY' });
+    assertEqual(inviteableRoomCode(), null, 'Not once the match has started');
+    freshState({ isMultiplayer: false });
+    assertTrue(friendRowHtml('u1', { username: 'Jamie', online: false }, 'friend').includes('friend-status offline'), 'Shows Offline');
+  });
+  await test('Home nickname row: picture | name | level on one line, and the longest username fits', () => {
+    const input = document.getElementById('playerNameInput');
+    const avatar = document.getElementById('homeNameAvatar'), level = document.getElementById('homeNameLevel');
+    assertTrue(!!avatar && !!level && input.closest('.home-name-row') === avatar.parentElement, 'Picture, name and level share one row');
+    assertEqual(input.maxLength, 12, 'Usernames are at most 12 characters');
+    const cs = getComputedStyle(input);
+    const cv = document.createElement('canvas').getContext('2d');
+    cv.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const room = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    if (input.offsetParent) assertTrue(cv.measureText('WWWWWWWWWWWW').width <= room, `12 W's fit (${Math.round(cv.measureText('WWWWWWWWWWWW').width)} <= ${Math.round(room)})`);
+    level.classList.remove('hidden'); level.innerHTML = xpLevelBadge(42, 'xp-badge-home');
+    if (input.offsetParent) {
+      const badge = level.firstElementChild;
+      assertTrue(Math.abs(badge.getBoundingClientRect().height - input.getBoundingClientRect().height) < 1, 'The level box is as tall as the name box');
+      assertEqual(getComputedStyle(badge).fontSize, cs.fontSize, 'The level text is the same size as the name');
+    }
+    assertEqual(level.textContent, 'Lvl 42', 'Levels read "Lvl"');
+    avatar.classList.remove('hidden'); avatar.innerHTML = avatarHtml('default', 64);
+    if (input.offsetParent) {
+      const ra = avatar.getBoundingClientRect(), rl = document.querySelector('.home-name-label').getBoundingClientRect(), ri = input.getBoundingClientRect();
+      assertTrue(Math.abs(ra.top - rl.top) < 1 && Math.abs(ra.bottom - ri.bottom) < 1, `The picture runs from the top of the label to the bottom of the name box (${Math.round(ra.top)}-${Math.round(ra.bottom)} vs ${Math.round(rl.top)}-${Math.round(ri.bottom)})`);
+      assertTrue(Math.abs(ra.width - ra.height) < 0.5, 'The picture stays square');
+    }
+    const realUser = currentUser;
+    currentUser = null; updateHamburgerAccountLabel(); refreshXpDisplays();
+    assertTrue(!avatar.classList.contains('hidden') && !level.classList.contains('hidden'), 'Signed out: avatar and level remain visible');
+    assertTrue(avatar.classList.contains('guest-profile') && level.classList.contains('guest-profile'), 'Guest profile is subdued');
+    assertEqual(level.textContent, 'LVL 1', 'Guest starts at level 1');
+    currentUser = realUser;
+  });
+  await test('Profile showcase: tapping an item opens Custom on its tab, scrolled to that item', async () => {
+    const realEquipped = { ...equippedCosmetics };
+    const frames = COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames');
+    const lastFrame = sortByValue(frames)[frames.length - 1];
+    const realOwned = cosmeticPurchaseState;
+    const realLoad = loadCosmeticCollection;
+    try {
+      // You own what you wear. Signed out (the test page), opening Custom would
+      // put a bought frame back to default, so stand in for the account's load.
+      cosmeticPurchaseState = { ...cosmeticPurchaseState, [lastFrame.id]: true };
+      loadCosmeticCollection = () => Promise.resolve();
+      equippedCosmetics = { ...equippedCosmetics, frame: lastFrame.id, burnEffect: 'default' };
+      renderProfileShowcase();
+      const chip = document.querySelector(`#profileShowcase [data-showcase-type="frame"][data-showcase-id="${lastFrame.id}"]`);
+      assertTrue(!!chip && chip.tagName === 'BUTTON', 'Your own showcase items are buttons');
+      assertTrue(!!document.querySelector('#profileShowcase [data-showcase-type="tableTheme"]'), 'The table preview is a button too');
+      const popupBody = document.getElementById('playerPopupBody');
+      popupBody.innerHTML = renderPlayerPopupHuman({ name: 'Other player', cosmetics: { frame: lastFrame.id } }, { loaded: false }, null);
+      const otherChip = popupBody.querySelector(`[data-showcase-type="frame"][data-showcase-id="${lastFrame.id}"]`);
+      assertTrue(!!otherChip && otherChip.tagName === 'BUTTON', 'Other players’ showcase items are buttons too');
+      document.getElementById('playerPopup').classList.remove('hidden');
+      otherChip.querySelector('b').click();
+      await new Promise(r => setTimeout(r, 60));
+      assertTrue(document.getElementById('playerPopup').classList.contains('hidden'), 'The player card closes');
+      assertEqual(customTab, 'frame', 'Another player’s item opens its Custom tab');
+      assertEqual(equippedCosmetics.frame, lastFrame.id, 'Viewing another showcase does not equip anything');
+      document.getElementById('profileModal').classList.remove('hidden');
+      chip.click();
+      await new Promise(r => setTimeout(r, 800)); // a smooth scroll
+      assertTrue(!document.getElementById('themesModal').classList.contains('hidden') && document.getElementById('profileModal').classList.contains('hidden'), 'Custom opens in place of Profile');
+      assertEqual(customTab, 'frame', 'On the Frames tab');
+      const tile = visibleCustomPanel().querySelector(`[data-equip-id="${lastFrame.id}"]`);
+      assertTrue(!!tile && tile.classList.contains('custom-focus'), 'The item glows');
+      const r = tile.getBoundingClientRect();
+      assertTrue(r.top >= 0 && r.bottom <= window.innerHeight, `The item is scrolled into view (${Math.round(r.top)}-${Math.round(r.bottom)} of ${window.innerHeight})`);
+      document.querySelector('#profileShowcase [data-showcase-type="burnEffect"]').click();
+      await new Promise(r => setTimeout(r, 60));
+      assertEqual(customTab, 'burnEffect', 'Default items open their tab too');
+    } finally {
+      cosmeticPurchaseState = realOwned;
+      loadCosmeticCollection = realLoad;
+      equippedCosmetics = realEquipped;
+      document.getElementById('themesModal').classList.add('hidden');
+      document.getElementById('profileModal').classList.add('hidden');
+      setCustomTab('all');
+    }
+  });
+  await test('Back goes to the page you came from: Profile → Custom → Collection, then back, back, closed', async () => {
+    const tick = () => new Promise(r => setTimeout(r, 30));
+    const shown = (id) => !document.getElementById(id).classList.contains('hidden');
+    const openNow = () => EXCLUSIVE_PAGE_IDS.filter(shown);
+    try {
+      closeOtherMenuPages(); await tick();
+      // Custom → Profile first (v276): the later showcase → Custom must still win.
+      document.getElementById('themesModal').classList.remove('hidden'); await tick();
+      document.getElementById('profileModal').classList.remove('hidden'); await tick();
+      renderProfileShowcase();
+      document.querySelector('#profileShowcase [data-showcase-type="frame"]').click(); await tick();
+      assertEqual(openNow(), ['themesModal'], 'The showcase opens Custom');
+      document.getElementById('customOwnedBtn').click(); await tick();
+      assertEqual(openNow(), ['collectionModal'], 'Custom → Collection');
+      handleBack(); await tick();
+      assertEqual(openNow(), ['themesModal'], 'Back from the Collection: Custom');
+      handleBack(); await tick();
+      assertEqual(openNow(), ['profileModal'], 'Back from Custom: Profile');
+      handleBack(); await tick();
+      assertEqual(openNow(), [], 'Back from Profile (opened from home): closed');
+      document.getElementById('profileModal').classList.remove('hidden'); await tick();
+      document.getElementById('profileCloseBtn').click(); await new Promise(r => setTimeout(r, 200));
+      document.getElementById('themesModal').classList.remove('hidden'); await tick();
+      handleBack(); await tick();
+      assertEqual(openNow(), [], 'A page opened after the last one was closed with ✕ just closes');
+    } finally {
+      closeOtherMenuPages(); await tick();
+    }
+  });
+  await test('Game speed: 0.5x/1x for everyone, 2x at Lvl 5 and 4x at Lvl 10 when signed in', () => {
+    const realUser = currentUser, realXp = playerXp, realOn = xpFeatureOn, realWanted = speedWantedIndex, realIdx = state.speedIndex;
+    const banners = []; const realBanner = notifyBanner; notifyBanner = (m) => banners.push(m);
+    try {
+      xpFeatureOn = true;
+      currentUser = null; playerXp = null;
+      updateSpeedByIndex(0, { user: true }); assertEqual(state.speedIndex, 0, 'Signed out: 0.5x');
+      updateSpeedByIndex(1, { user: true }); assertEqual(state.speedIndex, 1, 'Signed out: 1x');
+      updateSpeedByIndex(2, { user: true });
+      assertEqual(state.speedIndex, 1, 'Signed out: 2x snaps back to 1x');
+      assertTrue(/Sign in to use 2x/.test(banners.pop() || ''), 'and says to sign in');
+      assertTrue(document.querySelectorAll('#lobbySpeedTicks .speed-locked').length === 2, '2x and 4x show a lock');
+      assertTrue(!document.getElementById('lobbySpeedLockNote'), 'No subtitle under the slider');
+      const lockBtn = document.querySelector('#lobbySpeedTicks [data-speed-lock="2"]');
+      assertTrue(!!lockBtn, 'The 2x lock is a button');
+      lockBtn.click();
+      const pop = document.getElementById('infoPop');
+      assertTrue(!!pop && /Sign in and reach Lvl 5/.test(pop.textContent), 'Tapping the lock explains sign-in and Lvl 5: ' + (pop && pop.textContent));
+      lockBtn.click();
+      assertTrue(!document.getElementById('infoPop'), 'A second tap closes it');
+      document.querySelector('#lobbySpeedTicks [data-speed-lock="3"]').click();
+      assertTrue(/Lvl 10/.test(document.getElementById('infoPop').textContent), '4x says Lvl 10');
+      hideInfoPop();
+      currentUser = { uid: 'spd' }; playerXp = { total: xpForLevel(4) };
+      updateSpeedByIndex(2, { user: true });
+      assertEqual(state.speedIndex, 1, 'Level 4: 2x is still locked');
+      assertTrue(/unlocks at Lvl 5/.test(banners.pop() || ''), 'and says which level');
       playerXp = { total: xpForLevel(5) };
       updateSpeedByIndex(3, { user: true });
       assertEqual(state.speedIndex, 2, 'Level 5: 4x snaps to 2x');
