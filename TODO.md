@@ -32,11 +32,11 @@ Owner's backlog. Don't build an item until the owner asks for it.
 
 They are listed on the More Modes page (v320); each becomes its own carousel card and page when it goes live.
 
-- [ ] **2 vs 2**: teams of two, partners sit opposite each other, and a team wins when both partners are out.
-- [~] **Puzzles**: v341 prototype shipped (5 weekly "out in one turn" puzzles, solver, AmitK sees all). Still to do: more puzzles/goal types (burn, make the Rival pick up), XP/Diamond rewards with server-side move checking, Guide section.
-- [ ] **Randomiser Mode**: card powers are shuffled each match and shown up front.
-- [ ] **Multiple Decks**: 2+ decks for bigger tables and longer games.
-- [ ] **No Mercy**: harsher rules.
+- [x] (v388) **2 vs 2**: teams of two, partners sit opposite each other, and a team wins when both partners are out.
+- [x] **Puzzles**: shipped (52 weekly puzzles, server-checked rewards). History: v341 prototype (5 weekly "out in one turn" puzzles, solver, AmitK sees all). Still to do: more puzzles/goal types (burn, make the Rival pick up), XP/Diamond rewards with server-side move checking, Guide section.
+- [ ] **Randomiser Mode** (only one left): card powers are shuffled each match and shown up front.
+- [x] (v443-v447) **Multiple Decks**: 2+ decks for bigger tables and longer games.
+- [x] (v448-v455) **No Mercy**: harsher rules (built; King now stops at a King at the bottom of the Pile, bots break loops).
   - **Queen = X-ray** (as in Ocho): it shows the next player's hidden cards to the player who played it.
   - **Jokers can't be played on a 4.**
   - **King**: the next player must pick up the card at the **bottom** of the Pile.
