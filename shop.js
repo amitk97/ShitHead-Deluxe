@@ -14,6 +14,7 @@
 
     // Simple flat tile (art/effects/icons.js) for an effect id; null when it has none. 'default' needs its kind.
     function effIcon(id, kind) {
+      if (window.ShCityRedesign && ShCityRedesign.durations[id]) return `<span class="eicon"><img src="art/cities-v2/tiles/${id}.svg" alt="" style="width:100%;height:100%;object-fit:contain"/></span>`;
       if (id === 'default' && kind) id = kind + '-default';
       return window.ShEffectIcons && ShEffectIcons.has(id) ? `<span class="eicon">${ShEffectIcons.html(id)}</span>` : null;
     }
@@ -78,8 +79,9 @@
       if (type === 'tableTheme') return `<div class="bp-table">${miniTablePreviewHtml(id, '', true, { backId: equippedCosmetics.cardBack || 'default', frameId: equippedCosmetics.frame || 'default' })}</div>`;
       if (type === 'cardBack') return `<div class="bp-card card-base relative rounded-xl custom-card-back ${getCosmeticBackClass(id)} border-2 border-slate-500 flex items-center justify-center">${getEmblemSvg()}</div>`;
       if (type === 'frame') return `<div class="bp-card bp-frame card-base relative rounded-xl bg-slate-900 border-2 font-black text-white" style="border-color:${item.tones[1]};${getCosmeticFrameStyle(id)}"><span class="bp-rank">A</span><span class="bp-suit">♠</span></div>`;
+      if (type === 'deck' && cityDraftDeckSample(item,true)) return `<div class="bp-deck">${cityDraftDeckSample(item,true)}${cityDraftDeckSample(item,true,'10','D')}</div>`;
       if (type === 'deck') { ensureDeckFont(item.theme); return `<div class="bp-deck">${deckMiniCardHtml(item, true)}<span class="deck-mini-card ${item.theme} is-big"><span class="dm-rank ${getSuitStyle('♦')}">10</span><span class="dm-suits"><span class="${getSuitStyle('♦')}">♦</span></span></span></div>`; }
-      if (type === 'emotes') return `<div class="bp-emotes" data-keep-emoji>${(EMOTE_PACKS[id] || []).map(e => `<span>${e}</span>`).join('')}</div>`;
+      if (type === 'emotes') return `<div class="bp-emotes" data-keep-emoji>${(EMOTE_PACKS[id] || []).map(e => `<span>${cityDraftEmote(e,id)||e}</span>`).join('')}</div>`;
       return '';
     }
     function playBigPreviewEffect() {
@@ -534,7 +536,7 @@ document.addEventListener('keydown', (e) => {
       } else if (type === 'frame') {
         demo = `<div class="shop-preview-stage"><div class="card-base shop-preview-card relative rounded-xl bg-slate-900 border-2 p-1 font-black text-white" style="border-color:${item.tones[1]};${getCosmeticFrameStyle(item.id)}"><span class="card-corner-rank block leading-none">A</span><span class="card-corner-suit block leading-none mt-px">♠</span><span class="absolute inset-0 flex items-center justify-center text-[clamp(22px,4vh,34px)] opacity-90">♠</span></div></div>`;
       } else if (type === 'emotes') {
-        demo = `<div class="shop-preview-stage"><div class="grid grid-cols-3 gap-2">${(EMOTE_PACKS[item.id] || []).map(emoji => `<span class="w-10 h-10 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-xl">${emoji}</span>`).join('')}</div></div>`;
+        demo = `<div class="shop-preview-stage"><div class="grid grid-cols-3 gap-2">${(EMOTE_PACKS[item.id] || []).map(emoji => `<span class="w-10 h-10 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-xl">${cityDraftEmote(emoji,item.id)||emoji}</span>`).join('')}</div></div>`;
       } else if (type === 'tableTheme') {
         demo = `<div class="shop-preview-stage" style="width:100%">${miniTablePreviewHtml(item.id, item.name, true)}</div>`;
       } else if (type === 'burnEffect') {
@@ -545,6 +547,7 @@ document.addEventListener('keydown', (e) => {
         demo = `<div class="jfx-stage" data-shop-joker-stage><div class="jfx-stage-hint">${jokerPreviewIcon(item.id)}</div></div>`;
       } else if (type === 'deck') {
         demo = `<div class="shop-preview-stage" style="gap:10px">${deckMiniCardHtml(item, true)}<span class="deck-mini-card ${item.theme} is-big"><span class="dm-rank ${getSuitStyle('♦')}">10</span><span class="dm-suits"><span class="${getSuitStyle('♦')}">♦</span><span class="${getSuitStyle('♣')}">♣</span></span></span></div>`;
+        if (cityDraftDeckSample(item,true)) demo = `<div class="shop-preview-stage" style="gap:10px">${cityDraftDeckSample(item,true)}${cityDraftDeckSample(item,true,'10','D')}</div>`;
       } else if (type === 'victoryEffect') {
         demo = `<div class="shop-preview-stage"><div class="text-center"><div class="text-5xl">${victoryPreviewIcon(item.id)}</div><div class="text-[8px] text-slate-400 mt-1">Tap below to play the win animation</div></div></div>`;
       }
@@ -606,8 +609,8 @@ document.addEventListener('keydown', (e) => {
         'frame-gauntlet-boss': 'border-color:#a855f7!important;box-shadow:inset 0 0 0 1px #fde68a,inset 0 0 0 3px #6b21a8,0 0 9px rgba(168,85,247,.75)!important',
         'frame-split-crimson': 'box-shadow:inset 2.5px 2.5px 0 #e11d48,inset -2.5px -2.5px 0 #f8fafc,0 0 8px rgba(225,29,72,.45)!important',
         'frame-split-royal': 'box-shadow:inset 2.5px 2.5px 0 #2563eb,inset -2.5px -2.5px 0 #fbbf24,0 0 8px rgba(37,99,235,.45)!important',
-        'frame-ldn-unionjack': 'box-shadow:inset 0 0 0 1.5px #c8102e,inset 0 0 0 3px #fff,inset 0 0 0 4.5px #012169,0 0 8px rgba(1,33,105,.55)!important',
-        'frame-mum-kaalipeeli': 'box-shadow:inset 0 0 0 1.5px #15110f,inset 0 0 0 3px #f2b200,inset 0 0 0 4.5px #15110f,0 0 8px rgba(242,178,0,.5)!important',
+        'frame-ldn-unionjack': '--city-frame:url(art/cities-v2/london-frame-v2.svg);box-shadow:inset 0 0 0 1.5px #c8102e,inset 0 0 0 3px #fff,inset 0 0 0 4.5px #012169,0 0 8px rgba(1,33,105,.55)!important',
+        'frame-mum-kaalipeeli': '--city-frame:url(art/cities-v2/mumbai-frame-v2.svg);box-shadow:inset 0 0 0 1.5px #15110f,inset 0 0 0 3px #f2b200,inset 0 0 0 4.5px #15110f,0 0 8px rgba(242,178,0,.5)!important',
         'frame-split-noir': 'box-shadow:inset 2.5px 2.5px 0 #000,inset 3.5px 3.5px 0 #52525b,inset -2.5px -2.5px 0 #ec4899,0 0 8px rgba(236,72,153,.45)!important',
         'frame-dashed-gold': 'outline:2px dashed #fbbf24;outline-offset:-5px;box-shadow:0 0 7px rgba(251,191,36,.45)!important',
         'frame-neon-tube': 'outline:2px solid #f472b6;outline-offset:-4px;box-shadow:0 0 10px rgba(244,114,182,.75),inset 0 0 9px rgba(244,114,182,.45)!important;animation:fx-neon-flicker 4.5s infinite',
@@ -635,8 +638,8 @@ document.addEventListener('keydown', (e) => {
         'frame-gauntlet-boss': 'border-color:#a855f7!important;box-shadow:0 0 0 1px #d8b4fe,0 0 5px rgba(168,85,247,.55)!important',
         'frame-split-crimson': 'box-shadow:-1.5px -1.5px 0 0 #e11d48,1.5px 1.5px 0 0 #f8fafc!important',
         'frame-split-royal': 'box-shadow:-1.5px -1.5px 0 0 #2563eb,1.5px 1.5px 0 0 #fbbf24!important',
-        'frame-ldn-unionjack': 'box-shadow:0 0 0 1px #c8102e,0 0 0 2px #fff,0 0 0 3px #012169!important',
-        'frame-mum-kaalipeeli': 'box-shadow:0 0 0 1px #15110f,0 0 0 2px #f2b200,0 0 0 3px #15110f!important',
+        'frame-ldn-unionjack': '--city-frame:url(art/cities-v2/london-frame-v2.svg);box-shadow:0 0 0 1px #c8102e,0 0 0 2px #fff,0 0 0 3px #012169!important',
+        'frame-mum-kaalipeeli': '--city-frame:url(art/cities-v2/mumbai-frame-v2.svg);box-shadow:0 0 0 1px #15110f,0 0 0 2px #f2b200,0 0 0 3px #15110f!important',
         'frame-split-noir': 'box-shadow:-1.5px -1.5px 0 0 #000,1.5px 1.5px 0 0 #ec4899!important',
         'frame-dashed-gold': 'outline:1px dashed #fbbf24;outline-offset:-2px;box-shadow:0 0 4px rgba(251,191,36,.45)!important',
         'frame-neon-tube': 'outline:1px solid #f472b6;outline-offset:-2px;box-shadow:0 0 5px rgba(244,114,182,.6)!important',
@@ -948,4 +951,5 @@ document.getElementById('shopModal').addEventListener('click', (e) => {
       if (e.target.id === 'shopModal') document.getElementById('shopModal').classList.add('hidden');
     });
     }
+
 

@@ -1368,6 +1368,34 @@
       };
     }
     let dealCardStyle = null;
+
+    // City redesign review helpers. ID/protocol/catalog behaviour stays unchanged.
+    function cityDraftBack(className, frameStyle = '') {
+      if (!window.ShCityRedesign) return null;
+      const el = document.createElement('div');
+      el.className = 'custom-card-back opponent-cosmetic-card ' + className;
+      el.style.cssText = 'position:fixed;left:-10000px;top:0;width:70px;height:100px;' + frameStyle;
+      document.body.appendChild(el);
+      const bg = getComputedStyle(el).backgroundImage;
+      const m = bg.match(/url\(["']?([^"')]+)["']?\)/);
+      const result = m ? new URL(m[1], document.baseURI).href : ShCityRedesign.snapshotCard(el);
+      el.remove(); return result;
+    }
+    function cityDraftFace(card) {
+      if (!window.ShCityRedesign) return null;
+      const el = createCardElement(card || {id:'city-review-card',rank:'10',suit:'♠'});
+      el.style.position='fixed';el.style.left='-10000px';el.style.top='0';
+      document.body.appendChild(el);const result=ShCityRedesign.snapshotCard(el);el.remove();return result;
+    }
+    function cityDraftEmote(emoji, packId) {
+      const packs = {
+        'emotes-ldn': [['🫖','☔','🚌','💂','🎡','🇬🇧'], ['tea','rain','bus','guard','wheel','flag'], 'london'],
+        'emotes-mum': [['🍵','🌧️','🚆','🚕','🎬','🏏'], ['chai','monsoon','train','taxi','cinema','cricket'], 'mumbai']
+      };
+      const pack=packs[packId], i=pack && pack[0].indexOf(emoji);
+      return pack && i>=0 ? `<img src="art/cities-v2/emotes/${pack[2]}-${pack[1][i]}${motionOff()?'-still':''}.svg" alt="${pack[1][i]}" style="display:block;width:1em;height:1em;object-fit:contain"/>` : null;
+    }
+
     function snapshotCardBackHtml(style, extraClass = '', extraStyle = '') {
       return `<div class="${extraClass} custom-card-back opponent-cosmetic-card ${style.backClass}" style="${style.frameStyle};${extraStyle}"></div>`;
     }
@@ -4327,6 +4355,7 @@
     // leaves close with a thud at 3.3s, WELL DONE and Union confetti. Ends by 3.65s. Sound: VICTORY_SOUNDS['victory-ldn-towerbridge'].
     const TB_BURSTS = [1600, 1950, 2300];
     function vfxTowerBridge(layer) {
+      if (window.ShCityRedesign && ShCityRedesign.play('victory-ldn-towerbridge',layer,{reducedMotion:motionOff()})) return;
       const [W, H] = vfxSize(layer), D = 3600, k = Math.min(1, W / 390);
       const bw = Math.min(W * .98, 600), bh = bw / 2.099, cx = W / 2, cy = H * .44;
       ofxVignette(layer, W, H, 'rgba(8,16,48,.82)', D);
@@ -4369,6 +4398,7 @@
     // fall and WELL DONE lands at 2s. Ends by 3.65s. Sound: VICTORY_SOUNDS['victory-mum-gateway'] (same beats).
     const MUM_BURSTS = [1600, 1950, 2300], MUM_BEATS = [900, 1200, 1350, 1600, 1950, 2300, 2600, 2750, 3000];
     function vfxGateway(layer) {
+      if (window.ShCityRedesign && ShCityRedesign.play('victory-mum-gateway',layer,{reducedMotion:motionOff()})) return;
       const [W, H] = vfxSize(layer), D = 3600, k = Math.min(1, W / 390);
       const gw = Math.min(W * .98, 620), gh = gw / 1.465, cx = W / 2, cy = H * .46;
       ofxVignette(layer, W, H, 'rgba(22,8,46,.84)', D);
@@ -6108,6 +6138,7 @@
         el.style.height = 'clamp(38px,11vw,52px)';
         el.style.fontSize = 'clamp(20px,6vw,28px)';
         el.textContent = isMuteBtn ? (emotesMuted ? '🔔' : '🔕') : item;
+        if (!isMuteBtn) { const cityArt=cityDraftEmote(item,equippedCosmetics.emotes); if(cityArt) el.innerHTML=cityArt; }
         // Items are anchored to the fan's bottom-right corner, so distances
         // are expressed as offsets AWAY from that corner: larger `right`
         // moves left, larger `bottom` moves up. Using explicit offsets here
@@ -6213,13 +6244,16 @@
       const r = anchor.getBoundingClientRect();
       const el = document.createElement('div');
       el.textContent = emoji;
+      const cityPack = isOwn ? equippedCosmetics.emotes : state.players.find(p=>p.id===playerId)?.cosmetics?.emotes;
+      const cityArt = cityDraftEmote(emoji, cityPack);
+      if(cityArt) el.innerHTML=cityArt;
       el.className = 'emote-float';
       el.style.cssText = `position:fixed; left:${r.left + r.width / 2 - 20}px; top:${r.top - 10}px;
         font-size:36px; z-index:${EMOTE_FLOAT_Z}; pointer-events:none;
         transition: transform 1.9s ease-out, opacity 1.9s ease-out;`;
       document.body.appendChild(el);
       requestAnimationFrame(() => {
-        el.style.transform = 'translateY(-70px) scale(1.25)';
+        el.style.transform = cityArt && motionOff() ? 'none' : 'translateY(-70px) scale(1.25)';
         el.style.opacity = '0';
       });
       setTimeout(() => el.remove(), 2000);
@@ -6603,6 +6637,8 @@
         el.innerHTML = getEmblemSvg();
         return el;
       }
+      el.dataset.suit = card.suit || ''; // visible-face art hook only, after hidden-card early return
+      el.dataset.cityPower = (showCardIcons || tutorialActive || card.isJoker) ? 'on' : 'off';
       el.draggable = false; // native HTML5 DnD is replaced by the unified pointer-drag system below
       
       const sizeClass = isOpponent ? 'card-opponent-slot' : (isHand ? 'card-base' : 'card-table');
@@ -7117,7 +7153,7 @@
               const skewClass = hasDown ? 'transform rotate-[3deg] translate-x-0.5 -translate-y-1 shadow-md' : '';
               const flipClass = shouldPopCard(upCard.id) ? 'mi-flip-in' : '';
               slotContent += `
-                <div data-card-id="${upCard.id}" data-rank="${upCard.rank}" class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] p-0.5 flex flex-col justify-between select-none ${skewClass} ${flipClass}" style="${getOpponentCosmeticFrameStyle(p.cosmetics?.frame)}">
+                <div data-card-id="${upCard.id}" data-rank="${upCard.rank}" data-suit="${upCard.suit}" data-city-power="${showCardIcons || tutorialActive || upCard.isJoker ? 'on' : 'off'}" class="absolute inset-0 card-opponent-slot opponent-cosmetic-card rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] p-0.5 flex flex-col justify-between select-none ${skewClass} ${flipClass}" style="${getOpponentCosmeticFrameStyle(p.cosmetics?.frame)}">
                   <div class="flex flex-col opp-corner-text font-black leading-none ${sCol}">
                     <span>${upCard.isJoker ? 'JKR' : upCard.rank}</span>${upCard.isJoker ? '' : `<span>${upCard.suit}</span>`}
                   </div>
@@ -12803,6 +12839,10 @@
     // London Calling Joker (v438): a red phone box (Blender render) drops in, RINGS (it shakes, ring arcs pulse) and the
     // Joker card spins out of it at .4 of the clock with Union-colour confetti, then the box slides away. "PRANKED!".
     function jfxPhoneBox(host, g) {
+      if (window.ShCityRedesign) {
+        const cs = snapshotCardStyle();
+        if (ShCityRedesign.play('joker-ldn-phonebox',host,{x:g.cx,y:g.cy,reducedMotion:motionOff(),face:cityDraftFace({id:'city-joker',rank:'JOKER',suit:'JOKER',isJoker:true}),back:cityDraftBack(cs.backClass,cs.frameStyle)})) return;
+      }
       jfxScrim(host, 'rgba(127,29,29,.5)');
       const k = g.k, bh = 250 * k, bw = bh * .679, BX = g.cx - 30 * k, BY = g.cy + 12 * k, T0 = 580;
       const sh = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent)"></div>', BX, BY + bh / 2 - 6 * k, bw * 1.5, 24 * k);
@@ -12836,6 +12876,10 @@
     // one shared crop) drops in, shakes, the top tier with its carry handle pops off at .58 with steam and the Joker card
     // spins out of it at T0 with marigold petals. "SERVED!". Sound: JOKER_SOUNDS['joker-mum-tiffin'].
     function jfxTiffin(host, g) {
+      if (window.ShCityRedesign) {
+        const cs = snapshotCardStyle();
+        if (ShCityRedesign.play('joker-mum-tiffin',host,{x:g.cx,y:g.cy,reducedMotion:motionOff(),face:cityDraftFace({id:'city-joker',rank:'JOKER',suit:'JOKER',isJoker:true}),back:cityDraftBack(cs.backClass,cs.frameStyle)})) return;
+      }
       jfxScrim(host, 'rgba(90,15,46,.55)');
       const k = g.k, th = 260 * k, tw = th * .663, BX = g.cx - 26 * k, BY = g.cy + 14 * k, T0 = 620, D = JOKER_FX_MS - 60;
       const sh = bfxAdd(host, '<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent)"></div>', BX, BY + th / 2 - 6 * k, tw * 1.5, 24 * k);
@@ -14389,7 +14433,15 @@
     }
 
     // A small card in the deck's own colours: an Ace and all four suits.
+
+    function cityDraftDeckSample(item, big = false, rank = 'A', suit = 'S') {
+      const city = item?.id === 'deck-ldn-tube' ? 'london' : item?.id === 'deck-mum-chai' ? 'mumbai' : null;
+      if (!city) return null;
+      return `<span class="deck-mini-card ${item.theme} ${big ? 'is-big' : ''}" style="padding:0;display:block;overflow:hidden"><img src="art/cities-v2/decks/${city}/${rank}-${suit}.svg" alt="${rank} ${suit}" style="display:block;width:100%;height:100%;object-fit:fill"/></span>`;
+    }
+
     function deckMiniCardHtml(item, big = false) {
+      const cityPreview=cityDraftDeckSample(item,big); if(cityPreview) return cityPreview;
       const suits = ['♠', '♥', '♦', '♣'].map(s => `<span class="${getSuitStyle(s)}">${s}</span>`).join('');
       return `<span class="deck-mini-card ${item?.theme || 'theme-obsidian'} ${big ? 'is-big' : ''}"><span class="dm-rank">A</span><span class="dm-suits">${suits}</span></span>`;
     }
@@ -14402,7 +14454,7 @@
       if (type === 'avatar') return avatarHtml(item?.id || 'default', 40);
       if (type === 'tableTheme') return miniTablePreviewHtml(item ? item.id : 'default');
       if (type === 'frame') return framePreviewCard(item);
-      if (type === 'emotes') return `<span class="effect-mini-tile is-emotes" data-keep-emoji>${(EMOTE_PACKS[item ? item.id : 'default'] || EMOTE_PACKS.default).slice(0, 4).map(e => `<span>${e}</span>`).join('')}</span>`;
+      if (type === 'emotes') return `<span class="effect-mini-tile is-emotes" data-keep-emoji>${(EMOTE_PACKS[item ? item.id : 'default'] || EMOTE_PACKS.default).slice(0, 4).map(e => `<span>${cityDraftEmote(e,item ? item.id : 'default')||e}</span>`).join('')}</span>`;
       if (type === 'cardBack') return `<span class="cos-mini-card custom-card-back opponent-cosmetic-card ${item ? getCosmeticBackClass(item.id) : getThemeDeckBackClass('default')}">${getEmblemSvg()}</span>`;
       if (type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect') {
         if (!item) return `<span class="effect-mini-tile">${type === 'burnEffect' ? burnPreviewIcon('default') : effIcon('default', type === 'victoryEffect' ? 'victory' : 'joker')}</span>`;

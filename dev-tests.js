@@ -1505,6 +1505,17 @@ async function runDevTestSuite() {
         stage.appendChild(host);
         const t0 = document.timeline.currentTime;
         JOKER_FX[id](host, jfxGeom(host));
+        if (window.ShCityRedesign && ShCityRedesign.durations[id]) {
+          const snapshots = new Set(); let lastVisible = 0;
+          for (let t = 0; t <= 1550; t += 50) {
+            if (host.querySelector('svg')) { snapshots.add(host.innerHTML); lastVisible = t; }
+            await new Promise(r => setTimeout(r, 50));
+          }
+          assertTrue(snapshots.size > 4, id + ' draws changing SVG frames');
+          assertTrue(lastVisible >= 1000 && lastVisible <= 1500, id + ' stays within its playback window');
+          assertTrue(!host.querySelector('svg'), id + ' cleans up its SVG');
+          lengths[id] = lastVisible; host.remove(); continue;
+        }
         // Some pieces start part-way through: watch the whole run.
         const seen = new Map(); // animation -> when it ends (ms after the effect began)
         for (let t = 0; t <= 1500; t += 50) {
@@ -1902,9 +1913,9 @@ async function runDevTestSuite() {
     const types = ['avatar', 'cardBack', 'tableTheme', 'deck', 'frame', 'burnEffect', 'jokerEffect', 'victoryEffect', 'emotes'];
     assertEqual(items.map(i => COSMETIC_CATEGORY_TYPES[i.category]).sort(), [...types].sort(), 'One per type');
     items.forEach(i => { const t = COSMETIC_CATEGORY_TYPES[i.category]; assertTrue(t === 'deck' || isSupportedCosmetic(t, i.id), `${i.name} is equippable`); });
-    assertTrue(!!AVATAR_ART['avatar-ldn-guard'] && /ldn-guard2\.webp/.test(AVATAR_ART['avatar-ldn-guard'].art), 'The Guardsman has its art');
+    assertTrue(!!AVATAR_ART['avatar-ldn-guard'] && /cities-v2\/london-avatar\.webp/.test(AVATAR_ART['avatar-ldn-guard'].art), 'The Guardsman has its art');
     assertTrue(getCosmeticBackClass('back-ldn-bigben').includes('lvl-back'), 'The back wears the art-fills-the-card class');
-    assertTrue(/ldn-thames/.test(ILLUSTRATED_TABLES['table-ldn-thames'].art) && ShTableScenes.scene('table-ldn-thames', 1080, 1920).includes('table-thames3.webp'), 'The Thames table is its painted scene');
+    assertTrue(/ldn-thames/.test(ILLUSTRATED_TABLES['table-ldn-thames'].art) && ShTableScenes.scene('table-ldn-thames', 1080, 1920).includes('london-scene-portrait.webp'), 'The Thames table is its painted scene');
     assertTrue(SHAPE_BURN_EFFECTS.has('burn-ldn-routemaster') && typeof BURN_SOUNDS['burn-ldn-routemaster'] === 'function', 'Burn: shape effect with a sound');
     assertTrue(typeof JOKER_FX['joker-ldn-phonebox'] === 'function' && typeof JOKER_SOUNDS['joker-ldn-phonebox'] === 'function', 'Joker: animation and sound');
     assertTrue(typeof VICTORY_SOUNDS['victory-ldn-towerbridge'] === 'function', 'Victory: sound');
@@ -1917,9 +1928,9 @@ async function runDevTestSuite() {
     const types = ['avatar', 'cardBack', 'tableTheme', 'deck', 'frame', 'burnEffect', 'jokerEffect', 'victoryEffect', 'emotes'];
     assertEqual(items.map(i => COSMETIC_CATEGORY_TYPES[i.category]).sort(), [...types].sort(), 'One per type');
     items.forEach(i => { const t = COSMETIC_CATEGORY_TYPES[i.category]; assertTrue(t === 'deck' || isSupportedCosmetic(t, i.id), `${i.name} is equippable`); });
-    assertTrue(!!AVATAR_ART['avatar-mum-dabba'] && /mum-dabba\.webp/.test(AVATAR_ART['avatar-mum-dabba'].art), 'The Dabbawala has his art');
+    assertTrue(!!AVATAR_ART['avatar-mum-dabba'] && /cities-v2\/mumbai-avatar\.webp/.test(AVATAR_ART['avatar-mum-dabba'].art), 'The Dabbawala has his art');
     assertTrue(getCosmeticBackClass('back-mum-marigold').includes('lvl-back'), 'The back wears the art-fills-the-card class');
-    assertTrue(ShTableScenes.scene('table-mum-marine', 1080, 1920).includes('table-marine.webp'), 'The Marine Drive table is its painted scene');
+    assertTrue(ShTableScenes.scene('table-mum-marine', 1080, 1920).includes('mumbai-scene-portrait.webp'), 'The Marine Drive table is its painted scene');
     assertTrue(SHAPE_BURN_EFFECTS.has('burn-mum-monsoon') && typeof BURN_SOUNDS['burn-mum-monsoon'] === 'function', 'Burn: shape effect with a sound');
     assertTrue(typeof JOKER_FX['joker-mum-tiffin'] === 'function' && typeof JOKER_SOUNDS['joker-mum-tiffin'] === 'function', 'Joker: animation and sound');
     assertTrue(typeof VICTORY_SOUNDS['victory-mum-gateway'] === 'function', 'Victory: sound');
@@ -10193,7 +10204,7 @@ async function runDevTestSuite() {
     });
     Object.entries(ILLUSTRATED_TABLES).forEach(([id, t]) => {
       const bg = tableArtBackground(id);
-      assertTrue(tiled.has(t.art) ? bg.includes(`${TABLE_TILE_PX}px repeat`) : /^ss\d{4}-/.test(t.art) ? /<image\b[^>]*ss\d{4}\/table\.webp/.test(ShTableScenes.scene(id,1920,1080)) : t.art === 'ldn-thames' ? /<image\b[^>]*london\/table-thames3\.webp/.test(ShTableScenes.scene(id,1920,1080)) : t.art === 'mum-marine' ? /<image\b[^>]*mumbai\/table-marine\.webp/.test(ShTableScenes.scene(id,1920,1080)) : !/<image\b/.test(ShTableScenes.scene(id,1920,1080)), `${id} is never a stretched bitmap`);
+      assertTrue(tiled.has(t.art) ? bg.includes(`${TABLE_TILE_PX}px repeat`) : /^ss\d{4}-/.test(t.art) ? /<image\b[^>]*ss\d{4}\/table\.webp/.test(ShTableScenes.scene(id,1920,1080)) : t.art === 'ldn-thames' ? /<image\b[^>]*cities-v2\/london-scene-wide\.webp/.test(ShTableScenes.scene(id,1920,1080)) : t.art === 'mum-marine' ? /<image\b[^>]*cities-v2\/mumbai-scene-wide\.webp/.test(ShTableScenes.scene(id,1920,1080)) : !/<image\b/.test(ShTableScenes.scene(id,1920,1080)), `${id} is never a stretched bitmap`);
     });
     const svgs = [...Object.values(TABLE_ART), ...Object.values(SEASONAL_TABLE_ART), ...Object.values(SEASONAL_BACK_ART)].filter(u => /\.svg$/.test(u));
     assertTrue(svgs.length >= 30, 'every SVG art file is checked', svgs.length);
@@ -11813,4 +11824,5 @@ function renderDevTestReport(results) {
   });
   document.body.appendChild(list);
 }
+
 

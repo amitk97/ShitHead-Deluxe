@@ -667,6 +667,7 @@
       // Monsoon Deluge (v442): a low thunder swell and rain hiss build, lightning cracks at .45 with shards pattering, thunder rolls,
       // a wave rushes across (.6-1.3), spray and gurgles, then ripple drips. Same beats as bfxMonsoon (MS_HIT .45).
       'burn-mum-monsoon': (k) => {
+        if (window.ShCityRedesign) return ShCityRedesign.sound('burn-mum-monsoon', k, {reducedMotion:typeof motionOff==='function' ? motionOff() : false});
         k.noise({ at: 0.0, dur: 1.7, type: 'bandpass', f0: 5200, f1: 4200, q: 0.5, level: 0.14, attack: 0.25 });
         k.scatter(26, 0.05, 1.4, (at) => k.tone({ at, dur: 0.03, type: 'sine', f0: 2200 + Math.random() * 2400, f1: 1500, level: 0.035 }));
         k.tone({ at: 0.08, dur: 0.4, type: 'sawtooth', f0: 55, f1: 38, level: 0.16, attack: 0.25 });
@@ -682,6 +683,7 @@
         [1.1, 1.26, 1.42].forEach((at, i) => k.tone({ at, dur: 0.14, type: 'sine', f0: 700 - i * 90, f1: 380 - i * 40, level: 0.1, attack: 0.004 }));
       },
       'burn-ldn-routemaster': (k) => {
+        if (window.ShCityRedesign) return ShCityRedesign.sound('burn-ldn-routemaster', k, {reducedMotion:typeof motionOff==='function' ? motionOff() : false});
         [0.04, 0.2].forEach((at) => { k.tone({ at, dur: 0.12, type: 'sawtooth', f0: 392, f1: 388, level: 0.2 }); k.tone({ at, dur: 0.12, type: 'square', f0: 494, f1: 490, level: 0.09 }); });
         k.tone({ at: 0.06, dur: 0.5, type: 'sawtooth', f0: 60, f1: 190, level: 0.22, attack: 0.2 });
         k.noise({ at: 0.06, dur: 0.5, type: 'bandpass', f0: 300, f1: 1500, q: 0.7, level: 0.2, attack: 0.4 });
@@ -811,6 +813,7 @@
       // Gateway Gala (v442): the Gateway rises (rumble), lamps light along the arches, dhol beats drive the fireworks
       // (bursts 1.6 / 1.95 / 2.3s, as MUM_BURSTS in app.js), petals fall, a bright chime at WELL DONE (2.0s) and a last thud (3.3s).
       'victory-mum-gateway': (k) => {
+        if (window.ShCityRedesign) return ShCityRedesign.sound('victory-mum-gateway', k, {reducedMotion:typeof motionOff==='function' ? motionOff() : false});
         k.tone({ at: 0.1, dur: 0.7, type: 'sawtooth', f0: 50, f1: 85, level: 0.1, attack: 0.4 }); k.noise({ at: 0.1, dur: 0.7, type: 'lowpass', f0: 200, f1: 900, level: 0.1, attack: 0.5 });
         for (let i = 0; i < 12; i++) k.tone({ at: 0.7 + i * 0.07, dur: 0.12, type: 'sine', f0: 1500 + i * 130, f1: 1500 + i * 130, level: 0.05 });
         const dhol = (at, hard) => { k.tone({ at, dur: 0.22, f0: 120, f1: 55, level: hard ? 0.34 : 0.22, attack: 0.003 }); k.noise({ at, dur: 0.05, type: 'bandpass', f0: 1100, q: 1, level: hard ? 0.18 : 0.1 }); };
@@ -826,6 +829,7 @@
         k.tone({ at: 3.3, dur: 0.3, f0: 110, f1: 38, level: 0.3, attack: 0.004 }); k.noise({ at: 3.3, dur: 0.1, type: 'bandpass', f0: 700, q: 1, level: 0.18 });
       },
       'victory-ldn-towerbridge': (k) => {
+        if (window.ShCityRedesign) return ShCityRedesign.sound('victory-ldn-towerbridge', k, {reducedMotion:typeof motionOff==='function' ? motionOff() : false});
         for (let i = 0; i < 16; i++) k.noise({ at: 0.7 + i * 0.05, dur: 0.02, type: 'bandpass', f0: 1800, q: 4, level: 0.07 });
         k.tone({ at: 0.7, dur: 0.8, type: 'sawtooth', f0: 70, f1: 90, level: 0.12, attack: 0.3 });
         k.tone({ at: 1.5, dur: 0.7, type: 'sawtooth', f0: 98, f1: 94, level: 0.22, attack: 0.05 }); k.tone({ at: 1.5, dur: 0.7, type: 'square', f0: 147, f1: 141, level: 0.08, attack: 0.05 });
@@ -1152,6 +1156,7 @@
       // Tiffin Surprise (v442): the steel stack lands with a thud (.14), rattles as it shakes (.2-.5), the clasp pings open (.52),
       // the top tier lifts with a puff of steam and the Joker pops out (.62).
       'joker-mum-tiffin': (k0) => {
+        if (window.ShCityRedesign) return ShCityRedesign.sound('joker-mum-tiffin', k0, {reducedMotion:typeof motionOff==='function' ? motionOff() : false});
         const g = (o) => ({ ...o, level: o.level * 1.7 }), k = { tone: (o) => k0.tone(g(o)), noise: (o) => k0.noise(g(o)), scatter: k0.scatter };   // levels measured offline (peak ~.45, rms ~.027)
         k.tone({ at: 0.13, dur: 0.22, f0: 150, f1: 48, level: 0.26, attack: 0.004 }); k.noise({ at: 0.13, dur: 0.08, type: 'bandpass', f0: 900, q: 1, level: 0.25 });
         k.tone({ at: 0.15, dur: 0.5, type: 'sine', f0: 1180, f1: 1170, level: 0.07 }); k.tone({ at: 0.15, dur: 0.35, type: 'sine', f0: 1760, f1: 1750, level: 0.05 });
@@ -1165,6 +1170,7 @@
         k.tone({ at: 0.76, dur: 0.12, type: 'square', f0: 340, f1: 520, level: 0.09 });
       },
       'joker-ldn-phonebox': (k) => {
+        if (window.ShCityRedesign) return ShCityRedesign.sound('joker-ldn-phonebox', k, {reducedMotion:typeof motionOff==='function' ? motionOff() : false});
         k.tone({ at: 0.12, dur: 0.16, f0: 130, f1: 48, level: 0.4, attack: 0.004 }); k.noise({ at: 0.12, dur: 0.06, type: 'bandpass', f0: 900, q: 1, level: 0.2 });
         for (let i = 0; i < 6; i++) { const at = 0.2 + i * 0.062; k.tone({ at, dur: 0.045, type: 'square', f0: 1400, f1: 1400, level: 0.1 }); k.tone({ at: at + 0.026, dur: 0.03, type: 'square', f0: 1750, f1: 1750, level: 0.08 }); }
         k.tone({ at: 0.58, dur: 0.5, type: 'triangle', f0: 1568, f1: 1560, level: 0.16 }); k.tone({ at: 0.58, dur: 0.5, type: 'sine', f0: 2349, f1: 2340, level: 0.07 });

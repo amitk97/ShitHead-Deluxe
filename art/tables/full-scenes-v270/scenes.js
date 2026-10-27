@@ -260,9 +260,9 @@ function scene(id,W,H){
  case 'newyear':
   skyline(.88,'#10192d');skyline(.98,'#080f20');place('left-firework',firework('#e6c477'),0,.18,.40,1,.30);place('right-firework',firework('#cb9fc6'),1,.36,.34,1,.25);stars(90,'#efd8a4');break;
  case 'ldn-thames':
-  pieces.push(`<image href="art/london/table-thames3.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;
+  pieces.push(window.ShCityRedesign ? ShCityRedesign.table('london', W, H) : `<image href="art/london/table-thames3.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;
  case 'mum-marine':
-  pieces.push(`<image href="art/mumbai/table-marine.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;
+  pieces.push(window.ShCityRedesign ? ShCityRedesign.table('mumbai', W, H) : `<image href="art/mumbai/table-marine.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;
  case 'ss2611-egypt':
   // Ancient Egypt: one painted scene (owner's art), filled to the screen from the bottom centre so the temple floor sits behind the cards.
   pieces.push(`<image href="art/season-pass/ss2611/table.webp" x="0" y="0" width="${F(W)}" height="${F(H)}" preserveAspectRatio="xMidYMax slice"/>`);break;
@@ -320,3 +320,4 @@ window.ShTableScenes={scene,draw,refresh,queue,themes,names};
 window.addEventListener('resize',queue);window.visualViewport?.addEventListener('resize',queue);
 document.addEventListener('DOMContentLoaded',()=>{new MutationObserver(queue).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['data-equipped-table-theme','data-table','class','style']});queue();});
 })();
+

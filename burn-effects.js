@@ -1894,6 +1894,12 @@
     }
     function playBurnFx(id, host, x, y, scale = 1, card = null) {
       if (!host) return false;
+      if (window.ShCityRedesign && (id==='burn-ldn-routemaster'||id==='burn-mum-monsoon')) {
+        const cardEls = host.id==='burnFxLayer' ? [...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')] : [];
+        const back = cityDraftBack(burnBackClass());
+        const face = cardEls.length ? ShCityRedesign.snapshotCard(cardEls[cardEls.length-1]) : cityDraftFace(card);
+        if (back && ShCityRedesign.play(id,host,{x,y,cardEls,face,back,reducedMotion:reduceMotion||matchMedia('(prefers-reduced-motion: reduce)').matches})) return true;
+      }
       if (id === PRIVATE_BURN_ID) { playPrivateBurn(host,x,y,scale,card); return true; }
       // Season Pass burns (art/burns/season/season-burns.js): canvas particles + real card clones, 1.8s.
       if (window.ShSeasonBurns && ShSeasonBurns.has(id) && ShSeasonBurns.play(id, host, x, y, scale)) return true;
