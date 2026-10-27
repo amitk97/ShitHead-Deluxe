@@ -2078,7 +2078,7 @@ async function runDevTestSuite() {
     const savedSeen = localStorage.getItem('shithead_tips_seen'), savedOn = helperTipsOn;
     try {
       localStorage.removeItem('shithead_tips_seen'); helperTipsOn = true; hideHelperTip();
-      assertEqual(Object.keys(HELPER_TIPS).length, 29, 'Twenty-nine tips (v292 added seven, v293 ten, v391 three for 2 vs 2)');
+      assertEqual(Object.keys(HELPER_TIPS).length, 34, 'Thirty-four tips (v292 added seven, v293 ten, v391 three for 2 vs 2, v460 five for No Mercy)');
       const v293 = { 'forced-pickup': 'Picked up. Lower cards are easier to get rid of next turn.', 'ten-burn': 'A 10 burns the Pile, and you go again.',
         'four-burn': 'Four of the same rank in a row burns the Pile too.', 'three-played': 'A 3 is transparent: the next player must beat the card under it.',
         'last-card': 'One card left: try to make them pick up.', 'swap-phase': "Swap your best cards onto the table now. You'll need them later.",
@@ -7300,6 +7300,26 @@ async function runDevTestSuite() {
       state.noMercy = false;
       assertTrue(evaluateMoveUtility(bot, 'A', [c('a', 'A')], [c('p1', '8'), c('p2', '9')], null, 'hard', true) === blocked, 'normal games are unchanged');
     } finally { freshState(); }
+  });
+  await test('v460: No Mercy card tips show twice at most, once a game, and bots like a King that hits', () => {
+    const keep = localStorage.getItem('shithead_tip_counts');
+    try {
+      localStorage.removeItem('shithead_tip_counts');
+      helperTipGame = { id: null, keys: new Set() };
+      state.matchId = 'tipgame1';
+      assertTrue(!helperTipSeen('nm-q'), 'unseen at first');
+      markHelperTipSeen('nm-q');
+      assertTrue(helperTipSeen('nm-q'), 'not again in the same game');
+      state.matchId = 'tipgame2'; assertTrue(!helperTipSeen('nm-q'), 'shows in the next game');
+      markHelperTipSeen('nm-q');
+      state.matchId = 'tipgame3'; assertTrue(helperTipSeen('nm-q'), 'never a third time');
+      freshState(); startSinglePlayerGame(2); state.noMercy = true;
+      const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
+      const bot = state.players[0];
+      const hit = evaluateMoveUtility(bot, 'K', [c('k', 'K')], [c('p1', '8'), c('p2', '9')], null, 'hard', true);
+      const blocked = evaluateMoveUtility(bot, 'K', [c('k', 'K')], [c('p1', 'K'), c('p2', '9')], null, 'hard', true);
+      assertTrue(hit - blocked === 50, 'King hit ' + hit + ' blocked ' + blocked);
+    } finally { if (keep === null) localStorage.removeItem('shithead_tip_counts'); else localStorage.setItem('shithead_tip_counts', keep); helperTipGame = { id: null, keys: new Set() }; freshState(); }
   });
   await test('v455: a bot that is stuck in a loop tries a card it would not normally play', () => {
     try {

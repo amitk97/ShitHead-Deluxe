@@ -1,4 +1,4 @@
-<!-- README-VERSION: v440 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
+<!-- README-VERSION: v460 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
 # 💩 ShitHead Deluxe
 
 **The classic card game ShitHead, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
@@ -59,6 +59,9 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 
 - **A home screen built around the modes**: swipe a 3D carousel of cards (or use the arrows, the mouse wheel or keys 1-7): Play Computer, the Gauntlet, Ranked, Play Friends and More Modes. Tap the middle card and it flips over and spreads across the screen into that mode's page; the game remembers the last mode you opened. More Modes holds the weekly Puzzles, 2 vs 2 teams and previews of Randomiser, Multiple Decks and No Mercy. Each of the two outer Shortcut cards can pin one mode (never the same one twice).
 - **2 vs 2 teams**: play with a partner opposite you against bots or friends, choose bot difficulty and earn the Dream Team avatar with 10 wins.
+- **No Mercy** (More Modes → No Mercy, or a Play Friends card, 2-4 players): a normal game with four harsher rules. A Queen X-rays one card in the next player's hand, a King makes the next player take a card from the bottom of the Pile (it stops at a King), an Ace makes every opponent take one bottom card (it stops at an Ace), and a Joker cannot be played on a 4. The Card Powers panel, the Play Matrix and first-time tips explain the changes. Wins earn the Crimson Verdict card back and deck, plus the Seer and Enforcer avatars, and bots use the new rules.
+- **Multiple Decks** (4-8 players): two decks and four Jokers, a compact rail of opponents and a hand that groups cards by rank once it gets big. Snap Burn plays every matching card, and Jokers can chain up to four deep.
+- **Mumbai Masala**, a second Blender set: the Dabbawala avatar, Marigold Garland card back, Marine Drive table, Masala Chai deck, Kaali Peeli frame, Monsoon Deluge burn, Tiffin Surprise Joker, Gateway Gala victory and the Mumbai emote pack. The London and Mumbai sets were later redrawn with refreshed city art and effects.
 - **Free Season Pass**: two-month seasons with 50 tiers, Diamonds and themed card backs, avatars, tables and a burn at tier 40. Season XP follows your regular XP rewards; tier rewards arrive automatically. Six themes run from Ancient Egypt and Ice Age through Feudal Japan, Deep Ocean, Greek Mythology and Dark Sorcery.
 - **Double-Tap To Play**: enable it in Settings → Gameplay to play a staged card with a second tap. Ranked swaps show your changes immediately while the server confirms them.
 - **Watch friends**: friends can watch a Play Computer or Gauntlet game when Friends Can Watch is enabled; hidden cards remain hidden.

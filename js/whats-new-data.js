@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v460: [['spade', 'No Mercy now teaches itself: short tips appear the first two games a 4, Queen, King, Ace or Joker turns up in your hand. Bots also play the King and Ace on purpose.', WN_KEY]],
       v459: [['spade', 'Bots now play the No Mercy Ace when it will make opponents pick up a card.']],
       v458: [['spade', 'No Mercy has a new Ace rule: every opponent takes one card from the bottom of the Pile. It stops at an Ace, and a King can be taken by an Ace.', WN_KEY]],
       v457: [['book', 'The card rules pop-up now explains the No Mercy Queen (X-ray), King (takes the bottom card) and Joker (not on a 4), and the Play Matrix shows the Joker as not playable on a 4. Crimson Verdict card back shows its art again.']],

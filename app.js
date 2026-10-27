@@ -1055,6 +1055,9 @@
         }
       }
 
+      // No Mercy King (Medium, Hard and Boss): the next player takes a bottom card, so play it when it will hit
+      // (the bottom card is not a King and the Pile has cards under it).
+      if (candidateRank === 'K' && isNoMercy() && difficulty !== 'easy' && pileSize > 0 && discardPile[0].rank !== 'K') score += 50;
       // No Mercy Ace (Medium, Hard and Boss): every opponent takes one bottom card, so play it when it will hit
       // someone (the bottom card is not an Ace and the Pile has cards to give), and more so the more opponents it hits.
       if (candidateRank === 'A' && isNoMercy() && difficulty !== 'easy' && pileSize > 0 && discardPile[0].rank !== 'A') {
@@ -18353,7 +18356,12 @@
       'ranked-loss-run': 'Losses never cost extra. Win streaks earn bonus rating.',
       'twos-team': 'Your partner sits opposite. Your team wins when you are both out.',
       'twos-out': 'You are out. Your partner plays on, and your team wins when they finish too.',
-      'twos-eight': 'An 8 skips the next player. Two 8s also skip your partner.'
+      'twos-eight': 'An 8 skips the next player. Two 8s also skip your partner.',
+      'nm-4': 'No Mercy: a Joker cannot be played on a 4.',
+      'nm-q': 'No Mercy: a Queen shows you one hidden card in the next player\'s hand.',
+      'nm-k': 'No Mercy: a King makes the next player take a card from the bottom of the Pile.',
+      'nm-a': 'No Mercy: an Ace makes every opponent take one card from the bottom of the Pile.',
+      'nm-joker': 'No Mercy: a Joker cannot be played while a 4 is the card to beat.'
     };
     const HELPER_TIPS_SEEN_KEY = 'shithead_tips_seen';
     const HELPER_TIP_MS = 8000;
@@ -18362,8 +18370,25 @@
     function helperTipsSeen() {
       try { return new Set(JSON.parse(localStorage.getItem(HELPER_TIPS_SEEN_KEY) || '[]')); } catch (e) { return new Set(); }
     }
-    function helperTipSeen(key) { return helperTipsSeen().has(key); }
+    // No Mercy card tips show a limited number of times (first two games the card turns up), not just once.
+    const HELPER_TIP_TIMES = { 'nm-4': 2, 'nm-q': 2, 'nm-k': 2, 'nm-a': 2, 'nm-joker': 2 };
+    const HELPER_TIP_COUNTS_KEY = 'shithead_tip_counts';
+    function helperTipCounts() { try { return JSON.parse(localStorage.getItem(HELPER_TIP_COUNTS_KEY) || '{}') || {}; } catch (e) { return {}; } }
+    let helperTipGame = { id: null, keys: new Set() }; // a counted tip shows once per game
+    function helperTipSeen(key) {
+      if (HELPER_TIP_TIMES[key]) {
+        if (helperTipGame.id !== state.matchId) helperTipGame = { id: state.matchId, keys: new Set() };
+        return helperTipGame.keys.has(key) || (helperTipCounts()[key] || 0) >= HELPER_TIP_TIMES[key];
+      }
+      return helperTipsSeen().has(key);
+    }
     function markHelperTipSeen(key) {
+      if (HELPER_TIP_TIMES[key]) {
+        helperTipGame.keys.add(key);
+        const c = helperTipCounts(); c[key] = (c[key] || 0) + 1;
+        try { localStorage.setItem(HELPER_TIP_COUNTS_KEY, JSON.stringify(c)); } catch (e) {}
+        return;
+      }
       const seen = helperTipsSeen(); seen.add(key);
       try { localStorage.setItem(HELPER_TIPS_SEEN_KEY, JSON.stringify([...seen])); } catch (e) {}
     }
@@ -18441,6 +18466,12 @@
       if ((local.hand || []).some(c => c.isJoker || c.rank === 'JOKER') && showHelperTip('joker', '#localHand [data-rank="JOKER"]')) return;
       if (isTwos() && showHelperTip('twos-team', '#opponentsContainer [data-partner]')) return;
       if (!myTurn) return;
+      if (isNoMercy()) {
+        const hasR = (r) => (local.hand || []).some(c => (r === 'JOKER' ? (c.isJoker || c.rank === 'JOKER') : c.rank === r));
+        for (const [key, r] of [['nm-joker', 'JOKER'], ['nm-4', '4'], ['nm-q', 'Q'], ['nm-k', 'K'], ['nm-a', 'A']]) {
+          if (hasR(r) && showHelperTip(key, `#localHand [data-rank="${r}"]`)) return;
+        }
+      }
       if (showHelperTip('hold-card', '#localHand [data-card-id]')) return;
       if (isTwos() && (local.hand || []).some(c => c.rank === '8') && showHelperTip('twos-eight', '#localHand [data-rank="8"]')) return;
       if (!(local.hand || []).length && (local.faceUp || []).length && showHelperTip('hand-empty', '#localTableSlots')) return;
