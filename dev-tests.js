@@ -1504,7 +1504,14 @@ async function runDevTestSuite() {
         host.className = 'jfx-host';
         stage.appendChild(host);
         const t0 = document.timeline.currentTime;
-        JOKER_FX[id](host, jfxGeom(host));
+        // Constructors choose their motion path synchronously. The suite's
+        // general motion guard must not turn this normal-duration check into
+        // a test of the shorter reduced-motion variant.
+        const wasRunning = devTestSuiteRunning;
+        try {
+          devTestSuiteRunning = false;
+          JOKER_FX[id](host, jfxGeom(host));
+        } finally { devTestSuiteRunning = wasRunning; }
         if (window.ShCityRedesign && ShCityRedesign.durations[id]) {
           const snapshots = new Set(); let lastVisible = 0; const playbackStart = performance.now();
           while (performance.now() - playbackStart <= 1800) {
@@ -1536,6 +1543,27 @@ async function runDevTestSuite() {
     const tooShort = Object.entries(lengths).filter(([, ms]) => ms < 1000);
     assertEqual(tooLong, [], 'No animation runs past the 1.5s window');
     assertEqual(tooShort, [], 'Nor is any over in under a second');
+  });
+  await test('City Joker effects: Reduce Motion keeps a short payoff and cleans up both city overlays', async () => {
+    const stage = document.createElement('div');
+    stage.style.cssText = 'position:fixed;left:0;top:0;width:390px;height:700px;';
+    document.body.appendChild(stage);
+    const savedReduceMotion = reduceMotion;
+    try {
+      reduceMotion = true;
+      for (const id of ['joker-ldn-phonebox', 'joker-mum-tiffin']) {
+        const host = document.createElement('div'); host.className = 'jfx-host'; stage.appendChild(host);
+        JOKER_FX[id](host, jfxGeom(host));
+        await new Promise(r => setTimeout(r, 400));
+        assertTrue(!!host.querySelector('svg'), id + ' retains a readable calm payoff');
+        await new Promise(r => setTimeout(r, 550));
+        assertTrue(!host.querySelector('svg'), id + ' removes the calm overlay in under a second');
+        host.remove();
+      }
+    } finally {
+      stage.querySelectorAll('.jfx-host').forEach(host => ShCityRedesign.clear(host));
+      stage.remove(); reduceMotion = savedReduceMotion;
+    }
   });
   await test('Joker effects: a Joker played on a Joker never shows two at once; the first is seen, then COUNTERED takes over', async () => {
     const was = [bigEffectsOn, reduceMotion];
@@ -1938,6 +1966,7 @@ async function runDevTestSuite() {
     assertEqual(EMOTE_PACKS['emotes-mum'].length, 6, 'Six Mumbai emotes');
   });
   await test('v436: the Test Lab tries looks on in memory only: nothing is saved to the account or the device', () => {
+    const previousState = { ...state };
     freshState({ phase: 'PLAY' });
     state.players = [makePlayer({ id: 'p1', hand: [makeCard('5')] }), makePlayer({ id: 'p2', isBot: true, hand: [makeCard('6')] })];
     state.localPlayerId = 'p1'; state.labDummy = true;
@@ -1961,7 +1990,15 @@ async function runDevTestSuite() {
       ShTestLab.restoreReal();
       assertEqual({ ...equippedCosmetics }, realEquipped, 'Your real look is put back');
       assertEqual(state.deckTheme, realDeck, 'and your real deck');
-    } finally { db = realDb; Object.assign(equippedCosmetics, realEquipped); if (state.deckTheme !== realDeck) selectDeckTheme(realDeck); }
+    } finally {
+      db = realDb; Object.assign(equippedCosmetics, realEquipped);
+      if (state.deckTheme !== realDeck) selectDeckTheme(realDeck);
+      // Restore the whole fixture, including removal of labDummy when it
+      // was absent. A leaked sandbox flag suppresses normal avatar repair,
+      // seasonal bots and cosmetic persistence in subsequent tests.
+      Object.keys(state).forEach(key => { if (!(key in previousState)) delete state[key]; });
+      Object.assign(state, previousState);
+    }
   });
   await test('v405: the Test Lab card is only in the carousel for the AmitK account', () => {
     const has = () => !!document.querySelector('#modeCarousel .mc-track [data-mc-mode="lab"]'), was = currentUser;
@@ -9990,7 +10027,7 @@ async function runDevTestSuite() {
     assertEqual(JSON.stringify(serverEconomyCatalog().xp), JSON.stringify(XP_RULES), 'the server gets the same XP table');
   });
   await test('Best of series lobby: locked below level 20, the host picks a length and the other player gets the accept pop-up', async () => {
-    const saved = { players: state.players, isMultiplayer: state.isMultiplayer, isRanked: state.isRanked, roomCode: state.roomCode, isHost: state.isHost, localPlayerId: state.localPlayerId, phase: state.phase, spectating: state.spectating };
+    const saved = { players: state.players, isMultiplayer: state.isMultiplayer, isRanked: state.isRanked, roomCode: state.roomCode, isHost: state.isHost, localPlayerId: state.localPlayerId, phase: state.phase, spectating: state.spectating, friendsMode: state.friendsMode, ruleMode: state.ruleMode };
     const was = { on: xpFeatureOn, xp: playerXp, econ: callEconomy, confirm: window.confirm, series: seriesState, watch: watchSeriesRoom, owner: isGameOwner };
     const panel = document.getElementById('seriesPanel');
     const modal = document.getElementById('seriesModal');
@@ -10000,7 +10037,7 @@ async function runDevTestSuite() {
       window.confirm = () => true;
       currentUser = { uid: 'host_u', email: 'h@example.com' };
       setXpFeature(true);
-      Object.assign(state, { isMultiplayer: true, isRanked: false, roomCode: '424242', isHost: true, localPlayerId: 'p1', phase: 'LOBBY', spectating: null });
+      Object.assign(state, { isMultiplayer: true, isRanked: false, roomCode: '424242', isHost: true, localPlayerId: 'p1', phase: 'LOBBY', spectating: null, friendsMode: 'series', ruleMode: 'standard' });
       state.players = [
         { id: 'p1', uid: 'host_u', name: 'Hosty', isHost: true, cosmetics: { level: 12 } },
         { id: 'p2', uid: 'guest_u', name: 'Guesty', cosmetics: { level: 25 } }
@@ -10011,6 +10048,12 @@ async function runDevTestSuite() {
       renderSeriesPanel();
       assertTrue(SERIES_LOBBY_OPEN || panel.classList.contains('hidden'), 'until games count, only the owner sees the series choice');
       isGameOwner = () => true;
+      for (const mode of ['standard', 'house']) {
+        state.friendsMode = mode;
+        renderSeriesPanel();
+        assertTrue(panel.classList.contains('hidden'), 'the series picker stays out of ' + mode + ' rooms');
+      }
+      state.friendsMode = 'series';
       renderSeriesPanel();
       assertTrue(!panel.classList.contains('hidden'), 'the host sees the series choice');
       assertTrue([...panel.querySelectorAll('[data-series-best]')].every(b => b.disabled), 'Best of 3/5 are locked below level 20');
