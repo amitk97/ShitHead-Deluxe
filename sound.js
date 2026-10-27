@@ -143,6 +143,32 @@
           o.connect(og).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + 0.2);
         });
       }
+      /* No Mercy Queen X-ray: a cyan scan sweep (filtered noise), then a soft two-note blip per revealed card. */
+      playPeekScan(count) {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime, len = 0.7;
+        const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * len), ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        const src = ctx.createBufferSource(); src.buffer = buf;
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 6;
+        f.frequency.setValueAtTime(5200, t0); f.frequency.exponentialRampToValueAtTime(900, t0 + len);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.14 * vol, t0 + 0.1); g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+        src.connect(f).connect(g).connect(ctx.destination); src.start(t0); src.stop(t0 + len);
+        for (let i = 0; i < Math.min(count, 4); i++) {
+          [[1046.5, 0], [1568, 0.06]].forEach(([freq, at]) => {
+            const s = t0 + 0.25 + i * 0.5 + at;
+            const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(freq, s);
+            const og = ctx.createGain();
+            og.gain.setValueAtTime(0.0001, s); og.gain.exponentialRampToValueAtTime(0.16 * vol, s + 0.01); og.gain.exponentialRampToValueAtTime(0.0001, s + 0.22);
+            o.connect(og).connect(ctx.destination); o.start(s); o.stop(s + 0.25);
+          });
+        }
+      }
       playRevealResult(good) {
         const ctx = this.ctx;
         if (!this.enabled || !ctx || ctx.state !== 'running') return;

@@ -7219,6 +7219,32 @@ async function runDevTestSuite() {
       assertTrue(isMultiDeck(), 'the room plays as Multiple Decks');
     } finally { freshState(); }
   });
+  await test('v449: a Queen X-ray shows the card only to its player, leaves a memory tag, and cleans up', () => {
+    try {
+      const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
+      freshState(); startSinglePlayerGame(1, null, { noMercy: true });
+      state.phase = 'PLAY'; state.currentTurnIndex = 0; state.drawPile = []; state.discardPile = [];
+      const [a, b] = state.players;
+      a.faceUp = [c('af', '9')]; b.faceUp = [c('bf', '9')]; a.faceDown = []; b.faceDown = [];
+      a.hand = [c('q1', 'Q'), c('x1', '5')]; b.hand = [c('b1', '6'), c('b2', '7')];
+      executePlayCards(a.id, [a.hand[0]]);
+      const pk = state.lastPeek;
+      assertTrue(pk && pk.by === a.id && pk.target === b.id && pk.cardIds.length === 1, 'the peek is recorded');
+      noMercyPeekFx(pk, true);
+      let fx = document.querySelector('.nm-peek');
+      assertTrue(fx && fx.querySelectorAll('.nm-peek-card').length === 1, 'the Queen player sees the card face');
+      fx.remove();
+      noMercyPeekFx({ ...pk, by: b.id }, true);
+      fx = document.querySelector('.nm-peek');
+      assertTrue(fx && fx.querySelectorAll('.nm-peek-card').length === 0, 'anyone else sees only the scan');
+      fx.remove();
+      render();
+      assertEqual(document.querySelectorAll(`#opp-${b.id} .nm-known`).length, 1, 'a memory tag stays at the seat');
+      b.hand = b.hand.filter(x => x.id !== pk.cardIds[0]); render();
+      assertEqual(document.querySelectorAll(`#opp-${b.id} .nm-known`).length, 0, 'the tag goes when the card leaves the hand');
+    } finally { document.querySelectorAll('.nm-peek').forEach(e => e.remove()); }
+  });
+
   await test('v448: No Mercy: no Joker on a 4, Kings take the bottom card, Queens peek a fresh hand card each, a four-King pile burns', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });

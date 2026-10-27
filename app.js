@@ -2041,6 +2041,7 @@
       } else if (cardRank === 'Q' && isNoMercy()) {
         const target = getNextPlayer();
         const seen = noMercyPeek(player, target, cardsToPlay.length);
+        if (seen.length) noMercyPeekFx(state.lastPeek);
         notifyBanner(seen.length ? `Queen played: ${player.name} looked at ${seen.length === 1 ? '1 card' : seen.length + ' cards'} in ${target.name}'s hand.` : 'Queen played.');
         advanceTurn(1);
       } else if (cardRank === '3') {
@@ -3140,6 +3141,37 @@
       const taken = state.discardPile.splice(0, take);
       target.hand = [...(target.hand || []), ...taken];
       return { target, taken };
+    }
+    // Queen X-ray visual: a cyan scan sweeps the target's seat; only the Queen's player sees the card faces.
+    // One WAAPI clock (cards 500ms apart, ~1.5s each); Reduce Motion = plain fade. Never blocks play.
+    function noMercyPeekFx(pk, force) {
+      if (!pk || (!force && ((typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) || state.isFastForwarding || document.visibilityState === 'hidden'))) return;
+      if (typeof Element.prototype.animate !== 'function') return;
+      const seat = document.getElementById(`opp-${pk.target}`) || document.getElementById('localPlayerZone');
+      const r = seat && seat.getBoundingClientRect();
+      if (!r || !r.width) return;
+      const target = state.players.find(p => p.id === pk.target);
+      const mine = pk.by === viewSeatId();
+      const calm = motionOff();
+      const layer = document.createElement('div');
+      layer.className = 'nm-peek';
+      layer.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`;
+      const cards = mine ? pk.cardIds.map(id => (target && target.hand || []).find(c => c.id === id)).filter(Boolean) : [];
+      layer.innerHTML = `<i class="nm-peek-scan"></i><span class="nm-peek-chip">X-RAY</span>${cards.map(c => `<b class="nm-peek-card ${getSuitStyle(c.suit)}">${c.isJoker ? 'JKR' : c.rank + c.suit}</b>`).join('')}`;
+      document.body.appendChild(layer);
+      const anims = [];
+      const scan = layer.querySelector('.nm-peek-scan');
+      if (!calm) anims.push(scan.animate([{ transform: 'translateY(0)', opacity: 0 }, { opacity: 1, offset: .15 }, { opacity: 1, offset: .85 }, { transform: `translateY(${r.height}px)`, opacity: 0 }], { duration: 700, easing: 'ease-in-out', fill: 'both' }));
+      else scan.remove();
+      anims.push(layer.querySelector('.nm-peek-chip').animate([{ opacity: 0, transform: 'scale(.8)' }, { opacity: 1, transform: 'scale(1)', offset: .15 }, { opacity: 1, offset: .8 }, { opacity: 0, offset: 1 }], { duration: 1500, fill: 'both' }));
+      layer.querySelectorAll('.nm-peek-card').forEach((el, i) => {
+        const pop = calm
+          ? [{ opacity: 0 }, { opacity: 1, offset: .2 }, { opacity: 1, offset: .8 }, { opacity: 0, offset: 1 }]
+          : [{ opacity: 0, transform: 'translateY(14px) rotateY(90deg) scale(.7)' }, { opacity: 1, transform: 'translateY(-6px) rotateY(0) scale(1.1)', offset: .22 }, { transform: 'translateY(0) rotateY(0) scale(1)', opacity: 1, offset: .3 }, { transform: 'translateY(0) rotateY(0) scale(1)', opacity: 1, offset: .75 }, { opacity: 0, transform: 'translateY(8px) rotateY(90deg) scale(.7)', offset: 1 }];
+        anims.push(el.animate(pop, { duration: 1500, delay: 250 + i * 500, easing: 'ease-out', fill: 'both' }));
+      });
+      Promise.all(anims.map(a => a.finished)).catch(() => {}).then(() => layer.remove());
+      if (typeof audio.playPeekScan === 'function') audio.playPeekScan(pk.cardIds.length);
     }
     // Lobby: who is on which team. Keeps explicit picks while each team has at
     // most two, then fills the rest so the teams stay two and two.
@@ -7126,6 +7158,7 @@
             ${isPartner ? '<span class="shrink-0 text-[7px] md:text-[8px] font-black px-1 h-[15px] flex items-center justify-center rounded-full border bg-sky-950/70 text-sky-300 border-sky-600">PARTNER</span>' : ''}
             ${botBadgeHtml}
             ${statusBadgeHtml}
+            ${isNoMercy() ? noMercyKnownCards(viewId, p.id).map(c => `<span class="nm-known ${getSuitStyle(c.suit)}" data-tip="You saw this card with a Queen">${c.isJoker ? 'JKR' : c.rank + c.suit}</span>`).join('') : ''}
             ${onLastCard ? '<span class="last-card-chip" data-tip="Only one card left">☝️ LAST CARD</span>' : ''}
             <span id="opp-timer-${p.id}" class="hidden text-[7px] md:text-[8px] font-black px-1.5 h-[15px] shrink-0 flex items-center justify-center rounded-full bg-rose-950/70 text-rose-300 border border-rose-600">15s</span>
             ${kickBtnHtml}

@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v449: [['sparkle', 'Queen X-ray scan and memory tags for the new rules-twist mode (not playable yet).']],
       v448: [['sparkle', 'Groundwork for a new rules-twist mode (not playable yet).']],
       v447: [['book', 'The Guide now explains Multiple Decks, with a new Key Term.']],
       v446: [['sparkle', 'Multiple Decks rewards: win 10 games to earn the animated Double Deck avatar, plus four new challenges (win a game, win 10, Snap Burn 10 times, finish top three at a big table).', WN_KEY]],

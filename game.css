@@ -2977,3 +2977,10 @@ body.reduce-motion .rail-row { transition: none; }
 .decks-counts { display:grid; grid-template-columns:repeat(5,1fr); gap:.3rem; margin:.4rem 0 0; }
 .decks-count { padding:.45rem 0; font-size:.8rem; font-weight:900; border-radius:.55rem; border:2px solid #334155; background:rgba(15,23,42,.9); color:#cbd5e1; }
 .decks-count[aria-pressed="true"] { border-color:#6366f1; color:#fff; background:rgba(79,70,229,.35); }
+
+/* § No Mercy: Queen X-ray (blueprint look; cards show only to the Queen's player) */
+.nm-peek { position:fixed; z-index:66; pointer-events:none; display:flex; align-items:center; justify-content:center; gap:.3rem; overflow:visible; }
+.nm-peek-scan { position:absolute; left:0; right:0; top:0; height:3px; background:linear-gradient(90deg,transparent,#67e8f9,transparent); box-shadow:0 0 12px 3px rgba(34,211,238,.6); opacity:0; }
+.nm-peek-chip { position:absolute; top:-9px; padding:0 .4rem; font-size:9px; font-weight:900; letter-spacing:.14em; color:#082f49; background:#67e8f9; border-radius:999px; box-shadow:0 0 10px rgba(34,211,238,.7); }
+.nm-peek-card { position:relative; min-width:2.1rem; padding:.45rem .3rem; font-size:.95rem; font-weight:900; text-align:center; background:#06223a; border:2px solid #22d3ee; border-radius:.5rem; box-shadow:0 0 14px rgba(34,211,238,.65), inset 0 0 8px rgba(34,211,238,.25); opacity:0; }
+.nm-known { flex:none; font-size:8px; font-weight:900; padding:0 .3rem; height:15px; display:inline-flex; align-items:center; border-radius:999px; background:#06223a; border:1px solid #22d3ee; }
