@@ -13677,7 +13677,7 @@
         <radialGradient id="lx-eye-fire"><stop offset="0" stop-color="#fff7ed" stop-opacity=".95"/><stop offset=".3" stop-color="#fb923c" stop-opacity=".8"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/></radialGradient>
         <radialGradient id="lx-flame"><stop offset="0" stop-color="#fde68a" stop-opacity=".55"/><stop offset=".45" stop-color="#f97316" stop-opacity=".3"/><stop offset="1" stop-color="#b91c1c" stop-opacity="0"/></radialGradient>
         <linearGradient id="lx-gleam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`;
-      [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => (r.ldn || r.mum || r.nm) && r.file), ...EARNED_AVATARS.filter(r => r.file)].filter(r => r.category === 'Avatars').forEach((r) => {
+      [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => (r.ldn || r.mum) && r.file), ...EARNED_AVATARS.filter(r => r.file)].filter(r => r.category === 'Avatars').forEach((r) => {
         const motion = levelAvatarMotion(r.id);
         defs += motion.defs;
         AVATAR_ART[r.id] = {
@@ -13809,7 +13809,7 @@
 
     // Card backs: the art fills the back (the emblem and pattern layers hide).
     (function installLevelBackStyles() {
-      const css = [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => (r.ldn || r.mum || r.nm) && r.file)].filter(r => r.category === 'Card Backs').map(r =>
+      const css = [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => (r.ldn || r.mum) && r.file), ...NM_EARNED.filter(r => r.file)].filter(r => r.category === 'Card Backs').map(r =>
         `.cosmetic-${r.id} { background:url("${r.file}") center/cover no-repeat, #07070c !important; color:${r.tone}; }\n` +
         `.custom-card-back.cosmetic-${r.id} { border-color:${r.tone} !important; box-shadow:0 0 8px ${r.tone}66; }`).join('\n') +
         '\n.lvl-back::before, .lvl-back::after { display:none !important; }\n.lvl-back > svg { visibility:hidden; }';
@@ -13850,7 +13850,7 @@
       if (type === 'cardBack' || type === 'tableTheme' || type === 'burnEffect') COSMETIC_RUNTIME_IDS[type].add(it.id);
     });
     // § London Calling: the set's ids join the equip lists of their types.
-    COSMETIC_SHOP_ITEMS.filter(i => i.ldn || i.mum || i.nm).forEach((it) => {
+    [...COSMETIC_SHOP_ITEMS.filter(i => i.ldn || i.mum), ...NM_EARNED].forEach((it) => {
       const type = COSMETIC_CATEGORY_TYPES[it.category];
       if (COSMETIC_RUNTIME_IDS[type]) COSMETIC_RUNTIME_IDS[type].add(it.id);
     });
@@ -14306,7 +14306,7 @@
     // Decks are the deck theme (a card-face preference kept with Settings,
     // not an equipped cosmetic): the four originals are free, the rest are
     // bought in the Shop. Equipping one just selects its theme.
-    function deckItems() { return [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS].filter(item => item.category === 'Decks'); }
+    function deckItems() { return [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...NM_EARNED].filter(item => item.category === 'Decks'); }
     function deckItemForTheme(theme) { return deckItems().find(item => item.theme === theme) || null; }
     function equippedIdOf(type) {
       return type === 'deck' ? (deckItemForTheme(state.deckTheme)?.id || 'deck-obsidian') : equippedCosmetics[type];
@@ -14492,7 +14492,7 @@
       const category = Object.keys(COSMETIC_CATEGORY_TYPES).find(key => COSMETIC_CATEGORY_TYPES[key] === type);
       const bySeason = (items) => SEASONAL_EVENTS.flatMap(ev => sortByValue(items.filter(item => item.season === ev.id)));
       const shop = COSMETIC_SHOP_ITEMS.filter(item => item.category === category);
-      const earned = [...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].filter(item => item.category === category);
+      const earned = [...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS, ...NM_EARNED].filter(item => item.category === category);
       const free = BUILT_IN_COSMETICS.filter(item => item.category === category);
       return [
         ...sortByValue([...free, ...shop.filter(item => !item.season)]),
@@ -16656,10 +16656,11 @@
         { id: 'crowd-pleaser', name: 'Crowd Pleaser', target: 1, reward: 150 }
       ],
       // No Mercy (matchCounters.noMercyWins / nmQueens / nmKings, counted by the server);
-      // 50 Queens unlock The Seer avatar and 50 King pick-ups unlock The Enforcer.
+      // 50 Queens unlock The Seer avatar, 50 King pick-ups The Enforcer, 10 wins the Crimson Verdict card back, 25 wins the deck.
       noMercyWins: [
         { id: 'first-blood', name: 'First Blood', target: 1, reward: 100 },
-        { id: 'no-mercy-veteran', name: 'No Mercy Veteran', target: 10, reward: 300 }
+        { id: 'no-mercy-veteran', name: 'No Mercy Veteran', target: 10, reward: 300 },
+        { id: 'crimson-verdict', name: 'Crimson Verdict', target: 25, reward: 400 }
       ],
       noMercyQueens: [
         { id: 'sixth-sense', name: 'Sixth Sense', target: 50, reward: 200 }
@@ -17518,11 +17519,13 @@
       'avatar-twos': { type: 'twosWins', min: 10 },
       'avatar-decks': { type: 'decksWins', min: 10 },
       'avatar-nm-seer': { type: 'nmQueens', min: 50 },
-      'avatar-nm-enforcer': { type: 'nmKings', min: 50 }
+      'avatar-nm-enforcer': { type: 'nmKings', min: 50 },
+      'back-nm-verdict': { type: 'nmWins', min: 10 },
+      'deck-nm-verdict': { type: 'nmWins', min: 25 }
     };
     function serverEconomyCatalog() {
       const earned = {};
-      EARNED_AVATARS.forEach(item => {
+      [...EARNED_AVATARS, ...NM_EARNED].forEach(item => {
         const rule = item.season ? { type: 'seasonWins', season: item.season, min: SEASONAL_EARN_WINS } : EARNED_AVATAR_RULES[item.id];
         if (!rule) throw new Error(`No server rule for earned picture ${item.id}`);
         earned[item.id] = { name: item.name, requirement: item.requirement, ...rule };
@@ -18001,7 +18004,7 @@
       persistNewCosmetics();
       renderPersonalisationCosmetics();
       if (typeof refreshInboxBadge === 'function') refreshInboxBadge();
-      notifyBanner(`🏆 Avatar unlocked: ${newAvatars.map(item => item.name).join(', ')}`);
+      notifyBanner(`🏆 Unlocked: ${newAvatars.map(item => item.name).join(', ')}`);
     }
     // Pays anything the account already qualifies for (economy `sync`).
     let economySyncInFlight = null;

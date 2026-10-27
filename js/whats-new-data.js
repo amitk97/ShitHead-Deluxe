@@ -3,7 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
-      v451: [['sparkle', 'No Mercy rewards: play 50 Queens to unlock The Seer, make others take 50 cards with Kings for The Enforcer, plus new No Mercy challenges and the Crimson Verdict card back and deck in the Shop.', WN_KEY]],
+      v451: [['sparkle', 'No Mercy rewards: play 50 Queens to unlock The Seer, make others take 50 cards with Kings for The Enforcer, win 10 games for the Crimson Verdict card back and 25 for its deck.', WN_KEY]],
       v450: [['sparkle', 'No Mercy is here: a new mode where Queens see a hidden card, no Joker goes on a 4 and Kings make the next player take the bottom card. Find it in More Modes or Play Friends.', WN_KEY]],
       v449: [['sparkle', 'Queen X-ray scan and memory tags for the new rules-twist mode (not playable yet).']],
       v448: [['sparkle', 'Groundwork for a new rules-twist mode (not playable yet).']],

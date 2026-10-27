@@ -325,6 +325,7 @@ function grantEarnedAvatars(user, legacy, now) {
       : rule.type === 'recruits' ? num(user.referralStats?.recruits) >= rule.min
       : rule.type === 'twosWins' ? num(user.matchCounters?.twosWins) >= rule.min
       : rule.type === 'decksWins' ? num(user.matchCounters?.decksWins) >= rule.min
+      : rule.type === 'nmWins' ? num(user.matchCounters?.noMercyWins) >= rule.min
       : rule.type === 'nmQueens' ? num(user.matchCounters?.nmQueens) >= rule.min
       : rule.type === 'nmKings' ? num(user.matchCounters?.nmKings) >= rule.min
       : false;

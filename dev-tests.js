@@ -7227,6 +7227,8 @@ async function runDevTestSuite() {
       assertTrue(!!AVATAR_ART['avatar-nm-seer'] && !!AVATAR_ART['avatar-nm-enforcer'], 'both avatars have art');
       assertTrue(customAllItems('avatar').some(i => i.id === 'avatar-nm-seer'), 'The Seer is listed in Custom');
       assertTrue(customAllItems('cardBack').some(i => i.id === 'back-nm-verdict') && deckItems().some(i => i.id === 'deck-nm-verdict'), 'the back and deck are listed');
+      assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.nm), 'nothing from No Mercy is sold in the Shop');
+      assertEqual(EARNED_AVATAR_RULES['back-nm-verdict'].min, 10, 'the back follows 10 wins');
       assertTrue(/cosmetic-back-nm-verdict/.test(getThemeDeckBackClass('back-nm-verdict')), 'the back has a class');
       freshState(); startSinglePlayerGame(1, null, { noMercy: true });
       state.phase = 'PLAY'; state.currentTurnIndex = 0; state.drawPile = []; state.discardPile = [c('bot', '7'), c('mid', '9')];
@@ -11007,7 +11009,7 @@ async function runDevTestSuite() {
     ['Obsidian', 'Emerald', 'Cyber', 'Crimson', 'Classic Casino', 'Arcade', 'Four-Colour'].forEach((name) => {
       assertTrue(area.innerHTML.includes(name), `${name} must appear`);
     });
-    assertEqual(area.children.length, 18, 'Eighteen decks (5 free, 13 Shop), no placeholder cards');
+    assertEqual(area.children.length, 18, 'Eighteen decks (5 free, 12 Shop, 1 earned), no placeholder cards');
     assertTrue(!area.innerHTML.includes('Coming Soon'), 'The old Coming Soon placeholder is gone');
     document.getElementById('themesModal').classList.add('hidden');
   });
@@ -11108,7 +11110,7 @@ async function runDevTestSuite() {
       openThemesPanel();
       const area = document.getElementById('themesGridArea');
       const tiles = [...area.querySelectorAll('[data-equip-type="deck"]')];
-      assertEqual(tiles.length, 18, 'Five free decks and thirteen Shop decks');
+      assertEqual(tiles.length, 18, 'Five free decks, twelve Shop decks and the earned No Mercy deck');
       ['deck-obsidian', 'deck-emerald', 'deck-cyber', 'deck-crimson', 'deck-bigprint'].forEach(id => assertTrue(!area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is free`));
       ['deck-casino', 'deck-arcade', 'deck-fourcolour'].forEach(id => assertTrue(area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is locked until bought`));
       assertTrue(area.querySelector('[data-equip-id="deck-fourcolour"]').textContent.includes('750'), 'Four-Colour shows its premium price');

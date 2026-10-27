@@ -484,14 +484,6 @@
    "name": "Mumbai Pack",
    "cost": 500
   },
-  "back-nm-verdict": {
-   "name": "Crimson Verdict",
-   "cost": 1000
-  },
-  "deck-nm-verdict": {
-   "name": "Crimson Verdict",
-   "cost": 1000
-  },
   "back-lunar": {
    "name": "Lucky Envelope",
    "cost": 300,
@@ -971,7 +963,6 @@
   "back-inferno",
   "back-nebula",
   "back-space",
-  "back-nm-verdict",
   "back-dragon",
   "back-mum-marigold",
   "back-stained",
@@ -987,6 +978,7 @@
   "back-ss2705-deep",
   "back-ss2707-pegasus",
   "back-ss2709-cauldron",
+  "back-nm-verdict",
   "back-lunar",
   "back-valentine",
   "back-ramadan",
@@ -1005,10 +997,10 @@
   "deck-frost",
   "deck-neonnight",
   "deck-fourcolour",
-  "deck-nm-verdict",
   "deck-mum-chai",
   "deck-royalgold",
   "deck-ldn-tube",
+  "deck-nm-verdict",
   "frame-silver",
   "frame-gold",
   "frame-diamond",
@@ -1287,6 +1279,18 @@
    "type": "seasonWins",
    "season": "newyear",
    "min": 3
+  },
+  "back-nm-verdict": {
+   "name": "Crimson Verdict",
+   "requirement": "Win 10 games of No Mercy",
+   "type": "nmWins",
+   "min": 10
+  },
+  "deck-nm-verdict": {
+   "name": "Crimson Verdict",
+   "requirement": "Win 25 games of No Mercy",
+   "type": "nmWins",
+   "min": 25
   }
  },
  "seasonalEvents": [
@@ -2119,6 +2123,12 @@
     "name": "No Mercy Veteran",
     "target": 10,
     "reward": 300
+   },
+   {
+    "id": "crimson-verdict",
+    "name": "Crimson Verdict",
+    "target": 25,
+    "reward": 400
    }
   ],
   "noMercyQueens": [

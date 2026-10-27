@@ -126,10 +126,7 @@
       { id: 'burn-mum-monsoon', category: 'Burn Effects', name: 'Monsoon Deluge', cost: 2500, mum: true, tones: ['#06101f','#0ea5e9','#7dd3fc'] },
       { id: 'joker-mum-tiffin', category: 'Joker Effects', name: 'Tiffin Surprise', cost: 3500, mum: true, tones: ['#4a0d2a','#ff9a00','#c6ccd4'] },
       { id: 'victory-mum-gateway', category: 'Victory Effects', name: 'Gateway Gala', cost: 2500, mum: true, tones: ['#120a32','#d3a656','#ff9a00'] },
-      { id: 'emotes-mum', category: 'Emote Packs', name: 'Mumbai Pack', cost: 500, mum: true, tones: ['#6a1038','#f2b200','#ff9a00'] },
-      // No Mercy (v451): the owner's Crimson Verdict card back and deck (the two avatars are earn-only).
-      { id: 'back-nm-verdict', category: 'Card Backs', name: 'Crimson Verdict', cost: 1000, nm: true, tone: '#b91c1c', file: 'art/backs/nm-verdict.webp', tones: ['#14080a','#b91c1c','#c9a04a'] },
-      { id: 'deck-nm-verdict', category: 'Decks', name: 'Crimson Verdict', cost: 1000, nm: true, theme: 'theme-nmverdict', tones: ['#efe3cc','#7a5a2a','#b3141f'] }
+      { id: 'emotes-mum', category: 'Emote Packs', name: 'Mumbai Pack', cost: 500, mum: true, tones: ['#6a1038','#f2b200','#ff9a00'] }
     ];
     // Classic Reactions ships with the game. It remains selectable for old
     // saves, but is intentionally not a purchasable Shop item.
@@ -175,6 +172,11 @@
       { id: 'avatar-decks', category: 'Avatars', name: 'Double Deck', earned: true, animated: true, decks: true, requirement: 'Win 10 games of Multiple Decks', isEarned: () => false },
       { id: 'avatar-nm-seer', category: 'Avatars', name: 'The Seer', earned: true, nm: true, tone: '#e11d48', file: 'art/avatars/nm-seer.webp', requirement: 'Play 50 Queens in No Mercy', isEarned: () => false },
       { id: 'avatar-nm-enforcer', category: 'Avatars', name: 'The Enforcer', earned: true, nm: true, tone: '#b45309', file: 'art/avatars/nm-enforcer.webp', requirement: 'Make other players take 50 cards with Kings in No Mercy', isEarned: () => false }
+    ];
+    // No Mercy rewards (v451): the Crimson Verdict card back and deck are earned, never sold (see EARNED_AVATAR_RULES).
+    const NM_EARNED = [
+      { id: 'back-nm-verdict', category: 'Card Backs', name: 'Crimson Verdict', earned: true, nm: true, tone: '#b91c1c', file: 'art/backs/nm-verdict2.webp', tones: ['#14080a','#b91c1c','#c9a04a'], requirement: 'Win 10 games of No Mercy', isEarned: () => false },
+      { id: 'deck-nm-verdict', category: 'Decks', name: 'Crimson Verdict', earned: true, nm: true, theme: 'theme-nmverdict', tones: ['#efe3cc','#7a5a2a','#b3141f'], requirement: 'Win 25 games of No Mercy', isEarned: () => false }
     ];
     // Earn-only frames: never sold or gifted, shown locked in Custom until
     // the server grants them (Gauntlet Gold: beat the Gauntlet once).

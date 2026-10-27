@@ -39,6 +39,11 @@ const setNow = (iso) => { const t = new RealDate(iso).getTime(); global.Date = c
   }
   assert.equal(get('users/a/difficultyWins/easy'), 1, 'No Mercy wins never add unlock credit');
   assert(get('users/a/completedChallenges/no-mercy-veteran'), 'Veteran at 10');
+  assert(get('users/a/ownedCosmetics/back-nm-verdict'), 'the Crimson Verdict card back at 10 wins');
+  assert(!get('users/a/ownedCosmetics/deck-nm-verdict'), 'not the deck yet');
+  for (let i = 11; i <= 25; i++) await step(economy.matchWin, 'a', { mode: 'bots', matchId: 'm_n' + i, difficulty: 'easy', noMercy: true });
+  assert(get('users/a/completedChallenges/crimson-verdict'), 'Crimson Verdict challenge at 25');
+  assert(get('users/a/ownedCosmetics/deck-nm-verdict'), 'the Crimson Verdict deck at 25 wins');
   // Queens and Kings (bot games are the phone\'s word); a game is capped at 40 of each.
   r = await step(economy.matchFinished, 'a', { matchId: 'f1', noMercy: { queens: 30, kings: 20 } });
   assert.equal(get('users/a/matchCounters/nmQueens'), 30);
