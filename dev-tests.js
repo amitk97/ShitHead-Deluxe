@@ -1497,7 +1497,7 @@ async function runDevTestSuite() {
     const stage = document.createElement('div');
     stage.style.cssText = 'position:fixed;left:0;top:0;width:390px;height:700px;';
     document.body.appendChild(stage);
-    const lengths = {};
+    const lengths = {}; const savedReduceMotion = reduceMotion; reduceMotion = false;
     try {
       for (const id of Object.keys(JOKER_FX)) {
         const host = document.createElement('div');
@@ -1512,7 +1512,7 @@ async function runDevTestSuite() {
             await new Promise(r => setTimeout(r, 50));
           }
           assertTrue(snapshots.size > 4, id + ' draws changing SVG frames');
-          assertTrue(lastVisible >= 1000 && lastVisible <= JOKER_FX_MS + 60, id + ' stays within its playback window');
+          assertTrue(lastVisible >= 1000 && lastVisible <= JOKER_FX_MS + 60, id + ' stays within its playback window (' + lastVisible.toFixed(1) + 'ms)');
           assertTrue(!host.querySelector('svg'), id + ' cleans up its SVG');
           lengths[id] = lastVisible; host.remove(); continue;
         }
@@ -1531,7 +1531,7 @@ async function runDevTestSuite() {
         assertTrue(seen.size > 2, `${id} draws something`);
         host.remove();
       }
-    } finally { stage.remove(); }
+    } finally { stage.remove(); reduceMotion = savedReduceMotion; }
     const tooLong = Object.entries(lengths).filter(([, ms]) => ms > JOKER_FX_MS + 60);
     const tooShort = Object.entries(lengths).filter(([, ms]) => ms < 1000);
     assertEqual(tooLong, [], 'No animation runs past the 1.5s window');
