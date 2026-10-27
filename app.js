@@ -2084,6 +2084,10 @@
         bumpStat(player, 'nmKings', king.taken.length);
         notifyBanner(king.taken.length ? `King played: ${king.target.name} takes ${king.taken.length === 1 ? 'the bottom card' : king.taken.length + ' bottom cards'} of the Pile.` : 'King played.');
         advanceTurn(1);
+      } else if (cardRank === 'A' && isNoMercy()) {
+        const ace = noMercyAce(player, state.discardPile.length - cardsToPlay.length);
+        notifyBanner(ace.length ? `Ace played: ${ace.map(t => t.name).join(', ')} ${ace.length === 1 ? 'takes' : 'take'} a card from the bottom of the Pile.` : 'Ace played.');
+        advanceTurn(1);
       } else if (cardRank === 'Q' && isNoMercy()) {
         const target = getNextPlayer();
         const seen = noMercyPeek(player, target, cardsToPlay.length);
@@ -3191,6 +3195,22 @@
       const taken = state.discardPile.splice(0, take);
       target.hand = [...(target.hand || []), ...taken];
       return { target, taken };
+    }
+    // An Ace makes every opponent, in turn order, take ONE card from the bottom of the Pile (however many Aces were played).
+    // An Ace at the bottom cannot be taken: it stops the pick-up (nobody takes anything from an otherwise empty Pile).
+    // A King can be taken by an Ace, and an Ace by a King. Returns the players who took a card.
+    function noMercyAce(player, underCount) {
+      const n = state.players.length, took = [];
+      let idx = state.currentTurnIndex;
+      for (let step = 0; step < n && underCount > 0; step++) {
+        idx = (idx + state.direction + n) % n;
+        const p = state.players[idx];
+        if (!p || p.id === player.id || p.hasFinished || sameTeam(p, player)) continue;
+        if (state.discardPile[0].rank === 'A') break;
+        p.hand = [...(p.hand || []), state.discardPile.splice(0, 1)[0]];
+        underCount--; took.push(p);
+      }
+      return took;
     }
     // Queen X-ray visual: a cyan scan sweeps the target's seat; only the Queen's player sees the card faces.
     // One WAAPI clock (cards 500ms apart, ~1.5s each); Reduce Motion = plain fade. Never blocks play.

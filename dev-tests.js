@@ -7257,6 +7257,36 @@ async function runDevTestSuite() {
       state.noMercy = true; assertTrue(cell() === '✗', 'No Mercy: Joker on a 4 is refused');
     } finally { state.noMercy = was; state.isMultiplayer = mp; matrixRefOpen = open; }
   });
+  await test('v458: an Ace makes each opponent take one bottom card, stopping at an Ace', () => {
+    try {
+      const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
+      const setup = (pile) => {
+        freshState(); startSinglePlayerGame(2); state.noMercy = true;
+        state.phase = 'PLAY'; state.currentTurnIndex = 0; state.direction = 1;
+        state.players.forEach(p => { p.hand = [c(p.id + 'x', '9')]; p.hasFinished = false; });
+        state.discardPile = pile;
+      };
+      setup([c('b1', '8'), c('b2', 'K'), c('b3', '5'), c('a1', 'A')]);
+      let took = noMercyAce(state.players[0], 3);
+      assertTrue(took.length === 2 && state.players[1].hand.some(x => x.id === 'b1') && state.players[2].hand.some(x => x.id === 'b2'), 'each opponent takes one, a King can be taken');
+      assertTrue(state.discardPile.length === 2, 'the 5 and the Ace stay');
+      setup([c('b1', 'A'), c('b2', '5'), c('a1', 'A')]);
+      took = noMercyAce(state.players[0], 2);
+      assertTrue(took.length === 0 && state.discardPile.length === 3, 'an Ace at the bottom blocks');
+      setup([c('a1', 'A')]);
+      assertTrue(noMercyAce(state.players[0], 0).length === 0, 'nothing under the Ace: nothing taken');
+      setup([c('b1', '8'), c('a1', 'A')]);
+      assertTrue(noMercyAce(state.players[0], 1).length === 1 && state.discardPile.length === 1, 'a short Pile feeds only the first opponent');
+      setup([c('b1', 'A'), c('k1', 'K')]);
+      const king = noMercyKing(state.players[0], 1, 1);
+      assertTrue(king.taken.length === 1 && king.taken[0].rank === 'A', 'a King can take an Ace');
+      setup([c('b1', '8'), c('b2', '5'), c('t1', '9')]);
+      state.players[0].hand = [c('ace', 'A'), c('o', '4')];
+      executePlayCards(state.players[0].id, [state.players[0].hand[0]]);
+      assertTrue(state.players[1].hand.length === 2 && state.players[2].hand.length === 2 && state.discardPile.length === 2 && state.discardPile[1].rank === 'A', 'a real Ace play: ' + state.players.map(p => p.hand.length) + ' pile ' + state.discardPile.map(x => x.rank));
+      assertTrue(/Everyone Takes/.test(cardReferenceLabel('A')) === !!state.noMercy, 'card rules show the Ace');
+    } finally { freshState(); }
+  });
   await test('v455: a bot that is stuck in a loop tries a card it would not normally play', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });

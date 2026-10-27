@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v458: [['spade', 'No Mercy has a new Ace rule: every opponent takes one card from the bottom of the Pile. It stops at an Ace, and a King can be taken by an Ace.', WN_KEY]],
       v457: [['book', 'The card rules pop-up now explains the No Mercy Queen (X-ray), King (takes the bottom card) and Joker (not on a 4), and the Play Matrix shows the Joker as not playable on a 4. Crimson Verdict card back shows its art again.']],
       v456: [['sparkle', 'London Calling and Mumbai Masala have refreshed portraits, cards, tables, frames and emotes, with reworked city effects and matching sound.']],
       v455: [['sparkle', 'Bots that get stuck going round in circles now try a different move to break out of it.']],

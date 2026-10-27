@@ -1,10 +1,11 @@
 // House Rules behaviour helpers used by the in-game Card Powers reference UI.
 // Static reference data lives in card-reference-data.js; rendering stays in index.html.
 // No Mercy changes Q, K and the Joker (and the 4's answer to it).
-const NO_MERCY_LABEL = { Q: 'X-Ray', K: 'Takes Bottom' };
+const NO_MERCY_LABEL = { Q: 'X-Ray', K: 'Takes Bottom', A: 'Everyone Takes' };
 const NO_MERCY_TEXT = {
   Q: 'No Mercy: a high card that X-rays the next player. You see one of their hand cards you have not seen yet, per Queen.',
   K: 'No Mercy: the next player takes a card from the bottom of the Pile per King. It stops at a King, and a King at the bottom cannot be taken.',
+  A: 'No Mercy: the highest card. Every opponent in turn order takes one card from the bottom of the Pile. It stops at an Ace, and an Ace at the bottom cannot be taken.',
   '4': 'The weakest card. It can only be played on a 2, 3, 4, 6 or 7. In No Mercy a Joker cannot be played on it.',
   JOKER: 'Choose a player to pick up the whole Pile. In No Mercy it cannot be played on a 4.'
 };
