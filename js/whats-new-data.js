@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v465: [['info', 'Clearer, lighter icons for Puzzles, No Mercy, 2 vs 2 and Best of Series, with more space around their shapes.']],
       v464: [['info', 'Mode icons now use a coordinated outline set, including the armored Gauntlet, team pairs, House Rules and Best of Series.']],
       v463: [['info', 'No Mercy now has its own skull icon in Play Friends and pinned shortcuts.']],
       v462: [['info', 'The end-of-match page now names the mode: No Mercy, Multiple Decks or House Rules, as well as 2 vs 2, Gauntlet and Ranked.']],
@@ -806,6 +807,7 @@
     };
   window.ShWhatsNewData = { WN_KEY, WHATS_NEW };
 })();
+
 
 
 
