@@ -38,12 +38,13 @@ const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css'
      replace(next){values={...next};cloud.emit();},get data(){return {...values};}};
     clouds.set(uid,cloud);return cloud;
    };
-   db={ref:p=>{const m=p.match(/^publicProfiles\/([^/]+)\/wishlist$/);if(!m)throw Error('Unexpected backend path: '+p);return wishCloud(m[1]);}};
+   // Background health reports are unrelated to wishlist persistence; keep them in memory too.
+   db={ref:p=>{if(/^health\/[^/]+\/[^/]+$/.test(p))return {set:()=>Promise.resolve()};const m=p.match(/^publicProfiles\/([^/]+)\/wishlist$/);if(!m)throw Error('Unexpected backend path: '+p);return wishCloud(m[1]);}};
    currentUser=null;wishlistStore.setAccount(null);shopTab='Card Backs';shopFilter='all';collapsedShopCategories.clear();
    document.getElementById('shopModal').classList.remove('hidden');renderCosmeticShop();
   },data);
  }
- const signin=uid=>page.evaluate(async uid=>{currentUser={uid};await loadWishlist(currentUser);},uid);
+ const signin=uid=>page.evaluate(async uid=>{currentUser={uid};await loadWishlist(currentUser);Health.note('wishlistFixture');Health.save();},uid);
  await boot();
  const item=await page.evaluate(()=>COSMETIC_SHOP_ITEMS.find(i=>!i.season&&i.category==='Card Backs').id);
  const heart=page.locator(`#shopModal [data-wish-item="${item}"]`);
