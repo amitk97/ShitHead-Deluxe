@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-27-v462 (ShitHead-Deluxe-277) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-27-v463 (ShitHead-Deluxe-278) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -259,6 +259,7 @@
     <symbol id="ic-trophy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5v1.5A3.5 3.5 0 0 0 7.5 11M17 6h2.5v1.5A3.5 3.5 0 0 1 16.5 11"/><path d="M12 14v3.5M8.5 20.5h7M9.5 20.5l.5-3h4l.5 3"/></g></symbol>
     <symbol id="ic-flame" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-3.9 0-6.5-2.7-6.5-6.2 0-3.9 3.1-6 4-9.8 2.2 1.4 3.2 3.4 3.2 5.2 1-.6 1.7-1.7 1.9-2.9 2.4 1.9 3.9 4.6 3.9 7.4C18.5 18.3 15.9 21 12 21z"/><path d="M12 21c-1.7 0-3-1.2-3-2.9 0-1.9 1.6-2.8 2.1-4.6 1.8 1 3.9 2.7 3.9 4.6 0 1.7-1.3 2.9-3 2.9z"/></g></symbol>
     <symbol id="ic-joker" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13.5 3 6l5 4 4-6 4 6 5-4-2 7.5z"/><circle cx="3" cy="5.5" r="1"/><circle cx="12" cy="3.5" r="1"/><circle cx="21" cy="5.5" r="1"/><path d="M6 13.5a6 6 0 0 0 12 0"/><path d="M9.5 16.5c.8.8 1.6 1 2.5 1s1.7-.2 2.5-1"/></g></symbol>
+    <symbol id="ic-no-mercy" viewBox="0 0 24 24"><path d="M5 15.5C3.8 14.1 3.5 12.7 3.5 10.5a8.5 8.5 0 0 1 17 0c0 2.2-.3 3.6-1.5 5L17 17v4H7v-4zM7 10l3 1.5-2 2-1-1zM17 10l-3 1.5 2 2 1-1zM12 14l-1 2h2zM10 18v3M14 18v3" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="ic-cards" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3.5" width="11" height="15" rx="2"/><path d="M8 6.5 5.2 7.4a1.5 1.5 0 0 0-1 1.9l3.3 10.3a1.5 1.5 0 0 0 1.9 1l6.6-2.1"/><path d="M13.5 8.5l1.5 2.5-1.5 2.5-1.5-2.5z"/></g></symbol>
     <symbol id="ic-twos" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.8 10.2a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0zM2.5 21v-.6a4.5 4.5 0 0 1 9 0v.6M19.8 10.2a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0zM12.5 21v-.6a4.5 4.5 0 0 1 9 0v.6M12 2l.95 1.95 2.15.3-1.55 1.5.35 2.15L12 6.9l-1.9 1 .35-2.15-1.55-1.5 2.15-.3z"/></g></symbol>
     <symbol id="ic-swords" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3.5 6.5V3.5h3l11 11M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 17.5 3.5h3v3l-3 3M5 14l4 4M7 17l-3 3M3 19l2 2"/></g></symbol>
@@ -690,7 +691,7 @@
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="standard" style="--mc-tone:#10b981" aria-pressed="false"><span class="mc-num">3</span><svg class="mc-ic ic"><use href="#ic-cards"/></svg><strong class="mc-name">Standard</strong><small class="mc-sub">Classic rules</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="series" style="--mc-tone:#f59e0b" aria-pressed="false"><span class="mc-num">4</span><svg class="mc-ic ic"><use href="#ic-swords"/></svg><strong class="mc-name">Best of Series</strong><small class="mc-sub">Best of 3 · 5 · 7</small><button type="button" class="mc-go" data-friends-go>Go →</button><span id="friendsSeriesLock" class="pf-lock"><svg class="ic"><use href="#ic-lock"/></svg><span>Level 20</span></span></div>
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="twos" style="--mc-tone:#3b82f6" aria-pressed="false"><span class="mc-num">5</span><svg class="mc-ic ic"><use href="#ic-twos"/></svg><strong class="mc-name">2 vs 2</strong><small class="mc-sub">Team up with a partner</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
-<div role="button" tabindex="0" class="mc-card" data-friends-mode="noMercy" style="--mc-tone:#ef4444" aria-pressed="false"><span class="mc-num">6</span><svg class="mc-ic ic"><use href="#ic-cards"/></svg><strong class="mc-name">No Mercy</strong><small class="mc-sub">Queens see. Kings take.</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
+<div role="button" tabindex="0" class="mc-card" data-friends-mode="noMercy" style="--mc-tone:#ef4444" aria-pressed="false"><span class="mc-num">6</span><svg class="mc-ic ic"><use href="#ic-no-mercy"/></svg><strong class="mc-name">No Mercy</strong><small class="mc-sub">Queens see. Kings take.</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
 </div><div id="friendsCarouselControls" class="mc-controls"><button type="button" class="mc-arrow" data-friends-step="first" aria-label="First mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 6l-6 6 6 6M19 6l-6 6 6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="prev" aria-label="Previous mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="next" aria-label="Next mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="last" aria-label="Last mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6l6 6-6 6M11 6l6 6-6 6"/></svg></button></div><button type="button" id="friendsConfirmMode" class="hidden" tabindex="-1">HOST STANDARD ROOM</button>
 <div id="friendsRoomSettings" class="pf-ready-row hidden"><button type="button" id="friendsSettingsTrigger" class="pf-secondary" data-friends-config="house"><svg class="ic" viewBox="0 0 32 32"><use href="#ui-settings"/></svg><span>Custom Rules</span></button></div>
             <p id="friendsModeSummary" class="pf-summary" aria-live="polite"></p>
@@ -2771,14 +2772,14 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=5636a4a229a4"></script>
-  <script src="js/whats-new-data.js?v=519807b2bdf2"></script>
+  <script src="js/whats-new-data.js?v=f07fe074248c"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=46ac1e69fef3"></script>
   <script src="tutorial-data.js?v=86b1cdade927"></script>
   <script src="tutorial.js?v=0049a251f6ef"></script>
   <script src="level-ladder.js?v=2236068565c3"></script>
   <script src="shop.js?v=5ae6877dd45b"></script>
-  <script src="home-navigation.js?v=9940f81a51ea"></script>
+  <script src="home-navigation.js?v=e8aaad5742bd"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
   <script src="app.js?v=2cc80e88f343"></script>
@@ -2794,6 +2795,7 @@
   <script src="js/welcome-tour.js?v=1ec181602f01"></script>
 </body>
 </html>
+
 
 
 

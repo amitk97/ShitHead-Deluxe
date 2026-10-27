@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v463: [['info', 'No Mercy now has its own skull icon in Play Friends and pinned shortcuts.']],
       v462: [['info', 'The end-of-match page now names the mode: No Mercy, Multiple Decks or House Rules, as well as 2 vs 2, Gauntlet and Ranked.']],
       v461: [['lock', 'No Mercy now unlocks at Lvl 25 (it shows on the Level Ladder).', WN_KEY]],
       v460: [['spade', 'No Mercy now teaches itself: short tips appear the first two games a 4, Queen, King, Ace or Joker turns up in your hand. Bots also play the King and Ace on purpose.', WN_KEY]],
@@ -804,5 +805,6 @@
     };
   window.ShWhatsNewData = { WN_KEY, WHATS_NEW };
 })();
+
 
 

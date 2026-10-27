@@ -25,13 +25,13 @@ const OFFLINE_ASSETS = [
   '/js/play-matrix-ui.js?v=6a8c496bcbb8',
   '/js/play-matrix-panel.js?v=c3626e811e5c',
   '/js/card-hold.js?v=5636a4a229a4',
-  '/js/whats-new-data.js?v=519807b2bdf2',
+  '/js/whats-new-data.js?v=f07fe074248c',
   '/js/avatar-tones.js?v=a1fc8ff23117',
   '/cosmetics-data.js?v=46ac1e69fef3',
   '/tutorial-data.js?v=86b1cdade927',
   '/tutorial.js?v=0049a251f6ef',
   '/level-ladder.js?v=2236068565c3',
-  '/home-navigation.js?v=9940f81a51ea',
+  '/home-navigation.js?v=e8aaad5742bd',
   '/shop.js?v=5ae6877dd45b',
   '/multiplayer-lobby.js?v=3e73efeeb3e1',
   '/private-cosmetics.js?v=e9f1b6622a99',
@@ -316,6 +316,7 @@ async function checkSeasonStarts(now = new Date()) {
 self.addEventListener('periodicsync', (event) => {
   if (event.tag === 'season-check') event.waitUntil(checkSeasonStarts());
 });
+
 
 
 

@@ -251,7 +251,7 @@
         puzzles: ['Puzzles', 'M4 7a1 1 0 0 1 1-1h3.5a2.5 2.5 0 1 1 5 0H17a1 1 0 0 1 1 1v3.5a2.5 2.5 0 1 1 0 5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z', '#84cc16'],
         random: ['Randomiser', 'M4 7h3l10 10h3M4 17h3l3-3M14 10l3-3h3M18 4l3 3-3 3M18 14l3 3-3 3', '#ec4899'],
         decks: ['Multiple Decks', 'M7 4h10a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM3 7v12a2 2 0 0 0 2 2h9', '#6366f1'],
-        mercy: ['No Mercy', 'M12 3c4.4 0 8 3.1 8 7 0 2.4-1.3 4.4-3 5.6V19a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-3.4C5.3 14.4 4 12.4 4 10c0-3.9 3.6-7 8-7zM9 11h.01M15 11h.01', '#ef4444']
+        mercy: ['No Mercy', 'M5 15.5C3.8 14.1 3.5 12.7 3.5 10.5a8.5 8.5 0 0 1 17 0c0 2.2-.3 3.6-1.5 5L17 17v4H7v-4zM7 10l3 1.5-2 2-1-1zM17 10l-3 1.5 2 2 1-1zM12 14l-1 2h2zM10 18v3M14 18v3', '#ef4444']
       };
       const NO_PIN_TONE = '#64748b'; // an empty shortcut slot
       const pinSvg = (d) => '<svg class="mc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
@@ -766,4 +766,5 @@
       setTimeout(soon, 800);
       soon();
     }
+
 
