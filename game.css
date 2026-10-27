@@ -2449,7 +2449,7 @@
     .shop-row-thumb { flex-shrink:0; width:44px; height:46px; display:flex; align-items:center; justify-content:center; }
     .effect-mini-tile { display:inline-flex; box-sizing:border-box; flex-shrink:0; align-items:center; justify-content:center; width:40px; height:40px; border-radius:10px; border:2px solid #475569; background:#0f172a; color:#cbd5e1; font-size:21px; line-height:1; }
     .effect-mini-tile.is-emotes { display:inline-grid; grid-template-columns:1fr 1fr; place-items:center; font-size:14px; padding:1px; }
-    .frame-mini-card { display:inline-flex; box-sizing:border-box; flex-shrink:0; flex-direction:column; align-items:flex-start; justify-content:flex-start; padding:3px 4px; width:32px; height:44px; border-radius:6px; border:2px solid #475569; background:#0f172a; color:#f8fafc; font-weight:900; font-size:11px; line-height:1.05; }
+    .frame-mini-card { position:relative; display:inline-flex; box-sizing:border-box; flex-shrink:0; flex-direction:column; align-items:flex-start; justify-content:flex-start; padding:3px 4px; width:32px; height:44px; border-radius:6px; border:2px solid #475569; background:#0f172a; color:#f8fafc; font-weight:900; font-size:11px; line-height:1.05; }
     .cosmetic-tile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
     .cosmetic-tile { min-height:104px; }
     .cosmetic-tile .avatar-option-art { min-height:48px; display:flex; align-items:center; justify-content:center; }
