@@ -7219,6 +7219,27 @@ async function runDevTestSuite() {
       assertTrue(isMultiDeck(), 'the room plays as Multiple Decks');
     } finally { freshState(); }
   });
+  await test('v452: Hard bots use the Queen X-ray; Easy and Medium ignore it; the Guide and Key Terms cover No Mercy', () => {
+    try {
+      const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
+      freshState(); startSinglePlayerGame(1, null, { noMercy: true });
+      state.phase = 'PLAY'; state.currentTurnIndex = 0; state.drawPile = []; state.discardPile = [c('p', '4')];
+      const [bot, foe] = state.players;
+      bot.isBot = true; foe.hand = [c('f1', '5'), c('f2', '6')];
+      state.peeks = { [bot.id]: { [foe.id]: ['f1', 'f2'] } };
+      // The foe holds a 5 and a 6, both known: a 9 can be answered by neither, a 6 can be answered by... nothing lower than 6 either.
+      const nine = [c('n9', '9')], six = [c('n6', '6')];
+      const hard9 = evaluateMoveUtility(bot, '9', nine, state.discardPile, null, 'hard', true);
+      state.peeks = {};
+      const blind9 = evaluateMoveUtility(bot, '9', nine, state.discardPile, null, 'hard', true);
+      assertTrue(hard9 > blind9, 'a play the known cards cannot answer scores higher');
+      state.peeks = { [bot.id]: { [foe.id]: ['f1', 'f2'] } };
+      const med9 = evaluateMoveUtility(bot, '9', nine, state.discardPile, null, 'medium', true);
+      assertEqual(med9, blind9, 'Medium bots ignore what they saw');
+      assertTrue(!!document.querySelector('[data-guide-section="nomercy"]') && !!document.querySelector('[data-term="no-mercy"]'), 'Guide section and Key Term exist');
+    } finally { freshState(); }
+  });
+
   await test('v451: No Mercy rewards: challenges, The Seer and The Enforcer avatars, Crimson Verdict back and deck, counters', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });

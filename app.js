@@ -1045,6 +1045,16 @@
         score += (22 - rankVal);
       }
 
+      // No Mercy (Hard and Boss only): use the cards a Queen showed us in the next player's hand.
+      // A play that none of their known cards can answer is better; one they can answer is worse.
+      if ((difficulty === 'hard' || difficulty === 'boss') && isNoMercy() && nextOpponent && !sameTeam(nextOpponent, bot)) {
+        const known = noMercyKnownCards(bot.id, nextOpponent.id);
+        if (known.length) {
+          const answers = known.filter(c => isPlayLegal(c, candidateCards, null)).length;
+          score += answers === 0 ? (known.length >= (nextOpponent.hand?.length || 0) ? 45 : 25) : -12;
+        }
+      }
+
       return score;
     }
 
@@ -18804,6 +18814,7 @@
     // (openGuideTerm). Each term links once per line; text inside tags is
     // left alone. Slugs are the Key Terms' data-term ids.
     const KEY_TERM_LINKS = [
+      ['No Mercy', 'no-mercy'],
       ['Snap Burns?', 'snap-burn'], ['4-of-a-kind|four of a kind', 'four-of-a-kind'],
       ['Joker challenges?|Deflect', 'duel'], ['Bonus Draw', 'bonus-draw'], ['Hard Gauntlet', 'hard-gauntlet'], ['Boss Gauntlet', 'boss-gauntlet'], ['Gauntlet', 'gauntlet'],
       ['Quick Start', 'quick-start'], ['face-down cards?|face-down|blind', 'face-down-cards'],
