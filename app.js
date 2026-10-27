@@ -1123,6 +1123,13 @@
         if (score > bestScore) { bestScore = score; bestRank = rank; }
       });
 
+      // Loop breaker: once the same position has come round twice, the bot stops trusting its usual choice and
+      // tries another legal one (even a card it normally keeps), more often the longer the loop goes on.
+      const loops = state.stalemate && (state.stalemate.repeats || 0) >= 2 ? state.stalemate.repeats : 0;
+      if (loops && Math.random() < Math.min(0.9, 0.3 + 0.2 * loops)) {
+        const other = uniqueRanks.filter(r => r !== bestRank);
+        return pick(other[Math.floor(Math.random() * other.length)]);
+      }
       const accuracy = BOT_ACCURACY[difficulty] ?? BOT_ACCURACY.medium;
       if (Math.random() < accuracy) return pick(bestRank);
 

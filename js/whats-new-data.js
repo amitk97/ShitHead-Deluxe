@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v455: [['sparkle', 'Bots that get stuck going round in circles now try a different move to break out of it.']],
       v454: [['sparkle', 'No Mercy: a King at the bottom of the Pile can no longer be taken by a King, which stops Kings passing round in circles.']],
       v453: [['sparkle', 'A weekly No Mercy challenge joins the pool from next week: win 5 matches of No Mercy.', WN_KEY]],
       v452: [['sparkle', 'No Mercy: Hard and Boss bots now use the cards a Queen showed them. New Guide section and Key Term.']],

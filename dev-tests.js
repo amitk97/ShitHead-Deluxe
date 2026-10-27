@@ -7225,6 +7225,20 @@ async function runDevTestSuite() {
     assertTrue(weeklyRulesFor('2026-W45').pool.some(c => c.id === 'win-twos'), 'older challenges stay in the pool');
   });
 
+  await test('v455: a bot that is stuck in a loop tries a card it would not normally play', () => {
+    try {
+      const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
+      freshState(); startSinglePlayerGame(1);
+      state.phase = 'PLAY'; state.currentTurnIndex = 0; state.discardPile = [c('p', '4')];
+      const bot = state.players[0]; bot.isBot = true; bot.hand = [c('h1', '9'), c('h2', '2')];
+      const moves = bot.hand;
+      state.stalemate = null;
+      state.stalemate = { key: 'k', sig: 's', turns: 20, seen: { s: 3 }, repeats: 3 };
+      let twos = 0; for (let i = 0; i < 200; i++) if (selectBestBotMove(bot, moves, 'boss').some(x => x.rank === '2')) twos++;
+      assertTrue(twos > 60, 'in a loop the precious 2 is tried often (got ' + twos + ' of 200)');
+    } finally { freshState(); }
+  });
+
   await test('v452: Hard bots use the Queen X-ray; Easy and Medium ignore it; the Guide and Key Terms cover No Mercy', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
