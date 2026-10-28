@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v476: [['gift', 'Hover over the Daily Spin and Three Cards circles for a short description.']],
       v475: [['gift', 'Three Cards has its own circle under the Daily Spin wheel, with its own dot while the week’s game is waiting.']],
       v474: [['gift', 'New: Three Cards, a free weekly game. Follow the 300 Diamond card as it is shuffled and pick it. The Daily Spin wheel now wears the colours of the live event, and a wheel-only item you already own is replaced by a 1,250 Diamond slice.', WN_KEY]],
       v473: [['gift', 'Daily Spin: the pop-up now previews both wheel-only prizes, the Lucky Wheel avatar and the Lucky Spin card back, and the wheel slice reads CARD BACK.']],

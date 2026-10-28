@@ -318,6 +318,21 @@
   }
   function close() { if (!S.busy && !M.busy) $('wheelModal')?.classList.add('hidden'); }
 
+  // Hover (PC) or keyboard focus on either home circle explains it in the shared info bubble.
+  const CHIP_TIPS = {
+    homeWheelChip: '<p><b>Daily Spin</b></p><p>One free spin a day for Diamonds, XP or a wheel-only avatar and card back.</p>',
+    homeMontyChip: '<p><b>Three Cards</b></p><p>Once a week, follow the 300 Diamond card as it is shuffled, then pick it.</p>'
+  };
+  const chipTip = (e) => {
+    const c = e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip');
+    if (!c || typeof showInfoPop !== 'function') return;
+    if (e.type === 'mouseover' && !window.matchMedia('(hover: hover)').matches) return;
+    showInfoPop(c, CHIP_TIPS[c.id], { hover: true });
+  };
+  document.addEventListener('mouseover', chipTip);
+  document.addEventListener('focusin', (e) => { if (e.target.matches && e.target.matches(':focus-visible')) chipTip(e); });
+  document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip') && typeof hideInfoPop === 'function') hideInfoPop(); });
+
   document.addEventListener('click', (e) => {
     const t = e.target;
     if (t.closest && t.closest('#homeWheelChip')) open('spin');
