@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v472: [['info', 'The Season Pass and event boxes on the home screen are smaller.']],
       v471: [['gift', 'The Daily Spin wheel now sits inside the top right corner of the home panel instead of over the background.']],
       v470: [['gift', 'Daily Spin is now a small wheel in the top right of the home screen with a gold dot while your spin is waiting. The pop-up previews the animated Lucky Wheel avatar.']],
       v469: [['gift', 'Daily Spin: spin the Lucky Wheel once a day, free, for Diamonds, XP or two wheel-only items (the Lucky Wheel avatar and Lucky Spin card back). Find it on the home screen or in the menu.', WN_KEY]],

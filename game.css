@@ -3145,3 +3145,14 @@ body[data-equipped-frame="frame-mum-kaalipeeli"] :is(.card-base,.card-table,.cus
 .theme-chai :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-city-power="on"]{--city-face:url(art/cities-v2/mumbai-power-base.svg)!important}
 .theme-chai :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-city-power="on"]>div:not(.opponent-card-centre){position:relative;z-index:1}.theme-chai :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-city-power="on"]>.opponent-card-centre{z-index:1}.theme-chai :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-city-power="on"] .text-amber-400{color:var(--text-light)!important}
 .theme-chai{--card-bg:#f7ead1;--card-border:#a66d3b;--text-light:#332330;--text-red:#b5253b}
+
+/* v472: smaller season / event boxes (owner: still too big). The gold circle is the Season Pass tier you have reached. */
+#homeEventChip { margin:6px 0 4px; padding:4px 10px; gap:8px; }
+#homeSeasonChip { margin:0 0 4px; padding:3px 10px; gap:8px; }
+#homeEventChip .hec-emoji { font-size:18px; }
+#homeSeasonChip .hsc-tier { width:26px; height:26px; }
+#homeSeasonChip .hsc-tier b { font-size:12px; }
+#homeSeasonChip .hsc-tier small { display:none; }
+#homeEventChip b, #homeSeasonChip .hec-text b { font-size:11px; line-height:1.15; }
+#homeEventChip small, #homeSeasonChip .hec-text small { font-size:10px; line-height:1.15; }
+#homeEventChip .hec-go, #homeSeasonChip .hec-go { font-size:17px; line-height:1; }
