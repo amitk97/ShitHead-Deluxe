@@ -7386,7 +7386,7 @@ async function runDevTestSuite() {
   });
   await test('v469: the Daily Spin is wired in (chip, menu, modal, wheel-only items)', () => {
     assertTrue(!!window.ShWheel, 'ShWheel');
-    assertTrue(!!document.getElementById('homeWheelChip') && !!document.getElementById('menuWheelBtn') && !!document.getElementById('wheelModal'), 'entry points');
+    assertTrue(!!document.getElementById('homeWheelChip') && !!document.getElementById('homeMontyChip') && !!document.getElementById('menuWheelBtn') && !!document.getElementById('wheelModal'), 'entry points');
     const all = customAllItems('avatar').concat(customAllItems('cardBack'));
     assertTrue(all.some(i => i.id === 'avatar-wheel' && i.wheel) && all.some(i => i.id === 'back-wheel' && i.wheel), 'wheel items listed');
     const w = serverEconomyCatalog().wheel;

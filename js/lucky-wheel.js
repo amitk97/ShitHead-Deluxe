@@ -81,10 +81,13 @@
   function paint() {
     const chip = $('homeWheelChip'), ready = !!(S.status && S.status.canSpin), mReady = !!(S.monty && S.monty.canPlay);
     if (chip) {
-      chip.classList.toggle('hidden', !S.status && !S.monty);
-      chip.classList.toggle('lw-ready', ready || mReady);
+      chip.classList.toggle('hidden', !S.status);
+      chip.classList.toggle('lw-ready', ready);
     }
-    document.querySelectorAll('[data-wheel-dot]').forEach(el => el.classList.toggle('hidden', !(ready || mReady)));
+    const mc = $('homeMontyChip');
+    if (mc) { mc.classList.toggle('hidden', !S.monty); mc.classList.toggle('lw-ready', mReady); }
+    document.querySelectorAll('[data-wheel-dot]').forEach(el => el.classList.toggle('hidden', !ready));
+    document.querySelectorAll('[data-monty-dot]').forEach(el => el.classList.toggle('hidden', !mReady));
     document.querySelectorAll('[data-dot-spin]').forEach(el => el.classList.toggle('hidden', !ready));
     document.querySelectorAll('[data-dot-cards]').forEach(el => el.classList.toggle('hidden', !mReady));
     const btn = $('wheelSpinBtn');
@@ -299,7 +302,7 @@
     }
     paint();
   }
-  function open() {
+  function open(solo) {
     if (!signedIn()) { if (typeof openAuthModal === 'function') openAuthModal(); return; }
     if (!S.busy && !M.busy) S.built = false;
     build();
@@ -307,8 +310,8 @@
     $('wheelSvg').style.transform = `rotate(${S.angle}deg)`;
     $('wheelModal').classList.remove('hidden');
     if (!S.busy) $('wheelResult').innerHTML = S.status && !S.status.canSpin && S.status.last && prize(S.status.last.id) ? `<span>Today’s prize: ${nameOf(view(prize(S.status.last.id)))}.</span>` : '';
-    const wantCards = S.status && !S.status.canSpin && S.monty && S.monty.canPlay;
-    setTab(wantCards ? 'cards' : 'spin');
+    if (solo) $('wheelModal').dataset.solo = solo; else delete $('wheelModal').dataset.solo;
+    setTab(solo || 'spin');
     paint();
     refresh().then(() => { if (!S.busy && !M.busy) { const was = S.built; if (!was) { build(); paintPrize(); } } });
     ($('wheelModal').querySelector('.lw-tab.on') || $('wheelCloseBtn')).focus({ preventScroll: true });
@@ -317,8 +320,9 @@
 
   document.addEventListener('click', (e) => {
     const t = e.target;
-    if (t.closest && t.closest('#homeWheelChip')) open();
-    else if (t.closest && t.closest('#menuWheelBtn')) { if (typeof closeHamburgerMenu === 'function') closeHamburgerMenu(); open(); }
+    if (t.closest && t.closest('#homeWheelChip')) open('spin');
+    else if (t.closest && t.closest('#homeMontyChip')) open('cards');
+    else if (t.closest && t.closest('#menuWheelBtn')) { if (typeof closeHamburgerMenu === 'function') closeHamburgerMenu(); open('spin'); }
     else if (t.id === 'wheelCloseBtn' || t.id === 'wheelModal') close();
     else if (t.id === 'wheelSpinBtn') spin();
     else if (t.closest && t.closest('.lw-tab')) setTab(t.closest('.lw-tab').dataset.lwTab);

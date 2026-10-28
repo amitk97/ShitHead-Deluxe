@@ -12,6 +12,10 @@
 
 - `js/test-lab.js` tabs Back / Table / Deck / Frame / Emote / Avatar (the old dummy-position tab is now "Setup"): tap an item (any in `customAllItems(type)`, decks from `deckItems()`) and `applyLook` sets it IN MEMORY: `equippedCosmetics[type] = id` + `applyEquippedCosmetics()` (the bot's seat gets the back, frame and avatar too), decks through `selectDeckTheme`. Never saved: while `state.labDummy` is set `applyEquippedCosmetics` and `selectDeckTheme` skip their localStorage writes, `eventBotItem` and `showHelperTip` stand down, and `open()` turns `syncShowcase`, `syncPublicProfile` and `scheduleSettingsCloudSave` into no-ops (like the win/history reports). `snapshotReal()` at open and `restoreReal()` on Exit / "My real look" put the account's own look back. Extras: next / previous / Auto-step (1.8s) and an emote strip that floats each emote of the chosen pack from your seat. Trap found: the file's `const CSS` string shadows `window.CSS`, so use `window.CSS.escape`. Client only; no rules, Functions or catalog change. Dev test "v436: the Test Lab tries looks on in memory only…". Frames: scratchpad `lab-shot.js` (fakes `currentUser` and `isAmitkTestingAccount` then clicks the tabs).
 
+## v475 — Three Cards has its own circle
+
+- `#homeMontyChip` (3 fanned cards, 40px, `top: 56px; right: 10px` in the home panel, under `#homeWheelChip`) opens `#wheelModal` on the cards tab; the wheel circle and the menu entry open the spin tab. `ShWheel.open(solo)` sets `data-solo` on the modal and CSS hides `.lw-tabs`. Dots: `[data-wheel-dot]` = spin waiting only, `[data-monty-dot]` = Three Cards waiting. Client only.
+
 ## v474 — Three Cards, themed wheel, owned items become 1,250 Diamonds (owner)
 
 - **Owned items:** `WHEEL.dupeDiamonds` 1250. Economy `wheel` status returns `owned` {itemId: bool}; the client (`view()` in js/lucky-wheel.js) draws an owned item's slice as a 1250 Diamond slice and the server pays the same (the draw weights are unchanged). The prize preview says which items you own.

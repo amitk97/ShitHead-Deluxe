@@ -66,3 +66,13 @@ body.reduce-motion #homeWheelChip .lw-chip-ic { animation: none; }
 .lw-mc:focus-visible { outline: 2px solid #fbbf24; outline-offset: 4px; }
 body.reduce-motion .lw-mc-in { transition-duration: .01s; }
 .lw-odds .lw-odds-themed { color: #fde68a; }
+
+/* Three Cards has its own circle under the wheel; either circle opens the pop-up on its own game (tabs hidden). */
+#homeMontyChip { position: absolute; z-index: 3; top: 56px; right: 10px; display: none; width: 40px; height: 40px; padding: 0; border-radius: 50%; background: #0b1426; border: 1px solid #334155; box-shadow: 0 3px 10px rgba(0,0,0,.4); cursor: pointer; place-items: center; }
+#homeMontyChip:not(.hidden) { display: grid; }
+#lobbyScreen.mode-page-open #homeMontyChip { display: none !important; }
+#homeMontyChip .lw-chip-ic { width: 31px; height: 31px; }
+#homeMontyChip.lw-ready { border-color: #fbbf24; box-shadow: 0 0 0 1px rgba(251,191,36,.25), 0 0 14px rgba(251,191,36,.3); }
+#homeMontyChip .lw-dot-badge { position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; margin: 0; border: 2px solid #0b1426; box-sizing: content-box; }
+#homeMontyChip:focus-visible { outline: 2px solid #fbbf24; outline-offset: 3px; }
+#wheelModal[data-solo] .lw-tabs { display: none; }
