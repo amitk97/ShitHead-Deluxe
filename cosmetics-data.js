@@ -172,8 +172,8 @@
       { id: 'avatar-decks', category: 'Avatars', name: 'Double Deck', earned: true, animated: true, decks: true, requirement: 'Win 10 games of Multiple Decks', isEarned: () => false },
       { id: 'avatar-wheel', category: 'Avatars', name: 'Lucky Wheel', earned: true, animated: true, wheel: true, requirement: 'Win it on the Daily Spin', isEarned: () => false },
       { id: 'avatar-foil-ace', category: 'Avatars', name: 'Prism Ace', earned: true, animated: true, shine: true, scratch: true, tone: '#a78bfa', file: 'art/avatars/foil-prism-ace.webp', requirement: 'Get three Aces in a line on the Scratch Card', isEarned: () => false },
-      { id: 'avatar-nm-seer', category: 'Avatars', name: 'The Seer', earned: true, nm: true, tone: '#e11d48', file: 'art/avatars/nm-seer.webp', requirement: 'Play 50 Queens in No Mercy', isEarned: () => false },
-      { id: 'avatar-nm-enforcer', category: 'Avatars', name: 'The Enforcer', earned: true, nm: true, tone: '#b45309', file: 'art/avatars/nm-enforcer.webp', requirement: 'Make other players take 50 cards with Kings in No Mercy', isEarned: () => false }
+      { id: 'avatar-nm-seer', category: 'Avatars', name: 'The Seer', earned: true, nm: true, shine: true, tone: '#e11d48', file: 'art/avatars/nm-seer.webp', requirement: 'Play 50 Queens in No Mercy', isEarned: () => false },
+      { id: 'avatar-nm-enforcer', category: 'Avatars', name: 'The Enforcer', earned: true, nm: true, shine: true, tone: '#b45309', file: 'art/avatars/nm-enforcer.webp', requirement: 'Make other players take 50 cards with Kings in No Mercy', isEarned: () => false }
     ];
     // Daily Spin (v469): once a UK day, signed in. The server draws the prize by `weight` (out of 1000)
     // and pays it; the wheel the player sees has `segments` (ids, 12 equal slices) and turns to a slice of
