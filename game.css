@@ -3181,3 +3181,7 @@ body[data-equipped-frame="frame-mum-kaalipeeli"] :is(.card-base,.card-table,.cus
 #finalStandingsBanner.fs-two > div { min-width: 0; }
 /* The standings list names every seat, so the 8-row opponent rail steps aside once the match is over */
 body.fs-open #opponentsContainer.opp-rail-on { display: none; }
+
+/* Option 3: seats around the play area on wide screens (ringPlaceSeat); the container only reserves the top row's height */
+#opponentsContainer.opp-ring-on { min-height: 150px; pointer-events: none; }
+#opponentsContainer.opp-ring-on .opp-ring-seat { position: absolute; z-index: 12; pointer-events: auto; width: var(--opp-seat-w); }

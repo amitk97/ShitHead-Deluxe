@@ -7114,18 +7114,22 @@
       // width being wasted, so this scales cards up accordingly.
       // Multiple Decks with 5+ players: thin rows in a left rail, one full seat
       // (whoever is playing, or just played) at the top right.
-      const railMode = isMultiDeck() && opponentCount >= 4;
+      // On a wide PC screen the same big tables seat everyone around the play area instead (ringMode).
+      const railWanted = isMultiDeck() && opponentCount >= 4;
+      const ringMode = railWanted && (window.innerWidth || 0) >= 1100 && (window.innerHeight || 0) >= 640;
+      const railMode = railWanted && !ringMode;
       oppContainer.classList.toggle('opp-rail-on', railMode);
-      const oppScale = railMode ? 1 : opponentCount <= 1 ? 1.55 : opponentCount === 2 ? 1.22 : 1;
+      oppContainer.classList.toggle('opp-ring-on', ringMode);
+      const oppScale = (railMode || ringMode) ? 1 : opponentCount <= 1 ? 1.55 : opponentCount === 2 ? 1.22 : 1;
       oppContainer.style.setProperty('--opp-scale', oppScale);
       // Wide enough for the picture plus a 12-character name at every count.
       const viewportW = window.innerWidth || 390;
-      const seatW = railMode ? Math.min(150, viewportW * 0.4)
+      const seatW = ringMode ? 176 : railMode ? Math.min(150, viewportW * 0.4)
         : opponentCount <= 1 ? Math.min(240, viewportW - 40)
         : opponentCount === 2 ? Math.min(190, (viewportW - 36) / 2)
         : Math.min(150, (viewportW - 30) / 3 - 6);
       oppContainer.style.setProperty('--opp-seat-w', `${Math.floor(seatW)}px`);
-      oppContainer.style.setProperty('--opp-name-size', opponentCount <= 1 ? '12px' : opponentCount === 2 ? '10px' : '8px');
+      oppContainer.style.setProperty('--opp-name-size', ringMode ? '11px' : opponentCount <= 1 ? '12px' : opponentCount === 2 ? '10px' : '8px');
       ensureBotAvatars(state.players);
       ensureBotCardBacks(state.players);
       const oppAvatarSize = Math.round(18 * oppScale);
@@ -7142,7 +7146,7 @@
         }
         railFeatured = railOpponents.find(p => p.id === (railPeekId || railActiveId)) || railOpponents[0];
       }
-      (railMode ? [railFeatured] : oppList).forEach(p => {
+      (railMode ? [railFeatured] : oppList).forEach((p, seatIdx) => {
         const isTurn = currentTurnPlayer && currentTurnPlayer.id === p.id && !p.hasFinished;
         const onLastCard = isOnLastCard(p);
         const isPartner = !!twosView && p.team === twosView.team;
@@ -7265,6 +7269,7 @@
             ${kickBtnHtml}
           </div>
         `;
+        if (ringMode) ringPlaceSeat(oppDiv, seatIdx, oppList.length);
         oppContainer.appendChild(oppDiv);
       });
       if (railMode) oppContainer.insertBefore(buildOppRail(railOpponents, railFeatured, currentTurnPlayer), oppContainer.firstChild);
@@ -7787,6 +7792,19 @@
     const stagedLiftShown = new Set(); // staged cards that already sprang up onto the pile
 
     // § Multiple Decks rail (C): who the top-right seat shows, and the rail rows.
+    // Option 3 (PC, 5+ players): seats go clockwise round the play area: up the left, across the top, down the right.
+    // 4 opponents = 1 / 2 / 1, 5 = 1 / 3 / 1, 6 = 2 / 2 / 2, 7 = 2 / 3 / 2. Inline offsets only (no transform: a turn seat scales).
+    function ringPlaceSeat(el, i, n) {
+      const side = n >= 6 ? 2 : 1, top = n - 2 * side;
+      const leftY = side === 2 ? [58, 26] : [40];   // bottom seat first
+      const rightY = side === 2 ? [26, 58] : [40];  // top seat first
+      const topX = top === 2 ? [-190, 190] : [-330, 0, 330]; // px from the centre line
+      el.classList.add('opp-ring-seat');
+      const half = 'calc(var(--opp-seat-w) / -2)';
+      if (i < side) { el.style.left = 'max(14px, calc(50% - 600px))'; el.style.top = `calc((100vh - 3.75rem) * ${leftY[i] / 100})`; }
+      else if (i < side + top) { el.style.left = `calc(50% + ${topX[i - side]}px)`; el.style.marginLeft = half; el.style.top = '8px'; }
+      else { el.style.right = 'max(14px, calc(50% - 600px))'; el.style.top = `calc((100vh - 3.75rem) * ${rightY[i - side - top] / 100})`; }
+    }
     let railActiveId = null; // the opponent whose turn it was last
     let railPeekId = null;   // a row the player tapped, until the turn moves on
     function buildOppRail(list, featured, turnPlayer) {

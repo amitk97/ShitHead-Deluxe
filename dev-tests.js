@@ -7230,6 +7230,30 @@ async function runDevTestSuite() {
       assertEqual(document.querySelectorAll('#localHand .hand-stack').length, 0, 'a small hand stays in rows');
     } finally { freshState(); }
   });
+  await test('v488: on a wide PC screen a 5+ player Multiple Decks table seats everyone round the play area', () => {
+    const wDesc = Object.getOwnPropertyDescriptor(window, 'innerWidth'), hDesc = Object.getOwnPropertyDescriptor(window, 'innerHeight');
+    try {
+      Object.defineProperty(window, 'innerWidth', { value: 1500, configurable: true });
+      Object.defineProperty(window, 'innerHeight', { value: 860, configurable: true });
+      freshState(); startSinglePlayerGame(7, null, { multiDeck: true });
+      state.phase = 'PLAY'; state.currentTurnIndex = 2; render();
+      const box = document.getElementById('opponentsContainer');
+      assertTrue(box.classList.contains('opp-ring-on') && !box.classList.contains('opp-rail-on'), 'ring layout, no rail');
+      assertEqual(box.querySelectorAll('.rail-row').length, 0, 'no rail rows');
+      const seats = [...box.querySelectorAll('.opp-ring-seat')];
+      assertEqual(seats.length, 7, 'every opponent has a full seat');
+      const spots = new Set(seats.map(e => e.style.left + '|' + e.style.right + '|' + e.style.top + '|' + e.style.marginLeft));
+      assertEqual(spots.size, 7, 'every seat has its own place');
+      assertEqual(seats.filter(e => e.style.left.startsWith('max(')).length, 2, 'two seats up the left');
+      assertEqual(seats.filter(e => e.style.right.startsWith('max(')).length, 2, 'two seats down the right');
+      Object.defineProperty(window, 'innerWidth', { value: 390, configurable: true }); render();
+      assertTrue(box.classList.contains('opp-rail-on') && !box.classList.contains('opp-ring-on'), 'a phone keeps the rail');
+    } finally {
+      if (wDesc) Object.defineProperty(window, 'innerWidth', wDesc); else delete window.innerWidth;
+      if (hDesc) Object.defineProperty(window, 'innerHeight', hDesc); else delete window.innerHeight;
+      freshState(); render();
+    }
+  });
   await test('v445: Multiple Decks chooser starts 4-8 player games; a Friends room seats 8 and fills bots to four at the start', () => {
     try {
       document.querySelector('[data-open-decks]').click();
