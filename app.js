@@ -4570,9 +4570,12 @@
       const html = buildFinalStandingsHtml(state.players, state.localPlayerId, state.isRanked);
       if (html) {
         standingsEl.innerHTML = html;
+        standingsEl.classList.toggle('fs-two', state.players.filter(p => p.hasFinished).length > 4);
         standingsEl.classList.remove('hidden');
+        document.body.classList.add('fs-open');
       } else {
         standingsEl.classList.add('hidden');
+        document.body.classList.remove('fs-open');
       }
     }
 
@@ -4694,6 +4697,7 @@
       document.getElementById('matchStatsModal')?.classList.add('hidden');
       document.getElementById('victoryOverlay')?.classList.add('hidden');
       document.getElementById('finalStandingsBanner')?.classList.add('hidden');
+      document.body.classList.remove('fs-open');
       document.getElementById('turnIndicatorRow')?.classList.remove('hidden');
       document.getElementById('localHand')?.classList.remove('match-end-compact');
     }

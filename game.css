@@ -3175,3 +3175,9 @@ body[data-equipped-frame="frame-mum-kaalipeeli"] :is(.card-base,.card-table,.cus
 #homeEventChip .hec-go, #homeSeasonChip .hec-go { font-size:17px; line-height:1; }
 
 .nm-peek-card u { text-decoration:none; display:block; }
+
+/* Final standings with 5+ players: two columns, so 8 seats are not taller than the room above the buttons */
+#finalStandingsBanner.fs-two { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; padding-top: 6px; padding-bottom: 6px; }
+#finalStandingsBanner.fs-two > div { min-width: 0; }
+/* The standings list names every seat, so the 8-row opponent rail steps aside once the match is over */
+body.fs-open #opponentsContainer.opp-rail-on { display: none; }
