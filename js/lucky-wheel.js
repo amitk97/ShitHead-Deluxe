@@ -141,7 +141,7 @@
   }
   function scOdds() {
     $('scratchOdds').innerHTML = SCR.prizes.map(p => `<li><span class="lw-odds-name">${scName(p)}</span><b>${(p.weight / 10).toFixed(p.weight % 10 ? 1 : 0)}%</b></li>`).join('')
-      + `<li class="lw-odds-note">Three of one card in a row, column or diagonal wins. Once you own a Jackpot item, winning it pays ${SCR.dupeDiamonds.toLocaleString('en-GB')} Diamonds instead. Every card pays something.</li>`;
+      + `<li class="lw-odds-note">Three of one card in a row, column or diagonal wins. Once you own a Prism item, winning it pays ${SCR.dupeDiamonds.toLocaleString('en-GB')} Diamonds instead. Every card pays something.</li>`;
   }
   const SC_LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
   const SC_SUITS = ['♠', '♥', '♦', '♣'];
@@ -485,7 +485,7 @@
   // Hover (PC) or keyboard focus on either home circle explains it in the shared info bubble.
   const CHIP_TIPS = {
     homeWheelChip: '<p><b>Daily Spin</b></p><p>One free spin a day for Diamonds, XP or a wheel-only avatar and card back.</p>',
-    homeScratchChip: '<p><b>Scratch Card</b></p><p>One free card a day. Scratch off the foil and get three of a kind in a line, like tic tac toe, to win Diamonds or a Jackpot item.</p>',
+    homeScratchChip: '<p><b>Scratch Card</b></p><p>One free card a day. Scratch off the foil and get three of a kind in a line, like tic tac toe, to win Diamonds or a Prism item.</p>',
     homeMontyChip: '<p><b>Three Cards</b></p><p>Once a week, follow the 300 Diamond card as it is shuffled, then pick it.</p>'
   };
   const chipTip = (e) => {

@@ -98,3 +98,4 @@ body.reduce-motion .lw-sc-foil, body.reduce-motion .lw-sc-cell { transition: non
 #scratchBtn:disabled { opacity: .55; cursor: default; }
 #scratchPanel { min-height: 27rem; }
 #scratchRevealBtn, #scratchOddsBtn { margin-inline: .6rem; }
+#homeWheelChip .lw-chip-ic, #homeMontyChip .lw-chip-ic { width: 35px; height: 35px; }

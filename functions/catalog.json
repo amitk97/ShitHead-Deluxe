@@ -1215,7 +1215,7 @@
    "type": "wheel"
   },
   "avatar-foil-ace": {
-   "name": "Jackpot Wheel",
+   "name": "Prism Ace",
    "requirement": "Get three Aces in a line on the Scratch Card",
    "type": "wheel"
   },
@@ -1312,7 +1312,7 @@
    "type": "wheel"
   },
   "back-foil-joker": {
-   "name": "Jackpot Spin",
+   "name": "Prism Joker",
    "requirement": "Win it on the Scratch Card",
    "type": "wheel"
   }
@@ -1498,7 +1498,7 @@
     "symbol": "A",
     "kind": "item",
     "itemId": "avatar-foil-ace",
-    "name": "Jackpot Wheel",
+    "name": "Prism Ace",
     "weight": 20
    },
    {
@@ -1506,7 +1506,7 @@
     "symbol": "JOKER",
     "kind": "item",
     "itemId": "back-foil-joker",
-    "name": "Jackpot Spin",
+    "name": "Prism Joker",
     "weight": 10
    }
   ]

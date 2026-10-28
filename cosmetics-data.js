@@ -171,7 +171,7 @@
       { id: 'avatar-twos', category: 'Avatars', name: 'Dream Team', earned: true, animated: true, twos: true, requirement: 'Win 10 games of 2 vs 2', isEarned: () => false },
       { id: 'avatar-decks', category: 'Avatars', name: 'Double Deck', earned: true, animated: true, decks: true, requirement: 'Win 10 games of Multiple Decks', isEarned: () => false },
       { id: 'avatar-wheel', category: 'Avatars', name: 'Lucky Wheel', earned: true, animated: true, wheel: true, requirement: 'Win it on the Daily Spin', isEarned: () => false },
-      { id: 'avatar-foil-ace', category: 'Avatars', name: 'Jackpot Wheel', earned: true, animated: true, scratch: true, tone: '#e5a82a', spin: { disc: 'art/avatars/jackpot-wheel-disc.webp', pointer: 'art/avatars/jackpot-wheel-pointer.webp', cx: 503.6, cy: 514.6, size: 763, ptr: [407.7, 34, 187, 151] }, file: 'art/avatars/jackpot-wheel-tile.webp', requirement: 'Get three Aces in a line on the Scratch Card', isEarned: () => false },
+      { id: 'avatar-foil-ace', category: 'Avatars', name: 'Prism Ace', earned: true, animated: true, scratch: true, tone: '#a78bfa', file: 'art/avatars/foil-prism-ace.webp', requirement: 'Get three Aces in a line on the Scratch Card', isEarned: () => false },
       { id: 'avatar-nm-seer', category: 'Avatars', name: 'The Seer', earned: true, nm: true, tone: '#e11d48', file: 'art/avatars/nm-seer.webp', requirement: 'Play 50 Queens in No Mercy', isEarned: () => false },
       { id: 'avatar-nm-enforcer', category: 'Avatars', name: 'The Enforcer', earned: true, nm: true, tone: '#b45309', file: 'art/avatars/nm-enforcer.webp', requirement: 'Make other players take 50 cards with Kings in No Mercy', isEarned: () => false }
     ];
@@ -209,8 +209,8 @@
         { id: 'jacks', symbol: 'J', kind: 'diamonds', amount: 50, weight: 230 },
         { id: 'queens', symbol: 'Q', kind: 'diamonds', amount: 100, weight: 130 },
         { id: 'kings', symbol: 'K', kind: 'diamonds', amount: 250, weight: 50 },
-        { id: 'aces', symbol: 'A', kind: 'item', itemId: 'avatar-foil-ace', name: 'Jackpot Wheel', weight: 20 },
-        { id: 'jokers', symbol: 'JOKER', kind: 'item', itemId: 'back-foil-joker', name: 'Jackpot Spin', weight: 10 }
+        { id: 'aces', symbol: 'A', kind: 'item', itemId: 'avatar-foil-ace', name: 'Prism Ace', weight: 20 },
+        { id: 'jokers', symbol: 'JOKER', kind: 'item', itemId: 'back-foil-joker', name: 'Prism Joker', weight: 10 }
       ]
     };
     // No Mercy rewards (v451): the Crimson Verdict card back and deck are earned, never sold (see EARNED_AVATAR_RULES).
@@ -218,7 +218,7 @@
       { id: 'back-nm-verdict', category: 'Card Backs', name: 'Crimson Verdict', earned: true, nm: true, tone: '#b91c1c', file: 'art/backs/nm-verdict2.webp', tones: ['#14080a','#b91c1c','#c9a04a'], requirement: 'Win 10 games of No Mercy', isEarned: () => false },
       { id: 'deck-nm-verdict', category: 'Decks', name: 'Crimson Verdict', earned: true, nm: true, theme: 'theme-nmverdict', tones: ['#efe3cc','#7a5a2a','#b3141f'], requirement: 'Win 25 games of No Mercy', isEarned: () => false },
       { id: 'back-wheel', category: 'Card Backs', name: 'Lucky Spin', earned: true, wheel: true, tone: '#f59e0b', tones: ['#0b1230','#f59e0b','#b91c1c'], requirement: 'Win it on the Daily Spin', isEarned: () => false },
-      { id: 'back-foil-joker', category: 'Card Backs', name: 'Jackpot Spin', earned: true, scratch: true, tone: '#e5a82a', file: 'art/backs/jackpot-spin-card.webp', tones: ['#0a1226','#8b5cf6','#67e8f9'], requirement: 'Win it on the Scratch Card', isEarned: () => false }
+      { id: 'back-foil-joker', category: 'Card Backs', name: 'Prism Joker', earned: true, scratch: true, tone: '#a78bfa', file: 'art/backs/foil-prism-joker.webp', tones: ['#0a1226','#8b5cf6','#67e8f9'], requirement: 'Win it on the Scratch Card', isEarned: () => false }
     ];
     // Earn-only frames: never sold or gifted, shown locked in Custom until
     // the server grants them (Gauntlet Gold: beat the Gauntlet once).

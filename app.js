@@ -6369,7 +6369,7 @@
         'back-dragon': 'cosmetic-back-dragon',
         'back-stained': 'cosmetic-back-stained',
         'back-wheel': 'cosmetic-back-wheel',
-        'back-foil-joker': 'cosmetic-back-foil-joker cosmetic-back-jackpot lvl-back'
+        'back-foil-joker': 'cosmetic-back-foil-joker lvl-back'
       };
       if (/^back-(lvl|ldn|mum|nm|ss[0-9]{4})-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
       if (cosmeticBackClasses[backId]) return cosmeticBackClasses[backId];
@@ -13818,8 +13818,6 @@
           photo: true, tone: 'gold', animated: !!r.animated || !!motion.art,
           art: `<rect width="1000" height="1000" rx="234" fill="#07070c"/>`
             + `<image href="${r.file}" width="1000" height="1000" preserveAspectRatio="xMidYMid slice" style="clip-path:inset(0 round 234px)"/>`
-            + (r.spin ? `<image class="av-jspin" style="transform-origin:${r.spin.cx}px ${r.spin.cy}px" href="${r.spin.disc}" x="${r.spin.cx - r.spin.size / 2}" y="${r.spin.cy - r.spin.size / 2}" width="${r.spin.size}" height="${r.spin.size}"/>`
-              + `<image href="${r.spin.pointer}" x="${r.spin.ptr[0]}" y="${r.spin.ptr[1]}" width="${r.spin.ptr[2]}" height="${r.spin.ptr[3]}"/>` : '')
             + motion.art
             + (r.animated ? `<rect class="av-lvl-glow" x="10" y="10" width="980" height="980" rx="226" fill="none" stroke="${r.tone}" stroke-width="44" opacity=".25"/>` : '')
             + `<rect x="12" y="12" width="976" height="976" rx="222" fill="none" stroke="${r.tone}" stroke-width="22" opacity=".9"/>`
