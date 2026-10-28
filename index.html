@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-27-v468 (ShitHead-Deluxe-283) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-28-v469 (ShitHead-Deluxe-283) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -15,6 +15,7 @@
 <html lang="en" class="dark">
 <head>
   <link rel="stylesheet" href="css/friends-lobby.css?v=d41876d5ca00">
+  <link rel="stylesheet" href="css/lucky-wheel.css?v=0f9f24af26c6">
   <link rel="stylesheet" href="css/puzzles.css?v=584fef898369">
   <link rel="stylesheet" href="css/welcome-tour.css?v=9d478452ecd0">
   <meta charset="UTF-8" />
@@ -227,7 +228,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=e6c300c3f62a">
+  <link rel="stylesheet" href="game.css?v=6b95f9cca4b0">
 
   
   <!-- Firebase SDKs -->
@@ -327,6 +328,7 @@
     <symbol id="ui-leaderboard" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M6 25v-8h7v8M13 25V8h7v17M20 25V14h6v11" fill="#263449" stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"/><path d="M15.5 12h2M8.5 20.5h2M22 17.5h2" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="ui-challenges" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><g fill="none" stroke="#34d399" stroke-width="1.45"><circle cx="13" cy="18" r="9.3"/><circle cx="13" cy="18" r="6.1"/><circle cx="13" cy="18" r="2.9"/></g><path d="m11.9 17.6.6.5-.5.4.7.3-.4.6" fill="none" stroke="#94a3b8" stroke-width=".7" stroke-linejoin="round"/><g transform="translate(0 1.3) rotate(20 20 12.5)"><rect x="15.5" y="6" width="9" height="13" rx="1.7" fill="#263449" stroke="#cbd5e1" stroke-width="1.25"/><path d="M17.1 10.4 18.1 7.6l1 2.8M17.5 9.4h1.2" fill="none" stroke="#cbd5e1" stroke-width=".85" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.2 11.3c-.8 1.1-2.3 1.9-2.3 3.1 0 .9 1 1.4 1.9.8l-.4 1.4h1.6l-.4-1.4c.9.6 1.9.1 1.9-.8 0-1.2-1.5-2-2.3-3.1Z" fill="#cbd5e1"/></g></symbol>
     <symbol id="ui-ladder" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M11 26 12.2 6M21 26 19.8 6" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/><path d="M11.6 21.5h8.8M11.9 16.8h8.2M12.1 12.1h7.8" stroke="#60a5fa" stroke-width="1.9" stroke-linecap="round"/><path d="M12.4 7.6h7.2" stroke="#fbbf24" stroke-width="2.1" stroke-linecap="round"/><path d="m24.5 5.5.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8Z" fill="#fbbf24"/></symbol>
+    <symbol id="ui-wheel" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><circle cx="16" cy="17" r="9.2" fill="#263449" stroke="#fbbf24" stroke-width="2"/><path d="M16 17V8.4M16 17l6.1 6.1M16 17l-6.1 6.1" stroke="#cbd5e1" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="17" r="2" fill="#fbbf24"/><path d="m16 7.6-2.4-4h4.8Z" fill="#f87171"/></symbol>
     <symbol id="ui-shop" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M6.5 8h3l2.2 11.2h11.8l2-7.5H11" fill="#263449" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="24" r="1.8" fill="#34d399"/><circle cx="22" cy="24" r="1.8" fill="#34d399"/></symbol>
     <symbol id="ui-guide" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="M12.2 12a4.2 4.2 0 1 1 6.1 3.7c-1.6.8-2.3 1.6-2.3 3" fill="none" stroke="#34d399" stroke-width="2.8" stroke-linecap="round"/><circle cx="16" cy="23.2" r="1.5" fill="#cbd5e1"/></symbol>
     <symbol id="ui-settings" viewBox="0 0 32 32"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033"/><path d="m16 7 2 .6 1.6-1 2.8 2.8-1 1.6.6 2 2 .8v4l-2 .8-.6 2 1 1.6-2.8 2.8-1.6-1-2 .6-.8 2h-4l-.8-2-2-.6-1.6 1L4 22.3l1-1.6-.6-2-2-.8v-4l2-.8.6-2-1-1.6 2.8-2.8 1.6 1 2-.6.8-2h4l.8 2Z" transform="translate(2 0)" fill="#263449" stroke="#cbd5e1" stroke-width="1.7" stroke-linejoin="round"/><circle cx="16" cy="15.8" r="3.4" fill="none" stroke="#60a5fa" stroke-width="2"/></symbol>
@@ -500,6 +502,7 @@
       <button id="menuLeaderboardBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-leaderboard"/></svg></span><span>Leaderboard</span></button>
       <button id="menuChallengesBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-challenges"/></svg></span><span>Challenges</span></button>
       <button id="menuLadderBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-ladder"/></svg></span><span>Level Ladder</span></button>
+      <button id="menuWheelBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-wheel"/></svg></span><span>Daily Spin<i class="lw-dot-badge hidden" data-wheel-dot aria-hidden="true"></i></span></button>
       <button id="menuShopBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-shop"/></svg></span><span>Shop</span></button>
       <div class="border-t border-slate-800" style="margin: 4px 0;"></div>
       <button id="menuGuideBtn" class="hamburger-menu-item"><span class="item-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></span><span>Guide &amp; Strategy</span></button>
@@ -562,6 +565,11 @@
         <button type="button" id="homeSeasonChip" class="hidden" aria-label="Open the Season Pass">
           <span class="hsc-tier" aria-hidden="true"><b id="homeSeasonTier">0</b><small>Tier</small></span>
           <span class="hec-text"><b id="homeSeasonTitle"></b><small id="homeSeasonSub"></small></span>
+          <span class="hec-go" aria-hidden="true">&rsaquo;</span>
+        </button>
+        <button type="button" id="homeWheelChip" class="hidden" aria-label="Open the Daily Spin">
+          <svg class="lw-chip-ic" viewBox="0 0 38 38" aria-hidden="true"><circle cx="19" cy="19" r="18" fill="#f59e0b" stroke="#3b2204"/><path d="M19 19L19.0 3.0A16 16 0 0 1 30.3 7.7Z" fill="#b91c1c"/><path d="M19 19L30.3 7.7A16 16 0 0 1 35.0 19.0Z" fill="#f59e0b"/><path d="M19 19L35.0 19.0A16 16 0 0 1 30.3 30.3Z" fill="#1e3a8a"/><path d="M19 19L30.3 30.3A16 16 0 0 1 19.0 35.0Z" fill="#fde68a"/><path d="M19 19L19.0 35.0A16 16 0 0 1 7.7 30.3Z" fill="#b91c1c"/><path d="M19 19L7.7 30.3A16 16 0 0 1 3.0 19.0Z" fill="#f59e0b"/><path d="M19 19L3.0 19.0A16 16 0 0 1 7.7 7.7Z" fill="#1e3a8a"/><path d="M19 19L7.7 7.7A16 16 0 0 1 19.0 3.0Z" fill="#fde68a"/><circle cx="19" cy="19" r="4.4" fill="#fde68a" stroke="#3b2204" stroke-width=".8"/></svg>
+          <span class="hec-text"><b>Daily Spin</b><small id="homeWheelSub"></small></span>
           <span class="hec-go" aria-hidden="true">&rsaquo;</span>
         </button>
         <div id="modeCarousel" role="group" aria-label="Game modes">
@@ -2186,6 +2194,21 @@
       <div id="modeIntroBody"></div>
     </div>
   </div>
+  <div id="wheelModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="wheelTitle">
+    <div class="gauntlet-card lw-card">
+      <button type="button" id="wheelCloseBtn" class="gauntlet-close" aria-label="Close">✕</button>
+      <h2 id="wheelTitle" class="gauntlet-title">Daily Spin</h2>
+      <p id="wheelSub" class="gauntlet-text">One free spin every day.</p>
+      <div class="lw-stage">
+        <svg id="wheelSvg" class="lw-wheel" viewBox="0 0 300 300" aria-hidden="true"></svg>
+        <div id="wheelPointer" class="lw-pointer" aria-hidden="true"><svg viewBox="0 0 30 40"><path d="M15 38 3.5 12.5A13 13 0 1 1 26.5 12.5Z" fill="#dc2626" stroke="#fde68a" stroke-width="2.2" stroke-linejoin="round"/><circle cx="15" cy="13" r="4.2" fill="#fde68a"/></svg></div>
+      </div>
+      <div id="wheelResult" class="lw-result" role="status" aria-live="polite"></div>
+      <button type="button" id="wheelSpinBtn" class="gauntlet-go">SPIN</button>
+      <button type="button" id="wheelOddsBtn" class="lw-odds-btn" aria-expanded="false" aria-controls="wheelOdds">Prizes and odds</button>
+      <ul id="wheelOdds" class="lw-odds hidden"></ul>
+    </div>
+  </div>
   <div id="twosModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="twosTitle">
     <div class="gauntlet-card twos-card">
       <button type="button" id="twosCloseBtn" class="gauntlet-close" aria-label="Close">✕</button>
@@ -2744,7 +2767,7 @@
   <script src="art/burns/icons.js?v=97c925509b37"></script>
   <script src="art/effects/icons.js?v=dc511958ba17"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
-  <script src="sound.js?v=8dac7c575ab2"></script>
+  <script src="sound.js?v=405fbeb9481f"></script>
 
   <!-- BURN EMBER PARTICLE ENGINE -->
   <script src="art/cities-v2/city-effects.js?v=4e5acd905f79"></script>
@@ -2774,23 +2797,24 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=47726d6f1d5f"></script>
-  <script src="js/whats-new-data.js?v=157f913ea0c3"></script>
+  <script src="js/whats-new-data.js?v=eeccdd880481"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
-  <script src="cosmetics-data.js?v=46ac1e69fef3"></script>
+  <script src="cosmetics-data.js?v=7b0ec6f0ca5a"></script>
   <script src="tutorial-data.js?v=86b1cdade927"></script>
   <script src="tutorial.js?v=0049a251f6ef"></script>
   <script src="level-ladder.js?v=2236068565c3"></script>
   <script src="js/wishlist-store.js?v=664496c9f24f"></script>
-  <script src="shop.js?v=97e055db285b"></script>
+  <script src="shop.js?v=c76a38589f68"></script>
   <script src="home-navigation.js?v=8b927cb2e918"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=7bdda14a0535"></script>
+  <script src="app.js?v=2f96d256bc90"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>
   <script src="js/house-rules-presets.js?v=80f7a658ecb1"></script>
   <script src="js/friends-lobby.js?v=d6461177af51"></script>
+  <script src="js/lucky-wheel.js?v=fcf393fdd797"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>
   <script src="js/puzzles.js?v=87cb627bec7c"></script>

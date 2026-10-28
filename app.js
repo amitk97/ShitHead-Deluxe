@@ -109,7 +109,7 @@
     // browsers' compositing) made their position:fixed boxes start at the
     // table's top instead of the screen's, pushing the top and X of a tall
     // page (e.g. Profile on iPhone) under the header.
-    ['puzzlesModal', 'twosModal', 'decksModal', 'noMercyModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
+    ['puzzlesModal', 'wheelModal', 'twosModal', 'decksModal', 'noMercyModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
      'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'eventPopupModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
@@ -6367,7 +6367,8 @@
         'back-tartan': 'cosmetic-back-tartan',
         'back-artdeco': 'cosmetic-back-artdeco',
         'back-dragon': 'cosmetic-back-dragon',
-        'back-stained': 'cosmetic-back-stained'
+        'back-stained': 'cosmetic-back-stained',
+        'back-wheel': 'cosmetic-back-wheel'
       };
       if (/^back-(lvl|ldn|mum|nm|ss[0-9]{4})-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
       if (cosmeticBackClasses[backId]) return cosmeticBackClasses[backId];
@@ -11690,6 +11691,20 @@
         <rect x="21" y="43" width="22" height="11" rx="3.5" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.45)" stroke-width="1.1"/>
         <text x="32" y="51.6" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="8.6" fill="#1e1b4b" letter-spacing="-.3">x2</text>
         <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
+      // Lucky Wheel (wheel-only): a gold-rimmed wheel that spins up, slows and settles under a pointer.
+      'avatar-wheel':        { tone: 'gold', animated: true, art: `
+        <circle cx="32" cy="34" r="25" fill="url(#av-m-glow)" opacity=".24"/>
+        <g class="av-wheelspin" stroke="none">
+          <circle cx="32" cy="35.5" r="23" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.5)" stroke-width="1"/>
+          <path d="M32 35.5L32.00 15.50A20 20 0 0 1 46.14 21.36Z" fill="#dc2626"/><path d="M32 35.5L46.14 21.36A20 20 0 0 1 52.00 35.50Z" fill="#fbbf24"/><path d="M32 35.5L52.00 35.50A20 20 0 0 1 46.14 49.64Z" fill="#1e3a8a"/><path d="M32 35.5L46.14 49.64A20 20 0 0 1 32.00 55.50Z" fill="#fde68a"/><path d="M32 35.5L32.00 55.50A20 20 0 0 1 17.86 49.64Z" fill="#dc2626"/><path d="M32 35.5L17.86 49.64A20 20 0 0 1 12.00 35.50Z" fill="#fbbf24"/><path d="M32 35.5L12.00 35.50A20 20 0 0 1 17.86 21.36Z" fill="#0f766e"/><path d="M32 35.5L17.86 21.36A20 20 0 0 1 32.00 15.50Z" fill="#fde68a"/><path d="M32 35.5L32.00 15.50" stroke="rgba(0,0,0,.35)" stroke-width=".8"/><path d="M32 35.5L46.14 21.36" stroke="rgba(0,0,0,.35)" stroke-width=".8"/><path d="M32 35.5L52.00 35.50" stroke="rgba(0,0,0,.35)" stroke-width=".8"/><path d="M32 35.5L46.14 49.64" stroke="rgba(0,0,0,.35)" stroke-width=".8"/><path d="M32 35.5L32.00 55.50" stroke="rgba(0,0,0,.35)" stroke-width=".8"/><path d="M32 35.5L17.86 49.64" stroke="rgba(0,0,0,.35)" stroke-width=".8"/><path d="M32 35.5L12.00 35.50" stroke="rgba(0,0,0,.35)" stroke-width=".8"/><path d="M32 35.5L17.86 21.36" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>
+          <circle cx="32" cy="35.5" r="20" fill="none" stroke="rgba(0,0,0,.4)" stroke-width="1"/>
+          <circle cx="40.27" cy="15.54" r="1.35" fill="#fff7d6" stroke="rgba(0,0,0,.45)" stroke-width=".5"/><circle cx="51.96" cy="27.23" r="1.35" fill="#fff7d6" stroke="rgba(0,0,0,.45)" stroke-width=".5"/><circle cx="51.96" cy="43.77" r="1.35" fill="#fff7d6" stroke="rgba(0,0,0,.45)" stroke-width=".5"/><circle cx="40.27" cy="55.46" r="1.35" fill="#fff7d6" stroke="rgba(0,0,0,.45)" stroke-width=".5"/><circle cx="23.73" cy="55.46" r="1.35" fill="#fff7d6" stroke="rgba(0,0,0,.45)" stroke-width=".5"/><circle cx="12.04" cy="43.77" r="1.35" fill="#fff7d6" stroke="rgba(0,0,0,.45)" stroke-width=".5"/><circle cx="12.04" cy="27.23" r="1.35" fill="#fff7d6" stroke="rgba(0,0,0,.45)" stroke-width=".5"/><circle cx="23.73" cy="15.54" r="1.35" fill="#fff7d6" stroke="rgba(0,0,0,.45)" stroke-width=".5"/>
+          <circle cx="32" cy="35.5" r="5.2" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.5)" stroke-width="1"/>
+          <path d="M32 32.2l.95 2 2.15.25-1.6 1.5.42 2.15-1.92-1.05-1.92 1.05.42-2.15-1.6-1.5 2.15-.25Z" fill="#7c2d12"/>
+        </g>
+        <path d="M32 11.4l-4.6-7.2h9.2Z" fill="url(#av-m-crimson)" stroke="#fde68a" stroke-width="1.1" stroke-linejoin="round"/>
+        <g class="av-twinkle"><path d="M52.5 10.5l1.3 2.9 3.1.35-2.3 2.1.65 3.05-2.75-1.55-2.75 1.55.65-3.05-2.3-2.1 3.1-.35Z" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.4)" stroke-width=".7"/></g>
+        <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
       'avatar-centurion':    { tone: 'red', art: `
         <text x="32" y="38" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="21" fill="#ef4444" stroke="#7f1d1d" stroke-width=".8" letter-spacing="-1">100</text>
         <path d="M13.5 43.5 50 41.5M15.5 48.5 47 46.8" stroke="#ef4444" stroke-width="2.6" stroke-linecap="round"/>` },
@@ -14561,7 +14576,7 @@
     // count. Folded groups are remembered per tab (localStorage
     // shithead_custom_groups_collapsed, keys "<type>:<group>").
     const CUSTOM_GROUPS = [['free', 'Free'], ['shop', 'Shop'], ['ranked', 'Earn in Ranked'], ['gauntlet', 'Earn in the Gauntlet'],
-      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['nomercy', 'Earn in No Mercy'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
+      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['nomercy', 'Earn in No Mercy'], ['wheel', 'Earn on the Daily Spin'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
     const CUSTOM_GROUPS_KEY = 'shithead_custom_groups_collapsed';
     const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
     function customGroupOf(item) {
@@ -14573,6 +14588,7 @@
       if (item.referral) return 'friends';
       if (item.twos) return 'twos';
       if (item.decks) return 'decks';
+      if (item.wheel) return 'wheel';
       if (item.nm && item.earned) return 'nomercy';
       if (item.earned || EARNED_AVATARS.includes(item)) return 'ranked';
       return 'shop';
@@ -14602,8 +14618,8 @@
       const freeAvatars = sortByValue(BUILT_IN_COSMETICS.filter(item => item.category === 'Avatars'));
       const seasonalAvatars = [...sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Avatars' && item.season)), ...SEASONAL_EARNED_AVATARS].filter(isCosmeticListed);
       grid.innerHTML = ownedPrivateAvatars().map(avatarOptionHtml).join('') + customGroupedHtml('avatar', [...freeAvatars, ...shopAvatars,
-        ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral && !item.twos && !item.decks && !item.nm),
-        ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral), ...EARNED_AVATARS.filter(item => item.twos), ...EARNED_AVATARS.filter(item => item.decks), ...EARNED_AVATARS.filter(item => item.nm),
+        ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral && !item.twos && !item.decks && !item.nm && !item.wheel),
+        ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral), ...EARNED_AVATARS.filter(item => item.twos), ...EARNED_AVATARS.filter(item => item.decks), ...EARNED_AVATARS.filter(item => item.nm), ...EARNED_AVATARS.filter(item => item.wheel),
         ...LEVEL_REWARDS.filter(item => item.category === 'Avatars'), ...seasonalAvatars], avatarOptionHtml);
     }
 
@@ -15986,6 +16002,7 @@
     // plain Vs Bots home screen as a guest (no name, no Diamonds).
     let signOutResetting = false;
     function resetAfterSignOut() {
+      window.ShWheel?.reset();
       clearHomeSnapshot(); // § Home snapshot: never shown to the next account
       if (signOutResetting) return;
       signOutResetting = true;
@@ -16016,6 +16033,7 @@
       setTimeout(() => { if (currentUser && !devTestSuiteRunning) { registerPushToken(); shareSeasonCalendarWithWorker(); } }, 4000);
       // Preferences live under the account and do not depend on profile creation.
       loadAccountSettings(user).then(() => window.ShWelcomeTour?.maybeStart());
+      window.ShWheel?.onSignIn();
     }
 
     // ---- Account deletion (7-day recovery window) and Download my data ----
@@ -17659,6 +17677,8 @@
       'avatar-recruiter': { type: 'recruits', min: 5 },
       'avatar-twos': { type: 'twosWins', min: 10 },
       'avatar-decks': { type: 'decksWins', min: 10 },
+      'avatar-wheel': { type: 'wheel' }, // granted by the wheel action itself
+      'back-wheel': { type: 'wheel' },
       'avatar-nm-seer': { type: 'nmQueens', min: 50 },
       'avatar-nm-enforcer': { type: 'nmKings', min: 50 },
       'back-nm-verdict': { type: 'nmWins', min: 10 },
@@ -17682,6 +17702,7 @@
         eventLoginBonus: EVENT_LOGIN_BONUS,
         nameChangeTokenCost: NAME_CHANGE_TOKEN_COST,
         dailyStreakRewards: DAILY_STREAK_REWARDS,
+        wheel: WHEEL,
         matchWinRewards: { bots: 10, ranked: 20 },
         dailyReward: CHALLENGE_REWARD,
         weeklyReward: WEEKLY_CHALLENGE_REWARD,
@@ -22872,7 +22893,7 @@
       giftOpenModal: 'giftOpenClose', giftModal: 'giftModalClose', installHelpModal: 'installHelpClose',
       dailyRewardModal: () => closeDailyReward(), playerPopup: 'playerPopupClose', matchSummaryModal: 'matchSummaryClose',
       authModal: 'authCloseBtn', usernameModal: null, difficultyUnlockPopup: 'difficultyUnlockPopupBtn',
-      matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), noMercyModal: () => closeNoMercyChoice(), twosModal: () => closeTwosChoice(), decksModal: () => closeDecksChoice(), puzzlesModal: () => window.ShPuzzles?.close(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
+      matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), noMercyModal: () => closeNoMercyChoice(), twosModal: () => closeTwosChoice(), wheelModal: () => window.ShWheel?.close(), decksModal: () => closeDecksChoice(), puzzlesModal: () => window.ShPuzzles?.close(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
       leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', levelLadderModal: 'levelLadderCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn', changelogModal: 'changelogCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',

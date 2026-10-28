@@ -893,6 +893,7 @@
   "avatar-recruiter",
   "avatar-twos",
   "avatar-decks",
+  "avatar-wheel",
   "avatar-nm-seer",
   "avatar-nm-enforcer",
   "avatar-lvl-rookie-rogue",
@@ -979,6 +980,7 @@
   "back-ss2707-pegasus",
   "back-ss2709-cauldron",
   "back-nm-verdict",
+  "back-wheel",
   "back-lunar",
   "back-valentine",
   "back-ramadan",
@@ -1205,6 +1207,11 @@
    "type": "decksWins",
    "min": 10
   },
+  "avatar-wheel": {
+   "name": "Lucky Wheel",
+   "requirement": "Win it on the Daily Spin",
+   "type": "wheel"
+  },
   "avatar-nm-seer": {
    "name": "The Seer",
    "requirement": "Play 50 Queens in No Mercy",
@@ -1291,6 +1298,11 @@
    "requirement": "Win 25 games of No Mercy",
    "type": "nmWins",
    "min": 25
+  },
+  "back-wheel": {
+   "name": "Lucky Spin",
+   "requirement": "Win it on the Daily Spin",
+   "type": "wheel"
   }
  },
  "seasonalEvents": [
@@ -1343,6 +1355,87 @@
   40,
   100
  ],
+ "wheel": {
+  "dupeDiamonds": 250,
+  "prizes": [
+   {
+    "id": "d25",
+    "kind": "diamonds",
+    "amount": 25,
+    "weight": 335
+   },
+   {
+    "id": "d50",
+    "kind": "diamonds",
+    "amount": 50,
+    "weight": 260
+   },
+   {
+    "id": "d100",
+    "kind": "diamonds",
+    "amount": 100,
+    "weight": 130
+   },
+   {
+    "id": "xp75",
+    "kind": "xp",
+    "amount": 75,
+    "weight": 130
+   },
+   {
+    "id": "xp150",
+    "kind": "xp",
+    "amount": 150,
+    "weight": 60
+   },
+   {
+    "id": "d250",
+    "kind": "diamonds",
+    "amount": 250,
+    "weight": 40
+   },
+   {
+    "id": "d500",
+    "kind": "diamonds",
+    "amount": 500,
+    "weight": 20
+   },
+   {
+    "id": "d1000",
+    "kind": "diamonds",
+    "amount": 1000,
+    "weight": 5
+   },
+   {
+    "id": "avatar",
+    "kind": "item",
+    "itemId": "avatar-wheel",
+    "name": "Lucky Wheel",
+    "weight": 10
+   },
+   {
+    "id": "back",
+    "kind": "item",
+    "itemId": "back-wheel",
+    "name": "Lucky Spin",
+    "weight": 10
+   }
+  ],
+  "segments": [
+   "d25",
+   "xp75",
+   "d50",
+   "d500",
+   "d25",
+   "d100",
+   "avatar",
+   "d50",
+   "xp150",
+   "d250",
+   "back",
+   "d1000"
+  ]
+ },
  "matchWinRewards": {
   "bots": 10,
   "ranked": 20

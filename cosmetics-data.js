@@ -170,13 +170,35 @@
       { id: 'avatar-recruiter', category: 'Avatars', name: 'Recruiter', earned: true, referral: true, requirement: 'Recruit 5 players', isEarned: () => false },
       { id: 'avatar-twos', category: 'Avatars', name: 'Dream Team', earned: true, animated: true, twos: true, requirement: 'Win 10 games of 2 vs 2', isEarned: () => false },
       { id: 'avatar-decks', category: 'Avatars', name: 'Double Deck', earned: true, animated: true, decks: true, requirement: 'Win 10 games of Multiple Decks', isEarned: () => false },
+      { id: 'avatar-wheel', category: 'Avatars', name: 'Lucky Wheel', earned: true, animated: true, wheel: true, requirement: 'Win it on the Daily Spin', isEarned: () => false },
       { id: 'avatar-nm-seer', category: 'Avatars', name: 'The Seer', earned: true, nm: true, tone: '#e11d48', file: 'art/avatars/nm-seer.webp', requirement: 'Play 50 Queens in No Mercy', isEarned: () => false },
       { id: 'avatar-nm-enforcer', category: 'Avatars', name: 'The Enforcer', earned: true, nm: true, tone: '#b45309', file: 'art/avatars/nm-enforcer.webp', requirement: 'Make other players take 50 cards with Kings in No Mercy', isEarned: () => false }
     ];
+    // Daily Spin (v469): once a UK day, signed in. The server draws the prize by `weight` (out of 1000)
+    // and pays it; the wheel the player sees has `segments` (ids, 12 equal slices) and turns to a slice of
+    // the drawn prize. No cosmetics from the shop, no boosts, no pity timer (owner). The two item prizes are
+    // wheel-only (never sold); a duplicate pays `dupeDiamonds`. Average payout is about 60 Diamonds a day.
+    const WHEEL = {
+      dupeDiamonds: 250,
+      prizes: [
+        { id: 'd25', kind: 'diamonds', amount: 25, weight: 335 },
+        { id: 'd50', kind: 'diamonds', amount: 50, weight: 260 },
+        { id: 'd100', kind: 'diamonds', amount: 100, weight: 130 },
+        { id: 'xp75', kind: 'xp', amount: 75, weight: 130 },
+        { id: 'xp150', kind: 'xp', amount: 150, weight: 60 },
+        { id: 'd250', kind: 'diamonds', amount: 250, weight: 40 },
+        { id: 'd500', kind: 'diamonds', amount: 500, weight: 20 },
+        { id: 'd1000', kind: 'diamonds', amount: 1000, weight: 5 },
+        { id: 'avatar', kind: 'item', itemId: 'avatar-wheel', name: 'Lucky Wheel', weight: 10 },
+        { id: 'back', kind: 'item', itemId: 'back-wheel', name: 'Lucky Spin', weight: 10 }
+      ],
+      segments: ['d25', 'xp75', 'd50', 'd500', 'd25', 'd100', 'avatar', 'd50', 'xp150', 'd250', 'back', 'd1000']
+    };
     // No Mercy rewards (v451): the Crimson Verdict card back and deck are earned, never sold (see EARNED_AVATAR_RULES).
     const NM_EARNED = [
       { id: 'back-nm-verdict', category: 'Card Backs', name: 'Crimson Verdict', earned: true, nm: true, tone: '#b91c1c', file: 'art/backs/nm-verdict2.webp', tones: ['#14080a','#b91c1c','#c9a04a'], requirement: 'Win 10 games of No Mercy', isEarned: () => false },
-      { id: 'deck-nm-verdict', category: 'Decks', name: 'Crimson Verdict', earned: true, nm: true, theme: 'theme-nmverdict', tones: ['#efe3cc','#7a5a2a','#b3141f'], requirement: 'Win 25 games of No Mercy', isEarned: () => false }
+      { id: 'deck-nm-verdict', category: 'Decks', name: 'Crimson Verdict', earned: true, nm: true, theme: 'theme-nmverdict', tones: ['#efe3cc','#7a5a2a','#b3141f'], requirement: 'Win 25 games of No Mercy', isEarned: () => false },
+      { id: 'back-wheel', category: 'Card Backs', name: 'Lucky Spin', earned: true, wheel: true, tone: '#f59e0b', tones: ['#0b1230','#f59e0b','#b91c1c'], requirement: 'Win it on the Daily Spin', isEarned: () => false }
     ];
     // Earn-only frames: never sold or gifted, shown locked in Custom until
     // the server grants them (Gauntlet Gold: beat the Gauntlet once).

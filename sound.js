@@ -201,6 +201,55 @@
           o.connect(f).connect(g).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + 0.06);
         });
       }
+      /* Daily Spin (v469): one peg ticking past the pointer (called per peg, so it slows with the wheel). */
+      playWheelTick() {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime, f0 = 2100 + Math.random() * 380;
+        const o = ctx.createOscillator(); o.type = 'square'; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f0 * .72, t0 + .03);
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 5;
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.085 * vol, t0 + .003); g.gain.exponentialRampToValueAtTime(0.0001, t0 + .035);
+        o.connect(f).connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + .05);
+        const b = ctx.createOscillator(); b.type = 'triangle'; b.frequency.setValueAtTime(380, t0); b.frequency.exponentialRampToValueAtTime(240, t0 + .03);
+        const bg = ctx.createGain(); bg.gain.setValueAtTime(0.0001, t0); bg.gain.exponentialRampToValueAtTime(0.05 * vol, t0 + .004); bg.gain.exponentialRampToValueAtTime(0.0001, t0 + .04);
+        b.connect(bg).connect(ctx.destination); b.start(t0); b.stop(t0 + .05);
+      }
+      /* Daily Spin result: a rising chime that grows with the prize (small, mid, big, jackpot, item). */
+      playWheelWin(tier = 'small') {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime;
+        const notes = {
+          small: [[784, 0], [1175, .09]],
+          mid: [[659, 0], [880, .08], [1319, .16]],
+          big: [[523, 0], [659, .08], [784, .16], [1047, .24], [1319, .34]],
+          jackpot: [[523, 0], [659, .08], [784, .16], [1047, .24], [1319, .34], [1568, .44]],
+          item: [[523, 0], [659, .08], [784, .16], [1047, .24], [1319, .34], [1568, .44]]
+        }[tier] || [[784, 0], [1175, .09]];
+        const level = tier === 'small' ? .13 : tier === 'mid' ? .15 : .16;
+        notes.forEach(([freq, at]) => {
+          const o = ctx.createOscillator(); o.type = tier === 'small' ? 'sine' : 'triangle'; o.frequency.setValueAtTime(freq, t0 + at);
+          const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime(level * vol, t0 + at + .008); g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + .42);
+          o.connect(g).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + .45);
+        });
+        if (tier === 'big' || tier === 'jackpot' || tier === 'item') {
+          // a held major chord under the run, then a few high sparkles
+          [523, 659, 784, 1047].forEach((freq) => {
+            const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
+            const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0 + .4); g.gain.exponentialRampToValueAtTime(.05 * vol, t0 + .46); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.5);
+            o.connect(g).connect(ctx.destination); o.start(t0 + .4); o.stop(t0 + 1.55);
+          });
+          [2637, 3136, 3520, 4186].forEach((freq, i) => {
+            const at = .55 + i * .08, o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
+            const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime(.045 * vol, t0 + at + .006); g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + .22);
+            o.connect(g).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + .25);
+          });
+        }
+      }
       /* An opponent is down to their last card: two quick, soft rising pings. */
       playLastCard() {
         const ctx = this.ctx;

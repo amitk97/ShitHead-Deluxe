@@ -507,6 +507,45 @@ actions.streak = async ({ uid }) => {
   return { claimed: res.claimed || null, streak: res.user.loginStreak || null, diamonds: num(res.user.diamonds) };
 };
 
+// Daily Spin (v469): one free spin a UK day. The server draws the prize by weight (catalog `wheel`) and pays it in
+// the same write that marks the day, so it can never repeat. XP prizes are left out of the draw while XP is off.
+// The two item prizes are wheel-only; owning one already pays `dupeDiamonds` instead.
+actions.wheel = async ({ uid, data }) => {
+  const W = CAT.wheel;
+  if (!W || !Array.isArray(W.prizes)) fail('failed-precondition', 'The Daily Spin is not available yet.');
+  const now = new Date(), today = ukDateKey(now);
+  if (clip(data.op, 10) !== 'spin') {
+    const w = (await admin.database().ref(`users/${uid}/wheel`).once('value')).val() || {};
+    return { canSpin: w.lastDate !== today, last: w.last || null, spins: num(w.spins) };
+  }
+  const xpOn = await xp.enabled();
+  const pool = W.prizes.filter(p => xpOn || p.kind !== 'xp');
+  const total = pool.reduce((sum, p) => sum + num(p.weight), 0);
+  let roll = nodeCrypto.randomInt(total);
+  const prize = pool.find(p => (roll -= num(p.weight)) < 0) || pool[0];
+  const res = await userTx(uid, (user) => {
+    if (user.wheel?.lastDate === today) return { noop: true, already: true };
+    let paid = 0, duplicate = false, xpRes = null;
+    if (prize.kind === 'diamonds') { paid = num(prize.amount); addDiamonds(user, paid); }
+    else if (prize.kind === 'xp') {
+      const past = xp.backfill(user, now.getTime(), addDiamonds);
+      xpRes = xpResult(user, [['wheel', num(prize.amount)]], now.getTime(), past);
+    } else if (prize.kind === 'item') {
+      if (user.ownedCosmetics?.[prize.itemId]) { duplicate = true; paid = num(W.dupeDiamonds); addDiamonds(user, paid); }
+      else {
+        user.ownedCosmetics = user.ownedCosmetics || {};
+        user.ownedCosmetics[prize.itemId] = { cost: 0, purchasedAt: now.getTime() };
+        user.activityInbox = user.activityInbox || {};
+        user.activityInbox[`unlock_${prize.itemId}`] = { type: 'shop', unlocked: true, name: clip(prize.name, 80), cost: 0, requirement: 'Won on the Daily Spin', sentAt: now.getTime() };
+      }
+    }
+    user.wheel = { lastDate: today, last: { id: prize.id, at: now.getTime() }, spins: num(user.wheel?.spins) + 1 };
+    return { user, spin: { prize: prize.id, kind: prize.kind, amount: num(prize.amount), itemId: prize.itemId || null, name: prize.name || null, duplicate, paid }, xp: xpRes };
+  });
+  if (res.already) return { already: true, canSpin: false, last: res.user.wheel?.last || null, diamonds: num(res.user.diamonds) };
+  return { spin: res.spin, canSpin: false, diamonds: num(res.user.diamonds), xp: res.xp || null };
+};
+
 // One weekly challenge swapped for another, once a UK week, from level
 // xp.weeklyRerollLevel (owner, v289). Not for one already completed.
 // Weekly Puzzles (v346). The game exports the puzzles into catalog.puzzles; the week's puzzle is the

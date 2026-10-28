@@ -3415,7 +3415,7 @@ async function runDevTestSuite() {
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
     const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Avatars' && !i.season && !i.ldn && !i.mum).map(i => [i.name, i.cost]));
     assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000, 'Turtley': 5000 }, 'Shop pictures and prices');
-    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'The Seer', 'The Enforcer'], 'Earn-only pictures');
+    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'Lucky Wheel', 'The Seer', 'The Enforcer'], 'Earn-only pictures');
     [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Avatars')
       .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
   });
@@ -4389,8 +4389,8 @@ async function runDevTestSuite() {
     smoke.forEach(a => a.cancel());
     stage.querySelectorAll('.bfx').forEach(n => n.remove());
     renderPersonalisationAvatars();
-    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-25);
-    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'The Seer', 'The Enforcer', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Sphinx Cub', 'Baby Mammoth', 'Kitsune Cub', 'Pearl Octopus', 'Baby Pegasus', 'Little Witch'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
+    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-26);
+    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'The Seer', 'The Enforcer', 'Lucky Wheel', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Sphinx Cub', 'Baby Mammoth', 'Kitsune Cub', 'Pearl Octopus', 'Baby Pegasus', 'Little Witch'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
   });
 
   await test('Accessibility settings exist and apply', () => {
@@ -7377,6 +7377,15 @@ async function runDevTestSuite() {
       assertTrue(!document.getElementById('noMercyBotsBtn').disabled, 'chooser buttons work at Lvl 25');
       closeNoMercyChoice();
     } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeNoMercyChoice(); }
+  });
+  await test('v469: the Daily Spin is wired in (chip, menu, modal, wheel-only items)', () => {
+    assertTrue(!!window.ShWheel, 'ShWheel');
+    assertTrue(!!document.getElementById('homeWheelChip') && !!document.getElementById('menuWheelBtn') && !!document.getElementById('wheelModal'), 'entry points');
+    const all = customAllItems('avatar').concat(customAllItems('cardBack'));
+    assertTrue(all.some(i => i.id === 'avatar-wheel' && i.wheel) && all.some(i => i.id === 'back-wheel' && i.wheel), 'wheel items listed');
+    const w = serverEconomyCatalog().wheel;
+    assertEqual(w.prizes.reduce((n, p) => n + p.weight, 0), 1000, 'weights total 1000');
+    assertEqual(w.segments.length, 12, '12 segments');
   });
   await test('v468: an X-rayed card shows its face in the opponent hand fan', () => {
     try {
