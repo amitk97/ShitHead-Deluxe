@@ -8237,6 +8237,9 @@
       if (top < top0 + 4) top = r.bottom + 8;
       const left = Math.max(12, Math.min(window.innerWidth - pw - 12, (opts.centered ? window.innerWidth / 2 : r.left + r.width / 2) - pw / 2));
       pop.style.left = `${left}px`; pop.style.top = `${Math.max(4, top)}px`;
+      if (opts.side === 'left' && r.left - pw - 8 >= 8) { // beside the anchor, so it never covers a neighbour above or below
+        pop.style.left = `${r.left - pw - 8}px`; pop.style.top = `${Math.max(top0 + 4, r.top + r.height / 2 - ph / 2)}px`;
+      }
       requestAnimationFrame(() => pop.classList.add('show'));
       if (opts.hover) {
         const leave = (e) => { if (!anchor.contains(e.relatedTarget) && infoPopAnchor === anchor) { hideInfoPop(); } anchor.removeEventListener('mouseleave', leave); };

@@ -216,6 +216,28 @@
         const bg = ctx.createGain(); bg.gain.setValueAtTime(0.0001, t0); bg.gain.exponentialRampToValueAtTime(0.05 * vol, t0 + .004); bg.gain.exponentialRampToValueAtTime(0.0001, t0 + .04);
         b.connect(bg).connect(ctx.destination); b.start(t0); b.stop(t0 + .05);
       }
+      /* Three Cards (v477): 'slide' = a card swept sideways in the shuffle, 'flip' = a card turned over (paper snap and a soft thud). */
+      playMontyCard(kind = 'flip') {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime, slide = kind === 'slide', len = slide ? .2 : .07;
+        const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * len), ctx.sampleRate), d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        const n = ctx.createBufferSource(); n.buffer = buf;
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = slide ? 1.4 : 2.5;
+        if (slide) { f.frequency.setValueAtTime(700, t0); f.frequency.exponentialRampToValueAtTime(2300, t0 + len); } else f.frequency.value = 3200;
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime((slide ? .07 : .1) * vol, t0 + (slide ? .07 : .004));
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+        n.connect(f).connect(g).connect(ctx.destination); n.start(t0);
+        if (!slide) {
+          const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(240, t0); o.frequency.exponentialRampToValueAtTime(130, t0 + .09);
+          const og = ctx.createGain(); og.gain.setValueAtTime(0.0001, t0); og.gain.exponentialRampToValueAtTime(.08 * vol, t0 + .005); og.gain.exponentialRampToValueAtTime(0.0001, t0 + .1);
+          o.connect(og).connect(ctx.destination); o.start(t0); o.stop(t0 + .12);
+        }
+      }
       /* Daily Spin result: a rising chime that grows with the prize (small, mid, big, jackpot, item). */
       playWheelWin(tier = 'small') {
         const ctx = this.ctx;

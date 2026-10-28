@@ -223,7 +223,7 @@
   async function swapCards(a, b) {
     const ea = at(a), eb = at(b), xa = xOf(a), xb = xOf(b);
     M.pos[M.els.indexOf(ea)] = b; M.pos[M.els.indexOf(eb)] = a;
-    audio.playWheelTick && audio.playWheelTick();
+    audio.playMontyCard && audio.playMontyCard('slide');
     if (motionOff() || typeof ea.animate !== 'function') {
       ea.classList.add('hl'); eb.classList.add('hl'); montyPlace(); await wait(520); ea.classList.remove('hl'); eb.classList.remove('hl'); await wait(120); return;
     }
@@ -250,6 +250,7 @@
     r.reveal.forEach((v, q) => { const el = at(q); setFace(el, v); el.classList.add('up'); if (q === r.pick) el.classList.add('chosen'); });
     $('montyResult').innerHTML = r.prize === bigAmt() ? `<b class="lw-won">+${r.prize} Diamonds</b><span>You found the big prize.</span>` : `<b class="lw-won">+${r.prize} Diamonds</b><span>Not the big one. Try again next week.</span>`;
   }
+  const flipSnd = () => { if (audio.playMontyCard) audio.playMontyCard('flip'); };
   async function montyStart() {
     if (M.busy || !S.monty || !signedIn()) return;
     M.busy = true; M.phase = 'show';
@@ -260,9 +261,9 @@
     if (res.result) { M.busy = false; S.monty = { canPlay: false, result: res.result }; montyBuild(); montyShowDone(res.result); paint(); return; }
     montyBuild();
     const m = at(res.bigAt == null ? 1 : res.bigAt);
-    setFace(m, bigAmt()); m.classList.add('up');
+    setFace(m, bigAmt()); m.classList.add('up'); flipSnd();
     $('montyResult').innerHTML = `<span>Watch the ${bigAmt()} Diamond card.</span>`;
-    await wait(1300); m.classList.remove('up'); await wait(500);
+    await wait(1300); m.classList.remove('up'); flipSnd(); await wait(500);
     for (const [a, b] of res.swaps) await swapCards(a, b);
     M.busy = false; M.phase = 'pick'; S.monty = { ...S.monty, started: true, swaps: res.swaps };
     M.els.forEach(el => { el.disabled = false; });
@@ -277,9 +278,10 @@
     let res;
     try { res = await callEconomy('monty', { op: 'pick', index: q }); } catch (e) { M.busy = false; M.els.forEach(x => { x.disabled = false; }); $('montyResult').innerHTML = '<span>Couldn’t check that card. Try again.</span>'; return; }
     const r = res.result; if (!r) { M.busy = false; return; }
-    setFace(el, r.reveal[q]); el.classList.add('up', 'chosen'); audio.playWheelTick && audio.playWheelTick();
+    setFace(el, r.reveal[q]); el.classList.add('up', 'chosen'); flipSnd();
     await wait(motionOff() ? 100 : 650);
     r.reveal.forEach((v, p) => { const x = at(p); if (x !== el) { setFace(x, v); x.classList.add('up'); } });
+    flipSnd();
     applyEconomy(res);
     S.monty = { canPlay: false, started: false, result: r };
     M.busy = false; M.phase = 'done';
@@ -327,7 +329,7 @@
     const c = e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip');
     if (!c || typeof showInfoPop !== 'function') return;
     if (e.type === 'mouseover' && !window.matchMedia('(hover: hover)').matches) return;
-    showInfoPop(c, CHIP_TIPS[c.id], { hover: true });
+    showInfoPop(c, CHIP_TIPS[c.id], { hover: true, side: 'left' });
   };
   document.addEventListener('mouseover', chipTip);
   document.addEventListener('focusin', (e) => { if (e.target.matches && e.target.matches(':focus-visible')) chipTip(e); });
