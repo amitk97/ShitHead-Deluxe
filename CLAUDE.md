@@ -12,6 +12,10 @@
 
 - `js/test-lab.js` tabs Back / Table / Deck / Frame / Emote / Avatar (the old dummy-position tab is now "Setup"): tap an item (any in `customAllItems(type)`, decks from `deckItems()`) and `applyLook` sets it IN MEMORY: `equippedCosmetics[type] = id` + `applyEquippedCosmetics()` (the bot's seat gets the back, frame and avatar too), decks through `selectDeckTheme`. Never saved: while `state.labDummy` is set `applyEquippedCosmetics` and `selectDeckTheme` skip their localStorage writes, `eventBotItem` and `showHelperTip` stand down, and `open()` turns `syncShowcase`, `syncPublicProfile` and `scheduleSettingsCloudSave` into no-ops (like the win/history reports). `snapshotReal()` at open and `restoreReal()` on Exit / "My real look" put the account's own look back. Extras: next / previous / Auto-step (1.8s) and an emote strip that floats each emote of the chosen pack from your seat. Trap found: the file's `const CSS` string shadows `window.CSS`, so use `window.CSS.escape`. Client only; no rules, Functions or catalog change. Dev test "v436: the Test Lab tries looks on in memory only…". Frames: scratchpad `lab-shot.js` (fakes `currentUser` and `isAmitkTestingAccount` then clicks the tabs).
 
+## v471 — spin circle sits inside the home panel
+
+- `#homeWheelChip` is a child of the home panel (`div.bg-slate-900.relative`, `position:absolute; top/right 10px`, 40px), not fixed on `<body>` (v470 put it over the background); hidden by `#lobbyScreen.mode-page-open`. It is no longer in the move-to-body list.
+
 ## v470 — Daily Spin entry is a corner circle, prize preview, livelier avatar (owner)
 
 - `#homeWheelChip` is now a 44px circle (wheel icon only) fixed top right under the header (z 72, moved to `<body>` via the move-to-body list; shows only with `body.lobby-open:not(.mode-page)`); its gold `[data-wheel-dot]` shows while `canSpin`. The modal has `#wheelPrize`: the animated `avatar-wheel` at 56px with its odds (`paintPrize`). `avatar-wheel` now turns two full times, slows to a stop while the pointer (`.av-wheeltick`) flicks on each peg, then holds (4.4s loop). Client only. Frames: scratchpad `wheel-shot.js`.

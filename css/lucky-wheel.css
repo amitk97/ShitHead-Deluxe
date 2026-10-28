@@ -20,9 +20,10 @@
 .lw-odds .lw-odds-note { display: block; padding-top: .5rem; font-size: .68rem; line-height: 1.45; color: #94a3b8; }
 #wheelSpinBtn:disabled { opacity: .55; cursor: default; }
 /* Home: a small circle in the top right of the screen; the gold dot shows while today's spin is waiting. */
-#homeWheelChip { position: fixed; z-index: 72; top: calc(var(--header-h, 2.75rem) + var(--safe-top, 0px) + 10px); right: 12px; display: none; width: 44px; height: 44px; padding: 0; border-radius: 50%; background: #0b1426; border: 1px solid #334155; box-shadow: 0 4px 12px rgba(0,0,0,.45); cursor: pointer; place-items: center; }
-body.lobby-open:not(.mode-page) #homeWheelChip:not(.hidden) { display: grid; }
-#homeWheelChip .lw-chip-ic { width: 34px; height: 34px; }
+#homeWheelChip { position: absolute; z-index: 3; top: 10px; right: 10px; display: none; width: 40px; height: 40px; padding: 0; border-radius: 50%; background: #0b1426; border: 1px solid #334155; box-shadow: 0 3px 10px rgba(0,0,0,.4); cursor: pointer; place-items: center; }
+#homeWheelChip:not(.hidden) { display: grid; }
+#lobbyScreen.mode-page-open #homeWheelChip { display: none !important; }
+#homeWheelChip .lw-chip-ic { width: 31px; height: 31px; }
 #homeWheelChip.lw-ready { border-color: #fbbf24; box-shadow: 0 0 0 1px rgba(251,191,36,.25), 0 0 14px rgba(251,191,36,.3); }
 #homeWheelChip.lw-ready .lw-chip-ic { animation: lw-chip-spin 6s linear infinite; }
 #homeWheelChip .lw-dot-badge { position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; margin: 0; border: 2px solid #0b1426; box-sizing: content-box; }

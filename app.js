@@ -109,7 +109,7 @@
     // browsers' compositing) made their position:fixed boxes start at the
     // table's top instead of the screen's, pushing the top and X of a tall
     // page (e.g. Profile on iPhone) under the header.
-    ['puzzlesModal', 'wheelModal', 'homeWheelChip', 'twosModal', 'decksModal', 'noMercyModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
+    ['puzzlesModal', 'wheelModal', 'twosModal', 'decksModal', 'noMercyModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
      'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'eventPopupModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
