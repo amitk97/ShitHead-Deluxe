@@ -6079,6 +6079,16 @@ async function runDevTestSuite() {
     assertEqual(h.modes.find(m => m.mode === 'bots'), { mode: 'bots', started: 4, finished: 2, left: 1, abandoned: 1 }, 'Started = finished + left + abandoned');
     assertEqual([h.rejectedSaves, h.errors], [1, 2], 'Problems counted');
   });
+  await test('v489: Health sums table redraw, server call and stall timings per device', () => {
+    const h = summariseHealth({ '2026-10-28': {
+      s1: { device: 'android', frames: { n: 600, slow: 6, ms: 10000 }, counts: { renderN: 100, renderMs: 2000, renderSlow: 10, renderMax: 90, econN: 4, econMs: 2000, econSlow: 1, econMax: 3000, longTasks: 5, longTaskMs: 400 } },
+      s2: { device: 'android', frames: { n: 600, slow: 0, ms: 10000 }, counts: { renderN: 100, renderMs: 1000, renderMax: 40, longTasks: 1, longTaskMs: 60 } }
+    } });
+    assertEqual([h.renderAvg, h.renderSlowPct, h.renderWorst], [15, 5, 90], 'Redraw average, slow share and worst');
+    assertEqual([h.econAvg, h.econSlow, h.econWorst, h.longTasks], [500, 1, 3000, 6], 'Server call average, slow, worst; stalls');
+    assertEqual(h.byDevice.length, 1, 'One device row');
+    assertTrue(typeof Health.render === 'function' && typeof Health.econ === 'function', 'Health exposes timing hooks');
+  });
   await test('Ranked starts from a private server view and stays in the lobby when the server fails', async () => {
     const saved = {ref:rankedViewRef,code:rankedViewCode,event:rankedEventVersion};
     freshState({phase:'LOBBY',isMultiplayer:true,isRanked:true,isHost:true,roomCode:'515151'});

@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v489: [['sparkle', 'Behind the scenes: the game now measures how fast the table draws and how quick the server answers, to track down lag.']],
       v488: [['sparkle', 'On a PC, big Multiple Decks tables now seat every opponent around the play area instead of a thin list.']],
       v487: [['sparkle', 'Shiny avatars now glint in step with each other.']],
       v486: [['sparkle', 'The Seer and The Enforcer avatars now have a light glint that sweeps across them.']],

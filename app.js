@@ -233,13 +233,15 @@
       if (!firebaseAvailable || typeof firebase === 'undefined' || !firebase.functions) return Promise.reject(new Error('You need a connection for that.'));
       if (!economyCallable) economyCallable = firebase.app().functions('europe-west1').httpsCallable('economy', { timeout: 30000 });
       const payload = { ...data, action };
-      return primeMessagingForFunctions()
+      const t0 = performance.now();
+      const timed = (p) => p.then((r) => { try { Health.econ(performance.now() - t0); } catch (_) {} return r; });
+      return timed(primeMessagingForFunctions()
         .then(() => economyCallable(payload).then(res => res.data))
         .catch((error) => (isMessagingSdkError(error) ? callEconomyDirect(payload) : Promise.reject(error)))
         .catch((error) => {
         const offline = typeof isOffline === 'function' && isOffline();
         throw new Error(offline ? 'You need a connection for that.' : (error && error.message && !/^internal$/i.test(error.message) ? error.message : 'Something went wrong. Please try again.'));
-      });
+      }));
     }
     try {
       if (typeof firebase === 'undefined') throw new Error('Firebase SDK did not load');
@@ -382,6 +384,24 @@
         rec.counts[key] = Math.min(100000, (rec.counts[key] || 0) + amount);
         touch();
       }
+      const inMatch = () => typeof state !== 'undefined' && state && (state.phase === 'PLAY' || state.phase === 'SWAP');
+      // Timings (v489): how long a table redraw takes (render*), how long server
+      // calls take (econ*) and main-thread stalls over 50ms (longTasks*).
+      // N = how many, Ms = total, Slow = over the limit, Max = the worst one.
+      function timing(prefix, ms, slowOver) {
+        if (!(ms >= 0) || ms > 600000) return;
+        note(`${prefix}N`); note(`${prefix}Ms`, Math.round(ms));
+        if (ms > slowOver) note(`${prefix}Slow`);
+        if (ms > (rec.counts[`${prefix}Max`] || 0)) { rec.counts[`${prefix}Max`] = Math.round(ms); touch(); }
+      }
+      try {
+        if (!onTestPage && typeof PerformanceObserver === 'function') {
+          new PerformanceObserver((list) => {
+            if (!inMatch() || document.hidden) return;
+            list.getEntries().forEach(e => { note('longTasks'); note('longTaskMs', Math.round(e.duration)); });
+          }).observe({ type: 'longtask', buffered: false });
+        }
+      } catch (_) { /* not supported (Safari) */ }
       // Frame times while a match is on screen: slow = over 50ms (under 20fps).
       function frame(t) {
         const playing = typeof state !== 'undefined' && state && (state.phase === 'PLAY' || state.phase === 'SWAP') && !document.hidden;
@@ -408,6 +428,8 @@
         : state.isRanked ? 'ranked' : state.isMultiplayer ? 'online' : 'bots';
       return {
         note,
+        render(ms) { if (inMatch()) timing('render', ms, 50); },
+        econ(ms) { timing('econ', ms, 2000); },
         matchStarted() { if (!state.spectating && once('s')) note(`${modeKey()}Started`); },
         matchFinished() { if (!state.spectating && once('f')) note(`${modeKey()}Finished`); },
         matchLeft() { if (!state.spectating) note(`${modeKey()}Left`); },
@@ -7017,6 +7039,10 @@
     document.getElementById('histCollapseBtn')?.addEventListener('click', (e) => { e.stopPropagation(); setHistoryOpen(false); });
 
     function render() {
+      const t0 = performance.now();
+      try { return renderTable(); } finally { try { Health.render(performance.now() - t0); } catch (_) {} }
+    }
+    function renderTable() {
       if (state.phase !== 'LOBBY' || state.isMultiplayer || tutorialActive) document.getElementById('updatePrompt')?.classList.add('hidden');
       cleanupDrag(); // a re-render can remove the card element mid-drag; never leave a stuck ghost behind
       const viewId = viewSeatId();
@@ -15575,6 +15601,20 @@
         fps: frameMs ? Math.round((frames / frameMs) * 1000) : 0, slowPct: frames ? Math.round((slow / frames) * 1000) / 10 : 0,
         jankySessions: sessions.filter(r => r.frames && r.frames.n > 300 && r.frames.slow / r.frames.n > 0.05).length,
         modes, rejectedSaves: count('rejectedSave'), errors: count('errors'),
+        // v489 timings (only sessions on v489 or later carry them).
+        renderN: count('renderN'), renderAvg: count('renderN') ? Math.round(count('renderMs') / count('renderN')) : 0,
+        renderSlowPct: count('renderN') ? Math.round((count('renderSlow') / count('renderN')) * 1000) / 10 : 0,
+        renderWorst: sessions.reduce((m, r) => Math.max(m, (r.counts && r.counts.renderMax) || 0), 0),
+        econN: count('econN'), econAvg: count('econN') ? Math.round(count('econMs') / count('econN')) : 0,
+        econSlow: count('econSlow'), econWorst: sessions.reduce((m, r) => Math.max(m, (r.counts && r.counts.econMax) || 0), 0),
+        longTasks: count('longTasks'), longTaskMs: count('longTaskMs'),
+        byDevice: Object.entries(sessions.reduce((acc, r) => {
+          const d = acc[r.device || '?'] || (acc[r.device || '?'] = { sessions: 0, frames: 0, ms: 0, slow: 0, rN: 0, rSlow: 0, lt: 0 });
+          const c = r.counts || {};
+          d.sessions++; d.frames += (r.frames && r.frames.n) || 0; d.ms += (r.frames && r.frames.ms) || 0; d.slow += (r.frames && r.frames.slow) || 0;
+          d.rN += c.renderN || 0; d.rSlow += c.renderSlow || 0; d.lt += c.longTasks || 0;
+          return acc;
+        }, {})),
         // Distinct screens seen (device, app?, screen WxH, window H, page H, table bottom, notch/home bar).
         screens: Object.entries(sessions.reduce((acc, r) => {
           const c = r.counts || {};
@@ -15598,6 +15638,13 @@
         box('Speed', row('Page load', `${(h.loadMedian / 1000).toFixed(1)}s`, `slowest 10%: ${(h.loadP90 / 1000).toFixed(1)}s`)
           + row('Frame rate in matches', `${h.fps} fps`, `${h.slowPct}% of frames slow (under 20fps)`)
           + row('Janky sessions', h.jankySessions, 'more than 5% slow frames')),
+        box('Timings (v489+)', h.renderN || h.econN
+          ? row('Table redraw', `${h.renderAvg}ms avg`, `${h.renderSlowPct}% over 50ms · worst ${h.renderWorst}ms · ${h.renderN} measured`)
+            + row('Server calls', `${h.econAvg}ms avg`, `${h.econSlow} over 2s · worst ${h.econWorst}ms · ${h.econN} measured`)
+            + row('Main-thread stalls', h.longTasks, `over 50ms in a match · ${h.longTaskMs}ms in total`)
+            + h.byDevice.map(([d, v]) => row(escapeHtml(d), `${v.ms ? Math.round((v.frames / v.ms) * 1000) : 0} fps`,
+              `${v.frames ? Math.round((v.slow / v.frames) * 1000) / 10 : 0}% slow frames · ${v.rN ? Math.round((v.rSlow / v.rN) * 1000) / 10 : 0}% slow redraws · ${v.lt} stalls · ${v.sessions} sessions`)).join('')
+          : row('Timings', 'none yet', 'they appear once players are on this version')),
         box('Matches', h.modes.filter(m => m.started).map(m => row(m.mode[0].toUpperCase() + m.mode.slice(1),
           `${m.finished}/${m.started} finished`, `${m.left} left · ${m.abandoned} abandoned (app closed)`)).join('') || row('Matches', 'none yet')),
         box('Problems', row('Online saves rejected', h.rejectedSaves, 'two phones saved at once; the later one reloaded the table') + row('Errors', h.errors, 'details in the ERRORS tab')),
