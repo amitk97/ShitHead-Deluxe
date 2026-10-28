@@ -385,7 +385,7 @@
         touch();
       }
       const inMatch = () => typeof state !== 'undefined' && state && (state.phase === 'PLAY' || state.phase === 'SWAP');
-      // Timings (v489): how long a table redraw takes (render*), how long server
+      // Timings (v490): how long a table redraw takes (render*), how long server
       // calls take (econ*) and main-thread stalls over 50ms (longTasks*).
       // N = how many, Ms = total, Slow = over the limit, Max = the worst one.
       function timing(prefix, ms, slowOver) {
@@ -5145,9 +5145,12 @@
       if (reduceMotion) document.querySelectorAll('#flightLayer .flying-card').forEach(el => el.remove());
       const matrixLayer = document.getElementById('matrixRefLayer');
       const cardLayer = document.getElementById('cardRefLayer');
-      if (matrixLayer) matrixLayer.classList.toggle('hidden', hideHelperIcons);
-      if (cardLayer) cardLayer.classList.toggle('hidden', hideHelperIcons);
-      if (hideHelperIcons) {
+      // Lessons need both references even when the player normally hides them.
+      // Leave the saved preference untouched and restore it on tutorial exit.
+      const hideReferences = hideHelperIcons && !tutorialActive;
+      if (matrixLayer) matrixLayer.classList.toggle('hidden', hideReferences);
+      if (cardLayer) cardLayer.classList.toggle('hidden', hideReferences);
+      if (hideReferences) {
         if (typeof toggleMatrixReference === 'function') toggleMatrixReference(true);
         if (typeof toggleCardReference === 'function') toggleCardReference(true);
       }
@@ -10805,6 +10808,9 @@
       document.getElementById('hamburgerBtn')?.classList.add('open');
       document.getElementById('hamburgerOverlay').classList.remove('hidden');
       const drawer = document.getElementById('hamburgerDrawer');
+      drawer.inert = false;
+      drawer.setAttribute('aria-hidden', 'false');
+      document.getElementById('hamburgerBtn').setAttribute('aria-expanded', 'true');
       // Always start from the top, not wherever it was last scrolled to.
       [drawer, ...drawer.querySelectorAll('*')].forEach((el) => { if (el.scrollTop) el.scrollTop = 0; });
       drawer.classList.add('open');
@@ -10812,6 +10818,11 @@
       window.addEventListener('keydown', hamburgerEscHandler);
     }
     function closeHamburgerMenu() {
+      const drawer = document.getElementById('hamburgerDrawer');
+      if (drawer.contains(document.activeElement)) document.getElementById('hamburgerBtn').focus();
+      drawer.inert = true;
+      drawer.setAttribute('aria-hidden', 'true');
+      document.getElementById('hamburgerBtn').setAttribute('aria-expanded', 'false');
       document.getElementById('hamburgerBtn')?.classList.remove('open');
       document.getElementById('hamburgerOverlay').classList.add('hidden');
       document.getElementById('hamburgerDrawer').classList.remove('open');
@@ -15601,7 +15612,7 @@
         fps: frameMs ? Math.round((frames / frameMs) * 1000) : 0, slowPct: frames ? Math.round((slow / frames) * 1000) / 10 : 0,
         jankySessions: sessions.filter(r => r.frames && r.frames.n > 300 && r.frames.slow / r.frames.n > 0.05).length,
         modes, rejectedSaves: count('rejectedSave'), errors: count('errors'),
-        // v489 timings (only sessions on v489 or later carry them).
+        // v490 timings (only sessions on v490 or later carry them).
         renderN: count('renderN'), renderAvg: count('renderN') ? Math.round(count('renderMs') / count('renderN')) : 0,
         renderSlowPct: count('renderN') ? Math.round((count('renderSlow') / count('renderN')) * 1000) / 10 : 0,
         renderWorst: sessions.reduce((m, r) => Math.max(m, (r.counts && r.counts.renderMax) || 0), 0),
@@ -15638,7 +15649,7 @@
         box('Speed', row('Page load', `${(h.loadMedian / 1000).toFixed(1)}s`, `slowest 10%: ${(h.loadP90 / 1000).toFixed(1)}s`)
           + row('Frame rate in matches', `${h.fps} fps`, `${h.slowPct}% of frames slow (under 20fps)`)
           + row('Janky sessions', h.jankySessions, 'more than 5% slow frames')),
-        box('Timings (v489+)', h.renderN || h.econN
+        box('Timings (v490+)', h.renderN || h.econN
           ? row('Table redraw', `${h.renderAvg}ms avg`, `${h.renderSlowPct}% over 50ms · worst ${h.renderWorst}ms · ${h.renderN} measured`)
             + row('Server calls', `${h.econAvg}ms avg`, `${h.econSlow} over 2s · worst ${h.econWorst}ms · ${h.econN} measured`)
             + row('Main-thread stalls', h.longTasks, `over 50ms in a match · ${h.longTaskMs}ms in total`)
@@ -15824,13 +15835,16 @@
     document.getElementById('lobbySettingsShortcut')?.addEventListener('click', () => document.getElementById('menuSettingsBtn')?.click());
 
     function openSettings() {
-      // Locked during the tutorial: it controls its own state (icons forced
-      // on, and it teaches the rank toggle at a specific step), so changing
-      // things mid-lesson would desync it.
-      if (tutorialActive) { notifyBanner('Settings are unavailable during the tutorial.'); return; }
       refreshSettingsUI();
+      // Sound and accessibility remain available. Only scripted gameplay
+      // controls are locked; delayed Coach replies resume after closing.
+      if (tutorialActive) tutorialPauseForSettings(true);
+      else tutorialSettingsLocks();
       document.getElementById('settingsModal').classList.remove('hidden');
     }
+    new MutationObserver(() => {
+      if (tutorialActive && document.getElementById('settingsModal').classList.contains('hidden')) tutorialPauseForSettings(false);
+    }).observe(document.getElementById('settingsModal'), { attributes: true, attributeFilter: ['class'] });
     document.getElementById('matchStatsBtn').addEventListener('click', () => {
       buildMatchStats('game');
       document.getElementById('matchStatsModal').classList.remove('hidden');
@@ -22264,7 +22278,8 @@
     function renderSettingsTabs() {
       const bar = document.getElementById('settingsTabBar');
       if (!bar) return;
-      bar.innerHTML = SETTINGS_TABS.map(t => `<button type="button" role="tab" class="cosmetic-tab" data-settings-tab="${t.key}" aria-selected="${!settingsSearching && t.key === settingsTab}">${t.label}</button>`).join('');
+      bar.innerHTML = SETTINGS_TABS.map(t => `<button type="button" role="tab" class="cosmetic-tab" id="settings-tab-${t.key}" data-settings-tab="${t.key}" aria-controls="settingsTab-${t.key}" tabindex="${t.key === settingsTab ? '0' : '-1'}" aria-selected="${!settingsSearching && t.key === settingsTab}">${t.label}</button>`).join('');
+      SETTINGS_TABS.forEach(t => document.getElementById(`settingsTab-${t.key}`)?.setAttribute('aria-labelledby', `settings-tab-${t.key}`));
       initHorizontalScroller(bar);
     }
     function showSettingsTab(key) {
@@ -22283,6 +22298,16 @@
     document.getElementById('settingsTabBar')?.addEventListener('click', (e) => {
       const tab = e.target.closest('[data-settings-tab]');
       if (tab) showSettingsTab(tab.dataset.settingsTab);
+    });
+    document.getElementById('settingsTabBar')?.addEventListener('keydown', (e) => {
+      const tab = e.target.closest('[data-settings-tab]');
+      if (!tab || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+      e.preventDefault();
+      const n = SETTINGS_TABS.length, i = SETTINGS_TABS.findIndex(t => t.key === tab.dataset.settingsTab);
+      const next = e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + n) % n;
+      const key = SETTINGS_TABS[next].key;
+      showSettingsTab(key);
+      document.getElementById(`settings-tab-${key}`).focus();
     });
     showSettingsTab(settingsTab);
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-28-v489 (ShitHead-Deluxe-298) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-28-v490 (ShitHead-Deluxe-299) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -228,7 +228,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=1bbd810bfca2">
+  <link rel="stylesheet" href="game.css?v=8694f0f3fa21">
 
   
   <!-- Firebase SDKs -->
@@ -435,7 +435,7 @@
       <!-- Rightmost/outermost element on purpose — the desktop dropdown's
            own fixed `right: 12px` anchor (see the #hamburgerDrawer CSS)
            assumes it sits directly under this button. -->
-      <button id="hamburgerBtn" class="hamburger-btn h-7 flex items-center justify-center bg-transparent hover:brightness-125 rounded transition tip-below" style="width:1.75rem;" data-tip="Menu" aria-label="Menu">
+      <button id="hamburgerBtn" class="hamburger-btn h-7 flex items-center justify-center bg-transparent hover:brightness-125 rounded transition tip-below" style="width:1.75rem;" data-tip="Menu" aria-label="Menu" aria-controls="hamburgerDrawer" aria-expanded="false">
         <svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-menu"/></svg>
       </button>
     </div>
@@ -471,7 +471,7 @@
        class or a directly-set inline transform, so the two different
        breakpoint transforms in that CSS can both apply correctly. -->
   <div id="hamburgerOverlay" class="hidden fixed inset-0 z-[86] bg-slate-950/80"></div>
-  <div id="hamburgerDrawer" class="bg-slate-950 shadow-2xl overflow-y-auto" role="menu" aria-label="Main menu">
+  <div id="hamburgerDrawer" class="bg-slate-950 shadow-2xl overflow-y-auto" role="menu" aria-label="Main menu" aria-hidden="true" inert>
     <div id="hamburgerDragHandle"></div>
     <!-- Account header: the player's username (never their real name) and
          picture, centred, over one even row of four quick buttons. -->
@@ -977,6 +977,7 @@
       </div>
 
       <div class="hscroll-wrap"><button type="button" class="hscroll-btn prev" aria-label="Scroll sections left" tabindex="-1">‹</button><div id="settingsTabBar" class="cosmetic-tab-bar hscroll" role="tablist" aria-label="Settings sections"></div><button type="button" class="hscroll-btn next" aria-label="Scroll sections right" tabindex="-1">›</button></div>
+      <p id="settingsTutorialNotice" class="hidden" role="status">Lesson paused. Sound and accessibility settings are available. Gameplay and lesson helper controls stay locked until you leave the tutorial.</p>
       <div id="settingsScroll" class="max-h-[68vh] overflow-y-auto pr-1">
 
         <p id="settingsNoResultsMsg" class="hidden text-[10px] font-bold text-slate-500 text-center py-3">No matching settings found.</p>
@@ -1809,12 +1810,13 @@
       </svg>
 
       <div id="tutorialCaption" class="absolute bg-slate-900 border-2 border-amber-500 rounded-2xl px-4 py-3 shadow-2xl transition-all duration-300" style="width:min(330px, calc(100vw - 24px));pointer-events:auto;">
-        <div class="relative flex items-center justify-between mb-1.5">
+        <div class="tutorial-caption-head mb-1.5">
           <span id="tutorialStepCounter" class="text-[9px] font-black uppercase tracking-widest text-amber-400">Step 1 of 12</span>
           <span id="tutorialModuleTitle" class="absolute left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-widest text-slate-400"></span>
           <button id="tutorialSkipBtn" class="text-[9px] font-black uppercase tracking-wider text-slate-400 hover:text-rose-400 transition">Skip Tutorial ✕</button>
         </div>
         <p id="tutorialText" class="text-[12px] leading-snug text-slate-200 font-semibold"></p>
+        <p id="tutorialScrollHint">Scroll the table to see more cards.</p>
         <div class="flex items-center justify-between gap-2 mt-2.5">
           <button id="tutorialBackBtn" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider text-slate-300 transition">Back</button>
           <button id="tutorialNextBtn" class="px-4 py-1 bg-amber-500 hover:bg-amber-400 rounded-lg text-[10px] font-black uppercase tracking-wider text-slate-950 transition">Next</button>
@@ -2818,18 +2820,18 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=83850e0f086c"></script>
-  <script src="js/whats-new-data.js?v=91fe6f1b460f"></script>
+  <script src="js/whats-new-data.js?v=cd0632e762a5"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=8acbee61afea"></script>
-  <script src="tutorial-data.js?v=86b1cdade927"></script>
-  <script src="tutorial.js?v=0049a251f6ef"></script>
+  <script src="tutorial-data.js?v=51e38ba66974"></script>
+  <script src="tutorial.js?v=325c87f441da"></script>
   <script src="level-ladder.js?v=2236068565c3"></script>
   <script src="js/wishlist-store.js?v=664496c9f24f"></script>
   <script src="shop.js?v=d22b67674bb6"></script>
   <script src="home-navigation.js?v=8b927cb2e918"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=a8d6d7791046"></script>
+  <script src="app.js?v=cac094c48575"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>

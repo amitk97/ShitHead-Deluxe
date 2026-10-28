@@ -3,7 +3,8 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
-      v489: [['sparkle', 'Behind the scenes: the game now measures how fast the table draws and how quick the server answers, to track down lag.']],
+      v490: [['sparkle', 'Behind the scenes: the game now measures how fast the table draws and how quick the server answers, to track down lag.']],
+      v489: [['book', 'Tutorial fixes: hidden helper settings no longer block lessons, small phones can scroll the table, and lesson titles stay clear of Skip.', WN_KEY], ['gear', 'You can change sound and accessibility settings during a lesson. The Coach waits while Settings is open; gameplay controls stay locked. Settings text and touch targets are easier to use, with improved keyboard navigation.']],
       v488: [['sparkle', 'On a PC, big Multiple Decks tables now seat every opponent around the play area instead of a thin list.']],
       v487: [['sparkle', 'Shiny avatars now glint in step with each other.']],
       v486: [['sparkle', 'The Seer and The Enforcer avatars now have a light glint that sweeps across them.']],

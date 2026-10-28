@@ -257,7 +257,7 @@
         target: null
       },
       {
-        text: "You'll clear three zones in order: Hand, then Face-Up, then Face-Down (blind). No skipping ahead until the one before it is empty.",
+        text: "Normally, clear your Hand first, then Face-Up, then Face-Down (blind). The advanced Cross-Phase Combo lesson explains one exception.",
         target: ['#localHand', '#localTableSlots']
       },
       {
@@ -297,7 +297,7 @@
         scene: { faceUp: [] }
       },
       {
-        text: "Order matters: Hand, Face-Up, Face-Down. No skipping ahead, no matter how good the card underneath looks.",
+        text: "Normally the order is Hand, Face-Up, Face-Down. Cross-Phase Combo is one exception, covered in Advanced Tactics.",
         target: ['#localHand', '#localTableSlots'],
         scene: { faceUp: [['4', '♠'], ['9', '♦'], ['J', '♣']] }
       }
@@ -805,7 +805,7 @@
 
     const TUTORIAL_MODULE_CARD_Q = [
       {
-        text: "The Queen has no special power. Just a plain high card: equal or higher wins, same as most of the deck.",
+        text: "Under Standard Rules, the Queen is a plain high card: equal or higher wins. No Mercy gives Queens a different power.",
         target: null
       },
       {
@@ -820,7 +820,7 @@
 
     const TUTORIAL_MODULE_CARD_K = [
       {
-        text: "The King has no special power either. It's another plain high card, beaten only by an Ace or a handful of power cards.",
+        text: "Under Standard Rules, the King is a plain high card, beaten by an Ace or certain power cards. No Mercy gives Kings a different power.",
         target: null
       },
       {
@@ -954,7 +954,7 @@
         coachNote: "Burnt! And you play again."
       },
       {
-        text: "Every card has a power. Tap the glowing ⓘ button to see them all.",
+        text: "Tap the glowing ⓘ button to open Card Powers and see each card's rules.",
         target: '#cardRefBtn',
         require: { tapCheck: '#cardRefBtn' },
         coachNote: "Here's every card's power. Open it any time during a game.",
