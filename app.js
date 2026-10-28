@@ -2098,7 +2098,8 @@
         advanceTurn(1);
       } else if (cardRank === 'A' && isNoMercy()) {
         const ace = noMercyAce(player, state.discardPile.length - cardsToPlay.length);
-        notifyBanner(ace.length ? `Ace played: ${ace.map(t => t.name).join(', ')} ${ace.length === 1 ? 'takes' : 'take'} a card from the bottom of the Pile.` : 'Ace played.');
+        const aceUnder = state.discardPile.length - cardsToPlay.length;
+        notifyBanner(ace.length ? `Ace played: ${ace.map(t => t.name).join(', ')} ${ace.length === 1 ? 'takes' : 'take'} a card from the bottom of the Pile.` : aceUnder <= 0 ? 'Ace played: the Pile was empty, so nobody takes a card.' : 'Ace played: the bottom card is an Ace, so nobody takes a card.');
         advanceTurn(1);
       } else if (cardRank === 'Q' && isNoMercy()) {
         const target = getNextPlayer();
@@ -3240,7 +3241,7 @@
       layer.className = 'nm-peek';
       layer.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`;
       const cards = mine ? pk.cardIds.map(id => (target && target.hand || []).find(c => c.id === id)).filter(Boolean) : [];
-      layer.innerHTML = `<i class="nm-peek-scan"></i><span class="nm-peek-chip">X-RAY</span>${cards.map(c => `<b class="nm-peek-card ${getSuitStyle(c.suit)}">${c.isJoker ? 'JKR' : c.rank + c.suit}</b>`).join('')}`;
+      layer.innerHTML = `<i class="nm-peek-scan"></i><span class="nm-peek-chip">X-RAY</span>${cards.map(c => `<b class="nm-peek-card ${getSuitStyle(c.suit)}">${c.isJoker ? '<u>JKR</u>' : `<u>${c.rank}</u><u>${c.suit}</u>`}</b>`).join('')}`;
       document.body.appendChild(layer);
       const anims = [];
       const scan = layer.querySelector('.nm-peek-scan');

@@ -3019,7 +3019,7 @@ body.reduce-motion .rail-row { transition: none; }
 .nm-peek { position:fixed; z-index:66; pointer-events:none; display:flex; align-items:center; justify-content:center; gap:.3rem; overflow:visible; }
 .nm-peek-scan { position:absolute; left:0; right:0; top:0; height:3px; background:linear-gradient(90deg,transparent,#67e8f9,transparent); box-shadow:0 0 12px 3px rgba(34,211,238,.6); opacity:0; }
 .nm-peek-chip { position:absolute; top:-9px; padding:0 .4rem; font-size:9px; font-weight:900; letter-spacing:.14em; color:#082f49; background:#67e8f9; border-radius:999px; box-shadow:0 0 10px rgba(34,211,238,.7); }
-.nm-peek-card { position:relative; min-width:2.1rem; padding:.45rem .3rem; font-size:.95rem; font-weight:900; text-align:center; background:#06223a; border:2px solid #22d3ee; border-radius:.5rem; box-shadow:0 0 14px rgba(34,211,238,.65), inset 0 0 8px rgba(34,211,238,.25); opacity:0; }
+.nm-peek-card { position:relative; display:flex; flex-direction:column; align-items:flex-start; min-width:2.1rem; padding:.3rem .4rem .6rem; font-size:.95rem; line-height:1.05; font-weight:900; background:#06223a; border:2px solid #22d3ee; border-radius:.5rem; box-shadow:0 0 14px rgba(34,211,238,.65), inset 0 0 8px rgba(34,211,238,.25); opacity:0; }
 .nm-known { flex:none; font-size:8px; font-weight:900; padding:0 .3rem; height:15px; display:inline-flex; align-items:center; border-radius:999px; background:#06223a; border:1px solid #22d3ee; }
 
 .decks-counts.nm-counts { grid-template-columns:repeat(3,1fr); }
@@ -3173,3 +3173,5 @@ body[data-equipped-frame="frame-mum-kaalipeeli"] :is(.card-base,.card-table,.cus
 #homeEventChip b, #homeSeasonChip .hec-text b { font-size:11px; line-height:1.15; }
 #homeEventChip small, #homeSeasonChip .hec-text small { font-size:10px; line-height:1.15; }
 #homeEventChip .hec-go, #homeSeasonChip .hec-go { font-size:17px; line-height:1; }
+
+.nm-peek-card u { text-decoration:none; display:block; }

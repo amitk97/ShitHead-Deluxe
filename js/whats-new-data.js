@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v483: [['sparkle', 'No Mercy: cards you saw with a Queen now show the rank and suit in the top left, like real cards. An Ace that makes nobody pick up now says why.']],
       v482: [['sparkle', 'The Scratch Card foil is now a shiny holographic foil with a sweeping light band and glitter.']],
       v481: [['gift', 'On the Scratch Card you can start scratching the foil straight away; no need to press Get Card first.']],
       v480: [['sparkle', 'The Prism Ace avatar now shines with the same moving light band as the Prism Joker card back.']],
