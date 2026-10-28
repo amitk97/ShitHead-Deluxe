@@ -2099,7 +2099,9 @@
       } else if (cardRank === 'A' && isNoMercy()) {
         const ace = noMercyAce(player, state.discardPile.length - cardsToPlay.length);
         const aceUnder = state.discardPile.length - cardsToPlay.length;
-        notifyBanner(ace.length ? `Ace played: ${ace.map(t => t.name).join(', ')} ${ace.length === 1 ? 'takes' : 'take'} a card from the bottom of the Pile.` : aceUnder <= 0 ? 'Ace played: the Pile was empty, so nobody takes a card.' : 'Ace played: the bottom card is an Ace, so nobody takes a card.');
+        const aceSkipped = state.players.filter(p => p.id !== player.id && !p.hasFinished && !sameTeam(p, player) && !ace.includes(p));
+        const aceWhy = state.discardPile.length - cardsToPlay.length > 0 ? 'the next bottom card is an Ace' : 'the Pile ran out';
+        notifyBanner(ace.length ? `Ace played: ${ace.map(t => t.name).join(', ')} ${ace.length === 1 ? 'takes' : 'take'} a card from the bottom of the Pile.${aceSkipped.length ? ` ${aceSkipped.map(t => t.name).join(', ')} ${aceSkipped.length === 1 ? 'takes' : 'take'} nothing: ${aceWhy}.` : ''}` : aceUnder <= 0 ? 'Ace played: the Pile was empty, so nobody takes a card.' : 'Ace played: the bottom card is an Ace, so nobody takes a card.');
         advanceTurn(1);
       } else if (cardRank === 'Q' && isNoMercy()) {
         const target = getNextPlayer();
