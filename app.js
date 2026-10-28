@@ -13810,6 +13810,7 @@
       let defs = `<clipPath id="lx-tile"><rect width="1000" height="1000" rx="234"/></clipPath>
         <radialGradient id="lx-eye-fire"><stop offset="0" stop-color="#fff7ed" stop-opacity=".95"/><stop offset=".3" stop-color="#fb923c" stop-opacity=".8"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/></radialGradient>
         <radialGradient id="lx-flame"><stop offset="0" stop-color="#fde68a" stop-opacity=".55"/><stop offset=".45" stop-color="#f97316" stop-opacity=".3"/><stop offset="1" stop-color="#b91c1c" stop-opacity="0"/></radialGradient>
+        <linearGradient id="lx-pshine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".38" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#9fd8ff" stop-opacity=".4"/><stop offset=".62" stop-color="#ff9bea" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
         <linearGradient id="lx-gleam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`;
       [...LEVEL_REWARDS, ...COSMETIC_SHOP_ITEMS.filter(r => (r.ldn || r.mum) && r.file), ...EARNED_AVATARS.filter(r => r.file)].filter(r => r.category === 'Avatars').forEach((r) => {
         const motion = levelAvatarMotion(r.id);
@@ -13818,6 +13819,7 @@
           photo: true, tone: 'gold', animated: !!r.animated || !!motion.art,
           art: `<rect width="1000" height="1000" rx="234" fill="#07070c"/>`
             + `<image href="${r.file}" width="1000" height="1000" preserveAspectRatio="xMidYMid slice" style="clip-path:inset(0 round 234px)"/>`
+            + (r.shine ? `<g clip-path="url(#lx-tile)"><g transform="rotate(20 500 500)"><rect class="av-pshine" x="-460" y="-300" width="360" height="1600" fill="url(#lx-pshine)"/></g></g>` : '')
             + motion.art
             + (r.animated ? `<rect class="av-lvl-glow" x="10" y="10" width="980" height="980" rx="226" fill="none" stroke="${r.tone}" stroke-width="44" opacity=".25"/>` : '')
             + `<rect x="12" y="12" width="976" height="976" rx="222" fill="none" stroke="${r.tone}" stroke-width="22" opacity=".9"/>`
