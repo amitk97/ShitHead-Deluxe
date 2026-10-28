@@ -548,13 +548,20 @@ actions.wheel = async ({ uid, data }) => {
 };
 
 // Scratch Card (v478): one free card a UK day. `play` draws the result by weight, lays out the 3x3 grid that shows it
-// (three of a kind wins that symbol's prize; a losing grid never holds three of any symbol), pays it at once and keeps
+// (a line of three of one symbol wins that symbol's prize; a losing grid has no line), pays it at once and keeps
 // the card in `users/{uid}/scratch` so a reopened pop-up shows it. Scratching the foil off is only the reveal.
 const scratchShuffle = (list) => { for (let i = list.length - 1; i > 0; i--) { const j = nodeCrypto.randomInt(i + 1); [list[i], list[j]] = [list[j], list[i]]; } return list; };
+const SCRATCH_LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+const scratchLinesOf = (grid) => SCRATCH_LINES.filter(l => grid[l[0]] === grid[l[1]] && grid[l[1]] === grid[l[2]]);
+// v479: tic tac toe. A win is exactly ONE line (row, column or diagonal) of the prize symbol; a loss has no line at all.
 const scratchGrid = (symbols, win) => {
-  const twice = (arr) => arr.flatMap(x => [x, x]);
-  const rest = scratchShuffle(twice(win ? symbols.filter(x => x !== win) : symbols));
-  return scratchShuffle(win ? [win, win, win, ...rest.slice(0, 6)] : rest.slice(0, 9));
+  for (;;) {
+    const grid = Array.from({ length: 9 }, () => symbols[nodeCrypto.randomInt(symbols.length)]);
+    const line = win ? SCRATCH_LINES[nodeCrypto.randomInt(SCRATCH_LINES.length)] : null;
+    if (line) line.forEach(i => { grid[i] = win; });
+    const lines = scratchLinesOf(grid);
+    if (win ? lines.length === 1 && lines[0] === line : !lines.length) return grid;
+  }
 };
 actions.scratch = async ({ uid, data }) => {
   const S = CAT.scratch;

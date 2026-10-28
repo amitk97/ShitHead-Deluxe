@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v479: [['gift', 'The Scratch Card is now a 3x3 grid of real playing cards in your own deck, card back and frame. Win with three of one card in a row, column or diagonal. The prizes are the spinning Jackpot Wheel avatar and Jackpot Spin card back, shown in the pop-up, and the Scratch Card circle has a new icon.', WN_KEY]],
       v478: [['gift', 'New: the Scratch Card, a free card every day. Scratch off the foil and match three Jacks, Queens, Kings, Aces or Jokers. Three Aces win the animated Foil Ace avatar and three Jokers win the Foil Joker card back.', WN_KEY]],
       v477: [['sound', 'Three Cards now has card sounds for the shuffle and the flips, and the circle hints open beside the circle.']],
       v476: [['gift', 'Hover over the Daily Spin and Three Cards circles for a short description.']],

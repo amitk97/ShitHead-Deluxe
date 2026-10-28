@@ -136,15 +136,44 @@
   const scPrize = id => SCR.prizes.find(p => p.id === id);
   const scTier = p => p.kind === 'item' ? 'item' : p.amount >= 250 ? 'big' : p.amount >= 100 ? 'mid' : 'small';
   function scName(p) {
-    if (p.kind === 'item') { const owned = S.scOwned && S.scOwned[p.itemId]; return `3 ${SYM_NAMES[p.symbol]}s · ${p.name}${owned ? ' (you own it)' : ''}`; }
-    return p.symbol ? `3 ${SYM_NAMES[p.symbol]}s · ${p.amount} Diamonds` : `No match · ${p.amount} Diamonds`;
+    if (p.kind === 'item') { const owned = S.scOwned && S.scOwned[p.itemId]; return `A line of ${SYM_NAMES[p.symbol]}s · ${p.name}${owned ? ' (you own it)' : ''}`; }
+    return p.symbol ? `A line of ${SYM_NAMES[p.symbol]}s · ${p.amount} Diamonds` : `No line · ${p.amount} Diamonds`;
   }
   function scOdds() {
     $('scratchOdds').innerHTML = SCR.prizes.map(p => `<li><span class="lw-odds-name">${scName(p)}</span><b>${(p.weight / 10).toFixed(p.weight % 10 ? 1 : 0)}%</b></li>`).join('')
-      + `<li class="lw-odds-note">Once you own a foil item, winning it pays ${SCR.dupeDiamonds.toLocaleString('en-GB')} Diamonds instead. Every card pays something.</li>`;
+      + `<li class="lw-odds-note">Three of one card in a row, column or diagonal wins. Once you own a Jackpot item, winning it pays ${SCR.dupeDiamonds.toLocaleString('en-GB')} Diamonds instead. Every card pays something.</li>`;
   }
+  const SC_LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+  const SC_SUITS = ['♠', '♥', '♦', '♣'];
+  // The winning line (an older card that won with three anywhere falls back to every cell of that symbol).
+  function scWinCells(cells, win) {
+    if (!win) return [];
+    const l = SC_LINES.find(x => x.every(i => cells[i] === win));
+    return l || cells.map((c, i) => c === win ? i : -1).filter(i => i >= 0);
+  }
+  // Nine real playing cards in the player's own deck, frame and card back (rebuilt on every open, so it follows what is equipped).
   function scGrid(cells, win) {
-    $('scratchGrid').innerHTML = cells.map((c, i) => `<div class="lw-sc-cell${win && c === win ? ' win' : ''}" data-sym="${c || ''}">${c ? SYMS[c] : '<span class="lw-sc-r">?</span>'}</div>`).join('');
+    const hit = scWinCells(cells, win), g = $('scratchGrid');
+    let back = '<div class="custom-card-back"></div>';
+    try { back = snapshotCardBackHtml(snapshotCardStyle(), 'w-full h-full'); } catch (e) { /* default back */ }
+    g.innerHTML = cells.map((c, i) => {
+      let face = '';
+      if (c && typeof createCardElement === 'function') {
+        try {
+          const el = createCardElement(c === 'JOKER' ? { id: 'sc_' + i, suit: 'JOKER', rank: 'JOKER', isJoker: true } : { id: 'sc_' + i, rank: c, suit: SC_SUITS[(i * 3 + c.charCodeAt(0)) % 4] });
+          el.removeAttribute('data-card-id'); face = el.outerHTML;
+        } catch (e) { face = ''; }
+      }
+      return `<div class="lw-sc-cell${hit.includes(i) ? ' win' : ''}" data-sym="${c || ''}">${c ? face : back}</div>`;
+    }).join('');
+  }
+  function scPrizeRows() {
+    const el = $('scratchPrize'); if (!el || typeof avatarHtml !== 'function' || !SCR) return;
+    const row = (id, sym) => { const p = SCR.prizes.find(x => x.symbol === sym); return { p, own: S.scOwned && S.scOwned[p.itemId] }; };
+    const a = row('avatar', 'A'), b = row('back', 'JOKER');
+    const line = r => r.own ? `You own it, so it pays ${SCR.dupeDiamonds.toLocaleString('en-GB')} Diamonds` : `${(r.p.weight / 10).toString().replace(/\.0$/, '')}% chance`;
+    el.innerHTML = `<div class="lw-prize-row">${avatarHtml(a.p.itemId, 52)}<span class="lw-prize-t"><b>${a.p.name} avatar</b><span>Three Aces in a line · ${line(a)}</span></span></div>`
+      + `<div class="lw-prize-row"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass(b.p.itemId)} lw-backprev"></span></span><span class="lw-prize-t"><b>${b.p.name} card back</b><span>Three Jokers in a line · ${line(b)}</span></span></div>`;
   }
   function scDrawFoil() {
     const cv = $('scratchFoil'), r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -176,21 +205,21 @@
     const btn = $('scratchBtn'), sub = $('scratchSub'), rv = $('scratchRevealBtn'), c = S.scratch;
     if (!c) { btn.disabled = true; btn.textContent = 'NOT AVAILABLE YET'; sub.textContent = 'The Scratch Card needs a connection.'; rv.classList.add('hidden'); return; }
     rv.classList.toggle('hidden', !SC.pending);
-    if (SC.pending) { btn.disabled = true; btn.textContent = 'SCRATCH THE FOIL'; sub.textContent = 'Scratch to reveal. Match three to win.'; return; }
-    if (c.canPlay) { btn.disabled = SC.busy; btn.textContent = 'GET CARD'; sub.textContent = 'One free card every day. Match three to win.'; return; }
+    if (SC.pending) { btn.disabled = true; btn.textContent = 'SCRATCH THE FOIL'; sub.textContent = 'Scratch to reveal. Get three in a row, column or diagonal.'; return; }
+    if (c.canPlay) { btn.disabled = SC.busy; btn.textContent = 'GET CARD'; sub.textContent = 'One free card every day. Get three in a row, column or diagonal.'; return; }
     const m = Math.max(1, Math.ceil(untilMidnightMs() / 60000));
     btn.disabled = true; btn.textContent = `NEXT CARD IN ${Math.floor(m / 60)}H ${String(m % 60).padStart(2, '0')}M`; sub.textContent = 'You have used today’s card.';
   }
   function scratchResultHtml(card) {
     const p = scPrize(card.prize) || {};
     if (card.kind === 'item') return card.duplicate
-      ? `<b class="lw-won">+${card.paid.toLocaleString('en-GB')} Diamonds</b><span>Three ${SYM_NAMES[p.symbol]}s. You already own the ${card.name}, so it pays Diamonds.</span>`
-      : `<b class="lw-won">${card.name}</b><span>Three ${SYM_NAMES[p.symbol]}s. It is yours: find it in Custom.</span>`;
-    return p.symbol ? `<b class="lw-won">+${card.amount} Diamonds</b><span>Three ${SYM_NAMES[p.symbol]}s.</span>` : `<b class="lw-won">+${card.amount} Diamonds</b><span>No match this time. Every card pays a little.</span>`;
+      ? `<b class="lw-won">+${card.paid.toLocaleString('en-GB')} Diamonds</b><span>A line of ${SYM_NAMES[p.symbol]}s. You already own the ${card.name}, so it pays Diamonds.</span>`
+      : `<b class="lw-won">${card.name}</b><span>A line of ${SYM_NAMES[p.symbol]}s. It is yours: find it in Custom.</span>`;
+    return p.symbol ? `<b class="lw-won">+${card.amount} Diamonds</b><span>A line of ${SYM_NAMES[p.symbol]}s.</span>` : `<b class="lw-won">+${card.amount} Diamonds</b><span>No line this time. Every card pays a little.</span>`;
   }
   function scratchOpen() {
     if (!SCR) return;
-    scOdds();
+    scOdds(); scPrizeRows();
     const c = S.scratch;
     if (SC.pending) { scratchPaintState(); return; }
     const last = c && c.last;
@@ -456,7 +485,7 @@
   // Hover (PC) or keyboard focus on either home circle explains it in the shared info bubble.
   const CHIP_TIPS = {
     homeWheelChip: '<p><b>Daily Spin</b></p><p>One free spin a day for Diamonds, XP or a wheel-only avatar and card back.</p>',
-    homeScratchChip: '<p><b>Scratch Card</b></p><p>One free card a day. Scratch off the foil and match three to win Diamonds or a foil item.</p>',
+    homeScratchChip: '<p><b>Scratch Card</b></p><p>One free card a day. Scratch off the foil and get three of a kind in a line, like tic tac toe, to win Diamonds or a Jackpot item.</p>',
     homeMontyChip: '<p><b>Three Cards</b></p><p>Once a week, follow the 300 Diamond card as it is shuffled, then pick it.</p>'
   };
   const chipTip = (e) => {

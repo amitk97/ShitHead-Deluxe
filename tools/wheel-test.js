@@ -131,11 +131,12 @@ const setNow = (iso) => { const t = new RealDate(iso).getTime(); global.Date = c
   for (let i = 0; i < 4000; i++) {
     put(`users/c${i}`, { username: 'C' + i, diamonds: 0 });
     const c = (await economy.scratch({ uid: `c${i}`, data: { op: 'play' } })).card;
-    const counts = {}; c.grid.forEach(x => { assert(SC.symbols.includes(x)); counts[x] = (counts[x] || 0) + 1; });
-    const triples = Object.keys(counts).filter(x => counts[x] >= 3);
+    c.grid.forEach(x => assert(SC.symbols.includes(x)));
+    const L = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+    const lines = L.filter(l => c.grid[l[0]] === c.grid[l[1]] && c.grid[l[1]] === c.grid[l[2]]);
     const prize = SC.prizes.find(p => p.id === c.prize);
-    if (prize.symbol) { assert.deepEqual(triples, [prize.symbol], 'a win shows exactly its triple'); assert.equal(counts[prize.symbol], 3); }
-    else assert.equal(triples.length, 0, 'a loss never shows three of a kind');
+    if (prize.symbol) { assert.equal(lines.length, 1, 'a win shows exactly one line'); assert.equal(c.grid[lines[0][0]], prize.symbol); }
+    else assert.equal(lines.length, 0, 'a loss never shows a line');
     tally[c.prize] = (tally[c.prize] || 0) + 1;
     if (c.kind === 'item') { itemsWon++; assert(get(`users/c${i}/ownedCosmetics/${c.itemId}`), 'item owned'); assert(get(`users/c${i}/activityInbox/unlock_${c.itemId}`), 'unlock mail'); }
     else assert.equal(get(`users/c${i}/diamonds`), c.amount, 'Diamonds paid');

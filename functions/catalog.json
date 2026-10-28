@@ -1215,8 +1215,8 @@
    "type": "wheel"
   },
   "avatar-foil-ace": {
-   "name": "Foil Ace",
-   "requirement": "Win it on the Scratch Card",
+   "name": "Jackpot Wheel",
+   "requirement": "Get three Aces in a line on the Scratch Card",
    "type": "wheel"
   },
   "avatar-nm-seer": {
@@ -1312,7 +1312,7 @@
    "type": "wheel"
   },
   "back-foil-joker": {
-   "name": "Foil Joker",
+   "name": "Jackpot Spin",
    "requirement": "Win it on the Scratch Card",
    "type": "wheel"
   }
@@ -1498,7 +1498,7 @@
     "symbol": "A",
     "kind": "item",
     "itemId": "avatar-foil-ace",
-    "name": "Foil Ace",
+    "name": "Jackpot Wheel",
     "weight": 20
    },
    {
@@ -1506,7 +1506,7 @@
     "symbol": "JOKER",
     "kind": "item",
     "itemId": "back-foil-joker",
-    "name": "Foil Joker",
+    "name": "Jackpot Spin",
     "weight": 10
    }
   ]
