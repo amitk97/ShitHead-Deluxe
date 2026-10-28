@@ -93,6 +93,7 @@ body.reduce-motion .lw-mc-in { transition-duration: .01s; }
 .lw-sc-cell.win { box-shadow: 0 0 0 2px #fff3b0, 0 0 16px rgba(251,191,36,.9); transform: scale(1.07); z-index: 1; }
 .lw-sc-cell.win > * { animation: none !important; }
 .lw-sc-foil { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 1rem; touch-action: none; cursor: crosshair; transition: opacity .4s ease; }
+.lw-sc-shine { pointer-events: none; mix-blend-mode: screen; }
 .lw-sc-foil.gone { opacity: 0; pointer-events: none; }
 body.reduce-motion .lw-sc-foil, body.reduce-motion .lw-sc-cell { transition: none; }
 #scratchBtn:disabled { opacity: .55; cursor: default; }

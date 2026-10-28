@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v482: [['sparkle', 'The Scratch Card foil is now a shiny holographic foil with a sweeping light band and glitter.']],
       v481: [['gift', 'On the Scratch Card you can start scratching the foil straight away; no need to press Get Card first.']],
       v480: [['sparkle', 'The Prism Ace avatar now shines with the same moving light band as the Prism Joker card back.']],
       v479: [['gift', 'The Scratch Card is now a 3x3 grid of real playing cards in your own deck, card back and frame. Win with three of one card in a row, column or diagonal. The prizes are the Prism Ace avatar and Prism Joker card back, shown in the pop-up, and the Scratch Card, Daily Spin and Three Cards circles have new icons.', WN_KEY]],

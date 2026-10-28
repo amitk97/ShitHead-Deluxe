@@ -175,23 +175,58 @@
     el.innerHTML = `<div class="lw-prize-row">${avatarHtml(a.p.itemId, 52)}<span class="lw-prize-t"><b>${a.p.name} avatar</b><span>Three Aces in a line · ${line(a)}</span></span></div>`
       + `<div class="lw-prize-row"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass(b.p.itemId)} lw-backprev"></span></span><span class="lw-prize-t"><b>${b.p.name} card back</b><span>Three Jokers in a line · ${line(b)}</span></span></div>`;
   }
+  // Foil: silver-gold metal with a rainbow holo wash, brushed lines, glitter and bevelled edges; a second canvas sweeps a light band
+  // and twinkles over what is left of it (destination-in with the foil, so scratched holes stay clear).
+  const SC_GLITTER = Array.from({ length: 46 }, (_, i) => ({ x: ((i * 37) % 97) / 97, y: ((i * 61 + 13) % 89) / 89, r: .6 + (i % 4) * .45, ph: (i * 1.7) % 6.28, star: i % 5 === 0 }));
+  let scShineRaf = 0;
+  function scShine(t) {
+    scShineRaf = 0;
+    const fv = $('scratchFoil'), sh = $('scratchShine');
+    if (!fv || !sh || fv.classList.contains('gone') || $('wheelModal').classList.contains('hidden') || !fv.width) return;
+    if (sh.width !== fv.width || sh.height !== fv.height) { sh.width = fv.width; sh.height = fv.height; }
+    const g = sh.getContext('2d'), w = sh.width, h = sh.height, dpr = w / (fv.getBoundingClientRect().width || w), calm = motionOff();
+    g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, w, h);
+    const p = calm ? .42 : ((t / 2600) % 1.5) - .25, cx = p * (w + h) - h * .5;
+    const band = g.createLinearGradient(cx - h * .35, 0, cx + h * .35, h * .7);
+    band.addColorStop(0, 'rgba(255,255,255,0)'); band.addColorStop(.42, 'rgba(255,255,255,.75)'); band.addColorStop(.5, 'rgba(190,235,255,.55)'); band.addColorStop(.58, 'rgba(255,190,240,.5)'); band.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = band; g.fillRect(0, 0, w, h);
+    SC_GLITTER.forEach((d) => {
+      const a = calm ? .55 : Math.max(0, Math.sin(t / 380 + d.ph)) ** 3;
+      if (a < .05) return;
+      const x = d.x * w, y = d.y * h, r = d.r * dpr * (d.star ? 3.2 : 1.4);
+      g.fillStyle = `rgba(255,255,255,${a})`;
+      if (d.star) { g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r * .22, y - r * .22); g.lineTo(x + r, y); g.lineTo(x + r * .22, y + r * .22); g.lineTo(x, y + r); g.lineTo(x - r * .22, y + r * .22); g.lineTo(x - r, y); g.lineTo(x - r * .22, y - r * .22); g.closePath(); g.fill(); }
+      else { g.beginPath(); g.arc(x, y, r * .5, 0, 6.283); g.fill(); }
+    });
+    g.globalCompositeOperation = 'destination-in'; g.drawImage(fv, 0, 0);
+    if (!calm) scShineRaf = requestAnimationFrame(scShine);
+  }
   function scDrawFoil() {
     const cv = $('scratchFoil'), r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
     if (!r.width) return;
+    if (!$('scratchShine')) { const sh = document.createElement('canvas'); sh.id = 'scratchShine'; sh.className = 'lw-sc-foil lw-sc-shine'; sh.setAttribute('aria-hidden', 'true'); cv.after(sh); }
     cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
     const g = cv.getContext('2d'), w = cv.width, h = cv.height;
     g.globalCompositeOperation = 'source-over';
     const f = g.createLinearGradient(0, 0, w, h);
-    [[0, '#fff3b0'], [.28, '#f5b82e'], [.5, '#fff0a0'], [.74, '#d88a12'], [1, '#8a5208']].forEach(([o, c]) => f.addColorStop(o, c));
+    [[0, '#e6eaf3'], [.22, '#8c96ac'], [.4, '#f7f9ff'], [.58, '#737d95'], [.78, '#d6dcea'], [1, '#808aa2']].forEach(([o, c]) => f.addColorStop(o, c));
     g.fillStyle = f; g.fillRect(0, 0, w, h);
-    g.globalAlpha = .16; g.strokeStyle = '#7a4a08'; g.lineWidth = dpr * .8;
-    for (let x = -h; x < w; x += 9 * dpr) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + h, 0); g.stroke(); }
-    const hl = g.createLinearGradient(0, 0, w, 0); ['#ff4d8d', '#ffd24a', '#4dff9c', '#3dd8ff', '#8a5cff'].forEach((c, i) => hl.addColorStop(i / 4, c));
-    g.globalAlpha = .13; g.fillStyle = hl; g.fillRect(0, 0, w, h); g.globalAlpha = 1;
-    g.font = `900 ${Math.round(w * .095)}px Outfit, Arial Black, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillStyle = 'rgba(255,255,255,.55)'; g.fillText('SCRATCH HERE', w / 2 + dpr, h / 2 + dpr);
-    g.fillStyle = 'rgba(90,50,4,.78)'; g.fillText('SCRATCH HERE', w / 2, h / 2);
-    g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = dpr * 2; g.strokeRect(dpr, dpr, w - dpr * 2, h - dpr * 2);
+    const holo = g.createLinearGradient(0, h, w, 0);
+    ['#ff5fa8', '#ffd35a', '#6dffb0', '#52d6ff', '#9a7bff', '#ff5fa8'].forEach((c, i) => holo.addColorStop(i / 5, c));
+    g.globalCompositeOperation = 'overlay'; g.globalAlpha = .8; g.fillStyle = holo; g.fillRect(0, 0, w, h);
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = .1; g.strokeStyle = '#3b4560'; g.lineWidth = dpr * .6;
+    for (let y = 0; y < h; y += 3 * dpr) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y + (y % 7)); g.stroke(); }
+    g.globalAlpha = .22; g.strokeStyle = '#fff'; g.lineWidth = dpr * 1.4;
+    for (let x = -h; x < w; x += 22 * dpr) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + h, 0); g.stroke(); }
+    g.globalAlpha = 1;
+    const vg = g.createRadialGradient(w / 2, h / 2, Math.min(w, h) * .25, w / 2, h / 2, Math.max(w, h) * .72);
+    vg.addColorStop(0, 'rgba(255,255,255,0)'); vg.addColorStop(1, 'rgba(40,50,80,.35)'); g.fillStyle = vg; g.fillRect(0, 0, w, h);
+    g.font = `900 ${Math.round(w * .1)}px Outfit, Arial Black, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.letterSpacing = `${Math.round(w * .008)}px`;
+    g.fillStyle = 'rgba(255,255,255,.9)'; g.fillText('SCRATCH HERE', w / 2 + dpr, h / 2 + dpr);
+    g.fillStyle = 'rgba(60,72,104,.85)'; g.fillText('SCRATCH HERE', w / 2, h / 2);
+    g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = dpr * 2.4; g.strokeRect(dpr * 1.2, dpr * 1.2, w - dpr * 2.4, h - dpr * 2.4);
+    g.strokeStyle = 'rgba(70,84,120,.6)'; g.lineWidth = dpr; g.strokeRect(dpr * 3.6, dpr * 3.6, w - dpr * 7.2, h - dpr * 7.2);
+    cancelAnimationFrame(scShineRaf); scShineRaf = requestAnimationFrame(scShine);
   }
   function scCleared() {
     const cv = $('scratchFoil'), g = cv.getContext('2d'), w = cv.width, h = cv.height, step = 12;
@@ -224,10 +259,10 @@
     if (SC.pending) { scratchPaintState(); return; }
     const last = c && c.last;
     if (last) {
-      $('scratchFoil').classList.add('gone'); scGrid(last.grid, (scPrize(last.prize) || {}).symbol);
+      $('scratchFoil').classList.add('gone'); $('scratchShine')?.classList.add('gone'); scGrid(last.grid, (scPrize(last.prize) || {}).symbol);
       $('scratchResult').innerHTML = scratchResultHtml(last);
     } else {
-      $('scratchFoil').classList.remove('gone'); scGrid(Array(9).fill(''), null); $('scratchResult').innerHTML = '';
+      $('scratchFoil').classList.remove('gone'); $('scratchShine')?.classList.remove('gone'); scGrid(Array(9).fill(''), null); $('scratchResult').innerHTML = '';
       requestAnimationFrame(scDrawFoil);
     }
     scratchPaintState();
@@ -242,14 +277,14 @@
     SC.card = res; SC.pending = true;
     S.scratch = { canPlay: false, last: res.card };
     scGrid(res.card.grid, null); $('scratchResult').innerHTML = '';
-    $('scratchFoil').classList.remove('gone'); scDrawFoil();
+    $('scratchFoil').classList.remove('gone'); $('scratchShine')?.classList.remove('gone'); scDrawFoil();
     scratchPaintState(); paint();
   }
   function scratchReveal(quiet) {
     if (!SC.pending || !SC.card) return;
     const res = SC.card, card = res.card, p = scPrize(card.prize) || {};
     SC.pending = false; SC.card = null; SC.down = false;
-    $('scratchFoil').classList.add('gone');
+    $('scratchFoil').classList.add('gone'); $('scratchShine')?.classList.add('gone');
     scGrid(card.grid, p.symbol);
     if (Number.isFinite(Number(res.diamonds)) && typeof challengeEconomy !== 'undefined') challengeEconomy.diamonds = Number(res.diamonds);
     if (typeof updateDiamondHeader === 'function') updateDiamondHeader();
