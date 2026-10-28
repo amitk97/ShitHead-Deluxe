@@ -52,9 +52,33 @@ They are listed on the More Modes page (v320); each becomes its own carousel car
 ## Season Pass (built v393: free track, Season 1 Ancient Egypt, from 1 Nov 2026)
 
 - [x] Free 50-tier pass, auto-granted tiers, Egypt art (card back, avatar, table), Level Ladder tab, home chip (v393).
-- [ ] Season 2 (1 Jan to 28 Feb 2027): theme chosen = **Ice Age** (the era). Still to do: draft the three items for approval (cave-painting card back, woolly mammoth avatar, glacier steppe table), then `SEASON_PASS.seasons` entry, `ss2701` art files, rules regex check, catalog export, Functions deploy before 31 Dec. The season key is already date-driven.
+- [x] (v395–v399) Seasons 2–6 built (Ice Age, Feudal Japan, Deep Ocean, Ancient Greece, Dark Magic).
 - [ ] Premium track and tier skips stay on hold until there is a business bank account.
 
 - [ ] Detailed plan: `docs/plans/season-pass.md` (2-month seasons, 50 tiers, free + Premium tracks, first season 1 Nov 2026). Open decisions are in section 14 of the plan.
 - [ ] Legal and payments prerequisites before Premium goes on sale: legal drafts (kept locally), Monzo Business account and sole trader registration, ICO registration, Google Play developer account and closed test, and the game fixes listed in the legal pack (deletion gaps, age tick and terms links at sign-up, separate sales record).
 - [ ] Future game modes and No Mercy rules are listed above under the earlier TODO entries.
+
+## Daily extras (built v469–v482)
+
+- [x] Daily Spin (v469), Three Cards weekly (v474), Scratch Card daily (v478; tic tac toe lines with real cards v479; holographic foil v482).
+- [ ] **Functions deploy needed** for the v479 line grid, the catalog names and the AmitK/Pooja scratch reset (run the "Deploy notification functions" workflow).
+
+## Housekeeping due
+
+- [ ] **README refresh is overdue** (due at v480, now v482): text, all seven screenshots, `README-VERSION` stamp.
+
+## Ideas (v482, not decided; delete what you don't want)
+
+- [ ] Daily trio bonus: finish the Spin, the Scratch Card and (weekly) Three Cards in one day / week for a small extra prize.
+- [ ] Scratch Card streak: 7 days in a row gives a golden card with better odds.
+- [ ] Scratch Card as a gift: send a friend a free card.
+- [ ] A weekly mega scratch card with a bigger grid and a seasonal foil during events.
+- [ ] Randomiser Mode (already listed above): shuffled card powers shown up front.
+- [ ] Tournament mode (friends' bracket) once there are more players.
+- [ ] Clubs / teams with a shared weekly goal.
+- [ ] "You've been overtaken" leaderboard mail.
+- [ ] Share card for big wins (Foil items, Ranked streaks) as a picture.
+- [ ] Sound pass: more of the home screen (circles, carousel) with small synthesised sounds.
+- [ ] Hand-picked Daily puzzle sets for events (e.g. Halloween puzzles).
+- [ ] A "Collection" progress reward (own 25 / 50 / 100 items) with a title or frame.
