@@ -5123,9 +5123,12 @@
       if (reduceMotion) document.querySelectorAll('#flightLayer .flying-card').forEach(el => el.remove());
       const matrixLayer = document.getElementById('matrixRefLayer');
       const cardLayer = document.getElementById('cardRefLayer');
-      if (matrixLayer) matrixLayer.classList.toggle('hidden', hideHelperIcons);
-      if (cardLayer) cardLayer.classList.toggle('hidden', hideHelperIcons);
-      if (hideHelperIcons) {
+      // Lessons need both references even when the player normally hides them.
+      // Leave the saved preference untouched and restore it on tutorial exit.
+      const hideReferences = hideHelperIcons && !tutorialActive;
+      if (matrixLayer) matrixLayer.classList.toggle('hidden', hideReferences);
+      if (cardLayer) cardLayer.classList.toggle('hidden', hideReferences);
+      if (hideReferences) {
         if (typeof toggleMatrixReference === 'function') toggleMatrixReference(true);
         if (typeof toggleCardReference === 'function') toggleCardReference(true);
       }
@@ -10779,6 +10782,9 @@
       document.getElementById('hamburgerBtn')?.classList.add('open');
       document.getElementById('hamburgerOverlay').classList.remove('hidden');
       const drawer = document.getElementById('hamburgerDrawer');
+      drawer.inert = false;
+      drawer.setAttribute('aria-hidden', 'false');
+      document.getElementById('hamburgerBtn').setAttribute('aria-expanded', 'true');
       // Always start from the top, not wherever it was last scrolled to.
       [drawer, ...drawer.querySelectorAll('*')].forEach((el) => { if (el.scrollTop) el.scrollTop = 0; });
       drawer.classList.add('open');
@@ -10786,6 +10792,11 @@
       window.addEventListener('keydown', hamburgerEscHandler);
     }
     function closeHamburgerMenu() {
+      const drawer = document.getElementById('hamburgerDrawer');
+      if (drawer.contains(document.activeElement)) document.getElementById('hamburgerBtn').focus();
+      drawer.inert = true;
+      drawer.setAttribute('aria-hidden', 'true');
+      document.getElementById('hamburgerBtn').setAttribute('aria-expanded', 'false');
       document.getElementById('hamburgerBtn')?.classList.remove('open');
       document.getElementById('hamburgerOverlay').classList.add('hidden');
       document.getElementById('hamburgerDrawer').classList.remove('open');
@@ -15777,13 +15788,16 @@
     document.getElementById('lobbySettingsShortcut')?.addEventListener('click', () => document.getElementById('menuSettingsBtn')?.click());
 
     function openSettings() {
-      // Locked during the tutorial: it controls its own state (icons forced
-      // on, and it teaches the rank toggle at a specific step), so changing
-      // things mid-lesson would desync it.
-      if (tutorialActive) { notifyBanner('Settings are unavailable during the tutorial.'); return; }
       refreshSettingsUI();
+      // Sound and accessibility remain available. Only scripted gameplay
+      // controls are locked; delayed Coach replies resume after closing.
+      if (tutorialActive) tutorialPauseForSettings(true);
+      else tutorialSettingsLocks();
       document.getElementById('settingsModal').classList.remove('hidden');
     }
+    new MutationObserver(() => {
+      if (tutorialActive && document.getElementById('settingsModal').classList.contains('hidden')) tutorialPauseForSettings(false);
+    }).observe(document.getElementById('settingsModal'), { attributes: true, attributeFilter: ['class'] });
     document.getElementById('matchStatsBtn').addEventListener('click', () => {
       buildMatchStats('game');
       document.getElementById('matchStatsModal').classList.remove('hidden');
@@ -22217,7 +22231,8 @@
     function renderSettingsTabs() {
       const bar = document.getElementById('settingsTabBar');
       if (!bar) return;
-      bar.innerHTML = SETTINGS_TABS.map(t => `<button type="button" role="tab" class="cosmetic-tab" data-settings-tab="${t.key}" aria-selected="${!settingsSearching && t.key === settingsTab}">${t.label}</button>`).join('');
+      bar.innerHTML = SETTINGS_TABS.map(t => `<button type="button" role="tab" class="cosmetic-tab" id="settings-tab-${t.key}" data-settings-tab="${t.key}" aria-controls="settingsTab-${t.key}" tabindex="${t.key === settingsTab ? '0' : '-1'}" aria-selected="${!settingsSearching && t.key === settingsTab}">${t.label}</button>`).join('');
+      SETTINGS_TABS.forEach(t => document.getElementById(`settingsTab-${t.key}`)?.setAttribute('aria-labelledby', `settings-tab-${t.key}`));
       initHorizontalScroller(bar);
     }
     function showSettingsTab(key) {
@@ -22236,6 +22251,16 @@
     document.getElementById('settingsTabBar')?.addEventListener('click', (e) => {
       const tab = e.target.closest('[data-settings-tab]');
       if (tab) showSettingsTab(tab.dataset.settingsTab);
+    });
+    document.getElementById('settingsTabBar')?.addEventListener('keydown', (e) => {
+      const tab = e.target.closest('[data-settings-tab]');
+      if (!tab || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+      e.preventDefault();
+      const n = SETTINGS_TABS.length, i = SETTINGS_TABS.findIndex(t => t.key === tab.dataset.settingsTab);
+      const next = e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + n) % n;
+      const key = SETTINGS_TABS[next].key;
+      showSettingsTab(key);
+      document.getElementById(`settings-tab-${key}`).focus();
     });
     showSettingsTab(settingsTab);
 

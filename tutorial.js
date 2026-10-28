@@ -17,15 +17,55 @@
     let tutorialPendingContinueAction = null;
     let tutorialSnapshots = [];      // board as it was when each step first began
     let tutorialTimers = [];
+    let tutorialSettingsPaused = false;
 
     function tutorialClearTimers() {
-      tutorialTimers.forEach(t => clearTimeout(t));
+      tutorialTimers.forEach(t => clearTimeout(t.id));
       tutorialTimers = [];
     }
+    function tutorialScheduleTimer(t) {
+      t.due = performance.now() + t.remaining;
+      t.id = setTimeout(() => {
+        tutorialTimers = tutorialTimers.filter(x => x !== t);
+        if (tutorialActive) t.fn();
+      }, t.remaining);
+    }
     function tutorialDelay(fn, ms) {
-      const t = setTimeout(() => { if (tutorialActive) fn(); }, ms);
+      const t = { fn, remaining: ms, due: 0, id: null };
       tutorialTimers.push(t);
+      if (!tutorialSettingsPaused) tutorialScheduleTimer(t);
       return t;
+    }
+
+    function tutorialSettingsLocks() {
+      const notice = document.getElementById('settingsTutorialNotice');
+      notice?.classList.toggle('hidden', !tutorialActive);
+      const controls = document.querySelectorAll('#settingsTab-gameplay button, #settingsTab-gameplay input, #setIconsRow, #setHideHelpersRow');
+      controls.forEach(el => {
+        if (tutorialActive) {
+          if (!el.hasAttribute('data-lesson-locked')) el.dataset.lessonDisabledBefore = el.disabled ? '1' : '0';
+          el.dataset.lessonLocked = '1';
+          el.disabled = true;
+        } else if (el.hasAttribute('data-lesson-locked')) {
+          el.disabled = el.dataset.lessonDisabledBefore === '1';
+          delete el.dataset.lessonLocked;
+          delete el.dataset.lessonDisabledBefore;
+        }
+      });
+    }
+    function tutorialPauseForSettings(paused) {
+      tutorialSettingsLocks();
+      if (tutorialSettingsPaused === paused) return;
+      tutorialSettingsPaused = paused;
+      if (paused) {
+        tutorialTimers.forEach(t => {
+          clearTimeout(t.id);
+          t.remaining = Math.max(0, t.due - performance.now());
+          t.id = null;
+        });
+      } else {
+        tutorialTimers.forEach(tutorialScheduleTimer);
+      }
     }
 
     const C = (rank, suit) => ({ id: `tut_${rank}${suit}_${Math.random().toString(36).slice(2,8)}`, rank, suit, isJoker: rank === 'JOKER' });
@@ -452,7 +492,10 @@
       state.multiDeck = false; state.noMercy = false;
       TUTORIAL_STEPS = moduleSteps || TUTORIAL_STEPS_FULL_LEGACY;
       tutorialActive = true;
+      tutorialSettingsPaused = false;
       document.body.classList.add('tutorial-on');
+      applyAccessibilityPrefs();
+      document.getElementById('gameTable').scrollTop = 0;
       tutorialStep = 0;
       tutorialSnapshots = [];
       tutorialPrevSelectAll = selectAllOfRank;
@@ -587,7 +630,7 @@
       // spotlight measured against a stale position. Re-measure once the
       // browser has settled.
       requestAnimationFrame(applySpotlight);
-      tutorialDelay(applySpotlight, 320);
+      tutorialDelay(() => { tutorialRevealActionTarget(); applySpotlight(); }, 320);
       // A narration step (no require) can still script a live Coach reply —
       // e.g. Transparent needs the player to actually SEE the Coach's 3 land on
       // top of a card, not just read about it in a static pre-set scene.
@@ -604,7 +647,7 @@
     function renderTutorialCaption(step, idx, text) {
       document.getElementById('tutorialText').textContent = text;
       document.getElementById('tutorialStepCounter').textContent = `Step ${idx + 1} of ${TUTORIAL_STEPS.length}`;
-      document.getElementById('tutorialModuleTitle').textContent = tutorialCurrentModuleTitle;
+      document.getElementById('tutorialModuleTitle').textContent = `${tutorialCurrentModuleTitle} · Standard Rules`;
       // Back is ALWAYS available (except on the very first step) and performs a
       // genuine undo by restoring the snapshot taken when the step began.
       const backBtn = document.getElementById('tutorialBackBtn');
@@ -713,6 +756,29 @@
         if (step.matchSpotlightWidthPair) syncSpotlightBoxWidths(...step.matchSpotlightWidthPair);
       }
     }
+
+    // Short screens keep the caption in its own reserved area. Scroll the
+    // lesson table, never the document or the caption, to reveal the action.
+    function tutorialRevealActionTarget() {
+      if (!tutorialActive || !matchMedia('(max-height: 720px)').matches) return;
+      const step = TUTORIAL_STEPS[tutorialStep], r = step?.require;
+      const selectors = r?.rank ? ['#localHand .tutorial-glow', '#localTableSlots .tutorial-glow']
+        : r?.blind ? ['#localTableSlots .tutorial-glow']
+        : r?.holdCheck || r?.pickup ? ['#discardPileContainer']
+        : r?.ready ? ['#finishSwapBtn']
+        : r?.toggleRankSelect ? ['#multiSelectToggleBtn']
+        : r?.tapCheck ? [r.tapCheck]
+        : r?.swap ? ['#localHand .tutorial-glow']
+        : Array.isArray(step?.target) ? step.target : [step?.target];
+      if (r?.requireSnap) selectors.unshift('#snapBurnBtn');
+      const target = selectors.filter(Boolean).map(s => document.querySelector(s)).find(e => e?.getBoundingClientRect().height);
+      const table = document.getElementById('gameTable'), cap = document.getElementById('tutorialCaption');
+      if (!target || !table?.contains(target)) return;
+      const b = target.getBoundingClientRect(), top = cap.getBoundingClientRect().bottom + 12;
+      const bottom = table.getBoundingClientRect().bottom - 12;
+      if (b.bottom > bottom) table.scrollTop += b.bottom - bottom;
+      else if (b.top < top) table.scrollTop -= top - b.top;
+    }
     // The Card Powers / Play Matrix steps: the opened panel sits centred on
     // the screen, just below the caption, so the caption never covers it.
     function tutorialPlaceRefPanel(cap) {
@@ -812,6 +878,11 @@
           const lo = pileR.bottom + 6, hi = handR.top - capH - 6;
           top = hi >= lo ? (lo + hi) / 2 : Math.max(lo, (pileR.bottom + handR.top - capH) / 2);
         }
+      }
+      const compact = matchMedia('(max-height: 720px)').matches;
+      if (compact) {
+        top = (document.querySelector('body > header')?.getBoundingClientRect().bottom || 44) + m;
+        document.getElementById('gameTable')?.style.setProperty('--tutorial-caption-room', `${capH + m * 2}px`);
       }
       cap.style.top = `${Math.max(m, Math.min(top, window.innerHeight - capH - m))}px`;
       tutorialPlaceRefPanel(cap);
@@ -1386,7 +1457,12 @@
         updateMultiSelectToggleUI();
       }
       tutorialActive = false;
+      tutorialSettingsPaused = false;
+      tutorialSettingsLocks();
       document.body.classList.remove('tutorial-on');
+      applyAccessibilityPrefs();
+      document.getElementById('gameTable').scrollTop = 0;
+      document.getElementById('gameTable').style.removeProperty('--tutorial-caption-room');
       tutorialHoldKeep = false;
       if (typeof hideCardHold === 'function') hideCardHold();
       tutorialBotPaused = false;
