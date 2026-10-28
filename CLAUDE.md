@@ -12,6 +12,10 @@
 
 - `js/test-lab.js` tabs Back / Table / Deck / Frame / Emote / Avatar (the old dummy-position tab is now "Setup"): tap an item (any in `customAllItems(type)`, decks from `deckItems()`) and `applyLook` sets it IN MEMORY: `equippedCosmetics[type] = id` + `applyEquippedCosmetics()` (the bot's seat gets the back, frame and avatar too), decks through `selectDeckTheme`. Never saved: while `state.labDummy` is set `applyEquippedCosmetics` and `selectDeckTheme` skip their localStorage writes, `eventBotItem` and `showHelperTip` stand down, and `open()` turns `syncShowcase`, `syncPublicProfile` and `scheduleSettingsCloudSave` into no-ops (like the win/history reports). `snapshotReal()` at open and `restoreReal()` on Exit / "My real look" put the account's own look back. Extras: next / previous / Auto-step (1.8s) and an emote strip that floats each emote of the chosen pack from your seat. Trap found: the file's `const CSS` string shadows `window.CSS`, so use `window.CSS.escape`. Client only; no rules, Functions or catalog change. Dev test "v436: the Test Lab tries looks on in memory only…". Frames: scratchpad `lab-shot.js` (fakes `currentUser` and `isAmitkTestingAccount` then clicks the tabs).
 
+## v481 — scratch without Get Card
+
+- A press on the foil (`#scratchFoil` pointerdown) while a card is available calls `scratchGet()` itself (the foil is already drawn over face-down cards), and the drag carries on once the server card arrives; the GET CARD button stays for keyboard users. Client only.
+
 ## v480 — Prism Ace shines
 
 - `shine: true` on the `avatar-foil-ace` entry: `installLevelAvatars` adds a clipped, rotated light band (`.av-pshine`, gradient `lx-pshine`, 3.6s loop with a rest, `screen` blend) like the card back's sweep; Reduce Motion parks it. Client only, no rules or Functions change.

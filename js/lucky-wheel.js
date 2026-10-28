@@ -271,7 +271,7 @@
       g.beginPath(); g.moveTo(last ? last[0] : x, last ? last[1] : y); g.lineTo(x + .01, y); g.stroke(); last = [x, y];
       const t = performance.now(); if (t - SC.snd > 55 && audio.playScratch) { SC.snd = t; audio.playScratch(); }
     };
-    cv.addEventListener('pointerdown', (e) => { if (!SC.pending) return; SC.down = true; last = null; try { cv.setPointerCapture(e.pointerId); } catch (x) { /* fine */ } scrape(e); e.preventDefault(); });
+    cv.addEventListener('pointerdown', (e) => { if (!SC.pending) { if (S.scratch && S.scratch.canPlay && !SC.busy && signedIn()) { SC.down = true; last = null; try { cv.setPointerCapture(e.pointerId); } catch (x) { /* fine */ } scratchGet(); e.preventDefault(); } return; } SC.down = true; last = null; try { cv.setPointerCapture(e.pointerId); } catch (x) { /* fine */ } scrape(e); e.preventDefault(); });
     cv.addEventListener('pointermove', (e) => { scrape(e); });
     const up = () => { if (!SC.down) return; SC.down = false; last = null; if (SC.pending && scCleared() > .55) scratchReveal(); };
     cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
