@@ -171,7 +171,7 @@
       { id: 'avatar-twos', category: 'Avatars', name: 'Dream Team', earned: true, animated: true, twos: true, requirement: 'Win 10 games of 2 vs 2', isEarned: () => false },
       { id: 'avatar-decks', category: 'Avatars', name: 'Double Deck', earned: true, animated: true, decks: true, requirement: 'Win 10 games of Multiple Decks', isEarned: () => false },
       { id: 'avatar-wheel', category: 'Avatars', name: 'Lucky Wheel', earned: true, animated: true, wheel: true, requirement: 'Win it on the Daily Spin', isEarned: () => false },
-      { id: 'avatar-foil-ace', category: 'Avatars', name: 'Foil Ace', earned: true, animated: true, scratch: true, requirement: 'Win it on the Scratch Card', isEarned: () => false },
+      { id: 'avatar-foil-ace', category: 'Avatars', name: 'Foil Ace', earned: true, animated: true, scratch: true, tone: '#a78bfa', file: 'art/avatars/foil-prism-ace.webp', requirement: 'Win it on the Scratch Card', isEarned: () => false },
       { id: 'avatar-nm-seer', category: 'Avatars', name: 'The Seer', earned: true, nm: true, tone: '#e11d48', file: 'art/avatars/nm-seer.webp', requirement: 'Play 50 Queens in No Mercy', isEarned: () => false },
       { id: 'avatar-nm-enforcer', category: 'Avatars', name: 'The Enforcer', earned: true, nm: true, tone: '#b45309', file: 'art/avatars/nm-enforcer.webp', requirement: 'Make other players take 50 cards with Kings in No Mercy', isEarned: () => false }
     ];
@@ -218,7 +218,7 @@
       { id: 'back-nm-verdict', category: 'Card Backs', name: 'Crimson Verdict', earned: true, nm: true, tone: '#b91c1c', file: 'art/backs/nm-verdict2.webp', tones: ['#14080a','#b91c1c','#c9a04a'], requirement: 'Win 10 games of No Mercy', isEarned: () => false },
       { id: 'deck-nm-verdict', category: 'Decks', name: 'Crimson Verdict', earned: true, nm: true, theme: 'theme-nmverdict', tones: ['#efe3cc','#7a5a2a','#b3141f'], requirement: 'Win 25 games of No Mercy', isEarned: () => false },
       { id: 'back-wheel', category: 'Card Backs', name: 'Lucky Spin', earned: true, wheel: true, tone: '#f59e0b', tones: ['#0b1230','#f59e0b','#b91c1c'], requirement: 'Win it on the Daily Spin', isEarned: () => false },
-      { id: 'back-foil-joker', category: 'Card Backs', name: 'Foil Joker', earned: true, scratch: true, tone: '#f5b82e', tones: ['#140a02','#f5b82e','#fff3b0'], requirement: 'Win it on the Scratch Card', isEarned: () => false }
+      { id: 'back-foil-joker', category: 'Card Backs', name: 'Foil Joker', earned: true, scratch: true, tone: '#8b5cf6', file: 'art/backs/foil-prism-joker.webp', tones: ['#0a1226','#8b5cf6','#67e8f9'], requirement: 'Win it on the Scratch Card', isEarned: () => false }
     ];
     // Earn-only frames: never sold or gifted, shown locked in Custom until
     // the server grants them (Gauntlet Gold: beat the Gauntlet once).
