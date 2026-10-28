@@ -2316,9 +2316,11 @@
     /* Premium animated pictures (Royal Flush, Phoenix, Cosmic Ace). */
     .av-rf { transform-box:view-box; transform-origin:32px 54px; animation:av-rf 3.4s cubic-bezier(.34,1.3,.5,1) infinite; }
     @keyframes av-rf { 0%,14% { transform:rotate(calc(var(--a) * .2)); } 38%,80% { transform:rotate(var(--a)); } 100% { transform:rotate(calc(var(--a) * .2)); } }
-    /* Lucky Wheel avatar: spins up, slows and settles, holds, repeats. */
-    .av-wheelspin { transform-box:view-box; transform-origin:32px 35.5px; animation:av-wheelspin 5.2s infinite; }
-    @keyframes av-wheelspin { 0% { transform:rotate(0); animation-timing-function:cubic-bezier(.12,.62,.2,1); } 62%,100% { transform:rotate(360deg); } }
+    /* Lucky Wheel avatar: two fast turns slow to a stop under the pointer (which flicks on each peg), the star twinkles, a glow breathes, then it holds and repeats. */
+    .av-wheelspin { transform-box:view-box; transform-origin:32px 35.5px; animation:av-wheelspin 4.4s infinite; }
+    @keyframes av-wheelspin { 0% { transform:rotate(0); animation-timing-function:cubic-bezier(.1,.7,.25,1); } 70%,100% { transform:rotate(740deg); } }
+    .av-wheeltick { transform-box:view-box; transform-origin:32px 8px; animation:av-wheeltick 4.4s infinite; }
+    @keyframes av-wheeltick { 0%,100% { transform:rotate(0); } 4% { transform:rotate(-16deg); } 8% { transform:rotate(2deg); } 12% { transform:rotate(-14deg); } 16% { transform:rotate(1deg); } 22% { transform:rotate(-11deg); } 28% { transform:rotate(1deg); } 38% { transform:rotate(-8deg); } 46% { transform:rotate(0); } 60% { transform:rotate(-5deg); } 68% { transform:rotate(0); } }
     .av-bob { animation:av-bob 1.8s ease-in-out infinite alternate; }
     @keyframes av-bob { from { transform:translateY(1px); } to { transform:translateY(-1.5px); } }
     .av-wing { transform-box:view-box; transform-origin:29px 33px; animation:av-wing .9s ease-in-out infinite; }

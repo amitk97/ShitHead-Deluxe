@@ -109,7 +109,7 @@
     // browsers' compositing) made their position:fixed boxes start at the
     // table's top instead of the screen's, pushing the top and X of a tall
     // page (e.g. Profile on iPhone) under the header.
-    ['puzzlesModal', 'wheelModal', 'twosModal', 'decksModal', 'noMercyModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
+    ['puzzlesModal', 'wheelModal', 'homeWheelChip', 'twosModal', 'decksModal', 'noMercyModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
      'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'eventPopupModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
@@ -11702,7 +11702,7 @@
           <circle cx="32" cy="35.5" r="5.2" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.5)" stroke-width="1"/>
           <path d="M32 32.2l.95 2 2.15.25-1.6 1.5.42 2.15-1.92-1.05-1.92 1.05.42-2.15-1.6-1.5 2.15-.25Z" fill="#7c2d12"/>
         </g>
-        <path d="M32 11.4l-4.6-7.2h9.2Z" fill="url(#av-m-crimson)" stroke="#fde68a" stroke-width="1.1" stroke-linejoin="round"/>
+        <g class="av-wheeltick"><path d="M32 11.4l-4.6-7.2h9.2Z" fill="url(#av-m-crimson)" stroke="#fde68a" stroke-width="1.1" stroke-linejoin="round"/></g>
         <g class="av-twinkle"><path d="M52.5 10.5l1.3 2.9 3.1.35-2.3 2.1.65 3.05-2.75-1.55-2.75 1.55.65-3.05-2.3-2.1 3.1-.35Z" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.4)" stroke-width=".7"/></g>
         <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
       'avatar-centurion':    { tone: 'red', art: `

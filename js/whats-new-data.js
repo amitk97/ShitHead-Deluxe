@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v470: [['gift', 'Daily Spin is now a small wheel in the top right of the home screen with a gold dot while your spin is waiting. The pop-up previews the animated Lucky Wheel avatar.']],
       v469: [['gift', 'Daily Spin: spin the Lucky Wheel once a day, free, for Diamonds, XP or two wheel-only items (the Lucky Wheel avatar and Lucky Spin card back). Find it on the home screen or in the menu.', WN_KEY]],
       v468: [['spade', 'No Mercy: a card you X-ray with a Queen now shows its face in that player\'s hand fan, which opens by itself.']],
       v467: [['info', 'Fixed the Shop: the Union Jack and Kaali Peeli frame previews no longer draw a big frame over the whole page.']],

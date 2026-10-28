@@ -160,9 +160,15 @@
   }
 
   // ---- open / close ----
+  function paintPrize() {
+    const el = $('wheelPrize'); if (!el || typeof avatarHtml !== 'function') return;
+    const pct = WHEEL.prizes.find(p => p.id === 'avatar'); const odds = pct ? `${(pct.weight / 10).toString().replace(/\.0$/, '')}% chance` : '';
+    el.innerHTML = `${avatarHtml('avatar-wheel', 56)}<span class="lw-prize-t"><b>Wheel-only avatar</b><span>Lucky Wheel · ${odds} on any spin</span></span>`;
+  }
   function open() {
     if (!signedIn()) { if (typeof openAuthModal === 'function') openAuthModal(); return; }
     build();
+    paintPrize();
     $('wheelSvg').style.transform = `rotate(${S.angle}deg)`;
     $('wheelModal').classList.remove('hidden');
     if (!S.busy) $('wheelResult').innerHTML = S.status && !S.status.canSpin && S.status.last && prize(S.status.last.id) ? `<span>Today’s prize: ${nameOf(prize(S.status.last.id))}.</span>` : '';
