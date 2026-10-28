@@ -563,6 +563,10 @@ const scratchGrid = (symbols, win) => {
     if (win ? lines.length === 1 && lines[0] === line : !lines.length) return grid;
   }
 };
+// One-off reset (28 Oct, owner): AmitK's and Pooja's card for today (drawn before the v479 line rules) no longer counts, so each can
+// play once more. The marker `resetV` lives inside the card, so no rules change; bump SCRATCH_RESET_V to reset them again.
+const SCRATCH_RESET_UIDS = new Set(['11d84kCgSde82Xlu8k5U65OB9662', 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1']), SCRATCH_RESET_V = 1;
+const scratchToday = (uid, card, today) => card && card.date === today && !(SCRATCH_RESET_UIDS.has(uid) && card.resetV !== SCRATCH_RESET_V);
 actions.scratch = async ({ uid, data }) => {
   const S = CAT.scratch;
   if (!S || !Array.isArray(S.prizes)) fail('failed-precondition', 'The Scratch Card is not available yet.');
@@ -570,14 +574,14 @@ actions.scratch = async ({ uid, data }) => {
   if (clip(data.op, 10) !== 'play') {
     const c = (await admin.database().ref(`users/${uid}/scratch`).once('value')).val() || {};
     const owned = (await admin.database().ref(`users/${uid}/ownedCosmetics`).once('value')).val() || {};
-    return { canPlay: c.date !== today, last: c.date === today ? c : null, owned: Object.fromEntries(S.prizes.filter(p => p.kind === 'item').map(p => [p.itemId, !!owned[p.itemId]])) };
+    return { canPlay: !scratchToday(uid, c, today), last: scratchToday(uid, c, today) ? c : null, owned: Object.fromEntries(S.prizes.filter(p => p.kind === 'item').map(p => [p.itemId, !!owned[p.itemId]])) };
   }
   const total = S.prizes.reduce((sum, p) => sum + num(p.weight), 0);
   let roll = nodeCrypto.randomInt(total);
   const prize = S.prizes.find(p => (roll -= num(p.weight)) < 0) || S.prizes[0];
   const grid = scratchGrid(S.symbols, prize.symbol || null);
   const res = await userTx(uid, (user) => {
-    if (user.scratch?.date === today) return { noop: true, already: true };
+    if (scratchToday(uid, user.scratch, today)) return { noop: true, already: true };
     let paid = 0, duplicate = false;
     if (prize.kind === 'diamonds') { paid = num(prize.amount); addDiamonds(user, paid); }
     else if (prize.kind === 'item') {
@@ -589,7 +593,7 @@ actions.scratch = async ({ uid, data }) => {
         user.activityInbox[`unlock_${prize.itemId}`] = { type: 'shop', unlocked: true, name: clip(prize.name, 80), cost: 0, requirement: 'Won on the Scratch Card', sentAt: now.getTime() };
       }
     }
-    user.scratch = { date: today, grid, prize: prize.id, kind: prize.kind, amount: num(prize.amount), itemId: prize.itemId || null, name: prize.name || null, duplicate, paid, at: now.getTime(), plays: num(user.scratch?.plays) + 1 };
+    user.scratch = { date: today, grid, prize: prize.id, kind: prize.kind, amount: num(prize.amount), itemId: prize.itemId || null, name: prize.name || null, duplicate, paid, at: now.getTime(), plays: num(user.scratch?.plays) + 1, resetV: SCRATCH_RESET_V };
     return { user, card: user.scratch };
   });
   if (res.already) return { already: true, canPlay: false, last: res.user.scratch || null, diamonds: num(res.user.diamonds) };

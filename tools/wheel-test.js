@@ -127,6 +127,13 @@ const setNow = (iso) => { const t = new RealDate(iso).getTime(); global.Date = c
   assert(!sc.canPlay && sc.last.grid.length === 9, 'a reopened card shows the same grid');
   setNow('2027-04-02T12:00:00Z');
   assert((await economy.scratch({ uid: 's', data: { op: 'status' } })).canPlay, 'a new UK day');
+  // the one-off reset: a card without `resetV` does not count for AmitK or Pooja, but still does for anyone else
+  put('users/11d84kCgSde82Xlu8k5U65OB9662', { username: 'R1', diamonds: 0, scratch: { date: '2027-04-02', grid: [], prize: 'none', kind: 'diamonds', amount: 10 } });
+  put('users/rr', { username: 'R2', diamonds: 0, scratch: { date: '2027-04-02', grid: [], prize: 'none', kind: 'diamonds', amount: 10 } });
+  assert((await economy.scratch({ uid: '11d84kCgSde82Xlu8k5U65OB9662', data: { op: 'status' } })).canPlay, 'reset account can play again');
+  assert(!(await economy.scratch({ uid: 'rr', data: { op: 'status' } })).canPlay, 'others keep today\'s card');
+  assert(!(await economy.scratch({ uid: '11d84kCgSde82Xlu8k5U65OB9662', data: { op: 'play' } })).already, 'the reset play works');
+  assert((await economy.scratch({ uid: '11d84kCgSde82Xlu8k5U65OB9662', data: { op: 'play' } })).already, 'and only once');
   const tally = {}; let itemsWon = 0;
   for (let i = 0; i < 4000; i++) {
     put(`users/c${i}`, { username: 'C' + i, diamonds: 0 });
