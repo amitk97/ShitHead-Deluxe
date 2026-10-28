@@ -9,7 +9,7 @@
   const SPIN_MS = 4400, TURNS = 5, EASE = 'cubic-bezier(.12,.62,.14,1)';
   const $ = id => document.getElementById(id);
   const prize = id => WHEEL.prizes.find(p => p.id === id);
-  const S = { status: null, busy: false, angle: 0, tick: null, timer: null, built: false, owned: {}, monty: null, tab: 'spin' };
+  const S = { status: null, busy: false, angle: 0, tick: null, timer: null, built: false, owned: {}, monty: null, scratch: null, tab: 'spin' };
 
   // ---- themes (v474): while an event is live the wheel wears its colours ----
   const hex = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h); const n = m ? parseInt(m[1], 16) : 0; return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
@@ -84,6 +84,9 @@
       chip.classList.toggle('hidden', !S.status);
       chip.classList.toggle('lw-ready', ready);
     }
+    const sc = $('homeScratchChip'), scReady = !!(S.scratch && S.scratch.canPlay);
+    if (sc) { sc.classList.toggle('hidden', !S.scratch); sc.classList.toggle('lw-ready', scReady); }
+    document.querySelectorAll('[data-scratch-dot]').forEach(el => el.classList.toggle('hidden', !scReady));
     const mc = $('homeMontyChip');
     if (mc) { mc.classList.toggle('hidden', !S.monty); mc.classList.toggle('lw-ready', mReady); }
     document.querySelectorAll('[data-wheel-dot]').forEach(el => el.classList.toggle('hidden', !ready));
@@ -94,9 +97,10 @@
     if (btn && !S.busy) { btn.disabled = !ready; btn.textContent = ready ? 'SPIN' : nextText().toUpperCase(); }
     const sub = $('wheelSub'); if (sub) sub.textContent = ready ? 'One free spin every day.' : 'You have used today’s spin.';
     montyPaint();
+    if (S.tab === 'scratch' && SCR) scratchPaintState();
   }
   async function refresh() {
-    if (!signedIn()) { S.status = null; S.monty = null; paint(); return; }
+    if (!signedIn()) { S.status = null; S.monty = null; S.scratch = null; paint(); return; }
     const uid = currentUser.uid;
     try {
       const r = await callEconomy('wheel', { op: 'status' });
@@ -105,6 +109,10 @@
     try {
       const m = await callEconomy('monty', { op: 'status' });
       if (currentUser && currentUser.uid === uid && !M.busy) S.monty = { canPlay: !!m.canPlay, started: !!m.started, swaps: m.swaps || null, result: m.result || null };
+    } catch (e) { /* not deployed yet */ }
+    try {
+      const c = await callEconomy('scratch', { op: 'status' });
+      if (currentUser && currentUser.uid === uid && !SC.busy) { S.scratch = { canPlay: !!c.canPlay, last: c.last || null }; if (c.owned) S.scOwned = c.owned; }
     } catch (e) { /* not deployed yet */ }
     paint();
   }
@@ -116,6 +124,129 @@
       paint();
     }, 60000);
   }
+
+  // ---- Scratch Card (v478): the server draws and pays at `play`; the foil is only the reveal ----
+  const SC = { busy: false, card: null, pending: false, down: false, last: null, snd: 0 };
+  const SCR = typeof SCRATCH !== 'undefined' ? SCRATCH : null;
+  const SYMS = {
+    J: '<span class="lw-sc-r">J</span>', Q: '<span class="lw-sc-r">Q</span>', K: '<span class="lw-sc-r">K</span>', A: '<span class="lw-sc-r">A</span>',
+    JOKER: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 19 5 7.5l4.2 5L12 4.5l2.8 8 4.2-5 1.5 11.5Z" fill="currentColor" stroke="rgba(0,0,0,.45)" stroke-width="1" stroke-linejoin="round"/><circle cx="5" cy="6.5" r="1.7" fill="currentColor"/><circle cx="12" cy="3.6" r="1.7" fill="currentColor"/><circle cx="19" cy="6.5" r="1.7" fill="currentColor"/><path d="M5.5 21h13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+  };
+  const SYM_NAMES = { J: 'Jack', Q: 'Queen', K: 'King', A: 'Ace', JOKER: 'Joker' };
+  const scPrize = id => SCR.prizes.find(p => p.id === id);
+  const scTier = p => p.kind === 'item' ? 'item' : p.amount >= 250 ? 'big' : p.amount >= 100 ? 'mid' : 'small';
+  function scName(p) {
+    if (p.kind === 'item') { const owned = S.scOwned && S.scOwned[p.itemId]; return `3 ${SYM_NAMES[p.symbol]}s · ${p.name}${owned ? ' (you own it)' : ''}`; }
+    return p.symbol ? `3 ${SYM_NAMES[p.symbol]}s · ${p.amount} Diamonds` : `No match · ${p.amount} Diamonds`;
+  }
+  function scOdds() {
+    $('scratchOdds').innerHTML = SCR.prizes.map(p => `<li><span class="lw-odds-name">${scName(p)}</span><b>${(p.weight / 10).toFixed(p.weight % 10 ? 1 : 0)}%</b></li>`).join('')
+      + `<li class="lw-odds-note">Once you own a foil item, winning it pays ${SCR.dupeDiamonds.toLocaleString('en-GB')} Diamonds instead. Every card pays something.</li>`;
+  }
+  function scGrid(cells, win) {
+    $('scratchGrid').innerHTML = cells.map((c, i) => `<div class="lw-sc-cell${win && c === win ? ' win' : ''}" data-sym="${c || ''}">${c ? SYMS[c] : '<span class="lw-sc-r">?</span>'}</div>`).join('');
+  }
+  function scDrawFoil() {
+    const cv = $('scratchFoil'), r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (!r.width) return;
+    cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+    const g = cv.getContext('2d'), w = cv.width, h = cv.height;
+    g.globalCompositeOperation = 'source-over';
+    const f = g.createLinearGradient(0, 0, w, h);
+    [[0, '#fff3b0'], [.28, '#f5b82e'], [.5, '#fff0a0'], [.74, '#d88a12'], [1, '#8a5208']].forEach(([o, c]) => f.addColorStop(o, c));
+    g.fillStyle = f; g.fillRect(0, 0, w, h);
+    g.globalAlpha = .16; g.strokeStyle = '#7a4a08'; g.lineWidth = dpr * .8;
+    for (let x = -h; x < w; x += 9 * dpr) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + h, 0); g.stroke(); }
+    const hl = g.createLinearGradient(0, 0, w, 0); ['#ff4d8d', '#ffd24a', '#4dff9c', '#3dd8ff', '#8a5cff'].forEach((c, i) => hl.addColorStop(i / 4, c));
+    g.globalAlpha = .13; g.fillStyle = hl; g.fillRect(0, 0, w, h); g.globalAlpha = 1;
+    g.font = `900 ${Math.round(w * .095)}px Outfit, Arial Black, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.fillText('SCRATCH HERE', w / 2 + dpr, h / 2 + dpr);
+    g.fillStyle = 'rgba(90,50,4,.78)'; g.fillText('SCRATCH HERE', w / 2, h / 2);
+    g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = dpr * 2; g.strokeRect(dpr, dpr, w - dpr * 2, h - dpr * 2);
+  }
+  function scCleared() {
+    const cv = $('scratchFoil'), g = cv.getContext('2d'), w = cv.width, h = cv.height, step = 12;
+    const d = g.getImageData(0, 0, w, h).data; let hit = 0, all = 0;
+    for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step) { all++; if (d[(y * w + x) * 4 + 3] < 40) hit++; }
+    return hit / all;
+  }
+  function scatchPoint(e) { const cv = $('scratchFoil'), r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; }
+  function scratchSettle() { if (SC.pending && SC.card) scratchReveal(true); }
+  function scratchPaintState() {
+    const btn = $('scratchBtn'), sub = $('scratchSub'), rv = $('scratchRevealBtn'), c = S.scratch;
+    if (!c) { btn.disabled = true; btn.textContent = 'NOT AVAILABLE YET'; sub.textContent = 'The Scratch Card needs a connection.'; rv.classList.add('hidden'); return; }
+    rv.classList.toggle('hidden', !SC.pending);
+    if (SC.pending) { btn.disabled = true; btn.textContent = 'SCRATCH THE FOIL'; sub.textContent = 'Scratch to reveal. Match three to win.'; return; }
+    if (c.canPlay) { btn.disabled = SC.busy; btn.textContent = 'GET CARD'; sub.textContent = 'One free card every day. Match three to win.'; return; }
+    const m = Math.max(1, Math.ceil(untilMidnightMs() / 60000));
+    btn.disabled = true; btn.textContent = `NEXT CARD IN ${Math.floor(m / 60)}H ${String(m % 60).padStart(2, '0')}M`; sub.textContent = 'You have used today’s card.';
+  }
+  function scratchResultHtml(card) {
+    const p = scPrize(card.prize) || {};
+    if (card.kind === 'item') return card.duplicate
+      ? `<b class="lw-won">+${card.paid.toLocaleString('en-GB')} Diamonds</b><span>Three ${SYM_NAMES[p.symbol]}s. You already own the ${card.name}, so it pays Diamonds.</span>`
+      : `<b class="lw-won">${card.name}</b><span>Three ${SYM_NAMES[p.symbol]}s. It is yours: find it in Custom.</span>`;
+    return p.symbol ? `<b class="lw-won">+${card.amount} Diamonds</b><span>Three ${SYM_NAMES[p.symbol]}s.</span>` : `<b class="lw-won">+${card.amount} Diamonds</b><span>No match this time. Every card pays a little.</span>`;
+  }
+  function scratchOpen() {
+    if (!SCR) return;
+    scOdds();
+    const c = S.scratch;
+    if (SC.pending) { scratchPaintState(); return; }
+    const last = c && c.last;
+    if (last) {
+      $('scratchFoil').classList.add('gone'); scGrid(last.grid, (scPrize(last.prize) || {}).symbol);
+      $('scratchResult').innerHTML = scratchResultHtml(last);
+    } else {
+      $('scratchFoil').classList.remove('gone'); scGrid(Array(9).fill(''), null); $('scratchResult').innerHTML = '';
+      requestAnimationFrame(scDrawFoil);
+    }
+    scratchPaintState();
+  }
+  async function scratchGet() {
+    if (SC.busy || SC.pending || !S.scratch || !S.scratch.canPlay || !signedIn()) return;
+    SC.busy = true; $('scratchBtn').disabled = true; $('scratchBtn').textContent = 'GETTING YOUR CARD';
+    let res;
+    try { res = await callEconomy('scratch', { op: 'play' }); } catch (e) { SC.busy = false; $('scratchResult').innerHTML = '<span>Couldn’t get a card right now. Check your connection and try again.</span>'; scratchPaintState(); return; }
+    SC.busy = false;
+    if (res.already || !res.card) { S.scratch = { canPlay: false, last: res.last || null }; scratchOpen(); paint(); return; }
+    SC.card = res; SC.pending = true;
+    S.scratch = { canPlay: false, last: res.card };
+    scGrid(res.card.grid, null); $('scratchResult').innerHTML = '';
+    $('scratchFoil').classList.remove('gone'); scDrawFoil();
+    scratchPaintState(); paint();
+  }
+  function scratchReveal(quiet) {
+    if (!SC.pending || !SC.card) return;
+    const res = SC.card, card = res.card, p = scPrize(card.prize) || {};
+    SC.pending = false; SC.card = null; SC.down = false;
+    $('scratchFoil').classList.add('gone');
+    scGrid(card.grid, p.symbol);
+    if (Number.isFinite(Number(res.diamonds)) && typeof challengeEconomy !== 'undefined') challengeEconomy.diamonds = Number(res.diamonds);
+    if (typeof updateDiamondHeader === 'function') updateDiamondHeader();
+    if (card.kind === 'item' && typeof loadCosmeticCollection === 'function') loadCosmeticCollection(currentUser);
+    if (!quiet) {
+      $('scratchResult').innerHTML = scratchResultHtml(card);
+      $('scratchResult').classList.remove('lw-in'); void $('scratchResult').offsetWidth; $('scratchResult').classList.add('lw-in');
+      celebrate(scTier(p));
+    }
+    scratchPaintState();
+  }
+  (function wireScratch() {
+    const cv = $('scratchFoil'); if (!cv) return;
+    let last = null;
+    const scrape = (e) => {
+      if (!SC.pending || !SC.down) return;
+      const g = cv.getContext('2d'), [x, y] = scatchPoint(e);
+      g.globalCompositeOperation = 'destination-out'; g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = cv.width * .12;
+      g.beginPath(); g.moveTo(last ? last[0] : x, last ? last[1] : y); g.lineTo(x + .01, y); g.stroke(); last = [x, y];
+      const t = performance.now(); if (t - SC.snd > 55 && audio.playScratch) { SC.snd = t; audio.playScratch(); }
+    };
+    cv.addEventListener('pointerdown', (e) => { if (!SC.pending) return; SC.down = true; last = null; try { cv.setPointerCapture(e.pointerId); } catch (x) { /* fine */ } scrape(e); e.preventDefault(); });
+    cv.addEventListener('pointermove', (e) => { scrape(e); });
+    const up = () => { if (!SC.down) return; SC.down = false; last = null; if (SC.pending && scCleared() > .55) scratchReveal(); };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  })();
 
   // ---- the spin ----
   const angleOf = el => { const m = getComputedStyle(el).transform; if (!m || m === 'none') return 0; const v = m.match(/matrix\(([^)]+)\)/); if (!v) return 0; const [a, b] = v[1].split(',').map(Number); return Math.atan2(b, a) * 180 / Math.PI; };
@@ -292,16 +423,18 @@
   }
   function setTab(tab) {
     if (S.busy || M.busy) return;
-    S.tab = tab === 'cards' ? 'cards' : 'spin';
+    S.tab = tab === 'cards' ? 'cards' : tab === 'scratch' ? 'scratch' : 'spin';
     $('wheelPanel').classList.toggle('hidden', S.tab !== 'spin');
     $('montyPanel').classList.toggle('hidden', S.tab !== 'cards');
+    $('scratchPanel').classList.toggle('hidden', S.tab !== 'scratch');
     document.querySelectorAll('.lw-tab').forEach(b => { const on = b.dataset.lwTab === S.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
     const th = S.theme;
-    $('wheelTitle').textContent = S.tab === 'cards' ? 'Three Cards' : th ? `${th.name} Spin` : 'Daily Spin';
+    $('wheelTitle').textContent = S.tab === 'scratch' ? 'Scratch Card' : S.tab === 'cards' ? 'Three Cards' : th ? `${th.name} Spin` : 'Daily Spin';
     if (S.tab === 'cards' && M.phase !== 'pick') {
       montyBuild();
       const r = S.monty && S.monty.result; if (r) montyShowDone(r); else { M.phase = ''; $('montyResult').innerHTML = ''; }
     }
+    if (S.tab === 'scratch') scratchOpen();
     paint();
   }
   function open(solo) {
@@ -318,27 +451,32 @@
     refresh().then(() => { if (!S.busy && !M.busy) { const was = S.built; if (!was) { build(); paintPrize(); } } });
     ($('wheelModal').querySelector('.lw-tab.on') || $('wheelCloseBtn')).focus({ preventScroll: true });
   }
-  function close() { if (!S.busy && !M.busy) $('wheelModal')?.classList.add('hidden'); }
+  function close() { if (!S.busy && !M.busy && !SC.busy) { scratchSettle(); $('wheelModal')?.classList.add('hidden'); } }
 
   // Hover (PC) or keyboard focus on either home circle explains it in the shared info bubble.
   const CHIP_TIPS = {
     homeWheelChip: '<p><b>Daily Spin</b></p><p>One free spin a day for Diamonds, XP or a wheel-only avatar and card back.</p>',
+    homeScratchChip: '<p><b>Scratch Card</b></p><p>One free card a day. Scratch off the foil and match three to win Diamonds or a foil item.</p>',
     homeMontyChip: '<p><b>Three Cards</b></p><p>Once a week, follow the 300 Diamond card as it is shuffled, then pick it.</p>'
   };
   const chipTip = (e) => {
-    const c = e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip');
+    const c = e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip, #homeScratchChip');
     if (!c || typeof showInfoPop !== 'function') return;
     if (e.type === 'mouseover' && !window.matchMedia('(hover: hover)').matches) return;
-    showInfoPop(c, CHIP_TIPS[c.id], { hover: true, side: 'left' });
+    showInfoPop(c, CHIP_TIPS[c.id], { hover: true, side: c.id === 'homeScratchChip' ? 'right' : 'left' });
   };
   document.addEventListener('mouseover', chipTip);
   document.addEventListener('focusin', (e) => { if (e.target.matches && e.target.matches(':focus-visible')) chipTip(e); });
-  document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip') && typeof hideInfoPop === 'function') hideInfoPop(); });
+  document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip, #homeScratchChip') && typeof hideInfoPop === 'function') hideInfoPop(); });
 
   document.addEventListener('click', (e) => {
     const t = e.target;
     if (t.closest && t.closest('#homeWheelChip')) open('spin');
     else if (t.closest && t.closest('#homeMontyChip')) open('cards');
+    else if (t.closest && t.closest('#homeScratchChip')) open('scratch');
+    else if (t.id === 'scratchBtn') scratchGet();
+    else if (t.id === 'scratchRevealBtn') scratchReveal();
+    else if (t.id === 'scratchOddsBtn') { const o = $('scratchOdds'), on = o.classList.toggle('hidden'); t.setAttribute('aria-expanded', String(!on)); }
     else if (t.closest && t.closest('#menuWheelBtn')) { if (typeof closeHamburgerMenu === 'function') closeHamburgerMenu(); open('spin'); }
     else if (t.id === 'wheelCloseBtn' || t.id === 'wheelModal') close();
     else if (t.id === 'wheelSpinBtn') spin();

@@ -3415,7 +3415,7 @@ async function runDevTestSuite() {
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
     const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Avatars' && !i.season && !i.ldn && !i.mum).map(i => [i.name, i.cost]));
     assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000, 'Turtley': 5000 }, 'Shop pictures and prices');
-    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'Lucky Wheel', 'The Seer', 'The Enforcer'], 'Earn-only pictures');
+    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'Lucky Wheel', 'Foil Ace', 'The Seer', 'The Enforcer'], 'Earn-only pictures');
     [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Avatars')
       .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
   });
@@ -3631,7 +3631,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 47, 'All 47 avatars appear in Custom (incl. The Seer and The Enforcer, the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
+    assertEqual(options.length, 49, 'All 49 avatars appear in Custom (incl. the Lucky Wheel, the Foil Ace, The Seer and The Enforcer, the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -7377,6 +7377,15 @@ async function runDevTestSuite() {
       assertTrue(!document.getElementById('noMercyBotsBtn').disabled, 'chooser buttons work at Lvl 25');
       closeNoMercyChoice();
     } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeNoMercyChoice(); }
+  });
+  await test('v478: the Scratch Card has its own circle, a foil grid, and two foil prizes', () => {
+    assertTrue(!!document.getElementById('homeScratchChip') && !!document.getElementById('scratchPanel') && !!document.getElementById('scratchFoil'), 'chip, panel and foil');
+    assertEqual(SCRATCH.prizes.reduce((n, p) => n + p.weight, 0), 1000, 'weights total 1000');
+    assertEqual(serverEconomyCatalog().scratch.dupeDiamonds, 1250, 'scratch in the catalog');
+    const all = customAllItems('avatar').concat(customAllItems('cardBack'));
+    assertTrue(all.some(i => i.id === 'avatar-foil-ace' && i.scratch) && all.some(i => i.id === 'back-foil-joker' && i.scratch), 'foil items listed');
+    assertTrue(!!AVATAR_ART['avatar-foil-ace'] && getCosmeticBackClass('back-foil-joker').startsWith('cosmetic-back-foil'), 'foil art is drawn');
+    assertTrue(typeof audio.playScratch === 'function', 'scratch sound');
   });
   await test('v474: the wheel swaps owned items for Diamonds, wears the event colours, and has Three Cards', () => {
     assertEqual(WHEEL.dupeDiamonds, 1250, 'owned items pay 1250');

@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v478: [['gift', 'New: the Scratch Card, a free card every day. Scratch off the foil and match three Jacks, Queens, Kings, Aces or Jokers. Three Aces win the animated Foil Ace avatar and three Jokers win the Foil Joker card back.', WN_KEY]],
       v477: [['sound', 'Three Cards now has card sounds for the shuffle and the flips, and the circle hints open beside the circle.']],
       v476: [['gift', 'Hover over the Daily Spin and Three Cards circles for a short description.']],
       v475: [['gift', 'Three Cards has its own circle under the Daily Spin wheel, with its own dot while the week’s game is waiting.']],

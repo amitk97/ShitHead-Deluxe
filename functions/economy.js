@@ -547,6 +547,48 @@ actions.wheel = async ({ uid, data }) => {
   return { spin: res.spin, canSpin: false, diamonds: num(res.user.diamonds), xp: res.xp || null };
 };
 
+// Scratch Card (v478): one free card a UK day. `play` draws the result by weight, lays out the 3x3 grid that shows it
+// (three of a kind wins that symbol's prize; a losing grid never holds three of any symbol), pays it at once and keeps
+// the card in `users/{uid}/scratch` so a reopened pop-up shows it. Scratching the foil off is only the reveal.
+const scratchShuffle = (list) => { for (let i = list.length - 1; i > 0; i--) { const j = nodeCrypto.randomInt(i + 1); [list[i], list[j]] = [list[j], list[i]]; } return list; };
+const scratchGrid = (symbols, win) => {
+  const twice = (arr) => arr.flatMap(x => [x, x]);
+  const rest = scratchShuffle(twice(win ? symbols.filter(x => x !== win) : symbols));
+  return scratchShuffle(win ? [win, win, win, ...rest.slice(0, 6)] : rest.slice(0, 9));
+};
+actions.scratch = async ({ uid, data }) => {
+  const S = CAT.scratch;
+  if (!S || !Array.isArray(S.prizes)) fail('failed-precondition', 'The Scratch Card is not available yet.');
+  const now = new Date(), today = ukDateKey(now);
+  if (clip(data.op, 10) !== 'play') {
+    const c = (await admin.database().ref(`users/${uid}/scratch`).once('value')).val() || {};
+    const owned = (await admin.database().ref(`users/${uid}/ownedCosmetics`).once('value')).val() || {};
+    return { canPlay: c.date !== today, last: c.date === today ? c : null, owned: Object.fromEntries(S.prizes.filter(p => p.kind === 'item').map(p => [p.itemId, !!owned[p.itemId]])) };
+  }
+  const total = S.prizes.reduce((sum, p) => sum + num(p.weight), 0);
+  let roll = nodeCrypto.randomInt(total);
+  const prize = S.prizes.find(p => (roll -= num(p.weight)) < 0) || S.prizes[0];
+  const grid = scratchGrid(S.symbols, prize.symbol || null);
+  const res = await userTx(uid, (user) => {
+    if (user.scratch?.date === today) return { noop: true, already: true };
+    let paid = 0, duplicate = false;
+    if (prize.kind === 'diamonds') { paid = num(prize.amount); addDiamonds(user, paid); }
+    else if (prize.kind === 'item') {
+      if (user.ownedCosmetics?.[prize.itemId]) { duplicate = true; paid = num(S.dupeDiamonds); addDiamonds(user, paid); }
+      else {
+        user.ownedCosmetics = user.ownedCosmetics || {};
+        user.ownedCosmetics[prize.itemId] = { cost: 0, purchasedAt: now.getTime() };
+        user.activityInbox = user.activityInbox || {};
+        user.activityInbox[`unlock_${prize.itemId}`] = { type: 'shop', unlocked: true, name: clip(prize.name, 80), cost: 0, requirement: 'Won on the Scratch Card', sentAt: now.getTime() };
+      }
+    }
+    user.scratch = { date: today, grid, prize: prize.id, kind: prize.kind, amount: num(prize.amount), itemId: prize.itemId || null, name: prize.name || null, duplicate, paid, at: now.getTime(), plays: num(user.scratch?.plays) + 1 };
+    return { user, card: user.scratch };
+  });
+  if (res.already) return { already: true, canPlay: false, last: res.user.scratch || null, diamonds: num(res.user.diamonds) };
+  return { card: res.card, canPlay: false, diamonds: num(res.user.diamonds) };
+};
+
 // Three Cards (v474): one free play a UK week. `start` draws the shuffle (a list of position swaps) and keeps the
 // answer in server-only `montyGames/{uid}` (users/{uid} is readable by the player, so the answer can't live there);
 // `pick` {index} pays the prize under that position once and records the result in `users/{uid}/monty`.

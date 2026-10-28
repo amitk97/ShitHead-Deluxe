@@ -6368,7 +6368,8 @@
         'back-artdeco': 'cosmetic-back-artdeco',
         'back-dragon': 'cosmetic-back-dragon',
         'back-stained': 'cosmetic-back-stained',
-        'back-wheel': 'cosmetic-back-wheel'
+        'back-wheel': 'cosmetic-back-wheel',
+        'back-foil-joker': 'cosmetic-back-foil-a'
       };
       if (/^back-(lvl|ldn|mum|nm|ss[0-9]{4})-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
       if (cosmeticBackClasses[backId]) return cosmeticBackClasses[backId];
@@ -8239,6 +8240,9 @@
       pop.style.left = `${left}px`; pop.style.top = `${Math.max(4, top)}px`;
       if (opts.side === 'left' && r.left - pw - 8 >= 8) { // beside the anchor, so it never covers a neighbour above or below
         pop.style.left = `${r.left - pw - 8}px`; pop.style.top = `${Math.max(top0 + 4, r.top + r.height / 2 - ph / 2)}px`;
+      }
+      if (opts.side === 'right' && r.right + 8 + pw <= window.innerWidth - 8) {
+        pop.style.left = `${r.right + 8}px`; pop.style.top = `${Math.max(top0 + 4, r.top + r.height / 2 - ph / 2)}px`;
       }
       requestAnimationFrame(() => pop.classList.add('show'));
       if (opts.hover) {
@@ -11512,6 +11516,9 @@
       <linearGradient id="av-m-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4b8"/><stop offset=".45" stop-color="#fbbf24"/><stop offset="1" stop-color="#a16207"/></linearGradient>
       <linearGradient id="av-m-diamond" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0fdff"/><stop offset=".45" stop-color="#67e8f9"/><stop offset="1" stop-color="#0e7490"/></linearGradient>
       <linearGradient id="av-m-master" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fae8ff"/><stop offset=".45" stop-color="#c084fc"/><stop offset="1" stop-color="#6b21a8"/></linearGradient>
+      <linearGradient id="av-m-foilgold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".3" stop-color="#f5b82e"/><stop offset=".52" stop-color="#fff0a0"/><stop offset=".76" stop-color="#d88a12"/><stop offset="1" stop-color="#8a5208"/></linearGradient>
+      <linearGradient id="av-m-holo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d8d"/><stop offset=".2" stop-color="#ffd24a"/><stop offset=".4" stop-color="#4dff9c"/><stop offset=".6" stop-color="#3dd8ff"/><stop offset=".8" stop-color="#8a5cff"/><stop offset="1" stop-color="#ff4d8d"/></linearGradient>
+      <linearGradient id="av-m-chrome" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".3" stop-color="#b9c6d8"/><stop offset=".55" stop-color="#f4f8ff"/><stop offset=".8" stop-color="#8d9db3"/><stop offset="1" stop-color="#dbe5f2"/></linearGradient>
       <linearGradient id="av-m-ivory" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe6ee"/></linearGradient>
       <linearGradient id="av-m-crimson" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fda4af"/><stop offset=".5" stop-color="#e11d48"/><stop offset="1" stop-color="#881337"/></linearGradient>
       <linearGradient id="av-m-pearl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#d7dee8"/><stop offset="1" stop-color="#8795a8"/></linearGradient>
@@ -11707,6 +11714,37 @@
         </g>
         <g class="av-wheeltick"><path d="M32 11.4l-4.6-7.2h9.2Z" fill="url(#av-m-crimson)" stroke="#fde68a" stroke-width="1.1" stroke-linejoin="round"/></g>
         <g class="av-twinkle"><path d="M52.5 10.5l1.3 2.9 3.1.35-2.3 2.1.65 3.05-2.75-1.55-2.75 1.55.65-3.05-2.3-2.1 3.1-.35Z" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.4)" stroke-width=".7"/></g>
+        <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
+      'avatar-foil-ace': { tone: 'gold', animated: true, art: `
+        <circle cx="32" cy="34" r="26" fill="url(#av-m-glow)" opacity=".3"/>
+        <g transform="rotate(-8 32 33)">
+          <rect x="16" y="8" width="32" height="46" rx="4.2" fill="url(#av-m-foilgold)" stroke="#fff4b8" stroke-width="1.1"/>
+          <rect x="18.6" y="10.6" width="26.8" height="40.8" rx="2.8" fill="none" stroke="rgba(120,53,15,.5)" stroke-width=".6"/>
+          <path d="${AV_SPADE}" transform="translate(32 31) scale(.52) translate(-32 -32)" fill="#3b2204"/>
+          <text x="19.6" y="18.6" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="7.4" fill="#3b2204" transform="rotate(0 19.6 18.6)">A</text><text x="44.4" y="43.4" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="7.4" fill="#3b2204" transform="rotate(180 44.4 43.4)">A</text>
+          <g class="av-holohue"><rect x="16" y="8" width="32" height="46" rx="4.2" fill="url(#av-m-holo)" opacity=".22"/></g>
+          <svg x="16" y="8" width="32" height="46" overflow="hidden"><rect class="av-foilsweep" x="-6" y="-12" width="12" height="70" fill="url(#av-shine)"/></svg>
+        </g><g class="av-twinkle"><path d="M10 14l1 2.3 2.3 1-2.3 1-1 2.3-1-2.3-2.3-1 2.3-1Z" fill="#fff7d6"/></g><g class="av-twinkle av-twinkle-3"><path d="M54 46l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8Z" fill="#fff"/></g>
+        <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
+      'avatar-foil-ace-b': { tone: 'cyan', animated: true, art: `
+        <circle cx="32" cy="34" r="26" fill="url(#av-m-glow)" opacity=".3"/>
+        <g class="av-cardturn">
+          <rect x="16" y="8" width="32" height="46" rx="4.2" fill="url(#av-m-chrome)" stroke="url(#av-m-holo)" stroke-width="1.8"/>
+          <g class="av-holohue"><rect x="16" y="8" width="32" height="46" rx="4.2" fill="url(#av-m-holo)" opacity=".38"/></g>
+          <path d="${AV_SPADE}" transform="translate(32 31) scale(.52) translate(-32 -32)" fill="#0f172a"/>
+          <text x="19.6" y="18.6" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="7.4" fill="#0f172a" transform="rotate(0 19.6 18.6)">A</text><text x="44.4" y="43.4" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="7.4" fill="#0f172a" transform="rotate(180 44.4 43.4)">A</text>
+          <svg x="16" y="8" width="32" height="46" overflow="hidden"><rect class="av-foilsweep" x="-6" y="-12" width="12" height="70" fill="url(#av-shine)"/></svg>
+        </g>
+        <g class="av-twinkle"><path d="M12 12l1.1 2.5 2.5 1.1-2.5 1.1-1.1 2.5-1.1-2.5-2.5-1.1 2.5-1.1Z" fill="#fff"/></g><g class="av-twinkle av-twinkle-2"><path d="M53 20l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9Z" fill="#a5f3fc"/></g><g class="av-twinkle av-twinkle-4"><path d="M52 50l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8Z" fill="#f0abfc"/></g>
+        <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
+      'avatar-foil-ace-c': { tone: 'purple', animated: true, art: `
+        <circle cx="32" cy="36" r="26" fill="url(#av-m-glow)" opacity=".28"/>
+        <g class="av-sway">
+          <g transform="rotate(-26 32 52)"><rect x="19" y="14" width="26" height="38" rx="3.6" fill="url(#av-m-chrome)" stroke="#fff4b8" stroke-opacity=".9" stroke-width="1"/><path d="M32 14 L47 32 L32 50 L17 32Z" transform="translate(32 33) scale(.7) translate(-32 -32)" fill="#0891b2"/><text x="21.4" y="23" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="6.4" fill="#0891b2">A</text></g>
+          <g transform="rotate(26 32 52)"><rect x="19" y="14" width="26" height="38" rx="3.6" fill="url(#av-m-foilgold)" stroke="#fff4b8" stroke-opacity=".9" stroke-width="1"/><path d="M32 46C20 37 15 29 19 23c3-4 9-3 13 2 4-5 10-6 13-2 4 6-1 14-13 23Z" transform="translate(32 33) scale(.7) translate(-32 -32)" fill="#b91c1c"/><text x="21.4" y="23" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="6.4" fill="#7f1d1d">A</text></g>
+          <g transform="rotate(0 32 52)"><rect x="19" y="14" width="26" height="38" rx="3.6" fill="url(#av-m-foilgold)" stroke="#fff4b8" stroke-opacity=".9" stroke-width="1"/><path d="${AV_SPADE}" transform="translate(32 32) scale(.46) translate(-32 -32)" fill="#3b2204"/><text x="21.4" y="23" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="6.4" fill="#3b2204">A</text></g>
+        </g>
+        <svg x="12" y="10" width="40" height="44" overflow="hidden"><rect class="av-foilsweep" x="-6" y="-12" width="12" height="68" fill="url(#av-shine)"/></svg><g class="av-twinkle"><path d="M10 14l1 2.3 2.3 1-2.3 1-1 2.3-1-2.3-2.3-1 2.3-1Z" fill="#fff7d6"/></g><g class="av-twinkle av-twinkle-3"><path d="M54 46l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8Z" fill="#fff"/></g>
         <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
       'avatar-centurion':    { tone: 'red', art: `
         <text x="32" y="38" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="21" fill="#ef4444" stroke="#7f1d1d" stroke-width=".8" letter-spacing="-1">100</text>
@@ -14579,7 +14617,7 @@
     // count. Folded groups are remembered per tab (localStorage
     // shithead_custom_groups_collapsed, keys "<type>:<group>").
     const CUSTOM_GROUPS = [['free', 'Free'], ['shop', 'Shop'], ['ranked', 'Earn in Ranked'], ['gauntlet', 'Earn in the Gauntlet'],
-      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['nomercy', 'Earn in No Mercy'], ['wheel', 'Earn on the Daily Spin'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
+      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['nomercy', 'Earn in No Mercy'], ['wheel', 'Earn on the Daily Spin'], ['scratch', 'Earn on the Scratch Card'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
     const CUSTOM_GROUPS_KEY = 'shithead_custom_groups_collapsed';
     const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
     function customGroupOf(item) {
@@ -14592,6 +14630,7 @@
       if (item.twos) return 'twos';
       if (item.decks) return 'decks';
       if (item.wheel) return 'wheel';
+      if (item.scratch) return 'scratch';
       if (item.nm && item.earned) return 'nomercy';
       if (item.earned || EARNED_AVATARS.includes(item)) return 'ranked';
       return 'shop';
@@ -14621,8 +14660,8 @@
       const freeAvatars = sortByValue(BUILT_IN_COSMETICS.filter(item => item.category === 'Avatars'));
       const seasonalAvatars = [...sortByValue(COSMETIC_SHOP_ITEMS.filter(item => item.category === 'Avatars' && item.season)), ...SEASONAL_EARNED_AVATARS].filter(isCosmeticListed);
       grid.innerHTML = ownedPrivateAvatars().map(avatarOptionHtml).join('') + customGroupedHtml('avatar', [...freeAvatars, ...shopAvatars,
-        ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral && !item.twos && !item.decks && !item.nm && !item.wheel),
-        ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral), ...EARNED_AVATARS.filter(item => item.twos), ...EARNED_AVATARS.filter(item => item.decks), ...EARNED_AVATARS.filter(item => item.nm), ...EARNED_AVATARS.filter(item => item.wheel),
+        ...EARNED_AVATARS.filter(item => !item.season && !item.gauntlet && !item.referral && !item.twos && !item.decks && !item.nm && !item.wheel && !item.scratch),
+        ...EARNED_AVATARS.filter(item => item.gauntlet), ...EARNED_AVATARS.filter(item => item.referral), ...EARNED_AVATARS.filter(item => item.twos), ...EARNED_AVATARS.filter(item => item.decks), ...EARNED_AVATARS.filter(item => item.nm), ...EARNED_AVATARS.filter(item => item.wheel), ...EARNED_AVATARS.filter(item => item.scratch),
         ...LEVEL_REWARDS.filter(item => item.category === 'Avatars'), ...seasonalAvatars], avatarOptionHtml);
     }
 
@@ -17682,6 +17721,8 @@
       'avatar-decks': { type: 'decksWins', min: 10 },
       'avatar-wheel': { type: 'wheel' }, // granted by the wheel action itself
       'back-wheel': { type: 'wheel' },
+      'avatar-foil-ace': { type: 'wheel' }, // granted by the scratch action itself
+      'back-foil-joker': { type: 'wheel' },
       'avatar-nm-seer': { type: 'nmQueens', min: 50 },
       'avatar-nm-enforcer': { type: 'nmKings', min: 50 },
       'back-nm-verdict': { type: 'nmWins', min: 10 },
@@ -17707,6 +17748,7 @@
         dailyStreakRewards: DAILY_STREAK_REWARDS,
         wheel: WHEEL,
         monty: MONTY,
+        scratch: SCRATCH,
         matchWinRewards: { bots: 10, ranked: 20 },
         dailyReward: CHALLENGE_REWARD,
         weeklyReward: WEEKLY_CHALLENGE_REWARD,

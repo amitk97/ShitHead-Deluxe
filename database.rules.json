@@ -75,6 +75,7 @@
               newData.val() === 'back-mum-marigold' ||
               newData.val() === 'back-nm-verdict' ||
               newData.val() === 'back-wheel' ||
+              newData.val() === 'back-foil-joker' ||
               newData.val().matches(/^back-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||
               newData.val().matches(/^back-lvl-(first-burn|sharks-mark|inferno|chaos-crown)$/) ||
               newData.val() === 'back-lvl-master-pile' ||
@@ -207,6 +208,7 @@
               newData.val() === 'avatar-recruiter' || newData.val() === 'avatar-twos' ||
               newData.val() === 'avatar-decks' ||
               newData.val() === 'avatar-wheel' ||
+              newData.val() === 'avatar-foil-ace' ||
               newData.val().matches(/^avatar-nm-(seer|enforcer)$/) ||
               newData.val() === 'avatar-ldn-guard' ||
               newData.val() === 'avatar-mum-dabba' ||
@@ -343,6 +345,9 @@
         },
         "monty": {
           ".validate": "newData.hasChildren(['week'])"
+        },
+        "scratch": {
+          ".validate": "newData.hasChildren(['date'])"
         },
         "testOwned": {
           ".validate": "newData.hasChildren()"

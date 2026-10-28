@@ -238,6 +238,20 @@
           o.connect(og).connect(ctx.destination); o.start(t0); o.stop(t0 + .12);
         }
       }
+      /* Scratch Card (v478): a grain of foil being scraped, called while the finger moves (throttled by the caller). */
+      playScratch() {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime, len = .07;
+        const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * len), ctx.sampleRate), d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        const n = ctx.createBufferSource(); n.buffer = buf;
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.8; f.frequency.value = 2600 + Math.random() * 1800;
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(.06 * vol, t0 + .012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+        n.connect(f).connect(g).connect(ctx.destination); n.start(t0);
+      }
       /* Daily Spin result: a rising chime that grows with the prize (small, mid, big, jackpot, item). */
       playWheelWin(tier = 'small') {
         const ctx = this.ctx;

@@ -108,5 +108,43 @@ const setNow = (iso) => { const t = new RealDate(iso).getTime(); global.Date = c
   setNow('2027-03-09T12:00:00Z');
   assert((await economy.monty({ uid: 'm', data: { op: 'status' } })).canPlay, 'a new week opens a new game');
   await assert.rejects(() => economy.monty({ uid: 'm', data: { op: 'pick', index: 1 } }), /Start the game/);
+  // Scratch Card: one card a UK day; a win shows exactly three of its symbol, a loss never shows three of any.
+  const SC = CAT.scratch;
+  assert.equal(SC.prizes.reduce((t, p) => t + p.weight, 0), 1000, 'scratch weights make 1000');
+  SC.prizes.filter(p => p.kind === 'item').forEach(p => assert(CAT.earned[p.itemId] && CAT.earned[p.itemId].type === 'wheel', 'scratch item has a server rule'));
+  const scAvg = SC.prizes.filter(p => p.kind === 'diamonds').reduce((t, p) => t + p.amount * p.weight / 1000, 0);
+  assert(scAvg > 35 && scAvg < 50, `about 43 Diamonds a day (${scAvg})`);
+  put('users/s', { username: 'Sy', diamonds: 0 });
+  setNow('2027-04-01T12:00:00Z');
+  let sc = await economy.scratch({ uid: 's', data: { op: 'status' } });
+  assert(sc.canPlay && !sc.last);
+  sc = await economy.scratch({ uid: 's', data: { op: 'play' } });
+  assert.equal(sc.card.grid.length, 9); assert.equal(sc.canPlay, false);
+  const paidOnce = get('users/s/diamonds');
+  assert((await economy.scratch({ uid: 's', data: { op: 'play' } })).already, 'not twice in a UK day');
+  assert.equal(get('users/s/diamonds'), paidOnce, 'no second payment');
+  sc = await economy.scratch({ uid: 's', data: { op: 'status' } });
+  assert(!sc.canPlay && sc.last.grid.length === 9, 'a reopened card shows the same grid');
+  setNow('2027-04-02T12:00:00Z');
+  assert((await economy.scratch({ uid: 's', data: { op: 'status' } })).canPlay, 'a new UK day');
+  const tally = {}; let itemsWon = 0;
+  for (let i = 0; i < 4000; i++) {
+    put(`users/c${i}`, { username: 'C' + i, diamonds: 0 });
+    const c = (await economy.scratch({ uid: `c${i}`, data: { op: 'play' } })).card;
+    const counts = {}; c.grid.forEach(x => { assert(SC.symbols.includes(x)); counts[x] = (counts[x] || 0) + 1; });
+    const triples = Object.keys(counts).filter(x => counts[x] >= 3);
+    const prize = SC.prizes.find(p => p.id === c.prize);
+    if (prize.symbol) { assert.deepEqual(triples, [prize.symbol], 'a win shows exactly its triple'); assert.equal(counts[prize.symbol], 3); }
+    else assert.equal(triples.length, 0, 'a loss never shows three of a kind');
+    tally[c.prize] = (tally[c.prize] || 0) + 1;
+    if (c.kind === 'item') { itemsWon++; assert(get(`users/c${i}/ownedCosmetics/${c.itemId}`), 'item owned'); assert(get(`users/c${i}/activityInbox/unlock_${c.itemId}`), 'unlock mail'); }
+    else assert.equal(get(`users/c${i}/diamonds`), c.amount, 'Diamonds paid');
+  }
+  SC.prizes.forEach(p => assert(tally[p.id] > 0, `${p.id} came up in 4000 cards`));
+  assert(tally.none > 2000 && tally.none < 2500, `about 56% no match (${tally.none})`);
+  put('users/d', { username: 'Du', diamonds: 0, ownedCosmetics: { 'avatar-foil-ace': { cost: 0, purchasedAt: 1 }, 'back-foil-joker': { cost: 0, purchasedAt: 1 } } });
+  let dupe = null; setNow('2027-05-01T12:00:00Z');
+  for (let i = 0; i < 4000 && !dupe; i++) { put('users/d/scratch', null); put('users/d/diamonds', 0); const c = (await economy.scratch({ uid: 'd', data: { op: 'play' } })).card; if (c.kind === 'item') dupe = c; }
+  assert(dupe && dupe.duplicate && get('users/d/diamonds') === SC.dupeDiamonds, 'an owned foil item pays Diamonds');
   console.log('wheel test passed');
 })().catch(e => { console.error(e); process.exit(1); });

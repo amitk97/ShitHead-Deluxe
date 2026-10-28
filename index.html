@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-28-v477 (ShitHead-Deluxe-286) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-28-v478 (ShitHead-Deluxe-287) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -15,7 +15,7 @@
 <html lang="en" class="dark">
 <head>
   <link rel="stylesheet" href="css/friends-lobby.css?v=d41876d5ca00">
-  <link rel="stylesheet" href="css/lucky-wheel.css?v=89c2d827b11f">
+  <link rel="stylesheet" href="css/lucky-wheel.css?v=7153d875d2e6">
   <link rel="stylesheet" href="css/puzzles.css?v=584fef898369">
   <link rel="stylesheet" href="css/welcome-tour.css?v=9d478452ecd0">
   <meta charset="UTF-8" />
@@ -228,7 +228,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=1a336014d06c">
+  <link rel="stylesheet" href="game.css?v=cbfe398bf08b">
 
   
   <!-- Firebase SDKs -->
@@ -529,7 +529,8 @@
          lobby-specific is needed here any more. -->
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-4 shadow-2xl relative overflow-hidden my-auto">
       <div class="absolute -right-12 -top-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <button type="button" id="homeWheelChip" class="hidden" aria-label="Open the Daily Spin"><svg class="lw-chip-ic" viewBox="0 0 38 38" aria-hidden="true"><circle cx="19" cy="19" r="18" fill="#f59e0b" stroke="#3b2204"/><path d="M19 19L19.0 3.0A16 16 0 0 1 30.3 7.7Z" fill="#b91c1c"/><path d="M19 19L30.3 7.7A16 16 0 0 1 35.0 19.0Z" fill="#f59e0b"/><path d="M19 19L35.0 19.0A16 16 0 0 1 30.3 30.3Z" fill="#1e3a8a"/><path d="M19 19L30.3 30.3A16 16 0 0 1 19.0 35.0Z" fill="#fde68a"/><path d="M19 19L19.0 35.0A16 16 0 0 1 7.7 30.3Z" fill="#b91c1c"/><path d="M19 19L7.7 30.3A16 16 0 0 1 3.0 19.0Z" fill="#f59e0b"/><path d="M19 19L3.0 19.0A16 16 0 0 1 7.7 7.7Z" fill="#1e3a8a"/><path d="M19 19L7.7 7.7A16 16 0 0 1 19.0 3.0Z" fill="#fde68a"/><circle cx="19" cy="19" r="4.4" fill="#fde68a" stroke="#3b2204" stroke-width=".8"/></svg><i class="lw-dot-badge hidden" data-wheel-dot></i></button><button type="button" id="homeMontyChip" class="hidden" aria-label="Open Three Cards"><svg class="lw-chip-ic" viewBox="0 0 38 38" aria-hidden="true"><g stroke="#3b2204" stroke-width="1"><rect x="3" y="9" width="14" height="20" rx="2.5" fill="#1e3a8a" transform="rotate(-14 10 19)"/><rect x="21" y="9" width="14" height="20" rx="2.5" fill="#b91c1c" transform="rotate(14 28 19)"/><rect x="12" y="6" width="14" height="22" rx="2.5" fill="#f59e0b"/></g><path d="M19 13l1.8 3.7 4 .6-2.9 2.8.7 4L19 22.2l-3.6 1.9.7-4-2.9-2.8 4-.6z" fill="#fde68a"/></svg><i class="lw-dot-badge hidden" data-monty-dot></i></button>
+      <button type="button" id="homeWheelChip" class="hidden" aria-label="Open the Daily Spin"><svg class="lw-chip-ic" viewBox="0 0 38 38" aria-hidden="true"><circle cx="19" cy="19" r="18" fill="#f59e0b" stroke="#3b2204"/><path d="M19 19L19.0 3.0A16 16 0 0 1 30.3 7.7Z" fill="#b91c1c"/><path d="M19 19L30.3 7.7A16 16 0 0 1 35.0 19.0Z" fill="#f59e0b"/><path d="M19 19L35.0 19.0A16 16 0 0 1 30.3 30.3Z" fill="#1e3a8a"/><path d="M19 19L30.3 30.3A16 16 0 0 1 19.0 35.0Z" fill="#fde68a"/><path d="M19 19L19.0 35.0A16 16 0 0 1 7.7 30.3Z" fill="#b91c1c"/><path d="M19 19L7.7 30.3A16 16 0 0 1 3.0 19.0Z" fill="#f59e0b"/><path d="M19 19L3.0 19.0A16 16 0 0 1 7.7 7.7Z" fill="#1e3a8a"/><path d="M19 19L7.7 7.7A16 16 0 0 1 19.0 3.0Z" fill="#fde68a"/><circle cx="19" cy="19" r="4.4" fill="#fde68a" stroke="#3b2204" stroke-width=".8"/></svg><i class="lw-dot-badge hidden" data-wheel-dot></i></button><button type="button" id="homeScratchChip" class="hidden" aria-label="Open the Scratch Card"><svg class="lw-chip-ic" viewBox="0 0 38 38" aria-hidden="true"><rect x="6" y="4" width="26" height="30" rx="4" fill="#f5b82e" stroke="#3b2204" stroke-width="1.2"/><path d="M6 24L24 4h8L6 30Z" fill="#fff3b0" opacity=".75"/><rect x="10" y="9" width="18" height="18" rx="2.5" fill="#140a02" stroke="#fff3b0" stroke-width=".9"/><path d="M13.5 22l1.8-6.5 3.4 3.4L19 13.5l2.6 5.4 2.9-3.4 1 6.5Z" fill="#fde68a"/><circle cx="27.5" cy="29" r="4.4" fill="#fff3b0" stroke="#3b2204" stroke-width="1"/><path d="M25.5 29.2l1.4 1.4 2.6-2.8" stroke="#7c2d12" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><i class="lw-dot-badge hidden" data-scratch-dot></i></button>
+      <button type="button" id="homeMontyChip" class="hidden" aria-label="Open Three Cards"><svg class="lw-chip-ic" viewBox="0 0 38 38" aria-hidden="true"><g stroke="#3b2204" stroke-width="1"><rect x="3" y="9" width="14" height="20" rx="2.5" fill="#1e3a8a" transform="rotate(-14 10 19)"/><rect x="21" y="9" width="14" height="20" rx="2.5" fill="#b91c1c" transform="rotate(14 28 19)"/><rect x="12" y="6" width="14" height="22" rx="2.5" fill="#f59e0b"/></g><path d="M19 13l1.8 3.7 4 .6-2.9 2.8.7 4L19 22.2l-3.6 1.9.7-4-2.9-2.8 4-.6z" fill="#fde68a"/></svg><i class="lw-dot-badge hidden" data-monty-dot></i></button>
       
       <div class="text-center mb-3 flex flex-col items-center">
         <h1 class="brand-logo-rendered text-3xl mb-0.5"><button type="button" id="homeLogoBtn" aria-label="Back to the home screen">ShitHead</button></h1>
@@ -2217,6 +2218,15 @@
         <div id="montyResult" class="lw-result" role="status" aria-live="polite"></div>
         <button type="button" id="montyBtn" class="gauntlet-go">START</button>
       </div>
+      <div id="scratchPanel" class="hidden">
+        <p id="scratchSub" class="gauntlet-text">One free card every day. Match three to win.</p>
+        <div class="lw-sc-stage"><div id="scratchGrid" class="lw-sc-grid" role="group" aria-label="Scratch card"></div><canvas id="scratchFoil" class="lw-sc-foil" aria-hidden="true"></canvas></div>
+        <div id="scratchResult" class="lw-result" role="status" aria-live="polite"></div>
+        <button type="button" id="scratchBtn" class="gauntlet-go">GET CARD</button>
+        <button type="button" id="scratchRevealBtn" class="lw-odds-btn hidden">Reveal the card</button>
+        <button type="button" id="scratchOddsBtn" class="lw-odds-btn" aria-expanded="false" aria-controls="scratchOdds">Prizes and odds</button>
+        <ul id="scratchOdds" class="lw-odds hidden"></ul>
+      </div>
     </div>
   </div>
   <div id="twosModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="twosTitle">
@@ -2777,7 +2787,7 @@
   <script src="art/burns/icons.js?v=97c925509b37"></script>
   <script src="art/effects/icons.js?v=dc511958ba17"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
-  <script src="sound.js?v=b55c504306d3"></script>
+  <script src="sound.js?v=b4bf4aa75123"></script>
 
   <!-- BURN EMBER PARTICLE ENGINE -->
   <script src="art/cities-v2/city-effects.js?v=4e5acd905f79"></script>
@@ -2807,24 +2817,24 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=47726d6f1d5f"></script>
-  <script src="js/whats-new-data.js?v=9cffda2441bd"></script>
+  <script src="js/whats-new-data.js?v=43d1ebc3290a"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
-  <script src="cosmetics-data.js?v=6a9042fa81a0"></script>
+  <script src="cosmetics-data.js?v=0bd4a6635550"></script>
   <script src="tutorial-data.js?v=86b1cdade927"></script>
   <script src="tutorial.js?v=0049a251f6ef"></script>
   <script src="level-ladder.js?v=2236068565c3"></script>
   <script src="js/wishlist-store.js?v=664496c9f24f"></script>
-  <script src="shop.js?v=c76a38589f68"></script>
+  <script src="shop.js?v=0d923e071afe"></script>
   <script src="home-navigation.js?v=8b927cb2e918"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=3ae6d3d3e18f"></script>
+  <script src="app.js?v=4805348dbc99"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>
   <script src="js/house-rules-presets.js?v=80f7a658ecb1"></script>
   <script src="js/friends-lobby.js?v=d6461177af51"></script>
-  <script src="js/lucky-wheel.js?v=ca844ef29013"></script>
+  <script src="js/lucky-wheel.js?v=2517d47fed61"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>
   <script src="js/puzzles.js?v=87cb627bec7c"></script>

@@ -171,6 +171,7 @@
       { id: 'avatar-twos', category: 'Avatars', name: 'Dream Team', earned: true, animated: true, twos: true, requirement: 'Win 10 games of 2 vs 2', isEarned: () => false },
       { id: 'avatar-decks', category: 'Avatars', name: 'Double Deck', earned: true, animated: true, decks: true, requirement: 'Win 10 games of Multiple Decks', isEarned: () => false },
       { id: 'avatar-wheel', category: 'Avatars', name: 'Lucky Wheel', earned: true, animated: true, wheel: true, requirement: 'Win it on the Daily Spin', isEarned: () => false },
+      { id: 'avatar-foil-ace', category: 'Avatars', name: 'Foil Ace', earned: true, animated: true, scratch: true, requirement: 'Win it on the Scratch Card', isEarned: () => false },
       { id: 'avatar-nm-seer', category: 'Avatars', name: 'The Seer', earned: true, nm: true, tone: '#e11d48', file: 'art/avatars/nm-seer.webp', requirement: 'Play 50 Queens in No Mercy', isEarned: () => false },
       { id: 'avatar-nm-enforcer', category: 'Avatars', name: 'The Enforcer', earned: true, nm: true, tone: '#b45309', file: 'art/avatars/nm-enforcer.webp', requirement: 'Make other players take 50 cards with Kings in No Mercy', isEarned: () => false }
     ];
@@ -197,11 +198,27 @@
     // Three Cards (v474): one free play a UK week. The big prize starts in the middle and is shuffled by `swaps`
     // swaps the server draws; the player picks a card and gets the prize under it.
     const MONTY = { big: 300, small: [50, 25], swaps: 9 };
+    // Scratch Card (v478): one free card a UK day. The server draws the result by `weight` (out of 1000) and lays out a
+    // 3x3 grid that shows it: three of a kind wins that symbol's prize, a losing grid never holds three of any symbol.
+    // The two item prizes are scratch-only (never sold); a duplicate pays `dupeDiamonds`. Average about 43 Diamonds a day.
+    const SCRATCH = {
+      dupeDiamonds: 1250,
+      symbols: ['J', 'Q', 'K', 'A', 'JOKER'],
+      prizes: [
+        { id: 'none', kind: 'diamonds', amount: 10, weight: 560 },
+        { id: 'jacks', symbol: 'J', kind: 'diamonds', amount: 50, weight: 230 },
+        { id: 'queens', symbol: 'Q', kind: 'diamonds', amount: 100, weight: 130 },
+        { id: 'kings', symbol: 'K', kind: 'diamonds', amount: 250, weight: 50 },
+        { id: 'aces', symbol: 'A', kind: 'item', itemId: 'avatar-foil-ace', name: 'Foil Ace', weight: 20 },
+        { id: 'jokers', symbol: 'JOKER', kind: 'item', itemId: 'back-foil-joker', name: 'Foil Joker', weight: 10 }
+      ]
+    };
     // No Mercy rewards (v451): the Crimson Verdict card back and deck are earned, never sold (see EARNED_AVATAR_RULES).
     const NM_EARNED = [
       { id: 'back-nm-verdict', category: 'Card Backs', name: 'Crimson Verdict', earned: true, nm: true, tone: '#b91c1c', file: 'art/backs/nm-verdict2.webp', tones: ['#14080a','#b91c1c','#c9a04a'], requirement: 'Win 10 games of No Mercy', isEarned: () => false },
       { id: 'deck-nm-verdict', category: 'Decks', name: 'Crimson Verdict', earned: true, nm: true, theme: 'theme-nmverdict', tones: ['#efe3cc','#7a5a2a','#b3141f'], requirement: 'Win 25 games of No Mercy', isEarned: () => false },
-      { id: 'back-wheel', category: 'Card Backs', name: 'Lucky Spin', earned: true, wheel: true, tone: '#f59e0b', tones: ['#0b1230','#f59e0b','#b91c1c'], requirement: 'Win it on the Daily Spin', isEarned: () => false }
+      { id: 'back-wheel', category: 'Card Backs', name: 'Lucky Spin', earned: true, wheel: true, tone: '#f59e0b', tones: ['#0b1230','#f59e0b','#b91c1c'], requirement: 'Win it on the Daily Spin', isEarned: () => false },
+      { id: 'back-foil-joker', category: 'Card Backs', name: 'Foil Joker', earned: true, scratch: true, tone: '#f5b82e', tones: ['#140a02','#f5b82e','#fff3b0'], requirement: 'Win it on the Scratch Card', isEarned: () => false }
     ];
     // Earn-only frames: never sold or gifted, shown locked in Custom until
     // the server grants them (Gauntlet Gold: beat the Gauntlet once).

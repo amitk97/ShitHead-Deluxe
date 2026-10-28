@@ -894,6 +894,7 @@
   "avatar-twos",
   "avatar-decks",
   "avatar-wheel",
+  "avatar-foil-ace",
   "avatar-nm-seer",
   "avatar-nm-enforcer",
   "avatar-lvl-rookie-rogue",
@@ -981,6 +982,7 @@
   "back-ss2709-cauldron",
   "back-nm-verdict",
   "back-wheel",
+  "back-foil-joker",
   "back-lunar",
   "back-valentine",
   "back-ramadan",
@@ -1212,6 +1214,11 @@
    "requirement": "Win it on the Daily Spin",
    "type": "wheel"
   },
+  "avatar-foil-ace": {
+   "name": "Foil Ace",
+   "requirement": "Win it on the Scratch Card",
+   "type": "wheel"
+  },
   "avatar-nm-seer": {
    "name": "The Seer",
    "requirement": "Play 50 Queens in No Mercy",
@@ -1302,6 +1309,11 @@
   "back-wheel": {
    "name": "Lucky Spin",
    "requirement": "Win it on the Daily Spin",
+   "type": "wheel"
+  },
+  "back-foil-joker": {
+   "name": "Foil Joker",
+   "requirement": "Win it on the Scratch Card",
    "type": "wheel"
   }
  },
@@ -1443,6 +1455,61 @@
    25
   ],
   "swaps": 9
+ },
+ "scratch": {
+  "dupeDiamonds": 1250,
+  "symbols": [
+   "J",
+   "Q",
+   "K",
+   "A",
+   "JOKER"
+  ],
+  "prizes": [
+   {
+    "id": "none",
+    "kind": "diamonds",
+    "amount": 10,
+    "weight": 560
+   },
+   {
+    "id": "jacks",
+    "symbol": "J",
+    "kind": "diamonds",
+    "amount": 50,
+    "weight": 230
+   },
+   {
+    "id": "queens",
+    "symbol": "Q",
+    "kind": "diamonds",
+    "amount": 100,
+    "weight": 130
+   },
+   {
+    "id": "kings",
+    "symbol": "K",
+    "kind": "diamonds",
+    "amount": 250,
+    "weight": 50
+   },
+   {
+    "id": "aces",
+    "symbol": "A",
+    "kind": "item",
+    "itemId": "avatar-foil-ace",
+    "name": "Foil Ace",
+    "weight": 20
+   },
+   {
+    "id": "jokers",
+    "symbol": "JOKER",
+    "kind": "item",
+    "itemId": "back-foil-joker",
+    "name": "Foil Joker",
+    "weight": 10
+   }
+  ]
  },
  "matchWinRewards": {
   "bots": 10,
