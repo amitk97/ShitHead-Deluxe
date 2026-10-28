@@ -12,7 +12,7 @@ The seven requested fixes were implemented in order:
 6. **Settings within lessons:** sound and accessibility controls remain usable. Gameplay and lesson helper controls are disabled with an explanation. Pending tutorial timers retain their remaining delay while Settings is open and resume on closing, including Escape. Locks are restored on exit.
 7. **Rules copy:** modules identify Standard Rules, the reference instruction no longer claims every card has a power, and the core zone-order explanation acknowledges Cross-Phase Combo. Queen/King descriptions distinguish No Mercy.
 
-No release number was allocated. No push, merge, Firebase change or deployment was performed. This draft preserves v488's unrelated avatar and Multiple Decks changes.
+Release: **v489**, approved by the owner for main and the normal hosting release on 28 October 2026. This change preserves v488's unrelated avatar and Multiple Decks changes. No database or Functions changes are included.
 
 ## Validation
 
