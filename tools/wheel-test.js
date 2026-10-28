@@ -77,5 +77,36 @@ const setNow = (iso) => { const t = new RealDate(iso).getTime(); global.Date = c
   }
   assert(xpSeen && xpSeen.x.xp && xpSeen.x.xp.gained >= 75, 'an XP prize pays XP');
   assert(get(`users/x${xpSeen.i}/xp/total`) >= 75);
+  // Owned wheel items show in status and pay 1250.
+  assert.equal(W.dupeDiamonds, 1250);
+  const st = await economy.wheel({ uid: 'dup', data: { op: 'status' } });
+  assert.deepEqual(st.owned, { 'avatar-wheel': true, 'back-wheel': true });
+  // Three Cards: one play a UK week, the answer stays server-side, the prize under the pick is paid once.
+  const M = CAT.monty;
+  assert(M && M.big > Math.max(...M.small));
+  put('users/m', { username: 'Mo', diamonds: 0 });
+  setNow('2027-03-01T12:00:00Z');
+  let m = await economy.monty({ uid: 'm', data: { op: 'status' } });
+  assert(m.canPlay && !m.started && !m.result);
+  const s1 = await economy.monty({ uid: 'm', data: { op: 'start' } });
+  assert.equal(s1.swaps.length, M.swaps); assert.equal(s1.bigAt, 1);
+  const s2 = await economy.monty({ uid: 'm', data: { op: 'start' } });
+  assert.deepEqual(s2.swaps, s1.swaps, 'start again resumes the same shuffle');
+  assert(!JSON.stringify(get('users/m') || {}).includes('final'), 'the answer is not on the player record');
+  m = await economy.monty({ uid: 'm', data: { op: 'status' } });
+  assert(m.started && m.swaps.length === M.swaps);
+  const arr = [M.small[0], M.big, M.small[1]];
+  const hidden = get('montyGames/m'); const ans = hidden.final;
+  assert.deepEqual(ans.slice().sort(), arr.slice().sort());
+  const bigPos = ans.indexOf(M.big);
+  const pk = await economy.monty({ uid: 'm', data: { op: 'pick', index: bigPos } });
+  assert.equal(pk.result.prize, M.big); assert.deepEqual(pk.result.reveal, ans);
+  assert.equal(get('users/m/diamonds'), M.big);
+  const again = await economy.monty({ uid: 'm', data: { op: 'pick', index: 0 } });
+  assert(again.already && get('users/m/diamonds') === M.big, 'no second payout');
+  assert((await economy.monty({ uid: 'm', data: { op: 'start' } })).canPlay === false);
+  setNow('2027-03-09T12:00:00Z');
+  assert((await economy.monty({ uid: 'm', data: { op: 'status' } })).canPlay, 'a new week opens a new game');
+  await assert.rejects(() => economy.monty({ uid: 'm', data: { op: 'pick', index: 1 } }), /Start the game/);
   console.log('wheel test passed');
 })().catch(e => { console.error(e); process.exit(1); });

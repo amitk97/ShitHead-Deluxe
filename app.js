@@ -17703,6 +17703,7 @@
         nameChangeTokenCost: NAME_CHANGE_TOKEN_COST,
         dailyStreakRewards: DAILY_STREAK_REWARDS,
         wheel: WHEEL,
+        monty: MONTY,
         matchWinRewards: { bots: 10, ranked: 20 },
         dailyReward: CHALLENGE_REWARD,
         weeklyReward: WEEKLY_CHALLENGE_REWARD,

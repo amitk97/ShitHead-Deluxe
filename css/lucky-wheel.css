@@ -40,3 +40,29 @@ body.reduce-motion #homeWheelChip .lw-chip-ic { animation: none; }
 .lw-prize-back { flex: none; width: 52px; display: grid; place-items: center; }
 .lw-prize .lw-backprev { width: 34px; height: 48px; }
 .lw-prize-note { font-size: .64rem; color: #64748b; text-align: center; }
+
+/* Tabs and Three Cards (v474) */
+.lw-tabs { display: flex; gap: .3rem; margin: .5rem auto .2rem; padding: .2rem; max-width: 17rem; border-radius: 999px; background: #0b1426; border: 1px solid #1e293b; }
+.lw-tab { position: relative; flex: 1; padding: .38rem .4rem; border-radius: 999px; font-size: .68rem; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: #94a3b8; }
+.lw-tab.on { background: #fbbf24; color: #2a1604; }
+.lw-tab .lw-dot-badge { position: absolute; top: 1px; right: 5px; margin: 0; width: 8px; height: 8px; }
+.lw-tab:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+#montyPanel.hidden, #wheelPanel.hidden { display: none; }
+#montyPanel { min-height: 27rem; }
+.lw-mc-stage { position: relative; height: 9.6rem; width: 15rem; margin: 1rem auto .6rem; }
+.lw-mc { position: absolute; top: 0; left: 50%; width: 4.2rem; height: 6rem; margin-left: -2.1rem; padding: 0; border: 0; background: none; cursor: pointer; perspective: 600px; will-change: transform; }
+.lw-mc:disabled { cursor: default; }
+.lw-mc-in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .45s var(--ease-soft, ease); }
+.lw-mc.up .lw-mc-in { transform: rotateY(180deg); }
+.lw-mc-back, .lw-mc-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: .45rem; }
+.lw-mc-back .custom-card-back, .lw-mc-back.custom-card-back { width: 100%; height: 100%; }
+.lw-mc-face { transform: rotateY(180deg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem; background: linear-gradient(160deg, #1e293b, #0f172a); border: 2px solid #475569; font-weight: 900; color: #e2e8f0; font-size: 1.05rem; }
+.lw-mc-face svg { width: 1.2rem; height: 1.2rem; }
+.lw-mc.big .lw-mc-face { background: linear-gradient(160deg, #fde68a, #f59e0b); border-color: #fff7d6; color: #2a1604; box-shadow: 0 0 18px rgba(251,191,36,.6); }
+.lw-mc.chosen .lw-mc-face { outline: 3px solid #fbbf24; outline-offset: 2px; }
+.lw-mc.hl .lw-mc-in { filter: brightness(1.25); }
+.lw-mc:not(:disabled):hover .lw-mc-in { transform: translateY(-4px); }
+.lw-mc.up:not(:disabled):hover .lw-mc-in { transform: rotateY(180deg); }
+.lw-mc:focus-visible { outline: 2px solid #fbbf24; outline-offset: 4px; }
+body.reduce-motion .lw-mc-in { transition-duration: .01s; }
+.lw-odds .lw-odds-themed { color: #fde68a; }

@@ -9,7 +9,27 @@
   const SPIN_MS = 4400, TURNS = 5, EASE = 'cubic-bezier(.12,.62,.14,1)';
   const $ = id => document.getElementById(id);
   const prize = id => WHEEL.prizes.find(p => p.id === id);
-  const S = { status: null, busy: false, angle: 0, tick: null, timer: null, built: false };
+  const S = { status: null, busy: false, angle: 0, tick: null, timer: null, built: false, owned: {}, monty: null, tab: 'spin' };
+
+  // ---- themes (v474): while an event is live the wheel wears its colours ----
+  const hex = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h); const n = m ? parseInt(m[1], 16) : 0; return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const mix = (a, b, t) => { const x = hex(a), y = hex(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+  function theme() {
+    try {
+      if (typeof activeSeasonalEvents !== 'function') return null;
+      const w = activeSeasonalEvents()[0]; if (!w || !w.event || !w.event.tones) return null;
+      return { name: w.event.name, tones: w.event.tones };
+    } catch (e) { return null; }
+  }
+  // An owned wheel-only item is replaced by Diamonds on the wheel (the server pays the same).
+  const view = p => (p.kind === 'item' && S.owned[p.itemId]) ? { ...p, kind: 'diamonds', amount: WHEEL.dupeDiamonds, owned: true } : p;
+  function colour(id, i) {
+    const th = S.theme;
+    if (!th) return COLOURS[id];
+    const p = prize(id);
+    if (p.kind === 'item') return mix(th.tones[2], '#000', .5);
+    return i % 2 ? mix(th.tones[0], '#fff', .14) : mix(th.tones[1], '#000', .12);
+  }
 
   const pct = p => { const v = p.weight / 10; return `${v < 1 ? v.toFixed(1) : Math.round(v * 10) / 10}%`; };
   const nameOf = p => p.kind === 'diamonds' ? `${p.amount} Diamonds` : p.kind === 'xp' ? `${p.amount} XP` : p.itemId.startsWith('avatar') ? `${p.name} avatar` : `${p.name} card back`;
@@ -17,8 +37,8 @@
   const wedge = (r, a0, a1) => { const [x0, y0] = pt(r, a0), [x1, y1] = pt(r, a1); return `M${C} ${C}L${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z`; };
   const STAR = (x, y, s) => `<path d="M${x} ${y - s}l${s * .3} ${s * .62} ${s * .7} .1-${s * .52} ${s * .48} ${s * .15} ${s * .7}-${s * .63}-${s * .36}-${s * .63} ${s * .36} ${s * .15}-${s * .7}-${s * .52}-${s * .48} ${s * .7}-.1Z" fill="#fff7d6"/>`;
 
-  function label(p, i) {
-    const a = i * SLICE, rot = `transform="rotate(${a} ${C} ${C})"`;
+  function label(p0, i) {
+    const p = view(p0), a = i * SLICE, rot = `transform="rotate(${a} ${C} ${C})"`;
     if (p.kind === 'item') { const av = p.itemId.startsWith('avatar'); const t = (y, w) => `<text x="${C}" y="${y}" text-anchor="middle" font-size="${av ? 10 : 8.5}" font-weight="900" fill="#fff" letter-spacing="${av ? .5 : .2}">${w}</text>`; return `<g ${rot}>${STAR(C, C - R * .8, 9)}${av ? t(C - R * .56, 'AVATAR') : t(C - R * .6, 'CARD') + t(C - R * .48, 'BACK')}</g>`; }
     if (p.kind === 'xp') return `<g ${rot}><text x="${C}" y="${C - R * .72}" text-anchor="middle" font-size="20" font-weight="900" fill="#fff">${p.amount}</text><text x="${C}" y="${C - R * .56}" text-anchor="middle" font-size="10" font-weight="900" fill="#d9f99d" letter-spacing="1">XP</text></g>`;
     const big = String(p.amount).length > 3;
@@ -29,20 +49,22 @@
     if (S.built) return;
     const svg = $('wheelSvg');
     if (!svg) return;
-    const slices = WHEEL.segments.map((id, i) => `<path d="${wedge(R, i * SLICE - SLICE / 2, i * SLICE + SLICE / 2)}" fill="${COLOURS[id]}" stroke="rgba(5,8,22,.55)" stroke-width="1.2"/>`).join('');
+    S.theme = theme();
+    const th = S.theme, rim = th ? [mix(th.tones[2], '#fff', .45), th.tones[1], mix(th.tones[1], '#000', .55)] : ['#fff2b0', '#f59e0b', '#8a5a0a'];
+    const slices = WHEEL.segments.map((id, i) => `<path d="${wedge(R, i * SLICE - SLICE / 2, i * SLICE + SLICE / 2)}" fill="${colour(id, i)}" stroke="rgba(5,8,22,.55)" stroke-width="1.2"/>`).join('');
     const glow = WHEEL.segments.map((id, i) => `<path d="${wedge(R, i * SLICE - SLICE / 2, i * SLICE + SLICE / 2)}" fill="url(#lw-shade)"/>`).join('');
     const labels = WHEEL.segments.map((id, i) => label(prize(id), i)).join('');
     const pegs = WHEEL.segments.map((id, i) => { const [x, y] = pt(R + 6, i * SLICE + SLICE / 2); return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="3.4" fill="#fff7d6" stroke="rgba(0,0,0,.5)" stroke-width=".8"/>`; }).join('');
     svg.innerHTML = `<defs>
-      <linearGradient id="lw-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#f59e0b"/><stop offset="1" stop-color="#8a5a0a"/></linearGradient>
+      <linearGradient id="lw-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${rim[0]}"/><stop offset=".5" stop-color="${rim[1]}"/><stop offset="1" stop-color="${rim[2]}"/></linearGradient>
       <radialGradient id="lw-shade" cx=".5" cy=".5" r=".5"><stop offset=".25" stop-color="#000" stop-opacity=".28"/><stop offset=".8" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></radialGradient></defs>
       <circle cx="${C}" cy="${C}" r="${R + 14}" fill="url(#lw-gold)" stroke="#3b2204" stroke-width="2"/>
       <circle cx="${C}" cy="${C}" r="${R + 2}" fill="#050816"/>
       ${slices}${glow}${labels}${pegs}
       <circle cx="${C}" cy="${C}" r="24" fill="url(#lw-gold)" stroke="#3b2204" stroke-width="2"/>
       <path d="M${C} ${C - 13}l3.6 7.4 8.1 1.1-5.9 5.7 1.4 8-7.2-3.9-7.2 3.9 1.4-8-5.9-5.7 8.1-1.1Z" fill="#7c2d12"/>`;
-    $('wheelOdds').innerHTML = WHEEL.prizes.map(p => `<li><span class="lw-dot" style="background:${COLOURS[p.id]}"></span><span class="lw-odds-name">${nameOf(p)}</span><b>${pct(p)}</b></li>`).join('')
-      + `<li class="lw-odds-note">Wheel-only items you already own pay ${WHEEL.dupeDiamonds} Diamonds instead. XP prizes only come up while levels are on.</li>`;
+    $('wheelOdds').innerHTML = WHEEL.prizes.map(p0 => { const p = view(p0); return `<li><span class="lw-dot" style="background:${colour(p.id, WHEEL.segments.indexOf(p.id))}"></span><span class="lw-odds-name">${nameOf(p)}${p.owned ? ' (you own the item)' : ''}</span><b>${pct(p)}</b></li>`; }).join('')
+      + `<li class="lw-odds-note">Once you own a wheel-only item, its slice pays ${WHEEL.dupeDiamonds.toLocaleString('en-GB')} Diamonds instead. XP prizes only come up while levels are on.${th ? ` <span class="lw-odds-themed">${th.name} colours are on while the event runs.</span>` : ''}</li>`;
     S.built = true;
   }
 
@@ -57,24 +79,30 @@
   const nextText = () => { const m = Math.max(1, Math.ceil(untilMidnightMs() / 60000)); return `Next spin in ${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`; };
 
   function paint() {
-    const chip = $('homeWheelChip'), ready = !!(S.status && S.status.canSpin);
+    const chip = $('homeWheelChip'), ready = !!(S.status && S.status.canSpin), mReady = !!(S.monty && S.monty.canPlay);
     if (chip) {
-      chip.classList.toggle('hidden', !S.status);
-      chip.classList.toggle('lw-ready', ready);
-      const sub = $('homeWheelSub'); if (sub) sub.textContent = ready ? 'Your free spin is ready' : nextText();
+      chip.classList.toggle('hidden', !S.status && !S.monty);
+      chip.classList.toggle('lw-ready', ready || mReady);
     }
-    document.querySelectorAll('[data-wheel-dot]').forEach(el => el.classList.toggle('hidden', !ready));
+    document.querySelectorAll('[data-wheel-dot]').forEach(el => el.classList.toggle('hidden', !(ready || mReady)));
+    document.querySelectorAll('[data-dot-spin]').forEach(el => el.classList.toggle('hidden', !ready));
+    document.querySelectorAll('[data-dot-cards]').forEach(el => el.classList.toggle('hidden', !mReady));
     const btn = $('wheelSpinBtn');
     if (btn && !S.busy) { btn.disabled = !ready; btn.textContent = ready ? 'SPIN' : nextText().toUpperCase(); }
     const sub = $('wheelSub'); if (sub) sub.textContent = ready ? 'One free spin every day.' : 'You have used today’s spin.';
+    montyPaint();
   }
   async function refresh() {
-    if (!signedIn()) { S.status = null; paint(); return; }
+    if (!signedIn()) { S.status = null; S.monty = null; paint(); return; }
     const uid = currentUser.uid;
     try {
       const r = await callEconomy('wheel', { op: 'status' });
-      if (currentUser && currentUser.uid === uid) S.status = { canSpin: !!r.canSpin, last: r.last || null };
+      if (currentUser && currentUser.uid === uid) { S.status = { canSpin: !!r.canSpin, last: r.last || null }; if (r.owned) { const was = JSON.stringify(S.owned); S.owned = r.owned; if (was !== JSON.stringify(S.owned) && !S.busy) S.built = false; } }
     } catch (e) { /* offline or not deployed yet: the chip stays hidden */ }
+    try {
+      const m = await callEconomy('monty', { op: 'status' });
+      if (currentUser && currentUser.uid === uid && !M.busy) S.monty = { canPlay: !!m.canPlay, started: !!m.started, swaps: m.swaps || null, result: m.result || null };
+    } catch (e) { /* not deployed yet */ }
     paint();
   }
   function startTimer() {
@@ -105,10 +133,10 @@
     };
     S.tick = requestAnimationFrame(loop);
   }
-  const tierOf = p => p.kind === 'item' ? 'item' : p.id === 'd1000' ? 'jackpot' : (p.kind === 'diamonds' && p.amount >= 250) ? 'big' : (p.kind === 'diamonds' && p.amount >= 100) || p.id === 'xp150' ? 'mid' : 'small';
+  const tierOf = p => p.owned ? 'jackpot' : p.kind === 'item' ? 'item' : p.id === 'd1000' ? 'jackpot' : (p.kind === 'diamonds' && p.amount >= 250) ? 'big' : (p.kind === 'diamonds' && p.amount >= 100) || p.id === 'xp150' ? 'mid' : 'small';
 
   function showResult(sp) {
-    const p = prize(sp.prize), el = $('wheelResult');
+    const p = view(prize(sp.prize)), el = $('wheelResult');
     let html;
     if (p.kind === 'item') {
       const isAvatar = p.itemId.startsWith('avatar');
@@ -142,7 +170,7 @@
     try { res = await callEconomy('wheel', { op: 'spin' }); }
     catch (e) { S.busy = false; $('wheelResult').innerHTML = '<span>Couldn’t spin right now. Check your connection and try again.</span>'; paint(); return; }
     if (res.already || !res.spin) { S.busy = false; S.status = { canSpin: false, last: res.last || null }; paint(); return; }
-    const sp = res.spin, p = prize(sp.prize);
+    const sp = res.spin, p = view(prize(sp.prize));
     const slots = WHEEL.segments.map((id, i) => id === sp.prize ? i : -1).filter(i => i >= 0);
     const idx = slots[Math.floor(Math.random() * slots.length)];
     const from = S.angle, to = Math.ceil(from / 360) * 360 + 360 * TURNS - idx * SLICE + (Math.random() * 2 - 1) * SLICE * .32;
@@ -150,6 +178,8 @@
     const done = () => {
       S.angle = to; el.style.transform = `rotate(${to}deg)`;
       S.busy = false; S.status = { canSpin: false, last: { id: sp.prize } };
+      const gotItem = prize(sp.prize).kind === 'item' && !sp.duplicate;
+      if (gotItem) { S.owned = { ...S.owned, [prize(sp.prize).itemId]: true }; S.built = false; }
       applyEconomy(res); showResult(sp); celebrate(tierOf(p)); paint(); startTimer();
     };
     if (motionOff() || typeof el.animate !== 'function') { done(); return; }
@@ -163,21 +193,127 @@
   function paintPrize() {
     const el = $('wheelPrize'); if (!el || typeof avatarHtml !== 'function') return;
     const odds = id => { const p = WHEEL.prizes.find(x => x.id === id); return p ? `${(p.weight / 10).toString().replace(/\.0$/, '')}% chance` : ''; };
-    el.innerHTML = `<div class="lw-prize-row">${avatarHtml('avatar-wheel', 52)}<span class="lw-prize-t"><b>Lucky Wheel avatar</b><span>Your profile picture · ${odds('avatar')}</span></span></div>`
-      + `<div class="lw-prize-row"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass('back-wheel')} lw-backprev"></span></span><span class="lw-prize-t"><b>Lucky Spin card back</b><span>The design on your cards' backs · ${odds('back')}</span></span></div>`
+    const own = id => S.owned[id === 'avatar' ? 'avatar-wheel' : 'back-wheel'], pay = `You own it, so that slice pays ${WHEEL.dupeDiamonds.toLocaleString('en-GB')} Diamonds`;
+    el.innerHTML = `<div class="lw-prize-row">${avatarHtml('avatar-wheel', 52)}<span class="lw-prize-t"><b>Lucky Wheel avatar</b><span>Your profile picture · ${own('avatar') ? pay : odds('avatar')}</span></span></div>`
+      + `<div class="lw-prize-row"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass('back-wheel')} lw-backprev"></span></span><span class="lw-prize-t"><b>Lucky Spin card back</b><span>The design on your cards' backs · ${own('back') ? pay : odds('back')}</span></span></div>`
       + `<span class="lw-prize-note">Wheel-only. You can't buy them.</span>`;
+  }
+
+  // ---- Three Cards (weekly) ----
+  const M = { busy: false, els: [], pos: [0, 1, 2] };
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const gem = v => `<svg aria-hidden="true"><use href="#ic-gem"/></svg><span>${v}</span>`;
+  const bigAmt = () => (typeof MONTY !== 'undefined' ? MONTY.big : 300);
+  function montyBuild() {
+    const st = $('montyStage'); if (!st) return;
+    let back = '<div class="custom-card-back"></div>';
+    try { back = snapshotCardBackHtml(snapshotCardStyle(), 'w-full h-full'); } catch (e) { /* default back */ }
+    st.innerHTML = [0, 1, 2].map(i => `<button type="button" class="lw-mc" data-mc="${i}" disabled aria-label="Card ${i + 1}"><span class="lw-mc-in"><span class="lw-mc-back">${back}</span><span class="lw-mc-face"></span></span></button>`).join('');
+    M.els = [...st.querySelectorAll('.lw-mc')]; M.pos = [0, 1, 2];
+    montyPlace(false);
+  }
+  const dx = () => Math.round((M.els[0] ? M.els[0].offsetWidth : 67) * 1.22);
+  const xOf = q => (q - 1) * dx();
+  function montyPlace() { M.els.forEach((el, i) => { el.style.transform = `translateX(${xOf(M.pos[i])}px)`; el.style.zIndex = ''; }); }
+  const at = q => M.els[M.pos.indexOf(q)];
+  const setFace = (el, v) => { const f = el.querySelector('.lw-mc-face'); f.innerHTML = gem(v); el.classList.toggle('big', v === bigAmt()); };
+  async function swapCards(a, b) {
+    const ea = at(a), eb = at(b), xa = xOf(a), xb = xOf(b);
+    M.pos[M.els.indexOf(ea)] = b; M.pos[M.els.indexOf(eb)] = a;
+    audio.playWheelTick && audio.playWheelTick();
+    if (motionOff() || typeof ea.animate !== 'function') {
+      ea.classList.add('hl'); eb.classList.add('hl'); montyPlace(); await wait(520); ea.classList.remove('hl'); eb.classList.remove('hl'); await wait(120); return;
+    }
+    const D = 330, mid = (xa + xb) / 2;
+    ea.style.zIndex = 2;
+    const A = ea.animate([{ transform: `translateX(${xa}px)` }, { transform: `translate(${mid}px,-22px)`, offset: .5 }, { transform: `translateX(${xb}px)` }], { duration: D, easing: 'ease-in-out', fill: 'forwards' });
+    const B = eb.animate([{ transform: `translateX(${xb}px)` }, { transform: `translate(${mid}px,14px)`, offset: .5 }, { transform: `translateX(${xa}px)` }], { duration: D, easing: 'ease-in-out', fill: 'forwards' });
+    await Promise.all([A.finished, B.finished].map(f => f.catch(() => 0)));
+    A.cancel(); B.cancel(); montyPlace(); await wait(70);
+  }
+  function montyPaint() {
+    const btn = $('montyBtn'), sub = $('montySub'); if (!btn || M.busy) return;
+    const m = S.monty, big = bigAmt();
+    if (!m) { btn.disabled = true; btn.textContent = 'NOT AVAILABLE YET'; if (sub) sub.textContent = 'Three Cards needs a connection.'; return; }
+    const playing = M.phase === 'pick';
+    if (m.result) { btn.disabled = true; btn.textContent = 'BACK NEXT WEEK'; if (sub) sub.textContent = 'You have played this week’s game.'; return; }
+    btn.disabled = playing || !m.canPlay;
+    btn.textContent = playing ? 'PICK A CARD' : m.started ? 'WATCH THE SHUFFLE AGAIN' : 'START';
+    if (sub) sub.textContent = playing ? 'Tap the card you think hides the big prize.' : `One free play every week. Follow the ${big} Diamond card.`;
+  }
+  function montyShowDone(r) {
+    M.phase = 'done';
+    M.els.forEach(el => { el.disabled = true; });
+    r.reveal.forEach((v, q) => { const el = at(q); setFace(el, v); el.classList.add('up'); if (q === r.pick) el.classList.add('chosen'); });
+    $('montyResult').innerHTML = r.prize === bigAmt() ? `<b class="lw-won">+${r.prize} Diamonds</b><span>You found the big prize.</span>` : `<b class="lw-won">+${r.prize} Diamonds</b><span>Not the big one. Try again next week.</span>`;
+  }
+  async function montyStart() {
+    if (M.busy || !S.monty || !signedIn()) return;
+    M.busy = true; M.phase = 'show';
+    const btn = $('montyBtn'); btn.disabled = true; btn.textContent = 'WATCH';
+    $('montyResult').innerHTML = '';
+    let res;
+    try { res = await callEconomy('monty', { op: 'start' }); } catch (e) { M.busy = false; M.phase = ''; $('montyResult').innerHTML = '<span>Couldn’t start right now. Check your connection and try again.</span>'; montyPaint(); return; }
+    if (res.result) { M.busy = false; S.monty = { canPlay: false, result: res.result }; montyBuild(); montyShowDone(res.result); paint(); return; }
+    montyBuild();
+    const m = at(res.bigAt == null ? 1 : res.bigAt);
+    setFace(m, bigAmt()); m.classList.add('up');
+    $('montyResult').innerHTML = `<span>Watch the ${bigAmt()} Diamond card.</span>`;
+    await wait(1300); m.classList.remove('up'); await wait(500);
+    for (const [a, b] of res.swaps) await swapCards(a, b);
+    M.busy = false; M.phase = 'pick'; S.monty = { ...S.monty, started: true, swaps: res.swaps };
+    M.els.forEach(el => { el.disabled = false; });
+    $('montyResult').innerHTML = '';
+    montyPaint();
+    M.els[0].focus({ preventScroll: true });
+  }
+  async function montyPick(el) {
+    if (M.phase !== 'pick' || M.busy) return;
+    M.busy = true; M.els.forEach(x => { x.disabled = true; });
+    const q = M.pos[M.els.indexOf(el)];
+    let res;
+    try { res = await callEconomy('monty', { op: 'pick', index: q }); } catch (e) { M.busy = false; M.els.forEach(x => { x.disabled = false; }); $('montyResult').innerHTML = '<span>Couldn’t check that card. Try again.</span>'; return; }
+    const r = res.result; if (!r) { M.busy = false; return; }
+    setFace(el, r.reveal[q]); el.classList.add('up', 'chosen'); audio.playWheelTick && audio.playWheelTick();
+    await wait(motionOff() ? 100 : 650);
+    r.reveal.forEach((v, p) => { const x = at(p); if (x !== el) { setFace(x, v); x.classList.add('up'); } });
+    applyEconomy(res);
+    S.monty = { canPlay: false, started: false, result: r };
+    M.busy = false; M.phase = 'done';
+    $('montyResult').innerHTML = r.prize === bigAmt() ? `<b class="lw-won">+${r.prize} Diamonds</b><span>You found the big prize.</span>` : `<b class="lw-won">+${r.prize} Diamonds</b><span>Not the big one. Try again next week.</span>`;
+    $('montyResult').classList.remove('lw-in'); void $('montyResult').offsetWidth; $('montyResult').classList.add('lw-in');
+    celebrate(r.prize === bigAmt() ? 'big' : 'small');
+    paint();
+  }
+  function setTab(tab) {
+    if (S.busy || M.busy) return;
+    S.tab = tab === 'cards' ? 'cards' : 'spin';
+    $('wheelPanel').classList.toggle('hidden', S.tab !== 'spin');
+    $('montyPanel').classList.toggle('hidden', S.tab !== 'cards');
+    document.querySelectorAll('.lw-tab').forEach(b => { const on = b.dataset.lwTab === S.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
+    const th = S.theme;
+    $('wheelTitle').textContent = S.tab === 'cards' ? 'Three Cards' : th ? `${th.name} Spin` : 'Daily Spin';
+    if (S.tab === 'cards' && M.phase !== 'pick') {
+      montyBuild();
+      const r = S.monty && S.monty.result; if (r) montyShowDone(r); else { M.phase = ''; $('montyResult').innerHTML = ''; }
+    }
+    paint();
   }
   function open() {
     if (!signedIn()) { if (typeof openAuthModal === 'function') openAuthModal(); return; }
+    if (!S.busy && !M.busy) S.built = false;
     build();
     paintPrize();
     $('wheelSvg').style.transform = `rotate(${S.angle}deg)`;
     $('wheelModal').classList.remove('hidden');
-    if (!S.busy) $('wheelResult').innerHTML = S.status && !S.status.canSpin && S.status.last && prize(S.status.last.id) ? `<span>Today’s prize: ${nameOf(prize(S.status.last.id))}.</span>` : '';
-    paint(); refresh();
-    $('wheelSpinBtn').focus({ preventScroll: true });
+    if (!S.busy) $('wheelResult').innerHTML = S.status && !S.status.canSpin && S.status.last && prize(S.status.last.id) ? `<span>Today’s prize: ${nameOf(view(prize(S.status.last.id)))}.</span>` : '';
+    const wantCards = S.status && !S.status.canSpin && S.monty && S.monty.canPlay;
+    setTab(wantCards ? 'cards' : 'spin');
+    paint();
+    refresh().then(() => { if (!S.busy && !M.busy) { const was = S.built; if (!was) { build(); paintPrize(); } } });
+    ($('wheelModal').querySelector('.lw-tab.on') || $('wheelCloseBtn')).focus({ preventScroll: true });
   }
-  function close() { if (!S.busy) $('wheelModal')?.classList.add('hidden'); }
+  function close() { if (!S.busy && !M.busy) $('wheelModal')?.classList.add('hidden'); }
 
   document.addEventListener('click', (e) => {
     const t = e.target;
@@ -185,6 +321,9 @@
     else if (t.closest && t.closest('#menuWheelBtn')) { if (typeof closeHamburgerMenu === 'function') closeHamburgerMenu(); open(); }
     else if (t.id === 'wheelCloseBtn' || t.id === 'wheelModal') close();
     else if (t.id === 'wheelSpinBtn') spin();
+    else if (t.closest && t.closest('.lw-tab')) setTab(t.closest('.lw-tab').dataset.lwTab);
+    else if (t.id === 'montyBtn') montyStart();
+    else if (t.closest && t.closest('.lw-mc')) montyPick(t.closest('.lw-mc'));
     else if (t.closest && t.closest('#wheelOddsBtn')) { const list = $('wheelOdds'), btn = $('wheelOddsBtn'); const show = list.classList.contains('hidden'); list.classList.toggle('hidden', !show); btn.setAttribute('aria-expanded', String(show)); }
   });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.status && !S.status.canSpin) refresh(); });
@@ -192,7 +331,7 @@
   window.ShWheel = {
     open, close,
     onSignIn() { S.angle = 0; S.status = null; setTimeout(() => { if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return; refresh(); startTimer(); }, 2500); },
-    reset() { S.status = null; S.angle = 0; clearInterval(S.timer); paint(); $('wheelModal')?.classList.add('hidden'); },
+    reset() { S.status = null; S.monty = null; S.owned = {}; S.built = false; S.angle = 0; clearInterval(S.timer); paint(); $('wheelModal')?.classList.add('hidden'); },
     refresh, state: S, tierOf
   };
 })();

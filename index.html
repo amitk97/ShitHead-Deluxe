@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-28-v473 (ShitHead-Deluxe-283) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-28-v474 (ShitHead-Deluxe-283) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -15,7 +15,7 @@
 <html lang="en" class="dark">
 <head>
   <link rel="stylesheet" href="css/friends-lobby.css?v=d41876d5ca00">
-  <link rel="stylesheet" href="css/lucky-wheel.css?v=9dfdf9419d9f">
+  <link rel="stylesheet" href="css/lucky-wheel.css?v=5b19518e3984">
   <link rel="stylesheet" href="css/puzzles.css?v=584fef898369">
   <link rel="stylesheet" href="css/welcome-tour.css?v=9d478452ecd0">
   <meta charset="UTF-8" />
@@ -2195,6 +2195,11 @@
     <div class="gauntlet-card lw-card">
       <button type="button" id="wheelCloseBtn" class="gauntlet-close" aria-label="Close">✕</button>
       <h2 id="wheelTitle" class="gauntlet-title">Daily Spin</h2>
+      <div class="lw-tabs" role="tablist">
+        <button type="button" role="tab" data-lw-tab="spin" class="lw-tab on" aria-selected="true">Daily Spin<i class="lw-dot-badge hidden" data-dot-spin></i></button>
+        <button type="button" role="tab" data-lw-tab="cards" class="lw-tab" aria-selected="false">Three Cards<i class="lw-dot-badge hidden" data-dot-cards></i></button>
+      </div>
+      <div id="wheelPanel">
       <p id="wheelSub" class="gauntlet-text">One free spin every day.</p>
       <div class="lw-stage">
         <svg id="wheelSvg" class="lw-wheel" viewBox="0 0 300 300" aria-hidden="true"></svg>
@@ -2205,6 +2210,13 @@
       <button type="button" id="wheelSpinBtn" class="gauntlet-go">SPIN</button>
       <button type="button" id="wheelOddsBtn" class="lw-odds-btn" aria-expanded="false" aria-controls="wheelOdds">Prizes and odds</button>
       <ul id="wheelOdds" class="lw-odds hidden"></ul>
+      </div>
+      <div id="montyPanel" class="hidden">
+        <p id="montySub" class="gauntlet-text">One free play every week.</p>
+        <div id="montyStage" class="lw-mc-stage" role="group" aria-label="Three cards"></div>
+        <div id="montyResult" class="lw-result" role="status" aria-live="polite"></div>
+        <button type="button" id="montyBtn" class="gauntlet-go">START</button>
+      </div>
     </div>
   </div>
   <div id="twosModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="twosTitle">
@@ -2795,9 +2807,9 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=47726d6f1d5f"></script>
-  <script src="js/whats-new-data.js?v=11954b0a4ccb"></script>
+  <script src="js/whats-new-data.js?v=7c2412a4b90b"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
-  <script src="cosmetics-data.js?v=7b0ec6f0ca5a"></script>
+  <script src="cosmetics-data.js?v=6a9042fa81a0"></script>
   <script src="tutorial-data.js?v=86b1cdade927"></script>
   <script src="tutorial.js?v=0049a251f6ef"></script>
   <script src="level-ladder.js?v=2236068565c3"></script>
@@ -2806,13 +2818,13 @@
   <script src="home-navigation.js?v=8b927cb2e918"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=5cbb21bb4376"></script>
+  <script src="app.js?v=4ecef61edaf4"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>
   <script src="js/house-rules-presets.js?v=80f7a658ecb1"></script>
   <script src="js/friends-lobby.js?v=d6461177af51"></script>
-  <script src="js/lucky-wheel.js?v=9cec4e4df083"></script>
+  <script src="js/lucky-wheel.js?v=c8b8ae49bf62"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>
   <script src="js/puzzles.js?v=87cb627bec7c"></script>

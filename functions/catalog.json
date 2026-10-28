@@ -1356,7 +1356,7 @@
   100
  ],
  "wheel": {
-  "dupeDiamonds": 250,
+  "dupeDiamonds": 1250,
   "prizes": [
    {
     "id": "d25",
@@ -1435,6 +1435,14 @@
    "back",
    "d1000"
   ]
+ },
+ "monty": {
+  "big": 300,
+  "small": [
+   50,
+   25
+  ],
+  "swaps": 9
  },
  "matchWinRewards": {
   "bots": 10,

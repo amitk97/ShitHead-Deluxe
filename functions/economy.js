@@ -516,7 +516,8 @@ actions.wheel = async ({ uid, data }) => {
   const now = new Date(), today = ukDateKey(now);
   if (clip(data.op, 10) !== 'spin') {
     const w = (await admin.database().ref(`users/${uid}/wheel`).once('value')).val() || {};
-    return { canSpin: w.lastDate !== today, last: w.last || null, spins: num(w.spins) };
+    const owned = (await admin.database().ref(`users/${uid}/ownedCosmetics`).once('value')).val() || {};
+    return { canSpin: w.lastDate !== today, last: w.last || null, spins: num(w.spins), owned: Object.fromEntries(W.prizes.filter(p => p.kind === 'item').map(p => [p.itemId, !!owned[p.itemId]])) };
   }
   const xpOn = await xp.enabled();
   const pool = W.prizes.filter(p => xpOn || p.kind !== 'xp');
@@ -544,6 +545,55 @@ actions.wheel = async ({ uid, data }) => {
   });
   if (res.already) return { already: true, canSpin: false, last: res.user.wheel?.last || null, diamonds: num(res.user.diamonds) };
   return { spin: res.spin, canSpin: false, diamonds: num(res.user.diamonds), xp: res.xp || null };
+};
+
+// Three Cards (v474): one free play a UK week. `start` draws the shuffle (a list of position swaps) and keeps the
+// answer in server-only `montyGames/{uid}` (users/{uid} is readable by the player, so the answer can't live there);
+// `pick` {index} pays the prize under that position once and records the result in `users/{uid}/monty`.
+// A modified client could follow the swaps itself and always take the big prize once a week; that is the cost.
+actions.monty = async ({ uid, data }) => {
+  const M = CAT.monty;
+  if (!M || !Array.isArray(M.small)) fail('failed-precondition', 'Three Cards is not available yet.');
+  const now = new Date(), week = ukWeekKey(now), op = clip(data.op, 10);
+  const gameRef = admin.database().ref(`montyGames/${uid}`);
+  const done = (m) => m && m.week === week && m.done ? m : null;
+  if (op !== 'start' && op !== 'pick') {
+    const m = (await admin.database().ref(`users/${uid}/monty`).once('value')).val();
+    const g = (await gameRef.once('value')).val();
+    const live = g && g.week === week && !g.done;
+    return { canPlay: !done(m), started: !!live && !done(m), swaps: live && !done(m) ? g.swaps : null, result: done(m) ? { pick: m.pick, prize: m.prize, reveal: m.reveal } : null };
+  }
+  if (op === 'start') {
+    const u = (await admin.database().ref(`users/${uid}/monty`).once('value')).val();
+    if (done(u)) return { canPlay: false, result: { pick: u.pick, prize: u.prize, reveal: u.reveal } };
+    const pairs = [[0, 1], [0, 2], [1, 2]], swaps = [];
+    while (swaps.length < num(M.swaps, 9)) {
+      const p = pairs[nodeCrypto.randomInt(3)];
+      if (!swaps.length || swaps[swaps.length - 1].join() !== p.join()) swaps.push(p);
+    }
+    const flip = nodeCrypto.randomInt(2);
+    const arr = [M.small[flip], num(M.big), M.small[1 - flip]];
+    const start = arr.slice();
+    swaps.forEach(([a, b]) => { const t = arr[a]; arr[a] = arr[b]; arr[b] = t; });
+    const fresh = { week, swaps, start, final: arr, at: now.getTime(), done: false };
+    const r = await gameRef.transaction(cur => (cur && cur.week === week ? undefined : fresh));
+    const g = r.committed ? fresh : (await gameRef.once('value')).val();
+    return { canPlay: true, swaps: g.swaps, big: num(M.big), bigAt: g.start.indexOf(num(M.big)) };
+  }
+  const index = Math.floor(num(data.index, -1));
+  if (!(index >= 0 && index <= 2)) fail('invalid-argument', 'Pick one of the three cards.');
+  const g = (await gameRef.once('value')).val();
+  if (!g || g.week !== week) fail('failed-precondition', 'Start the game first.');
+  const prize = num(g.final[index]);
+  const res = await userTx(uid, (user) => {
+    if (user.monty?.week === week && user.monty.done) return { noop: true, already: true };
+    addDiamonds(user, prize);
+    user.monty = { week, done: true, pick: index, prize, reveal: g.final, at: now.getTime() };
+    return { user };
+  });
+  if (res.already) return { canPlay: false, already: true, result: { pick: res.user.monty.pick, prize: res.user.monty.prize, reveal: res.user.monty.reveal }, diamonds: num(res.user.diamonds) };
+  await gameRef.update({ done: true });
+  return { canPlay: false, result: { pick: index, prize, reveal: g.final }, diamonds: num(res.user.diamonds) };
 };
 
 // One weekly challenge swapped for another, once a UK week, from level

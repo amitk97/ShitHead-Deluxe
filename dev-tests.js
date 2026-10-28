@@ -7378,6 +7378,12 @@ async function runDevTestSuite() {
       closeNoMercyChoice();
     } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeNoMercyChoice(); }
   });
+  await test('v474: the wheel swaps owned items for Diamonds, wears the event colours, and has Three Cards', () => {
+    assertEqual(WHEEL.dupeDiamonds, 1250, 'owned items pay 1250');
+    assertTrue(!!document.getElementById('montyPanel') && !!document.querySelector('[data-lw-tab="cards"]'), 'Three Cards tab');
+    assertEqual(serverEconomyCatalog().monty.big, MONTY.big, 'monty in the catalog');
+    assertTrue(MONTY.big > Math.max(...MONTY.small), 'the big prize is the biggest');
+  });
   await test('v469: the Daily Spin is wired in (chip, menu, modal, wheel-only items)', () => {
     assertTrue(!!window.ShWheel, 'ShWheel');
     assertTrue(!!document.getElementById('homeWheelChip') && !!document.getElementById('menuWheelBtn') && !!document.getElementById('wheelModal'), 'entry points');

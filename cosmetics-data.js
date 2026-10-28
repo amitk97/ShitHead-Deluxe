@@ -179,7 +179,7 @@
     // the drawn prize. No cosmetics from the shop, no boosts, no pity timer (owner). The two item prizes are
     // wheel-only (never sold); a duplicate pays `dupeDiamonds`. Average payout is about 60 Diamonds a day.
     const WHEEL = {
-      dupeDiamonds: 250,
+      dupeDiamonds: 1250,
       prizes: [
         { id: 'd25', kind: 'diamonds', amount: 25, weight: 335 },
         { id: 'd50', kind: 'diamonds', amount: 50, weight: 260 },
@@ -194,6 +194,9 @@
       ],
       segments: ['d25', 'xp75', 'd50', 'd500', 'd25', 'd100', 'avatar', 'd50', 'xp150', 'd250', 'back', 'd1000']
     };
+    // Three Cards (v474): one free play a UK week. The big prize starts in the middle and is shuffled by `swaps`
+    // swaps the server draws; the player picks a card and gets the prize under it.
+    const MONTY = { big: 300, small: [50, 25], swaps: 9 };
     // No Mercy rewards (v451): the Crimson Verdict card back and deck are earned, never sold (see EARNED_AVATAR_RULES).
     const NM_EARNED = [
       { id: 'back-nm-verdict', category: 'Card Backs', name: 'Crimson Verdict', earned: true, nm: true, tone: '#b91c1c', file: 'art/backs/nm-verdict2.webp', tones: ['#14080a','#b91c1c','#c9a04a'], requirement: 'Win 10 games of No Mercy', isEarned: () => false },

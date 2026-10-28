@@ -341,6 +341,9 @@
         "wheel": {
           ".validate": "newData.hasChildren(['lastDate'])"
         },
+        "monty": {
+          ".validate": "newData.hasChildren(['week'])"
+        },
         "testOwned": {
           ".validate": "newData.hasChildren()"
         },
