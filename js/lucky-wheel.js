@@ -19,7 +19,7 @@
 
   function label(p, i) {
     const a = i * SLICE, rot = `transform="rotate(${a} ${C} ${C})"`;
-    if (p.kind === 'item') return `<g ${rot}>${STAR(C, C - R * .8, 9)}<text x="${C}" y="${C - R * .56}" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" letter-spacing=".5">${p.itemId.startsWith('avatar') ? 'AVATAR' : 'BACK'}</text></g>`;
+    if (p.kind === 'item') { const av = p.itemId.startsWith('avatar'); const t = (y, w) => `<text x="${C}" y="${y}" text-anchor="middle" font-size="${av ? 10 : 8.5}" font-weight="900" fill="#fff" letter-spacing="${av ? .5 : .2}">${w}</text>`; return `<g ${rot}>${STAR(C, C - R * .8, 9)}${av ? t(C - R * .56, 'AVATAR') : t(C - R * .6, 'CARD') + t(C - R * .48, 'BACK')}</g>`; }
     if (p.kind === 'xp') return `<g ${rot}><text x="${C}" y="${C - R * .72}" text-anchor="middle" font-size="20" font-weight="900" fill="#fff">${p.amount}</text><text x="${C}" y="${C - R * .56}" text-anchor="middle" font-size="10" font-weight="900" fill="#d9f99d" letter-spacing="1">XP</text></g>`;
     const big = String(p.amount).length > 3;
     return `<g ${rot}><use href="#ic-gem" x="${C - 8}" y="${C - R * .93}" width="16" height="16"/><text x="${C}" y="${C - R * .62}" text-anchor="middle" font-size="${big ? 17 : 20}" font-weight="900" fill="#fff">${p.amount}</text></g>`;
@@ -162,8 +162,10 @@
   // ---- open / close ----
   function paintPrize() {
     const el = $('wheelPrize'); if (!el || typeof avatarHtml !== 'function') return;
-    const pct = WHEEL.prizes.find(p => p.id === 'avatar'); const odds = pct ? `${(pct.weight / 10).toString().replace(/\.0$/, '')}% chance` : '';
-    el.innerHTML = `${avatarHtml('avatar-wheel', 56)}<span class="lw-prize-t"><b>Wheel-only avatar</b><span>Lucky Wheel · ${odds} on any spin</span></span>`;
+    const odds = id => { const p = WHEEL.prizes.find(x => x.id === id); return p ? `${(p.weight / 10).toString().replace(/\.0$/, '')}% chance` : ''; };
+    el.innerHTML = `<div class="lw-prize-row">${avatarHtml('avatar-wheel', 52)}<span class="lw-prize-t"><b>Lucky Wheel avatar</b><span>Your profile picture · ${odds('avatar')}</span></span></div>`
+      + `<div class="lw-prize-row"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass('back-wheel')} lw-backprev"></span></span><span class="lw-prize-t"><b>Lucky Spin card back</b><span>The design on your cards' backs · ${odds('back')}</span></span></div>`
+      + `<span class="lw-prize-note">Wheel-only. You can't buy them.</span>`;
   }
   function open() {
     if (!signedIn()) { if (typeof openAuthModal === 'function') openAuthModal(); return; }

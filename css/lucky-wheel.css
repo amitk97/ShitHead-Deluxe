@@ -31,8 +31,12 @@
 .lw-dot-badge.hidden { display: none; }
 body.reduce-motion #homeWheelChip .lw-chip-ic { animation: none; }
 /* Prize preview: the wheel-only avatar, animated. */
-.lw-prize { display: flex; align-items: center; justify-content: center; gap: .7rem; margin: .2rem auto .3rem; padding: .4rem .8rem; max-width: 17rem; border-radius: .9rem; background: #0b1426; border: 1px solid #1e293b; text-align: left; }
+.lw-prize { display: flex; flex-direction: column; align-items: stretch; gap: .45rem; margin: .2rem auto .3rem; padding: .4rem .8rem; max-width: 17rem; border-radius: .9rem; background: #0b1426; border: 1px solid #1e293b; text-align: left; }
 .lw-prize .lw-prize-t { display: flex; flex-direction: column; font-size: .7rem; color: #94a3b8; line-height: 1.35; }
 .lw-prize .lw-prize-t b { font-size: .78rem; font-weight: 900; letter-spacing: .04em; color: #fde68a; text-transform: uppercase; }
 #homeWheelChip:focus-visible { outline: 2px solid #fbbf24; outline-offset: 3px; }
 #wheelSpinBtn:focus-visible { outline: 2px solid #fbbf24; outline-offset: 3px; }
+.lw-prize-row { display: flex; align-items: center; gap: .7rem; }
+.lw-prize-back { flex: none; width: 52px; display: grid; place-items: center; }
+.lw-prize .lw-backprev { width: 34px; height: 48px; }
+.lw-prize-note { font-size: .64rem; color: #64748b; text-align: center; }
