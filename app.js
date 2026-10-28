@@ -11948,9 +11948,24 @@
       if (typeof IntersectionObserver !== 'function') return null;
       const io = new IntersectionObserver((entries) => entries.forEach(e => e.target.classList.toggle('av-still', !e.isIntersecting)));
       let queued = false;
+      // Every avatar light sweep runs on the document clock (startTime 0), so a row of shiny avatars glints in step
+      // however late each one was drawn or resumed. Throttled: it runs after DOM changes and on a slow timer.
+      const SHINE_ANIMS = /^(av-pshine|avLxSweep|av-shine|av-px-sweep-[ab]|avGxShine)$/;
+      let lastShineSync = 0, shineLater = 0;
+      const syncShines = () => {
+        if (document.hidden || typeof document.getAnimations !== 'function') return;
+        const now = performance.now();
+        if (now - lastShineSync < 200) { if (!shineLater) shineLater = setTimeout(() => { shineLater = 0; syncShines(); }, 220); return; }
+        lastShineSync = now;
+        document.getAnimations().forEach((a) => {
+          if (a.playState === 'running' && SHINE_ANIMS.test(a.animationName || '') && a.startTime !== 0) a.startTime = 0;
+        });
+      };
+      setInterval(syncShines, 1500);
       const scan = () => {
         queued = false;
         document.querySelectorAll('[data-av-anim]:not([data-av-watched])').forEach((el) => { el.setAttribute('data-av-watched', ''); io.observe(el); });
+        syncShines();
       };
       new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(scan); } }).observe(document.body, { childList: true, subtree: true });
       const syncHidden = () => document.body.classList.toggle('app-hidden', document.hidden);

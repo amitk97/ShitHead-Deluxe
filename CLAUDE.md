@@ -12,6 +12,10 @@
 
 - `js/test-lab.js` tabs Back / Table / Deck / Frame / Emote / Avatar (the old dummy-position tab is now "Setup"): tap an item (any in `customAllItems(type)`, decks from `deckItems()`) and `applyLook` sets it IN MEMORY: `equippedCosmetics[type] = id` + `applyEquippedCosmetics()` (the bot's seat gets the back, frame and avatar too), decks through `selectDeckTheme`. Never saved: while `state.labDummy` is set `applyEquippedCosmetics` and `selectDeckTheme` skip their localStorage writes, `eventBotItem` and `showHelperTip` stand down, and `open()` turns `syncShowcase`, `syncPublicProfile` and `scheduleSettingsCloudSave` into no-ops (like the win/history reports). `snapshotReal()` at open and `restoreReal()` on Exit / "My real look" put the account's own look back. Extras: next / previous / Auto-step (1.8s) and an emote strip that floats each emote of the chosen pack from your seat. Trap found: the file's `const CSS` string shadows `window.CSS`, so use `window.CSS.escape`. Client only; no rules, Functions or catalog change. Dev test "v436: the Test Lab tries looks on in memory only…". Frames: scratchpad `lab-shot.js` (fakes `currentUser` and `isAmitkTestingAccount` then clicks the tabs).
 
+## v487 — avatar shines in step
+
+- `syncShines` (inside `avatarMotionWatch`, app.js): every running avatar sweep animation (`SHINE_ANIMS`: av-pshine, avLxSweep, av-shine, av-px-sweep-a/b, avGxShine) gets `startTime = 0`, i.e. the document clock, so they glint together however late each was drawn. Runs after DOM changes (throttled 200ms, with a trailing run) and every 1.5s; animations paused offscreen are skipped and re-synced when they run again. Scratchpad `syncshine.js` checks three avatars drawn 700ms apart end on the same phase. Client only.
+
 ## v486 — Seer and Enforcer shine
 
 - `shine: true` on `avatar-nm-seer` / `avatar-nm-enforcer` (cosmetics-data.js). `installLevelAvatars` now treats `shine` as animated (so `avatarMotionWatch` pauses it offscreen; the pulsing rim still needs `animated: true`) and `nm` avatars use the warm white gradient `lx-pshine-warm` instead of the prism one. Client only. Frames: scratchpad `nmshine.js`.

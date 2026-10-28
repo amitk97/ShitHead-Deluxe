@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v487: [['sparkle', 'Shiny avatars now glint in step with each other.']],
       v486: [['sparkle', 'The Seer and The Enforcer avatars now have a light glint that sweeps across them.']],
       v485: [['sparkle', 'With 5 or more players the final standings use two columns and the opponent list steps aside, so every place is visible.']],
       v484: [['sparkle', 'No Mercy: the Ace banner now names anyone who took nothing and why.']],
