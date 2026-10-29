@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-29-v508 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-29-v509 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -15,7 +15,7 @@
 <html lang="en" class="dark">
 <head>
   <link rel="stylesheet" href="css/friends-lobby.css?v=d41876d5ca00">
-  <link rel="stylesheet" href="css/lucky-wheel.css?v=84d79a9cdb80">
+  <link rel="stylesheet" href="css/lucky-wheel.css?v=5895ae42be5a">
   <link rel="stylesheet" href="css/puzzles.css?v=584fef898369">
   <link rel="stylesheet" href="css/welcome-tour.css?v=9d478452ecd0">
   <meta charset="UTF-8" />
@@ -2246,8 +2246,10 @@
         <div class="dz-bar"><span id="dropCount" class="dz-count" aria-live="polite"></span></div>
         <div id="dropBoard" class="dz-board" role="img" aria-label="Drop Zone board: a card falls through pegs into seven prize slots"></div>
         <div id="dropResult" class="lw-result" role="status" aria-live="polite"></div>
-        <button type="button" id="dropBtn" class="gauntlet-go">DROP CARD</button>
-        <button type="button" id="dropAllBtn" class="lw-odds-btn hidden">Drop all</button>
+        <div class="dz-btns">
+          <button type="button" id="dropBtn" class="gauntlet-go">DROP</button>
+          <button type="button" id="dropAllBtn" class="gauntlet-go dz-all">DROP ALL</button>
+        </div>
         <button type="button" id="dropOddsBtn" class="lw-odds-btn" aria-expanded="false" aria-controls="dropOdds">Prizes and odds</button>
         <ul id="dropOdds" class="lw-odds hidden"></ul>
         <div id="dropPrize" class="lw-prize"></div>
@@ -2870,7 +2872,7 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=83850e0f086c"></script>
-  <script src="js/whats-new-data.js?v=1f69973aa85c"></script>
+  <script src="js/whats-new-data.js?v=7f64e10828ae"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=08c3fa477b7a"></script>
   <script src="tutorial-data.js?v=51e38ba66974"></script>
@@ -2887,7 +2889,7 @@
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>
   <script src="js/house-rules-presets.js?v=80f7a658ecb1"></script>
   <script src="js/friends-lobby.js?v=d6461177af51"></script>
-  <script src="js/lucky-wheel.js?v=eddc115eeac9"></script>
+  <script src="js/lucky-wheel.js?v=1de113404712"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>
   <script src="js/puzzles.js?v=87cb627bec7c"></script>

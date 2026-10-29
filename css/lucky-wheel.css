@@ -160,3 +160,9 @@ body.reduce-motion #homeDropChip.dz-bump { animation: none; }
   #wheelModal .lw-odds-btn { margin-top: .4rem; }
 }
 #homeWheelChip, #homeMontyChip, #homeScratchChip, #homeDropChip { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+
+/* Drop Zone: Drop and Drop All side by side */
+.dz-btns { display: flex; gap: .5rem; margin-top: .5rem; }
+.dz-btns > button { flex: 1 1 0; min-width: 0; margin: 0; }
+.dz-btns > .dz-all { background: transparent; border: 1px solid #e5b04a; color: #ffd36a; }
+.dz-btns > button:disabled { opacity: .45; }

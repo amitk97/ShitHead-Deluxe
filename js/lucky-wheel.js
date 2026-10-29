@@ -538,8 +538,8 @@
     if (b) { b.textContent = n || ''; b.classList.toggle('hidden', !n); }
     document.querySelectorAll('[data-dot-drop]').forEach(el => el.classList.toggle('hidden', !(n > 0)));
     const c = $('dropCount'); if (c) c.innerHTML = `${CARD_SVG}<span>${n == null ? '…' : n} ${n === 1 ? 'card' : 'cards'}</span>`;
-    const btn = $('dropBtn'); if (btn && !D.busy) { btn.disabled = !(n > 0); btn.textContent = n > 0 ? `DROP CARD${n > 1 ? ' (' + n + ' LEFT)' : ''}` : 'NO CARDS · WIN A GAME'; }
-    const all = $('dropAllBtn'); if (all) { all.classList.toggle('hidden', !(n > 1)); all.disabled = D.busy; all.textContent = `Drop all (${n})`; }
+    const btn = $('dropBtn'); if (btn && !D.busy) { btn.disabled = !(n > 0); btn.textContent = n > 0 ? 'DROP' : 'NO CARDS'; }
+    const all = $('dropAllBtn'); if (all) { all.disabled = D.busy || n < 2; all.textContent = n > 1 ? `DROP ALL (${n})` : 'DROP ALL'; }
     const sub = $('dropSub'); if (sub) sub.textContent = n > 0 ? 'Every game you win, in any mode, earns another card.' : 'Win a game in any mode to earn a card.';
   }
   // Gold Vault: black board, gold frame, diamond pins, framed gem bins.
