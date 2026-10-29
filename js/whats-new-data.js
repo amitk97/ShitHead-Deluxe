@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v506: [['sparkle', 'Every Lucky Game now fits on one screen with no scrolling. Drop Zone pegs sit inside the board and the spin pointer is no longer cut off.']],
       v505: [['sparkle', 'Tap the avatar or card back in any Lucky Game for a bigger preview. The Drop Zone board is larger with easier-to-read prize labels.', WN_KEY]],
       v504: [['sparkle', 'Drop Zone has a new Gold Vault look: a black and gold board with diamond pins, and a new Drop Zone card back.']],
       v503: [['sparkle', 'New Lucky Game: Drop Zone. Drop a card through the pegs for Diamonds, an avatar or a card back. Every game you win earns another card.', WN_KEY]],

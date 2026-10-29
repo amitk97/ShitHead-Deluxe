@@ -550,7 +550,7 @@
     g += `<rect x="3" y="3" width="354" height="464" rx="14" fill="url(#dzBg)"/><rect x="3" y="3" width="354" height="464" rx="14" fill="none" stroke="${GD}" stroke-width="3.5"/><rect x="11" y="11" width="338" height="448" rx="9" fill="none" stroke="#e5b04a" stroke-opacity=".35"/><path d="M180 26l10 12-10 12-10-12z" fill="${GD}"/><path d="M168 60l12 12 12-12" fill="none" stroke="#e5b04a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>`;
     for (let r = 0; r < DG.ROWS; r++) {
       const off = r % 2 === 0 ? 36 : 12, n = r % 2 === 0 ? 7 : 8;
-      for (let j = 0; j < n; j++) { const x = off + 48 * j, y = DG.Y0 + DG.DY * r; g += `<circle class="dz-halo" data-peg="${r}:${x}" cx="${x}" cy="${y}" r="10" fill="#ffd36a" opacity="0" filter="url(#dzGlow)"/><path d="M${x} ${y - 6.5}l5.4 6.5-5.4 6.5-5.4-6.5z" fill="${GD}" stroke="#3a2808" stroke-width=".6"/><path d="M${x} ${y - 6.5}l2.2 6.5h-4.4z" fill="#fff" opacity=".55"/>`; }
+      for (let j = 0; j < n; j++) { const x = off + 48 * j, y = DG.Y0 + DG.DY * r; if (x < 30 || x > 330) continue; g += `<circle class="dz-halo" data-peg="${r}:${x}" cx="${x}" cy="${y}" r="10" fill="#ffd36a" opacity="0" filter="url(#dzGlow)"/><path d="M${x} ${y - 6.5}l5.4 6.5-5.4 6.5-5.4-6.5z" fill="${GD}" stroke="#3a2808" stroke-width=".6"/><path d="M${x} ${y - 6.5}l2.2 6.5h-4.4z" fill="#fff" opacity=".55"/>`; }
     }
     const SY = DG.SLOT_Y, T = '#fff';
     DZR.slots.forEach((sl, i) => {
@@ -687,6 +687,26 @@
     }
   }
 
+  // One screen, no scrolling: shrink the big picture (wheel, scratch card or Drop Zone board) until the card stops overflowing.
+  function lwFit() {
+    const card = document.querySelector('#wheelModal .lw-card'); if (!card || $('wheelModal').classList.contains('hidden')) return;
+    const hero = ['.lw-stage', '.lw-sc-stage', '#dropBoard'].map(q => card.querySelector(q)).find(e => e && e.offsetParent);
+    card.style.setProperty('--lw-k', 1);
+    if (!hero) return;
+    const before = hero.getBoundingClientRect().width;
+    for (let i = 0; i < 3; i++) {
+      const over = card.scrollHeight - card.clientHeight; if (over <= 0) break;
+      const h = hero.getBoundingClientRect().height, k = Math.max(0.3, (h - over - 2) / h * (parseFloat(card.style.getPropertyValue('--lw-k')) || 1));
+      card.style.setProperty('--lw-k', k.toFixed(3));
+    }
+    if (Math.abs(hero.getBoundingClientRect().width - before) > 1) {
+      if (hero.id === 'dropBoard' && !D.busy) dzPlaceCard();
+      if (hero.classList.contains('lw-sc-stage') && !$('scratchFoil').classList.contains('gone') && !SC.busy) scDrawFoil();
+    }
+  }
+  let lwFitRaf = 0; const lwFitSoon = () => { if (!lwFitRaf) lwFitRaf = requestAnimationFrame(() => { lwFitRaf = 0; lwFit(); }); };
+  window.addEventListener('resize', lwFitSoon);
+  { const card = document.querySelector('#wheelModal .lw-card'); if (card) new MutationObserver(lwFitSoon).observe(card, { childList: true, subtree: true, characterData: true }); }
   function setTab(tab) {
     if (S.busy || M.busy || D.busy) return;
     S.tab = tab === 'cards' ? 'cards' : tab === 'scratch' ? 'scratch' : tab === 'drop' ? 'drop' : 'spin';
@@ -704,6 +724,7 @@
     if (S.tab === 'scratch') scratchOpen();
     if (S.tab === 'drop') dzOpen();
     paint();
+    lwFit();
   }
   function open(solo) {
     if (!signedIn()) { if (typeof openAuthModal === 'function') openAuthModal(); return; }

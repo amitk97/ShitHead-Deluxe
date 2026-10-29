@@ -1,8 +1,8 @@
 /* Daily Spin (v469). Scoped to #wheelModal / #homeWheelChip. Sizes and colours follow the Gauntlet / 2 vs 2 pop-ups. */
 #wheelModal .lw-card { max-width: 22rem; }
-.lw-stage { overflow: clip; overflow-clip-margin: 22px; position: relative; width: min(78vw, 17.5rem, 44vh); aspect-ratio: 1; margin: .9rem auto .5rem; }
+.lw-stage { overflow: clip; overflow-clip-margin: 22px; position: relative; width: calc(min(78vw, 17.5rem, 44vh) * var(--lw-k, 1)); aspect-ratio: 1; margin: .9rem auto .5rem; }
 .lw-wheel { display: block; width: 100%; height: 100%; transform-origin: 50% 50%; filter: drop-shadow(0 6px 14px rgba(0,0,0,.55)); will-change: transform; }
-.lw-pointer { position: absolute; left: 50%; top: -14px; width: 30px; height: 40px; transform: translateX(-50%); transform-origin: 50% 20%; z-index: 2; pointer-events: none; }
+.lw-pointer { position: absolute; left: 50%; top: 1px; width: 30px; height: 40px; transform: translateX(-50%); transform-origin: 50% 20%; z-index: 2; pointer-events: none; }
 .lw-pointer svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
 .lw-result { min-height: 3.6rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2rem; margin: .1rem 0 .6rem; font-size: .76rem; color: #cbd5e1; }
 .lw-result .lw-won { font-size: 1rem; font-weight: 900; color: #fde68a; letter-spacing: .02em; }
@@ -48,7 +48,7 @@ body.reduce-motion #homeWheelChip .lw-chip-ic { animation: none; }
 .lw-tab .lw-dot-badge { position: absolute; top: 1px; right: 5px; margin: 0; width: 8px; height: 8px; }
 .lw-tab:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
 #montyPanel.hidden, #wheelPanel.hidden { display: none; }
-#montyPanel { min-height: 27rem; }
+#montyPanel { min-height: 0; }
 .lw-mc-stage { position: relative; height: 9.6rem; width: 15rem; margin: 1rem auto .6rem; }
 .lw-mc { position: absolute; top: 0; left: 50%; width: 4.2rem; height: 6rem; margin-left: -2.1rem; padding: 0; border: 0; background: none; cursor: pointer; perspective: 600px; will-change: transform; }
 .lw-mc:disabled { cursor: default; }
@@ -85,7 +85,7 @@ body.reduce-motion .lw-mc-in { transition-duration: .01s; }
 #homeScratchChip.lw-ready { border-color: #fbbf24; box-shadow: 0 0 0 1px rgba(251,191,36,.25), 0 0 14px rgba(251,191,36,.3); }
 #homeScratchChip .lw-dot-badge { position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; margin: 0; border: 2px solid #0b1426; box-sizing: content-box; }
 #homeScratchChip:focus-visible { outline: 2px solid #fbbf24; outline-offset: 3px; }
-.lw-sc-stage { position: relative; width: 13rem; max-width: 100%; aspect-ratio: 5 / 7; margin: .8rem auto .5rem; border-radius: 1rem; }
+.lw-sc-stage { position: relative; width: calc(13rem * var(--lw-k, 1)); max-width: 100%; aspect-ratio: 5 / 7; margin: .8rem auto .5rem; border-radius: 1rem; }
 .lw-sc-grid { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: .3rem; padding: .4rem; border-radius: 1rem; background: linear-gradient(160deg, #1c1204, #0b0702); border: 2px solid #b8912b; box-shadow: inset 0 0 14px rgba(0,0,0,.6), 0 0 14px rgba(245,184,46,.18); }
 .lw-sc-cell { position: relative; display: grid; place-items: stretch; min-width: 0; min-height: 0; border-radius: .5rem; transition: transform .25s var(--ease-bouncy, cubic-bezier(.34,1.56,.64,1)), box-shadow .25s; }
 .lw-sc-cell > * { width: 100% !important; height: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; pointer-events: none; }
@@ -97,7 +97,7 @@ body.reduce-motion .lw-mc-in { transition-duration: .01s; }
 .lw-sc-foil.gone { opacity: 0; pointer-events: none; }
 body.reduce-motion .lw-sc-foil, body.reduce-motion .lw-sc-cell { transition: none; }
 #scratchBtn:disabled { opacity: .55; cursor: default; }
-#scratchPanel { min-height: 27rem; }
+#scratchPanel { min-height: 0; }
 #scratchRevealBtn, #scratchOddsBtn { margin-inline: .6rem; }
 #homeWheelChip .lw-chip-ic, #homeMontyChip .lw-chip-ic { width: 35px; height: 35px; }
 
@@ -136,7 +136,7 @@ body.reduce-motion .lw-winpop, body.reduce-motion .lw-win-card, body.reduce-moti
 .dz-bar { display: flex; justify-content: center; margin: .1rem 0 .4rem; }
 .dz-count { display: inline-flex; align-items: center; gap: .4rem; padding: .18rem .7rem .18rem .45rem; border-radius: 999px; border: 1px solid #334155; background: #0e1a33; color: #fde68a; font-size: .8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .dz-count svg { width: 18px; height: 18px; }
-.dz-board { position: relative; width: min(100%, 21rem); margin: 0 auto; aspect-ratio: 360 / 470; border-radius: 14px; overflow: hidden; }
+.dz-board { position: relative; width: calc(min(100%, 21rem) * var(--lw-k, 1)); margin: 0 auto; aspect-ratio: 360 / 470; border-radius: 14px; overflow: hidden; }
 .dz-board > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .dz-card { position: absolute; left: 0; top: 0; will-change: transform; pointer-events: none; filter: drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
 .dz-card > * { width: 100%; height: 100%; }
@@ -145,3 +145,17 @@ body.reduce-motion #homeDropChip.dz-bump { animation: none; }
 .lw-prize-row[data-lw-preview] { cursor: pointer; border-radius: 10px; transition: background .15s, transform .15s; }
 .lw-prize-row[data-lw-preview]:hover, .lw-prize-row[data-lw-preview]:focus-visible { background: rgba(255,255,255,.07); outline: none; }
 .lw-prize-row[data-lw-preview]:active { transform: scale(.98); }
+/* One screen, no scrolling: lwFit (js/lucky-wheel.js) scales the wheel, scratch card or Drop Zone board with --lw-k; the rest is kept tight. */
+#dropResult { min-height: 1.5rem; margin: .1rem 0 .35rem; }
+#dropPrize { flex-direction: row; gap: .4rem; max-width: 21rem; padding: .3rem .5rem; }
+#dropPrize .lw-prize-row { flex: 1 1 0; min-width: 0; gap: .45rem; }
+#dropPrize .lw-prize-row .av-tile, #dropPrize .lw-prize-row > :first-child { flex: none; }
+#dropPrize .lw-prize-t { font-size: .62rem; line-height: 1.25; }
+#dropPrize .lw-prize-t b { font-size: .68rem; }
+@media (max-height: 760px) {
+  #wheelModal .lw-card { padding: 1rem .9rem .8rem; }
+  #wheelModal .gauntlet-text { margin-top: .25rem; font-size: .72rem; line-height: 1.35; }
+  #wheelModal .lw-tabs { margin: .35rem auto .1rem; }
+  #wheelModal .lw-result { min-height: 2.2rem; margin: 0 0 .35rem; }
+  #wheelModal .lw-odds-btn { margin-top: .4rem; }
+}
