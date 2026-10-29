@@ -6142,6 +6142,13 @@ async function runDevTestSuite() {
       assertTrue(got.filter(i => i === 'burn-halloween').length === 1, 'asked once for the painted burn');
     } finally { ShLevel3D.preload = was; }
   });
+  await test('v498: the spinning wheel never adds scrollable overflow to its box (the box stays still)', () => {
+    const modal = document.getElementById('wheelModal'), was = modal.classList.contains('hidden');
+    try {
+      modal.classList.remove('hidden');
+      assertTrue(getComputedStyle(document.querySelector('.lw-stage')).overflow === 'clip', 'the wheel stage clips the turning corners');
+    } finally { modal.classList.toggle('hidden', was); }
+  });
   await test('v494: event card backs show in Custom → Card Backs under Events, and their unlock mail says card back', () => {
     for (const id of ['back-wheel', 'back-foil-joker', 'back-nm-verdict']) {
       const it = NM_EARNED.find(i => i.id === id);

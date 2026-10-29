@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v498: [['sparkle', 'The Daily Spin box no longer shakes while the wheel turns.']],
       v497: [['sparkle', 'Test accounts can have today\'s Daily Spin, Scratch Card and Three Cards reset.']],
       v496: [['sparkle', 'If a move fails to save online because the signal drops, the game now tries again by itself and shows Reconnecting until it lands.']],
       v495: [['sparkle', 'Burn, Joker and Victory effects are now loaded before the match starts, so the first one plays without a pause.']],
