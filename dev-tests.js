@@ -6168,11 +6168,11 @@ async function runDevTestSuite() {
   await test('v494: event card backs show in Custom → Card Backs under Events, and their unlock mail says card back', () => {
     for (const id of ['back-wheel', 'back-foil-joker', 'back-nm-verdict']) {
       const it = NM_EARNED.find(i => i.id === id);
-      assertTrue(it && customGroupOf(it) === 'events', id + ' is in the Events group');
+      assertTrue(it && customGroupOf(it) === (id === 'back-nm-verdict' ? 'events' : 'lucky'), id + ' is in its group');
     }
     renderPersonalisationCosmetics();
     const html = document.getElementById('personalisationCardBacks')?.innerHTML || document.body.innerHTML;
-    assertTrue(CUSTOM_GROUPS.some(([g, l]) => g === 'events' && l === 'Events'), 'Events group exists');
+    assertTrue(CUSTOM_GROUPS.some(([g, l]) => g === 'lucky' && l === 'Lucky Games'), 'Lucky Games group exists');
     assertTrue(/Lucky Spin/.test(html), 'Lucky Spin back is listed in the Card Backs tab');
     const mail = inboxItemHtml({ id: 'unlock_back-wheel', type: 'shop', unlocked: true, name: 'Lucky Spin', requirement: 'Won on the Daily Spin' });
     assertTrue(/Card back unlocked/.test(mail), 'mail says card back');

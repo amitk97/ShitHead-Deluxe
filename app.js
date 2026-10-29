@@ -14722,7 +14722,7 @@
     // count. Folded groups are remembered per tab (localStorage
     // shithead_custom_groups_collapsed, keys "<type>:<group>").
     const CUSTOM_GROUPS = [['free', 'Free'], ['shop', 'Shop'], ['ranked', 'Earn in Ranked'], ['gauntlet', 'Earn in the Gauntlet'],
-      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['events', 'Events'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
+      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['lucky', 'Lucky Games'], ['events', 'Earn in No Mercy'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
     const CUSTOM_GROUPS_KEY = 'shithead_custom_groups_collapsed';
     const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
     function customGroupOf(item) {
@@ -14734,7 +14734,8 @@
       if (item.referral) return 'friends';
       if (item.twos) return 'twos';
       if (item.decks) return 'decks';
-      if (item.wheel || item.scratch || (item.nm && item.earned)) return 'events';
+      if (item.wheel || item.scratch) return 'lucky';
+      if (item.nm && item.earned) return 'events';
       if (item.earned || EARNED_AVATARS.includes(item)) return 'ranked';
       return 'shop';
     }

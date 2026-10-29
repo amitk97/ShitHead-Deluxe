@@ -12,6 +12,10 @@
 
 - `js/test-lab.js` tabs Back / Table / Deck / Frame / Emote / Avatar (the old dummy-position tab is now "Setup"): tap an item (any in `customAllItems(type)`, decks from `deckItems()`) and `applyLook` sets it IN MEMORY: `equippedCosmetics[type] = id` + `applyEquippedCosmetics()` (the bot's seat gets the back, frame and avatar too), decks through `selectDeckTheme`. Never saved: while `state.labDummy` is set `applyEquippedCosmetics` and `selectDeckTheme` skip their localStorage writes, `eventBotItem` and `showHelperTip` stand down, and `open()` turns `syncShowcase`, `syncPublicProfile` and `scheduleSettingsCloudSave` into no-ops (like the win/history reports). `snapshotReal()` at open and `restoreReal()` on Exit / "My real look" put the account's own look back. Extras: next / previous / Auto-step (1.8s) and an emote strip that floats each emote of the chosen pack from your seat. Trap found: the file's `const CSS` string shadows `window.CSS`, so use `window.CSS.escape`. Client only; no rules, Functions or catalog change. Dev test "v436: the Test Lab tries looks on in memory only…". Frames: scratchpad `lab-shot.js` (fakes `currentUser` and `isAmitkTestingAccount` then clicks the tabs).
 
+## v502 — Lucky Games group in Custom
+
+- `CUSTOM_GROUPS` has `lucky` ("Lucky Games"): `customGroupOf` puts `wheel` / `scratch` items (Lucky Wheel, Prism Ace, Lucky Spin, Prism Joker) there; the `events` group is now labelled "Earn in No Mercy" (`nm && earned` only). Client only. Dev test v494 updated.
+
 ## v501 — Grant Diamonds (Dev page), README refresh
 
 - Dev row **Grant Diamonds** (`openDevGrant`, `#devGrant` inside `#devModal`): searchable list of players, amount chips or a number (1 to 100,000), optional message, confirm. Server (functions/economy.js, next to `testUnlock`): `devPlayers` lists `publicProfiles` (name, level) and `devGrantDiamonds` {to, amount, note} adds the Diamonds and writes mail `activityInbox/diamonds_<ms>` ({type:'diamonds', amount, note}; `ACTIVITY_MAIL_TYPES`, `inboxItemHtml`); both verified AmitK only. No rules change; **Functions deploy needed**. Test: `node tools/dev-grant-test.js` (CI). Dev test "v501".

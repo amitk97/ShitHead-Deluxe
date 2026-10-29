@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v502: [['sparkle', 'Daily Spin and Scratch Card prizes now sit under a Lucky Games group in Custom.']],
       v501: [['sparkle', 'Test account: Dev page can send Diamonds to any player with a message.', WN_KEY]],
       v500: [['sparkle', 'Test account: a Dev page replaces the Guide button, with Health on its own.']],
       v499: [['sparkle', 'Test account: a menu button resets the Daily Spin, Scratch Card and Three Cards.']],
