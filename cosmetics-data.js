@@ -171,6 +171,7 @@
       { id: 'avatar-twos', category: 'Avatars', name: 'Dream Team', earned: true, animated: true, twos: true, requirement: 'Win 10 games of 2 vs 2', isEarned: () => false },
       { id: 'avatar-decks', category: 'Avatars', name: 'Double Deck', earned: true, animated: true, decks: true, requirement: 'Win 10 games of Multiple Decks', isEarned: () => false },
       { id: 'avatar-wheel', category: 'Avatars', name: 'Lucky Wheel', earned: true, animated: true, wheel: true, requirement: 'Win it on the Daily Spin', isEarned: () => false },
+      { id: 'avatar-dropzone', category: 'Avatars', name: 'Drop Zone', earned: true, animated: true, drop: true, tone: 'gold', requirement: 'Land it in the Avatar slot on Drop Zone', isEarned: () => false },
       { id: 'avatar-foil-ace', category: 'Avatars', name: 'Prism Ace', earned: true, animated: true, shine: true, scratch: true, tone: '#a78bfa', file: 'art/avatars/foil-prism-ace.webp', requirement: 'Get three Aces in a line on the Scratch Card', isEarned: () => false },
       { id: 'avatar-nm-seer', category: 'Avatars', name: 'The Seer', earned: true, nm: true, shine: true, tone: '#e11d48', file: 'art/avatars/nm-seer.webp', requirement: 'Play 50 Queens in No Mercy', isEarned: () => false },
       { id: 'avatar-nm-enforcer', category: 'Avatars', name: 'The Enforcer', earned: true, nm: true, shine: true, tone: '#b45309', file: 'art/avatars/nm-enforcer.webp', requirement: 'Make other players take 50 cards with Kings in No Mercy', isEarned: () => false }
@@ -213,11 +214,27 @@
         { id: 'jokers', symbol: 'JOKER', kind: 'item', itemId: 'back-foil-joker', name: 'Prism Joker', weight: 10 }
       ]
     };
+    // Drop Zone (v503): a card falls through pegs into one of seven prize slots. Everyone starts with `start` card; each game won in
+    // any mode earns one more (the bank holds `cap`). The server draws the slot by `weight` (out of 100); a duplicate item pays
+    // `dupeDiamonds`. About 19 Diamonds a card on average plus the two rare items.
+    const DROPZONE = {
+      start: 1, cap: 10, dupeDiamonds: 1250,
+      slots: [
+        { id: 'avatar', kind: 'item', itemId: 'avatar-dropzone', name: 'Drop Zone', weight: 1 },
+        { id: 'd50a', kind: 'diamonds', amount: 50, weight: 7 },
+        { id: 'd25', kind: 'diamonds', amount: 25, weight: 14 },
+        { id: 'd10', kind: 'diamonds', amount: 10, weight: 56 },
+        { id: 'd20', kind: 'diamonds', amount: 20, weight: 14 },
+        { id: 'd50b', kind: 'diamonds', amount: 50, weight: 7 },
+        { id: 'back', kind: 'item', itemId: 'back-dropzone', name: 'Drop Zone', weight: 1 }
+      ]
+    };
     // No Mercy rewards (v451): the Crimson Verdict card back and deck are earned, never sold (see EARNED_AVATAR_RULES).
     const NM_EARNED = [
       { id: 'back-nm-verdict', category: 'Card Backs', name: 'Crimson Verdict', earned: true, nm: true, tone: '#b91c1c', file: 'art/backs/nm-verdict2.webp', tones: ['#14080a','#b91c1c','#c9a04a'], requirement: 'Win 10 games of No Mercy', isEarned: () => false },
       { id: 'deck-nm-verdict', category: 'Decks', name: 'Crimson Verdict', earned: true, nm: true, theme: 'theme-nmverdict', tones: ['#efe3cc','#7a5a2a','#b3141f'], requirement: 'Win 25 games of No Mercy', isEarned: () => false },
       { id: 'back-wheel', category: 'Card Backs', name: 'Lucky Spin', earned: true, wheel: true, tone: '#f59e0b', tones: ['#0b1230','#f59e0b','#b91c1c'], requirement: 'Win it on the Daily Spin', isEarned: () => false },
+      { id: 'back-dropzone', category: 'Card Backs', name: 'Drop Zone', earned: true, drop: true, tone: '#14b8c4', tones: ['#0b1737','#14b8c4','#f0b43c'], requirement: 'Land it in the Card Back slot on Drop Zone', isEarned: () => false },
       { id: 'back-foil-joker', category: 'Card Backs', name: 'Prism Joker', earned: true, scratch: true, tone: '#a78bfa', file: 'art/backs/foil-prism-joker.webp', tones: ['#0a1226','#8b5cf6','#67e8f9'], requirement: 'Win it on the Scratch Card', isEarned: () => false }
     ];
     // Earn-only frames: never sold or gifted, shown locked in Custom until

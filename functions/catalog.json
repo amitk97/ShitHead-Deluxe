@@ -894,6 +894,7 @@
   "avatar-twos",
   "avatar-decks",
   "avatar-wheel",
+  "avatar-dropzone",
   "avatar-foil-ace",
   "avatar-nm-seer",
   "avatar-nm-enforcer",
@@ -982,6 +983,7 @@
   "back-ss2709-cauldron",
   "back-nm-verdict",
   "back-wheel",
+  "back-dropzone",
   "back-foil-joker",
   "back-lunar",
   "back-valentine",
@@ -1214,6 +1216,11 @@
    "requirement": "Win it on the Daily Spin",
    "type": "wheel"
   },
+  "avatar-dropzone": {
+   "name": "Drop Zone",
+   "requirement": "Land it in the Avatar slot on Drop Zone",
+   "type": "wheel"
+  },
   "avatar-foil-ace": {
    "name": "Prism Ace",
    "requirement": "Get three Aces in a line on the Scratch Card",
@@ -1309,6 +1316,11 @@
   "back-wheel": {
    "name": "Lucky Spin",
    "requirement": "Win it on the Daily Spin",
+   "type": "wheel"
+  },
+  "back-dropzone": {
+   "name": "Drop Zone",
+   "requirement": "Land it in the Card Back slot on Drop Zone",
    "type": "wheel"
   },
   "back-foil-joker": {
@@ -1508,6 +1520,57 @@
     "itemId": "back-foil-joker",
     "name": "Prism Joker",
     "weight": 10
+   }
+  ]
+ },
+ "dropzone": {
+  "start": 1,
+  "cap": 10,
+  "dupeDiamonds": 1250,
+  "slots": [
+   {
+    "id": "avatar",
+    "kind": "item",
+    "itemId": "avatar-dropzone",
+    "name": "Drop Zone",
+    "weight": 1
+   },
+   {
+    "id": "d50a",
+    "kind": "diamonds",
+    "amount": 50,
+    "weight": 7
+   },
+   {
+    "id": "d25",
+    "kind": "diamonds",
+    "amount": 25,
+    "weight": 14
+   },
+   {
+    "id": "d10",
+    "kind": "diamonds",
+    "amount": 10,
+    "weight": 56
+   },
+   {
+    "id": "d20",
+    "kind": "diamonds",
+    "amount": 20,
+    "weight": 14
+   },
+   {
+    "id": "d50b",
+    "kind": "diamonds",
+    "amount": 50,
+    "weight": 7
+   },
+   {
+    "id": "back",
+    "kind": "item",
+    "itemId": "back-dropzone",
+    "name": "Drop Zone",
+    "weight": 1
    }
   ]
  },

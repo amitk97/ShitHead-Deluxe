@@ -76,6 +76,7 @@
               newData.val() === 'back-nm-verdict' ||
               newData.val() === 'back-wheel' ||
               newData.val() === 'back-foil-joker' ||
+              newData.val() === 'back-dropzone' ||
               newData.val().matches(/^back-ss[0-9]{4}-[a-z0-9-]{3,30}$/) ||
               newData.val().matches(/^back-lvl-(first-burn|sharks-mark|inferno|chaos-crown)$/) ||
               newData.val() === 'back-lvl-master-pile' ||
@@ -209,6 +210,7 @@
               newData.val() === 'avatar-decks' ||
               newData.val() === 'avatar-wheel' ||
               newData.val() === 'avatar-foil-ace' ||
+              newData.val() === 'avatar-dropzone' ||
               newData.val().matches(/^avatar-nm-(seer|enforcer)$/) ||
               newData.val() === 'avatar-ldn-guard' ||
               newData.val() === 'avatar-mum-dabba' ||
@@ -348,6 +350,9 @@
         },
         "scratch": {
           ".validate": "newData.hasChildren(['date'])"
+        },
+        "dropzone": {
+          ".validate": "newData.hasChildren(['cards'])"
         },
         "testOwned": {
           ".validate": "newData.hasChildren()"

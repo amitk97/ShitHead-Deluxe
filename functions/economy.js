@@ -512,6 +512,17 @@ actions.streak = async ({ uid }) => {
   return { claimed: res.claimed || null, streak: res.user.loginStreak || null, diamonds: num(res.user.diamonds) };
 };
 
+// Drop Zone (v503): a bank of cards, 1 to start, +1 for every game won in any mode (matchWin, Ranked win, each Gauntlet bot beaten), at most
+// `cap`. Stored server-only in `users/{uid}/dropzone` = {cards, earned, used, at, last}. A fresh record starts at `start`.
+const dzCap = () => num(CAT.dropzone?.cap, 10), dzStart = () => num(CAT.dropzone?.start, 1);
+function dzAward(user, now) {
+  if (!CAT.dropzone) return false;
+  const d = user.dropzone || (user.dropzone = { cards: dzStart(), earned: 0, used: 0, at: now });
+  if (num(d.cards) >= dzCap()) return false;
+  d.cards = num(d.cards) + 1; d.earned = num(d.earned) + 1;
+  return true;
+}
+const dzView = (user, awarded) => ({ cards: user.dropzone ? num(user.dropzone.cards) : dzStart(), awarded: !!awarded });
 // Daily Spin (v469): one free spin a UK day. The server draws the prize by weight (catalog `wheel`) and pays it in
 // the same write that marks the day, so it can never repeat. XP prizes are left out of the draw while XP is off.
 // The two item prizes are wheel-only; owning one already pays `dupeDiamonds` instead.
@@ -550,6 +561,45 @@ actions.wheel = async ({ uid, data }) => {
   });
   if (res.already) return { already: true, canSpin: false, last: res.user.wheel?.last || null, diamonds: num(res.user.diamonds) };
   return { spin: res.spin, canSpin: false, diamonds: num(res.user.diamonds), xp: res.xp || null };
+};
+
+// Drop Zone (v503): `status` returns the card count; `drop` {n} spends up to n cards (all of them in one write), draws a slot for
+// each by weight (catalog `dropzone`), pays it and returns the list so the phone can animate each card into its slot.
+actions.dropzone = async ({ uid, data }) => {
+  const D = CAT.dropzone;
+  if (!D || !Array.isArray(D.slots)) fail('failed-precondition', 'Drop Zone is not available yet.');
+  const now = Date.now();
+  if (clip(data.op, 10) !== 'drop') {
+    const u = (await admin.database().ref(`users/${uid}`).once('value')).val() || {};
+    const owned = u.ownedCosmetics || {};
+    return { cards: u.dropzone ? num(u.dropzone.cards) : dzStart(), cap: dzCap(), last: u.dropzone?.last || null, owned: Object.fromEntries(D.slots.filter(sl => sl.kind === 'item').map(sl => [sl.itemId, !!owned[sl.itemId]])) };
+  }
+  const want = Math.max(1, Math.min(dzCap(), Math.trunc(num(data.n, 1))));
+  const total = D.slots.reduce((sum, sl) => sum + num(sl.weight), 0);
+  const draws = Array.from({ length: want }, () => { let r = nodeCrypto.randomInt(total); const i = D.slots.findIndex(sl => (r -= num(sl.weight)) < 0); return i < 0 ? 0 : i; });
+  const res = await userTx(uid, (user) => {
+    const d = user.dropzone || { cards: dzStart(), earned: 0, used: 0, at: now };
+    if (num(d.cards) < 1) return { noop: true, none: true };
+    const k = Math.min(want, num(d.cards)), drops = [];
+    for (let i = 0; i < k; i++) {
+      const slot = D.slots[draws[i]];
+      let paid = 0, duplicate = false;
+      if (slot.kind === 'diamonds') { paid = num(slot.amount); addDiamonds(user, paid); }
+      else if (user.ownedCosmetics?.[slot.itemId]) { duplicate = true; paid = num(D.dupeDiamonds); addDiamonds(user, paid); }
+      else {
+        user.ownedCosmetics = user.ownedCosmetics || {};
+        user.ownedCosmetics[slot.itemId] = { cost: 0, purchasedAt: now };
+        user.activityInbox = user.activityInbox || {};
+        user.activityInbox[`unlock_${slot.itemId}`] = { type: 'shop', unlocked: true, name: clip(slot.name, 80), cost: 0, requirement: 'Won on Drop Zone', sentAt: now };
+      }
+      drops.push({ slot: draws[i], id: slot.id, kind: slot.kind, amount: num(slot.amount), itemId: slot.itemId || null, name: slot.name || null, duplicate, paid });
+    }
+    d.cards = num(d.cards) - k; d.used = num(d.used) + k; d.at = now; d.last = { slot: drops[drops.length - 1].slot, at: now };
+    user.dropzone = d;
+    return { user, drops };
+  });
+  if (res.none) return { none: true, cards: 0, diamonds: num(res.user.diamonds) };
+  return { drops: res.drops, cards: num(res.user.dropzone.cards), diamonds: num(res.user.diamonds) };
 };
 
 // Scratch Card (v478): one free card a UK day. `play` draws the result by weight, lays out the 3x3 grid that shows it
@@ -787,7 +837,8 @@ actions.matchWin = async ({ uid, data }) => {
     const claimed = grantMilestones(user, now);
     const newAvatars = grantEarnedAvatars(user, legacy, now);
     const xpRes = xpOn ? xpResult(user, [['win', xp.RULES.win]], now, past) : null;
-    return { user, amount, unlocked, seasonWins, claimed, newAvatars, xp: xpRes };
+    const dz = dzAward(user, now);
+    return { user, amount, unlocked, seasonWins, claimed, newAvatars, xp: xpRes, dz };
   });
   return {
     xp: res.xp || null,
@@ -796,7 +847,8 @@ actions.matchWin = async ({ uid, data }) => {
     seasonWins: res.user.seasonWins || {}, claimed: res.claimed || [], newAvatars: res.newAvatars || [],
     twosWins: num(res.user.matchCounters?.twosWins),
     decksWins: num(res.user.matchCounters?.decksWins),
-    noMercyWins: num(res.user.matchCounters?.noMercyWins)
+    noMercyWins: num(res.user.matchCounters?.noMercyWins),
+    dropzone: dzView(res.user, res.dz)
   };
 };
 
@@ -1085,7 +1137,7 @@ actions.gauntlet = async ({ uid, data }) => {
     return status({ gauntlet: g.val() || {}, xp: { level: level.val() } });
   }
   const xpOn = await xp.enabled();
-  let xpRes = null;
+  let xpRes = null, dzGot = false;
   const res = await userTx(uid, (user) => {
     xpRes = null;
     const g = user.gauntlet = user.gauntlet || {};
@@ -1132,6 +1184,7 @@ actions.gauntlet = async ({ uid, data }) => {
     run.playing = false;
     run.round = num(run.round) + 1;
     g.botsBeaten = num(g.botsBeaten) + 1; // Gauntlet board (every mode)
+    dzGot = dzAward(user, now);
     const boardWeek = xp.ukWeekKey(new Date(now));
     g.weekBotsBeaten = (g.week === boardWeek ? num(g.weekBotsBeaten) : 0) + 1;
     g.week = boardWeek;
@@ -1165,7 +1218,7 @@ actions.gauntlet = async ({ uid, data }) => {
   });
   return {
     ...status(res.user), over: !!res.over, completed: !!res.completed, forfeited: !!res.forfeited,
-    diamondsAwarded: num(res.amount), first: !!res.first, newItems: res.newItems || [], diamonds: num(res.user.diamonds), xp: xpRes
+    diamondsAwarded: num(res.amount), first: !!res.first, newItems: res.newItems || [], diamonds: num(res.user.diamonds), xp: xpRes, dropzone: dzView(res.user, dzGot)
   };
 };
 
@@ -1286,13 +1339,14 @@ actions.rankedResult = async ({ uid, data }) => {
           user.activityInbox = user.activityInbox || {};
           user.activityInbox[`rank_${now}_${i}`] = { type: 'rank', fromTier, toTier, direction: newRating > previousRating ? 'up' : 'down', previousRating, newRating, sentAt: now };
         }
-        let amount = 0;
+        let amount = 0, dz = false;
         const claimed = [];
         if (won) {
           amount = num(CAT.matchWinRewards.ranked);
           addDiamonds(user, amount);
           user.processedMatchRewards = pruneMap({ ...(user.processedMatchRewards || {}), [resultId]: { amount, label: 'Ranked Win!', awardedAt: now } });
           countSeasonWin(user, new Date(now));
+          dz = dzAward(user, now);
           const lastRank = String(p.seat.lastPlayRank || '');
           const ending = CAT.challengeDefs.endingCards.find(c => c.rank === lastRank);
           if (ending && !user.completedChallenges?.[ending.id]) claimed.push(recordClaim(user, ending.id, ending.name, ending.reward, now));
@@ -1300,7 +1354,7 @@ actions.rankedResult = async ({ uid, data }) => {
         claimed.push(...grantMilestones(user, now));
         const newAvatars = grantEarnedAvatars(user, legacy, now);
         const xpRes = xpOn ? xpResult(user, [['ranked', xp.RULES.ranked], ['rankedWin', won ? xp.RULES.rankedWin : 0]], now, past) : null;
-        return { user, result: { from: previousRating, to: newRating, won, drew, elo: deltas[i], winBonus, streak: newStreak, streakBonus, diamondsAwarded: amount, claimed, newAvatars, xp: xpRes } };
+        return { user, result: { from: previousRating, to: newRating, won, drew, elo: deltas[i], winBonus, streak: newStreak, streakBonus, diamondsAwarded: amount, claimed, newAvatars, xp: xpRes, dropzone: dzView(user, dz) } };
       });
       const u = res.user;
       results[p.uid] = {
@@ -1812,4 +1866,4 @@ exports.economy = onCall({ region: 'europe-west1', cors: true, maxInstances: 20 
 });
 
 // For the unit tests.
-exports._test = { actions, puzzleOfWeek, pickDailyIds, pickWeeklyIds, userWeeklyIds, userDailyIds, ukDateKey, ukWeekKey, shiftDateKey, activeSeasonWindows, pairwiseEloDeltas, rankedStreakBonus, RANKED_BONUS, tierName, challengeForKey, milestoneEligible, unlockedDifficulties };
+exports._test = { actions, puzzleOfWeek, pickDailyIds, pickWeeklyIds, userWeeklyIds, userDailyIds, ukDateKey, ukWeekKey, shiftDateKey, activeSeasonWindows, pairwiseEloDeltas, rankedStreakBonus, RANKED_BONUS, tierName, challengeForKey, milestoneEligible, unlockedDifficulties, dzAward, dzView };

@@ -216,6 +216,30 @@
         const bg = ctx.createGain(); bg.gain.setValueAtTime(0.0001, t0); bg.gain.exponentialRampToValueAtTime(0.05 * vol, t0 + .004); bg.gain.exponentialRampToValueAtTime(0.0001, t0 + .04);
         b.connect(bg).connect(ctx.destination); b.start(t0); b.stop(t0 + .05);
       }
+      /* Drop Zone (v503): a card ticking off a peg (pitch rises a little with each row), and the near-miss "aww". */
+      playDropPeg(row = 0) {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime, f0 = 520 + row * 70;
+        const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f0 * .6, t0 + .06);
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 2.5;
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.16 * vol, t0 + .004); g.gain.exponentialRampToValueAtTime(0.0001, t0 + .09);
+        o.connect(f).connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + .1);
+      }
+      playDropAww() {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        [392, 311].forEach((hz, i) => {
+          const t = ctx.currentTime + i * .16, o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'triangle'; o.frequency.setValueAtTime(hz, t); o.frequency.exponentialRampToValueAtTime(hz * .9, t + .3);
+          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.11 * vol, t + .02); g.gain.exponentialRampToValueAtTime(0.0001, t + .32);
+          o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + .35);
+        });
+      }
       /* Three Cards (v477): 'slide' = a card swept sideways in the shuffle, 'flip' = a card turned over (paper snap and a soft thud). */
       playMontyCard(kind = 'flip') {
         const ctx = this.ctx;

@@ -3415,7 +3415,7 @@ async function runDevTestSuite() {
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
     const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Avatars' && !i.season && !i.ldn && !i.mum).map(i => [i.name, i.cost]));
     assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000, 'Turtley': 5000 }, 'Shop pictures and prices');
-    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'Lucky Wheel', 'Prism Ace', 'The Seer', 'The Enforcer'], 'Earn-only pictures');
+    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'Lucky Wheel', 'Drop Zone', 'Prism Ace', 'The Seer', 'The Enforcer'], 'Earn-only pictures');
     [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Avatars')
       .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
   });
@@ -3631,7 +3631,7 @@ async function runDevTestSuite() {
     cosmeticPurchaseState = {};
     renderPersonalisationAvatars();
     const options = [...document.querySelectorAll('#personalisationAvatars [data-equip-type="avatar"]')];
-    assertEqual(options.length, 49, 'All 49 avatars appear in Custom (incl. the Lucky Wheel, the Prism Ace, The Seer and The Enforcer, the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
+    assertEqual(options.length, 50, 'All 50 avatars appear in Custom (incl. the Lucky Wheel, Drop Zone, the Prism Ace, The Seer and The Enforcer, the 5 level rewards, 3 Gauntlet crests and the four Season Pass ones)');
     const master = options.find(o => o.dataset.equipId === 'avatar-crown-master');
     assertTrue(master.hasAttribute('data-locked') && master.textContent.includes('Reach Master rank'), 'Locked earn-only pictures show how to unlock them');
     assertTrue(!options.find(o => o.dataset.equipId === 'avatar-suit-spades').disabled, 'Free pictures are always selectable');
@@ -4389,8 +4389,8 @@ async function runDevTestSuite() {
     smoke.forEach(a => a.cancel());
     stage.querySelectorAll('.bfx').forEach(n => n.remove());
     renderPersonalisationAvatars();
-    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-26);
-    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'The Seer', 'The Enforcer', 'Lucky Wheel', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Sphinx Cub', 'Baby Mammoth', 'Kitsune Cub', 'Pearl Octopus', 'Baby Pegasus', 'Little Witch'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
+    const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-28);
+    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'Drop Zone', 'Lucky Wheel', 'Prism Ace', 'The Seer', 'The Enforcer', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Sphinx Cub', 'Baby Mammoth', 'Kitsune Cub', 'Pearl Octopus', 'Baby Pegasus', 'Little Witch'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
   });
 
   await test('Accessibility settings exist and apply', () => {
@@ -6141,6 +6141,19 @@ async function runDevTestSuite() {
       equippedCosmetics.burnEffect = saved;
       assertTrue(got.filter(i => i === 'burn-halloween').length === 1, 'asked once for the painted burn');
     } finally { ShLevel3D.preload = was; }
+  });
+  await test('v503: Drop Zone has seven slots that add up to 100, its two items sit in the Lucky Games group, and the home circle shows the card count', () => {
+    assertEqual(DROPZONE.slots.length, 7, 'seven slots');
+    assertEqual(DROPZONE.slots.reduce((a, s) => a + s.weight, 0), 100, 'weights are percentages');
+    assertEqual(DROPZONE.slots.map(s => s.kind === 'item' ? s.itemId : s.amount).join(','), 'avatar-dropzone,50,25,10,20,50,back-dropzone', 'the owner\'s payouts');
+    const av = EARNED_AVATARS.find(i => i.id === 'avatar-dropzone'), bk = NM_EARNED.find(i => i.id === 'back-dropzone');
+    assertTrue(av && bk && customGroupOf(av) === 'lucky' && customGroupOf(bk) === 'lucky', 'both items are in Lucky Games');
+    assertTrue(!!document.getElementById('homeDropChip') && !!document.getElementById('dropPanel') && !!document.querySelector('[data-lw-tab="drop"]'), 'chip, panel and tab exist');
+    ShWheel.dropNote({ cards: 3, awarded: false });
+    assertEqual(document.getElementById('dropBadge').textContent, '3', 'the badge shows the card count');
+    assertTrue(!document.getElementById('homeDropChip').classList.contains('hidden'), 'the circle shows once the count is known');
+    ShWheel.reset();
+    assertTrue(document.getElementById('homeDropChip').classList.contains('hidden'), 'and hides again after a reset');
   });
   await test('v501: Dev has a Grant Diamonds panel and the Inbox draws a Diamonds message', () => {
     assertTrue(!!document.getElementById('devGrant') && !!document.getElementById('devGrantSend'), 'grant panel exists');

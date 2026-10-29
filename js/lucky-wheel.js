@@ -98,9 +98,10 @@
     const sub = $('wheelSub'); if (sub) sub.textContent = ready ? 'One free spin every day.' : 'You have used today’s spin.';
     montyPaint();
     if (S.tab === 'scratch' && SCR) scratchPaintState();
+    dzPaint();
   }
   async function refresh() {
-    if (!signedIn()) { S.status = null; S.monty = null; S.scratch = null; paint(); return; }
+    if (!signedIn()) { S.status = null; S.monty = null; S.scratch = null; D.cards = null; paint(); return; }
     const uid = currentUser.uid;
     try {
       const r = await callEconomy('wheel', { op: 'status' });
@@ -113,6 +114,10 @@
     try {
       const c = await callEconomy('scratch', { op: 'status' });
       if (currentUser && currentUser.uid === uid && !SC.busy) { S.scratch = { canPlay: !!c.canPlay, last: c.last || null }; if (c.owned) S.scOwned = c.owned; }
+    } catch (e) { /* not deployed yet */ }
+    try {
+      const z = await callEconomy('dropzone', { op: 'status' });
+      if (currentUser && currentUser.uid === uid && !D.busy && Number.isFinite(Number(z.cards))) { D.cards = Number(z.cards); D.cap = Number(z.cap) || 10; D.owned = z.owned || {}; }
     } catch (e) { /* not deployed yet */ }
     paint();
   }
@@ -516,20 +521,182 @@
     setTimeout(() => winPop({ eyebrow: r.prize === bigAmt() ? 'The big prize' : 'Three Cards', big: `+${Number(r.prize).toLocaleString('en-GB')} Diamonds`, sub: r.prize === bigAmt() ? 'You followed the right card.' : 'Not the big one. Try again next week.', tier: r.prize === bigAmt() ? 'big' : 'small' }), motionOff() ? 0 : 450);
     paint();
   }
+
+  // ---- Drop Zone (v503): a bank of cards (1 to start, +1 for every game won). The server draws each slot; the card is drawn falling to it ----
+  const DZR = typeof DROPZONE !== 'undefined' ? DROPZONE : null;
+  const D = { cards: null, cap: 10, owned: {}, busy: false, shown: null, built: false };
+  const DG = { X0: 180, DX: 24, ROWS: 6, Y0: 78, DY: 50, SLOT_Y: 372, W: 360 };
+  const DZ_COL = ['#a78bfa', '#f5b82e', '#14b8c4', '#5b8def', '#22c55e', '#f5b82e', '#f472b6'];
+  const dzLabel = (sl) => sl.kind === 'item' ? (sl.itemId.startsWith('avatar') ? 'AVATAR' : 'BACK') : String(sl.amount);
+  const dzName = (sl) => sl.kind === 'diamonds' ? `${sl.amount} Diamonds` : sl.itemId.startsWith('avatar') ? `${sl.name} avatar` : `${sl.name} card back`;
+  const dzShown = () => D.shown != null ? D.shown : D.cards;
+  const CARD_SVG = '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="1.5" width="11" height="17" rx="2" fill="#16295f" stroke="#ffd36a" stroke-width="1.3"/><path d="M10 6 13 10 10 14 7 10Z" fill="none" stroke="#f0b43c" stroke-width="1"/></svg>';
+  function dzPaint() {
+    const n = D.cards == null ? null : dzShown();
+    const chip = $('homeDropChip'), b = $('dropBadge');
+    if (chip) { chip.classList.toggle('hidden', n == null || !DZR); chip.classList.toggle('lw-ready', n > 0); }
+    if (b) { b.textContent = n || ''; b.classList.toggle('hidden', !n); }
+    document.querySelectorAll('[data-dot-drop]').forEach(el => el.classList.toggle('hidden', !(n > 0)));
+    const c = $('dropCount'); if (c) c.innerHTML = `${CARD_SVG}<span>${n == null ? '…' : n} ${n === 1 ? 'card' : 'cards'}</span>`;
+    const btn = $('dropBtn'); if (btn && !D.busy) { btn.disabled = !(n > 0); btn.textContent = n > 0 ? `DROP CARD${n > 1 ? ' (' + n + ' LEFT)' : ''}` : 'NO CARDS · WIN A GAME'; }
+    const all = $('dropAllBtn'); if (all) { all.classList.toggle('hidden', !(n > 1)); all.disabled = D.busy; all.textContent = `Drop all (${n})`; }
+    const sub = $('dropSub'); if (sub) sub.textContent = n > 0 ? 'Every game you win, in any mode, earns another card.' : 'Win a game in any mode to earn a card.';
+  }
+  function dzBuild() {
+    const host = $('dropBoard'); if (!host || !DZR) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    let g = '<defs><linearGradient id="dzFelt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10204a"/><stop offset="1" stop-color="#0a1330"/></linearGradient><radialGradient id="dzPeg" cx=".35" cy=".3"><stop offset="0" stop-color="#fff7d6"/><stop offset=".6" stop-color="#f0b43c"/><stop offset="1" stop-color="#8a5a0a"/></radialGradient><filter id="dzGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter></defs>';
+    g += '<rect x="2" y="2" width="356" height="466" rx="14" fill="url(#dzFelt)" stroke="#3b4f7e" stroke-width="1.5"/><path d="M168 30 L180 44 L192 30" fill="none" stroke="#f0b43c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>';
+    for (let r = 0; r < DG.ROWS; r++) {
+      const off = r % 2 === 0 ? 36 : 12, n = r % 2 === 0 ? 7 : 8;
+      for (let j = 0; j < n; j++) { const x = off + 48 * j, y = DG.Y0 + DG.DY * r; g += `<circle class="dz-halo" data-peg="${r}:${x}" cx="${x}" cy="${y}" r="9" fill="#ffd36a" opacity="0" filter="url(#dzGlow)"/><circle cx="${x}" cy="${y}" r="4.6" fill="url(#dzPeg)" stroke="#5a3a06" stroke-width=".6"/>`; }
+    }
+    DZR.slots.forEach((sl, i) => {
+      const cx = 36 + 48 * i, col = DZ_COL[i], big = sl.kind === 'item';
+      g += `<g class="dz-slot" data-slot="${i}"><rect class="dz-sglow" x="${cx - 22}" y="${DG.SLOT_Y - 6}" width="44" height="98" rx="8" fill="${col}" opacity="0" filter="url(#dzGlow)"/><path d="M${cx - 22} ${DG.SLOT_Y} v78 a6 6 0 0 0 6 6 h32 a6 6 0 0 0 6 -6 v-78" fill="#0a1330" stroke="${col}" stroke-width="1.6"/><rect x="${cx - 21}" y="${DG.SLOT_Y + 52}" width="42" height="31" rx="5" fill="${col}" opacity=".22"/><text x="${cx}" y="${DG.SLOT_Y + 70}" text-anchor="middle" fill="${col}" font-family="Outfit, system-ui, sans-serif" font-weight="800" font-size="${big ? 10 : 17}">${dzLabel(sl)}</text>${big ? '' : `<path d="M${cx - 5} ${DG.SLOT_Y + 22} l5 -7 l5 7 l-5 9 z" fill="#8ee6ff" stroke="#d9faff" stroke-width=".6" stroke-linejoin="round"/>`}</g>`;
+    });
+    let back = '<div class="custom-card-back"></div>';
+    try { back = snapshotCardBackHtml(snapshotCardStyle(), 'w-full h-full'); } catch (e) { /* default back */ }
+    host.innerHTML = `<svg viewBox="0 0 360 470" aria-hidden="true">${g}</svg><div id="dropCard" class="dz-card">${back}</div>`;
+    dzPlaceCard();
+    D.built = true;
+  }
+  function dzScale() { const b = $('dropBoard'); return b && b.clientWidth ? b.clientWidth / DG.W : 0.8; }
+  function dzPlaceCard(x = DG.X0, y = 34, rot = 0) {
+    const c = $('dropCard'); if (!c) return;
+    const s = dzScale(), w = 22 * s, h = 31 * s;
+    c.style.width = w + 'px'; c.style.height = h + 'px';
+    c.style.transform = `translate(${x * s - w / 2}px, ${y * s - h / 2}px) rotate(${rot}deg)`;
+  }
+  const dzRoute = (slot) => { const R = 3 + (slot - 3), m = []; for (let i = 0; i < DG.ROWS; i++) m.push(i < R ? 1 : -1); for (let i = m.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [m[i], m[j]] = [m[j], m[i]]; } return m; };
+  // One card falling into `slot`. Resolves when it has settled. The slot is the server's; only the path is made up here.
+  function dzFall(slot, fast, near) {
+    return new Promise((resolve) => {
+      const c = $('dropCard'); if (!c) return resolve();
+      const s = dzScale(), w = 22 * s, h = 31 * s;
+      const seg = fast ? 230 : 430, lead = fast ? 250 : 460, tail = fast ? 320 : 620, hold = near ? 560 : 0;
+      const moves = dzRoute(slot), kf = [], hits = [];
+      const total = lead + DG.ROWS * seg + hold + tail;
+      const push = (px, py, rot, t) => kf.push({ transform: `translate(${px * s - w / 2}px, ${py * s - h / 2}px) rotate(${rot}deg)`, offset: Math.min(1, t / total) });
+      const pegTop = (r) => DG.Y0 + DG.DY * r - 20;
+      let x = DG.X0, y = pegTop(0), time = lead;
+      push(x, 34, 0, 0);
+      for (let k = 1; k <= 8; k++) { const u = k / 8; push(x, 34 + (pegTop(0) - 34) * u * u, 0, lead * u); }
+      for (let r = 0; r < DG.ROWS; r++) {
+        hits.push({ r, time, x });
+        const dir = moves[r], nx = x + dir * DG.DX, ny = r < DG.ROWS - 1 ? pegTop(r + 1) : DG.SLOT_Y + 10, spin = dir * (14 + Math.random() * 10);
+        for (let k = 1; k <= 10; k++) { const u = k / 10, hh = 20 * Math.sin(Math.PI * Math.min(1, u * 1.05)); push(x + (nx - x) * u, y + (ny - y) * u * u * .75 + (ny - y) * u * .25 - hh * (1 - u) * .9, spin * (1 - (1 - u) * (1 - u)) * (r % 2 ? 1 : 1.2), time + seg * u); }
+        x = nx; y = ny; time += seg;
+      }
+      if (near) { for (let k = 1; k <= 10; k++) push(x, y - 4 * Math.sin(k * 1.3), 10 * Math.sin(k * 1.9) * (1 - k / 11), time + hold * k / 10); time += hold; }
+      for (let k = 1; k <= 6; k++) push(x, y + 16 * Math.sin(k / 6 * Math.PI / 2), 0, time + tail * k / 6 * .8);
+      push(x, y + 16, 0, total);
+      kf.sort((a, b) => a.offset - b.offset);
+      const settle = () => { dzPlaceCard(x, y + 16); resolve(); };
+      if (motionOff() || typeof c.animate !== 'function') return settle();
+      const anim = c.animate(kf, { duration: total, easing: 'linear', fill: 'forwards' });
+      hits.forEach(h => setTimeout(() => {
+        const peg = $('dropBoard') && $('dropBoard').querySelector(`[data-peg="${h.r}:${Math.round(h.x)}"]`);
+        if (peg && peg.animate) peg.animate([{ opacity: .95 }, { opacity: 0 }], { duration: 320 });
+        if (audio.playDropPeg) audio.playDropPeg(h.r);
+      }, h.time));
+      if (near && audio.playDropAww) setTimeout(() => audio.playDropAww(), time - hold + 80);
+      anim.finished.then(() => { try { anim.commitStyles(); } catch (e) { /* fine */ } anim.cancel(); settle(); }, settle);
+    });
+  }
+  function dzLand(slot, near) {
+    const sl = $('dropBoard') && $('dropBoard').querySelector(`[data-slot="${slot}"] .dz-sglow`);
+    if (sl && sl.animate) sl.animate([{ opacity: 0 }, { opacity: .8 }, { opacity: .45 }], { duration: 700, fill: 'forwards' });
+    const rare = slot === 1 ? 0 : slot === 5 ? 6 : -1;
+    if (near && rare >= 0 && !motionOff()) {
+      const g = $('dropBoard').querySelector(`[data-slot="${rare}"]`);
+      if (g && g.animate) g.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-3px)' }, { transform: 'translateX(3px)' }, { transform: 'translateX(-2px)' }, { transform: 'translateX(0)' }], { duration: 420 });
+    }
+  }
+  function dzClearGlow() { document.querySelectorAll('#dropBoard .dz-sglow').forEach(e => { e.getAnimations && e.getAnimations().forEach(a => a.cancel()); e.setAttribute('opacity', 0); }); }
+  async function dropGo(n) {
+    if (D.busy || !DZR || !signedIn() || !(D.cards > 0)) return;
+    D.busy = true; $('dropBtn').disabled = true; $('dropAllBtn').disabled = true; $('dropBtn').textContent = 'DROPPING';
+    $('dropResult').innerHTML = ''; dzClearGlow();
+    let res;
+    try { res = await callEconomy('dropzone', { op: 'drop', n: n === 'all' ? D.cards : 1 }); }
+    catch (e) { D.busy = false; $('dropResult').innerHTML = '<span>Couldn’t drop right now. Check your connection and try again.</span>'; dzPaint(); return; }
+    if (res.none || !res.drops || !res.drops.length) { D.busy = false; D.cards = Number(res.cards) || 0; $('dropResult').innerHTML = '<span>You have no cards left.</span>'; dzPaint(); return; }
+    const drops = res.drops, multi = drops.length > 1, before = D.cards;
+    D.shown = before;
+    for (let i = 0; i < drops.length; i++) {
+      const dr = drops[i], near = !multi && (dr.slot === 1 || dr.slot === 5);
+      dzClearGlow(); dzPlaceCard(); D.shown = before - i - 1; dzPaint();
+      if (multi) $('dropResult').innerHTML = `<span>Dropping ${i + 1} of ${drops.length}…</span>`;
+      await dzFall(dr.slot, multi, near);
+      dzLand(dr.slot, near);
+      if (!multi) {
+        const sl = DZR.slots[dr.slot], rare = dr.slot === 1 ? 'avatar' : dr.slot === 5 ? 'card back' : '';
+        $('dropResult').innerHTML = `<span>${near && rare ? `So close! One slot from the ${rare}. ` : ''}You won <b>${dr.duplicate ? `${Number(dr.paid).toLocaleString('en-GB')} Diamonds (you own it)` : dzName(sl)}</b>.</span>`;
+      }
+      if (multi) await wait(motionOff() ? 0 : 140);
+    }
+    D.shown = null; D.cards = Number(res.cards) || 0; D.busy = false;
+    const newItems = drops.filter(d => d.kind === 'item' && !d.duplicate);
+    if (newItems.length) { newItems.forEach(d => { D.owned = { ...D.owned, [d.itemId]: true }; }); }
+    applyEconomy({ diamonds: res.diamonds, spin: newItems.length ? { kind: 'item' } : null });
+    const dia = drops.reduce((a, d) => a + (d.kind === 'diamonds' || d.duplicate ? Number(d.paid || d.amount) : 0), 0);
+    const first = newItems[0];
+    const tier = first ? 'item' : drops.some(d => d.duplicate) ? 'jackpot' : tierOf({ kind: 'diamonds', amount: multi ? dia / drops.length : dia });
+    if (multi) {
+      $('dropResult').innerHTML = `<span>Dropped <b>${drops.length} cards</b>: <b>${dia.toLocaleString('en-GB')} Diamonds</b>${newItems.length ? ' and <b>' + newItems.map(d => dzName(DZR.slots[d.slot])).join(' + ') + '</b>' : ''}.</span>`;
+    }
+    celebrate(tier); dzPaint(); paint();
+    const popAt = motionOff() ? 0 : 450;
+    setTimeout(() => {
+      if (first) return winPop({ eyebrow: multi ? `${drops.length} cards` : 'New item', art: winArt(first.itemId), big: dzName(DZR.slots[first.slot]), sub: multi ? `Plus ${dia.toLocaleString('en-GB')} Diamonds. Find it in Custom. It is Drop Zone-only.` : 'Find it in Custom. It is Drop Zone-only.', tier: 'item' });
+      const dup = drops.find(d => d.duplicate);
+      if (!multi && dup) return winPop({ eyebrow: 'Already owned', big: `+${Number(dup.paid).toLocaleString('en-GB')} Diamonds`, sub: `You own the ${dzName(DZR.slots[dup.slot])}, so it pays Diamonds instead.`, tier: 'jackpot' });
+      winPop({ eyebrow: multi ? `${drops.length} cards` : 'You won', big: `+${dia.toLocaleString('en-GB')} Diamonds`, sub: 'Added to your balance.', tier });
+    }, popAt);
+  }
+  function dzOpen() {
+    if (!DZR) return;
+    if (!D.built || !$('dropCard')) dzBuild(); else { let back = ''; try { back = snapshotCardBackHtml(snapshotCardStyle(), 'w-full h-full'); } catch (e) { /* default */ } const c = $('dropCard'); if (c && back && !D.busy) { c.innerHTML = back; dzPlaceCard(); } }
+    const el = $('dropOdds');
+    if (el) el.innerHTML = DZR.slots.map((sl, i) => `<li><span class="lw-dot" style="background:${DZ_COL[i]}"></span><span class="lw-odds-name">${dzName(sl)}${sl.kind === 'item' && D.owned[sl.itemId] ? ` (you own it, pays ${DZR.dupeDiamonds.toLocaleString('en-GB')} Diamonds)` : ''}</span><b>${sl.weight}%</b></li>`).join('');
+    const pz = $('dropPrize');
+    if (pz && typeof avatarHtml === 'function') {
+      const own = (id) => D.owned[id], pay = `You own it, so it pays ${DZR.dupeDiamonds.toLocaleString('en-GB')} Diamonds`;
+      pz.innerHTML = `<div class="lw-prize-row">${avatarHtml('avatar-dropzone', 52)}<span class="lw-prize-t"><b>Drop Zone avatar</b><span>Far left slot · ${own('avatar-dropzone') ? pay : '1% chance'}</span></span></div>`
+        + `<div class="lw-prize-row"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass('back-dropzone')} lw-backprev"></span></span><span class="lw-prize-t"><b>Drop Zone card back</b><span>Far right slot · ${own('back-dropzone') ? pay : '1% chance'}</span></span></div>`;
+    }
+    dzPaint();
+  }
+  // A win elsewhere (match, Ranked, Gauntlet) came back with the new card count: show the card in the home circle.
+  function dropNote(z) {
+    if (!z || !Number.isFinite(Number(z.cards))) return;
+    D.cards = Number(z.cards);
+    dzPaint();
+    if (z.awarded) {
+      const chip = $('homeDropChip');
+      if (chip && !motionOff()) { chip.classList.remove('dz-bump'); void chip.offsetWidth; chip.classList.add('dz-bump'); }
+      if (typeof notifyBanner === 'function') notifyBanner(`You earned a Drop Zone card. You have ${D.cards}.`);
+      if (audio.playWheelWin) audio.playWheelWin('small');
+    }
+  }
+
   function setTab(tab) {
-    if (S.busy || M.busy) return;
-    S.tab = tab === 'cards' ? 'cards' : tab === 'scratch' ? 'scratch' : 'spin';
+    if (S.busy || M.busy || D.busy) return;
+    S.tab = tab === 'cards' ? 'cards' : tab === 'scratch' ? 'scratch' : tab === 'drop' ? 'drop' : 'spin';
     $('wheelPanel').classList.toggle('hidden', S.tab !== 'spin');
     $('montyPanel').classList.toggle('hidden', S.tab !== 'cards');
     $('scratchPanel').classList.toggle('hidden', S.tab !== 'scratch');
+    $('dropPanel').classList.toggle('hidden', S.tab !== 'drop');
     document.querySelectorAll('.lw-tab').forEach(b => { const on = b.dataset.lwTab === S.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
     const th = S.theme;
-    $('wheelTitle').textContent = S.tab === 'scratch' ? 'Scratch Card' : S.tab === 'cards' ? 'Three Cards' : th ? `${th.name} Spin` : 'Daily Spin';
+    $('wheelTitle').textContent = S.tab === 'drop' ? 'Drop Zone' : S.tab === 'scratch' ? 'Scratch Card' : S.tab === 'cards' ? 'Three Cards' : th ? `${th.name} Spin` : 'Daily Spin';
     if (S.tab === 'cards' && M.phase !== 'pick') {
       montyBuild();
       const r = S.monty && S.monty.result; if (r) montyShowDone(r); else { M.phase = ''; $('montyResult').innerHTML = ''; }
     }
     if (S.tab === 'scratch') scratchOpen();
+    if (S.tab === 'drop') dzOpen();
     paint();
   }
   function open(solo) {
@@ -546,29 +713,34 @@
     refresh().then(() => { if (!S.busy && !M.busy) { const was = S.built; if (!was) { build(); paintPrize(); } } });
     ($('wheelModal').querySelector('.lw-tab.on') || $('wheelCloseBtn')).focus({ preventScroll: true });
   }
-  function close() { if (closeWin()) return; if (!S.busy && !M.busy && !SC.busy) { scratchSettle(); $('wheelModal')?.classList.add('hidden'); } }
+  function close() { if (closeWin()) return; if (!S.busy && !M.busy && !SC.busy && !D.busy) { scratchSettle(); $('wheelModal')?.classList.add('hidden'); } }
 
   // Hover (PC) or keyboard focus on either home circle explains it in the shared info bubble.
   const CHIP_TIPS = {
     homeWheelChip: '<p><b>Daily Spin</b></p><p>One free spin a day for Diamonds, XP or a wheel-only avatar and card back.</p>',
+    homeDropChip: '<p><b>Drop Zone</b></p><p>Drop a card through the pegs into a prize slot. Every game you win earns a card.</p>',
     homeScratchChip: '<p><b>Scratch Card</b></p><p>One free card a day. Scratch off the foil and get three of a kind in a line, like tic tac toe, to win Diamonds or a Prism item.</p>',
     homeMontyChip: '<p><b>Three Cards</b></p><p>Once a week, follow the 300 Diamond card as it is shuffled, then pick it.</p>'
   };
   const chipTip = (e) => {
-    const c = e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip, #homeScratchChip');
+    const c = e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip, #homeScratchChip, #homeDropChip');
     if (!c || typeof showInfoPop !== 'function') return;
     if (e.type === 'mouseover' && !window.matchMedia('(hover: hover)').matches) return;
-    showInfoPop(c, CHIP_TIPS[c.id], { hover: true, side: c.id === 'homeScratchChip' ? 'right' : 'left' });
+    showInfoPop(c, CHIP_TIPS[c.id], { hover: true, side: c.id === 'homeScratchChip' || c.id === 'homeDropChip' ? 'right' : 'left' });
   };
   document.addEventListener('mouseover', chipTip);
   document.addEventListener('focusin', (e) => { if (e.target.matches && e.target.matches(':focus-visible')) chipTip(e); });
-  document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip, #homeScratchChip') && typeof hideInfoPop === 'function') hideInfoPop(); });
+  document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip, #homeScratchChip, #homeDropChip') && typeof hideInfoPop === 'function') hideInfoPop(); });
 
   document.addEventListener('click', (e) => {
     const t = e.target;
     if (t.closest && t.closest('#homeWheelChip')) open('spin');
     else if (t.closest && t.closest('#homeMontyChip')) open('cards');
     else if (t.closest && t.closest('#homeScratchChip')) open('scratch');
+    else if (t.closest && t.closest('#homeDropChip')) open('drop');
+    else if (t.id === 'dropBtn') dropGo(1);
+    else if (t.id === 'dropAllBtn') dropGo('all');
+    else if (t.id === 'dropOddsBtn') { const o = $('dropOdds'), on = o.classList.toggle('hidden'); t.setAttribute('aria-expanded', String(!on)); }
     else if (t.id === 'scratchBtn') scratchGet();
     else if (t.id === 'scratchRevealBtn') scratchReveal();
     else if (t.id === 'scratchOddsBtn') { const o = $('scratchOdds'), on = o.classList.toggle('hidden'); t.setAttribute('aria-expanded', String(!on)); }
@@ -584,9 +756,9 @@
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.status && !S.status.canSpin) refresh(); });
 
   window.ShWheel = {
-    open, close, winPop, closeWin,
+    open, close, winPop, closeWin, dropNote,
     onSignIn() { S.angle = 0; S.status = null; setTimeout(() => { if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return; refresh(); startTimer(); }, 2500); },
-    reset() { S.status = null; S.monty = null; S.owned = {}; S.built = false; S.angle = 0; clearInterval(S.timer); paint(); $('wheelModal')?.classList.add('hidden'); },
+    reset() { D.cards = null; S.status = null; S.monty = null; S.owned = {}; S.built = false; S.angle = 0; clearInterval(S.timer); paint(); $('wheelModal')?.classList.add('hidden'); },
     refresh, state: S, tierOf
   };
 })();

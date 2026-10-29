@@ -234,7 +234,7 @@
       if (!economyCallable) economyCallable = firebase.app().functions('europe-west1').httpsCallable('economy', { timeout: 30000 });
       const payload = { ...data, action };
       const t0 = performance.now();
-      const timed = (p) => p.then((r) => { try { Health.econ(performance.now() - t0); } catch (_) {} return r; });
+      const timed = (p) => p.then((r) => { try { Health.econ(performance.now() - t0); } catch (_) {} try { if (r && r.dropzone && action !== 'dropzone') window.ShWheel?.dropNote?.(r.dropzone); } catch (_) {} return r; });
       return timed(primeMessagingForFunctions()
         .then(() => economyCallable(payload).then(res => res.data))
         .catch((error) => (isMessagingSdkError(error) ? callEconomyDirect(payload) : Promise.reject(error)))
@@ -6417,6 +6417,7 @@
         'back-dragon': 'cosmetic-back-dragon',
         'back-stained': 'cosmetic-back-stained',
         'back-wheel': 'cosmetic-back-wheel',
+        'back-dropzone': 'cosmetic-back-dropzone',
         'back-foil-joker': 'cosmetic-back-foil-joker lvl-back'
       };
       if (/^back-(lvl|ldn|mum|nm|ss[0-9]{4})-/.test(backId || '')) return `cosmetic-${backId} lvl-back`;
@@ -11818,6 +11819,15 @@
         <g class="av-wheeltick"><path d="M32 11.4l-4.6-7.2h9.2Z" fill="url(#av-m-crimson)" stroke="#fde68a" stroke-width="1.1" stroke-linejoin="round"/></g>
         <g class="av-twinkle"><path d="M52.5 10.5l1.3 2.9 3.1.35-2.3 2.1.65 3.05-2.75-1.55-2.75 1.55.65-3.05-2.3-2.1 3.1-.35Z" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.4)" stroke-width=".7"/></g>
         <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
+      // Drop Zone (drop-zone-only): a card falls through gold pegs into the slot, bounces, and the cycle repeats.
+      'avatar-dropzone':     { tone: 'gold', animated: true, art: `
+        <circle cx="32" cy="34" r="25" fill="url(#av-m-glow)" opacity=".22"/>
+        <g fill="url(#av-m-gold)" stroke="rgba(0,0,0,.45)" stroke-width=".6"><circle cx="32" cy="16" r="2.2"/><circle cx="22" cy="25" r="2.2"/><circle cx="42" cy="25" r="2.2"/><circle cx="12" cy="34" r="2.2"/><circle cx="32" cy="34" r="2.2"/><circle cx="52" cy="34" r="2.2"/></g>
+        <path d="M10 44v8a3 3 0 0 0 3 3h38a3 3 0 0 0 3-3v-8" fill="rgba(7,14,40,.7)" stroke="url(#av-m-gold)" stroke-width="2"/>
+        <path d="M22 44v11M32 44v11M42 44v11" stroke="url(#av-m-gold)" stroke-width="1.3"/>
+        <g class="av-dropcard"><rect x="-6" y="-8.5" width="12" height="17" rx="2.2" fill="url(#av-m-crimson)" stroke="#fde68a" stroke-width="1.1"/><path d="M0 -3.6 3 0 0 3.6 -3 0Z" fill="none" stroke="#fde68a" stroke-width=".9"/></g>
+        <g class="av-twinkle"><path d="M52.5 10.5l1.3 2.9 3.1.35-2.3 2.1.65 3.05-2.75-1.55-2.75 1.55.65-3.05-2.3-2.1 3.1-.35Z" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.4)" stroke-width=".7"/></g>
+        <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
       'avatar-centurion':    { tone: 'red', art: `
         <text x="32" y="38" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="21" fill="#ef4444" stroke="#7f1d1d" stroke-width=".8" letter-spacing="-1">100</text>
         <path d="M13.5 43.5 50 41.5M15.5 48.5 47 46.8" stroke="#ef4444" stroke-width="2.6" stroke-linecap="round"/>` },
@@ -14734,7 +14744,7 @@
       if (item.referral) return 'friends';
       if (item.twos) return 'twos';
       if (item.decks) return 'decks';
-      if (item.wheel || item.scratch) return 'lucky';
+      if (item.wheel || item.scratch || item.drop) return 'lucky';
       if (item.nm && item.earned) return 'events';
       if (item.earned || EARNED_AVATARS.includes(item)) return 'ranked';
       return 'shop';
@@ -17954,6 +17964,8 @@
       'avatar-decks': { type: 'decksWins', min: 10 },
       'avatar-wheel': { type: 'wheel' }, // granted by the wheel action itself
       'back-wheel': { type: 'wheel' },
+      'avatar-dropzone': { type: 'wheel' }, // granted by the dropzone action itself
+      'back-dropzone': { type: 'wheel' },
       'avatar-foil-ace': { type: 'wheel' }, // granted by the scratch action itself
       'back-foil-joker': { type: 'wheel' },
       'avatar-nm-seer': { type: 'nmQueens', min: 50 },
@@ -17982,6 +17994,7 @@
         wheel: WHEEL,
         monty: MONTY,
         scratch: SCRATCH,
+        dropzone: DROPZONE,
         matchWinRewards: { bots: 10, ranked: 20 },
         dailyReward: CHALLENGE_REWARD,
         weeklyReward: WEEKLY_CHALLENGE_REWARD,
