@@ -7,7 +7,7 @@
       v496: [['sparkle', 'If a move fails to save online because the signal drops, the game now tries again by itself and shows Reconnecting until it lands.']],
       v495: [['sparkle', 'Burn, Joker and Victory effects are now loaded before the match starts, so the first one plays without a pause.']],
       v494: [['sparkle', 'Card backs won on the Daily Spin, Scratch Card and in No Mercy now show in Custom → Card Backs, under a new Events group, and their unlock mail says card back.']],
-      v493: [['sparkle', 'Winning on the Daily Spin, Scratch Card or Three Cards now shows a pop-up with exactly what you won.']],
+      v493: [['sparkle', 'Winning on the Daily Spin, Scratch Card or Three Cards now shows a pop-up with exactly what you won.', WN_KEY]],
       v492: [['sparkle', 'Animations hidden behind an open page now pause, which saves battery and keeps the game smoother.']],
       v491: [['sparkle', 'Smoother play on slower phones: flying cards are limited, and effects get lighter by themselves when the game starts to lag.']],
       v490: [['sparkle', 'Behind the scenes: the game now measures how fast the table draws and how quick the server answers, to track down lag.']],
