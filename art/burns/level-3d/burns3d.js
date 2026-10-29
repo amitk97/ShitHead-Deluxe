@@ -1601,5 +1601,7 @@ void main(){
     }
   };
   const sound = (id, k) => SOUNDS[id] && SOUNDS[id](k);
-  window.ShLevel3D = { has, play, still, clear, icon, sound, effects: EFFECTS };
+  // v494: fetch and decode a burn's painted atlas before the match, so the first play isn't waiting on it.
+  const preload = id => { try { const img = EFFECTS[id] && !EFFECTS[id].iconOnly && artFor(id); img && img.decode && img.decode().catch(() => {}); } catch (e) {} };
+  window.ShLevel3D = { has, play, still, clear, icon, sound, preload, effects: EFFECTS };
 })();

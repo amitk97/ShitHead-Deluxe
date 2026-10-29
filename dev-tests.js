@@ -6116,6 +6116,18 @@ async function runDevTestSuite() {
       assertEqual(getComputedStyle(probe).animationPlayState, 'running', 'Runs again once it closes');
     } finally { probe.remove(); page.classList.toggle('hidden', wasHidden); coverWatch.sync(); }
   });
+  await test('v495: equipped effects are preloaded once before a match (painted burn art decoded, owner layers fetched)', () => {
+    assertTrue(typeof ShLevel3D.preload === 'function', 'ShLevel3D.preload exists');
+    fxPreloaded.delete('burn-halloween');
+    const was = ShLevel3D.preload; let got = [];
+    ShLevel3D.preload = (id) => got.push(id);
+    try {
+      const saved = equippedCosmetics.burnEffect; equippedCosmetics.burnEffect = 'burn-halloween';
+      preloadEquippedEffects(); preloadEquippedEffects();
+      equippedCosmetics.burnEffect = saved;
+      assertTrue(got.filter(i => i === 'burn-halloween').length === 1, 'asked once for the painted burn');
+    } finally { ShLevel3D.preload = was; }
+  });
   await test('v494: event card backs show in Custom → Card Backs under Events, and their unlock mail says card back', () => {
     for (const id of ['back-wheel', 'back-foil-joker', 'back-nm-verdict']) {
       const it = NM_EARNED.find(i => i.id === id);

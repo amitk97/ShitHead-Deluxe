@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v495: [['sparkle', 'Burn, Joker and Victory effects are now loaded before the match starts, so the first one plays without a pause.']],
       v494: [['sparkle', 'Card backs won on the Daily Spin, Scratch Card and in No Mercy now show in Custom → Card Backs, under a new Events group, and their unlock mail says card back.']],
       v493: [['sparkle', 'Winning on the Daily Spin, Scratch Card or Three Cards now shows a pop-up with exactly what you won.']],
       v492: [['sparkle', 'Animations hidden behind an open page now pause, which saves battery and keeps the game smoother.']],

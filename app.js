@@ -3781,6 +3781,21 @@
         try { const img = new Image(); img.decoding = 'async'; img.src = ownerFxSrc(name); ownerFxImages.set(name, img); img.decode?.().catch(() => {}); } catch (e) {}
       }));
     }
+    // v494: before a match, fetch the art and sounds of every burn, Joker and victory effect at the table.
+    const fxPreloaded = new Set();
+    function preloadEquippedEffects() {
+      const ps = [{ cosmetics: equippedCosmetics }, ...(state.players || [])];
+      const ids = [];
+      ps.forEach(p => { try { ids.push(burnEffectIdFor(p), jokerEffectIdFor(p), p?.cosmetics?.victoryEffect); } catch (e) {} });
+      ids.push(equippedCosmetics.victoryEffect, equippedCosmetics.jokerEffect);
+      const todo = ids.filter(id => id && !fxPreloaded.has(id));
+      if (!todo.length) return;
+      todo.forEach(id => fxPreloaded.add(id));
+      preloadOwnerFx(todo);
+      todo.forEach(id => { try { window.ShLevel3D?.preload?.(id); } catch (e) {} });
+      const clips = { 'victory-lion': 'lion-roar', 'victory-fireworks': 'fireworks', 'joker-halloween': 'boo' };
+      todo.forEach(id => clips[id] && audio.enabled && audio.loadEffectClip?.(clips[id]));
+    }
     // One layer: `box` from the layout, in the square of side S at (ox, oy).
     function ofxLayer(host, name, box, S, ox, oy) {
       const [x, y, w, h] = box;
@@ -7781,7 +7796,7 @@
       try { helperTipsOnTable(); } catch (e) { if (!(e instanceof ReferenceError)) throw e; } // § Helper tips
       // The owner-art effects anyone at the table might play: fetch their layers early.
       ensurePrivateViews(state.players);
-      if (state.phase && state.phase !== 'SETUP') preloadOwnerFx([equippedCosmetics.victoryEffect, equippedCosmetics.jokerEffect, ...(state.players || []).flatMap(p => [p?.cosmetics?.victoryEffect, p?.cosmetics?.jokerEffect])]);
+      if (state.phase && state.phase !== 'SETUP') preloadEquippedEffects();
       renderGauntletHud();
       renderSeriesHud();
     }
