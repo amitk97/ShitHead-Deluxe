@@ -6142,6 +6142,12 @@ async function runDevTestSuite() {
       assertTrue(got.filter(i => i === 'burn-halloween').length === 1, 'asked once for the painted burn');
     } finally { ShLevel3D.preload = was; }
   });
+  await test('v500: the Dev page exists, is hidden for a normal account, and Health is no longer a tab in Error Reports', () => {
+    assertTrue(document.getElementById('headerDevBtn').classList.contains('hidden'), 'Dev button hidden');
+    assertTrue(!document.getElementById('headerGuideBtn').classList.contains('hidden'), 'Guide button shown');
+    assertTrue(document.getElementById('reportsTabHealth').classList.contains('hidden'), 'Health tab hidden in Error Reports');
+    assertTrue(!!document.getElementById('devModal') && !!document.getElementById('devList'), 'Dev page exists');
+  });
   await test('v499: the Reset Lucky Games menu button exists and is hidden for everyone but the AmitK account', () => {
     const b = document.getElementById('menuResetLuckyBtn');
     assertTrue(!!b, 'button exists');

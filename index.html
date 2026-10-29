@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-29-v499 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-29-v500 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -228,7 +228,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=a99578ef0c59">
+  <link rel="stylesheet" href="game.css?v=cb8982c24d82">
 
   
   <!-- Firebase SDKs -->
@@ -431,6 +431,7 @@
         <span id="inboxBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 flex items-center justify-center rounded-full inbox-badge--friend text-white text-[8px] font-black leading-none">0</span>
       </button>
       <button id="headerGuideBtn" class="hdr-home-only h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Guide" data-tip="Guide"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-guide"/></svg></button>
+      <button id="headerDevBtn" class="hdr-home-only hidden h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Dev" data-tip="Dev"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#172033" stroke="#334155"/><path d="M13 10l-5 6 5 6M19 10l5 6-5 6" fill="none" stroke="#a3e635" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button id="headerSettingsBtn" class="h-7 flex items-center justify-center bg-transparent hover:brightness-125 active:scale-95 transition tip-below" style="width:1.75rem;" aria-label="Settings" data-tip="Settings"><svg style="width:28px;height:28px" viewBox="0 0 32 32" aria-hidden="true"><use href="#ui-settings"/></svg></button>
       <!-- Rightmost/outermost element on purpose — the desktop dropdown's
            own fixed `right: 12px` anchor (see the #hamburgerDrawer CSS)
@@ -1533,13 +1534,23 @@
        email app. A standalone HTML file cannot safely hold SMTP or email
        service credentials, so this is the reliable no-backend option. -->
   <!-- Owner-only: the game's error reports (Database Rules let only the owner's verified email read them). -->
+  <div id="devModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-slate-950 border-2 border-lime-500 rounded-2xl shadow-2xl p-4" style="display:flex; flex-direction:column;">
+      <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
+        <span class="text-[11px] font-black uppercase tracking-widest text-lime-400">Dev</span>
+        <button id="devCloseBtn" class="text-slate-400 hover:text-lime-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
+      </div>
+      <p id="devBuild" class="text-[10px] text-slate-500 mb-2" style="flex-shrink:0;"></p>
+      <div id="devList" class="overflow-y-auto" style="flex:1; min-height:0; display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+  </div>
   <div id="errorReportsModal" class="hidden fixed inset-0 z-[95] bg-slate-950/85 backdrop-blur flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-950 border-2 border-rose-500 rounded-2xl shadow-2xl p-4" style="display:flex; flex-direction:column;">
       <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2" style="flex-shrink:0;">
-        <span class="text-[11px] font-black uppercase tracking-widest text-rose-400">Error Reports</span>
+        <span id="errorReportsTitle" class="text-[11px] font-black uppercase tracking-widest text-rose-400">Error Reports</span>
         <button id="errorReportsCloseBtn" class="text-slate-400 hover:text-rose-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
-      <div class="reports-tabs" role="tablist"><button type="button" id="reportsTabErrors" class="is-on">ERRORS</button><button type="button" id="reportsTabPlayers">PLAYERS</button><button type="button" id="reportsTabAudit">RANKED AUDIT</button><button type="button" id="reportsTabHealth">HEALTH</button></div>
+      <div class="reports-tabs" role="tablist"><button type="button" id="reportsTabErrors" class="is-on">ERRORS</button><button type="button" id="reportsTabPlayers">PLAYERS</button><button type="button" id="reportsTabAudit">RANKED AUDIT</button><button type="button" id="reportsTabHealth" class="hidden">HEALTH</button></div>
       <p id="errorReportsSummary" class="text-[10px] text-slate-400 mb-2" style="flex-shrink:0;">Loading…</p>
       <div id="errorReportsList" class="overflow-y-auto space-y-1.5" style="flex:1; min-height:0;"></div>
       <div class="flex gap-2" style="flex-shrink:0; margin-top:12px;">
@@ -2821,7 +2832,7 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=83850e0f086c"></script>
-  <script src="js/whats-new-data.js?v=8854c7bb9582"></script>
+  <script src="js/whats-new-data.js?v=ebd094b57504"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=8acbee61afea"></script>
   <script src="tutorial-data.js?v=51e38ba66974"></script>
@@ -2832,7 +2843,7 @@
   <script src="home-navigation.js?v=8b927cb2e918"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=fc0e77481338"></script>
+  <script src="app.js?v=22544bf22454"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>

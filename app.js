@@ -112,7 +112,7 @@
     ['puzzlesModal', 'wheelModal', 'twosModal', 'decksModal', 'noMercyModal', 'houseNameModal', 'friendsConfigModal', 'matchStatsModal', 'historyGameModal', 'modeIntroModal', 'tutorialHubScreen', 'settingsModal', 'authModal', 'usernameModal', 'difficultyUnlockPopup',
      'friendsModal', 'inboxModal', 'leaderboardModal', 'profileModal', 'deleteAccountModal', 'supportModal',
      'shopModal', 'challengesModal', 'statsModal', 'themesModal', 'pileInspectModal', 'needHumanModal', 'rulesModal',
-     'matchSummaryModal', 'errorReportsModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'eventPopupModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
+     'matchSummaryModal', 'errorReportsModal', 'devModal', 'changelogModal', 'rejoinModal', 'whatsNewModal', 'eventPopupModal', 'gauntletModal', 'referralWelcomeModal', 'keepAccountModal', 'collectionModal', 'levelLadderModal', 'seriesModal',
      // v281: #gameTable is isolation:isolate (v270 table scenes), so anything
      // left inside it can never sit above a page, whatever its z-index.
      'playerPopup', 'challengeToast', 'signOutConfirm', 'dailyRewardModal', 'giftModal', 'giftOpenModal', 'installHelpModal', 'shConfirm'].forEach((id) => {
@@ -10679,7 +10679,7 @@
     const MENU_PAGE_IDS = [
       'profileModal', 'statsModal', 'themesModal', 'friendsModal',
       'leaderboardModal', 'challengesModal', 'shopModal', 'rulesModal',
-      'settingsModal', 'supportModal', 'tutorialHubScreen', 'errorReportsModal', 'collectionModal', 'changelogModal', 'levelLadderModal'
+      'settingsModal', 'supportModal', 'tutorialHubScreen', 'errorReportsModal', 'devModal', 'collectionModal', 'changelogModal', 'levelLadderModal'
     ];
     // Every scrolling panel gets the floating Jump to top/bottom button,
     // including in-game ones that aren't hamburger menu pages.
@@ -15635,6 +15635,9 @@
       document.getElementById('reportsTabPlayers').classList.toggle('is-on', reportsTab === 'players');
       document.getElementById('reportsTabAudit').classList.toggle('is-on', reportsTab === 'audit');
       document.getElementById('reportsTabHealth').classList.toggle('is-on', reportsTab === 'health');
+      const health = reportsTab === 'health';
+      document.getElementById('errorReportsTitle').textContent = health ? 'Health' : 'Error Reports';
+      document.querySelector('#errorReportsModal .reports-tabs').classList.toggle('hidden', health);
     }
     // HEALTH: the last 7 days of Health session records, summed up.
     const HEALTH_DAYS = 7;
@@ -15771,12 +15774,15 @@
           : `Couldn’t load reports: ${e?.message || e}`;
       });
     }
-    document.getElementById('menuErrorReportsBtn').addEventListener('click', () => {
+    // Health has its own entry in Dev (v500); Error Reports keeps the other tabs.
+    function openReports(tab) {
       closeHamburgerMenu();
       if (!isGameOwner()) return;
+      reportsTab = tab;
       document.getElementById('errorReportsModal').classList.remove('hidden');
       loadErrorReports();
-    });
+    }
+    document.getElementById('menuErrorReportsBtn').addEventListener('click', () => openReports(reportsTab === 'health' ? 'errors' : reportsTab));
     document.getElementById('errorReportsCloseBtn').addEventListener('click', () => document.getElementById('errorReportsModal').classList.add('hidden'));
     // Owner-only Changelog: every version's notes, newest first; the key
     // ones (what returning players see in What's New) are tagged KEY.
@@ -15862,6 +15868,48 @@
       } catch (e) {
         notifyBanner('Couldn\'t change the unlock switch. Please try again.');
       } finally { testUnlockBusy = false; }
+    });
+    // § Dev (v500, AmitK only): a header button instead of Guide opens a list of every
+    // owner / test switch. Rows click the menu's own (hidden) buttons, so their logic and
+    // live labels stay in one place.
+    const DEV_ROWS = ['menuErrorReportsBtn', 'menuChangelogBtn', 'menuXpSwitchBtn', 'menuResetLuckyBtn', 'menuUnlockAllBtn'];
+    const devSeenKeys = () => ['shithead_tips_seen', 'shithead_tip_counts', 'shithead_welcome_tour', 'shithead_event_popup_seen', 'shithead_mode_intro', 'shithead_seen_version', 'shithead_first_day', 'shithead_ladder_seen_' + (currentUser?.uid || '')];
+    function devRow(icon, label, id) {
+      return `<button type="button" class="hamburger-menu-item" data-dev-row="${id}"><span class="item-icon">${icon}</span><span>${escapeHtml(label)}</span></button>`;
+    }
+    function paintDevList() {
+      const icon = (id) => document.getElementById(id)?.querySelector('.item-icon')?.innerHTML || '';
+      const label = (id) => document.getElementById(id)?.lastElementChild?.textContent || '';
+      const rows = [
+        devRow(icon('menuErrorReportsBtn'), 'Error Reports', 'menuErrorReportsBtn'),
+        devRow(icon('menuErrorReportsBtn'), 'Health', 'health'),
+        ...DEV_ROWS.slice(1).map((id) => devRow(icon(id), label(id), id)),
+        devRow(icon('menuGuideBtn'), 'Guide', 'menuGuideBtn'),
+        devRow(icon('menuChangelogBtn'), 'Check For Update', 'update'),
+        devRow(icon('menuResetLuckyBtn'), 'Show Tips And Pop-ups Again', 'seen')
+      ];
+      document.getElementById('devList').innerHTML = rows.join('');
+      document.getElementById('devBuild').textContent = `Build ${getGameVersionLabel()}`;
+    }
+    document.getElementById('headerDevBtn')?.addEventListener('click', () => {
+      if (!currentUser || !isAmitkTestingAccount({})) return;
+      paintDevList();
+      document.getElementById('devModal').classList.remove('hidden');
+    });
+    document.getElementById('devCloseBtn')?.addEventListener('click', () => document.getElementById('devModal').classList.add('hidden'));
+    document.getElementById('devList')?.addEventListener('click', async (e) => {
+      const row = e.target.closest('[data-dev-row]');
+      if (!row || !isAmitkTestingAccount({})) return;
+      const id = row.dataset.devRow;
+      if (id === 'health') { document.getElementById('devModal').classList.add('hidden'); openReports('health'); return; }
+      if (id === 'update') { notifyBanner('Checking for a newer version…'); await checkForNewVersion(true); return; }
+      if (id === 'seen') {
+        devSeenKeys().forEach((k) => { try { localStorage.removeItem(k); } catch (_) {} });
+        notifyBanner('Tips, tours and pop-ups will show again.');
+        return;
+      }
+      document.getElementById(id)?.click();
+      setTimeout(paintDevList, 600);
     });
     document.getElementById('changelogCloseBtn').addEventListener('click', () => document.getElementById('changelogModal').classList.add('hidden'));
     document.getElementById('errorReportsRefreshBtn').addEventListener('click', loadErrorReports);
@@ -16486,6 +16534,11 @@
       document.getElementById('menuXpSwitchBtn')?.classList.toggle('hidden', !isGameOwner());
       document.getElementById('menuUnlockAllBtn')?.classList.toggle('hidden', !currentUser || !isAmitkTestingAccount({}));
       document.getElementById('menuResetLuckyBtn')?.classList.toggle('hidden', !currentUser || !isAmitkTestingAccount({}));
+      // v500: AmitK's owner / test switches live in the Dev page (header), not the menu.
+      const devOn = !!currentUser && isAmitkTestingAccount({});
+      document.getElementById('headerDevBtn')?.classList.toggle('hidden', !devOn);
+      document.getElementById('headerGuideBtn')?.classList.toggle('hidden', devOn);
+      if (devOn) DEV_ROWS.forEach((id) => document.getElementById(id)?.classList.add('hidden'));
       window.ShHomeCarousel?.setLab?.(!!currentUser && isAmitkTestingAccount({})); // the Test Lab card (v405)
       drawerAvatar?.classList.toggle('hidden', !currentUser);
       const homeAvatar = document.getElementById('homeNameAvatar');
@@ -23091,7 +23144,7 @@
       dailyRewardModal: () => closeDailyReward(), playerPopup: 'playerPopupClose', matchSummaryModal: 'matchSummaryClose',
       authModal: 'authCloseBtn', usernameModal: null, difficultyUnlockPopup: 'difficultyUnlockPopupBtn',
       matchStatsModal: 'matchStatsCloseBtn', historyGameModal: 'historyGameCloseBtn', modeIntroModal: () => closeModeIntro(), noMercyModal: () => closeNoMercyChoice(), twosModal: () => closeTwosChoice(), wheelModal: () => window.ShWheel?.close(), decksModal: () => closeDecksChoice(), puzzlesModal: () => window.ShPuzzles?.close(), friendsModal: 'friendsCloseBtn', inboxModal: 'inboxCloseBtn',
-      leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', levelLadderModal: 'levelLadderCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn', changelogModal: 'changelogCloseBtn',
+      leaderboardModal: 'leaderboardCloseBtn', profileModal: 'profileCloseBtn', collectionModal: 'collectionCloseBtn', levelLadderModal: 'levelLadderCloseBtn', supportModal: 'supportCloseBtn', errorReportsModal: 'errorReportsCloseBtn', devModal: 'devCloseBtn', changelogModal: 'changelogCloseBtn',
       shopModal: 'shopCloseBtn', challengesModal: 'challengesCloseBtn', statsModal: 'statsCloseBtn',
       themesModal: 'themesCloseBtn', settingsModal: 'settingsCloseBtn', tutorialHubScreen: 'tutorialHubCloseBtn',
       seriesModal: 'seriesLaterBtn', needHumanModal: 'needHumanCloseBtn', rejoinModal: 'rejoinNoBtn', gauntletModal: 'gauntletCloseBtn', referralWelcomeModal: 'referralWelcomeCloseBtn', keepAccountModal: null, whatsNewModal: 'whatsNewCloseBtn', eventPopupModal: 'eventPopupLaterBtn', rulesModal: 'closeRulesBtn', pileInspectModal: 'closeInspectBtn',

@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v500: [['sparkle', 'Test account: a Dev page replaces the Guide button, with Health on its own.', WN_KEY]],
       v499: [['sparkle', 'Test account: a menu button resets the Daily Spin, Scratch Card and Three Cards.']],
       v498: [['sparkle', 'The Daily Spin box no longer shakes while the wheel turns.']],
       v497: [['sparkle', 'Test accounts can have today\'s Daily Spin, Scratch Card and Three Cards reset.']],

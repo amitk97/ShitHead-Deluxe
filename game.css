@@ -266,7 +266,7 @@
        Inbox · Guide · Settings · Menu. Elsewhere Shop/Custom/Guide fold into
        the menu (slide toward it, fade, small bounce) and the logo takes the
        middle. A room code replaces the Diamond count. */
-    #headerShopBtn, #headerCustomBtn, #headerGuideBtn, #headerLogoWrap, #navHomeLogoBtn {
+    #headerShopBtn, #headerCustomBtn, #headerGuideBtn, #headerDevBtn, #headerLogoWrap, #navHomeLogoBtn {
       max-width: 140px; overflow: visible;
       transition: none !important;
     }
@@ -277,14 +277,14 @@
     body.lobby-open:not(.mode-page):not(.ui-overlay-open) #headerLogoWrap { max-width: 0; padding: 0; opacity: 0; overflow: hidden; pointer-events: none; transform: scale(.6); }
     body.lobby-open:not(.mode-page):not(.ui-overlay-open) #navHomeLogoBtn { max-width: 0; }
     header:has(#roomCodeBadge:not(.hidden)) #headerDiamondCount { display: none; }
-    body.reduce-motion :is(#headerShopBtn, #headerCustomBtn, #headerGuideBtn, #headerLogoWrap, #navHomeLogoBtn) { transition: none !important; }
+    body.reduce-motion :is(#headerShopBtn, #headerCustomBtn, #headerGuideBtn, #headerDevBtn, #headerLogoWrap, #navHomeLogoBtn) { transition: none !important; }
     #homeQuickRow { display: none !important; }
     @media (max-width: 379px) {
       body > header { padding-left: 6px !important; padding-right: 6px !important; }
       body > header > div { gap: 2px !important; }
       :is(body:not(.lobby-open), body.mode-page, body.ui-overlay-open) .hdr-home-only { margin-left: -2px; }
-      :is(#leaveGameBtn, #headerShopBtn, #headerCustomBtn, #headerProfileBtn, #headerInboxBtn, #headerGuideBtn, #headerSettingsBtn, #hamburgerBtn) { width: 1.5rem !important; }
-      :is(#leaveGameBtn, #headerShopBtn, #headerCustomBtn, #headerProfileBtn, #headerInboxBtn, #headerGuideBtn, #headerSettingsBtn, #hamburgerBtn) svg { width: 24px !important; height: 24px !important; }
+      :is(#leaveGameBtn, #headerShopBtn, #headerCustomBtn, #headerProfileBtn, #headerInboxBtn, #headerGuideBtn, #headerDevBtn, #headerSettingsBtn, #hamburgerBtn) { width: 1.5rem !important; }
+      :is(#leaveGameBtn, #headerShopBtn, #headerCustomBtn, #headerProfileBtn, #headerInboxBtn, #headerGuideBtn, #headerDevBtn, #headerSettingsBtn, #hamburgerBtn) svg { width: 24px !important; height: 24px !important; }
     }
     #appClosingScreen { position:fixed; inset:0; z-index:10001; display:grid; place-items:center; padding:24px; background:#040919; }
     #appClosingScreen.hidden { display:none; }
@@ -1034,11 +1034,11 @@
          compact 44px header so it does not steal vertical game space. */
       body > header { height: calc(60px + var(--safe-top)) !important; padding: calc(7px + var(--safe-top)) 18px 7px !important; }
       body > header .brand-logo-rendered { font-size: 32px !important; }
-      #leaveGameBtn, #headerProfileBtn, #headerInboxBtn, #hamburgerBtn, #headerShopBtn, #headerCustomBtn, #headerGuideBtn, #headerSettingsBtn {
+      #leaveGameBtn, #headerProfileBtn, #headerInboxBtn, #hamburgerBtn, #headerShopBtn, #headerCustomBtn, #headerGuideBtn, #headerDevBtn, #headerSettingsBtn {
         width: 38px !important;
         height: 38px !important;
       }
-      #leaveGameBtn svg, #headerProfileBtn svg, #headerInboxBtn > svg, #hamburgerBtn svg, #headerShopBtn svg, #headerCustomBtn svg, #headerGuideBtn svg, #headerSettingsBtn svg {
+      #leaveGameBtn svg, #headerProfileBtn svg, #headerInboxBtn > svg, #hamburgerBtn svg, #headerShopBtn svg, #headerCustomBtn svg, #headerGuideBtn, #headerDevBtn svg, #headerSettingsBtn svg {
         width: 38px !important;
         height: 38px !important;
       }
