@@ -1,73 +1,66 @@
-# Lucky Games demo video: script (draft, not recorded yet)
+# Lucky Games demo video: script v2 (draft, not recorded yet)
 
-Working title: **"Four ways to get lucky in ShitHead Deluxe"**
-Length: about 60 to 70 seconds. Format: 9:16 vertical (1080x1920), game audio on, voiceover in the how-to-play voice (see `tools/video/`).
-Tone: friendly, quick, no shouting. Captions = the line being spoken.
-All four games are free, signed-in only, and the server picks every prize (the phone only plays the animation).
+Working title: **"Free prizes. Every day."**
+Length: about 40 seconds. Format: 9:16 vertical (1080x1920), game audio on, voiceover in the how-to-play voice (`tools/video/`).
+Style: fast cuts (3 to 7 seconds a scene), one prize moment per game, every caption = the line spoken, calm tone.
 
-Facts used here (keep in step with `WHEEL`, `SCRATCH`, `MONTY`, `DROPZONE` in `cosmetics-data.js` before recording):
-- Daily Spin: one free spin per UK day. Prizes: Diamonds (25 up to 1,000), XP, the Lucky Wheel avatar, the Lucky Spin card back.
-- Scratch Card: one free card per UK day. Nine real cards, one winning line. Prizes 10 / 50 / 100 / 250 Diamonds, the Prism Ace avatar, the Prism Joker card back.
-- Three Cards: once a week. Find the big card after 9 swaps: 300 Diamonds, the other two pay 50 and 25.
-- Drop Zone: you start with 1 card, every game you win in any mode earns another (bank holds 10). Slots: Avatar, 50, 25, 10, 20, 50, Card Back.
-- A prize item you already own pays 1,250 Diamonds instead.
+Facts (check against `WHEEL`, `SCRATCH`, `MONTY`, `DROPZONE` in `cosmetics-data.js` before recording):
+- Daily Spin: 1 free spin per UK day. Diamonds, XP, Lucky Wheel avatar, Lucky Spin card back.
+- Scratch Card: 1 free card per UK day. Three in a line wins. Prism Ace avatar, Prism Joker card back.
+- Three Cards: once a week. Follow the big card: 300 Diamonds.
+- Drop Zone: every win, in any mode, earns a card. Drop it for Diamonds, an avatar or a card back.
 
 ---
 
-## Scene 1: Hook (0:00 to 0:06)
+## 1. Hook (0:00 to 0:04)
 
-**Screen:** Home screen. The four round Lucky Games icons glow in the corners (wheel and Three Cards on the right, Scratch Card and Drop Zone on the left, gold dots showing).
-**Voiceover:** "Four free games hiding on your home screen. Every one can win you Diamonds, and rare avatars and card backs."
-**Caption:** Four free Lucky Games
-**Notes:** Slow push-in on the icons. Hold the Drop Zone badge showing a card count.
+**Screen:** Straight into a win pop-up: "New avatar: Prism Ace" with confetti. Quick freeze, then pull back to the home screen with the four glowing Lucky Games icons.
+**Voiceover:** "I just won this. For free."
+**Caption:** Won for free
 
-## Scene 2: Daily Spin (0:06 to 0:20)
+## 2. Daily Spin (0:04 to 0:12)
 
-**Screen:** Tap the wheel icon. The Daily Spin opens. Tap SPIN. Wheel turns, pegs tick, the red pointer settles. Win pop-up: "+100 Diamonds" with confetti. Quick cut to the prize preview rows (Lucky Wheel avatar, Lucky Spin back).
-**Voiceover:** "The Daily Spin. One free spin every day. Land on Diamonds or XP, or get lucky and win the Lucky Wheel avatar or the Lucky Spin card back."
-**Caption:** Daily Spin: one free spin a day
-**Notes:** Use the sound of the wheel ticks. Tap a prize row once to show the big preview (2 seconds).
+**Screen:** Tap the wheel. SPIN. Pegs tick, pointer slows, lands: "+250 Diamonds".
+**Voiceover:** "One free spin, every day."
+**Caption:** Daily Spin
 
-## Scene 3: Scratch Card (0:20 to 0:34)
+## 3. Scratch Card (0:12 to 0:20)
 
-**Screen:** Tap the scratch icon. A 3x3 grid of real cards under silver foil. Drag a finger across the foil; it peels with a shine. Cards turn up. A row of three Aces lights up gold. Pop-up: "Prism Ace avatar".
-**Voiceover:** "The Scratch Card. One a day. Scratch the foil, and if you line up three in a row, you win. Three Aces gets you the Prism Ace avatar."
-**Caption:** Scratch Card: match three in a line
-**Notes:** Record a card that wins on purpose (use the AmitK test account and Reset Lucky Games). Show the winning line glow.
+**Screen:** Scratch card tap. Finger drags across the foil, the grid of real cards appears, a line of three Aces glows gold.
+**Voiceover:** "One free scratch card. Line up three to win."
+**Caption:** Scratch Card
 
-## Scene 4: Three Cards (0:34 to 0:46)
+## 4. Three Cards (0:20 to 0:27)
 
-**Screen:** Tap the Three Cards icon. The big card is shown, flips face down, the three cards shuffle with sliding sounds. Tap one. It flips: "300 Diamonds".
-**Voiceover:** "Three Cards. Once a week. Watch the big card, follow it through the shuffle, and pick. Find it and it pays three hundred."
-**Caption:** Three Cards: follow the big card
-**Notes:** Keep the shuffle at normal speed so viewers can try to follow it. Land the pick on the big card.
+**Screen:** Big card shown, flips, shuffles. Tap one. It flips: "300 Diamonds".
+**Voiceover:** "Follow the big card. Find it, win three hundred."
+**Caption:** Three Cards, every week
 
-## Scene 5: Drop Zone (0:46 to 0:62)
+## 5. Drop Zone (0:27 to 0:36)
 
-**Screen:** Tap the Drop Zone icon. The gold board with pegs. Tap DROP. The card (in your own card back) bounces down and lands in the 50 slot. Then show the card count at 3, tap DROP ALL: cards drop one after another, and one total pops up at the end.
-**Voiceover:** "Drop Zone. Win any game, in any mode, and earn a card. Drop it down the pegs and see where it lands. Got a few saved up? Drop all of them and see your total at the end."
-**Caption:** Drop Zone: win games, earn cards
-**Notes:** Show the match summary row "Drop Zone, card earned" for 2 seconds before the drop (Scene 5 can start from the end of a bot game). Show the Avatar and Card Back slots at the edges.
+**Screen:** End of a bot game: summary row "Drop Zone card earned". Tap it. The card bounces down the gold pegs and lands in the Card Back slot. Pop-up with the new card back.
+**Voiceover:** "Win any game, earn a card. Drop it, and see where it lands."
+**Caption:** Drop Zone: win a game, drop a card
 
-## Scene 6: Close (0:62 to 0:70)
+## 6. Close (0:36 to 0:40)
 
-**Screen:** Back to home. The four icons again, then the end card.
-**Voiceover:** "Four games, all free. Come back every day. Play ShitHead Deluxe."
-**End card text:** "Four Lucky Games. All free." plus the game link (shithead-deluxe.web.app) and "Sign in to play".
+**Screen:** Home, the four icons pulse once. End card: "Four Lucky Games. All free." + shithead-deluxe.web.app.
+**Voiceover:** "Four free games. Come back every day."
+**Caption:** Come back every day
 
 ---
 
-## Recording checklist
+## Recording notes
 
-- Use the AmitK test account so Lucky Games can be reset (menu or Dev page: Reset Lucky Games) and Diamonds are plentiful.
-- Record the real game at 390x844 with `tools/video/director.js` (`openGame` with `size: [1080, 1920]`, `audio: true`); no fake screens.
-- The Halloween/seasonal wheel colours change with the date. Pick a calm date or set `seasonalNowOverride` so the wheel looks the same in every take.
-- Hide event pop-ups and the helper tips before recording.
-- Show paused frames of any new effect to the owner before publishing (house rule).
-- Voiceover lines go in `tools/video/` alongside the other `*-voice.py` files when the video is built; finished video goes in `docs/videos/` with its captions in the README there.
+- Use the AmitK test account (menu or Dev page: Reset Lucky Games) so each game can be replayed until the prize shot is a good one. Use Grant Diamonds only if the balance needs to look healthy.
+- Record at 390x844 with `tools/video/director.js` (`openGame` `size: [1080, 1920]`, `audio: true`). Real game screens only.
+- Keep one take per game under 7 seconds; trim the wait for the wheel to stop by recording the spin at normal speed and cutting the wait before the pop-up.
+- Pick a calm table and date so the wheel colours match in every take (set `seasonalNowOverride` if an event is live). Hide event pop-ups and helper tips.
+- Show the owner paused frames before publishing (house rule).
+- Voiceover lines go with the other `tools/video/*-voice.py` files; the finished video goes in `docs/videos/` with captions in its README.
 
-## Short cut-downs (optional, 15 seconds each)
+## Optional 15-second cut-downs
 
-1. Drop Zone only: win a game, get a card, drop it, land on the avatar slot ("Your next win could drop an avatar").
-2. Scratch Card only: peel the foil and reveal three Aces.
-3. Daily Spin only: spin, land on 1,000 Diamonds.
+1. Drop Zone: win a game, drop the card, land on the avatar slot.
+2. Scratch Card: peel the foil, reveal three Aces.
+3. Daily Spin: spin, land on 1,000 Diamonds.
