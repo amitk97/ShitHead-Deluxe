@@ -8522,12 +8522,19 @@
       if (!fresh && data.phase === 'PLAY') rankedTick();
     }
 
-    function syncFirebaseGameState() {
+    // v495: a save that fails with an error (not a lost race) is tried again up to
+    // SAVE_RETRY_MS.length times while this is still the newest save, with the pill showing.
+    const SAVE_RETRY_MS = [600, 1500, 3500];
+    let saveSeq = 0, saveRetryTimer = 0;
+    function syncFirebaseGameState(attempt) {
+      attempt = Number.isInteger(attempt) ? attempt : 0;
       if (isServerRanked()) return;
       if (!state.isMultiplayer || !state.roomCode || state.spectating) return;
       if (state.phase === 'PLAY' && state.players.filter(p => !p.hasFinished).length > 1) noteStalemateTurn(); // counted before it's saved
       const baseVersion = state.stateVersion || 0;
       state.stateVersion = baseVersion + 1;
+      const mySeq = ++saveSeq, myRoom = state.roomCode;
+      clearTimeout(saveRetryTimer);
       const syncedState = {
         matchId: state.matchId || null,
         phase: state.phase,
@@ -8565,7 +8572,20 @@
         if (syncedState.jokerTurnOwnerId === null) delete next.jokerTurnOwnerId;
         return next;
       }, (error, committed, snapshot) => {
-        if (error || committed || !snapshot || !snapshot.val()) return;
+        if (error) {
+          Health.note('saveError');
+          if (mySeq !== saveSeq || state?.roomCode !== myRoom || state.stateVersion !== baseVersion + 1) return; // a newer save took over
+          if (attempt >= SAVE_RETRY_MS.length) { setConnectionBanner('lost'); setTimeout(() => setConnectionBanner('hidden'), 2500); return; }
+          setConnectionBanner('lost');
+          saveRetryTimer = setTimeout(() => {
+            if (mySeq !== saveSeq || state?.roomCode !== myRoom || state.stateVersion !== baseVersion + 1) return;
+            state.stateVersion = baseVersion;
+            syncFirebaseGameState(attempt + 1);
+          }, SAVE_RETRY_MS[attempt]);
+          return;
+        }
+        if (attempt > 0 && committed) setConnectionBanner('hidden');
+        if (committed || !snapshot || !snapshot.val()) return;
         rejectedSaves++;
         Health.note('rejectedSave');
         const server = snapshot.val();
@@ -15640,7 +15660,7 @@
         loadMedian: median(sessions.map(r => Number(r.loadMs) || 0)), loadP90: p90(sessions.map(r => Number(r.loadMs) || 0)),
         fps: frameMs ? Math.round((frames / frameMs) * 1000) : 0, slowPct: frames ? Math.round((slow / frames) * 1000) / 10 : 0,
         jankySessions: sessions.filter(r => r.frames && r.frames.n > 300 && r.frames.slow / r.frames.n > 0.05).length,
-        modes, rejectedSaves: count('rejectedSave'), errors: count('errors'),
+        modes, rejectedSaves: count('rejectedSave'), saveErrors: count('saveError'), errors: count('errors'),
         // v490 timings (only sessions on v490 or later carry them).
         renderN: count('renderN'), renderAvg: count('renderN') ? Math.round(count('renderMs') / count('renderN')) : 0,
         renderSlowPct: count('renderN') ? Math.round((count('renderSlow') / count('renderN')) * 1000) / 10 : 0,
@@ -15688,7 +15708,7 @@
           : row('Timings', 'none yet', 'they appear once players are on this version')),
         box('Matches', h.modes.filter(m => m.started).map(m => row(m.mode[0].toUpperCase() + m.mode.slice(1),
           `${m.finished}/${m.started} finished`, `${m.left} left · ${m.abandoned} abandoned (app closed)`)).join('') || row('Matches', 'none yet')),
-        box('Problems', row('Online saves rejected', h.rejectedSaves, 'two phones saved at once; the later one reloaded the table') + row('Errors', h.errors, 'details in the ERRORS tab')),
+        box('Problems', row('Online saves rejected', h.rejectedSaves, 'two phones saved at once; the later one reloaded the table') + row('Online saves failed (retried)', h.saveErrors, 'no signal while saving; the game tried again') + row('Errors', h.errors, 'details in the ERRORS tab')),
         box('Screens', h.screens.length ? h.screens.map(([k, n]) => `<div class="py-1 border-b border-slate-800 text-slate-300">${escapeHtml(k)} <b class="text-white">×${n}</b></div>`).join('') : row('Screens', 'none yet'))
       ].join('');
     }

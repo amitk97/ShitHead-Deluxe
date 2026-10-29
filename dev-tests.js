@@ -6116,6 +6116,20 @@ async function runDevTestSuite() {
       assertEqual(getComputedStyle(probe).animationPlayState, 'running', 'Runs again once it closes');
     } finally { probe.remove(); page.classList.toggle('hidden', wasHidden); coverWatch.sync(); }
   });
+  await test('v496: a room save that fails with an error is tried again and shows the Reconnecting pill', async () => {
+    const saved = { isMultiplayer: state.isMultiplayer, roomCode: state.roomCode, spectating: state.spectating, stateVersion: state.stateVersion };
+    const realDb = db; let calls = 0;
+    try {
+      state.isMultiplayer = true; state.roomCode = '123456'; state.spectating = null; state.stateVersion = 5;
+      db = { ref: () => ({ transaction: (fn, done) => { calls++; fn({ stateVersion: 5 }); done(calls === 1 ? new Error('network') : null, calls > 1, { val: () => ({}) }); }, update() {} }) };
+      syncFirebaseGameState();
+      assertTrue(!document.getElementById('connectionStatusBanner').classList.contains('hidden'), 'pill shown after the failure');
+      await new Promise(r => setTimeout(r, 900));
+      assertTrue(calls === 2, 'tried again once (got ' + calls + ')');
+      assertTrue(state.stateVersion === 6, 'version is base + 1 again');
+      assertTrue(document.getElementById('connectionStatusBanner').classList.contains('hidden'), 'pill hidden once it saved');
+    } finally { db = realDb; Object.assign(state, saved); }
+  });
   await test('v495: equipped effects are preloaded once before a match (painted burn art decoded, owner layers fetched)', () => {
     assertTrue(typeof ShLevel3D.preload === 'function', 'ShLevel3D.preload exists');
     fxPreloaded.delete('burn-halloween');
