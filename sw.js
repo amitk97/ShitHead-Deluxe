@@ -12,7 +12,7 @@ const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192-v302.png', '/icons
 const OFFLINE_ASSETS = [
   '/art/cities-v2/city-effects.js?v=4e5acd905f79',
   // Application code and styles, including their deployment version keys.
-  '/game.css?v=921fc55dc7d2',
+  '/game.css?v=4fb18233eb8a',
   '/tailwind.css?v=a6876526974d',
   '/sound.js?v=d6eb2b1b0c75',
   '/burn-effects.js?v=4a5efe7c5054',
@@ -25,7 +25,7 @@ const OFFLINE_ASSETS = [
   '/js/play-matrix-ui.js?v=6a8c496bcbb8',
   '/js/play-matrix-panel.js?v=c3626e811e5c',
   '/js/card-hold.js?v=83850e0f086c',
-  '/js/whats-new-data.js?v=b6652732ce04',
+  '/js/whats-new-data.js?v=d36c5e96fb48',
   '/js/avatar-tones.js?v=a1fc8ff23117',
   '/cosmetics-data.js?v=08c3fa477b7a',
   '/tutorial-data.js?v=51e38ba66974',
