@@ -15096,11 +15096,14 @@
     // daily challenges and any seasonal picture.
     let matchRewardLog = [];
     let matchXpLog = { gained: 0, levelUps: [] }; // XP added this match (§ XP & levels)
+    let matchDropCards = 0; // Drop Zone cards earned this match (shown in the summary)
+    window.noteMatchDropCard = (n) => { matchDropCards += Math.max(1, Number(n) || 1); refreshMatchSummary(); };
     let matchSummaryRating = null;
     let matchSummaryTimer = null;
     function resetMatchSummary() {
       matchRewardLog = [];
       matchXpLog = { gained: 0, levelUps: [] };
+      matchDropCards = 0;
       matchSummaryRating = null;
       clearTimeout(matchSummaryTimer);
       document.getElementById('matchSummaryModal')?.classList.add('hidden');
@@ -15172,10 +15175,12 @@
         <div class="ms-section"><div class="ms-label">Your game</div><div class="ms-stats">${stat(st.played, 'Played')}${stat(st.pickedUp, 'Picked up')}${stat(st.burnt, 'Burns')}${stat(st.turns, 'Turns')}${stat(st.jokersPlayed, 'Jokers')}${stat(st.biggestPickup, 'Biggest pickup')}</div></div>
         <div class="ms-section"><div class="ms-label">Diamonds earned</div>${rewards}</div>
         ${matchSummaryXpHtml()}
+        ${currentUser && matchDropCards > 0 && window.ShWheel ? `<div class="ms-section"><div class="ms-label">Drop Zone</div><div class="ms-reward"><span>Card earned</span><b>+${matchDropCards} card${matchDropCards === 1 ? '' : 's'}</b></div><button type="button" class="ms-levelup" data-ms-drop>Drop it now ›</button></div>` : ''}
         ${progress.length ? `<div class="ms-section"><div class="ms-label">Progress</div>${progress.join('')}</div>` : ''}`;
     }
     // Mirrors whatever the end-of-match row offers: Quick Play (rematch),
     // the guest's "waiting for host", or Ranked's "return to Ranked".
+    document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-ms-drop]') && window.ShWheel) window.ShWheel.open('drop'); });
     function matchSummaryAgainAction() {
       const quick = document.getElementById('quickPlayMatchBtn');
       const lobby = document.getElementById('playAgainMatchBtn');

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-29-v507 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-29-v508 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -2628,6 +2628,23 @@
           </div>
         </div>
 
+        <!-- Lucky Games (v508) -->
+        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="lucky">
+          <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
+            <span>Lucky Games</span>
+            <span class="chevron transform transition-transform duration-200">&#9660;</span>
+          </button>
+          <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
+            <p><strong>What they are.</strong> Four small games for Diamonds, XP and a few items you cannot buy. They are the round buttons on the home screen. Press and hold one to read what it does. You need to be signed in.</p>
+            <p><strong>Daily Spin.</strong> One free spin a day. The wheel can give Diamonds, XP, the Lucky Wheel avatar or the Lucky Spin card back. If you already own an item, that slice pays 1,250 Diamonds instead.</p>
+            <p><strong>Scratch Card.</strong> One free card a day. Scratch off the foil: three of a kind in a line, like tic tac toe, wins. Jacks, Queens and Kings pay Diamonds; three Aces or three Jokers give the Prism Ace avatar or Prism Joker card back.</p>
+            <p><strong>Three Cards.</strong> One free play a week. Follow the 300 Diamond card as the three cards are shuffled, then pick it. The other two pay less.</p>
+            <p><strong>Drop Zone.</strong> A card falls through the pegs into one of seven slots: Avatar, 50, 25, 10, 20, 50 or Card Back. Most land on 10 Diamonds; the Drop Zone avatar and card back are rare (1% each). You start with one card and earn another for every game you win in any mode, up to ten saved. Tap <em>Drop all</em> to use several at once. The card you see falling wears your equipped card back.</p>
+            <p><strong>Items.</strong> Lucky Games items live in <em>Custom</em> under <em>Lucky Games</em>. Tap a prize in a game's list for a bigger look.</p>
+            <p><strong>Fair play.</strong> Every result is drawn on the server, not on your phone.</p>
+          </div>
+        </div>
+
         <!-- Puzzles (v343) -->
         <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="nomercy">
           <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
@@ -2745,6 +2762,7 @@
             <p data-term="level"><strong class="text-amber-400">Level:</strong> You earn XP for finishing games, winning, Ranked, the Gauntlet and challenges. Levels run from 1 to 99; every level up pays Diamonds, and some levels unlock free items (see <em>Level Rewards</em>). While a seasonal event is on, all the XP you earn is 1.5&times;.</p>
             <p data-term="level-rewards"><strong class="text-amber-400">Level Rewards:</strong> Free things you unlock by levelling up: 2x game speed at Lvl 5 and 4x at Lvl 10 (signed in), a second saved look at Lvl 10 and a third at Lvl 20, and earn-only avatars (Rookie Rogue 10, Card Shark 25, Burn King 50, Chaos Jester 75, The ShitHead 99) and card backs (First Burn 10, Shark&rsquo;s Mark 30, Inferno 50, Chaos Crown 70, Master of the Pile 99). Your level badge also changes colour at 20, 40, 60, 80 and 99.</p>
             <p data-term="lives"><strong class="text-amber-400">Lives:</strong> Your hearts in the Gauntlet. You start with 3; losing a game costs one and you replay the same bot.</p>
+            <p data-term="lucky-games"><strong class="text-amber-400">Lucky Games:</strong> The Daily Spin, Scratch Card, Three Cards and Drop Zone: the round buttons on the home screen. Free plays for Diamonds, XP and items you cannot buy.</p>
             <p data-term="menu"><strong class="text-amber-400">Menu:</strong> The &equiv; button at the right of the Header. It holds Challenges, Friends, Leaderboard, Level Ladder, Stats and Support, and gives you Shop, Custom and Guide whenever the Header has folded them away.</p>
             <p data-term="mode-card"><strong class="text-amber-400">Mode Card:</strong> One card in the row on the home screen: Gauntlet, Play Computer, Ranked, Play Friends and More Modes. Swipe or use the arrows, then tap Go (or the middle card) to open it. Press and hold a card to move it.</p>
             <p data-term="multiple-decks"><strong class="text-amber-400">Multiple Decks:</strong> A mode with two decks shuffled together (108 cards, 4 Jokers) for 4 to 8 players. Snap Burns play every matching card and a Joker chain can run to four.</p>
@@ -2852,7 +2870,7 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=83850e0f086c"></script>
-  <script src="js/whats-new-data.js?v=ec901e1ad934"></script>
+  <script src="js/whats-new-data.js?v=1f69973aa85c"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=08c3fa477b7a"></script>
   <script src="tutorial-data.js?v=51e38ba66974"></script>
@@ -2863,13 +2881,13 @@
   <script src="home-navigation.js?v=8b927cb2e918"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=da8422f1a1a2"></script>
+  <script src="app.js?v=b8f5d2a2325f"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>
   <script src="js/house-rules-presets.js?v=80f7a658ecb1"></script>
   <script src="js/friends-lobby.js?v=d6461177af51"></script>
-  <script src="js/lucky-wheel.js?v=c6aab814e299"></script>
+  <script src="js/lucky-wheel.js?v=eddc115eeac9"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>
   <script src="js/puzzles.js?v=87cb627bec7c"></script>

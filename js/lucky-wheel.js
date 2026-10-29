@@ -683,6 +683,7 @@
       const chip = $('homeDropChip');
       if (chip && !motionOff()) { chip.classList.remove('dz-bump'); void chip.offsetWidth; chip.classList.add('dz-bump'); }
       if (typeof notifyBanner === 'function') notifyBanner(`You earned a Drop Zone card. You have ${D.cards}.`);
+      if (typeof window.noteMatchDropCard === 'function') window.noteMatchDropCard(z.awarded === true ? 1 : Number(z.awarded) || 1);
       if (audio.playWheelWin) audio.playWheelWin('small');
     }
   }

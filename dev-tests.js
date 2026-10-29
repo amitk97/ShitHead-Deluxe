@@ -9389,6 +9389,7 @@ async function runDevTestSuite() {
       assertEqual(getComputedStyle(document.querySelector('#profileRatingText .profile-wl')).fontSize, getComputedStyle(pillEl).fontSize, 'Same size as the rank and rating');
       const name = document.getElementById('profileUsernameText').getBoundingClientRect();
       assertTrue(Math.abs(name.left - pill.left) < 1.5, 'Name and pill share a left edge');
+      const slot = document.querySelector('#profileAvatarBtn [data-own-avatar]'); if (!slot.firstElementChild) slot.innerHTML = avatarHtml('default', 68); // the slot is only filled while signed in
       const tile = document.querySelector('#profileAvatarBtn .avatar-tile, #profileAvatarBtn [data-own-avatar] > *').getBoundingClientRect();
       const streak = st.getBoundingClientRect();
       assertTrue(Math.abs(tile.top - document.querySelector('.profile-name-row').getBoundingClientRect().top) < 6 && Math.abs(tile.bottom - streak.bottom) < 10, `Picture spans name to streak (${Math.round(tile.top)}–${Math.round(tile.bottom)} vs ${Math.round(name.top)}–${Math.round(streak.bottom)})`);
