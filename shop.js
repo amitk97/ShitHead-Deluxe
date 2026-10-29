@@ -64,7 +64,7 @@
       // 'default' is shared by several categories; resolve it with the tile type.
       if (id === 'default' && type === 'cardBack') return { id, name:'Default Card Back', category:'Card Backs', builtIn:true };
       if (id === 'default' && DEFAULT_PREVIEW_ITEMS[type]) return { id, ...DEFAULT_PREVIEW_ITEMS[type], builtIn:true };
-      return [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(i => i.id === id) || null;
+      return [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS, ...(typeof NM_EARNED !== "undefined" ? NM_EARNED : [])].find(i => i.id === id) || null;
     }
     function bigPreviewStatus(item) {
       if (item.builtIn || cosmeticPurchaseState[item.id]) return 'You own this.';

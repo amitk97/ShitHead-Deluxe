@@ -177,8 +177,8 @@
     const row = (id, sym) => { const p = SCR.prizes.find(x => x.symbol === sym); return { p, own: S.scOwned && S.scOwned[p.itemId] }; };
     const a = row('avatar', 'A'), b = row('back', 'JOKER');
     const line = r => r.own ? `You own it, so it pays ${SCR.dupeDiamonds.toLocaleString('en-GB')} Diamonds` : `${(r.p.weight / 10).toString().replace(/\.0$/, '')}% chance`;
-    el.innerHTML = `<div class="lw-prize-row">${avatarHtml(a.p.itemId, 52)}<span class="lw-prize-t"><b>${a.p.name} avatar</b><span>Three Aces in a line · ${line(a)}</span></span></div>`
-      + `<div class="lw-prize-row"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass(b.p.itemId)} lw-backprev"></span></span><span class="lw-prize-t"><b>${b.p.name} card back</b><span>Three Jokers in a line · ${line(b)}</span></span></div>`;
+    el.innerHTML = `<div class="lw-prize-row" data-lw-preview="${a.p.itemId}" role="button" tabindex="0" title="Tap for a bigger preview">${avatarHtml(a.p.itemId, 52)}<span class="lw-prize-t"><b>${a.p.name} avatar</b><span>Three Aces in a line · ${line(a)}</span></span></div>`
+      + `<div class="lw-prize-row" data-lw-preview="${b.p.itemId}" role="button" tabindex="0" title="Tap for a bigger preview"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass(b.p.itemId)} lw-backprev"></span></span><span class="lw-prize-t"><b>${b.p.name} card back</b><span>Three Jokers in a line · ${line(b)}</span></span></div>`;
   }
   // Foil: silver-gold metal with a rainbow holo wash, brushed lines, glitter and bevelled edges; a second canvas sweeps a light band
   // and twinkles over what is left of it (destination-in with the foil, so scratched holes stay clear).
@@ -427,8 +427,8 @@
     const el = $('wheelPrize'); if (!el || typeof avatarHtml !== 'function') return;
     const odds = id => { const p = WHEEL.prizes.find(x => x.id === id); return p ? `${(p.weight / 10).toString().replace(/\.0$/, '')}% chance` : ''; };
     const own = id => S.owned[id === 'avatar' ? 'avatar-wheel' : 'back-wheel'], pay = `You own it, so that slice pays ${WHEEL.dupeDiamonds.toLocaleString('en-GB')} Diamonds`;
-    el.innerHTML = `<div class="lw-prize-row">${avatarHtml('avatar-wheel', 52)}<span class="lw-prize-t"><b>Lucky Wheel avatar</b><span>Your profile picture · ${own('avatar') ? pay : odds('avatar')}</span></span></div>`
-      + `<div class="lw-prize-row"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass('back-wheel')} lw-backprev"></span></span><span class="lw-prize-t"><b>Lucky Spin card back</b><span>The design on your cards' backs · ${own('back') ? pay : odds('back')}</span></span></div>`
+    el.innerHTML = `<div class="lw-prize-row" data-lw-preview="avatar-wheel" role="button" tabindex="0" title="Tap for a bigger preview">${avatarHtml('avatar-wheel', 52)}<span class="lw-prize-t"><b>Lucky Wheel avatar</b><span>Your profile picture · ${own('avatar') ? pay : odds('avatar')}</span></span></div>`
+      + `<div class="lw-prize-row" data-lw-preview="back-wheel" role="button" tabindex="0" title="Tap for a bigger preview"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass('back-wheel')} lw-backprev"></span></span><span class="lw-prize-t"><b>Lucky Spin card back</b><span>The design on your cards' backs · ${own('back') ? pay : odds('back')}</span></span></div>`
       + `<span class="lw-prize-note">Wheel-only. You can't buy them.</span>`;
   }
 
@@ -556,9 +556,9 @@
     DZR.slots.forEach((sl, i) => {
       const cx = 36 + 48 * i, c = DZ_COL[i], w = 42;
       let lab;
-      if (sl.kind !== 'item') lab = `<path d="M${cx - 8} ${SY + 19.6}l4-5.6h8l4 5.6-8 9.9z" fill="${c}" stroke="#fff" stroke-opacity=".7" stroke-width=".8"/><text x="${cx}" y="${SY + 58}" text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-size="20" font-weight="800" fill="${T}">${sl.amount}</text>`;
-      else if (sl.itemId.startsWith('avatar')) lab = `<circle cx="${cx}" cy="${SY + 30}" r="12" fill="#13244d" stroke="${c}" stroke-width="2"/><circle cx="${cx}" cy="${SY + 26}" r="4.4" fill="${c}"/><path d="M${cx - 8} ${SY + 38}q8-10 16 0z" fill="${c}"/><text x="${cx}" y="${SY + 66}" text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-size="9.5" font-weight="800" fill="${T}" letter-spacing=".5">AVATAR</text><text x="${cx}" y="${SY + 78}" text-anchor="middle" font-size="8" fill="${c}">1%</text>`;
-      else lab = `<rect x="${cx - 9}" y="${SY + 14}" width="18" height="26" rx="3" fill="#13244d" stroke="${c}" stroke-width="2"/><path d="M${cx - 4} ${SY + 22}h8M${cx - 4} ${SY + 28}h8" stroke="${c}" stroke-width="1.6"/><text x="${cx}" y="${SY + 66}" text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-size="9.5" font-weight="800" fill="${T}" letter-spacing=".5">BACK</text><text x="${cx}" y="${SY + 78}" text-anchor="middle" font-size="8" fill="${c}">1%</text>`;
+      if (sl.kind !== 'item') lab = `<path d="M${cx - 8} ${SY + 19.6}l4-5.6h8l4 5.6-8 9.9z" fill="${c}" stroke="#fff" stroke-opacity=".7" stroke-width=".8"/><text x="${cx}" y="${SY + 62}" text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-size="23" font-weight="800" fill="${T}">${sl.amount}</text>`;
+      else if (sl.itemId.startsWith('avatar')) lab = `<circle cx="${cx}" cy="${SY + 32}" r="14" fill="#13244d" stroke="${c}" stroke-width="2"/><circle cx="${cx}" cy="${SY + 27}" r="5" fill="${c}"/><path d="M${cx - 9} ${SY + 42}q9-11 18 0z" fill="${c}"/><text x="${cx}" y="${SY + 72}" text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-size="11" font-weight="800" fill="${T}">AVATAR</text>`;
+      else lab = `<rect x="${cx - 11}" y="${SY + 12}" width="22" height="32" rx="3.5" fill="#13244d" stroke="${c}" stroke-width="2"/><path d="M${cx - 5} ${SY + 22}h10M${cx - 5} ${SY + 29}h10" stroke="${c}" stroke-width="1.6"/><text x="${cx}" y="${SY + 72}" text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-size="12" font-weight="800" fill="${T}">BACK</text>`;
       g += `<g class="dz-slot" data-slot="${i}"><rect class="dz-sglow" x="${cx - w / 2 - 3}" y="${SY - 3}" width="${w + 6}" height="92" rx="9" fill="#ffd36a" opacity="0" filter="url(#dzGlow)"/><rect x="${cx - w / 2}" y="${SY}" width="${w}" height="86" rx="8" fill="#0d0b12" stroke="${GD}" stroke-width="2"/><rect x="${cx - w / 2 + 4}" y="${SY + 4}" width="${w - 8}" height="78" rx="5" fill="none" stroke="#e5b04a" stroke-opacity=".3"/>${lab}</g>`;
     });
     let back = '<div class="custom-card-back"></div>';
@@ -669,8 +669,8 @@
     const pz = $('dropPrize');
     if (pz && typeof avatarHtml === 'function') {
       const own = (id) => D.owned[id], pay = `You own it, so it pays ${DZR.dupeDiamonds.toLocaleString('en-GB')} Diamonds`;
-      pz.innerHTML = `<div class="lw-prize-row">${avatarHtml('avatar-dropzone', 52)}<span class="lw-prize-t"><b>Drop Zone avatar</b><span>Far left slot · ${own('avatar-dropzone') ? pay : '1% chance'}</span></span></div>`
-        + `<div class="lw-prize-row"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass('back-dropzone')} lw-backprev"></span></span><span class="lw-prize-t"><b>Drop Zone card back</b><span>Far right slot · ${own('back-dropzone') ? pay : '1% chance'}</span></span></div>`;
+      pz.innerHTML = `<div class="lw-prize-row" data-lw-preview="avatar-dropzone" role="button" tabindex="0" title="Tap for a bigger preview">${avatarHtml('avatar-dropzone', 52)}<span class="lw-prize-t"><b>Drop Zone avatar</b><span>Far left slot · ${own('avatar-dropzone') ? pay : '1% chance'}</span></span></div>`
+        + `<div class="lw-prize-row" data-lw-preview="back-dropzone" role="button" tabindex="0" title="Tap for a bigger preview"><span class="lw-prize-back"><span class="custom-card-back ${getCosmeticBackClass('back-dropzone')} lw-backprev"></span></span><span class="lw-prize-t"><b>Drop Zone card back</b><span>Far right slot · ${own('back-dropzone') ? pay : '1% chance'}</span></span></div>`;
     }
     dzPaint();
   }
@@ -767,4 +767,8 @@
     reset() { D.cards = null; S.status = null; S.monty = null; S.owned = {}; S.built = false; S.angle = 0; clearInterval(S.timer); paint(); $('wheelModal')?.classList.add('hidden'); },
     refresh, state: S, tierOf
   };
+  // Tap a prize row (avatar or card back) for the big preview.
+  const lwPreview = (e) => { const r = e.target.closest && e.target.closest('[data-lw-preview]'); if (r && typeof openBigPreview === 'function') openBigPreview(r.dataset.lwPreview); };
+  document.addEventListener('click', lwPreview);
+  document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[data-lw-preview]')) { e.preventDefault(); lwPreview(e); } });
 })();
