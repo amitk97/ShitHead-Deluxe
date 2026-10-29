@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-29-v500 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-29-v501 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -1541,6 +1541,15 @@
         <button id="devCloseBtn" class="text-slate-400 hover:text-lime-400 text-lg leading-none font-black transition" aria-label="Close">&times;</button>
       </div>
       <p id="devBuild" class="text-[10px] text-slate-500 mb-2" style="flex-shrink:0;"></p>
+      <div id="devGrant" class="hidden" style="flex:1; min-height:0; flex-direction:column; gap:8px;">
+        <button type="button" id="devGrantBack" class="text-[10px] font-black text-slate-300 text-left">&lsaquo; BACK</button>
+        <input id="devGrantSearch" type="search" placeholder="Search players" autocomplete="off" class="w-full rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs px-2 py-2">
+        <div id="devGrantPlayers" class="overflow-y-auto" style="flex:1; min-height:80px; max-height:30vh;"></div>
+        <div id="devGrantChips" class="flex gap-1.5 flex-wrap"></div>
+        <input id="devGrantAmount" type="number" min="1" max="100000" inputmode="numeric" placeholder="Diamonds (1 to 100,000)" class="w-full rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs px-2 py-2">
+        <input id="devGrantNote" type="text" maxlength="120" placeholder="Message to the player (optional)" class="w-full rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs px-2 py-2">
+        <button type="button" id="devGrantSend" class="text-[11px] font-black py-2 rounded-lg bg-amber-500 text-slate-950">SEND DIAMONDS</button>
+      </div>
       <div id="devList" class="overflow-y-auto" style="flex:1; min-height:0; display:flex; flex-direction:column; gap:6px;"></div>
     </div>
   </div>
@@ -2832,7 +2841,7 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=83850e0f086c"></script>
-  <script src="js/whats-new-data.js?v=ebd094b57504"></script>
+  <script src="js/whats-new-data.js?v=92ed842e7023"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=8acbee61afea"></script>
   <script src="tutorial-data.js?v=51e38ba66974"></script>
@@ -2843,7 +2852,7 @@
   <script src="home-navigation.js?v=8b927cb2e918"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=22544bf22454"></script>
+  <script src="app.js?v=48883ff6280b"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>

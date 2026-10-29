@@ -67,6 +67,8 @@ jobs:
 
       - name: AmitK test unlock switch
         run: node tools/test-unlock-test.js
+      - name: Dev tools (list players, grant Diamonds)
+        run: node tools/dev-grant-test.js
 
       - name: House Rules unit tests
         run: node tools/house-rules-test.js

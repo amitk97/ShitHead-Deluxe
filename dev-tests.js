@@ -6142,6 +6142,11 @@ async function runDevTestSuite() {
       assertTrue(got.filter(i => i === 'burn-halloween').length === 1, 'asked once for the painted burn');
     } finally { ShLevel3D.preload = was; }
   });
+  await test('v501: Dev has a Grant Diamonds panel and the Inbox draws a Diamonds message', () => {
+    assertTrue(!!document.getElementById('devGrant') && !!document.getElementById('devGrantSend'), 'grant panel exists');
+    const html = inboxItemHtml({ id: 'x', type: 'diamonds', amount: 250, note: 'Hi', sentAt: 1 });
+    assertTrue(/250/.test(html) && /Hi/.test(html), 'mail shows amount and note');
+  });
   await test('v500: the Dev page exists, is hidden for a normal account, and Health is no longer a tab in Error Reports', () => {
     assertTrue(document.getElementById('headerDevBtn').classList.contains('hidden'), 'Dev button hidden');
     assertTrue(!document.getElementById('headerGuideBtn').classList.contains('hidden'), 'Guide button shown');

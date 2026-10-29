@@ -1410,6 +1410,34 @@ actions.testResetLucky = async ({ uid, auth }) => {
   await admin.database().ref(`montyGames/${uid}`).remove();
   return { ok: true };
 };
+// AmitK only (dev page): lists every account with a public profile (name, level) so Diamonds can be sent.
+actions.devPlayers = async ({ auth }) => {
+  if (!isAmitK(auth)) fail('permission-denied', 'This tool is not available.');
+  const snap = await admin.database().ref('publicProfiles').once('value');
+  const out = [];
+  snap.forEach((c) => {
+    const v = c.val() || {};
+    if (v.username) out.push({ uid: c.key, name: clip(v.username, 20), level: num(v.level) || 1 });
+  });
+  out.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+  return { players: out };
+};
+// AmitK only: gives a player 1 to 100,000 Diamonds and mails them (type 'diamonds', optional short note).
+actions.devGrantDiamonds = async ({ auth, data }) => {
+  if (!isAmitK(auth)) fail('permission-denied', 'This tool is not available.');
+  const to = String(data?.to || '');
+  const amount = Math.floor(num(data?.amount));
+  if (!/^[A-Za-z0-9_-]{6,64}$/.test(to)) fail('invalid-argument', 'Pick a player.');
+  if (amount < 1 || amount > 100000) fail('invalid-argument', 'Amount must be 1 to 100,000.');
+  const note = clip(String(data?.note || ''), 120);
+  const now = Date.now();
+  const res = await userTx(to, (user) => {
+    addDiamonds(user, amount);
+    user.activityInbox = { ...(user.activityInbox || {}), [`diamonds_${now}`]: { type: 'diamonds', amount, note, sentAt: now } };
+    return { user };
+  });
+  return { ok: true, amount, diamonds: res.user.diamonds };
+};
 actions.testUnlock = async ({ uid, auth, data }) => {
   if (!isAmitK(auth)) fail('permission-denied', 'This switch is not available.');
   const on = !!data?.on;

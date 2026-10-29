@@ -15884,6 +15884,7 @@
         devRow(icon('menuErrorReportsBtn'), 'Error Reports', 'menuErrorReportsBtn'),
         devRow(icon('menuErrorReportsBtn'), 'Health', 'health'),
         ...DEV_ROWS.slice(1).map((id) => devRow(icon(id), label(id), id)),
+        devRow(icon('menuResetLuckyBtn'), 'Grant Diamonds', 'grant'),
         devRow(icon('menuGuideBtn'), 'Guide', 'menuGuideBtn'),
         devRow(icon('menuChangelogBtn'), 'Check For Update', 'update'),
         devRow(icon('menuResetLuckyBtn'), 'Show Tips And Pop-ups Again', 'seen')
@@ -15893,8 +15894,45 @@
     }
     document.getElementById('headerDevBtn')?.addEventListener('click', () => {
       if (!currentUser || !isAmitkTestingAccount({})) return;
-      paintDevList();
+      paintDevList(); devShowGrant(false);
       document.getElementById('devModal').classList.remove('hidden');
+    });
+    // Grant Diamonds: pick a player from the list, an amount and an optional message (server: devGrantDiamonds).
+    let devPlayers = null, devPick = null;
+    const devShowGrant = (on) => {
+      const g = document.getElementById('devGrant');
+      g.classList.toggle('hidden', !on); g.style.display = on ? 'flex' : '';
+      document.getElementById('devList').style.display = on ? 'none' : 'flex';
+    };
+    function paintDevPlayers() {
+      const q = document.getElementById('devGrantSearch').value.trim().toLowerCase();
+      const list = (devPlayers || []).filter((p) => !q || p.name.toLowerCase().includes(q)).slice(0, 80);
+      document.getElementById('devGrantPlayers').innerHTML = list.length ? list.map((p) =>
+        `<button type="button" data-dev-player="${escapeAttr(p.uid)}" class="w-full flex items-center justify-between text-xs px-2 py-1.5 rounded-lg border ${p.uid === devPick ? 'border-amber-400 bg-amber-500/15 text-amber-200' : 'border-transparent text-slate-200'}"><span>${escapeHtml(p.name)}</span><span class="text-slate-500">Lvl ${p.level}</span></button>`).join('')
+        : '<p class="text-[10px] text-slate-500 p-2">No players found.</p>';
+    }
+    async function openDevGrant() {
+      devShowGrant(true); devPick = null;
+      document.getElementById('devGrantChips').innerHTML = [100, 500, 1000, 5000, 10000].map((n) => `<button type="button" data-dev-amt="${n}" class="text-[10px] font-black px-2 py-1 rounded-lg border border-slate-600 text-slate-200">${n.toLocaleString('en-GB')}</button>`).join('');
+      document.getElementById('devGrantPlayers').innerHTML = '<p class="text-[10px] text-slate-500 p-2">Loading players…</p>';
+      try { devPlayers = (await callEconomy('devPlayers', {})).players || []; paintDevPlayers(); }
+      catch (e) { document.getElementById('devGrantPlayers').innerHTML = '<p class="text-[10px] text-rose-300 p-2">Couldn’t load players (is the latest Functions deploy live?).</p>'; }
+    }
+    document.getElementById('devGrantBack')?.addEventListener('click', () => devShowGrant(false));
+    document.getElementById('devGrantSearch')?.addEventListener('input', paintDevPlayers);
+    document.getElementById('devGrantPlayers')?.addEventListener('click', (e) => { const b = e.target.closest('[data-dev-player]'); if (b) { devPick = b.dataset.devPlayer; paintDevPlayers(); } });
+    document.getElementById('devGrantChips')?.addEventListener('click', (e) => { const b = e.target.closest('[data-dev-amt]'); if (b) document.getElementById('devGrantAmount').value = b.dataset.devAmt; });
+    document.getElementById('devGrantSend')?.addEventListener('click', async () => {
+      const amount = Math.floor(Number(document.getElementById('devGrantAmount').value));
+      const who = (devPlayers || []).find((p) => p.uid === devPick);
+      if (!who) return notifyBanner('Pick a player first.');
+      if (!(amount >= 1 && amount <= 100000)) return notifyBanner('Amount must be 1 to 100,000.');
+      if (!(await shConfirm({ title: 'Send Diamonds?', text: `${amount.toLocaleString('en-GB')} Diamonds to ${who.name}. They get a message in their Inbox.`, yes: 'Send', no: 'Cancel' }))) return;
+      try {
+        await callEconomy('devGrantDiamonds', { to: who.uid, amount, note: document.getElementById('devGrantNote').value });
+        notifyBanner(`Sent ${amount.toLocaleString('en-GB')} Diamonds to ${who.name}.`);
+        document.getElementById('devGrantAmount').value = ''; document.getElementById('devGrantNote').value = '';
+      } catch (e) { notifyBanner('Couldn’t send: ' + (e?.message || 'try again')); }
     });
     document.getElementById('devCloseBtn')?.addEventListener('click', () => document.getElementById('devModal').classList.add('hidden'));
     document.getElementById('devList')?.addEventListener('click', async (e) => {
@@ -15902,6 +15940,7 @@
       if (!row || !isAmitkTestingAccount({})) return;
       const id = row.dataset.devRow;
       if (id === 'health') { document.getElementById('devModal').classList.add('hidden'); openReports('health'); return; }
+      if (id === 'grant') { openDevGrant(); return; }
       if (id === 'update') { notifyBanner('Checking for a newer version…'); await checkForNewVersion(true); return; }
       if (id === 'seen') {
         devSeenKeys().forEach((k) => { try { localStorage.removeItem(k); } catch (_) {} });
@@ -20717,7 +20756,7 @@
       if (e.target.id === 'inboxModal') document.getElementById('inboxModal').classList.add('hidden');
     });
     // Mail kinds stored under users/{uid}/activityInbox.
-    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level', 'friendLevel', 'series', 'eventPrize', 'seasonPass'];
+    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level', 'friendLevel', 'series', 'eventPrize', 'seasonPass', 'diamonds'];
     // Congratulations from the server (functions/boards.js) the first time a
     // player reaches the top 10, #3, #2 or #1 on a leaderboard.
     const BOARD_NAMES = { ranked: 'Ranked', challenges: 'Challenges', gauntlet: 'Gauntlet', levels: 'Levels' };
@@ -20882,6 +20921,15 @@
           <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${escapeHtml(ev ? ev.name : 'Event')} leaderboard</p>
           <p class="text-xs font-bold text-white">You finished #${Math.round(Number(item.rank) || 0)} with ${Math.round(Number(item.wins) || 0)} wins</p>
           <p class="inbox-activity-accent text-[10px] mt-1">💎 ${Math.round(Number(item.reward) || 0)} added to your Diamonds</p>
+          <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
+        </div>`;
+      }
+      if (item.type === 'diamonds') {
+        const n = Math.max(0, Math.round(Number(item.amount) || 0));
+        return `<div class="inbox-activity--level border rounded-xl px-2.5 py-2">
+          <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">Gift from the game</p>
+          <p class="text-xs font-bold text-white">${icon('gem')} ${n.toLocaleString('en-GB')} Diamonds added</p>
+          ${item.note ? `<p class="inbox-activity-accent text-[10px] mt-1">${escapeHtml(item.note)}</p>` : ''}
           <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
         </div>`;
       }
