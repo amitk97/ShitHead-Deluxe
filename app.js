@@ -12030,6 +12030,21 @@
       scan();
       return { io, scan };
     })();
+    // § Covered layers (v492): only one menu page is open at a time and it covers the table and the home screen, so
+    // while one is open `body.cover-open` pauses every CSS animation underneath (game.css, end of the avatar block).
+    // Web Animations (effects) and the page itself are untouched.
+    const coverWatch = (() => {
+      const sync = () => {
+        const open = EXCLUSIVE_PAGE_IDS.some(id => { const el = document.getElementById(id); return !!el && !el.classList.contains('hidden') && el.getClientRects().length > 0; });
+        if (document.body.classList.contains('cover-open') !== open) document.body.classList.toggle('cover-open', open);
+      };
+      let queued = 0;
+      const later = () => { if (!queued) queued = requestAnimationFrame(() => { queued = 0; sync(); }); };
+      const mo = new MutationObserver(later);
+      EXCLUSIVE_PAGE_IDS.forEach(id => { const el = document.getElementById(id); if (el) mo.observe(el, { attributes: true, attributeFilter: ['class', 'style', 'hidden'] }); });
+      sync();
+      return { sync };
+    })();
 
 
     // ============================================================

@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v492: [['sparkle', 'Animations hidden behind an open page now pause, which saves battery and keeps the game smoother.']],
       v491: [['sparkle', 'Smoother play on slower phones: flying cards are limited, and effects get lighter by themselves when the game starts to lag.']],
       v490: [['sparkle', 'Behind the scenes: the game now measures how fast the table draws and how quick the server answers, to track down lag.']],
       v489: [['book', 'Tutorial fixes: hidden helper settings no longer block lessons, small phones can scroll the table, and lesson titles stay clear of Skip.', WN_KEY], ['gear', 'You can change sound and accessibility settings during a lesson. The Coach waits while Settings is open; gameplay controls stay locked. Settings text and touch targets are easier to use, with improved keyboard navigation.']],

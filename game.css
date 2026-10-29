@@ -2420,6 +2420,9 @@
     body.reduce-motion :is(.av-crown-glint,.av-crown-spark) { opacity:0; }
     body.reduce-motion .av-crown-aura { opacity:.12; }
     .av-still .avatar-svg *, body.app-hidden .avatar-svg * { animation-play-state:paused !important; }
+    /* A menu page covers the table and the home screen: nothing under it needs to move (coverWatch, v492). */
+    body.cover-open #gameTable *, body.cover-open #gameTable *::before, body.cover-open #gameTable *::after,
+    body.cover-open #lobbyScreen *, body.cover-open #lobbyScreen *::before, body.cover-open #lobbyScreen *::after { animation-play-state:paused !important; }
     body.reduce-motion .avatar-svg * { animation:none !important; }
     /* Opponent seat: [picture + name] / cards / [bot · status · timer].
        The head and status rows take their width from the card row

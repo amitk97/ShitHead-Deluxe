@@ -6100,6 +6100,22 @@ async function runDevTestSuite() {
     FxLoad.tick(16);
     assertTrue(FxLoad.lite, 'A smooth frame does not switch it off at once (20s minimum)');
   });
+  await test('v492: an open menu page pauses the CSS animations under it, and they resume when it closes', async () => {
+    EXCLUSIVE_PAGE_IDS.forEach(id => { const el = document.getElementById(id); if (el) assertEqual(el.parentElement, document.body, `${id} sits at the top level of the page`); });
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;width:4px;height:4px;animation:av-px-rise 3s linear infinite';
+    document.getElementById('gameTable').appendChild(probe);
+    const page = document.getElementById('settingsModal'), wasHidden = page.classList.contains('hidden');
+    try {
+      page.classList.add('hidden'); coverWatch.sync();
+      assertEqual(getComputedStyle(probe).animationPlayState, 'running', 'Runs while no page is open');
+      page.classList.remove('hidden'); coverWatch.sync();
+      assertTrue(document.body.classList.contains('cover-open'), 'An open page marks the body');
+      assertEqual(getComputedStyle(probe).animationPlayState, 'paused', 'Paused under the page');
+      page.classList.add('hidden'); coverWatch.sync();
+      assertEqual(getComputedStyle(probe).animationPlayState, 'running', 'Runs again once it closes');
+    } finally { probe.remove(); page.classList.toggle('hidden', wasHidden); coverWatch.sync(); }
+  });
   await test('Ranked starts from a private server view and stays in the lobby when the server fails', async () => {
     const saved = {ref:rankedViewRef,code:rankedViewCode,event:rankedEventVersion};
     freshState({phase:'LOBBY',isMultiplayer:true,isRanked:true,isHost:true,roomCode:'515151'});
