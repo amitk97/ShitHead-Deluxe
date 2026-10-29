@@ -90,7 +90,7 @@
     const { layer, cx, cy, W, H } = st;
     const hr = host.getBoundingClientRect();
     const vw = Math.round(host.clientWidth || hr.width || innerWidth), vh = Math.round(host.clientHeight || hr.height || innerHeight);
-    const dpr = Math.min(1.5, window.devicePixelRatio || 1); // v424: 1.5 is plenty for glows and sparks and a third cheaper than 2
+    const dpr = Math.min(window.FxLoad && FxLoad.lite ? 1 : 1.5, window.devicePixelRatio || 1); // v424: 1.5 is plenty for glows and sparks and a third cheaper than 2
     const canvases = [];
     const mkCanvas = () => {
       const c = document.createElement('canvas'); c.className = 'ssb-c'; c.width = Math.round(vw * dpr); c.height = Math.round(vh * dpr);

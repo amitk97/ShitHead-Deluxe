@@ -409,6 +409,7 @@
           const dt = t - lastFrame;
           rec.frames.n++; rec.frames.ms += dt;
           if (dt > 50) rec.frames.slow++;
+          try { FxLoad.tick(dt); } catch (_) {}
           if (rec.frames.n % 600 === 0) touch();
         }
         lastFrame = playing ? t : 0;
@@ -15618,7 +15619,7 @@
         renderWorst: sessions.reduce((m, r) => Math.max(m, (r.counts && r.counts.renderMax) || 0), 0),
         econN: count('econN'), econAvg: count('econN') ? Math.round(count('econMs') / count('econN')) : 0,
         econSlow: count('econSlow'), econWorst: sessions.reduce((m, r) => Math.max(m, (r.counts && r.counts.econMax) || 0), 0),
-        longTasks: count('longTasks'), longTaskMs: count('longTaskMs'),
+        longTasks: count('longTasks'), longTaskMs: count('longTaskMs'), liteFx: count('liteFx'), liteSessions: sessions.filter(r => r.counts && r.counts.liteFx).length,
         byDevice: Object.entries(sessions.reduce((acc, r) => {
           const d = acc[r.device || '?'] || (acc[r.device || '?'] = { sessions: 0, frames: 0, ms: 0, slow: 0, rN: 0, rSlow: 0, lt: 0 });
           const c = r.counts || {};
@@ -15652,6 +15653,7 @@
         box('Timings (v490+)', h.renderN || h.econN
           ? row('Table redraw', `${h.renderAvg}ms avg`, `${h.renderSlowPct}% over 50ms · worst ${h.renderWorst}ms · ${h.renderN} measured`)
             + row('Server calls', `${h.econAvg}ms avg`, `${h.econSlow} over 2s · worst ${h.econWorst}ms · ${h.econN} measured`)
+            + row('Lite effects', h.liteFx, `switched on by slow frames · ${h.liteSessions} of ${h.sessions} sessions`)
             + row('Main-thread stalls', h.longTasks, `over 50ms in a match · ${h.longTaskMs}ms in total`)
             + h.byDevice.map(([d, v]) => row(escapeHtml(d), `${v.ms ? Math.round((v.frames / v.ms) * 1000) : 0} fps`,
               `${v.frames ? Math.round((v.slow / v.frames) * 1000) / 10 : 0}% slow frames · ${v.rN ? Math.round((v.rSlow / v.rN) * 1000) / 10 : 0}% slow redraws · ${v.lt} stalls · ${v.sessions} sessions`)).join('')

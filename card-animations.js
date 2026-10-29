@@ -27,12 +27,40 @@
     })();
     const motionOff = () => (typeof reduceMotion !== 'undefined' && reduceMotion) || (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning);
 
+    // FxLoad (v491): how hard the phone is working while a match is on screen.
+    // Health's frame loop calls tick(dt) for every frame; a burst of slow frames
+    // switches lite on (fewer, simpler effects; canvas burns draw at a lower
+    // resolution) and it switches off again after 20s of smooth play. take()
+    // is a cap on card-shaped flights alive at once (14, or 6 in lite): the
+    // extras are simply not drawn, the cards themselves still move.
+    const FxLoad = window.FxLoad = (() => {
+      let recent = 0, lite = false, since = 0, last = 0, active = 0;
+      return {
+        get lite() { return lite; },
+        tick(dt) {
+          const now = performance.now();
+          if (now - last > 3000) { recent = 0; lite = false; }   // a new stretch of play starts fresh
+          last = now;
+          recent = recent * 0.95 + (dt > 45 ? 1 : 0);
+          if (!lite && recent > 3.5) { lite = true; since = now; try { Health.note('liteFx'); } catch (_) {} }
+          else if (lite && recent < 0.8 && now - since > 20000) lite = false;
+        },
+        scale(n, liteMax) { return lite ? Math.min(n, liteMax) : n; },
+        take(n, ms) {
+          const got = Math.min(n, Math.max(0, (lite ? 6 : 14) - active));
+          if (got > 0) { active += got; setTimeout(() => { active = Math.max(0, active - got); }, ms); }
+          return got;
+        }
+      };
+    })();
+
     // Picking up the pile: the cards fly into that player's seat as a
     // quick fan of card backs rather than one blob.
     function spawnPickupFan(fromEl, toEl, count) {
       if (!fromEl || !toEl || motionOff() || typeof Element.prototype.animate !== 'function') { spawnCardFlight(fromEl, toEl, count); return; }
       const f = fromEl.getBoundingClientRect(), t = toEl.getBoundingClientRect();
-      const n = Math.min(Math.max(count, 1), 7);
+      const n = FxLoad.take(FxLoad.scale(Math.min(Math.max(count, 1), 7), 3), 1000);
+      if (!n) return;
       const backTemplate = document.querySelector('.custom-card-back');
       const w = 34, h = 49;
       for (let i = 0; i < n; i++) {
@@ -146,8 +174,8 @@
       const fromRect = fromEl.getBoundingClientRect();
       const toRect = toEl.getBoundingClientRect();
 
-      const numProjectiles = Math.min(Math.max(count, 1), 5);
-      
+      const numProjectiles = FxLoad.take(FxLoad.scale(Math.min(Math.max(count, 1), 5), 2), 500);
+      if (!numProjectiles) return;
       for (let i = 0; i < numProjectiles; i++) {
         setTimeout(() => {
           if (motionOff()) return; // The preference may change during a staggered flight.

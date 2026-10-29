@@ -1320,7 +1320,7 @@ void main(){
       const [bw, bh] = fx.box;
       cards = [defaultCard(opts.cardH || Math.max(30, Math.min(110, (host.clientHeight || 160) / (bh - .4), (host.clientWidth || 240) / (bw - .4))))];
     }
-    const H = cards[cards.length - 1].H, dpr = Math.min(2, window.devicePixelRatio || 1);
+    const H = cards[cards.length - 1].H, dpr = Math.min(window.FxLoad && FxLoad.lite ? 1.25 : 2, window.devicePixelRatio || 1);
     // The painted scene fits the screen width and the room above the Pile (under the header), so its
     // top is never cut off; the cards stay their real size.
     const hw = host.clientWidth || 390, hh = host.clientHeight || 844, [LW, LR, , LV] = fx.layout || [];

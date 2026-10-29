@@ -6089,6 +6089,17 @@ async function runDevTestSuite() {
     assertEqual(h.byDevice.length, 1, 'One device row');
     assertTrue(typeof Health.render === 'function' && typeof Health.econ === 'function', 'Health exposes timing hooks');
   });
+  await test('v491: FxLoad switches lite effects on after slow frames, caps flights, and recovers', () => {
+    assertTrue(!FxLoad.lite, 'Starts smooth');
+    assertEqual(FxLoad.scale(7, 3), 7, 'Full counts while smooth');
+    assertEqual(FxLoad.take(20, 10), 14, 'At most 14 flights alive at once');
+    assertEqual(FxLoad.take(5, 10), 0, 'Nothing more until they land');
+    for (let i = 0; i < 6; i++) FxLoad.tick(80);
+    assertTrue(FxLoad.lite, 'Six slow frames switch lite on');
+    assertEqual(FxLoad.scale(7, 3), 3, 'Lite caps the count');
+    FxLoad.tick(16);
+    assertTrue(FxLoad.lite, 'A smooth frame does not switch it off at once (20s minimum)');
+  });
   await test('Ranked starts from a private server view and stays in the lobby when the server fails', async () => {
     const saved = {ref:rankedViewRef,code:rankedViewCode,event:rankedEventVersion};
     freshState({phase:'LOBBY',isMultiplayer:true,isRanked:true,isHost:true,roomCode:'515151'});
