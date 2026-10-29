@@ -58,8 +58,8 @@ Facts used (check against `WHEEL`, `SCRATCH`, `MONTY`, `DROPZONE` in `cosmetics-
 
 ---
 
-## Open choices for the owner before the build
+## Owner's decisions (NOT to be built yet, owner will say when)
 
-1. Voice only (game sounds + voiceover), or add a light music bed?
-2. Keep the end-card link as shithead-deluxe.web.app?
-3. Any games to leave out, or a second cut (15 seconds each, one game) for social posts: Drop Zone, Scratch Card, Daily Spin?
+1. Voiceover: yes (how-to-play voice). Game sounds stay; no music bed was asked for.
+2. End-card link: yes, shithead-deluxe.web.app.
+3. Scope: the main video covers all 4 Lucky Games (as above), PLUS four separate 10-second single-game videos for separate posts: Daily Spin, Scratch Card, Three Cards, Drop Zone. Each: hook line, the prize moment, end card with the link. Scripts for the 10s cuts still to be written when the owner asks.
