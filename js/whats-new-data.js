@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v514: [['sparkle', 'The Lucky Games circles on the home screen now appear straight away instead of a moment after launch.']],
       v513: [['sparkle', 'The game opens faster from your home screen: it starts from the saved copy and offers Update Now when a new version is out.']],
       v512: [['sparkle', 'The Drop Zone avatar card now bounces off the pegs and lands in a middle slot.']],
       v511: [['sparkle', 'Multiple Decks: a Skip To End button when only bots are left (also online), the grouped hand can always be switched back to rows, and a Joker you counter no longer makes you pick up the pile. Drop Zone card back and avatar are centred and fit their boxes.', WN_KEY]],

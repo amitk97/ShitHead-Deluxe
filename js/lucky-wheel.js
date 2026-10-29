@@ -78,6 +78,20 @@
   }
   const nextText = () => { const m = Math.max(1, Math.ceil(untilMidnightMs() / 60000)); return `Next spin in ${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`; };
 
+  const SNAP_KEY = 'shithead_lucky_snapshot';
+  function saveSnap() {
+    try { if (signedIn() && S.status && S.monty && S.scratch && D.cards != null) localStorage.setItem(SNAP_KEY, JSON.stringify({ uid: currentUser.uid, w: !!S.status.canSpin, m: !!S.monty.canPlay, s: !!S.scratch.canPlay, d: D.cards })); } catch (e) {}
+  }
+  function loadSnap() {
+    try {
+      const o = JSON.parse(localStorage.getItem(SNAP_KEY) || 'null');
+      if (!o || !currentUser || o.uid !== currentUser.uid) return;
+      if (!S.status) S.status = { canSpin: !!o.w, last: null };
+      if (!S.monty) S.monty = { canPlay: !!o.m, started: false, swaps: null, result: null };
+      if (!S.scratch) S.scratch = { canPlay: !!o.s, last: null };
+      if (D.cards == null && Number.isFinite(o.d)) D.cards = o.d;
+    } catch (e) {}
+  }
   function paint() {
     const chip = $('homeWheelChip'), ready = !!(S.status && S.status.canSpin), mReady = !!(S.monty && S.monty.canPlay);
     if (chip) {
@@ -99,26 +113,34 @@
     montyPaint();
     if (S.tab === 'scratch' && SCR) scratchPaintState();
     dzPaint();
+    saveSnap();
   }
   async function refresh() {
     if (!signedIn()) { S.status = null; S.monty = null; S.scratch = null; D.cards = null; paint(); return; }
     const uid = currentUser.uid;
+    const jobs = [(async () => {
     try {
       const r = await callEconomy('wheel', { op: 'status' });
       if (currentUser && currentUser.uid === uid) { S.status = { canSpin: !!r.canSpin, last: r.last || null }; if (r.owned) { const was = JSON.stringify(S.owned); S.owned = r.owned; if (was !== JSON.stringify(S.owned) && !S.busy) S.built = false; } }
     } catch (e) { /* offline or not deployed yet: the chip stays hidden */ }
+    })(), (async () => {
     try {
       const m = await callEconomy('monty', { op: 'status' });
       if (currentUser && currentUser.uid === uid && !M.busy) S.monty = { canPlay: !!m.canPlay, started: !!m.started, swaps: m.swaps || null, result: m.result || null };
     } catch (e) { /* not deployed yet */ }
+    })(), (async () => {
     try {
       const c = await callEconomy('scratch', { op: 'status' });
       if (currentUser && currentUser.uid === uid && !SC.busy) { S.scratch = { canPlay: !!c.canPlay, last: c.last || null }; if (c.owned) S.scOwned = c.owned; }
     } catch (e) { /* not deployed yet */ }
+    })(), (async () => {
     try {
       const z = await callEconomy('dropzone', { op: 'status' });
       if (currentUser && currentUser.uid === uid && !D.busy && Number.isFinite(Number(z.cards))) { D.cards = Number(z.cards); D.cap = Number(z.cap) || 10; D.owned = z.owned || {}; }
     } catch (e) { /* not deployed yet */ }
+    })()];
+    jobs.forEach(j => j.then(() => paint()));
+    await Promise.all(jobs);
     paint();
   }
   function startTimer() {
@@ -800,8 +822,8 @@
 
   window.ShWheel = {
     open, close, winPop, closeWin, dropNote,
-    onSignIn() { S.angle = 0; S.status = null; setTimeout(() => { if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return; refresh(); startTimer(); }, 2500); },
-    reset() { D.cards = null; S.status = null; S.monty = null; S.owned = {}; S.built = false; S.angle = 0; clearInterval(S.timer); paint(); $('wheelModal')?.classList.add('hidden'); },
+    onSignIn() { S.angle = 0; S.status = null; if (typeof devTestSuiteRunning === 'undefined' || !devTestSuiteRunning) { loadSnap(); paint(); } setTimeout(() => { if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return; refresh(); startTimer(); }, 600); },
+    reset() { try { localStorage.removeItem(SNAP_KEY); } catch (e) {} D.cards = null; S.status = null; S.monty = null; S.owned = {}; S.built = false; S.angle = 0; clearInterval(S.timer); paint(); $('wheelModal')?.classList.add('hidden'); },
     refresh, state: S, tierOf
   };
   // Tap a prize row (avatar or card back) for the big preview.
