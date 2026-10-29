@@ -38,6 +38,11 @@ const nodeCrypto = require('crypto');
 
 const MAX_DIAMONDS = 999999;
 const AMITK_EMAIL = 'amirk2197@googlemail.com';
+// Test resets (owner): a record of today's spin / card / Three Cards without this `resetV` no longer counts for that uid, so they can
+// play once more (prizes stay). Bump a number to reset again. Scratch also resets Pooja (28 Oct).
+const AMITK_UID = '11d84kCgSde82Xlu8k5U65OB9662', POOJA_UID = 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1';
+const RESET_V = { wheel: { [AMITK_UID]: 1 }, scratch: { [AMITK_UID]: 2, [POOJA_UID]: 1 }, monty: { [AMITK_UID]: 1 } };
+const resetOk = (kind, uid, rec) => !RESET_V[kind][uid] || (rec && rec.resetV === RESET_V[kind][uid]);
 const DIFFICULTIES = ['easy', 'medium', 'hard', 'boss'];
 // Phase 2 caps. A real match takes well over a minute even at 4x speed, so
 // these never touch honest play; they stop scripted reward farming.
@@ -517,7 +522,7 @@ actions.wheel = async ({ uid, data }) => {
   if (clip(data.op, 10) !== 'spin') {
     const w = (await admin.database().ref(`users/${uid}/wheel`).once('value')).val() || {};
     const owned = (await admin.database().ref(`users/${uid}/ownedCosmetics`).once('value')).val() || {};
-    return { canSpin: w.lastDate !== today, last: w.last || null, spins: num(w.spins), owned: Object.fromEntries(W.prizes.filter(p => p.kind === 'item').map(p => [p.itemId, !!owned[p.itemId]])) };
+    return { canSpin: w.lastDate !== today || !resetOk('wheel', uid, w), last: w.last || null, spins: num(w.spins), owned: Object.fromEntries(W.prizes.filter(p => p.kind === 'item').map(p => [p.itemId, !!owned[p.itemId]])) };
   }
   const xpOn = await xp.enabled();
   const pool = W.prizes.filter(p => xpOn || p.kind !== 'xp');
@@ -525,7 +530,7 @@ actions.wheel = async ({ uid, data }) => {
   let roll = nodeCrypto.randomInt(total);
   const prize = pool.find(p => (roll -= num(p.weight)) < 0) || pool[0];
   const res = await userTx(uid, (user) => {
-    if (user.wheel?.lastDate === today) return { noop: true, already: true };
+    if (user.wheel?.lastDate === today && resetOk('wheel', uid, user.wheel)) return { noop: true, already: true };
     let paid = 0, duplicate = false, xpRes = null;
     if (prize.kind === 'diamonds') { paid = num(prize.amount); addDiamonds(user, paid); }
     else if (prize.kind === 'xp') {
@@ -540,7 +545,7 @@ actions.wheel = async ({ uid, data }) => {
         user.activityInbox[`unlock_${prize.itemId}`] = { type: 'shop', unlocked: true, name: clip(prize.name, 80), cost: 0, requirement: 'Won on the Daily Spin', sentAt: now.getTime() };
       }
     }
-    user.wheel = { lastDate: today, last: { id: prize.id, at: now.getTime() }, spins: num(user.wheel?.spins) + 1 };
+    user.wheel = { lastDate: today, last: { id: prize.id, at: now.getTime() }, spins: num(user.wheel?.spins) + 1, ...(RESET_V.wheel[uid] ? { resetV: RESET_V.wheel[uid] } : {}) };
     return { user, spin: { prize: prize.id, kind: prize.kind, amount: num(prize.amount), itemId: prize.itemId || null, name: prize.name || null, duplicate, paid }, xp: xpRes };
   });
   if (res.already) return { already: true, canSpin: false, last: res.user.wheel?.last || null, diamonds: num(res.user.diamonds) };
@@ -565,8 +570,7 @@ const scratchGrid = (symbols, win) => {
 };
 // One-off reset (28 Oct, owner): AmitK's and Pooja's card for today (drawn before the v479 line rules) no longer counts, so each can
 // play once more. The marker `resetV` lives inside the card, so no rules change; bump SCRATCH_RESET_V to reset them again.
-const SCRATCH_RESET_UIDS = new Set(['11d84kCgSde82Xlu8k5U65OB9662', 'pAB2xxrFWMhUv6AYtJMP1nSxA5l1']), SCRATCH_RESET_V = 1;
-const scratchToday = (uid, card, today) => card && card.date === today && !(SCRATCH_RESET_UIDS.has(uid) && card.resetV !== SCRATCH_RESET_V);
+const scratchToday = (uid, card, today) => card && card.date === today && resetOk('scratch', uid, card);
 actions.scratch = async ({ uid, data }) => {
   const S = CAT.scratch;
   if (!S || !Array.isArray(S.prizes)) fail('failed-precondition', 'The Scratch Card is not available yet.');
@@ -593,7 +597,7 @@ actions.scratch = async ({ uid, data }) => {
         user.activityInbox[`unlock_${prize.itemId}`] = { type: 'shop', unlocked: true, name: clip(prize.name, 80), cost: 0, requirement: 'Won on the Scratch Card', sentAt: now.getTime() };
       }
     }
-    user.scratch = { date: today, grid, prize: prize.id, kind: prize.kind, amount: num(prize.amount), itemId: prize.itemId || null, name: prize.name || null, duplicate, paid, at: now.getTime(), plays: num(user.scratch?.plays) + 1, resetV: SCRATCH_RESET_V };
+    user.scratch = { date: today, grid, prize: prize.id, kind: prize.kind, amount: num(prize.amount), itemId: prize.itemId || null, name: prize.name || null, duplicate, paid, at: now.getTime(), plays: num(user.scratch?.plays) + 1, ...(RESET_V.scratch[uid] ? { resetV: RESET_V.scratch[uid] } : {}) };
     return { user, card: user.scratch };
   });
   if (res.already) return { already: true, canPlay: false, last: res.user.scratch || null, diamonds: num(res.user.diamonds) };
@@ -609,11 +613,11 @@ actions.monty = async ({ uid, data }) => {
   if (!M || !Array.isArray(M.small)) fail('failed-precondition', 'Three Cards is not available yet.');
   const now = new Date(), week = ukWeekKey(now), op = clip(data.op, 10);
   const gameRef = admin.database().ref(`montyGames/${uid}`);
-  const done = (m) => m && m.week === week && m.done ? m : null;
+  const done = (m) => m && m.week === week && m.done && resetOk('monty', uid, m) ? m : null;
   if (op !== 'start' && op !== 'pick') {
     const m = (await admin.database().ref(`users/${uid}/monty`).once('value')).val();
     const g = (await gameRef.once('value')).val();
-    const live = g && g.week === week && !g.done;
+    const live = g && g.week === week && !g.done && resetOk('monty', uid, g);
     return { canPlay: !done(m), started: !!live && !done(m), swaps: live && !done(m) ? g.swaps : null, result: done(m) ? { pick: m.pick, prize: m.prize, reveal: m.reveal } : null };
   }
   if (op === 'start') {
@@ -628,20 +632,20 @@ actions.monty = async ({ uid, data }) => {
     const arr = [M.small[flip], num(M.big), M.small[1 - flip]];
     const start = arr.slice();
     swaps.forEach(([a, b]) => { const t = arr[a]; arr[a] = arr[b]; arr[b] = t; });
-    const fresh = { week, swaps, start, final: arr, at: now.getTime(), done: false };
-    const r = await gameRef.transaction(cur => (cur && cur.week === week ? undefined : fresh));
+    const fresh = { week, swaps, start, final: arr, at: now.getTime(), done: false, ...(RESET_V.monty[uid] ? { resetV: RESET_V.monty[uid] } : {}) };
+    const r = await gameRef.transaction(cur => (cur && cur.week === week && resetOk('monty', uid, cur) ? undefined : fresh));
     const g = r.committed ? fresh : (await gameRef.once('value')).val();
     return { canPlay: true, swaps: g.swaps, big: num(M.big), bigAt: g.start.indexOf(num(M.big)) };
   }
   const index = Math.floor(num(data.index, -1));
   if (!(index >= 0 && index <= 2)) fail('invalid-argument', 'Pick one of the three cards.');
   const g = (await gameRef.once('value')).val();
-  if (!g || g.week !== week) fail('failed-precondition', 'Start the game first.');
+  if (!g || g.week !== week || !resetOk('monty', uid, g)) fail('failed-precondition', 'Start the game first.');
   const prize = num(g.final[index]);
   const res = await userTx(uid, (user) => {
-    if (user.monty?.week === week && user.monty.done) return { noop: true, already: true };
+    if (user.monty?.week === week && user.monty.done && resetOk('monty', uid, user.monty)) return { noop: true, already: true };
     addDiamonds(user, prize);
-    user.monty = { week, done: true, pick: index, prize, reveal: g.final, at: now.getTime() };
+    user.monty = { week, done: true, pick: index, prize, reveal: g.final, at: now.getTime(), ...(RESET_V.monty[uid] ? { resetV: RESET_V.monty[uid] } : {}) };
     return { user };
   });
   if (res.already) return { canPlay: false, already: true, result: { pick: res.user.monty.pick, prize: res.user.monty.prize, reveal: res.user.monty.reveal }, diamonds: num(res.user.diamonds) };
