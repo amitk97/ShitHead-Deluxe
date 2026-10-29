@@ -6142,6 +6142,11 @@ async function runDevTestSuite() {
       assertTrue(got.filter(i => i === 'burn-halloween').length === 1, 'asked once for the painted burn');
     } finally { ShLevel3D.preload = was; }
   });
+  await test('v499: the Reset Lucky Games menu button exists and is hidden for everyone but the AmitK account', () => {
+    const b = document.getElementById('menuResetLuckyBtn');
+    assertTrue(!!b, 'button exists');
+    assertTrue(b.classList.contains('hidden'), 'hidden for a normal account');
+  });
   await test('v498: the spinning wheel never adds scrollable overflow to its box (the box stays still)', () => {
     const modal = document.getElementById('wheelModal'), was = modal.classList.contains('hidden');
     try {

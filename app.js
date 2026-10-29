@@ -15824,6 +15824,17 @@
       const label = document.getElementById('menuUnlockAllLabel');
       if (label) label.textContent = `Unlock All Cosmetics: ${testUnlockOn ? 'On' : 'Off'}`;
     }
+    document.getElementById('menuResetLuckyBtn')?.addEventListener('click', async () => {
+      if (!isAmitkTestingAccount({})) return;
+      const yes = await shConfirm({ title: 'Reset Lucky Games?', text: 'Today\'s Daily Spin, today\'s Scratch Card and this week\'s Three Cards can be played again. Prizes you won stay.', yes: 'Reset', no: 'Cancel' });
+      if (!yes) return;
+      closeHamburgerMenu();
+      try {
+        await callEconomy('testResetLucky', {});
+        window.ShWheel?.refresh?.();
+        notifyBanner('Daily Spin, Scratch Card and Three Cards are ready again.');
+      } catch (e) { notifyBanner('Could not reset. Please try again.'); }
+    });
     document.getElementById('menuUnlockAllBtn')?.addEventListener('click', async () => {
       if (!isAmitkTestingAccount({}) || testUnlockBusy) return;
       const turnOn = !testUnlockOn;
@@ -16474,6 +16485,7 @@
       document.getElementById('menuChangelogBtn')?.classList.toggle('hidden', !isGameOwner());
       document.getElementById('menuXpSwitchBtn')?.classList.toggle('hidden', !isGameOwner());
       document.getElementById('menuUnlockAllBtn')?.classList.toggle('hidden', !currentUser || !isAmitkTestingAccount({}));
+      document.getElementById('menuResetLuckyBtn')?.classList.toggle('hidden', !currentUser || !isAmitkTestingAccount({}));
       window.ShHomeCarousel?.setLab?.(!!currentUser && isAmitkTestingAccount({})); // the Test Lab card (v405)
       drawerAvatar?.classList.toggle('hidden', !currentUser);
       const homeAvatar = document.getElementById('homeNameAvatar');

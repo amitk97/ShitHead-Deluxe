@@ -1397,6 +1397,19 @@ actions.buyNameToken = async ({ uid }) => {
 // real). `testUnlock` keeps a note of what the account owned and wore before; turning it off clears
 // `testOwned` and puts back the earlier look for any slot wearing an item that is no longer owned.
 const EQUIP_FREE = new Set(['default']);
+// AmitK only (verified email): makes today's Daily Spin, today's Scratch Card and this week's Three Cards playable again.
+// Only the "done" markers change; Diamonds, items and the last prize records stay.
+actions.testResetLucky = async ({ uid, auth }) => {
+  if (!isAmitK(auth)) fail('permission-denied', 'This button is not available.');
+  await userTx(uid, (user) => {
+    if (user.wheel) user.wheel = { ...user.wheel, lastDate: '' };
+    if (user.scratch) user.scratch = { ...user.scratch, date: '' };
+    if (user.monty) user.monty = { ...user.monty, week: '', done: false };
+    return { user };
+  });
+  await admin.database().ref(`montyGames/${uid}`).remove();
+  return { ok: true };
+};
 actions.testUnlock = async ({ uid, auth, data }) => {
   if (!isAmitK(auth)) fail('permission-denied', 'This switch is not available.');
   const on = !!data?.on;
