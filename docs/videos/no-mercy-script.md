@@ -1,47 +1,61 @@
-# No Mercy demo video: script v1 (15 seconds, NOT built yet)
+# No Mercy demo video: script v3 (exactly 15 seconds, NOT built yet)
 
 Working title: **"No Mercy. Nobody is safe."**
-Length: 15 seconds. Format: 9:16 vertical (1080x1920), game audio on, voiceover in the how-to-play voice, every caption = the line spoken.
-Status: script only. Claude builds it later, when the owner says so (headless `tools/video/director.js`, scripted game state, no live recording). Paused frames go to the owner for a "go" before it is published.
+Length: **15.0 seconds, hard limit.** Format 9:16 (1080x1920), game audio on, voiceover in the how-to-play voice, every caption = the line spoken.
+Status: script only. Claude builds it later when the owner says so (headless `tools/video/director.js`, scripted game state, no live recording). Paused frames go to the owner for a "go" first. End-card link: shithead-deluxe.web.app.
 
-Facts used (check against the game when building): Ace = every opponent, in turn order, takes exactly ONE card from the bottom of the Pile (an Ace at the bottom cannot be taken and stops it; an empty Pile does nothing; four Aces burn first). Queen = X-ray, you see a random card in the next player's hand. King = the next player takes a card from the bottom of the Pile (a King at the bottom cannot be taken). A Joker cannot be played on a 4. Unlocks at Lvl 25. Look: red No Mercy card, Crimson Verdict deck/back if equipped.
+Rules shown (check against the game when building):
+- **Queen:** X-ray. A random card from the NEXT player's hand is shown to you (one per Queen).
+- **King:** the next player takes a card from the BOTTOM of the Pile (a King at the bottom cannot be taken).
+- **Ace:** EVERY opponent, in turn order, takes exactly ONE card from the bottom of the Pile (an Ace at the bottom cannot be taken and stops it; an empty Pile does nothing; four Aces burn first).
+- **Joker:** cannot be played on a 4.
+- Unlocks at Level 25.
 
-## 1. Hook (0:00 to 0:02)
+Voiceover budget: about 2.5 words a second, so 15s holds about 35 words. This script uses 28, leaving room for game sounds.
 
-**Action:** Home carousel snaps to the red No Mercy card, quick open. Cut to a table, three players.
-**Voiceover:** "Normal rules? Not here."
-**Caption:** No Mercy
+## Beat sheet
 
-## 2. Queen X-ray (0:02 to 0:05)
+| Time | Scene | Voiceover (words) | Caption |
+|---|---|---|---|
+| 0.0-2.0 | Hook | "Normal rules? Not here." (4) | No Mercy |
+| 2.0-5.0 | Queen | "Queen: see their card." (4) | Queen: X-ray |
+| 5.0-8.0 | King | "King: they take from the bottom." (6) | King: take from the bottom |
+| 8.0-11.0 | Ace | "Ace: everyone takes one." (4) | Ace: everyone takes one |
+| 11.0-13.0 | Joker | "No Joker on a four." (5) | No Joker on a 4 |
+| 13.0-15.0 | Close | "No Mercy. Level twenty-five." (4) | No Mercy, Lvl 25 |
 
-**Action:** Play a Queen. The scan sweeps the next player's hand (`noMercyPeekFx`); one card turns face up with a cyan ring, a `.nm-known` tag stays under their seat.
-**Voiceover:** "Queen: see their card."
-**Caption:** Queen: X-ray
+## Shots
 
-## 3. King (0:05 to 0:08)
+### 1. Hook (0.0 to 2.0)
+- 0.0 Home screen, carousel turns; the red No Mercy card snaps to the middle with the carousel snap sound.
+- 0.6 Card opens (the expand cover), cut straight to a three-player table, a dealt hand on screen.
+- Voiceover starts at 0.2.
 
-**Action:** Play a King. A card is pulled from the very bottom of the Pile and flies into the next player's hand (banner shows it).
-**Voiceover:** "King: they take from the bottom."
-**Caption:** King: take from the bottom
+### 2. Queen X-ray (2.0 to 5.0)
+- 2.2 Tap-play a Queen from the hand; it lands on the Pile.
+- 2.6 The scan sweeps the next player's hand (`noMercyPeekFx`, scan sound); one card turns face up with a cyan ring.
+- 3.6 The card stays as a `.nm-known` chip under their seat. Hold on it for a beat.
 
-## 4. Ace (0:08 to 0:11)
+### 3. King (5.0 to 8.0)
+- 5.2 Play a King on a Pile of about 8 cards.
+- 5.7 The bottom card of the Pile slides out and flies into the next player's hand; banner names the card.
+- 6.8 Hand count on that seat ticks up by one. Hold.
 
-**Action:** Play an Ace. A card leaves the bottom of the Pile for EVERY opponent in turn, one each (three players: two cards fly out to two seats, banner "Everyone takes").
-**Voiceover:** "Ace: everyone takes one."
-**Caption:** Ace: everyone takes one
+### 4. Ace (8.0 to 11.0)
+- 8.2 Play an Ace.
+- 8.6 A card leaves the bottom of the Pile for the first opponent, then 9.2 another for the second opponent (two seats, one card each).
+- 10.0 Banner "Everyone takes"; both hand counts tick up. Hold.
 
-## 5. Joker blocked (0:11 to 0:13)
+### 5. Joker blocked (11.0 to 13.0)
+- 11.2 A 4 sits on top of the Pile. Tap the Joker in hand and Play.
+- 11.6 It is refused: the Joker shakes back and the banner says why. Hold.
 
-**Action:** A 4 is on top. Try the Joker: it is refused with the banner.
-**Voiceover:** "No Joker on a four."
-**Caption:** No Joker on a 4
+### 6. Close (13.0 to 15.0)
+- 13.0 Cut to the end card: red No Mercy badge, "Unlocks at Level 25", shithead-deluxe.web.app.
+- 14.6 Hold the last frame to 15.0.
 
-## 6. Close (0:13 to 0:15)
+## Sound
+Game sounds only (card plays, scan, pick-ups, refusal) plus the voiceover. No music bed. Voice lines are placed at each scene's real start (see `tiktok1.js` for the method), loudnorm -14 LUFS.
 
-**Action:** End card: red No Mercy badge, "Unlocks at Level 25", shithead-deluxe.web.app.
-**Voiceover:** "No Mercy. Level twenty-five."
-**Caption:** No Mercy, Lvl 25
-
----
-
-Same treatment as the Lucky Games video: voiceover yes, end-card link shithead-deluxe.web.app. Not built; wait for the owner.
+## If a scene needs more time
+The cut is fixed at 15s. Extra time can only come from tightening a scene elsewhere (e.g. take the Joker scene down to 1.5s) or dropping the hook line. A longer version (30s) would be a separate cut and the owner would ask for it.
