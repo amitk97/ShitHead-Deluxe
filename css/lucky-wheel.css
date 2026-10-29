@@ -100,3 +100,23 @@ body.reduce-motion .lw-sc-foil, body.reduce-motion .lw-sc-cell { transition: non
 #scratchPanel { min-height: 27rem; }
 #scratchRevealBtn, #scratchOddsBtn { margin-inline: .6rem; }
 #homeWheelChip .lw-chip-ic, #homeMontyChip .lw-chip-ic { width: 35px; height: 35px; }
+
+/* Win pop-up (v493): the prize big in the middle, over the wheel / scratch / three cards pop-up. */
+.lw-winpop { position: absolute; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(2,6,23,.82); animation: lw-win-fade .22s ease-out; }
+.lw-win-card { width: min(19rem, 100%); padding: 1.3rem 1.1rem 1.1rem; border-radius: 1.2rem; text-align: center; background: linear-gradient(180deg, #14213d, #0b1426); border: 1px solid #f59e0b; box-shadow: 0 0 0 1px rgba(251,191,36,.2), 0 0 34px rgba(251,191,36,.28), 0 14px 40px rgba(0,0,0,.6); animation: lw-win-pop .42s var(--ease-spring, cubic-bezier(.34,1.56,.64,1)); }
+.lw-win-big { margin-top: .55rem; font-size: 1.5rem; font-weight: 900; line-height: 1.15; color: #fde68a; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+.lw-win-eyebrow { font-size: .68rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: #fbbf24; }
+.lw-win-art { display: flex; align-items: center; justify-content: center; min-height: 5.2rem; margin-top: .7rem; }
+.lw-win-gem { width: 4.6rem; height: 4.6rem; filter: drop-shadow(0 0 14px rgba(56,189,248,.55)); animation: lw-win-bob 2.2s ease-in-out infinite; }
+.lw-win-xp { display: grid; place-items: center; width: 4.4rem; height: 4.4rem; border-radius: 50%; font-weight: 900; font-size: 1.3rem; color: #052e16; background: radial-gradient(circle at 35% 30%, #bbf7d0, #22c55e); box-shadow: 0 0 22px rgba(34,197,94,.5); }
+.lw-win-back { display: inline-block; width: 64px; height: 90px; border-radius: 8px; border: 2px solid #f59e0b; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
+.lw-win-sub { margin-top: .4rem; min-height: 2rem; font-size: .8rem; line-height: 1.4; color: #cbd5e1; }
+.lw-win-ok { margin-top: .9rem; width: 100%; padding: .7rem 1rem; border-radius: .8rem; font-size: .8rem; font-weight: 900; letter-spacing: .1em; color: #1c1405; background: linear-gradient(180deg, #fbbf24, #f59e0b); }
+.lw-win-big.lw-win-name { font-size: 1.2rem; }
+.lw-win-big, .lw-win-item .lw-win-big { word-break: break-word; }
+.lw-win-jackpot, .lw-win-item { border-color: #fde68a; box-shadow: 0 0 0 1px rgba(253,230,138,.35), 0 0 54px rgba(251,191,36,.5), 0 14px 40px rgba(0,0,0,.6); }
+.lw-win-big.lw-win-small { font-size: 1.3rem; }
+@keyframes lw-win-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lw-win-pop { from { opacity: 0; transform: translateY(14px) scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes lw-win-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+body.reduce-motion .lw-winpop, body.reduce-motion .lw-win-card, body.reduce-motion .lw-win-gem { animation: none; }

@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v493: [['sparkle', 'Winning on the Daily Spin, Scratch Card or Three Cards now shows a pop-up with exactly what you won.']],
       v492: [['sparkle', 'Animations hidden behind an open page now pause, which saves battery and keeps the game smoother.']],
       v491: [['sparkle', 'Smoother play on slower phones: flying cards are limited, and effects get lighter by themselves when the game starts to lag.']],
       v490: [['sparkle', 'Behind the scenes: the game now measures how fast the table draws and how quick the server answers, to track down lag.']],

@@ -6116,6 +6116,23 @@ async function runDevTestSuite() {
       assertEqual(getComputedStyle(probe).animationPlayState, 'running', 'Runs again once it closes');
     } finally { probe.remove(); page.classList.toggle('hidden', wasHidden); coverWatch.sync(); }
   });
+  await test('v493: a Daily Spin / Scratch Card / Three Cards win shows a pop-up with the prize, and Continue closes it', () => {
+    const modal = document.getElementById('wheelModal'), wasHidden = modal.classList.contains('hidden');
+    try {
+      modal.classList.remove('hidden');
+      ShWheel.winPop({ big: '+1,250 Diamonds', sub: 'Added to your balance.', tier: 'jackpot' });
+      const pop = document.getElementById('wheelWinPop');
+      assertTrue(!!pop && modal.contains(pop), 'The pop-up sits inside the wheel pop-up');
+      assertTrue(/1,250 Diamonds/.test(pop.textContent), 'It names the prize');
+      ShWheel.winPop({ big: '+50 Diamonds', tier: 'small' });
+      assertEqual(document.querySelectorAll('#wheelWinPop').length, 1, 'A second win replaces the first');
+      document.getElementById('wheelWinOk').click();
+      assertTrue(!document.getElementById('wheelWinPop'), 'Continue closes it');
+      ShWheel.winPop({ big: '+10 Diamonds' });
+      ShWheel.close();
+      assertTrue(!document.getElementById('wheelWinPop') && !modal.classList.contains('hidden'), 'Back / close dismisses the win first, then the wheel');
+    } finally { document.getElementById('wheelWinPop')?.remove(); modal.classList.toggle('hidden', wasHidden); }
+  });
   await test('Ranked starts from a private server view and stays in the lobby when the server fails', async () => {
     const saved = {ref:rankedViewRef,code:rankedViewCode,event:rankedEventVersion};
     freshState({phase:'LOBBY',isMultiplayer:true,isRanked:true,isHost:true,roomCode:'515151'});

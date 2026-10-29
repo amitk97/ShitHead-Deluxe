@@ -293,6 +293,12 @@
       $('scratchResult').innerHTML = scratchResultHtml(card);
       $('scratchResult').classList.remove('lw-in'); void $('scratchResult').offsetWidth; $('scratchResult').classList.add('lw-in');
       celebrate(scTier(p));
+      setTimeout(() => {
+        if (card.kind === 'item') winPop(card.duplicate
+          ? { eyebrow: 'Already owned', big: `+${Number(card.paid).toLocaleString('en-GB')} Diamonds`, sub: `You own the ${card.name}, so it pays Diamonds instead.`, tier: 'jackpot' }
+          : { eyebrow: 'New item', art: winArt(card.itemId), big: card.name, sub: 'Find it in Custom.', tier: 'item' });
+        else winPop({ eyebrow: p.symbol ? 'A winning line' : 'Scratch Card', big: `+${Number(card.amount).toLocaleString('en-GB')} Diamonds`, sub: p.symbol ? `A line of ${SYM_NAMES[p.symbol]}s.` : 'No line this time. Every card pays a little.', tier: scTier(p) });
+      }, motionOff() ? 0 : 450);
     }
     scratchPaintState();
   }
@@ -346,6 +352,29 @@
     el.innerHTML = html;
     el.classList.remove('lw-in'); void el.offsetWidth; el.classList.add('lw-in');
   }
+  // Win pop-up (v493): every win from the Daily Spin, Scratch Card and Three Cards is also shown as a pop-up over the
+  // game's pop-up, with the prize big in the middle. The result line under the wheel stays as the record.
+  function closeWin() { const d = $('wheelWinPop'); if (!d) return false; d.remove(); return true; }
+  function winPop(o) {
+    const host = $('wheelModal'); if (!host) return;
+    closeWin();
+    const gem = '<svg class="lw-win-gem" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-gem"/></svg>';
+    const art = o.art || gem;
+    const d = document.createElement('div');
+    d.id = 'wheelWinPop'; d.className = 'lw-winpop'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-label', 'You won');
+    d.innerHTML = `<div class="lw-win-card lw-win-${o.tier || 'small'}"><div class="lw-win-eyebrow">${o.eyebrow || 'You won'}</div><div class="lw-win-art">${art}</div><div class="lw-win-big">${o.big}</div><div class="lw-win-sub">${o.sub || ''}</div><button type="button" class="lw-win-ok" id="wheelWinOk">CONTINUE</button></div>`;
+    host.appendChild(d);
+    const ok = d.querySelector('#wheelWinOk'); if (ok) ok.focus({ preventScroll: true });
+  }
+  const winArt = (itemId) => itemId && itemId.startsWith('avatar') ? avatarHtml(itemId, 84) : itemId ? `<span class="custom-card-back ${getCosmeticBackClass(itemId)} lw-win-back"></span>` : '';
+  function wheelWinPop(sp, p) {
+    if (p.kind === 'item') {
+      if (sp.duplicate) return winPop({ eyebrow: 'Already owned', big: `+${Number(sp.paid).toLocaleString('en-GB')} Diamonds`, sub: `You own the ${nameOf(p)}, so it pays Diamonds instead.`, tier: 'jackpot' });
+      return winPop({ eyebrow: 'New item', art: winArt(p.itemId), big: nameOf(p), sub: 'Find it in Custom. It is wheel-only.', tier: 'item' });
+    }
+    if (p.kind === 'xp') return winPop({ art: '<span class="lw-win-xp">XP</span>', big: `+${p.amount} XP`, sub: 'Added to your level.', tier: tierOf(p) });
+    return winPop({ big: `+${Number(p.amount).toLocaleString('en-GB')} Diamonds`, sub: 'Added to your balance.', tier: tierOf(p) });
+  }
   function celebrate(tier) {
     if (audio.playWheelWin) audio.playWheelWin(tier);
     if (motionOff() || typeof confetti !== 'function' || (tier !== 'item' && tier !== 'jackpot' && tier !== 'big')) return;
@@ -379,6 +408,7 @@
       const gotItem = prize(sp.prize).kind === 'item' && !sp.duplicate;
       if (gotItem) { S.owned = { ...S.owned, [prize(sp.prize).itemId]: true }; S.built = false; }
       applyEconomy(res); showResult(sp); celebrate(tierOf(p)); paint(); startTimer();
+      setTimeout(() => wheelWinPop(sp, p), motionOff() ? 0 : 450);
     };
     if (motionOff() || typeof el.animate !== 'function') { done(); return; }
     const anim = el.animate([{ transform: `rotate(${from}deg)` }, { transform: `rotate(${to}deg)` }], { duration: SPIN_MS, easing: EASE, fill: 'forwards' });
@@ -483,6 +513,7 @@
     $('montyResult').innerHTML = r.prize === bigAmt() ? `<b class="lw-won">+${r.prize} Diamonds</b><span>You found the big prize.</span>` : `<b class="lw-won">+${r.prize} Diamonds</b><span>Not the big one. Try again next week.</span>`;
     $('montyResult').classList.remove('lw-in'); void $('montyResult').offsetWidth; $('montyResult').classList.add('lw-in');
     celebrate(r.prize === bigAmt() ? 'big' : 'small');
+    setTimeout(() => winPop({ eyebrow: r.prize === bigAmt() ? 'The big prize' : 'Three Cards', big: `+${Number(r.prize).toLocaleString('en-GB')} Diamonds`, sub: r.prize === bigAmt() ? 'You followed the right card.' : 'Not the big one. Try again next week.', tier: r.prize === bigAmt() ? 'big' : 'small' }), motionOff() ? 0 : 450);
     paint();
   }
   function setTab(tab) {
@@ -515,7 +546,7 @@
     refresh().then(() => { if (!S.busy && !M.busy) { const was = S.built; if (!was) { build(); paintPrize(); } } });
     ($('wheelModal').querySelector('.lw-tab.on') || $('wheelCloseBtn')).focus({ preventScroll: true });
   }
-  function close() { if (!S.busy && !M.busy && !SC.busy) { scratchSettle(); $('wheelModal')?.classList.add('hidden'); } }
+  function close() { if (closeWin()) return; if (!S.busy && !M.busy && !SC.busy) { scratchSettle(); $('wheelModal')?.classList.add('hidden'); } }
 
   // Hover (PC) or keyboard focus on either home circle explains it in the shared info bubble.
   const CHIP_TIPS = {
@@ -542,6 +573,7 @@
     else if (t.id === 'scratchRevealBtn') scratchReveal();
     else if (t.id === 'scratchOddsBtn') { const o = $('scratchOdds'), on = o.classList.toggle('hidden'); t.setAttribute('aria-expanded', String(!on)); }
     else if (t.closest && t.closest('#menuWheelBtn')) { if (typeof closeHamburgerMenu === 'function') closeHamburgerMenu(); open('spin'); }
+    else if (t.id === 'wheelWinOk' || t.id === 'wheelWinPop') closeWin();
     else if (t.id === 'wheelCloseBtn' || t.id === 'wheelModal') close();
     else if (t.id === 'wheelSpinBtn') spin();
     else if (t.closest && t.closest('.lw-tab')) setTab(t.closest('.lw-tab').dataset.lwTab);
@@ -552,7 +584,7 @@
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.status && !S.status.canSpin) refresh(); });
 
   window.ShWheel = {
-    open, close,
+    open, close, winPop, closeWin,
     onSignIn() { S.angle = 0; S.status = null; setTimeout(() => { if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return; refresh(); startTimer(); }, 2500); },
     reset() { S.status = null; S.monty = null; S.owned = {}; S.built = false; S.angle = 0; clearInterval(S.timer); paint(); $('wheelModal')?.classList.add('hidden'); },
     refresh, state: S, tierOf
