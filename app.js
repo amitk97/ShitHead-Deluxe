@@ -14056,7 +14056,7 @@
     const FREE_AVATAR_IDS = ['avatar-crown-bronze', 'avatar-suit-spades', 'avatar-suit-hearts', 'avatar-suit-diamonds', 'avatar-suit-clubs'];
     function getAvatarItem(id) {
       if (privateAvatarItem(id)) return privateAvatarItem(id);
-      return [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS, ...LEVEL_REWARDS].find(item => item.id === id && item.category === 'Avatars') || null;
+      return [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS, ...LEVEL_REWARDS, ...NM_EARNED].find(item => item.id === id && item.category === 'Avatars') || null;
     }
     const COSMETIC_CATEGORY_TYPES = Object.freeze({
       'Card Backs': 'cardBack', 'Frames': 'frame', 'Emote Packs': 'emotes',
@@ -14143,7 +14143,7 @@
       if (id === PRIVATE_TABLE_ID) return type === 'tableTheme' && !!ownedPrivateTables().length;
       if (id === PRIVATE_AVATAR_ID) return type === 'avatar' && !!privateGiftItem(id);
       if (id === 'default') return Object.prototype.hasOwnProperty.call(DEFAULT_EQUIPPED_COSMETICS, type);
-      const item = privateGiftItem(id) || [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
+      const item = privateGiftItem(id) || [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS, ...NM_EARNED].find(entry => entry.id === id);
       return !!item && COSMETIC_CATEGORY_TYPES[item.category] === type && !!COSMETIC_RUNTIME_IDS[type]?.has(id);
     }
 
@@ -14320,7 +14320,7 @@
     }
     function cosmeticDisplayName(type, id) {
       if (!id || id === 'default') return 'Default';
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id && COSMETIC_CATEGORY_TYPES[entry.category] === type);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_FRAMES, ...LEVEL_REWARDS, ...NM_EARNED].find(entry => entry.id === id && COSMETIC_CATEGORY_TYPES[entry.category] === type);
       return item ? item.name : 'Default';
     }
     function victoryPreviewIcon(id) {
@@ -14579,7 +14579,7 @@
       stampEquip(type);
       applyEquippedCosmetics();
       renderPersonalisationCosmetics();
-      const item = privateGiftItem(id) || [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
+      const item = privateGiftItem(id) || [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS, ...NM_EARNED].find(entry => entry.id === id);
       const effectsDisabled = (type === 'burnEffect' || type === 'victoryEffect' || type === 'jokerEffect') && !bigEffectsOn;
       const status = document.getElementById('personalisationStatus');
       if (status) status.textContent = `${item ? item.name : 'Default'} equipped.${effectsDisabled ? ' Effects are currently disabled in Settings.' : ''}`;
@@ -14687,7 +14687,7 @@
     // count. Folded groups are remembered per tab (localStorage
     // shithead_custom_groups_collapsed, keys "<type>:<group>").
     const CUSTOM_GROUPS = [['free', 'Free'], ['shop', 'Shop'], ['ranked', 'Earn in Ranked'], ['gauntlet', 'Earn in the Gauntlet'],
-      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['nomercy', 'Earn in No Mercy'], ['wheel', 'Earn on the Daily Spin'], ['scratch', 'Earn on the Scratch Card'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
+      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['events', 'Events'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
     const CUSTOM_GROUPS_KEY = 'shithead_custom_groups_collapsed';
     const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
     function customGroupOf(item) {
@@ -14699,9 +14699,7 @@
       if (item.referral) return 'friends';
       if (item.twos) return 'twos';
       if (item.decks) return 'decks';
-      if (item.wheel) return 'wheel';
-      if (item.scratch) return 'scratch';
-      if (item.nm && item.earned) return 'nomercy';
+      if (item.wheel || item.scratch || (item.nm && item.earned)) return 'events';
       if (item.earned || EARNED_AVATARS.includes(item)) return 'ranked';
       return 'shop';
     }
@@ -14716,7 +14714,7 @@
     }
     // A folded group opens when something needs to show one of its items.
     function openCustomGroupFor(type, id) {
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(i => i.id === id);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS, ...NM_EARNED].find(i => i.id === id);
       const key = `${type}:${customGroupOf(item || null)}`;
       if (!customGroupsCollapsed.delete(key)) return false;
       try { localStorage.setItem(CUSTOM_GROUPS_KEY, JSON.stringify([...customGroupsCollapsed])); } catch (e) {}
@@ -14827,7 +14825,7 @@
     document.getElementById('collectionBody').addEventListener('click', (event) => {
       const tile = event.target.closest('[data-coll-id]');
       if (!tile) return;
-      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(i => i.id === tile.dataset.collId);
+      const item = [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS, ...NM_EARNED].find(i => i.id === tile.dataset.collId);
       if (!item) return;
       document.getElementById('collectionStatus').innerHTML = `<b>${escapeHtml(item.name)}</b> · ${isCosmeticOwned(item) ? (item.builtIn ? 'Free for everyone' : 'Owned') : escapeHtml(customLockedStatus(item))}`;
       document.querySelectorAll('#collectionBody .coll-tile.is-picked').forEach(t => t.classList.remove('is-picked'));
@@ -14850,7 +14848,7 @@
       const victories = document.getElementById('personalisationVictoryEffects');
       const jokers = document.getElementById('personalisationJokerEffects');
       if (!backs || !frames || !emotes || !tables || !burns || !victories || !jokers) return;
-      backs.innerHTML = ownedPrivateBacks().map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('') + customGroupedHtml('cardBack', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Card Backs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs')]), ...LEVEL_REWARDS.filter(i => i.category === 'Card Backs')], i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack));
+      backs.innerHTML = ownedPrivateBacks().map(i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack)).join('') + customGroupedHtml('cardBack', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Card Backs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Card Backs')]), ...LEVEL_REWARDS.filter(i => i.category === 'Card Backs'), ...NM_EARNED.filter(i => i.category === 'Card Backs')], i => personalisationOptionHtml(i, 'cardBack', equippedCosmetics.cardBack));
       frames.innerHTML = customGroupedHtml('frame', [null, ...sortByValue(COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Frames')), ...EARNED_FRAMES, ...LEVEL_REWARDS.filter(i => i.category === 'Frames')], i => personalisationOptionHtml(i, 'frame', equippedCosmetics.frame));
       emotes.innerHTML = customGroupedHtml('emotes', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Emote Packs')])], i => personalisationOptionHtml(i, 'emotes', equippedCosmetics.emotes));
       tables.innerHTML = ownedPrivateTables().map(i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme)).join('') + customGroupedHtml('tableTheme', [null, ...sortByValue([...BUILT_IN_COSMETICS.filter(i => i.category === 'Table Themes'), ...COSMETIC_SHOP_ITEMS.filter(i => isCosmeticListed(i) && i.category === 'Table Themes')]), ...LEVEL_REWARDS.filter(i => i.category === 'Table Themes')], i => personalisationOptionHtml(i, 'tableTheme', equippedCosmetics.tableTheme));
@@ -14936,7 +14934,7 @@
     }
     function cosmeticDisplayName(type, id) {
       if (id === 'default') return 'Default';
-      const item = privateGiftItem(id) || [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(entry => entry.id === id);
+      const item = privateGiftItem(id) || [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS, ...NM_EARNED].find(entry => entry.id === id);
       return item ? item.name : 'This item';
     }
     document.getElementById('themesModal').addEventListener('click', (event) => {
@@ -20819,7 +20817,7 @@
         const isRank = item.type === 'rank';
         const unlockedFrame = item.unlocked && /^unlock_frame-/.test(String(item.id || ''));
         // Level rewards (v248) can be a card back, a frame or a table.
-        const levelItem = item.unlocked ? LEVEL_REWARDS.find(r => `unlock_${r.id}` === item.id) : null;
+        const levelItem = item.unlocked ? [...LEVEL_REWARDS, ...NM_EARNED].find(r => `unlock_${r.id}` === item.id) : null;
         const unlockKind = levelItem ? ({ 'Avatars': 'Avatar', 'Card Backs': 'Card back', 'Frames': 'Frame', 'Table Themes': 'Table', 'Burn Effects': 'Burn' }[levelItem.category] || 'Item') : unlockedFrame ? 'Frame' : 'Avatar';
         const heading = isRank ? `Rank ${item.direction === 'up' ? 'up' : 'down'}` : item.unlocked ? `${unlockKind} unlocked` : 'Shop purchase';
         const detail = isRank
@@ -20924,7 +20922,7 @@
     // and Back returns to it (page trail).
     let inboxRenderedItems = [];
     function mailItemByName(name) {
-      return [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(i => i.name === name) || null;
+      return [...COSMETIC_SHOP_ITEMS, ...BUILT_IN_COSMETICS, ...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS, ...NM_EARNED].find(i => i.name === name) || null;
     }
     function openCustomTileFromMail(item) {
       if (!item) return false;
@@ -21752,7 +21750,7 @@
     function openLockedCosmetic(id) {
       const shopItem = COSMETIC_SHOP_ITEMS.find(item => item.id === id);
       if (!shopItem) {
-        const earned = [...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS].find(item => item.id === id);
+        const earned = [...EARNED_AVATARS, ...EARNED_FRAMES, ...LEVEL_REWARDS, ...NM_EARNED].find(item => item.id === id);
         const status = document.getElementById('personalisationStatus');
         if (status && earned) status.textContent = `${earned.name}: ${earned.requirement}.`;
         return false;
