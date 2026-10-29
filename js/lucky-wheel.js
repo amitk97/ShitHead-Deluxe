@@ -755,9 +755,23 @@
     if (e.type === 'mouseover' && !window.matchMedia('(hover: hover)').matches) return;
     showInfoPop(c, CHIP_TIPS[c.id], { hover: true, side: c.id === 'homeScratchChip' || c.id === 'homeDropChip' ? 'right' : 'left' });
   };
+  // Touch / pen: press and hold a circle (450ms) to read what it is; the release click is swallowed so it does not open the game.
+  { let t = 0, sx = 0, sy = 0, held = null;
+    const CHIPS = '#homeWheelChip, #homeMontyChip, #homeScratchChip, #homeDropChip';
+    const stop = () => { clearTimeout(t); t = 0; };
+    document.addEventListener('pointerdown', (e) => {
+      const c = e.target.closest && e.target.closest(CHIPS); if (!c || e.pointerType === 'mouse' || typeof showInfoPop !== 'function') return;
+      sx = e.clientX; sy = e.clientY; stop();
+      t = setTimeout(() => { t = 0; held = c; showInfoPop(c, CHIP_TIPS[c.id], { side: c.id === 'homeScratchChip' || c.id === 'homeDropChip' ? 'right' : 'left' }); setTimeout(() => { if (typeof hideInfoPop === 'function') hideInfoPop(); }, 5000); }, 450);
+    });
+    document.addEventListener('pointermove', (e) => { if (t && Math.hypot(e.clientX - sx, e.clientY - sy) > 8) stop(); });
+    ['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, stop));
+    document.addEventListener('click', (e) => { const c = e.target.closest && e.target.closest(CHIPS); if (c && held === c) { held = null; e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+    document.addEventListener('contextmenu', (e) => { if (e.target.closest && e.target.closest(CHIPS)) e.preventDefault(); });
+  }
   document.addEventListener('mouseover', chipTip);
   document.addEventListener('focusin', (e) => { if (e.target.matches && e.target.matches(':focus-visible')) chipTip(e); });
-  document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip, #homeScratchChip, #homeDropChip') && typeof hideInfoPop === 'function') hideInfoPop(); });
+  document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('#homeWheelChip, #homeMontyChip, #homeScratchChip, #homeDropChip') && typeof hideInfoPop === 'function' && document.getElementById('infoPop')?.dataset.hover) hideInfoPop(); });
 
   document.addEventListener('click', (e) => {
     const t = e.target;
