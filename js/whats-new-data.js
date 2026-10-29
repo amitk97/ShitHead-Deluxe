@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v511: [['sparkle', 'Multiple Decks: a Skip To End button when only bots are left (also online), the grouped hand can always be switched back to rows, and a Joker you counter no longer makes you pick up the pile. Drop Zone card back and avatar are centred and fit their boxes.', WN_KEY]],
       v510: [['sparkle', 'Drop All now drops every card first, then shows your total Diamonds and prizes once at the end.']],
       v509: [['sparkle', 'Drop Zone now always shows a Drop button and a Drop All button side by side.']],
       v508: [['sparkle', 'The match summary now shows when you earned a Drop Zone card, with a button to drop it. The Guide has a new Lucky Games section.']],

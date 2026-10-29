@@ -2586,6 +2586,10 @@
     function stillHasNoLegalMove(player) {
       if (!player || state.burnResolving || state.phase !== 'PLAY') return false;
       if (state.players[state.currentTurnIndex]?.id !== player.id) return false;
+      // A Joker duel was just settled: the loser's pickup is still on its way (a short delay), so the
+      // winner, who plays next, must not be sent to pick the same pile up first (v511).
+      const lastPlay = (state.playedHistory || []).slice(-1)[0];
+      if (lastPlay && lastPlay.type === 'play' && lastPlay.isJoker && state.discardPile.length) return false;
       return getLegalMovesForPlayer(player, state.discardPile, state.activeConstraint).length === 0;
     }
     function handleNoLegalMove(player, difficulty) {
@@ -4844,8 +4848,15 @@
     // Once the local human is out of the running and only bots remain, waiting
     // through every real-time bot turn to see final rankings can take a while.
     // This collapses the bot turn delay to near-instant (muted) until the match ends.
-    function skipToEndSimulation() {
-      if (state.isMultiplayer || state.isFastForwarding || state.phase !== 'PLAY') return;
+    // Online: only bots are left in the room, so any finished human can ask the match driver to hurry (room field skipAt).
+    function onlySkipAllowed() { return state.players.filter(p => !p.hasFinished).every(p => p.isBot); }
+    function skipToEndSimulation(fromRoom) {
+      if (state.isRanked || state.isFastForwarding || state.phase !== 'PLAY') return;
+      if (state.isMultiplayer) {
+        if (!onlySkipAllowed()) return;
+        if (fromRoom !== true) { try { db.ref(`rooms/${state.roomCode}/skipAt`).set(serverNow()); } catch (e) { /* offline */ } }
+        if (!hasMatchAuthority()) { notifyBanner('Asked the table to skip ahead...'); return; }
+      }
       state.isFastForwarding = true;
       state.preFastForwardDelay = state.turnDelay;
       state.turnDelay = 15;
@@ -7599,7 +7610,7 @@
       // still fit the width: a tall phone suits more rows, a short one fewer.
       // Multiple Decks with a big hand: one stack per rank (H2), 7 to a row.
       const handGroups = handIsGrouped(local) ? groupHandByRank(local.hand) : null;
-      const handBarPx = isMultiDeck() && state.phase === 'PLAY' && local.hand.length >= 8 ? 27 : 0;
+      const handBarPx = isMultiDeck() && state.phase === 'PLAY' && (local.hand.length >= 8 || handGroups) ? 27 : 0;
       const handRows = handGroups
         ? chunkEvenly(handGroups.map(g => g[0]), 7)
         : bestHandRows(local.hand, getAvailableHandHeightPx() - handBarPx);
@@ -7781,7 +7792,7 @@
       if (skipBtn && state.phase === 'PLAY' && !isSacrificingNow) {
         document.getElementById('playActionControls')?.classList.remove('hidden');
         const activeOthers = state.players.filter(p => !p.hasFinished);
-        const showSkip = !state.isMultiplayer && local.hasFinished &&
+        const showSkip = !state.isRanked && !state.spectating && local.hasFinished &&
           activeOthers.length >= 2 && activeOthers.every(p => p.isBot);
         skipBtn.classList.toggle('hidden', !showSkip);
         playBtn.classList.toggle('hidden', local.hasFinished);
@@ -7884,6 +7895,7 @@
     }
 
     // § Multiple Decks hand (H2): grouped by rank from 16 cards, or by choice.
+    let lastHandledSkipAt = null;
     let handGroupOverride = null; // null = automatic, true/false = the player's choice
     const HAND_GROUP_AT = 16;
     function handIsGrouped(local) {
@@ -9057,6 +9069,11 @@
         if (data.lastBlindReveal?.key && data.lastBlindReveal.key !== lastHandledBlindRevealKey) {
           lastHandledBlindRevealKey = data.lastBlindReveal.key;
           if (!isCatchUp) showRemoteBlindReveal(data.lastBlindReveal);
+        }
+
+        if (data.skipAt && data.skipAt !== lastHandledSkipAt) {
+          lastHandledSkipAt = data.skipAt;
+          if (!isCatchUp && Date.now() - (Number(data.skipAt) || 0) < 20000 && hasMatchAuthority()) skipToEndSimulation(true);
         }
 
         // Joker effects: played for everyone but the client that made the play.
@@ -10457,7 +10474,7 @@
       tutorialOnPlayerActed();
     });
 
-    document.getElementById('skipSimulationBtn').addEventListener('click', skipToEndSimulation);
+    document.getElementById('skipSimulationBtn').addEventListener('click', () => skipToEndSimulation());
 
     document.getElementById('followUpPlayBtn').addEventListener('click', () => resolveFollowUpPlay(true));
     document.getElementById('followUpSkipBtn').addEventListener('click', () => resolveFollowUpPlay(false));
@@ -11825,7 +11842,7 @@
         <g fill="url(#av-m-gold)" stroke="rgba(0,0,0,.45)" stroke-width=".6"><circle cx="32" cy="16" r="2.2"/><circle cx="22" cy="25" r="2.2"/><circle cx="42" cy="25" r="2.2"/><circle cx="12" cy="34" r="2.2"/><circle cx="32" cy="34" r="2.2"/><circle cx="52" cy="34" r="2.2"/></g>
         <path d="M10 44v8a3 3 0 0 0 3 3h38a3 3 0 0 0 3-3v-8" fill="rgba(7,14,40,.7)" stroke="url(#av-m-gold)" stroke-width="2"/>
         <path d="M22 44v11M32 44v11M42 44v11" stroke="url(#av-m-gold)" stroke-width="1.3"/>
-        <g class="av-dropcard"><rect x="-6" y="-8.5" width="12" height="17" rx="2.2" fill="url(#av-m-crimson)" stroke="#fde68a" stroke-width="1.1"/><path d="M0 -3.6 3 0 0 3.6 -3 0Z" fill="none" stroke="#fde68a" stroke-width=".9"/></g>
+        <g class="av-dropcard"><rect x="-3.6" y="-5.1" width="7.2" height="10.2" rx="1.4" fill="url(#av-m-crimson)" stroke="#fde68a" stroke-width=".8"/><path d="M0 -2.1 1.7 0 0 2.1 -1.7 0Z" fill="none" stroke="#fde68a" stroke-width=".6"/></g>
         <g class="av-twinkle"><path d="M52.5 10.5l1.3 2.9 3.1.35-2.3 2.1.65 3.05-2.75-1.55-2.75 1.55.65-3.05-2.3-2.1 3.1-.35Z" fill="url(#av-m-gold)" stroke="rgba(0,0,0,.4)" stroke-width=".7"/></g>
         <g clip-path="url(#av-clip-tile)"><g transform="rotate(18 32 32)"><rect class="av-shine" x="6" y="0" width="10" height="64" fill="url(#av-shine)"/></g></g>` },
       'avatar-centurion':    { tone: 'red', art: `
