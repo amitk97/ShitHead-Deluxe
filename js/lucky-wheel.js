@@ -635,7 +635,7 @@
       dzClearGlow(); dzPlaceCard(); D.shown = before - i - 1; dzPaint();
       if (multi) $('dropResult').innerHTML = `<span>Dropping ${i + 1} of ${drops.length}…</span>`;
       await dzFall(dr.slot, multi, near);
-      dzLand(dr.slot, near);
+      if (!multi) dzLand(dr.slot, near);
       if (!multi) {
         const sl = DZR.slots[dr.slot], rare = dr.slot === 1 ? 'avatar' : dr.slot === 5 ? 'card back' : '';
         $('dropResult').innerHTML = `<span>${near && rare ? `So close! One slot from the ${rare}. ` : ''}You won <b>${dr.duplicate ? `${Number(dr.paid).toLocaleString('en-GB')} Diamonds (you own it)` : dzName(sl)}</b>.</span>`;
@@ -643,6 +643,7 @@
       if (multi) await wait(motionOff() ? 0 : 140);
     }
     D.shown = null; D.cards = Number(res.cards) || 0; D.busy = false;
+    if (multi) { dzClearGlow(); [...new Set(drops.map(d => d.slot))].forEach(sl => dzLand(sl, false)); }
     const newItems = drops.filter(d => d.kind === 'item' && !d.duplicate);
     if (newItems.length) { newItems.forEach(d => { D.owned = { ...D.owned, [d.itemId]: true }; }); }
     applyEconomy({ diamonds: res.diamonds, spin: newItems.length ? { kind: 'item' } : null });
@@ -655,10 +656,10 @@
     celebrate(tier); dzPaint(); paint();
     const popAt = motionOff() ? 0 : 450;
     setTimeout(() => {
-      if (first) return winPop({ eyebrow: multi ? `${drops.length} cards` : 'New item', art: winArt(first.itemId), big: dzName(DZR.slots[first.slot]), sub: multi ? `Plus ${dia.toLocaleString('en-GB')} Diamonds. Find it in Custom. It is Drop Zone-only.` : 'Find it in Custom. It is Drop Zone-only.', tier: 'item' });
+      if (first) return winPop({ eyebrow: multi ? `${drops.length} cards` : 'New item', art: winArt(first.itemId), big: dzName(DZR.slots[first.slot]), sub: multi ? `Plus ${dia.toLocaleString('en-GB')} Diamonds from ${drops.length} cards. Find it in Custom. It is Drop Zone-only.` : 'Find it in Custom. It is Drop Zone-only.', tier: 'item' });
       const dup = drops.find(d => d.duplicate);
       if (!multi && dup) return winPop({ eyebrow: 'Already owned', big: `+${Number(dup.paid).toLocaleString('en-GB')} Diamonds`, sub: `You own the ${dzName(DZR.slots[dup.slot])}, so it pays Diamonds instead.`, tier: 'jackpot' });
-      winPop({ eyebrow: multi ? `${drops.length} cards` : 'You won', big: `+${dia.toLocaleString('en-GB')} Diamonds`, sub: 'Added to your balance.', tier });
+      winPop({ eyebrow: multi ? `${drops.length} cards` : 'You won', big: `+${dia.toLocaleString('en-GB')} Diamonds`, sub: multi ? `Total from ${drops.length} cards. Added to your balance.` : 'Added to your balance.', tier });
     }, popAt);
   }
   function dzOpen() {

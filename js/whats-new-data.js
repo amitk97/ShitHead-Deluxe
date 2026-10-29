@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v510: [['sparkle', 'Drop All now drops every card first, then shows your total Diamonds and prizes once at the end.']],
       v509: [['sparkle', 'Drop Zone now always shows a Drop button and a Drop All button side by side.']],
       v508: [['sparkle', 'The match summary now shows when you earned a Drop Zone card, with a button to drop it. The Guide has a new Lucky Games section.']],
       v507: [['sparkle', 'Press and hold any Lucky Games circle on the home screen to read what it is.']],
