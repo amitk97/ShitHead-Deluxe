@@ -525,8 +525,8 @@
   // ---- Drop Zone (v503): a bank of cards (1 to start, +1 for every game won). The server draws each slot; the card is drawn falling to it ----
   const DZR = typeof DROPZONE !== 'undefined' ? DROPZONE : null;
   const D = { cards: null, cap: 10, owned: {}, busy: false, shown: null, built: false };
-  const DG = { X0: 180, DX: 24, ROWS: 6, Y0: 78, DY: 50, SLOT_Y: 372, W: 360 };
-  const DZ_COL = ['#a78bfa', '#f5b82e', '#14b8c4', '#5b8def', '#22c55e', '#f5b82e', '#f472b6'];
+  const DG = { X0: 180, DX: 24, ROWS: 6, Y0: 92, DY: 46, SLOT_Y: 364, W: 360, CW: 32, CH: 45, TOP: 72 };
+  const DZ_COL = ['#ffd36a', '#f0b43c', '#e5b04a', '#d99a2b', '#e5b04a', '#f0b43c', '#ffd36a'];
   const dzLabel = (sl) => sl.kind === 'item' ? (sl.itemId.startsWith('avatar') ? 'AVATAR' : 'BACK') : String(sl.amount);
   const dzName = (sl) => sl.kind === 'diamonds' ? `${sl.amount} Diamonds` : sl.itemId.startsWith('avatar') ? `${sl.name} avatar` : `${sl.name} card back`;
   const dzShown = () => D.shown != null ? D.shown : D.cards;
@@ -542,18 +542,24 @@
     const all = $('dropAllBtn'); if (all) { all.classList.toggle('hidden', !(n > 1)); all.disabled = D.busy; all.textContent = `Drop all (${n})`; }
     const sub = $('dropSub'); if (sub) sub.textContent = n > 0 ? 'Every game you win, in any mode, earns another card.' : 'Win a game in any mode to earn a card.';
   }
+  // Gold Vault: black board, gold frame, diamond pins, framed gem bins.
   function dzBuild() {
     const host = $('dropBoard'); if (!host || !DZR) return;
-    const NS = 'http://www.w3.org/2000/svg';
-    let g = '<defs><linearGradient id="dzFelt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10204a"/><stop offset="1" stop-color="#0a1330"/></linearGradient><radialGradient id="dzPeg" cx=".35" cy=".3"><stop offset="0" stop-color="#fff7d6"/><stop offset=".6" stop-color="#f0b43c"/><stop offset="1" stop-color="#8a5a0a"/></radialGradient><filter id="dzGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter></defs>';
-    g += '<rect x="2" y="2" width="356" height="466" rx="14" fill="url(#dzFelt)" stroke="#3b4f7e" stroke-width="1.5"/><path d="M168 30 L180 44 L192 30" fill="none" stroke="#f0b43c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>';
+    const GD = 'url(#dzGold)';
+    let g = '<defs><linearGradient id="dzBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16131c"/><stop offset="1" stop-color="#060509"/></linearGradient><linearGradient id="dzGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e5b04a"/><stop offset="1" stop-color="#7a5212"/></linearGradient><filter id="dzGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter></defs>';
+    g += `<rect x="3" y="3" width="354" height="464" rx="14" fill="url(#dzBg)"/><rect x="3" y="3" width="354" height="464" rx="14" fill="none" stroke="${GD}" stroke-width="3.5"/><rect x="11" y="11" width="338" height="448" rx="9" fill="none" stroke="#e5b04a" stroke-opacity=".35"/><path d="M180 26l10 12-10 12-10-12z" fill="${GD}"/><path d="M168 60l12 12 12-12" fill="none" stroke="#e5b04a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>`;
     for (let r = 0; r < DG.ROWS; r++) {
       const off = r % 2 === 0 ? 36 : 12, n = r % 2 === 0 ? 7 : 8;
-      for (let j = 0; j < n; j++) { const x = off + 48 * j, y = DG.Y0 + DG.DY * r; g += `<circle class="dz-halo" data-peg="${r}:${x}" cx="${x}" cy="${y}" r="9" fill="#ffd36a" opacity="0" filter="url(#dzGlow)"/><circle cx="${x}" cy="${y}" r="4.6" fill="url(#dzPeg)" stroke="#5a3a06" stroke-width=".6"/>`; }
+      for (let j = 0; j < n; j++) { const x = off + 48 * j, y = DG.Y0 + DG.DY * r; g += `<circle class="dz-halo" data-peg="${r}:${x}" cx="${x}" cy="${y}" r="10" fill="#ffd36a" opacity="0" filter="url(#dzGlow)"/><path d="M${x} ${y - 6.5}l5.4 6.5-5.4 6.5-5.4-6.5z" fill="${GD}" stroke="#3a2808" stroke-width=".6"/><path d="M${x} ${y - 6.5}l2.2 6.5h-4.4z" fill="#fff" opacity=".55"/>`; }
     }
+    const SY = DG.SLOT_Y, T = '#fff';
     DZR.slots.forEach((sl, i) => {
-      const cx = 36 + 48 * i, col = DZ_COL[i], big = sl.kind === 'item';
-      g += `<g class="dz-slot" data-slot="${i}"><rect class="dz-sglow" x="${cx - 22}" y="${DG.SLOT_Y - 6}" width="44" height="98" rx="8" fill="${col}" opacity="0" filter="url(#dzGlow)"/><path d="M${cx - 22} ${DG.SLOT_Y} v78 a6 6 0 0 0 6 6 h32 a6 6 0 0 0 6 -6 v-78" fill="#0a1330" stroke="${col}" stroke-width="1.6"/><rect x="${cx - 21}" y="${DG.SLOT_Y + 52}" width="42" height="31" rx="5" fill="${col}" opacity=".22"/><text x="${cx}" y="${DG.SLOT_Y + 70}" text-anchor="middle" fill="${col}" font-family="Outfit, system-ui, sans-serif" font-weight="800" font-size="${big ? 10 : 17}">${dzLabel(sl)}</text>${big ? '' : `<path d="M${cx - 5} ${DG.SLOT_Y + 22} l5 -7 l5 7 l-5 9 z" fill="#8ee6ff" stroke="#d9faff" stroke-width=".6" stroke-linejoin="round"/>`}</g>`;
+      const cx = 36 + 48 * i, c = DZ_COL[i], w = 42;
+      let lab;
+      if (sl.kind !== 'item') lab = `<path d="M${cx - 8} ${SY + 19.6}l4-5.6h8l4 5.6-8 9.9z" fill="${c}" stroke="#fff" stroke-opacity=".7" stroke-width=".8"/><text x="${cx}" y="${SY + 58}" text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-size="20" font-weight="800" fill="${T}">${sl.amount}</text>`;
+      else if (sl.itemId.startsWith('avatar')) lab = `<circle cx="${cx}" cy="${SY + 30}" r="12" fill="#13244d" stroke="${c}" stroke-width="2"/><circle cx="${cx}" cy="${SY + 26}" r="4.4" fill="${c}"/><path d="M${cx - 8} ${SY + 38}q8-10 16 0z" fill="${c}"/><text x="${cx}" y="${SY + 66}" text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-size="9.5" font-weight="800" fill="${T}" letter-spacing=".5">AVATAR</text><text x="${cx}" y="${SY + 78}" text-anchor="middle" font-size="8" fill="${c}">1%</text>`;
+      else lab = `<rect x="${cx - 9}" y="${SY + 14}" width="18" height="26" rx="3" fill="#13244d" stroke="${c}" stroke-width="2"/><path d="M${cx - 4} ${SY + 22}h8M${cx - 4} ${SY + 28}h8" stroke="${c}" stroke-width="1.6"/><text x="${cx}" y="${SY + 66}" text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-size="9.5" font-weight="800" fill="${T}" letter-spacing=".5">BACK</text><text x="${cx}" y="${SY + 78}" text-anchor="middle" font-size="8" fill="${c}">1%</text>`;
+      g += `<g class="dz-slot" data-slot="${i}"><rect class="dz-sglow" x="${cx - w / 2 - 3}" y="${SY - 3}" width="${w + 6}" height="92" rx="9" fill="#ffd36a" opacity="0" filter="url(#dzGlow)"/><rect x="${cx - w / 2}" y="${SY}" width="${w}" height="86" rx="8" fill="#0d0b12" stroke="${GD}" stroke-width="2"/><rect x="${cx - w / 2 + 4}" y="${SY + 4}" width="${w - 8}" height="78" rx="5" fill="none" stroke="#e5b04a" stroke-opacity=".3"/>${lab}</g>`;
     });
     let back = '<div class="custom-card-back"></div>';
     try { back = snapshotCardBackHtml(snapshotCardStyle(), 'w-full h-full'); } catch (e) { /* default back */ }
@@ -562,9 +568,9 @@
     D.built = true;
   }
   function dzScale() { const b = $('dropBoard'); return b && b.clientWidth ? b.clientWidth / DG.W : 0.8; }
-  function dzPlaceCard(x = DG.X0, y = 34, rot = 0) {
+  function dzPlaceCard(x = DG.X0, y = DG.TOP, rot = 0) {
     const c = $('dropCard'); if (!c) return;
-    const s = dzScale(), w = 22 * s, h = 31 * s;
+    const s = dzScale(), w = DG.CW * s, h = DG.CH * s;
     c.style.width = w + 'px'; c.style.height = h + 'px';
     c.style.transform = `translate(${x * s - w / 2}px, ${y * s - h / 2}px) rotate(${rot}deg)`;
   }
@@ -573,15 +579,15 @@
   function dzFall(slot, fast, near) {
     return new Promise((resolve) => {
       const c = $('dropCard'); if (!c) return resolve();
-      const s = dzScale(), w = 22 * s, h = 31 * s;
+      const s = dzScale(), w = DG.CW * s, h = DG.CH * s;
       const seg = fast ? 230 : 430, lead = fast ? 250 : 460, tail = fast ? 320 : 620, hold = near ? 560 : 0;
       const moves = dzRoute(slot), kf = [], hits = [];
       const total = lead + DG.ROWS * seg + hold + tail;
       const push = (px, py, rot, t) => kf.push({ transform: `translate(${px * s - w / 2}px, ${py * s - h / 2}px) rotate(${rot}deg)`, offset: Math.min(1, t / total) });
-      const pegTop = (r) => DG.Y0 + DG.DY * r - 20;
+      const pegTop = (r) => DG.Y0 + DG.DY * r - 24;
       let x = DG.X0, y = pegTop(0), time = lead;
-      push(x, 34, 0, 0);
-      for (let k = 1; k <= 8; k++) { const u = k / 8; push(x, 34 + (pegTop(0) - 34) * u * u, 0, lead * u); }
+      push(x, DG.TOP, 0, 0);
+      for (let k = 1; k <= 8; k++) { const u = k / 8; push(x, DG.TOP + (pegTop(0) - DG.TOP) * u * u, 0, lead * u); }
       for (let r = 0; r < DG.ROWS; r++) {
         hits.push({ r, time, x });
         const dir = moves[r], nx = x + dir * DG.DX, ny = r < DG.ROWS - 1 ? pegTop(r + 1) : DG.SLOT_Y + 10, spin = dir * (14 + Math.random() * 10);

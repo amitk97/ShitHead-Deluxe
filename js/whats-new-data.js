@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v504: [['sparkle', 'Drop Zone has a new Gold Vault look: a black and gold board with diamond pins, and a new Drop Zone card back.']],
       v503: [['sparkle', 'New Lucky Game: Drop Zone. Drop a card through the pegs for Diamonds, an avatar or a card back. Every game you win earns another card.', WN_KEY]],
       v502: [['sparkle', 'Daily Spin and Scratch Card prizes now sit under a Lucky Games group in Custom.']],
       v501: [['sparkle', 'Test account: Dev page can send Diamonds to any player with a message.', WN_KEY]],

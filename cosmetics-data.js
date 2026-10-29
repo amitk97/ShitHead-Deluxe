@@ -234,7 +234,7 @@
       { id: 'back-nm-verdict', category: 'Card Backs', name: 'Crimson Verdict', earned: true, nm: true, tone: '#b91c1c', file: 'art/backs/nm-verdict2.webp', tones: ['#14080a','#b91c1c','#c9a04a'], requirement: 'Win 10 games of No Mercy', isEarned: () => false },
       { id: 'deck-nm-verdict', category: 'Decks', name: 'Crimson Verdict', earned: true, nm: true, theme: 'theme-nmverdict', tones: ['#efe3cc','#7a5a2a','#b3141f'], requirement: 'Win 25 games of No Mercy', isEarned: () => false },
       { id: 'back-wheel', category: 'Card Backs', name: 'Lucky Spin', earned: true, wheel: true, tone: '#f59e0b', tones: ['#0b1230','#f59e0b','#b91c1c'], requirement: 'Win it on the Daily Spin', isEarned: () => false },
-      { id: 'back-dropzone', category: 'Card Backs', name: 'Drop Zone', earned: true, drop: true, tone: '#14b8c4', tones: ['#0b1737','#14b8c4','#f0b43c'], requirement: 'Land it in the Card Back slot on Drop Zone', isEarned: () => false },
+      { id: 'back-dropzone', category: 'Card Backs', name: 'Drop Zone', earned: true, drop: true, tone: '#e5b04a', tones: ['#0d0b12','#e5b04a','#ffd36a'], requirement: 'Land it in the Card Back slot on Drop Zone', isEarned: () => false },
       { id: 'back-foil-joker', category: 'Card Backs', name: 'Prism Joker', earned: true, scratch: true, tone: '#a78bfa', file: 'art/backs/foil-prism-joker.webp', tones: ['#0a1226','#8b5cf6','#67e8f9'], requirement: 'Win it on the Scratch Card', isEarned: () => false }
     ];
     // Earn-only frames: never sold or gifted, shown locked in Custom until
