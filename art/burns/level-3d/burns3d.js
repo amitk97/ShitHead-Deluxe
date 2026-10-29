@@ -38,7 +38,7 @@ const STORM_HEAD = [[.02, .525, .02], [.044, .534, .034], [.068, .51, .077], [.0
     // Hellfire Spiral (Lvl 60): the magma tornado (cards painted out) and the rubble at its base in front.
     'burn-lvl-hellfire-spiral': { dur: 2.0, box: [5, 5.6, .5, .8], tile: 'art/burns/hellfire-spiral/tile.webp', art: 'art/burns/hellfire-spiral/layers.webp?v=2', layout: [4.6, 444 / 434, .5, .8] },
     // The ShitStorm (Lvl 99): the owner's painted poo tornado (slot 0, the body swirls in the shader) and its whole head (slot 1, rigid).
-    'burn-lvl-shitstorm': { dur: 2.0, box: [5, 5.6, .5, .92], tile: 'art/burns/shitstorm/tile-v2.webp', art: 'art/burns/shitstorm/layers-v2.webp', layout: [4.6, 1, .5, .93] }
+    'burn-lvl-shitstorm': { dur: 2.0, box: [5, 5.6, .5, .92], tile: 'art/burns/shitstorm/mascot-poster.webp', art: 'art/burns/shitstorm/layers-v2.webp', layout: [4.6, 1, .5, .93] }
   };
   const artImages = {};
   const artFor = id => { const src = EFFECTS[id].art; if (!src) return null; if (!artImages[src]) { artImages[src] = new Image(); artImages[src].src = src; } return artImages[src]; };
@@ -1320,6 +1320,25 @@ void main(){
       const [bw, bh] = fx.box;
       cards = [defaultCard(opts.cardH || Math.max(30, Math.min(110, (host.clientHeight || 160) / (bh - .4), (host.clientWidth || 240) / (bw - .4))))];
     }
+    // The approved rig is baked once, then composited with the actual affected card.
+    // Delegate here so game, Shop preview and deterministic review share one lifecycle.
+    if (id === 'burn-lvl-shitstorm' && window.ShitstormBurn) {
+      const card = cards[cards.length - 1];
+      const face = drawFace(card), back = drawBack(card, 'opponent-cosmetic-card ' + (opts.backClass || ''));
+      if (ShitstormBurn.play(host, x, y, scale, calm, { ...opts, cardEls: pileEls, card, face, back })) return true;
+      // Cold/missing assets must never block play or substitute an older character.
+      // A brief opacity-only glow is safe until the approved atlas finishes loading.
+      ShitstormBurn.preload();
+      const glow = document.createElement('div');
+      glow.className = 'bfx shitstorm-loading-glow';
+      glow.style.cssText = `position:absolute;left:${x-50}px;top:${y-35}px;width:100px;height:70px;pointer-events:none;border-radius:50%;background:radial-gradient(ellipse,rgba(229,158,67,.22),transparent 70%)`;
+      host.appendChild(glow);
+      const anim = glow.animate([{ opacity: 0 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 700 });
+      let timer;
+      const cleanup = () => { clearTimeout(timer); anim.cancel(); glow.remove(); active.delete(cleanup); };
+      cleanup.host = host; active.add(cleanup); timer = setTimeout(cleanup, 750);
+      return true;
+    }
     const H = cards[cards.length - 1].H, dpr = Math.min(window.FxLoad && FxLoad.lite ? 1.25 : 2, window.devicePixelRatio || 1);
     // The painted scene fits the screen width and the room above the Pile (under the header), so its
     // top is never cut off; the cards stay their real size.
@@ -1376,13 +1395,17 @@ void main(){
   }
   // A still of any moment, for tiles and tests.
   function still(id, canvas, t, opts = {}) {
+    if (id === 'burn-lvl-shitstorm' && window.ShitstormBurn) {
+      const card = opts.card || defaultCard(opts.cardH || canvas.height / 3.2);
+      return ShitstormBurn.still(canvas, t, { ...opts, cx: canvas.width * (opts.cx ?? .5), cy: canvas.height * (opts.cy ?? .78), card, face: drawFace(card), back: drawBack(card, opts.backClass) });
+    }
     const card = opts.card || defaultCard(opts.cardH || canvas.height / 3.2);
     const R = makeRenderer(canvas, faceAtlas([card]).atlas, artFor(id)); if (!R) return false;
     const S = makeSim([card], { id, seed: 1931 }); S.advance(t);
     drawFrame(R, S, { F: card.H, px: 1, cx: canvas.width * (opts.cx ?? .5), cy: canvas.height * (opts.cy ?? .62), w: canvas.width, h: canvas.height });
     return true;
   }
-  function clear(host) { for (const c of [...active]) if (!host || c.host === host) c(); }
+  function clear(host) { window.ShitstormBurn?.clear(host); for (const c of [...active]) if (!host || c.host === host) c(); }
   document.addEventListener('visibilitychange', () => { if (document.hidden) clear(); });
   const icon = id => EFFECTS[id] ? `<img src="${EFFECTS[id].tile}" alt="" draggable="false" style="display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit">` : '';
 

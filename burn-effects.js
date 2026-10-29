@@ -1817,7 +1817,14 @@
       const onTable = host && host.id === 'burnFxLayer';
       const cardEls = onTable ? [...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')] : [];
       const pile = onTable ? document.getElementById('discardPileContainer') : null;
-      return ShLevel3D.play(id, host, x, y, k, calm, { cardEls, cardH: pile && pile.offsetHeight, backClass: burnBackClass() });
+      const opts = { cardEls, cardH: pile && pile.offsetHeight, backClass: burnBackClass() };
+      if (id === 'burn-lvl-shitstorm') {
+        const style = snapshotCardStyle(onTable ? burnFxPlayer : null);
+        opts.backClass = style.backClass;
+        opts.backUrl = cityDraftBack(style.backClass, style.frameStyle);
+        opts.faceUrl = cardEls.length && window.ShCityRedesign ? ShCityRedesign.snapshotCard(cardEls[cardEls.length - 1]) : null;
+      }
+      return ShLevel3D.play(id, host, x, y, k, calm, opts);
     }
     // Default Burn without WebGL (the 3D one plays from playBurnFx): the old ember burst.
     function bfxHellfireSpiral(host, x, y, k) {
@@ -1894,6 +1901,8 @@
     }
     function playBurnFx(id, host, x, y, scale = 1, card = null) {
       if (!host) return false;
+      // Settings also apply in Test Lab, which invokes the effect directly.
+      if (id === 'burn-lvl-shitstorm' && (!bigEffectsOn || reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return true;
       if (window.ShCityRedesign && (id==='burn-ldn-routemaster'||id==='burn-mum-monsoon')) {
         const cardEls = host.id==='burnFxLayer' ? [...document.querySelectorAll('#discardCardsWrapper > [data-card-id]')] : [];
         const back = cityDraftBack(burnBackClass());

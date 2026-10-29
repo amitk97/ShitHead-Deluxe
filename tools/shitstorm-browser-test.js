@@ -33,6 +33,8 @@ const ROOT = path.resolve(__dirname, '..'), OUT = process.env.SH_BURN_OUT || '/t
   <div class="card" data-card-id="under" style="transform:rotate(-6deg)"></div>
   <div class="card" data-card-id="top"><span class="card-corner-rank">10</span><span class="card-corner-suit">♥</span><span class="card-centre-suit">♥</span></div>
   </div></div><footer>Actual 72px square pile card · same gameplay renderer</footer>`);
+  await page.addScriptTag({ url: 'https://game.local/art/burns/shitstorm/mascot-burn.js' });
+  await page.evaluate(() => ShitstormBurn.preload());
   await page.addScriptTag({ path: path.join(ROOT, 'art/burns/level-3d/burns3d.js') });
   await page.addScriptTag({ path: path.join(ROOT, 'sound.js') });
   const start = async (time, calm = false) => page.evaluate(({ time, calm }) => {
@@ -42,7 +44,7 @@ const ROOT = path.resolve(__dirname, '..'), OUT = process.env.SH_BURN_OUT || '/t
     if (!ShLevel3D.play('burn-lvl-shitstorm', host, r.x + r.width/2 - hr.x, r.y + r.height/2 - hr.y, 1, calm, {cardEls: els})) throw Error('WebGL renderer unavailable');
   }, {time, calm});
   for (const [width, height] of [[390,844],[1366,768]]) {
-    await page.setViewportSize({ width, height });
+    await page.setViewportSize({ width, height }); await page.waitForTimeout(120);
     for (const time of [0,.2,.5,.85,1.2,1.6,1.95]) {
       await start(time); await page.waitForTimeout(160);
       await page.screenshot({ path: path.join(OUT, `${width}-${time}.png`) });
@@ -63,7 +65,7 @@ const ROOT = path.resolve(__dirname, '..'), OUT = process.env.SH_BURN_OUT || '/t
   const sound = await page.evaluate(async () => {
     const ctx = new OfflineAudioContext(1,48000*2.2,48000);
     const proxy = new Proxy(ctx,{get:(t,p)=>p==='state'?'running':typeof t[p]==='function'?t[p].bind(t):t[p]});
-    ShLevel3D.sound('burn-lvl-shitstorm', SoundFX.prototype._burnKit.call({ctx:proxy,enabled:true,riffleEl:{volume:1}}));
+    SoundFX.prototype.playBurnSound.call({ctx:proxy,enabled:true,riffleEl:{volume:1},_burnKit:SoundFX.prototype._burnKit}, 'burn-lvl-shitstorm');
     const b=await ctx.startRendering(), d=b.getChannelData(0); let peak=0,sum=0,last=0;
     for(let n=0;n<d.length;n++){peak=Math.max(peak,Math.abs(d[n]));sum+=d[n]*d[n];if(Math.abs(d[n])>.001)last=n/48000;}
     return {peak,rms:Math.sqrt(sum/d.length),last,samples:Array.from(d)};

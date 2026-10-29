@@ -714,7 +714,26 @@
         k.scatter(20, 0.85, 1.7, (at) => k.tone({ at, dur: 0.14, type: 'sine', f0: 2000 + Math.random() * 2400, level: 0.05 }));
         k.scatter(26, 0.85, 1.6, (at) => k.noise({ at, dur: 0.02, type: 'bandpass', f0: 1500 + Math.random() * 2500, q: 2, level: 0.1 }));
       },
-      'burn-lvl-shitstorm': k => (window.ShLevel3D ? ShLevel3D.sound('burn-lvl-shitstorm', k) : ShLevelBurns.sound('burn-lvl-shitstorm', k)),
+      // Approved mascot: pull, grin hold, rotation/ejection, then a short wet collapse.
+      // One shared game sound kit retains mute and the player's card-sound volume.
+      'burn-lvl-shitstorm': k => {
+        k.noise({ at: 0, dur: .52, type: 'bandpass', f0: 180, f1: 850, q: .6, level: .13, attack: .30 });
+        k.tone({ at: .12, dur: .40, type: 'sine', f0: 76, f1: 122, level: .09, attack: .18 });
+        k.noise({ at: .30, dur: .22, type: 'lowpass', f0: 420, f1: 170, level: .12, attack: .02 });
+        // A small, rough chuckle beneath the grin, leaving room before the spin.
+        [.55, .66].forEach((at, i) => {
+          k.tone({ at, dur: .10, type: 'triangle', f0: 145-i*12, f1: 78, level: .035, attack: .012 });
+          k.noise({ at, dur: .095, type: 'bandpass', f0: 470, f1: 260, q: 1.5, level: .045, attack: .01 });
+        });
+        k.noise({ at: .80, dur: .61, type: 'bandpass', f0: 500, f1: 1900, q: .7, level: .18, attack: .22 });
+        [.91, 1.00, 1.09, 1.18, 1.27].forEach((at, i) => {
+          k.noise({ at, dur: .065, type: 'highpass', f0: 2200+i*260, level: .045, attack: .006 });
+          k.noise({ at: at+.022, dur: .085, type: 'bandpass', f0: 620+i*60, f1: 200, q: 2, level: .048, attack: .008 });
+        });
+        k.noise({ at: 1.40, dur: .40, type: 'lowpass', f0: 850, f1: 130, level: .17, attack: .035 });
+        k.tone({ at: 1.47, dur: .30, type: 'sine', f0: 110, f1: 42, level: .13, attack: .015 });
+        [1.67, 1.78, 1.88].forEach((at, i) => k.noise({ at, dur: .065, type: 'bandpass', f0: 1500-i*210, f1: 550, q: 2, level: .035-i*.008, attack: .004 }));
+      },
       // Valentine (v410): heartbeat thumps (.10-.38s), an arrow whoosh into the strike at .42, the burst at .50 with a
       // harp run and soft petal rustle.
       'burn-valentine': (k) => {
