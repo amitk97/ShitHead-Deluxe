@@ -1,8 +1,8 @@
 // ShitHead Deluxe service worker.
 // Makes the game installable, playable offline (Vs Bots and the Tutorial)
-// and shows notifications. Pages always come from the network first so
-// every deploy reaches players straight away; the cached copy is only used
-// when offline. Game files (sounds, art, fonts, the Firebase and confetti
+// and shows notifications. The page comes from the cache first so
+// the saved page opens at once (cache first) and is refreshed in the background;
+// the game offers Update Now when a newer build is out. Game files (sounds, art, fonts, the Firebase and confetti
 // scripts) are served from the cache and refreshed in the background.
 const CACHE = 'shithead-shell-v10';
 const ASSET_CACHE = 'shithead-assets-v1';
@@ -25,7 +25,7 @@ const OFFLINE_ASSETS = [
   '/js/play-matrix-ui.js?v=6a8c496bcbb8',
   '/js/play-matrix-panel.js?v=c3626e811e5c',
   '/js/card-hold.js?v=83850e0f086c',
-  '/js/whats-new-data.js?v=d36c5e96fb48',
+  '/js/whats-new-data.js?v=c8986489ee06',
   '/js/avatar-tones.js?v=a1fc8ff23117',
   '/cosmetics-data.js?v=08c3fa477b7a',
   '/tutorial-data.js?v=51e38ba66974',
@@ -152,6 +152,30 @@ const OFFLINE_ASSETS = [
   '/art/backs/approved-v267/back-stained.webp',
   '/art/backs/approved-v267/default.webp',
 
+  // Most-used extra art (level rewards, Gauntlet, No Mercy, Lucky Games), so a first match needn't fetch it.
+  '/art/nomercy/q.webp',
+  '/art/nomercy/k.webp',
+  '/art/nomercy/joker.webp',
+  '/art/avatars/lvl-burn-king.webp',
+  '/art/avatars/lvl-card-shark.webp',
+  '/art/avatars/lvl-chaos-jester.webp',
+  '/art/avatars/lvl-rookie-rogue.webp',
+  '/art/avatars/lvl-the-shithead.webp',
+  '/art/avatars/gauntlet-easy.webp',
+  '/art/avatars/gauntlet-hard.webp',
+  '/art/avatars/gauntlet-boss.webp',
+  '/art/avatars/halloween-pumpkin.webp',
+  '/art/avatars/nm-seer.webp',
+  '/art/avatars/nm-enforcer.webp',
+  '/art/avatars/foil-prism-ace.webp',
+  '/art/backs/lvl-chaos-crown.webp',
+  '/art/backs/lvl-first-burn.webp',
+  '/art/backs/lvl-inferno.webp',
+  '/art/backs/lvl-master-pile.webp',
+  '/art/backs/lvl-sharks-mark.webp',
+  '/art/backs/halloween-cobweb.webp',
+  '/art/backs/foil-prism-joker.webp',
+  '/art/backs/nm-verdict2.webp',
   '/art/avatars/crowns-v263.png',
   '/audio/riffle.mp3', '/audio/place.mp3', '/audio/take.mp3', '/audio/turn.mp3', '/audio/notify.mp3',
   '/audio/lion-roar-v287.mp3', '/audio/boo-v287.mp3', '/audio/fireworks-v275.mp3',
@@ -202,18 +226,29 @@ self.addEventListener('fetch', (event) => {
   if ((url.pathname === '/privateTableArt' || url.pathname === '/privateBurnArt')) return; // Never cache authenticated artwork.
   // Firebase's own pages (Google sign-in handler) are never touched.
   if (url.origin === self.location.origin && url.pathname.startsWith('/__/')) return;
+  const saveShell = (response) => {
+    if (response && response.ok) { const copy = response.clone(); caches.open(CACHE).then((cache) => cache.put('/', copy)).catch(() => {}); }
+    return response;
+  };
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok && url.pathname === '/') {
-            const copy = response.clone();
-            caches.open(CACHE).then((cache) => cache.put('/', copy)).catch(() => {});
-          }
-          return response;
-        })
-        .catch(() => caches.match('/').then((cached) => cached || Response.error()))
-    );
+    // Cache first: the saved page opens at once and a fresh copy is stored for
+    // the next launch. The game's own version check (checkForNewVersion) offers
+    // Update Now when that copy is newer. First visit / no copy yet: network.
+    if (url.pathname !== '/') {
+      event.respondWith(fetch(request).catch(() => caches.match('/').then((cached) => cached || Response.error())));
+      return;
+    }
+    event.respondWith(caches.match('/').then((cached) => {
+      const refresh = fetch(request).then(saveShell).catch(() => null);
+      if (cached) { event.waitUntil(refresh); return cached; }
+      return refresh.then((fresh) => fresh || Response.error());
+    }));
+    return;
+  }
+  // The version check fetches /?v=<now>: keep the stored page in step with it,
+  // so Update Now reloads into the new build.
+  if (url.origin === self.location.origin && url.pathname === '/') {
+    event.respondWith(fetch(request).then(saveShell));
     return;
   }
   if (!isCachedAsset(url)) return;
