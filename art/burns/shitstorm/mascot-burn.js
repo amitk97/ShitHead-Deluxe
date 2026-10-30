@@ -18,8 +18,8 @@
     if (atlas) return Promise.resolve(true);
     if (loading) return loading;
     if (failureAt && performance.now() - failureAt < 10000) return Promise.resolve(false);
-    loading = Promise.all([image('mascot-atlas-v2.webp'), image('mascot-poster.webp'),
-      fetch(new URL('mascot-atlas-v2.json', ROOT)).then(r => { if (!r.ok) throw Error('atlas metadata'); return r.json(); })
+    loading = Promise.all([image('mascot-atlas-v3.webp'), image('mascot-poster.webp'),
+      fetch(new URL('mascot-atlas-v3.json', ROOT)).then(r => { if (!r.ok) throw Error('atlas metadata'); return r.json(); })
     ]).then(([a, p, m]) => { atlas = a; poster = p; meta = m; return true; }).catch(() => {
       failureAt = performance.now(); return false;
     }).finally(() => { loading = null; });
@@ -28,7 +28,7 @@
   // The rig's spin is baked into the atlas (one turn over frames 25-41, constant size), so a faster spin
   // re-uses those frames: SPIN_TURNS turns across 0.83-1.83s (the rig's own turn and a half), the frame
   // nearest the wanted angle is drawn, and the shrink into the pile is a scale about the tip.
-  const SPIN_TURNS = 4, SPIN_FROM = .83, SPIN_TO = 1.83, LOOP_FROM = 25, LOOP_TO = 41;
+  const SPIN_TURNS = 8, SPIN_FROM = .83, SPIN_TO = 1.83, LOOP_FROM = 25, LOOP_TO = 41;
   function spin(t) { return TAU * SPIN_TURNS * sm(SPIN_FROM, SPIN_TO, t); }
   function loopFrame(t) {
     const want = spin(t) % TAU; let best = LOOP_FROM, gap = 9;
@@ -168,7 +168,7 @@
     const w=host.clientWidth||hr.width,h=host.clientHeight||hr.height;
     if(!w||!h)return false;
     const topInset=host.id==='burnFxLayer'?Math.max(8,(document.querySelector('header')?.getBoundingClientRect().bottom||44)-hr.top+10):8;
-    const l=layout(w,h,x,y,card,scale,{...opts,topInset}),dpr=Math.min(devicePixelRatio||1,window.FxLoad?.lite?1.25:2);
+    const l=layout(w,h,x,y,card,scale,{...opts,topInset}),dpr=Math.min(devicePixelRatio||1,window.FxLoad?.lite?1.25:3);
     const canvas=document.createElement('canvas');canvas.className='bfx lb3d-canvas shitstorm-mascot';canvas.dataset.levelBurn='burn-lvl-shitstorm';
     canvas.width=Math.ceil(w*dpr);canvas.height=Math.ceil(h*dpr);canvas.style.cssText=`position:absolute;inset:0;width:${w}px;height:${h}px;pointer-events:none;z-index:2`;
     const g=canvas.getContext('2d');if(!g)return false;g.setTransform(dpr,0,0,dpr,0,0);
