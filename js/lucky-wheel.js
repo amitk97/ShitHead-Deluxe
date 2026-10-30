@@ -546,7 +546,7 @@
 
   // ---- Drop Zone (v503): a bank of cards (1 to start, +1 for every game won). The server draws each slot; the card is drawn falling to it ----
   const DZR = typeof DROPZONE !== 'undefined' ? DROPZONE : null;
-  const D = { cards: null, cap: 10, owned: {}, busy: false, shown: null, built: false };
+  const D = { cards: null, cap: 10, owned: {}, busy: false, shown: null, built: false, start: 180 };
   const DG = { X0: 180, DX: 24, ROWS: 6, Y0: 92, DY: 46, SLOT_Y: 364, W: 360, CW: 32, CH: 45, TOP: 72 };
   const DZ_COL = ['#ffd36a', '#f0b43c', '#e5b04a', '#d99a2b', '#e5b04a', '#f0b43c', '#ffd36a'];
   const dzLabel = (sl) => sl.kind === 'item' ? (sl.itemId.startsWith('avatar') ? 'AVATAR' : 'BACK') : String(sl.amount);
@@ -569,7 +569,7 @@
     const host = $('dropBoard'); if (!host || !DZR) return;
     const GD = 'url(#dzGold)';
     let g = '<defs><linearGradient id="dzBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16131c"/><stop offset="1" stop-color="#060509"/></linearGradient><linearGradient id="dzGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e5b04a"/><stop offset="1" stop-color="#7a5212"/></linearGradient><filter id="dzGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter></defs>';
-    g += `<rect x="3" y="3" width="354" height="464" rx="14" fill="url(#dzBg)"/><rect x="3" y="3" width="354" height="464" rx="14" fill="none" stroke="${GD}" stroke-width="3.5"/><rect x="11" y="11" width="338" height="448" rx="9" fill="none" stroke="#e5b04a" stroke-opacity=".35"/><path d="M180 26l10 12-10 12-10-12z" fill="${GD}"/><path d="M168 60l12 12 12-12" fill="none" stroke="#e5b04a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>`;
+    g += `<rect x="3" y="3" width="354" height="464" rx="14" fill="url(#dzBg)"/><rect x="3" y="3" width="354" height="464" rx="14" fill="none" stroke="${GD}" stroke-width="3.5"/><rect x="11" y="11" width="338" height="448" rx="9" fill="none" stroke="#e5b04a" stroke-opacity=".35"/>`;
     for (let r = 0; r < DG.ROWS; r++) {
       const off = r % 2 === 0 ? 36 : 12, n = r % 2 === 0 ? 7 : 8;
       for (let j = 0; j < n; j++) { const x = off + 48 * j, y = DG.Y0 + DG.DY * r; if (x < 30 || x > 330) continue; g += `<circle class="dz-halo" data-peg="${r}:${x}" cx="${x}" cy="${y}" r="10" fill="#ffd36a" opacity="0" filter="url(#dzGlow)"/><path d="M${x} ${y - 6.5}l5.4 6.5-5.4 6.5-5.4-6.5z" fill="${GD}" stroke="#3a2808" stroke-width=".6"/><path d="M${x} ${y - 6.5}l2.2 6.5h-4.4z" fill="#fff" opacity=".55"/>`; }
@@ -585,59 +585,143 @@
     });
     let back = '<div class="custom-card-back"></div>';
     try { back = snapshotCardBackHtml(snapshotCardStyle(), 'w-full h-full'); } catch (e) { /* default back */ }
-    host.innerHTML = `<svg viewBox="0 0 360 470" aria-hidden="true">${g}</svg><div id="dropCard" class="dz-card">${back}</div>`;
+    host.innerHTML = `<svg viewBox="0 0 360 470" aria-hidden="true">${g}</svg><div id="dropCard" class="dz-card">${back}</div>` + [['Left', 132], ['Middle', 180], ['Right', 228]].map(([n, x]) => `<button type="button" class="dz-start" data-start="${x}" style="left:${x / DG.W * 100}%" aria-label="Drop from the ${n.toLowerCase()}" aria-pressed="${x === D.start}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6l6 7 6-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`).join('');
+    host.onclick = (e) => {
+      const b = e.target.closest && e.target.closest('.dz-start'); if (!b || D.busy) return;
+      D.start = Number(b.dataset.start); host.querySelectorAll('.dz-start').forEach(el => el.setAttribute('aria-pressed', String(el === b)));
+      dzPlaceCard(); if (audio.playDropPeg) audio.playDropPeg(0, .5);
+    };
     dzPlaceCard();
     D.built = true;
   }
   function dzScale() { const b = $('dropBoard'); return b && b.clientWidth ? b.clientWidth / DG.W : 0.8; }
-  function dzPlaceCard(x = DG.X0, y = DG.TOP, rot = 0) {
+  function dzPlaceCard(x = D.start, y = DG.TOP, rot = 0) {
     const c = $('dropCard'); if (!c) return;
     const s = dzScale(), w = DG.CW * s, h = DG.CH * s;
     c.style.width = w + 'px'; c.style.height = h + 'px';
     c.style.transform = `translate(${x * s - w / 2}px, ${y * s - h / 2}px) rotate(${rot}deg)`;
   }
-  const dzRoute = (slot) => { const R = 3 + (slot - 3), m = []; for (let i = 0; i < DG.ROWS; i++) m.push(i < R ? 1 : -1); for (let i = m.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [m[i], m[j]] = [m[j], m[i]]; } return m; };
-  // One card falling into `slot`. Resolves when it has settled. The slot is the server's; only the path is made up here.
+  // Physics (cosmetic): the server picked the slot; the phone drops a card from the chosen start point and keeps the
+  // first physically plausible run that ends in that slot. Pegs are circles, the card a circle with a little spin.
+  const DZP = (() => { const a = []; for (let r = 0; r < DG.ROWS; r++) { const off = r % 2 === 0 ? 36 : 12, n = r % 2 === 0 ? 7 : 8; for (let j = 0; j < n; j++) { const x = off + 48 * j; if (x < 30 || x > 330) continue; a.push({ x, y: DG.Y0 + DG.DY * r, r: 5.5, row: r, id: `${r}:${x}` }); } } for (let k = 0; k < 6; k++) a.push({ x: 60 + 48 * k, y: DG.SLOT_Y, r: 3, row: -1 }); return a; })();
+  const DZ_FLOOR = 392;
+  function dzSim(sx, tx, k) {
+    const R = 13, dt = 1 / 300, g = 1800, rnd = Math.random;
+    let x = sx + (rnd() - .5) * 4, y = DG.TOP, vx = (rnd() - .5) * 60, vy = 0, a = 0, w = 0, t = 0, bin = -1, rest = 0, last = -1, nf = 0;
+    const frames = [], hits = [];
+    const hit = (kind, p, row, id) => { if (t - last < .035 && kind !== 'floor') return; last = t; hits.push({ t, kind, power: Math.min(1, p), row, id }); };
+    while (t < 5) {
+      vy += g * dt; vx += k * (tx - x) * dt; vx -= vx * .4 * dt; vy -= vy * .25 * dt;
+      x += vx * dt; y += vy * dt; w -= a * 8 * dt; w -= w * 1.5 * dt; a += w * dt; t += dt;
+      if (bin < 0) {
+        for (const p of DZP) {
+          const dx = x - p.x, dy = y - p.y, rr = R + p.r;
+          if (dx * dx + dy * dy >= rr * rr) continue;
+          const d = Math.sqrt(dx * dx + dy * dy) || .01, nx = dx / d, ny = dy / d; x = p.x + nx * rr; y = p.y + ny * rr;
+          const vn = vx * nx + vy * ny;
+          if (vn >= 0) continue;
+          vx -= 1.32 * vn * nx; vy -= 1.32 * vn * ny;
+          const vt = -vx * ny + vy * nx; vx += ny * vt * .12; vy -= nx * vt * .12;
+          w = Math.max(-380, Math.min(380, w + vt * .4)); if (p.row >= 0) vx += (rnd() - .5) * 36;
+          hit(p.row >= 0 ? 'peg' : 'div', -vn / 450, p.row, p.id);
+        }
+        if (x < 31) { x = 31; vx = Math.abs(vx) * .5; hit('wall', .4); } else if (x > 329) { x = 329; vx = -Math.abs(vx) * .5; hit('wall', .4); }
+        if (y >= DG.SLOT_Y + 4) bin = Math.max(0, Math.min(6, Math.round((x - 36) / 48)));
+      } else {
+        const cx = 36 + 48 * bin;
+        if (x < cx - 6) { x = cx - 6; if (vx < 0) { hit('wall', -vx / 200); vx *= -.45; } } else if (x > cx + 6) { x = cx + 6; if (vx > 0) { hit('wall', vx / 200); vx *= -.45; } }
+        if (y >= DZ_FLOOR) { y = DZ_FLOOR; if (vy > 60) { hit('floor', vy / 500); vy *= -.3; vx *= .6; } else { vy = 0; rest += dt; } }
+      }
+      if (t * 60 >= nf) { frames.push({ t, x, y, a }); nf++; }
+      if (rest > .12) break;
+    }
+    return { ok: bin >= 0 && rest > .12 && t < 3.2, bin, frames, hits };
+  }
+  // Best of a few runs that end in `slot` (steering is only added if plain physics keeps missing); a straight glide if none does.
+  function dzPlan(sx, slot) {
+    const tx = 36 + 48 * slot, KS = [0, 1, 3, 6, 12, 24];
+    let best = null, found = 0;
+    for (let i = 0; i < 360 && found < 4; i++) {
+      const r = dzSim(sx, tx, KS[Math.min(KS.length - 1, Math.floor(i / 60))]);
+      if (!r.ok || r.bin !== slot) continue;
+      found++; if (!best || r.hits.length < best.hits.length) best = r;
+    }
+    if (best) return best;
+    const frames = [], hits = [];
+    for (let i = 0; i <= 120; i++) { const u = i / 120; frames.push({ t: u * 2, x: sx + (tx - sx) * u * u, y: DG.TOP + (DZ_FLOOR - DG.TOP) * u * u, a: 6 * Math.sin(u * 20) * (1 - u) }); }
+    for (let r = 0; r < DG.ROWS; r++) { const u = Math.sqrt((DG.Y0 + DG.DY * r - DG.TOP) / (DZ_FLOOR - DG.TOP)); hits.push({ t: u * 2, kind: 'peg', power: .6, row: r }); }
+    hits.push({ t: 1.97, kind: 'floor', power: .7 });
+    return { frames, hits, bin: slot };
+  }
+  const dzSmooth = (a, b, v) => { const u = Math.max(0, Math.min(1, (v - a) / (b - a))); return u * u * (3 - 2 * u); };
+  // One card falling into `slot` from start x D.start. Resolves when it has settled. The slot is the server's; only the path is made up here.
   function dzFall(slot, fast, near) {
     return new Promise((resolve) => {
       const c = $('dropCard'); if (!c) return resolve();
-      const s = dzScale(), w = DG.CW * s, h = DG.CH * s;
-      const seg = fast ? 230 : 430, lead = fast ? 250 : 460, tail = fast ? 320 : 620, hold = near ? 560 : 0;
-      const moves = dzRoute(slot), kf = [], hits = [];
-      const total = lead + DG.ROWS * seg + hold + tail;
-      const push = (px, py, rot, t) => kf.push({ transform: `translate(${px * s - w / 2}px, ${py * s - h / 2}px) rotate(${rot}deg)`, offset: Math.min(1, t / total) });
-      const pegTop = (r) => DG.Y0 + DG.DY * r - 24;
-      let x = DG.X0, y = pegTop(0), time = lead;
-      push(x, DG.TOP, 0, 0);
-      for (let k = 1; k <= 8; k++) { const u = k / 8; push(x, DG.TOP + (pegTop(0) - DG.TOP) * u * u, 0, lead * u); }
-      for (let r = 0; r < DG.ROWS; r++) {
-        hits.push({ r, time, x });
-        const dir = moves[r], nx = x + dir * DG.DX, ny = r < DG.ROWS - 1 ? pegTop(r + 1) : DG.SLOT_Y + 10, spin = dir * (14 + Math.random() * 10);
-        for (let k = 1; k <= 10; k++) { const u = k / 10, hh = 20 * Math.sin(Math.PI * Math.min(1, u * 1.05)); push(x + (nx - x) * u, y + (ny - y) * u * u * .75 + (ny - y) * u * .25 - hh * (1 - u) * .9, spin * (1 - (1 - u) * (1 - u)) * (r % 2 ? 1 : 1.2), time + seg * u); }
-        x = nx; y = ny; time += seg;
+      const s = dzScale(), w = DG.CW * s, h = DG.CH * s, plan = dzPlan(D.start, slot);
+      const lead = fast ? 80 : 240, k = fast ? .7 : 1, item = DZR.slots[slot].kind === 'item';
+      // frames -> playback milliseconds (the last two rows crawl on a near miss)
+      let ms = lead, fr = [{ ms: 0, x: D.start, y: DG.TOP, a: 0, up: 0 }, { ms: lead * .45, x: D.start, y: DG.TOP - 4, a: 0, up: 0 }, { ms: lead, x: D.start, y: DG.TOP, a: 0, up: 0 }];
+      let prevT = 0, wob = -1;
+      const at = [];
+      plan.frames.forEach((f, i) => {
+        ms += (f.t - prevT) * 1000 * k * (near ? 1 + 1.7 * dzSmooth(DG.Y0 + DG.DY * 3, DG.SLOT_Y - 20, f.y) : 1);
+        prevT = f.t; at.push(ms); fr.push({ ms, x: f.x, y: f.y, a: f.a, up: 0 });
+        if (near && wob < 0 && f.y >= DG.SLOT_Y - 26) wob = fr.length - 1;
+      });
+      const msOf = (t) => { let i = 0; while (i < plan.frames.length - 1 && plan.frames[i].t < t) i++; return at[i]; };
+      let events = plan.hits.map(e => ({ ms: msOf(e.t), e }));
+      if (wob > 0) { // rock on the divider before dropping in, toward the rare bin
+        const base = fr[wob], dir = slot === 1 ? -1 : 1, hold = 520, rock = [];
+        for (let i = 1; i <= 13; i++) rock.push({ ms: base.ms + hold * i / 13, x: base.x, y: base.y, a: base.a + dir * 9 * Math.sin(i * 1.15) * (1 - i / 14), up: 0 });
+        fr.splice(wob + 1, 0, ...rock);
+        for (let i = wob + 14; i < fr.length; i++) fr[i].ms += hold;
+        events = events.map(v => v.ms > base.ms ? { ms: v.ms + hold, e: v.e } : v);
+        events.push({ ms: base.ms + 60, aww: true });
       }
-      if (near) { for (let k = 1; k <= 10; k++) push(x, y - 4 * Math.sin(k * 1.3), 10 * Math.sin(k * 1.9) * (1 - k / 11), time + hold * k / 10); time += hold; }
-      for (let k = 1; k <= 6; k++) push(x, y + 16 * Math.sin(k / 6 * Math.PI / 2), 0, time + tail * k / 6 * .8);
-      push(x, y + 16, 0, total);
-      kf.sort((a, b) => a.offset - b.offset);
-      const settle = () => { dzPlaceCard(x, y + 16); resolve(); };
+      const last = fr[fr.length - 1], total = last.ms + 120;
+      // squash: each strong hit flattens the card for a moment
+      const sq = (m) => events.reduce((q, v) => v.e && v.e.kind === 'peg' && m >= v.ms ? Math.max(q, v.e.power * Math.exp(-(m - v.ms) / 70)) : q, 0);
+      const build = (extra) => fr.map(f => { const q = sq(f.ms); return { transform: `translate(${f.x * s - w / 2}px, ${f.y * s - h / 2}px) rotate(${f.a}deg) scale(${1 + .09 * q}, ${1 - .15 * q})`, offset: Math.min(1, f.ms / total), ...(extra || {}) }; });
+      const settle = () => { dzPlaceCard(last.x, last.y, 0); resolve(); };
       if (motionOff() || typeof c.animate !== 'function') return settle();
-      const anim = c.animate(kf, { duration: total, easing: 'linear', fill: 'forwards' });
-      hits.forEach(h => setTimeout(() => {
-        const peg = $('dropBoard') && $('dropBoard').querySelector(`[data-peg="${h.r}:${Math.round(h.x)}"]`);
-        if (peg && peg.animate) peg.animate([{ opacity: .95 }, { opacity: 0 }], { duration: 320 });
-        if (audio.playDropPeg) audio.playDropPeg(h.r);
-      }, h.time));
-      if (near && audio.playDropAww) setTimeout(() => audio.playDropAww(), time - hold + 80);
-      anim.finished.then(() => { try { anim.commitStyles(); } catch (e) { /* fine */ } anim.cancel(); settle(); }, settle);
+      const host = $('dropBoard'), ghosts = [];
+      if (!fast && host) [[45, .3], [90, .18], [135, .09]].forEach(([d, al]) => {
+        const gh = document.createElement('div'); gh.className = 'dz-ghost'; gh.style.width = w + 'px'; gh.style.height = h + 'px'; host.appendChild(gh);
+        gh.animate(build({ opacity: al }), { duration: total, delay: d, easing: 'linear', fill: 'forwards' }); ghosts.push(gh);
+      });
+      const anim = c.animate(build(), { duration: total, easing: 'linear', fill: 'forwards' });
+      let floored = false, lastTick = -1;
+      events.forEach(v => setTimeout(() => {
+        if (v.aww) { if (audio.playDropAww) audio.playDropAww(); return; }
+        const e = v.e;
+        if (e.kind === 'peg') {
+          const peg = host && e.id && host.querySelector(`[data-peg="${e.id}"]`);
+          if (peg && peg.animate) peg.animate([{ opacity: .95 }, { opacity: 0 }], { duration: 320 });
+          if (audio.playDropPeg) audio.playDropPeg(e.row, e.power);
+        } else if (e.kind === 'floor' && !floored) { floored = true; if (audio.playDropLand) audio.playDropLand(item); }
+        else if (e.power > .15 && v.ms - lastTick > 55) { lastTick = v.ms; if (audio.playDropTick) audio.playDropTick(e.power); }
+      }, v.ms));
+      const done = () => { ghosts.forEach(g => g.remove()); settle(); };
+      anim.finished.then(() => { try { anim.commitStyles(); } catch (e) { /* fine */ } anim.cancel(); done(); }, done);
     });
   }
   function dzLand(slot, near) {
-    const sl = $('dropBoard') && $('dropBoard').querySelector(`[data-slot="${slot}"] .dz-sglow`);
-    if (sl && sl.animate) sl.animate([{ opacity: 0 }, { opacity: .8 }, { opacity: .45 }], { duration: 700, fill: 'forwards' });
+    const host = $('dropBoard'), sl = host && host.querySelector(`[data-slot="${slot}"] .dz-sglow`), item = DZR.slots[slot].kind === 'item';
+    if (sl && sl.animate) sl.animate([{ opacity: 0 }, { opacity: 1 }, { opacity: .45 }], { duration: 800, fill: 'forwards' });
+    if (host && !motionOff()) { // a ring of light out of the bin
+      const svg = host.querySelector('svg'), cx = 36 + 48 * slot;
+      for (let i = 0; i < (item ? 3 : 1); i++) {
+        const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        ring.setAttribute('cx', cx); ring.setAttribute('cy', DG.SLOT_Y + 28); ring.setAttribute('r', 8); ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', '#ffe9a3'); ring.setAttribute('stroke-width', 3); ring.setAttribute('opacity', 0);
+        svg.appendChild(ring);
+        const an = ring.animate([{ opacity: .95, r: 8 }, { opacity: 0, r: item ? 64 : 40 }], { duration: 520, delay: i * 140, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'both' });
+        an.finished.then(() => ring.remove(), () => ring.remove());
+      }
+    }
     const rare = slot === 1 ? 0 : slot === 5 ? 6 : -1;
     if (near && rare >= 0 && !motionOff()) {
-      const g = $('dropBoard').querySelector(`[data-slot="${rare}"]`);
+      const g = host.querySelector(`[data-slot="${rare}"]`);
       if (g && g.animate) g.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-3px)' }, { transform: 'translateX(3px)' }, { transform: 'translateX(-2px)' }, { transform: 'translateX(0)' }], { duration: 420 });
     }
   }

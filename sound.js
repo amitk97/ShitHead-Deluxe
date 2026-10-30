@@ -216,17 +216,45 @@
         const bg = ctx.createGain(); bg.gain.setValueAtTime(0.0001, t0); bg.gain.exponentialRampToValueAtTime(0.05 * vol, t0 + .004); bg.gain.exponentialRampToValueAtTime(0.0001, t0 + .04);
         b.connect(bg).connect(ctx.destination); b.start(t0); b.stop(t0 + .05);
       }
-      /* Drop Zone (v503): a card ticking off a peg (pitch rises a little with each row), and the near-miss "aww". */
-      playDropPeg(row = 0) {
+      /* Drop Zone (v503, v531): a card ticking off a peg. The note climbs a pentatonic scale with each row, harder hits are louder. */
+      playDropPeg(row = 0, power = .6) {
         const ctx = this.ctx;
         if (!this.enabled || !ctx || ctx.state !== 'running') return;
         const vol = this.riffleEl.volume;
         if (!vol) return;
-        const t0 = ctx.currentTime, f0 = 520 + row * 70;
-        const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f0 * .6, t0 + .06);
-        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 2.5;
-        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.16 * vol, t0 + .004); g.gain.exponentialRampToValueAtTime(0.0001, t0 + .09);
-        o.connect(f).connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + .1);
+        const t0 = ctx.currentTime, f0 = 440 * Math.pow(2, [0, 2, 4, 7, 9, 12, 14][Math.max(0, Math.min(6, row))] / 12), amp = (.07 + .11 * Math.min(1, power)) * vol;
+        const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f0 * .8, t0 + .07);
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = Math.max(1800, f0 * 2); f.Q.value = 2.5;
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(amp, t0 + .004); g.gain.exponentialRampToValueAtTime(0.0001, t0 + .11);
+        o.connect(f).connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + .12);
+      }
+      /* Drop Zone (v531): a small knock (card against a bin wall or the floor). */
+      playDropTick(power = .4) {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'square'; o.frequency.setValueAtTime(900 + Math.random() * 200, t0); o.frequency.exponentialRampToValueAtTime(420, t0 + .03);
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime((.03 + .05 * Math.min(1, power)) * vol, t0 + .003); g.gain.exponentialRampToValueAtTime(0.0001, t0 + .045);
+        o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + .06);
+      }
+      /* Drop Zone (v531): the card settles in its bin: a thud, then a bright chime (a rising pair for an avatar or card back). */
+      playDropLand(item = false) {
+        const ctx = this.ctx;
+        if (!this.enabled || !ctx || ctx.state !== 'running') return;
+        const vol = this.riffleEl.volume;
+        if (!vol) return;
+        const t0 = ctx.currentTime, th = ctx.createOscillator(), tg = ctx.createGain();
+        th.type = 'sine'; th.frequency.setValueAtTime(170, t0); th.frequency.exponentialRampToValueAtTime(58, t0 + .13);
+        tg.gain.setValueAtTime(0.0001, t0); tg.gain.exponentialRampToValueAtTime(.26 * vol, t0 + .006); tg.gain.exponentialRampToValueAtTime(0.0001, t0 + .18);
+        th.connect(tg).connect(ctx.destination); th.start(t0); th.stop(t0 + .2);
+        (item ? [784, 988, 1319] : [784, 1175]).forEach((hz, i) => {
+          const t = t0 + .05 + i * .09, o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sine'; o.frequency.value = hz;
+          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime((item ? .12 : .09) * vol, t + .012); g.gain.exponentialRampToValueAtTime(0.0001, t + (item ? .5 : .32));
+          o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + .55);
+        });
       }
       playDropAww() {
         const ctx = this.ctx;

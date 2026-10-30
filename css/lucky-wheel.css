@@ -166,3 +166,14 @@ body.reduce-motion #homeDropChip.dz-bump { animation: none; }
 .dz-btns > button { flex: 1 1 0; min-width: 0; margin: 0; }
 .dz-btns > .dz-all { background: transparent; border: 1px solid #e5b04a; color: #ffd36a; }
 .dz-btns > button:disabled { opacity: .45; }
+
+/* Drop Zone start points (v531): three chevrons above the board pick where the card is dropped from (cosmetic). */
+.dz-start { position: absolute; top: 3.2%; width: 2.6rem; height: 2.4rem; transform: translateX(-50%); display: grid; place-items: center; color: #e5b04a; opacity: .5; background: none; border: 0; padding: 0; cursor: pointer; border-radius: 10px; transition: opacity .18s var(--ease-soft, ease), transform .18s var(--ease-snappy, ease); -webkit-tap-highlight-color: transparent; }
+.dz-start svg { width: 1.3rem; height: 1.3rem; filter: drop-shadow(0 0 0 transparent); transition: filter .18s; }
+.dz-start[aria-pressed="true"] { opacity: 1; color: #ffd36a; }
+.dz-start[aria-pressed="true"] svg { filter: drop-shadow(0 0 5px rgba(255,211,106,.9)); }
+.dz-start:hover { opacity: .9; }
+.dz-start:active { transform: translateX(-50%) scale(.92); }
+.dz-start:focus-visible { outline: 2px solid #ffd36a; outline-offset: 1px; }
+.dz-ghost { position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0; border-radius: 4px; background: linear-gradient(#ffe9a3, #e5b04a); filter: blur(2px); }
+@media (prefers-reduced-motion: reduce) { .dz-start, .dz-start svg { transition: none; } }
