@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v531: [['sparkle', 'Drop Zone: the card now falls with real physics, you can pick where it drops from, and it sounds and feels better.', WN_KEY]],
       v530: [['sparkle', 'The Shitstorm burn spins about twice as fast again and is drawn from sharper frames.']],
       v529: [['sparkle', 'The Shitstorm burn is now drawn from sharper 512px frames.']],
       v528: [['sparkle', 'The Shitstorm burn now spins about four times faster.']],
