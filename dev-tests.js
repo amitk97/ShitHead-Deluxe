@@ -6112,6 +6112,24 @@ async function runDevTestSuite() {
     FxLoad.tick(16);
     assertTrue(FxLoad.lite, 'A smooth frame does not switch it off at once (20s minimum)');
   });
+  await test('v535: Performance Mode is off by default, holds lite on, persists and syncs', () => {
+    const row = document.getElementById('setPerfModeRow');
+    assertTrue(!!row, 'Row exists');
+    assertEqual(row.previousElementSibling.id, 'setHelperTipsRow', 'Alphabetical: after Helper Tips');
+    assertEqual(row.nextElementSibling.id, 'setOthersEffectsRow', 'Before Show Others\' Effects');
+    const was = perfMode;
+    try {
+      perfMode = false; FxLoad.forced = false;
+      assertTrue(!FxLoad.lite, 'Off: not lite');
+      row.click();
+      assertTrue(perfMode && FxLoad.lite, 'On forces lite');
+      assertEqual(FxLoad.scale(7, 3), 3, 'Counts capped');
+      assertEqual(readPref('shithead_perf_mode', false), true, 'Saved');
+      assertEqual(collectAccountSettings().perfMode, true, 'Synced');
+      row.click();
+      assertTrue(!perfMode && !FxLoad.lite, 'Off again');
+    } finally { perfMode = was; FxLoad.forced = was; writePref('shithead_perf_mode', was); }
+  });
   await test('v492: an open menu page pauses the CSS animations under it, and they resume when it closes', async () => {
     EXCLUSIVE_PAGE_IDS.forEach(id => { const el = document.getElementById(id); if (el) assertEqual(el.parentElement, document.body, `${id} sits at the top level of the page`); });
     const probe = document.createElement('div');

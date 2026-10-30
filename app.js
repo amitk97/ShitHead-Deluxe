@@ -5243,6 +5243,9 @@
     let hideHelperIcons = readPref('shithead_hide_helpers', false);
     let helperTipsOn = readPref('shithead_helper_tips', true); // Settings → Helper Tips (v291)
     let bigEffectsOn = readPref('shithead_big_effects', true);
+    // Performance Mode (v535): holds FxLoad.lite on (fewer flight pieces, lower canvas resolution). Off by default.
+    let perfMode = readPref('shithead_perf_mode', false);
+    if (window.FxLoad) FxLoad.forced = perfMode;
     // Show Others' Effects (Display): off shows everyone else's burn, Joker
     // and victory effects in the default style (the play is still shown).
     let othersEffectsOn = readPref('shithead_others_effects', true);
@@ -10779,6 +10782,7 @@
       paintToggle(document.getElementById('setHelperTipsState'), helperTipsOn);
       paintToggle(document.getElementById('setMotionState'), reduceMotion);
       paintToggle(document.getElementById('setBigEffectsState'), bigEffectsOn);
+      paintToggle(document.getElementById('setPerfModeState'), perfMode);
       paintToggle(document.getElementById('setOthersEffectsState'), othersEffectsOn);
       paintToggle(document.getElementById('setHistoryState'), historyOpenPref);
       paintToggle(document.getElementById('setHapticsState'), hapticsOn);
@@ -16275,6 +16279,7 @@
         helperTipsOn: !!helperTipsOn,
         reduceMotion: !!reduceMotion,
         bigEffectsOn: !!bigEffectsOn,
+        perfMode: !!perfMode,
         othersEffectsOn: !!othersEffectsOn,
         historyOpen: !!historyOpenPref,
         hapticsOn: !!hapticsOn,
@@ -16323,6 +16328,7 @@
           ['helperTipsOn','shithead_helper_tips',v => { helperTipsOn=v; if (!v) hideHelperTip(); }],
           ['reduceMotion','shithead_reduce_motion',v => { reduceMotion=v; }],
           ['bigEffectsOn','shithead_big_effects',v => { bigEffectsOn=v; }],
+          ['perfMode','shithead_perf_mode',v => { perfMode=v; if (window.FxLoad) FxLoad.forced = v; }],
           ['othersEffectsOn','shithead_others_effects',v => { othersEffectsOn=v; }],
           ['historyOpen','shithead_history_open',v => { historyOpenPref=v; historyOpen=v; renderHistoryCircle(); }],
           ['hapticsOn','shithead_haptics',v => { hapticsOn=v; }],
@@ -22825,6 +22831,12 @@
     document.getElementById('setHistoryRow').addEventListener('click', () => {
       historyOpenPref = !historyOpenPref; writePref('shithead_history_open', historyOpenPref);
       setHistoryOpen(historyOpenPref);
+      refreshSettingsUI(); scheduleSettingsCloudSave();
+    });
+    document.getElementById('setPerfModeRow').addEventListener('click', () => {
+      perfMode = !perfMode; writePref('shithead_perf_mode', perfMode);
+      if (window.FxLoad) FxLoad.forced = perfMode;
+      try { Health.note(perfMode ? 'perfOn' : 'perfOff'); } catch (_) {}
       refreshSettingsUI(); scheduleSettingsCloudSave();
     });
     document.getElementById('setOthersEffectsRow').addEventListener('click', () => {

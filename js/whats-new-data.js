@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v535: [['sparkle', 'New Performance Mode setting (Settings → Display) gives slower phones lighter effects. It is off by default.']],
       v534: [['sparkle', 'Three Cards now offers an extra go when you have one.']],
       v533: [['sparkle', 'Internal: extra Lucky Games goes can now be given to a player.']],
       v532: [['sparkle', 'Pressing a second face-down key right after a failed flip no longer picks up your next face-down card too.']],

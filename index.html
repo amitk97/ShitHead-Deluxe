@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-30-v534 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-30-v535 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -1058,6 +1058,11 @@
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Helper Tips</span>
           <span class="block text-[8px] text-slate-400 leading-snug">Short one-time tips that explain things as you meet them</span></span>
           <span id="setHelperTipsState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">ON</span>
+        </button>
+        <button id="setPerfModeRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="performance, lag, slow, fps, lighter, effects, battery, phone">
+          <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Performance Mode</span>
+          <span class="block text-[8px] text-slate-400 leading-snug">Lighter effects for slower phones</span></span>
+          <span id="setPerfModeState" class="shrink-0 text-[10px] font-black px-2 py-0.5 rounded border">OFF</span>
         </button>
         <button id="setOthersEffectsRow" class="settings-row settings-searchable w-full flex items-center justify-between gap-2 py-2 border-b border-slate-800" data-keywords="opponents, others, effects, burn, joker, victory, hide, cosmetics">
           <span class="text-left min-w-0"><span class="block text-[10px] font-black uppercase tracking-wider text-slate-300">Show Others' Effects</span>
@@ -2876,7 +2881,7 @@
   <script src="burn-effects.js?v=60ed42b4e0b0"></script>
 
   <!-- KINETIC PROJECTILE ENGINE -->
-  <script src="card-animations.js?v=77cc09758a63"></script>
+  <script src="card-animations.js?v=38d2c950203b"></script>
 
   <div id="friendsConfigModal" class="hidden pf-modal" role="dialog" aria-modal="true" aria-labelledby="friendsConfigTitle">
     <div class="pf-config-card">
@@ -2899,7 +2904,7 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=83850e0f086c"></script>
-  <script src="js/whats-new-data.js?v=dd2d0636015e"></script>
+  <script src="js/whats-new-data.js?v=c69e157cec76"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=08c3fa477b7a"></script>
   <script src="tutorial-data.js?v=51e38ba66974"></script>
@@ -2910,7 +2915,7 @@
   <script src="home-navigation.js?v=2264b5e08637"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=cb00c9594e3f"></script>
+  <script src="app.js?v=923b475bec19"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>

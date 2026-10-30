@@ -34,9 +34,10 @@
     // is a cap on card-shaped flights alive at once (14, or 6 in lite): the
     // extras are simply not drawn, the cards themselves still move.
     const FxLoad = window.FxLoad = (() => {
-      let recent = 0, lite = false, since = 0, last = 0, active = 0;
+      let recent = 0, lite = false, since = 0, last = 0, active = 0, forced = false;
       return {
-        get lite() { return lite; },
+        get lite() { return forced || lite; },
+        set forced(v) { forced = !!v; },   // Settings → Performance Mode (v535)
         tick(dt) {
           const now = performance.now();
           if (now - last > 3000) { recent = 0; lite = false; }   // a new stretch of play starts fresh
@@ -45,9 +46,9 @@
           if (!lite && recent > 3.5) { lite = true; since = now; try { Health.note('liteFx'); } catch (_) {} }
           else if (lite && recent < 0.8 && now - since > 20000) lite = false;
         },
-        scale(n, liteMax) { return lite ? Math.min(n, liteMax) : n; },
+        scale(n, liteMax) { return (forced || lite) ? Math.min(n, liteMax) : n; },
         take(n, ms) {
-          const got = Math.min(n, Math.max(0, (lite ? 6 : 14) - active));
+          const got = Math.min(n, Math.max(0, ((forced || lite) ? 6 : 14) - active));
           if (got > 0) { active += got; setTimeout(() => { active = Math.max(0, active - got); }, ms); }
           return got;
         }
