@@ -15949,6 +15949,8 @@
         devRow(icon('menuErrorReportsBtn'), 'Health', 'health'),
         ...DEV_ROWS.slice(1).map((id) => devRow(icon(id), label(id), id)),
         devRow(icon('menuResetLuckyBtn'), 'Grant Diamonds', 'grant'),
+        devRow(icon('menuGuideBtn'), 'Who\u2019s Online', 'online'),
+        devRow(icon('menuXpSwitchBtn'), 'Unlock Levels', 'unlocks'),
         devRow(icon('menuGuideBtn'), 'Guide', 'menuGuideBtn'),
         devRow(icon('menuChangelogBtn'), 'Check For Update', 'update'),
         devRow(icon('menuResetLuckyBtn'), 'Show Tips And Pop-ups Again', 'seen')
@@ -15958,9 +15960,31 @@
     }
     document.getElementById('headerDevBtn')?.addEventListener('click', () => {
       if (!currentUser || !isAmitkTestingAccount({})) return;
-      paintDevList(); devShowGrant(false);
+      paintDevList(); devShowGrant(false); devShowInfo(false);
       document.getElementById('devModal').classList.remove('hidden');
     });
+    // Who's Online / Unlock Levels: one shared read-only panel (#devInfo).
+    const devShowInfo = (on, title, html) => {
+      const g = document.getElementById('devInfo');
+      g.classList.toggle('hidden', !on); g.style.display = on ? 'flex' : '';
+      document.getElementById('devList').style.display = on ? 'none' : 'flex';
+      if (on) { document.getElementById('devInfoTitle').textContent = title; document.getElementById('devInfoBody').innerHTML = html; }
+    };
+    document.getElementById('devInfoBack')?.addEventListener('click', () => devShowInfo(false));
+    async function openDevOnline() {
+      devShowInfo(true, 'Who\u2019s Online', '<p class="text-slate-500">Loading…</p>');
+      try {
+        const on = ((await callEconomy('devPlayers', {})).players || []).filter((p) => p.online).sort((a, b) => b.level - a.level);
+        devShowInfo(true, `Who\u2019s Online · ${on.length}`, on.length ? on.map((p) =>
+          `<div class="flex items-center justify-between py-1 border-b border-slate-800"><span>${escapeHtml(p.name)}</span><span class="text-slate-400">Lvl ${p.level}${p.playing ? ' · in a ' + escapeHtml(p.playing) + ' match' : ''}</span></div>`).join('')
+          : '<p class="text-slate-500">Nobody else is online right now.</p>');
+      } catch (e) { devShowInfo(true, 'Who\u2019s Online', '<p class="text-rose-300">Couldn\u2019t load (older server: deploy the latest Functions).</p>'); }
+    }
+    function openDevUnlocks() {
+      const rows = [...ladderRewards().entries()].sort((a, b) => a[0] - b[0]).map(([L, pieces]) => [L, pieces.filter((x) => x.kind !== 'item')]).filter(([, p]) => p.length);
+      const html = rows.map(([L, pieces]) => `<div class="py-1.5 border-b border-slate-800"><b class="text-lime-300">Lvl ${L}</b>${pieces.map((x) => `<div class="text-slate-200">${escapeHtml(x.name)}${x.kind === 'badge' ? '' : ` <span class="text-slate-500">· ${escapeHtml(x.tip)}</span>`}</div>`).join('')}</div>`).join('');
+      devShowInfo(true, 'Unlock Levels', `${html}<p class="text-slate-500 pt-2">Every level pays 20 Diamonds, every 10th pays 100, level 99 pays ${XP_RULES.maxLevelDiamonds}. Cosmetic rewards are on the Level Ladder.</p>`);
+    }
     // Grant Diamonds: pick a player from the list, an amount and an optional message (server: devGrantDiamonds).
     let devPlayers = null, devPick = null;
     const devShowGrant = (on) => {
@@ -16005,6 +16029,8 @@
       const id = row.dataset.devRow;
       if (id === 'health') { document.getElementById('devModal').classList.add('hidden'); openReports('health'); return; }
       if (id === 'grant') { openDevGrant(); return; }
+      if (id === 'online') { openDevOnline(); return; }
+      if (id === 'unlocks') { openDevUnlocks(); return; }
       if (id === 'update') { notifyBanner('Checking for a newer version…'); await checkForNewVersion(true); return; }
       if (id === 'seen') {
         devSeenKeys().forEach((k) => { try { localStorage.removeItem(k); } catch (_) {} });
@@ -19856,8 +19882,12 @@
       }
     }
 
+    // § Ranked fallback (v516): after this long with no opponent the search panel offers an Easy
+    // Play Computer game (not Ranked, no rating). No player counts are shown.
+    const RANKED_FALLBACK_SECS = 15;
     function startRankedSearchClock() {
       rankedSearchStart = Date.now();
+      document.getElementById('rankedFallback')?.classList.add('hidden');
       rankedSearchTimer = setInterval(() => {
         // Looked up fresh every tick rather than captured once — cheap
         // insurance against ever writing to a detached/stale DOM node if
@@ -19866,9 +19896,18 @@
         if (!label) return;
         const secs = Math.floor((Date.now() - rankedSearchStart) / 1000);
         label.textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+        if (secs >= RANKED_FALLBACK_SECS) document.getElementById('rankedFallback')?.classList.remove('hidden');
       }, 1000);
     }
+    function playComputerInsteadOfRanked() {
+      if (!rankedSearchStartedAt || state.isRanked || state.roomCode) return; // search over or a match was just found
+      cancelRankedSearch();
+      state.difficulty = 'easy'; // always unlocked; the saved choice is untouched and the lobby resets it
+      runShuffleIntro(() => startSinglePlayerGame(1));
+    }
+    document.getElementById('rankedFallbackBtn')?.addEventListener('click', playComputerInsteadOfRanked);
     function stopRankedSearchClock() {
+      document.getElementById('rankedFallback')?.classList.add('hidden');
       if (rankedSearchTimer) { clearInterval(rankedSearchTimer); rankedSearchTimer = null; }
     }
 

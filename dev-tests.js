@@ -7446,6 +7446,16 @@ async function runDevTestSuite() {
       state.noMercy = true; assertTrue(cell() === '✗', 'No Mercy: Joker on a 4 is refused');
     } finally { state.noMercy = was; state.isMultiplayer = mp; matrixRefOpen = open; }
   });
+  await test('v516: Ranked offers the computer after 15s; the Dev page lists who is online and what unlocks', () => {
+    assertTrue(RANKED_FALLBACK_SECS === 15, '15 seconds');
+    const fb = document.getElementById('rankedFallback');
+    assertTrue(fb && fb.classList.contains('hidden'), 'fallback hidden at first');
+    assertTrue(!/online|players/i.test(fb.textContent.replace(/Play the computer instead/i, '')), 'no player counts shown');
+    assertTrue(document.getElementById('rankedFallbackBtn'), 'button exists');
+    const lv = [...ladderRewards().values()].flat().filter((x) => x.kind !== 'item');
+    assertTrue(lv.some((x) => /No Mercy/.test(x.name)) && lv.some((x) => /Gifting/.test(x.name)), 'non-cosmetic unlocks exist');
+    assertTrue(document.getElementById('devInfoBody') && document.getElementById('devInfoBack'), 'dev info panel exists');
+  });
   await test('v515: a refused card says why, and a forced pickup says what the Pile needed', () => {
     const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
     freshState(); startSinglePlayerGame(2);

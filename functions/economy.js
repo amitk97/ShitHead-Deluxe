@@ -1471,7 +1471,10 @@ actions.devPlayers = async ({ auth }) => {
   const out = [];
   snap.forEach((c) => {
     const v = c.val() || {};
-    if (v.username) out.push({ uid: c.key, name: clip(v.username, 20), level: num(v.level) || 1 });
+    if (!v.username) return;
+    // online = flag set and heartbeat (`seen`) within 3 minutes, same rule as the game's isProfileOnline
+    const online = v.online === true && num(v.seen) > Date.now() - 3 * 60 * 1000;
+    out.push({ uid: c.key, name: clip(v.username, 20), level: num(v.level) || 1, online, playing: online && v.playing ? clip(v.playing.mode, 10) : '' });
   });
   out.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
   return { players: out };
