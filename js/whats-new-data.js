@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v526: [['sparkle', 'Shitstorm now uses the approved animated mascot, with a full spin, torn card fragments, wet debris and matching sound.']],
       v525: [['check', 'The last browser pop-ups (removed from a room, matchmaking errors) now use the game\'s own dialog and banner.']],
       v524: [['check', 'Confirmation questions (leaving a room, unequipping everything, buying a bundle and more) now use the game\'s own dialog instead of the browser pop-up.']],
       v523: [['arrow-down', 'On a phone, drag a page (Settings, Shop, Profile and more) down to close it.']],

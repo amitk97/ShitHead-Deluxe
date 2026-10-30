@@ -1486,3 +1486,7 @@ A write to a parent node re-runs `.validate` on every child, so a whole-`users/{
 - For new card backs, packs, tables, burns etc. once current themes get stale: **Space, Sport, Animals, Countries/Cities, Cyberpunk, Gothic, Retro, Arcade, Origami** (Origami burn effect: the card folds up when burnt).
 - When one is picked up, follow the usual cosmetic checklist (rules id lists, catalog re-export, a `BURN_SOUNDS` recipe for any Burn item).
 
+
+## v526 — Approved Shitstorm mascot burn
+
+Owner approved publishing. Shitstorm delegates through ShLevel3D to art/burns/shitstorm/mascot-burn.js: transparent frames from the approved genuine 3D rig, live real-card debris, two-second timing, sound.js recipe, settings and lifecycle cleanup. No full GLB download in gameplay. See docs/shitstorm-mascot-burn.md. Tests: tools/shitstorm-mascot-browser-test.js, tools/shitstorm-browser-test.js, tools/modular-assets-test.js. Physical-phone FPS and networked multiplayer remain unmeasured.
