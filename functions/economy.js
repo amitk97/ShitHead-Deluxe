@@ -1601,7 +1601,7 @@ actions.claimGift = async ({ uid, data }) => {
 //   { id, room, bestOf, need, fee, pot, host, guest, names, wins {uid: n},
 //     games {matchId: uid|'draw'}, played, status pending|live|done|cancelled,
 //     winner, reason, createdAt, updatedAt, lastGameAt, settled {uid: true} }
-// Both players must be level CAT.series.level+, signed in with a verified
+// The host needs CAT.series.levels[bestOf]; the guest only SERIES.guestLevels (Best of 7), signed in with a verified
 // email, and pay the entry (CAT.series.bestOf[n]) up front: the host on
 // `create`, the other player on `accept`. The server matches the pot, so the
 // winner gets fee x 4. A game counts once (by matchId) and needs the room to
@@ -1708,9 +1708,11 @@ actions.series = async ({ uid, auth, data }) => {
     if (seriesActive(s)) fail('failed-precondition', 'A series is already set up in this room.');
     const other = humans.find(p => p.uid !== uid);
     const [myLevel, theirLevel] = await Promise.all([seriesPlayerLevel(uid), seriesPlayerLevel(other.uid)]);
-    const requiredLevel = Math.max(num(SERIES.level), num(SERIES.levels?.[bestOf], { 3: 20, 5: 35, 7: 45 }[bestOf]));
+    // The host needs the level for this length; the other player only for Best of 7 (SERIES.guestLevels).
+    const requiredLevel = Math.max(num(SERIES.level), num(SERIES.levels?.[bestOf], { 3: 5, 5: 15, 7: 30 }[bestOf]));
+    const guestLevel = num(SERIES.guestLevels?.[bestOf], { 7: 30 }[bestOf] || 0);
     if (myLevel < requiredLevel) fail('failed-precondition', `Best of ${bestOf} unlocks at level ${requiredLevel}.`);
-    if (theirLevel < requiredLevel) fail('failed-precondition', `${clip(other.name, 20)} needs to reach level ${requiredLevel} first.`);
+    if (theirLevel < guestLevel) fail('failed-precondition', `${clip(other.name, 20)} needs to reach level ${guestLevel} first.`);
     const id = `s${now.toString(36)}${nodeCrypto.randomInt(1e9).toString(36)}`;
     const draft = {
       id, room: code, bestOf, need: Math.ceil(bestOf / 2), fee, pot: fee * 4, host: uid, guest: other.uid,
@@ -1744,9 +1746,8 @@ actions.series = async ({ uid, auth, data }) => {
   if (op === 'accept') {
     if (uid !== s.guest || s.status !== 'pending') fail('failed-precondition', 'Nothing to accept.');
     if (!auth?.token?.email_verified) fail('failed-precondition', 'Verify your email address first.');
-    const requiredLevel = Math.max(num(SERIES.level), num(SERIES.levels?.[s.bestOf], { 3: 20, 5: 35, 7: 45 }[s.bestOf]));
-    const levels = await Promise.all([seriesPlayerLevel(uid), seriesPlayerLevel(other)]);
-    if (levels.some(level => level < requiredLevel)) fail('failed-precondition', `Both players must reach level ${requiredLevel} for Best of ${s.bestOf}.`);
+    const guestLevel = num(SERIES.guestLevels?.[s.bestOf], { 7: 30 }[s.bestOf] || 0);
+    if (guestLevel && (await seriesPlayerLevel(uid)) < guestLevel) fail('failed-precondition', `Both players must reach level ${guestLevel} for Best of ${s.bestOf}.`);
     await userTx(uid, (user) => (seriesActive(user.series) && user.series.room !== code ? { error: 'Finish your other series first.' } : { noop: true }));
     await seriesMoney(uid, `${s.id}_entry`, -num(s.fee), { ...s, status: 'live' });
     try {

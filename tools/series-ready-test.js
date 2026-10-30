@@ -19,13 +19,14 @@ function fixture(){put('series/123456',{id:'series-one',room:'123456',host:'alic
   put('rooms/123456',{phase:'LOBBY',ruleMode:'standard',players:[{uid:'alice',name:'Alice',isHost:true},{uid:'bob',name:'Bob'}]});
   for(const [uid,L]of [['alice',level],['bob',otherLevel]])put('users/'+uid,{diamonds:1000,xp:{total:xp.xpForLevel(L)}});
  }
- for(const [bestOf,required]of [[3,20],[5,35],[7,45]]){
-  levelFixture(required-1);await assert.rejects(create(bestOf),new RegExp('level '+required));
-  levelFixture(required,required-1);await assert.rejects(create(bestOf),new RegExp('level '+required));
-  levelFixture(required);await create(bestOf);assert.equal(get('series/123456/status'),'pending');
-  put('users/bob/xp',{total:xp.xpForLevel(required-1)});await assert.rejects(call('bob','accept'),new RegExp('level '+required));
+ for(const [bestOf,required,guest]of [[3,5,0],[5,15,0],[7,30,30]]){
+  levelFixture(required-1,required);await assert.rejects(create(bestOf),new RegExp('level '+required));
+  if(guest){levelFixture(required,guest-1);await assert.rejects(create(bestOf),new RegExp('level '+guest));}
+  else{levelFixture(required,1);await create(bestOf);assert.equal(get('series/123456/status'),'pending');await call('bob','accept');assert.equal(get('series/123456/status'),'live');continue;}
+  levelFixture(required,guest);await create(bestOf);assert.equal(get('series/123456/status'),'pending');
+  put('users/bob/xp',{total:xp.xpForLevel(guest-1)});await assert.rejects(call('bob','accept'),new RegExp('level '+guest));
   assert.equal(get('users/bob/diamonds'),1000);
-  put('users/bob/xp',{total:xp.xpForLevel(required)});await call('bob','accept');assert.equal(get('series/123456/status'),'live');
+  put('users/bob/xp',{total:xp.xpForLevel(guest)});await call('bob','accept');assert.equal(get('series/123456/status'),'live');
  }
  console.log('PASS server series level boundaries for host, guest, create and accept');
  fixture();await assert.rejects(call('alice','startNext'),/Both players must press Ready/);

@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v518: [['lock', 'New unlock levels: Best of 3 at Lvl 5 (host), Best of 5 at Lvl 15 (host), No Mercy at Lvl 10, Hard Gauntlet at Lvl 20, hosting Multiple Decks at Lvl 25, Best of 7 at Lvl 30 (both players) and Boss Gauntlet at Lvl 50. Joining a friend\'s series or Multiple Decks room has no lock.', WN_KEY]],
       v517: [['sparkle', 'Pull down on the home screen to check for a new version and update.', WN_KEY]],
       v516: [['sparkle', 'Ranked: if no opponent turns up after 15 seconds you can choose to play the computer instead (an Easy game that is not Ranked and does not change your rating).', WN_KEY]],
       v515: [['sparkle', 'When a card is refused or you have to pick up, the game now says why in one plain line (for example "A 5 can\'t go on the 9. You need a 9 or higher").', WN_KEY]],

@@ -463,7 +463,7 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   g = await call('dave', { action: 'gauntlet', op: 'start' });
   ok(g.run && g.run.round === 0 && g.run.lives === 3, 'the new day starts at the first Easy bot with full lives', g);
 
-  // Gauntlet modes (v254): Hard (Lvl 30 + Easy beaten), Boss (Lvl 50 + Easy once + Hard 3 times),
+  // Gauntlet modes (v254): Hard (Lvl 20 + Easy beaten), Boss (Lvl 50 + Easy once + Hard 3 times),
   // one mode a UK day, a run in progress must end before another mode.
   const xpAt = (L) => ({ total: cat.xp.levels[L], level: L, backfilled: true, paidLevel: L, table: cat.xp.tableVersion });
   const yesterday = { day: '2000-01-01', mode: 'easy' };
@@ -473,12 +473,12 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   r = await call('dave', { action: 'gauntlet', op: 'start', mode: 'hard' });
   ok(r.error && /Today's Gauntlet is Easy/.test(r.error.message), 'one Gauntlet mode a day', r);
   await admin('users/dave/gauntlet/dayMode', 'PUT', yesterday);
-  await admin('users/dave/xp', 'PUT', xpAt(29));
+  await admin('users/dave/xp', 'PUT', xpAt(19));
   r = await call('dave', { action: 'gauntlet', op: 'start', mode: 'hard' });
-  ok(r.error && /Reach Lvl 30/.test(r.error.message), 'Hard needs Lvl 30', r);
+  ok(r.error && /Reach Lvl 20/.test(r.error.message), 'Hard needs Lvl 20', r);
   g = await call('dave', { action: 'gauntlet', op: 'status' });
-  ok(g.modes && /Lvl 30/.test(g.modes.hard.locked || '') && /Lvl 50/.test(g.modes.boss.locked || '') && !g.modes.easy.locked, 'status names each lock', g.modes);
-  await admin('users/dave/xp', 'PUT', xpAt(30));
+  ok(g.modes && /Lvl 20/.test(g.modes.hard.locked || '') && /Lvl 50/.test(g.modes.boss.locked || '') && !g.modes.easy.locked, 'status names each lock', g.modes);
+  await admin('users/dave/xp', 'PUT', xpAt(20));
   g = await call('dave', { action: 'gauntlet', op: 'start', mode: 'hard' });
   ok(g.run && g.run.mode === 'hard' && g.run.lives === 2 && g.todayMode === 'hard', 'Hard starts with 2 lives', g);
   r = await gGame(g.run.id, false, false);
@@ -823,9 +823,13 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
     ok((await tryWrite('sera', db => set(ref(db, 'users/sera/series'), { room: code, id: 'x', status: 'live' }))) === 'denied', 'blocked: a phone writing its own series record');
     let r = await sc('serb', { op: 'create', bestOf: 3 });
     ok(r.error, 'only the host can start a series', r);
-    await admin('users/serb/xp', 'PUT', { total: 100, level: 1, backfilled: true, table: 2 });
+    await admin('users/sera/xp', 'PUT', { total: 100, level: 1, backfilled: true, table: 2 });
     r = await sc('sera', { op: 'create', bestOf: 3 });
-    ok(r.error && /level 20/.test(r.error.message), 'both players must be level 20+', r);
+    ok(r.error && /level 5/.test(r.error.message), 'the host needs level 5 for a Best of 3', r);
+    await admin('users/sera/xp', 'PUT', { total: lvl20, level: 20, backfilled: true, table: 2 });
+    await admin('users/serb/xp', 'PUT', { total: 100, level: 1, backfilled: true, table: 2 });
+    r = await sc('sera', { op: 'create', bestOf: 7 });
+    ok(r.error && /level 30/.test(r.error.message), 'Best of 7 needs level 30 (host)', r);
     await admin('users/serb/xp', 'PUT', { total: lvl20, level: 20, backfilled: true, table: 2 });
     r = await call('sera', { action: 'series', roomCode: code, op: 'create', bestOf: 3 }, undefined, false);
     ok(r.error, 'a series needs a verified email', r);

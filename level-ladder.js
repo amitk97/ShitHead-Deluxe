@@ -79,7 +79,8 @@
       const weeklyBase = WEEKLY_CHALLENGE_RULES[WEEKLY_CHALLENGE_RULES.length - 1].picks; // 5 a week from 2026-W41
       (XP_RULES.extraWeekly || []).forEach((L, i) => add(L, { kind: 'unlock', icon: 'check', tone: '#22d3ee', name: `${ordinalNumber(weeklyBase + i + 1)} weekly challenge`, tip: 'One more weekly challenge every week.' }));
       add(XP_RULES.weeklyRerollLevel, { kind: 'unlock', icon: 'refresh', tone: '#34d399', name: 'Weekly Reroll', tip: 'Swap one weekly challenge for a different one, once a week.' });
-      Object.entries(SERIES_RULES.levels).forEach(([n, level]) => add(level, { kind: 'unlock', icon: 'swords', tone: '#f472b6', name: `Best of ${n}`, tip: `Play a Best of ${n} against a friend (both players level ${level}+).` }));
+      Object.entries(SERIES_RULES.levels).forEach(([n, level]) => add(level, { kind: 'unlock', icon: 'swords', tone: '#f472b6', name: `Best of ${n}`, tip: SERIES_RULES.guestLevels[n] ? `Play a Best of ${n} against a friend (both players level ${level}+).` : `Host a Best of ${n} against a friend (you need level ${level}; they can be lower).` }));
+      add(MULTI_DECK_LEVEL, { kind: 'unlock', icon: 'friends4', tone: '#6366f1', name: 'Multiple Decks', tip: 'Host Multiple Decks: two decks, four Jokers, 4 to 8 players. Joining a friend\'s room has no level lock.' });
       add(NO_MERCY_LEVEL, { kind: 'unlock', icon: 'swords', tone: '#ef4444', name: 'No Mercy', tip: 'Play No Mercy: Queens see cards, Kings and Aces make others take cards.' });
       Object.entries(GAUNTLET.modes || {}).forEach(([key, m]) => { if (m.level > 0) add(m.level, { kind: 'unlock', icon: key === 'boss' ? 'crown' : 'shield', tone: key === 'boss' ? '#c084fc' : '#f87171', name: `${m.name} Gauntlet`, tip: `${m.name} Gauntlet opens at level ${m.level}${m.needs ? ' once you have beaten the easier Gauntlets' : ''}.` }); });
       LEVEL_BADGE_TIERS.forEach(([L, , label]) => add(L, { kind: 'badge', level: L, name: `${label} badge` }));

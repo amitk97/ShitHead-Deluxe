@@ -3695,8 +3695,8 @@ async function runDevTestSuite() {
       for (let L = 10; L <= XP_MAX_LEVEL; L += 10) assertTrue(!!modal.querySelector(`[data-ladder-level="${L}"]`), `Milestone ${L} has its own row`);
       assertEqual([ladderMilestoneDiamonds(XP_MAX_LEVEL), ladderMilestoneDiamonds(90), ladderMilestoneDiamonds(42)], [999, 100, 20], 'Level 99 pays 999 Diamonds, every 10th 100, others 20 (v285)');
       assertTrue(modal.querySelector(`[data-ladder-level="${XP_MAX_LEVEL}"]`).textContent.includes('999'), 'The max level row shows 999');
-      assertEqual(SERIES_RULES.levels, { 3: 20, 5: 35, 7: 45 }, 'Series unlock requirements stay at Levels 20, 35 and 45');
-      for (const [bestOf, level] of [[3, 20], [5, 35], [7, 45]]) {
+      assertEqual(SERIES_RULES.levels, { 3: 5, 5: 15, 7: 30 }, 'Series host levels are 5, 15 and 30');
+      for (const [bestOf, level] of [[3, 5], [5, 15], [7, 30]]) {
         const row = modal.querySelector(`[data-ladder-level="${level}"]`);
         assertTrue(!!row, `Level ${level} appears on the ladder`);
         const label = [...row.querySelectorAll('.ll-pname')].find(el => el.textContent === `Best of ${bestOf}`);
@@ -7539,25 +7539,46 @@ async function runDevTestSuite() {
       assertTrue(hit - blocked === 50, 'King hit ' + hit + ' blocked ' + blocked);
     } finally { if (keep === null) localStorage.removeItem('shithead_tip_counts'); else localStorage.setItem('shithead_tip_counts', keep); helperTipGame = { id: null, keys: new Set() }; freshState(); }
   });
-  await test('v461: No Mercy is locked below Lvl 25 (unless XP is off) in the chooser, Friends and the Ladder', () => {
+  await test('v461: No Mercy is locked below Lvl 10 (unless XP is off) in the chooser, Friends and the Ladder', () => {
     const on = xpFeatureOn, pxp = playerXp, cu = currentUser;
     try {
       xpFeatureOn = false;
       assertTrue(noMercyUnlocked() && noMercyLockReason() === '', 'XP off: no lock');
       xpFeatureOn = true; currentUser = { uid: 'u' };
-      playerXp = { total: xpForLevel(24), level: 24 };
-      assertTrue(!noMercyUnlocked() && /Lvl 25/.test(noMercyLockReason()), 'Lvl 24 is locked');
+      playerXp = { total: xpForLevel(9), level: 9 };
+      assertTrue(!noMercyUnlocked() && /Lvl 10/.test(noMercyLockReason()), 'Lvl 9 is locked');
       openNoMercyChoice();
       assertTrue(document.getElementById('noMercyBotsBtn').disabled && document.getElementById('noMercyFriendsBtn').disabled, 'chooser buttons are disabled');
-      assertTrue(/Lvl 25/.test(document.getElementById('noMercyNote').textContent), 'the chooser says why');
+      assertTrue(/Lvl 10/.test(document.getElementById('noMercyNote').textContent), 'the chooser says why');
       closeNoMercyChoice();
-      assertTrue(ladderRewards().get(NO_MERCY_LEVEL).some(p => p.name === 'No Mercy'), 'the Ladder lists it at Lvl 25');
-      playerXp = { total: xpForLevel(25), level: 25 };
-      assertTrue(noMercyUnlocked(), 'Lvl 25 is open');
+      assertTrue(ladderRewards().get(NO_MERCY_LEVEL).some(p => p.name === 'No Mercy'), 'the Ladder lists it at Lvl 10');
+      playerXp = { total: xpForLevel(10), level: 10 };
+      assertTrue(noMercyUnlocked(), 'Lvl 10 is open');
       openNoMercyChoice();
-      assertTrue(!document.getElementById('noMercyBotsBtn').disabled, 'chooser buttons work at Lvl 25');
+      assertTrue(!document.getElementById('noMercyBotsBtn').disabled, 'chooser buttons work at Lvl 10');
       closeNoMercyChoice();
     } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeNoMercyChoice(); }
+  });
+  await test('v518: Multiple Decks hosting unlocks at Lvl 25, Best of 5 and 7 and the Gauntlet follow the new levels', () => {
+    assertEqual(MULTI_DECK_LEVEL, 25, 'Multiple Decks at Lvl 25');
+    assertEqual(NO_MERCY_LEVEL, 10, 'No Mercy at Lvl 10');
+    assertEqual([GAUNTLET.modes.hard.level, GAUNTLET.modes.boss.level], [20, 50], 'Hard 20, Boss 50');
+    assertEqual(SERIES_RULES.guestLevels, { 7: 30 }, 'only Best of 7 asks the guest');
+    const on = xpFeatureOn, pxp = playerXp, cu = currentUser;
+    try {
+      xpFeatureOn = true; currentUser = { uid: 'u' };
+      playerXp = { total: xpForLevel(24), level: 24 };
+      assertTrue(!multiDeckUnlocked() && /Lvl 25/.test(multiDeckLockReason()), 'Lvl 24 is locked');
+      openDecksChoice();
+      assertTrue(document.getElementById('decksBotsBtn').disabled && document.getElementById('decksFriendsBtn').disabled, 'chooser buttons are disabled');
+      closeDecksChoice();
+      assertTrue(ladderRewards().get(MULTI_DECK_LEVEL).some(p => p.name === 'Multiple Decks'), 'the Ladder lists it');
+      playerXp = { total: xpForLevel(25), level: 25 };
+      assertTrue(multiDeckUnlocked(), 'Lvl 25 is open');
+      openDecksChoice();
+      assertTrue(!document.getElementById('decksBotsBtn').disabled, 'chooser works at Lvl 25');
+      closeDecksChoice();
+    } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeDecksChoice(); }
   });
   await test('v479: the Scratch Card has its own circle, nine real cards in tic tac toe lines, and two Prism prizes', () => {
     assertTrue(!!document.getElementById('homeScratchChip') && !!document.getElementById('scratchPanel') && !!document.getElementById('scratchFoil'), 'chip, panel and foil');
@@ -9108,7 +9129,7 @@ async function runDevTestSuite() {
       assertEqual(GAUNTLET.modes.hard.rounds, ['medium', 'hard', 'hard', 'hard', 'boss'], 'Hard: Medium, three Hard, then the Boss');
       assertEqual([GAUNTLET.modes.easy.lives, GAUNTLET.modes.hard.lives, GAUNTLET.modes.boss.lives], [3, 2, 1], 'Lives 3 / 2 / 1');
       assertEqual(GAUNTLET.modes.boss.rounds, ['boss', 'boss', 'boss'], 'Boss: three Boss bots');
-      assertEqual([GAUNTLET.modes.hard.level, GAUNTLET.modes.boss.level], [30, 50], 'Unlock levels');
+      assertEqual([GAUNTLET.modes.hard.level, GAUNTLET.modes.boss.level], [20, 50], 'Unlock levels');
       assertEqual(GAUNTLET.modes.boss.needs, { easy: 1, hard: 3 }, 'Boss needs Easy once and Hard 3 times');
       assertEqual(GAUNTLET.modes.boss.firstReward, 600, 'Boss first clear pays 600');
       assertEqual(serverEconomyCatalog().gauntlet.modes.boss.firstReward, 600, 'Exported to the server');
@@ -9440,7 +9461,7 @@ async function runDevTestSuite() {
       assertTrue(Math.abs(btn.left - counts[0].left) < 1, 'Lined up with them on the left');
       assertTrue(info.left >= btn.right && info.right <= counts[2].right + 1, 'ⓘ on the right, within the column');
       assertTrue(Math.abs((info.top + info.height / 2) - (btn.top + btn.height / 2)) < 1.5, 'ⓘ level with the button');
-      assertTrue(/bots in a row/.test(document.getElementById('gauntletTip').textContent) && /Lvl 30/.test(document.getElementById('gauntletTip').textContent), 'The tip explains the Gauntlet and its modes');
+      assertTrue(/bots in a row/.test(document.getElementById('gauntletTip').textContent) && /Lvl 20/.test(document.getElementById('gauntletTip').textContent), 'The tip explains the Gauntlet and its modes');
       currentUser = null;
       localStorage.removeItem(GAUNTLET_LOCAL_KEY);
       openGauntletWelcome();
@@ -10246,12 +10267,12 @@ async function runDevTestSuite() {
     const g = XP_RULES.gauntletBot;
     assertTrue(g.easy < g.medium && g.medium < g.hard && g.hard < g.boss, 'Gauntlet XP scales with the bot');
     assertTrue(!('dailyCap' in XP_RULES), 'no daily XP cap');
-    assertEqual(SERIES_RULES.level, 20, 'Best of series unlocks at level 20 (owner)');
+    assertEqual(SERIES_RULES.level, 5, 'Best of series unlocks at level 5 (owner)');
     assertEqual(JSON.stringify(serverEconomyCatalog().series), JSON.stringify(SERIES_RULES), 'the server gets the same series rules');
     assertEqual([SERIES_RULES.bestOf[3], SERIES_RULES.bestOf[5]], [30, 50], 'entries: Best of 3 = 30, Best of 5 = 50');
     assertEqual(JSON.stringify(serverEconomyCatalog().xp), JSON.stringify(XP_RULES), 'the server gets the same XP table');
   });
-  await test('Best of series lobby: locked below level 20, the host picks a length and the other player gets the accept pop-up', async () => {
+  await test('Best of series lobby: locked below level 5, the host picks a length and the other player gets the accept pop-up', async () => {
     const saved = { players: state.players, isMultiplayer: state.isMultiplayer, isRanked: state.isRanked, roomCode: state.roomCode, isHost: state.isHost, localPlayerId: state.localPlayerId, phase: state.phase, spectating: state.spectating, friendsMode: state.friendsMode, ruleMode: state.ruleMode };
     const was = { on: xpFeatureOn, xp: playerXp, econ: callEconomy, confirm: window.confirm, series: seriesState, watch: watchSeriesRoom, owner: isGameOwner };
     const panel = document.getElementById('seriesPanel');
@@ -10268,7 +10289,7 @@ async function runDevTestSuite() {
         { id: 'p2', uid: 'guest_u', name: 'Guesty', cosmetics: { level: 25 } }
       ];
       seriesState = null;
-      playerXp = { total: xpForLevel(12), level: 12 };
+      playerXp = { total: xpForLevel(4), level: 4 };
       isGameOwner = () => false;
       renderSeriesPanel();
       assertTrue(SERIES_LOBBY_OPEN || panel.classList.contains('hidden'), 'until games count, only the owner sees the series choice');
@@ -10281,9 +10302,9 @@ async function runDevTestSuite() {
       state.friendsMode = 'series';
       renderSeriesPanel();
       assertTrue(!panel.classList.contains('hidden'), 'the host sees the series choice');
-      assertTrue([...panel.querySelectorAll('[data-series-best]')].every(b => b.disabled), 'Best of 3/5 are locked below level 20');
-      assertTrue(/Reach level 20/.test(panel.textContent), 'the lock says which level unlocks it');
-      assertTrue(panel.classList.contains('series-folded'), 'below level 20 the series row starts folded');
+      assertTrue([...panel.querySelectorAll('[data-series-best]')].every(b => b.disabled), 'Best of 3/5 are locked below level 5');
+      assertTrue(/Reach level 5/.test(panel.textContent), 'the lock says which level unlocks it');
+      assertTrue(panel.classList.contains('series-folded'), 'below level 5 the series row starts folded');
       panel.querySelector('[data-series-toggle]').click();
       assertTrue(!panel.classList.contains('series-folded'), 'the player can open it to look');
       const multi = document.getElementById('multiOptions');
@@ -10293,15 +10314,15 @@ async function runDevTestSuite() {
       multi.classList.toggle('hidden', multiWasHidden);
       renderSeriesPanel();
       assertTrue(panel.classList.contains('series-folded'), 'leaving the Play Friends page folds it again');
-      playerXp = { total: xpForLevel(20), level: 20 };
+      playerXp = { total: xpForLevel(5), level: 5 };
       state.players.push({ id: 'b1', name: 'Bot', isBot: true });
       renderSeriesPanel();
       assertTrue(/exactly two players and no bots/.test(panel.textContent), 'no series with a bot in the room');
       state.players.pop();
       renderSeriesPanel();
-      assertTrue(!panel.classList.contains('series-folded'), 'at level 20 it starts open');
+      assertTrue(!panel.classList.contains('series-folded'), 'at level 5 it starts open');
       const pick = panel.querySelector('[data-series-best="3"]');
-      assertTrue(pick && !pick.disabled, 'level 20 + two players: Best of 3 can be picked');
+      assertTrue(pick && !pick.disabled, 'level 5 + two players: Best of 3 can be picked');
       const calls = fakeEconomy({ series: (d) => ({ series: { id: 'sx', room: d.roomCode, bestOf: d.bestOf, need: 2, fee: 30, pot: 120, host: 'host_u', guest: 'guest_u', names: { host_u: 'Hosty', guest_u: 'Guesty' }, status: 'pending', played: 0 } }) });
       await createSeries(3);
       assertEqual(calls[0], ['series', { op: 'create', roomCode: '424242', bestOf: 3 }], 'the host asks the server to create a Best of 3');

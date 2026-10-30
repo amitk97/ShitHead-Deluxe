@@ -9846,7 +9846,7 @@
           ['link', 'Host a room and share the code or invite link, or join a friend\'s room with their code.'],
           ['friends4', 'Up to 4 players. Empty seats can be filled with bots.'],
           ['bot', 'If someone\'s app closes, a bot keeps their seat until they\'re back.'],
-          ['gem', 'At Lvl 20 you can play a Best Of Series (3, 5 or 7 games) for Diamonds.']
+          ['gem', 'At Lvl 5 you can host a Best Of Series (3, 5 or 7 games) for Diamonds.']
         ]
       }
     };
@@ -10344,11 +10344,14 @@
     let decksPlayers = 4;
     function paintDecksCounts() {
       document.querySelectorAll('#decksCounts [data-n]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.n) === decksPlayers)));
-      document.getElementById('decksNote').textContent = `You and ${decksPlayers - 1} bots at this difficulty.`;
+      document.getElementById('decksNote').textContent = (typeof multiDeckLockReason === 'function' && multiDeckLockReason()) || `You and ${decksPlayers - 1} bots at this difficulty.`;
     }
     function openDecksChoice() {
       document.querySelectorAll('#decksModal .diff-btn').forEach(styleDifficultyBtn);
       paintDecksCounts();
+      const lock = multiDeckLockReason();
+      if (lock) document.getElementById('decksNote').textContent = lock;
+      ['decksBotsBtn', 'decksFriendsBtn'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !!lock; });
       document.getElementById('decksModal').classList.remove('hidden');
     }
     function closeDecksChoice() { document.getElementById('decksModal')?.classList.add('hidden'); }
@@ -10359,10 +10362,12 @@
       const c = e.target.closest('#decksCounts [data-n]'); if (c) { decksPlayers = Number(c.dataset.n); paintDecksCounts(); }
     });
     document.getElementById('decksBotsBtn').addEventListener('click', () => {
+      if (!multiDeckUnlocked()) return;
       closeDecksChoice();
       runShuffleIntro(() => startSinglePlayerGame(decksPlayers - 1, null, { multiDeck: true }));
     });
     document.getElementById('decksFriendsBtn').addEventListener('click', () => {
+      if (!multiDeckUnlocked()) return;
       closeDecksChoice();
       if (typeof isOffline === 'function' && isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
       window.ShHomeCarousel?.openMode('friends');
@@ -15448,8 +15453,17 @@
     }
     // Gifting unlocks at XP_RULES.giftLevel (owner, v289; the server checks
     // too). With XP switched off there is no lock, like the speed locks.
-    // No Mercy unlocks at Lvl 25 (owner, v461). No lock while XP is off.
-    const NO_MERCY_LEVEL = 25;
+    // No Mercy unlocks at Lvl 10 (owner, v518; was 25). No lock while XP is off.
+    const NO_MERCY_LEVEL = 10;
+    // Multiple Decks: hosting needs Lvl 25 (owner, v518); joining a friend's room has no lock.
+    const MULTI_DECK_LEVEL = 25;
+    function multiDeckUnlocked() {
+      if (typeof xpShown === 'function' && !xpShown()) return true;
+      return !!currentUser && !!playerXp && xpLevelFor(playerXp.total) >= MULTI_DECK_LEVEL;
+    }
+    function multiDeckLockReason() {
+      return multiDeckUnlocked() ? '' : `Multiple Decks unlocks at Lvl ${MULTI_DECK_LEVEL}${currentUser ? '. Finish a few more games to get there.' : '. Sign in and play to level up.'}`;
+    }
     function noMercyUnlocked() {
       if (typeof xpShown === 'function' && !xpShown()) return true;
       return !!currentUser && !!playerXp && xpLevelFor(playerXp.total) >= NO_MERCY_LEVEL;
@@ -17230,7 +17244,7 @@
       modes: {
         easy: { name: 'Easy', rounds: ['easy', 'easy', 'medium', 'hard', 'boss'], lives: 3, firstReward: 200, dailyReward: 50, level: 0, needs: {},
           picture: 'avatar-gauntlet', pictureName: 'Gauntlet Champion', frame: 'frame-gauntlet', frameName: 'Gauntlet Gold' },
-        hard: { name: 'Hard', rounds: ['medium', 'hard', 'hard', 'hard', 'boss'], lives: 2, firstReward: 400, dailyReward: 100, level: 30, needs: { easy: 1 },
+        hard: { name: 'Hard', rounds: ['medium', 'hard', 'hard', 'hard', 'boss'], lives: 2, firstReward: 400, dailyReward: 100, level: 20, needs: { easy: 1 },
           picture: 'avatar-gauntlet-hard', pictureName: 'Gauntlet Conqueror', frame: 'frame-gauntlet-hard', frameName: 'Crimson Gauntlet' },
         boss: { name: 'Boss', rounds: ['boss', 'boss', 'boss'], lives: 1, firstReward: 600, dailyReward: 200, level: 50, needs: { easy: 1, hard: 3 },
           picture: 'avatar-gauntlet-boss', pictureName: 'Gauntlet Overlord', frame: 'frame-gauntlet-boss', frameName: 'Amethyst Gauntlet' }
@@ -17321,8 +17335,9 @@
     // server matches the pot, so the winner gets fee x 4 (Best of 3: 120).
     // Exported to the catalog as `series` (functions/economy.js actions.series).
     const SERIES_RULES = {
-      level: 20,                 // owner: series unlock at level 20
-      levels: { 3: 20, 5: 35, 7: 45 },
+      level: 5,                  // owner (v518): the lowest series level (Best of 3, host)
+      levels: { 3: 5, 5: 15, 7: 30 },   // the HOST needs this
+      guestLevels: { 7: 30 },    // the other player needs this too (Best of 7 only)
       bestOf: { 3: 30, 5: 50, 7: 70 },  // entry per player
       perDay: 5,                 // series one player can start in a UK day
       forfeitTurns: 5,           // a stand-in bot plays this many turns, then the absent player forfeits
@@ -17384,7 +17399,8 @@
       const other = humans.find(p => p.id !== state.localPlayerId);
       if (!other || !other.uid) return `${escapeHtml(other?.name || 'The other player')} needs to sign in first.`;
       const theirs = Number(other.cosmetics?.level) || 0;
-      if (theirs && theirs < requiredLevel) return `${escapeHtml(other.name)} needs to reach level ${requiredLevel} first.`;
+      const guestLevel = SERIES_RULES.guestLevels[bestOf] || 0;
+      if (theirs && theirs < guestLevel) return `${escapeHtml(other.name)} needs to reach level ${guestLevel} first.`;
       if (state.phase === 'SWAP' || state.phase === 'PLAY') return 'Wait for this game to finish first.';
       return '';
     }
@@ -17417,9 +17433,10 @@
         const choice = (n) => {
           const requirement = SERIES_RULES.levels[n];
           const other = state.players.find(p => !p.isBot && p.id !== state.localPlayerId);
-          const levelLocked = lvl < requirement || (Number(other?.cosmetics?.level) > 0 && Number(other.cosmetics.level) < requirement);
+          const guestNeeds = SERIES_RULES.guestLevels[n] || 0;
+          const levelLocked = lvl < requirement || (guestNeeds > 0 && Number(other?.cosmetics?.level) > 0 && Number(other.cosmetics.level) < guestNeeds);
           const reason = seriesBlockReason(n);
-          return `<button type="button" class="series-choice${levelLocked ? ' series-level-locked' : ''}" data-series-best="${n}" aria-pressed="false" title="${escapeHtml(reason || `Both players level ${requirement}+`)}"${reason || seriesBusy ? ' disabled' : ''}>Best of ${n}<small>${SERIES_RULES.bestOf[n]} ${gem} entry</small>${levelLocked ? `<span class="series-level-label">${icon('lock')}Level ${requirement}</span>` : ''}</button>`;
+          return `<button type="button" class="series-choice${levelLocked ? ' series-level-locked' : ''}" data-series-best="${n}" aria-pressed="false" title="${escapeHtml(reason || (SERIES_RULES.guestLevels[n] ? `Both players level ${requirement}+` : `Host level ${requirement}+`))}"${reason || seriesBusy ? ' disabled' : ''}>Best of ${n}<small>${SERIES_RULES.bestOf[n]} ${gem} entry</small>${levelLocked ? `<span class="series-level-label">${icon('lock')}Level ${requirement}</span>` : ''}</button>`;
         };
         panel.innerHTML = `${head}
           <div class="series-choices">
