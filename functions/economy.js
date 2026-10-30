@@ -533,7 +533,7 @@ actions.wheel = async ({ uid, data }) => {
   if (clip(data.op, 10) !== 'spin') {
     const w = (await admin.database().ref(`users/${uid}/wheel`).once('value')).val() || {};
     const owned = (await admin.database().ref(`users/${uid}/ownedCosmetics`).once('value')).val() || {};
-    return { canSpin: w.lastDate !== today || !resetOk('wheel', uid, w), last: w.last || null, spins: num(w.spins), owned: Object.fromEntries(W.prizes.filter(p => p.kind === 'item').map(p => [p.itemId, !!owned[p.itemId]])) };
+    return { canSpin: w.lastDate !== today || !resetOk('wheel', uid, w) || num(w.extra) > 0, extra: num(w.extra), last: w.last || null, spins: num(w.spins), owned: Object.fromEntries(W.prizes.filter(p => p.kind === 'item').map(p => [p.itemId, !!owned[p.itemId]])) };
   }
   const xpOn = await xp.enabled();
   const pool = W.prizes.filter(p => xpOn || p.kind !== 'xp');
@@ -541,7 +541,10 @@ actions.wheel = async ({ uid, data }) => {
   let roll = nodeCrypto.randomInt(total);
   const prize = pool.find(p => (roll -= num(p.weight)) < 0) || pool[0];
   const res = await userTx(uid, (user) => {
-    if (user.wheel?.lastDate === today && resetOk('wheel', uid, user.wheel)) return { noop: true, already: true };
+    // Extra goes (v533, AmitK grants): the day's own spin is used first; once it is, each spin uses one extra.
+    const doneToday = user.wheel?.lastDate === today && resetOk('wheel', uid, user.wheel), had = num(user.wheel?.extra);
+    if (doneToday && had < 1) return { noop: true, already: true };
+    const left = doneToday ? had - 1 : had;
     let paid = 0, duplicate = false, xpRes = null;
     if (prize.kind === 'diamonds') { paid = num(prize.amount); addDiamonds(user, paid); }
     else if (prize.kind === 'xp') {
@@ -556,11 +559,11 @@ actions.wheel = async ({ uid, data }) => {
         user.activityInbox[`unlock_${prize.itemId}`] = { type: 'shop', unlocked: true, name: clip(prize.name, 80), cost: 0, requirement: 'Won on the Daily Spin', sentAt: now.getTime() };
       }
     }
-    user.wheel = { lastDate: today, last: { id: prize.id, at: now.getTime() }, spins: num(user.wheel?.spins) + 1, ...(RESET_V.wheel[uid] ? { resetV: RESET_V.wheel[uid] } : {}) };
-    return { user, spin: { prize: prize.id, kind: prize.kind, amount: num(prize.amount), itemId: prize.itemId || null, name: prize.name || null, duplicate, paid }, xp: xpRes };
+    user.wheel = { lastDate: today, last: { id: prize.id, at: now.getTime() }, spins: num(user.wheel?.spins) + 1, ...(left > 0 ? { extra: left } : {}), ...(RESET_V.wheel[uid] ? { resetV: RESET_V.wheel[uid] } : {}) };
+    return { user, left, spin: { prize: prize.id, kind: prize.kind, amount: num(prize.amount), itemId: prize.itemId || null, name: prize.name || null, duplicate, paid }, xp: xpRes };
   });
   if (res.already) return { already: true, canSpin: false, last: res.user.wheel?.last || null, diamonds: num(res.user.diamonds) };
-  return { spin: res.spin, canSpin: false, diamonds: num(res.user.diamonds), xp: res.xp || null };
+  return { spin: res.spin, canSpin: res.left > 0, extra: res.left, diamonds: num(res.user.diamonds), xp: res.xp || null };
 };
 
 // Drop Zone (v503): `status` returns the card count; `drop` {n} spends up to n cards (all of them in one write), draws a slot for
@@ -628,14 +631,16 @@ actions.scratch = async ({ uid, data }) => {
   if (clip(data.op, 10) !== 'play') {
     const c = (await admin.database().ref(`users/${uid}/scratch`).once('value')).val() || {};
     const owned = (await admin.database().ref(`users/${uid}/ownedCosmetics`).once('value')).val() || {};
-    return { canPlay: !scratchToday(uid, c, today), last: scratchToday(uid, c, today) ? c : null, owned: Object.fromEntries(S.prizes.filter(p => p.kind === 'item').map(p => [p.itemId, !!owned[p.itemId]])) };
+    return { canPlay: !scratchToday(uid, c, today) || num(c.extra) > 0, extra: num(c.extra), last: scratchToday(uid, c, today) && !(num(c.extra) > 0) ? c : null, owned: Object.fromEntries(S.prizes.filter(p => p.kind === 'item').map(p => [p.itemId, !!owned[p.itemId]])) };
   }
   const total = S.prizes.reduce((sum, p) => sum + num(p.weight), 0);
   let roll = nodeCrypto.randomInt(total);
   const prize = S.prizes.find(p => (roll -= num(p.weight)) < 0) || S.prizes[0];
   const grid = scratchGrid(S.symbols, prize.symbol || null);
   const res = await userTx(uid, (user) => {
-    if (scratchToday(uid, user.scratch, today)) return { noop: true, already: true };
+    const doneToday = scratchToday(uid, user.scratch, today), had = num(user.scratch?.extra);
+    if (doneToday && had < 1) return { noop: true, already: true };
+    const left = doneToday ? had - 1 : had;
     let paid = 0, duplicate = false;
     if (prize.kind === 'diamonds') { paid = num(prize.amount); addDiamonds(user, paid); }
     else if (prize.kind === 'item') {
@@ -647,11 +652,11 @@ actions.scratch = async ({ uid, data }) => {
         user.activityInbox[`unlock_${prize.itemId}`] = { type: 'shop', unlocked: true, name: clip(prize.name, 80), cost: 0, requirement: 'Won on the Scratch Card', sentAt: now.getTime() };
       }
     }
-    user.scratch = { date: today, grid, prize: prize.id, kind: prize.kind, amount: num(prize.amount), itemId: prize.itemId || null, name: prize.name || null, duplicate, paid, at: now.getTime(), plays: num(user.scratch?.plays) + 1, ...(RESET_V.scratch[uid] ? { resetV: RESET_V.scratch[uid] } : {}) };
-    return { user, card: user.scratch };
+    user.scratch = { date: today, grid, prize: prize.id, kind: prize.kind, amount: num(prize.amount), itemId: prize.itemId || null, name: prize.name || null, duplicate, paid, at: now.getTime(), plays: num(user.scratch?.plays) + 1, ...(left > 0 ? { extra: left } : {}), ...(RESET_V.scratch[uid] ? { resetV: RESET_V.scratch[uid] } : {}) };
+    return { user, left, card: user.scratch };
   });
   if (res.already) return { already: true, canPlay: false, last: res.user.scratch || null, diamonds: num(res.user.diamonds) };
-  return { card: res.card, canPlay: false, diamonds: num(res.user.diamonds) };
+  return { card: res.card, canPlay: res.left > 0, extra: res.left, diamonds: num(res.user.diamonds) };
 };
 
 // Three Cards (v474): one free play a UK week. `start` draws the shuffle (a list of position swaps) and keeps the
@@ -668,11 +673,24 @@ actions.monty = async ({ uid, data }) => {
     const m = (await admin.database().ref(`users/${uid}/monty`).once('value')).val();
     const g = (await gameRef.once('value')).val();
     const live = g && g.week === week && !g.done && resetOk('monty', uid, g);
-    return { canPlay: !done(m), started: !!live && !done(m), swaps: live && !done(m) ? g.swaps : null, result: done(m) ? { pick: m.pick, prize: m.prize, reveal: m.reveal } : null };
+    return { canPlay: !done(m) || num(m.extra) > 0, extra: num(m && m.extra), started: !!live && !done(m), swaps: live && !done(m) ? g.swaps : null, result: done(m) ? { pick: m.pick, prize: m.prize, reveal: m.reveal } : null };
   }
   if (op === 'start') {
-    const u = (await admin.database().ref(`users/${uid}/monty`).once('value')).val();
-    if (done(u)) return { canPlay: false, result: { pick: u.pick, prize: u.prize, reveal: u.reveal } };
+    let u = (await admin.database().ref(`users/${uid}/monty`).once('value')).val();
+    let extraStart = false;
+    if (done(u)) {
+      if (!(num(u.extra) > 0)) return { canPlay: false, result: { pick: u.pick, prize: u.prize, reveal: u.reveal } };
+      // an extra go (AmitK grant): reopen this week's game, using one extra
+      const r0 = await userTx(uid, (user) => {
+        if (!(user.monty?.week === week && user.monty.done && num(user.monty.extra) > 0)) return { noop: true };
+        const left = num(user.monty.extra) - 1;
+        user.monty = { ...user.monty, done: false, extra: left > 0 ? left : null };
+        if (!(left > 0)) delete user.monty.extra;
+        return { user };
+      });
+      if (r0.noop) return { canPlay: false, result: { pick: u.pick, prize: u.prize, reveal: u.reveal } };
+      extraStart = true;
+    }
     const pairs = [[0, 1], [0, 2], [1, 2]], swaps = [];
     while (swaps.length < num(M.swaps, 9)) {
       const p = pairs[nodeCrypto.randomInt(3)];
@@ -683,7 +701,7 @@ actions.monty = async ({ uid, data }) => {
     const start = arr.slice();
     swaps.forEach(([a, b]) => { const t = arr[a]; arr[a] = arr[b]; arr[b] = t; });
     const fresh = { week, swaps, start, final: arr, at: now.getTime(), done: false, ...(RESET_V.monty[uid] ? { resetV: RESET_V.monty[uid] } : {}) };
-    const r = await gameRef.transaction(cur => (cur && cur.week === week && resetOk('monty', uid, cur) ? undefined : fresh));
+    const r = await gameRef.transaction(cur => (cur && cur.week === week && resetOk('monty', uid, cur) && !(extraStart && cur.done) ? undefined : fresh));
     const g = r.committed ? fresh : (await gameRef.once('value')).val();
     return { canPlay: true, swaps: g.swaps, big: num(M.big), bigAt: g.start.indexOf(num(M.big)) };
   }
@@ -695,12 +713,12 @@ actions.monty = async ({ uid, data }) => {
   const res = await userTx(uid, (user) => {
     if (user.monty?.week === week && user.monty.done && resetOk('monty', uid, user.monty)) return { noop: true, already: true };
     addDiamonds(user, prize);
-    user.monty = { week, done: true, pick: index, prize, reveal: g.final, at: now.getTime(), ...(RESET_V.monty[uid] ? { resetV: RESET_V.monty[uid] } : {}) };
+    user.monty = { week, done: true, pick: index, prize, reveal: g.final, at: now.getTime(), ...(num(user.monty?.extra) > 0 ? { extra: num(user.monty.extra) } : {}), ...(RESET_V.monty[uid] ? { resetV: RESET_V.monty[uid] } : {}) };
     return { user };
   });
   if (res.already) return { canPlay: false, already: true, result: { pick: res.user.monty.pick, prize: res.user.monty.prize, reveal: res.user.monty.reveal }, diamonds: num(res.user.diamonds) };
   await gameRef.update({ done: true });
-  return { canPlay: false, result: { pick: index, prize, reveal: g.final }, diamonds: num(res.user.diamonds) };
+  return { canPlay: num(res.user.monty?.extra) > 0, extra: num(res.user.monty?.extra), result: { pick: index, prize, reveal: g.final }, diamonds: num(res.user.diamonds) };
 };
 
 // One weekly challenge swapped for another, once a UK week, from level
@@ -1494,6 +1512,27 @@ actions.devGrantDiamonds = async ({ auth, data }) => {
     return { user };
   });
   return { ok: true, amount, diamonds: res.user.diamonds };
+};
+// AmitK only (dev page): extra goes on the Lucky Games for any player. `wheel`, `scratch` and `monty` (Three Cards) add to an
+// `extra` counter kept inside that game's own server-only record (used after the day's or week's free go); `drops` adds
+// Drop Zone cards (above the usual cap). Each 0 to 1,000. Mails the player (type 'lucky').
+actions.devGrantLucky = async ({ auth, data }) => {
+  if (!isAmitK(auth)) fail('permission-denied', 'This tool is not available.');
+  const to = String(data?.to || '');
+  if (!/^[A-Za-z0-9_-]{6,64}$/.test(to)) fail('invalid-argument', 'Pick a player.');
+  const amt = (k) => Math.max(0, Math.min(1000, Math.floor(num(data?.[k]))));
+  const g = { wheel: amt('wheel'), scratch: amt('scratch'), monty: amt('monty'), drops: amt('drops') };
+  if (!(g.wheel + g.scratch + g.monty + g.drops)) fail('invalid-argument', 'Pick at least one go.');
+  const now = Date.now();
+  await userTx(to, (user) => {
+    if (g.wheel) user.wheel = { ...(user.wheel || {}), extra: num(user.wheel?.extra) + g.wheel };
+    if (g.scratch) user.scratch = { ...(user.scratch || {}), extra: num(user.scratch?.extra) + g.scratch };
+    if (g.monty) user.monty = { ...(user.monty || {}), extra: num(user.monty?.extra) + g.monty };
+    if (g.drops) { const d = user.dropzone || { cards: dzStart(), earned: 0, used: 0, at: now }; d.cards = num(d.cards) + g.drops; user.dropzone = d; }
+    user.activityInbox = { ...(user.activityInbox || {}), [`lucky_${now}`]: { type: 'lucky', ...g, sentAt: now } };
+    return { user };
+  });
+  return { ok: true, ...g };
 };
 actions.testUnlock = async ({ uid, auth, data }) => {
   if (!isAmitK(auth)) fail('permission-denied', 'This switch is not available.');

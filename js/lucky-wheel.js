@@ -328,6 +328,7 @@
       }, motionOff() ? 0 : 450);
     }
     scratchPaintState();
+    if (res.extra > 0) setTimeout(refresh, 2500); // an extra go is waiting (granted by the owner)
   }
   (function wireScratch() {
     const cv = $('scratchFoil'); if (!cv) return;
@@ -435,6 +436,7 @@
       const gotItem = prize(sp.prize).kind === 'item' && !sp.duplicate;
       if (gotItem) { S.owned = { ...S.owned, [prize(sp.prize).itemId]: true }; S.built = false; }
       applyEconomy(res); showResult(sp); celebrate(tierOf(p)); paint(); startTimer();
+      if (res.extra > 0) setTimeout(refresh, 3500);
       setTimeout(() => wheelWinPop(sp, p), motionOff() ? 0 : 450);
     };
     if (motionOff() || typeof el.animate !== 'function') { done(); return; }
@@ -536,6 +538,7 @@
     flipSnd();
     applyEconomy(res);
     S.monty = { canPlay: false, started: false, result: r };
+    if (res.extra > 0) setTimeout(refresh, 3500);
     M.busy = false; M.phase = 'done';
     $('montyResult').innerHTML = r.prize === bigAmt() ? `<b class="lw-won">+${r.prize} Diamonds</b><span>You found the big prize.</span>` : `<b class="lw-won">+${r.prize} Diamonds</b><span>Not the big one. Try again next week.</span>`;
     $('montyResult').classList.remove('lw-in'); void $('montyResult').offsetWidth; $('montyResult').classList.add('lw-in');

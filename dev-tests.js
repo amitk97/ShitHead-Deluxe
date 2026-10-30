@@ -6167,6 +6167,11 @@ async function runDevTestSuite() {
     ShWheel.reset();
     assertTrue(document.getElementById('homeDropChip').classList.contains('hidden'), 'and hides again after a reset');
   });
+  await test('v533: Dev has a Grant Lucky Games Goes panel and the Inbox draws the mail', () => {
+    assertTrue(!!document.getElementById('devLucky') && !!document.getElementById('devLuckySend') && !!document.getElementById('devLk_monty'), 'lucky panel exists');
+    const html = inboxItemHtml({ id: 'x', type: 'lucky', wheel: 2, scratch: 0, monty: 1, drops: 5, sentAt: 1 });
+    assertTrue(/2 Daily Spin goes/.test(html) && /1 Three Cards go/.test(html) && /5 Drop Zone cards/.test(html) && !/Scratch/.test(html), 'mail lists only what was granted');
+  });
   await test('v501: Dev has a Grant Diamonds panel and the Inbox draws a Diamonds message', () => {
     assertTrue(!!document.getElementById('devGrant') && !!document.getElementById('devGrantSend'), 'grant panel exists');
     const html = inboxItemHtml({ id: 'x', type: 'diamonds', amount: 250, note: 'Hi', sentAt: 1 });

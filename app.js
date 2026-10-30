@@ -16051,6 +16051,7 @@
         devRow(icon('menuErrorReportsBtn'), 'Health', 'health'),
         ...DEV_ROWS.slice(1).map((id) => devRow(icon(id), label(id), id)),
         devRow(icon('menuResetLuckyBtn'), 'Grant Diamonds', 'grant'),
+        devRow(icon('menuResetLuckyBtn'), 'Grant Lucky Games Goes', 'lucky'),
         devRow(icon('menuGuideBtn'), 'Who\u2019s Online', 'online'),
         devRow(icon('menuXpSwitchBtn'), 'Unlock Levels', 'unlocks'),
         devRow(icon('menuGuideBtn'), 'Guide', 'menuGuideBtn'),
@@ -16062,7 +16063,7 @@
     }
     document.getElementById('headerDevBtn')?.addEventListener('click', () => {
       if (!currentUser || !isAmitkTestingAccount({})) return;
-      paintDevList(); devShowGrant(false); devShowInfo(false);
+      paintDevList(); devShowGrant(false); devShowLucky(false); devShowInfo(false);
       document.getElementById('devModal').classList.remove('hidden');
     });
     // Who's Online / Unlock Levels: one shared read-only panel (#devInfo).
@@ -16134,6 +16135,43 @@
         document.getElementById('devGrantAmount').value = ''; document.getElementById('devGrantNote').value = '';
       } catch (e) { notifyBanner('Couldn’t send: ' + (e?.message || 'try again')); }
     });
+    // Grant Lucky Games Goes: extra Daily Spin / Scratch Card / Three Cards goes and Drop Zone cards for any player (server: devGrantLucky).
+    let devLuckyPick = null;
+    const devShowLucky = (on) => {
+      const g = document.getElementById('devLucky');
+      g.classList.toggle('hidden', !on); g.style.display = on ? 'flex' : '';
+      document.getElementById('devList').style.display = on ? 'none' : 'flex';
+    };
+    function paintDevLucky() {
+      const q = document.getElementById('devLuckySearch').value.trim().toLowerCase();
+      const list = (devPlayers || []).filter((p) => !q || p.name.toLowerCase().includes(q)).slice(0, 80);
+      document.getElementById('devLuckyPlayers').innerHTML = list.length ? list.map((p) =>
+        `<button type="button" data-dev-lplayer="${escapeAttr(p.uid)}" class="w-full flex items-center justify-between text-xs px-2 py-1.5 rounded-lg border ${p.uid === devLuckyPick ? 'border-amber-400 bg-amber-500/15 text-amber-200' : 'border-transparent text-slate-200'}"><span>${escapeHtml(p.name)}</span><span class="text-slate-500">Lvl ${p.level}</span></button>`).join('')
+        : '<p class="text-[10px] text-slate-500 p-2">No players found.</p>';
+    }
+    async function openDevLucky() {
+      devShowLucky(true); devLuckyPick = null;
+      ['wheel', 'scratch', 'monty', 'drops'].forEach((k) => { document.getElementById('devLk_' + k).value = ''; });
+      document.getElementById('devLuckyPlayers').innerHTML = '<p class="text-[10px] text-slate-500 p-2">Loading players…</p>';
+      try { devPlayers = (await callEconomy('devPlayers', {})).players || []; paintDevLucky(); }
+      catch (e) { document.getElementById('devLuckyPlayers').innerHTML = '<p class="text-[10px] text-rose-300 p-2">Couldn’t load players (is the latest Functions deploy live?).</p>'; }
+    }
+    document.getElementById('devLuckyBack')?.addEventListener('click', () => devShowLucky(false));
+    document.getElementById('devLuckySearch')?.addEventListener('input', paintDevLucky);
+    document.getElementById('devLuckyPlayers')?.addEventListener('click', (e) => { const b = e.target.closest('[data-dev-lplayer]'); if (b) { devLuckyPick = b.dataset.devLplayer; paintDevLucky(); } });
+    document.getElementById('devLuckySend')?.addEventListener('click', async () => {
+      const who = (devPlayers || []).find((p) => p.uid === devLuckyPick);
+      if (!who) return notifyBanner('Pick a player first.');
+      const g = {}; ['wheel', 'scratch', 'monty', 'drops'].forEach((k) => { g[k] = Math.max(0, Math.min(1000, Math.floor(Number(document.getElementById('devLk_' + k).value) || 0))); });
+      if (!(g.wheel + g.scratch + g.monty + g.drops)) return notifyBanner('Enter at least one go (up to 1,000 each).');
+      const parts = [g.wheel && `${g.wheel} Daily Spin`, g.scratch && `${g.scratch} Scratch Card`, g.monty && `${g.monty} Three Cards`, g.drops && `${g.drops} Drop Zone card${g.drops === 1 ? '' : 's'}`].filter(Boolean).join(', ');
+      if (!(await shConfirm({ title: 'Grant extra goes?', text: `${parts} to ${who.name}. They get a message in their Inbox.`, yes: 'Grant', no: 'Cancel' }))) return;
+      try {
+        await callEconomy('devGrantLucky', { to: who.uid, ...g });
+        notifyBanner(`Granted ${parts} to ${who.name}.`);
+        ['wheel', 'scratch', 'monty', 'drops'].forEach((k) => { document.getElementById('devLk_' + k).value = ''; });
+      } catch (e) { notifyBanner('Couldn’t grant: ' + (e?.message || 'try again')); }
+    });
     document.getElementById('devCloseBtn')?.addEventListener('click', () => document.getElementById('devModal').classList.add('hidden'));
     document.getElementById('devList')?.addEventListener('click', async (e) => {
       const row = e.target.closest('[data-dev-row]');
@@ -16141,6 +16179,7 @@
       const id = row.dataset.devRow;
       if (id === 'health') { document.getElementById('devModal').classList.add('hidden'); openReports('health'); return; }
       if (id === 'grant') { openDevGrant(); return; }
+      if (id === 'lucky') { openDevLucky(); return; }
       if (id === 'online') { openDevOnline(); return; }
       if (id === 'unlocks') { openDevUnlocks(); return; }
       if (id === 'update') { notifyBanner('Checking for a newer version…'); await checkForNewVersion(true); return; }
@@ -20997,7 +21036,7 @@
       if (e.target.id === 'inboxModal') document.getElementById('inboxModal').classList.add('hidden');
     });
     // Mail kinds stored under users/{uid}/activityInbox.
-    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level', 'friendLevel', 'series', 'eventPrize', 'seasonPass', 'diamonds'];
+    const ACTIVITY_MAIL_TYPES = ['rank', 'shop', 'season', 'gift', 'referral', 'board', 'level', 'friendLevel', 'series', 'eventPrize', 'seasonPass', 'diamonds', 'lucky'];
     // Congratulations from the server (functions/boards.js) the first time a
     // player reaches the top 10, #3, #2 or #1 on a leaderboard.
     const BOARD_NAMES = { ranked: 'Ranked', challenges: 'Challenges', gauntlet: 'Gauntlet', levels: 'Levels' };
@@ -21162,6 +21201,16 @@
           <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">${escapeHtml(ev ? ev.name : 'Event')} leaderboard</p>
           <p class="text-xs font-bold text-white">You finished #${Math.round(Number(item.rank) || 0)} with ${Math.round(Number(item.wins) || 0)} wins</p>
           <p class="inbox-activity-accent text-[10px] mt-1">💎 ${Math.round(Number(item.reward) || 0)} added to your Diamonds</p>
+          <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
+        </div>`;
+      }
+      if (item.type === 'lucky') {
+        const L = [[item.wheel, 'Daily Spin go', 'Daily Spin goes'], [item.scratch, 'Scratch Card', 'Scratch Cards'], [item.monty, 'Three Cards go', 'Three Cards goes'], [item.drops, 'Drop Zone card', 'Drop Zone cards']]
+          .map(([n, one, many]) => { n = Math.max(0, Math.round(Number(n) || 0)); return n ? `${n.toLocaleString('en-GB')} ${n === 1 ? one : many}` : ''; }).filter(Boolean);
+        return `<div class="inbox-activity--level border rounded-xl px-2.5 py-2">
+          <p class="inbox-activity-accent text-[9px] font-black uppercase tracking-wide mb-1">Gift from the game</p>
+          <p class="text-xs font-bold text-white">Extra Lucky Games goes</p>
+          <p class="inbox-activity-accent text-[10px] mt-1">${escapeHtml(L.join(', '))}</p>
           <button type="button" data-activity-id="${escapeAttr(item.id)}" class="inbox-read-activity-btn inbox-activity-accent mt-2 w-full text-[9px] font-black py-1 rounded-lg border transition" style="border-color:currentColor">MARK AS READ</button>
         </div>`;
       }

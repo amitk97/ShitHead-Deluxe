@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-30-v532 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-30-v533 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -1558,6 +1558,18 @@
         <input id="devGrantNote" type="text" maxlength="120" placeholder="Message to the player (optional)" class="w-full rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs px-2 py-2">
         <button type="button" id="devGrantSend" class="text-[11px] font-black py-2 rounded-lg bg-amber-500 text-slate-950">SEND DIAMONDS</button>
       </div>
+      <div id="devLucky" class="hidden" style="flex:1; min-height:0; flex-direction:column; gap:8px;">
+        <button type="button" id="devLuckyBack" class="text-[10px] font-black text-slate-300 text-left">&lsaquo; BACK</button>
+        <input id="devLuckySearch" type="search" placeholder="Search players" autocomplete="off" class="w-full rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs px-2 py-2">
+        <div id="devLuckyPlayers" class="overflow-y-auto" style="flex:1; min-height:80px; max-height:26vh;"></div>
+        <div style="display:grid; grid-template-columns:1fr 5.5rem; gap:6px; align-items:center;" class="text-xs text-slate-200">
+          <label for="devLk_wheel">Daily Spin goes</label><input id="devLk_wheel" type="number" min="0" max="1000" inputmode="numeric" placeholder="0" class="rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs px-2 py-1.5">
+          <label for="devLk_scratch">Scratch Cards</label><input id="devLk_scratch" type="number" min="0" max="1000" inputmode="numeric" placeholder="0" class="rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs px-2 py-1.5">
+          <label for="devLk_monty">Three Cards goes</label><input id="devLk_monty" type="number" min="0" max="1000" inputmode="numeric" placeholder="0" class="rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs px-2 py-1.5">
+          <label for="devLk_drops">Drop Zone cards</label><input id="devLk_drops" type="number" min="0" max="1000" inputmode="numeric" placeholder="0" class="rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs px-2 py-1.5">
+        </div>
+        <button type="button" id="devLuckySend" class="text-[11px] font-black py-2 rounded-lg bg-amber-500 text-slate-950">GRANT GOES</button>
+      </div>
       <div id="devInfo" class="hidden" style="flex:1; min-height:0; flex-direction:column; gap:8px;">
         <button type="button" id="devInfoBack" class="text-[10px] font-black text-slate-300 text-left">&lsaquo; BACK</button>
         <p id="devInfoTitle" class="text-[11px] font-black uppercase tracking-widest text-lime-400"></p>
@@ -2887,7 +2899,7 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=83850e0f086c"></script>
-  <script src="js/whats-new-data.js?v=c853d3fa8513"></script>
+  <script src="js/whats-new-data.js?v=88498873c228"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=08c3fa477b7a"></script>
   <script src="tutorial-data.js?v=51e38ba66974"></script>
@@ -2898,13 +2910,13 @@
   <script src="home-navigation.js?v=2264b5e08637"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=540056bfbb2a"></script>
+  <script src="app.js?v=cb00c9594e3f"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>
   <script src="js/house-rules-presets.js?v=80f7a658ecb1"></script>
   <script src="js/friends-lobby.js?v=223131fe903c"></script>
-  <script src="js/lucky-wheel.js?v=a8475dfc0118"></script>
+  <script src="js/lucky-wheel.js?v=99b043028e00"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>
   <script src="js/puzzles.js?v=87cb627bec7c"></script>
