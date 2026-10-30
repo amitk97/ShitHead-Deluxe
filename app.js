@@ -431,7 +431,7 @@
         note,
         render(ms) { if (inMatch()) timing('render', ms, 50); },
         econ(ms) { timing('econ', ms, 2000); },
-        matchStarted() { if (!state.spectating && once('s')) note(`${modeKey()}Started`); },
+        matchStarted() { if (!state.spectating && once('s')) { note(`${modeKey()}Started`); try { if (perfMode) note('perfMatch'); } catch (_) {} } },
         matchFinished() { if (!state.spectating && once('f')) note(`${modeKey()}Finished`); },
         matchLeft() { if (!state.spectating) note(`${modeKey()}Left`); },
         save, record: rec
@@ -15841,6 +15841,12 @@
         econN: count('econN'), econAvg: count('econN') ? Math.round(count('econMs') / count('econN')) : 0,
         econSlow: count('econSlow'), econWorst: sessions.reduce((m, r) => Math.max(m, (r.counts && r.counts.econMax) || 0), 0),
         longTasks: count('longTasks'), longTaskMs: count('longTaskMs'), liteFx: count('liteFx'), liteSessions: sessions.filter(r => r.counts && r.counts.liteFx).length,
+        // v536: Performance Mode On vs Off (a session counts as On when a match started with it on).
+        perf: [true, false].map((on) => {
+          const g = sessions.filter(r => r.frames && r.frames.n > 0 && !!(r.counts && r.counts.perfMatch) === on);
+          const f = g.reduce((n, r) => n + r.frames.n, 0), ms = g.reduce((n, r) => n + r.frames.ms, 0), sl = g.reduce((n, r) => n + r.frames.slow, 0);
+          return { on, sessions: g.length, fps: ms ? Math.round((f / ms) * 1000) : 0, slowPct: f ? Math.round((sl / f) * 1000) / 10 : 0 };
+        }),
         byDevice: Object.entries(sessions.reduce((acc, r) => {
           const d = acc[r.device || '?'] || (acc[r.device || '?'] = { sessions: 0, frames: 0, ms: 0, slow: 0, rN: 0, rSlow: 0, lt: 0 });
           const c = r.counts || {};
@@ -15879,6 +15885,9 @@
             + h.byDevice.map(([d, v]) => row(escapeHtml(d), `${v.ms ? Math.round((v.frames / v.ms) * 1000) : 0} fps`,
               `${v.frames ? Math.round((v.slow / v.frames) * 1000) / 10 : 0}% slow frames · ${v.rN ? Math.round((v.rSlow / v.rN) * 1000) / 10 : 0}% slow redraws · ${v.lt} stalls · ${v.sessions} sessions`)).join('')
           : row('Timings', 'none yet', 'they appear once players are on this version')),
+        box('Performance Mode (v536+)', h.perf[0].sessions
+          ? h.perf.map(p => row(p.on ? 'Mode on' : 'Mode off', `${p.fps} fps`, `${p.slowPct}% slow frames · ${p.sessions} sessions with a match`)).join('')
+          : row('Performance Mode', 'nobody yet', 'compares frame rate with it on and off once someone turns it on')),
         box('Matches', h.modes.filter(m => m.started).map(m => row(m.mode[0].toUpperCase() + m.mode.slice(1),
           `${m.finished}/${m.started} finished`, `${m.left} left · ${m.abandoned} abandoned (app closed)`)).join('') || row('Matches', 'none yet')),
         box('Problems', row('Online saves rejected', h.rejectedSaves, 'two phones saved at once; the later one reloaded the table') + row('Online saves failed (retried)', h.saveErrors, 'no signal while saving; the game tried again') + row('Stuck prompt shown', h.stuckShown, 'nothing changed for a while') + row('Resync tapped / fixed', h.stuckTapped + ' / ' + h.stuckFixed, 'fixed = the game moved within 10s') + row('Errors', h.errors, 'details in the ERRORS tab')),

@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v536: [['sparkle', 'Internal: Health now compares frame rate with Performance Mode on and off.']],
       v535: [['sparkle', 'New Performance Mode setting (Settings → Display) gives slower phones lighter effects. It is off by default.']],
       v534: [['sparkle', 'Three Cards now offers an extra go when you have one.']],
       v533: [['sparkle', 'Internal: extra Lucky Games goes can now be given to a player.']],

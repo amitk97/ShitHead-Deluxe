@@ -6130,6 +6130,16 @@ async function runDevTestSuite() {
       assertTrue(!perfMode && !FxLoad.lite, 'Off again');
     } finally { perfMode = was; FxLoad.forced = was; writePref('shithead_perf_mode', was); }
   });
+  await test('v536: Health splits sessions by Performance Mode', () => {
+    const day = '2026-10-30';
+    const h = summariseHealth({ [day]: {
+      a: { frames: { n: 100, ms: 2000, slow: 1 }, counts: { perfMatch: 1 } },
+      b: { frames: { n: 100, ms: 4000, slow: 20 }, counts: {} } } });
+    assertEqual(h.perf[0].on, true, 'On first');
+    assertEqual(h.perf[0].fps, 50, 'On fps');
+    assertEqual(h.perf[1].fps, 25, 'Off fps');
+    assertEqual(h.perf[1].slowPct, 20, 'Off slow %');
+  });
   await test('v492: an open menu page pauses the CSS animations under it, and they resume when it closes', async () => {
     EXCLUSIVE_PAGE_IDS.forEach(id => { const el = document.getElementById(id); if (el) assertEqual(el.parentElement, document.body, `${id} sits at the top level of the page`); });
     const probe = document.createElement('div');
