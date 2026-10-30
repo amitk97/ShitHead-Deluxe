@@ -23480,6 +23480,77 @@
       const action = screenBackAction();
       if (action) action();
     }
+    // § Swipe down to close (v523): drag a menu page or a sheet-like pop-up
+    // down from its top (content scrolled to the top) and let go past 110px or
+    // with a quick flick to close it, like the Back button. Touch only. Not on
+    // Inbox / Friends (pull to refresh), the Lucky Games, Puzzles or any pop-up
+    // that must be answered. The move listener is added only while a gesture
+    // can start, so normal scrolling stays passive.
+    const SWIPE_CLOSE_IDS = new Set([...MENU_PAGE_IDS.filter(id => id !== 'friendsModal'), 'matchStatsModal', 'historyGameModal', 'eventPopupModal', 'whatsNewModal']);
+    const SWIPE_CLOSE_PX = 110, SWIPE_FLICK_PX_MS = 0.6;
+    function swipeCloseScrollersAtTop(target, page) {
+      for (let el = target; el && el !== page; el = el.parentElement) {
+        if (!(el instanceof HTMLElement)) continue;
+        if (el.closest('.hscroll, .cosmetic-tab-bar, input, textarea, select, canvas, [data-no-swipe]') === el) return false;
+        const oy = getComputedStyle(el).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1 && el.scrollTop > 0) return false;
+      }
+      return !(page.scrollTop > 0);
+    }
+    (() => {
+      let g = null;
+      const reset = (panel) => { if (panel) { panel.style.transition = ''; panel.style.transform = ''; panel.style.opacity = ''; } };
+      const finish = (e) => {
+        if (!g) return;
+        document.removeEventListener('touchmove', onMove);
+        const { page, panel, dy, t0, id, active } = g; g = null;
+        if (!active) return;
+        const fast = dy / Math.max(1, Date.now() - t0) > SWIPE_FLICK_PX_MS && dy > 40;
+        if (e.type === 'touchend' && (dy > SWIPE_CLOSE_PX || fast)) {
+          const done = () => {
+            const layer = topBackLayer();
+            if (layer && layer.id === id) { layer.close(); if (EXCLUSIVE_PAGE_IDS.includes(id)) backToPreviousPage(id); }
+            requestAnimationFrame(() => reset(panel));
+          };
+          if (reduceMotion || document.body.classList.contains('reduce-motion')) { done(); return; }
+          panel.style.transition = 'transform .18s ease-in, opacity .18s ease-in';
+          panel.style.transform = `translateY(${Math.max(dy, 0) + 220}px)`; panel.style.opacity = '0';
+          setTimeout(done, 180);
+        } else {
+          panel.style.transition = 'transform .2s cubic-bezier(.2,.9,.3,1.2), opacity .2s';
+          panel.style.transform = 'translateY(0)'; panel.style.opacity = '';
+          setTimeout(() => reset(panel), 220);
+        }
+      };
+      function onMove(e) {
+        if (!g || e.touches.length !== 1) return;
+        const dy = e.touches[0].clientY - g.y, dx = e.touches[0].clientX - g.x;
+        if (!g.active) {
+          if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) { finish({ type: 'abort' }); return; }
+          if (dy < -6) { finish({ type: 'abort' }); return; }
+          if (dy < 10) return;
+          if (!swipeCloseScrollersAtTop(g.target, g.page)) { finish({ type: 'abort' }); return; }
+          g.active = true; g.y = e.touches[0].clientY - dy + 10; g.panel.style.transition = 'none';
+        }
+        g.dy = Math.max(0, e.touches[0].clientY - g.y);
+        if (e.cancelable) e.preventDefault();
+        g.panel.style.transform = `translateY(${g.dy * 0.9}px)`;
+        g.panel.style.opacity = String(Math.max(0.35, 1 - g.dy / 420));
+      }
+      document.addEventListener('touchstart', (e) => {
+        if (g) finish({ type: 'abort' });
+        if (e.touches.length !== 1 || tutorialActive) return;
+        const page = e.target.closest && e.target.closest('div.fixed.inset-0');
+        if (!page || !SWIPE_CLOSE_IDS.has(page.id)) return;
+        const layer = topBackLayer();
+        const panel = page.firstElementChild;
+        if (!layer || layer.id !== page.id || !panel) return;
+        g = { page, panel, id: page.id, target: e.target, x: e.touches[0].clientX, y: e.touches[0].clientY, dy: 0, t0: Date.now(), active: false };
+        document.addEventListener('touchmove', onMove, { passive: false });
+      }, { passive: true });
+      document.addEventListener('touchend', finish, { passive: true });
+      document.addEventListener('touchcancel', finish, { passive: true });
+    })();
     // Escape on PC (v248, owner): closes every open menu, page and pop-up in
     // one press, back to the home screen (or the table during a game). It
     // stops at anything that must be answered (BACK_LAYERS null) and never

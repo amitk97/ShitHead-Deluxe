@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v523: [['arrow-down', 'On a phone, drag a page (Settings, Shop, Profile and more) down to close it.']],
       v522: [['refresh', 'If a match stops moving, a small "Game stuck? Resync" button appears. The screen also stays awake during a match.']],
       v521: [['lock', '2 vs 2 now unlocks at Lvl 10 for the host (joining a friend\'s room has no lock). After a Best of series the host can offer a rematch with one tap.', WN_KEY]],
       v520: [['gem', 'In Play Friends, a Best of choice now greys out and says who is short of Diamonds before you tap it.']],

@@ -7580,6 +7580,28 @@ async function runDevTestSuite() {
       closeDecksChoice();
     } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeDecksChoice(); }
   });
+  await test('v523: dragging a page down closes it, a short drag or a scrolled page does not', async () => {
+    assertTrue(SWIPE_CLOSE_IDS.has('settingsModal') && !SWIPE_CLOSE_IDS.has('inboxModal') && !SWIPE_CLOSE_IDS.has('friendsModal'), 'list: pages yes, pull-to-refresh lists no');
+    const page = document.getElementById('collectionModal'), panel = page.firstElementChild;
+    const touch = (type, y, target) => {
+      const tt = new Touch({ identifier: 7, target, clientX: 100, clientY: y });
+      target.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true, touches: type === 'touchend' ? [] : [tt], changedTouches: [tt] }));
+    };
+    const drag = async (from, to, target) => { touch('touchstart', from, target); for (let y = from; y <= to; y += 20) touch('touchmove', y, target); touch('touchmove', to, target); await new Promise(r => setTimeout(r, 400)); touch('touchend', to, target); await new Promise(r => setTimeout(r, 450)); };
+    const wasRM = reduceMotion;
+    try {
+      page.classList.remove('hidden');
+      await drag(200, 260, panel);
+      assertTrue(!page.classList.contains('hidden'), 'a 60px drag only springs back');
+      assertEqual(panel.style.transform, '', 'the panel is back in place');
+      await drag(200, 420, panel);
+      assertTrue(page.classList.contains('hidden'), 'a 220px drag closes the page');
+      assertEqual(panel.style.transform, '', 'the closed panel is reset');
+      page.classList.remove('hidden');
+      const scroller = [panel, ...panel.querySelectorAll('*')].find(el => el.scrollHeight > el.clientHeight + 1 && ['auto', 'scroll'].includes(getComputedStyle(el).overflowY));
+      if (scroller) { scroller.scrollTop = 40; await drag(200, 420, scroller); assertTrue(!page.classList.contains('hidden'), 'a scrolled page does not close'); scroller.scrollTop = 0; }
+    } finally { page.classList.add('hidden'); reduceMotion = wasRM; panel.style.transform = ''; panel.style.opacity = ''; panel.style.transition = ''; }
+  });
   await test('v522: the stuck prompt resyncs and the wake lock follows the match', async () => {
     const before = stuckSignature();
     state.discardPile.push({ id: 'x_stuck', rank: '5', suit: 'hearts' });
