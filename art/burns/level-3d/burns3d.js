@@ -429,7 +429,7 @@ void main(){
       co = Math.cos(by); si = Math.sin(by); [x, z] = [x * co + z * si, -x * si + z * co];
       return [x + pv[0] + side * .62 * p, y + pv[1] + .16 * p, z + pv[2] + .3 * p];
     };
-    const emit = (key, rate, dt, fn) => { S.acc[key] = (S.acc[key] || 0) + rate * dt; while (S.acc[key] >= 1) { S.acc[key] -= 1; fn(); } };
+    const emit = (key, rate, dt, fn) => { S.acc[key] = (S.acc[key] || 0) + rate * (S.hell && window.FxLoad && FxLoad.lite ? .55 : 1) * dt; while (S.acc[key] >= 1) { S.acc[key] -= 1; fn(); } };
     const toWorld = ([x, y, z]) => [x, y * CP + z * SP, -y * SP + z * CP];
     // A burning card feeds its own small flames, embers, smoke and shards.
     const burnCard = (c, t, dt) => {
@@ -934,7 +934,7 @@ void main(){
       // the painted head rides on top, rigid, following the sway a beat late and squashing on the strike.
       const par = S.fun(t), { H, rise, collapse, K, g } = par, T = S.T, sp = S.spin(t);
       const alive = smooth(.06, .24, t) * (1 - smooth(1.62, 1.96, t));
-      const hell = S.hell, NB = hell ? 6 : 3, SEG = hell ? 110 : 150, turns = hell ? 2.1 : 1.5, hh = H / turns / NB * (hell ? 1.1 : .64), UMAX = hell ? 1 : 1.07, lagX = hell ? 0 : S.fun(t - .09).lean + .04 * K * Math.sin(t * 5.3) * rise - par.lean, TAU = Math.PI * 2;
+      const hell = S.hell, NB = hell ? 6 : 3, SEG = hell ? (window.FxLoad && FxLoad.lite ? 72 : 110) : 150, turns = hell ? 2.1 : 1.5, hh = H / turns / NB * (hell ? 1.1 : .64), UMAX = hell ? 1 : 1.07, lagX = hell ? 0 : S.fun(t - .09).lean + .04 * K * Math.sin(t * 5.3) * rise - par.lean, TAU = Math.PI * 2;
       // Where a lump tore away the coils are thinner for a moment.
       const bite = u => { let d = 0; for (const b of S.bites) { const k = (t - b.t) / .45; if (k > 0 && k < 1) d += Math.exp(-Math.pow((u - b.u) / .06, 2)) * (1 - k) * Math.min(1, k * 8); } return 1 - .5 * Math.min(1, d); };
       const far = [], near = [];
