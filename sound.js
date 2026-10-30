@@ -716,7 +716,8 @@
       },
       // Approved mascot: pull, grin hold, rotation/ejection, then a short wet collapse.
       // One shared game sound kit retains mute and the player's card-sound volume.
-      'burn-lvl-shitstorm': k => {
+      'burn-lvl-shitstorm': kit => {
+        const k = { noise: o => kit.noise({ ...o, level: (o.level ?? .3) * .35 }), tone: o => kit.tone({ ...o, level: (o.level ?? .2) * .35 }) };
         k.noise({ at: 0, dur: .52, type: 'bandpass', f0: 180, f1: 850, q: .6, level: .13, attack: .30 });
         k.tone({ at: .12, dur: .40, type: 'sine', f0: 76, f1: 122, level: .09, attack: .18 });
         k.noise({ at: .30, dur: .22, type: 'lowpass', f0: 420, f1: 170, level: .12, attack: .02 });
