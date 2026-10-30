@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v538: [['sparkle', 'Performance Mode makes the Shitstorm burn lighter (fewer debris pieces).']],
       v537: [['sparkle', 'Performance Mode now also turns off blur effects and pauses decorative animations.']],
       v536: [['sparkle', 'Internal: Health now compares frame rate with Performance Mode on and off.']],
       v535: [['sparkle', 'New Performance Mode setting (Settings → Display) gives slower phones lighter effects. It is off by default.', WN_KEY]],

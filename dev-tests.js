@@ -1348,7 +1348,8 @@ async function runDevTestSuite() {
     assertEqual(stage.querySelectorAll('.pfx-layer, canvas.ssb-c, .ssb-piece').length, 0, 'every node is removed when the 1.8s are over');
     stage.remove();
   });
-  await test('Level burns (v253): six earn-only burns, animated, each with its own sound, over within 2.1s', () => {
+  await test('Level burns (v253): six earn-only burns, animated, each with its own sound, over within 2.1s', async () => {
+    if (window.ShitstormBurn) await ShitstormBurn.preload(); // the mascot atlas decodes at idle; wait for it so the run does not race it
     const ids = LEVEL_REWARDS.filter(r => r.category === 'Burn Effects' && !r.pass).map(r => r.id);
     assertEqual(ids, LEVEL_BURN_IDS, 'The six level burns');
     const stage = testBurnStage();
