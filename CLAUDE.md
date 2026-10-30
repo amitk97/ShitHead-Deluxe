@@ -14,7 +14,7 @@
 
 ## v524 — no native confirm()
 
-- Every `confirm()` is now `await shConfirm({ title, text, yes, no })` (kick, unequip all, XP switch, clear reports/audit, series leave, weekly reroll, saved-look replace/clear, leave room on Back, seasonal bundle in shop.js; their handlers became `async`). Dev tests stub `shConfirm = async () => true` (not `window.confirm`). Three `alert()` calls remain (removed-by-host, two matchmaking errors). Never add a native `confirm()` again.
+- Every `confirm()` is now `await shConfirm({ title, text, yes, no })` (kick, unequip all, XP switch, clear reports/audit, series leave, weekly reroll, saved-look replace/clear, leave room on Back, seasonal bundle in shop.js; their handlers became `async`). Dev tests stub `shConfirm = async () => true` (not `window.confirm`). The three `alert()` calls are gone too (removed-by-host uses `shConfirm`, then reloads; the two matchmaking errors are `notifyBanner`s). Never add a native `confirm()` or `alert()` again.
 
 ## v523 — swipe down to close
 

@@ -459,6 +459,7 @@
     // to SEE that, and on returning to the app we must re-read the room in
     // case we missed changes while backgrounded.
     let hasConfirmedRoomMembership = false;
+    let removedPromptOpen = false;   // the "removed by the host" dialog is up (the room listener fires again meanwhile)
     let wasDisconnected = false;
 
     function setConnectionBanner(mode) {
@@ -9306,9 +9307,11 @@
           const myRecord = state.players.find(p => p.id === state.localPlayerId);
           if (!state.isRanked && myRecord && typeof myRecord.isHost === 'boolean') state.isHost = myRecord.isHost;
           if (!stillHere && !state.isHost && hasConfirmedRoomMembership && leftRoomOnPurpose !== code && !findMyStandInSeat(state.players)) {
-            alert("You have been removed from the room by the host.");
-            forgetJoinedRoom();
-            location.reload();
+            if (!removedPromptOpen) {
+              removedPromptOpen = true;
+              forgetJoinedRoom();
+              shConfirm({ title: 'Removed from the room', text: 'The host removed you from the room.', yes: 'OK', no: 'Close' }).then(() => location.reload());
+            }
             return;
           }
           const localRoomPlayer = state.players.find(p => p.id === state.localPlayerId);
@@ -20368,7 +20371,7 @@
           }
           if (error || !committed || !decision) {
             stopRankedSearchClock(); refreshRankedUI();
-            alert('Matchmaking failed — please try again. If this keeps happening, Database Rules may be blocking the "matchmaking" path.');
+            notifyBanner('Matchmaking failed. Please try again. If it keeps happening, Database Rules may be blocking the "matchmaking" path.');
             return;
           }
           if (decision.action === 'update') {
@@ -20395,7 +20398,7 @@
         if (!stillSearching()) return;
         stopRankedSearchClock();
         refreshRankedUI();
-        alert('Couldn’t start matchmaking — your account profile failed to load. This usually means Database Rules are blocking the "users" path. Check the console/errorReports for details.');
+        notifyBanner('Couldn’t start matchmaking: your account profile failed to load. Database Rules may be blocking the "users" path. Check errorReports for details.');
         console.warn('findRankedMatch failed', e);
       });
     }

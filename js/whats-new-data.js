@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v525: [['check', 'The last browser pop-ups (removed from a room, matchmaking errors) now use the game\'s own dialog and banner.']],
       v524: [['check', 'Confirmation questions (leaving a room, unequipping everything, buying a bundle and more) now use the game\'s own dialog instead of the browser pop-up.']],
       v523: [['arrow-down', 'On a phone, drag a page (Settings, Shop, Profile and more) down to close it.']],
       v522: [['refresh', 'If a match stops moving, a small "Game stuck? Resync" button appears. The screen also stays awake during a match.']],
