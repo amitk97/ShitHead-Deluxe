@@ -651,6 +651,7 @@
       const fit = Math.max(bare ? .7 : 1, Math.min(base, room / natural));
       if (fit < base) panel.style.zoom = String(Math.floor(fit * 100) / 100);
     }
+    window.fitHomePanel = fitHomePanel;
     function pickHomeTipRank() {
       const pool = HOME_TIP_RANKS.filter(r => r !== homeTipRank);
       return pool[Math.floor(Math.random() * pool.length)];

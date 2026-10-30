@@ -12,6 +12,10 @@
 
 - `js/test-lab.js` tabs Back / Table / Deck / Frame / Emote / Avatar (the old dummy-position tab is now "Setup"): tap an item (any in `customAllItems(type)`, decks from `deckItems()`) and `applyLook` sets it IN MEMORY: `equippedCosmetics[type] = id` + `applyEquippedCosmetics()` (the bot's seat gets the back, frame and avatar too), decks through `selectDeckTheme`. Never saved: while `state.labDummy` is set `applyEquippedCosmetics` and `selectDeckTheme` skip their localStorage writes, `eventBotItem` and `showHelperTip` stand down, and `open()` turns `syncShowcase`, `syncPublicProfile` and `scheduleSettingsCloudSave` into no-ops (like the win/history reports). `snapshotReal()` at open and `restoreReal()` on Exit / "My real look" put the account's own look back. Extras: next / previous / Auto-step (1.8s) and an emote strip that floats each emote of the chosen pack from your seat. Trap found: the file's `const CSS` string shadows `window.CSS`, so use `window.CSS.escape`. Client only; no rules, Functions or catalog change. Dev test "v436: the Test Lab tries looks on in memory only…". Frames: scratchpad `lab-shot.js` (fakes `currentUser` and `isAmitkTestingAccount` then clicks the tabs).
 
+## v527 — home screen ready behind the loading screen
+
+- `shBootReveal` (index.html) now calls `window.shHomePrep()` (app.js, after the event chip: refreshes the event and season chips and `fitHomePanel`, all exposed on `window`) and waits for `document.fonts.ready` (capped 400ms) before fading `#bootSplash`, so the chips (which used to appear 1.5s after start) and panel zoom are in place underneath. Client only.
+
 ## v524 — no native confirm()
 
 - Every `confirm()` is now `await shConfirm({ title, text, yes, no })` (kick, unequip all, XP switch, clear reports/audit, series leave, weekly reroll, saved-look replace/clear, leave room on Back, seasonal bundle in shop.js; their handlers became `async`). Dev tests stub `shConfirm = async () => true` (not `window.confirm`). The three `alert()` calls are gone too (removed-by-host uses `shConfirm`, then reloads; the two matchmaking errors are `notifyBanner`s). Never add a native `confirm()` or `alert()` again.

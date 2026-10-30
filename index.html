@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-10-30-v526 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
+<!-- BUILD: 2026-10-30-v527 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -147,10 +147,14 @@
       let gone = false;
       window.shBootReveal = () => {
         if (gone) return; gone = true;
-        requestAnimationFrame(() => requestAnimationFrame(() => {
+        // Paint the home screen's late parts (event and season chips, panel fit) underneath
+        // first, and let the fonts land, so nothing pops in as the splash fades.
+        try { window.shHomePrep && window.shHomePrep(); } catch (e) {}
+        const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 400))]) : Promise.resolve();
+        fonts.then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
           el.classList.add('boot-out');
           setTimeout(() => el.remove(), 320);
-        }));
+        })));
       };
       if (/[?&]dev-tests=1/.test(location.search)) { gone = true; el.remove(); return; }
       try { // an in-game reload back to home (reloadCleanly): no splash
@@ -2883,18 +2887,18 @@
   <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=83850e0f086c"></script>
-  <script src="js/whats-new-data.js?v=0d5b28be917a"></script>
+  <script src="js/whats-new-data.js?v=996392ed736e"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
   <script src="cosmetics-data.js?v=08c3fa477b7a"></script>
   <script src="tutorial-data.js?v=51e38ba66974"></script>
   <script src="tutorial.js?v=325c87f441da"></script>
-  <script src="level-ladder.js?v=5805ec01d544"></script>
+  <script src="level-ladder.js?v=a3530640bc5b"></script>
   <script src="js/wishlist-store.js?v=664496c9f24f"></script>
   <script src="shop.js?v=1461a7528520"></script>
-  <script src="home-navigation.js?v=8b927cb2e918"></script>
+  <script src="home-navigation.js?v=2264b5e08637"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=d36e1090c225"></script>
+  <script src="app.js?v=6669b1a5321b"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>

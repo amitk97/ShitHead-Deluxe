@@ -11616,6 +11616,13 @@
     document.getElementById('homeEventChip').addEventListener('click', () => { shopTab = SEASONAL_TAB; shopTabPicked = true; openShopPanel(); });
     setTimeout(refreshHomeEventChip, 1500); // after the whole script has run (it reads consts declared further down)
     setInterval(refreshHomeEventChip, 20000);
+    // The loading screen calls this just before it fades (index.html shBootReveal), so the chips and the panel
+    // size are already in place underneath and the home screen does not pop in.
+    window.shHomePrep = () => {
+      refreshHomeEventChip();
+      try { window.refreshHomeSeasonChip?.(); } catch (e) {}
+      try { window.fitHomePanel?.(); } catch (e) {}
+    };
     attachPullToRefresh(document.getElementById('friendsListArea'), () => switchFriendsTab(currentFriendsTab));
     document.getElementById('headerInboxBtn').addEventListener('click', () => openInboxPanel());
     document.getElementById('menuChallengesBtn').addEventListener('click', () => {

@@ -280,6 +280,7 @@
       document.getElementById('homeSeasonSub').textContent = st.started ? `Tier ${st.tier} of ${st.T} · ${st.left} days left` : `Starts in ${st.startsIn} day${st.startsIn === 1 ? '' : 's'}`;
     }
     document.getElementById('homeSeasonChip')?.addEventListener('click', () => openLevelLadder({ tab: 'season' }));
+    window.refreshHomeSeasonChip = refreshHomeSeasonChip;
     setTimeout(refreshHomeSeasonChip, 1500);
     setInterval(refreshHomeSeasonChip, 20000);
     document.getElementById('levelLadderModal')?.querySelector('.ll-tabs')?.addEventListener('click', (e) => {
