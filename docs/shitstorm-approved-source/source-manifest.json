@@ -1,0 +1,46 @@
+{
+  "mascot.glb": {
+    "bytes": 25640416,
+    "sha256": "b580723f12bb8e555e5b34c49bd5474d23f85575179bba1725fef1f60f572f6a"
+  },
+  "mascot.html": {
+    "bytes": 5445,
+    "sha256": "beb0502fdaab3aebb32fcb129494a70f8d7aa8a7d04540f2cc2ba396cba68707"
+  },
+  "viewer-app.js": {
+    "bytes": 15379,
+    "sha256": "56e3a503d10e85fbcbada4d03f21a2bb41d814bfa296d3bc96ca24430ee028f8"
+  },
+  "character-controller.js": {
+    "bytes": 6632,
+    "sha256": "a151aef36d425eb0009c4670526bb4b303c7b7cf67f69619b14d1dd4ffc8f5d9"
+  },
+  "voice-timing.json": {
+    "bytes": 1271,
+    "sha256": "311c68b3a67d88222b8bd9798f1305bfa25d18a0ee8dcb33c38c200de4ddc9b9"
+  },
+  "mascot-voice.mp3": {
+    "bytes": 38736,
+    "sha256": "64cbdc34a645286d2840ce97a1fdfb39775b31703d8848fc98438509dd9b52cd"
+  },
+  "draft-burn.wav": {
+    "bytes": 407084,
+    "sha256": "9bf10dbf37353095e09c56773e9b40f80bfca1a07bfb87520582212c343e7092"
+  },
+  "viewer/LICENSE": {
+    "bytes": 1081,
+    "sha256": "4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454"
+  },
+  "viewer/three.module.js": {
+    "bytes": 1314681,
+    "sha256": "ce1fa418de16a19495a9f72495580e3015d7745c296d3ce0485897f902ddedfb"
+  },
+  "viewer/loaders/GLTFLoader.js": {
+    "bytes": 110286,
+    "sha256": "88934e9d3664349c0adff797b848d7878d6626c43273d2b5eabdbe329885b18c"
+  },
+  "viewer/utils/BufferGeometryUtils.js": {
+    "bytes": 31781,
+    "sha256": "51db05616ad0ddf7722e4ae8ad06bacc464985f510db3e65501498c4a816b10c"
+  }
+}
