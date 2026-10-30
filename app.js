@@ -23533,6 +23533,44 @@
     setInterval(() => checkForNewVersion(true), UPDATE_CHECK_MS);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForNewVersion(); });
     window.addEventListener('online', () => checkForNewVersion());
+    // § Home pull to refresh (v517): pull down on the bare home screen to look for a new version
+    // and load it (applyUpdateNow), or say the game is up to date.
+    (() => {
+      const lobby = document.getElementById('lobbyScreen');
+      if (!lobby) return;
+      lobby.style.overscrollBehaviorY = 'contain';
+      const ind = document.createElement('div');
+      ind.className = 'ptr-indicator ptr-home';
+      ind.innerHTML = '<span class="ptr-icon">↓</span><span class="ptr-text">Pull to update</span>';
+      ind.style.cssText = 'position:fixed;left:0;right:0;top:var(--header-h, 3rem);height:0;overflow:hidden;z-index:71;pointer-events:none;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#cbd5e1;opacity:0';
+      document.body.appendChild(ind);
+      const text = ind.querySelector('.ptr-text');
+      let startX = 0, startY = null, pull = 0, busy = false;
+      const show = (h) => { ind.style.height = `${h}px`; ind.style.opacity = String(Math.min(1, h / PTR_TRIGGER_PX)); };
+      const canPull = (e) => !busy && e.touches.length === 1 && lobby.scrollTop <= 0 && updatePromptAllowed()
+        && !lobby.classList.contains('mode-page-open') && !e.target.closest('input, textarea, select, video');
+      lobby.addEventListener('touchstart', (e) => { startY = canPull(e) ? e.touches[0].clientY : null; startX = e.touches[0].clientX; pull = 0; }, { passive: true });
+      lobby.addEventListener('touchmove', (e) => {
+        if (startY === null) return;
+        const dy = e.touches[0].clientY - startY, dx = Math.abs(e.touches[0].clientX - startX);
+        if (dy <= 0 || dx > dy || lobby.scrollTop > 0) { pull = 0; show(0); return; }
+        pull = Math.min(84, dy * 0.5);
+        show(pull);
+        text.textContent = pull >= PTR_TRIGGER_PX ? 'Release to update' : 'Pull to update';
+      }, { passive: true });
+      const end = async () => {
+        if (startY === null) return;
+        startY = null;
+        if (pull < PTR_TRIGGER_PX) { show(0); return; }
+        busy = true; text.textContent = 'Checking…'; show(32);
+        const newer = await checkForNewVersion(true);
+        if (newer) { text.textContent = 'Updating…'; await applyUpdateNow(); }
+        else notifyBanner('The game is up to date.');
+        setTimeout(() => { busy = false; show(0); }, 400);
+      };
+      lobby.addEventListener('touchend', end);
+      lobby.addEventListener('touchcancel', end);
+    })();
     function reloadCleanly() {
       // Back to the home screen at once: the boot splash is for cold starts only.
       try { sessionStorage.setItem('shithead_skip_splash', '1'); } catch (e) {}

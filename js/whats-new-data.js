@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v517: [['sparkle', 'Pull down on the home screen to check for a new version and update.', WN_KEY]],
       v516: [['sparkle', 'Ranked: if no opponent turns up after 15 seconds you can choose to play the computer instead (an Easy game that is not Ranked and does not change your rating).', WN_KEY]],
       v515: [['sparkle', 'When a card is refused or you have to pick up, the game now says why in one plain line (for example "A 5 can\'t go on the 9. You need a 9 or higher").', WN_KEY]],
       v514: [['sparkle', 'The Lucky Games circles on the home screen now appear straight away instead of a moment after launch.']],

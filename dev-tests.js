@@ -7446,6 +7446,9 @@ async function runDevTestSuite() {
       state.noMercy = true; assertTrue(cell() === '✗', 'No Mercy: Joker on a 4 is refused');
     } finally { state.noMercy = was; state.isMultiplayer = mp; matrixRefOpen = open; }
   });
+  await test('v517: the home screen has a pull-down update indicator', () => {
+    assertTrue(document.querySelector('.ptr-home'), 'indicator exists');
+  });
   await test('v516: Ranked offers the computer after 15s; the Dev page lists who is online and what unlocks', () => {
     assertTrue(RANKED_FALLBACK_SECS === 15, '15 seconds');
     const fb = document.getElementById('rankedFallback');
