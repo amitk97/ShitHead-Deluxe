@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v532: [['sparkle', 'Pressing a second face-down key right after a failed flip no longer picks up your next face-down card too.']],
       v531: [['sparkle', 'Drop Zone: the card now falls with real physics, you can pick where it drops from, and it sounds and feels better.', WN_KEY]],
       v530: [['sparkle', 'The Shitstorm burn spins about twice as fast again and is drawn from sharper frames.']],
       v529: [['sparkle', 'The Shitstorm burn is now drawn from sharper 512px frames.']],

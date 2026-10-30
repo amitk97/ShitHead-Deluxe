@@ -439,6 +439,18 @@ async function runDevTestSuite() {
     assertEqual(me.hand.length, 3, 'A snap played anyway is refused, the hand is untouched');
     assertEqual(state.discardPile.length, 2, 'and the Pile is unchanged');
   });
+  await test('v532: a second blind key right after a failed flip does not start a reveal or play the next card', () => {
+    freshState({ drawPile: [] });
+    const me = makePlayer({ id: 'p1', hand: [], faceUp: [], faceDown: [makeCard('3', '♣')] });
+    state.players = [me, makePlayer({ id: 'p2', hand: [makeCard('4')] })];
+    state.localPlayerId = 'p1'; state.phase = 'PLAY'; state.currentTurnIndex = 0;
+    state.discardPile = [makeCard('8', '♣'), makeCard('2', '♣')];
+    state.playedHistory = [{ type: 'play', playerName: 'p1', rank: '2', suit: '♣', blindFailed: true }];
+    state.blindRevealing = false;
+    executePlayCards('p1', [me.faceDown[0]], true);
+    assertEqual(state.blindRevealing, false, 'No reveal starts while the failed flip waits for its pickup');
+    assertEqual(me.faceDown.length, 1, 'and the next face-down card stays put');
+  });
   await test('getSnapBurnNeeded correctly counts the current streak', () => {
     const info = getSnapBurnNeeded([makeCard('9'), makeCard('2'), makeCard('2'), makeCard('2')]);
     assertEqual(info.needed, 1, 'Three 2s in a row need exactly one more to complete the burn');

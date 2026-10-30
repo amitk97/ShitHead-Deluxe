@@ -1950,6 +1950,8 @@
       }
       // A blind flip is revealing: nothing else plays until it lands.
       if (state.blindRevealing && !opts.revealed) return;
+      // A failed blind flip is still waiting for its pickup: nobody (Snap Burn included) plays onto it meanwhile (checked before a new reveal starts, or a quick second key started one that outlived the pickup).
+      if (state.discardPile.length && state.playedHistory?.slice(-1)[0]?.blindFailed) return;
       if (isBlind && !opts.revealed && shouldRevealBlind() && cardsToPlay && cardsToPlay[0] && !state.burnResolving) {
         const card = cardsToPlay[0];
         state.blindRevealing = true;
@@ -1958,6 +1960,7 @@
           state.blindRevealing = false;
           const owner = state.players.find(p => p.id === playerId);
           if (isMatchDecided() || !owner || !(owner.faceDown || []).some(c => c.id === card.id)) return;
+          if (state.players[state.currentTurnIndex]?.id !== playerId) return; // the turn moved on while it revealed
           executePlayCards(playerId, cardsToPlay, true, chainedRankCount, { revealed: true });
         });
         return;
@@ -1975,8 +1978,6 @@
         console.warn('executePlayCards ignored — a burn is still resolving.');
         return;
       }
-      // A failed blind flip is still waiting for its pickup: nobody (Snap Burn included) plays onto it meanwhile.
-      if (state.discardPile.length && state.playedHistory?.slice(-1)[0]?.blindFailed) return;
       // The rightful player's first real action consumes the Joker bonus.
       // Clear before resolving so this action can advance normally or set a
       // fresh lock if they play another Joker.
