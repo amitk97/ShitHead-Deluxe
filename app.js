@@ -15980,11 +15980,21 @@
           : '<p class="text-slate-500">Nobody else is online right now.</p>');
       } catch (e) { devShowInfo(true, 'Who\u2019s Online', '<p class="text-rose-300">Couldn\u2019t load (older server: deploy the latest Functions).</p>'); }
     }
-    function openDevUnlocks() {
-      const rows = [...ladderRewards().entries()].sort((a, b) => a[0] - b[0]).map(([L, pieces]) => [L, pieces.filter((x) => x.kind !== 'item')]).filter(([, p]) => p.length);
-      const html = rows.map(([L, pieces]) => `<div class="py-1.5 border-b border-slate-800"><b class="text-lime-300">Lvl ${L}</b>${pieces.map((x) => `<div class="text-slate-200">${escapeHtml(x.name)}${x.kind === 'badge' ? '' : ` <span class="text-slate-500">· ${escapeHtml(x.tip)}</span>`}</div>`).join('')}</div>`).join('');
-      devShowInfo(true, 'Unlock Levels', `${html}<p class="text-slate-500 pt-2">Every level pays 20 Diamonds, every 10th pays 100, level 99 pays ${XP_RULES.maxLevelDiamonds}. Cosmetic rewards are on the Level Ladder.</p>`);
+    // Unlock Levels: one row per unlock, level in a left column, filter chips on top.
+    let devUnlockFilter = 'all';
+    const devUnlockGroup = (x) => x.kind === 'item' ? 'items' : x.kind === 'badge' ? 'badges' : /Best of|No Mercy|Gauntlet/.test(x.name) ? 'modes' : 'other';
+    function openDevUnlocks(filter) {
+      if (filter) devUnlockFilter = filter;
+      const chips = [['all', 'All'], ['modes', 'Game modes'], ['items', 'Custom items'], ['badges', 'Badges'], ['other', 'Other']];
+      const rows = [];
+      [...ladderRewards().entries()].sort((a, b) => a[0] - b[0]).forEach(([L, pieces]) => pieces.forEach((x) => {
+        const g = devUnlockGroup(x);
+        if (devUnlockFilter === 'all' || devUnlockFilter === g) rows.push(`<div style="display:grid;grid-template-columns:3.2rem 1fr;gap:6px;align-items:baseline" class="py-1 border-b border-slate-800"><b class="text-lime-300 text-right">${L}</b><span>${escapeHtml(x.name)}${x.kind === 'item' ? ` <span class="text-slate-500">· ${escapeHtml(x.item.category || '')}</span>` : ''}</span></div>`);
+      }));
+      const bar = `<div class="flex gap-1.5 flex-wrap pb-2">${chips.map(([k, t]) => `<button type="button" data-dev-ufilter="${k}" class="text-[10px] font-black px-2 py-1 rounded-lg border ${k === devUnlockFilter ? 'border-lime-400 bg-lime-500/15 text-lime-200' : 'border-slate-600 text-slate-300'}">${t}</button>`).join('')}</div>`;
+      devShowInfo(true, 'Unlock Levels', `${bar}${rows.join('') || '<p class="text-slate-500">Nothing here.</p>'}<p class="text-slate-500 pt-2">Every level pays 20 Diamonds, every 10th pays 100, level 99 pays ${XP_RULES.maxLevelDiamonds}.</p>`);
     }
+    document.getElementById('devInfoBody')?.addEventListener('click', (e) => { const b = e.target.closest('[data-dev-ufilter]'); if (b) openDevUnlocks(b.dataset.devUfilter); });
     // Grant Diamonds: pick a player from the list, an amount and an optional message (server: devGrantDiamonds).
     let devPlayers = null, devPick = null;
     const devShowGrant = (on) => {
