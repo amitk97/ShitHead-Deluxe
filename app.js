@@ -999,6 +999,37 @@
       return RANK_VALUES[card.rank] >= RANK_VALUES[topCard.rank];
     }
 
+    // Plain one-line reasons (v515): why a tapped card is refused, and what the Pile needs.
+    const PLAIN_RANK_NAMES = { J: 'Jack', Q: 'Queen', K: 'King', A: 'Ace', JOKER: 'Joker' };
+    const plainRankName = (r) => PLAIN_RANK_NAMES[r] || String(r);
+    function pileNeed(pile = state.discardPile, constraint = state.activeConstraint) {
+      if (isHouseRulesMatch()) return null;
+      let top = getEffectiveTopCard(pile);
+      if (state.baseOverrideCard) { top = state.baseOverrideCard; if (!constraint) constraint = deriveConstraintFromRank(top.rank); }
+      if (!top) return null;
+      let need;
+      if (constraint === 'EVEN') need = 'an even card (2, 4, 6, 8, 10, Q or A)';
+      else if (constraint === 'ODD') need = 'an odd card (3, 5, 7, 9, J or K)';
+      else if (constraint === 'LOW7') need = 'a 7 or lower';
+      else need = `a ${plainRankName(top.rank)} or higher`;
+      const extra = ['2', '3', '10'].filter(r => isPlayLegal({ rank: r }, pile, state.activeConstraint));
+      return extra.length && top.rank !== '2' ? `${need}, or a ${extra.join(', ')}` : need;
+    }
+    function whyNotPlayable(card, pile = state.discardPile) {
+      const generic = "That card can't be played here.";
+      if (!card || isHouseRulesMatch()) return generic;
+      if (card.isJoker) return isNoMercy() ? "No Mercy: a Joker can't go on a 4." : generic;
+      const top = state.baseOverrideCard || getEffectiveTopCard(pile);
+      if (!top) return generic;
+      const me = plainRankName(card.rank), tw = plainRankName(top.rank);
+      if (card.rank === '2' && top.rank === 'J') return 'A Jack blocks the 2.';
+      if (card.rank === '3' && top.rank === '6') return "A 3 can't go on a 6.";
+      if (card.rank === '10' && (top.rank === '7' || top.rank === 'J')) return `A 10 can't go on a ${tw}.`;
+      if (card.rank === '4') return 'A 4 only goes on a 2, 3, 4, 6 or 7.';
+      const need = pileNeed(pile);
+      return need ? `A ${me} can't go on the ${tw}. You need ${need}.` : generic;
+    }
+
     function getLegalMovesForPlayer(player, discardPile, activeConstraint) {
       if (!player) return [];
       let pool = [];
@@ -6097,7 +6128,7 @@
             const noHand = !(current.hand && current.hand.length > 0);
             notifyBanner(noHand
               ? "No legal move — pick card/s for your hand."
-              : "No legal move. Picking up the pile.");
+              : (pileNeed() ? `You need ${pileNeed()} and have none. Picking up the pile.` : "No legal move. Picking up the pile."));
             setTimeout(() => handleNoLegalMove(current, state.difficulty), state.turnDelay * 0.7);
           }
         }
@@ -7151,7 +7182,7 @@
                 // Re-verify it's still genuinely our turn before acting — state
                 // may have moved on by the time this fires (e.g. a snap-burn).
                 if (state.currentTurnIndex === turnIndexAtCheck && state.players[state.currentTurnIndex]?.id === local.id && state.phase === 'PLAY') {
-                  notifyBanner("No legal moves — picking up the pile...");
+                  notifyBanner(pileNeed() ? `You need ${pileNeed()} and have none. Picking up the pile.` : "No legal moves — picking up the pile...");
                   executePickup(local.id);
                 }
               }, 500);
@@ -7923,7 +7954,7 @@
     function stackSelect(stack, n) {
       const local = state.players.find(p => p.id === state.localPlayerId);
       if (!local || !isLocalPlayersTurnNow()) { state.selectedPlayCardIds = []; render(); return; }
-      if (!isPlayLegal(stack[0], state.discardPile, state.activeConstraint)) { notifyBanner("That card can't be played here."); return; }
+      if (!isPlayLegal(stack[0], state.discardPile, state.activeConstraint)) { notifyBanner(whyNotPlayable(stack[0])); return; }
       const count = Math.max(0, Math.min(stack[0].isJoker ? 1 : stack.length, n));
       state.selectedPlayCardIds = stack.slice(0, count).map(c => c.id);
       render();
@@ -8167,7 +8198,7 @@
       const card = pool.find(c => c.id === cardId);
       if (!card) return;
       if (!isPlayLegal(card, state.discardPile, state.activeConstraint)) {
-        notifyBanner("That card can't be played here.");
+        notifyBanner(whyNotPlayable(card));
         return;
       }
       if (state.selectedPlayCardIds.length > 0) {

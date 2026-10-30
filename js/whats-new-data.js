@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v515: [['sparkle', 'When a card is refused or you have to pick up, the game now says why in one plain line (for example "A 5 can\'t go on the 9. You need a 9 or higher").', WN_KEY]],
       v514: [['sparkle', 'The Lucky Games circles on the home screen now appear straight away instead of a moment after launch.']],
       v513: [['sparkle', 'The game opens faster from your home screen: it starts from the saved copy and offers Update Now when a new version is out.']],
       v512: [['sparkle', 'The Drop Zone avatar card now bounces off the pegs and lands in a middle slot.']],

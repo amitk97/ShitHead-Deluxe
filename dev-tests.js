@@ -7446,6 +7446,22 @@ async function runDevTestSuite() {
       state.noMercy = true; assertTrue(cell() === '✗', 'No Mercy: Joker on a 4 is refused');
     } finally { state.noMercy = was; state.isMultiplayer = mp; matrixRefOpen = open; }
   });
+  await test('v515: a refused card says why, and a forced pickup says what the Pile needed', () => {
+    const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
+    freshState(); startSinglePlayerGame(2);
+    state.phase = 'PLAY'; state.baseOverrideCard = null; state.activeConstraint = null;
+    state.discardPile = [c('p1', '9')];
+    assertTrue(/can't go on the 9/.test(whyNotPlayable(c('x', '5'))) && /9 or higher/.test(whyNotPlayable(c('x', '5'))), 'low card names the 9: ' + whyNotPlayable(c('x', '5')));
+    state.discardPile = [c('p2', 'J')];
+    assertTrue(whyNotPlayable(c('x', '2')) === 'A Jack blocks the 2.', 'Jack blocks 2');
+    assertTrue(/10 can't go on a Jack/.test(whyNotPlayable(c('x', '10'))), '10 on Jack');
+    state.discardPile = [c('p3', '6')]; state.activeConstraint = 'EVEN';
+    assertTrue(/even card/.test(pileNeed()), 'even need: ' + pileNeed());
+    assertTrue(whyNotPlayable(c('x', '3')) === "A 3 can't go on a 6.", '3 on 6');
+    state.discardPile = []; state.activeConstraint = null;
+    assertTrue(pileNeed() === null, 'no need on an empty Pile');
+  });
+
   await test('v458: an Ace makes each opponent take one bottom card, stopping at an Ace', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
