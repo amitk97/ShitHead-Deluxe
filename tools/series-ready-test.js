@@ -28,6 +28,8 @@ function fixture(){put('series/123456',{id:'series-one',room:'123456',host:'alic
   assert.equal(get('users/bob/diamonds'),1000);
   put('users/bob/xp',{total:xp.xpForLevel(guest)});await call('bob','accept');assert.equal(get('series/123456/status'),'live');
  }
+ levelFixture(5,5);put('users/bob/diamonds',29);await assert.rejects(create(3),/Bob needs 30 Diamonds/);assert.equal(get('series/123456'),null);
+ levelFixture(5,5);put('users/alice/diamonds',29);await assert.rejects(create(3),/You need 30 Diamonds/);
  console.log('PASS server series level boundaries for host, guest, create and accept');
  fixture();await assert.rejects(call('alice','startNext'),/Both players must press Ready/);
  await call('alice','readyNext');assert.deepEqual(get('series/123456/nextRound/ready'),{alice:true});

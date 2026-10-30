@@ -1713,6 +1713,10 @@ actions.series = async ({ uid, auth, data }) => {
     const guestLevel = num(SERIES.guestLevels?.[bestOf], { 7: 30 }[bestOf] || 0);
     if (myLevel < requiredLevel) fail('failed-precondition', `Best of ${bestOf} unlocks at level ${requiredLevel}.`);
     if (theirLevel < guestLevel) fail('failed-precondition', `${clip(other.name, 20)} needs to reach level ${guestLevel} first.`);
+    // Both players must be able to stake the entry before the series is offered.
+    const [myBank, theirBank] = await Promise.all([uid, other.uid].map(async u => num((await db().ref(`users/${u}/diamonds`).once('value')).val())));
+    if (myBank < fee) fail('failed-precondition', `You need ${fee} Diamonds to play this series.`);
+    if (theirBank < fee) fail('failed-precondition', `${clip(other.name, 20)} needs ${fee} Diamonds to play a Best of ${bestOf}.`);
     const id = `s${now.toString(36)}${nodeCrypto.randomInt(1e9).toString(36)}`;
     const draft = {
       id, room: code, bestOf, need: Math.ceil(bestOf / 2), fee, pot: fee * 4, host: uid, guest: other.uid,

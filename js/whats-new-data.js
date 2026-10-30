@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v519: [['gem', 'Best of series now checks that both players can afford the entry before the series is offered.']],
       v518: [['lock', 'New unlock levels: Best of 3 at Lvl 5 (host), Best of 5 at Lvl 15 (host), No Mercy at Lvl 10, Hard Gauntlet at Lvl 20, hosting Multiple Decks at Lvl 25, Best of 7 at Lvl 30 (both players) and Boss Gauntlet at Lvl 50. Joining a friend\'s series or Multiple Decks room has no lock.', WN_KEY]],
       v517: [['sparkle', 'Pull down on the home screen to check for a new version and update.', WN_KEY]],
       v516: [['sparkle', 'Ranked: if no opponent turns up after 15 seconds you can choose to play the computer instead (an Easy game that is not Ranked and does not change your rating).', WN_KEY]],
