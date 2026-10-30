@@ -12,6 +12,10 @@
 
 - `js/test-lab.js` tabs Back / Table / Deck / Frame / Emote / Avatar (the old dummy-position tab is now "Setup"): tap an item (any in `customAllItems(type)`, decks from `deckItems()`) and `applyLook` sets it IN MEMORY: `equippedCosmetics[type] = id` + `applyEquippedCosmetics()` (the bot's seat gets the back, frame and avatar too), decks through `selectDeckTheme`. Never saved: while `state.labDummy` is set `applyEquippedCosmetics` and `selectDeckTheme` skip their localStorage writes, `eventBotItem` and `showHelperTip` stand down, and `open()` turns `syncShowcase`, `syncPublicProfile` and `scheduleSettingsCloudSave` into no-ops (like the win/history reports). `snapshotReal()` at open and `restoreReal()` on Exit / "My real look" put the account's own look back. Extras: next / previous / Auto-step (1.8s) and an emote strip that floats each emote of the chosen pack from your seat. Trap found: the file's `const CSS` string shadows `window.CSS`, so use `window.CSS.escape`. Client only; no rules, Functions or catalog change. Dev test "v436: the Test Lab tries looks on in memory only…". Frames: scratchpad `lab-shot.js` (fakes `currentUser` and `isAmitkTestingAccount` then clicks the tabs).
 
+## v524 — no native confirm()
+
+- Every `confirm()` is now `await shConfirm({ title, text, yes, no })` (kick, unequip all, XP switch, clear reports/audit, series leave, weekly reroll, saved-look replace/clear, leave room on Back, seasonal bundle in shop.js; their handlers became `async`). Dev tests stub `shConfirm = async () => true` (not `window.confirm`). Three `alert()` calls remain (removed-by-host, two matchmaking errors). Never add a native `confirm()` again.
+
 ## v523 — swipe down to close
 
 - `§ Swipe down to close` (app.js, after `handleBack`): touch only. A touch that starts on a page in `SWIPE_CLOSE_IDS` (the menu pages except Friends, plus `matchStatsModal`, `historyGameModal`, `eventPopupModal`, `whatsNewModal`; never Inbox/Friends (pull to refresh), the Lucky Games, Puzzles or must-answer pop-ups) while it is the top `topBackLayer()`, with every scrolling ancestor at the top, drags `page.firstElementChild` down (opacity fades). Let go past 110px or a flick over 0.6px/ms to close through the layer's own close (`backToPreviousPage` for exclusive pages, so the trail still works); otherwise it springs back. The non-passive `touchmove` is added only while a gesture can start; `.hscroll`, tab bars, inputs, canvas and `[data-no-swipe]` never start one; a sideways or upward start aborts; Reduce Motion closes without the slide. Client only. Dev test "v523".
@@ -22,7 +26,7 @@
 
 ## v521 — 2 vs 2 lock, series rematch
 
-- `TWOS_LEVEL` 10 (`twosUnlocked()` / `twosLockReason()`, next to `multiDeckUnlocked`): locks the 2 vs 2 chooser buttons and the Play Friends 2 vs 2 card/confirm/`selectMode`; joining has no lock; client only, no lock while XP is off; Level Ladder row added. `createSeries` now asks through `shConfirm` (no native `confirm()`), and the series result pop-up has `#seriesRematchBtn` (host only, live results) that reopens `createSeries` for the same length. Other native `confirm()` calls remain (app.js ~8991, 15095, 15913, 16086). Dev test "v521".
+- `TWOS_LEVEL` 10 (`twosUnlocked()` / `twosLockReason()`, next to `multiDeckUnlocked`): locks the 2 vs 2 chooser buttons and the Play Friends 2 vs 2 card/confirm/`selectMode`; joining has no lock; client only, no lock while XP is off; Level Ladder row added. `createSeries` now asks through `shConfirm` (no native `confirm()`), and the series result pop-up has `#seriesRematchBtn` (host only, live results) that reopens `createSeries` for the same length. Dev test "v521".
 
 ## v520 — host sees who can't stake
 

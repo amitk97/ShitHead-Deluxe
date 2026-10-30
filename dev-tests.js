@@ -2345,7 +2345,7 @@ async function runDevTestSuite() {
     }
   });
   await test('v289: Weekly Reroll at Lvl 40 swaps one weekly challenge once a week', async () => {
-    const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp, econ: challengeEconomy, confirm: window.confirm, set: db, loaded: challengeEconomyLoadedForUid };
+    const saved = { on: xpFeatureOn, user: currentUser, xp: playerXp, econ: challengeEconomy, confirm: shConfirm, set: db, loaded: challengeEconomyLoadedForUid };
     try {
       const week = getUkWeekKey();
       const picks = pickWeeklyChallengeIds(week);
@@ -2364,7 +2364,7 @@ async function runDevTestSuite() {
       renderChallengesPanel();
       assertEqual(document.querySelectorAll('#challengesWeeklyList [data-weekly-reroll]').length, picks.length, 'Each open weekly challenge has a reroll button');
       const calls = fakeEconomy({ weeklyReroll: (d) => ({ reroll: { week, from: d.id, to: swapIn, at: 1 } }) });
-      window.confirm = () => true;
+      shConfirm = async () => true;
       await rerollWeeklyChallenge(picks[0]);
       assertEqual(calls[0], ['weeklyReroll', { id: picks[0] }], 'The server picks the new challenge');
       const ids = challengeEconomy.weeklyChallengeState.challengeIds;
@@ -2377,7 +2377,7 @@ async function runDevTestSuite() {
       assertEqual(weeklyIdsFor(week, challengeEconomy.weeklyReroll).join(), ids.join(), 'A reload rebuilds the same picks');
       assertEqual(ladderRewards().get(40).filter(p => p.name === 'Weekly Reroll').length, 1, 'The Level Ladder shows it at Lvl 40');
     } finally {
-      window.confirm = saved.confirm; db = saved.set; challengeEconomyLoadedForUid = saved.loaded;
+      shConfirm = saved.confirm; db = saved.set; challengeEconomyLoadedForUid = saved.loaded;
       xpFeatureOn = saved.on; currentUser = saved.user; playerXp = saved.xp; challengeEconomy = saved.econ;
       document.getElementById('challengesModal')?.classList.add('hidden');
     }
@@ -5904,10 +5904,10 @@ async function runDevTestSuite() {
     const originalRemove = removePlayerFromMatch;
     let removeCalls = 0;
     removePlayerFromMatch = () => { removeCalls++; };
-    const originalConfirm = window.confirm;
-    window.confirm = () => true; // would approve the kick if the Ranked guard ever let it get this far
+    const originalConfirm = shConfirm;
+    shConfirm = async () => true; // would approve the kick if the Ranked guard ever let it get this far
     kickPlayerMidMatch('p_room1');
-    window.confirm = originalConfirm;
+    shConfirm = originalConfirm;
     removePlayerFromMatch = originalRemove;
     assertEqual(removeCalls, 0, 'kickPlayerMidMatch must bail out before ever calling removePlayerFromMatch in a Ranked match');
   });
@@ -10341,13 +10341,13 @@ async function runDevTestSuite() {
   });
   await test('Best of series lobby: locked below level 5, the host picks a length and the other player gets the accept pop-up', async () => {
     const saved = { players: state.players, isMultiplayer: state.isMultiplayer, isRanked: state.isRanked, roomCode: state.roomCode, isHost: state.isHost, localPlayerId: state.localPlayerId, phase: state.phase, spectating: state.spectating, friendsMode: state.friendsMode, ruleMode: state.ruleMode };
-    const was = { on: xpFeatureOn, xp: playerXp, econ: callEconomy, confirm: window.confirm, series: seriesState, watch: watchSeriesRoom, owner: isGameOwner };
+    const was = { on: xpFeatureOn, xp: playerXp, econ: callEconomy, confirm: shConfirm, series: seriesState, watch: watchSeriesRoom, owner: isGameOwner };
     const panel = document.getElementById('seriesPanel');
     const modal = document.getElementById('seriesModal');
     try {
       watchSeriesRoom = () => {};
       isGameOwner = () => true; // the picker is owner-only until games count (SERIES_LOBBY_OPEN)
-      window.confirm = () => true;
+      shConfirm = async () => true;
       currentUser = { uid: 'host_u', email: 'h@example.com' };
       setXpFeature(true);
       Object.assign(state, { isMultiplayer: true, isRanked: false, roomCode: '424242', isHost: true, localPlayerId: 'p1', phase: 'LOBBY', spectating: null, friendsMode: 'series', ruleMode: 'standard' });
@@ -10410,7 +10410,7 @@ async function runDevTestSuite() {
       assertTrue(seriesBlocksLobbyAction('bot'), 'no bots in a series room');
     } finally {
       Object.assign(state, saved);
-      xpFeatureOn = was.on; playerXp = was.xp; callEconomy = was.econ; window.confirm = was.confirm; seriesState = was.series; watchSeriesRoom = was.watch; isGameOwner = was.owner;
+      xpFeatureOn = was.on; playerXp = was.xp; callEconomy = was.econ; shConfirm = was.confirm; seriesState = was.series; watchSeriesRoom = was.watch; isGameOwner = was.owner;
       modal.classList.add('hidden');
       renderSeriesPanel();
     }
@@ -10451,10 +10451,10 @@ async function runDevTestSuite() {
       assertTrue(!hud.classList.contains('hidden') && /1–0/.test(hud.textContent) && /Ready when you are/.test(hud.textContent), 'the table shows the score and waits for readiness');
       cancelSeriesNextGame();
       // Leaving after a game has been played is a forfeit.
-      const conf = window.confirm; window.confirm = () => true;
+      const conf = shConfirm; shConfirm = async () => true;
       const leaveCalls = fakeEconomy({ series: () => ({ series: { ...seriesState, status: 'done', winner: 'g_uid', reason: 'forfeit' } }) });
       assertTrue(await seriesBeforeLeave(), 'the player can leave');
-      window.confirm = conf;
+      shConfirm = conf;
       assertEqual(leaveCalls[0][1].op, 'forfeit', 'leaving mid-series forfeits it');
       assertTrue(!document.getElementById('seriesModal').classList.contains('hidden') && /Guesty won the series/.test(document.getElementById('seriesModalTitle').textContent), 'the result pop-up says who won');
     } finally {

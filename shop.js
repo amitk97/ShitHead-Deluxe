@@ -415,7 +415,7 @@ document.addEventListener('keydown', (e) => {
       }
       list.innerHTML = sections.join('');
     }
-    function buySeasonalBundle(eventId) {
+    async function buySeasonalBundle(eventId) {
       const ev = SEASONAL_EVENT_BY_ID[eventId];
       if (!ev || !currentUser) return;
       if (!seasonalShopTestAccess() && !isSeasonalEventActive(eventId)) { showShopActionNotice(`The ${ev.name} Bundle is only sold during ${ev.name}.`, 'error'); return; }
@@ -425,7 +425,7 @@ document.addEventListener('keydown', (e) => {
         showShopActionNotice(`Not enough Diamonds — you need 💎${price - (Number(challengeEconomy.diamonds) || 0)} more for the ${ev.name} Bundle.`, 'error');
         return;
       }
-      if (!confirm(`Buy the ${ev.name} Bundle (${items.length} items) for ${price} Diamonds?`)) return;
+      if (!await shConfirm({ title: `Buy the ${ev.name} Bundle?`, text: `${items.length} items for ${price} Diamonds.`, yes: 'Buy', no: 'Cancel' })) return;
       const uid = currentUser.uid;
       callEconomy('buyBundle', { eventId, price }).then((res) => {
         if (currentUser?.uid !== uid) return;

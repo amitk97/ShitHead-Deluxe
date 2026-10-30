@@ -9041,7 +9041,7 @@
       });
     }
 
-    function kickPlayerMidMatch(playerId) {
+    async function kickPlayerMidMatch(playerId) {
       // Same reasoning as kickPlayer above: a Ranked match is never
       // kickable by either side, host or not.
       if (state.isRanked) return;
@@ -9051,7 +9051,7 @@
       const msg = state.players.length <= 2
         ? `Remove ${target.name}? With only two players, the match will end with no winner.`
         : `Remove ${target.name}? A bot will take over their hand so the match can continue.`;
-      if (!confirm(msg)) return;
+      if (!await shConfirm({ title: `Remove ${target.name}?`, text: msg.replace(/^Remove [^?]*\? /, ''), yes: 'Remove', no: 'Cancel' })) return;
       removePlayerFromMatch(playerId, 'kicked');
     }
 
@@ -15149,13 +15149,13 @@
       old?.animate([{ opacity: .35 }, { opacity: 1 }], { duration: 380, easing: EASE.soft });
       audio.playEquipClick();
     });
-    document.getElementById('unequipAllCosmeticsBtn').addEventListener('click', () => {
+    document.getElementById('unequipAllCosmeticsBtn').addEventListener('click', async () => {
       const hasEquipped = Object.values(equippedCosmetics).some(id => id && id !== 'default');
       if (!hasEquipped) {
         document.getElementById('personalisationStatus').textContent = 'All cosmetics are already using their defaults.';
         return;
       }
-      if (!confirm('Unequip every cosmetic and restore all defaults?')) return;
+      if (!await shConfirm({ title: 'Unequip everything?', text: 'Every cosmetic goes back to its default.', yes: 'Unequip', no: 'Cancel' })) return;
       equippedCosmetics = { ...DEFAULT_EQUIPPED_COSMETICS };
       stampEquip(Object.keys(DEFAULT_EQUIPPED_COSMETICS));
       applyEquippedCosmetics();
@@ -15967,13 +15967,13 @@
       const label = document.getElementById('menuXpSwitchLabel');
       if (label) label.textContent = `XP & Levels: ${xpFeatureOn ? 'On' : 'Off'}`;
     }
-    document.getElementById('menuXpSwitchBtn').addEventListener('click', () => {
+    document.getElementById('menuXpSwitchBtn').addEventListener('click', async () => {
       if (!isGameOwner()) return;
       const turnOn = !xpFeatureOn;
       const msg = turnOn
         ? 'Turn XP & Levels ON for every player? Levels, XP bars and level-up Diamonds appear at once, and each player gets XP for their past games at their next sign-in.'
         : 'Turn XP & Levels OFF for every player? XP stops being earned and the level screens hide. Nobody loses the XP they have.';
-      if (!confirm(msg)) return;
+      if (!await shConfirm({ title: turnOn ? 'Turn XP & Levels on?' : 'Turn XP & Levels off?', text: msg.replace(/^Turn XP & Levels O[NF]+ for every player\? /, ''), yes: turnOn ? 'Turn On' : 'Turn Off', no: 'Cancel' })) return;
       closeHamburgerMenu();
       db.ref('config/features/xp').set(turnOn)
         .then(() => { notifyBanner(`XP & Levels are ${turnOn ? 'on' : 'off'} for everyone.`); if (turnOn) setTimeout(syncServerEconomy, 11000); })
@@ -16143,25 +16143,25 @@
     });
     document.getElementById('changelogCloseBtn').addEventListener('click', () => document.getElementById('changelogModal').classList.add('hidden'));
     document.getElementById('errorReportsRefreshBtn').addEventListener('click', loadErrorReports);
-    document.getElementById('errorReportsClearBtn').addEventListener('click', () => {
+    document.getElementById('errorReportsClearBtn').addEventListener('click', async () => {
       const path = { players: 'playerReports', audit: 'rankedAudit', health: 'health' }[reportsTab] || 'errorReports';
       const what = { players: 'player report', audit: 'Ranked audit entry', health: 'health record' }[reportsTab] || 'error report';
-      if (!confirm(`Delete every ${what}?`)) return;
-      db.ref(path).remove().then(loadErrorReports).catch((e) => alert(`Couldn’t clear: ${e?.message || e}`));
+      if (!await shConfirm({ title: `Delete every ${what}?`, text: 'This cannot be undone.', yes: 'Delete', no: 'Cancel' })) return;
+      db.ref(path).remove().then(loadErrorReports).catch((e) => notifyBanner(`Couldn’t clear: ${e?.message || e}`));
     });
     document.getElementById('reportsTabAudit').addEventListener('click', () => { reportsTab = 'audit'; loadErrorReports(); });
     document.getElementById('reportsTabHealth').addEventListener('click', () => { reportsTab = 'health'; loadErrorReports(); });
     document.getElementById('reportsTabErrors').addEventListener('click', () => { reportsTab = 'errors'; loadErrorReports(); });
     document.getElementById('reportsTabPlayers').addEventListener('click', () => { reportsTab = 'players'; loadErrorReports(); });
-    document.getElementById('errorReportsList').addEventListener('click', (e) => {
+    document.getElementById('errorReportsList').addEventListener('click', async (e) => {
       const auditBtn = e.target.closest('[data-clear-audit]');
       if (auditBtn) {
-        if (confirm('Delete the audit for this room?')) db.ref(`rankedAudit/${auditBtn.dataset.clearAudit}`).remove().then(loadErrorReports).catch((err) => alert(`Couldn’t clear: ${err?.message || err}`));
+        if (await shConfirm({ title: 'Delete this audit?', text: 'The Ranked audit for this room is removed.', yes: 'Delete', no: 'Cancel' })) db.ref(`rankedAudit/${auditBtn.dataset.clearAudit}`).remove().then(loadErrorReports).catch((err) => notifyBanner(`Couldn’t clear: ${err?.message || err}`));
         return;
       }
       const btn = e.target.closest('[data-clear-reports]');
-      if (!btn || !confirm('Delete the reports about this player?')) return;
-      db.ref(`playerReports/${btn.dataset.clearReports}`).remove().then(loadErrorReports).catch((err) => alert(`Couldn’t clear: ${err?.message || err}`));
+      if (!btn || !await shConfirm({ title: 'Delete these reports?', text: 'All reports about this player are removed.', yes: 'Delete', no: 'Cancel' })) return;
+      db.ref(`playerReports/${btn.dataset.clearReports}`).remove().then(loadErrorReports).catch((err) => notifyBanner(`Couldn’t clear: ${err?.message || err}`));
     });
 
     // Lobby quick-access strip replaces the old deck-theme selector. It uses
@@ -17854,7 +17854,7 @@
       const msg = forfeit
         ? `Leave the series? It counts as a forfeit: ${other} wins the ${s.pot} Diamonds.`
         : 'Leave the room? The series is called off and the entries go back.';
-      if (!confirm(msg)) return false;
+      if (!await shConfirm({ title: forfeit ? 'Leave the series?' : 'Leave the room?', text: msg.replace(/^Leave the (series|room)\? /, ''), yes: 'Leave', no: 'Stay' })) return false;
       try { await seriesCallQuiet(forfeit ? 'forfeit' : 'cancel'); } catch (e) { console.warn('Series leave not recorded', e); }
       return true;
     }
@@ -19065,11 +19065,12 @@
       }
     }
     let weeklyRerollBusy = false;
-    function rerollWeeklyChallenge(id) {
+    async function rerollWeeklyChallenge(id) {
       const weekly = challengeEconomy.weeklyChallengeState;
       const def = weekly && getWeeklyChallengeDef(id, weekly.weekKey);
       if (!def || weeklyRerollBusy || weeklyRerollState() !== 'ready') return Promise.resolve(false);
-      if (!confirm(`Swap ${def.name} for a different weekly challenge?\n\nYou can reroll once a week. Its progress is lost.`)) return Promise.resolve(false);
+      if (!await shConfirm({ title: `Swap ${def.name}?`, text: 'You get a different weekly challenge. You can reroll once a week, and the old one\'s progress is lost.', yes: 'Swap', no: 'Keep' })) return false;
+      if (weeklyRerollBusy) return false;
       weeklyRerollBusy = true;
       document.querySelectorAll('[data-weekly-reroll]').forEach(b => { b.disabled = true; });
       return callEconomy('weeklyReroll', { id }).then((res) => {
@@ -22075,7 +22076,7 @@
       });
       return true;
     }
-    document.getElementById('customLoadouts').addEventListener('click', (event) => {
+    document.getElementById('customLoadouts').addEventListener('click', async (event) => {
       const t = event.target;
       const locked = t.closest('[data-loadout-locked]');
       if (locked) {
@@ -22091,9 +22092,9 @@
       if (act) {
         event.stopPropagation();
         const slot = act.dataset.slot, l = savedLoadouts[slot];
-        if (act.dataset.loadoutAct === 'save' && confirm(`Replace "${l.name}" with what you're wearing now?`)) saveLoadout(slot, l.name);
+        if (act.dataset.loadoutAct === 'save' && await shConfirm({ title: `Replace "${l.name}"?`, text: 'It will hold what you are wearing now.', yes: 'Replace', no: 'Cancel' })) saveLoadout(slot, l.name);
         else if (act.dataset.loadoutAct === 'rename') { const n = prompt('Rename this look', l.name); if (n !== null) { savedLoadouts[slot] = { ...l, name: String(n).trim().slice(0, 16) || l.name }; if (currentUser) db.ref(`users/${currentUser.uid}/loadouts/${slot}/name`).set(savedLoadouts[slot].name).catch(() => {}); } }
-        else if (act.dataset.loadoutAct === 'clear' && confirm(`Clear "${l.name}"?`)) { delete savedLoadouts[slot]; savedLoadouts = { ...savedLoadouts }; if (currentUser) db.ref(`users/${currentUser.uid}/loadouts/${slot}`).remove().catch(() => {}); }
+        else if (act.dataset.loadoutAct === 'clear' && await shConfirm({ title: `Clear "${l.name}"?`, text: 'This saved look is emptied.', yes: 'Clear', no: 'Cancel' })) { delete savedLoadouts[slot]; savedLoadouts = { ...savedLoadouts }; if (currentUser) db.ref(`users/${currentUser.uid}/loadouts/${slot}`).remove().catch(() => {}); }
         loadoutMenuSlot = null;
         renderLoadouts();
         return;
@@ -23454,7 +23455,7 @@
       if (rankedSearchTimer || rankedHeartbeatTimer || rankedAssignmentRef) return () => cancelRankedSearch();
       if (!document.body.classList.contains('lobby-open') && isShownOnScreen(document.getElementById('leaveGameBtn'))) return () => document.getElementById('leaveGameBtn').click();
       if (state.isMultiplayer && state.roomCode && state.isRanked) return () => {}; // a Ranked match is about to start
-      if (state.isMultiplayer && state.roomCode && state.phase === 'LOBBY') return () => { if (confirm('Leave this room?')) leaveRoomAndReload(); };
+      if (state.isMultiplayer && state.roomCode && state.phase === 'LOBBY') return async () => { if (await shConfirm({ title: 'Leave this room?', text: 'You will go back to the home screen.', yes: 'Leave', no: 'Stay' })) leaveRoomAndReload(); };
       if (document.body.classList.contains('lobby-open') && (document.getElementById('lobbyScreen')?.classList.contains('mode-page-open') || window.modeExpandRunning?.())) return () => document.getElementById('modePageBack').click();
       return null;
     }
