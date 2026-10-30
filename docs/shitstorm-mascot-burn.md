@@ -72,8 +72,8 @@ SH_MASCOT_SOURCE=/path/to/approved-mascot SH_MASCOT_OUT=/tmp/shitstorm-bake node
 SH_MASCOT_OUT=/tmp/shitstorm-bake python tools/shitstorm-mascot-source/pack.py
 ```
 
-Copy the resulting `mascot-atlas.webp`, `mascot-poster.webp` and
-`mascot-atlas.json` into `art/burns/shitstorm/`. Source images are truly
+Copy the resulting `mascot-atlas-v2.webp` (build it from the native 512 frames with `tools/shitstorm-mascot-source/pack512.py`, not pack.py), `mascot-poster.webp` and
+`mascot-atlas-v2.json` into `art/burns/shitstorm/`. Source images are truly
 transparent WebGL captures; no backdrop color key or generated repaint is used.
 
 ## Review and limits

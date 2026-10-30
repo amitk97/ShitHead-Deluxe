@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v529: [['sparkle', 'The Shitstorm burn is now drawn from sharper 512px frames.']],
       v528: [['sparkle', 'The Shitstorm burn now spins about four times faster.']],
       v527: [['check', 'The home screen is now fully set up behind the loading screen, so its chips and layout no longer pop in when it fades.']],
       v526: [['sparkle', 'Shitstorm now uses the approved animated mascot, with a full spin, torn card fragments, wet debris and matching sound.']],

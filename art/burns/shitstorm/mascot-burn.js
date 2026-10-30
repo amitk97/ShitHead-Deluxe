@@ -18,8 +18,8 @@
     if (atlas) return Promise.resolve(true);
     if (loading) return loading;
     if (failureAt && performance.now() - failureAt < 10000) return Promise.resolve(false);
-    loading = Promise.all([image('mascot-atlas.webp'), image('mascot-poster.webp'),
-      fetch(new URL('mascot-atlas.json', ROOT)).then(r => { if (!r.ok) throw Error('atlas metadata'); return r.json(); })
+    loading = Promise.all([image('mascot-atlas-v2.webp'), image('mascot-poster.webp'),
+      fetch(new URL('mascot-atlas-v2.json', ROOT)).then(r => { if (!r.ok) throw Error('atlas metadata'); return r.json(); })
     ]).then(([a, p, m]) => { atlas = a; poster = p; meta = m; return true; }).catch(() => {
       failureAt = performance.now(); return false;
     }).finally(() => { loading = null; });
@@ -151,7 +151,8 @@
     const k = spinning ? size(t) : 1, tx = l.left + meta.tip[0] * l.S, ty = l.upper + meta.tip[1] * l.S;
     // Exactly one draw for the animated character; all its facial motion is from the approved rig.
     g.save(); g.imageSmoothingQuality = 'high'; g.translate(tx, ty); g.scale(k, k); g.translate(-tx, -ty);
-    g.drawImage(atlas,(frame%8)*256,Math.floor(frame/8)*256,256,256,l.left,l.upper,l.S,l.S); g.restore();
+    const slot = meta.index[frame], cell = meta.cell, pitch = cell + meta.gutter;
+    g.drawImage(atlas,(slot%meta.columns)*pitch,Math.floor(slot/meta.columns)*pitch,cell,cell,l.left,l.upper,l.S,l.S); g.restore();
     for(const q of qs)if(q.z>=0)drawParticle(g,q,l,data.face,data.back);
   }
   function loadSnapshot(url, data, key) {
