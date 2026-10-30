@@ -12,6 +12,10 @@
 
 - `js/test-lab.js` tabs Back / Table / Deck / Frame / Emote / Avatar (the old dummy-position tab is now "Setup"): tap an item (any in `customAllItems(type)`, decks from `deckItems()`) and `applyLook` sets it IN MEMORY: `equippedCosmetics[type] = id` + `applyEquippedCosmetics()` (the bot's seat gets the back, frame and avatar too), decks through `selectDeckTheme`. Never saved: while `state.labDummy` is set `applyEquippedCosmetics` and `selectDeckTheme` skip their localStorage writes, `eventBotItem` and `showHelperTip` stand down, and `open()` turns `syncShowcase`, `syncPublicProfile` and `scheduleSettingsCloudSave` into no-ops (like the win/history reports). `snapshotReal()` at open and `restoreReal()` on Exit / "My real look" put the account's own look back. Extras: next / previous / Auto-step (1.8s) and an emote strip that floats each emote of the chosen pack from your seat. Trap found: the file's `const CSS` string shadows `window.CSS`, so use `window.CSS.escape`. Client only; no rules, Functions or catalog change. Dev test "v436: the Test Lab tries looks on in memory only…". Frames: scratchpad `lab-shot.js` (fakes `currentUser` and `isAmitkTestingAccount` then clicks the tabs).
 
+## v521 — 2 vs 2 lock, series rematch
+
+- `TWOS_LEVEL` 10 (`twosUnlocked()` / `twosLockReason()`, next to `multiDeckUnlocked`): locks the 2 vs 2 chooser buttons and the Play Friends 2 vs 2 card/confirm/`selectMode`; joining has no lock; client only, no lock while XP is off; Level Ladder row added. `createSeries` now asks through `shConfirm` (no native `confirm()`), and the series result pop-up has `#seriesRematchBtn` (host only, live results) that reopens `createSeries` for the same length. Other native `confirm()` calls remain (app.js ~8991, 15095, 15913, 16086). Dev test "v521".
+
 ## v520 — host sees who can't stake
 
 - Economy `series` op `afford` (read-only; booleans per length `{me, them}`, never the balance). `refreshSeriesAfford` (app.js, next to `seriesBusy`) asks when the host's series panel is open and every 20s; a length either player can't afford shows as a disabled choice "<name> needs N". **Functions deploy needed**; no rules change.

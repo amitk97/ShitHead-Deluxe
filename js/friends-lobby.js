@@ -20,8 +20,8 @@
     $('friendsConfirmMode').hidden = room;
     $('friendsRoomSettings').classList.toggle('hidden', !room || (!host && mode!=='series'));
     $('friendsHostHint').parentElement.hidden = room;
-    $('friendsConfirmMode').disabled = busy || mode.startsWith('soon') || (mode === 'series' && !seriesUnlocked()) || (mode === 'noMercy' && !noMercyUnlocked()) || (mode === 'decks' && !multiDeckUnlocked());
-    $('friendsConfirmMode').textContent = busy ? 'CREATING ROOM…' : mode.startsWith('soon') ? 'COMING SOON' : mode === 'series' && !seriesUnlocked() ? `UNLOCKS AT LEVEL ${SERIES_RULES.level}` : mode === 'decks' && !multiDeckUnlocked() ? `UNLOCKS AT LEVEL ${MULTI_DECK_LEVEL}` : mode === 'noMercy' && !noMercyUnlocked() ? `UNLOCKS AT LEVEL ${NO_MERCY_LEVEL}` : `HOST ${mode === 'house' ? 'HOUSE RULES' : mode === 'series' ? 'BEST OF SERIES' : mode === 'twos' ? '2 VS 2' : mode === 'decks' ? 'MULTIPLE DECKS' : mode === 'noMercy' ? 'NO MERCY' : 'STANDARD'} ROOM`;
+    $('friendsConfirmMode').disabled = busy || mode.startsWith('soon') || (mode === 'series' && !seriesUnlocked()) || (mode === 'noMercy' && !noMercyUnlocked()) || (mode === 'decks' && !multiDeckUnlocked()) || (mode === 'twos' && !twosUnlocked());
+    $('friendsConfirmMode').textContent = busy ? 'CREATING ROOM…' : mode.startsWith('soon') ? 'COMING SOON' : mode === 'series' && !seriesUnlocked() ? `UNLOCKS AT LEVEL ${SERIES_RULES.level}` : mode === 'decks' && !multiDeckUnlocked() ? `UNLOCKS AT LEVEL ${MULTI_DECK_LEVEL}` : mode === 'twos' && !twosUnlocked() ? `UNLOCKS AT LEVEL ${TWOS_LEVEL}` : mode === 'noMercy' && !noMercyUnlocked() ? `UNLOCKS AT LEVEL ${NO_MERCY_LEVEL}` : `HOST ${mode === 'house' ? 'HOUSE RULES' : mode === 'series' ? 'BEST OF SERIES' : mode === 'twos' ? '2 VS 2' : mode === 'decks' ? 'MULTIPLE DECKS' : mode === 'noMercy' ? 'NO MERCY' : 'STANDARD'} ROOM`;
     const preview = {id: state.localPlayerId, name: $('playerNameInput').value.trim() || currentUser?.displayName || 'You', cosmetics: getPublicCosmeticLoadout()};
     const teamOf = room && mode === 'twos' ? twosAssign(state.players) : null;
     const players = room ? [...state.players].sort((a,b) => teamOf ? teamOf[a.id] - teamOf[b.id] || Number(b.isHost) - Number(a.isHost) : Number(b.isHost) - Number(a.isHost)) : [preview];
@@ -109,6 +109,7 @@
     }
     if(mode.startsWith('soon')) {notifyBanner('This mode is coming soon.');return false;}
     if(mode==='series' && !seriesUnlocked()) {notifyBanner(`Best of Series unlocks at level ${SERIES_RULES.level}.`);return false;}
+    if(mode==='twos' && !twosUnlocked()) {notifyBanner(twosLockReason());return false;}
     if(mode==='decks' && !multiDeckUnlocked()) {notifyBanner(multiDeckLockReason());return false;}
     if(mode==='noMercy' && !noMercyUnlocked()) {notifyBanner(noMercyLockReason());return false;}
     if(!editable() || busy) return false;
@@ -225,7 +226,7 @@
       c.style.setProperty('--mc-zi',String(10-a));
       c.classList.toggle('mc-focus',a===0);c.classList.toggle('mc-gone',a>2);c.tabIndex=a===0?0:-1;
       const go=c.querySelector('[data-friends-go]');
-      go.disabled=busy || a!==0 || modes[i].startsWith('soon') || (modes[i]==='series'&&!seriesUnlocked()) || (modes[i]==='noMercy'&&!noMercyUnlocked()) || (modes[i]==='decks'&&!multiDeckUnlocked());
+      go.disabled=busy || a!==0 || modes[i].startsWith('soon') || (modes[i]==='series'&&!seriesUnlocked()) || (modes[i]==='noMercy'&&!noMercyUnlocked()) || (modes[i]==='decks'&&!multiDeckUnlocked()) || (modes[i]==='twos'&&!twosUnlocked());
       go.tabIndex=go.disabled?-1:0;go.hidden=a!==0 || modes[i].startsWith('soon');
     });
     document.querySelectorAll('[data-friends-step]').forEach(b=>b.disabled=(['first','prev'].includes(b.dataset.friendsStep)?cursor===0:cursor===modes.length-1));
@@ -251,7 +252,7 @@
   });
   $('friendsConfirmMode').addEventListener('click', async () => {
     const mode=modes[cursor];
-    if(busy || inRoom() || mode.startsWith('soon') || (mode==='series'&&!seriesUnlocked()) || (mode==='noMercy'&&!noMercyUnlocked()) || (mode==='decks'&&!multiDeckUnlocked()) || !requireValidName()) return;
+    if(busy || inRoom() || mode.startsWith('soon') || (mode==='series'&&!seriesUnlocked()) || (mode==='noMercy'&&!noMercyUnlocked()) || (mode==='decks'&&!multiDeckUnlocked()) || (mode==='twos'&&!twosUnlocked()) || !requireValidName()) return;
     draft=mode;busy=true;render();
     try {await initHostRoom();} catch(e) { /* initHostRoom reports the failure and restores the input. */ }
     finally {busy=false;render();}

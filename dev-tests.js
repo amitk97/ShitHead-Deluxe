@@ -7580,6 +7580,24 @@ async function runDevTestSuite() {
       closeDecksChoice();
     } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeDecksChoice(); }
   });
+  await test('v521: 2 vs 2 unlocks at Lvl 10 and the series result offers a rematch', () => {
+    assertEqual(TWOS_LEVEL, 10, '2 vs 2 at Lvl 10');
+    const on = xpFeatureOn, pxp = playerXp, cu = currentUser;
+    try {
+      xpFeatureOn = true; currentUser = { uid: 'u' };
+      playerXp = { total: xpForLevel(9), level: 9 };
+      assertTrue(!twosUnlocked() && /Lvl 10/.test(twosLockReason()), 'Lvl 9 is locked');
+      openTwosChoice();
+      assertTrue(document.getElementById('twosBotsBtn').disabled && document.getElementById('twosFriendsBtn').disabled, 'chooser buttons disabled');
+      closeTwosChoice();
+      assertTrue(ladderRewards().get(TWOS_LEVEL).some(p => p.name === '2 vs 2'), 'the Ladder lists it');
+      playerXp = { total: xpForLevel(10), level: 10 };
+      openTwosChoice();
+      assertTrue(!document.getElementById('twosBotsBtn').disabled, 'open at Lvl 10');
+      closeTwosChoice();
+    } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeTwosChoice(); }
+    assertTrue(!!document.getElementById('seriesRematchBtn'), 'rematch button exists');
+  });
   await test('v479: the Scratch Card has its own circle, nine real cards in tic tac toe lines, and two Prism prizes', () => {
     assertTrue(!!document.getElementById('homeScratchChip') && !!document.getElementById('scratchPanel') && !!document.getElementById('scratchFoil'), 'chip, panel and foil');
     assertEqual(SCRATCH.prizes.reduce((n, p) => n + p.weight, 0), 1000, 'weights total 1000');

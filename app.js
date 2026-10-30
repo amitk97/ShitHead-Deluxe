@@ -10323,6 +10323,9 @@
     // § 2 vs 2 chooser (v389): 3 bots at a chosen difficulty, or Play Friends on its 2 vs 2 host screen.
     function openTwosChoice() {
       document.querySelectorAll('#twosModal .diff-btn').forEach(styleDifficultyBtn);
+      const lock = twosLockReason(), note = document.querySelector('#twosModal .twos-note');
+      if (note) { note.dataset.def = note.dataset.def || note.textContent; note.textContent = lock || note.dataset.def; }
+      ['twosBotsBtn', 'twosFriendsBtn'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !!lock; });
       document.getElementById('twosModal').classList.remove('hidden');
     }
     function closeTwosChoice() { document.getElementById('twosModal')?.classList.add('hidden'); }
@@ -10330,10 +10333,12 @@
     document.getElementById('twosCloseBtn').addEventListener('click', closeTwosChoice);
     document.getElementById('twosModal').addEventListener('click', (e) => { if (e.target.id === 'twosModal') closeTwosChoice(); });
     document.getElementById('twosBotsBtn').addEventListener('click', () => {
+      if (!twosUnlocked()) return;
       closeTwosChoice();
       runShuffleIntro(() => startSinglePlayerGame(3, null, { twos: true }));
     });
     document.getElementById('twosFriendsBtn').addEventListener('click', () => {
+      if (!twosUnlocked()) return;
       closeTwosChoice();
       if (typeof isOffline === 'function' && isOffline()) { notifyBanner(OFFLINE_MODE_MSG); return; }
       window.ShHomeCarousel?.openMode('friends');
@@ -15457,6 +15462,15 @@
     const NO_MERCY_LEVEL = 10;
     // Multiple Decks: hosting needs Lvl 25 (owner, v518); joining a friend's room has no lock.
     const MULTI_DECK_LEVEL = 25;
+    // 2 vs 2: hosting or playing it solo needs Lvl 10 (owner, v521); joining a friend's room has no lock.
+    const TWOS_LEVEL = 10;
+    function twosUnlocked() {
+      if (typeof xpShown === 'function' && !xpShown()) return true;
+      return !!currentUser && !!playerXp && xpLevelFor(playerXp.total) >= TWOS_LEVEL;
+    }
+    function twosLockReason() {
+      return twosUnlocked() ? '' : `2 vs 2 unlocks at Lvl ${TWOS_LEVEL}${currentUser ? '. Finish a few more games to get there.' : '. Sign in and play to level up.'}`;
+    }
     function multiDeckUnlocked() {
       if (typeof xpShown === 'function' && !xpShown()) return true;
       return !!currentUser && !!playerXp && xpLevelFor(playerXp.total) >= MULTI_DECK_LEVEL;
@@ -17498,7 +17512,7 @@
       const fee = SERIES_RULES.bestOf[bestOf];
       const other = state.players.find(p => !p.isBot && p.id !== state.localPlayerId);
       const name = other ? other.name : 'your opponent';
-      if (!confirm(`Start a Best of ${bestOf} with ${name}?\n\nYou both pay ${fee} Diamonds. The winner takes ${seriesPot(bestOf)}.`)) return;
+      if (!await shConfirm({ title: `Best of ${bestOf} with ${name}?`, text: `You both pay ${fee} Diamonds. The winner takes ${seriesPot(bestOf)}.`, yes: 'Send Challenge', no: 'Cancel' })) return;
       try { await seriesCall('create', { bestOf }); notifyBanner(`Series sent. Waiting for ${name} to accept.`); }
       catch (e) { notifyBanner(seriesError(e)); }
     }
@@ -17529,6 +17543,7 @@
       const modal = document.getElementById('seriesModal');
       modal.dataset.mode = 'invite';
       document.getElementById('seriesLaterBtn').textContent = 'Not now';
+      document.getElementById('seriesRematchBtn')?.classList.add('hidden');
       modal.classList.remove('hidden');
     }
     // Guards for the lobby while a series is set up.
@@ -17559,6 +17574,10 @@
     })();
     document.getElementById('seriesAcceptBtn')?.addEventListener('click', acceptSeries);
     document.getElementById('seriesDeclineBtn')?.addEventListener('click', cancelSeries);
+    document.getElementById('seriesRematchBtn')?.addEventListener('click', (e) => {
+      document.getElementById('seriesModal').classList.add('hidden');
+      createSeries(Number(e.currentTarget.dataset.n));
+    });
     document.getElementById('seriesLaterBtn')?.addEventListener('click', () => document.getElementById('seriesModal').classList.add('hidden'));
     // Playing a series (v234). Every finished game in a live series room is
     // reported by both phones (economy `series` op `game`, counted once by
@@ -17681,6 +17700,7 @@
       const sc = seriesScoreFor(s);
       showSeriesResultPopup({
         id: s.id, bestOf: s.bestOf, opponent: sc.other, reason: s.reason, fee: s.fee, pot: s.pot,
+        rematch: state.isHost ? s.bestOf : 0,
         cancelled: s.status !== 'done', won: s.status === 'done' && s.winner === me,
         score: `${sc.mine} – ${sc.theirs}`, refund: s.paid && s.paid[me] ? s.fee : 0
       });
@@ -17718,6 +17738,8 @@
       const modal = document.getElementById('seriesModal');
       modal.dataset.mode = 'result';
       document.getElementById('seriesLaterBtn').textContent = 'Close';
+      const rm = document.getElementById('seriesRematchBtn');
+      if (rm) { rm.classList.toggle('hidden', !r.rematch); rm.dataset.n = r.rematch || ''; rm.textContent = r.rematch ? `Rematch · Best of ${r.rematch}` : 'Rematch'; }
       modal.classList.remove('hidden');
     }
     // Back after a series ended without you (forfeit, called off): its
