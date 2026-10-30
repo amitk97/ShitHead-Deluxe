@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v534: [['sparkle', 'Three Cards now offers an extra go when you have one.']],
       v533: [['sparkle', 'Internal: extra Lucky Games goes can now be given to a player.']],
       v532: [['sparkle', 'Pressing a second face-down key right after a failed flip no longer picks up your next face-down card too.']],
       v531: [['sparkle', 'Drop Zone: the card now falls with real physics, you can pick where it drops from, and it sounds and feels better.', WN_KEY]],

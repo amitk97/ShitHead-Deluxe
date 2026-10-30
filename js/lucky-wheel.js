@@ -493,10 +493,10 @@
     const m = S.monty, big = bigAmt();
     if (!m) { btn.disabled = true; btn.textContent = 'NOT AVAILABLE YET'; if (sub) sub.textContent = 'Three Cards needs a connection.'; return; }
     const playing = M.phase === 'pick';
-    if (m.result) { btn.disabled = true; btn.textContent = 'BACK NEXT WEEK'; if (sub) sub.textContent = 'You have played this week’s game.'; return; }
+    if (m.result && !m.canPlay) { btn.disabled = true; btn.textContent = 'BACK NEXT WEEK'; if (sub) sub.textContent = 'You have played this week’s game.'; return; }
     btn.disabled = playing || !m.canPlay;
     btn.textContent = playing ? 'PICK A CARD' : m.started ? 'WATCH THE SHUFFLE AGAIN' : 'START';
-    if (sub) sub.textContent = playing ? 'Tap the card you think hides the big prize.' : `One free play every week. Follow the ${big} Diamond card.`;
+    if (sub) sub.textContent = playing ? 'Tap the card you think hides the big prize.' : m.result ? `You have an extra go. Follow the ${big} Diamond card.` : `One free play every week. Follow the ${big} Diamond card.`;
   }
   function montyShowDone(r) {
     M.phase = 'done';
