@@ -7580,6 +7580,33 @@ async function runDevTestSuite() {
       closeDecksChoice();
     } finally { xpFeatureOn = on; playerXp = pxp; currentUser = cu; closeDecksChoice(); }
   });
+  await test('v522: the stuck prompt resyncs and the wake lock follows the match', async () => {
+    const before = stuckSignature();
+    state.discardPile.push({ id: 'x_stuck', rank: '5', suit: 'hearts' });
+    assertTrue(stuckSignature() !== before, 'a card on the Pile changes the signature');
+    state.discardPile.pop();
+    let kicked = 0;
+    try {
+      stuckPill(true);
+      const pill = document.getElementById('stuckPill');
+      assertTrue(!!pill && !pill.classList.contains('hidden'), 'the pill shows');
+      const wasMulti = state.isMultiplayer; state.isMultiplayer = false;
+      const t0 = window.triggerNextTurn; window.triggerNextTurn = () => { kicked++; };
+      pill.querySelector('button').click();
+      state.isMultiplayer = wasMulti; window.triggerNextTurn = t0;
+      assertTrue(pill.classList.contains('hidden'), 'tapping hides the pill');
+      assertEqual(kicked, 1, 'a bot game re-kicks the turn');
+    } finally { stuckPill(false); }
+    let held = 0, released = 0;
+    const desc = Object.getOwnPropertyDescriptor(navigator, 'wakeLock');
+    Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: async () => { held++; return { release() { released++; }, addEventListener() {} }; } } });
+    try {
+      await syncWakeLock(true); await syncWakeLock(true);
+      assertEqual(held, 1, 'one lock is requested');
+      await syncWakeLock(false);
+      assertEqual(released, 1, 'the lock is released when the match is over');
+    } finally { if (desc) Object.defineProperty(navigator, 'wakeLock', desc); else delete navigator.wakeLock; }
+  });
   await test('v521: 2 vs 2 unlocks at Lvl 10 and the series result offers a rematch', () => {
     assertEqual(TWOS_LEVEL, 10, '2 vs 2 at Lvl 10');
     const on = xpFeatureOn, pxp = playerXp, cu = currentUser;

@@ -550,6 +550,69 @@
     });
     window.addEventListener('online', () => resyncRoomFromServer('online'));
 
+    // § Stuck watch + screen wake lock (v522). While a match is on screen, a
+    // 2s tick (1) keeps the screen awake and (2) shows "Stuck? Resync" when
+    // nothing has changed for too long (bot turn 10s, human turn 45s). The
+    // button re-reads the room online, or re-kicks the turn in a bot game.
+    const STUCK_BOT_MS = 10000, STUCK_HUMAN_MS = 45000;
+    let stuckSig = '', stuckSince = Date.now(), stuckTapAt = 0, wakeSentinel = null, wakeBusy = false;
+    function stuckEligible() {
+      return !IS_DEV_TEST_PAGE && !document.hidden && state.phase === 'PLAY' && !state.spectating && !state.labDummy
+        && !(typeof tutorialActive !== 'undefined' && tutorialActive) && !state.pendingFollowUp && !state.blindRevealing
+        && !document.body.classList.contains('lobby-open');
+    }
+    function stuckSignature() {
+      const cards = (state.players || []).reduce((n, p) => n + (p.hand?.length || 0) + (p.faceUp?.length || 0) + (p.faceDown?.length || 0), 0);
+      return [state.currentTurnIndex, state.discardPile.length, state.drawPile.length, (state.playedHistory || []).length, cards, state.stateVersion || 0].join(':');
+    }
+    function stuckPill(show) {
+      let el = document.getElementById('stuckPill');
+      if (!show) { el?.classList.add('hidden'); return; }
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'stuckPill';
+        el.className = 'hidden';
+        el.setAttribute('role', 'status');
+        el.innerHTML = '<span>Game stuck?</span><button type="button">Resync</button>';
+        el.querySelector('button').addEventListener('click', () => {
+          stuckTapAt = Date.now(); stuckSince = Date.now(); Health.note('stuckTapped'); stuckPill(false);
+          if (state.isMultiplayer || isServerRanked()) resyncRoomFromServer('stuck'); else triggerNextTurn();
+        });
+        document.body.appendChild(el);
+      }
+      el.classList.remove('hidden');
+    }
+    async function syncWakeLock(want) {
+      if (wakeBusy || !('wakeLock' in navigator)) return;
+      if (want && !wakeSentinel && !document.hidden) {
+        wakeBusy = true;
+        try { wakeSentinel = await navigator.wakeLock.request('screen'); wakeSentinel.addEventListener('release', () => { wakeSentinel = null; }); } catch (_) {}
+        wakeBusy = false;
+      } else if (!want && wakeSentinel) {
+        try { wakeSentinel.release(); } catch (_) {}
+        wakeSentinel = null;
+      }
+    }
+    setInterval(() => {
+      if (typeof state === 'undefined' || !state || IS_DEV_TEST_PAGE) return;
+      syncWakeLock((state.phase === 'PLAY' || state.phase === 'SWAP') && !document.body.classList.contains('lobby-open'));
+      if (!stuckEligible()) { stuckSince = Date.now(); stuckPill(false); return; }
+      const sig = stuckSignature(), now = Date.now();
+      if (sig !== stuckSig) {
+        if (stuckTapAt && now - stuckTapAt < 10000) Health.note('stuckFixed');
+        stuckTapAt = 0; stuckSig = sig; stuckSince = now; stuckPill(false); return;
+      }
+      const cur = state.players[state.currentTurnIndex];
+      const limit = cur && cur.isBot ? STUCK_BOT_MS : STUCK_HUMAN_MS;
+      const mine = cur && cur.id === state.localPlayerId;
+      if (!mine && now - stuckSince > limit) {
+        const el = document.getElementById('stuckPill');
+        if (!el || el.classList.contains('hidden')) Health.note('stuckShown');
+        stuckPill(true);
+      }
+    }, 2000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) syncWakeLock(state.phase === 'PLAY' || state.phase === 'SWAP'); });
+
     // A fresh join must not inherit the previous room's confirmation flag.
     function resetRoomMembershipConfirmation() { hasConfirmedRoomMembership = false; }
 
@@ -15755,7 +15818,7 @@
         loadMedian: median(sessions.map(r => Number(r.loadMs) || 0)), loadP90: p90(sessions.map(r => Number(r.loadMs) || 0)),
         fps: frameMs ? Math.round((frames / frameMs) * 1000) : 0, slowPct: frames ? Math.round((slow / frames) * 1000) / 10 : 0,
         jankySessions: sessions.filter(r => r.frames && r.frames.n > 300 && r.frames.slow / r.frames.n > 0.05).length,
-        modes, rejectedSaves: count('rejectedSave'), saveErrors: count('saveError'), errors: count('errors'),
+        modes, rejectedSaves: count('rejectedSave'), saveErrors: count('saveError'), stuckShown: count('stuckShown'), stuckTapped: count('stuckTapped'), stuckFixed: count('stuckFixed'), errors: count('errors'),
         // v490 timings (only sessions on v490 or later carry them).
         renderN: count('renderN'), renderAvg: count('renderN') ? Math.round(count('renderMs') / count('renderN')) : 0,
         renderSlowPct: count('renderN') ? Math.round((count('renderSlow') / count('renderN')) * 1000) / 10 : 0,
@@ -15803,7 +15866,7 @@
           : row('Timings', 'none yet', 'they appear once players are on this version')),
         box('Matches', h.modes.filter(m => m.started).map(m => row(m.mode[0].toUpperCase() + m.mode.slice(1),
           `${m.finished}/${m.started} finished`, `${m.left} left · ${m.abandoned} abandoned (app closed)`)).join('') || row('Matches', 'none yet')),
-        box('Problems', row('Online saves rejected', h.rejectedSaves, 'two phones saved at once; the later one reloaded the table') + row('Online saves failed (retried)', h.saveErrors, 'no signal while saving; the game tried again') + row('Errors', h.errors, 'details in the ERRORS tab')),
+        box('Problems', row('Online saves rejected', h.rejectedSaves, 'two phones saved at once; the later one reloaded the table') + row('Online saves failed (retried)', h.saveErrors, 'no signal while saving; the game tried again') + row('Stuck prompt shown', h.stuckShown, 'nothing changed for a while') + row('Resync tapped / fixed', h.stuckTapped + ' / ' + h.stuckFixed, 'fixed = the game moved within 10s') + row('Errors', h.errors, 'details in the ERRORS tab')),
         box('Screens', h.screens.length ? h.screens.map(([k, n]) => `<div class="py-1 border-b border-slate-800 text-slate-300">${escapeHtml(k)} <b class="text-white">×${n}</b></div>`).join('') : row('Screens', 'none yet'))
       ].join('');
     }

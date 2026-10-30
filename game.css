@@ -3258,3 +3258,8 @@ body > header button:focus-visible, #tutorialCaption button:focus-visible, #sett
   #settingsTab-gameplay > .settings-searchable:first-child > .text-left { flex-basis: 100%; }
   #settingsTab-gameplay > .settings-searchable:first-child > span:last-child { margin-left: auto; }
 }
+
+/* § Stuck prompt (v522) */
+#stuckPill { position: fixed; top: calc(5.4rem + var(--safe-top)); left: 50%; transform: translateX(-50%); z-index: 66; display: flex; align-items: center; gap: .6rem; padding: .3rem .4rem .3rem .9rem; border-radius: 999px; background: rgba(15, 23, 42, .94); border: 1px solid rgba(251, 191, 36, .55); color: #e2e8f0; font-size: .75rem; box-shadow: 0 6px 18px rgba(0, 0, 0, .45); }
+#stuckPill.hidden { display: none; }
+#stuckPill button { background: #fbbf24; color: #0f172a; font-weight: 700; border-radius: 999px; padding: .25rem .8rem; font-size: .72rem; letter-spacing: .02em; }
