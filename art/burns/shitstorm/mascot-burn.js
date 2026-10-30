@@ -25,9 +25,18 @@
     }).finally(() => { loading = null; });
     return loading;
   }
-  function spin(t) {
-    const s = t * 1.06;
-    return TAU * sm(.88, 1.48, s) + TAU * .65 * sm(1.48, 1.94, s);
+  // The rig's spin is baked into the atlas (one turn over frames 25-41, constant size), so a faster spin
+  // re-uses those frames: SPIN_TURNS turns across 0.83-1.83s (the rig's own turn and a half), the frame
+  // nearest the wanted angle is drawn, and the shrink into the pile is a scale about the tip.
+  const SPIN_TURNS = 4, SPIN_FROM = .83, SPIN_TO = 1.83, LOOP_FROM = 25, LOOP_TO = 41;
+  function spin(t) { return TAU * SPIN_TURNS * sm(SPIN_FROM, SPIN_TO, t); }
+  function loopFrame(t) {
+    const want = spin(t) % TAU; let best = LOOP_FROM, gap = 9;
+    for (let f = LOOP_FROM; f <= LOOP_TO; f++) {
+      const a = TAU * sm(.88, 1.48, f / 30 * 1.06), d = Math.abs(((a - want + Math.PI * 3) % TAU) - Math.PI);
+      if (d < gap) { gap = d; best = f; }
+    }
+    return best;
   }
   function size(t) {
     const s = t * 1.06;
@@ -138,9 +147,11 @@
     }
     const qs=data.particles.map(p=>particleAt(p,t,l)).filter(Boolean).sort((a,b)=>a.z-b.z);
     for(const q of qs)if(q.z<0)drawParticle(g,q,l,data.face,data.back);
-    const frame=Math.min(59,Math.max(0,Math.floor(t*30)));
+    const spinning = t >= SPIN_FROM, frame = spinning ? loopFrame(t) : Math.min(59, Math.max(0, Math.floor(t * 30)));
+    const k = spinning ? size(t) : 1, tx = l.left + meta.tip[0] * l.S, ty = l.upper + meta.tip[1] * l.S;
     // Exactly one draw for the animated character; all its facial motion is from the approved rig.
-    g.drawImage(atlas,(frame%8)*256,Math.floor(frame/8)*256,256,256,l.left,l.upper,l.S,l.S);
+    g.save(); g.imageSmoothingQuality = 'high'; g.translate(tx, ty); g.scale(k, k); g.translate(-tx, -ty);
+    g.drawImage(atlas,(frame%8)*256,Math.floor(frame/8)*256,256,256,l.left,l.upper,l.S,l.S); g.restore();
     for(const q of qs)if(q.z>=0)drawParticle(g,q,l,data.face,data.back);
   }
   function loadSnapshot(url, data, key) {
