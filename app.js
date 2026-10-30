@@ -5268,6 +5268,7 @@
     function applyAccessibilityPrefs() {
       document.body.classList.toggle('high-contrast', highContrast);
       document.body.classList.toggle('reduce-motion', reduceMotion);
+      document.body.classList.toggle('perf-mode', !!perfMode);   // v537: CSS-only lightening
       if (reduceMotion) document.querySelectorAll('#flightLayer .flying-card').forEach(el => el.remove());
       const matrixLayer = document.getElementById('matrixRefLayer');
       const cardLayer = document.getElementById('cardRefLayer');
@@ -16337,7 +16338,7 @@
           ['helperTipsOn','shithead_helper_tips',v => { helperTipsOn=v; if (!v) hideHelperTip(); }],
           ['reduceMotion','shithead_reduce_motion',v => { reduceMotion=v; }],
           ['bigEffectsOn','shithead_big_effects',v => { bigEffectsOn=v; }],
-          ['perfMode','shithead_perf_mode',v => { perfMode=v; if (window.FxLoad) FxLoad.forced = v; }],
+          ['perfMode','shithead_perf_mode',v => { perfMode=v; if (window.FxLoad) FxLoad.forced = v; document.body.classList.toggle('perf-mode', v); }],
           ['othersEffectsOn','shithead_others_effects',v => { othersEffectsOn=v; }],
           ['historyOpen','shithead_history_open',v => { historyOpenPref=v; historyOpen=v; renderHistoryCircle(); }],
           ['hapticsOn','shithead_haptics',v => { hapticsOn=v; }],
@@ -22845,6 +22846,7 @@
     document.getElementById('setPerfModeRow').addEventListener('click', () => {
       perfMode = !perfMode; writePref('shithead_perf_mode', perfMode);
       if (window.FxLoad) FxLoad.forced = perfMode;
+      applyAccessibilityPrefs();
       try { Health.note(perfMode ? 'perfOn' : 'perfOff'); } catch (_) {}
       refreshSettingsUI(); scheduleSettingsCloudSave();
     });

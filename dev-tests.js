@@ -6140,6 +6140,22 @@ async function runDevTestSuite() {
     assertEqual(h.perf[1].fps, 25, 'Off fps');
     assertEqual(h.perf[1].slowPct, 20, 'Off slow %');
   });
+  await test('v537: Performance Mode adds body.perf-mode, pauses home loops and avatar motion, keeps card states', () => {
+    const was = perfMode, probe = document.createElement('div');
+    probe.style.cssText = 'animation:av-px-rise 3s linear infinite';
+    document.getElementById('lobbyScreen').appendChild(probe);
+    try {
+      perfMode = false; applyAccessibilityPrefs();
+      assertTrue(!document.body.classList.contains('perf-mode'), 'Off: no class');
+      assertEqual(getComputedStyle(probe).animationPlayState, 'running', 'Off: runs');
+      perfMode = true; applyAccessibilityPrefs();
+      assertTrue(document.body.classList.contains('perf-mode'), 'On: class');
+      assertEqual(getComputedStyle(probe).animationPlayState, 'paused', 'On: home loop paused');
+      const out = document.createElement('div'); out.className = 'card-out-of-turn'; document.body.appendChild(out);
+      assertTrue(getComputedStyle(out).filter !== 'none', 'Out-of-turn dimming kept');
+      out.remove();
+    } finally { probe.remove(); perfMode = was; applyAccessibilityPrefs(); }
+  });
   await test('v492: an open menu page pauses the CSS animations under it, and they resume when it closes', async () => {
     EXCLUSIVE_PAGE_IDS.forEach(id => { const el = document.getElementById(id); if (el) assertEqual(el.parentElement, document.body, `${id} sits at the top level of the page`); });
     const probe = document.createElement('div');
