@@ -43,9 +43,9 @@
     return (.06 + .94 * sm(.12, .56, s)) * (1 - .997 * sm(1.48, 1.94, s));
   }
   function seeded(seed) { return () => { seed = (Math.imul(1664525, seed) + 1013904223) >>> 0; return seed / 4294967296; }; }
-  function particles() {
+  function particles(n = 42) {
     const rnd = seeded(7391);
-    return Array.from({ length: 42 }, (_, i) => ({
+    return Array.from({ length: n }, (_, i) => ({
       type: i % 7 < 4 ? 'paper' : i % 7 < 6 ? 'goo' : 'ember',
       u: .18 + rnd() * .40, theta: rnd() * TAU, release: .90 + rnd() * .31,
       speed: .48 + rnd() * .35, turn: rnd() * TAU, roll: (rnd() - .5) * 12,
@@ -150,7 +150,7 @@
     const spinning = t >= SPIN_FROM, frame = spinning ? loopFrame(t) : Math.min(59, Math.max(0, Math.floor(t * 30)));
     const k = spinning ? size(t) : 1, tx = l.left + meta.tip[0] * l.S, ty = l.upper + meta.tip[1] * l.S;
     // Exactly one draw for the animated character; all its facial motion is from the approved rig.
-    g.save(); g.imageSmoothingQuality = 'high'; g.translate(tx, ty); g.scale(k, k); g.translate(-tx, -ty);
+    g.save(); g.imageSmoothingQuality = window.FxLoad?.lite ? 'low' : 'high'; g.translate(tx, ty); g.scale(k, k); g.translate(-tx, -ty);
     const slot = meta.index[frame], cell = meta.cell, pitch = cell + meta.gutter;
     g.drawImage(atlas,(slot%meta.columns)*pitch,Math.floor(slot/meta.columns)*pitch,cell,cell,l.left,l.upper,l.S,l.S); g.restore();
     for(const q of qs)if(q.z>=0)drawParticle(g,q,l,data.face,data.back);
@@ -172,7 +172,7 @@
     const canvas=document.createElement('canvas');canvas.className='bfx lb3d-canvas shitstorm-mascot';canvas.dataset.levelBurn='burn-lvl-shitstorm';
     canvas.width=Math.ceil(w*dpr);canvas.height=Math.ceil(h*dpr);canvas.style.cssText=`position:absolute;inset:0;width:${w}px;height:${h}px;pointer-events:none;z-index:2`;
     const g=canvas.getContext('2d');if(!g)return false;g.setTransform(dpr,0,0,dpr,0,0);
-    const data={face:opts.face,back:opts.back,particles:particles(),clone:null,disposed:false};
+    const data={face:opts.face,back:opts.back,particles:particles(window.FxLoad ? FxLoad.scale(42, 24) : 42),clone:null,disposed:false};
     loadSnapshot(opts.faceUrl,data,'face');loadSnapshot(opts.backUrl,data,'back');
     const clone=top?.cloneNode(true);
     if(clone&&!calm){clone.removeAttribute('id');clone.removeAttribute('data-card-id');clone.querySelectorAll('[id],[data-card-id]').forEach(e=>{e.removeAttribute('id');e.removeAttribute('data-card-id');});

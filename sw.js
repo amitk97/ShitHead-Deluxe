@@ -77,7 +77,7 @@ const OFFLINE_ASSETS = [
   '/art/burns/royal-incineration/tile.webp',
   '/art/burns/hellfire-spiral/layers.webp?v=2',
   '/art/burns/hellfire-spiral/tile.webp',
-  '/art/burns/shitstorm/mascot-burn.js?v=815291da85fd',
+  '/art/burns/shitstorm/mascot-burn.js?v=941c47741df8',
   '/art/burns/shitstorm/mascot-atlas-v3.webp',
   '/art/burns/shitstorm/mascot-atlas-v3.json',
   '/art/burns/shitstorm/mascot-poster.webp',
