@@ -1676,7 +1676,7 @@ function finishSeries(s, winner, reason, now) {
 }
 actions.series = async ({ uid, auth, data }) => {
   const op = data.op;
-  if (!['status', 'create', 'accept', 'cancel', 'game', 'readyNext', 'startNext', 'forfeit', 'claimForfeit'].includes(op)) fail('invalid-argument', 'Unknown series step.');
+  if (!['status', 'create', 'accept', 'cancel', 'game', 'readyNext', 'startNext', 'forfeit', 'claimForfeit', 'afford'].includes(op)) fail('invalid-argument', 'Unknown series step.');
   const code = clip(data.roomCode, 6);
   if (!/^\d{6}$/.test(code)) fail('invalid-argument', 'Bad room.');
   const now = Date.now();
@@ -1692,6 +1692,17 @@ actions.series = async ({ uid, auth, data }) => {
   const seats = Object.values(room?.players || {}).filter(Boolean);
   const mine = seats.find(p => p.uid === uid);
   const isMember = s && (s.host === uid || s.guest === uid);
+
+  // Read-only: which lengths each player can stake (booleans only, never the balance).
+  if (op === 'afford') {
+    const other = seats.find(p => p.uid && p.uid !== uid && !p.isBot);
+    if (!mine || !other) return { afford: {} };
+    const bank = async (u) => num((await db().ref(`users/${u}/diamonds`).once('value')).val());
+    const [a, b] = await Promise.all([bank(uid), bank(other.uid)]);
+    const afford = {};
+    for (const n of Object.keys(SERIES.bestOf || {})) afford[n] = { me: a >= num(SERIES.bestOf[n]), them: b >= num(SERIES.bestOf[n]) };
+    return { afford };
+  }
 
   if (op === 'create') {
     const bestOf = num(data.bestOf);

@@ -17353,6 +17353,13 @@
     const SERIES_LOBBY_OPEN = true;
     var seriesState = null;
     let seriesWatch = null;          // { code, ref, handler }
+    let seriesAfford = null, seriesAffordKey = '', seriesAffordAt = 0;   // can each player stake each length? (server booleans)
+    function refreshSeriesAfford(code, other) {
+      const key = code + ':' + (other && other.uid || other && other.id || '');
+      if (key === seriesAffordKey && Date.now() - seriesAffordAt < 20000) return;
+      seriesAffordKey = key; seriesAffordAt = Date.now(); seriesAfford = null;
+      callEconomy('series', { op: 'afford', roomCode: code }).then(r => { if (seriesAffordKey === key) { seriesAfford = (r && r.afford) || null; renderSeriesPanel(); } }).catch(() => {});
+    }
     let seriesBusy = false;
     let seriesModalShownFor = null;  // series id the accept pop-up has opened for
     let seriesPanelOpen = null;      // the player's own open/closed pick on this visit (null = by level)
@@ -17428,6 +17435,7 @@
       const gem = icon('gem');
       const busy = seriesBusy ? ' disabled' : '';
       if (!s) {
+        { const o = state.players.find(p => !p.isBot && p.id !== state.localPlayerId); if (o && expanded) refreshSeriesAfford(code, o); }
         const why = seriesBlockReason();
         const locked = !playerXp || xpLevelFor(playerXp.total) < SERIES_RULES.level;
         const choice = (n) => {
@@ -17435,7 +17443,10 @@
           const other = state.players.find(p => !p.isBot && p.id !== state.localPlayerId);
           const guestNeeds = SERIES_RULES.guestLevels[n] || 0;
           const levelLocked = lvl < requirement || (guestNeeds > 0 && Number(other?.cosmetics?.level) > 0 && Number(other.cosmetics.level) < guestNeeds);
-          const reason = seriesBlockReason(n);
+          const af = seriesAfford && seriesAfford[n];
+          const poor = af && !af.me ? 'You need' : (af && !af.them ? `${other?.name || 'Your opponent'} needs` : '');
+          const reason = seriesBlockReason(n) || (poor ? `${poor} ${SERIES_RULES.bestOf[n]} Diamonds for this.` : '');
+          if (poor && !levelLocked) return `<button type="button" class="series-choice series-level-locked" data-series-best="${n}" aria-pressed="false" title="${escapeHtml(reason)}" disabled>Best of ${n}<small>${SERIES_RULES.bestOf[n]} ${gem} entry</small><span class="series-level-label">${icon('gem')}${escapeHtml(poor)} ${SERIES_RULES.bestOf[n]}</span></button>`;
           return `<button type="button" class="series-choice${levelLocked ? ' series-level-locked' : ''}" data-series-best="${n}" aria-pressed="false" title="${escapeHtml(reason || (SERIES_RULES.guestLevels[n] ? `Both players level ${requirement}+` : `Host level ${requirement}+`))}"${reason || seriesBusy ? ' disabled' : ''}>Best of ${n}<small>${SERIES_RULES.bestOf[n]} ${gem} entry</small>${levelLocked ? `<span class="series-level-label">${icon('lock')}Level ${requirement}</span>` : ''}</button>`;
         };
         panel.innerHTML = `${head}
