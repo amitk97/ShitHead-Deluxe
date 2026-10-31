@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v540: [['sparkle', 'Behind the scenes: documentation and screenshots refreshed.']],
       v539: [['sparkle', 'Performance Mode makes the Hellfire Spiral burn lighter.']],
       v538: [['sparkle', 'Performance Mode makes the Shitstorm burn lighter (fewer debris pieces).']],
       v537: [['sparkle', 'Performance Mode now also turns off blur effects and pauses decorative animations.']],

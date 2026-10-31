@@ -1,4 +1,4 @@
-<!-- README-VERSION: v522 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
+<!-- README-VERSION: v540 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
 # 💩 ShitHead Deluxe
 
 **The classic card game ShitHead, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
@@ -63,6 +63,7 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 - **Multiple Decks** (4-8 players): two decks and four Jokers, a compact rail of opponents and a hand that groups cards by rank once it gets big. Snap Burn plays every matching card, and Jokers can chain up to four deep. Hosting unlocks at level 25; joining has no lock.
 - **Mumbai Masala**, a second Blender set: the Dabbawala avatar, Marigold Garland card back, Marine Drive table, Masala Chai deck, Kaali Peeli frame, Monsoon Deluge burn, Tiffin Surprise Joker, Gateway Gala victory and the Mumbai emote pack. The London and Mumbai sets were later redrawn with refreshed city art and effects.
 - **Free Season Pass**: two-month seasons with 50 tiers, Diamonds and themed card backs, avatars, tables and a burn at tier 40. Season XP follows your regular XP rewards; tier rewards arrive automatically. Six themes run from Ancient Egypt and Ice Age through Feudal Japan, Deep Ocean, Greek Mythology and Dark Sorcery.
+- **Performance Mode** (Settings → Display, off by default): lighter effects for slower phones. Particle counts and canvas resolution drop, blur and drop-shadow filters go, and decorative loops pause, while timing, sound and art stay the same. The Shitstorm and Hellfire Spiral burns have their own lighter versions. The game also switches to the lighter effects by itself after repeated slow frames, and a Health box lets the developer compare frame rates with it on and off.
 - **Double-Tap To Play**: enable it in Settings → Gameplay to play a staged card with a second tap. Ranked swaps show your changes immediately while the server confirms them.
 - **Watch friends**: friends can watch a Play Computer or Gauntlet game when Friends Can Watch is enabled; hidden cards remain hidden.
 - **One header everywhere**: Exit on the far left (it asks first, in the game's own style), your Diamonds, then Shop, Custom, Profile, Inbox, Guide, Settings and the menu. In a game the extras fold into the menu and the ShitHead logo takes you home.
