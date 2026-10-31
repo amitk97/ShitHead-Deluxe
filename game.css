@@ -3270,3 +3270,28 @@ body.perf-mode :not(#burnFxLayer, #jokerFxLayer, #victoryFxLayer, .pfx-layer, .p
 body.perf-mode :is(.mc-ic, .daily-flame, .season-emoji, .card-centre-icon) { filter: none !important; }
 body.perf-mode #lobbyScreen *, body.perf-mode #lobbyScreen *::before, body.perf-mode #lobbyScreen *::after { animation-play-state: paused !important; }
 body.perf-mode svg [class*="av-"], body.perf-mode svg [class*="av-"]::before, body.perf-mode svg [class*="av-"]::after { animation-play-state: paused !important; }
+
+/* No Mercy lesson: a slim caption over the player's own table row, so the opponents stay visible */
+#tutorialCaption.tut-low { padding: 6px 10px; }
+#tutorialCaption.tut-low #tutorialModuleTitle { display: none; }
+#tutorialCaption.tut-low .tutorial-caption-head { margin-bottom: 2px; }
+#tutorialCaption.tut-low #tutorialText { font-size: 12px; line-height: 1.25; }
+#tutorialCaption.tut-low > .flex { margin-top: 5px; }
+#tutorialCaption.tut-low #tutorialBackBtn, #tutorialCaption.tut-low #tutorialNextBtn { padding: 3px 12px; }
+#tutorialCaption.tut-low #tutorialSkipBtn { min-height: 24px; }
+#tutorialCaption.tut-low .tutorial-caption-head { min-height: 0; margin-bottom: 0; }
+/* Short phones: the No Mercy lesson drops the top caption room and the history strip so opponents, Pile, Play and hand all fit */
+@media (max-height: 720px) {
+  body.tutorial-on:has(#tutorialCaption.tut-low) #gameTable { padding-top: 4px; scroll-padding-top: 4px; gap: 4px; padding-bottom: 4px; }
+  body.tutorial-on:has(#tutorialCaption.tut-low) #opponentsContainer { padding-top: 36px !important; } /* room for an opened hand fan */
+  body.tutorial-on:has(#tutorialCaption.tut-low) #turnIndicatorRow { display: none; }
+  body.tutorial-on:has(#tutorialCaption.tut-low) #centerArena { margin-top: 4px; margin-bottom: 4px; }
+  body.tutorial-on:has(#tutorialCaption.tut-low) #historyStreamPanel { display: none; }
+}
+@media (max-height: 720px) {
+  body.tutorial-on #tutorialCaption.tut-low { padding: 5px 10px; }
+  body.tutorial-on #tutorialCaption.tut-low #tutorialScrollHint { display: none; }
+  body.tutorial-on #tutorialCaption.tut-low #tutorialText { font-size: 11.5px; line-height: 1.2; }
+  body.tutorial-on #tutorialCaption.tut-low #tutorialBackBtn, body.tutorial-on #tutorialCaption.tut-low #tutorialNextBtn { min-height: 34px; }
+  body.tutorial-on #tutorialCaption.tut-low > .flex { margin-top: 3px; }
+}

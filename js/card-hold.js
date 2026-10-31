@@ -353,6 +353,11 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
     openSeat(seat, true);
   };
 
+  // The No Mercy lesson closes every fan when a new scene starts.
+  window.closeOpponentHands = function () {
+    pinnedPlayerId = null; hoveredPlayerId = null; closeAll();
+  };
+
   container.addEventListener('keydown', event => {
     const control = event.target.closest('[data-opponent-hand-toggle]');
     if (!control || (event.key !== 'Enter' && event.key !== ' ')) return;

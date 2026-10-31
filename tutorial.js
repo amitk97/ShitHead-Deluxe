@@ -359,8 +359,12 @@
       const pool = ['K', 'Q', 'J', '8', '5', '9', '6', '4', 'A'].filter(r => !used.has(r));
       return pool.slice(0, n).map((r, i) => ({ ...C(r, suits[i % suits.length]), slotIndex: i }));
     }
+    let tutorialHandSnap = {};
     function tutorialApplyScene(scene) {
       const you = state.players[0], coach = state.players[1];
+      // A new scene starts with no X-rays and no open opponent fan (No Mercy lesson).
+      state.peeks = {}; state.lastPeek = null;
+      window.closeOpponentHands?.();
       // Only present in modules that asked startTutorial for a 3rd seat
       // (see playerCount) — every 2-player module leaves this undefined and
       // simply never sets scene.rival*, so this is a pure capability add.
@@ -440,6 +444,8 @@
       state.baseOverrideCard = null;
       state.selectedPlayCardIds = [];
       state.currentTurnIndex = 0;
+      // Hands as the step starts, so the note can show which cards an opponent took.
+      tutorialHandSnap = Object.fromEntries(state.players.map(p => [p.id, (p.hand || []).map(c => c.id)]));
       // Only set when a scene depends on a particular direction (e.g. Snap
       // Burn's Coach play must pass the turn to Rival); otherwise left alone.
       if (scene.direction !== undefined) state.direction = scene.direction;
@@ -597,7 +603,8 @@
       const zoneEl = document.getElementById('localPlayerZone');
       const wantsCardPlay = !!(step.require && step.require.rank);
       if (playBtnEl) playBtnEl.classList.toggle('tutorial-glow', wantsCardPlay);
-      if (zoneEl) zoneEl.style.zIndex = wantsCardPlay ? '80' : '';
+      // A 'low' caption sits over this zone, so it stays under the layer and gets lit holes instead (drawTutorialSpotlight).
+      if (zoneEl) zoneEl.style.zIndex = wantsCardPlay && step.captionPlace !== 'low' ? '80' : '';
       document.getElementById('finishSwapBtn')?.classList.toggle('tutorial-glow', !!(step.require && step.require.ready));
       const tapSel = step.require && step.require.tapCheck;
       const refBtnTap = tapSel === '#cardRefBtn' || tapSel === '#matrixRefBtn';
@@ -648,6 +655,7 @@
 
     function renderTutorialCaption(step, idx, text) {
       document.getElementById('tutorialText').textContent = text;
+      document.getElementById('tutorialCaption').classList.toggle('tut-low', step.captionPlace === 'low');
       document.getElementById('tutorialStepCounter').textContent = `Step ${idx + 1} of ${TUTORIAL_STEPS.length}`;
       document.getElementById('tutorialModuleTitle').textContent = tutorialNoMercy ? `${tutorialCurrentModuleTitle} · Not Standard Rules` : `${tutorialCurrentModuleTitle} · Standard Rules`;
       // Back is ALWAYS available (except on the very first step) and performs a
@@ -764,6 +772,7 @@
     function tutorialRevealActionTarget() {
       if (!tutorialActive || !matchMedia('(max-height: 720px)').matches) return;
       const step = TUTORIAL_STEPS[tutorialStep], r = step?.require;
+      if (step?.captionPlace === 'low') return; // the lesson table is laid out to fit; never scroll the opponents away
       const selectors = r?.rank ? ['#localHand .tutorial-glow', '#localTableSlots .tutorial-glow']
         : r?.blind ? ['#localTableSlots .tutorial-glow']
         : r?.holdCheck || r?.pickup ? ['#discardPileContainer']
@@ -881,7 +890,17 @@
           top = hi >= lo ? (lo + hi) / 2 : Math.max(lo, (pileR.bottom + handR.top - capH) / 2);
         }
       }
-      const compact = matchMedia('(max-height: 720px)').matches;
+      // captionPlace 'low': over the player's own Face-Up / Face-Down row (not used in
+      // opponent lessons), so the opponents' seats and hands stay in view.
+      const low = !!(stepNow && stepNow.captionPlace === 'low');
+      if (low) {
+        const playR = document.getElementById('playActionControls')?.getBoundingClientRect();
+        const handR = document.getElementById('localHand')?.getBoundingClientRect();
+        const lo = (playR && playR.height ? playR.bottom : arenaTop) + 6;
+        const hi = (handR && handR.height ? handR.top : window.innerHeight) - capH - 6;
+        top = hi >= lo ? lo + (hi - lo) / 2 : Math.max(m, hi);
+      }
+      const compact = !low && matchMedia('(max-height: 720px)').matches;
       if (compact) {
         top = (document.querySelector('body > header')?.getBoundingClientRect().bottom || 44) + m;
         document.getElementById('gameTable')?.style.setProperty('--tutorial-caption-room', `${capH + m * 2}px`);
@@ -911,6 +930,18 @@
       }
 
       const svgNS = 'http://www.w3.org/2000/svg';
+      // 'low' caption: the hand and Play button stay lit through plain holes (no border).
+      if (low && stepNow.require) {
+        ['#localHand', '#playSelectedBtn'].forEach(sel => {
+          const r = document.querySelector(sel)?.getBoundingClientRect();
+          if (!r || !r.width) return;
+          const hole = document.createElementNS(svgNS, 'rect');
+          hole.setAttribute('x', r.left - 4); hole.setAttribute('y', r.top - 4);
+          hole.setAttribute('width', r.width + 8); hole.setAttribute('height', r.height + 8);
+          hole.setAttribute('rx', 12); hole.setAttribute('fill', 'black');
+          holesGroup.appendChild(hole);
+        });
+      }
       groups.forEach(r => {
         const x = r.left - pad, y = r.top - pad, w = r.width + pad * 2, h = r.height + pad * 2;
         const hole = document.createElementNS(svgNS, 'rect');
@@ -1216,6 +1247,23 @@
       nextBtn.style.display = '';
       nextBtn.textContent = tutorialStep === TUTORIAL_STEPS.length - 1 ? 'Finish' : 'Continue';
       positionTutorialUI(noteTarget);
+      tutorialRevealTaken(step);
+    }
+
+    // No Mercy lesson: open the fan of each seat that took cards, with the new cards face up.
+    function tutorialRevealTaken(step) {
+      if (!tutorialNoMercy || !Array.isArray(step.reveal)) return;
+      state.peeks = state.peeks || {};
+      const book = state.peeks.tut_you = state.peeks.tut_you || {};
+      const open = [];
+      step.reveal.forEach((id) => {
+        const p = state.players.find(x => x.id === id);
+        const fresh = p ? (p.hand || []).filter(c => !(tutorialHandSnap[id] || []).includes(c.id)) : [];
+        if (!fresh.length) return;
+        book[id] = [...(book[id] || []), ...fresh.map(c => c.id)];
+        open.push(id);
+      });
+      open.forEach((id, i) => tutorialDelay(() => window.showOpponentHand?.(id), 250 + i * 1800));
     }
 
     // A mid-wave pause — e.g. "the Coach just played a 10, here's what that

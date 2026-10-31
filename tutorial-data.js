@@ -602,46 +602,54 @@
     const TUTORIAL_MODULE_NO_MERCY = [
       {
         text: "No Mercy is the normal game with four twists: one each for the Queen, King, Ace and Joker.",
-        target: null
+        target: '#opponentsContainer',
+        captionPlace: 'low'
       },
       {
         text: "Play your Queen. It X-rays one card in Coach's hand.",
-        target: ['#localHand [data-rank="Q"]', '#pileZone'],
+        target: ['#localHand [data-rank="Q"]', '#pileZone', '#opponentsContainer'],
+        captionPlace: 'low',
         scene: {
           hand: [['Q', '♠'], ['8', '♦'], ['J', '♣']], pile: [['4', '♣']],
           coach: [['9', '♥'], ['6', '♦'], ['10', '♠']], rival: [['5', '♥'], ['7', '♠']]
         },
         require: { rank: 'Q' },
         noCoachReply: true,
-        coachNote: "X-ray. You saw one random card in Coach's hand, and it stays marked. Each Queen shows one more."
+        coachNote: "X-ray. You saw one random card in Coach's hand, and it stays marked.",
+        noteTarget: ['#pileZone', '#opponentsContainer']
       },
       {
         text: "Play your King. The next player takes the bottom card of the Pile.",
-        target: ['#localHand [data-rank="K"]', '#pileZone'],
+        target: ['#localHand [data-rank="K"]', '#pileZone', '#opponentsContainer'],
+        captionPlace: 'low',
+        reveal: ['tut_bot'],
         scene: {
           hand: [['K', '♥'], ['8', '♦'], ['J', '♣']], pile: [['9', '♦'], ['4', '♣']],
           coach: [['6', '♦'], ['10', '♠']], rival: [['5', '♥'], ['7', '♠']]
         },
         require: { rank: 'K' },
         noCoachReply: true,
-        coachNote: "Coach took the bottom card, the 9 of Diamonds. A King at the bottom can't be taken, and you don't go again.",
-        noteTarget: ['#pileZone']
+        coachNote: "Coach took the bottom card, the 9♦, into their hand. You don't go again.",
+        noteTarget: ['#pileZone', '#opponentsContainer']
       },
       {
         text: "Play your Ace. Every opponent takes one bottom card.",
-        target: ['#localHand [data-rank="A"]', '#pileZone'],
+        target: ['#localHand [data-rank="A"]', '#pileZone', '#opponentsContainer'],
+        captionPlace: 'low',
+        reveal: ['tut_bot', 'tut_rival'],
         scene: {
           hand: [['A', '♠'], ['8', '♦'], ['J', '♣']], pile: [['9', '♦'], ['6', '♣'], ['4', '♥']],
           coach: [['10', '♠'], ['3', '♦']], rival: [['5', '♥'], ['7', '♠']]
         },
         require: { rank: 'A' },
         noCoachReply: true,
-        coachNote: "Coach took the 9 and Rival took the 6. An Ace at the bottom of the Pile can't be taken, and it stops the pick-up.",
-        noteTarget: ['#pileZone']
+        coachNote: "Coach took the 9♦ and Rival the 6♣. An Ace at the bottom can't be taken.",
+        noteTarget: ['#pileZone', '#opponentsContainer']
       },
       {
         text: "Now try your Joker on this 4. Tap it.",
         target: ['#localHand [data-rank="JOKER"]', '#pileZone'],
+        captionPlace: 'low',
         scene: {
           hand: [['JOKER', 'JOKER'], ['9', '♦'], ['Q', '♣']], pile: [['7', '♣'], ['4', '♦']],
           coach: [['6', '♦'], ['10', '♠']], rival: [['5', '♥'], ['8', '♠']]
@@ -652,7 +660,8 @@
       },
       {
         text: "That's all four. Play No Mercy from More Modes once you reach level 10.",
-        target: null
+        target: '#opponentsContainer',
+        captionPlace: 'low'
       }
     ];
 
