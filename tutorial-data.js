@@ -595,6 +595,67 @@
       }
     ];
 
+    // --- Module: No Mercy -------------------------------------------------
+    // Runs with the No Mercy rules on (module flag noMercy -> tutorialNoMercy,
+    // read by isNoMercy()). Three seats so the Ace has two opponents to hit.
+    // Pile scenes list the BOTTOM card first: Kings and Aces take from there.
+    const TUTORIAL_MODULE_NO_MERCY = [
+      {
+        text: "No Mercy is the normal game with four twists: one each for the Queen, King, Ace and Joker.",
+        target: null
+      },
+      {
+        text: "Play your Queen. It X-rays one card in Coach's hand.",
+        target: ['#localHand [data-rank="Q"]', '#pileZone'],
+        scene: {
+          hand: [['Q', '♠'], ['8', '♦'], ['J', '♣']], pile: [['4', '♣']],
+          coach: [['9', '♥'], ['6', '♦'], ['10', '♠']], rival: [['5', '♥'], ['7', '♠']]
+        },
+        require: { rank: 'Q' },
+        noCoachReply: true,
+        coachNote: "X-ray. You saw one random card in Coach's hand, and it stays marked. Each Queen shows one more."
+      },
+      {
+        text: "Play your King. The next player takes the bottom card of the Pile.",
+        target: ['#localHand [data-rank="K"]', '#pileZone'],
+        scene: {
+          hand: [['K', '♥'], ['8', '♦'], ['J', '♣']], pile: [['9', '♦'], ['4', '♣']],
+          coach: [['6', '♦'], ['10', '♠']], rival: [['5', '♥'], ['7', '♠']]
+        },
+        require: { rank: 'K' },
+        noCoachReply: true,
+        coachNote: "Coach took the bottom card, the 9 of Diamonds. A King at the bottom can't be taken, and you don't go again.",
+        noteTarget: ['#pileZone']
+      },
+      {
+        text: "Play your Ace. Every opponent takes one bottom card.",
+        target: ['#localHand [data-rank="A"]', '#pileZone'],
+        scene: {
+          hand: [['A', '♠'], ['8', '♦'], ['J', '♣']], pile: [['9', '♦'], ['6', '♣'], ['4', '♥']],
+          coach: [['10', '♠'], ['3', '♦']], rival: [['5', '♥'], ['7', '♠']]
+        },
+        require: { rank: 'A' },
+        noCoachReply: true,
+        coachNote: "Coach took the 9 and Rival took the 6. An Ace at the bottom of the Pile can't be taken, and it stops the pick-up.",
+        noteTarget: ['#pileZone']
+      },
+      {
+        text: "Now try your Joker on this 4. Tap it.",
+        target: ['#localHand [data-rank="JOKER"]', '#pileZone'],
+        scene: {
+          hand: [['JOKER', 'JOKER'], ['9', '♦'], ['Q', '♣']], pile: [['7', '♣'], ['4', '♦']],
+          coach: [['6', '♦'], ['10', '♠']], rival: [['5', '♥'], ['8', '♠']]
+        },
+        require: { tapCheck: '#localHand [data-rank="JOKER"]' },
+        coachNote: "Refused. In No Mercy a Joker can't be played on a 4. On anything else it works as usual.",
+        noteTarget: ['#localHand [data-rank="JOKER"]', '#pileZone']
+      },
+      {
+        text: "That's all four. Play No Mercy from More Modes once you reach level 10.",
+        target: null
+      }
+    ];
+
     // ============================================================
     // CARD POWER REFERENCE
     // Non-linear: each card is its own tiny 2-3 step demo, launched from a
@@ -1001,6 +1062,8 @@
       { id: 'snap_burn', title: 'Snap Burn', time: '~30 sec', desc: 'Burn out of turn', steps: TUTORIAL_MODULE_SNAP_BURN, players: 3 },
       { id: 'bonus_draw', title: 'Bonus Draw', time: '~20 sec', desc: 'A free follow-up play', steps: TUTORIAL_MODULE_BONUS_DRAW, players: 2 },
       { id: 'cross_phase', title: 'Cross-Phase Combo', time: '~30 sec', desc: 'Reach Face-Up cards early', steps: TUTORIAL_MODULE_CROSS_PHASE, players: 2 },
-      { id: 'joker_duel', title: 'Joker Duel', time: '~40 sec', desc: 'Choose a target, risk a counter', steps: TUTORIAL_MODULE_JOKER_DUEL, players: 3 }
+      { id: 'joker_duel', title: 'Joker Duel', time: '~40 sec', desc: 'Choose a target, risk a counter', steps: TUTORIAL_MODULE_JOKER_DUEL, players: 3 },
+      // optional: not part of Tutorial Graduate (No Mercy itself unlocks at level 10)
+      { id: 'no_mercy', title: 'No Mercy', time: '~1 min', desc: 'Queen, King, Ace and Joker twists', steps: TUTORIAL_MODULE_NO_MERCY, players: 3, noMercy: true, optional: true }
     ];
 

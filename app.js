@@ -3297,7 +3297,8 @@
     }
     // § No Mercy: Queens X-ray the next player, Kings take the bottom card, no Joker on a 4.
     function isNoMercy() {
-      if (state.isRanked || tutorialActive) return false;
+      if (state.isRanked) return false;
+      if (tutorialActive) return tutorialNoMercy; // only the No Mercy lesson
       return state.isMultiplayer ? state.friendsMode === 'noMercy' : !!state.noMercy;
     }
     // Hand cards of `target` that `viewer` has already seen through a Queen (only ones still in the hand).
@@ -18029,7 +18030,7 @@
     }
     function noteXpResult(x) {
       if (!x || typeof x !== 'object') return;
-      const before = playerXp?.level || 1;
+      const before = playerXp?.level || 1, hadXp = !!playerXp;
       // This week's XP (Level Ladder) follows the gain while the UK week is the same.
       const week = getUkWeekKey(), weekXp = (playerXp?.week === week ? Number(playerXp.weekXp) || 0 : 0) + (Number(x.gained) > 0 ? Number(x.gained) : 0);
       playerXp = { total: Number(x.total) || 0, level: Number(x.level) || 1, week, weekXp };
@@ -18048,6 +18049,22 @@
       refreshXpDisplays();
       refreshMatchSummary();
       if (playerXp.level !== before) publishXpLevel();
+      if (hadXp && before < NO_MERCY_LEVEL && playerXp.level >= NO_MERCY_LEVEL) maybePromptNoMercyLesson();
+    }
+    // § No Mercy unlock prompt: the level-up that opens No Mercy offers its lesson once (device flag), on a calm home screen.
+    const NM_PROMPT_KEY = 'shithead_nm_prompt';
+    function maybePromptNoMercyLesson() {
+      if (IS_DEV_TEST_PAGE) return;
+      try { if (localStorage.getItem(NM_PROMPT_KEY) === '1') return; } catch (e) {}
+      if (getTutorialProgress().no_mercy) return;
+      const busy = () => state.isMultiplayer || tutorialActive || (state.phase && state.phase !== 'LOBBY')
+        || [...BLOCKING_OVERLAY_IDS, 'matchSummaryModal', 'dailyRewardModal', 'eventPopupModal', 'welcomeTour', 'shConfirm'].some(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
+      const tryShow = async (attempt) => {
+        if (busy()) { if (attempt < 240) setTimeout(() => tryShow(attempt + 1), 5000); return; }
+        try { localStorage.setItem(NM_PROMPT_KEY, '1'); } catch (e) {}
+        if (await shConfirm({ title: 'No Mercy unlocked', text: 'Queens X-ray, Kings and Aces take from the bottom of the Pile, and a Joker can\'t go on a 4. Learn it in a one-minute lesson?', yes: 'Start Lesson', no: 'Later' })) launchTutorialModule('no_mercy', { fromHub: false });
+      };
+      setTimeout(() => tryShow(0), 3000);
     }
     // Level rewards the server just granted ({ id, name, level }): owned at
     // once (Custom, Collection) with a banner and the Inbox unlock mail.

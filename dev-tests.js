@@ -6157,6 +6157,29 @@ async function runDevTestSuite() {
       out.remove();
     } finally { probe.remove(); perfMode = was; applyAccessibilityPrefs(); }
   });
+  await test('v541: the No Mercy lesson is an Advanced Tactics row, runs the real No Mercy rules, and is not needed for Tutorial Graduate', () => {
+    const mod = TUTORIAL_HUB_ADVANCED_MODULES.find(m => m.id === 'no_mercy');
+    assertTrue(mod && mod.noMercy && mod.optional, 'A No Mercy row sits in the Advanced Tactics list, flagged optional');
+    assertTrue(!getAllTutorialModuleIds().includes('no_mercy'), 'Tutorial Graduate does not wait for it');
+    freshState(); tutorialTestSetup(); launchTutorialModule('no_mercy', { fromHub: false });
+    try {
+      assertTrue(tutorialNoMercy && isNoMercy(), 'The lesson runs with No Mercy on');
+      assertTrue(/Not Standard Rules/.test(document.getElementById('tutorialModuleTitle').textContent), 'The caption says these are not the standard rules');
+      const run = (rank) => { const c = getAllSelectablePool(state.players[0]).find(x => x.rank === rank); executePlayCards('tut_you', [c]); };
+      const [you, coach, rival] = state.players;
+      showTutorialStep(1); run('Q');
+      assertEqual(noMercyKnownCards('tut_you', 'tut_bot').length, 1, 'The Queen X-rays one of Coach\'s cards');
+      showTutorialStep(2); const coachBefore = coach.hand.length; run('K');
+      assertEqual(coach.hand.length, coachBefore + 1, 'The King makes Coach take a card');
+      assertTrue(coach.hand.some(c => c.rank === '9' && c.suit === '♦'), 'It is the bottom card');
+      showTutorialStep(3); const cb = coach.hand.length, rb = rival.hand.length; run('A');
+      assertEqual([coach.hand.length - cb, rival.hand.length - rb], [1, 1], 'The Ace makes every opponent take one');
+      showTutorialStep(4);
+      const joker = you.hand.find(c => c.isJoker);
+      assertTrue(joker && !isPlayLegal(joker, state.discardPile, state.activeConstraint), 'A Joker cannot be played on the 4');
+    } finally { endTutorial(false); TUTORIAL_STEPS = TUTORIAL_STEPS_FULL_LEGACY; } // later tests read the default steps
+    assertTrue(!tutorialNoMercy && !isNoMercy(), 'Ending the lesson turns the rules off again');
+  });
   await test('v492: an open menu page pauses the CSS animations under it, and they resume when it closes', async () => {
     EXCLUSIVE_PAGE_IDS.forEach(id => { const el = document.getElementById(id); if (el) assertEqual(el.parentElement, document.body, `${id} sits at the top level of the page`); });
     const probe = document.createElement('div');

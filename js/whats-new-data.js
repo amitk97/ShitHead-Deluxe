@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v541: [['book', 'New No Mercy lesson in the Tutorial hub, under Advanced Tactics. You are offered it when you reach level 10 and No Mercy unlocks.', WN_KEY]],
       v540: [['sparkle', 'Behind the scenes: documentation and screenshots refreshed.']],
       v539: [['sparkle', 'Performance Mode makes the Hellfire Spiral burn lighter.']],
       v538: [['sparkle', 'Performance Mode makes the Shitstorm burn lighter (fewer debris pieces).']],

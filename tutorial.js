@@ -1,5 +1,6 @@
     // § Tutorial
     let tutorialActive = false;
+    let tutorialNoMercy = false; // the No Mercy lesson runs with those rules on (isNoMercy)
     let tutorialStep = 0;
     let tutorialBotPaused = false;   // blocks the Coach until the step says go
     // When true, a burn triggered inside executePlayCards is captured as
@@ -148,7 +149,7 @@
 
     function getAllTutorialModuleIds() {
       const builtCards = TUTORIAL_CARD_ROSTER.filter(c => c.steps);
-      return [...TUTORIAL_HUB_MODULES, ...TUTORIAL_HUB_ADVANCED_MODULES, ...builtCards].map(m => m.id);
+      return [...TUTORIAL_HUB_MODULES, ...TUTORIAL_HUB_ADVANCED_MODULES.filter(m => !m.optional), ...builtCards].map(m => m.id);
     }
     function hasCompletedFullTutorialLocally() {
       const ids = getAllTutorialModuleIds();
@@ -323,7 +324,7 @@
       // "JKR") rather than a full title like the other two registries.
       tutorialCurrentModuleTitle = mod.title || (mod.label ? `Card: ${mod.label}` : '');
       closeTutorialHub();
-      startTutorial(mod.steps, mod.players || 2);
+      startTutorial(mod.steps, mod.players || 2, { noMercy: !!mod.noMercy });
     }
 
     function tutorialSnapshot() {
@@ -488,8 +489,9 @@
     }
 
     let tutorialPrevSelectAll = null;
-    function startTutorial(moduleSteps, playerCount = 2) {
+    function startTutorial(moduleSteps, playerCount = 2, opts = {}) {
       state.multiDeck = false; state.noMercy = false;
+      tutorialNoMercy = !!opts.noMercy; state.peeks = {}; state.lastPeek = null;
       TUTORIAL_STEPS = moduleSteps || TUTORIAL_STEPS_FULL_LEGACY;
       tutorialActive = true;
       tutorialSettingsPaused = false;
@@ -647,7 +649,7 @@
     function renderTutorialCaption(step, idx, text) {
       document.getElementById('tutorialText').textContent = text;
       document.getElementById('tutorialStepCounter').textContent = `Step ${idx + 1} of ${TUTORIAL_STEPS.length}`;
-      document.getElementById('tutorialModuleTitle').textContent = `${tutorialCurrentModuleTitle} · Standard Rules`;
+      document.getElementById('tutorialModuleTitle').textContent = tutorialNoMercy ? `${tutorialCurrentModuleTitle} · Not Standard Rules` : `${tutorialCurrentModuleTitle} · Standard Rules`;
       // Back is ALWAYS available (except on the very first step) and performs a
       // genuine undo by restoring the snapshot taken when the step began.
       const backBtn = document.getElementById('tutorialBackBtn');
@@ -1456,7 +1458,7 @@
         tutorialPrevSelectAll = null;
         updateMultiSelectToggleUI();
       }
-      tutorialActive = false;
+      tutorialActive = false; tutorialNoMercy = false; state.peeks = {}; state.lastPeek = null;
       tutorialSettingsPaused = false;
       tutorialSettingsLocks();
       document.body.classList.remove('tutorial-on');
