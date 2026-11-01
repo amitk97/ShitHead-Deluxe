@@ -5004,11 +5004,12 @@
     const DOUBLE_TAP_PLAY_MS = 350;
     let lastCardTap = { id: null, at: 0 };
     // True when this tap is the second quick tap on a card that the first tap left staged.
-    function doubleTapPlayHit(cardId) {
+    // `ids` = every card the tap stands for (a grouped-hand stack stands for its whole rank).
+    function doubleTapPlayHit(cardId, ids = [cardId]) {
       const now = performance.now(), prev = lastCardTap;
       lastCardTap = { id: cardId, at: now };
       if (!doubleTapPlay || tutorialActive || prev.id !== cardId || now - prev.at > DOUBLE_TAP_PLAY_MS) return false;
-      if (!state.selectedPlayCardIds.includes(cardId)) return false;
+      if (!ids.some(id => state.selectedPlayCardIds.includes(id))) return false;
       lastCardTap = { id: null, at: 0 };
       document.getElementById('playSelectedBtn')?.click();
       return true;
@@ -7813,7 +7814,7 @@
             cardEl.onclick = () => {
               if (wasCardJustDragged(card.id)) return;
               if (handTapRedirected(card.id)) return;
-              if (state.phase === 'PLAY' && isMyTurn) handStackTap(stack);
+              if (state.phase === 'PLAY' && isMyTurn) { if (!doubleTapPlayHit(card.id, stack.map(c => c.id))) handStackTap(stack); }
               else if (state.phase === 'PLAY') {
                 if (handSnapEligible) executeLocalSnapBurn();
                 else showCardLockReason(getCardLockReason(card, 'hand', local));

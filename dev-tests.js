@@ -1882,6 +1882,22 @@ async function runDevTestSuite() {
       assertTrue(collectAccountSettings().doubleTapPlay === true, 'the setting is synced');
     } finally { [doubleTapPlay, executePlayCards, selectAllOfRank] = was; lastCardTap = { id: null, at: 0 }; }
   });
+  await test('v543: Double-Tap To Play also works on a stack in the grouped Multiple Decks hand', () => {
+    const was = [doubleTapPlay, executePlayCards, selectAllOfRank];
+    try {
+      freshState(); startSinglePlayerGame(3, null, { multiDeck: true });
+      const me = state.players[0]; state.phase = 'PLAY'; state.currentTurnIndex = 0; state.discardPile = [];
+      me.hand = state.drawPile.splice(0, 16); selectAllOfRank = false; state.selectedPlayCardIds = [];
+      const played = []; executePlayCards = (id, cards) => played.push(cards.length);
+
+      const g = groupHandByRank(me.hand).find(x => !x[0].isJoker);
+      const tap = () => document.querySelector(`#localHand .hand-stack[data-card-id="${g[0].id}"]`).click();
+      doubleTapPlay = true; lastCardTap = { id: null, at: 0 }; render();
+      tap(); assertEqual(played.length, 0, 'one tap only stages');
+      render(); tap();
+      assertEqual(played.length, 1, 'a second quick tap on the same stack plays it');
+    } finally { [doubleTapPlay, executePlayCards, selectAllOfRank] = was; lastCardTap = { id: null, at: 0 }; freshState(); }
+  });
   await test('v392: a Ranked swap shows at once and the server views wait until the last one answers', async () => {
     const was = [isServerRanked, rankedRequest, applyRankedView];
     try {
