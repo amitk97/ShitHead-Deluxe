@@ -76,6 +76,18 @@
       return (86400 - (p.hour * 3600 + p.minute * 60 + p.second)) * 1000;
     } catch (e) { return 3600e3; }
   }
+  // Seconds until the next UK week starts (Monday 00:00 UK), the same moment for every player.
+  function untilWeekMs() {
+    try {
+      const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hourCycle: 'h23', weekday: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date()).map(x => [x.type, x.value]));
+      const day = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(p.weekday);
+      return (604800 - (day * 86400 + (+p.hour) * 3600 + (+p.minute) * 60 + (+p.second))) * 1000;
+    } catch (e) { return 86400e3; }
+  }
+  function weekCountdown() {
+    const t = Math.max(0, Math.ceil(untilWeekMs() / 1000)), d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60, z = n => String(n).padStart(2, '0');
+    return `${d ? d + 'd ' : ''}${z(h)}h ${z(m)}m ${z(sec)}s`;
+  }
   const nextText = () => { const m = Math.max(1, Math.ceil(untilMidnightMs() / 60000)); return `Next spin in ${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`; };
 
   const SNAP_KEY = 'shithead_lucky_snapshot';
@@ -493,11 +505,14 @@
     const m = S.monty, big = bigAmt();
     if (!m) { btn.disabled = true; btn.textContent = 'NOT AVAILABLE YET'; if (sub) sub.textContent = 'Three Cards needs a connection.'; return; }
     const playing = M.phase === 'pick';
-    if (m.result && !m.canPlay) { btn.disabled = true; btn.textContent = 'BACK NEXT WEEK'; if (sub) sub.textContent = 'You have played this week’s game.'; return; }
+    if (m.result && !m.canPlay) { btn.disabled = true; btn.textContent = 'BACK NEXT WEEK'; if (sub) { sub.textContent = `Next game in ${weekCountdown()}`; sub.dataset.countdown = '1'; } return; }
+    if (sub) delete sub.dataset.countdown;
     btn.disabled = playing || !m.canPlay;
     btn.textContent = playing ? 'PICK A CARD' : m.started ? 'WATCH THE SHUFFLE AGAIN' : 'START';
     if (sub) sub.textContent = playing ? 'Tap the card you think hides the big prize.' : m.result ? `You have an extra go. Follow the ${big} Diamond card.` : `One free play every week. Follow the ${big} Diamond card.`;
   }
+  // One light timer keeps the "next game in" line live while the played state shows.
+  setInterval(() => { const sub = $('montySub'); if (sub && sub.dataset.countdown) sub.textContent = `Next game in ${weekCountdown()}`; }, 1000);
   function montyShowDone(r) {
     M.phase = 'done';
     M.els.forEach(el => { el.disabled = true; });
@@ -911,7 +926,7 @@
     open, close, winPop, closeWin, dropNote,
     onSignIn() { S.angle = 0; S.status = null; if (typeof devTestSuiteRunning === 'undefined' || !devTestSuiteRunning) { loadSnap(); paint(); } setTimeout(() => { if (typeof devTestSuiteRunning !== 'undefined' && devTestSuiteRunning) return; refresh(); startTimer(); }, 600); },
     reset() { try { localStorage.removeItem(SNAP_KEY); } catch (e) {} D.cards = null; S.status = null; S.monty = null; S.owned = {}; S.built = false; S.angle = 0; clearInterval(S.timer); paint(); $('wheelModal')?.classList.add('hidden'); },
-    refresh, state: S, tierOf
+    refresh, state: S, tierOf, weekCountdown, untilWeekMs, montyPaint
   };
   // Tap a prize row (avatar or card back) for the big preview.
   const lwPreview = (e) => { const r = e.target.closest && e.target.closest('[data-lw-preview]'); if (r && typeof openBigPreview === 'function') openBigPreview(r.dataset.lwPreview); };

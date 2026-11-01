@@ -1898,6 +1898,21 @@ async function runDevTestSuite() {
       assertEqual(played.length, 1, 'a second quick tap on the same stack plays it');
     } finally { [doubleTapPlay, executePlayCards, selectAllOfRank] = was; lastCardTap = { id: null, at: 0 }; freshState(); }
   });
+  await test('v544: Three Cards shows a live countdown to the next UK week once the week is played', () => {
+    const left = ShWheel.untilWeekMs();
+    assertTrue(left > 0 && left <= 7 * 86400e3, 'time left is within a week');
+    assertTrue(/^(\d+d )?\d\dh \d\dm \d\ds$/.test(ShWheel.weekCountdown()), 'format: ' + ShWheel.weekCountdown());
+    const was = ShWheel.state.monty;
+    try {
+      ShWheel.state.monty = { canPlay: false, result: { prize: 25, pick: 0, reveal: [25, 50, 300] } };
+      ShWheel.montyPaint();
+      const sub = document.getElementById('montySub');
+      assertTrue(/^Next game in /.test(sub.textContent) && sub.dataset.countdown === '1', 'the played state counts down: ' + sub.textContent);
+      ShWheel.state.monty = { canPlay: true, result: null };
+      ShWheel.montyPaint();
+      assertTrue(!sub.dataset.countdown && /One free play/.test(sub.textContent), 'a fresh week shows the normal line');
+    } finally { ShWheel.state.monty = was; }
+  });
   await test('v392: a Ranked swap shows at once and the server views wait until the last one answers', async () => {
     const was = [isServerRanked, rankedRequest, applyRankedView];
     try {
