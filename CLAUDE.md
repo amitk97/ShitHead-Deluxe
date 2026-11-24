@@ -8,9 +8,21 @@
 
 - `svg-animations` (supermemoryai/skills), `userinterface-wiki` (raphaelsalaja, MIT; its rules are UI/UX review guidance, a 300ms ceiling for user animations does NOT apply to the 2s burn effects) and `game-audio` (opusgamelabs/game-creator, MIT; written for Phaser, trimmed here: its Strudel section is removed because Strudel is AGPL). **This game's audio stays in `sound.js` (`SoundFX`, `BURN_SOUNDS`, `_burnKit`): use the skills' synthesis ideas (envelopes, noise, filters, mixing levels), never their AudioManager/AudioBridge file layout.** A shader skill was looked at and skipped (generic filler); the burn engine's shader notes are in this file.
 
+## Standing rule (owner, 24 Nov): a wording change goes everywhere
+
+- When a name or wording changes (a mode, item, challenge, button, lesson line), change it in ALL of: the code strings, the tutorial lessons and captions, the Guide and Key Terms, What's New, the catalog (`node tools/export-catalog.js`), tests, README and these notes. Internal ids (`noMercy`, `no_mercy`, `friendsMode`, `data-guide-section`, `PIN_MODES.mercy`, `back-nm-*`, counters such as `noMercyWins`) stay as they are: they are stored data and renaming them would break saves and the server. Grep the old words (every case) afterwards.
+
 ## v436 — Test Lab tries on card backs, tables, decks, frames, emotes and avatars (owner said "Go")
 
 - `js/test-lab.js` tabs Back / Table / Deck / Frame / Emote / Avatar (the old dummy-position tab is now "Setup"): tap an item (any in `customAllItems(type)`, decks from `deckItems()`) and `applyLook` sets it IN MEMORY: `equippedCosmetics[type] = id` + `applyEquippedCosmetics()` (the bot's seat gets the back, frame and avatar too), decks through `selectDeckTheme`. Never saved: while `state.labDummy` is set `applyEquippedCosmetics` and `selectDeckTheme` skip their localStorage writes, `eventBotItem` and `showHelperTip` stand down, and `open()` turns `syncShowcase`, `syncPublicProfile` and `scheduleSettingsCloudSave` into no-ops (like the win/history reports). `snapshotReal()` at open and `restoreReal()` on Exit / "My real look" put the account's own look back. Extras: next / previous / Auto-step (1.8s) and an emote strip that floats each emote of the chosen pack from your seat. Trap found: the file's `const CSS` string shadows `window.CSS`, so use `window.CSS.escape`. Client only; no rules, Functions or catalog change. Dev test "v436: the Test Lab tries looks on in memory only…". Frames: scratchpad `lab-shot.js` (fakes `currentUser` and `isAmitkTestingAccount` then clicks the tabs).
+
+## v545 — No Chill, Bubbly Pop, official sign-in button (Play Store preparation)
+
+- **No Mercy is now No Chill** in everything players see (mode card, chooser, lesson row and caption "No Chill · Not Standard Rules", Guide, Key Terms, card tips, challenges such as No Chill Veteran, What's New, README, server mail text). Reason: "No Mercy" is the name of Mattel's UNO Show 'Em No Mercy. Internal ids were deliberately left (see the standing rule above). Older notes in this file still say No Mercy: they mean the same mode.
+- **Champagne Pop is now Bubbly Pop** (name in `SEASONAL_EVENTS` new year names, catalog, What's New, comments); "champagne" is a protected name in the UK and EU. The bottle art and sound are unchanged.
+- **Continue with Google** is now the provider's light-theme button (`.gsi-btn`, game.css end): white, 1px #747775 border, pill, the official four-colour G (20px inline SVG), Roboto Medium 14px (falls back to Arial; Roboto is not loaded on purpose), not uppercase. Do not restyle it or swap the G (their branding rules).
+- `docs/ASSET-PROVENANCE.md` (new) lists where every asset came from. The git history was squashed (every file shows 2026-10-29), so git dates prove nothing: keep the ChatGPT / Gemini exports and Pixabay download pages instead.
+- Found, not changed: the London Underground deck's 12 court cards (`art/cities-v2/decks/london/J|Q|K-*.svg`) draw a red ring with a blue bar, a lookalike of the TfL roundel. Fonts are all SIL OFL (Cinzel, Outfit, Plus Jakarta Sans, Press Start 2P, Patrick Hand); the flag-emoji font is CC-BY 4.0 (credit line already in index.html). Functions deploy needed (catalog + economy text).
 
 ## v544 — Three Cards countdown; Season 1 launch checked
 

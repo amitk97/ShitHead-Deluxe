@@ -143,7 +143,7 @@
           o.connect(og).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + 0.2);
         });
       }
-      /* No Mercy Queen X-ray: a cyan scan sweep (filtered noise), then a soft two-note blip per revealed card. */
+      /* No Chill Queen X-ray: a cyan scan sweep (filtered noise), then a soft two-note blip per revealed card. */
       playPeekScan(count) {
         const ctx = this.ctx;
         if (!this.enabled || !ctx || ctx.state !== 'running') return;
@@ -816,8 +816,8 @@
         [2093, 2637, 3136].forEach((f) => k.tone({ at: 0.64, dur: 0.7, type: 'triangle', f0: f, level: 0.07 }));
         k.scatter(22, 0.7, 1.45, (at) => k.tone({ at, dur: 0.12, type: 'triangle', f0: 2800 + Math.random() * 1400, level: 0.05 }));
       },
-      // New Year (v409, champagne bottle v435): three clock ticks (3-2-1 at .05 / .23 / .41, rising) while the
-      // shaken bottle rattles and fizzes, the cork pops at midnight (.62) with a boom, then the champagne gushes
+      // New Year (v409, bubbly bottle v435): three clock ticks (3-2-1 at .05 / .23 / .41, rising) while the
+      // shaken bottle rattles and fizzes, the cork pops at midnight (.62) with a boom, then the bubbly gushes
       // (a long foamy hiss with glugs and fizzing bubbles to ~1.5s), confetti rustle and a chime run.
       // London Calling (v438): Routemaster Rush. Horn beep-beep (.04/.20s), the engine revs up as it approaches, impact at .55
       // (thump, crunch, glass), then it passes away (falling Doppler roar) while shards patter down.
@@ -1288,7 +1288,7 @@
       },
       // Midnight Joker: quick 3-2-1 ticks, a cork pop and firework crackle.
       'joker-newyear': (k) => {
-        // Clock ticks for 3-2-1, a bell at midnight, the cork pops, champagne fizz, three firework bursts and a bright chord.
+        // Clock ticks for 3-2-1, a bell at midnight, the cork pops, bubbly fizz, three firework bursts and a bright chord.
         [0.02, 0.17, 0.32].forEach((at, i) => k.tone({ at, dur: 0.07, type: 'square', f0: 1500 - i * 100, level: 0.1 }));
         k.tone({ at: 0.5, dur: 0.6, type: 'sine', f0: 880, level: 0.14 });
         k.tone({ at: 0.52, dur: 0.07, type: 'square', f0: 700, f1: 140, level: 0.4 });

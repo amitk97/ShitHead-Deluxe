@@ -994,7 +994,7 @@
     }
 
     // New Year: a gold clock ring fills round the card as 3-2-1 flash over it, at midnight the cork pops, the card
-    // bursts into gold shards, a champagne spray, confetti and streamers fly and starbursts crackle.
+    // bursts into gold shards, a bubbly spray, confetti and streamers fly and starbursts crackle.
     const NY_MID = .62, NY_TICKS = [.05, .23, .41];
     function bfxNewYear(host, x, y, k) {
       const st = procBurnStage(host, x, y, PFX_MS), { W, H, cx, cy, radius, anim, end, face } = st;
@@ -1014,9 +1014,9 @@
         const el = add(`left:${cx - H * .5}px;top:${cy - H * .5}px;width:${H}px;height:${H}px;z-index:6;display:flex;align-items:center;justify-content:center;font:800 ${H * .62}px/1 system-ui,sans-serif;color:#fff7d6;text-shadow:0 0 ${H * .08}px #facc15,0 0 ${H * .2}px rgba(250,204,21,.7)`, d), a = NY_TICKS[i];
         anim(el, fr(t => { const p = clamp((t - a) / .17); return { opacity: p > 0 && p < 1 ? 1 - sm(.6, 1, p) : 0, transform: `scale(${(1.6 - .6 * out(clamp(p * 3)) + .15 * p).toFixed(3)})` }; }));
       });
-      // The champagne bottle (green glass, gold foil, wire cage, label) stands at the card's right, tipped toward it.
+      // The bubbly bottle (green glass, gold foil, wire cage, label) stands at the card's right, tipped toward it.
       // It pops in, fizzes (bubbles rise inside), shakes harder with every tick, and at midnight the cork flies, foam
-      // pours down the neck and a stream of champagne and rising bubbles gushes out over the card.
+      // pours down the neck and a stream of bubbly and rising bubbles gushes out over the card.
       const Hb = H * 1.45, Wb = Hb * .34, bx = cx + W * .78, by = cy + H * .78, TH = -24 * Math.PI / 180;
       const mouthX = bx + Hb * Math.sin(TH), mouthY = by - Hb * Math.cos(TH);
       const dir = Math.atan2(-Math.cos(TH), Math.sin(TH));
@@ -1039,11 +1039,11 @@
         const sh = Math.sin(t * 95) * (.4 + 3.2 * g), sx = Math.sin(t * 83) * H * .012 * g;
         return { opacity: sm(0, .06, t) * (1 - sm(1.55, 1.95, t)), transform: `translate(${(sx + H * .06 * kick).toFixed(1)}px,${(H * .05 * kick + H * .15 * (1 - pop)).toFixed(1)}px) rotate(${(-24 + sh - 5 * kick).toFixed(2)}deg) scale(${((.5 + .5 * pop) * (1 + .05 * tk)).toFixed(3)})` };
       }));
-      // Midnight: the cork flies, the card bursts, champagne gushes, confetti, streamers and starbursts.
+      // Midnight: the cork flies, the card bursts, bubbly gushes, confetti, streamers and starbursts.
       pfxFly(st, kit, { x: mouthX, y: mouthY, w: H * .1, h: H * .14, t0: NY_MID, vx: Math.cos(dir) * H * 2.0, vy: Math.sin(dir) * H * 2.0, g: H * 3.4, spin: 9, floor: H * .55, bounce: .45, fade0: 1.6, z: 7,
         html: `<svg viewBox="0 0 20 26" width="100%" height="100%"><path d="M4 2h12l-2 20H6Z" fill="#b45309"/><path d="M4 2h12" stroke="#fde68a" stroke-width="2"/><path d="M7 8h6M7 13h6M7 18h6" stroke="#78350f" stroke-width="1"/></svg>` });
       pfxShatter(st, kit, { t0: NY_MID, ip: [W * .5, H * .5], cols: 4, rows: 6, speed: .85, edge: '#fff7d6', tint: i => `linear-gradient(135deg,${i % 2 ? 'rgba(250,204,21,.6)' : 'rgba(255,247,214,.5)'},rgba(250,204,21,.3))` });
-      for (let i = 0; i < 120; i++) { // the champagne stream: a thick arc of amber drops, strong at first and slowing as the bottle empties
+      for (let i = 0; i < 120; i++) { // the bubbly stream: a thick arc of amber drops, strong at first and slowing as the bottle empties
         const u = i / 120, a = dir + rand(-.06, .06) * (1 + 2 * u), sp = H * (2.6 - 1.1 * u) * rand(.97, 1.03), c = ['#fde68a', '#facc15', '#fff3b0', '#f5c542'][i % 4], w = H * rand(.045, .085);
         pfxFly(st, kit, { x: mouthX, y: mouthY, w, h: w * 1.6, rot: a + Math.PI / 2, t0: NY_MID + u * .85, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: H * 3.3, floor: H * .9, bounce: .08, fade0: 1.45 + u * .35 + rand(0, .1), z: 6,
           css: `border-radius:50% 50% 50% 50%/65% 65% 35% 35%;background:radial-gradient(circle at 35% 30%,#fff,${c} 50%,#d99a0b);box-shadow:0 0 ${H * .025}px rgba(250,204,21,.85)` });

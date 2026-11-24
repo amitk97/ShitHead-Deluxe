@@ -289,7 +289,7 @@ function milestoneEligible(user) {
   add(d.decksWins || [], num(user.matchCounters?.decksWins));
   add(d.decksSnaps || [], num(user.matchCounters?.decksSnaps));
   add(d.decksTop3 || [], num(user.matchCounters?.decksTop3));
-  // No Mercy: wins, Queens played and cards taken with Kings (matchCounters).
+  // No Chill: wins, Queens played and cards taken with Kings (matchCounters).
   add(d.noMercyWins || [], num(user.matchCounters?.noMercyWins));
   add(d.noMercyQueens || [], num(user.matchCounters?.nmQueens));
   add(d.noMercyKings || [], num(user.matchCounters?.nmKings));
@@ -892,7 +892,7 @@ actions.matchFinished = async ({ uid, data }) => {
       else decksTop3 = decksTop3 && !!dme && num(dme.finishRank) >= 1 && num(dme.finishRank) <= 3 && seats.length >= 6;
     }
   }
-  // No Mercy extras: Queens played and cards taken with Kings this game (a game cannot hold more than 40 of either).
+  // No Chill extras: Queens played and cards taken with Kings this game (a game cannot hold more than 40 of either).
   let nmQueens = 0, nmKings = 0;
   if (data.noMercy && typeof data.noMercy === 'object') {
     nmQueens = Math.max(0, Math.min(40, Math.trunc(num(data.noMercy.queens))));

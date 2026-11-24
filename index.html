@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-11-01-v544 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
+<!-- BUILD: 2026-11-24-v545 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -232,7 +232,7 @@
           Leave game.css unchanged and update the tailwind.css link
           version in index.html when publishing the rebuilt stylesheet.
        ============================================================ -->
-  <link rel="stylesheet" href="game.css?v=aa79adca1d80">
+  <link rel="stylesheet" href="game.css?v=709323d92769">
 
   
   <!-- Firebase SDKs -->
@@ -704,7 +704,7 @@
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="standard" style="--mc-tone:#10b981" aria-pressed="false"><span class="mc-num">3</span><svg class="mc-ic ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mode-standard"/></svg><strong class="mc-name">Standard</strong><small class="mc-sub">Classic rules</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="series" style="--mc-tone:#f59e0b" aria-pressed="false"><span class="mc-num">4</span><svg class="mc-ic ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mode-series"/></svg><strong class="mc-name">Best of Series</strong><small class="mc-sub">Best of 3 · 5 · 7</small><button type="button" class="mc-go" data-friends-go>Go →</button><span id="friendsSeriesLock" class="pf-lock"><svg class="ic"><use href="#ic-lock"/></svg><span>Level 5</span></span></div>
 <div role="button" tabindex="0" class="mc-card" data-friends-mode="twos" style="--mc-tone:#3b82f6" aria-pressed="false"><span class="mc-num">5</span><svg class="mc-ic ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mode-twos"/></svg><strong class="mc-name">2 vs 2</strong><small class="mc-sub">Team up with a partner</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
-<div role="button" tabindex="0" class="mc-card" data-friends-mode="noMercy" style="--mc-tone:#ef4444" aria-pressed="false"><span class="mc-num">6</span><svg class="mc-ic ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mode-mercy"/></svg><strong class="mc-name">No Mercy</strong><small class="mc-sub">Queens see. Kings take.</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
+<div role="button" tabindex="0" class="mc-card" data-friends-mode="noMercy" style="--mc-tone:#ef4444" aria-pressed="false"><span class="mc-num">6</span><svg class="mc-ic ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mode-mercy"/></svg><strong class="mc-name">No Chill</strong><small class="mc-sub">Queens see. Kings take.</small><button type="button" class="mc-go" data-friends-go>Go →</button></div>
 </div><div id="friendsCarouselControls" class="mc-controls"><button type="button" class="mc-arrow" data-friends-step="first" aria-label="First mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 6l-6 6 6 6M19 6l-6 6 6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="prev" aria-label="Previous mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="next" aria-label="Next mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="mc-arrow" data-friends-step="last" aria-label="Last mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6l6 6-6 6M11 6l6 6-6 6"/></svg></button></div><button type="button" id="friendsConfirmMode" class="hidden" tabindex="-1">HOST STANDARD ROOM</button>
 <div id="friendsRoomSettings" class="pf-ready-row hidden"><button type="button" id="friendsSettingsTrigger" class="pf-secondary" data-friends-config="house"><svg class="ic" viewBox="0 0 32 32"><use href="#ui-settings"/></svg><span>Custom Rules</span></button></div>
             <p id="friendsModeSummary" class="pf-summary" aria-live="polite"></p>
@@ -817,7 +817,7 @@
               <li class="mp-row"><span class="mp-row-text"><b>Puzzles</b><span>A set table and one way to win. A new puzzle every week.</span></span><button type="button" class="mp-open" data-open-puzzles>Play</button></li>
               <li class="mp-row"><span class="mp-row-text"><b>Randomiser</b><span>Card powers are shuffled every match and shown before the deal.</span></span><span class="mp-soon">Soon</span></li>
               <li class="mp-row"><span class="mp-row-text"><b>Multiple Decks</b><span>Two decks and four Jokers for 4 to 8 players. Four of a rank burn the Pile, and a Snap Burn plays every matching card. Hosting unlocks at Lvl 25.</span></span><button type="button" class="mp-open" data-open-decks>Play</button></li>
-              <li class="mp-row"><span class="mp-row-text"><b>No Mercy</b><span>Queens see hidden cards, no Jokers on a 4, Kings and Aces make others take cards. Unlocks at Lvl 10.</span></span><button type="button" class="mp-open" data-open-nomercy>Play</button></li>
+              <li class="mp-row"><span class="mp-row-text"><b>No Chill</b><span>Queens see hidden cards, no Jokers on a 4, Kings and Aces make others take cards. Unlocks at Lvl 10.</span></span><button type="button" class="mp-open" data-open-nomercy>Play</button></li>
             </ul>
           </div>
         </div>
@@ -1195,9 +1195,7 @@
            the redirect flow, wired up below, is what actually completes
            it). Styled to match the email/password submit button below it
            rather than the old greyed-out/disabled look. -->
-      <button id="googleSignInBtn" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-black uppercase tracking-wider text-white flex items-center justify-center gap-2 mb-3 transition">
-        <span aria-hidden="true">G</span> Continue with Google
-      </button>
+      <button id="googleSignInBtn" type="button" class="gsi-btn"><svg class="gsi-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span class="gsi-text">Continue with Google</span></button>
 
       <div class="flex items-center gap-2 mb-3">
         <div class="flex-1 bg-slate-800" style="height:1px;"></div>
@@ -1721,7 +1719,7 @@
           <div class="ch-sec" data-ch-title="Friends" data-ch-tone="emerald"><div id="challengesRecruitList" class="flex flex-col gap-1.5"></div></div>
           <div class="ch-sec" data-ch-title="2 vs 2" data-ch-tone="cyan"><div id="challengesTwosList" class="flex flex-col gap-1.5"></div></div>
           <div class="ch-sec" data-ch-title="Multiple Decks" data-ch-tone="violet"><div id="challengesDecksList" class="flex flex-col gap-1.5"></div></div>
-          <div class="ch-sec" data-ch-title="No Mercy" data-ch-tone="rose"><div id="challengesNoMercyList" class="flex flex-col gap-1.5"></div></div>
+          <div class="ch-sec" data-ch-title="No Chill" data-ch-tone="rose"><div id="challengesNoMercyList" class="flex flex-col gap-1.5"></div></div>
           <div class="ch-sec" data-ch-title="Hidden" data-ch-tone="violet"><div id="challengesHiddenList" class="flex flex-col gap-1.5"></div></div>
         </section>
         <section id="challengeTabDone" data-challenge-panel="done" class="hidden">
@@ -2339,7 +2337,7 @@
   <div id="noMercyModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="noMercyTitle">
     <div class="gauntlet-card twos-card">
       <button type="button" id="noMercyCloseBtn" class="gauntlet-close" aria-label="Close">✕</button>
-      <h2 id="noMercyTitle" class="gauntlet-title">No Mercy</h2>
+      <h2 id="noMercyTitle" class="gauntlet-title">No Chill</h2>
       <p class="gauntlet-text">Queens see a hidden card, no Joker goes on a 4, a King makes the next player take the bottom card of the Pile and an Ace makes every opponent take one. Unlocks at Lvl 10.</p>
       <div class="twos-label">Players at the table</div>
       <div id="noMercyCounts" class="decks-counts nm-counts" role="group" aria-label="Number of players">
@@ -2681,16 +2679,16 @@
         <!-- Puzzles (v343) -->
         <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="nomercy">
           <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs">
-            <span>No Mercy</span>
+            <span>No Chill</span>
             <span class="chevron transform transition-transform duration-200">&#9660;</span>
           </button>
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
-            <p><strong>What it is.</strong> A normal game with four extra rules, for 2 to 4 players. Open it from <em>More Modes</em> &rarr; <em>No Mercy</em>, or host it in <em>Play Friends</em>. It unlocks at level 10 and is never Ranked.</p>
+            <p><strong>What it is.</strong> A normal game with four extra rules, for 2 to 4 players. Open it from <em>More Modes</em> &rarr; <em>No Chill</em>, or host it in <em>Play Friends</em>. It unlocks at level 10 and is never Ranked.</p>
             <p><strong>Queen: X-ray.</strong> Each Queen you play shows you one random card in the next player's hand that you have not seen yet. Three Queens show three different cards. Face-Down cards can never be seen. A small tag at their seat reminds you of the card until it leaves their hand. If they have no hand cards, nothing happens.</p>
             <p><strong>King: bottom card.</strong> Each King makes the next player take one card from the bottom of the Pile into their hand, never one of the Kings you just played. A King on an empty Pile does nothing, and you get no extra go. Four Kings burn the Pile as usual, with no pick-up. A King at the bottom of the Pile can never be taken, and it stops the pick-up.</p>
             <p><strong>Ace: every opponent takes one.</strong> Each opponent, in turn order, takes ONE card from the bottom of the Pile, however many Aces you play, never one of the Aces you just played. An Ace at the bottom can never be taken and stops the pick-up, so with only your Ace on an empty Pile nobody takes anything. A King can be taken by an Ace, and an Ace by a King. You get no extra go, and four Aces burn the Pile as usual.</p>
             <p><strong>No Joker on a 4.</strong> A Joker cannot be played while a 4 is the card to beat. A 5 on a base 4 counts the same.</p>
-            <p><strong>Rewards.</strong> A win counts as a normal win (no bot-difficulty credit), and No Mercy wins feed a weekly challenge. Challenges: win games, play 50 Queens for <em>The Seer</em>, make others take 50 cards with Kings for <em>The Enforcer</em>. Ten wins unlock the Crimson Verdict card back and 25 wins its deck.</p>
+            <p><strong>Rewards.</strong> A win counts as a normal win (no bot-difficulty credit), and No Chill wins feed a weekly challenge. Challenges: win games, play 50 Queens for <em>The Seer</em>, make others take 50 cards with Kings for <em>The Enforcer</em>. Ten wins unlock the Crimson Verdict card back and 25 wins its deck.</p>
           </div>
         </div>
         <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60" data-guide-section="puzzles">
@@ -2799,7 +2797,7 @@
             <p data-term="menu"><strong class="text-amber-400">Menu:</strong> The &equiv; button at the right of the Header. It holds Challenges, Friends, Leaderboard, Level Ladder, Stats and Support, and gives you Shop, Custom and Guide whenever the Header has folded them away.</p>
             <p data-term="mode-card"><strong class="text-amber-400">Mode Card:</strong> One card in the row on the home screen: Gauntlet, Play Computer, Ranked, Play Friends and More Modes. Swipe or use the arrows, then tap Go (or the middle card) to open it. Press and hold a card to move it.</p>
             <p data-term="multiple-decks"><strong class="text-amber-400">Multiple Decks:</strong> A mode with two decks shuffled together (108 cards, 4 Jokers) for 4 to 8 players. Snap Burns play every matching card and a Joker chain can run to four.</p>
-            <p data-term="no-mercy"><strong class="text-amber-400">No Mercy:</strong> A mode with three extra rules: Queens X-ray a hidden card in the next player's hand, a King makes the next player take the bottom card of the Pile, and no Joker can be played on a 4.</p>
+            <p data-term="no-mercy"><strong class="text-amber-400">No Chill:</strong> A mode with three extra rules: Queens X-ray a hidden card in the next player's hand, a King makes the next player take the bottom card of the Pile, and no Joker can be played on a 4.</p>
             <p data-term="no-power"><strong class="text-amber-400">No Power:</strong> In House Rules, the rank behaves as a normal card with no special effect. Unlike Please Select, it is a valid completed choice.</p>
             <p data-term="pick-up"><strong class="text-amber-400">Pick Up:</strong> Taking the entire Pile into your Hand because you had no legal move. The setback of the game. If your Hand was already empty, you must also take one Face-Up Card (or several of the same rank) along with it.</p>
             <p data-term="pile"><strong class="text-amber-400">Pile:</strong> The face-up stack in the middle that everyone plays onto. Your card must match or beat the top card of the Pile &mdash; if you can't, you take the whole Pile into your Hand.</p>
@@ -2874,11 +2872,11 @@
   <script src="art/burns/icons.js?v=97c925509b37"></script>
   <script src="art/effects/icons.js?v=dc511958ba17"></script>
   <!-- SOUND ENGINE (embedded real recordings, no synthesized/procedural audio) -->
-  <script src="sound.js?v=5a97074a714b"></script>
+  <script src="sound.js?v=66eb56697c46"></script>
 
   <!-- BURN EMBER PARTICLE ENGINE -->
   <script src="art/cities-v2/city-effects.js?v=4e5acd905f79"></script>
-  <script src="burn-effects.js?v=60ed42b4e0b0"></script>
+  <script src="burn-effects.js?v=756d8ce0fab7"></script>
 
   <!-- KINETIC PROJECTILE ENGINE -->
   <script src="card-animations.js?v=38d2c950203b"></script>
@@ -2897,30 +2895,30 @@
   </div>
   <!-- GAMEPLAY ENGINE -->
   <script src="js/card-reference-data.js?v=e8e93ad152f4"></script>
-  <script src="js/card-reference-ui.js?v=9f69f1376876"></script>
+  <script src="js/card-reference-ui.js?v=967957c9ab3c"></script>
   <script src="js/card-reference-panel.js?v=24b27a802db1"></script>
   <script src="js/play-matrix-data.js?v=314a42b6e714"></script>
   <script src="js/play-matrix-rules.js?v=dd6da15b0146"></script>
-  <script src="js/play-matrix-ui.js?v=6a8c496bcbb8"></script>
+  <script src="js/play-matrix-ui.js?v=ede5322243a1"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
-  <script src="js/card-hold.js?v=29f57d09e518"></script>
-  <script src="js/whats-new-data.js?v=af56950c783a"></script>
+  <script src="js/card-hold.js?v=084690e5c579"></script>
+  <script src="js/whats-new-data.js?v=8467ed607cbe"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
-  <script src="cosmetics-data.js?v=08c3fa477b7a"></script>
-  <script src="tutorial-data.js?v=5826c8c74bc5"></script>
-  <script src="tutorial.js?v=37c1b635f85d"></script>
-  <script src="level-ladder.js?v=a3530640bc5b"></script>
+  <script src="cosmetics-data.js?v=afc8114a1c47"></script>
+  <script src="tutorial-data.js?v=c6c7b4c126e7"></script>
+  <script src="tutorial.js?v=66727852228b"></script>
+  <script src="level-ladder.js?v=3108cc7c12d4"></script>
   <script src="js/wishlist-store.js?v=664496c9f24f"></script>
   <script src="shop.js?v=1461a7528520"></script>
-  <script src="home-navigation.js?v=2264b5e08637"></script>
+  <script src="home-navigation.js?v=892541f40279"></script>
   <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=e49b25a2f9eb"></script>
+  <script src="app.js?v=e2df2f68360b"></script>
 
   <script src="js/house-rules.js?v=5d71fee2f41c"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>
   <script src="js/house-rules-presets.js?v=80f7a658ecb1"></script>
-  <script src="js/friends-lobby.js?v=223131fe903c"></script>
+  <script src="js/friends-lobby.js?v=a280b95792b2"></script>
   <script src="js/lucky-wheel.js?v=e9a3a29fd5f6"></script>
   <div id="welcomeTour" class="hidden" role="presentation"></div>
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>

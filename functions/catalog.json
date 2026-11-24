@@ -825,7 +825,7 @@
    "season": "newyear"
   },
   "burn-newyear": {
-   "name": "Champagne Pop",
+   "name": "Bubbly Pop",
    "cost": 1000,
    "season": "newyear"
   },
@@ -1228,13 +1228,13 @@
   },
   "avatar-nm-seer": {
    "name": "The Seer",
-   "requirement": "Play 50 Queens in No Mercy",
+   "requirement": "Play 50 Queens in No Chill",
    "type": "nmQueens",
    "min": 50
   },
   "avatar-nm-enforcer": {
    "name": "The Enforcer",
-   "requirement": "Make other players take 50 cards with Kings in No Mercy",
+   "requirement": "Make other players take 50 cards with Kings in No Chill",
    "type": "nmKings",
    "min": 50
   },
@@ -1303,13 +1303,13 @@
   },
   "back-nm-verdict": {
    "name": "Crimson Verdict",
-   "requirement": "Win 10 games of No Mercy",
+   "requirement": "Win 10 games of No Chill",
    "type": "nmWins",
    "min": 10
   },
   "deck-nm-verdict": {
    "name": "Crimson Verdict",
-   "requirement": "Win 25 games of No Mercy",
+   "requirement": "Win 25 games of No Chill",
    "type": "nmWins",
    "min": 25
   },
@@ -2069,7 +2069,7 @@
     },
     {
      "id": "win-nomercy",
-     "name": "No Mercy",
+     "name": "No Chill",
      "target": 5
     }
    ]
@@ -2457,7 +2457,7 @@
    },
    {
     "id": "no-mercy-veteran",
-    "name": "No Mercy Veteran",
+    "name": "No Chill Veteran",
     "target": 10,
     "reward": 300
    },

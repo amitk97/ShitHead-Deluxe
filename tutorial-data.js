@@ -595,13 +595,13 @@
       }
     ];
 
-    // --- Module: No Mercy -------------------------------------------------
-    // Runs with the No Mercy rules on (module flag noMercy -> tutorialNoMercy,
+    // --- Module: No Chill -------------------------------------------------
+    // Runs with the No Chill rules on (module flag noMercy -> tutorialNoMercy,
     // read by isNoMercy()). Three seats so the Ace has two opponents to hit.
     // Pile scenes list the BOTTOM card first: Kings and Aces take from there.
     const TUTORIAL_MODULE_NO_MERCY = [
       {
-        text: "No Mercy is the normal game with four twists: one each for the Queen, King, Ace and Joker.",
+        text: "No Chill is the normal game with four twists: one each for the Queen, King, Ace and Joker.",
         target: '#opponentsContainer',
         captionPlace: 'low'
       },
@@ -655,11 +655,11 @@
           coach: [['6', '♦'], ['10', '♠']], rival: [['5', '♥'], ['8', '♠']]
         },
         require: { tapCheck: '#localHand [data-rank="JOKER"]' },
-        coachNote: "Refused. In No Mercy a Joker can't be played on a 4. On anything else it works as usual.",
+        coachNote: "Refused. In No Chill a Joker can't be played on a 4. On anything else it works as usual.",
         noteTarget: ['#localHand [data-rank="JOKER"]', '#pileZone']
       },
       {
-        text: "That's all four. Play No Mercy from More Modes once you reach level 10.",
+        text: "That's all four. Play No Chill from More Modes once you reach level 10.",
         target: '#opponentsContainer',
         captionPlace: 'low'
       }
@@ -875,7 +875,7 @@
 
     const TUTORIAL_MODULE_CARD_Q = [
       {
-        text: "Under Standard Rules, the Queen is a plain high card: equal or higher wins. No Mercy gives Queens a different power.",
+        text: "Under Standard Rules, the Queen is a plain high card: equal or higher wins. No Chill gives Queens a different power.",
         target: null
       },
       {
@@ -890,7 +890,7 @@
 
     const TUTORIAL_MODULE_CARD_K = [
       {
-        text: "Under Standard Rules, the King is a plain high card, beaten by an Ace or certain power cards. No Mercy gives Kings a different power.",
+        text: "Under Standard Rules, the King is a plain high card, beaten by an Ace or certain power cards. No Chill gives Kings a different power.",
         target: null
       },
       {
@@ -1072,7 +1072,7 @@
       { id: 'bonus_draw', title: 'Bonus Draw', time: '~20 sec', desc: 'A free follow-up play', steps: TUTORIAL_MODULE_BONUS_DRAW, players: 2 },
       { id: 'cross_phase', title: 'Cross-Phase Combo', time: '~30 sec', desc: 'Reach Face-Up cards early', steps: TUTORIAL_MODULE_CROSS_PHASE, players: 2 },
       { id: 'joker_duel', title: 'Joker Duel', time: '~40 sec', desc: 'Choose a target, risk a counter', steps: TUTORIAL_MODULE_JOKER_DUEL, players: 3 },
-      // optional: not part of Tutorial Graduate (No Mercy itself unlocks at level 10)
-      { id: 'no_mercy', title: 'No Mercy', time: '~1 min', desc: 'Queen, King, Ace and Joker twists', steps: TUTORIAL_MODULE_NO_MERCY, players: 3, noMercy: true, optional: true }
+      // optional: not part of Tutorial Graduate (No Chill itself unlocks at level 10)
+      { id: 'no_mercy', title: 'No Chill', time: '~1 min', desc: 'Queen, King, Ace and Joker twists', steps: TUTORIAL_MODULE_NO_MERCY, players: 3, noMercy: true, optional: true }
     ];
 

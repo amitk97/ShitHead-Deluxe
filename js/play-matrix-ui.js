@@ -14,7 +14,7 @@ function renderMatrixReference() {
     let rowData = isHouseRulesMatch()
       ? PLAY_MATRIX_RANKS.map((col) => houseMatrixLegal(row, col) ? 1 : 0)
       : PLAY_MATRIX[row];
-    // No Mercy: a Joker cannot be played on a 4.
+    // No Chill: a Joker cannot be played on a 4.
     if (rowData && row === 'JOKER' && isNoMercy() && !isHouseRulesMatch()) rowData = rowData.map((v, i) => PLAY_MATRIX_RANKS[i] === '4' ? 0 : v);
     if (!rowData) return; // Defensive: validatePlayMatrix() already
     // guarantees this can't happen, but a render function should never

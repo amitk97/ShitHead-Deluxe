@@ -3029,7 +3029,7 @@ body.reduce-motion .rail-row { transition: none; }
 .decks-count { padding:.45rem 0; font-size:.8rem; font-weight:900; border-radius:.55rem; border:2px solid #334155; background:rgba(15,23,42,.9); color:#cbd5e1; }
 .decks-count[aria-pressed="true"] { border-color:#6366f1; color:#fff; background:rgba(79,70,229,.35); }
 
-/* § No Mercy: Queen X-ray (blueprint look; cards show only to the Queen's player) */
+/* § No Chill: Queen X-ray (blueprint look; cards show only to the Queen's player) */
 .nm-peek { position:fixed; z-index:66; pointer-events:none; display:flex; align-items:center; justify-content:center; gap:.3rem; overflow:visible; }
 .nm-peek-scan { position:absolute; left:0; right:0; top:0; height:3px; background:linear-gradient(90deg,transparent,#67e8f9,transparent); box-shadow:0 0 12px 3px rgba(34,211,238,.6); opacity:0; }
 .nm-peek-chip { position:absolute; top:-9px; padding:0 .4rem; font-size:9px; font-weight:900; letter-spacing:.14em; color:#082f49; background:#67e8f9; border-radius:999px; box-shadow:0 0 10px rgba(34,211,238,.7); }
@@ -3039,7 +3039,7 @@ body.reduce-motion .rail-row { transition: none; }
 .decks-counts.nm-counts { grid-template-columns:repeat(3,1fr); }
 .ch-tone-rose { color:#fb7185; }
 
-/* § No Mercy deck: Crimson Verdict (parchment faces; the owner's portraits on Q, K and Joker) */
+/* § No Chill deck: Crimson Verdict (parchment faces; the owner's portraits on Q, K and Joker) */
 .theme-nmverdict { --card-bg: #efe3cc; --card-border: #7a5a2a; --text-light: #1a1410; --text-red: #b3141f; }
 .theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back), .deck-mini-card.theme-nmverdict { background-image: radial-gradient(ellipse at 50% 40%, rgba(255,255,255,.35), transparent 70%), linear-gradient(180deg, #f3e8d2, #dcc9a6); box-shadow: inset 0 0 0 1px rgba(122,90,42,.55), inset 0 0 10px rgba(90,60,20,.25); }
 .theme-nmverdict :is(.card-base,.card-table,.card-opponent-slot) .card-corner-rank, .deck-mini-card.theme-nmverdict .dm-rank { font-family: 'Cinzel', Georgia, serif; }
@@ -3271,7 +3271,7 @@ body.perf-mode :is(.mc-ic, .daily-flame, .season-emoji, .card-centre-icon) { fil
 body.perf-mode #lobbyScreen *, body.perf-mode #lobbyScreen *::before, body.perf-mode #lobbyScreen *::after { animation-play-state: paused !important; }
 body.perf-mode svg [class*="av-"], body.perf-mode svg [class*="av-"]::before, body.perf-mode svg [class*="av-"]::after { animation-play-state: paused !important; }
 
-/* No Mercy lesson: a slim caption over the player's own table row, so the opponents stay visible */
+/* No Chill lesson: a slim caption over the player's own table row, so the opponents stay visible */
 #tutorialCaption.tut-low { padding: 6px 10px; }
 #tutorialCaption.tut-low #tutorialModuleTitle { display: none; }
 #tutorialCaption.tut-low .tutorial-caption-head { margin-bottom: 2px; }
@@ -3280,7 +3280,7 @@ body.perf-mode svg [class*="av-"], body.perf-mode svg [class*="av-"]::before, bo
 #tutorialCaption.tut-low #tutorialBackBtn, #tutorialCaption.tut-low #tutorialNextBtn { padding: 3px 12px; }
 #tutorialCaption.tut-low #tutorialSkipBtn { min-height: 24px; }
 #tutorialCaption.tut-low .tutorial-caption-head { min-height: 0; margin-bottom: 0; }
-/* Short phones: the No Mercy lesson drops the top caption room and the history strip so opponents, Pile, Play and hand all fit */
+/* Short phones: the No Chill lesson drops the top caption room and the history strip so opponents, Pile, Play and hand all fit */
 @media (max-height: 720px) {
   body.tutorial-on:has(#tutorialCaption.tut-low) #gameTable { padding-top: 4px; scroll-padding-top: 4px; gap: 4px; padding-bottom: 4px; }
   body.tutorial-on:has(#tutorialCaption.tut-low) #opponentsContainer { padding-top: 36px !important; } /* room for an opened hand fan */
@@ -3295,3 +3295,10 @@ body.perf-mode svg [class*="av-"], body.perf-mode svg [class*="av-"]::before, bo
   body.tutorial-on #tutorialCaption.tut-low #tutorialBackBtn, body.tutorial-on #tutorialCaption.tut-low #tutorialNextBtn { min-height: 34px; }
   body.tutorial-on #tutorialCaption.tut-low > .flex { margin-top: 3px; }
 }
+
+/* Sign-in button (v545): the provider's light-theme spec: white, 1px #747775 border, pill, official four-colour G at 20px, Roboto Medium 14px, never uppercase. */
+.gsi-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 12px; margin-bottom: .75rem; background: #fff; color: #1f1f1f; border: 1px solid #747775; border-radius: 20px; font: 500 14px/20px Roboto, "Helvetica Neue", Arial, sans-serif; letter-spacing: .25px; text-transform: none; cursor: pointer; transition: background-color .15s, box-shadow .15s; }
+.gsi-btn:hover { background: #f0f0f0; box-shadow: 0 1px 2px rgba(60,64,67,.3); }
+.gsi-btn:focus-visible { outline: 2px solid #1a73e8; outline-offset: 2px; }
+.gsi-btn:disabled { opacity: .6; cursor: default; }
+.gsi-logo { flex: none; display: block; }

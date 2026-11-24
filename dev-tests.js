@@ -2066,7 +2066,7 @@ async function runDevTestSuite() {
       localStorage.setItem('shithead_home_pins', JSON.stringify({ pin1: 'puzzles', pin2: 'mercy' })); ShHomeCarousel.repaintPins();
       const tone = (m) => document.querySelector(`#modeCarousel [data-mc-mode="${m}"]`).style.getPropertyValue('--mc-tone').trim().toLowerCase();
       assertEqual(tone('pin1'), ShHomeCarousel.pinTones().puzzles.toLowerCase(), 'a pinned Puzzles card shows its colour');
-      assertEqual(tone('pin2'), ShHomeCarousel.pinTones().mercy.toLowerCase(), 'a pinned No Mercy card shows its colour');
+      assertEqual(tone('pin2'), ShHomeCarousel.pinTones().mercy.toLowerCase(), 'a pinned No Chill card shows its colour');
       localStorage.removeItem('shithead_home_pins'); ShHomeCarousel.repaintPins();
       assertEqual(tone('pin1'), '#64748b', 'an empty slot stays neutral');
     } finally { if (was === null) localStorage.removeItem('shithead_home_pins'); else localStorage.setItem('shithead_home_pins', was); ShHomeCarousel.repaintPins(); }
@@ -2159,7 +2159,7 @@ async function runDevTestSuite() {
     const savedSeen = localStorage.getItem('shithead_tips_seen'), savedOn = helperTipsOn;
     try {
       localStorage.removeItem('shithead_tips_seen'); helperTipsOn = true; hideHelperTip();
-      assertEqual(Object.keys(HELPER_TIPS).length, 34, 'Thirty-four tips (v292 added seven, v293 ten, v391 three for 2 vs 2, v460 five for No Mercy)');
+      assertEqual(Object.keys(HELPER_TIPS).length, 34, 'Thirty-four tips (v292 added seven, v293 ten, v391 three for 2 vs 2, v460 five for No Chill)');
       const v293 = { 'forced-pickup': 'Picked up. Lower cards are easier to get rid of next turn.', 'ten-burn': 'A 10 burns the Pile, and you go again.',
         'four-burn': 'Four of the same rank in a row burns the Pile too.', 'three-played': 'A 3 is transparent: the next player must beat the card under it.',
         'last-card': 'One card left: try to make them pick up.', 'swap-phase': "Swap your best cards onto the table now. You'll need them later.",
@@ -6188,13 +6188,13 @@ async function runDevTestSuite() {
       out.remove();
     } finally { probe.remove(); perfMode = was; applyAccessibilityPrefs(); }
   });
-  await test('v541: the No Mercy lesson is an Advanced Tactics row, runs the real No Mercy rules, and is not needed for Tutorial Graduate', () => {
+  await test('v541: the No Chill lesson is an Advanced Tactics row, runs the real No Chill rules, and is not needed for Tutorial Graduate', () => {
     const mod = TUTORIAL_HUB_ADVANCED_MODULES.find(m => m.id === 'no_mercy');
-    assertTrue(mod && mod.noMercy && mod.optional, 'A No Mercy row sits in the Advanced Tactics list, flagged optional');
+    assertTrue(mod && mod.noMercy && mod.optional, 'A No Chill row sits in the Advanced Tactics list, flagged optional');
     assertTrue(!getAllTutorialModuleIds().includes('no_mercy'), 'Tutorial Graduate does not wait for it');
     freshState(); tutorialTestSetup(); launchTutorialModule('no_mercy', { fromHub: false });
     try {
-      assertTrue(tutorialNoMercy && isNoMercy(), 'The lesson runs with No Mercy on');
+      assertTrue(tutorialNoMercy && isNoMercy(), 'The lesson runs with No Chill on');
       assertTrue(/Not Standard Rules/.test(document.getElementById('tutorialModuleTitle').textContent), 'The caption says these are not the standard rules');
       const run = (rank) => { const c = getAllSelectablePool(state.players[0]).find(x => x.rank === rank); executePlayCards('tut_you', [c]); };
       const [you, coach, rival] = state.players;
@@ -7535,31 +7535,31 @@ async function runDevTestSuite() {
       assertTrue(isMultiDeck(), 'the room plays as Multiple Decks');
     } finally { freshState(); }
   });
-  await test('v453: a weekly No Mercy challenge starts in W45 and a No Mercy win sends its event', () => {
+  await test('v453: a weekly No Chill challenge starts in W45 and a No Chill win sends its event', () => {
     assertTrue(weeklyRulesFor('2026-W44').pool.every(c => c.id !== 'win-nomercy'), 'W44 is unchanged');
-    assertTrue(weeklyRulesFor('2026-W45').pool.some(c => c.id === 'win-nomercy' && c.target === 5), 'No Mercy from W45');
+    assertTrue(weeklyRulesFor('2026-W45').pool.some(c => c.id === 'win-nomercy' && c.target === 5), 'No Chill from W45');
     assertTrue(weeklyRulesFor('2026-W45').pool.some(c => c.id === 'win-twos'), 'older challenges stay in the pool');
   });
 
-  await test('v457: the card rules popup explains the No Mercy Queen, King and Joker', () => {
+  await test('v457: the card rules popup explains the No Chill Queen, King and Joker', () => {
     const was = state.noMercy, mp = state.isMultiplayer;
     try {
       state.isMultiplayer = false;
       state.noMercy = false;
-      assertTrue(cardReferenceLabel('Q') === 'High' && !/No Mercy/.test(cardReferenceText('K')), 'normal games keep the normal text');
+      assertTrue(cardReferenceLabel('Q') === 'High' && !/No Chill/.test(cardReferenceText('K')), 'normal games keep the normal text');
       state.noMercy = true;
       assertTrue(/X-Ray/.test(cardReferenceLabel('Q')) && /X-rays/.test(cardReferenceText('Q')), 'Queen');
       assertTrue(/bottom/.test(cardReferenceText('K')) && /Bottom/.test(cardReferenceLabel('K')), 'King');
       assertTrue(/4/.test(cardReferenceText('JOKER')) && /Joker/.test(cardReferenceText('4')), 'Joker and 4');
     } finally { state.noMercy = was; state.isMultiplayer = mp; }
   });
-  await test('v457: the Play Matrix shows the Joker as not playable on a 4 in No Mercy', () => {
+  await test('v457: the Play Matrix shows the Joker as not playable on a 4 in No Chill', () => {
     const was = state.noMercy, mp = state.isMultiplayer, open = matrixRefOpen;
     const cell = () => { renderMatrixReference(); const rows = [...document.querySelectorAll('#matrixRefTable tbody tr')]; const jr = rows[rows.length - 1]; return jr.children[1 + PLAY_MATRIX_RANKS.indexOf('4')].textContent; };
     try {
       state.isMultiplayer = false; matrixRefOpen = true;
       state.noMercy = false; assertTrue(cell() === '✓', 'normal: Joker on a 4 is fine');
-      state.noMercy = true; assertTrue(cell() === '✗', 'No Mercy: Joker on a 4 is refused');
+      state.noMercy = true; assertTrue(cell() === '✗', 'No Chill: Joker on a 4 is refused');
     } finally { state.noMercy = was; state.isMultiplayer = mp; matrixRefOpen = open; }
   });
   await test('v517: the home screen has a pull-down update indicator', () => {
@@ -7572,7 +7572,7 @@ async function runDevTestSuite() {
     assertTrue(!/online|players/i.test(fb.textContent.replace(/Play the computer instead/i, '')), 'no player counts shown');
     assertTrue(document.getElementById('rankedFallbackBtn'), 'button exists');
     const lv = [...ladderRewards().values()].flat().filter((x) => x.kind !== 'item');
-    assertTrue(lv.some((x) => /No Mercy/.test(x.name)) && lv.some((x) => /Gifting/.test(x.name)), 'non-cosmetic unlocks exist');
+    assertTrue(lv.some((x) => /No Chill/.test(x.name)) && lv.some((x) => /Gifting/.test(x.name)), 'non-cosmetic unlocks exist');
     assertTrue(document.getElementById('devInfoBody') && document.getElementById('devInfoBack'), 'dev info panel exists');
   });
   await test('v515: a refused card says why, and a forced pickup says what the Pile needed', () => {
@@ -7621,7 +7621,7 @@ async function runDevTestSuite() {
       assertTrue(/Everyone Takes/.test(cardReferenceLabel('A')) === !!state.noMercy, 'card rules show the Ace');
     } finally { freshState(); }
   });
-  await test('v459: No Mercy bots like an Ace that hits opponents and not one that does nothing', () => {
+  await test('v459: No Chill bots like an Ace that hits opponents and not one that does nothing', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
       freshState(); startSinglePlayerGame(2); state.noMercy = true;
@@ -7635,7 +7635,7 @@ async function runDevTestSuite() {
       assertTrue(evaluateMoveUtility(bot, 'A', [c('a', 'A')], [c('p1', '8'), c('p2', '9')], null, 'hard', true) === blocked, 'normal games are unchanged');
     } finally { freshState(); }
   });
-  await test('v460: No Mercy card tips show twice at most, once a game, and bots like a King that hits', () => {
+  await test('v460: No Chill card tips show twice at most, once a game, and bots like a King that hits', () => {
     const keep = localStorage.getItem('shithead_tip_counts');
     try {
       localStorage.removeItem('shithead_tip_counts');
@@ -7655,7 +7655,7 @@ async function runDevTestSuite() {
       assertTrue(hit - blocked === 50, 'King hit ' + hit + ' blocked ' + blocked);
     } finally { if (keep === null) localStorage.removeItem('shithead_tip_counts'); else localStorage.setItem('shithead_tip_counts', keep); helperTipGame = { id: null, keys: new Set() }; freshState(); }
   });
-  await test('v461: No Mercy is locked below Lvl 10 (unless XP is off) in the chooser, Friends and the Ladder', () => {
+  await test('v461: No Chill is locked below Lvl 10 (unless XP is off) in the chooser, Friends and the Ladder', () => {
     const on = xpFeatureOn, pxp = playerXp, cu = currentUser;
     try {
       xpFeatureOn = false;
@@ -7667,7 +7667,7 @@ async function runDevTestSuite() {
       assertTrue(document.getElementById('noMercyBotsBtn').disabled && document.getElementById('noMercyFriendsBtn').disabled, 'chooser buttons are disabled');
       assertTrue(/Lvl 10/.test(document.getElementById('noMercyNote').textContent), 'the chooser says why');
       closeNoMercyChoice();
-      assertTrue(ladderRewards().get(NO_MERCY_LEVEL).some(p => p.name === 'No Mercy'), 'the Ladder lists it at Lvl 10');
+      assertTrue(ladderRewards().get(NO_MERCY_LEVEL).some(p => p.name === 'No Chill'), 'the Ladder lists it at Lvl 10');
       playerXp = { total: xpForLevel(10), level: 10 };
       assertTrue(noMercyUnlocked(), 'Lvl 10 is open');
       openNoMercyChoice();
@@ -7677,7 +7677,7 @@ async function runDevTestSuite() {
   });
   await test('v518: Multiple Decks hosting unlocks at Lvl 25, Best of 5 and 7 and the Gauntlet follow the new levels', () => {
     assertEqual(MULTI_DECK_LEVEL, 25, 'Multiple Decks at Lvl 25');
-    assertEqual(NO_MERCY_LEVEL, 10, 'No Mercy at Lvl 10');
+    assertEqual(NO_MERCY_LEVEL, 10, 'No Chill at Lvl 10');
     assertEqual([GAUNTLET.modes.hard.level, GAUNTLET.modes.boss.level], [20, 50], 'Hard 20, Boss 50');
     assertEqual(SERIES_RULES.guestLevels, { 7: 30 }, 'only Best of 7 asks the guest');
     const on = xpFeatureOn, pxp = playerXp, cu = currentUser;
@@ -7804,10 +7804,10 @@ async function runDevTestSuite() {
       assertEqual(document.querySelectorAll(`#opp-${b.id} .opp-hand-fan-known`).length, 1, 'only the seen card shows its face');
     } finally { freshState(); }
   });
-  await test('v462: the end page names No Mercy and Multiple Decks games', () => {
+  await test('v462: the end page names No Chill and Multiple Decks games', () => {
     try {
       freshState(); startSinglePlayerGame(2); state.noMercy = true; state.difficulty = 'hard';
-      assertTrue(matchModeLabel() === 'No Mercy · 2 bots · Hard', matchModeLabel());
+      assertTrue(matchModeLabel() === 'No Chill · 2 bots · Hard', matchModeLabel());
       freshState(); startSinglePlayerGame(3, null, { multiDeck: true }); state.difficulty = 'hard';
       assertTrue(/^Multiple Decks · 3 bots/.test(matchModeLabel()), matchModeLabel());
       freshState(); startSinglePlayerGame(2); state.difficulty = 'hard';
@@ -7828,7 +7828,7 @@ async function runDevTestSuite() {
     } finally { freshState(); }
   });
 
-  await test('v452: Hard bots use the Queen X-ray; Easy and Medium ignore it; the Guide and Key Terms cover No Mercy', () => {
+  await test('v452: Hard bots use the Queen X-ray; Easy and Medium ignore it; the Guide and Key Terms cover No Chill', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
       freshState(); startSinglePlayerGame(1, null, { noMercy: true });
@@ -7849,7 +7849,7 @@ async function runDevTestSuite() {
     } finally { freshState(); }
   });
 
-  await test('v451: No Mercy rewards: challenges, The Seer and The Enforcer avatars, Crimson Verdict back and deck, counters', () => {
+  await test('v451: No Chill rewards: challenges, The Seer and The Enforcer avatars, Crimson Verdict back and deck, counters', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
       assertEqual(CHALLENGE_DEFS.noMercyQueens[0].target, 50, 'Sixth Sense asks for 50 Queens');
@@ -7857,7 +7857,7 @@ async function runDevTestSuite() {
       assertTrue(!!AVATAR_ART['avatar-nm-seer'] && !!AVATAR_ART['avatar-nm-enforcer'], 'both avatars have art');
       assertTrue(customAllItems('avatar').some(i => i.id === 'avatar-nm-seer'), 'The Seer is listed in Custom');
       assertTrue(customAllItems('cardBack').some(i => i.id === 'back-nm-verdict') && deckItems().some(i => i.id === 'deck-nm-verdict'), 'the back and deck are listed');
-      assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.nm), 'nothing from No Mercy is sold in the Shop');
+      assertTrue(!COSMETIC_SHOP_ITEMS.some(i => i.nm), 'nothing from No Chill is sold in the Shop');
       assertEqual(EARNED_AVATAR_RULES['back-nm-verdict'].min, 10, 'the back follows 10 wins');
       assertTrue(/cosmetic-back-nm-verdict/.test(getThemeDeckBackClass('back-nm-verdict')), 'the back has a class');
       freshState(); startSinglePlayerGame(1, null, { noMercy: true });
@@ -7873,7 +7873,7 @@ async function runDevTestSuite() {
     } finally { freshState(); }
   });
 
-  await test('v450: No Mercy has a chooser, a Friends card, a pin, and its room mode drives the rules', () => {
+  await test('v450: No Chill has a chooser, a Friends card, a pin, and its room mode drives the rules', () => {
     try {
       document.querySelector('[data-open-nomercy]').click();
       assertTrue(!document.getElementById('noMercyModal').classList.contains('hidden'), 'the chooser opens');
@@ -7883,11 +7883,11 @@ async function runDevTestSuite() {
       document.getElementById('noMercyCloseBtn').click();
       assertTrue(document.getElementById('noMercyModal').classList.contains('hidden'), 'the chooser closes');
       assertTrue(!!document.querySelector('#friendsModeCarousel [data-friends-mode="noMercy"]'), 'a Friends carousel card');
-      assertTrue(typeof ShFriendsLobby.openNoMercy === 'function', 'the lobby can open on No Mercy');
+      assertTrue(typeof ShFriendsLobby.openNoMercy === 'function', 'the lobby can open on No Chill');
       freshState(); state.isMultiplayer = true; state.friendsMode = 'noMercy';
-      assertTrue(isNoMercy() && lobbyCap() === 4, 'a No Mercy room, four seats');
+      assertTrue(isNoMercy() && lobbyCap() === 4, 'a No Chill room, four seats');
       state.friendsMode = 'standard'; assertTrue(!isNoMercy(), 'other rooms are unchanged');
-      assertTrue(!!ShHomeCarousel.pinTones().mercy, 'No Mercy can be pinned');
+      assertTrue(!!ShHomeCarousel.pinTones().mercy, 'No Chill can be pinned');
     } finally { freshState(); }
   });
 
@@ -7917,7 +7917,7 @@ async function runDevTestSuite() {
     } finally { document.querySelectorAll('.nm-peek').forEach(e => e.remove()); }
   });
 
-  await test('v448: No Mercy: no Joker on a 4, Kings take the bottom card, Queens peek a fresh hand card each, a four-King pile burns', () => {
+  await test('v448: No Chill: no Joker on a 4, Kings take the bottom card, Queens peek a fresh hand card each, a four-King pile burns', () => {
     try {
       const c = (id, rank, suit = '\u2665') => ({ id, rank, suit });
       const setup = () => {
@@ -7928,7 +7928,7 @@ async function runDevTestSuite() {
         return [a, b];
       };
       let [a, b] = setup();
-      assertTrue(isNoMercy(), 'No Mercy table');
+      assertTrue(isNoMercy(), 'No Chill table');
       const joker = { id: 'jk', rank: 'JOKER', suit: 'JOKER', isJoker: true };
       assertTrue(!isPlayLegal(joker, [c('p4', '4')], null), 'no Joker on a 4');
       assertTrue(isPlayLegal(joker, [c('p5', '5')], null), 'a Joker still goes on anything else');
@@ -7964,7 +7964,7 @@ async function runDevTestSuite() {
       freshState(); startSinglePlayerGame(1); state.phase = 'PLAY'; state.currentTurnIndex = 0; state.drawPile = [];
       const [na, nb] = state.players; na.hand = [c('k1', 'K'), c('x1', '5')]; nb.hand = [c('b1', '6')]; nb.faceUp = [c('bf', '9')]; na.faceUp = [c('af', '9')]; na.faceDown = []; nb.faceDown = []; state.discardPile = [c('bot', '7'), c('mid', '9')];
       executePlayCards(na.id, [na.hand[0]]);
-      assertEqual(nb.hand.length, 1, 'no pick-up outside No Mercy');
+      assertEqual(nb.hand.length, 1, 'no pick-up outside No Chill');
       // Four Kings burn instead of taking a card.
       [a, b] = setup(); a.hand = [c('k4', 'K', '\u2663'), c('x1', '5')]; b.hand = [c('b1', '6')];
       state.discardPile = [c('k1', 'K'), c('k2', 'K', '\u2660'), c('k3', 'K', '\u2666')];
@@ -9905,7 +9905,7 @@ async function runDevTestSuite() {
       assertTrue(!!pick, 'The middle Shortcut offers the coming modes');
       pick.click();
       assertEqual(JSON.parse(localStorage.getItem('shithead_home_pins')).pin1, 'mercy', 'The pin is saved');
-      assertTrue(/No Mercy/.test(document.querySelector('.mc-card[data-mc="1"]').textContent), 'and the card shows it');
+      assertTrue(/No Chill/.test(document.querySelector('.mc-card[data-mc="1"]').textContent), 'and the card shows it');
     } finally {
       try { if (savedPins == null) localStorage.removeItem('shithead_home_pins'); else localStorage.setItem('shithead_home_pins', savedPins); } catch (e) {}
       hideInfoPop(); if (wasHidden) lobby.classList.add('hidden');
@@ -11757,7 +11757,7 @@ async function runDevTestSuite() {
       openThemesPanel();
       const area = document.getElementById('themesGridArea');
       const tiles = [...area.querySelectorAll('[data-equip-type="deck"]')];
-      assertEqual(tiles.length, 18, 'Five free decks, twelve Shop decks and the earned No Mercy deck');
+      assertEqual(tiles.length, 18, 'Five free decks, twelve Shop decks and the earned No Chill deck');
       ['deck-obsidian', 'deck-emerald', 'deck-cyber', 'deck-crimson', 'deck-bigprint'].forEach(id => assertTrue(!area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is free`));
       ['deck-casino', 'deck-arcade', 'deck-fourcolour'].forEach(id => assertTrue(area.querySelector(`[data-equip-id="${id}"]`).hasAttribute('data-locked'), `${id} is locked until bought`));
       assertTrue(area.querySelector('[data-equip-id="deck-fourcolour"]').textContent.includes('750'), 'Four-Colour shows its premium price');

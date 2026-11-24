@@ -1082,7 +1082,7 @@
     function whyNotPlayable(card, pile = state.discardPile) {
       const generic = "That card can't be played here.";
       if (!card || isHouseRulesMatch()) return generic;
-      if (card.isJoker) return isNoMercy() ? "No Mercy: a Joker can't go on a 4." : generic;
+      if (card.isJoker) return isNoMercy() ? "No Chill: a Joker can't go on a 4." : generic;
       const top = state.baseOverrideCard || getEffectiveTopCard(pile);
       if (!top) return generic;
       const me = plainRankName(card.rank), tw = plainRankName(top.rank);
@@ -1163,7 +1163,7 @@
         score += (22 - rankVal);
       }
 
-      // No Mercy (Hard and Boss only): use the cards a Queen showed us in the next player's hand.
+      // No Chill (Hard and Boss only): use the cards a Queen showed us in the next player's hand.
       // A play that none of their known cards can answer is better; one they can answer is worse.
       if ((difficulty === 'hard' || difficulty === 'boss') && isNoMercy() && nextOpponent && !sameTeam(nextOpponent, bot)) {
         const known = noMercyKnownCards(bot.id, nextOpponent.id);
@@ -1173,10 +1173,10 @@
         }
       }
 
-      // No Mercy King (Medium, Hard and Boss): the next player takes a bottom card, so play it when it will hit
+      // No Chill King (Medium, Hard and Boss): the next player takes a bottom card, so play it when it will hit
       // (the bottom card is not a King and the Pile has cards under it).
       if (((state.stalemate && state.stalemate.turns) || 0) < 40 && candidateRank === 'K' && isNoMercy() && difficulty !== 'easy' && pileSize > 0 && discardPile[0].rank !== 'K') score += 50;
-      // No Mercy Ace (Medium, Hard and Boss): every opponent takes one bottom card, so play it when it will hit
+      // No Chill Ace (Medium, Hard and Boss): every opponent takes one bottom card, so play it when it will hit
       // someone (the bottom card is not an Ace and the Pile has cards to give), and more so the more opponents it hits.
       if (((state.stalemate && state.stalemate.turns) || 0) < 40 && candidateRank === 'A' && isNoMercy() && difficulty !== 'easy' && pileSize > 0 && discardPile[0].rank !== 'A') {
         const opps = state.players.filter(p => !p.hasFinished && p.id !== bot.id && !sameTeam(p, bot)).length;
@@ -1662,7 +1662,7 @@
       state.isMultiplayer = false;
       state.isRanked = false;
       state.multiDeck = !!opts.multiDeck;
-      state.noMercy = !!opts.noMercy; state.peeks = {}; state.lastPeek = null; // § No Mercy
+      state.noMercy = !!opts.noMercy; state.peeks = {}; state.lastPeek = null; // § No Chill
       handGroupOverride = null; railActiveId = null; railPeekId = null;
       state.gauntlet = opts.gauntlet ? { ...opts.gauntlet } : null; // § Gauntlet
       state.rankedRatingApplied = false;
@@ -3295,10 +3295,10 @@
       // Online the room's mode is the truth (every phone reads it); solo games carry the flag.
       return state.isMultiplayer ? state.friendsMode === 'decks' : !!state.multiDeck;
     }
-    // § No Mercy: Queens X-ray the next player, Kings take the bottom card, no Joker on a 4.
+    // § No Chill: Queens X-ray the next player, Kings take the bottom card, no Joker on a 4.
     function isNoMercy() {
       if (state.isRanked) return false;
-      if (tutorialActive) return tutorialNoMercy; // only the No Mercy lesson
+      if (tutorialActive) return tutorialNoMercy; // only the No Chill lesson
       return state.isMultiplayer ? state.friendsMode === 'noMercy' : !!state.noMercy;
     }
     // Hand cards of `target` that `viewer` has already seen through a Queen (only ones still in the hand).
@@ -4393,7 +4393,7 @@
     }
 
     // Midnight: a clock ticks 11:57 to 12 as 3-2-1 pops (.15, .6, 1.05s); at 1.5s the bell strikes, a cork
-    // flies, champagne sprays and five fireworks open (1.5-2.45s) over gold confetti and HAPPY NEW YEAR.
+    // flies, bubbly sprays and five fireworks open (1.5-2.45s) over gold confetti and HAPPY NEW YEAR.
     const NEWYEAR = { counts: [150, 600, 1050], midnight: 1500, bursts: [1500, 1700, 1900, 2100, 2300] };
     function vfxNewYear(layer) {
       const [W, H] = vfxSize(layer), D = 3700, k = Math.min(1, W / 390), cx = W / 2, cy = H * .27, CS = Math.min(W * .46, 190);
@@ -4412,7 +4412,7 @@
       [[ring, 0], [ring2, 200]].forEach(([r, d]) => bfxAnimate(r, [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(.9)', opacity: 1, offset: .12 }, { transform: 'scale(3)', opacity: 0 }], { duration: 800, delay: NEWYEAR.midnight + d, easing: 'cubic-bezier(.1,.7,.3,1)' }));
       const COLS = [['#fde68a', '#fbbf24', '#fff'], ['#f472b6', '#fb7185', '#fff'], ['#22d3ee', '#818cf8', '#fff'], ['#fde047', '#fb923c', '#fff'], ['#a7f3d0', '#fde68a', '#fff']];
       [[.2, .22], [.8, .2], [.5, .14], [.28, .62], [.74, .6]].forEach(([fx, fy], i) => vfxSparkBurst(layer, W * fx, H * fy, Math.min(W * .3, 125), NEWYEAR.bursts[i], COLS[i], 32, k));
-      // The cork and a spray of champagne.
+      // The cork and a spray of bubbly.
       const cork = bfxAdd(layer, '<div style="width:100%;height:100%;border-radius:40% 40% 30% 30%;background:linear-gradient(90deg,#a16207,#d4a017 50%,#92400e);border:1.5px solid #451a03"></div>', cx, H * .86, 14 * k, 20 * k);
       bfxAnimate(cork, vfxSample(24, t => { const s = t * 1.3, y = H * .86 - H * .75 * s + .5 * H * 1.2 * s * s * 2; return { transform: `translate(${(Math.sin(s * 4) * 16 * k).toFixed(1)}px,${(y - H * .86).toFixed(1)}px) rotate(${(s * 700).toFixed(0)}deg)`, opacity: t < .85 ? 1 : (1 - t) / .15 }; }), { duration: 1300, delay: NEWYEAR.midnight, easing: 'linear' });
       for (let i = 0; i < 26; i++) {
@@ -10270,7 +10270,7 @@
       else payload.roomCode = state.roomCode;
       if (mode === 'bots' && isTwos()) payload.twos = true; // § 2 vs 2: no difficulty unlock credit
       if (mode === 'bots' && isMultiDeck()) payload.decks = true; // Multiple Decks: the same
-      if (mode === 'bots' && isNoMercy()) payload.noMercy = true; // No Mercy: no difficulty credit either
+      if (mode === 'bots' && isNoMercy()) payload.noMercy = true; // No Chill: no difficulty credit either
       const attempt = (tries) => callEconomy('matchWin', payload).catch((error) => {
         if (mode === 'online' && tries > 0) return new Promise(r => setTimeout(r, 2500)).then(() => attempt(tries - 1));
         throw error;
@@ -10452,7 +10452,7 @@
       window.ShFriendsLobby?.openDecks();
     });
 
-    // § No Mercy chooser: 2-4 players (you plus bots at a chosen difficulty), or Play Friends.
+    // § No Chill chooser: 2-4 players (you plus bots at a chosen difficulty), or Play Friends.
     let noMercyPlayers = 2;
     function paintNoMercyCounts() {
       document.querySelectorAll('#noMercyCounts [data-n]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.n) === noMercyPlayers)));
@@ -12463,7 +12463,7 @@
         table: { base: '#5c2c10', rim: 'inset 0 0 0 3px #dc2626,inset 0 0 0 5px #fde68a,inset 0 0 46px rgba(20,8,3,.7)', label: 'rgba(254,240,138,.9)' },
         frame: ['inset 0 0 0 1px #fde68a,inset 0 0 0 3px #dc2626,0 0 9px rgba(250,204,21,.65)', '0 0 0 1px #dc2626,0 0 5px rgba(250,204,21,.55)'], back: { color: '#f8fafc', ink: '#dc2626', border: '#15803d' } },
       { id: 'newyear', name: "New Year's", title: 'Happy New Year', emoji: '🎆', when: '27 December – 7 January', tones: ['#020617', '#d4a017', '#fde68a'],
-        names: { tableTheme: 'Midnight Skyline', cardBack: 'Black Tie', frame: 'Gold Fizz', burnEffect: 'Champagne Pop', jokerEffect: 'Midnight Joker', victoryEffect: 'Countdown', avatar: 'Disco Ball', earned: 'Party Joker', emotes: 'Cheers' },
+        names: { tableTheme: 'Midnight Skyline', cardBack: 'Black Tie', frame: 'Gold Fizz', burnEffect: 'Bubbly Pop', jokerEffect: 'Midnight Joker', victoryEffect: 'Countdown', avatar: 'Disco Ball', earned: 'Party Joker', emotes: 'Cheers' },
         burnIcon: '🍾', victoryIcon: '🎆', emotes: ['🥂', '🎆', '🎉', '🕛', '🍾', '✨'],
         table: { base: '#1e1b4b', rim: 'inset 0 0 0 3px #d4a017,inset 0 0 50px rgba(0,0,0,.7)', label: 'rgba(253,230,138,.85)' },
         frame: ['inset 0 0 0 1px #fff7d6,inset 0 0 0 2px #d4a017,0 0 10px rgba(253,230,138,.7)', '0 0 0 1px #d4a017,0 0 5px rgba(253,230,138,.55)'], back: { color: '#0a0a0a', ink: '#d4a017', border: '#d4a017' } }
@@ -13568,7 +13568,7 @@
         { offset: .27, transform: 'rotate(0deg)', opacity: 1 }, { offset: .32, transform: 'rotate(0deg)', opacity: 1 }, { offset: .4, transform: 'rotate(0deg) scale(1.9)', opacity: 0 }, { offset: 1, opacity: 0 }], { duration: JOKER_FX_MS - 40, easing: 'linear' });
       ['3', '2', '1'].forEach((n, i) => sfxPop(host, `<div class="svfx-count" style="font-size:${px}px">${n}</div>`, g.cx, g.cy + 6 * k, px * 1.4, px * 1.3,
         [{ transform: 'scale(1.9)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .3 }, { transform: 'scale(.92)', opacity: 1, offset: .75 }, { transform: 'scale(.6)', opacity: 0 }], 190, 20 + i * 150));
-      // Midnight: flash, cork, a fizz of champagne, confetti, three firework bursts.
+      // Midnight: flash, cork, a fizz of bubbly, confetti, three firework bursts.
       sfxFlash(host, g.cx, g.cy, k, 'rgba(254,243,199,.95)', 320, 520, POP);
       const cork = bfxAdd(host, sfxSvg(20, 30, '<rect x="3" y="8" width="14" height="20" rx="3" fill="#b45309" stroke="#78350f" stroke-width="2"/><rect x="1" y="2" width="18" height="9" rx="3" fill="#fbbf24" stroke="#92400e" stroke-width="2"/>'), g.cx, g.cy + 10 * k, 20 * k, 30 * k);
       bfxAnimate(cork, [{ transform: 'translate(0,0) rotate(0)', opacity: 0 }, { transform: `translate(${14 * k}px,${-90 * k}px) rotate(160deg)`, opacity: 1, offset: .25 }, { transform: `translate(${34 * k}px,${-180 * k}px) rotate(360deg)`, opacity: 1, offset: .55 },
@@ -14871,7 +14871,7 @@
     // count. Folded groups are remembered per tab (localStorage
     // shithead_custom_groups_collapsed, keys "<type>:<group>").
     const CUSTOM_GROUPS = [['free', 'Free'], ['shop', 'Shop'], ['ranked', 'Earn in Ranked'], ['gauntlet', 'Earn in the Gauntlet'],
-      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['lucky', 'Lucky Games'], ['events', 'Earn in No Mercy'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
+      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['lucky', 'Lucky Games'], ['events', 'Earn in No Chill'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
     const CUSTOM_GROUPS_KEY = 'shithead_custom_groups_collapsed';
     const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
     function customGroupOf(item) {
@@ -15268,7 +15268,7 @@
     function matchModeLabel() {
       const bots = state.players.filter(p => p.isBot).length;
       if (state.isRanked) return 'Ranked match';
-      const special = isNoMercy() ? 'No Mercy' : isMultiDeck() ? 'Multiple Decks' : (state.isMultiplayer && isHouseRulesMatch()) ? 'House Rules' : '';
+      const special = isNoMercy() ? 'No Chill' : isMultiDeck() ? 'Multiple Decks' : (state.isMultiplayer && isHouseRulesMatch()) ? 'House Rules' : '';
       if (state.isMultiplayer) return isTwos() ? '2 vs 2 · Online' : special ? `${special} · Online · ${state.players.length} players` : `Online · ${state.players.length} players`;
       if (state.gauntlet) { const gm = gauntletModeOf(state.gauntlet), gr = Math.min(state.gauntlet.round, gauntletRounds(gm).length - 1); return `${gm === 'easy' ? 'Gauntlet' : `${gauntletMode(gm).name} Gauntlet`} · Round ${gr + 1} · ${gauntletRoundLabel(gr, gm)}`; }
       const diff = String(state.difficulty || 'medium');
@@ -15539,7 +15539,7 @@
     }
     // Gifting unlocks at XP_RULES.giftLevel (owner, v289; the server checks
     // too). With XP switched off there is no lock, like the speed locks.
-    // No Mercy unlocks at Lvl 10 (owner, v518; was 25). No lock while XP is off.
+    // No Chill unlocks at Lvl 10 (owner, v518; was 25). No lock while XP is off.
     const NO_MERCY_LEVEL = 10;
     // Multiple Decks: hosting needs Lvl 25 (owner, v518); joining a friend's room has no lock.
     const MULTI_DECK_LEVEL = 25;
@@ -15564,7 +15564,7 @@
       return !!currentUser && !!playerXp && xpLevelFor(playerXp.total) >= NO_MERCY_LEVEL;
     }
     function noMercyLockReason() {
-      return noMercyUnlocked() ? '' : `No Mercy unlocks at Lvl ${NO_MERCY_LEVEL}${currentUser ? '. Finish a few more games to get there.' : '. Sign in and play to level up.'}`;
+      return noMercyUnlocked() ? '' : `No Chill unlocks at Lvl ${NO_MERCY_LEVEL}${currentUser ? '. Finish a few more games to get there.' : '. Sign in and play to level up.'}`;
     }
     function giftLockReason() {
       if (typeof xpShown === 'function' && !xpShown()) return '';
@@ -16101,7 +16101,7 @@
     }
     // Unlock Levels: one row per unlock, level in a left column, filter chips on top.
     let devUnlockFilter = 'all';
-    const devUnlockGroup = (x) => x.kind === 'item' ? 'items' : x.kind === 'badge' ? 'badges' : /Best of|No Mercy|Gauntlet/.test(x.name) ? 'modes' : 'other';
+    const devUnlockGroup = (x) => x.kind === 'item' ? 'items' : x.kind === 'badge' ? 'badges' : /Best of|No Chill|Gauntlet/.test(x.name) ? 'modes' : 'other';
     function openDevUnlocks(filter) {
       if (filter) devUnlockFilter = filter;
       const chips = [['all', 'All'], ['modes', 'Game modes'], ['items', 'Custom items'], ['badges', 'Badges'], ['other', 'Other']];
@@ -17232,7 +17232,7 @@
       { id:'win-twos', name:'Team Player', desc:'Win 5 matches of 2 vs 2.', target:5 }
     ];
     const WEEKLY_CHALLENGE_POOL_V4 = [...WEEKLY_CHALLENGE_POOL_V3,
-      { id:'win-nomercy', name:'No Mercy', desc:'Win 5 matches of No Mercy.', target:5 }
+      { id:'win-nomercy', name:'No Chill', desc:'Win 5 matches of No Chill.', target:5 }
     ];
     // Oldest first; `from` = the first UK week the rule applies to.
     const WEEKLY_CHALLENGE_RULES = [
@@ -17347,11 +17347,11 @@
       decksTop3: [
         { id: 'crowd-pleaser', name: 'Crowd Pleaser', target: 1, reward: 150 }
       ],
-      // No Mercy (matchCounters.noMercyWins / nmQueens / nmKings, counted by the server);
+      // No Chill (matchCounters.noMercyWins / nmQueens / nmKings, counted by the server);
       // 50 Queens unlock The Seer avatar, 50 King pick-ups The Enforcer, 10 wins the Crimson Verdict card back, 25 wins the deck.
       noMercyWins: [
         { id: 'first-blood', name: 'First Blood', target: 1, reward: 100 },
-        { id: 'no-mercy-veteran', name: 'No Mercy Veteran', target: 10, reward: 300 },
+        { id: 'no-mercy-veteran', name: 'No Chill Veteran', target: 10, reward: 300 },
         { id: 'crimson-verdict', name: 'Crimson Verdict', target: 25, reward: 400 }
       ],
       noMercyQueens: [
@@ -18052,7 +18052,7 @@
       if (playerXp.level !== before) publishXpLevel();
       if (hadXp && before < NO_MERCY_LEVEL && playerXp.level >= NO_MERCY_LEVEL) maybePromptNoMercyLesson();
     }
-    // § No Mercy unlock prompt: the level-up that opens No Mercy offers its lesson once (device flag), on a calm home screen.
+    // § No Chill unlock prompt: the level-up that opens No Chill offers its lesson once (device flag), on a calm home screen.
     const NM_PROMPT_KEY = 'shithead_nm_prompt';
     function maybePromptNoMercyLesson() {
       if (IS_DEV_TEST_PAGE) return;
@@ -18063,7 +18063,7 @@
       const tryShow = async (attempt) => {
         if (busy()) { if (attempt < 240) setTimeout(() => tryShow(attempt + 1), 5000); return; }
         try { localStorage.setItem(NM_PROMPT_KEY, '1'); } catch (e) {}
-        if (await shConfirm({ title: 'No Mercy unlocked', text: 'Queens X-ray, Kings and Aces take from the bottom of the Pile, and a Joker can\'t go on a 4. Learn it in a one-minute lesson?', yes: 'Start Lesson', no: 'Later' })) launchTutorialModule('no_mercy', { fromHub: false });
+        if (await shConfirm({ title: 'No Chill unlocked', text: 'Queens X-ray, Kings and Aces take from the bottom of the Pile, and a Joker can\'t go on a 4. Learn it in a one-minute lesson?', yes: 'Start Lesson', no: 'Later' })) launchTutorialModule('no_mercy', { fromHub: false });
       };
       setTimeout(() => tryShow(0), 3000);
     }
@@ -18414,9 +18414,9 @@
         case 'decksWins': return def.target === 1 ? 'Win a game of Multiple Decks.' : `Win ${def.target} games of Multiple Decks.`;
         case 'decksSnaps': return `Snap Burn ${plural(def.target, 'time', 'times')} in Multiple Decks.`;
         case 'decksTop3': return 'Finish in the top three of a Multiple Decks game with 6 or more players.';
-        case 'noMercyWins': return def.target === 1 ? 'Win a game of No Mercy.' : `Win ${def.target} games of No Mercy.`;
-        case 'noMercyQueens': return `Play ${def.target} Queens in No Mercy to X-ray a hidden card.`;
-        case 'noMercyKings': return `Make other players take ${def.target} cards from the bottom of the Pile with Kings in No Mercy.`;
+        case 'noMercyWins': return def.target === 1 ? 'Win a game of No Chill.' : `Win ${def.target} games of No Chill.`;
+        case 'noMercyQueens': return `Play ${def.target} Queens in No Chill to X-ray a hidden card.`;
+        case 'noMercyKings': return `Make other players take ${def.target} cards from the bottom of the Pile with Kings in No Chill.`;
         case 'recruits': return `Recruit ${def.target} players: friends who join with your invite link and play ${REFERRAL.gamesNeeded} games.`;
         default: return '';
       }
@@ -18989,11 +18989,11 @@
       'twos-team': 'Your partner sits opposite. Your team wins when you are both out.',
       'twos-out': 'You are out. Your partner plays on, and your team wins when they finish too.',
       'twos-eight': 'An 8 skips the next player. Two 8s also skip your partner.',
-      'nm-4': 'No Mercy: a Joker cannot be played on a 4.',
-      'nm-q': 'No Mercy: a Queen shows you one hidden card in the next player\'s hand.',
-      'nm-k': 'No Mercy: a King makes the next player take a card from the bottom of the Pile.',
-      'nm-a': 'No Mercy: an Ace makes every opponent take one card from the bottom of the Pile.',
-      'nm-joker': 'No Mercy: a Joker cannot be played while a 4 is the card to beat.'
+      'nm-4': 'No Chill: a Joker cannot be played on a 4.',
+      'nm-q': 'No Chill: a Queen shows you one hidden card in the next player\'s hand.',
+      'nm-k': 'No Chill: a King makes the next player take a card from the bottom of the Pile.',
+      'nm-a': 'No Chill: an Ace makes every opponent take one card from the bottom of the Pile.',
+      'nm-joker': 'No Chill: a Joker cannot be played while a 4 is the card to beat.'
     };
     const HELPER_TIPS_SEEN_KEY = 'shithead_tips_seen';
     const HELPER_TIP_MS = 8000;
@@ -19002,7 +19002,7 @@
     function helperTipsSeen() {
       try { return new Set(JSON.parse(localStorage.getItem(HELPER_TIPS_SEEN_KEY) || '[]')); } catch (e) { return new Set(); }
     }
-    // No Mercy card tips show a limited number of times (first two games the card turns up), not just once.
+    // No Chill card tips show a limited number of times (first two games the card turns up), not just once.
     const HELPER_TIP_TIMES = { 'nm-4': 2, 'nm-q': 2, 'nm-k': 2, 'nm-a': 2, 'nm-joker': 2 };
     const HELPER_TIP_COUNTS_KEY = 'shithead_tip_counts';
     function helperTipCounts() { try { return JSON.parse(localStorage.getItem(HELPER_TIP_COUNTS_KEY) || '{}') || {}; } catch (e) { return {}; } }
@@ -19573,7 +19573,7 @@
     // (openGuideTerm). Each term links once per line; text inside tags is
     // left alone. Slugs are the Key Terms' data-term ids.
     const KEY_TERM_LINKS = [
-      ['No Mercy', 'no-mercy'],
+      ['No Chill', 'no-mercy'],
       ['Snap Burns?', 'snap-burn'], ['4-of-a-kind|four of a kind', 'four-of-a-kind'],
       ['Joker challenges?|Deflect', 'duel'], ['Bonus Draw', 'bonus-draw'], ['Hard Gauntlet', 'hard-gauntlet'], ['Boss Gauntlet', 'boss-gauntlet'], ['Gauntlet', 'gauntlet'],
       ['Quick Start', 'quick-start'], ['face-down cards?|face-down|blind', 'face-down-cards'],
