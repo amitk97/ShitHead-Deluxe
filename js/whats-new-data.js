@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v552: [['sparkle', 'The how-to-play video on the home screen is new: it shows the current game and the Shed Head name.']],
       v551: [['sparkle', 'The first-time tour now shows Exit and the free Lucky Games, and mentions where Puzzles, 2 vs 2 and Cold Blooded live. The Guide\'s Menu and Shortcut Card entries are up to date.']],
       v550: [['sparkle', 'The No Chill mode is now called Cold Blooded, in the mode card, lesson, Guide and challenges. The 50-Kings challenge that had that name is now King\'s Toll.']],
       v549: [['sparkle', 'The ShitStorm burn is now The Angry Twister. The loser badge and the burn tile no longer use the poop emoji, and Profile links to the Privacy Policy, Terms and account deletion help.']],

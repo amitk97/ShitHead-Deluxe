@@ -1,6 +1,6 @@
 const path = require('path');
 const { openGame, finish, wait } = require('./director');
-const OUT = path.join(__dirname, 'shithead-how-to-play.webm');
+const OUT = path.join(__dirname, 'shed-head-how-to-play.webm');
 const SHOTS = process.argv.includes('--shots');
 (async () => {
   const g = await openGame(OUT); const { page } = g;
@@ -15,7 +15,7 @@ const SHOTS = process.argv.includes('--shots');
   const DRAW = [['3','♦'],['K','♣'],['Q','♥'],['6','♦'],['J','♠'],['4','♥']];
 
   await ev(() => { document.getElementById('playerNameInput').value = 'You'; startSinglePlayerGame(2); });
-  await ev(() => V.card(`<div class="line" style="font-size:22px;color:#fde68a">HOW TO PLAY</div><div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">in about a minute ⏱️</div>`)); g.mark('start');
+  await ev(() => V.card(`<div class="line" style="font-size:22px;color:#fde68a">HOW TO PLAY</div><div class="logo">Shed Head</div><div class="deluxe">DELUXE</div><div class="line">in about a minute ⏱️</div>`)); g.mark('start');
   await shot('title'); await wait(page, 3000);
   await page.waitForFunction(() => document.getElementById('shuffleIntroOverlay')?.classList.contains('hidden') && typeof state.currentTurnIndex === 'number', null, { timeout: 20000 }).catch(() => {});
   await ev(({ BOTS, DRAW }) => {
@@ -29,7 +29,7 @@ const SHOTS = process.argv.includes('--shots');
 
   // 1. The goal.
   await cap('🎯 Get rid of all your cards'); await shot('goal'); await wait(page, 2600);
-  await cap('The last one holding cards is the <b style="color:#fbbf24">ShitHead</b> 💩'); await wait(page, 2800);
+  await cap('The last one holding cards is the <b style="color:#fbbf24">Shed Head</b>'); await wait(page, 2800);
 
   // 2. Your cards.
   await cap('① Your <b style="color:#fbbf24">Hand</b>: play from here first'); await hi('#localHand'); await shot('hand'); await wait(page, 2600);
@@ -93,9 +93,9 @@ const SHOTS = process.argv.includes('--shots');
   await ev(() => V.mePlay('A')); await wait(page, 1200);
   await ev(() => { if (!document.querySelector('#victoryFxLayer .rbat')) playVictoryEffect('victory-halloween'); });
   await wait(page, 900); await shot('win'); await wait(page, 1600);
-  await cap('The last one still holding cards is the <b style="color:#fbbf24">ShitHead</b> 💩'); await wait(page, 2600);
+  await cap('The last one still holding cards is the <b style="color:#fbbf24">Shed Head</b>'); await wait(page, 2600);
 
-  await ev(() => { V.hideCaption(); V.card(`<div class="big">💩</div><div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">Ready? Play free now</div><div class="url">shithead-deluxe.web.app</div><div class="sub">New? Tap Tutorial for the 1-minute Quick Start ⚡</div>`); });
+  await ev(() => { V.hideCaption(); V.card(`<div class="big">🃏</div><div class="logo">Shed Head</div><div class="deluxe">DELUXE</div><div class="line">Ready? Play free now</div><div class="url">shithead-deluxe.web.app</div><div class="sub">New? Tap Tutorial for the 1-minute Quick Start ⚡</div>`); });
   await shot('end'); await wait(page, 4000);
   await finish(g, OUT);
   console.log('saved', OUT);

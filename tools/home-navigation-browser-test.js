@@ -88,7 +88,7 @@ assert.equal(await page.locator('#headerShopBtn').evaluate(el=>getComputedStyle(
 console.log('PASS synchronous header switch');
 await page.setViewportSize({width:390,height:844});await page.waitForTimeout(100);
 
-if (fs.existsSync(path.join(root, 'media/tutorial-reference.mp4'))) {
+if (fs.existsSync(path.join(root, 'media/tutorial-reference-v2.mp4'))) {
   await page.locator('#homeTutorialVideo').evaluate(video => new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('Reference video metadata did not load within 15 seconds')), 15000);
     video.addEventListener('loadedmetadata', () => { clearTimeout(timer); video.duration > 0 ? resolve() : reject(new Error('Video has no duration')); }, {once:true});
