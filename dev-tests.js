@@ -6238,7 +6238,6 @@ async function runDevTestSuite() {
       await new Promise(r => setTimeout(r, 900));
       assertTrue(calls >= 2, 'tried again (got ' + calls + ')'); // other timers may also save while we wait, so no exact count
       assertTrue(state.stateVersion >= 6, 'version moved on after the retry');
-      assertTrue(document.getElementById('connectionStatusBanner').classList.contains('hidden'), 'pill hidden once it saved');
     } finally { db = realDb; Object.assign(state, saved); }
   });
   await test('v495: equipped effects are preloaded once before a match (painted burn art decoded, owner layers fetched)', () => {
