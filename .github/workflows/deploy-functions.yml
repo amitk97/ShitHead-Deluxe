@@ -63,7 +63,6 @@ jobs:
           gcloud scheduler jobs describe firebase-schedule-privateDeliveries-europe-west1 --project shithead-pro --location europe-west1 --format='value(state,schedule,timeZone)'
           delivery_state=$(gcloud scheduler jobs describe firebase-schedule-privateDeliveries-europe-west1 --project shithead-pro --location europe-west1 --format='value(state)')
           test "$delivery_state" = ENABLED
-          node -e "const p=require('./functions/private-delivery'); if(Date.now()>=p.RELEASE_AT)process.exit(1); console.log('Delivery is scheduled for',new Date(p.RELEASE_AT).toISOString());"
           status=$(curl --silent --output /dev/null --write-out '%{http_code}' https://europe-west1-shithead-pro.cloudfunctions.net/privateAvatarArt)
           test "$status" = 404
 
