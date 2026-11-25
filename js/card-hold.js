@@ -225,7 +225,7 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
     return shell;
   }
 
-  // No Chill: a hand card the viewer saw with a Queen shows its face in the fan.
+  // Cold Blooded: a hand card the viewer saw with a Queen shows its face in the fan.
   function buildCardFace(card) {
     const shell = document.createElement('div');
     shell.className = 'opp-hand-fan-card opp-hand-fan-known';
@@ -345,7 +345,7 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
     }
   });
 
-  // No Chill Queen: open the X-rayed player's fan so the seen card shows.
+  // Cold Blooded Queen: open the X-rayed player's fan so the seen card shows.
   window.showOpponentHand = function (playerId) {
     const seat = document.getElementById(`opp-${playerId}`);
     if (!seat) return;
@@ -353,7 +353,7 @@ document.addEventListener('contextmenu', (e) => { if (holdTargetAt(e.target)) e.
     openSeat(seat, true);
   };
 
-  // The No Chill lesson closes every fan when a new scene starts.
+  // The Cold Blooded lesson closes every fan when a new scene starts.
   window.closeOpponentHands = function () {
     pinnedPlayerId = null; hoveredPlayerId = null; closeAll();
   };

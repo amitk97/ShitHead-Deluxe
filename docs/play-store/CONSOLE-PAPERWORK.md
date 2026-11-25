@@ -84,4 +84,4 @@ Use `LISTING.md` in this folder: title, short and full description, graphics, co
 | Test account for Google's reviewers | **YOU** |
 | Developer identity verification | **YOU** |
 | 12 closed testers for 14 days | **YOU** |
-| Trademark checks (SHED HEAD, NO CHILL) | **YOU** |
+| Trademark checks (SHED HEAD, COLD BLOODED) | **YOU** |

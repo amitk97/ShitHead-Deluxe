@@ -173,8 +173,8 @@
       { id: 'avatar-wheel', category: 'Avatars', name: 'Lucky Wheel', earned: true, animated: true, wheel: true, requirement: 'Win it on the Daily Spin', isEarned: () => false },
       { id: 'avatar-dropzone', category: 'Avatars', name: 'Drop Zone', earned: true, animated: true, drop: true, tone: 'gold', requirement: 'Land it in the Avatar slot on Drop Zone', isEarned: () => false },
       { id: 'avatar-foil-ace', category: 'Avatars', name: 'Prism Ace', earned: true, animated: true, shine: true, scratch: true, tone: '#a78bfa', file: 'art/avatars/foil-prism-ace.webp', requirement: 'Get three Aces in a line on the Scratch Card', isEarned: () => false },
-      { id: 'avatar-nm-seer', category: 'Avatars', name: 'The Seer', earned: true, nm: true, shine: true, tone: '#e11d48', file: 'art/avatars/nm-seer.webp', requirement: 'Play 50 Queens in No Chill', isEarned: () => false },
-      { id: 'avatar-nm-enforcer', category: 'Avatars', name: 'The Enforcer', earned: true, nm: true, shine: true, tone: '#b45309', file: 'art/avatars/nm-enforcer.webp', requirement: 'Make other players take 50 cards with Kings in No Chill', isEarned: () => false }
+      { id: 'avatar-nm-seer', category: 'Avatars', name: 'The Seer', earned: true, nm: true, shine: true, tone: '#e11d48', file: 'art/avatars/nm-seer.webp', requirement: 'Play 50 Queens in Cold Blooded', isEarned: () => false },
+      { id: 'avatar-nm-enforcer', category: 'Avatars', name: 'The Enforcer', earned: true, nm: true, shine: true, tone: '#b45309', file: 'art/avatars/nm-enforcer.webp', requirement: 'Make other players take 50 cards with Kings in Cold Blooded', isEarned: () => false }
     ];
     // Daily Spin (v469): once a UK day, signed in. The server draws the prize by `weight` (out of 1000)
     // and pays it; the wheel the player sees has `segments` (ids, 12 equal slices) and turns to a slice of
@@ -229,10 +229,10 @@
         { id: 'back', kind: 'item', itemId: 'back-dropzone', name: 'Drop Zone', weight: 1 }
       ]
     };
-    // No Chill rewards (v451): the Crimson Verdict card back and deck are earned, never sold (see EARNED_AVATAR_RULES).
+    // Cold Blooded rewards (v451): the Crimson Verdict card back and deck are earned, never sold (see EARNED_AVATAR_RULES).
     const NM_EARNED = [
-      { id: 'back-nm-verdict', category: 'Card Backs', name: 'Crimson Verdict', earned: true, nm: true, tone: '#b91c1c', file: 'art/backs/nm-verdict2.webp', tones: ['#14080a','#b91c1c','#c9a04a'], requirement: 'Win 10 games of No Chill', isEarned: () => false },
-      { id: 'deck-nm-verdict', category: 'Decks', name: 'Crimson Verdict', earned: true, nm: true, theme: 'theme-nmverdict', tones: ['#efe3cc','#7a5a2a','#b3141f'], requirement: 'Win 25 games of No Chill', isEarned: () => false },
+      { id: 'back-nm-verdict', category: 'Card Backs', name: 'Crimson Verdict', earned: true, nm: true, tone: '#b91c1c', file: 'art/backs/nm-verdict2.webp', tones: ['#14080a','#b91c1c','#c9a04a'], requirement: 'Win 10 games of Cold Blooded', isEarned: () => false },
+      { id: 'deck-nm-verdict', category: 'Decks', name: 'Crimson Verdict', earned: true, nm: true, theme: 'theme-nmverdict', tones: ['#efe3cc','#7a5a2a','#b3141f'], requirement: 'Win 25 games of Cold Blooded', isEarned: () => false },
       { id: 'back-wheel', category: 'Card Backs', name: 'Lucky Spin', earned: true, wheel: true, tone: '#f59e0b', tones: ['#0b1230','#f59e0b','#b91c1c'], requirement: 'Win it on the Daily Spin', isEarned: () => false },
       { id: 'back-dropzone', category: 'Card Backs', name: 'Drop Zone', earned: true, drop: true, tone: '#e5b04a', tones: ['#0d0b12','#e5b04a','#ffd36a'], requirement: 'Land it in the Card Back slot on Drop Zone', isEarned: () => false },
       { id: 'back-foil-joker', category: 'Card Backs', name: 'Prism Joker', earned: true, scratch: true, tone: '#a78bfa', file: 'art/backs/foil-prism-joker.webp', tones: ['#0a1226','#8b5cf6','#67e8f9'], requirement: 'Win it on the Scratch Card', isEarned: () => false }

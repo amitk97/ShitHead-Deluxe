@@ -11,7 +11,7 @@ Starting point for proving where every asset came from. **Not finished:** the So
 | Season Pass art (`art/season-pass`) | 12 | 2026-10-29 to 2026-10-29 | Gemini sheets (prompts in docs/plans/season-art-prompts.md) | Owner to confirm |
 | Painted burn / effect art (`art/effects`) | 14 | 2026-10-29 to 2026-10-29 | AI-generated paintings cut into layers (ChatGPT) | Owner to confirm |
 | Burn engines and tiles (`art/burns`) | 41 | 2026-10-29 to 2026-10-30 | Mostly code; ShitStorm mascot is AI-generated (owner, 24 Nov), then its frames were rendered from the 3D rig; Ghost/others cut from AI paintings | Keep the generation record (tool, plan, date, prompt) for the mascot and its source ZIP |
-| No Chill art (`art/nomercy`) | 3 | 2026-10-29 to 2026-10-29 | AI-generated set (ChatGPT) | Owner to confirm |
+| Cold Blooded art (`art/nomercy`) | 3 | 2026-10-29 to 2026-10-29 | AI-generated set (ChatGPT) | Owner to confirm |
 | London set (`art/london`) | 8 | 2026-10-29 to 2026-10-29 | Own Blender renders (procedural models) | Own work |
 | Mumbai set (`art/mumbai`) | 4 | 2026-10-29 to 2026-10-29 | Own Blender renders (procedural models) | Own work |
 | City decks and effects (`art/cities-v2`) | 152 | 2026-10-29 to 2026-10-29 | Code-drawn SVG | Own work |

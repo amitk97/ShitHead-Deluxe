@@ -1228,13 +1228,13 @@
   },
   "avatar-nm-seer": {
    "name": "The Seer",
-   "requirement": "Play 50 Queens in No Chill",
+   "requirement": "Play 50 Queens in Cold Blooded",
    "type": "nmQueens",
    "min": 50
   },
   "avatar-nm-enforcer": {
    "name": "The Enforcer",
-   "requirement": "Make other players take 50 cards with Kings in No Chill",
+   "requirement": "Make other players take 50 cards with Kings in Cold Blooded",
    "type": "nmKings",
    "min": 50
   },
@@ -1303,13 +1303,13 @@
   },
   "back-nm-verdict": {
    "name": "Crimson Verdict",
-   "requirement": "Win 10 games of No Chill",
+   "requirement": "Win 10 games of Cold Blooded",
    "type": "nmWins",
    "min": 10
   },
   "deck-nm-verdict": {
    "name": "Crimson Verdict",
-   "requirement": "Win 25 games of No Chill",
+   "requirement": "Win 25 games of Cold Blooded",
    "type": "nmWins",
    "min": 25
   },
@@ -2069,7 +2069,7 @@
     },
     {
      "id": "win-nomercy",
-     "name": "No Chill",
+     "name": "Cold Blooded",
      "target": 5
     }
    ]
@@ -2457,7 +2457,7 @@
    },
    {
     "id": "no-mercy-veteran",
-    "name": "No Chill Veteran",
+    "name": "Cold Blooded Veteran",
     "target": 10,
     "reward": 300
    },
@@ -2479,7 +2479,7 @@
   "noMercyKings": [
    {
     "id": "cold-blooded",
-    "name": "Cold Blooded",
+    "name": "King's Toll",
     "target": 50,
     "reward": 200
    }

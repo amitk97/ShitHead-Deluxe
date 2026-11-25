@@ -1082,7 +1082,7 @@
     function whyNotPlayable(card, pile = state.discardPile) {
       const generic = "That card can't be played here.";
       if (!card || isHouseRulesMatch()) return generic;
-      if (card.isJoker) return isNoMercy() ? "No Chill: a Joker can't go on a 4." : generic;
+      if (card.isJoker) return isNoMercy() ? "Cold Blooded: a Joker can't go on a 4." : generic;
       const top = state.baseOverrideCard || getEffectiveTopCard(pile);
       if (!top) return generic;
       const me = plainRankName(card.rank), tw = plainRankName(top.rank);
@@ -1163,7 +1163,7 @@
         score += (22 - rankVal);
       }
 
-      // No Chill (Hard and Boss only): use the cards a Queen showed us in the next player's hand.
+      // Cold Blooded (Hard and Boss only): use the cards a Queen showed us in the next player's hand.
       // A play that none of their known cards can answer is better; one they can answer is worse.
       if ((difficulty === 'hard' || difficulty === 'boss') && isNoMercy() && nextOpponent && !sameTeam(nextOpponent, bot)) {
         const known = noMercyKnownCards(bot.id, nextOpponent.id);
@@ -1173,10 +1173,10 @@
         }
       }
 
-      // No Chill King (Medium, Hard and Boss): the next player takes a bottom card, so play it when it will hit
+      // Cold Blooded King (Medium, Hard and Boss): the next player takes a bottom card, so play it when it will hit
       // (the bottom card is not a King and the Pile has cards under it).
       if (((state.stalemate && state.stalemate.turns) || 0) < 40 && candidateRank === 'K' && isNoMercy() && difficulty !== 'easy' && pileSize > 0 && discardPile[0].rank !== 'K') score += 50;
-      // No Chill Ace (Medium, Hard and Boss): every opponent takes one bottom card, so play it when it will hit
+      // Cold Blooded Ace (Medium, Hard and Boss): every opponent takes one bottom card, so play it when it will hit
       // someone (the bottom card is not an Ace and the Pile has cards to give), and more so the more opponents it hits.
       if (((state.stalemate && state.stalemate.turns) || 0) < 40 && candidateRank === 'A' && isNoMercy() && difficulty !== 'easy' && pileSize > 0 && discardPile[0].rank !== 'A') {
         const opps = state.players.filter(p => !p.hasFinished && p.id !== bot.id && !sameTeam(p, bot)).length;
@@ -1662,7 +1662,7 @@
       state.isMultiplayer = false;
       state.isRanked = false;
       state.multiDeck = !!opts.multiDeck;
-      state.noMercy = !!opts.noMercy; state.peeks = {}; state.lastPeek = null; // § No Chill
+      state.noMercy = !!opts.noMercy; state.peeks = {}; state.lastPeek = null; // § Cold Blooded
       handGroupOverride = null; railActiveId = null; railPeekId = null;
       state.gauntlet = opts.gauntlet ? { ...opts.gauntlet } : null; // § Gauntlet
       state.rankedRatingApplied = false;
@@ -3295,10 +3295,10 @@
       // Online the room's mode is the truth (every phone reads it); solo games carry the flag.
       return state.isMultiplayer ? state.friendsMode === 'decks' : !!state.multiDeck;
     }
-    // § No Chill: Queens X-ray the next player, Kings take the bottom card, no Joker on a 4.
+    // § Cold Blooded: Queens X-ray the next player, Kings take the bottom card, no Joker on a 4.
     function isNoMercy() {
       if (state.isRanked) return false;
-      if (tutorialActive) return tutorialNoMercy; // only the No Chill lesson
+      if (tutorialActive) return tutorialNoMercy; // only the Cold Blooded lesson
       return state.isMultiplayer ? state.friendsMode === 'noMercy' : !!state.noMercy;
     }
     // Hand cards of `target` that `viewer` has already seen through a Queen (only ones still in the hand).
@@ -10270,7 +10270,7 @@
       else payload.roomCode = state.roomCode;
       if (mode === 'bots' && isTwos()) payload.twos = true; // § 2 vs 2: no difficulty unlock credit
       if (mode === 'bots' && isMultiDeck()) payload.decks = true; // Multiple Decks: the same
-      if (mode === 'bots' && isNoMercy()) payload.noMercy = true; // No Chill: no difficulty credit either
+      if (mode === 'bots' && isNoMercy()) payload.noMercy = true; // Cold Blooded: no difficulty credit either
       const attempt = (tries) => callEconomy('matchWin', payload).catch((error) => {
         if (mode === 'online' && tries > 0) return new Promise(r => setTimeout(r, 2500)).then(() => attempt(tries - 1));
         throw error;
@@ -10452,7 +10452,7 @@
       window.ShFriendsLobby?.openDecks();
     });
 
-    // § No Chill chooser: 2-4 players (you plus bots at a chosen difficulty), or Play Friends.
+    // § Cold Blooded chooser: 2-4 players (you plus bots at a chosen difficulty), or Play Friends.
     let noMercyPlayers = 2;
     function paintNoMercyCounts() {
       document.querySelectorAll('#noMercyCounts [data-n]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.n) === noMercyPlayers)));
@@ -14871,7 +14871,7 @@
     // count. Folded groups are remembered per tab (localStorage
     // shithead_custom_groups_collapsed, keys "<type>:<group>").
     const CUSTOM_GROUPS = [['free', 'Free'], ['shop', 'Shop'], ['ranked', 'Earn in Ranked'], ['gauntlet', 'Earn in the Gauntlet'],
-      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['lucky', 'Lucky Games'], ['events', 'Earn in No Chill'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
+      ['friends', 'Earn by inviting friends'], ['twos', 'Earn in 2 vs 2'], ['decks', 'Earn in Multiple Decks'], ['lucky', 'Lucky Games'], ['events', 'Earn in Cold Blooded'], ['level', 'Earn by levelling up'], ['pass', 'Earn in the Season Pass'], ['seasonal', 'Seasonal']];
     const CUSTOM_GROUPS_KEY = 'shithead_custom_groups_collapsed';
     const customGroupsCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem(CUSTOM_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); } })();
     function customGroupOf(item) {
@@ -15268,7 +15268,7 @@
     function matchModeLabel() {
       const bots = state.players.filter(p => p.isBot).length;
       if (state.isRanked) return 'Ranked match';
-      const special = isNoMercy() ? 'No Chill' : isMultiDeck() ? 'Multiple Decks' : (state.isMultiplayer && isHouseRulesMatch()) ? 'House Rules' : '';
+      const special = isNoMercy() ? 'Cold Blooded' : isMultiDeck() ? 'Multiple Decks' : (state.isMultiplayer && isHouseRulesMatch()) ? 'House Rules' : '';
       if (state.isMultiplayer) return isTwos() ? '2 vs 2 · Online' : special ? `${special} · Online · ${state.players.length} players` : `Online · ${state.players.length} players`;
       if (state.gauntlet) { const gm = gauntletModeOf(state.gauntlet), gr = Math.min(state.gauntlet.round, gauntletRounds(gm).length - 1); return `${gm === 'easy' ? 'Gauntlet' : `${gauntletMode(gm).name} Gauntlet`} · Round ${gr + 1} · ${gauntletRoundLabel(gr, gm)}`; }
       const diff = String(state.difficulty || 'medium');
@@ -15539,7 +15539,7 @@
     }
     // Gifting unlocks at XP_RULES.giftLevel (owner, v289; the server checks
     // too). With XP switched off there is no lock, like the speed locks.
-    // No Chill unlocks at Lvl 10 (owner, v518; was 25). No lock while XP is off.
+    // Cold Blooded unlocks at Lvl 10 (owner, v518; was 25). No lock while XP is off.
     const NO_MERCY_LEVEL = 10;
     // Multiple Decks: hosting needs Lvl 25 (owner, v518); joining a friend's room has no lock.
     const MULTI_DECK_LEVEL = 25;
@@ -15564,7 +15564,7 @@
       return !!currentUser && !!playerXp && xpLevelFor(playerXp.total) >= NO_MERCY_LEVEL;
     }
     function noMercyLockReason() {
-      return noMercyUnlocked() ? '' : `No Chill unlocks at Lvl ${NO_MERCY_LEVEL}${currentUser ? '. Finish a few more games to get there.' : '. Sign in and play to level up.'}`;
+      return noMercyUnlocked() ? '' : `Cold Blooded unlocks at Lvl ${NO_MERCY_LEVEL}${currentUser ? '. Finish a few more games to get there.' : '. Sign in and play to level up.'}`;
     }
     function giftLockReason() {
       if (typeof xpShown === 'function' && !xpShown()) return '';
@@ -16101,7 +16101,7 @@
     }
     // Unlock Levels: one row per unlock, level in a left column, filter chips on top.
     let devUnlockFilter = 'all';
-    const devUnlockGroup = (x) => x.kind === 'item' ? 'items' : x.kind === 'badge' ? 'badges' : /Best of|No Chill|Gauntlet/.test(x.name) ? 'modes' : 'other';
+    const devUnlockGroup = (x) => x.kind === 'item' ? 'items' : x.kind === 'badge' ? 'badges' : /Best of|Cold Blooded|Gauntlet/.test(x.name) ? 'modes' : 'other';
     function openDevUnlocks(filter) {
       if (filter) devUnlockFilter = filter;
       const chips = [['all', 'All'], ['modes', 'Game modes'], ['items', 'Custom items'], ['badges', 'Badges'], ['other', 'Other']];
@@ -17232,7 +17232,7 @@
       { id:'win-twos', name:'Team Player', desc:'Win 5 matches of 2 vs 2.', target:5 }
     ];
     const WEEKLY_CHALLENGE_POOL_V4 = [...WEEKLY_CHALLENGE_POOL_V3,
-      { id:'win-nomercy', name:'No Chill', desc:'Win 5 matches of No Chill.', target:5 }
+      { id:'win-nomercy', name:'Cold Blooded', desc:'Win 5 matches of Cold Blooded.', target:5 }
     ];
     // Oldest first; `from` = the first UK week the rule applies to.
     const WEEKLY_CHALLENGE_RULES = [
@@ -17347,18 +17347,18 @@
       decksTop3: [
         { id: 'crowd-pleaser', name: 'Crowd Pleaser', target: 1, reward: 150 }
       ],
-      // No Chill (matchCounters.noMercyWins / nmQueens / nmKings, counted by the server);
+      // Cold Blooded (matchCounters.noMercyWins / nmQueens / nmKings, counted by the server);
       // 50 Queens unlock The Seer avatar, 50 King pick-ups The Enforcer, 10 wins the Crimson Verdict card back, 25 wins the deck.
       noMercyWins: [
         { id: 'first-blood', name: 'First Blood', target: 1, reward: 100 },
-        { id: 'no-mercy-veteran', name: 'No Chill Veteran', target: 10, reward: 300 },
+        { id: 'no-mercy-veteran', name: 'Cold Blooded Veteran', target: 10, reward: 300 },
         { id: 'crimson-verdict', name: 'Crimson Verdict', target: 25, reward: 400 }
       ],
       noMercyQueens: [
         { id: 'sixth-sense', name: 'Sixth Sense', target: 50, reward: 200 }
       ],
       noMercyKings: [
-        { id: 'cold-blooded', name: 'Cold Blooded', target: 50, reward: 200 }
+        { id: 'cold-blooded', name: "King's Toll", target: 50, reward: 200 }
       ],
       // Hidden: shown as "???" until earned. A stalemate draw in any mode,
       // counted by the server (matchCounters.draws + rankedStats.draws).
@@ -18052,7 +18052,7 @@
       if (playerXp.level !== before) publishXpLevel();
       if (hadXp && before < NO_MERCY_LEVEL && playerXp.level >= NO_MERCY_LEVEL) maybePromptNoMercyLesson();
     }
-    // § No Chill unlock prompt: the level-up that opens No Chill offers its lesson once (device flag), on a calm home screen.
+    // § Cold Blooded unlock prompt: the level-up that opens Cold Blooded offers its lesson once (device flag), on a calm home screen.
     const NM_PROMPT_KEY = 'shithead_nm_prompt';
     function maybePromptNoMercyLesson() {
       if (IS_DEV_TEST_PAGE) return;
@@ -18063,7 +18063,7 @@
       const tryShow = async (attempt) => {
         if (busy()) { if (attempt < 240) setTimeout(() => tryShow(attempt + 1), 5000); return; }
         try { localStorage.setItem(NM_PROMPT_KEY, '1'); } catch (e) {}
-        if (await shConfirm({ title: 'No Chill unlocked', text: 'Queens X-ray, Kings and Aces take from the bottom of the Pile, and a Joker can\'t go on a 4. Learn it in a one-minute lesson?', yes: 'Start Lesson', no: 'Later' })) launchTutorialModule('no_mercy', { fromHub: false });
+        if (await shConfirm({ title: 'Cold Blooded unlocked', text: 'Queens X-ray, Kings and Aces take from the bottom of the Pile, and a Joker can\'t go on a 4. Learn it in a one-minute lesson?', yes: 'Start Lesson', no: 'Later' })) launchTutorialModule('no_mercy', { fromHub: false });
       };
       setTimeout(() => tryShow(0), 3000);
     }
@@ -18414,9 +18414,9 @@
         case 'decksWins': return def.target === 1 ? 'Win a game of Multiple Decks.' : `Win ${def.target} games of Multiple Decks.`;
         case 'decksSnaps': return `Snap Burn ${plural(def.target, 'time', 'times')} in Multiple Decks.`;
         case 'decksTop3': return 'Finish in the top three of a Multiple Decks game with 6 or more players.';
-        case 'noMercyWins': return def.target === 1 ? 'Win a game of No Chill.' : `Win ${def.target} games of No Chill.`;
-        case 'noMercyQueens': return `Play ${def.target} Queens in No Chill to X-ray a hidden card.`;
-        case 'noMercyKings': return `Make other players take ${def.target} cards from the bottom of the Pile with Kings in No Chill.`;
+        case 'noMercyWins': return def.target === 1 ? 'Win a game of Cold Blooded.' : `Win ${def.target} games of Cold Blooded.`;
+        case 'noMercyQueens': return `Play ${def.target} Queens in Cold Blooded to X-ray a hidden card.`;
+        case 'noMercyKings': return `Make other players take ${def.target} cards from the bottom of the Pile with Kings in Cold Blooded.`;
         case 'recruits': return `Recruit ${def.target} players: friends who join with your invite link and play ${REFERRAL.gamesNeeded} games.`;
         default: return '';
       }
@@ -18989,11 +18989,11 @@
       'twos-team': 'Your partner sits opposite. Your team wins when you are both out.',
       'twos-out': 'You are out. Your partner plays on, and your team wins when they finish too.',
       'twos-eight': 'An 8 skips the next player. Two 8s also skip your partner.',
-      'nm-4': 'No Chill: a Joker cannot be played on a 4.',
-      'nm-q': 'No Chill: a Queen shows you one hidden card in the next player\'s hand.',
-      'nm-k': 'No Chill: a King makes the next player take a card from the bottom of the Pile.',
-      'nm-a': 'No Chill: an Ace makes every opponent take one card from the bottom of the Pile.',
-      'nm-joker': 'No Chill: a Joker cannot be played while a 4 is the card to beat.'
+      'nm-4': 'Cold Blooded: a Joker cannot be played on a 4.',
+      'nm-q': 'Cold Blooded: a Queen shows you one hidden card in the next player\'s hand.',
+      'nm-k': 'Cold Blooded: a King makes the next player take a card from the bottom of the Pile.',
+      'nm-a': 'Cold Blooded: an Ace makes every opponent take one card from the bottom of the Pile.',
+      'nm-joker': 'Cold Blooded: a Joker cannot be played while a 4 is the card to beat.'
     };
     const HELPER_TIPS_SEEN_KEY = 'shithead_tips_seen';
     const HELPER_TIP_MS = 8000;
@@ -19002,7 +19002,7 @@
     function helperTipsSeen() {
       try { return new Set(JSON.parse(localStorage.getItem(HELPER_TIPS_SEEN_KEY) || '[]')); } catch (e) { return new Set(); }
     }
-    // No Chill card tips show a limited number of times (first two games the card turns up), not just once.
+    // Cold Blooded card tips show a limited number of times (first two games the card turns up), not just once.
     const HELPER_TIP_TIMES = { 'nm-4': 2, 'nm-q': 2, 'nm-k': 2, 'nm-a': 2, 'nm-joker': 2 };
     const HELPER_TIP_COUNTS_KEY = 'shithead_tip_counts';
     function helperTipCounts() { try { return JSON.parse(localStorage.getItem(HELPER_TIP_COUNTS_KEY) || '{}') || {}; } catch (e) { return {}; } }
@@ -19573,7 +19573,7 @@
     // (openGuideTerm). Each term links once per line; text inside tags is
     // left alone. Slugs are the Key Terms' data-term ids.
     const KEY_TERM_LINKS = [
-      ['No Chill', 'no-mercy'],
+      ['Cold Blooded', 'no-mercy'],
       ['Snap Burns?', 'snap-burn'], ['4-of-a-kind|four of a kind', 'four-of-a-kind'],
       ['Joker challenges?|Deflect', 'duel'], ['Bonus Draw', 'bonus-draw'], ['Hard Gauntlet', 'hard-gauntlet'], ['Boss Gauntlet', 'boss-gauntlet'], ['Gauntlet', 'gauntlet'],
       ['Quick Start', 'quick-start'], ['face-down cards?|face-down|blind', 'face-down-cards'],

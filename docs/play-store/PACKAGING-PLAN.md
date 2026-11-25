@@ -72,7 +72,7 @@ Fill the pages in order using `CONSOLE-PAPERWORK.md`: privacy policy, app access
 
 ## Risks and things to watch
 
-- **Name and trademark.** Do the free searches before submitting (SHED HEAD and NO CHILL). A complaint after launch can pull the app.
+- **Name and trademark.** Do the free searches before submitting (SHED HEAD and COLD BLOODED). A complaint after launch can pull the app.
 - **Crest-lookalike avatars.** Keep the blue lion, red devil and red bird out of store graphics and never refer to clubs.
 - **Content rating.** Answer the Lucky Games question honestly (see paperwork). A wrong answer is a policy risk.
 - **Sign-in.** Google sign-in must be tested in the TWA, on a real phone, before submitting.

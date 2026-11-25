@@ -1,6 +1,6 @@
     // § Tutorial
     let tutorialActive = false;
-    let tutorialNoMercy = false; // the No Chill lesson runs with those rules on (isNoMercy)
+    let tutorialNoMercy = false; // the Cold Blooded lesson runs with those rules on (isNoMercy)
     let tutorialStep = 0;
     let tutorialBotPaused = false;   // blocks the Coach until the step says go
     // When true, a burn triggered inside executePlayCards is captured as
@@ -362,7 +362,7 @@
     let tutorialHandSnap = {};
     function tutorialApplyScene(scene) {
       const you = state.players[0], coach = state.players[1];
-      // A new scene starts with no X-rays and no open opponent fan (No Chill lesson).
+      // A new scene starts with no X-rays and no open opponent fan (Cold Blooded lesson).
       state.peeks = {}; state.lastPeek = null;
       window.closeOpponentHands?.();
       // Only present in modules that asked startTutorial for a 3rd seat
@@ -1250,7 +1250,7 @@
       tutorialRevealTaken(step);
     }
 
-    // No Chill lesson: open the fan of each seat that took cards, with the new cards face up.
+    // Cold Blooded lesson: open the fan of each seat that took cards, with the new cards face up.
     function tutorialRevealTaken(step) {
       if (!tutorialNoMercy || !Array.isArray(step.reveal)) return;
       state.peeks = state.peeks || {};

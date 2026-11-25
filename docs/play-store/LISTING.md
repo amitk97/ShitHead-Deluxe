@@ -25,7 +25,7 @@ PLAY YOUR WAY
 - Play Friends: host or join a room with a code, share an invite link, and use emotes. House Rules let you change the card powers.
 - Ranked: one-on-one matches with an Elo rating and tiers from Novice to Master. The server shuffles and checks every move.
 - Best of 3, 5 or 7 series between friends.
-- 2 vs 2 team games, No Chill mode with harsher rules, and Multiple Decks games for up to 8 players.
+- 2 vs 2 team games, Cold Blooded mode with harsher rules, and Multiple Decks games for up to 8 players.
 - A new Weekly Puzzle every week, with 52 hand-made card puzzles.
 
 PROGRESS AND REWARDS

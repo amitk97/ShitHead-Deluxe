@@ -1,4 +1,4 @@
-// No Chill: `matchWin` counts wins (noMercyWins) with no difficulty credit, `matchFinished` counts Queens played
+// Cold Blooded: `matchWin` counts wins (noMercyWins) with no difficulty credit, `matchFinished` counts Queens played
 // and Kings' pick-ups; the challenges and The Seer / The Enforcer avatars follow.
 // Run: node tools/nomercy-win-test.js (npm install in functions first).
 'use strict';
@@ -37,7 +37,7 @@ const setNow = (iso) => { const t = new RealDate(iso).getTime(); global.Date = c
     assert.equal(r.noMercyWins, i);
     if (i === 1) assert(get('users/a/completedChallenges/first-blood'), 'first win paid');
   }
-  assert.equal(get('users/a/difficultyWins/easy'), 1, 'No Chill wins never add unlock credit');
+  assert.equal(get('users/a/difficultyWins/easy'), 1, 'Cold Blooded wins never add unlock credit');
   assert(get('users/a/completedChallenges/no-mercy-veteran'), 'Veteran at 10');
   assert(get('users/a/ownedCosmetics/back-nm-verdict'), 'the Crimson Verdict card back at 10 wins');
   assert(!get('users/a/ownedCosmetics/deck-nm-verdict'), 'not the deck yet');
@@ -51,7 +51,7 @@ const setNow = (iso) => { const t = new RealDate(iso).getTime(); global.Date = c
   r = await step(economy.matchFinished, 'a', { matchId: 'f2', noMercy: { queens: 25, kings: 30 } });
   assert.equal(get('users/a/matchCounters/nmQueens'), 55);
   assert(get('users/a/completedChallenges/sixth-sense'), 'Sixth Sense at 50 Queens');
-  assert(get('users/a/completedChallenges/cold-blooded'), 'Cold Blooded at 50 King cards');
+  assert(get('users/a/completedChallenges/cold-blooded'), 'King's Toll at 50 King cards');
   assert(get('users/a/ownedCosmetics/avatar-nm-seer'), 'The Seer unlocked at 50 Queens');
   assert(get('users/a/ownedCosmetics/avatar-nm-enforcer'), 'The Enforcer unlocked at 50 King cards');
   r = await step(economy.matchFinished, 'a', { matchId: 'f3', noMercy: { queens: 999, kings: 0 } });
@@ -61,7 +61,7 @@ const setNow = (iso) => { const t = new RealDate(iso).getTime(); global.Date = c
   const seats = (n, rank) => Array.from({ length: n }, (_, i) => ({ id: 'p' + i, uid: i === 0 ? 'b' : 'u' + i, finishRank: i === 0 ? rank : i + 1 }));
   put('rooms/123456', { matchId: 'm_room', friendsMode: 'noMercy', players: seats(3, 1) });
   r = await step(economy.matchWin, 'b', { mode: 'online', matchId: 'm_room', roomCode: '123456' });
-  assert.equal(r.noMercyWins, 1, 'an online No Chill room counts');
+  assert.equal(r.noMercyWins, 1, 'an online Cold Blooded room counts');
   put('rooms/123457', { matchId: 'm_room2', friendsMode: 'standard', players: seats(3, 1) });
   await step(economy.matchFinished, 'b', { matchId: 'f9', roomCode: '123457', noMercy: { queens: 10, kings: 10 } });
   assert.equal(get('users/b/matchCounters/nmQueens') || 0, 0, 'a standard room never counts Queens');

@@ -143,7 +143,7 @@
           o.connect(og).connect(ctx.destination); o.start(t0 + at); o.stop(t0 + at + 0.2);
         });
       }
-      /* No Chill Queen X-ray: a cyan scan sweep (filtered noise), then a soft two-note blip per revealed card. */
+      /* Cold Blooded Queen X-ray: a cyan scan sweep (filtered noise), then a soft two-note blip per revealed card. */
       playPeekScan(count) {
         const ctx = this.ctx;
         if (!this.enabled || !ctx || ctx.state !== 'running') return;

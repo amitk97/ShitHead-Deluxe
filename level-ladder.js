@@ -82,7 +82,7 @@
       Object.entries(SERIES_RULES.levels).forEach(([n, level]) => add(level, { kind: 'unlock', icon: 'swords', tone: '#f472b6', name: `Best of ${n}`, tip: SERIES_RULES.guestLevels[n] ? `Play a Best of ${n} against a friend (both players level ${level}+).` : `Host a Best of ${n} against a friend (you need level ${level}; they can be lower).` }));
       add(TWOS_LEVEL, { kind: 'unlock', icon: 'friends4', tone: '#3b82f6', name: '2 vs 2', tip: 'Host or play 2 vs 2 with a partner. Joining a friend\'s 2 vs 2 room has no level lock.' });
       add(MULTI_DECK_LEVEL, { kind: 'unlock', icon: 'friends4', tone: '#6366f1', name: 'Multiple Decks', tip: 'Host Multiple Decks: two decks, four Jokers, 4 to 8 players. Joining a friend\'s room has no level lock.' });
-      add(NO_MERCY_LEVEL, { kind: 'unlock', icon: 'swords', tone: '#ef4444', name: 'No Chill', tip: 'Play No Chill: Queens see cards, Kings and Aces make others take cards.' });
+      add(NO_MERCY_LEVEL, { kind: 'unlock', icon: 'swords', tone: '#ef4444', name: 'Cold Blooded', tip: 'Play Cold Blooded: Queens see cards, Kings and Aces make others take cards.' });
       Object.entries(GAUNTLET.modes || {}).forEach(([key, m]) => { if (m.level > 0) add(m.level, { kind: 'unlock', icon: key === 'boss' ? 'crown' : 'shield', tone: key === 'boss' ? '#c084fc' : '#f87171', name: `${m.name} Gauntlet`, tip: `${m.name} Gauntlet opens at level ${m.level}${m.needs ? ' once you have beaten the easier Gauntlets' : ''}.` }); });
       LEVEL_BADGE_TIERS.forEach(([L, , label]) => add(L, { kind: 'badge', level: L, name: `${label} badge` }));
       return at;
