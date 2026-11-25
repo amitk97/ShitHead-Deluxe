@@ -74,6 +74,9 @@ jobs:
       - name: Drop Zone
         run: node tools/dropzone-test.js
 
+      - name: Account purge
+        run: node tools/account-purge-test.js
+
       - name: House Rules unit tests
         run: node tools/house-rules-test.js
 

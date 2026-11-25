@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v551: [['sparkle', 'The first-time tour now shows Exit and the free Lucky Games, and mentions where Puzzles, 2 vs 2 and Cold Blooded live. The Guide\'s Menu and Shortcut Card entries are up to date.']],
       v550: [['sparkle', 'The No Chill mode is now called Cold Blooded, in the mode card, lesson, Guide and challenges. The 50-Kings challenge that had that name is now King\'s Toll.']],
       v549: [['sparkle', 'The ShitStorm burn is now The Angry Twister. The loser badge and the burn tile no longer use the poop emoji, and Profile links to the Privacy Policy, Terms and account deletion help.']],
     v548: [['sparkle', 'New Privacy Policy and Terms of Use, linked from the sign-in help. The poop emoji is gone from the lesson and the README.']],

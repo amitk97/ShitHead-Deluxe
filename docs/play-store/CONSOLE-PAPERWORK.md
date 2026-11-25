@@ -10,7 +10,7 @@ Prepared from the game as it is today. Google changes these forms from time to t
 ## 2. Privacy policy and account deletion
 
 - **Privacy policy URL:** https://shithead-deluxe.web.app/privacy-policy.html
-- **Account deletion URL** (Data safety → Data deletion): https://shithead-deluxe.web.app/delete-account.html. In the form say: users can request deletion in the app (Profile → Danger Zone → Delete account) or by email; data is erased after 7 days; some records of finished online games can be removed on request.
+- **Account deletion URL** (Data safety → Data deletion): https://shithead-deluxe.web.app/delete-account.html. In the form say: users can request deletion in the app (Profile → Danger Zone → Delete account) or by email; data is erased after 7 days (profile, friends, Diamonds and items, Lucky Games state, performance and error records, and finished Best of series records); records of finished online and Ranked rooms can be removed on request by email.
 - **App access:** most of the game works with no account (Play Computer, Gauntlet, Puzzles, Tutorial). Ranked, Play Friends, the Shop and rewards need an account. **YOU:** create a test account (email, verified, with a username), keep its password, and paste the instructions into the "App access → All or some functionality is restricted" box: "Sign in with Continue with Google or email. Test account: <email> / <password>. Ranked and Play Friends need a second player; Play Computer needs none."
 
 ## 3. Ads, audience, content
@@ -42,10 +42,10 @@ Data types to declare as **Collected** (all required for app functionality, none
 | Personal info | Name | From Google sign-in (display name); not shown to other players |
 | Personal info | Email address | Account sign-in |
 | Personal info | User IDs | Account ID and the public username |
-| App activity | Game progress, stats and purchases (use "Other in-app actions" / "App interactions") | Rating, XP, Diamonds, items, match history |
+| App activity | Game progress, stats and purchases (use "Other in-app actions" / "App interactions") | Rating, XP, Diamonds, items, match history, Lucky Games state (all erased on deletion) |
 | App activity | Other user-generated content | Username and emotes shown to other players |
 | App info and performance | Crash logs | Error reports linked to the account ID |
-| App info and performance | Diagnostics | Frame rate, load time, matches started/finished |
+| App info and performance | Diagnostics | Frame rate, load time, matches started/finished (erased on deletion) |
 | Device or other IDs | Device or other IDs | Push-notification token (only if the user turns notifications on) |
 
 **Not collected:** location, financial info or payment details, health and fitness, messages (emails, SMS, in-app chat; the game has preset emotes only), photos and videos, audio, files, contacts, calendar, web browsing history, advertising ID.
@@ -67,7 +67,7 @@ Use `LISTING.md` in this folder: title, short and full description, graphics, co
 ## 7. Before you can publish (new personal developer account)
 
 - Complete developer identity verification (legal name, address, contact details, phone number, and the ID check) in Play Console.
-- A new personal account must run a **closed test with at least 12 testers opted in for 14 days in a row** before it can apply for production access (Google's rule as I know it; check Play Console → Release → "Production" for the current requirement). Recruit the testers now: friends and family with Android phones, added by Google Group or email list.
+- A new personal account must run a **closed test with at least 12 testers opted in for 14 days in a row** before it can apply for production access (Google's rule as I know it; check Play Console → Release → "Production" for the current requirement). Recruit the testers now: friends and family with Android phones, added by Google Group or email list. If you don't have enough friends, see `TESTERS.md` (where to post, a paste-ready message, what testers should try). Daily play is not required, but ask for a few games early and one visit mid-way.
 - You must be able to describe your testing and how you will fix problems when you apply for production.
 
 ## 8. Items I checked in the game, and what is still on you
@@ -83,5 +83,8 @@ Use `LISTING.md` in this folder: title, short and full description, graphics, co
 | Data export | Done (Profile → Your Data) |
 | Test account for Google's reviewers | **YOU** |
 | Developer identity verification | **YOU** |
-| 12 closed testers for 14 days | **YOU** |
+| 12 closed testers for 14 days | **YOU** (kit in `TESTERS.md`) |
+| Account purge covers what the policy lists | Done and tested (`node tools/account-purge-test.js`, in CI) |
+| Age: 13+ is stated, not enforced by an age check | Decision pending (a tick box at sign-up is possible) |
+| Game mode names checked | Cold Blooded: pending Class 41 filing found by a web search; see `docs/legal/SOLICITOR-BRIEF.md` |
 | Trademark checks (SHED HEAD, COLD BLOODED) | **YOU** |

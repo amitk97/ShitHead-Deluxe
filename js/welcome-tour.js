@@ -6,6 +6,8 @@
   const NEW_ACCOUNT_MS = 3 * 24 * 3600 * 1000;
   const STEPS = [
     { title: 'Welcome to Shed Head Deluxe', text: 'A 30-second look around, so you know where everything is. You can skip any time.' },
+    { targets: ['#leaveGameBtn'], title: 'Exit',
+      text: 'Exit sits on the far left of every screen. It always asks first, so you never leave a game by accident.' },
     { targets: ['#headerShopBtn', '#headerDiamondBtn', '#headerCustomBtn'], title: 'Shop, Diamonds and Custom',
       text: 'Win games and finish challenges to earn Diamonds. Spend them in the Shop, then wear what you own in Custom.' },
     { targets: ['#headerProfileBtn', '#headerInboxBtn'], title: 'Profile and Inbox',
@@ -13,9 +15,11 @@
     { targets: ['#headerGuideBtn', '#headerSettingsBtn', '#hamburgerBtn'], title: 'Guide, Settings and Menu',
       text: 'The Guide explains every rule and card. Settings has speed, sound and accessibility. The Menu holds Challenges, Friends and the leaderboards.' },
     { targets: ['#modeCarousel .mc-track'], mode: 'cpu', title: 'Pick a game mode',
-      text: 'Swipe or use the arrows, then tap the middle card to open it. Press and hold a card to rearrange them.',
+      text: 'Swipe, then tap the middle card to open it. More Modes holds Puzzles, 2 vs 2 and Cold Blooded.',
       modes: [['cpu', 'Play Computer', 'practise against bots'], ['gauntlet', 'Gauntlet', 'five bots, three lives'],
         ['friends', 'Play Friends', 'private rooms with a code'], ['ranked', 'Ranked', 'climb the leaderboard']] },
+    { targets: ['#homeWheelChip', '#homeMontyChip', '#homeScratchChip', '#homeDropChip'], title: 'Free daily games',
+      text: 'The small circles are free Lucky Games: a Daily Spin, a Scratch Card, Three Cards and the Drop Zone. Prizes are Diamonds and rare items.' },
     { targets: ['#startTutorialBtn'], title: 'Learn in one minute',
       text: 'New to Shed Head? The 1-minute Tutorial teaches the basics with a coach.', last: true }
   ];
