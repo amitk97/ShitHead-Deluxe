@@ -1,17 +1,21 @@
-// Builds icons/share-preview-v3.jpg (1200×630), the picture link previews show
+// Builds icons/share-preview-v4.jpg (1200×630), the picture link previews show
 // (WhatsApp, iMessage, Discord, X, Facebook… via the og:image tag in
 // index.html). Everything that matters sits in the middle 630×630, because
-// some apps crop the preview to a square. The middle shows the four premium
-// animated pictures (their flat 160px copies).
+// some apps crop the preview to a square. The middle shows four avatars
+// (kept clear of the club-crest lookalikes).
 //   NODE_PATH=$(npm root -g) node tools/make-share-image.js
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
 const b64 = (p) => fs.readFileSync(path.join(ROOT, p)).toString('base64');
+// Optional local fonts (SH_VIDEO_DEPS with @fontsource-variable/cinzel + outfit) when the Google Fonts link can't load.
+const FD = process.env.SH_VIDEO_DEPS && path.join(process.env.SH_VIDEO_DEPS, 'node_modules/@fontsource-variable');
+const localFont = (name, id) => { try { const f = path.join(FD, id, 'files', id + '-latin-wght-normal.woff2'); return `@font-face{font-family:'${name}';font-weight:100 900;src:url(data:font/woff2;base64,${fs.readFileSync(f).toString('base64')}) format('woff2')}`; } catch (e) { return ''; } };
+const FONT_CSS = FD ? localFont('Cinzel', 'cinzel') + localFont('Outfit', 'outfit') : '';
 
 const html = `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@800;900&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
-<style>
+<style>${FONT_CSS}
   html,body{margin:0;width:1200px;height:630px;overflow:hidden}
   body{background:radial-gradient(circle at 50% 42%, #3b1a6b 0%, #120a2a 45%, #020617 80%);font-family:'Outfit',system-ui,sans-serif;position:relative}
   .phone{position:absolute;top:70px;width:250px;height:540px;border-radius:34px;overflow:hidden;border:5px solid #1e293b;
@@ -38,8 +42,8 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     <img class="icon" src="data:image/png;base64,${b64('icons/icon-512-v302.png')}">
     <div class="logo">Shed Head</div><div class="deluxe">DELUXE</div>
     <div class="tag">The classic card game.<br>Free on your phone.</div>
-    <div class="pics">${['sapphire-sovereign', 'crimson-inferno', 'scarlet-guardian', 'turtley'].map(n => `<img src="data:image/webp;base64,${b64('art/avatars/' + n + '-sm.webp')}">`).join('')}</div>
-    <div class="pills"><span class="pill">vs Bots</span><span class="pill">Friends</span><span class="pill">Ranked</span><span class="pill xp">Levels 1–99</span></div>
+    <div class="pics">${['turtley-sm', 'ss2611-pharaoh', 'lvl-card-shark', 'ss2701-mammoth'].map(n => `<img src="data:image/webp;base64,${b64('art/avatars/' + n + '.webp')}">`).join('')}</div>
+    <div class="pills"><span class="pill">Play Computer</span><span class="pill">Friends</span><span class="pill">Ranked</span><span class="pill xp">Levels 1–99</span></div>
   </div>
 </body></html>`;
 
@@ -48,7 +52,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
   await page.setContent(html, { waitUntil: 'networkidle' }).catch(() => {});
   await page.evaluate(() => document.fonts.ready);
-  const out = path.join(ROOT, 'icons/share-preview-v3.jpg');
+  const out = path.join(ROOT, 'icons/share-preview-v4.jpg');
   await page.screenshot({ path: out, type: 'jpeg', quality: 86 });
   await browser.close();
   console.log('saved', out, fs.statSync(out).size, 'bytes');

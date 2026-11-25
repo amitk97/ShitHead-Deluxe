@@ -1,5 +1,5 @@
-<!-- README-VERSION: v540 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
-# 💩 Shed Head Deluxe
+<!-- README-VERSION: v547 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
+# Shed Head Deluxe: Card Game
 
 **The classic card game Shed Head, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the Shed Head.
 
@@ -114,3 +114,8 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 - Painted burns are drawn with WebGL ([`art/burns/level-3d/burns3d.js`](art/burns/level-3d/burns3d.js)) from layers cut out of the artwork by [`tools/make-burn-layers.py`](tools/make-burn-layers.py).
 - The puzzle rules and solver ([`js/puzzle-engine.js`](js/puzzle-engine.js), copied to `functions/` for the server's check) are shared by the page, the tests and the search tools ([`tools/puzzle-search.js`](tools/puzzle-search.js), [`tools/puzzle-search-zones.js`](tools/puzzle-search-zones.js)).
 - A developer test suite runs in the browser: open `index.html?dev-tests=1`. Node tests live in `tools/*-test.js`.
+
+## Legal
+
+- [Privacy Policy](privacy-policy.html) and [Terms of Use](terms.html) (served at `shithead-deluxe.web.app/privacy-policy.html` and `/terms.html`), including font, effect and artwork credits.
+- Shed Head Deluxe is not connected to any other game, brand or company. Do not sell clothing or merchandise under the name (SHED HEAD is a clothing trademark).

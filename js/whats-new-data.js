@@ -3,7 +3,8 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
-      v547: [['sparkle', 'The game is now Shed Head Deluxe: Card Game. ShitHead is Shed Head everywhere, including the lessons, the Guide, challenges and avatars.', WN_KEY]],
+      v548: [['sparkle', 'New Privacy Policy and Terms of Use, linked from the sign-in help. The poop emoji is gone from the lesson and the README.']],
+    v547: [['sparkle', 'The game is now Shed Head Deluxe: Card Game. ShitHead is Shed Head everywhere, including the lessons, the Guide, challenges and avatars.', WN_KEY]],
     v546: [['sparkle', 'The Underground deck is now London Lines, with new shield badges on its Jack, Queen and King.']],
     v545: [['sparkle', 'No Mercy is now called No Chill. Same rules, new name (also in the lesson, Challenges and the Guide).', WN_KEY], ['sparkle', 'Champagne Pop is now Bubbly Pop, and the Continue with Google button uses the official Google look.']],
       v544: [['clock', 'Three Cards now shows a live countdown to the next game (the new UK week).']],

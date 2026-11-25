@@ -995,7 +995,7 @@
     const QS_FIRST_DEAL = { hand: [['7', '♣'], ['Q', '♠'], ['K', '♦']], faceUp: [['2', '♣'], ['J', '♦'], ['A', '♣']], pile: [['Q', '♥']], coach: [['A', '♠']], coachFaceUp: [['8', '♦'], ['5', '♠'], ['9', '♥']], drawPile: [['4', '♦'], ['6', '♣']] };
     const TUTORIAL_MODULE_QUICK_START = [
       {
-        text: "Get rid of all your cards. The last player holding cards is the Shed Head. 💩",
+        text: "Get rid of all your cards. The last player holding cards is the Shed Head.",
         target: null,
         scene: QS_FIRST_DEAL
       },

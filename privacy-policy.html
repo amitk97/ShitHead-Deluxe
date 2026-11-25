@@ -92,60 +92,74 @@
     <a class="back-link" href="./index.html">&larr; Back to Shed Head Deluxe</a>
     <header>
       <h1>Privacy Policy</h1>
-      <div class="updated">Last updated: 26 September 2026</div>
+      <div class="updated">Last updated: 25 November 2026 &middot; <a href="./terms.html">Terms of Use</a></div>
     </header>
 
-    <p>This page explains what information Shed Head Deluxe collects when you use it, why, and where it's stored. Shed Head Deluxe is a small, independently run project — this policy is written in plain language rather than dense legal text, so you can actually tell what happens to your information.</p>
+    <p>This page explains what information Shed Head Deluxe: Card Game ("Shed Head Deluxe", "the game") collects when you use it, why, and where it's stored. Shed Head Deluxe is made and run by an independent developer. This policy is written in plain language so you can tell what happens to your information.</p>
 
     <h2>Information we collect</h2>
     <ul>
-      <li><strong>Account information.</strong> If you sign in with Google, we receive the name and email address on your Google account. If you create an account with email and password instead, we store the email address you provide.</li>
-      <li><strong>Username.</strong> The username you choose is public — other players can see it, including via Friends and match history.</li>
-      <li><strong>Gameplay data.</strong> Your Ranked rating, win/loss record, and difficulty progress against bots.</li>
-      <li><strong>Social data.</strong> Your friends list, pending friend requests, and any players you've chosen to ignore.</li>
-      <li><strong>Presence.</strong> Whether you're currently online, shown to your friends only.</li>
-      <li><strong>Technical error reports.</strong> If something crashes while you're signed in, a basic error report (what failed and where in the code, your device type and game version) is logged automatically to help fix bugs. It's stored with your account ID so repeated problems can be traced, and only the developer can read it.</li>
-      <li><strong>Performance and match numbers.</strong> While you're signed in, the game keeps one small record per play session: your device type, game version, how long the page took to load, how smoothly matches ran (frame rate), and how many matches you started, finished or left. It's stored with your account ID, only the developer can read it, and it's used only to find and fix slow or broken parts of the game.</li>
+      <li><strong>Account information.</strong> If you sign in with Google, we receive the name and email address on your Google account. If you sign up with email and password instead, we store the email address you provide (your password is handled by Firebase Authentication and is never visible to us). Playing as a guest needs no account.</li>
+      <li><strong>Username and profile.</strong> The username you choose is public: other players can see it, with your avatar, level and the cosmetic items you have equipped, including on leaderboards, in Friends and in match history. Your public profile can also show your showcase and your wishlist.</li>
+      <li><strong>Gameplay data.</strong> Your Ranked rating, wins and losses, match history, difficulty progress, XP and level, Season Pass progress, challenge and puzzle progress, Gauntlet progress, Lucky Games results and the items, Diamonds and rewards you own. Diamonds are an in-game currency earned by playing; at the moment nothing in the game is bought with real money.</li>
+      <li><strong>Social data.</strong> Your friends list, friend requests, game invites, gifts you send or receive, Inbox messages, players you have ignored, and reports you make about other players (a report includes the reason, an optional note of up to 200 characters, and the match it came from).</li>
+      <li><strong>Invites.</strong> If you use an invite link, we record who invited you and how many games you have played, so both players can be rewarded.</li>
+      <li><strong>Presence.</strong> Whether you're currently online, whether you are in a match, and when you were last seen, shown to your friends. A friend can watch a Play Computer or Gauntlet game of yours (their hidden cards stay hidden) unless you switch <em>Friends Can Watch</em> off in Settings.</li>
+      <li><strong>Settings.</strong> Your game settings are saved on your device and, when you're signed in, on your account so they follow you between devices.</li>
+      <li><strong>Notifications.</strong> If you turn notifications on, your device's push-notification token is stored so game invites, friend requests, gifts and event reminders can reach you when the app is closed. Turning notifications off or signing out removes it.</li>
+      <li><strong>Technical error reports.</strong> If something crashes while you're signed in, a basic error report (what failed and where in the code, your device type and game version) is logged with your account ID so repeated problems can be traced. Only the developer can read it.</li>
+      <li><strong>Performance and match numbers.</strong> While you're signed in, the game keeps one small record per play session: device type, game version, how long the page took to load, how smoothly matches ran (frame rate), screen size, and how many matches you started, finished or left. It is stored with your account ID, only the developer can read it, and it is used only to find and fix slow or broken parts of the game.</li>
     </ul>
-    <p>We don't collect payment information, location data, or contacts, and we don't use advertising or third-party analytics trackers: the only performance numbers are the game's own, described above.</p>
+    <p>We don't collect payment card details, precise location, contacts, photos or microphone data. The game contains no advertising and no third-party analytics or tracking services.</p>
+
+    <h2>Information stored on your device</h2>
+    <p>The game saves things on your device so it works quickly and offline: your settings, your game in progress, your match history, a copy of the game's files (a service worker cache) and a few small markers such as which tips you have seen. This is not used to track you across other websites. You can clear it in your browser or device settings (clearing it also removes a game saved only on that device).</p>
 
     <h2>How we use this information</h2>
     <ul>
       <li>To sign you in and keep your progress attached to your account across devices.</li>
-      <li>To match you with opponents in Ranked play and let you play with friends via Online Room.</li>
-      <li>To show your username, rating, and online status to people you're friends with.</li>
-      <li>To diagnose and fix bugs when something goes wrong, and to see how well the game runs on different devices.</li>
+      <li>To match you with opponents in Ranked play, run Play Friends rooms, leaderboards and series, and show your username, rating, level and online status to other players.</li>
+      <li>To run the in-game economy: rewards, purchases with Diamonds, gifts, challenges, seasons and prizes. These are calculated on our servers so they can't be tampered with.</li>
+      <li>To keep the game fair and safe, including reviewing reports about other players.</li>
+      <li>To diagnose and fix bugs, and to see how well the game runs on different devices.</li>
     </ul>
+    <p>If you are in the UK or EU, we rely on these grounds: providing the game you asked to play (your account, progress, rewards and online play), our legitimate interest in keeping the game secure, fair and working, and your consent for push notifications.</p>
+    <p>If you sign in with Google, we use the name and email address Google gives us only to create and sign you in to your account. We do not share it with anyone else or use it for advertising.</p>
 
-    <h2>Where your information is stored</h2>
-    <p>Shed Head Deluxe is built on <a href="https://firebase.google.com" target="_blank" rel="noopener">Firebase</a>, Google's app development platform. Your account and game data are stored in a Firebase Realtime Database hosted in the EU (europe-west1). Firebase's own privacy practices are governed by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</p>
+    <h2>Where your information is stored and who processes it</h2>
+    <p>Shed Head Deluxe is built on <a href="https://firebase.google.com" target="_blank" rel="noopener">Firebase</a>, Google's app development platform (Authentication, Realtime Database, Cloud Functions, Cloud Messaging and Hosting). Your account and game data are stored in a Firebase Realtime Database in the EU (europe-west1); Google, as our processor, may handle some data (for example sign-in and push messages) in other countries under its standard safeguards. Firebase's own practices are governed by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</p>
+    <p>The game also loads a few things from other services when you play: fonts from Google Fonts, and a flag-emoji font and the confetti effect from the jsDelivr content network. Those services see your IP address and device information when your device asks for these files, as with any website.</p>
 
     <h2>Sharing</h2>
-    <p>We don't sell your information, and we don't share it with third parties other than Google/Firebase, who host the infrastructure this game runs on.</p>
+    <p>We don't sell your information. We don't share it with anyone other than the services above that host and run the game. Your username, avatar, level, rating, equipped items and online status are visible to other players as described. If we are required to by law, we may disclose information to the authorities.</p>
 
-    <h2>Your choices</h2>
+    <h2>How long we keep it</h2>
+    <p>We keep your account information while your account exists. When you delete your account (below) it is erased after the 7-day grace period. Match history on your account is limited to your most recent matches.</p>
+
+    <h2>Your choices and rights</h2>
     <ul>
       <li>You can sign out at any time from the menu or your Profile.</li>
-      <li>You can remove friends, decline requests, or ignore other players at any time from the Friends menu.</li>
+      <li>You can remove friends, decline requests, ignore other players, hide your online status by not being friends, and turn Friends Can Watch and notifications off at any time.</li>
       <li><strong>Get a copy of your data:</strong> Profile &rarr; Your data &rarr; <em>Download my data</em> saves a file with everything we store about your account (profile, stats, match history, purchases, friends, requests, reports you've made), plus the settings saved on your device.</li>
-      <li><strong>Delete your account:</strong> Profile &rarr; Danger Zone &rarr; <em>Delete account</em>. Your public profile and leaderboard entry disappear straight away and notifications stop. Your data is kept for 7 days in case you change your mind (sign back in and choose <em>Keep my account</em>); after that everything is erased, including your username, your place in other players' friend lists, and your sign-in. You can also ask us by email.</li>
+      <li><strong>Delete your account:</strong> Profile &rarr; Danger Zone &rarr; <em>Delete account</em>. Your public profile and leaderboard entry disappear straight away and notifications stop. Your data is kept for 7 days in case you change your mind (sign back in and choose <em>Keep my account</em>); after that everything is erased, including your username, your place in other players' friend lists, and your sign-in.</li>
+      <li>Under UK and EU data protection law you can also ask us to correct your data, restrict or object to how we use it, or complain to your data protection authority (in the UK, the Information Commissioner's Office). Email us and we will reply within a month.</li>
     </ul>
 
     <h2>Children</h2>
-    <p>Shed Head Deluxe is not directed at children under 13, and we don't knowingly collect information from anyone in that age group.</p>
+    <p>Shed Head Deluxe is not directed at children under 13, and we don't knowingly collect information from anyone in that age group. If you believe a child under 13 has an account, contact us and we will delete it. In some countries the minimum age to use online services is higher than 13; if that applies to you, you need a parent or guardian's permission.</p>
 
     <h2>Changes to this policy</h2>
-    <p>If this policy changes, we'll update the date at the top of this page.</p>
+    <p>If this policy changes, we'll update the date at the top of this page. If a change is significant (for example, real-money purchases or advertising), we will tell players in the game first.</p>
 
     <h2>Contact</h2>
     <p>Questions about this policy or your data can be sent to <a href="mailto:support.shitheaddeluxe@gmail.com">support.shitheaddeluxe@gmail.com</a>.</p>
 
     <div class="note">
-      This policy was written to plainly and accurately describe what the app actually does, for a small independently-run project — it hasn't been reviewed by a lawyer. If Shed Head Deluxe grows to handle payments, ads, or data from a specific regulated region (e.g. children's data under COPPA, or EU users under GDPR in a formal sense), this page should be revisited with proper legal advice at that point.
+      This policy was written to plainly and accurately describe what the app actually does, for a small independently-run project. It hasn't been reviewed by a lawyer. If Shed Head Deluxe grows to handle payments, ads, or data from a specific regulated region, this page should be revisited with proper legal advice at that point.
     </div>
 
     <footer>
-      Shed Head Deluxe &middot; <a href="mailto:support.shitheaddeluxe@gmail.com">support.shitheaddeluxe@gmail.com</a>
+      Shed Head Deluxe &middot; <a href="./terms.html">Terms of Use</a> &middot; <a href="mailto:support.shitheaddeluxe@gmail.com">support.shitheaddeluxe@gmail.com</a>
     </footer>
   </div>
 </body>
