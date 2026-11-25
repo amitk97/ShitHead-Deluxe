@@ -3309,3 +3309,14 @@ body.perf-mode svg [class*="av-"], body.perf-mode svg [class*="av-"]::before, bo
 
 /* Pinch zoom is allowed (v554); double-tap zoom stays off so taps on cards and buttons are never delayed. */
 html, body { touch-action: manipulation; }
+
+/* Touch targets (v555): controls that measured under 24px get a 24px+ hit area. The history arrows and the speed-lock icon
+   keep their look and layout (an invisible ::after grows the area); the helper tip button, password eye and logo button grow. */
+#histCollapseBtn, #histFirstBtn, #histLastBtn, #settingsSpeedLockBtn { position: relative; }
+#histCollapseBtn::after, #histFirstBtn::after, #histLastBtn::after, #settingsSpeedLockBtn::after { content: ''; position: absolute; inset: -6px; }
+.helper-tip-ok { min-height: 28px; padding: 6px 12px; }
+#togglePasswordBtn { min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+#navHomeLogoBtn { min-height: 32px; }
+
+/* Page heading for screen readers (v555): the one h1, never drawn. */
+.sr-h1 { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }

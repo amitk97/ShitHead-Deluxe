@@ -6856,7 +6856,7 @@
           <div class="flex flex-col items-start leading-none pointer-events-none text-amber-400 font-black pl-0.5 pt-0.5">
             <span class="card-corner-rank tracking-tight">JKR</span>
           </div>
-          <div class="flex items-center justify-center pointer-events-none my-auto text-amber-400 leading-none" aria-label="Joker">
+          <div class="flex items-center justify-center pointer-events-none my-auto text-amber-400 leading-none" role="img" aria-label="Joker">
             ${jokerCentre}
           </div>
         `;
