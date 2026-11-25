@@ -1,4 +1,4 @@
-<!-- README-VERSION: v547 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
+<!-- README-VERSION: v550 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
 # Shed Head Deluxe: Card Game
 
 **The classic card game Shed Head, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the Shed Head.
@@ -100,7 +100,8 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 - **Match summary** with stats, XP and a shareable result card, plus a full match history. Every mode ends with the same buttons: Match Stats and the obvious next step (Quick Play, Continue, Return To Ranked, Ready For Next Game).
 - **Built for every screen**: the hand resizes to fill your screen (including the installed iPhone app, edge to edge), overlapped cards stay easy to tap, the table grows on tablets and computers, foldables are supported (a small cover screen asks you to open the phone), and a phone turned sideways asks to be turned upright. Settings (Hand Sort, Turn Alert, Card History, Show Others' Effects and more) follow your account across devices, and an accessibility **Big Print** deck gives large, high-contrast ranks that stay readable in any hand.
 - **Always up to date**: when a new version is out, the game offers to update itself, and a game in progress carries on afterwards.
-- **Your data**: download everything stored about your account, or delete it (with 7 days to change your mind).
+- **Swipe down to close**: on a touch screen, drag any menu page or pop-up down to close it (Reduce Motion closes it without the slide).
+- **Your data**: download everything stored about your account, or delete it (with 7 days to change your mind). Account deletion also has a public help page ([delete-account.html](delete-account.html)), and deleting now erases Lucky Games state, performance records and finished series records too.
 
 ## Tech
 
