@@ -1,4 +1,4 @@
-# ShitHead Deluxe videos
+# Shed Head Deluxe videos
 
 Portrait 780×1688 WebM (VP8, 30fps; only the how-to-play has sound), recorded from the real game by
 the scripts in `tools/video/`. Social apps prefer MP4: open a file in CapCut
@@ -12,14 +12,12 @@ the scripts in `tools/video/`. Social apps prefer MP4: open a file in CapCut
 | `shithead-promo.webm` | 32s | Promo: plays, burn, blind flip, Joker, last card, win | `promo.js` |
 | `shithead-tiktok1-jokered.mp4` | 15s | TikTok 1 (1080×1920, card sounds + voiceover, no burn/Joker sounds): your 10 burns a 22-card Pile with Ghost Flames ("Burnt!"), then Jake's Pumpkin Joker hands you 17 cards; end card "Think you can beat the dev? Prove it" | `tiktok1-voice.py` → `tiktok1.js` |
 | `shithead-tiktok2-gauntlet.mp4` | 23s | TikTok 2 (1080×1920, game sounds + voiceover): Gauntlet welcome pop-up (5 bots, 3 lives), Round 1 won, a life lost, the Boss round burnt with the v382 Ghost Flames wraith, champion pop-up, end card "Your turn. Clear the Gauntlet" | `tt23-voice.py` → `tiktok2.js` |
-| `shithead-tiktok3-halloween.mp4` | 20s | TikTok 3 (1080×1920, game sounds + voiceover): the Halloween event pop-up scrolled through, the v382 Ghost Flames wraith, the Pumpkin Joker, what the event pays, end card "Halloween ends 2 November" (event window 15 Oct – 2 Nov) | `tt23-voice.py` → `tiktok3.js` |
 | `shithead-how-to-play.webm` / `.mp4` | 112s | How to play with a voiceover (British male, excited), every move cued to the narration | `narrate.py` → `howto-voice.js` → `mux-voice.py` |
 
 Suggested captions:
 
 - **TikTok 1 (Burnt… then Jokered):** "Karma comes fast in Shithead 🎃🔥" #cardgame #palacecardgame #satisfying
 - **TikTok 2 (Gauntlet):** "5 bots. 3 lives. One shot a day. 😮‍💨 Can you clear the Gauntlet? Free to play, link in bio." #cardgame #shithead #palace #gaming #indiegame
-- **TikTok 3 (Halloween):** "Halloween is live in ShitHead Deluxe 🎃 New table, burns and a leaderboard with Diamond prizes. Ends 2 Nov. Link in bio." #halloween #cardgame #shithead #mobilegame #gaming
 - **Hook:** "Last card. Face down. Everything on one flip 😱 #shithead #cardgame #palace"
 - **Gauntlet:** "5 bots. 3 lives. A new run every day. Can you beat the Boss? 😈 #cardgames #shithead"
 - **Uni:** "The card game every uni kitchen knew 🍻 Now on your phone. #shithead #uni #cardgame #palace #karma"
@@ -34,3 +32,5 @@ Re-record (needs Playwright + Chromium and `SH_VIDEO_DEPS` with
 How-to-play voiceover: `KOKORO_DIR=<kokoro-v1.0.onnx + voices-v1.0.bin> FFMPEG_FULL=<ffmpeg with rubberband, libopus, libx264> python3 tools/video/narrate.py`,
 then `node tools/video/howto-voice.js`, then `python3 tools/video/mux-voice.py` (writes the WebM and the MP4). The script text lives in `narrate.py`;
 each scene of `howto-voice.js` starts on its line and cues moves to the phrase times in `narration/timing.json`.
+
+Updated 25 Nov (v552): every clip now says Shed Head (end cards, captions, narration). The Halloween TikTok was removed (the event is over). TikTok 1 still shows the old end card: re-recording it needs the owner's "A few moments later" picture, which is not in the repo (`tools/video/art/README.md` says how it was made).
