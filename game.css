@@ -3302,3 +3302,7 @@ body.perf-mode svg [class*="av-"], body.perf-mode svg [class*="av-"]::before, bo
 .gsi-btn:focus-visible { outline: 2px solid #1a73e8; outline-offset: 2px; }
 .gsi-btn:disabled { opacity: .6; cursor: default; }
 .gsi-logo { flex: none; display: block; }
+
+/* Accessibility (v553): close buttons and the sign-in text links were 11-14px wide/tall; give them a 32px / 24px touch area. */
+#closeRulesBtn, #authCloseBtn, #themesCloseBtn, #profileCloseBtn { min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+#authToggleModeBtn, #authForgotBtn, #authHelpToggle { min-height: 24px; }
