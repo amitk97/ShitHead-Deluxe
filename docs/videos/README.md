@@ -33,4 +33,4 @@ How-to-play voiceover: `KOKORO_DIR=<kokoro-v1.0.onnx + voices-v1.0.bin> FFMPEG_F
 then `node tools/video/howto-voice.js`, then `python3 tools/video/mux-voice.py` (writes the WebM and the MP4). The script text lives in `narrate.py`;
 each scene of `howto-voice.js` starts on its line and cues moves to the phrase times in `narration/timing.json`.
 
-Updated 25 Nov (v552): every clip now says Shed Head (end cards, captions, narration). The Halloween TikTok was removed (the event is over). TikTok 1 still shows the old end card: re-recording it needs the owner's "A few moments later" picture, which is not in the repo (`tools/video/art/README.md` says how it was made).
+Updated 25 Nov (v552): every clip now says Shed Head (end cards, captions, narration). The Halloween TikTok was removed (the event is over). TikTok 1 was re-recorded the same day with a new "A few moments later…" title card drawn in HTML (`tools/video/art/README.md`).
