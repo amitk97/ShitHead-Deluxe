@@ -1,7 +1,7 @@
 # Voiceover for howto-voice.js: Kokoro TTS (pip install kokoro-onnx soundfile),
 # model files kokoro-v1.0.onnx + voices-v1.0.bin in $KOKORO_DIR. Voice = owner's pick
 # (v309): British George blended with lively Puck, each phrase its own pace and
-# pitch (rubberband) so it isn't flat. Write "Shithead" (one word) so it isn't said
+# pitch (rubberband) so it isn't flat. Write "Shed Head" so it isn't said
 # as two. Output: narration/scene-NN.wav + narration/timing.json (lengths, phrase starts).
 import numpy as np, soundfile as sf, subprocess, json, os
 D = os.path.join(os.path.dirname(os.path.abspath(__file__)), "narration"); os.makedirs(D, exist_ok=True)
@@ -12,7 +12,7 @@ FF = os.environ.get("FFMPEG_FULL", "ffmpeg")  # needs rubberband
 V = k.get_voice_style("bm_george")*.6 + k.get_voice_style("am_puck")*.4
 # Each phrase: (text, gap after, speed, pitch semitones). Same recipe as the approved line 1.
 S = [
- [("Welcome to Shithead Deluxe!",.16,1.32,1.5),("The aim is simple:",.08,1.4,-.5),("don't be the last one holding cards!",.05,1.34,1)],
+ [("Welcome to Shed Head Deluxe!",.16,1.32,1.5),("The aim is simple:",.08,1.4,-.5),("don't be the last one holding cards!",.05,1.34,1)],
  [("Everyone starts with three cards face down,",.1,1.34,.8),("three face up on top,",.08,1.36,0),("and three in their hand.",.25,1.34,.6),
   ("Nobody,",.1,1.3,1.2),("not even you,",.1,1.32,.3),("knows what's under the face-down cards!",.05,1.32,1)],
  [("Before play begins,",.06,1.38,.8),("you can swap cards between your hand and your face-up row.",.2,1.36,0),
@@ -36,7 +36,7 @@ S = [
  [("Once the Deck and your hand are empty,",.06,1.36,.6),("play your face-up cards.",.16,1.34,.2),
   ("Then flip your face-down cards blind,",.06,1.32,1),("one at a time.",.16,1.34,0),
   ("If it can't go on the Pile,",.06,1.34,.6),("you pick the Pile up!",.05,1.32,.9)],
- [("Empty all your cards to escape!",.16,1.32,1.2),("The last player left holding cards is the Shithead!",.25,1.32,.6),
+ [("Empty all your cards to escape!",.16,1.32,1.2),("The last player left holding cards is the Shed Head!",.25,1.32,.6),
   ("Good luck...",.14,1.28,.8),("and don't let it be you!",.05,1.32,1.2)],
 ]
 # Owner: "slow it down a bit" (after the first cut): every phrase's pace x PACE, pauses x GAPS.

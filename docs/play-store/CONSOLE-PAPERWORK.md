@@ -85,6 +85,6 @@ Use `LISTING.md` in this folder: title, short and full description, graphics, co
 | Developer identity verification | **YOU** |
 | 12 closed testers for 14 days | **YOU** (kit in `TESTERS.md`) |
 | Account purge covers what the policy lists | Done and tested (`node tools/account-purge-test.js`, in CI) |
-| Age: 13+ is stated, not enforced by an age check | Decision pending (a tick box at sign-up is possible) |
+| Age: 13+ is stated, not enforced by an age check | Decided (owner, 25 Nov): no tick box; 13+ stays stated in the policy and terms |
 | Game mode names checked | Cold Blooded: pending Class 41 filing found by a web search; see `docs/legal/SOLICITOR-BRIEF.md` |
 | Trademark checks (SHED HEAD, COLD BLOODED) | **YOU** |

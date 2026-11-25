@@ -56,9 +56,9 @@ const OUT = path.join(__dirname, 'shithead-uni.webm');
   await wait(page, 900);
   await ev(() => V.meBlind(0)); await wait(page, 2400);
 
-  await ev(() => { V.hideCaption(); V.card(`<div class="big">💩</div><div class="line">Last one holding cards<br>is the ShitHead.</div>`); });
+  await ev(() => { V.hideCaption(); V.card(`<div class="big">🃏</div><div class="line">Last one holding cards<br>is the Shed Head.</div>`); });
   await wait(page, 2400);
-  await ev(() => V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">Now on your phone.<br>Play your mates online.</div><div class="url">shithead-deluxe.web.app</div><div class="sub">Free · no download</div>`));
+  await ev(() => V.card(`<div class="logo">Shed Head</div><div class="deluxe">DELUXE</div><div class="line">Now on your phone.<br>Play your mates online.</div><div class="url">shithead-deluxe.web.app</div><div class="sub">Free · no download</div>`));
   await wait(page, 3200);
   await finish(g, OUT, { from: 'start', lead: 0.3 });
   console.log('saved', OUT);

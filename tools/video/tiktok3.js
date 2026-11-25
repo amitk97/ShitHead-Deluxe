@@ -91,7 +91,7 @@ const SLOW = 10;
   // End card.
   const tEnd = tE + 5.3;
   await at(tEnd);
-  await ev(() => { document.getElementById('vCard').classList.remove('show'); setTimeout(() => V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div>
+  await ev(() => { document.getElementById('vCard').classList.remove('show'); setTimeout(() => V.card(`<div class="logo">Shed Head</div><div class="deluxe">DELUXE</div>
     <div class="line" style="color:#fbbf24">Halloween ends<br>2 November 🎃</div>
     <div class="url">shithead-deluxe.web.app</div>
     <div class="sub">Play free in your browser</div>

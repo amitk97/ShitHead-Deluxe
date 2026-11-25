@@ -132,7 +132,7 @@ const LATENCY = 0.2;  // a screencast frame is stamped ~0.2s (real) after the ch
   const tEnd = tJoker + 2.9;
   await at(tEnd);
   await ev(() => { V.clearHighlights(); document.getElementById('ttCap').classList.remove('show');
-    V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div>
+    V.card(`<div class="logo">Shed Head</div><div class="deluxe">DELUXE</div>
     <div class="line" style="color:#fbbf24">Think you can<br>beat the dev?<br>Prove it 👇</div>
     <div class="url">shithead-deluxe.web.app</div>
     <div class="sub">Play free in your browser online,<br>vs Friends or vs bots now</div>

@@ -16,7 +16,7 @@ Audited at v552: everything already built was removed (history lives in `CLAUDE.
 The free 50-tier pass and Seasons 1-6 are built (v393-v399).
 
 - [ ] Premium track and tier skips stay on hold until there is a business bank account. Plan: `docs/plans/season-pass.md` (open decisions in section 14).
-- [ ] Legal and payments prerequisites before Premium goes on sale: legal drafts (kept locally), Monzo Business account and sole trader registration, ICO registration, Google Play developer account and closed test, and the game fixes in the legal pack (deletion gaps, age tick and terms links at sign-up, separate sales record).
+- [ ] Legal and payments prerequisites before Premium goes on sale: legal drafts (kept locally), Monzo Business account and sole trader registration, ICO registration, Google Play developer account and closed test, and the game fixes in the legal pack (deletion gaps, terms links at sign-up, separate sales record).
 
 ## Ideas (v482, not decided; delete what you don't want)
 

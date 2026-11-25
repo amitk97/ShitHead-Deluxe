@@ -86,7 +86,7 @@ const SLOW = 10;
   // End card.
   const tEnd = tBurn + 6.6;
   await at(tEnd);
-  await ev(() => { closeGauntlet(); V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div>
+  await ev(() => { closeGauntlet(); V.card(`<div class="logo">Shed Head</div><div class="deluxe">DELUXE</div>
     <div class="line" style="color:#fbbf24">Your turn.<br>Clear the Gauntlet 👇</div>
     <div class="url">shithead-deluxe.web.app</div>
     <div class="sub">Play free in your browser</div>

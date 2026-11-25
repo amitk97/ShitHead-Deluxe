@@ -34,7 +34,7 @@ const PAD = 0.8; // quiet gap between scenes (s)
 
   // No one-time helper tips in the recording.
   await ev(() => { window.showHelperTip = () => {}; document.getElementById('playerNameInput').value = 'You'; startSinglePlayerGame(2); });
-  await ev(() => V.card(`<div class="line" style="font-size:22px;color:#fde68a">HOW TO PLAY</div><div class="logo">ShitHead</div><div class="deluxe">DELUXE</div>`));
+  await ev(() => V.card(`<div class="line" style="font-size:22px;color:#fde68a">HOW TO PLAY</div><div class="logo">Shed Head</div><div class="deluxe">DELUXE</div>`));
   await page.waitForFunction(() => document.getElementById('shuffleIntroOverlay')?.classList.contains('hidden') && state.phase === 'SWAP', null, { timeout: 25000 }).catch(() => {});
   await ev(({ BOTS, DRAW }) => {
     V.bot(0).name = 'Noah'; V.bot(1).name = 'Emma';
@@ -172,9 +172,9 @@ const PAD = 0.8; // quiet gap between scenes (s)
     await cap(`Empty all your cards to ${Y('escape')}`); await ev(() => V.mePlay('A'));
     await wait(page, 1000);
     await ev(() => { if (!document.querySelector('#victoryFxLayer *')) playVictoryEffect('victory-halloween'); }); await shot('win');
-    await at(s[1]); await cap(`The last one holding cards is the ${Y('ShitHead')}`);
+    await at(s[1]); await cap(`The last one holding cards is the ${Y('Shed Head')}`);
     await at(s[2] - 0.2);
-    await ev(() => { V.hideCaption(); V.card(`<div class="logo">ShitHead</div><div class="deluxe">DELUXE</div><div class="line">Good luck… and don't let it be you!</div><div class="url">shithead-deluxe.web.app</div>`); });
+    await ev(() => { V.hideCaption(); V.card(`<div class="logo">Shed Head</div><div class="deluxe">DELUXE</div><div class="line">Good luck… and don't let it be you!</div><div class="url">shithead-deluxe.web.app</div>`); });
     await wait(page, 600); await shot('end');
     await at(T.durs[10] + 2.2);
   });
