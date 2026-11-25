@@ -7499,6 +7499,7 @@ async function runDevTestSuite() {
     }
   });
   await test('v445: Multiple Decks chooser starts 4-8 player games; a Friends room seats 8 and fills bots to four at the start', () => {
+    const xpWas445 = xpFeatureOn; xpFeatureOn = false; // the real XP switch can arrive from the database (CI) and lock the mode at Lvl 25
     try {
       document.querySelector('[data-open-decks]').click();
       assertTrue(!document.getElementById('decksModal').classList.contains('hidden'), 'the chooser opens');
@@ -7518,7 +7519,7 @@ async function runDevTestSuite() {
       assertEqual(four.length, 4, 'two humans get two bots');
       assertEqual(four.filter(p => p.isBot && p.difficulty === 'medium').length, 2, 'Medium bots');
       assertEqual(fillBotsToFour(new Array(6).fill(0).map((_, i) => ({ id: 'h' + i, name: 'H' + i })), 'medium').length, 6, 'a bigger table gets no bots');
-    } finally { freshState(); }
+    } finally { xpFeatureOn = xpWas445; freshState(); }
   });
   await test('v445: starting a Multiple Decks room with two people adds two Medium bots and deals two decks', () => {
     try {
@@ -8097,7 +8098,8 @@ async function runDevTestSuite() {
 
   await test('v389: the 2 vs 2 chooser offers 3 bots at a difficulty, or Play Friends on its 2 vs 2 host screen', () => {
     const modal = document.getElementById('twosModal');
-    const was = { shuffle: runShuffleIntro, diff: state.difficulty, car: window.ShHomeCarousel, fb: firebaseAvailable };
+    const was = { shuffle: runShuffleIntro, diff: state.difficulty, car: window.ShHomeCarousel, fb: firebaseAvailable, xp: xpFeatureOn };
+    xpFeatureOn = false; // the real XP switch can arrive from the database (CI) and lock 2 vs 2 at Lvl 10
     try {
       document.querySelector('[data-open-twos]').click();
       assertTrue(!modal.classList.contains('hidden'), 'tapping 2 vs 2 opens the chooser');
@@ -8120,7 +8122,7 @@ async function runDevTestSuite() {
       lobby.openTwos = openTwos;
       assertEqual(calls, ['open:friends', 'twos'], 'Play with friends opens the 2 vs 2 host screen');
       assertTrue(modal.classList.contains('hidden'), 'the chooser closes');
-    } finally { runShuffleIntro = was.shuffle; state.difficulty = was.diff; window.ShHomeCarousel = was.car; firebaseAvailable = was.fb; modal.classList.add('hidden'); freshState(); }
+    } finally { xpFeatureOn = was.xp; runShuffleIntro = was.shuffle; state.difficulty = was.diff; window.ShHomeCarousel = was.car; firebaseAvailable = was.fb; modal.classList.add('hidden'); freshState(); }
   });
   await test('v389: Hard and Boss bots in 2 vs 2 do not skip their own partner with two 8s', () => {
     try {
