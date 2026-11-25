@@ -191,7 +191,8 @@
           c.tabIndex = a === 0 ? 0 : -1;
           c.querySelectorAll('button').forEach(button => { button.tabIndex = a > 2 ? -1 : 0; });
           const lit = PANEL[c.dataset.mcMode] === shownPanel() && (c.dataset.mcMode === chosen || PANEL[chosen] !== shownPanel());
-          c.setAttribute('aria-pressed', lit ? 'true' : 'false');
+          c.setAttribute('aria-current', lit ? 'true' : 'false');
+          const nm = c.querySelector('.mc-name'); if (nm) c.setAttribute('aria-label', nm.textContent.trim());
         });
         atStart.forEach((b) => { b.disabled = focus === 0; });
         atEnd.forEach((b) => { b.disabled = focus === cards.length - 1; });
@@ -566,7 +567,7 @@
         if (on === !!labCard) return;
         if (on) {
           labCard = document.createElement('div');
-          labCard.className = 'mc-card'; labCard.setAttribute('role', 'button'); labCard.tabIndex = -1; labCard.setAttribute('aria-pressed', 'false');
+          labCard.className = 'mc-card'; labCard.setAttribute('role', 'group'); labCard.tabIndex = -1; labCard.setAttribute('aria-current', 'false');
           labCard.dataset.mcMode = 'lab'; labCard.style.setProperty('--mc-tone', '#e879f9');
           labCard.innerHTML = '<span class="mc-num" aria-hidden="true"></span><svg class="mc-ic ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mode-lab"/></svg><span class="mc-name">Test Lab</span><span class="mc-sub">Effects sandbox</span><button type="button" class="mc-go" data-mc-go>Go →</button>';
           labCard.dataset.mc = String(cards.length + 1);

@@ -338,7 +338,7 @@
     .mc-arrow:disabled { opacity: .3; cursor: default; }
     .mc-arrow svg { width: 16px; height: 16px; }
     .mc-card:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
-    .mc-card[aria-pressed="true"] { border-color: var(--mc-tone); background: color-mix(in srgb, var(--mc-tone) 13%, #0b1428);
+    .mc-card[aria-pressed="true"], .mc-card[aria-current="true"] { border-color: var(--mc-tone); background: color-mix(in srgb, var(--mc-tone) 13%, #0b1428);
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-tone) 18%, transparent), 0 14px 28px rgba(0,0,0,.45); }
     .mc-card .mc-num { position: absolute; top: 8px; left: 10px; font-size: 11px; font-weight: 800; color: #64748b; }
     .mc-card .mc-ic { width: 52px; height: 52px; padding: 7px; box-sizing: border-box; border-radius: 16px; color: var(--mc-tone);
@@ -3306,3 +3306,6 @@ body.perf-mode svg [class*="av-"], body.perf-mode svg [class*="av-"]::before, bo
 /* Accessibility (v553): close buttons and the sign-in text links were 11-14px wide/tall; give them a 32px / 24px touch area. */
 #closeRulesBtn, #authCloseBtn, #themesCloseBtn, #profileCloseBtn { min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
 #authToggleModeBtn, #authForgotBtn, #authHelpToggle { min-height: 24px; }
+
+/* Pinch zoom is allowed (v554); double-tap zoom stays off so taps on cards and buttons are never delayed. */
+html, body { touch-action: manipulation; }
