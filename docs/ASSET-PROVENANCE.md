@@ -40,3 +40,7 @@ Starting point for proving where every asset came from. **Not finished:** the So
 - Pixabay: the download page URL, the contributor name, the date, and a screenshot of the page showing the licence.
 - AI tool: the tool name, plan (free or paid) on the day, the prompt, and the date. Export your chat history (ChatGPT: Settings > Data controls > Export; Gemini: myactivity.google.com > Gemini Apps).
 - Own renders (Blender) and code-drawn art: the git history is the proof.
+
+## Owner notes (25 Nov)
+- Premium photo avatars Sapphire Sovereign (blue lion), Crimson Inferno (red devil) and Scarlet Guardian (red bird) are AI-generated (owner's pictures, `docs/avatar-art/src`). Same position as the other AI art: ownership depends on the tool's terms. No export of account data is planned; instead keep the originals, any saved chat links or screenshots, and a short note of tool, plan and approximate date.
+- London court cards: roundel lookalike replaced by a shield badge (v546); deck renamed London Lines.
