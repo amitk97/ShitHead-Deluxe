@@ -3,6 +3,7 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
+      v556: [['sparkle', 'Nicknames for online play now go through the same name check as usernames.']],
       v555: [['sparkle', 'The loading screen logo is centred again, and a few small buttons (Card History arrows, Got It, the password eye) are easier to tap.']],
       v554: [['sparkle', 'You can now pinch to zoom the game. The home mode cards are easier for screen readers to use, with the Go button reachable on its own.']],
       v553: [['sparkle', 'Accessibility fixes: the speed slider and play-direction badge are labelled for screen readers, the Pile Base label is easier to read, and the close buttons are bigger to tap.']],

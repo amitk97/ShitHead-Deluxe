@@ -24064,12 +24064,13 @@
       const input = document.getElementById('playerNameInput');
       const msg = document.getElementById('nameRequiredMsg');
       if (!input) return true;
-      if (input.value.trim()) {
+      if (input.value.trim() && !isUsernameBlocked(input.value.trim())) {
         if (msg) msg.classList.add('hidden');
         input.classList.remove('border-rose-500');
         return true;
       }
-      if (msg) msg.classList.remove('hidden');
+      // An empty name and a blocked one (same list as usernames) both stop online play.
+      if (msg) { msg.textContent = input.value.trim() ? 'Please choose a different name.' : 'Please enter a nickname to continue.'; msg.classList.remove('hidden'); }
       input.classList.add('border-rose-500');
       input.focus();
       input.classList.add('animate-screen-shake');
