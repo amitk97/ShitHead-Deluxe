@@ -4335,7 +4335,7 @@ async function runDevTestSuite() {
     shopTab = savedTab; shopFilter = savedFilter; renderCosmeticShop();
     renderPersonalisationCosmetics();
     const burnNames = [...document.querySelectorAll('#personalisationBurnEffects .avatar-option-name')].map(n => n.textContent).slice(1);
-    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show', 'Black Hole', 'Lava Melt', 'Monsoon Deluge', 'Origami Fold', 'Pixel Blast', 'Routemaster Rush', 'Spark Snap', 'Smoke Burst', 'Inferno Sweep', 'Hellfire Spiral', 'Royal Incineration', 'The ShitStorm', 'Sandstorm Vortex', 'Glacial Shatter', 'Shuriken Barrage', 'Abyssal Whirlpool', "Zeus's Bolt", 'Arcane Hex'], 'Custom burn tiles in value order, then the level burns by level');
+    assertEqual(burnNames, ['Coloured Flame', 'Ice Shatter', 'Paint Splats', 'Electric Blast', 'Stupendous Confectionery', 'Smoke Show', 'Black Hole', 'Lava Melt', 'Monsoon Deluge', 'Origami Fold', 'Pixel Blast', 'Routemaster Rush', 'Spark Snap', 'Smoke Burst', 'Inferno Sweep', 'Hellfire Spiral', 'Royal Incineration', 'The Angry Twister', 'Sandstorm Vortex', 'Glacial Shatter', 'Shuriken Barrage', 'Abyssal Whirlpool', "Zeus's Bolt", 'Arcane Hex'], 'Custom burn tiles in value order, then the level burns by level');
   });
   await test('REGRESSION: Card Shower and the deal freeze the relevant player\'s card style at the start', () => {
     const saved = { ...equippedCosmetics };
@@ -7085,7 +7085,7 @@ async function runDevTestSuite() {
   // ---- STAGE 1: hamburger menu restructure + responsive presentation ----
   await test('REGRESSION: the hamburger menu has all 9 items in the agreed order, with no duplicates', () => {
     // Error Reports is owner-only (hidden for everyone else).
-    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuLadderBtn', 'menuShopBtn', 'menuGuideBtn', 'menuTourBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuErrorReportsBtn', 'menuChangelogBtn', 'menuXpSwitchBtn', 'menuUnlockAllBtn', 'menuInstallBtn', 'menuSignOutBtn'];
+    const expectedOrder = ['menuProfileBtn', 'menuStatsBtn', 'menuThemesBtn', 'menuFriendsBtn', 'menuLeaderboardBtn', 'menuChallengesBtn', 'menuLadderBtn', 'menuWheelBtn', 'menuShopBtn', 'menuGuideBtn', 'menuTourBtn', 'menuSettingsBtn', 'menuSupportBtn', 'menuErrorReportsBtn', 'menuChangelogBtn', 'menuXpSwitchBtn', 'menuResetLuckyBtn', 'menuUnlockAllBtn', 'menuInstallBtn', 'menuSignOutBtn'];
     const nav = document.querySelector('#hamburgerDrawer nav');
     const actualOrder = Array.from(nav.querySelectorAll('button')).map(b => b.id);
     assertEqual(actualOrder, expectedOrder, 'Menu items must appear in exactly the agreed order: Profile, Stats, Personalisation, Friends, Leaderboard, Challenges, Level Ladder, Shop, Guide & Strategy, Settings, Support, Sign Out (signed in only)');

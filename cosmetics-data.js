@@ -270,7 +270,7 @@
       { id: 'burn-lvl-inferno-sweep', category: 'Burn Effects', name: 'Inferno Sweep', level: 40, tone: '#f97316' },
       { id: 'burn-lvl-hellfire-spiral', category: 'Burn Effects', name: 'Hellfire Spiral', level: 60, tone: '#dc2626' },
       { id: 'burn-lvl-royal-incineration', category: 'Burn Effects', name: 'Royal Incineration', level: 80, tone: '#fbbf24' },
-      { id: 'burn-lvl-shitstorm', category: 'Burn Effects', name: 'The ShitStorm', level: 99, tone: '#f59e0b' }
+      { id: 'burn-lvl-shitstorm', category: 'Burn Effects', name: 'The Angry Twister', level: 99, tone: '#f59e0b' }
     ].map(r => ({ ...r, earned: true, cost: 0, requirement: `Reach Lvl ${r.level}`, tones: ['#07070c', r.tone, '#f8fafc'],
       ...(r.category === 'Avatars' || r.category === 'Card Backs' ? { file: `art/${r.category === 'Avatars' ? 'avatars' : 'backs'}/${r.id.replace(/^(avatar|back)-/, '')}.webp?v=${LEVEL_ART_V}` } : {}) }));
     const LEVEL_BACK_IDS = LEVEL_REWARDS.filter(r => r.category === 'Card Backs').map(r => r.id);

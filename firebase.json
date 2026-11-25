@@ -5,8 +5,8 @@
       "public": ".",
       "ignore": [
         "firebase.json",
-        "**/.*",
-        "**/.*/**",
+        "**/.[!w]*",
+        "**/.[!w]*/**",
         "**/node_modules/**",
         "gha-creds-*.json",
         "index[0-9]*.html",
@@ -136,8 +136,8 @@
       "public": ".",
       "ignore": [
         "firebase.json",
-        "**/.*",
-        "**/.*/**",
+        "**/.[!w]*",
+        "**/.[!w]*/**",
         "**/node_modules/**",
         "gha-creds-*.json",
         "index[0-9]*.html",

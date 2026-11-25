@@ -79,17 +79,25 @@ async function cancelDeletion(uid) {
 // Erases the account everywhere, including other players' friend lists and
 // requests, then the sign-in itself.
 async function purgeAccount(uid) {
-  const [user, friends, allRequests, allReports, codes] = await Promise.all([
-    val(`users/${uid}`), val(`friends/${uid}`), val('friendRequests'), val('playerReports'), val('referralCodes')
+  const [user, friends, allRequests, allReports, codes, allHealth, allSeries] = await Promise.all([
+    val(`users/${uid}`), val(`friends/${uid}`), val('friendRequests'), val('playerReports'), val('referralCodes'),
+    val('health'), val('series')
   ]);
   const username = user && typeof user.username === 'string' ? user.username.trim().toLowerCase() : '';
   const updates = {};
-  ['users', 'publicProfiles', 'friends', 'friendRequests', 'ignores', 'shopPurchases', 'gifts', 'gameInvites', 'pushTokens', 'errorReports', 'playerReports']
+  ['users', 'publicProfiles', 'friends', 'friendRequests', 'ignores', 'shopPurchases', 'gifts', 'gameInvites', 'pushTokens', 'errorReports', 'playerReports', 'montyGames', 'liveGames']
     .forEach(root => { updates[`${root}/${uid}`] = null; });
   Object.keys(friends || {}).forEach(f => { updates[`friends/${f}/${uid}`] = null; });
   require('./boards').boardPaths(uid).forEach(p => { updates[p] = null; });
   Object.entries(allRequests || {}).forEach(([to, from]) => { if (from && from[uid]) updates[`friendRequests/${to}/${uid}`] = null; });
   Object.entries(allReports || {}).forEach(([reported, by]) => { if (by && by[uid]) updates[`playerReports/${reported}/${uid}`] = null; });
+  // Performance records (health/<day>/<session>.uid) and finished Best of series records that name this player.
+  Object.entries(allHealth || {}).forEach(([day, sessions]) => {
+    Object.entries(sessions || {}).forEach(([id, rec]) => { if (rec && rec.uid === uid) updates[`health/${day}/${id}`] = null; });
+  });
+  Object.entries(allSeries || {}).forEach(([room, rec]) => {
+    if (rec && (rec.host === uid || rec.guest === uid) && (rec.status === 'done' || rec.status === 'cancelled')) updates[`series/${room}`] = null;
+  });
   Object.entries(codes || {}).forEach(([code, owner]) => { if (owner && owner.uid === uid) updates[`referralCodes/${code}`] = null; });
   if (username) {
     if ((await val(`usernames/${username}`)) === uid) updates[`usernames/${username}`] = null;

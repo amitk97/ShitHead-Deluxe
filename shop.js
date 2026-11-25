@@ -26,7 +26,7 @@
       if (ShLevelBurns.index(id) >= 0) return ShLevelBurns.icon(id);
       return { 'burn-ice': '❄️', 'burn-electric': '⚡', 'burn-sweets': '🍬', 'burn-paint': '🎨', 'burn-smoke': '💨',
         'burn-blackhole': '🕳️', 'burn-origami': '🦢', 'burn-pixel': '👾', 'burn-lava': '🌋',
-        'burn-lvl-spark-snap': '✨', 'burn-lvl-smoke-burst': '💨', 'burn-lvl-inferno-sweep': '🔥', 'burn-lvl-hellfire-spiral': '🌪️', 'burn-lvl-royal-incineration': '👑', 'burn-lvl-shitstorm': '💩'  }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('burn-', '')]?.burnIcon || '🔥';
+        'burn-lvl-spark-snap': '✨', 'burn-lvl-smoke-burst': '💨', 'burn-lvl-inferno-sweep': '🔥', 'burn-lvl-hellfire-spiral': '🌪️', 'burn-lvl-royal-incineration': '👑', 'burn-lvl-shitstorm': '🌪️'  }[id] || SEASONAL_EVENT_BY_ID[String(id).replace('burn-', '')]?.burnIcon || '🔥';
     }
 
     // Burn and Joker previews open in Custom right under the tapped tile (a

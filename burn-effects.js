@@ -1646,7 +1646,7 @@
     }
     // ---- Level burns (v253, owner's art): earn-only, one per level band ----
     // Spark Snap (5), Smoke Burst (20), Inferno Sweep (40), Hellfire Spiral
-    // (60), Royal Incineration (80), The ShitStorm (99). Built from the
+    // (60), Royal Incineration (80), The Angry Twister (99). Built from the
     // shared pieces below; each is over (every piece removed) within ~2.1s.
     const LB_SUITS = {
       spade: '<path d="M10 1C4 7 1 10 3 13.2c2 3 5 2.2 6-.2L8 19h4l-1-6c1 2.4 4 3.2 6 .2C19 10 16 7 10 1Z"/>',

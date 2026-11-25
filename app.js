@@ -15256,7 +15256,7 @@
     function matchPlacingInfo(me) {
       const n = state.players.length;
       if (!me) return { emoji: '🃏', title: 'Match over', edge: '#475569', glow: 'rgba(71,85,105,.25)' };
-      if (!me.hasFinished && typeof isShitHead === 'function' && isShitHead(me)) return { emoji: '💩', title: "You're the Shed Head", edge: '#b45309', glow: 'rgba(180,83,9,.25)' };
+      if (!me.hasFinished && typeof isShitHead === 'function' && isShitHead(me)) return { emoji: '🐢', title: "You're the Shed Head", edge: '#b45309', glow: 'rgba(180,83,9,.25)' };
       const rank = me.finishRank || n;
       if (me.drew) return { emoji: '🤝', title: 'Draw', edge: '#64748b', glow: 'rgba(100,116,139,.25)' };
       if (isTwos()) return twosWinner() === me.team
