@@ -2990,7 +2990,7 @@
 .ll-pieces:has(.mini-table) { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:flex-start; }
 .ll-pieces:has(.mini-table) .ll-piece { flex:0 0 auto; width:104px; }
 
-    /* London Calling deck: Underground — midnight-blue faces, roundel red/white, rounded Johnston-style type */
+    /* London Calling deck: London Lines — midnight-blue faces, red/white, rounded type */
     .theme-chai { --card-bg: #f6e8cb; --card-border: #a8431f; --text-light: #3a2314; --text-red: #b3261e; }
     .theme-chai :is(.card-base,.card-table,.card-opponent-slot):not(.custom-card-back), .deck-mini-card.theme-chai { background-image: linear-gradient(180deg, rgba(255,255,255,.28) 0 7%, transparent 7% 93%, rgba(168,67,31,.28) 93%), radial-gradient(ellipse at 50% 115%, rgba(242,178,0,.28), transparent 70%); }
     .theme-chai :is(.card-base,.card-table,.card-opponent-slot) .card-corner-rank, .deck-mini-card.theme-chai .dm-rank { font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif; font-weight: 800; }
@@ -3066,9 +3066,9 @@ body.reduce-motion .rail-row { transition: none; }
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="8"][data-suit="♠"]{--city-face:url(art/cities-v2/decks/london/8-S.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="9"][data-suit="♠"]{--city-face:url(art/cities-v2/decks/london/9-S.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="10"][data-suit="♠"]{--city-face:url(art/cities-v2/decks/london/10-S.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="J"][data-suit="♠"]{--city-face:url(art/cities-v2/decks/london/J-S.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="Q"][data-suit="♠"]{--city-face:url(art/cities-v2/decks/london/Q-S.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="K"][data-suit="♠"]{--city-face:url(art/cities-v2/decks/london/K-S.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="J"][data-suit="♠"]{--city-face:url(art/cities-v2/decks/london/J-S-v2.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="Q"][data-suit="♠"]{--city-face:url(art/cities-v2/decks/london/Q-S-v2.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="K"][data-suit="♠"]{--city-face:url(art/cities-v2/decks/london/K-S-v2.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="A"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/A-H.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="2"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/2-H.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="3"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/3-H.svg)}
@@ -3079,9 +3079,9 @@ body.reduce-motion .rail-row { transition: none; }
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="8"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/8-H.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="9"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/9-H.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="10"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/10-H.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="J"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/J-H.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="Q"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/Q-H.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="K"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/K-H.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="J"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/J-H-v2.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="Q"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/Q-H-v2.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="K"][data-suit="♥"]{--city-face:url(art/cities-v2/decks/london/K-H-v2.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="A"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/A-D.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="2"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/2-D.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="3"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/3-D.svg)}
@@ -3092,9 +3092,9 @@ body.reduce-motion .rail-row { transition: none; }
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="8"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/8-D.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="9"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/9-D.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="10"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/10-D.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="J"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/J-D.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="Q"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/Q-D.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="K"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/K-D.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="J"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/J-D-v2.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="Q"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/Q-D-v2.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="K"][data-suit="♦"]{--city-face:url(art/cities-v2/decks/london/K-D-v2.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="A"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/A-C.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="2"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/2-C.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="3"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/3-C.svg)}
@@ -3105,9 +3105,9 @@ body.reduce-motion .rail-row { transition: none; }
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="8"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/8-C.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="9"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/9-C.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="10"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/10-C.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="J"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/J-C.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="Q"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/Q-C.svg)}
-.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="K"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/K-C.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="J"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/J-C-v2.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="Q"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/Q-C-v2.svg)}
+.theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="K"][data-suit="♣"]{--city-face:url(art/cities-v2/decks/london/K-C-v2.svg)}
 .theme-tube :is(.card-base,.card-table,.card-opponent-slot)[data-rank][data-suit]:not(.custom-card-back)[data-rank="JOKER"]{--city-face:url(art/cities-v2/decks/london/joker-1.svg)}
 body[data-equipped-frame="frame-ldn-unionjack"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card){--city-frame:url(art/cities-v2/london-frame-v2.svg)}
 body[data-equipped-frame="frame-ldn-unionjack"] :is(.card-base,.card-table,.custom-card-back):not(.opponent-cosmetic-card)::after{content:"";position:absolute;inset:-1px;z-index:8;border-radius:inherit;background:var(--city-frame) center/100% 100% no-repeat;pointer-events:none}

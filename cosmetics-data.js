@@ -111,7 +111,7 @@
       { id: 'avatar-ldn-guard', category: 'Avatars', name: 'Royal Guardsman', cost: 2500, ldn: true, tone: '#c8102e', file: 'art/cities-v2/london-avatar.webp', tones: ['#012169','#c8102e','#f4f1ea'] },
       { id: 'back-ldn-bigben', category: 'Card Backs', name: 'Union Jack', cost: 1000, ldn: true, tone: '#e8bd6a', file: 'art/cities-v2/london-back-v2.svg', tones: ['#012169','#c8102e','#e8bd6a'] },
       { id: 'table-ldn-thames', category: 'Table Themes', name: 'Thames Nights', cost: 3000, ldn: true, tones: ['#050a24','#17255a','#e8bd6a'] },
-      { id: 'deck-ldn-tube', category: 'Decks', name: 'Underground', cost: 1000, ldn: true, theme: 'theme-tube', tones: ['#0b1636','#e32219','#ffffff'] },
+      { id: 'deck-ldn-tube', category: 'Decks', name: 'London Lines', cost: 1000, ldn: true, theme: 'theme-tube', tones: ['#0b1636','#e32219','#ffffff'] },
       { id: 'frame-ldn-unionjack', category: 'Frames', name: 'Union Jack', cost: 1000, ldn: true, tones: ['#012169','#c8102e','#ffffff'] },
       { id: 'burn-ldn-routemaster', category: 'Burn Effects', name: 'Routemaster Rush', cost: 2500, ldn: true, tones: ['#2a0a10','#c8102e','#ffd36b'] },
       { id: 'joker-ldn-phonebox', category: 'Joker Effects', name: 'Phone Box Prank', cost: 3500, ldn: true, tones: ['#2a0a10','#c8102e','#fff0c8'] },

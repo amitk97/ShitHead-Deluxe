@@ -3,7 +3,8 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
-      v545: [['sparkle', 'No Mercy is now called No Chill. Same rules, new name (also in the lesson, Challenges and the Guide).', WN_KEY], ['sparkle', 'Champagne Pop is now Bubbly Pop, and the Continue with Google button uses the official Google look.']],
+      v546: [['sparkle', 'The Underground deck is now London Lines, with new shield badges on its Jack, Queen and King.']],
+    v545: [['sparkle', 'No Mercy is now called No Chill. Same rules, new name (also in the lesson, Challenges and the Guide).', WN_KEY], ['sparkle', 'Champagne Pop is now Bubbly Pop, and the Continue with Google button uses the official Google look.']],
       v544: [['clock', 'Three Cards now shows a live countdown to the next game (the new UK week).']],
       v543: [['hand', 'Double-Tap To Play now works on the stacks in a Multiple Decks hand too.']],
       v542: [['book', 'The No Chill lesson no longer covers the opponents: the note sits low, and Coach and Rival show the cards they take.']],
@@ -110,7 +111,7 @@
       v441: [['sparkle', 'Tower Bridge now has proper lattice-girder leaves that lift for the ship, and the Glitch Joker, Fortune Joker and Karate tiles were redrawn.']],
       v440: [['sparkle', 'London effects reworked from your recording: the bus now drives head-on at the card from behind it and grows with perspective, and the ship sails smoothly through the open Tower Bridge with the stone block removed.']],
       v439: [['sparkle', 'London set fixes: the Routemaster now drives down the road straight at the card with spinning wheels, the ship sails through the open Tower Bridge, the Union Jack card back is just the flag, and the Guardsman holds his rifle properly.']],
-      v438: [['sparkle', 'London Calling: a new UK set in the Shop. Royal Guardsman avatar, Union Jack card back, Thames Nights table, Underground deck, Union Jack frame, Routemaster Rush burn, Phone Box Prank Joker, Tower Bridge Salute victory and the London emote pack.', WN_KEY]],
+      v438: [['sparkle', 'London Calling: a new UK set in the Shop. Royal Guardsman avatar, Union Jack card back, Thames Nights table, London Lines deck, Union Jack frame, Routemaster Rush burn, Phone Box Prank Joker, Tower Bridge Salute victory and the London emote pack.', WN_KEY]],
       v437: [['sparkle', 'Test Lab tabs are in a new order, and the Avatar tab now shows on the opponent seat.']],
       v436: [['sparkle', 'The Test Lab can now try on any card back, table, deck, frame, emote pack and avatar (test account only).']],
       v435: [['sparkle', 'Bubbly Pop now shows a real bubbly bottle: it shakes with the countdown, the cork flies and bubbly, foam and bubbles pour out.', WN_KEY]],
