@@ -2369,7 +2369,7 @@
     // player object — room creation/join — never reset by a mid-session
     // rematch). Builds the end-of-match breakdown for whichever scope is
     // currently selected. Ordered by finishing position so the winner is at
-    // the top and the ShitHead at the bottom.
+    // the top and the Shed Head at the bottom.
     let matchStatsScope = 'game';
     // Players who left once their result was in (the match over, or they
     // had already finished) drop out of the room's list, but their stats
@@ -3258,7 +3258,7 @@
 
     // Hard lock: once one player (or nobody) is left still playing, the
     // match's result is already decided — the last player standing is the
-    // Shithead by definition, with nothing left to contest. Every function
+    // Shed Head by definition, with nothing left to contest. Every function
     // that could hand a player new cards (a hand refill, a pile pickup, a
     // Joker duel, or a play itself) checks this FIRST and refuses outright
     // once it's true, regardless of what state.phase happens to say locally.
@@ -3431,7 +3431,7 @@
 
         // Challenges: fires for ANY placement (this function is only ever
         // reached by a player who actually emptied their hand — the last-
-        // place "Shithead" never does, so no-pickup-finish naturally only
+        // place "Shed Head" never does, so no-pickup-finish naturally only
         // ever applies to a genuine finisher, not the loser).
         {
           const finishEvents = ['finish-any-match', 'play-three-matches'];
@@ -5293,7 +5293,7 @@
       catch (e) { return true; }
     })();
 
-    // The ShitHead is the loser: the single player left unfinished once every
+    // The Shed Head is the loser: the single player left unfinished once every
     // other seat is done. Only meaningful at the very end of a match.
     function isShitHead(player) {
       if (!player || player.hasFinished) return false;
@@ -5971,7 +5971,7 @@
     // progress, and each position (who holds what, the Pile, whose turn) is
     // counted by a short hash. The match ends in a draw for everyone still
     // playing (endInStalemate: they share the next place, nobody wins it and
-    // nobody is the ShitHead) when the exact same position comes round
+    // nobody is the Shed Head) when the exact same position comes round
     // STALEMATE_REPEATS times (a real loop), or after STALEMATE_TURNS turns
     // without progress. In 800 fuzzed bot games that all ended on their own,
     // a position came round at most 4 times and the longest stretch without
@@ -6071,7 +6071,7 @@
         // and for ranked concessions, which rely on this same field.
         shitheadPlayer.finishRank = state.players.length - concededCount();
         shitheadPlayer.hasFinished = true;
-        notifyBanner(`${shitheadPlayer.name} is the ShitHead.`);
+        notifyBanner(`${shitheadPlayer.name} is the Shed Head.`);
         state.phase = 'FINISHED';
         endFastForwardIfActive();
         saveGameState();
@@ -7326,11 +7326,11 @@
             </div>
           `;
         } else if (isShitHead(p)) {
-          // Everyone else is out — this player is the ShitHead.
+          // Everyone else is out — this player is the Shed Head.
           tableSlotsHtml = `
             <div class="col-span-3 w-full h-[52px] bg-amber-950/40 rounded-xl border border-amber-600/60 flex flex-col items-center justify-center p-1 shadow-inner">
               <span class="text-2xl leading-none">\u{1F4A9}</span>
-              <span class="text-[8px] font-black uppercase text-amber-300 tracking-widest mt-0.5">ShitHead</span>
+              <span class="text-[8px] font-black uppercase text-amber-300 tracking-widest mt-0.5">Shed Head</span>
             </div>
           `;
         } else {
@@ -7571,7 +7571,7 @@
 
       if (local.hasFinished || isShitHead(local)) {
         const lost = !local.hasFinished;
-        // The ShitHead's placing is simply last: one behind everyone who finished.
+        // The Shed Head's placing is simply last: one behind everyone who finished.
         const placing = lost ? state.players.filter(p => p.hasFinished).length + 1 : local.finishRank;
         // A Leave button under the box, straight back to the home screen
         // (v274, owner: Vs Bots, Gauntlet, Ranked and Play Friends alike).
@@ -11082,7 +11082,7 @@
       const accountLine = currentUser && currentUser.email ? `Account email: ${currentUser.email}\n` : '';
       const device = `${navigator.userAgent.includes('iPhone') ? 'iPhone' : /Android/.test(navigator.userAgent) ? 'Android' : 'Desktop'}${(window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone) ? ' app' : ' browser'}`;
       const body = `Category: ${category}\nGame version: ${getGameVersionLabel()}${GAME_BUILD.date ? ` (${GAME_BUILD.date})` : ''}\nDevice: ${device}\n${accountLine}\n${message}`;
-      return `mailto:support.shitheaddeluxe@gmail.com?subject=${encodeURIComponent(`[ShitHead Deluxe] ${subject}`)}&body=${encodeURIComponent(body)}`;
+      return `mailto:support.shitheaddeluxe@gmail.com?subject=${encodeURIComponent(`[Shed Head Deluxe] ${subject}`)}&body=${encodeURIComponent(body)}`;
     }
     function openSupportEmailDraft(uri) {
       lastSupportDraftUri = uri;
@@ -11329,7 +11329,7 @@
           <span class="mh-main"><span class="mh-title">${title}</span><span class="mh-sub">${escapeHtml(e.label || '')} · ${timeAgo(e.at, now)}</span></span>
           <span class="mh-side">${side}</span><span class="mh-chev" aria-hidden="true">›</span></div></div>`;
       }).join('');
-      return `<div class="mh-summary"><div><b>${list.length}</b><span>Matches</span></div><div><b>${wins}</b><span>Wins</span></div><div><b>${Math.round((wins / list.length) * 100)}%</b><span>Win rate</span></div><div><b>${shitheads}</b><span>ShitHeads</span></div><div><b>${draws}</b><span>Draws</span></div><div><b>💎${gems}</b><span>Earned</span></div></div>
+      return `<div class="mh-summary"><div><b>${list.length}</b><span>Matches</span></div><div><b>${wins}</b><span>Wins</span></div><div><b>${Math.round((wins / list.length) * 100)}%</b><span>Win rate</span></div><div><b>${shitheads}</b><span>Shed Heads</span></div><div><b>${draws}</b><span>Draws</span></div><div><b>💎${gems}</b><span>Earned</span></div></div>
         <div class="mh-list">${rows}</div>
         <p class="text-[8px] text-slate-600 text-center pt-2">Your last ${MATCH_HISTORY_LIMIT} matches. Tap one for its full stats.</p>`;
     }
@@ -11344,7 +11344,7 @@
       const ord = (n) => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
       return {
         emoji: e.draw ? '🤝' : won ? '🏆' : e.shithead ? '💩' : e.place === 2 ? '🥈' : e.place === 3 ? '🥉' : '🎖️',
-        title: e.draw ? 'Draw' : won ? 'Won' : e.shithead ? 'ShitHead' : `${ord(e.place)} of ${e.of}`,
+        title: e.draw ? 'Draw' : won ? 'Won' : e.shithead ? 'Shed Head' : `${ord(e.place)} of ${e.of}`,
         edge: won ? '#f59e0b' : e.shithead ? '#b45309' : '#64748b'
       };
     }
@@ -14047,12 +14047,12 @@
     // § Cosmetics catalogue
     // Static definitions loaded from cosmetics-data.js.
     // Avatars: the photo art in the shared rounded tile with a rim in its own
-    // colour; The ShitHead (Lvl 99) also breathes a gold glow.
+    // colour; The Shed Head (Lvl 99) also breathes a gold glow.
     // Moving light on three of them (v256, owner), in the art's 1000-unit
     // space, one 5s loop like the Gauntlet crests (paused offscreen, still
     // with Reduce Motion): Burn King's skull eyes glow, its flames flicker and
     // embers rise; Chaos Jester's eyes flash, its bells glint, a shine
-    // crosses the Joker card and purple sparkles drift up; The ShitHead's
+    // crosses the Joker card and purple sparkles drift up; The Shed Head's
     // sunglasses catch a gleam and its crown and chain glint. Gradients and
     // clips live once in #levelAvatarDefs.
     const LEVEL_AVATAR_MOTION = {
@@ -15256,7 +15256,7 @@
     function matchPlacingInfo(me) {
       const n = state.players.length;
       if (!me) return { emoji: '🃏', title: 'Match over', edge: '#475569', glow: 'rgba(71,85,105,.25)' };
-      if (!me.hasFinished && typeof isShitHead === 'function' && isShitHead(me)) return { emoji: '💩', title: "You're the ShitHead", edge: '#b45309', glow: 'rgba(180,83,9,.25)' };
+      if (!me.hasFinished && typeof isShitHead === 'function' && isShitHead(me)) return { emoji: '💩', title: "You're the Shed Head", edge: '#b45309', glow: 'rgba(180,83,9,.25)' };
       const rank = me.finishRank || n;
       if (me.drew) return { emoji: '🤝', title: 'Draw', edge: '#64748b', glow: 'rgba(100,116,139,.25)' };
       if (isTwos()) return twosWinner() === me.team
@@ -15425,7 +15425,7 @@
       g.textAlign = 'center'; g.textBaseline = 'alphabetic';
       // Logo
       const logo = g.createLinearGradient(0, 70, 0, 150); logo.addColorStop(0, '#f87171'); logo.addColorStop(.45, '#b91c1c'); logo.addColorStop(1, '#5e0a0a');
-      g.font = font(900, 92, "'Cinzel', Georgia, serif"); g.lineWidth = 4; g.strokeStyle = '#fde047'; g.strokeText('ShitHead', W / 2, 150); g.fillStyle = logo; g.fillText('ShitHead', W / 2, 150);
+      g.font = font(900, 92, "'Cinzel', Georgia, serif"); g.lineWidth = 4; g.strokeStyle = '#fde047'; g.strokeText('Shed Head', W / 2, 150); g.fillStyle = logo; g.fillText('Shed Head', W / 2, 150);
       g.font = font(800, 28, "'Cinzel', Georgia, serif"); g.fillStyle = '#fbbf24'; g.fillText('D E L U X E', W / 2, 192);
       // Placing
       g.font = font(400, 136, "'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"); g.fillText(d.emoji, W / 2, 352);
@@ -15475,9 +15475,9 @@
         const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
         if (!blob) throw new Error('Could not make the image');
         const file = new File([blob], 'shithead-result.png', { type: 'image/png' });
-        const text = `${d.emoji} ${d.title} in ShitHead! Can you beat me? ${SHARE_URL}`;
+        const text = `${d.emoji} ${d.title} in Shed Head! Can you beat me? ${SHARE_URL}`;
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], text, title: 'ShitHead' }); return 'shared'; }
+          try { await navigator.share({ files: [file], text, title: 'Shed Head' }); return 'shared'; }
           catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
         }
         const a = document.createElement('a');
@@ -15717,7 +15717,7 @@
     document.getElementById('shConfirmNo').addEventListener('click', () => shConfirmDone?.(false));
     document.getElementById('shConfirm').addEventListener('click', (e) => { if (e.target.id === 'shConfirm') shConfirmDone?.(false); });
     async function exitAppFromHome() {
-      if (!await shConfirm({ title: 'Leave ShitHead Deluxe?', text: 'Your progress is saved. Come back any time.', yes: 'Exit Game', no: 'Stay' })) return;
+      if (!await shConfirm({ title: 'Leave Shed Head Deluxe?', text: 'Your progress is saved. Come back any time.', yes: 'Exit Game', no: 'Stay' })) return;
       resetHomeUI();
       document.getElementById('appClosingScreen').classList.remove('hidden');
       document.body.classList.add('app-closing');
@@ -16621,7 +16621,7 @@
         const file = new File([JSON.stringify(data, null, 2)], name, { type: 'application/json' });
         let shared = false;
         if (isIOSDevice() && navigator.canShare && navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: 'My ShitHead data' }); shared = true; } catch (e) { if (e && e.name === 'AbortError') shared = true; }
+          try { await navigator.share({ files: [file], title: 'My Shed Head data' }); shared = true; } catch (e) { if (e && e.name === 'AbortError') shared = true; }
         }
         if (!shared) {
           const url = URL.createObjectURL(file);
@@ -17158,7 +17158,7 @@
       desc: 'Complete the Quick Start tutorial.',
       reward: 50
     };
-    const FIRST_GAME_CHALLENGE = { id: 'first-game', name: 'ShitHead Virgin', desc: 'Play your first game.', reward: 20 };
+    const FIRST_GAME_CHALLENGE = { id: 'first-game', name: 'Shed Head Virgin', desc: 'Play your first game.', reward: 20 };
     const FIRST_WIN_CHALLENGE = { id: 'first-win', name: 'Beginner', desc: 'Win your first game.', reward: 20 };
     // Challenges → Getting Started, in the order they're shown.
     const GETTING_STARTED_CHALLENGES = [QUICK_START_CHALLENGE, FIRST_GAME_CHALLENGE, FIRST_WIN_CHALLENGE, TUTORIAL_COMPLETION_CHALLENGE];
@@ -19289,12 +19289,12 @@
     }
 
     // Milestone challenges (Ranked totals, rank tiers, ending cards, bot
-    // wins) and ShitHead Virgin / Beginner are checked and paid by the
+    // wins) and Shed Head Virgin / Beginner are checked and paid by the
     // server from its own records: after a Ranked result, a win, a finished
     // match, or the sync at sign-in. Nothing here claims them.
     //
     // A finished real match (never the tutorial), from recordMatchHistory:
-    // the server counts it and pays ShitHead Virgin / Beginner if due.
+    // the server counts it and pays Shed Head Virgin / Beginner if due.
     function reportMatchFinished() {
       if (state.ruleMode === 'house') return Promise.resolve({houseRules:true,diamondsAwarded:0});
       if (isServerRanked()) return Promise.resolve(null);
@@ -19950,7 +19950,7 @@
     // substring match against the lowercased name, so "administrator123"
     // is still caught even though it isn't an exact match for "admin".
     // "shit" is blocked here on purpose (reversing an earlier version of
-    // this list) — it also catches "shithead"/"ShitHead" for free as a
+    // this list) — it also catches "shithead"/"Shed Head" for free as a
     // substring match, so both are covered by the one entry.
     const USERNAME_RESERVED = ['admin', 'administrator', 'moderator', 'support', 'staff', 'official', 'system', 'root', 'owner', 'developer'];
     const USERNAME_PROFANITY = ['fuck', 'cunt', 'asshole', 'bastard', 'bitch', 'whore', 'slut', 'shit'];
@@ -23109,9 +23109,9 @@
     function inviteLinkFor(code) { return `${INVITE_LINK_BASE}?join=${encodeURIComponent(code)}`; }
     async function shareInviteLink(code) {
       const url = inviteLinkFor(code);
-      const text = `Play ShitHead with me! Tap to join my room (code ${code}):`;
+      const text = `Play Shed Head with me! Tap to join my room (code ${code}):`;
       if (navigator.share) {
-        try { await navigator.share({ title: 'ShitHead Deluxe', text, url }); return 'shared'; }
+        try { await navigator.share({ title: 'Shed Head Deluxe', text, url }); return 'shared'; }
         catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
       }
       return (await copyTextToClipboard(`${text} ${url}`)) ? 'copied' : 'failed';
@@ -23451,9 +23451,9 @@
       catch (e) { notifyBanner(`⚠️ ${e.message}`); return 'failed'; }
       renderProfileReferral();
       const url = referralLinkFor(code);
-      const text = `Play ShitHead with me! Sign up with my link and play ${REFERRAL.gamesNeeded} games: we both get Diamonds 💎`;
+      const text = `Play Shed Head with me! Sign up with my link and play ${REFERRAL.gamesNeeded} games: we both get Diamonds 💎`;
       if (navigator.share) {
-        try { await navigator.share({ title: 'ShitHead Deluxe', text, url }); return 'shared'; }
+        try { await navigator.share({ title: 'Shed Head Deluxe', text, url }); return 'shared'; }
         catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
       }
       if (await copyTextToClipboard(`${text} ${url}`)) { notifyBanner('Invite link copied.'); Haptics.vibrate(20); return 'copied'; }

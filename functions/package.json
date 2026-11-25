@@ -1,7 +1,7 @@
 {
   "name": "shithead-functions",
   "private": true,
-  "description": "Push notifications for ShitHead Deluxe (game invites, friend requests, gifts, seasonal events).",
+  "description": "Push notifications for Shed Head Deluxe (game invites, friend requests, gifts, seasonal events).",
   "main": "index.js",
   "engines": {
     "node": "22"

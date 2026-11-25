@@ -5,7 +5,7 @@
 (function () {
   const NEW_ACCOUNT_MS = 3 * 24 * 3600 * 1000;
   const STEPS = [
-    { title: 'Welcome to ShitHead Deluxe', text: 'A 30-second look around, so you know where everything is. You can skip any time.' },
+    { title: 'Welcome to Shed Head Deluxe', text: 'A 30-second look around, so you know where everything is. You can skip any time.' },
     { targets: ['#headerShopBtn', '#headerDiamondBtn', '#headerCustomBtn'], title: 'Shop, Diamonds and Custom',
       text: 'Win games and finish challenges to earn Diamonds. Spend them in the Shop, then wear what you own in Custom.' },
     { targets: ['#headerProfileBtn', '#headerInboxBtn'], title: 'Profile and Inbox',
@@ -17,7 +17,7 @@
       modes: [['cpu', 'Play Computer', 'practise against bots'], ['gauntlet', 'Gauntlet', 'five bots, three lives'],
         ['friends', 'Play Friends', 'private rooms with a code'], ['ranked', 'Ranked', 'climb the leaderboard']] },
     { targets: ['#startTutorialBtn'], title: 'Learn in one minute',
-      text: 'New to Shithead? The 1-minute Tutorial teaches the basics with a coach.', last: true }
+      text: 'New to Shed Head? The 1-minute Tutorial teaches the basics with a coach.', last: true }
   ];
   const $ = (id) => document.getElementById(id);
   let root, idx = 0, watch = null, active = false, startedAt = 0;

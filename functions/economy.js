@@ -15,7 +15,7 @@
 //   puzzle        a solved weekly puzzle: the moves are replayed here (catalog puzzles), once per puzzle per UK week
 //   weeklyReroll  swap one weekly challenge for another, once a UK week (level-locked)
 //   matchWin      a Vs Bots or casual online win (caps: see MATCH_LIMITS)
-//   matchFinished a finished match (ShitHead Virgin / Beginner)
+//   matchFinished a finished match (Shed Head Virgin / Beginner)
 //   rankedDeal    the server's seat order + shuffled deck for a Ranked match
 //   gauntlet      Vs Bots Gauntlet runs: start, each game's result, the reward
 //   referral      invite codes, linking a new player to their inviter, the rewards

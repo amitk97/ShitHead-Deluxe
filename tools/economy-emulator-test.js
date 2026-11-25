@@ -224,7 +224,7 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   r = await call('alice', { action: 'claim', id: 'tutorial-quick-start' });
   ok(r.awarded && r.awarded.reward === 50, 'Quick Starter', r);
   r = await call('alice', { action: 'claim', id: 'first-game' });
-  ok(r.error, 'ShitHead Virgin needs a finished game', r);
+  ok(r.error, 'Shed Head Virgin needs a finished game', r);
 
   // Matches
   r = await call('alice', { action: 'matchWin', mode: 'bots', difficulty: 'medium', matchId: 'm_a1' });
@@ -232,7 +232,7 @@ async function tryWrite(uid, fn) { try { await fn(client(uid)); return 'ok'; } c
   const before = (await admin('users/alice/diamonds'));
   r = await call('alice', { action: 'matchWin', mode: 'bots', difficulty: 'easy', matchId: 'm_a1' });
   ok(r.diamondsAwarded === 10 && r.difficultyWins.easy === 1, 'bot win pays 10 and counts', r);
-  ok(r.claimed.some(c => c.id === 'first-win') && r.claimed.some(c => c.id === 'first-game'), 'first win also pays Beginner + ShitHead Virgin', r.claimed);
+  ok(r.claimed.some(c => c.id === 'first-win') && r.claimed.some(c => c.id === 'first-game'), 'first win also pays Beginner + Shed Head Virgin', r.claimed);
   ok(r.diamonds === before + 10 + 20 + 20, 'balance right after the win', { before, after: r.diamonds });
   r = await call('alice', { action: 'matchWin', mode: 'bots', difficulty: 'easy', matchId: 'm_a1' });
   ok(r.already, 'the same match never pays twice', r);

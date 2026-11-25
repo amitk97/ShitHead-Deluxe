@@ -3,7 +3,7 @@ const RANKS=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 const POWERS=['burn','dropBase','evens','none','odds','pickUp','playLower','reset','reverse','skip','transparent'];
 const LABEL={burn:'Burn',dropBase:'Drop to Base',evens:'Evens',none:'No Power',odds:'Odds',pickUp:'Pick Up',playLower:'Play Lower',reset:'Reset',reverse:'Reverse',skip:'Skip',transparent:'Transparent'};
 const JOKER=['burn','dropBase','off','pickUp','reset','transparent'];
-const CLASSIC={name:'ShitHead Deluxe',cards:{'2':'reset','3':'transparent','4':'none','5':'dropBase','6':'evens','7':'playLower','8':'skip','9':'reverse','10':'burn','J':'odds','Q':'none','K':'none','A':'none'},joker:'pickUp',fourKind:'burns'};
+const CLASSIC={name:'Shed Head Deluxe',cards:{'2':'reset','3':'transparent','4':'none','5':'dropBase','6':'evens','7':'playLower','8':'skip','9':'reverse','10':'burn','J':'odds','Q':'none','K':'none','A':'none'},joker:'pickUp',fourKind:'burns'};
 function fresh(){return {name:'Custom',cards:Object.fromEntries(RANKS.map(r=>[r,''])),joker:'',fourKind:''};}
 function allowed(rank,power){
  if(!POWERS.includes(power)) return false;

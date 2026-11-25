@@ -3,7 +3,8 @@
 (() => {
     const WN_KEY = 'key';
     const WHATS_NEW = {
-      v546: [['sparkle', 'The Underground deck is now London Lines, with new shield badges on its Jack, Queen and King.']],
+      v547: [['sparkle', 'The game is now Shed Head Deluxe: Card Game. ShitHead is Shed Head everywhere, including the lessons, the Guide, challenges and avatars.', WN_KEY]],
+    v546: [['sparkle', 'The Underground deck is now London Lines, with new shield badges on its Jack, Queen and King.']],
     v545: [['sparkle', 'No Mercy is now called No Chill. Same rules, new name (also in the lesson, Challenges and the Guide).', WN_KEY], ['sparkle', 'Champagne Pop is now Bubbly Pop, and the Continue with Google button uses the official Google look.']],
       v544: [['clock', 'Three Cards now shows a live countdown to the next game (the new UK week).']],
       v543: [['hand', 'Double-Tap To Play now works on the stacks in a Multiple Decks hand too.']],
@@ -231,7 +232,7 @@
       v319: [[ '✨', 'The mode cards click into place with a soft card snap and a light buzz, and More Modes wears a glowing New tag.' ]],
       v318: [[ '🎡', 'The mode cards now turn in 3D: swipe, use the arrows or mouse wheel, or press 1-7. Tap the middle card to open it; your last mode comes back next time.', WN_KEY ]],
       v317: [[ '🃏', 'A new home screen: swipe through the game modes on one row of cards, with the tutorial at the bottom.', WN_KEY ]],
-      v316: [[ '🏠', 'Tap the ShitHead logo during a game to head back to the home screen. It asks first, then skips the loading screen.' ]],
+      v316: [[ '🏠', 'Tap the Shed Head logo during a game to head back to the home screen. It asks first, then skips the loading screen.' ]],
       v315: [[ '🧭', 'A new header: Shop, Custom, Guide and Settings sit along the top of the home screen and tuck into the menu during a game. Exit is always on the left.' ]],
       v314: [[ '🏠', 'A calmer home screen: the panel no longer jumps between modes, shortcuts sit in one quiet row, and Game Speed lives in Settings.' ]],
       v313: [[ '🦢', 'Origami Fold remade: your card lifts to the middle of the table, folds into a long-necked swan, hovers and flies away.', WN_KEY ]],
@@ -249,7 +250,7 @@
         [ '🖼️', 'Every reworked burn now shows its painted artwork as its icon in the Shop and Custom.' ]],
       v303: [[ '🔥', 'The Default Burn is reborn: the coals glow, then real fire roars up around your card and burns it away in a shower of sparks and ash.', WN_KEY ]],
       v302: [[ '✨', 'A new app icon: three Emerald Court cards behind a big red and gold SH.', WN_KEY ],
-        [ '🃏', 'The loading screen now says ShitHead Deluxe, in the same lettering as the home screen.' ]],
+        [ '🃏', 'The loading screen now says Shed Head Deluxe, in the same lettering as the home screen.' ]],
       v301: [[ '⚡', 'The game opens faster: a loading screen shows straight away, and your level and Diamonds are on the home screen from the start.', WN_KEY ],
         [ '⏩', 'Your chosen game speed no longer flicks back to 1x while the game is starting.' ]],
       v300: [[ '✨', 'Spark Snap (Lvl 5) is reborn: a charge crackles round your card, then snaps into a white-gold explosion of sparks and light.', WN_KEY ],
@@ -352,7 +353,7 @@
       v265: [
         ['🎨', 'New art for suit, seasonal and card avatars, including the 100-ranked-games Centurion.', WN_KEY],
         ['🃏', 'Redesigned themed card backs, a white textured SH default, and three free linen colours.', WN_KEY],
-        ['✨', 'Royal Flush, Cosmic Ace, Burning 10, Joker Card and ShitHead have new looping animations.', WN_KEY]
+        ['✨', 'Royal Flush, Cosmic Ace, Burning 10, Joker Card and Shed Head have new looping animations.', WN_KEY]
       ],
       v264: [
         ["✨", "Shorter, seamless Lion and Fireworks victories, with a complete opening firework."],
@@ -390,7 +391,7 @@
       ],
       v256: [
         ['🏆', 'Beating the Boss Gauntlet again on a later day now pays 200 Diamonds.', WN_KEY],
-        ['✨', 'Burn King, Chaos Jester and The ShitHead avatars now move: glowing eyes, flickering flames, glinting gems and a gleam across the shades.', WN_KEY],
+        ['✨', 'Burn King, Chaos Jester and The Shed Head avatars now move: glowing eyes, flickering flames, glinting gems and a gleam across the shades.', WN_KEY],
         ['📂', 'Custom is split into folding groups (Free, Shop, Earn in Ranked, the Gauntlet, levelling up, Seasonal) that remember how you left them.'],
         ['ℹ️', 'Vs Bots, Play Friends and Ranked each have a small ⓘ that explains the mode.'],
         ['📖', 'Quick Start: Card Powers always fits on screen, and the hold step waits a moment so you can read the card.'],
@@ -417,7 +418,7 @@
         ['👀', 'Tap an item you don\'t own yet in Custom or the Collection to preview it.', WN_KEY]
       ],
       v251: [
-        ['🏆', 'New earn-only avatars for levelling up: Rookie Rogue (10), Card Shark (25), Burn King (50), Chaos Jester (75) and The ShitHead (99).', WN_KEY],
+        ['🏆', 'New earn-only avatars for levelling up: Rookie Rogue (10), Card Shark (25), Burn King (50), Chaos Jester (75) and The Shed Head (99).', WN_KEY],
         ['🃏', 'New earn-only card backs: First Burn (10), Shark\'s Mark (30), Inferno (50), Chaos Crown (70) and Master of the Pile (99).', WN_KEY],
         ['✨', 'Level badges below Lvl 20 are now white.']
       ],
@@ -858,7 +859,7 @@
         ['🃏', 'Hand Sort (Settings → Gameplay): turn it on to sort your hand by power (4 up to A, then 10, 2, 3, Joker) instead of by rank.', WN_KEY]
       ],
       v130: [
-        ['🎯', 'New Getting Started challenges: play your first game (ShitHead Virgin) and win your first game (Beginner), 20 Diamonds each.', WN_KEY]
+        ['🎯', 'New Getting Started challenges: play your first game (Shed Head Virgin) and win your first game (Beginner), 20 Diamonds each.', WN_KEY]
       ],
       v129: [
         ['💎', 'Finish the Quick Start tutorial for 50 Diamonds.'],

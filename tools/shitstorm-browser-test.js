@@ -29,7 +29,7 @@ const ROOT = path.resolve(__dirname, '..'), OUT = process.env.SH_BURN_OUT || '/t
     .card-centre-suit{position:absolute;left:30px;top:22px;font:30px Arial}
     footer{position:fixed;bottom:20px;left:0;right:0;text-align:center;color:#c8d2d3;font-size:12px}
     .bfx{position:absolute;pointer-events:none}
-  </style><header>ShitHead Deluxe · ShitStorm preview</header><div id="burnFxLayer"><div id="discardCardsWrapper">
+  </style><header>Shed Head Deluxe · ShitStorm preview</header><div id="burnFxLayer"><div id="discardCardsWrapper">
   <div class="card" data-card-id="under" style="transform:rotate(-6deg)"></div>
   <div class="card" data-card-id="top"><span class="card-corner-rank">10</span><span class="card-corner-suit">♥</span><span class="card-centre-suit">♥</span></div>
   </div></div><footer>Actual 72px square pile card · same gameplay renderer</footer>`);

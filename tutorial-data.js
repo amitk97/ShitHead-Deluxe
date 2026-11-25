@@ -1,6 +1,6 @@
     const TUTORIAL_STEPS_FULL_LEGACY = [
       {
-        text: "Welcome! I'm your Coach. We'll play real hands together, step by step. Your goal: get rid of every card you hold. The last player still holding cards is the ShitHead.",
+        text: "Welcome! I'm your Coach. We'll play real hands together, step by step. Your goal: get rid of every card you hold. The last player still holding cards is the Shed Head.",
         target: null
       },
       {
@@ -253,7 +253,7 @@
     // nothing on screen to point at yet".
     const TUTORIAL_MODULE_GOAL = [
       {
-        text: "Hey, I'm your Coach. Get rid of every card you hold. That's the whole game. Last one holding cards is the ShitHead.",
+        text: "Hey, I'm your Coach. Get rid of every card you hold. That's the whole game. Last one holding cards is the Shed Head.",
         target: null
       },
       {
@@ -995,7 +995,7 @@
     const QS_FIRST_DEAL = { hand: [['7', '♣'], ['Q', '♠'], ['K', '♦']], faceUp: [['2', '♣'], ['J', '♦'], ['A', '♣']], pile: [['Q', '♥']], coach: [['A', '♠']], coachFaceUp: [['8', '♦'], ['5', '♠'], ['9', '♥']], drawPile: [['4', '♦'], ['6', '♣']] };
     const TUTORIAL_MODULE_QUICK_START = [
       {
-        text: "Get rid of all your cards. The last player holding cards is the ShitHead. 💩",
+        text: "Get rid of all your cards. The last player holding cards is the Shed Head. 💩",
         target: null,
         scene: QS_FIRST_DEAL
       },

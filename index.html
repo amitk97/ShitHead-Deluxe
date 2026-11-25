@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-11-25-v546 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
+<!-- BUILD: 2026-11-25-v547 (ShitHead-Deluxe-302) — bump this on every release. It is the game's
      version everywhere (room compatibility, support email, What's New).
 
      FILE MAP (since v336 the code is in script files next to this page: see CLAUDE.md "Code layout")
@@ -57,22 +57,22 @@
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>ShitHead</title>
+  <title>Shed Head Deluxe: Card Game</title>
   <!-- Link previews (WhatsApp, iMessage, Discord, X, Facebook, Slack…) and
        search results. The picture is made by tools/make-share-image.js. -->
-  <meta name="description" content="Play ShitHead, the classic card game, free on your phone. Take on bots, play your friends online or climb the Ranked ladder. No download needed." />
+  <meta name="description" content="Play Shed Head, the classic card game, free on your phone. Take on bots, play your friends online or climb the Ranked ladder. No download needed." />
   <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="ShitHead Deluxe" />
-  <meta property="og:title" content="ShitHead Deluxe: the classic card game" />
+  <meta property="og:site_name" content="Shed Head Deluxe" />
+  <meta property="og:title" content="Shed Head Deluxe: the classic card game" />
   <meta property="og:description" content="Free on your phone. Play bots, your friends online or Ranked. No download needed." />
   <meta property="og:url" content="https://shithead-deluxe.web.app/" />
   <meta property="og:image" content="https://shithead-deluxe.web.app/icons/share-preview-v3.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="ShitHead Deluxe: the card game on two phone screens" />
+  <meta property="og:image:alt" content="Shed Head Deluxe: the card game on two phone screens" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="ShitHead Deluxe: the classic card game" />
+  <meta name="twitter:title" content="Shed Head Deluxe: the classic card game" />
   <meta name="twitter:description" content="Free on your phone. Play bots, your friends online or Ranked. No download needed." />
   <meta name="twitter:image" content="https://shithead-deluxe.web.app/icons/share-preview-v3.jpg" />
   <link rel="canonical" href="https://shithead-deluxe.web.app/" />
@@ -83,7 +83,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="ShitHead" />
+  <meta name="apple-mobile-web-app-title" content="Shed Head" />
 </head>
 <!-- The body opens here, before the big style sheets and the Firebase scripts, so the
      loading screen below is the first thing painted (v301): styles and scripts after it
@@ -132,7 +132,7 @@
     @keyframes boot-handoff-in { from { opacity: 0; transform: scale(.96); } }
   </style>
   <div id="bootSplash" role="status" aria-live="polite">
-    <div class="boot-brand"><h1 class="boot-logo">ShitHead</h1><p class="boot-sub">Deluxe</p></div>
+    <div class="boot-brand"><h1 class="boot-logo">Shed Head</h1><p class="boot-sub">Deluxe</p></div>
     <div class="boot-fan" aria-hidden="true"><img src="art/backs/approved-v267/default.webp" alt=""><img src="art/backs/approved-v267/default.webp" alt=""><img src="art/backs/approved-v267/default.webp" alt=""></div>
     <div class="boot-bar" aria-hidden="true"><i></i></div>
     <p class="boot-text">Getting your table ready…</p>
@@ -421,7 +421,7 @@
     <!-- Centered Logo (folds away on the home screen, which has its own) -->
     <div id="headerLogoWrap" class="shrink-0 flex flex-col items-center justify-center px-2">
       <button id="navHomeLogoBtn" class="flex items-center gap-1 group transition transform hover:scale-105 focus:outline-none tip-below" data-tip="Home" aria-label="Back to the home screen">
-        <span class="brand-logo-rendered text-2xl tracking-wide leading-none">ShitHead</span>
+        <span class="brand-logo-rendered text-2xl tracking-wide leading-none">Shed Head</span>
       </button>
 
     </div>
@@ -539,7 +539,7 @@
       <button type="button" id="homeMontyChip" class="hidden" aria-label="Open Three Cards"><svg class="lw-chip-ic" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="mcGem" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9bf0ff"/><stop offset="1" stop-color="#1ba6e6"/></linearGradient></defs><g stroke="#f0b43c" stroke-width="1.3" stroke-linejoin="round"><rect x="4" y="11" width="14" height="21" rx="2.6" fill="#0f766e" transform="rotate(-16 11 21)"/><rect x="22" y="11" width="14" height="21" rx="2.6" fill="#6d28d9" transform="rotate(16 29 21)"/></g><rect x="12.2" y="6" width="15.6" height="25" rx="2.8" fill="#0b1b4a" stroke="#ffd36a" stroke-width="1.6"/><path d="M20 14.5 25 17.5 20 26 15 17.5Z" fill="url(#mcGem)" stroke="#d9faff" stroke-width=".6" stroke-linejoin="round"/><path d="M15 17.5H25M17.5 15.9 20 17.5 22.5 15.9" fill="none" stroke="#e8fcff" stroke-width=".45" opacity=".8"/></svg><i class="lw-dot-badge hidden" data-monty-dot></i></button>
       
       <div class="text-center mb-3 flex flex-col items-center">
-        <h1 class="brand-logo-rendered text-3xl mb-0.5"><button type="button" id="homeLogoBtn" aria-label="Back to the home screen">ShitHead</button></h1>
+        <h1 class="brand-logo-rendered text-3xl mb-0.5"><button type="button" id="homeLogoBtn" aria-label="Back to the home screen">Shed Head</button></h1>
         <p class="brand-subtitle text-sm uppercase text-center">Deluxe</p>
       </div>
 
@@ -868,7 +868,7 @@
       <div class="inline-block px-5 py-1 rounded-full bg-slate-950 border border-amber-500/50 mb-5">
         <span id="victoryRankText" class="text-xs font-bold text-amber-400 uppercase tracking-widest">Finished Rank: #1</span>
       </div>
-      <p class="text-slate-400 text-xs font-semibold mb-6 px-2 leading-relaxed">The match carries on until only the ShitHead is left.</p>
+      <p class="text-slate-400 text-xs font-semibold mb-6 px-2 leading-relaxed">The match carries on until only the Shed Head is left.</p>
       <button id="closeVictoryBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 font-black rounded-xl shadow-lg transition tracking-widest text-slate-950 text-xs uppercase">CONTINUE WATCHING</button>
     </div>
   </div>
@@ -1427,7 +1427,7 @@
   <div id="installHelpModal" class="hidden gift-scrim" role="dialog" aria-modal="true" aria-labelledby="installHelpTitle">
     <div class="gift-card install-card">
       <img src="/icons/icon-192-v302.png" alt="" class="install-icon" width="64" height="64">
-      <div id="installHelpTitle" class="install-title">Install ShitHead</div>
+      <div id="installHelpTitle" class="install-title">Install Shed Head</div>
       <div id="installHelpBody" class="install-body"></div>
       <button type="button" id="installHelpClose" class="install-close">GOT IT</button>
     </div>
@@ -1490,7 +1490,7 @@
         <div id="profileDataSection" class="hidden">
           <span class="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Your Data</span>
           <div class="acct-card">
-            <p class="acct-text">Download a copy of everything ShitHead Deluxe stores about your account: profile, stats, match history, purchases and friends.</p>
+            <p class="acct-text">Download a copy of everything Shed Head Deluxe stores about your account: profile, stats, match history, purchases and friends.</p>
             <button id="downloadMyDataBtn" type="button" class="acct-btn">⬇ DOWNLOAD MY DATA</button>
             <p id="downloadMyDataStatus" class="acct-status hidden"></p>
           </div>
@@ -2461,7 +2461,7 @@
             <span class="chevron transform transition-transform duration-200">▼</span>
           </button>
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
-            <p>Welcome to <strong>ShitHead</strong>! The objective is to shed all your cards across three sequential phases. The last remaining player holding cards is the <strong>Shithead</strong>.</p>
+            <p>Welcome to <strong>Shed Head</strong>! The objective is to shed all your cards across three sequential phases. The last remaining player holding cards is the <strong>Shed Head</strong>.</p>
             <p><strong class="text-amber-300">0. Swap Phase:</strong> Before the first card is played, everyone can swap cards between their Hand and their Face-Up Cards. Tap READY when you're happy (see <em>Swap Phase</em> below).</p>
             <p><strong class="text-amber-300">1. Hand Phase:</strong> You must play cards from your Hand first. Whenever your Hand drops below 3 cards and the Deck has cards remaining, you automatically refill.</p>
             <p><strong class="text-amber-300">2. Face-Up Table Phase:</strong> When your Hand and the Deck are completely empty, you play directly from your 3 Face-Up Cards.</p>
@@ -2747,7 +2747,7 @@
           <button class="accordion-toggle w-full px-4 py-2.5 bg-slate-900/90 hover:bg-slate-850 flex justify-between items-center text-left font-bold text-amber-400 uppercase tracking-wider text-xs"><span>House Rules</span><span class="chevron transform transition-transform duration-200">&#9660;</span></button>
           <div class="accordion-content hidden p-4 space-y-2 border-t border-slate-800 text-[12px] leading-relaxed text-slate-300">
             <p><strong>House Rules</strong> is a casual Play Friends mode where the host assigns powers to every rank, chooses the Joker behaviour and decides whether four of a kind Burns.</p>
-            <p>Everyone sees the completed rules and must press <strong>Ready</strong> before the match starts. Any host change resets Ready. Signed-in hosts can save up to <strong>3 named variants</strong>; <strong>ShitHead Deluxe</strong> is the only built-in preset.</p>
+            <p>Everyone sees the completed rules and must press <strong>Ready</strong> before the match starts. Any host change resets Ready. Signed-in hosts can save up to <strong>3 named variants</strong>; <strong>Shed Head Deluxe</strong> is the only built-in preset.</p>
             <p>You can play with friends, with a mixture of friends and bots, or against up to <strong>3 bots</strong>. Bots dynamically value the selected powers according to their difficulty.</p>
             <p><strong>Important:</strong> House Rules is unranked, gives <strong>no Challenge progress</strong> and awards <strong>no Diamonds</strong>.</p>
           </div>
@@ -2776,7 +2776,7 @@
             <p data-term="deck"><strong class="text-amber-400">Deck:</strong> The face-down stack you draw from. After each turn you top your Hand back up to three cards while the Deck lasts. Once it's empty, no more topping up &mdash; and your Table Cards become reachable.</p>
             <p data-term="diamonds"><strong class="text-amber-400">Diamonds:</strong> The game&rsquo;s currency (💎). Earned from wins, challenges, the daily login streak and the Gauntlet; spent in the Shop on cosmetics or gifts for friends.</p>
             <p data-term="direction"><strong class="text-amber-400">Direction:</strong> Which way turn order flows around the table. A 9 flips it &mdash; an odd number played at once reverses it, an even number leaves it unchanged. A 5 played on a 9 base, or a 3 played over a 9, both act as a 9 for this purpose too.</p>
-            <p data-term="draw"><strong class="text-amber-400">Draw:</strong> When the same cards keep going round and nobody can ever get out, the game ends in a draw: nobody wins and nobody is the ShitHead.</p>
+            <p data-term="draw"><strong class="text-amber-400">Draw:</strong> When the same cards keep going round and nobody can ever get out, the game ends in a draw: nobody wins and nobody is the Shed Head.</p>
             <p data-term="duel"><strong class="text-amber-400">Duel (Joker Duel):</strong> When you play a Joker you choose an opponent to pick up the Pile. If that opponent holds a Joker they may counter with it, and the Pile bounces back to you instead. Both Jokers are burnt either way. Whoever wins the duel plays next; if their Joker was their last card, they finish and the next player carries on.</p>
             <p data-term="face-down-cards"><strong class="text-amber-400">Face-Down Cards:</strong> Three cards dealt beneath your Face-Up Cards that nobody ever sees. Only playable once your Hand, the Deck <em>and</em> your Face-Up Cards are all gone. You flip one blind &mdash; if it isn't legal, you pick up the Pile.</p>
             <p data-term="face-up-cards"><strong class="text-amber-400">Face-Up Cards:</strong> Three cards on the table in front of you, visible to everyone. Only playable once your Hand and the Deck are both empty. Because you play them last, the Swap Phase is your chance to stock them with strong cards.</p>
@@ -2791,7 +2791,7 @@
             <p data-term="last-card"><strong class="text-amber-400">Last Card:</strong> A player down to one card in total gets a pulsing <strong>&#9757;&#65039; LAST CARD</strong> badge and a warning, so nobody sneaks out unnoticed.</p>
             <p data-term="leaderboard"><strong class="text-amber-400">Leaderboard:</strong> Menu &rarr; Leaderboard: three tabs, <em>Ranked</em> (rating), <em>Challenges</em> (challenges completed) and <em>Gauntlet</em> (bots beaten). Reach the top 10, #3, #2 or #1 and a congratulations message lands in your Inbox.</p>
             <p data-term="level"><strong class="text-amber-400">Level:</strong> You earn XP for finishing games, winning, Ranked, the Gauntlet and challenges. Levels run from 1 to 99; every level up pays Diamonds, and some levels unlock free items (see <em>Level Rewards</em>). While a seasonal event is on, all the XP you earn is 1.5&times;.</p>
-            <p data-term="level-rewards"><strong class="text-amber-400">Level Rewards:</strong> Free things you unlock by levelling up: 2x game speed at Lvl 5 and 4x at Lvl 10 (signed in), a second saved look at Lvl 10 and a third at Lvl 20, and earn-only avatars (Rookie Rogue 10, Card Shark 25, Burn King 50, Chaos Jester 75, The ShitHead 99) and card backs (First Burn 10, Shark&rsquo;s Mark 30, Inferno 50, Chaos Crown 70, Master of the Pile 99). Your level badge also changes colour at 20, 40, 60, 80 and 99.</p>
+            <p data-term="level-rewards"><strong class="text-amber-400">Level Rewards:</strong> Free things you unlock by levelling up: 2x game speed at Lvl 5 and 4x at Lvl 10 (signed in), a second saved look at Lvl 10 and a third at Lvl 20, and earn-only avatars (Rookie Rogue 10, Card Shark 25, Burn King 50, Chaos Jester 75, The Shed Head 99) and card backs (First Burn 10, Shark&rsquo;s Mark 30, Inferno 50, Chaos Crown 70, Master of the Pile 99). Your level badge also changes colour at 20, 40, 60, 80 and 99.</p>
             <p data-term="lives"><strong class="text-amber-400">Lives:</strong> Your hearts in the Gauntlet. You start with 3; losing a game costs one and you replay the same bot.</p>
             <p data-term="lucky-games"><strong class="text-amber-400">Lucky Games:</strong> The Daily Spin, Scratch Card, Three Cards and Drop Zone: the round buttons on the home screen. Free plays for Diamonds, XP and items you cannot buy.</p>
             <p data-term="menu"><strong class="text-amber-400">Menu:</strong> The &equiv; button at the right of the Header. It holds Challenges, Friends, Leaderboard, Level Ladder, Stats and Support, and gives you Shop, Custom and Guide whenever the Header has folded them away.</p>
@@ -2808,7 +2808,7 @@
             <p data-term="power-cards"><strong class="text-amber-400">Power Cards:</strong> The five strongest cards &mdash; 2 (Reset), 3 (Transparent), 10 (Burner), Ace (highest rank) and Joker. Worth saving rather than spending, and worth putting in your Face-Up Cards during the Swap Phase.</p>
             <p data-term="puzzle"><strong class="text-amber-400">Puzzle:</strong> A set Hand and Pile with one turn to reach a goal: go out, burn the Pile, or leave the Rival nothing to play. A new one arrives every week in <em>More Modes</em> &rarr; <em>Puzzles</em>.</p>
             <p data-term="quick-start"><strong class="text-amber-400">Quick Start:</strong> The one-minute tutorial for new players. The Tutorial page has longer lessons on every rule.</p>
-            <p data-term="rank"><strong class="text-amber-400">Rank:</strong> A card's value, ignoring suit. Suits never matter in ShitHead &mdash; only rank. That's also why several cards of the same rank can be played together in one turn.</p>
+            <p data-term="rank"><strong class="text-amber-400">Rank:</strong> A card's value, ignoring suit. Suits never matter in Shed Head &mdash; only rank. That's also why several cards of the same rank can be played together in one turn.</p>
             <p data-term="ranked"><strong class="text-amber-400">Ranked:</strong> One-on-one online games against a real player, scored with a rating. Win and your rating goes up; lose and it goes down. Leaving a Ranked game counts as a loss.</p>
             <p data-term="rating"><strong class="text-amber-400">Rating:</strong> Your Ranked score (everyone starts at 500). It decides your Tier and your place on the Ranked leaderboard.</p>
             <p data-term="recruit"><strong class="text-amber-400">Recruit:</strong> Share your invite link (Profile or Friends). When a new player joins with it and plays 3 games, you both get Diamonds. Recruit 5 for the Recruiter avatar.</p>
@@ -2816,7 +2816,7 @@
             <p data-term="season-pass"><strong class="text-amber-400">Season Pass:</strong> A free 50-tier pass that every XP you earn (signed in) fills, over two calendar months. Each tier pays Diamonds the moment you reach it, with an exclusive card back, avatar, burn and table at tiers 10, 30, 40 and 50. Season 3 also gives the Origami Fold burn at tier 20.</p>
             <p data-term="seasonal-event"><strong class="text-amber-400">Seasonal Event:</strong> Halloween, Christmas, Diwali and more: while an event is on, its themed items are sold in the Shop&rsquo;s Seasonal tab, and winning 3 games earns that event&rsquo;s avatar.</p>
             <p data-term="select-all-of-a-rank"><strong class="text-amber-400">Select All Of A Rank:</strong> With it on (the round button left of your hand count, or S on a keyboard), tapping a card selects every card of that rank in your Hand. Protect Best Cards (Settings → Gameplay, off by default) keeps it to one card for 2s, 3s, 10s and Aces, so you don't waste them.</p>
-            <p data-term="shithead"><strong class="text-amber-400">ShitHead:</strong> The loser &mdash; the last player still holding cards once everyone else has emptied their Hand, Face-Up and Face-Down cards.</p>
+            <p data-term="shithead"><strong class="text-amber-400">Shed Head:</strong> The loser &mdash; the last player still holding cards once everyone else has emptied their Hand, Face-Up and Face-Down cards.</p>
             <p data-term="shortcut-card"><strong class="text-amber-400">Shortcut Card:</strong> The two outer Mode Cards. Pin Puzzles or a mode that is still coming to one of them, and Swap changes it. Puzzles opens straight from its pin.</p>
             <p data-term="skip"><strong class="text-amber-400">Skip:</strong> The 8. The next player misses their turn.</p>
             <p data-term="snap-burn"><strong class="text-amber-400">Snap Burn:</strong> Completing four of a kind <em>out of turn</em>. If the top of the Pile already shows some of a rank and you hold the rest, a Snap Burn button appears and you can burn the Pile immediately, even when it isn't your turn.</p>
@@ -2902,20 +2902,20 @@
   <script src="js/play-matrix-ui.js?v=ede5322243a1"></script>
   <script src="js/play-matrix-panel.js?v=c3626e811e5c"></script>
   <script src="js/card-hold.js?v=084690e5c579"></script>
-  <script src="js/whats-new-data.js?v=3b0e5336344f"></script>
+  <script src="js/whats-new-data.js?v=ccb92361214b"></script>
   <script src="js/avatar-tones.js?v=a1fc8ff23117"></script>
-  <script src="cosmetics-data.js?v=4840572cabf5"></script>
-  <script src="tutorial-data.js?v=c6c7b4c126e7"></script>
+  <script src="cosmetics-data.js?v=2e8713f97b63"></script>
+  <script src="tutorial-data.js?v=fdebdedd7391"></script>
   <script src="tutorial.js?v=66727852228b"></script>
   <script src="level-ladder.js?v=3108cc7c12d4"></script>
   <script src="js/wishlist-store.js?v=664496c9f24f"></script>
   <script src="shop.js?v=1461a7528520"></script>
   <script src="home-navigation.js?v=892541f40279"></script>
-  <script src="multiplayer-lobby.js?v=3e73efeeb3e1"></script>
+  <script src="multiplayer-lobby.js?v=9c763bd91e63"></script>
   <script src="private-cosmetics.js?v=e9f1b6622a99"></script>
-  <script src="app.js?v=e2df2f68360b"></script>
+  <script src="app.js?v=0a75e8feba31"></script>
 
-  <script src="js/house-rules.js?v=5d71fee2f41c"></script>
+  <script src="js/house-rules.js?v=e3900228b6e5"></script>
   <script src="js/house-rules-bots.js?v=1e6c3304258d"></script>
   <script src="js/house-rules-presets.js?v=80f7a658ecb1"></script>
   <script src="js/friends-lobby.js?v=a280b95792b2"></script>
@@ -2924,7 +2924,7 @@
   <script src="js/puzzle-engine.js?v=6da7c2c6c85c"></script>
   <script src="js/puzzles.js?v=87cb627bec7c"></script>
   <script src="js/test-lab.js?v=2216dd1aa6a1"></script>
-  <script src="js/welcome-tour.js?v=1ec181602f01"></script>
+  <script src="js/welcome-tour.js?v=012c60a94303"></script>
 </body>
 </html>
 

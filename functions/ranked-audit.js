@@ -249,7 +249,7 @@ function auditTransition(before, after, ctx) {
     if (a.drew) { add('draw', false, `drew holding ${seatCards(a).length} cards (${Number(after.stalemate?.turns) || 0} turns without progress)`, id); return; }
     const others = [...afterSeats.values()].filter((s) => s.id !== id);
     const othersDone = others.every((s) => s.hasFinished);
-    // The last one left is the ShitHead: finished last, still holding cards.
+    // The last one left is the Shed Head: finished last, still holding cards.
     const lastStanding = othersDone && others.some((s) => !seatCards(s).length && !s.isBot) && Number(a.finishRank) === afterSeats.size;
     const byConcession = othersDone && others.some((s) => s.isBot && seatCards(s).length);
     if (!lastStanding && !byConcession) add('finished-with-cards', true, `finished #${a.finishRank} holding ${seatCards(a).length} cards`, id);

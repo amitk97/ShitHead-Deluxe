@@ -1,4 +1,4 @@
-// ShitHead Deluxe developer test suite.
+// Shed Head Deluxe developer test suite.
 // Loaded by index.html only when the page is opened with ?dev-tests=1, so
 // normal players never download it. It runs against the live game's own
 // globals (functions and top-level variables in index.html).
@@ -168,7 +168,7 @@ async function runDevTestSuite() {
       }
     } finally { paused.forEach(a=>a.cancel());stage.remove(); }
   });
-  await test('Cosmetic art: ShitHead tears form at the eyes, fall and disappear over dry cheeks', async () => {
+  await test('Cosmetic art: Shed Head tears form at the eyes, fall and disappear over dry cheeks', async () => {
     const stage=document.createElement('div');stage.style.cssText='position:fixed;top:100px;left:100px;width:128px;height:128px';document.body.appendChild(stage);
     let animations=[];
     try {
@@ -1754,7 +1754,7 @@ async function runDevTestSuite() {
         assertTrue(a.hasFinished && a.finishRank === 1, 'The Joker player finishes first', [a.hasFinished, a.finishRank]);
         assertEqual((a.hand || []).length, 0, 'Nothing to pick up');
         if (n === 2) {
-          assertTrue(!b.hasFinished, 'Two players: that settles it, the defender is the ShitHead', [b.hasFinished, b.finishRank]);
+          assertTrue(!b.hasFinished, 'Two players: that settles it, the defender is the Shed Head', [b.hasFinished, b.finishRank]);
           assertTrue(ended > 0, 'and the match is told to end');
         } else if (defenderLast) {
           assertTrue(b.hasFinished && b.finishRank === 2, 'The defender who also went out finishes second', [b.hasFinished, b.finishRank]);
@@ -1766,7 +1766,7 @@ async function runDevTestSuite() {
       });
     }
   }
-  await test('Last card a Joker, countered with the defender\'s own last card (2 players): the defender wins, the Joker player is the ShitHead', () => {
+  await test('Last card a Joker, countered with the defender\'s own last card (2 players): the defender wins, the Joker player is the Shed Head', () => {
     const joker = makeCard('JOKER', 'JOKER');
     const counter = makeCard('JOKER', 'JOKER');
     lastCardScenario([['a', [joker]], ['b', [counter]]], () => executePlayCards('a', [joker]));
@@ -3152,7 +3152,7 @@ async function runDevTestSuite() {
       assertEqual(state.phase, 'FINISHED', 'The match is over');
       assertTrue(a.drew && b.drew && a.finishRank === 1 && b.finishRank === 1, 'Both drew and share the place');
       assertEqual(matchPlacingInfo(a).title, 'Draw', 'The summary says Draw');
-      assertTrue(!isShitHead(a) && !isShitHead(b), 'Nobody is the ShitHead');
+      assertTrue(!isShitHead(a) && !isShitHead(b), 'Nobody is the Shed Head');
       assertTrue(buildFinalStandingsHtml([a, b], 'p1', false).includes('Draw'), 'Final Standings marks the draw');
       assertTrue(/Draw/.test(matchHistoryHtml([{ at: Date.now(), mode: 'bots', label: 'Vs Bots', place: 1, of: 2, draw: true, players: [], stats: {} }])), 'Match History shows a draw, not a win');
     } finally { notifyBanner = savedBanner; hideMatchEndUI(); }
@@ -3459,7 +3459,7 @@ async function runDevTestSuite() {
     assertEqual(free, ['Bronze Crown', 'Spades', 'Hearts', 'Diamonds', 'Clubs'], 'Free pictures: Bronze Crown + the 4 suits');
     const shop = Object.fromEntries(COSMETIC_SHOP_ITEMS.filter(i => i.category === 'Avatars' && !i.season && !i.ldn && !i.mum).map(i => [i.name, i.cost]));
     assertEqual(shop, { 'Ace of Spades': 200, 'Queen of Hearts': 200, 'Joker': 200, 'Burn Flame': 500, 'Transparent Ghost': 500, 'Frozen': 500, 'Burning 10': 1000, 'Fanned Hand': 1000, 'Joker Card': 1000, 'Royal Flush': 2500, 'Cosmic Ace': 2500, 'Sapphire Sovereign': 5000, 'Crimson Inferno': 5000, 'Scarlet Guardian': 5000, 'Turtley': 5000 }, 'Shop pictures and prices');
-    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'Lucky Wheel', 'Drop Zone', 'Prism Ace', 'The Seer', 'The Enforcer'], 'Earn-only pictures');
+    assertEqual(EARNED_AVATARS.filter(i => !i.season).map(i => i.name), ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'Shed Head', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'Lucky Wheel', 'Drop Zone', 'Prism Ace', 'The Seer', 'The Enforcer'], 'Earn-only pictures');
     [...BUILT_IN_COSMETICS, ...COSMETIC_SHOP_ITEMS, ...EARNED_AVATARS].filter(i => i.category === 'Avatars')
       .forEach(i => assertTrue(!!AVATAR_ART[i.id] && isSupportedCosmetic('avatar', i.id), `${i.name} must have artwork and be equippable`));
   });
@@ -4434,7 +4434,7 @@ async function runDevTestSuite() {
     stage.querySelectorAll('.bfx').forEach(n => n.remove());
     renderPersonalisationAvatars();
     const earned = [...document.querySelectorAll('#personalisationAvatars .avatar-option-name')].map(n => n.textContent).slice(-28);
-    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'ShitHead', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'Drop Zone', 'Lucky Wheel', 'Prism Ace', 'The Seer', 'The Enforcer', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The ShitHead', 'Sphinx Cub', 'Baby Mammoth', 'Kitsune Cub', 'Pearl Octopus', 'Baby Pegasus', 'Little Witch'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
+    assertEqual(earned, ['Silver Crown', 'Gold Crown', 'Platinum Crown', 'Master Crown', 'Centurion', 'Shed Head', 'Gauntlet Champion', 'Gauntlet Conqueror', 'Gauntlet Overlord', 'Recruiter', 'Dream Team', 'Double Deck', 'Drop Zone', 'Lucky Wheel', 'Prism Ace', 'The Seer', 'The Enforcer', 'Rookie Rogue', 'Card Shark', 'Burn King', 'Chaos Jester', 'The Shed Head', 'Sphinx Cub', 'Baby Mammoth', 'Kitsune Cub', 'Pearl Octopus', 'Baby Pegasus', 'Little Witch'], 'Earn-only avatars in milestone order, then the Gauntlet, inviting friends, then levels');
   });
 
   await test('Accessibility settings exist and apply', () => {
@@ -7325,7 +7325,7 @@ async function runDevTestSuite() {
     }
     assertTrue(lastSupportDraftUri.startsWith('mailto:support.shitheaddeluxe@gmail.com?'), 'The draft must target the official support address');
     const decodedDraft = decodeURIComponent(lastSupportDraftUri);
-    assertTrue(decodedDraft.includes('[ShitHead Deluxe] Love the game'), 'The subject must be included');
+    assertTrue(decodedDraft.includes('[Shed Head Deluxe] Love the game'), 'The subject must be included');
     assertTrue(decodedDraft.includes('Category: Feedback'), 'The chosen category must be included');
     assertTrue(decodedDraft.includes(`Game version: ${getGameVersionLabel()}`), 'The game version must be included');
     assertTrue(decodedDraft.includes('Great job on the Ranked mode!'), 'The message must be included');
@@ -8501,12 +8501,12 @@ async function runDevTestSuite() {
       challengeEconomy.completedChallenges = {};
       state.matchId = 'm_test_2';
       const calls = fakeEconomy({
-        matchFinished: () => ({ claimed: [{ id: 'first-game', name: 'ShitHead Virgin', reward: 20 }], diamonds: 20 }),
+        matchFinished: () => ({ claimed: [{ id: 'first-game', name: 'Shed Head Virgin', reward: 20 }], diamonds: 20 }),
         streak: () => ({ claimed: { count: 2, reward: 15 }, streak: { count: 2, lastDate: localDateKey(), best: 2 }, diamonds: 35 })
       });
       await reportMatchFinished();
       assertEqual(calls[0], ['matchFinished', { matchId: 'm_test_2' }], 'Only the match id is sent');
-      assertTrue(!!challengeEconomy.completedChallenges['first-game'], 'ShitHead Virgin recorded from the reply');
+      assertTrue(!!challengeEconomy.completedChallenges['first-game'], 'Shed Head Virgin recorded from the reply');
       const claimed = await claimDailyLoginReward();
       assertEqual(claimed, { count: 2, reward: 15 }, 'Streak day and reward come from the server');
       assertEqual(challengeEconomy.diamonds, 35, 'Balance from the server');
@@ -8823,7 +8823,7 @@ async function runDevTestSuite() {
       assertTrue(document.getElementById('matchSummaryAgain').disabled, 'A guest cannot restart the room');
       state.players[0].hasFinished = false; state.players[0].finishRank = null; state.players[0].hand = [makeCard('9')];
       state.players[1].hasFinished = true; state.players[1].finishRank = 1; state.players[1].hand = [];
-      assertEqual(matchPlacingInfo(state.players[0]).title, "You're the ShitHead", 'The last player is the ShitHead');
+      assertEqual(matchPlacingInfo(state.players[0]).title, "You're the Shed Head", 'The last player is the Shed Head');
     } finally {
       currentUser = savedUser;
       hideMatchEndUI();
@@ -10163,7 +10163,7 @@ async function runDevTestSuite() {
       ['finish-any-match', 'win-any-match', 'win-ranked-match'].forEach(e => assertTrue(got.includes(e), e));
       got.length = 0;
       notifyRankedBurnChallenges(before, { id: 'a', hasFinished: true, finishRank: 2, gameStats: { jokersPlayed: 1 } });
-      assertEqual(got.length, 0, 'the last player (ShitHead) does not count as a finish');
+      assertEqual(got.length, 0, 'the last player (Shed Head) does not count as a finish');
     } finally { notifyChallengeEvent = saved; state.players = savedPlayers; }
   });
   await test('v374: Shop wishlist heart, Profile list, player card list, Wishlist filter', () => {
@@ -12396,7 +12396,7 @@ function renderDevTestReport(results) {
   const header = document.createElement('div');
   header.style.cssText = 'margin-bottom:20px;';
   header.innerHTML = `
-    <h1 style="margin:0 0 4px; font-size:22px;">ShitHead Deluxe — Rule Engine Test Suite</h1>
+    <h1 style="margin:0 0 4px; font-size:22px;">Shed Head Deluxe — Rule Engine Test Suite</h1>
     <p style="margin:0; color:${failCount > 0 ? '#f87171' : '#34d399'}; font-weight:bold; font-size:16px;">
       ${passCount} / ${results.length} passed${failCount > 0 ? ` — ${failCount} FAILING` : ''}
     </p>

@@ -1173,7 +1173,7 @@
    "min": 100
   },
   "avatar-shithead": {
-   "name": "ShitHead",
+   "name": "Shed Head",
    "requirement": "Lose 10 ranked games in a row",
    "type": "lossStreak",
    "min": 10
@@ -2115,7 +2115,7 @@
   },
   {
    "id": "first-game",
-   "name": "ShitHead Virgin",
+   "name": "Shed Head Virgin",
    "reward": 20
   },
   {
@@ -2669,7 +2669,7 @@
    },
    {
     "id": "avatar-lvl-the-shithead",
-    "name": "The ShitHead",
+    "name": "The Shed Head",
     "level": 99
    },
    {

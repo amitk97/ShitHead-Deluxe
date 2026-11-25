@@ -1,4 +1,4 @@
-// Push notifications for ShitHead Deluxe, sent while the app is closed.
+// Push notifications for Shed Head Deluxe, sent while the app is closed.
 // Each device that turns on Settings -> Notifications saves its push token
 // under pushTokens/{uid}/{key}. These functions watch the database and send:
 //   - a new game invite      gameInvites/{uid}/{inviteId}

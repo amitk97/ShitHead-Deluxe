@@ -1,4 +1,4 @@
-// ShitHead Deluxe service worker.
+// Shed Head Deluxe service worker.
 // Makes the game installable, playable offline (Vs Bots and the Tutorial)
 // and shows notifications. The page comes from the cache first so
 // the saved page opens at once (cache first) and is refreshed in the background;
@@ -25,19 +25,19 @@ const OFFLINE_ASSETS = [
   '/js/play-matrix-ui.js?v=ede5322243a1',
   '/js/play-matrix-panel.js?v=c3626e811e5c',
   '/js/card-hold.js?v=084690e5c579',
-  '/js/whats-new-data.js?v=3b0e5336344f',
+  '/js/whats-new-data.js?v=ccb92361214b',
   '/js/avatar-tones.js?v=a1fc8ff23117',
-  '/cosmetics-data.js?v=4840572cabf5',
-  '/tutorial-data.js?v=c6c7b4c126e7',
+  '/cosmetics-data.js?v=2e8713f97b63',
+  '/tutorial-data.js?v=fdebdedd7391',
   '/tutorial.js?v=66727852228b',
   '/level-ladder.js?v=3108cc7c12d4',
   '/home-navigation.js?v=892541f40279',
   '/js/wishlist-store.js?v=664496c9f24f',
   '/shop.js?v=1461a7528520',
-  '/multiplayer-lobby.js?v=3e73efeeb3e1',
+  '/multiplayer-lobby.js?v=9c763bd91e63',
   '/private-cosmetics.js?v=e9f1b6622a99',
-  '/app.js?v=e2df2f68360b',
-  '/js/house-rules.js?v=5d71fee2f41c',
+  '/app.js?v=0a75e8feba31',
+  '/js/house-rules.js?v=e3900228b6e5',
   '/js/house-rules-bots.js?v=1e6c3304258d',
   '/js/house-rules-presets.js?v=80f7a658ecb1',
   '/js/friends-lobby.js?v=a280b95792b2',
@@ -49,7 +49,7 @@ const OFFLINE_ASSETS = [
   '/js/puzzle-engine.js?v=6da7c2c6c85c',
   '/js/puzzles.js?v=87cb627bec7c',
   '/js/test-lab.js?v=2216dd1aa6a1',
-  '/js/welcome-tour.js?v=1ec181602f01',
+  '/js/welcome-tour.js?v=012c60a94303',
   '/icons/splash-handoff-v309.webp',
   '/art/fonts/cinzel-latin-v26.woff2',
   '/art/burns/level-v294/effects.js?v=3efa73e57658',
@@ -299,7 +299,7 @@ async function writeJson(name, value) {
   } catch (e) {}
 }
 function showGameNotification({ title, body, tag, open }) {
-  return self.registration.showNotification(title || 'ShitHead', {
+  return self.registration.showNotification(title || 'Shed Head', {
     body: body || '',
     // Same tags as the in-game alerts, so one thing never alerts twice.
     tag: `shithead-${tag || 'update'}`,

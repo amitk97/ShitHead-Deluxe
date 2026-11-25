@@ -1,7 +1,7 @@
 {
-  "name": "ShitHead Deluxe",
-  "short_name": "ShitHead",
-  "description": "The card game ShitHead: play bots, friends and Ranked.",
+  "name": "Shed Head Deluxe: Card Game",
+  "short_name": "Shed Head",
+  "description": "The card game Shed Head: play bots, friends and Ranked.",
   "id": "/",
   "start_url": "/?source=app",
   "scope": "/",

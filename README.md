@@ -1,7 +1,7 @@
 <!-- README-VERSION: v540 — refresh text + screenshots every 20 versions from v180 (v180, v200, v220…); see CLAUDE.md -->
-# 💩 ShitHead Deluxe
+# 💩 Shed Head Deluxe
 
-**The classic card game ShitHead, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the ShitHead.
+**The classic card game Shed Head, rebuilt for your phone.** Play against bots, play friends in private rooms, or climb the Ranked ladder. Get rid of all your cards. The last player holding cards is the Shed Head.
 
 ### ▶ [Play now at shithead-deluxe.web.app](https://shithead-deluxe.web.app/)
 
@@ -66,7 +66,7 @@ Card strength, weakest to strongest: **4, 5, 6, 7, 8, 9, J, Q, K, A, 10, 2, 3, J
 - **Performance Mode** (Settings → Display, off by default): lighter effects for slower phones. Particle counts and canvas resolution drop, blur and drop-shadow filters go, and decorative loops pause, while timing, sound and art stay the same. The Shitstorm and Hellfire Spiral burns have their own lighter versions. The game also switches to the lighter effects by itself after repeated slow frames, and a Health box lets the developer compare frame rates with it on and off.
 - **Double-Tap To Play**: enable it in Settings → Gameplay to play a staged card with a second tap. Ranked swaps show your changes immediately while the server confirms them.
 - **Watch friends**: friends can watch a Play Computer or Gauntlet game when Friends Can Watch is enabled; hidden cards remain hidden.
-- **One header everywhere**: Exit on the far left (it asks first, in the game's own style), your Diamonds, then Shop, Custom, Profile, Inbox, Guide, Settings and the menu. In a game the extras fold into the menu and the ShitHead logo takes you home.
+- **One header everywhere**: Exit on the far left (it asks first, in the game's own style), your Diamonds, then Shop, Custom, Profile, Inbox, Guide, Settings and the menu. In a game the extras fold into the menu and the Shed Head logo takes you home.
 - **A short tour for new players**: the first time a new account signs in, a six-step tour shows the header, the game modes and the Tutorial button (skip it any time, replay it from Menu → Take The Tour). Press and hold a mode card to pick it up and put the cards in your own order.
 - **Opens fast**: a loading screen paints at once, your level and Diamonds show straight away, and the installed Android app flows from its icon into the game. Launches come from a cached copy, and on a phone you can pull down on the home screen to check for a new version.
 - **XP & levels 1–99**: every game, win, Ranked game, Gauntlet bot and challenge earns XP (a win 75, a Ranked win 150, the first game of the day +50). Levels follow a RuneScape-style curve (level 92 is half-way to 99) and pay Diamonds: 20 a level, 100 on every 10th. A thin XP bar along the bottom of the header shows your progress (hover or tap it for the numbers), and your level shows on the table, on every leaderboard, on your Profile and in your friends list. Games you played before levels existed counted too. Levels unlock earn-only avatars, card backs and burn effects, faster game speeds, extra saved looks, Best of series and the harder Gauntlets.
