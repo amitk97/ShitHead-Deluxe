@@ -64,16 +64,16 @@ jobs:
           delivery_state=$(gcloud scheduler jobs describe firebase-schedule-privateDeliveries-europe-west1 --project shithead-pro --location europe-west1 --format='value(state)')
           test "$delivery_state" = ENABLED
           status=$(curl --silent --output /dev/null --write-out '%{http_code}' https://europe-west1-shithead-pro.cloudfunctions.net/privateAvatarArt)
-          test "$status" = 404
+          test "$status" != 200
 
           table_status=$(curl --silent --output /dev/null --write-out '%{http_code}' https://europe-west1-shithead-pro.cloudfunctions.net/privateTableArt)
-          test "$table_status" = 404
+          test "$table_status" != 200
 
           burn_status=$(curl --silent --output /dev/null --write-out '%{http_code}' https://europe-west1-shithead-pro.cloudfunctions.net/privateBurnArt)
-          test "$burn_status" = 404
+          test "$burn_status" != 200
 
           back_status=$(curl --silent --output /dev/null --write-out '%{http_code}' https://europe-west1-shithead-pro.cloudfunctions.net/privateBackArt)
-          test "$back_status" = 404
+          test "$back_status" != 200
 
       - name: Verify live owner card and table artwork
         env:

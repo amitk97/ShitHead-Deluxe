@@ -60,9 +60,10 @@ assert.equal(await page.evaluate(()=>privateViewing()),false,'the viewing flag i
 const sw=await page.evaluate(async()=>{
  const out={};
  currentUser={uid:'someone-else',email:'x@example.com',getIdToken:async()=>'t'};updateHamburgerAccountLabel();
- out.otherHidden=document.getElementById('menuUnlockAllBtn').classList.contains('hidden');
+ // Since v500 the switch lives on the Dev page (#headerDevBtn, AmitK only); the menu copy stays hidden for everyone.
+ out.otherHidden=document.getElementById('headerDevBtn').classList.contains('hidden');
  currentUser={uid:'amit-uid',email:'amirk2197@googlemail.com',getIdToken:async()=>'t'};updateHamburgerAccountLabel();
- out.amitShown=!document.getElementById('menuUnlockAllBtn').classList.contains('hidden');
+ out.amitShown=!document.getElementById('headerDevBtn').classList.contains('hidden');
  let testOwned={'back-lvl-inferno':true,'avatar-twos':true};
  db={ref:path=>({once:async()=>({val:()=>path.endsWith('/testOwned')?testOwned:path.endsWith('/ownedCosmetics')?{'avatar-twos':{cost:0,purchasedAt:5}}:null})})};
  cosmeticCollectionUid=null;cosmeticPurchaseState={};

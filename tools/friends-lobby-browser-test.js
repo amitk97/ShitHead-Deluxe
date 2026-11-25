@@ -136,17 +136,18 @@ await page.evaluate(()=>{
  state.players.push({id:'guest',uid:'guest_u',name:'Pooja',isBot:false,cosmetics:{level:25}});testRooms['rooms/123456'].players=state.players;
  renderSeriesPanel();
 });
-for (const level of [20, 34, 35, 44, 45]) {
+// Series levels (v518): the HOST needs Lvl 5 / 15 / 30 for Best of 3 / 5 / 7; the other player is only checked for Best of 7 (Lvl 30).
+for (const level of [5, 14, 15, 29, 30]) {
  await page.evaluate(level=>{playerXp={total:xpForLevel(level)};state.players[1].cosmetics.level=level;renderSeriesPanel();},level);
  assert.equal(await page.locator('[data-series-best="3"]').isDisabled(),false);
- assert.equal(await page.locator('[data-series-best="5"]').isDisabled(),level<35);
- assert.equal(await page.locator('[data-series-best="7"]').isDisabled(),level<45);
- if(level<35)assert((await page.locator('[data-series-best="5"]').innerText()).includes('Level 35'));
- if(level<45)assert((await page.locator('[data-series-best="7"]').innerText()).includes('Level 45'));
+ assert.equal(await page.locator('[data-series-best="5"]').isDisabled(),level<15);
+ assert.equal(await page.locator('[data-series-best="7"]').isDisabled(),level<30);
+ if(level<15)assert((await page.locator('[data-series-best="5"]').innerText()).includes('Level 15'));
+ if(level<30)assert((await page.locator('[data-series-best="7"]').innerText()).includes('Level 30'));
 }
-await page.evaluate(()=>{state.players[1].cosmetics.level=34;renderSeriesPanel();});
-assert(await page.locator('[data-series-best="5"]').isDisabled());
-assert(await page.locator('[data-series-best="7"]').isDisabled());
+await page.evaluate(()=>{state.players[1].cosmetics.level=29;renderSeriesPanel();});
+assert(!(await page.locator('[data-series-best="5"]').isDisabled()), 'the other player is not checked for Best of 5');
+assert(await page.locator('[data-series-best="7"]').isDisabled(), 'the other player must be Lvl 30 for Best of 7');
 await page.evaluate(()=>{playerXp={total:xpForLevel(25)};state.players[1].cosmetics.level=25;renderSeriesPanel();});
 console.log('PASS series level boundaries and opponent requirements');
 await page.setViewportSize({width:320,height:568});
