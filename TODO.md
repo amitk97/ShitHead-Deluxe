@@ -1,13 +1,15 @@
 # TODO
 
 Owner's backlog. Don't build an item until the owner asks for it.
-Audited at v482: everything already built was removed (history lives in `CLAUDE.md`).
+Audited at v552: everything already built was removed (history lives in `CLAUDE.md`).
 
 ## Open
 
 - [ ] **Randomiser Mode**: card powers are shuffled each match and shown up front (a "coming soon" card on More Modes; `PIN_MODES.random`).
-- [ ] **Functions deploy needed** for the v479 line grid, the catalog names and the AmitK/Pooja scratch reset (run the "Deploy notification functions" workflow). No rules change since v478.
-- [ ] **README refresh is overdue** (due at v480, now v482): text, all seven screenshots, `README-VERSION` stamp.
+- [ ] Update the tutorial, step-by-step logic and Guide Key Terms whenever a mode or the header changes (last checked v551).
+- [ ] First-sign-in onboarding exists (`js/welcome-tour.js`, 8 steps); extend it when new header items or modes arrive.
+- [ ] README refresh next due at v570.
+- [ ] Future modes already built: 2 vs 2, Puzzles, Multiple Decks, Cold Blooded (internal id `noMercy`: Queen X-rays a hand card, Joker can't go on a 4, King makes the next player take the Pile's bottom card, Ace makes everyone take one). Only Randomiser is still open.
 
 ## Season Pass: premium track (on hold)
 
